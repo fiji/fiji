@@ -102,7 +102,7 @@ public class UniverseSettings {
 			((ImageCanvas3D)univ.getCanvas()).getBG().getColor(defaultBackground);
 		showScalebar = gd.getNextBoolean();
 		boolean apply = gd.getNextBoolean();
-		
+
 		showLocalCoordinateSystemsByDefault = gd.getNextBoolean();
 
 		save();

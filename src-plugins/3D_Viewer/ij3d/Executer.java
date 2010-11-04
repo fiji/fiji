@@ -73,7 +73,7 @@ public class Executer {
 	public static final String CLOSE = "close";
 	public static final String WINDOW_SIZE = "windowSize";
 
-	public static final String SET_COLOR = "setColor"; 
+	public static final String SET_COLOR = "setColor";
 	public static final String SET_TRANSPARENCY = "setTransparency";
 	public static final String SET_CHANNELS = "setChannels";
 	public static final String FILL_SELECTION = "fillSelection";
@@ -205,7 +205,7 @@ public class Executer {
 // 		}
 // 		univ.addOctree(dir, name);
 // 	}
-// 
+//
 // 	public void removeOctree() {
 // 		univ.removeOctree();
 // 	}
@@ -252,7 +252,7 @@ public class Executer {
 			IJ.showMessage("Could not load the file:\n" + path);
 	}
 
-	
+
 	public void saveAsDXF() {
 		MeshExporter.saveAsDXF(univ.getContents());
 	}
@@ -260,11 +260,11 @@ public class Executer {
 	public void saveAsWaveFront() {
 		MeshExporter.saveAsWaveFront(univ.getContents());
 	}
-	
+
 	public void saveAsAsciiSTL(){
 		MeshExporter.saveAsSTL(univ.getContents(), MeshExporter.ASCII);
 	}
-	
+
 	public void saveAsBinarySTL(){
 		MeshExporter.saveAsSTL(univ.getContents(), MeshExporter.BINARY);
 	}
@@ -383,9 +383,9 @@ public class Executer {
 				"x, y, z + SPACE switches planes on\n" +
 				"and off");
 
-		final int[] dirs = new int[] {VolumeRenderer.X_AXIS, 
+		final int[] dirs = new int[] {VolumeRenderer.X_AXIS,
 				VolumeRenderer.Y_AXIS, VolumeRenderer.Z_AXIS};
-		final Scrollbar[] sl = new Scrollbar[3]; 
+		final Scrollbar[] sl = new Scrollbar[3];
 		final Checkbox[] cb = new Checkbox[3];
 
 		for(int k = 0; k < 3; k++) {
@@ -422,7 +422,7 @@ public class Executer {
 					return;
 				} else {
 					record(SET_SLICES,
-					Integer.toString(sl[0].getValue()), 
+					Integer.toString(sl[0].getValue()),
 					Integer.toString(sl[1].getValue()),
 					Integer.toString(sl[2].getValue()));
 					return;
@@ -436,7 +436,7 @@ public class Executer {
 		if(!checkSel(c))
 			return;
 		int type = c.getType();
-		if(type != Content.VOLUME && type != Content.ORTHO) 
+		if(type != Content.VOLUME && type != Content.ORTHO)
 			return;
 		new Thread() {
 			@Override
@@ -508,7 +508,7 @@ public class Executer {
 		if(!checkSel(c))
 			return;
 		final ContentInstant ci = c.getCurrent();
-		final GenericDialog gd = 
+		final GenericDialog gd =
 			new GenericDialog("Adjust color ...", univ.getWindow());
 		final Color3f oldC = ci.getColor();
 
@@ -588,7 +588,7 @@ public class Executer {
 
 	/** Adjust the background color in place. */
 	public void changeBackgroundColor() {
-		final GenericDialog gd = 
+		final GenericDialog gd =
 			new GenericDialog("Adjust background color ...", univ.getWindow());
 
 		final Background background = ((ImageCanvas3D)univ.getCanvas()).getBG();
@@ -674,16 +674,16 @@ public class Executer {
 		GenericDialog gd = new GenericDialog("Adjust channels ...",
 							univ.getWindow());
 		gd.addMessage("Channels");
-		gd.addCheckboxGroup(1, 3, 
-				new String[] {"red", "green", "blue"}, 
+		gd.addCheckboxGroup(1, 3,
+				new String[] {"red", "green", "blue"},
 				ci.getChannels());
 		gd.addCheckbox("Apply to all timepoints", true);
 		gd.showDialog();
 		if(gd.wasCanceled())
 			return;
-			
-		boolean[] channels = new boolean[]{gd.getNextBoolean(), 
-						gd.getNextBoolean(), 
+
+		boolean[] channels = new boolean[]{gd.getNextBoolean(),
+						gd.getNextBoolean(),
 						gd.getNextBoolean()};
 		if(gd.getNextBoolean())
 			c.setChannels(channels);
@@ -796,7 +796,7 @@ public class Executer {
 			return;
 		}
 		// in case we've not a mesh, change it interactively
-		final GenericDialog gd = 
+		final GenericDialog gd =
 				new GenericDialog("Adjust threshold...");
 		gd.addSlider("Threshold", 0, 255, oldTr);
 		((Scrollbar)gd.getSliders().get(0)).
@@ -915,7 +915,7 @@ public class Executer {
 	public void changePointSize(final Content c) {
 		if(!checkSel(c))
 			return;
-		final GenericDialog gd = 
+		final GenericDialog gd =
 			new GenericDialog("Point size", univ.getWindow());
 		final float oldS = (float)(c.getLandmarkPointSize());
 		gd.addSlider("Size", 0, 20, oldS);
@@ -969,7 +969,7 @@ public class Executer {
 		c.getContent().getMax(max);
 		c.getContent().getCenter(center);
 
-		TextWindow tw = new TextWindow(c.getName(), 
+		TextWindow tw = new TextWindow(c.getName(),
 			" \tx\ty\tz",
 			"min\t" + (float)min.x + "\t"
 				+ (float)min.y + "\t"
@@ -1223,14 +1223,14 @@ public class Executer {
 		gd.addNumericField("y position", sc.getY(), 2);
 		gd.addNumericField("length", sc.getLength(), 2);
 		gd.addStringField("Units", sc.getUnit(), 5);
-		gd.addChoice("Color", ColorTable.colorNames, 
+		gd.addChoice("Color", ColorTable.colorNames,
 				ColorTable.getColorName(sc.getColor()));
 		gd.addCheckbox("show", univ.isAttributeVisible(
 				Image3DUniverse.ATTRIBUTE_SCALEBAR));
 		gd.showDialog();
 		if(gd.wasCanceled())
 			return;
-		sc.setPosition((float)gd.getNextNumber(), 
+		sc.setPosition((float)gd.getNextNumber(),
 				(float)gd.getNextNumber());
 		sc.setLength((float)gd.getNextNumber());
 		sc.setUnit(gd.getNextString());
@@ -1245,7 +1245,7 @@ public class Executer {
 	 * Help menu
 	 * *********************************************************/
 	public void j3dproperties() {
-		TextWindow tw = new TextWindow("Java 3D Properties", 
+		TextWindow tw = new TextWindow("Java 3D Properties",
 			"Key\tValue", "", 512, 512);
 		Map props = Image3DUniverse.getProperties();
 		tw.append("Java 3D properties\n \n");
@@ -1304,7 +1304,7 @@ public class Executer {
 		Matrix4d m = new Matrix4d();
 		t3d.get(m);
 		return new FastMatrix(new double[][] {
-			{m.m00, m.m01, m.m02, m.m03}, 
+			{m.m00, m.m01, m.m02, m.m03},
 			{m.m10, m.m11, m.m12, m.m13},
 			{m.m20, m.m21, m.m22, m.m23}});
 	}
@@ -1394,7 +1394,7 @@ public class Executer {
 			this.go = false;
 			synchronized (this) { notify(); }
 		}
-		
+
 		/*
 		 * This class has to be implemented by subclasses, to define
 		 * the specific updating function.

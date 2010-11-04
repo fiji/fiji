@@ -12,10 +12,10 @@ import javax.vecmath.Point3d;
  * retrieving data. It is possible to control the loaded color channels of
  * RGB images, and to specify whether or not to average several channels
  * (and merge them in this way into one byte per pixel).
- * 
+ *
  * Depending on these settings, and on the type of image given at construction
  * time, the returned data type is one of INT_DATA or BYTE_DATA.
- * 
+ *
  * @author Benjamin Schmid
  */
 public class Volume {
@@ -42,7 +42,7 @@ public class Volume {
 	 * true.
 	 */
 	public static final int BYTE_DATA = 1;
-	
+
 	/** The image holding the data */
 	public final ImagePlus imp;
 
@@ -52,7 +52,7 @@ public class Volume {
 	/** The loader, initialized depending on the data type */
 	protected Loader loader;
 
-	/** 
+	/**
 	 * Indicates in which format the data is loaded. This depends on
 	 * the image type and on the number of selected channels.
 	 * May be one of INT_DATA or BYTE_DATA
@@ -132,7 +132,7 @@ public class Volume {
 		pw = c.pixelWidth;
 		ph = c.pixelHeight;
 		pd = c.pixelDepth;
-		
+
 		float xSpace = (float)pw;
 		float ySpace = (float)ph;
 		float zSpace = (float)pd;
@@ -174,7 +174,7 @@ public class Volume {
 	}
 
 	/**
-	 * If true, build an average byte from the specified channels 
+	 * If true, build an average byte from the specified channels
 	 * (for each pixel).
 	 * @return true if the value for 'average' has changed.
 	 */
@@ -231,8 +231,8 @@ public class Volume {
 	 * @return true if the channels settings has changed.
 	 */
 	public boolean setChannels(boolean[] ch) {
-		if(ch[0] == channels[0] && 
-			ch[1] == channels[1] && 
+		if(ch[0] == channels[0] &&
+			ch[1] == channels[1] &&
 			ch[2] == channels[2])
 			return false;
 		channels = ch;
@@ -483,7 +483,7 @@ public class Volume {
 		public void setNoCheck(int x, int y, int z, int v) {
 			image.set(x, y, z, v);
 		}
-		
+
 		public void set(int x, int y, int z, int v) {
 			if(x >= 0 && x < xDim &&
 					y >= 0 && y < yDim && z > 0 && z < zDim) {
@@ -517,7 +517,7 @@ public class Volume {
 		public void setNoCheck(int x, int y, int z, int v) {
 			image.set(x, y, z, v);
 		}
-		
+
 		public void set(int x, int y, int z, int v) {
 			if(x >= 0 && x < xDim &&
 					y >= 0 && y < yDim && z > 0 && z < zDim) {

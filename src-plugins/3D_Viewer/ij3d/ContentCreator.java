@@ -134,7 +134,7 @@ public class ContentCreator {
 	}
 
 	/**
-	 * Get an array of images of the specified image; if the image is a 
+	 * Get an array of images of the specified image; if the image is a
 	 * hyperstack, it is splitted into several individual images, otherwise,
 	 * it the returned array contains the given image only.
 	 * @param imp

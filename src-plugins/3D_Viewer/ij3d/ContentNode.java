@@ -9,7 +9,7 @@ import javax.vecmath.Color3f;
 /**
  * Abstract class which has to be extended by classes that want to define
  * a new type of Content.
- * 
+ *
  * @author Benjamin Schmid
  */
 public abstract class ContentNode extends BranchGroup {
