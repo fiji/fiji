@@ -320,6 +320,17 @@ public class Volume {
 	}
 
 	/**
+	 * Load the average value at the specified position
+	 * @param x
+	 * @param y
+	 * @param z
+	 * @return value.
+	 */
+	public byte getAverage(int x, int y, int z) {
+		return image.getAverage(x, y, z);
+	}
+
+	/**
 	 * Abstract interface for the loader classes.
 	 */
 	protected interface Loader {
@@ -335,6 +346,7 @@ public class Volume {
 	protected interface Img {
 		public int get(int x, int y, int z);
 		public void get(int x, int y, int z, int[] c);
+		public byte getAverage(int x, int y, int z);
 		public void set(int x, int y, int z, int v);
 	}
 
@@ -349,6 +361,10 @@ public class Volume {
 			fData = new byte[d][];
 			for (int z = 0; z < d; z++)
 				fData[z] = (byte[])stack.getPixels(z + 1);
+		}
+
+		public byte getAverage(int x, int y, int z) {
+			return fData[z][y * w + x];
 		}
 
 		public int get(int x, int y, int z) {
@@ -376,6 +392,14 @@ public class Volume {
 			fData = new int[d][];
 			for (int z = 0; z < d; z++)
 				fData[z] = (int[])stack.getPixels(z + 1);
+		}
+
+		public byte getAverage(int x, int y, int z) {
+			int v = fData[z][y * w + x];
+			int r = (v & 0xff0000) >> 16;
+			int g = (v & 0xff00) >> 8;
+			int b = (v & 0xff);
+			return (byte)((r + g + b) / 3);
 		}
 
 		public int get(int x, int y, int z) {
