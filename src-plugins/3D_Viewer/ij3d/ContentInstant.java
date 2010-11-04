@@ -383,7 +383,7 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 	public void setLUT(int[] rLUT, int[] gLUT, int[] bLUT, int[] aLUT) {
 		this.rLUT = rLUT;
 		this.gLUT = gLUT;
-		this.bLUT = gLUT;
+		this.bLUT = bLUT;
 		this.aLUT = aLUT;
 		if(contentNode != null)
 			contentNode.lutUpdated(rLUT, gLUT, bLUT, aLUT);
