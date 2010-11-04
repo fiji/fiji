@@ -1,4 +1,4 @@
-package ij3d;
+package ij3d.gui;
 
 import ij.gui.GenericDialog;
 

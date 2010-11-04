@@ -14,6 +14,7 @@ import ij.plugin.frame.Recorder;
 import ij.process.StackConverter;
 import ij.process.ImageConverter;
 
+import ij3d.gui.LUTDialog;
 import ij3d.gui.ContentCreatorDialog;
 
 import math3d.TransformIO;
