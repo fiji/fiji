@@ -324,6 +324,11 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 			c.setChannels(channels);
 	}
 
+	public void setLUT(int[] r, int[] g, int[] b, int[] a) {
+		for(ContentInstant c : contents.values())
+			c.setLUT(r, g, b, a);
+	}
+
 	public void setThreshold(int th) {
 		for(ContentInstant c : contents.values())
 			c.setThreshold(th);
@@ -444,6 +449,22 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 
 	public boolean[] getChannels() {
 		return getCurrent().getChannels();
+	}
+
+	public void getRedLUT(int[] l) {
+		getCurrent().getRedLUT(l);
+	}
+
+	public void getGreenLUT(int[] l) {
+		getCurrent().getGreenLUT(l);
+	}
+
+	public void getBlueLUT(int[] l) {
+		getCurrent().getBlueLUT(l);
+	}
+
+	public void getAlphaLUT(int[] l) {
+		getCurrent().getAlphaLUT(l);
 	}
 
 	public Color3f getColor() {

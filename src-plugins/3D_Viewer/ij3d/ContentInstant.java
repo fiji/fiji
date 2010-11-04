@@ -39,6 +39,10 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 	protected Color3f color = null;
 	protected ImagePlus image;
 	protected boolean[] channels = new boolean[] {true, true, true};
+	protected int[] rLUT = createDefaultLUT();
+	protected int[] gLUT = createDefaultLUT();
+	protected int[] bLUT = createDefaultLUT();
+	protected int[] aLUT = createDefaultLUT();
 	protected float transparency = 0f;
 	protected int resamplingF = 1;
 	protected int threshold = 0;
@@ -118,6 +122,13 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 		display(contentNode);
 		// update type
 		this.type = type;
+	}
+
+	private static int[] createDefaultLUT() {
+		int[] lut = new int[256];
+		for(int i = 0; i < lut.length; i++)
+			lut[i] = i;
+		return lut;
 	}
 
 	public static int getDefaultThreshold(ImagePlus imp, int type) {
@@ -369,6 +380,15 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 	 *
 	 * ***********************************************************/
 
+	public void setLUT(int[] rLUT, int[] gLUT, int[] bLUT, int[] aLUT) {
+		this.rLUT = rLUT;
+		this.gLUT = gLUT;
+		this.bLUT = gLUT;
+		this.aLUT = aLUT;
+		if(contentNode != null)
+			contentNode.lutUpdated(rLUT, gLUT, bLUT, aLUT);
+	}
+
 	public void setChannels(boolean[] channels) {
 		boolean channelsChanged = channels[0] != this.channels[0] ||
 				channels[1] != this.channels[1] ||
@@ -480,6 +500,22 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 
 	public boolean[] getChannels() {
 		return channels;
+	}
+
+	public void getRedLUT(int[] l) {
+		System.arraycopy(rLUT, 0, l, 0, rLUT.length);
+	}
+
+	public void getGreenLUT(int[] l) {
+		System.arraycopy(gLUT, 0, l, 0, gLUT.length);
+	}
+
+	public void getBlueLUT(int[] l) {
+		System.arraycopy(bLUT, 0, l, 0, bLUT.length);
+	}
+
+	public void getAlphaLUT(int[] l) {
+		System.arraycopy(aLUT, 0, l, 0, aLUT.length);
 	}
 
 	public Color3f getColor() {

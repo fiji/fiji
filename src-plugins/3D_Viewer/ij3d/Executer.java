@@ -645,6 +645,27 @@ public class Executer {
 		gd.showDialog();
 	}
 
+	public void adjustLUTs(final Content c) {
+		if(!checkSel(c))
+			return;
+		final int[] r = new int[256]; c.getRedLUT(r);
+		final int[] g = new int[256]; c.getGreenLUT(g);
+		final int[] b = new int[256]; c.getBlueLUT(b);
+		final int[] a = new int[256]; c.getAlphaLUT(a);
+
+		LUTDialog ld = new LUTDialog(r, g, b, a);
+
+		ld.addListener(new LUTDialog.Listener() {
+			public void applied() {
+				c.setLUT(r, g, b, a);
+				univ.fireContentChanged(c);
+			}
+		});
+		ld.showDialog();
+
+		// TODO record
+	}
+
 	public void changeChannels(Content c) {
 		if(!checkSel(c))
 			return;

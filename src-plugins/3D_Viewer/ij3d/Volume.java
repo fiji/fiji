@@ -19,13 +19,34 @@ import javax.vecmath.Point3d;
  */
 public class Volume {
 
-	/** Data is read as int data */
+	private int[] rLUT = new int[256];
+	private int[] gLUT = new int[256];
+	private int[] bLUT = new int[256];
+	private int[] aLUT = new int[256];
+
+	/**
+	 * Data is read as int data.
+	 * If the input image is RGB, this is the case if isDefaultLUT()
+	 * returns false or more than a single channel is used. If the input
+	 * image is 8 bit, again this is the case if isDefaultLUT() returns
+	 * false.
+	 */
 	public static final int INT_DATA = 0;
-	/** Data is read as byte data */
+
+	/**
+	 * Data is read as byte data.
+	 * If the input image is RGB, this is the case if isDefaultLUT()
+	 * returns true and only a single channel is used. If the input
+	 * image is 8 bit, again this is the case if isDefaultLUT() returns
+	 * true.
+	 */
 	public static final int BYTE_DATA = 1;
 	
 	/** The image holding the data */
 	public final ImagePlus imp;
+
+	/** Warping the ImagePlus */
+	protected final Img image;
 
 	/** The loader, initialized depending on the data type */
 	protected Loader loader;
@@ -37,9 +58,9 @@ public class Volume {
 	 */
 	protected int dataType;
 
-	/** Flag indicating that the channels should be averaged */
-	protected boolean average = false;
-
+// 	/** Flag indicating that the channels should be averaged */
+// 	protected boolean average = false;
+// 
 	/** Channels in RGB images which should be loaded */
 	protected boolean[] channels = new boolean[] {true, true, true};
 
@@ -59,6 +80,7 @@ public class Volume {
 	/** Create instance with a null imp. */
 	protected Volume() {
 		this.imp = null;
+		this.image = null;
 	}
 
 	/**
@@ -80,6 +102,26 @@ public class Volume {
 	public Volume(ImagePlus imp, boolean[] ch) {
 		this.channels = ch;
 		this.imp = imp;
+		switch(imp.getType()) {
+			case ImagePlus.GRAY8:
+			case ImagePlus.COLOR_256:
+				image = new ByteImage(imp);
+				break;
+			case ImagePlus.COLOR_RGB:
+				image = new IntImage(imp);
+				break;
+			default:
+				throw new IllegalArgumentException("Unsupported image type");
+		}
+
+		// TODO use color model of the image, if present
+		for(int i = 0; i < 256; i++) {
+			rLUT[i] = i;
+			gLUT[i] = i;
+			bLUT[i] = i;
+			aLUT[i] = Math.min(i, 100);
+		}
+
 		xDim = imp.getWidth();
 		yDim = imp.getHeight();
 		zDim = imp.getStackSize();
@@ -101,43 +143,55 @@ public class Volume {
 		maxCoord.y = minCoord.y + yDim * ySpace;
 		maxCoord.z = minCoord.z + zDim * zSpace;
 
+		initDataType();
 		initLoader();
 	}
 
 	/**
+	 * Checks if the LUTs of all the used color channels and of the
+	 * alpha channel have a default LUT.
+	 */
+	public boolean isDefaultLUT() {
+		for(int i = 0; i < 256; i++) {
+			if((channels[0] && rLUT[i] != i) ||
+				(channels[1] && gLUT[i] != i) ||
+				(channels[2] && bLUT[i] != i) ||
+				aLUT[i] != i)
+				return false;
+		}
+		return true;
+	}
+
+	/**
 	 * Get the current set data type. This is one of BYTE_DATA or INT_DATA.
-	 * The data type specifies in which format the data is read:
-	 * This method returns INT_DATA, if for example the image is of type
-	 * RGB and more than one channels should be read.
-	 * If only one channels is read, or if the type of the image is 8-bit,
-	 * it will return BYTE_DATA.
-	 * @return The type of the returned data.
+	 * The data type specifies in which format the data is read.
 	 */
 	public int getDataType() {
 		return dataType;
 	}
 
-	/**
-	 * If true, build an average byte from the specified channels 
-	 * (for each pixel).
-	 * @return true if the value for 'average' has changed.
-	 */
+// 	/**
+// 	 * If true, build an average byte from the specified channels 
+// 	 * (for each pixel).
+// 	 * @return true if the value for 'average' has changed.
+// 	 */
 	public boolean setAverage(boolean a) {
-		if(average != a) {
-			this.average = a;
-			initLoader();
-			return true;
-		}
+// 		if(average != a) {
+// 			this.average = a;
+// 			initLoader();
+// 			return true;
+// 		}
 		return false;
 	}
-
-	/**
-	 * Returns true if specified channels are being averaged when
-	 * reading the image data.
-	 * @return
-	 */
+// 
+// 	/**
+// 	 * Returns true if specified channels are being averaged when
+// 	 * reading the image data.
+// 	 * @return
+// 	 */
 	public boolean isAverage() {
-		return average;
+// 		return average;
+		return false;
 	}
 
 	/**
@@ -151,58 +205,74 @@ public class Volume {
 			ch[2] == channels[2])
 			return false;
 		channels = ch;
-		initLoader();
+		if(initDataType())
+			initLoader();
 		return true;
 	}
 
-	/*
-	 * Initializes the specific loader which is used for the current
-	 * settings. The choice depends on the specific values of channels,
-	 * average and data type.
+	/**
+	 * Set the lookup tables for this volume. Returns
+	 * true if the data type of the textures has changed.
+	 */
+	public boolean setLUTs(int[] r, int[] g, int[] b, int[] a) {
+		this.rLUT = r;
+		this.gLUT = g;
+		this.bLUT = b;
+		this.aLUT = a;
+		if(initDataType()) {
+			initLoader();
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Init the loader, based on the currently set data type,
+	 * which is either INT_DATA or BYTE_DATA.
 	 */
 	protected void initLoader() {
 
-		boolean[] c = channels;
-		int usedCh = 0;
-		for(int i = 0; i < 3; i++)
-			if(channels[i]) usedCh++;
-		switch(imp.getType()) {
-			case ImagePlus.GRAY8:
-				loader = new ByteLoader(imp);
-				dataType = BYTE_DATA;
-				break;
-			case ImagePlus.COLOR_RGB:
-				if(usedCh == 1) {
-					loader = new ByteFromIntLoader(imp, c);
-					dataType = BYTE_DATA;
-				} else if(usedCh == 2) {
-					if(average) {
-						loader = new ByteFromIntLoader(imp, c);
-						dataType = BYTE_DATA;
-					} else {
-						loader = new IntFromIntLoader(imp, c);
-						dataType = INT_DATA;
-					}
-				} else {
-					if(average) {
-						loader = new ByteFromIntLoader(imp, c);
-						dataType = BYTE_DATA;
-					} else {
-						loader = new IntLoader(imp);
-						dataType = INT_DATA;
-					}
-				}
-				break;
-			default: 
-				IJ.error("image format not supported");
-				break;
+		int channel = 0;
+		if(image instanceof IntImage) {
+			for(int i = 0; i < 3; i++)
+				if(channels[i])
+					channel = i;
 		}
+		switch(dataType) {
+			case BYTE_DATA: loader = new ByteLoader(image, channel); break;
+			case INT_DATA: loader = new IntLoader(image); break;
+		}
+	}
+
+	/**
+	 * Init the data type.
+	 * For 8 bit images, BYTE_DATA is used if isDefaultLUT() returns
+	 * true. For RGB images, an additional condition is that only a single
+	 * channel is used. For other cases, the data type is INT_DATA.
+	 */
+	protected boolean initDataType() {
+		int noChannels = 0;
+		if(image instanceof ByteImage) {
+			noChannels = 1;
+		} else {
+			for(int i = 0; i < 3; i++)
+				if(channels[i])
+					noChannels++;
+		}
+		boolean defaultLUT = isDefaultLUT();
+		int tmp = dataType;
+		if(defaultLUT && noChannels < 2)
+			dataType = BYTE_DATA;
+		else
+			dataType = INT_DATA;
+
+		return tmp != dataType;
 	}
 
 	public void setNoCheck(int x, int y, int z, int v) {
 		loader.setNoCheck(x, y, z, v);
 	}
-	
+
 	public void set(int x, int y, int z, int v) {
 		loader.set(x, y, z, v);
 	}
@@ -223,81 +293,103 @@ public class Volume {
 	 */
 	protected interface Loader {
 		int load(int x, int y, int z);
+		int loadWithLUT(int x, int y, int z);
 		void set(int x, int y, int z, int v);
 		void setNoCheck(int x, int y, int z, int v);
 	}
 
-	/*
-	 * This class loads bytes from byte data.
+	/**
+	 * Abstract interface for the input image.
 	 */
-	protected class ByteLoader implements Loader {
+	protected interface Img {
+		public int get(int x, int y, int z);
+		public void get(int x, int y, int z, int[] c);
+		public void set(int x, int y, int z, int v);
+	}
+
+	protected final class ByteImage implements Img {
 		protected byte[][] fData;
-		protected int w;
-		
-		protected ByteLoader(ImagePlus imp) {
+		private int w;
+
+		protected ByteImage(ImagePlus imp) {
 			ImageStack stack = imp.getStack();
-			int d = imp.getStackSize();
 			w = imp.getWidth();
+			int d = imp.getStackSize();
 			fData = new byte[d][];
 			for (int z = 0; z < d; z++)
-				fData[z] = (byte[])stack.getPixels(z+1);
+				fData[z] = (byte[])stack.getPixels(z + 1);
 		}
 
-		public final int load(int x, int y, int z) {
-			return (int)fData[z][y * w + x] & 0xff;
+		public int get(int x, int y, int z) {
+			return fData[z][y * w + x] & 0xff;
 		}
 
-		public void setNoCheck(int x, int y, int z, int v) {
-			fData[z][y * w + x] = (byte)v;
+		public void get(int x, int y, int z, int[] c) {
+			int v = get(x, y, z);
+			c[0] = c[1] = c[2] = v;
 		}
-		
+
 		public void set(int x, int y, int z, int v) {
-			if(x >= 0 && x < xDim &&
-					y >= 0 && y < yDim && z > 0 && z < zDim) {
-				setNoCheck(x, y, z, v);
-			}
+			fData[z][y * w + x] = (byte)v;
 		}
 	}
 
-	/*
-	 * This class loads all channels from int data and returns
-	 * it as int array.
-	 */
-	protected class IntLoader implements Loader {
+	protected final class IntImage implements Img {
 		protected int[][] fData;
-		protected int w;
+		private int w;
 
-		protected IntLoader(ImagePlus imp) {
+		protected IntImage(ImagePlus imp) {
 			ImageStack stack = imp.getStack();
-			int d = imp.getStackSize();
 			w = imp.getWidth();
+			int d = imp.getStackSize();
 			fData = new int[d][];
 			for (int z = 0; z < d; z++)
-				fData[z] = (int[])stack.getPixels(z+1);
-			adjustAlphaChannel();
+				fData[z] = (int[])stack.getPixels(z + 1);
 		}
 
-		protected final void adjustAlphaChannel() {
-			for(int z = 0; z < fData.length; z++) {
-				for(int i = 0; i < fData[z].length; i++) {
-					int v = fData[z][i];
-					int r = (v&0xff0000)>>16;
-					int g = (v&0xff00)>>8;
-					int b = (v&0xff);
-					int a = ((r + g + b) / 3) << 24;
-					fData[z][i] = (v & 0xffffff) + a;
-				}
-			}
-		}
-
-		public final int load(int x, int y, int z) {
+		public int get(int x, int y, int z) {
 			return fData[z][y * w + x];
 		}
 
-		public void setNoCheck(int x, int y, int z, int v) {
+		public void get(int x, int y, int z, int[] c) {
+			int v = get(x, y, z);
+			c[0] = (v & 0xff0000) >> 16;
+			c[1] = (v & 0xff00) >> 8;
+			c[2] = (v & 0xff);
+		}
+
+		public void set(int x, int y, int z, int v) {
 			fData[z][y * w + x] = v;
 		}
-		
+	}
+
+	protected class IntLoader implements Loader {
+		protected Img image;
+
+		protected IntLoader(Img imp) {
+			this.image = imp;
+		}
+
+		public final int load(int x, int y, int z) {
+			return image.get(x, y, z);
+		}
+
+		private int[] color = new int[3];
+		public final int loadWithLUT(int x, int y, int z) {
+			image.get(x, y, z, color);
+			int sum = 0, av = 0, v = 0;
+			if(channels[0]) { int r = rLUT[color[0]]; sum++; av += r; v += (r << 16); }
+			if(channels[1]) { int g = gLUT[color[1]]; sum++; av += g; v += (g << 8); }
+			if(channels[2]) { int b = bLUT[color[2]]; sum++; av += b; v += b; }
+			av /= sum;
+			int a = aLUT[av];
+			return (a << 24) + v;
+		}
+
+		public void setNoCheck(int x, int y, int z, int v) {
+			image.set(x, y, z, v);
+		}
+
 		public void set(int x, int y, int z, int v) {
 			if(x >= 0 && x < xDim &&
 					y >= 0 && y < yDim && z > 0 && z < zDim) {
@@ -306,104 +398,34 @@ public class Volume {
 		}
 	}
 
-	/*
-	 * Loads the specified channels from int data
-	 * This class should only be used if not all channels are
-	 * used. Otherwise, it's faster to use the IntLoader.
-	 */
-	protected class IntFromIntLoader implements Loader {
-		protected int[][] fData;
-		protected int w;
-		protected int mask = 0xffffff;
-		protected boolean[] ch = new boolean[] {true, true, true};
-		protected int usedCh = 3;
+	protected class ByteLoader implements Loader {
+		protected Img image;
+		protected int channel;
 
-		protected IntFromIntLoader(ImagePlus imp, boolean[] channels) {
-			ImageStack stack = imp.getStack();
-			int d = imp.getStackSize();
-			fData = new int[d][];
-			for (int z = 0; z < d; z++)
-				fData[z] = (int[])stack.getPixels(z+1);
-
-			ch = channels;
-			usedCh = 0;
-			mask = 0xff000000;
-			if(ch[0]) { usedCh++; mask |= 0xff0000; }
-			if(ch[1]) { usedCh++; mask |= 0xff00; }
-			if(ch[2]) { usedCh++; mask |= 0xff; }
-			adjustAlphaChannel();
+		protected ByteLoader(Img imp, int channel) {
+			this.image = imp;
+			this.channel = channel;
 		}
 
-		protected final void adjustAlphaChannel() {
-			for(int z = 0; z < fData.length; z++) {
-				for(int i = 0; i < fData[z].length; i++) {
-					int v = fData[z][i];
-					int n = 0;
-					if(ch[0]) n += (v & 0xff0000) >> 16;
-					if(ch[1]) n += (v & 0xff00) >> 8;
-					if(ch[2]) n += (v & 0xff);
-					int a = (n / usedCh) << 24;
-					fData[z][i] = (v & 0xffffff) + a;
-				}
-			}
+		public final int load(int x, int y, int z) {
+			return image.get(x, y, z);
+		}
+
+		private int[] color = new int[3];
+		public final int loadWithLUT(int x, int y, int z) {
+			image.get(x, y, z, color);
+			return color[channel];
+		}
+
+		public void setNoCheck(int x, int y, int z, int v) {
+			image.set(x, y, z, v);
 		}
 		
 		public void set(int x, int y, int z, int v) {
 			if(x >= 0 && x < xDim &&
 					y >= 0 && y < yDim && z > 0 && z < zDim) {
-				setNoCheck(x, y, z, v);
+				this.setNoCheck(x, y, z, v);
 			}
-		}
-
-		public final int load(int x, int y, int z) {
-			return fData[z][y * w + x] & mask;
-		}
-
-		public void setNoCheck(int x, int y, int z, int v) {
-			fData[z][y * w + x] = v;
-		}
-	}
-
-	/*
-	 * Loads from the specified channels an average byte from int
-	 * data.
-	 */
-	protected class ByteFromIntLoader implements Loader {
-		protected int[][] fdata;
-		protected int w;
-		protected boolean[] channels = new boolean[] {true, true, true};
-		protected int usedCh = 3;
-
-		protected ByteFromIntLoader(ImagePlus imp, boolean[] channels) {
-			this.channels = channels;
-			ImageStack stack = imp.getStack();
-			int d = imp.getStackSize();
-			w = imp.getWidth();
-			fdata = new int[d][];
-			for (int z = 0; z < d; z++)
-				fdata[z] = (int[])stack.getPixels(z+1);
-			usedCh = 0;
-			for(int i = 0; i < 3; i++)
-				if(channels[i]) usedCh++;
-		}
-
-		public void setNoCheck(int x, int y, int z, int v) {
-			fdata[z][y * w + x] = v;
-		}
-
-		public void set(int x, int y, int z, int v) {
-			if(x >= 0 && x < xDim &&
-					y >= 0 && y < yDim && z > 0 && z < zDim) {
-				setNoCheck(x, y, z, v);
-			}
-		}
-
-		final public int load(int x, int y, int z) {
-			int v = fdata[z][y*w + x], n = 0;
-			if(channels[0]) n += (v & 0xff0000) >> 16;
-			if(channels[1]) n += (v & 0xff00) >> 8;
-			if(channels[2]) n += (v & 0xff);
-			return (n /= usedCh);
 		}
 	}
 }

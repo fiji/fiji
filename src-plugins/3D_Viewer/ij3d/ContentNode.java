@@ -57,6 +57,12 @@ public abstract class ContentNode extends BranchGroup {
 	public abstract void channelsUpdated(boolean[] channels);
 
 	/**
+	 * This method is called when the color lookup tables of the Content
+	 * have changed.
+	 */
+	public abstract void lutUpdated(int[] r, int[] g, int[] b, int[] a);
+
+	/**
 	 * This method is called when the threshold of the Content
 	 * has changed.
 	 */

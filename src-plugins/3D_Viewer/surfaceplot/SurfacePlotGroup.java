@@ -141,6 +141,13 @@ public class SurfacePlotGroup extends ContentNode implements AdjustmentListener{
 	}
 
 	/**
+	 * @see ContentNode#lutUpdated(int[], int[], int[], int[]) lutUpdated
+	 */
+	public void lutUpdated(int[] r, int[] g, int[] b, int[] a) {
+		// TODO
+	}
+
+	/**
 	 * @see ContentNode#channelsUpdated(Tupe3d) channelsUpdated
 	 */
 	public void channelsUpdated(boolean[] channels) {

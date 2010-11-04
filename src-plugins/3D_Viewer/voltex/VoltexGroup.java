@@ -158,6 +158,13 @@ public class VoltexGroup extends ContentNode {
 	}
 
 	/**
+	 * @see ContentNode#lutUpdated() lutUpdated
+	 */
+	public void lutUpdated(int[] r, int[] g, int[] b, int[] a) {
+		renderer.setLUTs(r, g, b, a);
+	}
+
+	/**
 	 * @see ContentNode#shadeUpdated() shadeUpdated
 	 */
 	public void shadeUpdated(boolean shaded) {
