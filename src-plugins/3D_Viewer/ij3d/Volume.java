@@ -59,9 +59,9 @@ public class Volume {
 	 */
 	protected int dataType;
 
-// 	/** Flag indicating that the channels should be averaged */
-// 	protected boolean average = false;
-// 
+	/** Flag indicating that the channels should be averaged */
+	protected boolean average = false;
+
 	/** Channels in RGB images which should be loaded */
 	protected boolean[] channels = new boolean[] {true, true, true};
 
@@ -173,28 +173,28 @@ public class Volume {
 		return dataType;
 	}
 
-// 	/**
-// 	 * If true, build an average byte from the specified channels 
-// 	 * (for each pixel).
-// 	 * @return true if the value for 'average' has changed.
-// 	 */
+	/**
+	 * If true, build an average byte from the specified channels 
+	 * (for each pixel).
+	 * @return true if the value for 'average' has changed.
+	 */
 	public boolean setAverage(boolean a) {
-// 		if(average != a) {
-// 			this.average = a;
-// 			initLoader();
-// 			return true;
-// 		}
+		if(average != a) {
+			this.average = a;
+			initDataType();
+			initLoader();
+			return true;
+		}
 		return false;
 	}
-// 
-// 	/**
-// 	 * Returns true if specified channels are being averaged when
-// 	 * reading the image data.
-// 	 * @return
-// 	 */
+
+	/**
+	 * Returns true if specified channels are being averaged when
+	 * reading the image data.
+	 * @return
+	 */
 	public boolean isAverage() {
-// 		return average;
-		return false;
+		return average;
 	}
 
 	/**
@@ -263,16 +263,23 @@ public class Volume {
 	 */
 	protected void initLoader() {
 
+		if(dataType == INT_DATA) {
+			loader = new IntLoader(image);
+			return;
+		}
+
+		// else: BYTE_DATA
+		if (average) {
+			loader = new AverageByteLoader(image);
+			return;
+		}
 		int channel = 0;
 		if(image instanceof IntImage) {
 			for(int i = 0; i < 3; i++)
 				if(channels[i])
 					channel = i;
 		}
-		switch(dataType) {
-			case BYTE_DATA: loader = new ByteLoader(image, channel); break;
-			case INT_DATA: loader = new IntLoader(image); break;
-		}
+		loader = new ByteLoader(image, channel);
 	}
 
 	/**
@@ -292,7 +299,7 @@ public class Volume {
 		}
 		boolean defaultLUT = isDefaultLUT();
 		int tmp = dataType;
-		if(defaultLUT && noChannels < 2)
+		if(average || (defaultLUT && noChannels < 2))
 			dataType = BYTE_DATA;
 		else
 			dataType = INT_DATA;
@@ -462,12 +469,13 @@ public class Volume {
 			this.channel = channel;
 		}
 
-		public final int load(int x, int y, int z) {
+		public int load(int x, int y, int z) {
 			return image.get(x, y, z);
 		}
 
 		private int[] color = new int[3];
-		public final int loadWithLUT(int x, int y, int z) {
+		public int loadWithLUT(int x, int y, int z) {
+			// ByteLoader only is in use with a default LUT
 			image.get(x, y, z, color);
 			return color[channel];
 		}
@@ -483,4 +491,39 @@ public class Volume {
 			}
 		}
 	}
+
+	protected class AverageByteLoader extends ByteLoader {
+
+		protected AverageByteLoader(Img imp) {
+			super(imp, 0);
+		}
+
+		private int[] color = new int[3];
+		public final int load(int x, int y, int z) {
+			image.get(x, y, z, color);
+			return (color[0] + color[1] + color[2]) / 3;
+		}
+
+		public final int loadWithLUT(int x, int y, int z) {
+			image.get(x, y, z, color);
+			int sum = 0, av = 0, v = 0;
+			if(channels[0]) { av += rLUT[color[0]]; sum++; }
+			if(channels[1]) { av += gLUT[color[1]]; sum++; }
+			if(channels[2]) { av += bLUT[color[2]]; sum++; }
+			av /= sum;
+			return av;
+		}
+
+		public void setNoCheck(int x, int y, int z, int v) {
+			image.set(x, y, z, v);
+		}
+		
+		public void set(int x, int y, int z, int v) {
+			if(x >= 0 && x < xDim &&
+					y >= 0 && y < yDim && z > 0 && z < zDim) {
+				this.setNoCheck(x, y, z, v);
+			}
+		}
+	}
 }
+
