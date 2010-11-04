@@ -654,6 +654,7 @@ public class Executer {
 		final int[] a = new int[256]; c.getAlphaLUT(a);
 
 		LUTDialog ld = new LUTDialog(r, g, b, a);
+		ld.addStrgHint();
 
 		ld.addListener(new LUTDialog.Listener() {
 			public void applied() {

@@ -67,6 +67,10 @@ public class LUTDialog extends GenericDialog {
 		});
 	}
 
+	public void addStrgHint() {
+		addMessage("Press <Strg> to create straight lines");
+	}
+
 	public void actionPerformed(ActionEvent e) {
 		if(e.getActionCommand().equals("Cancel")) {
 			reset();
