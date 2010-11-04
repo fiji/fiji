@@ -37,12 +37,12 @@ public class LUTDialog extends GenericDialog {
 		tool = new ChannelsTool(r, g, b, a);
 		addPanel(tool);
 		String[] choice = new String[] {
-			"Red", "Green", "Blue", "Alpha" };
+			"Red", "Green", "Blue", "Alpha", "RGB", "RGBA" };
 		addChoice("Channel", choice, choice[0]);
 		final Choice cho = (Choice)getChoices().get(0);
 		cho.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
-				tool.current = cho.getSelectedIndex();
+				tool.channel = cho.getSelectedIndex();
 				tool.repaint();
 			}
 		});
@@ -143,13 +143,20 @@ public class LUTDialog extends GenericDialog {
 
 	private class ChannelsTool extends Panel implements MouseListener, MouseMotionListener {
 
-		private boolean paintAllLuts = false;
+		final static int RED   = 0;
+		final static int GREEN = 1;
+		final static int BLUE  = 2;
+		final static int ALPHA = 3;
+		final static int RGB   = 4;
+		final static int RGBA  = 5;
+
+		private boolean allLuts = false;
 
 		private final int[][] luts;
 		private final Color[] colors = new Color[] {
 			Color.RED, Color.GREEN, Color.BLUE, Color.WHITE };
 
-		private int current = 0;
+		private int channel = 0;
 
 		public ChannelsTool(int[] r, int[] g, int[] b, int[] a) {
 			super();
@@ -205,7 +212,15 @@ public class LUTDialog extends GenericDialog {
 				if(lx == 0) lx = 1;
 				double r = (double)(i - sx) / lx;
 				int yi = (int)Math.round(sy + r * ly);
-				luts[current][i] = 255 - yi;
+				int v = 255 - yi;
+				switch(channel) {
+					case 0:
+					case 1:
+					case 2:
+					case 3: luts[channel][i] = v; break;
+					case 4: luts[0][i] = luts[1][i] = luts[2][i] = v; break;
+					case 5: luts[0][i] = luts[1][i] = luts[2][i] = luts[3][i] = v; break;
+				}
 			}
 			if(!ctrl) {
 				yLast = y;
@@ -216,11 +231,19 @@ public class LUTDialog extends GenericDialog {
 		}
 
 		public void paint(Graphics g) {
-			if(paintAllLuts)
-				for(int i = 0; i < 4; i++)
-					paintLut(g, luts[i], colors[i]);
-			else
-				paintLut(g, luts[current], colors[current]);
+			// single channel
+			if(channel < 4) {
+				paintLut(g, luts[channel], colors[channel]);
+				return;
+			}
+			// rgb
+			paintLut(g, luts[0], colors[0]);
+			paintLut(g, luts[1], colors[1]);
+			paintLut(g, luts[2], colors[2]);
+
+			// rgba
+			if(channel == 5)
+				paintLut(g, luts[3], colors[3]);
 		}
 
 		public void paintLut(Graphics g, int[] lut, Color c) {
