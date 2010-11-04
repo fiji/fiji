@@ -158,6 +158,7 @@ public class ContentCreator {
 		String oldTitle = imp.getTitle();
 		for(int i = 0; i < nFrames; i++) {
 			ImageStack newStack = new ImageStack(w, h);
+			newStack.setColorModel(oldStack.getColorModel());
 			for(int j = 0; j < nSlices; j++) {
 				int index = imp.getStackIndex(1, j+1, i+1);
 				Object pixels;
