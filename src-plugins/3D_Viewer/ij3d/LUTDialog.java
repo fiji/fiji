@@ -42,15 +42,8 @@ public class LUTDialog extends GenericDialog {
 		final Choice cho = (Choice)getChoices().get(0);
 		cho.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
-				int idx = cho.getSelectedIndex();
-				int[] l = null;
-				switch(idx) {
-					case 0: l = tool.rLUT; break;
-					case 1: l = tool.gLUT; break;
-					case 2: l = tool.bLUT; break;
-					case 3: l = tool.aLUT; break;
-				}
-				tool.currentLUT = l;
+				tool.current = cho.getSelectedIndex();
+				tool.repaint();
 			}
 		});
 		Panel p = new Panel(new FlowLayout());
@@ -150,12 +143,13 @@ public class LUTDialog extends GenericDialog {
 
 	private class ChannelsTool extends Panel implements MouseListener, MouseMotionListener {
 
-		private final int[] rLUT;
-		private final int[] gLUT;
-		private final int[] bLUT;
-		private final int[] aLUT;
+		private boolean paintAllLuts = false;
 
-		private int[] currentLUT;
+		private final int[][] luts;
+		private final Color[] colors = new Color[] {
+			Color.RED, Color.GREEN, Color.BLUE, Color.WHITE };
+
+		private int current = 0;
 
 		public ChannelsTool(int[] r, int[] g, int[] b, int[] a) {
 			super();
@@ -163,12 +157,11 @@ public class LUTDialog extends GenericDialog {
 			addMouseListener(this);
 			addMouseMotionListener(this);
 			setBackground(Color.BLACK);
-			this.rLUT = r;
-			this.gLUT = g;
-			this.bLUT = b;
-			this.aLUT = a;
-
-			currentLUT = r;
+			luts = new int[4][];
+			luts[0] = r;
+			luts[1] = g;
+			luts[2] = b;
+			luts[3] = a;
 		}
 
 		public void mouseEntered(MouseEvent e) {}
@@ -212,7 +205,7 @@ public class LUTDialog extends GenericDialog {
 				if(lx == 0) lx = 1;
 				double r = (double)(i - sx) / lx;
 				int yi = (int)Math.round(sy + r * ly);
-				currentLUT[i] = 255 - yi;
+				luts[current][i] = 255 - yi;
 			}
 			if(!ctrl) {
 				yLast = y;
@@ -223,10 +216,11 @@ public class LUTDialog extends GenericDialog {
 		}
 
 		public void paint(Graphics g) {
-			paintLut(g, rLUT, Color.RED);
-			paintLut(g, gLUT, Color.GREEN);
-			paintLut(g, bLUT, Color.BLUE);
-			paintLut(g, aLUT, Color.WHITE);
+			if(paintAllLuts)
+				for(int i = 0; i < 4; i++)
+					paintLut(g, luts[i], colors[i]);
+			else
+				paintLut(g, luts[current], colors[current]);
 		}
 
 		public void paintLut(Graphics g, int[] lut, Color c) {
