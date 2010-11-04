@@ -218,14 +218,6 @@ public class ContentCreator {
 			return;
 		int s = image.getStackSize();
 		switch(imaget) {
-			case ImagePlus.COLOR_256:
-				if(s == 1)
-					new ImageConverter(image).
-						convertToRGB();
-				else
-					new StackConverter(image).
-						convertToRGB();
-				break;
 			case ImagePlus.GRAY16:
 			case ImagePlus.GRAY32:
 				if(s == 1)
