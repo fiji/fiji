@@ -99,7 +99,6 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
 		// Add algorithm options
 		gd.addMessage("Algorithms:");
-		gd.addCheckbox("Pearson's Correlation", true);
 		gd.addCheckbox("Li Histogram Channel 1", true);
 		gd.addCheckbox("Li Histogram Channel 2", true);
 		gd.addCheckbox("Li ICQ", true);
@@ -132,8 +131,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		}
 
         // Parse algorithm options
-        if (gd.getNextBoolean())
-            pearsonsCorrelation = new PearsonsCorrelation<T>(PearsonsCorrelation.Implementation.Fast);
+        pearsonsCorrelation = new PearsonsCorrelation<T>(PearsonsCorrelation.Implementation.Fast);
         if (gd.getNextBoolean())
 			liHistogramCh1 = new LiHistogram2D<T>("Li - Ch1", true);
         if (gd.getNextBoolean())
@@ -145,11 +143,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
         if (gd.getNextBoolean())
 			histogram2D = new Histogram2D<T>("2D intensity histogram");
         if (gd.getNextBoolean()) {
-            // check if we have already got a Pearson's correlation object
-            PearsonsCorrelation<T> pc = pearsonsCorrelation;
-            if ( pc == null)
-                pc = new PearsonsCorrelation<T>(PearsonsCorrelation.Implementation.Fast);
-			costesSignificance = new CostesSignificanceTest(pc, 3, 100);
+			costesSignificance = new CostesSignificanceTest(pearsonsCorrelation, 1, 10);
         }
 
         return true;
