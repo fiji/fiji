@@ -46,7 +46,7 @@ public class Volume {
 	/** The image holding the data */
 	public final ImagePlus imp;
 
-	/** Warping the ImagePlus */
+	/** Wraping the ImagePlus */
 	protected final Img image;
 
 	/** The loader, initialized depending on the data type */
