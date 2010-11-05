@@ -226,8 +226,9 @@ public final class MCCube {
 		final Area[] sectionAreas = new Area[shapeLists.size()];
 		// Create one Area for each section, composed of the addition of all Shape instances
 		{
-			int next = 0;
+			int next = -1;
 			for (final ArrayList<Shape> shapeList : shapeLists) {
+				next++;
 				if (shapeList.isEmpty()) {
 					continue;
 				}
@@ -235,7 +236,7 @@ public final class MCCube {
 				for (int i=1; i<shapeList.size(); i++) {
 					a.add(new Area(shapeList.get(i)));
 				}
-				sectionAreas[next++] = a;
+				sectionAreas[next] = a;
 			}
 		}
 		// Fuse Area instances for previous and next sections
@@ -245,13 +246,14 @@ public final class MCCube {
 			final Area a = new Area(sectionAreas[i]);
 			if (i-1 < 0 || null == sectionAreas[i-1]) {}
 			else a.add(sectionAreas[i-1]);
-			if (i+1 > sectionAreas.length -1 || null == sectionAreas[sectionAreas.length -1]) {}
+			if (i+1 > sectionAreas.length -1 || null == sectionAreas[i+1]) {}
 			else a.add(sectionAreas[i+1]);
 			scanAreas[i] = a;
 		}
 		// Collect the bounds of all subareas in each scanArea:
 		final HashMap<Integer,ArrayList<Rectangle>> sectionBounds = new HashMap<Integer,ArrayList<Rectangle>>();
 		for (int i=0; i<scanAreas.length; i++) {
+			if (null == scanAreas[i]) continue;
 			final ArrayList<Rectangle> bs = new ArrayList<Rectangle>();
 			Polygon pol = new Polygon();
 			final float[] coords = new float[6];
@@ -272,10 +274,12 @@ public final class MCCube {
 			}
 			sectionBounds.put(i, bs);
 		}
+
 		// Add Z paddings on top and bottom
 		sectionBounds.put(-1, sectionBounds.get(0));
 		sectionBounds.put(car.d, sectionBounds.get(car.d-1));
 
+		// Scan only relevant areas:
 		final MCCube cube = new MCCube();
 		for (int z = -1; z < car.d + 1; z += 1) {
 			final ArrayList<Rectangle> bs = sectionBounds.get(z);
