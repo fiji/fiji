@@ -134,7 +134,7 @@ public class ContentCreator {
 	}
 
 	/**
-	 * Get an array of images of the specified image; if the image is a 
+	 * Get an array of images of the specified image; if the image is a
 	 * hyperstack, it is splitted into several individual images, otherwise,
 	 * it the returned array contains the given image only.
 	 * @param imp
@@ -158,6 +158,7 @@ public class ContentCreator {
 		String oldTitle = imp.getTitle();
 		for(int i = 0; i < nFrames; i++) {
 			ImageStack newStack = new ImageStack(w, h);
+			newStack.setColorModel(oldStack.getColorModel());
 			for(int j = 0; j < nSlices; j++) {
 				int index = imp.getStackIndex(1, j+1, i+1);
 				Object pixels;
@@ -217,14 +218,6 @@ public class ContentCreator {
 			return;
 		int s = image.getStackSize();
 		switch(imaget) {
-			case ImagePlus.COLOR_256:
-				if(s == 1)
-					new ImageConverter(image).
-						convertToRGB();
-				else
-					new StackConverter(image).
-						convertToRGB();
-				break;
 			case ImagePlus.GRAY16:
 			case ImagePlus.GRAY32:
 				if(s == 1)

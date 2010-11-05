@@ -2,7 +2,7 @@ package ij3d;
 
 /**
  * This interface stores some common constants.
- * 
+ *
  * @author Benjamin Schmid
  */
 

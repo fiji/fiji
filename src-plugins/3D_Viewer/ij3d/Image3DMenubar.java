@@ -9,7 +9,7 @@ import java.util.Iterator;
 import javax.media.j3d.View;
 
 
-public class Image3DMenubar extends MenuBar implements ActionListener, 
+public class Image3DMenubar extends MenuBar implements ActionListener,
 					 		ItemListener,
 							UniverseListener {
 
@@ -30,6 +30,7 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 	private MenuItem color;
 	private MenuItem bgColor;
 	private MenuItem channels;
+	private MenuItem luts;
 	private MenuItem transparency;
 	private MenuItem threshold;
 	private MenuItem fill;
@@ -145,7 +146,7 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 		importObj = new MenuItem("Import WaveFront");
 		importObj.addActionListener(this);
 		file.add(importObj);
-		
+
 		importStl = new MenuItem("Import STL");
 		importStl.addActionListener(this);
 		file.add(importStl);
@@ -186,11 +187,11 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 		exportDXF = new MenuItem("DXF");
 		exportDXF.addActionListener(this);
 		subMenu.add(exportDXF);
-		
+
 		exportAsciiSTL = new MenuItem("STL (ASCII)");
 		exportAsciiSTL.addActionListener(this);
 		subMenu.add(exportAsciiSTL);
-		
+
 		exportBinarySTL = new MenuItem("STL (binary)");
 		exportBinarySTL.addActionListener(this);
 		subMenu.add(exportBinarySTL);
@@ -206,11 +207,11 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 
 	public Menu createEditMenu() {
 		Menu edit = new Menu("Edit");
-		
+
 		slices = new MenuItem("Adjust slices");
 		slices.addActionListener(this);
 		edit.add(slices);
-		
+
 		updateVol = new MenuItem("Upate Volume");
 		updateVol.addActionListener(this);
 		edit.add(updateVol);
@@ -228,12 +229,12 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 		edit.add(smoothAllMeshes);
 
 		edit.addSeparator();
-		
+
 		edit.add(createDisplayAsSubMenu());
 		edit.add(createAttributesSubMenu());
 		edit.add(createHideSubMenu());
 		edit.add(createPLSubMenu());
-	
+
 		edit.addSeparator();
 
 		regist = new MenuItem("Register");
@@ -259,7 +260,7 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 		lock = new CheckboxMenuItem("Lock");
 		lock.addItemListener(this);
 		transform.add(lock);
-		
+
 		setTransform = new MenuItem("Set Transform");
 		setTransform.addActionListener(this);
 		transform.add(setTransform);
@@ -437,6 +438,10 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 	public Menu createAttributesSubMenu() {
 		Menu attributes = new Menu("Attributes");
 
+		luts = new MenuItem("Transfer function");
+		luts.addActionListener(this);
+		attributes.add(luts);
+
 		channels = new MenuItem("Change channels");
 		channels.addActionListener(this);
 		attributes.add(channels);
@@ -492,6 +497,8 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 			executer.changeBackgroundColor();
 		else if(src == scalebar)
 			executer.editScalebar();
+		else if(src == luts)
+			executer.adjustLUTs(univ.getSelected());
 		else if(src == channels)
 			executer.changeChannels(univ.getSelected());
 		else if(src == transparency)
@@ -724,7 +731,7 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 			return;
 
 		int t = c.getType();
-		
+
 		slices.setEnabled(t == Content.ORTHO);
 		updateVol.setEnabled(t == Content.VOLUME ||
 			t == Content.ORTHO);

@@ -230,6 +230,16 @@ public class VolumeRenderer implements AxisConstants {
 	}
 
 	/**
+	 * Update the lookup tables for this volume rendering.
+	 */
+	public void setLUTs(int[] r, int[] g, int[] b, int[] a) {
+		if(volume.setLUTs(r, g, b, a)) {
+			appCreator.updateTextureMode();
+			fullReload();
+		}
+	}
+
+	/**
 	 * Set the color for this volume rendering
 	 * @param color
 	 */
