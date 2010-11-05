@@ -46,10 +46,10 @@ public class STLLoader {
 	private ArrayList<Point3f> vertices = new ArrayList<Point3f>();
 	private String name = null;
 	private String stlfile = null;
-	@SuppressWarnings("unused")
-	private Point3f normal; //to be used for file checking
+	private Point3f normal = new Point3f(0.0f, 0.0f, 0.0f); //to be used for file checking
 	private FileInputStream fis;
 	private int triangles;
+	private DecimalFormat decimalFormat = new DecimalFormat("0.0E0");
 
 	private void parse(String stlfile) throws IOException {
 		this.stlfile = stlfile;
@@ -92,30 +92,21 @@ public class STLLoader {
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
-		DecimalFormat df = new DecimalFormat("0.0E0");
 		meshes = new HashMap<String, CustomMesh>();
 		vertices = new ArrayList<Point3f>();
 		try {
 			while ((line = in.readLine()) != null) {
 				String[] numbers = line.trim().split("\\s+");
-				if (numbers[0].equals("facet") && numbers[1].equals("normal")) {
-					float x = df.parse(numbers[2].replaceFirst("\\+", ""))
-							.floatValue();
-					float y = df.parse(numbers[3].replaceFirst("\\+", ""))
-							.floatValue();
-					float z = df.parse(numbers[4].replaceFirst("\\+", ""))
-							.floatValue();
-					normal = new Point3f(x, y, z);
-				}
 				if (numbers[0].equals("vertex")) {
-					float x = df.parse(numbers[1].replaceFirst("\\+", ""))
-							.floatValue();
-					float y = df.parse(numbers[2].replaceFirst("\\+", ""))
-							.floatValue();
-					float z = df.parse(numbers[3].replaceFirst("\\+", ""))
-							.floatValue();
+					float x = parseFloat(numbers[1]);
+					float y = parseFloat(numbers[2]);
+					float z = parseFloat(numbers[3]);
 					Point3f vertex = new Point3f(x, y, z);
 					vertices.add(vertex);
+				} else if (numbers[0].equals("facet") && numbers[1].equals("normal")) {
+					normal.x = parseFloat(numbers[2]);
+					normal.y = parseFloat(numbers[3]);
+					normal.z = parseFloat(numbers[4]);
 				}
 			}
 			in.close();
@@ -140,10 +131,9 @@ public class STLLoader {
 				for (int tb = 0; tb < 50; tb++) {
 					tri[tb] = (byte) fis.read();
 				}
-				float nx = leBytesToFloat(tri[0], tri[1], tri[2], tri[3]);
-				float ny = leBytesToFloat(tri[4], tri[5], tri[6], tri[7]);
-				float nz = leBytesToFloat(tri[8], tri[9], tri[10], tri[11]);
-				normal = new Point3f(nx, ny, nz);
+				normal.x = leBytesToFloat(tri[0], tri[1], tri[2], tri[3]);
+				normal.y = leBytesToFloat(tri[4], tri[5], tri[6], tri[7]);
+				normal.z = leBytesToFloat(tri[8], tri[9], tri[10], tri[11]);
 				for (int i = 0; i < 3; i++) {
 					final int j = i * 12 + 12;
 					float px = leBytesToFloat(tri[j], tri[j + 1], tri[j + 2],
@@ -166,6 +156,14 @@ public class STLLoader {
 		meshes.put(name, cm);
 	}
 
+	private float parseFloat(String string) throws ParseException {
+		//E+05 -> E05, e+05 -> E05
+		string = string.replaceFirst("[eE]\\+", "E");
+		//E-05 -> E-05, e-05 -> E-05
+		string = string.replaceFirst("e\\-", "E-");
+	  	return decimalFormat.parse(string).floatValue();
+	}
+	
 	private float leBytesToFloat(byte b0, byte b1, byte b2, byte b3) {
 		return Float.intBitsToFloat((((b3 & 0xff) << 24) | ((b2 & 0xff) << 16)
 				| ((b1 & 0xff) << 8) | (b0 & 0xff)));
