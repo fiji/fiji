@@ -34,11 +34,11 @@ import javax.media.j3d.Transform3D;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Collection;
 
-public class RegistrationMenubar extends MenuBar implements ActionListener, 
+public class RegistrationMenubar extends MenuBar implements ActionListener,
 							UniverseListener {
 
 	private Image3DUniverse univ;
-	
+
 	private Menu register;
 	private MenuItem exit;
 	private MenuItem adjustSlices;
@@ -114,7 +114,7 @@ public class RegistrationMenubar extends MenuBar implements ActionListener,
 	}
 
 
-	private void selectLandmarkSet(final Content content, 
+	private void selectLandmarkSet(final Content content,
 						String actionCommand) {
 		hideAll();
 		content.setVisible(true);
@@ -170,7 +170,7 @@ public class RegistrationMenubar extends MenuBar implements ActionListener,
 		// Select the landmarks of the template
 		selectLandmarkSet(templ, "LS_MODEL");
 	}
-	
+
 
 
 
@@ -251,7 +251,7 @@ public class RegistrationMenubar extends MenuBar implements ActionListener,
 
 
 
-	
+
 	// Universe Listener interface
 	public void transformationStarted(View view) {}
 	public void transformationFinished(View view) {}
@@ -261,7 +261,7 @@ public class RegistrationMenubar extends MenuBar implements ActionListener,
 	public void universeClosed() {}
 	public void contentAdded(Content c) {}
 
-	public void contentRemoved(Content c) {} 
+	public void contentRemoved(Content c) {}
 	public void contentSelected(Content c) {}
 }
 

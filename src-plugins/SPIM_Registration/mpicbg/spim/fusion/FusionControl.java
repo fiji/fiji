@@ -32,7 +32,7 @@ public class FusionControl
 			isolatedWeightenerFactories.add( new GaussContentFactory( conf.entropyFactory ) );
 
 		if (conf.useLinearBlening)
-			combinedWeightenerFactories.add( new BlendingFactory() );
+			combinedWeightenerFactories.add( new BlendingSimpleFactory() );
 		
 		final SPIMImageFusion fusion;
 		

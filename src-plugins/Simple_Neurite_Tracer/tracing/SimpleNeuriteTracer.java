@@ -112,6 +112,12 @@ public class SimpleNeuriteTracer extends ThreePanes
 					   z_spacing * depth ));
 	}
 
+	public double getStackDiagonalLength() {
+		return Math.sqrt( (x_spacing * width) * (x_spacing * width) +
+				  (y_spacing * height) * (y_spacing * height) +
+				  (z_spacing * depth) * (z_spacing * depth) );
+	}
+
 	/* This overrides the method in ThreePanes... */
 
 	@Override

@@ -147,10 +147,12 @@ public class ContentCreatorDialog {
 
 		// check image type
 		int imaget = imps[0].getType();
-		if(imaget != ImagePlus.GRAY8 && imaget != ImagePlus.COLOR_RGB) {
+		if(imaget != ImagePlus.GRAY8 &&
+			imaget != ImagePlus.COLOR_256 &&
+			imaget != ImagePlus.COLOR_RGB) {
 			// TODO correct message
 			if(IJ.showMessageWithCancel("Convert...",
-				"8-bit image required. Convert?")) {
+				"8-bit or RGB image required. Convert?")) {
 				for(ImagePlus ip : imps)
 					ContentCreator.convert(ip);
 			} else {

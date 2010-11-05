@@ -21,9 +21,6 @@ import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 
-import com.sun.j3d.utils.geometry.Sphere;
-
-import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.ErrorStatistic;
@@ -31,6 +28,7 @@ import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.PointMatch;
 import mpicbg.models.Tile;
+import mpicbg.models.TileConfiguration;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
@@ -41,6 +39,9 @@ import mpicbg.spim.vis3d.Motion3D;
 import mpicbg.spim.vis3d.Viewer3dFunctions;
 import mpicbg.spim.vis3d.VisualizationFunctions;
 import mpicbg.spim.vis3d.VisualizationSketchTikZ;
+import mpicbg.util.TransformUtils;
+
+import com.sun.j3d.utils.geometry.Sphere;
 
 public class TileConfigurationSPIM
 {
@@ -269,7 +270,7 @@ public class TileConfigurationSPIM
 					final AffineModel3D m = new AffineModel3D();
 					m.set( tile.getModel() );
 					
-					Transform3D t = MathLib.getTransform3D( m ); 
+					Transform3D t = TransformUtils.getTransform3D( m ); 
 					ViewDataBeads parent = tile.getParent();
 													
 					// the bounding box is not scaled yet, so we have to apply
@@ -284,7 +285,7 @@ public class TileConfigurationSPIM
 					AffineModel3D backUp = new AffineModel3D( );
 					backUp.set( parent.getTile().getModel() );
 					
-					parent.getTile().getModel().set( MathLib.getAffineModel3D( t ) );
+					parent.getTile().getModel().set( TransformUtils.getAffineModel3D( t ) );
 					
 					/*
 					Transform3D backUpT3D = parent.transformation;
@@ -296,7 +297,7 @@ public class TileConfigurationSPIM
 					
 					System.out.println("Writing view " + parent.getName() + " @ iteration " + i );
 					files.getOutput().println( VisualizationSketchTikZ.drawView( parent, factor ) );
-					files.getOutput().println( VisualizationSketchTikZ.drawBeads( parent.getBeadStructure().getBeadList(), MathLib.getTransform3D( m ), "Bead", factor, 2 ) );
+					files.getOutput().println( VisualizationSketchTikZ.drawBeads( parent.getBeadStructure().getBeadList(), TransformUtils.getTransform3D( m ), "Bead", factor, 2 ) );
 					
 					for ( Bead bead : parent.getBeadStructure().getBeadList() )
 					{
@@ -312,7 +313,7 @@ public class TileConfigurationSPIM
 							if ( color < 0)
 								color = 0;
 							
-							files.getOutput().println( VisualizationSketchTikZ.drawBead( bead, MathLib.getTransform3D( m ), "RansacBead" + color, factor ) );
+							files.getOutput().println( VisualizationSketchTikZ.drawBead( bead, TransformUtils.getTransform3D( m ), "RansacBead" + color, factor ) );
 						}
 					}
 				
@@ -410,7 +411,7 @@ public class TileConfigurationSPIM
 					final AffineModel3D m = new AffineModel3D();
 					m.set( tile.getModel() );
 					
-					Transform3D t = MathLib.getTransform3D( m ); 
+					Transform3D t = TransformUtils.getTransform3D( m ); 
 					ViewDataBeads parent = tile.getParent();
 													
 					// the bounding box is not scaled yet, so we have to apply
@@ -425,7 +426,7 @@ public class TileConfigurationSPIM
 					AffineModel3D backUp = new AffineModel3D( );
 					backUp.set( parent.getTile().getModel() );
 					
-					parent.getTile().getModel().set( MathLib.getAffineModel3D( t ) );
+					parent.getTile().getModel().set( TransformUtils.getAffineModel3D( t ) );
 					
 					/*
 					Transform3D backUpT3D = parent.transformation;
@@ -437,7 +438,7 @@ public class TileConfigurationSPIM
 					
 					//System.out.println("Writing view " + parent.getName() + " @ iteration " + i );
 					files.getOutput().println( VisualizationSketchTikZ.drawView( parent, factor ) );
-					files.getOutput().println( VisualizationSketchTikZ.drawNuclei( parent.getNucleiList(), MathLib.getTransform3D( m ), "Bead", factor ) );
+					files.getOutput().println( VisualizationSketchTikZ.drawNuclei( parent.getNucleiList(), TransformUtils.getTransform3D( m ), "Bead", factor ) );
 					
 					for ( Nucleus nucleus : parent.getNucleiList() )
 					{
@@ -453,7 +454,7 @@ public class TileConfigurationSPIM
 							if ( color < 0)
 								color = 0;
 							
-							files.getOutput().println( VisualizationSketchTikZ.drawNucleus( nucleus, MathLib.getTransform3D( m ), "RansacBead" + color, factor ) );
+							files.getOutput().println( VisualizationSketchTikZ.drawNucleus( nucleus, TransformUtils.getTransform3D( m ), "RansacBead" + color, factor ) );
 						}
 					}
 				
@@ -643,7 +644,7 @@ public class TileConfigurationSPIM
 		for ( TileSPIM tile : getTiles() )
 		{
 			AffineModel3D m = tile.getModel();
-			Transform3D t = MathLib.getTransform3D( m );
+			Transform3D t = TransformUtils.getTransform3D( m );
 			
 			ViewDataBeads parent = tile.getParent();
 			
@@ -737,7 +738,7 @@ public class TileConfigurationSPIM
 				if ( i < 5 || i % 15 == 0 )
 				{
 					final AffineModel3D m = tile.getModel();
-					final Transform3D t = MathLib.getTransform3D( m );
+					final Transform3D t = TransformUtils.getTransform3D( m );
 					final ViewDataBeads parent = tile.getParent();
 					
 					final Transform3D newTransform = new Transform3D();

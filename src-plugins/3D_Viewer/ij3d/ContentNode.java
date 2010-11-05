@@ -9,7 +9,7 @@ import javax.vecmath.Color3f;
 /**
  * Abstract class which has to be extended by classes that want to define
  * a new type of Content.
- * 
+ *
  * @author Benjamin Schmid
  */
 public abstract class ContentNode extends BranchGroup {
@@ -55,6 +55,12 @@ public abstract class ContentNode extends BranchGroup {
 	 * have changed.
 	 */
 	public abstract void channelsUpdated(boolean[] channels);
+
+	/**
+	 * This method is called when the color lookup tables of the Content
+	 * have changed.
+	 */
+	public abstract void lutUpdated(int[] r, int[] g, int[] b, int[] a);
 
 	/**
 	 * This method is called when the threshold of the Content
