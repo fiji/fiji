@@ -285,6 +285,10 @@ public class Picker {
 		int ix = (int)Math.round(p.x / v.pw);
 		int iy = (int)Math.round(p.y / v.ph);
 		int iz = (int)Math.round(p.z / v.pd);
+		if(ix < 0 || ix >= v.xDim ||
+			iy < 0 || iy >= v.yDim ||
+			iz < 0 || iz >= v.zDim)
+			return 0;
 		return (v.getAverage(ix, iy, iz) & 0xff);
 	}
 }
