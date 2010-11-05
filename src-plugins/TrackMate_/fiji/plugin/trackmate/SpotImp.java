@@ -1,7 +1,7 @@
 package fiji.plugin.trackmate;
 
 import java.util.EnumMap;
-import mpicbg.imglib.algorithm.math.MathLib;
+import mpicbg.imglib.util.Util;
 
 /**
  * Plain implementation of the {@link Spot} interface.
@@ -137,7 +137,7 @@ public class SpotImp implements Spot {
 		if (null == coordinates)
 			s.append("Position: <no coordinates>\n");
 		else 
-			s.append("Position: "+MathLib.printCoordinates(coordinates)+"\n");
+			s.append("Position: "+Util.printCoordinates(coordinates)+"\n");
 		
 		// Feature list
 		if (null == features || features.size() < 1) 

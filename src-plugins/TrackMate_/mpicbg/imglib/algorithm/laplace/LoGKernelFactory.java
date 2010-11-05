@@ -1,12 +1,12 @@
 package mpicbg.imglib.algorithm.laplace;
 
-import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.imglib.util.Util;
 
 /**
  * This utility class is dedicated to creating Laplacian of Gaussian (LoG) kernels. 
@@ -26,7 +26,7 @@ public class LoGKernelFactory {
 	 * @return  the LoG kernel, as a {@link FloatType} {@link Image}
 	 */
 	public static Image<FloatType> createLoGKernel(double sigma, int nDims, boolean sigmaScaled, boolean invertSign) {
-		int size = MathLib.getSuggestedKernelDiameter(sigma);
+		int size = Util.getSuggestedKernelDiameter(sigma);
 		switch (nDims) {
 		case 1:
 			return create1DLoGKernel(sigma, size, sigmaScaled, invertSign);

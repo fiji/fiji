@@ -1,6 +1,5 @@
 package fiji.plugin.trackmate.features;
 
-import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.special.DiscCursor;
 import mpicbg.imglib.cursor.special.DomainCursor;
@@ -9,6 +8,7 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
+import mpicbg.imglib.util.Util;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.SpotImp;
@@ -106,7 +106,7 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 	        M2 = M2 + term1;
 		}
 
-		MathLib.quicksort(pixel_values, 0, npixels-1);
+		Util.quicksort(pixel_values, 0, npixels-1);
 		float median = pixel_values[npixels/2];
 		float min = pixel_values[0];
 		float max = pixel_values[npixels-1];

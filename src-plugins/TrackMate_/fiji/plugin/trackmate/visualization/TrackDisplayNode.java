@@ -246,4 +246,7 @@ public class TrackDisplayNode extends ContentNode {
 			mesh.setTransparency(transparency);
 	}
 
+	@Override
+	public void lutUpdated(int[] r, int[] g, int[] b, int[] a) {}
+
 }

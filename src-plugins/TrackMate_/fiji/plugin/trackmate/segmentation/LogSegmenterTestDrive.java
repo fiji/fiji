@@ -6,13 +6,13 @@ import java.util.Random;
 
 import javax.vecmath.Point3f;
 
-import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.special.SphereCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
+import mpicbg.imglib.util.Util;
 import fiji.plugin.trackmate.Spot;
 
 /**
@@ -115,13 +115,13 @@ public class LogSegmenterTestDrive {
 			
 			spot_list.remove(best_spot);
 			best_match = centers.remove(best_index);
-			System.out.println("Blob coordinates: " + MathLib.printCoordinates(best_spot.getPosition(coords)));
-			System.out.println(String.format("  Best matching center at distance %.1f with coords: " + MathLib.printCoordinates(best_match), min_dist));			
+			System.out.println("Blob coordinates: " + Util.printCoordinates(best_spot.getPosition(coords)));
+			System.out.println(String.format("  Best matching center at distance %.1f with coords: " + Util.printCoordinates(best_match), min_dist));			
 		}
 		System.out.println();
 		System.out.println("Unmatched centers:");
 		for (int i = 0; i < centers.size(); i++) 
-			System.out.println("Center "+i+" at position: " + MathLib.printCoordinates(centers.get(i)));
+			System.out.println("Center "+i+" at position: " + Util.printCoordinates(centers.get(i)));
 		
 		
 	}

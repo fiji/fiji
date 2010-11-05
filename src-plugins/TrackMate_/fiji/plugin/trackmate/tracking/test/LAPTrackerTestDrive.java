@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 
-import mpicbg.imglib.algorithm.math.MathLib;
+import mpicbg.imglib.util.Util;
 
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultEdge;
@@ -82,7 +82,7 @@ public class LAPTrackerTestDrive {
 			for (SortedSet<Spot> trackSegment : trackSegments) {
 				System.out.println("\n-*-*-*-*-* New Segment *-*-*-*-*-");
 				for (Spot spot : trackSegment)
-					System.out.println(MathLib.printCoordinates(spot.getPosition(null)) + ", Frame [" + spot.getFeature(Feature.POSITION_T) + "]");	
+					System.out.println(Util.printCoordinates(spot.getPosition(null)) + ", Frame [" + spot.getFeature(Feature.POSITION_T) + "]");	
 			}
 			
 		} else {
@@ -144,7 +144,7 @@ public class LAPTrackerTestDrive {
 			System.out.println("Track "+counter);
 			System.out.print("Spots in frames: \n");
 			for(Spot spot : track)
-				System.out.println(MathLib.printCoordinates(spot.getPosition(null)) + ", Frame [" + spot.getFeature(Feature.POSITION_T) + "]");
+				System.out.println(Util.printCoordinates(spot.getPosition(null)) + ", Frame [" + spot.getFeature(Feature.POSITION_T) + "]");
 			System.out.println();
 			counter++;
 		}

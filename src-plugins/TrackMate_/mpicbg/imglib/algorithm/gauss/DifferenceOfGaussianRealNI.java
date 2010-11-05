@@ -1,7 +1,8 @@
 package mpicbg.imglib.algorithm.gauss;
 
 import mpicbg.imglib.algorithm.OutputAlgorithm;
-import mpicbg.imglib.algorithm.math.function.RealTypeConverter;
+import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal;
+import mpicbg.imglib.function.RealTypeConverter;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;

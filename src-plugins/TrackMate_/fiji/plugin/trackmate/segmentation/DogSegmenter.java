@@ -2,9 +2,9 @@ package fiji.plugin.trackmate.segmentation;
 
 import java.util.ArrayList;
 
-import mpicbg.imglib.algorithm.gauss.DifferenceOfGaussian;
-import mpicbg.imglib.algorithm.gauss.DifferenceOfGaussianPeak;
 import mpicbg.imglib.algorithm.gauss.DifferenceOfGaussianRealNI;
+import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussian;
+import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;

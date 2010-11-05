@@ -357,10 +357,9 @@ public class SpotGroupNode <K> extends ContentNode {
 	public void thresholdUpdated(int threshold) {}
 	@Override
 	public void eyePtChanged(View view) {}
-	
 
-	
-
+	@Override
+	public void lutUpdated(int[] r, int[] g, int[] b, int[] a) {}
 
 
 }
