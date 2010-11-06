@@ -114,24 +114,30 @@ public class FeatureStack
 	public static final int BILATERAL 				= 11;
 	/** Lipschitz filter flag index */
 	public static final int LIPSCHITZ 				= 12;
+	/** Kuwahara filter flag index */
+	public static final int KUWAHARA				= 13;
 	/** Minimum filter flag index */
-	public static final int BLUR_MINIMUM			= 13;
+//	public static final int BLUR_MINIMUM			= 14;
 	/** Maximum filter flag index */
-	public static final int BLUR_MAXIMUM			= 14;
+//	public static final int BLUR_MAXIMUM			= 15;
+	
+	
 	/** names of available filters */
 	public static final String[] availableFeatures 
 		= new String[]{	"Gaussian_blur", "Sobel_filter", "Hessian", "Difference_of_gaussians", 
 					   	"Membrane_projections","Variance","Mean", "Minimum", "Maximum", "Median", 
-					   	"Anisotropic_diffusion", "Bilateral", "Lipschitz", "Blur_minimum", " Blur_maximum"};
+					   	"Anisotropic_diffusion", "Bilateral", "Lipschitz", "Kuwahara" /*, "Blur_minimum", " Blur_maximum" */};
 	/** flags of filters to be used */
 	private boolean[] enableFeatures = new boolean[]{true, true, true, true, true, false, false, 
-													 false, false, false, false, false, false, false, false};
+													 false, false, false, false, false, false, false /*, false, false */};
 	/** use neighborhood flag */
 	private boolean useNeighbors = false;
 	/** expected membrane thickness (in pixels) */
 	private int membraneSize = 1;	
 	/** size of the patch to use to enhance membranes (in pixels, NxN) */
 	private int membranePatchSize = 19;
+	/** number of rotating angles for membrane and Kuwahara features */
+	private int nAngles = 30;
 	
 	/**
 	 * Construct object to store stack of image features
@@ -344,7 +350,7 @@ public class FeatureStack
 	 * @param minRadius radius of minimum filter
 	 * @return filtered image
 	 */
-	public Callable<ImagePlus> getBlurMin(
+/*	public Callable<ImagePlus> getBlurMin(
 			final ImagePlus originalImage,
 			final float blurRadius,
 			final float minRadius)
@@ -361,7 +367,7 @@ public class FeatureStack
 			}
 		};
 	}
-	
+	*/
 	/**
 	 * Get original image after Gaussian blur and maximum filtering (to be called from an ExecutorService)
 	 * 
@@ -370,7 +376,7 @@ public class FeatureStack
 	 * @param minRadius radius of maximum filter
 	 * @return filtered image
 	 */
-	public Callable<ImagePlus> getBlurMax(
+/*	public Callable<ImagePlus> getBlurMax(
 			final ImagePlus originalImage,
 			final float blurRadius,
 			final float maxRadius)
@@ -387,7 +393,7 @@ public class FeatureStack
 			}
 		};
 	}
-	
+	*/
 	public void addMax(float radius)
 	{
 		final ImageProcessor ip = originalImage.getProcessor().duplicate();
@@ -855,11 +861,12 @@ public class FeatureStack
 				ImageStack is = new ImageStack(width, height);
 				ImageProcessor rotatedPatch;
 				
+				final double rotationAngle = 180/nAngles;
 				// Rotate kernel 15 degrees up to 180
-				for (int i=0; i<12; i++)
+				for (int i=0; i<nAngles; i++)
 				{					
 					rotatedPatch = membranePatch.duplicate();
-					rotatedPatch.rotate(15*i);
+					rotatedPatch.rotate(i*rotationAngle);
 					
 					Convolver c = new Convolver();				
 			
@@ -884,6 +891,34 @@ public class FeatureStack
 					membraneStack.addSlice(availableFeatures[MEMBRANE] + "_" +i+"_"+patchSize+"_"+membraneSize, zp.getProjection().getChannelProcessor());
 				}
 				return new ImagePlus ("membrane stack", membraneStack);
+			}
+		};
+	}
+	
+	
+	/**
+	 * Get Kuwahara filter features (to be submitted in an ExecutorService)
+	 * @param originalImage input image
+	 * @param kernelSize orientation kernel size
+	 * @param nAngles number of angles
+	 * @param criterion 
+	 * @return image stack with Kuwahara filter results using all the available criteria
+	 */
+	public Callable<ImagePlus> getKuwaharaFeatures(
+			final ImagePlus originalImage,
+			final int kernelSize, 
+			final int nAngles,
+			final int criterion)
+	{
+		return new Callable<ImagePlus>()
+		{
+			public ImagePlus call()
+			{
+				
+				final ImageProcessor ip = originalImage.getProcessor().duplicate();
+				final Kuwahara filter = new Kuwahara();
+				filter.applyFilter(ip, kernelSize, nAngles, criterion);
+				return new ImagePlus (availableFeatures[KUWAHARA] + "_" + kernelSize + "_ " + nAngles + "_" + criterion, ip);
 			}
 		};
 	}
@@ -1238,6 +1273,14 @@ public class FeatureStack
 					futures.add(exe.submit( getLipschitzFilter(originalImage, true, true, i) ) );
 			}
 			
+			// Kuwahara filter
+			if(enableFeatures[KUWAHARA])			
+			{			
+				for(int i = 0; i < 3; i++)
+					futures.add(exe.submit( getKuwaharaFeatures(originalImage, membranePatchSize, nAngles, i) ) );
+			}
+			
+			
 			float next = 1;
 			double scale = 0.5;			
 			
@@ -1306,14 +1349,14 @@ public class FeatureStack
 				{
 					futures.add(exe.submit( getMax(originalImage, i)) );
 				}
-
-				// Min
+/*
+				// Blur Min
 				if(enableFeatures[BLUR_MINIMUM])
 				{
 					for(float j = i/2; j<= i; j*=2)
 						futures.add(exe.submit( getBlurMin(originalImage, i, j)) );
 				}
-				// Max
+				// Blur Max
 				if(enableFeatures[BLUR_MAXIMUM])
 				{
 					for(float j = i/2; j<= i; j*=2)
@@ -1325,7 +1368,7 @@ public class FeatureStack
 				{
 					futures.add(exe.submit( getMedian(originalImage, i)) );
 				}
-
+*/
 			}
 			// Membrane projections
 			if(enableFeatures[MEMBRANE])
