@@ -6,6 +6,9 @@ import com.sun.j3d.utils.behaviors.mouse.*;
 import javax.media.j3d.*;
 import javax.vecmath.*;
 
+import java.text.DecimalFormat;
+import java.awt.Font;
+
 public class BoundingBox extends BranchGroup {
 
 	private Point3f min, max;
@@ -43,50 +46,115 @@ public class BoundingBox extends BranchGroup {
 		Shape3D shape = new Shape3D();
 		shape.setName("BB");
 
-		Point3f[] coords = new Point3f[2];
+		float lx = max.x - min.x;
+		float ly = max.y - min.y;
+		float lz = max.z - min.z;
+		float min = Math.min(lx, Math.min(ly, lz));
+		double tmp = 0.00001f;
+		while(min / tmp > 5)
+			tmp *= 10;
 
-		coords[0] = p[0];
-		coords[1] = p[1];
-		shape.addGeometry(makeLine(coords, color));
-		coords[0] = p[1];
-		coords[1] = p[2];
-		shape.addGeometry(makeLine(coords, color));
-		coords[0] = p[2];
-		coords[1] = p[3];
-		shape.addGeometry(makeLine(coords, color));
-		coords[0] = p[3];
-		coords[1] = p[0];
-		shape.addGeometry(makeLine(coords, color));
+		if(min / tmp < 2)
+			tmp = tmp / 2;
 
-		coords[0] = p[4];
-		coords[1] = p[5];
-		shape.addGeometry(makeLine(coords, color));
-		coords[0] = p[5];
-		coords[1] = p[6];
-		shape.addGeometry(makeLine(coords, color));
-		coords[0] = p[6];
-		coords[1] = p[7];
-		shape.addGeometry(makeLine(coords, color));
-		coords[0] = p[7];
-		coords[1] = p[4];
-		shape.addGeometry(makeLine(coords, color));
-		
-		coords[0] = p[0];
-		coords[1] = p[4];
-		shape.addGeometry(makeLine(coords, color));
-		coords[0] = p[1];
-		coords[1] = p[5];
-		shape.addGeometry(makeLine(coords, color));
-		coords[0] = p[2];
-		coords[1] = p[6];
-		shape.addGeometry(makeLine(coords, color));
-		coords[0] = p[3];
-		coords[1] = p[7];
-		shape.addGeometry(makeLine(coords, color));
-		
+		float tickDistance = (float)tmp;
+
+		float max = Math.max(lx, Math.max(ly, lz));
+		float tickSize = max / 50;
+
+		Color3f c = color;
+		float td = tickDistance;
+		float ts = tickSize;
+
+		float fx = tickDistance - (this.min.x % tickDistance);
+		float fy = tickDistance - (this.min.y % tickDistance);
+		float fz = tickDistance - (this.min.z % tickDistance);
+
+		shape.addGeometry(makeLine(p[0], p[1], c, td, 0f, ts, true));
+		shape.addGeometry(makeLine(p[1], p[2], c, td, 0f, ts, true));
+		shape.addGeometry(makeLine(p[2], p[3], c, td, 0f, ts, true));
+		shape.addGeometry(makeLine(p[3], p[0], c, td, 0f, ts, true));
+                                                            
+		shape.addGeometry(makeLine(p[4], p[5], c, td, fx, ts, false));
+		shape.addGeometry(makeLine(p[5], p[6], c, td, 0f, ts, true));
+		shape.addGeometry(makeLine(p[6], p[7], c, td, 0f, ts, true));
+		shape.addGeometry(makeLine(p[4], p[7], c, td, fy, ts, false));
+                                                            
+		shape.addGeometry(makeLine(p[4], p[0], c, td, fz, ts, false));
+		shape.addGeometry(makeLine(p[1], p[5], c, td, 0f, ts, true));
+		shape.addGeometry(makeLine(p[2], p[6], c, td, 0f, ts, true));
+		shape.addGeometry(makeLine(p[3], p[7], c, td, 0f, ts, true));
+
+		shape.setAppearance(createAppearance(color));
+		addChild(shape);
+
+		int fontsize = (int)(2 * tickSize);
+		DecimalFormat df = new DecimalFormat("#.##");
+
+		// x text
+		float v = this.min.x + fx;
+		Point3f pos = new Point3f(
+				v,
+				this.min.y - 1.5f * tickSize,
+				this.min.z - 1.5f * tickSize);
+		addText(df.format(v), pos, fontsize, color);
+		v = this.min.x + fx + tickDistance;
+		pos = new Point3f(
+				v,
+				this.min.y - 1.5f * tickSize,
+				this.min.z - 1.5f * tickSize);
+		addText(df.format(v), pos, fontsize, color);
+
+		// y text
+		v = this.min.y + fy;
+		pos = new Point3f(
+				this.min.x - 1.5f * tickSize,
+				v,
+				this.min.z - 1.5f * tickSize);
+		addText(df.format(v), pos, fontsize, color);
+		v = this.min.y + fy + tickDistance;
+		pos = new Point3f(
+				this.min.x - 1.5f * tickSize,
+				v,
+				this.min.z - 1.5f * tickSize);
+		addText(df.format(v), pos, fontsize, color);
+
+		// z text
+		v = this.min.z + fz;
+		pos = new Point3f(
+				this.min.x - 1.5f * tickSize,
+				this.min.y - 1.5f * tickSize,
+				v);
+		addText(df.format(v), pos, fontsize, color);
+		v = this.min.z + fz + tickDistance;
+		pos = new Point3f(
+				this.min.x - 1.5f * tickSize,
+				this.min.y - 1.5f * tickSize,
+				v);
+		addText(df.format(v), pos, fontsize, color);
+	}
+
+	private void addText(String s, Point3f pos, int fontsize, Color3f c) {
+		Transform3D translation = new Transform3D();
+		translation.rotX(Math.PI);
+		translation.setTranslation(new Vector3f(pos));
+		TransformGroup tg = new TransformGroup(translation);
+		OrientedShape3D textShape = new OrientedShape3D();
+		textShape.setAlignmentAxis(0.0f, 1.0f, 0.0f);
+		Font font = new Font("Helvetica", Font.PLAIN, fontsize);
+		Font3D font3D = new Font3D(font, new FontExtrusion());
+		Text3D textGeom = new Text3D(font3D, s);
+		textGeom.setAlignment(Text3D.ALIGN_CENTER);
+		textShape.addGeometry(textGeom);
+		textShape.setAppearance(createAppearance(c));
+		tg.addChild(textShape);
+		addChild(tg);
+	}
+
+	private Appearance createAppearance(Color3f color) {
 		Appearance a = new Appearance();
 		PolygonAttributes pa = new PolygonAttributes();
-		pa.setPolygonMode(PolygonAttributes.POLYGON_LINE);
+		pa.setPolygonMode(PolygonAttributes.POLYGON_FILL);
 		pa.setCullFace(PolygonAttributes.CULL_NONE);
 		a.setPolygonAttributes(pa);
 
@@ -94,20 +162,49 @@ public class BoundingBox extends BranchGroup {
 		ca.setColor(color);
 		a.setColoringAttributes(ca);
 
-		shape.setAppearance(a);
-
-		addChild(shape);
+		return a;
 	}
 
-	private Geometry makeLine(Point3f[] coords, Color3f color) {
-		LineArray ga = new LineArray(2, 
+	private Geometry makeLine(Point3f start, Point3f end, Color3f color,
+				float tickDistance, float first, float tickSize, boolean noTicks) {
+		float lineLength = start.distance(end);
+		int nTicks = (int)Math.floor((lineLength - first) / tickDistance) + 1;
+
+		int n = noTicks ? 2 : nTicks * 6 + 2;
+
+		Point3f[] coords = new Point3f[n];
+		int i = 0;
+		coords[i++] = start;
+		coords[i++] = end;
+		if(!noTicks) {
+			Point3f p = new Point3f();
+			Vector3f dir = new Vector3f();
+			dir.sub(end, start);
+			dir.normalize();
+			float fx = first * dir.x;
+			float fy = first * dir.y;
+			float fz = first * dir.z;
+			dir.scale(tickDistance);
+			for(int t = 0; t < nTicks; t++) {
+				p.x = start.x + fx + t * dir.x;
+				p.y = start.y + fy + t * dir.y;
+				p.z = start.z + fz + t * dir.z;
+
+				coords[i++] = new Point3f(p.x - tickSize, p.y, p.z);
+				coords[i++] = new Point3f(p.x + tickSize, p.y, p.z);
+				coords[i++] = new Point3f(p.x, p.y - tickSize, p.z);
+				coords[i++] = new Point3f(p.x, p.y + tickSize, p.z);
+				coords[i++] = new Point3f(p.x, p.y, p.z - tickSize);
+				coords[i++] = new Point3f(p.x, p.y, p.z + tickSize);
+			}
+		}
+
+		LineArray ga = new LineArray(coords.length,
 				GeometryArray.COORDINATES |
-				GeometryArray.COLOR_3 |
-				GeometryArray.NORMALS);
-//		ga.setCapability(GeometryArray.ALLOW_INTERSECT);
+				GeometryArray.COLOR_3);
 		ga.setCoordinates(0, coords);
-		Color3f[] col = new Color3f[2];
-		for(int i = 0; i < 2; i++) 
+		Color3f[] col = new Color3f[coords.length];
+		for(i = 0; i < col.length; i++) 
 			col[i] = color;
 		ga.setColors(0, col);
 		return ga;

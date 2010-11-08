@@ -9,13 +9,13 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Point3i;
 
 import mpicbg.imglib.algorithm.gauss.GaussianConvolution;
-import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.cursor.LocalizableByDimCursor3D;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.integer.IntType;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.imglib.util.Util;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.registration.ViewDataBeads;
@@ -568,7 +568,7 @@ public class BeadSegmentation
 		
 		img.getDisplay().setMinMax();
 		
-		final int maxValue = (int) MathLib.round( img.getDisplay().getMax() );
+		final int maxValue = (int) Util.round( img.getDisplay().getMax() );
 
 		final float thresholdImg;
 

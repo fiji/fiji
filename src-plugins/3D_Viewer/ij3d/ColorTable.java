@@ -25,8 +25,8 @@ public class ColorTable {
 		return null;
 	}
 
-	public static String[] colorNames = new String[]{"None", "Black", 
-				"White", "Red", "Green", "Blue", "Cyan", 
+	public static String[] colorNames = new String[]{"None", "Black",
+				"White", "Red", "Green", "Blue", "Cyan",
 				"Magenta", "Yellow"};
 
 	public static Color3f[] colors = {
@@ -41,20 +41,20 @@ public class ColorTable {
 				new Color3f(1f, 1f, 0)};
 
 	public static boolean isRedCh(String color) {
-		return color.equals("White") || color.equals("Red") || 
+		return color.equals("White") || color.equals("Red") ||
 				color.equals("Magenta") || color.equals("Yellow");
 	}
 
 	public static boolean isGreenCh(String color) {
-		return color.equals("White") || color.equals("Green") || 
+		return color.equals("White") || color.equals("Green") ||
 				color.equals("Cyan") || color.equals("Yellow");
 	}
 
 	public static boolean isBlueCh(String color) {
-		return color.equals("White") || color.equals("Blue") || 
+		return color.equals("White") || color.equals("Blue") ||
 				color.equals("Cyan") || color.equals("Magenta");
 	}
-	
+
 	public static String getColorName(Color3f col) {
 		for(int i = 1; i < colors.length; i++) {
 			if(colors[i].equals(col))
@@ -83,7 +83,7 @@ public class ColorTable {
 		return maxIndex;
 	}
 
-	public static IndexColorModel getOpaqueIndexedColorModel(ImagePlus imp, 
+	public static IndexColorModel getOpaqueIndexedColorModel(ImagePlus imp,
 				boolean[] ch) {
 
 
@@ -105,7 +105,7 @@ public class ColorTable {
 		return c;
 	}
 
-	public static IndexColorModel getIndexedColorModel(ImagePlus imp, 
+	public static IndexColorModel getIndexedColorModel(ImagePlus imp,
 				boolean[] ch) {
 
 
@@ -176,7 +176,7 @@ public class ColorTable {
 				g[i] = meanInt;
 				b[i] = meanInt;
 		}
-		IndexColorModel c = 
+		IndexColorModel c =
 				new IndexColorModel(8, N, r, g, b);
 		return c;
 
@@ -218,7 +218,7 @@ public class ColorTable {
 				a[i] = meanInt;
 		}
 		a[histoMax] = (byte)0;
-		IndexColorModel c = 
+		IndexColorModel c =
 				new IndexColorModel(8, N, r, g, b, a);
 		return c;
 
@@ -229,7 +229,7 @@ public class ColorTable {
 		int w = imp.getWidth(), h = imp.getHeight();
 		int d = imp.getStackSize();
 		int[] weight = new int[3];
-		IndexColorModel cmodel = 
+		IndexColorModel cmodel =
 			(IndexColorModel)imp.getProcessor().getColorModel();
 		int N = cmodel.getMapSize();
 		byte[] r = new byte[N];
@@ -245,19 +245,19 @@ public class ColorTable {
 				sum++;
 			}
 		}
-		
+
 		ImageStack res = new ImageStack(w, h);
 		for(int z = 0; z < d; z++) {
-			byte[] bytes = 
+			byte[] bytes =
 			(byte[])imp.getStack().getProcessor(z+1).getPixels();
 			byte[] newB = new byte[w * h];
 			for(int i = 0; i < w*h; i++) {
 				int index = bytes[i] & 0xff;
-				int value = (weight[0] * (int)(r[index]&0xff) + 
-					weight[1] * (int)(g[index]&0xff) + 
+				int value = (weight[0] * (int)(r[index]&0xff) +
+					weight[1] * (int)(g[index]&0xff) +
 					weight[2] * (int)(b[index]&0xff));
-				newB[i] = (byte)(value/sum); 
-					
+				newB[i] = (byte)(value/sum);
+
 			}
 			res.addSlice("", new ByteProcessor(w, h, newB, null));
 		}
@@ -274,8 +274,8 @@ public class ColorTable {
 		cmodel.getGreens(g);
 		cmodel.getBlues(b);
 		for(int i = 0; i < 256; i++) {
-			System.out.println((r[i] & 0xff) + "\t" + 
-						 (g[i] & 0xff) + "\t" + 
+			System.out.println((r[i] & 0xff) + "\t" +
+						 (g[i] & 0xff) + "\t" +
 						 (b[i] & 0xff));
 		}
 	}
