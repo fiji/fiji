@@ -64,6 +64,7 @@ import ij.ImagePlus;
 import ij.io.FileSaver;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+import ij.plugin.ContrastEnhancer;
 import ij.plugin.ZProjector;
 import ij.plugin.filter.GaussianBlur;
 import ij.plugin.filter.Convolver;
@@ -116,27 +117,29 @@ public class FeatureStack
 	public static final int LIPSCHITZ 				= 12;
 	/** Kuwahara filter flag index */
 	public static final int KUWAHARA				= 13;
+	/* Gabor filter flag index */					
+	public static final int GABOR					= 14;
 	/** Minimum filter flag index */
-//	public static final int BLUR_MINIMUM			= 14;
+//	public static final int BLUR_MINIMUM			= 15;
 	/** Maximum filter flag index */
-//	public static final int BLUR_MAXIMUM			= 15;
+//	public static final int BLUR_MAXIMUM			= 16;
 	
 	
 	/** names of available filters */
 	public static final String[] availableFeatures 
 		= new String[]{	"Gaussian_blur", "Sobel_filter", "Hessian", "Difference_of_gaussians", 
 					   	"Membrane_projections","Variance","Mean", "Minimum", "Maximum", "Median", 
-					   	"Anisotropic_diffusion", "Bilateral", "Lipschitz", "Kuwahara" /*, "Blur_minimum", " Blur_maximum" */};
+					   	"Anisotropic_diffusion", "Bilateral", "Lipschitz", "Kuwahara", "Gabor" /*, "Blur_minimum", " Blur_maximum" */};
 	/** flags of filters to be used */
 	private boolean[] enableFeatures = new boolean[]{true, true, true, true, true, false, false, 
-													 false, false, false, false, false, false, false /*, false, false */};
+													 false, false, false, false, false, false, false, false /*, false, false */};
 	/** use neighborhood flag */
 	private boolean useNeighbors = false;
 	/** expected membrane thickness (in pixels) */
 	private int membraneSize = 1;	
 	/** size of the patch to use to enhance membranes (in pixels, NxN) */
 	private int membranePatchSize = 19;
-	/** number of rotating angles for membrane and Kuwahara features */
+	/** number of rotating angles for membrane, Kuwahara and Gabor features */
 	private int nAngles = 30;
 	
 	/**
@@ -897,6 +900,120 @@ public class FeatureStack
 	
 	
 	/**
+	 * Get Gabor features (to be submitted in an ExecutorService)
+	 * @param originalImage input image
+	 * @param sigma
+	 * @param gamma
+	 * @param psi
+	 * @param frequency
+	 * @param nAngles
+	 * @return image stack with Gabor filter projections using "Max Intensity" and "Min Intensity"
+	 */
+	public Callable<ImagePlus> getGabor(
+			final ImagePlus originalImage,
+			final double sigma,
+			final double gamma,
+			final double psi,
+			final double frequency,
+			final int nAngles)
+	{
+		return new Callable<ImagePlus>()
+		{
+			public ImagePlus call()
+			{
+		
+				final int width = originalImage.getWidth();
+				final int height = originalImage.getHeight();
+				
+				// Apply aspect ratio to the Gaussian curves
+				final double sigma_x = sigma;
+				final double sigma_y = sigma / gamma;
+				
+				// Decide size of the filters based on the sigma
+				int largerSigma = (sigma_x > sigma_y) ? (int) sigma_x : (int) sigma_y;
+				if(largerSigma < 1)
+					largerSigma = 1;
+				
+				// Create set of filters			
+				final int filterSizeX = 6 * largerSigma + 1;
+				final int filterSizeY = 6 * largerSigma + 1;
+				
+				final int middleX = (int) Math.round(filterSizeX / 2);
+				final int middleY = (int) Math.round(filterSizeY / 2);
+							
+				final ImageStack kernels = new ImageStack(filterSizeX, filterSizeY);
+
+				final double rotationAngle = Math.PI/nAngles;
+				final double sigma_x2 = sigma_x * sigma_x;
+				final double sigma_y2 = sigma_y * sigma_y;
+				
+				// Rotate kernel from 0 to 180 degrees
+				for (int i=0; i<nAngles; i++)
+				{	
+					final double theta = rotationAngle * i;
+					final ImageProcessor filter = new FloatProcessor(filterSizeX, filterSizeY);	
+					for (int x=-middleX; x<=middleX; x++)
+					{
+						for (int y=-middleY; y<=middleY; y++)
+						{			
+							final double xPrime = x * Math.cos(theta) + y * Math.sin(theta);
+						    final double yPrime = y * Math.cos(theta) - x * Math.sin(theta);
+						        
+							final double a = 1.0 / ( 2* Math.PI * sigma_x * sigma_y ) * Math.exp(-0.5 * (xPrime*xPrime / sigma_x2 + yPrime*yPrime / sigma_y2) );
+							final double c = Math.cos( 2 * Math.PI * (frequency * xPrime) / filterSizeX + psi); 
+							
+							filter.setf(x+middleX, y+middleY, (float)(a*c) );
+						}
+					}
+					kernels.addSlice("kernel angle = " + i, filter);
+				}
+
+				// Show kernels
+				//ImagePlus ip_kernels = new ImagePlus("kernels", kernels);
+				//ip_kernels.show();
+				
+				final ImageStack is = new ImageStack(width, height);
+				// Apply kernels
+				for (int i=0; i<nAngles; i++)
+				{
+					//final double theta = rotationAngle * i;		
+					final Convolver c = new Convolver();				
+					
+					final float[] kernel = (float[]) kernels.getProcessor(i+1).getPixels();
+					final ImageProcessor ip = originalImage.getProcessor().duplicate();		
+					c.convolveFloat(ip, kernel, filterSizeX, filterSizeY);		
+
+					is.addSlice("gabor angle = " + i, ip);
+				}
+				
+				
+				final ImagePlus projectStack = new ImagePlus("filtered stack",is);
+				//projectStack.show();
+				
+				// Normalize filtered stack (it seems necessary to have proper results)
+				IJ.run(projectStack, "Enhance Contrast", "saturated=0.4 normalize normalize_all");
+				//final ContrastEnhancer c = new ContrastEnhancer();
+				//c.stretchHistogram(projectStack, 0.4);
+				//projectStack.updateAndDraw();
+				
+				final ImageStack resultStack = new ImageStack(width, height);
+				
+				final ZProjector zp = new ZProjector(projectStack);
+				zp.setStopSlice(is.getSize());
+				for (int i=1;i<=2; i++)
+				{
+					zp.setMethod(i);
+					zp.doProjection();
+					resultStack.addSlice(availableFeatures[GABOR] + "_" + i 
+							+"_"+sigma+"_" + gamma + "_"+ (int) (psi / (Math.PI/4) ) +"_"+frequency, 
+							zp.getProjection().getChannelProcessor());
+				}
+				return new ImagePlus ("Gabor stack", resultStack);
+			}
+		};
+	}	
+	
+	/**
 	 * Get Kuwahara filter features (to be submitted in an ExecutorService)
 	 * @param originalImage input image
 	 * @param kernelSize orientation kernel size
@@ -1280,30 +1397,44 @@ public class FeatureStack
 					futures.add(exe.submit( getKuwaharaFeatures(originalImage, membranePatchSize, nAngles, i) ) );
 			}
 			
-			
-			float next = 1;
-			double scale = 0.5;			
-			
-			if(scale == 0.5)
+			// Gabor filters
+			if ( enableFeatures[ GABOR ] )
 			{
-				// Sobel
-				if(enableFeatures[SOBEL])
-				{
-					futures.add(exe.submit( getGradient(originalImage, 0)) );
-				}
-				// Hessian
-				if(enableFeatures[HESSIAN])
-				{
-					futures.add(exe.submit( getHessian(originalImage, 0)) );
-				}
+				// elongated filters in y- axis (sigma = 1.0, gamma = [1.0 - 0.25])
+				for(int i=0; i < 3; i++)
+					for(double gamma = 1; gamma >= 0.25; gamma /= 2)						
+						for(int frequency = 2; frequency<=3; frequency ++)
+						{
+							final double psi = Math.PI / 4 * i;
+							futures.add(exe.submit( getGabor(originalImage, 1.0, gamma, psi, frequency, nAngles) ) );
+						}
+				// elongated filters in x- axis (sigma = [2.0 - 4.0], gamma = [1.0 - 2.0])
+				for(int i=0; i < 3; i++)
+					for(double sigma = 2.0; sigma <= 4.0; sigma *= 2)					
+						for(double gamma = 1.0; gamma <= 2.0; gamma *= 2)
+							for(int frequency = 2; frequency<=3; frequency ++)
+							{
+								final double psi = Math.PI / 4 * i;
+								futures.add(exe.submit( getGabor(originalImage, sigma, gamma, psi, frequency, nAngles) ) );
+							}
+				
+				
 			}
 			
-			for (float i=minimumSigma; i<= maximumSigma; i *=2)
+			// Sobel (no blur)
+			if(enableFeatures[SOBEL])
 			{
-			//	if (scale == 1)
-			//		next *=2;
-			//	else
-			//		next = 0.75f;				
+				futures.add(exe.submit( getGradient(originalImage, 0)) );
+			}
+			// Hessian (no blur)
+			if(enableFeatures[HESSIAN])
+			{
+				futures.add(exe.submit( getHessian(originalImage, 0)) );
+			}
+			
+			
+			for (float i=minimumSigma; i<= maximumSigma; i *=2)
+			{		
 				
 				// Gaussian blur
 				if(enableFeatures[GAUSSIAN])
