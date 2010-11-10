@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.io;
 
+import ij.ImagePlus;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -7,10 +9,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
-import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.io.LOCI;
-import mpicbg.imglib.type.numeric.RealType;
+import loci.formats.FormatException;
+import loci.plugins.in.ImagePlusReader;
+import loci.plugins.in.ImportProcess;
+import loci.plugins.in.ImporterOptions;
 
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
@@ -202,7 +204,7 @@ public class TmXmlReader implements TmXmlKeys {
 		return trackGraph;
 	}
 	
-	public <T extends RealType<T>> Image<T> getImage() {
+	public ImagePlus getImage() throws IOException, FormatException  {
 		Element imageInfoElement = root.getChild(IMAGE_ELEMENT_KEY);
 		if (null == imageInfoElement)
 			return null;
@@ -211,7 +213,20 @@ public class TmXmlReader implements TmXmlKeys {
 		File imageFile = new File(folder, filename);
 		if (!imageFile.exists() || !imageFile.canRead())
 			return null;
-		return LOCI.openLOCI(imageFile.getAbsolutePath(), new ArrayContainerFactory());
+
+		ImporterOptions options = new ImporterOptions();
+		options.loadOptions();
+		options.parseArg(imageFile.getAbsolutePath());
+		options.checkObsoleteOptions();
+
+		ImportProcess process = new ImportProcess(options);
+		process.execute();
+		
+		ImagePlusReader reader = new ImagePlusReader(process);
+		ImagePlus[] imps = reader.openImagePlus();
+		process.getReader().close();
+	    return imps[0];
+
 	}
 	
 	

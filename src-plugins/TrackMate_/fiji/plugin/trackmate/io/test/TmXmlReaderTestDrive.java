@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
+import loci.formats.FormatException;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.real.FloatType;
@@ -45,12 +46,16 @@ public class TmXmlReaderTestDrive {
 		}
 		
 		// Image
-		Image<? extends FloatType> img = reader.getImage();
-		ImagePlus imp = ImageJFunctions.copyToImagePlus(img);
-		imp.show();
-		
-		/*
-		
+		ImagePlus imp = null;
+		try {
+			imp = reader.getImage();
+			imp.show();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (FormatException e) {
+			e.printStackTrace();
+		}
+
 		// All spots
 		TreeMap<Integer, List<Spot>> spots = null;
 		try {
@@ -98,7 +103,7 @@ public class TmXmlReaderTestDrive {
 			if (i < minFrame)
 				minFrame = i;
 		}
-		ImagePlus imp = NewImage.createByteImage("FakeImage", 128, 128, maxFrame+1, NewImage.FILL_BLACK);
+		imp = NewImage.createByteImage("FakeImage", 128, 128, maxFrame+1, NewImage.FILL_BLACK);
 		imp.setDimensions(1, 1, maxFrame+1);
 
 		// Instantiate displayer
@@ -109,7 +114,7 @@ public class TmXmlReaderTestDrive {
 		displayer.refresh();
 		displayer.setTrackGraph(trackGraph);
 		
-		*/
+		
 	}
 	
 	
