@@ -88,7 +88,7 @@ public class BoundingBox extends BranchGroup {
 		shape.setAppearance(createAppearance(color));
 		addChild(shape);
 
-		int fontsize = (int)(2 * tickSize);
+		float fontsize = 2 * tickSize;
 		DecimalFormat df = new DecimalFormat("#.##");
 
 		// x text
@@ -134,14 +134,16 @@ public class BoundingBox extends BranchGroup {
 		addText(df.format(v), pos, fontsize, color);
 	}
 
-	private void addText(String s, Point3f pos, int fontsize, Color3f c) {
+	private void addText(String s, Point3f pos, float fontsize, Color3f c) {
+		float scale = fontsize / 12f;
 		Transform3D translation = new Transform3D();
 		translation.rotX(Math.PI);
 		translation.setTranslation(new Vector3f(pos));
+		translation.setScale(scale);
 		TransformGroup tg = new TransformGroup(translation);
 		OrientedShape3D textShape = new OrientedShape3D();
 		textShape.setAlignmentAxis(0.0f, 1.0f, 0.0f);
-		Font font = new Font("Helvetica", Font.PLAIN, fontsize);
+		Font font = new Font("Helvetica", Font.PLAIN, 12);
 		Font3D font3D = new Font3D(font, new FontExtrusion());
 		Text3D textGeom = new Text3D(font3D, s);
 		textGeom.setAlignment(Text3D.ALIGN_CENTER);
