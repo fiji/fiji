@@ -51,7 +51,11 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 		if ("install".equals(arg))
 			install();
 		else
-			runInteractively();
+			new Thread() {
+				public void run() {
+					runInteractively();
+				}
+			}.start();
 	}
 
 	public void install() {
