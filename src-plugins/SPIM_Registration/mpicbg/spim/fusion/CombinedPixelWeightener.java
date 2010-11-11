@@ -15,13 +15,6 @@ public abstract class CombinedPixelWeightener<I>
 		this.views = views;
 		this.conf = views.get( 0 ).getViewStructure().getSPIMConfiguration();
 	}
-
-	/**
-	 * Updates the weights for all images, knowing where to grab all pixels from in each source image
-	 * 
-	 * @param locations - the locations of the source pixel in each source image 
-	 */
-	public abstract void updateWeights( final int[][] locations );
 	
 	/**
 	 * Updates the weights for all images, knowing where to grab all pixels from in each source image

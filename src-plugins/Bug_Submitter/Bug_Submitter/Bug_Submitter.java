@@ -192,6 +192,15 @@ public class Bug_Submitter implements PlugIn {
 		return result.toString();
 	}
 
+	protected String getPathInformation() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("  JAVA_HOME is set to: ");
+		sb.append(System.getenv("JAVA_HOME"));
+		sb.append("\n  fiji.dir => ");
+		sb.append(System.getProperty("fiji.dir"));
+		return sb.toString();
+	}
+
 	protected String getInstalledVersions() {
 
 		ProgressDialog progress = new ProgressDialog(IJ.getInstance(),"Finding installed plugin versions...");
@@ -751,7 +760,9 @@ public class Bug_Submitter implements PlugIn {
 			"this information is useful for the Fiji developers:\n\n"+
 			getUsefulSystemInformation()+
 			"\nThe up-to-date check says: "+(new UptodateCheck()).check()+"\n"+
-			"\nInformation about the version of each plugin:\n\n"+
+			"\nInformation relevant to JAVA_HOME related problems:\n\n"+
+			getPathInformation()+
+			"\n\nInformation about the version of each plugin:\n\n"+
 			getInstalledVersions();
 
 		while( true ) {

@@ -2892,6 +2892,11 @@ public class Weka_Segmentation implements PlugIn
 		return true;
 	}
 	
+	public void setUseNeighbors(boolean useNeighbors)
+	{
+		this.featureStack.setUseNeighbors(useNeighbors);
+	}
+	
 	
 	/**
 	 * Add instances to a specific class from a label (binary) image.
@@ -3036,10 +3041,19 @@ public class Weka_Segmentation implements PlugIn
 			IJ.log("Initializing loaded data...");
 			// Create instances
 			ArrayList<Attribute> attributes = new ArrayList<Attribute>();
-			for (int i=1; i<=featureStack.getSize(); i++){
+			for (int i=1; i<=featureStack.getSize(); i++)
+			{
 				String attString = featureStack.getSliceLabel(i);
 				attributes.add(new Attribute(attString));
 			}
+			
+			if(featureStack.useNeighborhood())
+				for (int i=0; i<8; i++)
+				{	
+					IJ.log("Adding extra attribute original_neighbor_" + (i+1) + "...");
+					attributes.add(new Attribute(new String("original_neighbor_" + (i+1))));
+				}
+			
 			// Update list of names of loaded classes
 			// (we assume the first two default class names)
 			loadedClassNames = new ArrayList<String>();						
@@ -3050,9 +3064,7 @@ public class Weka_Segmentation implements PlugIn
 			
 			loadedTrainingData.setClassIndex(loadedTrainingData.numAttributes()-1);
 		}
-		
-			
-		
+							
 		// Check all pixels different from black
 		final int width = labelImage.getWidth();
 		final int height = labelImage.getHeight();
@@ -3077,14 +3089,15 @@ public class Weka_Segmentation implements PlugIn
 					n2++;
 				}
 					
+				/*
 				double[] values = new double[featureStack.getSize()+1];
 				for (int z=1; z<=featureStack.getSize(); z++)
 					values[z-1] = featureStack.getProcessor(z).getPixelValue(x, y);
 				values[featureStack.getSize()] = (double) classIndex;
-				loadedTrainingData.add(new DenseInstance(1.0, values));										
+				*/
+				loadedTrainingData.add(featureStack.createInstance(x, y, classIndex));										
 			}
-		
-		
+				
 		IJ.log("Added " + n1 + " instances of '" + className1 +"'.");
 		IJ.log("Added " + n2 + " instances of '" + className2 +"'.");
 		
@@ -3420,6 +3433,8 @@ public class Weka_Segmentation implements PlugIn
 			featureStack.updateFeaturesMT();
 			filterFeatureStackByList(this.featureNames, featureStack);
 
+			featureStack.setUseNeighbors(this.featureStack.useNeighborhood());
+			
 			if( false == this.addBinaryData(labelIP, featureStack, whiteClassName, blackClassName) )
 			{
 				IJ.log("Error while loading binary label data from slice " + i);
@@ -4001,6 +4016,7 @@ public class Weka_Segmentation implements PlugIn
 			testImageFeatures.setMembranePatchSize(membranePatchSize);
 			testImageFeatures.setMembraneSize(membraneThickness);
 			testImageFeatures.updateFeaturesMT();
+			testImageFeatures.setUseNeighbors(featureStack.useNeighborhood());
 			filterFeatureStackByList(this.featureNames, testImageFeatures);
 			
 			final Instances data = testImageFeatures.createInstances(classNames);

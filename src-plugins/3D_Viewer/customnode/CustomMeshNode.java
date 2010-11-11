@@ -46,6 +46,11 @@ public class CustomMeshNode extends ContentNode {
 	}
 
 	@Override
+	public void lutUpdated(int[] r, int[] g, int[] b, int[] a) {
+		// do nothing
+	}
+
+	@Override
 	public void colorUpdated(Color3f color) {
 		mesh.setColor(color);
 	}

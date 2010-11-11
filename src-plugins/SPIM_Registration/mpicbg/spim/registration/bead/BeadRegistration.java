@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.media.j3d.Transform3D;
 import javax.vecmath.Vector3d;
 
-import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.IllDefinedDataPointsException;
@@ -23,6 +22,7 @@ import mpicbg.spim.registration.ViewStructure;
 import mpicbg.spim.registration.bead.descriptor.CorrespondenceExtraction;
 import mpicbg.spim.registration.bead.descriptor.LocalCoordinateCorrespondenceExtraction;
 import mpicbg.spim.registration.bead.error.GlobalErrorStatistics;
+import mpicbg.util.TransformUtils;
 
 public class BeadRegistration
 {
@@ -478,7 +478,7 @@ public class BeadRegistration
 					IOFunctions.println( view + ":");
 					IOFunctions.println( "Transformation:\n"+ view.getTile().getModel() );	
 					
-					Transform3D t = MathLib.getTransform3D( view.getTile().getModel() );
+					Transform3D t = TransformUtils.getTransform3D( view.getTile().getModel() );
 					Vector3d s = new Vector3d();
 					t.getScale( s );
 					System.out.println( s );

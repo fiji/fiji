@@ -25,10 +25,10 @@ public class Anisotropic_Diffusion_2D implements PlugInFilter
 	static final String ADTDDate = "2010/27/05";
 
 	// the following are the input parameters, with default values assigned to them
-	/** Number of iterations */
+	/** Maximum number of complete iterations */
 	int nb_iter       = 20;    
 	static int stored_nb_iter = 20;
-	/** Number of smoothings per iteration */
+	/**  Number of smoothings by anisotropic Gaussian with 3x3 mask per iterations, default value is 1. Size of the smoothing per one complete iteration is proportional to the square root of this number. */
 	int nb_smoothings = 1;   
 	static int stored_nb_smoothings = 1;
 	/** Adapting time step */
@@ -52,7 +52,7 @@ public class Anisotropic_Diffusion_2D implements PlugInFilter
 	/** add labels to output stack */
 	boolean add_labels    = false;
 	static boolean stored_add_labels    = false;
-	/** edge threshold */
+	/** edge threshold height, it defines the minimum "strength" of edges that will be preserved by the filter */
 	float edgeheight  = 5;
 	static float stored_edgeheight  = 5;     
 
@@ -95,6 +95,11 @@ public class Anisotropic_Diffusion_2D implements PlugInFilter
 	public void setLimiterMaximalVariations(float a2)
 	{
 		this.a2 = a2;
+	}
+	
+	public void setEdgeThreshold(float edgeThreshold)
+	{
+		this.edgeheight = edgeThreshold;
 	}
 	//-----------------------------------------------------------------------------------
 
