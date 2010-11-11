@@ -919,7 +919,9 @@ public class Executer {
 		final GenericDialog gd =
 			new GenericDialog("Point size", univ.getWindow());
 		final float oldS = (float)(c.getLandmarkPointSize());
-		gd.addSlider("Size", 0, 20, oldS);
+		final float minS = oldS / 10f;
+		final float maxS = oldS * 10f;
+		gd.addSlider("Size", minS, maxS, oldS);
 		((Scrollbar)gd.getSliders().get(0)).
 			addAdjustmentListener(new AdjustmentListener() {
 			public void adjustmentValueChanged(AdjustmentEvent e) {
