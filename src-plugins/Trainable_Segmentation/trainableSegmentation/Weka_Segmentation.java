@@ -2057,7 +2057,7 @@ public class Weka_Segmentation implements PlugIn
 						}
 						
 					}
-					else if(i != FeatureStack.ANISOTROPIC_DIFFUSION)
+					else if(i < FeatureStack.ANISOTROPIC_DIFFUSION)
 					{
 						String[] tokens = a.name().split("_"); 
 						for(int j=0; j<tokens.length; j++)
@@ -2075,6 +2075,7 @@ public class Weka_Segmentation implements PlugIn
 		}
 		
 		IJ.log("Field of view: max sigma = " + maxSigma + ", min sigma = " + minSigma);
+		IJ.log("Membrane thickness: " + membraneThickness + ", patch size: " + membranePatchSize); 		
 		if(minSigma != this.minimumSigma)
 		{
 			this.minimumSigma = minSigma;
