@@ -1493,13 +1493,13 @@ public class FeatureStack
 					for(float j = i/2; j<= i; j*=2)
 						futures.add(exe.submit( getBlurMax(originalImage, i, j)) );
 				}
-				
+*/				
 				// Median
 				if(enableFeatures[MEDIAN])
 				{
 					futures.add(exe.submit( getMedian(originalImage, i)) );
 				}
-*/
+
 			}
 			// Membrane projections
 			if(enableFeatures[MEMBRANE])
