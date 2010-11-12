@@ -686,6 +686,15 @@ static int is_ipv6_broken(void)
 #define JNI_CREATEVM "JNI_CreateJavaVM"
 #endif
 
+static int is_slash(char c)
+{
+#ifdef WIN32
+	if (c == '\\')
+		return 1;
+#endif
+	return c == '/';
+}
+
 const char *fiji_dir;
 
 static const char *fiji_path(const char *relative_path)
@@ -695,9 +704,11 @@ static const char *fiji_path(const char *relative_path)
 
 	counter = ((counter + 1) % (sizeof(string) / sizeof(string[0])));
 	if (!string[counter])
-		string[counter] = string_initf("%s/%s", fiji_dir, relative_path);
+		string[counter] = string_initf("%s%s%s", fiji_dir,
+			is_slash(*relative_path) ? "" : "/", relative_path);
 	else
-		string_setf(string[counter], "%s/%s", fiji_dir, relative_path);
+		string_setf(string[counter], "%s%s%s", fiji_dir,
+			is_slash(*relative_path) ? "" : "/", relative_path);
 	return string[counter]->buffer;
 }
 
@@ -1226,25 +1237,47 @@ static int dir_exists(const char *path)
 	return 0;
 }
 
+static int mkdir_recursively(struct string *buffer)
+{
+	int slash = buffer->length - 1, save_length;
+	char save_char;
+	while (slash > 0 && !is_slash(buffer->buffer[slash]))
+		slash--;
+	while (slash > 0 && is_slash(buffer->buffer[slash - 1]))
+		slash--;
+	if (slash <= 0)
+		return -1;
+	save_char = buffer->buffer[slash];
+	save_length = buffer->length;
+	buffer->buffer[slash] = '\0';
+	buffer->length = slash;
+	if (!dir_exists(buffer->buffer)) {
+		int result = mkdir_recursively(buffer);
+		if (result)
+			return result;
+	}
+	buffer->buffer[slash] = save_char;
+	buffer->length = save_length;
+	return mkdir(buffer->buffer, 0777);
+}
+
+/*
+   Ensures that a directory exists in the manner of "mkdir -p", creating
+   components with file mode 777 (& umask) where they do not exist.
+   Returns 0 on success, or the return code of mkdir in the case of
+   failure.
+*/
 static int mkdir_p(const char *path)
 {
-	const char *slash;
+	int result;
 	struct string *buffer;
 	if (dir_exists(path))
 		return 0;
 
 	buffer = string_copy(path);
-	for (;;) {
-		int result;
-		slash = last_slash(buffer->buffer);
-		if (!slash)
-			return -1;
-		string_set_length(buffer, slash - buffer->buffer);
-		result = mkdir(buffer->buffer, 0777);
-		if (result)
-			return result;
-	}
-	return 0;
+	result = mkdir_recursively(buffer);
+	string_release(buffer);
+	return result;
 }
 
 static void add_java_home_to_path(void)
@@ -2890,7 +2923,7 @@ static void find_newest(struct string *relative_path, int max_depth, const char 
 	string_add_char(relative_path, '/');
 
 	string_append(relative_path, file);
-	if (file_exists(fiji_path(relative_path->buffer)) && is_native_library(relative_path->buffer)) {
+	if (file_exists(fiji_path(relative_path->buffer)) && is_native_library(fiji_path(relative_path->buffer))) {
 		string_set_length(relative_path, len);
 		if (!result->length || file_is_newer(fiji_path(relative_path->buffer), fiji_path(result->buffer)))
 			string_set(result, relative_path->buffer);

@@ -109,6 +109,9 @@ SUBMODULE_TARGETS=\
 	jars/weka.jar \
 	jars/jython.jar \
 	jars/imglib.jar \
+	jars/imglib-algorithms.jar \
+	jars/imglib-ij.jar \
+	jars/imglib-io.jar \
 	jars/mpicbg.jar \
 	jars/commons-math.jar
 
@@ -194,7 +197,9 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/TransformJ_.jar \
 	plugins/FeatureJ_.jar \
 	plugins/Stochastic_Denoise.jar \
-	plugins/RandomJ_.jar
+	plugins/RandomJ_.jar \
+	plugins/Linear_Kuwahara.jar \
+	plugins/Jython_Scripts.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
@@ -222,14 +227,21 @@ misc/headless.jar <- jars/javac.jar ImageJA/
 CLASSPATH(plugins/mpicbg_.jar)=jars/mpicbg.jar
 plugins/mpicbg_.jar <- mpicbg/
 jars/mpicbg.jar <- mpicbg/
-CLASSPATH(jars/imglib.jar)=jars/mpicbg.jar:$JAVA3D_JARS
-jars/imglib.jar <- plugins/loci_tools.jar imglib/
+CLASSPATH(jars/imglib.jar)=jars/mpicbg.jar
+jars/imglib.jar <- imglib/
+CLASSPATH(jars/imglib-ij.jar)=jars/ij.jar:jars/imglib.jar
+jars/imglib-ij.jar <- imglib/
+CLASSPATH(jars/imglib-io.jar)=plugins/loci_tools.jar:jars/imglib.jar
+jars/imglib-io.jar <- imglib/
+CLASSPATH(jars/imglib-algorithms.jar)=jars/Jama-1.0.2.jar:jars/imglib.jar
+jars/imglib-algorithms.jar <- imglib/
+
 jars/clojure.jar <- clojure/
 plugins/loci_tools.jar <- bio-formats/
 CLASSPATH(jars/VectorString.jar)=jars/Jama-1.0.2.jar:$JAVA3D_JARS
 jars/VectorString.jar <- TrakEM2/
-CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama-1.0.2.jar:jars/imglib.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar:$JAVA3D_JARS
-plugins/TrakEM2_.jar <- jars/ij.jar plugins/VIB_.jar jars/mpicbg.jar plugins/bUnwarpJ_.jar plugins/level_sets.jar plugins/Fiji_Plugins.jar jars/imglib.jar jars/VectorString.jar TrakEM2/
+CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama-1.0.2.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar:$JAVA3D_JARS
+plugins/TrakEM2_.jar <- jars/ij.jar plugins/VIB_.jar jars/mpicbg.jar plugins/bUnwarpJ_.jar plugins/level_sets.jar plugins/Fiji_Plugins.jar jars/imglib.jar jars/imglib-algorithms.jar jars/imglib-ij.jar jars/VectorString.jar TrakEM2/
 plugins/ij-ImageIO_.jar <- ij-plugins/
 jars/jacl.jar <- tcljava/
 jars/batik.jar <- batik/
@@ -243,7 +255,7 @@ jars/commons-math.jar <- commons-math/
 # From source
 libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama-1.0.2.jar \
 	jars/fiji-scripting.jar jars/fiji-lib.jar jars/jep.jar \
-	jars/pal-optimization.jar jars/MacOSX_Updater_Fix.jar
+	jars/pal-optimization.jar jars/Updater_Fix.jar
 
 plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Screen/**/*
 
@@ -299,6 +311,11 @@ CLASSPATH(plugins/SPIM_Registration.jar)=$JAVA3D_JARS:jars/imglib.jar:jars/mpicb
 CLASSPATH(plugins/Bug_Submitter.jar)=plugins/Fiji_Updater.jar
 CLASSPATH(plugins/TopoJ_.jar)=jars/Jama-1.0.2.jar
 CLASSPATH(jars/imagescience.jar)=plugins/Image_5D.jar
+CLASSPATH(plugins/Jython_Scripts.jar)=plugins/Jython_Interpreter.jar
+plugins/Jython_Scripts.jar <- \
+	src-plugins/Jython_Scripts/**/*java \
+	src-plugins/Jython_Scripts/scripts/*py \
+	src-plugins/Jython_Scripts/plugins.config
 
 # pre-Java5 generics ;-)
 
@@ -313,7 +330,7 @@ src-plugins/VIB-lib/math3d/Eigensystem2x2Float.java[src-plugins/VIB-lib/sed.py $
 MAINCLASS(jars/test-fiji.jar)=fiji.Tests
 CLASSPATH(jars/test-fiji.jar)=jars/junit-4.5.jar
 
-MAINCLASS(jars/MacOSX_Updater_Fix.jar)=fiji.updater.Fix
+MAINCLASS(jars/Updater_Fix.jar)=fiji.updater.Fix
 
 # the default rules
 
@@ -428,6 +445,9 @@ precompiled/autocomplete.jar <- jars/autocomplete.jar
 precompiled/weka.jar <- jars/weka.jar
 precompiled/jython.jar <- jars/jython.jar
 precompiled/imglib.jar <- jars/imglib.jar
+precompiled/imglib-algorithms.jar <- jars/imglib-algorithms.jar
+precompiled/imglib-ij.jar <- jars/imglib-ij.jar
+precompiled/imglib-io.jar <- jars/imglib-io.jar
 precompiled/commons-math.jar <- jars/commons-math.jar
 precompiled/* <- plugins/*
 

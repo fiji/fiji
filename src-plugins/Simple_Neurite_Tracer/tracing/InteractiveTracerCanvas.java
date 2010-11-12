@@ -89,6 +89,11 @@ public class InteractiveTracerCanvas extends TracerCanvas implements KeyListener
 		boolean shift_pressed = (keyCode == KeyEvent.VK_SHIFT);
 		boolean join_modifier_pressed = mac ? keyCode == KeyEvent.VK_ALT : keyCode == KeyEvent.VK_CONTROL;
 
+		int modifiers = e.getModifiersEx();
+		boolean shift_down = (modifiers & InputEvent.SHIFT_DOWN_MASK) > 0;
+		boolean control_down = (modifiers & InputEvent.CTRL_DOWN_MASK) > 0;
+		boolean alt_down = (modifiers & InputEvent.ALT_DOWN_MASK) > 0;
+
 		if (verbose) System.out.println("keyCode=" + keyCode + " (" + KeyEvent.getKeyText(keyCode)
 						+ ") keyChar=\"" + keyChar + "\" (" + (int)keyChar + ") "
 						+ KeyEvent.getKeyModifiersText(flags));
@@ -117,6 +122,43 @@ public class InteractiveTracerCanvas extends TracerCanvas implements KeyListener
 
 			just_near_slices = ! just_near_slices;
 
+		} else if( keyChar == 'g' || keyChar == 'G' ) {
+
+			if( pathAndFillManager.size() == 0 ) {
+				IJ.error("There are no paths yet, so you can't select one with 'g'");
+				return;
+			}
+
+			double [] p = new double[3];
+			tracerPlugin.findPointInStackPrecise( last_x_in_pane_precise, last_y_in_pane_precise, plane, p );
+
+			double diagonalLength = tracerPlugin.getStackDiagonalLength();
+
+			/* Find the nearest point on any path - we'll
+			   select that path... */
+
+			NearPoint np = pathAndFillManager.nearestPointOnAnyPath( p[0] * tracerPlugin.x_spacing,
+										 p[1] * tracerPlugin.y_spacing,
+										 p[2] * tracerPlugin.z_spacing,
+										 diagonalLength);
+
+			if( np == null ) {
+				IJ.error("BUG: No nearby path was found within "+diagonalLength+" of the pointer");
+				return;
+			}
+
+			Path path = np.getPath();
+
+			/* FIXME: in fact shift-G for multiple
+			   selections doesn't work, since in ImageJ
+			   that's a shortcut for taking a screenshot.
+			   Holding down control doesn't work since
+			   that's already used to restrict the
+			   cross-hairs to the selected path.  Need to
+			   find some way around this ... */
+
+			tracerPlugin.selectPath( path, shift_down || control_down );
+
 		} else if( shift_pressed || join_modifier_pressed ) {
 
 			/* This case is just so that when someone
@@ -128,11 +170,6 @@ public class InteractiveTracerCanvas extends TracerCanvas implements KeyListener
 			tracerPlugin.mouseMovedTo( last_x_in_pane_precise, last_y_in_pane_precise, plane, shift_pressed, join_modifier_pressed );
 
 		}
-
-		int modifiers = e.getModifiersEx();
-		boolean shift_down = (modifiers & InputEvent.SHIFT_DOWN_MASK) > 0;
-		boolean control_down = (modifiers & InputEvent.CTRL_DOWN_MASK) > 0;
-		boolean alt_down = (modifiers & InputEvent.ALT_DOWN_MASK) > 0;
 
 		if( shift_down && (control_down || alt_down) && (keyCode == KeyEvent.VK_A) ) {
 			if( pathAndFillManager.anySelected() ) {

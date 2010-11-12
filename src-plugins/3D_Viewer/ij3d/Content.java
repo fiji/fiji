@@ -23,6 +23,7 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 	private TreeMap<Integer, ContentInstant> contents;
 	private int currentTimePoint;
 	private Switch contentSwitch;
+	private boolean showAllTimepoints = false;
 	private final String name;
 
 	public Content(String name) {
@@ -110,11 +111,31 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 
 	public void showTimepoint(int tp) {
 		currentTimePoint = tp;
+		if(showAllTimepoints)
+			return;
+
 		Integer idx = timepointToSwitchIndex.get(tp);
 		if(idx == null)
 			contentSwitch.setWhichChild(Switch.CHILD_NONE);
 		else
 			contentSwitch.setWhichChild(idx);
+	}
+
+	public void setShowAllTimepoints(boolean b) {
+		this.showAllTimepoints = b;
+		if(b) {
+			contentSwitch.setWhichChild(Switch.CHILD_ALL);
+			return;
+		}
+		Integer idx = timepointToSwitchIndex.get(currentTimePoint);
+		if(idx == null)
+			contentSwitch.setWhichChild(Switch.CHILD_NONE);
+		else
+			contentSwitch.setWhichChild(idx);
+	}
+
+	public boolean getShowAllTimepoints() {
+		return showAllTimepoints;
 	}
 
 	public int getNumberOfInstants() {

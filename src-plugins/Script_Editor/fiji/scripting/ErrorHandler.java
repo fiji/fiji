@@ -1,5 +1,6 @@
 package fiji.scripting;
 
+import fiji.scripting.Languages;
 import fiji.scripting.Languages.Language;
 
 import ij.IJ;
@@ -29,7 +30,7 @@ public class ErrorHandler {
 	public ErrorHandler(Language language, JTextArea textArea,
 			int startOffset) {
 		this(textArea);
-		if (language.menuLabel.equals("Java"))
+		if (language.menuLabel.equals("Java") || language == Languages.fakefile)
 			parser = new JavacErrorParser();
 		else
 			return;

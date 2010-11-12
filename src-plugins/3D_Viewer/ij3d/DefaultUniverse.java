@@ -3,7 +3,6 @@ package ij3d;
 import ij3d.shapes.CoordinateSystem;
 import ij3d.shapes.Scalebar;
 import ij3d.behaviors.InteractiveBehavior;
-import ij.gui.Toolbar;
 import ij.ImagePlus;
 
 import java.awt.GraphicsEnvironment;
@@ -169,6 +168,11 @@ public abstract class DefaultUniverse extends SimpleUniverse
 	 */
 	protected final WaitForNextFrameBehavior frameBehavior;
 
+	/**
+	 * UIAdapter to handle calls to the ImageJ main window.
+	 */
+	public final UIAdapter ui;
+
 
 	/**
 	 * Switch which holds the optionally displayable scalebar and coordinate
@@ -191,7 +195,18 @@ public abstract class DefaultUniverse extends SimpleUniverse
 	 * @param height
 	 */
 	public DefaultUniverse(int width, int height) {
-		super(new ImageCanvas3D(width, height), 5);
+		this(width, height, getDefaultUIAdapter());
+	}
+
+	private static UIAdapter getDefaultUIAdapter() {
+		if(ij.IJ.getInstance() == null)
+			return new NoopAdapter();
+		return new IJAdapter();
+	}
+
+	public DefaultUniverse(int width, int height, UIAdapter uia) {
+		super(new ImageCanvas3D(width, height, uia), 5);
+		this.ui = uia;
 		getViewer().getView().setProjectionPolicy(UniverseSettings.projection);
 
 		bounds = new BoundingSphere();
@@ -261,8 +276,7 @@ public abstract class DefaultUniverse extends SimpleUniverse
 		getCanvas().addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				int id = Toolbar.getToolId();
-				if(id == Toolbar.HAND || id == Toolbar.MAGNIFIER) {
+				if(ui.isHandTool() || ui.isMagnifierTool()) {
 					if(transformed)
 						fireTransformationFinished();
 					transformed = false;
@@ -272,8 +286,7 @@ public abstract class DefaultUniverse extends SimpleUniverse
 		getCanvas().addMouseMotionListener(new MouseMotionAdapter() {
 			@Override
 			public void mouseDragged(MouseEvent e) {
-				int id = Toolbar.getToolId();
-				if(id == Toolbar.HAND || id == Toolbar.MAGNIFIER) {
+				if(ui.isHandTool() || ui.isMagnifierTool()) {
 					if(!transformed)
 						fireTransformationStarted();
 					transformed = true;
