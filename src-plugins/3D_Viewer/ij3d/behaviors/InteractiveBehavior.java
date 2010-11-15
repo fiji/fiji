@@ -8,8 +8,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.AWTEvent;
 
-import ij.gui.Toolbar;
-
 import ij3d.Content;
 import ij3d.DefaultUniverse;
 import ij3d.ImageCanvas3D;
@@ -36,8 +34,6 @@ public class InteractiveBehavior extends Behavior {
 
 	private WakeupOnAWTEvent[] mouseEvents;
 	private WakeupCondition wakeupCriterion;
-
-	private int toolID;
 
 	private ContentTransformer contentTransformer;
 	private Picker picker;
@@ -88,9 +84,10 @@ public class InteractiveBehavior extends Behavior {
 	 * @see Behavior#processStimulus(Enumeration) Behavior.processStimulus
 	 */
 	public void processStimulus(Enumeration criteria) {
-		toolID = Toolbar.getToolId();
-		if(toolID != Toolbar.HAND && toolID != Toolbar.MAGNIFIER &&
-				toolID != Toolbar.POINT) {
+		if(!univ.ui.isHandTool() &&
+			!univ.ui.isMagnifierTool() &&
+			!univ.ui.isPointTool()) {
+
 			wakeupOn (wakeupCriterion);
 			return;
 		}
@@ -109,33 +106,33 @@ public class InteractiveBehavior extends Behavior {
 		wakeupOn(wakeupCriterion);
 	}
 
-	private boolean shouldRotate(int mask, int toolID) {
+	private boolean shouldRotate(int mask) {
 		int onmask = B2, onmask2 = B1;
 		int offmask = SHIFT | CTRL;
 		boolean b0 = (mask & (onmask | offmask)) == onmask;
-		boolean b1 = (toolID == Toolbar.HAND
+		boolean b1 = (univ.ui.isHandTool()
 				&& (mask & (onmask2|offmask)) == onmask2);
 		return b0 || b1;
 	}
 
-	private boolean shouldTranslate(int mask, int toolID) {
+	private boolean shouldTranslate(int mask) {
 		int onmask = B2 | SHIFT, onmask2 = B1 | SHIFT;
 		int offmask = CTRL;
 		return (mask & (onmask | offmask)) == onmask ||
-			(toolID == Toolbar.HAND
+			(univ.ui.isHandTool()
 				&& (mask & (onmask2|offmask)) == onmask2);
 	}
 
-	private boolean shouldZoom(int mask, int toolID) {
-		if(toolID != Toolbar.MAGNIFIER)
+	private boolean shouldZoom(int mask) {
+		if(!univ.ui.isMagnifierTool())
 			return false;
 		int onmask = B1;
 		int offmask = SHIFT | CTRL;
 		return (mask & (onmask | offmask)) == onmask;
 	}
 
-	private boolean shouldMovePoint(int mask, int toolID) {
-		if(toolID != Toolbar.POINT)
+	private boolean shouldMovePoint(int mask) {
+		if(!univ.ui.isPointTool())
 			return false;
 		int onmask = B1;
 		int offmask = SHIFT | CTRL;
@@ -271,7 +268,7 @@ public class InteractiveBehavior extends Behavior {
 		if(id == MouseEvent.MOUSE_PRESSED) {
 			if(c != null && !c.isLocked()) contentTransformer.init(c, e.getX(), e.getY());
 			else viewTransformer.init(e);
-			if(toolID == Toolbar.POINT) {
+			if(univ.ui.isPointTool()) {
 				if(c != null)
 					c.showPointList(true);
 				if(mask == PICK_POINT_MASK) {
@@ -281,20 +278,19 @@ public class InteractiveBehavior extends Behavior {
 				}
 			}
 		} else if(id == MouseEvent.MOUSE_DRAGGED) {
-			if(shouldTranslate(mask, toolID)) {
+			if(shouldTranslate(mask)) {
 				if(c != null && !c.isLocked()) contentTransformer.translate(e);
 				else viewTransformer.translate(e);
-			} else if(shouldRotate(mask, toolID)) {
+			} else if(shouldRotate(mask)) {
 				if(c != null && !c.isLocked()) contentTransformer.rotate(e);
 				else viewTransformer.rotate(e);
-			} else if(shouldZoom(mask, toolID))
+			} else if(shouldZoom(mask))
 				viewTransformer.zoom(e);
-			else if(shouldMovePoint(mask, toolID))
+			else if(shouldMovePoint(mask))
 				picker.movePoint(c, e);
 		} else if(id == MouseEvent.MOUSE_RELEASED) {
-			if(toolID == Toolbar.POINT) {
+			if(univ.ui.isPointTool())
 				picker.stopMoving();
-			}
 		}
 		if(id == MouseEvent.MOUSE_WHEEL) {
 			int axis = -1;

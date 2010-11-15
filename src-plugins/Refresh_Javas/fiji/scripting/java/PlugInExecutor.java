@@ -53,6 +53,7 @@ public class PlugInExecutor {
 		for (int i = 0; i < urls.length; i++)
 			urls[i] = new File(paths[i]).toURI().toURL();
 		classLoader = new URLClassLoader(urls);
+		classLoader.setDefaultAssertionStatus(true);
 	}
 
 	/** Create a new object that runs the specified plugin
@@ -98,11 +99,21 @@ public class PlugInExecutor {
 				IllegalAccessException,
 				InvocationTargetException,
 				NoSuchMethodException {
+		tryRun(plugin, arg, null, newClassLoader);
+	}
+
+	public void tryRun(String plugin, String arg, String jarPath, boolean newClassLoader)
+			throws ClassNotFoundException, IOException,
+				IllegalAccessException,
+				InvocationTargetException,
+				NoSuchMethodException {
 		ClassLoader classLoader = newClassLoader ?
 			new FijiClassLoader(new String[] {
 				IJ.getDirectory("plugins"),
 				System.getProperty("fiji.dir") + "/jars"
 			}) : getClassLoader();
+		if (newClassLoader && jarPath != null)
+			((FijiClassLoader)classLoader).addPath(jarPath);
 		Class clazz = classLoader.loadClass(plugin);
 		try {
 			Object object = clazz.newInstance();
@@ -153,7 +164,7 @@ public class PlugInExecutor {
 						plugin.length() - 2);
 				plugin = plugin.substring(0, paren);
 			}
-			tryRun(plugin, arg, newClassLoader);
+			tryRun(plugin, arg, jar, newClassLoader);
 		}
 	}
 

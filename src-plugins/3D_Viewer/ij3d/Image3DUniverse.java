@@ -376,6 +376,25 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 		fireContentSelected(null);
 	}
 
+	/**
+	 * Show/Hide the selection box upon selecting a Content(Instant).
+	 */
+	public void setShowBoundingBoxUponSelection(boolean b) {
+		UniverseSettings.showSelectionBox = b;
+		if(selected != null) {
+			selected.setSelected(false);
+			selected.setSelected(true);
+		}
+	}
+
+	/**
+	 * Returns true if the selection box is shown upon
+	 * selecting a Content(Instant).
+	 */
+	public boolean getShowBoundingBoxUponSelection() {
+		return UniverseSettings.showSelectionBox;
+	}
+
 	/* *************************************************************
 	 * Dimensions
 	 * *************************************************************/

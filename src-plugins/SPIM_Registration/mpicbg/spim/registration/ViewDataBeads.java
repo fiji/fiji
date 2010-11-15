@@ -1,8 +1,11 @@
 package mpicbg.spim.registration;
 
+import ij.IJ;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Transform3D;
@@ -21,7 +24,7 @@ import mpicbg.spim.registration.bead.BeadStructure;
 import mpicbg.spim.registration.bead.error.ViewErrorStatistics;
 import mpicbg.spim.registration.segmentation.Nucleus;
 
-public class ViewDataBeads
+public class ViewDataBeads implements Comparable<ViewDataBeads>
 {
 	public ViewDataBeads( final int id, final AffineModel3D model, final String fileName, final double zStretching )
 	{		
@@ -32,6 +35,12 @@ public class ViewDataBeads
 		this.tile = new TileSPIM( model.clone(), this );
 		this.beads = new BeadStructure();
 	}
+	
+	/**
+	 * Provides the capability to lock a {@link ViewDataBeads} object if necessary
+	 */
+	public AtomicInteger islockedA = new AtomicInteger( 0 );
+	public AtomicInteger islockedB = new AtomicInteger( 0 );
 		
 	/**
 	 * if the view is connected to any other view or excluded from the registration because no true correspondences were found
@@ -82,6 +91,15 @@ public class ViewDataBeads
 	public int getID() { return id; }
 	public void setID( final int id ){ this.id = id; }
 
+	/**
+	 * the channel
+	 */
+	protected int channel = 0, channelIndex = 0;
+	public int getChannel() { return channel; }
+	public void setChannel( final int channel ){ this.channel = channel; }
+	public int getChannelIndex() { return channelIndex; }
+	public void setChannelIndex( final int channelIndex ){ this.channelIndex = channelIndex; }
+	
 	/**
 	 * the acquisition angle
 	 */
@@ -163,6 +181,19 @@ public class ViewDataBeads
 	public void setImageSize( final int[] size ) { this.imageSize = size; }
 
 	/**
+	 * The offset of the input stack
+	 */
+	protected int[] imageSizeOffset = null;	
+	public int[] getImageSizeOffset() 
+	{
+		if ( imageSizeOffset == null )
+			return new int[ getImageSize().length ];
+		
+		return imageSizeOffset.clone();	
+	}
+	public void setImageSizeOffset( final int[] imageSizeOffset ) { this.imageSizeOffset = imageSizeOffset; }
+
+	/**
 	 * The input image
 	 */
 	private Image<FloatType> image = null;
@@ -233,7 +264,10 @@ public class ViewDataBeads
 				image = LOCI.openLOCIFloatType( getFileName(), imageFactory );
 			
 			if ( image == null )
-				System.exit( 0 );
+			{
+				IJ.error( "Cannot find file: " + getFileName() );
+				return null;
+			}
 			
 			image.setName( getName() );
 						
@@ -444,6 +478,16 @@ public class ViewDataBeads
 		}
 		
 		return readDim;
+	}
+	@Override
+	public int compareTo( final ViewDataBeads o ) 
+	{
+		if ( getID() < o.getID() )
+			return -1;
+		else if ( o.getID() == getID() )
+			return 0;
+		else
+			return 1;
 	}
 	
 }

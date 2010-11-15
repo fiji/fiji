@@ -1,0 +1,18 @@
+import ij.IJ;
+import ij.Menus;
+
+import java.awt.MenuItem;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+class SplitChannelsListener implements ActionListener {
+	public void actionPerformed(ActionEvent e) {
+		IJ.run("Split Channels");
+	}
+}
+
+splitChannels = new MenuItem("Split Channels");
+splitChannels.addActionListener(new SplitChannelsListener());
+
+Menus.getPopupMenu().add(splitChannels);

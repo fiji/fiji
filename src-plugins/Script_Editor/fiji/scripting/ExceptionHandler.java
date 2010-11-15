@@ -81,7 +81,7 @@ public class ExceptionHandler implements IJ.ExceptionHandler {
 	}
 
 	public static void handle(Throwable t, TextEditor editor) {
-		JTextArea screen = editor.screen;
+		JTextArea screen = editor.getTab().screen;
 
 		if (t instanceof InvocationTargetException) {
 			t = ((InvocationTargetException)t).getTargetException();

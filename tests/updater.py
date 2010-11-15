@@ -58,7 +58,7 @@ if len(uploadables) + len(extra) != sum([len(listdir(tmpWebRoot + dir)) for
 for file in ['fiji', 'jars/ij.jar', 'jars/Fiji.jar', 'plugins/Fiji_Updater.jar',
 		'jars/jsch-0.1.37.jar', 'jars/jzlib-1.0.7.jar',
 		'jars/javac.jar',
-		'jars/fiji-scripting.jar', 'jars/jython.jar',
+		'jars/fiji-scripting.jar', 'jars/jython.jar', 'jars/jna.jar',
 		'plugins/Jython_Interpreter.jar']:
 	source = fijiDir + file
 	target = tmpRoot + file
@@ -188,6 +188,7 @@ expect = {
 	'jars/ij.jar' : Status.INSTALLED,
 	'jars/javac.jar' : Status.INSTALLED,
 	'jars/fiji-scripting.jar' : Status.NOT_FIJI,
+	'jars/jna.jar' : Status.NOT_FIJI,
 	'jars/jython.jar' : Status.NOT_FIJI,
 	'plugins/Jython_Interpreter.jar' : Status.NOT_FIJI,
 	'plugins/Test_Fiji_Updater.py' : Status.NOT_FIJI,
