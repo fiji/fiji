@@ -47,7 +47,13 @@ public class ExceptionHandler implements IJ.ExceptionHandler {
 			current = IJ.getExceptionHandler();
 			if (current instanceof ExceptionHandler)
 				return (ExceptionHandler)current;
-		} catch (Exception e) { /* ignore */ }
+		}
+		catch (Exception e) {
+			/* ignore */
+		}
+		catch (NoSuchMethodError e) {
+			/* ignore */
+		}
 
 		if (current == null)
 			current = new IJ.ExceptionHandler() {
