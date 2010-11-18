@@ -159,30 +159,38 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm<T>
 			// set the thresholds of the predicates
 			predicate1.setThreshold( threshold1 );
 			predicate2.setThreshold( threshold2 );
+			// indicates if we have actually found a real number
+			boolean badResult = false;
 
 			// backup last Person's R value
 			lastPersonsR = currentPersonsR;
-			// do persons calculation within the limits
-			currentPersonsR = pearsonsCorrellation.calculatePearsons(cursor, ch1Mean, ch2Mean);
+			try {
+				// do persons calculation within the limits
+				currentPersonsR = pearsonsCorrellation.calculatePearsons(cursor, ch1Mean, ch2Mean);
+				// indicates if we have actually found a real number
+				badResult = Double.isNaN(currentPersonsR);
 
-			// indicates if we have actually found a real number
-			boolean badResult = Double.isNaN(currentPersonsR);
+				//check to see if we're getting closer to zero for r
+				if ( (bestPersonsR * bestPersonsR) > (currentPersonsR * currentPersonsR) ) {
+					ch1BestThreshold = ch1ThreshMax;
+					bestPersonsR = currentPersonsR;
+				}
 
-			//check to see if we're getting closer to zero for r
-			if ( (bestPersonsR * bestPersonsR) > (currentPersonsR * currentPersonsR) ) {
-				ch1BestThreshold = ch1ThreshMax;
-				bestPersonsR = currentPersonsR;
+				/* If our r is close to our level of tolerance,
+				 * then set threshold has been found.
+				 */
+				if ( (currentPersonsR < tolerance) && (currentPersonsR > -tolerance) )
+					thresholdFound = true;
+
+				// if we've reached ch1 = 1 then we've exhausted our possibilities
+				if (Math.round(ch1ThreshMax) == 0)
+					thresholdFound = true;
+			} catch (MissingPreconditionException e) {
+				/* the exception that could occur is due to numerical
+				 * problems within the pearsons calculation.
+				 */
+				badResult = true;
 			}
-
-			/* If our r is close to our level of tolerance,
-			 * then set threshold has been found.
-			 */
-			if ( (currentPersonsR < tolerance) && (currentPersonsR > -tolerance) )
-				thresholdFound = true;
-
-			// if we've reached ch1 = 1 then we've exhausted our possibilities
-			if (Math.round(ch1ThreshMax) == 0)
-				thresholdFound = true;
 
 			// change threshold maximum
 			if (badResult || currentPersonsR < 0.0) {
