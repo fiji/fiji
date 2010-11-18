@@ -54,6 +54,9 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 		}
 		T threshold1 = 	autoThreshold.getCh1MaxThreshold();
 		T threshold2 = 	autoThreshold.getCh2MaxThreshold();
+		if (threshold1 == null || threshold2 == null ) {
+			throw new MissingPreconditionException("Pearsons calculation needs valid (not null) thresholds.");
+		}
 
 		// create cursors to walk over the images
 		TwinValueRangeCursor<T> alwaysTrueCursor
