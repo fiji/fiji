@@ -72,19 +72,6 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 		= new HashMap<Image<LongType>, Histogram2D<T>>();
 	// a list of warnings
 	protected List<Warning> warnings = new ArrayList<Warning>();
-	/* a small structure to keep decimal places information
-	 * with numbers along with a name.
-	 */
-	protected class ValueResult {
-		public String name;
-		public double number;
-		public int decimals;
-		public ValueResult( String name, double number, int decimals ) {
-			this.name = name;
-			this.number = number;
-			this.decimals = decimals;
-		}
-	}
 	// a list of named values, collected from algorithms
 	protected List<ValueResult> valueResults = new ArrayList<ValueResult>();
 
