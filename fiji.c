@@ -1998,6 +1998,9 @@ static int start_ij(void)
 	read_file_as_string(fiji_path("jvm.cfg"), jvm_options);
 #endif
 
+	if (jvm_options->length)
+		add_options(&options, jvm_options->buffer, 0);
+
 	for (i = 1; i < main_argc; i++)
 		if (!strcmp(main_argv[i], "--") && !dashdash)
 			dashdash = count;
@@ -2317,8 +2320,6 @@ static int start_ij(void)
 		add_option_string(&options, buffer, 0);
 	}
 
-	if (jvm_options->length)
-		add_options(&options, jvm_options->buffer, 0);
 	if (default_arguments->length)
 		add_options(&options, default_arguments->buffer, 1);
 
