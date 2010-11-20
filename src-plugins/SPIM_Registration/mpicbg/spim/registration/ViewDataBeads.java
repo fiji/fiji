@@ -32,7 +32,7 @@ public class ViewDataBeads implements Comparable<ViewDataBeads>
 		setFileName( fileName );
 		setZStretching( zStretching );
 		
-		this.tile = new TileSPIM( model.clone(), this );
+		this.tile = new TileSPIM( model.copy(), this );
 		this.beads = new BeadStructure();
 	}
 	
