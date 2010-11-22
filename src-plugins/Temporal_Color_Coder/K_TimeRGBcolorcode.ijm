@@ -3,11 +3,10 @@
 ************* Temporal-Color Coder *******************************
 Color code the temporal changes.
 
-Kota Miura (miura@embl.de) +49 6221 387 404
+Kota Miura (miura@embl.de)
 Centre for Molecular and Cellular Imaging, EMBL Heidelberg, Germany
 
-!!! Please do not distribute. If asked, please tell the person to contact me. !!!
-If you publish a paper using this macro, it would be cratedful if you could acknowledge.
+If you publish a paper using this macro, please acknowledge.
 
 
 ---- INSTRUCTION ----
@@ -26,30 +25,36 @@ History
 
 		future probable addiition: none-linear assigning of gray intensity to color intensity
 		--> but this is same as doing contrast enhancement before processing.
+101122  plugin'ified it
 *****************************************************************************
 */
-
 
 var Glut = "Fire";	//default LUT
 var Gstartf = 1;
 var Gendf = 10;
-var GFrameColorScaleCheck=1;
+var GFrameColorScaleCheck = 1;
 
-macro "Time-Lapse Color Coder"{
-	Gendf = nSlices;
-	Glut = ChooseLut();
-	run("Duplicate...", "title=listeriacells-1.stk duplicate");
-	hh = getHeight();
-	ww = getWidth();
-	totalslice = nSlices;
-	calcslices = Gendf - Gstartf +1;
-	run("8-bit");
+macro "Time-Lapse Color Coder" {
+	Stack.getDimensions(ww, hh, channels, slices, frames);
+	Gendf = frames;
+	if (channels > 1)
+		exit("Cannot color-code multi-channel images!");
+	showDialog();
+	totalframes = Gendf - Gstartf + 1;
+	calcslices = slices * totalframes;
 	imgID = getImageID();
 
 	newImage("colored", "RGB White", ww, hh, calcslices);
+	run("Stack to Hyperstack...", "order=xyczt(default) channels=1 slices="
+		+ slices + " frames=" + totalframes + " display=Color");
 	newimgID = getImageID();
 
 	setBatchMode(true);
+
+	selectImage(imgID);
+	run("Duplicate...", "duplicate");
+	run("8-bit");
+	imgID = getImageID();
 
 	newImage("stamp", "8-bit White", 10, 10, 1);
 	run(Glut);
@@ -59,63 +64,63 @@ macro "Time-Lapse Color Coder"{
 	ngA = newArray(256);
 	nbA = newArray(256);
 
-	for (i=0; i<calcslices; i++) {
-		colorscale=floor((256/calcslices)*i);
-		//print(colorscale);
-		for (j=0; j<256; j++) {
-			intensityfactor=0;
-			if (j!=0) intensityfactor = j/255;
+	newImage("temp", "8-bit White", ww, hh, 1);
+	tempID = getImageID();
+
+	for (i = 0; i < totalframes; i++) {
+		colorscale = floor((256 / totalframes) * i);
+		for (j = 0; j < 256; j++) {
+			intensityfactor = j / 255;
 			nrA[j] = round(rA[colorscale] * intensityfactor);
 			ngA[j] = round(gA[colorscale] * intensityfactor);
 			nbA[j] = round(bA[colorscale] * intensityfactor);
 		}
-		newImage("temp", "8-bit White", ww, hh, 1);
-		tempID = getImageID;
 
-		selectImage(imgID);
-		setSlice(i+Gstartf);
-		run("Select All");
-		run("Copy");
+		for (j = 0; j < slices; j++) {
+			selectImage(imgID);
+			Stack.setPosition(1, j + 1, i + Gstartf);
+			run("Select All");
+			run("Copy");
 
-		selectImage(tempID);
-		run("Paste");
-		setLut(nrA, ngA, nbA);
-		run("RGB Color");
-		run("Select All");
-		run("Copy");
-		close();
+			selectImage(tempID);
+			run("Paste");
+			setLut(nrA, ngA, nbA);
+			run("RGB Color");
+			run("Select All");
+			run("Copy");
+			run("8-bit");
 
-		selectImage(newimgID);
-		setSlice(i+1);
-		run("Select All");
-		run("Paste");
+			selectImage(newimgID);
+			Stack.setPosition(1, j + 1, i + 1);
+			run("Select All");
+			run("Paste");
+		}
 	}
+
+	selectImage(tempID);
+	close();
 
 	selectImage(imgID);
 	close();
-	selectImage(newimgID);
-	op = "start=1 stop="+totalslice+" projection=[Max Intensity]";
-	run("Z Project...", op);
+
 	setBatchMode("exit and display");
-	if (GFrameColorScaleCheck) CreatGrayscale256(Glut, Gstartf, Gendf);
+
+	selectImage(newimgID);
+	run("Stack to Hyperstack...", "order=xyctz channels=1 slices="
+		+ totalframes + " frames=" + slices + " display=Color");
+	op = "start=1 stop=" + Gendf + " projection=[Max Intensity] all";
+	run("Z Project...", op);
+	if (slices > 1)
+		run("Stack to Hyperstack...", "order=xyczt(default) channels=1 slices=" + slices
+			+ " frames=1 display=Color");
+	selectImage(newimgID);
+	close();
+	if (GFrameColorScaleCheck)
+		CreateScale(Glut, Gstartf, Gendf);
 }
 
-/*
-run("Spectrum");
-run("Fire");
-run("Ice");
-run("3-3-2 RGB");
-run("brgbcmyw");
-run("Green Fire Blue");
-run("royal");
-run("thal");
-run("smart");
-run("unionjack");
-10 luts
-*/
-
-function ChooseLut() {
-	lutA=newArray(10);
+function showDialog() {
+	lutA = newArray(10);
 	lutA[0] = "Spectrum";
 	lutA[1] = "Fire";
 	lutA[2] = "Ice";
@@ -132,45 +137,41 @@ function ChooseLut() {
 	Dialog.addNumber("start frame", Gstartf);
 	Dialog.addNumber("end frame", Gendf);
 	Dialog.addCheckbox("create Time Color Scale Bar", GFrameColorScaleCheck);
+	Dialog.addMessage("Author: Kota Miura (miura@embl.de)\n"
+		+ "Centre for Molecular and Cellular Imaging, EMBL Heidelberg, Germany\n"
+		+ " \n"
+		+ "If you publish a paper using this macro, please acknowledge.");
  	Dialog.show();
  	Glut = Dialog.getChoice();
-	Gstartf= Dialog.getNumber();
-	Gendf= Dialog.getNumber();
+	Gstartf = Dialog.getNumber();
+	Gendf = Dialog.getNumber();
 	GFrameColorScaleCheck = Dialog.getCheckbox();
-	print("selected lut:"+ Glut);
-	return Glut;
 }
 
-function CreatGrayscale256(lutstr, beginf, endf){
+function CreateScale(lutstr, beginf, endf){
 	ww = 256;
-	hh=32;
+	hh = 32;
 	newImage("color time scale", "8-bit White", ww, hh, 1);
-	for (j=0; j<hh; j++) {
-		for (i=0; i<ww; i++) {
+	for (j = 0; j < hh; j++) {
+		for (i = 0; i < ww; i++) {
 			setPixel(i, j, i);
 		}
 	}
 	run(lutstr);
-	//setLut(nrA, ngA, nbA);
 	run("RGB Color");
-	op = "width="+ww+" height="+hh+16+" position=Top-Center zero";
+	op = "width=" + ww + " height=" + (hh + 16) + " position=Top-Center zero";
 	run("Canvas Size...", op);
 	setFont("SansSerif", 12, "antiliased");
 	run("Colors...", "foreground=white background=black selection=yellow");
-	drawString("frame", round(ww/2)-12, hh+16);
-	drawString(leftPad(beginf, 3), 0, hh+16);
-	drawString(leftPad(endf, 3), ww-24, hh+16);
+	drawString("frame", round(ww / 2) - 12, hh + 16);
+	drawString(leftPad(beginf, 3), 0, hh + 16);
+	drawString(leftPad(endf, 3), ww - 24, hh + 16);
 
 }
 
 function leftPad(n, width) {
-    s =""+n;
-    while (lengthOf(s)<width)
-        s = "0"+s;
+    s = "" + n;
+    while (lengthOf(s) < width)
+        s = "0" + s;
     return s;
 }
-/*
-macro "drawscale"{
-	CreatGrayscale256("Fire", 1, 100);
-}
-*/
