@@ -3,13 +3,13 @@
 ************* Temporal-Color Coder *******************************
 Color code the temporal changes.
 
-Kota Miura (miura@embl.de) +49 6221 387 404 
+Kota Miura (miura@embl.de) +49 6221 387 404
 Centre for Molecular and Cellular Imaging, EMBL Heidelberg, Germany
 
 !!! Please do not distribute. If asked, please tell the person to contact me. !!!
-If you publish a paper using this macro, it would be cratedful if you could acknowledge. 
+If you publish a paper using this macro, it would be cratedful if you could acknowledge.
 
- 
+
 ---- INSTRUCTION ----
 
 1. Open a stack (8 bit or 16 bit)
@@ -96,7 +96,7 @@ macro "Time-Lapse Color Coder"{
 	selectImage(newimgID);
 	op = "start=1 stop="+totalslice+" projection=[Max Intensity]";
 	run("Z Project...", op);
-	setBatchMode("exit and display");	
+	setBatchMode("exit and display");
 	if (GFrameColorScaleCheck) CreatGrayscale256(Glut, Gstartf, Gendf);
 }
 
@@ -174,7 +174,3 @@ macro "drawscale"{
 	CreatGrayscale256("Fire", 1, 100);
 }
 */
-
-
-
-
