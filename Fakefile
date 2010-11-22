@@ -198,7 +198,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/FeatureJ_.jar \
 	plugins/RandomJ_.jar \
 	plugins/Linear_Kuwahara.jar \
-	plugins/Jython_Scripts.jar
+	plugins/Jython_Scripts.jar \
+	plugins/Temporal_Color_Coder.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
