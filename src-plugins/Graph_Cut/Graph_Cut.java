@@ -22,11 +22,14 @@ import java.awt.event.WindowEvent;
 
 import java.io.File;
 
+import java.util.Vector;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -93,17 +96,25 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 	// the image the gui was started with
 	private ImagePlus imp;
 
+	// the edge image
+	private ImagePlus edge;
+
 	// the segmentation image for the gui
 	private ImagePlus seg;
 
 	// the potts weight
 	private float pottsWeight = POTTS_INIT;
+	private float edgeWeight  = EDGE_INIT;
 
 	// min, max, and default value for potts weight
 	private static final int POTTS_MIN  = 0;
 	private static final int POTTS_MAX  = 1000;
 	private static final int POTTS_INIT = POTTS_MAX/2;
 
+	private static final int EDGE_MIN  = 0;
+	private static final int EDGE_MAX  = 1000;
+	private static final int EDGE_INIT = EDGE_MAX/2;
+	private static final float EDGE_SCALE = 0.001f;
 
 	// the GUI window
 	private GraphCutWindow win;
@@ -133,7 +144,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 	private JPanel buttonsPanel;
 
 	// panel containing the potts slider
-	private JPanel pottsPanel;
+	private JPanel weightPanel;
 
 	// start graph cut button
 	private JButton applyButton;
@@ -146,6 +157,13 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 
 	// slider to adjust the potts weight
 	private JSlider pottsSlider;
+
+	// slider to adjust the edge weight
+	private JSlider edgeSlider;
+
+	// combo box to select the edge image
+	private JComboBox edgeSelector;
+
 
 	/**
 	 * Custom canvas to deal with zooming an panning.
@@ -245,6 +263,9 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 						} else if (e.getSource() == batchButton) {
 							batchProcessImages();
 						}
+
+						if (e.getSource() == edgeSelector)
+							edge = (ImagePlus)edgeSelector.getSelectedItem();
 					}
 				});
 			}
@@ -255,8 +276,10 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 	
 			public void stateChanged(final ChangeEvent e) {
 				JSlider source = (JSlider)e.getSource();
-				if(e.getSource() == pottsSlider)
+				if (e.getSource() == pottsSlider)
 					pottsWeight = source.getValue();
+				if (e.getSource() == edgeSlider)
+					edgeWeight = source.getValue()*EDGE_SCALE;
 			}
 		};
 
@@ -281,9 +304,25 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			pottsSlider = new JSlider(JSlider.HORIZONTAL, POTTS_MIN, POTTS_MAX, POTTS_INIT);
 			pottsSlider.setToolTipText("Adjust the smoothness of the segmentation.");
 			pottsSlider.setMajorTickSpacing(500);
-			pottsSlider.setMinorTickSpacing(1);
+			pottsSlider.setMinorTickSpacing(10);
 			pottsSlider.setPaintTicks(true);
 			pottsSlider.setPaintLabels(true);
+	
+			edgeSlider = new JSlider(JSlider.HORIZONTAL, EDGE_MIN, EDGE_MAX, EDGE_INIT);
+			edgeSlider.setToolTipText("Adjust the influence of the edge image.");
+			edgeSlider.setMajorTickSpacing(500);
+			edgeSlider.setMinorTickSpacing(10);
+			edgeSlider.setPaintTicks(true);
+			edgeSlider.setPaintLabels(true);
+
+			Vector<ImagePlus> windowList = new Vector<ImagePlus>();
+			final int[] windowIds = WindowManager.getIDList();
+
+			windowList.add(null); // "no edge image"
+			for (int i = 0; ((windowIds != null) && (i < windowIds.length)); i++) 
+				windowList.add(WindowManager.getImage(windowIds[i]));
+
+			edgeSelector = new JComboBox(windowList);
 	
 			resultOverlay = new ImageOverlay();
 	
@@ -319,6 +358,8 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			batchButton.addActionListener(actionListener);
 			overlayButton.addActionListener(actionListener);
 			pottsSlider.addChangeListener(changeListener);
+			edgeSlider.addChangeListener(changeListener);
+			edgeSelector.addActionListener(actionListener);
 	
 			// Apply panel (left side of the GUI)
 			applyPanel = new JPanel();
@@ -342,20 +383,24 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			applyConstraints.gridy++;
 	
 			// Potts panel
-			GridBagLayout pottsLayout = new GridBagLayout();
-			GridBagConstraints pottsConstraints = new GridBagConstraints();
-			pottsPanel = new JPanel();
-			pottsPanel.setBorder(BorderFactory.createTitledBorder("Smoothness"));
-			pottsPanel.setLayout(pottsLayout);
-			pottsConstraints.anchor = GridBagConstraints.NORTHWEST;
-			pottsConstraints.fill = GridBagConstraints.HORIZONTAL;
-			pottsConstraints.gridwidth = 1;
-			pottsConstraints.gridheight = 1;
-			pottsConstraints.gridx = 0;
-			pottsConstraints.gridy = 0;
-			pottsPanel.add(pottsSlider, pottsConstraints);
-			pottsConstraints.gridy++;
-			pottsConstraints.insets = new Insets(5, 5, 6, 6);
+			GridBagLayout weightsLayout = new GridBagLayout();
+			GridBagConstraints weightsConstraints = new GridBagConstraints();
+			weightPanel = new JPanel();
+			weightPanel.setBorder(BorderFactory.createTitledBorder("Smoothness"));
+			weightPanel.setLayout(weightsLayout);
+			weightsConstraints.anchor = GridBagConstraints.NORTHWEST;
+			weightsConstraints.fill = GridBagConstraints.HORIZONTAL;
+			weightsConstraints.gridwidth = 1;
+			weightsConstraints.gridheight = 1;
+			weightsConstraints.gridx = 0;
+			weightsConstraints.gridy = 0;
+			weightPanel.add(pottsSlider, weightsConstraints);
+			weightsConstraints.gridy++;
+			weightPanel.add(edgeSlider, weightsConstraints);
+			weightsConstraints.gridy++;
+			weightPanel.add(edgeSelector, weightsConstraints);
+			weightsConstraints.gridy++;
+			weightsConstraints.insets = new Insets(5, 5, 6, 6);
 	
 			// Buttons panel
 			GridBagLayout buttonsLayout = new GridBagLayout();
@@ -370,7 +415,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			buttonsConstraints.gridy = 0;
 			buttonsPanel.add(applyPanel, buttonsConstraints);
 			buttonsConstraints.gridy++;
-			buttonsPanel.add(pottsPanel, buttonsConstraints);
+			buttonsPanel.add(weightPanel, buttonsConstraints);
 			buttonsConstraints.gridy++;
 			buttonsConstraints.insets = new Insets(5, 5, 6, 6);
 
@@ -420,6 +465,8 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 					batchButton.removeActionListener(actionListener);
 					overlayButton.removeActionListener(actionListener);
 					pottsSlider.removeChangeListener(changeListener);
+					edgeSlider.removeChangeListener(changeListener);
+					edgeSelector.removeActionListener(actionListener);
 				}
 			});
 	
@@ -498,10 +545,13 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 	 * isotropic edge weight.
 	 *
 	 * @param imp         The image to process
+	 * @param edge        An edge image that increases the likelihood for cuts
+	 *                    between certain pixels
 	 * @param pottsWeight Isotropic edge weights.
+	 * @param edgeWeight  The influence of the edge image.
 	 * @return A binary segmentation image
 	 */
-	public ImagePlus processSingleChannelImage(ImagePlus imp, float pottsWeight) {
+	public ImagePlus processSingleChannelImage(ImagePlus imp, ImagePlus edge, float pottsWeight, float edgeWeight) {
 		
 		// prepare segmentation image
 		int[] dimensions    = imp.getDimensions();
@@ -512,7 +562,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 		                               width, height, zslices);
 
 		// fill it with the segmentation
-		processSingleChannelImage(imp, pottsWeight, seg);
+		processSingleChannelImage(imp, edge, pottsWeight, edgeWeight, seg);
 
 		return seg;
 	}
@@ -604,7 +654,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 
 					IJ.log("Processing image " + file.getName() + " in thread " + numThread);
 
-					ImagePlus segmentation = processSingleChannelImage(batchImage, pottsWeight);
+					ImagePlus segmentation = processSingleChannelImage(batchImage, null, pottsWeight, 0.0f);
 
 					if (showResults) {
 						segmentation.show();
@@ -639,9 +689,12 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 		setButtonsEnabled(true);
 	}
 
-	private void processSingleChannelImage(ImagePlus imp, float pottsWeight, ImagePlus seg) {
+	private void processSingleChannelImage(ImagePlus imp, ImagePlus edge, float pottsWeight, float edgeWeight, ImagePlus seg) {
 
-		Image<T> image = ImagePlusAdapter.wrap(imp);
+		Image<T> image     = ImagePlusAdapter.wrap(imp);
+		Image<T> edgeImage = null;
+		if (edge != null)
+			edgeImage = ImagePlusAdapter.wrap(edge);
 
 		// get some statistics
 		int[] dimensions = image.getDimensions();
@@ -681,7 +734,11 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 
 		// set edge weights
 		IJ.log("Setting edge weights to " + pottsWeight + "...");
-		cursor   = image.createLocalizableByDimCursor();
+		if (edge != null) {
+			IJ.log("   (under consideration of edge image with weight " + edgeWeight + ")");
+			cursor   = edgeImage.createLocalizableByDimCursor();
+		} else
+			cursor   = image.createLocalizableByDimCursor();
 		int[] neighborPosition = new int[dimensions.length];
 		int e = 0;
 		start = System.currentTimeMillis();
@@ -693,6 +750,8 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			cursor.getPosition(imagePosition);
 			int nodeNum = listPosition(imagePosition, dimensions);
 
+			float value = cursor.getType().getRealFloat();
+
 			neighborPosition = imagePosition;
 
 			for (int d = 0; d < dimensions.length; d++) {
@@ -702,11 +761,22 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 				if (neighborPosition[d] >= 0) {
 
 					int neighborNum = listPosition(neighborPosition, dimensions);
-					graphCut.setEdgeWeight(nodeNum, neighborNum, pottsWeight);
+
+					float weight = pottsWeight;
+
+					if (edge != null) {
+
+						cursor.setPosition(neighborPosition);
+						weight += edgeWeight*(255.0f - Math.abs(cursor.getType().getRealFloat() - value));
+					}
+
+					graphCut.setEdgeWeight(nodeNum, neighborNum, weight);
 					e++;
 				}
 				neighborPosition[d] += 1;
 			}
+
+			cursor.setPosition(imagePosition);
 		}
 		end = System.currentTimeMillis();
 		IJ.log("...done inserting " + e + " edges. (" + (end - start) + "ms)");
@@ -772,9 +842,9 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 	private void updateSegmentationImage() {
 
 		if (seg == null)
-			seg = processSingleChannelImage(imp, pottsWeight);
+			seg = processSingleChannelImage(imp, edge, pottsWeight, edgeWeight);
 		else
-			processSingleChannelImage(imp, pottsWeight, seg);
+			processSingleChannelImage(imp, edge, pottsWeight, edgeWeight, seg);
 	}
 
 	private int listPosition(int[] imagePosition, int[] dimensions) {
