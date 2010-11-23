@@ -26,6 +26,7 @@ History
 		future probable addiition: none-linear assigning of gray intensity to color intensity
 		--> but this is same as doing contrast enhancement before processing.
 101122  plugin'ified it
+101123	fixed for cases when slices > 1 and frames == 1
 *****************************************************************************
 */
 
@@ -36,10 +37,19 @@ var GFrameColorScaleCheck = 1;
 
 macro "Time-Lapse Color Coder" {
 	Stack.getDimensions(ww, hh, channels, slices, frames);
-	Gendf = frames;
 	if (channels > 1)
 		exit("Cannot color-code multi-channel images!");
+	//swap slices and frames in case:
+	if ((slices > 1) && (frames == 1)) {
+		frames = slices;
+		slices = 1;
+		Stack.setDimensions(1, slices, frames);
+		print("slices and frames swapped");
+	}
+	Gendf = frames;
 	showDialog();
+	if (Gstartf <1) Gstartf = 1;
+	if (Gendf > frames) Gendf = frames;
 	totalframes = Gendf - Gstartf + 1;
 	calcslices = slices * totalframes;
 	imgID = getImageID();
@@ -136,12 +146,8 @@ function showDialog() {
 	Dialog.addChoice("LUT", lutA);
 	Dialog.addNumber("start frame", Gstartf);
 	Dialog.addNumber("end frame", Gendf);
-	Dialog.addCheckbox("create Time Color Scale Bar", GFrameColorScaleCheck);
-	Dialog.addMessage("Author: Kota Miura (miura@embl.de)\n"
-		+ "Centre for Molecular and Cellular Imaging, EMBL Heidelberg, Germany\n"
-		+ " \n"
-		+ "If you publish a paper using this macro, please acknowledge.");
- 	Dialog.show();
+	Dialog.addCheckbox("Create Time Color Scale Bar", GFrameColorScaleCheck);
+	Dialog.show();
  	Glut = Dialog.getChoice();
 	Gstartf = Dialog.getNumber();
 	Gendf = Dialog.getNumber();
