@@ -1,5 +1,9 @@
 import ij.IJ;
+import ij.ImagePlus;
+import ij.WindowManager;
+
 import ij.gui.GenericDialog;
+
 import ij.plugin.PlugIn;
 
 public class Thread_Killer implements PlugIn {
@@ -40,6 +44,11 @@ public class Thread_Killer implements PlugIn {
 			return;
 		int threadIndex = gd.getNextChoiceIndex();
 		threads[threadIndex].stop();
+
+		for (int id : WindowManager.getIDList()) {
+			ImagePlus image = WindowManager.getImage(id);
+			if (image != null)
+				image.unlock();
+		}
 	}
 }
-
