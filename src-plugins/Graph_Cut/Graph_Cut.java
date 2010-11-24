@@ -104,9 +104,15 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 	private ImagePlus seg;
 
 	// the potts weight
+	private float dataWeight   = DATA_INIT;
 	private float pottsWeight  = POTTS_INIT;
 	private float edgeWeight   = EDGE_INIT;
 	private float edgeVariance = 10.0f;
+
+	private static final float DATA_SCALE = 0.01f;
+	private static final int DATA_MIN  = 0;
+	private static final int DATA_MAX  = 100;
+	private static final float DATA_INIT = DATA_SCALE*((float)DATA_MAX/2.0f);
 
 	private static final float POTTS_SCALE = 0.01f;
 	private static final int POTTS_MIN  = 0;
@@ -159,6 +165,9 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 
 	// toggle segmentation overlay button
 	private JButton overlayButton;
+
+	// slider to adjust the data weight
+	private JSlider dataSlider;
 
 	// slider to adjust the potts weight
 	private JSlider pottsSlider;
@@ -285,6 +294,8 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 					pottsWeight = source.getValue()*POTTS_SCALE;
 				if (e.getSource() == edgeSlider)
 					edgeWeight = source.getValue()*EDGE_SCALE;
+				if (e.getSource() == dataSlider)
+					dataWeight = source.getValue()*DATA_SCALE;
 			}
 		};
 
@@ -305,6 +316,13 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 	
 			overlayButton = new JButton ("Toggle overlay");
 			overlayButton.setToolTipText("Toggle the segmentation overlay in the image");
+
+			dataSlider = new JSlider(JSlider.HORIZONTAL, DATA_MIN, DATA_MAX, (int)(DATA_INIT/DATA_SCALE));
+			dataSlider.setToolTipText("Adjust the influence of the data term.");
+			dataSlider.setMajorTickSpacing(500);
+			dataSlider.setMinorTickSpacing(10);
+			dataSlider.setPaintTicks(true);
+			dataSlider.setPaintLabels(true);
 
 			pottsSlider = new JSlider(JSlider.HORIZONTAL, POTTS_MIN, POTTS_MAX, (int)(POTTS_INIT/POTTS_SCALE));
 			pottsSlider.setToolTipText("Adjust the smoothness of the segmentation.");
@@ -362,6 +380,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			applyButton.addActionListener(actionListener);
 			batchButton.addActionListener(actionListener);
 			overlayButton.addActionListener(actionListener);
+			dataSlider.addChangeListener(changeListener);
 			pottsSlider.addChangeListener(changeListener);
 			edgeSlider.addChangeListener(changeListener);
 			edgeSelector.addActionListener(actionListener);
@@ -399,6 +418,8 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			weightsConstraints.gridheight = 1;
 			weightsConstraints.gridx = 0;
 			weightsConstraints.gridy = 0;
+			weightPanel.add(dataSlider, weightsConstraints);
+			weightsConstraints.gridy++;
 			weightPanel.add(pottsSlider, weightsConstraints);
 			weightsConstraints.gridy++;
 			weightPanel.add(edgeSlider, weightsConstraints);
@@ -556,7 +577,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 	 * @param edgeWeight  The influence of the edge image.
 	 * @return A binary segmentation image
 	 */
-	public ImagePlus processSingleChannelImage(ImagePlus imp, ImagePlus edge, float pottsWeight, float edgeWeight) {
+	public ImagePlus processSingleChannelImage(ImagePlus imp, ImagePlus edge, float dataWeight, float pottsWeight, float edgeWeight) {
 		
 		// prepare segmentation image
 		int[] dimensions    = imp.getDimensions();
@@ -567,7 +588,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 		                               width, height, zslices);
 
 		// fill it with the segmentation
-		processSingleChannelImage(imp, edge, pottsWeight, edgeWeight, seg);
+		processSingleChannelImage(imp, edge, dataWeight, pottsWeight, edgeWeight, seg);
 
 		return seg;
 	}
@@ -659,7 +680,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 
 					IJ.log("Processing image " + file.getName() + " in thread " + numThread);
 
-					ImagePlus segmentation = processSingleChannelImage(batchImage, null, pottsWeight, edgeWeight);
+					ImagePlus segmentation = processSingleChannelImage(batchImage, null, dataWeight, pottsWeight, edgeWeight);
 
 					if (showResults) {
 						segmentation.show();
@@ -694,7 +715,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 		setButtonsEnabled(true);
 	}
 
-	private void processSingleChannelImage(ImagePlus imp, ImagePlus edge, float pottsWeight, float edgeWeight, ImagePlus seg) {
+	private void processSingleChannelImage(ImagePlus imp, ImagePlus edge, float dataWeight, float pottsWeight, float edgeWeight, ImagePlus seg) {
 
 		Image<T> image     = ImagePlusAdapter.wrap(imp);
 		Image<T> edgeImage = null;
@@ -738,7 +759,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 		IJ.log("...done. (" + (end - start) + "ms)");
 
 		// set terminal weights, i.e., segmentation probabilities
-		IJ.log("Setting terminal weights...");
+		IJ.log("Setting terminal weights with data prior " + dataWeight + "...");
 		start = System.currentTimeMillis();
 		while (cursor.hasNext()) {
 
@@ -751,8 +772,9 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			float value = type.getRealFloat();
 
 			float probData  = (value/255.0f);
-			float fweight = -(float)Math.log(probData);
-			float bweight = -(float)Math.log(1.0 - probData);
+			float probPrior = dataWeight;
+			float fweight = -(float)Math.log(probData) - (float)Math.log(probPrior);
+			float bweight = -(float)Math.log(1.0 - probData) - (float)Math.log(1.0 - probPrior);
 
 			graphCut.setTerminalWeights(nodeNum, fweight, bweight);
 		}
@@ -919,9 +941,9 @@ A:			for (int i = 0; i < neighborPositions.length; i++) {
 	private void updateSegmentationImage() {
 
 		if (seg == null)
-			seg = processSingleChannelImage(imp, edge, pottsWeight, edgeWeight);
+			seg = processSingleChannelImage(imp, edge, dataWeight, pottsWeight, edgeWeight);
 		else
-			processSingleChannelImage(imp, edge, pottsWeight, edgeWeight, seg);
+			processSingleChannelImage(imp, edge, dataWeight, pottsWeight, edgeWeight, seg);
 	}
 
 	private float edgeLikelihood(float value1, float value2, int[] position1, int[] position2, int[] dimensions) {
