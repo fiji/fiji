@@ -1360,7 +1360,7 @@ public class FeatureStack
 		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
 		final ArrayList< Future<ImagePlus> > futures = new ArrayList< Future<ImagePlus> >();
-		
+		int n=0;
 		try{
 			
 			// Anisotropic Diffusion
@@ -1369,10 +1369,13 @@ public class FeatureStack
 				//for(int i = 1; i < 8; i += 3)
 				for (float i=minimumSigma; i<= maximumSigma; i *=2)
 					for(float j = 0.10f; j < 0.5f; j+= 0.25f)
+					{
+						//IJ.log( n++ +": Calculating anisotropic diffusion (20, 20, " + i + ", " + j + ", 0.9f" + ", " + membraneSize + ")");
 					//for(float j = 0.10f; j <= 0.5f; j+= 0.2f)
 						//for(float k = 0.5f; k < 6f; k+= 1f)
 							futures.add(exe.submit( getAnisotropicDiffusion(originalImage, 20, 20,(int) i, j, 0.9f, (float) membraneSize) ) );
 							//futures.add(exe.submit( getAnisotropicDiffusion(originalImage, 20, 20, (int) i, j, 0.9f, k) ) );
+					}
 			}
 			
 			// Bilateral filter
@@ -1380,21 +1383,30 @@ public class FeatureStack
 			{
 				for(double i = 5; i < 20; i *= 2)
 					for(double j = 50; j <= 100; j*= 2)
+					{
+						//IJ.log( n++ +": Calculating bilateral filter (" + i + ", " + j + ")");
 						futures.add(exe.submit( getBilateralFilter(originalImage, i, j) ) );
+					}
 			}
 			
 			// Bilateral filter
 			if(enableFeatures[LIPSCHITZ])			
 			{
 				for(double i = 5; i < 30; i += 5)					
+				{
+					//IJ.log( n++ +": Calculating Lipschitz filter (true, true, " + i + ")");
 					futures.add(exe.submit( getLipschitzFilter(originalImage, true, true, i) ) );
+				}
 			}
 			
 			// Kuwahara filter
 			if(enableFeatures[KUWAHARA])			
 			{			
 				for(int i = 0; i < 3; i++)
+				{
+					//IJ.log( n++ +": Calculating Kuwahara filter (" + membranePatchSize + ", " + nAngles + ", " + i + ")");
 					futures.add(exe.submit( getKuwaharaFeatures(originalImage, membranePatchSize, nAngles, i) ) );
+				}
 			}
 			
 			// Gabor filters
@@ -1406,6 +1418,7 @@ public class FeatureStack
 						for(int frequency = 2; frequency<=3; frequency ++)
 						{
 							final double psi = Math.PI / 4 * i;
+							//IJ.log( n++ +": Calculating Gabor filter (1.0, " + gamma + ", " + psi + ", " + frequency + ", " + nAngles + ")");
 							futures.add(exe.submit( getGabor(originalImage, 1.0, gamma, psi, frequency, nAngles) ) );
 						}
 				// elongated filters in x- axis (sigma = [2.0 - 4.0], gamma = [1.0 - 2.0])
@@ -1415,6 +1428,7 @@ public class FeatureStack
 							for(int frequency = 2; frequency<=3; frequency ++)
 							{
 								final double psi = Math.PI / 4 * i;
+								//IJ.log( n++ +": Calculating Gabor filter (" + sigma + " , " + gamma + ", " + psi + ", " + frequency + ", " + nAngles + ")");
 								futures.add(exe.submit( getGabor(originalImage, sigma, gamma, psi, frequency, nAngles) ) );
 							}
 				
@@ -1424,11 +1438,13 @@ public class FeatureStack
 			// Sobel (no blur)
 			if(enableFeatures[SOBEL])
 			{
+				//IJ.log(n++ + ": Calculating Sobel filter (0.0)");
 				futures.add(exe.submit( getGradient(originalImage, 0)) );
 			}
 			// Hessian (no blur)
 			if(enableFeatures[HESSIAN])
 			{
+				//IJ.log( n++ +": Calculating Hessian filter (0.0)");
 				futures.add(exe.submit( getHessian(originalImage, 0)) );
 			}
 			
@@ -1439,16 +1455,19 @@ public class FeatureStack
 				// Gaussian blur
 				if(enableFeatures[GAUSSIAN])
 				{
+					//IJ.log( n++ +": Calculating Gaussian filter ("+ i + ")");
 					futures.add(exe.submit( getGaussianBlur(originalImage, i)) );
 				}
 				// Sobel
 				if(enableFeatures[SOBEL])
 				{
+					//IJ.log( n++ +": Calculating Sobel filter ("+ i + ")");
 					futures.add(exe.submit( getGradient(originalImage, i)) );
 				}
 				// Hessian
 				if(enableFeatures[HESSIAN])
 				{
+					//IJ.log("Calculating Hessian filter ("+ i + ")");
 					futures.add(exe.submit( getHessian(originalImage, i)) );
 				}
 				// Difference of gaussians
@@ -1456,28 +1475,33 @@ public class FeatureStack
 				{
 					for (float j=minimumSigma; j<i; j*=2)
 					{
+						//IJ.log( n++ +": Calculating DoG filter ("+ i + ", " + j + ")");
 						futures.add(exe.submit( getDoG(originalImage, i, j)) );
 					}
 				}
 				// Variance
 				if(enableFeatures[VARIANCE])
 				{
+					//IJ.log( n++ +": Calculating Variance filter ("+ i + ")");
 					futures.add(exe.submit( getVariance(originalImage, i)) );
 				}
 				// Mean
 				if(enableFeatures[MEAN])
 				{
+					//IJ.log( n++ +": Calculating Mean filter ("+ i + ")");
 					futures.add(exe.submit( getMean(originalImage, i)) );
 				}
 
 				// Min
 				if(enableFeatures[MINIMUM])
 				{
+					//IJ.log( n++ +": Calculating Minimum filter ("+ i + ")");
 					futures.add(exe.submit( getMin(originalImage, i)) );
 				}
 				// Max
 				if(enableFeatures[MAXIMUM])
 				{
+					//IJ.log( n++ +": Calculating Maximum filter ("+ i + ")");
 					futures.add(exe.submit( getMax(originalImage, i)) );
 				}
 /*
@@ -1493,17 +1517,21 @@ public class FeatureStack
 					for(float j = i/2; j<= i; j*=2)
 						futures.add(exe.submit( getBlurMax(originalImage, i, j)) );
 				}
-				
+*/				
 				// Median
 				if(enableFeatures[MEDIAN])
 				{
+					//IJ.log( n++ +": Calculating Median filter ("+ i + ")");
 					futures.add(exe.submit( getMedian(originalImage, i)) );
 				}
-*/
+
 			}
 			// Membrane projections
 			if(enableFeatures[MEMBRANE])
-				futures.add(exe.submit( getMembraneFeatures(originalImage, membranePatchSize, membraneSize) ));						
+			{
+				//IJ.log( n++ +": Calculating Membranes projections ("+ membranePatchSize + ", " + membraneSize + ")");
+				futures.add(exe.submit( getMembraneFeatures(originalImage, membranePatchSize, membraneSize) ));
+			}
 
 			// Wait for the jobs to be done
 			for(Future<ImagePlus> f : futures)
