@@ -113,13 +113,15 @@ public class Volume {
 					rLUT[i] = cm.getRed(i);
 					gLUT[i] = cm.getGreen(i);
 					bLUT[i] = cm.getBlue(i);
-					aLUT[i] = (rLUT[i] + gLUT[i] + bLUT[i]) / 3;
+					aLUT[i] = Math.min(254, (rLUT[i] + gLUT[i] + bLUT[i]) / 3);
 				}
 				break;
 			case ImagePlus.COLOR_RGB:
 				image = new IntImage(imp);
-				for(int i = 0; i < 256; i++)
-					rLUT[i] = gLUT[i] = bLUT[i] = aLUT[i] = i;
+				for(int i = 0; i < 256; i++) {
+					rLUT[i] = gLUT[i] = bLUT[i] = i;
+					aLUT[i] = Math.min(254, i);
+				}
 				break;
 			default:
 				throw new IllegalArgumentException("Unsupported image type");
