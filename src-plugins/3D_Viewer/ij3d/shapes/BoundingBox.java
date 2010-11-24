@@ -49,7 +49,10 @@ public class BoundingBox extends BranchGroup {
 		float lx = max.x - min.x;
 		float ly = max.y - min.y;
 		float lz = max.z - min.z;
+		float max = Math.max(lx, Math.max(ly, lz));
 		float min = Math.min(lx, Math.min(ly, lz));
+		if (min == 0 || max / min > 100)
+			min = max / 100;
 		double tmp = 0.00001f;
 		while(min / tmp > 5)
 			tmp *= 10;
@@ -59,7 +62,6 @@ public class BoundingBox extends BranchGroup {
 
 		float tickDistance = (float)tmp;
 
-		float max = Math.max(lx, Math.max(ly, lz));
 		float tickSize = max / 50;
 
 		Color3f c = color;
