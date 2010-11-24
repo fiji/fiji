@@ -22,6 +22,7 @@ import java.awt.event.WindowEvent;
 
 import java.io.File;
 
+import java.util.Arrays;
 import java.util.Vector;
 
 import java.util.concurrent.ExecutorService;
@@ -103,18 +104,22 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 	private ImagePlus seg;
 
 	// the potts weight
-	private float pottsWeight = POTTS_INIT;
-	private float edgeWeight  = EDGE_INIT;
+	private float pottsWeight  = POTTS_INIT;
+	private float edgeWeight   = EDGE_INIT;
+	private float edgeVariance = 10.0f;
 
-	// min, max, and default value for potts weight
+	private static final float POTTS_SCALE = 0.01f;
 	private static final int POTTS_MIN  = 0;
 	private static final int POTTS_MAX  = 1000;
-	private static final int POTTS_INIT = POTTS_MAX/2;
+	private static final float POTTS_INIT = POTTS_SCALE*((float)POTTS_MAX/2.0f);
 
+	private static final float EDGE_SCALE = 0.1f;
 	private static final int EDGE_MIN  = 0;
 	private static final int EDGE_MAX  = 1000;
-	private static final int EDGE_INIT = EDGE_MAX/2;
-	private static final float EDGE_SCALE = 0.001f;
+	private static final float EDGE_INIT = EDGE_SCALE*((float)EDGE_MAX/2.0f);
+
+	// use an eight connected neighborhood?
+	private boolean eightConnect = true;
 
 	// the GUI window
 	private GraphCutWindow win;
@@ -277,7 +282,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			public void stateChanged(final ChangeEvent e) {
 				JSlider source = (JSlider)e.getSource();
 				if (e.getSource() == pottsSlider)
-					pottsWeight = source.getValue();
+					pottsWeight = source.getValue()*POTTS_SCALE;
 				if (e.getSource() == edgeSlider)
 					edgeWeight = source.getValue()*EDGE_SCALE;
 			}
@@ -301,14 +306,14 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			overlayButton = new JButton ("Toggle overlay");
 			overlayButton.setToolTipText("Toggle the segmentation overlay in the image");
 
-			pottsSlider = new JSlider(JSlider.HORIZONTAL, POTTS_MIN, POTTS_MAX, POTTS_INIT);
+			pottsSlider = new JSlider(JSlider.HORIZONTAL, POTTS_MIN, POTTS_MAX, (int)(POTTS_INIT/POTTS_SCALE));
 			pottsSlider.setToolTipText("Adjust the smoothness of the segmentation.");
 			pottsSlider.setMajorTickSpacing(500);
 			pottsSlider.setMinorTickSpacing(10);
 			pottsSlider.setPaintTicks(true);
 			pottsSlider.setPaintLabels(true);
 	
-			edgeSlider = new JSlider(JSlider.HORIZONTAL, EDGE_MIN, EDGE_MAX, EDGE_INIT);
+			edgeSlider = new JSlider(JSlider.HORIZONTAL, EDGE_MIN, EDGE_MAX, (int)(EDGE_INIT/EDGE_SCALE));
 			edgeSlider.setToolTipText("Adjust the influence of the edge image.");
 			edgeSlider.setMajorTickSpacing(500);
 			edgeSlider.setMinorTickSpacing(10);
@@ -654,7 +659,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 
 					IJ.log("Processing image " + file.getName() + " in thread " + numThread);
 
-					ImagePlus segmentation = processSingleChannelImage(batchImage, null, pottsWeight, 0.0f);
+					ImagePlus segmentation = processSingleChannelImage(batchImage, null, pottsWeight, edgeWeight);
 
 					if (showResults) {
 						segmentation.show();
@@ -700,9 +705,27 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 		int[] dimensions = image.getDimensions();
 		int   numNodes   = image.size();
 		int   numEdges   = 0;
+
+		// compute number of edges
+
+		// straight edges
 		for (int d = 0; d < dimensions.length; d++)
 			numEdges += numNodes - numNodes/dimensions[d];
+		IJ.log("" + numEdges + " straight edges");
 
+		// diagonal edges
+		if (eightConnect) {
+
+			int eightEdges = 1;
+			for (int d = 0; d < dimensions.length; d++)
+				eightEdges *= dimensions[d] - 1;
+			int edgesPerNode = ((int)Math.pow(3, dimensions.length) - 1 - 2*dimensions.length)/2;
+
+			numEdges += edgesPerNode*eightEdges;
+			IJ.log("" + (edgesPerNode*eightEdges) + " diagonal edges");
+		}
+
+		// setup imglib cursor
 		LocalizableByDimCursor<T> cursor = image.createLocalizableByDimCursor();
 		int[] imagePosition              = new int[dimensions.length];
 
@@ -727,12 +750,62 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			T type = cursor.getType();
 			float value = type.getRealFloat();
 
-			graphCut.setTerminalWeights(nodeNum, value, 255.0f - value);
+			float probData  = (value/255.0f);
+			float fweight = -(float)Math.log(probData);
+			float bweight = -(float)Math.log(1.0 - probData);
+
+			graphCut.setTerminalWeights(nodeNum, fweight, bweight);
 		}
 		end = System.currentTimeMillis();
 		IJ.log("...done. (" + (end - start) + "ms)");
 
 		// set edge weights
+
+		// create neighbor offsets
+		int[][] neighborPositions;
+
+		if (eightConnect) {
+
+			neighborPositions = new int[((int)Math.pow(3, dimensions.length)-1)/2][dimensions.length];
+
+			Arrays.fill(neighborPositions[0], -1);
+
+			for (int i = 1; i < neighborPositions.length; i++) {
+
+				System.arraycopy(neighborPositions[i-1], 0, neighborPositions[i], 0, dimensions.length);
+
+				boolean valid = false;
+				do {
+
+					for (int d = dimensions.length - 1; d >= 0; d--) {
+
+						neighborPositions[i][d]++;
+						if (neighborPositions[i][d] < 2)
+							break;
+						neighborPositions[i][d] = -1;
+					}
+
+					// check if valid neighbor
+					for (int d = dimensions.length - 1; d >= 0; d--) {
+
+						if (neighborPositions[i][d] < 0) {
+							valid = true;
+							break;
+						}
+					}
+
+				} while (!valid);
+			}
+		} else {
+
+			neighborPositions = new int[dimensions.length][dimensions.length];
+
+			for (int d = 0; d < dimensions.length; d++) {
+				Arrays.fill(neighborPositions[d], 0);
+				neighborPositions[d][d] = -1;
+			}
+		}
+
 		IJ.log("Setting edge weights to " + pottsWeight + "...");
 		if (edge != null) {
 			IJ.log("   (under consideration of edge image with weight " + edgeWeight + ")");
@@ -752,28 +825,32 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 
 			float value = cursor.getType().getRealFloat();
 
-			neighborPosition = imagePosition;
+A:			for (int i = 0; i < neighborPositions.length; i++) {
 
-			for (int d = 0; d < dimensions.length; d++) {
+				for (int d = 0; d < dimensions.length; d++) {
 
-				neighborPosition[d] -= 1;
-
-				if (neighborPosition[d] >= 0) {
-
-					int neighborNum = listPosition(neighborPosition, dimensions);
-
-					float weight = pottsWeight;
-
-					if (edge != null) {
-
-						cursor.setPosition(neighborPosition);
-						weight += edgeWeight*(255.0f - Math.abs(cursor.getType().getRealFloat() - value));
-					}
-
-					graphCut.setEdgeWeight(nodeNum, neighborNum, weight);
-					e++;
+					neighborPosition[d] = imagePosition[d] + neighborPositions[i][d];
+					if (neighborPosition[d] < 0 || neighborPosition[d] >= dimensions[d])
+						continue A;
 				}
-				neighborPosition[d] += 1;
+
+
+				int neighborNum = listPosition(neighborPosition, dimensions);
+
+				float weight = pottsWeight;
+
+				if (edge != null) {
+
+					cursor.setPosition(neighborPosition);
+					float neighborValue = cursor.getType().getRealFloat();
+
+					// TODO:
+					// cache neighbor distances
+					weight += edgeWeight*edgeLikelihood(value, neighborValue, imagePosition, neighborPosition, dimensions);
+				}
+
+				graphCut.setEdgeWeight(nodeNum, neighborNum, weight);
+				e++;
 			}
 
 			cursor.setPosition(imagePosition);
@@ -845,6 +922,16 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			seg = processSingleChannelImage(imp, edge, pottsWeight, edgeWeight);
 		else
 			processSingleChannelImage(imp, edge, pottsWeight, edgeWeight, seg);
+	}
+
+	private float edgeLikelihood(float value1, float value2, int[] position1, int[] position2, int[] dimensions) {
+
+		float dist = 0;
+		for (int d = 0; d < dimensions.length; d++)
+			dist += (position1[d] - position2[d])*(position1[d] - position2[d]);
+		dist = (float)Math.sqrt(dist);
+
+		return (float)Math.exp(-((value1 - value2)*(value1 - value2))/(2*edgeVariance))/dist;
 	}
 
 	private int listPosition(int[] imagePosition, int[] dimensions) {
