@@ -47,6 +47,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 
+import ij.gui.GenericDialog;
 import ij.gui.ImageWindow;
 
 import ij.io.FileInfo;
@@ -1082,7 +1083,21 @@ A:			for (int i = 0; i < neighborPositions.length; i++) {
 
 	private void createSequence() {
 
-		seq = createSequenceImage(imp, edge, 0.75f, 1.0f, 0.001f, pottsWeight, edgeWeight);
+		GenericDialog gd = new GenericDialog("Sequence Parameter");
+		gd.addNumericField("Start", 0.0, 3);
+		gd.addNumericField("End",   1.0, 3);
+		gd.addNumericField("Step",  0.1, 3);
+
+		gd.showDialog();
+
+		if (gd.wasCanceled())
+			return;
+
+		float start = (float)gd.getNextNumber();
+		float end   = (float)gd.getNextNumber();
+		float step  = (float)gd.getNextNumber();
+
+		seq = createSequenceImage(imp, edge, start, end, step, pottsWeight, edgeWeight);
 		seq.show();
 		seq.updateAndDraw();
 	}
