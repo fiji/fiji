@@ -103,6 +103,9 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 	// the segmentation image for the gui
 	private ImagePlus seg;
 
+	// the sequence segmentation image
+	private ImagePlus seq;
+
 	// the potts weight
 	private float dataWeight   = DATA_INIT;
 	private float pottsWeight  = POTTS_INIT;
@@ -159,6 +162,9 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 
 	// start graph cut button
 	private JButton applyButton;
+
+	// create a parameter sequence button
+	private JButton sequenceButton;
 
 	// start graph cut on several files
 	private JButton batchButton;
@@ -257,7 +263,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 						if(e.getSource() == applyButton)
 						{
 							try{
-								applyButton.setEnabled(false);
+								setButtonsEnabled(false);
 								final long start = System.currentTimeMillis();
 								updateSegmentationImage();
 								final long end = System.currentTimeMillis();
@@ -269,7 +275,23 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 							}catch(Exception e){
 								e.printStackTrace();
 							}finally{
-								applyButton.setEnabled(true);
+								setButtonsEnabled(true);
+							}
+						}
+						if(e.getSource() == sequenceButton)
+						{
+							try{
+								setButtonsEnabled(false);
+								final long start = System.currentTimeMillis();
+								createSequence();
+								final long end = System.currentTimeMillis();
+								seq.show();
+								seq.updateAndDraw();
+								IJ.log("Total time: " + (end - start) + "ms");
+							}catch(Exception e){
+								e.printStackTrace();
+							}finally{
+								setButtonsEnabled(true);
 							}
 						}
 						else if(e.getSource() == overlayButton){
@@ -317,6 +339,9 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			overlayButton = new JButton ("Toggle overlay");
 			overlayButton.setToolTipText("Toggle the segmentation overlay in the image");
 
+			sequenceButton = new JButton ("Create sequence");
+			sequenceButton.setToolTipText("Create a sequence of segmentations with different parameters");
+	
 			dataSlider = new JSlider(JSlider.HORIZONTAL, DATA_MIN, DATA_MAX, (int)(DATA_INIT/DATA_SCALE));
 			dataSlider.setToolTipText("Adjust the influence of the data term.");
 			dataSlider.setMajorTickSpacing(500);
@@ -380,6 +405,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			applyButton.addActionListener(actionListener);
 			batchButton.addActionListener(actionListener);
 			overlayButton.addActionListener(actionListener);
+			sequenceButton.addActionListener(actionListener);
 			dataSlider.addChangeListener(changeListener);
 			pottsSlider.addChangeListener(changeListener);
 			edgeSlider.addChangeListener(changeListener);
@@ -404,6 +430,8 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			applyPanel.add(batchButton, applyConstraints);
 			applyConstraints.gridy++;
 			applyPanel.add(overlayButton, applyConstraints);
+			applyConstraints.gridy++;
+			applyPanel.add(sequenceButton, applyConstraints);
 			applyConstraints.gridy++;
 	
 			// Potts panel
@@ -490,6 +518,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 					applyButton.removeActionListener(actionListener);
 					batchButton.removeActionListener(actionListener);
 					overlayButton.removeActionListener(actionListener);
+					sequenceButton.removeActionListener(actionListener);
 					pottsSlider.removeChangeListener(changeListener);
 					edgeSlider.removeChangeListener(changeListener);
 					edgeSelector.removeActionListener(actionListener);
@@ -591,6 +620,110 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 		processSingleChannelImage(imp, edge, dataWeight, pottsWeight, edgeWeight, seg);
 
 		return seg;
+	}
+
+	public ImagePlus createSequenceImage(ImagePlus imp, ImagePlus edge,
+	                                     float dataStart, float dataStop, float dataStep,
+	                                     float pottsWeight, float edgeWeight) {
+
+		// prepare sequence image
+		int[] dimensions    = imp.getDimensions();
+		int width   = dimensions[0];
+		int height  = dimensions[1];
+		int zslices = dimensions[3];
+		int frames  = (int)((dataStop - dataStart)/dataStep) + 1;
+
+		ImageStack seqStack = new ImageStack(width, height);
+
+		final int numProcessors = Runtime.getRuntime().availableProcessors();
+
+		class ImageProcessingThread extends Thread {
+
+			ImageStack result;
+
+			final ImagePlus imp;
+			final ImagePlus edge;
+
+			final float dataStart;
+			final float numSteps;
+			final float dataStep;
+			final float pottsWeight;
+			final float edgeWeight;
+
+			public ImageProcessingThread(final ImagePlus imp, final ImagePlus edge,
+			                             final float dataStart, final int numSteps, final float dataStep,
+			                             final float pottsWeight, final float edgeWeight) {
+
+				this.imp  = imp;
+				this.edge = edge;
+
+				this.dataStart = dataStart;
+				this.numSteps  = numSteps;
+				this.dataStep  = dataStep;
+
+				this.pottsWeight = pottsWeight;
+				this.edgeWeight  = edgeWeight;
+			}
+
+			public void run() {
+
+				result = new ImageStack(imp.getWidth(), imp.getHeight());
+
+				float dataWeight = dataStart;
+				for (int i = 0; i < numSteps; i++) {
+
+					IJ.log("Processing data weight " + dataWeight + "...");
+					ImagePlus seg = processSingleChannelImage(imp, edge, dataWeight, pottsWeight, edgeWeight);
+					for (int s = 0; s < seg.getStack().getSize(); s++)
+						result.addSlice("", seg.getStack().getProcessor(s+1));
+
+					dataWeight += dataStep;
+				}
+			}
+
+			public ImageStack getResult() {
+				return result;
+			}
+		}
+
+		Vector<ImageProcessingThread> threads = new Vector<ImageProcessingThread>(numProcessors);
+
+		int totalSteps = 0;
+		for (int i = 0; i < numProcessors; i++) {
+
+			float start  = dataStart + i*dataStep*(frames/numProcessors);
+			int numSteps = (i+1)*(frames/numProcessors - 1);
+
+			if (i == numProcessors - 1)
+				numSteps = frames - totalSteps;
+			totalSteps  += numSteps;
+
+			IJ.log("Starting thread " + i + " from " + start + ", " + numSteps + " steps (step " + dataStep + ")");
+			threads.add(new ImageProcessingThread(imp, edge, start, numSteps, dataStep, pottsWeight, edgeWeight));
+			threads.get(i).start();
+		}
+
+		for (int i = 0; i < numProcessors; i++)
+			try {
+				threads.get(i).join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+		for (ImageProcessingThread ipt : threads) {
+
+			ImageStack result = ipt.getResult();
+			IJ.log("Merging result with " + result.getSize() + " slices...");
+
+			for (int s = 0; s < result.getSize(); s++)
+				seqStack.addSlice("", result.getProcessor(s+1));
+		}
+
+		ImagePlus seq = new ImagePlus(imp.getTitle() + " sequence segmentation", seqStack);
+		seq.setDimensions(1, zslices, frames);
+		seq.setOpenAsHyperStack(true);
+
+		return seq;
 	}
 
 	/**
@@ -946,6 +1079,13 @@ A:			for (int i = 0; i < neighborPositions.length; i++) {
 			processSingleChannelImage(imp, edge, dataWeight, pottsWeight, edgeWeight, seg);
 	}
 
+	private void createSequence() {
+
+		seq = createSequenceImage(imp, edge, 0.0f, 1.0f, 0.1f, pottsWeight, edgeWeight);
+		seq.show();
+		seq.updateAndDraw();
+	}
+
 	private float edgeLikelihood(float value1, float value2, int[] position1, int[] position2, int[] dimensions) {
 
 		float dist = 0;
@@ -971,5 +1111,6 @@ A:			for (int i = 0; i < neighborPositions.length; i++) {
 		applyButton.setEnabled(enabled);
 		batchButton.setEnabled(enabled);
 		overlayButton.setEnabled(enabled);
+		sequenceButton.setEnabled(enabled);
 	}
 }
