@@ -635,7 +635,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 
 		ImageStack seqStack = new ImageStack(width, height);
 
-		final int numProcessors = Runtime.getRuntime().availableProcessors();
+		final int numThreads = Runtime.getRuntime().availableProcessors() + 1;
 
 		class ImageProcessingThread extends Thread {
 
@@ -673,6 +673,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 				for (int i = 0; i < numSteps; i++) {
 
 					IJ.log("Processing data weight " + dataWeight + "...");
+					IJ.showProgress((float)i/numSteps);
 					ImagePlus seg = processSingleChannelImage(imp, edge, dataWeight, pottsWeight, edgeWeight);
 					for (int s = 0; s < seg.getStack().getSize(); s++)
 						result.addSlice("", seg.getStack().getProcessor(s+1));
@@ -686,29 +687,29 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			}
 		}
 
-		Vector<ImageProcessingThread> threads = new Vector<ImageProcessingThread>(numProcessors);
+		Vector<ImageProcessingThread> threads = new Vector<ImageProcessingThread>(numThreads);
 
-		int totalSteps = 0;
-		for (int i = 0; i < numProcessors; i++) {
+		int numSteps = frames/numThreads;
 
-			float start  = dataStart + i*dataStep*(frames/numProcessors);
-			int numSteps = (i+1)*(frames/numProcessors - 1);
+		for (int i = 0; i < numThreads; i++) {
 
-			if (i == numProcessors - 1)
-				numSteps = frames - totalSteps;
-			totalSteps  += numSteps;
+			float start  = dataStart + dataStep*(i*numSteps + 1);
+
+			if (i == numThreads - 1)
+				numSteps = frames - (numThreads - 1)*numSteps;
 
 			IJ.log("Starting thread " + i + " from " + start + ", " + numSteps + " steps (step " + dataStep + ")");
 			threads.add(new ImageProcessingThread(imp, edge, start, numSteps, dataStep, pottsWeight, edgeWeight));
 			threads.get(i).start();
 		}
 
-		for (int i = 0; i < numProcessors; i++)
+		for (int i = 0; i < numThreads; i++)
 			try {
 				threads.get(i).join();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+		IJ.showProgress(1.0);
 
 		for (ImageProcessingThread ipt : threads) {
 
@@ -719,7 +720,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 				seqStack.addSlice("", result.getProcessor(s+1));
 		}
 
-		ImagePlus seq = new ImagePlus(imp.getTitle() + " sequence segmentation", seqStack);
+		ImagePlus seq = new ImagePlus(imp.getTitle() + " sequence segmentation " + dataStart + " - " + dataStop, seqStack);
 		seq.setDimensions(1, zslices, frames);
 		seq.setOpenAsHyperStack(true);
 
@@ -1081,7 +1082,7 @@ A:			for (int i = 0; i < neighborPositions.length; i++) {
 
 	private void createSequence() {
 
-		seq = createSequenceImage(imp, edge, 0.0f, 1.0f, 0.1f, pottsWeight, edgeWeight);
+		seq = createSequenceImage(imp, edge, 0.75f, 1.0f, 0.001f, pottsWeight, edgeWeight);
 		seq.show();
 		seq.updateAndDraw();
 	}
