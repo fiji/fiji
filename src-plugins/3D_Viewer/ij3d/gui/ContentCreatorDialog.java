@@ -51,7 +51,7 @@ public class ContentCreatorDialog {
 			for(int i=1; i<=img_count; i++) {
 				int id = WindowManager.getNthImageID(i);
 				ImagePlus ip = WindowManager.getImage(id);
-				if(ip != null && !ip.getTitle().equals("3d"))
+				if(ip != null && ip.getWidth() != 0 && !ip.getTitle().equals("3d"))
 					 windows.add(ip.getTitle());
 			}
 		}
