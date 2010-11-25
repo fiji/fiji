@@ -101,6 +101,7 @@ public class ImageWindow3D extends ImageWindow implements UniverseListener,
 
 	public boolean close() {
 		boolean b = super.close();
+		WindowManager.removeWindow(this);
 		return b;
 	}
 
