@@ -55,6 +55,10 @@ public class ContentCreatorDialog {
 					 windows.add(ip.getTitle());
 			}
 		}
+		if (windows.size() == 0) {
+			IJ.error("Need an image!");
+			return null;
+		}
 		final String[] images = new String[windows.size()];
 		windows.toArray(images);
 		if(file != null)
