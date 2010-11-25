@@ -64,7 +64,7 @@ public class ContentCreatorDialog {
 		if(file != null)
 			name = file.getName();
 		else
-			name = image == null ? images[0] : imp.getTitle();
+			name = imp == null ? images[0] : imp.getTitle();
 		String[] types = new String[] {
 			"Volume", "Orthoslice", "Surface", "Surface Plot 2D"};
 		type = type < 0 ? 0 : type;
