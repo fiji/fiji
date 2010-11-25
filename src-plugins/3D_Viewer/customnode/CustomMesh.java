@@ -97,8 +97,12 @@ public abstract class CustomMesh extends Shape3D {
 	public void calculateMinMaxCenterPoint(Point3f min,
 				Point3f max, Point3f center) {
 
-		if(mesh == null)
+		if(mesh == null || mesh.size() == 0) {
+			min.set(0, 0, 0);
+			max.set(0, 0, 0);
+			center.set(0, 0, 0);
 			return;
+		}
 
 		min.x = min.y = min.z = Float.MAX_VALUE;
 		max.x = max.y = max.z = Float.MIN_VALUE;
