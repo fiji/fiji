@@ -38,7 +38,7 @@ public class ContentCreatorDialog {
 
 	private GenericDialog gd;
 
-	public Content showDialog(Image3DUniverse univ, ImagePlus imp, File fi) {
+	public Content showDialog(final Image3DUniverse univ, final ImagePlus imp, final File fi) {
 		if(fi != null)
 			this.file = fi;
 
@@ -70,7 +70,7 @@ public class ContentCreatorDialog {
 		// create dialog
 		gd = new GenericDialog("Add ...", univ.getWindow());
 		gd.addChoice("Image", images, name);
-		gd.addStringField("Name", name, 10);
+		gd.addStringField("Name", getUniqueContentLabel(univ, name), 10);
 		gd.addChoice("Display as", types, types[type]);
 		gd.addChoice("Color", ColorTable.colorNames,
 						ColorTable.colorNames[0]);
@@ -100,10 +100,12 @@ public class ContentCreatorDialog {
 		im.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
 				int idx = im.getSelectedIndex();
+				String name;
 				if(file == null || idx > 0)
-					na.setText(im.getSelectedItem());
+					name = im.getSelectedItem();
 				else
-					na.setText(file.getName());
+					name = file.getName();
+				na.setText(getUniqueContentLabel(univ, name));
 			}
 		});
 		gd.showDialog();
@@ -135,6 +137,15 @@ public class ContentCreatorDialog {
 		}
 
 		return createContent();
+	}
+
+	// Avoid suggesting names that are taken already
+	protected String getUniqueContentLabel(Image3DUniverse univ, String name) {
+		if (!univ.contains(name))
+			return name;
+		for (int nr = 2; ; nr++)
+			if (!univ.contains(name + "-" + nr))
+				return name + "-" + nr;
 	}
 
 	private Content createContent() {
