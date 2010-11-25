@@ -52,7 +52,7 @@ public class BoundingBox extends BranchGroup {
 		float max = Math.max(lx, Math.max(ly, lz));
 		float min = Math.min(lx, Math.min(ly, lz));
 		if (min == 0 || max / min > 100)
-			min = max / 100;
+			min = max;
 		double tmp = 0.00001f;
 		while(min / tmp > 5)
 			tmp *= 10;
