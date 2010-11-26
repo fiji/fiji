@@ -862,6 +862,11 @@ static int file_exists(const char *path)
 	return !access(path, R_OK);
 }
 
+static inline int prefixcmp(const char *string, const char *prefix)
+{
+	return strncmp(string, prefix, strlen(prefix));
+}
+
 static inline int suffixcmp(const char *string, int len, const char *suffix)
 {
 	int suffix_len = strlen(suffix);
@@ -1547,6 +1552,37 @@ static void add_options(struct options *options, const char *cmd_line, int for_i
 	string_release(current);
 }
 
+/*
+ * If passing -Xmx=99999999g -Xmx=37m to Java, the former still triggers an
+ * error. So let's keep only the last, so that the command line can override
+ * invalid settings in jvm.cfg.
+ */
+static void keep_only_one_memory_option(struct string_array *options)
+{
+	int index_Xmx = -1, index_Xms = -1, index_Xmn = -1;
+	int i, j;
+
+	for (i = options->nr - 1; i >= 0; i--)
+		if (index_Xmx < 0 && !prefixcmp(options->list[i], "-Xmx"))
+			index_Xmx = i;
+		else if (index_Xms < 0 && !prefixcmp(options->list[i], "-Xms"))
+			index_Xms = i;
+		else if (index_Xmn < 0 && !prefixcmp(options->list[i], "-Xmn"))
+			index_Xmn = i;
+
+	for (i = j = 0; i < options->nr; i++)
+		if ((i < index_Xmx && !prefixcmp(options->list[i], "-Xmx")) ||
+				(i < index_Xms && !prefixcmp(options->list[i], "-Xms")) ||
+				(i < index_Xmn && !prefixcmp(options->list[i], "-Xmn")))
+			continue;
+		else {
+			if (i > j)
+				options->list[j] = options->list[i];
+			j++;
+		}
+	options->nr = j;
+}
+
 __attribute__((unused))
 static void read_file_as_string(const char *file_name, struct string *contents)
 {
@@ -1998,6 +2034,9 @@ static int start_ij(void)
 	read_file_as_string(fiji_path("jvm.cfg"), jvm_options);
 #endif
 
+	if (jvm_options->length)
+		add_options(&options, jvm_options->buffer, 0);
+
 	for (i = 1; i < main_argc; i++)
 		if (!strcmp(main_argv[i], "--") && !dashdash)
 			dashdash = count;
@@ -2317,8 +2356,6 @@ static int start_ij(void)
 		add_option_string(&options, buffer, 0);
 	}
 
-	if (jvm_options->length)
-		add_options(&options, jvm_options->buffer, 0);
 	if (default_arguments->length)
 		add_options(&options, default_arguments->buffer, 1);
 
@@ -2379,6 +2416,8 @@ static int start_ij(void)
 		"fiji.executable", main_argv0,
 		NULL
 	};
+
+	keep_only_one_memory_option(&options.java_options);
 
 	if (options.debug) {
 		for (i = 0; properties[i]; i += 2) {
