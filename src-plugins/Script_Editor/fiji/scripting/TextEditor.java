@@ -100,6 +100,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		  openSourceForMenuItem, showDiff, commit, ijToFront,
 		  openMacroFunctions, decreaseFontSize, increaseFontSize,
 		  chooseTabSize, gitGrep, loadToolsJar, openInGitweb;
+	protected RecentFilesMenuItem openRecent;
 	protected JMenu gitMenu, tabsMenu, tabSizeMenu, toolsMenu, runMenu;
 	protected int tabsMenuTabsStart;
 	protected Set<JMenuItem> tabsMenuItems;
@@ -128,6 +129,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		newFile.setMnemonic(KeyEvent.VK_N);
 		open = addToMenu(file, "Open...",  KeyEvent.VK_O, ctrl);
 		open.setMnemonic(KeyEvent.VK_O);
+		openRecent = new RecentFilesMenuItem(this);
+		openRecent.setMnemonic(KeyEvent.VK_R);
+		file.add(openRecent);
 		save = addToMenu(file, "Save", KeyEvent.VK_S, ctrl);
 		save.setMnemonic(KeyEvent.VK_S);
 		saveas = addToMenu(file, "Save as...", 0, 0);
@@ -1191,6 +1195,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			else
 				tabsMenuItems.add(addToMenu(tabsMenu,
 					tab.editorPane.getFileName(), 0, 0));
+			if (path != null && !"".equals(path))
+				openRecent.add(path);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			error("The file '" + path + "' was not found.");
