@@ -451,6 +451,7 @@ precompiled/imglib.jar <- jars/imglib.jar
 precompiled/imglib-algorithms.jar <- jars/imglib-algorithms.jar
 precompiled/imglib-ij.jar <- jars/imglib-ij.jar
 precompiled/imglib-io.jar <- jars/imglib-io.jar
+precompiled/imglib-scripting.jar <- jars/imglib-scripting.jar
 precompiled/commons-math.jar <- jars/commons-math.jar
 precompiled/* <- plugins/*
 
