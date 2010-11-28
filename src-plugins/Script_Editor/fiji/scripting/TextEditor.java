@@ -106,6 +106,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	protected Set<JMenuItem> tabsMenuItems;
 	protected FindAndReplaceDialog findDialog;
 	protected JCheckBoxMenuItem autoSave;
+	protected JTextArea errorScreen = new JTextArea();
 
 	protected final String templateFolder = "templates/";
 	protected Languages.Language[] availableLanguages = Languages.getInstance().languages;
@@ -935,8 +936,10 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		protected final EditorPane editorPane = new EditorPane(TextEditor.this);
 		protected final JTextArea screen = new JTextArea();
+		protected final JScrollPane scroll;
+		protected boolean showingErrors;
 		private Executer executer;
-		private final JButton runit, killit;
+		private final JButton runit, killit, toggleErrors;
 
 		public Tab() {
 			super(JSplitPane.VERTICAL_SPLIT);
@@ -981,9 +984,26 @@ public class TextEditor extends JFrame implements ActionListener,
 			bc.fill = GridBagConstraints.NONE;
 			bc.weightx = 0;
 			bc.anchor = GridBagConstraints.NORTHEAST;
+			toggleErrors = new JButton("Show Errors");
+			toggleErrors.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					toggleErrors();
+				}
+			});
+			bottom.add(toggleErrors, bc);
+
+			bc.gridx = 4;
+			bc.fill = GridBagConstraints.NONE;
+			bc.weightx = 0;
+			bc.anchor = GridBagConstraints.NORTHEAST;
 			JButton clear = new JButton("Clear");
 			clear.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent ae) { screen.setText(""); }
+				public void actionPerformed(ActionEvent ae) {
+					if (showingErrors)
+						errorScreen.setText("");
+					else
+						screen.setText("");
+				}
 			});
 			bottom.add(clear, bc);
 
@@ -993,12 +1013,12 @@ public class TextEditor extends JFrame implements ActionListener,
 			bc.fill = GridBagConstraints.BOTH;
 			bc.weightx = 1;
 			bc.weighty = 1;
-			bc.gridwidth = 4;
+			bc.gridwidth = 5;
 			screen.setEditable(false);
 			screen.setLineWrap(true);
 			Font font = new Font("Courier", Font.PLAIN, 12);
 			screen.setFont(font);
-			JScrollPane scroll = new JScrollPane(screen);
+			scroll = new JScrollPane(screen);
 			scroll.setPreferredSize(new Dimension(600, 80));
 			bottom.add(scroll, bc);
 
@@ -1024,6 +1044,23 @@ public class TextEditor extends JFrame implements ActionListener,
 			});
 		}
 
+		public void toggleErrors() {
+			showingErrors = !showingErrors;
+			if (showingErrors) {
+				toggleErrors.setLabel("Show Output");
+				scroll.setViewportView(errorScreen);
+			}
+			else {
+				toggleErrors.setLabel("Show Errors");
+				scroll.setViewportView(screen);
+			}
+		}
+
+		public void showErrors() {
+			if (!showingErrors)
+				toggleErrors();
+		}
+
 		boolean isExecuting() {
 			return null != executer;
 		}
@@ -1040,20 +1077,23 @@ public class TextEditor extends JFrame implements ActionListener,
 			prepare();
 			final JTextAreaOutputStream output =
 				new JTextAreaOutputStream(this.screen);
+			final JTextAreaOutputStream errors =
+				new JTextAreaOutputStream(errorScreen);
 			final RefreshScripts interpreter =
 				language.newInterpreter();
-			interpreter.setOutputStreams(output, output);
+			interpreter.setOutputStreams(output, errors);
 			// Pipe current text into the runScript:
 			final PipedInputStream pi = new PipedInputStream();
 			final PipedOutputStream po = new PipedOutputStream(pi);
 			// The Executer creates a Thread that
 			// does the reading from PipedInputStream
-			this.executer = new TextEditor.Executer(output) {
+			this.executer = new TextEditor.Executer(output, errors) {
 				public void execute() {
 					try {
 						interpreter.runScript(pi,
 							editorPane.getFileName());
 						output.flush();
+						errors.flush();
 						markCompileEnd();
 					} finally {
 						restore();
@@ -1547,10 +1587,11 @@ public class TextEditor extends JFrame implements ActionListener,
 	/** Generic Thread that keeps a starting time stamp,
 	 *  sets the priority to normal and starts itself. */
 	private abstract class Executer extends ThreadGroup {
-		JTextAreaOutputStream output;
-		Executer(final JTextAreaOutputStream output) {
+		JTextAreaOutputStream output, errors;
+		Executer(final JTextAreaOutputStream output, final JTextAreaOutputStream errors) {
 			super("Script Editor Run :: " + new Date().toString());
 			this.output = output;
+			this.errors = errors;
 			// Store itself for later
 			executingTasks.add(this);
 			setTitle();
@@ -1587,6 +1628,8 @@ public class TextEditor extends JFrame implements ActionListener,
 						try {
 							if (null != output)
 								output.shutdown();
+							if (null != errors)
+								errors.shutdown();
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -1632,6 +1675,8 @@ public class TextEditor extends JFrame implements ActionListener,
 				// Stop printing to the screen
 				if (null != output)
 					output.shutdownNow();
+				if (null != errors)
+					errors.shutdownNow();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -1726,15 +1771,20 @@ public class TextEditor extends JFrame implements ActionListener,
 			return;
 		}
 
+		if (getCurrentLanguage().isCompileable())
+			getTab().showErrors();
+
 		markCompileStart();
 		final JTextAreaOutputStream output = new JTextAreaOutputStream(getTab().screen);
-		interpreter.setOutputStreams(output, output);
+		final JTextAreaOutputStream errors = new JTextAreaOutputStream(errorScreen);
+		interpreter.setOutputStreams(output, errors);
 
 		final File file = getEditorPane().file;
-		new TextEditor.Executer(output) {
+		new TextEditor.Executer(output, errors) {
 			public void execute() {
 				interpreter.runScript(file.getPath());
 				output.flush();
+				errors.flush();
 				markCompileEnd();
 			}
 		};
@@ -1747,7 +1797,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		final RefreshScripts interpreter =
 			getCurrentLanguage().newInterpreter();
 		final JTextAreaOutputStream output = new JTextAreaOutputStream(getTab().screen);
-		interpreter.setOutputStreams(output, output);
+		final JTextAreaOutputStream errors = new JTextAreaOutputStream(errorScreen);
+		interpreter.setOutputStreams(output, errors);
+		getTab().showErrors();
 		if (interpreter instanceof Refresh_Javas) {
 			final Refresh_Javas java = (Refresh_Javas)interpreter;
 			final File file = getEditorPane().file;
@@ -1756,7 +1808,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			new Thread() {
 				public void run() {
 					java.compileAndRun(sourcePath, true);
-					getTab().screen.insert("Compilation finished.\n", getTab().screen.getDocument().getLength());
+					errorScreen.insert("Compilation finished.\n", getTab().screen.getDocument().getLength());
 					markCompileEnd();
 				}
 			}.start();
@@ -1788,11 +1840,12 @@ public class TextEditor extends JFrame implements ActionListener,
 		errorHandler = null;
 
 		Tab tab = getTab();
-		Document document = tab.screen.getDocument();
+		tab.showErrors();
+		Document document = errorScreen.getDocument();
 		int offset = document.getLength();
-		tab.screen.insert("Started " + getEditorPane().getFileName() + " at "
+		errorScreen.insert("Started " + getEditorPane().getFileName() + " at "
 			+ new Date() + "\n", offset);
-		tab.screen.setCaretPosition(document.getLength());
+		errorScreen.setCaretPosition(document.getLength());
 		try {
 			compileStartPosition = document.createPosition(offset);
 		} catch (BadLocationException e) {
@@ -1804,7 +1857,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	public void markCompileEnd() {
 		if (errorHandler == null)
 			errorHandler = new ErrorHandler(getCurrentLanguage(),
-				getTab().screen, compileStartPosition.getOffset());
+				errorScreen, compileStartPosition.getOffset());
 	}
 
 	public void installMacro() {
@@ -1817,8 +1870,9 @@ public class TextEditor extends JFrame implements ActionListener,
 			if (!file.isAbsolute())
 				file = getFileForBasename(file.getName());
 			switchTo(file, errorHandler.getLine());
+			getTab().showErrors();
 			errorHandler.markLine();
-			getTab().screen.repaint();
+			errorScreen.repaint();
 			getEditorPane().repaint();
 			return true;
 		} catch (Exception e) {
@@ -1948,6 +2002,14 @@ public class TextEditor extends JFrame implements ActionListener,
 		if (!message.endsWith("\n"))
 			message += "\n";
 		tab.screen.insert(message, tab.screen.getDocument().getLength());
+	}
+
+	public void writeError(String message) {
+		Tab tab = getTab();
+		tab.showErrors();
+		if (!message.endsWith("\n"))
+			message += "\n";
+		errorScreen.insert(message, errorScreen.getDocument().getLength());
 	}
 
 	protected void error(String message) {
