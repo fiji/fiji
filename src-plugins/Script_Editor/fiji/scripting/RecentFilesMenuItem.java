@@ -74,7 +74,7 @@ public class RecentFilesMenuItem extends JMenu {
 		// add the menu item
 		String label = path;
 		if (path.length() > maxLength)
-			label = "..." + path.substring(path.length() - maxLength - 3);
+			label = "..." + path.substring(path.length() - maxLength + 3);
 		insert(label, 0);
 		JMenuItem result = getItem(0);
 		result.addActionListener(new ActionListener() {
