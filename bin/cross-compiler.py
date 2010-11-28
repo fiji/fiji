@@ -28,6 +28,11 @@ elif platform == 'win32':
 	exe = '.exe'
 elif platform == 'linux' or platform == 'linux32':
 	cflags.append('-m32')
+elif platform == 'macosx':
+	prefix = 'bin/mac-sysroot/bin/i686-apple-darwin8-'
+	cflags.append('-isysroot')
+	cflags.append('bin/mac-sysroot')
+	cflags.append('-Ibin/mac-sysroot/usr/i686-apple-darwin8/usr/lib/gcc/i686-apple-darwin10/4.2.1/include/')
 else:
 	print "Unsupported platform:", sys.argv[1]
 	sys.exit(1)
