@@ -84,6 +84,11 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 		currentLanguage = Languages.get("");
 	}
 
+	public void setTabSize(int width) {
+		if (getTabSize() != width)
+			super.setTabSize(width);
+	}
+
 	public void embedWithScrollbars(Container container) {
 		container.add(embedWithScrollbars());
 	}
