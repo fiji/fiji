@@ -361,7 +361,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		// Add the editor and output area
 		tabbed = new JTabbedPane();
 		tabbed.addChangeListener(this);
-		open(path); // TODO
+		open(null); // make sure the editor pane is added
 
 		tabbed.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 		getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
@@ -409,6 +409,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		findDialog = new FindAndReplaceDialog(this);
 
 		setLocationRelativeTo(null); // center on screen
+
+		open(path);
 
 		final EditorPane editorPane = getEditorPane();
 		if (editorPane != null)
