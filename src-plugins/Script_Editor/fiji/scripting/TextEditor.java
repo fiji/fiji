@@ -1890,11 +1890,10 @@ public class TextEditor extends JFrame implements ActionListener,
 			File file = new File(errorHandler.getPath());
 			if (!file.isAbsolute())
 				file = getFileForBasename(file.getName());
+			errorHandler.markLine();
 			switchTo(file, errorHandler.getLine());
 			getTab().showErrors();
-			errorHandler.markLine();
-			errorScreen.repaint();
-			getEditorPane().repaint();
+			errorScreen.invalidate();
 			return true;
 		} catch (Exception e) {
 			IJ.handleException(e);
