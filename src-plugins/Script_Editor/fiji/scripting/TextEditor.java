@@ -1069,6 +1069,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		public void showErrors() {
 			if (!showingErrors)
 				toggleErrors();
+			else if (scroll.getViewport().getView() == null)
+				scroll.setViewportView(errorScreen);
 		}
 
 		boolean isExecuting() {
