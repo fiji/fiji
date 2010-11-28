@@ -1896,16 +1896,22 @@ public class TextEditor extends JFrame implements ActionListener,
 		return false;
 	}
 
-	public void switchTo(String path, int lineNumber)
-			throws BadLocationException, IOException {
+	public void switchTo(String path, int lineNumber) throws IOException {
 		switchTo(new File(path).getCanonicalFile(), lineNumber);
 	}
 
-	public void switchTo(File file, int lineNumber)
-			throws BadLocationException {
+	public void switchTo(File file, final int lineNumber) {
 		if (!editorPaneContainsFile(getEditorPane(), file))
 			switchTo(file);
-		gotoLine(lineNumber);
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					gotoLine(lineNumber);
+				} catch (BadLocationException e) {
+					// ignore
+				}
+			}
+		});
 	}
 
 	public void switchTo(File file) {
