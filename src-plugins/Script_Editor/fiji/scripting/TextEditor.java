@@ -431,7 +431,8 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public EditorPane getEditorPane() {
-		return getTab().editorPane;
+		Tab tab = getTab();
+		return tab == null ? null : tab.editorPane;
 	}
 
 	public Languages.Language getCurrentLanguage() {
@@ -927,7 +928,10 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public Tab getTab() {
-		return (Tab)tabbed.getSelectedComponent();
+		int index = tabbed.getSelectedIndex();
+		if (index < 0)
+			return null;
+		return (Tab)tabbed.getComponentAt(index);
 	}
 
 	public Tab getTab(int index) {
@@ -1529,6 +1533,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		nextError.setVisible(!isMacro && language.isRunnable());
 		previousError.setVisible(!isMacro && language.isRunnable());
 
+		if (getEditorPane() == null)
+			return;
 		boolean isInGit = getEditorPane().getGitDirectory() != null;
 		gitMenu.setVisible(isInGit);
 
