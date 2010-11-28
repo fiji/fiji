@@ -1918,6 +1918,8 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public void switchTo(int index) {
+		if (index == tabbed.getSelectedIndex())
+			return;
 		tabbed.setSelectedIndex(index);
 	}
 
