@@ -848,8 +848,12 @@ public class TextEditor extends JFrame implements ActionListener,
 		final EditorPane editorPane = getEditorPane(index);
 		editorPane.requestFocus();
 		setTitle();
-		editorPane.setLanguageByFileName(editorPane.getFileName());
 		editorPane.checkForOutsideChanges();
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				editorPane.setLanguageByFileName(editorPane.getFileName());
+			}
+		});
 	}
 
 	public EditorPane getEditorPane(int index) {
