@@ -60,6 +60,7 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 
 	public EditorPane(TextEditor frame) {
 		this.frame = frame;
+		setLineWrap(false);
 		setTabSize(8);
 		getActionMap().put(DefaultEditorKit
 				.nextWordAction, wordMovement(+1, false));

@@ -1216,8 +1216,6 @@ public class TextEditor extends JFrame implements ActionListener,
 				tab != null && tab.editorPane.isNew();
 			if (!wasNew) {
 				tab = new Tab();
-				tabbed.addTab("", tab);
-				switchTo(tabbed.getTabCount() - 1);
 				addDefaultAccelerators();
 			}
 			tab.editorPane.setFile("".equals(path) ? null : path);
@@ -1232,9 +1230,12 @@ public class TextEditor extends JFrame implements ActionListener,
 				tabsMenu.getItem(index)
 					.setText(tab.editorPane.getFileName());
 			}
-			else
+			else {
+				tabbed.addTab("", tab);
+				switchTo(tabbed.getTabCount() - 1);
 				tabsMenuItems.add(addToMenu(tabsMenu,
 					tab.editorPane.getFileName(), 0, 0));
+			}
 			if (path != null && !"".equals(path))
 				openRecent.add(path);
 		} catch (FileNotFoundException e) {
