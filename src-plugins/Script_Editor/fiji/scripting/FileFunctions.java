@@ -178,8 +178,9 @@ public class FileFunctions {
 			Fake fake = new Fake();
 			if (parent != null) {
 				final JTextAreaOutputStream output = new JTextAreaOutputStream(parent.getTab().screen);
+				final JTextAreaOutputStream errors = new JTextAreaOutputStream(parent.errorScreen);
 				fake.out = new PrintStream(output);
-				fake.err = new PrintStream(output);
+				fake.err = new PrintStream(errors);
 			}
 			Fake.Parser parser = fake.parse(new FileInputStream(fakefile), new File(fijiDir));
 			parser.parseRules(null);
@@ -788,7 +789,8 @@ public class FileFunctions {
 	}
 
 	public void gitGrep(String searchTerm, File directory) {
-		GrepLineHandler handler = new GrepLineHandler(parent.getTab().screen, directory.getAbsolutePath());
+		GrepLineHandler handler = new GrepLineHandler(parent.errorScreen, directory.getAbsolutePath());
+		parent.getTab().showErrors();
 		try {
 			SimpleExecuter executer = new SimpleExecuter(new String[] {
 				"git", "grep", "-n", searchTerm
