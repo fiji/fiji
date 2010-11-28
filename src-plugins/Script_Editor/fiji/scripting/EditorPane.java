@@ -230,8 +230,17 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 				setFileName(file);
 				return;
 			}
-			read(new BufferedReader(new FileReader(file)),
-				null);
+			StringBuffer string = new StringBuffer();
+			BufferedReader reader = new BufferedReader(new FileReader(file));
+			char[] buffer = new char[16384];
+			for (;;) {
+				int count = reader.read(buffer);
+				if (count < 0)
+					break;
+				string.append(buffer, 0, count);
+			}
+			reader.close();
+			setText(string.toString());
 			this.file = file;
 			if (line > getLineCount())
 				line = getLineCount() - 1;
