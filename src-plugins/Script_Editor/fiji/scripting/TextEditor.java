@@ -1212,29 +1212,35 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		try {
 			Tab tab = getTab();
-			boolean wasNew =
-				tab != null && tab.editorPane.isNew();
+			boolean wasNew = tab != null && tab.editorPane.isNew();
 			if (!wasNew) {
 				tab = new Tab();
-				addDefaultAccelerators();
+				SwingUtilities.invokeLater(new Runnable() {
+					public void run() {
+						addDefaultAccelerators();
+					}
+				});
 			}
-			tab.editorPane.setFile("".equals(path) ? null : path);
-			try {
-				updateTabSize(true);
-			} catch (NullPointerException e) {
-				/* ignore */
-			}
-			if (wasNew) {
-				int index = tabbed.getSelectedIndex()
-					+ tabsMenuTabsStart;
-				tabsMenu.getItem(index)
-					.setText(tab.editorPane.getFileName());
-			}
-			else {
-				tabbed.addTab("", tab);
-				switchTo(tabbed.getTabCount() - 1);
-				tabsMenuItems.add(addToMenu(tabsMenu,
-					tab.editorPane.getFileName(), 0, 0));
+			synchronized(tab.editorPane) {
+				tab.editorPane.setFile("".equals(path) ? null : path);
+				if (wasNew) {
+					int index = tabbed.getSelectedIndex()
+						+ tabsMenuTabsStart;
+					tabsMenu.getItem(index)
+						.setText(tab.editorPane.getFileName());
+				}
+				else {
+					tabbed.addTab("", tab);
+					switchTo(tabbed.getTabCount() - 1);
+					tabsMenuItems.add(addToMenu(tabsMenu,
+						tab.editorPane.getFileName(), 0, 0));
+				}
+				setFileName(tab.editorPane.file);
+				try {
+					updateTabSize(true);
+				} catch (NullPointerException e) {
+					/* ignore */
+				}
 			}
 			if (path != null && !"".equals(path))
 				openRecent.add(path);

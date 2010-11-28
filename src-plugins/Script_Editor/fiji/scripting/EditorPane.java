@@ -250,7 +250,8 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 		}
 		discardAllEdits();
 		modifyCount = 0;
-		setFileName(file);
+		fileLastModified = file == null || !file.exists() ? 0 :
+			file.lastModified();
 	}
 
 	public void setFileName(String baseName) {
