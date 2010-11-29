@@ -1866,18 +1866,21 @@ public class TextEditor extends JFrame implements ActionListener,
 		return className;
 	}
 
+	protected static void append(JTextArea textArea, String text) {
+		int length = textArea.getDocument().getLength();
+		textArea.insert(text, length);
+		textArea.setCaretPosition(length);
+	}
+
 	public void markCompileStart() {
 		errorHandler = null;
 
-		Tab tab = getTab();
-		tab.showErrors();
-		Document document = errorScreen.getDocument();
-		int offset = document.getLength();
-		errorScreen.insert("Started " + getEditorPane().getFileName() + " at "
-			+ new Date() + "\n", offset);
-		errorScreen.setCaretPosition(document.getLength());
+		String started = "Started " + getEditorPane().getFileName() + " at " + new Date() + "\n";
+		int offset = errorScreen.getDocument().getLength();
+		append(errorScreen, started);
+		append(getTab().screen, started);
 		try {
-			compileStartPosition = document.createPosition(offset);
+			compileStartPosition = errorScreen.getDocument().createPosition(offset);
 		} catch (BadLocationException e) {
 			handleException(e);
 		}
