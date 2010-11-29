@@ -20,6 +20,8 @@ public class Thread_Killer implements PlugIn {
 					name.startsWith("Thread-") ||
 					name.startsWith("pool-") ||
 					name.equals("Contrast Adjuster") ||
+					name.equals("ContrastAdjuster") ||
+					name.equals("ThresholdAdjuster") ||
 					name.equals("zSelector") ||
 					name.equals("Java2D Disposer") ||
 					name.equals("SocketListener") ||
