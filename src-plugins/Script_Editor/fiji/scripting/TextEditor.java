@@ -1073,6 +1073,11 @@ public class TextEditor extends JFrame implements ActionListener,
 				scroll.setViewportView(errorScreen);
 		}
 
+		public void showOutput() {
+			if (showingErrors)
+				toggleErrors();
+		}
+
 		boolean isExecuting() {
 			return null != executer;
 		}
@@ -1777,7 +1782,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		markCompileStart();
 
 		try {
-			getTab().execute(currentLanguage, selectionOnly);
+			Tab tab = getTab();
+			tab.showOutput();
+			tab.execute(currentLanguage, selectionOnly);
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
@@ -1794,6 +1801,8 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		if (getCurrentLanguage().isCompileable())
 			getTab().showErrors();
+		else
+			getTab().showOutput();
 
 		markCompileStart();
 		final JTextAreaOutputStream output = new JTextAreaOutputStream(getTab().screen);
