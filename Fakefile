@@ -112,6 +112,7 @@ SUBMODULE_TARGETS=\
 	jars/imglib-algorithms.jar \
 	jars/imglib-ij.jar \
 	jars/imglib-io.jar \
+	jars/imglib-scripting.jar \
 	jars/mpicbg.jar \
 	jars/commons-math.jar
 
@@ -198,6 +199,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/FeatureJ_.jar \
 	plugins/RandomJ_.jar \
 	plugins/Linear_Kuwahara.jar \
+	plugins/Thread_Killer.jar \
 	plugins/Jython_Scripts.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
@@ -234,6 +236,8 @@ CLASSPATH(jars/imglib-io.jar)=plugins/loci_tools.jar:jars/imglib.jar
 jars/imglib-io.jar <- imglib/
 CLASSPATH(jars/imglib-algorithms.jar)=jars/Jama-1.0.2.jar:jars/imglib.jar
 jars/imglib-algorithms.jar <- imglib/
+CLASSPATH(jars/imglib-scripting.jar)=jars/imglib.jar
+jars/imglib-scripting.jar <- imglib/
 
 jars/clojure.jar <- clojure/
 plugins/loci_tools.jar <- bio-formats/
@@ -447,6 +451,7 @@ precompiled/imglib.jar <- jars/imglib.jar
 precompiled/imglib-algorithms.jar <- jars/imglib-algorithms.jar
 precompiled/imglib-ij.jar <- jars/imglib-ij.jar
 precompiled/imglib-io.jar <- jars/imglib-io.jar
+precompiled/imglib-scripting.jar <- jars/imglib-scripting.jar
 precompiled/commons-math.jar <- jars/commons-math.jar
 precompiled/* <- plugins/*
 
