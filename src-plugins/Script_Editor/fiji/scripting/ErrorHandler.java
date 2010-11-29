@@ -17,11 +17,11 @@ import javax.swing.text.Position;
 
 
 public class ErrorHandler {
-	List<Error> list = new ArrayList<Error>();
-	int current = -1;
-	JTextArea textArea;
-	int currentOffset;
-	Parser parser;
+	protected List<Error> list = new ArrayList<Error>();
+	protected int current = -1;
+	protected JTextArea textArea;
+	protected int currentOffset;
+	protected Parser parser;
 
 	public ErrorHandler(JTextArea textArea) {
 		this.textArea = textArea;
@@ -42,6 +42,17 @@ public class ErrorHandler {
 		} catch (BadLocationException e) {
 			IJ.handleException(e);
 		}
+	}
+
+	public int getErrorCount() {
+		return list.size();
+	}
+
+	public boolean setCurrent(int index) {
+		if (index < 0 || index >= list.size())
+			return false;
+		current = index;
+		return true;
 	}
 
 	public boolean nextError(boolean forward) {
