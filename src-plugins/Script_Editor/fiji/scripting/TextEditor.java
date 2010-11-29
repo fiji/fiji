@@ -1885,9 +1885,12 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public void markCompileEnd() {
-		if (errorHandler == null)
+		if (errorHandler == null) {
 			errorHandler = new ErrorHandler(getCurrentLanguage(),
 				errorScreen, compileStartPosition.getOffset());
+			if (errorHandler.getErrorCount() > 0)
+				getTab().showErrors();
+		}
 	}
 
 	public void installMacro() {
