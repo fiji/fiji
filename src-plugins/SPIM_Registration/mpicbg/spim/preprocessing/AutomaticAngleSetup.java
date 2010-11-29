@@ -26,7 +26,7 @@ public class AutomaticAngleSetup
 		
 		IOFunctions.println("Using view " + viewA.getName() + " and " + viewB.getName() + " for automatic angle setup." );
 		
-		final Vector3f rotationAxis = extractRotationAxis( viewA.getTile().getModel(), viewB.getTile().getModel() );
+		final Vector3f rotationAxis = extractRotationAxis( (AffineModel3D)viewA.getTile().getModel(), (AffineModel3D)viewB.getTile().getModel() );
 		//final float rotationAngle = extractRotationAngle( viewA.getTile().getModel(), viewB.getTile().getModel(), rotationAxis );
 		//IOFunctions.println( "rotation axis: " + rotationAxis + ", angle: " + rotationAngle );
 				

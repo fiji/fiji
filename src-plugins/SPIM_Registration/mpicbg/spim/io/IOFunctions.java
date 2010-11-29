@@ -220,7 +220,7 @@ public class IOFunctions
 	
 	public static boolean writeNucleiCorrespondences( final ViewDataBeads view, final String directory )
 	{
-		final Collection<Nucleus> nuclei = view.getNucleiList();
+		final Collection<Nucleus> nuclei = view.getNucleiStructure().getDetectionList();
 		final String fileName = directory + view.getName() + ".nuclei.corresponding.txt";
 		
 		try
@@ -280,7 +280,7 @@ public class IOFunctions
 	
 		// remove previous entries if wanted
 		if ( removePreviousEntries )
-			for ( final Nucleus nucleus : view.getNucleiList() )
+			for ( final Nucleus nucleus : view.getNucleiStructure().getNucleiList() )
 			{
 				nucleus.getDescriptorCorrespondence().clear();
 				nucleus.getRANSACCorrespondence().clear();
@@ -289,7 +289,7 @@ public class IOFunctions
 		
 		final HashMap<Integer, Nucleus> lookupTable = new HashMap<Integer, Nucleus>();
 
-		for ( final Nucleus nucleus : view.getNucleiList() )
+		for ( final Nucleus nucleus : view.getNucleiStructure().getNucleiList() )
 			lookupTable.put( nucleus.getID(), nucleus );
 
 		int countLine = 0;
@@ -318,7 +318,7 @@ public class IOFunctions
 					if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
 						IOFunctions.printErr("ViewID messed up, should be " + viewID + "(file) but is " + view.getID() + "(view). We have to recompute the registration (WILL BE OVERWRITTEN).");
 					
-					for ( final Nucleus nucleus : view.getNucleiList() )
+					for ( final Nucleus nucleus : view.getNucleiStructure().getNucleiList() )
 					{
 						nucleus.getDescriptorCorrespondence().clear();
 						nucleus.getRANSACCorrespondence().clear();
@@ -336,7 +336,7 @@ public class IOFunctions
 					if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
 						IOFunctions.printErr("Cannot find nucleus " + nucleusID + ". We have to recompute the registration (WILL BE OVERWRITTEN).");
 					
-					for ( final Nucleus n : view.getNucleiList() )
+					for ( final Nucleus n : view.getNucleiStructure().getNucleiList() )
 					{
 						n.getDescriptorCorrespondence().clear();
 						n.getRANSACCorrespondence().clear();
@@ -369,7 +369,7 @@ public class IOFunctions
 								if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
 									IOFunctions.printErr("Could not add descriptor correspondence " + nucleusID + ": " + e);
 								
-								for ( final Nucleus n : view.getNucleiList() )
+								for ( final Nucleus n : view.getNucleiStructure().getNucleiList() )
 								{
 									n.getDescriptorCorrespondence().clear();
 									n.getRANSACCorrespondence().clear();
@@ -400,7 +400,7 @@ public class IOFunctions
 								if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
 									IOFunctions.printErr("Could not add ransac correspondence " + nucleusID + ": " + e);
 								
-								for ( final Nucleus n : view.getNucleiList() )
+								for ( final Nucleus n : view.getNucleiStructure().getNucleiList() )
 								{
 									n.getDescriptorCorrespondence().clear();
 									n.getRANSACCorrespondence().clear();
@@ -434,7 +434,7 @@ public class IOFunctions
 									if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
 										IOFunctions.printErr("Could not add ICP correspondence " + nucleusID + ": " + e);
 									
-									for ( final Nucleus n : view.getNucleiList() )
+									for ( final Nucleus n : view.getNucleiStructure().getNucleiList() )
 									{
 										n.getDescriptorCorrespondence().clear();
 										n.getRANSACCorrespondence().clear();
@@ -453,7 +453,7 @@ public class IOFunctions
 			int numRANSACCorrespondences = 0;
 			int numICPCorrespondences = 0;
 			
-			for ( final Nucleus nucleus : view.getNucleiList() )
+			for ( final Nucleus nucleus : view.getNucleiStructure().getNucleiList() )
 			{
 				numDescriptorCorrespondences += nucleus.getDescriptorCorrespondence().size();
 				numRANSACCorrespondences += nucleus.getRANSACCorrespondence().size();
@@ -470,7 +470,7 @@ public class IOFunctions
 			if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
 				IOFunctions.println("IOFunctions.readNucleiCorrespondences(): " + e + " in view " + view.getName() + " of " + view.getViewStructure() + " in line " + countLine );
 
-			for ( final Nucleus n : view.getNucleiList() )
+			for ( final Nucleus n : view.getNucleiStructure().getNucleiList() )
 			{
 				n.getDescriptorCorrespondence().clear();
 				n.getRANSACCorrespondence().clear();
@@ -630,7 +630,7 @@ public class IOFunctions
 					}
 				}
 				
-				view.getBeadStructure().addBead( bead );
+				view.getBeadStructure().addDetection( bead );
 			}
 			
 			if ( debugLevel <= ViewStructure.DEBUG_MAIN )

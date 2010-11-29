@@ -14,7 +14,7 @@ import mpicbg.imglib.interpolation.Interpolator;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
-import mpicbg.models.AffineModel3D;
+import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.NoninvertibleModelException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.registration.ViewDataBeads;
@@ -114,12 +114,12 @@ public class MappingFusionParalell extends SPIMImageFusion
 
 		// cache the views, imageSizes and models that we use
 		final boolean useView[] = new boolean[ numViews ];
-		final AffineModel3D models[] = new AffineModel3D[ numViews ];
+		final AbstractAffineModel3D<?> models[] = new AbstractAffineModel3D[ numViews ];
 		
 		for ( int i = 0; i < numViews; ++i )
 		{
 			useView[ i ] = Math.max( views.get( i ).getViewErrorStatistics().getNumConnectedViews(), views.get( i ).getTile().getConnectedTiles().size() ) > 0 || views.get( i ).getViewStructure().getNumViews() == 1;
-			models[ i ] = views.get( i ).getTile().getModel(); 
+			models[ i ] = (AbstractAffineModel3D<?>)views.get( i ).getTile().getModel(); 
 		}
 		
 		final int[][] imageSizes = new int[numViews][];		
