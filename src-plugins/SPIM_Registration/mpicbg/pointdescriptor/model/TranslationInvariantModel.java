@@ -1,5 +1,6 @@
 package mpicbg.pointdescriptor.model;
 
+import mpicbg.models.AbstractModel;
 import mpicbg.models.Model;
 import mpicbg.pointdescriptor.AbstractPointDescriptor;
 import mpicbg.pointdescriptor.fit.FitResult;
@@ -11,7 +12,7 @@ import mpicbg.pointdescriptor.fit.FitResult;
  *
  * @param <M> something that extends {@link Model}
  */
-public abstract class TranslationInvariantModel< M extends TranslationInvariantModel< M > > extends Model< M > implements FitResult
+public abstract class TranslationInvariantModel< M extends TranslationInvariantModel< M > > extends AbstractModel< M > implements FitResult
 {
 	/**
 	 * The {@link TranslationInvariantModel} can tell which dimensions it supports.

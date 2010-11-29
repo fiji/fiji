@@ -38,7 +38,7 @@ public class TranslationInvariantFixedModel extends TranslationInvariantModel<Tr
 	public boolean canDoNumDimension( final int numDimensions ) { return numDimensions == 3; }
 
 	@Override
-	final public void fit( final Collection< PointMatch > matches )
+	final public <P extends PointMatch> void fit( final Collection< P > matches )
 		throws NotEnoughDataPointsException, IllDefinedDataPointsException
 	{
 		if ( matches.size() < MIN_NUM_MATCHES )
@@ -62,7 +62,7 @@ public class TranslationInvariantFixedModel extends TranslationInvariantModel<Tr
 	}
 
 	@Override
-	public TranslationInvariantFixedModel clone()
+	public TranslationInvariantFixedModel copy()
 	{
 		TranslationInvariantFixedModel m = new TranslationInvariantFixedModel( m00, m01, m02, 
 		                                                                       m10, m11, m12, 

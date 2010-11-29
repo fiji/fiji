@@ -268,7 +268,7 @@ public class TileConfigurationSPIM
 				
 				for ( TileSPIM tile : tiles )
 				{
-					final AbstractAffineModel3D<?> m = (AbstractAffineModel3D<?>)tile.getModel().clone();
+					final AbstractAffineModel3D<?> m = (AbstractAffineModel3D<?>)tile.getModel().copy();
 					
 					Transform3D t = TransformUtils.getTransform3D1( m ); 
 					ViewDataBeads parent = tile.getParent();
@@ -282,7 +282,7 @@ public class TileConfigurationSPIM
 					t = tmp2;
 					
 					// back up the model
-					final AbstractAffineModel3D backUp = (AbstractAffineModel3D)tile.getModel().clone();
+					final AbstractAffineModel3D backUp = (AbstractAffineModel3D)tile.getModel().copy();
 					backUp.set( (AbstractAffineModel3D)parent.getTile().getModel() );
 					
 					parent.getTile().getModel().set( TransformUtils.getAffineModel3D( t ) );
@@ -408,7 +408,7 @@ public class TileConfigurationSPIM
 				
 				for ( TileSPIM tile : tiles )
 				{
-					final AbstractAffineModel3D<?> m = (AbstractAffineModel3D<?>)tile.getModel().clone();
+					final AbstractAffineModel3D<?> m = (AbstractAffineModel3D<?>)tile.getModel().copy();
 					
 					Transform3D t = TransformUtils.getTransform3D1( m ); 
 					ViewDataBeads parent = tile.getParent();
@@ -422,7 +422,7 @@ public class TileConfigurationSPIM
 					t = tmp2;
 					
 					// back up the model
-					AbstractAffineModel3D backUp = (AbstractAffineModel3D)tile.getModel().clone();
+					AbstractAffineModel3D backUp = (AbstractAffineModel3D)tile.getModel().copy();
 					backUp.set( (AbstractAffineModel3D)parent.getTile().getModel() );
 					
 					parent.getTile().getModel().set( TransformUtils.getAffineModel3D( t ) );

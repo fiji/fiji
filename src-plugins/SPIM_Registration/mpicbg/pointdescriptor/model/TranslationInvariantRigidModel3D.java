@@ -70,7 +70,7 @@ public class TranslationInvariantRigidModel3D extends TranslationInvariantModel<
 	public boolean canDoNumDimension( final int numDimensions ) { return numDimensions == 3; }
 
 	@Override
-	final public void fit( final Collection< PointMatch > matches )
+	final public <P extends PointMatch> void fit( final Collection< P > matches )
 		throws NotEnoughDataPointsException, IllDefinedDataPointsException
 	{
 		if ( matches.size() < MIN_NUM_MATCHES )
@@ -170,7 +170,7 @@ public class TranslationInvariantRigidModel3D extends TranslationInvariantModel<
 	}
 
 	@Override
-	public TranslationInvariantRigidModel3D clone()
+	public TranslationInvariantRigidModel3D copy()
 	{
 		TranslationInvariantRigidModel3D m = new TranslationInvariantRigidModel3D();
 		m.m00 = m00;

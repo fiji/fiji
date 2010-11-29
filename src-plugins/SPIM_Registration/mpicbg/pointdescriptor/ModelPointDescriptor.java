@@ -39,7 +39,7 @@ public class ModelPointDescriptor< P extends Point > extends AbstractPointDescri
 		if ( numNeighbors() < model.getMinNumMatches() )
 			throw new NoSuitablePointsException( "At least " + model.getMinNumMatches() + " nearest neighbors are required for a " + model.getClass().getName() + " : num neighbors=" + numNeighbors() );
 		
-		this.model = model.clone();
+		this.model = model.copy();
 	}
 
 	@Override

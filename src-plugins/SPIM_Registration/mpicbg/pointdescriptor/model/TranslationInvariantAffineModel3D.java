@@ -46,7 +46,7 @@ public class TranslationInvariantAffineModel3D extends TranslationInvariantModel
 	public boolean canDoNumDimension( final int numDimensions ) { return numDimensions == 3; }
 
 	@Override
-	final public void fit( final Collection< PointMatch > matches )
+	final public <P extends PointMatch> void fit( final Collection< P > matches )
 		throws NotEnoughDataPointsException, IllDefinedDataPointsException
 	{
 		if ( matches.size() < MIN_NUM_MATCHES )
@@ -165,7 +165,7 @@ public class TranslationInvariantAffineModel3D extends TranslationInvariantModel
 	}
 
 	@Override
-	public TranslationInvariantAffineModel3D clone()
+	public TranslationInvariantAffineModel3D copy()
 	{
 		TranslationInvariantAffineModel3D m = new TranslationInvariantAffineModel3D();
 		m.m00 = m00;

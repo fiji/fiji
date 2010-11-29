@@ -177,7 +177,7 @@ public class BeadRegistration
                     		
                     		// compute ransac and remove inconsistent candidates
                     		final ArrayList< PointMatchGeneric<Bead> > correspondences = new ArrayList<PointMatchGeneric<Bead>>();
-                    		final Model<?> model = viewA.getTile().getModel().clone();                    		
+                    		final Model<?> model = viewA.getTile().getModel().copy();                    		
                     		
                     		String result = DetectionRegistration.computeRANSAC( candidates, correspondences, model, conf.max_epsilon, conf.min_inlier_ratio, 3, conf.numIterations );
                     		if ( debugLevel <= ViewStructure.DEBUG_MAIN )
@@ -337,7 +337,7 @@ public class BeadRegistration
                     		
                     		// compute ransac and remove inconsistent candidates
                     		final ArrayList< PointMatchGeneric<Bead> > correspondences = new ArrayList<PointMatchGeneric<Bead>>();
-                    		final Model<?> model = viewA.getTile().getModel().clone();                    		
+                    		final Model<?> model = viewA.getTile().getModel().copy();                    		
                     		
                     		String result = DetectionRegistration.computeRANSAC( candidates, correspondences, model, conf.max_epsilon, conf.min_inlier_ratio, 3, conf.numIterations );
                     		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )

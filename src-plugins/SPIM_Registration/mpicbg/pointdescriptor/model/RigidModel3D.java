@@ -134,7 +134,7 @@ public class RigidModel3D extends AbstractAffineModel3D<RigidModel3D>
 	}
 
 	@Override
-	final public void fit( final Collection< PointMatch > matches ) throws NotEnoughDataPointsException, IllDefinedDataPointsException
+	final public <P extends PointMatch> void fit( final Collection< P > matches ) throws NotEnoughDataPointsException, IllDefinedDataPointsException
 	{
 		if ( matches.size() < MIN_SET_SIZE ) throw new NotEnoughDataPointsException( matches.size() + " data points are not enough to estimate a 3d rigid transformation model, at least " + MIN_SET_SIZE + " data points required." );
 		
@@ -166,7 +166,7 @@ public class RigidModel3D extends AbstractAffineModel3D<RigidModel3D>
 		inverseTransform.invert();
 	}
 
-	public RigidModel3D clone()
+	public RigidModel3D copy()
 	{
 		RigidModel3D tm = new RigidModel3D();
 		tm.transform = new Transform3D(transform);	
@@ -179,7 +179,7 @@ public class RigidModel3D extends AbstractAffineModel3D<RigidModel3D>
 	@Override
 	public RigidModel3D createInverse()
 	{
-		RigidModel3D model = this.clone();
+		RigidModel3D model = this.copy();
 		
 		model.transform.invert();
 		model.inverseTransform.invert();

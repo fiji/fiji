@@ -34,7 +34,7 @@ public class TranslationInvariantSimilarityModel3D extends TranslationInvariantM
 	public boolean canDoNumDimension( final int numDimensions ) { return numDimensions == 3; }
 
 	@Override
-	final public void fit( final Collection< PointMatch > matches )
+	final public <P extends PointMatch> void fit( final Collection< P > matches )
 		throws NotEnoughDataPointsException, IllDefinedDataPointsException
 	{
 		final int numMatches = matches.size(); 
@@ -173,7 +173,7 @@ public class TranslationInvariantSimilarityModel3D extends TranslationInvariantM
 	}
 
 	@Override
-	public TranslationInvariantSimilarityModel3D clone()
+	public TranslationInvariantSimilarityModel3D copy()
 	{
 		TranslationInvariantSimilarityModel3D m = new TranslationInvariantSimilarityModel3D();
 		m.m00 = m00;
