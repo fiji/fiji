@@ -550,7 +550,7 @@ public class BeadRegistration
 		return tc;
 	}
 
-	public static void concatenateAxialScaling( final AbstractAffineModel3D<?> model, final double zStretching )
+	public static void concatenateAxialScaling( final AbstractAffineModel3D model, final double zStretching )
 	{
 		if ( model != null )
 		{
