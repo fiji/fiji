@@ -4,6 +4,7 @@ import javax.media.j3d.Transform3D;
 import javax.vecmath.Matrix4f;
 
 import mpicbg.imglib.util.Util;
+import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.CoordinateTransform;
 
@@ -90,8 +91,24 @@ public class TransformUtils
 
 		return matrix;
 	}
+	
+	public static Transform3D getTransform3D1( final AbstractAffineModel3D<?> model )
+	{
+		final Transform3D transform = new Transform3D();
+		final float[] m = model.getMatrix( null );
 
-	public static Transform3D getTransform3D( AffineModel3D model )
+		final float[] m2 = new float[ 16 ];
+		transform.get( m2 );
+
+		for ( int i = 0; i < m.length; ++i )
+			m2[ i ] = m[ i ];
+
+		transform.set( m2 );
+
+		return transform;
+	}
+	
+	public static <M extends AbstractAffineModel3D<M>> Transform3D getTransform3D( final M model )
 	{
 		final Transform3D transform = new Transform3D();
 		final float[] m = model.getMatrix( null );

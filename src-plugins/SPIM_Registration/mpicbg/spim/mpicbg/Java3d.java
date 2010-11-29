@@ -2,12 +2,12 @@ package mpicbg.spim.mpicbg;
 
 import javax.vecmath.Point3f;
 
-import mpicbg.models.AffineModel3D;
+import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.NoninvertibleModelException;
 
 final public class Java3d
 {
-	final public static void applyInPlace( final AffineModel3D m, final Point3f p )
+	final public static void applyInPlace( final AbstractAffineModel3D<?> m, final Point3f p )
 	{
 		final float[] tmp = new float[ 3 ];
 		
@@ -22,7 +22,7 @@ final public class Java3d
 		p.z = tmp[ 2 ];
 	}
 
-	final public static void applyInPlace( final AffineModel3D m, final Point3f p, final float[] tmp )
+	final public static void applyInPlace( final AbstractAffineModel3D<?> m, final Point3f p, final float[] tmp )
 	{
 		tmp[ 0 ] = p.x;
 		tmp[ 1 ] = p.y;
@@ -35,7 +35,7 @@ final public class Java3d
 		p.z = tmp[ 2 ];
 	}
 	
-	final public static void applyInverseInPlace( final AffineModel3D m, final Point3f p ) throws NoninvertibleModelException
+	final public static void applyInverseInPlace( final AbstractAffineModel3D<?> m, final Point3f p ) throws NoninvertibleModelException
 	{
 		final float[] tmp = new float[ 3 ];
 		
@@ -50,7 +50,7 @@ final public class Java3d
 		p.z = tmp[ 2 ];
 	}
 	
-	final public static void applyInverseInPlace( final AffineModel3D m, final Point3f p, final float[] tmp ) throws NoninvertibleModelException
+	final public static void applyInverseInPlace( final AbstractAffineModel3D<?> m, final Point3f p, final float[] tmp ) throws NoninvertibleModelException
 	{
 		tmp[ 0 ] = p.x;
 		tmp[ 1 ] = p.y;

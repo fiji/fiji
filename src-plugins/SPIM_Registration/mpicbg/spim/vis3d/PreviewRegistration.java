@@ -8,6 +8,7 @@ import mpicbg.imglib.interpolation.InterpolatorFactory;
 import mpicbg.imglib.interpolation.nearestneighbor.NearestNeighborInterpolatorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
@@ -25,7 +26,7 @@ public class PreviewRegistration
 		{
 			if ( view.isConnected() )
 			{
-				InverseTransformDescription<FloatType> i = new InverseTransformDescription<FloatType>( view.getTile().getModel(), interpolatorFactory, view.getImage() );
+				InverseTransformDescription<FloatType> i = new InverseTransformDescription<FloatType>( (AbstractAffineModel3D<?>)view.getTile().getModel(), interpolatorFactory, view.getImage() );
 				list.add( i );
 			}
 		}
