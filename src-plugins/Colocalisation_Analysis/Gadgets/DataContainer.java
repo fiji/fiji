@@ -1,3 +1,5 @@
+package gadgets;
+
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -8,6 +10,11 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import algorithms.Algorithm;
+import algorithms.AutoThresholdRegression;
+import algorithms.InputCheck;
+
 
 import mpicbg.imglib.algorithm.math.ImageStatistics;
 import mpicbg.imglib.image.Image;

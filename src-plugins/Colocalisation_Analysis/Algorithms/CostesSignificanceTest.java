@@ -1,6 +1,13 @@
+package algorithms;
+
+import gadgets.DataContainer;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import results.ResultHandler;
+
 
 import mpicbg.imglib.algorithm.gauss.GaussianConvolution;
 import mpicbg.imglib.algorithm.gauss.GaussianConvolution3;

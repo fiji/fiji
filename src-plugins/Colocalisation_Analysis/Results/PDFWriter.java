@@ -1,7 +1,12 @@
+package results;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+
+import algorithms.Histogram2D;
 
 import com.lowagie.text.BadElementException;
 import com.lowagie.text.Document;
@@ -11,6 +16,7 @@ import com.lowagie.text.Paragraph;
 import com.lowagie.text.pdf.PdfContentByte;
 import com.lowagie.text.pdf.PdfWriter;
 
+import gadgets.DataContainer;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;

@@ -1,3 +1,5 @@
+package results;
+
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
 

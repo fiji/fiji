@@ -1,3 +1,5 @@
+package results;
+
 /**
  * A class representing a warning, combining a short and
  * a long message. Typically Algorithms can produce such

@@ -1,5 +1,11 @@
+package results;
+
 import java.util.Iterator;
 
+import algorithms.Histogram2D;
+
+
+import gadgets.DataContainer;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.text.TextWindow;

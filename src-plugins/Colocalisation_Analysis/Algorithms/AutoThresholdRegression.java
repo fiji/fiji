@@ -1,3 +1,7 @@
+package algorithms;
+
+import results.ResultHandler;
+import gadgets.DataContainer;
 import imglib.mpicbg.imglib.cursor.special.TwinValueRangeCursor;
 import imglib.mpicbg.imglib.cursor.special.meta.BelowThresholdPredicate;
 import mpicbg.imglib.cursor.Cursor;

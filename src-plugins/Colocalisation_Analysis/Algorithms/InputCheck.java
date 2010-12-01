@@ -1,3 +1,7 @@
+package algorithms;
+
+import results.ResultHandler;
+import gadgets.DataContainer;
 import ij.IJ;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;

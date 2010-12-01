@@ -1,7 +1,9 @@
+package algorithms;
+
 /**
  * An exception class for missing preconditions for algorithm execution.
  */
-class MissingPreconditionException extends Exception{
+public class MissingPreconditionException extends Exception{
 
 	private static final long serialVersionUID = 1L;
 

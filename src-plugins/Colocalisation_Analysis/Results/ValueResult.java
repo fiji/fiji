@@ -1,3 +1,5 @@
+package results;
+
 /**
  * A small structure to keep decimal places information
  * with numbers along with a name.

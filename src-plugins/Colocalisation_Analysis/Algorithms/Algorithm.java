@@ -1,7 +1,13 @@
+package algorithms;
+
+import gadgets.DataContainer;
+
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
+import results.ResultHandler;
+import results.Warning;
+
 
 import mpicbg.imglib.type.numeric.RealType;
 

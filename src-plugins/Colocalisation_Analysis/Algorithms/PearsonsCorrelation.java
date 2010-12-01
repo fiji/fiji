@@ -1,8 +1,10 @@
-import ij.IJ;
+package algorithms;
+
+import results.ResultHandler;
 import mpicbg.imglib.algorithm.math.ImageStatistics;
-import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
+import gadgets.DataContainer;
 import imglib.mpicbg.imglib.cursor.special.TwinValueRangeCursor;
 import imglib.mpicbg.imglib.cursor.special.TwinValueRangeCursorFactory;
 
@@ -15,7 +17,7 @@ import imglib.mpicbg.imglib.cursor.special.TwinValueRangeCursorFactory;
 public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 
 	// Identifiers for choosing which implementation to use
-	enum Implementation {Classic, Fast};
+	public enum Implementation {Classic, Fast};
 	// The member variable to store the implementation of the Pearson's Coefficient calculation used.
 	Implementation theImplementation = Implementation.Fast;
 	// resulting Pearsing value without thresholds

@@ -1,4 +1,9 @@
+package algorithms;
+
+import gadgets.DataContainer;
+
 import java.util.EnumSet;
+
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.Cursor;

@@ -1,3 +1,6 @@
+package results;
+
+import gadgets.DataContainer;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -40,6 +43,10 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JEditorPane;
 import javax.swing.JScrollPane;
+
+import algorithms.AutoThresholdRegression;
+import algorithms.Histogram2D;
+
 
 import mpicbg.imglib.algorithm.math.ImageStatistics;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
@@ -92,7 +99,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	 */
 	DataContainer<T> dataContainer = null;
 
-	SingleWindowDisplay(DataContainer<T> container){
+	public SingleWindowDisplay(DataContainer<T> container){
 		super(NewImage.createFloatImage("Single Window Display", WIN_WIDTH, WIN_HEIGHT, 1, NewImage.FILL_WHITE));
 		// save a reference to the container
 		dataContainer = container;

@@ -1,3 +1,6 @@
+package results;
+
+import algorithms.Histogram2D;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.IntegerType;
 import mpicbg.imglib.type.numeric.RealType;

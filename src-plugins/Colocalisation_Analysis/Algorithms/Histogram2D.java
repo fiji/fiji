@@ -1,5 +1,11 @@
+package algorithms;
+
 import java.util.EnumSet;
 
+import results.ResultHandler;
+
+
+import gadgets.DataContainer;
 import ij.IJ;
 import ij.measure.ResultsTable;
 import mpicbg.imglib.image.ImageFactory;
