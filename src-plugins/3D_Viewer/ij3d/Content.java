@@ -23,6 +23,7 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 	private TreeMap<Integer, ContentInstant> contents;
 	private int currentTimePoint;
 	private Switch contentSwitch;
+	private boolean showAllTimepoints = false;
 	private final String name;
 
 	public Content(String name) {
@@ -110,11 +111,31 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 
 	public void showTimepoint(int tp) {
 		currentTimePoint = tp;
+		if(showAllTimepoints)
+			return;
+
 		Integer idx = timepointToSwitchIndex.get(tp);
 		if(idx == null)
 			contentSwitch.setWhichChild(Switch.CHILD_NONE);
 		else
 			contentSwitch.setWhichChild(idx);
+	}
+
+	public void setShowAllTimepoints(boolean b) {
+		this.showAllTimepoints = b;
+		if(b) {
+			contentSwitch.setWhichChild(Switch.CHILD_ALL);
+			return;
+		}
+		Integer idx = timepointToSwitchIndex.get(currentTimePoint);
+		if(idx == null)
+			contentSwitch.setWhichChild(Switch.CHILD_NONE);
+		else
+			contentSwitch.setWhichChild(idx);
+	}
+
+	public boolean getShowAllTimepoints() {
+		return showAllTimepoints;
 	}
 
 	public int getNumberOfInstants() {
@@ -215,12 +236,10 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 			c.showPointList(b);
 	}
 
-	// TODO only for current point, makes this sense?
 	public void loadPointList() {
 		getCurrent().loadPointList();
 	}
 
-	// TODO only for current point, makes this sense?
 	public void savePointList() {
 		getCurrent().savePointList();
 	}
@@ -303,6 +322,11 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 	public void setChannels(boolean[] channels) {
 		for(ContentInstant c : contents.values())
 			c.setChannels(channels);
+	}
+
+	public void setLUT(int[] r, int[] g, int[] b, int[] a) {
+		for(ContentInstant c : contents.values())
+			c.setLUT(r, g, b, a);
 	}
 
 	public void setThreshold(int th) {
@@ -425,6 +449,22 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 
 	public boolean[] getChannels() {
 		return getCurrent().getChannels();
+	}
+
+	public void getRedLUT(int[] l) {
+		getCurrent().getRedLUT(l);
+	}
+
+	public void getGreenLUT(int[] l) {
+		getCurrent().getGreenLUT(l);
+	}
+
+	public void getBlueLUT(int[] l) {
+		getCurrent().getBlueLUT(l);
+	}
+
+	public void getAlphaLUT(int[] l) {
+		getCurrent().getAlphaLUT(l);
 	}
 
 	public Color3f getColor() {

@@ -874,7 +874,7 @@ public class Trainable_Segmentation implements PlugIn
 		
 		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 		for (int i=1; i<=featureStack.getSize(); i++){
-			String attString = featureStack.getSliceLabel(i) + " numeric";
+			String attString = featureStack.getSliceLabel(i);
 			attributes.add(new Attribute(attString));
 		}
 		
@@ -960,7 +960,7 @@ public class Trainable_Segmentation implements PlugIn
 									trainingData.add(new DenseInstance(1.0, values));
 									// increase number of instances for this class
 									nl ++;
-								}						
+								}																
 								x += dy;
 								y += dx;
 							} while (--n2>0);
@@ -1021,7 +1021,7 @@ public class Trainable_Segmentation implements PlugIn
 		if(featureStack.isEmpty())
 		{
 			IJ.showStatus("Creating feature stack...");
-			featureStack.addDefaultFeatures();
+			featureStack.updateFeaturesMT();
 		}
 		
 
@@ -1728,7 +1728,7 @@ public class Trainable_Segmentation implements PlugIn
 					final FeatureStack testImageFeatures = new FeatureStack(testSlice);
 					// Use the same features as the current classifier
 					testImageFeatures.setEnableFeatures(featureStack.getEnableFeatures());
-					testImageFeatures.updateFeatures();
+					testImageFeatures.updateFeaturesMT();
 
 					final Instances testData = testImageFeatures.createInstances(classNames);
 					testData.setClassIndex(testData.numAttributes() - 1);
@@ -1918,7 +1918,7 @@ public class Trainable_Segmentation implements PlugIn
 		if(featureStack.getSize() < 2)
 		{
 			setButtonsEnabled(false);
-			featureStack.updateFeatures();
+			featureStack.updateFeaturesMT();
 			setButtonsEnabled(true);
 		}
 
@@ -2025,8 +2025,6 @@ public class Trainable_Segmentation implements PlugIn
 		}
 		
 		gd.addMessage("General options:");
-		//FIXME normalization
-		//gd.addCheckbox("Normalize data", this.featureStack.isNormalized());
 		
 		gd.addMessage("Fast Random Forest settings:");
 		gd.addNumericField("Number of trees:", numOfTrees, 0);
@@ -2059,10 +2057,6 @@ public class Trainable_Segmentation implements PlugIn
 			if (newEnableFeatures[i] != oldEnableFeatures[i])
 				featuresChanged = true;
 		}
-		//FIXME normalization
-		// Normalization
-		//final boolean normalize = gd.getNextBoolean();
-		final boolean normalize = false;
 		
 		// Read fast random forest parameters and check if changed
 		final int newNumTrees = (int) gd.getNextNumber();
@@ -2115,12 +2109,11 @@ public class Trainable_Segmentation implements PlugIn
 			updateClassifier(newNumTrees, newRandomFeatures);
 		
 		// Update feature stack if necessary
-		if(featuresChanged || normalize != this.featureStack.isNormalized())
+		if(featuresChanged)
 		{
 			this.setButtonsEnabled(false);
-			this.featureStack.setNormalize(normalize);
 			this.featureStack.setEnableFeatures(newEnableFeatures);
-			this.featureStack.updateFeatures();
+			this.featureStack.updateFeaturesMT();
 			this.setButtonsEnabled(true);
 			// Force whole data to be updated
 			updateWholeData = true;
@@ -2298,7 +2291,7 @@ public class Trainable_Segmentation implements PlugIn
 		{
 			this.setButtonsEnabled(false);
 			this.featureStack.setEnableFeatures(usedFeatures);
-			this.featureStack.updateFeatures();
+			this.featureStack.updateFeaturesMT();
 			this.setButtonsEnabled(true);
 			// Force whole data to be updated
 			updateWholeData = true;

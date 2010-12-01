@@ -11,8 +11,15 @@ import javax.vecmath.Point3d;
 
 public class UniverseSettings {
 
+	protected static String getPrefsDir() {
+		String env = System.getenv("IJ_PREFS_DIR");
+		if (env != null && !env.equals(""))
+                        return env;
+		return System.getProperty("user.home");
+	}
+
 	public static final File propsfile = new File(
-		System.getProperty("user.home"), ".ImageJ_3D_Viewer.props");
+		getPrefsDir(), ".ImageJ_3D_Viewer.props");
 
 	public static final int PERSPECTIVE = View.PERSPECTIVE_PROJECTION;
 	public static final int PARALLEL  = View.PARALLEL_PROJECTION;
@@ -23,6 +30,7 @@ public class UniverseSettings {
 	public static boolean showGlobalCoordinateSystem           = false;
 	public static boolean showLocalCoordinateSystemsByDefault  = false;
 	public static boolean showScalebar                         = false;
+	public static boolean showSelectionBox                     = true;
 	public static Color3f defaultBackground                    = new Color3f();
 
 	public static void save() {
@@ -94,7 +102,7 @@ public class UniverseSettings {
 			((ImageCanvas3D)univ.getCanvas()).getBG().getColor(defaultBackground);
 		showScalebar = gd.getNextBoolean();
 		boolean apply = gd.getNextBoolean();
-		
+
 		showLocalCoordinateSystemsByDefault = gd.getNextBoolean();
 
 		save();

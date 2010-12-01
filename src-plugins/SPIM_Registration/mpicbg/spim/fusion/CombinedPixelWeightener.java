@@ -4,27 +4,17 @@ import java.util.ArrayList;
 
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.registration.ViewDataBeads;
-import mpicbg.spim.registration.ViewStructure;
 
 public abstract class CombinedPixelWeightener<I>
 {
-	final ViewStructure viewStructure;
 	final ArrayList<ViewDataBeads> views;
 	final SPIMConfiguration conf;
 	
-	protected CombinedPixelWeightener( final ViewStructure viewStructure )
+	protected CombinedPixelWeightener( final ArrayList<ViewDataBeads> views )
 	{
-		this.viewStructure = viewStructure;
-		this.views = viewStructure.getViews();
-		this.conf = viewStructure.getSPIMConfiguration();
+		this.views = views;
+		this.conf = views.get( 0 ).getViewStructure().getSPIMConfiguration();
 	}
-
-	/**
-	 * Updates the weights for all images, knowing where to grab all pixels from in each source image
-	 * 
-	 * @param locations - the locations of the source pixel in each source image 
-	 */
-	public abstract void updateWeights( final int[][] locations );
 	
 	/**
 	 * Updates the weights for all images, knowing where to grab all pixels from in each source image

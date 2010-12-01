@@ -152,6 +152,7 @@ public class Fake {
 		String jythonJar = pythonHome + "/jython.jar";
 		if (!new File(jythonJar).exists())
 			jythonJar = fijiHome + "/precompiled/jython.jar";
+		getClassLoader(fijiHome + "/jars/jna.jar");
 		getClassLoader(jythonJar);
 	}
 
@@ -900,7 +901,7 @@ public class Fake {
 
 			abstract void action() throws FakeException;
 
-			final boolean upToDate() {
+			public final boolean upToDate() {
 				if (upToDateStage == 1)
 					throw new RuntimeException("Circular "
 						+ "dependency detected in rule "
@@ -1767,6 +1768,10 @@ public class Fake {
 					String program) {
 				super(target, prerequisites);
 				this.program = program;
+				int space = program.indexOf(' ');
+				String argv0 = space < 0 ? program : program.substring(0, space);
+				if (argv0.endsWith(".py") && allRules.containsKey("jars/jython.jar"))
+					prerequisites.add("jars/jython.jar");
 			}
 
 			boolean checkUpToDate() {
@@ -2623,12 +2628,19 @@ public class Fake {
 			if (args[0].startsWith("../"))
 				args[0] = new File(dir,
 						args[0]).getAbsolutePath();
-			else if (args[0].equals("bash") && getPlatform().equals("win64")) {
+			else if ((args[0].equals("bash") || args[0].equals("sh")) && getPlatform().equals("win64")) {
 				String[] newArgs = new String[args.length + 2];
 				newArgs[0] = System.getenv("WINDIR") + "\\SYSWOW64\\cmd.exe";
 				newArgs[1] = "/C";
 				System.arraycopy(args, 0, newArgs, 2, args.length);
 				args = newArgs;
+				if (verbose) {
+					String output = "Executing (win32 on win64 using SYSWOW64\\cmd.exe):";
+					for (int i = 0; i < args.length; i++)
+						output += " '" + args[i] + "'";
+					err.println(output);
+				}
+
 			}
 		}
 
@@ -2934,8 +2946,9 @@ public class Fake {
 
 	public boolean isAbsolutePath(String path) {
 		boolean isWindows = getPlatform().startsWith("win");
-		return (isWindows && path.length() > 1 && path.charAt(1) == ':')
-			|| (!isWindows && path.startsWith("/"));
+		if (isWindows)
+			return path.length() > 1 && path.charAt(1) == ':';
+		return path.startsWith("/");
 	}
 
 	public String makePath(File cwd, String path) {

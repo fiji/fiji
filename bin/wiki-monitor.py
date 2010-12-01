@@ -55,7 +55,7 @@ from fiji import MediaWikiClient
 client = MediaWikiClient(url)
 if user != None and password != None and not client.isLoggedIn():
 	client.logIn(user, password)
-response = client.sendRequest(['title', 'Special:RecentChanges'], None)
+response = client.sendRequest(['title', 'Special:RecentChanges', 'hidebots', '0'], None)
 if client.isLoggedIn():
 	client.logOut()
 
@@ -94,7 +94,18 @@ for line in response.split('\n'):
 					start += 1
 				time = line[start:start + 5]
 		else:
-			author = '<unknown>'
+			i = line.find('>Talk</a>')
+			if i > 0:
+				end = line.rfind('</a>', 0, i)
+				start = line.rfind('>', 0, end) + 1
+				author = line[start:end]
+				end = line.rfind('; ', 0, start)
+				time = line[end + 2:end + 7]
+				end = line.rfind('</a>', 0, end)
+				start = line.rfind('">', 0, end) + 2
+				title = line[start:end]
+			else:
+				author = '<unknown>'
 		i = line.find('uploaded "<a href=')
 		if i > 0:
 			start = line.find('>', i) + 1
@@ -107,7 +118,7 @@ for line in response.split('\n'):
 			title = ' ->> ' + line[start:end]
 		result += '\t' + time + ' ' + title + ' (' + author + ')\n'
 
-firstLine = 'From ' + url + '/Special:RecentChanges\n'
+firstLine = 'From ' + url + '/Special:RecentChanges?hidebots=0\n'
 from java.lang import System
 backup = '.recent-changes.' + host
 if path.exists(backup):

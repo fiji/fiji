@@ -1,6 +1,8 @@
 package mpicbg.spim.fusion;
 
-import mpicbg.spim.registration.ViewStructure;
+import java.util.ArrayList;
+
+import mpicbg.spim.registration.ViewDataBeads;
 
 public class Blending extends CombinedPixelWeightener<Blending>
 {
@@ -11,11 +13,11 @@ public class Blending extends CombinedPixelWeightener<Blending>
 	
 	final int[][] imageSizes;
 	
-	protected Blending( final ViewStructure viewStructure )
+	protected Blending( final ArrayList<ViewDataBeads> views )
 	{
-		super( viewStructure );
+		super( views );
 		
-		numViews = viewStructure.getNumViews();
+		numViews = views.size();
 		useView = new boolean[numViews];
 		weights = new float[numViews];
 		minDistance = new float[numViews];
@@ -24,27 +26,6 @@ public class Blending extends CombinedPixelWeightener<Blending>
 		imageSizes = new int[numViews][];		
 		for ( int i = 0; i < numViews; ++i )
 			imageSizes[ i ] = views.get( i ).getImageSize();
-	}
-
-	@Override
-	public void updateWeights( final int[][] loc )
-	{
-		// check which location are inside its respective view
-		int num = 0;
-		for (int view = 0; view < numViews; view++)
-		{			
-			if (loc[ view ][ 0 ] >= 0 && loc[ view ][ 1 ] >= 0 && loc[ view ][ 2 ] >= 0 && 
-				loc[ view ][ 0 ] < imageSizes[ view ][ 0 ] && 
-				loc[ view ][ 1 ] < imageSizes[ view ][ 1 ] && 
-				loc[ view ][ 2 ] < imageSizes[ view ][ 2 ])
-			{
-				useView[view] = true;
-				++num;
-			}
-		}	
-		
-		// compute the linear weights
-		computeLinearWeights(num, loc, useView);
 	}
 
 	@Override
@@ -76,7 +57,7 @@ public class Blending extends CombinedPixelWeightener<Blending>
 	@Override
 	public float getWeight(final int view) { return weights[view]; }
 	
-	final private void computeLinearWeights(final int num, final int[][] loc, final boolean[] useView)
+	final private void computeLinearWeights( final int num, final int[][] loc, final boolean[] useView )
 	{
 		if (num <= 1)
 		{
@@ -141,7 +122,7 @@ public class Blending extends CombinedPixelWeightener<Blending>
 		}
 	}
 
-	final private void computeLinearWeights(final int num, final float[][] loc, final boolean[] useView)
+	final private void computeLinearWeights( final int num, final float[][] loc, final boolean[] useView )
 	{
 		if (num <= 1)
 		{

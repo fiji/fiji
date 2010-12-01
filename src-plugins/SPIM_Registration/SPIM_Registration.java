@@ -32,6 +32,7 @@ public class SPIM_Registration extends SPIMRegistrationAbstract
 	public static boolean displayRegistrationStatic = false;
 	public static boolean fusionUseBlendingStatic = true;
 	public static boolean fusionUseContentBasedStatic = false;
+	public static boolean displayFusedImageStatic = true;
 
 	public static int referenceTimePointStatic = 1;
 	public static int outputImageScalingStatic = 1;
@@ -71,6 +72,7 @@ public class SPIM_Registration extends SPIMRegistrationAbstract
 		gd.addNumericField( "Crop_Size_Output_Image_X", cropSizeXStatic, 0 );
 		gd.addNumericField( "Crop_Size_Output_Image_Y", cropSizeYStatic, 0 );
 		gd.addNumericField( "Crop_Size_Output_Image_Z", cropSizeZStatic, 0 );
+		gd.addCheckbox( "Display_fused_image", displayFusedImageStatic );
 
 		/*
 		//
@@ -183,7 +185,7 @@ public class SPIM_Registration extends SPIMRegistrationAbstract
 			conf.minPeakValue = 0.001f;
 		else if ( beadBrightness == 1 )
 			conf.minPeakValue = 0.008f;
-		else if ( beadBrightness == 2 )
+		else if ( beadBrightness == 1 )
 			conf.minPeakValue = 0.03f;
 		else
 			conf.minPeakValue = 0.1f;
@@ -205,7 +207,7 @@ public class SPIM_Registration extends SPIMRegistrationAbstract
 		else
 			conf.multipleImageFusion = true;
 		
-		if ( conf.timeLapseRegistration || conf.multipleImageFusion )
+		if ( conf.timeLapseRegistration || conf.multipleImageFusion || !displayFusedImageStatic  )
 			conf.showOutputImage = false;
 		else
 			conf.showOutputImage = true;
@@ -287,7 +289,7 @@ public class SPIM_Registration extends SPIMRegistrationAbstract
 	}
 
 	@Override
-	protected void getParameters(GenericDialogPlus gd)
+	protected boolean getParameters(GenericDialogPlus gd)
 	{
 		spimDataDirectoryStatic = gd.getNextString();
 		timepointsStatic = gd.getNextString();
@@ -314,7 +316,10 @@ public class SPIM_Registration extends SPIMRegistrationAbstract
 		cropOffsetZStatic = (int)Math.round( gd.getNextNumber() );
 		cropSizeXStatic  = (int)Math.round( gd.getNextNumber() );
 		cropSizeYStatic = (int)Math.round( gd.getNextNumber() );
-		cropSizeZStatic = (int)Math.round( gd.getNextNumber() );		
+		cropSizeZStatic = (int)Math.round( gd.getNextNumber() );
+		displayFusedImageStatic = gd.getNextBoolean(); 
+		
+		return true;
 	}
 
 }

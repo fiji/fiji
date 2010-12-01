@@ -104,7 +104,8 @@ import weka.core.RevisionUtils;
  *
  * @author Richard Kirkby (rkirkby@cs.waikato.ac.nz) - original code
  * @author Fran Supek (fran.supek[AT]irb.hr) - adapted code
- * @version Adapted by Ignacio Arganda-Carreras (iarganda at mit.edu) to work on Weka 3.7
+ * @author Ignacio Arganda-Carreras (iarganda at mit.edu)
+ * @version $Revision 2010$ adapted by Ignacio Arganda-Carreras to work on Weka 3.7 and correctly use instance weights
  */
 public class FastRandomForest 
   extends AbstractClassifier 
