@@ -66,6 +66,11 @@ public class BalancedRandomTree implements Runnable, Serializable
 	 */
 	abstract class BaseNode implements Serializable
 	{
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+		
 		public abstract double[] eval( Instance instance );
 		public int getDepth()
 		{
@@ -79,6 +84,11 @@ public class BalancedRandomTree implements Runnable, Serializable
 	 */
 	class LeafNode extends BaseNode implements Serializable
 	{
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+		
 		double[] probability;
 		
 		@Override
@@ -116,6 +126,10 @@ public class BalancedRandomTree implements Runnable, Serializable
 	 */
 	class InteriorNode extends BaseNode implements Serializable
 	{
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
 		BaseNode left;
 		BaseNode right;
 		final int depth;
@@ -157,7 +171,7 @@ public class BalancedRandomTree implements Runnable, Serializable
 					rightArray.add(it);
 					totalRight ++;
 				}										
-					
+System.out.println("total left = " + totalLeft + ", total rigth = " + totalRight + ", depth = " + depth);					
 			//indices.clear();
 			if( totalLeft == 0 )
 			{
