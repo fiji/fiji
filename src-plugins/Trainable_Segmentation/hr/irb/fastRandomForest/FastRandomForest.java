@@ -564,7 +564,7 @@ public class FastRandomForest
     
     m_bagger = new FastRfBagging();
 
-    // Set up the ree options which are held in the motherForest.
+    // Set up the tree options which are held in the motherForest.
     m_KValue = m_numFeatures;
     if (m_KValue > data.numAttributes()-1) m_KValue = data.numAttributes()-1;
     if (m_KValue < 1) m_KValue = (int) Utils.log2(data.numAttributes())+1;

@@ -171,7 +171,7 @@ public class DataCache {
   
   /**
    * Makes a copy of a DataCache. Most array fields are shallow copied, with the
-   * exception of in inBag and whatGoesWhere arrays, which are created anew.
+   * exception of inBag and whatGoesWhere arrays, which are created anew.
    * 
    * @param origData
    */
