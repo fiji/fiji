@@ -1,6 +1,9 @@
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
+import com.lowagie.text.BadElementException;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.PageSize;
@@ -17,8 +20,9 @@ import mpicbg.imglib.algorithm.math.ImageStatistics;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.RealType;
+import mpicbg.imglib.type.numeric.integer.LongType;
 
-public class PDFWriter<T extends RealType<T>> extends ResultsCollector<T> {
+public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 
 	// indicates if we want to produce US letter or A4 size
 	boolean isLetter = false;
@@ -33,8 +37,65 @@ public class PDFWriter<T extends RealType<T>> extends ResultsCollector<T> {
 	PdfWriter writer;
 	Document document;
 
+	// a list of the available result images, no matter what specific kinds
+	protected List<com.lowagie.text.Image> listOfPDFImages
+		= new ArrayList<com.lowagie.text.Image>();
+	protected List<Paragraph> listOfPDFTexts
+		= new ArrayList<Paragraph>();
+
 	public PDFWriter(DataContainer container) {
 		this.container = container;
+	}
+
+	public void handleImage(Image<T> image) {
+		ImagePlus imp = ImageJFunctions.displayAsVirtualStack( image );
+
+		// set the display range
+		double max = ImageStatistics.getImageMax(image).getRealDouble();
+		imp.setDisplayRange(0.0, max);
+		addImageToList(imp, image.getName());
+	}
+
+	public void handleHistogram(Histogram2D<T> histogram) {
+		Image<LongType> image = histogram.getPlotImage();
+		ImagePlus imp = ImageJFunctions.displayAsVirtualStack( image );
+		imp.getProcessor().snapshot();
+		imp.getProcessor().log();
+		IJ.resetMinAndMax();
+		imp.updateAndDraw();
+		IJ.run(imp,"Fire", null);
+		addImageToList(imp, image.getName());
+		// reset the imp from the log scaling we applied earlier
+		imp.getProcessor().reset();
+	}
+
+	protected void addImageToList(ImagePlus imp, String name) {
+		java.awt.Image awtImage = imp.getImage();
+		try {
+			com.lowagie.text.Image pdfImage = com.lowagie.text.Image.getInstance(awtImage, null);
+			pdfImage.setMarkupAttribute("name", name);
+			listOfPDFImages.add(pdfImage);
+		}
+		catch (BadElementException e) {
+			IJ.log("Could not convert image to correct format for PDF generation");
+			IJ.handleException(e);
+		}
+		catch (IOException e) {
+			IJ.log("Could not convert image to correct format for PDF generation");
+			IJ.handleException(e);
+		}
+	}
+
+	public void handleWarning(Warning warning) {
+		listOfPDFTexts.add(new Paragraph("Warning! " + warning.getShortMessage() + " - " + warning.getLongMessage()));
+	}
+
+	public void handleValue(String name, double value) {
+		handleValue(name, value, 3);
+	}
+
+	public void handleValue(String name, double value, int decimals) {
+		listOfPDFTexts.add(new Paragraph(name + ": " + IJ.d2s(value, decimals)));
 	}
 
 	/**
@@ -42,29 +103,13 @@ public class PDFWriter<T extends RealType<T>> extends ResultsCollector<T> {
 	 * @param img The image to print.
 	 * @param printName The name to print under the image.
 	 */
-	protected void addImage(Image<?> img, String printName)
+	protected void addImage(com.lowagie.text.Image image)
 			throws DocumentException, IOException {
-		ImagePlus imp = ImageJFunctions.displayAsVirtualStack( img );
 
-		boolean logScaleDisplayed = mapOf2DHistograms.containsKey(img);
-
-		if (logScaleDisplayed) {
-			imp.getProcessor().snapshot();
-			imp.getProcessor().log();
-			IJ.resetMinAndMax();
-			imp.updateAndDraw();
-			IJ.run(imp,"Fire", null);
-		}
-
-		// set the display range
-		double max = ImageStatistics.getImageMax((Image<T>) img).getRealDouble();
-		imp.setDisplayRange(0.0, max);
-
-		java.awt.Image awtImage = imp.getImage();
 		if (! isFirst) {
 			document.add(new Paragraph("\n"));
 			float vertPos = writer.getVerticalPosition(true);
-			if (vertPos - document.bottom() < imp.getHeight()) {
+			if (vertPos - document.bottom() < image.height()) {
 				document.newPage();
 			}
 			PdfContentByte cb = writer.getDirectContent();
@@ -80,28 +125,22 @@ public class PDFWriter<T extends RealType<T>> extends ResultsCollector<T> {
 		}
 
 		if (showName) {
-			Paragraph paragraph = new Paragraph(printName);
+			Paragraph paragraph = new Paragraph(image.getMarkupAttribute("name"));
 			paragraph.setAlignment(Paragraph.ALIGN_CENTER);
 			document.add(paragraph);
 			//spcNm = 40;
 		}
 
 		if (showSize) {
-			Paragraph paragraph = new Paragraph(awtImage.getWidth(null)+" x "+ awtImage.getHeight(null));
+			Paragraph paragraph = new Paragraph(image.width() + " x " + image.height());
 			paragraph.setAlignment(Paragraph.ALIGN_CENTER);
 			document.add(paragraph);
 			//spcSz = 40;
 		}
 
-		com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(awtImage, null);
 		image.setAlignment(com.lowagie.text.Image.ALIGN_CENTER);
 		document.add(image);
 		isFirst = false;
-
-		if (logScaleDisplayed) {
-			// reset the imp from the log scaling we applied earlier
-			imp.getProcessor().reset();
-		}
 	}
 
 	public void process() {
@@ -123,8 +162,12 @@ public class PDFWriter<T extends RealType<T>> extends ResultsCollector<T> {
 			writer = PdfWriter.getInstance(document, new FileOutputStream(path));
 			document.open();
 			// iterate over all produced images
-			for (Image<?> img : listOfImages) {
-				addImage(img, img.getName());
+			for (com.lowagie.text.Image img : listOfPDFImages) {
+				addImage(img);
+			}
+			//iterate over all produced text objects
+			for (Paragraph p : listOfPDFTexts) {
+				document.add(p);
 			}
 		} catch(DocumentException de) {
 			IJ.showMessage("PDF Writer", de.getMessage());
