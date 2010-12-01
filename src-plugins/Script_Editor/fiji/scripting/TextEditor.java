@@ -737,7 +737,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		else if (source == removeTrailingWhitespace)
 			new TokenFunctions(getTextArea()).removeTrailingWhitespace();
 		else if (source == clearScreen)
-			getTab().screen.setText("");
+			getTab().getScreen().setText("");
 		else if (source == autocomplete) {
 			try {
 				getEditorPane().autocomp.doCompletion();
@@ -1076,6 +1076,10 @@ public class TextEditor extends JFrame implements ActionListener,
 		public void showOutput() {
 			if (showingErrors)
 				toggleErrors();
+		}
+
+		public JTextArea getScreen() {
+			return showingErrors ? errorScreen: screen;
 		}
 
 		boolean isExecuting() {
