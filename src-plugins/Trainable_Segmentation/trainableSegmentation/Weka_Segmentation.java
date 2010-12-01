@@ -1719,7 +1719,9 @@ public class Weka_Segmentation implements PlugIn
 
 					IJ.log("Processing image " + file.getName() + " in thread " + numThread);
 
-					ImagePlus segmentation = applyClassifierToTestImage(testImage, false);
+					boolean parallelise = (imageFiles.length < numProcessors);
+
+					ImagePlus segmentation = applyClassifierToTestImage(testImage, parallelise);
 
 					if (showResults) {
 						segmentation.show();
