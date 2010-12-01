@@ -13,9 +13,11 @@ import ij.WindowManager;
 import ij.plugin.PlugIn;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
+import javax.vecmath.Vector3f;
 import javax.media.j3d.Transform3D;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.awt.Color;
 import ij3d.Image3DUniverse;
 import ij3d.ImageWindow3D;
@@ -182,5 +184,103 @@ public class MeshMaker {
 		}
 		return list;
 	}
-}
 
+	static final private float phi = (1 + (float)Math.sqrt(5)) / 2;
+	static final private float[][] icosahedron = { { phi, 1, 0 },
+					{ -phi, 1, 0 },
+					{ phi, -1, 0 },
+					{ -phi, -1, 0 },
+					{ 1, 0, phi },
+					{ 1, 0, -phi },
+					{-1, 0, phi },
+					{-1, 0, -phi },
+					{0, phi, 1 },
+					{0, -phi, 1},
+					{0, phi, -1 },
+					{0, -phi, -1} };
+	static final private int[][] icosfaces =    { { 0, 8, 4 },
+					{ 0, 5, 10 },
+					{ 2, 4, 9 },
+					{ 2, 11, 5 },
+					{ 1, 6, 8 },
+					{ 1, 10, 7 },
+					{ 3, 9, 6 },
+					{ 3, 7, 11 },
+					{ 0, 10, 8 },
+					{ 1, 8, 10 },
+					{ 2, 9, 11 },
+					{ 3, 11, 9 },
+					{ 4, 2, 0 },
+					{ 5, 0, 2 },
+					{ 6, 1, 3 },
+					{ 7, 3, 1 },
+					{ 8, 6, 4 },
+					{ 9, 4, 6 },
+					{ 10, 5, 7 },
+					{ 11, 7, 5 } };
+
+	/** Returns a "3D Viewer"-ready list mesh, centered at 0,0,0 and with radius as the radius of the enclosing sphere. */
+	static public final List<Point3f> createIcosahedron(int subdivisions, final float radius) {
+		List<Point3f> ps = new ArrayList<Point3f>();
+		for (int i=0; i<icosfaces.length; i++) {
+			for (int k=0; k<3; k++) {
+				ps.add(new Point3f(icosahedron[icosfaces[i][k]]));
+			}
+		}
+		while (subdivisions-- > 0) {
+			final List<Point3f> sub = new ArrayList<Point3f>();
+			// Take three consecutive points, which define a face, and create 4 faces out of them.
+			for (int i=0; i<ps.size(); i+=3) {
+				Point3f p0 = ps.get(i);
+				Point3f p1 = ps.get(i+1);
+				Point3f p2 = ps.get(i+2);
+
+				Point3f p01 = new Point3f((p0.x + p1.x)/2, (p0.y + p1.y)/2, (p0.z + p1.z)/2);
+				Point3f p02 = new Point3f((p0.x + p2.x)/2, (p0.y + p2.y)/2, (p0.z + p2.z)/2);
+				Point3f p12 = new Point3f((p1.x + p2.x)/2, (p1.y + p2.y)/2, (p1.z + p2.z)/2);
+				// lower left:
+				sub.add(p0);
+				sub.add(p01);
+				sub.add(p02);
+				// upper:
+				sub.add(new Point3f(p01)); // as copies
+				sub.add(p1);
+				sub.add(p12);
+				// lower right:
+				sub.add(new Point3f(p12));
+				sub.add(p2);
+				sub.add(new Point3f(p02));
+				// center:
+				sub.add(new Point3f(p01));
+				sub.add(new Point3f(p12));
+				sub.add(new Point3f(p02));
+			}
+			ps = sub;
+		}
+
+		// Project all vertices to the surface of a sphere of radius 1
+		final Vector3f v = new Vector3f();
+		for (final Point3f p : ps) {
+			v.set(p);
+			v.normalize();
+			v.scale(radius);
+			p.set(v);
+		}
+
+		return ps;
+	}
+
+	static public final List<Point3f> copyTranslated(final List<Point3f> ps, final float dx, final float dy, final float dz) {
+		final HashMap<Point3f,Point3f> m = new HashMap<Point3f,Point3f>();
+		final ArrayList<Point3f> verts = new ArrayList<Point3f>();
+		for (final Point3f p : ps) {
+			Point3f p2 = m.get(p);
+			if (null == p2) {
+				p2 = new Point3f(p.x + dx, p.y + dy, p.z + dz);
+				m.put(p, p2);
+			}
+			verts.add(p2);
+		}
+		return verts;
+	}
+}

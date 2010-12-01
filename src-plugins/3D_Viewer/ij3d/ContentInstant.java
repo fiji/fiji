@@ -188,6 +188,9 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 		// create point list and add it to the switch
 		bbSwitch.addChild(plShape);
 
+		// adjust the landmark point size properly
+		plShape.setRadius((float)min.distance(max) / 100f);
+
 		// initialize child mask of the switch
 		whichChild.set(BS, selected);
 		whichChild.set(CS, coordVisible);

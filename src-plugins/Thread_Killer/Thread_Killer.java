@@ -1,5 +1,9 @@
 import ij.IJ;
+import ij.ImagePlus;
+import ij.WindowManager;
+
 import ij.gui.GenericDialog;
+
 import ij.plugin.PlugIn;
 
 public class Thread_Killer implements PlugIn {
@@ -13,6 +17,11 @@ public class Thread_Killer implements PlugIn {
 			String name = threads[i].getName();
 			if (threads[i] == Thread.currentThread() ||
 					name.startsWith("AWT-") ||
+					name.startsWith("Thread-") ||
+					name.startsWith("pool-") ||
+					name.equals("Contrast Adjuster") ||
+					name.equals("ContrastAdjuster") ||
+					name.equals("ThresholdAdjuster") ||
 					name.equals("zSelector") ||
 					name.equals("Java2D Disposer") ||
 					name.equals("SocketListener") ||
@@ -40,6 +49,11 @@ public class Thread_Killer implements PlugIn {
 			return;
 		int threadIndex = gd.getNextChoiceIndex();
 		threads[threadIndex].stop();
+
+		for (int id : WindowManager.getIDList()) {
+			ImagePlus image = WindowManager.getImage(id);
+			if (image != null)
+				image.unlock();
+		}
 	}
 }
-

@@ -12,7 +12,7 @@ import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.interpolation.Interpolator;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
-import mpicbg.models.AffineModel3D;
+import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.NoninvertibleModelException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.registration.ViewDataBeads;
@@ -114,7 +114,7 @@ public class MappingFusionSequentialDifferentOutput extends SPIMImageFusion
 			final int h = imageSize[ 1 ];
 			final int d = imageSize[ 2 ];
 			
-			final AffineModel3D model = view.getTile().getModel();
+			final AbstractAffineModel3D<?> model = (AbstractAffineModel3D<?>)view.getTile().getModel();
 
 			// temporary float array
         	final float[] tmp = new float[ 3 ];
@@ -122,10 +122,7 @@ public class MappingFusionSequentialDifferentOutput extends SPIMImageFusion
         	
     		final CombinedPixelWeightener<?>[] combW = new CombinedPixelWeightener<?>[combinedWeightenerFactories.size()];
     		for (int i = 0; i < combW.length; i++)
-    		{
-    			System.out.println( "init " + combinedWeightenerFactories.get(i).getDescriptiveName() );
     			combW[i] = combinedWeightenerFactories.get(i).createInstance( views );
-    		}
 
 			final float[][] loc = new float[ numViews ][ 3 ];
 			final boolean[] use = new boolean[ numViews ];

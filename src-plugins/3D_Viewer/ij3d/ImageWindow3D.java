@@ -57,6 +57,7 @@ public class ImageWindow3D extends ImageWindow implements UniverseListener,
 		if (j3dNoOffScreen != null && j3dNoOffScreen.equals("true"))
 			noOffScreen = true;
 		imp = new ImagePlus();
+		imp.setTitle("ImageJ 3D Viewer");
 		this.universe = universe;
 		this.canvas3D = (ImageCanvas3D)universe.getCanvas();
 
@@ -100,6 +101,7 @@ public class ImageWindow3D extends ImageWindow implements UniverseListener,
 
 	public boolean close() {
 		boolean b = super.close();
+		WindowManager.removeWindow(this);
 		return b;
 	}
 
