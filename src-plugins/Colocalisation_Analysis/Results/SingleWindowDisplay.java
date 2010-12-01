@@ -137,7 +137,6 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 
 		listButton = new JButton("List");
 		listButton.addActionListener(new ActionListener() {
-			@Override
 			public void actionPerformed(ActionEvent e) {
 				showList();
 			}
@@ -146,7 +145,6 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 
 		copyButton = new JButton("Copy");
 		copyButton.addActionListener(new ActionListener() {
-			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				copyToClipboard();
 			}
@@ -551,7 +549,6 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 		}
 	}
 
-	@Override
 	public void lostOwnership(Clipboard clipboard, Transferable contents) {
 		// nothing to do here
 	}
