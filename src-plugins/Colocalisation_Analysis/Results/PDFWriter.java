@@ -32,7 +32,6 @@ public class PDFWriter<T extends RealType<T>> extends ResultsCollector<T> {
 	DataContainer container;
 	PdfWriter writer;
 	Document document;
-	Paragraph paragraph;
 
 	public PDFWriter(DataContainer container) {
 		this.container = container;
@@ -81,14 +80,14 @@ public class PDFWriter<T extends RealType<T>> extends ResultsCollector<T> {
 		}
 
 		if (showName) {
-			paragraph = new Paragraph(printName);
+			Paragraph paragraph = new Paragraph(printName);
 			paragraph.setAlignment(Paragraph.ALIGN_CENTER);
 			document.add(paragraph);
 			//spcNm = 40;
 		}
 
 		if (showSize) {
-			paragraph = new Paragraph(awtImage.getWidth(null)+" x "+ awtImage.getHeight(null));
+			Paragraph paragraph = new Paragraph(awtImage.getWidth(null)+" x "+ awtImage.getHeight(null));
 			paragraph.setAlignment(Paragraph.ALIGN_CENTER);
 			document.add(paragraph);
 			//spcSz = 40;
