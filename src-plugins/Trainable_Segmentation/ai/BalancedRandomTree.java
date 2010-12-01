@@ -1,12 +1,17 @@
 package ai;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import weka.core.Instance;
 import weka.core.Instances;
 
-public class BalancedRandomTree implements Runnable
+public class BalancedRandomTree implements Runnable, Serializable
 {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	/** original data */
 	Instances data = null;
 	/** indices of the samples in the bag for this tree */
@@ -59,7 +64,7 @@ public class BalancedRandomTree implements Runnable
 	 * Basic node of the tree
 	 *
 	 */
-	abstract class BaseNode
+	abstract class BaseNode implements Serializable
 	{
 		public abstract double[] eval( Instance instance );
 		public int getDepth()
@@ -72,7 +77,7 @@ public class BalancedRandomTree implements Runnable
 	 * Leaf node in the tree 
 	 *
 	 */
-	class LeafNode extends BaseNode
+	class LeafNode extends BaseNode implements Serializable
 	{
 		double[] probability;
 		
@@ -100,7 +105,7 @@ public class BalancedRandomTree implements Runnable
 			this.probability = new double[ data.numClasses() ];
 			for(final Integer it : indices)
 			{
-				this.probability[ data.get( it.intValue() ).classIndex()] ++;
+				this.probability[ (int) data.get( it.intValue() ).classValue()] ++;
 			}
 		}
 		
@@ -109,7 +114,7 @@ public class BalancedRandomTree implements Runnable
 	 * Interior node of the tree
 	 *
 	 */
-	class InteriorNode extends BaseNode
+	class InteriorNode extends BaseNode implements Serializable
 	{
 		BaseNode left;
 		BaseNode right;
