@@ -165,7 +165,9 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		}
 
 		// create a results handler
-		ResultHandler<T> resultHandler = new SingleWindowDisplay<T>(container);
+		List<ResultHandler> listOfResultHandlers = new ArrayList<ResultHandler>();
+		listOfResultHandlers.add(new SingleWindowDisplay<T>(container));
+		listOfResultHandlers.add(new PDFWriter<T>(container));
 		//ResultHandler<T> resultHandler = new EasyDisplay<T>(container);
 
 		// this list contains the algorithms that will be run when the user clicks ok
@@ -194,17 +196,21 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			catch (MissingPreconditionException e){
 				String aName = a.getClass().getName();
 				System.out.println("MissingPreconditionException occured in " + aName + " algorithm: " + e.getMessage());
-				resultHandler.handleWarning(
-						new Warning( "Probem with input data", aName + " - " + e.getMessage() ) );
+				for (ResultHandler r : listOfResultHandlers){
+					r.handleWarning(
+							new Warning( "Probem with input data", aName + " - " + e.getMessage() ) );
+				}
 			}
 		}
 
 		// let the algorithms feed their results to the handler
 		for (Algorithm a : userSelectedJobs){
-			a.processResults(resultHandler);
+			for (ResultHandler r : listOfResultHandlers)
+				a.processResults(r);
 		}
 		// do the actual results processing
-		resultHandler.process();
+		for (ResultHandler r : listOfResultHandlers)
+			r.process();
     }
 
     /**
