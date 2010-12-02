@@ -40,7 +40,7 @@ public class LiICQ<T extends RealType<T>> extends Algorithm<T> {
 	 * @param mean2 The second images mean
 	 * @return Li et al.'s ICQ value
 	 */
-	public double calculateLisICQ(Image<T> img1, double mean1, Image<T> img2, double mean2) {
+	public static <T extends RealType<T>> double calculateLisICQ(Image<T> img1, double mean1, Image<T> img2, double mean2) {
 		// get the cursors for iterating through pixels in images
 		Cursor<T> cursor1 = img1.createCursor();
 		Cursor<T> cursor2 = img2.createCursor();
