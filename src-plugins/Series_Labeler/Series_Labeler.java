@@ -294,29 +294,24 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		imp.setSlice(currentSlice);
 		
 		// This makes the GUI object
-		gd = new NonBlockingGenericDialog(
-				"Series Labeler");
+		gd = new NonBlockingGenericDialog("Series Labeler");
 
 		/*
 		 * General settings panel
 		 */
-		generalSettingsContainer = createContainerPanel(70,
-			"General Settings");
+		generalSettingsContainer = createContainerPanel(70, "General Settings");
 		
 		//add combobox for stack type
 		String[] stacks = convertStackTypesToStrings(stackTypes);
-		JPanel stackTypePanel = createComboBoxPanel(
-			"Stack_Type", stacks, 0, 100, 180);
+		JPanel stackTypePanel = createComboBoxPanel("Stack_Type", stacks, 0, 100, 180);
 		stackTypePanel.setLocation(left, 30);
 		
-		addPanelsToDialog(generalSettingsContainer,
-			new JPanel[] {stackTypePanel} );
+		addPanelsToDialog(generalSettingsContainer, new JPanel[] {stackTypePanel} );
 		
 		/*
 		 * Units formatting panel
 		 */
-		unitsFormattingContainer = createContainerPanel(100,
-			"Units_Formatting");
+		unitsFormattingContainer = createContainerPanel(100, "Units_Formatting");
 		
 		// add combobox for label format
 		JPanel pLabelFormat = createComboBoxPanel("Label_Format",
@@ -331,19 +326,16 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		labelUnitsPanel.setLocation(left, 60);
         
 		// add Custom Suffix panel
-		customSuffixPanel = createTextFieldPanel("Custom_Suffix",
-			customSuffix);
+		customSuffixPanel = createTextFieldPanel("Custom_Suffix", customSuffix);
 		suffixTextField = (TextField) gd.getStringFields().lastElement();
 		customSuffixPanel.setLocation(left, 60);
 		
 		// add Custom Format panel
-		customLabelFormatPanel = createTextFieldPanel("Custom_Format",
-			customFormat);
+		customLabelFormatPanel = createTextFieldPanel("Custom_Format", customFormat);
 		customLabelFormatPanel.setLocation(300, 30);
 		
 		// add Decimal Places panel
-		decimalPlacesPanel = createNumericFieldPanel("Decimal_Places",
-			decimalPlaces, 0);
+		decimalPlacesPanel = createNumericFieldPanel("Decimal_Places", decimalPlaces, 0);
 		decimalPlacesPanel.setLocation(280, 30);
 		
 		addPanelsToDialog(unitsFormattingContainer,
@@ -354,33 +346,27 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		/*
 		 * Start/Stop/Interval
 		 */
-		startStopIntervalsContainer = createContainerPanel(130,
-			"Start/Stop/Interval of Stack");
+		startStopIntervalsContainer = createContainerPanel(130, "Start/Stop/Interval of Stack");
 		
 		// add a panel for the series stamper start value
-		JPanel pStartup = createNumericFieldPanel("Startup",
-			start, 10);
+		JPanel pStartup = createNumericFieldPanel("Startup", start, 10);
 		pStartup.setLocation(left, 30);
 		
 		// add a panel for the interval settings
-		JPanel pInterval = createNumericFieldPanel("Interval",
-			interval, 10);
+		JPanel pInterval = createNumericFieldPanel("Interval", interval, 10);
 		intervalTextField = (TextField) gd.getNumericFields().lastElement();
 		pInterval.setLocation(left, 60);
 		
 		// add panel for the everyNth setting
-		JPanel pEveryNth = createNumericFieldPanel("Every_n-th",
-			frameMask, 0);
+		JPanel pEveryNth = createNumericFieldPanel("Every_n-th", frameMask, 0);
 		pEveryNth.setLocation(left, 90);
 		
 		// add panel for First Frame setting
-		JPanel pFirstFrame = createNumericFieldPanel("First",
-			first, 0);
+		JPanel pFirstFrame = createNumericFieldPanel("First", first, 0);
 		pFirstFrame.setLocation(280, 30);
 		
 		// add panel for Last Frame setting
-		JPanel pLastFrame = createNumericFieldPanel("Last",
-			last, 0);
+		JPanel pLastFrame = createNumericFieldPanel("Last", last, 0);
 		pLastFrame.setLocation(280, 60);
 		
 		addPanelsToDialog(startStopIntervalsContainer,
@@ -390,21 +376,16 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		/*
 		 * Location and Font panel
 		 */
-		locationFontContainer = createContainerPanel(110,
-			"Location & Font");
+		locationFontContainer = createContainerPanel(110, "Location & Font");
 		
 		// add panel for X location
-		JPanel pLocationX = createNumericFieldPanel("X_",
-			x, 0, 20, 50);
-		locationXTextField =
-			(TextField) gd.getNumericFields().lastElement();
+		JPanel pLocationX = createNumericFieldPanel("X_", x, 0, 20, 50);
+		locationXTextField = (TextField) gd.getNumericFields().lastElement();
 		pLocationX.setLocation(left, 30);
 		
 		// add panel for Y location
-		JPanel pLocationY =
-			createNumericFieldPanel("Y_", y, 0, 20, 50);
-		locationYTextField =
-			(TextField) gd.getNumericFields().lastElement();
+		JPanel pLocationY = createNumericFieldPanel("Y_", y, 0, 20, 50);
+		locationYTextField = (TextField) gd.getNumericFields().lastElement();
 		pLocationY.setLocation(120, 30);
 		
 		if (isCustomROI())
@@ -412,16 +393,12 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		else locationPreset = UPPER_LEFT;
 		
 		// add combobox for location presets
-		JPanel pLocationPresets = createComboBoxPanel(
-			"Location_Presets", locations,
-			locationPreset, 110, 130);
-		locationPresetsComboBox =
-			(Choice) gd.getChoices().lastElement();
+		JPanel pLocationPresets = createComboBoxPanel("Location_Presets", locations, locationPreset, 110, 130);
+		locationPresetsComboBox = (Choice) gd.getChoices().lastElement();
 		pLocationPresets.setLocation(240, 30);
         
 	        fontPropertiesContainer = new FontPropertiesPanel();
-		fontPropertiesContainer.setBounds(left, 70, 400,
-		subpanelHeight);
+		fontPropertiesContainer.setBounds(left, 70, 400, subpanelHeight);
   		
   		addPanelsToDialog(locationFontContainer,
 			new JPanel[] {pLocationX,
@@ -581,8 +558,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			labelIP.drawString(selectedFormat.getLabelString(labelValue));
 			
 			ImageRoi imageRoi =
-				new ImageRoi(backgroundRectangle.x, backgroundRectangle.y,
-						labelIP);
+				new ImageRoi(backgroundRectangle.x, backgroundRectangle.y, labelIP);
 			Overlay overlay = new Overlay(imageRoi);
 			imp.setOverlay(overlay);
 		} else {
@@ -1370,8 +1346,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 
 		protected DecimalLabelFormat(String[] allowedFormatUnits, String name,
 				boolean supportCustomSuffix, boolean supportCustomFormat) {
-			super(allowedFormatUnits, name, supportCustomSuffix,
-					supportCustomFormat, true);
+			super(allowedFormatUnits, name, supportCustomSuffix, supportCustomFormat, true);
 		}
 
 		/**
@@ -1386,9 +1361,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			if (interval == 0.0)
 				return suffix();
 			else
-				return (decimalPlaces == 0 ? "" + (int) labelValue : IJ.d2s(labelValue,
-						decimalPlaces))
-						+ " " + suffix();
+				return (decimalPlaces == 0 ? "" + (int) labelValue : IJ.d2s(labelValue, decimalPlaces)) + " " + suffix();
 		}
 	}
 
