@@ -159,6 +159,10 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 			SaveDialog sd = new SaveDialog("Save as PDF", name, ".pdf");
 			name = sd.getFileName();
 			String directory = sd.getDirectory();
+			// make sure we got what we need
+			if ((name == null) || (directory == null)) {
+				return;
+			}
 			String path = directory+name;
 			// create a new iText Document and add date and title
 			document = new Document(isLetter ? PageSize.LETTER : PageSize.A4);
