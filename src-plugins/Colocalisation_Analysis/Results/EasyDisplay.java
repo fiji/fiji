@@ -1,18 +1,14 @@
 package results;
 
-import java.util.Iterator;
-
-import algorithms.Histogram2D;
-
-
 import gadgets.DataContainer;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.text.TextWindow;
 import mpicbg.imglib.algorithm.math.ImageStatistics;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.RealType;
+import algorithms.Histogram2D;
 
 public class EasyDisplay<T extends RealType<T>> implements ResultHandler<T> {
 	// the text window to present value and text results
@@ -20,7 +16,7 @@ public class EasyDisplay<T extends RealType<T>> implements ResultHandler<T> {
 	/* the data container with general information about the
 	 * source images that were processed by the algorithms.
 	 */
-	protected DataContainer container;
+	protected DataContainer<T> container;
 
 	public EasyDisplay(DataContainer<T> container) {
 		final int twWidth = 170;
@@ -64,7 +60,7 @@ public class EasyDisplay<T extends RealType<T>> implements ResultHandler<T> {
 				+ IJ.d2s(value, decimals) + "\n");
 	}
 
-	protected void printTextStatistics(DataContainer container){
+	protected void printTextStatistics(DataContainer<T> container){
 		textWindow.getTextPanel().appendLine("Ch1 Mean\t" + container.getMeanCh1() + "\n");
 		textWindow.getTextPanel().appendLine("Ch2 Mean\t" + container.getMeanCh2() + "\n");
 		textWindow.getTextPanel().appendLine("Ch1 Min\t" + container.getMinCh1() + "\n");

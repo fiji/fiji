@@ -1,24 +1,14 @@
 package gadgets;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Dictionary;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-
-import algorithms.Algorithm;
-import algorithms.AutoThresholdRegression;
-import algorithms.InputCheck;
-
 
 import mpicbg.imglib.algorithm.math.ImageStatistics;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
+import algorithms.Algorithm;
+import algorithms.AutoThresholdRegression;
+import algorithms.InputCheck;
 
 /**
  * The DataContainer keeps all the source data, pre-processing results and
@@ -37,11 +27,11 @@ public class DataContainer<T extends RealType<T>> {
 	// The channels of the source images that the result relate to
 	int ch1, ch2;
 
-	InputCheck inputCheck = null;
-	AutoThresholdRegression autoThreshold = null;
+	InputCheck<T> inputCheck = null;
+	AutoThresholdRegression<T> autoThreshold = null;
 
 	// a list that contains all added algorithms
-	List< Algorithm > algorithms = new ArrayList< Algorithm >();
+	List< Algorithm<T> > algorithms = new ArrayList< Algorithm<T> >();
 
 	/**
 	 * Creates a new {@link DataContainer} for a specific set of image and
@@ -137,20 +127,20 @@ public class DataContainer<T extends RealType<T>> {
 		return integralCh2;
 	}
 
-	public InputCheck getInputCheck() {
+	public InputCheck<T> getInputCheck() {
 		return inputCheck;
 	}
 
-	public Algorithm setInputCheck(InputCheck inputCheck) {
+	public Algorithm<T> setInputCheck(InputCheck<T> inputCheck) {
 		this.inputCheck = inputCheck;
 		return inputCheck;
 	}
 
-	public AutoThresholdRegression getAutoThreshold() {
+	public AutoThresholdRegression<T> getAutoThreshold() {
 		return autoThreshold;
 	}
 
-	public Algorithm setAutoThreshold(AutoThresholdRegression autoThreshold) {
+	public Algorithm<T> setAutoThreshold(AutoThresholdRegression<T> autoThreshold) {
 		this.autoThreshold = autoThreshold;
 		return autoThreshold;
 	}

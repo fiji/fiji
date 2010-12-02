@@ -6,10 +6,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import results.ResultHandler;
-
-
-import mpicbg.imglib.algorithm.gauss.GaussianConvolution;
 import mpicbg.imglib.algorithm.gauss.GaussianConvolution3;
 import mpicbg.imglib.algorithm.math.function.Converter;
 import mpicbg.imglib.algorithm.math.function.RealTypeConverter;
@@ -18,14 +14,12 @@ import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.special.RegionOfInterestCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
-import mpicbg.imglib.type.TypeConverter;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import mpicbg.imglib.type.numeric.integer.LongType;
+import results.ResultHandler;
 
 public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> {
 	protected int psfRadiusInPixels[] = new int[3];
@@ -38,7 +32,7 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 	// the shuffled image last worke on
 	Image<T> smoothedShuffledImage;
 	// the Pearson's algorithm (that should have been run before)
-	PearsonsCorrelation pearsonsCorrelation;
+	PearsonsCorrelation<T> pearsonsCorrelation;
 	// a list of resulting Pearsons values from the randomized images
 	List<Double> shuffledPearsonsResults;
 	/* the amount of Pearson's values with shuffled data
@@ -63,7 +57,7 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 	 *
 	 * @param psfRadiusInPixels The edge width of the 3D cube block.
 	 */
-	public CostesSignificanceTest(PearsonsCorrelation pc, int psfRadiusInPixels, int nrRandomizations) {
+	public CostesSignificanceTest(PearsonsCorrelation<T> pc, int psfRadiusInPixels, int nrRandomizations) {
 		this.pearsonsCorrelation = pc;
 		this.psfRadiusInPixels[0] = psfRadiusInPixels;
 		this.psfRadiusInPixels[1] = psfRadiusInPixels;

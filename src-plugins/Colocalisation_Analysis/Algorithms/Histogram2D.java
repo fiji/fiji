@@ -1,22 +1,18 @@
 package algorithms;
 
+import gadgets.DataContainer;
+import ij.measure.ResultsTable;
+
 import java.util.EnumSet;
 
-import results.ResultHandler;
-
-
-import gadgets.DataContainer;
-import ij.IJ;
-import ij.measure.ResultsTable;
-import mpicbg.imglib.image.ImageFactory;
+import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
-import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.type.numeric.integer.LongType;
-import mpicbg.imglib.container.array.ArrayContainerFactory;
+import results.ResultHandler;
 
 /**
  * Represents the creation of a 2D histogram between two images.

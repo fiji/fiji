@@ -28,9 +28,9 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm<T>
 	// additional information
 	double bToYMaxRatio = 0.0;
 	//This is the Pearson's correlation we will use for further calculations
-	PearsonsCorrelation pearsonsCorrellation;
+	PearsonsCorrelation<T> pearsonsCorrellation;
 
-	public AutoThresholdRegression(PearsonsCorrelation pc){
+	public AutoThresholdRegression(PearsonsCorrelation<T> pc){
 		pearsonsCorrellation = pc;
 	}
 
@@ -276,7 +276,7 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm<T>
 		}
 	}
 
-	public void processResults(ResultHandler handler) {
+	public void processResults(ResultHandler<T> handler) {
 		super.processResults(handler);
 
 		handler.handleValue( "m (slope)", autoThresholdSlope , 2 );

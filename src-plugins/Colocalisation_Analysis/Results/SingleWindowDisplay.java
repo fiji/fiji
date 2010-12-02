@@ -5,15 +5,10 @@ import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
-import ij.gui.ImageRoi;
+import ij.gui.Line;
 import ij.gui.NewImage;
 import ij.gui.Overlay;
-import ij.gui.Toolbar;
-import ij.gui.Line;
-import ij.measure.ResultsTable;
 import ij.process.ImageProcessor;
-import ij.process.ColorProcessor;
-import ij.process.FloatProcessor;
 import ij.text.TextWindow;
 
 import java.awt.Dimension;
@@ -27,14 +22,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.io.CharArrayWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Dictionary;
-import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -44,18 +35,14 @@ import javax.swing.JComboBox;
 import javax.swing.JEditorPane;
 import javax.swing.JScrollPane;
 
-import algorithms.AutoThresholdRegression;
-import algorithms.Histogram2D;
-
-
 import mpicbg.imglib.algorithm.math.ImageStatistics;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
+import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.LongType;
-import mpicbg.imglib.type.numeric.real.FloatType;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImagePlusAdapter;
+import algorithms.AutoThresholdRegression;
+import algorithms.Histogram2D;
 
 /**
  * This class displays the container contents in one single window
@@ -307,7 +294,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 		 * or a generic image result
 		 */
 		if (isHistogram(currentlyDisplayedImageResult)) {
-			Histogram2D hr = mapOf2DHistograms.get(currentlyDisplayedImageResult);
+			Histogram2D<T> hr = mapOf2DHistograms.get(currentlyDisplayedImageResult);
 			double xBinWidth = 1.0 / hr.getXBinWidth();
 			double yBinWidth = 1.0 / hr.getYBinWidth();
 			// check if we have bins of size one or other ones
@@ -369,7 +356,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 
 			// the alt key is not pressed use x and y values that are bin widths or calibrated intensities not the x y image coordinates.
 			if (isHistogram(currentlyDisplayedImageResult)) {
-				Histogram2D histogram = mapOf2DHistograms.get(currentlyDisplayedImageResult);
+				Histogram2D<T> histogram = mapOf2DHistograms.get(currentlyDisplayedImageResult);
 
 				synchronized( pixelAccessCursor )
 				{
@@ -429,12 +416,12 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 
 		// if it is the 2d histogram, we want to show the regression line
 		if (isHistogram(img)) {
-			Histogram2D histogram = mapOf2DHistograms.get(img);
+			Histogram2D<T> histogram = mapOf2DHistograms.get(img);
 			/* check if we should draw a regression line for the
 			 * current histogram.
 			 */
 			if ( histogram.getDrawingSettings().contains(Histogram2D.DrawingFlags.RegressionLine) ) {
-				AutoThresholdRegression autoThreshold = dataContainer.getAutoThreshold();
+				AutoThresholdRegression<T> autoThreshold = dataContainer.getAutoThreshold();
 				if (histogram != null && autoThreshold != null) {
 					if (img == histogram.getPlotImage()) {
 						drawLine(overlay, img,
@@ -478,7 +465,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 
 		// check if we can get some exta information for drawing
 		if (isHistogram(img)) {
-			Histogram2D histogram = mapOf2DHistograms.get(img);
+			Histogram2D<T> histogram = mapOf2DHistograms.get(img);
 			// get calibrated start y coordinates
 			double calibratedStartY = slope * histogram.getXMin() + intercept;
 			double calibratedEndY = slope * histogram.getXMax() + intercept;

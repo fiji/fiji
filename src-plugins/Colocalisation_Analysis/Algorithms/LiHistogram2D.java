@@ -4,14 +4,9 @@ import gadgets.DataContainer;
 
 import java.util.EnumSet;
 
-
-import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.Cursor;
-import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.type.numeric.real.FloatType;
 
 /**
  * Represents the creation of a 2D histogram between two images.
@@ -106,7 +101,7 @@ public class LiHistogram2D<T extends RealType<T>> extends Histogram2D<T> {
 	}
 
 	@Override
-	protected double getYBinWidth(DataContainer container) {
+	protected double getYBinWidth(DataContainer<T> container) {
 		double max;
 		if (useCh1) {
 			max = getMaxCh1(container);

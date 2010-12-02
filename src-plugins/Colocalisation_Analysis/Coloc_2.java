@@ -1,13 +1,22 @@
+import gadgets.DataContainer;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
+import ij.gui.Roi;
+import ij.plugin.PlugIn;
+
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
-import java.awt.Rectangle;
-import java.io.File;
 
+import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.ImagePlusAdapter;
+import mpicbg.imglib.type.numeric.RealType;
 import results.PDFWriter;
 import results.ResultHandler;
 import results.SingleWindowDisplay;
 import results.Warning;
-
 import algorithms.Algorithm;
 import algorithms.AutoThresholdRegression;
 import algorithms.CostesSignificanceTest;
@@ -18,21 +27,6 @@ import algorithms.LiICQ;
 import algorithms.MandersCorrelation;
 import algorithms.MissingPreconditionException;
 import algorithms.PearsonsCorrelation;
-
-
-
-
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImagePlusAdapter;
-import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.type.numeric.integer.LongType;
-import gadgets.DataContainer;
-import ij.IJ;
-import ij.ImagePlus;
-import ij.WindowManager;
-import ij.gui.Roi;
-import ij.gui.GenericDialog;
-import ij.plugin.PlugIn;
 
 /**
  * A plugin which does colocalisation on two images.
@@ -61,13 +55,13 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
     /* The different algorithms this plug-in provides.
      * If a reference is null it will not get run.
      */
-    PearsonsCorrelation pearsonsCorrelation = null;
+    PearsonsCorrelation<T> pearsonsCorrelation = null;
     LiHistogram2D<T> liHistogramCh1 = null;
     LiHistogram2D<T> liHistogramCh2 = null;
     LiICQ<T> liICQ = null;
     MandersCorrelation<T> mandersCorrelation = null;
     Histogram2D<T> histogram2D = null;
-    CostesSignificanceTest costesSignificance = null;
+    CostesSignificanceTest<T> costesSignificance = null;
 
     /* GUI related members */
 	String[] roiLabels =  { "None","Channel 1", "Channel 2",};
@@ -163,7 +157,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
         if (gd.getNextBoolean())
 			histogram2D = new Histogram2D<T>("2D intensity histogram");
         if (gd.getNextBoolean()) {
-			costesSignificance = new CostesSignificanceTest(pearsonsCorrelation, 1, 10);
+			costesSignificance = new CostesSignificanceTest<T>(pearsonsCorrelation, 1, 10);
         }
 
         return true;
@@ -185,7 +179,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		}
 
 		// create a results handler
-		List<ResultHandler> listOfResultHandlers = new ArrayList<ResultHandler>();
+		List<ResultHandler<T>> listOfResultHandlers = new ArrayList<ResultHandler<T>>();
 		listOfResultHandlers.add(new SingleWindowDisplay<T>(container));
 		listOfResultHandlers.add(new PDFWriter<T>(container));
 		//ResultHandler<T> resultHandler = new EasyDisplay<T>(container);
@@ -209,14 +203,14 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	    addIfValid(costesSignificance, userSelectedJobs);
 
         // execute all algorithms
-		for (Algorithm a : userSelectedJobs){
+		for (Algorithm<T> a : userSelectedJobs){
 			try {
 				a.execute(container);
 			}
 			catch (MissingPreconditionException e){
 				String aName = a.getClass().getName();
 				System.out.println("MissingPreconditionException occured in " + aName + " algorithm: " + e.getMessage());
-				for (ResultHandler r : listOfResultHandlers){
+				for (ResultHandler<T> r : listOfResultHandlers){
 					r.handleWarning(
 							new Warning( "Probem with input data", aName + " - " + e.getMessage() ) );
 				}
@@ -224,12 +218,12 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		}
 
 		// let the algorithms feed their results to the handler
-		for (Algorithm a : userSelectedJobs){
-			for (ResultHandler r : listOfResultHandlers)
+		for (Algorithm<T> a : userSelectedJobs){
+			for (ResultHandler<T> r : listOfResultHandlers)
 				a.processResults(r);
 		}
 		// do the actual results processing
-		for (ResultHandler r : listOfResultHandlers)
+		for (ResultHandler<T> r : listOfResultHandlers)
 			r.process();
     }
 

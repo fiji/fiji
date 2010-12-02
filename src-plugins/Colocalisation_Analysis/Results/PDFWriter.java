@@ -1,11 +1,20 @@
 package results;
 
+import gadgets.DataContainer;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.io.SaveDialog;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-
+import mpicbg.imglib.algorithm.math.ImageStatistics;
+import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import mpicbg.imglib.type.numeric.RealType;
+import mpicbg.imglib.type.numeric.integer.LongType;
 import algorithms.Histogram2D;
 
 import com.lowagie.text.BadElementException;
@@ -15,18 +24,6 @@ import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.pdf.PdfContentByte;
 import com.lowagie.text.pdf.PdfWriter;
-
-import gadgets.DataContainer;
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.WindowManager;
-import ij.io.SaveDialog;
-import mpicbg.imglib.algorithm.math.ImageStatistics;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.type.numeric.integer.LongType;
 
 public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 
@@ -39,7 +36,7 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 	// show the size in pixels of the image
     static boolean showSize=true;
 	// a reference to the data container
-	DataContainer container;
+	DataContainer<T> container;
 	PdfWriter writer;
 	Document document;
 
@@ -49,7 +46,7 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 	protected List<Paragraph> listOfPDFTexts
 		= new ArrayList<Paragraph>();
 
-	public PDFWriter(DataContainer container) {
+	public PDFWriter(DataContainer<T> container) {
 		this.container = container;
 	}
 
