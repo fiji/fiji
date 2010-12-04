@@ -1133,6 +1133,7 @@ public class TextEditor extends JFrame implements ActionListener,
 						PrintWriter pw =
 							new PrintWriter(po);
 						pw.print(text);
+						pw.print("\n"); // Ensure code blocks are terminated
 						pw.flush();
 					}
 				} else {
