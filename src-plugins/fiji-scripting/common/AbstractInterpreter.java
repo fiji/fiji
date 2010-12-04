@@ -972,6 +972,20 @@ public abstract class AbstractInterpreter implements PlugIn {
 			}
 			list.add(baseName);
 		}
+		// remove non-unique class names
+		Map<String, String> reverse = new HashMap<String, String>();
+		for (String packageName : result.keySet()) {
+			Iterator<String> iter = result.get(packageName).iterator();
+			while (iter.hasNext()) {
+				String className = iter.next();
+				if (reverse.containsKey(className)) {
+					iter.remove();
+					result.get(reverse.get(className)).remove(className);
+				}
+				else
+					reverse.put(className, packageName);
+			}
+		}
 		return result;
 	}
 }
