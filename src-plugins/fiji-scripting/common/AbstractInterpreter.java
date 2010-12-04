@@ -940,7 +940,12 @@ public abstract class AbstractInterpreter implements PlugIn {
 		return false;
 	}
 
+	protected static Map<String, List<String>> defaultImports;
+
 	public static Map<String, List<String>> getDefaultImports() {
+		if (defaultImports != null)
+			return defaultImports;
+
 		final String[] classNames = {
 			"ij.IJ", "java.lang.String", "ini.trakem2.Project", "script.imglib.math.Compute"
 		};
@@ -954,7 +959,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 				IJ.log("Warning: class " + className
 						+ " was not found!");
 		}
-		Map<String, List<String>> result = new HashMap<String, List<String>>();
+		defaultImports = new HashMap<String, List<String>>();
 		Set<String> prefixes = new HashSet<String>();
 		prefixes.add("script.");
 		for (String className : classNames)
@@ -965,27 +970,27 @@ public abstract class AbstractInterpreter implements PlugIn {
 			int dot = className.lastIndexOf('.');
 			String packageName = dot < 0 ? "" : className.substring(0, dot);
 			String baseName = className.substring(dot + 1);
-			List<String> list = result.get(packageName);
+			List<String> list = defaultImports.get(packageName);
 			if (list == null) {
 				list = new ArrayList<String>();
-				result.put(packageName, list);
+				defaultImports.put(packageName, list);
 			}
 			list.add(baseName);
 		}
 		// remove non-unique class names
 		Map<String, String> reverse = new HashMap<String, String>();
-		for (String packageName : result.keySet()) {
-			Iterator<String> iter = result.get(packageName).iterator();
+		for (String packageName : defaultImports.keySet()) {
+			Iterator<String> iter = defaultImports.get(packageName).iterator();
 			while (iter.hasNext()) {
 				String className = iter.next();
 				if (reverse.containsKey(className)) {
 					iter.remove();
-					result.get(reverse.get(className)).remove(className);
+					defaultImports.get(reverse.get(className)).remove(className);
 				}
 				else
 					reverse.put(className, packageName);
 			}
 		}
-		return result;
+		return defaultImports;
 	}
 }
