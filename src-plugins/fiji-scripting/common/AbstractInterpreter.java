@@ -942,7 +942,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 
 	public static Map<String, List<String>> getDefaultImports() {
 		final String[] classNames = {
-			"ij.IJ", "java.lang.String", "ini.trakem2.Project"
+			"ij.IJ", "java.lang.String", "ini.trakem2.Project", "script.imglib.math.Compute"
 		};
 		InspectJar inspector = new InspectJar();
 		for (String className : classNames) try {
@@ -956,6 +956,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 		}
 		Map<String, List<String>> result = new HashMap<String, List<String>>();
 		Set<String> prefixes = new HashSet<String>();
+		prefixes.add("script.");
 		for (String className : classNames)
 			prefixes.add(className.substring(0, className.lastIndexOf('.')));
 		for (String className : inspector.classNames(true)) {
