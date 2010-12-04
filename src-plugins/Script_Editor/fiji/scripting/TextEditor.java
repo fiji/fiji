@@ -111,6 +111,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	protected final String templateFolder = "templates/";
 	protected Languages.Language[] availableLanguages = Languages.getInstance().languages;
 
+	protected int compileStartOffset;
 	protected Position compileStartPosition;
 	protected ErrorHandler errorHandler;
 
@@ -1883,6 +1884,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		int offset = errorScreen.getDocument().getLength();
 		append(errorScreen, started);
 		append(getTab().screen, started);
+		compileStartOffset = errorScreen.getDocument().getLength();
 		try {
 			compileStartPosition = errorScreen.getDocument().createPosition(offset);
 		} catch (BadLocationException e) {
@@ -1898,6 +1900,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			if (errorHandler.getErrorCount() > 0)
 				getTab().showErrors();
 		}
+		if (compileStartOffset != errorScreen.getDocument().getLength())
+			getTab().showErrors();
 	}
 
 	public void installMacro() {
