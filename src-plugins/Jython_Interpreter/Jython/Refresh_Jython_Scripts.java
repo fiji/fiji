@@ -73,7 +73,7 @@ public class Refresh_Jython_Scripts extends RefreshScripts {
 		} catch (PyException e) {
 			try {
 				err.write(e.toString().getBytes());
-			} catch (IOException e2) {
+			} catch (Exception e2) {
 				e.printStackTrace();
 			}
 		} catch (Throwable t) {
