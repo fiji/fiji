@@ -118,7 +118,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	// the font to draw the text with
 	Font font;
 	// the start time for the first frame 
-	double start = 1.0;
+	double start = 0.0;
 	// the interval between two frames
 	double interval = 1.0;
 	// the custom suffix, used if format supports it
