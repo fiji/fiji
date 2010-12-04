@@ -1349,7 +1349,7 @@ public class Fake {
 				return true;
 			}
 
-			File getFakefile() {
+			public File getFakefile() {
 				File file = new File(getLastPrerequisite(), "Fakefile");
 				if (!file.exists())
 					file = new File(getVar("PLUGINSCONFIGDIRECTORY"), baseName + ".Fakefile");
