@@ -1349,6 +1349,13 @@ public class Fake {
 				return true;
 			}
 
+			File getFakefile() {
+				File file = new File(getLastPrerequisite(), "Fakefile");
+				if (!file.exists())
+					file = new File(getVar("PLUGINSCONFIGDIRECTORY"), baseName + ".Fakefile");
+				return file.exists() ? file : null;
+			}
+
 			void action() throws FakeException {
 				for (String prereq : prerequisites)
 					action(prereq);
@@ -1413,11 +1420,21 @@ public class Fake {
 			protected void clean(boolean dry_run) {
 				super.clean(dry_run);
 				clean(getLastPrerequisite() + jarName, dry_run);
-				if (new File(makePath(cwd, getLastPrerequisite()), "Fakefile").exists()) try {
+				File fakefile = getFakefile();
+				if (fakefile != null) try {
 					action(getLastPrerequisite(), jarName + "-clean"
 						+ (dry_run ? "-dry-run" : ""));
 				} catch (FakeException e) {
 					e.printStackTrace(err);
+				}
+				File buildDir = getBuildDir();
+				if (buildDir != null) {
+					if (dry_run)
+						out.println("rm -rf "
+							+ buildDir.getPath());
+					else if (buildDir.exists())
+						deleteRecursively(buildDir);
+					return;
 				}
 			}
 		}
