@@ -940,6 +940,35 @@ public abstract class AbstractInterpreter implements PlugIn {
 		return false;
 	}
 
+	protected abstract String getImportStatement(String packageName, Iterable<String> classNames);
+
+	public String getImportStatement() {
+		StringBuffer buffer = new StringBuffer();
+		Map<String, List<String>> classNames = getDefaultImports();
+		for (String packageName : classNames.keySet())
+			buffer.append(getImportStatement(packageName, classNames.get(packageName)));
+		return buffer.toString();
+	}
+
+	/** pre-import all ImageJ java classes and TrakEM2 java classes */
+	public void importAll() {
+		if (System.getProperty("jnlp") != null) {
+			println("Because Fiji was started via WebStart, no packages were imported implicitly");
+			return;
+		}
+
+		String statement = getImportStatement();
+		try {
+			eval(statement);
+		} catch (Throwable e) {
+			RefreshScripts.printError(e);
+			return;
+		}
+		println("All ImageJ and java.lang"
+			+ (statement.indexOf("trakem2") > 0 ? " and TrakEM2" : "")
+			+ " classes imported.");
+	}
+
 	protected static Map<String, List<String>> defaultImports;
 
 	public static Map<String, List<String>> getDefaultImports() {

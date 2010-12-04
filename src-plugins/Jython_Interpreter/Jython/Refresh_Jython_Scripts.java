@@ -68,7 +68,7 @@ public class Refresh_Jython_Scripts extends RefreshScripts {
 			PI = new PythonInterpreter(new PyDictionary(), pystate);
 			PI.setOut(this.out);
 			PI.setErr(this.err);
-			Jython_Interpreter.importAll(PI);
+			new Jython_Interpreter(PI).importAll();
 			PI.execfile(istream);
 		} catch (PyException e) {
 			try {
