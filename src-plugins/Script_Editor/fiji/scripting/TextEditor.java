@@ -1647,8 +1647,16 @@ public class TextEditor extends JFrame implements ActionListener,
 								activeCount = ts.size();
 								if (activeCount <= 1) break;
 								System.out.println("Waiting for " + ts.size() + " threads to die");
+								int count_zSelector = 0;
 								for (Thread t : ts) {
+									if (t.getName().equals("zSelector")) {
+										count_zSelector++;
+									}
 									System.out.println("THREAD: " + t.getName());
+								}
+								if (activeCount == count_zSelector + 1) {
+									// Do not wait on the stack slice selector thread.
+									break;
 								}
 							} catch (InterruptedException ie) {}
 						}
