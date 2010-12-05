@@ -598,11 +598,16 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 * container panel for gui items to be put in.
 	 */
 	private Panel createContainerPanel(int height, String label, boolean border){
-		Panel panel = new Panel(null);
-		panel.setPreferredSize(new Dimension(490, height));
+		Panel panel;
+        // create a bordered banel if needed
 		if (border) {
-            // do nothing yet
-		}
+    	    panel = new BorderPanel(label);
+		} else {
+            panel = new Panel(null);
+        }
+        // set the wanted height of the panel
+		panel.setPreferredSize(new Dimension(490, height));
+
 		return panel;
 	}
 	
