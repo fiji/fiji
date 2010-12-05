@@ -64,8 +64,10 @@ import ij.ImageListener;
 import ij.measure.Calibration;
 
 import java.awt.AWTEvent;
+import java.awt.Button;
 import java.awt.Checkbox;
 import java.awt.Choice;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
@@ -74,6 +76,7 @@ import java.awt.Label;
 import java.awt.Panel;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.TextArea;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -86,12 +89,6 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
-
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.event.DocumentListener;
 
 /**
  * This plugin is inspired by the Time_Stamper plugins from ImageJ
@@ -218,24 +215,24 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	private Choice labelUnitsComboBox;
 	private Choice formatsComboBox;
 	private Choice locationPresetsComboBox;
-	private JPanel generalSettingsContainer;
-	private JPanel unitsFormattingContainer;
-	private JPanel startStopIntervalsContainer;
-	private JPanel locationFontContainer;
-	private JPanel fontPropertiesContainer;
+	private Panel generalSettingsContainer;
+	private Panel unitsFormattingContainer;
+	private Panel startStopIntervalsContainer;
+	private Panel locationFontContainer;
+	private Panel fontPropertiesContainer;
 	private TextField locationXTextField;
 	private TextField locationYTextField;
 	private TextField intervalTextField;
 	private TextField suffixTextField;
 	
 	// the panel containing the units selection
-	private JPanel labelUnitsPanel;
+	private Panel labelUnitsPanel;
 	// the panel containing the custom suffix elements
-	private JPanel customSuffixPanel;
+	private Panel customSuffixPanel;
 	// the panel containing the custom formats elements
-	private JPanel customLabelFormatPanel;
+	private Panel customLabelFormatPanel;
 	// the panel containing the Decimal Places elements
-	private JPanel decimalPlacesPanel;
+	private Panel decimalPlacesPanel;
 	// has a custom interval been entered in the gui
 	private boolean customIntervalEntered;
 	// has a custom unit been selected in the gui
@@ -305,12 +302,12 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		
 		//add combobox for stack type
 		String[] stacks = convertStackTypesToStrings(stackTypes);
-		JPanel stackTypePanel = createComboBoxPanel(
+		Panel stackTypePanel = createComboBoxPanel(
 			"Stack_Type", stacks, 0, 100, 180);
 		stackTypePanel.setLocation(left, 30);
 		
 		addPanelsToDialog(generalSettingsContainer,
-			new JPanel[] {stackTypePanel} );
+			new Panel[] {stackTypePanel} );
 		
 		/*
 		 * Units formatting panel
@@ -319,7 +316,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			"Units_Formatting");
 		
 		// add combobox for label format
-		JPanel pLabelFormat = createComboBoxPanel("Label_Format",
+		Panel pLabelFormat = createComboBoxPanel("Label_Format",
 			convertFormatsToStrings(selectedStackType.getSupportedFormats()), 0);
 		formatsComboBox = (Choice) gd.getChoices().lastElement();
 		pLabelFormat.setLocation(left, 30);
@@ -347,7 +344,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		decimalPlacesPanel.setLocation(280, 30);
 		
 		addPanelsToDialog(unitsFormattingContainer,
-			new JPanel[] {pLabelFormat, customSuffixPanel,
+			new Panel[] {pLabelFormat, customSuffixPanel,
 				labelUnitsPanel, decimalPlacesPanel,
 				customLabelFormatPanel} );
 		
@@ -358,33 +355,33 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			"Start/Stop/Interval of Stack");
 		
 		// add a panel for the series stamper start value
-		JPanel pStartup = createNumericFieldPanel("Startup",
+		Panel pStartup = createNumericFieldPanel("Startup",
 			start, 10);
 		pStartup.setLocation(left, 30);
 		
 		// add a panel for the interval settings
-		JPanel pInterval = createNumericFieldPanel("Interval",
+		Panel pInterval = createNumericFieldPanel("Interval",
 			interval, 10);
 		intervalTextField = (TextField) gd.getNumericFields().lastElement();
 		pInterval.setLocation(left, 60);
 		
 		// add panel for the everyNth setting
-		JPanel pEveryNth = createNumericFieldPanel("Every_n-th",
+		Panel pEveryNth = createNumericFieldPanel("Every_n-th",
 			frameMask, 0);
 		pEveryNth.setLocation(left, 90);
 		
 		// add panel for First Frame setting
-		JPanel pFirstFrame = createNumericFieldPanel("First",
+		Panel pFirstFrame = createNumericFieldPanel("First",
 			first, 0);
 		pFirstFrame.setLocation(280, 30);
 		
 		// add panel for Last Frame setting
-		JPanel pLastFrame = createNumericFieldPanel("Last",
+		Panel pLastFrame = createNumericFieldPanel("Last",
 			last, 0);
 		pLastFrame.setLocation(280, 60);
 		
 		addPanelsToDialog(startStopIntervalsContainer,
-			new JPanel[] {pStartup, pInterval,
+			new Panel[] {pStartup, pInterval,
 				 pEveryNth, pFirstFrame, pLastFrame} );
 		
 		/*
@@ -394,14 +391,14 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			"Location & Font");
 		
 		// add panel for X location
-		JPanel pLocationX = createNumericFieldPanel("X_",
+		Panel pLocationX = createNumericFieldPanel("X_",
 			x, 0, 20, 50);
 		locationXTextField =
 			(TextField) gd.getNumericFields().lastElement();
 		pLocationX.setLocation(left, 30);
 		
 		// add panel for Y location
-		JPanel pLocationY =
+		Panel pLocationY =
 			createNumericFieldPanel("Y_", y, 0, 20, 50);
 		locationYTextField =
 			(TextField) gd.getNumericFields().lastElement();
@@ -412,7 +409,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		else locationPreset = UPPER_LEFT;
 		
 		// add combobox for location presets
-		JPanel pLocationPresets = createComboBoxPanel(
+		Panel pLocationPresets = createComboBoxPanel(
 			"Location_Presets", locations,
 			locationPreset, 110, 130);
 		locationPresetsComboBox =
@@ -424,11 +421,11 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		subpanelHeight);
   		
   		addPanelsToDialog(locationFontContainer,
-			new JPanel[] {pLocationX,
+			new Panel[] {pLocationX,
 				pLocationY, pLocationPresets,
 				fontPropertiesContainer} );
 
-		JPanel previewAndMessage = createContainerPanel(35, "", false);
+		Panel previewAndMessage = createContainerPanel(35, "", false);
 		/* adds preview checkbox - needs
 		 * ExtendedPluginFilter and DialogListener!
 		 * Puts the preview checkbox and message into a panel of their very own.
@@ -438,12 +435,10 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		gd.remove(thePreviewCheckbox);
 		previewAndMessage.add(thePreviewCheckbox);
 		thePreviewCheckbox.setBounds(10, 0, 80, 20);
-		JLabel theMessage = new JLabel("<html>Series Labeler for " +
-				"Fiji (is just ImageJ - batteries included)<P>" +
-				"maintained by Dan White MPI-CBG dan(at)chalkie.org.uk</html>");
+        Component theMessage = createMessage("Series Labeler for " +
+				"Fiji (is just ImageJ - batteries included)\n" +
+				"maintained by Dan White MPI-CBG dan(at)chalkie.org.uk");
 		theMessage.setBounds(95, 0, 420, 35);
-		theMessage.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-		theMessage.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
 		previewAndMessage.add(theMessage);
 		addPanelIntoDialog(previewAndMessage);
 
@@ -600,35 +595,36 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	}
 	
 	/**
-	 * container panel from swing for gui items to be put in.
+	 * container panel for gui items to be put in.
 	 */
-	private JPanel createContainerPanel(int height, String label, boolean border){
-		JPanel panel = new JPanel(null);
+	private Panel createContainerPanel(int height, String label, boolean border){
+		Panel panel = new Panel(null);
 		panel.setPreferredSize(new Dimension(490, height));
-		if (border)
-			panel.setBorder(javax.swing.BorderFactory.createTitledBorder(label));
+		if (border) {
+            // do nothing yet
+		}
 		return panel;
 	}
 	
 	/**
-	 * container panel from swing for gui items to be put in, with a border.
+	 * container panel for gui items to be put in, with a border.
 	 */
-	private JPanel createContainerPanel(int height, String label){
+	private Panel createContainerPanel(int height, String label){
 		return createContainerPanel(height, label, true);
 	}
 
 	/**
 	 * drop down selection with a text label
 	 */
-	private JPanel createComboBoxPanel(String labelText, String[] values, int defaultIndex) {
+	private Panel createComboBoxPanel(String labelText, String[] values, int defaultIndex) {
 		return createComboBoxPanel(labelText, values, defaultIndex, 100, 150);
 	}
 	
 	/**
-	 * generate gd awt drop down selections for use in a
+	 * generate gd drop down selections for use in a
 	 * different container later
 	 */
-	private JPanel createComboBoxPanel(String labelText, String[] values, int defaultIndex, int labelWidth, int comboboxWidth) {
+	private Panel createComboBoxPanel(String labelText, String[] values, int defaultIndex, int labelWidth, int comboboxWidth) {
 		gd.addChoice(labelText, values, values[defaultIndex]);
 		// get the previously added choice
 		Choice choice = (Choice) gd.getChoices().lastElement();
@@ -640,7 +636,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		gd.remove(choice);
 		gd.remove(label);
 		
-		JPanel panel = new JPanel(null);
+		Panel panel = new Panel(null);
         label.setBounds(0, 0, labelWidth, 20);
         choice.setBounds(labelWidth, 0, comboboxWidth, 22);
         panel.add(label);
@@ -650,9 +646,23 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	}
 	
 	/**
+	 * generate gd message for use in a different container later.
+	 */
+	private Component createMessage(String labelText) {
+		gd.addMessage(labelText);
+		// get the previously added choice
+		Component component = gd.getMessage();
+		/* remove components from dialog, since we use
+		 * elsewhere, but be still registered with GerericDialog
+		 */
+		gd.remove(component);
+        
+	    return component;	
+	}
+	/**
 	 * This is a text field panel for use in the GUI
 	 */
-	private JPanel createTextFieldPanel(String labelText, String defaultText) {
+	private Panel createTextFieldPanel(String labelText, String defaultText) {
 		return createTextFieldPanel(labelText, defaultText, 100, 100);
 	}
 	
@@ -660,7 +670,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 * Generates gd awt string fields for use in a
 	 * different container later
 	 */
-	private JPanel createTextFieldPanel(String labelText,
+	private Panel createTextFieldPanel(String labelText,
 			String defaultText, int labelWidth, int textFieldWidth) {
 		// add the text field
 		gd.addStringField(labelText, defaultText);
@@ -674,7 +684,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		gd.remove(textField);
 		gd.remove(label);
 		
-		JPanel panel = new JPanel(null);
+		Panel panel = new Panel(null);
 		label.setBounds(0, 0, labelWidth, 20);
 		textField.setBounds(labelWidth,0,textFieldWidth, 22);
 		panel.add(label);
@@ -686,7 +696,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	/**
 	 * A numeric field for the GUI
 	 */
-	private JPanel createNumericFieldPanel(String labelText, double defaultValue, int digits) {
+	private Panel createNumericFieldPanel(String labelText, double defaultValue, int digits) {
 		return createNumericFieldPanel(labelText, defaultValue, digits, 100, 100); 
 	}
 	
@@ -694,7 +704,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 * Generates gd awt numeric fields for use in a
 	 * different container later
 	 */
-	private JPanel createNumericFieldPanel(String labelText, double defaultValue, int digits, int labelWidth, int textFieldWidth) {
+	private Panel createNumericFieldPanel(String labelText, double defaultValue, int digits, int labelWidth, int textFieldWidth) {
 		// add the numeric field
 		gd.addNumericField(labelText, defaultValue, digits);
 		// get the previously added numeric field object
@@ -705,7 +715,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		gd.remove(textField);
 		gd.remove(label);
 		
-		JPanel panel = new JPanel(null);
+		Panel panel = new Panel(null);
 		label.setBounds(0, 0, labelWidth, 20);
 		textField.setBounds(labelWidth,0,textFieldWidth, 22);
 		panel.add(label);
@@ -725,13 +735,11 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	}
 
 	/**
-	 * Adds different Swing JPanels to a container JPanel.
-	 * Moreover the container JPanel is encapsulated in a
-	 * AWT Panel which in turn is added to the generic
-	 * dialog.
+	 * Adds different Panels to a container Panel. Moreover
+	 * the container Panel is added to the generic dialog.
 	 */
-	private void addPanelsToDialog(JPanel container, JPanel[] panels) {
-		for (JPanel p : panels) {
+	private void addPanelsToDialog(Panel container, Panel[] panels) {
+		for (Panel p : panels) {
 			container.add(p);
 		}
 		
@@ -739,14 +747,10 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	}
 
 	/**
-	 * The container JPanel is encapsulated in a
-	 * AWT Panel which in turn is added to the generic
-	 * dialog.
+	 * The container Panel is added to the generic dialog.
 	 */
-	private void addPanelIntoDialog(JPanel container) {
-		Panel awtPanel = new Panel();
-		awtPanel.add(container);
-		gd.addPanel(awtPanel, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
+	private void addPanelIntoDialog(Panel container) {
+		gd.addPanel(container, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
 	}
 
 	/**
@@ -1494,7 +1498,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 * and also a check box for toggling drawing a background behind the label.
 	 */
 	@SuppressWarnings("serial")
-	protected class FontPropertiesPanel extends JPanel{
+	protected class FontPropertiesPanel extends Panel{
 		/**
 		 * Creates a new {@link FontPropertiesPanel} containing the font setting
 		 * and font colour buttons.
@@ -1502,7 +1506,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		public FontPropertiesPanel() {
 			super(null);
 			
-			JButton fontStyleButton = new JButton("Font Settings");
+			Button fontStyleButton = new Button("Font Settings");
 			fontStyleButton.setBounds(0, 0, 120, 25);
 			fontStyleButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent actionEvent) {
@@ -1511,7 +1515,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 				}
 			});
 			
-			JButton fontColourButton = new JButton("Font Color");
+			Button fontColourButton = new Button("Font Color");
 			fontColourButton.setBounds(130, 0, 120, 25);
 			fontColourButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent actionEvent) {
@@ -1520,11 +1524,11 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 				}
 			});
 			
-			final JCheckBox drawBackground = new JCheckBox("Background");
+			final Checkbox drawBackground = new Checkbox("Background");
 			drawBackground.setBounds(260, 0, 120, 25);
 			drawBackground.addItemListener(new ItemListener() {
 				public void itemStateChanged(ItemEvent e) {
-					backgroundEnabled = drawBackground.isSelected();
+					backgroundEnabled = drawBackground.getState();
 					updatePreview();
 				}
 			});
