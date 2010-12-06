@@ -940,9 +940,43 @@ public abstract class AbstractInterpreter implements PlugIn {
 		return false;
 	}
 
+	protected abstract String getImportStatement(String packageName, Iterable<String> classNames);
+
+	public String getImportStatement() {
+		StringBuffer buffer = new StringBuffer();
+		Map<String, List<String>> classNames = getDefaultImports();
+		for (String packageName : classNames.keySet())
+			buffer.append(getImportStatement(packageName, classNames.get(packageName)));
+		return buffer.toString();
+	}
+
+	/** pre-import all ImageJ java classes and TrakEM2 java classes */
+	public void importAll() {
+		if (System.getProperty("jnlp") != null) {
+			println("Because Fiji was started via WebStart, no packages were imported implicitly");
+			return;
+		}
+
+		String statement = getImportStatement();
+		try {
+			eval(statement);
+		} catch (Throwable e) {
+			RefreshScripts.printError(e);
+			return;
+		}
+		println("All ImageJ and java.lang"
+			+ (statement.indexOf("trakem2") > 0 ? " and TrakEM2" : "")
+			+ " classes imported.");
+	}
+
+	protected static Map<String, List<String>> defaultImports;
+
 	public static Map<String, List<String>> getDefaultImports() {
+		if (defaultImports != null)
+			return defaultImports;
+
 		final String[] classNames = {
-			"ij.IJ", "java.lang.String", "ini.trakem2.Project"
+			"ij.IJ", "java.lang.String", "ini.trakem2.Project", "script.imglib.math.Compute"
 		};
 		InspectJar inspector = new InspectJar();
 		for (String className : classNames) try {
@@ -954,8 +988,9 @@ public abstract class AbstractInterpreter implements PlugIn {
 				IJ.log("Warning: class " + className
 						+ " was not found!");
 		}
-		Map<String, List<String>> result = new HashMap<String, List<String>>();
+		defaultImports = new HashMap<String, List<String>>();
 		Set<String> prefixes = new HashSet<String>();
+		prefixes.add("script.");
 		for (String className : classNames)
 			prefixes.add(className.substring(0, className.lastIndexOf('.')));
 		for (String className : inspector.classNames(true)) {
@@ -964,13 +999,27 @@ public abstract class AbstractInterpreter implements PlugIn {
 			int dot = className.lastIndexOf('.');
 			String packageName = dot < 0 ? "" : className.substring(0, dot);
 			String baseName = className.substring(dot + 1);
-			List<String> list = result.get(packageName);
+			List<String> list = defaultImports.get(packageName);
 			if (list == null) {
 				list = new ArrayList<String>();
-				result.put(packageName, list);
+				defaultImports.put(packageName, list);
 			}
 			list.add(baseName);
 		}
-		return result;
+		// remove non-unique class names
+		Map<String, String> reverse = new HashMap<String, String>();
+		for (String packageName : defaultImports.keySet()) {
+			Iterator<String> iter = defaultImports.get(packageName).iterator();
+			while (iter.hasNext()) {
+				String className = iter.next();
+				if (reverse.containsKey(className)) {
+					iter.remove();
+					defaultImports.get(reverse.get(className)).remove(className);
+				}
+				else
+					reverse.put(className, packageName);
+			}
+		}
+		return defaultImports;
 	}
 }

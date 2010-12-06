@@ -32,8 +32,10 @@ import java.awt.event.KeyListener;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
 import java.util.ArrayList;
+import java.io.ByteArrayInputStream;
 import java.io.PipedWriter;
 import java.io.PipedReader;
+import java.io.PushbackReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -218,6 +220,18 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 						//create and move into the user namespace
 						in_ns.invoke(USER);
 						refer.invoke(CLOJURE);
+
+						// default imports
+						Reader reader = new InputStreamReader(new ByteArrayInputStream(getImportStatement().getBytes()));
+						PushbackReader pushback = new PushbackReader(reader);
+						final Thread thread = Thread.currentThread();
+						while (!thread.isInterrupted()) {
+							// read one token from the pipe
+							Object r = LispReader.read(pushback, false, EOF, false);
+							if (EOF == r)
+								break;
+							Compiler.eval(r);
+						}
 					} catch (Throwable t) {
 						IJ.log("Could not initialize variables for the clojure worker thread!");
 						t.printStackTrace();
@@ -329,5 +343,15 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 			t.printStackTrace();
 		}
 		return super.getPrompt();
+	}
+
+	protected String getImportStatement(String packageName, Iterable<String> classNames) {
+		StringBuffer sb = new StringBuffer();
+		if (!"".equals(packageName))
+			packageName += " ";
+		for (String className : classNames)
+			sb.append("(import '(").append(packageName)
+				.append(className).append("))\n");
+		return sb.toString();
 	}
 }

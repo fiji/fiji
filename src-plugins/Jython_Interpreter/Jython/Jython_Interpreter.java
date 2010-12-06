@@ -27,11 +27,9 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowAdapter;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 import common.AbstractInterpreter;
-import common.RefreshScripts;
 
 /** A dynamic Jython interpreter for ImageJ.
  *	It'd be nice to have TAB expand ImageJ class names and methods.
@@ -42,8 +40,13 @@ import common.RefreshScripts;
  *	$ jar cf Jython_Interpreter.jar *class plugins.config
  */
 public class Jython_Interpreter extends AbstractInterpreter {
+	protected PythonInterpreter pi;
 
-	PythonInterpreter pi;
+	public Jython_Interpreter() { }
+
+	public Jython_Interpreter(PythonInterpreter pi) {
+		this.pi = pi;
+	}
 
 	public void run(String arg) {
 		super.run(arg);
@@ -62,8 +65,7 @@ public class Jython_Interpreter extends AbstractInterpreter {
 		pi.setOut(out);
 		pi.setErr(out);
 		//pre-import all ImageJ java classes and TrakEM2 java classes
-		String msg = importAll(pi);
-		super.screen.append(msg);
+		importAll();
 		// fix back on closing
 		super.window.addWindowListener(
 			new WindowAdapter() {
@@ -114,36 +116,16 @@ public class Jython_Interpreter extends AbstractInterpreter {
 		return al;
 	}
 
-	/** pre-import all ImageJ java classes and TrakEM2 java classes */
-	static public String importAll(PythonInterpreter pi) {
-		if (System.getProperty("jnlp") != null)
-			return "Because Fiji was started via WebStart, no packages were imported implicitly";
-		boolean trakem2 = false;
-		try {
-			Map<String, List<String>> classNames = getDefaultImports();
-			for (String packageName : classNames.keySet()) {
-				StringBuffer names = null;
-				for (String className : classNames.get(packageName)) {
-					if (names == null)
-						names = new StringBuffer();
-					else
-						names.append(", ");
-					names.append(className);
-				}
-				if ("".equals(packageName))
-					pi.exec("import " + names);
-				else
-					pi.exec("from " + packageName + " import " + names);
-				if (packageName.startsWith("ini.trakem2"))
-					trakem2 = true;
-			}
-		} catch (Exception e) {
-			RefreshScripts.printError(e);
-			return "";
+	protected String getImportStatement(String packageName, Iterable<String> classNames) {
+		StringBuffer buffer = new StringBuffer();
+		for (String className : classNames) {
+			if (buffer.length() > 0)
+				buffer.append(", ");
+			buffer.append(className);
 		}
-		return "All ImageJ and java.lang"
-			+ (trakem2 ? " and TrakEM2" : "")
-			+ " classes imported.\n";
+		return "".equals(packageName) ?
+			"import " + buffer + "\n":
+			"from " + packageName + " import " + buffer + "\n";
 	}
 
 	protected String getLineCommentMark() {
