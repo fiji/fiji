@@ -330,7 +330,7 @@ public class Weka_Segmentation implements PlugIn
 
 						try{
 							if( wekaSegmentation.trainClassifier() ){
-								wekaSegmentation.applyClassifier();
+								wekaSegmentation.applyClassifier(false);
 								classifiedImage = wekaSegmentation.getClassifiedImage();
 								if(showColorOverlay)
 									toggleOverlay();
@@ -1045,7 +1045,8 @@ public class Weka_Segmentation implements PlugIn
 		IJ.showStatus("Calculating probability maps...");
 		IJ.log("Calculating probability maps...");
 		this.setButtonsEnabled(false);
-		final ImagePlus probImage = wekaSegmentation.getProbabilityMapsMT();
+		wekaSegmentation.applyClassifier(true);
+		final ImagePlus probImage = wekaSegmentation.getClassifiedImage();
 		if(null != probImage)
 			probImage.show();
 		this.updateButtonsEnabling();
@@ -1157,7 +1158,8 @@ public class Weka_Segmentation implements PlugIn
 			}
 		}
 
-		final int numProcessors = Runtime.getRuntime().availableProcessors();
+		final int numProcessors     = Runtime.getRuntime().availableProcessors();
+		final int numFurtherThreads = numProcessors/imageFiles.length;
 
 		IJ.log("Processing " + imageFiles.length + " image files in " + numProcessors + " threads....");
 
@@ -1196,9 +1198,7 @@ public class Weka_Segmentation implements PlugIn
 
 					IJ.log("Processing image " + file.getName() + " in thread " + numThread);
 
-					boolean parallelise = (imageFiles.length < numProcessors);
-
-					ImagePlus segmentation = wekaSegmentation.applyClassifierToTestImage(testImage, parallelise);
+					ImagePlus segmentation = wekaSegmentation.applyClassifier(testImage, numFurtherThreads, false);
 
 					if (showResults) {
 						segmentation.show();
