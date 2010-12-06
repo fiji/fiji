@@ -228,6 +228,10 @@ public class Weka_Segmentation implements PlugIn
 		// instantiate segmentation backend
 		wekaSegmentation = new WekaSegmentation();
 
+		// start with two classes
+		wekaSegmentation.addClass();
+		wekaSegmentation.addClass();
+
 		// Create overlay LUT
 		final byte[] red = new byte[256];
 		final byte[] green = new byte[256];

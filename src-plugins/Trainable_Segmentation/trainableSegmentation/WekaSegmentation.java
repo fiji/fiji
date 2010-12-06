@@ -1,6 +1,5 @@
 package trainableSegmentation;
 
-import java.awt.BorderLayout;
 import java.awt.Rectangle;
 
 import java.io.BufferedReader;
@@ -39,8 +38,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import javax.swing.JFrame;
-
 import javax.vecmath.Point3f;
 
 import hr.irb.fastRandomForest.FastRandomForest;
@@ -68,9 +65,6 @@ import weka.attributeSelection.CfsSubsetEval;
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Evaluation;
 
-import weka.classifiers.evaluation.EvaluationUtils;
-import weka.classifiers.evaluation.ThresholdCurve;
-
 import weka.classifiers.pmml.consumer.PMMLClassifier;
 
 import weka.core.Attribute;
@@ -88,9 +82,6 @@ import weka.filters.supervised.attribute.AttributeSelection;
 import weka.filters.supervised.instance.Resample;
 
 import weka.gui.explorer.ClassifierPanel;
-
-import weka.gui.visualize.PlotData2D;
-import weka.gui.visualize.ThresholdVisualizePanel;
 
 public class WekaSegmentation {
 
@@ -124,7 +115,7 @@ public class WekaSegmentation {
 	private boolean updateFeatures = false;
 
 	/** current number of classes */
-	private int numOfClasses = 2;
+	private int numOfClasses = 0;
 	/** names of the current classes */
 	String[] classLabels = new String[]{"class 1", "class 2", "class 3", "class 4", "class 5"};
 
@@ -168,9 +159,6 @@ public class WekaSegmentation {
 	{
 		this.trainingImage = trainingImage;
 
-		for(int i = 0; i < numOfClasses ; i++)
-			examples.add(new ArrayList<Roi>());
-
 		// Initialization of Fast Random Forest classifier
 		rf = new FastRandomForest();
 		rf.setNumTrees(numOfTrees);
@@ -192,9 +180,6 @@ public class WekaSegmentation {
 	 */
 	public WekaSegmentation()
 	{
-		for(int i = 0; i < numOfClasses ; i++)
-			examples.add(new ArrayList<Roi>());
-
 		// Initialization of Fast Random Forest classifier
 		rf = new FastRandomForest();
 		rf.setNumTrees(numOfTrees);
@@ -254,7 +239,7 @@ public class WekaSegmentation {
 	}
 
 	/**
-	 * Add new segmentation class (new label and new list on the right side)
+	 * Add new segmentation class.
 	 */
 	public void addClass()
 	{
