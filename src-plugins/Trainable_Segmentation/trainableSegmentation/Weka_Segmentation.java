@@ -1182,18 +1182,18 @@ public class Weka_Segmentation implements PlugIn
 		class ImageProcessingThread extends Thread {
 
 			final int     numThread;
-			final int     numProcessors;
+			final int     numThreads;
 			final File[]  imageFiles;
 			final boolean storeResults;
 			final boolean showResults;
 			final String  storeDir;
 
-			public ImageProcessingThread(int numThread, int numProcessors,
+			public ImageProcessingThread(int numThread, int numThreads,
 			                             File[] imageFiles,
 			                             boolean storeResults, boolean showResults,
 			                             String storeDir) {
 				this.numThread     = numThread;
-				this.numProcessors = numProcessors;
+				this.numThreads    = numThreads;
 				this.imageFiles    = imageFiles;
 				this.storeResults  = storeResults;
 				this.showResults   = showResults;
@@ -1202,8 +1202,7 @@ public class Weka_Segmentation implements PlugIn
 
 			public void run() {
 
-				for (int i = numThread; i < imageFiles.length; i += numProcessors) {
-
+				for (int i = numThread; i < imageFiles.length; i += numThreads) {
 					File file = imageFiles[i];
 
 					ImagePlus testImage = IJ.openImage(file.getPath());
@@ -1229,9 +1228,9 @@ public class Weka_Segmentation implements PlugIn
 		}
 
 		// start threads
-		for (int i = 0; i < numProcessors; i++) {
+		for (int i = 0; i < numThreads; i++) {
 
-			threads[i] = new ImageProcessingThread(i, numProcessors, imageFiles, storeResults, showResults, storeDir);
+			threads[i] = new ImageProcessingThread(i, numThreads, imageFiles, storeResults, showResults, storeDir);
 			threads[i].start();
 		}
 
