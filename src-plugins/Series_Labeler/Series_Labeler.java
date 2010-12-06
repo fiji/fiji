@@ -526,7 +526,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		Rectangle backgroundRectangle = getBoundingRectangle(ip);
 		
 		/* If we are in preview mode, an overlay is used to show
-		 * what the current settings will lokk like.
+		 * what the current settings will look like.
 		 */
 		if (preview) {
 			ImageProcessor labelIP;
