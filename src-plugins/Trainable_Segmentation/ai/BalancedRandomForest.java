@@ -1,7 +1,5 @@
 package ai;
 
-import hr.irb.fastRandomForest.FastRandomForest;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -132,16 +130,16 @@ public class BalancedRandomForest extends AbstractClassifier implements Randomiz
 		for(int i = 0; i < numClasses; i++)
 			indexSample[i] = new ArrayList<Integer>();
 		
-		System.out.println("numClasses = " + numClasses);
+		//System.out.println("numClasses = " + numClasses);
 		
 		// fill indexSample with the indices of each class
 		for(int i = 0 ; i < numInstances; i++)
 		{
-			System.out.println("data.get("+i+").classValue() = " + data.get(i).classValue());
+			//System.out.println("data.get("+i+").classValue() = " + data.get(i).classValue());
 			indexSample[ (int) data.get(i).classValue() ].add( i );
 		}
 		
-		Random random = new Random(seed);
+		final Random random = new Random(seed);
 		
 		// Executor service to run concurrent trees
 		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
@@ -152,17 +150,20 @@ public class BalancedRandomForest extends AbstractClassifier implements Randomiz
 		try{
 			for(int i = 0; i < numTrees; i++)
 			{
-				ArrayList<Integer> bagIndices = new ArrayList<Integer>(); 
+				final ArrayList<Integer> bagIndices = new ArrayList<Integer>(); 
 
+				// Randomly select the indices in a balanced way
 				for(int j = 0 ; j < numInstances; j++)
 				{
-					// Randomly select the indices in a balanced way
-					int randInt = random.nextInt( numClasses );				
-					bagIndices.add( indexSample[ randInt ].get( random.nextInt( indexSample[randInt].size() ) ) );
+					// Select first the class
+					final int randomClass = random.nextInt( numClasses );
+					// Select then a random sample of that class
+					final int randomSample = random.nextInt( indexSample[randomClass].size() );
+					bagIndices.add( indexSample[ randomClass ].get( randomSample ) );
 				}
 
 				// Create random tree
-				final Splitter splitter = new Splitter(new GiniFunction(numFeatures));
+				final Splitter splitter = new Splitter(new GiniFunction(numFeatures, random.nextInt()));
 				tree[i] = new BalancedRandomTree(data, bagIndices, splitter);
 
 				futures.add( exe.submit( tree[i]) );
@@ -369,7 +370,7 @@ public class BalancedRandomForest extends AbstractClassifier implements Randomiz
 	 * @param argv the options
 	 */
 	public static void main(String[] argv) {
-		runClassifier(new FastRandomForest(), argv);
+		runClassifier(new BalancedRandomForest(), argv);
 	}
 	
 }
