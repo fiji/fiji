@@ -69,7 +69,6 @@ import weka.classifiers.pmml.consumer.PMMLClassifier;
 
 import weka.core.Attribute;
 import weka.core.DenseInstance;
-import weka.core.FastVector;
 import weka.core.Instances;
 
 import weka.core.pmml.PMMLFactory;
@@ -2537,8 +2536,8 @@ public class WekaSegmentation {
 		{
 			IJ.log("Read class name: " + className);
 
-			addClass();
 			setClassLabel(j, className);
+			addClass();
 			j++;
 		}
 
