@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.registration.ViewDataBeads;
@@ -115,7 +116,7 @@ public abstract class SPIMImageFusion
 			final float[] minCoordinate = new float[]{ 0, 0, 0 };
 			final float[] maxCoordinate = new float[]{ dim[0], dim[1], dim[2] };
 			
-			view.getTile().getModel().estimateBounds( minCoordinate, maxCoordinate );
+			((AbstractAffineModel3D<?>)view.getTile().getModel()).estimateBounds( minCoordinate, maxCoordinate );
 
 			if ( minCoordinate[ 0 ] < min.x ) min.x = minCoordinate[ 0 ];
 			if ( minCoordinate[ 1 ] < min.y ) min.y = minCoordinate[ 1 ];

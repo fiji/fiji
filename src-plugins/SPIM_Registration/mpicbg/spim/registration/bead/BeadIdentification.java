@@ -2,88 +2,50 @@ package mpicbg.spim.registration.bead;
 
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.registration.ViewDataBeads;
+import mpicbg.spim.registration.detection.DetectionIdentification;
 
-/**
- * The BeadIdentification object stores the link (via ID) to an Bead-object and not an actual instance, but a link to the ViewDataBeads object where it belongs to.
- * This is necessary for storing/loading Bead-relationships to/from a text file. The Bead-objects of every {@link ViewDataBeads} have an {@link ArrayList} of BeadIdentification
- * objects telling which other Beads are correspondence candidates or true correspondences.
- *  
- * @author Stephan Preibisch
- *
- */
-public class BeadIdentification
+public class BeadIdentification extends DetectionIdentification<BeadIdentification, Bead> 
 {
-	final protected int beadID;
-	final ViewDataBeads view;
-	
-	/**
-	 * This constructor is used when a BeadIdenfication object is initialized during matching from an actual {@link Bead} object. 
-	 * @param bead - The {@link Bead} it should identify
-	 */
-	public BeadIdentification( final Bead bead )
+	public BeadIdentification( final Bead detection ) 
 	{
-		this.beadID = bead.getID();
-		this.view = bead.getView();
+		super( detection );
 	}
 
-	/**
-	 * This constructor is used when a BeadIdenfication object is initialized from a file where only the BeadID and the {@link ViewDataBeads} are known.
-	 * @param beadID - The BeadID of the {@link Bead} object it links to.
-	 * @param view - The {@link ViewDataBeads} object the bead belongs to.
-	 */
-	public BeadIdentification( final int beadID, final ViewDataBeads view )
+	public BeadIdentification( final int detectionID, final ViewDataBeads view )
 	{
-		this.beadID = beadID;
-		this.view = view;
+		super( detectionID, view );
 	}
-	
-	/**
-	 * Return the ID of the {@link Bead} object it describes
-	 * @return the Bead ID
-	 */
-	public int getBeadID() { return beadID; }
-	
-	/**
-	 * Returns the {@link ViewDataBeads} object of the view it belongs to.
-	 * @return {@link ViewDataBeads}
-	 */
-	public ViewDataBeads getView() { return view; }
-	
-	/**
-	 * Returns the ID of the view it belongs to.
-	 * @return ID of the view
-	 */
-	public int getViewID() { return getView().getID(); }
+
+	public int getBeadID() { return detectionID; }
 
 	/**
-	 * Prints the bead properties
+	 * Prints the nucleus properties
 	 */
-	public String toString() { return "BeadIdentification of " + getBead().toString(); }	
+	public String toString() { return "BeadIdentification of " + getDetection().toString(); }	
+
+	public Bead getBead() { return getDetection(); }
 	
-	/**
-	 * Returns the actual {@link Bead} object it links to
-	 * @return the {@link Bead} object
-	 */
-	public Bead getBead()
-	{		
-		// this is just a good guess that might speed up a lot
-		Bead bead = view.getBeadStructure().getBead( beadID );
+	@Override
+	public Bead getDetection() 
+	{
+         // this is just a good guess that might speed up a lot
+         Bead bead = view.getBeadStructure().getDetection( detectionID );
 
-		// check if it is the bead with the right ID
-		if ( bead.getID() != beadID )
-		{
-			bead = null;
-			for ( final Bead b : view.getBeadStructure().getBeadList() )
-				if ( bead.getID() == beadID )
-					bead = b;
+         // check if it is the bead with the right ID
+         if ( bead.getID() != detectionID )
+         {
+                bead = null;
+                for ( final Bead b : view.getBeadStructure().getDetectionList() )
+                       if ( bead.getID() == detectionID )
+                              bead = b;
 
-			if ( bead == null )
-			{
-				IOFunctions.printErr("BeadIdentification.getBead(): Cannot find a bead for beadID=" + beadID + " in view=" + view.getID() );
-				return null;
-			}
-		}
-		
-		return bead;
-	}
+                if ( bead == null )
+                {
+                	IOFunctions.printErr( "BeadIdentification.getBead(): Cannot find a bead for beadID=" + detectionID + " in view=" + view.getID() );
+                    return null;
+                }
+         }
+         return bead;
+   }
+
 }

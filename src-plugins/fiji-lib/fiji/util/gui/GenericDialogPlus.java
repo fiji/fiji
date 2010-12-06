@@ -195,7 +195,8 @@ public class GenericDialogPlus extends GenericDialog {
 
 			fc.showOpenDialog(null);
 			File selFile = fc.getSelectedFile();
-			text.setText( selFile.getAbsolutePath() );
+			if (selFile != null)
+				text.setText( selFile.getAbsolutePath() );
 		}
 	}
 

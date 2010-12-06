@@ -49,6 +49,6 @@ addDependencee(filename) {
 			addDependencee(dep);
 }
 
-addDependencee("jars/mpicbg.jar");
+addDependencee(bsh.args.length == 1 ? bsh.args[0] : "jars/mpicbg.jar");
 
 print(deps);

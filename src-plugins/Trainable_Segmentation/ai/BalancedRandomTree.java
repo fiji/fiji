@@ -2,6 +2,7 @@ package ai;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 import weka.core.Instance;
 import weka.core.Instances;
@@ -9,7 +10,7 @@ import weka.core.Instances;
 public class BalancedRandomTree implements Runnable, Serializable
 {
 	/**
-	 * 
+	 * Generated serial version UID
 	 */
 	private static final long serialVersionUID = 1L;
 	/** original data */
@@ -20,7 +21,7 @@ public class BalancedRandomTree implements Runnable, Serializable
 	Splitter splitter = null;
 	/** root node */
 	BaseNode rootNode = null;
-	
+
 	/**
 	 * Build random tree  
 	 * @param numOfFeatures
@@ -34,16 +35,20 @@ public class BalancedRandomTree implements Runnable, Serializable
 	{
 		this.data = data;
 		this.bagIndices = bagIndices;
+		//		System.out.println("Indices in bag: ");
+		//		for(int i=0; i<bagIndices.size(); i++)
+		//			System.out.println("index " + i + ": " + bagIndices.get(i));
 		this.splitter = splitter;
 	}
-	
+
 	/**
 	 * Build the random tree based on the data specified 
 	 * in the constructor 
 	 */
 	public void run() 
 	{
-		rootNode = new InteriorNode(data, bagIndices, 0, splitter);		
+		//rootNode = new InteriorNode(data, bagIndices, 0, splitter);
+		rootNode = createTree(data, bagIndices, 0, splitter);
 	}
 
 	/**
@@ -58,8 +63,8 @@ public class BalancedRandomTree implements Runnable, Serializable
 			return null;
 		return rootNode.eval(instance);
 	}
-	
-	
+
+
 	/**
 	 * Basic node of the tree
 	 *
@@ -70,14 +75,14 @@ public class BalancedRandomTree implements Runnable, Serializable
 		 * 
 		 */
 		private static final long serialVersionUID = 1L;
-		
+
 		public abstract double[] eval( Instance instance );
 		public int getDepth()
 		{
 			return 0;
 		}
 	}
-	
+
 	/**
 	 * Leaf node in the tree 
 	 *
@@ -88,20 +93,20 @@ public class BalancedRandomTree implements Runnable, Serializable
 		 * 
 		 */
 		private static final long serialVersionUID = 1L;
-		
+
 		double[] probability;
-		
+
 		@Override
 		public double[] eval(Instance instance) 
 		{		
 			return probability;
 		}
-		
+
 		public LeafNode(double[] probability)
 		{
 			this.probability = probability;
 		}
-		
+
 		/**
 		 * Create leaf node based on the current split data
 		 *  
@@ -117,8 +122,11 @@ public class BalancedRandomTree implements Runnable, Serializable
 			{
 				this.probability[ (int) data.get( it.intValue() ).classValue()] ++;
 			}
+			// Divide by the number of elements
+			for(int i=0; i<data.numClasses(); i++)
+				this.probability[i] /= (double) indices.size();
 		}
-		
+
 	}
 	/**
 	 * Interior node of the tree
@@ -134,7 +142,13 @@ public class BalancedRandomTree implements Runnable, Serializable
 		BaseNode right;
 		final int depth;
 		final SplitFunction splitFn;
-		
+
+		private InteriorNode(int depth, SplitFunction splitFn) 
+		{
+			this.depth = depth;
+			this.splitFn = splitFn;
+		}
+
 		/**
 		 * Construct interior node of the tree
 		 * 
@@ -142,25 +156,26 @@ public class BalancedRandomTree implements Runnable, Serializable
 		 * @param indices indices of the samples at this node
 		 * @param depth current tree depth
 		 */
-		public InteriorNode(
+/*		public InteriorNode(
 				final Instances data,
 				final ArrayList<Integer> indices,
 				final int depth,
 				final Splitter splitFnProducer)
 		{
 			this.splitFn = splitFnProducer.getSplitFunction(data, indices);
-			
-			
+
+
 			this.depth = depth;
-			
+
 			// left and right new arrays
 			final ArrayList<Integer> leftArray = new ArrayList<Integer>();
 			final ArrayList<Integer> rightArray = new ArrayList<Integer>();
-			
+
 			// split data
 			int totalLeft = 0;
 			int totalRight = 0;
 			for(final Integer it : indices)
+			{
 				if( splitFn.evaluate( data.get(it.intValue()) ) )
 				{
 					leftArray.add(it);
@@ -170,8 +185,9 @@ public class BalancedRandomTree implements Runnable, Serializable
 				{
 					rightArray.add(it);
 					totalRight ++;
-				}										
-System.out.println("total left = " + totalLeft + ", total rigth = " + totalRight + ", depth = " + depth);					
+				}
+			}
+			//System.out.println("total left = " + totalLeft + ", total rigth = " + totalRight + ", depth = " + depth);					
 			//indices.clear();
 			if( totalLeft == 0 )
 			{
@@ -186,8 +202,9 @@ System.out.println("total left = " + totalLeft + ", total rigth = " + totalRight
 				left = new InteriorNode(data, leftArray, depth+1, splitFnProducer);
 				right = new InteriorNode(data, rightArray, depth+1, splitFnProducer);
 			}				
-		}
-		
+		}*/
+
+
 		/**
 		 * Evaluate sample at this node
 		 */
@@ -205,8 +222,8 @@ System.out.println("total left = " + totalLeft + ", total rigth = " + totalRight
 			else // leaves are always left nodes 
 				return left.eval(instance);				
 		}
-		
-		
+
+
 		/**
 		 * Get node depth
 		 */
@@ -214,11 +231,81 @@ System.out.println("total left = " + totalLeft + ", total rigth = " + totalRight
 		{
 			return this.depth;
 		}
-		
-		
 	}
-	
-	
-	
-	
+
+	/**
+	 * Create random tree
+	 * 
+	 * @param data
+	 * @param indices
+	 * @param depth
+	 * @param splitFnProducer
+	 * @return root node
+	 */
+	private InteriorNode createTree(
+			final Instances data,
+			final ArrayList<Integer> indices,
+			final int depth,
+			final Splitter splitFnProducer)
+	{
+		int maxDepth = depth;
+		// Create root node
+		InteriorNode root = new InteriorNode(depth, splitFnProducer.getSplitFunction(data, indices));
+		// Create list of nodes to process and add the root to it
+		final LinkedList<InteriorNode> remainingNodes = new LinkedList<InteriorNode>();
+		remainingNodes.add(root);
+		// Create list of indices to process (it must match all the time with the node list)
+		final LinkedList<ArrayList<Integer>> remainingIndices = new LinkedList<ArrayList<Integer>>();
+		remainingIndices.add(indices);
+		// While there is still nodes to process
+		while (!remainingNodes.isEmpty()) 
+		{
+			final InteriorNode nd = remainingNodes.removeLast();
+			final ArrayList<Integer> currentIndices = remainingIndices.removeLast();
+			// left and right new arrays
+			final ArrayList<Integer> leftArray = new ArrayList<Integer>();
+			final ArrayList<Integer> rightArray = new ArrayList<Integer>();
+
+			// split data
+			for(final Integer it : currentIndices)
+			{
+				if( nd.splitFn.evaluate( data.get(it.intValue()) ) )
+				{
+					leftArray.add(it);
+				}
+				else
+				{
+					rightArray.add(it);
+				}
+			}
+			//System.out.println("total left = " + leftArray.size() + ", total right = " + rightArray.size() + ", depth = " + nd.depth);					
+			if(nd.depth > maxDepth)
+				maxDepth = nd.depth;
+
+			if( leftArray.size() == 0 )
+			{
+				nd.left = new LeafNode(data, rightArray);
+				//System.out.println("Created leaf with feature " + nd.splitFn.index);
+			}
+			else if ( rightArray.size() == 0 )
+			{
+				nd.left = new LeafNode(data, leftArray);
+				//System.out.println("Created leaf with feature " + nd.splitFn.index);
+			}
+			else
+			{
+				nd.left = new InteriorNode(nd.depth+1, splitFnProducer.getSplitFunction(data, leftArray));
+				remainingNodes.add((InteriorNode)nd.left);
+				remainingIndices.add(leftArray);
+				
+				nd.right = new InteriorNode(nd.depth+1, splitFnProducer.getSplitFunction(data, rightArray));
+				remainingNodes.add((InteriorNode)nd.right);
+				remainingIndices.add(rightArray);
+			}
+		}
+		
+		//System.out.println("Max depth = " + maxDepth);
+		return root;
+	}
+
 }
