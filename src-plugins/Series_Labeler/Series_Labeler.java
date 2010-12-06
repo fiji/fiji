@@ -412,7 +412,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		gd.remove(thePreviewCheckbox);
 		previewAndMessage.add(thePreviewCheckbox);
 		thePreviewCheckbox.setBounds(10, 0, 80, 20);
-        Component theMessage = createMessage("Series Labeler for " +
+		Component theMessage = createMessage("Series Labeler for " +
 				"Fiji (is just ImageJ - batteries included)\n" +
 				"maintained by Dan White MPI-CBG dan(at)chalkie.org.uk");
 		theMessage.setBounds(95, 0, 420, 35);
@@ -618,12 +618,12 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		gd.remove(label);
 		
 		Panel panel = new Panel(null);
-        label.setBounds(0, 0, labelWidth, 20);
-        choice.setBounds(labelWidth, 0, comboboxWidth, 22);
-        panel.add(label);
-        panel.add(choice);
-        panel.setSize(labelWidth+comboboxWidth, 30);
-        return panel;
+		label.setBounds(0, 0, labelWidth, 20);
+		choice.setBounds(labelWidth, 0, comboboxWidth, 22);
+		panel.add(label);
+		panel.add(choice);
+		panel.setSize(labelWidth+comboboxWidth, 30);
+		return panel;
 	}
 	
 	/**
