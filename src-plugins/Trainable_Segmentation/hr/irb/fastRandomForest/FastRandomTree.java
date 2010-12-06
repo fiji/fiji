@@ -31,6 +31,8 @@ import weka.core.OptionHandler;
 import weka.core.Utils;
 import weka.core.WeightedInstancesHandler;
 import weka.core.Capabilities.Capability;
+
+import java.util.LinkedList;
 import java.util.Random;
 import weka.core.RevisionUtils;
 
@@ -80,8 +82,9 @@ class FastRandomTree
 
   /** Minimum number of instances for leaf. */
   protected static final int m_MinNum = 1;
+  
 
-  /**
+/**
    * Get the value of MinNum.
    *
    * @return Value of MinNum.
@@ -195,7 +198,7 @@ class FastRandomTree
 
     buildTree(data.sortedIndices, classProbs, m_Debug,
             attIndicesWindow, 0);
-
+  
     this.data = null;
       
   }
@@ -412,7 +415,6 @@ class FastRandomTree
     this.data = null; // dereference all pointers so data can be GC'd after tree is built
     
   }
-
 
 
   /**
