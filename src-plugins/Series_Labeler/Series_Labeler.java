@@ -823,8 +823,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 
 		// has the label format been changed?
 		int currentFormat = gd.getNextChoiceIndex();
-		AbstractStampFormat lf =
-			selectedStackType.getSupportedFormats()[currentFormat];
+		AbstractStampFormat lf = selectedStackType.getSupportedFormats()[currentFormat];
 		boolean selectedFormatChanged = (lf != selectedFormat);
 		if (selectedFormatChanged) {
 			selectedFormat = lf;
