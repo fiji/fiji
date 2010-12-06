@@ -53,8 +53,8 @@ import common.AbstractInterpreter;
 
 public class Clojure_Interpreter extends AbstractInterpreter {
 
-	static final Symbol USER = Symbol.create("user");
-	static final Symbol CLOJURE = Symbol.create("clojure.core");
+	static final Symbol USER = Symbol.intern("user");
+	static final Symbol CLOJURE = Symbol.intern("clojure.core");
 
 	static final Var in_ns = RT.var("clojure.core", "in-ns");
 	static final Var refer = RT.var("clojure.core", "refer");
