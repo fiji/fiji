@@ -1167,13 +1167,14 @@ public class Weka_Segmentation implements PlugIn
 			probabilityMaps = false;
 
 		final int numProcessors     = Runtime.getRuntime().availableProcessors();
-		final int numFurtherThreads = numProcessors/imageFiles.length;
+		final int numThreads        = Math.min(imageFiles.length, numProcessors);
+		final int numFurtherThreads = (int)Math.ceil((double)(numProcessors - numThreads)/imageFiles.length) + 1;
 
-		IJ.log("Processing " + imageFiles.length + " image files in " + numProcessors + " threads....");
+		IJ.log("Processing " + imageFiles.length + " image files in " + numThreads + " threads....");
 
 		setButtonsEnabled(false);
 
-		Thread[] threads = new Thread[numProcessors];
+		Thread[] threads = new Thread[numThreads];
 
 		class ImageProcessingThread extends Thread {
 

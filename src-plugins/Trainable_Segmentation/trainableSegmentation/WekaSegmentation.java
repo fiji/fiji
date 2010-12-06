@@ -2874,7 +2874,6 @@ public class WekaSegmentation {
 
 		final int numSliceThreads = Math.min(imp.getStackSize(), numThreads);
 		final int numClasses      = numOfClasses;
-		final int numInstances    = imp.getWidth()*imp.getHeight();
 		final int numChannels     = (probabilityMaps ? numClasses : 1);
 
 		IJ.log("Processing slices of " + imp.getTitle() + " in " + numSliceThreads + " threads...");
@@ -2939,7 +2938,7 @@ public class WekaSegmentation {
 			}
 		}
 
-		final int numFurtherThreads = Math.max(1, (numThreads - numSliceThreads)/numSliceThreads + 1);
+		final int numFurtherThreads = (int)Math.ceil((double)(numThreads - numSliceThreads)/numSliceThreads) + 1;
 		final ApplyClassifierThread[] threads = new ApplyClassifierThread[numSliceThreads];
 
 		int numSlices  = imp.getStackSize()/numSliceThreads;
