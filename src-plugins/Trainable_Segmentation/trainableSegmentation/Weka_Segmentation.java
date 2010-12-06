@@ -1158,6 +1158,14 @@ public class Weka_Segmentation implements PlugIn
 			}
 		}
 
+		final boolean probabilityMaps;
+
+		int decision = JOptionPane.showConfirmDialog(null, "Create probability maps instead of segmentation?", "Probability maps?", JOptionPane.YES_NO_OPTION);
+		if (decision == JOptionPane.YES_OPTION)
+			probabilityMaps = true;
+		else
+			probabilityMaps = false;
+
 		final int numProcessors     = Runtime.getRuntime().availableProcessors();
 		final int numFurtherThreads = numProcessors/imageFiles.length;
 
@@ -1198,7 +1206,7 @@ public class Weka_Segmentation implements PlugIn
 
 					IJ.log("Processing image " + file.getName() + " in thread " + numThread);
 
-					ImagePlus segmentation = wekaSegmentation.applyClassifier(testImage, numFurtherThreads, false);
+					ImagePlus segmentation = wekaSegmentation.applyClassifier(testImage, numFurtherThreads, probabilityMaps);
 
 					if (showResults) {
 						segmentation.show();
