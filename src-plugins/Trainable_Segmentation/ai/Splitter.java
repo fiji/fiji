@@ -12,19 +12,26 @@ public class Splitter implements Serializable
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private SplitFunction splitFunction;
+	
+	private SplitFunction template;
 	
 	public Splitter(SplitFunction sfn)
 	{
-		this.splitFunction = sfn;
+		this.template = sfn;
 	}
 	
 	public SplitFunction getSplitFunction(
 			final Instances data,
 			final ArrayList<Integer> indices)
 	{
-		splitFunction.createFunction(data, indices);
-		return splitFunction;
+		try {
+			SplitFunction sf = template.newInstance();
+			sf.init(data, indices);
+			return sf;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 }
