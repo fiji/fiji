@@ -2525,6 +2525,8 @@ public class WekaSegmentation {
 		loadedClassNames = new ArrayList<String>();
 
 		int j = 0;
+		setNumOfClasses(0);
+
 		while(classValues.hasMoreElements())
 		{
 			final String className = classValues.nextElement().trim();
@@ -2534,26 +2536,11 @@ public class WekaSegmentation {
 		for(String className : loadedClassNames)
 		{
 			IJ.log("Read class name: " + className);
-			if( !className.equals(this.classLabels[j]))
-			{
-				String currentLabels = classLabels[0];
-				for(int i = 1; i < numOfClasses; i++)
-					currentLabels = currentLabels.concat(", " + classLabels[i]);
-				String loadedLabels = loadedClassNames.get(0);
-				for(int i = 1; i < loadedClassNames.size(); i++)
-					loadedLabels = loadedLabels.concat(", " + loadedClassNames.get(i));
-				IJ.error("ERROR: Loaded classes and current classes do not match!\nLoaded: " + loadedLabels + "\nFound:" + currentLabels);
-				return false;
-			}
+
+			addClass();
+			setClassLabel(j, className);
 			j++;
 		}
-
-		if(j != numOfClasses)
-		{
-			IJ.error("ERROR: Loaded number of classes and current number do not match!");
-			return false;
-		}
-
 
 		final boolean[] oldEnableFeatures = this.featureStack.getEnableFeatures();
 		// Read checked features and check if any of them changed

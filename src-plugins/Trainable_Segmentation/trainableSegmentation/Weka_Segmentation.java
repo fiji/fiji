@@ -167,6 +167,8 @@ public class Weka_Segmentation implements PlugIn
 	private ImagePlus classifiedImage;
 	/** GUI window */
 	private CustomWindow win;
+	/** number of classes in the GUI */
+	private int numOfClasses;
 	/** array of number of traces per class */
 	private int traceCounter[] = new int[WekaSegmentation.MAX_NUM_CLASSES];
 	/** flag to display the overlay image */
@@ -308,6 +310,7 @@ public class Weka_Segmentation implements PlugIn
 			exampleList[i] = new java.awt.List(5);
 			exampleList[i].setForeground(colors[i]);
 		}
+		numOfClasses = wekaSegmentation.getNumOfClasses();
 
 		showColorOverlay = false;
 	}
@@ -750,32 +753,32 @@ public class Weka_Segmentation implements PlugIn
 		 */
 		public void addClass()
 		{
-			int numOfClasses = wekaSegmentation.getNumOfClasses();
+			int classNum = numOfClasses;
 
-			wekaSegmentation.addClass();
+			exampleList[classNum] = new java.awt.List(5);
+			exampleList[classNum].setForeground(colors[classNum]);
 
-			exampleList[numOfClasses] = new java.awt.List(5);
-			exampleList[numOfClasses].setForeground(colors[numOfClasses]);
-
-			exampleList[numOfClasses].addActionListener(listener);
-			exampleList[numOfClasses].addItemListener(itemListener);
-			addExampleButton[numOfClasses] = new JButton("Add to " + wekaSegmentation.getClassLabel(numOfClasses));
+			exampleList[classNum].addActionListener(listener);
+			exampleList[classNum].addItemListener(itemListener);
+			addExampleButton[classNum] = new JButton("Add to " + wekaSegmentation.getClassLabel(classNum));
 
 			annotationsConstraints.fill = GridBagConstraints.HORIZONTAL;
 			annotationsConstraints.insets = new Insets(5, 5, 6, 6);
 
-			boxAnnotation.setConstraints(addExampleButton[numOfClasses], annotationsConstraints);
-			annotationsPanel.add(addExampleButton[numOfClasses]);
+			boxAnnotation.setConstraints(addExampleButton[classNum], annotationsConstraints);
+			annotationsPanel.add(addExampleButton[classNum]);
 			annotationsConstraints.gridy++;
 
 			annotationsConstraints.insets = new Insets(0,0,0,0);
 
-			boxAnnotation.setConstraints(exampleList[numOfClasses], annotationsConstraints);
-			annotationsPanel.add(exampleList[numOfClasses]);
+			boxAnnotation.setConstraints(exampleList[classNum], annotationsConstraints);
+			annotationsPanel.add(exampleList[classNum]);
 			annotationsConstraints.gridy++;
 
 			// Add listener to the new button
-			addExampleButton[numOfClasses].addActionListener(listener);
+			addExampleButton[classNum].addActionListener(listener);
+
+			numOfClasses++;
 
 			repaintAll();
 		}
@@ -1247,6 +1250,8 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public void loadClassifier()
 	{
+		int oldNumOfClasses = wekaSegmentation.getNumOfClasses();
+
 		OpenDialog od = new OpenDialog("Choose Weka classifier file","");
 		if (od.getFileName()==null)
 			return;
@@ -1266,7 +1271,6 @@ public class Weka_Segmentation implements PlugIn
 			return;
 		}
 
-
 		IJ.log("Read header from " + od.getDirectory() + od.getFileName() + " (number of attributes = " + wekaSegmentation.getTrainHeader().numAttributes() + ")");
 
 		if(wekaSegmentation.getTrainHeader().numAttributes() < 1)
@@ -1277,7 +1281,15 @@ public class Weka_Segmentation implements PlugIn
 			return;
 		}
 
+		// update GUI
+		int wekaNumOfClasses = wekaSegmentation.getNumOfClasses();
+		while (numOfClasses < wekaNumOfClasses)
+			win.addClass();
+		for (int i = 0; i < numOfClasses; i++)
+			addExampleButton[i].setText("Add to " + wekaSegmentation.getClassLabel(i));
+
 		updateButtonsEnabling();
+		repaintWindow();
 
 		IJ.log("Loaded " + od.getDirectory() + od.getFileName());
 	}
@@ -1464,8 +1476,6 @@ public class Weka_Segmentation implements PlugIn
 			return;
 		}
 
-		//IJ.log("Adding new class...");
-
 		String inputName = JOptionPane.showInputDialog("Please input a new label name");
 
 		if(null == inputName)
@@ -1481,9 +1491,9 @@ public class Weka_Segmentation implements PlugIn
 		if (0 == inputName.toLowerCase().indexOf("add to "))
 			inputName = inputName.substring(7);
 
-
 		// Add new name to the list of labels
 		wekaSegmentation.setClassLabel(wekaSegmentation.getNumOfClasses(), inputName);
+		wekaSegmentation.addClass();
 
 		// Add new class label and list
 		win.addClass();
