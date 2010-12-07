@@ -1,6 +1,28 @@
 package ai;
 
+/**
+ *
+ * License: GPL
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License 2
+ * as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ * Authors: Ignacio Arganda-Carreras (iarganda@mit.edu), 
+ * 			Albert Cardona (acardona@ini.phys.ethz.ch)
+ */
+
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Random;
 import java.util.Vector;
@@ -19,34 +41,85 @@ import weka.core.Capabilities.Capability;
 import weka.core.TechnicalInformation.Field;
 import weka.core.TechnicalInformation.Type;
 
+/**
+ * This class implements a Balanced Random Forest classifier,
+ * it is an ensemble classifier of random trees where all classes
+ * have the same representation in the training process. 
+ * 
+ * <!-- globalinfo-start -->
+ * Class for constructing a balanced forest of random trees.<br/>
+ * <br/>
+ * For more information see: <br/>
+ * <br/>
+ * Leo Breiman (2001). Random Forests. Machine Learning. 45(1):5-32.
+ * <p/>
+ <!-- globalinfo-end -->
+ *
+ <!-- technical-bibtex-start -->
+ * BibTeX:
+ * <pre>
+ * &#64;article{Breiman2001,
+ *    author = {Leo Breiman},
+ *    journal = {Machine Learning},
+ *    number = {1},
+ *    pages = {5-32},
+ *    title = {Random Forests},
+ *    volume = {45},
+ *    year = {2001}
+ * }
+ * </pre> * 
+ * <p/>
+ <!-- technical-bibtex-end -->
+ *
+ <!-- options-start -->
+ * Valid options are: <p/>
+ * 
+ * <pre> -I &lt;number of trees&gt;
+ *  Number of trees to build.</pre>
+ * 
+ * <pre> -K &lt;number of features&gt;
+ *  Number of features to consider (&lt;1=int(logM+1)).</pre>
+ * 
+ * <pre> -S
+ *  Seed for random number generator.
+ *  (default 1)</pre>
+ * 
+ * <pre> -D
+ *  If set, classifier is run in debug mode and
+ *  may output additional info to the console</pre>
+ * 
+ <!-- options-end -->
+ *
+ * @author Ignacio Arganda-Carreras (iarganda@mit.edu)
+ *
+ */
 public class BalancedRandomForest extends AbstractClassifier implements Randomizable
 {
-	
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+	/** serial version ID */
+	private static final long serialVersionUID = "BalancedRandomForest".hashCode();
 
 	/** random seed */
 	int seed = 1;
 	
 	/** number of trees */
-	int numTrees = 200;
+	int numTrees = 10;
 		
 	/** number of features used on each node of the trees */
 	int numFeatures = 0;
 	
 	/** array of random trees that form the forest */
 	BalancedRandomTree[] tree = null;
-	
+
+	/** the out of bag error which has been calculated */
+	double outOfBagError = 0;
 	
 	/**
 	 * Returns a string describing classifier
 	 * @return a description suitable for
 	 * displaying in the explorer/experimenter gui
 	 */
-	public String globalInfo() {
-
+	public String globalInfo() 
+	{
 		return  
 		"Class for constructing a balanced forest of random trees.\n\n"
 		+ "For more information see: \n\n"
@@ -60,7 +133,8 @@ public class BalancedRandomForest extends AbstractClassifier implements Randomiz
 	 * 
 	 * @return the technical information about this class
 	 */
-	public TechnicalInformation getTechnicalInformation() {
+	public TechnicalInformation getTechnicalInformation() 
+	{
 		TechnicalInformation 	result;
 
 		result = new TechnicalInformation(Type.ARTICLE);
@@ -147,7 +221,11 @@ public class BalancedRandomForest extends AbstractClassifier implements Randomiz
 		List< Future<?> > futures =
             new ArrayList< Future<?> >( numTrees );
 
-		try{
+		
+		final boolean[][] inBag = new boolean [ numTrees ][ numInstances ];
+		
+		try
+		{
 			for(int i = 0; i < numTrees; i++)
 			{
 				final ArrayList<Integer> bagIndices = new ArrayList<Integer>(); 
@@ -160,18 +238,59 @@ public class BalancedRandomForest extends AbstractClassifier implements Randomiz
 					// Select then a random sample of that class
 					final int randomSample = random.nextInt( indexSample[randomClass].size() );
 					bagIndices.add( indexSample[ randomClass ].get( randomSample ) );
+					inBag[ i ][ indexSample[ randomClass ].get( randomSample ) ] = true;
 				}
 
 				// Create random tree
-				final Splitter splitter = new Splitter(new GiniFunction(numFeatures, random.nextInt()));
+				final Splitter splitter = 
+					new Splitter(
+							new GiniFunction(	numFeatures, 
+												data.getRandomNumberGenerator( random.nextInt() ) ));
 				tree[i] = new BalancedRandomTree(data, bagIndices, splitter);
 
-				futures.add( exe.submit( tree[i]) );
+				futures.add( exe.submit( tree[i] ) );
 			}
 			
 			// Make sure all trees have been trained before proceeding
 			for (int treeIdx = 0; treeIdx < numTrees; treeIdx++) 
-				futures.get(treeIdx).get();		     			
+				futures.get(treeIdx).get();		
+
+			// Calculate out of bag error
+			final boolean numeric = data.classAttribute().isNumeric();
+
+			List<Future<Double>> votes =
+				new ArrayList<Future<Double>>(data.numInstances());
+			
+			for (int i = 0; i < data.numInstances(); i++) 
+			{
+				VotesCollector aCollector = new VotesCollector(tree, i, data, inBag);
+				votes.add(exe.submit(aCollector));
+			}
+
+			double outOfBagCount = 0.0;
+			double errorSum = 0.0;
+
+			for (int i = 0; i < data.numInstances(); i++) 
+			{
+
+				double vote = votes.get(i).get();
+
+				// error for instance
+				outOfBagCount += data.instance(i).weight();
+				if (numeric) 
+				{
+					errorSum += StrictMath.abs(vote - data.instance(i).classValue()) * data.instance(i).weight();
+				} 
+				else 
+				{
+					if (vote != data.instance(i).classValue())
+						errorSum += data.instance(i).weight();
+				}
+
+			}
+
+			outOfBagError = errorSum / outOfBagCount;
+			
 		}
 		catch(Exception ex)
 		{
@@ -266,7 +385,8 @@ public class BalancedRandomForest extends AbstractClassifier implements Randomiz
 	 * @param options the list of options as an array of strings
 	 * @throws Exception if an option is not supported
 	 */
-	public void setOptions(String[] options) throws Exception{
+	public void setOptions(String[] options) throws Exception
+	{
 		String	tmpStr;
 
 		tmpStr = Utils.getOption('I', options);
@@ -296,11 +416,22 @@ public class BalancedRandomForest extends AbstractClassifier implements Randomiz
 	}
 	
 	
+	/**
+	 * Get the number of random features to use
+	 * in each node of the random trees.
+	 * 
+	 * @return number of random features
+	 */
 	public int getNumFeatures() 
 	{
 		return this.numFeatures;
 	}
 
+	/**
+	 * Get the number of trees in the forest
+	 * 
+	 * @return number of trees being used
+	 */
 	public int getNumTrees() 
 	{
 		return this.numTrees;
@@ -324,28 +455,95 @@ public class BalancedRandomForest extends AbstractClassifier implements Randomiz
 		return result;
 	}
 
-
+	/**
+	 * Get the seed used to initialize the
+	 * random number generators
+	 * 
+	 * @return random seed
+	 */
 	public int getSeed() 
 	{
 		return seed;
 	}
 
+	/**
+	 * Set the seed used to initialize the
+	 * random number generators
+	 * 
+	 * @param seed random seed
+	 */
 	public void setSeed(int seed) 
 	{
 		this.seed = seed;
 	}
 
-	
+	/**
+	 * Set the number of trees in the forest
+	 * 
+	 * @param numTrees number of trees
+	 */
 	public void setNumTrees(int numTrees) 
 	{
 		this.numTrees = numTrees;
 	}
 
+	/**
+	 * Set the number of random features to use
+	 * in each node of the random trees
+	 * 
+	 * @param numFeatures number of random features
+	 */
 	public void setNumFeatures(int numFeatures) 
 	{
 		this.numFeatures = numFeatures;
 	}
 
+	/**
+	 * Gets the out of bag error that was calculated as the classifier
+	 * was built.
+	 *
+	 * @return the out of bag error 
+	 */
+	public double measureOutOfBagError() 
+	{
+		return outOfBagError;
+	}
+
+	/**
+	 * Returns an enumeration of the additional measure names.
+	 *
+	 * @return an enumeration of the measure names
+	 */
+	public Enumeration enumerateMeasures() 
+	{
+
+		Vector newVector = new Vector(1);
+		newVector.addElement("measureOutOfBagError");
+		return newVector.elements();
+	}
+
+	/**
+	 * Returns the value of the named measure.
+	 *
+	 * @param additionalMeasureName the name of the measure to query for its value
+	 * @return the value of the named measure
+	 * @throws IllegalArgumentException if the named measure is not supported
+	 */
+	public double getMeasure(String additionalMeasureName) 
+	{
+
+		if (additionalMeasureName.equalsIgnoreCase("measureOutOfBagError")) 
+		{
+			return measureOutOfBagError();
+		}
+		else 
+		{
+			throw new IllegalArgumentException(additionalMeasureName 
+				+ " not supported (Bagging)");
+		}
+	}
+	
+	
 	/**
 	 * Outputs a description of this classifier.
 	 *
@@ -359,9 +557,9 @@ public class BalancedRandomForest extends AbstractClassifier implements Randomiz
 		else 
 			return "Balanced random forest of " + this.numTrees
 			+ " trees, each constructed while considering "
-			+ this.numFeatures + " random feature" + (this.numFeatures==1 ? "" : "s") + ".\n";
-			//+ "Out of bag error: "
-			//+ Utils.doubleToString(m_bagger.measureOutOfBagError(), 4) + "\n";
+			+ this.numFeatures + " random feature" + (this.numFeatures==1 ? "" : "s")
+			+ "\nOut of bag error: "
+			+ Utils.doubleToString(measureOutOfBagError(), 4) + ".\n";
 	}
 
 	/**
