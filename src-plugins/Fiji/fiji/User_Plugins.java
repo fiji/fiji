@@ -81,6 +81,8 @@ public class User_Plugins implements PlugIn {
 			"fiji.User_Plugins(\"update\")");
 		Menus.getCommands().put("Refresh Menus",
 			"fiji.User_Plugins(\"update\")");
+		Menus.getCommands().put("Compile and Run...",
+			"fiji.Compile_and_Run");
 		if (IJ.getInstance() != null) {
 			Menu help = Menus.getMenuBar().getHelpMenu();
 			for (int i = help.getItemCount() - 1; i >= 0; i--) {

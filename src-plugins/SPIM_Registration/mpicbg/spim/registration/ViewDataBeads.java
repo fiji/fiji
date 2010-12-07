@@ -3,9 +3,7 @@ package mpicbg.spim.registration;
 import ij.IJ;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Transform3D;
@@ -17,30 +15,31 @@ import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.io.LOCI;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import mpicbg.models.AffineModel3D;
+import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.TileSPIM;
 import mpicbg.spim.registration.bead.BeadStructure;
 import mpicbg.spim.registration.bead.error.ViewErrorStatistics;
-import mpicbg.spim.registration.segmentation.Nucleus;
+import mpicbg.spim.registration.segmentation.NucleusStructure;
 
-public class ViewDataBeads implements Comparable<ViewDataBeads>
+public class ViewDataBeads implements Comparable< ViewDataBeads >
 {
-	public ViewDataBeads( final int id, final AffineModel3D model, final String fileName, final double zStretching )
+	public <M extends AbstractAffineModel3D<M>> ViewDataBeads( final int id, final M model, final String fileName, final double zStretching )
 	{		
 		setID( id );
 		setFileName( fileName );
 		setZStretching( zStretching );
 		
-		this.tile = new TileSPIM( model.clone(), this );
+		this.tile = new TileSPIM<M>( model.copy(), this );
 		this.beads = new BeadStructure();
+		this.nuclei = new NucleusStructure(); 
 	}
 	
 	/**
 	 * Provides the capability to lock a {@link ViewDataBeads} object if necessary
 	 */
-	public AtomicInteger islockedA = new AtomicInteger( 0 );
-	public AtomicInteger islockedB = new AtomicInteger( 0 );
+	//public AtomicInteger islockedA = new AtomicInteger( 0 );
+	//public AtomicInteger islockedB = new AtomicInteger( 0 );
 		
 	/**
 	 * if the view is connected to any other view or excluded from the registration because no true correspondences were found
@@ -62,7 +61,14 @@ public class ViewDataBeads implements Comparable<ViewDataBeads>
 	protected BeadStructure beads;
 	public BeadStructure getBeadStructure() { return beads; }
 	public void setBeadStructure( final BeadStructure beads ) { this.beads = beads; }
-	
+
+	/**
+	 * The Object for storing the potential nuclei
+	 */
+	protected NucleusStructure nuclei;
+	public NucleusStructure getNucleiStructure() { return nuclei; }
+	public void setNucleiStructure( final NucleusStructure nuclei ) { this.nuclei = nuclei; }
+
 	/**
 	 * The object for storing View-related error statistics
 	 */
@@ -138,7 +144,7 @@ public class ViewDataBeads implements Comparable<ViewDataBeads>
 	public Transform3D getTransform3D()
 	{
 		final Matrix4f matrix = new Matrix4f();
-		final float[] m = getTile().getModel().getMatrix( null );
+		final float[] m = ((AbstractAffineModel3D<?>)getTile().getModel()).getMatrix( null );
 		
 		matrix.m00 = m[ 0 ];
 		matrix.m01 = m[ 1 ];
@@ -277,17 +283,7 @@ public class ViewDataBeads implements Comparable<ViewDataBeads>
 		
 		return image;
 	}
-	
-	protected ArrayList<Nucleus> nuclei;
-	public void setNucleiList( final Collection<Nucleus> nuclei ) 
-	{ 
-		this.nuclei = new ArrayList<Nucleus>();
 		
-		for ( final Nucleus nucleus : nuclei )
-			this.nuclei.add( nucleus );
-	}
-	public ArrayList<Nucleus> getNucleiList() { return this.nuclei; }
-	
 	/**
 	 * Normalizes the image to the range [0...1]
 	 * @param image - the image to normalize
@@ -425,9 +421,9 @@ public class ViewDataBeads implements Comparable<ViewDataBeads>
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ALL )
 		{
 			if ( getBeadStructure() != null )
-				IOFunctions.println("Loaded " + getBeadStructure().getBeadList().size() + " beads for " + getName() + "[" + getImageSize()[0] + "x" + getImageSize()[1] + "x" + getImageSize()[2] + "]" );				
+				IOFunctions.println("Loaded " + getBeadStructure().getDetectionList().size() + " beads for " + getName() + "[" + getImageSize()[0] + "x" + getImageSize()[1] + "x" + getImageSize()[2] + "]" );				
 			else
-				IOFunctions.println("Bead loading FAILED for " + getName() + "[" + getImageSize()[0] + "x" + getImageSize()[1] + "x" + getImageSize()[2] + "]" );
+				IOFunctions.println("Detection loading FAILED for " + getName() + "[" + getImageSize()[0] + "x" + getImageSize()[1] + "x" + getImageSize()[2] + "]" );
 		}
 		
 		if (!readSeg)

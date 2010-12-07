@@ -178,8 +178,9 @@ public class FileFunctions {
 			Fake fake = new Fake();
 			if (parent != null) {
 				final JTextAreaOutputStream output = new JTextAreaOutputStream(parent.getTab().screen);
+				final JTextAreaOutputStream errors = new JTextAreaOutputStream(parent.errorScreen);
 				fake.out = new PrintStream(output);
-				fake.err = new PrintStream(output);
+				fake.err = new PrintStream(errors);
 			}
 			Fake.Parser parser = fake.parse(new FileInputStream(fakefile), new File(fijiDir));
 			parser.parseRules(null);
@@ -187,10 +188,22 @@ public class FileFunctions {
 			if (rule == null)
 				rule = parser.getRule("jars/" + baseName + ".jar");
 			if (rule != null) {
-				String stripPath = (rule instanceof Fake.Parser.SubFake) ?
-					rule.getLastPrerequisite() : rule.getStripPath();
+				String stripPath = rule.getStripPath();
+				dir = fijiDir + "/";
+				if (rule instanceof Fake.Parser.SubFake) {
+					stripPath = rule.getLastPrerequisite();
+					fakefile = ((Fake.Parser.SubFake)rule).getFakefile();
+					if (fakefile != null) {
+						dir += rule.getLastPrerequisite();
+						parser = fake.parse(new FileInputStream(fakefile), new File(dir));
+						parser.parseRules(null);
+						rule = parser.getRule(baseName + ".jar");
+						if (rule != null)
+							stripPath = rule.getStripPath();
+					}
+				}
 				if (stripPath != null) {
-					dir = fijiDir + "/" + stripPath;
+					dir += stripPath;
 					path = dir + "/" + className.replace('.', '/') + ".java";
 					if (new File(path).exists())
 						return path;
@@ -788,7 +801,8 @@ public class FileFunctions {
 	}
 
 	public void gitGrep(String searchTerm, File directory) {
-		GrepLineHandler handler = new GrepLineHandler(parent.getTab().screen, directory.getAbsolutePath());
+		GrepLineHandler handler = new GrepLineHandler(parent.errorScreen, directory.getAbsolutePath());
+		parent.getTab().showErrors();
 		try {
 			SimpleExecuter executer = new SimpleExecuter(new String[] {
 				"git", "grep", "-n", searchTerm
@@ -965,6 +979,10 @@ public class FileFunctions {
 
 	public static void main(String[] args) {
 		String root = System.getProperty("fiji.dir");
-		new FileFunctions(null).commit(new File(root + "/src-plugins/Script_Editor/fiji/scripting/TextEditor.java"), new File(root + "/.git"));
+		try {
+			System.err.println(new FileFunctions(null).getSourcePath("script.imglib.analysis.DoGPeaks"));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }

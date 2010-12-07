@@ -46,6 +46,10 @@ public class ImgLibVolume<T extends RealType<T>> extends Volume {
 		initLoader();
 	}
 
+	public Image<T> getImage() {
+		return img;
+	}
+
 	/** Create the image cursor anew. */
 	@Override
 	protected void initLoader() {

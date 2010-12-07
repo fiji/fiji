@@ -2,6 +2,7 @@ package mpicbg.spim.registration.segmentation;
 
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.registration.ViewDataBeads;
+import mpicbg.spim.registration.detection.DetectionIdentification;
 
 /**
  * The BeadIdentification object stores the link (via ID) to an Bead-object and not an actual instance, but a link to the ViewDataBeads object where it belongs to.
@@ -11,78 +12,50 @@ import mpicbg.spim.registration.ViewDataBeads;
  * @author Stephan Preibisch
  *
  */
-public class NucleusIdentification
+public class NucleusIdentification extends DetectionIdentification<NucleusIdentification, Nucleus>
 {
-	final protected int nucleusID;
-	final ViewDataBeads view;
-	
-	/**
-	 * This constructor is used when a NucleusIdenfication object is initialized during matching from an actual {@link Nucleus} object. 
-	 * @param nucleus - The {@link Nucleus} it should identify
-	 */
 	public NucleusIdentification( final Nucleus nucleus )
 	{
-		this.nucleusID = nucleus.getID();
-		this.view = nucleus.getView();
+		super( nucleus );
 	}
 
-	/**
-	 * This constructor is used when a NucleusIdenfication object is initialized from a file where only the NucleusID and the {@link ViewDataBeads} are known.
-	 * @param nucleusID - The NucleusID of the {@link Nucleus} object it links to.
-	 * @param view - The {@link ViewDataBeads} object the nucleus belongs to.
-	 */
-	public NucleusIdentification( final int nucleusID, final ViewDataBeads view )
+	public NucleusIdentification( final int detectionID, final ViewDataBeads view )
 	{
-		this.nucleusID = nucleusID;
-		this.view = view;
+		super( detectionID, view );
 	}
 	
-	/**
-	 * Return the ID of the {@link Nucleus} object it describes
-	 * @return the Nucleus ID
-	 */
-	public int getNucleusID() { return nucleusID; }
+	public int getNucleusID() { return detectionID; }
 	
-	/**
-	 * Returns the {@link ViewDataBeads} object of the view it belongs to.
-	 * @return {@link ViewDataBeads}
-	 */
-	public ViewDataBeads getView() { return view; }
-	
-	/**
-	 * Returns the ID of the view it belongs to.
-	 * @return ID of the view
-	 */
-	public int getViewID() { return getView().getID(); }
-
 	/**
 	 * Prints the nucleus properties
 	 */
-	public String toString() { return "NucleusIdentification of " + getNucleus().toString(); }	
+	public String toString() { return "NucleusIdentification of " + getDetection().toString(); }	
+	
+	public Nucleus getNucleus() { return getDetection(); }
 	
 	/**
 	 * Returns the actual {@link Nucleus} object it links to
 	 * @return the {@link Nucleus} object
 	 */
-	public Nucleus getNucleus()
+	public Nucleus getDetection()
 	{		
 		Nucleus nucleus = null;
 		
 		// this is just a good guess that might speed up a lot
-		if ( nucleusID < view.getNucleiList().size() )
-			nucleus = view.getNucleiList().get( nucleusID );
+		if ( detectionID < view.getNucleiStructure().getDetectionList().size() )
+			nucleus = view.getNucleiStructure().getDetectionList().get( detectionID );
 
 		// check if it is the nucleus with the right ID
-		if ( nucleus == null || nucleus.getID() != nucleusID )
+		if ( nucleus == null || nucleus.getID() != detectionID )
 		{
 			nucleus = null;
-			for ( final Nucleus n : view.getNucleiList() )
-				if ( n.getID() == nucleusID )
+			for ( final Nucleus n : view.getNucleiStructure().getDetectionList() )
+				if ( n.getID() == detectionID )
 					nucleus = n;
 
 			if ( nucleus == null )
 			{
-				IOFunctions.printErr("NucleusIdentification.getNucleus(): Cannot find a nucleus for nucleusID=" + nucleusID + " in view=" + view.getID() );
+				IOFunctions.printErr( "NucleusIdentification.getNucleus(): Cannot find a nucleus for nucleusID=" + detectionID + " in view=" + view.getID() );
 				return null;
 			}
 		}

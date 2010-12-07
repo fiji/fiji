@@ -19,8 +19,6 @@ public class BlendingSimple extends CombinedPixelWeightener<BlendingSimple>
 	{
 		super( views );
 		
-		//System.out.println("Running simple blending");
-		
 		numViews = views.size();
 		numDimensions = views.get( 0 ).getNumDimensions();
 		

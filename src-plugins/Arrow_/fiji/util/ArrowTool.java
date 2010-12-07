@@ -1,6 +1,7 @@
 package fiji.util;
 
 
+import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageCanvas;
@@ -8,6 +9,9 @@ import ij.gui.ImageWindow;
 import ij.gui.Line;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
+
+import ij.plugin.frame.Recorder;
+
 import ij.process.ImageProcessor;
 
 import java.awt.BasicStroke;
@@ -95,7 +99,7 @@ public class ArrowTool extends AbstractTool implements ActionListener {
 	 * INNER CLASS
 	 */
 	
-	private class ArrowShapeRoi extends ShapeRoi {
+	private static class ArrowShapeRoi extends ShapeRoi {
 		private static final long serialVersionUID = 1L;
 		private ArrowShape arrow;
 		private BasicStroke stroke;
@@ -276,6 +280,8 @@ public class ArrowTool extends AbstractTool implements ActionListener {
 			status = InteractionStatus.NO_ARROW;
 		} else {
 			status = InteractionStatus.FREE;
+
+			handleRecording();
 		}
 	}
 	
@@ -365,6 +371,34 @@ public class ArrowTool extends AbstractTool implements ActionListener {
 		paint();
 	}
 
+	protected void handleRecording() {
+		if (!Recorder.record)
+			return;
+		Point2D start = arrow.getStartPoint();
+		Point2D end = arrow.getEndPoint();
+		Recorder.record("call", getClass().getName() + ".select\", \"" + arrow.getStyle()
+			+ "\", \"" + start.getX() + "\", \"" + start.getY() + "\", \"" + end.getX() + "\", \"" + end.getY()
+			+ "\", \"" + stroke.getLineWidth() + "\", \"" + arrow.getLength());
+	}
+
+	// for macros
+	public static void select(String style, String x1, String y1, String x2, String y2, String width, String headLength) {
+		select(ArrowShape.ArrowStyle.valueOf(style),
+			Double.parseDouble(x1), Double.parseDouble(y1), Double.parseDouble(x2), Double.parseDouble(y2),
+			Float.parseFloat(width), Double.parseDouble(headLength));
+	}
+
+	public static void select(ArrowShape.ArrowStyle style, double x1, double y1, double x2, double y2, float width, double headLength) {
+		IJ.getImage().setRoi(makeRoi(style, x1, y1, x2, y2, width, headLength));
+	}
+
+	public static Roi makeRoi(ArrowShape.ArrowStyle style, double x1, double y1, double x2, double y2, float width, double headLength) {
+		ArrowShape arrow = new ArrowShape(style, headLength);
+		arrow.setStartPoint(new Point2D.Double(x1, y1));
+		arrow.setEndPoint(new Point2D.Double(x2, y2));
+		BasicStroke stroke = new BasicStroke(width, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
+		return new ArrowShapeRoi(arrow, stroke);
+	}
 
 	/*
 	 * PRIVATE METHODS

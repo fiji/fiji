@@ -956,6 +956,22 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 		  return addCustomMesh(tmesh, name);
 	}
 
+	/** At every {@link Point3f} in @param points, place an icosphere
+	 * created with @param subdivisions and @param radius.
+	 *
+	 * A reasonable @param subdivision value is 2. Higher values will result
+	 * in excessively detailed and very large meshes.*/
+	public Content addIcospheres(final List<Point3f> points, final Color3f color,
+					final int subdivisions, final float radius,
+					final String name) {
+		final List<Point3f> ico = MeshMaker.createIcosahedron(subdivisions, radius);
+		final List<Point3f> mesh = new ArrayList<Point3f>();
+		for (final Point3f p : points) {
+			mesh.addAll(MeshMaker.copyTranslated(ico, p.x, p.y, p.z));
+		}
+		return addCustomMesh(new CustomTriangleMesh(mesh, color, 0), name);
+	}
+
 	/**
 	 * Add a custom mesh, in particular a mesh consisting of quads, to the
 	 * universe.

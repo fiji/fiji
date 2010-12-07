@@ -47,7 +47,13 @@ public class ExceptionHandler implements IJ.ExceptionHandler {
 			current = IJ.getExceptionHandler();
 			if (current instanceof ExceptionHandler)
 				return (ExceptionHandler)current;
-		} catch (Exception e) { /* ignore */ }
+		}
+		catch (Exception e) {
+			/* ignore */
+		}
+		catch (NoSuchMethodError e) {
+			/* ignore */
+		}
 
 		if (current == null)
 			current = new IJ.ExceptionHandler() {
@@ -81,7 +87,8 @@ public class ExceptionHandler implements IJ.ExceptionHandler {
 	}
 
 	public static void handle(Throwable t, TextEditor editor) {
-		JTextArea screen = editor.getTab().screen;
+		JTextArea screen = editor.errorScreen;
+		editor.getTab().showErrors();
 
 		if (t instanceof InvocationTargetException) {
 			t = ((InvocationTargetException)t).getTargetException();

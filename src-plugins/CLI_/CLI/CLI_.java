@@ -1997,4 +1997,8 @@ public class CLI_ extends AbstractInterpreter {
 		//default;
 		return null;
 	}
+
+	public String getImportStatement(String packageName, Iterable<String> classNames) {
+		throw new RuntimeException("Cannot import classes into the macro interpreter");
+	}
 }
