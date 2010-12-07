@@ -1083,10 +1083,49 @@ A:			for (int i = 0; i < neighborPositions.length; i++) {
 
 	private void createSequence() {
 
+		// array of files to process
+		File[] imageFiles;
+		String storeDir = "";
+
+		// create a file chooser for the image files
+		JFileChooser fileChooser = new JFileChooser(".");
+		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		fileChooser.setMultiSelectionEnabled(true);
+
+		// get selected files or abort if no file has been selected
+		int returnVal = fileChooser.showOpenDialog(null);
+		if(returnVal == JFileChooser.APPROVE_OPTION) {
+			imageFiles = fileChooser.getSelectedFiles();
+		} else {
+			return;
+		}
+
+		boolean showResults = true;
+		boolean storeResults = false;
+
+		if (imageFiles.length >= 3) {
+
+			int decision = JOptionPane.showConfirmDialog(null, "You decided to process three or more image files. Do you want the results to be stored on the disk instead of opening them in Fiji?", "Save results?", JOptionPane.YES_NO_OPTION);
+
+			if (decision == JOptionPane.YES_OPTION) {
+				// ask for the directory to store the results
+				fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+				fileChooser.setMultiSelectionEnabled(false);
+				returnVal = fileChooser.showOpenDialog(null);
+				if(returnVal == JFileChooser.APPROVE_OPTION) {
+					storeDir = fileChooser.getSelectedFile().getPath();
+				} else {
+					return;
+				}
+				showResults  = false;
+				storeResults = true;
+			}
+		}
+
 		GenericDialog gd = new GenericDialog("Sequence Parameter");
 		gd.addNumericField("Start", 0.0, 3);
 		gd.addNumericField("End",   1.0, 3);
-		gd.addNumericField("Step",  0.1, 3);
+		gd.addNumericField("Step",  0.01, 3);
 
 		gd.showDialog();
 
@@ -1097,9 +1136,34 @@ A:			for (int i = 0; i < neighborPositions.length; i++) {
 		float end   = (float)gd.getNextNumber();
 		float step  = (float)gd.getNextNumber();
 
-		seq = createSequenceImage(imp, edge, start, end, step, pottsWeight, edgeWeight);
-		seq.show();
-		seq.updateAndDraw();
+		for (int i = 0; i < imageFiles.length; i++) {
+
+			File file = imageFiles[i];
+
+			ImagePlus sequenceImage = IJ.openImage(file.getPath());
+
+			// take first channel only if image has several channels
+			if (sequenceImage.getNChannels() > 1)
+				sequenceImage = extractChannel(sequenceImage, 1);
+
+			IJ.log("Processing image " + file.getName() + "...");
+
+			seq = createSequenceImage(sequenceImage, edge, start, end, step, pottsWeight, edgeWeight);
+
+			if (showResults) {
+				seq.show();
+				seq.updateAndDraw();
+			}
+
+			if (storeResults) {
+				String filename = storeDir + File.separator + file.getName();
+				IJ.log("Saving results to " + filename);
+				IJ.save(seq, filename);
+				seq.close();
+			}
+
+			sequenceImage.close();
+		}
 	}
 
 	private float edgeLikelihood(float value1, float value2, int[] position1, int[] position2, int[] dimensions) {
