@@ -17,8 +17,6 @@ public class InformationGainFunction extends SplitFunction
 	int numOfFeatures;
 	/** random number generator */
 	final Random random;
-	/** initial random seed */
-	final int seed;
 	
 	// Attribute-class pair comparator (by attribute value)
 	private static final Comparator<AttributeClassPair> comp = new Comparator<AttributeClassPair>(){
@@ -43,15 +41,14 @@ public class InformationGainFunction extends SplitFunction
 	 * to be initialize with the corresponding data and indices)
 	 * 
 	 * @param numOfFeatures number of random features to use
-	 * @param seed random seed for the number generator
+	 * @param random random number generator
 	 */
 	public InformationGainFunction(
 			int numOfFeatures, 
-			final int seed)
+			final Random random)
 	{
 		this.numOfFeatures = numOfFeatures;
-		this.seed = seed;
-		this.random = new Random(seed);
+		this.random = random;
 	}
 	
 	
@@ -203,7 +200,7 @@ public class InformationGainFunction extends SplitFunction
 	@Override
 	public SplitFunction newInstance() 
 	{		
-		return new InformationGainFunction(this.numOfFeatures, this.seed);
+		return new InformationGainFunction(this.numOfFeatures, this.random);
 	}
 	
 	
