@@ -1073,6 +1073,37 @@ A:			for (int i = 0; i < neighborPositions.length; i++) {
 		return imp2;
 	}
 
+	private ImagePlus extractZSlice(ImagePlus imp, int zslice) {
+
+		int width    = imp.getWidth();
+		int height   = imp.getHeight();
+		int channels = imp.getNChannels();
+		int frames   = imp.getNFrames();
+
+		FileInfo fileInfo         = imp.getOriginalFileInfo();
+
+		// create empty stack
+		ImageStack stack2 = new ImageStack(width, height);
+		// create new ImagePlus for selected frame
+		ImagePlus imp2 = new ImagePlus();
+		imp2.setTitle("Z" + zslice + "-" + imp.getTitle());
+
+		// copy slices
+		for (int f = 1; f <= frames; f++)
+			for (int c = 1; c <= channels; c++) {
+				int slice = imp.getStackIndex(c, zslice, f);
+				stack2.addSlice("", imp.getStack().getProcessor(slice));
+			}
+
+		imp2.setStack(stack2);
+		imp2.setDimensions(channels, 1, frames);
+		if (channels*frames > 1)
+			imp2.setOpenAsHyperStack(true);
+		imp2.setFileInfo(fileInfo);
+
+		return imp2;
+	}
+
 	private void updateSegmentationImage() {
 
 		if (seg == null)
@@ -1136,30 +1167,82 @@ A:			for (int i = 0; i < neighborPositions.length; i++) {
 		float end   = (float)gd.getNextNumber();
 		float step  = (float)gd.getNextNumber();
 
+		boolean zsliceByZslice     = false;
+		boolean rememberDecision = false;
+
 		for (int i = 0; i < imageFiles.length; i++) {
 
 			File file = imageFiles[i];
 
 			ImagePlus sequenceImage = IJ.openImage(file.getPath());
+			ImagePlus edgeImage;
 
-			// take first channel only if image has several channels
-			if (sequenceImage.getNChannels() > 1)
-				sequenceImage = extractChannel(sequenceImage, 1);
+			int width    = sequenceImage.getWidth();
+			int height   = sequenceImage.getHeight();
+			int channels = sequenceImage.getNChannels();
+			int zslices  = sequenceImage.getNSlices();
+			int frames   = sequenceImage.getNFrames();
+			int sequenceLength = -1;
 
-			IJ.log("Processing image " + file.getName() + "...");
+			if (zslices > 1 && rememberDecision == false) {
+				int decision = JOptionPane.showConfirmDialog(null, "Process image zslice by zslice (as opposed to as a whole)?", "Frame by frame?", JOptionPane.YES_NO_OPTION);
 
-			seq = createSequenceImage(sequenceImage, edge, start, end, step, pottsWeight, edgeWeight);
+				if (decision == JOptionPane.YES_OPTION)
+					zsliceByZslice = true;
+
+				// presumably, a lot of images are to be processed. in this
+				// case, don't bother the user again...
+				if (storeResults)
+					rememberDecision = true;
+			}
+
+			// create empty stack
+			ImageStack resultStack = new ImageStack(width, height);
+
+			for (int zslice = 0; zslice < (zsliceByZslice ? zslices : 1); zslice++) {
+
+				ImagePlus sequenceSlice = (zsliceByZslice ? extractZSlice(sequenceImage, zslice) : sequenceImage);
+
+				// take first channel as probability map and second as edge prior
+				// (if available)
+				if (channels > 1) {
+					edgeImage     = extractChannel(sequenceSlice, 2);
+					sequenceSlice = extractChannel(sequenceSlice, 1);
+				} else
+					edgeImage     = edge;
+
+				IJ.log("Processing image " + file.getName() +
+				       (edgeImage != null ? " under consideration of edge image in " + edgeImage.getTitle() : "") +
+				       "...");
+
+				seq = createSequenceImage(sequenceSlice, edgeImage, start, end, step, pottsWeight, edgeWeight);
+				if (sequenceLength == -1)
+					sequenceLength = seq.getStackSize();
+
+				// add all slices of the segmentation result
+				for (int s = 0; s < seq.getStack().getSize(); s++)
+					resultStack.addSlice("", seq.getStack().getProcessor(s+1), s*(zslice+1));
+			}
+
+			// create result image plus
+			ImagePlus result = new ImagePlus();
+			result.setTitle("sequence-" + sequenceImage.getTitle());
+			result.setStack(resultStack);
+			result.setDimensions(1, zslices, sequenceLength);
+			if (zslices*sequenceLength > 1)
+				result.setOpenAsHyperStack(true);
 
 			if (showResults) {
-				seq.show();
-				seq.updateAndDraw();
+				result.show();
+				result.updateAndDraw();
 			}
 
 			if (storeResults) {
 				String filename = storeDir + File.separator + file.getName();
 				IJ.log("Saving results to " + filename);
-				IJ.save(seq, filename);
-				seq.close();
+				IJ.save(result, filename);
+				if (!showResults)
+					result.close();
 			}
 
 			sequenceImage.close();
