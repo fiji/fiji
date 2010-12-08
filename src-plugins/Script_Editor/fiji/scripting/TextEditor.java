@@ -1587,6 +1587,8 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	synchronized void setTitle() {
 		final Tab tab = getTab();
+		if (null == tab || null == tab.editorPane)
+			return;
 		final boolean fileChanged = tab.editorPane.fileChanged();
 		final String fileName = tab.editorPane.getFileName();
 		final String title = (fileChanged ? "*" : "") + fileName
