@@ -21,6 +21,8 @@ package ai;
  * 			Albert Cardona (acardona@ini.phys.ethz.ch)
  */
 
+import ij.IJ;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -28,18 +30,21 @@ import java.util.LinkedList;
 import weka.core.Instance;
 import weka.core.Instances;
 
+/**
+ * This class implements a random tree based on the split
+ * function specified by the template in Splitter
+ * 
+ */
 public class BalancedRandomTree implements Runnable, Serializable
 {
-	/**
-	 * Generated serial version UID
-	 */
-	private static final long serialVersionUID = 1L;
+	/** Generated serial version UID */
+	private static final long serialVersionUID = 41518309467L;
 	/** original data */
-	Instances data = null;
+	final Instances data;
 	/** indices of the samples in the bag for this tree */
-	ArrayList<Integer> bagIndices = null;
+	final ArrayList<Integer> bagIndices;
 	/** split function generator */
-	Splitter splitter = null;
+	final Splitter splitter;
 	/** root node */
 	BaseNode rootNode = null;
 
@@ -69,8 +74,11 @@ public class BalancedRandomTree implements Runnable, Serializable
 	 */
 	public void run() 
 	{
+		final long start = System.currentTimeMillis();
 		//rootNode = new InteriorNode(data, bagIndices, 0, splitter);
 		rootNode = createTree(data, bagIndices, 0, splitter);
+		final long end = System.currentTimeMillis();
+		IJ.log("Creating tree took: " + (end-start) + "ms");
 	}
 
 	/**
