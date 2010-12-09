@@ -1,46 +1,46 @@
 function Miji(open_imagej)
-%% This script sets up the classpath to Fiji and starts MIJ
-%% Author: Jacques Pecreaux
+    %% This script sets up the classpath to Fiji and optionally starts MIJ
+    %% Author: Jacques Pecreaux & Johannes Schindelin
+    if nargin < 1
+        open_imagej = true;
+    end
 
-if nargin < 1
-	open_imagej = true;
-end
+    %% Get the Fiji directory
+    fiji_directory = fileparts(fileparts(mfilename('fullpath')));
 
-cwd = pwd;
-%%
-cd (fileparts(mfilename('fullpath')));
-cd ..;
-cd jars;
-%%
-if ~exist('mij.jar', 'file')
-  disp('you seem not to have mij.jar in the jars/ folder, downloading it!');
-  urlwrite('http://bigwww.epfl.ch/sage/soft/mij/mij.jar', 'mij.jar'); 
-end
-%%
-%path_ = fullfile(pwd,'ij.jar');
-%%
-test = dir('*.jar');
-path_= cell(1);
-for i = 1:length(test)
-  path_{i} = (fullfile(pwd, test(i).name));
-end
-shift = length(test);
-%%
-cd ..;
-cd plugins;
-test = dir('*.jar');
-for i = 1:length(test)
-  path_{i+shift} = (fullfile(pwd, test(i).name));
-end
-%%
-javaaddpath(path_, '-end');
-%%
+    %% Get the Java classpath
+    classpath = javaclasspath('-all');
 
-if open_imagej
-  cd ..;
-  disp([sprintf('\n') sprintf('\n') 'Use MIJ.exit to end the session' sprintf('\n') sprintf('\n')]);
-  MIJ.start(pwd);
+    %% Add all libraries in jars/ and plugins/ to the classpath
+    add_to_classpath(classpath, strcat([fiji_directory filesep 'jars']));
+    add_to_classpath(classpath, strcat([fiji_directory filesep 'plugins']));
+
+    %% Maybe open the ImageJ window
+    if open_imagej
+      cd ..;
+      fprintf('\n\nUse MIJ.exit to end the session\n\n');
+      MIJ.start(pwd);
+    end
 end
 
-%%
-cd(cwd);
+function add_to_classpath(classpath, directory)
+    % Get all .jar files in the directory
+    test = dir(strcat([directory filesep '*.jar']));
+    path_= cell(0);
+    for i = 1:length(test)
+        if not_yet_in_classpath(classpath, test(i).name)
+            path_{length(path_) + 1} = strcat([directory filesep test(i).name]);
+        end
+    end
+
+    %% Add them to the classpath
+    if ~isempty(path_)
+        javaaddpath(path_, '-end');
+    end
+end
+
+function test = not_yet_in_classpath(classpath, filename)
+%% Test whether the library was already imported
+expression = strcat([filesep filename '$']);
+test = isempty(cell2mat(regexp(classpath, expression)));
+end

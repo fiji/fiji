@@ -112,9 +112,9 @@ SUBMODULE_TARGETS=\
 	jars/imglib-algorithms.jar \
 	jars/imglib-ij.jar \
 	jars/imglib-io.jar \
-	jars/imglib-scripting.jar \
 	jars/mpicbg.jar \
-	jars/commons-math.jar
+	jars/commons-math.jar \
+	jars/imglib-scripting.jar
 
 PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \
@@ -240,8 +240,6 @@ CLASSPATH(jars/imglib-io.jar)=plugins/loci_tools.jar:jars/imglib.jar
 jars/imglib-io.jar <- imglib/
 CLASSPATH(jars/imglib-algorithms.jar)=jars/Jama-1.0.2.jar:jars/imglib.jar
 jars/imglib-algorithms.jar <- imglib/
-CLASSPATH(jars/imglib-scripting.jar)=jars/imglib.jar
-jars/imglib-scripting.jar <- imglib/
 
 jars/clojure.jar <- clojure/
 plugins/loci_tools.jar <- bio-formats/
@@ -258,6 +256,9 @@ jars/autocomplete.jar <- AutoComplete/
 jars/weka.jar <- jars/Fiji.jar weka/
 jars/jython.jar <- jython/
 jars/commons-math.jar <- commons-math/
+
+CLASSPATH(jars/imglib-scripting.jar)=ij.jar:jars/imglib.jar:jars/imglib-io.jars:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/loci_tools.jar
+jars/imglib-scripting.jar <- imglib/
 
 # From source
 libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama-1.0.2.jar \

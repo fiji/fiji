@@ -627,6 +627,23 @@ public class MIJ {
      * @param object	Matlab variable
      */
     public static void createImage(String title, Object object) {
+        createImage(title, object, true);
+    }
+
+    /**
+     * Create a new image in ImageJ from a Matlab variable with a specified title.
+	 *
+	 * This method tries to create an image (ImagePlus of ImageJ) from a Matlab's variable
+	 * which should be an 2D or 3D array
+	 * The recognize type are byte, short, int, float and double. The dimensionality of
+	 * the 2 (image) or 3 (stack of images)
+     *
+     * @param title		title of the new image
+     * @param object	Matlab variable
+     * @param showImage	whether to display the newly created image or not
+     * @return the resulting ImagePlus instance
+     */
+    public static ImagePlus createImage(String title, Object object, boolean showImage) {
         ImagePlus imp = null;
         int i = 0;
         if (object instanceof byte[][]) {
@@ -867,11 +884,14 @@ public class MIJ {
         }
 		else {
 			System.out.println("MIJ Error message: Unknow type of images or volumes.");
-			return;
+			return null;
 		}
-		
-        imp.show();
-        imp.updateAndDraw();
+
+        if (showImage) {
+            imp.show();
+            imp.updateAndDraw();
+        }
+        return imp;
     }
     
     /**
