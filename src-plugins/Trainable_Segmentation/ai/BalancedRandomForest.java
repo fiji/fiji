@@ -191,6 +191,9 @@ public class BalancedRandomForest extends AbstractClassifier implements Randomiz
 		// If number of features is 0 then set it to log2 of M (number of attributes)
 		if (numFeatures < 1) 
 			numFeatures = (int) Utils.log2(data.numAttributes())+1;
+		// Check maximum number of random features
+		if (numFeatures >= data.numAttributes())
+			numFeatures = data.numAttributes() - 1;
 		
 		// Initialize array of trees
 		tree = new BalancedRandomTree[ numTrees ];
@@ -244,8 +247,8 @@ public class BalancedRandomForest extends AbstractClassifier implements Randomiz
 				// Create random tree
 				final Splitter splitter = 
 					new Splitter(
-							new GiniFunction(	numFeatures, 
-												data.getRandomNumberGenerator( random.nextInt() ) ));
+							new GiniFunction(numFeatures, 
+														data.getRandomNumberGenerator( random.nextInt() ) ));
 				tree[i] = new BalancedRandomTree(data, bagIndices, splitter);
 
 				futures.add( exe.submit( tree[i] ) );
