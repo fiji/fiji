@@ -69,117 +69,103 @@ public class InformationGainFunction extends SplitFunction
 		}
 		
 		final int len = data.numAttributes();
-		
-		final int[] featureToUse = new int [ numOfFeatures ];
-		
+		final int numElements = indices.size();	
+		final int numClasses = data.numClasses();
+				
 		// Create and shuffle indices of features to use
 		ArrayList<Integer> allIndices = new ArrayList<Integer>();
 		for(int i=0; i<len; i++)
 			if(i != data.classIndex())
 				allIndices.add(i);
 		Collections.shuffle(allIndices, random);
-		// Select the random features
-		for(int i=0; i < featureToUse.length; i++)
-		{
-			featureToUse[ i ] = random.nextInt(allIndices.size());
-		}
-		// free list of possible indices to help garbage collector
-		allIndices.clear();
-		allIndices = null;
 		
-		
-		final int numElements = indices.size();		
 		double bestGain = Double.MIN_VALUE;
 		
-		// Calculate probabilities for right list
-		double[] initialProb = new double[data.numClasses()];
-		for(int n = 0; n < numElements; n++)
-			initialProb[(int)data.get(n).classValue()] ++;
-		final double initialEntropy = ContingencyTables.entropy(initialProb);
-		
-		initialProb = null;
-				
-		// Get the maximum information gain
-		for(int i=0; i < featureToUse.length; i++)
+		for(int i=0; i < numOfFeatures; i++)
 		{
-			//System.out.println("Feature to use: " + featureToUse[i]);			
+			// Select the random feature
+			final int featureToUse = allIndices.get(i); //random.nextInt(allIndices.size());
+			
+			// Calculate probabilities for right list
+			double[] initialProb = new double[ numClasses ];
+			for(int n = 0; n < numElements; n++)
+				initialProb[(int)data.get(n).classValue()] ++;
+			final double initialEntropy = ContingencyTables.entropy(initialProb);
+
+			initialProb = null;
+
+			// Get the maximum information gain
+		
 			// Create list with pairs attribute-class
 			final ArrayList<AttributeClassPair> list = new ArrayList<AttributeClassPair>();
 			for(int j=0; j<numElements; j++)
 			{
 				list.add(
-						new AttributeClassPair(	data.get(indices.get(j)).value(featureToUse[i]), 
+						new AttributeClassPair(	data.get(indices.get(j)).value(featureToUse), 
 								(int) data.get(indices.get(j)).classValue() ));
 			}
 
 			// Sort pairs in increasing order
 			Collections.sort(list, comp);
-			/*		
-			System.out.println("Sorted attribute-class pairs: ");			
-			for(final AttributeClassPair att: list)
-			{
-				System.out.println("att-class: [" + att.attributeValue + ", " + att.classValue  + " ]");
-			}
-			 */
 			
-			//this.threshold = Double.NaN;
+			final double[] probLeft  = new double[numClasses];
+			final double[] probRight = new double[numClasses];
+			// initial probabilities (all samples on the right)
+			for(int n = 0; n < list.size(); n++)
+				probRight[list.get(n).classValue] ++;
 			
-			for(int splitPoint = 0; splitPoint<numElements; splitPoint++)
+			// Try all splitting points, from position 0 to the end
+			int splitPoint = 0;
+			do
 			{
-				// Skip samples with the same attribute value
-				//if( this.threshold == list.get(splitPoint).attributeValue )
-				//	continue;
-				
-				double[] probLeft = new double[data.numClasses()];
-				
-				// Calculate probabilities for left list
-				for(int n = 0; n < splitPoint; n++)
-					probLeft[list.get(n).classValue] ++;
-				
+				final int rightNumElements = numElements - splitPoint;
+
 				// Calculate entropy
-				for(int nClass = 0; nClass < data.numClasses(); nClass++)
+				for(int nClass = 0; nClass < numClasses; nClass++)
 				{	
 					// Divide by the number of elements to get probabilities
 					if(splitPoint != 0)
 						probLeft[nClass] /= (double) splitPoint;
-				}
-				final double entropyLeft = ContingencyTables.entropy(probLeft);
-												
-				// Calculate probabilities for right list
-				double[] probRight = new double[data.numClasses()];
-				for(int n = splitPoint; n < list.size(); n++)
-					probRight[list.get(n).classValue] ++;
 				
-				// Calculate entropy;
-				final int rightNumElements = numElements - splitPoint;
-				for(int nClass = 0; nClass < data.numClasses(); nClass++)
-				{	
 					// Divide by the number of elements to get probabilities
 					if(rightNumElements != 0)
 						probRight[nClass] /= (double) rightNumElements;
 				}
+				
+				// Calculate entropy;				
+				final double entropyLeft = ContingencyTables.entropy(probLeft);
 				final double entropyRight = ContingencyTables.entropy(probRight);
+				
 				// Total entropy value
 				final double totalEntropy =	entropyLeft * splitPoint / (double) numElements + 
-								entropyRight * rightNumElements / (double) numElements;
-				
+											entropyRight * rightNumElements / (double) numElements;
+
 				final double currInfGain = initialEntropy - totalEntropy;
-				
+
 				// Save values of maximum information gain
 				if( currInfGain > bestGain )
 				{
 					bestGain = currInfGain;
-					this.index = featureToUse[i];
+					this.index = featureToUse;
 					this.threshold = list.get(splitPoint).attributeValue;
 				}
+
+				// update probabilities for next iteration
+				probLeft[list.get(splitPoint).classValue] ++;
+				probRight[list.get(splitPoint).classValue] --;
 				
-			}
+				splitPoint++;
+				
+			}while ( splitPoint < numElements );
+
 			list.clear();
 			//System.out.println("Maximum information gain values: index= " + this.index + " threshold= " + this.threshold);
-			
+
 		}
 		
-		
+		// free list of possible indices to help garbage collector
+		allIndices.clear();
+		allIndices = null;				
 	}
 
 	/**
