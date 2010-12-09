@@ -400,6 +400,10 @@ public class LAPTracker extends AbstractSpotTracker {
 
 		// Solve LAP
 		int[][] finalTrackSolutions = solveLAPForFinalTracks();
+		
+		if (DEBUG) {
+			LAPUtils.displayCostMatrix(segmentCosts, trackSegments.size(), splittingMiddlePoints.size(), settings.blockingValue, finalTrackSolutions);
+		}
 
 		// Compile LAP solutions into final tracks
 		compileFinalTracks(finalTrackSolutions);
@@ -514,11 +518,18 @@ public class LAPTracker extends AbstractSpotTracker {
 		final int numMergingMiddlePoints = mergingMiddlePoints.size();
 		final int numSplittingMiddlePoints = splittingMiddlePoints.size();
 
-		if(DEBUG) 
+		if(DEBUG)  {
 			System.out.println("-- DEBUG information from LAPTracker --");
+			System.out.println("Compiling final tracks with "+numTrackSegments+" segments, "
+					+numMergingMiddlePoints+" merging spot candidates, "+numSplittingMiddlePoints+" splitting spot condidates.");
+		}
 		for (int[] solution : finalTrackSolutions) {
 			int i = solution[0];
 			int j = solution[1];
+			
+			if (DEBUG)
+				System.out.println("Current couple: row = "+i+", col = "+j);
+			
 			if (i < numTrackSegments) {
 
 				// Case 1: Gap closing
@@ -531,10 +542,10 @@ public class LAPTracker extends AbstractSpotTracker {
 
 					if(DEBUG) 
 						System.out.println("Gap closing from segment "+i+" to segment "+j+".");
-				} 
 
-				// Case 2: Merging
-				else if (j < (numTrackSegments + numMergingMiddlePoints)) {
+				} else if (j < (numTrackSegments + numMergingMiddlePoints)) {
+					
+					// Case 2: Merging
 					SortedSet<Spot> segmentEnd = trackSegments.get(i);
 					Spot end =  segmentEnd.last();
 					Spot middle = mergingMiddlePoints.get(j - numTrackSegments);
@@ -559,34 +570,55 @@ public class LAPTracker extends AbstractSpotTracker {
 						System.out.println("Merging from segment "+i+" end to spot "+indexSpot+" in segment "+indexTrack+".");
 					}
 
+				}
+			} else if (i < (numTrackSegments + numSplittingMiddlePoints)) {
 
-				} else if (i < (numTrackSegments + numSplittingMiddlePoints)) {
-
-					// Case 3: Splitting
-					if (j < numTrackSegments) {
-						SortedSet<Spot> segmentStart = trackSegments.get(j);
-						Spot start = segmentStart.first();
-						Spot mother = splittingMiddlePoints.get(i - numTrackSegments);
-						trackGraph.addEdge(start, mother);
-
-						if(DEBUG) {
-							SortedSet<Spot> track = null;
-							int indexTrack = 0;
-							int indexSpot = 0;
-							for(SortedSet<Spot> t : trackSegments)
-								if (t.contains(mother)) {
-									track = t;
-									for(Spot spot : track) {
-										if (spot == mother)
-											break;
-										else
-											indexSpot++;
-									}
-									break;
-								} else
-									indexTrack++;
-							System.out.println("Splitting from spot "+indexSpot+" in segment "+indexTrack+" to segment"+j+".");
+				// Case 3: Splitting
+				if (j < numTrackSegments) {
+					SortedSet<Spot> segmentStart = trackSegments.get(j);
+					Spot start = segmentStart.first();
+					Spot mother = splittingMiddlePoints.get(i - numTrackSegments);
+					/*
+					// But we want to link with the PREVIOUS spot in track
+					SortedSet<Spot> trackTarget = null;
+					// Find encompassing track
+					for (SortedSet<Spot> t: trackSegments) {
+						for (Spot s : t) {
+							if (s == mother)  {
+								trackTarget = t; 
+								break;
+							}
 						}
+					}
+					// Find previous spot in order
+					Spot target = null;
+					for (Spot s : trackTarget) {
+						if (s == mother)
+							break;
+						target = s;
+					}
+					// Create link
+					*/
+					Spot target = mother;
+					trackGraph.addEdge(start, target);
+
+					if(DEBUG) {
+						SortedSet<Spot> track = null;
+						int indexTrack = 0;
+						int indexSpot = 0;
+						for(SortedSet<Spot> t : trackSegments)
+							if (t.contains(mother)) {
+								track = t;
+								for(Spot spot : track) {
+									if (spot == mother)
+										break;
+									else
+										indexSpot++;
+								}
+								break;
+							} else
+								indexTrack++;
+						System.out.println("Splitting from spot "+indexSpot+" in segment "+indexTrack+" to segment"+j+".");
 					}
 				}
 			}

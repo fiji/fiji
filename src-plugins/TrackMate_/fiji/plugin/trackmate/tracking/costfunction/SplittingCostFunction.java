@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 
+import mpicbg.imglib.util.Util;
+
 import Jama.Matrix;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
@@ -34,6 +36,8 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
  */
 public class SplittingCostFunction {
 
+	private static final boolean DEBUG = false;
+	
 	/** The time cutoff */
 	protected double timeCutoff;
 	/** The distance threshold. */
@@ -61,16 +65,42 @@ public class SplittingCostFunction {
 	
 	
 	public Matrix getCostFunction(final List<SortedSet<Spot>> trackSegments, final List<Spot> middlePoints) {
+		
+		if (DEBUG)
+			System.out.println("-- DEBUG information from SplittingCostFunction --");
+		
 		double iRatio, d2, s;
 		Spot start, middle;
 		float tstart, tmiddle;
 		Matrix m = new Matrix(middlePoints.size(), trackSegments.size());
+		boolean skip;
 		
 		// Fill in splitting scores
 		for (int i = 0; i < middlePoints.size(); i++) {
+			middle = middlePoints.get(i);
+			if (DEBUG)
+				System.out.println(String.format("Current middle spot: x=%.1f, y=%.1f, t=%.1f", 
+						middle.getPosition(null)[0], middle.getPosition(null)[1], middle.getFeature(Feature.POSITION_T)));
+
 			for (int j = 0; j < trackSegments.size(); j++) {
-				start = trackSegments.get(j).first();
-				middle = middlePoints.get(i);
+				skip = false;
+				SortedSet<Spot> track = trackSegments.get(j);
+				start = track.first();
+				
+				System.out.println("Segment "+j);
+				for(Spot spot : track) {
+					if (DEBUG)
+						System.out.println(Util.printCoordinates(spot.getPosition(null)) + ", Frame [" + spot.getFeature(Feature.POSITION_T) + "]");
+					if (spot == middle) {
+						// Can't split by attaching to the track segment you belong to
+						if (DEBUG)
+							System.out.println("Middle spot belong to track, skipping.");
+						m.set(i, j, blocked);
+						skip = true;
+					}
+				}
+				if (skip)
+					continue;
 				
 				// Frame threshold - middle Spot must be one frame behind of the start Spot
 				tstart = start.getFeature(Feature.POSITION_T);
@@ -107,7 +137,6 @@ public class SplittingCostFunction {
 				m.set(i, j, s);
 			}
 		}
-		
 		return m;
 	}
 }

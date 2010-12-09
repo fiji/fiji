@@ -1,136 +1,97 @@
 package fiji.plugin.trackmate.tracking.test;
 
 import ij.ImagePlus;
-import ij.gui.NewImage;
-import ij.process.ImageProcessor;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 
+import loci.formats.FormatException;
 import mpicbg.imglib.util.Util;
 
+import org.jdom.DataConversionException;
+import org.jdom.JDOMException;
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.Settings.TrackerType;
+import fiji.plugin.trackmate.io.TmXmlReader;
+import fiji.plugin.trackmate.io.test.TmXmlReaderTestDrive;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.LAPUtils;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
-import fiji.plugin.trackmate.tracking.costmatrix.LinkingCostMatrixCreator;
-import fiji.plugin.trackmate.tracking.costmatrix.TrackSegmentCostMatrixCreator;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer2D;
 
 public class LAPTrackerTestDrive {
 	
-	private final static int ZOOM_FACTOR = 4;
+	private static final String FILE_NAME_2 = "UltraSmallFakeTracks_TrackMateData.xml";
+	private static final String FILE_NAME_1 = "SmallFakeTracks_TrackMateData.xml";
 
 	/*
 	 * MAIN METHOD
 	 */
 	
-	
 	public static void main(String args[]) {
 		
-		final boolean useCustomCostMatrices = false;
-		final int tmax = 5; // nframes
-		
-		
-		// 1 - Set up test spots
-		TreeMap<Integer, List<Spot>> wrap = new TreeMap<Integer, List<Spot>>();
-		for (int i = 0; i < tmax; i++) 
-			wrap.put(i, new ArrayList<Spot>());
-
-		// first track
-		for (int i = 0; i < tmax; i++)
-			wrap.get(i).add(new SpotImp(new float[] { ZOOM_FACTOR*(1+i), ZOOM_FACTOR*(1+i), 0 } ));
-		// second track
-		for (int i = 2; i < tmax; i++)
-			wrap.get(i).add(new SpotImp(new float[] { ZOOM_FACTOR*(100+i), ZOOM_FACTOR*(1+i), 0 } ));
-		
-		int count = 0;
-		Set<Integer> frames = wrap.keySet();
-		for (int frame : frames) {
-			Collection<Spot> spots = wrap.get(frame);
-			for (Spot spot : spots) {
-				spot.putFeature(Feature.POSITION_T, frame);
-				spot.putFeature(Feature.MEAN_INTENSITY, 200);
-			}
-			count++;
+		// 1 - Load test spots
+		File file = new File(TmXmlReaderTestDrive.class.getResource(FILE_NAME_1).getFile());
+//		File file = new File(LAPTrackerTestDrive.class.getResource(FILE_NAME_2).getFile());
+		System.out.println("Opening file: "+file.getAbsolutePath());		
+		TmXmlReader reader = new TmXmlReader(file);
+		// Parse
+		try {
+			reader.parse();
+		} catch (JDOMException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
+		// All spots
+		TreeMap<Integer, List<Spot>> spots = null;
+		try {
+			spots = reader.getAllSpots();
+		} catch (DataConversionException e) {
+			e.printStackTrace();
+		}
+
 		
-		ij.ImageJ.main(args);
-		ij.ImagePlus imp = createImpFrom(wrap);
-		imp.show();
+		// 1.5 - Set the tracking settings
+		TrackerSettings settings = new TrackerSettings();
+		settings.trackerType = TrackerType.LAP_TRACKER;
+		settings.allowGapClosing = false; //true;
+		settings.gapClosingDistanceCutoff = 100;
+		settings.gapClosingTimeCutoff = 10;
+		settings.allowMerging = false;
+		settings.allowSplitting = true;
+		settings.splittingDistanceCutoff = 20;
+		settings.splittingTimeCutoff = 2;
+		settings.splittingFeatureCutoffs.clear();
+		System.out.println("Tracker settings:");
+		System.out.println(settings.toString());
 		
 		// 2 - Track the test spots
 		LAPTracker lap;
-		if (!useCustomCostMatrices) {
-			lap = new LAPTracker(wrap);
-			if (!lap.checkInput() || !lap.process())
-				System.out.println(lap.getErrorMessage());
-			
-			// Print out track segments
-			List<SortedSet<Spot>> trackSegments = lap.getTrackSegments();
-			for (SortedSet<Spot> trackSegment : trackSegments) {
-				System.out.println("\n-*-*-*-*-* New Segment *-*-*-*-*-");
-				for (Spot spot : trackSegment)
-					System.out.println(Util.printCoordinates(spot.getPosition(null)) + ", Frame [" + spot.getFeature(Feature.POSITION_T) + "]");	
-			}
-			
-		} else {
-			
-			lap = new LAPTracker(wrap);
-			
-			// Get linking costs
-			TreeMap<Integer, double[][]> linkingCosts = new TreeMap<Integer, double[][]>();
-			TrackerSettings settings = new TrackerSettings();
-			for (int frame : wrap.keySet()) {
-				List<Spot> x = wrap.get(frame);
-				List<Spot> y = wrap.get(frame+1); // unsafe
-				LinkingCostMatrixCreator l = new LinkingCostMatrixCreator(x, y, settings);
-				l.checkInput();
-				l.process();
-				linkingCosts.put(frame, l.getCostMatrix());
-			}
-			
-			// Link objects to track segments
-			lap.setLinkingCosts(linkingCosts);
-			lap.checkInput();
-			lap.linkObjectsToTrackSegments();
-			List<SortedSet<Spot>> tSegs = lap.getTrackSegments();
-			
-			// Print out track segments
-//			for (ArrayList<Spot> trackSegment : tSegs) {
-//				System.out.println("-*-*-*-*-* New Segment *-*-*-*-*-");
-//				for (Spot spot : trackSegment) {
-//					//System.out.println(spot.toString());
-//					System.out.println(MathLib.printCoordinates(spot.getCoordinates()));
-//				}
-//			}
-			
-			// Get segment costs
-			TrackSegmentCostMatrixCreator segCosts = new TrackSegmentCostMatrixCreator(tSegs, settings);
-			segCosts.checkInput();
-			segCosts.process();
-			double[][] segmentCosts = segCosts.getCostMatrix();
-			
-			// Link track segments to final tracks
-			lap.setSegmentCosts(segmentCosts);
-			lap.linkTrackSegmentsToFinalTracks();
-			
+		lap = new LAPTracker(spots, settings);
+		if (!lap.checkInput() || !lap.process())
+			System.out.println(lap.getErrorMessage());
+
+		// Print out track segments
+		List<SortedSet<Spot>> trackSegments = lap.getTrackSegments();
+		for (SortedSet<Spot> trackSegment : trackSegments) {
+			System.out.println("\n-*-*-*-*-* New Segment *-*-*-*-*-");
+			for (Spot spot : trackSegment)
+				System.out.println(Util.printCoordinates(spot.getPosition(null)) + ", Frame [" + spot.getFeature(Feature.POSITION_T) + "]");	
 		}
 
-		
-		// 3 - Print out results for testing
-		
+
+		// 3 - Print out results for testing		
 		System.out.println();
 		System.out.println();
 		System.out.println();
@@ -158,48 +119,23 @@ public class LAPTrackerTestDrive {
 		LAPUtils.echoMatrix(lap.getLinkingCosts().get(0));
 		
 		// 5 - Display tracks
+		// Load Image
+		ij.ImageJ.main(args);
+		ImagePlus imp = null;
+		try {
+			imp = reader.getImage();
+			imp.show();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (FormatException e) {
+			e.printStackTrace();
+		}
 		SpotDisplayer2D sd2d = new SpotDisplayer2D(imp, 2, new float[] {1, 1});
-		sd2d.setSpots(wrap);
+		sd2d.setSpots(spots);
 		sd2d.render();
-		sd2d.setSpotsToShow(wrap);
+		sd2d.setSpotsToShow(spots);
 		sd2d.setTrackGraph(graph);
 		sd2d.setDisplayTrackMode(SpotDisplayer.TrackDisplayMode.ALL_WHOLE_TRACKS, 1);
 	}
 
-	private static ImagePlus createImpFrom(TreeMap<Integer, List<Spot>> wrap) {
-		List<Spot> pool = new ArrayList<Spot>();
-		for(int frame : wrap.keySet()) 
-			pool.addAll(wrap.get(frame));
-		
-		float xmax = Float.NEGATIVE_INFINITY;
-		float ymax = Float.NEGATIVE_INFINITY;
-		int maxFrame = 0;
-		float x, y;
-		int t;
-		for (Spot spot : pool) {
-			x = spot.getFeature(Feature.POSITION_X);
-			y = spot.getFeature(Feature.POSITION_Y);
-			t = spot.getFeature(Feature.POSITION_T).intValue();
-			if (x > xmax) xmax = x;
-			if (y > ymax) ymax = y;
-			if (t > maxFrame) maxFrame = t;
-		}
-		
-		int width = (int) (Math.ceil(xmax+1) );
-		int height = (int) (Math.ceil(ymax+1) );
-		ImagePlus imp = NewImage.createByteImage("LAPT-test", width, height, maxFrame+1, NewImage.FILL_BLACK);
-		imp.setDimensions(1, 1, maxFrame+1);
-		int frame, ix, iy, value;
-		ImageProcessor ip;
-		for (Spot spot : pool) {
-			frame = spot.getFeature(Feature.POSITION_T).intValue();
-			ix = Math.round( spot.getFeature(Feature.POSITION_X));
-			iy = Math.round( spot.getFeature(Feature.POSITION_Y));
-			value = Math.round(spot.getFeature(Feature.MEAN_INTENSITY));
-			ip = imp.getImageStack().getProcessor(1+frame);
-			ip.set(ix, iy, value);
-		}
-		
-		return imp;
-	}
 }

@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate.visualization;
 
 import ij.ImagePlus;
+import ij.gui.NewImage;
 import ij.gui.StackWindow;
 
 import java.awt.AlphaComposite;
@@ -151,7 +152,7 @@ public class SpotDisplayer2D extends SpotDisplayer {
 	 * CONSTRUCTORS
 	 */
 	
-	private final ImagePlus imp;
+	private ImagePlus imp;
 	private OverlayedImageCanvas canvas;
 	private float[] calibration;
 	private SpotOverlay spotOverlay;
@@ -183,6 +184,25 @@ public class SpotDisplayer2D extends SpotDisplayer {
 	
 	@Override
 	public void render() {
+		if (null == imp) {
+			float max_x = 0;
+			float max_y = 0;
+			float x, y;
+			int max_t = 0;
+			for (int frame : spots.keySet()) {
+				for(Spot spot : spots.get(frame)) {
+					x = spot.getFeature(Feature.POSITION_X);
+					y = spot.getFeature(Feature.POSITION_Y);
+					if (x > max_x)
+						max_x = x;
+					if (y > max_y)
+						max_y = y;
+				}
+				max_t = frame;
+			}
+			this.imp = NewImage.createByteImage("Empty", (int)max_x+1, (int)max_y+1, max_t+1, NewImage.FILL_BLACK);
+			this.imp.setDimensions(1, 1, max_t+1);
+		}
 		canvas = new OverlayedImageCanvas(imp);
 		StackWindow window = new StackWindow(imp, canvas);
 		window.show();

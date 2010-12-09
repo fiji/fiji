@@ -1,9 +1,19 @@
 package fiji.plugin.trackmate.tracking.costmatrix;
 
+import java.awt.Color;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.SortedSet;
+
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableModel;
 
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
@@ -167,7 +177,9 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 		
 		// 2 - Get a list of the middle points that can participate in merging and splitting
 		middlePoints = getTrackSegmentMiddlePoints(trackSegments);
-
+		splittingMiddlePoints = middlePoints ;  // DEBUG ? 
+		mergingMiddlePoints = middlePoints; // DEBUG ? 
+		
 		// 3 - Create cost matrices by quadrant
 		
 		// Top left quadrant
@@ -182,13 +194,10 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 		final int numRows = 2 * trackSegments.size() + splittingMiddlePoints.size() + mergingMiddlePoints.size();
 		costs = new Matrix(numRows, numCols, 0);
 
-		costs.setMatrix(0, topLeft.getRowDimension() - 1, 0, topLeft.getColumnDimension() - 1, topLeft);							// Gap closing
-		costs.setMatrix(topLeft.getRowDimension(), numRows - 1, 0, topLeft.getColumnDimension() - 1, bottomLeft);		// Initiating and merging alternative
-		costs.setMatrix(0, topLeft.getRowDimension() - 1, topLeft.getColumnDimension(), numCols - 1, topRight);		// Terminating and splitting alternative
-		costs.setMatrix(topLeft.getRowDimension(), numRows - 1, topLeft.getColumnDimension(), numCols - 1, bottomRight);						// Lower right (transpose of gap closing, mathematically required for LAP)		
-		
-		//printMatrix(costs, "Step 2 costs");
-		System.out.println(String.format("Width: %d, Height: %d", costs.getColumnDimension(), costs.getRowDimension()));
+		costs.setMatrix(0, topLeft.getRowDimension() - 1, 0, topLeft.getColumnDimension() - 1, topLeft);						// Gap closing
+		costs.setMatrix(topLeft.getRowDimension(), numRows - 1, 0, topLeft.getColumnDimension() - 1, bottomLeft);				// Initiating and merging alternative
+		costs.setMatrix(0, topLeft.getRowDimension() - 1, topLeft.getColumnDimension(), numCols - 1, topRight);					// Terminating and splitting alternative
+		costs.setMatrix(topLeft.getRowDimension(), numRows - 1, topLeft.getColumnDimension(), numCols - 1, bottomRight);		// Lower right (transpose of gap closing, mathematically required for LAP)		
 		
 		return true;
 	}
@@ -275,7 +284,8 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	private Matrix getMergingScores() {
 		MergingCostFunction merging = new MergingCostFunction(settings);
 		Matrix mergingScores = merging.getCostFunction(trackSegments, middlePoints);
-		return pruneColumns(mergingScores, mergingMiddlePoints);
+//		return pruneColumns(mergingScores, mergingMiddlePoints);
+		return mergingScores;
 	}
 
 	
@@ -362,7 +372,8 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	private Matrix getSplittingScores() {
 		SplittingCostFunction splitting = new SplittingCostFunction(settings); 
 		Matrix splittingScores = splitting.getCostFunction(trackSegments, middlePoints);
-		return pruneRows(splittingScores, splittingMiddlePoints);
+//		return pruneRows(splittingScores, splittingMiddlePoints); // TODO
+		return splittingScores;
 	}
 	
 	

@@ -11,9 +11,6 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import loci.formats.FormatException;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import mpicbg.imglib.type.numeric.real.FloatType;
 
 import org.jdom.DataConversionException;
 import org.jdom.JDOMException;
