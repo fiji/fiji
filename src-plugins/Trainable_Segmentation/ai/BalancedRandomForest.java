@@ -29,6 +29,7 @@ import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.Callable;
 
 import weka.classifiers.AbstractClassifier;
 import weka.core.Capabilities;
@@ -186,7 +187,7 @@ public class BalancedRandomForest extends AbstractClassifier implements Randomiz
 	/**
 	 * Build Balanced Random Forest
 	 */
-	public void buildClassifier(Instances data) throws Exception 
+	public void buildClassifier(final Instances data) throws Exception 
 	{
 		// If number of features is 0 then set it to log2 of M (number of attributes)
 		if (numFeatures < 1) 
@@ -221,8 +222,8 @@ public class BalancedRandomForest extends AbstractClassifier implements Randomiz
 		// Executor service to run concurrent trees
 		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 		
-		List< Future<?> > futures =
-            new ArrayList< Future<?> >( numTrees );
+		List< Future<BalancedRandomTree> > futures =
+            new ArrayList< Future<BalancedRandomTree> >( numTrees );
 
 		
 		final boolean[][] inBag = new boolean [ numTrees ][ numInstances ];
@@ -246,17 +247,18 @@ public class BalancedRandomForest extends AbstractClassifier implements Randomiz
 
 				// Create random tree
 				final Splitter splitter = 
-					new Splitter(
-							new GiniFunction(numFeatures, 
-														data.getRandomNumberGenerator( random.nextInt() ) ));
-				tree[i] = new BalancedRandomTree(data, bagIndices, splitter);
+					new Splitter(new GiniFunction(numFeatures, data.getRandomNumberGenerator( random.nextInt() ) ));
 
-				futures.add( exe.submit( tree[i] ) );
+				futures.add(exe.submit(new Callable<BalancedRandomTree>() {
+					public BalancedRandomTree call() {
+						return new BalancedRandomTree( data, bagIndices, splitter );
+					}
+				}));
 			}
 			
-			// Make sure all trees have been trained before proceeding
+			// Grab all trained trees before proceeding
 			for (int treeIdx = 0; treeIdx < numTrees; treeIdx++) 
-				futures.get(treeIdx).get();		
+				tree[treeIdx] = futures.get(treeIdx).get();
 
 			// Calculate out of bag error
 			final boolean numeric = data.classAttribute().isNumeric();

@@ -35,18 +35,12 @@ import weka.core.Instances;
  * function specified by the template in Splitter
  * 
  */
-public class BalancedRandomTree implements Runnable, Serializable
+public class BalancedRandomTree implements Serializable
 {
 	/** Generated serial version UID */
 	private static final long serialVersionUID = 41518309467L;
-	/** original data */
-	final Instances data;
-	/** indices of the samples in the bag for this tree */
-	final ArrayList<Integer> bagIndices;
-	/** split function generator */
-	final Splitter splitter;
 	/** root node */
-	BaseNode rootNode = null;
+	private final BaseNode rootNode;
 
 	/**
 	 * Build random tree for a balanced random forest  
@@ -55,30 +49,24 @@ public class BalancedRandomTree implements Runnable, Serializable
 	 * @param bagIndices indices of the data samples to use
 	 * @param splitter split function generator
 	 */
-	public BalancedRandomTree(
-			final Instances data,
-			ArrayList<Integer> bagIndices,
-			final Splitter splitter)
+	public BalancedRandomTree(final Instances data, final ArrayList<Integer> bagIndices, final Splitter splitter)
 	{
-		this.data = data;
-		this.bagIndices = bagIndices;
-		//		System.out.println("Indices in bag: ");
-		//		for(int i=0; i<bagIndices.size(); i++)
-		//			System.out.println("index " + i + ": " + bagIndices.get(i));
-		this.splitter = splitter;
+		this.rootNode = createNode( data, bagIndices, splitter );
 	}
 
 	/**
 	 * Build the random tree based on the data specified 
 	 * in the constructor 
 	 */
-	public void run() 
+	private final BaseNode createNode(final Instances data, final ArrayList<Integer> bagIndices, final Splitter splitter)
 	{
 		final long start = System.currentTimeMillis();
-		//rootNode = new InteriorNode(data, bagIndices, 0, splitter);
-		rootNode = createTree(data, bagIndices, 0, splitter);
-		final long end = System.currentTimeMillis();
-		IJ.log("Creating tree took: " + (end-start) + "ms");
+		try {
+			return createTree(data, bagIndices, 0, splitter);
+		} finally {
+			final long end = System.currentTimeMillis();
+			IJ.log("Creating tree took: " + (end-start) + "ms");
+		}
 	}
 
 	/**
