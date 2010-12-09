@@ -46,6 +46,8 @@ public class SplittingCostFunction {
 	protected double blocked;
 	/** Thresholds for the feature ratios. */
 	protected Map<Feature, Double> featureCutoffs;
+
+	private boolean allowSplitting;
 	
 	/*
 	 * CONSTRUCTOR
@@ -53,6 +55,7 @@ public class SplittingCostFunction {
 	
 	
 	public SplittingCostFunction(TrackerSettings settings) {
+		this.allowSplitting 	= settings.allowSplitting;
 		this.maxDist 			= settings.splittingDistanceCutoff;
 		this.timeCutoff 		= settings.splittingTimeCutoff;
 		this.blocked 			= settings.blockingValue;
@@ -68,6 +71,9 @@ public class SplittingCostFunction {
 		
 		if (DEBUG)
 			System.out.println("-- DEBUG information from SplittingCostFunction --");
+		
+		if (!allowSplitting)
+			return new Matrix(middlePoints.size(), trackSegments.size(), blocked);
 		
 		double iRatio, d2, s;
 		Spot start, middle;
