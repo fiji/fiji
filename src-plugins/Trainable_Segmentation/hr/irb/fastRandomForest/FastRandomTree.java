@@ -32,6 +32,8 @@ import weka.core.Utils;
 import weka.core.WeightedInstancesHandler;
 import weka.core.Capabilities.Capability;
 
+import ij.IJ;
+
 import java.util.Random;
 import weka.core.RevisionUtils;
 
@@ -173,7 +175,7 @@ class FastRandomTree
    * function.
    */
   public void run() {
-
+final long start = System.currentTimeMillis();
     // compute initial class counts
     double[] classProbs = new double[data.numClasses];
     for (int i = 0; i < data.numInstances; i++) {
@@ -199,7 +201,8 @@ class FastRandomTree
             attIndicesWindow, 0);
   
     this.data = null;
-      
+final long end = System.currentTimeMillis();
+IJ.log("Creating tree took: " + (end-start) + "ms");     
   }
 
   
