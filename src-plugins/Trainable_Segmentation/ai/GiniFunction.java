@@ -48,25 +48,7 @@ public class GiniFunction extends SplitFunction
 	int numOfFeatures;
 	/** random number generator */
 	final Random random;
-	
-	/** Attribute-class pair comparator (by attribute value) */
-	private static final Comparator<AttributeClassPair> comp = new Comparator<AttributeClassPair>(){
-		public int compare(AttributeClassPair o1, AttributeClassPair o2)
-		{
-			final double diff = o2.attributeValue - o1.attributeValue; 
-			if(diff < 0)
-				return 1;
-			else if(diff == 0)
-				return 0;
-			else
-				return -1;
-		}
-		public boolean equals(Object o)
-		{
-			return false;
-		}
-	};
-	
+		
 	/**
 	 * Constructs a Gini function (initialize it)
 	 * 
@@ -98,52 +80,55 @@ public class GiniFunction extends SplitFunction
 		final int len = data.numAttributes();
 		final int numElements = indices.size();	
 		final int numClasses = data.numClasses();
-		
-		final int[] featureToUse = new int [ numOfFeatures ];
+				
+
+		/** Attribute-class pair comparator (by attribute value) */
+		final Comparator<AttributeClassPair> comp = new Comparator<AttributeClassPair>(){
+			public int compare(AttributeClassPair o1, AttributeClassPair o2)
+			{
+				final double diff = o2.attributeValue - o1.attributeValue; 
+				if(diff < 0)
+					return 1;
+				else if(diff == 0)
+					return 0;
+				else
+					return -1;
+			}
+			public boolean equals(Object o)
+			{
+				return false;
+			}
+		};
 		
 		// Create and shuffle indices of features to use
 		ArrayList<Integer> allIndices = new ArrayList<Integer>();
 		for(int i=0; i<len; i++)
 			if(i != data.classIndex())
 				allIndices.add(i);
-		//Collections.shuffle(allIndices, random);
-		
-		// Select the random features
-		for(int i=0; i < featureToUse.length; i++)
-		{
-			final int index = random.nextInt( allIndices.size() );
-			featureToUse[ i ] = allIndices.get( index );
-			allIndices.remove( index ); // remove that element to prevent from repetitions
-		}
-		// free list of possible indices to help garbage collector
-		allIndices.clear();
-		allIndices = null;
-
 		
 		double minimumGini = Double.MAX_VALUE;
 				
-		// Get the smallest Gini coefficient
-		for(int i=0; i < featureToUse.length; i++)
+		for(int i=0; i < numOfFeatures; i++)		
 		{
-			//System.out.println("Feature to use: " + featureToUse[i]);			
+			// Select the random feature
+			final int index = random.nextInt( allIndices.size() );
+			final int featureToUse = allIndices.get( index );
+			allIndices.remove( index ); // remove that element to prevent from repetitions
+				
+			// Get the smallest Gini coefficient
+		
 			// Create list with pairs attribute-class
 			final ArrayList<AttributeClassPair> list = new ArrayList<AttributeClassPair>();
 			for(int j=0; j<numElements; j++)
 			{
+				final Instance ins = data.get(indices.get(j));
 				list.add(
-						new AttributeClassPair(	data.get(indices.get(j)).value(featureToUse[i]), 
-								(int) data.get(indices.get(j)).classValue() ));
+						new AttributeClassPair(	ins.value(featureToUse), 
+												(int) ins.classValue() ));
 			}
-
+						
 			// Sort pairs in increasing order
 			Collections.sort(list, comp);
-			/*		
-			System.out.println("Sorted attribute-class pairs: ");			
-			for(final AttributeClassPair att: list)
-			{
-				System.out.println("att-class: [" + att.attributeValue + ", " + att.classValue  + " ]");
-			}
-			 */
 						
 			final double[] probLeft  = new double[numClasses];
 			final double[] probRight = new double[numClasses];
@@ -151,14 +136,14 @@ public class GiniFunction extends SplitFunction
 			for(int n = 0; n < list.size(); n++)
 				probRight[list.get(n).classValue] ++;
 			
-			int splitPoint = 0;
-			do
+			// Try all splitting points, from position 0 to the end
+			for(int splitPoint=0; splitPoint < numElements; splitPoint++)
 			{								
 				// Calculate Gini coefficient
 				double giniLeft = 0;
 				double giniRight = 0;
 				final int rightNumElements = numElements - splitPoint;
-				
+
 				for(int nClass = 0; nClass < numClasses; nClass++)
 				{	
 					// left set
@@ -167,7 +152,7 @@ public class GiniFunction extends SplitFunction
 					if(splitPoint != 0)
 						prob /= (double) splitPoint;
 					giniLeft += prob * prob;
-					
+
 					// right set
 					prob = probRight[nClass];
 					// Divide by the number of elements to get probabilities
@@ -175,30 +160,29 @@ public class GiniFunction extends SplitFunction
 						prob /= (double) rightNumElements;
 					giniRight += prob * prob;
 				}
-				
+
 				// Total Gini value
-				double gini = ( (1.0 - giniLeft) * splitPoint + (1.0 - giniRight) * rightNumElements) 
+				final double gini = ( (1.0 - giniLeft) * splitPoint 
+									+ (1.0 - giniRight) * rightNumElements ) 
 									/ (double) numElements;
-				
+
 				// Save values of minimum Gini coefficient
 				if( gini < minimumGini )
 				{
 					minimumGini = gini;
-					this.index = featureToUse[i];
+					this.index = featureToUse;
 					this.threshold = list.get(splitPoint).attributeValue;
 				}
-				
+
 				// update probabilities for next iteration
 				probLeft[list.get(splitPoint).classValue] ++;
 				probRight[list.get(splitPoint).classValue] --;
-				
-				splitPoint++;
-				
-			}while ( splitPoint < numElements );
-			
-			//list.clear();
-			//System.out.println("Minimum gini values: index= " + this.index + " threshold= " + this.threshold);			
-		}			
+			}				
+		}
+		
+		// free list of possible indices to help garbage collector
+		allIndices.clear();
+		allIndices = null;
 	}
 
 	/**
