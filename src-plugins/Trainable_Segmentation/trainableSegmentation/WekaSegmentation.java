@@ -152,7 +152,7 @@ public class WekaSegmentation {
 	/**
 	 * Default constructor.
 	 *
-	 * @param trainingImage The image to be segmentated/trained
+	 * @param trainingImage The image to be segmented/trained
 	 */
 	public WekaSegmentation(ImagePlus trainingImage)
 	{
@@ -171,6 +171,10 @@ public class WekaSegmentation {
 
 		// Initialize feature stack (no features yet)
 		featureStack = new FeatureStack(trainingImage);
+		
+		// start with two classes
+		addClass();
+		addClass();
 	}
 
 	/**
@@ -189,6 +193,10 @@ public class WekaSegmentation {
 		rf.setSeed(123);
 
 		classifier = rf;
+		
+		// start with two classes
+		addClass();
+		addClass();
 	}
 
 	/**
@@ -569,6 +577,7 @@ public class WekaSegmentation {
 			FeatureStack featureStack,
 			String className)
 	{
+
 		// Update features if necessary
 		if(featureStack.getSize() < 2)
 		{
@@ -646,7 +655,7 @@ public class WekaSegmentation {
 	}
 
 	/**
-	 * Add instances to a specific class from a label (binary) image.
+	 * Add instances to two classes from a label (binary) image.
 	 * White pixels will be added to the corresponding class 1 and
 	 * black pixels will be added to class 2.
 	 *
@@ -661,7 +670,7 @@ public class WekaSegmentation {
 			FeatureStack featureStack,
 			String className1,
 			String className2)
-	{
+	{		
 		// Update features if necessary
 		if(featureStack.getSize() < 2)
 		{
@@ -994,6 +1003,7 @@ public class WekaSegmentation {
 			String whiteClassName,
 			String blackClassName)
 	{
+		
 		// Update features if necessary
 		if(featureStack.getSize() < 2)
 		{
@@ -1046,6 +1056,7 @@ public class WekaSegmentation {
 			String whiteClassName,
 			String blackClassName)
 	{
+
 		// Check sizes
 		if(labelImage.getWidth() != inputImage.getWidth()
 				|| labelImage.getHeight() != inputImage.getHeight()
@@ -2752,7 +2763,8 @@ public class WekaSegmentation {
 		for(int i = 0; i < numOfClasses; i++)
 			if(examples.get(i).size() > 0)
 				nonEmpty++;
-		if (nonEmpty < 2 && null == loadedTrainingData){
+		if (nonEmpty < 2 && null == loadedTrainingData)
+		{
 			IJ.showMessage("Cannot train without at least 2 sets of examples!");
 			return false;
 		}
@@ -2782,7 +2794,8 @@ public class WekaSegmentation {
 			IJ.log("Creating training data took: " + (end-start) + "ms");
 		}
 
-		if (loadedTrainingData != null && data != null){
+		if (loadedTrainingData != null && data != null)
+		{
 			IJ.log("Merging data...");
 			for (int i=0; i < loadedTrainingData.numInstances(); i++)
 				data.add(loadedTrainingData.instance(i));
@@ -2804,9 +2817,12 @@ public class WekaSegmentation {
 		// Resample data if necessary
 		if(homogenizeClasses)
 		{
+			final long start = System.currentTimeMillis();
 			IJ.showStatus("Homogenizing classes distribution...");
 			IJ.log("Homogenizing classes distribution...");
 			data = homogenizeTrainingData(data);
+			final long end = System.currentTimeMillis();
+			IJ.log("Done. Homogenizing classes distribution took: " + (end-start) + "ms");
 		}
 
 		IJ.showStatus("Training classifier...");
