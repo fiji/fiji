@@ -22,27 +22,31 @@ import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.Settings.TrackerType;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import fiji.plugin.trackmate.io.test.TmXmlReaderTestDrive;
 import fiji.plugin.trackmate.tracking.LAPTracker;
-import fiji.plugin.trackmate.tracking.LAPUtils;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer2D;
 
 public class LAPTrackerTestDrive {
 	
-	private static final String FILE_NAME_2 = "UltraSmallFakeTracks_TrackMateData.xml";
-	private static final String FILE_NAME_1 = "SmallFakeTracks_TrackMateData.xml";
+	private static final String FILE_NAME_1 = "TestSplitting1.xml";
+	private static final String FILE_NAME_2 = "TestSplitting2.xml";
 
+	@SuppressWarnings("unused")
+	private static final File SPLITTING_CASE_1 = new File(LAPTrackerTestDrive.class.getResource(FILE_NAME_1).getFile());
+	private static final File SPLITTING_CASE_2 = new File(LAPTrackerTestDrive.class.getResource(FILE_NAME_2).getFile());
+
+	
+	
 	/*
 	 * MAIN METHOD
 	 */
 	
 	public static void main(String args[]) {
 		
+		File file = SPLITTING_CASE_2;
+		
 		// 1 - Load test spots
-		File file = new File(TmXmlReaderTestDrive.class.getResource(FILE_NAME_1).getFile());
-//		File file = new File(LAPTrackerTestDrive.class.getResource(FILE_NAME_2).getFile());
 		System.out.println("Opening file: "+file.getAbsolutePath());		
 		TmXmlReader reader = new TmXmlReader(file);
 		// Parse
@@ -84,6 +88,7 @@ public class LAPTrackerTestDrive {
 
 		// Print out track segments
 		List<SortedSet<Spot>> trackSegments = lap.getTrackSegments();
+		System.out.println("Found "+trackSegments.size()+" track segments:");
 		for (SortedSet<Spot> trackSegment : trackSegments) {
 			System.out.println("\n-*-*-*-*-* New Segment *-*-*-*-*-");
 			for (Spot spot : trackSegment)
@@ -98,7 +103,7 @@ public class LAPTrackerTestDrive {
 		SimpleGraph<Spot,DefaultEdge> graph = lap.getTrackGraph();
 		ConnectivityInspector<Spot, DefaultEdge> inspector = new ConnectivityInspector<Spot, DefaultEdge>(graph);
 		List<Set<Spot>> tracks = inspector.connectedSets();
-		System.out.println("Found " + tracks.size() + " tracks.");
+		System.out.println("Found " + tracks.size() + " final tracks:");
 		System.out.println();
 		int counter = 0;
 		for(Set<Spot> track : tracks) {
@@ -111,12 +116,12 @@ public class LAPTrackerTestDrive {
 		}
 		
 		// 4 - Detailed info
-		System.out.println("Segment costs:");
-		LAPUtils.echoMatrix(lap.getSegmentCosts());
+//		System.out.println("Segment costs:");
+//		LAPUtils.echoMatrix(lap.getSegmentCosts());
 		
-		System.out.println();
-		System.out.println("Fragment costs for 1st frame:");
-		LAPUtils.echoMatrix(lap.getLinkingCosts().get(0));
+//		System.out.println();
+//		System.out.println("Fragment costs for 1st frame:");
+//		LAPUtils.echoMatrix(lap.getLinkingCosts().get(0));
 		
 		// 5 - Display tracks
 		// Load Image

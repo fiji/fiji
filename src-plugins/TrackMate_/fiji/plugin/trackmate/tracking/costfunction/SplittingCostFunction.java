@@ -92,8 +92,9 @@ public class SplittingCostFunction {
 				skip = false;
 				SortedSet<Spot> track = trackSegments.get(j);
 				start = track.first();
-				
-				System.out.println("Segment "+j);
+
+				if (DEBUG)
+					System.out.println("Segment "+j);
 				for(Spot spot : track) {
 					if (DEBUG)
 						System.out.println(Util.printCoordinates(spot.getPosition(null)) + ", Frame [" + spot.getFeature(Feature.POSITION_T) + "]");

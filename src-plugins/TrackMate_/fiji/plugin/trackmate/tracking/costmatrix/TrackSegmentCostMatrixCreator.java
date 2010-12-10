@@ -96,7 +96,7 @@ import fiji.plugin.trackmate.tracking.costfunction.SplittingCostFunction;
 
 public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 	/** The track segments. */
 	protected List<SortedSet<Spot>> trackSegments;
 	/** Holds the Spots in the middle of track segments (not at end or start). */

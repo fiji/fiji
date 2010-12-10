@@ -527,9 +527,6 @@ public class LAPTracker extends AbstractSpotTracker {
 			int i = solution[0];
 			int j = solution[1];
 			
-			if (DEBUG)
-				System.out.println("Current couple: row = "+i+", col = "+j);
-			
 			if (i < numTrackSegments) {
 
 				// Case 1: Gap closing

@@ -20,16 +20,16 @@ import org.jgrapht.graph.SimpleGraph;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.io.TmXmlReader;
+import fiji.plugin.trackmate.tracking.test.LAPTrackerTestDrive;
 import fiji.plugin.trackmate.visualization.SpotDisplayer2D;
 
 public class TmXmlReaderTestDrive {
 
-	private static final String FILE_NAME = "SmallFakeTracks_TrackMateData.xml";
-	
+	private static final String FILE_NAME = "TestSplitting2.xml";
+	private static final File file = new File(LAPTrackerTestDrive.class.getResource(FILE_NAME).getFile());
 	
 	public static void main(String args[]) {
 		
-		File file = new File(TmXmlReaderTestDrive.class.getResource(FILE_NAME).getFile());
 		System.out.println("Opening file: "+file.getAbsolutePath());		
 		TmXmlReader reader = new TmXmlReader(file);
 		
