@@ -25,8 +25,12 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 
 import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.Settings.SegmenterType;
+import fiji.plugin.trackmate.segmentation.SegmenterSettings;
+import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 public class TmXmlReader implements TmXmlKeys {
 
@@ -59,6 +63,50 @@ public class TmXmlReader implements TmXmlKeys {
 		document = sb.build(file);
 		root = document.getRootElement();
 	}
+	
+	
+	/**
+	 * Return the settings for the TrackMate session saved in this file.
+	 * <p>
+	 * The settings object will have its {@link SegmenterSettings} and {@link TrackerSettings} objects filled with
+	 * the values saved as well, unless they are not present in the file. In this case, default value will be
+	 * used.
+	 * 
+	 * @return  a full Settings object
+	 * @throws DataConversionException 
+	 */
+	public Settings getSettings() throws DataConversionException {
+		Settings settings = new Settings();
+		// Basic settings
+		Element settingsEl = root.getChild(SETTINGS_ELEMENT_KEY);
+		if (null != settingsEl) {
+			settings.xstart 		= settingsEl.getAttribute(SETTINGS_XSTART_ATTRIBUTE_NAME).getIntValue();
+			settings.xend 			= settingsEl.getAttribute(SETTINGS_XEND_ATTRIBUTE_NAME).getIntValue();
+			settings.ystart 		= settingsEl.getAttribute(SETTINGS_YSTART_ATTRIBUTE_NAME).getIntValue();
+			settings.yend 			= settingsEl.getAttribute(SETTINGS_YEND_ATTRIBUTE_NAME).getIntValue();
+			settings.zstart 		= settingsEl.getAttribute(SETTINGS_ZSTART_ATTRIBUTE_NAME).getIntValue();
+			settings.zend 			= settingsEl.getAttribute(SETTINGS_ZEND_ATTRIBUTE_NAME).getIntValue();
+			settings.tstart 		= settingsEl.getAttribute(SETTINGS_TSTART_ATTRIBUTE_NAME).getIntValue();
+			settings.tend 			= settingsEl.getAttribute(SETTINGS_TEND_ATTRIBUTE_NAME).getIntValue();
+		}
+		// Segmenter settings
+		Element segSettingsEl = root.getChild(SEGMENTER_SETTINGS_ELEMENT_KEY);
+		if (null != segSettingsEl) {
+			String segmenterTypeStr = segSettingsEl.getAttributeValue(SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME);
+			SegmenterType segmenterType = SegmenterType.valueOf(segmenterTypeStr);
+			SegmenterSettings segSettings = segmenterType.createSettings();
+			segSettings.segmenterType 		= segmenterType;
+			segSettings.expectedRadius 		= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME).getFloatValue();
+			segSettings.threshold			= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME).getFloatValue();
+			segSettings.useMedianFilter		= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME).getBooleanValue();
+			segSettings.spaceUnits			= segSettingsEl.getAttributeValue(SEGMENTER_SETTINGS_UNITS_ATTRIBUTE_NAME);			
+			settings.segmenterType = segmenterType;
+			settings.segmenterSettings = segSettings;
+		}
+		return settings;
+	}
+	
+	
 	
 	/**
 	 * Return the list of all spots stored in this file.
