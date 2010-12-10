@@ -28,6 +28,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
+import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 public class TmXmlWriter implements TmXmlKeys {
 	
@@ -54,7 +55,9 @@ public class TmXmlWriter implements TmXmlKeys {
 		Element root = new Element(ROOT_ELEMENT_KEY);
 		// Gather data
 		root = echoImageInfo(root);
-		root = echoSettings(root);
+		root = echoBaseSettings(root);
+		root = echoSegmenterSettings(root);
+		root = echoTrackerSettings(root);
 		root = echoThresholds(root);
 		root = echoSpotSelection(root);
 		root = echoTracks(root);
@@ -72,8 +75,7 @@ public class TmXmlWriter implements TmXmlKeys {
 	 * PRIVATE METHODS
 	 */
 	
-	private Element echoSettings(Element root) {
-		
+	private Element echoBaseSettings(Element root) {
 		Settings settings = trackmate.getSettings();
 		Element settingsElement = new Element(SETTINGS_ELEMENT_KEY);
 		settingsElement.setAttribute(SETTINGS_XSTART_ATTRIBUTE_NAME, ""+settings.xstart);
@@ -85,8 +87,11 @@ public class TmXmlWriter implements TmXmlKeys {
 		settingsElement.setAttribute(SETTINGS_TSTART_ATTRIBUTE_NAME, ""+settings.tstart);
 		settingsElement.setAttribute(SETTINGS_TEND_ATTRIBUTE_NAME, ""+settings.tend);
 		root.addContent(settingsElement);
-		
-		SegmenterSettings segSettings = settings.segmenterSettings;
+		return root;
+	}
+	
+	private Element echoSegmenterSettings(Element root) {
+		SegmenterSettings segSettings = trackmate.getSettings().segmenterSettings;
 		Element segSettingsElement = new Element(SEGMENTER_SETTINGS_ELEMENT_KEY);
 		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME, 		segSettings.segmenterType.name());
 		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME, 		""+segSettings.expectedRadius);
@@ -94,10 +99,74 @@ public class TmXmlWriter implements TmXmlKeys {
 		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME, 			""+segSettings.threshold);
 		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_UNITS_ATTRIBUTE_NAME, 				""+segSettings.useMedianFilter);
 		root.addContent(segSettingsElement);
-		
 		return root;
 	}
 	
+	private Element echoTrackerSettings(Element root) {
+		TrackerSettings settings = trackmate.getSettings().trackerSettings;
+		Element trackerSettingsElement = new Element(TRACKER_SETTINGS_ELEMENT_KEY);
+		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_TRACKER_TYPE_ATTRIBUTE_NAME, 		settings.trackerType.name());
+		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_TIME_UNITS_ATTNAME, 				settings.timeUnits);
+		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_SPACE_UNITS_ATTNAME, 				settings.spaceUnits);
+		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_ALTERNATE_COST_FACTOR_ATTNAME, 	""+settings.alternativeObjectLinkingCostFactor);
+		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_CUTOFF_PERCENTILE_ATTNAME, 		""+settings.cutoffPercentile);
+		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_BLOCKING_VALUE_ATTNAME,			""+settings.blockingValue);
+		// Linking
+		Element linkingElement = new Element(TRACKER_SETTINGS_LINKING_ELEMENT);
+		linkingElement.addContent(
+				new Element(TRACKER_SETTINGS_DISTANCE_CUTOFF_ELEMENT)
+				.setAttribute(TRACKER_SETTINGS_DISTANCE_CUTOFF_ATTNAME, ""+settings.linkingDistanceCutOff));
+		for(Feature feature : settings.linkingFeatureCutoffs.keySet())
+			linkingElement.addContent(
+					new Element(TRACKER_SETTINGS_FEATURE_ELEMENT)
+					.setAttribute(feature.name(), ""+settings.linkingFeatureCutoffs.get(feature)) );
+		trackerSettingsElement.addContent(linkingElement);
+		// Gap-closing
+		Element gapClosingElement = new Element(TRACKER_SETTINGS_GAP_CLOSING_ELEMENT);
+		gapClosingElement.setAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME, ""+settings.allowGapClosing);
+		gapClosingElement.addContent(
+				new Element(TRACKER_SETTINGS_DISTANCE_CUTOFF_ELEMENT)
+				.setAttribute(TRACKER_SETTINGS_DISTANCE_CUTOFF_ATTNAME, ""+settings.gapClosingDistanceCutoff));
+		gapClosingElement.addContent(
+				new Element(TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT)
+				.setAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME, ""+settings.gapClosingTimeCutoff));
+		for(Feature feature : settings.gapClosingFeatureCutoffs.keySet())
+			gapClosingElement.addContent(
+					new Element(TRACKER_SETTINGS_FEATURE_ELEMENT)
+					.setAttribute(feature.name(), ""+settings.gapClosingFeatureCutoffs.get(feature)) );
+		trackerSettingsElement.addContent(gapClosingElement);
+		// Splitting
+		Element splittingElement = new Element(TRACKER_SETTINGS_SPLITTING_ELEMENT);
+		splittingElement.setAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME, ""+settings.allowSplitting);
+		splittingElement.addContent(
+				new Element(TRACKER_SETTINGS_DISTANCE_CUTOFF_ELEMENT)
+				.setAttribute(TRACKER_SETTINGS_DISTANCE_CUTOFF_ATTNAME, ""+settings.splittingDistanceCutoff));
+		splittingElement.addContent(
+				new Element(TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT)
+				.setAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME, ""+settings.splittingTimeCutoff));
+		for(Feature feature : settings.splittingFeatureCutoffs.keySet())
+			splittingElement.addContent(
+					new Element(TRACKER_SETTINGS_FEATURE_ELEMENT)
+					.setAttribute(feature.name(), ""+settings.splittingFeatureCutoffs.get(feature)) );
+		trackerSettingsElement.addContent(splittingElement);
+		// Merging
+		Element mergingElement = new Element(TRACKER_SETTINGS_MERGING_ELEMENT);
+		mergingElement.setAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME, ""+settings.allowMerging);
+		mergingElement.addContent(
+				new Element(TRACKER_SETTINGS_DISTANCE_CUTOFF_ELEMENT)
+				.setAttribute(TRACKER_SETTINGS_DISTANCE_CUTOFF_ATTNAME, ""+settings.mergingDistanceCutoff));
+		mergingElement.addContent(
+				new Element(TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT)
+				.setAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME, ""+settings.mergingTimeCutoff));
+		for(Feature feature : settings.mergingFeatureCutoffs.keySet())
+			mergingElement.addContent(
+					new Element(TRACKER_SETTINGS_FEATURE_ELEMENT)
+					.setAttribute(feature.name(), ""+settings.mergingFeatureCutoffs.get(feature)) );
+		trackerSettingsElement.addContent(mergingElement);
+		// Add to root		
+		root.addContent(trackerSettingsElement);
+		return root;
+	}
 	
 	private Element echoTracks(Element root) {
 		SimpleGraph<Spot, DefaultEdge> trackGraph = trackmate.getTrackGraph();
