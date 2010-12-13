@@ -133,7 +133,7 @@ public class PlugInExecutor {
 						plugin, arg);
 				return;
 			}
-		} catch (InstantiationException e) { /* ignore */ }
+		} catch (InstantiationException e) { e.printStackTrace(); }
 		runMain(clazz, arg);
 	}
 
