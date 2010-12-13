@@ -1199,7 +1199,7 @@ A:			for (int i = 0; i < neighborPositions.length; i++) {
 			// create empty stack
 			ImageStack resultStack = new ImageStack(width, height);
 
-			for (int zslice = 0; zslice < (zsliceByZslice ? zslices : 1); zslice++) {
+			for (int zslice = 1; zslice <= (zsliceByZslice ? zslices : 1); zslice++) {
 
 				ImagePlus sequenceSlice = (zsliceByZslice ? extractZSlice(sequenceImage, zslice) : sequenceImage);
 
@@ -1221,7 +1221,7 @@ A:			for (int i = 0; i < neighborPositions.length; i++) {
 
 				// add all slices of the segmentation result
 				for (int s = 0; s < seq.getStack().getSize(); s++)
-					resultStack.addSlice("", seq.getStack().getProcessor(s+1), s*(zslice+1));
+					resultStack.addSlice("", seq.getStack().getProcessor(s+1), (zslice-1) + s*(zslice));
 			}
 
 			// create result image plus
