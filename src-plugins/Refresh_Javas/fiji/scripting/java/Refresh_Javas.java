@@ -298,7 +298,7 @@ public class Refresh_Javas extends RefreshScripts {
 		if (className == null)
 			executor.runOneOf(path, newClassLoader);
 		else try {
-			executor.tryRun(className, "", newClassLoader);
+			executor.tryRun(className, "", path, newClassLoader);
 		} catch (NoSuchMethodException e) {
 			executor.runOneOf(path, newClassLoader);
 		}
