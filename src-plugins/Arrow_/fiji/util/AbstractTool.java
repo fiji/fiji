@@ -1,4 +1,5 @@
 package fiji.util;
+
 import ij.IJ;
 import ij.ImageListener;
 import ij.ImagePlus;
@@ -16,43 +17,28 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 
-public abstract class AbstractTool implements ImageListener, MouseListener, MouseWheelListener,
-		 MouseMotionListener, PlugIn {
-	
-	Toolbar toolbar;
-	int toolID = -1;
+public abstract class AbstractTool implements ImageListener, MouseListener, MouseWheelListener, MouseMotionListener, PlugIn {
+	protected Toolbar toolbar;
+	protected int toolID = -1;
 
-	
-	/*
-	 * INNER CLASS
-	 */
-	
 	/**
 	 * This class is used to monitor double-clicks on the toolbar icon of this concrete tool.
-	 * It only registers has a MouseListener if the concrete implementation returns true on 
+	 * It only registers has a MouseListener if the concrete implementation returns true on
 	 * {@link AbstractTool#hasOptionDialog()}.
 	 */
 	protected class ToolbarMouseAdapter extends MouseAdapter {
-		
-		private static final long DOUBLE_CLICK_TRESHOLD = 200; // ms
-		long latest_time_release = -1;
-		
 		public void mouseReleased(MouseEvent e) {
-			if (toolID != Toolbar.getToolId()) { return; }
-			final long current_time = System.currentTimeMillis();
-			final long delay = current_time-latest_time_release; 
-			if (delay<DOUBLE_CLICK_TRESHOLD) { 	showOptionDialog(); }
-			latest_time_release = current_time;
+			if (toolID != Toolbar.getToolId())
+				return;
+			if (e.getClickCount() > 1)
+				showOptionDialog();
 		}
 	}
-	
-	
-	
+
 	/*
 	 * PUBLIC METHODS
 	 */
-	
-	
+
 	public void run(String arg) {
 		toolbar = Toolbar.getInstance();
 		if (toolbar == null) {
@@ -70,7 +56,9 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 		}
 		toolbar.setTool(toolID);
 		registerTool();
-		if ( this.hasOptionDialog()) { toolbar.addMouseListener(new ToolbarMouseAdapter()); }
+		if (hasOptionDialog()) {
+			toolbar.addMouseListener(new ToolbarMouseAdapter());
+		}
 	}
 
 	public void mousePressed(MouseEvent e) {
@@ -111,8 +99,6 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 
 	public void mouseEntered(MouseEvent e) {}
 	public void mouseExited(MouseEvent e) {}
-	
-	
 
 	public void imageOpened(ImagePlus image) {
 		registerTool(image);
@@ -123,7 +109,7 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 	}
 
 	public void imageUpdated(ImagePlus image) { }
-	
+
 	/*
 	 * PROTECTED METHODS
 	 */
@@ -176,7 +162,7 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 	protected void handleMouseDrag(MouseEvent e) {}
 	protected void handleMouseMove(MouseEvent e) {}
 	protected void handleMouseWheelMove(MouseWheelEvent e) {}
-	
+
 	/*
 	 * ABSTRACT METHODS
 	 */
@@ -187,25 +173,25 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 	public abstract String getToolName();
 
 	/**
-	 * Return the string encoding of the tool icon as it will appear in the 
-	 * toolbar. See <a href="http://rsb.info.nih.gov/ij/developer/macro/macros.html#icons">syntax</a> 
+	 * Return the string encoding of the tool icon as it will appear in the
+	 * toolbar. See <a href="http://rsb.info.nih.gov/ij/developer/macro/macros.html#icons">syntax</a>
 	 * for icon string.
 	 */
 	public abstract String getToolIcon();
-	
+
 	/*
 	 * DEAL WITH OPTION PANEL
 	 */
-	
+
 	/**
-	 * This methods return true if the concrete implementation of this abstract tool 
+	 * This methods return true if the concrete implementation of this abstract tool
 	 * has an option dialog that pops up when the user double-click the toolbar icon.
 	 * @see {@link #showOptionDialog()}
 	 */
 	public abstract boolean hasOptionDialog();
-	
+
 	/**
-	 * When called, this method displays the configuration panel for the concrete 
+	 * When called, this method displays the configuration panel for the concrete
 	 * implementation of this tool. It is normally called when the user double-click
 	 * the toolbar icon of this tool. If this tool does not have an option panel,
 	 * this method does nothing.
