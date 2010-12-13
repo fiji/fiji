@@ -1664,7 +1664,7 @@ public class TextEditor extends JFrame implements ActionListener,
 							} catch (InterruptedException ie) {}
 						}
 					} catch (Throwable t) {
-						t.printStackTrace();
+						IJ.handleException(t);
 					} finally {
 						executingTasks.remove(Executer.this);
 						try {
@@ -1673,7 +1673,7 @@ public class TextEditor extends JFrame implements ActionListener,
 							if (null != errors)
 								errors.shutdown();
 						} catch (Exception e) {
-							e.printStackTrace();
+							IJ.handleException(e);
 						}
 						// Leave kill menu item enabled if other tasks are running
 						kill.setEnabled(executingTasks.size() > 0);
