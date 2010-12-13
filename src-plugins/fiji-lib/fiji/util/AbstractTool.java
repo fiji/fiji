@@ -21,20 +21,6 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 	protected Toolbar toolbar;
 	protected int toolID = -1;
 
-	/**
-	 * This class is used to monitor double-clicks on the toolbar icon of this concrete tool.
-	 * It only registers has a MouseListener if the concrete implementation returns true on
-	 * {@link AbstractTool#hasOptionDialog()}.
-	 */
-	protected class ToolbarMouseAdapter extends MouseAdapter {
-		public void mouseReleased(MouseEvent e) {
-			if (toolID != Toolbar.getToolId())
-				return;
-			if (e.getClickCount() > 1)
-				showOptionDialog();
-		}
-	}
-
 	/*
 	 * PUBLIC METHODS
 	 */
@@ -56,9 +42,6 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 		}
 		toolbar.setTool(toolID);
 		registerTool();
-		if (hasOptionDialog()) {
-			toolbar.addMouseListener(new ToolbarMouseAdapter());
-		}
 	}
 
 	public void mousePressed(MouseEvent e) {
@@ -178,23 +161,4 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 	 * for icon string.
 	 */
 	public abstract String getToolIcon();
-
-	/*
-	 * DEAL WITH OPTION PANEL
-	 */
-
-	/**
-	 * This methods return true if the concrete implementation of this abstract tool
-	 * has an option dialog that pops up when the user double-click the toolbar icon.
-	 * @see {@link #showOptionDialog()}
-	 */
-	public abstract boolean hasOptionDialog();
-
-	/**
-	 * When called, this method displays the configuration panel for the concrete
-	 * implementation of this tool. It is normally called when the user double-click
-	 * the toolbar icon of this tool. If this tool does not have an option panel,
-	 * this method does nothing.
-	 */
-	public abstract void showOptionDialog();
 }

@@ -72,7 +72,7 @@ import javax.swing.SwingUtilities;
  * Nov-Dec 2009
  * @version 1.0 - 3 Dec 2009
  */
-public class ArrowTool extends AbstractTool implements ActionListener {
+public class ArrowTool extends AbstractToolWithOptions implements ActionListener {
 	
 	
 	private ArrowShape arrow;
@@ -335,11 +335,6 @@ public class ArrowTool extends AbstractTool implements ActionListener {
 	 * OPTION PANEL
 	 */
 	
-	@Override
-	public boolean hasOptionDialog() {
-		return true;
-	}
-
 	@Override
 	public void showOptionDialog() {
 		final ActionListener current_instance = this;
