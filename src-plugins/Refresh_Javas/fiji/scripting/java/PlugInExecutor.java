@@ -122,6 +122,13 @@ public class PlugInExecutor {
 				return;
 			}
 			if (object instanceof PlugInFilter) {
+				ImagePlus image = WindowManager.getCurrentImage();
+				if (image != null && image.isLocked()) {
+					if (!IJ.showMessageWithCancel("Unlock image?", "The image '" + image.getTitle()
+							+ "'appears to be unlocked... Unlock?"))
+						return;
+					image.unlock();
+				}
 				new PlugInFilterRunner(object,
 						plugin, arg);
 				return;
