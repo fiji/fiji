@@ -838,10 +838,10 @@ public class NeuriteTracerResultsDialog
 			}
 			add(otherImportExportPanel,c);
 
-			++c.gridy;
+			// ++c.gridy;
 			showCorrespondencesToButton = new Button("Show Correspondences to Traces...");
 			showCorrespondencesToButton.addActionListener( this );
-			add(showCorrespondencesToButton,c);
+			// add(showCorrespondencesToButton,c);
 
 			saveButton = new Button("Save Traces File");
 			saveButton.addActionListener( this );
