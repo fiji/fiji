@@ -630,7 +630,6 @@ public class Auto_Threshold implements PlugIn {
 		new_thresh = mean;
 
 		do{
-IJ.log("li " + new_thresh);
 			old_thresh = new_thresh;
 			threshold = (int) (old_thresh + 0.5);	/* range */
 			/* Calculate the means of background and object pixels */
@@ -669,7 +668,6 @@ IJ.log("li " + new_thresh);
 			new and old threshold values is less than the tolerance */
 		}
 		while ( Math.abs ( new_thresh - old_thresh ) > tolerance );
-IJ.log("li: " + threshold);
 		return threshold;
 	}
 
