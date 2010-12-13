@@ -134,7 +134,7 @@ public class LAPTracker extends AbstractSpotTracker {
 	
 	
 	private final static String BASE_ERROR_MESSAGE = "LAPTracker: ";
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 
 	
 
