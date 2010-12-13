@@ -80,6 +80,7 @@ public class GiniFunction extends SplitFunction
 		final int len = data.numAttributes();
 		final int numElements = indices.size();	
 		final int numClasses = data.numClasses();
+		final int classIndex = data.classIndex();
 				
 
 		/** Attribute-class pair comparator (by attribute value) */
@@ -103,7 +104,7 @@ public class GiniFunction extends SplitFunction
 		// Create and shuffle indices of features to use
 		ArrayList<Integer> allIndices = new ArrayList<Integer>();
 		for(int i=0; i<len; i++)
-			if(i != data.classIndex())
+			if(i != classIndex)
 				allIndices.add(i);
 		
 		double minimumGini = Double.MAX_VALUE;
@@ -123,8 +124,8 @@ public class GiniFunction extends SplitFunction
 			{
 				final Instance ins = data.get(indices.get(j));
 				list.add(
-						new AttributeClassPair(	ins.value(featureToUse), 
-												(int) ins.classValue() ));
+						new AttributeClassPair(	ins.value( featureToUse ), 
+												(int) ins.value( classIndex ) ));
 			}
 						
 			// Sort pairs in increasing order
@@ -181,8 +182,8 @@ public class GiniFunction extends SplitFunction
 		}
 		
 		// free list of possible indices to help garbage collector
-		allIndices.clear();
-		allIndices = null;
+		//allIndices.clear();
+		//allIndices = null;
 	}
 
 	/**
