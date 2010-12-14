@@ -91,12 +91,16 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 	public final void mouseEntered(MouseEvent e) {
 		if (maybeUnregister())
 			return;
+		if (isThisTool())
+			handleMouseEntered(e);
 	}
 
 	@Override
 	public final void mouseExited(MouseEvent e) {
 		if (maybeUnregister())
 			return;
+		if (isThisTool())
+			handleMouseExited(e);
 	}
 
 	@Override
@@ -186,6 +190,8 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 	protected void handleMouseDrag(MouseEvent e) {}
 	protected void handleMouseMove(MouseEvent e) {}
 	protected void handleMouseWheelMove(MouseWheelEvent e) {}
+	protected void handleMouseEntered(MouseEvent e) {}
+	protected void handleMouseExited(MouseEvent e) {}
 
 	/*
 	 * ABSTRACT METHODS
