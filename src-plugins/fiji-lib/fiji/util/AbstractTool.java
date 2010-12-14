@@ -207,5 +207,8 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 	 * toolbar. See <a href="http://rsb.info.nih.gov/ij/developer/macro/macros.html#icons">syntax</a>
 	 * for icon string.
 	 */
-	public abstract String getToolIcon();
+	public String getToolIcon() {
+		// default: "New Tool"
+		return "C00aT0509NT5509eT9509wT0e09TT3e09oT8e09oTde09l";
+	}
 }
