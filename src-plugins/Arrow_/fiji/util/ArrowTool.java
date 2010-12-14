@@ -158,15 +158,18 @@ public class ArrowTool extends AbstractToolWithOptions implements ActionListener
 	/*
 	 * PUBLIC METHODS
 	 */
-	
+
+	@Override
 	public String getToolName() {
 		return "Arrow";
 	}
 
+	@Override
 	public String getToolIcon() {
 		return "C000P11aa8ceec8aa";
 	}
 
+	@Override
 	public void handleMousePress(MouseEvent e) {
 		ImageCanvas source = (ImageCanvas) e.getSource();
 		if (source != canvas) {
@@ -214,8 +217,8 @@ public class ArrowTool extends AbstractToolWithOptions implements ActionListener
 				}
 			}
 	}
-	
 
+	@Override
 	public void handleMouseDrag(MouseEvent e) {
 		final double x = canvas.offScreenXD(e.getX());
 		final double y = canvas.offScreenYD(e.getY());
@@ -271,6 +274,7 @@ public class ArrowTool extends AbstractToolWithOptions implements ActionListener
 	 * If the mouse is released near the base AND if we are not dragging the base, then we want
 	 * to delete the tool. 
 	 */
+	@Override
 	public void handleMouseRelease(MouseEvent e) {
 		final double x = canvas.offScreenXD(e.getX());
 		final double y = canvas.offScreenYD(e.getY());
@@ -288,6 +292,7 @@ public class ArrowTool extends AbstractToolWithOptions implements ActionListener
 	/**
 	 * SHIFT key + MouseWheelEvent are used to change the arrow field.
 	 */
+	@Override
 	public void handleMouseWheelMove(MouseWheelEvent e) {
 		final double x = canvas.offScreenXD(e.getX());
 		final double y = canvas.offScreenYD(e.getY());
@@ -358,6 +363,7 @@ public class ArrowTool extends AbstractToolWithOptions implements ActionListener
 	 * Is called when the user change a property using the option panel. We update the 
 	 * arrow fields, and let the {@link #paint()} method draw it.
 	 */
+	@Override
 	public void actionPerformed(ActionEvent e) {
 		ArrowOptionPanel panel = (ArrowOptionPanel) e.getSource();
 		arrow.setLength(panel.getLength());
@@ -451,8 +457,4 @@ public class ArrowTool extends AbstractToolWithOptions implements ActionListener
 		final double dy = y-start_Y;
 		return Math.sqrt(dx*dx+dy*dy);
 	}
-
-
-
-
 }
