@@ -80,13 +80,13 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 
 	@Override
 	public final void mouseClicked(MouseEvent e) {
-		if (Toolbar.getToolId() == toolID)
+		if (isThisTool())
 			handleMouseClick(e);
 	}
 
 	@Override
 	public final void mouseWheelMoved(MouseWheelEvent e) {
-		if (Toolbar.getToolId() == toolID)
+		if (isThisTool())
 			handleMouseWheelMove(e);
 	}
 
@@ -107,6 +107,10 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 
 	@Override
 	public void imageUpdated(ImagePlus image) { }
+
+	public boolean isThisTool() {
+		return Toolbar.getToolId() == toolID;
+	}
 
 	/*
 	 * PROTECTED METHODS
