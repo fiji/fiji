@@ -25,6 +25,7 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 	 * PUBLIC METHODS
 	 */
 
+	@Override
 	public void run(String arg) {
 		toolbar = Toolbar.getInstance();
 		if (toolbar == null) {
@@ -48,7 +49,8 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 		registerTool();
 	}
 
-	public void mousePressed(MouseEvent e) {
+	@Override
+	public final void mousePressed(MouseEvent e) {
 		if (Toolbar.getInstance() != toolbar) {
 			unregisterTool();
 			IJ.showStatus("unregistered " + getToolName() + " Tool");
@@ -59,42 +61,52 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 		handleMousePress(e);
 	}
 
-	public void mouseReleased(MouseEvent e) {
+	@Override
+	public final void mouseReleased(MouseEvent e) {
 		if (Toolbar.getToolId() == toolID)
 			handleMouseRelease(e);
 	}
 
-	public void mouseDragged(MouseEvent e) {
+	@Override
+	public final void mouseDragged(MouseEvent e) {
 		if (Toolbar.getToolId() == toolID)
 			handleMouseDrag(e);
 	}
 
-	public void mouseMoved(MouseEvent e) {
+	@Override
+	public final void mouseMoved(MouseEvent e) {
 		if (Toolbar.getToolId() == toolID)
 			handleMouseMove(e);
 	}
 
-	public void mouseClicked(MouseEvent e) {
+	@Override
+	public final void mouseClicked(MouseEvent e) {
 		if (Toolbar.getToolId() == toolID)
 			handleMouseClick(e);
 	}
 
-	public void mouseWheelMoved(MouseWheelEvent e) {
+	@Override
+	public final void mouseWheelMoved(MouseWheelEvent e) {
 		if (Toolbar.getToolId() == toolID)
 			handleMouseWheelMove(e);
 	}
 
-	public void mouseEntered(MouseEvent e) {}
-	public void mouseExited(MouseEvent e) {}
+	@Override
+	public final void mouseEntered(MouseEvent e) {}
+	@Override
+	public final void mouseExited(MouseEvent e) {}
 
+	@Override
 	public void imageOpened(ImagePlus image) {
 		registerTool(image);
 	}
 
+	@Override
 	public void imageClosed(ImagePlus image) {
 		unregisterTool(image);
 	}
 
+	@Override
 	public void imageUpdated(ImagePlus image) { }
 
 	/*
