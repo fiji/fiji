@@ -403,6 +403,9 @@ public class TextEditor extends JFrame implements ActionListener,
 			}
 		});
 
+		Font font = new Font("Courier", Font.PLAIN, 12);
+		errorScreen.setFont(font);
+
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
 		pack();
