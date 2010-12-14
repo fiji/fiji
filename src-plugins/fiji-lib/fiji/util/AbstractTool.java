@@ -21,6 +21,12 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 	protected int toolID = -1;
 
 	/*
+	 * There is currently no way to let the tool know that the toolbar decided to clear the custom tools.
+	 * For this reason, we save the tool name and compare (with == instead of equals()!) later to know.
+	 */
+	protected String savedToolName;
+
+	/*
 	 * PUBLIC METHODS
 	 */
 
@@ -45,6 +51,7 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 			IJ.error("Could not set tool (id = " + toolID + ")");
 			return;
 		}
+		savedToolName = Toolbar.getToolName();
 		registerTool();
 	}
 
@@ -160,6 +167,12 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 	protected boolean wasToolbarCleared() {
 		Toolbar current = Toolbar.getInstance();
 		if (current != toolbar)
+			return true;
+		/*
+		 * We need to compare with != rather than !equals() so that subsequent calls
+		 * of the same plugin will not result in multiple handling.
+		 */
+		if (Toolbar.getToolId() == toolID && Toolbar.getToolName() != savedToolName)
 			return true;
 		return false;
 	}
