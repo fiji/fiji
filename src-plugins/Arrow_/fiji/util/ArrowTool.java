@@ -24,6 +24,8 @@ import java.awt.Shape;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 
@@ -74,7 +76,8 @@ import javax.swing.SwingUtilities;
  * Nov-Dec 2009
  * @version 1.0 - 3 Dec 2009
  */
-public class ArrowTool extends AbstractToolWithOptions implements ActionListener {
+public class ArrowTool extends AbstractToolWithOptions
+		implements ActionListener, MouseListener, MouseMotionListener, MouseWheelListener {
 	private ArrowShape arrow;
 	private BasicStroke stroke = new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
 	/**
@@ -170,7 +173,7 @@ public class ArrowTool extends AbstractToolWithOptions implements ActionListener
 	}
 
 	@Override
-	public void handleMousePress(MouseEvent e) {
+	public void mousePressed(MouseEvent e) {
 		ImageCanvas source = (ImageCanvas) e.getSource();
 		if (source != canvas) {
 			// We changed image window. Update fields accordingly
@@ -219,7 +222,7 @@ public class ArrowTool extends AbstractToolWithOptions implements ActionListener
 	}
 
 	@Override
-	public void handleMouseDrag(MouseEvent e) {
+	public void mouseDragged(MouseEvent e) {
 		final double x = canvas.offScreenXD(e.getX());
 		final double y = canvas.offScreenYD(e.getY());
 		int modifiers = e.getModifiersEx();
@@ -275,7 +278,7 @@ public class ArrowTool extends AbstractToolWithOptions implements ActionListener
 	 * to delete the tool.
 	 */
 	@Override
-	public void handleMouseRelease(MouseEvent e) {
+	public void mouseReleased(MouseEvent e) {
 		final double x = canvas.offScreenXD(e.getX());
 		final double y = canvas.offScreenYD(e.getY());
 		if  ( (status != InteractionStatus.DRAGGING_ARROW_BASE) && (Math.abs(start_X-x)< 1e-2) && (Math.abs(start_Y-y)< 1e-2) ) {
@@ -293,7 +296,7 @@ public class ArrowTool extends AbstractToolWithOptions implements ActionListener
 	 * SHIFT key + MouseWheelEvent are used to change the arrow field.
 	 */
 	@Override
-	public void handleMouseWheelMove(MouseWheelEvent e) {
+	public void mouseWheelMoved(MouseWheelEvent e) {
 		final double x = canvas.offScreenXD(e.getX());
 		final double y = canvas.offScreenYD(e.getY());
 		final double dist_to_line = distanceToLine(x, y);
@@ -334,6 +337,18 @@ public class ArrowTool extends AbstractToolWithOptions implements ActionListener
 			}
 		}
 	}
+
+	@Override
+	public void mouseClicked(MouseEvent e) {}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {}
+
+	@Override
+	public void mouseExited(MouseEvent e) {}
+
+	@Override
+	public void mouseMoved(MouseEvent e) {}
 
 	/*
 	 * OPTION PANEL
