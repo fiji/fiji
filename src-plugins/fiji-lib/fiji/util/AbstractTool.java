@@ -42,13 +42,15 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 			return;
 		}
 
+		if (toolbar.getToolId(getToolName()) >= 0) {
+			IJ.error("Tool '" + getToolName() + "' already present!");
+			return;
+		}
+
 		toolID = toolbar.addTool(getToolName() + " - "	+ getToolIcon());
 		if (toolID < 0) {
-			toolID = toolbar.getToolId(getToolName());
-			if (toolID < 0) {
-				IJ.error("Could not register tool");
-				return;
-			}
+			IJ.error("Could not register tool");
+			return;
 		}
 		toolbar.setTool(toolID);
 		if (toolbar.getToolId() != toolID) {
