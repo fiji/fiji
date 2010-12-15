@@ -59,13 +59,19 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 		addImageToList(imp, image.getName());
 	}
 
+	/**
+	 * Handles a histogram the following way: create snapshot, log data, reset the
+	 * display range, apply the Fire LUT and finally store it as an iText PDF image.
+	 * Afterwards the image is reset to its orignal state again
+	 */
 	public void handleHistogram(Histogram2D<T> histogram) {
 		Image<LongType> image = histogram.getPlotImage();
 		ImagePlus imp = ImageJFunctions.displayAsVirtualStack( image );
+		// make a snapshot to be able to reset after modifications
 		imp.getProcessor().snapshot();
 		imp.getProcessor().log();
-		IJ.resetMinAndMax();
 		imp.updateAndDraw();
+		imp.getProcessor().resetMinAndMax();
 		IJ.run(imp,"Fire", null);
 		addImageToList(imp, image.getName());
 		// reset the imp from the log scaling we applied earlier
