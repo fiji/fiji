@@ -207,13 +207,15 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 	protected void handleMouseExited(MouseEvent e) {}
 
 	/*
-	 * ABSTRACT METHODS
+	 * METHODS TO OVERRIDE
 	 */
 
 	/**
 	 * Return the tool name.
 	 */
-	public abstract String getToolName();
+	public String getToolName() {
+		return getClass().getName().replace('_', ' ');
+	}
 
 	/**
 	 * Return the string encoding of the tool icon as it will appear in the
