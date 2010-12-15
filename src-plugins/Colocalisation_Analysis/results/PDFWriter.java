@@ -120,17 +120,18 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 			float vertPos = writer.getVerticalPosition(true);
 			if (vertPos - document.bottom() < image.height()) {
 				document.newPage();
-			}
-			PdfContentByte cb = writer.getDirectContent();
-			cb.setLineWidth(1f);
-			if (isLetter) {
-				cb.moveTo(PageSize.LETTER.left(50), vertPos);
-				cb.lineTo(PageSize.LETTER.right(50), vertPos);
 			} else {
-				cb.moveTo(PageSize.A4.left(50), vertPos);
-				cb.lineTo(PageSize.A4.right(50), vertPos);
+				PdfContentByte cb = writer.getDirectContent();
+				cb.setLineWidth(1f);
+				if (isLetter) {
+					cb.moveTo(PageSize.LETTER.left(50), vertPos);
+					cb.lineTo(PageSize.LETTER.right(50), vertPos);
+				} else {
+					cb.moveTo(PageSize.A4.left(50), vertPos);
+					cb.lineTo(PageSize.A4.right(50), vertPos);
+				}
+				cb.stroke();
 			}
-			cb.stroke();
 		}
 
 		if (showName) {
