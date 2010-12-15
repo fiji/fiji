@@ -16,6 +16,10 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 public abstract class AbstractTool implements ImageListener, PlugIn {
 	protected Toolbar toolbar;
 	protected int toolID = -1;
@@ -23,6 +27,8 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 	protected MouseProxy mouseProxy;
 	protected MouseWheelProxy mouseWheelProxy;
 	protected MouseMotionProxy mouseMotionProxy;
+	protected SliceListener sliceListener;
+	protected List<SliceObserver> sliceObservers = new ArrayList<SliceObserver>();
 
 	/*
 	 * There is currently no way to let the tool know that the toolbar decided to clear the custom tools.
@@ -86,6 +92,8 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 			mouseMotionProxy = new MouseMotionProxy((MouseMotionListener)this);
 		if (this instanceof MouseWheelListener)
 			mouseWheelProxy = new MouseWheelProxy((MouseWheelListener)this);
+		if (this instanceof SliceListener)
+			sliceListener = (SliceListener)this;
 
 		registerTool();
 	}
@@ -203,6 +211,13 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 	protected void registerTool(ImagePlus image) {
 		if (image == null)
 			return;
+		if (sliceListener != null)
+			sliceObservers.add(new SliceObserver(image, new SliceListener() {
+				public final void sliceChanged(ImagePlus image) {
+					if (isThisTool())
+						sliceListener.sliceChanged(image);
+				}
+			}));
 		registerTool(image.getCanvas());
 	}
 
@@ -242,11 +257,21 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 		for (int id : WindowManager.getIDList())
 			unregisterTool(WindowManager.getImage(id));
 		ImagePlus.removeImageListener(this);
+		for (SliceObserver observer : sliceObservers)
+			observer.unregister();
+		sliceObservers.clear();
 	}
 
 	protected void unregisterTool(ImagePlus image) {
 		if (image == null)
 			return;
+		for (Iterator<SliceObserver> iter = sliceObservers.iterator(); iter.hasNext(); ) {
+			SliceObserver observer = iter.next();
+			if (observer.getImagePlus() != image)
+				continue;
+			observer.unregister();
+			iter.remove();
+		}
 		unregisterTool(image.getCanvas());
 	}
 
