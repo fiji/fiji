@@ -223,8 +223,17 @@ public class Refresh_Javas extends RefreshScripts {
 						 rule.getPrerequisites().contains(relativeSourcePath)))
                                         targets.add(key);
                         }
-                        if (targets.size() == 0)
-                                throw new Fake.FakeException("No .jar targets found");
+                        if (targets.size() == 0) {
+				try {
+	                                err.write(("Warning: no .jar targets found for '"
+						+ relativeSourcePath + "' in '"
+						+ new File(dir, "Fakefile").getAbsolutePath()
+						+ "'\n").getBytes());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+                                return null;
+                        }
                         if (targets.size() == 1)
                                 target = targets.get(0);
                         else {
