@@ -143,45 +143,55 @@ public class Refresh_Javas extends RefreshScripts {
 
 	/* returns the class name and .jar on success, null otherwise */
 	public String[] fake(String path) throws Fake.FakeException {
-		String fijiDir = System.getProperty("fiji.dir");
-		if (fijiDir == null)
-			return null;
-		if (!fijiDir.endsWith("/"))
-			fijiDir += "/";
-		String base = fijiDir + "src-plugins/";
+		File file = new File(path);
 		try {
-			path = new File(path).getCanonicalFile()
-				.getAbsolutePath();
-		} catch (IOException e) {
+			file = file.getCanonicalFile();
+		}
+		catch (IOException e) {
 			e.printStackTrace(new PrintStream(err));
 			return null;
 		}
-		if (!path.startsWith(base))
-			return null;
-		path = path.substring(base.length());
+		File dir = file.getParentFile();
+		path = file.getName();
+		String name = path;
 
-		int slash = path.indexOf("/");
-		base = path.substring(0, slash);
-		String target = "plugins/" + base + ".jar";
-		String name = path.substring(slash + 1).replace('/', '.');
+		File fakefile;
+		for (;;) {
+			if (dir == null)
+				return null;
+			fakefile = new File(dir, "Fakefile");
+			if (fakefile.exists())
+				break;
+			path = dir.getName() + "/" + path;
+			dir = dir.getParentFile();
+		}
+
 		if (name.endsWith(".java"))
 			name = name.substring(0, name.length() - 5);
 
-		String fakefile = fijiDir + "/Fakefile";
-		if (new File(fakefile).exists()) try {
-			String[] result = fake(new FileInputStream(fakefile), new File(fijiDir), name, target);
+		try {
+			String[] result = fake(new FileInputStream(fakefile), dir, name, null, path, false);
 			if (result != null)
 				return result;
-			result = fake(new FileInputStream(fakefile), new File(fijiDir), name, "jars/" + base + ".jar");
-			if (result != null)
-				return result;
-		} catch (FileNotFoundException e) {
+		}
+		catch (FileNotFoundException e) {
 			e.printStackTrace(new PrintStream(err));
 		}
+
+		String absolutePath = file.getAbsolutePath();
+		String srcPluginsDir = new File(System.getProperty("fiji.dir"), "src-plugins").getAbsolutePath();
+		if (!absolutePath.startsWith(srcPluginsDir + File.separator))
+			return null;
+
+		String base = absolutePath.substring(srcPluginsDir.length() + 1);
+		int slash = base.indexOf(File.separator);
+		if (slash > 0)
+			base = base.substring(0, slash);
+		String target = "plugins/" + base + ".jar";
 		String rule = "all <- " + target + "\n"
 			+ "\n"
 			+ target + " <- src-plugins/" + base + "/**/*.java\n";
-		return fake(new StringBufferInputStream(rule), new File(fijiDir), name, target);
+		return fake(new StringBufferInputStream(rule), dir, name, target);
 	}
 
 	/* returns the class name and .jar on success, null otherwise */
@@ -191,6 +201,11 @@ public class Refresh_Javas extends RefreshScripts {
 
 	/* returns the class name and .jar on success, null otherwise */
 	public String[] fake(InputStream fakefile, File dir, String name, String target, boolean includeSource) throws Fake.FakeException {
+		return fake(fakefile, dir, name, target, null, includeSource);
+	}
+
+	/* returns the class name and .jar on success, null otherwise */
+	public String[] fake(InputStream fakefile, File dir, String name, String target, String relativeSourcePath, boolean includeSource) throws Fake.FakeException {
 		Fake fake = new Fake();
 		fake.out = new PrintStream(out);
 		fake.err = new PrintStream(err);
@@ -198,12 +213,27 @@ public class Refresh_Javas extends RefreshScripts {
 		parser.parseRules(null);
 
 		if (target == null) {
+			if (relativeSourcePath != null)
+				relativeSourcePath = relativeSourcePath.replace(File.separator.charAt(0), '/');
                         List<String> targets = new ArrayList<String>();
-                        for (String key : parser.getAllRules().keySet())
-                                if (parser.getRule(key).getClass().getName().endsWith("$CompileJar"))
+                        for (String key : parser.getAllRules().keySet()) {
+				Fake.Parser.Rule rule = parser.getRule(key);
+                                if (rule.getClass().getName().endsWith("$CompileJar") &&
+						(relativeSourcePath == null ||
+						 rule.getPrerequisites().contains(relativeSourcePath)))
                                         targets.add(key);
-                        if (targets.size() == 0)
-                                throw new Fake.FakeException("No .jar targets found");
+                        }
+                        if (targets.size() == 0) {
+				try {
+	                                err.write(("Warning: no .jar targets found for '"
+						+ relativeSourcePath + "' in '"
+						+ new File(dir, "Fakefile").getAbsolutePath()
+						+ "'\n").getBytes());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+                                return null;
+                        }
                         if (targets.size() == 1)
                                 target = targets.get(0);
                         else {
@@ -225,6 +255,13 @@ public class Refresh_Javas extends RefreshScripts {
 			parser.setVariable("includeSource(" + target + ")", "true");
 		parser.getRule(target).make();
 
+		try {
+			String packageName = getPackageName(new File(dir, relativeSourcePath).getAbsolutePath());
+			if (packageName != null)
+				name = packageName + "." + name;
+		} catch (IOException e) {
+			e.printStackTrace(new PrintStream(err));
+		}
 		return new String[] { name, new File(dir, target).getAbsolutePath() };
 	}
 
@@ -298,7 +335,7 @@ public class Refresh_Javas extends RefreshScripts {
 		if (className == null)
 			executor.runOneOf(path, newClassLoader);
 		else try {
-			executor.tryRun(className, "", newClassLoader);
+			executor.tryRun(className, "", path, newClassLoader);
 		} catch (NoSuchMethodException e) {
 			executor.runOneOf(path, newClassLoader);
 		}

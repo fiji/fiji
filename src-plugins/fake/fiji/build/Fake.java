@@ -1097,6 +1097,10 @@ public class Fake {
 				return prerequisites.get(index);
 			}
 
+			public List<String> getPrerequisites() {
+				return new ArrayList<String>(prerequisites);
+			}
+
 			public String toString() {
 				return toString("2".equals(getVar("VERBOSE")) ?
 						0 : 60);
