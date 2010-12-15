@@ -7,8 +7,8 @@ import java.util.Collections;
 import java.util.List;
 
 import mpicbg.imglib.algorithm.gauss.GaussianConvolution3;
-import mpicbg.imglib.algorithm.math.function.Converter;
-import mpicbg.imglib.algorithm.math.function.RealTypeConverter;
+import mpicbg.imglib.function.Converter;
+import mpicbg.imglib.function.RealTypeConverter;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.special.RegionOfInterestCursor;

@@ -9,8 +9,8 @@ import java.io.BufferedInputStream;
 import java.io.InputStream;
 
 import mpicbg.imglib.algorithm.gauss.GaussianConvolution3;
-import mpicbg.imglib.algorithm.math.function.Converter;
-import mpicbg.imglib.algorithm.math.function.RealTypeConverter;
+import mpicbg.imglib.function.Converter;
+import mpicbg.imglib.function.RealTypeConverter;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
