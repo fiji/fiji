@@ -9,10 +9,10 @@ import ij.WindowManager;
 
 import ij.gui.GenericDialog;
 
-import ij.io.OpenDialog;
 import ij.io.SaveDialog;
 
 import java.awt.Dimension;
+import java.awt.FileDialog;
 import java.awt.Font;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -640,12 +641,11 @@ public class TextEditor extends JFrame implements ActionListener,
 				editorPane != null && editorPane.file != null ?
 				editorPane.file.getParent() :
 				System.getProperty("fiji.dir");
-			OpenDialog dialog = new OpenDialog("Open...",
-					defaultDir, "");
-			grabFocus(2);
-			String name = dialog.getFileName();
-			if (name != null)
-				open(dialog.getDirectory() + name);
+			String path = openWithDialog("Open...", defaultDir, new String[] {
+				".class", ".jar"
+			}, false);
+			if (path != null)
+				open(path);
 			return;
 		}
 		else if (source == save)
@@ -2034,11 +2034,11 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public void extractSourceJar() {
-		OpenDialog dialog = new OpenDialog("Open...", "");
-		grabFocus();
-		String name = dialog.getFileName();
-		if (name != null)
-			extractSourceJar(dialog.getDirectory() + name);
+		String path = openWithDialog("Open...", null, new String[] {
+			".jar"
+		}, true);
+		if (path != null)
+			extractSourceJar(path);
 	}
 
 	public void extractSourceJar(String path) {
@@ -2057,6 +2057,29 @@ public class TextEditor extends JFrame implements ActionListener,
 			error("There was a problem opening " + path
 				+ ": " + e.getMessage());
 		}
+	}
+
+	/* extensionMustMatch == false means extension must not match */
+	protected String openWithDialog(final String title, final String directory,
+			final String[] extensions, final boolean extensionMustMatch) {
+		FileDialog dialog = new FileDialog(this, title);
+		if (directory != null)
+			dialog.setDirectory(directory);
+		if (extensions != null)
+			dialog.setFilenameFilter(new FilenameFilter() {
+				public boolean accept(File dir, String name) {
+					for (String extension : extensions)
+						if (name.endsWith(extension))
+							return extensionMustMatch;
+					return !extensionMustMatch;
+				}
+			});
+		dialog.setVisible(true);
+		String dir = dialog.getDirectory();
+		String name = dialog.getFile();
+		if (dir == null || name == null)
+			return null;
+		return new File(dir, name).getAbsolutePath();
 	}
 
 	/**
