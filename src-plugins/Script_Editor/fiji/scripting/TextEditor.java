@@ -405,6 +405,8 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		Font font = new Font("Courier", Font.PLAIN, 12);
 		errorScreen.setFont(font);
+		errorScreen.setEditable(false);
+		errorScreen.setLineWrap(true);
 
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
