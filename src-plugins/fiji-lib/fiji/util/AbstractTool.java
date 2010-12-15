@@ -16,15 +16,26 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 
-public abstract class AbstractTool implements ImageListener, MouseListener, MouseWheelListener, MouseMotionListener, PlugIn {
+public abstract class AbstractTool implements ImageListener, PlugIn {
 	protected Toolbar toolbar;
 	protected int toolID = -1;
+
+	protected MouseProxy mouseProxy;
+	protected MouseWheelProxy mouseWheelProxy;
+	protected MouseMotionProxy mouseMotionProxy;
 
 	/*
 	 * There is currently no way to let the tool know that the toolbar decided to clear the custom tools.
 	 * For this reason, we save the tool name and compare (with == instead of equals()!) later to know.
 	 */
 	protected String savedToolName;
+
+	/*
+	 * If there is no space left, or if the tool was registered already, the only way to register the
+	 * tool is by blowing away all other custom tools. For debugging purposes, you can set this flag
+	 * to "true" to allow this.
+	 */
+	protected boolean clearToolsIfNecessary;
 
 	/*
 	 * PUBLIC METHODS
@@ -38,13 +49,29 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 			return;
 		}
 
-		toolID = toolbar.addTool(getToolName() + " - "	+ getToolIcon());
-		if (toolID < 0) {
-			toolID = toolbar.getToolId(getToolName());
-			if (toolID < 0) {
-				IJ.error("Could not register tool");
+		boolean clearTools = false;
+		if (toolbar.getToolId(getToolName()) >= 0) {
+			if (clearToolsIfNecessary)
+				clearTools = true;
+			else {
+				IJ.error("Tool '" + getToolName() + "' already present!");
 				return;
 			}
+		}
+
+		toolID = -1;
+		if (!clearTools)
+			toolID = toolbar.addTool(getToolName() + " - " + getToolIcon());
+		if (toolID < 0 && clearToolsIfNecessary) {
+			int previousID = toolbar.getToolId();
+			toolbar.addMacroTool(getToolName() + " - " + getToolIcon(), null, 0);
+			toolID = toolbar.getToolId(getToolName());
+			if (previousID == toolID)
+				toolbar.repaint();
+		}
+		if (toolID < 0) {
+			IJ.error("Could not register tool");
+			return;
 		}
 		toolbar.setTool(toolID);
 		if (toolbar.getToolId() != toolID) {
@@ -52,62 +79,93 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 			return;
 		}
 		savedToolName = Toolbar.getToolName();
+
+		if (this instanceof MouseListener)
+			mouseProxy = new MouseProxy((MouseListener)this);
+		if (this instanceof MouseMotionListener)
+			mouseMotionProxy = new MouseMotionProxy((MouseMotionListener)this);
+		if (this instanceof MouseWheelListener)
+			mouseWheelProxy = new MouseWheelProxy((MouseWheelListener)this);
+
 		registerTool();
 	}
 
-	@Override
-	public final void mousePressed(MouseEvent e) {
-		if (maybeUnregister())
-			return;
-		if (Toolbar.getToolId() != toolID)
-			return;
-		handleMousePress(e);
+	protected class MouseProxy implements MouseListener {
+		protected MouseListener listener;
+
+		public MouseProxy(MouseListener listener) {
+			this.listener = listener;
+		}
+
+		@Override
+		public final void mousePressed(MouseEvent e) {
+			if (maybeUnregister())
+				return;
+			if (isThisTool())
+				listener.mousePressed(e);
+		}
+
+		@Override
+		public final void mouseReleased(MouseEvent e) {
+			if (isThisTool())
+				listener.mouseReleased(e);
+		}
+
+		@Override
+		public final void mouseClicked(MouseEvent e) {
+			if (isThisTool())
+				listener.mouseClicked(e);
+		}
+
+		@Override
+		public final void mouseEntered(MouseEvent e) {
+			if (maybeUnregister())
+				return;
+			if (isThisTool())
+				listener.mouseEntered(e);
+		}
+
+		@Override
+		public final void mouseExited(MouseEvent e) {
+			if (maybeUnregister())
+				return;
+			if (isThisTool())
+				listener.mouseExited(e);
+		}
 	}
 
-	@Override
-	public final void mouseReleased(MouseEvent e) {
-		if (Toolbar.getToolId() == toolID)
-			handleMouseRelease(e);
+	protected class MouseWheelProxy implements MouseWheelListener {
+		protected MouseWheelListener listener;
+
+		public MouseWheelProxy(MouseWheelListener listener) {
+			this.listener = listener;
+		}
+
+		@Override
+		public final void mouseWheelMoved(MouseWheelEvent e) {
+			if (isThisTool())
+				listener.mouseWheelMoved(e);
+		}
 	}
 
-	@Override
-	public final void mouseDragged(MouseEvent e) {
-		if (Toolbar.getToolId() == toolID)
-			handleMouseDrag(e);
-	}
+	protected class MouseMotionProxy implements MouseMotionListener {
+		protected MouseMotionListener listener;
 
-	@Override
-	public final void mouseMoved(MouseEvent e) {
-		if (Toolbar.getToolId() == toolID)
-			handleMouseMove(e);
-	}
+		public MouseMotionProxy(MouseMotionListener listener) {
+			this.listener = listener;
+		}
 
-	@Override
-	public final void mouseClicked(MouseEvent e) {
-		if (isThisTool())
-			handleMouseClick(e);
-	}
+		@Override
+		public final void mouseDragged(MouseEvent e) {
+			if (isThisTool())
+				listener.mouseDragged(e);
+		}
 
-	@Override
-	public final void mouseWheelMoved(MouseWheelEvent e) {
-		if (isThisTool())
-			handleMouseWheelMove(e);
-	}
-
-	@Override
-	public final void mouseEntered(MouseEvent e) {
-		if (maybeUnregister())
-			return;
-		if (isThisTool())
-			handleMouseEntered(e);
-	}
-
-	@Override
-	public final void mouseExited(MouseEvent e) {
-		if (maybeUnregister())
-			return;
-		if (isThisTool())
-			handleMouseExited(e);
+		@Override
+		public final void mouseMoved(MouseEvent e) {
+			if (isThisTool())
+				listener.mouseMoved(e);
+		}
 	}
 
 	@Override
@@ -126,7 +184,7 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 			return;
 	}
 
-	public boolean isThisTool() {
+	public final boolean isThisTool() {
 		return Toolbar.getToolId() == toolID;
 	}
 
@@ -151,9 +209,12 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 	protected void registerTool(ImageCanvas canvas) {
 		if (canvas == null)
 			return;
-		canvas.addMouseListener(this);
-		canvas.addMouseMotionListener(this);
-		canvas.addMouseWheelListener(this);
+		if (mouseProxy != null)
+			canvas.addMouseListener(mouseProxy);
+		if (mouseMotionProxy != null)
+			canvas.addMouseMotionListener(mouseMotionProxy);
+		if (mouseWheelProxy != null)
+			canvas.addMouseWheelListener(mouseWheelProxy);
 	}
 
 	protected boolean maybeUnregister() {
@@ -192,28 +253,24 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 	protected void unregisterTool(ImageCanvas canvas) {
 		if (canvas == null)
 			return;
-		canvas.removeMouseListener(this);
-		canvas.removeMouseMotionListener(this);
-		canvas.getParent().removeMouseWheelListener(this);
+		if (mouseProxy != null)
+			canvas.removeMouseListener(mouseProxy);
+		if (mouseMotionProxy != null)
+			canvas.removeMouseMotionListener(mouseMotionProxy);
+		if (mouseWheelProxy != null)
+			canvas.removeMouseWheelListener(mouseWheelProxy);
 	}
 
-	protected void handleMouseClick(MouseEvent e) {}
-	protected void handleMousePress(MouseEvent e) {}
-	protected void handleMouseRelease(MouseEvent e) {}
-	protected void handleMouseDrag(MouseEvent e) {}
-	protected void handleMouseMove(MouseEvent e) {}
-	protected void handleMouseWheelMove(MouseWheelEvent e) {}
-	protected void handleMouseEntered(MouseEvent e) {}
-	protected void handleMouseExited(MouseEvent e) {}
-
 	/*
-	 * ABSTRACT METHODS
+	 * METHODS TO OVERRIDE
 	 */
 
 	/**
 	 * Return the tool name.
 	 */
-	public abstract String getToolName();
+	public String getToolName() {
+		return getClass().getName().replace('_', ' ');
+	}
 
 	/**
 	 * Return the string encoding of the tool icon as it will appear in the

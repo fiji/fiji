@@ -11,9 +11,7 @@ public abstract class AbstractToolWithOptions extends AbstractTool {
 	 */
 	protected class ToolbarMouseAdapter extends MouseAdapter {
 		public void mouseReleased(MouseEvent e) {
-			if (toolID != Toolbar.getToolId())
-				return;
-			if (e.getClickCount() > 1)
+			if (isThisTool() && e.getClickCount() > 1)
 				showOptionDialog();
 		}
 	}
