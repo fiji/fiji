@@ -31,6 +31,13 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 	protected String savedToolName;
 
 	/*
+	 * If there is no space left, or if the tool was registered already, the only way to register the
+	 * tool is by blowing away all other custom tools. For debugging purposes, you can set this flag
+	 * to "true" to allow this.
+	 */
+	protected boolean clearToolsIfNecessary;
+
+	/*
 	 * PUBLIC METHODS
 	 */
 
@@ -42,12 +49,26 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 			return;
 		}
 
+		boolean clearTools = false;
 		if (toolbar.getToolId(getToolName()) >= 0) {
-			IJ.error("Tool '" + getToolName() + "' already present!");
-			return;
+			if (clearToolsIfNecessary)
+				clearTools = true;
+			else {
+				IJ.error("Tool '" + getToolName() + "' already present!");
+				return;
+			}
 		}
 
-		toolID = toolbar.addTool(getToolName() + " - "	+ getToolIcon());
+		toolID = -1;
+		if (!clearTools)
+			toolID = toolbar.addTool(getToolName() + " - " + getToolIcon());
+		if (toolID < 0 && clearToolsIfNecessary) {
+			int previousID = toolbar.getToolId();
+			toolbar.addMacroTool(getToolName() + " - " + getToolIcon(), null, 0);
+			toolID = toolbar.getToolId(getToolName());
+			if (previousID == toolID)
+				toolbar.repaint();
+		}
 		if (toolID < 0) {
 			IJ.error("Could not register tool");
 			return;
