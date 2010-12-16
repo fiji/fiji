@@ -202,7 +202,12 @@ public class Settings {
 	
 	@Override
 	public String toString() {
-		String str = "For image: "+imp.getShortTitle()+'\n';
+		String str = ""; 
+		if (null == imp) {
+			str = "Image with:\n";
+		} else {
+			str = "For image: "+imp.getShortTitle()+'\n';			
+		}
 		str += String.format("  X = %4d - %4d\n", xstart, xend);
 		str += String.format("  Y = %4d - %4d\n", ystart, yend);
 		str += String.format("  Z = %4d - %4d\n", zstart, zend);
