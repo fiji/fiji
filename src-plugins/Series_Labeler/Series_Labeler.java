@@ -62,6 +62,7 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.ImageListener;
 import ij.measure.Calibration;
+import ij.Prefs;
 
 import java.awt.AWTEvent;
 import java.awt.Button;
@@ -105,27 +106,51 @@ import java.util.TimeZone;
  */
 public class Series_Labeler implements ExtendedPlugInFilter,
 		DialogListener, ImageListener {
+	static String PREF_KEY = "Series_Labeler.";
 
-	// the image we are working on
-	ImagePlus imp;
 	// the distance from left of image in px to put the label. 
-	int x = 2;
+	static int x = 2;
 	// the px distance to the top
-	int y = 15;
+	static int y = 15;
 	// the font to draw the text with
-	Font font;
+	static Font font;
 	// the start time for the first frame 
-	double start = 0.0;
+	static double start = 0.0;
 	// the interval between two frames
-	double interval = 1.0;
+	static double interval = 1.0;
 	// the custom suffix, used if format supports it
-	String customSuffix = "";
+	static String customSuffix = "";
 	/* the suffix to append to the label, used if
 	 * format supports supports no custom suffix
 	 */
 	static String chosenSuffix = "s";
 	// the amount of decimal places, used by some formats
-	int decimalPlaces = 3;
+	static int decimalPlaces = 3;
+	/* the custom pattern for labeling, used if format
+	 * supports it
+	 */
+	static String customFormat = "";
+	// indicates if the text should be anti-aliased or not
+	static boolean antiAliasedText = true;
+	/* a generation range for the labels, these default to 0 as no
+	 * values are given
+	 */
+	static int first, last;
+	/* the 'n' for 'label every n-th frame'. Treated as 1 for values
+	 * below one
+	 */
+	static int frameMask = 1;
+	// background of label enabled
+	static boolean backgroundEnabled = false;
+	// the currently selected format
+	static AbstractStampFormat selectedFormat;
+	// the currently selected stack type
+	static StackType selectedStackType;
+	// the currently selected location preset
+	static int locationPreset;
+	
+	// the image we are working on
+	ImagePlus imp;
 	// indicates if processing has been canceled or not
 	boolean canceled;
 	/* indicates if we are in preview mode or doing the
@@ -134,24 +159,11 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	boolean preview = true;
 	// the current state of the preview checkbox
 	boolean previewCheckState = false;
-	/* the custom pattern for labeling, used if format
-	 * supports it
-	 */
-	String customFormat = "";
-	// indicates if the text should be anti-aliased or not
-	boolean antiAliasedText = true;
 	// the current frame 
 	int frame;
 	// the current slice selected in the ImagePlus
 	int currentSlice;
-	/* a generation range for the labels, these default to 0 as no
-	 * values are given
-	 */
-	int first, last;
-	/* the 'n' for 'label every n-th frame'. Treated as 1 for values
-	 * below one
-	 */
-	int frameMask = 1;
+	
 	// the object that runs the plugin.
 	PlugInFilterRunner pluginFilterRunner; 
 	/* a combination (bitwise OR) of the flags specified in
@@ -159,14 +171,6 @@ public class Series_Labeler implements ExtendedPlugInFilter,
          * Determines what kind of image the plug-in can run on etc.
 	 */
 	int flags = DOES_ALL + DOES_STACKS + STACK_REQUIRED;
-
-	// the currently selected format
-	AbstractStampFormat selectedFormat;
-	// the currently selected stack type
-	StackType selectedStackType;
-
-	// background of label enabled
-	private boolean backgroundEnabled = false;
 
 	// member variable for the GUI dialog
 	private GenericDialog gd;
@@ -177,9 +181,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	// Some index aliases for the locations array
 	static final int UPPER_RIGHT=0, LOWER_RIGHT=1, LOWER_LEFT=2,
 		UPPER_LEFT=3, CUSTOM=4;
-	// the currently selected location preset
-	int locationPreset;
-	
+
 	// the available time formats
 	final AbstractStampFormat[] timeFormats = {new DecimalLabelFormat(),
 		new DigitalLabelFormat(), new CustomLabelFormat()};
@@ -234,9 +236,9 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	// the panel containing the Decimal Places elements
 	private Panel decimalPlacesPanel;
 	// has a custom interval been entered in the gui
-	private boolean customIntervalEntered;
+	private static boolean customIntervalEntered;
 	// has a custom unit been selected in the gui
-	private boolean customUnitSelected;
+	private static boolean customUnitSelected;
 
 	/**
 	 * Setup the plug-in and tell ImageJ it needs to work on
@@ -252,8 +254,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			}
 
 			Calibration cal = imp.getCalibration();
-
-			first = 1;
+			
 			last = imp.getStackSize();
 			// if frame interval property of image is zero, set it to one
 			interval = Math.abs(cal.frameInterval) < 0.0000001 ? 1.0 : cal.frameInterval;
@@ -261,13 +262,6 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			setFontParams();
 		}
 
-		selectedStackType = stackTypes[0];
-
-		/* set the currently selected format to the
-		 * first available
-		 */
-		selectedFormat = selectedStackType.getSupportedFormats()[0];
-		
 		ImagePlus.addImageListener(this);
 
 		// return supported flags
@@ -285,6 +279,42 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		this.pluginFilterRunner = pfr;
 		int subpanelHeight = 30;
 		int left = 20;
+
+		// set up the users preferences
+		x = (int) Prefs.get(PREF_KEY+"x", 2);
+		y = (int) Prefs.get(PREF_KEY+"y", 15);
+		interval = Prefs.get(PREF_KEY+"interval", 1.0);
+		customSuffix = Prefs.get(PREF_KEY+"customSuffix", "");
+		chosenSuffix = Prefs.get(PREF_KEY+"chosenSuffix", "s");
+		decimalPlaces = (int) Prefs.get(PREF_KEY+"decimalPlaces", 3);
+		customFormat = Prefs.get(PREF_KEY+"customFormat", "");
+		frameMask = (int) Prefs.get(PREF_KEY+"frameMask", 1);
+		backgroundEnabled = Prefs.get(PREF_KEY+"backgroundEnabled", false);
+		locationPreset = (int) Prefs.get(PREF_KEY+"locationPreset", 4);
+		int stackType = (int) Prefs.get(PREF_KEY+"stackType", 0);
+		// make sure the stack type selection is in bounds
+		if (stackType < 0 || stackType > stackTypes.length)
+			stackType = 0;
+		selectedStackType = stackTypes[stackType];
+
+		int format = (int) Prefs.get(PREF_KEY+"format", 0);
+		// make sure the selected format is in bounds
+		if (format < 0 || format > selectedStackType.getSupportedFormats().length)
+			format = 0;
+		selectedFormat = selectedStackType.getSupportedFormats()[format];
+
+		String unit = Prefs.get(PREF_KEY+"unit", "s");
+		int unitIndex = Arrays.asList(selectedFormat.getAllowedFormatUnits())
+					.indexOf(unit);
+		// make sure the selected unit is in bounds
+		if (unitIndex < 0 || unitIndex > selectedFormat.getAllowedFormatUnits().length)
+			unitIndex = 0;
+
+		// if a custom ROI is selected, don't use a preset
+		if (isCustomROI())
+			 locationPreset = CUSTOM;
+
+		// end of loading user preferences
 		
 		// by default thea last frame is shown
 		currentSlice = imp.getNSlices();
@@ -300,7 +330,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		
 		//add combobox for stack type
 		String[] stacks = convertStackTypesToStrings(stackTypes);
-		Panel stackTypePanel = createComboBoxPanel( "Stack_Type", stacks, 0, 100, 180);
+		Panel stackTypePanel = createComboBoxPanel( "Stack_Type", stacks, stackType, 100, 180);
 		stackTypePanel.setLocation(left, 30);
 		
 		addPanelsToDialog(generalSettingsContainer, new Panel[] {stackTypePanel} );
@@ -312,13 +342,13 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		
 		// add combobox for label format
 		Panel pLabelFormat = createComboBoxPanel("Label_Format",
-			convertFormatsToStrings(selectedStackType.getSupportedFormats()), 0);
+			convertFormatsToStrings(selectedStackType.getSupportedFormats()), format);
 		formatsComboBox = (Choice) gd.getChoices().lastElement();
 		pLabelFormat.setLocation(left, 30);
         
 		// add combobox for label unit
 		labelUnitsPanel = createComboBoxPanel("Label_Unit",
-			selectedFormat.getAllowedFormatUnits(), 0);
+			selectedFormat.getAllowedFormatUnits(), unitIndex);
 		labelUnitsComboBox = (Choice) gd.getChoices().lastElement();
 		labelUnitsPanel.setLocation(left, 60);
         
@@ -384,17 +414,13 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		Panel pLocationY = createNumericFieldPanel("Y_", y, 0, 20, 50);
 		locationYTextField = (TextField) gd.getNumericFields().lastElement();
 		pLocationY.setLocation(120, 30);
-		
-		if (isCustomROI())
-			 locationPreset = CUSTOM;
-		else locationPreset = UPPER_LEFT;
-		
+
 		// add combobox for location presets
 		Panel pLocationPresets = createComboBoxPanel( "Location_Presets", locations, locationPreset, 110, 130);
 		locationPresetsComboBox = (Choice) gd.getChoices().lastElement();
 		pLocationPresets.setLocation(240, 30);
         
-	        fontPropertiesContainer = new FontPropertiesPanel();
+	        fontPropertiesContainer = new FontPropertiesPanel(backgroundEnabled);
 		fontPropertiesContainer.setBounds(left, 70, 400, subpanelHeight);
   		
   		addPanelsToDialog(locationFontContainer,
@@ -419,7 +445,12 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		previewAndMessage.add(theMessage);
 		addPanelIntoDialog(previewAndMessage);
 
-		bringMetaDataUnitToGUI();
+		/* If a custom format has been selected, don't bring
+		 * up the meta data of the image
+		 */
+		if (format != selectedStackType.getCustomFormatIndex()) {
+			bringMetaDataUnitToGUI();
+		}
 
 		/* needed for listening to dialog,
 		 * field/button/checkbox changes
@@ -459,6 +490,25 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			return DONE;
 		}
 
+		// save user preferences
+		Prefs.set(PREF_KEY+"x", x);
+		Prefs.set(PREF_KEY+"y", y);
+		Prefs.set(PREF_KEY+"interval", interval);
+		Prefs.set(PREF_KEY+"customSuffix", customSuffix);
+		Prefs.set(PREF_KEY+"chosenSuffix", chosenSuffix);
+		Prefs.set(PREF_KEY+"decimalPlaces", decimalPlaces);
+		Prefs.set(PREF_KEY+"customFormat", customFormat);
+		Prefs.set(PREF_KEY+"unit", chosenSuffix);
+		Prefs.set(PREF_KEY+"frameMask", frameMask);
+		Prefs.set(PREF_KEY+"backgroundEnabled", backgroundEnabled);
+		Prefs.set(PREF_KEY+"locationPreset", locationPreset);
+		int stackTypeIndex = Arrays.asList(stackTypes).indexOf(selectedStackType);
+		Prefs.set(PREF_KEY+"stackType", stackTypeIndex);
+		int formatIndex = Arrays.asList(selectedStackType.getSupportedFormats())
+					.indexOf(selectedFormat);	
+		Prefs.set(PREF_KEY+"format", formatIndex);
+
+		
 		/* if the ok button was pressed, we are really running the plug-in,
 		 * so later we can tell what label to make
 		 * as its not the last as used by preview
@@ -835,6 +885,9 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 				labelUnitsComboBox.addItem(unit);
 			}
 
+			/* If the stack type was not changed, but the format was,
+			 * the user selected a label format by hand.
+			 */
 			if (!stackTypeChanged) {
 				customUnitSelected = true;
 			}
@@ -846,7 +899,11 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		String theCurrentSuffix = gd.getNextChoice();
 		if (!theCurrentSuffix.equals(chosenSuffix)){
 			chosenSuffix = theCurrentSuffix;
-			if (!selectedFormatChanged) {
+
+			/* If the stack type was not changed, but the format was,
+			 * the user selected a label format by hand.
+			 */
+			if (!stackTypeChanged) {
 				customUnitSelected = true;
 			}
 		}
@@ -1282,7 +1339,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 
 		/**
 		 * Gets the display name of the format.
-		 * 
+		 *
 		 * @return The display name of the format
 		 */
 		public String getName() {
@@ -1292,7 +1349,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		/**
 		 * Indicates whether custom (user input) suffixes are allowed for this
 		 * format or not.
-		 * 
+		 *
 		 * @return True if custom suffixes are allowed, false otherwise
 		 */
 		public boolean supportsCustomSuffix() {
@@ -1303,18 +1360,18 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		 * Indicates whether a custom label format can be used by the format.
 		 * This could be useful for digital formats like HH:mm which should be
 		 * user definable.
-		 * 
+		 *
 		 * @return True if the format supports custom formats, false otherwise.
 		 */
 		public boolean supportsCustomFormat() {
 			return customFormatSupported;
 		}
-		
+
 		/**
 		 * Indicates whether decimal places are part of the format.
 		 * This could be useful for decimal formats for which the number of
 		 * decimal places should be user definable.
-		 * 
+		 *
 		 * @return True if the format supports decimal places, false otherwise.
 		 */
 		public boolean supportsDecimalPlaces() {
@@ -1342,7 +1399,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		 * Constructs a new {@link DecimalLabelFormat}. The allowed units and a
 		 * name are requested as parameters. No custom label format input is
 		 * supported, but one can use a custom suffix with this class.
-		 * 
+		 *
 		 * @param allowedFormatUnits
 		 *            The allowed units for this format.
 		 * @param name
@@ -1394,7 +1451,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		 * Constructs a new {@link DigitalLabelFormat}. The allowed units and a
 		 * name are requested as parameters. No custom label format input is
 		 * supported, but one can use a custom suffix with this class.
-		 * 
+		 *
 		 * @param allowedFormatUnits
 		 *            The allowed units for this format.
 		 * @param name
@@ -1406,7 +1463,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 
 		/**
 		 * Makes the string containing the number for the label stamp, with
-		 * hh:mm:ss.decimalPlaces format which is nice, 
+		 * hh:mm:ss.decimalPlaces format which is nice,
 		 * and we do have that functionality in HybridDateFormat?
 		 */
 		@Override
@@ -1471,7 +1528,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 
 	/**
 	 * Class for a panel containing several font manipulation items.
-	 * It consists of a font style and colour buttons, 
+	 * It consists of a font style and colour buttons,
 	 * and also a check box for toggling drawing a background behind the label.
 	 */
 	@SuppressWarnings("serial")
@@ -1480,9 +1537,9 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		 * Creates a new {@link FontPropertiesPanel} containing the font setting
 		 * and font colour buttons.
 		 */
-		public FontPropertiesPanel() {
+		public FontPropertiesPanel(boolean background) {
 			super(null);
-			
+
 			Button fontStyleButton = new Button("Font Settings");
 			fontStyleButton.setBounds(0, 0, 120, 25);
 			fontStyleButton.addActionListener(new ActionListener() {
@@ -1491,7 +1548,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 
 				}
 			});
-			
+
 			Button fontColourButton = new Button("Font Color");
 			fontColourButton.setBounds(130, 0, 120, 25);
 			fontColourButton.addActionListener(new ActionListener() {
@@ -1500,25 +1557,26 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 
 				}
 			});
-			
+
 			final Checkbox drawBackground = new Checkbox("Background");
 			drawBackground.setBounds(260, 0, 120, 25);
+			drawBackground.setState(background);
 			drawBackground.addItemListener(new ItemListener() {
 				public void itemStateChanged(ItemEvent e) {
 					backgroundEnabled = drawBackground.getState();
 					updatePreview();
 				}
 			});
-			
+
 			add(fontStyleButton);
 			add(fontColourButton);
 			add(drawBackground);
 		}
 	}
-	
+
 	/**
-	 * This class extends Fonts so we can listen to the changes in the 
-	 * imageJ fonts GUI that we reuse for font settings 
+	 * This class extends Fonts so we can listen to the changes in the
+	 * imageJ fonts GUI that we reuse for font settings
 	 * and update the preview accordingly.
 	 */
 	@SuppressWarnings("serial")
@@ -1530,6 +1588,6 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			antiAliasedText = TextRoi.isAntialiased();
 			updatePreview();
 		}
-		
+
 	}
 } // thats the end of Series_Labeler
