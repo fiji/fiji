@@ -106,88 +106,88 @@ import java.util.TimeZone;
  */
 public class Series_Labeler implements ExtendedPlugInFilter,
 		DialogListener, ImageListener {
-	static String PREF_KEY = "Series_Labeler.";
+	protected static String PREF_KEY = "Series_Labeler.";
 
 	// the distance from left of image in px to put the label.
-	static int x = 2;
+	protected static int x = 2;
 	// the px distance to the top
-	static int y = 15;
+	protected static int y = 15;
 	// the font to draw the text with
-	static Font font;
+	protected static Font font;
 	// the start time for the first frame
-	static double start = 0.0;
+	protected static double start = 0.0;
 	// the interval between two frames
-	static double interval = 1.0;
+	protected static double interval = 1.0;
 	// the custom suffix, used if format supports it
-	static String customSuffix = "";
+	protected static String customSuffix = "";
 	/* the suffix to append to the label, used if
 	 * format supports supports no custom suffix
 	 */
-	static String chosenSuffix = "s";
+	protected static String chosenSuffix = "s";
 	// the amount of decimal places, used by some formats
-	static int decimalPlaces = 3;
+	protected static int decimalPlaces = 3;
 	/* the custom pattern for labeling, used if format
 	 * supports it
 	 */
-	static String customFormat = "";
+	protected static String customFormat = "";
 	// indicates if the text should be anti-aliased or not
-	static boolean antiAliasedText = true;
+	protected static boolean antiAliasedText = true;
 	/* a generation range for the labels, these default to 0 as no
 	 * values are given
 	 */
-	static int first, last;
+	protected static int first, last;
 	/* the 'n' for 'label every n-th frame'. Treated as 1 for values
 	 * below one
 	 */
-	static int frameMask = 1;
+	protected static int frameMask = 1;
 	// background of label enabled
-	static boolean backgroundEnabled = false;
+	protected static boolean backgroundEnabled = false;
 	// the currently selected format
-	static AbstractStampFormat selectedFormat;
+	protected static AbstractStampFormat selectedFormat;
 	// the currently selected stack type
-	static StackType selectedStackType;
+	protected static StackType selectedStackType;
 	// the currently selected location preset
-	static int locationPreset;
+	protected static int locationPreset;
 
 	// the image we are working on
-	ImagePlus imp;
+	protected ImagePlus imp;
 	// indicates if processing has been canceled or not
-	boolean canceled;
+	protected boolean canceled;
 	/* indicates if we are in preview mode or doing the
 	 * actual processing
 	 */
-	boolean preview = true;
+	protected boolean preview = true;
 	// the current state of the preview checkbox
-	boolean previewCheckState = false;
+	protected boolean previewCheckState = false;
 	// the current frame
-	int frame;
+	protected int frame;
 	// the current slice selected in the ImagePlus
-	int currentSlice;
+	protected int currentSlice;
 
 	// the object that runs the plugin.
-	PlugInFilterRunner pluginFilterRunner;
+	protected PlugInFilterRunner pluginFilterRunner;
 	/* a combination (bitwise OR) of the flags specified in
          * interfaces PlugInFilter and ExtendedPlugInFilter.
          * Determines what kind of image the plug-in can run on etc.
 	 */
-	int flags = DOES_ALL + DOES_STACKS + STACK_REQUIRED;
+	protected int flags = DOES_ALL + DOES_STACKS + STACK_REQUIRED;
 
 	// member variable for the GUI dialog
-	private GenericDialog gd;
+	protected GenericDialog gd;
 
 	// String representations of the location presets offered
-	static final String[] locations = {"Upper Right", "Lower Right",
+	protected static final String[] locations = {"Upper Right", "Lower Right",
 		"Lower Left", "Upper Left", "Custom"};
 	// Some index aliases for the locations array
-	static final int UPPER_RIGHT=0, LOWER_RIGHT=1, LOWER_LEFT=2,
+	protected static final int UPPER_RIGHT=0, LOWER_RIGHT=1, LOWER_LEFT=2,
 		UPPER_LEFT=3, CUSTOM=4;
 
 	// the available time formats
-	final AbstractStampFormat[] timeFormats = {new DecimalLabelFormat(),
+	protected final AbstractStampFormat[] timeFormats = {new DecimalLabelFormat(),
 		new DigitalLabelFormat(), new CustomLabelFormat()};
 
 	// the availble z-stack formats
-	final AbstractStampFormat[] zFormats = {
+	protected final AbstractStampFormat[] zFormats = {
 		new DecimalLabelFormat( new String[] {"pixel", "pm", "Å",
 			"nm", "um", "mm", "cm", "m", "km", "Mm",
 			"parsec", "light year"}, "Lengths", false,
@@ -195,7 +195,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		new CustomLabelFormat()};
 
 	// the availble spectral formats
-	final AbstractStampFormat[] spectralFormats = {
+	protected final AbstractStampFormat[] spectralFormats = {
 		new DecimalLabelFormat( new String[] {"Hz", "pm⁻¹", "Å⁻¹",
 			"um⁻¹", "mm⁻¹", "cm⁻¹", "m⁻¹", "km⁻¹", "Mm⁻¹",
 			"parsec⁻¹", "light year⁻¹"}, "Frequency", false,
@@ -207,38 +207,38 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		new CustomLabelFormat() };
 
 	// the different types of stacks
-	final StackType[] stackTypes = {
+	protected final StackType[] stackTypes = {
 		new TimeStackType("time series or movie", timeFormats, 2),
 		new ZStackType("z-stack", zFormats, 1),
 		new StackType("spectral", spectralFormats, 2)};
 
 	// GUI variables that are needed to read out data
 	// from the components
-	private Choice labelUnitsComboBox;
-	private Choice formatsComboBox;
-	private Choice locationPresetsComboBox;
-	private Panel generalSettingsContainer;
-	private Panel unitsFormattingContainer;
-	private Panel startStopIntervalsContainer;
-	private Panel locationFontContainer;
-	private Panel fontPropertiesContainer;
-	private TextField locationXTextField;
-	private TextField locationYTextField;
-	private TextField intervalTextField;
-	private TextField suffixTextField;
+	protected Choice labelUnitsComboBox;
+	protected Choice formatsComboBox;
+	protected Choice locationPresetsComboBox;
+	protected Panel generalSettingsContainer;
+	protected Panel unitsFormattingContainer;
+	protected Panel startStopIntervalsContainer;
+	protected Panel locationFontContainer;
+	protected Panel fontPropertiesContainer;
+	protected TextField locationXTextField;
+	protected TextField locationYTextField;
+	protected TextField intervalTextField;
+	protected TextField suffixTextField;
 
 	// the panel containing the units selection
-	private Panel labelUnitsPanel;
+	protected Panel labelUnitsPanel;
 	// the panel containing the custom suffix elements
-	private Panel customSuffixPanel;
+	protected Panel customSuffixPanel;
 	// the panel containing the custom formats elements
-	private Panel customLabelFormatPanel;
+	protected Panel customLabelFormatPanel;
 	// the panel containing the Decimal Places elements
-	private Panel decimalPlacesPanel;
+	protected Panel decimalPlacesPanel;
 	// has a custom interval been entered in the gui
-	private static boolean customIntervalEntered;
+	protected static boolean customIntervalEntered;
 	// has a custom unit been selected in the gui
-	private static boolean customUnitSelected;
+	protected static boolean customUnitSelected;
 
 	/**
 	 * Setup the plug-in and tell ImageJ it needs to work on
@@ -623,7 +623,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	/**
 	 * container panel for gui items to be put in.
 	 */
-	private Panel createContainerPanel(int height, String label, boolean border){
+	protected Panel createContainerPanel(int height, String label, boolean border){
 		Panel panel;
         // create a bordered banel if needed
 		if (border) {
@@ -640,14 +640,14 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	/**
 	 * container panel for gui items to be put in, with a border.
 	 */
-	private Panel createContainerPanel(int height, String label){
+	protected Panel createContainerPanel(int height, String label){
 		return createContainerPanel(height, label, true);
 	}
 
 	/**
 	 * drop down selection with a text label
 	 */
-	private Panel createComboBoxPanel(String labelText, String[] values, int defaultIndex) {
+	protected Panel createComboBoxPanel(String labelText, String[] values, int defaultIndex) {
 		return createComboBoxPanel(labelText, values, defaultIndex, 100, 150);
 	}
 
@@ -655,7 +655,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 * generate gd drop down selections for use in a
 	 * different container later
 	 */
-	private Panel createComboBoxPanel(String labelText, String[] values, int defaultIndex, int labelWidth, int comboboxWidth) {
+	protected Panel createComboBoxPanel(String labelText, String[] values, int defaultIndex, int labelWidth, int comboboxWidth) {
 		gd.addChoice(labelText, values, values[defaultIndex]);
 		// get the previously added choice
 		Choice choice = (Choice) gd.getChoices().lastElement();
@@ -679,7 +679,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	/**
 	 * generate gd message for use in a different container later.
 	 */
-	private Component createMessage(String labelText) {
+	protected Component createMessage(String labelText) {
 		gd.addMessage(labelText);
 		// get the previously added choice
 		Component component = gd.getMessage();
@@ -693,7 +693,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	/**
 	 * This is a text field panel for use in the GUI
 	 */
-	private Panel createTextFieldPanel(String labelText, String defaultText) {
+	protected Panel createTextFieldPanel(String labelText, String defaultText) {
 		return createTextFieldPanel(labelText, defaultText, 100, 100);
 	}
 
@@ -701,7 +701,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 * Generates gd awt string fields for use in a
 	 * different container later
 	 */
-	private Panel createTextFieldPanel(String labelText,
+	protected Panel createTextFieldPanel(String labelText,
 			String defaultText, int labelWidth, int textFieldWidth) {
 		// add the text field
 		gd.addStringField(labelText, defaultText);
@@ -727,7 +727,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	/**
 	 * A numeric field for the GUI
 	 */
-	private Panel createNumericFieldPanel(String labelText, double defaultValue, int digits) {
+	protected Panel createNumericFieldPanel(String labelText, double defaultValue, int digits) {
 		return createNumericFieldPanel(labelText, defaultValue, digits, 100, 100);
 	}
 
@@ -735,7 +735,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 * Generates gd awt numeric fields for use in a
 	 * different container later
 	 */
-	private Panel createNumericFieldPanel(String labelText, double defaultValue, int digits, int labelWidth, int textFieldWidth) {
+	protected Panel createNumericFieldPanel(String labelText, double defaultValue, int digits, int labelWidth, int textFieldWidth) {
 		// add the numeric field
 		gd.addNumericField(labelText, defaultValue, digits);
 		// get the previously added numeric field object
@@ -769,7 +769,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 * Adds different Panels to a container Panel. Moreover
 	 * the container Panel is added to the generic dialog.
 	 */
-	private void addPanelsToDialog(Panel container, Panel[] panels) {
+	protected void addPanelsToDialog(Panel container, Panel[] panels) {
 		for (Panel p : panels) {
 			container.add(p);
 		}
@@ -780,7 +780,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	/**
 	 * The container Panel is added to the generic dialog.
 	 */
-	private void addPanelIntoDialog(Panel container) {
+	protected void addPanelIntoDialog(Panel container) {
 		gd.addPanel(container, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
 	}
 
@@ -790,7 +790,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 * @param dialog     are these params still right?
 	 * @param e
 	 */
-	private void updatePreview() {
+	protected void updatePreview() {
 		if (gd != null && preview){
 			/* tell the plug-in filter runner to update
 			 * the preview. Apparently, this is "OK"
@@ -803,7 +803,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 * Shows and Hides relevant GUI components,
 	 * based on the current state of the selected label format.
 	 */
-	private void updateUI() {
+	protected void updateUI() {
 		/* if the new format supports custom suffixes,
 		 * enable the custom suffix panel and deactivate
 		 * unit selection
@@ -1025,7 +1025,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	/**
 	 * Creates a string array out of the names of the available formats.
 	 */
-	private String[] convertFormatsToStrings(AbstractStampFormat[] formats) {
+	protected String[] convertFormatsToStrings(AbstractStampFormat[] formats) {
 		String[] formatArray = new String[formats.length];
 		int i = 0;
 		for (AbstractStampFormat t : formats) {
@@ -1038,7 +1038,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	/**
 	 * Creates a string array out of the names of the available formats.
 	 */
-	private String[] convertStackTypesToStrings(StackType[] types) {
+	protected String[] convertStackTypesToStrings(StackType[] types) {
 		String[] typeArray = new String[types.length];
 		int i = 0;
 		for (StackType t : types) {
