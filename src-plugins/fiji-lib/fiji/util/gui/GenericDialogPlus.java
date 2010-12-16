@@ -8,6 +8,7 @@ import ij.gui.GenericDialog;
 import ij.io.OpenDialog;
 
 import java.awt.Button;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
@@ -137,14 +138,21 @@ public class GenericDialogPlus extends GenericDialog {
 		Button button = new Button(label);
 		button.addActionListener(listener);
 
-		TextField text = (TextField)stringField.lastElement();
 		GridBagLayout layout = (GridBagLayout)getLayout();
-		GridBagConstraints constraints = layout.getConstraints(text);
+		Component[] children = getComponents();
+		GridBagConstraints constraints;
+		if (children != null && children.length > 0) {
+			constraints = layout.getConstraints(children[children.length - 1]);
+			constraints.insets = new Insets(0, 0, 3, 0);
+		}
+		else {
+			constraints = new GridBagConstraints();
+			constraints.insets = new Insets(5, 0, 3, 0);
+		}
 
 		constraints.gridx = 0;
 		constraints.anchor = GridBagConstraints.EAST;
 		constraints.gridwidth = 1;
-		constraints.insets = new Insets(0, 0, 3, 0);
 
 		Panel panel = new Panel();
 		panel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
