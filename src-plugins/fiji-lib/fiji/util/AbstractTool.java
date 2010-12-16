@@ -238,6 +238,8 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 		if (sliceListener != null)
 			sliceObservers.add(new SliceObserver(image, new SliceListener() {
 				public final void sliceChanged(ImagePlus image) {
+					if (maybeUnregister())
+						return;
 					if (isThisTool())
 						sliceListener.sliceChanged(image);
 				}
