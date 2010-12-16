@@ -93,6 +93,9 @@ public class SliceObserver implements AdjustmentListener, ImageListener, WindowL
 	public void unregister() {
 		ImagePlus.removeImageListener(this);
 
+		if (window == null)
+			return;
+
 		window.removeWindowListener(this);
 
 		window.removeMouseWheelListener(this);
