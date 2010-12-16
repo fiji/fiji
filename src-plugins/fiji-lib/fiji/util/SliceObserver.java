@@ -68,12 +68,10 @@ public class SliceObserver implements AdjustmentListener, ImageListener, WindowL
 	}
 
 	protected void register() {
-		ip = image.getProcessor();
-		slice = image.getCurrentSlice();
-
 		ImagePlus.addImageListener(this);
 
-		window = image.getWindow();
+		notifyIfChanged();
+
 		if (window == null)
 			return;
 
