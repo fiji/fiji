@@ -15,10 +15,12 @@ import java.awt.Scrollbar;
 
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
-public class SliceObserver implements AdjustmentListener, ImageListener, WindowListener {
+public class SliceObserver implements AdjustmentListener, ImageListener, WindowListener, MouseWheelListener {
 	protected SliceListener listener;
 
 	protected ImagePlus image;
@@ -75,6 +77,8 @@ public class SliceObserver implements AdjustmentListener, ImageListener, WindowL
 		if (window == null)
 			return;
 
+		window.addMouseWheelListener(this);
+
 		for (Component child : window.getComponents())
 			if (child instanceof Scrollbar)
 				((Scrollbar)child).addAdjustmentListener(this);
@@ -92,6 +96,8 @@ public class SliceObserver implements AdjustmentListener, ImageListener, WindowL
 		ImagePlus.removeImageListener(this);
 
 		window.removeWindowListener(this);
+
+		window.removeMouseWheelListener(this);
 
 		for (Component child : window.getComponents())
 			if (child instanceof Scrollbar)
@@ -127,6 +133,10 @@ public class SliceObserver implements AdjustmentListener, ImageListener, WindowL
         public void windowDeiconified(WindowEvent e) {}
         public void windowIconified(WindowEvent e) {}
         public void windowOpened(WindowEvent e) {}
+
+	public final void mouseWheelMoved(MouseWheelEvent e) {
+		notifyIfChanged();
+	}
 
 	public static void main(String[] args) {
 		register(new SliceListener() {
