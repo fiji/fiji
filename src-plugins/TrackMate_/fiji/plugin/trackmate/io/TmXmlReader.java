@@ -5,7 +5,9 @@ import ij.ImagePlus;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -29,6 +31,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.Settings.SegmenterType;
+import fiji.plugin.trackmate.Settings.TrackerType;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
@@ -103,9 +106,77 @@ public class TmXmlReader implements TmXmlKeys {
 			settings.segmenterType = segmenterType;
 			settings.segmenterSettings = segSettings;
 		}
+		// Tracker settings
+		Element trackerSettingsEl = root.getChild(TRACKER_SETTINGS_ELEMENT_KEY);
+		if (null != trackerSettingsEl) {
+			String trackerTypeStr 			= trackerSettingsEl.getAttributeValue(TRACKER_SETTINGS_TRACKER_TYPE_ATTRIBUTE_NAME);
+			TrackerType trackerType 		= TrackerType.valueOf(trackerTypeStr);
+			TrackerSettings trackerSettings = trackerType.createSettings();
+			trackerSettings.trackerType		= trackerType;
+			trackerSettings.timeUnits		= trackerSettingsEl.getAttributeValue(TRACKER_SETTINGS_TIME_UNITS_ATTNAME);
+			trackerSettings.spaceUnits		= trackerSettingsEl.getAttributeValue(TRACKER_SETTINGS_SPACE_UNITS_ATTNAME);
+			trackerSettings.alternativeObjectLinkingCostFactor = trackerSettingsEl.getAttribute(TRACKER_SETTINGS_ALTERNATE_COST_FACTOR_ATTNAME).getDoubleValue();
+			trackerSettings.cutoffPercentile = trackerSettingsEl.getAttribute(TRACKER_SETTINGS_CUTOFF_PERCENTILE_ATTNAME).getDoubleValue();
+			trackerSettings.blockingValue	=  trackerSettingsEl.getAttribute(TRACKER_SETTINGS_BLOCKING_VALUE_ATTNAME).getDoubleValue();
+			// Linking
+			Element linkingElement 			= trackerSettingsEl.getChild(TRACKER_SETTINGS_LINKING_ELEMENT);
+			trackerSettings.linkingDistanceCutOff = readDistanceCutoffAttribute(linkingElement);
+			trackerSettings.linkingFeatureCutoffs = readTrackerFeatureMap(linkingElement);
+			// Gap-closing
+			Element gapClosingElement		= trackerSettingsEl.getChild(TRACKER_SETTINGS_GAP_CLOSING_ELEMENT);
+			trackerSettings.allowGapClosing	= gapClosingElement.getAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME).getBooleanValue();
+			trackerSettings.gapClosingDistanceCutoff 	= readDistanceCutoffAttribute(gapClosingElement);
+			trackerSettings.gapClosingTimeCutoff 		= readTimeCutoffAttribute(gapClosingElement); 
+			trackerSettings.gapClosingFeatureCutoffs 	= readTrackerFeatureMap(gapClosingElement);
+			// Splitting
+			Element splittingElement		= trackerSettingsEl.getChild(TRACKER_SETTINGS_SPLITTING_ELEMENT);
+			trackerSettings.allowSplitting	= splittingElement.getAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME).getBooleanValue();
+			trackerSettings.splittingDistanceCutoff		= readDistanceCutoffAttribute(splittingElement);
+			trackerSettings.splittingTimeCutoff			= readTimeCutoffAttribute(splittingElement);
+			trackerSettings.splittingFeatureCutoffs		= readTrackerFeatureMap(splittingElement);
+			// Merging
+			Element mergingElement 			= trackerSettingsEl.getChild(TRACKER_SETTINGS_MERGING_ELEMENT);
+			trackerSettings.allowMerging	= mergingElement.getAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME).getBooleanValue();
+			trackerSettings.mergingDistanceCutoff		= readDistanceCutoffAttribute(mergingElement);
+			trackerSettings.mergingTimeCutoff			= readTimeCutoffAttribute(mergingElement);
+			trackerSettings.mergingFeatureCutoffs		= readTrackerFeatureMap(mergingElement);
+			// Conclude
+			settings.trackerType			= trackerType;
+			settings.trackerSettings		= trackerSettings;
+		}
 		return settings;
 	}
 	
+	
+	private static final double readDistanceCutoffAttribute(Element element) throws DataConversionException {
+		return element.getChild(TRACKER_SETTINGS_DISTANCE_CUTOFF_ELEMENT)
+			.getAttribute(TRACKER_SETTINGS_DISTANCE_CUTOFF_ATTNAME).getDoubleValue();
+	}
+	
+	private static final double readTimeCutoffAttribute(Element element) throws DataConversionException {
+		return element.getChild(TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT)
+			.getAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME).getDoubleValue();
+	}
+	
+	/**
+	 * Look for all the sub-elements of <code>element</code> with the name TRACKER_SETTINGS_FEATURE_ELEMENT, 
+	 * fetch the feature attributes from them, and returns them in a map.
+	 */
+	@SuppressWarnings("unchecked")
+	private static final Map<Feature, Double> readTrackerFeatureMap(final Element element) throws DataConversionException {
+		Map<Feature, Double> map = new HashMap<Feature, Double>();
+		List<Element> featurelinkingElements = element.getChildren(TRACKER_SETTINGS_FEATURE_ELEMENT);
+		for (Element el : featurelinkingElements) {
+			List<Attribute> atts = el.getAttributes();
+			for (Attribute att : atts) {
+				String featureStr = att.getName();
+				Feature feature = Feature.valueOf(featureStr);
+				Double cutoff = att.getDoubleValue();
+				map.put(feature, cutoff);
+			}
+		}
+		return map;
+	}
 	
 	
 	/**

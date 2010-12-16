@@ -18,6 +18,7 @@ import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.test.LAPTrackerTestDrive;
@@ -25,7 +26,7 @@ import fiji.plugin.trackmate.visualization.SpotDisplayer2D;
 
 public class TmXmlReaderTestDrive {
 
-	private static final String FILE_NAME = "TestSplitting2.xml";
+	private static final String FILE_NAME = "Test1.xml";
 	private static final File file = new File(LAPTrackerTestDrive.class.getResource(FILE_NAME).getFile());
 	
 	public static void main(String args[]) {
@@ -87,6 +88,17 @@ public class TmXmlReaderTestDrive {
 		}
 		List<Set<Spot>> tracks = new ConnectivityInspector<Spot, DefaultEdge>(trackGraph).connectedSets();		
 		System.out.println("Found "+tracks.size()+" tracks.");
+		
+		// Settings
+		System.out.println("Reading settings:");
+		try {
+			Settings settings = reader.getSettings();
+			System.out.println(settings);
+			System.out.println(settings.segmenterSettings);
+			System.out.println(settings.trackerSettings);
+		} catch (DataConversionException e) {
+			e.printStackTrace();
+		}
 		
 		// Display
 		

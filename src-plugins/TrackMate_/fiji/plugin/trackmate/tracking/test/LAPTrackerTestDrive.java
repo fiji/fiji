@@ -29,8 +29,8 @@ import fiji.plugin.trackmate.visualization.SpotDisplayer2D;
 
 public class LAPTrackerTestDrive {
 	
-	private static final String FILE_NAME_1 = "TestSplitting1.xml";
-	private static final String FILE_NAME_2 = "TestSplitting2.xml";
+	private static final String FILE_NAME_1 = "Test1.xml";
+	private static final String FILE_NAME_2 = "Test2.xml";
 
 	@SuppressWarnings("unused")
 	private static final File SPLITTING_CASE_1 = new File(LAPTrackerTestDrive.class.getResource(FILE_NAME_1).getFile());
@@ -64,7 +64,6 @@ public class LAPTrackerTestDrive {
 		} catch (DataConversionException e) {
 			e.printStackTrace();
 		}
-
 		
 		// 1.5 - Set the tracking settings
 		TrackerSettings settings = new TrackerSettings();
