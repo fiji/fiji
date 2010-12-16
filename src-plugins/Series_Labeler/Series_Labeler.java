@@ -35,7 +35,7 @@
  *  - Hyperstacks z, t, c
  *  - Macro Recording Support - does not work because GUI generic
  *   dialog is the non modal version.
- * 
+ *
  * Dan White MPI-CBG , began hacking on 15.04.09. Work continued
  * from 02-2010 by Tom Kazimiers and Dan White.
  * Pushed to Fiji contrib on 10 June 2010
@@ -98,9 +98,9 @@ import java.util.TimeZone;
  * refine and enhance the functionality for instance by adding
  * the preview functionality suggested by Michael Weber.
  * Series Labeler is not a drop in replacement for Time Stamper,
- * since it does not do hyperstacks or macro recording. 
+ * since it does not do hyperstacks or macro recording.
  *
- * Series Labeler handles any kind of stack, t, z 
+ * Series Labeler handles any kind of stack, t, z
  * or c (eg spectral series).
  * @author Dan White and Tom Kazimiers
  */
@@ -108,13 +108,13 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		DialogListener, ImageListener {
 	static String PREF_KEY = "Series_Labeler.";
 
-	// the distance from left of image in px to put the label. 
+	// the distance from left of image in px to put the label.
 	static int x = 2;
 	// the px distance to the top
 	static int y = 15;
 	// the font to draw the text with
 	static Font font;
-	// the start time for the first frame 
+	// the start time for the first frame
 	static double start = 0.0;
 	// the interval between two frames
 	static double interval = 1.0;
@@ -148,7 +148,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	static StackType selectedStackType;
 	// the currently selected location preset
 	static int locationPreset;
-	
+
 	// the image we are working on
 	ImagePlus imp;
 	// indicates if processing has been canceled or not
@@ -159,13 +159,13 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	boolean preview = true;
 	// the current state of the preview checkbox
 	boolean previewCheckState = false;
-	// the current frame 
+	// the current frame
 	int frame;
 	// the current slice selected in the ImagePlus
 	int currentSlice;
-	
+
 	// the object that runs the plugin.
-	PlugInFilterRunner pluginFilterRunner; 
+	PlugInFilterRunner pluginFilterRunner;
 	/* a combination (bitwise OR) of the flags specified in
          * interfaces PlugInFilter and ExtendedPlugInFilter.
          * Determines what kind of image the plug-in can run on etc.
@@ -174,7 +174,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 
 	// member variable for the GUI dialog
 	private GenericDialog gd;
-	
+
 	// String representations of the location presets offered
 	static final String[] locations = {"Upper Right", "Lower Right",
 		"Lower Left", "Upper Left", "Custom"};
@@ -193,7 +193,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			"parsec", "light year"}, "Lengths", false,
 			false),
 		new CustomLabelFormat()};
-	
+
 	// the availble spectral formats
 	final AbstractStampFormat[] spectralFormats = {
 		new DecimalLabelFormat( new String[] {"Hz", "pm⁻¹", "Å⁻¹",
@@ -205,13 +205,13 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			"parsec", "light year"}, "Wavelength", false,
 			false),
 		new CustomLabelFormat() };
-	
+
 	// the different types of stacks
 	final StackType[] stackTypes = {
 		new TimeStackType("time series or movie", timeFormats, 2),
 		new ZStackType("z-stack", zFormats, 1),
 		new StackType("spectral", spectralFormats, 2)};
-	
+
 	// GUI variables that are needed to read out data
 	// from the components
 	private Choice labelUnitsComboBox;
@@ -226,7 +226,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	private TextField locationYTextField;
 	private TextField intervalTextField;
 	private TextField suffixTextField;
-	
+
 	// the panel containing the units selection
 	private Panel labelUnitsPanel;
 	// the panel containing the custom suffix elements
@@ -254,7 +254,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			}
 
 			Calibration cal = imp.getCalibration();
-			
+
 			last = imp.getStackSize();
 			// if frame interval property of image is zero, set it to one
 			interval = Math.abs(cal.frameInterval) < 0.0000001 ? 1.0 : cal.frameInterval;
@@ -315,11 +315,11 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			 locationPreset = CUSTOM;
 
 		// end of loading user preferences
-		
+
 		// by default thea last frame is shown
 		currentSlice = imp.getNSlices();
 		imp.setSlice(currentSlice);
-		
+
 		// This makes the GUI object
 		gd = new NonBlockingGenericDialog("Series Labeler");
 
@@ -327,89 +327,89 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		 * General settings panel
 		 */
 		generalSettingsContainer = createContainerPanel(70, "General Settings");
-		
+
 		//add combobox for stack type
 		String[] stacks = convertStackTypesToStrings(stackTypes);
 		Panel stackTypePanel = createComboBoxPanel( "Stack_Type", stacks, stackType, 100, 180);
 		stackTypePanel.setLocation(left, 30);
-		
+
 		addPanelsToDialog(generalSettingsContainer, new Panel[] {stackTypePanel} );
-		
+
 		/*
 		 * Units formatting panel
 		 */
 		unitsFormattingContainer = createContainerPanel(100, "Units_Formatting");
-		
+
 		// add combobox for label format
 		Panel pLabelFormat = createComboBoxPanel("Label_Format",
 			convertFormatsToStrings(selectedStackType.getSupportedFormats()), format);
 		formatsComboBox = (Choice) gd.getChoices().lastElement();
 		pLabelFormat.setLocation(left, 30);
-        
+
 		// add combobox for label unit
 		labelUnitsPanel = createComboBoxPanel("Label_Unit",
 			selectedFormat.getAllowedFormatUnits(), unitIndex);
 		labelUnitsComboBox = (Choice) gd.getChoices().lastElement();
 		labelUnitsPanel.setLocation(left, 60);
-        
+
 		// add Custom Suffix panel
 		customSuffixPanel = createTextFieldPanel("Custom_Suffix", customSuffix);
 		suffixTextField = (TextField) gd.getStringFields().lastElement();
 		customSuffixPanel.setLocation(left, 60);
-		
+
 		// add Custom Format panel
 		customLabelFormatPanel = createTextFieldPanel("Custom_Format", customFormat);
 		customLabelFormatPanel.setLocation(300, 30);
-		
+
 		// add Decimal Places panel
 		decimalPlacesPanel = createNumericFieldPanel("Decimal_Places", decimalPlaces, 0);
 		decimalPlacesPanel.setLocation(280, 30);
-		
+
 		addPanelsToDialog(unitsFormattingContainer,
 			new Panel[] {pLabelFormat, customSuffixPanel,
 				labelUnitsPanel, decimalPlacesPanel,
 				customLabelFormatPanel} );
-		
+
 		/*
 		 * Start/Stop/Interval
 		 */
 		startStopIntervalsContainer = createContainerPanel(130, "Start/Stop/Interval of Stack");
-		
+
 		// add a panel for the series stamper start value
 		Panel pStartup = createNumericFieldPanel("Startup", start, 10);
 		pStartup.setLocation(left, 30);
-		
+
 		// add a panel for the interval settings
 		Panel pInterval = createNumericFieldPanel("Interval", interval, 10);
 		intervalTextField = (TextField) gd.getNumericFields().lastElement();
 		pInterval.setLocation(left, 60);
-		
+
 		// add panel for the everyNth setting
 		Panel pEveryNth = createNumericFieldPanel("Every_n-th", frameMask, 0);
 		pEveryNth.setLocation(left, 90);
-		
+
 		// add panel for First Frame setting
 		Panel pFirstFrame = createNumericFieldPanel("First", first, 0);
 		pFirstFrame.setLocation(280, 30);
-		
+
 		// add panel for Last Frame setting
 		Panel pLastFrame = createNumericFieldPanel("Last", last, 0);
 		pLastFrame.setLocation(280, 60);
-		
+
 		addPanelsToDialog(startStopIntervalsContainer,
 			new Panel[] {pStartup, pInterval,
 				 pEveryNth, pFirstFrame, pLastFrame} );
-		
+
 		/*
 		 * Location and Font panel
 		 */
 		locationFontContainer = createContainerPanel(110, "Location & Font");
-		
+
 		// add panel for X location
 		Panel pLocationX = createNumericFieldPanel("X_", x, 0, 20, 50);
 		locationXTextField = (TextField) gd.getNumericFields().lastElement();
 		pLocationX.setLocation(left, 30);
-		
+
 		// add panel for Y location
 		Panel pLocationY = createNumericFieldPanel("Y_", y, 0, 20, 50);
 		locationYTextField = (TextField) gd.getNumericFields().lastElement();
@@ -419,10 +419,10 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		Panel pLocationPresets = createComboBoxPanel( "Location_Presets", locations, locationPreset, 110, 130);
 		locationPresetsComboBox = (Choice) gd.getChoices().lastElement();
 		pLocationPresets.setLocation(240, 30);
-        
+
 	        fontPropertiesContainer = new FontPropertiesPanel(backgroundEnabled);
 		fontPropertiesContainer.setBounds(left, 70, 400, subpanelHeight);
-  		
+
   		addPanelsToDialog(locationFontContainer,
 			new Panel[] {pLocationX,
 				pLocationY, pLocationPresets,
@@ -468,7 +468,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 				}
 			}
 		});
-		
+
 		/* add a help button that opens a link to the
 		 * documentation wiki page.
 		 */
@@ -479,10 +479,10 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			updateUI();
 		}
 		gd.showDialog(); // shows the dialog GUI!
-		
+
 		// detach listener
 		ImagePlus.removeImageListener(this);
-		
+
 		// handle the plug-in cancel button being pressed.
 		if (gd.wasCanceled()){
 			// remove the preview overlay when cancel is clicked
@@ -505,10 +505,10 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		int stackTypeIndex = Arrays.asList(stackTypes).indexOf(selectedStackType);
 		Prefs.set(PREF_KEY+"stackType", stackTypeIndex);
 		int formatIndex = Arrays.asList(selectedStackType.getSupportedFormats())
-					.indexOf(selectedFormat);	
+					.indexOf(selectedFormat);
 		Prefs.set(PREF_KEY+"format", formatIndex);
 
-		
+
 		/* if the ok button was pressed, we are really running the plug-in,
 		 * so later we can tell what label to make
 		 * as its not the last as used by preview
@@ -534,7 +534,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		if (preview) {
 			frame = imp.getCurrentSlice();
 		} else {
-			frame = 1;	
+			frame = 1;
 		}
 		frame--;
 	}
@@ -569,12 +569,12 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 
 		// get current label value for that frame
 		double labelValue = getLabelValue(frame);
-		
+
 		/* set the background according to label
 		 * Rectangle
 		 */
 		Rectangle backgroundRectangle = getBoundingRectangle(ip);
-		
+
 		/* If we are in preview mode, an overlay is used to show
 		 * what the current settings will look like.
 		 */
@@ -587,7 +587,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 				labelIP = new FloatProcessor(backgroundRectangle.width,
 					backgroundRectangle.height);
 			}
-					
+
 			labelIP.setFont(font);
 			labelIP.setAntialiasedText(antiAliasedText);
 			labelIP.moveTo(0, backgroundRectangle.height);
@@ -601,7 +601,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			labelIP.setColor(Toolbar.getForegroundColor());
 			// draw the label string into the image
 			labelIP.drawString(selectedFormat.getLabelString(labelValue));
-			
+
 			ImageRoi imageRoi =
 				new ImageRoi(backgroundRectangle.x, backgroundRectangle.y, labelIP);
 			Overlay overlay = new Overlay(imageRoi);
@@ -619,7 +619,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			imp.setOverlay(null);
 		}
 	}
-	
+
 	/**
 	 * container panel for gui items to be put in.
 	 */
@@ -636,7 +636,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 
 		return panel;
 	}
-	
+
 	/**
 	 * container panel for gui items to be put in, with a border.
 	 */
@@ -650,7 +650,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	private Panel createComboBoxPanel(String labelText, String[] values, int defaultIndex) {
 		return createComboBoxPanel(labelText, values, defaultIndex, 100, 150);
 	}
-	
+
 	/**
 	 * generate gd drop down selections for use in a
 	 * different container later
@@ -666,7 +666,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		 */
 		gd.remove(choice);
 		gd.remove(label);
-		
+
 		Panel panel = new Panel(null);
 		label.setBounds(0, 0, labelWidth, 20);
 		choice.setBounds(labelWidth, 0, comboboxWidth, 22);
@@ -675,7 +675,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		panel.setSize(labelWidth+comboboxWidth, 30);
 		return panel;
 	}
-	
+
 	/**
 	 * generate gd message for use in a different container later.
 	 */
@@ -696,7 +696,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	private Panel createTextFieldPanel(String labelText, String defaultText) {
 		return createTextFieldPanel(labelText, defaultText, 100, 100);
 	}
-	
+
 	/**
 	 * Generates gd awt string fields for use in a
 	 * different container later
@@ -714,7 +714,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		 */
 		gd.remove(textField);
 		gd.remove(label);
-		
+
 		Panel panel = new Panel(null);
 		label.setBounds(0, 0, labelWidth, 20);
 		textField.setBounds(labelWidth,0,textFieldWidth, 22);
@@ -723,14 +723,14 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		panel.setSize(labelWidth+textFieldWidth, 30);
 		return panel;
 	}
-	
+
 	/**
 	 * A numeric field for the GUI
 	 */
 	private Panel createNumericFieldPanel(String labelText, double defaultValue, int digits) {
-		return createNumericFieldPanel(labelText, defaultValue, digits, 100, 100); 
+		return createNumericFieldPanel(labelText, defaultValue, digits, 100, 100);
 	}
-	
+
 	/**
 	 * Generates gd awt numeric fields for use in a
 	 * different container later
@@ -745,7 +745,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		// remove components from dialog, since we use elsewhere, but be still registered with GerericDialog
 		gd.remove(textField);
 		gd.remove(label);
-		
+
 		Panel panel = new Panel(null);
 		label.setBounds(0, 0, labelWidth, 20);
 		textField.setBounds(labelWidth,0,textFieldWidth, 22);
@@ -754,7 +754,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		panel.setSize(labelWidth+textFieldWidth, 30);
 		return panel;
 	}
-	
+
 	/**
 	 * A method for selecting the custom unit format
 	 * of the currently selected stack type.
@@ -773,7 +773,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		for (Panel p : panels) {
 			container.add(p);
 		}
-		
+
 		addPanelIntoDialog(container);
 	}
 
@@ -786,7 +786,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 
 	/**
 	 * Updates the preview.
-	 * 
+	 *
 	 * @param dialog     are these params still right?
 	 * @param e
 	 */
@@ -798,7 +798,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			pluginFilterRunner.dialogItemChanged(gd, null);
 		}
 	}
-	
+
 	/**
 	 * Shows and Hides relevant GUI components,
 	 * based on the current state of the selected label format.
@@ -820,7 +820,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		 */
 		decimalPlacesPanel.setVisible(selectedFormat.supportsDecimalPlaces());
 	}
-	
+
 	/**
 	 * This method deals with changes the user makes in the GUI
 	 */
@@ -915,7 +915,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		}
 
 		decimalPlaces = (int) gd.getNextNumber();
-		
+
 		start = gd.getNextNumber();
 
 		double currentIntervalInGui = gd.getNextNumber();
@@ -927,7 +927,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		frameMask = (int) gd.getNextNumber();
 		first = (int) gd.getNextNumber();
 		last = (int) gd.getNextNumber();
-		
+
 		// has a different location preset has been selected?
 		int preset = gd.getNextChoiceIndex();
 		if (preset != locationPreset){
@@ -937,7 +937,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			locationXTextField.setText(Integer.toString(p.x));
 			locationYTextField.setText(Integer.toString(p.y));
 		}
-		
+
 		try {
 			int curX = (int) gd.getNextNumber();
 			if (curX != x) {
@@ -946,7 +946,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			}
 		}
 		catch (NumberFormatException ex) { return false; }
-		
+
 		try {
 			int curY = (int) gd.getNextNumber();
 			if (curY != y) {
@@ -955,9 +955,9 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			}
 		}
 		catch (NumberFormatException ex) { return false; }
-		
+
 		boolean currestPreviewState = gd.getPreviewCheckbox().getState();
-		
+
 		// did the state of the preview checkbox change?
 		if (currestPreviewState != previewCheckState) {
 			// remember value
@@ -972,16 +972,16 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 
 		return true; // or else the dialog will have the ok button deactivated!
 	}
-	
-	
+
+
 	public void imageClosed(ImagePlus imp) {
 		// currently we are not interested in this event
 	}
-     
+
 	public void imageOpened(ImagePlus imp) {
 		// currently we are not interested in this event
 	}
-	
+
 	public void imageUpdated(ImagePlus imp) {
 		// has the slice been changed?
 		int slice = imp.getCurrentSlice();
@@ -994,7 +994,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			}
 		}
 	}
-	
+
 	/**
 	 * Method to take the meta data units from the calibration in the imp
 	 * and give it to the required member variables and drop down list
@@ -1034,7 +1034,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		}
 		return formatArray;
 	}
-	
+
 	/**
 	 * Creates a string array out of the names of the available formats.
 	 */
@@ -1057,9 +1057,9 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		Roi roi = imp.getRoi();
 		if (roi == null)
 			return false;
-		
+
 		Rectangle theROI = roi.getBounds();
-		
+
 		// if the ROI is the same size as the image (default ROI), return false
 		return (theROI.height != imp.getHeight()
 					|| theROI.width != imp.getWidth());
@@ -1068,18 +1068,18 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	/**
 	 * Works out the size of the font to use,
 	 * from the size of the ROI box drawn so it fits in the ROI.
-	 * If no ROI is set by the user, 
+	 * If no ROI is set by the user,
 	 * x and y are defaulted or set according to text fields in GUI
 	 */
 	void setFontParams() {
 
 		// the default font size
 		int size = 12;
-		
+
 		if (isCustomROI()){
 			Roi roi = imp.getRoi();
 			Rectangle theROI = roi.getBounds();
-			
+
 			/**
 			 * Remember the ROIs top left coordinates to be the X and Y values
 			 * of the font rectangle
@@ -1096,14 +1096,14 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			/**
 			 * make sure the font is not too big or small
 			 * ImageJ font dialog smallest size is 8
-			 * and largest is 72. Should stick to those limits. 
+			 * and largest is 72. Should stick to those limits.
 			 */
 			if (size < 8)
 				size = 8;
 			else if (size > 72)
 				size = 72;
 		}
-		
+
 		font = new Font(TextRoi.getFont(), TextRoi.getStyle(), size);
 	}
 
@@ -1126,20 +1126,20 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			roi.y = y;
 			roi.height = font.getSize();
 		}
-		
+
 		/* make sure the y position is not less than the font height/
 		 * size, so the label is not off the top of the image?
 		 */
 		if ( (roi.y + roi.height) < font.getSize()) {
 			y = roi.y = 1;
-		} 
-		
+		}
+
 		/* make sure the stamp does not fall off the bottom of the image
 		 */
 		if (ip.getHeight() < (roi.y + font.getSize())) {
 			y = roi.y = ip.getHeight() - font.getSize();
 		}
-		
+
 		/* assume that the last label is the widest one to calculate
 		 * the maximum width of the bounding rectangle. This is not always
 		 * true (e.g. 0:00 vs. 0:11) and could be made more precise.
@@ -1152,10 +1152,10 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		if (roi.width > (ip.getWidth() - roi.x)) {
 			x = roi.x = (ip.getWidth() - roi.width);
 		}
-		
+
 		return roi;
 	}
-	
+
 	/**
 	 * Work out where in the image the preset positions are.
 	 */
@@ -1178,9 +1178,9 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			y = ip.getHeight();
 		}
 		else return new Point(x, y);
-		
+
 		Rectangle rect = getBoundingRectangle(ip);
-		
+
 		return new Point(rect.x, rect.y);
 	}
 
@@ -1193,7 +1193,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 
 	/**
 	 * Returns the label value of a specific frame.
-	 * 
+	 *
 	 * @param f The frame to calculate the value of
 	 * @return The label value at frame f
 	 */
@@ -1255,7 +1255,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	}
 
 	/**
-	 * A class representing a supported label format 
+	 * A class representing a supported label format
 	 * It relates supported format units/suffixes to a format
 	 * name. Besides that it determines if a custom suffix
 	 * should be avaialble to the user.
@@ -1271,9 +1271,9 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		boolean customFormatSupported;
 		// a member indicating if decimal places modification is supported
 		boolean decimalPlacesSupported;
-		
+
 		/**
-		 * 
+		 *
 		 * @param allowedFormatUnits
 		 * @param name
 		 * @param supportCustomSuffix
@@ -1295,7 +1295,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		 * is decimal (not digital) then need to set suffix from drop down list
 		 * which might be custom suffix if one is entered and selected. if it is
 		 * digital, then there is no suffix as format is set default as hh:mm:ss.ms
-		 * 
+		 *
 		 * @param labelValue The value to a frame of which
 		 * the label should be generated
 		 * @return The string representation of the label value
@@ -1311,7 +1311,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		 * interval*imp.getStackSize())); but should use last not stacksize,
 		 * since no label is made for slices after last? It also needs to
 		 * calculate maxWidth for both digital and decimal label formats:
-		 * 
+		 *
 		 * @return
 		 */
 		public String lastLabelString() {
@@ -1320,7 +1320,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 
 		/**
 		 * Gets the suffix (if any) that should be appended to the label.
-		 * 
+		 *
 		 * @return The suffix to display.
 		 */
 		public String suffix() {
@@ -1328,9 +1328,9 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		}
 
 		/**
-		 * Gets an array of allowed units for the format. 
+		 * Gets an array of allowed units for the format.
 		 * eg. to display them in a drop down choice list.
-		 * 
+		 *
 		 * @return The allowed units.
 		 */
 		public String[] getAllowedFormatUnits() {
