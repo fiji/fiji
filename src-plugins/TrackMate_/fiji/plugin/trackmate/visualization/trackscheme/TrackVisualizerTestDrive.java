@@ -3,7 +3,6 @@ package fiji.plugin.trackmate.visualization.trackscheme;
 import java.awt.Dimension;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -14,6 +13,7 @@ import javax.swing.JScrollPane;
 import org.jdom.JDOMException;
 import org.jgraph.JGraph;
 import org.jgraph.graph.DefaultGraphCell;
+import org.jgraph.graph.GraphLayoutCache;
 import org.jgrapht.ext.JGraphModelAdapter;
 import org.jgrapht.ext.JGraphModelAdapter.CellFactory;
 import org.jgrapht.graph.DefaultEdge;
@@ -21,9 +21,7 @@ import org.jgrapht.graph.SimpleGraph;
 
 import com.jgraph.layout.JGraphFacade;
 import com.jgraph.layout.JGraphLayout;
-import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout;
 
-import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.test.LAPTrackerTestDrive;
@@ -38,7 +36,6 @@ public class TrackVisualizerTestDrive extends JFrame {
 	private static final String 	FILE_NAME_2 = "FakeTracks.xml";
 	private static final File 		CASE_2 = new File(Branched3DTrackTestDrive.class.getResource(FILE_NAME_2).getFile());
 	private static final Dimension 	DEFAULT_SIZE = new Dimension( 530, 320 );
-
 	
 	
 	public static void main(String[] args) throws JDOMException, IOException {
@@ -48,13 +45,10 @@ public class TrackVisualizerTestDrive extends JFrame {
 		tdtd.setVisible(true);
 		
 	}
-
-
-	private JGraphModelAdapter<Spot, DefaultEdge> jgAdapter;		
 		
 	public void init() throws JDOMException, IOException {
 
-		TmXmlReader reader = new TmXmlReader(CASE_1);
+		TmXmlReader reader = new TmXmlReader(CASE_2);
 		reader.parse();
 		
 		// Load objects 
@@ -67,7 +61,7 @@ public class TrackVisualizerTestDrive extends JFrame {
 		displayer.render();
 		displayer.setTrackGraph(tracks);
 		
-		jgAdapter = new JGraphModelAdapter<Spot, DefaultEdge>(
+		JGraphModelAdapter<Spot, DefaultEdge> jgAdapter = new JGraphModelAdapter<Spot, DefaultEdge>(
 				tracks,
 				JGraphModelAdapter.createDefaultVertexAttributes(), 
 				JGraphModelAdapter.createDefaultEdgeAttributes(tracks),
@@ -83,7 +77,13 @@ public class TrackVisualizerTestDrive extends JFrame {
 						return new SpotCell(s);
 					}
 				});
-		JGraph jgraph = new JGraph(jgAdapter);
+		
+		
+		GraphLayoutCache graphLayout = new GraphLayoutCache(jgAdapter, new SpotCellViewFactory());
+		JGraph jgraph = new JGraph(jgAdapter, graphLayout);
+
+		
+		
 		JScrollPane scrollPane = new JScrollPane(jgraph);
 		
 		
@@ -91,7 +91,7 @@ public class TrackVisualizerTestDrive extends JFrame {
         setSize( DEFAULT_SIZE );
         
         JGraphFacade facade = new JGraphFacade(jgraph);
-        JGraphLayout layout = new JGraphTimeLayout(tracks);
+        JGraphLayout layout = new JGraphTimeLayout(tracks, jgAdapter);
         
         layout.run(facade);
         Map nested = facade.createNestedMap(false, false); // Obtain a map of the resulting attribute changes from the facade 

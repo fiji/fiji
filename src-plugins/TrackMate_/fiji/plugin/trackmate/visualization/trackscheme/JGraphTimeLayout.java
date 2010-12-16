@@ -1,6 +1,5 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
@@ -8,6 +7,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.jgrapht.alg.ConnectivityInspector;
+import org.jgrapht.ext.JGraphModelAdapter;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 import org.jgrapht.traverse.DepthFirstIterator;
@@ -31,15 +31,15 @@ public class JGraphTimeLayout implements JGraphLayout {
 	
 	private SimpleGraph<Spot, DefaultEdge> graph;
 	private List<Set<Spot>> tracks;
+	private JGraphModelAdapter<Spot, DefaultEdge> adapter;
 
 
-	public JGraphTimeLayout(SimpleGraph<Spot,org.jgrapht.graph.DefaultEdge> graph) {
+	public JGraphTimeLayout(SimpleGraph<Spot, DefaultEdge> graph, JGraphModelAdapter<Spot, DefaultEdge> adapter) {
 		this.graph = graph;
+		this.adapter = adapter;
 		this.tracks = new ConnectivityInspector<Spot, DefaultEdge>(graph).connectedSets();
 	}
 	
-	
-	@SuppressWarnings("unchecked")
 	@Override
 	public void run(JGraphFacade graphFacade) {
 		
@@ -79,19 +79,11 @@ public class JGraphTimeLayout implements JGraphLayout {
 				// Keep track of column filling
 				columns.put(instant, targetColumn);
 				
-				// Move the corresponding object in the facade
-				Collection facadeObjects = graphFacade.getVertices();
-				Object facadeTarget = null;
-				for(Object obj : facadeObjects) {
-					SpotCell s = (SpotCell) obj;
-					if (s.getSpot() == spot) {
-						facadeTarget = obj;
-						break;
-					}
-				}
+				// Get corresponding JGraph cell 
+				Object facadeTarget = adapter.getVertexCell(spot);
+				// Move the corresponding cell in the facade
 				graphFacade.setLocation(facadeTarget, targetColumn * X_ZOOM_FACTOR, instant * Y_ZOOM_FACTOR);
 			}
-
 		
 			for(Float instant : instants)
 				columns.put(instant, currentColumn+1);
