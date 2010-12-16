@@ -165,13 +165,18 @@ public class SpotDisplayer2D extends SpotDisplayer {
 	public SpotDisplayer2D(final ImagePlus imp, final float radius, final float[] calibration) {
 		this.radius = radius;
 		this.imp = imp;
-		this.calibration = calibration;
+		if (null == calibration)
+			if (null == imp)
+				this.calibration = new float[] { 1, 1 };
+			else
+				this.calibration  = new float[] {(float) imp.getCalibration().pixelWidth, (float) imp.getCalibration().pixelHeight };
+		else
+			this.calibration = calibration;
 		this.radius = radius;
 	}
 	
 	public SpotDisplayer2D(ImagePlus imp, final float radius) {
-		this(imp, radius, 
-				new float[] {(float) imp.getCalibration().pixelWidth, (float) imp.getCalibration().pixelHeight });
+		this(imp, radius, null);
 	}
 	
 	public SpotDisplayer2D(final ImagePlus imp) {

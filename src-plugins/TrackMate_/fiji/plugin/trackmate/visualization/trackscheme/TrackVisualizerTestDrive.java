@@ -1,8 +1,9 @@
-package fiji.plugin.trackmate.visualization.test;
+package fiji.plugin.trackmate.visualization.trackscheme;
 
 import java.awt.Dimension;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -25,14 +26,17 @@ import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.io.TmXmlReader;
+import fiji.plugin.trackmate.tracking.test.LAPTrackerTestDrive;
+import fiji.plugin.trackmate.visualization.SpotDisplayer2D;
+import fiji.plugin.trackmate.visualization.test.Branched3DTrackTestDrive;
 
 public class TrackVisualizerTestDrive extends JFrame {
 
 	private static final long serialVersionUID = 1L;
-	private static final String 	FILE_NAME_1 = "Celegans-5pc_17timepoints.xml";
-	private static final File 		SPLITTING_CASE_1 = new File(TrackVisualizerTestDrive.class.getResource(FILE_NAME_1).getFile());
+	private static final String 	FILE_NAME_1 = "Test2.xml";
+	private static final File 		CASE_1 = new File(LAPTrackerTestDrive.class.getResource(FILE_NAME_1).getFile());
 	private static final String 	FILE_NAME_2 = "FakeTracks.xml";
-	private static final File 		SPLITTING_CASE_2 = new File(TrackVisualizerTestDrive.class.getResource(FILE_NAME_2).getFile());
+	private static final File 		CASE_2 = new File(Branched3DTrackTestDrive.class.getResource(FILE_NAME_2).getFile());
 	private static final Dimension 	DEFAULT_SIZE = new Dimension( 530, 320 );
 
 	
@@ -50,7 +54,7 @@ public class TrackVisualizerTestDrive extends JFrame {
 		
 	public void init() throws JDOMException, IOException {
 
-		TmXmlReader reader = new TmXmlReader(SPLITTING_CASE_2);
+		TmXmlReader reader = new TmXmlReader(CASE_1);
 		reader.parse();
 		
 		// Load objects 
@@ -58,9 +62,10 @@ public class TrackVisualizerTestDrive extends JFrame {
 		TreeMap<Integer, List<Spot>> selectedSpots 	= reader.getSpotSelection(allSpots);
 		SimpleGraph<Spot, DefaultEdge> tracks = reader.getTracks(selectedSpots);
 		
-		
-		
-//		ListenableUndirectedGraph<Spot, DefaultEdge> g = new ListenableUndirectedGraph<Spot, DefaultEdge>(tracks);
+		SpotDisplayer2D displayer = new SpotDisplayer2D(null);
+		displayer.setSpots(selectedSpots);
+		displayer.render();
+		displayer.setTrackGraph(tracks);
 		
 		jgAdapter = new JGraphModelAdapter<Spot, DefaultEdge>(
 				tracks,
@@ -75,14 +80,7 @@ public class TrackVisualizerTestDrive extends JFrame {
 
 					@Override
 					public DefaultGraphCell createVertexCell(Spot s) {
-						return new DefaultGraphCell(s) {
-							private static final long serialVersionUID = 1L;
-							@Override
-							public String toString() {
-								Spot s = (Spot) userObject;
-								return "t = "+s.getFeature(Feature.POSITION_T);
-							}
-						};
+						return new SpotCell(s);
 					}
 				});
 		JGraph jgraph = new JGraph(jgAdapter);
@@ -92,17 +90,12 @@ public class TrackVisualizerTestDrive extends JFrame {
         getContentPane().add(scrollPane);
         setSize( DEFAULT_SIZE );
         
-
-
-        Object[] roots = selectedSpots.get(selectedSpots.keySet().iterator().next()).toArray();
-        JGraphFacade facade = new JGraphFacade(jgraph, roots);
-        JGraphLayout layout = new JGraphHierarchicalLayout();
-        layout.run(facade); // Run the layout on the facade. Note that layouts do not implement the Runnable interface, to avoid confusion 
+        JGraphFacade facade = new JGraphFacade(jgraph);
+        JGraphLayout layout = new JGraphTimeLayout(tracks);
+        
+        layout.run(facade);
         Map nested = facade.createNestedMap(false, false); // Obtain a map of the resulting attribute changes from the facade 
         jgraph.getGraphLayoutCache().edit(nested); // Apply the results to the actual graph 
-
-
-
 		
 	}
 	
