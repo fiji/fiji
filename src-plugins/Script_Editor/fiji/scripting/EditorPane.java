@@ -13,9 +13,11 @@ import java.awt.event.ActionEvent;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 
 import java.util.Vector;
 
@@ -204,7 +206,7 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 
 	public void write(File file) throws IOException {
 		BufferedWriter outFile =
-			new BufferedWriter(new FileWriter(file));
+			new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
 		outFile.write(getText());
 		outFile.close();
 		modifyCount = 0;
@@ -231,7 +233,7 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 				return;
 			}
 			StringBuffer string = new StringBuffer();
-			BufferedReader reader = new BufferedReader(new FileReader(file));
+			BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
 			char[] buffer = new char[16384];
 			for (;;) {
 				int count = reader.read(buffer);
