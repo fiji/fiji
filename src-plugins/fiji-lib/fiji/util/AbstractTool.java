@@ -10,6 +10,7 @@ import ij.gui.Toolbar;
 
 import ij.plugin.PlugIn;
 
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -29,6 +30,7 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 	protected MouseMotionProxy mouseMotionProxy;
 	protected SliceListener sliceListener;
 	protected List<SliceObserver> sliceObservers = new ArrayList<SliceObserver>();
+	protected ToolbarMouseAdapter toolbarMouseListener;
 
 	/*
 	 * There is currently no way to let the tool know that the toolbar decided to clear the custom tools.
@@ -94,8 +96,28 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 			mouseWheelProxy = new MouseWheelProxy((MouseWheelListener)this);
 		if (this instanceof SliceListener)
 			sliceListener = (SliceListener)this;
+		if (this instanceof ToolWithOptions)
+			toolbarMouseListener = new ToolbarMouseAdapter((ToolWithOptions)this);
 
 		registerTool();
+	}
+
+	/**
+	 * This class is used to monitor double-clicks on the toolbar icon of this concrete tool.
+	 */
+	protected class ToolbarMouseAdapter extends MouseAdapter {
+		protected ToolWithOptions this2;
+
+		public ToolbarMouseAdapter(ToolWithOptions tool) {
+			this2 = tool;
+		}
+
+		public void mouseReleased(MouseEvent e) {
+			if (maybeUnregister())
+				return;
+			if (isThisTool() && e.getClickCount() > 1)
+				this2.showOptionDialog();
+		}
 	}
 
 	protected class MouseProxy implements MouseListener {
@@ -205,6 +227,8 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 		if (ids != null)
 			for (int id : ids)
 				registerTool(WindowManager.getImage(id));
+		if (toolbarMouseListener != null)
+			toolbar.addMouseListener(toolbarMouseListener);
 		ImagePlus.addImageListener(this);
 	}
 
@@ -260,6 +284,8 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 		for (SliceObserver observer : sliceObservers)
 			observer.unregister();
 		sliceObservers.clear();
+		if (toolbarMouseListener != null)
+			toolbar.removeMouseListener(toolbarMouseListener);
 	}
 
 	protected void unregisterTool(ImagePlus image) {

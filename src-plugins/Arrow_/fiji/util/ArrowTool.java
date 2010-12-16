@@ -76,8 +76,8 @@ import javax.swing.SwingUtilities;
  * Nov-Dec 2009
  * @version 1.0 - 3 Dec 2009
  */
-public class ArrowTool extends AbstractToolWithOptions
-		implements ActionListener, MouseListener, MouseMotionListener, MouseWheelListener {
+public class ArrowTool extends AbstractTool implements ActionListener,
+		MouseListener, MouseMotionListener, MouseWheelListener, ToolWithOptions {
 	private ArrowShape arrow;
 	private BasicStroke stroke = new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
 	/**
