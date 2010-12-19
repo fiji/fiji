@@ -11,23 +11,26 @@ import org.jgraph.graph.VertexView;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.gui.TrackMateFrame;
 
 
 public class SpotView extends VertexView {
 
 	private static final long serialVersionUID = 1L;
-	private static final String ADD_ICON = "images/add.png";
-	private static final String REMOVE_ICON = "images/delete.png";
 
 	private final JLabel label;
 	private final Spot spot;
+	private ImageIcon icon;
 
-	public SpotView(final SpotCell cell) {
+	public SpotView(final SpotCell spotCell) {
+		this(spotCell, null);
+	}
+
+	public SpotView(SpotCell spotCell, ImageIcon icon) {
 		super();
-		this.label = new JLabel("----");
-		this.spot  = cell.getSpot();
-		this.cell  = cell;
+		this.label 	= new JLabel();
+		this.spot  	= spotCell.getSpot();
+		this.cell 	= spotCell;
+		this.icon 	= icon;
 	}
 
 	@Override
@@ -37,7 +40,7 @@ public class SpotView extends VertexView {
 			label.setForeground(Color.RED);
 		else 
 			label.setForeground(Color.BLACK);
-		label.setIcon(new ImageIcon(TrackMateFrame.class.getResource(ADD_ICON)));
+		label.setIcon(icon);
 		return label;
 	}
 

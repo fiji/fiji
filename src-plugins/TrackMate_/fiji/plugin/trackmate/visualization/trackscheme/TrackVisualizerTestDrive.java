@@ -32,9 +32,9 @@ public class TrackVisualizerTestDrive extends JFrame {
 
 	private static final long serialVersionUID = 1L;
 	private static final String 	FILE_NAME_1 = "Test2.xml";
-	private static final File 		CASE_1 = new File(LAPTrackerTestDrive.class.getResource(FILE_NAME_1).getFile());
+	private static final File 	CASE_1 = new File(LAPTrackerTestDrive.class.getResource(FILE_NAME_1).getFile());
 	private static final String 	FILE_NAME_2 = "FakeTracks.xml";
-	private static final File 		CASE_2 = new File(Branched3DTrackTestDrive.class.getResource(FILE_NAME_2).getFile());
+	private static final File 	CASE_2 = new File(Branched3DTrackTestDrive.class.getResource(FILE_NAME_2).getFile());
 	private static final Dimension 	DEFAULT_SIZE = new Dimension( 530, 320 );
 	
 	
@@ -78,14 +78,10 @@ public class TrackVisualizerTestDrive extends JFrame {
 					}
 				});
 		
-		
 		GraphLayoutCache graphLayout = new GraphLayoutCache(jgAdapter, new SpotCellViewFactory());
 		JGraph jgraph = new JGraph(jgAdapter, graphLayout);
 
-		
-		
 		JScrollPane scrollPane = new JScrollPane(jgraph);
-		
 		
         getContentPane().add(scrollPane);
         setSize( DEFAULT_SIZE );
@@ -96,8 +92,5 @@ public class TrackVisualizerTestDrive extends JFrame {
         layout.run(facade);
         Map nested = facade.createNestedMap(false, false); // Obtain a map of the resulting attribute changes from the facade 
         jgraph.getGraphLayoutCache().edit(nested); // Apply the results to the actual graph 
-		
 	}
-	
-	
 }
