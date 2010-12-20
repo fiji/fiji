@@ -1,0 +1,47 @@
+// Action Bar description file :rotation_bar
+run("Action Bar","/plugins/ActionBar/rotation_bar.txt");
+exit();
+<popup>
+<line>
+<button> 1 line 1
+label=H Flip
+icon=rotation_bar/rotation-1.gif
+arg=<macro>
+run("Flip Horizontally");
+</macro>
+<button> 2 line 1
+label=V Flip
+icon=rotation_bar/rotation-2.gif
+arg=<macro>
+run("Flip Vertically");
+</macro>
+<button> 3 line 1
+label=+90
+icon=rotation_bar/rotation-3.gif
+arg=<macro>
+run("Rotate 90 Degrees Right");
+</macro>
+<button> 4 line 1
+label=-90
+icon=rotation_bar/rotation-4.gif
+arg=<macro>
+run("Rotate 90 Degrees Left");
+</macro>
+<button> 5 line 1
+label=Rotation
+icon=rotation_bar/rotation-5.gif
+arg=<macro>
+run("Arbitrarily...");
+</macro>
+<button> 6 line 1
+label=?
+icon=noicon
+arg=<macro>
+showMessage("Made with ImageJ");
+</macro>
+<button> 6 line 1
+label=X
+icon=noicon
+arg=<close>
+</line>
+// end of file

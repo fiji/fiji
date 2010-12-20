@@ -1,0 +1,25 @@
+//  sample actionbar
+
+run("Action Bar","plugins/ActionBar/_ZoomBar.txt");
+exit();
+
+
+
+<popup>
+<onTop>
+<line>
+<button>
+label=zoom out
+icon=_ZoomBar/zoom-out.gif
+arg=run("Out");
+
+<button>
+label=reset zoom
+icon=_ZoomBar/zoom-100.gif
+arg=run("View 100%");
+
+<button>
+label=zoom in
+icon=_ZoomBar/zoom-in.gif
+arg=run("In");
+</line>

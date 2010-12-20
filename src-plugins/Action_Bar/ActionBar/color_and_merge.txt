@@ -1,0 +1,88 @@
+// Action Bar description file : NAME_HERE
+run("Action Bar","/plugins/ActionBar/color_and_merge.txt");
+exit();
+
+<sticky>
+
+<line>
+<button>
+label=Blk
+icon=noicon
+arg=<macro>
+run("Grays");
+</macro>
+</line>
+
+<line>
+<button>
+label=<html><font color=red size=+1>R</font></html>
+icon=noicon
+arg=<macro>
+run("Red");
+</macro>
+</line>
+
+<line>
+<button>
+label=<html><font color=green size=+1>G</font></html>
+icon=noicon
+arg=<macro>
+run("Green");
+</macro>
+</line>
+
+<line>
+<button>
+label=<html><font color=blue size=+1>B</font></html>
+icon=noicon
+arg=<macro>
+run("Blue");
+</macro>
+</line>
+
+<line>
+<button>
+label=<html><font color=black size=+1>1</font></html>
+icon=noicon
+arg=<macro>
+id = getImageID();
+set("image1",id);
+</macro>
+</line>
+
+<line>
+<button>
+label=<html><font color=black size=+1>2</font></html>
+icon=noicon
+arg=<macro>
+id = getImageID();
+set("image2",id);
+</macro>
+</line>
+
+<line>
+<button>
+label=<html><font color=black size=+1>M</font></html>
+icon=noicon
+arg=<macro>
+id1 = parseInt(get("image1"));
+id2 = parseInt(get("image2"));
+setBatchMode(true);
+selectImage(id1);
+run("Duplicate...", "title=temp");
+run("RGB Color");
+id1 = getImageID();
+selectImage(id2);
+run("Duplicate...", "title=temp");
+run("RGB Color");
+id2 = getImageID();
+imageCalculator("Add create", id1,id2);
+rename("Merge");
+setBatchMode(false);
+</macro>
+</line>
+
+<codeLibrary>
+function get(s) {return parseInt(call("ij.Prefs.get","JMAB."+s,0));}
+function set(s,v) {call("ij.Prefs.set","JMAB."+s,v); return;}
+</codeLibrary>
