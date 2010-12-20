@@ -4,7 +4,6 @@ import fiji.FijiClassLoader;
 import fiji.User_Plugins;
 
 import ij.IJ;
-import ij.ImageJ;
 import ij.ImagePlus;
 import ij.Macro;
 import ij.WindowManager;
@@ -15,8 +14,6 @@ import ij.plugin.PlugIn;
 
 import ij.plugin.filter.PlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
-
-import ij.util.Tools;
 
 import java.io.File;
 import java.io.IOException;
