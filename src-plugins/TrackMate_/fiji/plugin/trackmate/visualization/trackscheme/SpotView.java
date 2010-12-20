@@ -5,6 +5,7 @@ import java.awt.Component;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 
 import org.jgraph.JGraph;
 import org.jgraph.graph.VertexView;
@@ -31,17 +32,22 @@ public class SpotView extends VertexView {
 		this.spot  	= spotCell.getSpot();
 		this.cell 	= spotCell;
 		this.icon 	= icon;
+		initLabel();
 	}
 
 	@Override
 	public Component getRendererComponent(JGraph graph, boolean selected, boolean focus, boolean preview) {
-		label.setText("t="+spot.getFeature(Feature.POSITION_T));
 		if (selected)
 			label.setForeground(Color.RED);
 		else 
 			label.setForeground(Color.BLACK);
-		label.setIcon(icon);
 		return label;
+	}
+
+	private void initLabel() {
+		label.setHorizontalAlignment(SwingConstants.CENTER);
+		label.setIcon(icon);
+		label.setText("t="+spot.getFeature(Feature.POSITION_T));
 	}
 
 	

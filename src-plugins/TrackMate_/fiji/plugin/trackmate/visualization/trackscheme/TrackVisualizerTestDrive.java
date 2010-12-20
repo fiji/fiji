@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
+import ij.ImagePlus;
+
 import java.awt.Dimension;
 import java.io.File;
 import java.io.IOException;
@@ -9,6 +11,8 @@ import java.util.TreeMap;
 
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
+
+import loci.formats.FormatException;
 
 import org.jdom.JDOMException;
 import org.jgraph.JGraph;
@@ -32,34 +36,46 @@ public class TrackVisualizerTestDrive extends JFrame {
 
 	private static final long serialVersionUID = 1L;
 	private static final String 	FILE_NAME_1 = "Test2.xml";
-	private static final File 	CASE_1 = new File(LAPTrackerTestDrive.class.getResource(FILE_NAME_1).getFile());
+	private static final File 		CASE_1 = new File(LAPTrackerTestDrive.class.getResource(FILE_NAME_1).getFile());
 	private static final String 	FILE_NAME_2 = "FakeTracks.xml";
-	private static final File 	CASE_2 = new File(Branched3DTrackTestDrive.class.getResource(FILE_NAME_2).getFile());
+	private static final File 		CASE_2 = new File(Branched3DTrackTestDrive.class.getResource(FILE_NAME_2).getFile());
 	private static final Dimension 	DEFAULT_SIZE = new Dimension( 530, 320 );
+	private static final String 	FILE_NAME_3 ="Celegans-5pc_17timepoints.xml";
+	private static final File 		CASE_3 = new File(TrackVisualizerTestDrive.class.getResource(FILE_NAME_3).getFile());
 	
 	
-	public static void main(String[] args) throws JDOMException, IOException {
+	public static void main(String[] args) throws JDOMException, IOException, FormatException {
 		
 		TrackVisualizerTestDrive tdtd = new TrackVisualizerTestDrive();
-		tdtd.init();
+		tdtd.init(args);
 		tdtd.setVisible(true);
 		
 	}
 		
-	public void init() throws JDOMException, IOException {
+	public void init(String[] args) throws JDOMException, IOException, FormatException {
 
-		TmXmlReader reader = new TmXmlReader(CASE_2);
+		TmXmlReader reader = new TmXmlReader(CASE_3);
 		reader.parse();
 		
 		// Load objects 
 		TreeMap<Integer, List<Spot>> allSpots 		= reader.getAllSpots();
 		TreeMap<Integer, List<Spot>> selectedSpots 	= reader.getSpotSelection(allSpots);
 		SimpleGraph<Spot, DefaultEdge> tracks = reader.getTracks(selectedSpots);
+		ImagePlus imp = reader.getImage();
 		
-		SpotDisplayer2D displayer = new SpotDisplayer2D(null);
+		// Stuff not saved yet
+		float[] calibration = null; // new float[] {1, 1, 1};
+		float radius = 15;
+		
+		// Launch ImageJ and display
+		ij.ImageJ.main(args);
+		imp.show();
+		SpotDisplayer2D displayer = new SpotDisplayer2D(imp, radius, calibration);
 		displayer.setSpots(selectedSpots);
 		displayer.render();
+		displayer.setSpotsToShow(selectedSpots);
 		displayer.setTrackGraph(tracks);
+		displayer.refresh();
 		
 		JGraphModelAdapter<Spot, DefaultEdge> jgAdapter = new JGraphModelAdapter<Spot, DefaultEdge>(
 				tracks,
@@ -78,7 +94,10 @@ public class TrackVisualizerTestDrive extends JFrame {
 					}
 				});
 		
-		GraphLayoutCache graphLayout = new GraphLayoutCache(jgAdapter, new SpotCellViewFactory());
+		
+		SpotCellViewFactory factory = new SpotCellViewFactory(imp, radius, calibration);
+		
+		GraphLayoutCache graphLayout = new GraphLayoutCache(jgAdapter, factory);
 		JGraph jgraph = new JGraph(jgAdapter, graphLayout);
 
 		JScrollPane scrollPane = new JScrollPane(jgraph);

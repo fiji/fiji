@@ -31,14 +31,14 @@ public class SpotCellViewFactory extends DefaultCellViewFactory {
 	}
 	
 	public SpotCellViewFactory(ImagePlus imp) {
-		this(imp, null);
+		this(imp, DEFAULT_RADIUS);
 	}
 	
-	public SpotCellViewFactory(ImagePlus imp, float[] calibration) {
-		this(imp, calibration, DEFAULT_RADIUS);
+	public SpotCellViewFactory(ImagePlus imp, float radius) {
+		this(imp, radius, null);
 	}
 	
-	public SpotCellViewFactory(ImagePlus imp, float[] calibration, float radius) {
+	public SpotCellViewFactory(ImagePlus imp, float radius, float[] calibration) {
 		if (null == calibration) {
 			if (null == imp)
 				this.calibration = new float[] {1, 1, 1};
@@ -75,8 +75,9 @@ public class SpotCellViewFactory extends DefaultCellViewFactory {
 		int width = Math.round(2 * ENLARGE_FACTOR * radius / calibration[0]);
 		int height = Math.round(2 * ENLARGE_FACTOR * radius / calibration[1]);
 		Roi roi = new Roi(x, y, width, height);
-		imp.setRoi(roi);
 		ImageProcessor ip = imp.getStack().getProcessor(index).duplicate();
+		ip.setRoi(roi);
+		ip = ip.crop();
 		Image image = ip.createImage();
 		ImageIcon icon = new ImageIcon(image);
 		return new SpotView(spotCell, icon);
