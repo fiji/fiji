@@ -45,6 +45,11 @@ public class Action_Bar implements PlugIn, ActionListener {
 
 		String arg = Macro.getOptions();
 
+		String ijHome = IJ.versionLessThan("1.43d") ?
+			IJ.getDirectory("plugins") + "../" :
+			IJ.getDirectory("imagej");
+
+
 		if (arg == null && s.equals("")) {
 			try {
 				File macro = new File(Action_Bar.class.getResource(
@@ -56,13 +61,13 @@ public class Action_Bar implements PlugIn, ActionListener {
 			}
 
 		} else if (arg == null) { // call from an installed command
-			path = IJ.getDirectory("startup") + s;
+			path = ijHome + s;
 			try {
 				name = path.substring(path.lastIndexOf("/") + 1);
 			} catch (Exception e) {
 			}
 		} else { // called from a macro by run("Action Bar",arg)
-			path = IJ.getDirectory("startup") + arg;
+			path = ijHome + arg;
 			try {
 				path = path.substring(0, path.indexOf(".txt") + 4);
 				name = path.substring(path.lastIndexOf("/") + 1);
