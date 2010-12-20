@@ -84,6 +84,9 @@ public class Action_Bar implements PlugIn, ActionListener {
 			public void windowClosing(WindowEvent e) {
 				rememberXYlocation();
 				e.getWindow().dispose();
+			}
+
+			public void windowClosed(WindowEvent e) {
 				WindowManager.removeWindow((Frame) frame);
 			}
 		});
