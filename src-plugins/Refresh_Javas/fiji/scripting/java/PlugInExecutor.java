@@ -27,6 +27,9 @@ import java.net.URLClassLoader;
 
 import java.util.List;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /*
  * This class should have been public instead of being hidden in
  * ij/plugin/Compiler.java.
@@ -99,6 +102,9 @@ public class PlugInExecutor {
 		tryRun(plugin, arg, null, newClassLoader);
 	}
 
+	private final static Pattern wrongClassNamePattern =
+		Pattern.compile("^([^ ]*) \\(wrong name: ([^ ]*)\\)$");
+
 	public void tryRun(String plugin, String arg, String jarPath, boolean newClassLoader)
 			throws ClassNotFoundException, IOException,
 				IllegalAccessException,
@@ -111,7 +117,27 @@ public class PlugInExecutor {
 			}) : getClassLoader();
 		if (newClassLoader && jarPath != null)
 			((FijiClassLoader)classLoader).addPath(jarPath);
-		Class clazz = classLoader.loadClass(plugin);
+		Class clazz;
+		try {
+			clazz = classLoader.loadClass(plugin);
+		} catch (NoClassDefFoundError e) {
+			Matcher matcher = wrongClassNamePattern.matcher(e.getMessage());
+			if (!matcher.matches())
+				throw e;
+			String correctClassName = matcher.group(2);
+
+			String path = plugin.replace('.', '/') + ".class";
+			URL url = classLoader.getResource(path);
+			if (url == null)
+				throw new RuntimeException("Could not find resource for class " + plugin, e);
+			String classPath = url.toString();
+			if (classPath.startsWith("file:"))
+				classPath = classPath.substring(5);
+			classPath += plugin.replace('.', '/');
+			classPath = classPath.substring(0, classPath.length() - correctClassName.length());
+			((FijiClassLoader)classLoader).addPath(jarPath);
+			clazz = classLoader.loadClass(correctClassName);
+		}
 		try {
 			Object object = clazz.newInstance();
 			if (object instanceof PlugIn) {
