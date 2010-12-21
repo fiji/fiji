@@ -500,4 +500,87 @@ public class Action_Bar implements PlugIn, ActionListener {
 	public static void callFunctionFinder() {
 		new FunctionFinder();
 	}
+
+	public static void pasteIntoEditor(String text) {
+		Component component = getTextArea();
+		if (component == null)
+			return;
+		if (component instanceof TextArea) {
+			TextArea textArea = (TextArea)component;
+			int begin = textArea.getSelectionStart();
+			int end = textArea.getSelectionEnd();
+			int pos;
+			if (begin < 0) {
+				pos = textArea.getCaretPosition();
+				textArea.insert(text, pos);
+				pos += text.length();
+			}
+			else {
+				try {
+					textArea.replaceRange(text, begin, end);
+					pos = begin + text.length();
+				}
+				catch (Exception e2) {
+					return;
+				}
+			}
+			textArea.setCaretPosition(pos);
+		}
+		else if (component instanceof JTextArea) {
+			JTextArea textArea = (JTextArea)component;
+			int begin = textArea.getSelectionStart();
+			int end = textArea.getSelectionEnd();
+			int pos;
+			if (begin < 0) {
+				pos = textArea.getCaretPosition();
+				textArea.insert(text, pos);
+				pos += text.length();
+			}
+			else {
+				try {
+					textArea.replaceRange(text, begin, end);
+					pos = begin + text.length();
+				}
+				catch (Exception e2) {
+					return;
+				}
+			}
+			textArea.setCaretPosition(pos);
+		}
+	}
+
+	protected static Component getTextArea() {
+		Frame front = WindowManager.getFrontWindow();
+		Component result = getTextArea(front);
+		if (result != null)
+			return result;
+
+		// look at the other frames
+		Frame[] frames = WindowManager.getNonImageWindows();
+		for (int i = frames.length - 1; i >= 0; i--) {
+			result = getTextArea(frames[i]);
+			if (result != null)
+				return result;
+		}
+		return null;
+	}
+
+	protected static Component getTextArea(Container container) {
+		return getTextArea(container, 6);
+	}
+
+	protected static Component getTextArea(Container container, int maxDepth) {
+		if (container == null)
+			return null;
+		for (Component component : container.getComponents()) {
+			if ((component instanceof TextArea || component instanceof JTextArea) && component.isVisible())
+				return component;
+			if (maxDepth > 0 && (component instanceof Container)) {
+				Component result = getTextArea((Container)component);
+				if (result != null)
+					return result;
+			}
+		}
+		return null;
+	}
 }
