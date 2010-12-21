@@ -496,4 +496,8 @@ public class Action_Bar implements PlugIn, ActionListener {
 	private void setABonTop() {
 		frame.setAlwaysOnTop(true);
 	}
+
+	public static void callFunctionFinder() {
+		new FunctionFinder();
+	}
 }

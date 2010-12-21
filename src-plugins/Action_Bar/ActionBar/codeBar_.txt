@@ -209,7 +209,7 @@ p("while (nImages>0) close();");
 label=Function Finder
 icon=noicon
 arg=<macro>
-run("F Finder");
+call("Action_Bar.callFunctionFinder");
 </macro>
 </line>
 
