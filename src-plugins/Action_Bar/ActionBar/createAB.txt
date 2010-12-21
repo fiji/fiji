@@ -22,11 +22,17 @@ setBatchMode (true);
 
 pluginsdir = getDirectory("plugins");
 actionbardir = pluginsdir+"ActionBar"+File.separator;
-if (!File.exists(actionbardir ))
-  exit("Error\nInstall Action Bar in \nplugins/ActionBar/");
+if (!File.exists(actionbardir)) {
+  File.makeDirectory(pluginsdir+"ActionBar");
+  if (!File.exists(actionbardir))
+    exit("Error\nInstall Action Bar in \nplugins/ActionBar/");
+}
 iconsdir = actionbardir+"icons"+File.separator;
-if (!File.exists(iconsdir ))
-  exit("Error\nReinstall Action Bar with an plugins/ActionBar/icons/");
+if (!File.exists(iconsdir)) {
+  File.makeDirectory(actionbardir+"icons");
+  if (!File.exists(iconsdir))
+    exit("Error\nReinstall Action Bar with an plugins/ActionBar/icons/");
+}
 newiconsdir = iconsdir+name+File.separator;
 if (File.exists(newiconsdir)||File.exists(actionbardir+name+".txt"))
   exit("Error\nAn Action Bar with the same name already exists");
