@@ -38,6 +38,10 @@ public class Action_Bar implements PlugIn, ActionListener {
 	private boolean isSticky = false;
 	int nButtons = 0;
 
+	protected static String ijHome = IJ.versionLessThan("1.43d") ?
+		IJ.getDirectory("plugins") + "../" :
+		IJ.getDirectory("imagej");
+
 	public void run(String s) {
 		// s used if called from another plugin, or from an installed command.
 		// arg used when called from a run("command", arg) macro function
@@ -45,31 +49,25 @@ public class Action_Bar implements PlugIn, ActionListener {
 
 		String arg = Macro.getOptions();
 
-		String ijHome = IJ.versionLessThan("1.43d") ?
-			IJ.getDirectory("plugins") + "../" :
-			IJ.getDirectory("imagej");
-
-
 		if (arg == null && s.equals("")) {
 			try {
-				File macro = new File(Action_Bar.class.getResource(
-				"createAB.txt").getFile());
-				new MacroRunner(macro);
+				runMacro("createAB.txt");
 				return;
 			} catch (Exception e) {
 				IJ.error("createAB.txt file not found");
 			}
 
 		} else if (arg == null) { // call from an installed command
-			path = ijHome + s;
+			path = getURL(s);
 			try {
 				name = path.substring(path.lastIndexOf("/") + 1);
 			} catch (Exception e) {
 			}
 		} else { // called from a macro by run("Action Bar",arg)
-			path = ijHome + arg;
+			path = getURL(arg.trim());
 			try {
-				path = path.substring(0, path.indexOf(".txt") + 4);
+				if (path.endsWith(".txt"))
+					path = path.substring(0, path.indexOf(".txt") + 4);
 				name = path.substring(path.lastIndexOf("/") + 1);
 			} catch (Exception e) {
 			}
@@ -187,6 +185,56 @@ public class Action_Bar implements PlugIn, ActionListener {
 
 	}
 
+	protected String getURL(String path) {
+		if (path.startsWith("/")) {
+			String fullPath = ijHome + path;
+			if (new File(fullPath).exists())
+				return fullPath;
+			if (path.startsWith("/plugins/"))
+				path = path.substring(8);
+		}
+		URL url = getClass().getResource(path);
+		if (url == null) {
+			url = getClass().getResource("/ActionBar/" + path);
+			if (url == null)
+				throw new RuntimeException("Cannot find resource '" + path + "'");
+		}
+		return url.toString();
+	}
+
+	protected void runMacro(String path) {
+		String url = getURL(path);
+		if (url.startsWith("jar:")) try {
+			String macro = readString(new URL(url).openStream());
+			new MacroRunner(macro);
+			return;
+		} catch (Exception e) {
+			IJ.handleException(e);
+		}
+		else {
+			File macro = new File(url);
+			new MacroRunner(macro);
+		}
+	}
+
+	protected String readString(InputStream in) {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+		StringBuffer buffer = new StringBuffer();
+		char[] buf = new char[16384];
+		try {
+			for (;;) {
+				int count = reader.read(buf);
+				if (count < 0)
+					break;
+				buffer.append(buf, 0, count);
+			}
+			reader.close();
+		} catch (IOException e) {
+			IJ.handleException(e);
+		}
+		return buffer.toString();
+	}
+
 	private void stickToActiveWindow() {
 		ImageWindow fw = WindowManager.getCurrentWindow();
 		try {
@@ -213,10 +261,18 @@ public class Action_Bar implements PlugIn, ActionListener {
 
 	private void designPanel() {
 		try {
-			File file = new File(path);
-			if (!file.exists())
-				IJ.error("Config File not found");
-			BufferedReader r = new BufferedReader(new FileReader(file));
+			Reader reader;
+			if (path.startsWith("jar:"))
+				reader = new InputStreamReader(new URL(path).openStream());
+			else {
+				File file = new File(path);
+				if (!file.exists()) {
+					frame.dispose();
+					IJ.error("Config File not found");
+				}
+				reader = new FileReader(file);
+			}
+			BufferedReader r = new BufferedReader(reader);
 			while (true) {
 				String s = r.readLine();
 				if (s.equals(null)) {
