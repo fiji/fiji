@@ -73,7 +73,7 @@ public class MergingCostFunction {
 				// Frame threshold - middle Spot must be one frame ahead of the end Spot
 				tend = end.getFeature(Feature.POSITION_T);
 				tmiddle = middle.getFeature(Feature.POSITION_T);
-				if (tmiddle - tend > timeCutoff || tmiddle <= tend) {
+				if (tmiddle - tend > timeCutoff || tmiddle - tend <= 0) {
 					m.set(i, j, blocked);
 					continue;
 				}
