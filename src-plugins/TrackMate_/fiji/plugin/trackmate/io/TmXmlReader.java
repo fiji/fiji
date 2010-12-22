@@ -92,6 +92,22 @@ public class TmXmlReader implements TmXmlKeys {
 			settings.tstart 		= settingsEl.getAttribute(SETTINGS_TSTART_ATTRIBUTE_NAME).getIntValue();
 			settings.tend 			= settingsEl.getAttribute(SETTINGS_TEND_ATTRIBUTE_NAME).getIntValue();
 		}
+		// Image info settings
+		Element infoEl 	= root.getChild(IMAGE_ELEMENT_KEY);
+		if (null != infoEl) {
+			settings.dx				= infoEl.getAttribute(IMAGE_PIXEL_WIDTH_ATTRIBUTE_NAME).getFloatValue();
+			settings.dy				= infoEl.getAttribute(IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME).getFloatValue();
+			settings.dz				= infoEl.getAttribute(IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME).getFloatValue();
+			settings.dt				= infoEl.getAttribute(IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME).getFloatValue();
+			settings.width			= infoEl.getAttribute(IMAGE_WIDTH_ATTRIBUTE_NAME).getIntValue();
+			settings.height			= infoEl.getAttribute(IMAGE_HEIGHT_ATTRIBUTE_NAME).getIntValue();
+			settings.nslices		= infoEl.getAttribute(IMAGE_NSLICES_ATTRIBUTE_NAME).getIntValue();
+			settings.nframes		= infoEl.getAttribute(IMAGE_NFRAMES_ATTRIBUTE_NAME).getIntValue();
+			settings.spaceUnits		= infoEl.getAttributeValue(IMAGE_SPATIAL_UNITS_ATTRIBUTE_NAME);
+			settings.timeUnits		= infoEl.getAttributeValue(IMAGE_TIME_UNITS_ATTRIBUTE_NAME);
+			settings.imageFileName	= infoEl.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
+			settings.imageFolder	= infoEl.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME);
+		}
 		// Segmenter settings
 		Element segSettingsEl = root.getChild(SEGMENTER_SETTINGS_ELEMENT_KEY);
 		if (null != segSettingsEl) {

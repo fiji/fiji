@@ -213,20 +213,18 @@ public class TmXmlWriter implements TmXmlKeys {
 		if (null == settings || null == settings.imp)
 			return root;
 		Element imEl = new Element(IMAGE_ELEMENT_KEY);
-		if (null != settings.imp.getOriginalFileInfo()) {
-			imEl.setAttribute(IMAGE_FILENAME_ATTRIBUTE_NAME, 		settings.imp.getOriginalFileInfo().fileName);
-			imEl.setAttribute(IMAGE_FOLDER_ATTRIBUTE_NAME, 			settings.imp.getOriginalFileInfo().directory);
-		}
-		imEl.setAttribute(IMAGE_WIDTH_ATTRIBUTE_NAME, 			""+settings.imp.getWidth());
-		imEl.setAttribute(IMAGE_HEIGHT_ATTRIBUTE_NAME, 			""+settings.imp.getHeight());
-		imEl.setAttribute(IMAGE_NSLICES_ATTRIBUTE_NAME, 		""+settings.imp.getNSlices());
-		imEl.setAttribute(IMAGE_NFRAMES_ATTRIBUTE_NAME, 		""+settings.imp.getNFrames());
-		imEl.setAttribute(IMAGE_PIXEL_WIDTH_ATTRIBUTE_NAME, 	""+settings.imp.getCalibration().pixelWidth);
-		imEl.setAttribute(IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME, 	""+settings.imp.getCalibration().pixelHeight);
-		imEl.setAttribute(IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME, 	""+settings.imp.getCalibration().pixelDepth);
-		imEl.setAttribute(IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME, 	""+settings.imp.getCalibration().frameInterval);
-		imEl.setAttribute(IMAGE_SPATIAL_UNITS_ATTRIBUTE_NAME,	settings.imp.getCalibration().getUnit());
-		imEl.setAttribute(IMAGE_TIME_UNITS_ATTRIBUTE_NAME,		settings.imp.getCalibration().getTimeUnit());
+		imEl.setAttribute(IMAGE_FILENAME_ATTRIBUTE_NAME, 		settings.imageFileName);
+		imEl.setAttribute(IMAGE_FOLDER_ATTRIBUTE_NAME, 			settings.imageFolder);
+		imEl.setAttribute(IMAGE_WIDTH_ATTRIBUTE_NAME, 			""+settings.width);
+		imEl.setAttribute(IMAGE_HEIGHT_ATTRIBUTE_NAME, 			""+settings.height);
+		imEl.setAttribute(IMAGE_NSLICES_ATTRIBUTE_NAME, 		""+settings.nslices);
+		imEl.setAttribute(IMAGE_NFRAMES_ATTRIBUTE_NAME, 		""+settings.nframes);
+		imEl.setAttribute(IMAGE_PIXEL_WIDTH_ATTRIBUTE_NAME, 	""+settings.dx);
+		imEl.setAttribute(IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME, 	""+settings.dy);
+		imEl.setAttribute(IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME, 	""+settings.dz);
+		imEl.setAttribute(IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME, 	""+settings.dt);
+		imEl.setAttribute(IMAGE_SPATIAL_UNITS_ATTRIBUTE_NAME,	settings.spaceUnits);
+		imEl.setAttribute(IMAGE_TIME_UNITS_ATTRIBUTE_NAME,		settings.timeUnits);
 		root.addContent(imEl);
 		return root;
 	}
