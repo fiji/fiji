@@ -1,5 +1,9 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
+import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.X_COLUMN_SIZE;
+import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.Y_COLUMN_SIZE;
+
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
@@ -21,18 +25,16 @@ import fiji.plugin.trackmate.SpotImp;
 
 public class JGraphTimeLayout implements JGraphLayout {
 
-	/*
-	 * CONSTRUCTOR
-	 */
-	
-	private static final float Y_ZOOM_FACTOR = 50;
-	private static final float X_ZOOM_FACTOR = 100;
 	
 	
 	private SimpleGraph<Spot, DefaultEdge> graph;
 	private List<Set<Spot>> tracks;
 	private JGraphModelAdapter<Spot, DefaultEdge> adapter;
 
+	/*
+	 * CONSTRUCTOR
+	 */
+	
 
 	public JGraphTimeLayout(SimpleGraph<Spot, DefaultEdge> graph, JGraphModelAdapter<Spot, DefaultEdge> adapter) {
 		this.graph = graph;
@@ -50,8 +52,16 @@ public class JGraphTimeLayout implements JGraphLayout {
 		TreeMap<Float, Integer> columns = new TreeMap<Float, Integer>();
 		for(Float instant : instants)
 			columns.put(instant, -1);
+		
+		TreeMap<Float, Integer> rows = new TreeMap<Float, Integer>();
+		Iterator<Float> it = instants.iterator();
+		int rowIndex = 1; // Start at 1 to let room for column headers
+		while (it.hasNext()) {
+			rows.put(it.next(), rowIndex);
+			rowIndex++;
+		}
 
-		int currentColumn = 0;
+		int currentColumn = 1; // Start at 1 to leave room for row header
 		Spot previousSpot = null;
 		for (Set<Spot> track : tracks) {
 			
@@ -82,7 +92,7 @@ public class JGraphTimeLayout implements JGraphLayout {
 				// Get corresponding JGraph cell 
 				Object facadeTarget = adapter.getVertexCell(spot);
 				// Move the corresponding cell in the facade
-				graphFacade.setLocation(facadeTarget, targetColumn * X_ZOOM_FACTOR, instant * Y_ZOOM_FACTOR);
+				graphFacade.setLocation(facadeTarget, targetColumn * X_COLUMN_SIZE, (0.5 + rows.get(instant)) * Y_COLUMN_SIZE);
 			}
 		
 			for(Float instant : instants)

@@ -10,16 +10,16 @@ import javax.swing.SwingConstants;
 import org.jgraph.JGraph;
 import org.jgraph.graph.VertexView;
 
-import fiji.plugin.trackmate.Feature;
-import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotImp;
 
 
 public class SpotView extends VertexView {
 
 	private static final long serialVersionUID = 1L;
+	
 
 	private final JLabel label;
-	private final Spot spot;
+	private final SpotImp spot;
 	private ImageIcon icon;
 
 	public SpotView(final SpotCell spotCell) {
@@ -29,12 +29,15 @@ public class SpotView extends VertexView {
 	public SpotView(SpotCell spotCell, ImageIcon icon) {
 		super();
 		this.label 	= new JLabel();
-		this.spot  	= spotCell.getSpot();
+		this.spot  	= (SpotImp) spotCell.getSpot();
 		this.cell 	= spotCell;
 		this.icon 	= icon;
 		initLabel();
 	}
 
+	
+	
+	
 	@Override
 	public Component getRendererComponent(JGraph graph, boolean selected, boolean focus, boolean preview) {
 		if (selected)
@@ -43,11 +46,12 @@ public class SpotView extends VertexView {
 			label.setForeground(Color.BLACK);
 		return label;
 	}
+	
 
 	private void initLabel() {
 		label.setHorizontalAlignment(SwingConstants.CENTER);
 		label.setIcon(icon);
-		label.setText("t="+spot.getFeature(Feature.POSITION_T));
+		label.setText(spot.getName());
 	}
 
 	
