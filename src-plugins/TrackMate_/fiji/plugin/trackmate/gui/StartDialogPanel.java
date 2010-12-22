@@ -148,6 +148,7 @@ public class StartDialogPanel extends ActionListenablePanel {
 	 */
 	public Settings getSettings() {
 		settings.imp =  imp;
+		// Crop cube
 		settings.tstart = Integer.parseInt(jTextFieldTStart.getText());
 		settings.tend 	= Integer.parseInt(jTextFieldTEnd.getText());
 		settings.xstart = Integer.parseInt(jTextFieldXStart.getText());
@@ -156,6 +157,21 @@ public class StartDialogPanel extends ActionListenablePanel {
 		settings.yend 	= Integer.parseInt(jTextFieldYEnd.getText());
 		settings.zstart = Integer.parseInt(jTextFieldZStart.getText());
 		settings.zend 	= Integer.parseInt(jTextFieldZEnd.getText());
+		// Image info
+		settings.dx 	= Float.parseFloat(jTextFieldPixelWidth.getText());
+		settings.dy 	= Float.parseFloat(jTextFieldPixelHeight.getText());
+		settings.dz 	= Float.parseFloat(jTextFieldVoxelDepth.getText());
+		settings.dt 	= Float.parseFloat(jTextFieldTimeInterval.getText());
+		settings.spaceUnits = imp.getCalibration().getUnit();
+		settings.timeUnits  = imp.getCalibration().getTimeUnit();
+		settings.width 		= imp.getWidth();
+		settings.height		= imp.getHeight();
+		settings.nslices	= imp.getNSlices();
+		settings.nframes	= imp.getNFrames();
+		if (null != settings.imp.getOriginalFileInfo()) {
+			settings.imageFileName	= imp.getOriginalFileInfo().fileName;
+			settings.imageFolder 	= imp.getOriginalFileInfo().directory;
+		}
 		// Parse segmenter choice
 		Settings.SegmenterType segmenterChoice = Settings.SegmenterType.values()[jComboBoxSegmenterChoice.getSelectedIndex()];
 		settings.segmenterSettings = segmenterChoice.createSettings();

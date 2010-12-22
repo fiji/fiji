@@ -553,7 +553,7 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	/**
 	 * Ensure an 8-bit gray image is sent to the 3D viewer.
 	 */
-	private static final ImagePlus[] makeImageForViewer(final Settings settings) {
+	public static final ImagePlus[] makeImageForViewer(final Settings settings) {
 		final ImagePlus origImp = settings.imp;
 		origImp.killRoi();
 		final ImagePlus imp;
@@ -566,8 +566,8 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 		}
 		
 		int nChannels = imp.getNChannels();
-		int nSlices = imp.getNSlices();
-		int nFrames = settings.tend - settings.tstart + 1;
+		int nSlices = settings.nslices;
+		int nFrames = settings.nframes;
 		ImagePlus[] ret = new ImagePlus[nFrames];
 		int w = imp.getWidth(), h = imp.getHeight();
 
