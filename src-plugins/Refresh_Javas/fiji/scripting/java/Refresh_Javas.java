@@ -255,7 +255,7 @@ public class Refresh_Javas extends RefreshScripts {
 			parser.setVariable("includeSource(" + target + ")", "true");
 		parser.getRule(target).make();
 
-		try {
+		if (relativeSourcePath != null) try {
 			String packageName = getPackageName(new File(dir, relativeSourcePath).getAbsolutePath());
 			if (packageName != null)
 				name = packageName + "." + name;
