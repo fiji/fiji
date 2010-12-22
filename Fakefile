@@ -205,7 +205,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Samples_.jar \
 	jars/mij.jar \
 	jars/wavelets.jar \
-	jars/imageware.jar
+	jars/imageware.jar \
+	plugins/Extended_Depth_Field.jar \
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
