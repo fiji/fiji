@@ -204,7 +204,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Temporal_Color_Coder.jar \
 	plugins/Samples_.jar \
 	jars/mij.jar \
-	jars/wavelets.jar
+	jars/wavelets.jar \
+	jars/imageware.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
