@@ -232,6 +232,10 @@ public class Fake {
 						args[i].substring(equal + 1));
 			}
 
+			for (Parser.Rule rule : all.getDependenciesRecursively())
+				if (rule.getVarBool("rebuild"))
+					rule.clean(false);
+
 			all.make();
 
 			/*
@@ -1078,18 +1082,40 @@ public class Fake {
 				return (Rule)allRules.get(prereq);
 			}
 
-			public void makePrerequisites() throws FakeException {
+			public Iterable<Rule> getDependencies() throws FakeException {
+				Set<Rule> result = new HashSet<Rule>();
 				for (String prereq : prerequisites) {
 					Rule rule = getRule(prereq);
-					if (rule == null) {
-						if (this instanceof All)
-							error("Unknown target: "
-								+ prereq);
-						else
-							continue;
-					}
-					rule.make();
+					if (rule != null)
+						result.add(rule);
+					else if (this instanceof All)
+						error("Unknown target: " + prereq);
 				}
+				return result;
+			}
+
+			public Iterable<Rule> getDependenciesRecursively() throws FakeException {
+				Set<Rule> result = new HashSet<Rule>();
+				getDependenciesRecursively(result);
+				return result;
+			}
+
+			public void getDependenciesRecursively(Set<Rule> result) throws FakeException {
+				for (Rule rule : getDependencies())
+					if (!result.contains(rule) &&
+							(rule instanceof CompileCProgram ||
+							 rule instanceof CompileClass ||
+							 rule instanceof CompileJar ||
+							 rule instanceof CopyJar ||
+							 rule instanceof SubFake)) {
+						result.add(rule);
+						rule.getDependenciesRecursively(result);
+					}
+			}
+
+			public void makePrerequisites() throws FakeException {
+				for (Rule rule : getDependencies())
+					rule.make();
 			}
 
 			public String getLastPrerequisite() {
