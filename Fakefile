@@ -320,6 +320,9 @@ CLASSPATH(plugins/Bug_Submitter.jar)=plugins/Fiji_Updater.jar
 CLASSPATH(plugins/TopoJ_.jar)=jars/Jama-1.0.2.jar
 CLASSPATH(jars/imagescience.jar)=plugins/Image_5D.jar
 CLASSPATH(plugins/Arrow_.jar)=jars/fiji-lib.jar
+CLASSPATH(plugins/TransformJ_.jar)=jars/imagescience.jar
+CLASSPATH(plugins/FeatureJ_.jar)=jars/imagescience.jar
+CLASSPATH(plugins/RandomJ_.jar)=jars/imagescience.jar
 CLASSPATH(plugins/Jython_Scripts.jar)=plugins/Jython_Interpreter.jar
 plugins/Jython_Scripts.jar <- \
 	src-plugins/Jython_Scripts/**/*java \
