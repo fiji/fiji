@@ -3,14 +3,13 @@ package fiji.plugin.trackmate.visualization.trackscheme;
 import java.awt.Color;
 import java.awt.Component;
 
-import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 
 import org.jgraph.JGraph;
 import org.jgraph.graph.VertexView;
 
-import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.Spot;
 
 
 public class SpotView extends VertexView {
@@ -19,24 +18,17 @@ public class SpotView extends VertexView {
 	
 
 	private final JLabel label;
-	private final SpotImp spot;
-	private ImageIcon icon;
+	private final Spot spot;
 
-	public SpotView(final SpotCell spotCell) {
-		this(spotCell, null);
-	}
 
-	public SpotView(SpotCell spotCell, ImageIcon icon) {
+	public SpotView(SpotCell spotCell) {
 		super();
 		this.label 	= new JLabel();
-		this.spot  	= (SpotImp) spotCell.getSpot();
+		this.spot  	= spotCell.getSpot();
 		this.cell 	= spotCell;
-		this.icon 	= icon;
 		initLabel();
 	}
 
-	
-	
 	
 	@Override
 	public Component getRendererComponent(JGraph graph, boolean selected, boolean focus, boolean preview) {
@@ -50,8 +42,11 @@ public class SpotView extends VertexView {
 
 	private void initLabel() {
 		label.setHorizontalAlignment(SwingConstants.CENTER);
-		label.setIcon(icon);
-		label.setText(spot.getName());
+		label.setIcon(spot.getIcon());
+		String name = spot.getName();
+		if (name == null || name.equals(""))
+			name = "<no name>";
+ 		label.setText(name);
 	}
 
 	

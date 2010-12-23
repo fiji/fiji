@@ -1,7 +1,5 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
-import ij.ImagePlus;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -22,7 +20,6 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 
 import com.jgraph.layout.JGraphFacade;
-import com.jgraph.layout.JGraphLayout;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
@@ -36,7 +33,11 @@ public class TrackSchemeFrame extends JFrame {
 	
 
 	public static final int Y_COLUMN_SIZE = 100;
-	public static final int X_COLUMN_SIZE = 100;
+	public static final int X_COLUMN_SIZE = 150;
+	
+	public static final int DEFAULT_CELL_WIDTH = 130;
+	public static final int DEFAULT_CELL_HEIGHT = 80;
+	
 	
 	private static final long serialVersionUID = 1L;
 	private static final Dimension DEFAULT_SIZE = new Dimension( 530, 320 );
@@ -48,10 +49,15 @@ public class TrackSchemeFrame extends JFrame {
 	 * INNER CLASSES
 	 */
 	
+	/**
+	 * The customized JPanel used to display a useful background under the graph.
+	 * It displays in Y the time, and in X the track identiy.
+	 */
 	private static class GraphPane extends JPanel {
 
 		private static final long serialVersionUID = 1L;
 		private TreeSet<Float> instants;
+		private int[] columnWidths = null;
 
 		public GraphPane(SimpleGraph<Spot, DefaultEdge> graph) {
 			super();
@@ -60,7 +66,6 @@ public class TrackSchemeFrame extends JFrame {
 			instants = new TreeSet<Float>();
 			for (Spot s : graph.vertexSet())
 				instants.add(s.getFeature(Feature.POSITION_T));
-				
 		}
 		
 		
@@ -92,7 +97,18 @@ public class TrackSchemeFrame extends JFrame {
 			}
 			
 			// Column headers
-			
+			if (null != columnWidths) {
+				x = X_COLUMN_SIZE;
+				for (int i = 0; i < columnWidths.length; i++) {
+					x += (columnWidths[i]-1) * X_COLUMN_SIZE;
+					g.drawLine(x, 0, x, height);
+				}
+			}
+		}
+
+
+		public void setColumnWidths(int[] columnWidths) {
+			this.columnWidths  = columnWidths;
 		}
 		
 	}
@@ -122,11 +138,7 @@ public class TrackSchemeFrame extends JFrame {
 	 */
 	
 	
-	private void init() {
-		float[] calibration = new float[] { settings.dx, settings.dy, settings.dz };
-		float radius = settings.segmenterSettings.expectedRadius;
-		ImagePlus imp = settings.imp;
-		
+	private void init() {		
 		JGraphModelAdapter<Spot, DefaultEdge> jgAdapter = new JGraphModelAdapter<Spot, DefaultEdge>(
 				trackGraph,
 				JGraphModelAdapter.createDefaultVertexAttributes(), 
@@ -135,8 +147,7 @@ public class TrackSchemeFrame extends JFrame {
 
 					@Override
 					public org.jgraph.graph.DefaultEdge createEdgeCell(DefaultEdge e) {
-						return new org.jgraph.graph.DefaultEdge();
-					}
+						return new org.jgraph.graph.DefaultEdge("");				}
 
 					@Override
 					public DefaultGraphCell createVertexCell(Spot s) {
@@ -145,7 +156,7 @@ public class TrackSchemeFrame extends JFrame {
 				});
 		
 		
-		SpotCellViewFactory factory = new SpotCellViewFactory(imp, radius, calibration);
+		SpotCellViewFactory factory = new SpotCellViewFactory();
 		
 		GraphLayoutCache graphLayoutCache = new GraphLayoutCache(jgAdapter, factory);
 		JGraph jgraph = new JGraph(jgAdapter, graphLayoutCache);
@@ -161,9 +172,12 @@ public class TrackSchemeFrame extends JFrame {
         setSize( DEFAULT_SIZE );
         
         JGraphFacade facade = new JGraphFacade(jgraph);
-        JGraphLayout graphLayout = new JGraphTimeLayout(trackGraph, jgAdapter);
+        JGraphTimeLayout graphLayout = new JGraphTimeLayout(trackGraph, jgAdapter);
         
         graphLayout.run(facade);
+        int[] columnWidths = graphLayout.getTrackColumnWidths();
+        backPane.setColumnWidths(columnWidths);
+        
         Map nested = facade.createNestedMap(false, false); // Obtain a map of the resulting attribute changes from the facade 
         jgraph.getGraphLayoutCache().edit(nested); // Apply the results to the actual graph 
         

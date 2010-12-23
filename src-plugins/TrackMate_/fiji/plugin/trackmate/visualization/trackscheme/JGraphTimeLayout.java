@@ -1,8 +1,12 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
+import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.DEFAULT_CELL_HEIGHT;
+import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.DEFAULT_CELL_WIDTH;
 import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.X_COLUMN_SIZE;
 import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.Y_COLUMN_SIZE;
 
+import java.awt.Color;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -10,6 +14,9 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import org.jfree.chart.renderer.InterpolatePaintScale;
+import org.jgraph.graph.EdgeView;
+import org.jgraph.graph.GraphConstants;
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.ext.JGraphModelAdapter;
 import org.jgrapht.graph.DefaultEdge;
@@ -30,7 +37,8 @@ public class JGraphTimeLayout implements JGraphLayout {
 	private SimpleGraph<Spot, DefaultEdge> graph;
 	private List<Set<Spot>> tracks;
 	private JGraphModelAdapter<Spot, DefaultEdge> adapter;
-
+	private int[] columnWidths;
+	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
 	/*
 	 * CONSTRUCTOR
 	 */
@@ -45,6 +53,14 @@ public class JGraphTimeLayout implements JGraphLayout {
 	@Override
 	public void run(JGraphFacade graphFacade) {
 		
+		HashMap<Set<Spot>, Color> trackColors = new HashMap<Set<Spot>, Color>(tracks.size());
+		int counter = 0;
+		int ntracks = tracks.size();
+		for(Set<Spot> track : tracks) {
+			trackColors.put(track, colorMap.getPaint((float) counter / (ntracks-1)));
+			counter++;
+		}
+				
 		SortedSet<Float> instants = new TreeSet<Float>();
 		for (Spot s : graph.vertexSet())
 			instants.add(s.getFeature(Feature.POSITION_T));
@@ -61,9 +77,18 @@ public class JGraphTimeLayout implements JGraphLayout {
 			rowIndex++;
 		}
 
-		int currentColumn = 1; // Start at 1 to leave room for row header
+		int currentColumn = 1;
+		int previousColumn = 0;
 		Spot previousSpot = null;
+		int columnIndex = 0;
+		columnWidths = new int[tracks.size()];
+		Color trackColor = null;
+		
+		
 		for (Set<Spot> track : tracks) {
+			
+			// Get track color
+			trackColor = trackColors.get(track);
 			
 			// Sort by ascending order
 			SortedSet<Spot> sortedTrack = new TreeSet<Spot>(SpotImp.frameComparator);
@@ -91,14 +116,36 @@ public class JGraphTimeLayout implements JGraphLayout {
 				
 				// Get corresponding JGraph cell 
 				Object facadeTarget = adapter.getVertexCell(spot);
+				
 				// Move the corresponding cell in the facade
-				graphFacade.setLocation(facadeTarget, targetColumn * X_COLUMN_SIZE, (0.5 + rows.get(instant)) * Y_COLUMN_SIZE);
+				graphFacade.setLocation(facadeTarget, ( targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2, (0.5 + rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2);
+				graphFacade.setSize(facadeTarget, DEFAULT_CELL_WIDTH, DEFAULT_CELL_HEIGHT);
+				
+				Object[] objEdges = graphFacade.getEdges(facadeTarget);
+				for(Object obj : objEdges) {
+					org.jgraph.graph.DefaultEdge edge = (org.jgraph.graph.DefaultEdge) obj;
+					EdgeView view = (EdgeView) graphFacade.getCellView(obj);
+					view.getAttributes().put(GraphConstants.LINECOLOR, trackColor);
+					view.getAttributes().put(GraphConstants.LINEWIDTH, 2f);
+				}
 			}
 		
 			for(Float instant : instants)
 				columns.put(instant, currentColumn+1);
-		}
+			
+			columnWidths[columnIndex] = currentColumn - previousColumn + 1;
+			columnIndex++;
+			previousColumn = currentColumn;			
+			
+		}  // loop over tracks
 		
+	}
+
+	/**
+	 * Return the width in column units of each track after they are arranged by this GraphLayout.
+	 */
+	public int[] getTrackColumnWidths() {
+		return columnWidths;
 	}
 
 }

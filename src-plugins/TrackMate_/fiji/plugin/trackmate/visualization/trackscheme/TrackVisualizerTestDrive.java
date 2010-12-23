@@ -1,45 +1,22 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
 import ij.ImagePlus;
-import ij3d.Content;
-import ij3d.ContentCreator;
-import ij3d.Image3DUniverse;
 
-import java.awt.Dimension;
-import java.awt.Rectangle;
-import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.TreeMap;
-
-import javax.swing.JFrame;
-import javax.swing.JScrollPane;
 
 import loci.formats.FormatException;
 
 import org.jdom.JDOMException;
-import org.jgraph.JGraph;
-import org.jgraph.graph.DefaultGraphCell;
-import org.jgraph.graph.GraphConstants;
-import org.jgraph.graph.GraphLayoutCache;
-import org.jgrapht.ext.JGraphModelAdapter;
-import org.jgrapht.ext.JGraphModelAdapter.CellFactory;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 
-import com.jgraph.layout.JGraphFacade;
-import com.jgraph.layout.JGraphLayout;
-
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.gui.TrackMateFrame;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.test.LAPTrackerTestDrive;
-import fiji.plugin.trackmate.visualization.SpotDisplayer;
-import fiji.plugin.trackmate.visualization.SpotDisplayer2D;
-import fiji.plugin.trackmate.visualization.SpotDisplayer3D;
 import fiji.plugin.trackmate.visualization.test.Branched3DTrackTestDrive;
 
 public class TrackVisualizerTestDrive {
@@ -67,8 +44,16 @@ public class TrackVisualizerTestDrive {
 		settings.imp = imp;
 		
 		// Launch ImageJ and display
-		ij.ImageJ.main(args);
-		imp.show();
+		if (null != imp) {
+			ij.ImageJ.main(args);
+			imp.show();
+		}
+		
+		// Update icons
+		if (null != imp) {
+			SpotIconGrabber grabber = new SpotIconGrabber(settings);
+			grabber.updateIcon(allSpots);
+		}
 		
 		// Display Track scheme
 		TrackSchemeFrame frame = new TrackSchemeFrame(tracks, settings);
