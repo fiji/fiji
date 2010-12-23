@@ -1,7 +1,7 @@
 package plugin;
 
-import fiji.util.AbstractTool;
-import fiji.util.ToolWithOptions;
+import fiji.tool.AbstractTool;
+import fiji.tool.ToolWithOptions;
 
 import ij.IJ;
 import ij.ImagePlus;

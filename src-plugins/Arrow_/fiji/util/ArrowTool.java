@@ -1,5 +1,8 @@
 package fiji.util;
 
+import fiji.tool.AbstractTool;
+import fiji.tool.ToolWithOptions;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;

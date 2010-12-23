@@ -1,4 +1,4 @@
-package fiji.util;
+package fiji.tool;
 
 import ij.IJ;
 import ij.ImageListener;
