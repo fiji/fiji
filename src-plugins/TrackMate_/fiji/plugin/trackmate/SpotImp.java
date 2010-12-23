@@ -1,6 +1,11 @@
 package fiji.plugin.trackmate;
 
 import java.util.EnumMap;
+
+import javax.swing.ImageIcon;
+
+import fiji.plugin.trackmate.gui.TrackMateFrame;
+
 import mpicbg.imglib.util.Util;
 
 /**
@@ -14,8 +19,9 @@ public class SpotImp implements Spot {
 	 * FIELDS
 	 */
 	
-	public static int IDcounter = 0;
+	public static final ImageIcon DEFAULT_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/spot_icon.png"));
 	
+	public static int IDcounter = 0;
 	
 	/** Store the individual features, and their values. */
 	private EnumMap<Feature, Float> features = new EnumMap<Feature, Float>(Feature.class);
@@ -23,6 +29,8 @@ public class SpotImp implements Spot {
 	private String name;
 	/** This spot ID */
 	private int ID;
+	/** This pot's icon */
+	private ImageIcon icon = DEFAULT_ICON;
 
 	/*
 	 * CONSTRUCTORS
@@ -95,18 +103,12 @@ public class SpotImp implements Spot {
 			coords[i] = getFeature(POSITION_FEATURES[i]);
 	}
 	
-	/**
-	 * Returns the name of this Spot.
-	 * @return The String name corresponding to this Spot.
-	 */
+	@Override
 	public String getName() {
 		return this.name;
 	}
 	
-	/**
-	 * Set the name of this Spot.
-	 * @param name
-	 */
+	@Override
 	public void setName(String name) {
 		this.name = name;
 	}
@@ -214,6 +216,16 @@ public class SpotImp implements Spot {
 			sumSquared += ( otherVal - thisVal ) * ( otherVal - thisVal ); 
 		}
 		return sumSquared;
+	}
+
+	@Override
+	public ImageIcon getIcon() {
+		return icon;
+	}
+
+	@Override
+	public void setIcon(ImageIcon icon) {
+		this.icon = icon;		
 	}
 
 }

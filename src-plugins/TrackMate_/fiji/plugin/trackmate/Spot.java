@@ -3,6 +3,8 @@ package fiji.plugin.trackmate;
 import java.util.Comparator;
 import java.util.EnumMap;
 
+import javax.swing.ImageIcon;
+
 /**
  * Interface for objects that can store and retrieve feature values.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Sep 2010
@@ -88,4 +90,26 @@ public interface Spot {
 	 * other classes of this package, keeping a spot and its clone in the same collection can be hazardous. 
 	 */
 	public Spot clone();
+	
+	/**
+	 * Returns the name of this Spot.
+	 * @return The String name corresponding to this Spot.
+	 */
+	public String getName();
+	
+	/**
+	 * Set the name of this Spot.
+	 * @param name
+	 */
+	public void setName(String name);
+	
+	/**
+	 * Get the icon image used to display this spot.
+	 */
+	public ImageIcon getIcon();
+	
+	/**
+	 * Set the icon used to display this spot. 
+	 */
+	public void setIcon(ImageIcon icon);
 }
