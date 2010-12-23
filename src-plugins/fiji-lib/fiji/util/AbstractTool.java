@@ -10,6 +10,9 @@ import ij.gui.Toolbar;
 
 import ij.plugin.PlugIn;
 
+import java.awt.Component;
+
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -312,6 +315,38 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 			canvas.removeMouseMotionListener(mouseMotionProxy);
 		if (mouseWheelProxy != null)
 			canvas.removeMouseWheelListener(mouseWheelProxy);
+	}
+
+	/* convenience methods */
+
+	public ImagePlus getImagePlus(ComponentEvent e) {
+		ImageCanvas canvas = getImageCanvas(e);
+		return canvas == null ? null : canvas.getImage();
+	}
+
+	public ImageCanvas getImageCanvas(ComponentEvent e) {
+		Component component = e.getComponent();
+		return component instanceof ImageCanvas ? (ImageCanvas)component : null;
+	}
+
+	public int getOffscreenX(MouseEvent e) {
+		ImageCanvas canvas = getImageCanvas(e);
+		return canvas == null ? -1 : canvas.offScreenX(e.getX());
+	}
+
+	public int getOffscreenY(MouseEvent e) {
+		ImageCanvas canvas = getImageCanvas(e);
+		return canvas == null ? -1 : canvas.offScreenX(e.getY());
+	}
+
+	public double getOffscreenXDouble(MouseEvent e) {
+		ImageCanvas canvas = getImageCanvas(e);
+		return canvas == null ? -1 : canvas.offScreenXD(e.getX());
+	}
+
+	public double getOffscreenYDouble(MouseEvent e) {
+		ImageCanvas canvas = getImageCanvas(e);
+		return canvas == null ? -1 : canvas.offScreenXD(e.getY());
 	}
 
 	/*
