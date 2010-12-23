@@ -1317,7 +1317,7 @@ public class Fake {
 			}
 		}
 
-		abstract class Special extends Rule {
+		public abstract class Special extends Rule {
 			Special(String target) {
 				super(target, new ArrayList<String>());
 			}
@@ -1469,7 +1469,7 @@ public class Fake {
 			}
 		}
 
-		class CopyJar extends Rule {
+		public class CopyJar extends Rule {
 			String source, configPath;
 			CopyJar(String target, List<String> prerequisites) {
 				super(target, prerequisites);
@@ -1491,7 +1491,7 @@ public class Fake {
 			}
 		}
 
-		class CompileJar extends Rule {
+		public class CompileJar extends Rule {
 			String configPath;
 			String classPath;
 
@@ -1632,7 +1632,7 @@ public class Fake {
 			}
 		}
 
-		class CompileClass extends Rule {
+		public class CompileClass extends Rule {
 			CompileClass(String target, List<String> prerequisites) {
 				super(target, prerequisites);
 			}
@@ -1661,7 +1661,7 @@ public class Fake {
 			}
 		}
 
-		class CompileCProgram extends Rule {
+		public class CompileCProgram extends Rule {
 			boolean linkCPlusPlus = false;
 
 			CompileCProgram(String target, List<String> prerequisites) {
@@ -1808,7 +1808,7 @@ public class Fake {
 			}
 		}
 
-		class ExecuteProgram extends Rule {
+		public class ExecuteProgram extends Rule {
 			String program;
 
 			ExecuteProgram(String target, List<String> prerequisites,
@@ -1869,7 +1869,7 @@ public class Fake {
 
 	// several utility functions
 
-	static class GlobFilter implements FilenameFilter {
+	public static class GlobFilter implements FilenameFilter {
 		Pattern pattern;
 		long newerThan;
 		String glob;
@@ -3015,7 +3015,7 @@ public class Fake {
 		return prefix + new File(cwd, path).toString() + suffix;
 	}
 
-	static class ByteCodeAnalyzer {
+	public static class ByteCodeAnalyzer {
 		byte[] buffer;
 		int[] poolOffsets;
 		int endOffset;
@@ -3065,7 +3065,7 @@ public class Fake {
 			endOffset = offset;
 		}
 
-		class ClassNameIterator implements Iterator<String> {
+		public class ClassNameIterator implements Iterator<String> {
 			int index;
 
 			ClassNameIterator() {
