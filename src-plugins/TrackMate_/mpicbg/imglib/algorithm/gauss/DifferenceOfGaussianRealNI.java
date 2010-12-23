@@ -1,9 +1,8 @@
 package mpicbg.imglib.algorithm.gauss;
 
 import mpicbg.imglib.algorithm.OutputAlgorithm;
-import mpicbg.imglib.algorithm.math.function.Converter;
-import mpicbg.imglib.algorithm.math.function.RealTypeConverter;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal;
+import mpicbg.imglib.function.RealTypeConverter;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
@@ -51,9 +50,7 @@ public class DifferenceOfGaussianRealNI<A extends RealType<A>, B extends RealTyp
 		final double[] sigmas = new double[calibration.length];
 		for (int i = 0; i < sigmas.length; i++) 
 			sigmas[i] = sigma * calibration[i];
-		Converter<A,B> converter = new RealTypeConverter<A, B>();
-		final GaussianConvolution2<A,B> gauss = new GaussianConvolution2<A,B>( image, factory, outOfBoundsFactory, converter, sigmas );
-		
+		final GaussianConvolution2<A,B> gauss = new GaussianConvolution2<A,B>( image, factory, outOfBoundsFactory, new RealTypeConverter<A, B>(), sigmas );
 		return gauss;
 	}
 
