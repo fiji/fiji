@@ -7,7 +7,6 @@
 - make it scriptable (for movie generation, presentations)
 - segmentation tool (as scissors, but works only on isosurfaces, i.e. 
   thresholded objects, and does not remove, but rather label it)
-- move Lasso/Blow Tool to Fiji?
 
 segmentation editor: CustomStackWindow -> SegmentationEditorPanel
 

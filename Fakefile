@@ -203,6 +203,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Jython_Scripts.jar \
 	plugins/Temporal_Color_Coder.jar \
 	plugins/Samples_.jar \
+	plugins/Lasso_and_Blow_Tool.jar \
 	jars/mij.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
