@@ -6,33 +6,35 @@ import ij.gui.GenericDialog;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
-import ij.gui.Toolbar;
+
+import ij.plugin.filter.ThresholdToSelection;
 
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
-import ij.plugin.MacroInstaller;
-import ij.plugin.PlugIn;
-
-import ij.plugin.filter.ThresholdToSelection;
-
-import java.util.TreeMap;
-
 import util.FibonacciHeapDouble;
 
 public class Lasso {
-	public final static int BLOW = 0;
-	public final static int LASSO = 1;
-	public final static int MIN_LASSO = 2;
-	public final static int MAX_TOOL = 2;
+	public enum Mode {
+		BLOW, LASSO, MIN_LASSO;
 
-	public final static String[] modeTitles = {
-		"Blow tool", "Lasso tool", "Lasso minimum tool"
+		public static Mode valueOf(int i) {
+			return values()[i];
+		}
+
+		public final static String[] labels;
+
+		static {
+			Mode[] values = values();
+			labels = new String[values.length];
+			for (int i = 0; i < values.length; i++)
+				labels[i] = values[i].toString();
+		}
 	};
 
-	private int mode = BLOW;
+	private Mode mode = Mode.BLOW;
 	private Difference difference;
 	private double[] dijkstra;
 	private int[] previous;
@@ -47,9 +49,21 @@ public class Lasso {
 	 */
 	private double ratioSpaceColor = 1;
 
-	/** Create an uninitialized Lasso.
-	 *  To initialize it, call initDijkstra(x,y,IJ.shiftKeyDown()); */
+	/**
+	 * Create an uninitialized Lasso/Blow tool
+	 *
+	 * @deprecated Use @link #Lasso(ImagePlus,Mode) instead.
+	 */
 	public Lasso(ImagePlus imp, int mode) {
+		this(imp, Mode.valueOf(mode));
+	}
+
+	/**
+	 * Create an uninitialized Lasso/Blow tool.
+	 *
+	 *  To initialize it, call initDijkstra(x,y,IJ.shiftKeyDown());
+	 */
+	public Lasso(ImagePlus imp, Mode mode) {
 		this.imp = imp;
 		this.mode = mode;
 		this.w = imp.getWidth();
@@ -57,11 +71,11 @@ public class Lasso {
 	}
 
 	public Lasso(ImagePlus imp) {
-		this(imp, BLOW);
+		this(imp, Mode.BLOW);
 	}
 
 	/** Create and initialize a Lasso at point x,y. */
-	public Lasso(ImagePlus imp, int mode, int x, int y, boolean shiftKeyDown) {
+	public Lasso(ImagePlus imp, Mode mode, int x, int y, boolean shiftKeyDown) {
 		this(imp, mode);
 		initDijkstra(x, y, shiftKeyDown);
 	}
@@ -71,13 +85,13 @@ public class Lasso {
 	}
 
 	public void optionDialog() {
-		GenericDialog gd = new GenericDialog("Lasso Tool Options");
-		gd.addChoice("mode", Lasso.modeTitles, Lasso.modeTitles[mode]);
+		GenericDialog gd = new GenericDialog("Lasso/Blow Tool Options");
+		gd.addChoice("mode", Mode.labels, mode.toString());
 		gd.addNumericField("ratio space/color", ratioSpaceColor, 2);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
-		mode = gd.getNextChoiceIndex();
+		mode = Mode.valueOf(gd.getNextChoiceIndex());
 		ratioSpaceColor = gd.getNextNumber();
 	}
 
@@ -85,11 +99,13 @@ public class Lasso {
 		return imp;
 	}
 
-	public void setMode(int mode) {
+	public void setMode(Mode mode) {
 		this.mode = mode;
 	}
 
-	public int getMode() { return mode; }
+	public Mode getMode() {
+		return mode;
+	}
 
 	public void moveLasso(int x, int y) {
 		getDijkstra(x, y);
@@ -131,7 +147,7 @@ public class Lasso {
 	}
 
 	Difference getDifference(ImageProcessor ip) {
-		if (mode == MIN_LASSO) {
+		if (mode == Mode.MIN_LASSO) {
 			if (ip instanceof ByteProcessor)
 				return new ByteMinValue((byte[])ip.getPixels());
 			if (ip instanceof ColorProcessor)
@@ -302,4 +318,3 @@ public class Lasso {
 		}
 	}
 }
-
