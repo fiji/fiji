@@ -1437,11 +1437,10 @@ public class Fake {
 				// Skip empty elements
 				String result = "";
 				StringTokenizer tokenizer =
-					new StringTokenizer(value,
-							File.pathSeparator);
+					new StringTokenizer(value, ":");
 				while (tokenizer.hasMoreElements()) {
 					if (!result.equals(""))
-						result += File.pathSeparator;
+						result += ":";
 					result += tokenizer.nextToken();
 				}
 				return result;
