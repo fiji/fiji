@@ -26,6 +26,8 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.TreeMap;
 
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
@@ -50,6 +52,19 @@ import fiji.plugin.trackmate.visualization.SpotDisplayer3D;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 
 
+
+/**
+* This code was edited or generated using CloudGarden's Jigloo
+* SWT/Swing GUI Builder, which is free for non-commercial
+* use. If Jigloo is being used commercially (ie, by a corporation,
+* company or business for any purpose whatever) then you
+* should purchase a license for each developer using Jigloo.
+* Please visit www.cloudgarden.com for details.
+* Use of Jigloo implies acceptance of these licensing terms.
+* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
+* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
+* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
+*/
 public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 
 	
@@ -138,6 +153,10 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	private static final int DEFAULT_RESAMPLING_FACTOR = 3; // for the 3d viewer
 	private static final int DEFAULT_THRESHOLD = 50; // for the 3d viewer
 	private static final String DEFAULT_FILENAME = "TrackMateData.xml";
+	private static final Icon NEXT_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/arrow_right.png"));
+	private static final Icon PREVIOUS_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/arrow_left.png"));
+	private static final Icon LOAD_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/page_go.png"));
+	private static final Icon SAVE_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/page_save.png"));
 
 	private TrackMate_<? extends RealType<?>> trackmate;
 	private GuiState state;
@@ -612,9 +631,10 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 				{
 					jButtonNext = new JButton();
 					jPanelButtons.add(jButtonNext);
-					jButtonNext.setText("Next >>");
+					jButtonNext.setText("Next");
+					jButtonNext.setIcon(NEXT_ICON);
 					jButtonNext.setFont(FONT);
-					jButtonNext.setBounds(221, 0, 70, 25);
+					jButtonNext.setBounds(216, 3, 76, 25);
 					jButtonNext.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
 							next();
@@ -624,9 +644,9 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 				{
 					jButtonPrevious = new JButton();
 					jPanelButtons.add(jButtonPrevious);
-					jButtonPrevious.setText("<<");
+					jButtonPrevious.setIcon(PREVIOUS_ICON);
 					jButtonPrevious.setFont(FONT);
-					jButtonPrevious.setBounds(181, 0, 40, 25);
+					jButtonPrevious.setBounds(177, 3, 40, 25);
 					jButtonPrevious.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
 							previous();
@@ -637,8 +657,9 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 					jButtonLoad = new JButton();
 					jPanelButtons.add(jButtonLoad);
 					jButtonLoad.setText("Load");
+					jButtonLoad.setIcon(LOAD_ICON);
 					jButtonLoad.setFont(FONT);
-					jButtonLoad.setBounds(7, 0, 50, 25);
+					jButtonLoad.setBounds(0, 2, 76, 25);
 					jButtonLoad.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
 							load();
@@ -649,8 +670,9 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 					jButtonSave = new JButton();
 					jPanelButtons.add(jButtonSave);
 					jButtonSave.setText("Save");
+					jButtonSave.setIcon(SAVE_ICON);
 					jButtonSave.setFont(FONT);
-					jButtonSave.setBounds(61, 0, 50, 25);
+					jButtonSave.setBounds(75, 2, 78, 25);
 					jButtonSave.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
 							save();
