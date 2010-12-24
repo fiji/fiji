@@ -1510,7 +1510,7 @@ public class Fake {
 
 			public String getVar(String var) {
 				String value = super.getVar(var);
-				if (isVarName(value, "CLASSPATH")) {
+				if (isVarName(var, "CLASSPATH")) {
 					if (classPath != null) {
 						return (value == null) ? classPath
 							: (value + ":" + classPath);
