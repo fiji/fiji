@@ -2,18 +2,18 @@
 package fiji.build;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.io.ByteArrayInputStream;
-import java.io.FileReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 
@@ -33,21 +33,30 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-import java.util.jar.Manifest;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
+
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
-
-import java.util.zip.ZipException;
+import java.util.jar.Manifest;
 
 import java.util.regex.Pattern;
+
+import java.util.zip.ZipException;
 
 public class Fake {
 	protected static Method javac;
@@ -236,7 +245,11 @@ public class Fake {
 				if (rule.getVarBool("rebuild"))
 					rule.clean(false);
 
-			all.make();
+			String parallel = all.getVar("parallel");
+			if (parallel != null)
+				all.makeParallel(Integer.parseInt(parallel));
+			else
+				all.make();
 
 			/*
 			 * By definition, everything is up-to-date now, but for
@@ -340,6 +353,16 @@ public class Fake {
 			addSpecialRule(new Special("check") {
 				void action() { check(); }
 			});
+
+			addSpecialRule(new Special("dependency-map") {
+				void action() throws FakeException {
+					List<Rule> targets = new ArrayList<Rule>();
+					for (Rule target : allRules.values())
+						if (!(target instanceof Special) && !target.target.equals(""))
+							targets.add(target);
+					showMap(buildDependencyMap(targets));
+				}
+			});
 		}
 
 		protected<T> void showMap(Map<String, T> map, boolean showKeys) {
@@ -349,6 +372,17 @@ public class Fake {
 				out.println((showKeys ?
 						key.toString() + " = " : "")
 					+ map.get(key));
+		}
+
+		protected void showMap(Map<Rule, List<Rule>> map) {
+			for (Map.Entry<Rule, List<Rule>> pair : map.entrySet()) {
+				String neededBy = "";
+				for (Rule rule : pair.getValue())
+					if (rule != null)
+						neededBy += " " + rule.target;
+				out.println(pair.getKey().target + (neededBy.equals("") ?
+					"" : " needed by" + neededBy));
+			}
 		}
 
 		protected void cleanAll(boolean dry_run) {
@@ -386,6 +420,227 @@ public class Fake {
 			}
 		}
 
+		public Map<Rule, List<Rule>> buildDependencyMap() throws FakeException {
+			return buildDependencyMap(Collections.singletonList(getDefaultRule()));
+		}
+
+		public Map<Rule, List<Rule>> buildDependencyMap(String[] targets) throws FakeException {
+			List<Rule> rules = new ArrayList<Rule>();
+			for (String target : targets) {
+				Rule rule = getRule(target);
+				if (rule == null)
+					throw new FakeException("Rule for target '" + target + "' not found!");
+				rules.add(rule);
+			}
+			return buildDependencyMap(rules);
+		}
+
+		/**
+		 * Builds a dependency map of the given targets.
+		 *
+		 * This guarantees that the order of the keySet is suitable for building, i.e. all
+		 * rules depending on a given rule will be returned later by keySet().iterator().
+		 */
+		public Map<Rule, List<Rule>> buildDependencyMap(List<Rule> targets) throws FakeException {
+			LinkedHashMap<Rule, List<Rule>> result = new LinkedHashMap<Rule, List<Rule>>();
+			for (Rule target : targets)
+				buildDependencyMap(result, target, null, new HashMap<Rule, Integer>(), 0);
+			return result;
+		}
+
+		protected void buildDependencyMap(Map<Rule, List<Rule>> map, Rule target, Rule neededBy, Map<Rule, Integer> degrees, int degree) throws FakeException {
+			List<Rule> depending = map.get(target);
+			if (depending != null) {
+				if (neededBy != null)
+					depending.add(neededBy);
+				return;
+			}
+
+			if (degrees.get(target) != null)
+				throw new FakeException("Cycle detected: " + getCycle(target, map, degree - degrees.get(target).intValue()));
+			degrees.put(target, new Integer(degree));
+
+			for (Rule rule : target.getDependencies())
+				buildDependencyMap(map, rule, target, degrees, degree + 1);
+
+			List<Rule> list = neededBy == null ? Collections.<Rule>emptyList() : Collections.singletonList(neededBy);
+			map.put(target, new ArrayList<Rule>(list));
+			degrees.remove(target);
+		}
+
+		/**
+		 * Given a graph, find a cycle of a given distance.
+		 *
+		 * This does a standard backtrack search. Likely has a horrible runtime, but it is probably not worth optimizing for.
+		 */
+		protected String getCycle(Rule target, Map<Rule, List<Rule>> map, int distance) throws FakeException {
+			Stack<Rule> stack = new Stack<Rule>();
+			stack.push(target);
+			getCycle(stack, map, distance);
+
+			String result = stack.pop().target;
+			while (!stack.empty())
+				result += " -> " + stack.pop().target;
+			return result;
+		}
+
+		protected Stack<Rule> getCycle(Stack<Rule> partialCycle, Map<Rule, List<Rule>> map, int distance) throws FakeException {
+			if (distance == 0 && partialCycle.get(0) == partialCycle.peek())
+				return partialCycle;
+			for (Rule rule : partialCycle.peek().getDependencies()) {
+				partialCycle.push(rule);
+				if (getCycle(partialCycle, map, distance - 1) != null)
+					return partialCycle;
+				partialCycle.pop();
+			}
+			return null;
+		}
+
+		protected class ParallelMaker {
+			protected ExecutorService pool;
+			protected Map<Rule, FutureTask<FakeException>> futures;
+			protected Map<Rule, List<Rule>> dependencyMap;
+			protected Map<Rule, FakeException> results;
+
+			protected final FakeException success = new FakeException("Dummy for success");
+
+			public ParallelMaker(int maxThreads, List<Rule> targets) throws FakeException {
+				pool = Executors.newFixedThreadPool(maxThreads);
+				futures = new HashMap<Rule, FutureTask<FakeException>>();
+				results = new LinkedHashMap<Rule, FakeException>();
+
+				dependencyMap = buildDependencyMap(targets);
+			}
+
+			public Map<Rule, FakeException> run() {
+				// First, make sure that jars/javac.jar is built
+				Rule javac = getRule("jars/javac.jar");
+				if (javac != null && dependencyMap.containsKey(javac)) try {
+					javac.make();
+					results.put(javac, success);
+				} catch (FakeException e) {
+					results.put(javac, e);
+				}
+
+				synchronized(futures) {
+					for (Rule rule : dependencyMap.keySet())
+						submitTaskIfReady(rule);
+				}
+
+				for (Rule rule : dependencyMap.keySet()) try {
+					FakeException e = futures.get(rule).get();
+				} catch (InterruptedException e) {
+					results.put(rule, new FakeException("Interrupted"));
+				} catch (ExecutionException e) {
+					results.put(rule, new FakeException("Execution error: " + e));
+				}
+
+				pool.shutdown();
+
+				for (Rule rule : new ArrayList<Rule>(results.keySet()))
+					if (results.get(rule) == success) try {
+						rule.setUpToDate();
+						results.remove(rule);
+					} catch (IOException e) {
+						results.put(rule, new FakeException("Could not set up-to=date: " + e));
+					}
+
+				return results;
+			}
+
+			/**
+			 * Schedule a rule for building if all dependencies were done already.
+			 *
+			 * This should only ever be called from a synchronized(futures) block.
+			 */
+			protected void submitTaskIfReady(final Rule rule) {
+				try {
+					if (!allDependenciesDone(rule))
+						return;
+					FutureTask<FakeException> future = new FutureTask<FakeException>(new Callable<FakeException>() {
+						public FakeException call() {
+							return make(rule);
+						}
+					});
+					futures.put(rule, future);
+					pool.submit(future);
+				} catch (FakeException e) {
+					e.printStackTrace(err);
+				}
+			}
+
+			protected FakeException make(Rule rule) {
+				FakeException e = results.get(rule);
+				if (e == success)
+					return e;
+				if (e == null) try {
+					// make(rule) must _only_ be called when all dependency rules have been handled
+					// Therefore, no need to synchronize here.
+					List<Rule> failedDependencies = new ArrayList<Rule>();
+					for (Rule dependency : rule.getDependencies())
+						if (results.get(dependency) != success)
+							failedDependencies.add(dependency);
+					if (failedDependencies.size() > 0)
+						e = new DependencyFakeException(failedDependencies);
+					else {
+						rule.make(false);
+						e = success;
+					}
+				} catch (FakeException e2) {
+					err.println("Failed: " + rule.target);
+					e = e2;
+				}
+				synchronized(futures) {
+					results.put(rule, e);
+
+					for (Rule neededBy : dependencyMap.get(rule))
+						submitTaskIfReady(neededBy);
+				}
+				return e;
+			}
+
+			/* This method _must_ be called in a synchronized(futures) block */
+			public boolean allDependenciesDone(final Rule rule) throws FakeException {
+				for (Rule dependency : rule.getDependencies())
+					if (results.get(dependency) == null)
+						return false;
+				return true;
+			}
+
+			protected class DependencyFakeException extends FakeException {
+				public DependencyFakeException(List<Rule> rules) {
+					super("Problem in dependenc" + (rules.size() == 1 ? "y" : "ies")
+						+ " " + ParallelMaker.this.toString(rules));
+				}
+			}
+
+			/* Must be called in a synchronized(futures) block */
+			protected List<Rule> unfinished() {
+				List<Rule> result = new ArrayList<Rule>();
+				for (Rule rule : dependencyMap.keySet())
+					if (results.get(rule) == null)
+						result.add(rule);
+				return result;
+			}
+
+			public List<Rule> unfinishedBecause(Rule rule) throws FakeException {
+				List<Rule> result = new ArrayList<Rule>();
+				for (Rule dependency : rule.getDependencies())
+					if (results.get(dependency) == null)
+						result.add(dependency);
+				return result;
+			}
+
+			public String toString(Iterable<Rule> rules) {
+				StringBuffer buffer = new StringBuffer();
+				Iterator<Rule> iter = rules.iterator();
+				if (iter.hasNext())
+					buffer.append(iter.next().target);
+				while (iter.hasNext())
+					buffer.append(" ").append(iter.next().target);
+				return buffer.toString();
+			}
+		}
 
 		public Rule parseRules(List<String> targets) throws FakeException {
 			Rule result = null;
@@ -445,7 +700,7 @@ public class Fake {
 				}
 			}
 
-			// add <name>-clean rules
+			// add special <target>-<suffix> rules (-clean, -clean-dry-run, etc)
 			for (String key : new ArrayList<String>(allRules.keySet())) {
 				final Rule rule = getRule(key);
 				if (key.endsWith("-clean") ||
@@ -463,6 +718,13 @@ public class Fake {
 					addSpecialRule(new Special(dryRunCleanKey) {
 						void action() { rule.clean(true); }
 					});
+				final String dependencyMapKey = key + "-dependency-map";
+				if (!allRules.containsKey(dependencyMapKey))
+					addSpecialRule(new Special(dependencyMapKey) {
+						void action() throws FakeException {
+							showMap(buildDependencyMap(Collections.singletonList(rule)));
+						}
+					});
 			}
 
 			lineNumber = -1;
@@ -473,8 +735,10 @@ public class Fake {
 
 			checkVariableNames();
 
-			if (targets != null)
-				return new All("", targets);
+			if (targets != null) {
+				result = new All("", targets);
+				allRules.put("", result);
+			}
 
 			return result;
 		}
@@ -856,6 +1120,7 @@ public class Fake {
 			if (fallBack == null)
 				throw new FakeException("No precompiled and "
 					+ "no fallback for " + target + "!");
+			// TODO: clone it
 			synchronized(fallBack) {
 				String save = fallBack.target;
 				fallBack.target = target;
@@ -870,6 +1135,13 @@ public class Fake {
 
 		public Map<String, Rule> getAllRules() {
 			return allRules;
+		}
+
+		public Rule getDefaultRule() {
+			for (Rule rule : allRules.values())
+				if (rule instanceof All)
+					return rule;
+			return null;
 		}
 
 		// the different rule types
@@ -998,17 +1270,36 @@ public class Fake {
 				return true;
 			}
 
+			public void makeParallel(int maxThreads) throws FakeException {
+				ParallelMaker make = new ParallelMaker(maxThreads, Collections.singletonList(this));
+				Map<Rule, FakeException> result = make.run();
+				if (result.size() == 1)
+					throw result.values().iterator().next();
+				if (result.size() > 0) {
+					String message = "";
+					for (Map.Entry<Parser.Rule, FakeException> pair : result.entrySet())
+						message += "Target " + pair.getKey().target + " was not made: " + pair.getValue() + "\n";
+					throw new FakeException(message);
+				}
+			}
+
 			public void make() throws FakeException {
+				make(true);
+			}
+
+			public void make(boolean makePrerequisitesFirst) throws FakeException {
 				if (wasAlreadyChecked)
 					return;
 				wasAlreadyChecked = true;
 				if (wasAlreadyInvoked)
 					error("Dependency cycle detected!");
 				wasAlreadyInvoked = true;
+
 				try {
 					verbose("Checking prerequisites of "
 						+ this);
-					makePrerequisites();
+					if (makePrerequisitesFirst)
+						makePrerequisites();
 
 					if (upToDate())
 						return;
@@ -1111,6 +1402,12 @@ public class Fake {
 						result.add(rule);
 						rule.getDependenciesRecursively(result);
 					}
+			}
+
+			public List<String> getDependenciesAsStrings() {
+				List<String> dependencies = new ArrayList(prerequisites);
+				Collections.addAll(dependencies, split(getVar("CLASSPATH"), ":"));
+				return dependencies;
 			}
 
 			public void makePrerequisites() throws FakeException {
@@ -1875,18 +2172,18 @@ public class Fake {
 		String glob;
 		String lastMatch;
 
-		GlobFilter(String glob) {
+		public GlobFilter(String glob) {
 			this(glob, 0);
 		}
 
-		GlobFilter(String glob, long newerThan) {
+		public GlobFilter(String glob, long newerThan) {
 			this.glob = glob;
 			String regex = "^" + replaceSpecials(glob) + "$";
 			pattern = Pattern.compile(regex);
 			this.newerThan = newerThan;
 		}
 
-		String replaceSpecials(String glob) {
+		public static String replaceSpecials(String glob) {
 			StringBuffer result = new StringBuffer();
 			char[] array = glob.toCharArray();
 			int len = array.length;
@@ -2228,34 +2525,36 @@ public class Fake {
 	}
 
 	// this function handles the javac singleton
-	protected synchronized void callJavac(String[] arguments,
+	protected void callJavac(String[] arguments,
 			boolean verbose) throws FakeException {
-		try {
-			if (javac == null) {
-				discoverJavac();
-				JarClassLoader loader = (JarClassLoader)
-					getClassLoader(toolsPath);
-				String className = "com.sun.tools.javac.Main";
-				Class<?> main = loader.forceLoadClass(className);
-				Class<?>[] argsType = new Class[] {
-					arguments.getClass(),
-					PrintWriter.class
-				};
-				javac = main.getMethod("compile", argsType);
-			}
+		synchronized(this) {
+			try {
+				if (javac == null) {
+					discoverJavac();
+					JarClassLoader loader = (JarClassLoader)
+						getClassLoader(toolsPath);
+					String className = "com.sun.tools.javac.Main";
+					Class<?> main = loader.forceLoadClass(className);
+					Class<?>[] argsType = new Class[] {
+						arguments.getClass(),
+						PrintWriter.class
+					};
+					javac = main.getMethod("compile", argsType);
+				}
 
-			Object result = javac.invoke(null,
-					new Object[] { arguments, new PrintWriter(err) });
-			if (!result.equals(new Integer(0)))
-				throw new FakeException("Compile error");
-			return;
-		} catch (FakeException e) {
-			/* was compile error */
-			throw e;
-		} catch (Exception e) {
-			err.println("Could not find javac " + e
-				+ " (tools path = " + toolsPath + "), "
-				+ "falling back to system javac");
+				Object result = javac.invoke(null,
+						new Object[] { arguments, new PrintWriter(err) });
+				if (!result.equals(new Integer(0)))
+					throw new FakeException("Compile error");
+				return;
+			} catch (FakeException e) {
+				/* was compile error */
+				throw e;
+			} catch (Exception e) {
+				err.println("Could not find javac " + e
+					+ " (tools path = " + toolsPath + "), "
+					+ "falling back to system javac");
+			}
 		}
 
 		// fall back to calling javac
@@ -2298,17 +2597,9 @@ public class Fake {
 			arguments.add("-deprecation");
 			arguments.add("-Xlint:unchecked");
 		}
-		String classPath = discoverClassPath();
 		if (extraClassPath != null && !extraClassPath.equals("")) {
-			StringTokenizer tokenizer =
-				new StringTokenizer(extraClassPath, ":");
-			while (tokenizer.hasMoreElements())
-				classPath += File.pathSeparator
-					+ tokenizer.nextToken();
-		}
-		if (classPath != null && !classPath.equals("")) {
 			arguments.add("-classpath");
-			arguments.add(classPath);
+			arguments.add(join(split(extraClassPath, ":"), File.pathSeparator));
 		}
 
 		int optionCount = arguments.size();
@@ -2508,7 +2799,7 @@ public class Fake {
 		}
 	}
 
-	static byte[] readFile(String fileName) {
+	public static byte[] readFile(String fileName) {
 		try {
 			if (fileName.startsWith("jar:file:")) {
 				URL url = new URL(fileName);
