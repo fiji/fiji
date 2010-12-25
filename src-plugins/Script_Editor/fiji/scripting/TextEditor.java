@@ -839,8 +839,10 @@ public class TextEditor extends JFrame implements ActionListener,
 			new FileFunctions(this).newPlugin();
 		else if (source == ijToFront)
 			IJ.getInstance().toFront();
-		else if (source == increaseFontSize || source == decreaseFontSize)
+		else if (source == increaseFontSize || source == decreaseFontSize) {
 			getEditorPane().increaseFontSize((float)(source == increaseFontSize ? 1.2 : 1 / 1.2));
+			updateTabAndFontSize(false);
+		}
 		else if (source == nextTab)
 			switchTabRelative(1);
 		else if (source == previousTab)
