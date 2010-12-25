@@ -139,12 +139,13 @@ public class PlugInExecutor {
 			clazz = classLoader.loadClass(correctClassName);
 		}
 		try {
-			Object object = clazz.newInstance();
-			if (object instanceof PlugIn) {
+			if (PlugIn.class.isAssignableFrom(clazz)) {
+				Object object = clazz.newInstance();
 				((PlugIn)object).run(arg);
 				return;
 			}
-			if (object instanceof PlugInFilter) {
+			if (PlugInFilter.class.isAssignableFrom(clazz)) {
+				Object object = clazz.newInstance();
 				ImagePlus image = WindowManager.getCurrentImage();
 				if (image != null && image.isLocked()) {
 					if (!IJ.showMessageWithCancel("Unlock image?", "The image '" + image.getTitle()
@@ -156,8 +157,15 @@ public class PlugInExecutor {
 						plugin, arg);
 				return;
 			}
-		} catch (InstantiationException e) { e.printStackTrace(); }
-		runMain(clazz, arg);
+			runMain(clazz, arg);
+		} catch (Throwable e) {
+			e.printStackTrace();
+			Throwable cause = e.getCause();
+			if (cause != null) {
+				System.err.print("Cause: ");
+				cause.printStackTrace();
+			}
+		}
 	}
 
 	public void runOneOf(String jar, boolean newClassLoader)
