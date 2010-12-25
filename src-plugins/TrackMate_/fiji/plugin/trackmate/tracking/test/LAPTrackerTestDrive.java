@@ -34,9 +34,8 @@ public class LAPTrackerTestDrive {
 
 	@SuppressWarnings("unused")
 	private static final File SPLITTING_CASE_1 = new File(LAPTrackerTestDrive.class.getResource(FILE_NAME_1).getFile());
+	@SuppressWarnings("unused")
 	private static final File SPLITTING_CASE_2 = new File(LAPTrackerTestDrive.class.getResource(FILE_NAME_2).getFile());
-
-	
 	
 	/*
 	 * MAIN METHOD
@@ -128,7 +127,8 @@ public class LAPTrackerTestDrive {
 		ImagePlus imp = null;
 		try {
 			imp = reader.getImage();
-			imp.show();
+			if (imp != null)
+				imp.show();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (FormatException e) {

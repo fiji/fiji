@@ -419,7 +419,6 @@ public class LAPTracker extends AbstractSpotTracker {
 	 * @see LAPTracker#createLinkingCostMatrices()
 	 */
 	public void solveLAPForTrackSegments() {
-
 		final AssignmentAlgorithm solver = new HungarianAlgorithm();
 		// Iterate properly over frame pair in order, not necessarily separated by 1.
 		Iterator<Integer> frameIterator = spots.keySet().iterator(); 		
