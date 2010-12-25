@@ -34,6 +34,7 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 	protected SliceListener sliceListener;
 	protected List<SliceObserver> sliceObservers = new ArrayList<SliceObserver>();
 	protected ToolbarMouseAdapter toolbarMouseListener;
+	protected ToolToggleListener toolToggleListener;
 
 	/*
 	 * There is currently no way to let the tool know that the toolbar decided to clear the custom tools.
@@ -47,6 +48,11 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 	 * to "true" to allow this.
 	 */
 	protected boolean clearToolsIfNecessary;
+
+	/*
+	 * Remember what the current state of the tool is.
+	 */
+	protected boolean toolActive;
 
 	/*
 	 * PUBLIC METHODS
@@ -101,7 +107,12 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 			sliceListener = (SliceListener)this;
 		if (this instanceof ToolWithOptions)
 			toolbarMouseListener = new ToolbarMouseAdapter((ToolWithOptions)this);
+		if (this instanceof ToolToggleListener) {
+			toolToggleListener = (ToolToggleListener)this;
+			toolToggleListener.toolToggled(true);
+		}
 
+		toolActive = true;
 		registerTool();
 	}
 
@@ -218,7 +229,11 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 	}
 
 	public final boolean isThisTool() {
-		return Toolbar.getToolId() == toolID;
+		boolean active = Toolbar.getToolId() == toolID;
+		if (toolToggleListener != null && active != toolActive)
+			toolToggleListener.toolToggled(active);
+		toolActive = active;
+		return active;
 	}
 
 	/*
@@ -283,6 +298,10 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 	}
 
 	protected void unregisterTool() {
+		if (toolToggleListener != null && toolActive) {
+			toolToggleListener.toolToggled(false);
+			toolActive = false;
+		}
 		for (int id : WindowManager.getIDList())
 			unregisterTool(WindowManager.getImage(id));
 		ImagePlus.removeImageListener(this);
