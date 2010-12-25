@@ -2303,7 +2303,7 @@ public class Fake {
 				new StringTokenizer(extraClassPath, ":");
 			while (tokenizer.hasMoreElements())
 				classPath += File.pathSeparator
-					+ tokenizer.nextToken();
+					+ makePath(cwd, tokenizer.nextToken());
 		}
 		if (classPath != null && !classPath.equals("")) {
 			arguments.add("-classpath");
