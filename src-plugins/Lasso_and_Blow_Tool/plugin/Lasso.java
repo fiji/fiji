@@ -17,6 +17,15 @@ import ij.process.ImageProcessor;
 import util.FibonacciHeapDouble;
 
 public class Lasso {
+	/** @deprecated */
+	public final static int BLOW = 0;
+	/** @deprecated */
+	public final static int LASSO = 1;
+	/** @deprecated */
+	public final static int MIN_LASSO = 2;
+	/** @deprecated */
+	public final static int MAX_TOOL = 2;
+
 	public enum Mode {
 		BLOW, LASSO, MIN_LASSO;
 
