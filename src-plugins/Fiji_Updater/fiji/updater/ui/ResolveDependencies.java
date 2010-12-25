@@ -24,6 +24,7 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
 import javax.swing.JTextPane;
 
 import javax.swing.text.BadLocationException;
@@ -163,6 +164,7 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 				needUninstall(plugin);
 
 		if (automatic.size() > 0) {
+			maybeAddSeparator();
 			newText("These components will be updated/"
 					+ "installed automatically: \n\n");
 			addList(automatic);
@@ -170,6 +172,7 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 	}
 
 	void bothInstallAndUninstall(PluginObject plugin) {
+		maybeAddSeparator();
 		PluginCollection reasons =
 			PluginCollection.clone(toInstall.get(plugin));
 		reasons.addAll(toUninstall.get(plugin));
@@ -186,6 +189,7 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 	}
 
 	void needUninstall(PluginObject plugin) {
+		maybeAddSeparator();
 		PluginCollection reasons = toUninstall.get(plugin);
 		newText("Conflict: ", red);
 		addText(plugin.getFilename(), bold);
@@ -200,6 +204,7 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 	void locallyModified(PluginObject plugin) {
 		if (ignore.contains(plugin))
 			return;
+		maybeAddSeparator();
 		newText("Warning: ");
 		addText(plugin.getFilename(), bold);
 		addText(" is locally modified and Fiji cannot determine its "
@@ -248,6 +253,7 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 		boolean notInstalled = plugin.isInstallable();
 		boolean obsolete = plugin.isObsolete();
 		final PluginCollection reasons = toInstall.get(plugin);
+		maybeAddSeparator();
 		newText("Warning: ", notFiji || obsolete ? red : normal);
 		addText(plugin.getFilename(), bold);
 		addText(" is " + (notFiji ? "not a Fiji component yet" :
@@ -278,6 +284,7 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 
 	void dependencyRemoved(final PluginObject plugin,
 			final String dependency) {
+		maybeAddSeparator();
 		newText("Warning: ", normal);
 		addText(plugin.getFilename(), bold);
 		addText(" depends on " + dependency + " which is about to be removed.\n\n");
@@ -390,5 +397,13 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 		int end = panel.getStyledDocument().getLength();
 		panel.select(end - 1, end - 1);
 		panel.setParagraphAttributes(indented, true);
+	}
+
+	protected void maybeAddSeparator() {
+		if (panel.getText().equals("") && panel.getComponents().length == 0)
+			return;
+		addText("\n");
+		selectEnd();
+		panel.insertComponent(new JSeparator());
 	}
 }
