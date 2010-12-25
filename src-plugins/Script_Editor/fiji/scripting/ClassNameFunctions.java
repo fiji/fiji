@@ -27,12 +27,12 @@ public class ClassNameFunctions {
 	}
 
 	public ClassNameFunctions(ClassCompletionProvider provider) {
-		this(provider.names);
+		this(provider.getClassNames());
 	}
 
 	public ClassNameFunctions(Frame parent,
 			ClassCompletionProvider provider) {
-		this(parent, provider.names);
+		this(parent, provider.getClassNames());
 	}
 
 	/**
