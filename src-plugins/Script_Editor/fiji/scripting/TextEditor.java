@@ -106,7 +106,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	protected int tabsMenuTabsStart;
 	protected Set<JMenuItem> tabsMenuItems;
 	protected FindAndReplaceDialog findDialog;
-	protected JCheckBoxMenuItem autoSave;
+	protected JCheckBoxMenuItem autoSave, showDeprecation;
 	protected JTextArea errorScreen = new JTextArea();
 
 	protected final String templateFolder = "templates/";
@@ -276,6 +276,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		compile.setMnemonic(KeyEvent.VK_C);
 		autoSave = new JCheckBoxMenuItem("Auto-save before compiling");
 		runMenu.add(autoSave);
+		showDeprecation = new JCheckBoxMenuItem("Show deprecations");
+		runMenu.add(showDeprecation);
 
 		installMacro = addToMenu(runMenu, "Install Macro",
 				KeyEvent.VK_I, ctrl);
@@ -1398,6 +1400,7 @@ public class TextEditor extends JFrame implements ActionListener,
 				sourcePath = generateScriptWrapper(tmpDir, sourceName, interpreter);
 				java = (Refresh_Javas)Languages.get(".java").newInterpreter();
 			}
+			java.showDeprecation(showDeprecation.getState());
 			java.compile(sourcePath, tmpDir.getAbsolutePath());
 			getClasses(tmpDir, paths, names);
 			if (includeSources) {
@@ -1530,6 +1533,7 @@ public class TextEditor extends JFrame implements ActionListener,
 				!language.isCompileable());
 		compile.setVisible(language.isCompileable());
 		autoSave.setVisible(language.isCompileable());
+		showDeprecation.setVisible(language.isCompileable());
 		makeJarWithSource.setVisible(language.isCompileable());
 
 		debug.setVisible(language.isDebuggable());
@@ -1855,6 +1859,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			final Refresh_Javas java = (Refresh_Javas)interpreter;
 			final File file = getEditorPane().file;
 			final String sourcePath = file.getAbsolutePath();
+			java.showDeprecation(showDeprecation.getState());
 			markCompileStart();
 			new Thread() {
 				public void run() {
