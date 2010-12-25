@@ -100,9 +100,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		  listBookmarks, openSourceForClass, newPlugin, installMacro,
 		  openSourceForMenuItem, showDiff, commit, ijToFront,
 		  openMacroFunctions, decreaseFontSize, increaseFontSize,
-		  chooseTabSize, gitGrep, loadToolsJar, openInGitweb;
+		  chooseFontSize, chooseTabSize, gitGrep, loadToolsJar, openInGitweb;
 	protected RecentFilesMenuItem openRecent;
-	protected JMenu gitMenu, tabsMenu, tabSizeMenu, toolsMenu, runMenu;
+	protected JMenu gitMenu, tabsMenu, fontSizeMenu, tabSizeMenu, toolsMenu, runMenu;
 	protected int tabsMenuTabsStart;
 	protected Set<JMenuItem> tabsMenuItems;
 	protected FindAndReplaceDialog findDialog;
@@ -180,14 +180,16 @@ public class TextEditor extends JFrame implements ActionListener,
 		increaseFontSize = addToMenu(edit, "Increase font size", KeyEvent.VK_PLUS, ctrl);
 		increaseFontSize.setMnemonic(KeyEvent.VK_C);
 
-		JMenu fontSize = new JMenu("Font sizes");
-		fontSize.setMnemonic(KeyEvent.VK_Z);
+		fontSizeMenu = new JMenu("Font sizes");
+		fontSizeMenu.setMnemonic(KeyEvent.VK_Z);
 		boolean[] fontSizeShortcutUsed = new boolean[10];
+		ButtonGroup buttonGroup = new ButtonGroup();
 		for (final int size : new int[] { 8, 10, 12, 16, 20, 28, 42 } ) {
-			JMenuItem item = new JMenuItem("" + size + " pt");
+			JRadioButtonMenuItem item = new JRadioButtonMenuItem("" + size + " pt");
 			item.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent event) {
 					getEditorPane().setFontSize(size);
+					updateTabAndFontSize(false);
 				}
 			});
 			for (char c : ("" + size).toCharArray()) {
@@ -198,9 +200,15 @@ public class TextEditor extends JFrame implements ActionListener,
 					break;
 				}
 			}
-			fontSize.add(item);
+			buttonGroup.add(item);
+			fontSizeMenu.add(item);
 		}
-		edit.add(fontSize);
+		chooseFontSize = new JRadioButtonMenuItem("Other...", false);
+		chooseFontSize.setMnemonic(KeyEvent.VK_O);
+		chooseFontSize.addActionListener(this);
+		buttonGroup.add(chooseFontSize);
+		fontSizeMenu.add(chooseFontSize);
+		edit.add(fontSizeMenu);
 		edit.addSeparator();
 
 		// Add tab size adjusting menu
@@ -212,7 +220,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			item.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent event) {
 					getEditorPane().setTabSize(size);
-					updateTabSize(false);
+					updateTabAndFontSize(false);
 				}
 			});
 			item.setMnemonic(KeyEvent.VK_0 + (size % 10));
@@ -738,11 +746,18 @@ public class TextEditor extends JFrame implements ActionListener,
 			getTextArea().setCaretPosition(0);
 			getTextArea().moveCaretPosition(getTextArea().getDocument().getLength());
 		}
+		else if (source == chooseFontSize) {
+			int fontSize = (int)IJ.getNumber("Font size", getEditorPane().getFontSize());
+			if (fontSize != IJ.CANCELED) {
+				getEditorPane().setFontSize(fontSize);
+				updateTabAndFontSize(false);
+			}
+		}
 		else if (source == chooseTabSize) {
 			int tabSize = (int)IJ.getNumber("Tab size", getEditorPane().getTabSize());
 			if (tabSize != IJ.CANCELED) {
 				getEditorPane().setTabSize(tabSize);
-				updateTabSize(false);
+				updateTabAndFontSize(false);
 			}
 		}
 		else if (source == addImport)
@@ -1276,7 +1291,7 @@ public class TextEditor extends JFrame implements ActionListener,
 				}
 				setFileName(tab.editorPane.file);
 				try {
-					updateTabSize(true);
+					updateTabAndFontSize(true);
 				} catch (NullPointerException e) {
 					/* ignore */
 				}
@@ -1527,7 +1542,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	void setLanguage(Languages.Language language) {
 		getEditorPane().setLanguage(language);
-		updateTabSize(true);
+		updateTabAndFontSize(true);
 	}
 
 	void updateLanguageMenu(Languages.Language language) {
@@ -1573,10 +1588,10 @@ public class TextEditor extends JFrame implements ActionListener,
 		boolean isInGit = getEditorPane().getGitDirectory() != null;
 		gitMenu.setVisible(isInGit);
 
-		updateTabSize(false);
+		updateTabAndFontSize(false);
 	}
 
-	protected void updateTabSize(boolean setByLanguage) {
+	protected void updateTabAndFontSize(boolean setByLanguage) {
 		EditorPane pane = getEditorPane();
 		if (setByLanguage)
 			pane.setTabSize(pane.currentLanguage.menuLabel.equals("Python") ? 4 : 8);
@@ -1589,6 +1604,23 @@ public class TextEditor extends JFrame implements ActionListener,
 				item.setLabel("Other" + (defaultSize ? "" : " (" + tabSize + ")") + "...");
 			}
 			else if (tabSize == Integer.parseInt(item.getLabel())) {
+				item.setSelected(true);
+				defaultSize = true;
+			}
+		}
+		int fontSize = (int)pane.getFontSize();
+		defaultSize = false;
+		for (int i = 0; i < fontSizeMenu.getItemCount(); i++) {
+			JMenuItem item = fontSizeMenu.getItem(i);
+			if (item == chooseFontSize) {
+				item.setSelected(!defaultSize);
+				item.setLabel("Other" + (defaultSize ? "" : " (" + fontSize + ")") + "...");
+				continue;
+			}
+			String label = item.getLabel();
+			if (label.endsWith(" pt"))
+				label = label.substring(0, label.length() - 3);
+			if (fontSize == Integer.parseInt(label)) {
 				item.setSelected(true);
 				defaultSize = true;
 			}
