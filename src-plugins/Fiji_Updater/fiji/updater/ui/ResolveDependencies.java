@@ -120,7 +120,7 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 		listIssues();
 
 		if (panel.getDocument().getLength() > 0)
-			show();
+			setVisible(true);
 		return !wasCanceled;
 	}
 
