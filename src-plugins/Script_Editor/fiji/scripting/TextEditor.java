@@ -182,6 +182,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		JMenu fontSize = new JMenu("Font sizes");
 		fontSize.setMnemonic(KeyEvent.VK_Z);
+		boolean[] fontSizeShortcutUsed = new boolean[10];
 		for (final int size : new int[] { 8, 10, 12, 16, 20, 28, 42 } ) {
 			JMenuItem item = new JMenuItem("" + size + " pt");
 			item.addActionListener(new ActionListener() {
@@ -189,6 +190,14 @@ public class TextEditor extends JFrame implements ActionListener,
 					getEditorPane().setFontSize(size);
 				}
 			});
+			for (char c : ("" + size).toCharArray()) {
+				int digit = c - '0';
+				if (!fontSizeShortcutUsed[digit]) {
+					item.setMnemonic(KeyEvent.VK_0 + digit);
+					fontSizeShortcutUsed[digit] = true;
+					break;
+				}
+			}
 			fontSize.add(item);
 		}
 		edit.add(fontSize);
