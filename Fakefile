@@ -56,6 +56,9 @@ debug=false
 # Compile .java files for this Java version
 javaVersion=1.5
 
+# Whether to show use of deprecated entities
+showDeprecation=false
+
 # If false, skips rebuilds triggered from newer Fakefile or fake.jar
 # (see issues 40 & 45)
 rebuildIfFakeIsNewer=true
