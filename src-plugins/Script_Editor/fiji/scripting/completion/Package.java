@@ -2,7 +2,7 @@ package fiji.scripting.completion;
 
 import java.util.TreeSet;
 
-public class Package extends TreeSet<Item> implements Item, Comparable {
+public class Package extends TreeSet<Item> implements Item, Comparable<Item> {
 	String key;
 
 	public Package() {}
@@ -15,8 +15,7 @@ public class Package extends TreeSet<Item> implements Item, Comparable {
 		return key;
 	}
 
-	public int compareTo(Object o) {
-		Item tree = (Item)o;
+	public int compareTo(Item tree) {
 		return(getName().compareTo(tree.getName()));
 	}
 }
