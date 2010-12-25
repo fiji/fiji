@@ -158,7 +158,7 @@ public class PlugInExecutor {
 				return;
 			}
 			runMain(clazz, arg);
-		} catch (Throwable e) {
+		} catch (InstantiationException e) {
 			e.printStackTrace();
 			Throwable cause = e.getCause();
 			if (cause != null) {
