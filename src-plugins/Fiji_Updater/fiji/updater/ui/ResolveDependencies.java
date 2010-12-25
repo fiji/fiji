@@ -38,7 +38,7 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 	JButton ok, cancel;
 
 	PluginCollection plugins;
-	DependencyMap toInstall, toUninstall;
+	DependencyMap toInstall, obsoleted;
 	Collection<PluginObject> automatic, ignore;
 	int conflicts;
 	boolean forUpload, wasCanceled;
@@ -146,10 +146,10 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 
 	void listUpdateIssues() {
 		toInstall = plugins.getDependencies(false);
-		toUninstall = plugins.getDependencies(true);
+		obsoleted = plugins.getDependencies(true);
 
 		for (PluginObject plugin : toInstall.keySet())
-			if (toUninstall.get(plugin) != null)
+			if (obsoleted.get(plugin) != null)
 				bothInstallAndUninstall(plugin);
 			else if (!plugin.willBeUpToDate()) {
 				if (plugin.isLocallyModified())
@@ -158,7 +158,7 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 					automatic.add(plugin);
 			}
 
-		for (PluginObject plugin : toUninstall.keySet())
+		for (PluginObject plugin : obsoleted.keySet())
 			if (toInstall.get(plugin) != null && // handled above
 					!plugin.willNotBeInstalled())
 				needUninstall(plugin);
@@ -175,13 +175,13 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 		maybeAddSeparator();
 		PluginCollection reasons =
 			PluginCollection.clone(toInstall.get(plugin));
-		reasons.addAll(toUninstall.get(plugin));
+		reasons.addAll(obsoleted.get(plugin));
 		newText("Conflict: ", red);
 		addText(plugin.getFilename(), bold);
 		addText(" is required by\n\n");
 		addList(toInstall.get(plugin));
 		addText("\nbut made obsolete by\n\n");
-		addList(toUninstall.get(plugin));
+		addList(obsoleted.get(plugin));
 		addText("\n    ");
 		addIgnoreButton("Ignore this issue", plugin);
 		addText("    ");
@@ -190,7 +190,7 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 
 	void needUninstall(PluginObject plugin) {
 		maybeAddSeparator();
-		PluginCollection reasons = toUninstall.get(plugin);
+		PluginCollection reasons = obsoleted.get(plugin);
 		newText("Conflict: ", red);
 		addText(plugin.getFilename(), bold);
 		addText(" is locally modified but made obsolete by\n\n");
