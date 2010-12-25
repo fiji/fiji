@@ -353,11 +353,11 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 		TmXmlWriter writer = new TmXmlWriter(trackmate);
 		try {
 			writer.writeToFile(file);
-			logger.log("Data saved to: "+file.toString());
+			logger.log("Data saved to: "+file.toString()+'\n');
 		} catch (FileNotFoundException e) {
-			logger.error("File not found:\n"+e.getMessage());
+			logger.error("File not found:\n"+e.getMessage()+'\n');
 		} catch (IOException e) {
-			logger.error("Input/Output error:\n"+e.getMessage());
+			logger.error("Input/Output error:\n"+e.getMessage()+'\n');
 		} finally {
 			jButtonSave.setEnabled(true);
 		}
@@ -496,10 +496,7 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 					universe.addContentLater(imageContent);
 
 				} else {
-					final float[] calibration = new float[] {
-							(float) settings.imp.getCalibration().pixelWidth, 
-							(float) settings.imp.getCalibration().pixelHeight};
-					displayer = new SpotDisplayer2D(settings.imp, settings.segmenterSettings.expectedRadius, calibration);
+					displayer = new SpotDisplayer2D(settings);
 				}
 				displayer.setSpots(trackmate.getSpots());
 				displayer.render();

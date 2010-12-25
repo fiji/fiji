@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate.visualization.test;
 
 import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.features.FeatureFacade;
@@ -82,10 +83,10 @@ public class SpotDisplayer2DTestDrive {
 		imp.show();
 		System.out.println("Creating image done.");
 		
-		SegmenterSettings settings = new SegmenterSettings();
-		settings.expectedRadius = RADIUS;
+		SegmenterSettings segSettings = new SegmenterSettings();
+		segSettings.expectedRadius = RADIUS;
 //		SpotSegmenter<UnsignedByteType> segmenter = new LogSegmenter<UnsignedByteType>();
-		SpotSegmenter<UnsignedByteType> segmenter = new PeakPickerSegmenter<UnsignedByteType>(settings);
+		SpotSegmenter<UnsignedByteType> segmenter = new PeakPickerSegmenter<UnsignedByteType>(segSettings);
 		segmenter.setCalibration(CALIBRATION);
 		segmenter.setImage(img);
 		List<Spot> spots;
@@ -110,7 +111,15 @@ public class SpotDisplayer2DTestDrive {
 		imp.getCalibration().pixelHeight = CALIBRATION[1];
 		final TreeMap<Integer, List<Spot>> allNodes = new TreeMap<Integer, List<Spot>>();
 		allNodes.put(0, spots);
-		final SpotDisplayer2D displayer = new SpotDisplayer2D(imp, RADIUS, CALIBRATION);
+		
+		// Prepare the settings object that will be passed to the displayer 
+		Settings settings = new Settings();
+		settings.segmenterSettings = segSettings;
+		settings.imp = imp;
+		settings.dx = CALIBRATION[0];
+		settings.dy = CALIBRATION[1];
+		
+		final SpotDisplayer2D displayer = new SpotDisplayer2D(settings);
 		displayer.setSpots(allNodes);
 		displayer.render();
 		
