@@ -513,7 +513,12 @@ public class Fake {
 			}
 
 			public Map<Rule, FakeException> run() {
-				// First, make sure that jars/javac.jar is built
+				// First, make sure that the status is determined
+				for (Rule rule : dependencyMap.keySet())
+					if (!rule.upToDate())
+						rule.verbose("Not up-to-date: " + rule.target);
+
+				// Then, make sure that jars/javac.jar is built
 				Rule javac = getRule("jars/javac.jar");
 				if (javac != null && dependencyMap.containsKey(javac)) try {
 					javac.make();
