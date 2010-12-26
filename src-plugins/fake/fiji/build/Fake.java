@@ -1441,7 +1441,8 @@ public class Fake {
 				while (tokenizer.hasMoreElements()) {
 					if (!result.equals(""))
 						result += ":";
-					result += tokenizer.nextToken();
+					String path = tokenizer.nextToken();
+					result += isAbsolutePath(path) ? path : "../" + path;
 				}
 				return result;
 			}
