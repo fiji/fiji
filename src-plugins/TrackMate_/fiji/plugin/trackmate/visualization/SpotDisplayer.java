@@ -56,7 +56,6 @@ public abstract class SpotDisplayer {
 	 */
 	
 	public enum TrackDisplayMode {
-		DO_NOT_DISPLAY,
 		ALL_WHOLE_TRACKS,
 		LOCAL_WHOLE_TRACKS,
 		LOCAL_BACKWARD_TRACKS,
@@ -65,8 +64,6 @@ public abstract class SpotDisplayer {
 		@Override
 		public String toString() {
 			switch(this) {
-			case DO_NOT_DISPLAY:
-				return "Do not display";
 			case ALL_WHOLE_TRACKS:
 				return "Show all entire tracks";
 			case LOCAL_WHOLE_TRACKS:
@@ -135,5 +132,9 @@ public abstract class SpotDisplayer {
 	
 	
 	public abstract void refresh();
+
+	public abstract void setTrackVisible(boolean displayTrackSelected);
+
+	public abstract void setSpotVisible(boolean displaySpotSelected);
 	
 }

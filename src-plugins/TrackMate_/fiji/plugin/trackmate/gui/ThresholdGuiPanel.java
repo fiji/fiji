@@ -126,7 +126,15 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 		prepareDataArrays();
 	}
 	
-
+	/**
+	 * Return the values ofe feature from all spots, for reuse somewhere else. Should
+	 * be called only after the spots field has been set by {@link #setSpots(Collection)}.
+	 */
+	public EnumMap<Feature, double[]> getFeatureValues() {
+		return featureValues;
+	}
+	
+	
 	/**
 	 * Called when one of the {@link ThresholdPanel} is changed by the user.
 	 */

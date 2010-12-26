@@ -43,12 +43,13 @@ public class SpotDisplayer2D extends SpotDisplayer {
 
 		@Override
 		public void draw(Graphics2D g2d) {
+			
+			if (!trackVisible)
+				return;
+			
 			g2d.setStroke(new BasicStroke((float) (1 / canvas.getMagnification())));
 
 			switch (trackDisplayMode) {
-
-			case DO_NOT_DISPLAY:
-				return;
 
 			case ALL_WHOLE_TRACKS:
 				for (int i = 0; i < frames.size(); i++) 
@@ -127,6 +128,10 @@ public class SpotDisplayer2D extends SpotDisplayer {
 
 		@Override
 		public void draw(Graphics2D g2d) {
+			
+			if (!spotVisible)
+				return;
+			
 			g2d.setStroke(new BasicStroke((float) (1 / canvas.getMagnification())));
 			final int frame = imp.getFrame()-1;
 			List<Color> c = colors.get(frame);
@@ -163,6 +168,8 @@ public class SpotDisplayer2D extends SpotDisplayer {
 	private float featureMaxValue;
 	private float featureMinValue;
 	private Settings settings;
+	private boolean trackVisible = true;
+	private boolean spotVisible = true;
 
 	public SpotDisplayer2D(final Settings settings) {
 		this.radius = settings.segmenterSettings.expectedRadius;
@@ -175,6 +182,16 @@ public class SpotDisplayer2D extends SpotDisplayer {
 	/*
 	 * PUBLIC METHODS
 	 */
+	
+	@Override
+	public void setTrackVisible(boolean displayTrackSelected) {
+		trackVisible = displayTrackSelected;
+	}
+	
+	@Override
+	public void setSpotVisible(boolean displaySpotSelected) {
+		spotVisible = displaySpotSelected;		
+	}
 	
 	@Override
 	public void render() {

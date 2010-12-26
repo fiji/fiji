@@ -269,12 +269,13 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 				break;
 								
 			case TRACKING:
-				cardLayout.show(jPanelMain, DISPLAYER_PANEL_KEY);
+				execShowDisplayerPanel();
 				break;
 				
 		}
 	}
 	
+
 	/**
 	 * Called when the "<<" is pressed.
 	 */
@@ -548,6 +549,34 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	
 	
 	/**
+	 * Create and switch to a displayer settings panel.
+	 */
+	private void execShowDisplayerPanel() {
+		if (null != displayerPanel)
+			jPanelMain.remove(displayerPanel);
+		displayerPanel = new DisplayerPanel(thresholdGuiPanel.getFeatureValues());
+		displayerPanel.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (e == displayerPanel.TRACK_DISPLAY_MODE_CHANGED) {
+					displayer.setDisplayTrackMode(displayerPanel.getTrackDisplayMode(), displayerPanel.getTrackDisplayDepth());
+				} else if (e == displayerPanel.TRACK_VISIBILITY_CHANGED) {
+					displayer.setTrackVisible(displayerPanel.isDisplayTrackSelected());
+				} else if (e == displayerPanel.SPOT_VISIBILITY_CHANGED) {
+					displayer.setSpotVisible(displayerPanel.isDisplaySpotSelected());
+				} else if (e == displayerPanel.SPOT_COLOR_MODE_CHANGED) {
+					displayer.setColorByFeature(displayerPanel.getColorSpotByFeature());
+				} else {
+					System.out.println("Unplanned event caught: "+e);
+				}
+				updater.doUpdate();
+			}
+		});
+		jPanelMain.add(displayerPanel, DISPLAYER_PANEL_KEY);
+		cardLayout.show(jPanelMain, DISPLAYER_PANEL_KEY);
+	}
+	
+	/**
 	 * Ensure an 8-bit gray image is sent to the 3D viewer.
 	 */
 	public static final ImagePlus[] makeImageForViewer(final Settings settings) {
@@ -600,12 +629,6 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 		displayer.setColorByFeature(thresholdGuiPanel.getColorByFeature());
 		updater.doUpdate();
 	}
-	
-	private void displayModeChanged() {
-		displayer.setDisplayTrackMode(displayerPanel.getTrackDisplayMode(), displayerPanel.getTrackDisplayDepth());
-		updater.doUpdate();
-	}
-	
 	
 	private void initGUI() {
 		try {
@@ -695,16 +718,6 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 						} 
 					});				
 				jPanelMain.add(thresholdGuiPanel, THRESHOLD_GUI_KEY);
-			}
-			{
-				displayerPanel = new DisplayerPanel();
-				displayerPanel.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						displayModeChanged();
-					}
-				});
-				jPanelMain.add(displayerPanel, DISPLAYER_PANEL_KEY);
 			}
 			cardLayout.show(jPanelMain, START_DIALOG_KEY);
 			state = GuiState.START;

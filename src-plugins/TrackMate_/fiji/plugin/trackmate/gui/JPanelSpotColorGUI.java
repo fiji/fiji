@@ -25,31 +25,19 @@ import org.jfree.chart.renderer.InterpolatePaintScale;
 import fiji.plugin.trackmate.Feature;
 
 
-/**
-* This code was edited or generated using CloudGarden's Jigloo
-* SWT/Swing GUI Builder, which is free for non-commercial
-* use. If Jigloo is being used commercially (ie, by a corporation,
-* company or business for any purpose whatever) then you
-* should purchase a license for each developer using Jigloo.
-* Please visit www.cloudgarden.com for details.
-* Use of Jigloo implies acceptance of these licensing terms.
-* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
-* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
-* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
-*/
 public class JPanelSpotColorGUI extends ActionListenablePanel {
 
 	/*
 	 * FIELDS
 	 */
 	
+	
+	private static final long serialVersionUID = 498572562002300656L;
 	/**
 	 * This action is fired when the feature to color in the "Set color by feature"
 	 * JComboBox is changed.
 	 */
 	public final ActionEvent COLOR_FEATURE_CHANGED = new ActionEvent(this, 1, "ColorFeatureChanged");
-	
-	
 	private JLabel jLabelSetColorBy;
 	private JComboBox jComboBoxSetColorBy;
 	private JPanel jPanelByFeature;
@@ -81,9 +69,28 @@ public class JPanelSpotColorGUI extends ActionListenablePanel {
 	}
 	
 	/*
+	 * PUBLIC METHODS
+	 */
+	
+	/**
+	 * Forward the enabled flag to all components off this panel.
+	 */
+	@Override
+	public void setEnabled(boolean enabled) {
+		jLabelSetColorBy.setEnabled(enabled);
+		jComboBoxSetColorBy.setEnabled(enabled);
+		canvasColor.setEnabled(enabled);
+
+	}
+	
+	
+	/*
 	 * PRIVATE METHODS
 	 */
 	
+	/**
+	 * Forward the 'color by feature' action to the caller of this GUI.
+	 */
 	private void setColorByFeature() {
 		int selection = jComboBoxSetColorBy.getSelectedIndex();
 		if (selection == 0) 
@@ -136,15 +143,15 @@ public class JPanelSpotColorGUI extends ActionListenablePanel {
 		{
 			BorderLayout layout = new BorderLayout();
 			setLayout(layout);
-			this.setPreferredSize(new java.awt.Dimension(270, 55));
+			this.setPreferredSize(new java.awt.Dimension(270, 45));
 
 			jPanelByFeature = new JPanel();
 			BoxLayout jPanelByFeatureLayout = new BoxLayout(jPanelByFeature, javax.swing.BoxLayout.X_AXIS);
 			jPanelByFeature.setLayout(jPanelByFeatureLayout);
 			add(jPanelByFeature, BorderLayout.CENTER);
-			jPanelByFeature.setPreferredSize(new java.awt.Dimension(270, 35));
-			jPanelByFeature.setMaximumSize(new java.awt.Dimension(32767, 50));
-			jPanelByFeature.setSize(270, 40);
+			jPanelByFeature.setPreferredSize(new java.awt.Dimension(270, 25));
+			jPanelByFeature.setMaximumSize(new java.awt.Dimension(32767, 25));
+			jPanelByFeature.setSize(270, 25);
 			{
 				jPanelByFeature.add(Box.createHorizontalStrut(5));
 				jLabelSetColorBy = new JLabel();

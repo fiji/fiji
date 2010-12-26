@@ -45,6 +45,17 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	 * OVERRIDDEN METHODS
 	 */
 	
+	@Override
+	public void setTrackVisible(boolean displayTrackSelected) {
+		trackContent.setVisible(displayTrackSelected);
+	}
+	
+	@Override
+	public void setSpotVisible(boolean displaySpotSelected) {
+		spotContent.setVisible(displaySpotSelected);
+	}
+	
+	@Override
 	public void setSpots(java.util.TreeMap<Integer,java.util.List<Spot>> spots) {
 		super.setSpots(spots);
 		spotContent = makeSpotContent();
@@ -52,21 +63,16 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	
 	
 	@Override
-	public void setDisplayTrackMode(TrackDisplayMode mode, int displayDepth) {
+	public void setDisplayTrackMode(TrackDisplayMode mode, int displayDepth) { // TODO
 		super.setDisplayTrackMode(mode, displayDepth);
 		if (null == trackContent) 
 			return;
 			
 		switch (trackDisplayMode) {
 		
-		case DO_NOT_DISPLAY:
-			trackContent.setVisible(false);
-			break;
-			
 		case ALL_WHOLE_TRACKS:
 			trackContent.setVisible(true);
 			break;
-		
 		}
 		
 	}
