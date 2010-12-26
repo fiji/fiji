@@ -1,4 +1,4 @@
-package vib;
+package fiji.util;
 
 import java.lang.reflect.Array;
 
