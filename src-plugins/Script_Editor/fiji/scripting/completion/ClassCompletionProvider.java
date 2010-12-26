@@ -44,7 +44,6 @@ public class ClassCompletionProvider extends CompletionProviderBase
 	 */
 	private CompletionProvider docCommentCompletionProvider;
 
-	protected Package topLevel;
 	protected String language;
 	protected ClassNames names;
 	protected Thread classNamesThread;
@@ -146,9 +145,7 @@ public class ClassCompletionProvider extends CompletionProviderBase
 	public CompletionProvider getDefaultProvider() {
 		defaultProvider.clear();
 		KeywordsCompletion.completeKeywords(defaultProvider, language, defaultProvider.getEnteredText(textArea));
-		if (topLevel == null)
-			topLevel = getClassNames().getRoot();
-		names.setClassCompletions(topLevel, textArea, language);
+		names.setClassCompletions(textArea, language);
 		return defaultProvider;
 	}
 
