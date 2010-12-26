@@ -424,31 +424,31 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 		for (int i = 0; i < 20; i++)
 			fakeChecksum += Integer.toHexString(random.nextInt() & 0xf) + Integer.toHexString(random.nextInt() & 0xf);
 		long fakeTimestamp = 19700000000000l + (random.nextLong() % 400000000000l);
-		return new PluginObject(label, fakeChecksum, fakeTimestamp, PluginObject.Status.NOT_INSTALLED);
+		return new PluginObject("", label, fakeChecksum, fakeTimestamp, PluginObject.Status.NOT_INSTALLED);
 	}
 
 	public static void main(String[] args) {
-		ResolveDependencies frame = new ResolveDependencies(null);
+		PluginCollection plugins = new PluginCollection();
+		ResolveDependencies frame = new ResolveDependencies(null, plugins);
 
-		PluginCollection plugins = PluginCollection.getInstance();
 		PluginObject plugin = fakePlugin("Install_.jar");
 		plugin.addDependency("Obsoleted_.jar");
 		plugin.addDependency("Locally_Modified.jar");
 		plugin.setStatus(PluginObject.Status.NOT_INSTALLED);
-		plugin.setAction(PluginObject.Action.INSTALL);
+		plugin.setAction(plugins, PluginObject.Action.INSTALL);
 		plugins.add(plugin);
 		plugin = fakePlugin("Obsoleting_.jar");
 		plugin.addDependency("Obsoleted_.jar");
 		plugin.setStatus(PluginObject.Status.NOT_INSTALLED);
-		plugin.setAction(PluginObject.Action.INSTALL);
+		plugin.setAction(plugins, PluginObject.Action.INSTALL);
 		plugins.add(plugin);
 		plugin = fakePlugin("Locally_Modified.jar");
 		plugin.setStatus(PluginObject.Status.MODIFIED);
-		plugin.setAction(PluginObject.Action.MODIFIED);
+		plugin.setAction(plugins, PluginObject.Action.MODIFIED);
 		plugins.add(plugin);
 		plugin = fakePlugin("Obsoleted_.jar");
 		plugin.setStatus(PluginObject.Status.OBSOLETE);
-		plugin.setAction(PluginObject.Action.OBSOLETE);
+		plugin.setAction(plugins, PluginObject.Action.OBSOLETE);
 		plugins.add(plugin);
 
 		System.err.println("resolved: " + frame.resolve());
