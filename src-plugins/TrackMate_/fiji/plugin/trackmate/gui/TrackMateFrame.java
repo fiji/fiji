@@ -45,7 +45,6 @@ import org.jgrapht.graph.SimpleGraph;
 
 import loci.formats.FormatException;
 import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.FeatureThreshold;
 import fiji.plugin.trackmate.Logger;
@@ -397,7 +396,7 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 			imp = NewImage.createByteImage("Empty", settings.width, settings.height, settings.nframes * settings.nslices, NewImage.FILL_BLACK);
 			imp.setDimensions(1, settings.nslices, settings.nframes);
 		}
-		imp.show();
+//		imp.show(); Launching the 2d displayer after that raise a NPE, I don't know why
 		settings.imp = imp;
 		trackmate.setSettings(settings);
 		logger.log("  Reading image done.\n");
@@ -840,6 +839,8 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 		// Render image data
 		boolean is3D = settings.imp.getNSlices() > 1;
 		if (is3D) { 
+			if (!settings.imp.isVisible())
+				settings.imp.show();
 			final Image3DUniverse universe = new Image3DUniverse();
 			universe.show();
 			ImagePlus[] images = makeImageForViewer(settings);
@@ -869,11 +870,14 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	/**
 	 * Auto-generated main method to display this JFrame
 	 */
-	public static void main(String[] args) {
+	public static <T extends RealType<T>> void main(String[] args) {
 		ij.ImageJ.main(args);
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				TrackMateFrame<UnsignedByteType> inst = new TrackMateFrame<UnsignedByteType>();
+				TrackMate_<T> trackmate = new TrackMate_<T>();
+				TrackMateFrame<T> inst = new TrackMateFrame<T>(trackmate);
+				trackmate.setLogger(inst.logger);
+				
 				inst.setLocationRelativeTo(null);
 				inst.setVisible(true);
 			}

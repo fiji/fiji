@@ -126,7 +126,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 		if (tracker.checkInput() && tracker.process())
 			trackGraph = tracker.getTrackGraph();
 		else
-			logger.error("Problem occured in tracking:\n"+tracker.getErrorMessage());
+			logger.error("Problem occured in tracking:\n"+tracker.getErrorMessage()+'\n');
 	}
 	
 	/**
