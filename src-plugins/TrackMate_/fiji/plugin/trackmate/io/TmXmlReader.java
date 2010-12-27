@@ -343,8 +343,10 @@ public class TmXmlReader implements TmXmlKeys {
 		Element imageInfoElement = root.getChild(IMAGE_ELEMENT_KEY);
 		if (null == imageInfoElement)
 			return null;
-		String filename = imageInfoElement.getAttribute(IMAGE_FILENAME_ATTRIBUTE_NAME).getValue();
-		String folder 	= imageInfoElement.getAttribute(IMAGE_FOLDER_ATTRIBUTE_NAME).getValue();
+		String filename = imageInfoElement.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
+		String folder 	= imageInfoElement.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME);
+		if (null == filename || null == folder || filename.equals(""))
+			return null;		
 		File imageFile = new File(folder, filename);
 		if (!imageFile.exists() || !imageFile.canRead())
 			return null;
