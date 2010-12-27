@@ -85,6 +85,8 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	@Override
 	public void setTrackGraph(SimpleGraph<Spot, DefaultEdge> trackGraph) {
 		super.setTrackGraph(trackGraph);
+		if (universe.contains(TRACK_CONTENT_NAME))
+			universe.removeContent(TRACK_CONTENT_NAME);
 		trackContent = makeTrackContent();
 		try {
 			trackContent = universe.addContentLater(trackContent).get();
