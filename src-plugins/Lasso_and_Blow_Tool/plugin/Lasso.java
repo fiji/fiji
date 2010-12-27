@@ -84,6 +84,11 @@ public class Lasso {
 	}
 
 	/** Create and initialize a Lasso at point x,y. */
+	public Lasso(ImagePlus imp, int mode, int x, int y, boolean shiftKeyDown) {
+		this(imp, Mode.valueOf(mode), x, y, shiftKeyDown);
+	}
+
+	/** Create and initialize a Lasso at point x,y. */
 	public Lasso(ImagePlus imp, Mode mode, int x, int y, boolean shiftKeyDown) {
 		this(imp, mode);
 		initDijkstra(x, y, shiftKeyDown);
