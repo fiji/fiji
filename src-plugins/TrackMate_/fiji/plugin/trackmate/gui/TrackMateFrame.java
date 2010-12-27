@@ -2,6 +2,7 @@ package fiji.plugin.trackmate.gui;
 
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.gui.NewImage;
 import ij.plugin.Duplicator;
 import ij.process.ColorProcessor;
 import ij.process.StackConverter;
@@ -37,6 +38,12 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import org.jdom.DataConversionException;
+import org.jdom.JDOMException;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.SimpleGraph;
+
+import loci.formats.FormatException;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import fiji.plugin.trackmate.Feature;
@@ -45,6 +52,7 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.io.TmXmlWriter;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer2D;
@@ -137,7 +145,8 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 		CALCULATE_FEATURES, 
 		THRESHOLD_BLOBS,
 		TUNE_TRACKER,
-		TRACKING;
+		TRACKING,
+		TUNE_DISPLAY;
 	};
 	
 	private static final long serialVersionUID = 1L;
@@ -270,6 +279,8 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 								
 			case TRACKING:
 				execShowDisplayerPanel();
+				state = GuiState.TUNE_DISPLAY;
+				jButtonNext.setEnabled(false);
 				break;
 				
 		}
@@ -321,6 +332,10 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 			state = GuiState.TUNE_TRACKER;
 			break;
 			
+		case TUNE_DISPLAY:
+			jButtonNext.setEnabled(true);
+			cardLayout.show(jPanelMain, LOG_PANEL_KEY);
+			state = GuiState.TRACKING;
 	}
 	}
 	
@@ -328,6 +343,126 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	 * Called when the "Load" button is pressed.
 	 */
 	private void load() {
+		jButtonLoad.setEnabled(false);
+		if (null == file ) {
+			File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
+			file = new File(folder.getPath() + File.separator + DEFAULT_FILENAME);
+		}
+		JFileChooser fileChooser = new JFileChooser(file.getParent());
+		fileChooser.setSelectedFile(file);
+		FileNameExtensionFilter filter = new FileNameExtensionFilter("XML files", "xml");
+		fileChooser.setFileFilter(filter);
+		
+		int returnVal = fileChooser.showOpenDialog(this);
+		if(returnVal == JFileChooser.APPROVE_OPTION) {
+			file = fileChooser.getSelectedFile();
+		} else {
+			logger.log("Load data aborted.\n");
+			return;  	    		
+		}
+		
+		cardLayout.show(jPanelMain, LOG_PANEL_KEY);
+		logger.log("Opening file "+file.getName()+'\n');
+		TmXmlReader reader = new TmXmlReader(file);
+		try {
+			reader.parse();
+		} catch (JDOMException e) {
+			logger.error("Problem parsing "+file.getName()+", it is not a valid TrackMate XML file.\nError message is:\n"+e.getLocalizedMessage()+'\n');
+		} catch (IOException e) {
+			logger.error("Problem reading "+file.getName()+".\nError message is:\n"+e.getLocalizedMessage()+'\n');
+		}
+		logger.log("  Parsing file done.\n");
+		
+		// Read settings
+		try {
+			settings = reader.getSettings();
+		} catch (DataConversionException e1) {
+			logger.error("Problem reading the settings field of "+file.getName()+". Error message is:\n"+e1.getLocalizedMessage()+'\n');
+		}
+		logger.log("  Reading settings done.\n");
+
+		
+		// Try to read image
+		ImagePlus imp = null;
+		try {
+			imp = reader.getImage();
+		} catch (IOException e) {
+			logger.error("Problem loading the image linked by "+file.getName()+". Error message is:\n"+e.getLocalizedMessage()+'\n');
+		} catch (FormatException e) {
+			logger.error("Problem loading the image linked by "+file.getName()+". Error message is:\n"+e.getLocalizedMessage()+'\n');
+		}
+		if (null == imp) {
+			// Provide a dummy empty image if linked image can't be found
+			logger.log("Could not find image "+settings.imageFileName+" in "+settings.imageFolder+". Substituting dummy image.\n");
+			imp = NewImage.createByteImage("Empty", settings.width, settings.height, settings.nframes * settings.nslices, NewImage.FILL_BLACK);
+			imp.setDimensions(1, settings.nslices, settings.nframes);
+		}
+		imp.show();
+		settings.imp = imp;
+		trackmate.setSettings(settings);
+		logger.log("  Reading image done.\n");
+		
+		// Try to read spots
+		TreeMap<Integer, List<Spot>> spots = null;
+		try {
+			spots = reader.getAllSpots();
+		} catch (DataConversionException e) {
+			logger.error("Problem reading the spots field of "+file.getName()+". Error message is\n"+e.getLocalizedMessage()+'\n');
+		}
+		if (null == spots) {
+			// No spots, so we stop here, and switch to the start panel
+			if (null != startDialogPanel)
+				jPanelMain.remove(startDialogPanel);
+			startDialogPanel = new StartDialogPanel(settings);
+			jPanelMain.add(startDialogPanel, START_DIALOG_KEY);
+			cardLayout.show(jPanelMain, START_DIALOG_KEY);
+			state = GuiState.START;
+			jButtonLoad.setEnabled(true);
+			return;
+		}
+		// We have a spot field, so we can instantiate a new displayer
+		trackmate.setSpots(spots);
+		logger.log("  Reading spots done - launching displayer.\n");
+		displayer = instantiateDisplayer(trackmate);
+		
+		// Try to read spot selection
+		TreeMap<Integer, List<Spot>> selectedSpots = null;
+		try {
+			selectedSpots = reader.getSpotSelection(spots);
+		} catch (DataConversionException e) {
+			logger.error("Problem reading the spot selection field of "+file.getName()+". Error message is\n"+e.getLocalizedMessage()+'\n');
+		}
+		if (null == selectedSpots) {
+			// No spot selection, so we go to the thresholding panel
+			execThresholdingStep();
+			state = GuiState.THRESHOLD_BLOBS;
+			jButtonLoad.setEnabled(true);
+			return;
+		}
+		trackmate.setSpotSelection(selectedSpots);
+		logger.log("  Reading spot selection done.\n");
+		displayer.setSpotsToShow(selectedSpots);
+		
+		SimpleGraph<Spot, DefaultEdge> trackGraph = null; 
+		try {
+			trackGraph = reader.getTracks(selectedSpots);
+		} catch (DataConversionException e) {
+			logger.error("Problem reading the track field of "+file.getName()+". Error message is\n"+e.getLocalizedMessage()+'\n');
+		}
+		if (null == trackGraph) {
+			// No track so we go to the tracking panel
+			execTuneTracker();
+			state = GuiState.TUNE_TRACKER;
+			jButtonLoad.setEnabled(true);
+			return;
+		}
+		logger.log("  Reading tracks done.\n");
+		displayer.setTrackGraph(trackGraph);
+		trackmate.setTrackGraph(trackGraph);
+		execShowDisplayerPanel();
+		jButtonLoad.setEnabled(true);
+		return;
+		
 	}
 	
 	/**
@@ -348,9 +483,10 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 		if(returnVal == JFileChooser.APPROVE_OPTION) {
 			file = fileChooser.getSelectedFile();
 		} else {
-			logger.log("Save data aborted.");
+			logger.log("Save data aborted.\n");
 			return;  	    		
 		}
+		
 		TmXmlWriter writer = new TmXmlWriter(trackmate);
 		try {
 			writer.writeToFile(file);
@@ -476,31 +612,7 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 		// Thread for rendering
 		new Thread("TrackMate rendering thread") {
 			public void run() {
-				Settings settings = trackmate.getSettings();
-				// Render image data
-				boolean is3D = settings.imp.getNSlices() > 1;
-				if (is3D) { 
-					final Image3DUniverse universe = new Image3DUniverse();
-					universe.show();
-					ImagePlus[] images = makeImageForViewer(settings);
-					Content imageContent = ContentCreator.createContent(
-							settings.imp.getTitle(), 
-							images, 
-							Content.VOLUME, 
-							DEFAULT_RESAMPLING_FACTOR, 
-							0,
-							null, 
-							DEFAULT_THRESHOLD, 
-							new boolean[] {true, true, true});
-					// Render spots
-					displayer = new SpotDisplayer3D(universe, settings.segmenterSettings.expectedRadius); 							
-					universe.addContentLater(imageContent);
-
-				} else {
-					displayer = new SpotDisplayer2D(settings);
-				}
-				displayer.setSpots(trackmate.getSpots());
-				displayer.render();
+				displayer = instantiateDisplayer(trackmate);
 				cardLayout.show(jPanelMain, THRESHOLD_GUI_KEY);
 				
 				thresholdGuiPanel.setSpots(trackmate.getSpots().values());
@@ -554,7 +666,7 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	private void execShowDisplayerPanel() {
 		if (null != displayerPanel)
 			jPanelMain.remove(displayerPanel);
-		displayerPanel = new DisplayerPanel(thresholdGuiPanel.getFeatureValues());
+		displayerPanel = new DisplayerPanel(trackmate.getSpots().values());
 		displayerPanel.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -619,15 +731,6 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 			
 		}
 		return ret;
-	}
-
-	/**
-	 * Is called when the user change the color by feature combo box in the 
-	 * {@link ThresholdGuiPanel}.
-	 */
-	private void recolorSpots() {
-		displayer.setColorByFeature(thresholdGuiPanel.getColorByFeature());
-		updater.doUpdate();
 	}
 	
 	private void initGUI() {
@@ -714,9 +817,10 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 				thresholdGuiPanel = new ThresholdGuiPanel();
 				thresholdGuiPanel.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
-							recolorSpots();
-						} 
-					});				
+						displayer.setColorByFeature(thresholdGuiPanel.getColorByFeature());
+						updater.doUpdate();
+					} 
+				});
 				jPanelMain.add(thresholdGuiPanel, THRESHOLD_GUI_KEY);
 			}
 			cardLayout.show(jPanelMain, START_DIALOG_KEY);
@@ -727,12 +831,46 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 		repaint();
 		validate();
 	}
+	
+	
+	
+	private static <T extends RealType<T>> SpotDisplayer instantiateDisplayer(TrackMate_<T> plugin) {
+		SpotDisplayer disp;
+		Settings settings = plugin.getSettings();
+		// Render image data
+		boolean is3D = settings.imp.getNSlices() > 1;
+		if (is3D) { 
+			final Image3DUniverse universe = new Image3DUniverse();
+			universe.show();
+			ImagePlus[] images = makeImageForViewer(settings);
+			Content imageContent = ContentCreator.createContent(
+					settings.imp.getTitle(), 
+					images, 
+					Content.VOLUME, 
+					DEFAULT_RESAMPLING_FACTOR, 
+					0,
+					null, 
+					DEFAULT_THRESHOLD, 
+					new boolean[] {true, true, true});
+			// Render spots
+			disp = new SpotDisplayer3D(universe, settings.segmenterSettings.expectedRadius); 							
+			universe.addContentLater(imageContent);
+
+		} else {
+			disp = new SpotDisplayer2D(settings);
+		}
+		disp.setSpots(plugin.getSpots());
+		disp.render();
+		return disp;
+	}
+	
 
 
 	/**
 	 * Auto-generated main method to display this JFrame
 	 */
 	public static void main(String[] args) {
+		ij.ImageJ.main(args);
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				TrackMateFrame<UnsignedByteType> inst = new TrackMateFrame<UnsignedByteType>();

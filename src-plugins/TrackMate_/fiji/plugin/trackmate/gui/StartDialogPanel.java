@@ -112,7 +112,10 @@ public class StartDialogPanel extends ActionListenablePanel {
 	 * Fill the text fields with parameters grabbed from current ImagePlus.
 	 */
 	private void refresh() {
-		imp = WindowManager.getCurrentImage();
+		if (null == settings.imp)
+			imp = WindowManager.getCurrentImage();
+		else 
+			imp = settings.imp;
 		if (null == imp)
 			return;
 		jLabelImageName.setText(imp.getTitle());

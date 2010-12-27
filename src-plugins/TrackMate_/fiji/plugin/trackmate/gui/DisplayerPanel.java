@@ -9,6 +9,7 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 import java.util.EnumMap;
 
 import javax.swing.ComboBoxModel;
@@ -24,6 +25,7 @@ import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
 
 import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 
@@ -72,9 +74,9 @@ public class DisplayerPanel extends ActionListenablePanel {
 
 	
 	
-	public DisplayerPanel(EnumMap<Feature, double[]> featureValues) {
+	public DisplayerPanel(final Collection<? extends Collection<Spot>> spots) {
 		super();
-		this.featureValues = featureValues;
+		this.featureValues = prepareDataArrays(spots);
 		initGUI();
 	}
 	
@@ -273,6 +275,40 @@ public class DisplayerPanel extends ActionListenablePanel {
 		}
 	}
 
+	private static EnumMap<Feature, double[]> prepareDataArrays(final Collection<? extends Collection<Spot>> spots) {
+		EnumMap<Feature, double[]> featureValues = new EnumMap<Feature, double[]>(Feature.class);
+		if (null == spots)
+			return featureValues;
+		int index;
+		Float val;
+		boolean noDataFlag = true;
+		// Get the total quantity of spot we have
+		int spotNumber = 0;
+		for(Collection<? extends Spot> collection : spots)
+			spotNumber += collection.size();
+		
+		for(Feature feature : Feature.values()) {
+			// Make a double array to comply to JFreeChart histograms
+			double[] values = new double[spotNumber];
+			index = 0;
+			for(Collection<? extends Spot> collection : spots) {
+				for (Spot spot : collection) {
+					val = spot.getFeature(feature);
+					if (null == val)
+						continue;
+					values[index] = val; 
+					index++;
+					noDataFlag = false;
+				}
+				if (noDataFlag)
+					featureValues.put(feature, null);
+				else 
+					featureValues.put(feature, values);
+			}
+		}
+		return featureValues;
+	}
+	
 	
 	
 	/**

@@ -199,7 +199,7 @@ public class TmXmlReader implements TmXmlKeys {
 	 * Return the list of all spots stored in this file.
 	 * @throws DataConversionException  if the attribute values are not formatted properly in the file.
 	 * @return  a {@link TreeMap} of spot list, index by frame number (one list of spot per frame, frame number
-	 * is the key of the treemap). Return <code>null</code> if the spot section does is not present in the file.
+	 * is the key of the treemap). Return <code>null</code> if the spot section is not present in the file.
 	 */
 	@SuppressWarnings("unchecked")
 	public TreeMap<Integer, List<Spot>> getAllSpots() throws DataConversionException {

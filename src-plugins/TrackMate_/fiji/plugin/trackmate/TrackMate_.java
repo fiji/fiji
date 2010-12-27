@@ -292,6 +292,20 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 		this.spots = spots;
 	}
 
+	/**
+	 * Overwrite the {@link #selectedSpots} field, resulting from feature thresholding.
+	 */
+	public void setSpotSelection(TreeMap<Integer, List<Spot>> selectedSpots) {
+		this.selectedSpots = selectedSpots;
+	}
+	
+	/**
+	 * Overwrite the {@link #trackGraph} field, resulting from the tracking step.
+	 */
+	public void setTrackGraph(SimpleGraph<Spot, DefaultEdge> trackGraph) {
+		this.trackGraph = trackGraph;
+	}
+
 	
 	/*
 	 * STATIC METHODS
