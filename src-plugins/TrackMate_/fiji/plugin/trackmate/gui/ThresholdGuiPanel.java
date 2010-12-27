@@ -127,7 +127,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	}
 	
 	/**
-	 * Return the values ofe feature from all spots, for reuse somewhere else. Should
+	 * Return the values of feature from all spots, for reuse somewhere else. Should
 	 * be called only after the spots field has been set by {@link #setSpots(Collection)}.
 	 */
 	public EnumMap<Feature, double[]> getFeatureValues() {

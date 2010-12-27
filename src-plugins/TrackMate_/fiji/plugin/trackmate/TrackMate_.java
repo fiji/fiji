@@ -156,7 +156,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 	public void execSegmentation() {
 		final ImagePlus imp = settings.imp;
 		if (null == imp) {
-			logger.error("No image to operate on.");
+			logger.error("No image to operate on.\n");
 			return;
 		}
 
@@ -190,7 +190,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 				spots.put(i, spotsThisFrame);
 				spotFound += spotsThisFrame.size();
 			} else {
-				logger.error(segmenter.getErrorMessage());
+				logger.error(segmenter.getErrorMessage()+'\n');
 				return;
 			}
 						

@@ -423,6 +423,8 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 		trackmate.setSpots(spots);
 		logger.log("  Reading spots done - launching displayer.\n");
 		displayer = instantiateDisplayer(trackmate);
+		// Also update the feature threshold GUI, in case the user move back to it
+		thresholdGuiPanel.setSpots(spots.values());
 		
 		// Try to read spot selection
 		TreeMap<Integer, List<Spot>> selectedSpots = null;
@@ -458,7 +460,7 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 		logger.log("  Reading tracks done.\n");
 		displayer.setTrackGraph(trackGraph);
 		trackmate.setTrackGraph(trackGraph);
-		execShowDisplayerPanel();
+		state = GuiState.TRACKING;
 		jButtonLoad.setEnabled(true);
 		return;
 		
@@ -831,6 +833,11 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 		validate();
 	}
 	
+	
+	private ThresholdGuiPanel instantiateThresholdGuiPanel() {
+		// TODO
+		return null;
+	}
 	
 	
 	private static <T extends RealType<T>> SpotDisplayer instantiateDisplayer(TrackMate_<T> plugin) {
