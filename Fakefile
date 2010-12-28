@@ -241,6 +241,7 @@ jars/postgresql-8.2-506.jdbc3.jar[] <-
 
 # From submodules
 jars/ij.jar <- jars/javac.jar ImageJA/
+CLASSPATH(misc/headless.jar)=jars/ij.jar
 misc/headless.jar <- jars/javac.jar ImageJA/
 CLASSPATH(plugins/mpicbg_.jar)=jars/ij.jar:jars/mpicbg.jar
 plugins/mpicbg_.jar <- mpicbg/
