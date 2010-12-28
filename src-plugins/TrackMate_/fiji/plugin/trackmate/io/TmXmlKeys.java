@@ -18,7 +18,7 @@ public interface TmXmlKeys {
 	 * ROOT ELEMENT
 	 */
 
-	public static final String ROOT_ELEMENT_KEY 					= "TrakMate";
+	public static final String ROOT_ELEMENT_KEY 					= "TrackMate";
 	
 	/*
 	 * SETTINGS elements

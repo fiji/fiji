@@ -27,6 +27,8 @@ import fiji.plugin.trackmate.FeatureThreshold;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.Settings.SegmenterType;
+import fiji.plugin.trackmate.Settings.TrackerType;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
@@ -92,6 +94,9 @@ public class TmXmlWriter implements TmXmlKeys {
 	
 	private Element echoSegmenterSettings(Element root) {
 		SegmenterSettings segSettings = trackmate.getSettings().segmenterSettings;
+		SegmenterType type = segSettings.segmenterType;
+		if (null == type)
+			return root;
 		Element segSettingsElement = new Element(SEGMENTER_SETTINGS_ELEMENT_KEY);
 		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME, 		segSettings.segmenterType.name());
 		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME, 		""+segSettings.expectedRadius);
@@ -104,6 +109,9 @@ public class TmXmlWriter implements TmXmlKeys {
 	
 	private Element echoTrackerSettings(Element root) {
 		TrackerSettings settings = trackmate.getSettings().trackerSettings;
+		TrackerType type = settings.trackerType;
+		if (null == type)
+			return root;
 		Element trackerSettingsElement = new Element(TRACKER_SETTINGS_ELEMENT_KEY);
 		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_TRACKER_TYPE_ATTRIBUTE_NAME, 		settings.trackerType.name());
 		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_TIME_UNITS_ATTNAME, 				settings.timeUnits);

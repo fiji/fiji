@@ -184,7 +184,6 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	private JButton jButtonNext;
 	private JPanel jPanelButtons;
 	private JPanel jPanelMain;
-	private Settings settings;
 	private SegmenterSettingsPanel segmenterSettingsPanel;
 	private TrackerSettingsPanel trackerSettingsPanel;
 	private InitThresholdPanel initThresholdingPanel;
@@ -269,8 +268,7 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 				
 			case TUNE_TRACKER:
 				// Get settings from tuning panel and pass them to trackmate
-				settings.trackerSettings = trackerSettingsPanel.getSettings();
-				trackmate.setSettings(settings);
+				trackmate.getSettings().trackerSettings = trackerSettingsPanel.getSettings();
 				// Track
 				execTrackingStep();
 				state = GuiState.TRACKING;
@@ -373,6 +371,7 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 		logger.log("  Parsing file done.\n");
 		
 		// Read settings
+		Settings settings = null;
 		try {
 			settings = reader.getSettings();
 		} catch (DataConversionException e1) {
@@ -412,7 +411,7 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 			// No spots, so we stop here, and switch to the start panel
 			if (null != startDialogPanel)
 				jPanelMain.remove(startDialogPanel);
-			startDialogPanel = new StartDialogPanel(settings);
+			startDialogPanel = new StartDialogPanel(trackmate.getSettings());
 			jPanelMain.add(startDialogPanel, START_DIALOG_KEY);
 			cardLayout.show(jPanelMain, START_DIALOG_KEY);
 			state = GuiState.START;
@@ -485,6 +484,7 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 			file = fileChooser.getSelectedFile();
 		} else {
 			logger.log("Save data aborted.\n");
+			jButtonSave.setEnabled(true);
 			return;  	    		
 		}
 		
@@ -507,10 +507,10 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	 * Create a new {@link SegmenterSettingsPanel}.
 	 */
 	private void execTuneSegmenter() {
-		settings = startDialogPanel.getSettings();
+		trackmate.setSettings(startDialogPanel.getSettings());
 		if (null != segmenterSettingsPanel)
 			jPanelMain.remove(segmenterSettingsPanel);
-		segmenterSettingsPanel = settings.createSegmenterSettingsPanel();
+		segmenterSettingsPanel = trackmate.getSettings().createSegmenterSettingsPanel();
 		jPanelMain.add(segmenterSettingsPanel, TUNE_SEGMENTER_KEY);
 		cardLayout.show(jPanelMain, TUNE_SEGMENTER_KEY);
 	}
@@ -518,7 +518,7 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	private void execTuneTracker() {
 		if (null != trackerSettingsPanel)
 			jPanelMain.remove(trackerSettingsPanel);
-		trackerSettingsPanel = settings.createTrackerSettingsPanel();
+		trackerSettingsPanel = trackmate.getSettings().createTrackerSettingsPanel();
 		jPanelMain.add(trackerSettingsPanel, TUNE_TRACKER_KEY);
 		cardLayout.show(jPanelMain, TUNE_TRACKER_KEY);
 	}
@@ -530,12 +530,11 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	 */
 	private void execSegmentationStep() {
 		cardLayout.show(jPanelMain, LOG_PANEL_KEY);
-		settings.segmenterSettings = segmenterSettingsPanel.getSettings();
-		trackmate.setSettings(settings);
+		trackmate.getSettings().segmenterSettings = segmenterSettingsPanel.getSettings();
 		logger.log("Starting segmentation...\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
-		logger.log(settings.toString());
-		logger.log(settings.segmenterSettings.toString());
+		logger.log(trackmate.getSettings().toString());
+		logger.log(trackmate.getSettings().segmenterSettings.toString());
 		new Thread("TrackMate segmentation thread") {					
 			public void run() {
 				long start = System.currentTimeMillis();
@@ -644,7 +643,7 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 		jButtonNext.setEnabled(false);
 		logger.log("Starting tracking...\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
-		logger.log(settings.trackerSettings.toString());
+		logger.log(trackmate.getSettings().trackerSettings.toString());
 		new Thread("TrackMate tracking thread") {					
 			public void run() {
 				long start = System.currentTimeMillis();
@@ -807,7 +806,7 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 			pack();
 			this.setSize(300, 520);
 			{
-				startDialogPanel = new StartDialogPanel(settings);
+				startDialogPanel = new StartDialogPanel(trackmate.getSettings());
 				jPanelMain.add(startDialogPanel, START_DIALOG_KEY);
 			}
 			{
@@ -832,13 +831,6 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 		repaint();
 		validate();
 	}
-	
-	
-	private ThresholdGuiPanel instantiateThresholdGuiPanel() {
-		// TODO
-		return null;
-	}
-	
 	
 	private static <T extends RealType<T>> SpotDisplayer instantiateDisplayer(TrackMate_<T> plugin) {
 		SpotDisplayer disp;
