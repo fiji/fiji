@@ -501,18 +501,34 @@ public class Fake {
 			protected Map<Rule, FutureTask<FakeException>> futures;
 			protected Map<Rule, List<Rule>> dependencyMap;
 			protected Map<Rule, FakeException> results;
+			protected Rule finalRule;
 
 			protected final FakeException success = new FakeException("Dummy for success");
 
-			public ParallelMaker(int maxThreads, List<Rule> targets) throws FakeException {
-				pool = Executors.newFixedThreadPool(maxThreads);
+			public ParallelMaker(final int maxThreads, final List<Rule> targets) throws FakeException {
 				futures = new HashMap<Rule, FutureTask<FakeException>>();
 				results = new LinkedHashMap<Rule, FakeException>();
+				pool = Executors.newFixedThreadPool(maxThreads);
 
-				dependencyMap = buildDependencyMap(targets);
+				finalRule = getFinalRule(targets);
+				List<Rule> rules = new ArrayList<Rule>(targets);
+				rules.add(finalRule);
+				dependencyMap = buildDependencyMap(rules);
 			}
 
-			public Map<Rule, FakeException> run() {
+			protected Rule getFinalRule(final List<Rule> targets) {
+				return new Special("final") {
+					public Iterable<Rule> getDependencies() {
+						return targets;
+					}
+
+					public void action() {
+						finalRule.notify();
+					}
+				};
+			}
+
+			public FakeException run() {
 				// First, make sure that the status is determined
 				for (Rule rule : dependencyMap.keySet())
 					if (!rule.upToDate())
@@ -527,30 +543,28 @@ public class Fake {
 					results.put(javac, e);
 				}
 
-				synchronized(futures) {
-					for (Rule rule : dependencyMap.keySet())
-						submitTaskIfReady(rule);
-				}
+				// Now, queue all rules that can be made already
+				for (Rule rule : dependencyMap.keySet())
+					submitTaskIfReady(rule);
 
-				for (Rule rule : dependencyMap.keySet()) try {
-					FakeException e = futures.get(rule).get();
-				} catch (InterruptedException e) {
-					results.put(rule, new FakeException("Interrupted"));
-				} catch (ExecutionException e) {
-					results.put(rule, new FakeException("Execution error: " + e));
+				synchronized (finalRule) {
+					try {
+						finalRule.wait();
+					} catch (InterruptedException e) {
+						err.println("Interrupted: " + e);
+					}
 				}
-
+				FakeException result = results.get(finalRule);
 				pool.shutdown();
 
 				for (Rule rule : new ArrayList<Rule>(results.keySet()))
 					if (results.get(rule) == success) try {
 						rule.setUpToDate();
-						results.remove(rule);
 					} catch (IOException e) {
-						results.put(rule, new FakeException("Could not set up-to=date: " + e));
+						results.put(rule, new FakeException("Could not set up-to-date: " + e));
 					}
 
-				return results;
+				return result == success ? null : result;
 			}
 
 			/**
@@ -559,67 +573,91 @@ public class Fake {
 			 * This should only ever be called from a synchronized(futures) block.
 			 */
 			protected void submitTaskIfReady(final Rule rule) {
-				try {
-					if (!allDependenciesDone(rule))
+				synchronized (futures) {
+					if (results.get(rule) != null)
 						return;
-					FutureTask<FakeException> future = new FutureTask<FakeException>(new Callable<FakeException>() {
+					FakeException result = allDependenciesDone(rule);
+					if (result == null)
+						return;
+					if (rule == finalRule) {
+						results.put(rule, result);
+						synchronized (finalRule) {
+							finalRule.notify();
+						}
+						return;
+					}
+					if (result != success) {
+						err.println(rule.target + ": " + result.getMessage());
+						results.put(rule, result);
+						submitDependencees(rule);
+						return;
+					}
+					if (futures.get(rule) != null)
+						return;
+					futures.put(rule, new FutureTask<FakeException>(new Callable<FakeException>() {
 						public FakeException call() {
 							return make(rule);
 						}
-					});
-					futures.put(rule, future);
-					pool.submit(future);
-				} catch (FakeException e) {
-					e.printStackTrace(err);
+					}));
+					pool.submit(futures.get(rule));
+				}
+			}
+
+			protected void submitDependencees(Rule rule) {
+				synchronized (futures) {
+					for (Rule dependencee : dependencyMap.get(rule))
+						submitTaskIfReady(dependencee);
 				}
 			}
 
 			protected FakeException make(Rule rule) {
-				FakeException e = results.get(rule);
-				if (e == success)
-					return e;
-				if (e == null) try {
-					// make(rule) must _only_ be called when all dependency rules have been handled
-					// Therefore, no need to synchronize here.
-					List<Rule> failedDependencies = new ArrayList<Rule>();
-					for (Rule dependency : rule.getDependencies())
-						if (results.get(dependency) != success)
-							failedDependencies.add(dependency);
-					if (failedDependencies.size() > 0)
-						e = new DependencyFakeException(failedDependencies);
-					else {
-						rule.make(false);
-						e = success;
-					}
-				} catch (FakeException e2) {
+				FakeException result = success;
+				try {
+					rule.make(false);
+				} catch (FakeException e) {
 					err.println("Failed: " + rule.target);
-					e = e2;
+					result = e;
 				}
-				synchronized(futures) {
-					results.put(rule, e);
-
-					for (Rule neededBy : dependencyMap.get(rule))
-						submitTaskIfReady(neededBy);
+				synchronized (futures) {
+					results.put(rule, result);
+					submitDependencees(rule);
 				}
-				return e;
+				return result;
 			}
 
 			/* This method _must_ be called in a synchronized(futures) block */
-			public boolean allDependenciesDone(final Rule rule) throws FakeException {
-				for (Rule dependency : rule.getDependencies())
-					if (results.get(dependency) == null)
-						return false;
-				return true;
+			protected FakeException allDependenciesDone(final Rule rule) {
+				List<Rule> failed = new ArrayList<Rule>();
+				try {
+					for (Rule dependency : rule.getDependencies())
+						if (results.get(dependency) == null)
+							return null;
+						else if (results.get(dependency) != success)
+							failed.add(dependency);
+					return failed.size() > 0 ? new DependencyFakeException(failed) : success;
+				} catch (FakeException e) {
+					return e;
+				}
 			}
 
 			protected class DependencyFakeException extends FakeException {
 				public DependencyFakeException(List<Rule> rules) {
 					super("Problem in dependenc" + (rules.size() == 1 ? "y" : "ies")
-						+ " " + ParallelMaker.this.toString(rules));
+						+ " " + getTargetsAsString(rules));
 				}
 			}
 
-			/* Must be called in a synchronized(futures) block */
+			protected String getTargetsAsString(Iterable<Rule> rules) {
+				StringBuffer buffer = new StringBuffer();
+				Iterator<Rule> iter = rules.iterator();
+				if (iter.hasNext())
+					buffer.append(iter.next().target);
+				while (iter.hasNext())
+					buffer.append(" ").append(iter.next().target);
+				return buffer.toString();
+			}
+
+			/* Debug function; must be called in a synchronized(futures) block */
 			protected List<Rule> unfinished() {
 				List<Rule> result = new ArrayList<Rule>();
 				for (Rule rule : dependencyMap.keySet())
@@ -634,16 +672,6 @@ public class Fake {
 					if (results.get(dependency) == null)
 						result.add(dependency);
 				return result;
-			}
-
-			public String toString(Iterable<Rule> rules) {
-				StringBuffer buffer = new StringBuffer();
-				Iterator<Rule> iter = rules.iterator();
-				if (iter.hasNext())
-					buffer.append(iter.next().target);
-				while (iter.hasNext())
-					buffer.append(" ").append(iter.next().target);
-				return buffer.toString();
 			}
 		}
 
@@ -1277,15 +1305,9 @@ public class Fake {
 
 			public void makeParallel(int maxThreads) throws FakeException {
 				ParallelMaker make = new ParallelMaker(maxThreads, Collections.singletonList(this));
-				Map<Rule, FakeException> result = make.run();
-				if (result.size() == 1)
-					throw result.values().iterator().next();
-				if (result.size() > 0) {
-					String message = "";
-					for (Map.Entry<Parser.Rule, FakeException> pair : result.entrySet())
-						message += "Target " + pair.getKey().target + " was not made: " + pair.getValue() + "\n";
-					throw new FakeException(message);
-				}
+				FakeException result = make.run();
+				if (result != null)
+					throw result;
 			}
 
 			public void make() throws FakeException {
