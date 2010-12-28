@@ -1387,6 +1387,13 @@ public class Fake {
 					else if (this instanceof All)
 						error("Unknown target: " + prereq);
 				}
+
+				// check the classpath
+				for (String jarFile : split(getVar("CLASSPATH"), ":")) {
+					Rule rule = getRule(jarFile);
+					if (rule != null)
+						result.add(rule);
+				}
 				return result;
 			}
 
@@ -1823,12 +1830,6 @@ public class Fake {
 			}
 
 			void action() throws FakeException {
-				// check the classpath
-				String[] paths =
-					split(getVar("CLASSPATH"), ":");
-				for (int i = 0; i < paths.length; i++)
-					maybeMake((Rule)allRules.get(paths[i]));
-
 				File buildDir = getBuildDir();
 				Set<String> noCompile =
 					expandToSet(getVar("NO_COMPILE"), cwd);
