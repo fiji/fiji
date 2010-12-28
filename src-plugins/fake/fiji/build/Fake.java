@@ -1861,7 +1861,7 @@ public class Fake {
 			}
 
 			boolean notUpToDate(String reason) {
-				verbose("" + this
+				verbose("" + target
 					+ " is not up-to-date because of "
 					+ reason);
 				return false;
@@ -1893,7 +1893,7 @@ public class Fake {
 						return notUpToDate(paths[i]);
 					Rule rule = (Rule)allRules.get(paths[i]);
 					if (rule != null && !rule.upToDate())
-						return notUpToDate("" + rule);
+						return notUpToDate(rule.target);
 				}
 				return super.checkUpToDate() &&
 					upToDate(configPath);
