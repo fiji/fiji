@@ -1301,10 +1301,10 @@ public class Fake {
 				wasAlreadyInvoked = true;
 
 				try {
-					verbose("Checking prerequisites of "
-						+ this);
-					if (makePrerequisitesFirst)
+					if (makePrerequisitesFirst) {
+						verbose("Checking prerequisites of " + this);
 						makePrerequisites();
+					}
 
 					if (upToDate())
 						return;
