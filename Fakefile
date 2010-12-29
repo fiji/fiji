@@ -244,7 +244,7 @@ CLASSPATH(jars/imglib.jar)=jars/mpicbg.jar
 jars/imglib.jar <- imglib/
 CLASSPATH(jars/imglib-ij.jar)=jars/ij.jar:jars/imglib.jar:jars/mpicbg.jar
 jars/imglib-ij.jar <- imglib/
-CLASSPATH(jars/imglib-io.jar)=plugins/loci_tools.jar:jars/imglib.jar
+CLASSPATH(jars/imglib-io.jar)=plugins/loci_tools.jar:jars/imglib.jar:jars/imglib-ij.jar
 jars/imglib-io.jar <- imglib/
 CLASSPATH(jars/imglib-algorithms.jar)=jars/Jama-1.0.2.jar:jars/imglib.jar:jars/edu_mines_jtk.jar:jars/mpicbg.jar
 jars/imglib-algorithms.jar <- imglib/
