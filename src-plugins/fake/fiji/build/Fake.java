@@ -600,7 +600,7 @@ public class Fake {
 			String classPath = "";
 			StringTokenizer tokenizer = new StringTokenizer(extraClassPath, ":");
 			while (tokenizer.hasMoreElements())
-                                classPath += (classPath.equals("") ? "" : File.pathSeparator) + Util.makePath(cwd, tokenizer.nextToken());
+                                classPath += (classPath.equals("") ? "" : File.pathSeparator) + tokenizer.nextToken();
 
 			arguments.add("-classpath");
 			arguments.add(classPath);

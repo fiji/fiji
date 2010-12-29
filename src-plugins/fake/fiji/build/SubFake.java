@@ -117,7 +117,7 @@ public class SubFake extends Rule {
 			if (!result.equals(""))
 				result += ":";
 			String path = tokenizer.nextToken();
-			result += Util.isAbsolutePath(path) ? path : "../" + path;
+			result += path;
 		}
 		return result;
 	}
