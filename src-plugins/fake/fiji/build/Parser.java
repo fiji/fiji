@@ -557,7 +557,7 @@ public class Parser {
 			return;
 		}
 
-		if (isVarName(name, "CLASSPATH"))
+		if (isVarName(name, "CLASSPATH") || isVarName(name, "TOOLSPATH"))
 			value = fake.prefixPaths(cwd, value, true);
 
 		value = expandVariables(value, paren < 0 ? null :
