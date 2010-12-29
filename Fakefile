@@ -238,6 +238,7 @@ jars/ij.jar <- jars/javac.jar ImageJA/
 misc/headless.jar <- jars/javac.jar ImageJA/
 CLASSPATH(plugins/mpicbg_.jar)=jars/ij.jar:jars/mpicbg.jar
 plugins/mpicbg_.jar <- mpicbg/
+CLASSPATH(jars/mpicbg.jar)=jars/ij.jar
 jars/mpicbg.jar <- mpicbg/
 CLASSPATH(jars/imglib.jar)=jars/mpicbg.jar
 jars/imglib.jar <- imglib/
@@ -344,7 +345,7 @@ CLASSPATH(plugins/ToAST_.jar)=jars/ij.jar
 CLASSPATH(misc/headless.jar)=jars/ij.jar
 CLASSPATH(plugins/AnalyzeSkeleton_.jar)=jars/ij.jar
 CLASSPATH(plugins/CPU_Meter.jar)=jars/jna.jar:jars/ij.jar
-CLASSPATH(jars/mpicbg.jar)=jars/ij.jar
+CLASSPATH(jars/mpicbg.jar)=jars/ij.jar:jars/Jama-1.0.2.jar
 CLASSPATH(plugins/M_I_P.jar)=jars/ij.jar
 CLASSPATH(plugins/level_sets.jar)=jars/ij.jar
 CLASSPATH(plugins/Anisotropic_Diffusion_2D.jar)=jars/ij.jar
