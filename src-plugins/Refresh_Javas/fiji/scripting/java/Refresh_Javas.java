@@ -4,6 +4,8 @@ import common.RefreshScripts;
 
 import fiji.build.Fake;
 import fiji.build.FakeException;
+import fiji.build.Parser;
+import fiji.build.Rule;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -210,7 +212,7 @@ public class Refresh_Javas extends RefreshScripts {
 		Fake fake = new Fake();
 		fake.out = new PrintStream(out);
 		fake.err = new PrintStream(err);
-		Fake.Parser parser = fake.parse(fakefile, dir);
+		Parser parser = fake.parse(fakefile, dir);
 		parser.parseRules(null);
 
 		if (target == null) {
@@ -218,7 +220,7 @@ public class Refresh_Javas extends RefreshScripts {
 				relativeSourcePath = relativeSourcePath.replace(File.separator.charAt(0), '/');
                         List<String> targets = new ArrayList<String>();
                         for (String key : parser.getAllRules().keySet()) {
-				Fake.Parser.Rule rule = parser.getRule(key);
+				Rule rule = parser.getRule(key);
                                 if (rule.getClass().getName().endsWith("$CompileJar") &&
 						(relativeSourcePath == null ||
 						 rule.getPrerequisites().contains(relativeSourcePath)))

@@ -2,8 +2,8 @@
 // 2>&1 | :; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji
 
 import fiji.build.Fake;
-import fiji.build.Fake.Parser.Rule;
-import fiji.build.Fake.Parser.CompileJar;
+import fiji.build.Rule;
+import fiji.build.CompileJar;
 
 import java.io.File;
 import java.io.FileInputStream;

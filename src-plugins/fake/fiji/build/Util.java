@@ -14,6 +14,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 public class Util {
 	public static List<String> splitCommandLine(String program)
@@ -259,5 +260,48 @@ public class Util {
 			return true;
 		throw new FakeException("Could not move " + file
 				+ " out of the way");
+	}
+
+	public static String getPlatform() {
+		boolean is64bit = System.getProperty("os.arch", "").indexOf("64") >= 0;
+		String osName = System.getProperty("os.name", "<unknown>");
+		if (osName.equals("Linux"))
+			return "linux" + (is64bit ? "64" : "");
+		if (osName.equals("Mac OS X"))
+			return "macosx";
+		if (osName.startsWith("Windows"))
+			return "win" + (is64bit ? "64" : "32");
+		System.err.println("Unknown platform: " + osName);
+		return osName;
+	}
+
+	public static boolean isAbsolutePath(String path) {
+		boolean isWindows = getPlatform().startsWith("win");
+		if (isWindows)
+			return path.length() > 1 && path.charAt(1) == ':';
+		return path.startsWith("/");
+	}
+
+	public static String makePath(File cwd, String path) {
+		String prefix = "", suffix = "";
+		if (path.startsWith("jar:file:")) {
+			prefix = "jar:file:";
+			int exclamation = path.indexOf('!');
+			suffix = path.substring(exclamation);
+			path = path.substring(prefix.length(), exclamation);
+		}
+		if (isAbsolutePath(path))
+			return prefix + path + suffix;
+		if (path.equals("."))
+			return prefix + cwd.toString() + suffix;
+		if (cwd.toString().equals("."))
+			return prefix + (path.equals("") ? "." : path) + suffix;
+		return prefix + new File(cwd, path).toString() + suffix;
+	}
+
+	public static boolean getBool(String string) {
+		return string != null &&
+			(string.equalsIgnoreCase("true") ||
+			 string.equals("1") || string.equals("2"));
 	}
 }
