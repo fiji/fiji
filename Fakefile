@@ -255,14 +255,14 @@ jars/VectorString.jar <- TrakEM2/
 CLASSPATH(plugins/TrakEM2_.jar)=jars/VectorString.jar:jars/postgresql-8.2-506.jdbc3.jar:jars/jcommon-1.0.12.jar:jars/jfreechart-1.0.13.jar:jars/edu_mines_jtk.jar:plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama-1.0.2.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar:plugins/Lasso_and_Blow_Tool.jar:$JAVA3D_JARS
 plugins/TrakEM2_.jar <- jars/ij.jar plugins/VIB_.jar jars/mpicbg.jar plugins/bUnwarpJ_.jar plugins/level_sets.jar plugins/Fiji_Plugins.jar jars/imglib.jar jars/imglib-algorithms.jar jars/imglib-ij.jar jars/VectorString.jar TrakEM2/
 plugins/ij-ImageIO_.jar <- ij-plugins/
-jars/jacl.jar <- tcljava/
-jars/batik.jar <- batik/
-jars/junit-4.5.jar <- junit/
-jars/rsyntaxtextarea.jar <- RSyntaxTextArea/
-jars/autocomplete.jar <- AutoComplete/
-jars/weka.jar <- jars/Fiji.jar weka/
-jars/jython.jar <- jython/
-jars/commons-math.jar <- commons-math/
+jars/jacl.jar <- fiji tcljava/
+jars/batik.jar <- fiji batik/
+jars/junit-4.5.jar <- fiji junit/
+jars/rsyntaxtextarea.jar <- fiji RSyntaxTextArea/
+jars/autocomplete.jar <- fiji AutoComplete/
+jars/weka.jar <- fiji jars/Fiji.jar weka/
+jars/jython.jar <- fiji jython/
+jars/commons-math.jar <- fiji commons-math/
 
 CLASSPATH(jars/imglib-scripting.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-io.jars:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/loci_tools.jar:jars/mpicbg.jar
 jars/imglib-scripting.jar <- imglib/
