@@ -980,52 +980,54 @@ public class Fake {
 		return arg;
 	}
 
-
+	// Jython initialization needs to be synchronized; use a simple String for that
+	private static String dummyJython = "jython";
 	protected static Constructor<?> jythonCreate;
 	protected static Method jythonExec, jythonExecfile, jythonSetOut, jythonSetErr;
 
-	protected static boolean executePython(String[] args, PrintStream out, PrintStream err)
-			throws FakeException {
-		if (jythonExecfile == null) try {
-			discoverJython();
-			ClassLoader loader = getClassLoader();
-			String className = "org.python.util.PythonInterpreter";
-			Class<?> main = loader.loadClass(className);
-			Class<?>[] argsType = new Class[] { };
-			jythonCreate = main.getConstructor(argsType);
-			argsType = new Class[] { args[0].getClass() };
-			jythonExec = main.getMethod("exec", argsType);
-			argsType = new Class[] { args[0].getClass() };
-			jythonExecfile = main.getMethod("execfile", argsType);
-			argsType = new Class[] { OutputStream.class };
-			jythonSetOut = main.getMethod("setOut", argsType);
-			jythonSetErr = main.getMethod("setErr", argsType);
-		} catch (Exception e) {
-			return false;
-		}
+	protected static boolean executePython(String[] args, PrintStream out, PrintStream err) throws FakeException {
+		synchronized (dummyJython) {
+			if (jythonExecfile == null) try {
+				discoverJython();
+				ClassLoader loader = getClassLoader();
+				String className = "org.python.util.PythonInterpreter";
+				Class<?> main = loader.loadClass(className);
+				Class<?>[] argsType = new Class[] { };
+				jythonCreate = main.getConstructor(argsType);
+				argsType = new Class[] { args[0].getClass() };
+				jythonExec = main.getMethod("exec", argsType);
+				argsType = new Class[] { args[0].getClass() };
+				jythonExecfile = main.getMethod("execfile", argsType);
+				argsType = new Class[] { OutputStream.class };
+				jythonSetOut = main.getMethod("setOut", argsType);
+				jythonSetErr = main.getMethod("setErr", argsType);
+			} catch (Exception e) {
+				return false;
+			}
 
-		try {
-			Object instance =
-				jythonCreate.newInstance(new Object[] { });
-			jythonSetOut.invoke(instance, new Object[] { out });
-			jythonSetErr.invoke(instance, new Object[] { err });
-			String init = "import sys\n" +
-				"sys.argv = [";
-			for (int i = 0; i < args.length; i++)
-				init += (i > 0 ? ", " : "")
-					+ "\"" + quoteArg(args[i], "\"") + "\"";
-			init += "]\n";
-			jythonExec.invoke(instance, new Object[] { init });
-			String sysPath = "sys.path.insert(0, '"
-				+ new File(args[0]).getParent() + "')";
-			jythonExec.invoke(instance, new Object[] { sysPath });
-			jythonExecfile.invoke(instance,
-					new Object[] { args[0] });
-		} catch (InvocationTargetException e) {
-			e.getTargetException().printStackTrace();
-			throw new FakeException("Jython failed");
-		} catch (Exception e) {
-			return false;
+			try {
+				Object instance =
+					jythonCreate.newInstance(new Object[] { });
+				jythonSetOut.invoke(instance, new Object[] { out });
+				jythonSetErr.invoke(instance, new Object[] { err });
+				String init = "import sys\n" +
+					"sys.argv = [";
+				for (int i = 0; i < args.length; i++)
+					init += (i > 0 ? ", " : "")
+						+ "\"" + quoteArg(args[i], "\"") + "\"";
+				init += "]\n";
+				jythonExec.invoke(instance, new Object[] { init });
+				String sysPath = "sys.path.insert(0, '"
+					+ new File(args[0]).getParent() + "')";
+				jythonExec.invoke(instance, new Object[] { sysPath });
+				jythonExecfile.invoke(instance,
+						new Object[] { args[0] });
+			} catch (InvocationTargetException e) {
+				e.getTargetException().printStackTrace();
+				throw new FakeException("Jython failed");
+			} catch (Exception e) {
+				return false;
+			}
 		}
 		return true;
 	}
