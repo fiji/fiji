@@ -31,9 +31,11 @@ public class ParallelMaker {
 		results = new LinkedHashMap<Rule, FakeException>();
 		pool = Executors.newFixedThreadPool(maxThreads);
 
+		// add wrap-up rule to determine when all is built
 		finalRule = getFinalRule(targets);
 		List<Rule> rules = new ArrayList<Rule>(targets);
 		rules.add(finalRule);
+
 		dependencyMap = parser.buildDependencyMap(rules);
 	}
 
