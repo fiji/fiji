@@ -3,6 +3,9 @@ package fiji.scripting.java;
 import common.RefreshScripts;
 
 import fiji.build.Fake;
+import fiji.build.FakeException;
+import fiji.build.Parser;
+import fiji.build.Rule;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -84,7 +87,7 @@ public class Refresh_Javas extends RefreshScripts {
 					err.write(("Could not compile " + path + "\n").getBytes());
 					return;
 				}
-			} catch (Fake.FakeException e) {
+			} catch (FakeException e) {
 				if (!e.getMessage().equals("Canceled")) try {
 					err.write(e.getMessage().getBytes());
 				} catch (IOException e2) {
@@ -147,7 +150,7 @@ public class Refresh_Javas extends RefreshScripts {
 	}
 
 	/* returns the class name and .jar on success, null otherwise */
-	public String[] fake(String path) throws Fake.FakeException {
+	public String[] fake(String path) throws FakeException {
 		File file = new File(path);
 		try {
 			file = file.getCanonicalFile();
@@ -200,21 +203,21 @@ public class Refresh_Javas extends RefreshScripts {
 	}
 
 	/* returns the class name and .jar on success, null otherwise */
-	public String[] fake(InputStream fakefile, File dir, String name, String target) throws Fake.FakeException {
+	public String[] fake(InputStream fakefile, File dir, String name, String target) throws FakeException {
 		return fake(fakefile, dir, name, target, false);
 	}
 
 	/* returns the class name and .jar on success, null otherwise */
-	public String[] fake(InputStream fakefile, File dir, String name, String target, boolean includeSource) throws Fake.FakeException {
+	public String[] fake(InputStream fakefile, File dir, String name, String target, boolean includeSource) throws FakeException {
 		return fake(fakefile, dir, name, target, null, includeSource);
 	}
 
 	/* returns the class name and .jar on success, null otherwise */
-	public String[] fake(InputStream fakefile, File dir, String name, String target, String relativeSourcePath, boolean includeSource) throws Fake.FakeException {
+	public String[] fake(InputStream fakefile, File dir, String name, String target, String relativeSourcePath, boolean includeSource) throws FakeException {
 		Fake fake = new Fake();
 		fake.out = new PrintStream(out);
 		fake.err = new PrintStream(err);
-		Fake.Parser parser = fake.parse(fakefile, dir);
+		Parser parser = fake.parse(fakefile, dir);
 		parser.parseRules(null);
 
 		if (target == null) {
@@ -222,7 +225,7 @@ public class Refresh_Javas extends RefreshScripts {
 				relativeSourcePath = relativeSourcePath.replace(File.separator.charAt(0), '/');
                         List<String> targets = new ArrayList<String>();
                         for (String key : parser.getAllRules().keySet()) {
-				Fake.Parser.Rule rule = parser.getRule(key);
+				Rule rule = parser.getRule(key);
                                 if (rule.getClass().getName().endsWith("$CompileJar") &&
 						(relativeSourcePath == null ||
 						 rule.getPrerequisites().contains(relativeSourcePath)))
@@ -247,7 +250,7 @@ public class Refresh_Javas extends RefreshScripts {
                                 gd.addChoice("Target", array, array[0]);
                                 gd.showDialog();
                                 if (gd.wasCanceled())
-                                        throw new Fake.FakeException("Canceled");
+                                        throw new FakeException("Canceled");
                                 target = gd.getNextChoice();
                         }
 		}

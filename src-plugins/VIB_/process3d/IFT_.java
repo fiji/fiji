@@ -30,6 +30,8 @@ import ij.text.TextWindow;
 import ij.gui.GenericDialog;
 import ij.WindowManager;
 
+import fiji.util.IntArray;
+
 public class IFT_ implements PlugInFilter {
 	
 	private ImagePlus image;

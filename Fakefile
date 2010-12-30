@@ -263,13 +263,13 @@ jars/VectorString.jar <- TrakEM2/
 CLASSPATH(plugins/TrakEM2_.jar)=jars/VectorString.jar:jars/postgresql-8.2-506.jdbc3.jar:jars/jcommon-1.0.12.jar:jars/jfreechart-1.0.13.jar:jars/edu_mines_jtk.jar:plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama-1.0.2.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar:plugins/Lasso_and_Blow_Tool.jar:$JAVA3D_JARS
 plugins/TrakEM2_.jar <- jars/ij.jar plugins/VIB_.jar jars/mpicbg.jar plugins/bUnwarpJ_.jar plugins/level_sets.jar plugins/Fiji_Plugins.jar jars/imglib.jar jars/imglib-algorithms.jar jars/imglib-ij.jar jars/VectorString.jar TrakEM2/
 plugins/ij-ImageIO_.jar <- ij-plugins/
-jars/jacl.jar <- tcljava/
+jars/jacl.jar <- fiji tcljava/
 jars/batik.jar <- fiji batik/
 jars/junit-4.5.jar <- fiji junit/
 jars/rsyntaxtextarea.jar <- fiji RSyntaxTextArea/
 jars/autocomplete.jar <- fiji AutoComplete/
 jars/weka.jar <- fiji jars/Fiji.jar weka/
-jars/jython.jar <- jython/
+jars/jython.jar <- fiji jython/
 jars/commons-math.jar <- fiji commons-math/
 
 CLASSPATH(jars/imglib-scripting.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-io.jars:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/loci_tools.jar:jars/mpicbg.jar
@@ -325,8 +325,8 @@ CLASSPATH(plugins/IO_.jar)=jars/ij.jar:jars/batik.jar:jars/jpedalSTD.jar:jars/it
 CLASSPATH(plugins/Sync_Win.jar)=jars/ij.jar:plugins/Image_5D.jar
 CLASSPATH(plugins/Fiji_Developer.jar)=jars/ij.jar:plugins/Script_Editor.jar:plugins/Fiji_Plugins.jar:jars/rsyntaxtextarea.jar:plugins/3D_Viewer.jar:$JAVA3D_JARS
 CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/ij.jar:jars/weka.jar:plugins/Stitching_.jar:jars/fiji-lib.jar
-CLASSPATH(plugins/VIB_.jar)=jars/ij.jar:$JAVA3D_JARS:jars/VIB-lib.jar:jars/pal-optimization.jar:plugins/3D_Viewer.jar:jars/imglib.jar
-CLASSPATH(jars/VIB-lib.jar)=jars/ij.jar:jars/Jama-1.0.2.jar:jars/junit-4.5.jar:jars/pal-optimization.jar:jars/jzlib-1.0.7.jar
+CLASSPATH(plugins/VIB_.jar)=jars/ij.jar:$JAVA3D_JARS:jars/VIB-lib.jar:jars/pal-optimization.jar:plugins/3D_Viewer.jar:jars/imglib.jar:jars/fiji-lib.jar
+CLASSPATH(jars/VIB-lib.jar)=jars/ij.jar:jars/Jama-1.0.2.jar:jars/junit-4.5.jar:jars/pal-optimization.jar:jars/jzlib-1.0.7.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Simple_Neurite_Tracer.jar)=jars/ij.jar:$JAVA3D_JARS:jars/VIB-lib.jar:plugins/VIB_.jar:jars/pal-optimization.jar:jars/junit-4.5.jar:plugins/3D_Viewer.jar:jars/commons-math.jar:jars/jfreechart-1.0.13.jar:jars/jcommon-1.0.12.jar:jars/batik.jar:plugins/AnalyzeSkeleton_.jar:plugins/Skeletonize3D_.jar
 CLASSPATH(plugins/3D_Viewer.jar)=jars/ij.jar:jars/VIB-lib.jar:jars/imglib.jar:jars/Jama-1.0.2.jar:$JAVA3D_JARS
 CLASSPATH(jars/jep.jar)=jars/ij.jar:jars/Jama-1.0.2.jar:jars/junit-4.5.jar

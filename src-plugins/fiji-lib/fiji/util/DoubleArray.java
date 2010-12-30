@@ -1,4 +1,4 @@
-package vib;
+package fiji.util;
 
 public class DoubleArray extends ArrayBase
 {
