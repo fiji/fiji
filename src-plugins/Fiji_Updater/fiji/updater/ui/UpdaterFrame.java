@@ -388,7 +388,7 @@ public class UpdaterFrame extends JFrame
 				if (enable && enableOther)
 					break;
 			}
-			setLabel(!enableOther ? label :
+			setText(!enableOther ? label :
 				(enable ? label + "/" : "") + otherLabel);
 			setEnabled(enable || enableOther);
 		}
@@ -458,7 +458,7 @@ public class UpdaterFrame extends JFrame
 			for (; child != getContentPane();
 					child = child.getParent())
 				child.setVisible(true);
-		easy.setLabel(easyMode ? "Advanced mode" : "Easy mode");
+		easy.setText(easyMode ? "Advanced mode" : "Easy mode");
 		if (isVisible())
 			repaint();
 	}
@@ -525,7 +525,7 @@ public class UpdaterFrame extends JFrame
 			button.enableIfValid();
 
 		apply.setEnabled(plugins.hasChanges());
-		cancel.setLabel(plugins.hasChanges() ? "Cancel" : "Close");
+		cancel.setText(plugins.hasChanges() ? "Cancel" : "Close");
 
 		if (Util.isDeveloper)
 			// TODO: has to change when details editor is embedded

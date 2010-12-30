@@ -56,6 +56,9 @@ debug=false
 # Compile .java files for this Java version
 javaVersion=1.5
 
+# Whether to show use of deprecated entities
+showDeprecation=false
+
 # If false, skips rebuilds triggered from newer Fakefile or fake.jar
 # (see issues 40 & 45)
 rebuildIfFakeIsNewer=true
@@ -204,7 +207,10 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Temporal_Color_Coder.jar \
 	plugins/Samples_.jar \
 	plugins/Lasso_and_Blow_Tool.jar \
-	jars/mij.jar
+	jars/mij.jar \
+	jars/wavelets.jar \
+	jars/imageware.jar \
+	plugins/Extended_Depth_Field.jar \
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
@@ -235,10 +241,11 @@ jars/postgresql-8.2-506.jdbc3.jar[] <-
 
 # From submodules
 jars/ij.jar <- jars/javac.jar ImageJA/
-misc/headless.jar <- jars/ij.jar jars/javac.jar ImageJA/
+CLASSPATH(misc/headless.jar)=jars/ij.jar
+misc/headless.jar <- jars/javac.jar ImageJA/
 CLASSPATH(plugins/mpicbg_.jar)=jars/ij.jar:jars/mpicbg.jar
 plugins/mpicbg_.jar <- mpicbg/
-CLASSPATH(jars/mpicbg.jar)=jars/ij.jar
+CLASSPATH(jars/mpicbg.jar)=jars/ij.jar:jars/Jama-1.0.2.jar
 jars/mpicbg.jar <- mpicbg/
 CLASSPATH(jars/imglib.jar)=jars/mpicbg.jar
 jars/imglib.jar <- imglib/
@@ -249,8 +256,8 @@ jars/imglib-io.jar <- imglib/
 CLASSPATH(jars/imglib-algorithms.jar)=jars/Jama-1.0.2.jar:jars/imglib.jar:jars/edu_mines_jtk.jar:jars/mpicbg.jar
 jars/imglib-algorithms.jar <- imglib/
 
-jars/clojure.jar <- clojure/
-plugins/loci_tools.jar <- bio-formats/
+jars/clojure.jar <- fiji clojure/
+plugins/loci_tools.jar <- fiji bio-formats/
 CLASSPATH(jars/VectorString.jar)=jars/ij.jar:jars/Jama-1.0.2.jar:$JAVA3D_JARS
 jars/VectorString.jar <- TrakEM2/
 CLASSPATH(plugins/TrakEM2_.jar)=jars/VectorString.jar:jars/postgresql-8.2-506.jdbc3.jar:jars/jcommon-1.0.12.jar:jars/jfreechart-1.0.13.jar:jars/edu_mines_jtk.jar:plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama-1.0.2.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar:plugins/Lasso_and_Blow_Tool.jar:$JAVA3D_JARS
@@ -310,7 +317,7 @@ CLASSPATH(plugins/Directionality_.jar)=jars/ij.jar:jars/jfreechart-1.0.13.jar:ja
 CLASSPATH(plugins/LSM_Toolbox.jar)=jars/ij.jar:plugins/LSM_Reader.jar
 MAINCLASS(plugins/LSM_Toolbox.jar)=org.imagearchive.lsm.toolbox.gui.AboutDialog
 MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
-CLASSPATH(plugins/Stitching_.jar)=jars/ij.jar:plugins/loci_tools.jar:jars/fiji-lib.jar:jars/edu_mines_jtk.jar
+CLASSPATH(plugins/Stitching_.jar)=jars/ij.jar:plugins/loci_tools.jar:jars/fiji-lib.jar:jars/imglib.jar:jars/edu_mines_jtk.jar
 CLASSPATH(plugins/Fiji_Plugins.jar)=jars/ij.jar:jars/jsch-0.1.37.jar:jars/fiji-lib.jar:jars/VIB-lib.jar
 MAINCLASS(plugins/Fiji_Updater.jar)=fiji.updater.Main
 CLASSPATH(plugins/Fiji_Updater.jar)=jars/ij.jar:jars/jsch-0.1.37.jar
@@ -345,7 +352,6 @@ CLASSPATH(plugins/ToAST_.jar)=jars/ij.jar
 CLASSPATH(misc/headless.jar)=jars/ij.jar
 CLASSPATH(plugins/AnalyzeSkeleton_.jar)=jars/ij.jar
 CLASSPATH(plugins/CPU_Meter.jar)=jars/jna.jar:jars/ij.jar
-CLASSPATH(jars/mpicbg.jar)=jars/ij.jar:jars/Jama-1.0.2.jar
 CLASSPATH(plugins/M_I_P.jar)=jars/ij.jar
 CLASSPATH(plugins/level_sets.jar)=jars/ij.jar
 CLASSPATH(plugins/Anisotropic_Diffusion_2D.jar)=jars/ij.jar
@@ -397,6 +403,9 @@ CLASSPATH(plugins/Linear_Kuwahara.jar)=jars/ij.jar
 CLASSPATH(plugins/Thread_Killer.jar)=jars/ij.jar
 CLASSPATH(plugins/MosaicJ_.jar)=jars/ij.jar
 CLASSPATH(plugins/SheppLogan_.jar)=jars/ij.jar
+CLASSPATH(jars/wavelets.jar)=jars/ij.jar
+CLASSPATH(jars/imageware.jar)=jars/ij.jar
+CLASSPATH(plugins/Extended_Depth_Field.jar)=jars/ij.jar:jars/imageware.jar:jars/wavelets.jar
 
 # pre-Java5 generics ;-)
 

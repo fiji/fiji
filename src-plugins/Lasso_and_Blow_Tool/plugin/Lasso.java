@@ -17,6 +17,15 @@ import ij.process.ImageProcessor;
 import util.FibonacciHeapDouble;
 
 public class Lasso {
+	/** @deprecated */
+	public final static int BLOW = 0;
+	/** @deprecated */
+	public final static int LASSO = 1;
+	/** @deprecated */
+	public final static int MIN_LASSO = 2;
+	/** @deprecated */
+	public final static int MAX_TOOL = 2;
+
 	public enum Mode {
 		BLOW, LASSO, MIN_LASSO;
 
@@ -72,6 +81,11 @@ public class Lasso {
 
 	public Lasso(ImagePlus imp) {
 		this(imp, Mode.BLOW);
+	}
+
+	/** Create and initialize a Lasso at point x,y. */
+	public Lasso(ImagePlus imp, int mode, int x, int y, boolean shiftKeyDown) {
+		this(imp, Mode.valueOf(mode), x, y, shiftKeyDown);
 	}
 
 	/** Create and initialize a Lasso at point x,y. */

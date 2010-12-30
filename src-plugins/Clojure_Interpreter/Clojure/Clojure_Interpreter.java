@@ -221,17 +221,6 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 						in_ns.invoke(USER);
 						refer.invoke(CLOJURE);
 
-						// default imports
-						Reader reader = new InputStreamReader(new ByteArrayInputStream(getImportStatement().getBytes()));
-						PushbackReader pushback = new PushbackReader(reader);
-						final Thread thread = Thread.currentThread();
-						while (!thread.isInterrupted()) {
-							// read one token from the pipe
-							Object r = LispReader.read(pushback, false, EOF, false);
-							if (EOF == r)
-								break;
-							Compiler.eval(r);
-						}
 					} catch (Throwable t) {
 						IJ.log("Could not initialize variables for the clojure worker thread!");
 						t.printStackTrace();
@@ -346,12 +335,6 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 	}
 
 	protected String getImportStatement(String packageName, Iterable<String> classNames) {
-		StringBuffer sb = new StringBuffer();
-		if (!"".equals(packageName))
-			packageName += " ";
-		for (String className : classNames)
-			sb.append("(import '(").append(packageName)
-				.append(className).append("))\n");
-		return sb.toString();
+		return null;
 	}
 }

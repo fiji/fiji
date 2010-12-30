@@ -46,6 +46,7 @@ import java.util.List;
  * it is compiled before it is called.
  */
 public class Refresh_Javas extends RefreshScripts {
+	protected boolean showDeprecation;
 
 	public void run(String arg) {
 		setLanguageProperties(".java", "Java");
@@ -125,6 +126,10 @@ public class Refresh_Javas extends RefreshScripts {
 		} catch (Exception e) {
 			e.printStackTrace(new PrintStream(err));
 		}
+	}
+
+	public void showDeprecation(boolean toggle) {
+		showDeprecation = toggle;
 	}
 
 	boolean upToDate(String source, String target) {
@@ -254,6 +259,7 @@ public class Refresh_Javas extends RefreshScripts {
 			return null;
 		parser.setVariable("debug", "true");
 		parser.setVariable("buildDir", "build");
+		parser.setVariable("showDeprecation", "" + showDeprecation);
 		if (includeSource)
 			parser.setVariable("includeSource(" + target + ")", "true");
 		parser.getRule(target).make();
@@ -288,6 +294,10 @@ public class Refresh_Javas extends RefreshScripts {
 			       IllegalAccessException,
 			       InvocationTargetException {
 		String[] arguments = { "-g", path };
+		if (showDeprecation)
+			arguments = unshift(arguments, new String[] {
+				"-deprecation", "-Xlint:unchecked"
+			});
 		if (extraArgs != null)
 			arguments = unshift(arguments, extraArgs);
 		String classPath = getPluginsClasspath();
