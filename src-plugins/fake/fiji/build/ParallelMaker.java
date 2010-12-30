@@ -59,13 +59,15 @@ public class ParallelMaker {
 			if (!rule.upToDate())
 				rule.verbose("Not up-to-date: " + rule.target);
 
-		// Then, make sure that jars/javac.jar is built
-		Rule javac = parser.getRule("jars/javac.jar");
-		if (javac != null && dependencyMap.containsKey(javac)) try {
-			javac.make();
-			results.put(javac, success);
-		} catch (FakeException e) {
-			results.put(javac, e);
+		// Then, make sure that certain components are built first
+		for (String target : new String[] { "jars/javac.jar", "jars/fake.jar" }) {
+			Rule rule = parser.getRule(target);
+			if (rule != null && dependencyMap.containsKey(rule)) try {
+				rule.make();
+				results.put(rule, success);
+			} catch (FakeException e) {
+				results.put(rule, e);
+			}
 		}
 
 		// Now, queue all rules that can be made already
