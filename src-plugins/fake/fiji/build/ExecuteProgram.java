@@ -3,6 +3,7 @@ package fiji.build;
 import java.io.File;
 import java.io.IOException;
 
+import java.util.Collections;
 import java.util.List;
 
 public class ExecuteProgram extends Rule {
@@ -11,10 +12,24 @@ public class ExecuteProgram extends Rule {
 	ExecuteProgram(Parser parser, String target, List<String> prerequisites, String program) {
 		super(parser, target, prerequisites);
 		this.program = program;
+	}
+
+	public String getArgv0() {
 		int space = program.indexOf(' ');
-		String argv0 = space < 0 ? program : program.substring(0, space);
-		if (argv0.endsWith(".py") && parser.allRules.containsKey("jars/jython.jar"))
-			prerequisites.add("jars/jython.jar");
+		return space < 0 ? program : program.substring(0, space);
+	}
+
+	public Iterable<Rule> getDependencies() throws FakeException {
+		String prereq = null;
+		String argv0 = getArgv0();
+		if (argv0.endsWith(".py"))
+			prereq = "jars/jython.jar";
+		else if (argv0.endsWith(".bsh"))
+			prereq = "jars/bsh-2.0b4.jar";
+		Rule rule = prereq == null ? null : parser.getRule(prereq);
+		if (rule == null)
+			return super.getDependencies();
+		return new MultiIterable<Rule>(super.getDependencies(), Collections.<Rule>singleton(rule));
 	}
 
 	boolean checkUpToDate() {
