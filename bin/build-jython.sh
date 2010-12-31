@@ -5,7 +5,13 @@ die () {
 	exit 1
 }
 
-../fiji --ant -Dpython.lib=/usr/lib/python2.5 -f jython/build.xml jar-complete copy-lib >&2 ||
+PYTHON_LIB=
+for version in 2.6 2.5
+do
+	test -d /usr/lib/python$version && PYTHON_LIB=/usr/lib/python$version
+done
+
+../fiji --ant -Dpython.lib=$PYTHON_LIB -f jython/build.xml jar-complete copy-lib >&2 ||
 die "Could not run ant"
 
 cd jython/dist &&
