@@ -3,6 +3,9 @@ package fiji.scripting;
 import fiji.SimpleExecuter;
 
 import fiji.build.Fake;
+import fiji.build.Parser;
+import fiji.build.Rule;
+import fiji.build.SubFake;
 
 import ij.IJ;
 
@@ -182,17 +185,17 @@ public class FileFunctions {
 				fake.out = new PrintStream(output);
 				fake.err = new PrintStream(errors);
 			}
-			Fake.Parser parser = fake.parse(new FileInputStream(fakefile), new File(fijiDir));
+			Parser parser = fake.parse(new FileInputStream(fakefile), new File(fijiDir));
 			parser.parseRules(null);
-			Fake.Parser.Rule rule = parser.getRule("plugins/" + baseName + ".jar");
+			Rule rule = parser.getRule("plugins/" + baseName + ".jar");
 			if (rule == null)
 				rule = parser.getRule("jars/" + baseName + ".jar");
 			if (rule != null) {
 				String stripPath = rule.getStripPath();
 				dir = fijiDir + "/";
-				if (rule instanceof Fake.Parser.SubFake) {
+				if (rule instanceof SubFake) {
 					stripPath = rule.getLastPrerequisite();
-					fakefile = ((Fake.Parser.SubFake)rule).getFakefile();
+					fakefile = ((SubFake)rule).getFakefile();
 					if (fakefile != null) {
 						dir += rule.getLastPrerequisite();
 						parser = fake.parse(new FileInputStream(fakefile), new File(dir));

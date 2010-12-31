@@ -1,36 +1,25 @@
 package fiji.scripting.completion;
 
-import java.lang.Comparable;
-import java.util.TreeSet;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-public class ClassName implements Item, Comparable {
+import java.util.Set;
+import java.util.TreeSet;
 
-	String key;
-	String completeName;
-	TreeSet<ClassMethod> methodNames = new TreeSet<ClassMethod>();
+public class ClassName implements Item, Comparable<Item> {
+	protected String key;
+	protected Set<ClassMethod> methodNames = new TreeSet<ClassMethod>();
 
-
-	public ClassName() {
-	}
-
-	public ClassName(String paramkey, String name) {
-		key = paramkey;
-		completeName = name;
+	public ClassName(String name) {
+		key = name;
 	}
 
 	public String getName() {
-		return this.key;
+		return key;
 	}
 
-	public String getCompleteName() {
-		return this.completeName.replace('/', '.');
-	}
-
-	public int compareTo(Object o) {
-		Item tree = (Item)o;
-		return(this.getName().compareTo(tree.getName()));
+	public int compareTo(Item tree) {
+		return getName().compareTo(tree.getName());
 	}
 
 	public void setMethodNames(Method[] methods) {
@@ -44,4 +33,3 @@ public class ClassName implements Item, Comparable {
 			methodNames.add(new ClassMethod(f.toString()));
 	}
 }
-

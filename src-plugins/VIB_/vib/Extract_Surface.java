@@ -13,6 +13,9 @@ import ij.process.ImageProcessor;
 
 import ij3d.Image3DUniverse;
 
+import fiji.util.IntArray;
+import fiji.util.DoubleArray;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
