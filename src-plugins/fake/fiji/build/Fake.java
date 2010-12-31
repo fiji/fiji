@@ -990,6 +990,7 @@ public class Fake {
 			if (jythonExecfile == null) try {
 				discoverJython();
 				ClassLoader loader = getClassLoader();
+				Thread.currentThread().setContextClassLoader(loader);
 				String className = "org.python.util.PythonInterpreter";
 				Class<?> main = loader.loadClass(className);
 				Class<?>[] argsType = new Class[] { };
