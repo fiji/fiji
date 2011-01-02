@@ -1,10 +1,8 @@
 package fiji.plugin.trackmate.gui;
 
-import javax.swing.JPanel;
-
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
-public abstract class TrackerSettingsPanel extends JPanel {
+public abstract class TrackerSettingsPanel extends ActionListenablePanel {
 
 	private static final long serialVersionUID = 6489221290360334663L;
 

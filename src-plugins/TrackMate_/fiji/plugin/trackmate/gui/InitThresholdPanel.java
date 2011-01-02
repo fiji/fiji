@@ -30,7 +30,7 @@ import fiji.plugin.trackmate.FeatureThreshold;
 * THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
 * LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
 */
-public class InitThresholdPanel extends javax.swing.JPanel {
+public class InitThresholdPanel extends ActionListenablePanel {
 	
 	private static final long serialVersionUID = -5067695740285574761L;
 	private static final String EXPLANATION_TEXT = "<html><p align=\"justify\">" +

@@ -15,6 +15,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Random;
 import java.util.Stack;
+import java.util.TreeMap;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -31,21 +32,13 @@ import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.FeatureThreshold;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.TrackMate_;
 
 /**
-* This code was edited or generated using CloudGarden's Jigloo
-* SWT/Swing GUI Builder, which is free for non-commercial
-* use. If Jigloo is being used commercially (ie, by a corporation,
-* company or business for any purpose whatever) then you
-* should purchase a license for each developer using Jigloo.
-* Please visit www.cloudgarden.com for details.
-* Use of Jigloo implies acceptance of these licensing terms.
-* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
-* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
-* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
-*/
+ *
+ */
 public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeListener {
-	
+
 	private static final long serialVersionUID = 1307749013344373051L;
 	private final ChangeEvent CHANGE_EVENT = new ChangeEvent(this);
 	/** Will be set to the value of the {@link JPanelSpotColorGUI}. */
@@ -67,7 +60,6 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 
 	private Stack<ThresholdPanel<Feature>> thresholdPanels = new Stack<ThresholdPanel<Feature>>();
 	private Stack<Component> struts = new Stack<Component>();
-	private Collection<? extends Collection<? extends Spot>> spots;
 	private EnumMap<Feature, double[]> featureValues = new EnumMap<Feature, double[]>(Feature.class);
 	private int newFeatureIndex;
 	
@@ -88,17 +80,17 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	 * CONSTRUCTOR
 	 */
 	
-	public ThresholdGuiPanel(Collection<List<Spot>> spots, Feature selectedFeature) {
+	public ThresholdGuiPanel(EnumMap<Feature, double[]> featureValues, Feature selectedFeature) {
 		super();
 		newFeatureIndex = selectedFeature.ordinal();
-		setSpots(spots);
+		this.featureValues = featureValues;
 		initGUI();
-		if (null != spots)
+		if (null != featureValues)
 			addThresholdPanel();
 	}
 
-	public ThresholdGuiPanel(Collection<List<Spot>> allSpots) {
-		this(allSpots, Feature.values()[0]);
+	public ThresholdGuiPanel(EnumMap<Feature, double[]> featureValues) {
+		this(featureValues, Feature.values()[0]);
 	}
 	
 	public ThresholdGuiPanel() {
@@ -108,32 +100,6 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	/*
 	 * PUBLIC METHODS
 	 */
-	
-	/**
-	 * Set the Spot collection displayed in this GUI.
-	 * <p>
-	 * Calling this method causes the individual threshold panel to be all 
-	 * removed.
-	 */
-	public void setSpots(Collection<? extends Collection<? extends Spot>> spots) {
-		for(ThresholdPanel<Feature> tp : thresholdPanels)
-			jPanelAllThresholds.remove(tp);
-		for(Component strut : struts)
-			jPanelAllThresholds.remove(strut);
-		if (null != jPanelAllThresholds)
-			jPanelAllThresholds.repaint();
-		this.spots = spots;
-		prepareDataArrays();
-	}
-	
-	/**
-	 * Return the values of feature from all spots, for reuse somewhere else. Should
-	 * be called only after the spots field has been set by {@link #setSpots(Collection)}.
-	 */
-	public EnumMap<Feature, double[]> getFeatureValues() {
-		return featureValues;
-	}
-	
 	
 	/**
 	 * Called when one of the {@link ThresholdPanel} is changed by the user.
@@ -193,39 +159,6 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 		for (ChangeListener cl : changeListeners) 
 			cl.stateChanged(e);
 	}
-	
-	private void prepareDataArrays() {
-		if (null == spots)
-			return;
-		int index;
-		Float val;
-		boolean noDataFlag = true;
-		// Get the total quantity of spot we have
-		int spotNumber = 0;
-		for(Collection<? extends Spot> collection : spots)
-			spotNumber += collection.size();
-		
-		for(Feature feature : Feature.values()) {
-			// Make a double array to comply to JFreeChart histograms
-			double[] values = new double[spotNumber];
-			index = 0;
-			for(Collection<? extends Spot> collection : spots) {
-				for (Spot spot : collection) {
-					val = spot.getFeature(feature);
-					if (null == val)
-						continue;
-					values[index] = val; 
-					index++;
-					noDataFlag = false;
-				}
-				if (noDataFlag)
-					featureValues.put(feature, null);
-				else 
-					featureValues.put(feature, values);
-			}
-		}
-	}
-	
 	
 	public void addThresholdPanel() {
 		addThresholdPanel(Feature.values()[newFeatureIndex]);		
@@ -345,6 +278,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	* JPanel inside a new JFrame.
 	 * @throws IOException 
 	*/
+	@SuppressWarnings("rawtypes")
 	public static void main(String[] args) throws IOException {
 		// Generate fake Spot data
 		final int NSPOT = 100;
@@ -359,18 +293,20 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 		}
 		
 		// Generate GUI
-		ThresholdGuiPanel gui = new ThresholdGuiPanel();
+		TrackMate_<?> trackmate = new TrackMate_();
+		System.out.println("Type <Enter> to ad spots to this");
+		System.in.read();
+		TreeMap<Integer, List<Spot>> allSpots = new TreeMap<Integer, List<Spot>>();
+		allSpots.put(0, spots);
+		trackmate.setSpots(allSpots);
+		
+		ThresholdGuiPanel gui = new ThresholdGuiPanel(trackmate.getFeatureValues());
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(gui);
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();
 		frame.setVisible(true);
 		
-		System.out.println("Type <Enter> to ad spots to this");
-		System.in.read();
-		List<Collection<Spot>> allSpots = new ArrayList<Collection<Spot>>();
-		allSpots.add(spots);
-		gui.setSpots(allSpots);
 		
 	}
 }

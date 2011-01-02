@@ -5,8 +5,11 @@ import ij.ImageStack;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.TreeMap;
 
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImagePlusAdapter;
@@ -44,6 +47,55 @@ public class Utils {
 	}
 
 
+	/**
+	 * Convenience static method that executes the thresholding part.
+	 * <p>
+	 * Given a list of spots, only spots with the feature satisfying <b>all</b> of the thresholds given
+	 * in argument are returned. 
+	 */
+	public static TreeMap<Integer, List<Spot>> thresholdSpots(final TreeMap<Integer, List<Spot>> spots, final List<FeatureThreshold> featureThresholds) {
+		TreeMap<Integer, List<Spot>> selectedSpots = new TreeMap<Integer, List<Spot>>();
+		Collection<Spot> spotThisFrame, spotToRemove;
+		List<Spot> spotToKeep;
+		Float val, tval;	
+		
+		for (int timepoint : spots.keySet()) {
+			
+			spotThisFrame = spots.get(timepoint);
+			spotToKeep = new ArrayList<Spot>(spotThisFrame);
+			spotToRemove = new ArrayList<Spot>(spotThisFrame.size());
+
+			for (FeatureThreshold threshold : featureThresholds) {
+
+				tval = threshold.value;
+				if (null == tval)
+					continue;
+				spotToRemove.clear();
+
+				if (threshold.isAbove) {
+					for (Spot spot : spotToKeep) {
+						val = spot.getFeature(threshold.feature);
+						if (null == val)
+							continue;
+						if ( val < tval)
+							spotToRemove.add(spot);
+					}
+
+				} else {
+					for (Spot spot : spotToKeep) {
+						val = spot.getFeature(threshold.feature);
+						if (null == val)
+							continue;
+						if ( val > tval)
+							spotToRemove.add(spot);
+					}
+				}
+				spotToKeep.removeAll(spotToRemove); // no need to treat them multiple times
+			}
+			selectedSpots.put(timepoint, spotToKeep);
+		}
+		return selectedSpots;
+	}
 	
 	
 	

@@ -24,7 +24,7 @@ import javax.swing.JTextField;
 import fiji.plugin.trackmate.Settings.SegmenterType;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 
-public class SegmenterSettingsPanel extends javax.swing.JPanel {
+public class SegmenterSettingsPanel extends ActionListenablePanel {
 	private static final long serialVersionUID = 3220742915219642676L;
 	private JLabel jLabel1;
 	private JLabel jLabelSegmenterName;

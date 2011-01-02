@@ -1,21 +1,17 @@
 package fiji.plugin.trackmate;
 
 import fiji.plugin.trackmate.features.FeatureFacade;
-import fiji.plugin.trackmate.gui.TrackMateFrame;
+import fiji.plugin.trackmate.gui.TrackMateFrameController;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.SpotTracker;
-import ij.IJ;
 import ij.ImagePlus;
-import ij.WindowManager;
 import ij.plugin.PlugIn;
 
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.TreeMap;
-
-import javax.swing.SwingUtilities;
 
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
@@ -30,10 +26,10 @@ import org.jgrapht.graph.SimpleGraph;
  * 
  * <p><b>Required input:</b> A 2D or 3D time-lapse image with bright blobs.</p>
  *
- * @author Nicholas Perry, Jean-Yves Tinevez - Institut Pasteur - July-Aug-Sep 2010
+ * @author Nicholas Perry, Jean-Yves Tinevez - Institut Pasteur - July 2010 - January 2011
  *
  */
-public class TrackMate_ <T extends RealType<T>> implements PlugIn {
+public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateModelInterface {
 	
 	public static final String PLUGIN_NAME_STR = "Track Mate";
 	public static final String PLUGIN_NAME_VERSION = ".alpha";
@@ -69,57 +65,17 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 	 */
 	
 	/** 
-	 * If the <code>arg</code> is empty or <code>null</code>, simply launch the GUI.
-	 * Otherwise, parse it and execute the plugin without the GUI. 
+	 * Launch the GUI.
 	 */
 	public void run(String arg) {
-		final TrackMate_<T> instance = this;
-		if (null == arg || arg.isEmpty()) {
-			// Launch the GUI 
-			SwingUtilities.invokeLater(new Runnable() {			
-				@Override
-				public void run() {
-					TrackMateFrame<T> mainGui = new TrackMateFrame<T>(instance);
-					mainGui.setLocationRelativeTo(null);
-					mainGui.setVisible(true);
-				}
-			});
-			return;
-		}
-
-		// If ImageJ is running, we use its toolbar to echo log messages
-		if (IJ.getInstance() != null)
-			logger = new Logger() {
-				public void log(String message, Color color) {IJ.showStatus(message);}
-				public void error(String message) { IJ.error("Spot_Tracker", message);}
-				public void setProgress(float val) {IJ.showProgress(val); }
-				public void setStatus(String status) {IJ.showStatus(status);}
-		};
-		
-		// Run plugin on current image
-		ImagePlus imp = WindowManager.getCurrentImage();
-		settings.imp = imp;
-		settings.segmenterSettings.spaceUnits = imp.getCalibration().getUnit();
-		settings.trackerSettings.spaceUnits = imp.getCalibration().getUnit();
-		settings.trackerSettings.timeUnits = imp.getCalibration().getTimeUnit();
-		
-		// Segment
-		execSegmentation();
-		// Threshold
-		execThresholding();
+		new TrackMateFrameController(this);
 	}
 	
 	/*
 	 * PUBLIC METHODS
 	 */
 	
-	/**
-	 * Execute the tracking part.
-	 * <p>
-	 * This method links all the selected spots from the thresholding part using the selected tracking algorithm.
-	 * Spots are embedded in a {@link TrackNode} from which tracks info can be retrieved.
-	 * Tracks can be accessed when the tracking is over using the {@link #getTracks()} method.
-	 */
+	@Override
 	public void execTracking() {
 		SpotTracker tracker = settings.getSpotTracker(selectedSpots);
 		tracker.setLogger(logger);
@@ -129,30 +85,12 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 			logger.error("Problem occured in tracking:\n"+tracker.getErrorMessage()+'\n');
 	}
 	
-	/**
-	 * Execute the thresholding part.
- 	 *<p> 
-	 * Because of the presence of noise, it is possible that some of the regional maxima found in the segmenting step have
-	 * identified noise, rather than objects of interest. A thresholding operation based on the calculated features in this 
-	 * step should allow to rule them out.
-	 * <p>
-	 * This method simply takes all the segmented spots, and store in the field {@link #selectedSpots}
-	 * the spots whose features satisfy all of the thresholds entered with the method {@link #addThreshold(FeatureThreshold)}
-	 * @see TrackMate_#getSelectedSpots()
-	 */
+	@Override
 	public void execThresholding() {
-		selectedSpots = thresholdSpots(spots, thresholds);
+		selectedSpots = Utils.thresholdSpots(spots, thresholds);
 	}
 	
-	/** 
-	 * Execute the segmentation part.
-	 * <p>
-	 * This method looks for bright blobs: bright object of approximately spherical shape, whose expected 
-	 * diameter is given in argument. The method used for segmentation depends on the {@link SpotSegmenter} 
-	 * chosen, and set in {@link #settings};
-	 * <p>
-	 * This gives us a collection of spots, which at this stage simply wrap a physical center location. 
-	 */
+	@Override
 	public void execSegmentation() {
 		final ImagePlus imp = settings.imp;
 		if (null == imp) {
@@ -201,12 +139,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 		return;
 	}
 	
-	/**
-	 * Calculate features for all segmented spots.
-	 * <p>
-	 * Features are calculated for each spot, using their location, and the raw image. See the {@link FeatureFacade} class
-	 * for details. 
-	 */
+	@Override
 	public void computeFeatures() {
 		int numFrames = settings.tend - settings.tstart + 1;
 		List<Spot> spotsThisFrame;
@@ -236,129 +169,99 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 	 * GETTERS / SETTERS
 	 */
 	
+	@Override
 	public SimpleGraph<Spot,DefaultEdge> getTrackGraph() {
 		return trackGraph;
 	}
 	
-	/**
-	 * Return the spots generated by the segmentation part of this plugin. The collection are un-filtered and contain
-	 * all spots. They are returned as a List of Collection, one item in the list per time-point, in order.
-	 * @see #execSegmentation(ImagePlus, Settings)
-	 */
+	@Override
 	public TreeMap<Integer, List<Spot>> getSpots() {
 		return spots;
 	}
 
-	/**
-	 * Return the spots filtered by feature, after the execution of {@link #execThresholding(List, ArrayList, ArrayList, ArrayList)}.
-	 * @see #execSegmentation(ImagePlus, Settings)
-	 * @see #addThreshold(Feature, float, boolean)
-	 */
+	@Override
 	public TreeMap<Integer, List<Spot>> getSelectedSpots() {
 		return selectedSpots;
 	}
 	
-	/**
-	 * Add a threshold to the list of thresholds to deal with when executing {@link #execThresholding(List, ArrayList, ArrayList, ArrayList)}.
-	 */
+	@Override
 	public void addThreshold(final FeatureThreshold threshold) { thresholds .add(threshold); }
+	
+	@Override
 	public void removeThreshold(final FeatureThreshold threshold) { thresholds .remove(threshold); }
+	
+	@Override
 	public void clearTresholds() { thresholds.clear(); }
+	
+	@Override
 	public List<FeatureThreshold> getFeatureThresholds() { return thresholds; }
+	
+	@Override
 	public void setFeatureThresholds(List<FeatureThreshold> thresholds) { this.thresholds = thresholds; }
 	
-	/**
-	 * Set the logger that will receive the messages from the processes occuring within this plugin.
-	 */
+	@Override
 	public void setLogger(Logger logger) {
 		this.logger = logger;
 	}
 	
-	/**
-	 * Return the {@link Settings} object that determines the behavior of this plugin.
-	 */
+	@Override
 	public Settings getSettings() {
 		return settings;
 	}
-	
+
+	@Override
 	public void setSettings(Settings settings) {
 		this.settings = settings;
 	}
 
-	/**
-	 * Overwrite the {@link #spots} field, resulting from segmentation.
-	 */
+	@Override
 	public void setSpots(TreeMap<Integer, List<Spot>> spots) {
 		this.spots = spots;
 	}
 
-	/**
-	 * Overwrite the {@link #selectedSpots} field, resulting from feature thresholding.
-	 */
+	@Override
 	public void setSpotSelection(TreeMap<Integer, List<Spot>> selectedSpots) {
 		this.selectedSpots = selectedSpots;
 	}
 	
-	/**
-	 * Overwrite the {@link #trackGraph} field, resulting from the tracking step.
-	 */
+	@Override
 	public void setTrackGraph(SimpleGraph<Spot, DefaultEdge> trackGraph) {
 		this.trackGraph = trackGraph;
 	}
 
-	
-	/*
-	 * STATIC METHODS
-	 */
-	
-	/**
-	 * Convenience static method that executes the thresholding part.
-	 * <p>
-	 * Given a list of spots, only spots with the feature satisfying <b>all</b> of the thresholds given
-	 * in argument are returned. 
-	 */
-	public static TreeMap<Integer, List<Spot>> thresholdSpots(final TreeMap<Integer, List<Spot>> spots, final List<FeatureThreshold> featureThresholds) {
-		TreeMap<Integer, List<Spot>> selectedSpots = new TreeMap<Integer, List<Spot>>();
-		Collection<Spot> spotThisFrame, spotToRemove;
-		List<Spot> spotToKeep;
-		Float val, tval;	
+	@Override
+	public EnumMap<Feature, double[]> getFeatureValues() {
+		 EnumMap<Feature, double[]> featureValues = new  EnumMap<Feature, double[]>(Feature.class);
+		if (null == spots || spots.isEmpty())
+			return featureValues;
+		int index;
+		Float val;
+		boolean noDataFlag = true;
+		// Get the total quantity of spot we have
+		int spotNumber = 0;
+		for(Collection<? extends Spot> collection : spots.values())
+			spotNumber += collection.size();
 		
-		for (int timepoint : spots.keySet()) {
-			
-			spotThisFrame = spots.get(timepoint);
-			spotToKeep = new ArrayList<Spot>(spotThisFrame);
-			spotToRemove = new ArrayList<Spot>(spotThisFrame.size());
-
-			for (FeatureThreshold threshold : featureThresholds) {
-
-				tval = threshold.value;
-				if (null == tval)
-					continue;
-				spotToRemove.clear();
-
-				if (threshold.isAbove) {
-					for (Spot spot : spotToKeep) {
-						val = spot.getFeature(threshold.feature);
-						if (null == val)
-							continue;
-						if ( val < tval)
-							spotToRemove.add(spot);
-					}
-
-				} else {
-					for (Spot spot : spotToKeep) {
-						val = spot.getFeature(threshold.feature);
-						if (null == val)
-							continue;
-						if ( val > tval)
-							spotToRemove.add(spot);
-					}
+		for(Feature feature : Feature.values()) {
+			// Make a double array to comply to JFreeChart histograms
+			double[] values = new double[spotNumber];
+			index = 0;
+			for(Collection<? extends Spot> collection : spots.values()) {
+				for (Spot spot : collection) {
+					val = spot.getFeature(feature);
+					if (null == val)
+						continue;
+					values[index] = val; 
+					index++;
+					noDataFlag = false;
 				}
-				spotToKeep.removeAll(spotToRemove); // no need to treat them multiple times
+				if (noDataFlag)
+					featureValues.put(feature, null);
+				else 
+					featureValues.put(feature, values);
 			}
-			selectedSpots.put(timepoint, spotToKeep);
 		}
-		return selectedSpots;
+		return featureValues;
 	}
 
 
