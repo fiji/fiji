@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.TreeMap;
 
 import mpicbg.imglib.type.numeric.RealType;
-import fiji.plugin.trackmate.gui.ActionListenablePanel;
 import fiji.plugin.trackmate.gui.LAPTrackerSettingsPanel;
 import fiji.plugin.trackmate.gui.SegmenterSettingsPanel;
 import fiji.plugin.trackmate.gui.SimpleLAPTrackerSettingsPanel;

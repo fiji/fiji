@@ -162,7 +162,7 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 			annotation.setText("No data");
 			fireThresholdChanged();
 		} else {
-			int nBins = Utils.getNBins(values);
+			int nBins = Utils.getNBins(values, 8, 100);
 			dataset = new LogHistogramDataset();
 			if (nBins > 1) {
 				dataset.addSeries(DATA_SERIES_NAME, values, nBins);

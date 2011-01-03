@@ -23,6 +23,7 @@ import fiji.plugin.trackmate.Spot;
 public class SpotDisplayer3D extends SpotDisplayer {
 	
 	private static final String TRACK_CONTENT_NAME = "Tracks";
+	private static final String SPOT_CONTENT_NAME = "Spots";
 	private TreeMap<Integer, SpotGroupNode<Spot>> blobs;	
 	private Content spotContent;
 	private Content trackContent;
@@ -145,7 +146,11 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		}
 	}
 
-	
+	@Override
+	public void clear() {
+		universe.removeContent(SPOT_CONTENT_NAME);
+		universe.removeContent(TRACK_CONTENT_NAME);
+	}
 	
 	/*
 	 * PRIVATE METHODS
@@ -204,7 +209,7 @@ public class SpotDisplayer3D extends SpotDisplayer {
 			contentAllFrames.put(i, contentThisFrame);
 			blobs.put(i, blobGroup);
 		}
-		return new Content("Spots", contentAllFrames);
+		return new Content(SPOT_CONTENT_NAME, contentAllFrames);
 	}
 
 

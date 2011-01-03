@@ -42,10 +42,11 @@ public interface TrackMateModelInterface {
 	/**
 	 * Overwrite the {@link #selectedSpots} field, resulting from feature thresholding.
 	 */
-	public void setSpotSelection(TreeMap<Integer, List<Spot>> selectedSpots);
+//	public void setSpotSelection(TreeMap<Integer, List<Spot>> selectedSpots);
 
 	/**
-	 * Return the spots filtered by feature, after the execution of {@link #execThresholding(List, ArrayList, ArrayList, ArrayList)}.
+	 * Return the spots filtered by feature threshold. Feature thresholds can be set / added / cleared by 
+	 * {@link #setFeatureThresholds(List)}, {@link #addThreshold(FeatureThreshold)} and {@link #clearTresholds()}.
 	 */
 	public TreeMap<Integer, List<Spot>> getSelectedSpots();
 
@@ -128,19 +129,6 @@ public interface TrackMateModelInterface {
 	 * for details. 
 	 */
 	public void computeFeatures();
-
-	/**
-	 * Execute the thresholding part.
-	 *<p> 
-	 * Because of the presence of noise, it is possible that some of the regional maxima found in the segmenting step have
-	 * identified noise, rather than objects of interest. A thresholding operation based on the calculated features in this 
-	 * step should allow to rule them out.
-	 * <p>
-	 * This method simply takes all the segmented spots, and store in the field {@link #selectedSpots}
-	 * the spots whose features satisfy all of the thresholds entered with the method {@link #addThreshold(FeatureThreshold)}
-	 * @see #getSelectedSpots()
-	 */
-	public void execThresholding();
 
 	/**
 	 * Execute the tracking part.

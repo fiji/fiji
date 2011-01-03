@@ -8,6 +8,7 @@ import ij.process.ImageProcessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -169,6 +170,47 @@ public class Utils {
 		}
 		return values;
 	}
+	
+	/**
+	 * Return a map of {@link Feature} values for the spot collection given.
+	 * Each feature maps a double array, with 1 element per {@link Spot}, all pooled
+	 * together.
+	 */
+	public static EnumMap<Feature, double[]> getFeatureValues(Collection<? extends Collection<Spot>> spots) {
+		 EnumMap<Feature, double[]> featureValues = new  EnumMap<Feature, double[]>(Feature.class);
+		if (null == spots || spots.isEmpty())
+			return featureValues;
+		int index;
+		Float val;
+		boolean noDataFlag = true;
+		// Get the total quantity of spot we have
+		int spotNumber = 0;
+		for(Collection<? extends Spot> collection : spots)
+			spotNumber += collection.size();
+		
+		for(Feature feature : Feature.values()) {
+			// Make a double array to comply to JFreeChart histograms
+			double[] values = new double[spotNumber];
+			index = 0;
+			for(Collection<? extends Spot> collection : spots) {
+				for (Spot spot : collection) {
+					val = spot.getFeature(feature);
+					if (null == val)
+						continue;
+					values[index] = val; 
+					index++;
+					noDataFlag = false;
+				}
+				if (noDataFlag)
+					featureValues.put(feature, null);
+				else 
+					featureValues.put(feature, values);
+			}
+		}
+		return featureValues;
+	}
+
+
 	
 	/**
 	 * Return the optimal bin number for a histogram of the data given in array, using the 

@@ -247,6 +247,11 @@ public class SpotDisplayer2D extends SpotDisplayer {
 		prepareSpotOverlay();
 	}
 	
+	@Override
+	public void clear() {
+		canvas.clearOverlay();
+	}
+	
 	
 	/*
 	 * PRIVATE METHODS

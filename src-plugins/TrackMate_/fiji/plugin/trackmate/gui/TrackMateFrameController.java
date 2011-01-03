@@ -10,6 +10,7 @@ import ij3d.Content;
 import ij3d.ContentCreator;
 import ij3d.Image3DUniverse;
 
+import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -53,7 +54,7 @@ import fiji.plugin.trackmate.visualization.SpotDisplayer2D;
 import fiji.plugin.trackmate.visualization.SpotDisplayer3D;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 
-public class TrackMateFrameController {
+public class TrackMateFrameController implements ActionListener {
 
 	/*
 	 * ENUMS
@@ -69,7 +70,10 @@ public class TrackMateFrameController {
 		TUNE_TRACKER,
 		TRACKING,
 		TUNE_DISPLAY;
-
+		
+		/**
+		 * Provide the next state the view should be into when pushing the 'next' button.
+		 */
 		public GuiState nextState() {
 			switch (this) {
 			case START:
@@ -94,6 +98,10 @@ public class TrackMateFrameController {
 			}
 		}
 		
+
+		/**
+		 * Provide the previous state the view should be into when pushing the 'previous' button.
+		 */
 		public GuiState previousState() {
 			switch (this) {
 			case TUNE_SEGMENTER:
@@ -118,10 +126,15 @@ public class TrackMateFrameController {
 			}
 		}
 		
+		/**
+		 * Update the view given in argument in adequation with the current state.
+		 * @param view
+		 */
 		public void updateGUI(final TrackMateFrame view) {
 			// Display adequate card
-			TrackMateFrame.PanelCard key = null;
+			final TrackMateFrame.PanelCard key;
 			switch (this) {
+			default:
 			case START:
 				key = PanelCard.START_DIALOG_KEY;
 				break;
@@ -150,34 +163,55 @@ public class TrackMateFrameController {
 				key = PanelCard.DISPLAYER_PANEL_KEY;
 				break;
 			}
-			view.displayPanel(key);
-			// Update button states
-			switch(this) {
-			case START:
-				view.jButtonPrevious.setEnabled(false);
-				view.jButtonNext.setEnabled(true);
-				break;
-			case TUNE_DISPLAY:
-				view.jButtonPrevious.setEnabled(true);
-				view.jButtonNext.setEnabled(false);
-				break;
-			default:
-				view.jButtonPrevious.setEnabled(true);
-				view.jButtonNext.setEnabled(true);
-			}
+			final GuiState state = this;
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					view.displayPanel(key);
+					// Update button states
+					switch(state) {
+					case START:
+						view.jButtonPrevious.setEnabled(false);
+						view.jButtonNext.setEnabled(true);
+						break;
+					case TUNE_DISPLAY:
+						view.jButtonPrevious.setEnabled(true);
+						view.jButtonNext.setEnabled(false);
+						break;
+					default:
+						view.jButtonPrevious.setEnabled(true);
+						view.jButtonNext.setEnabled(true);
+					}
+					
+				}
+			});
 		}
 		
-		public void performTask(TrackMateFrameController controller) {
+		public void performTask(final TrackMateFrameController controller) {
 			switch(this) {
+			case TUNE_SEGMENTER:
+				// Get the settings field from the 
+				controller.execGetStartSettings();
+				return;
 			case SEGMENTING:
 				controller.execSegmentationStep();
 				return;
-			case THRESHOLD_SPOTS:
-				// When we switch to the display of the threshold GUI, we execute the *initial* thresholding step
+			case CALCULATE_FEATURES:
+				// Before we switch to the log display when calculating features, we execute the *initial* thresholding step.
 				controller.execInitialThresholding();
+				// Then we calculate the other features.
+				controller.execCalculateFeatures();
+				// Then we launch the displayer
+				controller.execLaunchdisplayer();
+				return;
+			case THRESHOLD_SPOTS:
+				controller.execLinkDisplayerToThresholdGUI();
 				return;
 			case TRACKING:
 				controller.execTrackingStep();
+				return;
+			case TUNE_DISPLAY:
+				controller.execLinkDisplayerToTuningGUI();
 				return;
 				
 			default:
@@ -217,19 +251,44 @@ public class TrackMateFrameController {
 	
 	public TrackMateFrameController(final TrackMateModelInterface model) {
 		this.model = model;
-		// Launch the GUI 
-		final TrackMateControllerInterface controller = this;
-		SwingUtilities.invokeLater(new Runnable() {			
-			@Override
-			public void run() {
-				view = new TrackMateFrame(controller, model);
-				view.initGUI();
-				logger = view.getLogger();
-				model.setLogger(logger);
-				initUpdater();
-			}
-		});
+		view = new TrackMateFrame(model);
+		logger = view.getLogger();
+		model.setLogger(logger);
+		if (null != model.getSettings().imp)
+			view.setLocationRelativeTo(model.getSettings().imp.getWindow());
+		else
+			view.setLocationRelativeTo(null);
+		view.setVisible(true);
+		view.addActionListener(this);
+		state = GuiState.START;
+		state.updateGUI(view);
+		initUpdater();
 	}
+	
+	
+	/*
+	 * ACTIONLISTENER METHODS
+	 */
+	
+
+	@Override
+	public void actionPerformed(ActionEvent event) {
+		if (event == view.NEXT_BUTTON_PRESSED) {
+			state = state.nextState();
+			state.updateGUI(view);
+			state.performTask(this);
+		} else if (event == view.PREVIOUS_BUTTON_PRESSED) {
+			state = state.previousState();
+			state.updateGUI(view);
+		} else if (event == view.LOAD_BUTTON_PRESSED) {
+			logger.log("Load button pushed.\n");			
+		} else if (event == view.SAVE_BUTTON_PRESSED) {
+			logger.log("Save button pushed.\n");
+		} else {
+			logger.error("Unknown event caught: "+event+'\n');
+		}
+	}
+	
 	
 	/*
 	
@@ -413,12 +472,22 @@ public class TrackMateFrameController {
 	}
 	
 	
+	private void execGetStartSettings() {
+		model.setSettings(view.startDialogPanel.getSettings());
+	}
+	
 	/**
 	 * Switch to the log panel, and execute the segmentation step, which will be delegated to 
 	 * the {@link TrackMate_} glue class in a new Thread.
 	 */
 	private void execSegmentationStep() {
-		view.jButtonNext.setEnabled(false);
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				view.jButtonNext.setEnabled(false);
+			}
+		});
+		model.getSettings().segmenterSettings = view.segmenterSettingsPanel.getSettings();
 		logger.log("Starting segmentation...\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
 		logger.log(model.getSettings().toString());
@@ -432,7 +501,12 @@ public class TrackMateFrameController {
 					logger.error("An error occured:\n"+e+'\n');
 					e.printStackTrace(logger);
 				} finally {
-					view.jButtonNext.setEnabled(true);
+					SwingUtilities.invokeLater(new Runnable() {
+						@Override
+						public void run() {
+							view.jButtonNext.setEnabled(true);
+						}
+					});
 					long end = System.currentTimeMillis();
 					logger.log(String.format("Segmentation done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
 				}
@@ -440,24 +514,53 @@ public class TrackMateFrameController {
 		}.start();
 	}
 	
+	/**
+	 * Apply the quality threshold set by the {@link TrackMateFrame#initThresholdingPanel}, and <b>overwrite</b> 
+	 * the {@link Spot} collection of the {@link TrackMateModelInterface} with the result.
+	 */
 	private void execInitialThresholding() {
-		view.initThresholdingPanel.getFeatureThreshold(); // TODO TODO
+		FeatureThreshold qualityThreshold = view.initThresholdingPanel.getFeatureThreshold();
+		String str = "Initial thresholding with a quality threshold ";
+		if (qualityThreshold.isAbove)
+			str += "above ";
+		else
+			str += "below ";
+		str += "" + String.format("%.1f", qualityThreshold.value) + " ...\n";
+		logger.log(str,Logger.BLUE_COLOR);
+		ArrayList<FeatureThreshold> featureThresholds = new ArrayList<FeatureThreshold>(1);
+		featureThresholds.add(qualityThreshold);
+		TreeMap<Integer, List<Spot>> thresholdedSpots = Utils.thresholdSpots(model.getSpots(), featureThresholds);
+		int ntotal = 0;
+		for (Collection<Spot> spots : model.getSpots().values())
+			ntotal += spots.size();
+		int nselected = 0;
+		for (Collection<Spot> spots : thresholdedSpots.values())
+			nselected += spots.size();
+		logger.log(String.format("Retained %d spots out of %d.\n", nselected, ntotal));
+		model.setSpots(thresholdedSpots);
 	}
 	
 	
 	/**
-	 * Collect the raw result, threshold by the quality value set in the init. threshold panel, 
-	 * and then compute all features.
+	 * Compute all features on all spots retained after initial thresholding.
 	 */
 	private void execCalculateFeatures() {
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				view.jButtonNext.setEnabled(false);
+			}
+		});
 		logger.log("Calculating features...\n",Logger.BLUE_COLOR);
-		// Collect initial thresholding result
-		List<FeatureThreshold> featureThresholds = model.getFeatureThresholds();
-		TreeMap<Integer, List<Spot>> spots = Utils.thresholdSpots(model.getSpots(), featureThresholds); // operate on the RAW segmentation result
-		model.setSpots(spots); // Here we OVERRIDE the raw results by this initially segmented collection
 		// Calculate features
 		model.computeFeatures();		
 		logger.log("Calculating features done.\n", Logger.BLUE_COLOR);
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				view.jButtonNext.setEnabled(true);
+			}
+		});
 	}
 	
 	/**
@@ -466,23 +569,78 @@ public class TrackMateFrameController {
 	private void execLaunchdisplayer() {
 		// Launch renderer
 		logger.log("Rendering results...\n",Logger.BLUE_COLOR);
-		view.jButtonNext.setEnabled(false);
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				view.jButtonNext.setEnabled(false);
+			}
+		});
 		// Thread for rendering
 		new Thread("TrackMate rendering thread") {
 			public void run() {
+				// Instantiate displayer
+				if (null != displayer) {
+					displayer.clear();
+				}
 				displayer = instantiateDisplayer(model);
 				displayer.setSpots(model.getSpots());
+				// Re-enable the GUI
 				logger.log("Rendering done.\n", Logger.BLUE_COLOR);
-				view.jButtonNext.setEnabled(true);
+				SwingUtilities.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						view.jButtonNext.setEnabled(true);
+					}
+				});
+				updater.doUpdate();
 			}
 		}.start();
+	}
+	
+	
+	/**
+	 * Link the displayer frame to the threshold gui displayed in the view, so that 
+	 * displayed spots are updated live when the user changes something in the view.
+	 */
+	private void execLinkDisplayerToThresholdGUI() {
+		SwingUtilities.invokeLater(new Runnable() {			
+			@Override
+			public void run() {
+
+				view.thresholdGuiPanel.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent event) {
+						displayer.setColorByFeature(view.thresholdGuiPanel.getColorByFeature());
+						updater.doUpdate();
+					}
+				});
+				
+				view.thresholdGuiPanel.addChangeListener(new ChangeListener() {
+					@Override
+					public void stateChanged(ChangeEvent event) {
+						model.setFeatureThresholds(view.thresholdGuiPanel.getFeatureThresholds());
+						displayer.setSpotsToShow(model.getSelectedSpots());
+						updater.doUpdate();
+					}
+				});
+				
+				view.thresholdGuiPanel.stateChanged(null); // force redraw
+				updater.doUpdate();
+			}
+		});
 	}
 	
 	/**
 	 * Switch to the log panel, and execute the tracking part in another thread.
 	 */
 	private void execTrackingStep() {
-		view.jButtonNext.setEnabled(false);
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				view.jButtonNext.setEnabled(false);
+			}
+		});
+		model.getSettings().trackerSettings = view.trackerSettingsPanel.getSettings();
 		logger.log("Starting tracking...\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
 		logger.log(model.getSettings().trackerSettings.toString());
@@ -494,12 +652,52 @@ public class TrackMateFrameController {
 				displayer.setDisplayTrackMode(TrackDisplayMode.ALL_WHOLE_TRACKS, 20);
 				updater.doUpdate();
 				// Re-enable the GUI
-				view.jButtonNext.setEnabled(true);
+				SwingUtilities.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						view.jButtonNext.setEnabled(true);
+					}
+				});
 				long end = System.currentTimeMillis();
 				logger.log(String.format("Tracking done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
 			}
 		}.start();
 	}
+	
+	/**
+	 * Link the displayer to the tuning display panel in the view.
+	 */
+	private void execLinkDisplayerToTuningGUI() {
+		SwingUtilities.invokeLater(new Runnable() {			
+			@Override
+			public void run() {
+				
+				view.displayerPanel.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent event) {
+						if (event == view.displayerPanel.SPOT_COLOR_MODE_CHANGED) {
+							displayer.setColorByFeature(view.displayerPanel.getColorSpotByFeature());
+						} else if (event == view.displayerPanel.SPOT_VISIBILITY_CHANGED) {
+							displayer.setSpotVisible(view.displayerPanel.isDisplaySpotSelected());
+						} else if (event == view.displayerPanel.TRACK_DISPLAY_MODE_CHANGED) {
+							displayer.setDisplayTrackMode(view.displayerPanel.getTrackDisplayMode(), view.displayerPanel.getTrackDisplayDepth());
+						} else if (event == view.displayerPanel.TRACK_VISIBILITY_CHANGED) {
+							displayer.setTrackVisible(view.displayerPanel.isDisplayTrackSelected());
+						} else {
+							logger.error("Unknown event caught: "+event+'\n');
+						}
+						updater.doUpdate();
+					}
+				});
+				
+				updater.doUpdate();
+				
+				
+			}
+		});
+	}
+	
+	
 	
 	/*
 	 * STATIC METHODS
@@ -555,7 +753,7 @@ public class TrackMateFrameController {
 	 * Instantiate a suitable {@link SpotDisplayer} for the given model, and render it with
 	 * the image content only.
 	 */
-	private static SpotDisplayer instantiateDisplayer(TrackMateModelInterface model) {
+	private static SpotDisplayer instantiateDisplayer(final TrackMateModelInterface model) {
 		SpotDisplayer disp;
 		Settings settings = model.getSettings();
 		// Render image data
@@ -646,6 +844,12 @@ public class TrackMateFrameController {
 			}
 		}
 	}
-	
-	
+
+	@SuppressWarnings("unchecked")
+	public static void main(String[] args) {
+		ij.ImageJ.main(args);
+		TrackMateModelInterface model = new TrackMate_();
+		new TrackMateFrameController(model);
+	}
+
 }

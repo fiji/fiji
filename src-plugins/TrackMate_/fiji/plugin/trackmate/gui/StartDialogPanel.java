@@ -8,6 +8,7 @@ import ij.WindowManager;
 import ij.gui.NewImage;
 import ij.gui.Roi;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
@@ -26,6 +27,7 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
 import fiji.plugin.trackmate.Settings;
@@ -88,59 +90,28 @@ public class StartDialogPanel extends ActionListenablePanel {
 
 	private JButton jButtonTrackerInfo;
 	private Settings settings;
+	private Component target;
 	
-	public StartDialogPanel(Settings settings) {		
+	/**
+	 * Create and lay out of new {@link StartDialogPanel}, with the default settings given, and a target component.
+	 * The later will be disabled, until a valid {@link ImagePlus} is set in the {@link Settings} field returned
+	 * by this panel.
+	 */
+	public StartDialogPanel(Settings settings, Component target) {		
 		super();
 		if (null == settings)
 			settings = new Settings();
 		this.settings = settings;
+		this.target = target;
 		initGUI();
 		refresh();
 	}
-	
+
 	/*
 	 * PUBLIC METHODS
 	 */
 	
-	
-	
-	/*
-	 * PRIVATE METHODS
-	 */
-	
-	/**
-	 * Fill the text fields with parameters grabbed from current ImagePlus.
-	 */
-	private void refresh() {
-		if (null == settings.imp)
-			imp = WindowManager.getCurrentImage();
-		else 
-			imp = settings.imp;
-		if (null == imp)
-			return;
-		jLabelImageName.setText(imp.getTitle());
-		jTextFieldPixelWidth.setText(String.format("%.1f", imp.getCalibration().pixelWidth));
-		jTextFieldPixelHeight.setText(String.format("%.1f", imp.getCalibration().pixelHeight));
-		jTextFieldVoxelDepth.setText(String.format("%.1f", imp.getCalibration().pixelDepth));
-		jTextFieldTimeInterval.setText(String.format("%.1f", imp.getCalibration().frameInterval));
-		jLabelUnits1.setText(imp.getCalibration().getXUnit());
-		jLabelUnits2.setText(imp.getCalibration().getYUnit());
-		jLabelUnits3.setText(imp.getCalibration().getZUnit());
-		jLabelUnits4.setText(imp.getCalibration().getTimeUnit());
-		Roi roi = imp.getRoi();
-		if (null == roi)
-			roi = new Roi(0,0,imp.getWidth(),imp.getHeight());
-		Rectangle boundingRect = roi.getBounds();
-		jTextFieldXStart.setText(""+(boundingRect.x+1)); 
-		jTextFieldYStart.setText(""+(boundingRect.y+1));
-		jTextFieldXEnd.setText(""+(boundingRect.width+boundingRect.x+1));
-		jTextFieldYEnd.setText(""+(boundingRect.height+boundingRect.y+1));
-		jTextFieldZStart.setText(""+1);
-		jTextFieldZEnd.setText(""+imp.getNSlices());
-		jTextFieldTStart.setText(""+1); 
-		jTextFieldTEnd.setText(""+imp.getNFrames());
-	}
-	
+
 	
 	/**
 	 * Update the settings object given with the parameters this panel allow to tune
@@ -152,14 +123,14 @@ public class StartDialogPanel extends ActionListenablePanel {
 	public Settings getSettings() {
 		settings.imp =  imp;
 		// Crop cube
-		settings.tstart = Integer.parseInt(jTextFieldTStart.getText());
-		settings.tend 	= Integer.parseInt(jTextFieldTEnd.getText());
-		settings.xstart = Integer.parseInt(jTextFieldXStart.getText());
-		settings.xend 	= Integer.parseInt(jTextFieldXEnd.getText());
-		settings.ystart = Integer.parseInt(jTextFieldYStart.getText());
-		settings.yend 	= Integer.parseInt(jTextFieldYEnd.getText());
-		settings.zstart = Integer.parseInt(jTextFieldZStart.getText());
-		settings.zend 	= Integer.parseInt(jTextFieldZEnd.getText());
+		settings.tstart = Math.round(Float.parseFloat(jTextFieldTStart.getText()));
+		settings.tend 	= Math.round(Float.parseFloat(jTextFieldTEnd.getText()));
+		settings.xstart = Math.round(Float.parseFloat(jTextFieldXStart.getText()));
+		settings.xend 	= Math.round(Float.parseFloat(jTextFieldXEnd.getText()));
+		settings.ystart = Math.round(Float.parseFloat(jTextFieldYStart.getText()));
+		settings.yend 	= Math.round(Float.parseFloat(jTextFieldYEnd.getText()));
+		settings.zstart = Math.round(Float.parseFloat(jTextFieldZStart.getText()));
+		settings.zend 	= Math.round(Float.parseFloat(jTextFieldZEnd.getText()));
 		// Image info
 		settings.dx 	= Float.parseFloat(jTextFieldPixelWidth.getText());
 		settings.dy 	= Float.parseFloat(jTextFieldPixelHeight.getText());
@@ -190,6 +161,56 @@ public class StartDialogPanel extends ActionListenablePanel {
 		settings.trackerSettings.timeUnits = imp.getCalibration().getTimeUnit();
 		// Hop!
 		return settings;
+	}
+	
+	
+	/*
+	 * PRIVATE METHODS
+	 */
+	
+	/**
+	 * Fill the text fields with parameters grabbed from current ImagePlus. If the image is valid,
+	 * enable the {@link #target} component.
+	 */
+	private void refresh() {
+		if (null == settings.imp)
+			imp = WindowManager.getCurrentImage();
+		else 
+			imp = settings.imp;
+		if (null == imp) {
+			if (null != target) {
+				SwingUtilities.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						target.setEnabled(false);
+					}
+				});
+			}
+			return;
+		}
+		jLabelImageName.setText(imp.getTitle());
+		jTextFieldPixelWidth.setText(String.format("%.1f", imp.getCalibration().pixelWidth));
+		jTextFieldPixelHeight.setText(String.format("%.1f", imp.getCalibration().pixelHeight));
+		jTextFieldVoxelDepth.setText(String.format("%.1f", imp.getCalibration().pixelDepth));
+		jTextFieldTimeInterval.setText(String.format("%.1f", imp.getCalibration().frameInterval));
+		jLabelUnits1.setText(imp.getCalibration().getXUnit());
+		jLabelUnits2.setText(imp.getCalibration().getYUnit());
+		jLabelUnits3.setText(imp.getCalibration().getZUnit());
+		jLabelUnits4.setText(imp.getCalibration().getTimeUnit());
+		Roi roi = imp.getRoi();
+		if (null == roi)
+			roi = new Roi(0,0,imp.getWidth(),imp.getHeight());
+		Rectangle boundingRect = roi.getBounds();
+		jTextFieldXStart.setText(""+(boundingRect.x+1)); 
+		jTextFieldYStart.setText(""+(boundingRect.y+1));
+		jTextFieldXEnd.setText(""+(boundingRect.width+boundingRect.x+1));
+		jTextFieldYEnd.setText(""+(boundingRect.height+boundingRect.y+1));
+		jTextFieldZStart.setText(""+1);
+		jTextFieldZEnd.setText(""+imp.getNSlices());
+		jTextFieldTStart.setText(""+1); 
+		jTextFieldTEnd.setText(""+imp.getNFrames());
+		if (null != target)
+			target.setEnabled(true);
 	}
 	
 	
@@ -485,7 +506,7 @@ public class StartDialogPanel extends ActionListenablePanel {
 		imp.getCalibration().pixelWidth = 0.4;
 		imp.setRoi(new Roi(10, 20, 5, 60));
 		imp.show();
-		frame.getContentPane().add(new StartDialogPanel(null));
+		frame.getContentPane().add(new StartDialogPanel(null, null));
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();
 		frame.setVisible(true);

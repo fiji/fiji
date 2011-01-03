@@ -3,7 +3,7 @@ package fiji.plugin.trackmate.visualization.test;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.Utils;
 import fiji.plugin.trackmate.features.FeatureFacade;
 import fiji.plugin.trackmate.gui.ThresholdGuiPanel;
 import fiji.plugin.trackmate.visualization.SpotDisplayer3D;
@@ -114,13 +114,13 @@ public class SpotDisplayer3DTestDrive {
 		universe.show();
 		
 		// Launch threshold GUI
-		final ThresholdGuiPanel gui = new ThresholdGuiPanel(allSpots.values());
+		final ThresholdGuiPanel gui = new ThresholdGuiPanel(Utils.getFeatureValues(allSpots.values()));
 
 		// Set listeners
 		gui.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				displayer.setSpotsToShow(TrackMate_.thresholdSpots(allSpots, gui.getFeatureThresholds()));
+				displayer.setSpotsToShow(Utils.thresholdSpots(allSpots, gui.getFeatureThresholds()));
 				displayer.refresh();
 			}
 		});

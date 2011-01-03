@@ -119,7 +119,7 @@ public class SegmenterSettingsPanel extends ActionListenablePanel {
 				jTextFieldBlobDiameter.setSize(TEXTFIELD_DIMENSION);
 				this.add(jTextFieldBlobDiameter, new GridBagConstraints(1, 3, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
 				jTextFieldBlobDiameter.setFont(FONT);
-				jTextFieldBlobDiameter.setText("10");
+				jTextFieldBlobDiameter.setText(""+(2*settings.expectedRadius));
 			}
 			{
 				jLabelBlobDiameterUnit = new JLabel();
@@ -132,6 +132,7 @@ public class SegmenterSettingsPanel extends ActionListenablePanel {
 				this.add(jCheckBoxMedianFilter, new GridBagConstraints(0, 5, 2, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 10), 0, 0));
 				jCheckBoxMedianFilter.setText("Use median filter ");
 				jCheckBoxMedianFilter.setFont(FONT);
+				jCheckBoxMedianFilter.setSelected(settings.useMedianFilter);
 			}
 			{
 				jLabelHelpText = new JLabel();
@@ -148,7 +149,7 @@ public class SegmenterSettingsPanel extends ActionListenablePanel {
 			{
 				jTextFieldThreshold = new JNumericTextField();
 				this.add(jTextFieldThreshold, new GridBagConstraints(1, 4, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-				jTextFieldThreshold.setText("0");
+				jTextFieldThreshold.setText(""+settings.threshold);
 				jTextFieldThreshold.setFont(FONT);
 			}
 			{

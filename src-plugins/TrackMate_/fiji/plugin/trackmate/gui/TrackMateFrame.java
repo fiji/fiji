@@ -14,25 +14,15 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
-import mpicbg.imglib.type.numeric.RealType;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModelInterface;
-import fiji.plugin.trackmate.TrackMate_;
-
-
 
 /**
-* This code was edited or generated using CloudGarden's Jigloo
-* SWT/Swing GUI Builder, which is free for non-commercial
-* use. If Jigloo is being used commercially (ie, by a corporation,
-* company or business for any purpose whatever) then you
-* should purchase a license for each developer using Jigloo.
-* Please visit www.cloudgarden.com for details.
-* Use of Jigloo implies acceptance of these licensing terms.
-* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
-* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
-* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
-*/
+ * A view for the TrackMate_ plugin, strongly inspired from the spots segmentation GUI of the Imaris® software 
+ * from Bitplane ({@link http://www.bitplane.com/}).
+ * 
+ * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - September 2010 - January 2011
+ */
 public class TrackMateFrame extends javax.swing.JFrame {
 
 	/*
@@ -43,6 +33,58 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	static final Font SMALL_FONT = FONT.deriveFont(8);
 	static final Dimension TEXTFIELD_DIMENSION = new Dimension(40,18);
 	
+	/*
+	 * CONSTANTS
+	 */
+	
+	private static final long serialVersionUID = 6161909075663429689L;
+	private static final Icon NEXT_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/arrow_right.png"));
+	private static final Icon PREVIOUS_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/arrow_left.png"));
+	private static final Icon LOAD_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/page_go.png"));
+	private static final Icon SAVE_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/page_save.png"));
+
+	/*
+	 * DEFAULT VISIBILITY FIELDS
+	 */
+	
+	/** This {@link ActionEvent} is fired when the 'next' button is pressed. */
+	final ActionEvent NEXT_BUTTON_PRESSED = new ActionEvent(this, 0, "NextButtonPressed");
+	/** This {@link ActionEvent} is fired when the 'previous' button is pressed. */
+	final ActionEvent PREVIOUS_BUTTON_PRESSED = new ActionEvent(this, 1, "PreviousButtonPressed");
+	/** This {@link ActionEvent} is fired when the 'load' button is pressed. */
+	final ActionEvent LOAD_BUTTON_PRESSED = new ActionEvent(this, 2, "LoadButtonPressed");
+	/** This {@link ActionEvent} is fired when the 'save' button is pressed. */
+	final ActionEvent SAVE_BUTTON_PRESSED = new ActionEvent(this, 3, "SaveButtonPressed");
+	
+	JButton jButtonSave;
+	JButton jButtonLoad;
+	JButton jButtonPrevious;
+	JButton jButtonNext;
+	
+	StartDialogPanel startDialogPanel;
+	SegmenterSettingsPanel segmenterSettingsPanel;
+	InitThresholdPanel initThresholdingPanel;
+	ThresholdGuiPanel thresholdGuiPanel;
+	TrackerSettingsPanel trackerSettingsPanel;
+	DisplayerPanel displayerPanel;
+
+	/*
+	 * FIELDS
+	 */
+	
+	private TrackMateModelInterface model;
+	private ArrayList<ActionListener> listeners = new ArrayList<ActionListener>();
+
+	private JPanel jPanelButtons;
+	private JPanel jPanelMain;
+	private LogPanel logPanel;
+	private CardLayout cardLayout;
+
+
+	/*
+	 * ENUM
+	 */
+	
 	public enum PanelCard {
 		START_DIALOG_KEY,
 		TUNE_SEGMENTER_KEY,
@@ -52,54 +94,6 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		LOG_PANEL_KEY,
 		DISPLAYER_PANEL_KEY;
 	}
-	
-	
-	
-	/*
-	 * CONSTANTS
-	 */
-	
-	private static final Icon NEXT_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/arrow_right.png"));
-	private static final Icon PREVIOUS_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/arrow_left.png"));
-	private static final Icon LOAD_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/page_go.png"));
-	private static final Icon SAVE_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/page_save.png"));
-
-	/*
-	 * PUBLIC FIELDS
-	 */
-	
-	/** This {@link ActionEvent} is fired when the 'next' button is pressed. */
-	public final ActionEvent NEXT_BUTTON_PRESSED = new ActionEvent(this, 0, "NextButtonPressed");
-	/** This {@link ActionEvent} is fired when the 'previous' button is pressed. */
-	public final ActionEvent PREVIOUS_BUTTON_PRESSED = new ActionEvent(this, 1, "PreviousButtonPressed");
-	/** This {@link ActionEvent} is fired when the 'load' button is pressed. */
-	public final ActionEvent LOAD_BUTTON_PRESSED = new ActionEvent(this, 2, "LoadButtonPressed");
-	/** This {@link ActionEvent} is fired when the 'save' button is pressed. */
-	public final ActionEvent SAVE_BUTTON_PRESSED = new ActionEvent(this, 3, "SaveButtonPressed");
-	
-	/*
-	 * FIELDS
-	 */
-	
-	private StartDialogPanel startDialogPanel;
-	private LogPanel logPanel;
-	private DisplayerPanel displayerPanel;
-	private CardLayout cardLayout;
-	JButton jButtonSave;
-	JButton jButtonLoad;
-	JButton jButtonPrevious;
-	JButton jButtonNext;
-	private JPanel jPanelButtons;
-	private JPanel jPanelMain;
-	private SegmenterSettingsPanel segmenterSettingsPanel;
-	private TrackerSettingsPanel trackerSettingsPanel;
-	ThresholdGuiPanel thresholdGuiPanel;
-	InitThresholdPanel initThresholdingPanel;
-	
-	private TrackMateFrameController controller;
-	private TrackMateModelInterface model;
-	
-	private ArrayList<ActionListener> listeners = new ArrayList<ActionListener>();
 	
 	
 	{
@@ -115,8 +109,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	 * CONSTRUCTOR
 	 */
 	
-	public TrackMateFrame(TrackMateFrameController controller, TrackMateModelInterface model) {
-		this.controller = controller;
+	public TrackMateFrame(TrackMateModelInterface model) {
 		this.model = model;
 		initGUI();
 		
@@ -131,18 +124,19 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	 * required parameters from the model this view represent.
 	 */
 	public void displayPanel(PanelCard key) {
+		
+		if (key == PanelCard.LOG_PANEL_KEY) {
+			cardLayout.show(jPanelMain, PanelCard.LOG_PANEL_KEY.name());
+			return;
+		}
+		
 		ActionListenablePanel panel = null;
-		
 		switch (key) {
-		
-		case LOG_PANEL_KEY:
-			panel = logPanel;
-			break;
 		
 		case START_DIALOG_KEY:
 			if (null != startDialogPanel)
 				jPanelButtons.remove(startDialogPanel);
-			startDialogPanel = new StartDialogPanel(model.getSettings());
+			startDialogPanel = new StartDialogPanel(model.getSettings(), jButtonNext);
 			panel = startDialogPanel;
 			break;
 			
@@ -184,7 +178,6 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		
 		jPanelMain.add(panel, key.name());
 		cardLayout.show(jPanelMain, key.name());
-		
 	}
 	
 	/** 
@@ -210,13 +203,26 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		return logPanel.getLogger();
 	}
 	
+	
+	/*
+	 * PRIVATE METHODS
+	 */
+	
+	/**
+	 * Forward the given {@link ActionEvent} to the listeners of this GUI.
+	 */
+	private void fireAction(ActionEvent event) {
+		for (ActionListener listener : listeners)
+			listener.actionPerformed(event);
+	}
+	
 	/**
 	 * Layout this GUI.
 	 */
-	public void initGUI() {
+	private void initGUI() {
 		try {
 			setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-			this.setTitle(TrackMate_.PLUGIN_NAME_STR + " v"+TrackMate_.PLUGIN_NAME_VERSION);
+			this.setTitle(fiji.plugin.trackmate.TrackMate_.PLUGIN_NAME_STR + " v"+fiji.plugin.trackmate.TrackMate_.PLUGIN_NAME_VERSION);
 			this.setResizable(false);
 			{
 				jPanelMain = new JPanel();
@@ -295,30 +301,6 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		}
 		repaint();
 		validate();
-	}
-	
-	
-	/*
-	 * PRIVATE METHODS
-	 */
-	
-	/**
-	 * Forward the given {@link ActionEvent} to the listeners of this GUI.
-	 */
-	private void fireAction(ActionEvent event) {
-		for (ActionListener listener : listeners)
-			listener.actionPerformed(event);
-	}
-
-
-	/*
-	 * MAIN METHODS
-	 */
-
-	public static <T extends RealType<T>> void main(String[] args) {
-		ij.ImageJ.main(args);
-		TrackMateModelInterface model = new TrackMate_<T>();
-		TrackMateControllerInterface controller = new TrackMateFrameController(model);
 	}
 	
 }

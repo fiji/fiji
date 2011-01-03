@@ -136,5 +136,10 @@ public abstract class SpotDisplayer {
 	public abstract void setTrackVisible(boolean displayTrackSelected);
 
 	public abstract void setSpotVisible(boolean displaySpotSelected);
+
+	/**
+	 * Remove any overlay (for spots or tracks) from this displayer.
+	 */
+	public abstract void clear();
 	
 }

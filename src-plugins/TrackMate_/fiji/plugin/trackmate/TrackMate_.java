@@ -5,10 +5,10 @@ import fiji.plugin.trackmate.gui.TrackMateFrameController;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import ij.ImagePlus;
+import ij.WindowManager;
 import ij.plugin.PlugIn;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.TreeMap;
@@ -43,7 +43,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 	private SimpleGraph<Spot, DefaultEdge> trackGraph;
 
 	private Logger logger = Logger.DEFAULT_LOGGER;
-	private Settings settings = new Settings();
+	private Settings settings;
 	private List<FeatureThreshold> thresholds = new ArrayList<FeatureThreshold>();
 	private SpotSegmenter<T> segmenter;
 
@@ -52,7 +52,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 	 */
 	
 	public TrackMate_() {
-		
+		this.settings = new Settings();
 	}
 	
 	public TrackMate_(Settings settings) {
@@ -68,6 +68,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 	 * Launch the GUI.
 	 */
 	public void run(String arg) {
+		settings.imp = WindowManager.getCurrentImage();
 		new TrackMateFrameController(this);
 	}
 	
@@ -83,11 +84,6 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 			trackGraph = tracker.getTrackGraph();
 		else
 			logger.error("Problem occured in tracking:\n"+tracker.getErrorMessage()+'\n');
-	}
-	
-	@Override
-	public void execThresholding() {
-		selectedSpots = Utils.thresholdSpots(spots, thresholds);
 	}
 	
 	@Override
@@ -181,6 +177,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 
 	@Override
 	public TreeMap<Integer, List<Spot>> getSelectedSpots() {
+		selectedSpots = Utils.thresholdSpots(spots, thresholds);
 		return selectedSpots;
 	}
 	
@@ -219,10 +216,10 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 		this.spots = spots;
 	}
 
-	@Override
-	public void setSpotSelection(TreeMap<Integer, List<Spot>> selectedSpots) {
-		this.selectedSpots = selectedSpots;
-	}
+//	@Override
+//	public void setSpotSelection(TreeMap<Integer, List<Spot>> selectedSpots) {
+//		this.selectedSpots = selectedSpots;
+//	}
 	
 	@Override
 	public void setTrackGraph(SimpleGraph<Spot, DefaultEdge> trackGraph) {
@@ -231,37 +228,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 
 	@Override
 	public EnumMap<Feature, double[]> getFeatureValues() {
-		 EnumMap<Feature, double[]> featureValues = new  EnumMap<Feature, double[]>(Feature.class);
-		if (null == spots || spots.isEmpty())
-			return featureValues;
-		int index;
-		Float val;
-		boolean noDataFlag = true;
-		// Get the total quantity of spot we have
-		int spotNumber = 0;
-		for(Collection<? extends Spot> collection : spots.values())
-			spotNumber += collection.size();
-		
-		for(Feature feature : Feature.values()) {
-			// Make a double array to comply to JFreeChart histograms
-			double[] values = new double[spotNumber];
-			index = 0;
-			for(Collection<? extends Spot> collection : spots.values()) {
-				for (Spot spot : collection) {
-					val = spot.getFeature(feature);
-					if (null == val)
-						continue;
-					values[index] = val; 
-					index++;
-					noDataFlag = false;
-				}
-				if (noDataFlag)
-					featureValues.put(feature, null);
-				else 
-					featureValues.put(feature, values);
-			}
-		}
-		return featureValues;
+		return Utils.getFeatureValues(spots.values());
 	}
 
 
