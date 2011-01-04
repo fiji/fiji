@@ -154,10 +154,15 @@ public class Fake {
 		return fijiHome;
 	}
 
+	protected static void setDefaultProperty(String key, String value) {
+		if (null == System.getProperty(key))
+			System.setProperty(key,value);
+	}
+
 	protected static void discoverJython() throws IOException {
 		String pythonHome = fijiHome + "jars";
-		System.setProperty("python.home", pythonHome);
-		System.setProperty("python.cachedir.skip", "false");
+		setDefaultProperty("python.home", pythonHome);
+		setDefaultProperty("python.cachedir.skip", "false");
 		String jythonJar = pythonHome + "/jython.jar";
 		if (!new File(jythonJar).exists())
 			jythonJar = fijiHome + "/precompiled/jython.jar";
