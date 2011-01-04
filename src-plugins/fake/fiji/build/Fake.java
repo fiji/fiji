@@ -167,7 +167,8 @@ public class Fake {
 		if (!new File(jythonJar).exists())
 			jythonJar = fijiHome + "/precompiled/jython.jar";
 		getClassLoader(fijiHome + "/jars/jna.jar");
-		getClassLoader(jythonJar);
+		if (new File(jythonJar).exists())
+			getClassLoader(jythonJar);
 	}
 
 	protected static void discoverBeanshell() throws IOException {
