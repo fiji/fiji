@@ -240,6 +240,8 @@ jars/jna.jar[] <-
 jars/postgresql-8.2-506.jdbc3.jar[] <-
 jars/jai_core.jar[] <-
 jars/jai_codec.jar[] <-
+jars/jython.jar[] <-
+jars/batik.jar[] <-
 
 # From submodules
 jars/ij.jar <- jars/javac.jar ImageJA/
