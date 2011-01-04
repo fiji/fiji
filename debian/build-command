@@ -4,6 +4,8 @@
 ## with debian/update-debian --generate-build-command
 
 DEBIAN_DIRECTORY=$(dirname $(readlink -f "$BASH_SOURCE"))
+FIJI_DIRECTORY=$(readlink -f "$DEBIAN_DIRECTORY"/..)
+
 export JAVA_HOME=`cat "$DEBIAN_DIRECTORY"/java-home`
 JAVAC_PATH=$JAVA_HOME/bin/javac
 
@@ -15,7 +17,19 @@ fi
 
 echo In build-command, found JAVA_HOME was $JAVA_HOME
 
-sh -x Fake.sh FALLBACK=false VERBOSE=true \
+# These lines are taken from Build.sh to ensure that Fake
+# is built:
+source_dir=src-plugins/fake
+source=$source_dir/fiji/build/*.java
+export SYSTEM_JAVAC=$JAVA_HOME/bin/javac
+export SYSTEM_JAVA=$JAVA_HOME/bin/java
+
+mkdir -p "$FIJI_DIRECTORY"/build &&
+  $SYSTEM_JAVAC -d "$FIJI_DIRECTORY"/build/ "$FIJI_DIRECTORY"/$source &&
+  $SYSTEM_JAVA -classpath "$FIJI_DIRECTORY"/build fiji.build.Fake fiji &&
+  $SYSTEM_JAVA -classpath "$FIJI_DIRECTORY"/build fiji.build.Fake jars/fake.jar
+
+./fiji --build -Dpython.home=/usr/share/jython -Dpython.path=/usr/lib/site-python -- FALLBACK=false VERBOSE=true \
     "CLASSPATH(jars/VIB-lib.jar)=/usr/share/java/jama.jar:/usr/share/java/junit4.jar:/usr/share/java/jzlib.jar:jars/fiji-lib.jar:jars/ij.jar:jars/pal-optimization.jar" \
     "CLASSPATH(jars/VectorString.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jama.jar:/usr/share/java/vecmath.jar:jars/ij.jar" \
     "CLASSPATH(jars/batik.jar)=/usr/share/java/jython.jar:jars/jacl.jar:plugins/loci_tools.jar" \

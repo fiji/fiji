@@ -404,6 +404,8 @@ if options.generate_build_command:
 ## with debian/update-debian --generate-build-command
 
 DEBIAN_DIRECTORY=$(dirname $(readlink -f "$BASH_SOURCE"))
+FIJI_DIRECTORY=$(readlink -f "$DEBIAN_DIRECTORY"/..)
+
 export JAVA_HOME=`cat "$DEBIAN_DIRECTORY"/java-home`
 JAVAC_PATH=$JAVA_HOME/bin/javac
 
@@ -415,7 +417,19 @@ fi
 
 echo In build-command, found JAVA_HOME was $JAVA_HOME
 
-sh -x Fake.sh FALLBACK=false VERBOSE=true \\
+# These lines are taken from Build.sh to ensure that Fake
+# is built:
+source_dir=src-plugins/fake
+source=$source_dir/fiji/build/*.java
+export SYSTEM_JAVAC=$JAVA_HOME/bin/javac
+export SYSTEM_JAVA=$JAVA_HOME/bin/java
+
+mkdir -p "$FIJI_DIRECTORY"/build &&
+  $SYSTEM_JAVAC -d "$FIJI_DIRECTORY"/build/ "$FIJI_DIRECTORY"/$source &&
+  $SYSTEM_JAVA -classpath "$FIJI_DIRECTORY"/build fiji.build.Fake fiji &&
+  $SYSTEM_JAVA -classpath "$FIJI_DIRECTORY"/build fiji.build.Fake jars/fake.jar
+
+./fiji --build -Dpython.home=/usr/share/jython -Dpython.path=/usr/lib/site-python -- FALLBACK=false VERBOSE=true \\
 ''')
         for k in sorted(new_classpaths.keys()):
             f.write('    "CLASSPATH(%s)=%s" \\\n' % (k,':'.join(sorted(new_classpaths[k]))))
