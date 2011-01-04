@@ -147,6 +147,9 @@ public class Fake {
 		else if (fijiHome.endsWith("jars/"))
 			fijiHome = fijiHome.substring(0,
 					fijiHome.length() - 5);
+		else if (fijiHome.endsWith("plugins/"))
+			fijiHome = fijiHome.substring(0,
+					fijiHome.length() - 8);
 
 		return fijiHome;
 	}
