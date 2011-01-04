@@ -235,6 +235,10 @@ public abstract class Rule {
 		parser.fake.err.println(message);
 	}
 
+	public String getTarget() {
+		return target;
+	}
+
 	public Rule getRule(String prereq) {
 		if (prereq.endsWith(".jar/"))
 			prereq = Util.stripSuffix(prereq, "/");
