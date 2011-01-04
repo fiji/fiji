@@ -174,8 +174,13 @@ public class Fake {
 
 	protected static void discoverJavac() throws IOException {
 		String path = fijiHome + "jars/javac.jar";
-		if (!new File(path).exists())
+		if (!new File(path).exists()) {
 			path = fijiHome + "precompiled/javac.jar";
+			if (!new File(path).exists()) {
+				System.err.println("No javac.jar found (looked in " + fijiHome + ")!");
+				return;
+			}
+		}
 		getClassLoader(path);
 	}
 
