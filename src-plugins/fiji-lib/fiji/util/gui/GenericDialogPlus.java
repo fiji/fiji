@@ -1,5 +1,6 @@
 package fiji.util.gui;
 
+import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 
@@ -266,5 +267,20 @@ public class GenericDialogPlus extends GenericDialog {
 				text.setText(getString(event));
 			} catch (Exception e) { e.printStackTrace(); }
 		}
+	}
+
+	public static void main(String[] args) {
+		GenericDialogPlus gd = new GenericDialogPlus("GenericDialogPlus Test");
+		gd.addFileField("A_file", System.getProperty("fiji.dir") + "/jars/ij.jar");
+		gd.addDirectoryField("A_directory", System.getProperty("fiji.dir") + "/plugins");
+		gd.addButton("Click me!", new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				IJ.showMessage("You clicked me!");
+			}
+		});
+		gd.showDialog();
+		if (!gd.wasCanceled())
+			IJ.showMessage("You chose the file " + gd.getNextString()
+				+ "\nand the directory " + gd.getNextString());
 	}
 }
