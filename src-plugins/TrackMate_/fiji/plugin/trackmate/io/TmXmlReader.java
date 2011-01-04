@@ -27,6 +27,7 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 
 import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.FeatureThreshold;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
@@ -67,6 +68,42 @@ public class TmXmlReader implements TmXmlKeys {
 		root = document.getRootElement();
 	}
 	
+	/**
+	 * Return the initial threshold on quality stored in this file.
+	 * Return <code>null</code> if the initial threshold data cannot be found in the file.
+	 */
+	public FeatureThreshold getInitialThreshold() throws DataConversionException {
+		Element itEl = root.getChild(INITIAL_THRESHOLD_ELEMENT_KEY);
+		if (null == itEl)
+			return null;
+		Feature feature = Feature.valueOf(itEl.getAttributeValue(THRESHOLD_FEATURE_ATTRIBUTE_NAME));
+		Float value 	= itEl.getAttribute(THRESHOLD_VALUE_ATTRIBUTE_NAME).getFloatValue();
+		boolean isAbove	= itEl.getAttribute(THRESHOLD_ABOVE_ATTRIBUTE_NAME).getBooleanValue();
+		FeatureThreshold ft = new FeatureThreshold(feature, value, isAbove);
+		return ft;
+	}
+	
+	
+	/**
+	 * Return the list of {@link FeatureThreshold} stored in this file.
+	 * Return <code>null</code> if the feature thresholds data cannot be found in the file.
+	 */
+	@SuppressWarnings("unchecked")
+	public List<FeatureThreshold> getFeatureThresholds() throws DataConversionException {
+		List<FeatureThreshold> featureThresholds = new ArrayList<FeatureThreshold>();
+		Element ftCollectionEl = root.getChild(THRESHOLD_COLLECTION_ELEMENT_KEY);
+		if (null == ftCollectionEl)
+			return null;
+		List<Element> ftEls = ftCollectionEl.getChildren(THRESHOLD_ELEMENT_KEY);
+		for (Element ftEl : ftEls) {
+			Feature feature = Feature.valueOf(ftEl.getAttributeValue(THRESHOLD_FEATURE_ATTRIBUTE_NAME));
+			Float value 	= ftEl.getAttribute(THRESHOLD_VALUE_ATTRIBUTE_NAME).getFloatValue();
+			boolean isAbove	= ftEl.getAttribute(THRESHOLD_ABOVE_ATTRIBUTE_NAME).getBooleanValue();
+			FeatureThreshold ft = new FeatureThreshold(feature, value, isAbove);
+			featureThresholds.add(ft);
+		}
+		return featureThresholds;
+	}
 	
 	/**
 	 * Return the settings for the TrackMate session saved in this file.
@@ -161,37 +198,6 @@ public class TmXmlReader implements TmXmlKeys {
 			settings.trackerSettings		= trackerSettings;
 		}
 		return settings;
-	}
-	
-	
-	private static final double readDistanceCutoffAttribute(Element element) throws DataConversionException {
-		return element.getChild(TRACKER_SETTINGS_DISTANCE_CUTOFF_ELEMENT)
-			.getAttribute(TRACKER_SETTINGS_DISTANCE_CUTOFF_ATTNAME).getDoubleValue();
-	}
-	
-	private static final double readTimeCutoffAttribute(Element element) throws DataConversionException {
-		return element.getChild(TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT)
-			.getAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME).getDoubleValue();
-	}
-	
-	/**
-	 * Look for all the sub-elements of <code>element</code> with the name TRACKER_SETTINGS_FEATURE_ELEMENT, 
-	 * fetch the feature attributes from them, and returns them in a map.
-	 */
-	@SuppressWarnings("unchecked")
-	private static final Map<Feature, Double> readTrackerFeatureMap(final Element element) throws DataConversionException {
-		Map<Feature, Double> map = new HashMap<Feature, Double>();
-		List<Element> featurelinkingElements = element.getChildren(TRACKER_SETTINGS_FEATURE_ELEMENT);
-		for (Element el : featurelinkingElements) {
-			List<Attribute> atts = el.getAttributes();
-			for (Attribute att : atts) {
-				String featureStr = att.getName();
-				Feature feature = Feature.valueOf(featureStr);
-				Double cutoff = att.getDoubleValue();
-				map.put(feature, cutoff);
-			}
-		}
-		return map;
 	}
 	
 	
@@ -370,6 +376,39 @@ public class TmXmlReader implements TmXmlKeys {
 	/*
 	 * PRIVATE METHODS
 	 */
+	
+
+	
+	private static final double readDistanceCutoffAttribute(Element element) throws DataConversionException {
+		return element.getChild(TRACKER_SETTINGS_DISTANCE_CUTOFF_ELEMENT)
+			.getAttribute(TRACKER_SETTINGS_DISTANCE_CUTOFF_ATTNAME).getDoubleValue();
+	}
+	
+	private static final double readTimeCutoffAttribute(Element element) throws DataConversionException {
+		return element.getChild(TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT)
+			.getAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME).getDoubleValue();
+	}
+	
+	/**
+	 * Look for all the sub-elements of <code>element</code> with the name TRACKER_SETTINGS_FEATURE_ELEMENT, 
+	 * fetch the feature attributes from them, and returns them in a map.
+	 */
+	@SuppressWarnings("unchecked")
+	private static final Map<Feature, Double> readTrackerFeatureMap(final Element element) throws DataConversionException {
+		Map<Feature, Double> map = new HashMap<Feature, Double>();
+		List<Element> featurelinkingElements = element.getChildren(TRACKER_SETTINGS_FEATURE_ELEMENT);
+		for (Element el : featurelinkingElements) {
+			List<Attribute> atts = el.getAttributes();
+			for (Attribute att : atts) {
+				String featureStr = att.getName();
+				Feature feature = Feature.valueOf(featureStr);
+				Double cutoff = att.getDoubleValue();
+				map.put(feature, cutoff);
+			}
+		}
+		return map;
+	}
+	
 	
 	private static Spot createSpotFrom(Element spotEl) throws DataConversionException {
 		int ID = spotEl.getAttribute(SPOT_ID_ATTRIBUTE_NAME).getIntValue();

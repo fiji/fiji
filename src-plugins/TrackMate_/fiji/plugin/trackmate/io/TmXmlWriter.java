@@ -37,6 +37,7 @@ public class TmXmlWriter implements TmXmlKeys {
 	 */
 	
 	private TrackMateModelInterface model;
+	private Element root;
 
 	/*
 	 * CONSTRUCTOR
@@ -44,38 +45,86 @@ public class TmXmlWriter implements TmXmlKeys {
 	
 	public TmXmlWriter(TrackMateModelInterface model) {
 		this.model = model;
+		this.root = new Element(ROOT_ELEMENT_KEY);
 	}
-
 
 	/*
 	 * PUBLIC METHODS
 	 */
 	
+	/**
+	 * Append the image info to the root {@link Document}.
+	 */
+	public void appendBasicSettings() {
+		echoBaseSettings();
+		echoImageInfo();		
+	}
+	
+	/**
+	 * Append the {@link SegmenterSettings} to the {@link Document}.
+	 */
+	public void appendSegmenterSettings() {
+		echoSegmenterSettings();
+	}
+
+	/**
+	 * Append the {@link TrackerSettings} to the {@link Document}.
+	 */
+	public void appendTrackerSettings() {
+		echoTrackerSettings();
+	}
+	
+	/**
+	 * Append the initial threshold on quality to the {@link Document}. Because 
+	 * this initial threshold is not stored in the {@link TrackMateModelInterface},
+	 * it has to be provided here.
+	 */
+	public void appendInitialThreshold(FeatureThreshold qualityThreshold) {
+		echoInitialThreshold(qualityThreshold);
+	}
+
+	/**
+	 * Append the list of {@link FeatureThreshold} to the {@link Document}.
+	 */
+	public void appendFeatureThresholds() {
+		echoThresholds();
+	}
+	
+	/**
+	 * Append the spot list to the  {@link Document}.
+	 */
+	public void appendSpots() {
+		echoAllSpots();
+	}
+	
+	/**
+	 * Append the spot selection to the  {@link Document}.	
+	 */
+	public void appendSpotSelection() {
+		echoSpotSelection();
+	}
+	
+	/**
+	 * Append the tracks to the  {@link Document}.
+	 */
+	public void appendTracks() {
+		echoTracks();
+	}
+	
+	/**
+	 * Write the document to the given file.
+	 */
 	public void writeToFile(File file) throws FileNotFoundException, IOException {
-		Element root = new Element(ROOT_ELEMENT_KEY);
-		// Gather data
-		root = echoImageInfo(root);
-		root = echoBaseSettings(root);
-		root = echoSegmenterSettings(root);
-		root = echoTrackerSettings(root);
-		root = echoThresholds(root);
-		root = echoSpotSelection(root);
-		root = echoTracks(root);
-		root = echoAllSpots(root); // last one because it is a long list
-		
-		// Write to file
 		Document document = new Document(root);
 		XMLOutputter outputter = new XMLOutputter(Format.getPrettyFormat());
 		outputter.output(document, new FileOutputStream(file));
 	}
 	
-	
-
 	/*
 	 * PRIVATE METHODS
 	 */
 	
-	private Element echoBaseSettings(Element root) {
+	private void echoBaseSettings() {
 		Settings settings = model.getSettings();
 		Element settingsElement = new Element(SETTINGS_ELEMENT_KEY);
 		settingsElement.setAttribute(SETTINGS_XSTART_ATTRIBUTE_NAME, ""+settings.xstart);
@@ -87,14 +136,14 @@ public class TmXmlWriter implements TmXmlKeys {
 		settingsElement.setAttribute(SETTINGS_TSTART_ATTRIBUTE_NAME, ""+settings.tstart);
 		settingsElement.setAttribute(SETTINGS_TEND_ATTRIBUTE_NAME, ""+settings.tend);
 		root.addContent(settingsElement);
-		return root;
+		return;
 	}
 	
-	private Element echoSegmenterSettings(Element root) {
+	private void echoSegmenterSettings() {
 		SegmenterSettings segSettings = model.getSettings().segmenterSettings;
 		SegmenterType type = segSettings.segmenterType;
 		if (null == type)
-			return root;
+			return;
 		Element segSettingsElement = new Element(SEGMENTER_SETTINGS_ELEMENT_KEY);
 		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME, 		segSettings.segmenterType.name());
 		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME, 		""+segSettings.expectedRadius);
@@ -102,14 +151,14 @@ public class TmXmlWriter implements TmXmlKeys {
 		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME, 			""+segSettings.threshold);
 		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME, 			""+segSettings.useMedianFilter);
 		root.addContent(segSettingsElement);
-		return root;
+		return;
 	}
 	
-	private Element echoTrackerSettings(Element root) {
+	private void echoTrackerSettings() {
 		TrackerSettings settings = model.getSettings().trackerSettings;
 		TrackerType type = settings.trackerType;
 		if (null == type)
-			return root;
+			return;
 		Element trackerSettingsElement = new Element(TRACKER_SETTINGS_ELEMENT_KEY);
 		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_TRACKER_TYPE_ATTRIBUTE_NAME, 		settings.trackerType.name());
 		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_TIME_UNITS_ATTNAME, 				settings.timeUnits);
@@ -171,13 +220,13 @@ public class TmXmlWriter implements TmXmlKeys {
 		trackerSettingsElement.addContent(mergingElement);
 		// Add to root		
 		root.addContent(trackerSettingsElement);
-		return root;
+		return;
 	}
 	
-	private Element echoTracks(Element root) {
+	private void echoTracks() {
 		SimpleGraph<Spot, DefaultEdge> trackGraph = model.getTrackGraph();
 		if (null == trackGraph)
-			return root;
+			return;
 		
 		List<Set<Spot>> tracks = new ConnectivityInspector<Spot, DefaultEdge>(trackGraph).connectedSets();
 		Element allTracksElement = new Element(TRACK_COLLECTION_ELEMENT_KEY);
@@ -211,13 +260,13 @@ public class TmXmlWriter implements TmXmlKeys {
 		}
 
 		root.addContent(allTracksElement);
-		return root;
+		return;
 	}
 	
-	private Element echoImageInfo(Element root) {
+	private void echoImageInfo() {
 		Settings settings = model.getSettings();
 		if (null == settings || null == settings.imp)
-			return root;
+			return;
 		Element imEl = new Element(IMAGE_ELEMENT_KEY);
 		imEl.setAttribute(IMAGE_FILENAME_ATTRIBUTE_NAME, 		settings.imageFileName);
 		imEl.setAttribute(IMAGE_FOLDER_ATTRIBUTE_NAME, 			settings.imageFolder);
@@ -232,13 +281,13 @@ public class TmXmlWriter implements TmXmlKeys {
 		imEl.setAttribute(IMAGE_SPATIAL_UNITS_ATTRIBUTE_NAME,	settings.spaceUnits);
 		imEl.setAttribute(IMAGE_TIME_UNITS_ATTRIBUTE_NAME,		settings.timeUnits);
 		root.addContent(imEl);
-		return root;
+		return;
 	}
 	
-	private Element echoAllSpots(Element root) {		
+	private void echoAllSpots() {		
 		TreeMap<Integer, List<Spot>> allSpots = model.getSpots();
 		if (null == allSpots)
-			return root;
+			return;
 		List<Spot> spots;
 		
 		Element spotElement;
@@ -258,10 +307,19 @@ public class TmXmlWriter implements TmXmlKeys {
 			spotCollection.addContent(frameSpotsElement);
 		}
 		root.addContent(spotCollection);
-		return root;
+		return;
 	}
 	
-	private Element echoThresholds(Element root) {
+	private void echoInitialThreshold(final FeatureThreshold qualityThreshold) {
+		Element itElement = new Element(INITIAL_THRESHOLD_ELEMENT_KEY);
+		itElement.setAttribute(THRESHOLD_FEATURE_ATTRIBUTE_NAME, qualityThreshold.feature.name());
+		itElement.setAttribute(THRESHOLD_VALUE_ATTRIBUTE_NAME, qualityThreshold.value.toString());
+		itElement.setAttribute(THRESHOLD_ABOVE_ATTRIBUTE_NAME, ""+qualityThreshold.isAbove);
+		root.addContent(itElement);
+		return;
+	}
+	
+	private void echoThresholds() {
 		List<FeatureThreshold> featureThresholds = model.getFeatureThresholds();
 		
 		Element allTresholdElement = new Element(THRESHOLD_COLLECTION_ELEMENT_KEY);
@@ -273,14 +331,14 @@ public class TmXmlWriter implements TmXmlKeys {
 			allTresholdElement.addContent(thresholdElement);
 		}
 		root.addContent(allTresholdElement);
-		return root;
+		return;
 		
 	}
 	
-	private Element echoSpotSelection(Element root) {
+	private void echoSpotSelection() {
 		TreeMap<Integer, List<Spot>> selectedSpots =  model.getSelectedSpots();
 		if (null == selectedSpots)
-			return root;
+			return;
 		List<Spot> spots;
 		
 		Element spotIDElement, frameSpotsElement;
@@ -301,7 +359,7 @@ public class TmXmlWriter implements TmXmlKeys {
 		}
 
 		root.addContent(spotCollection);
-		return root;
+		return;
 	}
 	
 	private static final Element marshalSpot(final Spot spot) {
