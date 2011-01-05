@@ -81,6 +81,7 @@ FIJI_JAVA_HOME(linux64)=java/linux-amd64/jdk1.6.0_24/jre
 FIJI_JAVA_HOME(win32)=java/win32/jdk1.6.0_24/jre
 FIJI_JAVA_HOME(win64)=java/win64/jdk1.6.0_24/jre
 FIJI_JAVA_HOME(macosx)=java/macosx-java3d
+FIJI_JAVA_HOME(freebsd)=/usr/local/jdk1.6.0/jre
 JAVA_HOME=$FIJI_JAVA_HOME
 ENVOVERRIDES(JAVA_HOME)=true
 
@@ -511,6 +512,7 @@ JAVA_LIB_PATH(linux64)=lib/amd64/server/libjvm.so
 JAVA_LIB_PATH(win32)=bin/client/jvm.dll
 JAVA_LIB_PATH(win64)=bin/server/jvm.dll
 JAVA_LIB_PATH(macosx)=
+JAVA_LIB_PATH(freebsd)=lib/i386/client/libjvm.so
 
 # The variables CFLAGS, LDFLAGS and LIBS will be used for compiling
 # C and C++ programs.
@@ -536,6 +538,9 @@ CFLAGS(linux64)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector -rdynamic
 	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(linux64)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(linux64)"'
 
 LDFLAGS(win32)=$LDFLAGS $WINOPTS
+
+CFLAGS(freebsd)=$COMMONCFLAGS \
+	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(freebsd)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(freebsd)"'
 
 CFLAGS(fiji)=$COMMONCFLAGS $MACOPTS
 LDFLAGS(fiji)=$LDFLAGS $MACOPTS
