@@ -634,7 +634,7 @@ size_t get_memory_size(int available_only)
 #else
 size_t get_memory_size(int available_only)
 {
-	fprintf(stderr, "Unsupported\n");
+	fprintf(stderr, "Cannot reserve optimal memory on this platform\n");
 	return 0;
 }
 #endif
