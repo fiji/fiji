@@ -145,6 +145,7 @@ public class Executer {
 
 	public void addContent(final ImagePlus image, final File file) {
 		new Thread() {
+			{ setPriority(Thread.NORM_PRIORITY); }
 			@Override
 			public void run() {
 				addC(image, file);
@@ -306,6 +307,7 @@ public class Executer {
 		if(dir == null || name == null)
 			return;
 		new Thread() {
+			{ setPriority(Thread.NORM_PRIORITY); }
 			public void run() {
 				try {
 					univ.loadSession(dir + name);
@@ -440,6 +442,7 @@ public class Executer {
 		if(type != Content.VOLUME && type != Content.ORTHO)
 			return;
 		new Thread() {
+			{ setPriority(Thread.NORM_PRIORITY); }
 			@Override
 			public void run() {
 				ImageCanvas3D canvas = (ImageCanvas3D)univ.getCanvas();
@@ -474,6 +477,7 @@ public class Executer {
 			Runtime.getRuntime().availableProcessors()];
 		for (int i = 0; i<thread.length; i++) {
 			thread[i] = new Thread() {
+				{ setPriority(Thread.NORM_PRIORITY); }
 				@Override
 				public void run() {
 					try {
@@ -1074,11 +1078,12 @@ public class Executer {
 	public void exportTransformed(final Content c) {
 		if(!checkSel(c))
 			return;
-		new Thread(new Runnable() {
+		new Thread() {
+			{ setPriority(Thread.NORM_PRIORITY); }
 			public void run() {
 				exportTr(c);
 			}
-		}).start();
+		}.start();
 	}
 
 	private void exportTr(Content c) {
