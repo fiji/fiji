@@ -84,8 +84,7 @@ class FastRandomTree
   /** Minimum number of instances for leaf. */
   protected static final int m_MinNum = 1;
   
-
-/**
+  /**
    * Get the value of MinNum.
    *
    * @return Value of MinNum.
@@ -202,7 +201,7 @@ final long start = System.currentTimeMillis();
   
     this.data = null;
 final long end = System.currentTimeMillis();
-IJ.log("Creating tree took: " + (end-start) + "ms");     
+IJ.log("Creating tree took: " + (end-start) + "ms" + ", max depth = " + this.m_MotherForest.maxRealDepth);     
   }
 
   
@@ -336,6 +335,13 @@ IJ.log("Creating tree took: " + (end-start) + "ms");
       
       m_ClassProbs = classProbs;
       this.data = null;
+      
+      if(depth > this.m_MotherForest.maxRealDepth)
+      {
+    	  //System.out.println("Changed maxDepth to " + depth);
+    	  this.m_MotherForest.maxRealDepth = depth;
+      }
+      
       return;
     }
     

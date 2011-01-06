@@ -345,7 +345,7 @@ public class BalancedRandomTree implements Serializable
 			}
 		}
 
-		//System.out.println("Max depth = " + maxDepth);
+		System.out.println("Max depth = " + maxDepth);
 		return root;
 	}
 

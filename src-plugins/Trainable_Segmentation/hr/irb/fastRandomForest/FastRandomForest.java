@@ -142,6 +142,8 @@ public class FastRandomForest
   
   /** a ZeroR model in case no model can be built from the data */
   protected Classifier m_ZeroR;  
+ 
+  int maxRealDepth = 0;
   
   /**
    * Returns a string describing classifier
