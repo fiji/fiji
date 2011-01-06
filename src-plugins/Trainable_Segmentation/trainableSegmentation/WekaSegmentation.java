@@ -1100,6 +1100,64 @@ public class WekaSegmentation {
 		return true;
 	}
 
+	
+	/**
+	 * Add binary training data from input and label images.
+	 * The features will be created out of a list of filters.
+	 * Input and label images can be 2D or stacks and their
+	 * sizes must match.
+	 *
+	 * @param inputImage input grayscale image
+	 * @param labelImage binary label image
+	 * @param filters stack of filters to create features
+	 * @param whiteClassName class name for the white pixels
+	 * @param blackClassName class name for the black pixels
+	 * @return false if error
+	 */
+	public boolean addBinaryData(
+			ImagePlus inputImage,
+			ImagePlus labelImage,
+			ImagePlus filters,
+			String whiteClassName,
+			String blackClassName)
+	{
+
+		// Check sizes
+		if(labelImage.getWidth() != inputImage.getWidth()
+				|| labelImage.getHeight() != inputImage.getHeight()
+				|| labelImage.getImageStackSize() != inputImage.getImageStackSize())
+		{
+			IJ.log("Error: label and training image sizes do not fit.");
+			return false;
+		}
+
+		final ImageStack inputSlices = inputImage.getImageStack();
+		final ImageStack labelSlices = labelImage.getImageStack();
+
+		for(int i=1; i <= inputSlices.getSize(); i++)
+		{
+
+			// Process label pixels
+			final ImagePlus labelIP = new ImagePlus ("labels", labelSlices.getProcessor(i).duplicate());
+			// Make sure it's binary
+			final byte[] pix = (byte[])labelIP.getProcessor().getPixels();
+			for(int j =0; j < pix.length; j++)
+				if(pix[j] > 0)
+					pix[j] = (byte)255;
+
+			final FeatureStack featureStack = new FeatureStack(new ImagePlus("slice " + i, inputSlices.getProcessor(i)));			
+			featureStack.addFeaturesMT( filters );
+
+
+			if( false == this.addBinaryData(labelIP, featureStack, whiteClassName, blackClassName) )
+			{
+				IJ.log("Error while loading binary label data from slice " + i);
+				return false;
+			}
+		}
+		return true;
+	}
+	
 
 	/**
 	 * Add eroded version of label image as binary data
@@ -1420,6 +1478,103 @@ public class WekaSegmentation {
 		return error;
 	}
 
+	/**
+	 * Get test error of current classifier on a specific image and its binary labels
+	 *
+	 * @param image input image
+	 * @param labels binary labels
+	 * @param filters list of filters to create features
+	 * @param whiteClassIndex index of the white class
+	 * @param blackClassIndex index of the black class
+	 * @param verbose option to display evaluation information in the log window
+	 * @return pixel classification error
+	 */
+	public double getTestError(
+			ImagePlus image,
+			ImagePlus labels,
+			ImagePlus filters,
+			int whiteClassIndex,
+			int blackClassIndex,
+			boolean verbose)
+	{
+		IJ.showStatus("Creating features for test image...");
+		if(verbose)
+			IJ.log("Creating features for test image " + image.getTitle() +  "...");
+
+
+		// Set proper class names (skip empty list ones)
+		ArrayList<String> classNames = new ArrayList<String>();
+		if( null == loadedClassNames )
+		{
+			for(int i = 0; i < numOfClasses; i++)
+				if(examples.get(i).size() > 0)
+					classNames.add(classLabels[i]);
+		}
+		else
+			classNames = loadedClassNames;
+
+
+		// Apply labels
+		final int height = image.getHeight();
+		final int width = image.getWidth();
+		final int depth = image.getStackSize();
+
+		Instances testData = null;
+
+		for(int z=1; z <= depth; z++)
+		{
+			final ImagePlus testSlice = new ImagePlus(image.getImageStack().getSliceLabel(z), image.getImageStack().getProcessor(z).convertToByte(true));
+			// Create feature stack for test image
+			IJ.showStatus("Creating features for test image...");
+			if(verbose)
+				IJ.log("Creating features for test image " + z +  "...");
+			final FeatureStack testImageFeatures = new FeatureStack(testSlice);
+			// Create features by applying the filters
+			testImageFeatures.addFeaturesMT(filters);
+
+			final Instances data = testImageFeatures.createInstances(classNames);
+			data.setClassIndex(data.numAttributes()-1);
+			if(verbose)
+				IJ.log("Assigning classes based on the labels...");
+
+			final ImageProcessor slice = labels.getImageStack().getProcessor(z);
+			for(int n=0, y=0; y<height; y++)
+				for(int x=0; x<width; x++, n++)
+				{
+					final double newValue = slice.getPixel(x, y) > 0 ? whiteClassIndex : blackClassIndex;
+					data.get(n).setClassValue(newValue);
+				}
+
+			if(null == testData)
+				testData = data;
+			else
+			{
+				for(int i=0; i<data.numInstances(); i++)
+					testData.add( data.get(i) );
+			}
+		}
+		if(verbose)
+			IJ.log("Evaluating test data...");
+
+		double error = -1;
+		try {
+			final Evaluation evaluation = new Evaluation(testData);
+			evaluation.evaluateModel(classifier, testData);
+			if(verbose)
+			{
+				IJ.log(evaluation.toSummaryString("\n=== Test data evaluation ===\n", false));
+				IJ.log(evaluation.toClassDetailsString() + "\n");
+				IJ.log(evaluation.toMatrixString());
+			}
+			error = evaluation.errorRate();
+		} catch (Exception e) {
+
+			e.printStackTrace();
+		}
+
+		return error;
+	}	
+	
 
 	// **********************
 	// BLOTC-related  methods
