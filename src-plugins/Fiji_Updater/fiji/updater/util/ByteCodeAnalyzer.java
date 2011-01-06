@@ -5,13 +5,27 @@ import java.util.Iterator;
 public class ByteCodeAnalyzer implements Iterable<String> {
 	byte[] buffer;
 	int[] poolOffsets;
-	int endOffset;
+	int endOffset, interfacesOffset, fieldsOffset, methodsOffset, attributesOffset;
+	Interface[] interfaces;
+	Field[] fields;
+	Method[] methods;
+	Attribute[] attributes;
 
 	public ByteCodeAnalyzer(byte[] buffer) {
+		this(buffer, false);
+	}
+
+	public ByteCodeAnalyzer(byte[] buffer, boolean readAll) {
 		this.buffer = buffer;
 		if ((int)getU4(0) != 0xcafebabe)
 			throw new RuntimeException("No class");
 		getConstantPoolOffsets();
+		if (readAll) {
+			getAllInterfaces();
+			getAllFields();
+			getAllMethods();
+			getAllAttributes();
+		}
 	}
 
 	public String getPathForClass() {
@@ -136,12 +150,24 @@ public class ByteCodeAnalyzer implements Iterable<String> {
 		String result = "";
 		for (int i = 0; i < poolOffsets.length; i++) {
 			int offset = poolOffsets[i];
-			result += "index #" + i + ": "
+			result += "index #" + (i + 1) + ": "
 				+ format(offset) + "\n";
 			int tag = getU1(offset);
 			if (tag == 5 || tag == 6)
 				i++;
 		}
+		if (interfaces != null)
+			for (int i = 0; i < interfaces.length; i++)
+				result += "interface #" + (i + 1) + ": " + interfaces[i] + "\n";
+		if (fields != null)
+			for (int i = 0; i < fields.length; i++)
+				result += "field #" + (i + 1) + ": " + fields[i] + "\n";
+		if (methods != null)
+			for (int i = 0; i < methods.length; i++)
+				result += "method #" + (i + 1) + ": " + methods[i] + "\n";
+		if (attributes != null)
+			for (int i = 0; i < attributes.length; i++)
+				result += "attribute #" + (i + 1) + ": " + attributes[i] + "\n";
 		return result;
 	}
 
@@ -169,15 +195,15 @@ public class ByteCodeAnalyzer implements Iterable<String> {
 		int u2 = getU2(offset + 1);
 		String result = "offset: " + offset + "(" + tag + "), ";
 		if (tag == 7)
-			return result + "class " + u2;
+			return result + "class #" + u2;
 		if (tag == 9)
-			return result + "field " + u2 + ", "
+			return result + "field #" + u2 + ", #"
 				+ getU2(offset + 3);
 		if (tag == 10)
-			return result + "method " + u2 + ", "
+			return result + "method #" + u2 + ", #"
 				+ getU2(offset + 3);
 		if (tag == 11)
-			return result + "interface method " + u2 + ", "
+			return result + "interface method #" + u2 + ", #"
 				+ getU2(offset + 3);
 		if (tag == 8)
 			return result + "string #" + u2;
@@ -186,7 +212,7 @@ public class ByteCodeAnalyzer implements Iterable<String> {
 		if (tag == 4)
 			return result + "float " + getU4(offset + 1);
 		if (tag == 12)
-			return result + "name and type " + u2 + ", "
+			return result + "name and type #" + u2 + ", #"
 				+ getU2(offset + 3);
 		if (tag == 5)
 			return result + "long "
@@ -200,5 +226,103 @@ public class ByteCodeAnalyzer implements Iterable<String> {
 			return result + "utf8 " + u2
 				+ " " + getString(offset);
 		return result + "unknown";
+	}
+
+	protected void getAllInterfaces() {
+		interfacesOffset = endOffset + 6;
+		interfaces = new Interface[getU2(interfacesOffset)];
+		for (int i = 0; i < interfaces.length; i++)
+			interfaces[i] = new Interface(interfacesOffset + 2 + i * 2);
+	}
+
+	protected class Interface {
+		int nameIndex;
+		public Interface(int offset) {
+			nameIndex = getU2(offset);
+		}
+
+		public String toString() {
+			return getClassNameConstant(nameIndex);
+		}
+	}
+
+	protected void getAllFields() {
+		fieldsOffset = interfacesOffset + 2 + 2 * interfaces.length;
+		fields = new Field[getU2(fieldsOffset)];
+		for (int i = 0; i < fields.length; i++)
+			fields[i] = new Field(i == 0 ? fieldsOffset + 2 : fields[i - 1].endOffset);
+	}
+
+	protected class Field {
+		int accessFlags, nameIndex, descriptorIndex;
+		Attribute[] attributes;
+		int endOffset;
+		public Field(int offset) {
+			accessFlags = getU2(offset);
+			nameIndex = getU2(offset + 2);
+			descriptorIndex = getU2(offset + 4);
+			attributes = getAttributes(offset + 6);
+			endOffset = attributes.length == 0 ? offset + 8 : attributes[attributes.length - 1].endOffset;
+		}
+
+		public String toString() {
+			return getStringConstant(nameIndex) + ByteCodeAnalyzer.this.toString(attributes);
+		}
+	}
+
+	protected void getAllMethods() {
+		methodsOffset = fields.length == 0 ? fieldsOffset + 2 : fields[fields.length - 1].endOffset;
+		methods = new Method[getU2(methodsOffset)];
+		for (int i = 0; i < methods.length; i++)
+			methods[i] = new Method(i == 0 ? methodsOffset + 2 : methods[i - 1].endOffset);
+	}
+
+	protected class Method extends Field {
+		public Method(int offset) {
+			super(offset);
+		}
+	}
+
+	protected void getAllAttributes() {
+		attributesOffset = methods.length == 0 ? methodsOffset + 2 : methods[methods.length - 1].endOffset;
+		attributes = getAttributes(attributesOffset);
+	}
+
+	protected Attribute[] getAttributes(int offset) {
+		Attribute[] result = new Attribute[getU2(offset)];
+		for (int i = 0; i < result.length; i++)
+			result[i] = new Attribute(i == 0 ? offset + 2 : result[i - 1].endOffset);
+		return result;
+	}
+
+	protected class Attribute {
+		int nameIndex;
+		byte[] attribute;
+		int endOffset;
+
+		public Attribute(int offset) {
+			nameIndex = getU2(offset);
+			attribute = new byte[(int)getU4(offset + 2)];
+			System.arraycopy(buffer, offset + 6, attribute, 0, attribute.length);
+			endOffset = offset + 6 + attribute.length;
+		}
+
+		public String toString() {
+			if (getStringConstant(nameIndex).equals("Code")) {
+				int offset = endOffset - 6 - attribute.length;
+				int codeLength = (int)getU4(offset + 10);
+				int exceptionTableLength = getU2(offset + 14 + codeLength);
+				int attributesOffset = offset + 14 + codeLength + 2 + 8 * exceptionTableLength;
+				return "Code" + ByteCodeAnalyzer.this.toString(getAttributes(attributesOffset));
+			}
+			return getStringConstant(nameIndex) + " (length " + attribute.length + ")";
+		}
+	}
+
+	protected String toString(Attribute[] attributes) {
+		String result = "";
+		for (Attribute attribute : attributes)
+			result += (result.equals("") ? "(" : ";") + attribute;
+		return result.equals("") ? "" : result + ")";
 	}
 }
