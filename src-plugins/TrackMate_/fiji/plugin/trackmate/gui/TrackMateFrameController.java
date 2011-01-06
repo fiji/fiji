@@ -10,7 +10,6 @@ import ij3d.Content;
 import ij3d.ContentCreator;
 import ij3d.Image3DUniverse;
 
-import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -18,9 +17,7 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EnumMap;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -30,31 +27,29 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import loci.formats.FormatException;
-import mpicbg.imglib.type.numeric.RealType;
-
 import org.jdom.DataConversionException;
 import org.jdom.JDOMException;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 
-import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.FeatureThreshold;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TMUtils;
 import fiji.plugin.trackmate.TrackMateModelInterface;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.Utils;
 import fiji.plugin.trackmate.gui.TrackMateFrame.PanelCard;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.io.TmXmlWriter;
+import fiji.plugin.trackmate.segmentation.SegmenterSettings;
+import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer2D;
 import fiji.plugin.trackmate.visualization.SpotDisplayer3D;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 
-public class TrackMateFrameController implements ActionListener {
+public class TrackMateFrameController {
 
 	/*
 	 * ENUMS
@@ -66,7 +61,8 @@ public class TrackMateFrameController implements ActionListener {
 		SEGMENTING,
 		INITIAL_THRESHOLDING,
 		CALCULATE_FEATURES, 
-		THRESHOLD_SPOTS,
+		TUNE_THRESHOLDS,
+		THRESHOLD_BLOBS,
 		TUNE_TRACKER,
 		TRACKING,
 		TUNE_DISPLAY;
@@ -85,17 +81,19 @@ public class TrackMateFrameController implements ActionListener {
 			case INITIAL_THRESHOLDING:
 				return CALCULATE_FEATURES;
 			case CALCULATE_FEATURES:
-				return THRESHOLD_SPOTS;
-			case THRESHOLD_SPOTS:
+				return TUNE_THRESHOLDS;
+			case TUNE_THRESHOLDS:
+				return THRESHOLD_BLOBS;
+			case THRESHOLD_BLOBS:
 				return TUNE_TRACKER;
 			case TUNE_TRACKER:
 				return TRACKING;
 			case TRACKING:
 				return TUNE_DISPLAY;
 			case TUNE_DISPLAY:
-			default:
 				return TUNE_DISPLAY;
 			}
+			return null;
 		}
 		
 
@@ -112,18 +110,20 @@ public class TrackMateFrameController implements ActionListener {
 				return SEGMENTING;
 			case CALCULATE_FEATURES:
 				return INITIAL_THRESHOLDING;
-			case THRESHOLD_SPOTS:
+			case TUNE_THRESHOLDS:
 				return CALCULATE_FEATURES;
+			case THRESHOLD_BLOBS:
+				return TUNE_THRESHOLDS;
 			case TUNE_TRACKER:
-				return THRESHOLD_SPOTS;
+				return THRESHOLD_BLOBS;
 			case TRACKING:
 				return TUNE_TRACKER;
 			case TUNE_DISPLAY:
 				return TRACKING;
 			case START:
-			default:
 				return START;
 			}
+			return null;
 		}
 		
 		/**
@@ -134,31 +134,35 @@ public class TrackMateFrameController implements ActionListener {
 			// Display adequate card
 			final TrackMateFrame.PanelCard key;
 			switch (this) {
+
 			default:
-			case START:
-				key = PanelCard.START_DIALOG_KEY;
-				break;
-			case TUNE_SEGMENTER:
-				key = PanelCard.TUNE_SEGMENTER_KEY;
-				break;
 			case SEGMENTING:
-				key = PanelCard.LOG_PANEL_KEY;
-				break;
-			case INITIAL_THRESHOLDING:
-				key = PanelCard.INITIAL_THRESHOLDING_KEY;
-				break;
-			case THRESHOLD_SPOTS:
-				key = PanelCard.THRESHOLD_GUI_KEY;
-				break;
 			case CALCULATE_FEATURES:
-				key = PanelCard.LOG_PANEL_KEY;
-				break;
-			case TUNE_TRACKER:
-				key = PanelCard.TUNE_TRACKER_KEY;
-				break;
+			case THRESHOLD_BLOBS:
 			case TRACKING:
 				key = PanelCard.LOG_PANEL_KEY;
 				break;
+			
+			case START:
+				key = PanelCard.START_DIALOG_KEY;
+				break;
+			
+			case TUNE_SEGMENTER:
+				key = PanelCard.TUNE_SEGMENTER_KEY;
+				break;
+			
+			case INITIAL_THRESHOLDING:
+				key = PanelCard.INITIAL_THRESHOLDING_KEY;
+				break;
+			
+			case TUNE_THRESHOLDS:
+				key = PanelCard.THRESHOLD_GUI_KEY;
+				break;
+			
+			case TUNE_TRACKER:
+				key = PanelCard.TUNE_TRACKER_KEY;
+				break;
+			
 			case TUNE_DISPLAY:
 				key = PanelCard.DISPLAYER_PANEL_KEY;
 				break;
@@ -204,8 +208,11 @@ public class TrackMateFrameController implements ActionListener {
 				// Then we launch the displayer
 				controller.execLaunchdisplayer();
 				return;
-			case THRESHOLD_SPOTS:
+			case TUNE_THRESHOLDS:
 				controller.execLinkDisplayerToThresholdGUI();
+				return;
+			case THRESHOLD_BLOBS:
+				controller.execThresholding();
 				return;
 			case TRACKING:
 				controller.execTrackingStep();
@@ -242,7 +249,21 @@ public class TrackMateFrameController implements ActionListener {
 	private DisplayUpdater updater;
 	
 	private TrackMateModelInterface model;
-	private TrackMateFrame view;
+	private final TrackMateFrame view;
+	private final TrackMateFrameController controller; 
+	
+	/**
+	 * This action listener is made for normal processing, when the user presses the next/previous
+	 * button and expects processing to occur.
+	 */
+	private final ActionListener inProcessActionListener;	
+	/**
+	 * Is used to determine how to react to a 'next' button push. If it is set to true, then we are
+	 * normally processing through the GUI, and pressing 'next' should update the GUI and process the
+	 * data. If is is set to false, then we are currently loading/saving the data, and we should simply
+	 * re-generate the data.
+	 */
+	private boolean actionFlag = true;
 	
 	
 	/*
@@ -251,50 +272,78 @@ public class TrackMateFrameController implements ActionListener {
 	
 	public TrackMateFrameController(final TrackMateModelInterface model) {
 		this.model = model;
-		view = new TrackMateFrame(model);
-		logger = view.getLogger();
+		this.view = new TrackMateFrame(model);
+		this.controller = this;
+		this.logger = view.getLogger();
+		
+		// Instantiate action listeners
+		this.inProcessActionListener = new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent event) {
+
+				view.jButtonSave.setEnabled(true);
+				view.jButtonLoad.setEnabled(true);
+
+				if (actionFlag) {
+
+					if (event == view.NEXT_BUTTON_PRESSED) {					
+						state = state.nextState();
+						state.updateGUI(view);
+						state.performTask(controller);
+					} else if (event == view.PREVIOUS_BUTTON_PRESSED) {
+						state = state.previousState();
+						state.updateGUI(view);
+					} else if (event == view.LOAD_BUTTON_PRESSED) {
+						load();
+					} else if (event == view.SAVE_BUTTON_PRESSED) {
+						save();
+					} else {
+						logger.error("Unknown event caught: "+event+'\n');
+					}
+					
+				} else {
+					
+					actionFlag = true;
+					state.updateGUI(view);
+					
+				}
+
+			}
+		};
+
+		// Set up GUI and communications
 		model.setLogger(logger);
 		if (null != model.getSettings().imp)
 			view.setLocationRelativeTo(model.getSettings().imp.getWindow());
 		else
 			view.setLocationRelativeTo(null);
 		view.setVisible(true);
-		view.addActionListener(this);
+		view.addActionListener(inProcessActionListener);
 		state = GuiState.START;
 		state.updateGUI(view);
 		initUpdater();
 	}
 	
 	
-	/*
-	 * ACTIONLISTENER METHODS
-	 */
-	
-
-	@Override
-	public void actionPerformed(ActionEvent event) {
-		if (event == view.NEXT_BUTTON_PRESSED) {
-			state = state.nextState();
-			state.updateGUI(view);
-			state.performTask(this);
-		} else if (event == view.PREVIOUS_BUTTON_PRESSED) {
-			state = state.previousState();
-			state.updateGUI(view);
-		} else if (event == view.LOAD_BUTTON_PRESSED) {
-			logger.log("Load button pushed.\n");			
-		} else if (event == view.SAVE_BUTTON_PRESSED) {
-			logger.log("Save button pushed.\n");
-		} else {
-			logger.error("Unknown event caught: "+event+'\n');
-		}
-	}
-	
-	
-	/*
-	
+	@SuppressWarnings("unchecked")
 	private void load() {
-		view.jButtonLoad.setEnabled(false);
-		if (null == file ) {
+		actionFlag = false;
+		SwingUtilities.invokeLater(new Runnable() {			
+			@Override
+			public void run() {
+				view.jButtonLoad.setEnabled(false);
+				view.jButtonSave.setEnabled(false);
+				view.jButtonNext.setEnabled(false);
+				view.jButtonPrevious.setEnabled(false);
+			}
+		});
+		view.displayPanel(PanelCard.LOG_PANEL_KEY);
+		
+		// New model to feed
+		TrackMateModelInterface newModel = new TrackMate_();
+		newModel.setLogger(logger);
+		
+		if (null == file) {
 			File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 			file = new File(folder.getPath() + File.separator + DEFAULT_FILENAME);
 		}
@@ -311,115 +360,310 @@ public class TrackMateFrameController implements ActionListener {
 			return;  	    		
 		}
 		
-//		cardLayout.show(jPanelMain, LOG_PANEL_KEY);
 		logger.log("Opening file "+file.getName()+'\n');
 		TmXmlReader reader = new TmXmlReader(file);
 		try {
 			reader.parse();
 		} catch (JDOMException e) {
-			logger.error("Problem parsing "+file.getName()+", it is not a valid TrackMate XML file.\nError message is:\n"+e.getLocalizedMessage()+'\n');
+			logger.error("Problem parsing "+file.getName()+", it is not a valid TrackMate XML file.\nError message is:\n"
+					+e.getLocalizedMessage()+'\n');
 		} catch (IOException e) {
-			logger.error("Problem reading "+file.getName()+".\nError message is:\n"+e.getLocalizedMessage()+'\n');
+			logger.error("Problem reading "+file.getName()
+					+".\nError message is:\n"+e.getLocalizedMessage()+'\n');
 		}
 		logger.log("  Parsing file done.\n");
 		
-		// Read settings
 		Settings settings = null;
-		try {
-			settings = reader.getSettings();
-		} catch (DataConversionException e1) {
-			logger.error("Problem reading the settings field of "+file.getName()+". Error message is:\n"+e1.getLocalizedMessage()+'\n');
-		}
-		logger.log("  Reading settings done.\n");
-
-		
-		// Try to read image
 		ImagePlus imp = null;
-		try {
-			imp = reader.getImage();
-		} catch (IOException e) {
-			logger.error("Problem loading the image linked by "+file.getName()+". Error message is:\n"+e.getLocalizedMessage()+'\n');
-		} catch (FormatException e) {
-			logger.error("Problem loading the image linked by "+file.getName()+". Error message is:\n"+e.getLocalizedMessage()+'\n');
-		}
-		if (null == imp) {
-			// Provide a dummy empty image if linked image can't be found
-			logger.log("Could not find image "+settings.imageFileName+" in "+settings.imageFolder+". Substituting dummy image.\n");
-			imp = NewImage.createByteImage("Empty", settings.width, settings.height, settings.nframes * settings.nslices, NewImage.FILL_BLACK);
-			imp.setDimensions(1, settings.nslices, settings.nframes);
-		}
-//		imp.show(); Launching the 2d displayer after that raise a NPE, I don't know why
-		settings.imp = imp;
-		model.setSettings(settings);
-		logger.log("  Reading image done.\n");
 		
-		// Try to read spots
-		TreeMap<Integer, List<Spot>> spots = null;
-		try {
-			spots = reader.getAllSpots();
-		} catch (DataConversionException e) {
-			logger.error("Problem reading the spots field of "+file.getName()+". Error message is\n"+e.getLocalizedMessage()+'\n');
+		{ // Read settings
+			try {
+				settings = reader.getSettings();
+			} catch (DataConversionException e) {
+				logger.error("Problem reading the settings field of "+file.getName()
+						+". Error message is:\n"+e.getLocalizedMessage()+'\n');
+				return;
+			}
+			logger.log("  Reading settings done.\n");
+
+			// Try to read image
+			imp = reader.getImage();		
+			if (null == imp) {
+				// Provide a dummy empty image if linked image can't be found
+				logger.log("Could not find image "+settings.imageFileName+" in "+settings.imageFolder+". Substituting dummy image.\n");
+				imp = NewImage.createByteImage("Empty", settings.width, settings.height, settings.nframes * settings.nslices, NewImage.FILL_BLACK);
+				imp.setDimensions(1, settings.nslices, settings.nframes);
+			}
+
+			settings.imp = imp;
+			newModel.setSettings(settings);
+			logger.log("  Reading image done.\n");
 		}
-		if (null == spots) {
-			// No spots, so we stop here, and switch to the start panel
-			if (null != startDialogPanel)
-				jPanelMain.remove(startDialogPanel);
-			startDialogPanel = new StartDialogPanel(trackmate.getSettings());
-			jPanelMain.add(startDialogPanel, START_DIALOG_KEY);
-			cardLayout.show(jPanelMain, START_DIALOG_KEY);
-			state = GuiState.START;
-			view.jButtonLoad.setEnabled(true);
-			return;
+
+
+		{ // Try to read segmenter settings
+			SegmenterSettings segmenterSettings = null;
+			try {
+				segmenterSettings = reader.getSegmenterSettings();
+			} catch (DataConversionException e1) {
+				logger.error("Problem reading the segmenter settings field of "+file.getName()
+						+". Error message is:\n"+e1.getLocalizedMessage()+'\n');
+			}
+			if (null == segmenterSettings) {
+				// Fill in defaults
+				segmenterSettings = new SegmenterSettings();
+				settings.segmenterSettings = segmenterSettings;
+				settings.segmenterType = segmenterSettings.segmenterType;
+				settings.trackerSettings = new TrackerSettings();
+				settings.trackerType = settings.trackerSettings.trackerType;
+				newModel.setSettings(settings);
+				this.model = newModel;
+				view.setModel(model);
+				// Stop at start panel
+				state = GuiState.START;
+				logger.log("Loading data finished, press 'next' to resume.\n");
+				SwingUtilities.invokeLater(new Runnable() {			
+					@Override
+					public void run() {
+						view.jButtonNext.setEnabled(true);
+					}
+				});
+				return;
+			}
+
+			settings.segmenterSettings = segmenterSettings;
+			settings.segmenterType = segmenterSettings.segmenterType;
+			settings.trackerSettings = new TrackerSettings(); // put defaults for now
+			settings.trackerType = settings.trackerSettings.trackerType;
+			newModel.setSettings(settings);
+			logger.log("  Reading segmenter settings done.\n");
 		}
-		// We have a spot field, so we can instantiate a new displayer
-		model.setSpots(spots);
-		logger.log("  Reading spots done - launching displayer.\n");
-		displayer = instantiateDisplayer(model);
-		// Also update the feature threshold GUI, in case the user move back to it
-		thresholdGuiPanel.setSpots(spots.values());
 		
-		// Try to read spot selection
-		TreeMap<Integer, List<Spot>> selectedSpots = null;
-		try {
-			selectedSpots = reader.getSpotSelection(spots);
-		} catch (DataConversionException e) {
-			logger.error("Problem reading the spot selection field of "+file.getName()+". Error message is\n"+e.getLocalizedMessage()+'\n');
-		}
-		if (null == selectedSpots) {
-			// No spot selection, so we go to the thresholding panel
-			execThresholdingStep();
-			state = GuiState.THRESHOLD_BLOBS;
-			view.jButtonLoad.setEnabled(true);
-			return;
-		}
-		model.setSpotSelection(selectedSpots);
-		logger.log("  Reading spot selection done.\n");
-		displayer.setSpotsToShow(selectedSpots);
 		
-		SimpleGraph<Spot, DefaultEdge> trackGraph = null; 
-		try {
-			trackGraph = reader.getTracks(selectedSpots);
-		} catch (DataConversionException e) {
-			logger.error("Problem reading the track field of "+file.getName()+". Error message is\n"+e.getLocalizedMessage()+'\n');
+		{ // Try to read spots
+			TreeMap<Integer, List<Spot>> spots = null;
+			try {
+				spots = reader.getAllSpots();
+			} catch (DataConversionException e) {
+				logger.error("Problem reading the spots field of "+file.getName()
+						+". Error message is\n"+e.getLocalizedMessage()+'\n');
+			}
+			if (null == spots) {
+				// No spots, so we stop here, and switch to the segmenter panel
+				imp.show();
+				this.model = newModel;
+				view.setModel(model);
+				state = GuiState.TUNE_SEGMENTER;
+				logger.log("Loading data finished, press 'next' to resume.\n");
+				SwingUtilities.invokeLater(new Runnable() {			
+					@Override
+					public void run() {
+						view.jButtonNext.setEnabled(true);
+					}
+				});
+				return;
+			}
+
+			// We have a spot field, update the model.
+			newModel.setSpots(spots);
+			logger.log("  Reading spots done.\n");
 		}
-		if (null == trackGraph) {
-			// No track so we go to the tracking panel
-			execTuneTracker();
-			state = GuiState.TUNE_TRACKER;
-			view.jButtonLoad.setEnabled(true);
-			return;
+		
+		
+		{ // Try to read the initial threshold
+			FeatureThreshold initialThreshold = null;
+			try {
+				initialThreshold = reader.getInitialThreshold();
+			} catch (DataConversionException e) {
+				logger.error("Problem reading the initial threshold field of "+file.getName()
+						+". Error message is\n"+e.getLocalizedMessage()+'\n');
+			}
+
+			if (initialThreshold == null) {
+				// No initial threshold, so set it
+				this.model = newModel;
+				view.setModel(model);
+				state = GuiState.INITIAL_THRESHOLDING;
+				logger.log("Loading data finished, press 'next' to resume.\n");
+				SwingUtilities.invokeLater(new Runnable() {			
+					@Override
+					public void run() {
+						view.jButtonNext.setEnabled(true);
+					}
+				});
+				return;
+			}
+
+			// Store it in model
+			newModel.setInitialThreshold(initialThreshold.value);
+			logger.log("  Reading initial threshold done.\n");
 		}
-		logger.log("  Reading tracks done.\n");
-		displayer.setTrackGraph(trackGraph);
-		model.setTrackGraph(trackGraph);
+
+		{ // Try to read feature thresholds
+			List<FeatureThreshold> featureThresholds = null;
+			try {
+				featureThresholds = reader.getFeatureThresholds();
+			} catch (DataConversionException e) {
+				logger.error("Problem reading the feature threholds field of "+file.getName()
+						+". Error message is\n"+e.getLocalizedMessage()+'\n');
+			}
+
+			if (null == featureThresholds) {
+				// No feature thresholds, we assume we have the features calculated, and put ourselves
+				// in a state such that the threshold GUI will be displayed.
+				this.model = newModel;
+				view.setModel(model);
+				state = GuiState.CALCULATE_FEATURES;
+				actionFlag = true;
+				displayer = instantiateDisplayer(model);
+				logger.log("Loading data finished, press 'next' to resume.\n");
+				SwingUtilities.invokeLater(new Runnable() {			
+					@Override
+					public void run() {
+						view.jButtonNext.setEnabled(true);
+					}
+				});
+				return;
+			}
+
+			// Store thresholds in model
+			newModel.setFeatureThresholds(featureThresholds);
+			logger.log("  Reading feature thresholds done.\n");
+		}
+
+
+		{ // Try to read spot selection
+			TreeMap<Integer, List<Spot>> selectedSpots = null;
+			try {
+				selectedSpots = reader.getSpotSelection(newModel.getSpots());
+			} catch (DataConversionException e) {
+				logger.error("Problem reading the spot selection field of "+file.getName()+". Error message is\n"+e.getLocalizedMessage()+'\n');
+			}
+
+			// No spot selection, so we display the feature threshold GUI, with the loaded feature threshold
+			// already in place.
+			if (null == selectedSpots) {
+				this.model = newModel;
+				view.setModel(model);
+				state = GuiState.CALCULATE_FEATURES;
+				actionFlag = true;
+				displayer = instantiateDisplayer(model);
+				displayer.setSpots(model.getSpots());
+				logger.log("Loading data finished, press 'next' to resume.\n");
+				SwingUtilities.invokeLater(new Runnable() {			
+					@Override
+					public void run() {
+						view.jButtonNext.setEnabled(true);
+					}
+				});
+				return;
+			}
+
+			newModel.setSpotSelection(selectedSpots);
+			logger.log("  Reading spot selection done.\n");
+		}
+		
+
+		{ // Try to read tracker settings
+			TrackerSettings trackerSettings = null;
+			try {
+				trackerSettings = reader.getTrackerSettings();
+			} catch (DataConversionException e) {
+				logger.error("Problem reading the tracker settings field of "+file.getName()
+						+". Error message is:\n"+e.getLocalizedMessage()+'\n');
+			}
+			if (null == trackerSettings) {
+				// Fill in defaults
+				trackerSettings = new TrackerSettings();
+				settings.trackerSettings = trackerSettings;
+				settings.trackerType = trackerSettings.trackerType;
+				newModel.setSettings(settings);
+				this.model = newModel;
+				view.setModel(model);
+				// Stop at tune tracker panel
+				state = GuiState.TUNE_TRACKER;
+				displayer = instantiateDisplayer(model);
+				displayer.setSpots(model.getSpots());
+				displayer.setSpotsToShow(model.getSelectedSpots());
+				logger.log("Loading data finished, press 'next' to resume.\n");
+				SwingUtilities.invokeLater(new Runnable() {			
+					@Override
+					public void run() {
+						view.jButtonNext.setEnabled(true);
+					}
+				});
+				return;
+			}
+
+			settings.trackerSettings = trackerSettings;
+			settings.trackerType = trackerSettings.trackerType;
+			newModel.setSettings(settings);
+			logger.log("  Reading tracker settings done.\n");
+		}
+		
+
+		{ // Try reading the tracks 
+			SimpleGraph<Spot, DefaultEdge> trackGraph = null; 
+			try {
+				trackGraph = reader.getTracks(newModel.getSelectedSpots());
+			} catch (DataConversionException e) {
+				logger.error("Problem reading the track field of "+file.getName()
+						+". Error message is\n"+e.getLocalizedMessage()+'\n');
+			}
+			if (null == trackGraph) {
+				this.model = newModel;
+				view.setModel(model);
+				// Stop at tune tracker panel
+				state = GuiState.TUNE_TRACKER;
+				displayer = instantiateDisplayer(model);
+				displayer.setSpots(model.getSpots());
+				displayer.setSpotsToShow(model.getSelectedSpots());
+				logger.log("Loading data finished, press 'next' to resume.\n");
+				SwingUtilities.invokeLater(new Runnable() {			
+					@Override
+					public void run() {
+						view.jButtonNext.setEnabled(true);
+					}
+				});
+				return;
+			}
+			
+			logger.log("  Reading tracks done.\n");
+			newModel.setTrackGraph(trackGraph);
+		}
+		
+		this.model = newModel;
+		view.setModel(model);
 		state = GuiState.TRACKING;
-		view.jButtonLoad.setEnabled(true);
-		return;
-		
+		actionFlag = true; // force redraw and relinking
+		displayer = instantiateDisplayer(model);
+		displayer.setSpots(model.getSpots());
+		displayer.setSpotsToShow(model.getSelectedSpots());
+		displayer.setTrackGraph(model.getTrackGraph());
+		updater.doUpdate();
+		logger.log("Loading data finished, press 'next' to resume.\n");
+		SwingUtilities.invokeLater(new Runnable() {			
+			@Override
+			public void run() {
+				view.jButtonNext.setEnabled(true);
+			}
+		});
+
 	}
 	
 	private void save() {
-		view.jButtonSave.setEnabled(false);
+		SwingUtilities.invokeLater(new Runnable() {			
+			@Override
+			public void run() {
+				view.jButtonLoad.setEnabled(false);
+				view.jButtonSave.setEnabled(false);
+				view.jButtonNext.setEnabled(false);
+				view.jButtonPrevious.setEnabled(false);
+			}
+		});
+		view.displayPanel(PanelCard.LOG_PANEL_KEY);
+		
+		logger.log("Saving data...\n", Logger.BLUE_COLOR);
 		if (null == file ) {
 			File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 			file = new File(folder.getPath() + File.separator + DEFAULT_FILENAME);
@@ -438,7 +682,57 @@ public class TrackMateFrameController implements ActionListener {
 			return;  	    		
 		}
 		
-		TmXmlWriter writer = new TmXmlWriter(model);
+		TmXmlWriter writer = new TmXmlWriter(model, logger);
+		switch (state) {
+		case START:
+			model.setSettings(view.startDialogPanel.getSettings());
+			writer.appendBasicSettings();
+			break;
+		case TUNE_SEGMENTER:
+			writer.appendBasicSettings();
+			writer.appendSegmenterSettings();
+			break;
+		case SEGMENTING:
+		case INITIAL_THRESHOLDING:
+			writer.appendBasicSettings();
+			writer.appendSegmenterSettings();
+			writer.appendSpots();
+			break;		
+		case CALCULATE_FEATURES:
+			writer.appendBasicSettings();
+			writer.appendSegmenterSettings();
+			writer.appendInitialThreshold();
+			writer.appendSpots();
+			break;
+		case TUNE_THRESHOLDS:
+		case THRESHOLD_BLOBS:
+			writer.appendBasicSettings();
+			writer.appendSegmenterSettings();
+			writer.appendInitialThreshold();
+			writer.appendFeatureThresholds();
+			writer.appendSpots();
+			break;
+		case TUNE_TRACKER:
+			writer.appendBasicSettings();
+			writer.appendSegmenterSettings();
+			writer.appendTrackerSettings();
+			writer.appendInitialThreshold();
+			writer.appendFeatureThresholds();
+			writer.appendSpotSelection();
+			writer.appendSpots();
+			break;
+		case TRACKING:
+		case TUNE_DISPLAY:
+			writer.appendBasicSettings();
+			writer.appendSegmenterSettings();
+			writer.appendTrackerSettings();
+			writer.appendInitialThreshold();
+			writer.appendFeatureThresholds();
+			writer.appendSpotSelection();
+			writer.appendTracks();
+			writer.appendSpots();
+			break;
+		}
 		try {
 			writer.writeToFile(file);
 			logger.log("Data saved to: "+file.toString()+'\n');
@@ -447,11 +741,20 @@ public class TrackMateFrameController implements ActionListener {
 		} catch (IOException e) {
 			logger.error("Input/Output error:\n"+e.getMessage()+'\n');
 		} finally {
-			view.jButtonSave.setEnabled(true);
+			actionFlag = false;
+			SwingUtilities.invokeLater(new Runnable() {			
+				@Override
+				public void run() {
+					view.jButtonLoad.setEnabled(true);
+					view.jButtonSave.setEnabled(true);
+					view.jButtonNext.setEnabled(true);
+					view.jButtonPrevious.setEnabled(true);
+				}
+			});
+
 		}
 	}
 
-	*/
 	
 	/*
 	 * PRIVATE METHODS
@@ -519,25 +822,18 @@ public class TrackMateFrameController implements ActionListener {
 	 * the {@link Spot} collection of the {@link TrackMateModelInterface} with the result.
 	 */
 	private void execInitialThresholding() {
-		FeatureThreshold qualityThreshold = view.initThresholdingPanel.getFeatureThreshold();
-		String str = "Initial thresholding with a quality threshold ";
-		if (qualityThreshold.isAbove)
-			str += "above ";
-		else
-			str += "below ";
-		str += "" + String.format("%.1f", qualityThreshold.value) + " ...\n";
+		FeatureThreshold initialThreshold = view.initThresholdingPanel.getFeatureThreshold();
+		String str = "Initial thresholding with a quality threshold above "+ String.format("%.1f", initialThreshold.value) + " ...\n";
 		logger.log(str,Logger.BLUE_COLOR);
-		ArrayList<FeatureThreshold> featureThresholds = new ArrayList<FeatureThreshold>(1);
-		featureThresholds.add(qualityThreshold);
-		TreeMap<Integer, List<Spot>> thresholdedSpots = Utils.thresholdSpots(model.getSpots(), featureThresholds);
 		int ntotal = 0;
 		for (Collection<Spot> spots : model.getSpots().values())
 			ntotal += spots.size();
+		model.setInitialThreshold(initialThreshold.value);
+		model.execInitialThresholding();
 		int nselected = 0;
-		for (Collection<Spot> spots : thresholdedSpots.values())
+		for (Collection<Spot> spots : model.getSpots().values())
 			nselected += spots.size();
 		logger.log(String.format("Retained %d spots out of %d.\n", nselected, ntotal));
-		model.setSpots(thresholdedSpots);
 	}
 	
 	
@@ -596,8 +892,7 @@ public class TrackMateFrameController implements ActionListener {
 			}
 		}.start();
 	}
-	
-	
+		
 	/**
 	 * Link the displayer frame to the threshold gui displayed in the view, so that 
 	 * displayed spots are updated live when the user changes something in the view.
@@ -618,8 +913,9 @@ public class TrackMateFrameController implements ActionListener {
 				view.thresholdGuiPanel.addChangeListener(new ChangeListener() {
 					@Override
 					public void stateChanged(ChangeEvent event) {
+						// We set the thresholds field of the model but do not touch its selected spot field yet.
 						model.setFeatureThresholds(view.thresholdGuiPanel.getFeatureThresholds());
-						displayer.setSpotsToShow(model.getSelectedSpots());
+						displayer.setSpotsToShow(TMUtils.thresholdSpots(model.getSpots(), model.getFeatureThresholds()));
 						updater.doUpdate();
 					}
 				});
@@ -629,6 +925,42 @@ public class TrackMateFrameController implements ActionListener {
 			}
 		});
 	}
+	
+	/**
+	 * Retrieve the thresholds list set in the threshold GUI, forward it to the model, and 
+	 * perform the threshold in the model.
+	 */
+	private void execThresholding() {
+		logger.log("Performing feature threholding on the following features:\n", Logger.BLUE_COLOR);
+		List<FeatureThreshold> featureThresholds = view.thresholdGuiPanel.getFeatureThresholds();
+		model.setFeatureThresholds(featureThresholds);
+		model.execThresholding();
+		displayer.setSpotsToShow(model.getSelectedSpots());
+		
+		int ntotal = 0;
+		for(Collection<Spot> spots : model.getSpots().values())
+			ntotal += spots.size();
+		if (featureThresholds == null || featureThresholds.isEmpty()) {
+			logger.log("No feature threshold set, kept the " + ntotal + " spots.\n");
+		} else {
+			for (FeatureThreshold ft : featureThresholds) {
+				String str = "  - on "+ft.feature.name();
+				if (ft.isAbove) 
+					str += " above ";
+				else
+					str += " below ";
+				str += String.format("%.1f", ft.value);
+				str += '\n';
+				logger.log(str);
+			}
+			int nselected = 0;
+			for(Collection<Spot> spots : model.getSelectedSpots().values())
+				nselected += spots.size();
+			logger.log("Kept "+nselected+" spots out of " + ntotal + ".\n");
+		}		
+	}
+
+
 	
 	/**
 	 * Switch to the log panel, and execute the tracking part in another thread.
@@ -754,7 +1086,7 @@ public class TrackMateFrameController implements ActionListener {
 	 * the image content only.
 	 */
 	private static SpotDisplayer instantiateDisplayer(final TrackMateModelInterface model) {
-		SpotDisplayer disp;
+		final SpotDisplayer disp;
 		Settings settings = model.getSettings();
 		// Render image data
 		boolean is3D = settings.imp.getNSlices() > 1;
@@ -764,7 +1096,7 @@ public class TrackMateFrameController implements ActionListener {
 			final Image3DUniverse universe = new Image3DUniverse();
 			universe.show();
 			ImagePlus[] images = makeImageForViewer(settings);
-			Content imageContent = ContentCreator.createContent(
+			final Content imageContent = ContentCreator.createContent(
 					settings.imp.getTitle(), 
 					images, 
 					Content.VOLUME, 
@@ -774,13 +1106,22 @@ public class TrackMateFrameController implements ActionListener {
 					DEFAULT_THRESHOLD, 
 					new boolean[] {true, true, true});
 			// Render spots
-			disp = new SpotDisplayer3D(universe, settings.segmenterSettings.expectedRadius); 							
-			universe.addContentLater(imageContent);
-
+			disp = new SpotDisplayer3D(universe, settings.segmenterSettings.expectedRadius);
+			disp.setSpots(model.getSpots());
+			new Thread() {
+				public void run() {
+					disp.render();
+					universe.addContentLater(imageContent);					
+				};
+			}.start();
+			
 		} else {
+			
 			disp = new SpotDisplayer2D(settings);
+			disp.setSpots(model.getSpots());
+			disp.render();
+			
 		}
-		disp.render();
 		return disp;
 	}
 	

@@ -104,7 +104,12 @@ public class StartDialogPanel extends ActionListenablePanel {
 		this.settings = settings;
 		this.target = target;
 		initGUI();
-		refresh();
+		if (null == settings.imp)
+			refresh();
+		else {
+			echoSettings(settings);
+			imp = settings.imp;
+		}
 	}
 
 	/*
@@ -136,8 +141,8 @@ public class StartDialogPanel extends ActionListenablePanel {
 		settings.dy 	= Float.parseFloat(jTextFieldPixelHeight.getText());
 		settings.dz 	= Float.parseFloat(jTextFieldVoxelDepth.getText());
 		settings.dt 	= Float.parseFloat(jTextFieldTimeInterval.getText());
-		settings.spaceUnits = imp.getCalibration().getUnit();
-		settings.timeUnits  = imp.getCalibration().getTimeUnit();
+		settings.spaceUnits = jLabelUnits1.getText();
+		settings.timeUnits  = jLabelUnits4.getText();
 		settings.width 		= imp.getWidth();
 		settings.height		= imp.getHeight();
 		settings.nslices	= imp.getNSlices();
@@ -167,6 +172,30 @@ public class StartDialogPanel extends ActionListenablePanel {
 	/*
 	 * PRIVATE METHODS
 	 */
+	
+	/**
+	 * Fill the text fields with the paramters grabbed in the {@link Settings} argument.
+	 */
+	private void echoSettings(Settings settings) {
+		jLabelImageName.setText(settings.imp.getTitle());
+		jTextFieldPixelWidth.setText(String.format("%.1f", settings.dx));
+		jTextFieldPixelHeight.setText(String.format("%.1f", settings.dy));
+		jTextFieldVoxelDepth.setText(String.format("%.1f", settings.dz));
+		jTextFieldTimeInterval.setText(String.format("%.1f", settings.dt));
+		jLabelUnits1.setText(settings.spaceUnits);
+		jLabelUnits2.setText(settings.spaceUnits);
+		jLabelUnits3.setText(settings.spaceUnits);
+		jLabelUnits4.setText(settings.timeUnits);
+		jTextFieldXStart.setText(""+settings.xstart); 
+		jTextFieldYStart.setText(""+settings.ystart);
+		jTextFieldXEnd.setText(""+settings.xend);
+		jTextFieldYEnd.setText(""+settings.yend);
+		jTextFieldZStart.setText(""+settings.zstart);
+		jTextFieldZEnd.setText(""+settings.zend);
+		jTextFieldTStart.setText(""+settings.tstart); 
+		jTextFieldTEnd.setText(""+settings.tend);
+	}
+	
 	
 	/**
 	 * Fill the text fields with parameters grabbed from current ImagePlus. If the image is valid,

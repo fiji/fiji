@@ -77,30 +77,42 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	}
 	
 	/*
-	 * CONSTRUCTOR
+	 * CONSTRUCTORS
 	 */
-	
-	public ThresholdGuiPanel(EnumMap<Feature, double[]> featureValues, Feature selectedFeature) {
+
+	public ThresholdGuiPanel(EnumMap<Feature, double[]> featureValues, List<FeatureThreshold> featureThresholds) {
 		super();
-		newFeatureIndex = selectedFeature.ordinal();
 		this.featureValues = featureValues;
 		initGUI();
-		if (null != featureValues)
-			addThresholdPanel();
-	}
+		if (null != featureValues) {
+			
+			if (null == featureThresholds || featureThresholds.isEmpty()) {
+			
+				addThresholdPanel();
+				newFeatureIndex = 0;
+			
+			} else {
+				
+				for (FeatureThreshold ft : featureThresholds)
+					addThresholdPanel(ft);
+				newFeatureIndex = featureThresholds.get(featureThresholds.size()-1).feature.ordinal();
 
+			}
+		}
+	}
+	
 	public ThresholdGuiPanel(EnumMap<Feature, double[]> featureValues) {
-		this(featureValues, Feature.values()[0]);
+		this(featureValues, null);
 	}
 	
 	public ThresholdGuiPanel() {
 		this(null);
 	}
-	
+
 	/*
 	 * PUBLIC METHODS
 	 */
-	
+
 	/**
 	 * Called when one of the {@link ThresholdPanel} is changed by the user.
 	 */
@@ -164,6 +176,26 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 		addThresholdPanel(Feature.values()[newFeatureIndex]);		
 	}
 	
+	public void addThresholdPanel(FeatureThreshold threshold) {
+		if (null == threshold)
+			return;
+		ThresholdPanel<Feature> tp = new ThresholdPanel<Feature>(featureValues, threshold.feature);
+		tp.setThreshold(threshold.value);
+		tp.setAboveThreshold(threshold.isAbove);		
+		tp.addChangeListener(this);
+		newFeatureIndex++;
+		if (newFeatureIndex >= Feature.values().length) 
+			newFeatureIndex = 0;
+		Component strut = Box.createVerticalStrut(5);
+		struts.push(strut);
+		thresholdPanels.push(tp);
+		jPanelAllThresholds.add(tp);
+		jPanelAllThresholds.add(strut);
+		jPanelAllThresholds.revalidate();
+		stateChanged(CHANGE_EVENT);
+	}
+		
+	
 	public void addThresholdPanel(Feature feature) {
 		if (null == featureValues)
 			return;
@@ -184,12 +216,12 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	private void removeThresholdPanel() {
 		try {
 			ThresholdPanel<Feature> tp = thresholdPanels.pop();
-			tp.addChangeListener(this);
+			tp.removeChangeListener(this);
 			Component strut = struts.pop();
 			jPanelAllThresholds.remove(strut);
 			jPanelAllThresholds.remove(tp);
 			jPanelAllThresholds.repaint();
-			fireThresholdChanged(CHANGE_EVENT);
+			stateChanged(CHANGE_EVENT);
 		} catch (EmptyStackException ese) {	}
 	}
 	

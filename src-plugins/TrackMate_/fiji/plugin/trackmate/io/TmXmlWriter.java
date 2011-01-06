@@ -22,6 +22,7 @@ import org.jgrapht.graph.SimpleGraph;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.FeatureThreshold;
+import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModelInterface;
@@ -38,20 +39,28 @@ public class TmXmlWriter implements TmXmlKeys {
 	
 	private TrackMateModelInterface model;
 	private Element root;
+	private Logger logger;
 
 	/*
-	 * CONSTRUCTOR
+	 * CONSTRUCTORS
 	 */
 	
 	public TmXmlWriter(TrackMateModelInterface model) {
-		this.model = model;
-		this.root = new Element(ROOT_ELEMENT_KEY);
+		this(model, null);
 	}
 
+	public TmXmlWriter(TrackMateModelInterface model, Logger logger) {
+		this.model = model;
+		this.root = new Element(ROOT_ELEMENT_KEY);
+		if (null == logger) 
+			logger = Logger.VOID_LOGGER;
+		this.logger = logger;
+	}
 	/*
 	 * PUBLIC METHODS
 	 */
 	
+
 	/**
 	 * Append the image info to the root {@link Document}.
 	 */
@@ -79,8 +88,8 @@ public class TmXmlWriter implements TmXmlKeys {
 	 * this initial threshold is not stored in the {@link TrackMateModelInterface},
 	 * it has to be provided here.
 	 */
-	public void appendInitialThreshold(FeatureThreshold qualityThreshold) {
-		echoInitialThreshold(qualityThreshold);
+	public void appendInitialThreshold() {
+		echoInitialThreshold(model.getInitialThreshold());
 	}
 
 	/**
@@ -115,6 +124,7 @@ public class TmXmlWriter implements TmXmlKeys {
 	 * Write the document to the given file.
 	 */
 	public void writeToFile(File file) throws FileNotFoundException, IOException {
+		logger.log("  Writing to file.\n");
 		Document document = new Document(root);
 		XMLOutputter outputter = new XMLOutputter(Format.getPrettyFormat());
 		outputter.output(document, new FileOutputStream(file));
@@ -136,6 +146,7 @@ public class TmXmlWriter implements TmXmlKeys {
 		settingsElement.setAttribute(SETTINGS_TSTART_ATTRIBUTE_NAME, ""+settings.tstart);
 		settingsElement.setAttribute(SETTINGS_TEND_ATTRIBUTE_NAME, ""+settings.tend);
 		root.addContent(settingsElement);
+		logger.log("  Appending base settings.\n");
 		return;
 	}
 	
@@ -151,6 +162,7 @@ public class TmXmlWriter implements TmXmlKeys {
 		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME, 			""+segSettings.threshold);
 		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME, 			""+segSettings.useMedianFilter);
 		root.addContent(segSettingsElement);
+		logger.log("  Appending segmenter settings.\n");
 		return;
 	}
 	
@@ -220,6 +232,7 @@ public class TmXmlWriter implements TmXmlKeys {
 		trackerSettingsElement.addContent(mergingElement);
 		// Add to root		
 		root.addContent(trackerSettingsElement);
+		logger.log("  Appending tracker settings.\n");
 		return;
 	}
 	
@@ -260,6 +273,7 @@ public class TmXmlWriter implements TmXmlKeys {
 		}
 
 		root.addContent(allTracksElement);
+		logger.log("  Appending tracks.\n");
 		return;
 	}
 	
@@ -281,6 +295,7 @@ public class TmXmlWriter implements TmXmlKeys {
 		imEl.setAttribute(IMAGE_SPATIAL_UNITS_ATTRIBUTE_NAME,	settings.spaceUnits);
 		imEl.setAttribute(IMAGE_TIME_UNITS_ATTRIBUTE_NAME,		settings.timeUnits);
 		root.addContent(imEl);
+		logger.log("  Appending image information.\n");
 		return;
 	}
 	
@@ -307,15 +322,17 @@ public class TmXmlWriter implements TmXmlKeys {
 			spotCollection.addContent(frameSpotsElement);
 		}
 		root.addContent(spotCollection);
+		logger.log("  Appending spots.\n");
 		return;
 	}
 	
-	private void echoInitialThreshold(final FeatureThreshold qualityThreshold) {
+	private void echoInitialThreshold(final Float qualityThreshold) {
 		Element itElement = new Element(INITIAL_THRESHOLD_ELEMENT_KEY);
-		itElement.setAttribute(THRESHOLD_FEATURE_ATTRIBUTE_NAME, qualityThreshold.feature.name());
-		itElement.setAttribute(THRESHOLD_VALUE_ATTRIBUTE_NAME, qualityThreshold.value.toString());
-		itElement.setAttribute(THRESHOLD_ABOVE_ATTRIBUTE_NAME, ""+qualityThreshold.isAbove);
+		itElement.setAttribute(THRESHOLD_FEATURE_ATTRIBUTE_NAME, Feature.QUALITY.name());
+		itElement.setAttribute(THRESHOLD_VALUE_ATTRIBUTE_NAME, ""+qualityThreshold);
+		itElement.setAttribute(THRESHOLD_ABOVE_ATTRIBUTE_NAME, ""+true);
 		root.addContent(itElement);
+		logger.log("  Appending initial threshold.\n");
 		return;
 	}
 	
@@ -331,6 +348,7 @@ public class TmXmlWriter implements TmXmlKeys {
 			allTresholdElement.addContent(thresholdElement);
 		}
 		root.addContent(allTresholdElement);
+		logger.log("  Appending feature thresholds.\n");
 		return;
 		
 	}
@@ -359,6 +377,7 @@ public class TmXmlWriter implements TmXmlKeys {
 		}
 
 		root.addContent(spotCollection);
+		logger.log("  Appending spot selection.\n");
 		return;
 	}
 	

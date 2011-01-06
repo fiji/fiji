@@ -68,7 +68,20 @@ public abstract class Logger extends PrintWriter {
 	public abstract void setStatus(String status);
 	
 	
-	
+	/**
+	 * This logger discard any message.
+	 */
+	public static final Logger VOID_LOGGER = new Logger() {
+		
+		@Override
+		public void setStatus(String status) { }
+		@Override
+		public void setProgress(float val) { }
+		@Override
+		public void log(String message, Color color) { }		
+		@Override
+		public void error(String message) { }
+	};
 	
 	/**
 	 * This {@link Logger} simply outputs to the standard output and standard error.

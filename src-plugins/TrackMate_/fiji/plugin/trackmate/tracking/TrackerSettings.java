@@ -39,7 +39,7 @@ public class TrackerSettings {
 	private static final double 	DEFAULT_CUTOFF_PERCENTILE 				= 0.9d;
 	
 	/** The tracker type this settings object is for. This field is here just for reference. */
-	public TrackerType trackerType;
+	public TrackerType trackerType = TrackerType.SIMPLE_LAP_TRACKER;
 	
 	/** Max time difference over which particle linking is allowed.	 */
 	public double linkingDistanceCutOff 		= DEFAULT_LINKING_DISTANCE_CUTOFF;

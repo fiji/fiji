@@ -292,18 +292,16 @@ public class SpotDisplayer2D extends SpotDisplayer {
 		Spot source, target;
 		Set<DefaultEdge> edges = trackGraph.edgeSet();
 		int frame;
-		
 		for (DefaultEdge edge : edges) {
 			source = trackGraph.getEdgeSource(edge);
 			target = trackGraph.getEdgeTarget(edge);
 			// Find to what frame it belongs to
 			frame = -1;
-			for (int key : spots.keySet())
+			for (int key : spotsToShow.keySet())
 				if (spots.get(key).contains(source)) {
 					frame = key;
 					break;
 				}
-			// Find to what track it belongs to
 			for (Set<Spot> track : tracks) {
 				if (track.contains(source)) {
 					wholeTrackOverlays.get(track).addEdge(source, target, frame);

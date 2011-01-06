@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate.io;
 
+import ij.IJ;
 import ij.ImagePlus;
 
 import java.io.File;
@@ -10,11 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-
-import loci.formats.FormatException;
-import loci.plugins.in.ImagePlusReader;
-import loci.plugins.in.ImportProcess;
-import loci.plugins.in.ImporterOptions;
 
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
@@ -108,8 +104,7 @@ public class TmXmlReader implements TmXmlKeys {
 	/**
 	 * Return the settings for the TrackMate session saved in this file.
 	 * <p>
-	 * The settings object will have its {@link SegmenterSettings} and {@link TrackerSettings} objects filled with
-	 * the values saved as well, unless they are not present in the file. In this case, default value will be
+	 * The settings object will have its {@link SegmenterSettings} and {@link TrackerSettings} set default values will be
 	 * used.
 	 * 
 	 * @return  a full Settings object
@@ -145,59 +140,64 @@ public class TmXmlReader implements TmXmlKeys {
 			settings.imageFileName	= infoEl.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
 			settings.imageFolder	= infoEl.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME);
 		}
-		// Segmenter settings
-		Element segSettingsEl = root.getChild(SEGMENTER_SETTINGS_ELEMENT_KEY);
-		if (null != segSettingsEl) {
-			String segmenterTypeStr = segSettingsEl.getAttributeValue(SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME);
-			SegmenterType segmenterType = SegmenterType.valueOf(segmenterTypeStr);
-			SegmenterSettings segSettings = segmenterType.createSettings();
-			segSettings.segmenterType 		= segmenterType;
-			segSettings.expectedRadius 		= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME).getFloatValue();
-			segSettings.threshold			= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME).getFloatValue();
-			segSettings.useMedianFilter		= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME).getBooleanValue();
-			segSettings.spaceUnits			= segSettingsEl.getAttributeValue(SEGMENTER_SETTINGS_UNITS_ATTRIBUTE_NAME);			
-			settings.segmenterType = segmenterType;
-			settings.segmenterSettings = segSettings;
-		}
-		// Tracker settings
-		Element trackerSettingsEl = root.getChild(TRACKER_SETTINGS_ELEMENT_KEY);
-		if (null != trackerSettingsEl) {
-			String trackerTypeStr 			= trackerSettingsEl.getAttributeValue(TRACKER_SETTINGS_TRACKER_TYPE_ATTRIBUTE_NAME);
-			TrackerType trackerType 		= TrackerType.valueOf(trackerTypeStr);
-			TrackerSettings trackerSettings = trackerType.createSettings();
-			trackerSettings.trackerType		= trackerType;
-			trackerSettings.timeUnits		= trackerSettingsEl.getAttributeValue(TRACKER_SETTINGS_TIME_UNITS_ATTNAME);
-			trackerSettings.spaceUnits		= trackerSettingsEl.getAttributeValue(TRACKER_SETTINGS_SPACE_UNITS_ATTNAME);
-			trackerSettings.alternativeObjectLinkingCostFactor = trackerSettingsEl.getAttribute(TRACKER_SETTINGS_ALTERNATE_COST_FACTOR_ATTNAME).getDoubleValue();
-			trackerSettings.cutoffPercentile = trackerSettingsEl.getAttribute(TRACKER_SETTINGS_CUTOFF_PERCENTILE_ATTNAME).getDoubleValue();
-			trackerSettings.blockingValue	=  trackerSettingsEl.getAttribute(TRACKER_SETTINGS_BLOCKING_VALUE_ATTNAME).getDoubleValue();
-			// Linking
-			Element linkingElement 			= trackerSettingsEl.getChild(TRACKER_SETTINGS_LINKING_ELEMENT);
-			trackerSettings.linkingDistanceCutOff = readDistanceCutoffAttribute(linkingElement);
-			trackerSettings.linkingFeatureCutoffs = readTrackerFeatureMap(linkingElement);
-			// Gap-closing
-			Element gapClosingElement		= trackerSettingsEl.getChild(TRACKER_SETTINGS_GAP_CLOSING_ELEMENT);
-			trackerSettings.allowGapClosing	= gapClosingElement.getAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME).getBooleanValue();
-			trackerSettings.gapClosingDistanceCutoff 	= readDistanceCutoffAttribute(gapClosingElement);
-			trackerSettings.gapClosingTimeCutoff 		= readTimeCutoffAttribute(gapClosingElement); 
-			trackerSettings.gapClosingFeatureCutoffs 	= readTrackerFeatureMap(gapClosingElement);
-			// Splitting
-			Element splittingElement		= trackerSettingsEl.getChild(TRACKER_SETTINGS_SPLITTING_ELEMENT);
-			trackerSettings.allowSplitting	= splittingElement.getAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME).getBooleanValue();
-			trackerSettings.splittingDistanceCutoff		= readDistanceCutoffAttribute(splittingElement);
-			trackerSettings.splittingTimeCutoff			= readTimeCutoffAttribute(splittingElement);
-			trackerSettings.splittingFeatureCutoffs		= readTrackerFeatureMap(splittingElement);
-			// Merging
-			Element mergingElement 			= trackerSettingsEl.getChild(TRACKER_SETTINGS_MERGING_ELEMENT);
-			trackerSettings.allowMerging	= mergingElement.getAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME).getBooleanValue();
-			trackerSettings.mergingDistanceCutoff		= readDistanceCutoffAttribute(mergingElement);
-			trackerSettings.mergingTimeCutoff			= readTimeCutoffAttribute(mergingElement);
-			trackerSettings.mergingFeatureCutoffs		= readTrackerFeatureMap(mergingElement);
-			// Conclude
-			settings.trackerType			= trackerType;
-			settings.trackerSettings		= trackerSettings;
-		}
 		return settings;
+	}
+
+		public SegmenterSettings getSegmenterSettings() throws DataConversionException {
+			SegmenterSettings segSettings = null;
+			Element segSettingsEl = root.getChild(SEGMENTER_SETTINGS_ELEMENT_KEY);
+			if (null != segSettingsEl) {
+				String segmenterTypeStr = segSettingsEl.getAttributeValue(SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME);
+				SegmenterType segmenterType = SegmenterType.valueOf(segmenterTypeStr);
+				segSettings = segmenterType.createSettings();
+				segSettings.segmenterType 		= segmenterType;
+				segSettings.expectedRadius 		= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME).getFloatValue();
+				segSettings.threshold			= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME).getFloatValue();
+				segSettings.useMedianFilter		= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME).getBooleanValue();
+				segSettings.spaceUnits			= segSettingsEl.getAttributeValue(SEGMENTER_SETTINGS_UNITS_ATTRIBUTE_NAME);			
+			}
+			return segSettings;
+		}
+
+
+		public TrackerSettings getTrackerSettings() throws DataConversionException {
+			// Tracker settings
+			TrackerSettings trackerSettings = null;
+			Element trackerSettingsEl = root.getChild(TRACKER_SETTINGS_ELEMENT_KEY);
+			if (null != trackerSettingsEl) {
+				String trackerTypeStr 			= trackerSettingsEl.getAttributeValue(TRACKER_SETTINGS_TRACKER_TYPE_ATTRIBUTE_NAME);
+				TrackerType trackerType 		= TrackerType.valueOf(trackerTypeStr);
+				trackerSettings = trackerType.createSettings();
+				trackerSettings.trackerType		= trackerType;
+				trackerSettings.timeUnits		= trackerSettingsEl.getAttributeValue(TRACKER_SETTINGS_TIME_UNITS_ATTNAME);
+				trackerSettings.spaceUnits		= trackerSettingsEl.getAttributeValue(TRACKER_SETTINGS_SPACE_UNITS_ATTNAME);
+				trackerSettings.alternativeObjectLinkingCostFactor = trackerSettingsEl.getAttribute(TRACKER_SETTINGS_ALTERNATE_COST_FACTOR_ATTNAME).getDoubleValue();
+				trackerSettings.cutoffPercentile = trackerSettingsEl.getAttribute(TRACKER_SETTINGS_CUTOFF_PERCENTILE_ATTNAME).getDoubleValue();
+				trackerSettings.blockingValue	=  trackerSettingsEl.getAttribute(TRACKER_SETTINGS_BLOCKING_VALUE_ATTNAME).getDoubleValue();
+				// Linking
+				Element linkingElement 			= trackerSettingsEl.getChild(TRACKER_SETTINGS_LINKING_ELEMENT);
+				trackerSettings.linkingDistanceCutOff = readDistanceCutoffAttribute(linkingElement);
+				trackerSettings.linkingFeatureCutoffs = readTrackerFeatureMap(linkingElement);
+				// Gap-closing
+				Element gapClosingElement		= trackerSettingsEl.getChild(TRACKER_SETTINGS_GAP_CLOSING_ELEMENT);
+				trackerSettings.allowGapClosing	= gapClosingElement.getAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME).getBooleanValue();
+				trackerSettings.gapClosingDistanceCutoff 	= readDistanceCutoffAttribute(gapClosingElement);
+				trackerSettings.gapClosingTimeCutoff 		= readTimeCutoffAttribute(gapClosingElement); 
+				trackerSettings.gapClosingFeatureCutoffs 	= readTrackerFeatureMap(gapClosingElement);
+				// Splitting
+				Element splittingElement		= trackerSettingsEl.getChild(TRACKER_SETTINGS_SPLITTING_ELEMENT);
+				trackerSettings.allowSplitting	= splittingElement.getAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME).getBooleanValue();
+				trackerSettings.splittingDistanceCutoff		= readDistanceCutoffAttribute(splittingElement);
+				trackerSettings.splittingTimeCutoff			= readTimeCutoffAttribute(splittingElement);
+				trackerSettings.splittingFeatureCutoffs		= readTrackerFeatureMap(splittingElement);
+				// Merging
+				Element mergingElement 			= trackerSettingsEl.getChild(TRACKER_SETTINGS_MERGING_ELEMENT);
+				trackerSettings.allowMerging	= mergingElement.getAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME).getBooleanValue();
+				trackerSettings.mergingDistanceCutoff		= readDistanceCutoffAttribute(mergingElement);
+				trackerSettings.mergingTimeCutoff			= readTimeCutoffAttribute(mergingElement);
+				trackerSettings.mergingFeatureCutoffs		= readTrackerFeatureMap(mergingElement);
+			}
+			return trackerSettings;
 	}
 	
 	
@@ -345,7 +345,7 @@ public class TmXmlReader implements TmXmlKeys {
 		return trackGraph;
 	}
 	
-	public ImagePlus getImage() throws IOException, FormatException  {
+	public ImagePlus getImage()  {
 		Element imageInfoElement = root.getChild(IMAGE_ELEMENT_KEY);
 		if (null == imageInfoElement)
 			return null;
@@ -356,19 +356,7 @@ public class TmXmlReader implements TmXmlKeys {
 		File imageFile = new File(folder, filename);
 		if (!imageFile.exists() || !imageFile.canRead())
 			return null;
-
-		ImporterOptions options = new ImporterOptions();
-		options.loadOptions();
-		options.parseArg(imageFile.getAbsolutePath());
-		options.checkObsoleteOptions();
-
-		ImportProcess process = new ImportProcess(options);
-		process.execute();
-		
-		ImagePlusReader reader = new ImagePlusReader(process);
-		ImagePlus[] imps = reader.openImagePlus();
-		process.getReader().close();
-	    return imps[0];
+		return IJ.openImage(imageFile.getAbsolutePath());
 
 	}
 	

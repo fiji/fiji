@@ -41,7 +41,7 @@ import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.data.statistics.LogHistogramDataset;
 
-import fiji.plugin.trackmate.Utils;
+import fiji.plugin.trackmate.TMUtils;
 
 /**
  * 
@@ -58,8 +58,8 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 	JComboBox jComboBoxFeature;
 	private ChartPanel chartPanel;
 	private JButton jButtonAutoThreshold;
-	private JRadioButton jRadioButtonBelow;
-	private JRadioButton jRadioButtonAbove;
+	JRadioButton jRadioButtonBelow;
+	JRadioButton jRadioButtonAbove;
 	private LogHistogramDataset dataset;
 	private JFreeChart chart;
 	private XYPlot plot;
@@ -101,6 +101,26 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 	/*
 	 * PUBLIC METHODS
 	 */
+
+	/**
+	 * Set the threshold currently selected for the data displayed in this panel.
+	 * @see #isAboveThreshold()
+	 */
+	public void setThreshold(double threshold) { 
+		this.threshold = threshold;
+		redrawThresholdMarker();
+	}
+	
+	/**
+	 * Set if the current threshold should be taken above or below its value.
+	 * @param isAbove  if true, the threshold will be related as above its value.
+	 */
+	public void setAboveThreshold(boolean isAbove) {
+		jRadioButtonAbove.setSelected(isAbove);
+		jRadioButtonBelow.setSelected(!isAbove);
+		redrawThresholdMarker();
+	}
+
 	
 	/**
 	 * Return the threshold currently selected for the data displayed in this panel.
@@ -162,7 +182,7 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 			annotation.setText("No data");
 			fireThresholdChanged();
 		} else {
-			int nBins = Utils.getNBins(values, 8, 100);
+			int nBins = TMUtils.getNBins(values, 8, 100);
 			dataset = new LogHistogramDataset();
 			if (nBins > 1) {
 				dataset.addSeries(DATA_SERIES_NAME, values, nBins);
@@ -177,7 +197,7 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 		K selectedFeature = allKeys[jComboBoxFeature.getSelectedIndex()];
 		double[] values = valuesMap.get(selectedFeature);
 		if (null != values) {
-			threshold = Utils.otsuThreshold(valuesMap.get(selectedFeature));
+			threshold = TMUtils.otsuThreshold(valuesMap.get(selectedFeature));
 			redrawThresholdMarker();
 		}
 	}

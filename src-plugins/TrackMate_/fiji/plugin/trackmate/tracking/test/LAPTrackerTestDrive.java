@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 
-import loci.formats.FormatException;
 import mpicbg.imglib.util.Util;
 
 import org.jdom.DataConversionException;
@@ -35,7 +34,6 @@ public class LAPTrackerTestDrive {
 
 	@SuppressWarnings("unused")
 	private static final File SPLITTING_CASE_1 = new File(LAPTrackerTestDrive.class.getResource(FILE_NAME_1).getFile());
-	@SuppressWarnings("unused")
 	private static final File SPLITTING_CASE_2 = new File(LAPTrackerTestDrive.class.getResource(FILE_NAME_2).getFile());
 	
 	/*
@@ -129,15 +127,10 @@ public class LAPTrackerTestDrive {
 		// Load Image
 		ij.ImageJ.main(args);
 		ImagePlus imp = null;
-		try {
-			imp = reader.getImage();
-			if (imp != null)
-				imp.show();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (FormatException e) {
-			e.printStackTrace();
-		}
+		imp = reader.getImage();
+		if (imp != null)
+			imp.show();
+		
 		SpotDisplayer2D sd2d = new SpotDisplayer2D(inFileSettings);
 		sd2d.setSpots(spots);
 		sd2d.render();

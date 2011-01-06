@@ -19,7 +19,7 @@ import mpicbg.imglib.type.numeric.RealType;
 /**
  * List of static utilities for the {@link TrackMate_} plugin
  */
-public class Utils {
+public class TMUtils {
 	
 	/**
 	 * Return a 3D stack or a 2D slice as an {@link Image} corresponding to the frame number <code>iFrame</code>
@@ -48,6 +48,54 @@ public class Utils {
 	}
 
 
+	/**
+	 * Convenience static method that executes the thresholding part.
+	 * <p>
+	 * Given a list of spots, only spots with the feature satisfying the threshold given
+	 * in argument are returned. 
+	 */
+	public static TreeMap<Integer, List<Spot>> thresholdSpots(final TreeMap<Integer, List<Spot>> spots, final FeatureThreshold featureThreshold) {
+		TreeMap<Integer, List<Spot>> selectedSpots = new TreeMap<Integer, List<Spot>>();
+		Collection<Spot> spotThisFrame, spotToRemove;
+		List<Spot> spotToKeep;
+		Float val, tval;	
+
+		for (int timepoint : spots.keySet()) {
+
+			spotThisFrame = spots.get(timepoint);
+			spotToKeep = new ArrayList<Spot>(spotThisFrame);
+			spotToRemove = new ArrayList<Spot>(spotThisFrame.size());
+
+			tval = featureThreshold.value;
+			if (null != tval) {
+
+				if (featureThreshold.isAbove) {
+					for (Spot spot : spotToKeep) {
+						val = spot.getFeature(featureThreshold.feature);
+						if (null == val)
+							continue;
+						if ( val < tval)
+							spotToRemove.add(spot);
+					}
+
+				} else {
+					for (Spot spot : spotToKeep) {
+						val = spot.getFeature(featureThreshold.feature);
+						if (null == val)
+							continue;
+						if ( val > tval)
+							spotToRemove.add(spot);
+					}
+				}
+				spotToKeep.removeAll(spotToRemove); // no need to treat them multiple times
+				
+			}
+			
+			selectedSpots.put(timepoint, spotToKeep);
+		}
+		return selectedSpots;
+	}
+	
 	/**
 	 * Convenience static method that executes the thresholding part.
 	 * <p>
@@ -220,8 +268,8 @@ public class Utils {
 	 */
 	public static final int getNBins(final double[] values, int minBinNumber, int maxBinNumber) {
 		final int size = values.length;
-		final double q1 = Utils.getPercentile(values, 0.25);
-		final double q3 = Utils.getPercentile(values, 0.75);
+		final double q1 = getPercentile(values, 0.25);
+		final double q3 = getPercentile(values, 0.75);
 		final double iqr = q3 - q1;
 		final double binWidth = 2 * iqr * Math.pow(size, -0.33);
 		final double[] range = getRange(values);
@@ -247,7 +295,7 @@ public class Utils {
 	 * Create a histogram from the data given.
 	 */
 	public static final int[] histogram(final double data[], final int nBins) {
-		final double[] range = Utils.getRange(data);
+		final double[] range = getRange(data);
 		final double binWidth = range[0]/nBins;
 		final int[] hist = new int[nBins];
 		int index;

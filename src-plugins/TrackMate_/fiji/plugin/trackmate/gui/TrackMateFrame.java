@@ -119,6 +119,11 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	 * PUBLIC METHODS
 	 */
 	
+	public void setModel(TrackMateModelInterface model) {
+		this.model = model;		
+	}
+
+	
 	/**
 	 * Display the panel whose key is given. If needed, instantiate it or update it by getting 
 	 * required parameters from the model this view represent.
@@ -135,7 +140,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		
 		case START_DIALOG_KEY:
 			if (null != startDialogPanel)
-				jPanelButtons.remove(startDialogPanel);
+				jPanelMain.remove(startDialogPanel);
 			startDialogPanel = new StartDialogPanel(model.getSettings(), jButtonNext);
 			panel = startDialogPanel;
 			break;
@@ -150,14 +155,14 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		case INITIAL_THRESHOLDING_KEY:
 			if (null != initThresholdingPanel)
 				jPanelMain.remove(initThresholdingPanel);
-			initThresholdingPanel = new InitThresholdPanel(model.getFeatureValues());
+			initThresholdingPanel = new InitThresholdPanel(model.getFeatureValues(), model.getInitialThreshold());
 			panel = initThresholdingPanel;
 			break;
 			
 		case THRESHOLD_GUI_KEY:
 			if (null != thresholdGuiPanel) 
 				jPanelMain.remove(thresholdGuiPanel);
-			thresholdGuiPanel = new ThresholdGuiPanel(model.getFeatureValues());
+			thresholdGuiPanel = new ThresholdGuiPanel(model.getFeatureValues(), model.getFeatureThresholds());
 			panel = thresholdGuiPanel;
 			break;
 			
@@ -212,8 +217,10 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	 * Forward the given {@link ActionEvent} to the listeners of this GUI.
 	 */
 	private void fireAction(ActionEvent event) {
-		for (ActionListener listener : listeners)
-			listener.actionPerformed(event);
+		synchronized (event) {
+			for (ActionListener listener : listeners)
+				listener.actionPerformed(event);
+		}
 	}
 	
 	/**
@@ -301,6 +308,5 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		}
 		repaint();
 		validate();
-	}
-	
+	}	
 }

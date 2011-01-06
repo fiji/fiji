@@ -45,7 +45,8 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 	private Logger logger = Logger.DEFAULT_LOGGER;
 	private Settings settings;
 	private List<FeatureThreshold> thresholds = new ArrayList<FeatureThreshold>();
-	private SpotSegmenter<T> segmenter;
+	private SpotSegmenter<T> segmenter;	
+	private Float initialThreshold;
 
 	/*
 	 * CONSTRUCTORS
@@ -110,7 +111,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 		for (int i = settings.tstart-1; i < settings.tend; i++) {
 			
 			/* 1 - Prepare stack for use with Imglib. */
-			Image<T> img = Utils.getSingleFrameAsImage(imp, i, settings); // will be cropped according to settings
+			Image<T> img = TMUtils.getSingleFrameAsImage(imp, i, settings); // will be cropped according to settings
 			
 			/* 2 Segment it */
 
@@ -136,6 +137,12 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 	}
 	
 	@Override
+	public void execInitialThresholding() {
+		FeatureThreshold featureThreshold = new FeatureThreshold(Feature.QUALITY, initialThreshold, true);
+		this.spots = TMUtils.thresholdSpots(spots, featureThreshold);
+	}
+		
+	@Override
 	public void computeFeatures() {
 		int numFrames = settings.tend - settings.tstart + 1;
 		List<Spot> spotsThisFrame;
@@ -144,7 +151,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 		for (int i = settings.tstart-1; i < settings.tend; i++) {
 			
 			/* 1 - Prepare stack for use with Imglib. */
-			Image<T> img = Utils.getSingleFrameAsImage(settings.imp, i, settings); // will be cropped according to settings
+			Image<T> img = TMUtils.getSingleFrameAsImage(settings.imp, i, settings); // will be cropped according to settings
 			
 			/* 2 - Compute features. */
 			logger.setProgress((2*(i-settings.tstart)) / (2f * numFrames + 1));
@@ -159,7 +166,11 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 		return;
 	}
 
-	
+
+	@Override
+	public void execThresholding() {
+		this.selectedSpots = TMUtils.thresholdSpots(spots, thresholds);
+	}
 	
 	/*
 	 * GETTERS / SETTERS
@@ -177,7 +188,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 
 	@Override
 	public TreeMap<Integer, List<Spot>> getSelectedSpots() {
-		selectedSpots = Utils.thresholdSpots(spots, thresholds);
+		selectedSpots = TMUtils.thresholdSpots(spots, thresholds);
 		return selectedSpots;
 	}
 	
@@ -216,10 +227,10 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 		this.spots = spots;
 	}
 
-//	@Override
-//	public void setSpotSelection(TreeMap<Integer, List<Spot>> selectedSpots) {
-//		this.selectedSpots = selectedSpots;
-//	}
+	@Override
+	public void setSpotSelection(TreeMap<Integer, List<Spot>> selectedSpots) {
+		this.selectedSpots = selectedSpots;
+	}
 	
 	@Override
 	public void setTrackGraph(SimpleGraph<Spot, DefaultEdge> trackGraph) {
@@ -228,9 +239,18 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 
 	@Override
 	public EnumMap<Feature, double[]> getFeatureValues() {
-		return Utils.getFeatureValues(spots.values());
+		return TMUtils.getFeatureValues(spots.values());
 	}
 
+	@Override
+	public Float getInitialThreshold() {
+		return initialThreshold;
+	}
+
+	@Override
+	public void setInitialThreshold(Float initialThreshold) {
+		this.initialThreshold = initialThreshold;
+	}
 
 
 	

@@ -4,7 +4,6 @@ import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.event.ActionEvent;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -21,17 +20,9 @@ import javax.swing.text.StyleContext;
 import fiji.plugin.trackmate.Logger;
 
 /**
-* This code was edited or generated using CloudGarden's Jigloo
-* SWT/Swing GUI Builder, which is free for non-commercial
-* use. If Jigloo is being used commercially (ie, by a corporation,
-* company or business for any purpose whatever) then you
-* should purchase a license for each developer using Jigloo.
-* Please visit www.cloudgarden.com for details.
-* Use of Jigloo implies acceptance of these licensing terms.
-* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
-* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
-* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
-*/
+ * A panel using s {@link JTextPane} to log events.
+ * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - September 2010 - January 2011.
+ */
 public class LogPanel extends ActionListenablePanel {
 
 
@@ -45,12 +36,6 @@ public class LogPanel extends ActionListenablePanel {
 	}
 
 	private static final long serialVersionUID = 1L;
-
-	/**
-	 * This action is fired when the "Next >>" button is pressed.
-	 */
-	public final ActionEvent NEXT_BUTTON_PRESSED = new ActionEvent(this, 0, "NextButtonPressed");
-	
 	private JScrollPane jScrollPaneLog;
 	private JTextPane jTextPaneLog;
 	private JProgressBar jProgressBar;
@@ -85,18 +70,27 @@ public class LogPanel extends ActionListenablePanel {
 			}
 
 			@Override
-			public void setStatus(String status) {
-				jProgressBar.setString(status);
+			public void setStatus(final String status) {
+				SwingUtilities.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						jProgressBar.setString(status);
+					}
+				});
 			}
 			
 			@Override
 			public void setProgress(float val) {
 				if (val < 0) val =0;
 				if (val > 1) val = 1;
-				int intVal = (int) (val*100);
-				jProgressBar.setValue(intVal);
+				final int intVal = (int) (val*100);
+				SwingUtilities.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						jProgressBar.setValue(intVal);
+					}
+				});
 			}
-			
 		};		
 	}
 	

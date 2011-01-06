@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
-import loci.formats.FormatException;
-
 import org.jdom.DataConversionException;
 import org.jdom.JDOMException;
 import org.jgrapht.alg.ConnectivityInspector;
@@ -44,15 +42,9 @@ public class TmXmlReaderTestDrive {
 		
 		// Image
 		ImagePlus imp = null;
-		try {
-			imp = reader.getImage();
-			if (null != imp)
-				imp.show();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (FormatException e) {
-			e.printStackTrace();
-		}
+		imp = reader.getImage();
+		if (null != imp)
+			imp.show();
 
 		// All spots
 		TreeMap<Integer, List<Spot>> spots = null;

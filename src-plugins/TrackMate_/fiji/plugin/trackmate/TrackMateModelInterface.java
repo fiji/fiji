@@ -40,9 +40,9 @@ public interface TrackMateModelInterface {
 	 */
 	
 	/**
-	 * Overwrite the {@link #selectedSpots} field, resulting from feature thresholding.
+	 * Overwrite the {@link #selectedSpots} field, resulting (normally) from feature thresholding.
 	 */
-//	public void setSpotSelection(TreeMap<Integer, List<Spot>> selectedSpots);
+	public void setSpotSelection(TreeMap<Integer, List<Spot>> selectedSpots);
 
 	/**
 	 * Return the spots filtered by feature threshold. Feature thresholds can be set / added / cleared by 
@@ -59,6 +59,9 @@ public interface TrackMateModelInterface {
 	 */
 	public Settings getSettings();
 
+	/**
+	 * Set the {@link Settings} object that determines the behavior of this plugin.
+	 */
 	public void setSettings(Settings settings);
 	
 	/*
@@ -85,6 +88,17 @@ public interface TrackMateModelInterface {
 	/*
 	 * FEATURE THRESHOLDS AND VALUES
 	 */
+	
+	/**
+	 * Return the initial threshold on {@link Feature#QUALITY} stored in this model.
+	 */
+	public Float getInitialThreshold();
+
+	/**
+	 * Set the initial threshold on {@link Feature#QUALITY} stored in this model.
+	 */
+	public void setInitialThreshold(Float initialThreshold);
+
 	
 	public List<FeatureThreshold> getFeatureThresholds();
 
@@ -139,5 +153,37 @@ public interface TrackMateModelInterface {
 	 * @see #getTrackGraph()
 	 */ 
 	public void execTracking();
+
+	/**
+	 * Execute the initial thresholding part.
+	 *<p>
+	 * Because of the presence of noise, it is possible that some of the regional maxima found in the segmenting step have
+	 * identified noise, rather than objects of interest. This can generates a very high number of spots, which is
+	 * inconvenient to deal with when it comes to  computing their features, or displaying them.
+	 * <p>
+	 * Any {@link SpotSegmenter} is expected to at least compute the {@link Feature#QUALITY} value for each spot
+	 * it creates, so it is possible to set up an initial thresholding on this Feature, prior to any other operation. 
+	 * <p>
+	 * This method simply takes all the segmented spots, and discard those whose quality value is below the threshold set 
+	 * by {@link #setInitialThreshold(Float)}. The spot field is overwritten, and discarded spots can't be recalled.
+	 * 
+	 * @see #getSpots()
+	 * @see #setInitialThreshold(Float)
+	 */
+	public void execInitialThresholding();
+	
+	/**
+	 * Execute the feature thresholding part.
+	 *<p>
+	 * Because of the presence of noise, it is possible that some of the regional maxima found in the segmenting step have
+	 * identified noise, rather than objects of interest. A thresholding operation based on the calculated features in this
+	 * step should allow to rule them out.
+	 * <p>
+	 * This method simply takes all the segmented spots, and store in the field {@link #selectedSpots}
+	 * the spots whose features satisfy all of the thresholds entered with the method {@link #addThreshold(FeatureThreshold)}
+	 * @see #getSelectedSpots()
+	 */
+	public void execThresholding();
+
 
 }
