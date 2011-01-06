@@ -222,6 +222,26 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 		}
 	}
 
+	protected class MouseMotionProxyIfNotConsumed implements MouseMotionListener {
+		protected MouseMotionListener listener;
+
+		public MouseMotionProxyIfNotConsumed(MouseMotionListener listener) {
+			this.listener = listener;
+		}
+
+		@Override
+		public final void mouseDragged(MouseEvent e) {
+			if (!e.isConsumed())
+				listener.mouseDragged(e);
+		}
+
+		@Override
+		public final void mouseMoved(MouseEvent e) {
+			if (!e.isConsumed())
+				listener.mouseMoved(e);
+		}
+	}
+
 	protected class KeyProxy implements KeyListener {
 		protected KeyListener listener;
 
@@ -351,8 +371,7 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 			return;
 		if (mouseProxy != null)
 			canvas.addMouseListener(mouseProxy);
-		if (mouseMotionProxy != null)
-			canvas.addMouseMotionListener(mouseMotionProxy);
+		addMouseMotionListener(canvas);
 		if (mouseWheelProxy != null)
 			canvas.addMouseWheelListener(mouseWheelProxy);
 		addKeyListener(canvas);
@@ -375,6 +394,26 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 					ij = ijKeyProxy;
 			}
 			component.addKeyListener(ij);
+		}
+	}
+
+	protected void addMouseMotionListener(ImageCanvas canvas) {
+		if (mouseMotionProxy != null) {
+			canvas.addMouseMotionListener(mouseMotionProxy);
+			// make sure that IJ gets only unconsumed key events
+			MouseMotionListener listener = null;
+			for (MouseMotionListener listener2 : canvas.getMouseMotionListeners())
+				if (listener2 == canvas ||
+						listener2.getClass().getName().endsWith("MouseMotionProxyIfNotConsumed"))
+					listener = listener2;
+			if (listener == null)
+				listener = new MouseMotionProxyIfNotConsumed(canvas);
+			else {
+				canvas.removeMouseMotionListener(listener);
+				if (listener == canvas)
+					listener = new MouseMotionProxyIfNotConsumed(canvas);
+			}
+			canvas.addMouseMotionListener(listener);
 		}
 	}
 
@@ -440,6 +479,7 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 		if (mouseProxy != null)
 			canvas.removeMouseListener(mouseProxy);
 		if (mouseMotionProxy != null)
+			// we leave the ijMouseMotionProxy in because it might be required by another active custom tool
 			canvas.removeMouseMotionListener(mouseMotionProxy);
 		if (mouseWheelProxy != null)
 			canvas.removeMouseWheelListener(mouseWheelProxy);
