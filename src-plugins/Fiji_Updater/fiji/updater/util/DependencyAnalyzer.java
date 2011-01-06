@@ -107,4 +107,23 @@ public class DependencyAnalyzer {
 				addClassAndInterfaces(allClassNames, handled, iface);
 		} catch (Exception e) { /* ignore */ }
 	}
+
+	public static boolean containsDebugInfo(String filename) throws IOException {
+		if (!filename.endsWith(".jar") || !new File(filename).exists())
+			return false;
+
+		final JarFile jar = new JarFile(filename);
+		filename = Util.stripPrefix(filename, Util.fijiRoot);
+		for (JarEntry file : Collections.list(jar.entries())) {
+			if (!file.getName().endsWith(".class"))
+				continue;
+
+			InputStream input = jar.getInputStream(file);
+			byte[] code = Compressor.readStream(input);
+			ByteCodeAnalyzer analyzer = new ByteCodeAnalyzer(code, true);
+			if (analyzer.containsDebugInfo())
+				return true;
+		}
+		return false;
+	}
 }

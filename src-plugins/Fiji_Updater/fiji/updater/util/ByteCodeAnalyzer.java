@@ -46,6 +46,13 @@ public class ByteCodeAnalyzer implements Iterable<String> {
 		return getString(poolOffsets[index - 1]);
 	}
 
+	public boolean containsDebugInfo() {
+		for (Method method : methods)
+			if (method.containsDebugInfo())
+				return true;
+		return false;
+	}
+
 	int dereferenceOffset(int offset) {
 		int index = getU2(offset);
 		return poolOffsets[index - 1];
@@ -281,6 +288,13 @@ public class ByteCodeAnalyzer implements Iterable<String> {
 		public Method(int offset) {
 			super(offset);
 		}
+
+		public boolean containsDebugInfo() {
+			for (Attribute attribute : attributes)
+				if (attribute.containsDebugInfo())
+					return true;
+			return false;
+		}
 	}
 
 	protected void getAllAttributes() {
@@ -307,14 +321,26 @@ public class ByteCodeAnalyzer implements Iterable<String> {
 			endOffset = offset + 6 + attribute.length;
 		}
 
+		public boolean containsDebugInfo() {
+			if (!getStringConstant(nameIndex).equals("Code"))
+				return false;
+			for (Attribute attribute : getAttributes())
+				if (getStringConstant(attribute.nameIndex).equals("LocalVariableTable"))
+					return true;
+			return false;
+		}
+
+		protected Attribute[] getAttributes() {
+			int offset = endOffset - 6 - attribute.length;
+			int codeLength = (int)getU4(offset + 10);
+			int exceptionTableLength = getU2(offset + 14 + codeLength);
+			int attributesOffset = offset + 14 + codeLength + 2 + 8 * exceptionTableLength;
+			return ByteCodeAnalyzer.this.getAttributes(attributesOffset);
+		}
+
 		public String toString() {
-			if (getStringConstant(nameIndex).equals("Code")) {
-				int offset = endOffset - 6 - attribute.length;
-				int codeLength = (int)getU4(offset + 10);
-				int exceptionTableLength = getU2(offset + 14 + codeLength);
-				int attributesOffset = offset + 14 + codeLength + 2 + 8 * exceptionTableLength;
-				return "Code" + ByteCodeAnalyzer.this.toString(getAttributes(attributesOffset));
-			}
+			if (getStringConstant(nameIndex).equals("Code"))
+				return "Code" + ByteCodeAnalyzer.this.toString(getAttributes());
 			return getStringConstant(nameIndex) + " (length " + attribute.length + ")";
 		}
 	}
