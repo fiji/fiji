@@ -9,8 +9,23 @@ import java.util.Arrays;
 import mpicbg.imglib.cursor.Cursor;
 
 /**
- * A class that emulates cursor behavior and allows constraints
- * to be specified for the value of the current elements.
+ * A class that emulates cursor behavior by walking over two images.
+ * It allows constraints to be defined for the values of the current
+ * elements. These constraints are specified in terms of predicates,
+ * separate for each channel if wanted. Moreover a forwarding  mode
+ * can be set to define how both predicates have to relate to each
+ * other to form a valid location. Available options are "And", "Or",
+ * "Xor" and "None". These logical operations are evaluated on the
+ * results of the predicates at the current location.
+ *
+ * It can happen that the movement on both images gets out of sync.
+ * That happens for instance if the predicates are true for channel one,
+ * false for channel two and the forward mode in "Or". In that case a
+ * valid location is available which is just a part of the entire
+ * set of the valid locations. The retrieved channel types are but now
+ * not from the same spatial location anymore.
+ *
+ * Author: Tom Kazimiers
  */
 public class TwinValueRangeCursor< T extends Type<T> & Comparable<T> > extends MetaCursor<T> {
 	// the predicates for checking if the channel positions are valid
@@ -37,18 +52,19 @@ public class TwinValueRangeCursor< T extends Type<T> & Comparable<T> > extends M
 	 */
 	public TwinValueRangeCursor(Cursor<T> cursor1, Cursor<T> cursor2) {
 		this( cursor1, cursor2,
-				new AlwaysTruePredicate<T>(),
-				new AlwaysTruePredicate<T>() );
+			new AlwaysTruePredicate<T>(),
+			new AlwaysTruePredicate<T>() );
 	}
 
 	/**
 	 * Creates a new TwinValueRangeCursor that limits access to the values.
-	 * It will only iterate over values that are below the passed threshold.
+	 * It will only iterate over values where both predicates relate
+	 * according to the forward mode set.
 	 *
 	 * @param cursor1 The cursor for channel one
 	 * @param cursor2 The cursor for channel two
-	 * @param maxThresholdCh1 A maximum value threshold for channel one
-	 * @param maxThresholdCh2 A maximum value threshold for channel two
+	 * @param predicate1 The predicate for channel one
+	 * @param predicate2 The predicate for channel two
 	 */
 	@SuppressWarnings("unchecked")
 	public TwinValueRangeCursor(Cursor<T> cursor1, Cursor<T> cursor2, Predicate<T> predicate1, Predicate<T> predicate2 ) {
