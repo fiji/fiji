@@ -899,6 +899,32 @@ public class FeatureStack
 	}
 	
 	
+
+
+	public Callable<ImagePlus> getFilter(
+			final ImagePlus originalImage,
+			final ImageProcessor filter,
+			final String title)
+	{
+		return new Callable<ImagePlus>(){
+			public ImagePlus call(){
+
+				final int patchSize = filter.getWidth();
+
+
+				Convolver c = new Convolver();				
+
+				float[] kernel = (float[]) filter.getPixels();
+				ImageProcessor ip = originalImage.getProcessor().duplicate();		
+				c.convolveFloat(ip, kernel, patchSize, patchSize);		
+
+					
+				return new ImagePlus (title, ip);
+			}
+		};
+	}
+	
+	
 	/**
 	 * Get Gabor features (to be submitted in an ExecutorService)
 	 * @param originalImage input image
@@ -1348,6 +1374,53 @@ public class FeatureStack
 		IJ.showStatus("Features stack is updated now!");
 	}
 	
+	
+	/**
+	 * Add features based on a list of filters in a multi-thread fashion
+	 */
+	public void addFeaturesMT(final ImagePlus filterList)
+	{
+		wholeStack = new ImageStack(width, height);
+		//wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
+
+		// Executor service to produce concurrent threads
+		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+		final ArrayList< Future<ImagePlus> > futures = new ArrayList< Future<ImagePlus> >();
+		
+		try
+		{
+			for(int i=1; i<=filterList.getStackSize(); i++)
+				futures.add(exe.submit( getFilter(originalImage, filterList.getImageStack().getProcessor(i), filterList.getImageStack().getSliceLabel(i)) ) );
+			
+			// Wait for the jobs to be done
+			for(Future<ImagePlus> f : futures)
+			{
+				final ImagePlus res = f.get();
+				if(res.getImageStackSize() == 1)
+				{
+					this.wholeStack.addSlice(res.getTitle(), res.getProcessor());
+				}
+				else
+				{
+					final ImageStack slices = res.getImageStack();
+					for(int i = 1; i <= slices.getSize() ; i++)
+						this.wholeStack.addSlice(slices.getSliceLabel(i), slices.getProcessor(i));
+				}
+			}
+			
+		}
+		catch(Exception ex)
+		{
+			IJ.log("Error when updating feature stack.");
+			ex.printStackTrace();
+		}
+		finally{
+			exe.shutdown();
+		}	
+		
+	}
+	
 	/**
 	 * Update features with current list in a multi-thread fashion
 	 */
@@ -1360,7 +1433,7 @@ public class FeatureStack
 		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
 		final ArrayList< Future<ImagePlus> > futures = new ArrayList< Future<ImagePlus> >();
-		int n=0;
+		//int n=0;
 		try{
 			
 			// Anisotropic Diffusion
