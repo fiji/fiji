@@ -21,12 +21,14 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public abstract class AbstractTool implements ImageListener, PlugIn {
+public abstract class AbstractTool implements ImageListener, WindowFocusListener, PlugIn {
 	protected Toolbar toolbar;
 	protected int toolID = -1;
 
@@ -288,6 +290,18 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 			return;
 	}
 
+	@Override
+	public void windowGainedFocus(WindowEvent e) {
+		if (maybeUnregister())
+			return;
+	}
+
+	@Override
+	public void windowLostFocus(WindowEvent e) {
+		if (maybeUnregister())
+			return;
+	}
+
 	public final boolean isThisTool() {
 		boolean active = Toolbar.getToolId() == toolID;
 		if (toolToggleListener != null && active != toolActive)
@@ -308,6 +322,7 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 		if (toolbarMouseListener != null)
 			toolbar.addMouseListener(toolbarMouseListener);
 		ImagePlus.addImageListener(this);
+		IJ.getInstance().addWindowFocusListener(this);
 	}
 
 	protected void registerTool(ImagePlus image) {
@@ -324,8 +339,11 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 			}));
 		if (image.getCanvas() != null)
 			registerTool(image.getCanvas());
-		if (keyProxy != null && image.getWindow() != null)
-			addKeyListener(image.getWindow());
+		if (image.getWindow() != null) {
+			image.getWindow().addWindowFocusListener(this);
+			if (keyProxy != null)
+				addKeyListener(image.getWindow());
+		}
 	}
 
 	protected void registerTool(ImageCanvas canvas) {
@@ -394,6 +412,7 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 		sliceObservers.clear();
 		if (toolbarMouseListener != null)
 			toolbar.removeMouseListener(toolbarMouseListener);
+		IJ.getInstance().removeWindowFocusListener(this);
 	}
 
 	protected void unregisterTool(ImagePlus image) {
@@ -408,8 +427,11 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 		}
 		if (image.getCanvas() != null)
 			unregisterTool(image.getCanvas());
-		if (keyProxy != null && image.getWindow() != null)
-			image.getWindow().removeKeyListener(keyProxy);
+		if (image.getWindow() != null) {
+			image.getWindow().removeWindowFocusListener(this);
+			if (keyProxy != null)
+				image.getWindow().removeKeyListener(keyProxy);
+		}
 	}
 
 	protected void unregisterTool(ImageCanvas canvas) {
