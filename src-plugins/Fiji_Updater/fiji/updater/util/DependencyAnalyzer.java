@@ -108,204 +108,22 @@ public class DependencyAnalyzer {
 		} catch (Exception e) { /* ignore */ }
 	}
 
-	static class ByteCodeAnalyzer implements Iterable<String> {
-		byte[] buffer;
-		int[] poolOffsets;
-		int endOffset;
+	public static boolean containsDebugInfo(String filename) throws IOException {
+		if (!filename.endsWith(".jar") || !new File(filename).exists())
+			return false;
 
-		public ByteCodeAnalyzer(byte[] buffer) {
-			this.buffer = buffer;
-			if ((int)getU4(0) != 0xcafebabe)
-				throw new RuntimeException("No class");
-			getConstantPoolOffsets();
+		final JarFile jar = new JarFile(filename);
+		filename = Util.stripPrefix(filename, Util.fijiRoot);
+		for (JarEntry file : Collections.list(jar.entries())) {
+			if (!file.getName().endsWith(".class"))
+				continue;
+
+			InputStream input = jar.getInputStream(file);
+			byte[] code = Compressor.readStream(input);
+			ByteCodeAnalyzer analyzer = new ByteCodeAnalyzer(code, true);
+			if (analyzer.containsDebugInfo())
+				return true;
 		}
-
-		public String getPathForClass() {
-			int thisOffset = dereferenceOffset(endOffset + 2);
-			if (getU1(thisOffset) != 7)
-				throw new RuntimeException("Parse error");
-			return getString(dereferenceOffset(thisOffset + 1));
-		}
-
-		public String getClassNameConstant(int index) {
-			int offset = poolOffsets[index - 1];
-			if (getU1(offset) != 7)
-				throw new RuntimeException("Constant " + index + " does not refer to a class");
-			return getStringConstant(getU2(offset + 1)).replace('/', '.');
-		}
-
-		public String getStringConstant(int index) {
-			return getString(poolOffsets[index - 1]);
-		}
-
-		int dereferenceOffset(int offset) {
-			int index = getU2(offset);
-			return poolOffsets[index - 1];
-		}
-
-		void getConstantPoolOffsets() {
-			int poolCount = getU2(8) - 1;
-			poolOffsets = new int[poolCount];
-			int offset = 10;
-			for (int i = 0; i < poolCount; i++) {
-				poolOffsets[i] = offset;
-				int tag = getU1(offset);
-				if (tag == 7 || tag == 8)
-					offset += 3;
-				else if (tag == 9 || tag == 10 || tag == 11 ||
-						tag == 3 || tag == 4 ||
-						tag == 12)
-					offset += 5;
-				else if (tag == 5 || tag == 6) {
-					poolOffsets[++i] = offset;
-					offset += 9;
-				}
-				else if (tag == 1)
-					offset += 3 + getU2(offset + 1);
-				else
-					throw new RuntimeException("Unknown tag"
-						+ " " + tag);
-			}
-			endOffset = offset;
-		}
-
-		class ClassNameIterator implements Iterator<String> {
-			int index;
-
-			ClassNameIterator() {
-				index = 0;
-				findNext();
-			}
-
-			void findNext() {
-				while (++index <= poolOffsets.length)
-					if (getU1(poolOffsets[index - 1]) == 7)
-						break;
-			}
-
-			public boolean hasNext() {
-				return index <= poolOffsets.length;
-			}
-
-			public String next() {
-				int current = index;
-				findNext();
-				return getClassNameConstant(current);
-			}
-
-			public void remove() throws UnsupportedOperationException {
-				throw new UnsupportedOperationException();
-			}
-		}
-
-		public Iterator<String> iterator() {
-			return new ClassNameIterator();
-		}
-
-		class InterfaceIterator implements Iterator<String> {
-			int index, count;
-
-			InterfaceIterator() {
-				index = 0;
-				count = getU2(endOffset + 6);
-			}
-
-			public boolean hasNext() {
-				return index < count;
-			}
-
-			public String next() {
-				return getClassNameConstant(getU2(endOffset + 8 + index++ * 2));
-			}
-
-			public void remove() throws UnsupportedOperationException {
-				throw new UnsupportedOperationException();
-			}
-		}
-
-		public Iterable<String> getInterfaces() {
-			return new Iterable<String>() {
-				public Iterator<String> iterator() {
-					return new InterfaceIterator();
-				}
-			};
-		}
-
-		public String getSuperclass() {
-			int index = getU2(endOffset + 4);
-			if (index == 0)
-				return null;
-			return getClassNameConstant(index);
-		}
-
-		public String toString() {
-			String result = "";
-			for (int i = 0; i < poolOffsets.length; i++) {
-				int offset = poolOffsets[i];
-				result += "index #" + i + ": "
-					+ format(offset) + "\n";
-				int tag = getU1(offset);
-				if (tag == 5 || tag == 6)
-					i++;
-			}
-			return result;
-		}
-
-		int getU1(int offset) {
-			return buffer[offset] & 0xff;
-		}
-
-		int getU2(int offset) {
-			return getU1(offset) << 8 | getU1(offset + 1);
-		}
-
-		long getU4(int offset) {
-			return ((long)getU2(offset)) << 16 | getU2(offset + 2);
-		}
-
-		String getString(int offset) {
-			try {
-				return new String(buffer, offset + 3,
-						getU2(offset + 1), "UTF-8");
-			} catch (Exception e) { return ""; }
-		}
-
-		String format(int offset) {
-			int tag = getU1(offset);
-			int u2 = getU2(offset + 1);
-			String result = "offset: " + offset + "(" + tag + "), ";
-			if (tag == 7)
-				return result + "class " + u2;
-			if (tag == 9)
-				return result + "field " + u2 + ", "
-					+ getU2(offset + 3);
-			if (tag == 10)
-				return result + "method " + u2 + ", "
-					+ getU2(offset + 3);
-			if (tag == 11)
-				return result + "interface method " + u2 + ", "
-					+ getU2(offset + 3);
-			if (tag == 8)
-				return result + "string #" + u2;
-			if (tag == 3)
-				return result + "integer " + getU4(offset + 1);
-			if (tag == 4)
-				return result + "float " + getU4(offset + 1);
-			if (tag == 12)
-				return result + "name and type " + u2 + ", "
-					+ getU2(offset + 3);
-			if (tag == 5)
-				return result + "long "
-					+ getU4(offset + 1) + ", "
-					+ getU4(offset + 5);
-			if (tag == 6)
-				return result + "double "
-					+ getU4(offset + 1) + ", "
-					+ getU4(offset + 5);
-			if (tag == 1)
-				return result + "utf8 " + u2
-					+ " " + getString(offset);
-			return result + "unknown";
-		}
+		return false;
 	}
 }

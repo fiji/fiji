@@ -147,6 +147,9 @@ public class Fake {
 		else if (fijiHome.endsWith("jars/"))
 			fijiHome = fijiHome.substring(0,
 					fijiHome.length() - 5);
+		else if (fijiHome.endsWith("plugins/"))
+			fijiHome = fijiHome.substring(0,
+					fijiHome.length() - 8);
 
 		return fijiHome;
 	}
@@ -174,8 +177,13 @@ public class Fake {
 
 	protected static void discoverJavac() throws IOException {
 		String path = fijiHome + "jars/javac.jar";
-		if (!new File(path).exists())
+		if (!new File(path).exists()) {
 			path = fijiHome + "precompiled/javac.jar";
+			if (!new File(path).exists()) {
+				System.err.println("No javac.jar found (looked in " + fijiHome + ")!");
+				return;
+			}
+		}
 		getClassLoader(path);
 	}
 

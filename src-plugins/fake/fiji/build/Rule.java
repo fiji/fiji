@@ -36,7 +36,7 @@ public abstract class Rule {
 	 */
 	protected int upToDateStage;
 
-	Rule(Parser parser, String target, List<String> prerequisites) {
+	public Rule(Parser parser, String target, List<String> prerequisites) {
 		this.parser = parser;
 		this.target = target;
 		this.prerequisites = prerequisites;
@@ -233,6 +233,10 @@ public abstract class Rule {
 		if (!getVarBool("VERBOSE"))
 			return;
 		parser.fake.err.println(message);
+	}
+
+	public String getTarget() {
+		return target;
 	}
 
 	public Rule getRule(String prereq) {

@@ -203,5 +203,3 @@ public class ParallelMaker {
 		return result;
 	}
 }
-
-

@@ -2,6 +2,7 @@ package fiji.scripting.java;
 
 import common.RefreshScripts;
 
+import fiji.build.CompileJar;
 import fiji.build.Fake;
 import fiji.build.FakeException;
 import fiji.build.Parser;
@@ -226,7 +227,7 @@ public class Refresh_Javas extends RefreshScripts {
                         List<String> targets = new ArrayList<String>();
                         for (String key : parser.getAllRules().keySet()) {
 				Rule rule = parser.getRule(key);
-                                if (rule.getClass().getName().endsWith("$CompileJar") &&
+                                if ((rule instanceof CompileJar) &&
 						(relativeSourcePath == null ||
 						 rule.getPrerequisites().contains(relativeSourcePath)))
                                         targets.add(key);

@@ -13,24 +13,30 @@ import ij.plugin.PlugIn;
 import java.awt.Component;
 
 import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public abstract class AbstractTool implements ImageListener, PlugIn {
+public abstract class AbstractTool implements ImageListener, WindowFocusListener, PlugIn {
 	protected Toolbar toolbar;
 	protected int toolID = -1;
 
 	protected MouseProxy mouseProxy;
 	protected MouseWheelProxy mouseWheelProxy;
 	protected MouseMotionProxy mouseMotionProxy;
+	protected KeyProxy keyProxy;
+	protected KeyProxyIfNotConsumed ijKeyProxy;
 	protected SliceListener sliceListener;
 	protected List<SliceObserver> sliceObservers = new ArrayList<SliceObserver>();
 	protected ToolbarMouseAdapter toolbarMouseListener;
@@ -103,6 +109,10 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 			mouseMotionProxy = new MouseMotionProxy((MouseMotionListener)this);
 		if (this instanceof MouseWheelListener)
 			mouseWheelProxy = new MouseWheelProxy((MouseWheelListener)this);
+		if (this instanceof KeyListener) {
+			keyProxy = new KeyProxy((KeyListener)this);
+			ijKeyProxy = new KeyProxyIfNotConsumed(IJ.getInstance());
+		}
 		if (this instanceof SliceListener)
 			sliceListener = (SliceListener)this;
 		if (this instanceof ToolWithOptions)
@@ -212,6 +222,58 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 		}
 	}
 
+	protected class KeyProxy implements KeyListener {
+		protected KeyListener listener;
+
+		public KeyProxy(KeyListener listener) {
+			this.listener = listener;
+		}
+
+		@Override
+		public final void keyPressed(KeyEvent e) {
+			if (isThisTool())
+				listener.keyPressed(e);
+		}
+
+		@Override
+		public final void keyReleased(KeyEvent e) {
+			if (isThisTool())
+				listener.keyReleased(e);
+		}
+
+		@Override
+		public final void keyTyped(KeyEvent e) {
+			if (isThisTool())
+				listener.keyTyped(e);
+		}
+	}
+
+	protected class KeyProxyIfNotConsumed implements KeyListener {
+		protected KeyListener listener;
+
+		public KeyProxyIfNotConsumed(KeyListener listener) {
+			this.listener = listener;
+		}
+
+		@Override
+		public final void keyPressed(KeyEvent e) {
+			if (!e.isConsumed())
+				listener.keyPressed(e);
+		}
+
+		@Override
+		public final void keyReleased(KeyEvent e) {
+			if (!e.isConsumed())
+				listener.keyReleased(e);
+		}
+
+		@Override
+		public final void keyTyped(KeyEvent e) {
+			if (!e.isConsumed())
+				listener.keyTyped(e);
+		}
+	}
+
 	@Override
 	public void imageOpened(ImagePlus image) {
 		registerTool(image);
@@ -224,6 +286,18 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 
 	@Override
 	public void imageUpdated(ImagePlus image) {
+		if (maybeUnregister())
+			return;
+	}
+
+	@Override
+	public void windowGainedFocus(WindowEvent e) {
+		if (maybeUnregister())
+			return;
+	}
+
+	@Override
+	public void windowLostFocus(WindowEvent e) {
 		if (maybeUnregister())
 			return;
 	}
@@ -248,6 +322,7 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 		if (toolbarMouseListener != null)
 			toolbar.addMouseListener(toolbarMouseListener);
 		ImagePlus.addImageListener(this);
+		IJ.getInstance().addWindowFocusListener(this);
 	}
 
 	protected void registerTool(ImagePlus image) {
@@ -262,7 +337,13 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 						sliceListener.sliceChanged(image);
 				}
 			}));
-		registerTool(image.getCanvas());
+		if (image.getCanvas() != null)
+			registerTool(image.getCanvas());
+		if (image.getWindow() != null) {
+			image.getWindow().addWindowFocusListener(this);
+			if (keyProxy != null)
+				addKeyListener(image.getWindow());
+		}
 	}
 
 	protected void registerTool(ImageCanvas canvas) {
@@ -274,6 +355,27 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 			canvas.addMouseMotionListener(mouseMotionProxy);
 		if (mouseWheelProxy != null)
 			canvas.addMouseWheelListener(mouseWheelProxy);
+		addKeyListener(canvas);
+	}
+
+	protected void addKeyListener(Component component) {
+		if (keyProxy != null) {
+			component.addKeyListener(keyProxy);
+			// make sure that IJ gets only unconsumed key events
+			KeyListener ij = null;
+			for (KeyListener listener : component.getKeyListeners())
+				if (listener == ijKeyProxy.listener ||
+						listener.getClass().getName().endsWith("KeyProxyIfNotConsumed"))
+					ij = listener;
+			if (ij == null)
+				ij = ijKeyProxy;
+			else {
+				component.removeKeyListener(ij);
+				if (ij == ijKeyProxy.listener)
+					ij = ijKeyProxy;
+			}
+			component.addKeyListener(ij);
+		}
 	}
 
 	protected boolean maybeUnregister() {
@@ -310,6 +412,7 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 		sliceObservers.clear();
 		if (toolbarMouseListener != null)
 			toolbar.removeMouseListener(toolbarMouseListener);
+		IJ.getInstance().removeWindowFocusListener(this);
 	}
 
 	protected void unregisterTool(ImagePlus image) {
@@ -322,7 +425,13 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 			observer.unregister();
 			iter.remove();
 		}
-		unregisterTool(image.getCanvas());
+		if (image.getCanvas() != null)
+			unregisterTool(image.getCanvas());
+		if (image.getWindow() != null) {
+			image.getWindow().removeWindowFocusListener(this);
+			if (keyProxy != null)
+				image.getWindow().removeKeyListener(keyProxy);
+		}
 	}
 
 	protected void unregisterTool(ImageCanvas canvas) {
@@ -334,6 +443,9 @@ public abstract class AbstractTool implements ImageListener, PlugIn {
 			canvas.removeMouseMotionListener(mouseMotionProxy);
 		if (mouseWheelProxy != null)
 			canvas.removeMouseWheelListener(mouseWheelProxy);
+		if (keyProxy != null)
+			// we leave the ijKeyProxy in because it might be required by another active custom tool
+			canvas.removeKeyListener(keyProxy);
 	}
 
 	/* convenience methods */
