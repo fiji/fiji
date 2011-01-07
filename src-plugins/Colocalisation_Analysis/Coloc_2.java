@@ -63,35 +63,35 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	// the mask corresponding to the ROI
 	protected Image<T> mask = null;
 	// default indices of image, mask and roi choices
-    protected static int index1 = 0;
-    protected static int index2 = 1;
+	protected static int index1 = 0;
+	protected static int index2 = 1;
 	protected static int indexMask = 0;
 	protected static int indexRoi = 0;
 
 	// the images to work on
 	Image<T> img1, img2;
-    // the channels of the images to use
-    int img1Channel = 1, img2Channel = 1;
+	// the channels of the images to use
+	int img1Channel = 1, img2Channel = 1;
 
-    /* The different algorithms this plug-in provides.
-     * If a reference is null it will not get run.
-     */
-    PearsonsCorrelation<T> pearsonsCorrelation = null;
-    LiHistogram2D<T> liHistogramCh1 = null;
-    LiHistogram2D<T> liHistogramCh2 = null;
-    LiICQ<T> liICQ = null;
-    MandersCorrelation<T> mandersCorrelation = null;
-    Histogram2D<T> histogram2D = null;
-    CostesSignificanceTest<T> costesSignificance = null;
+	/* The different algorithms this plug-in provides.
+	* If a reference is null it will not get run.
+	*/
+	PearsonsCorrelation<T> pearsonsCorrelation = null;
+	LiHistogram2D<T> liHistogramCh1 = null;
+	LiHistogram2D<T> liHistogramCh2 = null;
+	LiICQ<T> liICQ = null;
+	MandersCorrelation<T> mandersCorrelation = null;
+	Histogram2D<T> histogram2D = null;
+	CostesSignificanceTest<T> costesSignificance = null;
 
-    /* GUI related members */
+	/* GUI related members */
 	String[] roiLabels =  { "None","Channel 1", "Channel 2",};
 
 	public void run(String arg0) {
-        if (showDialog()) {
-            colocalise(img1, img2);
-        }
-    }
+		if (showDialog()) {
+		colocalise(img1, img2);
+	}
+	}
 
     public boolean showDialog() {
         // get IDs of open windows
@@ -147,12 +147,11 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
         if (gd.wasCanceled())
             return false;
 
-		ImagePlus imp1 = WindowManager.getImage(gd.getNextChoiceIndex() + 1);
-		ImagePlus imp2 = WindowManager.getImage(gd.getNextChoiceIndex() + 1);
-	    // save the ImgLib wrapped images as members
-		img1 = ImagePlusAdapter.wrap(imp1);
-		img2 = ImagePlusAdapter.wrap(imp2);
-
+	ImagePlus imp1 = WindowManager.getImage(gd.getNextChoiceIndex() + 1);
+	ImagePlus imp2 = WindowManager.getImage(gd.getNextChoiceIndex() + 1);
+	// save the ImgLib wrapped images as members
+	img1 = ImagePlusAdapter.wrap(imp1);
+	img2 = ImagePlusAdapter.wrap(imp2);
 
 	// configure ROIs and masks
 	roi = null;
@@ -201,9 +200,9 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
         return true;
     }
 
-    public void colocalise(Image<T> img1, Image<T> img2) {
-	    // indicates if a ROI should be used
-	boolean useRoi = (roi != null);
+	public void colocalise(Image<T> img1, Image<T> img2) {
+		// indicates if a ROI should be used
+		boolean useRoi = (roi != null || mask != null) ;
 
 		// create a new container for the selected images and channels
 		DataContainer<T> container;
