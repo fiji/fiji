@@ -168,4 +168,9 @@ public abstract class ConstraintCursor< T extends Type<T> & Comparable<T> > exte
 		super.reset();
 		hasNextChecked = false;
 	}
+
+	public void setForwardMode(ForwardMode mode) {
+		forwardMode = mode;
+	}
 }
+
