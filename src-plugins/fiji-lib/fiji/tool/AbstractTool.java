@@ -6,6 +6,7 @@ import ij.ImagePlus;
 import ij.WindowManager;
 
 import ij.gui.ImageCanvas;
+import ij.gui.ImageWindow;
 import ij.gui.Toolbar;
 
 import ij.plugin.PlugIn;
@@ -498,6 +499,13 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 	public ImageCanvas getImageCanvas(ComponentEvent e) {
 		Component component = e.getComponent();
 		return component instanceof ImageCanvas ? (ImageCanvas)component : null;
+	}
+
+	public ImageWindow getImageWindow(ComponentEvent e) {
+		for (Component component = e.getComponent(); component != null; component = component.getParent())
+			if (component instanceof ImageWindow)
+				return (ImageWindow)component;
+		return null;
 	}
 
 	public int getOffscreenX(MouseEvent e) {
