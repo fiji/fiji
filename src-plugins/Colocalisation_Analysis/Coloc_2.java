@@ -1,6 +1,7 @@
 import gadgets.DataContainer;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.process.ImageProcessor;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.Roi;
@@ -54,11 +55,13 @@ import algorithms.PearsonsCorrelation;
 public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
 	// Allowed types of ROI configuration
-	protected enum RoiConfiguration {None, Img1, Img2};
+	protected enum RoiConfiguration {None, Img1, Img2, Mask};
 	// the ROI configuration to use
-	RoiConfiguration roiConfig = RoiConfiguration.None;
-    // the ROI to use (null if none)
-    Rectangle roi = null;
+	RoiConfiguration roiConfig = RoiConfiguration.Img1;
+	// the ROI to use (null if none)
+	Rectangle roi = null;
+	// the mask corresponding to the ROI
+	protected Image<T> mask = null;
 	// default indices of image, mask and roi choices
     protected static int index1 = 0;
     protected static int index2 = 1;
@@ -150,17 +153,34 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		img1 = ImagePlusAdapter.wrap(imp1);
 		img2 = ImagePlusAdapter.wrap(imp2);
 
-		// configure the ROI
-		Rectangle roi = null;
-		/* check if we have a valid ROI for the selected configuration
-		 * and if so, get the ROI's bounds. Currently, only rectangular
-		 * ROIs are supported.
-		 */
-		if (roiConfig == RoiConfiguration.Img1 && hasValidRoi(imp1)) {
-			roi = imp1.getRoi().getBounds();
-		} else if (roiConfig == RoiConfiguration.Img2 && hasValidRoi(imp2)) {
-			roi = imp2.getRoi().getBounds();
+
+	// configure ROIs and masks
+	roi = null;
+	mask = null;
+	/* check if we have a valid ROI for the selected configuration
+	 * and if so, get the ROI's bounds. Alternatively, a mask can
+	 * be selected (that is basically all, but a rectangle).
+	 */
+	if (roiConfig == RoiConfiguration.Img1 && hasValidRoi(imp1)) {
+		roi = imp1.getRoi().getBounds();
+		ImageProcessor ip = imp1.getMask();
+		// check if we got an irregular ROI
+		if (ip != null) {
+			ImagePlus maskImp = new ImagePlus("Mask", ip);
+			mask = ImagePlusAdapter.wrap( maskImp );
 		}
+	} else if (roiConfig == RoiConfiguration.Img2 && hasValidRoi(imp2)) {
+		roi = imp2.getRoi().getBounds();
+		ImageProcessor ip = imp2.getMask();
+		// check if we got an irregular ROI
+		if (ip != null) {
+			ImagePlus maskImp = new ImagePlus("Mask", ip);
+			mask = ImagePlusAdapter.wrap( maskImp );
+		}
+	} else if (roiConfig == RoiConfiguration.Mask) {
+		// see which image we should use as mask
+		// TODO
+	}
 
         // Parse algorithm options
         pearsonsCorrelation = new PearsonsCorrelation<T>(PearsonsCorrelation.Implementation.Fast);
@@ -187,13 +207,20 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
 		// create a new container for the selected images and channels
 		DataContainer<T> container;
-		if (useRoi) {
+		if (mask != null) {
+			// if we have a mask, a irregular ROI or a mask is in use
+			container = new DataContainer<T>(img1, img2,
+					img1Channel, img2Channel, mask);
+		} else if (roi != null) {
+			// if we have no musk, but a ROI, a regular ROI is in use
 			int roiOffset[] = new int[] {roi.x, roi.y};
 			int roiSize[] = new int[] {roi.width, roi.height};
-			container = new DataContainer<T>(img1, img2, img1Channel, img2Channel,
-					roiOffset, roiSize);
+			container = new DataContainer<T>(img1, img2,
+					img1Channel, img2Channel, roiOffset, roiSize);
 		} else {
-			container = new DataContainer<T>(img1, img2, img1Channel, img2Channel);
+			// no mask and no ROI is present
+			container = new DataContainer<T>(img1, img2,
+					img1Channel, img2Channel);
 		}
 
 		// create a results handler
