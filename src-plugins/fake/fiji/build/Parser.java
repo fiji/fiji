@@ -564,11 +564,12 @@ public class Parser {
 			return;
 		}
 
+		if (isVarName(name, "CLASSPATH") || isVarName(name, "TOOLSPATH") || isVarName(name, "TOOLS_JAR")  || isVarName(name, "FIJI_JAVA_HOME"))
+			value = fake.prefixPaths(cwd, value, true);
+
 		value = expandVariables(value, paren < 0 ? null :
 			key.substring(paren + 1, key.length() - 1));
 
-		if (isVarName(name, "CLASSPATH") || isVarName(name, "TOOLSPATH") || isVarName(name, "TOOLS_JAR")  || isVarName(name, "JAVA_HOME"))
-			value = fake.prefixPaths(cwd, value, true);
 
 		if (value.indexOf('*') >= 0 ||
 				value.indexOf('?') >= 0) {
