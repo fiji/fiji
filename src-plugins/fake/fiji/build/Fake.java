@@ -1118,9 +1118,9 @@ public class Fake {
 				if (verbose)
 					parser.setVariable("VERBOSE", "true");
 				if (toolsPath != null)
-					parser.setVariable("TOOLSPATH", toolsPath);
+					parser.variables.put("TOOLSPATH", parser.expandVariables(toolsPath));
 				if (classPath != null)
-					parser.setVariable("CLASSPATH", classPath);
+					parser.variables.put("CLASSPATH", parser.expandVariables(classPath));
 				if (buildDir != null)
 					parser.setVariable("BUILDDIR", buildDir.getAbsolutePath());
 				parser.cwd = new File(cwd, directory);
