@@ -660,11 +660,15 @@ public class TextEditor extends JFrame implements ActionListener,
 				editorPane != null && editorPane.file != null ?
 				editorPane.file.getParent() :
 				System.getProperty("fiji.dir");
-			String path = openWithDialog("Open...", defaultDir, new String[] {
+			final String path = openWithDialog("Open...", defaultDir, new String[] {
 				".class", ".jar"
 			}, false);
 			if (path != null)
-				open(path);
+				new Thread() {
+					public void run() {
+						open(path);
+					}
+				}.start();
 			return;
 		}
 		else if (source == save)
