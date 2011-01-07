@@ -226,9 +226,6 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
     }
 
 	public void colocalise(Image<T> img1, Image<T> img2) {
-		// indicates if a ROI should be used
-		boolean useRoi = (roi != null || mask != null) ;
-
 		// create a new container for the selected images and channels
 		DataContainer<T> container;
 		if (mask != null) {
