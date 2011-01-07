@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import mpicbg.imglib.container.Container;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.Iterable;
+import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.Type;
 
 /**
@@ -14,7 +16,7 @@ import mpicbg.imglib.type.Type;
  *
  * @author Dan White & Tom Kazimiers
  */
-public class MetaCursor< T extends Type< T > > implements Iterable
+public abstract class MetaCursor< T extends Type< T > > implements Cursor<T>
 {
 	// the list of cursors that is driven by this class
 	List<Cursor<T>> cursors = new ArrayList<Cursor<T>>();
@@ -70,10 +72,37 @@ public class MetaCursor< T extends Type< T > > implements Iterable
 			c.close();
 	}
 
+	@Override
+	public void setDebug( final boolean debug ) {
+		for(Cursor<T> c : cursors)
+			c.setDebug( debug );
+	}
+
+	@Override
+	public boolean isActive() {
+		boolean isActive = true;
+		for(Cursor<T> c : cursors)
+			isActive &= c.isActive();
+
+		return isActive;
+	}
+
+	@Override
+	public void remove()
+	{
+		for(Cursor<T> c : cursors)
+			c.remove();
+	}
+
 	/**
 	 * Gets the Type of the specified cursor.
 	 */
 	public T getType(int index) {
 		return cursors.get(index).getType();
+	}
+
+	public T next() {
+		fwd();
+		return getType();
 	}
 }
