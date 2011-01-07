@@ -678,7 +678,7 @@ public class Parser {
 		String res = null;
 		if ("true".equals(variables.get("ENVOVERRIDES("
 						+ key + ")")))
-			res = fake.stripFijiHome(System.getenv(key));
+			res = System.getenv(key);
 		key = key.toUpperCase();
 		if (subkey != null && res == null)
 			res = (String)variables.get(key
