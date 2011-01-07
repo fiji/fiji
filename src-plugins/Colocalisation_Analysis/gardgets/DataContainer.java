@@ -63,6 +63,24 @@ public class DataContainer<T extends RealType<T>> {
 	/**
 	 * Creates a new {@link DataContainer} for a specific set of image and
 	 * channel combination. It will give access to the image according to
+	 * the masked passed. Default thresholds, min, max and mean will be set
+	 * according to the ROI as well.
+	 *
+	 * @param src1 The channel one image source
+	 * @param src2 The channel two image source
+	 * @param ch1 The channel one image channel
+	 * @param ch2 The channel two image channel
+	 * @param mask The mask to use for the images
+	 */
+	public DataContainer(Image<T> src1, Image<T> src2, int ch1, int ch2,
+			final Image<T> mask) {
+		this(new MaskedImage<T>(src1, mask), new MaskedImage<T>(src2, mask),
+			 ch1, ch2);
+	}
+
+	/**
+	 * Creates a new {@link DataContainer} for a specific set of image and
+	 * channel combination. It will give access to the image according to
 	 * the region of interest (ROI) passed. Default thresholds, min, max and
 	 * mean will be set according to the ROI as well.
 	 *
@@ -75,8 +93,7 @@ public class DataContainer<T extends RealType<T>> {
 	 */
 	public DataContainer(Image<T> src1, Image<T> src2, int ch1, int ch2,
 			final int[] offset, final int size[]) {
-		this(new RoiImage<T>(src1, offset, size),
-			 new RoiImage<T>(src2, offset, size),
+		this(new RoiImage<T>(src1, offset, size), new RoiImage<T>(src2, offset, size),
 			 ch1, ch2);
 	}
 
