@@ -108,17 +108,23 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
             = new GenericDialog("Coloc 2");
 
 		String[] titles = new String[windowList.length];
-		String[] chooseMask=  new String[windowList.length + 1];
-		chooseMask[0]="<None>";
+		/* the masks and rois array needs three more entries than
+		 * windows to contain "none", "roi ch 1" and "roi ch 2"
+		 */
+		String[] roisAndMasks= new String[windowList.length + 3];
+		roisAndMasks[0]="<None>";
+		roisAndMasks[1]="ROI in channel 1";
+		roisAndMasks[2]="ROI in channel 2";
 
+		// go through all open images and add them to GUI
 		for (int i=0; i < windowList.length; i++) {
 			ImagePlus imp = WindowManager.getImage(windowList[i]);
-            if (imp != null) {
-                titles[i] = imp.getTitle();
-                chooseMask[i + 1] =imp.getTitle();
-            } else {
-                titles[i] = "";
-            }
+			if (imp != null) {
+				titles[i] = imp.getTitle();
+				roisAndMasks[i + 3] =imp.getTitle();
+			} else {
+				titles[i] = "";
+			}
 		}
 
         /* make sure the default indices are no bigger
@@ -126,10 +132,11 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
          */
         index1 = clip( index1, 0, titles.length );
         index2 = clip( index2, 0, titles.length );
-        indexMask = clip( indexMask, 0, titles.length);
+        indexMask = clip( indexMask, 0, roisAndMasks.length);
 
 		gd.addChoice("Channel_1", titles, titles[index1]);
 		gd.addChoice("Channel_2", titles, titles[index2]);
+        gd.addChoice("ROI or mask", roisAndMasks, roisAndMasks[indexMask]);
 		//gd.addChoice("Use ROI", roiLabels, roiLabels[indexRoi]);
 
 		// Add algorithm options
@@ -149,6 +156,23 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
 	ImagePlus imp1 = WindowManager.getImage(gd.getNextChoiceIndex() + 1);
 	ImagePlus imp2 = WindowManager.getImage(gd.getNextChoiceIndex() + 1);
+    // get information about the mask/roi to use
+    indexMask = gd.getNextChoiceIndex();
+    if (indexMask == 0)
+        roiConfig = RoiConfiguration.None;
+    else if (indexMask == 1)
+        roiConfig = RoiConfiguration.Img1;
+    else if (indexMask == 2)
+        roiConfig = RoiConfiguration.Img2;
+    else {
+        roiConfig = RoiConfiguration.Mask;
+        /* Make indexMask the reference to the mask image to use.
+         * To do this we reduce it by three for the first three
+         * entries in the combo box.
+         */
+        indexMask = indexMask - 3;
+    }
+
 	// save the ImgLib wrapped images as members
 	img1 = ImagePlusAdapter.wrap(imp1);
 	img2 = ImagePlusAdapter.wrap(imp2);
@@ -177,8 +201,9 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			mask = ImagePlusAdapter.wrap( maskImp );
 		}
 	} else if (roiConfig == RoiConfiguration.Mask) {
-		// see which image we should use as mask
-		// TODO
+		// get the  which image we should use as mask
+		ImagePlus maskImp = WindowManager.getImage(indexMask);
+		mask = ImagePlusAdapter.wrap( maskImp );
 	}
 
         // Parse algorithm options
