@@ -18,8 +18,10 @@ import mpicbg.imglib.type.Type;
  * with that class yet.
  */
 public class RoiImage<T extends Type<T>> extends Image<T> {
-
+	// location and dimensionality
 	final int[] offset, size;
+	// total number of pixels
+	final int numPixels;
 
 	/**
 	 * Creates a new RoiImage to decorate the passed image. Cursors
@@ -34,6 +36,34 @@ public class RoiImage<T extends Type<T>> extends Image<T> {
 
 		this.offset = offset;
 		this.size = size;
+
+		int count = 1;
+		for (int d=0; d < getNumDimensions(); d++) {
+			count *= size[d];
+		}
+		numPixels = count;
+	}
+
+	@Override
+	public int[] getDimensions() {
+		return size.clone();
+	}
+
+	@Override
+	public void getDimensions( int[] position ) {
+		for (int d=0; d < getNumDimensions(); d++) {
+			position[d] = size[d];
+		}
+	}
+
+	@Override
+	public int getDimension( int dim ) {
+		return size[dim];
+	}
+
+	@Override
+	public int getNumPixels() {
+		return numPixels;
 	}
 
 	@Override
