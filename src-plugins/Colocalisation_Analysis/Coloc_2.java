@@ -89,23 +89,23 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
 	public void run(String arg0) {
 		if (showDialog()) {
-		colocalise(img1, img2);
-	}
+			colocalise(img1, img2);
+		}
 	}
 
-    public boolean showDialog() {
-        // get IDs of open windows
-        int[] windowList = WindowManager.getIDList();
-        // if theer are no windows open, cancel
-        if (windowList == null) {
-            IJ.noImage();
-            return false;
-        }
-        /* create a new generic dialog for the
-         * display of various options.
-         */
-        final GenericDialog gd
-            = new GenericDialog("Coloc 2");
+	public boolean showDialog() {
+		// get IDs of open windows
+		int[] windowList = WindowManager.getIDList();
+		// if theer are no windows open, cancel
+		if (windowList == null) {
+			IJ.noImage();
+			return false;
+		}
+		/* create a new generic dialog for the
+		 * display of various options.
+		 */
+		final GenericDialog gd
+			= new GenericDialog("Coloc 2");
 
 		String[] titles = new String[windowList.length];
 		/* the masks and rois array needs three more entries than
@@ -127,16 +127,16 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			}
 		}
 
-        /* make sure the default indices are no bigger
-         * than the amount of images we have
-         */
-        index1 = clip( index1, 0, titles.length );
-        index2 = clip( index2, 0, titles.length );
-        indexMask = clip( indexMask, 0, roisAndMasks.length);
+		/* make sure the default indices are no bigger
+		 * than the amount of images we have
+		 */
+		index1 = clip( index1, 0, titles.length );
+		index2 = clip( index2, 0, titles.length );
+		indexMask = clip( indexMask, 0, roisAndMasks.length);
 
 		gd.addChoice("Channel_1", titles, titles[index1]);
 		gd.addChoice("Channel_2", titles, titles[index2]);
-        gd.addChoice("ROI or mask", roisAndMasks, roisAndMasks[indexMask]);
+		gd.addChoice("ROI or mask", roisAndMasks, roisAndMasks[indexMask]);
 		//gd.addChoice("Use ROI", roiLabels, roiLabels[indexRoi]);
 
 		// Add algorithm options
@@ -148,82 +148,82 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		gd.addCheckbox("2D Instensity Histogram", true);
 		gd.addCheckbox("Costes' Significance Test", true);
 
-        // show the dialog, finally
-        gd.showDialog();
-        // do nothing if dialog has been canceled
-        if (gd.wasCanceled())
-            return false;
+		// show the dialog, finally
+		gd.showDialog();
+		// do nothing if dialog has been canceled
+		if (gd.wasCanceled())
+			return false;
 
-	ImagePlus imp1 = WindowManager.getImage(gd.getNextChoiceIndex() + 1);
-	ImagePlus imp2 = WindowManager.getImage(gd.getNextChoiceIndex() + 1);
-    // get information about the mask/roi to use
-    indexMask = gd.getNextChoiceIndex();
-    if (indexMask == 0)
-        roiConfig = RoiConfiguration.None;
-    else if (indexMask == 1)
-        roiConfig = RoiConfiguration.Img1;
-    else if (indexMask == 2)
-        roiConfig = RoiConfiguration.Img2;
-    else {
-        roiConfig = RoiConfiguration.Mask;
-        /* Make indexMask the reference to the mask image to use.
-         * To do this we reduce it by three for the first three
-         * entries in the combo box.
-         */
-        indexMask = indexMask - 3;
-    }
+		ImagePlus imp1 = WindowManager.getImage(gd.getNextChoiceIndex() + 1);
+		ImagePlus imp2 = WindowManager.getImage(gd.getNextChoiceIndex() + 1);
+		// get information about the mask/roi to use
+		indexMask = gd.getNextChoiceIndex();
+		if (indexMask == 0)
+			roiConfig = RoiConfiguration.None;
+		else if (indexMask == 1)
+			roiConfig = RoiConfiguration.Img1;
+		else if (indexMask == 2)
+			roiConfig = RoiConfiguration.Img2;
+		else {
+			roiConfig = RoiConfiguration.Mask;
+			/* Make indexMask the reference to the mask image to use.
+			 * To do this we reduce it by three for the first three
+			 * entries in the combo box.
+			 */
+			indexMask = indexMask - 3;
+		}
 
-	// save the ImgLib wrapped images as members
-	img1 = ImagePlusAdapter.wrap(imp1);
-	img2 = ImagePlusAdapter.wrap(imp2);
+		// save the ImgLib wrapped images as members
+		img1 = ImagePlusAdapter.wrap(imp1);
+		img2 = ImagePlusAdapter.wrap(imp2);
 
-	// configure ROIs and masks
-	roi = null;
-	mask = null;
-	/* check if we have a valid ROI for the selected configuration
-	 * and if so, get the ROI's bounds. Alternatively, a mask can
-	 * be selected (that is basically all, but a rectangle).
-	 */
-	if (roiConfig == RoiConfiguration.Img1 && hasValidRoi(imp1)) {
-		roi = imp1.getRoi().getBounds();
-		ImageProcessor ip = imp1.getMask();
-		// check if we got an irregular ROI
-		if (ip != null) {
-			ImagePlus maskImp = new ImagePlus("Mask", ip);
+		// configure ROIs and masks
+		roi = null;
+		mask = null;
+		/* check if we have a valid ROI for the selected configuration
+		 * and if so, get the ROI's bounds. Alternatively, a mask can
+		 * be selected (that is basically all, but a rectangle).
+		 */
+		if (roiConfig == RoiConfiguration.Img1 && hasValidRoi(imp1)) {
+			roi = imp1.getRoi().getBounds();
+			ImageProcessor ip = imp1.getMask();
+			// check if we got an irregular ROI
+			if (ip != null) {
+				ImagePlus maskImp = new ImagePlus("Mask", ip);
+				mask = ImagePlusAdapter.wrap( maskImp );
+			}
+		} else if (roiConfig == RoiConfiguration.Img2 && hasValidRoi(imp2)) {
+			roi = imp2.getRoi().getBounds();
+			ImageProcessor ip = imp2.getMask();
+			// check if we got an irregular ROI
+			if (ip != null) {
+				ImagePlus maskImp = new ImagePlus("Mask", ip);
+				mask = ImagePlusAdapter.wrap( maskImp );
+			}
+		} else if (roiConfig == RoiConfiguration.Mask) {
+			// get the  which image we should use as mask
+			ImagePlus maskImp = WindowManager.getImage(indexMask);
 			mask = ImagePlusAdapter.wrap( maskImp );
 		}
-	} else if (roiConfig == RoiConfiguration.Img2 && hasValidRoi(imp2)) {
-		roi = imp2.getRoi().getBounds();
-		ImageProcessor ip = imp2.getMask();
-		// check if we got an irregular ROI
-		if (ip != null) {
-			ImagePlus maskImp = new ImagePlus("Mask", ip);
-			mask = ImagePlusAdapter.wrap( maskImp );
+
+		// Parse algorithm options
+		pearsonsCorrelation = new PearsonsCorrelation<T>(PearsonsCorrelation.Implementation.Fast);
+		if (gd.getNextBoolean())
+				liHistogramCh1 = new LiHistogram2D<T>("Li - Ch1", true);
+		if (gd.getNextBoolean())
+				liHistogramCh2 = new LiHistogram2D<T>("Li - Ch2", false);
+		if (gd.getNextBoolean())
+				liICQ = new LiICQ<T>();
+		if (gd.getNextBoolean())
+				mandersCorrelation = new MandersCorrelation<T>();
+		if (gd.getNextBoolean())
+				histogram2D = new Histogram2D<T>("2D intensity histogram");
+		if (gd.getNextBoolean()) {
+				costesSignificance = new CostesSignificanceTest<T>(pearsonsCorrelation, 1, 10);
 		}
-	} else if (roiConfig == RoiConfiguration.Mask) {
-		// get the  which image we should use as mask
-		ImagePlus maskImp = WindowManager.getImage(indexMask);
-		mask = ImagePlusAdapter.wrap( maskImp );
+
+		return true;
 	}
-
-        // Parse algorithm options
-        pearsonsCorrelation = new PearsonsCorrelation<T>(PearsonsCorrelation.Implementation.Fast);
-        if (gd.getNextBoolean())
-			liHistogramCh1 = new LiHistogram2D<T>("Li - Ch1", true);
-        if (gd.getNextBoolean())
-			liHistogramCh2 = new LiHistogram2D<T>("Li - Ch2", false);
-        if (gd.getNextBoolean())
-			liICQ = new LiICQ<T>();
-        if (gd.getNextBoolean())
-			mandersCorrelation = new MandersCorrelation<T>();
-        if (gd.getNextBoolean())
-			histogram2D = new Histogram2D<T>("2D intensity histogram");
-        if (gd.getNextBoolean()) {
-			costesSignificance = new CostesSignificanceTest<T>(pearsonsCorrelation, 1, 10);
-        }
-
-        return true;
-    }
 
 	public void colocalise(Image<T> img1, Image<T> img2) {
 		// create a new container for the selected images and channels
@@ -260,15 +260,15 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			new AutoThresholdRegression<T>(pearsonsCorrelation)) );
 
 		// add user selected algorithms
-	    addIfValid(pearsonsCorrelation, userSelectedJobs);
-	    addIfValid(liHistogramCh1, userSelectedJobs);
-	    addIfValid(liHistogramCh2, userSelectedJobs);
-	    addIfValid(liICQ, userSelectedJobs);
-	    addIfValid(mandersCorrelation, userSelectedJobs);
-	    addIfValid(histogram2D, userSelectedJobs);
-	    addIfValid(costesSignificance, userSelectedJobs);
+		addIfValid(pearsonsCorrelation, userSelectedJobs);
+		addIfValid(liHistogramCh1, userSelectedJobs);
+		addIfValid(liHistogramCh2, userSelectedJobs);
+		addIfValid(liICQ, userSelectedJobs);
+		addIfValid(mandersCorrelation, userSelectedJobs);
+		addIfValid(histogram2D, userSelectedJobs);
+		addIfValid(costesSignificance, userSelectedJobs);
 
-        // execute all algorithms
+		// execute all algorithms
 		for (Algorithm<T> a : userSelectedJobs){
 			try {
 				a.execute(container);
@@ -293,13 +293,13 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			r.process();
     }
 
-    /**
-     * Adds the provided Algorithm to the list if it is not null.
-     */
-    protected void addIfValid(Algorithm<T> a, List<Algorithm<T>> list) {
-        if (a != null)
-            list.add(a);
-    }
+	/**
+	* Adds the provided Algorithm to the list if it is not null.
+	*/
+	protected void addIfValid(Algorithm<T> a, List<Algorithm<T>> list) {
+		if (a != null)
+			list.add(a);
+	}
 
 	/**
 	 * Returns true if a custom ROI has been selected, i.e if the current
@@ -318,10 +318,10 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 					|| theROI.width != imp.getWidth());
 	}
 
-    /**
-     * Clips a value to the specified bounds.
-     */
-    protected static int clip(int val, int min, int max) {
-        return Math.max( Math.min( val, max ), min );
-    }
+	/**
+	* Clips a value to the specified bounds.
+	*/
+	protected static int clip(int val, int min, int max) {
+		return Math.max( Math.min( val, max ), min );
+	}
 }
