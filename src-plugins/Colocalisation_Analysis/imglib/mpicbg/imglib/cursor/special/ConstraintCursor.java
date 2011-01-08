@@ -32,22 +32,22 @@ import mpicbg.imglib.cursor.Cursor;
  */
 public abstract class ConstraintCursor< T extends Type<T> & Comparable<T> > extends MetaCursor<T> {
 	// the predicates for checking if the channel positions are valid
-	Predicate<T> predicate1, predicate2;
+	protected Predicate<T> predicate1, predicate2;
 	// the cursors to simplify access within class
-	Cursor<T> cursor1, cursor2;
+	protected Cursor<T> cursor1, cursor2;
 	/* Available forwarding modes for the predicates:
 	 * And: Both predicates need to be true
 	 * Or: One and/or the other has to be true
 	 * Xor: One or (exclusive) must be true
 	 * None: Both need to be false
 	 */
-	enum ForwardMode { And, Or, Xor, None }
+	public enum ForwardMode { And, Or, Xor, None }
 	// the selected forward mode, defaulting to "Or"
-	ForwardMode forwardMode = ForwardMode.Or;
+	protected ForwardMode forwardMode = ForwardMode.Or;
 	// indicate if a check for a next element has already be performed
-	boolean hasNextChecked = false;
+	protected boolean hasNextChecked = false;
 	// the latest types found for valid elements
-	T cachedType1 = null, cachedType2 = null;
+	protected T cachedType1 = null, cachedType2 = null;
 
 	/**
 	 * Creates a ConstraintCursor without any restrictions in values.
