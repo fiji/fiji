@@ -48,7 +48,7 @@ public class DoubleArray extends ArrayBase
 
     // Get value from the collection.
     public double get(int index) {
-        if (index < countPresent) {
+        if (index < actualSize) {
             return baseArray[index];
         } else {
             throw new ArrayIndexOutOfBoundsException("Invalid index value");
@@ -57,7 +57,7 @@ public class DoubleArray extends ArrayBase
 
     // Set the value at a position in the collection.
     public void set(int index, double value) {
-        if (index < countPresent) {
+        if (index < actualSize) {
             baseArray[index] = value;
         } else {
             throw new ArrayIndexOutOfBoundsException("Invalid index value");
@@ -65,7 +65,7 @@ public class DoubleArray extends ArrayBase
     }
 
     public boolean contains(double value) {
-	    for (int i = 0; i < countPresent; i++)
+	    for (int i = 0; i < actualSize; i++)
 		    if (baseArray[i] == value)
 			    return true;
 	    return false;

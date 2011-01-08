@@ -48,7 +48,7 @@ public class IntArray extends ArrayBase
 
     // Get value from the collection.
     public int get(int index) {
-        if (index < countPresent) {
+        if (index < actualSize) {
             return baseArray[index];
         } else {
             throw new ArrayIndexOutOfBoundsException("Invalid index value");
@@ -57,7 +57,7 @@ public class IntArray extends ArrayBase
 
     // Set the value at a position in the collection.
     public void set(int index, int value) {
-        if (index < countPresent) {
+        if (index < actualSize) {
             baseArray[index] = value;
         } else {
             throw new ArrayIndexOutOfBoundsException("Invalid index value");
@@ -65,7 +65,7 @@ public class IntArray extends ArrayBase
     }
 
     public boolean contains(int value) {
-	    for (int i = 0; i < countPresent; i++)
+	    for (int i = 0; i < actualSize; i++)
 		    if (baseArray[i] == value)
 			    return true;
 	    return false;
