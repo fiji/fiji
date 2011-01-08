@@ -6,6 +6,7 @@ import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.cursor.LocalizablePlaneCursor;
 import mpicbg.imglib.cursor.special.RegionOfInterestCursor;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.interpolation.Interpolator;
 import mpicbg.imglib.interpolation.InterpolatorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
@@ -30,6 +31,8 @@ public class MaskedImage<T extends NumericType<T>> extends Image<T> {
 	final Image<T> mask;
 	// the offValue of the image (see MaskCursor)
 	T offValue;
+	// a factory to create MaskImage objects
+	MaskedImageFactory<T> maskedImageFactory;
 
 	/**
 	 * Creates a new MaskedImage to decorate the passed image. Cursors
@@ -46,6 +49,13 @@ public class MaskedImage<T extends NumericType<T>> extends Image<T> {
 		// create the offValue of the mask
 		offValue = mask.createType();
 		offValue.setZero();
+		// create a new factory
+		maskedImageFactory = new MaskedImageFactory(mask, img.createType(), img.getContainerFactory());
+	}
+
+	@Override
+	public ImageFactory<T> getImageFactory() {
+		return maskedImageFactory;
 	}
 
 	@Override
