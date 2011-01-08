@@ -1,6 +1,6 @@
 package fiji.util;
 
-public class IntArray extends ArrayBase
+public class IntArray extends ArrayBase<int[]>
 {
 	protected int[] baseArray;
 
@@ -13,24 +13,19 @@ public class IntArray extends ArrayBase
 	}
 
 	public IntArray() {
-	super(0, Integer.TYPE);
+		super(0, Integer.TYPE);
 	}
 
 	// Implementation of callout to get the underlying array.
-	protected Object getArray() {
+	@Override
+	protected int[] getArray() {
 		return baseArray;
 	}
 
 	// Implementation of callout to set the underlying array.
-	protected void setArray(Object array) {
-		baseArray = (int[]) array;
-	}
-
-	// Implementation of callout to initialize a portion of the array.
-	protected void discardValues(int from, int to) {
-		for (int i = from; i < to; i++) {
-			baseArray[i] = 0;
-		}
+	@Override
+	protected void setArray(int[] array) {
+		baseArray = array;
 	}
 
 	// Append a value to the collection.
@@ -41,27 +36,23 @@ public class IntArray extends ArrayBase
 	}
 
 	// Insert a value into the collection.
-	public void add(int index, int value) {
+	public void insert(int index, int value) {
 		makeInsertSpace(index);
 		baseArray[index] = value;
 	}
 
 	// Get value from the collection.
 	public int get(int index) {
-		if (index < actualSize) {
-			return baseArray[index];
-		} else {
-			throw new ArrayIndexOutOfBoundsException("Invalid index value");
-		}
+		if (index < 0 || index >= actualSize)
+			throw new ArrayIndexOutOfBoundsException("Invalid index value: " + index);
+		return baseArray[index];
 	}
 
 	// Set the value at a position in the collection.
 	public void set(int index, int value) {
-		if (index < actualSize) {
-			baseArray[index] = value;
-		} else {
+		if (index < 0 || index >= actualSize)
 			throw new ArrayIndexOutOfBoundsException("Invalid index value");
-		}
+		baseArray[index] = value;
 	}
 
 	public boolean contains(int value) {
@@ -71,17 +62,21 @@ public class IntArray extends ArrayBase
 		return false;
 	}
 
-	// Convert to an array.
-	public int[] buildArray() {
-		return (int[]) buildArray(Integer.TYPE);
+	public String toString() {
+		StringBuilder result = new StringBuilder();
+		String delimiter = "";
+		for (int i = 0; i < actualSize; i++) {
+			result.append(delimiter).append(baseArray[i]);
+			delimiter = ", ";
+		}
+		return "[ " + result.toString() + " ]";
 	}
 
 	public static void main(String[] args) {
 		IntArray array = new IntArray();
-		array.add(10, 1);
-		for (int value : array.buildArray())
-			System.out.println("" + value);
+		array.ensureCapacity(5);
+		array.insert(2, 1);
+		array.insert(6, 2);
+		System.out.println(array.toString());
 	}
 }
-
-

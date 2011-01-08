@@ -2,14 +2,16 @@ package fiji.util;
 
 import java.lang.reflect.Array;
 
-public abstract class ArrayBase
+public abstract class ArrayBase<ArrayType>
 {
+	protected Class type;
 	protected int actualSize;
 	protected int allocated;
 	protected int maximumGrowth;
 
 	public ArrayBase(int size, int growth, Class type) {
-		Object array = Array.newInstance(type, size);
+		this.type = type;
+		ArrayType array = (ArrayType)Array.newInstance(type, size);
 		allocated = size;
 		maximumGrowth = growth;
 		setArray(array);
@@ -18,93 +20,75 @@ public abstract class ArrayBase
 	public ArrayBase(int size, Class type) {
 		this(size, Integer.MAX_VALUE, type);
 	}
-	protected abstract Object getArray();
+	protected abstract ArrayType getArray();
 
-	protected abstract void setArray(Object array);
+	protected abstract void setArray(ArrayType array);
 
-	protected abstract void discardValues(int from, int to);
-
-	// Implementation method to increase the underlying array size.
-	protected void growArray(int required) {
-		Object base = getArray();
-		int size = Math.max(required,
-			allocated + Math.min(allocated, maximumGrowth));
-		Class type = base.getClass().getComponentType();
-		Object grown = Array.newInstance(type, size);
-		System.arraycopy(base, 0, grown, 0, allocated);
+	/// Make sure we have at least a specified capacity.
+	public void ensureCapacity(int required) {
+		if (required <= actualSize)
+			return;
+		if (required <= allocated) {
+			actualSize = required;
+			return;
+		}
+		ArrayType base = getArray();
+		int size = Math.max(required, allocated + Math.min(allocated, maximumGrowth));
+		ArrayType grown = (ArrayType)Array.newInstance(type, size);
+		if (actualSize > 0)
+			System.arraycopy(base, 0, grown, 0, actualSize);
 		allocated = size;
+		actualSize = required;
 		setArray(grown);
 	}
 
-	// Get next add position for appending, increasing size if needed.
+	/// Get next add position for appending, increasing size if needed.
 	protected int getAddIndex() {
-		int index = actualSize++;
-		if (actualSize > allocated) {
-			growArray(actualSize);
-		}
-		return index;
+		ensureCapacity(actualSize + 1);
+		return actualSize;
 	}
 
-	// Make room to insert a value at a specified index.
+	/// Make room to insert a value at a specified index.
 	protected void makeInsertSpace(int index) {
-		if (index >= 0 && index <= actualSize) {
-			if (++actualSize > allocated) {
-				growArray(actualSize);
-			}
-			if (index < actualSize - 1) {
-				Object array = getArray();
-				System.arraycopy(array, index, array, index + 1,
-					actualSize - index - 1);
-			}
-		} else {
+		if (index < 0)
 			throw new ArrayIndexOutOfBoundsException("Invalid index value");
+		ensureCapacity(actualSize + 1);
+		if (index < actualSize) {
+			ArrayType array = getArray();
+			System.arraycopy(array, index, array, index + 1, actualSize - index - 1);
 		}
 	}
 
-	// Remove a value from the collection.
+	/// Remove a value from the collection.
 	public void remove(int index) {
-		if (index >= 0 && index < actualSize) {
-			if (index < --actualSize){
-				Object base = getArray();
-				System.arraycopy(base, index + 1, base, index,
-					actualSize - index);
-				discardValues(actualSize, actualSize + 1);
-			}
-		} else {
-			throw new ArrayIndexOutOfBoundsException("Invalid index value");
+		if (index < 0 || index >= actualSize)
+			throw new ArrayIndexOutOfBoundsException("Invalid index value: " + index);
+		if (index < --actualSize) {
+			ArrayType array = getArray();
+			System.arraycopy(array, index + 1, array, index, actualSize - index);
 		}
 	}
 
-	// Make sure we have at least a specified capacity.
-	public void ensureCapacity(int min) {
-		if (min > allocated) {
-			growArray(min);
-		}
-	}
-
-	// Set the collection empty.
+	/// Make the collection empty.
 	public void clear() {
 		setSize(0);
 	}
 
-	// Get number of values in collection.
+	/// Get number of values in collection.
 	public int size() {
 		return actualSize;
 	}
 
-	// Set the size of the collection.
+	/// Set the size of the collection.
 	public void setSize(int count) {
-		if (count > allocated) {
-			growArray(count);
-		} else if (count < actualSize) {
-			discardValues(count, actualSize);
-		}
+		if (count > allocated)
+			ensureCapacity(count);
 		actualSize = count;
 	}
 
-	// Convert to an array of specified type.
-	protected Object buildArray(Class type) {
-		Object copy = Array.newInstance(type, actualSize);
+	/// Convert to an array of specified type.
+	public ArrayType buildArray() {
+		ArrayType copy = (ArrayType)Array.newInstance(type, actualSize);
 		System.arraycopy(getArray(), 0, copy, 0, actualSize);
 		return copy;
 	}
