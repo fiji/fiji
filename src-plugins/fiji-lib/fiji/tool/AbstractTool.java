@@ -203,6 +203,20 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 		}
 	}
 
+	protected class MouseWheelProxyIfNotConsumed implements MouseWheelListener {
+		protected MouseWheelListener listener;
+
+		public MouseWheelProxyIfNotConsumed(MouseWheelListener listener) {
+			this.listener = listener;
+		}
+
+		@Override
+		public final void mouseWheelMoved(MouseWheelEvent e) {
+			if (!e.isConsumed())
+				listener.mouseWheelMoved(e);
+		}
+	}
+
 	protected class MouseMotionProxy implements MouseMotionListener {
 		protected MouseMotionListener listener;
 
@@ -360,10 +374,12 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 			}));
 		if (image.getCanvas() != null)
 			registerTool(image.getCanvas());
-		if (image.getWindow() != null) {
-			image.getWindow().addWindowFocusListener(this);
+		ImageWindow window = image.getWindow();
+		if (window != null) {
+			window.addWindowFocusListener(this);
 			if (keyProxy != null)
-				addKeyListener(image.getWindow());
+				addKeyListener(window);
+			addMouseWheelListener(window);
 		}
 	}
 
@@ -373,8 +389,6 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 		if (mouseProxy != null)
 			canvas.addMouseListener(mouseProxy);
 		addMouseMotionListener(canvas);
-		if (mouseWheelProxy != null)
-			canvas.addMouseWheelListener(mouseWheelProxy);
 		addKeyListener(canvas);
 	}
 
@@ -415,6 +429,26 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 					listener = new MouseMotionProxyIfNotConsumed(canvas);
 			}
 			canvas.addMouseMotionListener(listener);
+		}
+	}
+
+	protected void addMouseWheelListener(ImageWindow window) {
+		if (mouseWheelProxy != null) {
+			window.addMouseWheelListener(mouseWheelProxy);
+			// make sure that IJ gets only unconsumed key events
+			MouseWheelListener listener = null;
+			for (MouseWheelListener listener2 : window.getMouseWheelListeners())
+				if (listener2 == window ||
+						listener2.getClass().getName().endsWith("MouseWheelProxyIfNotConsumed"))
+					listener = listener2;
+			if (listener == null)
+				listener = new MouseWheelProxyIfNotConsumed(window);
+			else {
+				window.removeMouseWheelListener(listener);
+				if (listener == window)
+					listener = new MouseWheelProxyIfNotConsumed(window);
+			}
+			window.addMouseWheelListener(listener);
 		}
 	}
 
