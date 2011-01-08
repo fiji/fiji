@@ -532,7 +532,8 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 
 	public ImageCanvas getImageCanvas(ComponentEvent e) {
 		Component component = e.getComponent();
-		return component instanceof ImageCanvas ? (ImageCanvas)component : null;
+		return component instanceof ImageCanvas ? (ImageCanvas)component :
+			(component instanceof ImageWindow ? ((ImageWindow)component).getCanvas() : null);
 	}
 
 	public ImageWindow getImageWindow(ComponentEvent e) {
