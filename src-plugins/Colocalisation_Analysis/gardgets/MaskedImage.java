@@ -12,6 +12,7 @@ import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.type.Type;
 import mpicbg.imglib.type.numeric.NumericType;
 import imglib.mpicbg.imglib.cursor.special.MaskCursor;
+import imglib.mpicbg.imglib.cursor.special.MaskLocalizableCursor;
 
 /**
  * A MaskedImage decorates an ImgLib Image in a way that cursors on it
@@ -49,13 +50,14 @@ public class MaskedImage<T extends NumericType<T>> extends Image<T> {
 
 	@Override
 	public Cursor<T> createCursor() {
-		return createLocalizableCursor();
+		Cursor<T> cursor = image.createCursor();
+		return new MaskCursor(cursor, mask, offValue);
 	}
 
 	@Override
 	public LocalizableCursor<T> createLocalizableCursor() {
-		LocalizableByDimCursor<T> cursor = image.createLocalizableByDimCursor();
-		return new MaskCursor(cursor, mask, offValue);
+		LocalizableCursor<T> cursor = image.createLocalizableCursor();
+		return new MaskLocalizableCursor(cursor, mask, offValue);
 	}
 
 	@Override

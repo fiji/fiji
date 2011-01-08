@@ -5,10 +5,7 @@ import java.util.Iterator;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.container.Container;
 import mpicbg.imglib.type.Type;
-import mpicbg.imglib.type.numeric.integer.ByteType;
 import mpicbg.imglib.cursor.Cursor;
-import mpicbg.imglib.cursor.LocalizableCursor;
-import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.Iterable;
 import imglib.mpicbg.imglib.cursor.special.meta.AlwaysTruePredicate;
 import imglib.mpicbg.imglib.cursor.special.meta.AboveThresholdPredicate;
@@ -19,9 +16,9 @@ import imglib.mpicbg.imglib.cursor.special.meta.AboveThresholdPredicate;
  *
  * Author: Tom Kazimiers
  */
-public class MaskCursor< T extends Type<T> & Comparable<T> > extends ConstraintCursor<T> implements LocalizableCursor<T> {
+public class MaskCursor< T extends Type<T> & Comparable<T> > extends ConstraintCursor<T> {
 	// the curser of the original image
-	LocalizableByDimCursor<T> imageCursor;
+	Cursor<T> imageCursor;
 	// the mask image used for driving the cursor
 	Image<T> mask;
 
@@ -38,7 +35,7 @@ public class MaskCursor< T extends Type<T> & Comparable<T> > extends ConstraintC
 	 * @param mask The mask for the cursor.
 	 * @param offValue The value specifing the "off" state in the mask.
 	 */
-	public MaskCursor(LocalizableByDimCursor<T> cursor, Image<T> mask, T offValue) {
+	public MaskCursor(Cursor<T> cursor, Image<T> mask, T offValue) {
 		super( cursor, mask.createCursor(),
 			new AlwaysTruePredicate(),
 			new AboveThresholdPredicate( offValue ) );
@@ -103,28 +100,6 @@ public class MaskCursor< T extends Type<T> & Comparable<T> > extends ConstraintC
 	@Override
 	public void getDimensions( int[] position ) {
 		cursor1.getDimensions( position );
-	}
-
-	/* Localizable implementatio */
-
-	@Override
-	public void getPosition( int[] position ) {
-		imageCursor.getPosition( position );
-	}
-
-	@Override
-	public int[] getPosition() {
-		return imageCursor.getPosition();
-	}
-
-	@Override
-	public int getPosition( int dim ) {
-		return imageCursor.getPosition( dim );
-	}
-
-	@Override
-	public String getPositionAsString() {
-		return imageCursor.getPositionAsString();
 	}
 }
 
