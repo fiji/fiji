@@ -550,7 +550,7 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 
 	public int getOffscreenY(MouseEvent e) {
 		ImageCanvas canvas = getImageCanvas(e);
-		return canvas == null ? -1 : canvas.offScreenX(e.getY());
+		return canvas == null ? -1 : canvas.offScreenY(e.getY());
 	}
 
 	public double getOffscreenXDouble(MouseEvent e) {
