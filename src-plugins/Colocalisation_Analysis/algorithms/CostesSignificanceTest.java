@@ -297,7 +297,7 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 				locCursor = img.createLocalizableByDimCursor();
 
 			RegionOfInterestCursor<T> roiCursor
-				= new RegionOfInterestCursor<T>( locCursor, offset, psfRadiusInPixels );
+				= locCursor.createRegionOfInterestCursor( offset, psfRadiusInPixels );
 			blockList.add(roiCursor);
 		}
 		// check is we need to add a out of bounds strategy cursor
