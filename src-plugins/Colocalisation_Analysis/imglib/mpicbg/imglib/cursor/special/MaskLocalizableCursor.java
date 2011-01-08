@@ -4,6 +4,7 @@ import java.util.Iterator;
 
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.Type;
+import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 
 /**
@@ -26,7 +27,7 @@ public class MaskLocalizableCursor< T extends Type<T> & Comparable<T> > extends 
 	 * @param mask The mask for the cursor.
 	 * @param offValue The value specifing the "off" state in the mask.
 	 */
-	public MaskLocalizableCursor(LocalizableCursor<T> cursor, Image<T> mask, T offValue) {
+	public MaskLocalizableCursor(LocalizableCursor<T> cursor, Cursor<T> mask, T offValue) {
 		super( cursor, mask, offValue );
 		imageCursor = cursor;
 	}

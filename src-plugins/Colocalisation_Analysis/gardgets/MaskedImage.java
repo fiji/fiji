@@ -51,13 +51,15 @@ public class MaskedImage<T extends NumericType<T>> extends Image<T> {
 	@Override
 	public Cursor<T> createCursor() {
 		Cursor<T> cursor = image.createCursor();
-		return new MaskCursor(cursor, mask, offValue);
+		Cursor<T> maskCursor = mask.createCursor();
+		return new MaskCursor(cursor, maskCursor, offValue);
 	}
 
 	@Override
 	public LocalizableCursor<T> createLocalizableCursor() {
 		LocalizableCursor<T> cursor = image.createLocalizableCursor();
-		return new MaskLocalizableCursor(cursor, mask, offValue);
+		LocalizableCursor<T> maskCursor = mask.createLocalizableCursor();
+		return new MaskLocalizableCursor(cursor, maskCursor, offValue);
 	}
 
 	@Override

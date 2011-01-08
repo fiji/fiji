@@ -35,14 +35,14 @@ public class MaskCursor< T extends Type<T> & Comparable<T> > extends ConstraintC
 	 * @param mask The mask for the cursor.
 	 * @param offValue The value specifing the "off" state in the mask.
 	 */
-	public MaskCursor(Cursor<T> cursor, Image<T> mask, T offValue) {
-		super( cursor, mask.createCursor(),
+	public MaskCursor(Cursor<T> cursor, Cursor<T> mask, T offValue) {
+		super( cursor, mask,
 			new AlwaysTruePredicate(),
 			new AboveThresholdPredicate( offValue ) );
 		// for masking we want the forward mode to be "And"
 		setForwardMode( ForwardMode.And );
 		imageCursor = cursor;
-		this.mask = mask;
+		this.mask = mask.getImage();
 	}
 
 	/**
