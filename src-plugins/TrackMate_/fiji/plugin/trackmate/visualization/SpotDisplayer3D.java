@@ -62,6 +62,18 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		spotContent = makeSpotContent();
 	};
 	
+	@Override
+	public void setRadiusDisplayRatio(float ratio) {
+		super.setRadiusDisplayRatio(ratio);
+		List<Spot> spotsThisFrame; 
+		SpotGroupNode<Spot> spotGroup;
+		for(int key : blobs.keySet()) {
+			spotsThisFrame = spots.get(key);
+			spotGroup = blobs.get(key);
+			for ( Spot spot : spotsThisFrame) 
+				spotGroup.setRadius(spot, radius*radiusRatio);
+		}
+	}
 	
 	@Override
 	public void setDisplayTrackMode(TrackDisplayMode mode, int displayDepth) { // TODO
@@ -199,7 +211,7 @@ public class SpotDisplayer3D extends SpotDisplayer {
 			float[] coords = new float[3];
 			for(Spot spot : spotsThisFrame) {
 				spot.getPosition(coords);
-				pos = new float[] {coords[0], coords[1], coords[2], radius};
+				pos = new float[] {coords[0], coords[1], coords[2], radius*radiusRatio};
 				centers.put(spot, new Point4f(pos));
 			}
 			blobGroup = new SpotGroupNode<Spot>(centers, new Color3f(color));

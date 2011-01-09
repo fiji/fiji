@@ -154,10 +154,6 @@ public class SpotDisplayer2D extends SpotDisplayer {
 		
 	}
 	
-	/*
-	 * CONSTRUCTORS
-	 */
-	
 	private ImagePlus imp;
 	private OverlayedImageCanvas canvas;
 	private float[] calibration;
@@ -171,6 +167,10 @@ public class SpotDisplayer2D extends SpotDisplayer {
 	private boolean trackVisible = true;
 	private boolean spotVisible = true;
 
+	/*
+	 * CONSTRUCTORS
+	 */
+	
 	public SpotDisplayer2D(final Settings settings) {
 		this.radius = settings.segmenterSettings.expectedRadius;
 		this.imp = settings.imp;
@@ -186,6 +186,13 @@ public class SpotDisplayer2D extends SpotDisplayer {
 	@Override
 	public void setTrackVisible(boolean displayTrackSelected) {
 		trackVisible = displayTrackSelected;
+	}
+	
+	@Override
+	public void setRadiusDisplayRatio(float ratio) {
+		super.setRadiusDisplayRatio(ratio);
+		prepareSpotOverlay();
+		refresh();
 	}
 	
 	@Override

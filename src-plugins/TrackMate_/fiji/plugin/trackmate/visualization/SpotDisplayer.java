@@ -14,6 +14,7 @@ import org.jgrapht.graph.SimpleGraph;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 
 public abstract class SpotDisplayer {
 
@@ -27,6 +28,8 @@ public abstract class SpotDisplayer {
 	protected static final Color DEFAULT_COLOR = new Color(1f, 0, 1f);
 	/** The display radius. */
 	protected float radius = DEFAULT_DISPLAY_RADIUS;
+	/** The ratio setting the actual display size of the spots, with respect to the physical radius. */
+	protected float radiusRatio = 1.0f;
 	
 	/** The colorMap. */
 	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
@@ -113,6 +116,14 @@ public abstract class SpotDisplayer {
 		this.spotsToShow = spotsToShow;
 	}
 
+	/**
+	 * Set up the ratio used to determine the actual display radius of spots. The spots on the image
+	 * will have a radius given by <code> {@link SegmenterSettings#expectedRadius} * ratio </code>.
+	 */
+	public void setRadiusDisplayRatio(float ratio) {
+		this.radiusRatio = ratio;
+	}
+	
 	
 	/*
 	 * ABSTRACT METHODS
