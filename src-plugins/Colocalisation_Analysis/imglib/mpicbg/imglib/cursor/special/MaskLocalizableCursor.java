@@ -16,6 +16,9 @@ import mpicbg.imglib.cursor.LocalizableCursor;
 public class MaskLocalizableCursor< T extends Type<T> & Comparable<T> > extends MaskCursor<T> implements LocalizableCursor<T> {
 	// the curser of the original image
 	LocalizableCursor<T> imageCursor;
+	// the offset of the masks bounding box
+	final int[] offset;
+
 	/**
 	 * Creates a new MaskLocalizableCursor, based on a Maskcursor for an
 	 * existing image and a mask that is used to drive the cursor. If the mask is
@@ -27,24 +30,30 @@ public class MaskLocalizableCursor< T extends Type<T> & Comparable<T> > extends 
 	 * @param mask The mask for the cursor.
 	 * @param offValue The value specifing the "off" state in the mask.
 	 */
-	public MaskLocalizableCursor(LocalizableCursor<T> cursor, Cursor<T> mask, T offValue) {
+	public MaskLocalizableCursor(LocalizableCursor<T> cursor, Cursor<T> mask, T offValue, int[] offset) {
 		super( cursor, mask, offValue );
 		imageCursor = cursor;
+		this.offset = offset;
 	}
 
 	@Override
 	public void getPosition( int[] position ) {
 		imageCursor.getPosition( position );
+		for (int d=0; d < getNumDimensions(); d++) {
+			position[d] -= offset[d];
+		}
 	}
 
 	@Override
 	public int[] getPosition() {
-		return imageCursor.getPosition();
+		int[] position = imageCursor.createPositionArray();
+		getPosition( position );
+		return position;
 	}
 
 	@Override
 	public int getPosition( int dim ) {
-		return imageCursor.getPosition( dim );
+		return imageCursor.getPosition( dim ) - offset[dim];
 	}
 
 	@Override

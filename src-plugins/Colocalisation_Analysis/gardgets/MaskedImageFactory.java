@@ -12,11 +12,17 @@ import mpicbg.imglib.type.Type;
 public class MaskedImageFactory<T extends Type<T>> extends ImageFactory<T> {
 	// the mask for newly created images
 	Image<T> mask;
+	// the masks bounding box offset
+	int[] offset;
+	// the size of the masks bounding box
+	int[] size;
 
-	public MaskedImageFactory(final Image<T> mask, final T type,
+	public MaskedImageFactory(final Image<T> mask, int[] offset, int[] size, final T type,
 			final ContainerFactory containerFactory) {
 		super(type, containerFactory);
 		this.mask = mask;
+		this.offset = offset;
+		this.size = size;
 	}
 
 	@Override
@@ -24,6 +30,7 @@ public class MaskedImageFactory<T extends Type<T>> extends ImageFactory<T> {
 	{
 		// create a new MaskImage with the mask of this factory
 		Image<T> img = super.createImage(dim, name);
-		return new MaskedImage(img, mask);
+		return new MaskedImage(img, mask, offset, size);
 	}
 }
+

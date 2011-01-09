@@ -14,6 +14,7 @@ import mpicbg.imglib.type.Type;
 import mpicbg.imglib.type.numeric.NumericType;
 import imglib.mpicbg.imglib.cursor.special.MaskCursor;
 import imglib.mpicbg.imglib.cursor.special.MaskLocalizableCursor;
+import imglib.mpicbg.imglib.cursor.special.RoiShiftingLocalizableByDimCursor;
 
 /**
  * A MaskedImage decorates an ImgLib Image in a way that cursors on it
@@ -24,7 +25,7 @@ import imglib.mpicbg.imglib.cursor.special.MaskLocalizableCursor;
  * For now the mask must be of the same type of the image and is bound
  * to numeric types.
  */
-public class MaskedImage<T extends NumericType<T>> extends Image<T> {
+public class MaskedImage<T extends NumericType<T> & Comparable<T>> extends RoiImage<T> {
 	// the image to operate on
 	Image<T> image;
 	// the mask te use for the image
@@ -33,6 +34,10 @@ public class MaskedImage<T extends NumericType<T>> extends Image<T> {
 	T offValue;
 	// a factory to create MaskImage objects
 	MaskedImageFactory<T> maskedImageFactory;
+	// the offset of the masks bounding box
+	int[] offset;
+	// the size of the masks bounding box
+	int[] size;
 
 	/**
 	 * Creates a new MaskedImage to decorate the passed image. Cursors
@@ -41,21 +46,36 @@ public class MaskedImage<T extends NumericType<T>> extends Image<T> {
 	 * @param img The image to decorate.
 	 * @param mask The mask for the image.
 	 */
-	public MaskedImage( Image<T> img, final Image<T> mask ) {
-		super(img.getContainer(), img.createType(), img.getName());
+	public MaskedImage( Image<T> img, final Image<T> mask, int[] offset, int size[] ) {
+		super(img, offset, size);
 
 		this.image = img;
 		this.mask = mask;
+		this.offset = offset;
+		this.size = size;
+
 		// create the offValue of the mask
 		offValue = mask.createType();
 		offValue.setZero();
-		// create a new factory
-		maskedImageFactory = new MaskedImageFactory(mask, img.createType(), img.getContainerFactory());
+
+		init();
 	}
 
-	@Override
-	public ImageFactory<T> getImageFactory() {
-		return maskedImageFactory;
+	/**
+	 * Init the mask factory and the off value.
+	 */
+	protected void init() {
+		// create a new factory
+		maskedImageFactory = new MaskedImageFactory(mask, offset, size, image.createType(),
+			image.getContainerFactory());
+System.err.println(offset);
+	}
+
+	/**
+	 * Gets the offset of the masks bounding box.
+	 */
+	public int[] getOffset() {
+		return offset;
 	}
 
 	@Override
@@ -69,7 +89,7 @@ public class MaskedImage<T extends NumericType<T>> extends Image<T> {
 	public LocalizableCursor<T> createLocalizableCursor() {
 		LocalizableCursor<T> cursor = image.createLocalizableCursor();
 		LocalizableCursor<T> maskCursor = mask.createLocalizableCursor();
-		return new MaskLocalizableCursor(cursor, maskCursor, offValue);
+		return new MaskLocalizableCursor(cursor, maskCursor, offValue, offset);
 	}
 
 	@Override
