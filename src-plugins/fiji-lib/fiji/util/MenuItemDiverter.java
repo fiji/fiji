@@ -4,10 +4,9 @@ import ij.IJ;
 import ij.ImageJ;
 import ij.Menus;
 
-import ij.plugin.BrowserLauncher;
 import ij.plugin.PlugIn;
 
-import java.awt.AWTException;
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Image;
 import java.awt.Point;
@@ -86,6 +85,8 @@ public abstract class MenuItemDiverter implements KeyListener, PlugIn, WindowFoc
                 ij.setCursor(diversionCursor);
 
                 ij.addKeyListener(this);
+                for (Component component : ij.getComponents())
+                	component.addKeyListener(this);
                 ij.addWindowFocusListener(this);
 		IJ.showStatus("Click menu entry for " + getTitle() + " (Esc to abort)");
         }
@@ -102,12 +103,14 @@ public abstract class MenuItemDiverter implements KeyListener, PlugIn, WindowFoc
                 actions = null;
                 ij.setCursor(cursor);
                 ij.removeKeyListener(this);
+                for (Component component : ij.getComponents())
+                	component.removeKeyListener(this);
                 ij.removeWindowFocusListener(this);
         }
 
 	@Override
         public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == e.VK_ESCAPE) {
+                if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
                         resetActions();
 			IJ.showStatus(getTitle() + " aborted");
 		}
