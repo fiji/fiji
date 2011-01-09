@@ -11,7 +11,12 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
+import mpicbg.imglib.container.array.ArrayContainerFactory;
+import mpicbg.imglib.cursor.Cursor;
+import mpicbg.imglib.cursor.LocalizableCursor;
+import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.ImagePlusAdapter;
 import mpicbg.imglib.type.numeric.RealType;
 import results.PDFWriter;
@@ -288,6 +293,15 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			for (ResultHandler<T> r : listOfResultHandlers)
 				a.processResults(r);
 		}
+		// if we have ROIs/masks, add them to results
+		if (mask != null || roi != null) {
+			Image<T> mask1 = createMaskImage( container.getSourceImage1(), "Channel 1" );
+			Image<T> mask2 = createMaskImage( container.getSourceImage2(), "Channel 2" );
+			for (ResultHandler<T> r : listOfResultHandlers) {
+				r.handleImage (mask1);
+				r.handleImage (mask2);
+			}
+		}
 		// do the actual results processing
 		for (ResultHandler<T> r : listOfResultHandlers)
 			r.process();
@@ -323,5 +337,29 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	*/
 	protected static int clip(int val, int min, int max) {
 		return Math.max( Math.min( val, max ), min );
+	}
+
+	/**
+	 * This method duplicates the given images, but respects
+	 * ROIs if present. Meaning, a subpicture will be created when
+	 * source images are ROI/MaskImages.
+	 */
+	protected Image<T> createMaskImage(Image<T> sourceImage, String name) {
+		LocalizableCursor<T> cursor = sourceImage.createLocalizableCursor();
+		ImageFactory<T> maskFactory = new ImageFactory<T>(sourceImage.createType(), new ArrayContainerFactory());
+		Image<T> maskImage = maskFactory.createImage( sourceImage.getDimensions(), name );
+		LocalizableByDimCursor<T> maskCursor = maskImage.createLocalizableByDimCursor();
+
+		while (cursor.hasNext()) {
+			cursor.fwd();
+			maskCursor.setPosition( cursor );
+
+			maskCursor.getType().set( cursor.getType() );
+		}
+
+		cursor.close();
+		maskCursor.close();
+
+		return maskImage;
 	}
 }
