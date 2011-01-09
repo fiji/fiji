@@ -1,6 +1,7 @@
 import gadgets.DataContainer;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.process.Blitter;
 import ij.process.ImageProcessor;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
@@ -191,20 +192,10 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		 */
 		if (roiConfig == RoiConfiguration.Img1 && hasValidRoi(imp1)) {
 			roi = imp1.getRoi().getBounds();
-			ImageProcessor ip = imp1.getMask();
-			// check if we got an irregular ROI
-			if (ip != null) {
-				ImagePlus maskImp = new ImagePlus("Mask", ip);
-				mask = ImagePlusAdapter.wrap( maskImp );
-			}
+			mask = findIrregularMask(imp1, roi);
 		} else if (roiConfig == RoiConfiguration.Img2 && hasValidRoi(imp2)) {
 			roi = imp2.getRoi().getBounds();
-			ImageProcessor ip = imp2.getMask();
-			// check if we got an irregular ROI
-			if (ip != null) {
-				ImagePlus maskImp = new ImagePlus("Mask", ip);
-				mask = ImagePlusAdapter.wrap( maskImp );
-			}
+			mask = findIrregularMask(imp2, roi);
 		} else if (roiConfig == RoiConfiguration.Mask) {
 			// get the  which image we should use as mask
 			ImagePlus maskImp = WindowManager.getImage(indexMask);
@@ -337,6 +328,32 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	*/
 	protected static int clip(int val, int min, int max) {
 		return Math.max( Math.min( val, max ), min );
+	}
+
+	/**
+	 * This method checks if the given ImagePlus contains an
+	 * irregular ROI. If so, it will be put into a frame of
+	 * appropriate size and put into an Image<T>. Otherwise
+	 * null is returned.
+	 */
+	protected Image<T> findIrregularMask(ImagePlus imp, Rectangle bb) {
+		ImageProcessor ipMask = imp.getMask();
+		// check if we got a regular ROI and return if so
+		if (ipMask == null)
+			return null;
+
+		// create a mask processor of the same size as a slice
+		ImageProcessor ipSlice = ipMask.createProcessor(imp.getWidth(), imp.getHeight());
+		// fill the new slice with black
+		ipSlice.setValue(0.0);
+		ipSlice.fill();
+		// position the mask on the new  mask processor
+		ipSlice.copyBits(ipMask, bb.x, bb.y, Blitter.COPY);
+		// create an Image<T> out of it
+		ImagePlus maskImp = new ImagePlus("Mask", ipSlice);
+		Image<T> mask = ImagePlusAdapter.wrap( maskImp );
+
+		return mask;
 	}
 
 	/**
