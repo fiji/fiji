@@ -21,6 +21,8 @@ public class MaskCursor< T extends Type<T> & Comparable<T> > extends ConstraintC
 	Cursor<T> imageCursor;
 	// the mask image used for driving the cursor
 	Image<T> mask;
+	// the mask cursor
+	Cursor<T> maskCursor;
 
 	/**
 	 * Creates a new MaskCursor, based on a cursor over an existing
@@ -42,7 +44,22 @@ public class MaskCursor< T extends Type<T> & Comparable<T> > extends ConstraintC
 		// for masking we want the forward mode to be "And"
 		setForwardMode( ForwardMode.And );
 		imageCursor = cursor;
+		this.maskCursor = mask;
 		this.mask = mask.getImage();
+	}
+
+	@Override
+	public void fwd() {
+		/* The constraint cursor expects an image of the same size to evalute
+		 * constraints for us in "And" forward mode. If the mask gets out of
+		 * bounds we need to handle that. For now we just reset it.
+		 */
+		if ( !maskCursor.hasNext() ) {
+			maskCursor.reset();
+		}
+
+		// call the actual forward method
+		super.fwd();
 	}
 
 	/**
