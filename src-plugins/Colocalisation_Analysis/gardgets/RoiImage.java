@@ -6,6 +6,7 @@ import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.cursor.LocalizablePlaneCursor;
 import mpicbg.imglib.cursor.special.RegionOfInterestCursor;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.interpolation.Interpolator;
 import mpicbg.imglib.interpolation.InterpolatorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
@@ -22,6 +23,8 @@ public class RoiImage<T extends Type<T>> extends Image<T> {
 	final int[] offset, size;
 	// total number of pixels
 	final int numPixels;
+	// a factory for creating RoiImages like this
+	RoiImageFactory<T> roiImageFactory;
 
 	/**
 	 * Creates a new RoiImage to decorate the passed image. Cursors
@@ -42,6 +45,9 @@ public class RoiImage<T extends Type<T>> extends Image<T> {
 			count *= size[d];
 		}
 		numPixels = count;
+
+		roiImageFactory = new RoiImageFactory<T>(offset, size, img.createType(),
+			img.getContainerFactory());
 	}
 
 	@Override
@@ -54,6 +60,17 @@ public class RoiImage<T extends Type<T>> extends Image<T> {
 		for (int d=0; d < getNumDimensions(); d++) {
 			position[d] = size[d];
 		}
+	}
+
+	@Override
+	public ImageFactory<T> getImageFactory() {
+		return roiImageFactory;
+	}
+
+	@Override
+	public Image<T> createNewImage( final int[] dimensions, final String name ) {
+		Image<T> image = super.createNewImage( dimensions, name);
+		return new RoiImage(image, offset, size);
 	}
 
 	@Override
