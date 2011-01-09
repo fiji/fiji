@@ -197,9 +197,10 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			roi = imp2.getRoi().getBounds();
 			mask = findIrregularMask(imp2, roi);
 		} else if (roiConfig == RoiConfiguration.Mask) {
-			// get the  which image we should use as mask
+			// get the image to be used as mask
 			ImagePlus maskImp = WindowManager.getImage(indexMask);
 			mask = ImagePlusAdapter.wrap( maskImp );
+			// TODO: Check for correct size of the mask
 		}
 
 		// Parse algorithm options
