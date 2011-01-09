@@ -325,7 +325,6 @@ public class TrackMateFrameController {
 	}
 	
 	
-	@SuppressWarnings("unchecked")
 	private void load() {
 		actionFlag = false;
 		SwingUtilities.invokeLater(new Runnable() {			
@@ -340,6 +339,7 @@ public class TrackMateFrameController {
 		view.displayPanel(PanelCard.LOG_PANEL_KEY);
 		
 		// New model to feed
+		@SuppressWarnings("rawtypes")
 		TrackMateModelInterface newModel = new TrackMate_();
 		newModel.setLogger(logger);
 		
@@ -1186,9 +1186,9 @@ public class TrackMateFrameController {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	public static void main(String[] args) {
 		ij.ImageJ.main(args);
+		@SuppressWarnings("rawtypes")
 		TrackMateModelInterface model = new TrackMate_();
 		new TrackMateFrameController(model);
 	}

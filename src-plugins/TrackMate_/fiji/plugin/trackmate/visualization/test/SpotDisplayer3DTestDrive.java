@@ -129,6 +129,7 @@ public class SpotDisplayer3DTestDrive {
 				if (e == gui.COLOR_FEATURE_CHANGED) {
 					Feature feature = gui.getColorByFeature();
 					displayer.setColorByFeature(feature);
+					displayer.setRadiusDisplayRatio(RAN.nextFloat());
 					displayer.refresh();
 				}
 			}

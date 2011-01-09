@@ -152,6 +152,7 @@ public class TrackDisplayNode extends ContentNode {
 		// Avoid trouble if the source and target are at the same location
 		if (x[0] == x[1] && y[0] == y[1] && z[0] == z[1])
 			z[1] += radius/100;
+		@SuppressWarnings("rawtypes")
 		List points = MeshMaker.createTube(x, y, z, r, DEFAULT_PARALLEL_NUMBER, false);
 		CustomTriangleMesh node = new CustomTriangleMesh(points, new Color3f(color.x, color.y, color.z), color.w);
 		return node;
