@@ -100,11 +100,6 @@ System.err.println(offset);
 	/* Not implemented/needed methods follow */
 
 	@Override
-	public LocalizablePlaneCursor<T> createLocalizablePlaneCursor() {
-		throw new UnsupportedOperationException("This method has not been implemented, yet.");
-	}
-
-	@Override
 	public LocalizableByDimCursor<T> createLocalizableByDimCursor(
 			OutOfBoundsStrategyFactory<T> factory) {
 		throw new UnsupportedOperationException("This method has not been implemented, yet.");
