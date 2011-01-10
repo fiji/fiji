@@ -26,7 +26,7 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 	// the lists of cursor blocks, representing the images
 	List<RegionOfInterestCursor<T>> blocks, outputBlocks;
 	// indicates if the shuffled images should be shown as a result
-	boolean showShuffledImages = true;
+	boolean showShuffledImages = false;
 	// the number of randomization tests
 	int nrRandomizations;
 	// the shuffled image last worke on
