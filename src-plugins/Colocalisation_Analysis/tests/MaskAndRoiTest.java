@@ -1,30 +1,15 @@
 package tests;
 
 import static org.junit.Assert.assertTrue;
-import gadgets.MaskedImage;
 import gadgets.RoiImage;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
-import mpicbg.imglib.function.Converter;
-import mpicbg.imglib.function.RealTypeConverter;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import imglib.mpicbg.imglib.cursor.special.TwinValueRangeCursor;
-import imglib.mpicbg.imglib.cursor.special.TwinValueRangeCursorFactory;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
-import mpicbg.imglib.type.numeric.real.FloatType;
 
 import org.junit.Test;
-
-import com.lowagie.text.ImgTemplate;
-
-import clojure.test.junit__init;
-
-import algorithms.MissingPreconditionException;
-import algorithms.PearsonsCorrelation;
 
 /**
  * This class contains JUnit 4 test cases for the ROI and masks

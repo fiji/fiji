@@ -3,6 +3,7 @@ package tests;
 import static org.junit.Assert.assertTrue;
 import imglib.mpicbg.imglib.cursor.special.TwinValueRangeCursor;
 import imglib.mpicbg.imglib.cursor.special.TwinValueRangeCursorFactory;
+import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 
 import org.junit.Test;
@@ -25,7 +26,7 @@ public class PearsonsCorrelationTest extends ColocalisationTest {
 	@Test
 	public void fastPearsonsZeroCorrTest() throws MissingPreconditionException {
 		// create a twin value range cursor that iterates over all pixels of the input data
-		TwinValueRangeCursor<FloatType> cursor = TwinValueRangeCursorFactory
+		TwinValueRangeCursor<UnsignedByteType> cursor = TwinValueRangeCursorFactory
 				.generateAlwaysTrueCursor(zeroCorrelationImageCh1, zeroCorrelationImageCh2);
 		// get the Pearson's value
 		double pearsonsR = PearsonsCorrelation.fastPearsons(cursor);
@@ -40,7 +41,7 @@ public class PearsonsCorrelationTest extends ColocalisationTest {
 	@Test
 	public void fastPearsonsPositiveCorrTest() throws MissingPreconditionException {
 		// create a twin value range cursor that iterates over all pixels of the input data
-		TwinValueRangeCursor<FloatType> cursor = TwinValueRangeCursorFactory
+		TwinValueRangeCursor<UnsignedByteType> cursor = TwinValueRangeCursorFactory
 				.generateAlwaysTrueCursor(positiveCorrelationImageCh1, positiveCorrelationImageCh2);
 		// get the Pearson's value
 		double pearsonsR = PearsonsCorrelation.fastPearsons(cursor);
@@ -55,7 +56,7 @@ public class PearsonsCorrelationTest extends ColocalisationTest {
 	@Test
 	public void classicPearsonsZeroCorrTest() throws MissingPreconditionException {
 		// create a twin value range cursor that iterates over all pixels of the input data
-		TwinValueRangeCursor<FloatType> cursor = TwinValueRangeCursorFactory
+		TwinValueRangeCursor<UnsignedByteType> cursor = TwinValueRangeCursorFactory
 				.generateAlwaysTrueCursor(zeroCorrelationImageCh1, zeroCorrelationImageCh2);
 		// get the Pearson's value
 		double pearsonsR = PearsonsCorrelation
@@ -71,7 +72,7 @@ public class PearsonsCorrelationTest extends ColocalisationTest {
 	@Test
 	public void classicPearsonsPositiveCorrTest() throws MissingPreconditionException {
 		// create a twin value range cursor that iterates over all pixels of the input data
-		TwinValueRangeCursor<FloatType> cursor = TwinValueRangeCursorFactory
+		TwinValueRangeCursor<UnsignedByteType> cursor = TwinValueRangeCursorFactory
 				.generateAlwaysTrueCursor(positiveCorrelationImageCh1, positiveCorrelationImageCh2);
 		// get the Pearson's value
 		double pearsonsR = PearsonsCorrelation

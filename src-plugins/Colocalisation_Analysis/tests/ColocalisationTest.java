@@ -2,7 +2,7 @@ package tests;
 
 import mpicbg.imglib.algorithm.math.ImageStatistics;
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 
 import org.junit.After;
 import org.junit.Before;
@@ -11,14 +11,14 @@ import org.junit.Before;
 public abstract class ColocalisationTest {
 
 	// images and meta data for zero correlation
-	Image<FloatType> zeroCorrelationImageCh1;
-	Image<FloatType> zeroCorrelationImageCh2;
+	Image<UnsignedByteType> zeroCorrelationImageCh1;
+	Image<UnsignedByteType> zeroCorrelationImageCh2;
 	double zeroCorrelationImageCh1Mean;
 	double zeroCorrelationImageCh2Mean;
 
 	// images and meta data for positive correlation
-	Image<FloatType> positiveCorrelationImageCh1;
-	Image<FloatType> positiveCorrelationImageCh2;
+	Image<UnsignedByteType> positiveCorrelationImageCh1;
+	Image<UnsignedByteType> positiveCorrelationImageCh2;
 	double positiveCorrelationImageCh1Mean;
 	double positiveCorrelationImageCh2Mean;
 
