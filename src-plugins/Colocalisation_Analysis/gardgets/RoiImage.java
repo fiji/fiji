@@ -64,17 +64,6 @@ public class RoiImage<T extends Type<T>> extends Image<T> {
 	}
 
 	@Override
-	public ImageFactory<T> getImageFactory() {
-		return roiImageFactory;
-	}
-
-	@Override
-	public Image<T> createNewImage( final int[] dimensions, final String name ) {
-		Image<T> image = super.createNewImage( dimensions, name);
-		return new RoiImage(image, offset, size);
-	}
-
-	@Override
 	public int getDimension( int dim ) {
 		return size[dim];
 	}
