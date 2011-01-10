@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
-import mpicbg.imglib.type.numeric.RealType;
-
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -24,9 +22,12 @@ import org.jgrapht.graph.SimpleGraph;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.FeatureThreshold;
+import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.Settings.SegmenterType;
+import fiji.plugin.trackmate.Settings.TrackerType;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
@@ -36,47 +37,105 @@ public class TmXmlWriter implements TmXmlKeys {
 	 * FIELD
 	 */
 	
-	private TrackMate_<? extends RealType<?>> trackmate;
+	private TrackMateModelInterface model;
+	private Element root;
+	private Logger logger;
 
 	/*
-	 * CONSTRUCTOR
+	 * CONSTRUCTORS
 	 */
 	
-	public TmXmlWriter(TrackMate_<? extends RealType<?>> trackmate) {
-		this.trackmate = trackmate;
+	public TmXmlWriter(TrackMateModelInterface model) {
+		this(model, null);
 	}
 
-
+	public TmXmlWriter(TrackMateModelInterface model, Logger logger) {
+		this.model = model;
+		this.root = new Element(ROOT_ELEMENT_KEY);
+		if (null == logger) 
+			logger = Logger.VOID_LOGGER;
+		this.logger = logger;
+	}
 	/*
 	 * PUBLIC METHODS
 	 */
 	
+
+	/**
+	 * Append the image info to the root {@link Document}.
+	 */
+	public void appendBasicSettings() {
+		echoBaseSettings();
+		echoImageInfo();		
+	}
+	
+	/**
+	 * Append the {@link SegmenterSettings} to the {@link Document}.
+	 */
+	public void appendSegmenterSettings() {
+		echoSegmenterSettings();
+	}
+
+	/**
+	 * Append the {@link TrackerSettings} to the {@link Document}.
+	 */
+	public void appendTrackerSettings() {
+		echoTrackerSettings();
+	}
+	
+	/**
+	 * Append the initial threshold on quality to the {@link Document}. Because 
+	 * this initial threshold is not stored in the {@link TrackMateModelInterface},
+	 * it has to be provided here.
+	 */
+	public void appendInitialThreshold() {
+		echoInitialThreshold(model.getInitialThreshold());
+	}
+
+	/**
+	 * Append the list of {@link FeatureThreshold} to the {@link Document}.
+	 */
+	public void appendFeatureThresholds() {
+		echoThresholds();
+	}
+	
+	/**
+	 * Append the spot list to the  {@link Document}.
+	 */
+	public void appendSpots() {
+		echoAllSpots();
+	}
+	
+	/**
+	 * Append the spot selection to the  {@link Document}.	
+	 */
+	public void appendSpotSelection() {
+		echoSpotSelection();
+	}
+	
+	/**
+	 * Append the tracks to the  {@link Document}.
+	 */
+	public void appendTracks() {
+		echoTracks();
+	}
+	
+	/**
+	 * Write the document to the given file.
+	 */
 	public void writeToFile(File file) throws FileNotFoundException, IOException {
-		Element root = new Element(ROOT_ELEMENT_KEY);
-		// Gather data
-		root = echoImageInfo(root);
-		root = echoBaseSettings(root);
-		root = echoSegmenterSettings(root);
-		root = echoTrackerSettings(root);
-		root = echoThresholds(root);
-		root = echoSpotSelection(root);
-		root = echoTracks(root);
-		root = echoAllSpots(root); // last one because it is a long list
-		
-		// Write to file
+		logger.log("  Writing to file.\n");
 		Document document = new Document(root);
 		XMLOutputter outputter = new XMLOutputter(Format.getPrettyFormat());
 		outputter.output(document, new FileOutputStream(file));
 	}
 	
-	
-
 	/*
 	 * PRIVATE METHODS
 	 */
 	
-	private Element echoBaseSettings(Element root) {
-		Settings settings = trackmate.getSettings();
+	private void echoBaseSettings() {
+		Settings settings = model.getSettings();
 		Element settingsElement = new Element(SETTINGS_ELEMENT_KEY);
 		settingsElement.setAttribute(SETTINGS_XSTART_ATTRIBUTE_NAME, ""+settings.xstart);
 		settingsElement.setAttribute(SETTINGS_XEND_ATTRIBUTE_NAME, ""+settings.xend);
@@ -87,11 +146,15 @@ public class TmXmlWriter implements TmXmlKeys {
 		settingsElement.setAttribute(SETTINGS_TSTART_ATTRIBUTE_NAME, ""+settings.tstart);
 		settingsElement.setAttribute(SETTINGS_TEND_ATTRIBUTE_NAME, ""+settings.tend);
 		root.addContent(settingsElement);
-		return root;
+		logger.log("  Appending base settings.\n");
+		return;
 	}
 	
-	private Element echoSegmenterSettings(Element root) {
-		SegmenterSettings segSettings = trackmate.getSettings().segmenterSettings;
+	private void echoSegmenterSettings() {
+		SegmenterSettings segSettings = model.getSettings().segmenterSettings;
+		SegmenterType type = segSettings.segmenterType;
+		if (null == type)
+			return;
 		Element segSettingsElement = new Element(SEGMENTER_SETTINGS_ELEMENT_KEY);
 		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME, 		segSettings.segmenterType.name());
 		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME, 		""+segSettings.expectedRadius);
@@ -99,11 +162,15 @@ public class TmXmlWriter implements TmXmlKeys {
 		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME, 			""+segSettings.threshold);
 		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME, 			""+segSettings.useMedianFilter);
 		root.addContent(segSettingsElement);
-		return root;
+		logger.log("  Appending segmenter settings.\n");
+		return;
 	}
 	
-	private Element echoTrackerSettings(Element root) {
-		TrackerSettings settings = trackmate.getSettings().trackerSettings;
+	private void echoTrackerSettings() {
+		TrackerSettings settings = model.getSettings().trackerSettings;
+		TrackerType type = settings.trackerType;
+		if (null == type)
+			return;
 		Element trackerSettingsElement = new Element(TRACKER_SETTINGS_ELEMENT_KEY);
 		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_TRACKER_TYPE_ATTRIBUTE_NAME, 		settings.trackerType.name());
 		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_TIME_UNITS_ATTNAME, 				settings.timeUnits);
@@ -165,13 +232,14 @@ public class TmXmlWriter implements TmXmlKeys {
 		trackerSettingsElement.addContent(mergingElement);
 		// Add to root		
 		root.addContent(trackerSettingsElement);
-		return root;
+		logger.log("  Appending tracker settings.\n");
+		return;
 	}
 	
-	private Element echoTracks(Element root) {
-		SimpleGraph<Spot, DefaultEdge> trackGraph = trackmate.getTrackGraph();
+	private void echoTracks() {
+		SimpleGraph<Spot, DefaultEdge> trackGraph = model.getTrackGraph();
 		if (null == trackGraph)
-			return root;
+			return;
 		
 		List<Set<Spot>> tracks = new ConnectivityInspector<Spot, DefaultEdge>(trackGraph).connectedSets();
 		Element allTracksElement = new Element(TRACK_COLLECTION_ELEMENT_KEY);
@@ -205,13 +273,14 @@ public class TmXmlWriter implements TmXmlKeys {
 		}
 
 		root.addContent(allTracksElement);
-		return root;
+		logger.log("  Appending tracks.\n");
+		return;
 	}
 	
-	private Element echoImageInfo(Element root) {
-		Settings settings = trackmate.getSettings();
+	private void echoImageInfo() {
+		Settings settings = model.getSettings();
 		if (null == settings || null == settings.imp)
-			return root;
+			return;
 		Element imEl = new Element(IMAGE_ELEMENT_KEY);
 		imEl.setAttribute(IMAGE_FILENAME_ATTRIBUTE_NAME, 		settings.imageFileName);
 		imEl.setAttribute(IMAGE_FOLDER_ATTRIBUTE_NAME, 			settings.imageFolder);
@@ -226,13 +295,14 @@ public class TmXmlWriter implements TmXmlKeys {
 		imEl.setAttribute(IMAGE_SPATIAL_UNITS_ATTRIBUTE_NAME,	settings.spaceUnits);
 		imEl.setAttribute(IMAGE_TIME_UNITS_ATTRIBUTE_NAME,		settings.timeUnits);
 		root.addContent(imEl);
-		return root;
+		logger.log("  Appending image information.\n");
+		return;
 	}
 	
-	private Element echoAllSpots(Element root) {		
-		TreeMap<Integer, List<Spot>> allSpots = trackmate.getSpots();
+	private void echoAllSpots() {		
+		TreeMap<Integer, List<Spot>> allSpots = model.getSpots();
 		if (null == allSpots)
-			return root;
+			return;
 		List<Spot> spots;
 		
 		Element spotElement;
@@ -252,11 +322,22 @@ public class TmXmlWriter implements TmXmlKeys {
 			spotCollection.addContent(frameSpotsElement);
 		}
 		root.addContent(spotCollection);
-		return root;
+		logger.log("  Appending spots.\n");
+		return;
 	}
 	
-	private Element echoThresholds(Element root) {
-		List<FeatureThreshold> featureThresholds = trackmate.getFeatureThresholds();
+	private void echoInitialThreshold(final Float qualityThreshold) {
+		Element itElement = new Element(INITIAL_THRESHOLD_ELEMENT_KEY);
+		itElement.setAttribute(THRESHOLD_FEATURE_ATTRIBUTE_NAME, Feature.QUALITY.name());
+		itElement.setAttribute(THRESHOLD_VALUE_ATTRIBUTE_NAME, ""+qualityThreshold);
+		itElement.setAttribute(THRESHOLD_ABOVE_ATTRIBUTE_NAME, ""+true);
+		root.addContent(itElement);
+		logger.log("  Appending initial threshold.\n");
+		return;
+	}
+	
+	private void echoThresholds() {
+		List<FeatureThreshold> featureThresholds = model.getFeatureThresholds();
 		
 		Element allTresholdElement = new Element(THRESHOLD_COLLECTION_ELEMENT_KEY);
 		for (FeatureThreshold threshold : featureThresholds) {
@@ -267,14 +348,15 @@ public class TmXmlWriter implements TmXmlKeys {
 			allTresholdElement.addContent(thresholdElement);
 		}
 		root.addContent(allTresholdElement);
-		return root;
+		logger.log("  Appending feature thresholds.\n");
+		return;
 		
 	}
 	
-	private Element echoSpotSelection(Element root) {
-		TreeMap<Integer, List<Spot>> selectedSpots =  trackmate.getSelectedSpots();
+	private void echoSpotSelection() {
+		TreeMap<Integer, List<Spot>> selectedSpots =  model.getSelectedSpots();
 		if (null == selectedSpots)
-			return root;
+			return;
 		List<Spot> spots;
 		
 		Element spotIDElement, frameSpotsElement;
@@ -295,7 +377,8 @@ public class TmXmlWriter implements TmXmlKeys {
 		}
 
 		root.addContent(spotCollection);
-		return root;
+		logger.log("  Appending spot selection.\n");
+		return;
 	}
 	
 	private static final Element marshalSpot(final Spot spot) {

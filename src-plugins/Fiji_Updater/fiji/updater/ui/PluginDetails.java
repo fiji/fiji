@@ -182,7 +182,7 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 
 	public void list(String label, boolean showLinks,
 			Iterable items, String delim, PluginObject plugin) {
-		List list = new ArrayList();
+		List<Object> list = new ArrayList<Object>();
 		for (Object object : items)
 			list.add(object);
 

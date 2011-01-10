@@ -1,7 +1,6 @@
 package fiji.plugin.trackmate.io.test;
 
 import ij.ImagePlus;
-import ij.gui.NewImage;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,8 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
-
-import loci.formats.FormatException;
 
 import org.jdom.DataConversionException;
 import org.jdom.JDOMException;
@@ -45,14 +42,9 @@ public class TmXmlReaderTestDrive {
 		
 		// Image
 		ImagePlus imp = null;
-		try {
-			imp = reader.getImage();
+		imp = reader.getImage();
+		if (null != imp)
 			imp.show();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (FormatException e) {
-			e.printStackTrace();
-		}
 
 		// All spots
 		TreeMap<Integer, List<Spot>> spots = null;
@@ -91,8 +83,9 @@ public class TmXmlReaderTestDrive {
 		
 		// Settings
 		System.out.println("Reading settings:");
+		Settings settings = null;
 		try {
-			Settings settings = reader.getSettings();
+			settings = reader.getSettings();
 			System.out.println(settings);
 			System.out.println(settings.segmenterSettings);
 			System.out.println(settings.trackerSettings);
@@ -100,23 +93,8 @@ public class TmXmlReaderTestDrive {
 			e.printStackTrace();
 		}
 		
-		// Display
-		
-		// Create fake image
-		Integer[] frames = spots.keySet().toArray(new Integer[0]);
-		int minFrame = Integer.MAX_VALUE;
-		int maxFrame = Integer.MIN_VALUE;
-		for(int i : frames) {
-			if (i > maxFrame)
-				maxFrame = i;
-			if (i < minFrame)
-				minFrame = i;
-		}
-		imp = NewImage.createByteImage("FakeImage", 128, 128, maxFrame+1, NewImage.FILL_BLACK);
-		imp.setDimensions(1, 1, maxFrame+1);
-
 		// Instantiate displayer
-		SpotDisplayer2D displayer = new SpotDisplayer2D(imp);
+		SpotDisplayer2D displayer = new SpotDisplayer2D(settings);
 		displayer.render();
 		displayer.setSpots(spots);
 		displayer.setSpotsToShow(selectedSpots);

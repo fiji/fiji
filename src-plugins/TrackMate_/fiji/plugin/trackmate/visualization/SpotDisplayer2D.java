@@ -18,6 +18,7 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 
 import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.util.gui.AbstractAnnotation;
 import fiji.util.gui.OverlayedImageCanvas;
@@ -42,12 +43,13 @@ public class SpotDisplayer2D extends SpotDisplayer {
 
 		@Override
 		public void draw(Graphics2D g2d) {
+			
+			if (!trackVisible)
+				return;
+			
 			g2d.setStroke(new BasicStroke((float) (1 / canvas.getMagnification())));
 
 			switch (trackDisplayMode) {
-
-			case DO_NOT_DISPLAY:
-				return;
 
 			case ALL_WHOLE_TRACKS:
 				for (int i = 0; i < frames.size(); i++) 
@@ -126,6 +128,10 @@ public class SpotDisplayer2D extends SpotDisplayer {
 
 		@Override
 		public void draw(Graphics2D g2d) {
+			
+			if (!spotVisible)
+				return;
+			
 			g2d.setStroke(new BasicStroke((float) (1 / canvas.getMagnification())));
 			final int frame = imp.getFrame()-1;
 			List<Color> c = colors.get(frame);
@@ -161,52 +167,37 @@ public class SpotDisplayer2D extends SpotDisplayer {
 	private Feature currentFeature;
 	private float featureMaxValue;
 	private float featureMinValue;
+	private Settings settings;
+	private boolean trackVisible = true;
+	private boolean spotVisible = true;
 
-	public SpotDisplayer2D(final ImagePlus imp, final float radius, final float[] calibration) {
-		this.radius = radius;
-		this.imp = imp;
-		if (null == calibration)
-			if (null == imp)
-				this.calibration = new float[] { 1, 1 };
-			else
-				this.calibration  = new float[] {(float) imp.getCalibration().pixelWidth, (float) imp.getCalibration().pixelHeight };
-		else
-			this.calibration = calibration;
-		this.radius = radius;
+	public SpotDisplayer2D(final Settings settings) {
+		this.radius = settings.segmenterSettings.expectedRadius;
+		this.imp = settings.imp;
+		this.calibration = new float[] { settings.dx, settings.dy };
+		this.settings = settings;
 	}
 	
-	public SpotDisplayer2D(ImagePlus imp, final float radius) {
-		this(imp, radius, null);
-	}
-	
-	public SpotDisplayer2D(final ImagePlus imp) {
-		this(imp, DEFAULT_DISPLAY_RADIUS);
-	}
 	
 	/*
 	 * PUBLIC METHODS
 	 */
 	
 	@Override
+	public void setTrackVisible(boolean displayTrackSelected) {
+		trackVisible = displayTrackSelected;
+	}
+	
+	@Override
+	public void setSpotVisible(boolean displaySpotSelected) {
+		spotVisible = displaySpotSelected;		
+	}
+	
+	@Override
 	public void render() {
 		if (null == imp) {
-			float max_x = 0;
-			float max_y = 0;
-			float x, y;
-			int max_t = 0;
-			for (int frame : spots.keySet()) {
-				for(Spot spot : spots.get(frame)) {
-					x = spot.getFeature(Feature.POSITION_X);
-					y = spot.getFeature(Feature.POSITION_Y);
-					if (x > max_x)
-						max_x = x;
-					if (y > max_y)
-						max_y = y;
-				}
-				max_t = frame;
-			}
-			this.imp = NewImage.createByteImage("Empty", (int)max_x+1, (int)max_y+1, max_t+1, NewImage.FILL_BLACK);
-			this.imp.setDimensions(1, 1, max_t+1);
+			this.imp = NewImage.createByteImage("Empty", settings.width, settings.height, settings.nframes, NewImage.FILL_BLACK);
+			this.imp.setDimensions(1, 1, settings.nframes);
 		}
 		canvas = new OverlayedImageCanvas(imp);
 		StackWindow window = new StackWindow(imp, canvas);
@@ -256,6 +247,11 @@ public class SpotDisplayer2D extends SpotDisplayer {
 		prepareSpotOverlay();
 	}
 	
+	@Override
+	public void clear() {
+		canvas.clearOverlay();
+	}
+	
 	
 	/*
 	 * PRIVATE METHODS
@@ -296,18 +292,16 @@ public class SpotDisplayer2D extends SpotDisplayer {
 		Spot source, target;
 		Set<DefaultEdge> edges = trackGraph.edgeSet();
 		int frame;
-		
 		for (DefaultEdge edge : edges) {
 			source = trackGraph.getEdgeSource(edge);
 			target = trackGraph.getEdgeTarget(edge);
 			// Find to what frame it belongs to
 			frame = -1;
-			for (int key : spots.keySet())
+			for (int key : spotsToShow.keySet())
 				if (spots.get(key).contains(source)) {
 					frame = key;
 					break;
 				}
-			// Find to what track it belongs to
 			for (Set<Spot> track : tracks) {
 				if (track.contains(source)) {
 					wholeTrackOverlays.get(track).addEdge(source, target, frame);

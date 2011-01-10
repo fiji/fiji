@@ -30,7 +30,7 @@ import fiji.plugin.trackmate.FeatureThreshold;
 * THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
 * LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
 */
-public class InitThresholdPanel extends javax.swing.JPanel {
+public class InitThresholdPanel extends ActionListenablePanel {
 	
 	private static final long serialVersionUID = -5067695740285574761L;
 	private static final String EXPLANATION_TEXT = "<html><p align=\"justify\">" +
@@ -47,17 +47,22 @@ public class InitThresholdPanel extends javax.swing.JPanel {
 	private JLabel jLabelSelectedSpots;
 	private JPanel jPanelText;
 
-	public InitThresholdPanel(EnumMap<Feature, double[]> features) {
-		super();
-		this.features = features;
-		initGUI();
-		thresholdChanged();
+	public InitThresholdPanel(EnumMap<Feature, double[]> featureValues) {
+		this(featureValues, null);
 	}
 	
+	
+	public InitThresholdPanel(EnumMap<Feature, double[]> featureValues,	Float initialThreshold) {
+		super();
+		this.features = featureValues;
+		initGUI(initialThreshold);
+		thresholdChanged();
+	}
+
 	/*
 	 * PUBLIC METHOD
 	 */
-	
+
 	/**
 	 * Return the feature threshold on quality set by this panel. 
 	 */
@@ -88,14 +93,19 @@ public class InitThresholdPanel extends javax.swing.JPanel {
 	}
 	
 	
-	private void initGUI() {
+	private void initGUI(Float initialThreshold) { 
 		try {
 			BorderLayout thisLayout = new BorderLayout();
 			this.setLayout(thisLayout);
 			this.setPreferredSize(new java.awt.Dimension(300, 500));
 			{
+					
 				jPanelThreshold = new ThresholdPanel<Feature>(features, Feature.QUALITY);
+				if (null != initialThreshold)
+					jPanelThreshold.setThreshold(initialThreshold);
 				jPanelThreshold.jComboBoxFeature.setEnabled(false);
+				jPanelThreshold.jRadioButtonAbove.setEnabled(false);
+				jPanelThreshold.jRadioButtonBelow.setEnabled(false);
 				this.add(jPanelThreshold, BorderLayout.CENTER);
 				jPanelThreshold.setPreferredSize(new java.awt.Dimension(300, 200));
 				jPanelThreshold.addChangeListener(new ChangeListener() {

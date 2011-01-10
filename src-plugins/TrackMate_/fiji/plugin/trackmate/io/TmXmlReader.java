@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate.io;
 
+import ij.IJ;
 import ij.ImagePlus;
 
 import java.io.File;
@@ -10,11 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-
-import loci.formats.FormatException;
-import loci.plugins.in.ImagePlusReader;
-import loci.plugins.in.ImportProcess;
-import loci.plugins.in.ImporterOptions;
 
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
@@ -27,6 +23,7 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 
 import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.FeatureThreshold;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
@@ -67,12 +64,47 @@ public class TmXmlReader implements TmXmlKeys {
 		root = document.getRootElement();
 	}
 	
+	/**
+	 * Return the initial threshold on quality stored in this file.
+	 * Return <code>null</code> if the initial threshold data cannot be found in the file.
+	 */
+	public FeatureThreshold getInitialThreshold() throws DataConversionException {
+		Element itEl = root.getChild(INITIAL_THRESHOLD_ELEMENT_KEY);
+		if (null == itEl)
+			return null;
+		Feature feature = Feature.valueOf(itEl.getAttributeValue(THRESHOLD_FEATURE_ATTRIBUTE_NAME));
+		Float value 	= itEl.getAttribute(THRESHOLD_VALUE_ATTRIBUTE_NAME).getFloatValue();
+		boolean isAbove	= itEl.getAttribute(THRESHOLD_ABOVE_ATTRIBUTE_NAME).getBooleanValue();
+		FeatureThreshold ft = new FeatureThreshold(feature, value, isAbove);
+		return ft;
+	}
+	
+	
+	/**
+	 * Return the list of {@link FeatureThreshold} stored in this file.
+	 * Return <code>null</code> if the feature thresholds data cannot be found in the file.
+	 */
+	@SuppressWarnings("unchecked")
+	public List<FeatureThreshold> getFeatureThresholds() throws DataConversionException {
+		List<FeatureThreshold> featureThresholds = new ArrayList<FeatureThreshold>();
+		Element ftCollectionEl = root.getChild(THRESHOLD_COLLECTION_ELEMENT_KEY);
+		if (null == ftCollectionEl)
+			return null;
+		List<Element> ftEls = ftCollectionEl.getChildren(THRESHOLD_ELEMENT_KEY);
+		for (Element ftEl : ftEls) {
+			Feature feature = Feature.valueOf(ftEl.getAttributeValue(THRESHOLD_FEATURE_ATTRIBUTE_NAME));
+			Float value 	= ftEl.getAttribute(THRESHOLD_VALUE_ATTRIBUTE_NAME).getFloatValue();
+			boolean isAbove	= ftEl.getAttribute(THRESHOLD_ABOVE_ATTRIBUTE_NAME).getBooleanValue();
+			FeatureThreshold ft = new FeatureThreshold(feature, value, isAbove);
+			featureThresholds.add(ft);
+		}
+		return featureThresholds;
+	}
 	
 	/**
 	 * Return the settings for the TrackMate session saved in this file.
 	 * <p>
-	 * The settings object will have its {@link SegmenterSettings} and {@link TrackerSettings} objects filled with
-	 * the values saved as well, unless they are not present in the file. In this case, default value will be
+	 * The settings object will have its {@link SegmenterSettings} and {@link TrackerSettings} set default values will be
 	 * used.
 	 * 
 	 * @return  a full Settings object
@@ -108,90 +140,64 @@ public class TmXmlReader implements TmXmlKeys {
 			settings.imageFileName	= infoEl.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
 			settings.imageFolder	= infoEl.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME);
 		}
-		// Segmenter settings
-		Element segSettingsEl = root.getChild(SEGMENTER_SETTINGS_ELEMENT_KEY);
-		if (null != segSettingsEl) {
-			String segmenterTypeStr = segSettingsEl.getAttributeValue(SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME);
-			SegmenterType segmenterType = SegmenterType.valueOf(segmenterTypeStr);
-			SegmenterSettings segSettings = segmenterType.createSettings();
-			segSettings.segmenterType 		= segmenterType;
-			segSettings.expectedRadius 		= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME).getFloatValue();
-			segSettings.threshold			= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME).getFloatValue();
-			segSettings.useMedianFilter		= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME).getBooleanValue();
-			segSettings.spaceUnits			= segSettingsEl.getAttributeValue(SEGMENTER_SETTINGS_UNITS_ATTRIBUTE_NAME);			
-			settings.segmenterType = segmenterType;
-			settings.segmenterSettings = segSettings;
-		}
-		// Tracker settings
-		Element trackerSettingsEl = root.getChild(TRACKER_SETTINGS_ELEMENT_KEY);
-		if (null != trackerSettingsEl) {
-			String trackerTypeStr 			= trackerSettingsEl.getAttributeValue(TRACKER_SETTINGS_TRACKER_TYPE_ATTRIBUTE_NAME);
-			TrackerType trackerType 		= TrackerType.valueOf(trackerTypeStr);
-			TrackerSettings trackerSettings = trackerType.createSettings();
-			trackerSettings.trackerType		= trackerType;
-			trackerSettings.timeUnits		= trackerSettingsEl.getAttributeValue(TRACKER_SETTINGS_TIME_UNITS_ATTNAME);
-			trackerSettings.spaceUnits		= trackerSettingsEl.getAttributeValue(TRACKER_SETTINGS_SPACE_UNITS_ATTNAME);
-			trackerSettings.alternativeObjectLinkingCostFactor = trackerSettingsEl.getAttribute(TRACKER_SETTINGS_ALTERNATE_COST_FACTOR_ATTNAME).getDoubleValue();
-			trackerSettings.cutoffPercentile = trackerSettingsEl.getAttribute(TRACKER_SETTINGS_CUTOFF_PERCENTILE_ATTNAME).getDoubleValue();
-			trackerSettings.blockingValue	=  trackerSettingsEl.getAttribute(TRACKER_SETTINGS_BLOCKING_VALUE_ATTNAME).getDoubleValue();
-			// Linking
-			Element linkingElement 			= trackerSettingsEl.getChild(TRACKER_SETTINGS_LINKING_ELEMENT);
-			trackerSettings.linkingDistanceCutOff = readDistanceCutoffAttribute(linkingElement);
-			trackerSettings.linkingFeatureCutoffs = readTrackerFeatureMap(linkingElement);
-			// Gap-closing
-			Element gapClosingElement		= trackerSettingsEl.getChild(TRACKER_SETTINGS_GAP_CLOSING_ELEMENT);
-			trackerSettings.allowGapClosing	= gapClosingElement.getAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME).getBooleanValue();
-			trackerSettings.gapClosingDistanceCutoff 	= readDistanceCutoffAttribute(gapClosingElement);
-			trackerSettings.gapClosingTimeCutoff 		= readTimeCutoffAttribute(gapClosingElement); 
-			trackerSettings.gapClosingFeatureCutoffs 	= readTrackerFeatureMap(gapClosingElement);
-			// Splitting
-			Element splittingElement		= trackerSettingsEl.getChild(TRACKER_SETTINGS_SPLITTING_ELEMENT);
-			trackerSettings.allowSplitting	= splittingElement.getAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME).getBooleanValue();
-			trackerSettings.splittingDistanceCutoff		= readDistanceCutoffAttribute(splittingElement);
-			trackerSettings.splittingTimeCutoff			= readTimeCutoffAttribute(splittingElement);
-			trackerSettings.splittingFeatureCutoffs		= readTrackerFeatureMap(splittingElement);
-			// Merging
-			Element mergingElement 			= trackerSettingsEl.getChild(TRACKER_SETTINGS_MERGING_ELEMENT);
-			trackerSettings.allowMerging	= mergingElement.getAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME).getBooleanValue();
-			trackerSettings.mergingDistanceCutoff		= readDistanceCutoffAttribute(mergingElement);
-			trackerSettings.mergingTimeCutoff			= readTimeCutoffAttribute(mergingElement);
-			trackerSettings.mergingFeatureCutoffs		= readTrackerFeatureMap(mergingElement);
-			// Conclude
-			settings.trackerType			= trackerType;
-			settings.trackerSettings		= trackerSettings;
-		}
 		return settings;
 	}
-	
-	
-	private static final double readDistanceCutoffAttribute(Element element) throws DataConversionException {
-		return element.getChild(TRACKER_SETTINGS_DISTANCE_CUTOFF_ELEMENT)
-			.getAttribute(TRACKER_SETTINGS_DISTANCE_CUTOFF_ATTNAME).getDoubleValue();
-	}
-	
-	private static final double readTimeCutoffAttribute(Element element) throws DataConversionException {
-		return element.getChild(TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT)
-			.getAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME).getDoubleValue();
-	}
-	
-	/**
-	 * Look for all the sub-elements of <code>element</code> with the name TRACKER_SETTINGS_FEATURE_ELEMENT, 
-	 * fetch the feature attributes from them, and returns them in a map.
-	 */
-	@SuppressWarnings("unchecked")
-	private static final Map<Feature, Double> readTrackerFeatureMap(final Element element) throws DataConversionException {
-		Map<Feature, Double> map = new HashMap<Feature, Double>();
-		List<Element> featurelinkingElements = element.getChildren(TRACKER_SETTINGS_FEATURE_ELEMENT);
-		for (Element el : featurelinkingElements) {
-			List<Attribute> atts = el.getAttributes();
-			for (Attribute att : atts) {
-				String featureStr = att.getName();
-				Feature feature = Feature.valueOf(featureStr);
-				Double cutoff = att.getDoubleValue();
-				map.put(feature, cutoff);
+
+		public SegmenterSettings getSegmenterSettings() throws DataConversionException {
+			SegmenterSettings segSettings = null;
+			Element segSettingsEl = root.getChild(SEGMENTER_SETTINGS_ELEMENT_KEY);
+			if (null != segSettingsEl) {
+				String segmenterTypeStr = segSettingsEl.getAttributeValue(SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME);
+				SegmenterType segmenterType = SegmenterType.valueOf(segmenterTypeStr);
+				segSettings = segmenterType.createSettings();
+				segSettings.segmenterType 		= segmenterType;
+				segSettings.expectedRadius 		= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME).getFloatValue();
+				segSettings.threshold			= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME).getFloatValue();
+				segSettings.useMedianFilter		= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME).getBooleanValue();
+				segSettings.spaceUnits			= segSettingsEl.getAttributeValue(SEGMENTER_SETTINGS_UNITS_ATTRIBUTE_NAME);			
 			}
+			return segSettings;
 		}
-		return map;
+
+
+		public TrackerSettings getTrackerSettings() throws DataConversionException {
+			// Tracker settings
+			TrackerSettings trackerSettings = null;
+			Element trackerSettingsEl = root.getChild(TRACKER_SETTINGS_ELEMENT_KEY);
+			if (null != trackerSettingsEl) {
+				String trackerTypeStr 			= trackerSettingsEl.getAttributeValue(TRACKER_SETTINGS_TRACKER_TYPE_ATTRIBUTE_NAME);
+				TrackerType trackerType 		= TrackerType.valueOf(trackerTypeStr);
+				trackerSettings = trackerType.createSettings();
+				trackerSettings.trackerType		= trackerType;
+				trackerSettings.timeUnits		= trackerSettingsEl.getAttributeValue(TRACKER_SETTINGS_TIME_UNITS_ATTNAME);
+				trackerSettings.spaceUnits		= trackerSettingsEl.getAttributeValue(TRACKER_SETTINGS_SPACE_UNITS_ATTNAME);
+				trackerSettings.alternativeObjectLinkingCostFactor = trackerSettingsEl.getAttribute(TRACKER_SETTINGS_ALTERNATE_COST_FACTOR_ATTNAME).getDoubleValue();
+				trackerSettings.cutoffPercentile = trackerSettingsEl.getAttribute(TRACKER_SETTINGS_CUTOFF_PERCENTILE_ATTNAME).getDoubleValue();
+				trackerSettings.blockingValue	=  trackerSettingsEl.getAttribute(TRACKER_SETTINGS_BLOCKING_VALUE_ATTNAME).getDoubleValue();
+				// Linking
+				Element linkingElement 			= trackerSettingsEl.getChild(TRACKER_SETTINGS_LINKING_ELEMENT);
+				trackerSettings.linkingDistanceCutOff = readDistanceCutoffAttribute(linkingElement);
+				trackerSettings.linkingFeatureCutoffs = readTrackerFeatureMap(linkingElement);
+				// Gap-closing
+				Element gapClosingElement		= trackerSettingsEl.getChild(TRACKER_SETTINGS_GAP_CLOSING_ELEMENT);
+				trackerSettings.allowGapClosing	= gapClosingElement.getAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME).getBooleanValue();
+				trackerSettings.gapClosingDistanceCutoff 	= readDistanceCutoffAttribute(gapClosingElement);
+				trackerSettings.gapClosingTimeCutoff 		= readTimeCutoffAttribute(gapClosingElement); 
+				trackerSettings.gapClosingFeatureCutoffs 	= readTrackerFeatureMap(gapClosingElement);
+				// Splitting
+				Element splittingElement		= trackerSettingsEl.getChild(TRACKER_SETTINGS_SPLITTING_ELEMENT);
+				trackerSettings.allowSplitting	= splittingElement.getAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME).getBooleanValue();
+				trackerSettings.splittingDistanceCutoff		= readDistanceCutoffAttribute(splittingElement);
+				trackerSettings.splittingTimeCutoff			= readTimeCutoffAttribute(splittingElement);
+				trackerSettings.splittingFeatureCutoffs		= readTrackerFeatureMap(splittingElement);
+				// Merging
+				Element mergingElement 			= trackerSettingsEl.getChild(TRACKER_SETTINGS_MERGING_ELEMENT);
+				trackerSettings.allowMerging	= mergingElement.getAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME).getBooleanValue();
+				trackerSettings.mergingDistanceCutoff		= readDistanceCutoffAttribute(mergingElement);
+				trackerSettings.mergingTimeCutoff			= readTimeCutoffAttribute(mergingElement);
+				trackerSettings.mergingFeatureCutoffs		= readTrackerFeatureMap(mergingElement);
+			}
+			return trackerSettings;
 	}
 	
 	
@@ -199,7 +205,7 @@ public class TmXmlReader implements TmXmlKeys {
 	 * Return the list of all spots stored in this file.
 	 * @throws DataConversionException  if the attribute values are not formatted properly in the file.
 	 * @return  a {@link TreeMap} of spot list, index by frame number (one list of spot per frame, frame number
-	 * is the key of the treemap). Return <code>null</code> if the spot section does is not present in the file.
+	 * is the key of the treemap). Return <code>null</code> if the spot section is not present in the file.
 	 */
 	@SuppressWarnings("unchecked")
 	public TreeMap<Integer, List<Spot>> getAllSpots() throws DataConversionException {
@@ -339,28 +345,18 @@ public class TmXmlReader implements TmXmlKeys {
 		return trackGraph;
 	}
 	
-	public ImagePlus getImage() throws IOException, FormatException  {
+	public ImagePlus getImage()  {
 		Element imageInfoElement = root.getChild(IMAGE_ELEMENT_KEY);
 		if (null == imageInfoElement)
 			return null;
-		String filename = imageInfoElement.getAttribute(IMAGE_FILENAME_ATTRIBUTE_NAME).getValue();
-		String folder 	= imageInfoElement.getAttribute(IMAGE_FOLDER_ATTRIBUTE_NAME).getValue();
+		String filename = imageInfoElement.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
+		String folder 	= imageInfoElement.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME);
+		if (null == filename || null == folder || filename.equals(""))
+			return null;		
 		File imageFile = new File(folder, filename);
 		if (!imageFile.exists() || !imageFile.canRead())
 			return null;
-
-		ImporterOptions options = new ImporterOptions();
-		options.loadOptions();
-		options.parseArg(imageFile.getAbsolutePath());
-		options.checkObsoleteOptions();
-
-		ImportProcess process = new ImportProcess(options);
-		process.execute();
-		
-		ImagePlusReader reader = new ImagePlusReader(process);
-		ImagePlus[] imps = reader.openImagePlus();
-		process.getReader().close();
-	    return imps[0];
+		return IJ.openImage(imageFile.getAbsolutePath());
 
 	}
 	
@@ -368,6 +364,39 @@ public class TmXmlReader implements TmXmlKeys {
 	/*
 	 * PRIVATE METHODS
 	 */
+	
+
+	
+	private static final double readDistanceCutoffAttribute(Element element) throws DataConversionException {
+		return element.getChild(TRACKER_SETTINGS_DISTANCE_CUTOFF_ELEMENT)
+			.getAttribute(TRACKER_SETTINGS_DISTANCE_CUTOFF_ATTNAME).getDoubleValue();
+	}
+	
+	private static final double readTimeCutoffAttribute(Element element) throws DataConversionException {
+		return element.getChild(TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT)
+			.getAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME).getDoubleValue();
+	}
+	
+	/**
+	 * Look for all the sub-elements of <code>element</code> with the name TRACKER_SETTINGS_FEATURE_ELEMENT, 
+	 * fetch the feature attributes from them, and returns them in a map.
+	 */
+	@SuppressWarnings("unchecked")
+	private static final Map<Feature, Double> readTrackerFeatureMap(final Element element) throws DataConversionException {
+		Map<Feature, Double> map = new HashMap<Feature, Double>();
+		List<Element> featurelinkingElements = element.getChildren(TRACKER_SETTINGS_FEATURE_ELEMENT);
+		for (Element el : featurelinkingElements) {
+			List<Attribute> atts = el.getAttributes();
+			for (Attribute att : atts) {
+				String featureStr = att.getName();
+				Feature feature = Feature.valueOf(featureStr);
+				Double cutoff = att.getDoubleValue();
+				map.put(feature, cutoff);
+			}
+		}
+		return map;
+	}
+	
 	
 	private static Spot createSpotFrom(Element spotEl) throws DataConversionException {
 		int ID = spotEl.getAttribute(SPOT_ID_ATTRIBUTE_NAME).getIntValue();

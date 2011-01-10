@@ -18,7 +18,7 @@ public interface TmXmlKeys {
 	 * ROOT ELEMENT
 	 */
 
-	public static final String ROOT_ELEMENT_KEY 					= "TrakMate";
+	public static final String ROOT_ELEMENT_KEY 					= "TrackMate";
 	
 	/*
 	 * SETTINGS elements
@@ -96,6 +96,11 @@ public interface TmXmlKeys {
 	public static final String SPOT_FRAME_COLLECTION_ELEMENT_KEY 	= "SpotsInFrame"; 
 	public static final String SPOT_ELEMENT_KEY 					= "Spot"; 
 
+	/*
+	 * INITIAL THRESHOLD element
+	 */
+	
+	public static final String INITIAL_THRESHOLD_ELEMENT_KEY			= "InitialThreshold";
 	
 	/*
 	 * THRESHOLDS element

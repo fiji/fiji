@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.TreeMap;
 
-import loci.formats.FormatException;
-
 import org.jdom.JDOMException;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
@@ -28,11 +26,16 @@ public class TrackVisualizerTestDrive {
 	private static final File 		CASE_2 = new File(Branched3DTrackTestDrive.class.getResource(FILE_NAME_2).getFile());
 	private static final String 	FILE_NAME_3 ="Celegans-5pc_17timepoints.xml";
 	private static final File 		CASE_3 = new File(TrackVisualizerTestDrive.class.getResource(FILE_NAME_3).getFile());
+	private static final String 	FILE_NAME_4 ="Celegans-5pc.xml";
+	private static final File 		CASE_4 = new File(TrackVisualizerTestDrive.class.getResource(FILE_NAME_4).getFile());
+	private static final String 	FILE_NAME_5 ="SwimmingAlgae.xml";
+	private static final File 		CASE_5 = new File(TrackVisualizerTestDrive.class.getResource(FILE_NAME_5).getFile());
 	
 	
-	public static void main(String[] args) throws JDOMException, IOException, FormatException {
 	
-		TmXmlReader reader = new TmXmlReader(CASE_3);
+	public static void main(String[] args) throws JDOMException, IOException {
+	
+		TmXmlReader reader = new TmXmlReader(CASE_5);
 		reader.parse();
 		
 		// Load objects 

@@ -1,8 +1,9 @@
 package fiji.plugin.trackmate.visualization.test;
 
 import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TMUtils;
 import fiji.plugin.trackmate.features.FeatureFacade;
 import fiji.plugin.trackmate.gui.ThresholdGuiPanel;
 import fiji.plugin.trackmate.segmentation.PeakPickerSegmenter;
@@ -82,10 +83,10 @@ public class SpotDisplayer2DTestDrive {
 		imp.show();
 		System.out.println("Creating image done.");
 		
-		SegmenterSettings settings = new SegmenterSettings();
-		settings.expectedRadius = RADIUS;
+		SegmenterSettings segSettings = new SegmenterSettings();
+		segSettings.expectedRadius = RADIUS;
 //		SpotSegmenter<UnsignedByteType> segmenter = new LogSegmenter<UnsignedByteType>();
-		SpotSegmenter<UnsignedByteType> segmenter = new PeakPickerSegmenter<UnsignedByteType>(settings);
+		SpotSegmenter<UnsignedByteType> segmenter = new PeakPickerSegmenter<UnsignedByteType>(segSettings);
 		segmenter.setCalibration(CALIBRATION);
 		segmenter.setImage(img);
 		List<Spot> spots;
@@ -110,13 +111,20 @@ public class SpotDisplayer2DTestDrive {
 		imp.getCalibration().pixelHeight = CALIBRATION[1];
 		final TreeMap<Integer, List<Spot>> allNodes = new TreeMap<Integer, List<Spot>>();
 		allNodes.put(0, spots);
-		final SpotDisplayer2D displayer = new SpotDisplayer2D(imp, RADIUS, CALIBRATION);
+		
+		// Prepare the settings object that will be passed to the displayer 
+		Settings settings = new Settings();
+		settings.segmenterSettings = segSettings;
+		settings.imp = imp;
+		settings.dx = CALIBRATION[0];
+		settings.dy = CALIBRATION[1];
+		
+		final SpotDisplayer2D displayer = new SpotDisplayer2D(settings);
 		displayer.setSpots(allNodes);
 		displayer.render();
 		
 		System.out.println("Starting threshold GUI...");
-		final ThresholdGuiPanel gui = new ThresholdGuiPanel();
-		gui.setSpots(allSpots.values());
+		final ThresholdGuiPanel gui = new ThresholdGuiPanel(TMUtils.getFeatureValues(allSpots.values()));
 		gui.addThresholdPanel(Feature.MEAN_INTENSITY);
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(gui);
@@ -127,7 +135,7 @@ public class SpotDisplayer2DTestDrive {
 		
 		gui.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
-				displayer.setSpotsToShow(TrackMate_.thresholdSpots(allNodes, gui.getFeatureThresholds()));
+				displayer.setSpotsToShow(TMUtils.thresholdSpots(allNodes, gui.getFeatureThresholds()));
 				displayer.refresh();
 			}
 		});

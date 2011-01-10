@@ -13,24 +13,22 @@ import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 
 // TODO: rename to ObjectInstances
 public class ObjStartCompletions {
-	ArrayList<String> packageNames = new ArrayList<String>();
-	TreeSet<ImportedClassObjects> objectSet = new TreeSet<ImportedClassObjects>();
-	ClassNames names;
-	// TODO: why not parser?
-	ConstructorParser parser;
-	String language;
+	protected List<String> packageNames;
+	protected TreeSet<ImportedClassObjects> objectSet = new TreeSet<ImportedClassObjects>();
+	protected ClassNames names;
+	protected ConstructorParser parser;
+	protected String language;
 
-	public ObjStartCompletions(ClassNames name, String lang, ArrayList pNames) {
-		names = name;
-		language = lang;
-		this.packageNames = pNames;
-		parser = new ConstructorParser(name, lang);
+	public ObjStartCompletions(ClassNames names, String language) {
+		this.names = names;
+		this.language = language;
+		packageNames = new ArrayList<String>(names.getPackageNames());
+		parser = new ConstructorParser(names, language);
 	}
 
 	// TODO: RSyntaxTextArea or RSyntaxDocument?
 	// TODO: lazy evaluation?
 	public void setObjects(RSyntaxTextArea textArea, String text, DefaultProvider defaultProvider) {
-
 		//System.out.println("The first package element "+packageNames.get(0));
 		parser.setPackageNames(packageNames);
 		parser.findConstructorObjects(textArea);

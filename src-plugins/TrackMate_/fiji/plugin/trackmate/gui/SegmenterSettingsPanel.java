@@ -24,7 +24,7 @@ import javax.swing.JTextField;
 import fiji.plugin.trackmate.Settings.SegmenterType;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 
-public class SegmenterSettingsPanel extends javax.swing.JPanel {
+public class SegmenterSettingsPanel extends ActionListenablePanel {
 	private static final long serialVersionUID = 3220742915219642676L;
 	private JLabel jLabel1;
 	private JLabel jLabelSegmenterName;
@@ -119,7 +119,7 @@ public class SegmenterSettingsPanel extends javax.swing.JPanel {
 				jTextFieldBlobDiameter.setSize(TEXTFIELD_DIMENSION);
 				this.add(jTextFieldBlobDiameter, new GridBagConstraints(1, 3, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
 				jTextFieldBlobDiameter.setFont(FONT);
-				jTextFieldBlobDiameter.setText("10");
+				jTextFieldBlobDiameter.setText(""+(2*settings.expectedRadius));
 			}
 			{
 				jLabelBlobDiameterUnit = new JLabel();
@@ -132,6 +132,7 @@ public class SegmenterSettingsPanel extends javax.swing.JPanel {
 				this.add(jCheckBoxMedianFilter, new GridBagConstraints(0, 5, 2, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 10), 0, 0));
 				jCheckBoxMedianFilter.setText("Use median filter ");
 				jCheckBoxMedianFilter.setFont(FONT);
+				jCheckBoxMedianFilter.setSelected(settings.useMedianFilter);
 			}
 			{
 				jLabelHelpText = new JLabel();
@@ -148,7 +149,7 @@ public class SegmenterSettingsPanel extends javax.swing.JPanel {
 			{
 				jTextFieldThreshold = new JNumericTextField();
 				this.add(jTextFieldThreshold, new GridBagConstraints(1, 4, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-				jTextFieldThreshold.setText("0");
+				jTextFieldThreshold.setText(""+settings.threshold);
 				jTextFieldThreshold.setFont(FONT);
 			}
 			{

@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 
-import loci.formats.FormatException;
 import mpicbg.imglib.util.Util;
 
 import org.jdom.DataConversionException;
@@ -19,6 +18,7 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 
 import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.Settings.TrackerType;
 import fiji.plugin.trackmate.io.TmXmlReader;
@@ -35,8 +35,6 @@ public class LAPTrackerTestDrive {
 	@SuppressWarnings("unused")
 	private static final File SPLITTING_CASE_1 = new File(LAPTrackerTestDrive.class.getResource(FILE_NAME_1).getFile());
 	private static final File SPLITTING_CASE_2 = new File(LAPTrackerTestDrive.class.getResource(FILE_NAME_2).getFile());
-
-	
 	
 	/*
 	 * MAIN METHOD
@@ -58,9 +56,11 @@ public class LAPTrackerTestDrive {
 			e.printStackTrace();
 		}
 		// All spots
+		Settings inFileSettings = null;
 		TreeMap<Integer, List<Spot>> spots = null;
 		try {
 			spots = reader.getAllSpots();
+			inFileSettings = reader.getSettings();
 		} catch (DataConversionException e) {
 			e.printStackTrace();
 		}
@@ -78,10 +78,11 @@ public class LAPTrackerTestDrive {
 		settings.splittingFeatureCutoffs.clear();
 		System.out.println("Tracker settings:");
 		System.out.println(settings.toString());
+		inFileSettings.trackerSettings = settings;
 		
 		// 2 - Track the test spots
 		LAPTracker lap;
-		lap = new LAPTracker(spots, settings);
+		lap = new LAPTracker(spots, inFileSettings.trackerSettings);
 		if (!lap.checkInput() || !lap.process())
 			System.out.println(lap.getErrorMessage());
 
@@ -126,15 +127,11 @@ public class LAPTrackerTestDrive {
 		// Load Image
 		ij.ImageJ.main(args);
 		ImagePlus imp = null;
-		try {
-			imp = reader.getImage();
+		imp = reader.getImage();
+		if (imp != null)
 			imp.show();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (FormatException e) {
-			e.printStackTrace();
-		}
-		SpotDisplayer2D sd2d = new SpotDisplayer2D(imp, 2, new float[] {1, 1});
+		
+		SpotDisplayer2D sd2d = new SpotDisplayer2D(inFileSettings);
 		sd2d.setSpots(spots);
 		sd2d.render();
 		sd2d.setSpotsToShow(spots);

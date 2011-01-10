@@ -39,9 +39,9 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
-import org.jfree.data.statistics.HistogramDataset;
+import org.jfree.data.statistics.LogHistogramDataset;
 
-import fiji.plugin.trackmate.Utils;
+import fiji.plugin.trackmate.TMUtils;
 
 /**
  * 
@@ -58,9 +58,9 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 	JComboBox jComboBoxFeature;
 	private ChartPanel chartPanel;
 	private JButton jButtonAutoThreshold;
-	private JRadioButton jRadioButtonBelow;
-	private JRadioButton jRadioButtonAbove;
-	private HistogramDataset dataset;
+	JRadioButton jRadioButtonBelow;
+	JRadioButton jRadioButtonAbove;
+	private LogHistogramDataset dataset;
 	private JFreeChart chart;
 	private XYPlot plot;
 	private IntervalMarker intervalMarker;
@@ -101,6 +101,26 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 	/*
 	 * PUBLIC METHODS
 	 */
+
+	/**
+	 * Set the threshold currently selected for the data displayed in this panel.
+	 * @see #isAboveThreshold()
+	 */
+	public void setThreshold(double threshold) { 
+		this.threshold = threshold;
+		redrawThresholdMarker();
+	}
+	
+	/**
+	 * Set if the current threshold should be taken above or below its value.
+	 * @param isAbove  if true, the threshold will be related as above its value.
+	 */
+	public void setAboveThreshold(boolean isAbove) {
+		jRadioButtonAbove.setSelected(isAbove);
+		jRadioButtonBelow.setSelected(!isAbove);
+		redrawThresholdMarker();
+	}
+
 	
 	/**
 	 * Return the threshold currently selected for the data displayed in this panel.
@@ -156,16 +176,17 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 		key = allKeys[jComboBoxFeature.getSelectedIndex()];
 		double[] values = valuesMap.get(key);
 		if (null == values) {
-			dataset = new HistogramDataset();
+			dataset = new LogHistogramDataset();
 			threshold = Double.NaN;
 			annotation.setLocation(0.5f, 0.5f);
 			annotation.setText("No data");
 			fireThresholdChanged();
 		} else {
-			int nBins = Utils.getNBins(values);
-			dataset = new HistogramDataset();
-			if (nBins > 1)
+			int nBins = TMUtils.getNBins(values, 8, 100);
+			dataset = new LogHistogramDataset();
+			if (nBins > 1) {
 				dataset.addSeries(DATA_SERIES_NAME, values, nBins);
+			}
 		}
 		plot.setDataset(dataset);
 		resetAxes();
@@ -176,7 +197,7 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 		K selectedFeature = allKeys[jComboBoxFeature.getSelectedIndex()];
 		double[] values = valuesMap.get(selectedFeature);
 		if (null != values) {
-			threshold = Utils.otsuThreshold(valuesMap.get(selectedFeature));
+			threshold = TMUtils.otsuThreshold(valuesMap.get(selectedFeature));
 			redrawThresholdMarker();
 		}
 	}
@@ -266,11 +287,10 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 	 * Instantiate and configure the histogram chart.
 	 */
 	private void createHistogramPlot() {
-		dataset = new HistogramDataset();
+		dataset = new LogHistogramDataset();
 		chart = ChartFactory.createHistogram(null, null, null, dataset, PlotOrientation.VERTICAL, false, false, false);
 		
-		plot = chart.getXYPlot();
-		
+		plot = chart.getXYPlot();		
 		XYBarRenderer renderer = (XYBarRenderer) plot.getRenderer();
 		renderer.setShadowVisible(false);
 		renderer.setMargin(0);
@@ -285,6 +305,8 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 		plot.setDomainGridlinesVisible(false);
 		plot.setRangeCrosshairVisible(false);
 		plot.setRangeGridlinesVisible(false);
+
+		
 		
 		plot.getRangeAxis().setVisible(false);
 		plot.getDomainAxis().setVisible(false);

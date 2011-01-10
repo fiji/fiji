@@ -21,7 +21,7 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 	
 	/** The original image that is analyzed. */
 	private Image<T> img;
-	/** The number of pixels in the sphere or disc that will be iterated through tp build statistics. */
+	/** The number of pixels in the sphere or disc that will be iterated through to build statistics. */
 	private int npixels;
 	private DomainCursor<T> cursor;
 	/** Utility holder. */
@@ -51,6 +51,7 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 	 * PUBLIC METHODS
 	 */
 	
+	
 	@Override
 	public Feature getFeature() {
 		return Feature.MEAN_INTENSITY;
@@ -79,6 +80,7 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 		final float[] pixel_values = new float[npixels];
 		int n = 0;
 		
+		
 		for (int i = 0; i < coords.length; i++)
 			coords[i] = spot.getFeature(Spot.POSITION_FEATURES[i]);
 		
@@ -88,7 +90,6 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 			val = cursor.getType().getRealFloat();
 			// For median, min and max
 			pixel_values[n] = val;
-			
 			// For variance and mean
 			sum += val;
 			sum_sqr += val*val;

@@ -7,7 +7,7 @@ import java.util.SortedSet;
 
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.Utils;
+import fiji.plugin.trackmate.TMUtils;
 import fiji.plugin.trackmate.tracking.LAPUtils;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.tracking.costfunction.GapClosingCostFunction;
@@ -388,7 +388,7 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 		for (int i = 0; i < scores.size(); i++) {
 			scoreArr[i] = scores.get(i);
 		}
-		double cutoff = Utils.getPercentile(scoreArr, settings.cutoffPercentile); 
+		double cutoff = TMUtils.getPercentile(scoreArr, settings.cutoffPercentile); 
 		if (!(cutoff < settings.blockingValue)) {
 			cutoff = 10.0d; // TODO how to fix this? In this case, there are no costs in the matrix, so nothing to calculate the cutoff values from
 		}

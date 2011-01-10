@@ -23,6 +23,7 @@ import fiji.plugin.trackmate.Spot;
 public class SpotDisplayer3D extends SpotDisplayer {
 	
 	private static final String TRACK_CONTENT_NAME = "Tracks";
+	private static final String SPOT_CONTENT_NAME = "Spots";
 	private TreeMap<Integer, SpotGroupNode<Spot>> blobs;	
 	private Content spotContent;
 	private Content trackContent;
@@ -45,6 +46,17 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	 * OVERRIDDEN METHODS
 	 */
 	
+	@Override
+	public void setTrackVisible(boolean displayTrackSelected) {
+		trackContent.setVisible(displayTrackSelected);
+	}
+	
+	@Override
+	public void setSpotVisible(boolean displaySpotSelected) {
+		spotContent.setVisible(displaySpotSelected);
+	}
+	
+	@Override
 	public void setSpots(java.util.TreeMap<Integer,java.util.List<Spot>> spots) {
 		super.setSpots(spots);
 		spotContent = makeSpotContent();
@@ -52,21 +64,16 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	
 	
 	@Override
-	public void setDisplayTrackMode(TrackDisplayMode mode, int displayDepth) {
+	public void setDisplayTrackMode(TrackDisplayMode mode, int displayDepth) { // TODO
 		super.setDisplayTrackMode(mode, displayDepth);
 		if (null == trackContent) 
 			return;
 			
 		switch (trackDisplayMode) {
 		
-		case DO_NOT_DISPLAY:
-			trackContent.setVisible(false);
-			break;
-			
 		case ALL_WHOLE_TRACKS:
 			trackContent.setVisible(true);
 			break;
-		
 		}
 		
 	}
@@ -79,6 +86,8 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	@Override
 	public void setTrackGraph(SimpleGraph<Spot, DefaultEdge> trackGraph) {
 		super.setTrackGraph(trackGraph);
+		if (universe.contains(TRACK_CONTENT_NAME))
+			universe.removeContent(TRACK_CONTENT_NAME);
 		trackContent = makeTrackContent();
 		try {
 			trackContent = universe.addContentLater(trackContent).get();
@@ -137,7 +146,11 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		}
 	}
 
-	
+	@Override
+	public void clear() {
+		universe.removeContent(SPOT_CONTENT_NAME);
+		universe.removeContent(TRACK_CONTENT_NAME);
+	}
 	
 	/*
 	 * PRIVATE METHODS
@@ -196,7 +209,7 @@ public class SpotDisplayer3D extends SpotDisplayer {
 			contentAllFrames.put(i, contentThisFrame);
 			blobs.put(i, blobGroup);
 		}
-		return new Content("Spots", contentAllFrames);
+		return new Content(SPOT_CONTENT_NAME, contentAllFrames);
 	}
 
 
