@@ -27,7 +27,7 @@
  *
  * @author Dan White & Tom Kazimiers
  */
-package mpicbg.imglib.algorithm.math;
+package imglib.mpicbg.imglib.algorithm.math;
 
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
