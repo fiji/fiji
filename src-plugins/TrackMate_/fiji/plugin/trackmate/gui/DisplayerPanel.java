@@ -79,6 +79,14 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 	private TrackMateWizard wizard;
 
 	/*
+	 * CONSTRUCTOR 
+	 */
+
+	public DisplayerPanel() {
+		initGUI();
+	}
+
+	/*
 	 * PUBLIC METHODS
 	 */
 
@@ -101,7 +109,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 	public String getComponentID() {
 		return DESCRIPTOR;
 	}
-	
+
 	@Override
 	public String getDescriptorID() {
 		return DESCRIPTOR;
@@ -121,7 +129,6 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 	@Override
 	public void aboutToDisplayPanel() {
 		setModel(plugin.getModel());
-		initGUI();
 		register(wizard.getDisplayer());
 	}
 
@@ -140,7 +147,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 			views.add(view);
 		}
 	}
-	
+
 	@Override
 	protected void fireAction(ActionEvent event) {
 		// Intercept event coming from the JPanelSpotColorGUI, and translate it for views
@@ -171,15 +178,35 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 			depth = Integer.MAX_VALUE;
 		displaySettings.put(KEY_TRACK_DISPLAY_DEPTH, depth);
 	}
-	
+
 	/*
 	 * PRIVATE METHODS
 	 */
 
 	private void setModel(TrackMateModel model) {
+		
+		// TODO TODO FIXME
+		
 		this.featureValues = model.getFeatureModel().getSpotFeatureValues();
 		this.features = model.getFeatureModel().getSpotFeatures();
 		this.featureNames = model.getFeatureModel().getSpotFeatureNames();
+
+		if (null != jPanelSpotColor) {
+			jPanelSpotOptions.remove(jPanelSpotOptions);
+		}
+		jPanelSpotColor = new JPanelColorByFeatureGUI(features, featureNames, this);
+		jPanelSpotColor.featureValues = featureValues;
+		jPanelSpotOptions.add(jPanelSpotColor);
+		jPanelSpotColor.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				for(TrackMateModelView view : views) {
+					view.setDisplaySettings(KEY_SPOT_COLOR_FEATURE, jPanelSpotColor.setColorByFeature);
+					view.refresh();
+				}							
+			}
+		});
+
 	}
 
 	private void initGUI() {
@@ -328,20 +355,6 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 				this.add(jPanelSpotOptions);
 				jPanelSpotOptions.setBounds(10, 63, 280, 110);
 				jPanelSpotOptions.setBorder(new LineBorder(new java.awt.Color(192,192,192), 1, true));
-				{
-					jPanelSpotColor = new JPanelColorByFeatureGUI(features, featureNames, this);
-					jPanelSpotColor.featureValues = featureValues;
-					jPanelSpotOptions.add(jPanelSpotColor);
-					jPanelSpotColor.addActionListener(new ActionListener() {
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							for(TrackMateModelView view : views) {
-								view.setDisplaySettings(KEY_SPOT_COLOR_FEATURE, jPanelSpotColor.setColorByFeature);
-								view.refresh();
-							}							
-						}
-					});
-				}
 				{
 					JLabel jLabelSpotRadius = new JLabel();
 					jLabelSpotRadius.setText("  Spot display radius ratio:");

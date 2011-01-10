@@ -4,6 +4,7 @@ import java.awt.Component;
 
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.tracking.SpotTracker;
+import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 
@@ -54,12 +55,19 @@ public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 		// Set the settings field of the model
 		SpotTracker tracker = component.getChoice();
 		plugin.getModel().getSettings().tracker = tracker;
-		plugin.getModel().getSettings().trackerSettings = tracker.createDefaultSettings();
 
+		// Compare current settings with default ones, and substitute default ones
+		// only if the old ones are absent or not compatible with it.
+		TrackerSettings defaultSettings = tracker.createDefaultSettings();
+		TrackerSettings currentSettings = plugin.getModel().getSettings().trackerSettings;
+		if (null == currentSettings || currentSettings.getClass() != defaultSettings.getClass()) {
+			plugin.getModel().getSettings().trackerSettings = defaultSettings;
+		}
+		 
 		// Instantiate next descriptor for the wizard
 		TrackerConfigurationPanelDescriptor descriptor = new TrackerConfigurationPanelDescriptor();
-		descriptor.setWizard(wizard);
 		descriptor.setPlugin(plugin);
+		
 		wizard.registerWizardDescriptor(TrackerConfigurationPanelDescriptor.DESCRIPTOR, descriptor);
 	}
 
@@ -75,7 +83,7 @@ public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 		this.wizard = wizard;
 	}
 
-	private void setCurrentChoiceFromPlugin() {
+	void setCurrentChoiceFromPlugin() {
 		SpotTracker tracker = plugin.getModel().getSettings().tracker; 
 		if (tracker != null) {
 			int index = 0;

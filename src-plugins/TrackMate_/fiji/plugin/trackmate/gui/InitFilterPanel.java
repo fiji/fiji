@@ -23,12 +23,11 @@ import javax.swing.event.ChangeListener;
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 
-/**
- * 
- */
 public class InitFilterPanel extends ActionListenablePanel implements WizardPanelDescriptor {
 
 	private static final long serialVersionUID = 1L;
@@ -54,6 +53,15 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 	private TrackMate_ plugin;
 	private Logger logger;
 
+	
+	/**
+	 * Default constructor, initialize component. 
+	 */
+	public InitFilterPanel() {
+		initGUI();
+	}
+	
+	
 	/*
 	 * PUBLIC METHOD
 	 */
@@ -70,12 +78,10 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 		this.logger = wizard.getLogger();
 	}
 
-
 	@Override
 	public void setPlugin(TrackMate_ plugin) {
 		this.plugin = plugin;
 	}
-
 
 	@Override
 	public Component getComponent() {
@@ -107,9 +113,17 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 	@Override
 	public void aboutToDisplayPanel() {
 		TrackMateModel model = plugin.getModel();
-		this.features = model.getFeatureModel().getSpotFeatureValues();
+		
+		// Remove and redisplay threshold panel
+		features = model.getFeatureModel().getSpotFeatureValues();
+		regenerateThresholdPanel(features);
+
 		Float initialFilterValue = model.getInitialSpotFilterValue();
-		initGUI(initialFilterValue);
+		if (null != initialFilterValue)
+			jPanelThreshold.setThreshold(initialFilterValue);
+		else
+			jPanelThreshold.setThreshold(0);
+		thresholdChanged();
 	}
 
 	@Override
@@ -138,6 +152,31 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 	 * PRIVATE METHODS
 	 */
 
+	private void regenerateThresholdPanel(Map<String, double[]> features) {
+
+		// Remove old one if there is one already
+		if (jPanelThreshold != null) {
+			this.remove(jPanelThreshold);
+		}
+		
+		ArrayList<String> keys = new ArrayList<String>(1);
+		keys.add(Spot.QUALITY);
+		HashMap<String, String> keyNames = new HashMap<String, String>(1);
+		keyNames.put(Spot.QUALITY, Spot.FEATURE_NAMES.get(Spot.QUALITY));
+		jPanelThreshold = new FilterPanel(features, keys, keyNames);
+		
+		jPanelThreshold.jComboBoxFeature.setEnabled(false);
+		jPanelThreshold.jRadioButtonAbove.setEnabled(false);
+		jPanelThreshold.jRadioButtonBelow.setEnabled(false);
+		this.add(jPanelThreshold, BorderLayout.CENTER);
+		jPanelThreshold.setPreferredSize(new java.awt.Dimension(300, 200));
+		jPanelThreshold.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				thresholdChanged();
+			}
+		});
+	}
+	
 	private void thresholdChanged() {
 		double threshold  = jPanelThreshold.getThreshold();
 		boolean isAbove = jPanelThreshold.isAboveThreshold();
@@ -159,33 +198,12 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 	}
 
 
-	private void initGUI(Float initialThreshold) { 
+	private void initGUI() { 
 		try {
 			BorderLayout thisLayout = new BorderLayout();
 			this.setLayout(thisLayout);
 			this.setPreferredSize(new java.awt.Dimension(300, 500));
-			{
-
-				ArrayList<String> keys = new ArrayList<String>(1);
-				keys.add(Spot.QUALITY);
-				HashMap<String, String> keyNames = new HashMap<String, String>(1);
-				keyNames.put(Spot.QUALITY, Spot.FEATURE_NAMES.get(Spot.QUALITY));
-				jPanelThreshold = new FilterPanel(features, keys, keyNames);
-				if (null != initialThreshold)
-					jPanelThreshold.setThreshold(initialThreshold);
-				else
-					jPanelThreshold.setThreshold(0);
-				jPanelThreshold.jComboBoxFeature.setEnabled(false);
-				jPanelThreshold.jRadioButtonAbove.setEnabled(false);
-				jPanelThreshold.jRadioButtonBelow.setEnabled(false);
-				this.add(jPanelThreshold, BorderLayout.CENTER);
-				jPanelThreshold.setPreferredSize(new java.awt.Dimension(300, 200));
-				jPanelThreshold.addChangeListener(new ChangeListener() {
-					public void stateChanged(ChangeEvent e) {
-						thresholdChanged();
-					}
-				});
-			}
+			
 			{
 				jPanelFields = new JPanel();
 				this.add(jPanelFields, BorderLayout.SOUTH);
@@ -240,19 +258,23 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 		final Random ran = new Random();
 		double mean;
 
-		Map<String, double[]> fv = new HashMap<String, double[]>();
-		double[] val = new double[N_ITEMS];
+		SpotCollection spots = new SpotCollection();
 		mean = ran.nextDouble() * 10;
-		for (int j = 0; j < val.length; j++) 
-			val[j] = ran.nextGaussian() + 5 + mean;
-		fv.put(Spot.QUALITY, val);
+		for (int j = 0; j < N_ITEMS; j++)  {
+			Spot spot = new SpotImp(1);
+			float val = (float) (ran.nextGaussian() + 5 + mean);
+			spot.putFeature(Spot.QUALITY, val);
+			spots.add(spot, 0);
+		}
+		TrackMateModel model = new TrackMateModel();
+		model.setSpots(spots, false);
 
 		InitFilterPanel panel = new InitFilterPanel();
-		panel.features = fv; // FORBIDDEN normally but that's fine for testing
+		panel.setPlugin(new TrackMate_(model));
+		panel.aboutToDisplayPanel();
 		
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(panel);
-		panel.initGUI(0f); // FORBIDDEN
 		panel.displayingPanel();
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();

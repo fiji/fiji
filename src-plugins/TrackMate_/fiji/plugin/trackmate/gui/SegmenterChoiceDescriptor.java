@@ -5,6 +5,7 @@ import java.awt.Component;
 import mpicbg.imglib.type.numeric.RealType;
 
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 
 public class SegmenterChoiceDescriptor implements WizardPanelDescriptor {
@@ -73,7 +74,14 @@ public class SegmenterChoiceDescriptor implements WizardPanelDescriptor {
 		@SuppressWarnings("rawtypes")
 		SpotSegmenter segmenter = component.getChoice();
 		plugin.getModel().getSettings().segmenter = segmenter;
-		plugin.getModel().getSettings().segmenterSettings = segmenter.createDefaultSettings();
+		
+		// Compare current settings with default ones, and substitute default ones
+		// only if the old ones are absent or not compatible with it.
+		SegmenterSettings defaultSettings = segmenter.createDefaultSettings();
+		SegmenterSettings currentSettings = plugin.getModel().getSettings().segmenterSettings;
+		if (null == currentSettings || currentSettings.getClass() != defaultSettings.getClass()) {
+			plugin.getModel().getSettings().segmenterSettings = defaultSettings;
+		}
 
 		// Instantiate next descriptor for the wizard
 		SegmenterConfigurationPanelDescriptor descriptor = new SegmenterConfigurationPanelDescriptor();

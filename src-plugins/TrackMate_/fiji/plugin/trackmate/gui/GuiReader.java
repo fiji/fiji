@@ -71,7 +71,7 @@ public class GuiReader {
 	public TrackMate_ getPlugin() {
 		return plugin;
 	}
-	
+
 	/**
 	 * Return the descriptor for the {@link WizardPanelDescriptor} that matches the amount of data 
 	 * found in the target file. This identifier can be used to resume the tracking process
@@ -80,7 +80,7 @@ public class GuiReader {
 	public String getTargetDescriptor() {
 		return targetDescriptor;
 	}
-	
+
 	/**
 	 * Load the file and create a new {@link TrackMate_} plugin
 	 * with a new model reflecting the file content.
@@ -97,7 +97,7 @@ public class GuiReader {
 		TrackMateModel model = new TrackMateModel();
 		plugin = new TrackMate_(model);
 		plugin.setLogger(logger);
-		
+
 		// Open and parse file
 		logger.log("Opening file "+file.getName()+'\n');
 		TmXmlReader reader = new TmXmlReader(file, logger);
@@ -112,18 +112,15 @@ public class GuiReader {
 		}
 		logger.log("  Parsing file done.\n");
 
-		
+
 		// Retrieve data and update GUI
 		Settings settings = null;
 		ImagePlus imp = null;
 
 		// Send the new instance of plugin to all panel a first
 		// time, required by some for proper instantiation.
-		// We will have to do it a second time just before
-		// leaving, so that all panels are updated with the new
-		// content before leaving.
 		passNewPluginToWizard();
-		
+
 		{ // Read settings
 			settings = reader.getSettings();
 			logger.log("  Reading settings done.\n");
@@ -156,23 +153,21 @@ public class GuiReader {
 				targetDescriptor = StartDialogPanel.DESCRIPTOR;
 				if (!imp.isVisible())
 					imp.show();
-				passNewPluginToWizard();
 				logger.log("Loading data finished.\n");
 				return;
 			}
 
 			logger.log("  Reading segmenter settings done.\n");
-			
+
 			// Update 2nd panel: segmenter choice
 			SegmenterChoiceDescriptor segmenterChoiceDescriptor = (SegmenterChoiceDescriptor) wizard.getPanelDescriptorFor(SegmenterChoiceDescriptor.DESCRIPTOR);
 			segmenterChoiceDescriptor.aboutToDisplayPanel();
-			
+
 			// Instantiate descriptor for the segmenter configuration and update it
-			SegmenterConfigurationPanelDescriptor descriptor = new SegmenterConfigurationPanelDescriptor();
-			descriptor.setWizard(wizard);
-			descriptor.setPlugin(plugin);
-			wizard.registerWizardDescriptor(SegmenterConfigurationPanelDescriptor.DESCRIPTOR, descriptor);
-			descriptor.aboutToDisplayPanel();
+			SegmenterConfigurationPanelDescriptor segmConfDescriptor = new SegmenterConfigurationPanelDescriptor();
+			segmConfDescriptor.setPlugin(plugin);
+			wizard.registerWizardDescriptor(SegmenterConfigurationPanelDescriptor.DESCRIPTOR, segmConfDescriptor);
+			segmConfDescriptor.aboutToDisplayPanel();
 		}
 
 
@@ -183,7 +178,6 @@ public class GuiReader {
 				targetDescriptor = SegmenterConfigurationPanelDescriptor.DESCRIPTOR;
 				if (!imp.isVisible())
 					imp.show();
-				passNewPluginToWizard();
 				logger.log("Loading data finished.\n");
 				return;
 			}
@@ -191,12 +185,12 @@ public class GuiReader {
 			// We have a spot field, update the model.
 			model.setSpots(spots, false);
 			logger.log("  Reading spots done.\n");
-			
+
 			// Next panel that needs to know is the initial filter one
 			InitFilterPanel panel = (InitFilterPanel) wizard.getPanelDescriptorFor(InitFilterPanel.DESCRIPTOR);
 			panel.aboutToDisplayPanel();
 		}
-		
+
 
 		{ // Try to read the initial threshold
 			FeatureFilter initialThreshold = reader.getInitialFilter();
@@ -205,7 +199,6 @@ public class GuiReader {
 				targetDescriptor = InitFilterPanel.DESCRIPTOR;
 				if (!imp.isVisible())
 					imp.show();
-				passNewPluginToWizard();
 				logger.log("Loading data finished.\n");
 				return;
 			}
@@ -213,7 +206,7 @@ public class GuiReader {
 			// Store it in model
 			model.setInitialSpotFilterValue(initialThreshold.value);
 			logger.log("  Reading initial spot filter done.\n");
-			
+
 		}		
 
 		// Prepare the next panel, which is the spot filter panel
@@ -233,7 +226,6 @@ public class GuiReader {
 				wizard.setDisplayer(displayer);
 				if (!imp.isVisible())
 					imp.show();
-				passNewPluginToWizard();
 				logger.log("Loading data finished.\n");
 				return;
 			}
@@ -257,7 +249,6 @@ public class GuiReader {
 				wizard.setDisplayer(displayer);
 				if (!imp.isVisible())
 					imp.show();
-				passNewPluginToWizard();
 				logger.log("Loading data finished.\n");
 				return;
 			}
@@ -279,7 +270,6 @@ public class GuiReader {
 				wizard.setDisplayer(displayer);
 				if (!imp.isVisible())
 					imp.show();
-				passNewPluginToWizard();
 				logger.log("Loading data finished.\n");
 				return;
 			}
@@ -287,19 +277,20 @@ public class GuiReader {
 			model.setSettings(settings);
 			logger.log("  Reading tracker settings done.\n");
 		}
-		
+
 
 		// Update panel: tracker choice
-		TrackerChoiceDescriptor segmenterChoiceDescriptor = (TrackerChoiceDescriptor) wizard.getPanelDescriptorFor(TrackerChoiceDescriptor.DESCRIPTOR);
-		segmenterChoiceDescriptor.aboutToDisplayPanel();
-		
+		TrackerChoiceDescriptor trackerChoiceDescriptor = (TrackerChoiceDescriptor) wizard.getPanelDescriptorFor(TrackerChoiceDescriptor.DESCRIPTOR);
+		trackerChoiceDescriptor.setCurrentChoiceFromPlugin();
+
 		// Instantiate descriptor for the tracker configuration and update it
 		TrackerConfigurationPanelDescriptor trackerDescriptor = new TrackerConfigurationPanelDescriptor();
-		trackerDescriptor.setWizard(wizard);
 		trackerDescriptor.setPlugin(plugin);
+		trackerDescriptor.aboutToDisplayPanel(); // This will feed the new panel with the current settings content
+
 		wizard.registerWizardDescriptor(TrackerConfigurationPanelDescriptor.DESCRIPTOR, trackerDescriptor);
 
-		
+
 		{ // Try reading the tracks
 			SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = reader.readTracks(model.getFilteredSpots());
 			if (graph == null) {
@@ -310,7 +301,6 @@ public class GuiReader {
 				wizard.setDisplayer(displayer);
 				if (!imp.isVisible())
 					imp.show();
-				passNewPluginToWizard();
 				trackerDescriptor.aboutToDisplayPanel();
 				logger.log("Loading data finished.\n");
 				return;
@@ -330,30 +320,26 @@ public class GuiReader {
 				wizard.setDisplayer(displayer);
 				if (!imp.isVisible())
 					imp.show();
-				passNewPluginToWizard();
 				logger.log("Loading data finished.\n");
 				return;
 			}
 			logger.log("  Reading track filters done.\n");
 		}
 
-		
+
 		// Track filter descriptor
 		TrackFilterDescriptor trackFilterDescriptor = (TrackFilterDescriptor) wizard.getPanelDescriptorFor(TrackFilterDescriptor.DESCRIPTOR);
-		
+
 		{ // Try reading track selection
 			model.setVisibleTrackIndices(reader.getFilteredTracks(), false);
 			if (model.getVisibleTrackIndices() == null) {
-				if (null != wizard) {
-					targetDescriptor = TrackFilterDescriptor.DESCRIPTOR;
-					TrackMateModelView displayer = new HyperStackDisplayer();
-					displayer.setModel(model);
-					displayer.render();
-					wizard.setDisplayer(displayer);
-					if (!imp.isVisible())
-						imp.show();
-					passNewPluginToWizard();
-				}
+				targetDescriptor = TrackFilterDescriptor.DESCRIPTOR;
+				TrackMateModelView displayer = new HyperStackDisplayer();
+				displayer.setModel(model);
+				displayer.render();
+				wizard.setDisplayer(displayer);
+				if (!imp.isVisible())
+					imp.show();
 				trackFilterDescriptor.aboutToDisplayPanel();
 				logger.log("Loading data finished.\n");
 				return;
@@ -369,12 +355,11 @@ public class GuiReader {
 		wizard.setDisplayer(displayer);
 		if (!imp.isVisible())
 			imp.show();
-		passNewPluginToWizard();
-		
+
 		// Displayer descriptor
 		DisplayerPanel displayerPanel = (DisplayerPanel) wizard.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);
 		displayerPanel.aboutToDisplayPanel();
-		
+
 		logger.log("Loading data finished.\n");
 	}
 
@@ -422,12 +407,12 @@ public class GuiReader {
 		}
 		return file;
 	}
-	
-	
+
+
 	/**
 	 *  Pass new plugin instance to all panels.
 	 */
-	public void passNewPluginToWizard() {
+	private void passNewPluginToWizard() {
 		for (WizardPanelDescriptor descriptor : wizard.getWizardPanelDescriptors()) {
 			descriptor.setPlugin(plugin);
 		}

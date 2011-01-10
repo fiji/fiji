@@ -84,7 +84,7 @@ public class WizardController implements ActionListener {
 		panelDescriptor.aboutToDisplayPanel();
 
 		// Display matching panel
-		wizard.setCurrentPanelDescriptor(id);
+		wizard.showDescriptorPanelFor(id);
 
 		//  Show the panel in the dialog, and execute action after display
 		panelDescriptor.displayingPanel();  
@@ -167,7 +167,7 @@ public class WizardController implements ActionListener {
 			// Display old panel, but do not execute its actions
 			actionFlag = true;
 			String id = wizard.getCurrentPanelDescriptor().getNextDescriptorID();
-			wizard.setCurrentPanelDescriptor(id);
+			wizard.showDescriptorPanelFor(id);
 			
 			// Put back buttons
 			wizard.jButtonNext.setText("Next");
@@ -219,7 +219,7 @@ public class WizardController implements ActionListener {
 		panelDescriptor.aboutToDisplayPanel();
 		
 		// Display matching panel
-		wizard.setCurrentPanelDescriptor(id);
+		wizard.showDescriptorPanelFor(id);
 
 		//  Show the panel in the dialog, and execute action after display
 		panelDescriptor.displayingPanel();        
@@ -230,7 +230,7 @@ public class WizardController implements ActionListener {
 		// Move to previous panel, but do not execute its actions
 		WizardPanelDescriptor descriptor = wizard.getCurrentPanelDescriptor();
 		String backPanelDescriptor = descriptor.getPreviousDescriptorID();        
-		wizard.setCurrentPanelDescriptor(backPanelDescriptor);
+		wizard.showDescriptorPanelFor(backPanelDescriptor);
 
 		// Check if the new panel has a next panel. If not, disable the next button
 		WizardPanelDescriptor previousPanel = wizard.getPanelDescriptorFor(backPanelDescriptor);
@@ -250,7 +250,7 @@ public class WizardController implements ActionListener {
 		LoadDescriptor loadDescriptor = (LoadDescriptor) wizard.getPanelDescriptorFor(LoadDescriptor.DESCRIPTOR);
 		loadDescriptor.setTargetNextID(oldDescriptor.getDescriptorID());
 		loadDescriptor.aboutToDisplayPanel();
-		wizard.setCurrentPanelDescriptor(LoadDescriptor.DESCRIPTOR);
+		wizard.showDescriptorPanelFor(LoadDescriptor.DESCRIPTOR);
 		loadDescriptor.displayingPanel(); // This will update the GUI using GuiReader
 
 		// Update GUI with loaded plugin
@@ -280,7 +280,7 @@ public class WizardController implements ActionListener {
 		SaveDescriptor saveDescriptor = (SaveDescriptor) wizard.getPanelDescriptorFor(SaveDescriptor.DESCRIPTOR);
 		saveDescriptor.setTargetNextID(oldDescriptor.getDescriptorID());
 		saveDescriptor.aboutToDisplayPanel();
-		wizard.setCurrentPanelDescriptor(SaveDescriptor.DESCRIPTOR);
+		wizard.showDescriptorPanelFor(SaveDescriptor.DESCRIPTOR);
 		saveDescriptor.displayingPanel();
 	}
 
