@@ -33,4 +33,3 @@ public class MaskedImageFactory<T extends Type<T>> extends ImageFactory<T> {
 		return new MaskedImage(img, mask, offset, size);
 	}
 }
-
