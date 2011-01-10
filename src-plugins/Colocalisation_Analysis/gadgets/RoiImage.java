@@ -38,11 +38,20 @@ public class RoiImage<T extends Type<T>> extends Image<T> {
 	public RoiImage( Image<T> img, final int[] offset, final int size[] ) {
 		super(img.getContainer(), img.createType(), img.getName());
 
-		this.offset = offset.clone();
-		this.size = size.clone();
+		// copy offset data, and pad if necessary
+		this.offset = new int[getNumDimensions()];
+		for (int d=0; d < this.offset.length; d++) {
+			this.offset[d] = (d<offset.length)? offset[d] : 0;
+		}
+		System.err.println("----");
+		// copy size data, and pad if necessary
+		this.size = new int[getNumDimensions()];
+		for (int d=0; d < this.size.length; d++) {
+			this.size[d] = (d<size.length)? size[d] : 1;
+		}
 
 		int count = 1;
-		for (int d=0; d < getNumDimensions(); d++) {
+		for (int d=0; d < size.length; d++) {
 			count *= size[d];
 		}
 		numPixels = count;
