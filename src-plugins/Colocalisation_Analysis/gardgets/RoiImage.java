@@ -65,7 +65,10 @@ public class RoiImage<T extends Type<T>> extends Image<T> {
 
 	@Override
 	public int getDimension( int dim ) {
-		return size[dim];
+		if ( dim < getNumDimensions() && dim > -1 )
+			return this.size[ dim ];
+		else
+			return 1;
 	}
 
 	@Override
