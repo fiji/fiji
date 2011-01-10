@@ -306,7 +306,7 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 			LocalizableByDimCursor<T> locCursor
 				= img.createLocalizableByDimCursor( outOfBoundsFactory );
 			RegionOfInterestCursor<T> roiCursor
-				= new RegionOfInterestCursor<T>( locCursor, offset, psfRadiusInPixels );
+				= locCursor.createRegionOfInterestCursor( offset, psfRadiusInPixels );
 			blockList.add(roiCursor);
 		}
 	}
