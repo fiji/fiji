@@ -66,8 +66,10 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	RoiConfiguration roiConfig = RoiConfiguration.Img1;
 	// the ROI to use (null if none)
 	Rectangle roi = null;
-	// the mask corresponding to the ROI
+	// the mask corresponding to the ROI, sized the same as a slice
 	protected Image<T> mask = null;
+	// the mask corresponding to the ROI, sized to its bounding box
+	protected Image<T> maskBB = null;
 	// default indices of image, mask and roi choices
 	protected static int index1 = 0;
 	protected static int index2 = 1;
@@ -192,10 +194,10 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		 */
 		if (roiConfig == RoiConfiguration.Img1 && hasValidRoi(imp1)) {
 			roi = imp1.getRoi().getBounds();
-			mask = findIrregularMask(imp1, roi);
+			findIrregularMask(imp1, roi);
 		} else if (roiConfig == RoiConfiguration.Img2 && hasValidRoi(imp2)) {
 			roi = imp2.getRoi().getBounds();
-			mask = findIrregularMask(imp2, roi);
+			findIrregularMask(imp2, roi);
 		} else if (roiConfig == RoiConfiguration.Mask) {
 			// get the image to be used as mask
 			ImagePlus maskImp = WindowManager.getImage(indexMask);
@@ -236,7 +238,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 				int bbOffset[] = new int[] {roi.x, roi.y};
 				int bbSize[] = new int[] {roi.width, roi.height};
 				container = new DataContainer<T>(img1, img2,
-						img1Channel, img2Channel, mask, bbOffset, bbSize);
+						img1Channel, img2Channel, mask, maskBB,
+						bbOffset, bbSize);
 
 			} else {
 				// TODO
@@ -352,11 +355,14 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	 * appropriate size and put into an Image<T>. Otherwise
 	 * null is returned.
 	 */
-	protected Image<T> findIrregularMask(ImagePlus imp, Rectangle bb) {
+	protected void findIrregularMask(ImagePlus imp, Rectangle bb) {
 		ImageProcessor ipMask = imp.getMask();
 		// check if we got a regular ROI and return if so
-		if (ipMask == null)
-			return null;
+		if (ipMask == null) {
+			mask = null;
+			maskBB = null;
+			return;
+		}
 
 		// create a mask processor of the same size as a slice
 		ImageProcessor ipSlice = ipMask.createProcessor(imp.getWidth(), imp.getHeight());
@@ -367,9 +373,9 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		ipSlice.copyBits(ipMask, bb.x, bb.y, Blitter.COPY);
 		// create an Image<T> out of it
 		ImagePlus maskImp = new ImagePlus("Mask", ipSlice);
-		Image<T> mask = ImagePlusAdapter.wrap( maskImp );
-
-		return mask;
+		mask = ImagePlusAdapter.wrap( maskImp );
+		// remember the masks bounding box version
+		maskBB = ImagePlusAdapter.wrap( new ImagePlus( "MaskBB", ipMask ) );
 	}
 
 	/**
