@@ -103,10 +103,10 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 		OutOfBoundsStrategyFactory<T> oobFactory = new OutOfBoundsStrategyMirrorFactory<T>();
 		generateBlocks( img1, blocks, oobFactory);
 
-		/* Create a new image, based on the shuffled data and with
+		/* Create a new image to contain the shuffled data and with
 		 * same dimensions as the original data.
 		 */
-		Image<T> shuffledImage = img1.createNewImage();
+		Image<T> shuffledImage = img1.createNewImage(img1.getDimensions(), "Shuffled Image");
 
 		/* create a list of output blocks for the shuffled image
 		 * which will be used to write out the shuffled original
@@ -147,6 +147,22 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 			// shuffle the list
 			Collections.shuffle( blocks );
 
+			// check if a mask is in use and further actions are needed
+			if (container.isMaskInUse()) {
+				// black the whole intermediate image, just in case we have irr. masks
+				for(int j=0; j < outputBlocks.size(); j++) {
+					RegionOfInterestCursor<T> output = outputBlocks.get( j );
+					// iterate over output blocks
+					while (output.hasNext()) {
+						output.fwd();
+						// write black
+						output.getType().setZero();
+					}
+					// reset the output cursor
+					output.reset();
+				}
+			}
+
 			// write out the shuffled input blocks into the output blocks
 			for(int j=0; j < blocks.size(); j++) {
 				RegionOfInterestCursor<T> input = blocks.get( j );
@@ -179,6 +195,9 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 			} else {
 				throw new MissingPreconditionException( smoother.getErrorMessage() );
 			}
+
+			// allow the potential addition of a mask
+			smoothedShuffledImage = container.maskImageIfNeeded( smoothedShuffledImage );
 
 			// calculate correlation value...
 			double pValue = pearsonsCorrelation.calculatePearsons( smoothedShuffledImage, img2);
