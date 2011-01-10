@@ -92,18 +92,7 @@ System.err.println(offset);
 		return new MaskLocalizableCursor(cursor, maskCursor, offValue, offset);
 	}
 
-	@Override
-	public LocalizableByDimCursor<T> createLocalizableByDimCursor() {
-		throw new UnsupportedOperationException("This method has not been implemented, yet.");
-	}
-
 	/* Not implemented/needed methods follow */
-
-	@Override
-	public LocalizableByDimCursor<T> createLocalizableByDimCursor(
-			OutOfBoundsStrategyFactory<T> factory) {
-		throw new UnsupportedOperationException("This method has not been implemented, yet.");
-	}
 
 	@Override
 	public Interpolator<T> createInterpolator(InterpolatorFactory<T> factory) {

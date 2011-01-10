@@ -105,7 +105,6 @@ public class RoiImage<T extends Type<T>> extends Image<T> {
 	/* Not implemented/needed methods follow */
 
 	@Override
-
 	public Interpolator<T> createInterpolator(InterpolatorFactory<T> factory) {
 		throw new UnsupportedOperationException("This method has not been implemented, yet.");
 	}
