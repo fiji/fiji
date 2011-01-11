@@ -7,9 +7,65 @@ if (bsh.args.length == 0) {
 	System.exit(1);
 }
 
+import fiji.SimpleExecuter;
+
+import fiji.build.Fake;
+
 import fiji.updater.util.DependencyAnalyzer;
 
+import java.io.File;
 import java.io.IOException;
+
+fijiDir = System.getProperty("fiji.dir");
+if (!fijiDir.endsWith(File.separator))
+	fijiDir += File.separator;
+
+String getSourcePathForTarget(String path) {
+	if (!path.startsWith(fijiDir)) {
+		System.err.println("Warning: Not in $FIJI_ROOT: " + path);
+		return null;
+	}
+	path = path.substring(fijiDir.length());
+
+	fake = new Fake();
+	parser = fake.parse(new FileInputStream(fijiDir + "/Fakefile"), new File(fijiDir));
+	parser.parseRules(new ArrayList());
+
+	rule = parser.getRule(path);
+	if (rule == null) {
+		System.err.println("Warning: No rule found for " + path);
+		return null;
+	}
+
+	prereq = rule.getPrerequisiteString();
+	starstar = prereq.indexOf("**");
+	if (starstar >= 0)
+		prereq = prereq.substring(0, starstar);
+
+	return fijiDir + prereq;
+}
+
+boolean checkDirtyFiles(String path) {
+	path = new File(path).getAbsolutePath();
+	sourcePath = getSourcePathForTarget(path);
+	if (sourcePath == null)
+		return true; // ignore
+
+	// check for uncommitted files
+	executer = new SimpleExecuter(new File(sourcePath), new String[] {
+		"git", "ls-files", "--exclude-standard", "--other", "--modified", "."
+	});
+	if (executer.getExitCode() != 0) {
+		System.err.println("Failed looking for uncommitted/changed files for " + path + "\n" + executer.getError() + "\n" + executer.getOutput());
+		return false;
+	}
+	if (!"".equals(executer.getOutput())) {
+		System.err.println("Uncommitted files for " + path + ":\n" + executer.getOutput());
+		return false;
+	}
+
+	return true;
+}
 
 boolean check(String path) {
 	if (!path.endsWith(".jar")) {
@@ -22,6 +78,9 @@ boolean check(String path) {
 			System.err.println(path + " contains debug information");
 			return false;
 		}
+
+		if (!checkDirtyFiles(path))
+			return false;
 	} catch (IOException e) {
 		System.err.println("Error opening " + path);
 		return false;
