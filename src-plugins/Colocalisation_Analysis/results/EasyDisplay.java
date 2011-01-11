@@ -37,14 +37,20 @@ public class EasyDisplay<T extends RealType<T>> implements ResultHandler<T> {
 
 	public void handleImage(Image<T> image) {
 		ImagePlus imp = ImageJFunctions.displayAsVirtualStack( image );
-		// set the display range
 		double max = ImageStatistics.getImageMax( image ).getRealDouble();
-		imp.setDisplayRange(0.0, max);
-		imp.show();
+		showImage( imp, max );
 	}
 
-	public void handleHistogram(Histogram2D histogram) {
-		handleImage( histogram.getPlotImage() );
+	public void handleHistogram(Histogram2D<T> histogram) {
+		ImagePlus imp = ImageJFunctions.displayAsVirtualStack( histogram.getPlotImage() );
+		double max = ImageStatistics.getImageMax( histogram.getPlotImage() ).getRealDouble();
+		showImage( imp, max );
+	}
+
+	protected void showImage(ImagePlus imp, double max) {
+		// set the display range
+		imp.setDisplayRange(0.0, max);
+		imp.show();
 	}
 
 	public void handleWarning(Warning warning) {
