@@ -1,21 +1,21 @@
 import gadgets.DataContainer;
 import ij.IJ;
 import ij.ImagePlus;
-import ij.process.Blitter;
-import ij.process.ImageProcessor;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.Roi;
+import ij.gui.ShapeRoi;
 import ij.plugin.PlugIn;
+import ij.process.Blitter;
+import ij.process.ImageProcessor;
 
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.Cursor;
-import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
+import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.ImagePlusAdapter;
@@ -60,16 +60,28 @@ import algorithms.PearsonsCorrelation;
  */
 public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
+	// a storage class for ROI information
+	protected class MaskInfo {
+		// the ROI to use (null if none)
+		public Rectangle roi;
+		/* the mask corresponding to the ROI, sized the same as a slice,
+		 * but also giving access to its bounding boxed' versior
+		 */
+		public Image<T> mask;
+		public Image<T> boundingBox;
+		// constructor
+		public MaskInfo(Rectangle r, Image<T> m, Image<T> bb) {
+			roi = r; mask = m; boundingBox = bb;
+		}
+		public MaskInfo() { };
+	}
+
 	// Allowed types of ROI configuration
 	protected enum RoiConfiguration {None, Img1, Img2, Mask};
 	// the ROI configuration to use
 	RoiConfiguration roiConfig = RoiConfiguration.Img1;
-	// the ROI to use (null if none)
-	Rectangle roi = null;
-	// the mask corresponding to the ROI, sized the same as a slice
-	protected Image<T> mask = null;
-	// the mask corresponding to the ROI, sized to its bounding box
-	protected Image<T> maskBB = null;
+	// A list of all ROIs/masks found
+	ArrayList<MaskInfo> masks = new ArrayList<MaskInfo>();
 	// default indices of image, mask and roi choices
 	protected static int index1 = 0;
 	protected static int index2 = 1;
@@ -97,7 +109,9 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
 	public void run(String arg0) {
 		if (showDialog()) {
-			colocalise(img1, img2);
+			for (MaskInfo mi : masks) {
+				colocalise(img1, img2, mi.roi, mi.mask, mi.boundingBox);
+			}
 		}
 	}
 
@@ -185,23 +199,22 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		img1 = ImagePlusAdapter.wrap(imp1);
 		img2 = ImagePlusAdapter.wrap(imp2);
 
-		// configure ROIs and masks
-		roi = null;
-		mask = null;
 		/* check if we have a valid ROI for the selected configuration
 		 * and if so, get the ROI's bounds. Alternatively, a mask can
 		 * be selected (that is basically all, but a rectangle).
 		 */
 		if (roiConfig == RoiConfiguration.Img1 && hasValidRoi(imp1)) {
-			roi = imp1.getRoi().getBounds();
-			findIrregularMask(imp1, roi);
+			createMasksAndRois(imp1);
 		} else if (roiConfig == RoiConfiguration.Img2 && hasValidRoi(imp2)) {
-			roi = imp2.getRoi().getBounds();
-			findIrregularMask(imp2, roi);
+			createMasksAndRois(imp2);
 		} else if (roiConfig == RoiConfiguration.Mask) {
 			// get the image to be used as mask
 			ImagePlus maskImp = WindowManager.getImage(indexMask);
-			mask = ImagePlusAdapter.wrap( maskImp );
+			Image<T> maskImg = ImagePlusAdapter.<T>wrap( maskImp );
+			// TODO: find bounding box
+			Image<T> maskBB = maskImg;
+
+			masks.add( new MaskInfo(null, maskImg, maskBB) ) ;
 			// TODO: Check for correct size of the mask
 		}
 
@@ -224,7 +237,20 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		return true;
 	}
 
-	public void colocalise(Image<T> img1, Image<T> img2) {
+	/**
+	 * Call this method to run a whole colocalisation configuration,
+	 * all selected algorithms get run on the supplied images. You
+	 * can specitfy the data further by suppliing appropriate
+	 * information in the mask structure.
+	 *
+	 * @param img1
+	 * @param img2
+	 * @param roi
+	 * @param mask
+	 * @param maskBB
+	 */
+	public void colocalise(Image<T> img1, Image<T> img2, Rectangle roi,
+			Image<T> mask, Image<T> maskBB) {
 		// create a new container for the selected images and channels
 		DataContainer<T> container;
 		if (mask != null) {
@@ -350,32 +376,47 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	}
 
 	/**
-	 * This method checks if the given ImagePlus contains an
-	 * irregular ROI. If so, it will be put into a frame of
-	 * appropriate size and put into an Image<T>. Otherwise
-	 * null is returned.
+	 * This method checks if the given ImagePlus contains any
+	 * masks or ROIs. If so, the appropriate date structures
+	 * are created and filled. If an irregular ROI is found,
+	 * it will be put into a frame of its bounding box size and
+	 * put into an Image<T>.
+	 *
+	 * In the end the members rois, masks and maskBBs will be
+	 * filled if ROIs or masks were found. They will be null
+	 * otherwise.
 	 */
-	protected void findIrregularMask(ImagePlus imp, Rectangle bb) {
-		ImageProcessor ipMask = imp.getMask();
-		// check if we got a regular ROI and return if so
-		if (ipMask == null) {
-			mask = null;
-			maskBB = null;
-			return;
-		}
+	protected void createMasksAndRois(ImagePlus imp) {
+		// get Rois from current image in Fiji
+		Roi[] impRois = split(imp.getRoi());
+		// create empty list
+		masks.clear();
 
-		// create a mask processor of the same size as a slice
-		ImageProcessor ipSlice = ipMask.createProcessor(imp.getWidth(), imp.getHeight());
-		// fill the new slice with black
-		ipSlice.setValue(0.0);
-		ipSlice.fill();
-		// position the mask on the new  mask processor
-		ipSlice.copyBits(ipMask, bb.x, bb.y, Blitter.COPY);
-		// create an Image<T> out of it
-		ImagePlus maskImp = new ImagePlus("Mask", ipSlice);
-		mask = ImagePlusAdapter.wrap( maskImp );
-		// remember the masks bounding box version
-		maskBB = ImagePlusAdapter.wrap( new ImagePlus( "MaskBB", ipMask ) );
+		for (Roi r : impRois ){
+			MaskInfo mi = new MaskInfo();
+			mi.roi = r.getBounds();
+
+			ImageProcessor ipMask = r.getMask();
+			// check if we got a regular ROI and return if so
+			if (ipMask == null) {
+				return;
+			}
+
+			// create a mask processor of the same size as a slice
+			ImageProcessor ipSlice = ipMask.createProcessor(imp.getWidth(), imp.getHeight());
+			// fill the new slice with black
+			ipSlice.setValue(0.0);
+			ipSlice.fill();
+			// position the mask on the new  mask processor
+			ipSlice.copyBits(ipMask, mi.roi.x, mi.roi.y, Blitter.COPY);
+			// create an Image<T> out of it
+			ImagePlus maskImp = new ImagePlus("Mask", ipSlice);
+			// and remember it and the masks bounding box version
+			mi.mask = ImagePlusAdapter.<T>wrap( maskImp );
+			mi.boundingBox = ImagePlusAdapter.<T>wrap( new ImagePlus( "MaskBB", ipMask ) );
+			// add it to the list of masks/rois
+			masks.add(mi);
+		}
 	}
 
 	/**
@@ -400,5 +441,17 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		maskCursor.close();
 
 		return maskImage;
+	}
+
+	/**
+	 * Splits a non overlapping composite ROI into its sub ROIs.
+	 *
+	 * @param roi The ROI to split
+	 * @return A list of one or more ROIs
+	 */
+	public static Roi[] split(Roi roi) {
+		if (roi instanceof ShapeRoi)
+			return ((ShapeRoi)roi).getRois();
+		return new Roi[] { roi };
 	}
 }
