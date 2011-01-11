@@ -33,8 +33,10 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 	boolean isFirst  = true;
 	// show the name of the image
 	static boolean showName=true;
+	// a static counter for this sessions created PDFs
+	static int succeededPrints = 0;
 	// show the size in pixels of the image
-    static boolean showSize=true;
+	static boolean showSize=true;
 	// a reference to the data container
 	DataContainer<T> container;
 	PdfWriter writer;
@@ -158,7 +160,14 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 			// produce default name
 			String nameCh1 = container.getSourceImage1().getName();
 			String nameCh2 = container.getSourceImage2().getName();
+
 			String name =  "coloc_" + nameCh1 + "_" + nameCh2;
+			/* If a mask is in use, add a counter
+			 * information to the name.
+			 */
+			if (container.isMaskInUse() || container.isRoiInUse()) {
+				name += "_mask_"+ succeededPrints;
+			}
 			// get the path to the file we are about to create
 			SaveDialog sd = new SaveDialog("Save as PDF", name, ".pdf");
 			name = sd.getFileName();
@@ -189,8 +198,10 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 			IJ.showMessage("PDF Writer", ioe.getMessage());
 		}
 		finally {
-			if (document !=null)
+			if (document !=null) {
 				document.close();
+				succeededPrints++;
+			}
 		}
 	}
 }
