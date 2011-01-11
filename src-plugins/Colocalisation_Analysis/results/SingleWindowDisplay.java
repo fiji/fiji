@@ -63,7 +63,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	protected List<Image<? extends RealType>> listOfImages
 		= new ArrayList<Image<? extends RealType>>();
 	protected Map<Image<LongType>, Histogram2D<T>> mapOf2DHistograms
-		= new HashMap<Image<LongType>, Histogram2D<T>>();
+	= new HashMap<Image<LongType>, Histogram2D<T>>();
 	// a list of warnings
 	protected List<Warning> warnings = new ArrayList<Warning>();
 	// a list of named values, collected from algorithms

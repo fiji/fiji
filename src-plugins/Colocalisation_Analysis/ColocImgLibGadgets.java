@@ -56,7 +56,7 @@ public class ColocImgLibGadgets<T extends RealType<T>> implements PlugIn {
 
 	// create factories for new image stack
 	ContainerFactory containerFactory = new ImagePlusContainerFactory();
-	ImageFactory<T> imgFactory = new ImageFactory(cursor.getType(), containerFactory);
+	ImageFactory<T> imgFactory = new ImageFactory<T>(cursor.getType(), containerFactory);
 
 	// crete a new stack for the random images
 	Image<T> randomStack = imgFactory.createImage(img.getDimensions());

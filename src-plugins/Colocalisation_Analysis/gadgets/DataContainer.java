@@ -130,7 +130,7 @@ public class DataContainer<T extends RealType<T>> {
 		if (maskBB == null)
 			return image;
 
-		return new MaskedImage(image, maskBB, maskBBOffset.clone(), maskBBSize.clone());
+		return new MaskedImage<T>(image, maskBB, maskBBOffset.clone(), maskBBSize.clone());
 	}
 
 	/**

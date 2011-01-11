@@ -3,13 +3,13 @@ package gadgets;
 import mpicbg.imglib.container.ContainerFactory;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.type.Type;
+import mpicbg.imglib.type.numeric.NumericType;
 
 /**
  * This class produces new MaskImage objects, based on a before defined
  * mask.
  */
-public class MaskedImageFactory<T extends Type<T>> extends ImageFactory<T> {
+public class MaskedImageFactory<T extends NumericType<T> & Comparable<T>> extends ImageFactory<T> {
 	// the mask for newly created images
 	Image<T> mask;
 	// the masks bounding box offset
@@ -30,6 +30,7 @@ public class MaskedImageFactory<T extends Type<T>> extends ImageFactory<T> {
 	{
 		// create a new MaskImage with the mask of this factory
 		Image<T> img = super.createImage(dim, name);
-		return new MaskedImage(img, mask, offset, size);
+		return new MaskedImage<T>(img, mask, offset, size);
 	}
 }
+

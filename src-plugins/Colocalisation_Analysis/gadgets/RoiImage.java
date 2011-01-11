@@ -1,17 +1,15 @@
 package gadgets;
 
+import imglib.mpicbg.imglib.cursor.special.RoiShiftingLocalizableByDimCursor;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
-import mpicbg.imglib.cursor.LocalizablePlaneCursor;
 import mpicbg.imglib.cursor.special.RegionOfInterestCursor;
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.interpolation.Interpolator;
 import mpicbg.imglib.interpolation.InterpolatorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.type.Type;
-import imglib.mpicbg.imglib.cursor.special.RoiShiftingLocalizableByDimCursor;
 
 /**
  * A RoiImage decorates an ImgLib Image in a way that cursors on it
@@ -43,7 +41,7 @@ public class RoiImage<T extends Type<T>> extends Image<T> {
 		for (int d=0; d < this.offset.length; d++) {
 			this.offset[d] = (d<offset.length)? offset[d] : 0;
 		}
-		System.err.println("----");
+
 		// copy size data, and pad if necessary
 		this.size = new int[getNumDimensions()];
 		for (int d=0; d < this.size.length; d++) {
@@ -100,14 +98,14 @@ public class RoiImage<T extends Type<T>> extends Image<T> {
 	@Override
 	public LocalizableByDimCursor<T> createLocalizableByDimCursor() {
 		LocalizableByDimCursor<T> cursor = super.createLocalizableByDimCursor();
-		return new RoiShiftingLocalizableByDimCursor(cursor, offset);
+		return new RoiShiftingLocalizableByDimCursor<T>(cursor, offset);
 	}
 
 	@Override
 	public LocalizableByDimCursor<T> createLocalizableByDimCursor(
 			OutOfBoundsStrategyFactory<T> factory) {
 		LocalizableByDimCursor<T> cursor = super.createLocalizableByDimCursor( factory );
-		return new RoiShiftingLocalizableByDimCursor(cursor, offset);
+		return new RoiShiftingLocalizableByDimCursor<T>(cursor, offset);
 	}
 
 

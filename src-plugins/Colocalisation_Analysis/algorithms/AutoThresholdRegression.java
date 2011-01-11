@@ -123,9 +123,10 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm<T>
 		 */
 		double currentPersonsR = Double.MAX_VALUE;
 
-		double ch1ThreshMin = 0;
+		// Min threshold not yet implemented
+		//double ch1ThreshMin = 0;
 		double ch1ThreshMax = container.getMaxCh1();
-		double ch2ThreshMin = 0;
+		//double ch2ThreshMin = 0;
 		double ch2ThreshMax = container.getMaxCh2();
 
 		// the best found threshold for channel one

@@ -4,7 +4,6 @@ import static org.junit.Assert.assertTrue;
 import imglib.mpicbg.imglib.cursor.special.TwinValueRangeCursor;
 import imglib.mpicbg.imglib.cursor.special.TwinValueRangeCursorFactory;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
-import mpicbg.imglib.type.numeric.real.FloatType;
 
 import org.junit.Test;
 

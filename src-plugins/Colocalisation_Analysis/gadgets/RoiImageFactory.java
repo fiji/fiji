@@ -27,6 +27,7 @@ public class RoiImageFactory<T extends Type<T>> extends ImageFactory<T> {
 	{
 		// create a new RoiImage with the this factorys data
 		Image<T> img = super.createImage(dim, name);
-		return new RoiImage(img, offset, size);
+		return new RoiImage<T>(img, offset, size);
 	}
 }
+

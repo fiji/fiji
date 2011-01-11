@@ -17,7 +17,7 @@ import mpicbg.imglib.cursor.special.RegionOfInterestCursor;
  *
  * Author: Tom Kazimiers
  */
-public class RoiShiftingLocalizableByDimCursor< T extends Type<T> & Comparable<T> > extends CursorImpl<T> implements LocalizableByDimCursor<T> {
+public class RoiShiftingLocalizableByDimCursor< T extends Type<T>> extends CursorImpl<T> implements LocalizableByDimCursor<T> {
 	// the original LocalizableByDimCursor to drive
 	LocalizableByDimCursor<T> cursor;
 	// the offset to apply to requests

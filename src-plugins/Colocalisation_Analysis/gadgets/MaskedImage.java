@@ -1,20 +1,13 @@
 package gadgets;
 
-import mpicbg.imglib.cursor.Cursor;
-import mpicbg.imglib.cursor.LocalizableByDimCursor;
-import mpicbg.imglib.cursor.LocalizableCursor;
-import mpicbg.imglib.cursor.LocalizablePlaneCursor;
-import mpicbg.imglib.cursor.special.RegionOfInterestCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.interpolation.Interpolator;
-import mpicbg.imglib.interpolation.InterpolatorFactory;
-import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
-import mpicbg.imglib.type.Type;
-import mpicbg.imglib.type.numeric.NumericType;
 import imglib.mpicbg.imglib.cursor.special.MaskCursor;
 import imglib.mpicbg.imglib.cursor.special.MaskLocalizableCursor;
-import imglib.mpicbg.imglib.cursor.special.RoiShiftingLocalizableByDimCursor;
+import mpicbg.imglib.cursor.Cursor;
+import mpicbg.imglib.cursor.LocalizableCursor;
+import mpicbg.imglib.image.Image;
+import mpicbg.imglib.interpolation.Interpolator;
+import mpicbg.imglib.interpolation.InterpolatorFactory;
+import mpicbg.imglib.type.numeric.NumericType;
 
 /**
  * A MaskedImage decorates an ImgLib Image in a way that cursors on it
@@ -66,9 +59,8 @@ public class MaskedImage<T extends NumericType<T> & Comparable<T>> extends RoiIm
 	 */
 	protected void init() {
 		// create a new factory
-		maskedImageFactory = new MaskedImageFactory(mask, offset, size, image.createType(),
+		maskedImageFactory = new MaskedImageFactory<T>(mask, offset, size, image.createType(),
 			image.getContainerFactory());
-System.err.println(offset);
 	}
 
 	/**
@@ -82,14 +74,14 @@ System.err.println(offset);
 	public Cursor<T> createCursor() {
 		Cursor<T> cursor = image.createCursor();
 		Cursor<T> maskCursor = mask.createCursor();
-		return new MaskCursor(cursor, maskCursor, offValue);
+		return new MaskCursor<T>(cursor, maskCursor, offValue);
 	}
 
 	@Override
 	public LocalizableCursor<T> createLocalizableCursor() {
 		LocalizableCursor<T> cursor = image.createLocalizableCursor();
 		LocalizableCursor<T> maskCursor = mask.createLocalizableCursor();
-		return new MaskLocalizableCursor(cursor, maskCursor, offValue, offset);
+		return new MaskLocalizableCursor<T>(cursor, maskCursor, offValue, offset);
 	}
 
 	/* Not implemented/needed methods follow */
