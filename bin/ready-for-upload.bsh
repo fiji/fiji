@@ -9,12 +9,19 @@ if (bsh.args.length == 0) {
 
 import fiji.SimpleExecuter;
 
+import fiji.build.CompileJar;
 import fiji.build.Fake;
+import fiji.build.SubFake;
 
 import fiji.updater.util.DependencyAnalyzer;
 
 import java.io.File;
 import java.io.IOException;
+
+import java.util.Collections;
+
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 fijiDir = System.getProperty("fiji.dir");
 if (!fijiDir.endsWith(File.separator))
@@ -36,6 +43,12 @@ String getSourcePathForTarget(String path) {
 		System.err.println("Warning: No rule found for " + path);
 		return null;
 	}
+	if (rule instanceof SubFake)
+		return rule.getLastPrerequisite();
+	if (!(rule instanceof CompileJar)) {
+		System.err.println("Ignoring rule for " + path);
+		return null;
+	}
 
 	prereq = rule.getPrerequisiteString();
 	starstar = prereq.indexOf("**");
@@ -45,15 +58,9 @@ String getSourcePathForTarget(String path) {
 	return fijiDir + prereq;
 }
 
-boolean checkDirtyFiles(String path) {
-	path = new File(path).getAbsolutePath();
-	sourcePath = getSourcePathForTarget(path);
-	if (sourcePath == null)
-		return true; // ignore
-
-	// check for uncommitted files
-	executer = new SimpleExecuter(new File(sourcePath), new String[] {
-		"git", "ls-files", "--exclude-standard", "--other", "--modified", "."
+boolean checkDirtyFiles(File directory, String fileName, String path) {
+	executer = new SimpleExecuter(directory, new String[] {
+		"git", "ls-files", "--exclude-standard", "--other", "--modified", fileName
 	});
 	if (executer.getExitCode() != 0) {
 		System.err.println("Failed looking for uncommitted/changed files for " + path + "\n" + executer.getError() + "\n" + executer.getOutput());
@@ -62,6 +69,25 @@ boolean checkDirtyFiles(String path) {
 	if (!"".equals(executer.getOutput())) {
 		System.err.println("Uncommitted files for " + path + ":\n" + executer.getOutput());
 		return false;
+	}
+	return true;
+}
+
+boolean checkDirtyFiles(String path) {
+	fullPath = new File(path).getAbsolutePath();
+	sourcePath = getSourcePathForTarget(fullPath);
+	if (sourcePath == null)
+		return true; // ignore
+
+	// check for uncommitted files
+	if (!checkDirtyFiles(new File(sourcePath), ".", path))
+		return false;
+
+	// check whether submodules are correctly committed
+	if (new File(sourcePath, ".git").exists()) {
+		dir = new File(sourcePath);
+		if (!checkDirtyFiles(dir.getParentFile(), dir.getName(), path))
+			return false;
 	}
 
 	return true;
