@@ -1,5 +1,6 @@
 package gadgets;
 
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,6 +31,8 @@ public class DataContainer<T extends RealType<T>> {
 	protected Image<T> maskBB = null;
 	protected int[] maskBBSize = null;
 	protected int[] maskBBOffset = null;
+	// indicates if a regular ROI is in use
+	protected boolean regularRoiInUse = false;
 
 	InputCheck<T> inputCheck = null;
 	AutoThresholdRegression<T> autoThreshold = null;
@@ -115,6 +118,7 @@ public class DataContainer<T extends RealType<T>> {
 			final int[] offset, final int size[]) {
 		this(new RoiImage<T>(src1, offset, size), new RoiImage<T>(src2, offset, size),
 			 ch1, ch2);
+		regularRoiInUse = true;
 	}
 
 	/**
@@ -131,6 +135,13 @@ public class DataContainer<T extends RealType<T>> {
 			return image;
 
 		return new MaskedImage<T>(image, maskBB, maskBBOffset.clone(), maskBBSize.clone());
+	}
+
+	/**
+	 * Indicates if a regular ROI is in use.
+	 */
+	public boolean isRoiInUse() {
+		return regularRoiInUse;
 	}
 
 	/**
