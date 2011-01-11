@@ -67,6 +67,39 @@ boolean checkDirtyFiles(String path) {
 	return true;
 }
 
+long getMTime(String path) {
+	return new File(path).lastModified();
+}
+
+boolean checkTimestamps(String path) {
+	fullPath = new File(path).getAbsolutePath();
+	sourcePath = getSourcePathForTarget(fullPath);
+	if (sourcePath == null)
+		return true; // ignore
+
+	if (!sourcePath.endsWith(File.separator))
+		sourcePath += File.separator;
+
+	zip = new ZipFile(fullPath);
+	for (ZipEntry entry : Collections.list(zip.entries())) {
+		name = entry.getName();
+		if (name.endsWith(".class")) {
+			dollar = name.indexOf('$');
+			if (dollar >= 0)
+				name = name.substring(0, dollar) + ".java";
+			else
+				name = name.substring(0, name.length() - 5) + "java";
+			if (!new File(sourcePath + name).exists())
+				continue;
+		}
+		if (entry.getTime() < getMTime(sourcePath + name)) {
+			System.err.println(entry.getName() + " in " + path + " is not up-to-date");
+			return false;
+		}
+	}
+	return true;
+}
+
 boolean check(String path) {
 	if (!path.endsWith(".jar")) {
 		System.err.println("Ignoring " + path);
@@ -80,6 +113,8 @@ boolean check(String path) {
 		}
 
 		if (!checkDirtyFiles(path))
+			return false;
+		if (!checkTimestamps(path))
 			return false;
 	} catch (IOException e) {
 		System.err.println("Error opening " + path);
