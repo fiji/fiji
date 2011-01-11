@@ -1,0 +1,36 @@
+#!/bin/sh
+/*/. 2>/dev/null; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
+
+if (bsh.args.length == 0) {
+	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
+		+ " <file>...");
+	System.exit(1);
+}
+
+import fiji.updater.util.DependencyAnalyzer;
+
+import java.io.IOException;
+
+boolean check(String path) {
+	if (!path.endsWith(".jar")) {
+		System.err.println("Ignoring " + path);
+		return true;
+	}
+
+	try {
+		if (DependencyAnalyzer.containsDebugInfo(path)) {
+			System.err.println(path + " contains debug information");
+			return false;
+		}
+	} catch (IOException e) {
+		System.err.println("Error opening " + path);
+		return false;
+	}
+	return true;
+}
+
+exitCode = 0;
+for (String arg : bsh.args)
+	if (!check(arg))
+		exitCode = 1;
+System.exit(exitCode);
