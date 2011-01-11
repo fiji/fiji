@@ -82,7 +82,7 @@ String getSourcePathForTarget(String path, boolean fromSubFakefile) {
 		return rule.getLastPrerequisite();
 	}
 	if (!(rule instanceof CompileJar)) {
-		System.err.println("Ignoring rule for " + path);
+		System.err.println("Warning: ignoring rule for " + path);
 		return null;
 	}
 
@@ -97,7 +97,7 @@ String getSourcePathForTarget(String path, boolean fromSubFakefile) {
 boolean checkFakeTargetUpToDate(String path) {
 	rule = getRule(path);
 	if (rule == null) {
-		System.err.println("Could not determine target for " + path);
+		System.err.println("Warning: could not determine target for " + path);
 		return true; // ignore
 	}
 	return rule.upToDate();
@@ -124,7 +124,7 @@ boolean checkDirtyFiles(String path) {
 	// check for uncommitted files
 	sourcePath = getSourcePathForTarget(fullPath, true);
 	if (sourcePath == null)
-		System.err.println("Could not determine source directory for " + path);
+		System.err.println("Warning: could not determine source directory for " + path);
 	else if (!checkDirtyFiles(new File(sourcePath), ".", path))
 		return false;
 
@@ -175,7 +175,7 @@ boolean checkTimestamps(String path) {
 
 boolean check(String path) {
 	if (!path.endsWith(".jar")) {
-		System.err.println("Ignoring " + path);
+		System.err.println("Warning: ignoring " + path);
 		return true;
 	}
 
