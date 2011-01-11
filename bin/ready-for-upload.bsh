@@ -122,7 +122,7 @@ boolean checkDirtyFiles(String path) {
 	fullPath = new File(path).getAbsolutePath();
 
 	// check for uncommitted files
-	sourcePath = getSourcePathForTarget(fullPath, true);
+	sourcePath = getSourcePathForTarget(fullPath, false);
 	if (sourcePath == null)
 		System.err.println("Warning: could not determine source directory for " + path);
 	else if (!checkDirtyFiles(new File(sourcePath), ".", path))
