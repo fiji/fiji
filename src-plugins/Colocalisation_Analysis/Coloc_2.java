@@ -216,6 +216,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
 			masks.add( new MaskInfo(null, maskImg, maskBB) ) ;
 			// TODO: Check for correct size of the mask
+			throw new UnsupportedOperationException("Separate image masks have not been implemented, yet.");
 		}
 
 		// Parse algorithm options
@@ -254,25 +255,12 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		// create a new container for the selected images and channels
 		DataContainer<T> container;
 		if (mask != null) {
-			/* if we have a mask, a irregular ROI or a mask is in use.
-			 * and if roi is set, we can easiliy get its bunding box.
-			 */
-			if (roi != null) {
-				/* an irregular ROI's mask is the bounding box of it and
-				 * so we neeed to create a mask of the same size as the images.
-				 */
 				int bbOffset[] = new int[] {roi.x, roi.y};
 				int bbSize[] = new int[] {roi.width, roi.height};
 				container = new DataContainer<T>(img1, img2,
 						img1Channel, img2Channel, mask, maskBB,
 						bbOffset, bbSize);
 
-			} else {
-				// TODO
-				//container = new DataContainer<T>(img1, img2,
-				//		img1Channel, img2Channel, mask);
-				throw new UnsupportedOperationException("Separate image masks have not been implemented, yet.");
-			}
 		} else if (roi != null) {
 			// if we have no musk, but a ROI, a regular ROI is in use
 			int roiOffset[] = new int[] {roi.x, roi.y};
