@@ -13,6 +13,7 @@ import fiji.build.CompileJar;
 import fiji.build.Fake;
 import fiji.build.Rule;
 import fiji.build.SubFake;
+import fiji.build.Util;
 
 import fiji.updater.util.DependencyAnalyzer;
 
@@ -43,14 +44,43 @@ Rule getRule(String path) {
 	return parser.getRule(path);
 }
 
-String getSourcePathForTarget(String path) {
+String getSourcePathForTarget(String path, boolean fromSubFakefile) {
 	rule = getRule(path);
 	if (rule == null) {
 		System.err.println("Warning: No rule found for " + path);
 		return null;
 	}
-	if (rule instanceof SubFake)
+	if (rule instanceof SubFake) {
+		if (fromSubFakefile) {
+			fakefile = rule.getFakefile();
+			if (fakefile == null)
+				return false;
+			fake = new Fake();
+			cwd = new File(fijiDir, rule.getLastPrerequisite());
+			parser = fake.parse(new FileInputStream(fakefile), cwd);
+			parser.parseRules(new ArrayList());
+
+			target = rule.getTarget();
+			target = target.substring(target.lastIndexOf('/') + 1);
+			subRule = parser.getRule(target);
+			if (subRule == null) {
+				System.err.println("Warning: rule for " + target + " not found in " + rule.getLastPrerequisite());
+				return null;
+			}
+			if (!(subRule instanceof CompileJar)) {
+				System.err.println("Warning: ignoring rule for " + target);
+				return null;
+			}
+
+			prereq = subRule.getPrerequisiteString();
+			starstar = prereq.indexOf("**");
+			if (starstar >= 0)
+				prereq = prereq.substring(0, starstar);
+
+			return Util.makePath(cwd, prereq);
+		}
 		return rule.getLastPrerequisite();
+	}
 	if (!(rule instanceof CompileJar)) {
 		System.err.println("Ignoring rule for " + path);
 		return null;
@@ -90,16 +120,18 @@ boolean checkDirtyFiles(File directory, String fileName, String path) {
 
 boolean checkDirtyFiles(String path) {
 	fullPath = new File(path).getAbsolutePath();
-	sourcePath = getSourcePathForTarget(fullPath);
-	if (sourcePath == null)
-		return true; // ignore
 
 	// check for uncommitted files
-	if (!checkDirtyFiles(new File(sourcePath), ".", path))
+	sourcePath = getSourcePathForTarget(fullPath, true);
+	if (sourcePath == null)
+		System.err.println("Could not determine source directory for " + path);
+	else if (!checkDirtyFiles(new File(sourcePath), ".", path))
 		return false;
 
 	// check whether submodules are correctly committed
-	if (new File(sourcePath, ".git").exists()) {
+	if (sourcePath == null)
+		sourcePath = getSourcePathForTarget(fullPath, false);
+	if (sourcePath != null && new File(sourcePath, ".git").exists()) {
 		dir = new File(sourcePath);
 		if (!checkDirtyFiles(dir.getParentFile(), dir.getName(), path))
 			return false;
@@ -114,7 +146,7 @@ long getMTime(String path) {
 
 boolean checkTimestamps(String path) {
 	fullPath = new File(path).getAbsolutePath();
-	sourcePath = getSourcePathForTarget(fullPath);
+	sourcePath = getSourcePathForTarget(fullPath, true);
 	if (sourcePath == null)
 		return true; // ignore
 
