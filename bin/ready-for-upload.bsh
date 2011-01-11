@@ -181,8 +181,12 @@ boolean check(String path) {
 
 	try {
 		if (DependencyAnalyzer.containsDebugInfo(path)) {
-			System.err.println(path + " contains debug information");
-			return false;
+			if (new File(path).getCanonicalPath().equals(new File(fijiDir, "plugins/loci_tools.jar").getCanonicalPath()))
+				System.err.println("Ignoring debug info in Bio-Formats");
+			else {
+				System.err.println(path + " contains debug information");
+				return false;
+			}
 		}
 
 		if (!checkFakeTargetUpToDate(path)) {
