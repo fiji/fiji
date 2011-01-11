@@ -198,7 +198,8 @@ boolean check(String path) {
 		if (!checkTimestamps(path))
 			return false;
 	} catch (IOException e) {
-		System.err.println("Error opening " + path);
+		e.printStackTrace();
+		System.err.println("Error opening " + path + ": " + e);
 		return false;
 	}
 	return true;
