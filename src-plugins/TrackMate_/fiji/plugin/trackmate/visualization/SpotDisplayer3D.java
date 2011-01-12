@@ -22,6 +22,10 @@ import fiji.plugin.trackmate.Spot;
 
 public class SpotDisplayer3D extends SpotDisplayer {
 	
+	public static final int DEFAULT_RESAMPLING_FACTOR = 4;
+	public static final int DEFAULT_THRESHOLD = 50;
+
+	
 	private static final String TRACK_CONTENT_NAME = "Tracks";
 	private static final String SPOT_CONTENT_NAME = "Spots";
 	private TreeMap<Integer, SpotGroupNode<Spot>> blobs;	
@@ -198,6 +202,7 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		instants.put(0, trackCI);
 		Content tc = new Content(TRACK_CONTENT_NAME, instants);
 		tc.setShowAllTimepoints(true);
+		tc.showCoordinateSystem(false);
 		return tc;
 	}
 
@@ -227,7 +232,9 @@ public class SpotDisplayer3D extends SpotDisplayer {
 			contentAllFrames.put(i, contentThisFrame);
 			blobs.put(i, blobGroup);
 		}
-		return new Content(SPOT_CONTENT_NAME, contentAllFrames);
+		Content blobContent = new Content(SPOT_CONTENT_NAME, contentAllFrames);
+		blobContent.showCoordinateSystem(false);
+		return blobContent;
 	}
 
 

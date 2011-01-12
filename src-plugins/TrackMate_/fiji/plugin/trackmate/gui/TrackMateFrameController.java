@@ -1,14 +1,7 @@
 package fiji.plugin.trackmate.gui;
 
 import ij.ImagePlus;
-import ij.ImageStack;
 import ij.gui.NewImage;
-import ij.plugin.Duplicator;
-import ij.process.ColorProcessor;
-import ij.process.StackConverter;
-import ij3d.Content;
-import ij3d.ContentCreator;
-import ij3d.Image3DUniverse;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -45,8 +38,7 @@ import fiji.plugin.trackmate.io.TmXmlWriter;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
-import fiji.plugin.trackmate.visualization.SpotDisplayer2D;
-import fiji.plugin.trackmate.visualization.SpotDisplayer3D;
+import fiji.plugin.trackmate.visualization.SpotDisplayer.DisplayerType;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 
 public class TrackMateFrameController {
@@ -234,8 +226,6 @@ public class TrackMateFrameController {
 	 * CONSTANTS
 	 */
 	
-	private static final int DEFAULT_RESAMPLING_FACTOR = 4; // for the 3d viewer
-	private static final int DEFAULT_THRESHOLD = 50; // for the 3d viewer
 	private static final String DEFAULT_FILENAME = "TrackMateData.xml";
 
 	/*
@@ -515,7 +505,11 @@ public class TrackMateFrameController {
 				view.setModel(model);
 				state = GuiState.CALCULATE_FEATURES;
 				actionFlag = true;
-				displayer = instantiateDisplayer(model);
+				boolean is3D = settings.imp.getNSlices() > 1;
+				if (is3D)
+					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
+				else 
+					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.STACK_DISPLAYER, model);					 
 				logger.log("Loading data finished, press 'next' to resume.\n");
 				SwingUtilities.invokeLater(new Runnable() {			
 					@Override
@@ -547,7 +541,11 @@ public class TrackMateFrameController {
 				view.setModel(model);
 				state = GuiState.CALCULATE_FEATURES;
 				actionFlag = true;
-				displayer = instantiateDisplayer(model);
+				boolean is3D = settings.imp.getNSlices() > 1;
+				if (is3D)
+					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
+				else 
+					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.STACK_DISPLAYER, model);
 				displayer.setSpots(model.getSpots());
 				logger.log("Loading data finished, press 'next' to resume.\n");
 				SwingUtilities.invokeLater(new Runnable() {			
@@ -582,8 +580,11 @@ public class TrackMateFrameController {
 				view.setModel(model);
 				// Stop at tune tracker panel
 				state = GuiState.TUNE_TRACKER;
-				displayer = instantiateDisplayer(model);
-				displayer.setSpots(model.getSpots());
+				boolean is3D = settings.imp.getNSlices() > 1;
+				if (is3D)
+					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
+				else 
+					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.STACK_DISPLAYER, model);				displayer.setSpots(model.getSpots());
 				displayer.setSpotsToShow(model.getSelectedSpots());
 				logger.log("Loading data finished, press 'next' to resume.\n");
 				SwingUtilities.invokeLater(new Runnable() {			
@@ -615,8 +616,11 @@ public class TrackMateFrameController {
 				view.setModel(model);
 				// Stop at tune tracker panel
 				state = GuiState.TUNE_TRACKER;
-				displayer = instantiateDisplayer(model);
-				displayer.setSpots(model.getSpots());
+				boolean is3D = settings.imp.getNSlices() > 1;
+				if (is3D)
+					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
+				else 
+					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.STACK_DISPLAYER, model);				displayer.setSpots(model.getSpots());
 				displayer.setSpotsToShow(model.getSelectedSpots());
 				logger.log("Loading data finished, press 'next' to resume.\n");
 				SwingUtilities.invokeLater(new Runnable() {			
@@ -636,8 +640,11 @@ public class TrackMateFrameController {
 		view.setModel(model);
 		state = GuiState.TRACKING;
 		actionFlag = true; // force redraw and relinking
-		displayer = instantiateDisplayer(model);
-		displayer.setSpots(model.getSpots());
+		boolean is3D = settings.imp.getNSlices() > 1;
+		if (is3D)
+			displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
+		else 
+			displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.STACK_DISPLAYER, model);		displayer.setSpots(model.getSpots());
 		displayer.setSpotsToShow(model.getSelectedSpots());
 		displayer.setTrackGraph(model.getTrackGraph());
 		updater.doUpdate();
@@ -878,7 +885,11 @@ public class TrackMateFrameController {
 				if (null != displayer) {
 					displayer.clear();
 				}
-				displayer = instantiateDisplayer(model);
+				boolean is3D = model.getSettings().imp.getNSlices() > 1;
+				if (is3D)
+					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
+				else 
+					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.STACK_DISPLAYER, model);
 				displayer.setSpots(model.getSpots());
 				// Re-enable the GUI
 				logger.log("Rendering done.\n", Logger.BLUE_COLOR);
@@ -1028,104 +1039,7 @@ public class TrackMateFrameController {
 			}
 		});
 	}
-	
-	
-	
-	/*
-	 * STATIC METHODS
-	 */
-	
-	/**
-	 * Ensure an 8-bit gray image is sent to the 3D viewer.
-	 */
-	public static final ImagePlus[] makeImageForViewer(final Settings settings) {
-		final ImagePlus origImp = settings.imp;
-		origImp.killRoi();
-		final ImagePlus imp;
 		
-		if (origImp.getType() == ImagePlus.GRAY8)
-			imp = origImp;
-		else {
-			imp = new Duplicator().run(origImp);
-			new StackConverter(imp).convertToGray8();
-		}
-		
-		int nChannels = imp.getNChannels();
-		int nSlices = settings.nslices;
-		int nFrames = settings.nframes;
-		ImagePlus[] ret = new ImagePlus[nFrames];
-		int w = imp.getWidth(), h = imp.getHeight();
-
-		ImageStack oldStack = imp.getStack();
-		String oldTitle = imp.getTitle();
-		
-		for(int i = 0; i < nFrames; i++) {
-			
-			ImageStack newStack = new ImageStack(w, h);
-			for(int j = 0; j < nSlices; j++) {
-				int index = imp.getStackIndex(1, j+1, i+settings.tstart+1);
-				Object pixels;
-				if (nChannels > 1) {
-					imp.setPositionWithoutUpdate(1, j+1, i+1);
-					pixels = new ColorProcessor(imp.getImage()).getPixels();
-				}
-				else
-					pixels = oldStack.getPixels(index);
-				newStack.addSlice(oldStack.getSliceLabel(index), pixels);
-			}
-			ret[i] = new ImagePlus(oldTitle	+ " (frame " + i + ")", newStack);
-			ret[i].setCalibration(imp.getCalibration().copy());
-			
-		}
-		return ret;
-	}
-	
-
-	/**
-	 * Instantiate a suitable {@link SpotDisplayer} for the given model, and render it with
-	 * the image content only.
-	 */
-	private static SpotDisplayer instantiateDisplayer(final TrackMateModelInterface model) {
-		final SpotDisplayer disp;
-		Settings settings = model.getSettings();
-		// Render image data
-		boolean is3D = settings.imp.getNSlices() > 1;
-		if (is3D) { 
-			if (!settings.imp.isVisible())
-				settings.imp.show();
-			final Image3DUniverse universe = new Image3DUniverse();
-			universe.show();
-			ImagePlus[] images = makeImageForViewer(settings);
-			final Content imageContent = ContentCreator.createContent(
-					settings.imp.getTitle(), 
-					images, 
-					Content.VOLUME, 
-					DEFAULT_RESAMPLING_FACTOR, 
-					0,
-					null, 
-					DEFAULT_THRESHOLD, 
-					new boolean[] {true, true, true});
-			// Render spots
-			disp = new SpotDisplayer3D(universe, settings.segmenterSettings.expectedRadius);
-			disp.setSpots(model.getSpots());
-			new Thread() {
-				public void run() {
-					disp.render();
-					universe.addContentLater(imageContent);					
-				};
-			}.start();
-			
-		} else {
-			
-			disp = new SpotDisplayer2D(settings);
-			disp.setSpots(model.getSpots());
-			disp.render();
-			
-		}
-		return disp;
-	}
-	
-	
 	
 	/*
 	 * INNER CLASSES

@@ -1,5 +1,10 @@
 package fiji.plugin.trackmate.visualization;
 
+import ij.ImagePlus;
+import ij3d.Content;
+import ij3d.ContentCreator;
+import ij3d.Image3DUniverse;
+
 import java.awt.Color;
 import java.util.HashMap;
 import java.util.List;
@@ -13,11 +18,77 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 
 import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TMUtils;
+import fiji.plugin.trackmate.TrackMateModelInterface;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 
+/**
+ * The mother abstract class for spot displayers, that can overlay segmented spots and tracks on top
+ * of the image data. 
+ * <p>
+ * Displayers must implements this abastract class. It offers on top some facilities to store common
+ * fields, and can instantiate concrete implementation based on factory design.
+ * <p>
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Jan 2011
+ *
+ */
 public abstract class SpotDisplayer {
 
+	
+	/*
+	 * ENUMS
+	 */
+	
+	/**
+	 * This enum stores the list of {@link SpotDisplayer} currently available.
+	 */
+	public static enum DisplayerType {
+		STACK_DISPLAYER,		
+		THREEDVIEWER_DISPLAYER,
+		HYPERSTACK_DISPLAYER;
+		
+		public static DisplayerType[] get2DDisplayers() {
+			return new DisplayerType[] { STACK_DISPLAYER };
+		}
+
+		public static DisplayerType[] get3DDisplayers() {
+			return new DisplayerType[] { HYPERSTACK_DISPLAYER, THREEDVIEWER_DISPLAYER };
+		}
+
+	}
+
+	/**
+	 * This enum stores the different display omde for tracks. Note that it might be ignored 
+	 * by some displayers.
+	 */
+	public enum TrackDisplayMode {
+		ALL_WHOLE_TRACKS,
+		LOCAL_WHOLE_TRACKS,
+		LOCAL_BACKWARD_TRACKS,
+		LOCAL_FORWARD_TRACKS;
+		
+		@Override
+		public String toString() {
+			switch(this) {
+			case ALL_WHOLE_TRACKS:
+				return "Show all entire tracks";
+			case LOCAL_WHOLE_TRACKS:
+				return "Show current tracks";
+			case LOCAL_BACKWARD_TRACKS:
+				return "Show current tracks, only backward";
+			case LOCAL_FORWARD_TRACKS:
+				return "Show current tracks, only forward";
+			}
+			return "Not implemented";
+		}
+		
+	}
+	
+	/*
+	 * FIELDS
+	 */
 	
 	public static final TrackDisplayMode DEFAULT_TRACK_DISPLAY_MODE = TrackDisplayMode.ALL_WHOLE_TRACKS;
 	public static final int DEFAULT_TRACK_DISPLAY_DEPTH 			= 10;
@@ -54,34 +125,65 @@ public abstract class SpotDisplayer {
 	protected int trackDisplayDepth = DEFAULT_TRACK_DISPLAY_DEPTH;
 
 	
+
 	/*
-	 * ENUMS
+	 * STATIC METHOD
 	 */
 	
-	public enum TrackDisplayMode {
-		ALL_WHOLE_TRACKS,
-		LOCAL_WHOLE_TRACKS,
-		LOCAL_BACKWARD_TRACKS,
-		LOCAL_FORWARD_TRACKS;
-		
-		@Override
-		public String toString() {
-			switch(this) {
-			case ALL_WHOLE_TRACKS:
-				return "Show all entire tracks";
-			case LOCAL_WHOLE_TRACKS:
-				return "Show current tracks";
-			case LOCAL_BACKWARD_TRACKS:
-				return "Show current tracks, only backward";
-			case LOCAL_FORWARD_TRACKS:
-				return "Show current tracks, only forward";
-			}
-			return "Not implemented";
+	/**
+	 * Instantiate and render the displayer specified by the given {@link DisplayerType}, using the data from
+	 * the model given. This will render the chosen {@link SpotDisplayer} only with image data.
+	 */
+	public static SpotDisplayer instantiateDisplayer(final DisplayerType displayerType, final TrackMateModelInterface model) {
+		final SpotDisplayer disp;
+		Settings settings = model.getSettings();
+		switch (displayerType) {
+		case THREEDVIEWER_DISPLAYER:
+		{ 
+			if (!settings.imp.isVisible())
+				settings.imp.show();
+			final Image3DUniverse universe = new Image3DUniverse();
+			universe.show();
+			ImagePlus[] images = TMUtils.makeImageForViewer(settings);
+			final Content imageContent = ContentCreator.createContent(
+					settings.imp.getTitle(), 
+					images, 
+					Content.VOLUME, 
+					SpotDisplayer3D.DEFAULT_RESAMPLING_FACTOR, 
+					0,
+					null, 
+					SpotDisplayer3D.DEFAULT_THRESHOLD, 
+					new boolean[] {true, true, true});
+			// Render spots
+			disp = new SpotDisplayer3D(universe, settings.segmenterSettings.expectedRadius);
+			disp.setSpots(model.getSpots());
+			new Thread("Displayer rendering thread") {
+				public void run() {
+					disp.render();
+					universe.addContentLater(imageContent);					
+				};
+			}.start();
+			break;
+
+		} 
+		case STACK_DISPLAYER:
+		{
+			disp = new SpotDisplayer2D(settings);
+			disp.render();
+			break;
 		}
-		
+		case HYPERSTACK_DISPLAYER:
+		default:
+			{
+				disp = new HyperStackDisplayer(settings);
+				disp.render();
+				break;
+			}
+		}
+		return disp;
 	}
 
-	
+
 	/*
 	 * PUBLIC METHODS
 	 */

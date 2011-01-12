@@ -90,7 +90,10 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 				
 				for (FeatureThreshold ft : featureThresholds)
 					addThresholdPanel(ft);
-				newFeatureIndex = featureThresholds.get(featureThresholds.size()-1).feature.ordinal();
+				if (featureThresholds.isEmpty())
+					newFeatureIndex = 0;
+				else
+					newFeatureIndex = featureThresholds.get(featureThresholds.size()-1).feature.ordinal();
 
 			}
 		}

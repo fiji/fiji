@@ -3,7 +3,10 @@ package fiji.plugin.trackmate;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.Roi;
+import ij.plugin.Duplicator;
+import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
+import ij.process.StackConverter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -408,5 +411,51 @@ public class TMUtils {
 		return eucD;
 	}
 
+	
+	/**
+	 * Ensure an 8-bit gray image is sent to the 3D viewer.
+	 */
+	public static final ImagePlus[] makeImageForViewer(final Settings settings) {
+		final ImagePlus origImp = settings.imp;
+		origImp.killRoi();
+		final ImagePlus imp;
+		
+		if (origImp.getType() == ImagePlus.GRAY8)
+			imp = origImp;
+		else {
+			imp = new Duplicator().run(origImp);
+			new StackConverter(imp).convertToGray8();
+		}
+		
+		int nChannels = imp.getNChannels();
+		int nSlices = settings.nslices;
+		int nFrames = settings.nframes;
+		ImagePlus[] ret = new ImagePlus[nFrames];
+		int w = imp.getWidth(), h = imp.getHeight();
+
+		ImageStack oldStack = imp.getStack();
+		String oldTitle = imp.getTitle();
+		
+		for(int i = 0; i < nFrames; i++) {
+			
+			ImageStack newStack = new ImageStack(w, h);
+			for(int j = 0; j < nSlices; j++) {
+				int index = imp.getStackIndex(1, j+1, i+settings.tstart+1);
+				Object pixels;
+				if (nChannels > 1) {
+					imp.setPositionWithoutUpdate(1, j+1, i+1);
+					pixels = new ColorProcessor(imp.getImage()).getPixels();
+				}
+				else
+					pixels = oldStack.getPixels(index);
+				newStack.addSlice(oldStack.getSliceLabel(index), pixels);
+			}
+			ret[i] = new ImagePlus(oldTitle	+ " (frame " + i + ")", newStack);
+			ret[i].setCalibration(imp.getCalibration().copy());
+			
+		}
+		return ret;
+	}
+	
 
 }
