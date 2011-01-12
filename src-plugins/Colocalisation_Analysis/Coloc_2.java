@@ -219,7 +219,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			createMasksAndRois(imp2);
 		} else if (roiConfig == RoiConfiguration.Mask) {
 			// get the image to be used as mask
-			ImagePlus maskImp = WindowManager.getImage(indexMask);
+			ImagePlus maskImp = WindowManager.getImage(windowList[indexMask]);
 			Image<T> maskImg = ImagePlusAdapter.<T>wrap( maskImp );
 			// TODO: find bounding box
 			Image<T> maskBB = maskImg;
