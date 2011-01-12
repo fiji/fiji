@@ -12,6 +12,8 @@ import mpicbg.imglib.algorithm.gauss.GaussianConvolution3;
 import mpicbg.imglib.function.Converter;
 import mpicbg.imglib.function.RealTypeConverter;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
+import mpicbg.imglib.cursor.LocalizableByDimCursor;
+import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.ImagePlusAdapter;
@@ -19,6 +21,7 @@ import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.numeric.RealType;
+import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 
 /**
@@ -88,7 +91,7 @@ public class TestImageAccessor {
 		Image<T> noiseImage = imgFactory.createImage( new int[] {width, height}, "Noise image");
 
 		/* for now (probably until ImageJ2 is out) we must convert
-		 * the ImgLib image to an Image one to draw circles on it.
+		 * the ImgLib image to an ImageJ one to draw circles on it.
 		 */
 		ImagePlus img = ImageJFunctions.displayAsVirtualStack( noiseImage );
 		ImageProcessor imp = img.getProcessor();
@@ -122,5 +125,30 @@ public class TestImageAccessor {
 		} else {
 			throw new RuntimeException(smoother.getErrorMessage());
 		}
+	}
+
+	/**
+	 * Inverts an image.
+	 *
+	 * @param <T> The images data type.
+	 * @param image The image to convert.
+	 * @return The inverted image.
+	 */
+	static <T extends RealType<T>> Image<T> invertImage(Image<T> image) {
+		LocalizableCursor<T> imgCursor = image.createLocalizableCursor();
+		// invert the image
+		Image<T> invImg = image.createNewImage("Inverted " + image.getName());
+		LocalizableByDimCursor<T> invCursor = invImg.createLocalizableByDimCursor();
+
+		while (imgCursor.hasNext()) {
+			imgCursor.fwd();
+			invCursor.setPosition(imgCursor);
+			invCursor.getType().setReal( imgCursor.getType().getMaxValue() - imgCursor.getType().getRealDouble() );
+		}
+
+		imgCursor.close();
+		invCursor.close();
+
+		return invImg;
 	}
 }
