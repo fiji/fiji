@@ -105,13 +105,14 @@ public class SpotDisplayer3DTestDrive {
 
 		// Launch renderer
 		final Image3DUniverse universe = new Image3DUniverse();
+		universe.addVoltex(imp);
+		universe.show();
+
 		final TreeMap<Integer, List<Spot>> allSpots = new TreeMap<Integer, List<Spot>>();
 		allSpots.put(0, spots);
 		final SpotDisplayer3D displayer = new SpotDisplayer3D(universe, RADIUS);
-		displayer.setSpots(allSpots);
 		displayer.render();
-		universe.addVoltex(imp);
-		universe.show();
+		displayer.setSpots(allSpots);
 		
 		// Launch threshold GUI
 		final ThresholdGuiPanel gui = new ThresholdGuiPanel(TMUtils.getFeatureValues(allSpots.values()));

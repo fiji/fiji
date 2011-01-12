@@ -56,11 +56,7 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		spotContent.setVisible(displaySpotSelected);
 	}
 	
-	@Override
-	public void setSpots(java.util.TreeMap<Integer,java.util.List<Spot>> spots) {
-		super.setSpots(spots);
-		spotContent = makeSpotContent();
-	};
+	
 	
 	@Override
 	public void setRadiusDisplayRatio(float ratio) {
@@ -110,9 +106,12 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		}
 	}
 	
-
 	@Override
-	public void render()  {
+	public void setSpots(java.util.TreeMap<Integer,java.util.List<Spot>> spots) {
+		super.setSpots(spots);
+		if (universe.contains(SPOT_CONTENT_NAME))
+			universe.removeContent(SPOT_CONTENT_NAME);
+		spotContent = makeSpotContent();
 		try {
 			spotContent = universe.addContentLater(spotContent).get();
 		} catch (InterruptedException e) {
@@ -120,6 +119,13 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		} catch (ExecutionException e) {
 			e.printStackTrace();
 		}
+	};
+	
+
+	@Override
+	public void render()  {
+		// do nothing, since this implementation is given a universe which must
+		// be correctly instantiated with the image content.
 	}
 	
 	@Override

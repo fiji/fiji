@@ -16,13 +16,15 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
+import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 
 
 public class HyperStackDisplayerTestDrive {
 
 	public static void main(String[] args) throws JDOMException, IOException {
 		
-		File file = new File("E:/Users/JeanYves/Desktop/data/Celegans-5pc_17timepoints_bis.xml");
+//		File file = new File("E:/Users/JeanYves/Desktop/data/Celegans-5pc_17timepoints_bis.xml");
+		File file = new File("/Users/tinevez/Desktop/Celegans-5pc_17timepoints_bis.xml");
 		TmXmlReader reader = new TmXmlReader(file);
 		reader.parse();
 		
@@ -40,6 +42,7 @@ public class HyperStackDisplayerTestDrive {
 		displayer.render();
 		displayer.setSpotsToShow(selectedSpots);
 		displayer.setTrackGraph(trackGraph);
+		displayer.setDisplayTrackMode(TrackDisplayMode.LOCAL_WHOLE_TRACKS, 5);
 		displayer.setRadiusDisplayRatio(0.5f);
 	}
 	

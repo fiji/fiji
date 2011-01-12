@@ -96,6 +96,9 @@ public abstract class SpotDisplayer {
 		this.trackDisplayDepth = displayDepth;
 	}	
 	
+	/**
+	 * Set the track to be displayed in this displayer.
+	 */
 	public void setTrackGraph(SimpleGraph<Spot, DefaultEdge> trackGraph) {
 		this.trackGraph = trackGraph;
 		this.tracks = new ConnectivityInspector<Spot, DefaultEdge>(trackGraph).connectedSets();
@@ -108,10 +111,21 @@ public abstract class SpotDisplayer {
 		}
 	}
 	
+	/**
+	 * Set the spots that can be displayed by this displayer. Note that calling this method this 
+	 * does not actually draw the spots. The spots to be displayed has to be specified 
+	 * using {@link #setSpotsToShow(TreeMap)}, and must be a subset from the field passed to this method.
+	 * @see #setSpotsToShow(TreeMap)  
+	 */
 	public void setSpots(TreeMap<Integer, List<Spot>> spots) {
 		this.spots = spots;
 	}
 	
+	/**
+	 * Set what spots are to be displayed in this displayer. The list of spot given here must be a subset
+	 * of the list passed to the {@link #setSpots(TreeMap)} method.
+	 * @see #setSpots(TreeMap) 
+	 */
 	public void setSpotsToShow(TreeMap<Integer, List<Spot>> spotsToShow) {
 		this.spotsToShow = spotsToShow;
 	}
@@ -130,7 +144,8 @@ public abstract class SpotDisplayer {
 	 */
 	
 	/**
-	 * Prepare this displayer and render it according to its concrete implementation.
+	 * Prepare this displayer and render it according to its concrete implementation. Must be called before
+	 * adding spots or tracks for displaying. 
 	 */
 	public abstract void render();
 	

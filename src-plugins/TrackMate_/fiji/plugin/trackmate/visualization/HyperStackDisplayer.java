@@ -219,8 +219,6 @@ public class HyperStackDisplayer extends SpotDisplayer {
 		canvas = new OverlayedImageCanvas(imp);
 		StackWindow window = new StackWindow(imp, canvas);
 		window.show();
-		prepareSpotOverlay();
-		prepareWholeTrackOverlay();
 		refresh();
 	}
 	
