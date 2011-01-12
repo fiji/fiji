@@ -11,6 +11,7 @@ import ij.process.ImageProcessor;
 
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
@@ -60,18 +61,27 @@ import algorithms.PearsonsCorrelation;
  */
 public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
+	// a small bounding box container
+	protected class BoundingBox {
+		public int[] offset;
+		public int[] size;
+		public BoundingBox(int [] offset, int[] size) {
+			this.offset = offset.clone(); this.size = size.clone();
+		}
+	}
+
 	// a storage class for ROI information
 	protected class MaskInfo {
 		// the ROI to use (null if none)
-		public Rectangle roi;
+		BoundingBox roi;
 		/* the mask corresponding to the ROI, sized the same as a slice,
-		 * but also giving access to its bounding boxed' versior
+		 * but also giving access to its bounding boxed' version
 		 */
 		public Image<T> mask;
 		public Image<T> boundingBox;
-		// constructor
-		public MaskInfo(Rectangle r, Image<T> m, Image<T> bb) {
-			roi = r; mask = m; boundingBox = bb;
+		// constructors
+		public MaskInfo(BoundingBox roi, Image<T> m, Image<T> bb) {
+			this.roi = roi; mask = m; boundingBox = bb;
 		}
 		public MaskInfo() { };
 	}
@@ -255,23 +265,19 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	 * @param mask
 	 * @param maskBB
 	 */
-	public void colocalise(Image<T> img1, Image<T> img2, Rectangle roi,
+	public void colocalise(Image<T> img1, Image<T> img2, BoundingBox roi,
 			Image<T> mask, Image<T> maskBB) {
 		// create a new container for the selected images and channels
 		DataContainer<T> container;
 		if (mask != null) {
-				int bbOffset[] = new int[] {roi.x, roi.y};
-				int bbSize[] = new int[] {roi.width, roi.height};
 				container = new DataContainer<T>(img1, img2,
 						img1Channel, img2Channel, mask, maskBB,
-						bbOffset, bbSize);
+						roi.offset, roi.size);
 
 		} else if (roi != null) {
 			// if we have no musk, but a ROI, a regular ROI is in use
-			int roiOffset[] = new int[] {roi.x, roi.y};
-			int roiSize[] = new int[] {roi.width, roi.height};
 			container = new DataContainer<T>(img1, img2,
-					img1Channel, img2Channel, roiOffset, roiSize);
+					img1Channel, img2Channel, roi.offset, roi.size);
 		} else {
 			// no mask and no ROI is present
 			container = new DataContainer<T>(img1, img2,
@@ -387,12 +393,17 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
 		for (Roi r : impRois ){
 			MaskInfo mi = new MaskInfo();
-			mi.roi = r.getBounds();
-
+			// add it to the list of masks/rois
+			masks.add(mi);
+			// get the ROIs/masks bounding box
+			Rectangle rect = r.getBounds();
+			mi.roi = new BoundingBox(
+					new int[] {rect.x, rect.y} ,
+					new int[] {rect.width, rect.height});
 			ImageProcessor ipMask = r.getMask();
 			// check if we got a regular ROI and return if so
 			if (ipMask == null) {
-				return;
+				continue;
 			}
 
 			// create a mask processor of the same size as a slice
@@ -401,14 +412,12 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			ipSlice.setValue(0.0);
 			ipSlice.fill();
 			// position the mask on the new  mask processor
-			ipSlice.copyBits(ipMask, mi.roi.x, mi.roi.y, Blitter.COPY);
+			ipSlice.copyBits(ipMask, mi.roi.offset[0], mi.roi.offset[1], Blitter.COPY);
 			// create an Image<T> out of it
 			ImagePlus maskImp = new ImagePlus("Mask", ipSlice);
 			// and remember it and the masks bounding box version
 			mi.mask = ImagePlusAdapter.<T>wrap( maskImp );
 			mi.boundingBox = ImagePlusAdapter.<T>wrap( new ImagePlus( "MaskBB", ipMask ) );
-			// add it to the list of masks/rois
-			masks.add(mi);
 		}
 	}
 
