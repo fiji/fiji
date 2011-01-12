@@ -5,8 +5,8 @@ import mpicbg.imglib.algorithm.math.ImageStatistics;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
 import gadgets.DataContainer;
-import imglib.mpicbg.imglib.cursor.special.TwinValueRangeCursor;
-import imglib.mpicbg.imglib.cursor.special.TwinValueRangeCursorFactory;
+import mpicbg.imglib.cursor.special.TwinValueRangeCursor;
+import mpicbg.imglib.cursor.special.TwinValueRangeCursorFactory;
 
 /**
  * A class that represents the mean calculation of the two source

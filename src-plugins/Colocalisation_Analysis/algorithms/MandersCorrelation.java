@@ -2,9 +2,9 @@ package algorithms;
 
 import results.ResultHandler;
 import gadgets.DataContainer;
-import imglib.mpicbg.imglib.cursor.special.TwinValueRangeCursor;
-import imglib.mpicbg.imglib.cursor.special.meta.Predicate;
-import imglib.mpicbg.imglib.cursor.special.meta.AboveThresholdPredicate;
+import mpicbg.imglib.cursor.special.TwinValueRangeCursor;
+import mpicbg.imglib.cursor.special.meta.Predicate;
+import mpicbg.imglib.cursor.special.meta.AboveThresholdPredicate;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;

@@ -1,4 +1,4 @@
-package imglib.mpicbg.imglib.cursor.special.meta;
+package mpicbg.imglib.cursor.special.meta;
 
 /**
  * An interface to check a value against arbitrary conditions.

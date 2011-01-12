@@ -1,4 +1,4 @@
-package imglib.mpicbg.imglib.cursor.special.meta;
+package mpicbg.imglib.cursor.special.meta;
 
 /**
  * A predicate that is true if, and only if, the value is above lower

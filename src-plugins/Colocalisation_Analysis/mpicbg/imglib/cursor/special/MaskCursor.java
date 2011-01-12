@@ -1,4 +1,4 @@
-package imglib.mpicbg.imglib.cursor.special;
+package mpicbg.imglib.cursor.special;
 
 import java.util.Iterator;
 
@@ -7,8 +7,8 @@ import mpicbg.imglib.container.Container;
 import mpicbg.imglib.type.Type;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.Iterable;
-import imglib.mpicbg.imglib.cursor.special.meta.AlwaysTruePredicate;
-import imglib.mpicbg.imglib.cursor.special.meta.AboveThresholdPredicate;
+import mpicbg.imglib.cursor.special.meta.AlwaysTruePredicate;
+import mpicbg.imglib.cursor.special.meta.AboveThresholdPredicate;
 
 /**
  * A MaskCursor allows to specify a mask image for the image to walk
@@ -17,7 +17,7 @@ import imglib.mpicbg.imglib.cursor.special.meta.AboveThresholdPredicate;
  * Author: Tom Kazimiers
  */
 public class MaskCursor< T extends Type<T> & Comparable<T> > extends ConstraintCursor<T> {
-	// the curser of the original image
+	// the cursor of the original image
 	Cursor<T> imageCursor;
 	// the mask image used for driving the cursor
 	Image<T> mask;
@@ -39,8 +39,8 @@ public class MaskCursor< T extends Type<T> & Comparable<T> > extends ConstraintC
 	 */
 	public MaskCursor(Cursor<T> cursor, Cursor<T> mask, T offValue) {
 		super( cursor, mask,
-			new AlwaysTruePredicate(),
-			new AboveThresholdPredicate( offValue ) );
+			new AlwaysTruePredicate<T>(),
+			new AboveThresholdPredicate<T>( offValue ) );
 		// for masking we want the forward mode to be "And"
 		setForwardMode( ForwardMode.And );
 		imageCursor = cursor;
@@ -119,4 +119,3 @@ public class MaskCursor< T extends Type<T> & Comparable<T> > extends ConstraintC
 		cursor1.getDimensions( position );
 	}
 }
-

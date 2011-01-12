@@ -1,8 +1,8 @@
 package tests;
 
 import static org.junit.Assert.assertTrue;
-import imglib.mpicbg.imglib.cursor.special.TwinValueRangeCursor;
-import imglib.mpicbg.imglib.cursor.special.TwinValueRangeCursorFactory;
+import mpicbg.imglib.cursor.special.TwinValueRangeCursor;
+import mpicbg.imglib.cursor.special.TwinValueRangeCursorFactory;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 
 import org.junit.Test;

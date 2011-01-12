@@ -1,6 +1,6 @@
 package gadgets;
 
-import imglib.mpicbg.imglib.cursor.special.RoiShiftingLocalizableByDimCursor;
+import mpicbg.imglib.cursor.special.RoiShiftingLocalizableByDimCursor;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;

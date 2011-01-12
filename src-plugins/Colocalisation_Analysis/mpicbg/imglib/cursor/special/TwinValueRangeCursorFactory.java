@@ -1,7 +1,7 @@
-package imglib.mpicbg.imglib.cursor.special;
+package mpicbg.imglib.cursor.special;
 
-import imglib.mpicbg.imglib.cursor.special.meta.AboveThresholdPredicate;
-import imglib.mpicbg.imglib.cursor.special.meta.BelowThresholdPredicate;
+import mpicbg.imglib.cursor.special.meta.AboveThresholdPredicate;
+import mpicbg.imglib.cursor.special.meta.BelowThresholdPredicate;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.Type;
 

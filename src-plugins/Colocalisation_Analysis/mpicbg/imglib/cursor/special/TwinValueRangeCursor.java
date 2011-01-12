@@ -1,9 +1,9 @@
-package imglib.mpicbg.imglib.cursor.special;
+package mpicbg.imglib.cursor.special;
 
 import mpicbg.imglib.container.Container;
 import mpicbg.imglib.image.Image;
-import imglib.mpicbg.imglib.cursor.special.meta.AlwaysTruePredicate;
-import imglib.mpicbg.imglib.cursor.special.meta.Predicate;
+import mpicbg.imglib.cursor.special.meta.AlwaysTruePredicate;
+import mpicbg.imglib.cursor.special.meta.Predicate;
 import mpicbg.imglib.type.Type;
 
 import java.util.Arrays;
@@ -137,4 +137,3 @@ public class TwinValueRangeCursor< T extends Type<T> & Comparable<T> > extends C
 		cursor2.getDimensions( position );
 	}
 }
-

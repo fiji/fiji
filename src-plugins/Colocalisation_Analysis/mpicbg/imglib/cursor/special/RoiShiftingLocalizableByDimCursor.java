@@ -1,4 +1,4 @@
-package imglib.mpicbg.imglib.cursor.special;
+package mpicbg.imglib.cursor.special;
 
 import java.util.Iterator;
 

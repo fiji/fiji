@@ -1,4 +1,4 @@
-package imglib.mpicbg.imglib.cursor.special.meta;
+package mpicbg.imglib.cursor.special.meta;
 
 /**
  * A predicate that is only true iff the value is below the threshold.

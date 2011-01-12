@@ -1,7 +1,7 @@
 package gadgets;
 
-import imglib.mpicbg.imglib.cursor.special.MaskCursor;
-import imglib.mpicbg.imglib.cursor.special.MaskLocalizableCursor;
+import mpicbg.imglib.cursor.special.MaskCursor;
+import mpicbg.imglib.cursor.special.MaskLocalizableCursor;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;

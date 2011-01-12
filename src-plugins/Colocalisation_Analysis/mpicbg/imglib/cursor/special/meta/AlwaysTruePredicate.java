@@ -1,4 +1,4 @@
-package imglib.mpicbg.imglib.cursor.special.meta;
+package mpicbg.imglib.cursor.special.meta;
 
 /**
  * A predicate that always evaluates to true.
