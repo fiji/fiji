@@ -21,8 +21,19 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
+import fiji.plugin.trackmate.segmentation.SegmenterType;
+import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 
+/**
+ * Mother class for spot segmenter settings panel. This panel is actually suitable for the 3 segmenters
+ * currently implemented, which is why it is a class concrete for now.  
+ * <p>
+ * Also offer a factory method to instantiate the correct panel pointed by a tracker type.
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2010 - 2011
+ *
+ */
 public class SegmenterSettingsPanel extends ActionListenablePanel {
 	private static final long serialVersionUID = 3220742915219642676L;
 	private JLabel jLabel1;
@@ -46,6 +57,10 @@ public class SegmenterSettingsPanel extends ActionListenablePanel {
 		}
 	}
 	
+	/*
+	 * CONSTRUCTOR
+	 */
+	
 	
 	public SegmenterSettingsPanel(SegmenterSettings settings) {
 		super();
@@ -55,6 +70,31 @@ public class SegmenterSettingsPanel extends ActionListenablePanel {
 		initGUI();
 	}
 	
+	
+	/*
+	 * STATIC METHOD
+	 */
+	
+
+	/**
+	 * Return a {@link SegmenterSettingsPanel} that is able to configure the {@link SpotSegmenter}
+	 * selected in the given settings object.
+	 */
+	public static SegmenterSettingsPanel createSegmenterSettingsPanel(final Settings settings) {
+		SegmenterType segmenterType = settings.segmenterType;
+		SegmenterSettings segmenterSettings = settings.segmenterSettings;
+		switch (segmenterType) {
+		case DOG_SEGMENTER:
+		case LOG_SEGMENTER:
+		case PEAKPICKER_SEGMENTER:
+			return new SegmenterSettingsPanel(segmenterSettings);
+		}
+		return null;
+	}	
+	
+	/*
+	 * METHODS
+	 */
 	
 	/**
 	 * Update the settings object given with the parameters this panel allow to tune its

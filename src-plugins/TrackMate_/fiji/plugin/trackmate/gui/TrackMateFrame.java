@@ -148,7 +148,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		case TUNE_SEGMENTER_KEY:
 			if (null != segmenterSettingsPanel)
 				jPanelMain.remove(segmenterSettingsPanel);
-			segmenterSettingsPanel = model.getSettings().createSegmenterSettingsPanel();
+			segmenterSettingsPanel = SegmenterSettingsPanel.createSegmenterSettingsPanel(model.getSettings());
 			panel = segmenterSettingsPanel;
 			break;
 			
@@ -169,7 +169,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		case TUNE_TRACKER_KEY:
 			if (null != trackerSettingsPanel)
 				jPanelMain.remove(trackerSettingsPanel);
-			trackerSettingsPanel = model.getSettings().createTrackerSettingsPanel();
+			trackerSettingsPanel = TrackerSettingsPanel.createPanel(model.getSettings());
 			panel = trackerSettingsPanel;
 			break;
 			

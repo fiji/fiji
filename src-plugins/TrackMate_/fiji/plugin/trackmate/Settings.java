@@ -1,13 +1,5 @@
 package fiji.plugin.trackmate;
 
-import java.util.List;
-import java.util.TreeMap;
-
-import mpicbg.imglib.type.numeric.RealType;
-import fiji.plugin.trackmate.gui.LAPTrackerSettingsPanel;
-import fiji.plugin.trackmate.gui.SegmenterSettingsPanel;
-import fiji.plugin.trackmate.gui.SimpleLAPTrackerSettingsPanel;
-import fiji.plugin.trackmate.gui.TrackerSettingsPanel;
 import fiji.plugin.trackmate.segmentation.DogSegmenter;
 import fiji.plugin.trackmate.segmentation.LogSegmenter;
 import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
@@ -20,6 +12,11 @@ import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.tracking.TrackerType;
 import ij.ImagePlus;
+
+import java.util.List;
+import java.util.TreeMap;
+
+import mpicbg.imglib.type.numeric.RealType;
 
 /**
  * This class is used to store user settings for the {@link TrackMate_} plugin.
@@ -107,38 +104,4 @@ public class Settings {
 		return str;
 	}
 
-	/**
-	 * Return a {@link SegmenterSettingsPanel} that is able to configure the {@link SpotSegmenter}
-	 * selected in this settings object.
-	 */
-	public SegmenterSettingsPanel createSegmenterSettingsPanel() {
-		switch (segmenterType) {
-		case DOG_SEGMENTER:
-		case LOG_SEGMENTER:
-		case PEAKPICKER_SEGMENTER:
-			return new SegmenterSettingsPanel(segmenterSettings);
-		}
-		return null;
-	}
-
-	/** 
-	 * Return a {@link TrackerSettingsPanel} that is able to configure the {@link SpotTracker}
-	 * selected in this settings object.
-	 */
-	public TrackerSettingsPanel createTrackerSettingsPanel() {
-		switch (trackerType) {
-		case LAP_TRACKER:
-			return new LAPTrackerSettingsPanel(trackerSettings);
-		case SIMPLE_LAP_TRACKER:
-			return new SimpleLAPTrackerSettingsPanel(trackerSettings);
-		}
-		return null;
-	}
-	
-	
-	
-	
-	
-	
-	
 }
