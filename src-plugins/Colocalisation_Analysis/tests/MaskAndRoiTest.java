@@ -1,13 +1,17 @@
 package tests;
 
 import static org.junit.Assert.assertTrue;
+import gadgets.MaskedImage;
 import gadgets.RoiImage;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
+import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
+import mpicbg.imglib.type.numeric.real.FloatType;
 
 import org.junit.Test;
 
@@ -87,5 +91,55 @@ public class MaskAndRoiTest extends ColocalisationTest {
 
 		// check if sum is zero
 		assertTrue(Math.abs(sum) < 0.00001);
+	}
+
+	/**
+	 * Tests against the implementation of irregular ROIs alias
+	 * masks. Masks can also be produced by mask images open in
+	 * another Fiji window.
+	 *
+	 * This test generates a random black/white noise image and
+	 * uses first itself and then an inverted version of it as
+	 * mask. While iterating over it, the pixel values are
+	 * multiplied by each other. In the end the the product would
+	 * be one in the non-inverted case and zero in the other. This
+	 * way one makes sure, that. only ones and zeros are present
+	 * in the result.
+	 */
+	@Test
+	public void irregularRoiTest() {
+		// create a random noise 2D image -- set roiWidh/roiSize accordingly
+		Image<UnsignedByteType> img = TestImageAccessor.produceNoiseImage(new UnsignedByteType(), 200, 300);
+		// invert the image
+		Image<UnsignedByteType> invImg = TestImageAccessor.invertImage(img);
+		// some general mask data
+		int[] maskOffset = new int[] {0, 0};
+		int[] maskSize = new int[] {invImg.getDimension(0), invImg.getDimension(1)};
+
+		/* first test - using itself as a mask */
+		MaskedImage<UnsignedByteType> maskedImg1 =
+			new MaskedImage<UnsignedByteType>(img, img, maskOffset, maskSize);
+		Cursor<UnsignedByteType> maskedCursor = maskedImg1.createCursor();
+
+		UnsignedByteType product = new UnsignedByteType(1);
+		while (maskedCursor.hasNext()) {
+			maskedCursor.fwd();
+			product.mul( maskedCursor.getType() );
+		}
+
+		assertTrue( product.getInteger() == 1 );
+
+		/* second test - using inverted image */
+		MaskedImage<UnsignedByteType> invMaskedImg =
+			new MaskedImage<UnsignedByteType>(img, invImg, maskOffset, maskSize);
+		Cursor<UnsignedByteType> invMaskedCursor = invMaskedImg.createCursor();
+
+		product = new UnsignedByteType(1);
+		while (invMaskedCursor.hasNext()) {
+			invMaskedCursor.fwd();
+			product.mul( invMaskedCursor.getType() );
+		}
+
+		assertTrue( product.getInteger() == 0 );
 	}
 }
