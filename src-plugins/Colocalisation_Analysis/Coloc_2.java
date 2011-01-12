@@ -217,6 +217,11 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			masks.add( new MaskInfo(null, maskImg, maskBB) ) ;
 			// TODO: Check for correct size of the mask
 			throw new UnsupportedOperationException("Separate image masks have not been implemented, yet.");
+		} else {
+			/* if no ROI/mask is selected, just add an empty MaskInfo
+			 * to colocalise both images without constraints.
+			 */
+			masks.add(new MaskInfo(null, null, null));
 		}
 
 		// Parse algorithm options
