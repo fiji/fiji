@@ -17,9 +17,11 @@ import java.util.List;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
+import mpicbg.imglib.cursor.special.RegionOfInterestCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.ImagePlusAdapter;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.RealType;
 import results.PDFWriter;
 import results.ResultHandler;
@@ -221,12 +223,9 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			// get the image to be used as mask
 			ImagePlus maskImp = WindowManager.getImage(windowList[indexMask]);
 			Image<T> maskImg = ImagePlusAdapter.<T>wrap( maskImp );
-			// TODO: find bounding box
-			Image<T> maskBB = maskImg;
-
-			masks.add( new MaskInfo(null, maskImg, maskBB) ) ;
-			// TODO: Check for correct size of the mask
-			throw new UnsupportedOperationException("Separate image masks have not been implemented, yet.");
+			// get a valid mask info for the image
+			MaskInfo mi = getBoundingBoxOfMask(maskImg);
+			masks.add( mi ) ;
 		} else {
 			/* if no ROI/mask is selected, just add an empty MaskInfo
 			 * to colocalise both images without constraints.
@@ -343,6 +342,92 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
     }
 
 	/**
+	 * A method to get the bounding box from the data in the given
+	 * image that is above zero. Those values are interpreted as a
+	 * mask. It will return null if no mask information was found.
+	 *
+	 * @param mask The image to look for "on" values in
+	 * @return a new MaskInfo object or null
+	 */
+	protected MaskInfo getBoundingBoxOfMask(Image<T> mask) {
+		LocalizableCursor<T> cursor = mask.createLocalizableCursor();
+
+		int numMaskDims = mask.getNumDimensions();
+		// the "off type" of the mask
+		T offType = mask.createType();
+		offType.setZero();
+		// the corners of the bounding box
+		int[] min = null;
+		int[] max = null;
+		// indicates if mask data has been found
+		boolean maskFound = false;
+		// a container for temporary position information
+		int[] pos = new int[numMaskDims];
+		// walk over the mask
+		while (cursor.hasNext() ) {
+			cursor.fwd();
+			T data = cursor.getType();
+			// test if the current mask data represents on or off
+			if (data.compareTo(offType) > 0) {
+				// get current position
+				cursor.getPosition(pos);
+				if (!maskFound) {
+					// we found mask data, first time
+					maskFound = true;
+					// init min and max with the current position
+					min = Arrays.copyOf(pos, numMaskDims);
+					max = Arrays.copyOf(pos, numMaskDims);
+				} else {
+					/* Is is at least second hit, compare if it
+					 * has new "extreme" positions, i.e. does
+					 * is make the BB bigger?
+					 */
+					for (int d=0; d<numMaskDims; d++) {
+						if (pos[d] < min[d]) {
+							// is it smaller than min
+							min[d] = pos[d];
+						} else if (pos[d] > max[d]) {
+							// is it larger than max
+							max[d] = pos[d];
+						}
+					}
+				}
+			}
+		}
+
+		cursor.close();
+
+		if (!maskFound) {
+			return null;
+		} else {
+			// calculate size
+			int[] size = new int[numMaskDims];
+			for (int d=0; d<numMaskDims; d++)
+				size[d] = max[d] - min[d] + 1;
+			// create and add bounding box
+			BoundingBox bb = new BoundingBox(min, size);
+			// get a thumbnail version of the mask
+			LocalizableByDimCursor<T> maskCursor =
+				mask.createLocalizableByDimCursor();
+			RegionOfInterestCursor<T> roiCursor =
+				new RegionOfInterestCursor<T>(maskCursor, bb.offset, bb.size);
+			Image<T> maskBB = mask.createNewImage(bb.size, "clipped Mask");
+			LocalizableByDimCursor<T> maskBBCursor
+				= maskBB.createLocalizableByDimCursor();
+			while (roiCursor.hasNext()) {
+				roiCursor.fwd();
+				maskBBCursor.setPosition( roiCursor );
+				maskBBCursor.getType().set( roiCursor.getType() );
+			}
+			maskBBCursor.close();
+			roiCursor.close();
+			maskCursor.close();
+
+			return new MaskInfo(bb, mask, maskBB);
+		}
+	}
+
+	/**
 	* Adds the provided Algorithm to the list if it is not null.
 	*/
 	protected void addIfValid(Algorithm<T> a, List<Algorithm<T>> list) {
@@ -435,7 +520,6 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		while (cursor.hasNext()) {
 			cursor.fwd();
 			maskCursor.setPosition( cursor );
-
 			maskCursor.getType().set( cursor.getType() );
 		}
 
