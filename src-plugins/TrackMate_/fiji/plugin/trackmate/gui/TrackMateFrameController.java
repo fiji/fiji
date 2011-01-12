@@ -423,12 +423,7 @@ public class TrackMateFrameController {
 				// Stop at start panel
 				state = GuiState.START;
 				logger.log("Loading data finished, press 'next' to resume.\n");
-				SwingUtilities.invokeLater(new Runnable() {			
-					@Override
-					public void run() {
-						view.jButtonNext.setEnabled(true);
-					}
-				});
+				switchNextButton(true);
 				return;
 			}
 
@@ -456,12 +451,7 @@ public class TrackMateFrameController {
 				view.setModel(model);
 				state = GuiState.TUNE_SEGMENTER;
 				logger.log("Loading data finished, press 'next' to resume.\n");
-				SwingUtilities.invokeLater(new Runnable() {			
-					@Override
-					public void run() {
-						view.jButtonNext.setEnabled(true);
-					}
-				});
+				switchNextButton(true);
 				return;
 			}
 
@@ -486,20 +476,15 @@ public class TrackMateFrameController {
 				view.setModel(model);
 				state = GuiState.INITIAL_THRESHOLDING;
 				logger.log("Loading data finished, press 'next' to resume.\n");
-				SwingUtilities.invokeLater(new Runnable() {			
-					@Override
-					public void run() {
-						view.jButtonNext.setEnabled(true);
-					}
-				});
+				switchNextButton(true);
 				return;
 			}
 
 			// Store it in model
 			newModel.setInitialThreshold(initialThreshold.value);
 			logger.log("  Reading initial threshold done.\n");
-		}
-
+		}		
+		
 		{ // Try to read feature thresholds
 			List<FeatureThreshold> featureThresholds = null;
 			try {
@@ -522,12 +507,7 @@ public class TrackMateFrameController {
 				else 
 					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.STACK_DISPLAYER, model);					 
 				logger.log("Loading data finished, press 'next' to resume.\n");
-				SwingUtilities.invokeLater(new Runnable() {			
-					@Override
-					public void run() {
-						view.jButtonNext.setEnabled(true);
-					}
-				});
+				switchNextButton(true);
 				return;
 			}
 
@@ -559,12 +539,7 @@ public class TrackMateFrameController {
 					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.STACK_DISPLAYER, model);
 				displayer.setSpots(model.getSpots());
 				logger.log("Loading data finished, press 'next' to resume.\n");
-				SwingUtilities.invokeLater(new Runnable() {			
-					@Override
-					public void run() {
-						view.jButtonNext.setEnabled(true);
-					}
-				});
+				switchNextButton(true);
 				return;
 			}
 
@@ -598,12 +573,7 @@ public class TrackMateFrameController {
 					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.STACK_DISPLAYER, model);				displayer.setSpots(model.getSpots());
 				displayer.setSpotsToShow(model.getSelectedSpots());
 				logger.log("Loading data finished, press 'next' to resume.\n");
-				SwingUtilities.invokeLater(new Runnable() {			
-					@Override
-					public void run() {
-						view.jButtonNext.setEnabled(true);
-					}
-				});
+				switchNextButton(true);
 				return;
 			}
 
@@ -634,12 +604,7 @@ public class TrackMateFrameController {
 					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.STACK_DISPLAYER, model);				displayer.setSpots(model.getSpots());
 				displayer.setSpotsToShow(model.getSelectedSpots());
 				logger.log("Loading data finished, press 'next' to resume.\n");
-				SwingUtilities.invokeLater(new Runnable() {			
-					@Override
-					public void run() {
-						view.jButtonNext.setEnabled(true);
-					}
-				});
+				switchNextButton(true);
 				return;
 			}
 			
@@ -660,13 +625,7 @@ public class TrackMateFrameController {
 		displayer.setTrackGraph(model.getTrackGraph());
 		updater.doUpdate();
 		logger.log("Loading data finished, press 'next' to resume.\n");
-		SwingUtilities.invokeLater(new Runnable() {			
-			@Override
-			public void run() {
-				view.jButtonNext.setEnabled(true);
-			}
-		});
-
+		switchNextButton(true);
 	}
 	
 	private void save() {
@@ -802,12 +761,7 @@ public class TrackMateFrameController {
 	 * the {@link TrackMate_} glue class in a new Thread.
 	 */
 	private void execSegmentationStep() {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				view.jButtonNext.setEnabled(false);
-			}
-		});
+		switchNextButton(false);
 		model.getSettings().segmenterSettings = view.segmenterSettingsPanel.getSettings();
 		logger.log("Starting segmentation...\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
@@ -822,12 +776,7 @@ public class TrackMateFrameController {
 					logger.error("An error occured:\n"+e+'\n');
 					e.printStackTrace(logger);
 				} finally {
-					SwingUtilities.invokeLater(new Runnable() {
-						@Override
-						public void run() {
-							view.jButtonNext.setEnabled(true);
-						}
-					});
+					switchNextButton(true);
 					long end = System.currentTimeMillis();
 					logger.log(String.format("Segmentation done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
 				}
@@ -859,22 +808,12 @@ public class TrackMateFrameController {
 	 * Compute all features on all spots retained after initial thresholding.
 	 */
 	private void execCalculateFeatures() {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				view.jButtonNext.setEnabled(false);
-			}
-		});
+		switchNextButton(false);
 		logger.log("Calculating features...\n",Logger.BLUE_COLOR);
 		// Calculate features
 		model.computeFeatures();		
 		logger.log("Calculating features done.\n", Logger.BLUE_COLOR);
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				view.jButtonNext.setEnabled(true);
-			}
-		});
+		switchNextButton(true);
 	}
 	
 	/**
@@ -883,12 +822,7 @@ public class TrackMateFrameController {
 	private void execLaunchdisplayer() {
 		// Launch renderer
 		logger.log("Rendering results...\n",Logger.BLUE_COLOR);
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				view.jButtonNext.setEnabled(false);
-			}
-		});
+		switchNextButton(false);
 		// Thread for rendering
 		new Thread("TrackMate rendering thread") {
 			public void run() {
@@ -900,12 +834,7 @@ public class TrackMateFrameController {
 				displayer.setSpots(model.getSpots());
 				// Re-enable the GUI
 				logger.log("Rendering done.\n", Logger.BLUE_COLOR);
-				SwingUtilities.invokeLater(new Runnable() {
-					@Override
-					public void run() {
-						view.jButtonNext.setEnabled(true);
-					}
-				});
+				switchNextButton(true);
 				updater.doUpdate();
 			}
 		}.start();
@@ -984,12 +913,7 @@ public class TrackMateFrameController {
 	 * Switch to the log panel, and execute the tracking part in another thread.
 	 */
 	private void execTrackingStep() {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				view.jButtonNext.setEnabled(false);
-			}
-		});
+		switchNextButton(false);
 		model.getSettings().trackerSettings = view.trackerSettingsPanel.getSettings();
 		logger.log("Starting tracking...\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
@@ -1002,12 +926,7 @@ public class TrackMateFrameController {
 				displayer.setDisplayTrackMode(TrackDisplayMode.ALL_WHOLE_TRACKS, 20);
 				updater.doUpdate();
 				// Re-enable the GUI
-				SwingUtilities.invokeLater(new Runnable() {
-					@Override
-					public void run() {
-						view.jButtonNext.setEnabled(true);
-					}
-				});
+				switchNextButton(true);
 				long end = System.currentTimeMillis();
 				logger.log(String.format("Tracking done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
 			}
@@ -1046,7 +965,16 @@ public class TrackMateFrameController {
 			}
 		});
 	}
-		
+	
+	private void switchNextButton(final boolean state) {
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				view.jButtonNext.setEnabled(state);
+			}
+		});
+	}
+	
 	
 	/*
 	 * INNER CLASSES
