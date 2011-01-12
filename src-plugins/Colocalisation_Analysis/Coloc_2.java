@@ -21,7 +21,6 @@ import mpicbg.imglib.cursor.special.RegionOfInterestCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.ImagePlusAdapter;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.RealType;
 import results.PDFWriter;
 import results.ResultHandler;
@@ -106,8 +105,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	int img1Channel = 1, img2Channel = 1;
 
 	/* The different algorithms this plug-in provides.
-	* If a reference is null it will not get run.
-	*/
+	 * If a reference is null it will not get run.
+	 */
 	PearsonsCorrelation<T> pearsonsCorrelation = null;
 	LiHistogram2D<T> liHistogramCh1 = null;
 	LiHistogram2D<T> liHistogramCh2 = null;

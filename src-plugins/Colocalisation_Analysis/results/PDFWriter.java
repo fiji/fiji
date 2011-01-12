@@ -48,6 +48,11 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 	protected List<Paragraph> listOfPDFTexts
 		= new ArrayList<Paragraph>();
 
+	/**
+	 * Creates a new PDFWriter that can access the container.
+	 *
+	 * @param container The data container for source image data
+	 */
 	public PDFWriter(DataContainer<T> container) {
 		this.container = container;
 	}
@@ -196,8 +201,7 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 			IJ.showMessage("PDF Writer", de.getMessage());
 		} catch(IOException ioe) {
 			IJ.showMessage("PDF Writer", ioe.getMessage());
-		}
-		finally {
+		} finally {
 			if (document !=null) {
 				document.close();
 				succeededPrints++;
