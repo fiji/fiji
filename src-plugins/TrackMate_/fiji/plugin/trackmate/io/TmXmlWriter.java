@@ -26,10 +26,10 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModelInterface;
-import fiji.plugin.trackmate.Settings.SegmenterType;
-import fiji.plugin.trackmate.Settings.TrackerType;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
+import fiji.plugin.trackmate.segmentation.SegmenterType;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
+import fiji.plugin.trackmate.tracking.TrackerType;
 
 public class TmXmlWriter implements TmXmlKeys {
 	

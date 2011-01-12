@@ -21,7 +21,6 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 
-import fiji.plugin.trackmate.Settings.SegmenterType;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 
 public class SegmenterSettingsPanel extends ActionListenablePanel {
@@ -180,7 +179,7 @@ public class SegmenterSettingsPanel extends ActionListenablePanel {
 	public static void main(String[] args) {
 		JFrame frame = new JFrame();
 		SegmenterSettings s = new SegmenterSettings();
-		s.segmenterType = SegmenterType.PEAKPICKER_SEGMENTER;
+		s.segmenterType = fiji.plugin.trackmate.segmentation.SegmenterType.PEAKPICKER_SEGMENTER;
 		frame.getContentPane().add(new SegmenterSettingsPanel(s));
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();

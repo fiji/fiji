@@ -27,10 +27,10 @@ import fiji.plugin.trackmate.FeatureThreshold;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.Settings.SegmenterType;
-import fiji.plugin.trackmate.Settings.TrackerType;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
+import fiji.plugin.trackmate.segmentation.SegmenterType;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
+import fiji.plugin.trackmate.tracking.TrackerType;
 
 public class TmXmlReader implements TmXmlKeys {
 

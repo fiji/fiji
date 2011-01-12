@@ -56,6 +56,19 @@ public abstract class SpotDisplayer {
 		public static DisplayerType[] get3DDisplayers() {
 			return new DisplayerType[] { HYPERSTACK_DISPLAYER, THREEDVIEWER_DISPLAYER };
 		}
+		
+		@Override
+		public String toString() {
+			switch(this) {
+			case STACK_DISPLAYER:
+				return "Stack displayer";
+			case HYPERSTACK_DISPLAYER:
+				return "HyperStack displayer";
+			case THREEDVIEWER_DISPLAYER:
+				return "3D viewer";
+			}
+			return null;
+		}
 
 	}
 
