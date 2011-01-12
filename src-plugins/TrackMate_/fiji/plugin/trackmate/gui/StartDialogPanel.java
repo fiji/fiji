@@ -111,6 +111,7 @@ public class StartDialogPanel extends ActionListenablePanel {
 		else {
 			echoSettings(settings);
 			imp = settings.imp;
+			refresh();
 		}
 	}
 

@@ -64,6 +64,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	StartDialogPanel startDialogPanel;
 	SegmenterSettingsPanel segmenterSettingsPanel;
 	InitThresholdPanel initThresholdingPanel;
+	DisplayerChooserPanel displayerChooserPanel;
 	ThresholdGuiPanel thresholdGuiPanel;
 	TrackerSettingsPanel trackerSettingsPanel;
 	DisplayerPanel displayerPanel;
@@ -89,6 +90,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		START_DIALOG_KEY,
 		TUNE_SEGMENTER_KEY,
 		INITIAL_THRESHOLDING_KEY,
+		DISPLAYER_CHOICE_KEY,
 		THRESHOLD_GUI_KEY,
 		TUNE_TRACKER_KEY,
 		LOG_PANEL_KEY,
@@ -157,6 +159,13 @@ public class TrackMateFrame extends javax.swing.JFrame {
 				jPanelMain.remove(initThresholdingPanel);
 			initThresholdingPanel = new InitThresholdPanel(model.getFeatureValues(), model.getInitialThreshold());
 			panel = initThresholdingPanel;
+			break;
+			
+		case DISPLAYER_CHOICE_KEY:
+			if (null != displayerChooserPanel)
+				jPanelMain.remove(displayerChooserPanel);
+			displayerChooserPanel = new DisplayerChooserPanel(model.getSettings());
+			panel = displayerChooserPanel;
 			break;
 			
 		case THRESHOLD_GUI_KEY:

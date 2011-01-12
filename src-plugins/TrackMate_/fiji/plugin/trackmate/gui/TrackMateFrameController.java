@@ -52,7 +52,8 @@ public class TrackMateFrameController {
 		TUNE_SEGMENTER,
 		SEGMENTING,
 		INITIAL_THRESHOLDING,
-		CALCULATE_FEATURES, 
+		CHOOSE_DISPLAYER,
+		CALCULATE_FEATURES,
 		TUNE_THRESHOLDS,
 		THRESHOLD_BLOBS,
 		TUNE_TRACKER,
@@ -71,6 +72,8 @@ public class TrackMateFrameController {
 			case SEGMENTING:
 				return INITIAL_THRESHOLDING;
 			case INITIAL_THRESHOLDING:
+				return CHOOSE_DISPLAYER;
+			case CHOOSE_DISPLAYER:
 				return CALCULATE_FEATURES;
 			case CALCULATE_FEATURES:
 				return TUNE_THRESHOLDS;
@@ -100,8 +103,10 @@ public class TrackMateFrameController {
 				return TUNE_SEGMENTER;
 			case INITIAL_THRESHOLDING:
 				return SEGMENTING;
-			case CALCULATE_FEATURES:
+			case CHOOSE_DISPLAYER:
 				return INITIAL_THRESHOLDING;
+			case CALCULATE_FEATURES:
+				return CHOOSE_DISPLAYER;
 			case TUNE_THRESHOLDS:
 				return CALCULATE_FEATURES;
 			case THRESHOLD_BLOBS:
@@ -145,6 +150,10 @@ public class TrackMateFrameController {
 			
 			case INITIAL_THRESHOLDING:
 				key = PanelCard.INITIAL_THRESHOLDING_KEY;
+				break;
+				
+			case CHOOSE_DISPLAYER:
+				key = PanelCard.DISPLAYER_CHOICE_KEY;
 				break;
 			
 			case TUNE_THRESHOLDS:
@@ -192,10 +201,12 @@ public class TrackMateFrameController {
 			case SEGMENTING:
 				controller.execSegmentationStep();
 				return;
-			case CALCULATE_FEATURES:
-				// Before we switch to the log display when calculating features, we execute the *initial* thresholding step.
+			case CHOOSE_DISPLAYER:
+				// Before we switch to the log display when calculating features, we *execute* the initial thresholding step.
 				controller.execInitialThresholding();
-				// Then we calculate the other features.
+				return;
+			case CALCULATE_FEATURES:
+				// Compute the feature first
 				controller.execCalculateFeatures();
 				// Then we launch the displayer
 				controller.execLaunchdisplayer();
@@ -885,11 +896,7 @@ public class TrackMateFrameController {
 				if (null != displayer) {
 					displayer.clear();
 				}
-				boolean is3D = model.getSettings().imp.getNSlices() > 1;
-				if (is3D)
-					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
-				else 
-					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.STACK_DISPLAYER, model);
+				displayer = SpotDisplayer.instantiateDisplayer(view.displayerChooserPanel.getDisplayerType(), model);
 				displayer.setSpots(model.getSpots());
 				// Re-enable the GUI
 				logger.log("Rendering done.\n", Logger.BLUE_COLOR);

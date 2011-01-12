@@ -28,11 +28,10 @@ import fiji.plugin.trackmate.segmentation.SegmenterSettings;
  * The mother abstract class for spot displayers, that can overlay segmented spots and tracks on top
  * of the image data. 
  * <p>
- * Displayers must implements this abastract class. It offers on top some facilities to store common
+ * Displayers must implements this abstract class. It offers on top some facilities to store common
  * fields, and can instantiate concrete implementation based on factory design.
  * <p>
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Jan 2011
- *
  */
 public abstract class SpotDisplayer {
 
@@ -66,6 +65,28 @@ public abstract class SpotDisplayer {
 				return "HyperStack displayer";
 			case THREEDVIEWER_DISPLAYER:
 				return "3D viewer";
+			}
+			return null;
+		}
+		
+		public String getInfoText() {
+			switch(this) {
+			case STACK_DISPLAYER:
+				return "<html>" +
+						"This displayer overlays the spots and tracks on the current<br>" +
+						"ImageJ stack window." +
+						"</html>";
+			case HYPERSTACK_DISPLAYER:
+				return "<html>" +
+						"This displayer overlays the spots and tracks on the current<br>" +
+						"ImageJ hyperstack window." +
+						"</html>";
+			case THREEDVIEWER_DISPLAYER:
+				return "<html>" +
+						"This invokes a new 3D viewer (over time) window, which receive a<br>" +
+						"8-bit copy of the image data. Spots and tracks are rendered in 3D,<br>" +
+						"and track display mode settings is ignored." +
+						"</html>"; 
 			}
 			return null;
 		}
@@ -167,15 +188,9 @@ public abstract class SpotDisplayer {
 					null, 
 					SpotDisplayer3D.DEFAULT_THRESHOLD, 
 					new boolean[] {true, true, true});
-			// Render spots
+			universe.addContentLater(imageContent);					
 			disp = new SpotDisplayer3D(universe, settings.segmenterSettings.expectedRadius);
-			disp.setSpots(model.getSpots());
-			new Thread("Displayer rendering thread") {
-				public void run() {
-					disp.render();
-					universe.addContentLater(imageContent);					
-				};
-			}.start();
+			disp.render();
 			break;
 
 		} 
