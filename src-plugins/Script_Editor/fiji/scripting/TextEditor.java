@@ -1314,8 +1314,12 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public boolean saveAs() {
+		EditorPane editorPane = getEditorPane();
 		SaveDialog sd = new SaveDialog("Save as ",
-				getEditorPane().getFileName() , "");
+				editorPane.file == null ?
+				System.getProperty("fiji.dir") :
+				editorPane.file.getParentFile().getAbsolutePath(),
+				editorPane.getFileName() , "");
 		grabFocus(2);
 		String name = sd.getFileName();
 		if (name == null)
