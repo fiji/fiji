@@ -171,7 +171,7 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 			 * information to the name.
 			 */
 			if (container.isMaskInUse() || container.isRoiInUse()) {
-				name += "_mask_"+ succeededPrints;
+				name += "_mask_"+ (succeededPrints + 1);
 			}
 			// get the path to the file we are about to create
 			SaveDialog sd = new SaveDialog("Save as PDF", name, ".pdf");
