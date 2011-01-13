@@ -36,7 +36,6 @@ public class MaskLocalizableCursor< T extends Type<T> & Comparable<T> > extends 
 		this.offset = offset;
 	}
 
-	@Override
 	public void getPosition( int[] position ) {
 		imageCursor.getPosition( position );
 		for (int d=0; d < getNumDimensions(); d++) {
@@ -44,19 +43,16 @@ public class MaskLocalizableCursor< T extends Type<T> & Comparable<T> > extends 
 		}
 	}
 
-	@Override
 	public int[] getPosition() {
 		int[] position = imageCursor.createPositionArray();
 		getPosition( position );
 		return position;
 	}
 
-	@Override
 	public int getPosition( int dim ) {
 		return imageCursor.getPosition( dim ) - offset[dim];
 	}
 
-	@Override
 	public String getPositionAsString() {
 		return imageCursor.getPositionAsString();
 	}

@@ -45,7 +45,6 @@ public class TwinValueRangeCursor< T extends Type<T> & Comparable<T> > extends C
 		super( cursor1, cursor2, predicate1, predicate2 );
 	}
 
-	@Override
 	public Iterator<T> iterator()
 	{
 		return cursor1.iterator();
@@ -56,7 +55,6 @@ public class TwinValueRangeCursor< T extends Type<T> & Comparable<T> > extends C
 		return cursor2.iterator();
 	}
 
-	@Override
 	public T getType() {
 		return getChannel1Type();
 	}
@@ -65,7 +63,6 @@ public class TwinValueRangeCursor< T extends Type<T> & Comparable<T> > extends C
 		return getChannel2Type();
 	}
 
-	@Override
 	public Image<T> getImage() {
 		return cursor1.getImage();
 	}
@@ -74,7 +71,6 @@ public class TwinValueRangeCursor< T extends Type<T> & Comparable<T> > extends C
 		return cursor2.getImage();
 	}
 
-	@Override
 	public int getArrayIndex() {
 		return cursor1.getArrayIndex();
 	}
@@ -83,7 +79,6 @@ public class TwinValueRangeCursor< T extends Type<T> & Comparable<T> > extends C
 		return cursor2.getArrayIndex();
 	}
 
-	@Override
 	public int getStorageIndex() {
 		return cursor1.getStorageIndex();
 	}
@@ -92,7 +87,6 @@ public class TwinValueRangeCursor< T extends Type<T> & Comparable<T> > extends C
 		return cursor2.getStorageIndex();
 	}
 
-	@Override
 	public Container<T> getStorageContainer() {
 		return cursor1.getStorageContainer();
 	}
@@ -101,7 +95,6 @@ public class TwinValueRangeCursor< T extends Type<T> & Comparable<T> > extends C
 		return cursor2.getStorageContainer();
 	}
 
-	@Override
 	public int[] createPositionArray() {
 		return cursor1.createPositionArray();
 	}
@@ -110,7 +103,6 @@ public class TwinValueRangeCursor< T extends Type<T> & Comparable<T> > extends C
 		return cursor2.createPositionArray();
 	}
 
-	@Override
 	public int getNumDimensions() {
 		return cursor1.getNumDimensions();
 	}
@@ -119,7 +111,6 @@ public class TwinValueRangeCursor< T extends Type<T> & Comparable<T> > extends C
 		return cursor2.getNumDimensions();
 	}
 
-	@Override
 	public int[] getDimensions() {
 		return cursor1.getDimensions();
 	}
@@ -128,7 +119,6 @@ public class TwinValueRangeCursor< T extends Type<T> & Comparable<T> > extends C
 		return cursor2.getDimensions();
 	}
 
-	@Override
 	public void getDimensions( int[] position ) {
 		cursor1.getDimensions( position );
 	}

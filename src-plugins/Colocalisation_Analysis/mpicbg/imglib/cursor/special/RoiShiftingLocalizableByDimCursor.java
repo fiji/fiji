@@ -40,27 +40,22 @@ public class RoiShiftingLocalizableByDimCursor< T extends Type<T>> extends Curso
 		this.cursor = cursor;
 	}
 
-	@Override
 	public String getPositionAsString() {
 		return cursor.getPositionAsString();
 	}
 
-	@Override
 	public void fwd( int dim ) {
 		cursor.fwd( dim );
 	}
 
-	@Override
 	public void bck( int dim ) {
 		cursor.bck( dim );
 	}
 
-	@Override
 	public void setPosition( int position[] ) {
 		cursor.setPosition( position );
 	}
 
-	@Override
 	public RegionOfInterestCursor<T> createRegionOfInterestCursor( final int[] offset,
 			final int[] size ) {
 		/* a ROI cursor for a MaskedImage must operate on a ROI relative to
@@ -75,84 +70,68 @@ public class RoiShiftingLocalizableByDimCursor< T extends Type<T>> extends Curso
 		return new RegionOfInterestCursor<T>(this, shiftedOffset, size);
 	}
 
-	@Override
 	public void move( int steps, int dim ) {
 		cursor.move( steps, dim );
 	}
 
-	@Override
 	public void moveTo( Localizable localizable ) {
 		cursor.moveTo( localizable );
 	}
 
-	@Override
 	public void moveTo( int position[] ) {
 		cursor.moveTo( position );
 	}
 
-	@Override
 	public void moveRel( int position[] ) {
 		cursor.moveRel( position );
 	}
 
-	@Override
 	public void setPosition( Localizable localizable ) {
 		cursor.setPosition( localizable );
 	}
 
-	@Override
 	public void setPosition( int position, int dim ) {
 		cursor.setPosition( position, dim );
 	}
 
-	@Override
 	public int getStorageIndex() {
 		 return cursor.getStorageIndex();
 	}
 
-	@Override
 	public void close() {
 		cursor.close();
 	}
 
-	@Override
 	public T getType() {
 		return cursor.getType();
 	}
 
-	@Override
 	public void reset() {
 		cursor.reset();
 	}
 
-	@Override
 	public boolean hasNext() {
 		return cursor.hasNext();
 	}
 
-	@Override
 	public void fwd() {
 		cursor.fwd();
 	}
 
-	@Override
 	public void getPosition( int[] pos ) {
 		cursor.getPosition( pos );
 	}
 
-	@Override
 	public int getPosition( final int dim ) {
 		return cursor.getPosition( dim );
 	}
 
-	@Override
 	public int[] getPosition() {
 		return cursor.getPosition();
 	}
 
 	/* Not yet implemented methods follow */
 
-	@Override
 	public LocalNeighborhoodCursor<T> createLocalNeighborhoodCursor() {
 		throw new UnsupportedOperationException("This method has not been implemented, yet.");
 	}

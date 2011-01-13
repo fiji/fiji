@@ -69,52 +69,42 @@ public class MaskCursor< T extends Type<T> & Comparable<T> > extends ConstraintC
 		return mask;
 	}
 
-	@Override
 	public Iterator<T> iterator()
 	{
 		throw new UnsupportedOperationException("This method has not been implemented, yet.");
 	}
-	@Override
 	public T getType() {
 		return getChannel1Type();
 	}
 
-	@Override
 	public Image<T> getImage() {
 		return cursor1.getImage();
 	}
 
-	@Override
 	public int getArrayIndex() {
 		return cursor1.getArrayIndex();
 	}
 
-	@Override
 	public int getStorageIndex() {
 		return cursor1.getStorageIndex();
 	}
 
-	@Override
 	public Container<T> getStorageContainer() {
 		return cursor1.getStorageContainer();
 	}
 
-	@Override
 	public int[] createPositionArray() {
 		return cursor1.createPositionArray();
 	}
 
-	@Override
 	public int getNumDimensions() {
 		return cursor1.getNumDimensions();
 	}
 
-	@Override
 	public int[] getDimensions() {
 		return cursor1.getDimensions();
 	}
 
-	@Override
 	public void getDimensions( int[] position ) {
 		cursor1.getDimensions( position );
 	}

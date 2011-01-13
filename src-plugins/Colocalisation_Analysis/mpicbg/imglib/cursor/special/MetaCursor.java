@@ -4,10 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import mpicbg.imglib.container.Container;
 import mpicbg.imglib.cursor.Cursor;
-import mpicbg.imglib.cursor.Iterable;
-import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.Type;
 
 /**
@@ -72,13 +69,11 @@ public abstract class MetaCursor< T extends Type< T > > implements Cursor<T>
 			c.close();
 	}
 
-	@Override
 	public void setDebug( final boolean debug ) {
 		for(Cursor<T> c : cursors)
 			c.setDebug( debug );
 	}
 
-	@Override
 	public boolean isActive() {
 		boolean isActive = true;
 		for(Cursor<T> c : cursors)
@@ -87,7 +82,6 @@ public abstract class MetaCursor< T extends Type< T > > implements Cursor<T>
 		return isActive;
 	}
 
-	@Override
 	public void remove()
 	{
 		for(Cursor<T> c : cursors)
