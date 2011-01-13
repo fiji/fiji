@@ -35,7 +35,7 @@ public class TrackVisualizerTestDrive {
 	
 	public static void main(String[] args) throws JDOMException, IOException {
 	
-		TmXmlReader reader = new TmXmlReader(CASE_5);
+		TmXmlReader reader = new TmXmlReader(CASE_3);
 		reader.parse();
 		
 		// Load objects 

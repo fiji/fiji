@@ -57,6 +57,7 @@ public class SpotIconGrabber {
 		ImageProcessor ip = imp.getStack().getProcessor(index).duplicate();
 		ip.setRoi(roi);
 		ip = ip.crop();
+		ip.resetMinAndMax();
 		Image image = ip.createImage();
 		ImageIcon icon = new ImageIcon(image);
 		spot.setIcon(icon);
