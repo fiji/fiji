@@ -24,8 +24,8 @@ import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.tracking.TrackerType;
+import fiji.plugin.trackmate.visualization.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
-import fiji.plugin.trackmate.visualization.SpotDisplayer2D;
 
 public class LAPTrackerTestDrive {
 	
@@ -129,9 +129,9 @@ public class LAPTrackerTestDrive {
 		ImagePlus imp = null;
 		imp = reader.getImage();
 		if (imp != null)
-			imp.show();
+			inFileSettings.imp = imp;
 		
-		SpotDisplayer2D sd2d = new SpotDisplayer2D(inFileSettings);
+		SpotDisplayer sd2d = new HyperStackDisplayer(inFileSettings);
 		sd2d.setSpots(spots);
 		sd2d.render();
 		sd2d.setSpotsToShow(spots);

@@ -505,7 +505,7 @@ public class TrackMateFrameController {
 				if (is3D)
 					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
 				else 
-					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.STACK_DISPLAYER, model);					 
+					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);					 
 				logger.log("Loading data finished, press 'next' to resume.\n");
 				switchNextButton(true);
 				return;
@@ -536,7 +536,7 @@ public class TrackMateFrameController {
 				if (is3D)
 					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
 				else 
-					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.STACK_DISPLAYER, model);
+					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
 				displayer.setSpots(model.getSpots());
 				logger.log("Loading data finished, press 'next' to resume.\n");
 				switchNextButton(true);
@@ -570,7 +570,8 @@ public class TrackMateFrameController {
 				if (is3D)
 					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
 				else 
-					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.STACK_DISPLAYER, model);				displayer.setSpots(model.getSpots());
+					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
+				displayer.setSpots(model.getSpots());
 				displayer.setSpotsToShow(model.getSelectedSpots());
 				logger.log("Loading data finished, press 'next' to resume.\n");
 				switchNextButton(true);
@@ -601,7 +602,8 @@ public class TrackMateFrameController {
 				if (is3D)
 					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
 				else 
-					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.STACK_DISPLAYER, model);				displayer.setSpots(model.getSpots());
+					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
+				displayer.setSpots(model.getSpots());
 				displayer.setSpotsToShow(model.getSelectedSpots());
 				logger.log("Loading data finished, press 'next' to resume.\n");
 				switchNextButton(true);
@@ -620,7 +622,8 @@ public class TrackMateFrameController {
 		if (is3D)
 			displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
 		else 
-			displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.STACK_DISPLAYER, model);		displayer.setSpots(model.getSpots());
+			displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
+		displayer.setSpots(model.getSpots());
 		displayer.setSpotsToShow(model.getSelectedSpots());
 		displayer.setTrackGraph(model.getTrackGraph());
 		updater.doUpdate();

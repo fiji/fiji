@@ -44,12 +44,11 @@ public abstract class SpotDisplayer {
 	 * This enum stores the list of {@link SpotDisplayer} currently available.
 	 */
 	public static enum DisplayerType {
-		STACK_DISPLAYER,		
 		THREEDVIEWER_DISPLAYER,
 		HYPERSTACK_DISPLAYER;
 		
 		public static DisplayerType[] get2DDisplayers() {
-			return new DisplayerType[] { STACK_DISPLAYER };
+			return new DisplayerType[] { HYPERSTACK_DISPLAYER };
 		}
 
 		public static DisplayerType[] get3DDisplayers() {
@@ -59,8 +58,6 @@ public abstract class SpotDisplayer {
 		@Override
 		public String toString() {
 			switch(this) {
-			case STACK_DISPLAYER:
-				return "Stack displayer";
 			case HYPERSTACK_DISPLAYER:
 				return "HyperStack displayer";
 			case THREEDVIEWER_DISPLAYER:
@@ -71,11 +68,6 @@ public abstract class SpotDisplayer {
 		
 		public String getInfoText() {
 			switch(this) {
-			case STACK_DISPLAYER:
-				return "<html>" +
-						"This displayer overlays the spots and tracks on the current<br>" +
-						"ImageJ stack window." +
-						"</html>";
 			case HYPERSTACK_DISPLAYER:
 				return "<html>" +
 						"This displayer overlays the spots and tracks on the current<br>" +
@@ -197,12 +189,6 @@ public abstract class SpotDisplayer {
 			break;
 
 		} 
-		case STACK_DISPLAYER:
-		{
-			disp = new SpotDisplayer2D(settings);
-			disp.render();
-			break;
-		}
 		case HYPERSTACK_DISPLAYER:
 		default:
 			{
