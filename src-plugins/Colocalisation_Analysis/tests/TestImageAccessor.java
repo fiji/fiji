@@ -130,6 +130,46 @@ public class TestImageAccessor {
 	}
 
 	/**
+	 * This method creates a noise image that is made of many little
+	 * sticks oriented in a random direction. How many of them and
+	 * what the length of them are can be specified.
+	 *
+	 * @return a new noise image
+	 */
+	public static <T extends RealType<T>> Image<T> produceSticksNoiseImage(T type, int width,
+			int height, int numSticks, int lineWidth, double maxLength, double[] smoothingSigma) {
+		// create the new image
+		ImageFactory<T> imgFactory = new ImageFactory<T>(type, new ArrayContainerFactory());
+		Image<T> noiseImage = imgFactory.createImage( new int[] {width, height}, "Noise image");
+
+		/* for now (probably until ImageJ2 is out) we must convert
+		 * the ImgLib image to an ImageJ one to draw circles on it.
+		 */
+		ImagePlus img = ImageJFunctions.copyToImagePlus( noiseImage );
+		ImageProcessor imp = img.getProcessor();
+		imp.setColor(Color.WHITE);
+		imp.setLineWidth(lineWidth);
+
+		for (int i=0; i < numSticks; i++) {
+			// find random starting point
+			int x = (int) (Math.random() * width);
+			int y = (int) (Math.random() * height);
+			// create random stick length and direction
+			double length = Math.random() * maxLength;
+			double angle = Math.random() * 2 * Math.PI;
+			// calculate random point on circle, for the direction
+			int destX = x + (int) (length * Math.cos(angle));
+			int destY = y + (int) (length * Math.sin(angle));
+			// now draw the line
+			imp.drawLine(x, y, destX, destY);
+		}
+		// we changed the data, so update it
+		img.updateImage();
+
+		return gaussianSmooth(noiseImage, imgFactory, smoothingSigma);
+	}
+
+	/**
 	 * Gaussian Smooth of the input image using intermediate float format.
 	 * @param <T>
 	 * @param img
