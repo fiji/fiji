@@ -13,21 +13,14 @@ import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
-import fiji.plugin.trackmate.Settings.TrackerType;
+import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 /**
-* This code was edited or generated using CloudGarden's Jigloo
-* SWT/Swing GUI Builder, which is free for non-commercial
-* use. If Jigloo is being used commercially (ie, by a corporation,
-* company or business for any purpose whatever) then you
-* should purchase a license for each developer using Jigloo.
-* Please visit www.cloudgarden.com for details.
-* Use of Jigloo implies acceptance of these licensing terms.
-* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
-* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
-* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
-*/
+ * A simplified configuration panel for the {@link LAPTracker}.
+ * 
+ * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - 2010-2011
+ */
 public class SimpleLAPTrackerSettingsPanel extends TrackerSettingsPanel {
 	
 	private static final long serialVersionUID = 7869519363287710721L;
@@ -195,7 +188,7 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerSettingsPanel {
 	public static void main(String[] args) {
 		JFrame frame = new JFrame();
 		TrackerSettings ts = new TrackerSettings();
-		ts.trackerType = TrackerType.SIMPLE_LAP_TRACKER;
+		ts.trackerType = fiji.plugin.trackmate.tracking.TrackerType.SIMPLE_LAP_TRACKER;
 		frame.getContentPane().add(new SimpleLAPTrackerSettingsPanel(ts));
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();

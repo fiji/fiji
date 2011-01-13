@@ -1,5 +1,10 @@
 package fiji.plugin.trackmate.visualization;
 
+import ij.ImagePlus;
+import ij3d.Content;
+import ij3d.ContentCreator;
+import ij3d.Image3DUniverse;
+
 import java.awt.Color;
 import java.util.HashMap;
 import java.util.List;
@@ -13,10 +18,111 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 
 import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TMUtils;
+import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 
+/**
+ * The mother abstract class for spot displayers, that can overlay segmented spots and tracks on top
+ * of the image data. 
+ * <p>
+ * Displayers must implements this abstract class. It offers on top some facilities to store common
+ * fields, and can instantiate concrete implementation based on factory design.
+ * <p>
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Jan 2011
+ */
 public abstract class SpotDisplayer {
 
+	
+	/*
+	 * ENUMS
+	 */
+	
+	/**
+	 * This enum stores the list of {@link SpotDisplayer} currently available.
+	 */
+	public static enum DisplayerType {
+		STACK_DISPLAYER,		
+		THREEDVIEWER_DISPLAYER,
+		HYPERSTACK_DISPLAYER;
+		
+		public static DisplayerType[] get2DDisplayers() {
+			return new DisplayerType[] { STACK_DISPLAYER };
+		}
+
+		public static DisplayerType[] get3DDisplayers() {
+			return new DisplayerType[] { HYPERSTACK_DISPLAYER, THREEDVIEWER_DISPLAYER };
+		}
+		
+		@Override
+		public String toString() {
+			switch(this) {
+			case STACK_DISPLAYER:
+				return "Stack displayer";
+			case HYPERSTACK_DISPLAYER:
+				return "HyperStack displayer";
+			case THREEDVIEWER_DISPLAYER:
+				return "3D viewer";
+			}
+			return null;
+		}
+		
+		public String getInfoText() {
+			switch(this) {
+			case STACK_DISPLAYER:
+				return "<html>" +
+						"This displayer overlays the spots and tracks on the current<br>" +
+						"ImageJ stack window." +
+						"</html>";
+			case HYPERSTACK_DISPLAYER:
+				return "<html>" +
+						"This displayer overlays the spots and tracks on the current<br>" +
+						"ImageJ hyperstack window." +
+						"</html>";
+			case THREEDVIEWER_DISPLAYER:
+				return "<html>" +
+						"This invokes a new 3D viewer (over time) window, which receive a<br>" +
+						"8-bit copy of the image data. Spots and tracks are rendered in 3D,<br>" +
+						"and track display mode settings is ignored." +
+						"</html>"; 
+			}
+			return null;
+		}
+
+	}
+
+	/**
+	 * This enum stores the different display omde for tracks. Note that it might be ignored 
+	 * by some displayers.
+	 */
+	public enum TrackDisplayMode {
+		ALL_WHOLE_TRACKS,
+		LOCAL_WHOLE_TRACKS,
+		LOCAL_BACKWARD_TRACKS,
+		LOCAL_FORWARD_TRACKS;
+		
+		@Override
+		public String toString() {
+			switch(this) {
+			case ALL_WHOLE_TRACKS:
+				return "Show all entire tracks";
+			case LOCAL_WHOLE_TRACKS:
+				return "Show current tracks";
+			case LOCAL_BACKWARD_TRACKS:
+				return "Show current tracks, only backward";
+			case LOCAL_FORWARD_TRACKS:
+				return "Show current tracks, only forward";
+			}
+			return "Not implemented";
+		}
+		
+	}
+	
+	/*
+	 * FIELDS
+	 */
 	
 	public static final TrackDisplayMode DEFAULT_TRACK_DISPLAY_MODE = TrackDisplayMode.ALL_WHOLE_TRACKS;
 	public static final int DEFAULT_TRACK_DISPLAY_DEPTH 			= 10;
@@ -27,6 +133,8 @@ public abstract class SpotDisplayer {
 	protected static final Color DEFAULT_COLOR = new Color(1f, 0, 1f);
 	/** The display radius. */
 	protected float radius = DEFAULT_DISPLAY_RADIUS;
+	/** The ratio setting the actual display size of the spots, with respect to the physical radius. */
+	protected float radiusRatio = 1.0f;
 	
 	/** The colorMap. */
 	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
@@ -51,34 +159,59 @@ public abstract class SpotDisplayer {
 	protected int trackDisplayDepth = DEFAULT_TRACK_DISPLAY_DEPTH;
 
 	
+
 	/*
-	 * ENUMS
+	 * STATIC METHOD
 	 */
 	
-	public enum TrackDisplayMode {
-		ALL_WHOLE_TRACKS,
-		LOCAL_WHOLE_TRACKS,
-		LOCAL_BACKWARD_TRACKS,
-		LOCAL_FORWARD_TRACKS;
-		
-		@Override
-		public String toString() {
-			switch(this) {
-			case ALL_WHOLE_TRACKS:
-				return "Show all entire tracks";
-			case LOCAL_WHOLE_TRACKS:
-				return "Show current tracks";
-			case LOCAL_BACKWARD_TRACKS:
-				return "Show current tracks, only backward";
-			case LOCAL_FORWARD_TRACKS:
-				return "Show current tracks, only forward";
-			}
-			return "Not implemented";
+	/**
+	 * Instantiate and render the displayer specified by the given {@link DisplayerType}, using the data from
+	 * the model given. This will render the chosen {@link SpotDisplayer} only with image data.
+	 */
+	public static SpotDisplayer instantiateDisplayer(final DisplayerType displayerType, final TrackMateModelInterface model) {
+		final SpotDisplayer disp;
+		Settings settings = model.getSettings();
+		switch (displayerType) {
+		case THREEDVIEWER_DISPLAYER:
+		{ 
+			if (!settings.imp.isVisible())
+				settings.imp.show();
+			final Image3DUniverse universe = new Image3DUniverse();
+			universe.show();
+			ImagePlus[] images = TMUtils.makeImageForViewer(settings);
+			final Content imageContent = ContentCreator.createContent(
+					settings.imp.getTitle(), 
+					images, 
+					Content.VOLUME, 
+					SpotDisplayer3D.DEFAULT_RESAMPLING_FACTOR, 
+					0,
+					null, 
+					SpotDisplayer3D.DEFAULT_THRESHOLD, 
+					new boolean[] {true, true, true});
+			universe.addContentLater(imageContent);					
+			disp = new SpotDisplayer3D(universe, settings.segmenterSettings.expectedRadius);
+			disp.render();
+			break;
+
+		} 
+		case STACK_DISPLAYER:
+		{
+			disp = new SpotDisplayer2D(settings);
+			disp.render();
+			break;
 		}
-		
+		case HYPERSTACK_DISPLAYER:
+		default:
+			{
+				disp = new HyperStackDisplayer(settings);
+				disp.render();
+				break;
+			}
+		}
+		return disp;
 	}
 
-	
+
 	/*
 	 * PUBLIC METHODS
 	 */
@@ -93,6 +226,9 @@ public abstract class SpotDisplayer {
 		this.trackDisplayDepth = displayDepth;
 	}	
 	
+	/**
+	 * Set the track to be displayed in this displayer.
+	 */
 	public void setTrackGraph(SimpleGraph<Spot, DefaultEdge> trackGraph) {
 		this.trackGraph = trackGraph;
 		this.tracks = new ConnectivityInspector<Spot, DefaultEdge>(trackGraph).connectedSets();
@@ -105,21 +241,41 @@ public abstract class SpotDisplayer {
 		}
 	}
 	
+	/**
+	 * Set the spots that can be displayed by this displayer. Note that calling this method this 
+	 * does not actually draw the spots. The spots to be displayed has to be specified 
+	 * using {@link #setSpotsToShow(TreeMap)}, and must be a subset from the field passed to this method.
+	 * @see #setSpotsToShow(TreeMap)  
+	 */
 	public void setSpots(TreeMap<Integer, List<Spot>> spots) {
 		this.spots = spots;
 	}
 	
+	/**
+	 * Set what spots are to be displayed in this displayer. The list of spot given here must be a subset
+	 * of the list passed to the {@link #setSpots(TreeMap)} method.
+	 * @see #setSpots(TreeMap) 
+	 */
 	public void setSpotsToShow(TreeMap<Integer, List<Spot>> spotsToShow) {
 		this.spotsToShow = spotsToShow;
 	}
 
+	/**
+	 * Set up the ratio used to determine the actual display radius of spots. The spots on the image
+	 * will have a radius given by <code> {@link SegmenterSettings#expectedRadius} * ratio </code>.
+	 */
+	public void setRadiusDisplayRatio(float ratio) {
+		this.radiusRatio = ratio;
+	}
+	
 	
 	/*
 	 * ABSTRACT METHODS
 	 */
 	
 	/**
-	 * Prepare this displayer and render it according to its concrete implementation.
+	 * Prepare this displayer and render it according to its concrete implementation. Must be called before
+	 * adding spots or tracks for displaying. 
 	 */
 	public abstract void render();
 	

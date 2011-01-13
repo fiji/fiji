@@ -86,16 +86,14 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 		initGUI();
 		if (null != featureValues) {
 			
-			if (null == featureThresholds || featureThresholds.isEmpty()) {
-			
-				addThresholdPanel();
-				newFeatureIndex = 0;
-			
-			} else {
+			if (null != featureThresholds) {
 				
 				for (FeatureThreshold ft : featureThresholds)
 					addThresholdPanel(ft);
-				newFeatureIndex = featureThresholds.get(featureThresholds.size()-1).feature.ordinal();
+				if (featureThresholds.isEmpty())
+					newFeatureIndex = 0;
+				else
+					newFeatureIndex = featureThresholds.get(featureThresholds.size()-1).feature.ordinal();
 
 			}
 		}
@@ -325,6 +323,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 		}
 		
 		// Generate GUI
+		@SuppressWarnings("rawtypes")
 		TrackMate_ trackmate = new TrackMate_();
 		System.out.println("Type <Enter> to ad spots to this");
 		System.in.read();

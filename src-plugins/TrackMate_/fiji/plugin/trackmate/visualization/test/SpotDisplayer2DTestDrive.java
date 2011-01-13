@@ -120,8 +120,8 @@ public class SpotDisplayer2DTestDrive {
 		settings.dy = CALIBRATION[1];
 		
 		final SpotDisplayer2D displayer = new SpotDisplayer2D(settings);
-		displayer.setSpots(allNodes);
 		displayer.render();
+		displayer.setSpots(allNodes);
 		
 		System.out.println("Starting threshold GUI...");
 		final ThresholdGuiPanel gui = new ThresholdGuiPanel(TMUtils.getFeatureValues(allSpots.values()));

@@ -23,7 +23,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.util.gui.AbstractAnnotation;
 import fiji.util.gui.OverlayedImageCanvas;
 
-public class SpotDisplayer2D extends SpotDisplayer {
+public class HyperStackDisplayer extends SpotDisplayer {
 
 	/*
 	 * INNER CLASSES
@@ -113,6 +113,7 @@ public class SpotDisplayer2D extends SpotDisplayer {
 
 		private TreeMap<Integer, List<Integer>> X = new TreeMap<Integer, List<Integer>>();
 		private TreeMap<Integer, List<Integer>> Y = new TreeMap<Integer, List<Integer>>();
+		private TreeMap<Integer, List<Integer>> Z = new TreeMap<Integer, List<Integer>>();
 		private TreeMap<Integer, List<Integer>> R = new TreeMap<Integer, List<Integer>>();
 		private TreeMap<Integer, List<Color>> colors = new TreeMap<Integer, List<Color>>();
 		
@@ -121,6 +122,7 @@ public class SpotDisplayer2D extends SpotDisplayer {
 			for (int i = 0; i < imp.getNFrames(); i++) {
 				X.put(i, new ArrayList<Integer>());
 				Y.put(i, new ArrayList<Integer>());
+				Z.put(i, new ArrayList<Integer>());
 				R.put(i, new ArrayList<Integer>());
 				colors.put(i, new ArrayList<Color>());
 			}
@@ -134,20 +136,34 @@ public class SpotDisplayer2D extends SpotDisplayer {
 			
 			g2d.setStroke(new BasicStroke((float) (1 / canvas.getMagnification())));
 			final int frame = imp.getFrame()-1;
+			final float zslice = (imp.getSlice()-1) * calibration[2];
+			
 			List<Color> c = colors.get(frame);
 			List<Integer> r = R.get(frame);
 			List<Integer> x = X.get(frame);
 			List<Integer> y = Y.get(frame);
+			List<Integer> z = Z.get(frame);
 
+			float radius, dz2, zi;
+			int apparentRadius;
 			for (int i = 0; i < c.size(); i++) {
 				g2d.setColor(c.get(i));
-				g2d.drawOval(x.get(i) - r.get(i), y.get(i) - r.get(i), 2 * r.get(i), 2 * r.get(i));			
+				radius = r.get(i) * calibration[0];
+				zi = z.get(i) * calibration[2];
+				dz2 = (zi - zslice) * (zi - zslice);
+				if (dz2 >= radius*radius)
+					g2d.fillOval(x.get(i) - 2, y.get(i) - 2, 4, 4);
+				else {
+					apparentRadius = (int) Math.round( Math.sqrt(radius*radius - dz2) / calibration[0]); 
+					g2d.drawOval(x.get(i) - apparentRadius, y.get(i) - apparentRadius, 2 * apparentRadius, 2 * apparentRadius);			
+				}
 			}
 		}
 		
 		public void addSpot(final Spot spot, float radius, Color color, int frame) {
 			X.get(frame).add(Math.round(spot.getFeature(Feature.POSITION_X) / calibration[0] ));
 			Y.get(frame).add(Math.round(spot.getFeature(Feature.POSITION_Y) / calibration[1] ));
+			Z.get(frame).add(Math.round(spot.getFeature(Feature.POSITION_Z) / calibration[2] ));
 			R.get(frame).add(Math.round(radius / calibration[0]));
 			colors.get(frame).add(color);
 		}
@@ -171,10 +187,10 @@ public class SpotDisplayer2D extends SpotDisplayer {
 	 * CONSTRUCTORS
 	 */
 	
-	public SpotDisplayer2D(final Settings settings) {
+	public HyperStackDisplayer(final Settings settings) {
 		this.radius = settings.segmenterSettings.expectedRadius;
 		this.imp = settings.imp;
-		this.calibration = new float[] { settings.dx, settings.dy };
+		this.calibration = new float[] { settings.dx, settings.dy, settings.dz };
 		this.settings = settings;
 	}
 	
@@ -189,13 +205,6 @@ public class SpotDisplayer2D extends SpotDisplayer {
 	}
 	
 	@Override
-	public void setRadiusDisplayRatio(float ratio) {
-		super.setRadiusDisplayRatio(ratio);
-		prepareSpotOverlay();
-		refresh();
-	}
-	
-	@Override
 	public void setSpotVisible(boolean displaySpotSelected) {
 		spotVisible = displaySpotSelected;		
 	}
@@ -206,12 +215,19 @@ public class SpotDisplayer2D extends SpotDisplayer {
 			this.imp = NewImage.createByteImage("Empty", settings.width, settings.height, settings.nframes, NewImage.FILL_BLACK);
 			this.imp.setDimensions(1, 1, settings.nframes);
 		}
+		imp.setOpenAsHyperStack(true);
 		canvas = new OverlayedImageCanvas(imp);
 		StackWindow window = new StackWindow(imp, canvas);
 		window.show();
 		refresh();
 	}
 	
+	@Override
+	public void setRadiusDisplayRatio(float ratio) {
+		super.setRadiusDisplayRatio(ratio);
+		prepareSpotOverlay();
+		refresh();
+	}
 	
 	@Override
 	public void setColorByFeature(Feature feature) {
@@ -277,7 +293,7 @@ public class SpotDisplayer2D extends SpotDisplayer {
 					spotColor = color;
 				else
 					spotColor = colorMap.getPaint((val-featureMinValue)/(featureMaxValue-featureMinValue));
-				spotOverlay.addSpot(spot, radius, spotColor, frame);
+				spotOverlay.addSpot(spot, radius * radiusRatio, spotColor, frame);
 			}
 		}
 		canvas.addOverlay(spotOverlay);

@@ -22,6 +22,10 @@ import fiji.plugin.trackmate.Spot;
 
 public class SpotDisplayer3D extends SpotDisplayer {
 	
+	public static final int DEFAULT_RESAMPLING_FACTOR = 4;
+	public static final int DEFAULT_THRESHOLD = 50;
+
+	
 	private static final String TRACK_CONTENT_NAME = "Tracks";
 	private static final String SPOT_CONTENT_NAME = "Spots";
 	private TreeMap<Integer, SpotGroupNode<Spot>> blobs;	
@@ -56,12 +60,20 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		spotContent.setVisible(displaySpotSelected);
 	}
 	
-	@Override
-	public void setSpots(java.util.TreeMap<Integer,java.util.List<Spot>> spots) {
-		super.setSpots(spots);
-		spotContent = makeSpotContent();
-	};
 	
+	
+	@Override
+	public void setRadiusDisplayRatio(float ratio) {
+		super.setRadiusDisplayRatio(ratio);
+		List<Spot> spotsThisFrame; 
+		SpotGroupNode<Spot> spotGroup;
+		for(int key : blobs.keySet()) {
+			spotsThisFrame = spots.get(key);
+			spotGroup = blobs.get(key);
+			for ( Spot spot : spotsThisFrame) 
+				spotGroup.setRadius(spot, radius*radiusRatio);
+		}
+	}
 	
 	@Override
 	public void setDisplayTrackMode(TrackDisplayMode mode, int displayDepth) { // TODO
@@ -98,9 +110,12 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		}
 	}
 	
-
 	@Override
-	public void render()  {
+	public void setSpots(java.util.TreeMap<Integer,java.util.List<Spot>> spots) {
+		super.setSpots(spots);
+		if (universe.contains(SPOT_CONTENT_NAME))
+			universe.removeContent(SPOT_CONTENT_NAME);
+		spotContent = makeSpotContent();
 		try {
 			spotContent = universe.addContentLater(spotContent).get();
 		} catch (InterruptedException e) {
@@ -108,6 +123,13 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		} catch (ExecutionException e) {
 			e.printStackTrace();
 		}
+	};
+	
+
+	@Override
+	public void render()  {
+		// do nothing, since this implementation is given a universe which must
+		// be correctly instantiated with the image content.
 	}
 	
 	@Override
@@ -180,6 +202,7 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		instants.put(0, trackCI);
 		Content tc = new Content(TRACK_CONTENT_NAME, instants);
 		tc.setShowAllTimepoints(true);
+		tc.showCoordinateSystem(false);
 		return tc;
 	}
 
@@ -199,7 +222,7 @@ public class SpotDisplayer3D extends SpotDisplayer {
 			float[] coords = new float[3];
 			for(Spot spot : spotsThisFrame) {
 				spot.getPosition(coords);
-				pos = new float[] {coords[0], coords[1], coords[2], radius};
+				pos = new float[] {coords[0], coords[1], coords[2], radius*radiusRatio};
 				centers.put(spot, new Point4f(pos));
 			}
 			blobGroup = new SpotGroupNode<Spot>(centers, new Color3f(color));
@@ -209,7 +232,9 @@ public class SpotDisplayer3D extends SpotDisplayer {
 			contentAllFrames.put(i, contentThisFrame);
 			blobs.put(i, blobGroup);
 		}
-		return new Content(SPOT_CONTENT_NAME, contentAllFrames);
+		Content blobContent = new Content(SPOT_CONTENT_NAME, contentAllFrames);
+		blobContent.showCoordinateSystem(false);
+		return blobContent;
 	}
 
 

@@ -1,8 +1,5 @@
 package fiji.plugin.trackmate.segmentation;
 
-import fiji.plugin.trackmate.Settings.SegmenterType;
-
-
 /** 
  * Empty interface to pass settings to the concrete implementations of {@link SpotSegmenter}.
  * The concrete derivation of this interface should be matched to the concrete implementation
