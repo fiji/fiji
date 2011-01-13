@@ -106,7 +106,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	protected int tabsMenuTabsStart;
 	protected Set<JMenuItem> tabsMenuItems;
 	protected FindAndReplaceDialog findDialog;
-	protected JCheckBoxMenuItem autoSave, showDeprecation;
+	protected JCheckBoxMenuItem autoSave, showDeprecation, wrapLines;
 	protected JTextArea errorScreen = new JTextArea();
 
 	protected final String templateFolder = "templates/";
@@ -209,7 +209,6 @@ public class TextEditor extends JFrame implements ActionListener,
 		buttonGroup.add(chooseFontSize);
 		fontSizeMenu.add(chooseFontSize);
 		edit.add(fontSizeMenu);
-		edit.addSeparator();
 
 		// Add tab size adjusting menu
 		tabSizeMenu = new JMenu("Tab sizes");
@@ -233,6 +232,14 @@ public class TextEditor extends JFrame implements ActionListener,
 		bg.add(chooseTabSize);
 		tabSizeMenu.add(chooseTabSize);
 		edit.add(tabSizeMenu);
+
+		wrapLines = new JCheckBoxMenuItem("Wrap lines");
+		wrapLines.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				getEditorPane().setLineWrap(wrapLines.getState());
+			}
+		});
+		edit.add(wrapLines);
 		edit.addSeparator();
 
 		clearScreen = addToMenu(edit, "Clear output panel", 0, 0);
@@ -1632,6 +1639,7 @@ public class TextEditor extends JFrame implements ActionListener,
 				defaultSize = true;
 			}
 		}
+		wrapLines.setState(pane.getLineWrap());
 	}
 
 	public void setFileName(String baseName) {
