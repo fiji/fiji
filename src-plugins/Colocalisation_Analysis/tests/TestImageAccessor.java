@@ -46,7 +46,7 @@ public class TestImageAccessor {
 	 * @param relPath The relative path to the Tiff file.
 	 * @return The file as ImgLib image.
 	 */
-	static <T extends RealType<T>> Image<T> loadTiffFromJar(String relPath) {
+	public static <T extends RealType<T>> Image<T> loadTiffFromJar(String relPath) {
 		InputStream is = TestImageAccessor.class.getResourceAsStream(relPath);
 		BufferedInputStream bis = new BufferedInputStream(is);
 
@@ -67,7 +67,7 @@ public class TestImageAccessor {
 	 * @param height The image height.
 	 * @return The noise image.
 	 */
-	static <T extends RealType<T>> Image<T> produceNoiseImage(T type, int width, int height) {
+	public static <T extends RealType<T>> Image<T> produceNoiseImage(T type, int width, int height) {
 		return produceNoiseImage(type, width, height, 3.0f, 5000, new double[] {1.0,1.0});
 	}
 
@@ -84,7 +84,7 @@ public class TestImageAccessor {
 	 * @param smoothingSigma The two dimensional sigma for smoothing.
 	 * @return The noise image.
 	 */
-	static <T extends RealType<T>> Image<T> produceNoiseImage(T type, int width,
+	public static <T extends RealType<T>> Image<T> produceNoiseImage(T type, int width,
 			int height, float dotSize, int numDots, double[] smoothingSigma) {
 		// create the new image
 		ImageFactory<T> imgFactory = new ImageFactory<T>(type, new ArrayContainerFactory());
@@ -118,7 +118,7 @@ public class TestImageAccessor {
 	 * @param sigma
 	 * @return
 	 */
-	static <T extends RealType<T>> Image<T> gaussianSmooth(Image<T> img, ImageFactory<T> factory, double[] sigma) {
+	public static <T extends RealType<T>> Image<T> gaussianSmooth(Image<T> img, ImageFactory<T> factory, double[] sigma) {
 		// create a Gaussian smoothing algorithm
 		ImageFactory<FloatType> imgFactoryProcess
 			= new ImageFactory<FloatType>(new FloatType(), new ArrayContainerFactory());
@@ -145,7 +145,7 @@ public class TestImageAccessor {
 	 * @param image The image to convert.
 	 * @return The inverted image.
 	 */
-	static <T extends RealType<T>> Image<T> invertImage(Image<T> image) {
+	public static <T extends RealType<T>> Image<T> invertImage(Image<T> image) {
 		LocalizableCursor<T> imgCursor = image.createLocalizableCursor();
 		// invert the image
 		Image<T> invImg = image.createNewImage("Inverted " + image.getName());
