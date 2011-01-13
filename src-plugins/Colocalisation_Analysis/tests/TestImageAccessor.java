@@ -113,6 +113,14 @@ public class TestImageAccessor {
 		return gaussianSmooth(noiseImage, imgFactory, smoothingSigma);
 	}
 
+	/**
+	 * This method creates a noise image that has a specified mean.
+	 * Every pixel has a value uniformly distributed around mean with
+	 * the maximum spread specified.
+	 *
+	 * @return a new noise image
+	 * @throws MissingPreconditionException if specified means and spreads are not valid
+	 */
 	public static <T extends RealType<T>> Image<T> produceMeanBasedNoiseImage(T type, int width,
 			int height, double mean, double spread, double[] smoothingSigma) throws MissingPreconditionException {
 		if (mean < spread || (mean + spread) > type.getMaxValue()) {
