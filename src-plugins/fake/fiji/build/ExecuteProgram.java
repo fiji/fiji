@@ -70,4 +70,9 @@ public class ExecuteProgram extends Rule {
 				+ program + "'\n" + e);
 		}
 	}
+
+	protected void clean(boolean dryRun) {
+		if (!"".equals(program))
+			super.clean(dryRun);
+	}
 }

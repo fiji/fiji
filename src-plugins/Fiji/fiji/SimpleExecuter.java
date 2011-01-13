@@ -17,8 +17,12 @@ public class SimpleExecuter {
 		public void handleLine(String line);
 	}
 
-	public SimpleExecuter(String[] cmdarray) throws IOException {
+	public SimpleExecuter(String... cmdarray) throws IOException {
 		this(cmdarray, null, null, null);
+	}
+
+	public SimpleExecuter(File workingDirectory, String... cmdarray) throws IOException {
+		this(cmdarray, null, null, workingDirectory);
 	}
 
 	public SimpleExecuter(String[] cmdarray, File workingDirectory) throws IOException {

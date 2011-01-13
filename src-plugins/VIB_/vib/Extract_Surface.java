@@ -290,7 +290,7 @@ public class Extract_Surface implements PlugInFilter {
 			for (i = 0; i < distances.size() &&
 					distance < distances.get(i);
 					i++);
-			distances.add(i, distance);
+			distances.insert(i, distance);
 			queue.add(i, voxel);
 			done.add(voxel);
 		}

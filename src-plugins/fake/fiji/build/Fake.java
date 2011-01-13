@@ -154,15 +154,21 @@ public class Fake {
 		return fijiHome;
 	}
 
+	protected static void setDefaultProperty(String key, String value) {
+		if (null == System.getProperty(key))
+			System.setProperty(key,value);
+	}
+
 	protected static void discoverJython() throws IOException {
 		String pythonHome = fijiHome + "jars";
-		System.setProperty("python.home", pythonHome);
-		System.setProperty("python.cachedir.skip", "false");
+		setDefaultProperty("python.home", pythonHome);
+		setDefaultProperty("python.cachedir.skip", "false");
 		String jythonJar = pythonHome + "/jython.jar";
 		if (!new File(jythonJar).exists())
 			jythonJar = fijiHome + "/precompiled/jython.jar";
 		getClassLoader(fijiHome + "/jars/jna.jar");
-		getClassLoader(jythonJar);
+		if (new File(jythonJar).exists())
+			getClassLoader(jythonJar);
 	}
 
 	protected static void discoverBeanshell() throws IOException {
@@ -1112,9 +1118,9 @@ public class Fake {
 				if (verbose)
 					parser.setVariable("VERBOSE", "true");
 				if (toolsPath != null)
-					parser.setVariable("TOOLSPATH", toolsPath);
+					parser.variables.put("TOOLSPATH", parser.expandVariables(toolsPath));
 				if (classPath != null)
-					parser.setVariable("CLASSPATH", classPath);
+					parser.variables.put("CLASSPATH", parser.expandVariables(classPath));
 				if (buildDir != null)
 					parser.setVariable("BUILDDIR", buildDir.getAbsolutePath());
 				parser.cwd = new File(cwd, directory);

@@ -6,6 +6,7 @@ import ij.ImagePlus;
 import ij.WindowManager;
 
 import ij.gui.ImageCanvas;
+import ij.gui.ImageWindow;
 import ij.gui.Toolbar;
 
 import ij.plugin.PlugIn;
@@ -202,6 +203,20 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 		}
 	}
 
+	protected class MouseWheelProxyIfNotConsumed implements MouseWheelListener {
+		protected MouseWheelListener listener;
+
+		public MouseWheelProxyIfNotConsumed(MouseWheelListener listener) {
+			this.listener = listener;
+		}
+
+		@Override
+		public final void mouseWheelMoved(MouseWheelEvent e) {
+			if (!e.isConsumed())
+				listener.mouseWheelMoved(e);
+		}
+	}
+
 	protected class MouseMotionProxy implements MouseMotionListener {
 		protected MouseMotionListener listener;
 
@@ -218,6 +233,26 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 		@Override
 		public final void mouseMoved(MouseEvent e) {
 			if (isThisTool())
+				listener.mouseMoved(e);
+		}
+	}
+
+	protected class MouseMotionProxyIfNotConsumed implements MouseMotionListener {
+		protected MouseMotionListener listener;
+
+		public MouseMotionProxyIfNotConsumed(MouseMotionListener listener) {
+			this.listener = listener;
+		}
+
+		@Override
+		public final void mouseDragged(MouseEvent e) {
+			if (!e.isConsumed())
+				listener.mouseDragged(e);
+		}
+
+		@Override
+		public final void mouseMoved(MouseEvent e) {
+			if (!e.isConsumed())
 				listener.mouseMoved(e);
 		}
 	}
@@ -339,10 +374,12 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 			}));
 		if (image.getCanvas() != null)
 			registerTool(image.getCanvas());
-		if (image.getWindow() != null) {
-			image.getWindow().addWindowFocusListener(this);
+		ImageWindow window = image.getWindow();
+		if (window != null) {
+			window.addWindowFocusListener(this);
 			if (keyProxy != null)
-				addKeyListener(image.getWindow());
+				addKeyListener(window);
+			addMouseWheelListener(window);
 		}
 	}
 
@@ -351,10 +388,7 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 			return;
 		if (mouseProxy != null)
 			canvas.addMouseListener(mouseProxy);
-		if (mouseMotionProxy != null)
-			canvas.addMouseMotionListener(mouseMotionProxy);
-		if (mouseWheelProxy != null)
-			canvas.addMouseWheelListener(mouseWheelProxy);
+		addMouseMotionListener(canvas);
 		addKeyListener(canvas);
 	}
 
@@ -375,6 +409,46 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 					ij = ijKeyProxy;
 			}
 			component.addKeyListener(ij);
+		}
+	}
+
+	protected void addMouseMotionListener(ImageCanvas canvas) {
+		if (mouseMotionProxy != null) {
+			canvas.addMouseMotionListener(mouseMotionProxy);
+			// make sure that IJ gets only unconsumed key events
+			MouseMotionListener listener = null;
+			for (MouseMotionListener listener2 : canvas.getMouseMotionListeners())
+				if (listener2 == canvas ||
+						listener2.getClass().getName().endsWith("MouseMotionProxyIfNotConsumed"))
+					listener = listener2;
+			if (listener == null)
+				listener = new MouseMotionProxyIfNotConsumed(canvas);
+			else {
+				canvas.removeMouseMotionListener(listener);
+				if (listener == canvas)
+					listener = new MouseMotionProxyIfNotConsumed(canvas);
+			}
+			canvas.addMouseMotionListener(listener);
+		}
+	}
+
+	protected void addMouseWheelListener(ImageWindow window) {
+		if (mouseWheelProxy != null) {
+			window.addMouseWheelListener(mouseWheelProxy);
+			// make sure that IJ gets only unconsumed key events
+			MouseWheelListener listener = null;
+			for (MouseWheelListener listener2 : window.getMouseWheelListeners())
+				if (listener2 == window ||
+						listener2.getClass().getName().endsWith("MouseWheelProxyIfNotConsumed"))
+					listener = listener2;
+			if (listener == null)
+				listener = new MouseWheelProxyIfNotConsumed(window);
+			else {
+				window.removeMouseWheelListener(listener);
+				if (listener == window)
+					listener = new MouseWheelProxyIfNotConsumed(window);
+			}
+			window.addMouseWheelListener(listener);
 		}
 	}
 
@@ -440,6 +514,7 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 		if (mouseProxy != null)
 			canvas.removeMouseListener(mouseProxy);
 		if (mouseMotionProxy != null)
+			// we leave the ijMouseMotionProxy in because it might be required by another active custom tool
 			canvas.removeMouseMotionListener(mouseMotionProxy);
 		if (mouseWheelProxy != null)
 			canvas.removeMouseWheelListener(mouseWheelProxy);
@@ -457,7 +532,15 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 
 	public ImageCanvas getImageCanvas(ComponentEvent e) {
 		Component component = e.getComponent();
-		return component instanceof ImageCanvas ? (ImageCanvas)component : null;
+		return component instanceof ImageCanvas ? (ImageCanvas)component :
+			(component instanceof ImageWindow ? ((ImageWindow)component).getCanvas() : null);
+	}
+
+	public ImageWindow getImageWindow(ComponentEvent e) {
+		for (Component component = e.getComponent(); component != null; component = component.getParent())
+			if (component instanceof ImageWindow)
+				return (ImageWindow)component;
+		return null;
 	}
 
 	public int getOffscreenX(MouseEvent e) {
@@ -467,7 +550,7 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 
 	public int getOffscreenY(MouseEvent e) {
 		ImageCanvas canvas = getImageCanvas(e);
-		return canvas == null ? -1 : canvas.offScreenX(e.getY());
+		return canvas == null ? -1 : canvas.offScreenY(e.getY());
 	}
 
 	public double getOffscreenXDouble(MouseEvent e) {

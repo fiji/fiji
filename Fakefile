@@ -241,6 +241,8 @@ jars/jna.jar[] <-
 jars/postgresql-8.2-506.jdbc3.jar[] <-
 jars/jai_core.jar[] <-
 jars/jai_codec.jar[] <-
+jars/jython.jar[] <-
+jars/batik.jar[] <-
 
 # From submodules
 jars/ij.jar <- jars/javac.jar ImageJA/
@@ -442,7 +444,7 @@ JAVA_LIB_PATH(macosx)=
 # The variables CFLAGS, CXXFLAGS, LDFLAGS and LIBS will be used for compiling
 # C and C++ programs.
 CFLAGS(*)=-Wall -Iincludes \
-	-DJAVA_HOME='"$FIJI_JAVA_HOME"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH"'
+	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH"'
 WINOPTS=-mwindows -mno-cygwin -DMINGW32
 CFLAGS(win32)=$CFLAGS $WINOPTS
 CFLAGS(win64)=$CFLAGS $WINOPTS
@@ -528,6 +530,7 @@ precompile-submodules[] <- \
 	precompiled/jython.jar \
 	precompiled/imglib.jar \
 	precompiled/commons-math.jar \
+	precompiled/imglib-algorithms.jar \
 
 precompiled/ij.jar <- jars/ij.jar
 precompiled/clojure.jar <- jars/clojure.jar
