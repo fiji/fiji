@@ -1164,16 +1164,13 @@ public class TextEditor extends JFrame implements ActionListener,
 			try {
 				final String text;
 				if (selectionOnly) {
-					text = editorPane.getSelectedText();
-					if (text == null)
+					String selected = editorPane.getSelectedText();
+					if (selected == null) {
 						error("Selection required!");
-					else {
-						PrintWriter pw =
-							new PrintWriter(po);
-						pw.print(text);
-						pw.print("\n"); // Ensure code blocks are terminated
-						pw.flush();
+						text = null;
 					}
+					else
+						text = selected + "\n"; // Ensure code blocks are terminated
 				} else {
 					text = editorPane.getText();
 				}
