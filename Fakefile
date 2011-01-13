@@ -528,6 +528,7 @@ precompile-submodules[] <- \
 	precompiled/jython.jar \
 	precompiled/imglib.jar \
 	precompiled/commons-math.jar \
+	precompiled/imglib-algorithms.jar \
 
 precompiled/ij.jar <- jars/ij.jar
 precompiled/clojure.jar <- jars/clojure.jar
