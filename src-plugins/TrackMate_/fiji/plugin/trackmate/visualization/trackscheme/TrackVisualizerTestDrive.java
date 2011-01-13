@@ -15,10 +15,14 @@ import org.jgrapht.graph.SimpleGraph;
 
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.test.LAPTrackerTestDrive;
 import fiji.plugin.trackmate.visualization.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
+import fiji.plugin.trackmate.visualization.SpotDisplayer.DisplayerType;
+import fiji.plugin.trackmate.visualization.SpotDisplayer3D;
 import fiji.plugin.trackmate.visualization.test.Branched3DTrackTestDrive;
 
 public class TrackVisualizerTestDrive {
@@ -57,7 +61,11 @@ public class TrackVisualizerTestDrive {
 		}
 		
 		// Instantiate displayer
-		final SpotDisplayer displayer = new HyperStackDisplayer(settings);
+//		final SpotDisplayer displayer = new HyperStackDisplayer(settings);
+		@SuppressWarnings("rawtypes")
+		TrackMateModelInterface model = new TrackMate_();
+		model.setSettings(settings);
+		final SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
 		displayer.render();
 		displayer.setSpots(allSpots);
 		displayer.setSpotsToShow(selectedSpots);

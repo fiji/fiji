@@ -25,14 +25,17 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	public static final int DEFAULT_RESAMPLING_FACTOR = 4;
 	public static final int DEFAULT_THRESHOLD = 50;
 
-	
+	private static final Color3f HIGHLIGHT_COLOR4F = new Color3f(HIGHLIGHT_COLOR);
 	private static final String TRACK_CONTENT_NAME = "Tracks";
 	private static final String SPOT_CONTENT_NAME = "Spots";
+	
 	private TreeMap<Integer, SpotGroupNode<Spot>> blobs;	
 	private Content spotContent;
 	private Content trackContent;
 	private final Image3DUniverse universe;
-	
+	private Spot previousSpot;
+	private Color3f previousColor;
+	private int previousFrame;
 	
 	public SpotDisplayer3D(Image3DUniverse universe, final float radius) {
 		this.radius = radius;
@@ -49,6 +52,29 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	/*
 	 * OVERRIDDEN METHODS
 	 */
+	
+	public void highlight(Spot spot) {
+		int frame = - 1;
+		for(int i : spotsToShow.keySet()) {
+			List<Spot> spotThisFrame = spotsToShow.get(i);
+			if (spotThisFrame.contains(spot)) {
+				frame = i;
+				break;
+			}
+		}
+		if (frame == -1)
+			return;
+		// Restore previous display settings for previously highlighted spot
+		if (null != previousSpot) 
+			blobs.get(previousFrame).setColor(previousSpot, previousColor);
+//		 Store current settings
+		previousSpot = spot;
+		previousColor = blobs.get(frame).getColor3f(spot);
+		previousFrame = frame;
+		// Update target spot display
+		blobs.get(frame).setColor(spot,HIGHLIGHT_COLOR4F);
+		universe.showTimepoint(frame);
+	};
 	
 	@Override
 	public void setTrackVisible(boolean displayTrackSelected) {

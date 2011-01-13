@@ -198,6 +198,14 @@ public class SpotGroupNode <K> extends ContentNode {
 		colors.get(key).z = color.z;
 	}
 	
+	public Color4f getColor(final K key) {
+		return colors.get(key);
+	}
+	
+	public Color3f getColor3f(final K key) {
+		return new Color3f(colors.get(key).x, colors.get(key).y, colors.get(key).z);
+	}
+	
 	/**
 	 * Set the color of the spot <code>key</code>. Its transparency set by the <code>w</code>
 	 * field of the {@link Color4f} argument.
