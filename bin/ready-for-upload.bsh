@@ -173,9 +173,12 @@ boolean checkTimestamps(String path) {
 	return true;
 }
 
-boolean checkPushed(String directory, String path) {
+boolean checkPushed(String directory, String subdirectory, String path) {
+	upstreamBranch = "master";
+	if (path.endsWith("loci_tools.jar") && directory.endsWith("bio-formats/"))
+		upstreamBranch = "svn/4.2";
 	executer = new SimpleExecuter(new File(directory), new String[] {
-		"git", "log", "--oneline", "origin/master.."
+		"git", "log", "--oneline", "origin/" + upstreamBranch + "..", "--", subdirectory == null ? "." : subdirectory
 	});
 	if (executer.getExitCode() != 0) {
 		System.err.println("Failed looking for unpushed commits for " + path + "\n" + executer.getError() + "\n" + executer.getOutput());
@@ -190,12 +193,12 @@ boolean checkPushed(String directory, String path) {
 
 boolean checkPushed(String path) {
 	fullPath = new File(path).getAbsolutePath();
-	if (fullPath.startsWith(fijiDir) && !checkPushed(fijiDir, path))
+	submodulePath = getSourcePathForTarget(fullPath, false);
+	if (fullPath.startsWith(fijiDir) && !checkPushed(fijiDir, submodulePath, path))
 		return false;
 
 	// check whether submodules are pushed
-	submodulePath = getSourcePathForTarget(fullPath, false);
-	if (submodulePath != null && new File(submodulePath, ".git").exists() && !checkPushed(submodulePath, path))
+	if (submodulePath != null && new File(submodulePath, ".git").exists() && !checkPushed(submodulePath, ".", path))
 		return false;
 
 	return true;
