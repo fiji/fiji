@@ -73,9 +73,9 @@ String getSourcePathForTarget(String path, boolean fromSubFakefile) {
 			}
 
 			prereq = subRule.getPrerequisiteString();
-			starstar = prereq.indexOf("**");
-			if (starstar >= 0)
-				prereq = prereq.substring(0, starstar);
+			star = prereq.indexOf("*");
+			if (star >= 0)
+				prereq = prereq.substring(0, star);
 
 			return Util.makePath(cwd, prereq);
 		}
