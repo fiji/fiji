@@ -409,7 +409,7 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 		costesPValue = 1.0;
 	else if (costesPValue < 0.0)
 		costesPValue = 0.0;
-    }
+	}
 
 	public void processResults(ResultHandler<T> handler) {
 		super.processResults(handler);
@@ -432,5 +432,21 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 			ratio = (double)shuffledPearsonsResults.size() / (double)shuffledPearsonsNotLessOriginal;
 		}
 		handler.handleValue("Ratio of rand. Pearsons >= actual Pearsons value ", ratio, 2);
+	}
+
+	public double getCostesPValue() {
+		return costesPValue;
+	}
+
+	public double getShuffledMean() {
+		return shuffledMean;
+	}
+
+	public double getShuffledStdDerivation() {
+		return shuffledStdDerivation;
+	}
+
+	public double getShuffledPearsonsNotLessOriginal() {
+		return shuffledPearsonsNotLessOriginal;
 	}
 }
