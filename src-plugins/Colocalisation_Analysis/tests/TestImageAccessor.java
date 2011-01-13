@@ -8,10 +8,13 @@ import java.awt.Color;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 
+import algorithms.MissingPreconditionException;
+
 import mpicbg.imglib.algorithm.gauss.GaussianConvolution3;
 import mpicbg.imglib.function.Converter;
 import mpicbg.imglib.function.RealTypeConverter;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
+import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
@@ -107,6 +110,22 @@ public class TestImageAccessor {
 		}
 		// we changed the data, so update it
 		img.updateImage();
+		return gaussianSmooth(noiseImage, imgFactory, smoothingSigma);
+	}
+
+	public static <T extends RealType<T>> Image<T> produceMeanBasedNoiseImage(T type, int width,
+			int height, double mean, double spread, double[] smoothingSigma) throws MissingPreconditionException {
+		if (mean < spread || (mean + spread) > type.getMaxValue()) {
+			throw new MissingPreconditionException("Mean must be larger than spread, and mean plus spread must be smaller than max of the type");
+		}
+		// create the new image
+		ImageFactory<T> imgFactory = new ImageFactory<T>(type, new ArrayContainerFactory());
+		Image<T> noiseImage = imgFactory.createImage( new int[] {width, height}, "Noise image");
+
+		for (T value : noiseImage) {
+			value.setReal( mean + ( (Math.random() - 0.5) * spread ) );
+		}
+
 		return gaussianSmooth(noiseImage, imgFactory, smoothingSigma);
 	}
 
