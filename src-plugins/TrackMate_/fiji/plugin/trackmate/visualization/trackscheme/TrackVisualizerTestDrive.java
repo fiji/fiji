@@ -2,6 +2,8 @@ package fiji.plugin.trackmate.visualization.trackscheme;
 
 import ij.ImagePlus;
 
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -15,6 +17,8 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.test.LAPTrackerTestDrive;
+import fiji.plugin.trackmate.visualization.HyperStackDisplayer;
+import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.test.Branched3DTrackTestDrive;
 
 public class TrackVisualizerTestDrive {
@@ -52,6 +56,14 @@ public class TrackVisualizerTestDrive {
 			imp.show();
 		}
 		
+		// Instantiate displayer
+		final SpotDisplayer displayer = new HyperStackDisplayer(settings);
+		displayer.render();
+		displayer.setSpots(allSpots);
+		displayer.setSpotsToShow(selectedSpots);
+		displayer.setTrackGraph(tracks);
+		displayer.refresh();
+		
 		// Update icons
 		if (null != imp) {
 			SpotIconGrabber grabber = new SpotIconGrabber(settings);
@@ -59,8 +71,27 @@ public class TrackVisualizerTestDrive {
 		}
 		
 		// Display Track scheme
-		TrackSchemeFrame frame = new TrackSchemeFrame(tracks, settings);
-        frame.setVisible(true);
+		final TrackSchemeFrame frame = new TrackSchemeFrame(tracks, settings);
+		frame.setVisible(true);
+
+		frame.jgraph.addMouseListener(new MouseAdapter() {
+			public void mousePressed(MouseEvent e) {
+				if (e.getClickCount() == 2) {
+					// Get Cell under Mousepointer
+					int x = e.getX(), y = e.getY();
+					Object obj = frame.jgraph.getFirstCellForLocation(x, y);
+					
+					if (obj instanceof SpotCell) {
+						SpotCell sc = (SpotCell) obj;
+						Spot spot = sc.getSpot();
+						displayer.highlight(spot);
+					} else {
+						System.out.println("Double-slicked on a "+obj.getClass().getCanonicalName());// DEBUG
+					}
+				}
+			}
+		});
+	
         
 	}
 }

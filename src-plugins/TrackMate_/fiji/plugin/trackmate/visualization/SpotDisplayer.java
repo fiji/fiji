@@ -131,8 +131,11 @@ public abstract class SpotDisplayer {
 	protected static final float DEFAULT_DISPLAY_RADIUS = 5;
 	/** The default color. */
 	protected static final Color DEFAULT_COLOR = new Color(1f, 0, 1f);
+	/** The color used when highlighting spots. */
+	protected static final Color HIGHLIGHT_COLOR = new Color(1f, 1f, 0);
 	/** The display radius. */
 	protected float radius = DEFAULT_DISPLAY_RADIUS;
+	
 	/** The ratio setting the actual display size of the spots, with respect to the physical radius. */
 	protected float radiusRatio = 1.0f;
 	
@@ -297,5 +300,10 @@ public abstract class SpotDisplayer {
 	 * Remove any overlay (for spots or tracks) from this displayer.
 	 */
 	public abstract void clear();
+
+	/**
+	 * Highlight visually the spot given in argument. Do nothing if the given spot is not in {@link #spotsToShow}.
+	 */
+	public abstract void highlight(Spot spot);
 	
 }

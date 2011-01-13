@@ -28,6 +28,10 @@ public class SpotView extends VertexView {
 		this.cell 	= spotCell;
 		initLabel();
 	}
+	
+	public Spot getSpot() {
+		return spot;
+	}
 
 	
 	@Override

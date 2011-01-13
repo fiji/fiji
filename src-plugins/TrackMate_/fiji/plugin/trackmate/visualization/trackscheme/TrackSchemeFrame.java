@@ -121,6 +121,7 @@ public class TrackSchemeFrame extends JFrame {
 	
 	private SimpleGraph<Spot, DefaultEdge> trackGraph;
 	private Settings settings;
+	JGraph jgraph;
 
 	/*
 	 * CONSTRUCTORS
@@ -132,9 +133,13 @@ public class TrackSchemeFrame extends JFrame {
 		init();
 	}
 	
+	/*
+	 * PUBLIC METHODS
+	 */
+	
 	
 	/*
-	 * METHODS
+	 * PRIVATE METHODS
 	 */
 	
 	
@@ -159,7 +164,7 @@ public class TrackSchemeFrame extends JFrame {
 		SpotCellViewFactory factory = new SpotCellViewFactory();
 		
 		GraphLayoutCache graphLayoutCache = new GraphLayoutCache(jgAdapter, factory);
-		JGraph jgraph = new JGraph(jgAdapter, graphLayoutCache);
+		jgraph = new JGraph(jgAdapter, graphLayoutCache);
 		
 		GraphPane backPane = new GraphPane(trackGraph);
 		BorderLayout layout = new BorderLayout();

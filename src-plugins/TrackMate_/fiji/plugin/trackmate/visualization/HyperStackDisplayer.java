@@ -11,6 +11,7 @@ import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -111,20 +112,14 @@ public class HyperStackDisplayer extends SpotDisplayer {
 		
 	public class SpotOverlay extends AbstractAnnotation {
 
-		private TreeMap<Integer, List<Integer>> X = new TreeMap<Integer, List<Integer>>();
-		private TreeMap<Integer, List<Integer>> Y = new TreeMap<Integer, List<Integer>>();
-		private TreeMap<Integer, List<Integer>> Z = new TreeMap<Integer, List<Integer>>();
-		private TreeMap<Integer, List<Integer>> R = new TreeMap<Integer, List<Integer>>();
-		private TreeMap<Integer, List<Color>> colors = new TreeMap<Integer, List<Color>>();
+		private TreeMap<Integer, Map<Spot, Float>> R = new TreeMap<Integer, Map<Spot, Float>>();
+		private TreeMap<Integer, Map<Spot, Color>> colors = new TreeMap<Integer, Map<Spot, Color>>();
 		
 		public SpotOverlay() {
 			this.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
 			for (int i = 0; i < imp.getNFrames(); i++) {
-				X.put(i, new ArrayList<Integer>());
-				Y.put(i, new ArrayList<Integer>());
-				Z.put(i, new ArrayList<Integer>());
-				R.put(i, new ArrayList<Integer>());
-				colors.put(i, new ArrayList<Color>());
+				R.put(i, new HashMap<Spot, Float>());
+				colors.put(i, new HashMap<Spot, Color>());
 			}
 		}
 
@@ -138,37 +133,44 @@ public class HyperStackDisplayer extends SpotDisplayer {
 			final int frame = imp.getFrame()-1;
 			final float zslice = (imp.getSlice()-1) * calibration[2];
 			
-			List<Color> c = colors.get(frame);
-			List<Integer> r = R.get(frame);
-			List<Integer> x = X.get(frame);
-			List<Integer> y = Y.get(frame);
-			List<Integer> z = Z.get(frame);
+			Map<Spot, Color> c = colors.get(frame);
+			Map<Spot, Float> r = R.get(frame);
+			Set<Spot> spotThisFrame = c.keySet();
 
-			float radius, dz2, zi;
+			float x, y, z, radius, dz2;
 			int apparentRadius;
-			for (int i = 0; i < c.size(); i++) {
-				g2d.setColor(c.get(i));
-				radius = r.get(i) * calibration[0];
-				zi = z.get(i) * calibration[2];
-				dz2 = (zi - zslice) * (zi - zslice);
+			for (Spot spot : spotThisFrame) {
+				g2d.setColor(c.get(spot));
+				radius = r.get(spot);
+				x = spot.getFeature(Feature.POSITION_X);
+				y = spot.getFeature(Feature.POSITION_Y);
+				z = spot.getFeature(Feature.POSITION_Z);
+				dz2 = (z - zslice) * (z - zslice);
 				if (dz2 >= radius*radius)
-					g2d.fillOval(x.get(i) - 2, y.get(i) - 2, 4, 4);
+					g2d.fillOval(Math.round(x/calibration[0]) - 2, Math.round(y/calibration[1]) - 2, 4, 4);
 				else {
 					apparentRadius = (int) Math.round( Math.sqrt(radius*radius - dz2) / calibration[0]); 
-					g2d.drawOval(x.get(i) - apparentRadius, y.get(i) - apparentRadius, 2 * apparentRadius, 2 * apparentRadius);			
+					g2d.drawOval(Math.round(x/calibration[0]) - apparentRadius, Math.round(y/calibration[1]) - apparentRadius, 
+							2 * apparentRadius, 2 * apparentRadius);			
 				}
 			}
 		}
 		
 		public void addSpot(final Spot spot, float radius, Color color, int frame) {
-			X.get(frame).add(Math.round(spot.getFeature(Feature.POSITION_X) / calibration[0] ));
-			Y.get(frame).add(Math.round(spot.getFeature(Feature.POSITION_Y) / calibration[1] ));
-			Z.get(frame).add(Math.round(spot.getFeature(Feature.POSITION_Z) / calibration[2] ));
-			R.get(frame).add(Math.round(radius / calibration[0]));
-			colors.get(frame).add(color);
+			R.get(frame).put(spot, radius);
+			colors.get(frame).put(spot, color);
+		}
+
+		public void putColor(Spot spot, Color color) {
+			for(int key : colors.keySet())
+				if (colors.get(key).keySet().contains(spot)) {
+					colors.get(key).put(spot, color);
+					return;
+				}
 		}
 		
 	}
+
 	
 	private ImagePlus imp;
 	private OverlayedImageCanvas canvas;
@@ -182,6 +184,10 @@ public class HyperStackDisplayer extends SpotDisplayer {
 	private Settings settings;
 	private boolean trackVisible = true;
 	private boolean spotVisible = true;
+	private StackWindow window;
+	// For hightlight
+	private Spot previousSpot;
+	private Color previousColor;
 
 	/*
 	 * CONSTRUCTORS
@@ -198,6 +204,33 @@ public class HyperStackDisplayer extends SpotDisplayer {
 	/*
 	 * PUBLIC METHODS
 	 */
+	
+	@Override
+	public void highlight(final Spot spot) {
+		int frame = - 1;
+		for(int i : spotsToShow.keySet()) {
+			List<Spot> spotThisFrame = spotsToShow.get(i);
+			if (spotThisFrame.contains(spot)) {
+				frame = i;
+				break;
+			}
+		}
+		if (frame == -1)
+			return;
+		// Restore previous display settings for previously highlighted spot
+		if (null != previousSpot) 
+			spotOverlay.putColor(previousSpot, previousColor);
+		// Store current settings
+		previousSpot = spot;
+		previousColor = spotOverlay.colors.get(frame).get(spot);
+		// Change settings of target spot 
+		spotOverlay.putColor(spot, HIGHLIGHT_COLOR);
+		// Update diplayed frame
+		int z = Math.round(spot.getFeature(Feature.POSITION_Z) / calibration[2] ) + 1;
+		imp.setPosition(1, z, frame+1);
+		window.setPosition(1, z, frame+1);
+		imp.updateAndDraw();
+	}
 	
 	@Override
 	public void setTrackVisible(boolean displayTrackSelected) {
@@ -217,7 +250,7 @@ public class HyperStackDisplayer extends SpotDisplayer {
 		}
 		imp.setOpenAsHyperStack(true);
 		canvas = new OverlayedImageCanvas(imp);
-		StackWindow window = new StackWindow(imp, canvas);
+		window = new StackWindow(imp, canvas);
 		window.show();
 		refresh();
 	}
