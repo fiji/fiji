@@ -122,7 +122,7 @@ boolean checkDirtyFiles(String path) {
 	fullPath = new File(path).getAbsolutePath();
 
 	// check for uncommitted files
-	sourcePath = getSourcePathForTarget(fullPath, false);
+	sourcePath = getSourcePathForTarget(fullPath, true);
 	if (sourcePath == null)
 		System.err.println("Warning: could not determine source directory for " + path);
 	else if (!checkDirtyFiles(new File(sourcePath), ".", path))
@@ -173,6 +173,34 @@ boolean checkTimestamps(String path) {
 	return true;
 }
 
+boolean checkPushed(String directory, String path) {
+	executer = new SimpleExecuter(new File(directory), new String[] {
+		"git", "log", "--oneline", "origin/master.."
+	});
+	if (executer.getExitCode() != 0) {
+		System.err.println("Failed looking for unpushed commits for " + path + "\n" + executer.getError() + "\n" + executer.getOutput());
+		return false;
+	}
+	if (!"".equals(executer.getOutput())) {
+		System.err.println("Unpushed commits for " + path + ":\n" + executer.getOutput());
+		return false;
+	}
+	return true;
+}
+
+boolean checkPushed(String path) {
+	fullPath = new File(path).getAbsolutePath();
+	if (fullPath.startsWith(fijiDir) && !checkPushed(fijiDir, path))
+		return false;
+
+	// check whether submodules are pushed
+	submodulePath = getSourcePathForTarget(fullPath, false);
+	if (submodulePath != null && new File(submodulePath, ".git").exists() && !checkPushed(submodulePath, path))
+		return false;
+
+	return true;
+}
+
 boolean check(String path) {
 	if (!path.endsWith(".jar")) {
 		System.err.println("Warning: ignoring " + path);
@@ -196,6 +224,8 @@ boolean check(String path) {
 		if (!checkDirtyFiles(path))
 			return false;
 		if (!checkTimestamps(path))
+			return false;
+		if (!checkPushed(path))
 			return false;
 	} catch (IOException e) {
 		e.printStackTrace();
