@@ -107,7 +107,18 @@ public class TestImageAccessor {
 		}
 		// we changed the data, so update it
 		img.updateImage();
+		return gaussianSmooth(noiseImage, imgFactory, smoothingSigma);
+	}
 
+	/**
+	 * Gaussian Smooth of the input image using intermediate float format.
+	 * @param <T>
+	 * @param img
+	 * @param factory
+	 * @param sigma
+	 * @return
+	 */
+	static <T extends RealType<T>> Image<T> gaussianSmooth(Image<T> img, ImageFactory<T> factory, double[] sigma) {
 		// create a Gaussian smoothing algorithm
 		ImageFactory<FloatType> imgFactoryProcess
 			= new ImageFactory<FloatType>(new FloatType(), new ArrayContainerFactory());
@@ -116,8 +127,8 @@ public class TestImageAccessor {
 		Converter<T, FloatType> typeConverterIn = new RealTypeConverter<T, FloatType>();
 		Converter<FloatType, T> typeConverterOut = new RealTypeConverter<FloatType, T>();
 		GaussianConvolution3<T, FloatType, T> smoother
-			= new GaussianConvolution3<T, FloatType, T>(noiseImage, imgFactoryProcess, imgFactory,
-					smootherOobFactory, typeConverterIn, typeConverterOut, smoothingSigma );
+			= new GaussianConvolution3<T, FloatType, T>(img, imgFactoryProcess, factory,
+					smootherOobFactory, typeConverterIn, typeConverterOut, sigma );
 
 		// smooth the image
 		if ( smoother.checkInput() && smoother.process() ) {
