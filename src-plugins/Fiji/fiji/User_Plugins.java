@@ -235,11 +235,14 @@ public class User_Plugins implements PlugIn {
 			return null;
 		}
 
-		int croc = menuPath.lastIndexOf('>');
-		Menu menu = getMenu(menuPath);
-		MenuItem item = new MenuItem(name);
-		menu.add(item);
-		item.addActionListener(IJ.getInstance());
+		MenuItem item = null;
+		if (IJ.getInstance() != null) {
+			int croc = menuPath.lastIndexOf('>');
+			Menu menu = getMenu(menuPath);
+			item = new MenuItem(name);
+			menu.add(item);
+			item.addActionListener(IJ.getInstance());
+		}
 		Menus.getCommands().put(name, command);
 		return item;
 	}

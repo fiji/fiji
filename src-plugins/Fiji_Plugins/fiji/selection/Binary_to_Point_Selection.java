@@ -8,7 +8,7 @@ import ij.plugin.filter.PlugInFilter;
 
 import ij.process.ImageProcessor;
 
-import vib.IntArray;
+import fiji.util.IntArray;
 
 
 /**

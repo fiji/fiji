@@ -1,15 +1,17 @@
 /** Albert Cardona 2008. Released under General Public License. */
 package Javascript;
 
-import ij.IJ;
-import ij.plugin.PlugIn;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ImporterTopLevel;
-import java.io.PrintStream;
 import common.AbstractInterpreter;
-import ij.Menus;
-import java.io.File;
+
+import ij.IJ;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ImporterTopLevel;
+import org.mozilla.javascript.Scriptable;
 
 public class Javascript_Interpreter extends AbstractInterpreter {
 
@@ -74,14 +76,19 @@ public class Javascript_Interpreter extends AbstractInterpreter {
 		Context.exit();
 	}
 
+	protected final static Set excludeFromImport =
+		new HashSet(Arrays.<String>asList("InternalError", "Math",
+			"Number", "Boolean", "Error", "String", "Object", "Array"));
+
 	/** Import all ImageJ and java.lang classes. */
 	protected String getImportStatement(String packageName, Iterable<String> classNames) {
 		StringBuffer sb = new StringBuffer();
 		if (!"".equals(packageName))
 			packageName += ".";
 		for (String className : classNames)
-			sb.append("importClass(Packages.").append(packageName)
-				.append(className).append(");");
+			if (!excludeFromImport.contains(className))
+				sb.append("importClass(Packages.").append(packageName)
+					.append(className).append(");");
 		return sb.toString();
 	}
 

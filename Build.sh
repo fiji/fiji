@@ -86,11 +86,20 @@ variables=$(handle_variables "$@")
 jar=jars/fake.jar
 pre_jar=precompiled/${jar##*/}
 source_dir=src-plugins/fake
-source=$source_dir/fiji/build/Fake.java
+sources=$source_dir/fiji/build/*.java
+
+jarUpToDate () {
+	test -f "$CWD/$jar" || return 1
+	for source in $sources
+	do
+		test "$CWD/$source" -nt "$CWD/$jar" && return 1
+	done
+	return 0
+}
 
 # make sure fake.jar is up-to-date
 test "a$targets" != a$jar &&
-test ! -f "$CWD"/$jar -o "$CWD"/$source -nt "$CWD"/$jar && {
+! jarUpToDate && {
 	(cd "$CWD" && sh "$(basename "$0")" $variables $jar) || exit
 }
 
@@ -157,5 +166,5 @@ $SYSTEM_JAVA -classpath "$CWD"/$pre_jar fiji.build.Fake "$@"
 
 # fall back to compiling and running with system Java
 mkdir -p "$CWD"/build &&
-$SYSTEM_JAVAC -d "$CWD"/build/ -source 1.3 -target 1.3 "$CWD"/$source &&
+$SYSTEM_JAVAC -d "$CWD"/build/ "$CWD"/$sources &&
 $SYSTEM_JAVA -classpath "$CWD"/build fiji.build.Fake "$@"

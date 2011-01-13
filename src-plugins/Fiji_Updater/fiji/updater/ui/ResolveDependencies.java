@@ -243,7 +243,9 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 			if (plugin.getAction() == Action.REMOVE)
 				continue;
 			for (Dependency dependency : plugin.getDependencies())
-				if (plugins.getPlugin(dependency.filename).getAction()
+				if (plugins.getPlugin(dependency.filename) == null)
+					dependencyNotUploaded(plugin, dependency.filename);
+				else if (plugins.getPlugin(dependency.filename).getAction()
 						== Action.REMOVE)
 					dependencyRemoved(plugin, dependency.filename);
 		}
@@ -281,6 +283,14 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 				listIssues();
 			}
 		});
+	}
+
+	void dependencyNotUploaded(final PluginObject plugin, final String dependency) {
+		maybeAddSeparator();
+		newText("Error: ", normal);
+		addText(plugin.getFilename(), bold);
+		addText(" depends on " + dependency + " which is not a Fiji plugin.\n\n");
+		addDependencyButton("Break the dependency", plugin, dependency, null);
 	}
 
 	void dependencyRemoved(final PluginObject plugin,

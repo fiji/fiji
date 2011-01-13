@@ -238,9 +238,14 @@ jars/jcommon-1.0.12.jar[] <-
 jars/jfreechart-1.0.13.jar[] <-
 jars/jna.jar[] <-
 jars/postgresql-8.2-506.jdbc3.jar[] <-
+jars/jai_core.jar[] <-
+jars/jai_codec.jar[] <-
+jars/jython.jar[] <-
+jars/batik.jar[] <-
 
 # From submodules
 jars/ij.jar <- jars/javac.jar ImageJA/
+CLASSPATH(misc/headless.jar)=jars/ij.jar
 misc/headless.jar <- jars/javac.jar ImageJA/
 CLASSPATH(plugins/mpicbg_.jar)=jars/ij.jar:jars/mpicbg.jar
 plugins/mpicbg_.jar <- mpicbg/
@@ -259,16 +264,16 @@ jars/clojure.jar <- fiji clojure/
 plugins/loci_tools.jar <- fiji bio-formats/
 CLASSPATH(jars/VectorString.jar)=jars/ij.jar:jars/Jama-1.0.2.jar:$JAVA3D_JARS
 jars/VectorString.jar <- TrakEM2/
-CLASSPATH(plugins/TrakEM2_.jar)=jars/VectorString.jar:jars/postgresql-8.2-506.jdbc3.jar:jars/jcommon-1.0.12.jar:jars/jfreechart-1.0.13.jar:jars/edu_mines_jtk.jar:plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama-1.0.2.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar:plugins/Lasso_and_Blow_Tool.jar:$JAVA3D_JARS
-plugins/TrakEM2_.jar <- jars/ij.jar plugins/VIB_.jar jars/mpicbg.jar plugins/bUnwarpJ_.jar plugins/level_sets.jar plugins/Fiji_Plugins.jar jars/imglib.jar jars/imglib-algorithms.jar jars/imglib-ij.jar jars/VectorString.jar TrakEM2/
+CLASSPATH(plugins/TrakEM2_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar:jars/VectorString.jar:jars/postgresql-8.2-506.jdbc3.jar:jars/jcommon-1.0.12.jar:jars/jfreechart-1.0.13.jar:jars/edu_mines_jtk.jar:jars/VIB-lib.jar:plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama-1.0.2.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar:plugins/Lasso_and_Blow_Tool.jar:$JAVA3D_JARS
+plugins/TrakEM2_.jar <- TrakEM2/
 plugins/ij-ImageIO_.jar <- ij-plugins/
-jars/jacl.jar <- tcljava/
+jars/jacl.jar <- fiji tcljava/
 jars/batik.jar <- fiji batik/
 jars/junit-4.5.jar <- fiji junit/
 jars/rsyntaxtextarea.jar <- fiji RSyntaxTextArea/
 jars/autocomplete.jar <- fiji AutoComplete/
 jars/weka.jar <- fiji jars/Fiji.jar weka/
-jars/jython.jar <- jython/
+jars/jython.jar <- fiji jython/
 jars/commons-math.jar <- fiji commons-math/
 
 CLASSPATH(jars/imglib-scripting.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-io.jars:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/loci_tools.jar:jars/mpicbg.jar
@@ -324,8 +329,8 @@ CLASSPATH(plugins/IO_.jar)=jars/ij.jar:jars/batik.jar:jars/jpedalSTD.jar:jars/it
 CLASSPATH(plugins/Sync_Win.jar)=jars/ij.jar:plugins/Image_5D.jar
 CLASSPATH(plugins/Fiji_Developer.jar)=jars/ij.jar:plugins/Script_Editor.jar:plugins/Fiji_Plugins.jar:jars/rsyntaxtextarea.jar:plugins/3D_Viewer.jar:$JAVA3D_JARS
 CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/ij.jar:jars/weka.jar:plugins/Stitching_.jar:jars/fiji-lib.jar
-CLASSPATH(plugins/VIB_.jar)=jars/ij.jar:$JAVA3D_JARS:jars/VIB-lib.jar:jars/pal-optimization.jar:plugins/3D_Viewer.jar:jars/imglib.jar
-CLASSPATH(jars/VIB-lib.jar)=jars/ij.jar:jars/Jama-1.0.2.jar:jars/junit-4.5.jar:jars/pal-optimization.jar:jars/jzlib-1.0.7.jar
+CLASSPATH(plugins/VIB_.jar)=jars/ij.jar:$JAVA3D_JARS:jars/VIB-lib.jar:jars/pal-optimization.jar:plugins/3D_Viewer.jar:jars/imglib.jar:jars/fiji-lib.jar
+CLASSPATH(jars/VIB-lib.jar)=jars/ij.jar:jars/Jama-1.0.2.jar:jars/junit-4.5.jar:jars/pal-optimization.jar:jars/jzlib-1.0.7.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Simple_Neurite_Tracer.jar)=jars/ij.jar:$JAVA3D_JARS:jars/VIB-lib.jar:plugins/VIB_.jar:jars/pal-optimization.jar:jars/junit-4.5.jar:plugins/3D_Viewer.jar:jars/commons-math.jar:jars/jfreechart-1.0.13.jar:jars/jcommon-1.0.12.jar:jars/batik.jar:plugins/AnalyzeSkeleton_.jar:plugins/Skeletonize3D_.jar
 CLASSPATH(plugins/3D_Viewer.jar)=jars/ij.jar:jars/VIB-lib.jar:jars/imglib.jar:jars/Jama-1.0.2.jar:$JAVA3D_JARS
 CLASSPATH(jars/jep.jar)=jars/ij.jar:jars/Jama-1.0.2.jar:jars/junit-4.5.jar
@@ -384,7 +389,7 @@ CLASSPATH(plugins/Analyze_Reader_Writer.jar)=jars/ij.jar
 CLASSPATH(plugins/Calculator_Plus.jar)=jars/ij.jar
 CLASSPATH(plugins/bUnwarpJ_.jar)=jars/ij.jar
 CLASSPATH(plugins/QuickPALM_.jar)=jars/ij.jar
-CLASSPATH(plugins/ij-ImageIO_.jar)=jars/ij.jar
+CLASSPATH(plugins/ij-ImageIO_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar
 CLASSPATH(plugins/FlowJ_.jar)=jars/ij.jar
 CLASSPATH(plugins/View5D_.jar)=jars/ij.jar
 CLASSPATH(plugins/Time_Stamper.jar)=jars/ij.jar
@@ -437,7 +442,7 @@ JAVA_LIB_PATH(macosx)=
 # The variables CFLAGS, CXXFLAGS, LDFLAGS and LIBS will be used for compiling
 # C and C++ programs.
 CFLAGS(*)=-Wall -Iincludes \
-	-DJAVA_HOME='"$FIJI_JAVA_HOME"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH"'
+	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH"'
 WINOPTS=-mwindows -mno-cygwin -DMINGW32
 CFLAGS(win32)=$CFLAGS $WINOPTS
 CFLAGS(win64)=$CFLAGS $WINOPTS
