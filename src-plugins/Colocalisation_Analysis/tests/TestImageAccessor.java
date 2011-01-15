@@ -1,6 +1,7 @@
 package tests;
 
 import ij.ImagePlus;
+import ij.gui.NewImage;
 import ij.io.Opener;
 import ij.process.ImageProcessor;
 
@@ -8,24 +9,20 @@ import java.awt.Color;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 
-import algorithms.MissingPreconditionException;
-
 import mpicbg.imglib.algorithm.gauss.GaussianConvolution3;
-import mpicbg.imglib.function.Converter;
-import mpicbg.imglib.function.RealTypeConverter;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
+import mpicbg.imglib.function.Converter;
+import mpicbg.imglib.function.RealTypeConverter;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.ImagePlusAdapter;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import algorithms.MissingPreconditionException;
 
 /**
  * A class containing some testing helper methods. It allows
@@ -89,14 +86,11 @@ public class TestImageAccessor {
 	 */
 	public static <T extends RealType<T>> Image<T> produceNoiseImage(T type, int width,
 			int height, float dotSize, int numDots, double[] smoothingSigma) {
-		// create the new image
-		ImageFactory<T> imgFactory = new ImageFactory<T>(type, new ArrayContainerFactory());
-		Image<T> noiseImage = imgFactory.createImage( new int[] {width, height}, "Noise image");
-
-		/* for now (probably until ImageJ2 is out) we must convert
-		 * the ImgLib image to an ImageJ one to draw circles on it.
+		/* For now (probably until ImageJ2 is out) we use an
+		 * ImageJ image to draw circles.
 		 */
-		ImagePlus img = ImageJFunctions.displayAsVirtualStack( noiseImage );
+		int options = NewImage.FILL_BLACK + NewImage.CHECK_AVAILABLE_MEMORY;
+	        ImagePlus img = NewImage.createByteImage("Noise", width, height, 1, options);
 		ImageProcessor imp = img.getProcessor();
 
 		float dotRadius = dotSize * 0.5f;
@@ -110,6 +104,10 @@ public class TestImageAccessor {
 		}
 		// we changed the data, so update it
 		img.updateImage();
+		// create the new image
+		ImageFactory<T> imgFactory = new ImageFactory<T>(type, new ArrayContainerFactory());
+		Image<T> noiseImage = ImagePlusAdapter.wrap(img);
+
 		return gaussianSmooth(noiseImage, imgFactory, smoothingSigma);
 	}
 
@@ -146,14 +144,11 @@ public class TestImageAccessor {
 	 */
 	public static <T extends RealType<T>> Image<T> produceSticksNoiseImage(T type, int width,
 			int height, int numSticks, int lineWidth, double maxLength, double[] smoothingSigma) {
-		// create the new image
-		ImageFactory<T> imgFactory = new ImageFactory<T>(type, new ArrayContainerFactory());
-		Image<T> noiseImage = imgFactory.createImage( new int[] {width, height}, "Noise image");
-
-		/* for now (probably until ImageJ2 is out) we must convert
-		 * the ImgLib image to an ImageJ one to draw circles on it.
+		/* For now (probably until ImageJ2 is out) we use an
+		 * ImageJ image to draw lines.
 		 */
-		ImagePlus img = ImageJFunctions.copyToImagePlus( noiseImage );
+		int options = NewImage.FILL_BLACK + NewImage.CHECK_AVAILABLE_MEMORY;
+	        ImagePlus img = NewImage.createByteImage("Noise", width, height, 1, options);
 		ImageProcessor imp = img.getProcessor();
 		imp.setColor(Color.WHITE);
 		imp.setLineWidth(lineWidth);
@@ -173,6 +168,10 @@ public class TestImageAccessor {
 		}
 		// we changed the data, so update it
 		img.updateImage();
+
+		// wrap the ImageJ image in an Imglib image
+		Image<T> noiseImage = ImagePlusAdapter.wrap(img);
+		ImageFactory<T> imgFactory = new ImageFactory<T>(type, new ArrayContainerFactory());
 
 		return gaussianSmooth(noiseImage, imgFactory, smoothingSigma);
 	}
