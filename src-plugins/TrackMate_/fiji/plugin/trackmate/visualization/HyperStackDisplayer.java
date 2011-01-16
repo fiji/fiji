@@ -245,8 +245,8 @@ public class HyperStackDisplayer extends SpotDisplayer {
 	@Override
 	public void render() {
 		if (null == imp) {
-			this.imp = NewImage.createByteImage("Empty", settings.width, settings.height, settings.nframes, NewImage.FILL_BLACK);
-			this.imp.setDimensions(1, 1, settings.nframes);
+			this.imp = NewImage.createByteImage("Empty", settings.width, settings.height, settings.nframes*settings.nslices, NewImage.FILL_BLACK);
+			this.imp.setDimensions(1, settings.nslices, settings.nframes);
 		}
 		imp.setOpenAsHyperStack(true);
 		canvas = new OverlayedImageCanvas(imp);
