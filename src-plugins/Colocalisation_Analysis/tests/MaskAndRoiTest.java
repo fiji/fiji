@@ -101,15 +101,15 @@ public class MaskAndRoiTest extends ColocalisationTest {
 	 * This test generates a random black/white noise image and
 	 * uses first itself and then an inverted version of it as
 	 * mask. While iterating over it, the pixel values are
-	 * multiplied by each other. In the end the the product would
-	 * be one in the non-inverted case and zero in the other. This
-	 * way one makes sure, that. only ones and zeros are present
-	 * in the result.
+	 * checked. Is the first version only non-zero values should
+	 * be present, while only zeros should be there in the second
+	 * one.
 	 */
 	@Test
 	public void irregularRoiTest() {
 		// create a random noise 2D image -- set roiWidh/roiSize accordingly
-		Image<UnsignedByteType> img = TestImageAccessor.produceNoiseImage(new UnsignedByteType(), 200, 300);
+		Image<UnsignedByteType> img =
+			TestImageAccessor.produceSticksNoiseImage(300, 300, 50, 2, 10);
 		// invert the image
 		Image<UnsignedByteType> invImg = TestImageAccessor.invertImage(img);
 		// some general mask data
@@ -121,25 +121,19 @@ public class MaskAndRoiTest extends ColocalisationTest {
 			new MaskedImage<UnsignedByteType>(img, img, maskOffset, maskSize);
 		Cursor<UnsignedByteType> maskedCursor = maskedImg1.createCursor();
 
-		UnsignedByteType product = new UnsignedByteType(1);
 		while (maskedCursor.hasNext()) {
 			maskedCursor.fwd();
-			product.mul( maskedCursor.getType() );
+			assertTrue( maskedCursor.getType().getInteger() != 0 );
 		}
-
-		assertTrue( product.getInteger() == 1 );
 
 		/* second test - using inverted image */
 		MaskedImage<UnsignedByteType> invMaskedImg =
 			new MaskedImage<UnsignedByteType>(img, invImg, maskOffset, maskSize);
 		Cursor<UnsignedByteType> invMaskedCursor = invMaskedImg.createCursor();
 
-		product = new UnsignedByteType(1);
 		while (invMaskedCursor.hasNext()) {
 			invMaskedCursor.fwd();
-			product.mul( invMaskedCursor.getType() );
+			assertTrue( invMaskedCursor.getType().getInteger() == 0 );
 		}
-
-		assertTrue( product.getInteger() == 0 );
 	}
 }
