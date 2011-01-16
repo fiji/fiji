@@ -351,13 +351,14 @@ public class TmXmlReader implements TmXmlKeys {
 			return null;
 		String filename = imageInfoElement.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
 		String folder 	= imageInfoElement.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME);
-		if (null == filename || null == folder || filename.equals(""))
-			return null;		
+		if (null == filename || filename.isEmpty())
+			return null;
+		if (null == folder || folder.isEmpty())
+			folder = file.getParent(); // it is a relative path, then
 		File imageFile = new File(folder, filename);
 		if (!imageFile.exists() || !imageFile.canRead())
 			return null;
 		return IJ.openImage(imageFile.getAbsolutePath());
-
 	}
 	
 	
