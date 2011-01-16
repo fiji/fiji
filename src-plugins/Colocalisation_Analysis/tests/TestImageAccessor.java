@@ -140,10 +140,10 @@ public class TestImageAccessor {
 	 * sticks oriented in a random direction. How many of them and
 	 * what the length of them are can be specified.
 	 *
-	 * @return a new noise image
+	 * @return a new noise image that is not smoothed
 	 */
-	public static <T extends RealType<T>> Image<T> produceSticksNoiseImage(T type, int width,
-			int height, int numSticks, int lineWidth, double maxLength, double[] smoothingSigma) {
+	public static <T extends RealType<T>> Image<T> produceSticksNoiseImage(int width,
+			int height, int numSticks, int lineWidth, double maxLength) {
 		/* For now (probably until ImageJ2 is out) we use an
 		 * ImageJ image to draw lines.
 		 */
@@ -169,8 +169,20 @@ public class TestImageAccessor {
 		// we changed the data, so update it
 		img.updateImage();
 
-		// wrap the ImageJ image in an Imglib image
-		Image<T> noiseImage = ImagePlusAdapter.wrap(img);
+		return ImagePlusAdapter.wrap(img);
+	}
+
+	/**
+	 * This method creates a smoothed noise image that is made of
+	 * many little sticks oriented in a random direction. How many
+	 * of them and what the length of them are can be specified.
+	 *
+	 * @return a new noise image that is smoothed
+	 */
+	public static <T extends RealType<T>> Image<T> produceSticksNoiseImageSmoothed(T type, int width,
+			int height, int numSticks, int lineWidth, double maxLength, double[] smoothingSigma) {
+
+		Image<T> noiseImage = produceSticksNoiseImage(width, height, numSticks, lineWidth, maxLength);
 		ImageFactory<T> imgFactory = new ImageFactory<T>(type, new ArrayContainerFactory());
 
 		return gaussianSmooth(noiseImage, imgFactory, smoothingSigma);
