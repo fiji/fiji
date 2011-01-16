@@ -15,6 +15,8 @@ import fiji.build.Rule;
 import fiji.build.SubFake;
 import fiji.build.Util;
 
+import fiji.updater.util.ByteCodeAnalyzer;
+import fiji.updater.util.Compressor;
 import fiji.updater.util.DependencyAnalyzer;
 
 import java.io.File;
@@ -140,6 +142,12 @@ boolean checkDirtyFiles(String path) {
 	return true;
 }
 
+String getSourceFileName(InputStream in) {
+	code = Compressor.readStream(in);
+	analyzer = new ByteCodeAnalyzer(code, true);
+	return analyzer.getSourceFile();
+}
+
 long getMTime(String path) {
 	return new File(path).lastModified();
 }
@@ -162,8 +170,18 @@ boolean checkTimestamps(String path) {
 				name = name.substring(0, dollar) + ".java";
 			else
 				name = name.substring(0, name.length() - 5) + "java";
-			if (!new File(sourcePath + name).exists())
-				continue;
+			if (!new File(sourcePath + name).exists()) {
+				sourceName = getSourceFileName(zip.getInputStream(entry));
+				if (sourceName == null) {
+					System.err.println("No source file found for '" + sourcePath + entry.getName() + "'");
+					continue;
+				}
+				name = name.substring(0, name.lastIndexOf('/') + 1) + sourceName;
+			}
+		}
+		if (!new File(sourcePath + name).exists()) {
+			System.err.println(entry.getName() + " in " + path + " is missing the source " + name);
+			return false;
 		}
 		if (entry.getTime() < getMTime(sourcePath + name)) {
 			System.err.println(entry.getName() + " in " + path + " is not up-to-date");
