@@ -169,21 +169,23 @@ public abstract class SpotDisplayer {
 		switch (displayerType) {
 		case THREEDVIEWER_DISPLAYER:
 		{ 
-			if (!settings.imp.isVisible())
-				settings.imp.show();
 			final Image3DUniverse universe = new Image3DUniverse();
 			universe.show();
-			ImagePlus[] images = TMUtils.makeImageForViewer(settings);
-			final Content imageContent = ContentCreator.createContent(
-					settings.imp.getTitle(), 
-					images, 
-					Content.VOLUME, 
-					SpotDisplayer3D.DEFAULT_RESAMPLING_FACTOR, 
-					0,
-					null, 
-					SpotDisplayer3D.DEFAULT_THRESHOLD, 
-					new boolean[] {true, true, true});
-			universe.addContentLater(imageContent);					
+			if (null != settings.imp) {
+				if (!settings.imp.isVisible())
+					settings.imp.show();
+				ImagePlus[] images = TMUtils.makeImageForViewer(settings);
+				final Content imageContent = ContentCreator.createContent(
+						settings.imp.getTitle(), 
+						images, 
+						Content.VOLUME, 
+						SpotDisplayer3D.DEFAULT_RESAMPLING_FACTOR, 
+						0,
+						null, 
+						SpotDisplayer3D.DEFAULT_THRESHOLD, 
+						new boolean[] {true, true, true});
+				universe.addContentLater(imageContent);	
+			}
 			disp = new SpotDisplayer3D(universe, settings.segmenterSettings.expectedRadius);
 			disp.render();
 			break;
