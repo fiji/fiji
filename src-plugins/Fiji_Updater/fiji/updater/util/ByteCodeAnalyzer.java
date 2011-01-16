@@ -153,6 +153,13 @@ public class ByteCodeAnalyzer implements Iterable<String> {
 		return getClassNameConstant(index);
 	}
 
+	public String getSourceFile() {
+		for (Attribute attribute : attributes)
+			if (getStringConstant(attribute.nameIndex).equals("SourceFile"))
+				return getStringConstant(getU2(attribute.endOffset - 2));
+		return null;
+	}
+
 	public String toString() {
 		String result = "";
 		for (int i = 0; i < poolOffsets.length; i++) {
