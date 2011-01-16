@@ -54,6 +54,8 @@ String getSourcePathForTarget(String path, boolean fromSubFakefile) {
 	}
 	if (rule instanceof SubFake) {
 		if (fromSubFakefile) {
+			if (rule.getLastPrerequisite().equals("mpicbg/"))
+				return fijiDir + "mpicbg/";
 			fakefile = rule.getFakefile();
 			if (fakefile == null)
 				return null;
