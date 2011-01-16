@@ -313,6 +313,8 @@ public class Parser {
 			final Rule rule = getRule(key);
 			if (key.endsWith("-clean") ||
 					key.endsWith("-clean-dry-run") ||
+					key.endsWith("-dependency-map") ||
+					key.endsWith("-rebuild") ||
 					(rule instanceof Special))
 				continue;
 			final String cleanKey = key + "-clean";
@@ -331,6 +333,14 @@ public class Parser {
 				addSpecialRule(new Special(Parser.this, dependencyMapKey) {
 					void action() throws FakeException {
 						showMap(buildDependencyMap(Collections.singletonList(rule)));
+					}
+				});
+			final String rebuildKey = key + "-rebuild";
+			if (!allRules.containsKey(rebuildKey))
+				addSpecialRule(new Special(Parser.this, rebuildKey) {
+					void action() throws FakeException {
+						rule.clean(false);
+						rule.action();
 					}
 				});
 		}
