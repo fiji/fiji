@@ -229,6 +229,8 @@ boolean check(String path) {
 	}
 
 	try {
+		if (!checkTimestamps(path))
+			return false;
 		if (DependencyAnalyzer.containsDebugInfo(path)) {
 			if (new File(path).getCanonicalPath().equals(new File(fijiDir, "plugins/loci_tools.jar").getCanonicalPath()))
 				System.err.println("Ignoring debug info in Bio-Formats");
@@ -243,8 +245,6 @@ boolean check(String path) {
 			return false;
 		}
 		if (!checkDirtyFiles(path))
-			return false;
-		if (!checkTimestamps(path))
 			return false;
 		if (!checkPushed(path))
 			return false;
