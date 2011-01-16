@@ -61,11 +61,11 @@ public class TrackVisualizerTestDrive {
 		}
 		
 		// Instantiate displayer
-//		final SpotDisplayer displayer = new HyperStackDisplayer(settings);
 		@SuppressWarnings("rawtypes")
 		TrackMateModelInterface model = new TrackMate_();
 		model.setSettings(settings);
-		final SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
+//		final SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
+		final SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
 		displayer.render();
 		displayer.setSpots(allSpots);
 		displayer.setSpotsToShow(selectedSpots);

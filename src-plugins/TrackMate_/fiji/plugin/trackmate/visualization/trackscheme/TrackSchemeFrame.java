@@ -121,7 +121,7 @@ public class TrackSchemeFrame extends JFrame {
 	
 	private SimpleGraph<Spot, DefaultEdge> trackGraph;
 	private Settings settings;
-	JGraph jgraph;
+	public JGraph jgraph;
 
 	/*
 	 * CONSTRUCTORS

@@ -5,6 +5,8 @@ import ij.gui.NewImage;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -40,6 +42,9 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.DisplayerType;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
+import fiji.plugin.trackmate.visualization.trackscheme.SpotCell;
+import fiji.plugin.trackmate.visualization.trackscheme.SpotIconGrabber;
+import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 public class TrackMateFrameController {
 
@@ -955,6 +960,8 @@ public class TrackMateFrameController {
 							displayer.setDisplayTrackMode(view.displayerPanel.getTrackDisplayMode(), view.displayerPanel.getTrackDisplayDepth());
 						} else if (event == view.displayerPanel.TRACK_VISIBILITY_CHANGED) {
 							displayer.setTrackVisible(view.displayerPanel.isDisplayTrackSelected());
+						} else if (event == view.displayerPanel.TRACK_SCHEME_BUTTON_PRESSED) {
+							launchTrackScheme();
 						} else {
 							logger.error("Unknown event caught: "+event+'\n');
 						}
@@ -967,6 +974,37 @@ public class TrackMateFrameController {
 				
 			}
 		});
+	}
+	
+	private void launchTrackScheme() {
+		// Update icons
+		if (null != model.getSettings().imp) {
+			SpotIconGrabber grabber = new SpotIconGrabber(model.getSettings());
+			grabber.updateIcon(model.getSpots());
+		}
+		
+		// Display Track scheme
+		final TrackSchemeFrame frame = new TrackSchemeFrame(model.getTrackGraph(), model.getSettings());
+		frame.setVisible(true);
+
+		frame.jgraph.addMouseListener(new MouseAdapter() {
+			public void mousePressed(MouseEvent e) {
+				if (e.getClickCount() == 2) {
+					// Get Cell under Mousepointer
+					int x = e.getX(), y = e.getY();
+					Object obj = frame.jgraph.getFirstCellForLocation(x, y);
+					
+					if (obj instanceof SpotCell) {
+						SpotCell sc = (SpotCell) obj;
+						Spot spot = sc.getSpot();
+						displayer.highlight(spot);
+					} else {
+						System.out.println("Double-slicked on a "+obj.getClass().getCanonicalName());// DEBUG
+					}
+				}
+			}
+		});
+	
 	}
 	
 	private void switchNextButton(final boolean state) {

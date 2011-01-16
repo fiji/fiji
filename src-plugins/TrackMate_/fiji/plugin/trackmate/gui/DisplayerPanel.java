@@ -13,6 +13,9 @@ import java.util.EnumMap;
 
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -27,6 +30,19 @@ import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 
+
+/**
+* This code was edited or generated using CloudGarden's Jigloo
+* SWT/Swing GUI Builder, which is free for non-commercial
+* use. If Jigloo is being used commercially (ie, by a corporation,
+* company or business for any purpose whatever) then you
+* should purchase a license for each developer using Jigloo.
+* Please visit www.cloudgarden.com for details.
+* Use of Jigloo implies acceptance of these licensing terms.
+* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
+* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
+* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
+*/
 /**
  * A configuration panel used to tune the aspect of spots and tracks in {@link SpotDisplayer}.
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr>   -  2010 - 2011
@@ -44,13 +60,17 @@ public class DisplayerPanel extends ActionListenablePanel {
 		}
 	}
 	
-	public ActionEvent TRACK_DISPLAY_MODE_CHANGED 	= new ActionEvent(this, 0, "Track display mode changed");
-	public ActionEvent TRACK_VISIBILITY_CHANGED 	= new ActionEvent(this, 1, "Track visibility changed");
+	public ActionEvent TRACK_DISPLAY_MODE_CHANGED 	= new ActionEvent(this, 0, "TrackDisplayModeChanged");
+	public ActionEvent TRACK_VISIBILITY_CHANGED 	= new ActionEvent(this, 1, "TrackVisibilityChanged");
 	public ActionEvent SPOT_COLOR_MODE_CHANGED; // instantiate later, from color gui panel
-	public ActionEvent SPOT_VISIBILITY_CHANGED 		= new ActionEvent(this, 2, "Spot visibility changed");
+	public ActionEvent SPOT_VISIBILITY_CHANGED 		= new ActionEvent(this, 2, "SpotVisibilityChanged");
+	public ActionEvent TRACK_SCHEME_BUTTON_PRESSED 	= new ActionEvent(this, 3, "TrackSchemeButtonPushed");
 
+	private static final Icon TRACK_SCHEME_ICON = new ImageIcon(DisplayerPanel.class.getResource("images/track_scheme.png"));
+	
 	private JLabel jLabelTrackDisplayMode;
 	private JComboBox jComboBoxDisplayMode;
+	static private DisplayerPanel displayerPanel_IL;
 	private JLabel jLabelDisplayOptions;
 	private JPanel jPanelSpotOptions;
 	private JCheckBox jCheckBoxDisplaySpots;
@@ -61,6 +81,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 	private JLabel jLabelFrameDepth;
 	private JPanelSpotColorGUI jPanelSpotColor;
 	private EnumMap<Feature, double[]> featureValues;
+	private JButton jButtonShowTrackScheme;
 
 	
 	
@@ -148,7 +169,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 				jPanelSpotOptionsLayout.setAlignment(FlowLayout.LEFT);
 				jPanelTrackOptions.setLayout(jPanelSpotOptionsLayout);
 				this.add(jPanelTrackOptions);
-				jPanelTrackOptions.setBounds(10, 287, 280, 117);
+				jPanelTrackOptions.setBounds(10, 187, 280, 117);
 				jPanelTrackOptions.setBorder(new LineBorder(new java.awt.Color(192,192,192), 1, true));
 				{
 					jLabelTrackDisplayMode = new JLabel();
@@ -205,7 +226,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 				this.add(jCheckBoxDisplayTracks);
 				jCheckBoxDisplayTracks.setText("Display tracks");
 				jCheckBoxDisplayTracks.setFont(FONT);
-				jCheckBoxDisplayTracks.setBounds(10, 263, 233, 23);
+				jCheckBoxDisplayTracks.setBounds(10, 163, 233, 23);
 				jCheckBoxDisplayTracks.setSelected(true);
 				jCheckBoxDisplayTracks.addActionListener(new ActionListener() {
 					@Override
@@ -254,11 +275,26 @@ public class DisplayerPanel extends ActionListenablePanel {
 			}
 			{
 				jLabelDisplayOptions = new JLabel();
-				this.add(jLabelDisplayOptions);
 				jLabelDisplayOptions.setText("Display options");
 				jLabelDisplayOptions.setFont(FONT.deriveFont(Font.BOLD));
 				jLabelDisplayOptions.setBounds(10, 11, 280, 14);
 				jLabelDisplayOptions.setHorizontalAlignment(SwingConstants.CENTER);
+				this.add(jLabelDisplayOptions);
+			}
+			{
+				jButtonShowTrackScheme = new JButton();
+				jButtonShowTrackScheme.setText("Track scheme");
+				jButtonShowTrackScheme.setIcon(TRACK_SCHEME_ICON);
+				jButtonShowTrackScheme.setFont(FONT);
+				jButtonShowTrackScheme.setBounds(10, 320, 120, 30);
+				jButtonShowTrackScheme.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						fireAction(TRACK_SCHEME_BUTTON_PRESSED);
+					}
+				});
+				this.add(jButtonShowTrackScheme);
+				
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -271,9 +307,13 @@ public class DisplayerPanel extends ActionListenablePanel {
 	
 	public static void main(String[] args) {
 		JFrame frame = new JFrame();
-		frame.getContentPane().add(new DisplayerPanel(null));
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();
 		frame.setVisible(true);
+		{
+			displayerPanel_IL = new DisplayerPanel(null);
+			frame.getContentPane().add(displayerPanel_IL);
+			displayerPanel_IL.setPreferredSize(new java.awt.Dimension(300, 469));
+		}
 	}
 }
