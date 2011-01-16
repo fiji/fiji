@@ -168,6 +168,8 @@ boolean checkTimestamps(String path) {
 	zip = new ZipFile(fullPath);
 	for (ZipEntry entry : Collections.list(zip.entries())) {
 		name = entry.getName();
+		if (name.startsWith("META-INF/"))
+			continue;
 		if (name.endsWith(".class")) {
 			dollar = name.indexOf('$');
 			if (dollar >= 0)
