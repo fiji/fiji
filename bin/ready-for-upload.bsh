@@ -56,9 +56,13 @@ String getSourcePathForTarget(String path, boolean fromSubFakefile) {
 		if (fromSubFakefile) {
 			fakefile = rule.getFakefile();
 			if (fakefile == null)
-				return false;
+				return null;
 			fake = new Fake();
 			cwd = new File(fijiDir, rule.getLastPrerequisite());
+			if (!new File(cwd, ".git").exists()) {
+				System.err.println(rule.getLastPrerequisite() + " not checked out");
+				return null;
+			}
 			parser = fake.parse(new FileInputStream(fakefile), cwd);
 			parser.parseRules(new ArrayList());
 
