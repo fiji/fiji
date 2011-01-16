@@ -169,7 +169,7 @@ public class TrackSchemeFrame extends JFrame {
 		GraphPane backPane = new GraphPane(trackGraph);
 		BorderLayout layout = new BorderLayout();
 		backPane.setLayout(layout);
-		backPane.add(jgraph, BorderLayout.CENTER);
+//		backPane.add(jgraph, BorderLayout.CENTER);
 		jgraph.setOpaque(false);
 
 		JScrollPane scrollPane = new JScrollPane(backPane);
@@ -186,5 +186,8 @@ public class TrackSchemeFrame extends JFrame {
         Map nested = facade.createNestedMap(false, false); // Obtain a map of the resulting attribute changes from the facade 
         jgraph.getGraphLayoutCache().edit(nested); // Apply the results to the actual graph 
         
+        GraphEd grapEd = new GraphEd(jgraph);
+        backPane.add(grapEd);
+        grapEd.setVisible(true);
 	}
 }
