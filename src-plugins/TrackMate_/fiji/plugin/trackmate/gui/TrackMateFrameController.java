@@ -984,26 +984,26 @@ public class TrackMateFrameController {
 		}
 		
 		// Display Track scheme
-		final TrackSchemeFrame frame = new TrackSchemeFrame(model.getTrackGraph(), model.getSettings());
-		frame.setVisible(true);
-
-		frame.jgraph.addMouseListener(new MouseAdapter() {
-			public void mousePressed(MouseEvent e) {
-				if (e.getClickCount() == 2) {
-					// Get Cell under Mousepointer
-					int x = e.getX(), y = e.getY();
-					Object obj = frame.jgraph.getFirstCellForLocation(x, y);
-					
-					if (obj instanceof SpotCell) {
-						SpotCell sc = (SpotCell) obj;
-						Spot spot = sc.getSpot();
-						displayer.highlight(spot);
-					} else {
-						System.out.println("Double-slicked on a "+obj.getClass().getCanonicalName());// DEBUG
-					}
-				}
-			}
-		});
+//		final TrackSchemeFrame frame = new TrackSchemeFrame(model.getTrackGraph(), model.getSettings());
+//		frame.setVisible(true);
+//
+//		frame.jgraph.addMouseListener(new MouseAdapter() {
+//			public void mousePressed(MouseEvent e) {
+//				if (e.getClickCount() == 2) {
+//					// Get Cell under Mousepointer
+//					int x = e.getX(), y = e.getY();
+//					Object obj = frame.jgraph.getFirstCellForLocation(x, y);
+//					
+//					if (obj instanceof SpotCell) {
+//						SpotCell sc = (SpotCell) obj;
+//						Spot spot = sc.getSpot();
+//						displayer.highlight(spot);
+//					} else {
+//						System.out.println("Double-slicked on a "+obj.getClass().getCanonicalName());// DEBUG
+//					}
+//				}
+//			}
+//		});
 	
 	}
 	

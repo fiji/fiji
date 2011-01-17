@@ -29,8 +29,8 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	 * DEFAULT VISIBILITY CONSTANTS
 	 */
 	
-	static final Font FONT = new Font("Arial", Font.PLAIN, 10);
-	static final Font SMALL_FONT = FONT.deriveFont(8);
+	public static final Font FONT = new Font("Arial", Font.PLAIN, 10);
+	public static final Font SMALL_FONT = FONT.deriveFont(8);
 	static final Dimension TEXTFIELD_DIMENSION = new Dimension(40,18);
 	
 	/*
