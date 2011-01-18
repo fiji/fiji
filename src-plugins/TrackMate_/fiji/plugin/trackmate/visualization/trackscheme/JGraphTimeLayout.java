@@ -17,10 +17,10 @@ import java.util.TreeSet;
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgraph.graph.EdgeView;
 import org.jgraph.graph.GraphConstants;
+import org.jgrapht.UndirectedGraph;
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.ext.JGraphModelAdapter;
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.SimpleGraph;
 import org.jgrapht.traverse.DepthFirstIterator;
 
 import com.jgraph.layout.JGraphFacade;
@@ -34,7 +34,7 @@ public class JGraphTimeLayout implements JGraphLayout {
 
 	
 	
-	private SimpleGraph<Spot, DefaultEdge> graph;
+	private UndirectedGraph<Spot, DefaultEdge> graph;
 	private List<Set<Spot>> tracks;
 	private JGraphModelAdapter<Spot, DefaultEdge> adapter;
 	private int[] columnWidths;
@@ -44,12 +44,13 @@ public class JGraphTimeLayout implements JGraphLayout {
 	 */
 	
 
-	public JGraphTimeLayout(SimpleGraph<Spot, DefaultEdge> graph, JGraphModelAdapter<Spot, DefaultEdge> adapter) {
+	public JGraphTimeLayout(UndirectedGraph<Spot, DefaultEdge> graph, JGraphModelAdapter<Spot, DefaultEdge> adapter) {
 		this.graph = graph;
 		this.adapter = adapter;
 		this.tracks = new ConnectivityInspector<Spot, DefaultEdge>(graph).connectedSets();
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public void run(JGraphFacade graphFacade) {
 		
@@ -116,17 +117,22 @@ public class JGraphTimeLayout implements JGraphLayout {
 				
 				// Get corresponding JGraph cell 
 				Object facadeTarget = adapter.getVertexCell(spot);
+				SpotView vView = (SpotView) graphFacade.getCellView(facadeTarget);
+				
+				// Tune aspect of cell according to context
+				vView.setColor(trackColor);
 				
 				// Move the corresponding cell in the facade
 				graphFacade.setLocation(facadeTarget, ( targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2, (0.5 + rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2);
-				graphFacade.setSize(facadeTarget, DEFAULT_CELL_WIDTH, DEFAULT_CELL_HEIGHT);
+				int height = Math.min(DEFAULT_CELL_WIDTH, spot.getIcon().getIconHeight());
+				graphFacade.setSize(facadeTarget, DEFAULT_CELL_WIDTH, height);
 				
 				Object[] objEdges = graphFacade.getEdges(facadeTarget);
 				for(Object obj : objEdges) {
-					org.jgraph.graph.DefaultEdge edge = (org.jgraph.graph.DefaultEdge) obj;
-					EdgeView view = (EdgeView) graphFacade.getCellView(obj);
-					view.getAttributes().put(GraphConstants.LINECOLOR, trackColor);
-					view.getAttributes().put(GraphConstants.LINEWIDTH, 2f);
+//					org.jgraph.graph.DefaultEdge edge = (org.jgraph.graph.DefaultEdge) obj;
+					EdgeView eView = (EdgeView) graphFacade.getCellView(obj);
+					eView.getAttributes().put(GraphConstants.LINECOLOR, trackColor);
+					eView.getAttributes().put(GraphConstants.LINEWIDTH, 2f);
 				}
 			}
 		

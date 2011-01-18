@@ -1,10 +1,12 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
+import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
+
 import java.awt.Color;
 import java.awt.Component;
 
-import javax.swing.JLabel;
 import javax.swing.SwingConstants;
+import javax.swing.border.LineBorder;
 
 import org.jgraph.JGraph;
 import org.jgraph.graph.VertexView;
@@ -15,18 +17,14 @@ import fiji.plugin.trackmate.Spot;
 public class SpotView extends VertexView {
 
 	private static final long serialVersionUID = 1L;
-	
-
-	private final JLabel label;
 	private final Spot spot;
+	private Color color;
 
 
 	public SpotView(SpotCell spotCell) {
 		super();
-		this.label 	= new JLabel();
 		this.spot  	= spotCell.getSpot();
 		this.cell 	= spotCell;
-		initLabel();
 	}
 	
 	public Spot getSpot() {
@@ -36,22 +34,22 @@ public class SpotView extends VertexView {
 	
 	@Override
 	public Component getRendererComponent(JGraph graph, boolean selected, boolean focus, boolean preview) {
-		if (selected)
-			label.setForeground(Color.RED);
-		else 
-			label.setForeground(Color.BLACK);
-		return label;
-	}
-	
-
-	private void initLabel() {
-		label.setHorizontalAlignment(SwingConstants.CENTER);
-		label.setIcon(spot.getIcon());
+		renderer.setHorizontalAlignment(SwingConstants.LEFT);
+		renderer.setIcon(spot.getIcon());
+		renderer.setBorder(new LineBorder(color, 1));
+		renderer.setFont(FONT);
 		String name = spot.getName();
 		if (name == null || name.equals(""))
 			name = "<no name>";
- 		label.setText(name);
+		renderer.setText(name);
+		if (selected)
+			renderer.setForeground(Color.RED);
+		else 
+			renderer.setForeground(Color.BLACK);
+		return renderer;
 	}
 
-	
+	public void setColor(Color color) {
+		this.color = color;		
+	}	
 }
