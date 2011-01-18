@@ -23,6 +23,7 @@ import java.util.Vector;
 
 import javax.swing.JScrollPane;
 import javax.swing.JViewport;
+import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 
 import javax.swing.event.DocumentEvent;
@@ -266,12 +267,16 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 			new TokenFunctions(this).setClassName(name);
 	}
 
-	public void setFileName(File file) {
+	public void setFileName(final File file) {
 		this.file = file;
 		updateGitDirectory();
 		setTitle();
 		if (file != null) {
-			setLanguageByFileName(file.getName());
+			SwingUtilities.invokeLater(new Thread() {
+				public void run() {
+					setLanguageByFileName(file.getName());
+				}
+			});
 			fallBackBaseName = null;
 		}
 		fileLastModified = file == null || !file.exists() ? 0 :
@@ -344,17 +349,22 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 		provider.setProviderLanguage(language.menuLabel);
 
 		// TODO: these should go to upstream RSyntaxTextArea
-		if (language.syntaxStyle != null)
-			setSyntaxEditingStyle(language.syntaxStyle);
-		else if (language.extension.equals(".clj"))
-			getRSyntaxDocument()
-				.setSyntaxStyle(new ClojureTokenMaker());
-		else if (language.extension.equals(".m"))
-			getRSyntaxDocument()
-				.setSyntaxStyle(new MatlabTokenMaker());
-		else if (language.extension.equals(".ijm"))
-			getRSyntaxDocument()
-				.setSyntaxStyle(new ImageJMacroTokenMaker());
+		 try {
+			if (language.syntaxStyle != null)
+				setSyntaxEditingStyle(language.syntaxStyle);
+			else if (language.extension.equals(".clj"))
+				getRSyntaxDocument()
+					.setSyntaxStyle(new ClojureTokenMaker());
+			else if (language.extension.equals(".m"))
+				getRSyntaxDocument()
+					.setSyntaxStyle(new MatlabTokenMaker());
+			else if (language.extension.equals(".ijm"))
+				getRSyntaxDocument()
+					.setSyntaxStyle(new ImageJMacroTokenMaker());
+		}
+		catch (NullPointerException e) {
+			// ignore; this sometimes happens in the TokenMaker...
+		}
 
 		frame.setTitle();
 		frame.updateLanguageMenu(language);
