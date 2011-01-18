@@ -1920,7 +1920,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			new Thread() {
 				public void run() {
 					java.compileAndRun(sourcePath, true);
-					errorScreen.insert("Compilation finished.\n", getTab().screen.getDocument().getLength());
+					errorScreen.insert("Compilation finished.\n", errorScreen.getDocument().getLength());
 					markCompileEnd();
 				}
 			}.start();
