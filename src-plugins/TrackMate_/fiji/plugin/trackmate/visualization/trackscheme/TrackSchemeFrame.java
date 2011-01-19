@@ -2,11 +2,13 @@ package fiji.plugin.trackmate.visualization.trackscheme;
 
 import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -180,7 +182,14 @@ public class TrackSchemeFrame extends JFrame {
 	 */
 	
 	private void connect(Object source, Object target) {
-		System.out.println("Connect "+source+" to "+target+"!!");// TODO
+		if (source instanceof SpotCell && target instanceof SpotCell) {
+			SpotCell s = (SpotCell) source;
+			SpotCell t = (SpotCell) target;
+			DefaultEdge e = lGraph.addEdge(s.getSpot(), t.getSpot());
+//			lGraph.setEdgeWeight(e, 1); // Default Weight			
+		} else {
+			System.out.println("Try to connect a "+source.getClass().getCanonicalName()+" with a "+target.getClass().getCanonicalName());// DEBUG
+		}
 	}
 	
 	private void insert(final Point pt) {
@@ -586,8 +595,9 @@ public class TrackSchemeFrame extends JFrame {
 		protected void drawConnectorLine(Graphics g) {
 			if (firstPort != null && start != null && current != null) {
 				// Then Draw A Line From Start to Current Point
-				g.drawLine((int) start.getX(), (int) start.getY(),
-						(int) current.getX(), (int) current.getY());
+				Graphics2D g2d = (Graphics2D) g;
+				g2d.setStroke(new BasicStroke(2));
+				g.drawLine((int) start.getX(), (int) start.getY(), (int) current.getX(), (int) current.getY());
 			}
 		}
 
