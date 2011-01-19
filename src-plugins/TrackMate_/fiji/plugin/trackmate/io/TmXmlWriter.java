@@ -17,7 +17,7 @@ import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.jgrapht.alg.ConnectivityInspector;
-import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Feature;
@@ -237,11 +237,11 @@ public class TmXmlWriter implements TmXmlKeys {
 	}
 	
 	private void echoTracks() {
-		SimpleWeightedGraph<Spot, DefaultEdge> trackGraph = model.getTrackGraph();
+		SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph = model.getTrackGraph();
 		if (null == trackGraph)
 			return;
 		
-		List<Set<Spot>> tracks = new ConnectivityInspector<Spot, DefaultEdge>(trackGraph).connectedSets();
+		List<Set<Spot>> tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(trackGraph).connectedSets();
 		Element allTracksElement = new Element(TRACK_COLLECTION_ELEMENT_KEY);
 		Element trackElement;
 		Element edgeElement;
@@ -252,14 +252,16 @@ public class TmXmlWriter implements TmXmlKeys {
 			allTracksElement.addContent(trackElement);
 		}
 		
-		Set<DefaultEdge> edges = trackGraph.edgeSet();
+		Set<DefaultWeightedEdge> edges = trackGraph.edgeSet();
 		Spot source, target;
+		double weight;
 		Set<Spot> track = null;
 		
-		for (DefaultEdge edge : edges) {
+		for (DefaultWeightedEdge edge : edges) {
 			
 			source = trackGraph.getEdgeSource(edge);
 			target = trackGraph.getEdgeTarget(edge);
+			weight = trackGraph.getEdgeWeight(edge);
 			for (Set<Spot> t : tracks)
 				if (t.contains(source)) {
 					track = t;
@@ -269,6 +271,7 @@ public class TmXmlWriter implements TmXmlKeys {
 			edgeElement = new Element(TRACK_EDGE_ELEMENT_KEY);
 			edgeElement.setAttribute(TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, ""+source.ID());
 			edgeElement.setAttribute(TRACK_EDGE_TARGET_ATTRIBUTE_NAME, ""+target.ID());
+			edgeElement.setAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME, ""+weight);
 			trackElements.get(track).addContent(edgeElement);
 		}
 

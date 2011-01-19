@@ -129,6 +129,7 @@ public interface TmXmlKeys {
 	public static final String TRACK_EDGE_ELEMENT_KEY				= "Edge";
 	public static final String TRACK_EDGE_SOURCE_ATTRIBUTE_NAME	 	= "sourceID";
 	public static final String TRACK_EDGE_TARGET_ATTRIBUTE_NAME	 	= "targetID";
+	public static final String TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME	 	= "weight";
 	
 	
 	

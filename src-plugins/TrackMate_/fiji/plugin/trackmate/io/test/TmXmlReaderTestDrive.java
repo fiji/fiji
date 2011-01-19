@@ -12,7 +12,7 @@ import java.util.TreeMap;
 import org.jdom.DataConversionException;
 import org.jdom.JDOMException;
 import org.jgrapht.alg.ConnectivityInspector;
-import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Settings;
@@ -73,13 +73,13 @@ public class TmXmlReaderTestDrive {
 		System.out.println("The spot selection contains "+spotList.size()+" spots over "+spots.keySet().size()+" different frames.");
 
 		// Tracks
-		SimpleWeightedGraph<Spot, DefaultEdge> trackGraph = null;
+		SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph = null;
 		try {
 			trackGraph = reader.getTracks(selectedSpots);
 		} catch (DataConversionException e) {
 			e.printStackTrace();
 		}
-		List<Set<Spot>> tracks = new ConnectivityInspector<Spot, DefaultEdge>(trackGraph).connectedSets();		
+		List<Set<Spot>> tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(trackGraph).connectedSets();		
 		System.out.println("Found "+tracks.size()+" tracks.");
 		
 		// Settings

@@ -19,7 +19,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 import org.jgrapht.Graph;
-import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Feature;
@@ -295,14 +295,14 @@ public class TmXmlReader implements TmXmlKeys {
 	 * @throws DataConversionException  if the attribute values are not formatted properly in the file.
 	 */
 	@SuppressWarnings("unchecked")
-	public SimpleWeightedGraph<Spot, DefaultEdge> getTracks(TreeMap<Integer, List<Spot>> selectedSpots) throws DataConversionException {
+	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> getTracks(TreeMap<Integer, List<Spot>> selectedSpots) throws DataConversionException {
 		
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
 		if (null == allTracksElement)
 			return null;
 		
 		// Add all spots to the graph
-		SimpleWeightedGraph<Spot, DefaultEdge> trackGraph = new SimpleWeightedGraph<Spot, DefaultEdge>(DefaultEdge.class);
+		SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		for(int frame : selectedSpots.keySet())
 			for(Spot spot : selectedSpots.get(frame))
 				trackGraph.addVertex(spot);		
@@ -313,6 +313,8 @@ public class TmXmlReader implements TmXmlKeys {
 		List<Element> edgeElements;
 		int sourceID, targetID;
 		Spot sourceSpot, targetSpot;
+		double weight = 0;
+		DefaultWeightedEdge edge;
 		boolean sourceFound, targetFound;
 		for (Element trackElement : trackElements) {
 			edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
@@ -320,6 +322,7 @@ public class TmXmlReader implements TmXmlKeys {
 				// Get source and target ID for this edge
 				sourceID = edgeElement.getAttribute(TRACK_EDGE_SOURCE_ATTRIBUTE_NAME).getIntValue();
 				targetID = edgeElement.getAttribute(TRACK_EDGE_TARGET_ATTRIBUTE_NAME).getIntValue();
+				weight   = edgeElement.getAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME).getDoubleValue();
 				// Retrieve corresponding spots from their ID
 				targetFound = false;
 				sourceFound = false;
@@ -335,7 +338,8 @@ public class TmXmlReader implements TmXmlKeys {
 						targetFound = true;
 					}
 					if (targetFound && sourceFound) {
-						trackGraph.addEdge(sourceSpot, targetSpot);
+						edge = trackGraph.addEdge(sourceSpot, targetSpot);
+						trackGraph.setEdgeWeight(edge, weight);
 						break;
 					}
 				}
