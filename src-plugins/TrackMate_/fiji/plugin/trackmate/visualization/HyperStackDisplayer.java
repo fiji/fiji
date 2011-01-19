@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Feature;
@@ -290,7 +290,7 @@ public class HyperStackDisplayer extends SpotDisplayer {
 	}
 		
 	@Override
-	public void setTrackGraph(SimpleWeightedGraph<Spot, DefaultEdge> trackGraph) {
+	public void setTrackGraph(SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph) {
 		super.setTrackGraph(trackGraph);
 		prepareWholeTrackOverlay();
 	}
@@ -344,9 +344,9 @@ public class HyperStackDisplayer extends SpotDisplayer {
 			wholeTrackOverlays.put(track, new TrackOverlay(trackColors.get(track)));
 		
 		Spot source, target;
-		Set<DefaultEdge> edges = trackGraph.edgeSet();
+		Set<DefaultWeightedEdge> edges = trackGraph.edgeSet();
 		int frame;
-		for (DefaultEdge edge : edges) {
+		for (DefaultWeightedEdge edge : edges) {
 			source = trackGraph.getEdgeSource(edge);
 			target = trackGraph.getEdgeTarget(edge);
 			// Find to what frame it belongs to

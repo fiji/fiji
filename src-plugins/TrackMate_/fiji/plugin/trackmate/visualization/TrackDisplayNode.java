@@ -19,7 +19,7 @@ import javax.vecmath.Color3f;
 import javax.vecmath.Color4f;
 import javax.vecmath.Tuple3d;
 
-import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import customnode.CustomTriangleMesh;
@@ -30,7 +30,7 @@ public class TrackDisplayNode extends ContentNode {
 	private static final int DEFAULT_PARALLEL_NUMBER = 12;
 
 	/** The graph containing the connectivity. */
-	protected SimpleWeightedGraph<Spot, DefaultEdge> graph;
+	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph;
 	/** The spots indexed by frame. */
 	protected TreeMap<Integer, List<Spot>> spots;
 	/** The list of tracks. */
@@ -59,7 +59,7 @@ public class TrackDisplayNode extends ContentNode {
 	 */
 	
 	public TrackDisplayNode(
-			SimpleWeightedGraph<Spot, DefaultEdge> graph, 
+			SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph, 
 			TreeMap<Integer, List<Spot>> spots, 
 			List<Set<Spot>> tracks, 
 			Map<Set<Spot>, Color4f> colors, 
@@ -84,7 +84,7 @@ public class TrackDisplayNode extends ContentNode {
 	private void makeMeshes() {
 		
 		// Loop over tracks
-		Set<DefaultEdge> allEdges;
+		Set<DefaultWeightedEdge> allEdges;
 		Spot target;
 		CustomTriangleMesh mesh;
 		
@@ -115,7 +115,7 @@ public class TrackDisplayNode extends ContentNode {
 				
 				// Create a tube from this spot to its targets - next in time
 				allEdges = graph.edgesOf(source);
-				for(DefaultEdge edge : allEdges) {
+				for(DefaultWeightedEdge edge : allEdges) {
 					target = graph.getEdgeTarget(edge);
 					// Skip spots that are previous in time
 					if (target.diffTo(source, Feature.POSITION_T) <= 0)

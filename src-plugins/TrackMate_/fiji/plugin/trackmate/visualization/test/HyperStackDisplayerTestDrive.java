@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.TreeMap;
 
 import org.jdom.JDOMException;
-import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Settings;
@@ -32,7 +32,7 @@ public class HyperStackDisplayerTestDrive {
 
 		TreeMap<Integer, List<Spot>> spots = reader.getAllSpots();
 		TreeMap<Integer, List<Spot>> selectedSpots = reader.getSpotSelection(spots);
-		SimpleWeightedGraph<Spot, DefaultEdge> trackGraph = reader.getTracks(selectedSpots);
+		SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph = reader.getTracks(selectedSpots);
 		Settings settings = reader.getSettings();
 		ImagePlus imp = reader.getImage();
 		settings.imp = imp;

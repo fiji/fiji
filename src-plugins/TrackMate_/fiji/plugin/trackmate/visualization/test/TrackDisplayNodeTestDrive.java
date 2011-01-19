@@ -16,7 +16,7 @@ import javax.vecmath.Point4f;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.alg.ConnectivityInspector;
-import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Feature;
@@ -40,7 +40,7 @@ public class TrackDisplayNodeTestDrive {
 		Spot[] spots = new Spot[N_BLOBS];
 		ArrayList<Spot>	 alSpot;
 		TreeMap<Integer, List<Spot>> timeSpots = new TreeMap<Integer, List<Spot>>();
-		SimpleWeightedGraph<Spot, DefaultEdge> graph = new SimpleWeightedGraph<Spot, DefaultEdge>(DefaultEdge.class);
+		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		TreeMap<Integer, ContentInstant> spotInstants = new TreeMap<Integer, ContentInstant>();
 		Color4f color;
 		Point4f center;
@@ -93,7 +93,7 @@ public class TrackDisplayNodeTestDrive {
 
 		
 		// Track content
-		List<Set<Spot>> tracks = new ConnectivityInspector<Spot, DefaultEdge>(graph).connectedSets();
+		List<Set<Spot>> tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets();
 		int ntracks = tracks.size();
 		HashMap<Set<Spot>, Color4f> trackColors = new HashMap<Set<Spot>, Color4f>(tracks.size());
 

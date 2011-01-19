@@ -14,7 +14,7 @@ import mpicbg.imglib.util.Util;
 import org.jdom.DataConversionException;
 import org.jdom.JDOMException;
 import org.jgrapht.alg.ConnectivityInspector;
-import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Feature;
@@ -100,8 +100,8 @@ public class LAPTrackerTestDrive {
 		System.out.println();
 		System.out.println();
 		System.out.println();
-		SimpleWeightedGraph<Spot,DefaultEdge> graph = lap.getTrackGraph();
-		ConnectivityInspector<Spot, DefaultEdge> inspector = new ConnectivityInspector<Spot, DefaultEdge>(graph);
+		SimpleWeightedGraph<Spot,DefaultWeightedEdge> graph = lap.getTrackGraph();
+		ConnectivityInspector<Spot, DefaultWeightedEdge> inspector = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph);
 		List<Set<Spot>> tracks = inspector.connectedSets();
 		System.out.println("Found " + tracks.size() + " final tracks:");
 		System.out.println();

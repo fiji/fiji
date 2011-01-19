@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeMap;
 
-import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Logger;
@@ -17,7 +17,7 @@ public abstract class AbstractSpotTracker implements SpotTracker {
 	/** Logger used to echo progress on tracking. */
 	protected Logger logger = Logger.DEFAULT_LOGGER;
 	/** Store the whole track connections as a graph. */
-	protected SimpleWeightedGraph<Spot, DefaultEdge> trackGraph = new SimpleWeightedGraph<Spot, DefaultEdge>(DefaultEdge.class);
+	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 	/** 
 	 * Store the track segments computed during step (1) of the algorithm. 
 	 * <p>
@@ -56,7 +56,7 @@ public abstract class AbstractSpotTracker implements SpotTracker {
 
 
 	@Override
-	public SimpleWeightedGraph<Spot,DefaultEdge> getTrackGraph() {
+	public SimpleWeightedGraph<Spot,DefaultWeightedEdge> getTrackGraph() {
 		return trackGraph;
 	}
 

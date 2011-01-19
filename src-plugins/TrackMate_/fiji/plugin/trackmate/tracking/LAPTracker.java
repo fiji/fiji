@@ -8,7 +8,7 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
 
 import fiji.plugin.trackmate.Feature;
@@ -422,7 +422,7 @@ public class LAPTracker extends AbstractSpotTracker {
 		final AssignmentAlgorithm solver = new HungarianAlgorithm();
 		// Iterate properly over frame pair in order, not necessarily separated by 1.
 		Iterator<Integer> frameIterator = spots.keySet().iterator(); 
-		DefaultEdge edge;
+		DefaultWeightedEdge edge;
 		int frame0 = frameIterator.next();
 		int frame1;
 		double weight;
@@ -488,12 +488,12 @@ public class LAPTracker extends AbstractSpotTracker {
 			spotPool.addAll(spots.get(frame)); // frame info lost
 
 		Spot source, current;
-		DepthFirstIterator<Spot, DefaultEdge> graphIterator;
+		DepthFirstIterator<Spot, DefaultWeightedEdge> graphIterator;
 		SortedSet<Spot> trackSegment = null;
 
 		while (!spotPool.isEmpty()) {
 			source = spotPool.iterator().next();
-			graphIterator = new DepthFirstIterator<Spot, DefaultEdge>(trackGraph, source); // restricted to connected components
+			graphIterator = new DepthFirstIterator<Spot, DefaultWeightedEdge>(trackGraph, source); // restricted to connected components
 			trackSegment = new TreeSet<Spot>(Spot.frameComparator);
 
 			while(graphIterator.hasNext()) {
@@ -522,7 +522,7 @@ public class LAPTracker extends AbstractSpotTracker {
 		final int numTrackSegments = trackSegments.size();
 		final int numMergingMiddlePoints = mergingMiddlePoints.size();
 		final int numSplittingMiddlePoints = splittingMiddlePoints.size();
-		DefaultEdge edge;
+		DefaultWeightedEdge edge;
 		double weight;
 
 		if(DEBUG)  {

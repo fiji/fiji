@@ -5,7 +5,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.TreeMap;
 
-import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.features.FeatureFacade;
@@ -68,12 +68,12 @@ public interface TrackMateModelInterface {
 	 * TRACKS
 	 */
 
-	public SimpleWeightedGraph<Spot, DefaultEdge> getTrackGraph();
+	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> getTrackGraph();
 
 	/**
 	 * Overwrite the {@link #trackGraph} field, resulting from the tracking step.
 	 */
-	public void setTrackGraph(SimpleWeightedGraph<Spot, DefaultEdge> trackGraph);
+	public void setTrackGraph(SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph);
 
 	/*
 	 * LOGGER

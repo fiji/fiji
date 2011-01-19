@@ -44,7 +44,7 @@ import org.jgraph.graph.PortView;
 import org.jgrapht.Graph;
 import org.jgrapht.ext.JGraphModelAdapter;
 import org.jgrapht.ext.JGraphModelAdapter.CellFactory;
-import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.ListenableUndirectedWeightedGraph;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
@@ -86,7 +86,7 @@ public class TrackSchemeFrame extends JFrame {
 		private TreeSet<Float> instants;
 		private int[] columnWidths = null;
 
-		public GraphPane(Graph<Spot, DefaultEdge> graph) {
+		public GraphPane(Graph<Spot, DefaultWeightedEdge> graph) {
 			super();
 			setBackground(BACKGROUND_COLOR_1);
 
@@ -152,18 +152,18 @@ public class TrackSchemeFrame extends JFrame {
 	 */
 
 
-	private SimpleWeightedGraph<Spot, DefaultEdge> trackGraph;
-	private JGraphModelAdapter<Spot, DefaultEdge> jGMAdapter;
-	private ListenableUndirectedWeightedGraph<Spot, DefaultEdge> lGraph;
+	private SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph;
+	private JGraphModelAdapter<Spot, DefaultWeightedEdge> jGMAdapter;
+	private ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge> lGraph;
 	private JGraph jGraph;
 
 	/*
 	 * CONSTRUCTORS
 	 */
 
-	public TrackSchemeFrame(SimpleWeightedGraph<Spot, DefaultEdge> trackGraph) {
+	public TrackSchemeFrame(SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph) {
 		this.trackGraph = trackGraph;
-		this.lGraph = new ListenableUndirectedWeightedGraph<Spot, DefaultEdge>(trackGraph);
+		this.lGraph = new ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge>(trackGraph);
 		this.jGraph = createGraph();
 		init();
 		setSize(DEFAULT_SIZE);
@@ -185,8 +185,8 @@ public class TrackSchemeFrame extends JFrame {
 		if (source instanceof SpotCell && target instanceof SpotCell) {
 			SpotCell s = (SpotCell) source;
 			SpotCell t = (SpotCell) target;
-			DefaultEdge e = lGraph.addEdge(s.getSpot(), t.getSpot());
-//			lGraph.setEdgeWeight(e, 1); // Default Weight			
+			DefaultWeightedEdge e = lGraph.addEdge(s.getSpot(), t.getSpot());
+			lGraph.setEdgeWeight(e, 1); // Default Weight			
 		} else {
 			System.out.println("Try to connect a "+source.getClass().getCanonicalName()+" with a "+target.getClass().getCanonicalName());// DEBUG
 		}
@@ -197,15 +197,15 @@ public class TrackSchemeFrame extends JFrame {
 	}
 	
 	private JGraph createGraph() {
-		jGMAdapter = new JGraphModelAdapter<Spot, DefaultEdge>(
+		jGMAdapter = new JGraphModelAdapter<Spot, DefaultWeightedEdge>(
 				lGraph,
 				JGraphModelAdapter.createDefaultVertexAttributes(), 
 				JGraphModelAdapter.createDefaultEdgeAttributes(lGraph),
-				new CellFactory<Spot, DefaultEdge>() {
+				new CellFactory<Spot, DefaultWeightedEdge>() {
 
 					@Override
-					public org.jgraph.graph.DefaultEdge createEdgeCell(DefaultEdge e) {
-						return new org.jgraph.graph.DefaultEdge("");				}
+					public org.jgraph.graph.DefaultEdge createEdgeCell(DefaultWeightedEdge e) {
+						return new org.jgraph.graph.DefaultEdge(""+lGraph.getEdgeWeight(e));				}
 
 					@Override
 					public DefaultGraphCell createVertexCell(Spot s) {

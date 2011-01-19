@@ -16,7 +16,7 @@ import java.util.TreeMap;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
 
-import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 
@@ -40,7 +40,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 	/** Contain the Spot retained for tracking, after thresholding by features. */
 	private TreeMap<Integer,List<Spot>> selectedSpots = new TreeMap<Integer, List<Spot>>();
 	/** The tracks as a graph. */
-	private SimpleWeightedGraph<Spot, DefaultEdge> trackGraph;
+	private SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph;
 
 	private Logger logger = Logger.DEFAULT_LOGGER;
 	private Settings settings;
@@ -177,7 +177,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 	 */
 	
 	@Override
-	public SimpleWeightedGraph<Spot,DefaultEdge> getTrackGraph() {
+	public SimpleWeightedGraph<Spot,DefaultWeightedEdge> getTrackGraph() {
 		return trackGraph;
 	}
 	
@@ -233,7 +233,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 	}
 	
 	@Override
-	public void setTrackGraph(SimpleWeightedGraph<Spot, DefaultEdge> trackGraph) {
+	public void setTrackGraph(SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph) {
 		this.trackGraph = trackGraph;
 	}
 

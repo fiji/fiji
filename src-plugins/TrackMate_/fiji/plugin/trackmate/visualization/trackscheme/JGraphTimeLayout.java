@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
+import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.DEFAULT_CELL_HEIGHT;
 import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.DEFAULT_CELL_WIDTH;
 import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.X_COLUMN_SIZE;
@@ -20,7 +21,7 @@ import org.jgraph.graph.GraphConstants;
 import org.jgrapht.UndirectedGraph;
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.ext.JGraphModelAdapter;
-import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
 
 import com.jgraph.layout.JGraphFacade;
@@ -34,9 +35,9 @@ public class JGraphTimeLayout implements JGraphLayout {
 
 	
 	
-	private UndirectedGraph<Spot, DefaultEdge> graph;
+	private UndirectedGraph<Spot, DefaultWeightedEdge> graph;
 	private List<Set<Spot>> tracks;
-	private JGraphModelAdapter<Spot, DefaultEdge> adapter;
+	private JGraphModelAdapter<Spot, DefaultWeightedEdge> adapter;
 	private int[] columnWidths;
 	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
 	/*
@@ -44,10 +45,10 @@ public class JGraphTimeLayout implements JGraphLayout {
 	 */
 	
 
-	public JGraphTimeLayout(UndirectedGraph<Spot, DefaultEdge> graph, JGraphModelAdapter<Spot, DefaultEdge> adapter) {
+	public JGraphTimeLayout(UndirectedGraph<Spot, DefaultWeightedEdge> graph, JGraphModelAdapter<Spot, DefaultWeightedEdge> adapter) {
 		this.graph = graph;
 		this.adapter = adapter;
-		this.tracks = new ConnectivityInspector<Spot, DefaultEdge>(graph).connectedSets();
+		this.tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets();
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -96,7 +97,7 @@ public class JGraphTimeLayout implements JGraphLayout {
 			sortedTrack.addAll(track);
 			Spot root = sortedTrack.first();
 			
-			DepthFirstIterator<Spot, DefaultEdge> iterator = new DepthFirstIterator<Spot, DefaultEdge>(graph, root);
+			DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = new DepthFirstIterator<Spot, DefaultWeightedEdge>(graph, root);
 			while (iterator.hasNext()) {
 				Spot spot = iterator.next();
 				
@@ -129,10 +130,9 @@ public class JGraphTimeLayout implements JGraphLayout {
 				
 				Object[] objEdges = graphFacade.getEdges(facadeTarget);
 				for(Object obj : objEdges) {
-//					org.jgraph.graph.DefaultEdge edge = (org.jgraph.graph.DefaultEdge) obj;
+//					org.jgraph.graph.DefaultWeightedEdge edge = (org.jgraph.graph.DefaultWeightedEdge) obj;
 					EdgeView eView = (EdgeView) graphFacade.getCellView(obj);
 					eView.getAttributes().put(GraphConstants.LINECOLOR, trackColor);
-					eView.getAttributes().put(GraphConstants.LINEWIDTH, 2f);
 				}
 			}
 		

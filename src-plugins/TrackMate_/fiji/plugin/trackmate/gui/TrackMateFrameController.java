@@ -22,7 +22,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.jdom.DataConversionException;
 import org.jdom.JDOMException;
-import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.FeatureThreshold;
@@ -587,7 +587,7 @@ public class TrackMateFrameController {
 		
 
 		{ // Try reading the tracks 
-			SimpleWeightedGraph<Spot, DefaultEdge> trackGraph = null; 
+			SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph = null; 
 			try {
 				trackGraph = reader.getTracks(newModel.getSelectedSpots());
 			} catch (DataConversionException e) {

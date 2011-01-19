@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.TreeMap;
 
 import org.jdom.JDOMException;
-import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Settings;
@@ -39,13 +39,13 @@ public class TrackVisualizerTestDrive {
 	
 	public static void main(String[] args) throws JDOMException, IOException {
 	
-		TmXmlReader reader = new TmXmlReader(CASE_3);
+		TmXmlReader reader = new TmXmlReader(CASE_2);
 		reader.parse();
 		
 		// Load objects 
 		TreeMap<Integer, List<Spot>> allSpots 		= reader.getAllSpots();
 		TreeMap<Integer, List<Spot>> selectedSpots 	= reader.getSpotSelection(allSpots);
-		SimpleWeightedGraph<Spot, DefaultEdge> tracks = reader.getTracks(selectedSpots);
+		SimpleWeightedGraph<Spot, DefaultWeightedEdge> tracks = reader.getTracks(selectedSpots);
 		ImagePlus imp = reader.getImage();
 		Settings settings = reader.getSettings();
 		settings.imp = imp;
