@@ -17,28 +17,26 @@ import fiji.plugin.trackmate.Spot;
 public class SpotView extends VertexView {
 
 	private static final long serialVersionUID = 1L;
-	private final Spot spot;
 	private Color color;
 
 
 	public SpotView(SpotCell spotCell) {
 		super();
-		this.spot  	= spotCell.getSpot();
 		this.cell 	= spotCell;
 	}
 	
 	public Spot getSpot() {
-		return spot;
+		return ((SpotCell) cell).getSpot();
 	}
 
 	
 	@Override
 	public Component getRendererComponent(JGraph graph, boolean selected, boolean focus, boolean preview) {
 		renderer.setHorizontalAlignment(SwingConstants.LEFT);
-		renderer.setIcon(spot.getIcon());
+		renderer.setIcon(getSpot().getIcon());
 		renderer.setBorder(new LineBorder(color, 1));
 		renderer.setFont(FONT);
-		String name = spot.getName();
+		String name = getSpot().getName();
 		if (name == null || name.equals(""))
 			name = "<no name>";
 		renderer.setText(name);

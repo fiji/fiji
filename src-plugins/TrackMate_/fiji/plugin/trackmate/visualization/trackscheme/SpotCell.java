@@ -2,7 +2,6 @@ package fiji.plugin.trackmate.visualization.trackscheme;
 
 import org.jgraph.graph.DefaultGraphCell;
 
-import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 
 public class SpotCell extends DefaultGraphCell {
@@ -11,6 +10,7 @@ public class SpotCell extends DefaultGraphCell {
 	private Spot spot;
 	
 	public SpotCell(Spot spot) {
+		super(spot);
 		this.spot = spot;
 	}
 	
@@ -20,6 +20,6 @@ public class SpotCell extends DefaultGraphCell {
 	
 	@Override
 	public String toString() {
-		return "t = " + spot.getFeature(Feature.POSITION_T);
+		return spot.getName();
 	}
 }

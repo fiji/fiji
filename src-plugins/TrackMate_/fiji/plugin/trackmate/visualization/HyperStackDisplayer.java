@@ -228,7 +228,7 @@ public class HyperStackDisplayer extends SpotDisplayer {
 		// Update diplayed frame
 		int z = Math.round(spot.getFeature(Feature.POSITION_Z) / calibration[2] ) + 1;
 		imp.setPosition(1, z, frame+1);
-		window.setPosition(1, z, frame+1);
+//		window.setPosition(1, z, frame+1);
 		imp.updateAndDraw();
 	}
 	

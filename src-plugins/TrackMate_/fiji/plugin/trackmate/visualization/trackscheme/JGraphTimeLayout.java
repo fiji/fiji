@@ -1,6 +1,5 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
-import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.DEFAULT_CELL_HEIGHT;
 import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.DEFAULT_CELL_WIDTH;
 import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.X_COLUMN_SIZE;

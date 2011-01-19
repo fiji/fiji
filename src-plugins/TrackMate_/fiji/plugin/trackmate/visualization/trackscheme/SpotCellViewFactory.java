@@ -12,7 +12,7 @@ import org.jgraph.graph.VertexView;
 public class SpotCellViewFactory extends DefaultCellViewFactory {
 
 	private static final long serialVersionUID = 1L;
-
+	private static final Color DEFAULT_COLOR = Color.MAGENTA;
 
 	/*
 	 * CONSTRUCTORS
@@ -39,6 +39,7 @@ public class SpotCellViewFactory extends DefaultCellViewFactory {
 		eView.getAttributes().put(GraphConstants.FOREGROUND, Color.BLACK);
 		eView.getAttributes().put(GraphConstants.LABELALONGEDGE, true);
 		eView.getAttributes().put(GraphConstants.LINEWIDTH, 2f);
+		eView.getAttributes().put(GraphConstants.LINECOLOR, DEFAULT_COLOR);
 		return eView;
 	}
 	

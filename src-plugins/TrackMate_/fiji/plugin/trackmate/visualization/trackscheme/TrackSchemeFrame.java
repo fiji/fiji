@@ -5,6 +5,7 @@ import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -30,11 +31,15 @@ import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
+import javax.swing.event.CellEditorListener;
+import javax.swing.event.ChangeEvent;
 
 import org.jgraph.JGraph;
+import org.jgraph.graph.AbstractCellView;
 import org.jgraph.graph.BasicMarqueeHandler;
 import org.jgraph.graph.CellView;
 import org.jgraph.graph.DefaultGraphCell;
+import org.jgraph.graph.DefaultGraphCellEditor;
 import org.jgraph.graph.EdgeView;
 import org.jgraph.graph.GraphConstants;
 import org.jgraph.graph.GraphContext;
@@ -175,6 +180,12 @@ public class TrackSchemeFrame extends JFrame {
 	 * PUBLIC METHODS
 	 */
 
+	/**
+	 * Return a reference to the {@link JGraph} in charge of rendering the track scheme.
+	 */
+	public JGraph getJGraph() {
+		return jGraph;
+	}
 
 
 	/*
@@ -218,6 +229,7 @@ public class TrackSchemeFrame extends JFrame {
 		GraphLayoutCache graphLayoutCache = new GraphLayoutCache(jGMAdapter, factory);		
 		MyGraph myGraph = new MyGraph(jGMAdapter, graphLayoutCache);
 		myGraph.setMarqueeHandler(new MyMarqueeHandler());
+		AbstractCellView.cellEditor = new MyGraphCellEditor();
 		return myGraph;
 
 	}
@@ -266,7 +278,7 @@ public class TrackSchemeFrame extends JFrame {
 	 * @return
 	 */
 	@SuppressWarnings("serial")
-	public JToolBar createToolBar() {
+	private JToolBar createToolBar() {
 		JToolBar toolbar = new JToolBar();
 		toolbar.setFloatable(false);
 		
@@ -323,7 +335,7 @@ public class TrackSchemeFrame extends JFrame {
 	 *  PopupMenu
 	 */
 	@SuppressWarnings("serial")
-	public JPopupMenu createPopupMenu(final Point pt, final Object cell) {
+	private JPopupMenu createPopupMenu(final Point pt, final Object cell) {
 		JPopupMenu menu = new JPopupMenu();
 		if (cell != null) {
 			// Edit
@@ -357,6 +369,37 @@ public class TrackSchemeFrame extends JFrame {
 	/*
 	 * INNER CLASSES
 	 */
+	
+	
+	@SuppressWarnings("serial")
+	public static class MyGraphCellEditor extends DefaultGraphCellEditor {
+		private Object target;
+		
+		public MyGraphCellEditor() {
+			addCellEditorListener(new CellEditorListener() {
+
+				@Override
+				public void editingStopped(ChangeEvent e) {
+					if (target instanceof SpotCell) {
+						SpotCell spotCell = (SpotCell) target;
+						spotCell.getSpot().setName(""+getCellEditorValue());
+					}
+				}
+
+				@Override
+				public void editingCanceled(ChangeEvent e) {}
+			});
+		}
+		
+		@Override
+		public Component getGraphCellEditorComponent(JGraph graph, Object cell, boolean isSelected) {
+			target = cell;
+			return super.getGraphCellEditorComponent(graph, cell, isSelected);
+		};
+		
+		
+	};
+
 	
 	/**
 	 * Defines a Graph that uses the Shift-Button (Instead of the Right
