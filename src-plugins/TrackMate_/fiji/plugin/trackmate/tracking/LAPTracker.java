@@ -421,9 +421,11 @@ public class LAPTracker extends AbstractSpotTracker {
 	public void solveLAPForTrackSegments() {
 		final AssignmentAlgorithm solver = new HungarianAlgorithm();
 		// Iterate properly over frame pair in order, not necessarily separated by 1.
-		Iterator<Integer> frameIterator = spots.keySet().iterator(); 		
+		Iterator<Integer> frameIterator = spots.keySet().iterator(); 
+		DefaultEdge edge;
 		int frame0 = frameIterator.next();
 		int frame1;
+		double weight;
 		while(frameIterator.hasNext()) { // ascending order
 
 			double[][] costMatrix = linkingCosts.get(frame0);
@@ -441,7 +443,11 @@ public class LAPTracker extends AbstractSpotTracker {
 					// Solution belong to the upper-left quadrant: we can connect the spots
 					Spot s0 = t0.get(i0);
 					Spot s1 = t1.get(i1);
-					trackGraph.addEdge(s0, s1);
+					edge = trackGraph.addEdge(s0, s1);
+					// We set the edge weight to be the linking cost, for future reference. 
+					// This is NOT used in further tracking steps
+					weight = costMatrix[i0][i1]; 
+					trackGraph.setEdgeWeight(edge, weight);
 				} // otherwise we do not create any connection
 			}
 
@@ -516,6 +522,8 @@ public class LAPTracker extends AbstractSpotTracker {
 		final int numTrackSegments = trackSegments.size();
 		final int numMergingMiddlePoints = mergingMiddlePoints.size();
 		final int numSplittingMiddlePoints = splittingMiddlePoints.size();
+		DefaultEdge edge;
+		double weight;
 
 		if(DEBUG)  {
 			System.out.println("-- DEBUG information from LAPTracker --");
@@ -534,7 +542,10 @@ public class LAPTracker extends AbstractSpotTracker {
 					SortedSet<Spot> segmentStart = trackSegments.get(j);
 					Spot end = segmentEnd.last();
 					Spot start = segmentStart.first();
-					trackGraph.addEdge(end, start);
+					edge = trackGraph.addEdge(end, start);
+					// Set weight to be the linking cost
+					weight = segmentCosts[i][j];
+					trackGraph.setEdgeWeight(edge, weight);
 
 					if(DEBUG) 
 						System.out.println("Gap closing from segment "+i+" to segment "+j+".");
@@ -545,7 +556,11 @@ public class LAPTracker extends AbstractSpotTracker {
 					SortedSet<Spot> segmentEnd = trackSegments.get(i);
 					Spot end =  segmentEnd.last();
 					Spot middle = mergingMiddlePoints.get(j - numTrackSegments);
-					trackGraph.addEdge(end, middle);
+					edge = trackGraph.addEdge(end, middle);
+					// Set weight to be the linking cost
+					weight = segmentCosts[i][j];
+					trackGraph.setEdgeWeight(edge, weight);
+
 
 					if(DEBUG) {
 						SortedSet<Spot> track = null;
@@ -596,7 +611,11 @@ public class LAPTracker extends AbstractSpotTracker {
 					// Create link
 					*/
 					Spot target = mother;
-					trackGraph.addEdge(start, target);
+					edge = trackGraph.addEdge(start, target);
+					// Set weight to be the linking cost
+					weight = segmentCosts[i][j];
+					trackGraph.setEdgeWeight(edge, weight);
+
 
 					if(DEBUG) {
 						SortedSet<Spot> track = null;
