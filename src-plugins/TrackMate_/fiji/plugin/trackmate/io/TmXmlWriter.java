@@ -18,7 +18,7 @@ import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.SimpleGraph;
+import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.FeatureThreshold;
@@ -237,7 +237,7 @@ public class TmXmlWriter implements TmXmlKeys {
 	}
 	
 	private void echoTracks() {
-		SimpleGraph<Spot, DefaultEdge> trackGraph = model.getTrackGraph();
+		SimpleWeightedGraph<Spot, DefaultEdge> trackGraph = model.getTrackGraph();
 		if (null == trackGraph)
 			return;
 		

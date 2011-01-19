@@ -16,7 +16,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.SimpleGraph;
+import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
@@ -290,7 +290,7 @@ public class HyperStackDisplayer extends SpotDisplayer {
 	}
 		
 	@Override
-	public void setTrackGraph(SimpleGraph<Spot, DefaultEdge> trackGraph) {
+	public void setTrackGraph(SimpleWeightedGraph<Spot, DefaultEdge> trackGraph) {
 		super.setTrackGraph(trackGraph);
 		prepareWholeTrackOverlay();
 	}

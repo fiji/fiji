@@ -45,8 +45,8 @@ import org.jgrapht.Graph;
 import org.jgrapht.ext.JGraphModelAdapter;
 import org.jgrapht.ext.JGraphModelAdapter.CellFactory;
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.ListenableUndirectedGraph;
-import org.jgrapht.graph.SimpleGraph;
+import org.jgrapht.graph.ListenableUndirectedWeightedGraph;
+import org.jgrapht.graph.SimpleWeightedGraph;
 
 import com.jgraph.layout.JGraphFacade;
 
@@ -152,18 +152,18 @@ public class TrackSchemeFrame extends JFrame {
 	 */
 
 
-	private SimpleGraph<Spot, DefaultEdge> trackGraph;
+	private SimpleWeightedGraph<Spot, DefaultEdge> trackGraph;
 	private JGraphModelAdapter<Spot, DefaultEdge> jGMAdapter;
-	private ListenableUndirectedGraph<Spot, DefaultEdge> lGraph;
+	private ListenableUndirectedWeightedGraph<Spot, DefaultEdge> lGraph;
 	private JGraph jGraph;
 
 	/*
 	 * CONSTRUCTORS
 	 */
 
-	public TrackSchemeFrame(SimpleGraph<Spot, DefaultEdge> trackGraph) {
+	public TrackSchemeFrame(SimpleWeightedGraph<Spot, DefaultEdge> trackGraph) {
 		this.trackGraph = trackGraph;
-		this.lGraph = new ListenableUndirectedGraph<Spot, DefaultEdge>(trackGraph);
+		this.lGraph = new ListenableUndirectedWeightedGraph<Spot, DefaultEdge>(trackGraph);
 		this.jGraph = createGraph();
 		init();
 		setSize(DEFAULT_SIZE);

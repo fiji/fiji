@@ -20,7 +20,7 @@ import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.SimpleGraph;
+import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.FeatureThreshold;
@@ -290,19 +290,19 @@ public class TmXmlReader implements TmXmlKeys {
 	 * Return the {@link Graph} mapping spot linking as tracks. The graph vertices are made of the selected spot
 	 * list given in argument. Edges are formed from the file data.
 	 * @param selectedSpots  the spot selection from which tracks area made 
-	 * @return  a {@link SimpleGraph} encompassing spot linking, or <code>null</code> if the track section does is
+	 * @return  a {@link SimpleWeightedGraph} encompassing spot linking, or <code>null</code> if the track section does is
 	 * not present in the file.
 	 * @throws DataConversionException  if the attribute values are not formatted properly in the file.
 	 */
 	@SuppressWarnings("unchecked")
-	public SimpleGraph<Spot, DefaultEdge> getTracks(TreeMap<Integer, List<Spot>> selectedSpots) throws DataConversionException {
+	public SimpleWeightedGraph<Spot, DefaultEdge> getTracks(TreeMap<Integer, List<Spot>> selectedSpots) throws DataConversionException {
 		
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
 		if (null == allTracksElement)
 			return null;
 		
 		// Add all spots to the graph
-		SimpleGraph<Spot, DefaultEdge> trackGraph = new SimpleGraph<Spot, DefaultEdge>(DefaultEdge.class);
+		SimpleWeightedGraph<Spot, DefaultEdge> trackGraph = new SimpleWeightedGraph<Spot, DefaultEdge>(DefaultEdge.class);
 		for(int frame : selectedSpots.keySet())
 			for(Spot spot : selectedSpots.get(frame))
 				trackGraph.addVertex(spot);		

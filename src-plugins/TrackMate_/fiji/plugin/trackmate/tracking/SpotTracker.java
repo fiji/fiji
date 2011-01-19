@@ -1,7 +1,7 @@
 package fiji.plugin.trackmate.tracking;
 
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.SimpleGraph;
+import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
@@ -19,7 +19,7 @@ public interface SpotTracker extends Algorithm {
 	/**
 	 * Returns the final tracks computed, as a directed Graph of spots.
 	 */
-	public SimpleGraph<Spot, DefaultEdge> getTrackGraph();
+	public SimpleWeightedGraph<Spot, DefaultEdge> getTrackGraph();
 
 	/**
 	 * Set the logger used to echo log messages.

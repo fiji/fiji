@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.TreeMap;
 
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.SimpleGraph;
+import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.features.FeatureFacade;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
@@ -68,12 +68,12 @@ public interface TrackMateModelInterface {
 	 * TRACKS
 	 */
 
-	public SimpleGraph<Spot, DefaultEdge> getTrackGraph();
+	public SimpleWeightedGraph<Spot, DefaultEdge> getTrackGraph();
 
 	/**
 	 * Overwrite the {@link #trackGraph} field, resulting from the tracking step.
 	 */
-	public void setTrackGraph(SimpleGraph<Spot, DefaultEdge> trackGraph);
+	public void setTrackGraph(SimpleWeightedGraph<Spot, DefaultEdge> trackGraph);
 
 	/*
 	 * LOGGER
@@ -148,7 +148,7 @@ public interface TrackMateModelInterface {
 	 * Execute the tracking part.
 	 * <p>
 	 * This method links all the selected spots from the thresholding part using the selected tracking algorithm.
-	 * This tracking process will generate a graph (more precisely a {@link SimpleGraph}) made of the spot 
+	 * This tracking process will generate a graph (more precisely a {@link SimpleWeightedGraph}) made of the spot 
 	 * election for its vertices, and edges representing the links.
 	 * @see #getTrackGraph()
 	 */ 

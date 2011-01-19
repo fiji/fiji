@@ -15,7 +15,7 @@ import javax.vecmath.Color4f;
 import javax.vecmath.Point4f;
 
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.SimpleGraph;
+import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
@@ -122,7 +122,7 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	}
 	
 	@Override
-	public void setTrackGraph(SimpleGraph<Spot, DefaultEdge> trackGraph) {
+	public void setTrackGraph(SimpleWeightedGraph<Spot, DefaultEdge> trackGraph) {
 		super.setTrackGraph(trackGraph);
 		if (universe.contains(TRACK_CONTENT_NAME))
 			universe.removeContent(TRACK_CONTENT_NAME);

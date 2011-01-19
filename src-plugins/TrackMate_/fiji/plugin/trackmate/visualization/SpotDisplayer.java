@@ -15,7 +15,7 @@ import java.util.TreeMap;
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.SimpleGraph;
+import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
@@ -138,7 +138,7 @@ public abstract class SpotDisplayer {
 	
 	/** The track collections emanating from tracking. They are represented as a graph of Spot,
 	 * which must be the same objects as for {@link #spots}. */
-	protected SimpleGraph<Spot, DefaultEdge> trackGraph;
+	protected SimpleWeightedGraph<Spot, DefaultEdge> trackGraph;
 	/** The individual tracks contained in the {@link #trackGraph}. */ 
 	protected List<Set<Spot>> tracks;
 	/** The track colors. */
@@ -220,7 +220,7 @@ public abstract class SpotDisplayer {
 	/**
 	 * Set the track to be displayed in this displayer.
 	 */
-	public void setTrackGraph(SimpleGraph<Spot, DefaultEdge> trackGraph) {
+	public void setTrackGraph(SimpleWeightedGraph<Spot, DefaultEdge> trackGraph) {
 		this.trackGraph = trackGraph;
 		this.tracks = new ConnectivityInspector<Spot, DefaultEdge>(trackGraph).connectedSets();
 		this.trackColors = new HashMap<Set<Spot>, Color>(tracks.size());

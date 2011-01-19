@@ -20,7 +20,7 @@ import javax.vecmath.Color4f;
 import javax.vecmath.Tuple3d;
 
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.SimpleGraph;
+import org.jgrapht.graph.SimpleWeightedGraph;
 
 import customnode.CustomTriangleMesh;
 import customnode.MeshMaker;
@@ -30,7 +30,7 @@ public class TrackDisplayNode extends ContentNode {
 	private static final int DEFAULT_PARALLEL_NUMBER = 12;
 
 	/** The graph containing the connectivity. */
-	protected SimpleGraph<Spot, DefaultEdge> graph;
+	protected SimpleWeightedGraph<Spot, DefaultEdge> graph;
 	/** The spots indexed by frame. */
 	protected TreeMap<Integer, List<Spot>> spots;
 	/** The list of tracks. */
@@ -59,7 +59,7 @@ public class TrackDisplayNode extends ContentNode {
 	 */
 	
 	public TrackDisplayNode(
-			SimpleGraph<Spot, DefaultEdge> graph, 
+			SimpleWeightedGraph<Spot, DefaultEdge> graph, 
 			TreeMap<Integer, List<Spot>> spots, 
 			List<Set<Spot>> tracks, 
 			Map<Set<Spot>, Color4f> colors, 

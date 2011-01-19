@@ -5,8 +5,6 @@ import ij.gui.NewImage;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -25,7 +23,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.jdom.DataConversionException;
 import org.jdom.JDOMException;
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.SimpleGraph;
+import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.FeatureThreshold;
 import fiji.plugin.trackmate.Logger;
@@ -42,9 +40,7 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.DisplayerType;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
-import fiji.plugin.trackmate.visualization.trackscheme.SpotCell;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotIconGrabber;
-import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 public class TrackMateFrameController {
 
@@ -591,7 +587,7 @@ public class TrackMateFrameController {
 		
 
 		{ // Try reading the tracks 
-			SimpleGraph<Spot, DefaultEdge> trackGraph = null; 
+			SimpleWeightedGraph<Spot, DefaultEdge> trackGraph = null; 
 			try {
 				trackGraph = reader.getTracks(newModel.getSelectedSpots());
 			} catch (DataConversionException e) {
