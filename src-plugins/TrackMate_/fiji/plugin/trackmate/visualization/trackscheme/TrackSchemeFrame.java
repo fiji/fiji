@@ -17,24 +17,44 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 
 import javax.swing.AbstractAction;
+import javax.swing.AbstractListModel;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTable;
+import javax.swing.JTextPane;
 import javax.swing.JToolBar;
+import javax.swing.ListCellRenderer;
+import javax.swing.ListModel;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 
 import org.jgraph.JGraph;
+import org.jgraph.event.GraphSelectionEvent;
+import org.jgraph.event.GraphSelectionListener;
 import org.jgraph.graph.AbstractCellView;
 import org.jgraph.graph.BasicMarqueeHandler;
 import org.jgraph.graph.CellView;
@@ -70,12 +90,16 @@ public class TrackSchemeFrame extends JFrame {
 	public static final int DEFAULT_CELL_WIDTH = 130;
 	public static final int DEFAULT_CELL_HEIGHT = 80;
 
-
 	private static final long serialVersionUID = 1L;
-	private static final Dimension DEFAULT_SIZE = new Dimension(530, 320);
+	private static final Dimension DEFAULT_SIZE = new Dimension(800, 600);
 	private static final Color BACKGROUND_COLOR_1 = Color.GRAY;
 	private static final Color BACKGROUND_COLOR_2 = Color.LIGHT_GRAY;
 	private static final Color LINE_COLOR = Color.BLACK;
+	private static final int TABLE_CELL_WIDTH 		= 40;
+	private static final int TABLE_ROW_HEADER_WIDTH = 50;
+	private static final Color GRID_COLOR = Color.GRAY;
+
+
 
 	/*
 	 * INNER CLASSES
@@ -152,6 +176,132 @@ public class TrackSchemeFrame extends JFrame {
 	}
 
 
+	@SuppressWarnings("serial")
+	private class InfoPane extends JPanel {
+
+		private class RowHeaderRenderer extends JLabel implements ListCellRenderer {
+
+			RowHeaderRenderer(JTable table) {
+				JTableHeader header = table.getTableHeader();
+				setOpaque(false);
+				setBorder(UIManager.getBorder("TableHeader.cellBorder"));
+				setForeground(header.getForeground());
+				setBackground(header.getBackground());
+				setFont(SMALL_FONT.deriveFont(9.0f));
+				setHorizontalAlignment(SwingConstants.LEFT);				
+			}
+
+			public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+				setText((value == null) ? "" : value.toString());
+				return this;
+			}
+		}
+		
+		private JTextPane textPane;
+		private JTable table;
+		private JScrollPane scrollTable;
+
+		public InfoPane() {
+			init();
+		}
+
+		public void echo(Set<Spot> spots) {
+			// Fill feature table
+			DefaultTableModel dm = new DefaultTableModel() { // Un-editable model
+				@Override
+				public boolean isCellEditable(int row, int column) { return false; }
+			};
+			for (Spot spot : spots) {
+				Object[] columnData = new Object[Feature.values().length];
+				for (int i = 0; i < columnData.length; i++) 
+					columnData[i] = String.format("%.1f", spot.getFeature(Feature.values()[i]));
+				dm.addColumn(spot.getName(), columnData);
+			}
+			table.setModel(dm);
+			// Tune look
+			
+			DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer() {
+				public boolean isOpaque() { return false; };
+				@Override
+				public Color getBackground() {
+					return Color.BLUE;
+				}
+			};
+			headerRenderer.setBackground(Color.RED);
+			
+			
+			DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
+			renderer.setOpaque(false);
+			renderer.setHorizontalAlignment(SwingConstants.RIGHT);
+			renderer.setFont(SMALL_FONT);			
+			for(int i=0; i<table.getColumnCount(); i++) {
+				table.setDefaultRenderer(table.getColumnClass(i), renderer);
+				table.getColumnModel().getColumn(i).setPreferredWidth(TABLE_CELL_WIDTH);
+			}
+			for (Component c : scrollTable.getColumnHeader().getComponents())
+				c.setBackground(getBackground());
+			scrollTable.getColumnHeader().setOpaque(false);
+			
+			// Set text
+			textPane.setText("Selection:");
+		}
+
+		private void init() {
+
+			AbstractListModel lm = new AbstractListModel() {
+				String headers[] = new String[Feature.values().length];
+				{
+					for(int i=0; i<headers.length; i++)
+						headers[i] = Feature.values()[i].shortName();			    	  
+				}
+
+				public int getSize() {
+					return headers.length;
+				}
+
+				public Object getElementAt(int index) {
+					return headers[index];
+				}
+			};
+
+			table = new JTable();
+			table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+			table.setOpaque(false);
+			table.setFont(SMALL_FONT);
+			table.setPreferredScrollableViewportSize(new Dimension(120, 400));
+			table.getTableHeader().setOpaque(false);
+			table.setSelectionForeground(Color.YELLOW.darker());
+			table.setGridColor(GRID_COLOR);
+
+			
+			JList rowHeader = new JList(lm);
+			rowHeader.setFixedCellWidth(TABLE_ROW_HEADER_WIDTH);
+			rowHeader.setFixedCellHeight(table.getRowHeight());
+			rowHeader.setCellRenderer(new RowHeaderRenderer(table));
+			rowHeader.setBackground(getBackground());
+			
+			scrollTable = new JScrollPane(table);
+			scrollTable.setRowHeaderView(rowHeader);
+			scrollTable.getRowHeader().setOpaque(false);
+			scrollTable.setOpaque(false);
+			scrollTable.getViewport().setOpaque(false);
+
+			textPane = new JTextPane();
+			textPane.setCaretPosition(0);
+//			StyledDocument styledDoc = textPane.getStyledDocument();
+			textPane.setEditable(false);
+			textPane.setOpaque(false);
+			textPane.setFont(SMALL_FONT);
+			
+			setLayout(new BorderLayout());
+			add(textPane, BorderLayout.NORTH);
+			add(scrollTable, BorderLayout.CENTER);
+			
+			scrollTable.setVisible(false);
+		}
+		
+	}
+	
 	/*
 	 * FIELDS
 	 */
@@ -161,6 +311,7 @@ public class TrackSchemeFrame extends JFrame {
 	private JGraphModelAdapter<Spot, DefaultWeightedEdge> jGMAdapter;
 	private ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge> lGraph;
 	private JGraph jGraph;
+	private InfoPane infoPane;
 
 	/*
 	 * CONSTRUCTORS
@@ -263,8 +414,39 @@ public class TrackSchemeFrame extends JFrame {
 		JScrollPane scrollPane = new JScrollPane(backPane);
 		scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 		scrollPane.getHorizontalScrollBar().setUnitIncrement(16);
+		
+		// Add the info pane
+		infoPane = new InfoPane();
+		
+		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, infoPane, scrollPane);
+		splitPane.setDividerLocation(120);
+		getContentPane().add(splitPane, BorderLayout.CENTER);
 
-		getContentPane().add(scrollPane, BorderLayout.CENTER);
+		// Listeners
+		jGraph.addGraphSelectionListener(new GraphSelectionListener() {
+			Set<Spot> spots = new HashSet<Spot>();
+
+			@Override
+			public void valueChanged(GraphSelectionEvent e) {
+				Object[] cells = e.getCells();
+				for(Object cell : cells) {
+					if (cell instanceof SpotCell) {
+						SpotCell spotCell = (SpotCell) cell;
+						if (e.isAddedCell(cell)) {
+							spots.add(spotCell.getSpot());
+						} else {
+							spots.remove(spotCell.getSpot());
+						}
+					}
+					infoPane.echo(spots);
+				}
+				if (spots.isEmpty())
+					infoPane.scrollTable.setVisible(false);
+				else
+					infoPane.scrollTable.setVisible(true);
+			}
+		});
+
 	}
 	
 	/**

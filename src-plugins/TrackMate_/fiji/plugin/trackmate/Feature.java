@@ -87,5 +87,64 @@ public enum Feature {
 			return null;
 		}
 	}
+	
+	public String shortName() {
+		switch(this) {
+		case CONTRAST:
+			return "Contrast";
+		case ELLIPSOIDFIT_AXISPHI_A:
+			return "φa";
+		case ELLIPSOIDFIT_AXISPHI_B:
+			return "φb";
+		case ELLIPSOIDFIT_AXISPHI_C:
+			return "φc";
+		case ELLIPSOIDFIT_AXISTHETA_A:
+			return "θb";
+		case ELLIPSOIDFIT_AXISTHETA_B:
+			return "θb";
+		case ELLIPSOIDFIT_AXISTHETA_C:
+			return "θc";
+		case ELLIPSOIDFIT_SEMIAXISLENGTH_A:
+			return "la";
+		case ELLIPSOIDFIT_SEMIAXISLENGTH_B:
+			return "lb";
+		case ELLIPSOIDFIT_SEMIAXISLENGTH_C:
+			return "lc";
+		case ESTIMATED_DIAMETER:
+			return "Diam.";
+		case KURTOSIS:
+			return "Kurtosis";
+		case MAX_INTENSITY:
+			return "Max";
+		case MEAN_INTENSITY:
+			return "Mean";
+		case MEDIAN_INTENSITY:
+			return "Median";
+		case MIN_INTENSITY:
+			return "Min";
+		case MORPHOLOGY:
+			return "Morpho.";
+		case POSITION_T:
+			return "T";
+		case POSITION_X:
+			return "X";
+		case POSITION_Y:
+			return "Y";
+		case POSITION_Z:
+			return "Z";
+		case QUALITY:
+			return "Quality";
+		case SKEWNESS:
+			return "Skewness";
+		case STANDARD_DEVIATION:
+			return "Stdev.";
+		case TOTAL_INTENSITY:
+			return "Total int.";
+		case VARIANCE:
+			return "Var.";
+		default:
+			return null;
+		}
+	}
 
 }
