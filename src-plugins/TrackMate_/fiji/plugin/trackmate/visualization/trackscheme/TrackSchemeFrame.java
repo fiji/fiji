@@ -17,9 +17,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -40,12 +38,10 @@ import javax.swing.JTable;
 import javax.swing.JTextPane;
 import javax.swing.JToolBar;
 import javax.swing.ListCellRenderer;
-import javax.swing.ListModel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
-import javax.swing.border.LineBorder;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -60,13 +56,14 @@ import org.jgraph.graph.BasicMarqueeHandler;
 import org.jgraph.graph.CellView;
 import org.jgraph.graph.DefaultGraphCell;
 import org.jgraph.graph.DefaultGraphCellEditor;
-import org.jgraph.graph.EdgeView;
 import org.jgraph.graph.GraphConstants;
-import org.jgraph.graph.GraphContext;
 import org.jgraph.graph.GraphLayoutCache;
 import org.jgraph.graph.GraphModel;
 import org.jgraph.graph.PortView;
 import org.jgrapht.Graph;
+import org.jgrapht.event.GraphEdgeChangeEvent;
+import org.jgrapht.event.GraphListener;
+import org.jgrapht.event.GraphVertexChangeEvent;
 import org.jgrapht.ext.JGraphModelAdapter;
 import org.jgrapht.ext.JGraphModelAdapter.CellFactory;
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -99,213 +96,9 @@ public class TrackSchemeFrame extends JFrame {
 	private static final int TABLE_ROW_HEADER_WIDTH = 50;
 	private static final Color GRID_COLOR = Color.GRAY;
 
-
-
-	/*
-	 * INNER CLASSES
-	 */
-
-	/**
-	 * The customized JPanel used to display a useful background under the graph.
-	 * It displays in Y the time, and in X the track identity.
-	 */
-	private class GraphPane extends JPanel {
-
-		private static final long serialVersionUID = 1L;
-		private TreeSet<Float> instants;
-		private int[] columnWidths = null;
-
-		public GraphPane(Graph<Spot, DefaultWeightedEdge> graph) {
-			super();
-			setBackground(BACKGROUND_COLOR_1);
-
-			instants = new TreeSet<Float>();
-			for (Spot s : graph.vertexSet())
-				instants.add(s.getFeature(Feature.POSITION_T));
-		}
-
-
-		@Override
-		public void paintComponent(Graphics g) {
-			super.paintComponent(g);
-			int width = getSize().width;
-			int height = getSize().height;
-			float scale = (float) jGraph.getScale();
-
-			// Scaled sizes
-			int xcs 			= Math.round(X_COLUMN_SIZE*scale);
-			int ycs 			= Math.round(Y_COLUMN_SIZE*scale);
-			
-			// Alternating row color
-			g.setColor(BACKGROUND_COLOR_2);
-			int y = 0;
-			while (y < height) {
-				g.fillRect(0, y, width, ycs);
-				y += 2*ycs;
-			}
-
-			// Header separator
-			g.setColor(LINE_COLOR);
-			g.drawLine(0, ycs, width, ycs);
-			g.drawLine(xcs, 0, xcs, height);
-
-			// Row headers
-			int x = xcs / 4;
-			y = 3 * ycs / 2;
-			g.setFont(SMALL_FONT.deriveFont(10*scale));
-			for(Float instant : instants) {
-				g.drawString("t="+instant, x, y);
-				y += ycs;
-			}
-
-			// Column headers
-			if (null != columnWidths) {
-				x = xcs;
-				for (int i = 0; i < columnWidths.length; i++) {
-					x += (columnWidths[i]-1) * xcs;
-					g.drawLine(x, 0, x, height);
-				}
-			}
-		}
-
-
-		public void setColumnWidths(int[] columnWidths) {
-			this.columnWidths  = columnWidths;
-		}
-
-	}
-
-
-	@SuppressWarnings("serial")
-	private class InfoPane extends JPanel {
-
-		private class RowHeaderRenderer extends JLabel implements ListCellRenderer {
-
-			RowHeaderRenderer(JTable table) {
-				JTableHeader header = table.getTableHeader();
-				setOpaque(false);
-				setBorder(UIManager.getBorder("TableHeader.cellBorder"));
-				setForeground(header.getForeground());
-				setBackground(header.getBackground());
-				setFont(SMALL_FONT.deriveFont(9.0f));
-				setHorizontalAlignment(SwingConstants.LEFT);				
-			}
-
-			public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-				setText((value == null) ? "" : value.toString());
-				return this;
-			}
-		}
-		
-		private JTextPane textPane;
-		private JTable table;
-		private JScrollPane scrollTable;
-
-		public InfoPane() {
-			init();
-		}
-
-		public void echo(Set<Spot> spots) {
-			// Fill feature table
-			DefaultTableModel dm = new DefaultTableModel() { // Un-editable model
-				@Override
-				public boolean isCellEditable(int row, int column) { return false; }
-			};
-			for (Spot spot : spots) {
-				Object[] columnData = new Object[Feature.values().length];
-				for (int i = 0; i < columnData.length; i++) 
-					columnData[i] = String.format("%.1f", spot.getFeature(Feature.values()[i]));
-				dm.addColumn(spot.getName(), columnData);
-			}
-			table.setModel(dm);
-			// Tune look
-			
-			DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer() {
-				public boolean isOpaque() { return false; };
-				@Override
-				public Color getBackground() {
-					return Color.BLUE;
-				}
-			};
-			headerRenderer.setBackground(Color.RED);
-			
-			
-			DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
-			renderer.setOpaque(false);
-			renderer.setHorizontalAlignment(SwingConstants.RIGHT);
-			renderer.setFont(SMALL_FONT);			
-			for(int i=0; i<table.getColumnCount(); i++) {
-				table.setDefaultRenderer(table.getColumnClass(i), renderer);
-				table.getColumnModel().getColumn(i).setPreferredWidth(TABLE_CELL_WIDTH);
-			}
-			for (Component c : scrollTable.getColumnHeader().getComponents())
-				c.setBackground(getBackground());
-			scrollTable.getColumnHeader().setOpaque(false);
-			
-			// Set text
-			textPane.setText("Selection:");
-		}
-
-		private void init() {
-
-			AbstractListModel lm = new AbstractListModel() {
-				String headers[] = new String[Feature.values().length];
-				{
-					for(int i=0; i<headers.length; i++)
-						headers[i] = Feature.values()[i].shortName();			    	  
-				}
-
-				public int getSize() {
-					return headers.length;
-				}
-
-				public Object getElementAt(int index) {
-					return headers[index];
-				}
-			};
-
-			table = new JTable();
-			table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-			table.setOpaque(false);
-			table.setFont(SMALL_FONT);
-			table.setPreferredScrollableViewportSize(new Dimension(120, 400));
-			table.getTableHeader().setOpaque(false);
-			table.setSelectionForeground(Color.YELLOW.darker());
-			table.setGridColor(GRID_COLOR);
-
-			
-			JList rowHeader = new JList(lm);
-			rowHeader.setFixedCellWidth(TABLE_ROW_HEADER_WIDTH);
-			rowHeader.setFixedCellHeight(table.getRowHeight());
-			rowHeader.setCellRenderer(new RowHeaderRenderer(table));
-			rowHeader.setBackground(getBackground());
-			
-			scrollTable = new JScrollPane(table);
-			scrollTable.setRowHeaderView(rowHeader);
-			scrollTable.getRowHeader().setOpaque(false);
-			scrollTable.setOpaque(false);
-			scrollTable.getViewport().setOpaque(false);
-
-			textPane = new JTextPane();
-			textPane.setCaretPosition(0);
-//			StyledDocument styledDoc = textPane.getStyledDocument();
-			textPane.setEditable(false);
-			textPane.setOpaque(false);
-			textPane.setFont(SMALL_FONT);
-			
-			setLayout(new BorderLayout());
-			add(textPane, BorderLayout.NORTH);
-			add(scrollTable, BorderLayout.CENTER);
-			
-			scrollTable.setVisible(false);
-		}
-		
-	}
-	
 	/*
 	 * FIELDS
 	 */
-
 
 	private SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph;
 	private JGraphModelAdapter<Spot, DefaultWeightedEdge> jGMAdapter;
@@ -332,12 +125,16 @@ public class TrackSchemeFrame extends JFrame {
 	 */
 
 	/**
-	 * Return a reference to the {@link JGraph} in charge of rendering the track scheme.
+	 * Return a reference to the {@link JGraph} model in charge of rendering the track scheme.
 	 */
 	public JGraph getJGraph() {
 		return jGraph;
 	}
+	
 
+	public ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge> getListenableGraph() {
+		return lGraph;
+	}
 
 	/*
 	 * PRIVATE METHODS
@@ -547,14 +344,211 @@ public class TrackSchemeFrame extends JFrame {
 	}
 
 	
-	
+
 	/*
 	 * INNER CLASSES
 	 */
+
+	/**
+	 * The customized JPanel used to display a useful background under the graph.
+	 * It displays in Y the time, and in X the track identity.
+	 */
+	private class GraphPane extends JPanel {
+
+		private static final long serialVersionUID = 1L;
+		private TreeSet<Float> instants;
+		private int[] columnWidths = null;
+
+		public GraphPane(Graph<Spot, DefaultWeightedEdge> graph) {
+			super();
+			setBackground(BACKGROUND_COLOR_1);
+
+			instants = new TreeSet<Float>();
+			for (Spot s : graph.vertexSet())
+				instants.add(s.getFeature(Feature.POSITION_T));
+		}
+
+
+		@Override
+		public void paintComponent(Graphics g) {
+			super.paintComponent(g);
+			int width = getSize().width;
+			int height = getSize().height;
+			float scale = (float) jGraph.getScale();
+
+			// Scaled sizes
+			int xcs 			= Math.round(X_COLUMN_SIZE*scale);
+			int ycs 			= Math.round(Y_COLUMN_SIZE*scale);
+			
+			// Alternating row color
+			g.setColor(BACKGROUND_COLOR_2);
+			int y = 0;
+			while (y < height) {
+				g.fillRect(0, y, width, ycs);
+				y += 2*ycs;
+			}
+
+			// Header separator
+			g.setColor(LINE_COLOR);
+			g.drawLine(0, ycs, width, ycs);
+			g.drawLine(xcs, 0, xcs, height);
+
+			// Row headers
+			int x = xcs / 4;
+			y = 3 * ycs / 2;
+			g.setFont(SMALL_FONT.deriveFont(10*scale));
+			for(Float instant : instants) {
+				g.drawString("t="+instant, x, y);
+				y += ycs;
+			}
+
+			// Column headers
+			if (null != columnWidths) {
+				x = xcs;
+				for (int i = 0; i < columnWidths.length; i++) {
+					x += (columnWidths[i]-1) * xcs;
+					g.drawLine(x, 0, x, height);
+				}
+			}
+		}
+
+
+		public void setColumnWidths(int[] columnWidths) {
+			this.columnWidths  = columnWidths;
+		}
+
+	}
+
+
+	@SuppressWarnings("serial")
+	private class InfoPane extends JPanel {
+
+		private class RowHeaderRenderer extends JLabel implements ListCellRenderer {
+
+			RowHeaderRenderer(JTable table) {
+				JTableHeader header = table.getTableHeader();
+				setOpaque(false);
+				setBorder(UIManager.getBorder("TableHeader.cellBorder"));
+				setForeground(header.getForeground());
+				setBackground(header.getBackground());
+				setFont(SMALL_FONT.deriveFont(9.0f));
+				setHorizontalAlignment(SwingConstants.LEFT);				
+			}
+
+			public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+				setText((value == null) ? "" : value.toString());
+				return this;
+			}
+		}
+		
+		private JTextPane textPane;
+		private JTable table;
+		private JScrollPane scrollTable;
+
+		public InfoPane() {
+			init();
+		}
+
+		public void echo(Set<Spot> spots) {
+			// Fill feature table
+			DefaultTableModel dm = new DefaultTableModel() { // Un-editable model
+				@Override
+				public boolean isCellEditable(int row, int column) { return false; }
+			};
+			for (Spot spot : spots) {
+				Object[] columnData = new Object[Feature.values().length];
+				for (int i = 0; i < columnData.length; i++) 
+					columnData[i] = String.format("%.1f", spot.getFeature(Feature.values()[i]));
+				dm.addColumn(spot.getName(), columnData);
+			}
+			table.setModel(dm);
+			// Tune look
+			
+			DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer() {
+				public boolean isOpaque() { return false; };
+				@Override
+				public Color getBackground() {
+					return Color.BLUE;
+				}
+			};
+			headerRenderer.setBackground(Color.RED);
+			
+			
+			DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
+			renderer.setOpaque(false);
+			renderer.setHorizontalAlignment(SwingConstants.RIGHT);
+			renderer.setFont(SMALL_FONT);			
+			for(int i=0; i<table.getColumnCount(); i++) {
+				table.setDefaultRenderer(table.getColumnClass(i), renderer);
+				table.getColumnModel().getColumn(i).setPreferredWidth(TABLE_CELL_WIDTH);
+			}
+			for (Component c : scrollTable.getColumnHeader().getComponents())
+				c.setBackground(getBackground());
+			scrollTable.getColumnHeader().setOpaque(false);
+			
+			// Set text
+			textPane.setText("Selection:");
+		}
+
+		private void init() {
+
+			AbstractListModel lm = new AbstractListModel() {
+				String headers[] = new String[Feature.values().length];
+				{
+					for(int i=0; i<headers.length; i++)
+						headers[i] = Feature.values()[i].shortName();			    	  
+				}
+
+				public int getSize() {
+					return headers.length;
+				}
+
+				public Object getElementAt(int index) {
+					return headers[index];
+				}
+			};
+
+			table = new JTable();
+			table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+			table.setOpaque(false);
+			table.setFont(SMALL_FONT);
+			table.setPreferredScrollableViewportSize(new Dimension(120, 400));
+			table.getTableHeader().setOpaque(false);
+			table.setSelectionForeground(Color.YELLOW.darker());
+			table.setGridColor(GRID_COLOR);
+
+			
+			JList rowHeader = new JList(lm);
+			rowHeader.setFixedCellWidth(TABLE_ROW_HEADER_WIDTH);
+			rowHeader.setFixedCellHeight(table.getRowHeight());
+			rowHeader.setCellRenderer(new RowHeaderRenderer(table));
+			rowHeader.setBackground(getBackground());
+			
+			scrollTable = new JScrollPane(table);
+			scrollTable.setRowHeaderView(rowHeader);
+			scrollTable.getRowHeader().setOpaque(false);
+			scrollTable.setOpaque(false);
+			scrollTable.getViewport().setOpaque(false);
+
+			textPane = new JTextPane();
+			textPane.setCaretPosition(0);
+//			StyledDocument styledDoc = textPane.getStyledDocument();
+			textPane.setEditable(false);
+			textPane.setOpaque(false);
+			textPane.setFont(SMALL_FONT);
+			
+			setLayout(new BorderLayout());
+			add(textPane, BorderLayout.NORTH);
+			add(scrollTable, BorderLayout.CENTER);
+			
+			scrollTable.setVisible(false);
+		}
+		
+	}
 	
 	
 	@SuppressWarnings("serial")
-	public static class MyGraphCellEditor extends DefaultGraphCellEditor {
+	private static class MyGraphCellEditor extends DefaultGraphCellEditor {
 		private Object target;
 		
 		public MyGraphCellEditor() {
@@ -587,15 +581,10 @@ public class TrackSchemeFrame extends JFrame {
 	 * Defines a Graph that uses the Shift-Button (Instead of the Right
 	 * Mouse Button, which is Default) to add/remove point to/from an edge.
 	 */
-	public static class MyGraph extends JGraph {
+	private static class MyGraph extends JGraph {
 
 		private static final long serialVersionUID = 5454138486162686890L;
-
-		// Construct the Graph using the Model as its Data Source
-		public MyGraph(GraphModel model) {
-			this(model, null);
-		}
-
+		
 		// Construct the Graph using the Model as its Data Source
 		public MyGraph(GraphModel model, GraphLayoutCache cache) {
 			super(model, cache);
@@ -620,7 +609,7 @@ public class TrackSchemeFrame extends JFrame {
 	 * Custom MarqueeHandler
 	 * MarqueeHandler that Connects Vertices and Displays PopupMenus
 	 */
-	public class MyMarqueeHandler extends BasicMarqueeHandler {
+	private class MyMarqueeHandler extends BasicMarqueeHandler {
 
 		// Holds the Start and the Current Point
 		protected Point2D start, current;
@@ -897,28 +886,7 @@ public class TrackSchemeFrame extends JFrame {
 	} // End of Editor.MyMarqueeHandler
 	
 
-	/**
-	 * Defines a EdgeHandle that uses the Shift-Button (Instead of the Right
-	 * Mouse Button, which is Default) to add/remove point to/from an edge.
-	 */
-	public static class MyEdgeHandle extends EdgeView.EdgeHandle {
-		private static final long serialVersionUID = -9009802856074145078L;
 
-		public MyEdgeHandle(EdgeView edge, GraphContext ctx) {
-			super(edge, ctx);
-		}
-
-		// Override Superclass Method
-		public boolean isAddPointEvent(MouseEvent event) {
-			// Points are Added using Shift-Click
-			return event.isShiftDown();
-		}
-
-		// Override Superclass Method
-		public boolean isRemovePointEvent(MouseEvent event) {
-			// Points are Removed using Shift-Click
-			return event.isShiftDown();
-		}
-
-	}
+	
+	
 }

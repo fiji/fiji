@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.TreeMap;
 
 import org.jdom.JDOMException;
+import org.jgrapht.event.GraphEdgeChangeEvent;
+import org.jgrapht.event.GraphListener;
+import org.jgrapht.event.GraphVertexChangeEvent;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
@@ -47,7 +50,7 @@ public class TrackVisualizerTestDrive {
 		// Load objects 
 		TreeMap<Integer, List<Spot>> allSpots 		= reader.getAllSpots();
 		TreeMap<Integer, List<Spot>> selectedSpots 	= reader.getSpotSelection(allSpots);
-		SimpleWeightedGraph<Spot, DefaultWeightedEdge> tracks = reader.getTracks(selectedSpots);
+		final SimpleWeightedGraph<Spot, DefaultWeightedEdge> tracks = reader.getTracks(selectedSpots);
 		ImagePlus imp = reader.getImage();
 		Settings settings = reader.getSettings();
 		settings.imp = imp;
@@ -100,7 +103,39 @@ public class TrackVisualizerTestDrive {
 				}
 			}
 		});
-	
-        
+		
+		frame.getListenableGraph().addGraphListener(new GraphListener<Spot, DefaultWeightedEdge>() {
+			
+			@Override
+			public void vertexRemoved(GraphVertexChangeEvent<Spot> e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void vertexAdded(GraphVertexChangeEvent<Spot> e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void edgeRemoved(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void edgeAdded(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
+				DefaultWeightedEdge edge = e.getEdge();
+				Spot source = frame.getListenableGraph().getEdgeSource(edge);
+				Spot target = frame.getListenableGraph().getEdgeTarget(edge);
+				tracks.addEdge(source, target);
+				displayer.setTrackGraph(tracks);
+				displayer.refresh();
+			}
+		});
+		
+		
+		
 	}
 }
