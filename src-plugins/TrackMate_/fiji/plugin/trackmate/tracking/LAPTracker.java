@@ -327,7 +327,7 @@ public class LAPTracker extends AbstractSpotTracker {
 
 			objCosts = new LinkingCostMatrixCreator(t0, t1, settings);
 			if (!objCosts.checkInput() || !objCosts.process()) {
-				System.out.println(objCosts.getErrorMessage());
+				errorMessage = objCosts.getErrorMessage();
 				return false;
 			}
 			costMatrix = objCosts.getCostMatrix();
@@ -435,6 +435,8 @@ public class LAPTracker extends AbstractSpotTracker {
 
 			// Extend track segments using solutions: we update the graph edges
 			for (int i = 0; i < solutions.length; i++) {
+				if (solutions[i].length == 0)
+					continue;
 				int i0 = solutions[i][0];
 				int i1 = solutions[i][1];
 				List<Spot> t0 = spots.get(frame0);

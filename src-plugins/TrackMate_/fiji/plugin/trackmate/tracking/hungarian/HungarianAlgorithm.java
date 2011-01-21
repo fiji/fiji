@@ -17,11 +17,15 @@ public class HungarianAlgorithm implements AssignmentAlgorithm {
 	@Override
     public int[][] computeAssignments(double[][] matrix) {
 
-		// check if we have 1 line, 1 column, which causes normal algo to hang.
+		// check if we have less than 1 line, 1 column, which causes normal algo to hang.
 		int nlines = matrix.length;
+		if (nlines == 0) {
+			// no spot
+			return new int[][] { {  } };
+		}
 		int ncols = matrix[0].length;
 		if (nlines <=1 && ncols <= 1)
-			return new int[][] { { 0, 0 } };
+			return new int[][] { {  } };
 
         // subtract minimum value from rows and columns to create lots of zeroes
         reduceMatrix(matrix);

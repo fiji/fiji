@@ -49,10 +49,10 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	
 	@Override
 	public boolean checkInput() {
-		if (numSpots == 0) {
-			errorMessage = "There are no objects!";
-			return false;
-		}
+//		if (numSpots == 0) {
+//			errorMessage = "There are no objects!";
+//			return false;
+//		}
 		
 		inputChecked = true;
 		return true;

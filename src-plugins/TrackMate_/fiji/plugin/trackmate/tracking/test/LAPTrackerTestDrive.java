@@ -18,6 +18,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.io.TmXmlReader;
@@ -35,6 +36,7 @@ public class LAPTrackerTestDrive {
 	@SuppressWarnings("unused")
 	private static final File SPLITTING_CASE_1 = new File(LAPTrackerTestDrive.class.getResource(FILE_NAME_1).getFile());
 	private static final File SPLITTING_CASE_2 = new File(LAPTrackerTestDrive.class.getResource(FILE_NAME_2).getFile());
+	private static final File SPLITTING_CASE_3 = new File("/Users/tinevez/Desktop/Celegans-5pc.xml");
 	
 	/*
 	 * MAIN METHOD
@@ -42,7 +44,7 @@ public class LAPTrackerTestDrive {
 	
 	public static void main(String args[]) {
 		
-		File file = SPLITTING_CASE_2;
+		File file = SPLITTING_CASE_3;
 		
 		// 1 - Load test spots
 		System.out.println("Opening file: "+file.getAbsolutePath());		
@@ -58,8 +60,10 @@ public class LAPTrackerTestDrive {
 		// All spots
 		Settings inFileSettings = null;
 		TreeMap<Integer, List<Spot>> spots = null;
+		TreeMap<Integer, List<Spot>> spotSelection = null;
 		try {
 			spots = reader.getAllSpots();
+			spotSelection = reader.getSpotSelection(spots);
 			inFileSettings = reader.getSettings();
 		} catch (DataConversionException e) {
 			e.printStackTrace();
@@ -68,12 +72,13 @@ public class LAPTrackerTestDrive {
 		// 1.5 - Set the tracking settings
 		TrackerSettings settings = new TrackerSettings();
 		settings.trackerType = TrackerType.LAP_TRACKER;
+		settings.linkingDistanceCutOff = 10;
 		settings.allowGapClosing = false; //true;
 		settings.gapClosingDistanceCutoff = 100;
 		settings.gapClosingTimeCutoff = 10;
 		settings.allowMerging = false;
 		settings.allowSplitting = true;
-		settings.splittingDistanceCutoff = 20;
+		settings.splittingDistanceCutoff = 5;
 		settings.splittingTimeCutoff = 2;
 		settings.splittingFeatureCutoffs.clear();
 		System.out.println("Tracker settings:");
@@ -82,10 +87,13 @@ public class LAPTrackerTestDrive {
 		
 		// 2 - Track the test spots
 		LAPTracker lap;
-		lap = new LAPTracker(spots, inFileSettings.trackerSettings);
-		if (!lap.checkInput() || !lap.process())
-			System.out.println(lap.getErrorMessage());
-
+		lap = new LAPTracker(spotSelection, inFileSettings.trackerSettings);
+		lap.setLogger(Logger.DEFAULT_LOGGER);
+		if (!lap.checkInput())
+			System.err.println("Error checking input: "+lap.getErrorMessage());
+		if (!lap.process())
+			System.err.println("Error in process: "+lap.getErrorMessage());
+		
 		// Print out track segments
 		List<SortedSet<Spot>> trackSegments = lap.getTrackSegments();
 		System.out.println("Found "+trackSegments.size()+" track segments:");
@@ -132,9 +140,9 @@ public class LAPTrackerTestDrive {
 			inFileSettings.imp = imp;
 		
 		SpotDisplayer sd2d = new HyperStackDisplayer(inFileSettings);
-		sd2d.setSpots(spots);
 		sd2d.render();
-		sd2d.setSpotsToShow(spots);
+		sd2d.setSpots(spots);
+		sd2d.setSpotsToShow(spotSelection);
 		sd2d.setTrackGraph(graph);
 		sd2d.setDisplayTrackMode(SpotDisplayer.TrackDisplayMode.ALL_WHOLE_TRACKS, 1);
 	}
