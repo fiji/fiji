@@ -38,12 +38,14 @@ public class JNumericTextField extends JTextField {
 	public JNumericTextField(Document doc, String text, int columns) {
 		super(doc, text, columns);
 		setBorder(BORDER_UNFOCUSED);
-		try {
-			value = Double.parseDouble(text);
-			oldValue = value;
-		} catch (NumberFormatException nfe) {
-			oldValue = 0;
-			value = 0;
+		if (text != null) {
+			try {
+				value = Double.parseDouble(text);
+				oldValue = value;
+			} catch (NumberFormatException nfe) {
+				oldValue = 0;
+				value = 0;
+			}
 		}
 		addActionListener(al);
 		addFocusListener(new FocusListener() {
