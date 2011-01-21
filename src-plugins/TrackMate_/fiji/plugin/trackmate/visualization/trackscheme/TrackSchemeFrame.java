@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
 import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
+import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
 
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
@@ -16,8 +17,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -95,6 +97,13 @@ public class TrackSchemeFrame extends JFrame {
 	private static final int TABLE_CELL_WIDTH 		= 40;
 	private static final int TABLE_ROW_HEADER_WIDTH = 50;
 	private static final Color GRID_COLOR = Color.GRAY;
+	
+	private static final ImageIcon LINKING_ON_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/connect.png")); 
+	private static final ImageIcon LINKING_OFF_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/forbid_connect.png")); 
+	private static final ImageIcon RESET_ZOOM_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/zoom.png")); 
+	private static final ImageIcon ZOOM_IN_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/zoom_in.png")); 
+	private static final ImageIcon ZOOM_OUT_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/zoom_out.png")); 
+	private static final ImageIcon REFRESH_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/refresh.png")); 
 
 	/*
 	 * FIELDS
@@ -105,6 +114,8 @@ public class TrackSchemeFrame extends JFrame {
 	private ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge> lGraph;
 	private JGraph jGraph;
 	private InfoPane infoPane;
+	private ArrayList<GraphListener<Spot, DefaultWeightedEdge>> graphListeners = new ArrayList<GraphListener<Spot,DefaultWeightedEdge>>();
+	private GraphPane backPane;
 
 	/*
 	 * CONSTRUCTORS
@@ -118,22 +129,35 @@ public class TrackSchemeFrame extends JFrame {
 		setSize(DEFAULT_SIZE);
 	}
 
-	
-
 	/*
 	 * PUBLIC METHODS
 	 */
 
+	public void addGraphListener(GraphListener<Spot, DefaultWeightedEdge> listener) {
+		graphListeners.add(listener);
+	}
+
+	public boolean removeGraphListener(GraphListener<Spot, DefaultWeightedEdge> listener) {
+		return graphListeners.remove(listener);
+	}
+	
+	public List<GraphListener<Spot, DefaultWeightedEdge>> getGraphListeners() {
+		return graphListeners;
+	}
+	
 	/**
-	 * Return a reference to the {@link JGraph} model in charge of rendering the track scheme.
+	 * Return an updated reference of the {@link Graph} that acts as a model for tracks. This graph will
+	 * have his edges and vertices updated by the manual interaction occuring in this view.
+	 */
+	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> getTrackModel() {
+		return trackGraph;
+	}
+	
+	/**
+	 * Return a reference to the {@link JGraph} view in charge of rendering the track scheme.
 	 */
 	public JGraph getJGraph() {
 		return jGraph;
-	}
-	
-
-	public ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge> getListenableGraph() {
-		return lGraph;
 	}
 
 	/*
@@ -144,8 +168,15 @@ public class TrackSchemeFrame extends JFrame {
 		if (source instanceof SpotCell && target instanceof SpotCell) {
 			SpotCell s = (SpotCell) source;
 			SpotCell t = (SpotCell) target;
-			DefaultWeightedEdge e = lGraph.addEdge(s.getSpot(), t.getSpot());
-			lGraph.setEdgeWeight(e, 1); // Default Weight			
+			// Update the listenable graph so that the VIEW is updated
+			DefaultWeightedEdge edge = lGraph.addEdge(s.getSpot(), t.getSpot());
+			if (null == edge) {
+				infoPane.textPane.setText("Invalid edge.");
+				return;
+			}
+			lGraph.setEdgeWeight(edge, -1); // Default Weight
+			// Update the MODEL graph as well
+			trackGraph.addEdge(s.getSpot(), t.getSpot(), edge);
 		} else {
 			System.out.println("Try to connect a "+source.getClass().getCanonicalName()+" with a "+target.getClass().getCanonicalName());// DEBUG
 		}
@@ -189,24 +220,15 @@ public class TrackSchemeFrame extends JFrame {
 		getContentPane().add(createToolBar(), BorderLayout.NORTH);
 		
 		// Create back pane
-		GraphPane backPane = new GraphPane(lGraph);
+		backPane = new GraphPane(lGraph);
 		BorderLayout layout = new BorderLayout();
 		backPane.setLayout(layout);
 		backPane.add(jGraph, BorderLayout.CENTER);
 		jGraph.setOpaque(false);
 
 		// Arrange graph layout
-		JGraphFacade facade = new JGraphFacade(jGraph);
-		JGraphTimeLayout graphLayout = new JGraphTimeLayout(trackGraph, jGMAdapter);
-		graphLayout.run(facade);
-
-		@SuppressWarnings("rawtypes")
-		Map nested = facade.createNestedMap(false, false); // Obtain a map of the resulting attribute changes from the facade 
-		jGraph.getGraphLayoutCache().edit(nested); // Apply the results to the actual graph 
-
-		int[] columnWidths = graphLayout.getTrackColumnWidths();
-		backPane.setColumnWidths(columnWidths);
-
+		doTrackLayout();
+		
 		// Add the back pane as Center Component
 		JScrollPane scrollPane = new JScrollPane(backPane);
 		scrollPane.getVerticalScrollBar().setUnitIncrement(16);
@@ -244,7 +266,46 @@ public class TrackSchemeFrame extends JFrame {
 			}
 		});
 
+		// Forward graph change events to the listeners registered with this frame 
+		lGraph.addGraphListener(new GraphListener<Spot, DefaultWeightedEdge>() {
+			@Override
+			public void vertexAdded(GraphVertexChangeEvent<Spot> e) {
+				for (GraphListener<Spot, DefaultWeightedEdge> graphListener : graphListeners)
+					graphListener.vertexAdded(e);
+			}
+			@Override
+			public void vertexRemoved(GraphVertexChangeEvent<Spot> e) {
+				for (GraphListener<Spot, DefaultWeightedEdge> graphListener : graphListeners)
+					graphListener.vertexRemoved(e);
+			}
+			@Override
+			public void edgeAdded(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
+				for (GraphListener<Spot, DefaultWeightedEdge> graphListener : graphListeners)
+					graphListener.edgeAdded(e);
+			}
+			@Override
+			public void edgeRemoved(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
+				for (GraphListener<Spot, DefaultWeightedEdge> graphListener : graphListeners)
+					graphListener.edgeRemoved(e);
+			}
+		});	
 	}
+	
+	private void doTrackLayout() {
+		JGraphFacade facade = new JGraphFacade(jGraph);
+		JGraphTimeLayout graphLayout = new JGraphTimeLayout(trackGraph, jGMAdapter);
+		graphLayout.run(facade);
+
+		@SuppressWarnings("rawtypes")
+		Map nested = facade.createNestedMap(false, false); // Obtain a map of the resulting attribute changes from the facade 
+		jGraph.getGraphLayoutCache().edit(nested); // Apply the results to the actual graph 
+
+		// Forward painting info to back pane
+		backPane.setColumnWidths(graphLayout.getTrackColumnWidths());
+		backPane.setColumnColor(graphLayout.getTrackColors());
+
+	}
+	
 	
 	/**
 	 * Instantiate the toolbar of the track scheme. For now, the toolbar only has the following actions:
@@ -262,17 +323,14 @@ public class TrackSchemeFrame extends JFrame {
 		toolbar.setFloatable(false);
 		
 		// Toggle Connect Mode
-		URL connectUrl = getClass().getResource("resources/connecton.gif");
-		ImageIcon connectIcon = new ImageIcon(connectUrl);
-		toolbar.add(new AbstractAction("", connectIcon) {
+		toolbar.add(new AbstractAction("Toggle linking", LINKING_ON_ICON) {
 			public void actionPerformed(ActionEvent e) {
 				jGraph.setPortsVisible(!jGraph.isPortsVisible());
-				URL connectUrl;
+				ImageIcon connectIcon;
 				if (jGraph.isPortsVisible())
-					connectUrl = getClass().getResource("resources/connecton.gif");
+					connectIcon = LINKING_ON_ICON;
 				else
-					connectUrl = getClass().getResource("resources/connectoff.gif");
-				ImageIcon connectIcon = new ImageIcon(connectUrl);
+					connectIcon = LINKING_OFF_ICON;
 				putValue(SMALL_ICON, connectIcon);
 			}
 		});
@@ -281,31 +339,34 @@ public class TrackSchemeFrame extends JFrame {
 		toolbar.addSeparator();
 		
 		// Zoom Std
-		toolbar.addSeparator();
-		URL zoomUrl = getClass().getResource("resources/zoom.gif");
-		ImageIcon zoomIcon = new ImageIcon(zoomUrl);
-		toolbar.add(new AbstractAction("", zoomIcon) {
+		toolbar.add(new AbstractAction("Reset zoom", RESET_ZOOM_ICON) {
 			public void actionPerformed(ActionEvent e) {
 				jGraph.setScale(1.0);
 			}
 		});
 		// Zoom In
-		URL zoomInUrl = getClass().getResource("resources/zoomin.gif");
-		ImageIcon zoomInIcon = new ImageIcon(zoomInUrl);
-		toolbar.add(new AbstractAction("", zoomInIcon) {
+		toolbar.add(new AbstractAction("Zoom in", ZOOM_IN_ICON) {
 			public void actionPerformed(ActionEvent e) {
 				jGraph.setScale(2 * jGraph.getScale());
 			}
 		});
 		// Zoom Out
-		URL zoomOutUrl = getClass().getResource("resources/zoomout.gif");
-		ImageIcon zoomOutIcon = new ImageIcon(zoomOutUrl);
-		toolbar.add(new AbstractAction("", zoomOutIcon) {
+		toolbar.add(new AbstractAction("Zoom out", ZOOM_OUT_ICON) {
 			public void actionPerformed(ActionEvent e) {
 				jGraph.setScale(jGraph.getScale() / 2);
 			}
 		});
 
+		// Separator
+		toolbar.addSeparator();
+
+		// Redo layout
+		toolbar.add(new AbstractAction("Refresh", REFRESH_ICON) {
+			public void actionPerformed(ActionEvent e) {
+				doTrackLayout();
+			}
+		});
+		
 		return toolbar;
 	}
 
@@ -358,6 +419,7 @@ public class TrackSchemeFrame extends JFrame {
 		private static final long serialVersionUID = 1L;
 		private TreeSet<Float> instants;
 		private int[] columnWidths = null;
+		private Color[] columnColors;
 
 		public GraphPane(Graph<Spot, DefaultWeightedEdge> graph) {
 			super();
@@ -368,6 +430,8 @@ public class TrackSchemeFrame extends JFrame {
 				instants.add(s.getFeature(Feature.POSITION_T));
 		}
 
+
+		
 
 		@Override
 		public void paintComponent(Graphics g) {
@@ -396,9 +460,9 @@ public class TrackSchemeFrame extends JFrame {
 			// Row headers
 			int x = xcs / 4;
 			y = 3 * ycs / 2;
-			g.setFont(SMALL_FONT.deriveFont(10*scale));
+			g.setFont(FONT.deriveFont(12*scale));
 			for(Float instant : instants) {
-				g.drawString("t="+instant, x, y);
+				g.drawString(String.format("Frame %.0f", instant), x, y);
 				y += ycs;
 			}
 
@@ -407,7 +471,10 @@ public class TrackSchemeFrame extends JFrame {
 				x = xcs;
 				for (int i = 0; i < columnWidths.length; i++) {
 					x += (columnWidths[i]-1) * xcs;
+					g.setColor(LINE_COLOR);
 					g.drawLine(x, 0, x, height);
+					g.setColor(columnColors[i]);
+					g.drawString(String.format("Track %d", i), x-3*xcs*(columnWidths[i]-1)/4, ycs/2);
 				}
 			}
 		}
@@ -416,6 +483,11 @@ public class TrackSchemeFrame extends JFrame {
 		public void setColumnWidths(int[] columnWidths) {
 			this.columnWidths  = columnWidths;
 		}
+		
+		public void setColumnColor(Color[] columnColors) {
+			this.columnColors = columnColors;
+		}
+
 
 	}
 

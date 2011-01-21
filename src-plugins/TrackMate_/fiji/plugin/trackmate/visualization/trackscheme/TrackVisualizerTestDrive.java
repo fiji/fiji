@@ -104,7 +104,7 @@ public class TrackVisualizerTestDrive {
 			}
 		});
 		
-		frame.getListenableGraph().addGraphListener(new GraphListener<Spot, DefaultWeightedEdge>() {
+		frame.addGraphListener(new GraphListener<Spot, DefaultWeightedEdge>() {
 			
 			@Override
 			public void vertexRemoved(GraphVertexChangeEvent<Spot> e) {
@@ -126,11 +126,7 @@ public class TrackVisualizerTestDrive {
 			
 			@Override
 			public void edgeAdded(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
-				DefaultWeightedEdge edge = e.getEdge();
-				Spot source = frame.getListenableGraph().getEdgeSource(edge);
-				Spot target = frame.getListenableGraph().getEdgeTarget(edge);
-				tracks.addEdge(source, target);
-				displayer.setTrackGraph(tracks);
+				displayer.setTrackGraph(frame.getTrackModel());
 				displayer.refresh();
 			}
 		});

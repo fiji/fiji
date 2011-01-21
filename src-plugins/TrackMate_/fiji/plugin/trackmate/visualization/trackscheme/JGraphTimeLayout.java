@@ -39,6 +39,8 @@ public class JGraphTimeLayout implements JGraphLayout {
 	private JGraphModelAdapter<Spot, DefaultWeightedEdge> adapter;
 	private int[] columnWidths;
 	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
+	private Color[] trackColorArray;
+
 	/*
 	 * CONSTRUCTOR
 	 */
@@ -83,6 +85,7 @@ public class JGraphTimeLayout implements JGraphLayout {
 		Spot previousSpot = null;
 		int columnIndex = 0;
 		columnWidths = new int[tracks.size()];
+		trackColorArray = new Color[tracks.size()];
 		Color trackColor = null;
 		
 		
@@ -139,6 +142,7 @@ public class JGraphTimeLayout implements JGraphLayout {
 				columns.put(instant, currentColumn+1);
 			
 			columnWidths[columnIndex] = currentColumn - previousColumn + 1;
+			trackColorArray[columnIndex] = trackColor;
 			columnIndex++;
 			previousColumn = currentColumn;			
 			
@@ -151,6 +155,13 @@ public class JGraphTimeLayout implements JGraphLayout {
 	 */
 	public int[] getTrackColumnWidths() {
 		return columnWidths;
+	}
+	
+	/**
+	 * Return the color affected to each track.
+	 */
+	public Color[] getTrackColors() {
+		return trackColorArray;
 	}
 
 }
