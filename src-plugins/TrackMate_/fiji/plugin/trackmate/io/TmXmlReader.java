@@ -322,7 +322,10 @@ public class TmXmlReader implements TmXmlKeys {
 				// Get source and target ID for this edge
 				sourceID = edgeElement.getAttribute(TRACK_EDGE_SOURCE_ATTRIBUTE_NAME).getIntValue();
 				targetID = edgeElement.getAttribute(TRACK_EDGE_TARGET_ATTRIBUTE_NAME).getIntValue();
-				weight   = edgeElement.getAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME).getDoubleValue();
+				if (null != edgeElement.getAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME))
+					weight   	= edgeElement.getAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME).getDoubleValue();
+				else 
+					weight  	= 0;
 				// Retrieve corresponding spots from their ID
 				targetFound = false;
 				sourceFound = false;
