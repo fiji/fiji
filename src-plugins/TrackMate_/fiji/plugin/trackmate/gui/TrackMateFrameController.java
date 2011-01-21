@@ -963,6 +963,8 @@ public class TrackMateFrameController {
 							displayer.setDisplayTrackMode(view.displayerPanel.getTrackDisplayMode(), view.displayerPanel.getTrackDisplayDepth());
 						} else if (event == view.displayerPanel.TRACK_VISIBILITY_CHANGED) {
 							displayer.setTrackVisible(view.displayerPanel.isDisplayTrackSelected());
+						} else if (event == view.displayerPanel.SPOT_DISPLAY_RADIUS_CHANGED) {
+							displayer.setRadiusDisplayRatio((float) view.displayerPanel.getSpotDisplayRadiusRatio());
 						} else if (event == view.displayerPanel.TRACK_SCHEME_BUTTON_PRESSED) {
 							launchTrackScheme();
 						} else {

@@ -2,7 +2,6 @@ package fiji.plugin.trackmate.gui;
 
 import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
-import static fiji.plugin.trackmate.gui.TrackMateFrame.TEXTFIELD_DIMENSION;
 import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.TRACK_SCHEME_ICON;
 
 import java.awt.Component;
@@ -10,6 +9,8 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.util.EnumMap;
 
 import javax.swing.ComboBoxModel;
@@ -29,19 +30,6 @@ import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 
-
-/**
-* This code was edited or generated using CloudGarden's Jigloo
-* SWT/Swing GUI Builder, which is free for non-commercial
-* use. If Jigloo is being used commercially (ie, by a corporation,
-* company or business for any purpose whatever) then you
-* should purchase a license for each developer using Jigloo.
-* Please visit www.cloudgarden.com for details.
-* Use of Jigloo implies acceptance of these licensing terms.
-* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
-* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
-* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
-*/
 /**
  * A configuration panel used to tune the aspect of spots and tracks in {@link SpotDisplayer}.
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr>   -  2010 - 2011
@@ -64,6 +52,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 	public ActionEvent SPOT_COLOR_MODE_CHANGED; // instantiate later, from color gui panel
 	public ActionEvent SPOT_VISIBILITY_CHANGED 		= new ActionEvent(this, 2, "SpotVisibilityChanged");
 	public ActionEvent TRACK_SCHEME_BUTTON_PRESSED 	= new ActionEvent(this, 3, "TrackSchemeButtonPushed");
+	public ActionEvent SPOT_DISPLAY_RADIUS_CHANGED 	= new ActionEvent(this, 4, "SpotDisplayRadiusChanged");
 
 	private JLabel jLabelTrackDisplayMode;
 	private JComboBox jComboBoxDisplayMode;
@@ -79,6 +68,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 	private JPanelSpotColorGUI jPanelSpotColor;
 	private EnumMap<Feature, double[]> featureValues;
 	private JButton jButtonShowTrackScheme;
+	private JNumericTextField jTextFieldSpotRadius;
 
 	
 	
@@ -93,6 +83,10 @@ public class DisplayerPanel extends ActionListenablePanel {
 	/*
 	 * PUBLIC METHODS
 	 */
+	
+	public double getSpotDisplayRadiusRatio() {
+		return jTextFieldSpotRadius.getValue();
+	}
 	
 	public TrackDisplayMode getTrackDisplayMode() {
 		return TrackDisplayMode.values()[jComboBoxDisplayMode.getSelectedIndex()];
@@ -162,9 +156,9 @@ public class DisplayerPanel extends ActionListenablePanel {
 							c.setEnabled(enabled);
 					};
 				};
-				FlowLayout jPanelSpotOptionsLayout = new FlowLayout();
-				jPanelSpotOptionsLayout.setAlignment(FlowLayout.LEFT);
-				jPanelTrackOptions.setLayout(jPanelSpotOptionsLayout);
+				FlowLayout jPanelTrackOptionsLayout = new FlowLayout();
+				jPanelTrackOptionsLayout.setAlignment(FlowLayout.LEFT);
+				jPanelTrackOptions.setLayout(jPanelTrackOptionsLayout);
 				this.add(jPanelTrackOptions);
 				jPanelTrackOptions.setBounds(10, 187, 280, 117);
 				jPanelTrackOptions.setBorder(new LineBorder(new java.awt.Color(192,192,192), 1, true));
@@ -212,7 +206,6 @@ public class DisplayerPanel extends ActionListenablePanel {
 					jPanelTrackOptions.add(jTextFieldFrameDepth);
 					jTextFieldFrameDepth.setText("10");
 					jTextFieldFrameDepth.setFont(SMALL_FONT);
-					jTextFieldFrameDepth.setSize(TEXTFIELD_DIMENSION);
 					jTextFieldFrameDepth.setText(""+SpotDisplayer.DEFAULT_TRACK_DISPLAY_DEPTH);
 					jTextFieldFrameDepth.setPreferredSize(new java.awt.Dimension(34, 20));
 					jTextFieldFrameDepth.addActionListener(trackDisplayModeListener);
@@ -254,8 +247,11 @@ public class DisplayerPanel extends ActionListenablePanel {
 							c.setEnabled(enabled);
 					};
 				};
+				FlowLayout jPanelSpotOptionsLayout = new FlowLayout();
+				jPanelSpotOptionsLayout.setAlignment(FlowLayout.LEFT);
+				jPanelSpotOptions.setLayout(jPanelSpotOptionsLayout);
 				this.add(jPanelSpotOptions);
-				jPanelSpotOptions.setBounds(10, 63, 280, 67);
+				jPanelSpotOptions.setBounds(10, 63, 280, 85);
 				jPanelSpotOptions.setBorder(new LineBorder(new java.awt.Color(192,192,192), 1, true));
 				{
 					jPanelSpotColor = new JPanelSpotColorGUI(this);
@@ -267,6 +263,31 @@ public class DisplayerPanel extends ActionListenablePanel {
 						public void actionPerformed(ActionEvent e) {
 							spotColorModeChanged();
 						}
+					});
+				}
+				{
+					JLabel jLabelSpotRadius = new JLabel();
+					jLabelSpotRadius.setText("Spot display radius ratio:");
+					jLabelSpotRadius.setFont(SMALL_FONT);
+					jPanelSpotOptions.add(jLabelSpotRadius);
+					
+					jTextFieldSpotRadius = new JNumericTextField("1");
+					jTextFieldSpotRadius.setPreferredSize(new java.awt.Dimension(34, 20));
+					jTextFieldSpotRadius.setFont(SMALL_FONT);
+					jPanelSpotOptions.add(jTextFieldSpotRadius);
+					jTextFieldSpotRadius.addActionListener(new ActionListener() {
+						@Override
+						public void actionPerformed(ActionEvent e) {
+							fireAction(SPOT_DISPLAY_RADIUS_CHANGED);
+						}
+					});
+					jTextFieldSpotRadius.addFocusListener(new FocusListener() {
+						@Override
+						public void focusLost(FocusEvent e) {
+							fireAction(SPOT_DISPLAY_RADIUS_CHANGED);							
+						}
+						@Override
+						public void focusGained(FocusEvent e) {	}
 					});
 				}
 			}
