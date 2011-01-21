@@ -17,7 +17,7 @@ public class JNumericTextField extends JTextField {
 	 * FIELDS
 	 */
 	
-	private static final long serialVersionUID = 8717556183255510078L;
+	private static final long serialVersionUID = 5967459761896269716L;
 	private static final Border BORDER_FOCUSED = new LineBorder(new Color(252, 117, 0), 1, true); 
 	private static final Border BORDER_UNFOCUSED = new LineBorder(new Color(150, 150, 150), 1, true); 
 	private final ActionListener al = new ActionListener() {
@@ -38,7 +38,13 @@ public class JNumericTextField extends JTextField {
 	public JNumericTextField(Document doc, String text, int columns) {
 		super(doc, text, columns);
 		setBorder(BORDER_UNFOCUSED);
-		oldValue = 0;
+		try {
+			value = Double.parseDouble(text);
+			oldValue = value;
+		} catch (NumberFormatException nfe) {
+			oldValue = 0;
+			value = 0;
+		}
 		addActionListener(al);
 		addFocusListener(new FocusListener() {
 			@Override
@@ -71,6 +77,10 @@ public class JNumericTextField extends JTextField {
 	
 	public JNumericTextField() {
 		this(null, null, 0);
+	}
+	
+	public double getValue() {
+		return value;
 	}
 	
 	/*
