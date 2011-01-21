@@ -3,6 +3,7 @@ package fiji.plugin.trackmate.gui;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.TEXTFIELD_DIMENSION;
+import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.TRACK_SCHEME_ICON;
 
 import java.awt.Component;
 import java.awt.FlowLayout;
@@ -13,8 +14,6 @@ import java.util.EnumMap;
 
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -66,8 +65,6 @@ public class DisplayerPanel extends ActionListenablePanel {
 	public ActionEvent SPOT_VISIBILITY_CHANGED 		= new ActionEvent(this, 2, "SpotVisibilityChanged");
 	public ActionEvent TRACK_SCHEME_BUTTON_PRESSED 	= new ActionEvent(this, 3, "TrackSchemeButtonPushed");
 
-	private static final Icon TRACK_SCHEME_ICON = new ImageIcon(DisplayerPanel.class.getResource("images/track_scheme.png"));
-	
 	private JLabel jLabelTrackDisplayMode;
 	private JComboBox jComboBoxDisplayMode;
 	static private DisplayerPanel displayerPanel_IL;

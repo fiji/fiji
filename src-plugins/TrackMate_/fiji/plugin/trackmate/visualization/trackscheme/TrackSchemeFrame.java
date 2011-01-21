@@ -83,11 +83,13 @@ public class TrackSchemeFrame extends JFrame {
 	 * CONSTANTS
 	 */
 
-	public static final int Y_COLUMN_SIZE = 100;
-	public static final int X_COLUMN_SIZE = 150;
+	static final int Y_COLUMN_SIZE = 100;
+	static final int X_COLUMN_SIZE = 150;
 
-	public static final int DEFAULT_CELL_WIDTH = 130;
-	public static final int DEFAULT_CELL_HEIGHT = 80;
+	static final int DEFAULT_CELL_WIDTH = 130;
+	static final int DEFAULT_CELL_HEIGHT = 80;
+	
+	public static final ImageIcon TRACK_SCHEME_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/track_scheme.png"));
 
 	private static final long serialVersionUID = 1L;
 	private static final Dimension DEFAULT_SIZE = new Dimension(800, 600);
@@ -215,6 +217,10 @@ public class TrackSchemeFrame extends JFrame {
 
 	
 	private void init() {
+		// Frame look
+		setIconImage(TRACK_SCHEME_ICON.getImage());
+		setTitle("Track scheme");
+		
 		getContentPane().setLayout(new BorderLayout());
 		// Add a ToolBar
 		getContentPane().add(createToolBar(), BorderLayout.NORTH);

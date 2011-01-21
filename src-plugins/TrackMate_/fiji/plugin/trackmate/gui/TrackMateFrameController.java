@@ -5,6 +5,8 @@ import ij.gui.NewImage;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -22,6 +24,9 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.jdom.DataConversionException;
 import org.jdom.JDOMException;
+import org.jgrapht.event.GraphEdgeChangeEvent;
+import org.jgrapht.event.GraphListener;
+import org.jgrapht.event.GraphVertexChangeEvent;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
@@ -40,7 +45,9 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.DisplayerType;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
+import fiji.plugin.trackmate.visualization.trackscheme.SpotCell;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotIconGrabber;
+import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 public class TrackMateFrameController {
 
@@ -980,26 +987,47 @@ public class TrackMateFrameController {
 		}
 		
 		// Display Track scheme
-//		final TrackSchemeFrame frame = new TrackSchemeFrame(model.getTrackGraph(), model.getSettings());
-//		frame.setVisible(true);
-//
-//		frame.jgraph.addMouseListener(new MouseAdapter() {
-//			public void mousePressed(MouseEvent e) {
-//				if (e.getClickCount() == 2) {
-//					// Get Cell under Mousepointer
-//					int x = e.getX(), y = e.getY();
-//					Object obj = frame.jgraph.getFirstCellForLocation(x, y);
-//					
-//					if (obj instanceof SpotCell) {
-//						SpotCell sc = (SpotCell) obj;
-//						Spot spot = sc.getSpot();
-//						displayer.highlight(spot);
-//					} else {
-//						System.out.println("Double-slicked on a "+obj.getClass().getCanonicalName());// DEBUG
-//					}
-//				}
-//			}
-//		});
+		final TrackSchemeFrame trackScheme = new TrackSchemeFrame(model.getTrackGraph());
+		trackScheme.setVisible(true);
+
+		// Link it with displayer
+
+		trackScheme.getJGraph().addMouseListener(new MouseAdapter() {
+			public void mousePressed(MouseEvent e) {
+				if (e.getClickCount() >= 1) {
+					// Get Cell under Mousepointer
+					int x = e.getX(), y = e.getY();
+					Object obj = trackScheme.getJGraph().getFirstCellForLocation(x, y);
+					
+					if (null == obj)
+						return;
+					System.out.println("Clicked on a "+obj.getClass().getCanonicalName());// DEBUG
+					
+					if (obj instanceof SpotCell) {
+						SpotCell sc = (SpotCell) obj;
+						Spot spot = sc.getSpot();
+						displayer.highlight(spot);
+						System.out.println("Hey!");// DEBUG
+					}
+				}
+			}
+		});
+		
+		trackScheme.addGraphListener(new GraphListener<Spot, DefaultWeightedEdge>() {
+			@Override
+			public void vertexRemoved(GraphVertexChangeEvent<Spot> e) {}
+			@Override
+			public void vertexAdded(GraphVertexChangeEvent<Spot> e) {}
+			@Override
+			public void edgeRemoved(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {}
+			@Override
+			public void edgeAdded(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
+				displayer.setTrackGraph(trackScheme.getTrackModel());
+				displayer.refresh();
+			}
+		});
+		
+		
 	
 	}
 	
