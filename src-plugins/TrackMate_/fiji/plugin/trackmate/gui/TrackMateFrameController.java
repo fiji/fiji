@@ -135,7 +135,7 @@ public class TrackMateFrameController {
 		 * Update the view given in argument in adequation with the current state.
 		 * @param view
 		 */
-		public void updateGUI(final TrackMateFrame view) {
+		public void updateGUI(final TrackMateFrame view, final TrackMateFrameController controller) {
 			// Display adequate card
 			final TrackMateFrame.PanelCard key;
 			switch (this) {
@@ -195,6 +195,16 @@ public class TrackMateFrameController {
 						view.jButtonPrevious.setEnabled(true);
 						view.jButtonNext.setEnabled(true);
 					}
+					// Extra actions
+					switch(state) {
+
+					case TUNE_THRESHOLDS:
+						controller.execLinkDisplayerToThresholdGUI();
+						break;
+					case TUNE_DISPLAY:
+						controller.execLinkDisplayerToTuningGUI();
+						break;
+					}
 					
 				}
 			});
@@ -219,19 +229,12 @@ public class TrackMateFrameController {
 				// Then we launch the displayer
 				controller.execLaunchdisplayer();
 				return;
-			case TUNE_THRESHOLDS:
-				controller.execLinkDisplayerToThresholdGUI();
-				return;
 			case THRESHOLD_BLOBS:
 				controller.execThresholding();
 				return;
 			case TRACKING:
 				controller.execTrackingStep();
 				return;
-			case TUNE_DISPLAY:
-				controller.execLinkDisplayerToTuningGUI();
-				return;
-				
 			default:
 				return;
 		
@@ -297,11 +300,11 @@ public class TrackMateFrameController {
 
 					if (event == view.NEXT_BUTTON_PRESSED) {					
 						state = state.nextState();
-						state.updateGUI(view);
+						state.updateGUI(view, controller);
 						state.performTask(controller);
 					} else if (event == view.PREVIOUS_BUTTON_PRESSED) {
 						state = state.previousState();
-						state.updateGUI(view);
+						state.updateGUI(view, controller);
 					} else if (event == view.LOAD_BUTTON_PRESSED) {
 						load();
 					} else if (event == view.SAVE_BUTTON_PRESSED) {
@@ -313,7 +316,7 @@ public class TrackMateFrameController {
 				} else {
 					
 					actionFlag = true;
-					state.updateGUI(view);
+					state.updateGUI(view, controller);
 					
 				}
 
@@ -329,7 +332,7 @@ public class TrackMateFrameController {
 		view.setVisible(true);
 		view.addActionListener(inProcessActionListener);
 		state = GuiState.START;
-		state.updateGUI(view);
+		state.updateGUI(view, controller);
 		initUpdater();
 	}
 	
@@ -511,7 +514,7 @@ public class TrackMateFrameController {
 				actionFlag = true;
 				boolean is3D = settings.imp.getNSlices() > 1;
 				if (is3D)
-					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
+					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
 				else 
 					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);					 
 				logger.log("Loading data finished, press 'next' to resume.\n");
@@ -542,7 +545,7 @@ public class TrackMateFrameController {
 				actionFlag = true;
 				boolean is3D = settings.imp.getNSlices() > 1;
 				if (is3D)
-					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
+					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
 				else 
 					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
 				displayer.setSpots(model.getSpots());
@@ -576,7 +579,7 @@ public class TrackMateFrameController {
 				state = GuiState.TUNE_TRACKER;
 				boolean is3D = settings.imp.getNSlices() > 1;
 				if (is3D)
-					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
+					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
 				else 
 					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
 				displayer.setSpots(model.getSpots());
@@ -608,7 +611,7 @@ public class TrackMateFrameController {
 				state = GuiState.TUNE_TRACKER;
 				boolean is3D = settings.imp.getNSlices() > 1;
 				if (is3D)
-					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
+					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
 				else 
 					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
 				displayer.setSpots(model.getSpots());
@@ -628,7 +631,7 @@ public class TrackMateFrameController {
 		actionFlag = true; // force redraw and relinking
 		boolean is3D = settings.imp.getNSlices() > 1;
 		if (is3D)
-			displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
+			displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
 		else 
 			displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
 		displayer.setSpots(model.getSpots());
