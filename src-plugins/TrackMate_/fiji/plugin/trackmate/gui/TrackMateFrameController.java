@@ -5,14 +5,13 @@ import ij.gui.NewImage;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -24,6 +23,8 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.jdom.DataConversionException;
 import org.jdom.JDOMException;
+import org.jgraph.event.GraphSelectionEvent;
+import org.jgraph.event.GraphSelectionListener;
 import org.jgrapht.event.GraphEdgeChangeEvent;
 import org.jgrapht.event.GraphListener;
 import org.jgrapht.event.GraphVertexChangeEvent;
@@ -47,6 +48,7 @@ import fiji.plugin.trackmate.visualization.SpotDisplayer.DisplayerType;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotCell;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotIconGrabber;
+import fiji.plugin.trackmate.visualization.trackscheme.TrackEdgeCell;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 public class TrackMateFrameController {
@@ -995,26 +997,32 @@ public class TrackMateFrameController {
 		final TrackSchemeFrame trackScheme = new TrackSchemeFrame(model.getTrackGraph());
 		trackScheme.setVisible(true);
 
-		// Link it with displayer
-
-		trackScheme.getJGraph().addMouseListener(new MouseAdapter() {
-			public void mousePressed(MouseEvent e) {
-				if (e.getClickCount() >= 1) {
-					// Get Cell under Mousepointer
-					int x = e.getX(), y = e.getY();
-					Object obj = trackScheme.getJGraph().getFirstCellForLocation(x, y);
-					
-					if (null == obj)
-						return;
-					System.out.println("Clicked on a "+obj.getClass().getCanonicalName());// DEBUG
-					
-					if (obj instanceof SpotCell) {
-						SpotCell sc = (SpotCell) obj;
-						Spot spot = sc.getSpot();
-						displayer.highlight(spot);
-						System.out.println("Hey!");// DEBUG
+		// Link it with displayer		
+		trackScheme.getJGraph().addGraphSelectionListener(new GraphSelectionListener() {
+			
+			private HashSet<Spot> highlightedSpots = new  HashSet<Spot>();
+			private HashSet<DefaultWeightedEdge> highlightedEdges = new HashSet<DefaultWeightedEdge>();
+			
+			@Override
+			public void valueChanged(GraphSelectionEvent event) {
+				Object[] cells = event.getCells();
+				for(Object cell : cells) {
+					if (cell instanceof SpotCell) {
+						SpotCell spotCell = (SpotCell) cell;
+						if (event.isAddedCell(cell)) 
+							highlightedSpots.add(spotCell.getSpot());
+						else
+							highlightedSpots.remove(spotCell.getSpot());
+					} else if (cell instanceof TrackEdgeCell) {
+						TrackEdgeCell edgeCell = (TrackEdgeCell) cell;
+						if (event.isAddedCell(cell)) 
+							highlightedEdges.add(edgeCell.getEdge());
+						else
+							highlightedEdges.remove(edgeCell.getEdge());
 					}
 				}
+				displayer.highlightEdges(highlightedEdges);
+				displayer.highlightSpots(highlightedSpots);
 			}
 		});
 		
@@ -1024,7 +1032,10 @@ public class TrackMateFrameController {
 			@Override
 			public void vertexAdded(GraphVertexChangeEvent<Spot> e) {}
 			@Override
-			public void edgeRemoved(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {}
+			public void edgeRemoved(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
+				displayer.setTrackGraph(trackScheme.getTrackModel());
+				displayer.refresh();
+			}
 			@Override
 			public void edgeAdded(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
 				displayer.setTrackGraph(trackScheme.getTrackModel());

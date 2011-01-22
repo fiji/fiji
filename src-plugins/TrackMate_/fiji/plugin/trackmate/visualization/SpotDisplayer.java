@@ -292,6 +292,11 @@ public abstract class SpotDisplayer {
 	/**
 	 * Highlight visually the spot given in argument. Do nothing if the given spot is not in {@link #spotsToShow}.
 	 */
-	public abstract void highlight(Spot spot);
+	public abstract void highlightSpots(Set<Spot> spots);
+
+	/**
+	 * Highlight visually the edges given in argument.
+	 */
+	public abstract void highlightEdges(Set<DefaultWeightedEdge> edges);
 	
 }

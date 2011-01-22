@@ -6,10 +6,13 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.TreeMap;
 
 import org.jdom.JDOMException;
+import org.jgraph.event.GraphSelectionEvent;
+import org.jgraph.event.GraphSelectionListener;
 import org.jgrapht.event.GraphEdgeChangeEvent;
 import org.jgrapht.event.GraphListener;
 import org.jgrapht.event.GraphVertexChangeEvent;
@@ -44,6 +47,8 @@ public class TrackVisualizerTestDrive {
 	
 	public static void main(String[] args) throws JDOMException, IOException {
 	
+		ij.ImageJ.main(args);
+		
 		TmXmlReader reader = new TmXmlReader(CASE_2);
 		reader.parse();
 		
@@ -83,27 +88,37 @@ public class TrackVisualizerTestDrive {
 		final TrackSchemeFrame frame = new TrackSchemeFrame(tracks);
 		frame.setVisible(true);
 
-		frame.getJGraph().addMouseListener(new MouseAdapter() {
-			public void mousePressed(MouseEvent e) {
-				if (e.getClickCount() >= 1) {
-					// Get Cell under Mousepointer
-					int x = e.getX(), y = e.getY();
-					Object obj = frame.getJGraph().getFirstCellForLocation(x, y);
-					
-					if (null == obj)
-						return;
-					
-					if (obj instanceof SpotCell) {
-						SpotCell sc = (SpotCell) obj;
-						Spot spot = sc.getSpot();
-						displayer.highlight(spot);
+		frame.getJGraph().addGraphSelectionListener(new GraphSelectionListener() {
+
+			private HashSet<Spot> highlightedSpots = new  HashSet<Spot>();
+			private HashSet<DefaultWeightedEdge> highlightedEdges = new HashSet<DefaultWeightedEdge>();
+
+			@Override
+			public void valueChanged(GraphSelectionEvent event) {
+				Object[] cells = event.getCells();
+				for(Object cell : cells) {
+					if (cell instanceof SpotCell) {
+						SpotCell spotCell = (SpotCell) cell;
+						if (event.isAddedCell(cell)) 
+							highlightedSpots.add(spotCell.getSpot());
+						else
+							highlightedSpots.remove(spotCell.getSpot());
+					} else if (cell instanceof TrackEdgeCell) {
+						TrackEdgeCell edgeCell = (TrackEdgeCell) cell;
+						if (event.isAddedCell(cell)) 
+							highlightedEdges.add(edgeCell.getEdge());
+						else
+							highlightedEdges.remove(edgeCell.getEdge());
 					}
 				}
+				displayer.highlightEdges(highlightedEdges);
+				displayer.highlightSpots(highlightedSpots);
 			}
 		});
-		
+
+
 		frame.addGraphListener(new GraphListener<Spot, DefaultWeightedEdge>() {
-			
+
 			@Override
 			public void vertexRemoved(GraphVertexChangeEvent<Spot> e) {
 				System.out.println("Removed a spot");

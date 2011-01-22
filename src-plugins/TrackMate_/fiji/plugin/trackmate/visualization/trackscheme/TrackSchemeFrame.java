@@ -184,10 +184,6 @@ public class TrackSchemeFrame extends JFrame {
 		}
 	}
 	
-	private void insert(final Point pt) {
-		System.out.println("Insert!!");// TODO
-	}
-	
 	private void remove(Object cell) {
 		if (cell instanceof TrackEdgeCell) {
 			TrackEdgeCell trackEdge = (TrackEdgeCell) cell;
@@ -409,13 +405,6 @@ public class TrackSchemeFrame extends JFrame {
 				}
 			});
 		}
-		menu.addSeparator();
-		// Insert
-		menu.add(new AbstractAction("Insert") {
-			public void actionPerformed(ActionEvent ev) {
-				insert(pt);
-			}
-		});
 		return menu;
 	}
 
