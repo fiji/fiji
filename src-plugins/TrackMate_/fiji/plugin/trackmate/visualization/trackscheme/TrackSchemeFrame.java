@@ -1,7 +1,7 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
-import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
+import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
@@ -188,6 +188,15 @@ public class TrackSchemeFrame extends JFrame {
 		System.out.println("Insert!!");// TODO
 	}
 	
+	private void remove(Object cell) {
+		if (cell instanceof TrackEdgeCell) {
+			TrackEdgeCell trackEdge = (TrackEdgeCell) cell;
+			DefaultWeightedEdge edge = trackEdge.getEdge();
+			lGraph.removeEdge(edge);
+			trackGraph.removeEdge(edge);
+		}
+	}
+	
 	private JGraph createGraph() {
 		jGMAdapter = new JGraphModelAdapter<Spot, DefaultWeightedEdge>(
 				lGraph,
@@ -196,12 +205,12 @@ public class TrackSchemeFrame extends JFrame {
 				new CellFactory<Spot, DefaultWeightedEdge>() {
 
 					@Override
-					public org.jgraph.graph.DefaultEdge createEdgeCell(DefaultWeightedEdge e) {
-						return new org.jgraph.graph.DefaultEdge(""+lGraph.getEdgeWeight(e));				}
+					public org.jgraph.graph.DefaultEdge createEdgeCell(DefaultWeightedEdge edge) {
+						return new TrackEdgeCell(edge, lGraph);			}
 
 					@Override
-					public DefaultGraphCell createVertexCell(Spot s) {
-						return new SpotCell(s);
+					public DefaultGraphCell createVertexCell(Spot spot) {
+						return new SpotCell(spot);
 					}
 					
 				});
@@ -396,7 +405,7 @@ public class TrackSchemeFrame extends JFrame {
 			menu.addSeparator();
 			menu.add(new AbstractAction("Remove") {
 				public void actionPerformed(ActionEvent e) {
-					System.out.println("Remove!!");// TODO
+					remove(cell);
 				}
 			});
 		}

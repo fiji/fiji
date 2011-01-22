@@ -21,8 +21,7 @@ public class SpotView extends VertexView {
 
 
 	public SpotView(SpotCell spotCell) {
-		super();
-		this.cell 	= spotCell;
+		super(spotCell);
 	}
 	
 	public Spot getSpot() {

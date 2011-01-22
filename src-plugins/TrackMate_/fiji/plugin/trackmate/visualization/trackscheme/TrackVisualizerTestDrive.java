@@ -97,8 +97,6 @@ public class TrackVisualizerTestDrive {
 						SpotCell sc = (SpotCell) obj;
 						Spot spot = sc.getSpot();
 						displayer.highlight(spot);
-					} else {
-						System.out.println("Clicked on a "+obj.getClass().getCanonicalName());// DEBUG
 					}
 				}
 			}
@@ -108,20 +106,18 @@ public class TrackVisualizerTestDrive {
 			
 			@Override
 			public void vertexRemoved(GraphVertexChangeEvent<Spot> e) {
-				// TODO Auto-generated method stub
-				
+				System.out.println("Removed a spot");
 			}
 			
 			@Override
 			public void vertexAdded(GraphVertexChangeEvent<Spot> e) {
-				// TODO Auto-generated method stub
-				
+				System.out.println("Added a spot");
 			}
 			
 			@Override
 			public void edgeRemoved(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
-				// TODO Auto-generated method stub
-				
+				displayer.setTrackGraph(frame.getTrackModel());
+				displayer.refresh();
 			}
 			
 			@Override
