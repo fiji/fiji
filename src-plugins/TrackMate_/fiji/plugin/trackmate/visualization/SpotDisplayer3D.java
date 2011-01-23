@@ -4,6 +4,7 @@ import ij3d.Content;
 import ij3d.ContentInstant;
 import ij3d.Image3DUniverse;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -25,17 +26,20 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	public static final int DEFAULT_RESAMPLING_FACTOR = 4;
 	public static final int DEFAULT_THRESHOLD = 50;
 
-	private static final Color3f HIGHLIGHT_COLOR4F = new Color3f(HIGHLIGHT_COLOR);
+	private static final Color3f HIGHLIGHT_COLOR3F = new Color3f(HIGHLIGHT_COLOR);
 	private static final String TRACK_CONTENT_NAME = "Tracks";
 	private static final String SPOT_CONTENT_NAME = "Spots";
 	
 	private TreeMap<Integer, SpotGroupNode<Spot>> blobs;	
+	private TrackDisplayNode trackNode;
 	private Content spotContent;
 	private Content trackContent;
 	private final Image3DUniverse universe;
-	private Spot previousSpot;
-	private Color3f previousColor;
-	private int previousFrame;
+	// For highlighting
+	private ArrayList<Spot> previousSpotHighlight;
+	private HashMap<Spot, Color3f> previousColoHighlight;
+	private HashMap<Spot, Integer> previousFrameHighlight;
+	private HashMap<DefaultWeightedEdge, Color3f> previousEdgeHighlight;
 	
 	public SpotDisplayer3D(Image3DUniverse universe, final float radius) {
 		this.radius = radius;
@@ -53,28 +57,61 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	 * OVERRIDDEN METHODS
 	 */
 	
-	public void highlight(Spot spot) {
-		int frame = - 1;
-		for(int i : spotsToShow.keySet()) {
-			List<Spot> spotThisFrame = spotsToShow.get(i);
-			if (spotThisFrame.contains(spot)) {
-				frame = i;
-				break;
+	@Override
+	public void highlightSpots(Set<Spot> spots) {
+		// Restore previous display settings for previously highlighted spot
+		if (null != previousSpotHighlight)
+			for (Spot spot : previousSpotHighlight)
+				blobs.get(previousFrameHighlight.get(spot)).setColor(spot, previousColoHighlight.get(spot));
+		previousSpotHighlight = new ArrayList<Spot>(spots.size());
+		previousColoHighlight = new HashMap<Spot, Color3f>(spots.size());
+		previousFrameHighlight = new HashMap<Spot, Integer>(spots.size());
+		
+		int frame = -1;
+		for (Spot spot : spots) {
+			frame = - 1;
+			for(int i : spotsToShow.keySet()) {
+				List<Spot> spotThisFrame = spotsToShow.get(i);
+				if (spotThisFrame.contains(spot)) {
+					frame = i;
+					break;
+				}
 			}
+			if (frame == -1)
+				continue;
+			
+			// Store current settings
+			previousSpotHighlight.add(spot);
+			previousColoHighlight.put(spot, blobs.get(frame).getColor3f(spot));
+			previousFrameHighlight.put(spot, frame);
+			
+			// Update target spot display
+			blobs.get(frame).setColor(spot,HIGHLIGHT_COLOR3F);
 		}
+		
+		// Move to last spot's timepoint
 		if (frame == -1)
 			return;
-		// Restore previous display settings for previously highlighted spot
-		if (null != previousSpot) 
-			blobs.get(previousFrame).setColor(previousSpot, previousColor);
-//		 Store current settings
-		previousSpot = spot;
-		previousColor = blobs.get(frame).getColor3f(spot);
-		previousFrame = frame;
-		// Update target spot display
-		blobs.get(frame).setColor(spot,HIGHLIGHT_COLOR4F);
 		universe.showTimepoint(frame);
 	};
+	
+	@Override
+	public void highlightEdges(Set<DefaultWeightedEdge> edges) {
+		// Restore previous display settings for previously highlighted edges
+		if (null != previousEdgeHighlight)
+			for(DefaultWeightedEdge edge : previousEdgeHighlight.keySet())
+					trackNode.setColor(edge, previousEdgeHighlight.get(edge));
+		
+		// Store current color settings
+		previousEdgeHighlight = new HashMap<DefaultWeightedEdge, Color3f>();
+		for(DefaultWeightedEdge edge :edges)
+			previousEdgeHighlight.put(edge, trackNode.getColor(edge));
+		
+		// Change edge color
+		for(DefaultWeightedEdge edge :edges)
+			trackNode.setColor(edge, HIGHLIGHT_COLOR3F);
+		
+	}
 	
 	@Override
 	public void setTrackVisible(boolean displayTrackSelected) {
@@ -219,7 +256,7 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		}
 		
 		// Prepare tracks instant
-		TrackDisplayNode trackNode = new TrackDisplayNode(trackGraph, spots, tracks, colors, radius/10);
+		trackNode = new TrackDisplayNode(trackGraph, spots, tracks, colors, radius/10);
 		
 		// Pass tracks instant to all instants
 		TreeMap<Integer, ContentInstant> instants = new TreeMap<Integer,ContentInstant>();

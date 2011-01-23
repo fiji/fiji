@@ -51,6 +51,8 @@ public class TrackDisplayNode extends ContentNode {
 	protected HashMap<Integer, Collection<Integer>> frameIndices;
 	/** Hold a index of all the meshes created, indexed as the other maps. */
 	protected HashMap<Integer, CustomTriangleMesh> meshes;
+	/** Hold a reference of the meshes corresponding to each edge. */
+	protected HashMap<DefaultWeightedEdge, CustomTriangleMesh> edgeMeshes = new HashMap<DefaultWeightedEdge, CustomTriangleMesh>();
 	
 	
 	 
@@ -76,6 +78,35 @@ public class TrackDisplayNode extends ContentNode {
 		makeMeshes();
 	}
 	
+	/*
+	 * PUBLIC METHODS
+	 */
+	
+	/**
+	 * Set the color of the whole specified track.
+	 */
+	public void setColor(final Set<Spot> track, final Color3f color) {
+		Set<DefaultWeightedEdge> edges;
+		for(Spot spot : track) {
+			edges = graph.edgesOf(spot);
+			for(DefaultWeightedEdge edge : edges)
+				setColor(edge, color);
+		}
+	}
+	
+	/**
+	 * Set the color of the given edge mesh.
+	 */
+	public void setColor(final DefaultWeightedEdge edge, final Color3f color) {
+		edgeMeshes.get(edge).setColor(color);
+	}
+	
+	/**
+	 * Return the color of the specified edge mesh.
+	 */
+	public Color3f getColor(final DefaultWeightedEdge edge) {
+		return edgeMeshes.get(edge).getColor();
+	}
 	
 	/*
 	 * PRIVATE METHODS
@@ -88,7 +119,7 @@ public class TrackDisplayNode extends ContentNode {
 		Spot target;
 		CustomTriangleMesh mesh;
 		
-		trackIndices 	= new HashMap<Set<Spot>, Collection<Integer>>(tracks.size());
+		trackIndices = new HashMap<Set<Spot>, Collection<Integer>>(tracks.size());
 		for(Set<Spot> track : tracks)  
 			trackIndices.put(track, new ArrayList<Integer>());
 		
@@ -121,6 +152,8 @@ public class TrackDisplayNode extends ContentNode {
 					if (target.diffTo(source, Feature.POSITION_T) <= 0)
 						continue;
 					mesh = makeMesh(source, target, colors.get(track));
+					// Store the individual mesh
+					edgeMeshes.put(edge, mesh);
 					// Add the tube to the content
 					trackSwitch.addChild(mesh);
 					// Store indices
