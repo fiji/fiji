@@ -150,6 +150,7 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 		double pearsonDenominator = 0;
 		double ch1diffSquaredSum = 0;
 		double ch2diffSquaredSum = 0;
+		int count = 0;
 		while (cursor.hasNext()) {
 			cursor.fwd();
 			T type1 = cursor.getChannel1Type();
@@ -159,12 +160,13 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			pearsonDenominator += ch1diff*ch2diff;
 			ch1diffSquaredSum += (ch1diff*ch1diff);
 			ch2diffSquaredSum += (ch2diff*ch2diff);
+			count++;
 		}
 		double pearsonNumerator = Math.sqrt(ch1diffSquaredSum * ch2diffSquaredSum);
 
 		double pearsonsR = pearsonDenominator / pearsonNumerator;
 
-		checkForSanity(pearsonsR);
+		checkForSanity(pearsonsR, count);
 
 		return pearsonsR;
 	}
@@ -210,7 +212,7 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 		double pearsons3 = sum2squared - (sum2 * sum2 * invN);
 		double pearsonsR = pearsons1/(Math.sqrt(pearsons2*pearsons3));
 
-		checkForSanity(pearsonsR);
+		checkForSanity(pearsonsR, N);
 
 		return pearsonsR;
 	}
@@ -221,7 +223,7 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 	 *
 	 * @param val The value to check.
 	 */
-	private static void checkForSanity(double value) throws MissingPreconditionException {
+	private static void checkForSanity(double value, int iterations) throws MissingPreconditionException {
 		if ( Double.isNaN(value) || Double.isInfinite(value)) {
 			/* For the _fast_ implementation this could happen:
 			 *   Infinity could happen if only the numerator is 0, i.e.:
@@ -237,7 +239,7 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			 *   Additionally, if is zero for both channels at once you
 			 *   could get NaN. NaN
 			 */
-			throw new MissingPreconditionException("A numerical problem occured: the input data is unsuitable for this algorithm. Possibly too few pixels.");
+			throw new MissingPreconditionException("A numerical problem occured: the input data is unsuitable for this algorithm. Possibly too few pixels (in range were: " + iterations + ").");
 		}
 	}
 
