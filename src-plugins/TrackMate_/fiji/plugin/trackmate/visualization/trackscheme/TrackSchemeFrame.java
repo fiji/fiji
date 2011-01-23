@@ -79,6 +79,15 @@ import fiji.plugin.trackmate.Spot;
 
 public class TrackSchemeFrame extends JFrame {
 
+	{
+		//Set Look & Feel
+		try {
+			javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 	/*
 	 * CONSTANTS
 	 */
@@ -100,12 +109,13 @@ public class TrackSchemeFrame extends JFrame {
 	private static final int TABLE_ROW_HEADER_WIDTH = 50;
 	private static final Color GRID_COLOR = Color.GRAY;
 	
-	private static final ImageIcon LINKING_ON_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/connect.png")); 
+	private static final ImageIcon LINKING_ON_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/connect.png")); 
 	private static final ImageIcon LINKING_OFF_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/forbid_connect.png")); 
-	private static final ImageIcon RESET_ZOOM_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/zoom.png")); 
-	private static final ImageIcon ZOOM_IN_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/zoom_in.png")); 
-	private static final ImageIcon ZOOM_OUT_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/zoom_out.png")); 
-	private static final ImageIcon REFRESH_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/refresh.png")); 
+	private static final ImageIcon RESET_ZOOM_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/zoom.png")); 
+	private static final ImageIcon ZOOM_IN_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/zoom_in.png")); 
+	private static final ImageIcon ZOOM_OUT_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/zoom_out.png")); 
+	private static final ImageIcon REFRESH_ICON		= new ImageIcon(TrackSchemeFrame.class.getResource("resources/refresh.png"));
+	private static final ImageIcon PLOT_ICON		= new ImageIcon(TrackSchemeFrame.class.getResource("resources/plots.png"));
 
 	/*
 	 * FIELDS
@@ -165,6 +175,28 @@ public class TrackSchemeFrame extends JFrame {
 	/*
 	 * PRIVATE METHODS
 	 */
+	
+	private void plotSelectionData() {
+		Feature xFeature = infoPane.featureSelectionPanel.getXKey();
+		Set<Feature> yFeatures = infoPane.featureSelectionPanel.getYKeys();
+		if (yFeatures.isEmpty())
+			return;
+		
+		Object[] selectedCells = jGraph.getSelectionCells();
+		if (selectedCells == null || selectedCells.length == 0)
+			return;
+		
+		List<Spot> spots = new ArrayList<Spot>();
+		for(Object cell : selectedCells)
+			if (cell instanceof SpotCell)
+				spots.add(((SpotCell)cell).getSpot());
+		if (spots.isEmpty())
+			return;
+		
+		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, spots, trackGraph);
+		grapher.setVisible(true);
+		
+	}
 	
 	private void connect(Object source, Object target) {
 		if (source instanceof SpotCell && target instanceof SpotCell) {
@@ -249,7 +281,7 @@ public class TrackSchemeFrame extends JFrame {
 		infoPane = new InfoPane();
 		
 		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, infoPane, scrollPane);
-		splitPane.setDividerLocation(120);
+		splitPane.setDividerLocation(170);
 		getContentPane().add(splitPane, BorderLayout.CENTER);
 
 		// Listeners
@@ -375,6 +407,17 @@ public class TrackSchemeFrame extends JFrame {
 		toolbar.add(new AbstractAction("Refresh", REFRESH_ICON) {
 			public void actionPerformed(ActionEvent e) {
 				doTrackLayout();
+			}
+		});
+		
+		// Separator
+		toolbar.addSeparator();
+		
+		// Plot selection data
+		toolbar.add(new AbstractAction("Plot selection data", PLOT_ICON) {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				plotSelectionData();
 			}
 		});
 		
@@ -520,6 +563,7 @@ public class TrackSchemeFrame extends JFrame {
 		private JTextPane textPane;
 		private JTable table;
 		private JScrollPane scrollTable;
+		private FeaturePlotSelectionPanel<Feature> featureSelectionPanel;
 
 		public InfoPane() {
 			init();
@@ -592,7 +636,6 @@ public class TrackSchemeFrame extends JFrame {
 			table.getTableHeader().setOpaque(false);
 			table.setSelectionForeground(Color.YELLOW.darker());
 			table.setGridColor(GRID_COLOR);
-
 			
 			JList rowHeader = new JList(lm);
 			rowHeader.setFixedCellWidth(TABLE_ROW_HEADER_WIDTH);
@@ -605,6 +648,7 @@ public class TrackSchemeFrame extends JFrame {
 			scrollTable.getRowHeader().setOpaque(false);
 			scrollTable.setOpaque(false);
 			scrollTable.getViewport().setOpaque(false);
+			scrollTable.setVisible(false); // for now
 
 			textPane = new JTextPane();
 			textPane.setCaretPosition(0);
@@ -613,11 +657,13 @@ public class TrackSchemeFrame extends JFrame {
 			textPane.setOpaque(false);
 			textPane.setFont(SMALL_FONT);
 			
+			featureSelectionPanel = new FeaturePlotSelectionPanel<Feature>(Feature.POSITION_T);
+			
 			setLayout(new BorderLayout());
 			add(textPane, BorderLayout.NORTH);
 			add(scrollTable, BorderLayout.CENTER);
+			add(featureSelectionPanel, BorderLayout.SOUTH);
 			
-			scrollTable.setVisible(false);
 		}
 		
 	}
