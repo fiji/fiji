@@ -73,14 +73,54 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			double ch1Mean = container.getMeanCh1();
 			double ch2Mean = container.getMeanCh2();
 
-			pearsonsCorrelationValue = classicPearsons(alwaysTrueCursor, ch1Mean, ch2Mean);
-			pearsonsCorrelationValueBelowThr = classicPearsons(belowThresholdCursor, ch1Mean, ch2Mean);
-			pearsonsCorrelationValueAboveThr = classicPearsons(aboveThresholdCursor, ch1Mean, ch2Mean);
+			try {
+				pearsonsCorrelationValue = classicPearsons(alwaysTrueCursor, ch1Mean, ch2Mean);
+			} catch (MissingPreconditionException e) {
+				// probably a numerical error occurred
+				pearsonsCorrelationValue = Double.NaN;
+				throw e;
+			}
+
+			try {
+				pearsonsCorrelationValueBelowThr = classicPearsons(belowThresholdCursor, ch1Mean, ch2Mean);
+			} catch (MissingPreconditionException e) {
+				// probably a numerical error occurred
+				pearsonsCorrelationValueBelowThr = Double.NaN;
+				throw e;
+			}
+
+			try {
+				pearsonsCorrelationValueAboveThr = classicPearsons(aboveThresholdCursor, ch1Mean, ch2Mean);
+			} catch (MissingPreconditionException e) {
+				// probably a numerical error occurred
+				pearsonsCorrelationValueAboveThr = Double.NaN;
+				throw e;
+			}
 		}
 		else if (theImplementation == Implementation.Fast) {
-			pearsonsCorrelationValue = fastPearsons(alwaysTrueCursor);
-			pearsonsCorrelationValueBelowThr = fastPearsons(belowThresholdCursor);
-			pearsonsCorrelationValueAboveThr = fastPearsons(aboveThresholdCursor);
+			try {
+				pearsonsCorrelationValue = fastPearsons(alwaysTrueCursor);
+			} catch (MissingPreconditionException e) {
+				// probably a numerical error occurred
+				pearsonsCorrelationValue = Double.NaN;
+				throw e;
+			}
+
+			try {
+				pearsonsCorrelationValueBelowThr = fastPearsons(belowThresholdCursor);
+			} catch (MissingPreconditionException e) {
+				// probably a numerical error occurred
+				pearsonsCorrelationValueBelowThr = Double.NaN;
+				throw e;
+			}
+
+			try {
+				pearsonsCorrelationValueAboveThr = fastPearsons(aboveThresholdCursor);
+			} catch (MissingPreconditionException e) {
+				// probably a numerical error occurred
+				pearsonsCorrelationValueAboveThr = Double.NaN;
+				throw e;
+			}
 		}
 	}
 
