@@ -316,8 +316,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 				a.execute(container);
 			}
 			catch (MissingPreconditionException e){
+				IJ.handleException(e);
 				String aName = a.getClass().getName();
-				System.out.println("MissingPreconditionException occured in " + aName + " algorithm: " + e.getMessage());
 				for (ResultHandler<T> r : listOfResultHandlers){
 					r.handleWarning(
 							new Warning( "Probem with input data", aName + " - " + e.getMessage() ) );
