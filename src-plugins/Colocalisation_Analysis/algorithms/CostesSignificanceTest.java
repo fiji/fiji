@@ -48,6 +48,8 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 	 * r values.
 	 */
 	double costesPValue;
+	// the maximum retries in case of Pearson numerical errors
+	protected final int maxErrorRetries = 3;
 
 
 
@@ -142,6 +144,9 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 		 */
 		OutOfBoundsStrategyFactory<FloatType> smootherOobFactory = new OutOfBoundsStrategyMirrorFactory<FloatType>();
 
+		// the retry count for error cases
+		int retries = 0;
+
 		shuffledPearsonsResults = new ArrayList<Double>();
 		for (int i=0; i < nrRandomizations; i++) {
 			// shuffle the list
@@ -199,10 +204,23 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 			// allow the potential addition of a mask
 			smoothedShuffledImage = container.maskImageIfNeeded( smoothedShuffledImage );
 
-			// calculate correlation value...
-			double pValue = pearsonsCorrelation.calculatePearsons( smoothedShuffledImage, img2);
-			// ...and add it to the results list
-			shuffledPearsonsResults.add( pValue );
+			try {
+				// calculate correlation value...
+				double pValue = pearsonsCorrelation.calculatePearsons( smoothedShuffledImage, img2);
+				// ...and add it to the results list
+				shuffledPearsonsResults.add( pValue );
+			} catch (MissingPreconditionException e) {
+				/* if the randomized input data does not suit due to numerical
+				 * problems, try it three times again and then fail.
+				 */
+				if (retries < maxErrorRetries) {
+					// increase retry count and the number of ranodmizations
+					retries++;
+					nrRandomizations++;
+				} else {
+					throw new MissingPreconditionException("Costes: Maximum retries have been made, but errors keep on coming: " + e.getMessage());
+				}
+			}
 		}
 
 		// close all input and output cursors
