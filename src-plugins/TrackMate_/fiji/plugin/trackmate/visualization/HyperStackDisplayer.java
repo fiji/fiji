@@ -36,6 +36,7 @@ public class HyperStackDisplayer extends SpotDisplayer {
 		protected ArrayList<Integer> X1 = new ArrayList<Integer>();
 		protected ArrayList<Integer> Y1 = new ArrayList<Integer>();
 		protected ArrayList<Integer> frames = new ArrayList<Integer>();
+		protected float lineThickness = 1.0f;
 
 		public TrackOverlay(Color color) {
 			this.color = color;
@@ -48,11 +49,7 @@ public class HyperStackDisplayer extends SpotDisplayer {
 			if (!trackVisible)
 				return;
 			
-			g2d.setStroke(new BasicStroke((float) (1 / canvas.getMagnification())));
-			concreteDraw(g2d);
-		}
-		
-		protected void concreteDraw(Graphics2D g2d) {
+			g2d.setStroke(new BasicStroke((float) (lineThickness / canvas.getMagnification()),  BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 			switch (trackDisplayMode) {
 
 			case ALL_WHOLE_TRACKS:
@@ -115,8 +112,9 @@ public class HyperStackDisplayer extends SpotDisplayer {
 		
 	private class SpotOverlay extends AbstractAnnotation {
 
-		private TreeMap<Integer, Map<Spot, Float>> R = new TreeMap<Integer, Map<Spot, Float>>();
-		private TreeMap<Integer, Map<Spot, Color>> colors = new TreeMap<Integer, Map<Spot, Color>>();
+		protected TreeMap<Integer, Map<Spot, Float>> R = new TreeMap<Integer, Map<Spot, Float>>();
+		protected TreeMap<Integer, Map<Spot, Color>> colors = new TreeMap<Integer, Map<Spot, Color>>();
+		protected float lineThickness = 1.0f;
 		
 		public SpotOverlay() {
 			this.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
@@ -132,7 +130,6 @@ public class HyperStackDisplayer extends SpotDisplayer {
 			if (!spotVisible)
 				return;
 			
-			g2d.setStroke(new BasicStroke((float) (1 / canvas.getMagnification())));
 			final int frame = imp.getFrame()-1;
 			final float zslice = (imp.getSlice()-1) * calibration[2];
 			
@@ -143,6 +140,7 @@ public class HyperStackDisplayer extends SpotDisplayer {
 			float x, y, z, radius, dz2;
 			int apparentRadius;
 			for (Spot spot : spotThisFrame) {
+				g2d.setStroke(new BasicStroke((float) (lineThickness / canvas.getMagnification())));
 				g2d.setColor(c.get(spot));
 				radius = r.get(spot);
 				x = spot.getFeature(Feature.POSITION_X);
@@ -163,33 +161,21 @@ public class HyperStackDisplayer extends SpotDisplayer {
 			R.get(frame).put(spot, radius);
 			colors.get(frame).put(spot, color);
 		}
+	}
+	
+	private class HighlightSpotOverlay extends SpotOverlay {
 
-		public void putColor(Spot spot, Color color) {
-			for(int key : colors.keySet())
-				if (colors.get(key).keySet().contains(spot)) {
-					colors.get(key).put(spot, color);
-					return;
-				}
+		public HighlightSpotOverlay() {
+			super();
+			this.lineThickness = 2.0f;
 		}
-		
 	}
 
-	private class HighlightOverlay extends TrackOverlay {
+	private class HighlightTrackOverlay extends TrackOverlay {
 		
-		public HighlightOverlay() {
+		public HighlightTrackOverlay() {
 			super(HIGHLIGHT_COLOR);
-			this.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
-			this.stroke = new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
-		}
-		
-		@Override
-		public void draw(Graphics2D g2d) {
-			
-			if (!trackVisible)
-				return;
-			
-			g2d.setStroke(stroke);
-			concreteDraw(g2d);
+			this.lineThickness = 2.0f;
 		}
 	}
 	
@@ -207,8 +193,8 @@ public class HyperStackDisplayer extends SpotDisplayer {
 	private boolean spotVisible = true;
 	private StackWindow window;
 	// For hightlight
-	private HashMap<Spot, Color> previousSpotHighlight;
-	private HighlightOverlay highlightOverlay;
+	private HighlightSpotOverlay highlightSpotOverlay;
+	private HighlightTrackOverlay highlightTrackOverlay;
 
 	/*
 	 * CONSTRUCTORS
@@ -228,12 +214,9 @@ public class HyperStackDisplayer extends SpotDisplayer {
 	
 	@Override
 	public void highlightSpots(final Set<Spot> spots) {
-		// Restore previous display settings for previously highlighted spot
-		if (null != previousSpotHighlight)
-			for(Spot spot : previousSpotHighlight.keySet())
-				spotOverlay.putColor(spot, previousSpotHighlight.get(spot));
-		
-		previousSpotHighlight = new HashMap<Spot, Color>();
+		if (null != highlightSpotOverlay)
+			canvas.removeOverlay(highlightSpotOverlay);
+		highlightSpotOverlay = new HighlightSpotOverlay();
 		
 		// Change target spots
 		Spot thisSpot = null;
@@ -250,17 +233,16 @@ public class HyperStackDisplayer extends SpotDisplayer {
 			}
 			if (frame == -1)
 				continue;
-			
-			// Store current settings
-			previousSpotHighlight.put(spot, spotOverlay.colors.get(frame).get(spot));
+
 			// Change settings of target spot 
-			spotOverlay.putColor(spot, HIGHLIGHT_COLOR);
+			highlightSpotOverlay.addSpot(spot, radius * radiusRatio, HIGHLIGHT_COLOR, frame);
 			// Keep reference for outer loop
 			thisSpot = spot;
 		}
 		// Update displayed frame
 		if (null == thisSpot)
 			return;
+		canvas.addOverlay(highlightSpotOverlay);
 		int z = Math.round(thisSpot.getFeature(Feature.POSITION_Z) / calibration[2] ) + 1;
 		imp.setPosition(1, z, frame+1);
 //		window.setPosition(1, z, frame+1);
@@ -271,9 +253,9 @@ public class HyperStackDisplayer extends SpotDisplayer {
 	public void highlightEdges(Set<DefaultWeightedEdge> edges) {
 		Spot source, target;
 		int frame;
-		if (null != highlightOverlay)
-			canvas.removeOverlay(highlightOverlay);
-		highlightOverlay = new HighlightOverlay();
+		if (null != highlightTrackOverlay)
+			canvas.removeOverlay(highlightTrackOverlay);
+		highlightTrackOverlay = new HighlightTrackOverlay();
 		for (DefaultWeightedEdge edge : edges) {
 			source = trackGraph.getEdgeSource(edge);
 			target = trackGraph.getEdgeTarget(edge);
@@ -283,9 +265,9 @@ public class HyperStackDisplayer extends SpotDisplayer {
 					frame = key;
 					break;
 				}
-			highlightOverlay.addEdge(source, target, frame);
+			highlightTrackOverlay.addEdge(source, target, frame);
 		}
-		canvas.addOverlay(highlightOverlay);
+		canvas.addOverlay(highlightTrackOverlay);
 		imp.updateAndDraw();
 	}
 	
@@ -388,8 +370,6 @@ public class HyperStackDisplayer extends SpotDisplayer {
 		}
 		canvas.addOverlay(spotOverlay);
 	}
-	
-
 	
 	private void prepareWholeTrackOverlay() {
 		if (null == tracks)
