@@ -68,6 +68,7 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 		TwinValueRangeCursor<T> aboveThresholdCursor
 			= TwinValueRangeCursorFactory.generateAboveThresholdCursor(img1, img2, threshold1, threshold2);
 
+		MissingPreconditionException error = null;
 		if (theImplementation == Implementation.Classic) {
 			// get the means from the DataContainer
 			double ch1Mean = container.getMeanCh1();
@@ -78,7 +79,7 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			} catch (MissingPreconditionException e) {
 				// probably a numerical error occurred
 				pearsonsCorrelationValue = Double.NaN;
-				throw e;
+				error = e;
 			}
 
 			try {
@@ -86,7 +87,7 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			} catch (MissingPreconditionException e) {
 				// probably a numerical error occurred
 				pearsonsCorrelationValueBelowThr = Double.NaN;
-				throw e;
+				error = e;
 			}
 
 			try {
@@ -94,7 +95,7 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			} catch (MissingPreconditionException e) {
 				// probably a numerical error occurred
 				pearsonsCorrelationValueAboveThr = Double.NaN;
-				throw e;
+				error = e;
 			}
 		}
 		else if (theImplementation == Implementation.Fast) {
@@ -103,7 +104,7 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			} catch (MissingPreconditionException e) {
 				// probably a numerical error occurred
 				pearsonsCorrelationValue = Double.NaN;
-				throw e;
+				error = e;
 			}
 
 			try {
@@ -111,7 +112,7 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			} catch (MissingPreconditionException e) {
 				// probably a numerical error occurred
 				pearsonsCorrelationValueBelowThr = Double.NaN;
-				throw e;
+				error = e;
 			}
 
 			try {
@@ -119,9 +120,13 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			} catch (MissingPreconditionException e) {
 				// probably a numerical error occurred
 				pearsonsCorrelationValueAboveThr = Double.NaN;
-				throw e;
+				error = e;
 			}
 		}
+
+		// if an error occurred, throw it one level up
+		if (error != null)
+			throw error;
 	}
 
 	/**
