@@ -189,6 +189,41 @@ public class TestImageAccessor {
 	}
 
 	/**
+	 * Generates a Perlin noise image. It is based on Ken Perlin's
+	 * reference implementation (ImprovedNoise class) and a small
+	 * bit of Kas Thomas' sample code (http://asserttrue.blogspot.com/).
+	 */
+	public static <T extends RealType<T>> Image<T> producePerlinNoiseImage(T type, int width,
+			int height, double z, double scale) { // , double[] smoothingSigma
+		// create the new image
+		ImageFactory<T> imgFactory = new ImageFactory<T>(type, new ArrayContainerFactory());
+		Image<T> noiseImage = imgFactory.createImage( new int[] {width, height}, "Noise image");
+		LocalizableCursor<T> noiseCursor = noiseImage.createLocalizableCursor();
+
+		double xOffset = Math.random() * (width*width);
+		double yOffset = Math.random() * (height*height);
+
+		while (noiseCursor.hasNext()) {
+			noiseCursor.fwd();
+			double x = (noiseCursor.getPosition(0) + xOffset) * scale;
+			double y = (noiseCursor.getPosition(1) + yOffset) * scale;
+
+			float t = (float)ImprovedNoise.noise( x, y, z);
+
+			// ImprovedNoise.noise returns a float in the range [-1..1],
+			// whereas we want a float in the range [0..1], so:
+                        t = (1 + t) * 0.5f;
+
+                        noiseCursor.getType().setReal(t);
+		}
+
+		noiseCursor.close();
+
+		//return gaussianSmooth(noiseImage, imgFactory, smoothingSigma);
+		return noiseImage;
+	}
+
+	/**
 	 * Gaussian Smooth of the input image using intermediate float format.
 	 * @param <T>
 	 * @param img
