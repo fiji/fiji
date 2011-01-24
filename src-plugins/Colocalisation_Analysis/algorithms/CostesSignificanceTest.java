@@ -1,6 +1,7 @@
 package algorithms;
 
 import gadgets.DataContainer;
+import gadgets.Statistics;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -348,81 +349,28 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 		}
 	}
 
-	/**
-	 * Calculates an estimate of the upper tail cumulative normal distribution
-	 * (which is simply the complementary error function with linear scalings
-	 * of x and y axis).
-	 *
-	 * Fractional error in math formula less than 1.2 * 10 ^ -7.
-     * although subject to catastrophic cancellation when z in very close to 0
-     *
-     * Code from (thanks to Bob Dougherty):
-	 * http://www.cs.princeton.edu/introcs/26function/MyMath.java.html
-	 *
-	 * Original algorithm from Section 6.2 of Numerical Recipes
-	 */
-    public static double erf(double z) {
-        double t = 1.0 / (1.0 + 0.5 * Math.abs(z));
-
-        // use Horner's method
-        double ans = 1 - t * Math.exp( -z*z   -   1.26551223 +
-                                            t * ( 1.00002368 +
-                                            t * ( 0.37409196 +
-                                            t * ( 0.09678418 +
-                                            t * (-0.18628806 +
-                                            t * ( 0.27886807 +
-                                            t * (-1.13520398 +
-                                            t * ( 1.48851587 +
-                                            t * (-0.82215223 +
-                                            t * ( 0.17087277))))))))));
-        if (z >= 0) return  ans;
-        else        return -ans;
-    }
-
     protected void calculateStatistics(List<Double> compareValues, double originalVal) {
 	shuffledPearsonsNotLessOriginal = 0;
 	int iterations = shuffledPearsonsResults.size();
 	double compareSum = 0.0;
-	double compareSquaredSum = 0.0;
 
-		for( Double shuffledVal : shuffledPearsonsResults ) {
-			double diff = shuffledVal - originalVal;
-			/* check if the randomized Pearsons value is equal
-			 * or larger than the original one.
-			 */
-			if( diff > -0.00001 ) {
-				shuffledPearsonsNotLessOriginal++;
-			}
-			compareSum += shuffledVal;
-			compareSquaredSum += shuffledVal * shuffledVal;
+	for( Double shuffledVal : shuffledPearsonsResults ) {
+		double diff = shuffledVal - originalVal;
+		/* check if the randomized Pearsons value is equal
+		 * or larger than the original one.
+		 */
+		if( diff > -0.00001 ) {
+			shuffledPearsonsNotLessOriginal++;
 		}
+		compareSum += shuffledVal;
+	}
 
 	shuffledMean = compareSum / iterations;
-	shuffledStdDerivation = Math.sqrt(
-			  ( (iterations * compareSquaredSum) - (compareSum * compareSum) )
-			/ ( iterations * (iterations - 1) ) );
+	shuffledStdDerivation = Statistics.stdDeviation(compareValues);
 
-	/* Calculate phi, which is the area of the Gaussian distribution from
-	 * minus infinity to the query value in units of standard derivation.
-	 * The original formula was:
-	 *
-	 *          1 + erf( z / sqrt(2) )
-	 * Phi(z) = ----------------------
-	 *                   2
-	 *
-	 * This could be rearranged (we think) to:
-	 *
-	 *               erf(z - mean)
-	 *          1 + -----------------
-	 *               sqrt(2) * stdDev
-	 * Phi(z) = ------------------------
-	 *                    2
-	 *
-	 * The rearrangment was probably done for numerical accuracy (?).
-	 */
-	costesPValue = 0.5 * (1 + (  erf(originalVal - shuffledMean)
-							     / (Math.sqrt(2) * shuffledStdDerivation)
-							    ) );
+	// get the quantile of the original value in the shuffle distribution
+	costesPValue = Statistics.phi(originalVal, shuffledMean, shuffledStdDerivation);
+
 	if (costesPValue > 1.0)
 		costesPValue = 1.0;
 	else if (costesPValue < 0.0)
