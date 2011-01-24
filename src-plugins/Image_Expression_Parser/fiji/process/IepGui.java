@@ -676,7 +676,7 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 						
 						// Have the parser process individual channel separately
 						Map<String, Image<T>> img_map;
-						ImageStack[] result_array = new ImageStack[3];
+						ImagePlus[] result_array = new ImagePlus[3];
 						Image<T> tmp_image;
 						int index = 0;
 						for (Map<String, ImagePlus> current_map : map_array) {
@@ -685,14 +685,13 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 							image_expression_parser.process();
 							// Collect results
 							tmp_image = image_expression_parser.getResult();
-							result_array[index] = ImageJFunctions.copyToImagePlus(tmp_image).getImageStack();
+							result_array[index] = ImageJFunctions.copyToImagePlus(tmp_image);
 							index++;
 						}
 						
 						// Merge back channels
 						RGBStackMerge rgb_merger = new RGBStackMerge();
-						ImagePlus new_imp = rgb_merger.createComposite(current_imp.getWidth(), current_imp.getHeight(), current_imp.getNSlices(), 
-								result_array, false);
+						ImagePlus new_imp = rgb_merger.mergeHyperstacks(result_array, false);
 						new_imp.resetDisplayRange();
 						
 						if (target_imp == null) {
