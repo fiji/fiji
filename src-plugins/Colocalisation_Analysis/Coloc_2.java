@@ -249,7 +249,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		if (gd.getNextBoolean())
 				histogram2D = new Histogram2D<T>("2D intensity histogram");
 		if (gd.getNextBoolean()) {
-				costesSignificance = new CostesSignificanceTest<T>(pearsonsCorrelation, 1, 10);
+				costesSignificance = new CostesSignificanceTest<T>(pearsonsCorrelation, 3, 10);
 		}
 
 		return true;
