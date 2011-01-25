@@ -29,6 +29,84 @@ public enum Feature {
 	ELLIPSOIDFIT_AXISTHETA_B,
 	ELLIPSOIDFIT_AXISTHETA_C	;
 	
+	public enum Dimension {
+		NONE,
+		QUALITY,
+		INTENSITY,
+		INTENSITY_SQUARED,
+		POSITION,
+		SIZE,   // we separate size and dimension so that x,y,z are plotted on a different graph from spot sizes
+		TIME,
+		ANGLE;
+		
+		public static String QualityUnits = "Quality";
+		public static String IntensityUnits = "Counts";
+		public static String LengthUnits = "Pixels";
+		public static String AngleUnits = "Radians";
+		public static String TimeUnits = "Frames";
+
+		public String getUnits() {
+			switch(this) {
+			case ANGLE:
+				return AngleUnits;
+			default:
+			case NONE:
+				return "";
+			case INTENSITY:
+				return IntensityUnits;
+			case INTENSITY_SQUARED:
+				return IntensityUnits+"^2";
+			case POSITION:
+			case SIZE:
+				return LengthUnits;
+			case TIME:
+				return TimeUnits;
+			case QUALITY:
+				return QualityUnits;
+			}
+		}
+	}
+	
+	public Dimension getDimension() {
+		switch(this) {
+		case POSITION_X:
+		case POSITION_Y:
+		case POSITION_Z:
+			return  Dimension.POSITION;
+		case QUALITY:
+			return Dimension.QUALITY;
+		case MORPHOLOGY:
+		case CONTRAST:
+		case KURTOSIS:
+		case SKEWNESS:
+		default:
+			return Dimension.NONE;
+		case MEAN_INTENSITY:
+		case MEDIAN_INTENSITY:
+		case MIN_INTENSITY:
+		case MAX_INTENSITY:
+		case TOTAL_INTENSITY:
+		case STANDARD_DEVIATION:
+			return Dimension.INTENSITY;
+		case VARIANCE:
+			return Dimension.INTENSITY_SQUARED;
+		case ELLIPSOIDFIT_AXISPHI_A:
+		case ELLIPSOIDFIT_AXISPHI_B:
+		case ELLIPSOIDFIT_AXISPHI_C:
+		case ELLIPSOIDFIT_AXISTHETA_A:
+		case ELLIPSOIDFIT_AXISTHETA_B:
+		case ELLIPSOIDFIT_AXISTHETA_C:
+			return Dimension.ANGLE;
+		case ELLIPSOIDFIT_SEMIAXISLENGTH_A:
+		case ELLIPSOIDFIT_SEMIAXISLENGTH_B:
+		case ELLIPSOIDFIT_SEMIAXISLENGTH_C:
+		case ESTIMATED_DIAMETER:
+			return Dimension.SIZE;
+		case POSITION_T:
+			return Dimension.TIME;		
+		}
+	}
+	
 	public String toString() {
 		switch(this) {
 		case POSITION_X:
