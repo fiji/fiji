@@ -43,7 +43,7 @@ public class SpotFeatureGrapher extends JFrame {
 	
 	
 	/*
-	 * PRIVATEC METHODS
+	 * PRIVATE METHODS
 	 */
 	
 	private void initGUI() {
@@ -79,13 +79,24 @@ public class SpotFeatureGrapher extends JFrame {
 		XYLineAndShapeRenderer pointRenderer = new XYLineAndShapeRenderer();
 		pointRenderer.setSeriesLinesVisible(0, false);
 		pointRenderer.setSeriesShape(0, XYLineAndShapeRenderer.DEFAULT_SHAPE, false);
+
+		// Data-set for edges
+		XYEdgeSeriesCollection edgeDataset = new XYEdgeSeriesCollection();
+		XYEdgeSeries edgeSeries = new XYEdgeSeries("TEST");
+		edgeSeries.addEdge(10, 10, 20, 20);
+		edgeSeries.addEdge(20, 10, 20, 10);
+		
+		// Edge renderer
+		XYEdgeRenderer edgeRenderer = new XYEdgeRenderer();
 		
 		// The chart
-		JFreeChart chart = ChartFactory.createXYLineChart(title, xAxisLabel, yAxisLabel, dataset, PlotOrientation.VERTICAL, true, true, false);
+		JFreeChart chart = ChartFactory.createXYLineChart(title, xAxisLabel, yAxisLabel, edgeDataset, PlotOrientation.VERTICAL, true, true, false);
 		
 		// The plot
 		XYPlot plot = (XYPlot) chart.getPlot();
-		plot.setRenderer(0, pointRenderer);
+//		plot.setRenderer(0, pointRenderer);
+//		plot.setDataset(1, edgeDataset);
+		plot.setRenderer(edgeRenderer);
 		
 		// The panel
 		ChartPanel chartPanel = new ChartPanel(chart);

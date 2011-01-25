@@ -52,11 +52,12 @@ public class XYEdgeRenderer extends AbstractXYItemRenderer {
             state.workingLine.setLine(transX0, transY0, transX1, transY1);
         }
 
-        if (state.workingLine.intersects(dataArea)) {
+//        if (state.workingLine.intersects(dataArea)) {
             g2.setStroke(getItemStroke(series, item));
             g2.setPaint(getItemPaint(series, item));
             g2.draw(state.workingLine);
-        }
+//        }
+            System.out.println("Drawing");// DEBUG
 		
 		
 	}

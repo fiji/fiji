@@ -9,8 +9,8 @@ public class XYEdgeSeries extends Series {
 	 * FIELDS
 	 */
 	
-	private XYSeries startSeries;
-	private XYSeries endSeries;
+	private XYSeries startSeries = new XYSeries("StartPoints");
+	private XYSeries endSeries = new XYSeries("EndPoints");
 	
 	/*
 	 * CONSTRUCTOR
