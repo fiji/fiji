@@ -9,6 +9,7 @@ public class XYEdgeSeries extends Series {
 	 * FIELDS
 	 */
 	
+	private static final long serialVersionUID = -3716934680176727207L;
 	private XYSeries startSeries = new XYSeries("StartPoints");
 	private XYSeries endSeries = new XYSeries("EndPoints");
 	

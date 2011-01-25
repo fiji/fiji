@@ -1,5 +1,12 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
+import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Shape;
+import java.awt.geom.Ellipse2D;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -11,9 +18,11 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.util.PaintList;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
@@ -26,6 +35,8 @@ public class SpotFeatureGrapher extends JFrame {
 	 * CONSTRUCTOR
 	 */
 	
+	private static final Shape DEFAULT_SHAPE = new Ellipse2D.Double(-3, -3, 6, 6);
+	private InterpolatePaintScale paints = InterpolatePaintScale.Jet; 
 	private Feature xFeature;
 	private Set<Feature> yFeatures;
 	private List<Spot> spots;
@@ -65,38 +76,80 @@ public class SpotFeatureGrapher extends JFrame {
 		String yAxisLabel = "";
 		
 		// Data-set for points (easy)
-		XYSeriesCollection dataset = new XYSeriesCollection();
+		XYSeriesCollection pointDataset = new XYSeriesCollection();
 		{
 			for(Feature feature : yFeatures) {
 				XYSeries series = new XYSeries(feature.shortName());
 				for(Spot spot : spots)
 					series.add(spot.getFeature(xFeature), spot.getFeature(feature));
-				dataset.addSeries(series);
+				pointDataset.addSeries(series);
 			}
 		}
 		
 		// Point renderer
 		XYLineAndShapeRenderer pointRenderer = new XYLineAndShapeRenderer();
-		pointRenderer.setSeriesLinesVisible(0, false);
-		pointRenderer.setSeriesShape(0, XYLineAndShapeRenderer.DEFAULT_SHAPE, false);
 
-		// Data-set for edges
-		XYEdgeSeriesCollection edgeDataset = new XYEdgeSeriesCollection();
-		XYEdgeSeries edgeSeries = new XYEdgeSeries("TEST");
-		edgeSeries.addEdge(10, 10, 20, 20);
-		edgeSeries.addEdge(20, 10, 20, 10);
+		// Collect edges
+		ArrayList<Spot[]> edges = new ArrayList<Spot[]>();
+		{
+			int nspots = spots.size();
+			Spot source, target;
+			for (int i = 0; i < nspots; i++) {
+				source = spots.get(i);
+				for (int j = i+1; j < nspots; j++) {
+					target = spots.get(j);
+
+					if (graph.containsEdge(source, target)) 
+						edges.add(new Spot[] {source, target});
+
+				}
+			}
+		}
 		
 		// Edge renderer
 		XYEdgeRenderer edgeRenderer = new XYEdgeRenderer();
+
+		// Data-set for edges
+		XYEdgeSeriesCollection edgeDataset = new XYEdgeSeriesCollection();
+		{
+			double x0, x1, y0, y1;
+			XYEdgeSeries edgeSeries;
+			Spot source, target;
+			for(Feature yFeature : yFeatures) {
+				edgeSeries = new XYEdgeSeries(yFeature.shortName());
+				for(Spot[]	edge : edges) {
+					source = edge[0];
+					target = edge[1];
+					x0 = source.getFeature(xFeature);
+					y0 = source.getFeature(yFeature);
+					x1 = target.getFeature(xFeature);
+					y1 = target.getFeature(yFeature);
+					edgeSeries.addEdge(x0, y0, x1, y1);
+				}
+				edgeDataset.addSeries(edgeSeries);
+			}
+		}
+		
 		
 		// The chart
-		JFreeChart chart = ChartFactory.createXYLineChart(title, xAxisLabel, yAxisLabel, edgeDataset, PlotOrientation.VERTICAL, true, true, false);
-		
+		JFreeChart chart = ChartFactory.createXYLineChart(title, xAxisLabel, yAxisLabel, pointDataset, PlotOrientation.VERTICAL, true, true, false);
+
 		// The plot
-		XYPlot plot = (XYPlot) chart.getPlot();
-//		plot.setRenderer(0, pointRenderer);
-//		plot.setDataset(1, edgeDataset);
-		plot.setRenderer(edgeRenderer);
+		XYPlot plot = chart.getXYPlot();
+		plot.setDataset(1, edgeDataset);
+		plot.setRenderer(1, edgeRenderer);
+		plot.setRenderer(0, pointRenderer);
+
+		// Paint
+		pointRenderer.setUseOutlinePaint(true);
+		int nseries = edgeDataset.getSeriesCount();
+		for (int i = 0; i < nseries; i++) {
+			pointRenderer.setSeriesOutlinePaint(i, Color.black);
+			pointRenderer.setSeriesLinesVisible(i, false);
+			pointRenderer.setSeriesShape(i, DEFAULT_SHAPE, false);
+			pointRenderer.setSeriesPaint(i, paints.getPaint((double)i/nseries), false);
+			edgeRenderer.setSeriesPaint(i, paints.getPaint((double)i/nseries), false);
+		}
 		
 		// The panel
 		ChartPanel chartPanel = new ChartPanel(chart);

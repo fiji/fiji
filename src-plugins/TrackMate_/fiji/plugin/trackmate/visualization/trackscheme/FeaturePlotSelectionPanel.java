@@ -34,7 +34,7 @@ public class FeaturePlotSelectionPanel <K extends Enum<K>> extends javax.swing.J
 	private static final ImageIcon ADD_ICON = new ImageIcon(FeaturePlotSelectionPanel.class.getResource("resources/add.png"));
 	private static final ImageIcon REMOVE_ICON = new ImageIcon(FeaturePlotSelectionPanel.class.getResource("resources/delete.png"));
 	private static final Dimension BUTTON_SIZE = new Dimension(24, 24);
-	private static final Dimension COMBO_BOX_SIZE = new java.awt.Dimension(150, 20);
+	private static final Dimension COMBO_BOX_SIZE = new java.awt.Dimension(150, 22);
 	private static final int MAX_FEATURE_ALLOWED = 10;
 	
 	
@@ -155,7 +155,7 @@ public class FeaturePlotSelectionPanel <K extends Enum<K>> extends javax.swing.J
 				this.add(jComboBoxXFeature);
 				jComboBoxXFeature.setModel(jComboBoxXFeatureModel);
 				jComboBoxXFeature.setFont(SMALL_FONT);
-				jComboBoxXFeature.setBounds(10, 25, 148, 20);
+				jComboBoxXFeature.setBounds(10, 25, COMBO_BOX_SIZE.width, COMBO_BOX_SIZE.height);
 				jComboBoxXFeature.setSelectedIndex(xKey.ordinal());
 			}
 			{
