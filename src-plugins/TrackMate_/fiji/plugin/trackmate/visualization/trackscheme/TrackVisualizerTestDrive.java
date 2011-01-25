@@ -49,7 +49,7 @@ public class TrackVisualizerTestDrive {
 	
 		ij.ImageJ.main(args);
 		
-		TmXmlReader reader = new TmXmlReader(CASE_3);
+		TmXmlReader reader = new TmXmlReader(CASE_4);
 		reader.parse();
 		
 		// Load objects 
