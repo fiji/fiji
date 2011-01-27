@@ -8,6 +8,8 @@ import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,10 +23,11 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotImp;
 import fiji.util.gui.AbstractAnnotation;
 import fiji.util.gui.OverlayedImageCanvas;
 
-public class HyperStackDisplayer extends SpotDisplayer {
+public class HyperStackDisplayer extends SpotDisplayer implements MouseListener {
 
 	/*
 	 * INNER CLASSES
@@ -291,6 +294,7 @@ public class HyperStackDisplayer extends SpotDisplayer {
 		canvas = new OverlayedImageCanvas(imp);
 		window = new StackWindow(imp, canvas);
 		window.show();
+		canvas.addMouseListener(this);
 		refresh();
 	}
 	
@@ -404,5 +408,37 @@ public class HyperStackDisplayer extends SpotDisplayer {
 		for (TrackOverlay wto : wholeTrackOverlays.values())
 			canvas.addOverlay(wto);
 	}
+
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		final int sx = e.getX();
+		final int sy = e.getY();
+		final int ix = canvas.offScreenX(sx);
+		final int iy = canvas.offScreenY(sy);
+		final float x = ix * calibration[0];
+		final float y = iy * calibration[1];
+		final float z = (imp.getSlice()-1) * calibration[2];
+		final Spot clickLocation = new SpotImp(new float[] {x, y, z});
+		final int frame = imp.getFrame() - 1;		
+		final Set<Spot> highlight = getNClosestSpot(clickLocation, frame, 3);
+		highlightSpots(highlight);		
+	}
+
+
+	@Override
+	public void mousePressed(MouseEvent e) {}
+
+
+	@Override
+	public void mouseReleased(MouseEvent e) {}
+
+
+	@Override
+	public void mouseEntered(MouseEvent e) {}
+
+
+	@Override
+	public void mouseExited(MouseEvent e) {}
 
 }

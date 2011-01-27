@@ -42,14 +42,15 @@ public class TrackVisualizerTestDrive {
 	private static final File 		CASE_4 = new File(TrackVisualizerTestDrive.class.getResource(FILE_NAME_4).getFile());
 	private static final String 	FILE_NAME_5 ="SwimmingAlgae.xml";
 	private static final File 		CASE_5 = new File(TrackVisualizerTestDrive.class.getResource(FILE_NAME_5).getFile());
-	
+	// Yeeeehaaaa!
+	private static final File		CELEGANS_2HOURS = new File("/Volumes/Data/Data/Confocal_LSM700/10-01-21/10-01-21.xml");
 	
 	
 	public static void main(String[] args) throws JDOMException, IOException {
 	
 		ij.ImageJ.main(args);
 		
-		TmXmlReader reader = new TmXmlReader(CASE_4);
+		TmXmlReader reader = new TmXmlReader(CELEGANS_2HOURS);
 		reader.parse();
 		
 		// Load objects 
