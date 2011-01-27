@@ -147,6 +147,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 		int numFrames = settings.tend - settings.tstart + 1;
 		List<Spot> spotsThisFrame;
 		FeatureFacade<T> featureCalculator;
+		final float[] calibration = new float[] { settings.dx, settings.dy, settings.dz };
 		
 		for (int i = settings.tstart-1; i < settings.tend; i++) {
 			
@@ -156,7 +157,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 			/* 2 - Compute features. */
 			logger.setProgress((2*(i-settings.tstart)) / (2f * numFrames + 1));
 			logger.setStatus("Frame "+(i+1)+": Calculating features...");
-			featureCalculator = new FeatureFacade<T>(img, settings.segmenterSettings.expectedRadius);
+			featureCalculator = new FeatureFacade<T>(img, settings.segmenterSettings.expectedRadius, calibration);
 			spotsThisFrame = spots.get(i);
 			featureCalculator.processAllFeatures(spotsThisFrame);
 						

@@ -1,17 +1,13 @@
 package fiji.plugin.trackmate.features;
 
-import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.special.DiscCursor;
 import mpicbg.imglib.cursor.special.DomainCursor;
 import mpicbg.imglib.cursor.special.SphereCursor;
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import mpicbg.imglib.util.Util;
-import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.Feature;
-import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.Spot;
 
 public class BlobDescriptiveStatistics <T extends RealType<T>> extends IndependentFeatureAnalyzer {
 
@@ -80,11 +76,10 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 		final float[] pixel_values = new float[npixels];
 		int n = 0;
 		
-		
 		for (int i = 0; i < coords.length; i++)
 			coords[i] = spot.getFeature(Spot.POSITION_FEATURES[i]);
-		
 		cursor.moveCenterToCoordinates(coords);
+		
 		while (cursor.hasNext()) {
 			cursor.next();
 			val = cursor.getType().getRealFloat();
@@ -106,7 +101,7 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 	        M3 = M3 + term1 * delta_n * (n - 2) - 3 * delta_n * M2;
 	        M2 = M2 + term1;
 		}
-
+	
 		Util.quicksort(pixel_values, 0, npixels-1);
 		float median = pixel_values[npixels/2];
 		float min = pixel_values[0];
@@ -125,42 +120,5 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 		spot.putFeature(Feature.TOTAL_INTENSITY, sum);
 		spot.putFeature(Feature.KURTOSIS, kurtosis);
 		spot.putFeature(Feature.SKEWNESS, skewness);
-	}
-		
-	/*
-	 * MAIN METHOD
-	 */
-
-	public static void main(String[] args) {
-
-		Image<UnsignedByteType> testImage = new ImageFactory<UnsignedByteType>(
-				new UnsignedByteType(),
-				new ArrayContainerFactory()
-		).createImage(new int[] {200, 200, 40} );
-		
-		float[] center = new float[]  {20, 20, 20};
-		SpotImp s1 = new SpotImp(center);
-		float radius = 5;
-		s1.setName("Test spot with radius = "+radius);
-
-		float[] calibration = new float[] {0.2f, 0.2f, 1};
-		SphereCursor<UnsignedByteType> cursor = new SphereCursor<UnsignedByteType>(
-				testImage, 
-				s1.getPosition(null), 
-				radius, // µm
-				calibration);
-		while(cursor.hasNext()) {
-			cursor.fwd();
-			if (new java.util.Random().nextBoolean()) cursor.getType().set(1);
-//			cursor.getType().set(new java.util.Random().nextInt(101));
-//			cursor.getType().set((int) (100 + new java.util.Random().nextGaussian()*10));
-		}
-		cursor.close();
-		
-		BlobDescriptiveStatistics<UnsignedByteType> bb = new BlobDescriptiveStatistics<UnsignedByteType>(testImage, 2*radius, calibration);
-		bb.process(s1);
-		System.out.println(s1);
-		System.out.println("Volume parsed: "+cursor.getNPixels());
-		
 	}
 }

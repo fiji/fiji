@@ -3,10 +3,10 @@ package fiji.plugin.trackmate.features;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.Feature;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
+import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.Spot;
 
 /**
  * This class aims at being a facade to simplify the calculation of blob
