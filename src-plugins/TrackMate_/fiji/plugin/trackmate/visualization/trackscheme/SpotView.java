@@ -33,7 +33,7 @@ public class SpotView extends VertexView {
 	public Component getRendererComponent(JGraph graph, boolean selected, boolean focus, boolean preview) {
 		renderer.setHorizontalAlignment(SwingConstants.LEFT);
 		renderer.setIcon(getSpot().getIcon());
-		renderer.setBorder(new LineBorder(color, 1));
+		renderer.setBorder(new LineBorder(color, 2));
 		renderer.setFont(FONT);
 		String name = getSpot().getName();
 		if (name == null || name.equals(""))

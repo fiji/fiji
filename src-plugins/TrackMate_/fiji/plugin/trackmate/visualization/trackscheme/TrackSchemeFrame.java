@@ -510,9 +510,6 @@ public class TrackSchemeFrame extends JFrame {
 				instants.add(s.getFeature(Feature.POSITION_T));
 		}
 
-
-		
-
 		@Override
 		public void paintComponent(Graphics g) {
 			super.paintComponent(g);
@@ -542,7 +539,7 @@ public class TrackSchemeFrame extends JFrame {
 			y = 3 * ycs / 2;
 			g.setFont(FONT.deriveFont(12*scale).deriveFont(Font.BOLD));
 			for(Float instant : instants) {
-				g.drawString(String.format("Frame %.0f", instant), x, y);
+				g.drawString(String.format("Frame %.0f", instant+1), x, y);
 				y += ycs;
 			}
 
@@ -552,7 +549,7 @@ public class TrackSchemeFrame extends JFrame {
 				for (int i = 0; i < columnWidths.length; i++) {
 					int cw = columnWidths[i]-1;
 					g.setColor(columnColors[i]);
-					g.drawString(String.format("Track %d", i), x+20, ycs/2);
+					g.drawString(String.format("Track %d", i+1), x+20, ycs/2);
 					g.setColor(LINE_COLOR);
 //					((Graphics2D)g).setStroke(new BasicStroke(1));
 //					for (int x2 = x + xcs; x2 < x + cw * xcs; x2 = x2 + xcs) 

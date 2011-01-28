@@ -128,6 +128,7 @@ public class JGraphTimeLayout implements JGraphLayout {
 				// Move the corresponding cell in the facade
 				graphFacade.setLocation(facadeTarget, (targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2, (0.5 + rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2);
 				int height = Math.min(DEFAULT_CELL_WIDTH, spot.getIcon().getIconHeight());
+				height = Math.max(height, 12);
 				graphFacade.setSize(facadeTarget, DEFAULT_CELL_WIDTH, height);
 				
 				Object[] objEdges = graphFacade.getEdges(facadeTarget);

@@ -47,7 +47,6 @@ public class TrackVisualizerTestDrive {
 	// Yeeeehaaaa!
 	private static final File		CELEGANS_2HOURS = new File("/Volumes/Data/Data/Confocal_LSM700/10-01-21/10-01-21-after-removal2.xml");
 	
-	
 	public static void main(String[] args) throws JDOMException, IOException {
 	
 		ij.ImageJ.main(args);
