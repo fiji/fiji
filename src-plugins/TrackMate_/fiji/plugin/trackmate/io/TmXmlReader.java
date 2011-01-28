@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -303,11 +304,15 @@ public class TmXmlReader implements TmXmlKeys {
 		
 		// Add all spots to the graph
 		SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
-		for(int frame : selectedSpots.keySet())
-			for(Spot spot : selectedSpots.get(frame))
-				trackGraph.addVertex(spot);		
-		Set<Spot> spots = trackGraph.vertexSet();
+//		for(int frame : selectedSpots.keySet())
+//			for(Spot spot : selectedSpots.get(frame))
+//				trackGraph.addVertex(spot);		
+//		Set<Spot> spots = trackGraph.vertexSet();
 
+		Set<Spot> spots = new HashSet<Spot>();
+		for(List<Spot> st : selectedSpots.values())
+			spots.addAll(st);
+		
 		// Load tracks
 		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
 		List<Element> edgeElements;
@@ -341,6 +346,8 @@ public class TmXmlReader implements TmXmlKeys {
 						targetFound = true;
 					}
 					if (targetFound && sourceFound) {
+						trackGraph.addVertex(sourceSpot);
+						trackGraph.addVertex(targetSpot);
 						edge = trackGraph.addEdge(sourceSpot, targetSpot);
 						trackGraph.setEdgeWeight(edge, weight);
 						break;

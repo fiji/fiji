@@ -409,7 +409,6 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 			canvas.addOverlay(wto);
 	}
 
-
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		final int sx = e.getX();

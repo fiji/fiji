@@ -9,6 +9,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -26,8 +27,10 @@ import java.util.TreeSet;
 
 import javax.swing.AbstractAction;
 import javax.swing.AbstractListModel;
+import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -92,10 +95,10 @@ public class TrackSchemeFrame extends JFrame {
 	 * CONSTANTS
 	 */
 
-	static final int Y_COLUMN_SIZE = 100;
-	static final int X_COLUMN_SIZE = 150;
+	static final int Y_COLUMN_SIZE = 96;
+	static final int X_COLUMN_SIZE = 160;
 
-	static final int DEFAULT_CELL_WIDTH = 130;
+	static final int DEFAULT_CELL_WIDTH = 128;
 	static final int DEFAULT_CELL_HEIGHT = 80;
 	
 	public static final ImageIcon TRACK_SCHEME_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/track_scheme.png"));
@@ -128,6 +131,8 @@ public class TrackSchemeFrame extends JFrame {
 	private InfoPane infoPane;
 	private ArrayList<GraphListener<Spot, DefaultWeightedEdge>> graphListeners = new ArrayList<GraphListener<Spot,DefaultWeightedEdge>>();
 	private GraphPane backPane;
+	/** The spots currently selected. */
+	private HashSet<Spot> spotSelection = new HashSet<Spot>();
 
 	/*
 	 * CONSTRUCTORS
@@ -222,6 +227,10 @@ public class TrackSchemeFrame extends JFrame {
 			DefaultWeightedEdge edge = trackEdge.getEdge();
 			lGraph.removeEdge(edge);
 			trackGraph.removeEdge(edge);
+		} else if (cell instanceof SpotCell) {
+			SpotCell spotCell = (SpotCell) cell;
+			lGraph.removeVertex(spotCell.getSpot());
+			trackGraph.removeVertex(spotCell.getSpot());
 		}
 	}
 	
@@ -286,7 +295,6 @@ public class TrackSchemeFrame extends JFrame {
 
 		// Listeners
 		jGraph.addGraphSelectionListener(new GraphSelectionListener() {
-			Set<Spot> spots = new HashSet<Spot>();
 
 			@Override
 			public void valueChanged(GraphSelectionEvent e) {
@@ -294,15 +302,14 @@ public class TrackSchemeFrame extends JFrame {
 				for(Object cell : cells) {
 					if (cell instanceof SpotCell) {
 						SpotCell spotCell = (SpotCell) cell;
-						if (e.isAddedCell(cell)) {
-							spots.add(spotCell.getSpot());
-						} else {
-							spots.remove(spotCell.getSpot());
-						}
+						if (e.isAddedCell(cell))
+							spotSelection.add(spotCell.getSpot());
+						else 
+							spotSelection.remove(spotCell.getSpot());
 					}
-					infoPane.echo(spots);
 				}
-				if (spots.isEmpty())
+				infoPane.echo(spotSelection);
+				if (spotSelection.isEmpty())
 					infoPane.scrollTable.setVisible(false);
 				else
 					infoPane.scrollTable.setVisible(true);
@@ -381,6 +388,39 @@ public class TrackSchemeFrame extends JFrame {
 		// Separator
 		toolbar.addSeparator();
 		
+
+		final Action zoomInAction;
+		final Action zoomOutAction;
+		final JButton zoomInButton = new JButton();
+		final JButton zoomOutButton = new JButton();
+		
+		zoomInAction = new AbstractAction(null, ZOOM_IN_ICON) {
+			public void actionPerformed(ActionEvent e) {
+				double scale = jGraph.getScale();
+				if (scale < 2)
+					jGraph.setScale(2 * scale);
+				if (scale > 2)
+					zoomInButton.setEnabled(false);
+				zoomOutButton.setEnabled(true);
+			}
+		};
+		zoomOutAction = new AbstractAction(null, ZOOM_OUT_ICON) {
+			public void actionPerformed(ActionEvent e) {
+				double scale = jGraph.getScale();
+				if (scale > (double)1/16)
+					jGraph.setScale(scale/2);
+				if (scale < (double)1/16)
+					zoomOutButton.setEnabled(false);
+				zoomInButton.setEnabled(true);
+			}
+		};
+		
+		zoomInButton.setAction(zoomInAction);
+		zoomInButton.setToolTipText("Zoom in 2x");
+		zoomOutButton.setAction(zoomOutAction);
+		zoomOutButton.setToolTipText("Zoom out 2x");
+		
+			
 		// Zoom Std
 		toolbar.add(new AbstractAction("Reset zoom", RESET_ZOOM_ICON) {
 			public void actionPerformed(ActionEvent e) {
@@ -388,17 +428,10 @@ public class TrackSchemeFrame extends JFrame {
 			}
 		});
 		// Zoom In
-		toolbar.add(new AbstractAction("Zoom in", ZOOM_IN_ICON) {
-			public void actionPerformed(ActionEvent e) {
-				jGraph.setScale(2 * jGraph.getScale());
-			}
-		});
+		
+		toolbar.add(zoomInButton);
 		// Zoom Out
-		toolbar.add(new AbstractAction("Zoom out", ZOOM_OUT_ICON) {
-			public void actionPerformed(ActionEvent e) {
-				jGraph.setScale(jGraph.getScale() / 2);
-			}
-		});
+		toolbar.add(zoomOutButton);
 
 		// Separator
 		toolbar.addSeparator();
@@ -507,7 +540,7 @@ public class TrackSchemeFrame extends JFrame {
 			// Row headers
 			int x = xcs / 4;
 			y = 3 * ycs / 2;
-			g.setFont(FONT.deriveFont(12*scale));
+			g.setFont(FONT.deriveFont(12*scale).deriveFont(Font.BOLD));
 			for(Float instant : instants) {
 				g.drawString(String.format("Frame %.0f", instant), x, y);
 				y += ycs;
@@ -517,11 +550,16 @@ public class TrackSchemeFrame extends JFrame {
 			if (null != columnWidths) {
 				x = xcs;
 				for (int i = 0; i < columnWidths.length; i++) {
-					x += (columnWidths[i]-1) * xcs;
-					g.setColor(LINE_COLOR);
-					g.drawLine(x, 0, x, height);
+					int cw = columnWidths[i]-1;
 					g.setColor(columnColors[i]);
-					g.drawString(String.format("Track %d", i), x-3*xcs*(columnWidths[i]-1)/4, ycs/2);
+					g.drawString(String.format("Track %d", i), x+20, ycs/2);
+					g.setColor(LINE_COLOR);
+//					((Graphics2D)g).setStroke(new BasicStroke(1));
+//					for (int x2 = x + xcs; x2 < x + cw * xcs; x2 = x2 + xcs) 
+//						g.drawLine(x2, 0, x2, height);						
+//					((Graphics2D)g).setStroke(new BasicStroke(2));					
+					x += cw * xcs;
+					g.drawLine(x, 0, x, height);
 				}
 			}
 		}

@@ -126,7 +126,7 @@ public class JGraphTimeLayout implements JGraphLayout {
 				vView.setColor(trackColor);
 				
 				// Move the corresponding cell in the facade
-				graphFacade.setLocation(facadeTarget, ( targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2, (0.5 + rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2);
+				graphFacade.setLocation(facadeTarget, (targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2, (0.5 + rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2);
 				int height = Math.min(DEFAULT_CELL_WIDTH, spot.getIcon().getIconHeight());
 				graphFacade.setSize(facadeTarget, DEFAULT_CELL_WIDTH, height);
 				

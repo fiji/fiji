@@ -1028,11 +1028,23 @@ public class TrackMateFrameController {
 		
 		trackScheme.addGraphListener(new GraphListener<Spot, DefaultWeightedEdge>() {
 			@Override
-			public void vertexRemoved(GraphVertexChangeEvent<Spot> e) {}
+			public void vertexRemoved(GraphVertexChangeEvent<Spot> e) {
+				Spot removedSpot = e.getVertex();
+				TreeMap<Integer, List<Spot>> spots = model.getSelectedSpots();
+				for(List<Spot> st : spots.values())
+					if (st.remove(removedSpot))
+						break;
+				model.setSpotSelection(spots);
+				model.setTrackGraph(trackScheme.getTrackModel());
+				displayer.setSpotsToShow(spots);
+				displayer.setTrackGraph(trackScheme.getTrackModel());
+				displayer.refresh();
+			}
 			@Override
 			public void vertexAdded(GraphVertexChangeEvent<Spot> e) {}
 			@Override
 			public void edgeRemoved(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
+				model.setTrackGraph(trackScheme.getTrackModel());
 				displayer.setTrackGraph(trackScheme.getTrackModel());
 				displayer.refresh();
 			}

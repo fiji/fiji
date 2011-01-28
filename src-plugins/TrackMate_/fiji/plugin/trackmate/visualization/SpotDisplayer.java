@@ -6,7 +6,6 @@ import ij3d.ContentCreator;
 import ij3d.Image3DUniverse;
 
 import java.awt.Color;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;

@@ -8,11 +8,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.jdom.JDOMException;
 import org.jgraph.event.GraphSelectionEvent;
 import org.jgraph.event.GraphSelectionListener;
+import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.event.GraphEdgeChangeEvent;
 import org.jgrapht.event.GraphListener;
 import org.jgrapht.event.GraphVertexChangeEvent;
@@ -43,7 +45,7 @@ public class TrackVisualizerTestDrive {
 	private static final String 	FILE_NAME_5 ="SwimmingAlgae.xml";
 	private static final File 		CASE_5 = new File(TrackVisualizerTestDrive.class.getResource(FILE_NAME_5).getFile());
 	// Yeeeehaaaa!
-	private static final File		CELEGANS_2HOURS = new File("/Volumes/Data/Data/Confocal_LSM700/10-01-21/10-01-21.xml");
+	private static final File		CELEGANS_2HOURS = new File("/Volumes/Data/Data/Confocal_LSM700/10-01-21/10-01-21-after-removal2.xml");
 	
 	
 	public static void main(String[] args) throws JDOMException, IOException {
@@ -57,6 +59,15 @@ public class TrackVisualizerTestDrive {
 		TreeMap<Integer, List<Spot>> allSpots 		= reader.getAllSpots();
 		TreeMap<Integer, List<Spot>> selectedSpots 	= reader.getSpotSelection(allSpots);
 		final SimpleWeightedGraph<Spot, DefaultWeightedEdge> tracks = reader.getTracks(selectedSpots);
+		
+		List<Set<Spot>> trackList = new ConnectivityInspector<Spot, DefaultWeightedEdge>(tracks).connectedSets();
+		System.out.println("Found "+trackList.size()+" tracks.");// DEBUG
+		for(Set<Spot> track : trackList) {
+			System.out.println(" - "+track.size()+" spots in track.");// DEBUG
+		}
+		
+		
+		
 		ImagePlus imp = reader.getImage();
 		Settings settings = reader.getSettings();
 		settings.imp = imp;
