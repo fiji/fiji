@@ -421,7 +421,7 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 		final float z = (imp.getSlice()-1) * calibration[2];
 		final Spot clickLocation = new SpotImp(new float[] {x, y, z});
 		final int frame = imp.getFrame() - 1;		
-		final Set<Spot> highlight = getNClosestSpot(clickLocation, frame, 3);
+		final Set<Spot> highlight = getNClosestSpot(clickLocation, frame, 1);
 		highlightSpots(highlight);		
 	}
 

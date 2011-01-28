@@ -9,6 +9,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -268,27 +269,24 @@ public abstract class SpotDisplayer {
 
 	/**
 	 * Return the <code>n</code> closest {@link Spot} to the given location (encoded as a 
-	 * Spot), contained in the frame <code>frame</code>. If no spots are found, or if the number of 
-	 * spots in the frame is exhausted, <code>null</code> is appended to the set.
+	 * Spot), contained in the frame <code>frame</code>. If the number of 
+	 * spots in the frame is exhausted, a shorter set is returned.
 	 */
-	public final Set<Spot> getNClosestSpot(final Spot clickLocation, final int frame, final int n) {
+	public final Set<Spot> getNClosestSpot(final Spot clickLocation, final int frame, int n) {
 		final List<Spot> spotsThisFrame = spotsToShow.get(frame);
-		final Set<Spot> selectedSpots = new HashSet<Spot>(); 
-		final List<Spot> list = new ArrayList<Spot>(spotsThisFrame); // We operate on a copy
+		final TreeMap<Float, Spot> distanceToSpot = new TreeMap<Float, Spot>();
+		
+		float d2;
+		for(Spot s : spotsThisFrame) {
+			d2 = s.squareDistanceTo(clickLocation);
+			distanceToSpot.put(d2, s);
+		}
 
-		for (int i = 0; i < n; i++) {
-			float minDist = Float.POSITIVE_INFINITY;
-			float d2;
-			Spot target = null;
-			for(Spot s : list) {
-				d2 = s.squareDistanceTo(clickLocation);
-				if (d2 < minDist) {
-					minDist = d2;
-					target = s;
-				}
-			}
-			selectedSpots.add(target);
-			list.remove(target);
+		final Set<Spot> selectedSpots = new HashSet<Spot>(n);
+		final Iterator<Float> it = distanceToSpot.keySet().iterator();
+		while (n > 0 && it.hasNext()) {
+			selectedSpots.add(distanceToSpot.get(it.next()));
+			n--;
 		}
 		return selectedSpots;
 	}
