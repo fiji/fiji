@@ -189,7 +189,6 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 
 	@Override
 	public TreeMap<Integer, List<Spot>> getSelectedSpots() {
-		selectedSpots = TMUtils.thresholdSpots(spots, thresholds);
 		return selectedSpots;
 	}
 	
