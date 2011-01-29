@@ -1,7 +1,7 @@
 A loose TODO list for Fiji
 ==========================
 
-- include StackReg and BoneJ
+- include Piotr's parallel deconvolution plugins, StackReg and BoneJ
 - updater:
 	- special-case updating the updater even more: just download the updater,
 		start a thread that downloads the updater and overwrites the old
