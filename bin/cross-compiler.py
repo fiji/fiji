@@ -53,16 +53,23 @@ elif platform == 'linux' or platform == 'linux32':
 	compile('', platform, cflags + ['-m32'], '')
 elif platform == 'linux64':
 	compile('', platform, cflags + ['-m64'], '')
-elif platform == 'macosx' or platform == 'tiger' or platform == 'leopard':
+elif platform == 'macosx' or platform.startswith('tiger') or platform == 'leopard':
+	prefixppc = 'bin/mac-sysroot/bin/powerpc-apple-darwin8-'
 	prefix32 = 'bin/mac-sysroot/bin/i686-apple-darwin8-'
 	prefix64 = 'bin/mac-sysroot/bin/x86_64-apple-darwin8-'
 	extra = ['-isysroot', 'bin/mac-sysroot', '-Ibin/mac-sysroot/usr/i686-apple-darwin8/usr/lib/gcc/i686-apple-darwin10/4.2.1/include/']
-	if platform == 'macosx' or platform == 'tiger':
-		compile(prefix32, 'tiger', cflags + extra + ['-m32'], '')
+	if platform.startswith('tiger'):
+		compile(prefixppc, 'tiger-ppc', cflags + extra + ['-m32'], '')
+	if platform == 'macosx' or platform.startswith('tiger'):
+		compile(prefix32, 'tiger-i686', cflags + extra + ['-m32'], '')
 	if platform == 'macosx' or platform == 'leopard':
 		compile(prefix64, 'leopard', cflags + extra + ['-m64'], '')
+	if platform == 'tiger':
+		command = prefix64 + 'lipo -create precompiled/fiji-tiger-ppc precompiled/fiji-tiger-i686 -output precompiled/fiji-tiger'
+		print(command)
+		print execute(command)
 	if platform == 'macosx':
-		command = prefix64 + 'lipo -create precompiled/fiji-tiger precompiled/fiji-leopard -output precompiled/fiji-macosx'
+		command = prefix64 + 'lipo -create precompiled/fiji-tiger-i686 precompiled/fiji-leopard -output precompiled/fiji-macosx'
 		print(command)
 		print execute(command)
 else:
