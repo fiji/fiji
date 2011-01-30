@@ -2445,8 +2445,10 @@ static int start_ij(void)
 			die("Out of memory!");
 		}
 		if (result) {
-			if (result != 2)
+			if (result != 2) {
 				error("Warning: falling back to System JVM");
+				unsetenv("JAVA_HOME");
+			}
 			env = NULL;
 		} else {
 			string_setf(buffer, "-Djava.home=%s", get_java_home());
