@@ -6,6 +6,8 @@ import ij3d.ContentCreator;
 import ij3d.Image3DUniverse;
 
 import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -25,6 +27,8 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TMUtils;
 import fiji.plugin.trackmate.TrackMateModelInterface;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
+import fiji.plugin.trackmate.visualization.trackscheme.SpotSelectionEvent;
+import fiji.plugin.trackmate.visualization.trackscheme.SpotSelectionListener;
 
 /**
  * The mother abstract class for spot displayers, that can overlay segmented spots and tracks on top
@@ -88,7 +92,7 @@ public abstract class SpotDisplayer {
 	}
 
 	/**
-	 * This enum stores the different display omde for tracks. Note that it might be ignored 
+	 * This enum stores the different display mode for tracks. Note that it might be ignored 
 	 * by some displayers.
 	 */
 	public enum TrackDisplayMode {
@@ -126,10 +130,17 @@ public abstract class SpotDisplayer {
 	/** The default color. */
 	protected static final Color DEFAULT_COLOR = new Color(1f, 0, 1f);
 	/** The color used when highlighting spots. */
-	protected static final Color HIGHLIGHT_COLOR = new Color(1f, 1f, 0);
+	protected static final Color HIGHLIGHT_COLOR = new Color(0, 1f, 0);
+	
+	/** Flag to state that object should be added to selection. */
+	protected static final int ADD_TO_SELECTION_FLAG  = 0;
+	/** Flag to state that object should be removed from selection. */
+	protected static final int REMOVE_FROM_SELECTION_FLAG  = 1;
+	/** Flag to state that object should replace the current selection. */
+	protected static final int REPLACE_SELECTION_FLAG  = 2;
+	
 	/** The display radius. */
 	protected float radius = DEFAULT_DISPLAY_RADIUS;
-	
 	/** The ratio setting the actual display size of the spots, with respect to the physical radius. */
 	protected float radiusRatio = 1.0f;
 	
@@ -154,7 +165,11 @@ public abstract class SpotDisplayer {
 	protected TrackDisplayMode trackDisplayMode = DEFAULT_TRACK_DISPLAY_MODE;
 	/** The display depth: how many track segments will be shown on the track display. */
 	protected int trackDisplayDepth = DEFAULT_TRACK_DISPLAY_DEPTH;
-
+	
+	/** The list of listener to warn for spot selection change. */
+	protected ArrayList<SpotSelectionListener> spotSelectionListeners = new ArrayList<SpotSelectionListener>();
+	/** The spots currently selected in this displayer. Can be empty, but no t null. */
+	protected Set<Spot> spotSelection = new HashSet<Spot>();
 	
 
 	/*
@@ -209,6 +224,22 @@ public abstract class SpotDisplayer {
 	 * PUBLIC METHODS
 	 */
 	
+	/**
+	 * Add a listener to this displayer that will be notified when the spot selection changes.
+	 */
+	public void addSpotSelectionListener(SpotSelectionListener listener) {
+		spotSelectionListeners.add(listener);
+	}
+	
+	/**
+	 * Remove a listener from the list of the spot selection listeners list. 
+	 * @param listener  the listener to remove
+	 * @return  true if the listener was found in the list maintained by 
+	 * this displayer and successfully removed.
+	 */
+	public boolean removeSpotSelectionListener(SpotSelectionListener listener) {
+		return spotSelectionListeners.remove(listener);
+	}
 
 	/**
 	 * Set the display mode for tracks. The {@link #refresh()} method must be called to refresh
@@ -261,17 +292,32 @@ public abstract class SpotDisplayer {
 		this.radiusRatio = ratio;
 	}
 	
-	
-	/*
-	 * PROTECTED METHODS
+	/**
+	 * Return the closest {@link Spot} to the given location (encoded as a 
+	 * Spot), contained in the frame <code>frame</code>.
 	 */
+	public final Spot getClosestSpot(final Spot clickLocation, final int frame) {
+		final List<Spot> spotsThisFrame = spotsToShow.get(frame);
+		float d2;
+		float minDist = Float.POSITIVE_INFINITY;
+		Spot target = null;
+		for(Spot s : spotsThisFrame) {
+			d2 = s.squareDistanceTo(clickLocation);
+			if (d2 < minDist) {
+				minDist = d2;
+				target = s;
+			}
+		}
+		return target;
+	}
+
 
 	/**
 	 * Return the <code>n</code> closest {@link Spot} to the given location (encoded as a 
 	 * Spot), contained in the frame <code>frame</code>. If the number of 
 	 * spots in the frame is exhausted, a shorter set is returned.
 	 */
-	public final Set<Spot> getNClosestSpot(final Spot clickLocation, final int frame, int n) {
+	public final Set<Spot> getNClosestSpots(final Spot clickLocation, final int frame, int n) {
 		final List<Spot> spotsThisFrame = spotsToShow.get(frame);
 		final TreeMap<Float, Spot> distanceToSpot = new TreeMap<Float, Spot>();
 		
@@ -329,4 +375,61 @@ public abstract class SpotDisplayer {
 	 */
 	public abstract void highlightEdges(Set<DefaultWeightedEdge> edges);
 	
+	/*
+	 * PRIVATE METHODS
+	 */
+	
+	protected void fireSpotSelectionChange(Spot[] spotArray, boolean[] areNew) {
+		SpotSelectionEvent event = new SpotSelectionEvent(this, spotArray, areNew);
+		for (SpotSelectionListener listener : spotSelectionListeners)
+			listener.valueChanged(event);
+	}
+	
+	protected void spotSelectionChanged(Spot target, int flag) {
+		Spot[] spotArray;
+		boolean[] areNew;
+		if (flag == ADD_TO_SELECTION_FLAG) {
+			// Add target to current selection, if it's not already in
+			if (spotSelection.contains(target))
+				return;
+			spotArray = new Spot[] { target };
+			areNew = new boolean[] { true };
+			spotSelection.add(target);
+			fireSpotSelectionChange(spotArray, areNew);
+
+		} else if (flag == REMOVE_FROM_SELECTION_FLAG) {
+			// Remove target from selection if it was in
+			if (!spotSelection.remove(target)) 
+				return;
+			spotArray = new Spot[] { target };
+			areNew = new boolean[] { false };
+			fireSpotSelectionChange(spotArray, areNew);
+
+		} else if (flag == REPLACE_SELECTION_FLAG) {
+			// Forget previous selection, and set selection to be target
+			if (spotSelection.remove(target)) {
+				// Target was in selection, so we just have to remove all other
+				spotArray = spotSelection.toArray(new Spot[0]);
+				areNew = new boolean[spotSelection.size()];
+				Arrays.fill(areNew, false);
+			} else {
+				// Target is not in selection, so we remove others and add it
+				spotArray = new Spot[spotSelection.size()+1];
+				areNew = new boolean[spotSelection.size()+1];
+				spotArray[0] = target;
+				areNew[0] = true;
+				int index = 1;
+				for (Spot spot : spotSelection) {
+					spotArray[index] = spot;
+					areNew[index] = false;
+					index++;
+				}
+			}
+			spotSelection.clear();
+			spotSelection.add(target);
+			fireSpotSelectionChange(spotArray, areNew);
+
+		} 
+		highlightSpots(spotSelection);
+	}
 }

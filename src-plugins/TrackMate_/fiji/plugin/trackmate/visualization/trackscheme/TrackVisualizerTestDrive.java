@@ -4,6 +4,7 @@ import ij.ImagePlus;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
@@ -14,6 +15,7 @@ import java.util.TreeMap;
 import org.jdom.JDOMException;
 import org.jgraph.event.GraphSelectionEvent;
 import org.jgraph.event.GraphSelectionListener;
+import org.jgraph.graph.GraphSelectionModel;
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.event.GraphEdgeChangeEvent;
 import org.jgrapht.event.GraphListener;
@@ -51,7 +53,7 @@ public class TrackVisualizerTestDrive {
 	
 		ij.ImageJ.main(args);
 		
-		TmXmlReader reader = new TmXmlReader(CELEGANS_2HOURS);
+		TmXmlReader reader = new TmXmlReader(CASE_2);
 		reader.parse();
 		
 		// Load objects 
@@ -98,6 +100,25 @@ public class TrackVisualizerTestDrive {
 		// Display Track scheme
 		final TrackSchemeFrame frame = new TrackSchemeFrame(tracks);
 		frame.setVisible(true);
+		
+		// Listeners
+
+		displayer.addSpotSelectionListener(new SpotSelectionListener() {
+			
+			@Override
+			public void valueChanged(SpotSelectionEvent event) {
+				GraphSelectionModel selectionModel = frame.getJGraph().getSelectionModel();
+				Spot[] spots = event.getSpots();
+				for(Spot spot : spots) {
+					SpotCell cell = (SpotCell) frame.getAdapter().getVertexCell(spot);
+					if (event.isAddedSpot(spot))
+						selectionModel.addSelectionCell(cell);
+					else 
+						selectionModel.removeSelectionCell(cell);
+				}
+				frame.centerViewOn(frame.getAdapter().getVertexCell(spots[0]));
+			}
+		});
 
 		frame.getJGraph().addGraphSelectionListener(new GraphSelectionListener() {
 

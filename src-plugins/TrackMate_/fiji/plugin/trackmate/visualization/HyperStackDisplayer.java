@@ -210,45 +210,22 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 		this.settings = settings;
 	}
 	
-	
+		
 	/*
 	 * PUBLIC METHODS
 	 */
 	
 	@Override
-	public void highlightSpots(final Set<Spot> spots) {
-		if (null != highlightSpotOverlay)
-			canvas.removeOverlay(highlightSpotOverlay);
-		highlightSpotOverlay = new HighlightSpotOverlay();
-		
-		// Change target spots
-		Spot thisSpot = null;
-		int frame = 0;
-		for (Spot spot : spots) {
-
-			frame = - 1;
-			for(int i : spotsToShow.keySet()) {
-				List<Spot> spotThisFrame = spotsToShow.get(i);
-				if (spotThisFrame.contains(spot)) {
-					frame = i;
-					break;
-				}
-			}
-			if (frame == -1)
-				continue;
-
-			// Change settings of target spot 
-			highlightSpotOverlay.addSpot(spot, radius * radiusRatio, HIGHLIGHT_COLOR, frame);
-			// Keep reference for outer loop
-			thisSpot = spot;
-		}
-		// Update displayed frame
-		if (null == thisSpot)
-			return;
-		canvas.addOverlay(highlightSpotOverlay);
-		int z = Math.round(thisSpot.getFeature(Feature.POSITION_Z) / calibration[2] ) + 1;
-		imp.setPosition(1, z, frame+1);
-//		window.setPosition(1, z, frame+1);
+	public void addToSelection(Spot spot) {
+		super.addToSelection(spot);
+		prepareHighlightSpots();
+		imp.updateAndDraw();
+	}
+	
+	@Override
+	public void removeFromSelection(Spot spot) {
+		super.removeFromSelection(spot);
+		prepareHighlightSpots();
 		imp.updateAndDraw();
 	}
 	
@@ -353,6 +330,48 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 	/*
 	 * PRIVATE METHODS
 	 */
+
+	private void prepareHighlightSpots() {
+		if (null != highlightSpotOverlay)
+			canvas.removeOverlay(highlightSpotOverlay);
+		highlightSpotOverlay = new HighlightSpotOverlay();
+		
+		// Change target spots
+		Spot thisSpot = null;
+		int frame = 0;
+		int thisFrame = 0;
+		boolean firstSpot = true;
+		for (Spot spot : spotSelection) {
+
+			frame = - 1;
+			for(int i : spotsToShow.keySet()) {
+				List<Spot> spotThisFrame = spotsToShow.get(i);
+				if (spotThisFrame.contains(spot)) {
+					frame = i;
+					break;
+				}
+			}
+			if (frame == -1)
+				continue;
+
+			// Change settings of target spot 
+			highlightSpotOverlay.addSpot(spot, radius * radiusRatio, HIGHLIGHT_COLOR, frame);
+			// Keep reference for outer loop
+			if (firstSpot) {
+				thisSpot = spot;
+				thisFrame = frame;
+				firstSpot = false;
+			}
+		}
+		// Update displayed frame
+		if (null == thisSpot)
+			return;
+		canvas.addOverlay(highlightSpotOverlay);
+		int z = Math.round(thisSpot.getFeature(Feature.POSITION_Z) / calibration[2] ) + 1;
+		imp.setPosition(1, z, thisFrame+1);
+//		window.setPosition(1, z, frame+1);
+	}
+
 	
 	private void prepareSpotOverlay() {
 		if (null == spotsToShow)
@@ -420,9 +439,19 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 		final float z = (imp.getSlice()-1) * calibration[2];
 		final Spot clickLocation = new SpotImp(new float[] {x, y, z});
 		final int frame = imp.getFrame() - 1;		
-		final Set<Spot> highlight = getNClosestSpot(clickLocation, frame, 1);
-		highlightSpots(highlight);		
-	}
+		final Spot target = getClosestSpot(clickLocation, frame);
+		// Check desired behavior
+		final int addToSelectionMask = MouseEvent.SHIFT_DOWN_MASK;
+		final int removeFromSelectionMask = MouseEvent.ALT_DOWN_MASK;
+		final int flag;
+		if ((e.getModifiersEx() & addToSelectionMask) == addToSelectionMask) 
+			flag = ADD_TO_SELECTION_FLAG;
+		else if ((e.getModifiersEx() & removeFromSelectionMask) == removeFromSelectionMask) 
+			flag = REMOVE_FROM_SELECTION_FLAG;
+		else 
+			flag = REPLACE_SELECTION_FLAG;
+		spotSelectionChanged(target, flag);
+	} 
 
 
 	@Override

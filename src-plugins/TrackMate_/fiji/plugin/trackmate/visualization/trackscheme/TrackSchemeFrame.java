@@ -133,6 +133,7 @@ public class TrackSchemeFrame extends JFrame {
 	private GraphPane backPane;
 	/** The spots currently selected. */
 	private HashSet<Spot> spotSelection = new HashSet<Spot>();
+	private JScrollPane scrollPane;
 
 	/*
 	 * CONSTRUCTORS
@@ -176,6 +177,22 @@ public class TrackSchemeFrame extends JFrame {
 	public JGraph getJGraph() {
 		return jGraph;
 	}
+	
+	/**
+	 * Return a reference to the adapter in charge of converting the {@link Spot} and
+	 * {@link DefaultWeightedEdge} for display in this JGraph frame.
+	 */
+	public JGraphModelAdapter<Spot, DefaultWeightedEdge> getAdapter() {
+		return jGMAdapter;
+	}
+	
+	public void centerViewOn(DefaultGraphCell cell) {
+		Rectangle2D bounds = jGraph.getCellBounds(cell);
+		Point2D center = new Point2D.Double(bounds.getCenterX()*jGraph.getScale(), bounds.getCenterY()*jGraph.getScale());
+		scrollPane.getHorizontalScrollBar().setValue((int) center.getX() - scrollPane.getWidth()/2);
+		scrollPane.getVerticalScrollBar().setValue((int) center.getY() - scrollPane.getHeight()/2);
+	}
+	
 
 	/*
 	 * PRIVATE METHODS
@@ -258,7 +275,6 @@ public class TrackSchemeFrame extends JFrame {
 		myGraph.setMarqueeHandler(new MyMarqueeHandler());
 		AbstractCellView.cellEditor = new MyGraphCellEditor();
 		return myGraph;
-
 	}
 
 	
@@ -282,7 +298,7 @@ public class TrackSchemeFrame extends JFrame {
 		doTrackLayout();
 		
 		// Add the back pane as Center Component
-		JScrollPane scrollPane = new JScrollPane(backPane);
+		scrollPane = new JScrollPane(backPane);
 		scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 		scrollPane.getHorizontalScrollBar().setUnitIncrement(16);
 		
@@ -1041,6 +1057,7 @@ public class TrackSchemeFrame extends JFrame {
 
 
 	} // End of Editor.MyMarqueeHandler
+
 	
 
 
