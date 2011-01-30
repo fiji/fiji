@@ -719,6 +719,7 @@ const char *main_class;
 int run_precompiled = 0;
 
 static int dir_exists(const char *directory);
+static int is_native_library(const char *path);
 
 static const char *get_java_home(void)
 {
@@ -726,12 +727,21 @@ static const char *get_java_home(void)
 		return absolute_java_home;
 	const char *env = getenv("JAVA_HOME");
 	if (env) {
-		if (dir_exists(env))
-			return env;
-		else {
-			error("Ignoring invalid JAVA_HOME: %s", env);
-			unsetenv("JAVA_HOME");
+		if (dir_exists(env)) {
+			struct string* libjvm =
+				string_initf("%s/%s", env, library_path);
+			if (!is_native_library(libjvm->buffer)) {
+				error("Ignoring JAVA_HOME (wrong arch): %s",
+					env);
+				env = NULL;
+			}
+			string_release(libjvm);
+			if (env)
+				return env;
 		}
+		else
+			error("Ignoring invalid JAVA_HOME: %s", env);
+		unsetenv("JAVA_HOME");
 	}
 	return fiji_path(relative_java_home);
 }
