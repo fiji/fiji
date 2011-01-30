@@ -308,9 +308,17 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		Object source = e.getSource();
 		if (source == upload)
-			upload();
+			new Thread() {
+				public void run() {
+					upload();
+				}
+			}.start();
 		else if (source == preview)
-			preview();
+			new Thread() {
+				public void run() {
+					preview();
+				}
+			}.start();
 		else if (source == renameImage)
 			renameImage();
 		else if (source == whiteImage)
