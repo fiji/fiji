@@ -276,6 +276,8 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 					IJ.error("Could not get page source for '" + name + "'");
 					return;
 				}
+				if (!text.endsWith("\n"))
+					text += "\n";
 				text += "\n* " + name + "|"
 					+ screenshot.getTitle() + "\n"
 					+ "The [[" + name + "]] plugin <describe the project here>\n";
