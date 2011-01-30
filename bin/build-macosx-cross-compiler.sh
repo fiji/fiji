@@ -37,6 +37,13 @@ then
 	exit 1
 fi
 
+bison --help > /dev/null 2>&1
+if test $? = 127
+then
+	echo "Please install bison" >&2
+	exit 1
+fi
+
 if test ! -f Payload
 then
 	cat >&2 << EOF
