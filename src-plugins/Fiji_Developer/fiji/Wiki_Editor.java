@@ -183,7 +183,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			int dot = defaultTitle.lastIndexOf('.');
 			if (dot > 0)
 				defaultTitle = defaultTitle.substring(0, dot);
-			label = "Project_title";
+			label = "Project_title (e.g. TrakEM2)";
 		}
 		else
 			interceptRenames();
