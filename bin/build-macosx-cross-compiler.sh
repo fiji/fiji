@@ -4,7 +4,7 @@ cd "$(dirname "$0")"
 
 TARGET=i686-apple-darwin8
 TARGET64=x86_64-apple-darwin8
-TARGETPPC=powerpc-apple-darwin8
+TARGET_PPC=powerpc-apple-darwin8
 SDK=MacOSX10.6u.sdk
 SYSROOT="$(pwd)/mac-sysroot"
 test -d "$SYSROOT" || mkdir -p "$SYSROOT"
@@ -107,7 +107,7 @@ then
 	 CFLAGS="-m32" LDFLAGS="-m32 -L/usr/lib32 -L$SYSROOT/lib" \
 	 ../odcctools/configure \
 		--target=$TARGET --enable-ld64 \
-		--enable-targets=$TARGET,$TARGET64,$TARGETPPC \
+		--enable-targets=$TARGET,$TARGET64,$TARGET_PPC \
 		--with-sysroot="$SYSROOT" --prefix="$SYSROOT" &&
 	 make $PARALLEL &&
 	 make $PARALLEL install) &&
@@ -233,6 +233,35 @@ then
 		--disable-multilib \
 		--with-sysroot="$SYSROOT" --prefix="$SYSROOT" &&
 	make $PARALLEL &&
+	make $PARALLEL install)
+fi &&
+if test ! -f "$SYSROOT/bin/$TARGET_PPC-gcc"
+then
+	if test ! -f "$SYSROOT/bin/$TARGET_PPC-ld64"
+	then
+		mkdir -p build-odcctools-ppc &&
+		(cd build-odcctools-ppc &&
+		 CFLAGS="-m32" LDFLAGS="-m32 -L$SYSROOT/lib" \
+		 ../odcctools/configure \
+			--target=$TARGET_PPC --enable-ld64 \
+			--with-sysroot="$SYSROOT" --prefix="$SYSROOT" &&
+		 make $PARALLEL &&
+		 make $PARALLEL install)
+	fi &&
+	mkdir -p build-macgcc-ppc &&
+	(cd build-macgcc-ppc &&
+	 export PATH="$SYSROOT/bin:$PATH" &&
+	 CFLAGS_FOR_BUILD="-m32" CFLAGS="-m32" \
+	 LDFLAGS="-L$SYSROOT/lib" \
+	 ../gcc-5664/configure \
+		--target=$TARGET_PPC --enable-ld64 \
+		--disable-checking --enable-languages=c,c++ \
+		--with-as="$SYSROOT/bin/$TARGET_PPC-as" \
+		--with-ld="$SYSROOT/bin/$TARGET_PPC-ld64" \
+		--enable-static --enable-shared --disable-nls \
+		--disable-multilib \
+		--with-sysroot="$SYSROOT" --prefix="$SYSROOT" &&
+	make &&
 	make $PARALLEL install)
 fi &&
 for d in Library System
