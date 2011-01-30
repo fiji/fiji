@@ -202,12 +202,13 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		if (mode != Mode.SCREENSHOT)
 			name = capitalize(name).replace(' ', '_');
 		else {
+			name = capitalize(name);
 			new Prettify_Wiki_Screenshot().run(screenshot.getProcessor());
 			screenshot = IJ.getImage();
 			String imageTitle = name + "-snapshot" + imageFormat.extension;
 			for (int i = 2; wikiHasImage(imageTitle); i++)
 				imageTitle = name + "-snapshot-" + i + imageFormat.extension;
-			screenshot.setTitle(imageTitle);
+			screenshot.setTitle(imageTitle.replace(' ', '_'));
 		}
 
 		addEditor();
