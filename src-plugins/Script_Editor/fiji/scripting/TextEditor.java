@@ -264,11 +264,15 @@ public class TextEditor extends JFrame implements ActionListener,
 		mbar.add(edit);
 
 		whiteSpaceMenu = new JMenu("Whitespace");
+		whiteSpaceMenu.setMnemonic(KeyEvent.VK_W);
 		removeTrailingWhitespace = addToMenu(whiteSpaceMenu, "Remove trailing whitespace", 0, 0);
 		removeTrailingWhitespace.setMnemonic(KeyEvent.VK_W);
 		replaceTabsWithSpaces = addToMenu(whiteSpaceMenu, "Replace tabs with spaces", 0, 0);
+		replaceTabsWithSpaces.setMnemonic(KeyEvent.VK_S);
 		replaceSpacesWithTabs = addToMenu(whiteSpaceMenu, "Replace spaces with tabs", 0, 0);
+		replaceSpacesWithTabs.setMnemonic(KeyEvent.VK_T);
 		toggleWhiteSpaceLabeling = new JRadioButtonMenuItem("Label whitespace");
+		toggleWhiteSpaceLabeling.setMnemonic(KeyEvent.VK_L);
 		toggleWhiteSpaceLabeling.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				getTextArea().setWhitespaceVisible(toggleWhiteSpaceLabeling.isSelected());
@@ -1617,12 +1621,12 @@ public class TextEditor extends JFrame implements ActionListener,
 		addImport.setVisible(isJava);
 		removeUnusedImports.setVisible(isJava);
 		sortImports.setVisible(isJava);
-		openSourceForClass.setVisible(isJava);
 		openSourceForMenuItem.setVisible(isJava);
 
 		boolean isMacro = language.menuLabel.equals("ImageJ Macro");
 		installMacro.setVisible(isMacro);
 		openMacroFunctions.setVisible(isMacro);
+		openSourceForClass.setVisible(!isMacro);
 
 		openHelp.setVisible(!isMacro && language.isRunnable());
 		openHelpWithoutFrames.setVisible(!isMacro && language.isRunnable());
