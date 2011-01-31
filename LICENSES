@@ -123,9 +123,7 @@ imagescience (Erik Meijering; http://www.imagescience.org/meijering/software/):
 
 Unresolved (TODO):
 * Example/ scripts folder
-* Graphics/Example_Plot.class   Wayne Rasband, PD ?
 * Java Advanced Imaging jai_codec.jar, jai_core.jar, jai_imageio.jar
-* ij-ImageIO
 
 
 Problematic:
