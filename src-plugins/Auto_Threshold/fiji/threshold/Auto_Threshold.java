@@ -468,15 +468,16 @@ public class Auto_Threshold implements PlugIn {
 		for (int i=0; i<data.length; i++)
 			iHisto[i]=(double) data[i];
 
-		double [] tHisto = iHisto;
-
 		while (!bimodalTest(iHisto) ) {
 			 //smooth with a 3 point running mean filter
-			for (int i=1; i<data.length - 1; i++)
-				tHisto[i]= (iHisto[i-1] + iHisto[i] + iHisto[i+1])/3;
-			tHisto[0] = (iHisto[0]+iHisto[1])/3; //0 outside
-			tHisto[data.length - 1] = (iHisto[data.length - 2]+iHisto[data.length - 1])/3; //0 outside
-			iHisto = tHisto;
+			double previous = 0, current = 0, next = iHisto[0];
+			for (int i = 0; i < data.length - 1; i++) {
+				previous = current;
+				current = next;
+				next = iHisto[i + 1];
+				iHisto[i] = (previous + current + next) / 3;
+			}
+			iHisto[data.length - 1] = (current + next) / 3;
 			iter++;
 			if (iter>10000) {
 				threshold = -1;
