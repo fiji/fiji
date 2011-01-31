@@ -2737,9 +2737,12 @@ static int get_fiji_bundle_variable(const char *key, struct string *value)
 	if (!propertyString)
 		return -5;
 
+	const char *c_string = CFStringGetCStringPtr(propertyString, kCFStringEncodingMacRoman);
+	if (!c_string)
+		return -6;
+
 	string_set_length(value, 0);
-	string_append(value, CFStringGetCStringPtr(propertyString,
-			kCFStringEncodingMacRoman));
+	string_append(value, c_string);
 
 	return 0;
 }
