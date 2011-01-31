@@ -437,7 +437,11 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
-		pack();
+		try {
+			SwingUtilities.invokeAndWait(new Runnable() { public void run() {
+				pack();
+			}});
+		} catch (Exception ie) {}
 		getToolkit().setDynamicLayout(true);            //added to accomodate the autocomplete part
 		findDialog = new FindAndReplaceDialog(this);
 
