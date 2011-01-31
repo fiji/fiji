@@ -689,7 +689,11 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 						// Merge back channels
 						RGBStackMerge rgb_merger = new RGBStackMerge();
 						ImagePlus new_imp = rgb_merger.mergeHyperstacks(result_array, false);
-						new_imp.resetDisplayRange();
+						// Jump through hoops...
+						for (int channel = new_imp.getNChannels(); channel > 0; channel--) {
+							new_imp.setPosition(channel, new_imp.getSlice(), new_imp.getFrame());
+							new_imp.resetDisplayRange();
+						}
 						
 						if (target_imp == null) {
 							target_imp = new_imp;
