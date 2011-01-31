@@ -287,31 +287,43 @@ public class TokenFunctions implements Iterable<Token> {
 
 		String string = "import " + className + ";\n";
 		Import imp = new Import(0, 0, className);
-		int insert = -1;
+		int after = -1, startOffset, endOffset;
 
 		for (int i = 0; i < imports.size(); i++) {
 			int cmp = imports.get(i).compareTo(imp);
 			if (cmp == 0)
 				return;
 			if (cmp < 0)
-				insert = i;
+				after = i;
 		}
 
-		// 'insert' is the index of the import _after_ which we
+		// 'after' is the index of the import after which we
 		// want to insert the current import.
-		if (insert >= 0)
+		if (after < 0) {
+			startOffset = imports.get(0).startOffset;
+			if (startOffset > 1 && !getText(startOffset - 2, startOffset).equals("\n\n"))
+				string = "\n" + string;
+		}
+		else {
+			startOffset = imports.get(after).endOffset;
 			string = "\n" + string;
-		if (insert >= 0 && !imp.getPackage()
-				.equals(imports.get(insert).getPackage()))
-			string = "\n" + string;
-		if (insert + 1 < imports.size() && !imp.getPackage()
-				.equals(imports.get(insert + 1).getPackage()))
-			string += "\n";
-		int startOffset = insert < 0 ? imports.get(0).startOffset :
-			imports.get(insert).endOffset;
-		int endOffset = insert + 1 < imports.size() ?
-			imports.get(insert + 1).startOffset :
-			imports.get(insert).endOffset;
+			if (!imp.getPackage().equals(imports.get(after).getPackage()))
+				string = "\n" + string;
+		}
+		if (after + 1 < imports.size()) {
+			endOffset = imports.get(after + 1).startOffset;
+			if (!imp.getPackage().equals(imports.get(after + 1).getPackage()))
+				string += "\n";
+		}
+		else {
+			if (after < 0)
+				endOffset = startOffset;
+			else
+				endOffset = imports.get(after).endOffset;
+			if (endOffset + 1 < textArea.getDocument().getLength() &&
+					!getText(endOffset, endOffset + 2).equals("\n\n"))
+				string += "\n";
+		}
 		textArea.replaceRange(string, startOffset, endOffset);
 	}
 
