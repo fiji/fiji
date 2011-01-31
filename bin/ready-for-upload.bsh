@@ -187,7 +187,9 @@ boolean checkTimestamps(String path) {
 				name = name.substring(0, name.lastIndexOf('/') + 1) + sourceName;
 			}
 		}
-		if (!new File(sourcePath + name).exists()) {
+		if (!new File(sourcePath + name).exists() &&
+				(!path.endsWith("/Script_Editor.jar") ||
+				 !new File(sourcePath + "templates/Java/" + name).exists())) {
 			System.err.println(entry.getName() + " in " + path + " is missing the source " + name);
 			return false;
 		}
