@@ -83,6 +83,7 @@ import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rsyntaxtextarea.RSyntaxDocument;
 
 import org.fife.ui.rtextarea.RTextScrollPane;
 
@@ -100,9 +101,11 @@ public class TextEditor extends JFrame implements ActionListener,
 		  listBookmarks, openSourceForClass, newPlugin, installMacro,
 		  openSourceForMenuItem, showDiff, commit, ijToFront,
 		  openMacroFunctions, decreaseFontSize, increaseFontSize,
-		  chooseFontSize, chooseTabSize, gitGrep, loadToolsJar, openInGitweb;
+		  chooseFontSize, chooseTabSize, gitGrep, loadToolsJar, openInGitweb,
+		  replaceTabsWithSpaces, replaceSpacesWithTabs, toggleWhiteSpaceLabeling;
 	protected RecentFilesMenuItem openRecent;
-	protected JMenu gitMenu, tabsMenu, fontSizeMenu, tabSizeMenu, toolsMenu, runMenu;
+	protected JMenu gitMenu, tabsMenu, fontSizeMenu, tabSizeMenu, toolsMenu, runMenu,
+		  whiteSpaceMenu;
 	protected int tabsMenuTabsStart;
 	protected Set<JMenuItem> tabsMenuItems;
 	protected FindAndReplaceDialog findDialog;
@@ -254,9 +257,23 @@ public class TextEditor extends JFrame implements ActionListener,
 		removeUnusedImports.setMnemonic(KeyEvent.VK_U);
 		sortImports = addToMenu(edit, "Sort imports", 0, 0);
 		sortImports.setMnemonic(KeyEvent.VK_S);
-		removeTrailingWhitespace = addToMenu(edit, "Remove trailing whitespace", 0, 0);
-		removeTrailingWhitespace.setMnemonic(KeyEvent.VK_W);
 		mbar.add(edit);
+
+		whiteSpaceMenu = new JMenu("Whitespace");
+		removeTrailingWhitespace = addToMenu(whiteSpaceMenu, "Remove trailing whitespace", 0, 0);
+		removeTrailingWhitespace.setMnemonic(KeyEvent.VK_W);
+		replaceTabsWithSpaces = addToMenu(whiteSpaceMenu, "Replace tabs with spaces", 0, 0);
+		replaceSpacesWithTabs = addToMenu(whiteSpaceMenu, "Replace spaces with tabs", 0, 0);
+		toggleWhiteSpaceLabeling = new JRadioButtonMenuItem("Label whitespace");
+		toggleWhiteSpaceLabeling.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				getTextArea().setWhitespaceVisible(toggleWhiteSpaceLabeling.isSelected());
+			}
+		});
+		whiteSpaceMenu.add(toggleWhiteSpaceLabeling);
+
+		edit.add(whiteSpaceMenu);
+
 
 		JMenu languages = new JMenu("Language");
 		languages.setMnemonic(KeyEvent.VK_L);
@@ -783,6 +800,10 @@ public class TextEditor extends JFrame implements ActionListener,
 			new TokenFunctions(getTextArea()).sortImports();
 		else if (source == removeTrailingWhitespace)
 			new TokenFunctions(getTextArea()).removeTrailingWhitespace();
+		else if (source == replaceTabsWithSpaces)
+			getTextArea().convertTabsToSpaces();
+		else if (source == replaceSpacesWithTabs)
+			getTextArea().convertSpacesToTabs();
 		else if (source == clearScreen)
 			getTab().getScreen().setText("");
 		else if (source == autocomplete) {
@@ -901,6 +922,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				editorPane.setLanguageByFileName(editorPane.getFileName());
+				toggleWhiteSpaceLabeling.setSelected(getTextArea().isWhitespaceVisible());
 			}
 		});
 	}
