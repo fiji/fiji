@@ -476,4 +476,58 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 	public void terminate() {
 		throw new RuntimeException("TODO: unimplemented!");
 	}
+
+	/** Adapted from ij.plugin.frame.Editor */
+	public int zapGremlins() {
+		final char[] chars = getText().toCharArray();
+		int count=0;
+		boolean inQuotes = false;
+		char quoteChar = 0;
+		for (int i=0; i<chars.length; i++) {
+			char c = chars[i];
+			if (!inQuotes && (c=='"' || c=='\'')) {
+				inQuotes = true;
+				quoteChar = c;
+			} else  {
+				if (inQuotes && (c==quoteChar || c=='\n'))
+				inQuotes = false;
+			}
+			if (!inQuotes && c!='\n' && c!='\t' && (c<32||c>127)) {
+				count++;
+				chars[i] = ' ';
+			}
+		}
+		if (count>0) {
+			beginAtomicEdit();
+			try {
+				setText(new String(chars));
+			} catch (Throwable t) {
+				t.printStackTrace();
+			} finally {
+				endAtomicEdit();
+			}
+		}
+		return count;
+	}
+
+	public void convertTabsToSpaces() {
+		beginAtomicEdit();
+		try {
+			super.convertTabsToSpaces();
+		} catch (Throwable t) {
+			t.printStackTrace();
+		} finally {
+			endAtomicEdit();
+		}
+	}
+	public void convertSpacesToTabs() {
+		beginAtomicEdit();
+		try {
+			super.convertSpacesToTabs();
+		} catch (Throwable t) {
+			t.printStackTrace();
+		} finally {
+			endAtomicEdit();
+		}
+	}
 }

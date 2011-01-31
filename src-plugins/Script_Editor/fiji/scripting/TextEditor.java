@@ -102,7 +102,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		  openSourceForMenuItem, showDiff, commit, ijToFront,
 		  openMacroFunctions, decreaseFontSize, increaseFontSize,
 		  chooseFontSize, chooseTabSize, gitGrep, loadToolsJar, openInGitweb,
-		  replaceTabsWithSpaces, replaceSpacesWithTabs, toggleWhiteSpaceLabeling;
+		  replaceTabsWithSpaces, replaceSpacesWithTabs, toggleWhiteSpaceLabeling,
+		  zapGremlins;
 	protected RecentFilesMenuItem openRecent;
 	protected JMenu gitMenu, tabsMenu, fontSizeMenu, tabSizeMenu, toolsMenu, runMenu,
 		  whiteSpaceMenu;
@@ -249,6 +250,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		clearScreen.setMnemonic(KeyEvent.VK_L);
 		//edit.addSeparator();
 		//autocomplete = addToMenu(edit, "Autocomplete", KeyEvent.VK_SPACE, ctrl);
+
+		zapGremlins = addToMenu(edit, "Zap Gremlins", 0, 0);
+
 		//autocomplete.setMnemonic(KeyEvent.VK_A);
 		edit.addSeparator();
 		addImport = addToMenu(edit, "Add import...", 0, 0);
@@ -806,6 +810,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			getTextArea().convertSpacesToTabs();
 		else if (source == clearScreen)
 			getTab().getScreen().setText("");
+		else if (source == zapGremlins)
+			zapGremlins();
 		else if (source == autocomplete) {
 			try {
 				getEditorPane().autocomp.doCompletion();
@@ -922,7 +928,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				editorPane.setLanguageByFileName(editorPane.getFileName());
-				toggleWhiteSpaceLabeling.setSelected(getTextArea().isWhitespaceVisible());
+				toggleWhiteSpaceLabeling.setSelected(((RSyntaxTextArea)editorPane).isWhitespaceVisible());
 			}
 		});
 	}
@@ -2195,5 +2201,14 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	void handleException(Throwable e) {
 		ij.IJ.handleException(e);
+	}
+
+	/** Removes invalid characters, shows a dialog.
+	 * @return The amount of invalid characters found. */
+	public int zapGremlins() {
+		int count = getEditorPane().zapGremlins();
+		String msg = count > 0 ? "Zap Gremlins converted " + count + " invalid characters to spaces" : "No invalid characters found!";
+		JOptionPane.showMessageDialog(this, msg);
+		return count;
 	}
 }
