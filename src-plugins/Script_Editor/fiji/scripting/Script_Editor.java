@@ -10,6 +10,7 @@ import ij.plugin.PlugIn;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import javax.swing.SwingUtilities;
 
 import java.lang.reflect.Method;
 
@@ -41,7 +42,9 @@ public class Script_Editor implements PlugIn {
 			instance = new TextEditor(path);
 			if (!isToolsJarAvailable())
 				instance.installDebugSupportMenuItem();
-			instance.setVisible(true);
+			SwingUtilities.invokeLater(new Runnable() { public void run() {
+				instance.setVisible(true);
+			}});
 		}
 		else {
 			instance.open(path);

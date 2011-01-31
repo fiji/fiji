@@ -83,6 +83,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
 
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -297,8 +298,10 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		if (mode == Mode.TUTORIAL_MAKER)
 			showSnapshotFrame();
 
-		editor.setVisible(true);
 		editor.setTitle("Edit Wiki - " + name);
+		SwingUtilities.invokeLater(new Runnable() { public void run() {
+			editor.setVisible(true);
+		}});
 	}
 
 	public String getText() {
