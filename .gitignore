@@ -32,6 +32,7 @@
 *~
 *$py.class
 /nightly-build/
+/full-nightly-build/
 /MMConfig_demo.cfg
 /MMStartup.bsh
 /mmgr_dal_*
