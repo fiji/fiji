@@ -333,6 +333,7 @@ public class Auto_Threshold implements PlugIn {
 				imp.getProcessor().setThreshold(data.length - 1, data.length - 1, ImageProcessor.NO_LUT_UPDATE);
 			}
 		}
+		imp.setDisplayRange(0, 255);
 		//IJ.showProgress((double)(255-i)/255);
 		imp.updateAndDraw();
 		// 2 - Return the threshold and the image
