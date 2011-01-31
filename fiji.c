@@ -720,6 +720,7 @@ int run_precompiled = 0;
 
 static int dir_exists(const char *directory);
 static int is_native_library(const char *path);
+static int file_exists(const char *path);
 
 static const char *get_java_home(void)
 {
@@ -730,7 +731,12 @@ static const char *get_java_home(void)
 		if (dir_exists(env)) {
 			struct string* libjvm =
 				string_initf("%s/%s", env, library_path);
-			if (!is_native_library(libjvm->buffer)) {
+			if (!file_exists(libjvm->buffer)) {
+				string_set_length(libjvm, 0);
+				string_addf(libjvm, "%s/jre/%s", env, library_path);
+			}
+			if (file_exists(libjvm->buffer) &&
+					!is_native_library(libjvm->buffer)) {
 				error("Ignoring JAVA_HOME (wrong arch): %s",
 					env);
 				env = NULL;
@@ -2731,9 +2737,12 @@ static int get_fiji_bundle_variable(const char *key, struct string *value)
 	if (!propertyString)
 		return -5;
 
+	const char *c_string = CFStringGetCStringPtr(propertyString, kCFStringEncodingMacRoman);
+	if (!c_string)
+		return -6;
+
 	string_set_length(value, 0);
-	string_append(value, CFStringGetCStringPtr(propertyString,
-			kCFStringEncodingMacRoman));
+	string_append(value, c_string);
 
 	return 0;
 }

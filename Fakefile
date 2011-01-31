@@ -439,13 +439,13 @@ JAVA_LIB_PATH(win32)=bin/client/jvm.dll
 JAVA_LIB_PATH(win64)=bin/server/jvm.dll
 JAVA_LIB_PATH(macosx)=
 
-# The variables CFLAGS, CXXFLAGS, LDFLAGS and LIBS will be used for compiling
+# The variables CFLAGS, LDFLAGS and LIBS will be used for compiling
 # C and C++ programs.
-CFLAGS(*)=-Wall -Iincludes \
+COMMONCFLAGS=-Wall -Iincludes \
 	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH"'
 WINOPTS=-mwindows -mno-cygwin -DMINGW32
-CFLAGS(win32)=$CFLAGS $WINOPTS
-CFLAGS(win64)=$CFLAGS $WINOPTS
+CFLAGS(win32)=$COMMONCFLAGS $WINOPTS
+CFLAGS(win64)=$COMMONCFLAGS $WINOPTS
 
 # Include 64-bit architectures only in ./fiji (as opposed to ./fiji-tiger),
 # and only on MacOSX
@@ -454,40 +454,42 @@ MACOPTS(osx10.3)=-I/System/Library/Frameworks/JavaVM.Framework/Headers \
 MACOPTS(osx10.4)=$MACOPTS(osx10.3) -mmacosx-version-min=10.3 -arch i386 -arch ppc
 MACOPTS(osx10.5)=$MACOPTS(osx10.3) -mmacosx-version-min=10.4 -arch i386 -arch x86_64
 
-CFLAGS(linux)=$CFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector
-CFLAGS(linux64)=$CFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector
+CFLAGS(linux)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector
+CFLAGS(linux64)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector
 
 LDFLAGS(win32)=$LDFLAGS $WINOPTS
 
-CFLAGS(fiji)=$CFLAGS $MACOPTS
+CFLAGS(fiji)=$COMMONCFLAGS $MACOPTS
 LDFLAGS(fiji)=$LDFLAGS $MACOPTS
 
 LIBS(linux)=-ldl
 LIBS(linux64)=-ldl
-LIBS(macosx)=-framework CoreFoundation -framework ApplicationServices \
+LIBS(macosx)=-weak -framework CoreFoundation -framework ApplicationServices \
 	-framework JavaVM
 
 fiji <- fiji.c
 
-CFLAGS(fiji-macosx)=$CFLAGS $MACOPTS(osx10.5)
+CFLAGS(fiji-macosx)=$COMMONCFLAGS $MACOPTS(osx10.5)
 LDFLAGS(fiji-macosx)=$LDFLAGS $MACOPTS(osx10.5)
 fiji-macosx <- fiji.c
 
-CFLAGS(fiji-tiger)=$CFLAGS $MACOPTS(osx10.4)
+CFLAGS(fiji-tiger)=$COMMONCFLAGS $MACOPTS(osx10.4)
 LDFLAGS(fiji-tiger)=$LDFLAGS $MACOPTS(osx10.4)
 fiji-tiger <- fiji.c
 
-CFLAGS(fiji-panther)=$CFLAGS $MACOPTS(osx10.3)
+CFLAGS(fiji-panther)=$COMMONCFLAGS $MACOPTS(osx10.3)
 LDFLAGS(fiji-panther)=$LDFLAGS $MACOPTS(osx10.3)
 fiji-panther <- fiji.c
 
 # Cross-compiling (works only on Linux64 so far)
 
-all-cross[] <- cross-win32 cross-win64 cross-linux
+all-cross[] <- cross-win32 cross-win64 cross-linux cross-macosx cross-tiger
 # cross-tiger does not work yet
 
-cross-tiger[bin/chrooted-cross-compiler.sh tiger \
-	$CFLAGS(macosx) $LIBS(macosx)] <- fiji.c
+cross-tiger[bin/cross-compiler.py tiger \
+	$CFLAGS(fiji-panther) $LIBS(macosx)] <- fiji.c
+cross-macosx[bin/cross-compiler.py macosx \
+	$CFLAGS(fiji-panther) $LIBS(macosx)] <- fiji.c
 cross-*[bin/cross-compiler.py * $CFLAGS(*) $LDFLAGS(*) $LIBS(*)] <- fiji.c
 
 # Precompiled stuff

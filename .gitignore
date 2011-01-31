@@ -32,6 +32,7 @@
 *~
 *$py.class
 /nightly-build/
+/full-nightly-build/
 /MMConfig_demo.cfg
 /MMStartup.bsh
 /mmgr_dal_*
@@ -213,3 +214,6 @@
 /jars/wavelets.jar
 /jars/imageware.jar
 /plugins/Extended_Depth_Field.jar
+/precompiled/fiji-tiger-i686
+/precompiled/fiji-tiger-ppc
+/precompiled/fiji-leopard
