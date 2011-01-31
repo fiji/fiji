@@ -1,5 +1,6 @@
 package fiji.process;
 
+import ij.CompositeImage;
 import ij.IJ;
 import ij.ImageListener;
 import ij.ImagePlus;
@@ -704,6 +705,9 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 								target_imp.show();
 							} else {
 								target_imp.setStack(expression, new_imp.getStack());
+								if (target_imp.isComposite())
+									// Workaround: setStack() does not update CompositeImage's buffered image
+									((CompositeImage)target_imp).reset();
 							}
 						}
 
