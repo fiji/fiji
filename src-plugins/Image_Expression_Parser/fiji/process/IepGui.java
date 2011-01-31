@@ -246,9 +246,6 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 	 * Main method for debug
 	 */
 	public static <T extends RealType<T>> void main(String[] args) {
-		// Load an image
-		ImagePlus imp = IJ.openImage("http://rsb.info.nih.gov/ij/images/blobs.gif");
-		imp.show();
 		// Launch the GUI
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
