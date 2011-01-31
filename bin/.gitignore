@@ -21,3 +21,6 @@
 /gcc-5664.tar.gz
 /build-macgcc
 /build-macgcc64
+/SDKs/
+/build-macgcc-ppc/
+/build-odcctools-ppc/

@@ -200,3 +200,6 @@
 /plugins/FeatureJ_.jar
 /plugins/RandomJ_.jar
 /plugins/Linear_Kuwahara.jar
+/precompiled/fiji-tiger-i686
+/precompiled/fiji-tiger-ppc
+/precompiled/fiji-leopard
