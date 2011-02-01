@@ -1,6 +1,16 @@
 #!/bin/sh
 /*/. 2>/dev/null; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
 
+/*
+This script checks several preconditions of .jar files before uploading:
+
+- the source files should be committed
+- the latest commit touching the source files should be pushed
+- Fiji Build should report it as up-to-date
+- no stale leftover files from old versions
+- no debug information in the .class files
+*/
+
 if (bsh.args.length == 0) {
 	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
 		+ " <file>...");
