@@ -211,6 +211,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	jars/wavelets.jar \
 	jars/imageware.jar \
 	plugins/Extended_Depth_Field.jar \
+	plugins/panorama_.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
@@ -276,7 +277,7 @@ jars/weka.jar <- fiji jars/Fiji.jar weka/
 jars/jython.jar <- fiji jython/
 jars/commons-math.jar <- fiji commons-math/
 
-CLASSPATH(jars/imglib-scripting.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-io.jars:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/loci_tools.jar:jars/mpicbg.jar:jars/jfreechart-1.0.13.jar:jars/jcommon-1.0.12.jar
+CLASSPATH(jars/imglib-scripting.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-io.jars:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/loci_tools.jar:jars/mpicbg.jar:jars/jfreechart-1.0.13.jar:jars/jcommon-1.0.12.jar:$JAVA3D_JARS
 jars/imglib-scripting.jar <- imglib/
 
 # From source
@@ -410,6 +411,7 @@ CLASSPATH(plugins/SheppLogan_.jar)=jars/ij.jar
 CLASSPATH(jars/wavelets.jar)=jars/ij.jar
 CLASSPATH(jars/imageware.jar)=jars/ij.jar
 CLASSPATH(plugins/Extended_Depth_Field.jar)=jars/ij.jar:jars/imageware.jar:jars/wavelets.jar
+CLASSPATH(plugins/panorama_.jar)=jars/ij.jar:jars/mpicbg.jar:/jars/mpicbg_.jar
 
 # pre-Java5 generics ;-)
 
