@@ -64,7 +64,6 @@ import ij.ImagePlus;
 import ij.io.FileSaver;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-import ij.plugin.ContrastEnhancer;
 import ij.plugin.ZProjector;
 import ij.plugin.filter.GaussianBlur;
 import ij.plugin.filter.Convolver;
@@ -660,8 +659,10 @@ public class FeatureStack
 					
 				final double t = Math.pow(1, 0.75);
 				
-				for (int x=0; x<width; x++){
-					for (int y=0; y<height; y++){
+				for (int x=0; x<width; x++)
+				{
+					for (int y=0; y<height; y++)
+					{
 						float s_xx = ip_xx.getf(x,y);
 						float s_xy = ip_xy.getf(x,y);
 						float s_yy = ip_yy.getf(x,y);
@@ -682,17 +683,19 @@ public class FeatureStack
 						// Orientation
 						if (s_xy < 0.0) 
 						{
-							ipOri.setf(x, y, (float)(-0.5 * Math.acos((s_xx
-								- s_yy) / Math.sqrt(4.0 * s_xy
-								* s_xy + (s_xx - s_yy)
-								* (s_xx - s_yy)))) );
+							float orientation =(float)( -0.5 * Math.acos((s_xx	- s_yy) 
+									/ Math.sqrt(4.0 * s_xy * s_xy + (s_xx - s_yy) * (s_xx - s_yy)) ));							
+							if (Float.isNaN(orientation))
+								orientation = 0;
+							ipOri.setf(x, y,  orientation);
 						}
 						else 
 						{
-							ipOri.setf(x, y, (float)(0.5 * Math.acos((s_xx
-								- s_yy) / Math.sqrt(4.0 * s_xy
-								* s_xy + (s_xx - s_yy)
-								* (s_xx - s_yy)))) );
+							float orientation =(float)( 0.5 * Math.acos((s_xx	- s_yy) 
+									/ Math.sqrt(4.0 * s_xy * s_xy + (s_xx - s_yy) * (s_xx - s_yy)) ));							
+							if (Float.isNaN(orientation))
+								orientation = 0;
+							ipOri.setf(x, y,  orientation);
 						}
 						// Gamma-normalized square eigenvalue difference
 						ipSed.setf(x, y, (float) ( Math.pow(t,4) * trace*trace * ( (s_xx - s_yy)*(s_xx - s_yy) + 4*s_xy*s_xy ) ) );
