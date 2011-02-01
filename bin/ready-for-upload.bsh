@@ -199,7 +199,9 @@ boolean checkTimestamps(String path) {
 		}
 		if (!new File(sourcePath + name).exists() &&
 				(!path.endsWith("/Script_Editor.jar") ||
-				 !new File(sourcePath + "templates/Java/" + name).exists())) {
+				 !new File(sourcePath + "templates/Java/" + name).exists()) &&
+				(!path.endsWith("/ij.jar") ||
+				 (!name.equals("aboutja.jpg") && !name.equals("icon.gif")))) {
 			System.err.println(entry.getName() + " in " + path + " is missing the source " + name);
 			return false;
 		}
