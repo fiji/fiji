@@ -56,6 +56,11 @@ public abstract class AbstractTrackingTool extends AbstractTool implements Mouse
 	protected int activeHandle;
 
 	@Override
+	public String getToolIcon() {
+		return "C00aT0509TT4509rT7509aTb509kT0e09TT3e09oT8e09oTde09l";
+	}
+
+	@Override
 	public void mousePressed(MouseEvent e) {
 		ImagePlus image = getImagePlus(e);
 		activeHandle = getHandle(image.getRoi(), e.getX(), e.getY());
