@@ -29,30 +29,28 @@ You may contact Albert Cardona at acardona at ini phys ethz ch.
 
 package common;
 
+import fiji.User_Plugins;
+
 import ij.IJ;
 import ij.ImageJ;
 import ij.Menus;
+
 import ij.plugin.PlugIn;
 
 import java.awt.Menu;
-import java.awt.PopupMenu;
-import java.awt.MenuItem;
 import java.awt.MenuBar;
+import java.awt.MenuItem;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.PrintWriter;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+
+import java.util.Arrays;
 
 /**
  *  This class looks through the plugins directory for files with a
@@ -80,8 +78,10 @@ import java.io.InputStreamReader;
  *
  */
 abstract public class RefreshScripts implements PlugIn {
+	protected static ImageJ ij;
 	static {
-		if (IJ.getInstance() != null)
+		ij = IJ.getInstance();
+		if (ij != null)
 			System.setProperty("java.class.path",
 					getPluginsClasspath());
 	}
@@ -111,12 +111,15 @@ abstract public class RefreshScripts implements PlugIn {
 
 	Menu pluginsMenu;
 
-	/* This is called by addFromDirectory when it finds a file
-	   that we might want to add - check the extension, etc. and
-	   add it from this method. */
-	private void maybeAddFile( String topLevelDirectory,
-				   String subDirectory,
-				   String filename ) {
+	/*
+	 * This is called by addFromDirectory when it finds a file
+	 * that we might want to add - check the extension, etc. and
+	 * add it from this method.
+	 *
+	 * Unfortunately, we cannot use the getMenu() method of ij.Menus.
+	 * Fortunately, we can use fiji.User_Plugins' getMenuItem() method.
+	 */
+	private void maybeAddFile(String topLevelDirectory, String subDirectory, String filename) {
 		if (verbose) {
 			System.out.println("maybeAddFile:");
 			System.out.println("  t: "+topLevelDirectory);
@@ -124,27 +127,14 @@ abstract public class RefreshScripts implements PlugIn {
 			System.out.println("  f: "+filename);
 		}
 
-		if( ! filename.endsWith(scriptExtension) )
+		if (!filename.endsWith(scriptExtension))
 			return;
-		if( filename.indexOf("_") < 0 )
+		if (filename.indexOf("_") < 0)
 			return;
-
-		Menu m;
-		if( subDirectory.length() == 0 )
-			m = pluginsMenu;
-		else
-			m = ensureSubMenu(subDirectory);
 
 		String newLabel = strip(filename);
-		if (m != null) {
-			int n = m.getItemCount();
-			MenuItem[] items = new MenuItem[n];
-			for (int i=0; i<n; i++) {
-				items[i] = m.getItem(i);
-			}
-			if (!addMenuItem(m, newLabel, filename))
-				return;
-		}
+		if (!addMenuItem(subDirectory, newLabel,filename))
+			return;
 
 		String fullPath = topLevelDirectory + File.separator
 			+ (0 == subDirectory.length() ?
@@ -155,16 +145,16 @@ abstract public class RefreshScripts implements PlugIn {
 		Menus.getCommands().put(newLabel, newCommand);
 	}
 
-	protected boolean addMenuItem(Menu m, String label, String filename) {
+	protected boolean addMenuItem(String subDirectory, String label, String filename) {
 		String command = (String)Menus.getCommands().get(label);
 		if (command == null) {
-			// Now add the command:
-			MenuItem item = new MenuItem(label);
-			// storing the name of the script file as the action
-			// command. The label is stripped!
-			m.add(item);
-			item.addActionListener(IJ.getInstance());
-
+			if (ij != null) {
+				String menuPath = "Plugins>" + subDirectory.replace(File.separator.charAt(0), '>');
+				Menu menu = (Menu)User_Plugins.getMenuItem(Menus.getMenuBar(), menuPath, true);
+				MenuItem item = new MenuItem(label);
+				menu.add(item);
+				item.addActionListener(IJ.getInstance());
+			}
 			return true;
 		}
 
@@ -180,90 +170,9 @@ abstract public class RefreshScripts implements PlugIn {
 		if (command.startsWith(getClass().getName() + "("))
 			return true;
 
-		IJ.log("The script " + filename + " would override "
-			+ "an existing menu entry; skipping");
+		IJ.log("The script " + filename + " would override an existing menu entry; skipping");
 
 		return false;
-	}
-
-	/** Split subDirectory by File.separator and make sure submenus
-	    corresponding to those exist, creating them if necessary.
-	    Then return the final submenu.
-
-	    FIXME: Johannes points out that there's probably an ImageJ / ImageJA function to do
-	    this more simply
-	*/
-	protected Menu ensureSubMenu( String subDirectory ) {
-
-		boolean topMenu = true;
-
-		boolean imageJA = false;
-		ImageJ instance = IJ.getInstance();
-		if (instance == null)
-			return null;
-		if( instance != null &&
-				instance.getTitle().indexOf("ImageJA") >= 0 )
-			imageJA = true;
-
-		String separatorRegularExpression;
-		/* Have I missed something obvious, or is Java really
-		   missing a method to escape a string safely for
-		   inclusion in a regular expression? */
-		if( File.separator.equals("/") )
-			separatorRegularExpression = "/";
-		else if( File.separator.equals("\\") )
-			separatorRegularExpression = "\\\\";
-		else {
-			IJ.error("BUG: unknown File.separator \""+File.separator+"\"");
-			return null;
-		}
-
-		String [] parts = subDirectory.split(separatorRegularExpression);
-
-		for (int i=0; i<parts.length; i++) {
-			parts[i] = parts[i].replace('_', ' ');
-		}
-
-		Menu m = pluginsMenu;
-
-		for( int i = 0; i < parts.length; ++i ) {
-			String subMenuName = parts[i];
-			int idealPosition = 0;
-			boolean found = false;
-			boolean afterSeparator = false;
-			for( int j = 0; j < m.getItemCount(); ++j ) {
-				MenuItem item=m.getItem(j);
-				String n = item.getLabel();
-				if( (! topMenu || afterSeparator) && (subMenuName.compareTo(n) > 0) ) {
-					idealPosition = j + 1;
-				}
-				if( n.equals("-") && topMenu ) {
-					afterSeparator = true;
-					idealPosition = j + 1;
-				}
-				if( n.equals(subMenuName) ) {
-					if (item instanceof Menu)  {
-						m = (Menu)item;
-						found = true;
-						break;
-					}
-				}
-			}
-			if( ! found ) {
-				/* Create a new subMenu, and insert it
-				   at the "ideal position": */
-				Menu newSubMenu = null;
-				if (imageJA)
-					newSubMenu = new PopupMenu(subMenuName);
-				else
-					newSubMenu = new Menu(subMenuName);
-				m.insert(newSubMenu,idealPosition);
-				m = newSubMenu;
-			}
-			topMenu = false;
-		}
-
-		return m;
 	}
 
 	/**
