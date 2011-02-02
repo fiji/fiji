@@ -65,9 +65,9 @@ fi
 	(cd "$submodule" &&
                          git clean -q -x -d -f &&
                          # remove empty directories
-                         for d in $(git ls-files --others --directory)                     
-                         do                                                                
-                                rm -rf $d || break                                         
+                         for d in $(git ls-files --others --directory)
+                         do
+                                rm -rf $d || break
                          done)
     done
 )
