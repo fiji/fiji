@@ -46,6 +46,11 @@ public class Updater implements PlugIn {
 		if (errorIfDebian())
 			return;
 
+		if (new File(Util.fijiRoot, "update").exists()) {
+			IJ.error("Fiji restart required to finalize previous update");
+			return;
+		}
+
 		final PluginCollection plugins = new PluginCollection();
 		final UpdaterFrame main = new UpdaterFrame(plugins);
 		main.setLocationRelativeTo(IJ.getInstance());
