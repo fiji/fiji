@@ -2,9 +2,16 @@ package fiji.python;
 
 import java.util.Map;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.Iterator;
+import java.util.SortedSet;
+import java.util.SortedMap;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.HashMap;
+import java.util.Queue;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import fiji.scripting.java.Refresh_Javas;
@@ -12,6 +19,7 @@ import fiji.FijiClassLoader;
 import java.net.URLClassLoader;
 import java.net.URL;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.lang.reflect.Method;
 import java.io.OutputStreamWriter;
@@ -95,9 +103,12 @@ public class Weave {
 	}
 	static public final <T extends Object> Callable<T> inline(final String code, final Map<String,?> bindings, final Class<T> returnType) throws Exception
 	{
+		// Buffer to store the contents of the java file
 		final StringBuilder sb = new StringBuilder(4096);
+		// Acquire a unique number to generate a unique class name
 		final int k = K.incrementAndGet();
 		final String className = "weave.gen" + k;
+		// Parse the return type, and ensure it's not null
 		final Class<?> rt = null == returnType ? Object.class : returnType;
 		// 1. Header of the java file
 		sb.append("package weave;\n")
@@ -147,15 +158,17 @@ public class Weave {
 				}
 			}
 		}
-		new Refresh_Javas().compile(f.getAbsolutePath(), null);
-
-		// 6. Set the temporary files for deletion when the JVM exits
-		// The .java file
-		f.deleteOnExit();
-		// The .class files
-		for (File fc : f.getParentFile().listFiles()) {
-			if (pclass.matcher(fc.getName()).matches()) {
-				fc.deleteOnExit();
+		try {
+			new Refresh_Javas().compile(f.getAbsolutePath(), null);
+		} finally {
+			// 6. Set the temporary files for deletion when the JVM exits
+			// The .java file
+			f.deleteOnExit();
+			// The .class files, if any
+			for (File fc : f.getParentFile().listFiles()) {
+				if (pclass.matcher(fc.getName()).matches()) {
+					fc.deleteOnExit();
+				}
 			}
 		}
 		// 7. Load the class file
@@ -164,12 +177,22 @@ public class Weave {
 		return (Callable<T>) loader.loadClass(className).newInstance();
 	}
 
+	/** Supports all the most common interfaces from java.util package, all numeric types and all primitive numeric array types. */
 	static private final String guessClass(final Object ob) {
+		// Order matters, some interfaces are super to others, so present the subinterfaces first
 		if (null == ob) return "Object";
 		if (ob instanceof List) return "java.util.List";
+		if (ob instanceof SortedSet) return "java.util.SortedSet";
 		if (ob instanceof Set) return "java.util.Set";
+		if (ob instanceof SortedMap) return "java.util.SortedMap";
 		if (ob instanceof Map) return "java.util.Map";
 		if (ob instanceof String) return "String";
+		if (ob instanceof ListIterator) return "java.util.ListIterator";
+		if (ob instanceof Iterator) return "java.util.Iterator";
+		if (ob instanceof Collection) return "java.util.Collection";
+		if (ob instanceof Iterable) return "java.util.Iterable";
+		if (ob instanceof Comparator) return "java.util.Comparator";
+		if (ob instanceof Queue) return "java.util.Queue";
 		if (ob instanceof Number) {
 			if (ob instanceof Double) return "double";
 			if (ob instanceof Float) return "float";
@@ -190,6 +213,10 @@ public class Weave {
 		if (ob instanceof byte[]) return "byte[]";
 		if (ob instanceof char[]) return "char[]";
 		if (ob instanceof Object[]) return "Object[]";
+		if (ob instanceof Comparable) return "Comparable";
+		if (ob instanceof Runnable) return "Runnable";
+		if (ob instanceof Future) return "Future";
+		if (ob instanceof Callable) return "Callable";
 		return "Object";
 	}
 }
