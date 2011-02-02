@@ -70,8 +70,8 @@ public class TestImageAccessor {
 	 * @param height The image height.
 	 * @return The noise image.
 	 */
-	public static <T extends RealType<T>> Image<T> produceNoiseImage(T type, int width, int height) {
-		return produceNoiseImage(type, width, height, 3.0f, 5000, new double[] {1.0,1.0});
+	public static <T extends RealType<T>> Image<T> produceNoiseImageSmoothed(T type, int width, int height) {
+		return produceNoiseImageSmoothed(type, width, height, 3.0f, 5000, new double[] {1.0,1.0});
 	}
 
 	/**
@@ -87,8 +87,8 @@ public class TestImageAccessor {
 	 * @param smoothingSigma The two dimensional sigma for smoothing.
 	 * @return The noise image.
 	 */
-	public static <T extends RealType<T>> Image<T> produceNoiseImage(T type, int width,
-			int height, float dotSize, int numDots, double[] smoothingSigma) {
+	public static <T extends RealType<T>> Image<T> produceNoiseImage(int width,
+			int height, float dotSize, int numDots) {
 		/* For now (probably until ImageJ2 is out) we use an
 		 * ImageJ image to draw circles.
 		 */
@@ -108,8 +108,15 @@ public class TestImageAccessor {
 		// we changed the data, so update it
 		img.updateImage();
 		// create the new image
-		ImageFactory<T> imgFactory = new ImageFactory<T>(type, new ArrayContainerFactory());
 		Image<T> noiseImage = ImagePlusAdapter.wrap(img);
+
+		return noiseImage;
+	}
+
+	public static <T extends RealType<T>> Image<T> produceNoiseImageSmoothed(T type, int width,
+			int height, float dotSize, int numDots, double[] smoothingSigma) {
+		Image<T> noiseImage = produceNoiseImage(width, height, dotSize, numDots);
+		ImageFactory<T> imgFactory = new ImageFactory<T>(type, new ArrayContainerFactory());
 
 		return gaussianSmooth(noiseImage, imgFactory, smoothingSigma);
 	}
