@@ -275,4 +275,42 @@ public class TestImageAccessor {
 
 		return invImg;
 	}
+
+	/**
+	 * Converts an arbitrary image to a black/white version of it.
+	 * All image data lower or equal 0.5 times the maximum value
+	 * of the image type will get black, the rest will turn white.
+	 */
+	public static <T extends RealType<T>> Image<T> makeBinaryImage(Image<T> image) {
+		T binSplitValue = image.createType();
+		binSplitValue.setReal( binSplitValue.getMaxValue() * 0.5 );
+		return TestImageAccessor.makeBinaryImage(image, binSplitValue);
+	}
+
+	/**
+	 * Converts an arbitrary image to a black/white version of it.
+	 * All image data lower or equal the splitValue will get black,
+	 * the rest will turn white.
+	 */
+	public static <T extends RealType<T>> Image<T> makeBinaryImage(Image<T> image, T splitValue) {
+		LocalizableCursor<T> imgCursor = image.createLocalizableCursor();
+		// make a new image of the same type, but binary
+		Image<T> binImg = image.createNewImage("Binary image of " + image.getName());
+		LocalizableByDimCursor<T> invCursor = binImg.createLocalizableByDimCursor();
+
+		while (imgCursor.hasNext()) {
+			imgCursor.fwd();
+			invCursor.setPosition(imgCursor);
+			T currentValue = invCursor.getType();
+			if (currentValue.compareTo(splitValue) > 0)
+				currentValue.setReal(  currentValue.getMaxValue() );
+			else
+				currentValue.setZero();
+		}
+
+		imgCursor.close();
+		invCursor.close();
+
+		return binImg;
+	}
 }
