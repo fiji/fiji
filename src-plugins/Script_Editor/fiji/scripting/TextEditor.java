@@ -1281,18 +1281,30 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 	}
 
-	public void open(String path) {
+	/** Open a new tab with some content; the languageExtension is like ".java", ".py", etc. */
+	public Tab newTab(String content, String language) {
+		Tab tab = open("");
+		if (null != language && language.length() > 0) {
+			language = language.trim().toLowerCase();
+			if ('.' != language.charAt(0)) language = "." + language;
+			tab.editorPane.setLanguage(Languages.getInstance().map.get(language));
+		}
+		if (null != content) tab.editorPane.setText(content);
+		return tab;
+	}
+
+	public Tab open(String path) {
 		if (path != null && path.startsWith("class:")) try {
 			path = new FileFunctions(this).getSourcePath(path.substring(6));
 			if (path == null)
-				return;
+				return null;
 		} catch (ClassNotFoundException e) {
 			error("Could not find " + path);
 		}
 
 		if (isBinary(path)) {
 			IJ.open(path);
-			return;
+			return null;
 		}
 
 		/*
@@ -1339,6 +1351,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			}
 			if (path != null && !"".equals(path))
 				openRecent.add(path);
+
+			return tab;
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			error("The file '" + path + "' was not found.");
@@ -1346,6 +1360,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			e.printStackTrace();
 			error("There was an error while opening '" + path + "': " + e);
 		}
+		return null;
 	}
 
 	public boolean saveAs() {
