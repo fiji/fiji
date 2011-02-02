@@ -34,7 +34,7 @@ from fiji.python import Weave
 
 nums = [1.0, 2.0, 3.0, 4.0]
 
-w = Weave(
+w = Weave.inline(
 	"""
 	double sum = 0;
 	for (Double d : (java.util.List<Double>)nums) {
@@ -42,7 +42,8 @@ w = Weave(
 	}
 	return sum;
 	""",
-	{"nums" : nums})
+	{"nums" : nums},
+	Double)
 
 print w.call()
  *
@@ -51,6 +52,8 @@ print w.call()
  * will be read as given. If you want to change the content of the bindings,
  * make them arrays or collections, and retrieve (and cast) their contents
  * within the inlined java code.
+ *
+ * The return type is optional.
  *
  * The java-embedding approach is intended for short snippets of code,
  * but any code suitable for the code block of a static method is allowed.
