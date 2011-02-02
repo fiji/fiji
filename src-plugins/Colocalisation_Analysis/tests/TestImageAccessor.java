@@ -227,6 +227,17 @@ public class TestImageAccessor {
 	}
 
 	/**
+	 * Gaussian Smooth of the input image using intermediate float format. An
+	 * ArrayContainerFactory is used to produce new images.
+	 *
+	 * @return
+	 */
+	public static <T extends RealType<T>> Image<T> gaussianSmooth(Image<T> img, double[] sigma) {
+		ImageFactory<T> imgFactory = new ImageFactory<T>(img.createType(), new ArrayContainerFactory());
+		return gaussianSmooth(img, imgFactory, sigma);
+	}
+
+	/**
 	 * Gaussian Smooth of the input image using intermediate float format.
 	 * @param <T>
 	 * @param img
