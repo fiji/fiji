@@ -10,9 +10,12 @@ import java.io.BufferedInputStream;
 import java.io.InputStream;
 
 import mpicbg.imglib.algorithm.gauss.GaussianConvolution3;
+import mpicbg.imglib.algorithm.math.ImageStatistics;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
+import mpicbg.imglib.cursor.special.TwinValueRangeCursor;
+import mpicbg.imglib.cursor.special.TwinValueRangeCursorFactory;
 import mpicbg.imglib.function.Converter;
 import mpicbg.imglib.function.RealTypeConverter;
 import mpicbg.imglib.image.Image;
@@ -312,5 +315,35 @@ public class TestImageAccessor {
 		invCursor.close();
 
 		return binImg;
+	}
+
+	/**
+	 * A method to combine a foreground image and a background image.
+	 * If data on the foreground image is above zero, it will be
+	 * placed on the background. While doing that, the image data from
+	 * the foreground is scaled to be in range of the background.
+	 */
+	public static <T extends RealType<T>> void combineImages(Image<T> background, Image<T> foreground) {
+		TwinValueRangeCursor<T> cursor = TwinValueRangeCursorFactory.generateAlwaysTrueCursor(background, foreground);
+		// find a scaling factor for scale forground range into background
+		double bgMin = ImageStatistics.getImageMin(background).getRealDouble();
+		double bgMax = ImageStatistics.getImageMax(background).getRealDouble();
+		double fgMin = ImageStatistics.getImageMin(foreground).getRealDouble();
+		double fgMax = ImageStatistics.getImageMax(foreground).getRealDouble();
+
+		double scaling = (bgMax - bgMin ) / (fgMax - fgMin);
+		// iterate over both images
+		while (cursor.hasNext()) {
+			cursor.fwd();
+			T bgData = cursor.getChannel1Type();
+			double fgData = cursor.getChannel2Type().getRealDouble() * scaling;
+			if (fgData > 0.01) {
+				/* if the foreground data is above zero, copy
+				 * it to the background.
+				 */
+				bgData.setReal(fgData);
+			}
+		}
+		cursor.close();
 	}
 }
