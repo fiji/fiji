@@ -352,15 +352,21 @@ os.chdir(source_directory)
 # the current git HEAD:
 
 if options.add_changelog_template:
+    if len(args) == 0:
+        message = "[Fill in the rest of the commit message here.]"
+    elif len(args) == 1:
+        message = args[0]
+    else:
+        raise Exception, "You must provide a single argument with the changelog message"
     suggest_new_version = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
     git_rev = Popen(["git","rev-parse","--verify","HEAD"],stdout=PIPE).communicate()[0].strip()
     fp = open("debian/changelog")
     old_changelog = fp.read()
     fp.close()
     fp = open("debian/changelog","w")
-    fp.write("fiji (%s) unstable; urgency=low\n\n"%(suggest_new_version))
+    fp.write("fiji (%s) unstable; urgency=low\n\n"%(suggest_new_version,))
     fp.write("  * Based on fiji.git at "+git_rev+"\n")
-    fp.write("    [Fill in the rest of the commit message here.]\n")
+    fp.write("    %s\n"%(message))
     fp.write("\n")
     fp.write(" -- Mark Longair <mhl@pobox.com>  "+time.strftime("%a, %d %b %Y %H:%M:%S +0000",time.gmtime())+"\n\n")
     fp.write(old_changelog)
