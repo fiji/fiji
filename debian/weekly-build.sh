@@ -3,6 +3,8 @@
 set -e
 set -x
 
+export GIT_SSH=/home/mark/bin/ssh-pacific
+
 cd ~/fiji-for-debian/
 
 rm -rf fiji_* fiji*.deb
@@ -63,9 +65,9 @@ fi
 	(cd "$submodule" &&
                          git clean -q -x -d -f &&
                          # remove empty directories
-                         for d in $(git ls-files --others --directory)                     
-                         do                                                                
-                                rm -rf $d || break                                         
+                         for d in $(git ls-files --others --directory)
+                         do
+                                rm -rf $d || break
                          done)
     done
 )
@@ -97,5 +99,5 @@ fi
     git fetch origin master &&
     git rebase origin/master &&
     git config remote.origin.url longair@pacific.mpi-cbg.de:/srv/git/fiji.git &&
-    GIT_SSH=/home/mark/bin/ssh-pacific git push origin master
+    git push origin master
 )

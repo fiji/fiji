@@ -52,6 +52,10 @@ Description: components from Fiji, including: Command Launcher Ruby, Fiji Cub [.
  plugins/Examples/Fiji_Cube.ijm: A demonstration how to use the 3D Viewer
  via macros.
  .
+ plugins/Examples/Find_Dimension_of_Raw_Image.py: A helper to determine
+ the width and height of a raw image (i.e. just the pixel values in one
+ file, without any metadata).
+ .
  plugins/Examples/downsample_.js: Downsampling heeding the sampling
  theory.
  .
@@ -66,10 +70,6 @@ Description: components from Fiji, including: Command Launcher Ruby, Fiji Cub [.
  .
  plugins/Examples/chess_.py: Some late-night fun at the Zuerich Hackathon
  2008.
- .
- plugins/Examples/Find_Dimension_of_Raw_Image.py: A helper to determine
- the width and height of a raw image (i.e. just the pixel values in one
- file, without any metadata).
  .
  plugins/Examples/Add_Popup_Split_Channels.bsh: A demonstration how to
  add entries to the popup menu in images.
@@ -541,7 +541,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: jython, clojure, fiji-imglib (>= 20110113161806), fiji-rsyntaxtextarea (>= 20100822163606), libjfreechart-java, fiji-vib (>= 20100813145758), fiji-base (>= 20110131233713), fiji-autocomplete (>= 20090524213156), libjava3d-java, bsh, fiji-imagej (>= 20110201204601), libvecmath-java, fiji-3d-viewer (>= 20101203003645), fiji-plugins (>= 20110113161806), libjcommon-java, rhino, fiji-jruby (>= 20100925003646)
+Depends: jython, clojure, fiji-imglib (>= 20110113161806), fiji-rsyntaxtextarea (>= 20100822163606), libjcommon-java, fiji-vib (>= 20100813145758), fiji-base (>= 20110131233713), fiji-autocomplete (>= 20090524213156), libjava3d-java, bsh, fiji-imagej (>= 20110201204601), libvecmath-java, fiji-3d-viewer (>= 20101203003645), fiji-plugins (>= 20110113161806), libjfreechart-java, rhino, fiji-jruby (>= 20100925003646)
 Description: components from Fiji, including: Script Editor, Javascript, JRub [...]
  The descriptions below are extracted from the Fiji Updater database:
  .
@@ -643,7 +643,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-mpicbg (>= 20110130214001), fiji-loci-tools (>= 20110112001304), fiji-edu-mines-jtk (>= 20080801134354), libjama-java, fiji-imagej (>= 20110201204601)
+Depends: fiji-mpicbg (>= 20110130214001), libjama-java, fiji-edu-mines-jtk (>= 20080801134354), fiji-imagej (>= 20110201204601), fiji-loci-tools (>= 20110112001304)
 Description: A generic, Open Source library for image access to arbitrary dim [...]
  The description below is extracted from the Fiji Updater database.
  .
