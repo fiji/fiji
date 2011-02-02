@@ -78,6 +78,7 @@ import java.util.Arrays;
  *
  */
 abstract public class RefreshScripts implements PlugIn {
+	public static final String magicMenuPrefix = "Plugins>Scripts>";
 	protected static ImageJ ij;
 	static {
 		ij = IJ.getInstance();
@@ -150,6 +151,8 @@ abstract public class RefreshScripts implements PlugIn {
 		if (command == null) {
 			if (ij != null) {
 				String menuPath = "Plugins>" + subDirectory.replace(File.separator.charAt(0), '>');
+				if (menuPath.startsWith(magicMenuPrefix))
+					menuPath = menuPath.substring(magicMenuPrefix.length());
 				Menu menu = (Menu)User_Plugins.getMenuItem(Menus.getMenuBar(), menuPath, true);
 				MenuItem item = new MenuItem(label);
 				menu.add(item);
