@@ -262,7 +262,9 @@ public class User_Plugins implements PlugIn {
 			(MenuBar)container : null;
 		Menu menu = (container instanceof Menu) ?
 			(Menu)container : null;
-		while (menuPath != null) {
+		while (menuPath.endsWith(">"))
+			menuPath = menuPath.substring(0, menuPath.length() - 1);
+		while (menuPath != null && menuPath.length() > 0) {
 			int croc = menuPath.indexOf('>');
 			if (croc < 0) {
 				name = menuPath;
