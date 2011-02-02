@@ -15,6 +15,8 @@ import java.util.Queue;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import fiji.scripting.java.Refresh_Javas;
+import fiji.scripting.Script_Editor;
+import fiji.scripting.TextEditor;
 import fiji.FijiClassLoader;
 import java.net.URLClassLoader;
 import java.net.URL;
@@ -99,9 +101,20 @@ public class Weaver {
 
 	static public final <T extends Object> Callable<T> inline(final String code, final Map<String,?> bindings) throws Throwable
 	{
-		return inline(code, bindings, null);
+		return inline(code, bindings, null, false);
 	}
-	static public final <T extends Object> Callable<T> inline(final String code, final Map<String,?> bindings, final Class<T> returnType) throws Throwable
+	static public final <T extends Object> Callable<T> inline(final String code, final Map<String,?> bindings,
+			final boolean showJavaCode) throws Throwable
+	{
+		return inline(code, bindings, null, showJavaCode);
+	}
+	static public final <T extends Object> Callable<T> inline(final String code, final Map<String,?> bindings,
+			final Class<T> returnType) throws Throwable
+	{
+		return inline(code, bindings, returnType, false);
+	}
+	static public final <T extends Object> Callable<T> inline(final String code, final Map<String,?> bindings,
+			final Class<T> returnType, final boolean showJavaCode) throws Throwable
 	{
 		// Buffer to store the contents of the java file
 		final StringBuilder sb = new StringBuilder(4096);
@@ -119,10 +132,10 @@ public class Weaver {
 		// 2. Setup fields to represent the bindings
 		for (final Map.Entry<String,?> e : bindings.entrySet()) {
 			final String name = e.getKey();
-			String guessedClass = guessPublicClass(e.getValue());
+			Type t = guessPublicClass(e.getValue());
 			sb.append("static private final ")
-			  .append(guessedClass).append(' ')
-			  .append(name).append(" = (").append(guessedClass)
+			  .append(t.type).append(' ')
+			  .append(name).append(" = (").append(t.cast)
 			  .append(") fiji.scripting.Weaver.steal(\"")
 			  .append(className).append("\" ,\"")
 			  .append(name).append("\");\n");
@@ -139,6 +152,12 @@ public class Weaver {
 		final File f = new File(tmpDir + "/weave/gen" + k + ".java");
 		if (!f.getParentFile().exists() && !f.getParentFile().mkdirs()) {
 			throw new Exception("Could not create directories for " + f);
+		}
+		if (showJavaCode) {
+			// Not from the not-yet-saved file (that file "doesn't exist" ever)
+			TextEditor ted = Script_Editor.getInstance();
+			if (null == ted) ted = new TextEditor("gen" + k + ".java", sb.toString());
+			else ted.newTab(sb.toString(), ".java");
 		}
 		OutputStreamWriter dos = null;
 		try {
@@ -182,26 +201,44 @@ public class Weaver {
 		}
 	}
 
-	/** Return the most specific yet public Class of the class hierarchy of {@param ob}. */
-	static private final String guessPublicClass(final Object ob) {
-		if (null == ob) return "Object";
-		Class<?> c = ob.getClass();
-		if (c.isPrimitive()) {
-			return c.getSimpleName();
+	static private class Type {
+		final String type, cast;
+		private Type(String type, String cast) {
+			this.type = type;
+			this.cast = cast;
 		}
+		private Type(String type) {
+			this(type, type);
+		}
+	}
+
+	/** Return the most specific yet public Class of the class hierarchy of {@param ob}. */
+	static private final Type guessPublicClass(final Object ob) {
+		if (null == ob) return new Type("Object");
+		Class<?> c = ob.getClass();
+		// Avoid boxing/unboxing: is done only once
+		if (Long.class == c) return new Type("long", "Long");
+		if (Double.class == c) return new Type("double", "Double");
+		if (Float.class == c) return new Type("float", "Float");
+		if (Byte.class == c) return new Type("byte", "Byte");
+		if (Short.class == c) return new Type("short", "Short");
+		if (Integer.class == c) return new Type("int", "Integer");
+		if (Character.class == c) return new Type("char", "Character");
+
 		// While not named class and not public, inspect its super class:
 		while (c.isAnonymousClass() || 0 == (c.getModifiers() | Modifier.PUBLIC)) {
 			c = c.getSuperclass();
 		}
+
 		// If it's an array, inspect if it's native, or fix the name
-		String s = c.getSimpleName();
 		if (c.isArray()) {
+			String s = c.getSimpleName();
 			// native array?
 			if (s.toLowerCase().equals(s)) {
 				Pattern pat = Pattern.compile("^(\\[\\])+$");
 				for (String name : new String[]{"byte", "char", "short", "int", "long", "float", "double"}) {
 					if (s.startsWith(name) && pat.matcher(s.substring(name.length())).matches()) {
-						return s;
+						return new Type(s);
 					}
 				}
 			}
@@ -211,8 +248,8 @@ public class Weaver {
 			StringBuilder sb = new StringBuilder(32);
 			sb.append(name, nBrackets+1, name.length() -1); // +1 to skip 'L'
 			for (int i=0; i<nBrackets; i++) sb.append('[').append(']');
-			return sb.toString();
+			return new Type(sb.toString());
 		}
-		return c.getName();
+		return new Type(c.getName());
 	}
 }
