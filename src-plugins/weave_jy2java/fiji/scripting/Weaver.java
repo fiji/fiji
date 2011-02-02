@@ -1,4 +1,4 @@
-package fiji.python;
+package fiji.scripting;
 
 import java.util.Map;
 import java.util.List;
@@ -38,11 +38,11 @@ import ij.IJ;
  * 
  * An example in jython:
 
-from fiji.python import Weave
+from fiji.scripting import Weaver
 
 nums = [1.0, 2.0, 3.0, 4.0]
 
-w = Weave.inline(
+w = Weaver.inline(
 	"""
 	double sum = 0;
 	for (Double d : (java.util.List<Double>)nums) {
