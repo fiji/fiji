@@ -71,7 +71,7 @@ public class XMLFileWriter {
 		write(out, local);
 		return out.toByteArray();
 	}
-		
+
 	public byte[] toCompressedByteArray(boolean local) throws SAXException,
 			TransformerConfigurationException, IOException,
 			ParserConfigurationException {
@@ -79,7 +79,7 @@ public class XMLFileWriter {
 		write(new GZIPOutputStream(out), local);
 		return out.toByteArray();
 	}
-		
+
 	public void validate(boolean local) throws SAXException,
 			TransformerConfigurationException, IOException,
 			ParserConfigurationException {

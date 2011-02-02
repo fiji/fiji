@@ -55,7 +55,7 @@ public class XMLFileReader extends DefaultHandler {
 	public XMLFileReader(PluginCollection plugins) {
 		this.plugins = plugins;
 	}
-	
+
 	public void read(String updateSite) throws ParserConfigurationException, IOException, SAXException {
 		UpdateSite site = plugins.getUpdateSite(updateSite);
 		if (site == null)

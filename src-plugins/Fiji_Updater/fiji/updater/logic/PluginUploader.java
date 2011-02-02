@@ -82,7 +82,7 @@ public class PluginUploader {
 		public String getFilename() {
 			return compressed;
 		}
-		
+
 		public String getPermissions() {
 			return "C0444";
 		}
