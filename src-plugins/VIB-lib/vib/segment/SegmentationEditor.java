@@ -21,10 +21,9 @@ import vib.SegmentationViewerCanvas;
 public class SegmentationEditor implements PlugIn {
 
 	private CustomStackWindow csw;
-	
+
 	public void run(String arg) {
 		ImagePlus image = WindowManager.getCurrentImage();
-		ImageProcessor ip;
 		if (image==null) {
 			IJ.error("No image?");
 			return;
@@ -55,6 +54,10 @@ public class SegmentationEditor implements PlugIn {
 		ImagePlus labels = csw.getLabels();
 		System.out.println(image);
 		image.show();
+	}
+
+	public CustomStackWindow getCustomStackWindow() {
+		return csw;
 	}
 
 	public ImagePlus getLabels() {
