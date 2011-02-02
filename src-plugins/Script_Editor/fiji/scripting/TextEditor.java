@@ -1975,7 +1975,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	public String getSelectedTextOrAsk(String label) {
 		String selection = getTextArea().getSelectedText();
-		if (selection == null) {
+		if (selection == null || selection.indexOf('\n') >= 0) {
 			selection = JOptionPane.showInputDialog(this,
 				label + ":", label + "...",
 				JOptionPane.QUESTION_MESSAGE);
