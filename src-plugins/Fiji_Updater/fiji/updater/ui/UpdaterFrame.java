@@ -502,6 +502,32 @@ public class UpdaterFrame extends JFrame
 			// TODO: remove "update/" directory
 			IJ.error("Canceled");
 			installer.done();
+		} catch (Exception e) {
+			e.printStackTrace();
+			// TODO: remove "update/" directory
+			error("Installer failed: " + e);
+			installer.done();
+		}
+	}
+
+	public void updateTheUpdater() {
+		PluginCollection.Filter filter = new PluginCollection.Filter() {
+			public boolean matches(PluginObject plugin) {
+				if (plugin.filename.equals("plugins/Fiji_Updater.jar")) {
+					plugin.setAction(plugins, Action.UPDATE);
+					return true;
+				}
+				return false;
+			}
+		};
+		PluginCollection justTheUpdater = PluginCollection.clone(plugins.filter(filter));
+		Installer installer = new Installer(justTheUpdater, getProgress("Installing the updater..."));
+		try {
+			installer.start();
+		} catch (Canceled e) {
+			// TODO: remove "update/" directory
+			error("Canceled");
+			installer.done();
 		} catch (IOException e) {
 			// TODO: remove "update/" directory
 			// TODO: make error() method

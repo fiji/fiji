@@ -7,6 +7,7 @@ import ij.plugin.PlugIn;
 
 import fiji.updater.logic.Checksummer;
 import fiji.updater.logic.PluginCollection;
+import fiji.updater.logic.PluginObject;
 import fiji.updater.logic.XMLFileDownloader;
 import fiji.updater.logic.XMLFileReader;
 
@@ -19,6 +20,8 @@ import fiji.updater.util.Canceled;
 import fiji.updater.util.Progress;
 import fiji.updater.util.Util;
 
+import ij.Executer;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -26,6 +29,7 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -94,6 +98,38 @@ public class Updater implements PlugIn {
 			checksummer.done();
 			main.dispose();
 			IJ.error("Canceled");
+			return;
+		}
+
+		PluginObject updater = plugins.getPlugin("plugins/Fiji_Updater.jar");
+		if (updater != null && updater.getStatus() == PluginObject.Status.UPDATEABLE) {
+			if (main.showQuestion("Update the updater",
+					"There is an update available for the Fiji Updater. Install now?")) {
+				// download just the updater
+				main.updateTheUpdater();
+
+				// overwrite the original updater
+				File downloaded = new File(Util.prefix("update/plugins/Fiji_Updater.jar"));
+				File updaterJar = new File(Util.prefix("plugins/Fiji_Updater.jar"));
+				if (!updaterJar.delete() || !downloaded.renameTo(updaterJar) ||
+						!downloaded.getParentFile().delete() ||
+						!downloaded.getParentFile().getParentFile().delete())
+					main.error("Could not overwrite Fiji Updater");
+				else
+					/*
+					 * Start a new Thread that refreshes the menus and restarts the updater;
+					 * the new updater has to be restarted in another thread to avoid clashes
+					 * with the current updater.
+					 */
+					SwingUtilities.invokeLater(new Runnable() {
+						public void run() {
+							new Executer("Refresh Menus").run();
+							new Executer("Update Fiji", null);
+						}
+					});
+			}
+			// we do not save the plugins to prevent the mtime from changing
+			main.dispose();
 			return;
 		}
 

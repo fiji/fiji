@@ -449,12 +449,6 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	}
 
 	public void markForUpdate(boolean evenForcedUpdates) {
-		PluginObject updater = getPlugin("plugins/Fiji_Updater.jar");
-		if (updater != null &&
-				updater.getStatus() == Status.UPDATEABLE) {
-			updater.setAction(this, Action.UPDATE);
-			return;
-		}
 		for (PluginObject plugin : updateable(evenForcedUpdates)) {
 			if (Util.isDeveloper && Util.isLauncher(plugin.filename))
 				continue;
