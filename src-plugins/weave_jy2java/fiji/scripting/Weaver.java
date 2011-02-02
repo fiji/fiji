@@ -21,7 +21,7 @@ import java.net.URL;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.io.OutputStreamWriter;
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
@@ -97,11 +97,11 @@ public class Weaver {
 		}
 	}
 
-	static public final <T extends Object> Callable<T> inline(final String code, final Map<String,?> bindings) throws Exception
+	static public final <T extends Object> Callable<T> inline(final String code, final Map<String,?> bindings) throws Throwable
 	{
 		return inline(code, bindings, null);
 	}
-	static public final <T extends Object> Callable<T> inline(final String code, final Map<String,?> bindings, final Class<T> returnType) throws Exception
+	static public final <T extends Object> Callable<T> inline(final String code, final Map<String,?> bindings, final Class<T> returnType) throws Throwable
 	{
 		// Buffer to store the contents of the java file
 		final StringBuilder sb = new StringBuilder(4096);
@@ -119,7 +119,7 @@ public class Weaver {
 		// 2. Setup fields to represent the bindings
 		for (final Map.Entry<String,?> e : bindings.entrySet()) {
 			final String name = e.getKey();
-			String guessedClass = guessClass(e.getValue());
+			String guessedClass = guessPublicClass(e.getValue());
 			sb.append("static private final ")
 			  .append(guessedClass).append(' ')
 			  .append(name).append(" = (").append(guessedClass)
@@ -174,49 +174,45 @@ public class Weaver {
 		// 7. Load the class file
 		URLClassLoader loader = new URLClassLoader(new URL[]{new URL("file://" + tmpDir)}, IJ.getClassLoader());
 
-		return (Callable<T>) loader.loadClass(className).newInstance();
+		try {
+			return (Callable<T>) loader.loadClass(className).newInstance();
+		} catch (Throwable t) {
+			IJ.getExceptionHandler().handle(t);
+			throw t;
+		}
 	}
 
-	/** Supports all the most common interfaces from java.util package, all numeric types and all primitive numeric array types. */
-	static private final String guessClass(final Object ob) {
-		// Order matters, some interfaces are super to others, so present the subinterfaces first
+	/** Return the most specific yet public Class of the class hierarchy of {@param ob}. */
+	static private final String guessPublicClass(final Object ob) {
 		if (null == ob) return "Object";
-		if (ob instanceof List) return "java.util.List";
-		if (ob instanceof SortedSet) return "java.util.SortedSet";
-		if (ob instanceof Set) return "java.util.Set";
-		if (ob instanceof SortedMap) return "java.util.SortedMap";
-		if (ob instanceof Map) return "java.util.Map";
-		if (ob instanceof String) return "String";
-		if (ob instanceof ListIterator) return "java.util.ListIterator";
-		if (ob instanceof Iterator) return "java.util.Iterator";
-		if (ob instanceof Collection) return "java.util.Collection";
-		if (ob instanceof Iterable) return "java.util.Iterable";
-		if (ob instanceof Comparator) return "java.util.Comparator";
-		if (ob instanceof Queue) return "java.util.Queue";
-		if (ob instanceof Number) {
-			if (ob instanceof Double) return "double";
-			if (ob instanceof Float) return "float";
-			if (ob instanceof Long) return "long";
-			if (ob instanceof Integer) return "int";
-			if (ob instanceof Short) return "short";
-			if (ob instanceof Byte) return "byte";
-			if (ob instanceof Character) return "char";
-			if (ob instanceof BigDecimal) return "java.math.BigDecimal";
-			if (ob instanceof BigInteger) return "java.math.BigInteger";
-			return "Number";
+		Class<?> c = ob.getClass();
+		if (c.isPrimitive()) {
+			return c.getSimpleName();
 		}
-		if (ob instanceof double[]) return "double[]";
-		if (ob instanceof float[]) return "float[]";
-		if (ob instanceof long[]) return "long[]";
-		if (ob instanceof int[]) return "int[]";
-		if (ob instanceof short[]) return "short[]";
-		if (ob instanceof byte[]) return "byte[]";
-		if (ob instanceof char[]) return "char[]";
-		if (ob instanceof Object[]) return "Object[]";
-		if (ob instanceof Comparable) return "Comparable";
-		if (ob instanceof Runnable) return "Runnable";
-		if (ob instanceof Future) return "Future";
-		if (ob instanceof Callable) return "Callable";
-		return "Object";
+		// While not named class and not public, inspect its super class:
+		while (c.isAnonymousClass() || 0 == (c.getModifiers() | Modifier.PUBLIC)) {
+			c = c.getSuperclass();
+		}
+		// If it's an array, inspect if it's native, or fix the name
+		String s = c.getSimpleName();
+		if (c.isArray()) {
+			// native array?
+			if (s.toLowerCase().equals(s)) {
+				Pattern pat = Pattern.compile("^(\\[\\])+$");
+				for (String name : new String[]{"byte", "char", "short", "int", "long", "float", "double"}) {
+					if (s.startsWith(name) && pat.matcher(s.substring(name.length())).matches()) {
+						return s;
+					}
+				}
+			}
+			// Not native: transform "[[Ljava.util.List;" into "java.util.List[][]"
+			String name = c.getName();
+			int nBrackets = name.indexOf('L');
+			StringBuilder sb = new StringBuilder(32);
+			sb.append(name, nBrackets+1, name.length() -1); // +1 to skip 'L'
+			for (int i=0; i<nBrackets; i++) sb.append('[').append(']');
+			return sb.toString();
+		}
+		return c.getName();
 	}
 }
