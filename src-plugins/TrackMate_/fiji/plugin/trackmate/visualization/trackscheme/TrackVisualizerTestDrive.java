@@ -2,20 +2,13 @@ package fiji.plugin.trackmate.visualization.trackscheme;
 
 import ij.ImagePlus;
 
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
 import org.jdom.JDOMException;
-import org.jgraph.event.GraphSelectionEvent;
-import org.jgraph.event.GraphSelectionListener;
-import org.jgraph.graph.GraphSelectionModel;
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.event.GraphEdgeChangeEvent;
 import org.jgrapht.event.GraphListener;
@@ -53,7 +46,7 @@ public class TrackVisualizerTestDrive {
 	
 		ij.ImageJ.main(args);
 		
-		TmXmlReader reader = new TmXmlReader(CASE_2);
+		TmXmlReader reader = new TmXmlReader(CASE_4);
 		reader.parse();
 		
 		// Load objects 
@@ -83,8 +76,8 @@ public class TrackVisualizerTestDrive {
 		@SuppressWarnings("rawtypes")
 		TrackMateModelInterface model = new TrackMate_();
 		model.setSettings(settings);
-//		final SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
-		final SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
+		final SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
+//		final SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
 		displayer.render();
 		displayer.setSpots(allSpots);
 		displayer.setSpotsToShow(selectedSpots);
@@ -102,52 +95,7 @@ public class TrackVisualizerTestDrive {
 		frame.setVisible(true);
 		
 		// Listeners
-
-		displayer.addSpotSelectionListener(new SpotSelectionListener() {
-			
-			@Override
-			public void valueChanged(SpotSelectionEvent event) {
-				GraphSelectionModel selectionModel = frame.getJGraph().getSelectionModel();
-				Spot[] spots = event.getSpots();
-				for(Spot spot : spots) {
-					SpotCell cell = (SpotCell) frame.getAdapter().getVertexCell(spot);
-					if (event.isAddedSpot(spot))
-						selectionModel.addSelectionCell(cell);
-					else 
-						selectionModel.removeSelectionCell(cell);
-				}
-				frame.centerViewOn(frame.getAdapter().getVertexCell(spots[0]));
-			}
-		});
-
-		frame.getJGraph().addGraphSelectionListener(new GraphSelectionListener() {
-
-			private HashSet<Spot> highlightedSpots = new  HashSet<Spot>();
-			private HashSet<DefaultWeightedEdge> highlightedEdges = new HashSet<DefaultWeightedEdge>();
-
-			@Override
-			public void valueChanged(GraphSelectionEvent event) {
-				Object[] cells = event.getCells();
-				for(Object cell : cells) {
-					if (cell instanceof SpotCell) {
-						SpotCell spotCell = (SpotCell) cell;
-						if (event.isAddedCell(cell)) 
-							highlightedSpots.add(spotCell.getSpot());
-						else
-							highlightedSpots.remove(spotCell.getSpot());
-					} else if (cell instanceof TrackEdgeCell) {
-						TrackEdgeCell edgeCell = (TrackEdgeCell) cell;
-						if (event.isAddedCell(cell)) 
-							highlightedEdges.add(edgeCell.getEdge());
-						else
-							highlightedEdges.remove(edgeCell.getEdge());
-					}
-				}
-				displayer.highlightEdges(highlightedEdges);
-				displayer.highlightSpots(highlightedSpots);
-			}
-		});
-
+		new SpotSelectionManager(displayer, frame);
 
 		frame.addGraphListener(new GraphListener<Spot, DefaultWeightedEdge>() {
 

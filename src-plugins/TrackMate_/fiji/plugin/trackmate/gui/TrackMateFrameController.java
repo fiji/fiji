@@ -48,6 +48,7 @@ import fiji.plugin.trackmate.visualization.SpotDisplayer.DisplayerType;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotCell;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotIconGrabber;
+import fiji.plugin.trackmate.visualization.trackscheme.SpotSelectionManager;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackEdgeCell;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
@@ -997,35 +998,11 @@ public class TrackMateFrameController {
 		final TrackSchemeFrame trackScheme = new TrackSchemeFrame(model.getTrackGraph());
 		trackScheme.setVisible(true);
 
-		// Link it with displayer		
-		trackScheme.getJGraph().addGraphSelectionListener(new GraphSelectionListener() {
-			
-			private HashSet<Spot> highlightedSpots = new  HashSet<Spot>();
-			private HashSet<DefaultWeightedEdge> highlightedEdges = new HashSet<DefaultWeightedEdge>();
-			
-			@Override
-			public void valueChanged(GraphSelectionEvent event) {
-				Object[] cells = event.getCells();
-				for(Object cell : cells) {
-					if (cell instanceof SpotCell) {
-						SpotCell spotCell = (SpotCell) cell;
-						if (event.isAddedCell(cell)) 
-							highlightedSpots.add(spotCell.getSpot());
-						else
-							highlightedSpots.remove(spotCell.getSpot());
-					} else if (cell instanceof TrackEdgeCell) {
-						TrackEdgeCell edgeCell = (TrackEdgeCell) cell;
-						if (event.isAddedCell(cell)) 
-							highlightedEdges.add(edgeCell.getEdge());
-						else
-							highlightedEdges.remove(edgeCell.getEdge());
-					}
-				}
-				displayer.highlightEdges(highlightedEdges);
-				displayer.highlightSpots(highlightedSpots);
-			}
-		});
+		// Link it with displayer:		
+		// Selection manager
+		new SpotSelectionManager(displayer, trackScheme);
 		
+		// Graph modification listener
 		trackScheme.addGraphListener(new GraphListener<Spot, DefaultWeightedEdge>() {
 			@Override
 			public void vertexRemoved(GraphVertexChangeEvent<Spot> e) {

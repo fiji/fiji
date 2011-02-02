@@ -195,7 +195,7 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 	private boolean trackVisible = true;
 	private boolean spotVisible = true;
 	private StackWindow window;
-	// For hightlight
+	// For highlight
 	private HighlightSpotOverlay highlightSpotOverlay;
 	private HighlightTrackOverlay highlightTrackOverlay;
 
@@ -214,20 +214,6 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 	/*
 	 * PUBLIC METHODS
 	 */
-	
-	@Override
-	public void addToSelection(Spot spot) {
-		super.addToSelection(spot);
-		prepareHighlightSpots();
-		imp.updateAndDraw();
-	}
-	
-	@Override
-	public void removeFromSelection(Spot spot) {
-		super.removeFromSelection(spot);
-		prepareHighlightSpots();
-		imp.updateAndDraw();
-	}
 	
 	@Override
 	public void highlightEdges(Set<DefaultWeightedEdge> edges) {
@@ -249,6 +235,31 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 		}
 		canvas.addOverlay(highlightTrackOverlay);
 		imp.updateAndDraw();
+	}
+	
+
+	@Override
+	public void highlightSpots(Set<Spot> spots) {
+		spotSelection = spots;
+		prepareHighlightSpots();
+		imp.updateAndDraw();		
+	}
+
+	@Override
+	public void centerViewOn(Spot spot) {
+		int frame = - 1;
+		for(int i : spotsToShow.keySet()) {
+			List<Spot> spotThisFrame = spotsToShow.get(i);
+			if (spotThisFrame.contains(spot)) {
+				frame = i;
+				break;
+			}
+		}
+		if (frame == -1)
+			return;
+		int z = Math.round(spot.getFeature(Feature.POSITION_Z) / calibration[2] ) + 1;
+		imp.setPosition(1, z, frame+1);
+//		window.setPosition(1, z, frame+1);
 	}
 	
 	@Override
@@ -337,10 +348,7 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 		highlightSpotOverlay = new HighlightSpotOverlay();
 		
 		// Change target spots
-		Spot thisSpot = null;
-		int frame = 0;
-		int thisFrame = 0;
-		boolean firstSpot = true;
+		int frame;
 		for (Spot spot : spotSelection) {
 
 			frame = - 1;
@@ -352,24 +360,10 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 				}
 			}
 			if (frame == -1)
-				continue;
-
-			// Change settings of target spot 
+				continue; 
 			highlightSpotOverlay.addSpot(spot, radius * radiusRatio, HIGHLIGHT_COLOR, frame);
-			// Keep reference for outer loop
-			if (firstSpot) {
-				thisSpot = spot;
-				thisFrame = frame;
-				firstSpot = false;
-			}
 		}
-		// Update displayed frame
-		if (null == thisSpot)
-			return;
 		canvas.addOverlay(highlightSpotOverlay);
-		int z = Math.round(thisSpot.getFeature(Feature.POSITION_Z) / calibration[2] ) + 1;
-		imp.setPosition(1, z, thisFrame+1);
-//		window.setPosition(1, z, frame+1);
 	}
 
 	
@@ -468,5 +462,6 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 
 	@Override
 	public void mouseExited(MouseEvent e) {}
+
 
 }

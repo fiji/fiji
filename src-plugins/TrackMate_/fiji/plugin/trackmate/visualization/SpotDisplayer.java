@@ -368,12 +368,18 @@ public abstract class SpotDisplayer {
 	/**
 	 * Highlight visually the spot given in argument. Do nothing if the given spot is not in {@link #spotsToShow}.
 	 */
-	public abstract void highlightSpots(Set<Spot> spots);
+	public abstract void highlightSpots(final Set<Spot> spots);
 
 	/**
 	 * Highlight visually the edges given in argument.
 	 */
-	public abstract void highlightEdges(Set<DefaultWeightedEdge> edges);
+	public abstract void highlightEdges(final Set<DefaultWeightedEdge> edges);
+	
+	/**
+	 * Center the view on the given spot.
+	 */
+	public abstract void centerViewOn(final Spot spot);
+	
 	
 	/*
 	 * PRIVATE METHODS

@@ -88,12 +88,23 @@ public class SpotDisplayer3D extends SpotDisplayer {
 			// Update target spot display
 			blobs.get(frame).setColor(spot,HIGHLIGHT_COLOR3F);
 		}
-		
-		// Move to last spot's timepoint
+	};
+	
+	@Override
+	public void centerViewOn(Spot spot) {
+		int frame = - 1;
+		for(int i : spotsToShow.keySet()) {
+			List<Spot> spotThisFrame = spotsToShow.get(i);
+			if (spotThisFrame.contains(spot)) {
+				frame = i;
+				break;
+			}
+		}
 		if (frame == -1)
 			return;
 		universe.showTimepoint(frame);
-	};
+	}
+
 	
 	@Override
 	public void highlightEdges(Set<DefaultWeightedEdge> edges) {
@@ -300,5 +311,6 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		return blobContent;
 	}
 
+	
 
 }
