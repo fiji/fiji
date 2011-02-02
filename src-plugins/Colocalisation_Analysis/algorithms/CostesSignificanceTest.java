@@ -349,32 +349,32 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 		}
 	}
 
-    protected void calculateStatistics(List<Double> compareValues, double originalVal) {
-	shuffledPearsonsNotLessOriginal = 0;
-	int iterations = shuffledPearsonsResults.size();
-	double compareSum = 0.0;
+	protected void calculateStatistics(List<Double> compareValues, double originalVal) {
+		shuffledPearsonsNotLessOriginal = 0;
+		int iterations = shuffledPearsonsResults.size();
+		double compareSum = 0.0;
 
-	for( Double shuffledVal : shuffledPearsonsResults ) {
-		double diff = shuffledVal - originalVal;
-		/* check if the randomized Pearsons value is equal
-		 * or larger than the original one.
-		 */
-		if( diff > -0.00001 ) {
-			shuffledPearsonsNotLessOriginal++;
+		for( Double shuffledVal : shuffledPearsonsResults ) {
+			double diff = shuffledVal - originalVal;
+			/* check if the randomized Pearsons value is equal
+			 * or larger than the original one.
+			 */
+			if( diff > -0.00001 ) {
+				shuffledPearsonsNotLessOriginal++;
+			}
+			compareSum += shuffledVal;
 		}
-		compareSum += shuffledVal;
-	}
 
-	shuffledMean = compareSum / iterations;
-	shuffledStdDerivation = Statistics.stdDeviation(compareValues);
+		shuffledMean = compareSum / iterations;
+		shuffledStdDerivation = Statistics.stdDeviation(compareValues);
 
-	// get the quantile of the original value in the shuffle distribution
-	costesPValue = Statistics.phi(originalVal, shuffledMean, shuffledStdDerivation);
+		// get the quantile of the original value in the shuffle distribution
+		costesPValue = Statistics.phi(originalVal, shuffledMean, shuffledStdDerivation);
 
-	if (costesPValue > 1.0)
-		costesPValue = 1.0;
-	else if (costesPValue < 0.0)
-		costesPValue = 0.0;
+		if (costesPValue > 1.0)
+			costesPValue = 1.0;
+		else if (costesPValue < 0.0)
+			costesPValue = 0.0;
 	}
 
 	public void processResults(ResultHandler<T> handler) {

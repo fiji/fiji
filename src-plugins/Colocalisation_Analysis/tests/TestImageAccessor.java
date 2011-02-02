@@ -194,7 +194,7 @@ public class TestImageAccessor {
 	 * bit of Kas Thomas' sample code (http://asserttrue.blogspot.com/).
 	 */
 	public static <T extends RealType<T>> Image<T> producePerlinNoiseImage(T type, int width,
-			int height, double z, double scale) { // , double[] smoothingSigma
+			int height, double z, double scale) {
 		// create the new image
 		ImageFactory<T> imgFactory = new ImageFactory<T>(type, new ArrayContainerFactory());
 		Image<T> noiseImage = imgFactory.createImage( new int[] {width, height}, "Noise image");
