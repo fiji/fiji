@@ -1,6 +1,11 @@
 A loose TODO list for Fiji
 ==========================
 
+- provide a Fiji exception handler that
+	- suggests updating if Fiji is out of date; and then
+	- suggest bug reporting if it is up-to-date.
+- ignore JAVA_HOME by default, add an innocuous option to jvm.cfg to force system java (either by using JAVA_HOME or by specific path)
+- teach RefreshScripts to special-case plugins/Scripts/ to be able to put scripts anywhere into the menu structure
 - include Piotr's parallel deconvolution plugins, StackReg and BoneJ
 - updater:
 	- special-case updating the updater even more: just download the updater,
@@ -10,9 +15,7 @@ A loose TODO list for Fiji
 	- multiple updater sites
 	- close after upload
 	- close after download
-- fix 16-bit auto threshold (try all)
 - fix merge channels with 4 grayscale images
-- fix IEP with RGB images
 - fix z-project, split channels for virtual stacks
 - fix substack maker for hyperstacks
 - provide preview for auto threshold plugin
