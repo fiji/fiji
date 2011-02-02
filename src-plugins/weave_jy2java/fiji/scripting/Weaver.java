@@ -67,7 +67,7 @@ print w.call()
  * but any code suitable for the code block of a static method is allowed.
  *
  */
-public class Weave {
+public class Weaver {
 
 	static private final AtomicInteger K = new AtomicInteger(0);
 	static private final Map<String,Map<String,Object>> bindings = new HashMap<String,Map<String,Object>>();
@@ -123,10 +123,10 @@ public class Weave {
 			sb.append("static private final ")
 			  .append(guessedClass).append(' ')
 			  .append(name).append(" = (").append(guessedClass)
-			  .append(") fiji.python.Weave.steal(\"")
+			  .append(") fiji.scripting.Weaver.steal(\"")
 			  .append(className).append("\" ,\"")
 			  .append(name).append("\");\n");
-			Weave.put(className, name, e.getValue());
+			Weaver.put(className, name, e.getValue());
 
 			System.out.println("binding is: " + (e.getValue() == null ? null : e.getValue().getClass()));
 		}
