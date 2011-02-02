@@ -525,8 +525,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		addAccelerator(component, key, modifiers, false);
 	}
 
-	public void addAccelerator(final JMenuItem component,
-			int key, int modifiers, boolean record) {
+	public void addAccelerator(final JMenuItem component, int key, int modifiers, boolean record) {
 		if (record) {
 			AcceleratorTriplet triplet = new AcceleratorTriplet();
 			triplet.component = component;
@@ -536,12 +535,13 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 
 		RSyntaxTextArea textArea = getTextArea();
-		if (textArea == null)
-			return;
+		if (textArea != null)
+			addAccelerator(textArea, component, key, modifiers);
+	}
+
+	public void addAccelerator(RSyntaxTextArea textArea, final JMenuItem component, int key, int modifiers) {
 		textArea.getInputMap().put(KeyStroke.getKeyStroke(key,
 					modifiers), component);
-		if (textArea.getActionMap().get(component) != null)
-			return;
 		textArea.getActionMap().put(component,
 				new AbstractAction() {
 			public void actionPerformed(ActionEvent e) {
@@ -554,10 +554,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		});
 	}
 
-	public void addDefaultAccelerators() {
+	public void addDefaultAccelerators(RSyntaxTextArea textArea) {
 		for (AcceleratorTriplet triplet : defaultAccelerators)
-			addAccelerator(triplet.component,
-					triplet.key, triplet.modifiers, false);
+			addAccelerator(textArea, triplet.component, triplet.key, triplet.modifiers);
 	}
 
 	protected JMenu getMenu(JMenu root, String menuItemPath, boolean createIfNecessary) {
@@ -1315,11 +1314,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			boolean wasNew = tab != null && tab.editorPane.isNew();
 			if (!wasNew) {
 				tab = new Tab();
-				SwingUtilities.invokeLater(new Runnable() {
-					public void run() {
-						addDefaultAccelerators();
-					}
-				});
+				addDefaultAccelerators(tab.editorPane);
 			}
 			synchronized(tab.editorPane) {
 				tab.editorPane.setFile("".equals(path) ? null : path);

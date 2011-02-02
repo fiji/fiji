@@ -1,5 +1,6 @@
 package fiji.process;
 
+import ij.CompositeImage;
 import ij.IJ;
 import ij.ImageListener;
 import ij.ImagePlus;
@@ -246,9 +247,6 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 	 * Main method for debug
 	 */
 	public static <T extends RealType<T>> void main(String[] args) {
-		// Load an image
-		ImagePlus imp = IJ.openImage("http://rsb.info.nih.gov/ij/images/blobs.gif");
-		imp.show();
 		// Launch the GUI
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
@@ -692,7 +690,11 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 						// Merge back channels
 						RGBStackMerge rgb_merger = new RGBStackMerge();
 						ImagePlus new_imp = rgb_merger.mergeHyperstacks(result_array, false);
-						new_imp.resetDisplayRange();
+						// Jump through hoops...
+						for (int channel = new_imp.getNChannels(); channel > 0; channel--) {
+							new_imp.setPosition(channel, new_imp.getSlice(), new_imp.getFrame());
+							new_imp.resetDisplayRange();
+						}
 						
 						if (target_imp == null) {
 							target_imp = new_imp;
@@ -703,6 +705,9 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 								target_imp.show();
 							} else {
 								target_imp.setStack(expression, new_imp.getStack());
+								if (target_imp.isComposite())
+									// Workaround: setStack() does not update CompositeImage's buffered image
+									((CompositeImage)target_imp).reset();
 							}
 						}
 

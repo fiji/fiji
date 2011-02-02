@@ -541,7 +541,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: jython, clojure, fiji-imglib (>= 20110113161806), fiji-rsyntaxtextarea (>= 20100822163606), libjcommon-java, fiji-vib (>= 20100813145758), fiji-base (>= 20110131233713), fiji-autocomplete (>= 20090524213156), libjava3d-java, bsh, fiji-imagej (>= 20110104161015), libvecmath-java, fiji-3d-viewer (>= 20101203003645), fiji-plugins (>= 20110113161806), libjfreechart-java, rhino, fiji-jruby (>= 20100925003646)
+Depends: jython, clojure, fiji-imglib (>= 20110113161806), fiji-rsyntaxtextarea (>= 20100822163606), libjfreechart-java, fiji-vib (>= 20100813145758), fiji-base (>= 20110131233713), fiji-autocomplete (>= 20090524213156), libjava3d-java, bsh, fiji-imagej (>= 20110104161015), libvecmath-java, fiji-3d-viewer (>= 20101203003645), fiji-plugins (>= 20110113161806), libjcommon-java, rhino, fiji-jruby (>= 20100925003646)
 Description: components from Fiji, including: Script Editor, Javascript, JRub [...]
  The descriptions below are extracted from the Fiji Updater database:
  .
