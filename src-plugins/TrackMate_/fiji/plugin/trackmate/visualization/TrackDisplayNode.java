@@ -4,9 +4,7 @@ import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import ij3d.ContentNode;
 
-import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,13 +42,6 @@ public class TrackDisplayNode extends ContentNode {
 	protected Switch trackSwitch;
 	/** Boolean set that controls the visibility of each mesh.	 */
 	protected BitSet switchMask;
-	
-	/** Hold an index of the bit masks for each track. */
-	protected HashMap<Set<Spot>, Collection<Integer>> trackIndices;
-	/** Hold an index of the bit masks for each frame. */
-	protected HashMap<Integer, Collection<Integer>> frameIndices;
-	/** Hold a index of all the meshes created, indexed as the other maps. */
-	protected HashMap<Integer, CustomTriangleMesh> meshes;
 	/** Hold a reference of the meshes corresponding to each edge. */
 	protected HashMap<DefaultWeightedEdge, CustomTriangleMesh> edgeMeshes = new HashMap<DefaultWeightedEdge, CustomTriangleMesh>();
 	
@@ -114,60 +105,30 @@ public class TrackDisplayNode extends ContentNode {
 	
 	private void makeMeshes() {
 		
-		// Loop over tracks
-		Set<DefaultWeightedEdge> allEdges;
-		Spot target;
 		CustomTriangleMesh mesh;
+		Spot target, source;
+		Set<Spot> parentTrack;
 		
-		trackIndices = new HashMap<Set<Spot>, Collection<Integer>>(tracks.size());
-		for(Set<Spot> track : tracks)  
-			trackIndices.put(track, new ArrayList<Integer>());
-		
-		frameIndices = new HashMap<Integer, Collection<Integer>>(spots.size());
-		for(int frame : spots.keySet()) 
-			frameIndices.put(frame, new ArrayList<Integer>());
-		
-		meshes = new HashMap<Integer, CustomTriangleMesh>();
-		
+		Set<DefaultWeightedEdge> allEdges = graph.edgeSet();
 		int index = 0;
-		int frame;
-		
-		for (Set<Spot> track : tracks) {
-			
-			for (Spot source : track) {
-
-				// Find the frame to which it belongs
-				frame = -1;
-				for(int key : spots.keySet())
-					if (spots.get(key).contains(source)) {
-						frame = key;
-						break;
-					}
-				
-				// Create a tube from this spot to its targets - next in time
-				allEdges = graph.edgesOf(source);
-				for(DefaultWeightedEdge edge : allEdges) {
-					target = graph.getEdgeTarget(edge);
-					// Skip spots that are previous in time
-					if (target.diffTo(source, Feature.POSITION_T) <= 0)
-						continue;
-					mesh = makeMesh(source, target, colors.get(track));
-					// Store the individual mesh
-					edgeMeshes.put(edge, mesh);
-					// Add the tube to the content
-					trackSwitch.addChild(mesh);
-					// Store indices
-					trackIndices.get(track).add(index);
-					frameIndices.get(frame).add(index);
-					meshes.put(index, mesh);
-					// Next!
-					index++;
-					
+		for(DefaultWeightedEdge edge : allEdges) {
+			// Find source and target
+			target = graph.getEdgeTarget(edge);
+			source = graph.getEdgeSource(edge);
+			// Find track it belongs to
+			parentTrack = null;
+			for (Set<Spot> track : tracks) 
+				if (track.contains(source)) {
+					parentTrack = track;
+					break;
 				}
+			mesh = makeMesh(source, target, colors.get(parentTrack));
+			// Store the individual mesh
+			edgeMeshes.put(edge, mesh);
+			// Add the tube to the content
+			trackSwitch.addChild(mesh);
+			index++;
 			}
-			
-		}
-		
 		switchMask = new BitSet(index);
 		switchMask.set(0, index, true); // all visible
 		trackSwitch.setChildMask(switchMask);
@@ -202,7 +163,7 @@ public class TrackDisplayNode extends ContentNode {
 
 	@Override
 	public void colorUpdated(Color3f color) {
-		for(CustomTriangleMesh mesh : meshes.values())
+		for(CustomTriangleMesh mesh : edgeMeshes.values())
 			mesh.setColor(color);
 	}
 
@@ -263,14 +224,14 @@ public class TrackDisplayNode extends ContentNode {
 	@Override
 	public float getVolume() {
 		float volume = 0;
-		for (CustomTriangleMesh mesh : meshes.values()) 
+		for (CustomTriangleMesh mesh : edgeMeshes.values()) 
 			volume += mesh.getVolume();
 		return volume;
 	}
 
 	@Override
 	public void shadeUpdated(boolean shaded) {
-		for (CustomTriangleMesh mesh : meshes.values())
+		for (CustomTriangleMesh mesh : edgeMeshes.values())
 			 mesh.setShaded(shaded);
 	}
 
@@ -279,7 +240,7 @@ public class TrackDisplayNode extends ContentNode {
 
 	@Override
 	public void transparencyUpdated(float transparency) {
-		for(CustomTriangleMesh mesh : meshes.values()) 
+		for(CustomTriangleMesh mesh : edgeMeshes.values()) 
 			mesh.setTransparency(transparency);
 	}
 
