@@ -37,6 +37,7 @@ import mpicbg.imglib.image.ImagePlusAdapter;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.algorithm.gauss.GaussianConvolution;
+import mpicbg.imglib.algorithm.gauss.GaussianConvolutionReal;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategy;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
@@ -180,7 +181,7 @@ public class Curvatures_<T extends RealType<T>> implements PlugIn {
 		for( int i = 0; i < spacing.length; ++i )
 			sigmas[i] = 1.0 / (double)spacing[i];
 
-		GaussianConvolution<T> gauss = new GaussianConvolution<T>( image, new OutOfBoundsStrategyMirrorFactory<T>(), sigmas );
+		GaussianConvolutionReal<T> gauss = new GaussianConvolutionReal<T>( image, new OutOfBoundsStrategyMirrorFactory<T>(), sigmas );
 
 		gauss.setNumThreads( Runtime.getRuntime().availableProcessors() );
 
