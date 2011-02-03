@@ -201,4 +201,69 @@ public class MaskAndRoiTest extends ColocalisationTest {
 			assertTrue( invMaskedCursor.getType().getInteger() == 0 );
 		}
 	}
+
+	@Test
+	public void irregularRoiPixelCountTest() {
+		// load a 3D test image
+		Image<UnsignedByteType> img = positiveCorrelationImageCh1;
+		int width = img.getDimension(0);
+		int height = img.getDimension(1);
+		// define rectangular mask to be used as irregular mask
+		int[] roiOffset = new int[] {width / 4, height / 4};
+		int[] roiSize = new int[] {width / 2, height / 2};
+		Image<UnsignedByteType> mask
+			= TestImageAccessor.createRectengularMaskImage(width, height, roiOffset, roiSize);
+
+		MaskedImage<UnsignedByteType> maskImage
+			= new MaskedImage<UnsignedByteType>(img, mask, roiOffset, roiSize);
+
+		// calculate volume of ROI box
+		int roiVolume = roiSize[0] * roiSize[1] * img.getDimension(2);
+		// count pixels in ROI
+		Cursor<UnsignedByteType> maskCursor = maskImage.createCursor();
+		int count = 0;
+		while (maskCursor.hasNext()) {
+			maskCursor.fwd();
+			count++;
+		}
+
+		maskCursor.close();
+
+		assertEquals(roiVolume, count);
+	}
+
+	/**
+	 * This test makes sure the MaskedImage can figure out the
+	 * correct dimensions of the ROI in case on passes a ROI
+	 * with different dimensions than the image.
+	 */
+	@Test
+	public void irregularRoiDimensionsTest() {
+		// load a 3D test image
+		Image<UnsignedByteType> img = positiveCorrelationImageCh1;
+		int width = img.getDimension(0);
+		int height = img.getDimension(1);
+		// define rectangular mask to be used as irregular mask
+		int[] roiOffset = new int[] {width / 4, height / 4};
+		int[] roiSize = new int[] {width / 2, height / 2};
+		Image<UnsignedByteType> mask
+			= TestImageAccessor.createRectengularMaskImage(width, height, roiOffset, roiSize);
+
+		MaskedImage<UnsignedByteType> maskImage
+			= new MaskedImage<UnsignedByteType>(img, mask, roiOffset, roiSize);
+		// is the number of dimensions the same as in the image?
+		assertEquals(maskImage.getNumDimensions(), img.getNumDimensions());
+		assertEquals(maskImage.getOffset().length, img.getNumDimensions());
+		/* Is the ROIs dimension information correct? Is the z dimension
+		 * of the ROI the same as the images one?
+		 */
+		assertEquals(maskImage.getDimension(0), roiSize[0]);
+		assertEquals(maskImage.getDimension(1), roiSize[1]);
+		assertEquals(maskImage.getDimension(2), img.getDimension(2));
+		// Is the ROIs extend correct?
+		int[] ro = maskImage.getOffset();
+		assertEquals(ro[0], roiOffset[0]);
+		assertEquals(ro[1], roiOffset[1]);
+		assertEquals(ro[2], 0);
+	}
 }
