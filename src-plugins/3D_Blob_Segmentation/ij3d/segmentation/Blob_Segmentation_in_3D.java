@@ -40,6 +40,7 @@ public class Blob_Segmentation_in_3D implements PlugIn {
 
 	/** Initialize. */
 	public void run(String arg) {
+		IJ.log("Click with the WAND tool on any 3D blob.\nShift-click with WAND to edit Level Sets options.");
 		if (Image3DUniverse.universes.isEmpty()) {
 			Image3DUniverse univ = new Image3DUniverse();
 			univ.addInteractiveBehavior(new GrowBlob(univ));
@@ -56,47 +57,66 @@ public class Blob_Segmentation_in_3D implements PlugIn {
 		private ResultsTable rt = null;
 		private LevelSet levelsets = new LevelSet();
 		private Image3DUniverse univ;
+		private Thread thread = null;
 
 		public GrowBlob(Image3DUniverse univ) {
 			super(univ);
 			this.univ = univ; // shadow it
 		}
 		public void doProcess(final MouseEvent me) {
-			ij.IJ.log("me is consumed: " + me.isConsumed());
+			if (me.getID() != MouseEvent.MOUSE_PRESSED) return;
+			synchronized (this) {
+				if (null != thread) {
+					IJ.showMessage("A blob segmentation is currently running.\nWait until it finishes, or push ESC to cancel it.");
+					return;
+				}
+			}
 			if (me.isConsumed() || Toolbar.getToolId() != Toolbar.WAND) return;
 			me.consume();
-			new Thread() {
-				{ setPriority(Thread.NORM_PRIORITY); }
-				public void run() {
-					if (me.isShiftDown()) {
-						// Setup static parameters
-						levelsets.showDialog();
-						return;
+			synchronized (this) {
+				thread = new Thread() {
+					{ setPriority(Thread.NORM_PRIORITY); }
+					public void run() {
+						try {
+							if (me.isShiftDown()) {
+								// Setup static parameters
+								levelsets.showDialog();
+								return;
+							}
+							// Level sets on first intersecting blob
+							Blob blob = segment(me.getX(), me.getY());
+							if (null == blob) return;
+							// Show segmentation as a mesh
+							blob.show();
+							// Measure
+							double[] m = blob.measure();
+							// ... and show a results table:
+							String name = blob.c.getName();
+							if (null == rt || null == WindowManager.getFrame(name)) {
+								rt = new ResultsTable();
+								rt.setHeading(0, "Volume");
+								rt.setHeading(1, "Surface");
+								rt.setHeading(2, "X-center");
+								rt.setHeading(3, "Y-center");
+								rt.setHeading(4, "Z-center");
+							}
+							rt.incrementCounter();
+							rt.addLabel("units", blob.seg.getCalibration().getUnits());
+							for (int i=0; i<m.length; i++)
+								rt.addValue(i, m[i]);
+							rt.show(name);
+						} catch (Throwable e) {
+							e.printStackTrace();
+							IJ.getExceptionHandler().handle(e);
+						} finally {
+							synchronized (GrowBlob.this) {
+								thread = null;
+							}
+						}
 					}
-					// Level sets on first intersecting blob
-					Blob blob = segment(me.getX(), me.getY());
-					if (null == blob) return;
-					// Show segmentation as a mesh
-					blob.show();
-					// Measure
-					double[] m = blob.measure();
-					// ... and show a results table:
-					String name = blob.c.getName();
-					if (null == rt || null == WindowManager.getFrame(name)) {
-						rt = new ResultsTable();
-						rt.setHeading(0, "Volume");
-						rt.setHeading(1, "Surface");
-						rt.setHeading(2, "X-center");
-						rt.setHeading(3, "Y-center");
-						rt.setHeading(4, "Z-center");
-					}
-					rt.incrementCounter();
-					rt.addLabel("units", blob.seg.getCalibration().getUnits());
-					for (int i=0; i<m.length; i++)
-						rt.addValue(i, m[i]);
-					rt.show(name);
-				}
-			}.start();
+				};
+				thread.start();
+			}
 		}
 
 		public final class Blob {
@@ -122,7 +142,10 @@ public class Blob_Segmentation_in_3D implements PlugIn {
 					num++;
 				}
 				List<Point3f> triangles = new MCTriangulator().getTriangles(seg, 1, new boolean[]{true, true, true}, c.getResamplingFactor());
+				// Lock both the image Content and the newly generated mesh
+				c.setLocked(true);
 				Content mesh = univ.createContent(new CustomTriangleMesh(triangles, new Color3f(0, 1, 0), 0), title);
+				mesh.setLocked(true);
 				// TODO should set the transform to that of Content c!
 				// TODO but I can't get it from c!
 				univ.addContentLater(mesh);
@@ -257,6 +280,10 @@ public class Blob_Segmentation_in_3D implements PlugIn {
 			if (debug) imp.show();
 
 			ImagePlus seg = levelsets.execute(imp, false);
+			if (null == seg) {
+				IJ.log("3D Blob segmentation failed!\nPlease click on a brigther voxel.");
+				return null;
+			}
 			seg.setCalibration(imp.getCalibration());
 
 			if (debug) seg.show();
