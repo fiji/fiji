@@ -147,8 +147,6 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 			}
 		});
 
-		canvas.addMouseListener(new SegmentationListener(this));
-
 		canvas.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
