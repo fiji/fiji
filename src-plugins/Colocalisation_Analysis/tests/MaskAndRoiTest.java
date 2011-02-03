@@ -1,5 +1,6 @@
 package tests;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import gadgets.MaskedImage;
 import gadgets.RoiImage;
@@ -9,9 +10,7 @@ import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
-import mpicbg.imglib.type.numeric.real.FloatType;
 
 import org.junit.Test;
 
@@ -94,6 +93,69 @@ public class MaskAndRoiTest extends ColocalisationTest {
 
 		// check if sum is zero
 		assertTrue("The sum of differences was " + sum + ".", Math.abs(sum) < 0.00001);
+	}
+
+	/**
+	 * This test puts a regular ROI onto an image and compares
+	 * the number of pixels in it to the expected volume of the
+	 * ROI (which is just a box).
+	 */
+	@Test
+	public void regularRoiPixelCountTest() {
+		// load a 3D test image
+		Image<UnsignedByteType> img = positiveCorrelationImageCh1;
+		int width = img.getDimension(0);
+		int height = img.getDimension(1);
+
+		int[] roiOffset = new int[] {width / 4, height / 4};
+		int[] roiSize = new int[] {width / 2, height / 2};
+		RoiImage<UnsignedByteType> roiImage
+			= new RoiImage<UnsignedByteType>(img, roiOffset, roiSize);
+		// calculate volume of ROI box
+		int roiVolume = roiSize[0] * roiSize[1] * img.getDimension(2);
+		// count pixels in ROI
+		Cursor<UnsignedByteType> roiCursor = roiImage.createCursor();
+		int count = 0;
+		while (roiCursor.hasNext()) {
+			roiCursor.fwd();
+			count++;
+		}
+
+		roiCursor.close();
+
+		assertEquals(roiVolume, count);
+	}
+
+	/**
+	 * This test makes sure the RoiImage can figure out the
+	 * correct dimensions of the ROI in case on passes a ROI
+	 * with different dimensions than the image.
+	 */
+	@Test
+	public void regularRoiDimensionsTest() {
+		// load a 3D test image
+		Image<UnsignedByteType> img = positiveCorrelationImageCh1;
+		int width = img.getDimension(0);
+		int height = img.getDimension(1);
+
+		int[] roiOffset = new int[] {width / 4, height / 4};
+		int[] roiSize = new int[] {width / 2, height / 2};
+		RoiImage<UnsignedByteType> roiImage
+			= new RoiImage<UnsignedByteType>(img, roiOffset, roiSize);
+		// is the number of dimensions the same as in the image?
+		assertEquals(roiImage.getNumDimensions(), img.getNumDimensions());
+		assertEquals(roiImage.getOffset().length, img.getNumDimensions());
+		/* Is the ROIs dimension information correct? Is the z dimension
+		 * of the ROI the same as the images one?
+		 */
+		assertEquals(roiImage.getDimension(0), roiSize[0]);
+		assertEquals(roiImage.getDimension(1), roiSize[1]);
+		assertEquals(roiImage.getDimension(2), img.getDimension(2));
+		// Is the ROIs extend correct?
+		int[] ro = roiImage.getOffset();
+		assertEquals(ro[0], roiOffset[0]);
+		assertEquals(ro[1], roiOffset[1]);
+		assertEquals(ro[2], 0);
 	}
 
 	/**
