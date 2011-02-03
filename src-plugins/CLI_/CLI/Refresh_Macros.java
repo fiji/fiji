@@ -32,7 +32,7 @@ import java.io.InputStream;
 public class Refresh_Macros extends RefreshScripts {
 
 	public void run(String arg) {
-		setLanguageProperties(".ijm,", "ImageJ Macro");
+		setLanguageProperties(".ijm", "ImageJ Macro");
 		setVerbose(false);
 		super.run(arg);
 	}
