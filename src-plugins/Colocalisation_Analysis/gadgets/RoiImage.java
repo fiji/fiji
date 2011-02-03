@@ -1,5 +1,7 @@
 package gadgets;
 
+import java.util.Arrays;
+
 import mpicbg.imglib.cursor.special.RoiShiftingLocalizableByDimCursor;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
@@ -19,7 +21,7 @@ import mpicbg.imglib.type.Type;
  */
 public class RoiImage<T extends Type<T>> extends Image<T> {
 	// location and dimensionality
-	final int[] offset, size;
+	final int[] roiOffset, roiSize;
 	// total number of pixels
 	final int numPixels;
 	// a factory for creating RoiImages like this
@@ -36,21 +38,20 @@ public class RoiImage<T extends Type<T>> extends Image<T> {
 	public RoiImage( Image<T> img, final int[] offset, final int size[] ) {
 		super(img.getContainer(), img.createType(), img.getName());
 
-		// copy offset data, and pad if necessary
-		this.offset = new int[getNumDimensions()];
-		for (int d=0; d < this.offset.length; d++) {
-			this.offset[d] = (d<offset.length)? offset[d] : 0;
+		// copy offset data, and pad with zero if necessary
+		roiOffset = new int[img.getNumDimensions()];
+		for (int d=0; d < roiOffset.length; d++) {
+			roiOffset[d] = (d<offset.length)? offset[d] : 0;
 		}
 
-		// copy size data, and pad if necessary
-		this.size = new int[getNumDimensions()];
-		for (int d=0; d < this.size.length; d++) {
-			this.size[d] = (d<size.length)? size[d] : 1;
-		}
-
+		/* copy size data, and pad with original images size in
+		 * the missing dimension if necessary
+		 */
+		this.roiSize = new int[img.getNumDimensions()];
 		int count = 1;
-		for (int d=0; d < size.length; d++) {
-			count *= size[d];
+		for (int d=0; d < roiSize.length; d++) {
+			roiSize[d] = (d<size.length)? size[d] : img.getDimension(d);
+			count *= roiSize[d];
 		}
 		numPixels = count;
 
@@ -58,22 +59,26 @@ public class RoiImage<T extends Type<T>> extends Image<T> {
 			img.getContainerFactory());
 	}
 
+	public int[] getOffset() {
+		return roiOffset.clone();
+	}
+
 	@Override
 	public int[] getDimensions() {
-		return size.clone();
+		return roiSize.clone();
 	}
 
 	@Override
 	public void getDimensions( int[] position ) {
 		for (int d=0; d < getNumDimensions(); d++) {
-			position[d] = size[d];
+			position[d] = roiSize[d];
 		}
 	}
 
 	@Override
 	public int getDimension( int dim ) {
 		if ( dim < getNumDimensions() && dim > -1 )
-			return this.size[ dim ];
+			return this.roiSize[ dim ];
 		else
 			return 1;
 	}
@@ -86,26 +91,26 @@ public class RoiImage<T extends Type<T>> extends Image<T> {
 	@Override
 	public Cursor<T> createCursor() {
 		LocalizableByDimCursor<T> cursor = super.createLocalizableByDimCursor();
-		return new RegionOfInterestCursor<T>(cursor, offset, size);
+		return new RegionOfInterestCursor<T>(cursor, roiOffset, roiSize);
 	}
 
 	@Override
 	public LocalizableCursor<T> createLocalizableCursor() {
 		LocalizableByDimCursor<T> cursor = super.createLocalizableByDimCursor();
-		return new RegionOfInterestCursor<T>(cursor, offset, size);
+		return new RegionOfInterestCursor<T>(cursor, roiOffset, roiSize);
 	}
 
 	@Override
 	public LocalizableByDimCursor<T> createLocalizableByDimCursor() {
 		LocalizableByDimCursor<T> cursor = super.createLocalizableByDimCursor();
-		return new RoiShiftingLocalizableByDimCursor<T>(cursor, offset);
+		return new RoiShiftingLocalizableByDimCursor<T>(cursor, roiOffset);
 	}
 
 	@Override
 	public LocalizableByDimCursor<T> createLocalizableByDimCursor(
 			OutOfBoundsStrategyFactory<T> factory) {
 		LocalizableByDimCursor<T> cursor = super.createLocalizableByDimCursor( factory );
-		return new RoiShiftingLocalizableByDimCursor<T>(cursor, offset);
+		return new RoiShiftingLocalizableByDimCursor<T>(cursor, roiOffset);
 	}
 
 
