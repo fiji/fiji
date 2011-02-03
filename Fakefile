@@ -210,7 +210,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	jars/imageware.jar \
 	plugins/Extended_Depth_Field.jar \
 	plugins/panorama_.jar \
-	jars/weave_jy2java.jar
+	jars/weave_jy2java.jar \
+	plugins/3D_Blob_Segmentation.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
@@ -411,6 +412,7 @@ CLASSPATH(jars/imageware.jar)=jars/ij.jar
 CLASSPATH(plugins/Extended_Depth_Field.jar)=jars/ij.jar:jars/imageware.jar:jars/wavelets.jar
 CLASSPATH(plugins/panorama_.jar)=jars/ij.jar:jars/mpicbg.jar:/jars/mpicbg_.jar
 CLASSPATH(jars/weave_jy2java.jar)=plugins/Refresh_Javas.jar:jars/fiji-scripting.jar:jars/Fiji.jar:jars/ij.jar:plugins/Script_Editor.jar
+CLASSPATH(plugins/3D_Blob_Segmentation.jar)=jars/ij.jar:plugins/level_sets.jar:plugins/3D_Viewer.jar:jars/VIB-lib.jar:jars/imglib.jar
 
 # pre-Java5 generics ;-)
 
