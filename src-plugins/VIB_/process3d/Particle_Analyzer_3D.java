@@ -58,7 +58,8 @@ public class Particle_Analyzer_3D implements PlugInFilter {
 		calculateIntensities(image);
 		calculateSizes();
  		sortResults();
-		keepNLargest(3);
+		if (sizes.length > 3)
+			keepNLargest(3);
 		getResultAsByteImage().show();
 		if(gd.getNextBoolean())
 			showResultWindow();

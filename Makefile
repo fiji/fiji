@@ -3,7 +3,7 @@ all: run
 run:
 	sh Build.sh $(shell test -f make-targets && cat make-targets || echo run)
 
-fiji: fiji.cxx
+fiji: fiji.c
 	sh Build.sh fiji
 
 .PHONY: jars/fake.jar

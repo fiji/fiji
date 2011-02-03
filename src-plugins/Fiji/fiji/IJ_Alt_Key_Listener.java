@@ -85,7 +85,7 @@ public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener {
 		pressedKeys = 0;
 	}
 
-	static Runnable getOpener() {
+	public static Runnable getOpener() {
 		try {
 			return getX11Opener();
 		} catch (Exception e) { /* ignore */ }
@@ -96,8 +96,8 @@ public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener {
 	}
 
 	static Runnable getX11Opener() throws NoSuchMethodException {
-		final MenuBar bar = IJ.getInstance().getMenuBar();
-		final Method method = bar.getPeer().getClass()
+		final Method method = IJ.getInstance().getMenuBar()
+			.getPeer().getClass()
 			.getDeclaredMethod("handleF10KeyPress",
 					new Class[] { KeyEvent.class });
 		method.setAccessible(true);
@@ -108,7 +108,7 @@ public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener {
 					System.currentTimeMillis(), 0,
 					KeyEvent.VK_F10);
 				try {
-					method.invoke(bar.getPeer(),
+					method.invoke(IJ.getInstance().getMenuBar().getPeer(),
 						new Object[] { event });
 				} catch (Exception e) { /* ignore */ }
 			}

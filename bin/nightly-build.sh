@@ -59,12 +59,28 @@ case "$1" in
 		git fetch origin master &&
 		git reset --hard FETCH_HEAD &&
 		git submodule update &&
+		for submodule in $(git ls-files --stage |
+				sed -n 's/^160000 .\{40\} 0.//p')
+		do
+			(cd "$submodule" &&
+			 git clean -q -x -d -f &&
+			 # remove empty directories
+			 for d in $(git ls-files --others --directory)
+			 do
+				rm -rf $d || break
+			 done)
+		done &&
 		nightly_build &&
 		if test -d /var/www/update
 		then
-			./bin/javadoc-all.sh -d /var/www/javadoc \
+			(./bin/create-jnlp.sh &&
+			 ./bin/create-jnlp.sh --updater ||
+			 (echo "Java WebStart generation failed"; false)) &&
+			(./bin/plugin-list-parser.py --upload-to-wiki ||
+			 (echo "PluginList generation failed"; false)) &&
+			(./bin/javadoc-all.sh -d /var/www/javadoc \
 				> javadoc.out 2>&1 ||
-			(echo "JavaDoc failed"; false)
+			 (echo "JavaDoc failed"; false))
 		fi
 		;; # okay
 	*)

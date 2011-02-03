@@ -403,17 +403,21 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			updater.setAction(Action.UPDATE);
 			return;
 		}
-		for (PluginObject plugin : updateable(evenForcedUpdates))
+		for (PluginObject plugin : updateable(evenForcedUpdates)) {
+			if (Util.isDeveloper && Util.isLauncher(plugin.filename))
+				continue;
 			plugin.setFirstValidAction(new Action[] {
 				Action.UPDATE, Action.UNINSTALL, Action.INSTALL
 			});
-		for (String name : Util.getLaunchers()) {
-			PluginObject launcher = getPlugin(name);
-			if (launcher == null)
-				continue; // the regression test triggers this
-			if (launcher.getStatus() == Status.NOT_INSTALLED)
-				launcher.setAction(Action.INSTALL);
 		}
+		if (!Util.isDeveloper)
+			for (String name : Util.getLaunchers()) {
+				PluginObject launcher = getPlugin(name);
+				if (launcher == null)
+					continue; // the regression test triggers this
+				if (launcher.getStatus() == Status.NOT_INSTALLED)
+					launcher.setAction(Action.INSTALL);
+			}
 	}
 
 	public static class DependencyMap

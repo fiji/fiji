@@ -1,5 +1,6 @@
 package fiji.scripting;
 
+import fiji.scripting.Languages;
 import fiji.scripting.Languages.Language;
 
 import ij.IJ;
@@ -11,15 +12,16 @@ import javax.swing.JTextArea;
 
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Document;
 import javax.swing.text.Position;
 
 
 public class ErrorHandler {
-	List<Error> list = new ArrayList<Error>();
-	int current = -1;
-	JTextArea textArea;
-	int currentOffset;
-	Parser parser;
+	protected List<Error> list = new ArrayList<Error>();
+	protected int current = -1;
+	protected JTextArea textArea;
+	protected int currentOffset;
+	protected Parser parser;
 
 	public ErrorHandler(JTextArea textArea) {
 		this.textArea = textArea;
@@ -28,7 +30,7 @@ public class ErrorHandler {
 	public ErrorHandler(Language language, JTextArea textArea,
 			int startOffset) {
 		this(textArea);
-		if (language.menuLabel.equals("Java"))
+		if (language.menuLabel.equals("Java") || language == Languages.fakefile)
 			parser = new JavacErrorParser();
 		else
 			return;
@@ -40,6 +42,17 @@ public class ErrorHandler {
 		} catch (BadLocationException e) {
 			IJ.handleException(e);
 		}
+	}
+
+	public int getErrorCount() {
+		return list.size();
+	}
+
+	public boolean setCurrent(int index) {
+		if (index < 0 || index >= list.size())
+			return false;
+		current = index;
+		return true;
 	}
 
 	public boolean nextError(boolean forward) {
@@ -76,6 +89,7 @@ public class ErrorHandler {
 		textArea.getHighlighter().removeAllHighlights();
 		textArea.getHighlighter().addHighlight(start, end,
 			DefaultHighlighter.DefaultPainter);
+		textArea.scrollRectToVisible(textArea.modelToView(textArea.getDocument().getLength()));
 		textArea.scrollRectToVisible(textArea.modelToView(start));
 	}
 
@@ -87,6 +101,23 @@ public class ErrorHandler {
 		public Error(String path, int line) {
 			this.path = path;
 			this.line = line;
+		}
+	}
+
+	public void addError(String path, int line, String text) {
+		try {
+			Document document = textArea.getDocument();
+			int offset = document.getLength();
+			if (!text.endsWith("\n"))
+				text += "\n";
+			textArea.insert(text, offset);
+			if (path == null || line < 0)
+				return;
+			Error error = new Error(path, line);
+			error.position = document.createPosition(offset + 1);
+			list.add(error);
+		} catch (BadLocationException e) {
+			IJ.handleException(e);
 		}
 	}
 
@@ -109,18 +140,17 @@ public class ErrorHandler {
 					.createPosition(start);
 				list.add(error);
 			} catch (BadLocationException e) {
-				e.printStackTrace();
+				IJ.handleException(e);
 			}
 		}
 	}
 
 	class JavacErrorParser implements Parser {
 		public Error getError(String line) {
-			if (!line.startsWith("/"))
-				return null;
-			int colon = line.indexOf(':');
+			int colon = line.indexOf(".java:");
 			if (colon <= 0)
 				return null;
+			colon += 5;
 			int next = line.indexOf(':', colon + 1);
 			if (next < colon + 2)
 				return null;
@@ -131,7 +161,8 @@ public class ErrorHandler {
 			} catch (NumberFormatException e) {
 				return null;
 			}
-			return new Error(line.substring(0, colon), lineNumber);
+			String fileName = line.substring(0, colon);
+			return new Error(fileName, lineNumber);
 		}
 	}
 }

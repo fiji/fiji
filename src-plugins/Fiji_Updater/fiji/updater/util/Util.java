@@ -46,7 +46,7 @@ public class Util {
 			.toString().replace("jar:file:", "")
 			.replace("plugins/Fiji_Updater.jar!/"
 				+ "fiji/updater/util/Util.class", "");
-		isDeveloper = new File(fijiRoot + "/fiji.cxx").exists();
+		isDeveloper = new File(fijiRoot + "/fiji.c").exists();
 		platform = getPlatform();
 
 		String macLauncher = macPrefix + "fiji-macosx";
@@ -159,16 +159,16 @@ public class Util {
 		return toHex(digest.digest());
 	}
 
-	private static class JarEntryComparator implements Comparator {
-		public int compare(Object o1, Object o2) {
-			String name1 = ((JarEntry)o1).getName();
-			String name2 = ((JarEntry)o2).getName();
+	private static class JarEntryComparator implements Comparator<JarEntry> {
+		public int compare(JarEntry entry1, JarEntry entry2) {
+			String name1 = entry1.getName();
+			String name2 = entry2.getName();
 			return name1.compareTo(name2);
 		}
 
-		public boolean equals(Object o1, Object o2) {
-			String name1 = ((JarEntry)o1).getName();
-			String name2 = ((JarEntry)o2).getName();
+		public boolean equals(JarEntry entry1, JarEntry entry2) {
+			String name1 = entry1.getName();
+			String name2 = entry2.getName();
 			return name1.equals(name2);
 		}
 	}
@@ -238,7 +238,7 @@ public class Util {
 
 	public static boolean isLauncher(String filename) {
 		return Arrays.binarySearch(launchers,
-				stripPrefix(filename, fijiRoot)) >= 0;
+				stripPrefix(stripPrefix(filename, fijiRoot), "precompiled/")) >= 0;
 	}
 
 	public static String[] getLaunchers() {
@@ -257,5 +257,9 @@ public class Util {
 			builder.append((builder.length() > 0 ? ", " : "")
 				+ object.toString());
 		return builder.toString();
+	}
+
+	public static void useSystemProxies() {
+		System.setProperty("java.net.useSystemProxies", "true");
 	}
 }

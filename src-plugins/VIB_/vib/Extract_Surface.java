@@ -13,6 +13,9 @@ import ij.process.ImageProcessor;
 
 import ij3d.Image3DUniverse;
 
+import fiji.util.IntArray;
+import fiji.util.DoubleArray;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -287,7 +290,7 @@ public class Extract_Surface implements PlugInFilter {
 			for (i = 0; i < distances.size() &&
 					distance < distances.get(i);
 					i++);
-			distances.add(i, distance);
+			distances.insert(i, distance);
 			queue.add(i, voxel);
 			done.add(voxel);
 		}

@@ -1,0 +1,93 @@
+current_version = 1.1;
+
+url = "http://code.google.com/p/quickpalm/downloads/list";
+prefix = "QuickPALM%20";
+jarname = "QuickPALM_.jar";
+
+
+///// FUNCTIONS - START
+function findFileRecursive(dir, fname, patharr) 
+{
+  list = getFileList(dir);
+  for (i=0; i<list.length; i++) 
+  {
+    if (endsWith(list[i], "/"))
+      findFileRecursive(""+dir+list[i], fname, patharr);
+    else if (indexOf(list[i], fname)!=-1)
+      patharr[0]=dir+list[i];
+  }
+}
+
+///// FUNCTIONS - END
+
+showStatus("Searching for "+jarname);
+jpath = newArray(1);
+findFileRecursive(getDirectory("plugins"), jarname, jpath);
+jpath = jpath[0];
+if (jpath==0) exit("Could not find '"+jarname+"' path.");
+
+showStatus("Looking in "+url);
+urltxt = File.openUrlAsString(url);
+urltxtlines = split(urltxt, "\n");
+
+showStatus("Parsing versions");
+fnames = newArray(100);
+links = newArray(100);
+versions = newArray(100);
+versions_major = newArray(100);
+versions_minor = newArray(100);
+versions_beta = newArray(100);
+counter = 0;
+for (l=0;l<lengthOf(urltxtlines);l++)
+{
+  line = urltxtlines[l];
+  if (indexOf(line, "title=\"Download\"")!=-1 && indexOf(line, "Laser")==-1)
+  {
+    start = indexOf(line, "location.href='")+15;
+    stop = indexOf(line, "'\"");
+    links[counter] = substring(line, start, stop);
+    start = indexOf(line, "name=\"")+6;
+    stop = indexOf(line, "\" title");
+    fnames[counter] = replace(substring(line, start, stop), "%20", " ");
+    start = indexOf(fnames[counter], "QuickPALM%20")+11;
+    stop = indexOf(fnames[counter], ".zip");
+    versions[counter] = substring(fnames[counter], start, stop);
+
+    versions_major = substring(versions[counter], 0, indexOf(versions[counter], "."));
+    if (indexOf(versions[counter], "b")==-1)
+    {
+      versions_minor = substring(versions[counter], indexOf(versions[counter], ".")+1, lengthOf(versions[counter]));
+      versions_beta[counter] = "final";
+    }
+    else
+    {
+      versions_minor = substring(versions[counter], indexOf(versions[counter], ".")+1, indexOf(versions[counter], "b"));
+      versions_beta[counter] = substring(versions[counter], indexOf(versions[counter], "b")+1, lengthOf(versions[counter]));
+    }
+
+    counter++;
+  }
+}
+showStatus("Found "+counter+" diferent versions");
+
+versions = Array.trim(versions, counter);
+Dialog.create("Update QuickPALM...");
+Dialog.addMessage("Current version: "+ current_version);
+Dialog.addChoice("Get version", versions);
+Dialog.show();
+choice = Dialog.getChoice();
+furl = "";
+for (n=0;n<counter;n++)
+{
+  if (choice == versions[n]) furl = links[n];
+}
+
+showStatus("Downloading...");
+exec("open", furl);
+print("Downloading: "+furl+"\nPlease extract and copy: "+jarname+"\nReplace: "+jpath);
+//File.saveString(File.openUrlAsString(furl), jpath);
+//showStatus("Done... please restart ImageJ.");
+
+
+
+

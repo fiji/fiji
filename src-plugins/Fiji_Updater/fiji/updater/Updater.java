@@ -46,6 +46,10 @@ public class Updater implements PlugIn {
 	public static boolean debug, testRun;
 
 	public void run(String arg) {
+
+		if (errorIfDebian())
+			return;
+
 		final UpdaterFrame main = new UpdaterFrame();
 		main.setLocationRelativeTo(IJ.getInstance());
 		main.setEasyMode(true);
@@ -122,4 +126,28 @@ public class Updater implements PlugIn {
 		main.setLastModified(downloader.getXMLLastModified());
 		main.updatePluginsTable();
 	}
+
+	/** This returns true if this seems to be the Debian packaged
+	 * version of Fiji, or false otherwise. */
+
+	public static boolean isDebian() {
+		String debianProperty = System.getProperty("fiji.debian");
+		return debianProperty != null && debianProperty.equals("true");
+	}
+
+	/** If this seems to be the Debian packaged version of Fiji,
+	 * then produce an error and return true.  Otherwise return false. */
+
+	public static boolean errorIfDebian() {
+		// If this is the Debian / Ubuntu packaged version, then
+		// insist that the user uses apt-get / synaptic instead:
+		if (isDebian()) {
+			String message = "You are using the Debian packaged version of Fiji.\n";
+			message += "You should update Fiji with your system's usual package manager instead.";
+			IJ.error(message);
+			return true;
+		} else
+			return false;
+	}
+
 }

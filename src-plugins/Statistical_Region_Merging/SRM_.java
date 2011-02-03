@@ -1,5 +1,6 @@
 import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 
 import ij.gui.GenericDialog;
 import ij.gui.Roi;
@@ -32,11 +33,13 @@ public class SRM_ implements PlugInFilter {
 	}
 
 	public void run(ImageProcessor ip) {
-		// TODO: implement 3D version, let user choose
+		boolean isStack = image.getStackSize() > 1;
 
 		GenericDialog gd = new GenericDialog("SRM");
 		gd.addNumericField("Q", Q, 2);
 		gd.addCheckbox("showAverages", true);
+		if (isStack)
+			gd.addCheckbox("3d", true);
 		gd.showDialog();
 
 		if (gd.wasCanceled())
@@ -44,7 +47,11 @@ public class SRM_ implements PlugInFilter {
 
 		Q = (float)gd.getNextNumber();
 		boolean showAverages = gd.getNextBoolean();
-		srm2D(ip, showAverages).show();
+		boolean do3D = isStack ? gd.getNextBoolean() : false;
+		if (do3D)
+			srm3D(showAverages).show();
+		else
+			srm2D(ip, showAverages).show();
 	}
 
 	final float g = 256; // number of different intensity values
@@ -101,6 +108,75 @@ public class SRM_ implements PlugInFilter {
 	 * specifies the Cartesian unit vector (axis) determining the neighbor.
 	 */
 	int[] nextNeighbor, neighborBucket;
+
+	protected ImagePlus srm3D(boolean showAverages) {
+		int w = image.getWidth(), h = image.getHeight();
+		int d = image.getStackSize();
+
+		delta = 1f / (6 * w * h * d);
+		/*
+		 * This would be the non-relaxed formula:
+		 *
+		 * factor = g * g / 2 / Q * (float)Math.log(2 / delta);
+		 *
+		 * The paper claims that this is more prone to oversegmenting.
+		 */
+		factor = g * g / 2 / Q;
+		logDelta = 2f * (float)Math.log(6 * w * h * d);
+
+		IJ.showStatus("Initializing regions");
+		initializeRegions3D(w, h, d);
+		IJ.showStatus("Initializing neighbors");
+		initializeNeighbors3D(w, h, d);
+		IJ.showStatus("Merging neighbors");
+		mergeAllNeighbors3D(w, h);
+		IJ.showStatus("Making stack");
+
+		ImageStack stack = new ImageStack(w, h);
+		if (showAverages)
+			for (int k = 0; k < d; k++) {
+				int off = k * w * h;
+				float[] p = new float[w * h];
+				for (int i = 0; i < w * h; i++)
+					p[i] = average[getRegionIndex(i + off)];
+				stack.addSlice(null, new FloatProcessor(w, h,
+							p, null));
+			}
+		else {
+			int regionCount = consolidateRegions();
+
+			if (regionCount > 1<<16)
+				IJ.showMessage("Found " + regionCount
+					+ " regions, which does not fit"
+					+ " in 16-bit.");
+
+			for (int k = 0; k < d; k++) {
+				ImageProcessor ip;
+
+				int off = k * w * h;
+
+				if (regionCount > 1<<8) {
+					short[] p = new short[w * h];
+					for (int i = 0; i < p.length; i++)
+						p[i] = (short)regionIndex[i
+							+ off];
+					ip = new ShortProcessor(w, h, p, null);
+				}
+				else {
+					byte[] p = new byte[w * h];
+					for (int i = 0; i < p.length; i++)
+						p[i] = (byte)regionIndex[i
+							+ off];
+					ip = new ByteProcessor(w, h, p, null);
+				}
+				stack.addSlice(null, ip);
+			}
+		}
+
+		IJ.showStatus("");
+		String title = image.getTitle() + " (SRM3D Q=" + Q + ")";
+		return new ImagePlus(title, stack);
+	}
 
 	protected ImagePlus srm2D(ImageProcessor ip, boolean showAverages) {
 		int w = ip.getWidth(), h = ip.getHeight();
@@ -163,6 +239,24 @@ public class SRM_ implements PlugInFilter {
 		}
 	}
 
+	void initializeRegions3D(int w, int h, int d) {
+		average = new float[w * h * d];
+		count = new int[w * h * d];
+		regionIndex = new int[w * h * d];
+
+		for (int j = 0; j < d; j++) {
+			byte[] pixel =
+				(byte[])image.getStack().getProcessor(j
+						+ 1).getPixels();
+			int offset = j * w * h;
+			for (int i = 0; i < w * h; i++) {
+				average[offset + i] = pixel[i] & 0xff;
+				count[offset + i] = 1;
+				regionIndex[offset + i] = offset + i;
+			}
+		}
+	}
+
 	protected void addNeighborPair(int neighborIndex,
 			byte[] pixel, int i1, int i2) {
 		int difference = Math.abs((pixel[i1] & 0xff)
@@ -193,6 +287,54 @@ public class SRM_ implements PlugInFilter {
 					addNeighborPair(neighborIndex,
 						pixel, index, index + 1);
 			}
+	}
+
+	protected void addNeighborPair(int neighborIndex,
+			byte[] pixel, byte[] nextPixel, int i) {
+		int difference = Math.abs((pixel[i] & 0xff)
+				- (nextPixel[i] & 0xff));
+		nextNeighbor[neighborIndex] = neighborBucket[difference];
+		neighborBucket[difference] = neighborIndex;
+	}
+
+	void initializeNeighbors3D(int w, int h, int d) {
+		nextNeighbor = new int[3 * w * h * d];
+
+		// bucket sort
+		neighborBucket = new int[256];
+		Arrays.fill(neighborBucket, -1);
+
+		byte[] nextPixel = null;
+		for (int k = d - 1; k >= 0; k--) {
+			byte[] pixel =
+				(byte[])image.getStack().getProcessor(k
+						+ 1).getPixels();
+			for (int j = h - 1; j >= 0; j--)
+				for (int i = w - 1; i >= 0; i--) {
+					int index = i + w * j;
+					int neighborIndex =
+						3 * (index + k * w * h);
+
+					// depth
+					if (nextPixel != null)
+						addNeighborPair(neighborIndex
+								+ 2, pixel,
+							nextPixel, index);
+
+					// vertical
+					if (j < h - 1)
+						addNeighborPair(neighborIndex
+								+ 1, pixel,
+							index, index + w);
+
+					// horizontal
+					if (i < w - 1)
+						addNeighborPair(neighborIndex,
+							pixel,
+							index, index + 1);
+				}
+			nextPixel = pixel;
+		}
 	}
 
 	// recursively find out the region index for this pixel
@@ -240,6 +382,29 @@ public class SRM_ implements PlugInFilter {
 				neighborIndex = nextNeighbor[neighborIndex];
 			}
 		}
+	}
+
+	void mergeAllNeighbors3D(int w, int h) {
+		for (int i = 0; i < neighborBucket.length; i++) {
+			int neighborIndex = neighborBucket[i];
+			IJ.showProgress(i, neighborBucket.length);
+			while (neighborIndex >= 0) {
+				int i1 = neighborIndex / 3;
+				int i2 = i1
+					+ (0 == (neighborIndex % 3) ? 1 :
+					  (1 == (neighborIndex % 3) ? w :
+					   w * h));
+
+				i1 = getRegionIndex(i1);
+				i2 = getRegionIndex(i2);
+
+				if (i1 != i2 && predicate(i1, i2))
+					mergeRegions(i1, i2);
+
+				neighborIndex = nextNeighbor[neighborIndex];
+			}
+		}
+		IJ.showProgress(neighborBucket.length, neighborBucket.length);
 	}
 
 	void mergeRegions(int i1, int i2) {

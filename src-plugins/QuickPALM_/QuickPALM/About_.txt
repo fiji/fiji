@@ -1,0 +1,5 @@
+showMessage("QuickPALM - v1.1",
+"QuickPALM plugin developed by Ricardo Henriques @ Instituto de Medicina Molecular (PT)/Institut Pasteur (FR)\n \n"+
+"This plugin would not be possible without the help of our colleagues acknowledged in http://code.google.com/p/quickpalm/wiki/Acknowledgments\n \n"+
+"Latest files and source code available on http://code.google.com/p/quickpalm/\n \n"+
+"We kindly request that you include a citation or acknowledgment whenever presenting or publishing results based on QuickPALM\n \n");

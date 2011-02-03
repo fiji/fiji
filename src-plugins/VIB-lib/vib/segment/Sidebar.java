@@ -23,14 +23,13 @@ import vib.InterpolatedImage;
 
 /**
  * Sidebar: 
- * This class build all the interface of the SegmentationEditor. It handle the
+ * This class builds all the interface of the SegmentationEditor. It handles the
  * listeners too.
  * 
  * @author Francois KUSZTOS
  * @version 5
  */
-public class Sidebar extends Panel implements CustomCanvas.CanvasListener, 
-												ItemListener {
+public class Sidebar extends Panel implements CustomCanvas.CanvasListener, ItemListener {
 
 	private CustomCanvas cc;
 	
@@ -66,10 +65,10 @@ public class Sidebar extends Panel implements CustomCanvas.CanvasListener,
 		constr.gridwidth = GridBagConstraints.REMAINDER;
 		constr.insets = new Insets(0, 5, 0, 5);
 		
-		addLabel("Labels:");
+		addLabel("Label sets:");
 		add(addLabelImageChoice(), constr);
 		
-		addLabel("Materials:");
+		addLabel("Labels:");
 		materials = new MaterialList(cc);
 		add(materials, constr);
 
@@ -142,7 +141,7 @@ public class Sidebar extends Panel implements CustomCanvas.CanvasListener,
 			return;
 		}
 		selected -= labelImages.size();
-	    String materials = (String)defaultMaterials.get(selected);
+		String materials = (String)defaultMaterials.get(selected);
 		if (!currentLabelsAreNew)
 			setLabelImage(null);
 		ImagePlus labels = cc.getLabels();
@@ -203,6 +202,18 @@ public class Sidebar extends Panel implements CustomCanvas.CanvasListener,
 			labelImagesChoice.add(image.getTitle());
 			labelImages.add(image);
 		}
+		labelImagesChoice.add("<new>");
+		defaultMaterials.add("Parameters {\n"
+				                + "\tMaterials {\n"
+				                + "\t\tExterior {\n"
+				                + "\t\t\tColor 0.0 0.0 0.0\n"
+				                + "\t\t}\n"
+				                + "\t\tInterior {\n"
+				                + "\t\t\tColor 1.0 0.0 0.0\n"
+				                + "\t\t}\n"
+				                + "\t}\n"
+				                + "}\n");
+
 //		URL materials = getClass().getResource("materials/");
 //		File folder = materials != null ?
 //			new File(materials.getPath()).getParentFile() : null;
@@ -224,19 +235,7 @@ public class Sidebar extends Panel implements CustomCanvas.CanvasListener,
 		String contents = readURL(materials);
 		defaultMaterials.add(contents);
 		labelImagesChoice.add("CompactStandard");
-		
-		labelImagesChoice.add("<new>");
-		defaultMaterials.add("Parameters {\n"
-				                + "\tMaterials {\n"
-				                + "\t\tExterior {\n"
-				                + "\t\t\tColor 0.0 0.0 0.0\n"
-				                + "\t\t}\n"
-				                + "\t\tInterior {\n"
-				                + "\t\t\tColor 1.0 0.0 0.0\n"
-				                + "\t\t}\n"
-				                + "\t}\n"
-				                + "}\n");
-		
+
 		labelImagesChoice.addItemListener(this);
 		return labelImagesChoice;
 	}

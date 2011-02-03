@@ -1,5 +1,3 @@
-package view5d;
-
 /****************************************************************************
  *   Copyright (C) 1996-2007 by Rainer Heintzmann                          *
  *   heintzmann@gmail.com                                                  *
@@ -23,6 +21,8 @@ package view5d;
 // By making the appropriate class "View5D" or "View5D_" public and renaming the file, this code can be toggled between Applet and ImageJ respectively
 
 // import java.io.*;
+package view5d;
+
 import java.awt.image.*;
 import java.awt.event.*;
 import java.awt.Graphics;
@@ -30,7 +30,7 @@ import java.awt.*;
 import java.util.*;
 import java.text.*;
 
-class PixelDisplay extends Panel implements MouseListener,ImageObserver,KeyListener {  // A panel displaying the multi-element contens of a single pixel
+public class PixelDisplay extends Panel implements MouseListener,ImageObserver,KeyListener {  // A panel displaying the multi-element contens of a single pixel
     static final long serialVersionUID = 1;
     ImageCanvas c1,c2,c3;
     My3DData data3d;
@@ -595,16 +595,16 @@ class PixelDisplay extends Panel implements MouseListener,ImageObserver,KeyListe
         	c1.myPanel.AdjustOffset();
             }
 	// System.out.println("Switching to "+element);
-	if (false) // (yprev > r.height/2)  // lower half  -> change also the RGB assignment
-	    {
-		int MyMask=e.getModifiers();
-		if (MyMask == InputEvent.BUTTON1_MASK)
-		    data3d.MarkChannel(0);
-		if (MyMask == InputEvent.BUTTON2_MASK)
-		    data3d.MarkChannel(1);
-		if (MyMask == InputEvent.BUTTON3_MASK)
-		    data3d.MarkChannel(2);
-	    }
+	//if (false) // (yprev > r.height/2)  // lower half  -> change also the RGB assignment
+	//    {
+	//	int MyMask=e.getModifiers();
+	//	if (MyMask == InputEvent.BUTTON1_MASK)
+	//	    data3d.MarkChannel(0);
+	//	if (MyMask == InputEvent.BUTTON2_MASK)
+	//	    data3d.MarkChannel(1);
+	//	if (MyMask == InputEvent.BUTTON3_MASK)
+	//	    data3d.MarkChannel(2);
+	//    }
 	c1.UpdateAll();
     }
     public void mouseReleased(MouseEvent e) {

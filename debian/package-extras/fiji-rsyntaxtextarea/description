@@ -1,2 +1,6 @@
-Description: [FIXME: please write a description for this Fiji package]
- [More description should go here.]
+Description: a syntax highlighting text component for Java Swing
+ RSyntaxTextArea is a syntax highlighting text component for Java
+ Swing. It extends JTextComponent so it integrates completely with the
+ standard javax.swing.text package. It is fast and efficient, and can
+ be used in any application that needs to edit or view source code.
+ http://fifesoft.com/rsyntaxtextarea/

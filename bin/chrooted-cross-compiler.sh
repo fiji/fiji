@@ -26,7 +26,7 @@ test -d $CHROOT || {
 
 test -f $CHROOT/usr/bin/wget ||
 dchroot "sudo apt-get install -q -y --force-yes gcc libcurl3-openssl-dev make \
-	libexpat-dev perl-modules tk8.4 g++ pax patch \
+	libexpat-dev perl-modules tk8.4 gcc pax patch \
 	autoconf automake libtool bison flex unzip make wget" || {
 	echo "Could not install packages"
 	exit 1
@@ -45,17 +45,17 @@ dchroot "sudo apt-get install -q -y --force-yes gcc libcurl3-openssl-dev make \
 	git checkout -b fiji origin/fiji
  fi)
 
-test -f $CHROOT/opt/mac/bin/i686-apple-darwin8-g++ \
-	-a -f $CHROOT/usr/local/bin/i386-mingw32-g++ ||
+test -f $CHROOT/opt/mac/bin/i686-apple-darwin8-gcc \
+	-a -f $CHROOT/usr/local/bin/i386-mingw32-gcc ||
 dchroot "cd IMCROSS && sudo make fiji"
 
-SOURCE=fiji.cxx
+SOURCE=fiji.c
 STRIP=
 RESOURCE=
 PLATFORM="$1"; shift
 case "$PLATFORM" in
 win32)
-	CXX=/usr/local/bin/i386-mingw32-g++
+	CC=/usr/local/bin/i386-mingw32-gcc
 	STRIP=/usr/local/bin/i386-mingw32-strip
 	TARGET=fiji-win32.exe
 
@@ -65,11 +65,11 @@ win32)
 	RESOURCE=tmp.o
 ;;
 tiger)
-	CXX=/opt/mac/bin/i686-apple-darwin8-g++
+	CC=/opt/mac/bin/i686-apple-darwin8-gcc
 	TARGET=fiji-tiger
 ;;
 linux)
-	CXX=/usr/bin/g++
+	CC=/usr/bin/gcc
 	TARGET=fiji-linux
 ;;
 *)
@@ -87,7 +87,7 @@ QUOTED_ARGS="$(echo "$*" | sed 's/"/\\"/g')"
 
 cp -R $SOURCE includes $CHROOT/$CHROOT_HOME/
 
-dchroot "$CXX -o \"$TARGET\" $QUOTED_ARGS $SOURCE $RESOURCE"
+dchroot "$CC -o \"$TARGET\" $QUOTED_ARGS $SOURCE $RESOURCE"
 
 test -z "$STRIP" || dchroot "$STRIP \"$TARGET\""
 

@@ -12,6 +12,7 @@ print System.getProperty('fiji.dir')
 sys.exit(lib.launchFiji(['--headless', \
 		'--main-class=org.junit.runner.JUnitCore', \
 		'math3d.TestEigenvalueDecompositions', \
+		'util.TestFindConnectedRegions', \
 		'distance.TestMutualInformation', \
 		'distance.TestEuclidean', \
 		'distance.TestCorrelation', \

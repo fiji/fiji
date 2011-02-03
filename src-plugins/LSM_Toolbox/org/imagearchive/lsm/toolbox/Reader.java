@@ -4,13 +4,11 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.io.OpenDialog;
 import ij.io.RandomAccessStream;
-import ij.text.TextWindow;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Vector;
 
@@ -43,12 +41,19 @@ public class Reader {
 
 	private MasterModel masterModel;
 
-	public Reader(MasterModel masterModel) {
-		this.masterModel = masterModel;
+	public Reader() {
+		masterModel = MasterModel.getMasterModel();
 	}
 
-	public Reader() {
-		this.masterModel = new MasterModel();
+	public static CZLSMInfoExtended getCZ(String filename) {
+		Reader reader = ServiceMediator.getReader();
+		ImagePlus imp = reader.open(filename, false);
+		if (imp == null) return null;
+		reader.updateMetadata(imp);
+		LSMFileInfo lsm = (LSMFileInfo) imp.getOriginalFileInfo();
+		ImageDirectory imDir = (ImageDirectory) lsm.imageDirectories.get(0);
+		CZLSMInfoExtended cz = (CZLSMInfoExtended) imDir.TIF_CZ_LSMINFO;
+		return cz;
 	}
 
 	public ImagePlus open(String arg, boolean verbose) {
@@ -60,7 +65,7 @@ public class Reader {
 			fc.addChoosableFileFilter(new ImageFilter());
 			fc.addChoosableFileFilter(new AllKnownFilter());
 			fc.setAcceptAllFileFilterUsed(false);
-			fc.setAccessory(new ImagePreview(masterModel, fc));
+			fc.setAccessory(new ImagePreview(fc));
 			fc.setName("Open Zeiss LSM image");
 			String directory = OpenDialog.getDefaultDirectory();
 			if (directory != null) {
@@ -87,17 +92,17 @@ public class Reader {
 			imp = open(file.getParent(), file.getName(), verbose, false);
 			updateMetadata(imp);
 			LSMFileInfo openLSM = (LSMFileInfo) imp.getOriginalFileInfo();
-			//printImDirData(openLSM);
+			// printImDirData(openLSM);
 			OpenDialog.setDefaultDirectory(file.getParent());
 		}
 		return imp;
 	}
 
-	public ImagePlus open(String directory, String filename,
-			boolean verbose, boolean thumb) {
+	public ImagePlus open(String directory, String filename, boolean verbose,
+			boolean thumb) {
 		ImagePlus imp = null;
 		org.imagearchive.lsm.reader.Reader r = new org.imagearchive.lsm.reader.Reader();
-		imp = r.open(directory,filename, false,false);
+		imp = r.open(directory, filename, false, false);
 		return imp;
 	}
 
@@ -135,7 +140,8 @@ public class Reader {
 	}
 
 	public void updateMetadata(ImagePlus imp) {
-		if (imp == null) return;
+		if (imp == null)
+			return;
 		if (imp.getOriginalFileInfo() instanceof LSMFileInfo) {
 			LSMFileInfo lsm = (LSMFileInfo) imp.getOriginalFileInfo();
 			if (lsm.fullyRead == true)
@@ -259,7 +265,7 @@ public class Reader {
 				cz.timeStamps = getTimeStamps(stream, cz.OffsetTimeStamps);
 				if ((cz.ScanType == 3) || (cz.ScanType == 4)
 						|| (cz.ScanType == 5) || (cz.ScanType == 6)
-						|| (cz.ScanType == 9) || (cz.ScanType == 10)){
+						|| (cz.ScanType == 9) || (cz.ScanType == 10)) {
 					if (cz.OffsetEventList != 0)
 						cz.eventList = getEventList(stream, cz.OffsetEventList,
 								cz.timeStamps.FirstTimeStamp);
@@ -739,7 +745,10 @@ public class Reader {
 		return sit;
 	}
 
-	/** ******************************************************************************************* */
+	/**
+	 * *************************************************************************
+	 * ******************
+	 */
 	private class ScanInfoTag {
 		public long entry = 0;
 

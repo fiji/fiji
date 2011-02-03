@@ -20,8 +20,9 @@ Abbreviations:
 * ?: UNKNOWN
 
 
-Name					File					Author(s)						Contact	(2008)							License
+Name					File					Author(s)						Contact								License
 ----					----					---------						--------------							-------
+* Anisotropic Diffusion 2D 		Anisotropic_Diffusion_2D.jar 		http://rsb.info.nih.gov/ij/plugins/download/Anisotropic_Diffusion_2D.java						GPL
 * Batik 				batik.jar 				http://xmlgraphics.apache.org/batik/contributors.html									AL
 * Bean Shell language 			bsh-2.0b4.jar 											http://www.beanshell.org/ 					SPL/LGPL
 * Bean Shell Interpreter 		BSH_Interpreter.jar			Johannes Schindelin					Johannes.Schindelin@gmx.de					GPL
@@ -30,11 +31,16 @@ Name					File					Author(s)						Contact	(2008)							License
 * Clojure Interpreter			Clojure_Interpreter.jar 		Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * Color Histogram 			Color_Histogram.jar			Dimiter Prodanov 					dimiterpp@gmail.com 						GPL 2
 * Color Inspector 3D 			Color_Inspector_3D.jar			Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
+* Differentials				Differentials_.jar			Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/differentials/			BIG (see below)
+* Extended Depth of Focus		Extended_Depth_Field.jar		Alex Prudencio, Daniel Sage et al			http://bigwww.epfl.ch/demo/edf/					BIG (see below)
+* FeatureJ	 			FeatureJ_.jar	 			Erik Meijering	 					http://www.imagescience.org/meijering/software/featurej/	imagescience (see below)
 * Fiji_Plugins.jar 			Fiji_Plugins.jar 			Various authors 					http://pacific.mpi-cbg.de/contributors 				PD,GPL
 * Fiji as a framework																							GPL
+* Graph Cut				Graph_Cut.jar				Jan Funke						jan.funke@inf.tu-dresden.de					GPL 2
 * ij-ImageIO 				ij-ImageIO_.jar				Jarek Sacha 						jarek@ieee.org 							LGPL
 * ImageJA				ij.jar					Johannes Schindelin, Wayne Rasband			Johannes.Schindelin@gmx.de					PD
-* imagescience.jar 			imagescience.jar 			Erik Meijering 						meijering@imagescience.org 					Copyright © Erik Meijering. All rights reserved. See http://www.imagescience.org/meijering/software/transformj/
+* imagescience.jar 			imagescience.jar 			Erik Meijering 						meijering@imagescience.org 					imagescience (see below)
+* imageware.jar				imageware.jar				Daniel Sage et al					http://bigwww.epfl.ch/						BIG (see below)
 * Interactive 3D Surface Plot 		Interactive_3D_Surface_Plot.jar		Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
 * itext-1.3.jar 			itext-1.3.jar 				Bruno Lowagie, Paulo Soares 				http://www.lowagie.com/iText/ 					MPL/LGPL
 * IO package 				IO_.jar 				A. Cardona, S. Saalfeld, J. Schindelin, G. Jefferis 	acardona@ini.phys.ethz.ch 					GPL/public domain
@@ -50,23 +56,34 @@ Name					File					Author(s)						Contact	(2008)							License
 * Jython 				jython.jar				http://www.jython.org/Project/contributors.html 	http://www.jython.org 						PSF 2/JSF 2.1/JPSL
 * Jython Interpreter 			Jython_Interpreter.jar			Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * jzlib 				jzlib-1.0.7.jar 			ymnk 							jzlib@jcraft.com 						BSD-like http://www.jcraft.com/jzlib/LICENSE.txt
+* Linear Kuwahara			Linear_Kuwahara.jar			Christian Tischer													GPL
 * LOCI 					loci_tools.jar				Melissa Linkert, Curtis Rueden et al. 			ctrueden@wisc.edu 						GPL		
 * Macro Interpreter 			CLI_.jar				Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * Mines Java Toolkit 			edu_mines_jtk.jar 			Dave Hale 						http://www.mines.edu/~dhale/jtk/ 				CPL 1.0
+* MosaicJ				MosaicJ_.jar				Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/mosaicj/				BIG (see below)
 * MTrack2				MTrack2_.jar				Nico Stuurman						http://valelab.ucsf.edu/~nico/IJplugins/MTrack2.html		BSDR
 * Multiple Image Processor 		M_I_P.jar				Nathaniel Gonzalez Santiago				http://ciar.rcm.upr.edu/projects/imageprocessor/multiples/	GPL
+* PAL Optimization			pal-optimization.jar			Alexei Drummond et al					http://ftp.cse.sc.edu/bioinformatics/PAL/pal-1.4/doc/index.html	LGPL
+* Panorama equirectangular view 	panorama_.jar 				Stephan Saalfeld 					http://fly.mpi-cbg.de/~saalfeld/Projects/panorama.html 		GPL
 * PDF Viewer 				PDF_Viewer.jar				Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
+* PointPicker				PointPicker_.jar			Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/pointpicker/			BIG (see below)
 * PostgreSQL JDBC 			postgresql-8.2-506.jdbc3.jar 		http://jdbc.postgresql.org/ 				http://jdbc.postgresql.org/					BSD
+* RandomJ	 			RandomJ_.jar	 			Erik Meijering	 					http://www.imagescience.org/meijering/software/randomj/		imagescience (see below)
 * Register virtual stack slices 	register_virtual_stack_slices.jar 	Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
+* Shepp-Logan Phantom			SheppLogan_.jar				Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/shepplogan/			BIG (see below)
+* Snakuscule				Snakuscule_.jar				Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/snakuscule/			BIG (see below)
+* Stack Reverser 			Stack_Reverser.class 			Anthony Padua, Daniel Barboriak 			http://rsb.info.nih.gov/ij/plugins/substack-maker.html		PD
+* StackReg				StackReg_.jar				Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/stackreg/			BIG (see below)
 * Substack Maker 			Substack_Maker.class 			Wayne Rasband 						http://rsb.info.nih.gov/ij/plugins/reverser.html 		PD
-* Stack Reverser 			Stack_Reverser.class 			Anthony Padua, Daniel Barboriak 			http://rsb.info.nih.gov/ij/plugins/substack-maker.html		PD			
-* TransformJ 				TransformJ_.jar 			Erik Meijering 						meijering@imagescience.org 					Copyright © Erik Meijering. All rights reserved. See http://www.imagescience.org/meijering/software/transformj/
+* TransformJ 				TransformJ_.jar 			Erik Meijering 						http://www.imagescience.org/meijering/software/transformj/	imagescience (see below)
 * TrakEM2				TrakEM2_.jar				Albert Cardona, Rodney Douglas				acardona@ini.phys.ethz.ch					GPL
 * TurboReg				TurboReg_.jar				Philippe Thévenaz					philippe.thevenaz@epfl.ch					Citationware (see below)
-* VIB as VIB_.jar plugin bundle		VIB_.jar				J. Schindelin, Benjamin Schmid, M. Longair		bene.schmid@gmail.com						GPL
+* UnwarpJ				UnwarpJ_.jar				Carlos Oscar Sanchez Sorzano				http://bigwww.epfl.ch/thevenaz/UnwarpJ/				BIG (see below)
+* VIB as VIB_.jar plugin bundle		VIB_.jar, VIB-lib.jar			J. Schindelin, Benjamin Schmid, M. Longair		bene.schmid@gmail.com						GPL
 * Video Editing			Video_Editing.jar				Benjamin Schmid						bene.schmid@gmail.com						GPL
 * View5D 				View5D_.jar 				Rainer Heintzmann					heintzmannd@gmail.com						GPL 2
 * Volume Viewer / 3D Reslicer 		Volume_Viewer.jar 			Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
+* wavelets.jar				wavelets.jar				Daniel Sage et al					http://bigwww.epfl.ch/						BIG (see below)
 
 
 TurboReg (Citationware):
@@ -79,11 +96,35 @@ Note that this blessing is for the (re)distribution within Fiji only.
 JEP version included in Fiji is jep-2.4.1-ext-1.1.1-gpl. This version is the last to be distributed
 under GPL. Subsequent versions (>3.0) have a commercial license.
 
+BIG (Biomedical Imaging Group at the EPFL):
+	Date: Mon, 26 Jul 2010 10:58:20 +0200
+	From: Michael Unser <michael.unser@epfl.ch>
+
+	[...] we are happy that Fiji distributes our software: you have
+	my formal authorization for this (in my quality of lab chief).
+	"You'll be free to use this software for research purposes,  but you
+	must not transmit and distribute it without our consent":  this means
+	that from now on, you are authorized to distribute any ImageJ pluging
+	listed at http://bigwww.epfl.ch/algorithms.html since you have our
+	consent.
+
+imagescience (Erik Meijering; http://www.imagescience.org/meijering/software/):
+
+	Date: Fri, 17 Sep 2010 13:47:28 +0200
+	From: Erik Meijering <meijering@imagescience.org>
+
+	[...] Nice to hear from you. Yes, you have my permission to redistribute
+	TransformJ (and also FeatureJ and RandomJ if you're interested) as part of
+	Fiji. That would be great!
+
+	Best wishes,
+
+	Erik
+
+
 Unresolved (TODO):
 * Example/ scripts folder
-* Graphics/Example_Plot.class   Wayne Rasband, PD ?
 * Java Advanced Imaging jai_codec.jar, jai_core.jar, jai_imageio.jar
-* ij-ImageIO
 
 
 Problematic:

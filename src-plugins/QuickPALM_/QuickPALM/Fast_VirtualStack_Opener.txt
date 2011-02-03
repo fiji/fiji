@@ -1,0 +1,3 @@
+dir = getDirectory("Directory to open");
+start=getNumber("Start at image", 1);
+run("Image Sequence...", "open=["+dir+"] number=9999999 starting="+start+" increment=1 scale=100 file=[.tif] or=[] sort use");

@@ -4,8 +4,7 @@ $package = 'Mac-Finder-DSStore-0.94';
 $url = 'http://ftp.cw.net/pub/CPAN/authors/id/W/WI/WIML/';
 
 if (! -d $package) {
-	`curl $url$package.tar.gz | tar xzvf -` &&
-	`(cd $package; perl Build.PL; ./Build)` ||
+	`curl $url$package.tar.gz | tar xzvf -; (echo "Hello\n"; set -x; cd $package; perl Build.PL; ./Build)` ||
 	die "Could not download/install $package";
 }
 

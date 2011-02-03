@@ -47,7 +47,13 @@ public class ExceptionHandler implements IJ.ExceptionHandler {
 			current = IJ.getExceptionHandler();
 			if (current instanceof ExceptionHandler)
 				return (ExceptionHandler)current;
-		} catch (Exception e) { /* ignore */ }
+		}
+		catch (Exception e) {
+			/* ignore */
+		}
+		catch (NoSuchMethodError e) {
+			/* ignore */
+		}
 
 		if (current == null)
 			current = new IJ.ExceptionHandler() {
@@ -81,8 +87,8 @@ public class ExceptionHandler implements IJ.ExceptionHandler {
 	}
 
 	public static void handle(Throwable t, TextEditor editor) {
-		JTextArea screen = editor.screen;
-		Document document = screen.getDocument();
+		JTextArea screen = editor.errorScreen;
+		editor.getTab().showErrors();
 
 		if (t instanceof InvocationTargetException) {
 			t = ((InvocationTargetException)t).getTargetException();
@@ -90,26 +96,16 @@ public class ExceptionHandler implements IJ.ExceptionHandler {
 		StackTraceElement[] trace = t.getStackTrace();
 
 		screen.insert(t.getClass().getName() + ": "
-				+ t.getMessage() + "\n", document.getLength());
+				+ t.getMessage() + "\n", screen.getDocument().getLength());
 		ErrorHandler handler = new ErrorHandler(screen);
 		for (int i = 0; i < trace.length; i++) {
-			int offset = document.getLength();
 			String fileName = trace[i].getFileName();
 			int line = trace[i].getLineNumber();
-			screen.insert("\t at " + trace[i].getClassName()
+			String text = "\t at " + trace[i].getClassName()
 					+ "." + trace[i].getMethodName()
-					+ "(" + fileName + ":" + line + ")\n",
-					offset);
+					+ "(" + fileName + ":" + line + ")\n";
 			File file = editor.getFileForBasename(fileName);
-			if (file != null) try {
-				Error error =
-					new Error(file.getAbsolutePath(), line);
-				error.position =
-					document.createPosition(offset + 1);
-				handler.list.add(error);
-			} catch (BadLocationException e) {
-				e.printStackTrace();
-			}
+			handler.addError(file == null ? null : file.getAbsolutePath(), line, text);
 		}
 
 		editor.errorHandler = handler;

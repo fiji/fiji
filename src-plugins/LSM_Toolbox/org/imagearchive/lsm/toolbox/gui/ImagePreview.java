@@ -34,16 +34,17 @@ public class ImagePreview extends JPanel implements PropertyChangeListener {
 
 	File file = null;
 
-	Reader reader;
+	org.imagearchive.lsm.reader.Reader reader;
 
 	JPanel panel ;
 
 	Color backgroundcolor = SystemColor.window;
 
-	public ImagePreview(MasterModel masterModel, JFileChooser fc) {
+	public ImagePreview(JFileChooser fc) {
 		setPreferredSize(new Dimension(138, 50));
 		fc.addPropertyChangeListener(this);
-		reader = new Reader(masterModel);
+		//reader = ServiceMediator.getReader();
+		reader = new org.imagearchive.lsm.reader.Reader();
 		setLayout(new BorderLayout());
 		add(slider, BorderLayout.NORTH);
 		slider.setPaintLabels(true);
@@ -85,14 +86,10 @@ public class ImagePreview extends JPanel implements PropertyChangeListener {
 			RandomAccessStream stream = new RandomAccessStream(
 					new RandomAccessFile(file, "r"));
 			if (reader.isLSMfile(stream)) {
-				/*ImagePlus imp = reader.open(file.getParent(), file.getName(),
-						false, false, true);*/
-				org.imagearchive.lsm.reader.Reader r = new org.imagearchive.lsm.reader.Reader();
-				imp = r.open(file.getParent(), file.getName(), false, true);
+				imp = reader.open(file.getParent(), file.getName(), false, true);
 				if (imp != null) {
 					slider.setValue(1);
 					slider.setMaximum(imp.getNSlices());
-					//this.imp = imp;
 					if (imp.getNSlices()==1){
 						slider.setVisible(false);
 					} else {

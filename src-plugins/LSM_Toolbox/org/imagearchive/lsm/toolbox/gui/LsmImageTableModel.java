@@ -29,18 +29,18 @@ public class LsmImageTableModel extends AbstractTableModel{
         return columnTitles.length;
     }
     public String getColumnName(int columnIndex){
-    	return columnTitles[columnIndex];
+	return columnTitles[columnIndex];
     }
 
     public Object getValueAt(int row, int col) {
         File file = (File)files.get(row);
         if (col == 0)
-        	return file.getName();
+		return file.getName();
         if (col == 1)
-        	return new DecimalFormat("###.##").format(file.length() / 1024f) + " kbytes";
+		return new DecimalFormat("###.##").format(file.length() / 1024f) + " kbytes";
         if (col == 2)
-        	return new SimpleDateFormat("dd/MM/yyyy, HH:mm:ss").format(new Date(file.lastModified()));
-    	return "N/A";
+		return new SimpleDateFormat("dd/MM/yyyy, HH:mm:ss").format(new Date(file.lastModified()));
+	return "N/A";
     }
 
     public Class<String> getColumnClass(int col){

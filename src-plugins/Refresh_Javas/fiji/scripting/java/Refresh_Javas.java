@@ -2,11 +2,18 @@ package fiji.scripting.java;
 
 import common.RefreshScripts;
 
+import fiji.build.CompileJar;
 import fiji.build.Fake;
+import fiji.build.FakeException;
+import fiji.build.Parser;
+import fiji.build.Rule;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.Macro;
 import ij.Menus;
+
+import ij.gui.GenericDialog;
 
 import ij.io.PluginClassLoader;
 
@@ -29,6 +36,9 @@ import java.lang.reflect.Method;
 
 import java.net.MalformedURLException;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * This plugin looks for Java sources in plugins/ and turns them into
  * transparently-compiling plugins.
@@ -37,10 +47,16 @@ import java.net.MalformedURLException;
  * it is compiled before it is called.
  */
 public class Refresh_Javas extends RefreshScripts {
+	protected boolean showDeprecation;
 
 	public void run(String arg) {
 		setLanguageProperties(".java", "Java");
 		setVerbose(false);
+		if (arg == null || arg.equals("")) {
+			arg = Macro.getOptions();
+			if (arg != null)
+				arg = arg.trim();
+		}
 		super.run(arg);
 	}
 
@@ -51,14 +67,34 @@ public class Refresh_Javas extends RefreshScripts {
 
 	/** Compile and run an ImageJ plugin */
 	public void runScript(String path) {
+		compileAndRun(path, false);
+	}
+
+	/** Compile and optionally run an ImageJ plugin */
+	public void compileAndRun(String path, boolean compileOnly) {
+		boolean isFakefile = path.endsWith("/Fakefile");
 		String c = path;
-		if (c.endsWith(".java")) {
+		if (c.endsWith(".java") || isFakefile) {
 			try {
-				String[] result = fake(path);
+				String[] result = isFakefile ?
+					fake(new FileInputStream(path), new File(path).getParentFile(), null, null) :
+					fake(path);
 				if (result != null) {
-					runPlugin(result[1], result[0], true);
+					if (!compileOnly)
+						runPlugin(result[1], result[0], true);
 					return;
 				}
+				if (isFakefile) {
+					err.write(("Could not compile " + path + "\n").getBytes());
+					return;
+				}
+			} catch (FakeException e) {
+				if (!e.getMessage().equals("Canceled")) try {
+					err.write(e.getMessage().getBytes());
+				} catch (IOException e2) {
+					e.printStackTrace();
+				}
+				return;
 			} catch (Exception e) {
 				e.printStackTrace(new PrintStream(err));
 				return;
@@ -82,14 +118,19 @@ public class Refresh_Javas extends RefreshScripts {
 			while ((file = file.getParentFile()) != null &&
 					!file.equals(plugins))
 				c = file.getName() + "." + c;
-			if (file == null) {
+			if (!compileOnly && file == null) {
 				runOutOfTreePlugin(path);
 				return;
 			}
-			runPlugin(c.replace('/', '.'));
+			if (!compileOnly)
+				runPlugin(c.replace('/', '.'));
 		} catch (Exception e) {
 			e.printStackTrace(new PrintStream(err));
 		}
+	}
+
+	public void showDeprecation(boolean toggle) {
+		showDeprecation = toggle;
 	}
 
 	boolean upToDate(String source, String target) {
@@ -110,57 +151,128 @@ public class Refresh_Javas extends RefreshScripts {
 	}
 
 	/* returns the class name and .jar on success, null otherwise */
-	public String[] fake(String path) throws Fake.FakeException {
-		String fijiDir = System.getProperty("fiji.dir");
-		if (fijiDir == null)
-			return null;
-		if (!fijiDir.endsWith("/"))
-			fijiDir += "/";
-		String base = fijiDir + "src-plugins/";
+	public String[] fake(String path) throws FakeException {
+		File file = new File(path);
 		try {
-			path = new File(path).getCanonicalFile()
-				.getAbsolutePath();
-		} catch (IOException e) {
+			file = file.getCanonicalFile();
+		}
+		catch (IOException e) {
 			e.printStackTrace(new PrintStream(err));
 			return null;
 		}
-		if (!path.startsWith(base))
-			return null;
-		path = path.substring(base.length());
+		File dir = file.getParentFile();
+		path = file.getName();
+		String name = path;
 
-		int slash = path.indexOf("/");
-		base = path.substring(0, slash);
-		String target = "plugins/" + base + ".jar";
-		String name = path.substring(slash + 1).replace('/', '.');
+		File fakefile;
+		for (;;) {
+			if (dir == null)
+				return null;
+			fakefile = new File(dir, "Fakefile");
+			if (fakefile.exists())
+				break;
+			path = dir.getName() + "/" + path;
+			dir = dir.getParentFile();
+		}
+
 		if (name.endsWith(".java"))
 			name = name.substring(0, name.length() - 5);
 
+		try {
+			String[] result = fake(new FileInputStream(fakefile), dir, name, null, path, false);
+			if (result != null)
+				return result;
+		}
+		catch (FileNotFoundException e) {
+			e.printStackTrace(new PrintStream(err));
+		}
+
+		String absolutePath = file.getAbsolutePath();
+		String srcPluginsDir = new File(System.getProperty("fiji.dir"), "src-plugins").getAbsolutePath();
+		if (!absolutePath.startsWith(srcPluginsDir + File.separator))
+			return null;
+
+		String base = absolutePath.substring(srcPluginsDir.length() + 1);
+		int slash = base.indexOf(File.separator);
+		if (slash > 0)
+			base = base.substring(0, slash);
+		String target = "plugins/" + base + ".jar";
+		String rule = "all <- " + target + "\n"
+			+ "\n"
+			+ target + " <- src-plugins/" + base + "/**/*.java\n";
+		return fake(new StringBufferInputStream(rule), dir, name, target);
+	}
+
+	/* returns the class name and .jar on success, null otherwise */
+	public String[] fake(InputStream fakefile, File dir, String name, String target) throws FakeException {
+		return fake(fakefile, dir, name, target, false);
+	}
+
+	/* returns the class name and .jar on success, null otherwise */
+	public String[] fake(InputStream fakefile, File dir, String name, String target, boolean includeSource) throws FakeException {
+		return fake(fakefile, dir, name, target, null, includeSource);
+	}
+
+	/* returns the class name and .jar on success, null otherwise */
+	public String[] fake(InputStream fakefile, File dir, String name, String target, String relativeSourcePath, boolean includeSource) throws FakeException {
 		Fake fake = new Fake();
 		fake.out = new PrintStream(out);
 		fake.err = new PrintStream(err);
-		Fake.Parser parser = null;
-		String fakefile = fijiDir + "/Fakefile";
-		if (new File(fakefile).exists()) try {
-			parser = fake.parse(new FileInputStream(fakefile),
-					new File(fijiDir));
-			parser.parseRules(null);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace(new PrintStream(err));
+		Parser parser = fake.parse(fakefile, dir);
+		parser.parseRules(null);
+
+		if (target == null) {
+			if (relativeSourcePath != null)
+				relativeSourcePath = relativeSourcePath.replace(File.separator.charAt(0), '/');
+                        List<String> targets = new ArrayList<String>();
+                        for (String key : parser.getAllRules().keySet()) {
+				Rule rule = parser.getRule(key);
+                                if ((rule instanceof CompileJar) &&
+						(relativeSourcePath == null ||
+						 rule.getPrerequisites().contains(relativeSourcePath)))
+                                        targets.add(key);
+                        }
+                        if (targets.size() == 0) {
+				try {
+	                                err.write(("Warning: no .jar targets found for '"
+						+ relativeSourcePath + "' in '"
+						+ new File(dir, "Fakefile").getAbsolutePath()
+						+ "'\n").getBytes());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+                                return null;
+                        }
+                        if (targets.size() == 1)
+                                target = targets.get(0);
+                        else {
+                                String[] array = targets.toArray(new String[targets.size()]);
+                                GenericDialog gd = new GenericDialog("Target");
+                                gd.addChoice("Target", array, array[0]);
+                                gd.showDialog();
+                                if (gd.wasCanceled())
+                                        throw new FakeException("Canceled");
+                                target = gd.getNextChoice();
+                        }
 		}
-		if (parser == null || parser.getRule(target) == null) {
-			String rule = "all <- " + target + "\n"
-				+ "\n"
-				+ target + " <- src-plugins/" + base
-					+ "/**/*.java\n";
-			parser = fake.parse(new StringBufferInputStream(rule),
-					new File(fijiDir));
-			parser.parseRules(null);
-		}
+
+		if (parser.getRule(target) == null)
+			return null;
 		parser.setVariable("debug", "true");
 		parser.setVariable("buildDir", "build");
+		parser.setVariable("showDeprecation", "" + showDeprecation);
+		if (includeSource)
+			parser.setVariable("includeSource(" + target + ")", "true");
 		parser.getRule(target).make();
 
-		return new String[] { name, target };
+		if (relativeSourcePath != null) try {
+			String packageName = getPackageName(new File(dir, relativeSourcePath).getAbsolutePath());
+			if (packageName != null)
+				name = packageName + "." + name;
+		} catch (IOException e) {
+			e.printStackTrace(new PrintStream(err));
+		}
+		return new String[] { name, new File(dir, target).getAbsolutePath() };
 	}
 
 	static Method javac;
@@ -183,6 +295,10 @@ public class Refresh_Javas extends RefreshScripts {
 			       IllegalAccessException,
 			       InvocationTargetException {
 		String[] arguments = { "-g", path };
+		if (showDeprecation)
+			arguments = unshift(arguments, new String[] {
+				"-deprecation", "-Xlint:unchecked"
+			});
 		if (extraArgs != null)
 			arguments = unshift(arguments, extraArgs);
 		String classPath = getPluginsClasspath();
@@ -229,7 +345,14 @@ public class Refresh_Javas extends RefreshScripts {
 
 	void runPlugin(String path, String className, boolean newClassLoader)
 			throws Exception {
-		new PlugInExecutor(path).run(className, "", newClassLoader);
+		PlugInExecutor executor = new PlugInExecutor(path);
+		if (className == null)
+			executor.runOneOf(path, newClassLoader);
+		else try {
+			executor.tryRun(className, "", path, newClassLoader);
+		} catch (NoSuchMethodException e) {
+			executor.runOneOf(path, newClassLoader);
+		}
 	}
 
 	void runOutOfTreePlugin(String path) throws IOException,
@@ -260,10 +383,12 @@ public class Refresh_Javas extends RefreshScripts {
 		}
 		if (classPath == null || classPath.equals(""))
 			classPath = directory.getPath();
-		else
+		else {
 			// make sure classes from this directory are found first
-			classPath = directory.getPath()
-				+ File.pathSeparator + classPath;
+			if (!classPath.startsWith(File.pathSeparator))
+				classPath = File.pathSeparator + classPath;
+			classPath = directory.getPath() + classPath;
+		}
 
 		new PlugInExecutor(classPath).run(className);
 	}

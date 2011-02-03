@@ -29,8 +29,7 @@ import javax.naming.OperationNotSupportedException;
 
 import amira.AmiraParameters;
 
-public class MaterialList extends ScrollPane implements ActionListener,
-					ItemListener {
+public class MaterialList extends ScrollPane implements ActionListener, ItemListener {
 	PopupMenu popup;
 
 	ImagePlus labels;
@@ -73,7 +72,7 @@ public class MaterialList extends ScrollPane implements ActionListener,
 		return list.selectedIndex;
 	}
 
-	private void select(int index) {
+	public void select(int index) {
 		list.selectedIndex = index;
 	}
 
@@ -171,16 +170,29 @@ public class MaterialList extends ScrollPane implements ActionListener,
 		// not forget to delete entry in locked-array
 	}
 
+	public void renameMaterial(String newName) {
+		params.editMaterial(currentMaterialID(), newName, -1, -1, -1);
+		params.setParameters(labels);
+		list.repaint();
+	}
+
 	private void renameMaterial() {
 		GenericDialog gd = new GenericDialog("Rename");
 		gd.addStringField("name", getSelectedItem());
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
-		
-		params.editMaterial(currentMaterialID(), gd.getNextString(),-1,-1,-1);
+		renameMaterial(gd.getNextString());
+	}
+
+	public void setColor(int r, int g, int b) {
+		params.editMaterial(currentMaterialID(), null,
+				r / 255.0, g / 255.0, b / 255.0);
 		params.setParameters(labels);
+		labels.updateAndDraw();
 		list.repaint();
+		if (cc != null)
+			cc.setLabels(labels);
 	}
 
 	private void setColor() {
@@ -191,16 +203,9 @@ public class MaterialList extends ScrollPane implements ActionListener,
 		String name = params.getMaterialName(id) + " Color";
 		ColorChooser chooser = new ColorChooser(name, current, false);
 		Color changed = chooser.getColor();
-		if (changed != null) {
-			params.editMaterial(id, null, changed.getRed() / 255.0,
-					changed.getGreen() / 255.0,
-					changed.getBlue() / 255.0);
-			params.setParameters(labels);
-			labels.updateAndDraw();
-			list.repaint();
-			if (cc != null)
-				cc.setLabels(labels);
-		}
+		if (changed != null)
+			setColor(changed.getRed(), changed.getGreen(),
+					changed.getBlue());
 	}
 
 	public void actionPerformed(ActionEvent e) {

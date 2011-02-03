@@ -13,6 +13,7 @@ import fiji.updater.logic.PluginUploader;
 import fiji.updater.util.Downloader;
 import fiji.updater.util.Canceled;
 import fiji.updater.util.Progress;
+import fiji.updater.util.UpdateJava;
 import fiji.updater.util.Util;
 
 import ij.IJ;
@@ -20,6 +21,8 @@ import ij.Prefs;
 import ij.WindowManager;
 
 import ij.gui.GenericDialog;
+
+import ij.plugin.PlugIn;
 
 import java.awt.Container;
 import java.awt.Component;
@@ -249,6 +252,40 @@ public class UpdaterFrame extends JFrame
 				}
 			}, bottomPanel);
 			btnUpload.setEnabled(false);
+
+			try {
+				Class pluginChangesClass = Class.forName("fiji.scripting.ShowPluginChanges");
+				if (pluginChangesClass != null && new File(System.getProperty("fiji.dir"), ".git").isDirectory()) {
+					final PlugIn pluginChanges = (PlugIn)pluginChangesClass.newInstance();
+					bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
+					JButton showChanges = SwingTools.button("Show changes",
+							"Show the changes in Git since the last upload", new ActionListener() {
+						public void actionPerformed(ActionEvent e) {
+							new Thread() {
+								public void run() {
+									for (PluginObject plugin : table.getSelectedPlugins())
+										pluginChanges.run(plugin.filename);
+								}
+							}.start();
+						}
+					}, bottomPanel);
+				}
+			} catch (Exception e) { /* ignore */ }
+		}
+
+		// offer to update Java, but only on non-Macs
+		if (!IJ.isMacOSX() && new File(Util.fijiRoot, "java").canWrite()) {
+			bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
+			SwingTools.button("Update Java",
+					"Update the Java version used for Fiji", new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					new Thread() {
+						public void run() {
+							new UpdateJava(getProgress("Update Java")).run(null);
+						}
+					}.start();
+				}
+			}, bottomPanel);
 		}
 
 		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
@@ -351,7 +388,7 @@ public class UpdaterFrame extends JFrame
 				if (enable && enableOther)
 					break;
 			}
-			setLabel(!enableOther ? label :
+			setText(!enableOther ? label :
 				(enable ? label + "/" : "") + otherLabel);
 			setEnabled(enable || enableOther);
 		}
@@ -421,7 +458,7 @@ public class UpdaterFrame extends JFrame
 			for (; child != getContentPane();
 					child = child.getParent())
 				child.setVisible(true);
-		easy.setLabel(easyMode ? "Advanced mode" : "Easy mode");
+		easy.setText(easyMode ? "Advanced mode" : "Easy mode");
 		if (isVisible())
 			repaint();
 	}
@@ -449,7 +486,9 @@ public class UpdaterFrame extends JFrame
 					PluginCollection.getInstance()
 						.remove(plugin);
 				else
-					plugin.setStatus(Status.NOT_INSTALLED);
+					plugin.setStatus(plugin.isObsolete() ?
+						Status.OBSOLETE_UNINSTALLED :
+						Status.NOT_INSTALLED);
 			updatePluginsTable();
 			pluginsChanged();
 			info("Updated successfully.  Please restart Fiji!");
@@ -486,7 +525,7 @@ public class UpdaterFrame extends JFrame
 			button.enableIfValid();
 
 		apply.setEnabled(plugins.hasChanges());
-		cancel.setLabel(plugins.hasChanges() ? "Cancel" : "Close");
+		cancel.setText(plugins.hasChanges() ? "Cancel" : "Close");
 
 		if (Util.isDeveloper)
 			// TODO: has to change when details editor is embedded
@@ -610,7 +649,8 @@ public class UpdaterFrame extends JFrame
 				}
 				else {
 					plugin.markRemoved();
-					plugin.setStatus(Status.NOT_INSTALLED);
+					plugin.setStatus(Status
+						.OBSOLETE_UNINSTALLED);
 				}
 			updatePluginsTable();
 			canUpload = false;

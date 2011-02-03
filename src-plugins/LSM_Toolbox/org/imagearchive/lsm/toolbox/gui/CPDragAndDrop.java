@@ -24,20 +24,20 @@ import javax.swing.SwingUtilities;
 import org.imagearchive.lsm.reader.info.LSMFileInfo;
 import org.imagearchive.lsm.toolbox.MasterModel;
 import org.imagearchive.lsm.toolbox.Reader;
+import org.imagearchive.lsm.toolbox.ServiceMediator;
 
 /*     Requires Java 2, v1.3.1. Based on the Drag_And_Drop plugin by Eric Kischell (keesh@ieee.org). */
 public class CPDragAndDrop implements DropTargetListener {
 	protected static ImageJ ij = null; // the "ImageJ" frame
 	private static boolean enableDND = true;
 	protected DataFlavor dFlavor;
-	private MasterModel masterModel;
 	private ControlPanelFrame cp;
 
-	public CPDragAndDrop(MasterModel masterModel, ControlPanelFrame cp) {
+	public CPDragAndDrop(ControlPanelFrame cp) {
 		String vers = System.getProperty("java.version");
 		if (vers.compareTo("1.3.1") < 0)
 			return;
-		this.masterModel = masterModel;
+
 		this.cp = cp;
 		/*
 		 * ij = IJ.getInstance(); ij.setDropTarget(null);
@@ -56,7 +56,7 @@ public class CPDragAndDrop implements DropTargetListener {
 				while (iterator.hasNext()) {
 					final File file = (File) iterator.next();
 					// IJ.log("dopen: "+file.getAbsolutePath());
-					final Reader reader = new Reader(masterModel);
+					final Reader reader = ServiceMediator.getReader();
 					SwingUtilities.invokeLater(new Runnable() {
 						ImageWindow iwc = null;
 

@@ -1,5 +1,3 @@
-package view5d;
-
 /****************************************************************************
  *   Copyright (C) 1996-2009 by Rainer Heintzmann                          *
  *   heintzmann@gmail.com                                                  *
@@ -22,9 +20,12 @@ package view5d;
 // By making the appropriate class "View5D" or "View5D_" public and renaming the file, this code can be toggled between Applet and ImageJ respectively
 
 // import java.io.*;
+package view5d;
+
 import java.applet.Applet;
 import java.awt.*;
 import java.util.*;
+// import view5d.*;
 
 // insert : "public" before this to make it an applet
 public class View5D extends Applet {
@@ -35,7 +36,7 @@ public class View5D extends Applet {
   My3DData data3d;
   TextArea myLabel;
   ImgPanel mypan=null;
-  Vector panels=new Vector();  // Keeps track of all the views. Sometimes this information is needed to send the updates.
+  Vector<ImgPanel> panels=new Vector<ImgPanel>();  // Keeps track of all the views. Sometimes this information is needed to send the updates.
   
   public String filename=null;
  
@@ -451,7 +452,7 @@ public class View5D extends Applet {
   }
   
   public void init() {
-	 if (System.getProperty("java.version").compareTo("1.1") < 0)  // this viewer should work from version 1.1 on
+	 if (System.getProperty("java.version").compareTo("1.4") < 0)  // this viewer should work from version 1.1 on
 	     {
 	 	setLayout(new BorderLayout());
 	 	add("North", new ImageErr());

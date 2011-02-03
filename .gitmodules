@@ -52,12 +52,6 @@
 [submodule "AutoComplete"]
 	path = AutoComplete
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/AutoComplete
-[submodule "live-helper"]
-	path = live-helper
-	url = git://git.debian.net/git/debian-live/live-helper.git
-[submodule "clojure-contrib"]
-	path = clojure-contrib
-	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/clojure-contrib/
 [submodule "weka"]
 	path = weka
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/weka/
@@ -67,3 +61,6 @@
 [submodule "imglib"]
 	path = imglib
 	url = contrib@pacific.mpi-cbg.de:/srv/git/imglib.git
+[submodule "commons-math"]
+	path = commons-math
+	url = contrib@pacific.mpi-cbg.de:/srv/git/commons-math

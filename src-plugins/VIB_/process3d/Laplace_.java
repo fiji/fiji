@@ -12,8 +12,6 @@ import ij.process.ImageProcessor;
 
 import ij.plugin.filter.PlugInFilter;
 
-import process3d.Convolve_3d;
-
 public class Laplace_ implements PlugInFilter {
 
 	private ImagePlus image;
@@ -36,13 +34,13 @@ public class Laplace_ implements PlugInFilter {
 		IJ.showStatus("Calculating laplace");
 
 		float[] H_x = new float[] {1.0f, -2.0f, 1.0f};
-		ImagePlus g_x = Convolve_3d.convolveX(imp, H_x);
+		ImagePlus g_x = Convolve3d.convolveX(imp, H_x);
 
 		float[] H_y = new float[] {1.0f, -2.0f, 1.0f};
-		ImagePlus g_y = Convolve_3d.convolveY(imp, H_y);
+		ImagePlus g_y = Convolve3d.convolveY(imp, H_y);
 
 		float[] H_z = new float[] {1.0f, -2.0f, 1.0f};
-		ImagePlus g_z = Convolve_3d.convolveZ(imp, H_z);
+		ImagePlus g_z = Convolve3d.convolveZ(imp, H_z);
 
 		int w = imp.getWidth(), h = imp.getHeight();
 		int d = imp.getStackSize();

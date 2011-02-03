@@ -1,5 +1,3 @@
-package view5d;
-
 /****************************************************************************
  *   Copyright (C) 1996-2007 by Rainer Heintzmann                          *
  *   heintzmann@gmail.com                                                  *
@@ -25,6 +23,8 @@ package view5d;
 //import java.io.*;
 //import java.lang.*;
 // import java.lang.Number.*;
+package view5d;
+
 import java.awt.event.*;
 import java.awt.*;
 // import ij.*;
@@ -241,6 +241,10 @@ class AGenericDialog extends Dialog implements WindowListener,ActionListener, Fo
 	setVisible(false);
 	dispose();
     System.out.println("Generic Dialog closing!\n");
+	if (canceled)
+        System.out.println("canceled!\n");
+	else
+        System.out.println("okay!\n");
     }
     
     public void windowClosed (WindowEvent e) { }
@@ -266,8 +270,14 @@ class AGenericDialog extends Dialog implements WindowListener,ActionListener, Fo
 
 
     public void actionPerformed(ActionEvent e) {
+        // System.out.println("action performed!\n");
 		canceled = (e.getSource()==cancel);
+		//if (canceled)
+	    //    System.out.println("canceled!\n");
+		//else
+	    //    System.out.println("okay!\n");
+	    //System.out.println("Generic Dialog closing!\n");
 		setVisible(false);
-		dispose();
+		// dispose();    // Not good. This will close the whole application under some systems
 	}
 }

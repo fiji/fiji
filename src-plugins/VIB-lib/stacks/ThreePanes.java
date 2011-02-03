@@ -18,6 +18,10 @@
     or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
     License for more details.
 
+    In addition, as a special exception, the copyright holders give
+    you permission to combine this program with free software programs or
+    libraries that are released under the Apache Public License. 
+
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -139,6 +143,16 @@ public class ThreePanes implements PaneOwner {
 
 		if( shift_down )
 			setSlicesAllPanes( point[0], point[1], point[2] );
+	}
+
+	public void zoom( boolean in, int off_screen_x, int off_screen_y, int in_plane ) {
+		int point[] = new int[3];
+		findPointInStack( off_screen_x, off_screen_y, in_plane, point );
+		xy_canvas.realZoom( in, point[0],point[1] );
+		if( ! single_pane ) {
+			xz_canvas.realZoom(in,point[0],point[2]);
+			zy_canvas.realZoom(in,point[2],point[1]);
+		}
 	}
 
 	public void setSlicesAllPanes( int new_x, int new_y, int new_z ) {

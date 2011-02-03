@@ -182,7 +182,7 @@ public class Stitch_Image_Collection implements PlugIn
 			computePhaseCorrelations(overlappingTiles, handleRGB);
 			
 			// compute the model
-			newImageInformationList = optimize(overlappingTiles);
+			newImageInformationList = optimize( overlappingTiles, imageInformationList.get( 0 ) );
 			
 			if(newImageInformationList == null)
 				return null;
@@ -873,6 +873,11 @@ public class Stitch_Image_Collection implements PlugIn
 		return min;
 	}
 
+	final private static int round( final float value )
+	{
+		return (int)( value + (0.5f * Math.signum( value ) ) );
+	}	
+
 	final private static int getImagesAtCoordinate(final ArrayList<ImageInformation> imageInformationList, final ImageInformation indices[], final int[] pos)
 	{
 		int num = 0;
@@ -882,7 +887,7 @@ public class Stitch_Image_Collection implements PlugIn
 			// check if pixel is inside the image
 			boolean isInside = true;
 			for (int dim = 0; dim < iI.dim && isInside; dim++)
-				if ( !(pos[dim] >= Math.round(iI.position[dim]) && pos[dim] < Math.round(iI.position[dim] + iI.size[dim]) ) )
+				if ( !(pos[dim] >= round(iI.position[dim]) && pos[dim] < round(iI.position[dim] + iI.size[dim]) ) )
 					isInside = false;
 			
 			if (isInside)
@@ -968,7 +973,7 @@ public class Stitch_Image_Collection implements PlugIn
 		return max;
 	}
 	
-	private ArrayList<ImageInformation> optimize(final ArrayList<OverlapProperties> overlappingTiles)
+	private ArrayList<ImageInformation> optimize(final ArrayList<OverlapProperties> overlappingTiles, final ImageInformation firstImage)
 	{
 		boolean redo;
 		TileConfiguration tc;
@@ -1013,10 +1018,19 @@ public class Stitch_Image_Collection implements PlugIn
 			}
 			IJ.log("Tile size: " + tiles.size());
 			
-			if(tiles.size() == 0)
+			if( tiles.size() == 0 )
 			{
-				IJ.error("No correlated tiles found!");
-				return null;
+				IJ.log("Error: No correlated tiles found, setting the first tile to (0,0,0).");
+				
+				for ( int d = 0; d < firstImage.position.length; ++d )
+					firstImage.position[ d ] = 0;
+				
+				ArrayList<ImageInformation> imageInformationList = new ArrayList<ImageInformation>();
+				imageInformationList.add( firstImage );
+				
+				IJ.log(" image information list size =" + imageInformationList.size());
+				
+				return imageInformationList;
 			}						
 			
 			// trash everything but the largest graph			

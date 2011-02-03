@@ -1,5 +1,3 @@
-package view5d;
-
 /****************************************************************************
  *   Copyright (C) 1996-2007 by Rainer Heintzmann                          *
  *   heintzmann@gmail.com                                                  *
@@ -24,11 +22,13 @@ package view5d;
 
 //import java.io.*;
 // import java.awt.image.ColorModel.*;
+package view5d;
+
 import java.awt.event.*;
 // import java.awt.color.*;
 import java.awt.*;
 
-class AlternateViewer extends Frame implements WindowListener {
+public class AlternateViewer extends Frame implements WindowListener {
  static final long serialVersionUID = 1;
  My3DData cloned=null;
  Component mycomponent=null;
@@ -78,7 +78,7 @@ class AlternateViewer extends Frame implements WindowListener {
     
     public void windowClosed(java.awt.event.WindowEvent windowEvent) {
         cloned=null;
-    if (applet instanceof View5D_)
+    if (!(applet instanceof View5D))
 	   ((View5D_) applet).panels.removeElement(mycomponent);  // remove this view from the list
     else
 	   ((View5D) applet).panels.removeElement(mycomponent);  // remove this view from the list

@@ -1,5 +1,3 @@
-package view5d;
-
 /****************************************************************************
  *   Copyright (C) 1996-2007 by Rainer Heintzmann                          *
  *   heintzmann@gmail.com                                                  *
@@ -22,10 +20,12 @@ package view5d;
 */
 // By making the appropriate class "View5D" or "View5D_" public and renaming the file, this code can be toggled between Applet and ImageJ respectively
 
+package view5d;
+
 // import java.io.*;
 
-class ComplexElement extends AnElement {
-  float [] myData;        // holds the 3D data in pairs of real numbers
+public class ComplexElement extends AnElement {
+  public float [] myData;        // holds the 3D data in pairs of real numbers
   int SizeXY;
   int readmode;   // 0 : magnitude, 1: phase angle, 2: real part, 3: imaginary part
   ComplexElement(int SX, int SY, int SZ, double MaxVal) {

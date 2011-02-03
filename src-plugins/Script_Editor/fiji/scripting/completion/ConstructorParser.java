@@ -5,15 +5,16 @@ import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.Token;
 import java.util.TreeSet;
 import java.util.ArrayList;
+import java.util.Collection;
+
 import javax.swing.text.Element;
 
 public class ConstructorParser {
-
-	TreeSet<ImportedClassObjects> objectSet = new TreeSet<ImportedClassObjects>();
-	ClassNames names;
-	ArrayList<String> packageNames = new ArrayList<String>();
-	RSyntaxDocument doc;
-	String language;
+	protected TreeSet<ImportedClassObjects> objectSet = new TreeSet<ImportedClassObjects>();
+	protected ClassNames names;
+	protected Collection<String> packageNames = new ArrayList<String>();
+	protected RSyntaxDocument doc;
+	protected String language;
 
 	public ConstructorParser(ClassNames name, String lang) {
 		names = name;
@@ -178,7 +179,7 @@ public class ConstructorParser {
 
 
 
-	public void setPackageNames(ArrayList<String> names) {
+	public void setPackageNames(Collection<String> names) {
 		packageNames = names;
 	}
 
@@ -187,7 +188,7 @@ public class ConstructorParser {
 			if (prevToPrev.type == 15) {
 				String temp = classNameToken.getLexeme();
 				if (classNameToken.getNextToken().getLexeme().equals("(") || classNameToken.getNextToken().getLexeme().equals(")")) {
-					String temp2 = isClassPresent(temp, names.root);
+					String temp2 = names.isClassPresent(temp);
 					if (!temp2.equals("")) {
 						ImportedClassObjects obj = new ImportedClassObjects(prevToPrev.getLexeme(), temp, temp2, true);
 						objectSet.add(obj);
@@ -196,34 +197,12 @@ public class ConstructorParser {
 			}
 		}
 	}
-	public String isClassPresent(String name, Package root) {
-		for (String s : packageNames) {
-			String[] parts = s.split("\\.");
-			Item current = findPackage(parts, root);                                 //to create this function
-			if (current instanceof Package) {
-				try {
-					current = names.findTailSet((Package)current, name).first();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-			if (current.getName().equals(name)) {
-				return ((ClassName)current).getCompleteName();
-			}
-		}
-		return "";
-	}
 
+	/* TODO: fix
 	public Item findPackage(String[] splitPart, Package p) {
-		for (int i = 0; i < splitPart.length - 1; i++) {
-			p = (Package)names.findTailSet(p, splitPart[i]).first();
-		}
-		if (splitPart[splitPart.length-1].equals("*")) {
-			return (Item)p;
-		} else {
-			return names.findTailSet(p, splitPart[splitPart.length-1]).first();
-		}
+		return null;
 	}
+	*/
 
 	public Token getNextNonWhitespaceToken(Token t) {
 		Token toReturn = t.getNextToken();

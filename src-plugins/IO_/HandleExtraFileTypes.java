@@ -24,6 +24,20 @@ import java.io.*;
 public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 	static final int IMAGE_OPENED = -1;
 	static final int PLUGIN_NOT_FOUND = -2;
+	static final boolean LOCI_PRESENT = checkForLoci();
+
+	private static boolean checkForLoci() {
+		// This should run without exception in headless mode
+		boolean lociPresent=true;
+		try {
+			lociPresent = IJ.getClassLoader().loadClass("loci.plugins.LociImporter") != null;
+		}
+		catch (ClassNotFoundException e) {
+			lociPresent = false;
+		}
+		if(IJ.debugMode) IJ.log("HEFT: loci is"+(lociPresent?" ":" not ")+"present");
+		return lociPresent;
+	}
 
 	/** Called from io/Opener.java. */
 	public void run(String path) {
@@ -54,22 +68,25 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 			setProperty("Info", imp.getProperty("Info"));
 		// copy over the FileInfo
 		setFileInfo(imp.getOriginalFileInfo());
+		// copy dimensions
+		if (IJ.getVersion().compareTo("1.38s")>=0)
+			setDimensions(imp.getNChannels(), imp.getNSlices(), imp.getNFrames());
+		if (IJ.getVersion().compareTo("1.41o")>=0)
+			setOpenAsHyperStack(imp.getOpenAsHyperStack());
 	}
 	
 
 	private Object tryOpen(String directory, String name, String path) {
-
 		// set up a stream to read in 132 bytes from the file header
 		// These can be checked for "magic" values which are diagnostic
 		// of some image types
 		InputStream is;
 		byte[] buf = new byte[132];
 		try {
-			if (0 == path.indexOf("http://")) {
+			if (0 == path.indexOf("http://"))
 				is = new java.net.URL(path).openStream();
-			} else {
+			else
 				is = new FileInputStream(path);
-			}
 			is.read(buf, 0, 132);
 			is.close();
 		}
@@ -81,7 +98,7 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		width = PLUGIN_NOT_FOUND;
 
 		// Temporarily suppress "plugin not found" errors if LOCI Bio-Formats plugin is installed
-		if (Menus.getCommands().get("Bio-Formats Importer")!=null && IJ.getVersion().compareTo("1.37u")>=0)
+		if (IJ.getVersion().compareTo("1.37u")>=0 && LOCI_PRESENT)
 			IJ.suppressPluginNotFoundError();
 
 		// OK now we get to the interesting bit
@@ -117,10 +134,21 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		}
 
 		// Analyze format (.img/.hdr) handler
-		// Note that the Analyze_Reader plugin opens and displays the
+		// Opens the file using the Nifti_Reader if it is installed,
+		// otherwise the Analyze_Reader is used. Note that
+		// the Analyze_Reader plugin opens and displays the
 		// image and does not implement the ImagePlus class.
 		if (name.endsWith(".img") || name.endsWith(".hdr")) {
-			return tryPlugIn("Analyze_Reader", path);
+			if (Menus.getCommands().get("NIfTI-Analyze")!=null)
+				return tryPlugIn("Nifti_Reader", path);
+			else
+				return tryPlugIn("Analyze_Reader", path);
+		}
+
+		// NIFTI format (.nii) handler
+		if (name.endsWith(".nii") || name.endsWith( ".nii.gz" ) ||
+				name.endsWith(".nii.z")) {
+			return tryPlugIn("Nifti_Reader", path);
 		}
 
 		// Image Cytometry Standard (.ics) handler
@@ -138,11 +166,10 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		// Zeiss Confocal LSM 510 image file (.lsm) handler
 		// http://rsb.info.nih.gov/ij/plugins/lsm-reader.html
 		if (name.endsWith(".lsm")) {
-			if (Menus.getCommands().get("Show LSMToolbox")!=null)
-				return tryPlugIn("LSM_Toolbox", "file="+path);
-			else
-				// Use the version in VIB (FIXME: just temporarily, so loading works again)
-				return tryPlugIn("zeiss.LSM_Reader", path);
+			Object obj = tryPlugIn("LSM_Reader", path);
+			if (obj==null && Menus.getCommands().get("Show LSMToolbox")!=null)
+				obj = tryPlugIn("LSM_Toolbox", "file="+path);
+			return obj;
 		}
 
 		// BM: added Bruker file handler 29.07.04
@@ -163,6 +190,13 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 			return tryPlugIn("QT_Movie_Opener", path);
 		}
 
+		// ZVI file handler
+		// Little-endian ZVI and Thumbs.db files start with d0 cf 11 e0
+		// so we can only look at the extension.
+		if (name.endsWith(".zvi")) {
+			return tryPlugIn("ZVI_Reader", path);
+		}
+
 		// University of North Carolina (UNC) file format handler
 		// 'magic' numbers are (int) offsets to data structures and
 		// may change in future releases.
@@ -174,6 +208,12 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		if (name.endsWith(".mrc") || name.endsWith(".rec") ||
 				name.endsWith(".st")) {
 			return tryPlugIn("io.Open_MRC_Leginon", path);
+		}
+
+		// Deltavision file handler
+		// Open DV files generated on Applied Precision DeltaVision systems
+		if (name.endsWith(".dv") || name.endsWith(".r3d")) {
+			return tryPlugIn("Deltavision_Opener", path);
 		}
 
 		// Albert Cardona: read .dat files from the EMMENU software
@@ -293,12 +333,13 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		// if an image was returned, assume success
 		if (o instanceof ImagePlus) return (ImagePlus)o;
 
-		// if null and the file path does not exist, return null
-		if (! new File(path).exists()) return null;
+		// tryPlugIn sets width to IMAGE_OPENED when a plugin that does not
+		// extend ImagePlus successfully opens the image
+		if (width == IMAGE_OPENED) return null;
 
 		// try opening the file with LOCI Bio-Formats plugin - always check this last!
 		// Do not call Bio-Formats if File>Import>Image Sequence is opening this file.
-		if (o==null && (IJ.getVersion().compareTo("1.38j")<0||!IJ.redirectingErrorMessages()) && width != IMAGE_OPENED) {
+		if (o==null && (IJ.getVersion().compareTo("1.38j")<0||!IJ.redirectingErrorMessages()) && (new File(path).exists())) {
 			Object loci = IJ.runPlugIn("loci.plugins.LociImporter", path);
 			if (loci!=null) {
 				// plugin exists and was launched
@@ -321,9 +362,7 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 	} // openImage
 
 	/**
-	* Attempts to open the specified path with the given plugin. If the
-	* plugin extends the ImagePlus class (e.g., BioRad_Reader), set
-	* extendsImagePlus to true, otherwise (e.g., LSM_Reader) set it to false.
+	* Attempts to open the specified path with the given plugin.
 	*
 	* @return A reference to the plugin, if it was successful.
 	*/
@@ -336,10 +375,10 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 					o = null; // invalid image
 				else
 					width = IMAGE_OPENED; // success
-		} else {
-			// plugin does not extend ImagePlus; assume success
+		} else if (o != null) {
+			// plugin was run but does not extend ImagePlus; assume success
 			width = IMAGE_OPENED;
-		}
+		} // ... else plugin was not run/found
 		return o;
 	}
 

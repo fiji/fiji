@@ -334,77 +334,53 @@ public class SigmaPalette extends Thread {
 
 	ImagePlus image;
 
-	public void run( String ignoredArguments ) {
+	public void run( ) {
 
-		image = IJ.getImage();
-		if( image == null ) {
-			IJ.error("There is no current image");
+		ImagePlus cropped = ThreePaneCrop.performCrop( image, x_min, x_max, y_min, y_max, z_min, z_max, false );
+
+		croppedWidth  = (x_max - x_min) + 1;
+		croppedHeight = (y_max - y_min) + 1;
+		croppedDepth  = (z_max - z_min) + 1;
+
+		if( sigmaValues.length > sigmasAcross * sigmasDown ) {
+			IJ.error( "A "+sigmasAcross+"x"+sigmasDown+" layout is not large enough for "+sigmaValues+" + 1 images" );
 			return;
 		}
 
-		Calibration calibration = image.getCalibration();
-                double minimumSeparation = 1;
-                if( calibration != null )
-                        minimumSeparation = Math.min(calibration.pixelWidth,
-                                                     Math.min(calibration.pixelHeight,
-                                                              calibration.pixelDepth));
+		int paletteWidth = croppedWidth * sigmasAcross + (sigmasAcross + 1);
+		int paletteHeight = croppedHeight * sigmasDown + (sigmasDown + 1);
 
-		Roi roi = image.getRoi();
-		if( roi == null ) {
-			IJ.error("There is no current point selection");
-			return;
+		ImageStack newStack = new ImageStack( paletteWidth, paletteHeight );
+		for( int z = 0; z < croppedDepth; ++z ) {
+			FloatProcessor fp = new FloatProcessor( paletteWidth, paletteHeight );
+			newStack.addSlice("",fp);
 		}
+		paletteImage = new ImagePlus("Pick Sigma and Maximum",newStack);
+		setMax(defaultMax);
 
-		if( roi.getType() != Roi.POINT ) {
-			IJ.error("You must have a point selection");
-			return;
+		PaletteCanvas paletteCanvas = new PaletteCanvas( paletteImage, this, croppedWidth, croppedHeight, sigmasAcross, sigmasDown );
+		PaletteStackWindow paletteWindow = new PaletteStackWindow( paletteImage, paletteCanvas, this, defaultMax );
+
+		paletteImage.setSlice( (initial_z - z_min) + 1 );
+
+		for( int sigmaIndex = 0; sigmaIndex < sigmaValues.length; ++sigmaIndex ) {
+			int sigmaY = sigmaIndex / sigmasAcross;
+			int sigmaX = sigmaIndex % sigmasAcross;
+			int offsetX = sigmaX * (croppedWidth + 1) + 1;
+			int offsetY = sigmaY * (croppedHeight + 1) + 1;
+			double sigma = sigmaValues[sigmaIndex];
+			hep.setSigma(sigma);
+			ImagePlus processed = hep.generateImage(cropped);
+			if( ! paletteWindow.manuallyChangedAlready ) {
+				float [] limits = Limits.getStackLimits( processed );
+				int suggestedMax = (int)limits[1];
+				paletteWindow.maxValueScrollbar.setValue( suggestedMax );
+				paletteWindow.maxChanged( suggestedMax );
+			}
+			copyIntoPalette( processed, paletteImage, offsetX, offsetY );
+			paletteImage.updateAndDraw();
 		}
-
-		Polygon p = roi.getPolygon();
-
-		if(p.npoints != 1) {
-			IJ.error("You must have exactly one point selected");
-			return;
-		}
-
-		ImageProcessor processor = image.getProcessor();
-
-		int x = p.xpoints[0];
-		int y = p.ypoints[0];
-		int z = image.getCurrentSlice() - 1;
-
-		int either_side = 40;
-
-		int x_min = x - either_side;
-		int x_max = x + either_side;
-		int y_min = y - either_side;
-		int y_max = y + either_side;
-		int z_min = z - either_side;
-		int z_max = z + either_side;
-
-		int originalWidth = image.getWidth();
-		int originalHeight = image.getHeight();
-		int originalDepth = image.getStackSize();
-
-		if( x_min < 0 )
-			x_min = 0;
-		if( y_min < 0 )
-			y_min = 0;
-		if( z_min < 0 )
-			z_min = 0;
-		if( x_max >= originalWidth )
-			x_max = originalWidth - 1;
-		if( y_max >= originalHeight )
-			y_max = originalHeight - 1;
-		if( z_max >= originalDepth )
-			z_max = originalDepth - 1;
-
-		double [] sigmas = new double[9];
-		for( int i = 0; i < sigmas.length; ++i ) {
-			sigmas[i] = ((i + 1) * minimumSeparation) / 2;
-		}
-
-		makePalette( image, x_min, x_max, y_min, y_max, z_min, z_max, new TubenessProcessor(true), sigmas, 4, 3, 3, z );
 	}
+
 }
 

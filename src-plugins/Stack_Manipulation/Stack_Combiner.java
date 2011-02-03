@@ -117,9 +117,9 @@ public class Stack_Combiner implements PlugIn {
 		}
 
 		GenericDialog gd = new GenericDialog("Combiner");
-		gd.addChoice("Stack 1:", titles, titles[0]);
-		gd.addChoice("Stack 2:", titles, titles[1]);
-		gd.addCheckbox("Combine Vertically", false);
+		gd.addChoice("Stack_1:", titles, titles[0]);
+		gd.addChoice("Stack_2:", titles, titles[1]);
+		gd.addCheckbox("Combine_Vertically", false);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return false;

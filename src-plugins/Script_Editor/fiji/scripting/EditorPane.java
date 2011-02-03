@@ -3,20 +3,27 @@ package fiji.scripting;
 import fiji.scripting.completion.ClassCompletionProvider;
 import fiji.scripting.completion.DefaultProvider;
 
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.Font;
 
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 
-import javax.swing.KeyStroke;
+import java.util.Vector;
+
+import javax.swing.JScrollPane;
+import javax.swing.JViewport;
+import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 
 import javax.swing.event.DocumentEvent;
@@ -24,15 +31,16 @@ import javax.swing.event.DocumentListener;
 
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultEditorKit;
-import javax.swing.text.Document;
 
 import org.fife.ui.autocomplete.AutoCompletion;
 
 import org.fife.ui.rsyntaxtextarea.RSyntaxDocument;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
-import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
+import org.fife.ui.rsyntaxtextarea.Style;
+import org.fife.ui.rsyntaxtextarea.SyntaxScheme;
 
 import org.fife.ui.rtextarea.Gutter;
+import org.fife.ui.rtextarea.GutterIconInfo;
 import org.fife.ui.rtextarea.IconGroup;
 import org.fife.ui.rtextarea.RTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
@@ -42,7 +50,7 @@ import org.fife.ui.rtextarea.ToolTipSupplier;
 public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 	TextEditor frame;
 	String fallBackBaseName;
-	File file;
+	File file, gitDirectory;
 	long fileLastModified;
 	Languages.Language currentLanguage;
 	AutoCompletion autocomp;
@@ -55,6 +63,7 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 
 	public EditorPane(TextEditor frame) {
 		this.frame = frame;
+		setLineWrap(false);
 		setTabSize(8);
 		getActionMap().put(DefaultEditorKit
 				.nextWordAction, wordMovement(+1, false));
@@ -76,6 +85,11 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 		ToolTipManager.sharedInstance().registerComponent(this);
 		getDocument().addDocumentListener(this);
 		currentLanguage = Languages.get("");
+	}
+
+	public void setTabSize(int width) {
+		if (getTabSize() != width)
+			super.setTabSize(width);
 	}
 
 	public void embedWithScrollbars(Container container) {
@@ -173,6 +187,12 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 			setTitle();
 	}
 
+	public boolean isNew() {
+		return !fileChanged() && file == null &&
+			fallBackBaseName == null &&
+			getDocument().getLength() == 0;
+	}
+
 	public void checkForOutsideChanges() {
 		if (frame != null && wasChangedOutside() &&
 				!frame.reload("The file " + file.getName()
@@ -187,7 +207,7 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 
 	public void write(File file) throws IOException {
 		BufferedWriter outFile =
-			new BufferedWriter(new FileWriter(file));
+			new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
 		outFile.write(getText());
 		outFile.close();
 		modifyCount = 0;
@@ -195,23 +215,46 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 	}
 
 	public void setFile(String path) throws IOException {
+		File oldFile = file;
 		file = null;
 		if (path == null)
 			setText("");
 		else {
 			File file = new File(path);
+			if (!file.isAbsolute())
+				file = new File(ij.io.OpenDialog.getDefaultDirectory(), path);
+			int line = 0;
+			try {
+				if (file.getCanonicalPath().equals(oldFile.getCanonicalPath()))
+					line = getCaretLineNumber();
+			} catch (Exception e) { /* ignore */ }
 			if (!file.exists()) {
 				modifyCount = Integer.MIN_VALUE;
 				setFileName(file);
 				return;
 			}
-			read(new BufferedReader(new FileReader(file)),
-				null);
+			StringBuffer string = new StringBuffer();
+			BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+			char[] buffer = new char[16384];
+			for (;;) {
+				int count = reader.read(buffer);
+				if (count < 0)
+					break;
+				string.append(buffer, 0, count);
+			}
+			reader.close();
+			setText(string.toString());
 			this.file = file;
+			if (line > getLineCount())
+				line = getLineCount() - 1;
+			try {
+				setCaretPosition(getLineStartOffset(line));
+			} catch (BadLocationException e) { /* ignore */ }
 		}
 		discardAllEdits();
 		modifyCount = 0;
-		setFileName(file);
+		fileLastModified = file == null || !file.exists() ? 0 :
+			file.lastModified();
 	}
 
 	public void setFileName(String baseName) {
@@ -224,15 +267,28 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 			new TokenFunctions(this).setClassName(name);
 	}
 
-	public void setFileName(File file) {
+	public void setFileName(final File file) {
 		this.file = file;
+		updateGitDirectory();
 		setTitle();
 		if (file != null) {
-			setLanguageByExtension(getExtension(file.getName()));
+			SwingUtilities.invokeLater(new Thread() {
+				public void run() {
+					setLanguageByFileName(file.getName());
+				}
+			});
 			fallBackBaseName = null;
 		}
 		fileLastModified = file == null || !file.exists() ? 0 :
 			file.lastModified();
+	}
+
+	protected void updateGitDirectory() {
+		gitDirectory = new FileFunctions(frame).getGitDirectory(file);
+	}
+
+	public File getGitDirectory() {
+		return gitDirectory;
 	}
 
 	protected String getFileName() {
@@ -258,14 +314,20 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 		return dot < 0 ?  "" : fileName.substring(dot);
 	}
 
-	void setLanguageByExtension(String extension) {
-		setLanguage(Languages.get(extension));
+	protected void setLanguageByFileName(String name) {
+		if (name.equals("Fakefile") || name.endsWith("/Fakefile"))
+			setLanguage(Languages.fakefile);
+		else
+			setLanguage(Languages.get(getExtension(name)));
 	}
 
-	void setLanguage(Languages.Language language) {
+	protected void setLanguage(Languages.Language language) {
 		if (language == null)
 			language = Languages.get("");
 
+		if (fallBackBaseName != null && fallBackBaseName.endsWith(".txt"))
+			fallBackBaseName = fallBackBaseName.substring(0,
+				fallBackBaseName.length() - 4);
 		if (file != null) {
 			String name = file.getName();
 			if (!name.endsWith(language.extension) &&
@@ -274,8 +336,11 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 				if (name.endsWith(ext))
 					name = name.substring(0, name.length()
 							- ext.length());
+				else if (name.endsWith(".txt"))
+					name = name.substring(0, name.length() - 4);
 				file = new File(file.getParentFile(),
 						name + language.extension);
+				updateGitDirectory();
 				modifyCount = Integer.MIN_VALUE;
 			}
 		}
@@ -284,17 +349,57 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 		provider.setProviderLanguage(language.menuLabel);
 
 		// TODO: these should go to upstream RSyntaxTextArea
-		if (language.syntaxStyle != null)
-			setSyntaxEditingStyle(language.syntaxStyle);
-		else if (language.extension.equals(".clj"))
-			getRSyntaxDocument()
-				.setSyntaxStyle(new ClojureTokenMaker());
-		else if (language.extension.equals(".m"))
-			getRSyntaxDocument()
-				.setSyntaxStyle(new MatlabTokenMaker());
+		 try {
+			if (language.syntaxStyle != null)
+				setSyntaxEditingStyle(language.syntaxStyle);
+			else if (language.extension.equals(".clj"))
+				getRSyntaxDocument()
+					.setSyntaxStyle(new ClojureTokenMaker());
+			else if (language.extension.equals(".m"))
+				getRSyntaxDocument()
+					.setSyntaxStyle(new MatlabTokenMaker());
+			else if (language.extension.equals(".ijm"))
+				getRSyntaxDocument()
+					.setSyntaxStyle(new ImageJMacroTokenMaker());
+		}
+		catch (NullPointerException e) {
+			// ignore; this sometimes happens in the TokenMaker...
+		}
 
 		frame.setTitle();
 		frame.updateLanguageMenu(language);
+	}
+
+	public float getFontSize() {
+		return getFont().getSize2D();
+	}
+
+	public void setFontSize(float size) {
+		increaseFontSize(size / getFontSize());
+	}
+
+	public void increaseFontSize(float factor) {
+		if (factor == 1)
+			return;
+		SyntaxScheme scheme = getSyntaxScheme();
+		for (Style style : scheme.styles) {
+			if (style == null || style.font == null)
+				continue;
+			float size = (float)Math.max(5, style.font.getSize2D() * factor);
+			style.font = style.font.deriveFont(size);
+		}
+		Font font = getFont();
+		float size = (float)Math.max(5, font.getSize2D() * factor);
+		setFont(font.deriveFont(size));
+		setSyntaxScheme(scheme);
+		Component parent = getParent();
+		if (parent instanceof JViewport) {
+			parent = parent.getParent();
+			if (parent instanceof JScrollPane) {
+				parent.repaint();
+			}
+		}
+		parent.repaint();
 	}
 
 	protected RSyntaxDocument getRSyntaxDocument() {
@@ -303,6 +408,50 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 
 	public ClassNameFunctions getClassNameFunctions() {
 		return new ClassNameFunctions(frame, provider);
+	}
+
+	public void toggleBookmark() {
+		toggleBookmark(getCaretLineNumber());
+	}
+
+	public void toggleBookmark(int line) {
+		if (gutter != null) try {
+			gutter.toggleBookmark(line);
+		} catch (BadLocationException e) { /* ignore */ }
+	}
+
+	public class Bookmark {
+		int tab;
+		GutterIconInfo info;
+
+		public Bookmark(int tab, GutterIconInfo info) {
+			this.tab = tab;
+			this.info = info;
+		}
+
+		public int getLineNumber() {
+			try {
+				return getLineOfOffset(info.getMarkedOffset());
+			} catch (BadLocationException e) {
+				return -1;
+			}
+		}
+
+		public void setCaret() {
+			frame.switchTo(tab);
+			setCaretPosition(info.getMarkedOffset());
+		}
+
+		public String toString() {
+			return "Line " + (getLineNumber() + 1) + " (" + getFileName() + ")";
+		}
+	}
+
+	public void getBookmarks(int tab, Vector<Bookmark> result) {
+		if (gutter == null)
+			return;
+		for (GutterIconInfo info : gutter.getBookmarks())
+			result.add(new Bookmark(tab, info));
 	}
 
 	public void startDebugging() {
@@ -326,5 +475,59 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 
 	public void terminate() {
 		throw new RuntimeException("TODO: unimplemented!");
+	}
+
+	/** Adapted from ij.plugin.frame.Editor */
+	public int zapGremlins() {
+		final char[] chars = getText().toCharArray();
+		int count=0;
+		boolean inQuotes = false;
+		char quoteChar = 0;
+		for (int i=0; i<chars.length; i++) {
+			char c = chars[i];
+			if (!inQuotes && (c=='"' || c=='\'')) {
+				inQuotes = true;
+				quoteChar = c;
+			} else  {
+				if (inQuotes && (c==quoteChar || c=='\n'))
+				inQuotes = false;
+			}
+			if (!inQuotes && c!='\n' && c!='\t' && (c<32||c>127)) {
+				count++;
+				chars[i] = ' ';
+			}
+		}
+		if (count>0) {
+			beginAtomicEdit();
+			try {
+				setText(new String(chars));
+			} catch (Throwable t) {
+				t.printStackTrace();
+			} finally {
+				endAtomicEdit();
+			}
+		}
+		return count;
+	}
+
+	public void convertTabsToSpaces() {
+		beginAtomicEdit();
+		try {
+			super.convertTabsToSpaces();
+		} catch (Throwable t) {
+			t.printStackTrace();
+		} finally {
+			endAtomicEdit();
+		}
+	}
+	public void convertSpacesToTabs() {
+		beginAtomicEdit();
+		try {
+			super.convertSpacesToTabs();
+		} catch (Throwable t) {
+			t.printStackTrace();
+		} finally {
+			endAtomicEdit();
+		}
 	}
 }

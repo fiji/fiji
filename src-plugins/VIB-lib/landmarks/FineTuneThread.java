@@ -129,7 +129,7 @@ public class FineTuneThread extends Thread {
 		listener.fineTuneThreadFinished( FineTuneProgressListener.COMPLETED, r, this );
 	}
 
-	boolean pleaseStop = false;
+	volatile boolean pleaseStop = false;
 
 	public void askToFinish() {
 		pleaseStop = true;

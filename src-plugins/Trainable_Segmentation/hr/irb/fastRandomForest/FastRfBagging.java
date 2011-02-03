@@ -108,7 +108,7 @@ class FastRfBagging extends RandomizableIteratedSingleClassifierEnhancer
     getCapabilities().testWithFail(data);
 
     // remove instances with missing class
-    data = new Instances(data);
+    //data = new Instances(data); // not sure this line is necessary, it duplicates the data
     data.deleteWithMissingClass();
 
     if ( ! (m_Classifier instanceof FastRandomTree) )

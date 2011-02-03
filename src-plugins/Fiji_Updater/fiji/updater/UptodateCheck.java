@@ -29,17 +29,25 @@ public class UptodateCheck implements PlugIn {
 	final static long reminderInterval = 86400 * 7; // one week
 
 	public void run(String arg) {
-		if ("quick".equals(arg))
+		Util.useSystemProxies();
+		if ("quick".equals(arg)) {
+			// "quick" is used on startup; don't produce an error in the Debian packaged version
+			if (Updater.isDebian())
+				return;
 			checkOrShowDialog();
-		else if ("verbose".equals(arg)) {
-			String result = checkOrShowDialog();
-			if (result != null)
-				JOptionPane.showMessageDialog(IJ.getInstance(),
-					result, "Up-to-date check",
-					JOptionPane.INFORMATION_MESSAGE);
+		} else {
+			if (Updater.errorIfDebian())
+				return;
+			if ("verbose".equals(arg)) {
+				String result = checkOrShowDialog();
+				if (result != null)
+					JOptionPane.showMessageDialog(IJ.getInstance(),
+						result, "Up-to-date check",
+						JOptionPane.INFORMATION_MESSAGE);
+			}
+			else if ("config".equals(arg) && !isBatchMode())
+				config();
 		}
-		else if ("config".equals(arg) && !isBatchMode())
-			config();
 	}
 
 	public String checkOrShowDialog() {
@@ -50,12 +58,14 @@ public class UptodateCheck implements PlugIn {
 	}
 
 	public String check() {
+		if (neverRemind())
+			return "You wanted never to be reminded.";
 		if (shouldRemindLater())
 			return "You wanted to be reminded later.";
 		if (isBatchMode())
 			return "No check will be performed in batch mode";
 		if (!canWrite())
-			return "Your Fiji is read-onyl!";
+			return "Your Fiji is read-only!";
 		if (!haveNetworkConnection())
 			return "No network connection available!";
 		localLastModified = getLocalLastModified();
@@ -68,6 +78,14 @@ public class UptodateCheck implements PlugIn {
 
 	public static long now() {
 		return new Date().getTime() / 1000;
+	}
+
+	public boolean neverRemind() {
+		String latestNag = Prefs.get(latestReminderKey, null);
+		if (latestNag == null || latestNag.equals(""))
+			return false;
+		long time = Long.parseLong(latestNag);
+		return time == Long.MAX_VALUE;
 	}
 
 	public boolean shouldRemindLater() {

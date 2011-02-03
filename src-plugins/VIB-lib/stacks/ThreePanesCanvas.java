@@ -18,6 +18,10 @@
     or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
     License for more details.
 
+    In addition, as a special exception, the copyright holders give
+    you permission to combine this program with free software programs or
+    libraries that are released under the Apache Public License. 
+
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -89,6 +93,8 @@ public class ThreePanesCanvas extends ImageCanvas {
 
 	public void mouseMoved(MouseEvent e) {
 
+		super.mouseMoved(e);
+
 		double off_screen_x = offScreenX(e.getX());
 		double off_screen_y = offScreenY(e.getY());
 
@@ -97,6 +103,22 @@ public class ThreePanesCanvas extends ImageCanvas {
 		owner.mouseMovedTo( (int)off_screen_x, (int)off_screen_y, plane, shift_key_down );
 	}
 
+	public void realZoom( boolean in, int x, int y ) {
+		if( in )
+			super.zoomIn(screenX(x),screenY(y));
+		else
+			super.zoomOut(screenX(x),screenY(y));
+	}
+
+	@Override
+	public void zoomIn( int sx, int sy ) {
+		owner.zoom( true, (int)offScreenX(sx), (int)offScreenY(sy), plane );
+	}
+
+	@Override
+	public void zoomOut( int sx, int sy ) {
+		owner.zoom( false, (int)offScreenX(sx), (int)offScreenY(sy), plane );
+	}
 
 	// ------------------------------------------------------------------------
 

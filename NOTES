@@ -19,7 +19,7 @@ and wrap them, together with Java, and make an easy installable package.
 Building Fiji (including the submodules) should be as easy as calling
 "make" in the project root directory.
 
-Of course, this assumes that you have a Bash, make and g++ handy.  On
+Of course, this assumes that you have a Bash, make and gcc handy.  On
 Linux/Unix and MacOSX, this is no problem.
 
 For Windows, the easiest way is probably to use the msysGit package

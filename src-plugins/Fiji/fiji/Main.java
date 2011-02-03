@@ -10,9 +10,11 @@ import ij.plugin.PlugIn;
 
 import java.awt.AWTEvent;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dialog;
 import java.awt.Frame;
 import java.awt.Image;
+import java.awt.Label;
 import java.awt.Toolkit;
 import java.awt.Window;
 
@@ -95,7 +97,7 @@ public class Main implements AWTEventListener {
 
 	public static Window getWindow(String title) {
 		for (Window window : all.keySet())
-			if (window != null && getTitle(window).equals(title))
+			if (window != null && title.equals(getTitle(window)))
 				return window;
 		return null;
 	}
@@ -104,7 +106,7 @@ public class Main implements AWTEventListener {
 		synchronized (title) {
 			synchronized (all) {
 				Window window = getWindow(title);
-				if (window != null)
+				if (window != null || timeout == 0)
 					return window;
 				waiters.add(title);
 			}
@@ -118,6 +120,149 @@ public class Main implements AWTEventListener {
 				return null;
 			}
 		}
+	}
+
+	/**
+	 * For a given (visible) component, return a "component path"
+	 *
+	 * The path describes recursively in which container the component is,
+	 * possibly taking labels into account. A typical path looks like this:
+	 *
+	 *	Some Dialog>java.awt.Panel[2]>java.awt.TextField{Name:}
+	 *
+	 * If the component cannot be described (e.g. when the window is not
+	 * visible yet, or when the component is in the process of being added
+	 * to its container, this function returns null.
+	 */
+	public static String getPath(Component component) {
+		String path = "";
+		for (;;) {
+			if (component instanceof Window)
+				return getTitle((Window)component) + path;
+
+			Container parent = component.getParent();
+			if (parent == null)
+				return null;
+			Class componentClass = component.getClass();
+			int index = 0, sameComponent = 0;
+			Set<String> labels = new HashSet<String>();
+			Label lastLabel = null;
+			for (Component item : parent.getComponents()) {
+				if (item instanceof Label) {
+					lastLabel = (Label)item;
+					String txt = lastLabel.getText();
+					if (labels.contains(txt) ||
+							txt.indexOf('>') >= 0 ||
+							txt.indexOf("}") >= 0 ||
+							txt.startsWith("["))
+						lastLabel = null;
+					else
+						labels.add(txt);
+					sameComponent = 1;
+				}
+				if (item == component) {
+					path = ">" + componentClass.getName() +
+						(lastLabel == null ?
+						 "[" + index + "]" :
+						 "{" + lastLabel.getText() + "}"
+						 + (sameComponent > 1 ?
+							 "[" + sameComponent
+							 + "]" : "")) + path;
+					component = parent;
+					break;
+				}
+				if (item.getClass() == componentClass) {
+					index++;
+					sameComponent++;
+				}
+			}
+			if (parent != component)
+				return null;
+		}
+	}
+
+	public static Component getComponent(String path) {
+		return getComponent(path, -1);
+	}
+
+	/**
+	 * Return a component for a given component path
+	 *
+	 * If the respective window is not visible, wait for the given number
+	 * of milliseconds (or forever, if timeout == -1)
+	 */
+	public static Component getComponent(String path, long timeout) {
+		if (path == null)
+			return null;
+		String[] list = path.split(">");
+		Component component = waitForWindow(list[0], timeout);
+		if (component == null)
+			return null;
+
+		for (int i = 1; i < list.length; i++) {
+			Container parent = (Container)component;
+
+			int bracket = list[i].indexOf('[');
+			int bracket2 = list[i].indexOf('{');
+			if (bracket == -1 || (bracket2 != -1 && bracket2 < bracket))
+				bracket = bracket2;
+
+			String componentClass = list[i].substring(0, bracket);
+			if (bracket == bracket2) {
+				int end = list[i].indexOf('}', bracket2);
+				String txt = list[i].substring(bracket2 + 1, end);
+				int sameComponent = 1;
+				if (end + 1 < list[i].length()) {
+					if (list[i].charAt(end + 1) != '[' ||
+							!list[i].endsWith("]"))
+						throw new RuntimeException(
+							"Internal error");
+					String num = list[i].substring(end + 2,
+						list[i].length() - 1);
+					sameComponent = Integer.parseInt(num);
+				}
+				component = null;
+				for (Component item : parent.getComponents()) {
+					if (txt != null) {
+						if ((item instanceof Label) &&
+								((Label)item)
+								.getText()
+								.equals(txt))
+							txt = null;
+					}
+					if (!componentClass.equals(item
+							.getClass().getName()) ||
+							--sameComponent > 0)
+						continue;
+					component = item;
+					break;
+				}
+			}
+			else {
+				int end = list[i].indexOf(']', bracket);
+				int index = Integer.parseInt(list[i]
+					.substring(bracket + 1, end));
+
+				for (Component item : parent.getComponents()) {
+					if (!componentClass.equals(
+							item.getClass().getName()))
+						continue;
+
+					if (index > 0)
+						index--;
+					else {
+						component = item;
+						break;
+					}
+				}
+			}
+
+			if (component == null) {
+				throw new RuntimeException("Component "
+					+ path + " not found");
+			}
+		}
+		return component;
 	}
 
 	/* Unfortunately, we have to support Java 1.5 because of MacOSX... */
@@ -183,12 +328,21 @@ public class Main implements AWTEventListener {
 	 * command line arguments are parsed.
 	 */
 	public static void setup() {
+		new User_Plugins().run(null);
 		if (IJ.getInstance() != null) {
-			new User_Plugins().run(null);
-			SampleImageLoader.install();
-			installRecentCommands();
 			new Thread() {
 				public void run() {
+					/*
+					 * Do not run updater when command line
+					 * parameters were specified.
+					 * Fiji automatically adds -eval ...
+					 * and -port7, so there should be at
+					 * least 3 parameters anyway.
+					 */
+					String[] ijArgs = ImageJ.getArgs();
+					if (ijArgs != null && ijArgs.length > 3)
+						return;
+
 					runUpdater();
 				}
 			}.start();

@@ -1,4 +1,14 @@
-- BeanShell seems not to import the second time a BeanShell interpreter is
+- "Dialog.create" and "drawText" are not identified as builtin functions correctly
+
+- add proper help for Macro functions
+
+- take functions.html from ij.jar (or include it in Script_Editor.jar)
+
+- Identify non-explicit imports and add an option to make them explicit.
+
+- enable Add import for all languages
+
+- Beanshell seems not to import the second time a Beanshell interpreter is
   opened (reported by Stephan Saalfeld).
 
 - Enable to set breakpoints via the Breakpoints menu and F9 (IIRC).
@@ -9,7 +19,3 @@
 
 - when debugging finished, give the user a chance to save resulting images
   or some such before closing the debuggee.
-
-- Integrate Fiji Build much better.
-
-- Identify non-explicit imports and add an option to make them explicit.

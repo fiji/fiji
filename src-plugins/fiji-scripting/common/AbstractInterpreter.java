@@ -1,5 +1,7 @@
 package common;
 
+import fiji.InspectJar;
+
 import ij.plugin.PlugIn;
 import ij.IJ;
 import ij.gui.GenericDialog;
@@ -49,16 +51,21 @@ import java.io.File;
 import java.io.Writer;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+
+import java.net.URL;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
 import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Iterator;
 import java.util.Collections;
 import java.util.regex.Pattern;
 import java.util.Scanner;
+import java.util.Set;
 
 public abstract class AbstractInterpreter implements PlugIn {
 
@@ -692,12 +699,6 @@ public abstract class AbstractInterpreter implements PlugIn {
 	/** Executed inside the executer thread right before the thread will die. */
 	protected void threadQuitting() {}
 
-	/** Enable tab chars in the prompt. */
-	protected String fix(String text) {
-		return text.replaceAll("\\\\n", "\n")
-			   .replaceAll("\\\\t", "\t");
-	}
-
 	/** Insert a tab in the prompt (in replacement for Component focus)*/
 	synchronized protected void doTab(ActionEvent ae) {
 		String prompt_text = prompt.getText();
@@ -930,5 +931,95 @@ public abstract class AbstractInterpreter implements PlugIn {
 			scanner.close();
 		}
 		return new ArrayList[]{blocks, valid};
+	}
+
+	protected static boolean hasPrefix(String subject, Set<String> prefixes) {
+		for (String prefix : prefixes)
+			if (subject.startsWith(prefix))
+				return true;
+		return false;
+	}
+
+	protected abstract String getImportStatement(String packageName, Iterable<String> classNames);
+
+	public String getImportStatement() {
+		StringBuffer buffer = new StringBuffer();
+		Map<String, List<String>> classNames = getDefaultImports();
+		for (String packageName : classNames.keySet())
+			buffer.append(getImportStatement(packageName, classNames.get(packageName)));
+		return buffer.toString();
+	}
+
+	/** pre-import all ImageJ java classes and TrakEM2 java classes */
+	public void importAll() {
+		if (System.getProperty("jnlp") != null) {
+			println("Because Fiji was started via WebStart, no packages were imported implicitly");
+			return;
+		}
+
+		String statement = getImportStatement();
+		try {
+			eval(statement);
+		} catch (Throwable e) {
+			RefreshScripts.printError(e);
+			return;
+		}
+		println("All ImageJ and java.lang"
+			+ (statement.indexOf("trakem2") > 0 ? " and TrakEM2" : "")
+			+ " classes imported.");
+	}
+
+	protected static Map<String, List<String>> defaultImports;
+
+	public static Map<String, List<String>> getDefaultImports() {
+		if (defaultImports != null)
+			return defaultImports;
+
+		final String[] classNames = {
+			"ij.IJ", "java.lang.String", "ini.trakem2.Project", "script.imglib.math.Compute"
+		};
+		InspectJar inspector = new InspectJar();
+		for (String className : classNames) try {
+			String baseName = className.substring(className.lastIndexOf('.') + 1);
+			URL url = Class.forName(className).getResource(baseName + ".class");
+			inspector.addJar(url);
+		} catch (Exception e) {
+			if (IJ.debugMode)
+				IJ.log("Warning: class " + className
+						+ " was not found!");
+		}
+		defaultImports = new HashMap<String, List<String>>();
+		Set<String> prefixes = new HashSet<String>();
+		prefixes.add("script.");
+		for (String className : classNames)
+			prefixes.add(className.substring(0, className.lastIndexOf('.')));
+		for (String className : inspector.classNames(true)) {
+			if (!hasPrefix(className, prefixes))
+				continue;
+			int dot = className.lastIndexOf('.');
+			String packageName = dot < 0 ? "" : className.substring(0, dot);
+			String baseName = className.substring(dot + 1);
+			List<String> list = defaultImports.get(packageName);
+			if (list == null) {
+				list = new ArrayList<String>();
+				defaultImports.put(packageName, list);
+			}
+			list.add(baseName);
+		}
+		// remove non-unique class names
+		Map<String, String> reverse = new HashMap<String, String>();
+		for (String packageName : defaultImports.keySet()) {
+			Iterator<String> iter = defaultImports.get(packageName).iterator();
+			while (iter.hasNext()) {
+				String className = iter.next();
+				if (reverse.containsKey(className)) {
+					iter.remove();
+					defaultImports.get(reverse.get(className)).remove(className);
+				}
+				else
+					reverse.put(className, packageName);
+			}
+		}
+		return defaultImports;
 	}
 }

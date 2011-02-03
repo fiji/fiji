@@ -225,7 +225,7 @@ public class Stitch_Image_Grid_Sequence implements PlugIn
 			replaceZ = "\\\\\\\\";
 		}
 		
-		final int gridSize = gridLayout.sizeX + gridLayout.sizeY;
+		final int gridSize = gridLayout.sizeX * gridLayout.sizeY;
 		
 		for(int z = 0; z < nSections; z++)
 		{

@@ -1,0 +1,114 @@
+// Take a snapshot with white background after a delay specified in a dialog
+
+import fiji.selection.Select_Bounding_Box;
+
+import ij.IJ;
+import ij.ImagePlus;
+
+import ij.gui.GenericDialog;
+import ij.gui.Roi;
+
+import ij.plugin.ScreenGrabber;
+
+import ij.process.ImageProcessor;
+
+import java.awt.Color;
+import java.awt.Dialog;
+import java.awt.EventQueue;
+import java.awt.Frame;
+import java.awt.KeyboardFocusManager;
+import java.awt.Panel;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.Window;
+
+public class Snapshot extends Thread {
+	protected long delay;
+	protected Frame whiteBackground;
+	protected Window window;
+	protected Point location;
+
+	public Snapshot(long delay) {
+		this.delay = delay;
+	}
+
+	public void run() {
+		Thread.sleep(delay);
+		window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+		if (window == null) {
+			IJ.showMessage("No focused ImageJ window!");
+			return;
+		}
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+		whiteBackground = new Frame();
+		whiteBackground.setUndecorated(true);
+		panel = new Panel();
+		panel.setSize(screenSize);
+		panel.setMinimumSize(screenSize);
+		panel.setBackground(Color.WHITE);
+		whiteBackground.add(panel);
+		whiteBackground.pack();
+		whiteBackground.setExtendedState(Frame.MAXIMIZED_BOTH);
+		whiteBackground.setVisible(true);
+		toFrontAndSnap(window);
+	}
+
+	public void toFront(Window window) {
+		// work around Metacity (GNOME) problem as per
+		// http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6472274
+		if (window.isActive())
+			return;
+		if (location == null)
+			location = window.getLocationOnScreen();
+		window.setVisible(false);
+		window.toFront();
+		window.setVisible(true);
+		window.setLocation(0, 0);
+		window.setLocation(location.x, location.y);
+	}
+
+	public void toFrontAndSnap(Window window) {
+		toFront(window);
+		Thread.sleep(200);
+		snapLater(4);
+	}
+
+	public void snapLater(/* final */ int manana) {
+		toFront(window);
+		if (manana <= 0) {
+			Thread.sleep(100);
+			snap();
+			return;
+		}
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				snapLater(manana - 1);
+			}
+		});
+	}
+
+	public void snap() {
+		ImageProcessor imageProcessor = new ScreenGrabber().captureScreen().getProcessor();
+		Point upperLeft = whiteBackground.getLocationOnScreen();
+		Dimension size = whiteBackground.getSize();
+		whiteBackground.dispose();
+		Rectangle rect = new Rectangle(upperLeft.x, upperLeft.y,
+			imageProcessor.getWidth() - upperLeft.x, imageProcessor.getHeight() - upperLeft.y);
+		rect = Select_Bounding_Box.getBoundingBox(imageProcessor, rect, 0xffffff);
+		imageProcessor.setRoi(new Roi(rect));
+		String title = "Delayed snapshot";
+		if (window instanceof Frame)
+			title = "Snapshot of " + ((Frame)window).getTitle();
+		else if (window instanceof Dialog)
+			title = "Snapshot of " + ((Dialog)window).getTitle();
+		new ImagePlus(title, imageProcessor.crop()).show();
+	}
+}
+
+gd = new GenericDialog("Delay");
+gd.addSlider("Delay (secs.): ", 0, 20, 5);
+gd.showDialog();
+
+if (!gd.wasCanceled())
+	new Snapshot((long)(1000 * gd.getNextNumber())).start();

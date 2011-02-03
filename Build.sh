@@ -40,9 +40,15 @@ esac
 test -z "$JAVA_HOME" &&
 JAVA_HOME="$("$CWD"/precompiled/fiji-"$platform" --print-java-home)"
 
+if test ! -d "$JAVA_HOME"
+then
+	JAVA_HOME="$CWD"/java/$java_submodule
+	JAVA_HOME="$JAVA_HOME"/"$(ls -t "$JAVA_HOME" | head -n 1)"
+fi
+
 # need to clone java submodule
 test -f "$JAVA_HOME/lib/tools.jar" || test -f "$JAVA_HOME/../lib/tools.jar" ||
-test -f java/"$java_submodule"/Home/lib/ext/vecmath.jar || {
+test -f "$CWD"/java/"$java_submodule"/Home/lib/ext/vecmath.jar || {
 	echo "No JDK found; cloning it"
 	JAVA_SUBMODULE=java/$java_submodule
 	git submodule init "$JAVA_SUBMODULE" && (
@@ -80,27 +86,39 @@ variables=$(handle_variables "$@")
 jar=jars/fake.jar
 pre_jar=precompiled/${jar##*/}
 source_dir=src-plugins/fake
-source=$source_dir/fiji/build/Fake.java
+sources=$source_dir/fiji/build/*.java
+
+jarUpToDate () {
+	test -f "$CWD/$jar" || return 1
+	for source in $sources
+	do
+		test "$CWD/$source" -nt "$CWD/$jar" && return 1
+	done
+	return 0
+}
 
 # make sure fake.jar is up-to-date
 test "a$targets" != a$jar &&
-test ! -f "$CWD"/$jar -o "$CWD"/$source -nt "$CWD"/$jar && {
+! jarUpToDate && {
 	(cd "$CWD" && sh "$(basename "$0")" $variables $jar) || exit
 }
 
 # make sure the Fiji launcher is up-to-date
 test "a$targets" != a$jar -a "a$targets" != afiji &&
-test ! -f "$CWD"/fiji -o "$CWD"/fiji.cxx -nt "$CWD"/fiji$exe && {
+test ! -f "$CWD"/fiji -o "$CWD"/fiji.c -nt "$CWD"/fiji$exe && {
 	(cd "$CWD" && sh "$(basename "$0")" $variables fiji) || exit
 }
 
 # on Win64, with a 32-bit compiler, do not try to compile
 case $platform in
 win64)
-	case "$(g++ --version)" in
-	*mingw32*)
+	W64_GCC=/src/mingw-w64/sysroot/bin/x86_64-w64-mingw32-gcc.exe
+	test -f "$W64_GCC" && export CC="$W64_GCC"
+
+	case "$CC,$(gcc --version)" in
+	,*mingw32*)
 		# cannot compile!
-		test "$CWD"/fiji.exe -nt "$CWD"/fiji.cxx &&
+		test "$CWD"/fiji.exe -nt "$CWD"/fiji.c &&
 		test "$CWD"/fiji.exe -nt "$CWD"/precompiled/fiji-win64.exe &&
 		test "$CWD"/fiji.exe -nt "$CWD"/Fakefile &&
 		test "$CWD"/fiji.exe -nt "$CWD"/$jar ||
@@ -148,5 +166,5 @@ $SYSTEM_JAVA -classpath "$CWD"/$pre_jar fiji.build.Fake "$@"
 
 # fall back to compiling and running with system Java
 mkdir -p "$CWD"/build &&
-$SYSTEM_JAVAC -d "$CWD"/build/ -source 1.3 -target 1.3 "$CWD"/$source &&
+$SYSTEM_JAVAC -d "$CWD"/build/ "$CWD"/$sources &&
 $SYSTEM_JAVA -classpath "$CWD"/build fiji.build.Fake "$@"

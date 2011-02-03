@@ -1,0 +1,129 @@
+#!/bin/sh
+// 2>&1 | :; exec "$(dirname "$0")"/../../fiji "$0" "$@" # exec with fiji */
+
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
+
+import java.net.URL;
+
+import java.util.HashSet;
+
+url = "http://rsb.info.nih.gov/ij/developer/macro/functions.html";
+
+prefixes = new HashSet();
+keywords = new HashSet();
+functions = new HashSet();
+
+in = new BufferedReader(new InputStreamReader(new URL(url).openStream()));
+while ((line = in.readLine()) != null) {
+	if (line.indexOf("<blockquote>") < 0)
+		continue;
+	while ((line = in.readLine()) != null && !line.trim().equals(""))
+		; // ignore
+	if (line == null || (line = in.readLine()) == null)
+		break;
+	end = line.indexOf('(');
+	if (end < 0)
+		end = line.indexOf("</b>");
+	if (end < 0)
+		end = line.length();
+	if (!line.startsWith("<b>") || line.indexOf('.') < 0 || line.indexOf('.') > end)
+		continue;
+	do {
+		line = line.substring(3, end).trim();
+		functions.add(line);
+		prefixes.add(line.substring(0, line.indexOf('.')));
+		while ((line = in.readLine()) != null && line.indexOf("</blockquote>") < 0 && !line.startsWith("<b>"))
+			; // ignore
+		end = line.indexOf('(');
+		if (end < 0)
+			end = line.indexOf("</b>");
+		if (end < 0)
+			end = line.length();
+	} while (line.startsWith("<b>") && line.indexOf('.') > 0 && line.indexOf('.') < end);
+}
+in.close();
+
+inKeywords = false;
+url = "http://rsb.info.nih.gov/ij/source/ij/macro/MacroConstants.java";
+in = new BufferedReader(new InputStreamReader(new URL(url).openStream()));
+while ((line = in.readLine()) != null) {
+	if (line.indexOf(" keywords = ") >= 0)
+		inKeywords = true;
+	else if (inKeywords && line.indexOf("=") >= 0)
+		inKeywords = false;
+	while ((i = line.indexOf('"')) >= 0) {
+		end = line.indexOf('"', i + 1);
+		if (end < 0)
+			break;
+		word = line.substring(i + 1, end);
+		if (!prefixes.contains(word)) {
+			if (inKeywords)
+				keywords.add(word);
+			else
+				functions.add(word);
+		}
+		line = line.substring(end + 1);
+	}
+}
+in.close();
+
+print("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
+	+ "<TokenMakerDefinition>\n"
+	+ "<general>\n"
+	+ "<package>fiji.scripting</package>\n"
+	+ "<className>ImageJMacroTokenMaker</className>\n"
+	+ "<extendedClass>AbstractJFlexCTokenMaker</extendedClass>\n"
+	+ "<classComment/>\n"
+	+ "<ignoreCase>false</ignoreCase>\n"
+	+ "</general>\n"
+	+ "<comments>\n"
+	+ "<lineComments enabled=\"true\" start=\"//\"/>\n"
+	+ "<multiLineComments enabled=\"true\" end=\"*/\" start=\"/*\"/>\n"
+	+ "<docComments enabled=\"false\" end=\"\" start=\"\"/>\n"
+	+ "</comments>\n"
+	+ "<keywords>");
+for (String keyword : keywords)
+	print("<keyword>" + keyword + "</keyword>");
+print("</keywords>\n"
+	+ "<dataTypes/>\n"
+	+ "<functions>");
+for (String function : functions)
+	print("<function>" + function + "</function>");
+print("</functions>\n"
+	+ "<stringLiterals enabled=\"true\" multiLine=\"false\"/>\n"
+	+ "<charLiterals enabled=\"true\" multiLine=\"false\"/>\n"
+	+ "<backtickLiterals enabled=\"false\"/>\n"
+	+ "<operators>\n"
+	+ "<operator>!</operator>\n"
+	+ "<operator>%</operator>\n"
+	+ "<operator>%=</operator>\n"
+	+ "<operator>&amp;</operator>\n"
+	+ "<operator>&amp;&amp;</operator>\n"
+	+ "<operator>*</operator>\n"
+	+ "<operator>*=</operator>\n"
+	+ "<operator>+</operator>\n"
+	+ "<operator>++</operator>\n"
+	+ "<operator>+=</operator>\n"
+	+ "<operator>,</operator>\n"
+	+ "<operator>-</operator>\n"
+	+ "<operator>--</operator>\n"
+	+ "<operator>-=</operator>\n"
+	+ "<operator>/</operator>\n"
+	+ "<operator>/=</operator>\n"
+	+ "<operator>:</operator>\n"
+	+ "<operator>&lt;</operator>\n"
+	+ "<operator>&lt;&lt;</operator>\n"
+	+ "<operator>&lt;&lt;=</operator>\n"
+	+ "<operator>=</operator>\n"
+	+ "<operator>==</operator>\n"
+	+ "<operator>&gt;</operator>\n"
+	+ "<operator>&gt;&gt;</operator>\n"
+	+ "<operator>&gt;&gt;=</operator>\n"
+	+ "<operator>?</operator>\n"
+	+ "<operator>^</operator>\n"
+	+ "<operator>|</operator>\n"
+	+ "<operator>||</operator>\n"
+	+ "<operator>~</operator>\n"
+	+ "</operators>\n"
+	+ "</TokenMakerDefinition>");

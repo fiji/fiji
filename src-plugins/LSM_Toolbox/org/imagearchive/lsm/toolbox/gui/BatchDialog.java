@@ -239,11 +239,11 @@ public class BatchDialog extends JDialog {
         if (path.isDirectory()) {
             String[] children = path.list();
             for (int i=0; i<children.length; i++) {
-            	tm = processPath(tm, new File(path, children[i]));
+		tm = processPath(tm, new File(path, children[i]));
             }
         } else {
-        	if (ImageFilter.getExtension(path).equals("lsm"))
-        	tm.addFile(path);
+		if (ImageFilter.getExtension(path).equals("lsm"))
+		tm.addFile(path);
         }
         return tm;
 

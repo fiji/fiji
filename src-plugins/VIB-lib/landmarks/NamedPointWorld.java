@@ -23,7 +23,7 @@ import java.awt.event.*;
 import java.io.*;
 import java.util.regex.*;
 
-import tracing.PathAndFillManager;
+import util.XMLFunctions;
 
 import vib.FastMatrix;
 
@@ -98,7 +98,7 @@ public class NamedPointWorld {
 		StringBuffer result = new StringBuffer("<pointworld set=\"");
 		result.append( set );
 		result.append( "\" name=\"" );
-		result.append( PathAndFillManager.escapeForXMLAttributeValue(name) );
+		result.append( XMLFunctions.escapeForXMLAttributeValue(name) );
 		result.append( "\"");
 		if( set ) {
 			result.append( " x=\"" );
@@ -149,5 +149,4 @@ public class NamedPointWorld {
 		return "landmark {\n\tname \""+escape(name)+"\"\n\tlocation "+
 			x+" "+y+" "+z+"\n}";
 	}
-
 }

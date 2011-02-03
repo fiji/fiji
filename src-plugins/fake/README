@@ -30,11 +30,11 @@ all <- plugins/*.jar fiji
 plugins/xyz.jar <- submodule
 plugins/abc.jar <- src-plugins/abc/*.java
 
-# C++ stuff
-CXXFLAGS=-g -O2
-CXXFLAGS(win32)=-DWIN32 -DJRE_HOME=java/win32
+# C stuff
+CCFLAGS=-g -O2
+CCFLAGS(win32)=-DWIN32 -DJRE_HOME=java/win32
 LDFLAGS(linux,linux-amd64,macosx)=-ldl
-fiji <- fiji.cxx
+fiji <- fiji.c
 -- snap --
 
 Empty lines and lines starting with a "#" are ignored.

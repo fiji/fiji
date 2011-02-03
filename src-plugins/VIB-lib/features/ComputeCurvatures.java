@@ -24,6 +24,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
+ * In addition, as a special exception, the copyright holders give
+ * you permission to combine this program with free software programs or
+ * libraries that are released under the Apache Public License. 
+ *
  * @author Stephan Preibisch
  * @version 1.0
  *
@@ -1474,16 +1478,19 @@ public class ComputeCurvatures implements Runnable
      */
     public FloatArray3D StackToFloatArray(ImageStack stack)
     {
-        Object[] imageStack = stack.getImageArray();
         int width = stack.getWidth();
         int height = stack.getHeight();
         int nstacks = stack.getSize();
+        Object[] imageStack = new Object[nstacks];
 
-        if (imageStack == null || imageStack.length == 0)
+        if (nstacks == 0)
         {
             IJ.error("Image Stack is empty.");
             return null;
         }
+
+	for( int z = 0; z < nstacks; ++z )
+		imageStack[z] = stack.getPixels(z+1);
 
         if (imageStack[0] instanceof int[])
         {

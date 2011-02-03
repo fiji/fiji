@@ -18,12 +18,12 @@
 	</echo>
 </target>
  <target name="compress" depends="" description="generate the distribution">
- 	<jar jarfile="LSM_Toolbox.jar">
- 		<fileset dir="." includes="plugins.config" />
+	<jar jarfile="LSM_Toolbox.jar">
+		<fileset dir="." includes="plugins.config" />
 		<fileset dir="${build}" includes="**/*.*" />
- 		<manifest>
- 		</manifest>
- 	</jar>
+		<manifest>
+		</manifest>
+	</jar>
     <copy file="LSM_Toolbox.jar" toDir="${pluginsDir}" />
   </target>
 </project>

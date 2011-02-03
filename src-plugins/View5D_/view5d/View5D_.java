@@ -1,5 +1,3 @@
-package view5d;
-
 /****************************************************************************
  *   Copyright (C) 1996-2007 by Rainer Heintzmann                          *
  *   heintzmann@gmail.com                                                  *
@@ -21,6 +19,7 @@ package view5d;
  ***************************************************************************
 */
 // By making the appropriate class "View5D" or "View5D_" public and renaming the file, this code can be toggled between Applet and ImageJ respectively
+package view5d;
 
 import java.awt.event.*;
 import java.awt.*;
@@ -36,7 +35,7 @@ import ij.gui.*;
 public class View5D_ extends PlugInFrame implements PlugIn, WindowListener {
     public static final long serialVersionUID = 1;
     public static final long serialSubVersionUID = 2;
-    public static final long serialSubSubVersionUID = 11;
+    public static final long serialSubSubVersionUID = 17;
 	// Panel panel;
 	int previousId;
 	ImagePlus imp;
@@ -44,7 +43,7 @@ public class View5D_ extends PlugInFrame implements PlugIn, WindowListener {
   	My3DData data3d;  // Takes care of all datasets
   	TextArea myLabel;
 	MenuBar IJMenu; // to save it
-    Vector panels=new Vector();  // Keeps track of all the views. Sometimes this information is needed to send the updates.
+    Vector<ImgPanel> panels=new Vector<ImgPanel>();  // Keeps track of all the views. Sometimes this information is needed to send the updates.
         
     String [] DimensionChoices={"ZCT","CZT","ZTC","TZC","CTZ","TCZ"};
     String [] AppendChoices={"Color","Time"};
@@ -115,6 +114,7 @@ public class View5D_ extends PlugInFrame implements PlugIn, WindowListener {
 
    public boolean LoadImg(int NumZ) {
   		int   redEl=-1,greenEl=-1,blueEl=-1;
+    	//System.out.println("LoadImage called");
                 
 		imp = WindowManager.getCurrentImage();  // remember image
                 if (imp == null)
@@ -161,57 +161,59 @@ public class View5D_ extends PlugInFrame implements PlugIn, WindowListener {
                     		}
                     }
                 }
+        DimensionOrder=1;
 		if (SizeZ > 1 || Elements > 1 || Times > 1 || data3d != null)
 			ImportDialog();
-		
+
 		int HistoX = 0;
         int HistoY = -1;
         int HistoZ = -1;
 		int DataType=AnElement.ByteType;
                 int NumBytes=1, NumBits=8;
 		int ImageType=imp.getType();
-		switch (ImageType) {
-			case ImagePlus.COLOR_256: DataType=AnElement.ByteType;NumBytes=1;NumBits=8;break;    // 8-bit RGB with lookup
-			case ImagePlus.COLOR_RGB: DataType=AnElement.ByteType;NumBytes=1;NumBits=8;Elements=3; break;    // 24-bit RGB 
-			case ImagePlus.GRAY8: DataType=AnElement.ByteType;NumBytes=1;NumBits=8;break;    // 8-bit grayscale
-			case ImagePlus.GRAY16: DataType=AnElement.ShortType;NumBytes=2;NumBits=16;break;    // 16-bit grayscale
-			case ImagePlus.GRAY32: DataType=AnElement.FloatType;NumBytes=4;NumBits=32;break;    // float image
-		}
-                double[] Scales = new double[5];
-                for (int j=0;j<5;j++) Scales[j]=1.0;                
-                double[] Offsets = new double[5];
-                for (int j=0;j<5;j++) Offsets[j]=0.0;
-                double ScaleV=1.0,OffsetV=0.0;
-                String [] Names = new String[5];
-                String [] Units = new String[5];
-                Names[0] = "X";Names[1] = "Y";Names[2] = "Z";Names[3] = "Elements";Names[4] = "Time";
-                Units[0] = "pixels";Units[1] = "ypixels";Units[2] = "zpixels";Units[3] = "elements";Units[4] = "time";
-                String NameV = "intensity";
-                String UnitV = "a.u.";
+     	switch (ImageType) {
+     	case ImagePlus.COLOR_256: DataType=AnElement.ByteType;NumBytes=1;NumBits=8;break;    // 8-bit RGB with lookup
+     	case ImagePlus.COLOR_RGB: DataType=AnElement.ByteType;NumBytes=1;NumBits=8;Elements=3; break;    // 24-bit RGB 
+     	case ImagePlus.GRAY8: DataType=AnElement.ByteType;NumBytes=1;NumBits=8;break;    // 8-bit grayscale
+     	case ImagePlus.GRAY16: DataType=AnElement.ShortType;NumBytes=2;NumBits=16;break;    // 16-bit grayscale
+     	case ImagePlus.GRAY32: DataType=AnElement.FloatType;NumBytes=4;NumBits=32;break;    // float image
+     	}
 
-                ij.measure.Calibration myCal=imp.getCalibration();  // retrieve the spatial information
-         if (myCal.scaled())
-                {
-                    Scales[0]=myCal.pixelWidth;
-                    Scales[1]=myCal.pixelHeight;
-                    Scales[2]=myCal.pixelDepth;
-                    Offsets[0]=myCal.xOrigin;
-                    Offsets[1]=myCal.yOrigin;
-                    Offsets[2]=myCal.zOrigin;
-                                
-                    if (myCal.getUnits() != "")
-                    {
-                        Units[0] = myCal.getUnits();
-                        Units[1] = myCal.getUnits();
-                        Units[2] = myCal.getUnits();
-                    }
-                                
-                    if (myCal.frameInterval != 0 && Scales[2] == 0) 
-                    {
-                        Scales[2]=myCal.frameInterval;
-                        Units[2] = "seconds";
-                    }
-                }
+     	double[] Scales = new double[5];
+     	for (int j=0;j<5;j++) Scales[j]=1.0;                
+     	double[] Offsets = new double[5];
+     	for (int j=0;j<5;j++) Offsets[j]=0.0;
+     	double ScaleV=1.0,OffsetV=0.0;
+     	String [] Names = new String[5];
+     	String [] Units = new String[5];
+     	Names[0] = "X";Names[1] = "Y";Names[2] = "Z";Names[3] = "Elements";Names[4] = "Time";
+     	Units[0] = "pixels";Units[1] = "ypixels";Units[2] = "zpixels";Units[3] = "elements";Units[4] = "time";
+     	String NameV = "intensity";
+     	String UnitV = "a.u.";
+
+     	ij.measure.Calibration myCal=imp.getCalibration();  // retrieve the spatial information
+     	if (myCal.scaled())
+     	{
+     		Scales[0]=myCal.pixelWidth;
+     		Scales[1]=myCal.pixelHeight;
+     		Scales[2]=myCal.pixelDepth;
+     		Offsets[0]=myCal.xOrigin;
+     		Offsets[1]=myCal.yOrigin;
+     		Offsets[2]=myCal.zOrigin;
+
+     		if (myCal.getUnits() != "")
+     		{
+     			Units[0] = myCal.getUnits();
+     			Units[1] = myCal.getUnits();
+     			Units[2] = myCal.getUnits();
+     		}
+
+     		if (myCal.frameInterval != 0 && Scales[2] == 0) 
+     		{
+     			Scales[2]=myCal.frameInterval;
+     			Units[2] = "seconds";
+     		}
+     	}
 
          if (myCal.calibrated())
                 {
@@ -221,7 +223,7 @@ public class View5D_ extends PlugInFrame implements PlugIn, WindowListener {
                     ScaleV=myCal.getCValue(1.0)-OffsetV;
                 }
 
-        if (data3d == null)  // ist there no existing data?
+        if (data3d == null)  // is there no existing data?
 			{
 			if (Elements > 1)
 				{
@@ -365,30 +367,31 @@ public class View5D_ extends PlugInFrame implements PlugIn, WindowListener {
 		super("5D Viewer");
 		data3d=null;
 		if (! LoadImg(0))
-                {
-                  IJ.showMessage("Error: View5D needs a loaded image in ImageJ, when starting!");
-                  return;
-                }
+		{
+			IJ.showMessage("Error: View5D needs a loaded image in ImageJ, when starting!");
+			return;
+		}
 		ImgPanel mypan=new ImgPanel(this,data3d);
-                panels.addElement(mypan);  // enter this view into the list
-        CheckforLUT();
-        VerifyAspect();
+		panels.addElement(mypan);  // enter this view into the list
+		CheckforLUT();
+		VerifyAspect();
 
 		setLayout(new BorderLayout());
 		add("Center", mypan);
-                myLabel=new TextArea("5D-viewer Java Applet by Rainer Heintzmann, [press '?' for help]",1,76,TextArea.SCROLLBARS_NONE);
-                add("North", myLabel);
+		myLabel=new TextArea("5D-viewer Java Applet by Rainer Heintzmann, [press '?' for help]",1,76,TextArea.SCROLLBARS_NONE);
+		add("North", myLabel);
 		mypan.CheckScrollBar();
-                setMenuBar(mypan.MyMenu);
-                
-		pack();
-		GUI.center(this);
-		//show();
-        setVisible(true);
+		setMenuBar(mypan.MyMenu);
+		// setVisible(true);
+
 
 		// data3d.initThresh();
 		mypan.InitScaling();
 		addWindowListener(this);
+		pack();
+		GUI.center(this);
+		//show();
+		setVisible(true);
     }
 
     public ImagePlus GetImp() { return imp;}
@@ -416,8 +419,8 @@ public class View5D_ extends PlugInFrame implements PlugIn, WindowListener {
 	
     void showAbout() {
               IJ.showMessage("About View5D, Version V"+serialVersionUID+"."+serialSubVersionUID+"."+serialSubSubVersionUID,
-	      "5D-Viewer by Rainer Heintzmann\nKing's College London, London, U.K.\n"+
-              "rainer.heintzmann@kcl.ac.uk\n"+
+	      "5D-Viewer by Rainer Heintzmann\nUniversity of Jena, Jena, Germany\n"+
+              "heintzmann@googlemail.com\n"+
               "http://www.nanoimaging.de/View5D/\n"+
 	      "use mouse click for changing slices, \ndrag images, zoom by typing 'A' and 'a'\n"+
 	      "'next page' and 'prev. page'  for changing perpendicular slice ,\n'<' and '>' for perpendicular magnificaltion\n"+

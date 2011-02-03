@@ -203,6 +203,9 @@ public class Select_Bounding_Box implements PlugInFilter {
 	}
 
 	public static void crop(ImagePlus image, Rectangle rect) {
+		if (image.getWidth() == rect.width && image.getHeight() == rect.height)
+			return;
+		image.changes = true;
 		if (image.getStackSize() == 1) {
 			image.setProcessor(image.getTitle(),
 					crop(image.getProcessor(), rect));

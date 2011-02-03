@@ -2,14 +2,18 @@
 <h1>Release History:</h1>
 <pre>
 
+   2010/03/29 (v4.0g):
+   - various bugfixing (class cleanup)
+   - added a the getCZ method in the Reader class to get CZLSMExtended
+
   2009/06/18 (v4.0f):
    - Various cosmetic bugfixes
    - Added scantype 10 support
    - Fixed 16-bit compressed lsm bug
    - Added a button to load event window.
    - Fixed XML export via macro.
-   	 	Use as follows:
-   			run("Show LSMToolbox","ext");
+		Use as follows:
+			run("Show LSMToolbox","ext");
 			//to open an image:
 			//Ext.lsmOpen("d:/a.lsm");
 			file= "d:/a.lsm"
@@ -23,15 +27,15 @@
 		Z-Stamps (Ext.getZStamps)
 
 		Use as follows:
-	 		run("Show LSMToolbox","ext");
-	 		file= "d:/a.lsm"
+			run("Show LSMToolbox","ext");
+			file= "d:/a.lsm"
 			stamps = Ext.getTStamps(file);
 			print(stamps);
 
 	- Export events via macro.
 		Use as follows:
-	  		run("Show LSMToolbox","ext");
-	 		file= "d:/a.lsm"
+			run("Show LSMToolbox","ext");
+			file= "d:/a.lsm"
 			events = Ext.getEvents(file);
 			print(stamps);
 
@@ -47,7 +51,7 @@
    - a bug caused a race condition resulting in macros behaving erratically has been fixed
    - image preview: the thumbnail is shown in grayscale
    - image preview: a slider helps browsing through thumbnail stacks
-   - Added Magic_Montage, a bunch of useful macros by JÃ©rÃ´me Mutterer. They are installed automagically
+   - Added Magic_Montage, a bunch of useful macros by Jérôme Mutterer. They are installed automagically
      into the ImageJ toolbar via the Toolbox user interface
    - 8bit and 12bit compressed and uncompressed images work
    - batch conversion interface: added a reset button to empty the file list
@@ -118,9 +122,9 @@
 
   2003/12/01 (v3.2c):
     - adds the "Batch Convert" method. This method allows the batch conversion of an entire directory of lsm files
- 						into various usual file format : tiff, 8-bit tiff, jpeg, raw, zip. This converter handles also stacks and lambda stacks by
- 						saving one image for each slice of the stack. Credits for the base batch conversion method goes for Wayne Rasband,
-  						wayne@codon.nih.gov, many thanks for his kind collaboration.
+						into various usual file format : tiff, 8-bit tiff, jpeg, raw, zip. This converter handles also stacks and lambda stacks by
+						saving one image for each slice of the stack. Credits for the base batch conversion method goes for Wayne Rasband,
+						wayne@codon.nih.gov, many thanks for his kind collaboration.
 
   2003/05/16 (v3.2b):
    - bug fix release. Fixed a bug that scrambled 12 bit images. Added option to dump stamps to text

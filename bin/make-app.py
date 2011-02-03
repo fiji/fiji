@@ -31,6 +31,8 @@ def make_app():
 	for d in ['plugins', 'macros', 'jars', 'misc', 'retro', 'luts', \
 			'scripts']:
 		shutil.copytree(d, 'Fiji.app/' + d)
+	if os.path.isdir('samples'):
+		shutil.copytree('samples', 'Fiji.app/samples')
 	if os.path.isdir('Fiji.app/jars/jython2.2.1/cachedir'):
 		removedirs('Fiji.app/jars/jython2.2.1/cachedir')
 	if os.path.isdir('Fiji.app/jars/cachedir'):

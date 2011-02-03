@@ -1,5 +1,3 @@
-package view5d;
-
 /****************************************************************************
  *   Copyright (C) 1996-2007 by Rainer Heintzmann                          *
  *   heintzmann@gmail.com                                                  *
@@ -23,17 +21,19 @@ package view5d;
 // By making the appropriate class "View5D" or "View5D_" public and renaming the file, this code can be toggled between Applet and ImageJ respectively
 
 // import java.io.*;
+package view5d;
+
 import java.awt.event.*;
 import java.awt.*;
 import java.util.*;
 import java.text.*;
 
-class PositionLabel extends Panel implements MouseListener{
+public class PositionLabel extends Panel implements MouseListener{
     static final long serialVersionUID = 1;
     ImageCanvas c1,c2,c3;
     My3DData data3d;
     Label l1,l2,l3,l4,l5,l6;
-    PixelDisplay PixDisplay;
+    public PixelDisplay PixDisplay;
     TextArea MyText;
     NumberFormat nf;
     NumberFormat nf2;
@@ -159,10 +159,10 @@ class PositionLabel extends Panel implements MouseListener{
   void Help() {
        // javax.swing.JOptionPane.showMessageDialog(applet,
       String newtext="Java 5D image viewer, Version V"+View5D_.serialVersionUID+"."+View5D_.serialSubVersionUID+"."+View5D_.serialSubSubVersionUID+"" +
-      		" by Rainer Heintzmann,\nKCL, London (rainer.heintzmann@kcl.ac.uk)\n\n"+
+      "by Rainer Heintzmann\nUniversity of Jena, Germany (heintzmann@gmail.com)\n"+
               "Right-click for menu\nUse mouse click for changing slices, \n"+
               "Shift and mouse-drag for square ROIs, Ctrl and mouse-drag for multiple line ROIs\ndrag images, zoom by typing 'A' and 'a' or into ROI by 'Z'\n"+
-	      "Arrow keys for fine control of slicing\n"+
+	      "Arrow keys for fine control of slicing position\n"+
 	      "'next page' and 'prev. page'  for changing perpendicular slice ,\n'<' and '>' for perpendicular magnificaltion\n"+
 	      "'i' for init view, 'c' for change ColorMap, \n"+
 	      "1,2,5,6' for lower and '3,4,7,8' for upper Threshold, 't' and 'T' for automatic contrast adjustment using one or all elements\n"+
