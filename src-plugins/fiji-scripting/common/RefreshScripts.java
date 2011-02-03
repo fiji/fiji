@@ -148,7 +148,7 @@ abstract public class RefreshScripts implements PlugIn {
 		String command = (String)Menus.getCommands().get(label);
 		if (command == null) {
 			if (ij != null) {
-				String menuPath = "Plugins>" + subDirectory.replace(File.separator.charAt(0), '>');
+				String menuPath = "Plugins>" + subDirectory.replace(File.separator.charAt(0), '>').replace('_', ' ');
 				if (menuPath.startsWith(magicMenuPrefix))
 					menuPath = menuPath.substring(magicMenuPrefix.length());
 				Menu menu = (Menu)User_Plugins.getMenuItem(Menus.getMenuBar(), menuPath, true);
