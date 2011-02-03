@@ -344,7 +344,7 @@ public class User_Plugins implements PlugIn {
 				menuPath = menuPath.substring(croc + 1);
 			}
 			MenuItem current = getMenuItem(menuBar, menu, name,
-				createIfNecessary);
+				createMenuIfNecessary);
 			if (current == null || menuPath == null)
 				return current;
 			menuBar = null;
