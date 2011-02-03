@@ -65,6 +65,14 @@ public class Refresh_Macros extends RefreshScripts {
 		}
 	}
 
+	@Override
+	protected boolean isThisLanguage(String command) {
+		return super.isThisLanguage(command) ||
+			(command != null &&
+			 command.startsWith("ij.plugin.Macro_Runner(\"") &&
+			 (command.endsWith(".ijm\")") || command.endsWith(".txt\")")));
+	}
+
 	/** Read the complete input stream, return as a String */
 	protected String read(InputStream in) throws IOException {
 		StringBuffer buffer = new StringBuffer();
