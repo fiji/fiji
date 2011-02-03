@@ -484,6 +484,10 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 		 endY = ( imgHeight - 1 ) - endY;
 		// create the line ROI and add it to the overlay
 		Line lineROI = new Line(startX, startY, endX, endY);
+		/* Set drawing width of line to one, in case it has
+		 * been changed globally.
+		 */
+		lineROI.setStrokeWidth(1.0f);
 		overlay.add(lineROI);
 	}
 
