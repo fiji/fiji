@@ -27,7 +27,9 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-/*
+/**
+ * A class to find user plugins, i.e. plugins not inside Fiji.app/plugins/
+ *
  * This plugin looks through all files in a given directory (default:
  * $ROOT/user-plugins/, where $ROOT is the parent directory of jars/Fiji.jar)
  * and inserts the found plugins into a given menu (default: Plugins>User).
@@ -36,14 +38,29 @@ public class User_Plugins implements PlugIn {
 	public String path, menuPath;
 	protected boolean stripPluginsPrefix;
 
+	/**
+	 * Default constructor
+	 */
 	public User_Plugins() {
 		this(true);
 	}
 
+	/**
+	 * Construct an instance which looks in the default places and strips the plugin prefix
+	 *
+	 * @param stripPluginsPrefix whether to delete "Plugins>" from the original plugin paths
+	 */
 	public User_Plugins(boolean stripPluginsPrefix) {
 		this(getDefaultPath(), getDefaultMenuPath(), stripPluginsPrefix);
 	}
 
+	/**
+	 * Construct an instance that looks in an arbitrary place
+	 *
+	 * @param path the top directory being searched
+	 * @param menuPath the menu into which the plugins will be installed
+	 * @param stripPluginsPrefix whether to delete "Plugins>" from the original plugin paths
+	 */
 	public User_Plugins(String path, String menuPath, boolean stripPluginsPrefix) {
 		this.path = path;
 		if (menuPath.endsWith(">"))
@@ -52,6 +69,9 @@ public class User_Plugins implements PlugIn {
 		this.stripPluginsPrefix = stripPluginsPrefix;
 	}
 
+	/**
+	 * Install the plugins now
+	 */
 	public void run(String arg) {
 		if ("update".equals(arg)) {
 			Menus.updateImageJMenus();
@@ -100,16 +120,27 @@ public class User_Plugins implements PlugIn {
 		Main.installRecentCommands();
 	}
 
+	/**
+	 * Install the plugins (default path, default menu)
+	 */
 	public static void install() {
 		new User_Plugins().run(null);
 	}
 
+	/**
+	 * Run the command associated with a menu label if there is one
+	 *
+	 * @param menuLabel the label of the menu item to run
+	 */
 	public static void runPlugIn(String menuLabel) {
 		String className = (String)Menus.getCommands().get(menuLabel);
 		if (className != null)
 			IJ.runPlugIn(className, null);
 	}
 
+	/**
+	 * Install the scripts in Fiji.app/plugins/
+	 */
 	public static void installScripts() {
 		if (System.getProperty("jnlp") != null)
 			return;
@@ -121,6 +152,13 @@ public class User_Plugins implements PlugIn {
 			runPlugIn("Refresh " + languages[i] + " Scripts");
 	}
 
+	/**
+	 * Install one or more plugins
+	 *
+	 * @param dir the directory where to look
+	 * @param name the name of a file or directory
+	 * @param menuPath the menu into which to put the discovered plugins
+	 */
 	public void installPlugins(String dir, String name, String menuPath) {
 		File file = new File(dir, name);
 		if (file.isDirectory()) {
@@ -152,6 +190,16 @@ public class User_Plugins implements PlugIn {
 		}
 	}
 
+	/**
+	 * Parse the plugins.config for a given .jar file
+	 *
+	 * If there is no plugins.config, this method lists all the classes whose
+	 * file names have underscores , putting the menu items into the menu
+	 * specified by a menu path.
+	 *
+	 * @param jarFile the .jar file
+	 * @param menuPath the menu into which the discovered plugins are put
+	 */
 	public List getJarPluginList(File jarFile, String menuPath)
 			throws IOException {
 		List result = new ArrayList();
@@ -226,6 +274,13 @@ public class User_Plugins implements PlugIn {
 		return menuPath + ">" + original;
 	}
 
+	/**
+	 * Install a single menu item
+	 *
+	 * @param menuPath the menu into which to install it
+	 * @param name the label of the menu item
+	 * @param the command to run (as per the plugins.config)
+	 */
 	/* TODO: sorted */
 	public static MenuItem installPlugin(String menuPath, String name,
 			String command) {
@@ -251,12 +306,26 @@ public class User_Plugins implements PlugIn {
 		return (Menu)getMenuItem(Menus.getMenuBar(), menuPath, true);
 	}
 
+	/**
+	 * Get the MenuItem instance for a given menu path
+	 *
+	 * @param menuPath the menu path, e.g. File>New>Bio-Formats
+	 */
 	public static MenuItem getMenuItem(String menuPath) {
 		return getMenuItem(Menus.getMenuBar(), menuPath, false);
 	}
 
+	/**
+	 * Get the MenuItem instance for a given menu path
+	 *
+	 * If the menu item was not found, create a {@link Menu} for the given path.
+	 *
+	 * @param container an instance of {@link MenuBar} or {@link Menu}
+	 * @param menuPath the menu path, e.g. File>New>Bio-Formats
+	 * @param createMenuIfNecessary if the menu item was not found, create a menu
+	 */
 	public static MenuItem getMenuItem(MenuContainer container,
-			String menuPath, boolean createIfNecessary) {
+			String menuPath, boolean createMenuIfNecessary) {
 		String name;
 		MenuBar menuBar = (container instanceof MenuBar) ?
 			(MenuBar)container : null;
@@ -325,6 +394,9 @@ public class User_Plugins implements PlugIn {
 
 	/* defaults */
 
+	/**
+	 * Get the default path to the plugins searched outside Fiji.app
+	 */
 	public static String getDefaultPath() {
 		try {
 			return FijiTools.getFijiDir() + "/user-plugins";
@@ -334,6 +406,9 @@ public class User_Plugins implements PlugIn {
 		}
 	}
 
+	/**
+	 * Get the default menu path where the user plugins will be installed
+	 */
 	public static String getDefaultMenuPath() {
 		return "Plugins>User";
 	}
