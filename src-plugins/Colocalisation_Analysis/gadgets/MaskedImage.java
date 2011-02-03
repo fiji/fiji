@@ -27,10 +27,6 @@ public class MaskedImage<T extends NumericType<T> & Comparable<T>> extends RoiIm
 	T offValue;
 	// a factory to create MaskImage objects
 	MaskedImageFactory<T> maskedImageFactory;
-	// the offset of the masks bounding box
-	int[] offset;
-	// the size of the masks bounding box
-	int[] size;
 
 	/**
 	 * Creates a new MaskedImage to decorate the passed image. Cursors
@@ -44,8 +40,6 @@ public class MaskedImage<T extends NumericType<T> & Comparable<T>> extends RoiIm
 
 		this.image = img;
 		this.mask = mask;
-		this.offset = offset;
-		this.size = size;
 
 		// create the offValue of the mask
 		offValue = mask.createType();
@@ -59,15 +53,8 @@ public class MaskedImage<T extends NumericType<T> & Comparable<T>> extends RoiIm
 	 */
 	protected void init() {
 		// create a new factory
-		maskedImageFactory = new MaskedImageFactory<T>(mask, offset, size, image.createType(),
+		maskedImageFactory = new MaskedImageFactory<T>(mask, roiOffset, roiSize, image.createType(),
 			image.getContainerFactory());
-	}
-
-	/**
-	 * Gets the offset of the masks bounding box.
-	 */
-	public int[] getOffset() {
-		return offset;
 	}
 
 	@Override
@@ -81,7 +68,7 @@ public class MaskedImage<T extends NumericType<T> & Comparable<T>> extends RoiIm
 	public LocalizableCursor<T> createLocalizableCursor() {
 		LocalizableCursor<T> cursor = image.createLocalizableCursor();
 		LocalizableCursor<T> maskCursor = mask.createLocalizableCursor();
-		return new MaskLocalizableCursor<T>(cursor, maskCursor, offValue, offset);
+		return new MaskLocalizableCursor<T>(cursor, maskCursor, offValue, roiOffset);
 	}
 
 	/* Not implemented/needed methods follow */
