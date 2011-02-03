@@ -48,17 +48,19 @@ public class MaskCursor< T extends Type<T> & Comparable<T> > extends ConstraintC
 	}
 
 	@Override
-	public void fwd() {
+	public boolean hasNext() {
 		/* The constraint cursor expects an image of the same size to evaluate
 		 * constraints for us in "And" forward mode. If the mask gets out of
-		 * bounds we need to handle that. For now we just reset it.
+		 * bounds we need to handle that. For now we just reset it. This essentially
+		 * repeats the mask over and over again until the end of the image is
+		 * reached.
 		 */
-		if ( !maskCursor.hasNext() ) {
+		if ( !super.hasNext() && !maskCursor.hasNext() && imageCursor.hasNext() ) {
 			maskCursor.reset();
+			hasNextChecked = false;
 		}
 
-		// call the actual forward method
-		super.fwd();
+		return super.hasNext();
 	}
 
 	/**
