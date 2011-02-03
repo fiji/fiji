@@ -247,13 +247,18 @@ abstract public class RefreshScripts implements PlugIn {
 	public void run(String arg) {
 
 		if( arg != null && ! arg.equals("") ) {
-			/* set the default class loader to ImageJ's PluginClassLoader */
-			Thread.currentThread()
-				.setContextClassLoader(IJ.getClassLoader());
-
 			String path = arg;
 			if (!new File(path).isAbsolute())
 				path = new StringBuffer(Menus.getPlugInsPath()).append(path).toString(); // blackslash-safe
+
+			if (IJ.shiftKeyDown()) {
+				IJ.runPlugIn("fiji.scripting.Script_Editor", path);
+				return;
+			}
+
+			/* set the default class loader to ImageJ's PluginClassLoader */
+			Thread.currentThread()
+				.setContextClassLoader(IJ.getClassLoader());
 			runScript(path);
 			return;
 		}
