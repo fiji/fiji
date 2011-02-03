@@ -442,9 +442,9 @@ public class Volume {
 		public final int loadWithLUT(int x, int y, int z) {
 			image.get(x, y, z, color);
 			int sum = 0, av = 0, v = 0;
-			if(channels[0]) { int r = rLUT[color[0]]; sum++; av += r; v += (r << 16); }
-			if(channels[1]) { int g = gLUT[color[1]]; sum++; av += g; v += (g << 8); }
-			if(channels[2]) { int b = bLUT[color[2]]; sum++; av += b; v += b; }
+			if(channels[0]) { int r = rLUT[color[0]]; sum++; av += color[0]; v += (r << 16); }
+			if(channels[1]) { int g = gLUT[color[1]]; sum++; av += color[1]; v += (g << 8); }
+			if(channels[2]) { int b = bLUT[color[2]]; sum++; av += color[2]; v += b; }
 			av /= sum;
 			int a = aLUT[av];
 			return (a << 24) + v;
