@@ -203,7 +203,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Linear_Kuwahara.jar \
 	plugins/Thread_Killer.jar \
 	plugins/Jython_Scripts.jar \
-	plugins/Temporal_Color_Coder.jar \
 	plugins/Samples_.jar \
 	plugins/Lasso_and_Blow_Tool.jar \
 	jars/mij.jar \
@@ -395,7 +394,6 @@ CLASSPATH(plugins/FlowJ_.jar)=jars/ij.jar
 CLASSPATH(plugins/View5D_.jar)=jars/ij.jar
 CLASSPATH(plugins/Time_Stamper.jar)=jars/ij.jar
 CLASSPATH(plugins/3D_Objects_Counter.jar)=jars/ij.jar
-CLASSPATH(plugins/Temporal_Color_Coder.jar)=jars/ij.jar
 CLASSPATH(plugins/Snakuscule_.jar)=jars/ij.jar
 CLASSPATH(plugins/UnwarpJ_.jar)=jars/ij.jar
 CLASSPATH(plugins/Graph_Cut.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/fiji-lib.jar
