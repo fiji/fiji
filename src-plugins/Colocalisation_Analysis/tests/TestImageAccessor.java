@@ -2,6 +2,7 @@ package tests;
 
 import ij.ImagePlus;
 import ij.gui.NewImage;
+import ij.gui.Roi;
 import ij.io.Opener;
 import ij.process.ImageProcessor;
 
@@ -363,5 +364,33 @@ public class TestImageAccessor {
 			}
 		}
 		cursor.close();
+	}
+
+	/**
+	 * Creates a mask image with a black background and a white
+	 * rectangular foreground.
+	 *
+	 * @param width The width of the result image.
+	 * @param height The height of the result image.
+	 * @param offset The offset of the rectangular mask.
+	 * @param size The size of the rectangular mask.
+	 * @return A black image with a white rectangle on it.
+	 */
+	public static <T extends RealType<T>> Image<T> createRectengularMaskImage(int width,
+			int height, int[] offset, int[] size) {
+		/* For now (probably until ImageJ2 is out) we use an
+		 * ImageJ image to draw lines.
+		 */
+		int options = NewImage.FILL_BLACK + NewImage.CHECK_AVAILABLE_MEMORY;
+	        ImagePlus img = NewImage.createByteImage("Noise", width, height, 1, options);
+		ImageProcessor imp = img.getProcessor();
+		imp.setColor(Color.WHITE);
+		Roi rect = new Roi(offset[0], offset[1], size[0], size[1]);
+
+		imp.fill(rect);
+		// we changed the data, so update it
+		img.updateImage();
+
+		return ImagePlusAdapter.wrap(img);
 	}
 }
