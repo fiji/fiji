@@ -15,13 +15,14 @@ import java.io.Reader;
 import java.io.File;
 
 public class Refresh_Javascript_Scripts extends RefreshScripts {
-
+	@Override
 	public void run(String arg) {
 		setLanguageProperties(".js","Javascript");
 		setVerbose(false);
 		super.run(arg);
 	}
 
+	@Override
 	public void runScript(String filename) {
 		try {
 			if (! new File(filename).exists()) {
@@ -36,6 +37,7 @@ public class Refresh_Javascript_Scripts extends RefreshScripts {
 	}
 
 	/** Will consume and close the stream. */
+	@Override
 	public void runScript(InputStream istream) {
 		try {
 			Context cx = Context.enter();

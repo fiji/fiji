@@ -30,7 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class Refresh_Macros extends RefreshScripts {
-
+	@Override
 	public void run(String arg) {
 		setLanguageProperties(".ijm", "ImageJ Macro");
 		setVerbose(false);
@@ -38,6 +38,7 @@ public class Refresh_Macros extends RefreshScripts {
 	}
 
 	/** Run an ImageJ Macro. */
+	@Override
 	public void runScript(String path) {
 		try {
 			InputStream s = new FileInputStream(new File(path));
@@ -49,6 +50,7 @@ public class Refresh_Macros extends RefreshScripts {
 	}
 
 	/** Will consume and close the stream. */
+	@Override
 	public void runScript(InputStream in) {
 		try {
 			new Interpreter().run(read(in));
