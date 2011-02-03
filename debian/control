@@ -359,9 +359,6 @@ Description: components from Fiji, including: PIV analyser, listManagement, P [.
  .
  plugins/RandomJ_.jar: Add all kind of parameterized noise to images
  .
- plugins/Macro_Examples.jar: A dummy "plugin" to add two macros to the
- File>Open Samples menu, needed for teaching.
- .
  plugins/Record_Screen.jar: Relies on python scripts to provide an
  utility where upon given the user-desired settings, would allow the user
  to record activity through screenshots of either the desktop or of a
