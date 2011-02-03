@@ -1,12 +1,10 @@
 package gadgets;
 
-import java.util.Arrays;
-
-import mpicbg.imglib.cursor.special.RoiShiftingLocalizableByDimCursor;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.cursor.special.RegionOfInterestCursor;
+import mpicbg.imglib.cursor.special.RoiShiftingLocalizableByDimCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.interpolation.Interpolator;
 import mpicbg.imglib.interpolation.InterpolatorFactory;

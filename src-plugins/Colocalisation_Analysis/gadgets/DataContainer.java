@@ -1,7 +1,7 @@
 package gadgets;
 
-import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import mpicbg.imglib.algorithm.math.ImageStatistics;
@@ -94,9 +94,7 @@ public class DataContainer<T extends RealType<T>> {
 		 * offset.
 		 */
 		maskBBOffset = offset.clone();
-		for (int d=0; d < offset.length; d++) {
-			maskBBOffset[d] = 0;
-		}
+		Arrays.fill(maskBBOffset, 0);
 
 		maskBBSize = size.clone();
 	}

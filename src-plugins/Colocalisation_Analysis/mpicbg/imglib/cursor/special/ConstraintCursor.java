@@ -1,15 +1,11 @@
 package mpicbg.imglib.cursor.special;
 
-import mpicbg.imglib.container.Container;
-import mpicbg.imglib.image.Image;
+import java.util.Arrays;
+
+import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.special.meta.AlwaysTruePredicate;
 import mpicbg.imglib.cursor.special.meta.Predicate;
 import mpicbg.imglib.type.Type;
-
-import java.util.Arrays;
-import java.util.Iterator;
-
-import mpicbg.imglib.cursor.Cursor;
 
 /**
  * A cursor class that walks over two images.

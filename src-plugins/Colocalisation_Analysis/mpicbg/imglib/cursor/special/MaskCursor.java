@@ -2,13 +2,12 @@ package mpicbg.imglib.cursor.special;
 
 import java.util.Iterator;
 
-import mpicbg.imglib.image.Image;
 import mpicbg.imglib.container.Container;
-import mpicbg.imglib.type.Type;
 import mpicbg.imglib.cursor.Cursor;
-import mpicbg.imglib.cursor.Iterable;
-import mpicbg.imglib.cursor.special.meta.AlwaysTruePredicate;
 import mpicbg.imglib.cursor.special.meta.AboveThresholdPredicate;
+import mpicbg.imglib.cursor.special.meta.AlwaysTruePredicate;
+import mpicbg.imglib.image.Image;
+import mpicbg.imglib.type.Type;
 
 /**
  * A MaskCursor allows to specify a mask image for the image to walk
@@ -30,7 +29,7 @@ public class MaskCursor< T extends Type<T> & Comparable<T> > extends ConstraintC
 	 * "on" or "off" is specified by the "offValue". Every value in the
 	 * mask that is langer than this, will be "on".
 	 *
-	 * It resumes the cursor to be reset and will require ownership
+	 * It assumes the cursor to be reset and will require ownership
 	 * of it, i.e. it will be closed if the MaskCursor gets closed.
 	 *
 	 * @param cursor The cursor over which the masked walk should happen.
@@ -50,7 +49,7 @@ public class MaskCursor< T extends Type<T> & Comparable<T> > extends ConstraintC
 
 	@Override
 	public void fwd() {
-		/* The constraint cursor expects an image of the same size to evalute
+		/* The constraint cursor expects an image of the same size to evaluate
 		 * constraints for us in "And" forward mode. If the mask gets out of
 		 * bounds we need to handle that. For now we just reset it.
 		 */

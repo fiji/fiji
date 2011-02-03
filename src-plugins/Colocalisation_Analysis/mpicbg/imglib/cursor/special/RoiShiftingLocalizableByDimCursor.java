@@ -1,14 +1,9 @@
 package mpicbg.imglib.cursor.special;
 
-import java.util.Iterator;
-
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.Type;
-import mpicbg.imglib.cursor.Localizable;
 import mpicbg.imglib.cursor.CursorImpl;
+import mpicbg.imglib.cursor.Localizable;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
-import mpicbg.imglib.cursor.special.LocalNeighborhoodCursor;
-import mpicbg.imglib.cursor.special.RegionOfInterestCursor;
+import mpicbg.imglib.type.Type;
 
 /**
  * A RoiShiftingLocalizableByDimCursor allows to specify a mask image for the

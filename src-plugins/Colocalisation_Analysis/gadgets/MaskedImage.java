@@ -21,7 +21,7 @@ import mpicbg.imglib.type.numeric.NumericType;
 public class MaskedImage<T extends NumericType<T> & Comparable<T>> extends RoiImage<T> {
 	// the image to operate on
 	Image<T> image;
-	// the mask te use for the image
+	// the mask to use for the image
 	final Image<T> mask;
 	// the offValue of the image (see MaskCursor)
 	T offValue;

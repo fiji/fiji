@@ -272,10 +272,9 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		// create a new container for the selected images and channels
 		DataContainer<T> container;
 		if (mask != null) {
-				container = new DataContainer<T>(img1, img2,
-						img1Channel, img2Channel, mask, maskBB,
-						roi.offset, roi.size);
-
+			container = new DataContainer<T>(img1, img2,
+					img1Channel, img2Channel, mask, maskBB,
+					roi.offset, roi.size);
 		} else if (roi != null) {
 			// if we have no musk, but a ROI, a regular ROI is in use
 			container = new DataContainer<T>(img1, img2,
@@ -511,7 +510,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
 	/**
 	 * This method duplicates the given images, but respects
-	 * ROIs if present. Meaning, a subpicture will be created when
+	 * ROIs if present. Meaning, a sub-picture will be created when
 	 * source images are ROI/MaskImages.
 	 */
 	protected Image<T> createMaskImage(Image<T> sourceImage, String name) {

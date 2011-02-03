@@ -1,21 +1,19 @@
 package mpicbg.imglib.cursor.special;
 
-import mpicbg.imglib.container.Container;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.cursor.special.meta.AlwaysTruePredicate;
-import mpicbg.imglib.cursor.special.meta.Predicate;
-import mpicbg.imglib.type.Type;
-
-import java.util.Arrays;
 import java.util.Iterator;
 
+import mpicbg.imglib.container.Container;
 import mpicbg.imglib.cursor.Cursor;
+import mpicbg.imglib.cursor.special.meta.AlwaysTruePredicate;
+import mpicbg.imglib.cursor.special.meta.Predicate;
+import mpicbg.imglib.image.Image;
+import mpicbg.imglib.type.Type;
 
 /**
  * A class that walks over two images in a constrained way. Cursor
  * specific functionality that could provide only one type (like
  * iterator()  refer to the the first cursor that is passed to this
- * class. A pendent (abbended a "2") for the second cursor is available.
+ * class. A pendent (appended a "2") for the second cursor is available.
  *
  * Author: Tom Kazimiers
  */
@@ -40,7 +38,6 @@ public class TwinValueRangeCursor< T extends Type<T> & Comparable<T> > extends C
 	 * @param predicate1 The predicate for channel one
 	 * @param predicate2 The predicate for channel two
 	 */
-	@SuppressWarnings("unchecked")
 	public TwinValueRangeCursor(Cursor<T> cursor1, Cursor<T> cursor2, Predicate<T> predicate1, Predicate<T> predicate2 ) {
 		super( cursor1, cursor2, predicate1, predicate2 );
 	}
