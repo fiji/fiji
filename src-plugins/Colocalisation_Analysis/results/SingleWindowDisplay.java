@@ -53,6 +53,9 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	static final int WIN_WIDTH = 350;
 	static final int WIN_HEIGHT = 240;
 
+	// a static list for keeping track of all other SingleWindowDisplays
+	static ArrayList<SingleWindowDisplay> displays = new ArrayList<SingleWindowDisplay>();
+
 	// indicates if original images should be displayed or not
 	boolean displayOriginalImages = false;
 
@@ -92,6 +95,8 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 		dataContainer = container;
 		// don't show ourself on instantiation
 		this.setVisible(false);
+		// add ourself to the list of single window displays
+		displays.add(this);
 	}
 
 	public void setup() {
