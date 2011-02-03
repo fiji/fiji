@@ -69,4 +69,12 @@ public class Refresh_Javascript_Scripts extends RefreshScripts {
 			Context.exit();
 		}
 	}
+
+	@Override
+	protected boolean isThisLanguage(String command) {
+		return super.isThisLanguage(command) ||
+			(command != null &&
+			 command.startsWith("ij.plugin.Macro_Runner(\"") &&
+			 command.endsWith(".js\")"));
+	}
 }

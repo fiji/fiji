@@ -110,8 +110,6 @@ abstract public class RefreshScripts implements PlugIn {
 
 	File script_dir;
 
-	Menu pluginsMenu;
-
 	/*
 	 * This is called by addFromDirectory when it finds a file
 	 * that we might want to add - check the extension, etc. and
@@ -161,16 +159,12 @@ abstract public class RefreshScripts implements PlugIn {
 			return true;
 		}
 
-		// Allow overriding JavaScripts added by ImageJ
-		if (scriptExtension.equals(".js") &&
-				command.endsWith(".js\")") &&
-				command.startsWith("ij.plugin.Macro_Runner("))
-			return true;
-
 		if (scriptExtension.equals(".java"))
 			return true;
 
-		if (command.startsWith(getClass().getName() + "("))
+		// Allow overriding previously added scripts
+		// and macros and Javascripts added by ImageJ
+		if (isThisLanguage(command))
 			return true;
 
 		IJ.log("The script " + filename + " would override an existing menu entry; skipping");
@@ -221,7 +215,7 @@ abstract public class RefreshScripts implements PlugIn {
 	}
 
 	// Removes all entries that refer to scripts with the current extension
-	private void removeFromMenu(Menu menu) {
+	protected void removeFromMenu(Menu menu) {
 		int count = menu.getItemCount();
 		for (int i = count - 1; i >= 0; i--) {
 			MenuItem item = menu.getItem(i);
@@ -231,14 +225,21 @@ abstract public class RefreshScripts implements PlugIn {
 			}
 			String label = item.getLabel();
 			String command = (String)Menus.getCommands().get(label);
-			if (command == null ||
-			    !command.startsWith(getClass().getName() + "(\""
-				+ Menus.getPlugInsPath()) ||
-			    !command.endsWith(scriptExtension + "\")"))
+			if (!isThisLanguage(command))
 				continue;
 			menu.remove(i);
 			Menus.getCommands().remove(label);
 		}
+	}
+
+	/**
+	 * Test whether a command is handled by this class
+	 */
+	protected boolean isThisLanguage(String command) {
+		return command != null &&
+		    command.startsWith(getClass().getName() + "(\""
+			+ Menus.getPlugInsPath()) &&
+		    command.endsWith(scriptExtension + "\")");
 	}
 
 	public void run(String arg) {
