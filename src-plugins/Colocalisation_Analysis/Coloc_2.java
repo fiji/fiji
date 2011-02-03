@@ -184,6 +184,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		gd.addCheckbox("Manders' Correlation", true);
 		gd.addCheckbox("2D Instensity Histogram", true);
 		gd.addCheckbox("Costes' Significance Test", true);
+		gd.addNumericField("PSF", 3.0, 1);
+		gd.addNumericField("Costes randomisations", 10.0, 0);
 
 		// show the dialog, finally
 		gd.showDialog();
@@ -236,20 +238,31 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			masks.add(new MaskInfo(null, null, null));
 		}
 
+		// read out GUI data
+		boolean useLiCh1 = gd.getNextBoolean();
+		boolean useLiCh2 = gd.getNextBoolean();
+		boolean useLiICQ = gd.getNextBoolean();
+		boolean useManders = gd.getNextBoolean();
+		boolean useScatterplot = gd.getNextBoolean();
+		boolean useCostes = gd.getNextBoolean();
+		int psf = (int) gd.getNextNumber();
+		int nrCostesRandomisations = (int) gd.getNextNumber();
+
 		// Parse algorithm options
 		pearsonsCorrelation = new PearsonsCorrelation<T>(PearsonsCorrelation.Implementation.Fast);
-		if (gd.getNextBoolean())
-				liHistogramCh1 = new LiHistogram2D<T>("Li - Ch1", true);
-		if (gd.getNextBoolean())
-				liHistogramCh2 = new LiHistogram2D<T>("Li - Ch2", false);
-		if (gd.getNextBoolean())
-				liICQ = new LiICQ<T>();
-		if (gd.getNextBoolean())
-				mandersCorrelation = new MandersCorrelation<T>();
-		if (gd.getNextBoolean())
-				histogram2D = new Histogram2D<T>("2D intensity histogram");
-		if (gd.getNextBoolean()) {
-				costesSignificance = new CostesSignificanceTest<T>(pearsonsCorrelation, 3, 10);
+
+		if (useLiCh1)
+			liHistogramCh1 = new LiHistogram2D<T>("Li - Ch1", true);
+		if (useLiCh2)
+			liHistogramCh2 = new LiHistogram2D<T>("Li - Ch2", false);
+		if (useLiICQ)
+			liICQ = new LiICQ<T>();
+		if (useManders)
+			mandersCorrelation = new MandersCorrelation<T>();
+		if (useScatterplot)
+			histogram2D = new Histogram2D<T>("2D intensity histogram");
+		if (useCostes) {
+			costesSignificance = new CostesSignificanceTest<T>(pearsonsCorrelation, psf, nrCostesRandomisations);
 		}
 
 		return true;
