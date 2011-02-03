@@ -221,6 +221,8 @@ abstract public class RefreshScripts implements PlugIn {
 			MenuItem item = menu.getItem(i);
 			if (item instanceof Menu) {
 				removeFromMenu((Menu)item);
+				if (((Menu)item).getItemCount() == 0)
+					menu.remove(item);
 				continue;
 			}
 			String label = item.getLabel();
