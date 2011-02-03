@@ -38,9 +38,12 @@ public class MaskAndRoiTest extends ColocalisationTest {
 		Image<UnsignedByteType> img = positiveCorrelationImageCh1;
 		int width = img.getDimension(0);
 		int height = img.getDimension(1);
-		int z = img.getDimension(2);
-		int[] roiOffset = new int[] {width / 4, height / 4, 0};
-		int[] roiSize = new int[] {width / 2, height / 2, z};
+		/* The size and dimensions are not of same dimension as the image.
+		 * This is intended to make sure the RoiImage can figure it out
+		 * on its own.
+		 */
+		int[] roiOffset = new int[] {width / 4, height / 4};
+		int[] roiSize = new int[] {width / 2, height / 2};
 		RoiImage<UnsignedByteType> roiImage
 			= new RoiImage<UnsignedByteType>(img, roiOffset, roiSize);
 
@@ -49,7 +52,7 @@ public class MaskAndRoiTest extends ColocalisationTest {
 			= new ImageFactory<UnsignedByteType>(img.createType(),
 				new ArrayContainerFactory());
 		Image<UnsignedByteType> clippedRoiImage
-			= maskFactory.createImage( roiSize, "Clipped ROI" );
+			= maskFactory.createImage( roiImage.getDimensions(), "Clipped ROI" );
 		LocalizableCursor<UnsignedByteType> roiCursor
 			= roiImage.createLocalizableCursor();
 		LocalizableByDimCursor<UnsignedByteType> outputCursor
@@ -76,7 +79,7 @@ public class MaskAndRoiTest extends ColocalisationTest {
 		double sum = 0;
 		while (roiCopyCursor.hasNext()) {
 			roiCopyCursor.fwd();
-			int[] pos = roiOffset.clone();
+			int[] pos = roiImage.getOffset();
 			for (int d=0; d<clippedRoiImage.getNumDimensions(); d++) {
 				pos[d] = pos[d] + roiCopyCursor.getPosition(d);
 			}
@@ -90,7 +93,7 @@ public class MaskAndRoiTest extends ColocalisationTest {
 		}
 
 		// check if sum is zero
-		assertTrue(Math.abs(sum) < 0.00001);
+		assertTrue("The sum of differences was " + sum + ".", Math.abs(sum) < 0.00001);
 	}
 
 	/**
