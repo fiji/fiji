@@ -272,21 +272,12 @@ abstract public class RefreshScripts implements PlugIn {
 			return;
 		}
 
-		MenuBar menu_bar = Menus.getMenuBar();
+		MenuBar menuBar = Menus.getMenuBar();
 		// In headless mode, there is no menu bar
-		if (menu_bar != null) {
-			int n = menu_bar.getMenuCount();
-			for (int i=0; i<n; i++) {
-				Menu menu = menu_bar.getMenu(i);
-				if (menu.getLabel().equals("Plugins")) {
-					pluginsMenu = menu;
-					break;
-				}
-			}
-		}
+		if (menuBar != null)
+			for (int i = 0; i < menuBar.getMenuCount(); i++)
+				removeFromMenu(menuBar.getMenu(i));
 
-		if (pluginsMenu != null)
-			removeFromMenu( pluginsMenu );
 		addFromDirectory( Menus.getPlugInsPath(), -1 );
 	}
 
