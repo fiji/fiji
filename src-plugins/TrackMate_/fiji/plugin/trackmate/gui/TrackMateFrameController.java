@@ -1,17 +1,19 @@
 package fiji.plugin.trackmate.gui;
 
+import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.NewImage;
 
+import java.awt.FileDialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -23,8 +25,6 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.jdom.DataConversionException;
 import org.jdom.JDOMException;
-import org.jgraph.event.GraphSelectionEvent;
-import org.jgraph.event.GraphSelectionListener;
 import org.jgrapht.event.GraphEdgeChangeEvent;
 import org.jgrapht.event.GraphListener;
 import org.jgrapht.event.GraphVertexChangeEvent;
@@ -46,10 +46,8 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.DisplayerType;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
-import fiji.plugin.trackmate.visualization.trackscheme.SpotCell;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotIconGrabber;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotSelectionManager;
-import fiji.plugin.trackmate.visualization.trackscheme.TrackEdgeCell;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 public class TrackMateFrameController {
@@ -362,17 +360,40 @@ public class TrackMateFrameController {
 			File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 			file = new File(folder.getPath() + File.separator + DEFAULT_FILENAME);
 		}
-		JFileChooser fileChooser = new JFileChooser(file.getParent());
-		fileChooser.setSelectedFile(file);
-		FileNameExtensionFilter filter = new FileNameExtensionFilter("XML files", "xml");
-		fileChooser.setFileFilter(filter);
-		
-		int returnVal = fileChooser.showOpenDialog(view);
-		if(returnVal == JFileChooser.APPROVE_OPTION) {
-			file = fileChooser.getSelectedFile();
+
+		if(IJ.isMacintosh()) {
+			// use the native file dialog on the mac
+			FileDialog dialog =	new FileDialog(view, "Select a TrackMate file", FileDialog.LOAD);
+			dialog.setDirectory(file.getParent());
+			dialog.setFile(file.getName());
+			FilenameFilter filter = new FilenameFilter() {
+				@Override
+				public boolean accept(File dir, String name) {
+					return name.endsWith(".xml");
+				}
+			};
+			dialog.setFilenameFilter(filter);
+			dialog.setVisible(true);
+			String selectedFile = dialog.getFile();
+			if (null == selectedFile) {
+				logger.log("Load data aborted.\n");
+				return;
+			}
+			file = new File(dialog.getDirectory(), selectedFile);
+			
 		} else {
-			logger.log("Load data aborted.\n");
-			return;  	    		
+			// use a swing file dialog on the other platforms
+			JFileChooser fileChooser = new JFileChooser(file.getParent());
+			fileChooser.setSelectedFile(file);
+			FileNameExtensionFilter filter = new FileNameExtensionFilter("XML files", "xml");
+			fileChooser.setFileFilter(filter);
+			int returnVal = fileChooser.showOpenDialog(view);
+			if(returnVal == JFileChooser.APPROVE_OPTION) {
+				file = fileChooser.getSelectedFile();
+			} else {
+				logger.log("Load data aborted.\n");
+				return;  	    		
+			}
 		}
 		
 		logger.log("Opening file "+file.getName()+'\n');
@@ -662,20 +683,43 @@ public class TrackMateFrameController {
 			File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 			file = new File(folder.getPath() + File.separator + DEFAULT_FILENAME);
 		}
-		JFileChooser fileChooser = new JFileChooser(file.getParent());
-		fileChooser.setSelectedFile(file);
-		FileNameExtensionFilter filter = new FileNameExtensionFilter("XML files", "xml");
-		fileChooser.setFileFilter(filter);
 
-		int returnVal = fileChooser.showSaveDialog(view);
-		if(returnVal == JFileChooser.APPROVE_OPTION) {
-			file = fileChooser.getSelectedFile();
+		if(IJ.isMacintosh()) {
+			// use the native file dialog on the mac
+			FileDialog dialog =	new FileDialog(view, "Save to a TrackMate file", FileDialog.SAVE);
+			dialog.setDirectory(file.getParent());
+			dialog.setFile(file.getName());
+			FilenameFilter filter = new FilenameFilter() {
+				@Override
+				public boolean accept(File dir, String name) {
+					return name.endsWith(".xml");
+				}
+			};
+			dialog.setFilenameFilter(filter);
+			dialog.setVisible(true);
+			String selectedFile = dialog.getFile();
+			if (null == selectedFile) {
+				logger.log("Save data aborted.\n");
+				view.jButtonSave.setEnabled(true);
+				return;
+			}
+			file = new File(dialog.getDirectory(), selectedFile);
 		} else {
-			logger.log("Save data aborted.\n");
-			view.jButtonSave.setEnabled(true);
-			return;  	    		
+			JFileChooser fileChooser = new JFileChooser(file.getParent());
+			fileChooser.setSelectedFile(file);
+			FileNameExtensionFilter filter = new FileNameExtensionFilter("XML files", "xml");
+			fileChooser.setFileFilter(filter);
+
+			int returnVal = fileChooser.showSaveDialog(view);
+			if(returnVal == JFileChooser.APPROVE_OPTION) {
+				file = fileChooser.getSelectedFile();
+			} else {
+				logger.log("Save data aborted.\n");
+				view.jButtonSave.setEnabled(true);
+				return;  	    		
+			}
 		}
-		
+
 		TmXmlWriter writer = new TmXmlWriter(model, logger);
 		switch (state) {
 		case START:
