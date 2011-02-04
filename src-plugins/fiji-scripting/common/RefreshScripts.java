@@ -252,9 +252,12 @@ abstract public class RefreshScripts implements PlugIn {
 				path = new StringBuffer(Menus.getPlugInsPath()).append(path).toString(); // blackslash-safe
 
 			if (IJ.shiftKeyDown()) {
+				IJ.showStatus("Opening " + path);
 				IJ.runPlugIn("fiji.scripting.Script_Editor", path);
 				return;
 			}
+			else
+				IJ.showStatus("Running " + path);
 
 			/* set the default class loader to ImageJ's PluginClassLoader */
 			Thread.currentThread()
