@@ -33,6 +33,7 @@ import fiji.User_Plugins;
 
 import ij.IJ;
 import ij.ImageJ;
+import ij.Macro;
 import ij.Menus;
 
 import ij.plugin.PlugIn;
@@ -313,6 +314,10 @@ abstract public class RefreshScripts implements PlugIn {
 	abstract public void runScript(String filename);
 
 	static public void printError(Throwable t) {
+		if (t instanceof RuntimeException && t.getMessage() == Macro.MACRO_CANCELED) {
+			IJ.showStatus("Macro/script aborted");
+			return;
+		}
 		IJ.handleException(t);
 	}
 
