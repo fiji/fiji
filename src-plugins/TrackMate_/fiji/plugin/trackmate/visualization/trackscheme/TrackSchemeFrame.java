@@ -238,16 +238,18 @@ public class TrackSchemeFrame extends JFrame {
 		}
 	}
 	
-	private void remove(Object cell) {
-		if (cell instanceof TrackEdgeCell) {
-			TrackEdgeCell trackEdge = (TrackEdgeCell) cell;
-			DefaultWeightedEdge edge = trackEdge.getEdge();
-			lGraph.removeEdge(edge);
-			trackGraph.removeEdge(edge);
-		} else if (cell instanceof SpotCell) {
-			SpotCell spotCell = (SpotCell) cell;
-			lGraph.removeVertex(spotCell.getSpot());
-			trackGraph.removeVertex(spotCell.getSpot());
+	private void remove(Object[] cells) {
+		for (Object cell : cells) {
+			if (cell instanceof TrackEdgeCell) {
+				TrackEdgeCell trackEdge = (TrackEdgeCell) cell;
+				DefaultWeightedEdge edge = trackEdge.getEdge();
+				lGraph.removeEdge(edge);
+				trackGraph.removeEdge(edge);
+			} else if (cell instanceof SpotCell) {
+				SpotCell spotCell = (SpotCell) cell;
+				lGraph.removeVertex(spotCell.getSpot());
+				trackGraph.removeVertex(spotCell.getSpot());
+			}
 		}
 	}
 	
@@ -489,14 +491,15 @@ public class TrackSchemeFrame extends JFrame {
 			});
 		}
 		// Remove
-		if (!jGraph.isSelectionEmpty()) {
-			menu.addSeparator();
-			menu.add(new AbstractAction("Remove") {
-				public void actionPerformed(ActionEvent e) {
-					remove(cell);
-				}
-			});
-		}
+		menu.addSeparator();
+		Action removeAction = new AbstractAction("Remove") {
+			public void actionPerformed(ActionEvent e) {
+				remove(jGraph.getSelectionCells());
+			}
+		};
+		menu.add(removeAction);
+		if (jGraph.isSelectionEmpty()) 
+			removeAction.setEnabled(false);
 		return menu;
 	}
 
