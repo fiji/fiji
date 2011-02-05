@@ -271,7 +271,7 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	public void showTimepoint(int tp) {
 		this.currentTimepoint = tp;
 		for(Content c : contents.values())
-			c.showTimepoint(tp);
+			c.showTimepoint(tp, false);
 		if(timelineGUIVisible)
 			timelineGUI.updateTimepoint(tp);
 	}
@@ -1378,14 +1378,14 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 			if(c.getEndTime() > endTime)
 				e = c.getEndTime();
 			updateStartAndEndTime(st, e);
-			c.showTimepoint(currentTimepoint);
 
 			this.scene.addChild(c);
 			this.contents.put(name, c);
 			this.recalculateGlobalMinMax(c);
-			c.showTimepoint(currentTimepoint);
 
 			c.setPointListDialog(plDialog);
+
+			c.showTimepoint(currentTimepoint, true);
 		}
 		return true;
 	}

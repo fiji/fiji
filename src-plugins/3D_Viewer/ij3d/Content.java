@@ -108,6 +108,12 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 	}
 
 	public void showTimepoint(int tp) {
+		showTimepoint(tp, false);
+	}
+
+	public void showTimepoint(int tp, boolean force) {
+		if(tp == currentTimePoint && !force)
+			return;
 		currentTimePoint = tp;
 		if(showAllTimepoints)
 			return;
