@@ -80,7 +80,6 @@ public class Volume {
 
 	/** Create instance with a null imp. */
 	protected Volume() {
-		this.imp = null;
 		this.image = null;
 	}
 
@@ -158,6 +157,17 @@ public class Volume {
 
 	public ImagePlus getImagePlus() {
 		return imp;
+	}
+
+	public void swap(String path) {
+		IJ.save(imp, path + ".tif");
+		imp = null;
+		image = null;
+		loader = null;
+	}
+
+	public void restore(String path) {
+		setImage(IJ.openImage(path + ".tif"), channels);
 	}
 
 	/**
@@ -272,6 +282,8 @@ public class Volume {
 	 * which is either INT_DATA or BYTE_DATA.
 	 */
 	protected void initLoader() {
+		if(image == null)
+			throw new RuntimeException("No image. Maybe it is swapped?");
 
 		if(dataType == INT_DATA) {
 			loader = new IntLoader(image);
@@ -299,6 +311,8 @@ public class Volume {
 	 * channel is used. For other cases, the data type is INT_DATA.
 	 */
 	protected boolean initDataType() {
+		if(image == null)
+			throw new RuntimeException("No image. Maybe it is swapped?");
 		int noChannels = 0;
 		if(image instanceof ByteImage) {
 			noChannels = 1;
@@ -318,11 +332,19 @@ public class Volume {
 	}
 
 	public void setNoCheck(int x, int y, int z, int v) {
-		loader.setNoCheck(x, y, z, v);
+		try {
+			loader.setNoCheck(x, y, z, v);
+		} catch(NullPointerException e) {
+			throw new RuntimeException("No image. Maybe it is swapped");
+		}
 	}
 
 	public void set(int x, int y, int z, int v) {
-		loader.set(x, y, z, v);
+		try {
+			loader.set(x, y, z, v);
+		} catch(NullPointerException e) {
+			throw new RuntimeException("No image. Maybe it is swapped");
+		}
 	}
 
 	/**
@@ -333,7 +355,11 @@ public class Volume {
 	 * @return value. Casted to int if it was a byte value before.
 	 */
 	public int load(int x, int y, int z) {
-		return loader.load(x, y, z);
+		try {
+			return loader.load(x, y, z);
+		} catch(NullPointerException e) {
+			throw new RuntimeException("No image. Maybe it is swapped");
+		}
 	}
 
 	/**
@@ -344,7 +370,11 @@ public class Volume {
 	 * @return value.
 	 */
 	public byte getAverage(int x, int y, int z) {
-		return image.getAverage(x, y, z);
+		try {
+			return image.getAverage(x, y, z);
+		} catch(NullPointerException e) {
+			throw new RuntimeException("No image. Maybe it is swapped");
+		}
 	}
 
 	/**

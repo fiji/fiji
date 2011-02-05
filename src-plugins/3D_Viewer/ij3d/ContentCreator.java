@@ -19,6 +19,8 @@ import javax.vecmath.Color3f;
 
 public class ContentCreator {
 
+	private static final boolean SWAP_TIMELAPSE_DATA = false;
+
 	public static Content createContent(
 				String name,
 				ImagePlus image,
@@ -85,6 +87,8 @@ public class ContentCreator {
 
 		TreeMap<Integer, ContentInstant> instants =
 			new TreeMap<Integer, ContentInstant>();
+		boolean timelapse = images.length > 1;
+		boolean shouldSwap = SWAP_TIMELAPSE_DATA && timelapse;
 		for(ImagePlus imp : images) {
 			ContentInstant content = new ContentInstant(name);
 			content.image = imp;
@@ -92,13 +96,18 @@ public class ContentCreator {
 			content.threshold = thresh;
 			content.channels = channels;
 			content.resamplingF = resf;
+			content.timepoint = tp;
 			content.showCoordinateSystem(UniverseSettings.
 					showLocalCoordinateSystemsByDefault);
 			content.displayAs(type);
 			content.compile();
+			if(shouldSwap) {
+				content.swapOriginalData();
+				content.swapDisplayedData();
+			}
 			instants.put(tp++, content);
 		}
-		return new Content(name, instants);
+		return new Content(name, instants, shouldSwap);
 	}
 
 	public static Content createContent(CustomMesh mesh, String name) {

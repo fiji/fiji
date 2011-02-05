@@ -108,6 +108,28 @@ public class VoltexVolume extends Volume {
 		updateData();
 	}
 
+	public void swap(String path) {
+		super.swap(path);
+		xy = null;
+		xz = null;
+		yz = null;
+		xyComp = null;
+		xzComp = null;
+		yzComp = null;
+	}
+
+	public void restore(String path) {
+		ImagePlus imp = IJ.openImage(path + ".tif");
+		try {
+			setImage(IJ.openImage(path + ".tif"), channels);
+		} catch(NullPointerException e) {
+			throw new IllegalArgumentException("Cannot load image from " + path);
+		} catch(RuntimeException e) {
+			System.out.println("Cannot load " + path);
+			throw e;
+		}
+	}
+
 	private void createImageComponents() {
 		for(int z = 0; z < zDim; z++)
 			xyComp[z] = compCreator.createImageComponent(xy[z], xTexSize, yTexSize);

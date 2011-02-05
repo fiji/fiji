@@ -1,7 +1,10 @@
 package customnode;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Arrays;
+import java.util.Map;
 
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.geometry.NormalGenerator;
@@ -340,6 +343,33 @@ public abstract class CustomMesh extends Shape3D {
 		material.setDiffuseColor(0.1f,0.1f,0.1f);
 		appearance.setMaterial(material);
 		return appearance;
+	}
+
+	public void restoreDisplayedData(String path, String name) {
+		HashMap<String, CustomMesh> contents = null;
+		try {
+			contents = WavefrontLoader.load(path);
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
+		if(contents.containsKey(name)) {
+			this.mesh = contents.get(name).getMesh();
+			update();
+		}
+	}
+
+	public void swapDisplayedData(String path, String name) {
+		HashMap<String, CustomMesh> contents =
+			new HashMap<String, CustomMesh>();
+		contents.put(name, this);
+		try {
+			WavefrontExporter.save(
+				contents,
+				path + ".obj");
+			this.mesh = null;
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	protected abstract GeometryArray createGeometry();

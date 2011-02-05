@@ -90,5 +90,9 @@ public abstract class ContentNode extends BranchGroup {
 	 * @param view
 	 */
 	public abstract void eyePtChanged(View view);
+
+	public abstract void swapDisplayedData(String path, String name);
+
+	public abstract void restoreDisplayedData(String path, String name);
 }
 

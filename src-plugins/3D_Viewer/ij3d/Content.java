@@ -26,12 +26,15 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 	private boolean showAllTimepoints = false;
 	private final String name;
 
+	private final boolean swapTimelapseData;
+
 	public Content(String name) {
 		this(name, 0);
 	}
 
 	public Content(String name, int tp) {
 		this.name = name;
+		this.swapTimelapseData = false;
 		setCapability(BranchGroup.ALLOW_DETACH);
 		setCapability(BranchGroup.ENABLE_PICK_REPORTING);
 		timepointToSwitchIndex = new HashMap<Integer, Integer>();
@@ -49,7 +52,12 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 	}
 
 	public Content(String name, TreeMap<Integer, ContentInstant> contents) {
+		this(name, contents, false);
+	}
+
+	public Content(String name, TreeMap<Integer, ContentInstant> contents, boolean swapTimelapseData) {
 		this.name = name;
+		this.swapTimelapseData = swapTimelapseData;
 		setCapability(BranchGroup.ALLOW_DETACH);
 		setCapability(BranchGroup.ENABLE_PICK_REPORTING);
 		this.contents = contents;
@@ -114,9 +122,17 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 	public void showTimepoint(int tp, boolean force) {
 		if(tp == currentTimePoint && !force)
 			return;
+		if(!showAllTimepoints && swapTimelapseData) {
+			ContentInstant old = contents.get(currentTimePoint);
+			if(old != null)
+				old.swapDisplayedData();
+		}
 		currentTimePoint = tp;
 		if(showAllTimepoints)
 			return;
+		ContentInstant next = contents.get(currentTimePoint);
+		if(next != null && swapTimelapseData)
+			next.restoreDisplayedData();
 
 		Integer idx = timepointToSwitchIndex.get(tp);
 		if(idx == null)
