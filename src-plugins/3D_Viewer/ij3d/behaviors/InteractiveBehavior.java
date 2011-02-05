@@ -1,6 +1,7 @@
 package ij3d.behaviors;
 
 import java.util.Enumeration;
+import java.util.List;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -29,7 +30,7 @@ import voltex.VolumeRenderer;
  */
 public class InteractiveBehavior extends Behavior {
 
-	private DefaultUniverse univ;
+	protected final DefaultUniverse univ;
 	private ImageCanvas3D canvas;
 
 	private WakeupOnAWTEvent[] mouseEvents;
@@ -52,6 +53,12 @@ public class InteractiveBehavior extends Behavior {
 
 	public static final double TWO_RAD = 2 * Math.PI / 180;
 
+	private List<InteractiveBehavior> external;
+
+	public void setExternalBehaviours(List<InteractiveBehavior> bs) {
+		external = bs;
+	}
+	public List<InteractiveBehavior> getExternalBehaviors() { return external; }
 
 	/**
 	 * Initializes a new InteractiveBehavior.
@@ -84,18 +91,18 @@ public class InteractiveBehavior extends Behavior {
 	 * @see Behavior#processStimulus(Enumeration) Behavior.processStimulus
 	 */
 	public void processStimulus(Enumeration criteria) {
+		/*
 		if(!univ.ui.isHandTool() &&
 			!univ.ui.isMagnifierTool() &&
 			!univ.ui.isPointTool()) {
 
-			wakeupOn (wakeupCriterion);
+			wakeupOn(wakeupCriterion);
 			return;
 		}
-		WakeupOnAWTEvent wakeup;
-		AWTEvent[] events;
+		*/
 		while(criteria.hasMoreElements()) {
-			wakeup = (WakeupOnAWTEvent)criteria.nextElement();
-			events = (AWTEvent[])wakeup.getAWTEvent();
+			WakeupOnAWTEvent wakeup = (WakeupOnAWTEvent)criteria.nextElement();
+			AWTEvent[] events = (AWTEvent[])wakeup.getAWTEvent();
 			for(AWTEvent evt : events) {
 				if(evt instanceof MouseEvent)
 					doProcess((MouseEvent)evt);
@@ -144,6 +151,15 @@ public class InteractiveBehavior extends Behavior {
 	 * @param e
 	 */
 	protected void doProcess(KeyEvent e) {
+
+		if (null != external) {
+			// Delegate to external behaviours
+			for (InteractiveBehavior b : external) {
+				b.doProcess(e);
+				if (e.isConsumed()) return;
+			}
+		}
+
 		int id = e.getID();
 
 		if(id == KeyEvent.KEY_RELEASED || id == KeyEvent.KEY_TYPED)
@@ -262,6 +278,15 @@ public class InteractiveBehavior extends Behavior {
 	 * @param e
 	 */
 	protected void doProcess(MouseEvent e) {
+
+		if (null != external) {
+			// Delegate to external behaviours
+			for (InteractiveBehavior b : external) {
+				b.doProcess(e);
+				if (e.isConsumed()) return;
+			}
+		}
+
 		int id = e.getID();
 		int mask = e.getModifiersEx();
 		Content c = univ.getSelected();
@@ -269,28 +294,38 @@ public class InteractiveBehavior extends Behavior {
 			if(c != null && !c.isLocked()) contentTransformer.init(c, e.getX(), e.getY());
 			else viewTransformer.init(e);
 			if(univ.ui.isPointTool()) {
-				if(c != null)
+				if(c != null) {
 					c.showPointList(true);
-				if(mask == PICK_POINT_MASK) {
+					e.consume();
+				} if(mask == PICK_POINT_MASK) {
 					picker.addPoint(c, e);
+					e.consume();
 				} else if(mask == DELETE_POINT_MASK) {
 					picker.deletePoint(c, e);
+					e.consume();
 				}
 			}
 		} else if(id == MouseEvent.MOUSE_DRAGGED) {
 			if(shouldTranslate(mask)) {
 				if(c != null && !c.isLocked()) contentTransformer.translate(e);
 				else viewTransformer.translate(e);
+				e.consume();
 			} else if(shouldRotate(mask)) {
-				if(c != null && !c.isLocked()) contentTransformer.rotate(e);
+				if(c != null && !c.isLocked() && (MouseEvent.BUTTON1_DOWN_MASK == (mask & MouseEvent.BUTTON1_DOWN_MASK))) contentTransformer.rotate(e);
 				else viewTransformer.rotate(e);
-			} else if(shouldZoom(mask))
+				e.consume();
+			} else if(shouldZoom(mask)) {
 				viewTransformer.zoom(e);
-			else if(shouldMovePoint(mask))
+				e.consume();
+			} else if(shouldMovePoint(mask)) {
 				picker.movePoint(c, e);
+				e.consume();
+			}
 		} else if(id == MouseEvent.MOUSE_RELEASED) {
-			if(univ.ui.isPointTool())
+			if(univ.ui.isPointTool()) {
 				picker.stopMoving();
+				e.consume();
+			}
 		}
 		if(id == MouseEvent.MOUSE_WHEEL) {
 			int axis = -1;
@@ -311,10 +346,10 @@ public class InteractiveBehavior extends Behavior {
 				if(units > 0) og.increase(axis);
 				else if(units < 0) og.decrease(axis);
 				univ.fireContentChanged(c);
-
 			} else {
 				viewTransformer.wheel_zoom(e);
 			}
+			e.consume();
 		}
 	}
 }

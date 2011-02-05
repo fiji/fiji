@@ -144,9 +144,12 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 					IJ.showStatus("");
 			}
 		});
+
 		canvas.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
+				if (e.isConsumed())
+					return;
 				Content c = picker.getPickedContent(
 						e.getX(), e.getY());
 				select(c);

@@ -1,0 +1,5 @@
+This is just a meta-package which depends on all the components of
+Fiji, and as such has no license.  Each package contains its own
+copyright file in /usr/share/doc/[package-name]/copyright, but there
+is a summary of the licenses of each component in
+/usr/share/doc/fiji-base/LICENSES

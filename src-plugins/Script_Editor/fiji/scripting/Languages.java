@@ -41,7 +41,7 @@ public class Languages {
 		        new Language(".rb", SyntaxConstants.SYNTAX_STYLE_RUBY, "Ruby", KeyEvent.VK_R, Refresh_JRuby_Scripts.class, false, false),
 		        new Language(".clj", null, "Clojure", KeyEvent.VK_C, Refresh_Clojure_Scripts.class, false, false),
 		        /* new Language(".m", null, "Matlab", KeyEvent.VK_M, null, false, false), */
-		        new Language(".bsh", SyntaxConstants.SYNTAX_STYLE_JAVA, "BeanShell", KeyEvent.VK_B, Refresh_BSH_Scripts.class, false, false),
+		        new Language(".bsh", SyntaxConstants.SYNTAX_STYLE_JAVA, "Beanshell", KeyEvent.VK_B, Refresh_BSH_Scripts.class, false, false),
 		        new Language(".ijm", null, "ImageJ Macro", KeyEvent.VK_I, Refresh_Macros.class, false, false),
 		        new Language("", SyntaxConstants.SYNTAX_STYLE_NONE, "None", KeyEvent.VK_N, null, false, false)
 		};

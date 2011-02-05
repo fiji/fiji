@@ -8,7 +8,16 @@
 - segmentation tool (as scissors, but works only on isosurfaces, i.e. 
   thresholded objects, and does not remove, but rather label it)
 
-segmentation editor: CustomStackWindow -> SegmentationEditorPanel
+segmentation editor:
+	- CustomStackWindow -> SegmentationEditorPanel
+	- connect to 3D viewer
+	- <PageDown> like 5x <CursorRight>
+	- automatically select 1st non-exterior
+	- fix right click in empty areas of "Labels" list
+	- HyperRoi extends Roi[]
+	- morphological operators on Roi3Ds
+	- turn into MDI (labels & buttons into an extra window)
+	- make it a tool (to override keyboard shortcut)
 
 VIB:
 	- eye candy: file list with processes already done (checkboxes)

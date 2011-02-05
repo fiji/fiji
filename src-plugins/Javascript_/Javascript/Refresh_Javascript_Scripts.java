@@ -15,13 +15,14 @@ import java.io.Reader;
 import java.io.File;
 
 public class Refresh_Javascript_Scripts extends RefreshScripts {
-
+	@Override
 	public void run(String arg) {
 		setLanguageProperties(".js","Javascript");
 		setVerbose(false);
 		super.run(arg);
 	}
 
+	@Override
 	public void runScript(String filename) {
 		try {
 			if (! new File(filename).exists()) {
@@ -36,6 +37,7 @@ public class Refresh_Javascript_Scripts extends RefreshScripts {
 	}
 
 	/** Will consume and close the stream. */
+	@Override
 	public void runScript(InputStream istream) {
 		try {
 			Context cx = Context.enter();
@@ -68,5 +70,13 @@ public class Refresh_Javascript_Scripts extends RefreshScripts {
 		} finally {
 			Context.exit();
 		}
+	}
+
+	@Override
+	protected boolean isThisLanguage(String command) {
+		return super.isThisLanguage(command) ||
+			(command != null &&
+			 command.startsWith("ij.plugin.Macro_Runner(\"") &&
+			 command.endsWith(".js\")"));
 	}
 }

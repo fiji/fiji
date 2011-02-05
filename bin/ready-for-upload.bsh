@@ -1,6 +1,16 @@
 #!/bin/sh
 /*/. 2>/dev/null; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
 
+/*
+This script checks several preconditions of .jar files before uploading:
+
+- the source files should be committed
+- the latest commit touching the source files should be pushed
+- Fiji Build should report it as up-to-date
+- no stale leftover files from old versions
+- no debug information in the .class files
+*/
+
 if (bsh.args.length == 0) {
 	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
 		+ " <file>...");
@@ -15,6 +25,8 @@ import fiji.build.Rule;
 import fiji.build.SubFake;
 import fiji.build.Util;
 
+import fiji.updater.util.ByteCodeAnalyzer;
+import fiji.updater.util.Compressor;
 import fiji.updater.util.DependencyAnalyzer;
 
 import java.io.File;
@@ -52,11 +64,17 @@ String getSourcePathForTarget(String path, boolean fromSubFakefile) {
 	}
 	if (rule instanceof SubFake) {
 		if (fromSubFakefile) {
+			if (rule.getLastPrerequisite().equals("mpicbg/"))
+				return fijiDir + "mpicbg/";
 			fakefile = rule.getFakefile();
 			if (fakefile == null)
-				return false;
+				return null;
 			fake = new Fake();
 			cwd = new File(fijiDir, rule.getLastPrerequisite());
+			if (!new File(cwd, ".git").exists()) {
+				System.err.println(rule.getLastPrerequisite() + " not checked out");
+				return null;
+			}
 			parser = fake.parse(new FileInputStream(fakefile), cwd);
 			parser.parseRules(new ArrayList());
 
@@ -73,9 +91,9 @@ String getSourcePathForTarget(String path, boolean fromSubFakefile) {
 			}
 
 			prereq = subRule.getPrerequisiteString();
-			starstar = prereq.indexOf("**");
-			if (starstar >= 0)
-				prereq = prereq.substring(0, starstar);
+			star = prereq.indexOf("*");
+			if (star >= 0)
+				prereq = prereq.substring(0, star);
 
 			return Util.makePath(cwd, prereq);
 		}
@@ -140,6 +158,12 @@ boolean checkDirtyFiles(String path) {
 	return true;
 }
 
+String getSourceFileName(InputStream in) {
+	code = Compressor.readStream(in);
+	analyzer = new ByteCodeAnalyzer(code, true);
+	return analyzer.getSourceFile();
+}
+
 long getMTime(String path) {
 	return new File(path).lastModified();
 }
@@ -156,14 +180,30 @@ boolean checkTimestamps(String path) {
 	zip = new ZipFile(fullPath);
 	for (ZipEntry entry : Collections.list(zip.entries())) {
 		name = entry.getName();
+		if (name.startsWith("META-INF/"))
+			continue;
 		if (name.endsWith(".class")) {
 			dollar = name.indexOf('$');
 			if (dollar >= 0)
 				name = name.substring(0, dollar) + ".java";
 			else
 				name = name.substring(0, name.length() - 5) + "java";
-			if (!new File(sourcePath + name).exists())
-				continue;
+			if (!new File(sourcePath + name).exists()) {
+				sourceName = getSourceFileName(zip.getInputStream(entry));
+				if (sourceName == null) {
+					System.err.println("No source file found for '" + sourcePath + entry.getName() + "'");
+					continue;
+				}
+				name = name.substring(0, name.lastIndexOf('/') + 1) + sourceName;
+			}
+		}
+		if (!new File(sourcePath + name).exists() &&
+				(!path.endsWith("/Script_Editor.jar") ||
+				 !new File(sourcePath + "templates/Java/" + name).exists()) &&
+				(!path.endsWith("/ij.jar") ||
+				 (!name.equals("aboutja.jpg") && !name.equals("icon.gif")))) {
+			System.err.println(entry.getName() + " in " + path + " is missing the source " + name);
+			return false;
 		}
 		if (entry.getTime() < getMTime(sourcePath + name)) {
 			System.err.println(entry.getName() + " in " + path + " is not up-to-date");
@@ -177,6 +217,8 @@ boolean checkPushed(String directory, String subdirectory, String path) {
 	upstreamBranch = "master";
 	if (path.endsWith("loci_tools.jar") && directory.endsWith("bio-formats/"))
 		upstreamBranch = "svn/4.2";
+	if (subdirectory.endsWith("/"))
+		subdirectory = subdirectory.substring(0, subdirectory.length() - 1);
 	executer = new SimpleExecuter(new File(directory), new String[] {
 		"git", "log", "--oneline", "origin/" + upstreamBranch + "..", "--", subdirectory == null ? "." : subdirectory
 	});
@@ -211,6 +253,8 @@ boolean check(String path) {
 	}
 
 	try {
+		if (!checkTimestamps(path))
+			return false;
 		if (DependencyAnalyzer.containsDebugInfo(path)) {
 			if (new File(path).getCanonicalPath().equals(new File(fijiDir, "plugins/loci_tools.jar").getCanonicalPath()))
 				System.err.println("Ignoring debug info in Bio-Formats");
@@ -225,8 +269,6 @@ boolean check(String path) {
 			return false;
 		}
 		if (!checkDirtyFiles(path))
-			return false;
-		if (!checkTimestamps(path))
 			return false;
 		if (!checkPushed(path))
 			return false;

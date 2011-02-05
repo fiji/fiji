@@ -83,6 +83,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
 
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -183,7 +184,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			int dot = defaultTitle.lastIndexOf('.');
 			if (dot > 0)
 				defaultTitle = defaultTitle.substring(0, dot);
-			label = "Project_title";
+			label = "Project_title (e.g. TrakEM2)";
 		}
 		else
 			interceptRenames();
@@ -202,12 +203,13 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		if (mode != Mode.SCREENSHOT)
 			name = capitalize(name).replace(' ', '_');
 		else {
+			name = capitalize(name);
 			new Prettify_Wiki_Screenshot().run(screenshot.getProcessor());
 			screenshot = IJ.getImage();
 			String imageTitle = name + "-snapshot" + imageFormat.extension;
 			for (int i = 2; wikiHasImage(imageTitle); i++)
 				imageTitle = name + "-snapshot-" + i + imageFormat.extension;
-			screenshot.setTitle(imageTitle);
+			screenshot.setTitle(imageTitle.replace(' ', '_'));
 		}
 
 		addEditor();
@@ -275,6 +277,8 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 					IJ.error("Could not get page source for '" + name + "'");
 					return;
 				}
+				if (!text.endsWith("\n"))
+					text += "\n";
 				text += "\n* " + name + "|"
 					+ screenshot.getTitle() + "\n"
 					+ "The [[" + name + "]] plugin <describe the project here>\n";
@@ -294,8 +298,10 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		if (mode == Mode.TUTORIAL_MAKER)
 			showSnapshotFrame();
 
-		editor.setVisible(true);
 		editor.setTitle("Edit Wiki - " + name);
+		SwingUtilities.invokeLater(new Runnable() { public void run() {
+			editor.setVisible(true);
+		}});
 	}
 
 	public String getText() {
@@ -305,9 +311,17 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		Object source = e.getSource();
 		if (source == upload)
-			upload();
+			new Thread() {
+				public void run() {
+					upload();
+				}
+			}.start();
 		else if (source == preview)
-			preview();
+			new Thread() {
+				public void run() {
+					preview();
+				}
+			}.start();
 		else if (source == renameImage)
 			renameImage();
 		else if (source == whiteImage)
@@ -831,6 +845,8 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		if (oldTitle.equals(newTitle))
 			return;
 		for (TextEditor editor : editors) {
+			if (editor == null || editor.getTextArea() == null)
+				continue;
 			String text = editor.getTextArea().getText();
 			String transformed = text.replaceAll("\\[\\[Image:"
 					+ oldTitle.replaceAll("\\.", "\\\\.")

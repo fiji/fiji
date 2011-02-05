@@ -20,9 +20,13 @@ import ij.IJ;
 import ij.gui.GenericDialog;
 import java.util.ArrayList;
 import org.python.util.PythonInterpreter;
+import org.python.core.ParserFacade;
+import org.python.core.Py;
+import org.python.core.CompilerFlags;
 import org.python.core.PyObject;
 import org.python.core.PyDictionary;
 import org.python.core.PySystemState;
+import org.python.core.CompileMode;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowAdapter;
 
@@ -41,6 +45,8 @@ import common.AbstractInterpreter;
  */
 public class Jython_Interpreter extends AbstractInterpreter {
 	protected PythonInterpreter pi;
+	protected PyDictionary globals = new PyDictionary();
+	protected PySystemState pystate = new PySystemState();
 
 	public Jython_Interpreter() { }
 
@@ -58,9 +64,8 @@ public class Jython_Interpreter extends AbstractInterpreter {
 		if (classLoader == null)
 			classLoader = getClass().getClassLoader();
 		PySystemState.initialize(System.getProperties(), System.getProperties(), new String[] { }, classLoader);
-		PySystemState pystate = new PySystemState();
 		pystate.setClassLoader(classLoader);
-		pi = new PythonInterpreter(new PyDictionary(), pystate);
+		pi = new PythonInterpreter(globals, pystate);
 		//redirect stdout and stderr to the screen for the interpreter
 		pi.setOut(out);
 		pi.setErr(out);
@@ -92,8 +97,26 @@ public class Jython_Interpreter extends AbstractInterpreter {
 
 	/** Evaluate python code. */
 	protected Object eval(String text) {
-		pi.exec(text);
+		//pi.exec(text);
+		//return null;
+
+		// A. Prints None
+		//Py.setSystemState(pystate);
+		//PyObject po = Py.runCode(Py.compile_flags(text, "<string>", CompileMode.exec, Py.getCompilerFlags(0, false)), pi.getLocals(), globals);
+		//Py.flushLine();
+		//return po;
+
+		// B. Prints None
+		//return pi.eval(Py.compile_flags(text, "<string>", CompileMode.exec, Py.getCompilerFlags(0, false)));
+
+		// C. Works! Prints to stdout the last evaluated expression if it is meaningful
+		// (for example def something doesn't print, but a single number does.)
+		CompilerFlags cflags = Py.getCompilerFlags(0, false);
+		String filename = "<string>";
+		pi.eval(Py.compile_flags(ParserFacade.parse(text, CompileMode.exec, filename, cflags), 
+						Py.getName(), filename, true, true, cflags));
 		return null;
+
 	}
 
 	/** Returns an ArrayList of String, each entry a possible word expansion. */

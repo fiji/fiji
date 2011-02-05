@@ -315,6 +315,19 @@ public abstract class DefaultUniverse extends SimpleUniverse
 		scene.addChild(bg);
 	}
 
+	public void addInteractiveBehavior(InteractiveBehavior b) {
+		if (null == mouseBehavior) {
+			setInteractiveBehavior(b);
+			return;
+		}
+		List<InteractiveBehavior> ls = mouseBehavior.getExternalBehaviors();
+		if (null == ls) {
+			ls = new ArrayList<InteractiveBehavior>();
+			mouseBehavior.setExternalBehaviours(ls);
+		}
+		ls.add(b);
+	}
+
 	/**
 	 * Copy the whole transformation, which transforms any
 	 * point from the vworld coordinate system to the observer
@@ -575,6 +588,7 @@ public abstract class DefaultUniverse extends SimpleUniverse
 			ImageWindow3D win2 = win;
 			win = null;
 			win2.destroy();
+			if (null != mouseBehavior) mouseBehavior.setExternalBehaviours(null);
 		}
 		// Flush native resources used by this universe:
 		super.removeAllLocales();

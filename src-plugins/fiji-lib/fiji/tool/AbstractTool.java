@@ -121,6 +121,8 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 		if (this instanceof ToolToggleListener) {
 			toolToggleListener = (ToolToggleListener)this;
 			toolToggleListener.toolToggled(true);
+			if (toolbarMouseListener == null)
+				toolbarMouseListener = new ToolbarMouseAdapter(null);
 		}
 
 		toolActive = true;
@@ -128,7 +130,7 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 	}
 
 	/**
-	 * This class is used to monitor double-clicks on the toolbar icon of this concrete tool.
+	 * This class is used to monitor tool toggles and double-clicks on the toolbar icon of this concrete tool.
 	 */
 	protected class ToolbarMouseAdapter extends MouseAdapter {
 		protected ToolWithOptions this2;
@@ -140,7 +142,7 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 		public void mouseReleased(MouseEvent e) {
 			if (maybeUnregister())
 				return;
-			if (isThisTool() && e.getClickCount() > 1)
+			if (isThisTool() && this2 != null && e.getClickCount() > 1)
 				this2.showOptionDialog();
 		}
 	}

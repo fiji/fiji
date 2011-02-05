@@ -619,7 +619,9 @@ public class Fake {
 			arguments.add("-classpath");
 			arguments.add(classPath);
 		}
-
+		String extDirs = System.getProperty("java.ext.dirs");
+		if (extDirs != null && !extDirs.equals(""))
+			arguments.add("-Djava.ext.dirs=" + extDirs);
 		int optionCount = arguments.size();
 		for (String path : javas)
 			if (path.endsWith(".java") && !exclude.contains(path))

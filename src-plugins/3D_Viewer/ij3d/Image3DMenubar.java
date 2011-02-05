@@ -543,16 +543,20 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 			executer.changeAnimationOptions();
 		else if(src == threshold)
 			executer.changeThreshold(univ.getSelected());
-		else if(src == displayAsVolume)
+		else if(src == displayAsVolume) {
 			executer.displayAs(univ.getSelected(), Content.VOLUME);
-		else if(src == displayAsOrtho)
+			updateMenus();
+		} else if(src == displayAsOrtho) {
 			executer.displayAs(univ.getSelected(), Content.ORTHO);
-		else if(src == displayAsSurface)
+			updateMenus();
+		} else if(src == displayAsSurface) {
 			executer.displayAs(univ.getSelected(), Content.SURFACE);
-		else if(src == displayAsSurfacePlot)
+			updateMenus();
+		} else if(src == displayAsSurfacePlot) {
 			executer.displayAs(
 				univ.getSelected(), Content.SURFACE_PLOT2D);
-		else if(src == updateVol)
+			updateMenus();
+		} else if(src == updateVol)
 			executer.updateVolume(univ.getSelected());
 		else if(src == slices)
 			executer.changeSlices(univ.getSelected());
@@ -683,6 +687,11 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 			}
 		}
 	}
+
+	public void updateMenus() {
+		contentSelected(univ.getSelected());
+	}
+
 
 	public void contentSelected(Content c) {
 

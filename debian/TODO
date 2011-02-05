@@ -4,9 +4,16 @@ Could we use the packaged commons-math?
 
 jna.jar is packaged in libjna-java - should use that
 
+The man page for fiji should be in fiji-base, not fiji.
+
 Need all the fiji-*.copyright files - needs more detail than in
    LICENSES, with the source of the information and a link
    to the full license in /usr/share/common-licenses/ where possible.
+
+Problematic packages for copyright in that they have many authors
+include:
+   - fiji-examples
+   - fiji-plugins
 
 Allow a per-user plugins directory as well as the system-wide one.
 
