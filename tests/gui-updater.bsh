@@ -1,0 +1,18 @@
+#!/bin/sh
+/*/. 2>/dev/null; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
+
+thisDir = new File(this.interpreter.getSourceFileInfo()).getParentFile();
+libDir = new File(thisDir, "updater");
+source(new File(libDir, "lib.bsh").getAbsolutePath());
+
+cleanWebRoot();
+prepareNewFijiRoot(tmpDeveloperRoot, true);
+prepareNewFijiRoot(tmpUserRoot, false);
+
+print("About to upload");
+upload("initialUpload()");
+download("initialUserCheck()");
+
+prepareSome();
+upload("uploadSome()");
+download("downloadSome()");

@@ -1,0 +1,402 @@
+// A library of useful variables and functions
+
+
+/// SETUP
+
+testDir = libDir.getCanonicalFile().getParentFile();
+tmpDeveloperRoot = new File(testDir, "tmpDeveloperRoot");
+tmpUserRoot = new File(testDir, "tmpUserRoot");
+tmpWebRoot = new File(testDir, "tmpWebRoot");
+
+import fiji.updater.Updater;
+
+import fiji.updater.logic.PluginObject;
+
+import fiji.updater.util.Util;
+
+Updater.MAIN_URL = "file:" + tmpWebRoot.getAbsolutePath() + "/";
+Updater.UPDATE_DIRECTORY = tmpWebRoot.getAbsolutePath() + "/";
+
+if (Util.isDeveloper)
+	Updater.SSH_HOST = null;
+
+
+/// GENERAL HELPERS
+
+error(message) {
+	throw new RuntimeException(message);
+}
+
+assert(message, cond) {
+	if (!cond)
+		error("assertion failed: " + message);
+}
+
+
+/// DATA STRUCTURE HELPERS
+
+shiftArray(array) {
+	newArray = new String[array.length - 1];
+	System.arraycopy(array, 1, newArray, 0, newArray.length);
+	return newArray;
+}
+
+unshiftArray(array, item) {
+	newArray = new String[array.length + 1];
+	newArray[0] = item;
+	System.arraycopy(array, 0, newArray, 1, array.length);
+	return newArray;
+}
+
+appendArray(array, array2) {
+	newArray = new String[array.length + array2.length];
+	System.arraycopy(array, 0, newArray, 0, array.length);
+	System.arraycopy(array2, 0, newArray, array.length, array2.length);
+	return newArray;
+}
+
+count(iterable) {
+	i = 0;
+	for (iter = iterable.iterator(); iter.hasNext(); i++)
+		iter.next();
+	return i;
+}
+
+requireStatus(filename, status) {
+	assert(filename + " has status " + status,
+		plugins.getPlugin(filename).getStatus() == status);
+}
+
+markForUpload(filename) {
+	print("Marking " + filename + " for upload");
+	plugins.getPlugin(filename).setAction(plugins, PluginObject.Action.UPLOAD);
+}
+
+
+/// FILESYSTEM HELPERS
+
+deleteRecursively(dir) {
+	for (File file : dir.listFiles())
+		if (file.getName().equals(".") || file.getName().equals(".."))
+			continue;
+		else if (file.isDirectory())
+			deleteRecursively(file);
+		else if (file.isFile())
+			file.delete();
+	dir.delete();
+}
+
+import fiji.updater.util.UpdateJava;
+
+import java.io.FileInputStream;
+
+copyFile(source, destination) {
+	destination.getCanonicalFile().getParentFile().mkdirs();
+	new UpdateJava().copyTo(new FileInputStream(source), destination.getAbsolutePath());
+	if (destination.getName().equals("fiji"))
+		execute(new String[] { "chmod", "a+x", destination.getAbsolutePath() });
+}
+
+fijiDir = new File(System.getProperty("fiji.executable")).getCanonicalFile().getParentFile();
+
+prepareNewFijiRoot(root, asDeveloper) {
+	if (root.exists())
+		deleteRecursively(root);
+	root.mkdirs();
+
+	toCopy = new String[] {
+		"fiji",
+		"jars/ij.jar", "jars/Fiji.jar", "plugins/Fiji_Updater.jar",
+		"jars/bsh-2.0b4.jar", "jars/jsch-0.1.37.jar"
+	};
+
+	if (asDeveloper)
+		toCopy = unshiftArray(toCopy, "fiji.c");
+
+	for (String name : toCopy)
+		copyFile(new File(fijiDir, name),  new File(root, name));
+}
+
+import fiji.updater.util.Compressor;
+
+readFile(dir, name) {
+	in = new FileInputStream(new File(dir, name));
+	return new String(Compressor.readStream(in)).trim();
+}
+
+import java.io.PrintWriter;
+
+writeFile(dir, name) {
+	return writeFile(dir, name,name);
+}
+
+writeFile(dir, name, content) {
+	file = new File(dir, name);
+	file.getParentFile().mkdirs();
+	writer = new PrintWriter(file);
+	writer.println(content);
+	writer.close();
+
+	return file;
+}
+
+cleanWebRoot() {
+	if (tmpWebRoot.exists())
+		deleteRecursively(tmpWebRoot);
+	tmpWebRoot.mkdirs();
+
+	dbXml = writeFile(tmpWebRoot, "db.xml",
+		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		+ "<pluginRecords/>");
+
+	execute(new String[] { "gzip", dbXml.getAbsolutePath() });
+}
+
+
+/// LAUNCH HELPERS
+
+import fiji.SimpleExecuter;
+
+execute(args) {
+	lineHandler = new SimpleExecuter.LineHandler() {
+		handleLine(line) {
+			print(line);
+		}
+	};
+	executer = new SimpleExecuter(args, lineHandler, lineHandler);
+	status = executer.getExitCode();
+	if (status != 0) {
+		print("Failed with error " + status);
+		System.exit(status);
+	}
+}
+
+upload(bsh) {
+	args = new String[] {
+		new File(tmpDeveloperRoot, "fiji").getAbsolutePath(),
+		new File(libDir, "client.bsh").getAbsolutePath(),
+		bsh
+	};
+	print("Starting fake developer with " + bsh);
+	execute(args);
+}
+
+download(bsh) {
+	args = new String[] {
+		new File(tmpUserRoot, "fiji").getAbsolutePath(),
+		new File(libDir, "client.bsh").getAbsolutePath(),
+		bsh
+	};
+	print("Starting fake user with " + bsh);
+	execute(args);
+}
+
+
+/// GUI INTERACTION HELPERS
+
+import java.awt.Window;
+
+describeComponent(component) {
+	className = component.getClass().getName();
+	result = className.substring(className.lastIndexOf('.') + 1);
+	if (component instanceof Window)
+		result += "(" + component.getTitle() + ")";
+	return result;
+}
+
+listComponentsRecursively(container) {
+	listComponentsRecursively(container, "");
+}
+
+import java.awt.Component;
+import java.awt.Container;
+
+listComponentsRecursively(component, indent) {
+	print(indent + describeComponent(component));
+	if (component instanceof Container)
+		for (Component child : component.getComponents())
+			listComponentsRecursively(child, indent + "\t");
+}
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+getButton(container, title) {
+	for (Component child : container.getComponents())
+		if (child instanceof JButton && child.getText().equals(title))
+			return child;
+		else if (child instanceof Container) {
+			button = getButton(child, title);
+			if (button != null)
+				return button;
+		}
+	return null;
+}
+
+clickButton(container, title) {
+	button = getButton(container, title);
+	if (button == null)
+		error("Button " + title + " not found in " + container);
+	/*
+	child.addActionListener(new ActionListener() {
+		void actionPerformed(ActionEvent e) {
+			print(e.getActionCommand());
+			print(e.getID());
+		}
+	});
+	*/
+	event = new ActionEvent(button, ActionEvent.ACTION_PERFORMED, button.getText());
+	for (ActionListener listener : button.getActionListeners())
+		listener.actionPerformed(event);
+}
+
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+waitUntilClosed(window) {
+	print("Waiting until " + window.getTitle() + " is closed");
+	windowListener = new WindowAdapter() {
+		public void windowClosed(WindowEvent e) {
+			synchronized (this) {
+				notify();
+			}
+		}
+	};
+	window.addWindowListener(windowListener);
+	synchronized (windowListener) {
+		windowListener.wait();
+	}
+	print(window.getTitle() + " was closed");
+}
+
+import fiji.Main;
+
+waitForMessageBox(title, message) {
+	print("Waiting for the " + title + " '" + message + "'");
+	window = Main.waitForWindow(title);
+	components = window.getComponents();
+	if (components.length == 1 && components[0].getClass().getName().endsWith("JRootPane"))
+		components = components[0].getComponents();
+	pane = window.getComponents()[0].getComponents()[1].getComponents()[0].getComponents()[0];
+	if (pane.getMessage().equals(message)) {
+		window.dispose();
+		print("Okay");
+	}
+	else
+		print("Not okay");
+}
+
+waitForInformation(message) {
+	waitForMessageBox("Information", message);
+}
+
+waitForWarning(message) {
+	waitForMessageBox("Warning", message);
+}
+
+requireUpToDate() {
+	waitForInformation("Your Fiji is up to date!");
+}
+
+requireUploadOK() {
+	waitForInformation("Uploaded completed.");
+}
+
+requireDownloadFinished() {
+	waitForInformation("Updated successfully.  Please restart Fiji!");
+}
+
+requireModified() {
+	waitForWarning("There are locally modified files!");
+}
+
+advancedMode() {
+	//listComponentsRecursively(updaterFrame);
+	clickButton(updaterFrame, "Advanced mode");
+}
+
+viewMode(label) {
+	if (!label.startsWith("View "))
+		label = "View " + label;
+	options = updaterFrame.viewOptions;
+	selected = false;
+	for (i = 0; i < options.getItemCount(); i++)
+		if (options.getItemAt(i).toString().equals(label)) {
+			options.setSelectedIndex(i);
+			selected = true;
+			break;
+		}
+	assert(label, selected);
+}
+
+exitWhenClosed() {
+	waitUntilClosed(updaterFrame);
+	System.exit(0);
+}
+
+startUpload() {
+	print("Uploading");
+	clickButton(updaterFrame, "Upload to server");
+	requireUploadOK();
+	exitWhenClosed();
+}
+
+startDownload() {
+	print("Downloading");
+	clickButton(updaterFrame, "Apply changes");
+	requireDownloadFinished();
+}
+
+
+/// THE DEVELOPER/USER IMPERSONATIONS
+
+initialUpload() {
+	requireUpToDate();
+	advancedMode();
+	assert("5 plugins", plugins.size() == 5);
+	for (PluginObject plugin : plugins)
+		markForUpload(plugin.filename);
+	startUpload();
+}
+
+initialUserCheck() {
+	requireUpToDate();
+	advancedMode();
+	assert("5 plugins", plugins.size() == 5);
+	for (PluginObject plugin : plugins)
+		assert(plugin.filename + " is up-to-date",
+			plugin.getStatus() == PluginObject.Status.INSTALLED);
+	System.exit(0);
+}
+
+prepareSome() {
+	print("Preparing some files");
+	writeFile(tmpDeveloperRoot, "macros/new.ijm");
+	writeFile(tmpDeveloperRoot, "macros/modified.ijm");
+	writeFile(tmpUserRoot, "macros/modified.ijm", "modified");
+}
+
+uploadSome() {
+	requireUpToDate();
+	advancedMode();
+	assert("7 plugins", plugins.size() == 7);
+	markForUpload("macros/new.ijm");
+	markForUpload("macros/modified.ijm");
+	startUpload();
+}
+
+downloadSome() {
+	requireModified();
+	advancedMode();
+	viewMode("all plugins");
+	assert("7 plugins", plugins.size() == 7);
+	assert("2 updateable", count(plugins.updateable(true)) == 2);
+	assert("1 modified", count(plugins.locallyModified()) == 1);
+	requireStatus("macros/modified.ijm", PluginObject.Status.MODIFIED);
+	startDownload();
+	assert("modified was left alone",
+		!new File(tmpUserRoot, "update/macros/modified.ijm").exists());
+	assert("new file was downloaded",
+		readFile(tmpUserRoot, "update/macros/new.ijm").equals("macros/new.ijm"));
+	System.exit(0);
+}

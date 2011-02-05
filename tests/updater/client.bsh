@@ -1,0 +1,29 @@
+#!/bin/sh
+/*/. 2>/dev/null; exec "$(dirname "$0")"/../../fiji "$0" "$@" # exec with fiji */
+
+import java.io.File;
+
+if (bsh.args.length == 0) {
+	print("Usage: "  + this.interpreter.getSourceFileInfo()
+                + " <beanshell-script>");
+        System.exit(1);
+}
+
+libDir = new File(this.interpreter.getSourceFileInfo()).getParentFile();
+source(new File(libDir, "lib.bsh").getAbsolutePath());
+
+import fiji.Main;
+
+new Thread() {
+	void run() {
+		print("Starting Fiji");
+		Main.main(new String[] { "-eval", "run('Update Fiji');" });
+	}
+}.start();
+
+print("Waiting for the updater");
+updaterFrame = Main.waitForWindow("Fiji Updater");
+setAccessibility(true);
+plugins = updaterFrame.plugins;
+
+eval(bsh.args[0]);
