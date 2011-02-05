@@ -150,6 +150,7 @@ public class User_Plugins implements PlugIn {
 		};
 		for (int i = 0; i < languages.length; i++)
 			runPlugIn("Refresh " + languages[i] + " Scripts");
+		runPlugIn("Refresh Macros");
 	}
 
 	/**

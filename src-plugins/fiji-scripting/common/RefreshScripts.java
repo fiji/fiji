@@ -33,6 +33,7 @@ import fiji.User_Plugins;
 
 import ij.IJ;
 import ij.ImageJ;
+import ij.Macro;
 import ij.Menus;
 
 import ij.plugin.PlugIn;
@@ -110,8 +111,6 @@ abstract public class RefreshScripts implements PlugIn {
 
 	File script_dir;
 
-	Menu pluginsMenu;
-
 	/*
 	 * This is called by addFromDirectory when it finds a file
 	 * that we might want to add - check the extension, etc. and
@@ -150,7 +149,7 @@ abstract public class RefreshScripts implements PlugIn {
 		String command = (String)Menus.getCommands().get(label);
 		if (command == null) {
 			if (ij != null) {
-				String menuPath = "Plugins>" + subDirectory.replace(File.separator.charAt(0), '>');
+				String menuPath = "Plugins>" + subDirectory.replace(File.separator.charAt(0), '>').replace('_', ' ');
 				if (menuPath.startsWith(magicMenuPrefix))
 					menuPath = menuPath.substring(magicMenuPrefix.length());
 				Menu menu = (Menu)User_Plugins.getMenuItem(Menus.getMenuBar(), menuPath, true);
@@ -161,16 +160,12 @@ abstract public class RefreshScripts implements PlugIn {
 			return true;
 		}
 
-		// Allow overriding JavaScripts added by ImageJ
-		if (scriptExtension.equals(".js") &&
-				command.endsWith(".js\")") &&
-				command.startsWith("ij.plugin.Macro_Runner("))
-			return true;
-
 		if (scriptExtension.equals(".java"))
 			return true;
 
-		if (command.startsWith(getClass().getName() + "("))
+		// Allow overriding previously added scripts
+		// and macros and Javascripts added by ImageJ
+		if (isThisLanguage(command))
 			return true;
 
 		IJ.log("The script " + filename + " would override an existing menu entry; skipping");
@@ -221,36 +216,53 @@ abstract public class RefreshScripts implements PlugIn {
 	}
 
 	// Removes all entries that refer to scripts with the current extension
-	private void removeFromMenu(Menu menu) {
+	protected void removeFromMenu(Menu menu) {
 		int count = menu.getItemCount();
 		for (int i = count - 1; i >= 0; i--) {
 			MenuItem item = menu.getItem(i);
 			if (item instanceof Menu) {
 				removeFromMenu((Menu)item);
+				if (((Menu)item).getItemCount() == 0)
+					menu.remove(item);
 				continue;
 			}
 			String label = item.getLabel();
 			String command = (String)Menus.getCommands().get(label);
-			if (command == null ||
-			    !command.startsWith(getClass().getName() + "(\""
-				+ Menus.getPlugInsPath()) ||
-			    !command.endsWith(scriptExtension + "\")"))
+			if (!isThisLanguage(command))
 				continue;
 			menu.remove(i);
 			Menus.getCommands().remove(label);
 		}
 	}
 
+	/**
+	 * Test whether a command is handled by this class
+	 */
+	protected boolean isThisLanguage(String command) {
+		return command != null &&
+		    command.startsWith(getClass().getName() + "(\""
+			+ Menus.getPlugInsPath()) &&
+		    command.endsWith(scriptExtension + "\")");
+	}
+
 	public void run(String arg) {
 
 		if( arg != null && ! arg.equals("") ) {
-			/* set the default class loader to ImageJ's PluginClassLoader */
-			Thread.currentThread()
-				.setContextClassLoader(IJ.getClassLoader());
-
 			String path = arg;
 			if (!new File(path).isAbsolute())
 				path = new StringBuffer(Menus.getPlugInsPath()).append(path).toString(); // blackslash-safe
+
+			if (IJ.shiftKeyDown()) {
+				IJ.showStatus("Opening " + path);
+				IJ.runPlugIn("fiji.scripting.Script_Editor", path);
+				return;
+			}
+			else
+				IJ.showStatus("Running " + path);
+
+			/* set the default class loader to ImageJ's PluginClassLoader */
+			Thread.currentThread()
+				.setContextClassLoader(IJ.getClassLoader());
 			runScript(path);
 			return;
 		}
@@ -272,21 +284,12 @@ abstract public class RefreshScripts implements PlugIn {
 			return;
 		}
 
-		MenuBar menu_bar = Menus.getMenuBar();
+		MenuBar menuBar = Menus.getMenuBar();
 		// In headless mode, there is no menu bar
-		if (menu_bar != null) {
-			int n = menu_bar.getMenuCount();
-			for (int i=0; i<n; i++) {
-				Menu menu = menu_bar.getMenu(i);
-				if (menu.getLabel().equals("Plugins")) {
-					pluginsMenu = menu;
-					break;
-				}
-			}
-		}
+		if (menuBar != null)
+			for (int i = 0; i < menuBar.getMenuCount(); i++)
+				removeFromMenu(menuBar.getMenu(i));
 
-		if (pluginsMenu != null)
-			removeFromMenu( pluginsMenu );
 		addFromDirectory( Menus.getPlugInsPath(), -1 );
 	}
 
@@ -311,6 +314,10 @@ abstract public class RefreshScripts implements PlugIn {
 	abstract public void runScript(String filename);
 
 	static public void printError(Throwable t) {
+		if (t instanceof RuntimeException && t.getMessage() == Macro.MACRO_CANCELED) {
+			IJ.showStatus("Macro/script aborted");
+			return;
+		}
 		IJ.handleException(t);
 	}
 

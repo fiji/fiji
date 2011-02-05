@@ -2593,6 +2593,51 @@ static void append_icon_path(struct string *str)
 #include <sys/param.h>
 #include <string.h>
 
+static struct string *convert_cfstring(CFStringRef ref, struct string *buffer)
+{
+	string_ensure_alloc(buffer, (int)CFStringGetLength(ref) * 6);
+	if (!CFStringGetCString((CFStringRef)ref, buffer->buffer, buffer->alloc, kCFStringEncodingUTF8))
+		string_set_length(buffer, 0);
+	else
+		buffer->length = strlen(buffer->buffer);
+	return buffer;
+}
+
+static struct string *resolve_alias(CFDataRef ref, struct string *buffer)
+{
+	if (!ref)
+		string_set_length(buffer, 0);
+	else {
+		CFRange range = { 0, CFDataGetLength(ref) };
+		if (range.length <= 0) {
+			string_set_length(buffer, 0);
+			return buffer;
+		}
+		AliasHandle alias = (AliasHandle)NewHandle(range.length);
+		CFDataGetBytes(ref, range, (void *)*alias);
+
+		string_ensure_alloc(buffer, 1024);
+		FSRef fs;
+		Boolean changed;
+		if (FSResolveAlias(NULL, alias, &fs, &changed) == noErr)
+			FSRefMakePath(&fs, (unsigned char *)buffer->buffer, buffer->alloc);
+		else {
+			CFStringRef string;
+			if (FSCopyAliasInfo(alias, NULL, NULL, &string, NULL, NULL) == noErr) {
+				convert_cfstring(string, buffer);
+				CFRelease(string);
+			}
+			else
+				string_set_length(buffer, 0);
+		}
+		buffer->length = strlen(buffer->buffer);
+
+		DisposeHandle((Handle)alias);
+	}
+
+	return buffer;
+}
+
 static int is_intel(void)
 {
 	int mib[2] = { CTL_HW, HW_MACHINE };
@@ -2602,6 +2647,77 @@ static int is_intel(void)
 	if (sysctl(mib, 2, result, &len, NULL, 0) < 0)
 		return 0;
 	return !strcmp(result, "i386") || !strncmp(result, "x86", 3);
+}
+
+static int force_32_bit_mode(const char *argv0)
+{
+	int result = 0;
+	struct string *buffer = string_initf("%s/%s", getenv("HOME"),
+		"Library/Preferences/com.apple.LaunchServices.plist");
+	if (!buffer)
+		return 0;
+
+	CFURLRef launchServicesURL =
+		CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault,
+		(unsigned char *)buffer->buffer, buffer->length, 0);
+	if (!launchServicesURL)
+		goto release_buffer;
+
+	CFDataRef data;
+	SInt32 errorCode;
+	if (!CFURLCreateDataAndPropertiesFromResource(kCFAllocatorDefault,
+			launchServicesURL, &data, NULL, NULL, &errorCode))
+		goto release_url;
+
+	CFDictionaryRef dict;
+	CFStringRef errorString;
+	dict = (CFDictionaryRef)CFPropertyListCreateFromXMLData(kCFAllocatorDefault,
+		data, kCFPropertyListImmutable, &errorString);
+	if (!dict || errorString)
+		goto release_data;
+
+
+	CFDictionaryRef arch64 = (CFDictionaryRef)CFDictionaryGetValue(dict,
+		CFSTR("LSArchitecturesForX86_64"));
+	if (!arch64)
+		goto release_dict;
+
+	CFArrayRef app = (CFArrayRef)CFDictionaryGetValue(arch64, CFSTR("org.fiji"));
+	if (!app)
+		goto release_dict;
+
+	struct string *fiji_dir = string_copy(!strrchr(argv0, '/') ?
+		find_in_path(argv0) : make_absolute_path(argv0));
+	char *slash = strrchr(fiji_dir->buffer, '/');
+	if (!slash)
+		goto release_fiji_dir;
+	string_set_length(fiji_dir, slash - fiji_dir->buffer);
+	const char *suffix = "/Contents/MacOS";
+	if (!suffixcmp(fiji_dir->buffer, fiji_dir->length, suffix))
+		string_set_length(fiji_dir, fiji_dir->length - strlen(suffix));
+
+	int i, count = (int)CFArrayGetCount(app);
+	for (i = 0; i < count; i += 2) {
+		convert_cfstring((CFStringRef)CFArrayGetValueAtIndex(app, i + 1), buffer);
+		if (strcmp(buffer->buffer, "i386"))
+			continue;
+		resolve_alias((CFDataRef)CFArrayGetValueAtIndex(app, i), buffer);
+		if (!strcmp(buffer->buffer, fiji_dir->buffer)) {
+			result = 1;
+			break;
+		}
+	}
+release_fiji_dir:
+	string_release(fiji_dir);
+release_dict:
+	CFRelease(dict);
+release_data:
+	CFRelease(data);
+release_url:
+	CFRelease(launchServicesURL);
+release_buffer:
+	string_release(buffer);
+	return result;
 }
 
 static void set_path_to_JVM(void)
@@ -2845,6 +2961,9 @@ static int is_tiger(void)
 static int launch_32bit_on_tiger(int argc, char **argv)
 {
 	const char *match, *replace;
+
+	if (force_32_bit_mode(argv[0]))
+		return 0;
 
 	if (is_intel() && is_leopard()) {
 		match = "-tiger";

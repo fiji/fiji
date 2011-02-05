@@ -149,6 +149,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/AnalyzeSkeleton_.jar \
 	plugins/Skeletonize3D_.jar \
 	plugins/TurboReg_.jar \
+	plugins/Feature_Detection.jar \
 	plugins/Bug_Submitter.jar \
 	plugins/Fiji_Plugins.jar \
 	plugins/ToAST_.jar \
@@ -188,7 +189,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/3D_Viewer.jar \
 	plugins/CPU_Meter.jar \
 	plugins/Graph_Cut.jar \
-	plugins/Macro_Examples.jar \
 	plugins/TopoJ_.jar \
 	plugins/Differentials_.jar \
 	plugins/MosaicJ_.jar \
@@ -204,7 +204,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Linear_Kuwahara.jar \
 	plugins/Thread_Killer.jar \
 	plugins/Jython_Scripts.jar \
-	plugins/Temporal_Color_Coder.jar \
 	plugins/Samples_.jar \
 	plugins/Lasso_and_Blow_Tool.jar \
 	jars/mij.jar \
@@ -212,7 +211,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	jars/imageware.jar \
 	plugins/Extended_Depth_Field.jar \
 	plugins/panorama_.jar \
-	jars/weave_jy2java.jar
+	jars/weave_jy2java.jar \
+	plugins/3D_Blob_Segmentation.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
@@ -396,7 +396,6 @@ CLASSPATH(plugins/FlowJ_.jar)=jars/ij.jar
 CLASSPATH(plugins/View5D_.jar)=jars/ij.jar
 CLASSPATH(plugins/Time_Stamper.jar)=jars/ij.jar
 CLASSPATH(plugins/3D_Objects_Counter.jar)=jars/ij.jar
-CLASSPATH(plugins/Temporal_Color_Coder.jar)=jars/ij.jar
 CLASSPATH(plugins/Snakuscule_.jar)=jars/ij.jar
 CLASSPATH(plugins/UnwarpJ_.jar)=jars/ij.jar
 CLASSPATH(plugins/Graph_Cut.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/fiji-lib.jar
@@ -414,6 +413,8 @@ CLASSPATH(jars/imageware.jar)=jars/ij.jar
 CLASSPATH(plugins/Extended_Depth_Field.jar)=jars/ij.jar:jars/imageware.jar:jars/wavelets.jar
 CLASSPATH(plugins/panorama_.jar)=jars/ij.jar:jars/mpicbg.jar:/jars/mpicbg_.jar
 CLASSPATH(jars/weave_jy2java.jar)=plugins/Refresh_Javas.jar:jars/fiji-scripting.jar:jars/Fiji.jar:jars/ij.jar:plugins/Script_Editor.jar
+CLASSPATH(plugins/3D_Blob_Segmentation.jar)=jars/ij.jar:plugins/level_sets.jar:plugins/3D_Viewer.jar:jars/VIB-lib.jar:jars/imglib.jar
+CLASSPATH(plugins/Feature_Detection.jar)=jars/ij.jar:jars/imglib-ij.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/Jama-1.0.2.jar
 
 # pre-Java5 generics ;-)
 

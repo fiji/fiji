@@ -191,7 +191,6 @@
 /plugins/CPU_Meter.jar
 /plugins/TopoJ_.jar
 /plugins/Graph_Cut.jar
-/plugins/Macro_Examples.jar
 /plugins/Differentials_.jar
 /plugins/MosaicJ_.jar
 /plugins/PointPicker_.jar
@@ -208,7 +207,6 @@
 /plugins/Thread_Killer.jar
 /jars/imglib-scripting.jar
 /jars/mij.jar
-/plugins/Temporal_Color_Coder.jar
 /plugins/Samples_.jar
 /plugins/Lasso_and_Blow_Tool.jar
 /jars/wavelets.jar

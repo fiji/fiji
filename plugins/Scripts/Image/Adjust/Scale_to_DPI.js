@@ -1,14 +1,14 @@
 //
-// Scale_by_DPI.js
+// Scale_to_DPI.js
 //
 
 // This script resizes an image to match a particular number of
 // dots per inch (DPI) with a specified width and height in inches.
 // It also updates the spatial calibration accordingly.
 
-scaleByDPI();
+scaleToDPI();
 
-function scaleByDPI() {
+function scaleToDPI() {
   imp = IJ.getImage();
   dpi = 600;
   wPix = imp.getWidth();

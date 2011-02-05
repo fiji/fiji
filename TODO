@@ -1,6 +1,7 @@
 A loose TODO list for Fiji
 ==========================
 
+- fix Temporal-Color Code for recent ImageJ hyperstack breakage
 - provide a Fiji exception handler that
 	- suggests updating if Fiji is out of date; and then
 	- suggest bug reporting if it is up-to-date.
