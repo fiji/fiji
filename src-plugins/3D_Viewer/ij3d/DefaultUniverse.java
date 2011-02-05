@@ -304,6 +304,10 @@ public abstract class DefaultUniverse extends SimpleUniverse
 		fireTransformationUpdated();
 	}
 
+	/**
+	 * @deprecated This method should not be used any more from outside
+	 * this class. Use addInteractiveBehavior() instead.
+	 */
 	public void setInteractiveBehavior(InteractiveBehavior b) {
 		if(mouseBehavior != null)
 			scene.removeChild(mouseBehavior.getParent());
