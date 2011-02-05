@@ -68,8 +68,8 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 	}
 
 	// replace if timepoint is already present
-	public void addInstant(ContentInstant ci, int timepoint) {
-		ci.timepoint = timepoint;
+	public void addInstant(ContentInstant ci) {
+		int timepoint = ci.timepoint;
 		contents.put(timepoint, ci);
 		if(!contents.containsKey(timepoint)) {
 			timepointToSwitchIndex.put(timepoint, contentSwitch.numChildren());
