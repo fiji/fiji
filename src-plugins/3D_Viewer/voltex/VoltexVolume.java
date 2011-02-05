@@ -194,12 +194,6 @@ public class VoltexVolume extends Volume {
 	 * which is either INT_DATA or BYTE_DATA.
 	 */
 	protected void initVoltexLoader() {
-		int channel = 0;
-		if(image instanceof IntImage) {
-			for(int i = 0; i < 3; i++)
-				if(channels[i])
-					channel = i;
-		}
 		switch(dataType) {
 			case BYTE_DATA:
 				voltexLoader = new VoltexByteLoader(
