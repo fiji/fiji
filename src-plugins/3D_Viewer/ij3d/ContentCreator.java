@@ -24,7 +24,7 @@ public class ContentCreator {
 				ImagePlus image,
 				int type) {
 		int resf = Content.getDefaultResamplingFactor(image, type);
-		return createContent(name, image, type, resf, -1);
+		return createContent(name, image, type, resf, 0);
 	}
 
 	public static Content createContent(
@@ -32,7 +32,7 @@ public class ContentCreator {
 				ImagePlus image,
 				int type,
 				int resf) {
-		return createContent(name, image, type, resf, -1);
+		return createContent(name, image, type, resf, 0);
 	}
 
 	public static Content createContent(

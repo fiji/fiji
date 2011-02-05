@@ -1369,9 +1369,7 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 			}
 			TreeMap<Integer, ContentInstant> instants =
 				c.getInstants();
-			// in case the time point is not set, do so now
-			if(instants.firstKey() == -1)
-				c.startAt(currentTimepoint);
+
 			// update start and end time
 			int st = startTime;
 			int e = endTime;

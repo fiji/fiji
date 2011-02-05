@@ -144,23 +144,6 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 		return contents.containsKey(tp);
 	}
 
-	public void startAt(int timepoint) {
-		TreeMap<Integer, ContentInstant> copy =
-			new TreeMap<Integer, ContentInstant>(contents);
-		contents.clear();
-		timepointToSwitchIndex.clear();
-		contentSwitch.removeAllChildren();
-		for(Integer i : copy.keySet()) {
-			ContentInstant c = copy.get(i);
-			c.timepoint = timepoint;
-			c.name = name + "_#" + timepoint;
-			timepointToSwitchIndex.put(timepoint, contentSwitch.numChildren());
-			contents.put(timepoint, c);
-			contentSwitch.addChild(c);
-			timepoint++;
-		}
-	}
-
 	public int getStartTime() {
 		return contents.firstKey();
 	}
