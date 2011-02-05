@@ -35,7 +35,7 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 	int timepoint = 0;
 
 	// attributes
-	protected String name;
+	private final String name;
 	protected Color3f color = null;
 	protected ImagePlus image;
 	protected boolean[] channels = new boolean[] {true, true, true};
@@ -256,7 +256,7 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 		showPL = b;
 		bbSwitch.setChildMask(whichChild);
 		if(b && plDialog != null)
-			plDialog.addPointList(name, plPanel);
+			plDialog.addPointList(getName(), plPanel);
 		else if(!b && plDialog != null)
 			plDialog.removePointList(plPanel);
 	}
@@ -269,7 +269,7 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 
 	public void savePointList() {
 		String dir = OpenDialog.getDefaultDirectory();
-		String n = this.name;
+		String n = this.getName();
 		if(image != null) {
 			FileInfo fi = image.getFileInfo();
 			dir = fi.directory;
@@ -482,7 +482,7 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 	 **************************************************************/
 	@Override
 	public String getName() {
-		return name;
+		return name + "_#" + timepoint;
 	}
 
 	public int getTimepoint() {
