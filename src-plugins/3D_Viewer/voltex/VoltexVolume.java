@@ -33,13 +33,13 @@ import javax.vecmath.Point3d;
 public class VoltexVolume extends Volume {
 
 	/** The textures' size. These are powers of two. */
-	public final int xTexSize, yTexSize, zTexSize;
+	int xTexSize, yTexSize, zTexSize;
 
 	/** The texGenScale */
-	public final float xTexGenScale, yTexGenScale, zTexGenScale;
+	float xTexGenScale, yTexGenScale, zTexGenScale;
 
 	/** The mid point in the data */
-	public final Point3d volRefPt = new Point3d();
+	final Point3d volRefPt = new Point3d();
 
 	/** The ColorModel used for 8-bit textures */
 	protected static final ColorModel greyCM = createGreyColorModel();
@@ -73,11 +73,14 @@ public class VoltexVolume extends Volume {
 	 * @param imp
 	 * @param ch A boolean[] array of length three, which indicates whether
 	 * the red, blue and green channel should be read. This has only an
-	 * effct when reading color images.
+	 * effect when reading color images.
 	 */
 	public VoltexVolume(ImagePlus imp, boolean[] ch) {
+		setImage(imp, ch);
+	}
 
-		super(imp, ch);
+	public void setImage(ImagePlus imp, boolean[] ch) {
+		super.setImage(imp, ch);
 		// tex size is next power of two greater than max - min
 		// regarding pixels
 		xTexSize = powerOfTwo(xDim);

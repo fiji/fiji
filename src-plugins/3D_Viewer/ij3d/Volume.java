@@ -44,10 +44,10 @@ public class Volume {
 	public static final int BYTE_DATA = 1;
 
 	/** The image holding the data */
-	public final ImagePlus imp;
+	protected ImagePlus imp;
 
 	/** Wraping the ImagePlus */
-	protected final Img image;
+	protected Img image;
 
 	/** The loader, initialized depending on the data type */
 	protected Loader loader;
@@ -98,11 +98,15 @@ public class Volume {
 	 * @param imp
 	 * @param ch A boolean[] array of length three, which indicates whether
 	 * the red, blue and green channel should be read. This has only an
-	 * effct when reading color images.
+	 * effect when reading color images.
 	 */
 	public Volume(ImagePlus imp, boolean[] ch) {
-		this.channels = ch;
+		setImage(imp, ch);
+	}
+
+	public void setImage(ImagePlus imp, boolean[] ch) {
 		this.imp = imp;
+		this.channels = ch;
 		switch(imp.getType()) {
 			case ImagePlus.GRAY8:
 			case ImagePlus.COLOR_256:
@@ -150,6 +154,10 @@ public class Volume {
 
 		initDataType();
 		initLoader();
+	}
+
+	public ImagePlus getImagePlus() {
+		return imp;
 	}
 
 	/**
@@ -508,7 +516,7 @@ public class Volume {
 
 		public final int loadWithLUT(int x, int y, int z) {
 			image.get(x, y, z, color);
-			int sum = 0, av = 0, v = 0;
+			int sum = 0, av = 0;
 			if(channels[0]) { av += rLUT[color[0]]; sum++; }
 			if(channels[1]) { av += gLUT[color[1]]; sum++; }
 			if(channels[2]) { av += bLUT[color[2]]; sum++; }
