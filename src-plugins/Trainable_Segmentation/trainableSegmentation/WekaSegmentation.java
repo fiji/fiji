@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Random;
 import java.util.Vector;
 
 import java.util.concurrent.Callable;
@@ -165,7 +166,8 @@ public class WekaSegmentation {
 		//rf.setNumFeatures((int) Math.round(Math.sqrt(featureStack.getSize())));
 		//but this seems to work better
 		rf.setNumFeatures(randomFeatures);
-		rf.setSeed(123);
+		// Random seed
+		rf.setSeed( (new Random()).nextInt() );
 
 		classifier = rf;
 
@@ -190,7 +192,8 @@ public class WekaSegmentation {
 		//rf.setNumFeatures((int) Math.round(Math.sqrt(featureStack.getSize())));
 		//but this seems to work better
 		rf.setNumFeatures(randomFeatures);
-		rf.setSeed(123);
+		// Random seed
+		rf.setSeed( (new Random()).nextInt() );
 
 		classifier = rf;
 		
