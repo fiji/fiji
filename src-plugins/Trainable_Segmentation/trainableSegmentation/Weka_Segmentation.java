@@ -15,12 +15,15 @@ import fiji.util.gui.OverlayedImageCanvas;
 import hr.irb.fastRandomForest.FastRandomForest;
 
 import ij.IJ;
+import ij.plugin.Duplicator;
 import ij.plugin.PlugIn;
 
 import ij.process.ImageProcessor;
 import ij.process.LUT;
+import ij.process.StackConverter;
 import ij.gui.ImageWindow;
 import ij.gui.Roi;
+import ij.gui.StackWindow;
 import ij.io.OpenDialog;
 import ij.io.SaveDialog;
 import ij.ImagePlus;
@@ -259,7 +262,7 @@ public class Weka_Segmentation implements PlugIn
 		settingsButton = new JButton ("Settings");
 		settingsButton.setToolTipText("Display settings dialog");
 
-		/** The weka image */
+		/** The Weka icon image */
 		ImageIcon icon = new ImageIcon(Weka_Segmentation.class.getResource("/trainableSegmentation/images/weka.png"));
 		wekaButton = new JButton( icon );
 		wekaButton.setToolTipText("Launch Weka GUI chooser");
@@ -450,7 +453,7 @@ public class Weka_Segmentation implements PlugIn
 	/**
 	 * Custom window to define the Advanced Weka Segmentation GUI
 	 */
-	private class CustomWindow extends ImageWindow
+	private class CustomWindow extends StackWindow
 	{
 		/** default serial version UID */
 		private static final long serialVersionUID = 1L;
@@ -468,10 +471,15 @@ public class Weka_Segmentation implements PlugIn
 
 		Panel all = new Panel();
 
+		/**
+		 * Construct the plugin window
+		 * 
+		 * @param imp input image
+		 */
 		CustomWindow(ImagePlus imp)
 		{
 			super(imp, new CustomCanvas(imp));
-
+			
 			final CustomCanvas canvas = (CustomCanvas) getCanvas();
 
 			// add roi list overlays (one per class)
@@ -627,6 +635,7 @@ public class Weka_Segmentation implements PlugIn
 			allConstraints.gridheight = 1;
 			allConstraints.gridx = 0;
 			allConstraints.gridy = 0;
+			allConstraints.gridheight = 2;
 			allConstraints.weightx = 0;
 			allConstraints.weighty = 0;
 
@@ -635,12 +644,20 @@ public class Weka_Segmentation implements PlugIn
 			allConstraints.gridx++;
 			allConstraints.weightx = 1;
 			allConstraints.weighty = 1;
+			allConstraints.gridheight = 1;
 			all.add(canvas, allConstraints);
+			
+			allConstraints.gridy++;
+			allConstraints.weightx = 1;
+			allConstraints.weighty = 1;
+			all.add(this.sliceSelector, allConstraints);
+			allConstraints.gridy--;
 
 			allConstraints.gridx++;
 			allConstraints.anchor = GridBagConstraints.NORTHEAST;
 			allConstraints.weightx = 0;
 			allConstraints.weighty = 0;
+			allConstraints.gridheight = 2;
 			all.add(annotationsPanel, allConstraints);
 
 			GridBagLayout wingb = new GridBagLayout();
@@ -692,7 +709,8 @@ public class Weka_Segmentation implements PlugIn
 					Rectangle r = canvas.getBounds();
 					canvas.setDstDimensions(r.width, r.height);
 				}
-			});
+			});			
+			
 		}
 
 
@@ -770,7 +788,7 @@ public class Weka_Segmentation implements PlugIn
 			if (null == trainingImage) return; // user canceled open dialog
 		}
 		else
-			trainingImage = new ImagePlus("Advanced Weka Segmentation",WindowManager.getCurrentImage().getProcessor().duplicate());
+			trainingImage = WindowManager.getCurrentImage().duplicate();
 
 
 		if (Math.max(trainingImage.getWidth(), trainingImage.getHeight()) > 1024)
@@ -781,12 +799,13 @@ public class Weka_Segmentation implements PlugIn
 			"Proceed?"))
 				return;
 
-		trainingImage.setProcessor("Advanced Weka Segmentation", trainingImage.getProcessor().duplicate().convertToByte(true));
-
-		wekaSegmentation.loadNewImage(trainingImage);
-
-		displayImage = new ImagePlus();
-		displayImage.setProcessor("Advanced Weka Segmentation", trainingImage.getProcessor().duplicate());
+		//trainingImage.setProcessor("Advanced Weka Segmentation", trainingImage.getProcessor().duplicate().convertToByte(true));
+		//wekaSegmentation.loadNewImage(trainingImage);
+		(new StackConverter(trainingImage)).convertToGray8();
+		
+		// The display image is a copy of the training image (single image or stack)
+		displayImage = trainingImage.duplicate();
+		displayImage.setTitle("Advanced Weka Segmentation");
 
 		ij.gui.Toolbar.getInstance().setTool(ij.gui.Toolbar.FREELINE);
 
