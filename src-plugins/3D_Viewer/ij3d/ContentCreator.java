@@ -111,7 +111,7 @@ public class ContentCreator {
 	}
 
 	public static Content createContent(CustomMesh mesh, String name) {
-		return createContent(mesh, name, -1);
+		return createContent(mesh, name, 0);
 	}
 
 	public static Content createContent(CustomMesh mesh, String name, int tp) {
@@ -127,7 +127,7 @@ public class ContentCreator {
 	}
 
 	public static Content createContent(CustomMultiMesh node, String name) {
-		return createContent(node, name, -1);
+		return createContent(node, name, 0);
 	}
 
 	public static Content createContent(CustomMultiMesh node, String name, int tp) {
