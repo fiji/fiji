@@ -3,4 +3,4 @@ all <- clojure.jar
 
 MAINCLASS(clojure.jar)=clojure.main
 
-clojure.jar[../fiji --ant] <-
+clojure.jar[../../fiji --ant] <-
