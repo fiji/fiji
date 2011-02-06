@@ -82,8 +82,7 @@ public class UpdaterFrame extends JFrame
 	boolean easyMode;
 
 	//For developers
-	// TODO: no more Hungarian notation
-	private JButton btnUpload;
+	protected JButton upload;
 	boolean canUpload;
 
 	public UpdaterFrame(PluginCollection plugins) {
@@ -241,7 +240,7 @@ public class UpdaterFrame extends JFrame
 		//includes button to upload to server if is a Developer using
 		if (Util.isDeveloper) {
 			bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
-			btnUpload = SwingTools.button("Upload to server",
+			upload = SwingTools.button("Upload to server",
 					"Upload selected plugins to server", new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					new Thread() {
@@ -251,7 +250,7 @@ public class UpdaterFrame extends JFrame
 					}.start();
 				}
 			}, bottomPanel);
-			btnUpload.setEnabled(false);
+			upload.setEnabled(false);
 
 			try {
 				Class pluginChangesClass = Class.forName("fiji.scripting.ShowPluginChanges");
@@ -600,7 +599,7 @@ public class UpdaterFrame extends JFrame
 	}
 
 	void enableUploadOrNot() {
-		btnUpload.setEnabled(canUpload || plugins.hasUploadOrRemove());
+		upload.setEnabled(canUpload || plugins.hasUploadOrRemove());
 	}
 
 	protected void upload() {
