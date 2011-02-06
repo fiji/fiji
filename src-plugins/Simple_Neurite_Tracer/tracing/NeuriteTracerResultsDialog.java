@@ -49,10 +49,10 @@ import javax.swing.JDialog;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JPanel;
 import javax.swing.JTextArea;
 
 import javax.swing.JLabel;
-
 import ij.measure.Calibration;
 
 import Skeletonize3D_.Skeletonize3D_;
@@ -117,12 +117,12 @@ public class NeuriteTracerResultsDialog
 
 	SimpleNeuriteTracer plugin;
 
-	Panel statusPanel;
+	JPanel statusPanel;
 	JTextArea statusText;
 	JButton keepSegment, junkSegment;
 	JButton cancelSearch;
 
-	Panel pathActionPanel;
+	JPanel pathActionPanel;
 	JButton completePath;
 	JButton cancelPath;
 
@@ -674,11 +674,12 @@ public class NeuriteTracerResultsDialog
 		GridBagConstraints c = new GridBagConstraints();
 
 		c.anchor = GridBagConstraints.LINE_START;
-		c.insets = new Insets( 3, 3, 3, 3 );
+
+		c.insets = new Insets( 10, 10, 4, 10 );
 
 		{ /* Add the status panel */
 
-			statusPanel = new Panel();
+			statusPanel = new JPanel();
 			statusPanel.setLayout(new BorderLayout());
 			statusPanel.add(new JLabel("Instructions:"), BorderLayout.NORTH);
 			statusText = new JTextArea("Initial status text...",2,25);
@@ -692,7 +693,7 @@ public class NeuriteTracerResultsDialog
 			junkSegment.addActionListener( this );
 			cancelSearch.addActionListener( this );
 
-			Panel statusChoicesPanel = new Panel();
+			JPanel statusChoicesPanel = new JPanel();
 			statusChoicesPanel.setLayout( new GridBagLayout() );
 			GridBagConstraints cs = new GridBagConstraints();
 			cs.gridx = 0; cs.gridy = 0; cs.anchor = GridBagConstraints.LINE_START;
@@ -709,9 +710,11 @@ public class NeuriteTracerResultsDialog
 			getContentPane().add(statusPanel,c);
 		}
 
+		c.insets = new Insets( 4, 10, 10, 10 );
+
 		{ /* Add the panel of actions to take on half-constructed paths */
 
-			pathActionPanel = new Panel();
+			pathActionPanel = new JPanel();
 			completePath = new JButton("Complete Path");
 			cancelPath = new JButton("Cancel Path");
 			completePath.addActionListener( this );
@@ -724,19 +727,20 @@ public class NeuriteTracerResultsDialog
 			getContentPane().add(pathActionPanel,c);
 		}
 
-		{ /* Add the panel with other options - preprocessing and the view of paths */
+		c.insets = new Insets( 10, 10, 10, 10 );
 
-			Panel otherOptionsPanel = new Panel();
+		{
+			JPanel viewOptionsPanel = new JPanel();
 
-			otherOptionsPanel.setLayout(new GridBagLayout());
-			GridBagConstraints co = new GridBagConstraints();
-			co.anchor = GridBagConstraints.LINE_START;
+			viewOptionsPanel.setLayout(new GridBagLayout());
+			GridBagConstraints cv = new GridBagConstraints();
+			cv.anchor = GridBagConstraints.LINE_START;
 			viewPathChoice = new JComboBox();
 			viewPathChoice.addItem(projectionChoice);
 			viewPathChoice.addItem(partsNearbyChoice);
 			viewPathChoice.addItemListener(this);
 
-			Panel nearbyPanel = new Panel();
+			JPanel nearbyPanel = new JPanel();
 			nearbyPanel.setLayout(new BorderLayout());
 			nearbyPanel.add(new JLabel("(up to"),BorderLayout.WEST);
 			nearbyField = new TextField("2",2);
@@ -744,42 +748,42 @@ public class NeuriteTracerResultsDialog
 			nearbyPanel.add(nearbyField,BorderLayout.CENTER);
 			nearbyPanel.add(new JLabel("slices to each side)"),BorderLayout.EAST);
 
-			co.gridx = 0;
-			co.gridy = 0;
-			otherOptionsPanel.add(new JLabel("View paths (2D): "),co);
-			co.gridx = 1;
-			co.gridy = 0;
-			otherOptionsPanel.add(viewPathChoice,co);
+			cv.gridx = 0;
+			cv.gridy = 0;
+			viewOptionsPanel.add(new JLabel("View paths (2D): "),cv);
+			cv.gridx = 1;
+			cv.gridy = 0;
+			viewOptionsPanel.add(viewPathChoice,cv);
 
 			paths3DChoice = new JComboBox();
 			if( plugin != null && plugin.use3DViewer ) {
 				for( int choice = 1; choice < paths3DChoicesStrings.length; ++choice )
 					paths3DChoice.addItem(paths3DChoicesStrings[choice]);
 
-				co.gridx = 0;
-				++ co.gridy;
-				otherOptionsPanel.add(new JLabel("View paths (3D): "),co);
-				co.gridx = 1;
-				otherOptionsPanel.add(paths3DChoice,co);
+				cv.gridx = 0;
+				++ cv.gridy;
+				viewOptionsPanel.add(new JLabel("View paths (3D): "),cv);
+				cv.gridx = 1;
+				viewOptionsPanel.add(paths3DChoice,cv);
 			}
 			paths3DChoice.addItemListener(this);
 
-			co.gridx = 1;
-			++ co.gridy;
-			co.gridwidth = 1;
-			co.anchor = GridBagConstraints.LINE_START;
-			otherOptionsPanel.add(nearbyPanel,co);
+			cv.gridx = 1;
+			++ cv.gridy;
+			cv.gridwidth = 1;
+			cv.anchor = GridBagConstraints.LINE_START;
+			viewOptionsPanel.add(nearbyPanel,cv);
 
 
-			Panel colorOptionsPanel = new Panel();
+			JPanel colorOptionsPanel = new JPanel();
 			{
-				Panel flatColorOptionsPanel = new Panel();
+				JPanel flatColorOptionsPanel = new JPanel();
 				flatColorOptionsPanel.setLayout(new BorderLayout());
 				flatColorOptionsPanel.add( new JLabel("Click to change Path colours:"), BorderLayout.NORTH );
 				pathColorsCanvas = new PathColorsCanvas( plugin, 150, 18 );
 				flatColorOptionsPanel.add(pathColorsCanvas, BorderLayout.CENTER);
 
-				Panel imageColorOptionsPanel = new Panel();
+				JPanel imageColorOptionsPanel = new JPanel();
 				imageColorOptionsPanel.setLayout(new BorderLayout());
 				imageColorOptionsPanel.add(new JLabel("Use colors / labels from:"),BorderLayout.NORTH);
 
@@ -793,19 +797,34 @@ public class NeuriteTracerResultsDialog
 				colorOptionsPanel.add(imageColorOptionsPanel);
 			}
 
-			co.gridx = 0;
-			++ co.gridy;
-			co.gridwidth = 2;
-			otherOptionsPanel.add(colorOptionsPanel,co);
+			cv.gridx = 0;
+			++ cv.gridy;
+			cv.gridwidth = 2;
+			viewOptionsPanel.add(colorOptionsPanel,cv);
 
 			justShowSelected = new JCheckBox( "Show only selected paths" );
 			justShowSelected.addItemListener( this );
-			co.gridx = 0;
-			++ co.gridy;
-			co.gridwidth = 2;
+			cv.gridx = 0;
+			++ cv.gridy;
+			cv.gridwidth = 2;
+			cv.anchor = GridBagConstraints.LINE_START;
+			cv.insets = new Insets( 0, 0, 0, 0 );
+			viewOptionsPanel.add(justShowSelected,cv);
+
+			c.gridx = 0;
+			++ c.gridy;
+			getContentPane().add(viewOptionsPanel,c);
+		}
+
+
+
+		{ /* Add the panel with other options - preprocessing and the view of paths */
+
+			JPanel otherOptionsPanel = new JPanel();
+
+			otherOptionsPanel.setLayout(new GridBagLayout());
+			GridBagConstraints co = new GridBagConstraints();
 			co.anchor = GridBagConstraints.LINE_START;
-			co.insets = new Insets( 0, 0, 0, 0 );
-			otherOptionsPanel.add(justShowSelected,co);
 
 			preprocess = new JCheckBox("Hessian-based analysis");
 			preprocess.addItemListener( this );
@@ -832,7 +851,7 @@ public class NeuriteTracerResultsDialog
 			updateLabel( );
 			++ co.gridy;
 
-			Panel sigmaButtonPanel = new Panel( );
+			JPanel sigmaButtonPanel = new JPanel( );
 
 			editSigma = new JButton( "Pick Sigma Manually" );
 			editSigma.addActionListener( this );
@@ -852,7 +871,7 @@ public class NeuriteTracerResultsDialog
 
 		{
 			++ c.gridy;
-			Panel hideWindowsPanel = new Panel();
+			JPanel hideWindowsPanel = new JPanel();
 			showOrHidePathList = new JButton("Show / Hide Path List");
 			showOrHidePathList.addActionListener(this);
 			showOrHideFillList = new JButton("Show / Hide Fill List");
@@ -865,7 +884,7 @@ public class NeuriteTracerResultsDialog
 
 		{ /* The panel with options for saving, loading, network storage, etc. */
 
-			Panel traceFileOptionsPanel = new Panel();
+			JPanel traceFileOptionsPanel = new JPanel();
 
 			traceFileOptionsPanel.setLayout(new GridBagLayout());
 
