@@ -15,13 +15,11 @@ import fiji.util.gui.OverlayedImageCanvas;
 import hr.irb.fastRandomForest.FastRandomForest;
 
 import ij.IJ;
-import ij.plugin.Duplicator;
 import ij.plugin.PlugIn;
 
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.process.StackConverter;
-import ij.gui.ImageWindow;
 import ij.gui.Roi;
 import ij.gui.StackWindow;
 import ij.io.OpenDialog;
@@ -51,6 +49,8 @@ import java.awt.Rectangle;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
@@ -58,6 +58,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
@@ -176,7 +178,7 @@ public class Weka_Segmentation implements PlugIn
 	/** current segmentation result overlay */
 	ImageOverlay resultOverlay;
 
-	/** available colors for available classes*/
+	/** available colors for available classes */
 	final Color[] colors = new Color[]{Color.red, Color.green, Color.blue,
 			Color.cyan, Color.magenta};
 
@@ -366,7 +368,7 @@ public class Weka_Segmentation implements PlugIn
 			});
 		}
 	};
-
+	
 	/**
 	 * Item listener for the trace lists
 	 */
@@ -552,7 +554,81 @@ public class Weka_Segmentation implements PlugIn
 			addClassButton.addActionListener(listener);
 			settingsButton.addActionListener(listener);
 			wekaButton.addActionListener(listener);
+			
+			// add adjustment listener to the scroll bar
+			sliceSelector.addAdjustmentListener(new AdjustmentListener() 
+			{
 
+				public void adjustmentValueChanged(final AdjustmentEvent e) {
+					exec.submit(new Runnable() {
+						public void run() {							
+							if(e.getSource() == sliceSelector)
+							{
+								IJ.log("moving scroll");
+								drawExamples();
+							}
+
+						}
+					});
+
+				}
+			});
+
+			// mouse wheel listener to update the rois while scrolling
+			addMouseWheelListener(new MouseWheelListener() {
+
+				@Override
+				public void mouseWheelMoved(final MouseWheelEvent e) {
+
+					exec.submit(new Runnable() {
+						public void run() 
+						{
+							IJ.log("moving scroll");
+							drawExamples();
+						}
+					});
+
+				}
+			});
+						
+			KeyListener keyListener = new KeyListener() {
+				
+				@Override
+				public void keyTyped(KeyEvent e) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void keyReleased(final KeyEvent e) {
+					exec.submit(new Runnable() {
+						public void run() 
+						{
+							if(e.getKeyCode() == KeyEvent.VK_LEFT ||
+								e.getKeyCode() == KeyEvent.VK_RIGHT ||
+								e.getKeyCode() == KeyEvent.VK_LESS ||
+								e.getKeyCode() == KeyEvent.VK_GREATER ||
+								e.getKeyCode() == KeyEvent.VK_COMMA ||
+								e.getKeyCode() == KeyEvent.VK_PERIOD)
+							{
+								IJ.log("moving scroll");
+								drawExamples();
+							}
+						}
+					});
+					
+				}
+				
+				@Override
+				public void keyPressed(KeyEvent e) {
+										
+				}
+			};
+			
+			addKeyListener(keyListener);
+			canvas.addKeyListener(keyListener);
+			
+			
 			// Training panel (left side of the GUI)
 			trainingJPanel.setBorder(BorderFactory.createTitledBorder("Training"));
 			GridBagLayout trainingLayout = new GridBagLayout();
@@ -773,7 +849,18 @@ public class Weka_Segmentation implements PlugIn
 			imp.setWindow(this);
 			repaint();
 		}
-
+/*
+		public void mouseWheelMoved(MouseWheelEvent e) 
+		{
+			super.mouseWheelMoved(e);
+			exec.submit(new Runnable() {
+				public void run() {
+					drawExamples();	
+				}
+			});
+			
+		}
+	*/	
 	}
 
 	/**
@@ -802,6 +889,7 @@ public class Weka_Segmentation implements PlugIn
 		//trainingImage.setProcessor("Advanced Weka Segmentation", trainingImage.getProcessor().duplicate().convertToByte(true));
 		//wekaSegmentation.loadNewImage(trainingImage);
 		(new StackConverter(trainingImage)).convertToGray8();
+		wekaSegmentation.setTrainingImage(trainingImage);
 		
 		// The display image is a copy of the training image (single image or stack)
 		displayImage = trainingImage.duplicate();
@@ -906,11 +994,20 @@ public class Weka_Segmentation implements PlugIn
 			return;
 		}
 
+		IJ.log("Adding trace");
+		
+		final int n = displayImage.getCurrentSlice();
+try{		
 		displayImage.killRoi();
-		wekaSegmentation.addExample(i, r);
+		wekaSegmentation.addExample(i, r, n);
 		exampleList[i].add("trace " + traceCounter[i]);
 		traceCounter[i]++;
 		drawExamples();
+}catch(Exception ex)
+{
+	IJ.log("error when adding trace!");
+	ex.printStackTrace();
+}
 	}
 
 	/**
@@ -918,18 +1015,23 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	private void drawExamples()
 	{
+		final int currentSlice = this.displayImage.getCurrentSlice();
 
+		IJ.log("num of classes = " + wekaSegmentation.getNumOfClasses());
+		
+		
 		for(int i = 0; i < wekaSegmentation.getNumOfClasses(); i++)
 		{
 			roiOverlay[i].setColor(colors[i]);
 			final ArrayList< Roi > rois = new ArrayList<Roi>();
-			for (Roi r : wekaSegmentation.getExamples(i))
+			for (Roi r : wekaSegmentation.getExamples(i, currentSlice))
 			{
 				rois.add(r);
-				//IJ.log("painted ROI: " + r + " in color "+ colors[i]);
+				IJ.log("painted ROI: " + r + " in color "+ colors[i] + ", slice = " + currentSlice);
 			}
 			roiOverlay[i].setRoi(rois);
 		}
+		
 		displayImage.updateAndDraw();
 	}
 
@@ -960,6 +1062,7 @@ public class Weka_Segmentation implements PlugIn
 
 	/**
 	 * Select a list and deselect the others
+	 * 
 	 * @param e item event (originated by a list)
 	 * @param i list index
 	 */
@@ -972,7 +1075,9 @@ public class Weka_Segmentation implements PlugIn
 		{
 			if (j == i)
 			{
-				final Roi newRoi = wekaSegmentation.getExamples(i).get(exampleList[i].getSelectedIndex());
+				final Roi newRoi = 
+					wekaSegmentation.getExamples(i, 
+							this.trainingImage.getCurrentSlice()).get(exampleList[i].getSelectedIndex());
 				// Set selected trace as current ROI
 				newRoi.setImage(displayImage);
 				displayImage.setRoi(newRoi);
@@ -998,11 +1103,12 @@ public class Weka_Segmentation implements PlugIn
 				int index = exampleList[i].getSelectedIndex();
 
 				// kill Roi from displayed image
-				if(displayImage.getRoi().equals( wekaSegmentation.getExamples(i).get(index) ))
+				if(displayImage.getRoi().equals( 
+						wekaSegmentation.getExamples(i, trainingImage.getCurrentSlice()).get(index) ))
 					displayImage.killRoi();
 
 
-				wekaSegmentation.getExamples(i).remove(index);
+				wekaSegmentation.getExamples(i, trainingImage.getCurrentSlice()).remove(index);
 				//delete item from list
 				exampleList[i].remove(index);
 			}
@@ -1516,7 +1622,7 @@ public class Weka_Segmentation implements PlugIn
 	{
 		GenericDialogPlus gd = new GenericDialogPlus("Segmentation settings");
 
-		final boolean[] oldEnableFeatures = wekaSegmentation.getFeatureStack().getEnableFeatures();
+		final boolean[] oldEnableFeatures = wekaSegmentation.getFeatureStack(1).getEnableFeatures();
 
 		gd.addMessage("Training features:");
 		final int rows = (int)Math.round(FeatureStack.availableFeatures.length/2.0);
@@ -1566,7 +1672,7 @@ public class Weka_Segmentation implements PlugIn
 
 		gd.addMessage("Advanced options:");
 		gd.addCheckbox("Homogenize classes", wekaSegmentation.doHomogenizeClasses());
-		gd.addButton("Save feature stack", new SaveFeatureStackButtonListener("Select location to save feature stack", wekaSegmentation.getFeatureStack()));
+		gd.addButton("Save feature stack", new SaveFeatureStackButtonListener("Select location to save feature stack", wekaSegmentation.getFeatureStack(1)));
 		gd.addSlider("Result overlay opacity", 0, 100, overlayOpacity);
 		gd.addHelp("http://pacific.mpi-cbg.de/wiki/Trainable_Segmentation_Plugin");
 
@@ -1687,7 +1793,7 @@ public class Weka_Segmentation implements PlugIn
 		if(featuresChanged)
 		{
 			//this.setButtonsEnabled(false);
-			wekaSegmentation.getFeatureStack().setEnableFeatures(newEnableFeatures);
+			wekaSegmentation.getFeatureStack(1).setEnableFeatures(newEnableFeatures);
 			// Force features to be updated
 			wekaSegmentation.setFeaturesDirty();
 		}
