@@ -95,6 +95,12 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	private PointListDialog plDialog;
 
 	/**
+	 * The timelapse listeners.
+	 */
+	private ArrayList<TimelapseListener> timeListeners =
+			new ArrayList<TimelapseListener>();
+
+	/**
 	 * An object used for synchronizing.
 	 * Synchronized methods in a subclass of SimpleUniverse should
 	 * be avoided, since Java3D uses it obviously internally for
@@ -267,16 +273,33 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	/* *************************************************************
 	 * Timeline stuff
 	 * *************************************************************/
+
+	public void addTimelapseListener(TimelapseListener l) {
+		timeListeners.add(l);
+	}
+
+	public void removeTimelapseListener(TimelapseListener l) {
+		timeListeners.remove(l);
+	}
+
+	private void fireTimepointChanged(int timepoint) {
+		for(TimelapseListener l : timeListeners)
+			l.timepointChanged(timepoint);
+	}
+
 	public Timeline getTimeline() {
 		return timeline;
 	}
 
 	public void showTimepoint(int tp) {
+		if(currentTimepoint == tp)
+			return;
 		this.currentTimepoint = tp;
 		for(Content c : contents.values())
 			c.showTimepoint(tp, false);
 		if(timelineGUIVisible)
 			timelineGUI.updateTimepoint(tp);
+		fireTimepointChanged(currentTimepoint);
 	}
 
 	public int getCurrentTimepoint() {
