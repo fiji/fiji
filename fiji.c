@@ -2759,6 +2759,7 @@ static void set_path_to_JVM(void)
 	}
 
 	if (!TargetJavaVM) {
+		retrotranslator = 1;
 		targetJVM = CFSTR("1.5");
 		TargetJavaVM =
 		CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault,
@@ -2959,8 +2960,6 @@ static int launch_32bit_on_tiger(int argc, char **argv)
 		replace = "-macosx";
 	}
 	else { /* Tiger */
-		if (!is_tiger())
-			retrotranslator = 1;
 		match = "-macosx";
 		replace = "-tiger";
 		if (sizeof(void *) < 8)
