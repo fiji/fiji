@@ -1223,6 +1223,10 @@ public class Executer {
 		UniverseSettings.initFromDialog(univ);
 	}
 
+	public void sync(boolean b) {
+		univ.sync(b);
+	}
+
 	public void editScalebar() {
 		Scalebar sc = univ.getScalebar();
 		final GenericDialog gd = new GenericDialog(

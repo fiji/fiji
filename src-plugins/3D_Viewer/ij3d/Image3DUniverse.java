@@ -49,6 +49,9 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	public static ArrayList<Image3DUniverse> universes =
 				new ArrayList<Image3DUniverse>();
 
+	private static final UniverseSynchronizer synchronizer =
+			new UniverseSynchronizer();
+
 	/** The current time point */
 	private int currentTimepoint = 0;
 
@@ -1154,6 +1157,17 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	/* *************************************************************
 	 * Methods changing the view of this universe
 	 * *************************************************************/
+
+	/**
+	 * Syncs this window.
+	 */
+	public void sync(boolean b) {
+		if(b)
+			synchronizer.addUniverse(this);
+		else
+			synchronizer.removeUniverse(this);
+	}
+
 	/**
 	 * Save the current view transformations to a file
 	 */

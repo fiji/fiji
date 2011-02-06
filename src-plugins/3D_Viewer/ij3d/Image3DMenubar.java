@@ -66,6 +66,7 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 	private MenuItem centerSelected;
 	private MenuItem centerOrigin;
 	private MenuItem centerUniverse;
+	private CheckboxMenuItem sync;
 	private MenuItem fitViewToUniverse;
 	private MenuItem fitViewToContent;
 	private MenuItem regist;
@@ -357,6 +358,12 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 
 		view.addSeparator();
 
+		sync = new CheckboxMenuItem("Sync view");
+		sync.addItemListener(this);
+		view.add(sync);
+
+		view.addSeparator();
+
 		scalebar = new MenuItem("Edit Scalebar");
 		scalebar.addActionListener(this);
 		view.add(scalebar);
@@ -644,6 +651,8 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 			executer.setShaded(c, shaded.getState());
 		else if (src == pl_show)
 			executer.showPointList(c, pl_show.getState());
+		else if (src == sync)
+			executer.sync(sync.getState());
 	}
 
 	private Content getSelected() {
