@@ -88,14 +88,14 @@ public class WekaSegmentation {
 	/** maximum number of classes (labels) allowed */
 	public static final int MAX_NUM_CLASSES = 5;
 
-	/** array of lists of Rois for each class */
-	private Vector<ArrayList<Roi>> examples = new Vector<ArrayList<Roi>>(MAX_NUM_CLASSES);
+	/** array of lists of Rois for each class and each slice of the training image */
+	private Vector<ArrayList<Roi>> examples[];
 	/** image to be used in the training */
 	private ImagePlus trainingImage;
 	/** result image after classification */
 	private ImagePlus classifiedImage;
 	/** features to be used in the training */
-	private FeatureStack featureStack = null;
+	private FeatureStackList featureStackList = null;
 	/** set of instances for the whole training image */
 	private Instances wholeImageData;
 	/** set of instances from loaded data (previously saved segmentation) */
@@ -172,7 +172,11 @@ public class WekaSegmentation {
 		classifier = rf;
 
 		// Initialize feature stack (no features yet)
-		featureStack = new FeatureStack(trainingImage);
+		featureStackList = new FeatureStackList(trainingImage.getImageStackSize());
+		
+		examples = new Vector[trainingImage.getImageStackSize()];
+		for(int i=0; i< trainingImage.getImageStackSize(); i++)
+			examples[i] = new Vector<ArrayList<Roi>>(MAX_NUM_CLASSES);
 		
 		// start with two classes
 		addClass();
@@ -181,7 +185,7 @@ public class WekaSegmentation {
 
 	/**
 	 * No-image constructor. If you use this constructor, the image has to be
-	 * set using loadNewImage().
+	 * set using setTrainingImage().
 	 */
 	public WekaSegmentation()
 	{
@@ -201,22 +205,47 @@ public class WekaSegmentation {
 		addClass();
 		addClass();
 	}
+	
+	/**
+	 * Set the training image (single image or stack)
+	 * 
+	 * @param imp training image
+	 */
+	public void setTrainingImage(ImagePlus imp)
+	{
+		this.trainingImage = imp;
+
+		// update list of examples
+		examples = new Vector[trainingImage.getImageStackSize()];
+		for(int i=0; i < trainingImage.getImageStackSize(); i++)
+		{
+			examples[i] = new Vector<ArrayList<Roi>>(MAX_NUM_CLASSES);
+			for(int j=0; j<MAX_NUM_CLASSES; j++)
+				examples[i].add(new ArrayList<Roi>());
+		}	
+	}
 
 	/**
 	 * Adds a ROI to the list of examples for a certain class.
 	 *
 	 * @param classNum the number of the class
-	 * @param roi      the ROI containing the new example
+	 * @param roi the ROI containing the new example
+	 * @param z number of the current slice
 	 */
-	public void addExample(int classNum, Roi roi) {
-		examples.get(classNum).add(roi);
+	public void addExample(int classNum, Roi roi, int n) 
+	{
+		examples[n-1].get(classNum).add(roi);
 	}
 
 	/**
 	 * Return the list of examples for a certain class.
+	 * 
+	 * @param classNum the number of the examples' class
+	 * @param n the slice number
 	 */
-	public List<Roi> getExamples(int classNum) {
-		return examples.get(classNum);
+	public List<Roi> getExamples(int classNum, int n) 
+	{
+		return examples[n-1].get(classNum);
 	}
 
 	/**
@@ -253,7 +282,9 @@ public class WekaSegmentation {
 	 */
 	public void addClass()
 	{
-		examples.add(new ArrayList<Roi>());
+		if(null != trainingImage)
+			for(int i=1; i <= trainingImage.getImageStackSize(); i++)
+				examples[i-1].add(new ArrayList<Roi>());
 
 		// increase number of available classes
 		numOfClasses ++;
@@ -334,7 +365,7 @@ public class WekaSegmentation {
 		IJ.log("Loaded data: " + loadedTrainingData.numInstances() + " instances");
 
 		boolean featuresChanged = false;
-		final boolean[] oldEnableFeatures = this.featureStack.getEnableFeatures();
+		final boolean[] oldEnableFeatures = this.featureStackList.get(1).getEnableFeatures();
 		// Read checked features and check if any of them chasetButtonsEnablednged
 		for(int i = 0; i < numFeatures; i++)
 		{
@@ -345,7 +376,7 @@ public class WekaSegmentation {
 		if(featuresChanged)
 		{
 			//this.setButtonsEnabled(false);
-			this.featureStack.setEnableFeatures(usedFeatures);
+			this.featureStackList.get(1).setEnableFeatures(usedFeatures);
 			// Force features to be updated
 			updateFeatures = true;
 		}
@@ -512,20 +543,23 @@ public class WekaSegmentation {
 	{
 		boolean examplesEmpty = true;
 		for(int i = 0; i < numOfClasses; i ++)
-			if(examples.get(i).size() > 0)
-			{
-				examplesEmpty = false;
-				break;
-			}
+		{
+			for(int n=0; n<trainingImage.getImageStackSize(); n++)
+				if(examples[n].get(i).size() > 0)
+				{
+					examplesEmpty = false;
+					break;
+				}
+		}
 		if (examplesEmpty && loadedTrainingData == null){
 			IJ.log("There is no data to save");
 			return false;
 		}
 
-		if(featureStack.getSize() < 2 || updateFeatures)
+		if(/* TODO featureStack.getSize() < 2 || */ updateFeatures)
 		{
 			IJ.log("Creating feature stack...");
-			featureStack.updateFeaturesMT();
+			featureStackList.updateFeaturesMT();
 			filterFeatureStackByList();
 			updateFeatures = false;
 			IJ.log("Features stack is now updated.");
@@ -562,7 +596,7 @@ public class WekaSegmentation {
 
 	public void setUseNeighbors(boolean useNeighbors)
 	{
-		this.featureStack.setUseNeighbors(useNeighbors);
+		this.featureStackList.get(1).setUseNeighbors(useNeighbors);
 	}
 
 
@@ -779,11 +813,13 @@ public class WekaSegmentation {
 
 	/**
 	 * Get current feature stack
-	 * @return feature stack
+	 * 
+	 * @param i number of feature stack slice
+	 * @return feature stack of the corresponding slice
 	 */
-	public FeatureStack getFeatureStack()
+	public FeatureStack getFeatureStack(int i)
 	{
-		return this.featureStack;
+		return this.featureStackList.get(i);
 	}
 
 	/**
@@ -815,7 +851,7 @@ public class WekaSegmentation {
 	{
 		// Accumulate current data in "loadedTrainingData"
 		IJ.log("Storing previous image instances...");
-
+/*
 		if (featureStack == null)
 			featureStack = new FeatureStack(newImage);
 
@@ -859,7 +895,7 @@ public class WekaSegmentation {
 		examples.clear();
 		for(int i = 0; i < numOfClasses; i ++)
 		{
-			examples.add(new ArrayList<Roi>());
+			examples.add(new ArrayList<SliceRoi>());
 		}
 
 		// Updating image
@@ -885,7 +921,7 @@ public class WekaSegmentation {
 		classifiedImage = null;
 
 		IJ.log("Done");
-
+*/
 		return true;
 	}
 
@@ -899,14 +935,15 @@ public class WekaSegmentation {
 	 */
 	public boolean addCenterLinesBinaryData(
 			ImagePlus labelImage,
+			int n,
 			String whiteClassName,
 			String blackClassName)
 	{
 		// Update features if necessary
-		if(featureStack.getSize() < 2)
+		if(featureStackList.get(n).getSize() < 2)
 		{
 			IJ.log("Creating feature stack...");
-			featureStack.updateFeaturesMT();
+			featureStackList.get(n).updateFeaturesMT();
 			filterFeatureStackByList();
 			updateFeatures = false;
 			IJ.log("Features stack is now updated.");
@@ -923,7 +960,7 @@ public class WekaSegmentation {
 		final ImagePlus whiteIP = new ImagePlus ("white", labelImage.getProcessor().duplicate());
 		IJ.run(whiteIP, "Skeletonize","");
 		// Add skeleton to white class
-		if( false == this.addBinaryData(whiteIP, featureStack, whiteClassName) )
+		if( false == this.addBinaryData(whiteIP, featureStackList.get(n), whiteClassName) )
 		{
 			IJ.log("Error while loading white class center-lines data.");
 			return false;
@@ -934,7 +971,7 @@ public class WekaSegmentation {
 		IJ.run(blackIP, "Invert","");
 		IJ.run(blackIP, "Skeletonize","");
 		// Add skeleton to black class
-		if( false == this.addBinaryData(blackIP, featureStack, blackClassName))
+		if( false == this.addBinaryData(blackIP, featureStackList.get(n), blackClassName))
 		{
 			IJ.log("Error while loading black class center-lines data.");
 			return false;
@@ -950,13 +987,13 @@ public class WekaSegmentation {
 		if (null == this.featureNames)
 			return;
 
-		for(int i=1; i<=this.featureStack.getSize(); i++)
+		for(int i=1; i<=this.featureStackList.get(1).getSize(); i++)
 		{
-			final String featureName = this.featureStack.getSliceLabel(i);
+			final String featureName = this.featureStackList.get(1).getSliceLabel(i);
 			if(false == this.featureNames.contains( featureName ) )
 			{
 				// Remove feature
-				this.featureStack.removeFeature( featureName );
+				this.featureStackList.get(1).removeFeature( featureName );
 				// decrease i to avoid skipping any name
 				i--;
 			}
@@ -1003,15 +1040,16 @@ public class WekaSegmentation {
 	 */
 	public boolean addBinaryData(
 			ImagePlus labelImage,
+			int n,
 			String whiteClassName,
 			String blackClassName)
 	{
 		
 		// Update features if necessary
-		if(featureStack.getSize() < 2)
+		if(featureStackList.get(n).getSize() < 2)
 		{
 			IJ.log("Creating feature stack...");
-			featureStack.updateFeaturesMT();
+			featureStackList.get(n).updateFeaturesMT();
 			filterFeatureStackByList();
 			updateFeatures = false;
 			IJ.log("Features stack is now updated.");
@@ -1033,7 +1071,7 @@ public class WekaSegmentation {
 				pix[i] = (byte)255;
 
 
-		if( false == this.addBinaryData(labelIP, featureStack, whiteClassName, blackClassName) )
+		if( false == this.addBinaryData(labelIP, featureStackList.get(n), whiteClassName, blackClassName) )
 		{
 			IJ.log("Error while loading binary label data.");
 			return false;
@@ -1084,7 +1122,7 @@ public class WekaSegmentation {
 					pix[j] = (byte)255;
 
 			final FeatureStack featureStack = new FeatureStack(new ImagePlus("slice " + i, inputSlices.getProcessor(i)));
-			featureStack.setEnableFeatures(this.featureStack.getEnableFeatures());
+			featureStack.setEnableFeatures(this.featureStackList.get(1).getEnableFeatures());
 			featureStack.setMembranePatchSize(membranePatchSize);
 			featureStack.setMembraneSize(this.membraneThickness);
 			featureStack.setMaximumSigma(this.maximumSigma);
@@ -1092,7 +1130,7 @@ public class WekaSegmentation {
 			featureStack.updateFeaturesMT();
 			filterFeatureStackByList(this.featureNames, featureStack);
 
-			featureStack.setUseNeighbors(this.featureStack.useNeighborhood());
+			featureStack.setUseNeighbors(this.featureStackList.get(1).useNeighborhood());
 
 			if( false == this.addBinaryData(labelIP, featureStack, whiteClassName, blackClassName) )
 			{
@@ -1172,14 +1210,15 @@ public class WekaSegmentation {
 	 */
 	public boolean addErodedBinaryData(
 			ImagePlus labelImage,
+			int n,
 			String whiteClassName,
 			String blackClassName)
 	{
 		// Update features if necessary
-		if(featureStack.getSize() < 2)
+		if(featureStackList.get(n).getSize() < 2)			
 		{
 			IJ.log("Creating feature stack...");
-			featureStack.updateFeaturesMT();
+			featureStackList.get(n).updateFeaturesMT();
 			filterFeatureStackByList();
 			updateFeatures = false;
 			IJ.log("Features stack is now updated.");
@@ -1196,7 +1235,7 @@ public class WekaSegmentation {
 		final ImagePlus whiteIP = new ImagePlus ("white", labelImage.getProcessor().duplicate());
 		IJ.run(whiteIP, "Erode","");
 		// Add skeleton to white class
-		if( false == this.addBinaryData(whiteIP, featureStack, whiteClassName) )
+		if( false == this.addBinaryData(whiteIP, featureStackList.get(n), whiteClassName) )
 		{
 			IJ.log("Error while loading white class center-lines data.");
 			return false;
@@ -1209,7 +1248,7 @@ public class WekaSegmentation {
 		IJ.run(blackIP, "Invert","");
 		IJ.run(blackIP, "Erode","");
 		// Add skeleton to white class
-		if( false == this.addBinaryData(blackIP, featureStack, blackClassName))
+		if( false == this.addBinaryData(blackIP, featureStackList.get(n), blackClassName))
 		{
 			IJ.log("Error while loading black class center-lines data.");
 			return false;
@@ -1231,10 +1270,10 @@ public class WekaSegmentation {
 	 */
 	public void useAllFeatures()
 	{
-		boolean[] enableFeatures = this.featureStack.getEnableFeatures();
+		boolean[] enableFeatures = this.featureStackList.get(1).getEnableFeatures();
 		for (int i = 0; i < enableFeatures.length; i++)
 			enableFeatures[i] = true;
-		this.featureStack.setEnableFeatures(enableFeatures);
+		this.featureStackList.get(1).setEnableFeatures(enableFeatures);
 	}
 
 	/**
@@ -1406,7 +1445,7 @@ public class WekaSegmentation {
 		if( null == loadedClassNames )
 		{
 			for(int i = 0; i < numOfClasses; i++)
-				if(examples.get(i).size() > 0)
+				if(examples[0].get(i).size() > 0)
 					classNames.add(classLabels[i]);
 		}
 		else
@@ -1429,13 +1468,13 @@ public class WekaSegmentation {
 				IJ.log("Creating features for test image " + z +  "...");
 			final FeatureStack testImageFeatures = new FeatureStack(testSlice);
 			// Use the same features as the current classifier
-			testImageFeatures.setEnableFeatures(featureStack.getEnableFeatures());
+			testImageFeatures.setEnableFeatures(featureStackList.get(1).getEnableFeatures());
 			testImageFeatures.setMaximumSigma(maximumSigma);
 			testImageFeatures.setMinimumSigma(minimumSigma);
 			testImageFeatures.setMembranePatchSize(membranePatchSize);
 			testImageFeatures.setMembraneSize(membraneThickness);
 			testImageFeatures.updateFeaturesMT();
-			testImageFeatures.setUseNeighbors(featureStack.useNeighborhood());
+			testImageFeatures.setUseNeighbors(featureStackList.get(1).useNeighborhood());
 			filterFeatureStackByList(this.featureNames, testImageFeatures);
 
 			final Instances data = testImageFeatures.createInstances(classNames);
@@ -1510,7 +1549,7 @@ public class WekaSegmentation {
 		if( null == loadedClassNames )
 		{
 			for(int i = 0; i < numOfClasses; i++)
-				if(examples.get(i).size() > 0)
+				if(examples[0].get(i).size() > 0)
 					classNames.add(classLabels[i]);
 		}
 		else
@@ -2640,7 +2679,7 @@ public class WekaSegmentation {
 						if(patchSize != membranePatchSize)
 						{
 							membranePatchSize = patchSize;
-							this.featureStack.setMembranePatchSize(patchSize);
+							this.featureStackList.get(1).setMembranePatchSize(patchSize);
 							featuresChanged = true;
 						}
 						index = a.name().lastIndexOf("_");
@@ -2648,7 +2687,7 @@ public class WekaSegmentation {
 						if(thickness != membraneThickness)
 						{
 							membraneThickness = thickness;
-							this.featureStack.setMembraneSize(thickness);
+							this.featureStackList.get(1).setMembraneSize(thickness);
 							featuresChanged = true;
 						}
 
@@ -2676,13 +2715,13 @@ public class WekaSegmentation {
 		{
 			this.minimumSigma = minSigma;
 			featuresChanged = true;
-			this.featureStack.setMinimumSigma(minSigma);
+			this.featureStackList.get(1).setMinimumSigma(minSigma);
 		}
 		if(maxSigma != this.maximumSigma)
 		{
 			this.maximumSigma = maxSigma;
 			featuresChanged = true;
-			this.featureStack.setMaximumSigma(maxSigma);
+			this.featureStackList.get(1).setMaximumSigma(maxSigma);
 		}
 
 		// Check if classes match
@@ -2710,7 +2749,7 @@ public class WekaSegmentation {
 			j++;
 		}
 
-		final boolean[] oldEnableFeatures = this.featureStack.getEnableFeatures();
+		final boolean[] oldEnableFeatures = this.featureStackList.get(1).getEnableFeatures();
 		// Read checked features and check if any of them changed
 		for(int i = 0; i < numFeatures; i++)
 		{
@@ -2721,7 +2760,7 @@ public class WekaSegmentation {
 		if(featuresChanged)
 		{
 			//this.setButtonsEnabled(false);
-			this.featureStack.setEnableFeatures(usedFeatures);
+			this.featureStackList.get(1).setEnableFeatures(usedFeatures);
 			// Force features to be updated
 			updateFeatures = true;
 		}
@@ -2738,8 +2777,8 @@ public class WekaSegmentation {
 		//IJ.log("create training instances: num of features = " + featureStack.getSize());
 
 		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
-		for (int i=1; i<=featureStack.getSize(); i++){
-			String attString = featureStack.getSliceLabel(i);
+		for (int i=1; i<=featureStackList.get(1).getSize(); i++){
+			String attString = featureStackList.get(1).getSliceLabel(i);
 			attributes.add(new Attribute(attString));
 		}
 
@@ -2753,12 +2792,16 @@ public class WekaSegmentation {
 			for(int i = 0; i < numOfClasses ; i ++)
 			{
 				// Do not add empty lists
-				if(examples.get(i).size() > 0)
+				for(int n=0; n<trainingImage.getImageStackSize(); n++)
 				{
-					classes.add(classLabels[i]);
-					numOfUsedClasses++;
+					if(examples[n].get(i).size() > 0)
+					{
+						if(classes.contains(classLabels[i]) == false)
+							classes.add(classLabels[i]);
+						numOfUsedClasses++;
+					}									
+					numOfInstances += examples[n].get(i).size();
 				}
-				numOfInstances += examples.get(i).size();
 			}
 		}
 		else
@@ -2778,98 +2821,98 @@ public class WekaSegmentation {
 		{
 			int nl = 0;
 			// Read all lists of examples
-			for(int j=0; j<examples.get(l).size(); j++)
-			{
-				Roi r = examples.get(l).get(j);
-
-
-				// For polygon rois we get the list of points
-				if( r instanceof PolygonRoi && r.getType() != Roi.FREEROI )
+			for(int sliceNum = 1; sliceNum <= trainingImage.getImageStackSize(); sliceNum ++)
+				for(int j=0; j<examples[sliceNum-1].get(l).size(); j++)
 				{
-					if(r.getStrokeWidth() == 1)
+					Roi r = examples[sliceNum-1].get(l).get(j);
+
+					// For polygon rois we get the list of points
+					if( r instanceof PolygonRoi && r.getType() != Roi.FREEROI )
 					{
-						int[] x = r.getPolygon().xpoints;
-						int[] y = r.getPolygon().ypoints;
-						final int n = r.getPolygon().npoints;
-
-						for (int i=0; i<n; i++)
+						if(r.getStrokeWidth() == 1)
 						{
-							double[] values = new double[featureStack.getSize()+1];
-							for (int z=1; z<=featureStack.getSize(); z++)
-								values[z-1] = featureStack.getProcessor(z).getPixelValue(x[i], y[i]);
-							values[featureStack.getSize()] = (double) l;
-							trainingData.add(new DenseInstance(1.0, values));
-							// increase number of instances for this class
-							nl ++;
-						}
-					}
-					else // For thicker lines, include also neighbors
-					{
-						final int width = (int) Math.round(r.getStrokeWidth());
-						FloatPolygon p = r.getFloatPolygon();
-						int n = p.npoints;
+							int[] x = r.getPolygon().xpoints;
+							int[] y = r.getPolygon().ypoints;
+							final int n = r.getPolygon().npoints;
 
-						double x1, y1;
-						double x2=p.xpoints[0]-(p.xpoints[1]-p.xpoints[0]);
-						double y2=p.ypoints[0]-(p.ypoints[1]-p.ypoints[0]);
-						for (int i=0; i<n; i++)
-						{
-							x1 = x2;
-							y1 = y2;
-							x2 = p.xpoints[i];
-							y2 = p.ypoints[i];
-
-							double dx = x2-x1;
-							double dy = y1-y2;
-				            double length = (float)Math.sqrt(dx*dx+dy*dy);
-				            dx /= length;
-				            dy /= length;
-							double x = x2-dy*width/2.0;
-							double y = y2-dx*width/2.0;
-
-							int n2 = width;
-							do {
-								if(x >= 0 && x < featureStack.getWidth() && y >= 0 && y <featureStack.getHeight())
-								{
-									double[] values = new double[featureStack.getSize()+1];
-									for (int z=1; z<=featureStack.getSize(); z++)
-										values[z-1] = featureStack.getProcessor(z).getInterpolatedValue(x, y);
-									values[featureStack.getSize()] = (double) l;
-									trainingData.add(new DenseInstance(1.0, values));
-									// increase number of instances for this class
-									nl ++;
-								}
-								x += dy;
-								y += dx;
-							} while (--n2>0);
-						}
-
-					}
-				}
-				else // for the rest of rois we get ALL points inside the roi
-				{
-					final ShapeRoi shapeRoi = new ShapeRoi(r);
-					final Rectangle rect = shapeRoi.getBounds();
-
-					final int lastX = rect.x + rect.width;
-					final int lastY = rect.y + rect.height;
-
-					for(int x = rect.x; x < lastX; x++)
-						for(int y = rect.y; y < lastY; y++)
-							if(shapeRoi.contains(x, y))
+							for (int i=0; i<n; i++)
 							{
-								double[] values = new double[featureStack.getSize()+1];
-								for (int z=1; z<=featureStack.getSize(); z++)
-									values[z-1] = featureStack.getProcessor(z).getPixelValue(x, y);
-								values[featureStack.getSize()] = (double) l;
+								double[] values = new double[featureStackList.get(sliceNum).getSize()+1];
+								for (int z=1; z<=featureStackList.get(sliceNum).getSize(); z++)
+									values[z-1] = featureStackList.get(sliceNum).getProcessor(z).getPixelValue(x[i], y[i]);
+								values[featureStackList.get(sliceNum).getSize()] = (double) l;
 								trainingData.add(new DenseInstance(1.0, values));
 								// increase number of instances for this class
 								nl ++;
 							}
+						}
+						else // For thicker lines, include also neighbors
+						{
+							final int width = (int) Math.round(r.getStrokeWidth());
+							FloatPolygon p = r.getFloatPolygon();
+							int n = p.npoints;
+
+							double x1, y1;
+							double x2=p.xpoints[0]-(p.xpoints[1]-p.xpoints[0]);
+							double y2=p.ypoints[0]-(p.ypoints[1]-p.ypoints[0]);
+							for (int i=0; i<n; i++)
+							{
+								x1 = x2;
+								y1 = y2;
+								x2 = p.xpoints[i];
+								y2 = p.ypoints[i];
+
+								double dx = x2-x1;
+								double dy = y1-y2;
+								double length = (float)Math.sqrt(dx*dx+dy*dy);
+								dx /= length;
+								dy /= length;
+								double x = x2-dy*width/2.0;
+								double y = y2-dx*width/2.0;
+
+								int n2 = width;
+								do {
+									if(x >= 0 && x < featureStackList.get(sliceNum).getWidth() && y >= 0 && y <featureStackList.get(sliceNum).getHeight())
+									{
+										double[] values = new double[featureStackList.get(sliceNum).getSize()+1];
+										for (int z=1; z<=featureStackList.get(sliceNum).getSize(); z++)
+											values[z-1] = featureStackList.get(sliceNum).getProcessor(z).getInterpolatedValue(x, y);
+										values[featureStackList.get(sliceNum).getSize()] = (double) l;
+										trainingData.add(new DenseInstance(1.0, values));
+										// increase number of instances for this class
+										nl ++;
+									}
+									x += dy;
+									y += dx;
+								} while (--n2>0);
+							}
+
+						}
+					}
+					else // for the rest of rois we get ALL points inside the roi
+					{
+						final ShapeRoi shapeRoi = new ShapeRoi(r);
+						final Rectangle rect = shapeRoi.getBounds();
+
+						final int lastX = rect.x + rect.width;
+						final int lastY = rect.y + rect.height;
+
+						for(int x = rect.x; x < lastX; x++)
+							for(int y = rect.y; y < lastY; y++)
+								if(shapeRoi.contains(x, y))
+								{
+									double[] values = new double[featureStackList.get(sliceNum).getSize()+1];
+									for (int z=1; z<=featureStackList.get(sliceNum).getSize(); z++)
+										values[z-1] = featureStackList.get(sliceNum).getProcessor(z).getPixelValue(x, y);
+									values[featureStackList.get(sliceNum).getSize()] = (double) l;
+									trainingData.add(new DenseInstance(1.0, values));
+									// increase number of instances for this class
+									nl ++;
+								}
+					}
+
+
 				}
-
-
-			}
 
 			IJ.log("# of pixels selected as " + classLabels[l] + ": " +nl);
 		}
@@ -2878,7 +2921,7 @@ public class WekaSegmentation {
 			return null;
 
 		// Set the index of the class attribute
-		trainingData.setClassIndex(featureStack.getSize());
+		trainingData.setClassIndex(featureStackList.get(1).getSize());
 
 		return trainingData;
 	}
@@ -2886,7 +2929,7 @@ public class WekaSegmentation {
 	/**
 	 * Update whole data set with current number of classes and features
 	 */
-	private void updateTestSet()
+	private Instances updateTestSet(int n)
 	{
 		IJ.showStatus("Reading whole image data...");
 
@@ -2899,16 +2942,20 @@ public class WekaSegmentation {
 		{
 			classNames = new ArrayList<String>();
 
-			for(int i = 0; i < numOfClasses; i++)
-				if(examples.get(i).size() > 0)
-					classNames.add(classLabels[i]);
+			for(int j=0; j<trainingImage.getImageStackSize(); j++)
+				for(int i = 0; i < numOfClasses; i++)					
+					if(examples[j].get(i).size() > 0)
+						if(false == classNames.contains(classLabels[i]))
+							classNames.add(classLabels[i]);
 		}
-		wholeImageData = featureStack.createInstances(classNames);
+		Instances data = featureStackList.get(n).createInstances(classNames);
 		long end = System.currentTimeMillis();
-		IJ.log("Creating whole image data took: " + (end-start) + "ms");
-		wholeImageData.setClassIndex(wholeImageData.numAttributes() - 1);
+		IJ.log("Creating whole image data for section " + n + " took: " + (end-start) + "ms");
+		data.setClassIndex(data.numAttributes() - 1);
 
 		updateWholeData = false;
+		
+		return data;
 	}
 
 	/**
@@ -2919,8 +2966,12 @@ public class WekaSegmentation {
 		// Two list of examples need to be non empty
 		int nonEmpty = 0;
 		for(int i = 0; i < numOfClasses; i++)
-			if(examples.get(i).size() > 0)
-				nonEmpty++;
+			for(int j=0; j<trainingImage.getImageStackSize(); j++)
+				if(examples[j].get(i).size() > 0)
+				{
+					nonEmpty++;
+					break;
+				}
 		if (nonEmpty < 2 && null == loadedTrainingData)
 		{
 			IJ.showMessage("Cannot train without at least 2 sets of examples!");
@@ -2929,11 +2980,11 @@ public class WekaSegmentation {
 
 		// Create feature stack if necessary (training from traces
 		// and the features stack is empty or the settings changed)
-		if(nonEmpty > 1 && featureStack.isEmpty() || updateFeatures)
+		if(nonEmpty > 1 /* TODO && featureStack.isEmpty() */ || updateFeatures)
 		{
 			IJ.showStatus("Creating feature stack...");
 			IJ.log("Creating feature stack...");
-			featureStack.updateFeaturesMT();
+			featureStackList.updateFeaturesMT();
 			filterFeatureStackByList();
 			updateFeatures = false;
 			updateWholeData = true;
@@ -3043,8 +3094,12 @@ public class WekaSegmentation {
 		if( null == loadedClassNames )
 		{
 			for(int i = 0; i < numOfClasses; i++)
-				if(examples.get(i).size() > 0)
-					classNames.add(classLabels[i]);
+				for(int j=0; j<trainingImage.getImageStackSize(); j++)
+					if(examples[j].get(i).size() > 0)
+					{
+						classNames.add(classLabels[i]);
+						break;
+					}
 		}
 		else
 			classNames = loadedClassNames;
@@ -3076,7 +3131,7 @@ public class WekaSegmentation {
 					IJ.log("Creating features for slice " + i +  "...");
 					final FeatureStack sliceFeatures = new FeatureStack(slice);
 					// Use the same features as the current classifier
-					sliceFeatures.setEnableFeatures(featureStack.getEnableFeatures());
+					sliceFeatures.setEnableFeatures(featureStackList.get(1).getEnableFeatures());
 					sliceFeatures.setMaximumSigma(maximumSigma);
 					sliceFeatures.setMinimumSigma(minimumSigma);
 					sliceFeatures.setMembranePatchSize(membranePatchSize);
@@ -3163,27 +3218,37 @@ public class WekaSegmentation {
 			numThreads = Runtime.getRuntime().availableProcessors();
 
 		// Create feature stack if it was not created yet
-		if(featureStack.isEmpty() || updateFeatures)
+		if(/* TODO featureStack.isEmpty() || */ updateFeatures)
 		{
 			IJ.showStatus("Creating feature stack...");
 			IJ.log("Creating feature stack...");
-			featureStack.updateFeaturesMT();
+			featureStackList.updateFeaturesMT();
 			filterFeatureStackByList();
 			updateFeatures = false;
 			updateWholeData = true;
 			IJ.log("Features stack is now updated.");
 		}
 
-		if(updateWholeData)
+		ImageStack is = new ImageStack(trainingImage.getWidth(), trainingImage.getHeight());
+		
+		for(int z = 1; z<=trainingImage.getImageStackSize(); z++)
 		{
-			updateTestSet();
-			IJ.log("Test dataset updated ("+ wholeImageData.numInstances() + " instances, " + wholeImageData.numAttributes() + " attributes).");
+			if(updateWholeData)
+			{
+				updateTestSet(z);
+				IJ.log("Test dataset updated ("+ wholeImageData.numInstances() + " instances, " + wholeImageData.numAttributes() + " attributes).");
+			}
+
+			IJ.log("Classifying whole image " + z +  "...");
+
+			ImagePlus res = applyClassifier(wholeImageData, trainingImage.getWidth(), trainingImage.getHeight(), numThreads, classify);
+			for(int i=1; i<=res.getImageStackSize(); i++)
+				is.addSlice(res.getImageStack().getSliceLabel(i), res.getImageStack().getProcessor(i));
+			
 		}
-
-		IJ.log("Classifying whole image...");
-
-		classifiedImage = applyClassifier(wholeImageData, trainingImage.getWidth(), trainingImage.getHeight(), numThreads, classify);
-
+		
+		classifiedImage = new ImagePlus("Classified image", is);
+		
 		IJ.log("Finished segmentation of whole image.\n");
 	}
 
@@ -3365,7 +3430,7 @@ public class WekaSegmentation {
 					usedFeatures[i] = true;
 		}
 
-		this.featureStack.setEnableFeatures(usedFeatures);
+		this.featureStackList.get(1).setEnableFeatures(usedFeatures);
 
 		return true;
 	}
@@ -3373,7 +3438,7 @@ public class WekaSegmentation {
 	public void setMembraneThickness(int thickness)
 	{
 		this.membraneThickness = thickness;
-		featureStack.setMembraneSize(thickness);
+		featureStackList.get(1).setMembraneSize(thickness);
 	}
 
 	public int getMembraneThickness()
@@ -3388,7 +3453,8 @@ public class WekaSegmentation {
 	public void setMembranePatchSize(int patchSize)
 	{
 		membranePatchSize = patchSize;
-		featureStack.setMembranePatchSize(patchSize); }
+		featureStackList.get(1).setMembranePatchSize(patchSize); 
+	}
 	public int getMembranePatchSize()
 	{
 		return membranePatchSize;
@@ -3401,7 +3467,7 @@ public class WekaSegmentation {
 	public void setMaximumSigma(float sigma)
 	{
 		maximumSigma = sigma;
-		featureStack.setMaximumSigma(sigma);
+		featureStackList.get(1).setMaximumSigma(sigma);
 	}
 
 	public float getMaximumSigma()
@@ -3416,7 +3482,7 @@ public class WekaSegmentation {
 	public void setMinimumSigma(float sigma)
 	{
 		minimumSigma = sigma;
-		featureStack.setMinimumSigma(sigma);
+		featureStackList.get(1).setMinimumSigma(sigma);
 	}
 
 	public float getMinimumSigma()
