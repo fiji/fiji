@@ -891,7 +891,7 @@ public class Executer {
 	public void showContent(Content c, boolean b) {
 		if(!checkSel(c))
 			return;
-		univ.getSelected().setVisible(b);
+		c.setVisible(b);
 		if(!b)
 			univ.clearSelection();
 	}

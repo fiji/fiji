@@ -492,17 +492,17 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 		Object src = e.getSource();
 
 		if(src == color)
-			executer.changeColor(univ.getSelected());
+			executer.changeColor(getSelected());
 		else if (src == bgColor)
 			executer.changeBackgroundColor();
 		else if(src == scalebar)
 			executer.editScalebar();
 		else if(src == luts)
-			executer.adjustLUTs(univ.getSelected());
+			executer.adjustLUTs(getSelected());
 		else if(src == channels)
-			executer.changeChannels(univ.getSelected());
+			executer.changeChannels(getSelected());
 		else if(src == transparency)
-			executer.changeTransparency(univ.getSelected());
+			executer.changeTransparency(getSelected());
 		else if(src == addContentFromFile)
 			executer.addContentFromFile();
 		else if(src == addContentFromImage)
@@ -516,11 +516,11 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 		else if(src == regist)
 			executer.register();
 		else if(src == delete)
-			executer.delete(univ.getSelected());
+			executer.delete(getSelected());
 		else if(src == resetView)
 			executer.resetView();
 		else if(src == centerSelected)
-			executer.centerSelected(univ.getSelected());
+			executer.centerSelected(getSelected());
 		else if(src == centerOrigin)
 			executer.centerOrigin();
 		else if(src == centerUniverse)
@@ -528,7 +528,7 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 		else if(src == fitViewToUniverse)
 			executer.fitViewToUniverse();
 		else if(src == fitViewToContent)
-			executer.fitViewToContent(univ.getSelected());
+			executer.fitViewToContent(getSelected());
 		else if(src == record360)
 			executer.record360();
 		else if(src == startRecord)
@@ -542,46 +542,46 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 		else if(src == animationOptions)
 			executer.changeAnimationOptions();
 		else if(src == threshold)
-			executer.changeThreshold(univ.getSelected());
+			executer.changeThreshold(getSelected());
 		else if(src == displayAsVolume) {
-			executer.displayAs(univ.getSelected(), Content.VOLUME);
+			executer.displayAs(getSelected(), Content.VOLUME);
 			updateMenus();
 		} else if(src == displayAsOrtho) {
-			executer.displayAs(univ.getSelected(), Content.ORTHO);
+			executer.displayAs(getSelected(), Content.ORTHO);
 			updateMenus();
 		} else if(src == displayAsSurface) {
-			executer.displayAs(univ.getSelected(), Content.SURFACE);
+			executer.displayAs(getSelected(), Content.SURFACE);
 			updateMenus();
 		} else if(src == displayAsSurfacePlot) {
 			executer.displayAs(
-				univ.getSelected(), Content.SURFACE_PLOT2D);
+				getSelected(), Content.SURFACE_PLOT2D);
 			updateMenus();
 		} else if(src == updateVol)
-			executer.updateVolume(univ.getSelected());
+			executer.updateVolume(getSelected());
 		else if(src == slices)
-			executer.changeSlices(univ.getSelected());
+			executer.changeSlices(getSelected());
 		else if(src == fill)
-			executer.fill(univ.getSelected());
+			executer.fill(getSelected());
 		else if(src == close)
 			executer.close();
 		else if(src == resetTransform)
-			executer.resetTransform(univ.getSelected());
+			executer.resetTransform(getSelected());
 		else if(src == setTransform)
-			executer.setTransform(univ.getSelected());
+			executer.setTransform(getSelected());
 		else if(src == properties)
-			executer.contentProperties(univ.getSelected());
+			executer.contentProperties(getSelected());
 		else if(src == applyTransform)
-			executer.applyTransform(univ.getSelected());
+			executer.applyTransform(getSelected());
 		else if(src == saveTransform)
-			executer.saveTransform(univ.getSelected());
+			executer.saveTransform(getSelected());
 		else if(src == exportTransformed)
-			executer.exportTransformed(univ.getSelected());
+			executer.exportTransformed(getSelected());
 		else if (src == pl_load)
-			executer.loadPointList(univ.getSelected());
+			executer.loadPointList(getSelected());
 		else if (src == pl_save)
-			executer.savePointList(univ.getSelected());
+			executer.savePointList(getSelected());
 		else if (src == pl_size)
-			executer.changePointSize(univ.getSelected());
+			executer.changePointSize(getSelected());
 		else if (src == saveView)
 			executer.saveView();
 		else if (src == loadView)
@@ -603,7 +603,7 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 		else if (src == exportBinarySTL)
 			executer.saveAsBinarySTL();
 		else if (src == smoothMesh)
-			executer.smoothMesh(univ.getSelected());
+			executer.smoothMesh(getSelected());
 		else if (src == smoothAllMeshes)
 			executer.smoothAllMeshes();
 		else if (src == viewPreferences)
@@ -626,7 +626,7 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 
 	public void itemStateChanged(ItemEvent e) {
 		Object src = e.getSource();
-		Content c = univ.getSelected();
+		Content c = getSelected();
 		if(src == coordinateSystem)
 			executer.showCoordinateSystem(
 				c, coordinateSystem.getState());
@@ -646,6 +646,15 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 			executer.showPointList(c, pl_show.getState());
 	}
 
+	private Content getSelected() {
+		Content c = univ.getSelected();
+		if(c != null)
+			return c;
+		if(univ.getContents().size() == 1)
+			return (Content)univ.contents().next();
+		return null;
+	}
+
 
 
 
@@ -661,6 +670,7 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 	public void universeClosed() {}
 
 	public void contentAdded(Content c) {
+		updateMenus();
 		if(c == null)
 			return;
 		final String name = c.getName();
@@ -677,6 +687,7 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 	}
 
 	public void contentRemoved(Content c) {
+		updateMenus();
 		if(c == null)
 			return;
 		for(int i = 0; i < selectMenu.getItemCount(); i++) {
@@ -689,11 +700,13 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 	}
 
 	public void updateMenus() {
-		contentSelected(univ.getSelected());
+		contentSelected(getSelected());
 	}
 
 
 	public void contentSelected(Content c) {
+
+		c = getSelected();
 
 		delete.setEnabled(c != null);
 		centerSelected.setEnabled(c != null);
