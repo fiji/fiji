@@ -652,6 +652,7 @@ public class UpdaterFrame extends JFrame
 				}
 			updatePluginsTable();
 			canUpload = false;
+			info("Uploaded completed.");
 			enableUploadOrNot();
 			dispose();
 		} catch (Canceled e) {
