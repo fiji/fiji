@@ -73,7 +73,6 @@ public class UpdaterFrame extends JFrame
 		implements TableModelListener, ListSelectionListener {
 	PluginCollection plugins;
 
-	private JFrame loadedFrame;
 	private JTextField txtSearch;
 	private ViewOptions viewOptions;
 	private PluginTable table;
@@ -468,13 +467,6 @@ public class UpdaterFrame extends JFrame
 		setEasyMode(!easyMode);
 	}
 
-	private void showFrame() {
-		if (loadedFrame != null) {
-			loadedFrame.setVisible(true);
-			loadedFrame.setLocationRelativeTo(null); //center of the screen
-		}
-	}
-
 	public void install() {
 		Installer installer =
 			new Installer(plugins, getProgress("Installing..."));
@@ -502,14 +494,6 @@ public class UpdaterFrame extends JFrame
 			// TODO: make error() method
 			IJ.error("Installer failed: " + e);
 			installer.done();
-		}
-	}
-
-	private void removeLoadedFrameIfExists() {
-		if (loadedFrame != null) {
-			loadedFrame.setVisible(false);
-			loadedFrame.dispose();
-			loadedFrame = null;
 		}
 	}
 
