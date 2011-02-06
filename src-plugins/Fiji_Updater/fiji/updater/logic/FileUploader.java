@@ -39,7 +39,7 @@ public class FileUploader extends Progressable {
 	long timestamp;
 
 	public FileUploader() {
-		this("/var/www/update/");
+		this(Updater.UPDATE_DIRECTORY);
 	}
 
 	public FileUploader(String uploadDir) {

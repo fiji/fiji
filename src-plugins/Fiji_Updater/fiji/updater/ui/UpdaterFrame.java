@@ -2,6 +2,7 @@ package fiji.updater.ui;
 
 import fiji.updater.Updater;
 
+import fiji.updater.logic.FileUploader;
 import fiji.updater.logic.Installer;
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginCollection.DependencyMap;
@@ -633,7 +634,9 @@ public class UpdaterFrame extends JFrame
 		PluginUploader uploader = new PluginUploader(plugins, updateSite);
 
 		try {
-			if (!interactiveSshLogin(uploader))
+			if (Updater.SSH_HOST == null)
+				uploader.setUploader(new FileUploader(Updater.UPDATE_DIRECTORY));
+			else if (!interactiveSshLogin(uploader))
 				return;
 			uploader.upload(getProgress("Uploading..."));
 			for (PluginObject plugin : plugins.toUploadOrRemove())
