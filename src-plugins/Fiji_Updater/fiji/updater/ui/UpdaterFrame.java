@@ -492,6 +492,7 @@ public class UpdaterFrame extends JFrame
 			updatePluginsTable();
 			pluginsChanged();
 			info("Updated successfully.  Please restart Fiji!");
+			dispose();
 		} catch (Canceled e) {
 			// TODO: remove "update/" directory
 			IJ.error("Canceled");
