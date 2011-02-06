@@ -58,7 +58,7 @@ public class PluginUploader {
 	public PluginUploader(PluginCollection plugins, UpdateSite updateSite) {
 		this.plugins = plugins;
 		site = updateSite;
-		compressed = Util.prefix(Updater.XML_COMPRESSED);
+		compressed = Updater.XML_COMPRESSED;
 	}
 
 	public void setUploader(FileUploader uploader) {
@@ -80,7 +80,7 @@ public class PluginUploader {
 		public byte[] bytes;
 
 		public String getFilename() {
-			return compressed;
+			return compressed + ".lock";
 		}
 
 		public String getPermissions() {
