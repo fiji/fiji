@@ -55,8 +55,7 @@ public class FileUploader extends Progressable {
 	//Steps to accomplish entire upload task
 	public synchronized void upload(List<SourceFile> sources,
 			List<String> locks) throws IOException {
-		long now = new Date().getTime();
-		timestamp = Long.parseLong(Util.timestamp(now));
+		timestamp = Long.parseLong(Util.timestamp(System.currentTimeMillis()));
 		setTitle("Uploading");
 
 		calculateTotalSize(sources);
