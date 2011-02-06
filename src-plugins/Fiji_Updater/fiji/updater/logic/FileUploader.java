@@ -63,7 +63,7 @@ public class FileUploader extends Progressable {
 
 		byte[] buffer = new byte[65536];
 		for (SourceFile source : sources) {
-			File file = new File(uploadDir + source.getFilename());
+			File file = new File(uploadDir, source.getFilename());
 			File dir = file.getParentFile();
 			if (!dir.exists())
 				dir.mkdirs();
@@ -93,9 +93,9 @@ public class FileUploader extends Progressable {
 		}
 
 		for (String lock : locks) {
-			File file = new File(uploadDir + lock);
-			File lockFile = new File(uploadDir + lock + ".lock");
-			File backup = new File(uploadDir + lock + ".old");
+			File file = new File(uploadDir, lock);
+			File lockFile = new File(uploadDir, lock + ".lock");
+			File backup = new File(uploadDir, lock + ".old");
 			if (backup.exists())
 				backup.delete();
 			file.renameTo(backup);
