@@ -652,6 +652,7 @@ public class UpdaterFrame extends JFrame
 			updatePluginsTable();
 			canUpload = false;
 			enableUploadOrNot();
+			dispose();
 		} catch (Canceled e) {
 			// TODO: teach uploader to remove the lock file
 			IJ.error("Canceled");
