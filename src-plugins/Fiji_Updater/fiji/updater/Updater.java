@@ -40,7 +40,7 @@ public class Updater implements PlugIn {
 	// Note: ij.Prefs is only saved during shutdown of Fiji
 	public static final String PREFS_USER = "fiji.updater.login";
 
-	public static boolean debug, testRun;
+	public static boolean debug, testRun, hidden;
 
 	public void run(String arg) {
 
@@ -53,7 +53,7 @@ public class Updater implements PlugIn {
 		}
 
 		final PluginCollection plugins = new PluginCollection();
-		final UpdaterFrame main = new UpdaterFrame(plugins);
+		final UpdaterFrame main = new UpdaterFrame(plugins, hidden);
 		main.setLocationRelativeTo(IJ.getInstance());
 		main.setEasyMode(true);
 		main.setVisible(true);

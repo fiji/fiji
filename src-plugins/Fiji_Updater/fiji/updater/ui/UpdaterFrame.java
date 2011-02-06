@@ -15,6 +15,7 @@ import fiji.updater.logic.PluginUploader;
 import fiji.updater.util.Downloader;
 import fiji.updater.util.Canceled;
 import fiji.updater.util.Progress;
+import fiji.updater.util.StderrProgress;
 import fiji.updater.util.UpdateJava;
 import fiji.updater.util.Util;
 
@@ -84,11 +85,17 @@ public class UpdaterFrame extends JFrame
 	//For developers
 	protected JButton upload;
 	boolean canUpload;
+	protected boolean hidden;
 
 	public UpdaterFrame(PluginCollection plugins) {
+		this(plugins, false);
+	}
+
+	public UpdaterFrame(PluginCollection plugins, boolean hidden) {
 		super("Fiji Updater");
 
 		this.plugins = plugins;
+		this.hidden = hidden;
 
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		addWindowListener(new WindowAdapter() {
@@ -319,12 +326,18 @@ public class UpdaterFrame extends JFrame
 				KeyEvent.VK_ESCAPE, 0);
 	}
 
+	public void setVisible(boolean visible) {
+		super.setVisible(visible && !hidden);
+	}
+
 	public void dispose() {
 		WindowManager.removeWindow(this);
 		super.dispose();
 	}
 
 	public Progress getProgress(String title) {
+		if (hidden)
+			return new StderrProgress();
 		return new ProgressDialog(this, title);
 	}
 
