@@ -37,10 +37,9 @@ public class XMLFileWriter {
 	protected final String XALAN_INDENT_AMOUNT =
 		"{http://xml.apache.org/xslt}" + "indent-amount";
 	protected final static String dtd =
-		"<!DOCTYPE update-sites? pluginRecords [\n"
-		+ "<!ELEMENT update-sites (update-site*)>\n"
-		+ "<!ELEMENT update-site (name, url, timestamp)>\n"
-		+ "<!ELEMENT pluginRecords (plugin*)>\n"
+		"<!DOCTYPE pluginRecords [\n"
+		+ "<!ELEMENT pluginRecords (update-site*, plugin*)>\n"
+		+ "<!ELEMENT update-site EMPTY>\n"
 		+ "<!ELEMENT plugin (platform*, category*, version?, previous-version*)>\n"
 		+ "<!ELEMENT version (description?, dependency*, link*, author*)>\n"
 		+ "<!ELEMENT previous-version EMPTY>\n"
@@ -50,6 +49,9 @@ public class XMLFileWriter {
 		+ "<!ELEMENT author (#PCDATA)>\n"
 		+ "<!ELEMENT platform (#PCDATA)>\n"
 		+ "<!ELEMENT category (#PCDATA)>\n"
+		+ "<!ATTLIST update-site name CDATA #REQUIRED>\n"
+		+ "<!ATTLIST update-site url CDATA #REQUIRED>\n"
+		+ "<!ATTLIST update-site timestamp CDATA #REQUIRED>\n"
 		+ "<!ATTLIST plugin filename CDATA #REQUIRED>\n"
 		+ "<!ATTLIST dependency filename CDATA #REQUIRED>\n"
 		+ "<!ATTLIST dependency timestamp CDATA #IMPLIED>\n"
@@ -97,7 +99,6 @@ public class XMLFileWriter {
 
 		handler.startElement("", "", "pluginRecords", attr);
 		if (local) {
-			handler.startElement("", "", "update-sites", attr);
 			for (String name : plugins.getUpdateSiteNames()) {
 				attr.clear();
 				UpdateSite site = plugins.getUpdateSite(name);
@@ -106,7 +107,6 @@ public class XMLFileWriter {
 				setAttribute(attr, "timestamp", "" + site.timestamp);
 				writeSimpleTag("update-site", null, attr);
 			}
-			handler.endElement("", "", "update-sites");
 		}
 
 		for (PluginObject plugin : plugins.fijiPlugins()) {
