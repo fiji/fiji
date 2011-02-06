@@ -132,12 +132,10 @@ public abstract class SpotDisplayer {
 	/** The color used when highlighting spots. */
 	protected static final Color HIGHLIGHT_COLOR = new Color(0, 1f, 0);
 	
-	/** Flag to state that object should be added to selection. */
-	protected static final int ADD_TO_SELECTION_FLAG  = 0;
-	/** Flag to state that object should be removed from selection. */
-	protected static final int REMOVE_FROM_SELECTION_FLAG  = 1;
+	/** Flag to state that object should be added or removed to selection. */
+	protected static final int MODIFY_SELECTION_FLAG  = 0;
 	/** Flag to state that object should replace the current selection. */
-	protected static final int REPLACE_SELECTION_FLAG  = 2;
+	protected static final int REPLACE_SELECTION_FLAG  = 1;
 	
 	/** The display radius. */
 	protected float radius = DEFAULT_DISPLAY_RADIUS;
@@ -394,22 +392,24 @@ public abstract class SpotDisplayer {
 	protected void spotSelectionChanged(Spot target, int flag) {
 		Spot[] spotArray;
 		boolean[] areNew;
-		if (flag == ADD_TO_SELECTION_FLAG) {
-			// Add target to current selection, if it's not already in
-			if (spotSelection.contains(target))
-				return;
-			spotArray = new Spot[] { target };
-			areNew = new boolean[] { true };
-			spotSelection.add(target);
-			fireSpotSelectionChange(spotArray, areNew);
 
-		} else if (flag == REMOVE_FROM_SELECTION_FLAG) {
-			// Remove target from selection if it was in
-			if (!spotSelection.remove(target)) 
-				return;
-			spotArray = new Spot[] { target };
-			areNew = new boolean[] { false };
-			fireSpotSelectionChange(spotArray, areNew);
+		if (flag == MODIFY_SELECTION_FLAG) {
+			
+			if (!spotSelection.contains(target)) {
+				// Add target to current selection, if it's not already in
+				spotArray = new Spot[] { target };
+				areNew = new boolean[] { true };
+				spotSelection.add(target);
+				fireSpotSelectionChange(spotArray, areNew);
+
+			} else  {
+				// Remove target from selection if it was in
+				if (!spotSelection.remove(target)) 
+					return;
+				spotArray = new Spot[] { target };
+				areNew = new boolean[] { false };
+				fireSpotSelectionChange(spotArray, areNew);
+			}
 
 		} else if (flag == REPLACE_SELECTION_FLAG) {
 			// Forget previous selection, and set selection to be target

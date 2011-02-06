@@ -118,6 +118,7 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 		protected TreeMap<Integer, Map<Spot, Float>> R = new TreeMap<Integer, Map<Spot, Float>>();
 		protected TreeMap<Integer, Map<Spot, Color>> colors = new TreeMap<Integer, Map<Spot, Color>>();
 		protected float lineThickness = 1.0f;
+		protected float[] dash = new float[] { 1 };
 		
 		public SpotOverlay() {
 			this.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
@@ -143,7 +144,8 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 			float x, y, z, radius, dz2;
 			int apparentRadius;
 			for (Spot spot : spotThisFrame) {
-				g2d.setStroke(new BasicStroke((float) (lineThickness / canvas.getMagnification())));
+				g2d.setStroke(new BasicStroke((float) (lineThickness / canvas.getMagnification()), 
+						BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, dash , 0));	// TODO TODO
 				g2d.setColor(c.get(spot));
 				radius = r.get(spot);
 				x = spot.getFeature(Feature.POSITION_X);
@@ -182,6 +184,14 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 		}
 	}
 	
+	private class SpotEditOverlay extends SpotOverlay {
+		public SpotEditOverlay() {
+			super();
+			this.lineThickness = 2.0f;
+			this.dash = new float[] {4, 4};
+		}
+	}
+	
 	private ImagePlus imp;
 	private OverlayedImageCanvas canvas;
 	private float[] calibration;
@@ -198,6 +208,9 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 	// For highlight
 	private HighlightSpotOverlay highlightSpotOverlay;
 	private HighlightTrackOverlay highlightTrackOverlay;
+	/** The spot currently being edited, null if no spot is being edited. */
+	private Spot editedSpot;
+	private SpotEditOverlay editOverlay;
 
 	/*
 	 * CONSTRUCTORS
@@ -341,6 +354,15 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 	/*
 	 * PRIVATE METHODS
 	 */
+	
+	private final Spot getCLickLocation(final MouseEvent e) {
+		final int ix = canvas.offScreenX(e.getX());
+		final int iy =  canvas.offScreenX(e.getY());
+		final float x = ix * calibration[0];
+		final float y = iy * calibration[1];
+		final float z = (imp.getSlice()-1) * calibration[2];
+		return new SpotImp(new float[] {x, y, z});
+	}
 
 	private void prepareHighlightSpots() {
 		if (null != highlightSpotOverlay)
@@ -424,27 +446,62 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		final int sx = e.getX();
-		final int sy = e.getY();
-		final int ix = canvas.offScreenX(sx);
-		final int iy = canvas.offScreenY(sy);
-		final float x = ix * calibration[0];
-		final float y = iy * calibration[1];
-		final float z = (imp.getSlice()-1) * calibration[2];
-		final Spot clickLocation = new SpotImp(new float[] {x, y, z});
+		final Spot clickLocation = getCLickLocation(e);
 		final int frame = imp.getFrame() - 1;		
-		final Spot target = getClosestSpot(clickLocation, frame);
+		Spot target = getClosestSpot(clickLocation, frame);
+		
 		// Check desired behavior
-		final int addToSelectionMask = MouseEvent.SHIFT_DOWN_MASK;
-		final int removeFromSelectionMask = MouseEvent.ALT_DOWN_MASK;
-		final int flag;
-		if ((e.getModifiersEx() & addToSelectionMask) == addToSelectionMask) 
-			flag = ADD_TO_SELECTION_FLAG;
-		else if ((e.getModifiersEx() & removeFromSelectionMask) == removeFromSelectionMask) 
-			flag = REMOVE_FROM_SELECTION_FLAG;
-		else 
-			flag = REPLACE_SELECTION_FLAG;
-		spotSelectionChanged(target, flag);
+		switch (e.getClickCount()) {
+		case 1: {
+			// Change selection
+			// only id we are nut currently editing
+			if (null != editedSpot)
+				return;
+			final int addToSelectionMask = MouseEvent.SHIFT_DOWN_MASK;
+			final int flag;
+			if ((e.getModifiersEx() & addToSelectionMask) == addToSelectionMask) 
+				flag = MODIFY_SELECTION_FLAG;
+			else 
+				flag = REPLACE_SELECTION_FLAG;
+			spotSelectionChanged(target, flag);
+			break;
+		}
+		
+		case 2: {
+			// Edit spot
+			
+			// Empty current selection
+			spotSelectionChanged(null, REPLACE_SELECTION_FLAG);
+			
+			if (null == editedSpot) {
+			
+				// No spot is currently edited, we pick one to edit
+				if (target.squareDistanceTo(clickLocation) > radius*radius*radiusRatio*radiusRatio) {
+					// Create a new spot if not inside one
+					target = clickLocation;
+				}
+				editedSpot = target;
+				spots.get(frame).remove(editedSpot);
+				spotsToShow.get(frame).remove(editedSpot);
+				spotSelection.remove(editedSpot);
+				editOverlay = new SpotEditOverlay();
+				editOverlay.addSpot(editedSpot, radius * radiusRatio, HIGHLIGHT_COLOR, frame);
+				canvas.addOverlay(editOverlay);
+				prepareSpotOverlay();
+				
+			} else {
+				// We leave editing mode
+				spots.get(frame).add(editedSpot);
+				spotsToShow.get(frame).add(editedSpot);
+				editedSpot = null;
+				canvas.removeOverlay(editOverlay);
+				prepareSpotOverlay();
+				prepareWholeTrackOverlay();
+				
+			}
+			break;
+		}
+		}
 	} 
 
 
