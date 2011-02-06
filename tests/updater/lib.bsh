@@ -1,5 +1,7 @@
 // A library of useful variables and functions
 
+if (hidden == void) // not defined?
+	hidden = true;
 
 /// SETUP
 
@@ -176,7 +178,8 @@ startFiji(root, type, bsh) {
 		new File(root, "fiji").getAbsolutePath(),
 		"--java-home=" + System.getProperty("java.home"),
 		new File(libDir, "client.bsh").getAbsolutePath(),
-		bsh
+		bsh,
+		hidden ? "" : "--no-hidden"
 	};
 	print("Starting fake " + type + " with " + bsh);
 	execute(args);
@@ -192,6 +195,63 @@ download(bsh) {
 
 
 /// GUI INTERACTION HELPERS
+
+// waitForWindow (not fiji.Main's, because we're interested even in non-showing windows
+
+import java.awt.AWTEvent;
+import java.awt.Dialog;
+import java.awt.Frame;
+import java.awt.Tookit;
+
+import java.awt.event.AWTEventListener;
+import java.awt.event.WindowEvent;
+
+import java.util.HashMap;
+import java.util.HashSet;
+
+windowMap = null;
+
+public class WindowCollector implements AWTEventListener {
+	public void eventDispatched(AWTEvent event) {
+		source = event.getSource();
+		if ((source instanceof Dialog || source instanceof Frame) && source.getTitle() != null) {
+			if (discardedWindows.contains(source))
+				return;
+			title = source.getTitle();
+			if (event.getID() == WindowEvent.WINDOW_CLOSED) {
+				synchronized (windowMap) {
+					discardedWindows.add(windowMap.get(title));
+					windowMap.remove(title);
+				}
+				return;
+			}
+			if (hidden && source.isVisible()) {
+				source.setVisible(false);
+			}
+			synchronized (windowMap) {
+				if (!windowMap.containsKey(title) || windowMap.get(title) != source) {
+					windowMap.put(title, source);
+					windowMap.notifyAll();
+				}
+			}
+		}
+	}
+}
+
+waitForWindow(title) {
+	if (windowMap == null) {
+		windowMap = new HashMap();
+		global.discardedWindows = new HashSet();
+		Toolkit.getDefaultToolkit().addAWTEventListener(new WindowCollector(), -1);
+	}
+	synchronized (windowMap) {
+		for (;;) {
+			if (windowMap.containsKey(title))
+				return windowMap.get(title);
+			windowMap.wait();
+		}
+	}
+}
 
 import java.awt.Window;
 
@@ -249,6 +309,29 @@ clickButton(container, title) {
 		listener.actionPerformed(event);
 }
 
+import ij.IJ;
+
+startUpdater() {
+	// The window is called ImageJA when being created
+	waitForWindow("ImageJA");
+	if (hidden)
+		Updater.hidden = true;
+	new Thread() {
+		public void run() {
+			IJ.run("Update Fiji");
+		}
+	}.start();
+	print("Waiting for the updater");
+	global.updaterFrame = waitForWindow("Fiji Updater");
+	for (;;) {
+		if (updaterFrame.getContentPane().getWidth() > 0) // was pack() called yet?
+			break;
+		Thread.sleep(100);
+	}
+	setAccessibility(true);
+	global.plugins = updaterFrame.plugins;
+}
+
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
@@ -268,21 +351,35 @@ waitUntilClosed(window) {
 	print(window.getTitle() + " was closed");
 }
 
-import fiji.Main;
+import javax.swing.JOptionPane;
+
+getOptionPane(container) {
+	for (Component child : container.getComponents())
+		if (child instanceof JOptionPane)
+			return child;
+		else if (child instanceof Container) {
+			pane = getOptionPane(child);
+			if (pane != null)
+				return pane;
+		}
+	return null;
+}
 
 waitForMessageBox(title, message) {
 	print("Waiting for the " + title + " '" + message + "'");
-	window = Main.waitForWindow(title);
-	components = window.getComponents();
-	if (components.length == 1 && components[0].getClass().getName().endsWith("JRootPane"))
-		components = components[0].getComponents();
-	pane = window.getComponents()[0].getComponents()[1].getComponents()[0].getComponents()[0];
+	window = waitForWindow(title);
+	for (;;) {
+		pane = getOptionPane(window);
+		if (pane != null)
+			break;
+		Thread.sleep(50);
+	}
 	if (pane.getMessage().equals(message)) {
 		window.dispose();
 		print("Okay");
 	}
 	else
-		print("Not okay");
+		print("Not okay (" + title + "): " + pane.getMessage());
 }
 
 waitForInformation(message) {
@@ -350,6 +447,7 @@ startDownload() {
 /// THE DEVELOPER/USER IMPERSONATIONS
 
 initialUpload() {
+	startUpdater();
 	requireUpToDate();
 	advancedMode();
 	assert("5 plugins", plugins.size() == 5);
@@ -359,6 +457,7 @@ initialUpload() {
 }
 
 initialUserCheck() {
+	startUpdater();
 	requireUpToDate();
 	advancedMode();
 	assert("5 plugins", plugins.size() == 5);
@@ -376,6 +475,7 @@ prepareSome() {
 }
 
 uploadSome() {
+	startUpdater();
 	requireUpToDate();
 	advancedMode();
 	assert("7 plugins", plugins.size() == 7);
@@ -385,6 +485,7 @@ uploadSome() {
 }
 
 downloadSome() {
+	startUpdater();
 	requireModified();
 	advancedMode();
 	viewMode("all plugins");

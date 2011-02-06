@@ -1,6 +1,9 @@
 #!/bin/sh
 /*/. 2>/dev/null; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
 
+if (bsh.args.length > 0 && bsh.args[0].equals("--no-hidden"))
+	hidden = false;
+
 thisDir = new File(this.interpreter.getSourceFileInfo()).getParentFile();
 libDir = new File(thisDir, "updater");
 source(new File(libDir, "lib.bsh").getAbsolutePath());
