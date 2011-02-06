@@ -53,6 +53,8 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 
 import javax.swing.JLabel;
+import javax.swing.border.EmptyBorder;
+
 import ij.measure.Calibration;
 
 import Skeletonize3D_.Skeletonize3D_;
@@ -118,7 +120,7 @@ public class NeuriteTracerResultsDialog
 	SimpleNeuriteTracer plugin;
 
 	JPanel statusPanel;
-	JTextArea statusText;
+	JLabel statusText;
 	JButton keepSegment, junkSegment;
 	JButton cancelSearch;
 
@@ -184,6 +186,10 @@ public class NeuriteTracerResultsDialog
 	}
 
 	// ------------------------------------------------------------------------
+
+	public void updateStatusText(String newStatus) {
+		statusText.setText("<html><strong>"+newStatus+"</strong></html>");
+	}
 
 	public static final boolean onlySameSizedImages = false;
 
@@ -420,7 +426,6 @@ public class NeuriteTracerResultsDialog
 
 		exportCSVMenuItem.setEnabled(false);
 		exportCSVMenuItemAgain.setEnabled(false);
-		showCorrespondencesToButton.setEnabled(false);
 		analyzeSkeletonMenuItem.setEnabled(false);
 		saveMenuItem.setEnabled(false);
 		loadMenuItem.setEnabled(false);
@@ -440,7 +445,7 @@ public class NeuriteTracerResultsDialog
 		switch( newState ) {
 
 		case WAITING_TO_START_PATH:
-			statusText.setText("Click somewhere to start a new path...");
+			updateStatusText("Click somewhere to start a new path...");
 			disableEverything();
 			pw.setButtonsEnabled(true);
 			// Fake a selection change in the path tree:
@@ -465,7 +470,6 @@ public class NeuriteTracerResultsDialog
 			loadMenuItem.setEnabled(true);
 			exportCSVMenuItem.setEnabled(true);
 			exportCSVMenuItemAgain.setEnabled(true);
-			showCorrespondencesToButton.setEnabled(true);
 			analyzeSkeletonMenuItem.setEnabled(true);
 			if( uploadButton != null ) {
 				uploadButton.setEnabled(true);
@@ -477,7 +481,7 @@ public class NeuriteTracerResultsDialog
 			break;
 
 		case PARTIAL_PATH:
-			statusText.setText("Now select a point further along that structure...");
+			updateStatusText("Now select a point further along that structure...");
 			disableEverything();
 
 			cancelSearch.setVisible(false);
@@ -502,7 +506,7 @@ public class NeuriteTracerResultsDialog
 			break;
 
 		case SEARCHING:
-			statusText.setText("Searching for path between points...");
+			updateStatusText("Searching for path between points...");
 			disableEverything();
 
 			cancelSearch.setLabel("Abandon search");
@@ -519,7 +523,7 @@ public class NeuriteTracerResultsDialog
 			break;
 
 		case QUERY_KEEP:
-			statusText.setText("Keep this new path segment?");
+			updateStatusText("Keep this new path segment?");
 			disableEverything();
 
 			keepSegment.setEnabled(true);
@@ -532,7 +536,7 @@ public class NeuriteTracerResultsDialog
 			break;
 
 		case FILLING_PATHS:
-			statusText.setText("Filling out from neuron...");
+			updateStatusText("Filling out from neuron...");
 			disableEverything();
 
 			fw.setEnabledWhileFilling();
@@ -540,7 +544,7 @@ public class NeuriteTracerResultsDialog
 			break;
 
 		case CALCULATING_GAUSSIAN:
-			statusText.setText("Calculating Gaussian...");
+			updateStatusText("Calculating Gaussian...");
 			disableEverything();
 
 			cancelSearch.setLabel("Cancel");
@@ -552,22 +556,22 @@ public class NeuriteTracerResultsDialog
 			break;
 
 		case WAITING_FOR_SIGMA_POINT:
-			statusText.setText("Click on a neuron in the image");
+			updateStatusText("Click on a neuron in the image");
 			disableEverything();
 			break;
 
 		case WAITING_FOR_SIGMA_CHOICE:
-			statusText.setText("Close the sigma palette window to continue");
+			updateStatusText("Close the sigma palette window to continue");
 			disableEverything();
 			break;
 
 		case LOADING:
-			statusText.setText("Loading...");
+			updateStatusText("Loading...");
 			disableEverything();
 			break;
 
 		case SAVING:
-			statusText.setText("Saving...");
+			updateStatusText("Saving...");
 			disableEverything();
 			break;
 
@@ -602,7 +606,7 @@ public class NeuriteTracerResultsDialog
 	public void windowDeiconified( WindowEvent e ) { }
 
 	public void updateSearchingStatistics( int pointsInOpenBoundary ) {
-		statusText.setText( SEARCHING_STRING + " ("+pointsInOpenBoundary+" boundary points.)" );
+		updateStatusText( SEARCHING_STRING + " ("+pointsInOpenBoundary+" boundary points.)" );
 	}
 
 	private PathAndFillManager pathAndFillManager;
@@ -682,7 +686,9 @@ public class NeuriteTracerResultsDialog
 			statusPanel = new JPanel();
 			statusPanel.setLayout(new BorderLayout());
 			statusPanel.add(new JLabel("Instructions:"), BorderLayout.NORTH);
-			statusText = new JTextArea("Initial status text...",2,25);
+			statusText = new JLabel("");
+			updateStatusText("Initial status text");
+			statusText.setBorder( new EmptyBorder( 5, 5, 5, 5 ) );
 			statusPanel.add(statusText,BorderLayout.CENTER);
 
 			keepSegment = new JButton("Yes");
@@ -696,6 +702,7 @@ public class NeuriteTracerResultsDialog
 			JPanel statusChoicesPanel = new JPanel();
 			statusChoicesPanel.setLayout( new GridBagLayout() );
 			GridBagConstraints cs = new GridBagConstraints();
+			cs.weightx = 1;
 			cs.gridx = 0; cs.gridy = 0; cs.anchor = GridBagConstraints.LINE_START;
 			statusChoicesPanel.add(keepSegment,cs);
 			cs.gridx = 1; cs.gridy = 0; cs.anchor = GridBagConstraints.LINE_START;
@@ -707,9 +714,11 @@ public class NeuriteTracerResultsDialog
 
 			c.gridx = 0;
 			c.gridy = 0;
+			c.weightx = 1;
 			getContentPane().add(statusPanel,c);
 		}
 
+		c.weightx = 0;
 		c.insets = new Insets( 4, 10, 10, 10 );
 
 		{ /* Add the panel of actions to take on half-constructed paths */
@@ -881,49 +890,6 @@ public class NeuriteTracerResultsDialog
 			c.fill = GridBagConstraints.HORIZONTAL;
 			getContentPane().add( hideWindowsPanel, c );
 		}
-
-		{ /* The panel with options for saving, loading, network storage, etc. */
-
-			JPanel traceFileOptionsPanel = new JPanel();
-
-			traceFileOptionsPanel.setLayout(new GridBagLayout());
-
-			GridBagConstraints ct = new GridBagConstraints();
-
-			ct.gridy = 0;
-
-			if( false ) {
-
-				uploadButton = new JButton("Upload Traces");
-				uploadButton.addActionListener( this );
-				fetchButton = new JButton("Fetch Traces");
-				fetchButton.addActionListener( this );
-				ct.gridx = 0;
-				traceFileOptionsPanel.add( uploadButton, ct );
-				ct.gridx = 1;
-				traceFileOptionsPanel.add( fetchButton, ct );
-
-				++ ct.gridy;
-
-			}
-
-			c.gridx = 0;
-			++ c.gridy;
-			c.anchor = GridBagConstraints.CENTER;
-			c.fill = GridBagConstraints.NONE;
-
-			// ++c.gridy;
-			showCorrespondencesToButton = new JButton("Show Correspondences to Traces...");
-			showCorrespondencesToButton.addActionListener( this );
-			// getContentPane().add(showCorrespondencesToButton,c);
-
-			c.gridx = 0;
-			++ c.gridy;
-			getContentPane().add(traceFileOptionsPanel,c);
-
-		}
-
-		/* Just add the quit JButton at the bottom... */
 
 		pack();
 
@@ -1165,10 +1131,10 @@ public class NeuriteTracerResultsDialog
 		} else if( source == cancelSearch ) {
 
 			if( currentState == SEARCHING ) {
-				statusText.setText("Cancelling path search...");
+				updateStatusText("Cancelling path search...");
 				plugin.cancelSearch( false );
 			} else if( currentState == CALCULATING_GAUSSIAN ) {
-				statusText.setText("Cancelling Gaussian generation...");
+				updateStatusText("Cancelling Gaussian generation...");
 				plugin.cancelGaussian();
 			} else {
 				IJ.error("BUG! (wrong state for cancelling...)");
