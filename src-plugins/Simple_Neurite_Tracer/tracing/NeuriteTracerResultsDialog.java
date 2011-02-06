@@ -509,7 +509,7 @@ public class NeuriteTracerResultsDialog
 			updateStatusText("Searching for path between points...");
 			disableEverything();
 
-			cancelSearch.setLabel("Abandon search");
+			cancelSearch.setText("Abandon search");
 			cancelSearch.setEnabled(true);
 			cancelSearch.setVisible(true);
 			keepSegment.setVisible(false);
@@ -547,7 +547,7 @@ public class NeuriteTracerResultsDialog
 			updateStatusText("Calculating Gaussian...");
 			disableEverything();
 
-			cancelSearch.setLabel("Cancel");
+			cancelSearch.setText("Cancel");
 			cancelSearch.setEnabled(true);
 			cancelSearch.setVisible(true);
 			keepSegment.setVisible(true);
@@ -1059,7 +1059,6 @@ public class NeuriteTracerResultsDialog
 
 		} else if( source == showCorrespondencesToButton ) {
 
-
 			// Ask for the traces file to show correspondences to:
 
 			String fileName = null;
@@ -1212,11 +1211,11 @@ public class NeuriteTracerResultsDialog
 
 	public void setPathListVisible(boolean makeVisible) {
 		if( makeVisible ) {
-			showOrHidePathList.setLabel("Hide Path List");
+			showOrHidePathList.setText("Hide Path List");
 			pw.setVisible(true);
 			pw.toFront();
 		} else {
-			showOrHidePathList.setLabel("Show Path List");
+			showOrHidePathList.setText("Show Path List");
 			pw.setVisible(false);
 		}
 	}
@@ -1229,11 +1228,11 @@ public class NeuriteTracerResultsDialog
 
 	public void setFillListVisible(boolean makeVisible) {
 		if( makeVisible ) {
-			showOrHideFillList.setLabel("Hide Fill List");
+			showOrHideFillList.setText("Hide Fill List");
 			fw.setVisible(true);
 			fw.toFront();
 		} else {
-			showOrHideFillList.setLabel("Show Fill List");
+			showOrHideFillList.setText("Show Fill List");
 			fw.setVisible(false);
 		}
 	}
