@@ -58,6 +58,7 @@ import ij.measure.Calibration;
 import Skeletonize3D_.Skeletonize3D_;
 import skeleton_analysis. AnalyzeSkeleton_;
 
+@SuppressWarnings("serial")
 public class NeuriteTracerResultsDialog
 	extends JDialog
 	implements ActionListener, WindowListener, ItemListener, PathAndFillListener, TextListener, SigmaPalette.SigmaPaletteListener, ImageListener {
