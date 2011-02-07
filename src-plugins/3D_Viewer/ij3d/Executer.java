@@ -1159,10 +1159,14 @@ public class Executer {
 	}
 
 	public void record360() {
-		ImagePlus movie = univ.record360();
-		if(movie != null)
-			movie.show();
-		record(RECORD_360);
+		new Thread() {
+			public void run() {
+				ImagePlus movie = univ.record360();
+				if(movie != null)
+					movie.show();
+				record(RECORD_360);
+			}
+		}.start();
 	}
 
 	public void startFreehandRecording() {
