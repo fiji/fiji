@@ -12,6 +12,7 @@ import java.awt.AWTEvent;
 import ij3d.Content;
 import ij3d.DefaultUniverse;
 import ij3d.ImageCanvas3D;
+import ij3d.Image3DUniverse;
 
 import javax.media.j3d.Behavior;
 import javax.media.j3d.WakeupCondition;
@@ -294,14 +295,17 @@ public class InteractiveBehavior extends Behavior {
 			if(c != null && !c.isLocked()) contentTransformer.init(c, e.getX(), e.getY());
 			else viewTransformer.init(e);
 			if(univ.ui.isPointTool()) {
-				if(c != null) {
-					c.showPointList(true);
+				Content sel = c;
+				if(sel == null && ((Image3DUniverse)univ).getContents().size() == 1)
+					sel = (Content)univ.contents().next();
+				if(sel != null) {
+					sel.showPointList(true);
 					e.consume();
 				} if(mask == PICK_POINT_MASK) {
-					picker.addPoint(c, e);
+					picker.addPoint(sel, e);
 					e.consume();
 				} else if(mask == DELETE_POINT_MASK) {
-					picker.deletePoint(c, e);
+					picker.deletePoint(sel, e);
 					e.consume();
 				}
 			}
