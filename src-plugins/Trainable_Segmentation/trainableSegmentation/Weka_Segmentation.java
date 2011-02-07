@@ -17,6 +17,7 @@ import hr.irb.fastRandomForest.FastRandomForest;
 import ij.IJ;
 import ij.plugin.PlugIn;
 
+import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.process.StackConverter;
@@ -44,6 +45,7 @@ import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.List;
 import java.awt.Panel;
 import java.awt.Rectangle;
 import java.awt.TextField;
@@ -555,79 +557,91 @@ public class Weka_Segmentation implements PlugIn
 			settingsButton.addActionListener(listener);
 			wekaButton.addActionListener(listener);
 			
-			// add adjustment listener to the scroll bar
-			sliceSelector.addAdjustmentListener(new AdjustmentListener() 
+			// add especial listener if the training image is a stack
+			if(null != sliceSelector)
 			{
+				// add adjustment listener to the scroll bar
+				sliceSelector.addAdjustmentListener(new AdjustmentListener() 
+				{
 
-				public void adjustmentValueChanged(final AdjustmentEvent e) {
-					exec.submit(new Runnable() {
-						public void run() {							
-							if(e.getSource() == sliceSelector)
-							{
-								IJ.log("moving scroll");
-								drawExamples();
+					public void adjustmentValueChanged(final AdjustmentEvent e) {
+						exec.submit(new Runnable() {
+							public void run() {							
+								if(e.getSource() == sliceSelector)
+								{
+									//IJ.log("moving scroll");
+									displayImage.killRoi();
+									drawExamples();
+									updateExampleLists();
+								}
+
 							}
+						});
 
-						}
-					});
+					}
+				});
 
-				}
-			});
+				// mouse wheel listener to update the rois while scrolling
+				addMouseWheelListener(new MouseWheelListener() {
 
-			// mouse wheel listener to update the rois while scrolling
-			addMouseWheelListener(new MouseWheelListener() {
+					@Override
+					public void mouseWheelMoved(final MouseWheelEvent e) {
 
-				@Override
-				public void mouseWheelMoved(final MouseWheelEvent e) {
-
-					exec.submit(new Runnable() {
-						public void run() 
-						{
-							IJ.log("moving scroll");
-							drawExamples();
-						}
-					});
-
-				}
-			});
-						
-			KeyListener keyListener = new KeyListener() {
-				
-				@Override
-				public void keyTyped(KeyEvent e) {
-					// TODO Auto-generated method stub
-					
-				}
-				
-				@Override
-				public void keyReleased(final KeyEvent e) {
-					exec.submit(new Runnable() {
-						public void run() 
-						{
-							if(e.getKeyCode() == KeyEvent.VK_LEFT ||
-								e.getKeyCode() == KeyEvent.VK_RIGHT ||
-								e.getKeyCode() == KeyEvent.VK_LESS ||
-								e.getKeyCode() == KeyEvent.VK_GREATER ||
-								e.getKeyCode() == KeyEvent.VK_COMMA ||
-								e.getKeyCode() == KeyEvent.VK_PERIOD)
+						exec.submit(new Runnable() {
+							public void run() 
 							{
-								IJ.log("moving scroll");
+								//IJ.log("moving scroll");
+								displayImage.killRoi();
 								drawExamples();
+								updateExampleLists();
 							}
-						}
-					});
-					
-				}
-				
-				@Override
-				public void keyPressed(KeyEvent e) {
-										
-				}
-			};
+						});
+
+					}
+				});
+
+				// key listener to repaint the display image and the traces
+				// when using the keys to scroll the stack
+				KeyListener keyListener = new KeyListener() {
+
+					@Override
+					public void keyTyped(KeyEvent e) {
+						// TODO Auto-generated method stub
+
+					}
+
+					@Override
+					public void keyReleased(final KeyEvent e) {
+						exec.submit(new Runnable() {
+							public void run() 
+							{
+								if(e.getKeyCode() == KeyEvent.VK_LEFT ||
+										e.getKeyCode() == KeyEvent.VK_RIGHT ||
+										e.getKeyCode() == KeyEvent.VK_LESS ||
+										e.getKeyCode() == KeyEvent.VK_GREATER ||
+										e.getKeyCode() == KeyEvent.VK_COMMA ||
+										e.getKeyCode() == KeyEvent.VK_PERIOD)
+								{
+									//IJ.log("moving scroll");
+									displayImage.killRoi();
+									updateExampleLists();
+									drawExamples();
+								}
+							}
+						});
+
+					}
+
+					@Override
+					public void keyPressed(KeyEvent e) {
+
+					}
+				};
+				// add key listener to the window and the canvas
+				addKeyListener(keyListener);
+				canvas.addKeyListener(keyListener);
 			
-			addKeyListener(keyListener);
-			canvas.addKeyListener(keyListener);
-			
+			}
 			
 			// Training panel (left side of the GUI)
 			trainingJPanel.setBorder(BorderFactory.createTitledBorder("Training"));
@@ -726,7 +740,8 @@ public class Weka_Segmentation implements PlugIn
 			allConstraints.gridy++;
 			allConstraints.weightx = 1;
 			allConstraints.weighty = 1;
-			all.add(this.sliceSelector, allConstraints);
+			if(null != sliceSelector)
+				all.add(sliceSelector, allConstraints);
 			allConstraints.gridy--;
 
 			allConstraints.gridx++;
@@ -888,7 +903,10 @@ public class Weka_Segmentation implements PlugIn
 
 		//trainingImage.setProcessor("Advanced Weka Segmentation", trainingImage.getProcessor().duplicate().convertToByte(true));
 		//wekaSegmentation.loadNewImage(trainingImage);
-		(new StackConverter(trainingImage)).convertToGray8();
+		if(trainingImage.getImageStackSize() > 1)
+			(new StackConverter(trainingImage)).convertToGray8();
+		else
+			(new ImageConverter(trainingImage)).convertToGray8();
 		wekaSegmentation.setTrainingImage(trainingImage);
 		
 		// The display image is a copy of the training image (single image or stack)
@@ -984,25 +1002,27 @@ public class Weka_Segmentation implements PlugIn
 
 	/**
 	 * Add examples defined by the user to the corresponding list
-	 * @param i list index
+	 * in the GUI and the example list in the segmentation object.
+	 * 
+	 * @param i GUI list index
 	 */
 	private void addExamples(int i)
 	{
 		//get selected pixels
 		final Roi r = displayImage.getRoi();
-		if (null == r){
+		if (null == r)
 			return;
-		}
 
-		IJ.log("Adding trace");
+		// IJ.log("Adding trace to list " + i);
 		
 		final int n = displayImage.getCurrentSlice();
 try{		
 		displayImage.killRoi();
 		wekaSegmentation.addExample(i, r, n);
-		exampleList[i].add("trace " + traceCounter[i]);
+	//	exampleList[i].add("trace " + traceCounter[i]);
 		traceCounter[i]++;
 		drawExamples();
+		updateExampleLists();
 }catch(Exception ex)
 {
 	IJ.log("error when adding trace!");
@@ -1017,9 +1037,6 @@ try{
 	{
 		final int currentSlice = this.displayImage.getCurrentSlice();
 
-		IJ.log("num of classes = " + wekaSegmentation.getNumOfClasses());
-		
-		
 		for(int i = 0; i < wekaSegmentation.getNumOfClasses(); i++)
 		{
 			roiOverlay[i].setColor(colors[i]);
@@ -1027,14 +1044,28 @@ try{
 			for (Roi r : wekaSegmentation.getExamples(i, currentSlice))
 			{
 				rois.add(r);
-				IJ.log("painted ROI: " + r + " in color "+ colors[i] + ", slice = " + currentSlice);
+				//IJ.log("painted ROI: " + r + " in color "+ colors[i] + ", slice = " + currentSlice);
 			}
 			roiOverlay[i].setRoi(rois);
 		}
 		
 		displayImage.updateAndDraw();
 	}
+	/**
+	 * Update the example lists in the GUI
+	 */
+	private void updateExampleLists()
+	{
+		final int currentSlice = this.displayImage.getCurrentSlice();
 
+		for(int i = 0; i < wekaSegmentation.getNumOfClasses(); i++)
+		{
+			exampleList[i].removeAll();
+			for(int j=0; j<wekaSegmentation.getExamples(i, currentSlice).size(); j++)
+				exampleList[i].add("trace " + j + " (Z=" + currentSlice+")");
+		}
+		
+	}
 	/**
 	 * Toggle between overlay and original image with markings
 	 */
@@ -1068,6 +1099,8 @@ try{
 	 */
 	void listSelected(final ItemEvent e, final int i)
 	{
+		// find the right slice of the corresponding ROI
+		
 		drawExamples();
 		displayImage.setColor(Color.YELLOW);
 
@@ -1076,8 +1109,8 @@ try{
 			if (j == i)
 			{
 				final Roi newRoi = 
-					wekaSegmentation.getExamples(i, 
-							this.trainingImage.getCurrentSlice()).get(exampleList[i].getSelectedIndex());
+					wekaSegmentation.getExamples(i, displayImage.getCurrentSlice())
+							.get(exampleList[i].getSelectedIndex());
 				// Set selected trace as current ROI
 				newRoi.setImage(displayImage);
 				displayImage.setRoi(newRoi);
@@ -1094,8 +1127,9 @@ try{
 	 *
 	 * @param e action event
 	 */
-	void deleteSelected(final ActionEvent e){
-
+	void deleteSelected(final ActionEvent e)
+	{
+try{
 		for(int i = 0; i < wekaSegmentation.getNumOfClasses(); i++)
 			if (e.getSource() == exampleList[i])
 			{
@@ -1104,23 +1138,31 @@ try{
 
 				// kill Roi from displayed image
 				if(displayImage.getRoi().equals( 
-						wekaSegmentation.getExamples(i, trainingImage.getCurrentSlice()).get(index) ))
+						wekaSegmentation.getExamples(i, displayImage.getCurrentSlice()).get(index) ))
 					displayImage.killRoi();
 
-
-				wekaSegmentation.getExamples(i, trainingImage.getCurrentSlice()).remove(index);
-				//delete item from list
+				// delete item from the list of ROIs of that class and slice
+				wekaSegmentation.getExamples(i, displayImage.getCurrentSlice()).remove(index);
+				//delete item from GUI list
 				exampleList[i].remove(index);
 			}
 
 		drawExamples();
+		updateExampleLists();
+}catch(Exception ex)
+{
+	ex.printStackTrace();
+	IJ.log("Error while deleting trace!");
+}
 	}
 
 	/**
 	 * Display the whole image after classification
 	 */
-	void showClassificationImage(){
-		ImagePlus resultImage = new ImagePlus("classification result", classifiedImage.getProcessor().convertToByte(true).duplicate());
+	void showClassificationImage()
+	{
+		ImagePlus resultImage = new ImagePlus("classification result", 
+				classifiedImage.getProcessor().convertToByte(true).duplicate());
 		resultImage.show();
 	}
 
