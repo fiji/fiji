@@ -44,6 +44,40 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	/*
 	 * METHODS
 	 */
+
+	/**
+	 * Remove the given spot from the given frame only.
+	 * <p>
+	 * If the given frame is <code>null</code>, or this collection does not have spots for the given frame,
+	 * or the spot list for the given frame does not contain the spot, nothing is done and false
+	 * is returned.
+	 */
+	public boolean remove(Spot spot, Integer frame) {
+		if (null == frame)
+			return false;
+		List<Spot> spots = content.get(frame);
+		if (null == spots)
+			return false;
+		return spots.remove(spot);		
+	}
+
+
+	
+	/**
+	 * Add the given spot to this collection, at the given frame. If the frame collection does not exist yet,
+	 * it is created. If <code>null</code> is passed for the frame, nothing is done and false is returned. 
+	 * @return true if adding was succesful.
+	 */
+	public boolean add(Spot spot, Integer frame) {
+		if (null == frame)
+			return false;
+		List<Spot> spots = content.get(frame);
+		if (null == spots) {
+			spots = new ArrayList<Spot>(1);
+			content.put(frame, spots);
+		}
+		return spots.add(spot);
+	}
 	
 	/**
 	 * Return a subset of this collection, containing only the spots with the 
@@ -95,7 +129,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	 * Return a subset of this collection, containing only the spots with the 
 	 * feature satisfying all the thresholds given. 
 	 */
-	public final SpotCollection threshold(Collection<FeatureThreshold> thresholds) {
+	public final SpotCollection threshold(final Collection<FeatureThreshold> thresholds) {
 		SpotCollection selectedSpots = new SpotCollection();
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
@@ -336,6 +370,5 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	public Set<java.util.Map.Entry<Integer, List<Spot>>> entrySet() {
 		return content.entrySet();
 	}
-
 
 }

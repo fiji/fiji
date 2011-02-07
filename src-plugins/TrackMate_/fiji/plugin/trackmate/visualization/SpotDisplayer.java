@@ -8,11 +8,12 @@ import ij3d.Image3DUniverse;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.alg.ConnectivityInspector;
@@ -166,7 +167,7 @@ public abstract class SpotDisplayer {
 	/** The list of listener to warn for spot selection change. */
 	protected ArrayList<SpotSelectionListener> spotSelectionListeners = new ArrayList<SpotSelectionListener>();
 	/** The spots currently selected in this displayer. Can be empty, but no t null. */
-	protected Set<Spot> spotSelection = new HashSet<Spot>();
+	protected SpotCollection spotSelection = new SpotCollection();
 	
 
 	/*
@@ -321,8 +322,13 @@ public abstract class SpotDisplayer {
 	/**
 	 * Highlight visually the spot given in argument. Do nothing if the given spot is not in {@link #spotsToShow}.
 	 */
-	public abstract void highlightSpots(final Set<Spot> spots);
+	public abstract void highlightSpots(final SpotCollection spots);
 
+	/**
+	 * Highlight visually the spot given in argument. Do nothing if the given spot is not in {@link #spotsToShow}.
+	 */
+	public abstract void highlightSpots(final Collection<Spot> spots);
+	
 	/**
 	 * Highlight visually the edges given in argument.
 	 */
@@ -344,22 +350,23 @@ public abstract class SpotDisplayer {
 			listener.valueChanged(event);
 	}
 	
-	protected void spotSelectionChanged(Spot target, int flag) {
+	protected void spotSelectionChanged(Spot target, int frame, int flag) {
 		Spot[] spotArray;
 		boolean[] areNew;
 
 		if (flag == MODIFY_SELECTION_FLAG) {
 			
-			if (!spotSelection.contains(target)) {
-				// Add target to current selection, if it's not already in
+			Integer selectionFrame = spotSelection.getFrame(target); 
+			if (null == selectionFrame) {
+				// Not in the selection, add target to current selection
 				spotArray = new Spot[] { target };
 				areNew = new boolean[] { true };
-				spotSelection.add(target);
+				spotSelection.add(target, frame);
 				fireSpotSelectionChange(spotArray, areNew);
 
 			} else  {
 				// Remove target from selection if it was in
-				if (!spotSelection.remove(target)) 
+				if (!spotSelection.remove(target, selectionFrame)) 
 					return;
 				spotArray = new Spot[] { target };
 				areNew = new boolean[] { false };
@@ -368,15 +375,16 @@ public abstract class SpotDisplayer {
 
 		} else if (flag == REPLACE_SELECTION_FLAG) {
 			// Forget previous selection, and set selection to be target
-			if (spotSelection.remove(target)) {
+			Integer selectionFrame = spotSelection.getFrame(target); 
+			if (spotSelection.remove(target, selectionFrame)) {
 				// Target was in selection, so we just have to remove all other
-				spotArray = spotSelection.toArray(new Spot[0]);
-				areNew = new boolean[spotSelection.size()];
+				spotArray = spotSelection.getAllSpots().toArray(new Spot[0]);
+				areNew = new boolean[spotArray.length];
 				Arrays.fill(areNew, false);
 			} else {
 				// Target is not in selection, so we remove others and add it
-				spotArray = new Spot[spotSelection.size()+1];
-				areNew = new boolean[spotSelection.size()+1];
+				spotArray = new Spot[spotSelection.getNSpots()+1];
+				areNew = new boolean[spotSelection.getNSpots()+1];
 				spotArray[0] = target;
 				areNew[0] = true;
 				int index = 1;
@@ -387,7 +395,7 @@ public abstract class SpotDisplayer {
 				}
 			}
 			spotSelection.clear();
-			spotSelection.add(target);
+			spotSelection.add(target, frame);
 			fireSpotSelectionChange(spotArray, areNew);
 
 		} 
