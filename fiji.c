@@ -1336,6 +1336,33 @@ static int mkdir_p(const char *path)
 	return result;
 }
 
+static void detect_library_path(struct string *library_path, struct string *directory)
+{
+	int original_length = directory->length;
+	char found = 0;
+	DIR *dir = opendir(directory->buffer);
+	struct dirent *entry;
+
+	if (!dir)
+		return;
+
+	while ((entry = readdir(dir))) {
+		if (entry->d_name[0] == '.')
+			continue;
+		string_addf(directory, "/%s", entry->d_name);
+		if (dir_exists(directory->buffer))
+			detect_library_path(library_path, directory);
+		else if (!found && is_native_library(directory->buffer)) {
+			string_set_length(directory, original_length);
+			string_append_path_list(library_path, directory->buffer);
+			found = 1;
+			continue;
+		}
+		string_set_length(directory, original_length);
+	}
+	closedir(dir);
+}
+
 static void add_java_home_to_path(void)
 {
 	const char *java_home = get_java_home();
@@ -2011,6 +2038,7 @@ static int start_ij(void)
 	struct string *arg = string_init(32);
 	struct string *plugin_path = string_init(32);
 	struct string *java_library_path = string_init(32);
+	struct string *library_base_path;
 	int dashdash = 0;
 	int allow_multiple = 0, skip_build_classpath = 0;
 	int jdb = 0, add_class_path_option = 0, advanced_gc = 1, debug_gc = 0;
@@ -2035,6 +2063,10 @@ static int start_ij(void)
 		string_append_path_list(java_library_path, buffer->buffer);
 		string_release(buffer);
 	}
+
+	library_base_path = string_copy(fiji_path("lib"));
+	detect_library_path(library_base_path, library_base_path);
+	string_release(library_base_path);
 
 #ifdef WIN32
 	if (java_library_path->length) {
