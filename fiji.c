@@ -41,6 +41,20 @@ static void set_path_to_JVM(void);
 static int get_fiji_bundle_variable(const char *key, struct string *value);
 #endif
 
+static const char *get_platform(void)
+{
+#ifdef MACOSX
+	return "macosx";
+#endif
+#ifdef WIN32
+	return sizeof(void *) < 8 ? "win32" : "win64";
+#endif
+#ifdef __linux__
+	return sizeof(void *) < 8 ? "linux32" : "linux64";
+#endif
+	return NULL;
+}
+
 #ifdef WIN32
 #include <io.h>
 #include <process.h>
@@ -1996,6 +2010,7 @@ static int start_ij(void)
 	struct string *default_arguments = string_init(32);
 	struct string *arg = string_init(32);
 	struct string *plugin_path = string_init(32);
+	struct string *java_library_path = string_init(32);
 	int dashdash = 0;
 	int allow_multiple = 0, skip_build_classpath = 0;
 	int jdb = 0, add_class_path_option = 0, advanced_gc = 1, debug_gc = 0;
@@ -2014,6 +2029,21 @@ static int start_ij(void)
 			file_is_newer(fiji_path("fiji.c"), fiji_path("fiji" EXE_EXTENSION)) &&
 			!is_building("fiji"))
 		error("Warning: your Fiji executable is not up-to-date");
+
+	if (get_platform() != NULL) {
+		struct string *buffer = string_initf("%s/%s", fiji_path("lib"), get_platform());
+		string_append_path_list(java_library_path, buffer->buffer);
+		string_release(buffer);
+	}
+
+#ifdef WIN32
+	if (java_library_path->length) {
+		struct string *new_path = string_initf("%s%s%s",
+			getenv("PATH"), PATH_SEP, java_library_path->buffer);
+		setenv("PATH", new_path->buffer, 1);
+		string_release(new_path);
+	}
+#endif
 
 	memset(&options, 0, sizeof(options));
 
@@ -2434,6 +2464,7 @@ static int start_ij(void)
 		"fiji.dir", fiji_dir,
 		"fiji.defaultLibPath", JAVA_LIB_PATH,
 		"fiji.executable", main_argv0,
+		"java.library.path", java_library_path->buffer,
 		NULL
 	};
 
