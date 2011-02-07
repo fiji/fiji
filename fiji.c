@@ -206,16 +206,30 @@ static void string_append(struct string *string, const char *append)
 	string->length += len;
 }
 
+static int path_list_contains(const char *list, const char *path)
+{
+	size_t len = strlen(path);
+	const char *p = list;
+	while (p && *p) {
+		if (!strncmp(p, path, len) &&
+				(p[len] == PATH_SEP[0] || !p[len]))
+			return 1;
+		p = strchr(p, PATH_SEP[0]);
+		if (!p)
+			break;
+		p++;
+	}
+	return 0;
+}
+
 static void string_append_path_list(struct string *string, const char *append)
 {
-	int len = strlen(append);
+	if (path_list_contains(string->buffer, append))
+		return;
 
 	if (string->length)
 		string_append(string, PATH_SEP);
-
-	string_ensure_alloc(string, string->length + len + 1);
-	memcpy(string->buffer + string->length, append, len + 1);
-	string->length += len;
+	string_append(string, append);
 }
 
 static void string_append_at_most(struct string *string, const char *append, int length)
@@ -987,23 +1001,6 @@ static struct string *get_parent_directory(const char *path)
 	if (!slash || slash == path)
 		return string_initf("/");
 	return string_initf("%.*s", (int)(slash - path), path);
-}
-
-__attribute__((unused))
-static int path_list_contains(const char *list, const char *path)
-{
-	size_t len = strlen(path);
-	const char *p = list;
-	while (p && *p) {
-		if (!strncmp(p, path, len) &&
-				(p[len] == PATH_SEP[0] || !p[len]))
-			return 1;
-		p = strchr(p, PATH_SEP[0]);
-		if (!p)
-			break;
-		p++;
-	}
-	return 0;
 }
 
 /*
