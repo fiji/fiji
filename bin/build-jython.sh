@@ -15,7 +15,7 @@ then
 	fi
 fi
 
-../fiji --ant -Dpython.lib="$PYTHON_LIB" -f jython/build.xml jar-complete copy-lib >&2 ||
+../../fiji --ant -Dpython.lib="$PYTHON_LIB" -f jython/build.xml jar-complete copy-lib >&2 ||
 die "Could not run ant"
 
 cd jython/dist &&

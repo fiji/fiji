@@ -246,40 +246,40 @@ jars/jython.jar[] <-
 jars/batik.jar[] <-
 
 # From submodules
-jars/ij.jar <- jars/javac.jar ImageJA/
+jars/ij.jar <- jars/javac.jar modules/ImageJA/
 CLASSPATH(misc/headless.jar)=jars/ij.jar
-misc/headless.jar <- jars/javac.jar ImageJA/
+misc/headless.jar <- jars/javac.jar modules/ImageJA/
 CLASSPATH(plugins/mpicbg_.jar)=jars/ij.jar:jars/mpicbg.jar
-plugins/mpicbg_.jar <- mpicbg/
+plugins/mpicbg_.jar <- modules/mpicbg/
 CLASSPATH(jars/mpicbg.jar)=jars/ij.jar:jars/Jama-1.0.2.jar
-jars/mpicbg.jar <- mpicbg/
+jars/mpicbg.jar <- modules/mpicbg/
 CLASSPATH(jars/imglib.jar)=jars/mpicbg.jar
-jars/imglib.jar <- imglib/
+jars/imglib.jar <- modules/imglib/
 CLASSPATH(jars/imglib-ij.jar)=jars/ij.jar:jars/imglib.jar:jars/mpicbg.jar
-jars/imglib-ij.jar <- imglib/
+jars/imglib-ij.jar <- modules/imglib/
 CLASSPATH(jars/imglib-io.jar)=plugins/loci_tools.jar:jars/imglib.jar:jars/imglib-ij.jar
-jars/imglib-io.jar <- imglib/
+jars/imglib-io.jar <- modules/imglib/
 CLASSPATH(jars/imglib-algorithms.jar)=jars/Jama-1.0.2.jar:jars/imglib.jar:jars/edu_mines_jtk.jar:jars/mpicbg.jar
-jars/imglib-algorithms.jar <- imglib/
+jars/imglib-algorithms.jar <- modules/imglib/
 
-jars/clojure.jar <- fiji clojure/
-plugins/loci_tools.jar <- fiji bio-formats/
+jars/clojure.jar <- fiji modules/clojure/
+plugins/loci_tools.jar <- fiji modules/bio-formats/
 CLASSPATH(jars/VectorString.jar)=jars/ij.jar:jars/Jama-1.0.2.jar:$JAVA3D_JARS
-jars/VectorString.jar <- TrakEM2/
+jars/VectorString.jar <- modules/TrakEM2/
 CLASSPATH(plugins/TrakEM2_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar:jars/VectorString.jar:jars/postgresql-8.2-506.jdbc3.jar:jars/jcommon-1.0.12.jar:jars/jfreechart-1.0.13.jar:jars/edu_mines_jtk.jar:jars/VIB-lib.jar:plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama-1.0.2.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar:plugins/Lasso_and_Blow_Tool.jar:$JAVA3D_JARS
-plugins/TrakEM2_.jar <- TrakEM2/
-plugins/ij-ImageIO_.jar <- ij-plugins/
-jars/jacl.jar <- fiji tcljava/
-jars/batik.jar <- fiji batik/
-jars/junit-4.5.jar <- fiji junit/
-jars/rsyntaxtextarea.jar <- fiji RSyntaxTextArea/
-jars/autocomplete.jar <- fiji AutoComplete/
-jars/weka.jar <- fiji jars/Fiji.jar weka/
-jars/jython.jar <- fiji jython/
-jars/commons-math.jar <- fiji commons-math/
+plugins/TrakEM2_.jar <- modules/TrakEM2/
+plugins/ij-ImageIO_.jar <- modules/ij-plugins/
+jars/jacl.jar <- fiji modules/tcljava/
+jars/batik.jar <- fiji modules/batik/
+jars/junit-4.5.jar <- fiji modules/junit/
+jars/rsyntaxtextarea.jar <- fiji modules/RSyntaxTextArea/
+jars/autocomplete.jar <- fiji modules/AutoComplete/
+jars/weka.jar <- fiji jars/Fiji.jar modules/weka/
+jars/jython.jar <- fiji modules/jython/
+jars/commons-math.jar <- fiji modules/commons-math/
 
 CLASSPATH(jars/imglib-scripting.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-io.jars:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/loci_tools.jar:jars/mpicbg.jar:jars/jfreechart-1.0.13.jar:jars/jcommon-1.0.12.jar:$JAVA3D_JARS
-jars/imglib-scripting.jar <- imglib/
+jars/imglib-scripting.jar <- modules/imglib/
 
 # From source
 libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama-1.0.2.jar \

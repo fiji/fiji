@@ -64,6 +64,8 @@ public class SubFake extends Rule {
 	}
 
 	void action() throws FakeException {
+		checkObsoleteLocation(getLastPrerequisite());
+
 		for (String prereq : prerequisites)
 			action(prereq);
 
@@ -140,5 +142,37 @@ public class SubFake extends Rule {
 				parser.fake.deleteRecursively(buildDir);
 			return;
 		}
+	}
+
+	/*
+	 * During the Madison hackathon in February 2011, the submodules
+	 * were moved from $PROJECT_ROOT/ into $PROJECT_ROOT/modules/
+	 * as suggested by Albert Cardona.
+	 *
+	 * Check that the modules were moved correctly, offering an
+	 * automatic move.
+	 */
+	protected void checkObsoleteLocation(String directory) throws FakeException {
+		if (!directory.startsWith("modules/"))
+			return;
+		File submodule = new File(Util.makePath(parser.cwd, directory));
+		if (submodule.isDirectory() && !Util.isDirEmpty(submodule.getAbsolutePath()))
+			return;
+
+		// check whether there is a directory in the obsolete location
+		File oldSubmodule = new File(Util.makePath(parser.cwd, directory.substring("modules/".length())));
+		if (!oldSubmodule.isDirectory())
+			return;
+
+		if (getVarBool("movesubmodules")) {
+			if (submodule.exists() && !submodule.delete())
+				throw new FakeException("Cannot delete submodule directory " + submodule.getAbsolutePath());
+			submodule.getParentFile().mkdirs();
+			if (!oldSubmodule.renameTo(submodule))
+				throw new FakeException("Cannot move " + oldSubmodule.getAbsolutePath() + " to " + submodule.getAbsolutePath());
+		}
+		else
+			throw new FakeException("Detected submodule in obsolete location: " + submodule.getAbsolutePath()
+				+ "\nTo move submodules automatically, call Fiji Build again with moveSubmodules=true");
 	}
 }
