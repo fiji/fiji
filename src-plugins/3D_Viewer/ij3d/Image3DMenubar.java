@@ -2,6 +2,7 @@ package ij3d;
 
 import ij.ImagePlus;
 
+import javax.swing.*;
 import java.awt.event.*;
 import java.awt.*;
 import java.util.Iterator;
@@ -9,86 +10,86 @@ import java.util.Iterator;
 import javax.media.j3d.View;
 
 
-public class Image3DMenubar extends MenuBar implements ActionListener,
+public class Image3DMenubar extends JMenuBar implements ActionListener,
 					 		ItemListener,
 							UniverseListener {
 
 	private Image3DUniverse univ;
 	private Executer executer;
 
-	private MenuItem addContentFromFile;
-	private MenuItem addContentFromImage;
-	private MenuItem add4DFromFile;
-	private MenuItem add4DFromImage;
-	private MenuItem add4DFromFolder;
-	private MenuItem saveView;
-	private MenuItem loadView;
-	private MenuItem saveSession;
-	private MenuItem loadSession;
-	private MenuItem importObj;
-	private MenuItem importStl;
-	private MenuItem color;
-	private MenuItem bgColor;
-	private MenuItem channels;
-	private MenuItem luts;
-	private MenuItem transparency;
-	private MenuItem threshold;
-	private MenuItem fill;
-	private MenuItem slices;
-	private MenuItem updateVol;
-	private MenuItem delete;
-	private MenuItem properties;
-	private MenuItem resetView;
-	private MenuItem record360;
-	private MenuItem startRecord;
-	private MenuItem stopRecord;
-	private MenuItem startAnimation;
-	private MenuItem stopAnimation;
-	private MenuItem animationOptions;
-	private MenuItem viewPreferences;
-	private MenuItem close;
-	private MenuItem setTransform;
-	private MenuItem resetTransform;
-	private MenuItem applyTransform;
-	private MenuItem saveTransform;
-	private MenuItem exportTransformed;
-	private MenuItem exportObj;
-	private MenuItem exportDXF;
-	private MenuItem exportAsciiSTL;
-	private MenuItem exportBinarySTL;
-	private MenuItem smoothMesh;
-	private MenuItem scalebar;
-	private MenuItem smoothAllMeshes;
-	private MenuItem displayAsVolume;
-	private MenuItem displayAsOrtho;
-	private MenuItem displayAsSurface;
-	private MenuItem displayAsSurfacePlot;
-	private MenuItem centerSelected;
-	private MenuItem centerOrigin;
-	private MenuItem centerUniverse;
-	private CheckboxMenuItem sync;
-	private MenuItem fitViewToUniverse;
-	private MenuItem fitViewToContent;
-	private MenuItem regist;
-	private CheckboxMenuItem shaded;
-	private MenuItem pl_load;
-	private MenuItem pl_save;
-	private MenuItem pl_size;
-	private CheckboxMenuItem pl_show;
-	private MenuItem j3dproperties;
-	private CheckboxMenuItem coordinateSystem;
-	private CheckboxMenuItem boundingBox;
-	private CheckboxMenuItem allCoordinateSystems;
-	private CheckboxMenuItem lock;
-	private CheckboxMenuItem show;
-	private MenuItem viewposXY, viewposXZ, viewposYZ, viewnegXY, viewnegXZ, viewnegYZ;
+	private JMenuItem addContentFromFile;
+	private JMenuItem addContentFromImage;
+	private JMenuItem add4DFromFile;
+	private JMenuItem add4DFromImage;
+	private JMenuItem add4DFromFolder;
+	private JMenuItem saveView;
+	private JMenuItem loadView;
+	private JMenuItem saveSession;
+	private JMenuItem loadSession;
+	private JMenuItem importObj;
+	private JMenuItem importStl;
+	private JMenuItem color;
+	private JMenuItem bgColor;
+	private JMenuItem channels;
+	private JMenuItem luts;
+	private JMenuItem transparency;
+	private JMenuItem threshold;
+	private JMenuItem fill;
+	private JMenuItem slices;
+	private JMenuItem updateVol;
+	private JMenuItem delete;
+	private JMenuItem properties;
+	private JMenuItem resetView;
+	private JMenuItem record360;
+	private JMenuItem startRecord;
+	private JMenuItem stopRecord;
+	private JMenuItem startAnimation;
+	private JMenuItem stopAnimation;
+	private JMenuItem animationOptions;
+	private JMenuItem viewPreferences;
+	private JMenuItem close;
+	private JMenuItem setTransform;
+	private JMenuItem resetTransform;
+	private JMenuItem applyTransform;
+	private JMenuItem saveTransform;
+	private JMenuItem exportTransformed;
+	private JMenuItem exportObj;
+	private JMenuItem exportDXF;
+	private JMenuItem exportAsciiSTL;
+	private JMenuItem exportBinarySTL;
+	private JMenuItem smoothMesh;
+	private JMenuItem scalebar;
+	private JMenuItem smoothAllMeshes;
+	private JMenuItem displayAsVolume;
+	private JMenuItem displayAsOrtho;
+	private JMenuItem displayAsSurface;
+	private JMenuItem displayAsSurfacePlot;
+	private JMenuItem centerSelected;
+	private JMenuItem centerOrigin;
+	private JMenuItem centerUniverse;
+	private JCheckBoxMenuItem sync;
+	private JMenuItem fitViewToUniverse;
+	private JMenuItem fitViewToContent;
+	private JMenuItem regist;
+	private JCheckBoxMenuItem shaded;
+	private JMenuItem pl_load;
+	private JMenuItem pl_save;
+	private JMenuItem pl_size;
+	private JCheckBoxMenuItem pl_show;
+	private JMenuItem j3dproperties;
+	private JCheckBoxMenuItem coordinateSystem;
+	private JCheckBoxMenuItem boundingBox;
+	private JCheckBoxMenuItem allCoordinateSystems;
+	private JCheckBoxMenuItem lock;
+	private JCheckBoxMenuItem show;
+	private JMenuItem viewposXY, viewposXZ, viewposYZ, viewnegXY, viewnegXZ, viewnegYZ;
 
-	private Menu transformMenu;
-	private Menu editMenu;
-	private Menu selectMenu;
-	private Menu viewMenu;
-	private Menu fileMenu;
-	private Menu helpMenu;
+	private JMenu transformMenu;
+	private JMenu editMenu;
+	private JMenu selectMenu;
+	private JMenu viewMenu;
+	private JMenu fileMenu;
+	private JMenu helpMenu;
 
 	public Image3DMenubar(Image3DUniverse univ) {
 		super();
@@ -114,118 +115,117 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 
 		helpMenu = createHelpMenu();
 		this.add(helpMenu);
-		this.setHelpMenu(helpMenu);
 
 		contentSelected(null);
 	}
 
-	public Menu createFileMenu() {
-		Menu file = new Menu("File");
+	public JMenu createFileMenu() {
+		JMenu file = new JMenu("File");
 
-		Menu addContent = new Menu("Add content");
-		addContentFromFile = new MenuItem("from file");
+		JMenu addContent = new JMenu("Add content");
+		addContentFromFile = new JMenuItem("from file");
 		addContentFromFile.addActionListener(this);
 		addContent.add(addContentFromFile);
-		addContentFromImage = new MenuItem("from open image");
+		addContentFromImage = new JMenuItem("from open image");
 		addContentFromImage.addActionListener(this);
 		addContent.add(addContentFromImage);
 		file.add(addContent);
 
-		Menu add4D = new Menu("Add timelapse");
-		add4DFromFile = new MenuItem("from hyperstack file");
+		JMenu add4D = new JMenu("Add timelapse");
+		add4DFromFile = new JMenuItem("from hyperstack file");
 		add4DFromFile.addActionListener(this);
 		add4D.add(add4DFromFile);
-		add4DFromImage = new MenuItem("from open hyperstack");
+		add4DFromImage = new JMenuItem("from open hyperstack");
 		add4DFromImage.addActionListener(this);
 		add4D.add(add4DFromImage);
-		add4DFromFolder = new MenuItem("from folder with stacks");
+		add4DFromFolder = new JMenuItem("from folder with stacks");
 		add4DFromFolder.addActionListener(this);
 		add4D.add(add4DFromFolder);
 		file.add(add4D);
 
 
-		importObj = new MenuItem("Import WaveFront");
+		importObj = new JMenuItem("Import WaveFront");
 		importObj.addActionListener(this);
 		file.add(importObj);
 
-		importStl = new MenuItem("Import STL");
+		importStl = new JMenuItem("Import STL");
 		importStl.addActionListener(this);
 		file.add(importStl);
 
-		delete = new MenuItem("Delete");
+		delete = new JMenuItem("Delete");
 		delete.setEnabled(false);
 		delete.addActionListener(this);
 		file.add(delete);
 
 		file.addSeparator();
 
-		saveView = new MenuItem("Save View");
+		saveView = new JMenuItem("Save View");
 		saveView.addActionListener(this);
 		file.add(saveView);
 
-		loadView = new MenuItem("Load View");
+		loadView = new JMenuItem("Load View");
 		loadView.addActionListener(this);
 		file.add(loadView);
 
 		file.addSeparator();
 
-		saveSession = new MenuItem("Save Session");
+		saveSession = new JMenuItem("Save Session");
 		saveSession.addActionListener(this);
 		file.add(saveSession);
 
-		loadSession = new MenuItem("Load Session");
+		loadSession = new JMenuItem("Load Session");
 		loadSession.addActionListener(this);
 		file.add(loadSession);
 
 		file.addSeparator();
 
-		Menu subMenu = new Menu("Export surfaces as");
+		JMenu subMenu = new JMenu("Export surfaces as");
 		file.add(subMenu);
-		exportObj = new MenuItem("WaveFront");
+		exportObj = new JMenuItem("WaveFront");
 		exportObj.addActionListener(this);
 		subMenu.add(exportObj);
 
-		exportDXF = new MenuItem("DXF");
+		exportDXF = new JMenuItem("DXF");
 		exportDXF.addActionListener(this);
 		subMenu.add(exportDXF);
 
-		exportAsciiSTL = new MenuItem("STL (ASCII)");
+		exportAsciiSTL = new JMenuItem("STL (ASCII)");
 		exportAsciiSTL.addActionListener(this);
 		subMenu.add(exportAsciiSTL);
 
-		exportBinarySTL = new MenuItem("STL (binary)");
+		exportBinarySTL = new JMenuItem("STL (binary)");
 		exportBinarySTL.addActionListener(this);
 		subMenu.add(exportBinarySTL);
 
 		file.addSeparator();
 
-		close = new MenuItem("Quit");
+		close = new JMenuItem("Quit");
 		close.addActionListener(this);
 		file.add(close);
 
 		return file;
 	}
 
-	public Menu createEditMenu() {
-		Menu edit = new Menu("Edit");
+	public JMenu createEditMenu() {
+		JMenu edit = new JMenu("Edit");
 
-		slices = new MenuItem("Adjust slices");
+		slices = new JMenuItem("Adjust slices");
 		slices.addActionListener(this);
 		edit.add(slices);
 
-		updateVol = new MenuItem("Upate Volume");
+		updateVol = new JMenuItem("Upate Volume");
 		updateVol.addActionListener(this);
 		edit.add(updateVol);
 
-		fill = new MenuItem("Fill selection");
+		fill = new JMenuItem("Fill selection");
 		fill.addActionListener(this);
 		edit.add(fill);
 
-		smoothMesh = new MenuItem("Smooth mesh");
+		smoothMesh = new JMenuItem("Smooth mesh");
 		smoothMesh.addActionListener(this);
 		edit.add(smoothMesh);
 
-		smoothAllMeshes = new MenuItem("Smooth all meshes");
+		smoothAllMeshes = new JMenuItem("Smooth all meshes");
 		smoothAllMeshes.addActionListener(this);
 		edit.add(smoothAllMeshes);
 
@@ -238,177 +238,177 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 
 		edit.addSeparator();
 
-		regist = new MenuItem("Register");
+		regist = new JMenuItem("Register");
 		regist.addActionListener(this);
 		edit.add(regist);
 
 		edit.addSeparator();
 
-		properties = new MenuItem("Object Properties");
+		properties = new JMenuItem("Object Properties");
 		properties.addActionListener(this);
 		edit.add(properties);
 
 		return edit;
 	}
 
-	public Menu createSelectMenu() {
-		return new Menu("Select");
+	public JMenu createSelectMenu() {
+		return new JMenu("Select");
 	}
 
-	public Menu createTransformMenu() {
-		Menu transform = new Menu("Transformation");
+	public JMenu createTransformMenu() {
+		JMenu transform = new JMenu("Transformation");
 
-		lock = new CheckboxMenuItem("Lock");
+		lock = new JCheckBoxMenuItem("Lock");
 		lock.addItemListener(this);
 		transform.add(lock);
 
-		setTransform = new MenuItem("Set Transform");
+		setTransform = new JMenuItem("Set Transform");
 		setTransform.addActionListener(this);
 		transform.add(setTransform);
 
-		resetTransform = new MenuItem("Reset Transform");
+		resetTransform = new JMenuItem("Reset Transform");
 		resetTransform.addActionListener(this);
 		transform.add(resetTransform);
 
-		applyTransform = new MenuItem("Apply Transform");
+		applyTransform = new JMenuItem("Apply Transform");
 		applyTransform.addActionListener(this);
 		transform.add(applyTransform);
 
-		saveTransform = new MenuItem("Save Transform");
+		saveTransform = new JMenuItem("Save Transform");
 		saveTransform.addActionListener(this);
 		transform.add(saveTransform);
 
 		transform.addSeparator();
 
-		exportTransformed= new MenuItem("Export transformed image");
+		exportTransformed= new JMenuItem("Export transformed image");
 		exportTransformed.addActionListener(this);
 		transform.add(exportTransformed);
 
 		return transform;
 	}
-	public Menu createViewMenu() {
-		Menu view = new Menu("View");
+	public JMenu createViewMenu() {
+		JMenu view = new JMenu("View");
 
-		resetView = new MenuItem("Reset view");
+		resetView = new JMenuItem("Reset view");
 		resetView.addActionListener(this);
 		view.add(resetView);
 
 		// center submenu
-		Menu menu = new Menu("Center");
-		centerSelected = new MenuItem("Selected content");
+		JMenu menu = new JMenu("Center");
+		centerSelected = new JMenuItem("Selected content");
 		centerSelected.addActionListener(this);
 		menu.add(centerSelected);
 
-		centerOrigin = new MenuItem("Origin");
+		centerOrigin = new JMenuItem("Origin");
 		centerOrigin.addActionListener(this);
 		menu.add(centerOrigin);
 
-		centerUniverse = new MenuItem("Universe");
+		centerUniverse = new JMenuItem("Universe");
 		centerUniverse.addActionListener(this);
 		menu.add(centerUniverse);
 		view.add(menu);
 
 		// fit view submenu
-		menu = new Menu("Fit view to");
-		fitViewToUniverse = new MenuItem("Universe");
+		menu = new JMenu("Fit view to");
+		fitViewToUniverse = new JMenuItem("Universe");
 		fitViewToUniverse.addActionListener(this);
 		menu.add(fitViewToUniverse);
 
-		fitViewToContent = new MenuItem("Selected content");
+		fitViewToContent = new JMenuItem("Selected content");
 		fitViewToContent.addActionListener(this);
 		menu.add(fitViewToContent);
 		view.add(menu);
 
-		menu = new Menu("Set view");
-		viewposXY = new MenuItem("+ XY"); viewposXY.addActionListener(this); menu.add(viewposXY);
-		viewposXZ = new MenuItem("+ XZ"); viewposXZ.addActionListener(this); menu.add(viewposXZ);
-		viewposYZ = new MenuItem("+ YZ"); viewposYZ.addActionListener(this); menu.add(viewposYZ);
-		viewnegXY = new MenuItem("- XY"); viewnegXY.addActionListener(this); menu.add(viewnegXY);
-		viewnegXZ = new MenuItem("- XZ"); viewnegXZ.addActionListener(this); menu.add(viewnegXZ);
-		viewnegYZ = new MenuItem("- YZ"); viewnegYZ.addActionListener(this); menu.add(viewnegYZ);
+		menu = new JMenu("Set view");
+		viewposXY = new JMenuItem("+ XY"); viewposXY.addActionListener(this); menu.add(viewposXY);
+		viewposXZ = new JMenuItem("+ XZ"); viewposXZ.addActionListener(this); menu.add(viewposXZ);
+		viewposYZ = new JMenuItem("+ YZ"); viewposYZ.addActionListener(this); menu.add(viewposYZ);
+		viewnegXY = new JMenuItem("- XY"); viewnegXY.addActionListener(this); menu.add(viewnegXY);
+		viewnegXZ = new JMenuItem("- XZ"); viewnegXZ.addActionListener(this); menu.add(viewnegXZ);
+		viewnegYZ = new JMenuItem("- YZ"); viewnegYZ.addActionListener(this); menu.add(viewnegYZ);
 		view.add(menu);
 
 		view.addSeparator();
 
-		record360 = new MenuItem("Record 360 deg rotation");
+		record360 = new JMenuItem("Record 360 deg rotation");
 		record360.addActionListener(this);
 		view.add(record360);
 
-		startRecord = new MenuItem("Start freehand recording");
+		startRecord = new JMenuItem("Start freehand recording");
 		startRecord.addActionListener(this);
 		view.add(startRecord);
 
-		stopRecord = new MenuItem("Stop freehand recording");
+		stopRecord = new JMenuItem("Stop freehand recording");
 		stopRecord.addActionListener(this);
 		view.add(stopRecord);
 
 		view.addSeparator();
 
-		startAnimation = new MenuItem("Start animation");
+		startAnimation = new JMenuItem("Start animation");
 		startAnimation.addActionListener(this);
 		view.add(startAnimation);
 
-		stopAnimation = new MenuItem("Stop animation");
+		stopAnimation = new JMenuItem("Stop animation");
 		stopAnimation.addActionListener(this);
 		view.add(stopAnimation);
 
-		animationOptions = new MenuItem("Change animation options");
+		animationOptions = new JMenuItem("Change animation options");
 		animationOptions.addActionListener(this);
 		view.add(animationOptions);
 
 		view.addSeparator();
 
-		sync = new CheckboxMenuItem("Sync view");
+		sync = new JCheckBoxMenuItem("Sync view");
 		sync.addItemListener(this);
 		view.add(sync);
 
 		view.addSeparator();
 
-		scalebar = new MenuItem("Edit Scalebar");
+		scalebar = new JMenuItem("Edit Scalebar");
 		scalebar.addActionListener(this);
 		view.add(scalebar);
 
 		view.addSeparator();
 
-		viewPreferences = new MenuItem("View Preferences");
+		viewPreferences = new JMenuItem("View Preferences");
 		viewPreferences.addActionListener(this);
 		view.add(viewPreferences);
 
-		bgColor = new MenuItem("Change background color");
+		bgColor = new JMenuItem("Change background color");
 		bgColor.addActionListener(this);
 		view.add(bgColor);
 
 		return view;
 	}
 
-	public Menu createHelpMenu() {
-		Menu help = new Menu("Help");
-		j3dproperties = new MenuItem("Java 3D Properties");
+	public JMenu createHelpMenu() {
+		JMenu help = new JMenu("Help");
+		j3dproperties = new JMenuItem("Java 3D Properties");
 		j3dproperties.addActionListener(this);
 		help.add(j3dproperties);
 		return help;
 	}
 
 
-	public Menu createPLSubMenu() {
-		Menu pl = new Menu("Point list");
+	public JMenu createPLSubMenu() {
+		JMenu pl = new JMenu("Point list");
 		if(univ == null)
 			return pl;
-		pl_load = new MenuItem("Load Point List");
+		pl_load = new JMenuItem("Load Point List");
 		pl_load.addActionListener(this);
 		pl.add(pl_load);
 
-		pl_save = new MenuItem("Save Point List");
+		pl_save = new JMenuItem("Save Point List");
 		pl_save.addActionListener(this);
 		pl.add(pl_save);
 
-		pl_show = new CheckboxMenuItem("Show Point List");
+		pl_show = new JCheckBoxMenuItem("Show Point List");
 		pl_show.addItemListener(this);
 		pl.add(pl_show);
 
 		pl.addSeparator();
 
-		pl_size = new MenuItem("Point size");
+		pl_size = new JMenuItem("Point size");
 		pl_size.addActionListener(this);
 		pl.add(pl_size);
 
@@ -416,25 +416,25 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 	}
 
 
-	public Menu createHideSubMenu() {
-		Menu hide = new Menu("Hide/Show");
+	public JMenu createHideSubMenu() {
+		JMenu hide = new JMenu("Hide/Show");
 
-		show = new CheckboxMenuItem("Show content");
+		show = new JCheckBoxMenuItem("Show content");
 		show.setState(true);
 		show.addItemListener(this);
 		hide.add(show);
 
-		coordinateSystem = new CheckboxMenuItem(
+		coordinateSystem = new JCheckBoxMenuItem(
 					"Show coordinate system", true);
 		coordinateSystem.addItemListener(this);
 		hide.add(coordinateSystem);
 
-		boundingBox = new CheckboxMenuItem(
+		boundingBox = new JCheckBoxMenuItem(
 					"Show bounding box", false);
 		boundingBox.addItemListener(this);
 		hide.add(boundingBox);
 
-		allCoordinateSystems = new CheckboxMenuItem(
+		allCoordinateSystems = new JCheckBoxMenuItem(
 				"Show all coordinate systems", true);
 		allCoordinateSystems.addItemListener(this);
 		hide.add(allCoordinateSystems);
@@ -442,30 +442,30 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 		return hide;
 	}
 
-	public Menu createAttributesSubMenu() {
-		Menu attributes = new Menu("Attributes");
+	public JMenu createAttributesSubMenu() {
+		JMenu attributes = new JMenu("Attributes");
 
-		luts = new MenuItem("Transfer function");
+		luts = new JMenuItem("Transfer function");
 		luts.addActionListener(this);
 		attributes.add(luts);
 
-		channels = new MenuItem("Change channels");
+		channels = new JMenuItem("Change channels");
 		channels.addActionListener(this);
 		attributes.add(channels);
 
-		color = new MenuItem("Change color");
+		color = new JMenuItem("Change color");
 		color.addActionListener(this);
 		attributes.add(color);
 
-		transparency = new MenuItem("Change transparency");
+		transparency = new JMenuItem("Change transparency");
 		transparency.addActionListener(this);
 		attributes.add(transparency);
 
-		threshold = new MenuItem("Adjust threshold");
+		threshold = new JMenuItem("Adjust threshold");
 		threshold.addActionListener(this);
 		attributes.add(threshold);
 
-		shaded = new CheckboxMenuItem("Shade surface");
+		shaded = new JCheckBoxMenuItem("Shade surface");
 		shaded.setState(true);
 		shaded.addItemListener(this);
 		attributes.add(shaded);
@@ -473,22 +473,22 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 		return attributes;
 	}
 
-	public Menu createDisplayAsSubMenu() {
-		Menu display = new Menu("Display as");
+	public JMenu createDisplayAsSubMenu() {
+		JMenu display = new JMenu("Display as");
 
-		displayAsVolume = new MenuItem("Volume");
+		displayAsVolume = new JMenuItem("Volume");
 		displayAsVolume.addActionListener(this);
 		display.add(displayAsVolume);
 
-		displayAsOrtho = new MenuItem("Orthoslice");
+		displayAsOrtho = new JMenuItem("Orthoslice");
 		displayAsOrtho.addActionListener(this);
 		display.add(displayAsOrtho);
 
-		displayAsSurface = new MenuItem("Surface");
+		displayAsSurface = new JMenuItem("Surface");
 		displayAsSurface.addActionListener(this);
 		display.add(displayAsSurface);
 
-		displayAsSurfacePlot = new MenuItem("Surface Plot 2D");
+		displayAsSurfacePlot = new JMenuItem("Surface Plot 2D");
 		displayAsSurfacePlot.addActionListener(this);
 		display.add(displayAsSurfacePlot);
 
@@ -683,7 +683,7 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 		if(c == null)
 			return;
 		final String name = c.getName();
-		final CheckboxMenuItem item = new CheckboxMenuItem(name);
+		final JCheckBoxMenuItem item = new JCheckBoxMenuItem(name);
 		item.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
 				if(item.getState())
@@ -700,7 +700,7 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 		if(c == null)
 			return;
 		for(int i = 0; i < selectMenu.getItemCount(); i++) {
-			MenuItem item = selectMenu.getItem(i);
+			JMenuItem item = selectMenu.getItem(i);
 			if(item.getLabel().equals(c.getName())) {
 				selectMenu.remove(i);
 				return;
@@ -714,6 +714,14 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 	}
 
 	public void updateMenus() {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				doUpdateMenus();
+			}
+		});
+	}
+
+	private void doUpdateMenus() {
 
 		Content c = getSelected();
 
@@ -753,8 +761,8 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 		// update select menu
 		Content sel = univ.getSelected();
 		for(int i = 0; i < selectMenu.getItemCount(); i++) {
-			MenuItem item = selectMenu.getItem(i);
-			((CheckboxMenuItem)item).setState(sel != null &&
+			JMenuItem item = selectMenu.getItem(i);
+			((JCheckBoxMenuItem)item).setState(sel != null &&
 				sel.getName().equals(item.getLabel()));
 		}
 

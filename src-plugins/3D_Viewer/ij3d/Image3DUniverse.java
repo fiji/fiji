@@ -4,6 +4,8 @@ import ij3d.pointlist.PointListDialog;
 import ij.ImagePlus;
 import ij.IJ;
 
+import javax.swing.JMenuBar;
+
 import java.awt.BorderLayout;
 import java.awt.MenuBar;
 import java.awt.event.*;
@@ -219,16 +221,16 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	 * Set a custom menu bar to the viewer
 	 * @param mb
 	 */
-	public void setMenubar(MenuBar mb) {
+	public void setMenubar(JMenuBar mb) {
 		if(win != null)
-			win.setMenuBar(mb);
+			win.setJMenuBar(mb);
 	}
 
 	/**
 	 * Returns a reference to the menu bar used by this universe.
 	 * @return
 	 */
-	public MenuBar getMenuBar() {
+	public JMenuBar getMenuBar() {
 		return menubar;
 	}
 

@@ -12,7 +12,7 @@ import ij.gui.ImageCanvas;
 import ij.process.ColorProcessor;
 import ij.macro.Interpreter;
 
-import java.awt.Frame;
+import javax.swing.JFrame;
 import java.awt.AWTException;
 import java.awt.Label;
 import java.awt.Color;
@@ -44,11 +44,11 @@ import javax.media.j3d.RenderingErrorListener;
 import javax.media.j3d.Screen3D;
 import javax.vecmath.Color3f;
 
-public class ImageWindow3D extends Frame implements UniverseListener,
+public class ImageWindow3D extends JFrame implements UniverseListener,
 							KeyListener {
-	DefaultUniverse universe;
-	ImageCanvas3D canvas3D;
-	Label status = new Label("");
+	private DefaultUniverse universe;
+	private ImageCanvas3D canvas3D;
+	private Label status = new Label("");
 	private boolean noOffScreen = true;
 	private ErrorListener error_listener;
 	private ImagePlus imp;
@@ -95,9 +95,6 @@ public class ImageWindow3D extends Frame implements UniverseListener,
 		return new ImageCanvas(getImagePlus());
 	}
 
-	/* prevent ImageWindow from painting */
-	public void drawInfo(Graphics g) { }
-	public void paint(Graphics g) { }
 // 	public Insets getInsets() {
 // 		// pretend to have a canvas to avoid a NullPointerException
 // 		// when calling the super method
@@ -279,19 +276,6 @@ public class ImageWindow3D extends Frame implements UniverseListener,
 	public Label getStatusLabel() {
 		return status;
 	}
-
-// 	/**
-// 	 * Override windowActivated() in ij.gui.ImageWindow.
-// 	 * The default implementation sets ImageJ's menubar to this
-// 	 * ImageWindow, however, we have our own menubar here.
-// 	 */
-// 	public void windowActivated(WindowEvent e) {
-// 		ImageJ ij = IJ.getInstance();
-// 		boolean quitting = ij!=null && ij.quitting();
-// 		imp.setActivated(); // notify ImagePlus that image has been activated
-// 		if (!closed && !quitting && !Interpreter.isBatchMode())
-// 			WindowManager.setCurrentWindow(this);
-// 	}
 
 	public void close() {
 		if (null == universe) return;
