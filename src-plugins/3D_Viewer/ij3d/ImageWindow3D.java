@@ -99,12 +99,6 @@ public class ImageWindow3D extends ImageWindow implements UniverseListener,
 		show();
 	}
 
-	public boolean close() {
-		boolean b = super.close();
-		WindowManager.removeWindow(this);
-		return b;
-	}
-
 	public DefaultUniverse getUniverse() {
 		return universe;
 	}
@@ -313,16 +307,15 @@ public class ImageWindow3D extends ImageWindow implements UniverseListener,
 
 	public void windowClosing(WindowEvent e) {
 		super.windowClosing(e);
-		destroy();
+		close();
 	}
 
-	public void destroy() {
-		if (null == universe) return;
-		universe.removeUniverseListener(this);
+	public boolean close() {
+		super.close();
+		WindowManager.removeWindow(this);
 
-		// Destroy executor service:
-		if (universe instanceof Image3DUniverse)
-			((Image3DUniverse)universe).getExecuter().flush();
+		if (null == universe) return true;
+		universe.removeUniverseListener(this);
 
 		// Must remove the listener so this instance can be garbage
 		// collected and removed from the Canvas3D, overcomming the limit
@@ -340,7 +333,7 @@ public class ImageWindow3D extends ImageWindow implements UniverseListener,
 		}
 
 		if (null != universe.getWindow())
-			universe.close();
+			universe.cleanup();
 		ImageJ ij = IJ.getInstance();
 		if (null != ij) {
 			removeKeyListener(ij);
@@ -349,6 +342,7 @@ public class ImageWindow3D extends ImageWindow implements UniverseListener,
 		imp_updater.quit();
 		canvas3D.flush();
 		universe = null;
+		return true;
 	}
 
 	/*

@@ -189,17 +189,18 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	 * Close this universe. Remove all Contents and release all resources.
 	 */
 	@Override
-	public void close() {
+	public void cleanup() {
 		timeline.pause();
 		removeAllContents();
 		contents = null;
 		universes.remove(this);
 		adder.shutdownNow();
+		executer.flush();
 		WindowListener[] ls = plDialog.getWindowListeners();
 		for(WindowListener l : ls)
 			plDialog.removeWindowListener(l);
 		plDialog.dispose();
-		super.close();
+		super.cleanup();
 	}
 
 	/**
@@ -1407,9 +1408,6 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 				IJ.log("Mesh named '" + name + "' exists already");
 				return false;
 			}
-			TreeMap<Integer, ContentInstant> instants =
-				c.getInstants();
-
 			// update start and end time
 			int st = startTime;
 			int e = endTime;
