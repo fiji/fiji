@@ -128,9 +128,9 @@ public abstract class SpotDisplayer {
 	/** The default display radius. */
 	protected static final float DEFAULT_DISPLAY_RADIUS = 5;
 	/** The default color. */
-	protected static final Color DEFAULT_COLOR = new Color(1f, 0, 1f);
+	static final Color DEFAULT_COLOR = new Color(1f, 0, 1f);
 	/** The color used when highlighting spots. */
-	protected static final Color HIGHLIGHT_COLOR = new Color(0, 1f, 0);
+	static final Color HIGHLIGHT_COLOR = new Color(0, 1f, 0);
 	
 	/** Flag to state that object should be added or removed to selection. */
 	protected static final int MODIFY_SELECTION_FLAG  = 0;
@@ -167,7 +167,7 @@ public abstract class SpotDisplayer {
 	/** The list of listener to warn for spot selection change. */
 	protected ArrayList<SpotSelectionListener> spotSelectionListeners = new ArrayList<SpotSelectionListener>();
 	/** The spots currently selected in this displayer. Can be empty, but no t null. */
-	protected SpotCollection spotSelection = new SpotCollection();
+	protected Collection<Spot> spotSelection = new ArrayList<Spot>();
 	
 
 	/*
@@ -307,7 +307,6 @@ public abstract class SpotDisplayer {
 	 */
 	public abstract void setColorByFeature(final Feature feature);
 	
-	
 	public abstract void refresh();
 
 	public abstract void setTrackVisible(boolean displayTrackSelected);
@@ -318,11 +317,6 @@ public abstract class SpotDisplayer {
 	 * Remove any overlay (for spots or tracks) from this displayer.
 	 */
 	public abstract void clear();
-
-	/**
-	 * Highlight visually the spot given in argument. Do nothing if the given spot is not in {@link #spotsToShow}.
-	 */
-	public abstract void highlightSpots(final SpotCollection spots);
 
 	/**
 	 * Highlight visually the spot given in argument. Do nothing if the given spot is not in {@link #spotsToShow}.
@@ -356,17 +350,16 @@ public abstract class SpotDisplayer {
 
 		if (flag == MODIFY_SELECTION_FLAG) {
 			
-			Integer selectionFrame = spotSelection.getFrame(target); 
-			if (null == selectionFrame) {
+			if (!spotSelection.contains(target)) {
 				// Not in the selection, add target to current selection
 				spotArray = new Spot[] { target };
 				areNew = new boolean[] { true };
-				spotSelection.add(target, frame);
+				spotSelection.add(target);
 				fireSpotSelectionChange(spotArray, areNew);
 
 			} else  {
 				// Remove target from selection if it was in
-				if (!spotSelection.remove(target, selectionFrame)) 
+				if (!spotSelection.remove(target)) 
 					return;
 				spotArray = new Spot[] { target };
 				areNew = new boolean[] { false };
@@ -375,16 +368,15 @@ public abstract class SpotDisplayer {
 
 		} else if (flag == REPLACE_SELECTION_FLAG) {
 			// Forget previous selection, and set selection to be target
-			Integer selectionFrame = spotSelection.getFrame(target); 
-			if (spotSelection.remove(target, selectionFrame)) {
+			if (spotSelection.remove(target)) {
 				// Target was in selection, so we just have to remove all other
-				spotArray = spotSelection.getAllSpots().toArray(new Spot[0]);
+				spotArray = spotSelection.toArray(new Spot[0]);
 				areNew = new boolean[spotArray.length];
 				Arrays.fill(areNew, false);
 			} else {
 				// Target is not in selection, so we remove others and add it
-				spotArray = new Spot[spotSelection.getNSpots()+1];
-				areNew = new boolean[spotSelection.getNSpots()+1];
+				spotArray = new Spot[spotSelection.size()+1];
+				areNew = new boolean[spotSelection.size()+1];
 				spotArray[0] = target;
 				areNew[0] = true;
 				int index = 1;
@@ -395,9 +387,8 @@ public abstract class SpotDisplayer {
 				}
 			}
 			spotSelection.clear();
-			spotSelection.add(target, frame);
+			spotSelection.add(target);
 			fireSpotSelectionChange(spotArray, areNew);
-
 		} 
 		highlightSpots(spotSelection);
 	}

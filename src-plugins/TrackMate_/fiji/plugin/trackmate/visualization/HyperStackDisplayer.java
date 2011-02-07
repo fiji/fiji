@@ -114,79 +114,6 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 		
 	}
 		
-	private class SpotOverlay extends AbstractAnnotation {
-
-		protected float lineThickness = 1.0f;
-		protected float[] dash = new float[] { 1 };
-		/** The spot collection this annotation should draw. */
-		protected SpotCollection target;
-		/** The color mapping of the target collection. */
-		protected Map<Spot, Color> targetColor;
-		
-		public SpotOverlay() {
-			this.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
-			this.target = spotsToShow;
-			this.targetColor = spotColor;
-		}
-
-		@Override
-		public void draw(Graphics2D g2d) {
-			
-			if (!spotVisible || null == target )
-				return;
-			
-			final int frame = imp.getFrame()-1;
-			final float zslice = (imp.getSlice()-1) * calibration[2];
-			
-			g2d.setStroke(new BasicStroke((float) (lineThickness / canvas.getMagnification()), 
-					BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, dash , 0));
-
-			float x, y, z, dz2;
-			int apparentRadius;
-			List<Spot> spots = target.get(frame);
-			if (null == spots)
-				return;
-			for (Spot spot : spots) {
-				if (null == spot)
-					continue;
-				g2d.setColor(targetColor.get(spot));
-				x = spot.getFeature(Feature.POSITION_X);
-				y = spot.getFeature(Feature.POSITION_Y);
-				z = spot.getFeature(Feature.POSITION_Z);
-				dz2 = (z - zslice) * (z - zslice);
-				if (dz2 >= radius*radius)
-					g2d.fillOval(Math.round(x/calibration[0]) - 2, Math.round(y/calibration[1]) - 2, 4, 4);
-				else {
-					apparentRadius = (int) Math.round( Math.sqrt(radius*radius - dz2) / calibration[0]); 
-					g2d.drawOval(Math.round(x/calibration[0]) - apparentRadius, Math.round(y/calibration[1]) - apparentRadius, 
-							2 * apparentRadius, 2 * apparentRadius);			
-				}
-			}
-		}
-	}
-	
-	private class HighlightSpotOverlay extends SpotOverlay {
-
-
-		public HighlightSpotOverlay() {
-			super();
-			this.lineThickness = 2.0f;
-			this.target = spotSelection;
-			this.targetColor = spotSelectionColor;
-		}
-	}
-
-	private class SpotEditOverlay extends SpotOverlay {
-
-		public SpotEditOverlay() {
-			super();
-			this.lineThickness = 2.0f;
-			this.dash = new float[] {4, 4};
-			this.target = editedSpot;
-			this.targetColor = editedSpotColor;
-		}
-	}
-		
 	private class HighlightTrackOverlay extends TrackOverlay {
 		
 		public HighlightTrackOverlay() {
@@ -206,22 +133,14 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 	private float featureMinValue;
 	private Settings settings;
 	private boolean trackVisible = true;
-	private boolean spotVisible = true;
 	private StackWindow window;
-	// For highlight
-	private SpotOverlay 			spotOverlay 			= new SpotOverlay();
-	private HighlightSpotOverlay 	highlightSpotOverlay 	= new HighlightSpotOverlay();
-	private SpotEditOverlay 		editOverlay 			= new SpotEditOverlay();
+	private SpotOverlay 			spotOverlay;
 	private HighlightTrackOverlay 	highlightTrackOverlay;
 	/** The spot currently being edited, empty if no spot is being edited. */
-	private SpotCollection editedSpot;
-	/** A mapping of the spots versus the color they must be drawn in, for the currently edited spot. */
-	private Map<Spot, Color> editedSpotColor = new HashMap<Spot, Color>();;
+	private Spot editedSpot;
 	/** A mapping of the spots versus the color they must be drawn in. */
 	private Map<Spot, Color> spotColor = new HashMap<Spot, Color>();
-	/** A mapping of the spots versus the color they must be drawn in, for the spot selection */
-	private Map<Spot, Color> spotSelectionColor = new HashMap<Spot, Color>();
-
+	
 
 	/*
 	 * CONSTRUCTORS
@@ -260,21 +179,10 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 		canvas.addOverlay(highlightTrackOverlay);
 		imp.updateAndDraw();
 	}
-	
-
-	@Override
-	public void highlightSpots(SpotCollection spots) {
-		spotSelection = spots;
-		prepareHighlightSpots();
-		imp.updateAndDraw();		
-	}
-	
+		
 	@Override
 	public void highlightSpots(Collection<Spot> spots) {
-		spotSelection = new SpotCollection();
-		for (Spot spot : spots) 
-			spotSelection.add(spot, spotsToShow.getFrame(spot));
-		prepareHighlightSpots();
+		spotOverlay.setSpotSelection(spots);
 		imp.updateAndDraw();				
 	}
 
@@ -301,8 +209,8 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 	}
 	
 	@Override
-	public void setSpotVisible(boolean displaySpotSelected) {
-		spotVisible = displaySpotSelected;		
+	public void setSpotVisible(boolean spotVisible) {
+		spotOverlay.setSpotVisible(spotVisible);
 	}
 	
 	@Override
@@ -315,17 +223,16 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 		canvas = new OverlayedImageCanvas(imp);
 		window = new StackWindow(imp, canvas);
 		window.show();
-		canvas.addOverlay(highlightSpotOverlay);
-		canvas.addOverlay(editOverlay);
-		canvas.addMouseListener(this);
-		
+		spotOverlay = new SpotOverlay(imp, calibration, radius);
+		canvas.addOverlay(spotOverlay);
+		canvas.addMouseListener(this);	
 		refresh();
 	}
 	
 	@Override
 	public void setRadiusDisplayRatio(float ratio) {
 		super.setRadiusDisplayRatio(ratio);
-		prepareSpotOverlay();
+		spotOverlay.setRadius(ratio*radius);
 		refresh();
 	}
 	
@@ -386,25 +293,10 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 		final float z = (imp.getSlice()-1) * calibration[2];
 		return new SpotImp(new float[] {x, y, z});
 	}
-
-	/**
-	 * Tune the highlight (selection) overlay.
-	 */
-	private void prepareHighlightSpots() {
-		spotSelectionColor = new HashMap<Spot, Color>(spotSelection.getNSpots());
-		for(Spot spot : spotSelection)
-			spotSelectionColor.put(spot, HIGHLIGHT_COLOR);
-		canvas.removeOverlay(highlightSpotOverlay);
-		highlightSpotOverlay = new HighlightSpotOverlay();
-		canvas.addOverlay(highlightSpotOverlay);
-	}
-
 	
 	private void prepareSpotOverlay() {
 		if (null == spotsToShow)
 			return;
-		canvas.removeOverlay(spotOverlay);
-		spotOverlay = new SpotOverlay();
 		Float val;
 		for(Spot spot : spotsToShow) {
 			val = spot.getFeature(currentFeature);
@@ -413,7 +305,8 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 			else
 				spotColor.put(spot, colorMap.getPaint((val-featureMinValue)/(featureMaxValue-featureMinValue)) );
 		}
-		canvas.addOverlay(spotOverlay);
+		spotOverlay.setTarget(spotsToShow);
+		spotOverlay.setTargettColor(spotColor);
 	}
 	
 	private void prepareWholeTrackOverlay() {
@@ -489,28 +382,14 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 				} else {
 					System.out.println("Editing spot "+target.getName());// DEBUG
 				}
-				editedSpot = new SpotCollection();
-				editedSpot.add(target, frame);
-				editedSpotColor.clear();
-				editedSpotColor.put(target, HIGHLIGHT_COLOR);
-				spots.remove(target, frame);
-				spotsToShow.remove(target, frame);
-				spotSelection.remove(target, frame);
-				editOverlay = new SpotEditOverlay();
-				canvas.addOverlay(editOverlay);
+				editedSpot = target;
 				
 			} else {
 				// We leave editing mode
 				System.out.println("Leaving edit mode");// DEBUG
-				target = editedSpot.iterator().next();
-				spots.add(target, frame); // Only one spot in this collection anyway
-				spotsToShow.add(target, frame);
 				editedSpot = null;
-				canvas.removeOverlay(editOverlay);
-				prepareSpotOverlay();
-				prepareWholeTrackOverlay();
-				
 			}
+			spotOverlay.setEditedSpot(editedSpot);
 			break;
 		}
 		}

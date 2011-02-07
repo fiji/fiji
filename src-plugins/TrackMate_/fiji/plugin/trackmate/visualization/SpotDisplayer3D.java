@@ -5,6 +5,7 @@ import ij3d.ContentInstant;
 import ij3d.Image3DUniverse;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -59,7 +60,7 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	 */
 	
 	@Override
-	public void highlightSpots(Set<Spot> spots) {
+	public void highlightSpots(Collection<Spot> spots) {
 		// Restore previous display settings for previously highlighted spot
 		if (null != previousSpotHighlight)
 			for (Spot spot : previousSpotHighlight)
