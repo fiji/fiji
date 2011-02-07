@@ -708,14 +708,14 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 		}
 	}
 
-	public void updateMenus() {
-		contentSelected(getSelected());
-	}
-
 
 	public void contentSelected(Content c) {
+		updateMenus();
+	}
 
-		c = getSelected();
+	public void updateMenus() {
+
+		Content c = getSelected();
 
 		delete.setEnabled(c != null);
 		centerSelected.setEnabled(c != null);
