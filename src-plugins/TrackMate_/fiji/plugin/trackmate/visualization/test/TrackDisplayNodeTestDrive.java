@@ -21,6 +21,7 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.visualization.SpotGroupNode;
 import fiji.plugin.trackmate.visualization.TrackDisplayNode;
@@ -39,7 +40,7 @@ public class TrackDisplayNodeTestDrive {
 		Spot spot;
 		Spot[] spots = new Spot[N_BLOBS];
 		ArrayList<Spot>	 alSpot;
-		TreeMap<Integer, List<Spot>> timeSpots = new TreeMap<Integer, List<Spot>>();
+		SpotCollection timeSpots = new SpotCollection();
 		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		TreeMap<Integer, ContentInstant> spotInstants = new TreeMap<Integer, ContentInstant>();
 		Color4f color;

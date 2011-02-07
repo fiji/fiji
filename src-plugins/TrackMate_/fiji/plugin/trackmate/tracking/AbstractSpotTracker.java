@@ -2,13 +2,13 @@ package fiji.plugin.trackmate.tracking;
 
 import java.util.List;
 import java.util.SortedSet;
-import java.util.TreeMap;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
 
 public abstract class AbstractSpotTracker implements SpotTracker {
 
@@ -31,7 +31,7 @@ public abstract class AbstractSpotTracker implements SpotTracker {
 	/** Stores a message describing an error incurred during use of the class. */
 	protected String errorMessage;
 	/** Stores the objects to track as a list of Spots per frame.  */
-	protected TreeMap<Integer, List<Spot>> spots;
+	protected SpotCollection spots;
 
 	
 

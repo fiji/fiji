@@ -11,7 +11,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
@@ -27,6 +26,7 @@ import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.FeatureThreshold;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
@@ -205,11 +205,10 @@ public class TmXmlReader implements TmXmlKeys {
 	/**
 	 * Return the list of all spots stored in this file.
 	 * @throws DataConversionException  if the attribute values are not formatted properly in the file.
-	 * @return  a {@link TreeMap} of spot list, index by frame number (one list of spot per frame, frame number
-	 * is the key of the treemap). Return <code>null</code> if the spot section is not present in the file.
+	 * @return  a {@link SpotCollection}. Return <code>null</code> if the spot section is not present in the file.
 	 */
 	@SuppressWarnings("unchecked")
-	public TreeMap<Integer, List<Spot>> getAllSpots() throws DataConversionException {
+	public SpotCollection getAllSpots() throws DataConversionException {
 		Element spotCollection = root.getChild(SPOT_COLLECTION_ELEMENT_KEY);
 		if (null == spotCollection)
 			return null;
@@ -217,7 +216,7 @@ public class TmXmlReader implements TmXmlKeys {
 		List<Element> frameContent = spotCollection.getChildren(SPOT_FRAME_COLLECTION_ELEMENT_KEY);
 		int currentFrame = 0;
 		ArrayList<Spot> spotList;
-		TreeMap<Integer, List<Spot>> allSpots = new TreeMap<Integer, List<Spot>>();
+		SpotCollection allSpots = new SpotCollection();
 		
 		for (Element currentFrameContent : frameContent) {
 			
@@ -242,13 +241,12 @@ public class TmXmlReader implements TmXmlKeys {
 	 * it is simply ignored, and not added to the selection list. That way, it is certain that all spots
 	 * belonging to the selection list also belong to the global list. 
 	 * @param allSpots  the list of all spots, from which this selection is made 
-	 * @return  a {@link TreeMap} of spot list, index by frame number (one list of spot per frame, frame number
-	 * is the key of the treemap). Each spot of this list belongs also to the  given list.
+	 * @return  a {@link SpotCollection}. Each spot of this collection belongs also to the  given collection.
 	 * Return <code>null</code> if the spot selection section does is not present in the file.
 	 * @throws DataConversionException  if the attribute values are not formatted properly in the file.
 	 */
 	@SuppressWarnings("unchecked")
-	public TreeMap<Integer, List<Spot>> getSpotSelection(TreeMap<Integer, List<Spot>> allSpots) throws DataConversionException {
+	public SpotCollection getSpotSelection(SpotCollection allSpots) throws DataConversionException {
 		Element selectedSpotCollection = root.getChild(SELECTED_SPOT_ELEMENT_KEY);
 		if (null == selectedSpotCollection)
 			return null;
@@ -258,7 +256,7 @@ public class TmXmlReader implements TmXmlKeys {
 		ArrayList<Spot> spotList;
 		List<Element> spotContent;
 		List<Spot> spotsThisFrame;
-		TreeMap<Integer, List<Spot>> spotSelection = new TreeMap<Integer, List<Spot>>();
+		SpotCollection spotSelection = new SpotCollection();
 		List<Element> frameContent = selectedSpotCollection.getChildren(SELECTED_SPOT_COLLECTION_ELEMENT_KEY);
 		
 		for (Element currentFrameContent : frameContent) {
@@ -296,7 +294,7 @@ public class TmXmlReader implements TmXmlKeys {
 	 * @throws DataConversionException  if the attribute values are not formatted properly in the file.
 	 */
 	@SuppressWarnings("unchecked")
-	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> getTracks(TreeMap<Integer, List<Spot>> selectedSpots) throws DataConversionException {
+	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> getTracks(SpotCollection selectedSpots) throws DataConversionException {
 		
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
 		if (null == allTracksElement)

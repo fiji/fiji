@@ -9,7 +9,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeMap;
 
 import org.jdom.Attribute;
 import org.jdom.Document;
@@ -25,6 +24,7 @@ import fiji.plugin.trackmate.FeatureThreshold;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModelInterface;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
@@ -303,7 +303,7 @@ public class TmXmlWriter implements TmXmlKeys {
 	}
 	
 	private void echoAllSpots() {		
-		TreeMap<Integer, List<Spot>> allSpots = model.getSpots();
+		SpotCollection allSpots = model.getSpots();
 		if (null == allSpots)
 			return;
 		List<Spot> spots;
@@ -357,7 +357,7 @@ public class TmXmlWriter implements TmXmlKeys {
 	}
 	
 	private void echoSpotSelection() {
-		TreeMap<Integer, List<Spot>> selectedSpots =  model.getSelectedSpots();
+		SpotCollection selectedSpots =  model.getSelectedSpots();
 		if (null == selectedSpots)
 			return;
 		List<Spot> spots;

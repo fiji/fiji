@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.TreeMap;
 
 import mpicbg.imglib.util.Util;
 
@@ -21,6 +20,7 @@ import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
@@ -59,8 +59,8 @@ public class LAPTrackerTestDrive {
 		}
 		// All spots
 		Settings inFileSettings = null;
-		TreeMap<Integer, List<Spot>> spots = null;
-		TreeMap<Integer, List<Spot>> spotSelection = null;
+		SpotCollection spots = null;
+		SpotCollection spotSelection = null;
 		try {
 			spots = reader.getAllSpots();
 			spotSelection = reader.getSpotSelection(spots);

@@ -13,6 +13,7 @@ import org.jgrapht.traverse.DepthFirstIterator;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.tracking.costmatrix.LinkingCostMatrixCreator;
 import fiji.plugin.trackmate.tracking.costmatrix.TrackSegmentCostMatrixCreator;
 import fiji.plugin.trackmate.tracking.hungarian.AssignmentAlgorithm;
@@ -149,7 +150,7 @@ public class LAPTracker extends AbstractSpotTracker {
 	 * @param linkingCosts The cost matrix for step 1, linking objects, specified for every frame.
 	 * @param settings The settings to use for this tracker.
 	 */
-	public LAPTracker (TreeMap<Integer, List<Spot>> spots, TrackerSettings settings) {
+	public LAPTracker (SpotCollection spots, TrackerSettings settings) {
 		super(settings);
 		this.spots = spots;
 		// Add all spots to the graph
@@ -159,7 +160,7 @@ public class LAPTracker extends AbstractSpotTracker {
 	}
 
 
-	public LAPTracker (TreeMap<Integer, List<Spot>> spots) {
+	public LAPTracker (SpotCollection spots) {
 		this(spots, new TrackerSettings());
 	}
 

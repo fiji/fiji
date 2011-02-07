@@ -4,8 +4,6 @@ import ij.ImagePlus;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.TreeMap;
 
 import org.jdom.JDOMException;
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -13,6 +11,7 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
@@ -30,8 +29,8 @@ public class HyperStackDisplayerTestDrive {
 		
 		ij.ImageJ.main(args);
 
-		TreeMap<Integer, List<Spot>> spots = reader.getAllSpots();
-		TreeMap<Integer, List<Spot>> selectedSpots = reader.getSpotSelection(spots);
+		SpotCollection spots = reader.getAllSpots();
+		SpotCollection selectedSpots = reader.getSpotSelection(spots);
 		SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph = reader.getTracks(selectedSpots);
 		Settings settings = reader.getSettings();
 		ImagePlus imp = reader.getImage();

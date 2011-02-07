@@ -12,10 +12,6 @@ import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.tracking.TrackerType;
 import ij.ImagePlus;
-
-import java.util.List;
-import java.util.TreeMap;
-
 import mpicbg.imglib.type.numeric.RealType;
 
 /**
@@ -79,7 +75,7 @@ public class Settings {
 	/**
 	 * Return a new {@link SpotTracker} as selected in this settings object. 
 	 */
-	public SpotTracker getSpotTracker(TreeMap<Integer, List<Spot>> spots) {
+	public SpotTracker getSpotTracker(SpotCollection spots) {
 		switch(trackerType) {
 		case LAP_TRACKER:
 		case SIMPLE_LAP_TRACKER:

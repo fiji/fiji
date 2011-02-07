@@ -2,6 +2,7 @@ package fiji.plugin.trackmate.visualization.test;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TMUtils;
 import fiji.plugin.trackmate.features.FeatureFacade;
@@ -17,7 +18,6 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.TreeMap;
 
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
@@ -108,7 +108,7 @@ public class SpotDisplayer3DTestDrive {
 		universe.addVoltex(imp);
 		universe.show();
 
-		final TreeMap<Integer, List<Spot>> allSpots = new TreeMap<Integer, List<Spot>>();
+		final SpotCollection allSpots = new SpotCollection();
 		allSpots.put(0, spots);
 		final SpotDisplayer3D displayer = new SpotDisplayer3D(universe, RADIUS);
 		displayer.render();
@@ -121,7 +121,7 @@ public class SpotDisplayer3DTestDrive {
 		gui.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				displayer.setSpotsToShow(TMUtils.thresholdSpots(allSpots, gui.getFeatureThresholds()));
+				displayer.setSpotsToShow(allSpots.threshold(gui.getFeatureThresholds()));
 				displayer.refresh();
 			}
 		});

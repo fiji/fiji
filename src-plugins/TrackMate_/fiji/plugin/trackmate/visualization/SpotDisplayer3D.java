@@ -20,6 +20,7 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
 
 public class SpotDisplayer3D extends SpotDisplayer {
 	
@@ -185,7 +186,7 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	}
 	
 	@Override
-	public void setSpots(java.util.TreeMap<Integer,java.util.List<Spot>> spots) {
+	public void setSpots(SpotCollection spots) {
 		super.setSpots(spots);
 		if (universe.contains(SPOT_CONTENT_NAME))
 			universe.removeContent(SPOT_CONTENT_NAME);

@@ -46,6 +46,100 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	 */
 	
 	/**
+	 * Return a subset of this collection, containing only the spots with the 
+	 * feature satisfying the threshold given. 
+	 */
+	public final SpotCollection threshold(final FeatureThreshold featureThreshold) {
+		SpotCollection selectedSpots = new SpotCollection();
+		Collection<Spot> spotThisFrame, spotToRemove;
+		List<Spot> spotToKeep;
+		Float val, tval;	
+
+		for (int timepoint : content.keySet()) {
+
+			spotThisFrame = content.get(timepoint);
+			spotToKeep = new ArrayList<Spot>(spotThisFrame);
+			spotToRemove = new ArrayList<Spot>(spotThisFrame.size());
+
+			tval = featureThreshold.value;
+			if (null != tval) {
+
+				if (featureThreshold.isAbove) {
+					for (Spot spot : spotToKeep) {
+						val = spot.getFeature(featureThreshold.feature);
+						if (null == val)
+							continue;
+						if ( val < tval)
+							spotToRemove.add(spot);
+					}
+
+				} else {
+					for (Spot spot : spotToKeep) {
+						val = spot.getFeature(featureThreshold.feature);
+						if (null == val)
+							continue;
+						if ( val > tval)
+							spotToRemove.add(spot);
+					}
+				}
+				spotToKeep.removeAll(spotToRemove); // no need to treat them multiple times
+				
+			}
+			
+			selectedSpots.put(timepoint, spotToKeep);
+		}
+		return selectedSpots;
+	}
+	
+	/**
+	 * Return a subset of this collection, containing only the spots with the 
+	 * feature satisfying all the thresholds given. 
+	 */
+	public final SpotCollection threshold(Collection<FeatureThreshold> thresholds) {
+		SpotCollection selectedSpots = new SpotCollection();
+		Collection<Spot> spotThisFrame, spotToRemove;
+		List<Spot> spotToKeep;
+		Float val, tval;	
+		
+		for (int timepoint : content.keySet()) {
+			
+			spotThisFrame = content.get(timepoint);
+			spotToKeep = new ArrayList<Spot>(spotThisFrame);
+			spotToRemove = new ArrayList<Spot>(spotThisFrame.size());
+
+			for (FeatureThreshold threshold : thresholds) {
+
+				tval = threshold.value;
+				if (null == tval)
+					continue;
+				spotToRemove.clear();
+
+				if (threshold.isAbove) {
+					for (Spot spot : spotToKeep) {
+						val = spot.getFeature(threshold.feature);
+						if (null == val)
+							continue;
+						if ( val < tval)
+							spotToRemove.add(spot);
+					}
+
+				} else {
+					for (Spot spot : spotToKeep) {
+						val = spot.getFeature(threshold.feature);
+						if (null == val)
+							continue;
+						if ( val > tval)
+							spotToRemove.add(spot);
+					}
+				}
+				spotToKeep.removeAll(spotToRemove); // no need to treat them multiple times
+			}
+			selectedSpots.put(timepoint, spotToKeep);
+		}
+		return selectedSpots;
+	}
+	
+	/**
 	 * Return the closest {@link Spot} to the given location (encoded as a 
 	 * Spot), contained in the frame <code>frame</code>. If the frame has no spot,
 	 * return <code>null</code>.
@@ -242,5 +336,6 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	public Set<java.util.Map.Entry<Integer, List<Spot>>> entrySet() {
 		return content.entrySet();
 	}
+
 
 }

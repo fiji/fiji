@@ -15,7 +15,6 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.TreeMap;
 
 import javax.swing.JFileChooser;
 import javax.swing.SwingUtilities;
@@ -35,7 +34,7 @@ import fiji.plugin.trackmate.FeatureThreshold;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TMUtils;
+import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModelInterface;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.TrackMateFrame.PanelCard;
@@ -472,7 +471,7 @@ public class TrackMateFrameController {
 		
 		
 		{ // Try to read spots
-			TreeMap<Integer, List<Spot>> spots = null;
+			SpotCollection spots = null;
 			try {
 				spots = reader.getAllSpots();
 			} catch (DataConversionException e) {
@@ -553,7 +552,7 @@ public class TrackMateFrameController {
 
 
 		{ // Try to read spot selection
-			TreeMap<Integer, List<Spot>> selectedSpots = null;
+			SpotCollection selectedSpots = null;
 			try {
 				selectedSpots = reader.getSpotSelection(newModel.getSpots());
 			} catch (DataConversionException e) {
@@ -923,7 +922,7 @@ public class TrackMateFrameController {
 					public void stateChanged(ChangeEvent event) {
 						// We set the thresholds field of the model but do not touch its selected spot field yet.
 						model.setFeatureThresholds(view.thresholdGuiPanel.getFeatureThresholds());
-						displayer.setSpotsToShow(TMUtils.thresholdSpots(model.getSpots(), model.getFeatureThresholds()));
+						displayer.setSpotsToShow(model.getSpots().threshold(model.getFeatureThresholds()));
 						updater.doUpdate();
 					}
 				});
@@ -1051,7 +1050,7 @@ public class TrackMateFrameController {
 			@Override
 			public void vertexRemoved(GraphVertexChangeEvent<Spot> e) {
 				Spot removedSpot = e.getVertex();
-				TreeMap<Integer, List<Spot>> spots = model.getSelectedSpots();
+				SpotCollection spots = model.getSelectedSpots();
 				for(List<Spot> st : spots.values())
 					if (st.remove(removedSpot))
 						break;

@@ -2,6 +2,7 @@ package fiji.plugin.trackmate.visualization;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
 import ij3d.ContentNode;
 
 import java.util.BitSet;
@@ -9,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import javax.media.j3d.Switch;
 import javax.media.j3d.View;
@@ -30,7 +30,7 @@ public class TrackDisplayNode extends ContentNode {
 	/** The graph containing the connectivity. */
 	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph;
 	/** The spots indexed by frame. */
-	protected TreeMap<Integer, List<Spot>> spots;
+	protected SpotCollection spots;
 	/** The list of tracks. */
 	protected List<Set<Spot>> tracks;
 	/** Hold the color and transparency of all spots for a given track. */
@@ -53,7 +53,7 @@ public class TrackDisplayNode extends ContentNode {
 	
 	public TrackDisplayNode(
 			SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph, 
-			TreeMap<Integer, List<Spot>> spots, 
+			SpotCollection spots, 
 			List<Set<Spot>> tracks, 
 			Map<Set<Spot>, Color4f> colors, 
 			double radius) {

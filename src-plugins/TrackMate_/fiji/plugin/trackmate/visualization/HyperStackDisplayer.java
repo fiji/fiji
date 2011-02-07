@@ -23,6 +23,7 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.util.gui.AbstractAnnotation;
 import fiji.util.gui.OverlayedImageCanvas;
@@ -340,7 +341,7 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 	}
 	
 	@Override
-	public void setSpotsToShow(TreeMap<Integer, List<Spot>> spotsToShow) {
+	public void setSpotsToShow(SpotCollection spotsToShow) {
 		super.setSpotsToShow(spotsToShow);
 		prepareSpotOverlay();
 	}
@@ -448,7 +449,7 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 	public void mouseClicked(MouseEvent e) {
 		final Spot clickLocation = getCLickLocation(e);
 		final int frame = imp.getFrame() - 1;		
-		Spot target = getClosestSpot(clickLocation, frame);
+		Spot target = spotsToShow.getClosestSpot(clickLocation, frame);
 		
 		// Check desired behavior
 		switch (e.getClickCount()) {

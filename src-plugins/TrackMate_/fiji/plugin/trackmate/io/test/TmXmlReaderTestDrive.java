@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeMap;
 
 import org.jdom.DataConversionException;
 import org.jdom.JDOMException;
@@ -17,6 +16,7 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.test.LAPTrackerTestDrive;
 import fiji.plugin.trackmate.visualization.HyperStackDisplayer;
@@ -48,7 +48,7 @@ public class TmXmlReaderTestDrive {
 			imp.show();
 
 		// All spots
-		TreeMap<Integer, List<Spot>> spots = null;
+		SpotCollection spots = null;
 		try {
 			spots = reader.getAllSpots();
 		} catch (DataConversionException e) {
@@ -64,7 +64,7 @@ public class TmXmlReaderTestDrive {
 //		}
 		
 		// Spot selection
-		TreeMap<Integer, List<Spot>> selectedSpots = null;
+		SpotCollection selectedSpots = null;
 		try {
 			selectedSpots = reader.getSpotSelection(spots);
 		} catch (DataConversionException e) {

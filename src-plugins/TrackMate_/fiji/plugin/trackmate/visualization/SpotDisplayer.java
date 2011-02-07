@@ -10,11 +10,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.alg.ConnectivityInspector;
@@ -24,6 +22,7 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TMUtils;
 import fiji.plugin.trackmate.TrackMateModelInterface;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
@@ -155,9 +154,9 @@ public abstract class SpotDisplayer {
 	/** The track colors. */
 	protected Map<Set<Spot>, Color> trackColors;
 	/** The Spot lists emanating from segmentation, indexed by the frame index as Integer. */
-	protected TreeMap<Integer, List<Spot>> spots = new TreeMap<Integer, List<Spot>>();
+	protected SpotCollection spots = new SpotCollection();
 	/** The subset of Spots retained from {@link #spots} for displaying. */
-	protected TreeMap<Integer, List<Spot>> spotsToShow = new TreeMap<Integer, List<Spot>>();
+	protected SpotCollection spotsToShow = new SpotCollection();
 
 	/** The display track mode. */
 	protected TrackDisplayMode trackDisplayMode = DEFAULT_TRACK_DISPLAY_MODE;
@@ -269,7 +268,7 @@ public abstract class SpotDisplayer {
 	 * using {@link #setSpotsToShow(TreeMap)}, and must be a subset from the field passed to this method.
 	 * @see #setSpotsToShow(TreeMap)  
 	 */
-	public void setSpots(TreeMap<Integer, List<Spot>> spots) {
+	public void setSpots(SpotCollection spots) {
 		this.spots = spots;
 	}
 	
@@ -278,7 +277,7 @@ public abstract class SpotDisplayer {
 	 * of the list passed to the {@link #setSpots(TreeMap)} method.
 	 * @see #setSpots(TreeMap) 
 	 */
-	public void setSpotsToShow(TreeMap<Integer, List<Spot>> spotsToShow) {
+	public void setSpotsToShow(SpotCollection spotsToShow) {
 		this.spotsToShow = spotsToShow;
 	}
 
@@ -290,50 +289,6 @@ public abstract class SpotDisplayer {
 		this.radiusRatio = ratio;
 	}
 	
-	/**
-	 * Return the closest {@link Spot} to the given location (encoded as a 
-	 * Spot), contained in the frame <code>frame</code>.
-	 */
-	public final Spot getClosestSpot(final Spot clickLocation, final int frame) {
-		final List<Spot> spotsThisFrame = spotsToShow.get(frame);
-		float d2;
-		float minDist = Float.POSITIVE_INFINITY;
-		Spot target = null;
-		for(Spot s : spotsThisFrame) {
-			d2 = s.squareDistanceTo(clickLocation);
-			if (d2 < minDist) {
-				minDist = d2;
-				target = s;
-			}
-		}
-		return target;
-	}
-
-
-	/**
-	 * Return the <code>n</code> closest {@link Spot} to the given location (encoded as a 
-	 * Spot), contained in the frame <code>frame</code>. If the number of 
-	 * spots in the frame is exhausted, a shorter set is returned.
-	 */
-	public final Set<Spot> getNClosestSpots(final Spot clickLocation, final int frame, int n) {
-		final List<Spot> spotsThisFrame = spotsToShow.get(frame);
-		final TreeMap<Float, Spot> distanceToSpot = new TreeMap<Float, Spot>();
-		
-		float d2;
-		for(Spot s : spotsThisFrame) {
-			d2 = s.squareDistanceTo(clickLocation);
-			distanceToSpot.put(d2, s);
-		}
-
-		final Set<Spot> selectedSpots = new HashSet<Spot>(n);
-		final Iterator<Float> it = distanceToSpot.keySet().iterator();
-		while (n > 0 && it.hasNext()) {
-			selectedSpots.add(distanceToSpot.get(it.next()));
-			n--;
-		}
-		return selectedSpots;
-	}
-
 	/*
 	 * ABSTRACT METHODS
 	 */

@@ -11,7 +11,6 @@ import ij.plugin.PlugIn;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
-import java.util.TreeMap;
 
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
@@ -36,9 +35,9 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 	
 	
 	/** Contain the segmentation result, un-filtered.*/
-	private TreeMap<Integer,List<Spot>> spots;
+	private SpotCollection spots;
 	/** Contain the Spot retained for tracking, after thresholding by features. */
-	private TreeMap<Integer,List<Spot>> selectedSpots = new TreeMap<Integer, List<Spot>>();
+	private SpotCollection selectedSpots;
 	/** The tracks as a graph. */
 	private SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph;
 
@@ -103,7 +102,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 		segmenter = settings.getSpotSegmenter();
 		segmenter.setCalibration(calibration);
 		
-		spots = new TreeMap<Integer, List<Spot>>();
+		spots = new SpotCollection();
 		List<Spot> spotsThisFrame;
 		
 		// For each frame...
@@ -139,7 +138,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 	@Override
 	public void execInitialThresholding() {
 		FeatureThreshold featureThreshold = new FeatureThreshold(Feature.QUALITY, initialThreshold, true);
-		this.spots = TMUtils.thresholdSpots(spots, featureThreshold);
+		this.spots = spots.threshold(featureThreshold);
 	}
 		
 	@Override
@@ -170,7 +169,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 
 	@Override
 	public void execThresholding() {
-		this.selectedSpots = TMUtils.thresholdSpots(spots, thresholds);
+		this.selectedSpots = spots.threshold(thresholds);
 	}
 	
 	/*
@@ -183,12 +182,12 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 	}
 	
 	@Override
-	public TreeMap<Integer, List<Spot>> getSpots() {
+	public SpotCollection getSpots() {
 		return spots;
 	}
 
 	@Override
-	public TreeMap<Integer, List<Spot>> getSelectedSpots() {
+	public SpotCollection getSelectedSpots() {
 		return selectedSpots;
 	}
 	
@@ -223,12 +222,12 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 	}
 
 	@Override
-	public void setSpots(TreeMap<Integer, List<Spot>> spots) {
+	public void setSpots(SpotCollection spots) {
 		this.spots = spots;
 	}
 
 	@Override
-	public void setSpotSelection(TreeMap<Integer, List<Spot>> selectedSpots) {
+	public void setSpotSelection(SpotCollection selectedSpots) {
 		this.selectedSpots = selectedSpots;
 	}
 	

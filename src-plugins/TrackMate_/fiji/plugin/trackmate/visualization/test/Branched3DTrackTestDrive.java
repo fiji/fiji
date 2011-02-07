@@ -4,14 +4,13 @@ import ij3d.Image3DUniverse;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.TreeMap;
 
 import org.jdom.JDOMException;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.SpotDisplayer3D;
 
@@ -29,8 +28,8 @@ public class Branched3DTrackTestDrive {
 		reader.parse();
 		
 		// Load objects 
-		TreeMap<Integer, List<Spot>> allSpots 		= reader.getAllSpots();
-		TreeMap<Integer, List<Spot>> selectedSpots 	= reader.getSpotSelection(allSpots);
+		SpotCollection allSpots 		= reader.getAllSpots();
+		SpotCollection selectedSpots 	= reader.getSpotSelection(allSpots);
 		SimpleWeightedGraph<Spot, DefaultWeightedEdge> tracks = reader.getTracks(selectedSpots);
 		
 		// Launch ImageJ

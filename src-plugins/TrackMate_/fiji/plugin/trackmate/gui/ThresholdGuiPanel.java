@@ -15,7 +15,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Random;
 import java.util.Stack;
-import java.util.TreeMap;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -31,6 +30,7 @@ import javax.swing.event.ChangeListener;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.FeatureThreshold;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMate_;
 
@@ -327,7 +327,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 		TrackMate_ trackmate = new TrackMate_();
 		System.out.println("Type <Enter> to ad spots to this");
 		System.in.read();
-		TreeMap<Integer, List<Spot>> allSpots = new TreeMap<Integer, List<Spot>>();
+		SpotCollection allSpots = new SpotCollection();
 		allSpots.put(0, spots);
 		trackmate.setSpots(allSpots);
 		

@@ -1,18 +1,18 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
-import java.awt.Image;
-import java.util.Collection;
-import java.util.List;
-import java.util.TreeMap;
-
-import javax.swing.ImageIcon;
-
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
+
+import java.awt.Image;
+import java.util.Collection;
+
+import javax.swing.ImageIcon;
+
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
 
 /**
  * This class is used to take a snapshot of a {@link Spot} object (or collection) from 
@@ -33,7 +33,7 @@ public class SpotIconGrabber {
 		this.radius = settings.segmenterSettings.expectedRadius;
 	}
 	
-	public void updateIcon(TreeMap<Integer, List<Spot>> spots) {
+	public void updateIcon(SpotCollection spots) {
 		for(int key : spots.keySet())
 			updateIcon(spots.get(key));
 	}
