@@ -95,25 +95,6 @@ public class ImageWindow3D extends JFrame implements UniverseListener,
 		return new ImageCanvas(getImagePlus());
 	}
 
-// 	public Insets getInsets() {
-// 		// pretend to have a canvas to avoid a NullPointerException
-// 		// when calling the super method
-// 		ic = getCanvas();
-// 		Insets insets = super.getInsets();
-// 		ic = null;
-// 		double mag = 1;
-// 		int extraWidth = (int)((MIN_WIDTH - imp.getWidth()*mag) / 2.0);
-// 		if (extraWidth < 0) extraWidth = 0;
-// 		int extraHeight = (int)((MIN_HEIGHT - imp.getHeight()*mag)/2.0);
-// 		if (extraHeight < 0) extraHeight = 0;
-// 		insets = new Insets(
-// 			insets.top - 10 /* TEXT_GAP */ - extraHeight,
-// 			insets.left - extraWidth,
-// 			insets.bottom - extraHeight,
-// 			insets.right - extraWidth);
-// 		return insets;
-// 	}
-
 	/* off-screen rendering stuff */
 	private Canvas3D offScreenCanvas3D;
 	private Canvas3D getOffScreenCanvas() {
@@ -210,7 +191,6 @@ public class ImageWindow3D extends JFrame implements UniverseListener,
 		return imp;
 	}
 
-// 	private int top = 25, bottom = 4, left = 4, right = 4;
 	private int top = 0, bottom = 0, left = 0, right = 0;
 	private ImagePlus getNewImagePlus() {
 		if (getWidth() <= 0 || getHeight() <= 0)
@@ -257,9 +237,6 @@ public class ImageWindow3D extends JFrame implements UniverseListener,
 			universe.getViewer().getView()
 				.removeCanvas3D(offScreenCanvas3D);
 			offScreenCanvas3D = null;
-// 			new MessageDialog(this, "Java3D error",
-// 				"Off-screen rendering not supported by this\n"
-// 				 + "setup. Falling back to screen capturing");
 			System.err.println("Java3D error: " +
  				"Off-screen rendering not supported by this\n" +
 				"setup. Falling back to screen capturing");
