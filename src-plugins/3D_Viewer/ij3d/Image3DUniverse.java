@@ -5,7 +5,13 @@ import ij.ImagePlus;
 import ij.IJ;
 
 import javax.swing.JMenuBar;
+import javax.swing.JMenu;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JMenuItem;
 
+import java.awt.Menu;
+import java.awt.MenuItem;
+import java.awt.CheckboxMenuItem;
 import java.awt.BorderLayout;
 import java.awt.MenuBar;
 import java.awt.event.*;
@@ -215,6 +221,47 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	public void setStatus(String text) {
 // 		if(win != null)
 // 			win.getStatusLabel().setText("  " + text);
+	}
+
+	/**
+	 * Set a custom menu bar to the viewer.
+	 * @deprecated Use swing instead.
+	 */
+	public void setMenubar(MenuBar mb) {
+		JMenuBar jmb = new JMenuBar();
+		int num = mb.getMenuCount();
+		for(int i = 0; i < num; i++)
+			jmb.add(menuToJMenu(mb.getMenu(i)));
+
+		setMenubar(jmb);
+	}
+
+	private JMenu menuToJMenu(Menu menu) {
+		JMenu jm = new JMenu(menu.getLabel());
+		int num = menu.getItemCount();
+		for(int i = 0; i < num; i++) {
+			MenuItem item = menu.getItem(i);
+			String label = item.getLabel();
+			JMenuItem jitem;
+			if(item instanceof Menu) {
+				jitem = menuToJMenu((Menu)item);
+			} else if(item instanceof CheckboxMenuItem) {
+				jitem = new JCheckBoxMenuItem(label);
+				((JCheckBoxMenuItem)jitem).setState(
+					((CheckboxMenuItem)item).getState());
+				for(ItemListener l : ((CheckboxMenuItem)item).getItemListeners())
+					jitem.addItemListener(l);
+			} else if(label.equals("-")) {
+				jm.addSeparator();
+				continue;
+			} else {
+				jitem = new JMenuItem(label);
+				for(ActionListener l : item.getActionListeners())
+					jitem.addActionListener(l);
+			}
+			jm.add(jitem);
+		}
+		return jm;
 	}
 
 	/**
