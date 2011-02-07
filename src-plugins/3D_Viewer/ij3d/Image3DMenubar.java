@@ -751,10 +751,11 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 		exportTransformed.setEnabled(c != null);
 
 		// update select menu
+		Content sel = univ.getSelected();
 		for(int i = 0; i < selectMenu.getItemCount(); i++) {
 			MenuItem item = selectMenu.getItem(i);
-			((CheckboxMenuItem)item).setState(c != null &&
-				c.getName().equals(item.getLabel()));
+			((CheckboxMenuItem)item).setState(sel != null &&
+				sel.getName().equals(item.getLabel()));
 		}
 
 
