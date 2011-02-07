@@ -1925,6 +1925,8 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\tstart JavaC, the Java Compiler, instead of ImageJ\n"
 		"--ant\n"
 		"\trun Apache Ant\n"
+		"--javah\n"
+		"\tstart javah instead of ImageJ\n"
 		"--javap\n"
 		"\tstart javap instead of ImageJ\n"
 		"--javadoc\n"
@@ -2255,6 +2257,7 @@ static int start_ij(void)
 			main_class = "fiji.build.Fake";
 		}
 		else if (!strcmp(main_argv[i], "--javac") ||
+				!strcmp(main_argv[i], "--javah") ||
 				!strcmp(main_argv[i], "--javap") ||
 				!strcmp(main_argv[i], "--javadoc")) {
 			add_class_path_option = 1;
@@ -2271,6 +2274,8 @@ static int start_ij(void)
 			string_addf_path_list(class_path, "%s/../lib/tools.jar", get_jre_home());
 			if (!strcmp(main_argv[i], "--javac"))
 				main_class = "com.sun.tools.javac.Main";
+			else if (!strcmp(main_argv[i], "--javah"))
+				main_class = "com.sun.tools.javah.Main";
 			else if (!strcmp(main_argv[i], "--javap"))
 				main_class = "sun.tools.javap.Main";
 			else if (!strcmp(main_argv[i], "--javadoc"))
