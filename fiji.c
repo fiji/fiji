@@ -2949,7 +2949,7 @@ static int is_leopard(void)
 	return is_osrelease(9);
 }
 
-static int is_tiger(void)
+static MAYBE_UNUSED int is_tiger(void)
 {
 	return is_osrelease(8);
 }
