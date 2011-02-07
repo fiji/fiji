@@ -173,7 +173,7 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	 */
 	@Override
 	public void show() {
-		super.show();
+		win = new ImageWindow3D("ImageJ 3D Viewer", this);
 		plDialog = new PointListDialog(win);
 		plDialog.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
@@ -183,6 +183,9 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 		menubar = new Image3DMenubar(this);
 		registrationMenubar = new RegistrationMenubar(this);
 		setMenubar(menubar);
+
+		win.pack();
+		win.setVisible(true);
 	}
 
 	/**

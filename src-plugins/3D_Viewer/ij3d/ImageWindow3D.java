@@ -68,8 +68,6 @@ public class ImageWindow3D extends Frame implements UniverseListener,
 
 		add(canvas3D, -1);
 
-		pack();
-
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
 				close();
@@ -87,7 +85,6 @@ public class ImageWindow3D extends Frame implements UniverseListener,
 		updateImagePlus();
 		universe.ui.setHandTool();
 		lastToolID = universe.ui.getToolId();
-		show();
 	}
 
 	public DefaultUniverse getUniverse() {
