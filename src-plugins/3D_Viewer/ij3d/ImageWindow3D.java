@@ -12,6 +12,7 @@ import ij.gui.ImageCanvas;
 import ij.process.ColorProcessor;
 import ij.macro.Interpreter;
 
+import java.awt.Frame;
 import java.awt.AWTException;
 import java.awt.Label;
 import java.awt.Color;
@@ -31,6 +32,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowStateListener;
 import java.awt.event.WindowEvent;
+import java.awt.event.WindowAdapter;
 
 import java.lang.reflect.Method;
 
@@ -42,14 +44,14 @@ import javax.media.j3d.RenderingErrorListener;
 import javax.media.j3d.Screen3D;
 import javax.vecmath.Color3f;
 
-public class ImageWindow3D extends ImageWindow implements UniverseListener,
-							WindowStateListener,
+public class ImageWindow3D extends Frame implements UniverseListener,
 							KeyListener {
 	DefaultUniverse universe;
 	ImageCanvas3D canvas3D;
 	Label status = new Label("");
 	private boolean noOffScreen = true;
 	private ErrorListener error_listener;
+	private ImagePlus imp;
 
 	public ImageWindow3D(String title, DefaultUniverse universe) {
 		super(title);
@@ -64,27 +66,16 @@ public class ImageWindow3D extends ImageWindow implements UniverseListener,
 		error_listener = new ErrorListener();
 		error_listener.addTo(universe);
 
-		WindowManager.addWindow(this);
-		WindowManager.setCurrentWindow(this);
-
-		// remove the existing children
-		for (Component component : getComponents())
-			remove(component);
-
 		add(canvas3D, -1);
-// 		status.setText("");
-// 		status.setForeground(Color.WHITE);
-// 		Color3f c = UniverseSettings.defaultBackground;
-// 		status.setBackground(new Color(c.x, c.y, c.z));
-// 		status.setFont(new Font("Verdana", Font.PLAIN, 20));
-// 		add(status, BorderLayout.SOUTH, -1);
 
 		pack();
 
-		addFocusListener(this);
-		setFocusTraversalKeysEnabled(false);
-		addWindowListener(this);
-		addWindowStateListener(this);
+		addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				close();
+			}
+		});
+
 		// this listener first, to interrupt events
 		canvas3D.addKeyListener(this);
 		ImageJ ij = IJ.getInstance();
@@ -110,24 +101,24 @@ public class ImageWindow3D extends ImageWindow implements UniverseListener,
 	/* prevent ImageWindow from painting */
 	public void drawInfo(Graphics g) { }
 	public void paint(Graphics g) { }
-	public Insets getInsets() {
-		// pretend to have a canvas to avoid a NullPointerException
-		// when calling the super method
-		ic = getCanvas();
-		Insets insets = super.getInsets();
-		ic = null;
-		double mag = 1;
-		int extraWidth = (int)((MIN_WIDTH - imp.getWidth()*mag) / 2.0);
-		if (extraWidth < 0) extraWidth = 0;
-		int extraHeight = (int)((MIN_HEIGHT - imp.getHeight()*mag)/2.0);
-		if (extraHeight < 0) extraHeight = 0;
-		insets = new Insets(
-			insets.top - 10 /* TEXT_GAP */ - extraHeight,
-			insets.left - extraWidth,
-			insets.bottom - extraHeight,
-			insets.right - extraWidth);
-		return insets;
-	}
+// 	public Insets getInsets() {
+// 		// pretend to have a canvas to avoid a NullPointerException
+// 		// when calling the super method
+// 		ic = getCanvas();
+// 		Insets insets = super.getInsets();
+// 		ic = null;
+// 		double mag = 1;
+// 		int extraWidth = (int)((MIN_WIDTH - imp.getWidth()*mag) / 2.0);
+// 		if (extraWidth < 0) extraWidth = 0;
+// 		int extraHeight = (int)((MIN_HEIGHT - imp.getHeight()*mag)/2.0);
+// 		if (extraHeight < 0) extraHeight = 0;
+// 		insets = new Insets(
+// 			insets.top - 10 /* TEXT_GAP */ - extraHeight,
+// 			insets.left - extraWidth,
+// 			insets.bottom - extraHeight,
+// 			insets.right - extraWidth);
+// 		return insets;
+// 	}
 
 	/* off-screen rendering stuff */
 	private Canvas3D offScreenCanvas3D;
@@ -292,29 +283,21 @@ public class ImageWindow3D extends ImageWindow implements UniverseListener,
 		return status;
 	}
 
-	/**
-	 * Override windowActivated() in ij.gui.ImageWindow.
-	 * The default implementation sets ImageJ's menubar to this
-	 * ImageWindow, however, we have our own menubar here.
-	 */
-	public void windowActivated(WindowEvent e) {
-		ImageJ ij = IJ.getInstance();
-		boolean quitting = ij!=null && ij.quitting();
-		imp.setActivated(); // notify ImagePlus that image has been activated
-		if (!closed && !quitting && !Interpreter.isBatchMode())
-			WindowManager.setCurrentWindow(this);
-	}
+// 	/**
+// 	 * Override windowActivated() in ij.gui.ImageWindow.
+// 	 * The default implementation sets ImageJ's menubar to this
+// 	 * ImageWindow, however, we have our own menubar here.
+// 	 */
+// 	public void windowActivated(WindowEvent e) {
+// 		ImageJ ij = IJ.getInstance();
+// 		boolean quitting = ij!=null && ij.quitting();
+// 		imp.setActivated(); // notify ImagePlus that image has been activated
+// 		if (!closed && !quitting && !Interpreter.isBatchMode())
+// 			WindowManager.setCurrentWindow(this);
+// 	}
 
-	public void windowClosing(WindowEvent e) {
-		super.windowClosing(e);
-		close();
-	}
-
-	public boolean close() {
-		super.close();
-		WindowManager.removeWindow(this);
-
-		if (null == universe) return true;
+	public void close() {
+		if (null == universe) return;
 		universe.removeUniverseListener(this);
 
 		// Must remove the listener so this instance can be garbage
@@ -336,13 +319,13 @@ public class ImageWindow3D extends ImageWindow implements UniverseListener,
 			universe.cleanup();
 		ImageJ ij = IJ.getInstance();
 		if (null != ij) {
-			removeKeyListener(ij);
 			canvas3D.removeKeyListener(ij);
+			removeKeyListener(ij);
 		}
 		imp_updater.quit();
 		canvas3D.flush();
 		universe = null;
-		return true;
+		dispose();
 	}
 
 	/*
