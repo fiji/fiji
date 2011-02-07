@@ -226,11 +226,12 @@ public class WekaSegmentation {
 	}
 
 	/**
-	 * Adds a ROI to the list of examples for a certain class.
+	 * Adds a ROI to the list of examples for a certain class
+	 * and slice.
 	 *
 	 * @param classNum the number of the class
 	 * @param roi the ROI containing the new example
-	 * @param z number of the current slice
+	 * @param n number of the current slice
 	 */
 	public void addExample(int classNum, Roi roi, int n) 
 	{
