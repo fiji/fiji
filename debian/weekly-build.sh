@@ -52,6 +52,7 @@ fi
 # This cleaning logic is taken from bin/nightly-build.sh in Fiji:
 
 ( cd $D &&
+    bin/gitignore-in-submodules.sh submodule
     git fetch origin master &&
     git reset --hard FETCH_HEAD &&
     git submodule update &&
