@@ -19,17 +19,17 @@ then
     git clone contrib@pacific.mpi-cbg.de:/srv/git/fiji.git
     ( cd fiji &&
 	git submodule update --init \
-	    AutoComplete \
-	    ImageJA \
-	    RSyntaxTextArea \
-	    TrakEM2 \
-	    bio-formats \
-	    commons-math \
-	    ij-plugins \
-	    imglib \
-	    mpicbg \
-	    tcljava \
-	    weka
+	    modules/AutoComplete \
+	    modules/ImageJA \
+	    modules/RSyntaxTextArea \
+	    modules/TrakEM2 \
+	    modules/bio-formats \
+	    modules/commons-math \
+	    modules/ij-plugins \
+	    modules/imglib \
+	    modules/mpicbg \
+	    modules/tcljava \
+	    modules/weka
     )
 
     VERSION=$( cd fiji && dpkg-parsechangelog | egrep '^Version' | sed 's/^Version: //' )
