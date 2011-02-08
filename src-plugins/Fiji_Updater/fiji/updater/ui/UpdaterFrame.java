@@ -55,6 +55,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -696,18 +697,41 @@ public class UpdaterFrame extends JFrame
 		return true;
 	}
 
+	public void showMessageBox(String message, int type) {
+		String title = type == JOptionPane.ERROR_MESSAGE ? "Error" :
+			type == JOptionPane.WARNING_MESSAGE ? "Warning" : "Information";
+		if (hidden) {
+			// Do not show, but wait for dispose() to be called
+			JDialog fakeDialog = new JDialog(this, title) {
+				public void dispose() {
+					synchronized (this) {
+						notifyAll();
+					}
+					super.dispose();
+				}
+			};
+			JOptionPane pane = new JOptionPane(message, type);
+			fakeDialog.getContentPane().add(pane);
+			fakeDialog.pack();
+			try {
+				synchronized (fakeDialog) {
+					fakeDialog.wait();
+				}
+			} catch (InterruptedException e) { /* ignore */ }
+		}
+		else
+			JOptionPane.showMessageDialog(this, message, title, type);
+	}
+
 	public void error(String message) {
-		JOptionPane.showMessageDialog(this, message, "Error",
-				JOptionPane.ERROR_MESSAGE);
+		showMessageBox(message, JOptionPane.ERROR_MESSAGE);
 	}
 
 	public void warn(String message) {
-		JOptionPane.showMessageDialog(this, message, "Warning",
-				JOptionPane.WARNING_MESSAGE);
+		showMessageBox(message, JOptionPane.WARNING_MESSAGE);
 	}
 
 	public void info(String message) {
-		JOptionPane.showMessageDialog(this, message, "Information",
-				JOptionPane.INFORMATION_MESSAGE);
+		showMessageBox(message, JOptionPane.INFORMATION_MESSAGE);
 	}
 }
