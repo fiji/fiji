@@ -1223,6 +1223,33 @@ public class Executer {
 		univ.setRotationInterval(interval);
 	}
 
+	public void snapshot() {
+		int w = univ.getCanvas().getWidth();
+		int h = univ.getCanvas().getHeight();
+
+		GenericDialog gd = new GenericDialog("Snapshot",
+				univ.getWindow());
+		gd.addNumericField("Target_width", w, 0);
+		gd.addNumericField("Target_height", h, 0);
+		gd.showDialog();
+		if(gd.wasCanceled())
+			return;
+		w = (int)gd.getNextNumber();
+		h = (int)gd.getNextNumber();
+
+		Map props = univ.getCanvas().queryProperties();
+		int maxW = (Integer)props.get("textureWidthMax");
+		int maxH = (Integer)props.get("textureHeightMax");
+
+		if(w < 0 || w >= maxW || h < 0 || h >= maxH) {
+			IJ.error("Width must be between 0 and " + maxW +
+				",\nheight between 0 and " + maxH);
+			return;
+		}
+		univ.takeSnapshot(w, h).show();
+	}
+
+
 	public void viewPreferences() {
 		UniverseSettings.initFromDialog(univ);
 	}

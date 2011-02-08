@@ -40,6 +40,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 	private JMenuItem delete;
 	private JMenuItem properties;
 	private JMenuItem resetView;
+	private JMenuItem snapshot;
 	private JMenuItem record360;
 	private JMenuItem startRecord;
 	private JMenuItem stopRecord;
@@ -330,6 +331,12 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 
 		view.addSeparator();
 
+		snapshot = new JMenuItem("Take snapshot");
+		snapshot.addActionListener(this);
+		view.add(snapshot);
+
+		view.addSeparator();
+
 		record360 = new JMenuItem("Record 360 deg rotation");
 		record360.addActionListener(this);
 		view.add(record360);
@@ -536,6 +543,8 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 			executer.fitViewToUniverse();
 		else if(src == fitViewToContent)
 			executer.fitViewToContent(getSelected());
+		else if(src == snapshot)
+			executer.snapshot();
 		else if(src == record360)
 			executer.record360();
 		else if(src == startRecord)
