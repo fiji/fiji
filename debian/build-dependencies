@@ -26,3 +26,4 @@ libjava3d-jni
 build-essential
 python2.6-minimal
 python-lxml
+zip
