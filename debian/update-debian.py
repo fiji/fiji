@@ -707,13 +707,17 @@ if options.clean:
 
     # Hopefully there'll be a better fix for this at some stage, but
     # for the moment rewrite any occurence of "fiji --ant" in
-    # staged-plugins/* to include the --java-home parameter
-    for s in os.listdir('staged-plugins'):
-        filename = os.path.join('staged-plugins',s)
+    # staged-plugins/* and bin/build-jython.sh to include the
+    # --java-home parameter:
+
+    files_to_rewrite = [ os.path.join('staged-plugins',s) for s in os.listdir('staged-plugins') ]
+    files_to_rewrite.append('bin/build-jython.sh')
+
+    for filename in files_to_rewrite:
         with NamedTemporaryFile(delete=False) as tfp:
             with open(filename) as original:
                 for line in original:
-                    tfp.write(re.sub('fiji\s+--ant',"fiji --java-home '%s' --ant"%(java_home,),line))
+                    tfp.write(re.sub('fiji\s+--ant',"fiji --ant --java-home '%s'"%(java_home,),line))
 
         os.rename(tfp.name, original.name)
 
