@@ -5,6 +5,7 @@ import ij3d.ContentInstant;
 import ij3d.Image3DUniverse;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -38,15 +39,13 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	private final Image3DUniverse universe;
 	// For highlighting
 	private ArrayList<Spot> previousSpotHighlight;
-	private HashMap<Spot, Color3f> previousColoHighlight;
+	private HashMap<Spot, Color3f> previousColorHighlight;
 	private HashMap<Spot, Integer> previousFrameHighlight;
 	private HashMap<DefaultWeightedEdge, Color3f> previousEdgeHighlight;
 	
 	public SpotDisplayer3D(Image3DUniverse universe, final float radius) {
 		this.radius = radius;
 		this.universe = universe;
-		universe.getCurrentTimepoint();
-		
 	}
 	
 	public SpotDisplayer3D(Image3DUniverse universe) {
@@ -58,38 +57,36 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	 * OVERRIDDEN METHODS
 	 */
 	
+
 	@Override
-	public void highlightSpots(Set<Spot> spots) {
+	public void highlightSpots(SpotCollection spots) {
 		// Restore previous display settings for previously highlighted spot
 		if (null != previousSpotHighlight)
 			for (Spot spot : previousSpotHighlight)
-				blobs.get(previousFrameHighlight.get(spot)).setColor(spot, previousColoHighlight.get(spot));
+				blobs.get(previousFrameHighlight.get(spot)).setColor(spot, previousColorHighlight.get(spot));
 		previousSpotHighlight = new ArrayList<Spot>(spots.size());
-		previousColoHighlight = new HashMap<Spot, Color3f>(spots.size());
+		previousColorHighlight = new HashMap<Spot, Color3f>(spots.size());
 		previousFrameHighlight = new HashMap<Spot, Integer>(spots.size());
 		
-		int frame = -1;
-		for (Spot spot : spots) {
-			frame = - 1;
-			for(int i : spotsToShow.keySet()) {
-				List<Spot> spotThisFrame = spotsToShow.get(i);
-				if (spotThisFrame.contains(spot)) {
-					frame = i;
-					break;
-				}
+		List<Spot> st;
+		for(int frame : spots.keySet()) {
+			st = spots.get(frame);
+			for(Spot spot : st) {
+				// Store current settings
+				previousSpotHighlight.add(spot);
+				previousColorHighlight.put(spot, blobs.get(frame).getColor3f(spot));
+				previousFrameHighlight.put(spot, frame);
+
+				// Update target spot display
+				blobs.get(frame).setColor(spot,HIGHLIGHT_COLOR3F);
 			}
-			if (frame == -1)
-				continue;
-			
-			// Store current settings
-			previousSpotHighlight.add(spot);
-			previousColoHighlight.put(spot, blobs.get(frame).getColor3f(spot));
-			previousFrameHighlight.put(spot, frame);
-			
-			// Update target spot display
-			blobs.get(frame).setColor(spot,HIGHLIGHT_COLOR3F);
 		}
-	};
+	}
+	
+	@Override
+	public void highlightSpots(Collection<Spot> spots) {
+		highlightSpots(spotsToShow.subset(spots));
+	}
 	
 	@Override
 	public void centerViewOn(Spot spot) {
@@ -151,18 +148,11 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	}
 	
 	@Override
-	public void setDisplayTrackMode(TrackDisplayMode mode, int displayDepth) { // TODO
+	public void setDisplayTrackMode(TrackDisplayMode mode, int displayDepth) {
 		super.setDisplayTrackMode(mode, displayDepth);
 		if (null == trackContent) 
 			return;
-			
-		switch (trackDisplayMode) {
-		
-		case ALL_WHOLE_TRACKS:
-			trackContent.setVisible(true);
-			break;
-		}
-		
+		trackNode.setDisplayTrackMode(mode, displayDepth);	
 	}
 	
 	public void refresh() { 
@@ -173,9 +163,12 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	@Override
 	public void setTrackGraph(SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph) {
 		super.setTrackGraph(trackGraph);
-		if (universe.contains(TRACK_CONTENT_NAME))
+		if (universe.contains(TRACK_CONTENT_NAME)) {
 			universe.removeContent(TRACK_CONTENT_NAME);
+			universe.removeTimelapseListener(trackNode);
+		}
 		trackContent = makeTrackContent();
+		universe.addTimelapseListener(trackNode);
 		try {
 			trackContent = universe.addContentLater(trackContent).get();
 		} catch (InterruptedException e) {
@@ -312,6 +305,5 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		return blobContent;
 	}
 
-	
 
 }

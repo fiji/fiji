@@ -44,6 +44,23 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	/*
 	 * METHODS
 	 */
+	
+	/**
+	 * Return a new SpotCollection that contains only the given spot, at the right frame, taken from this
+	 * spot collection. If one of the given spot is not found in this collection, it is not added to the
+	 * new collection.
+	 */
+	public SpotCollection subset(Collection<Spot> spots) {
+		SpotCollection newCollection = new SpotCollection();
+		Integer frame;
+		for(Spot spot : spots) {
+			frame = getFrame(spot);
+			if (null == frame)
+				continue;
+			newCollection.add(spot, frame);
+		}
+		return newCollection;
+	}
 
 	/**
 	 * Remove the given spot from the given frame only.

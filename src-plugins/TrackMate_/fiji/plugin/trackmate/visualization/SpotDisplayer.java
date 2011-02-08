@@ -374,6 +374,18 @@ public abstract class SpotDisplayer {
 			}
 
 		} else if (flag == REPLACE_SELECTION_FLAG) {
+
+			if (null == target) {
+				// A null target means that we must empty the current selection
+				spotArray = spotSelection.getAllSpots().toArray(new Spot[0]);
+				areNew = new boolean[spotArray.length];
+				Arrays.fill(areNew, false);
+				spotSelection.clear();
+				fireSpotSelectionChange(spotArray, areNew);
+				highlightSpots(spotSelection);
+				return;
+			}
+			
 			// Forget previous selection, and set selection to be target
 			Integer selectionFrame = spotSelection.getFrame(target); 
 			if (spotSelection.remove(target, selectionFrame)) {
