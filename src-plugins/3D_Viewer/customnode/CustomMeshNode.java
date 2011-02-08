@@ -86,4 +86,14 @@ public class CustomMeshNode extends ContentNode {
 		center = new Point3f();
 		mesh.calculateMinMaxCenterPoint(min, max, center);
 	}
+
+	@Override
+	public void restoreDisplayedData(String path, String name) {
+		mesh.restoreDisplayedData(path, name);
+	}
+
+	@Override
+	public void swapDisplayedData(String path, String name) {
+		mesh.swapDisplayedData(path, name);
+	}
 }

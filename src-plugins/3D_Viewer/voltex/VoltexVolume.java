@@ -33,13 +33,13 @@ import javax.vecmath.Point3d;
 public class VoltexVolume extends Volume {
 
 	/** The textures' size. These are powers of two. */
-	public final int xTexSize, yTexSize, zTexSize;
+	int xTexSize, yTexSize, zTexSize;
 
 	/** The texGenScale */
-	public final float xTexGenScale, yTexGenScale, zTexGenScale;
+	float xTexGenScale, yTexGenScale, zTexGenScale;
 
 	/** The mid point in the data */
-	public final Point3d volRefPt = new Point3d();
+	final Point3d volRefPt = new Point3d();
 
 	/** The ColorModel used for 8-bit textures */
 	protected static final ColorModel greyCM = createGreyColorModel();
@@ -73,11 +73,14 @@ public class VoltexVolume extends Volume {
 	 * @param imp
 	 * @param ch A boolean[] array of length three, which indicates whether
 	 * the red, blue and green channel should be read. This has only an
-	 * effct when reading color images.
+	 * effect when reading color images.
 	 */
 	public VoltexVolume(ImagePlus imp, boolean[] ch) {
+		setImage(imp, ch);
+	}
 
-		super(imp, ch);
+	public void setImage(ImagePlus imp, boolean[] ch) {
+		super.setImage(imp, ch);
 		// tex size is next power of two greater than max - min
 		// regarding pixels
 		xTexSize = powerOfTwo(xDim);
@@ -103,6 +106,28 @@ public class VoltexVolume extends Volume {
 		initVoltexLoader();
 		createImageComponents();
 		updateData();
+	}
+
+	public void swap(String path) {
+		super.swap(path);
+		xy = null;
+		xz = null;
+		yz = null;
+		xyComp = null;
+		xzComp = null;
+		yzComp = null;
+	}
+
+	public void restore(String path) {
+		ImagePlus imp = IJ.openImage(path + ".tif");
+		try {
+			setImage(IJ.openImage(path + ".tif"), channels);
+		} catch(NullPointerException e) {
+			throw new IllegalArgumentException("Cannot load image from " + path);
+		} catch(RuntimeException e) {
+			System.out.println("Cannot load " + path);
+			throw e;
+		}
 	}
 
 	private void createImageComponents() {
@@ -194,12 +219,6 @@ public class VoltexVolume extends Volume {
 	 * which is either INT_DATA or BYTE_DATA.
 	 */
 	protected void initVoltexLoader() {
-		int channel = 0;
-		if(image instanceof IntImage) {
-			for(int i = 0; i < 3; i++)
-				if(channels[i])
-					channel = i;
-		}
 		switch(dataType) {
 			case BYTE_DATA:
 				voltexLoader = new VoltexByteLoader(

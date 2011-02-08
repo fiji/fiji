@@ -134,6 +134,11 @@ public class ContentCreatorDialog {
 					gd.getNextBoolean() };
 		timepoint = (int)gd.getNextNumber();
 
+		if(resamplingFactor < 1) {
+			IJ.error("Resampling factor must be greater than 0");
+			return null;
+		}
+
 		if(univ.contains(name)) {
 			IJ.error("Could not add new content. A content with " +
 				"name \"" + name + "\" exists already.");

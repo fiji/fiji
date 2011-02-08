@@ -342,4 +342,16 @@ public class VoltexGroup extends ContentNode {
 				* cal.pixelDepth);
 
 	}
+
+	@Override
+	public void swapDisplayedData(String path, String name) {
+		renderer.volume.swap(path + ".tif");
+		renderer.disableTextures();
+	}
+
+	@Override
+	public void restoreDisplayedData(String path, String name) {
+		renderer.volume.restore(path + ".tif");
+		renderer.enableTextures();
+	}
 }
