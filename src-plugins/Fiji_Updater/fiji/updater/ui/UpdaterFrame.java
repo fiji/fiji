@@ -500,7 +500,7 @@ public class UpdaterFrame extends JFrame
 			dispose();
 		} catch (Canceled e) {
 			// TODO: remove "update/" directory
-			IJ.error("Canceled");
+			error("Canceled");
 			installer.done();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -530,8 +530,7 @@ public class UpdaterFrame extends JFrame
 			installer.done();
 		} catch (IOException e) {
 			// TODO: remove "update/" directory
-			// TODO: make error() method
-			IJ.error("Installer failed: " + e);
+			error("Installer failed: " + e);
 			installer.done();
 		}
 	}
@@ -680,10 +679,10 @@ public class UpdaterFrame extends JFrame
 			dispose();
 		} catch (Canceled e) {
 			// TODO: teach uploader to remove the lock file
-			IJ.error("Canceled");
+			error("Canceled");
 		} catch (Throwable e) {
 			e.printStackTrace();
-			IJ.error("Upload failed: " + e);
+			error("Upload failed: " + e);
 		}
 	}
 
