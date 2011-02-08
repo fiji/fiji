@@ -171,24 +171,23 @@ execute(args) {
 	}
 }
 
-upload(bsh) {
+startFiji(root, type, bsh) {
 	args = new String[] {
-		new File(tmpDeveloperRoot, "fiji").getAbsolutePath(),
+		new File(root, "fiji").getAbsolutePath(),
+		"--java-home=" + System.getProperty("java.home"),
 		new File(libDir, "client.bsh").getAbsolutePath(),
 		bsh
 	};
-	print("Starting fake developer with " + bsh);
+	print("Starting fake " + type + " with " + bsh);
 	execute(args);
 }
 
+upload(bsh) {
+	startFiji(tmpDeveloperRoot, "developer", bsh);
+}
+
 download(bsh) {
-	args = new String[] {
-		new File(tmpUserRoot, "fiji").getAbsolutePath(),
-		new File(libDir, "client.bsh").getAbsolutePath(),
-		bsh
-	};
-	print("Starting fake user with " + bsh);
-	execute(args);
+	startFiji(tmpUserRoot, "user", bsh);
 }
 
 
