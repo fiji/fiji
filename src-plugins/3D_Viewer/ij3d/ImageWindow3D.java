@@ -28,8 +28,6 @@ import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.image.BufferedImage;
 
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.WindowStateListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowAdapter;
@@ -44,8 +42,8 @@ import javax.media.j3d.RenderingErrorListener;
 import javax.media.j3d.Screen3D;
 import javax.vecmath.Color3f;
 
-public class ImageWindow3D extends JFrame implements UniverseListener,
-							KeyListener {
+public class ImageWindow3D extends JFrame implements UniverseListener {
+
 	private DefaultUniverse universe;
 	private ImageCanvas3D canvas3D;
 	private Label status = new Label("");
@@ -74,17 +72,9 @@ public class ImageWindow3D extends JFrame implements UniverseListener,
 			}
 		});
 
-		// this listener first, to interrupt events
-		canvas3D.addKeyListener(this);
-		ImageJ ij = IJ.getInstance();
-		if (ij != null) {
-			canvas3D.addKeyListener(ij);
-			addKeyListener(ij);
-		}
 		universe.addUniverseListener(this);
 		updateImagePlus();
 		universe.ui.setHandTool();
-		lastToolID = universe.ui.getToolId();
 	}
 
 	public DefaultUniverse getUniverse() {
@@ -275,11 +265,7 @@ public class ImageWindow3D extends JFrame implements UniverseListener,
 
 		if (null != universe.getWindow())
 			universe.cleanup();
-		ImageJ ij = IJ.getInstance();
-		if (null != ij) {
-			canvas3D.removeKeyListener(ij);
-			removeKeyListener(ij);
-		}
+
 		imp_updater.quit();
 		canvas3D.flush();
 		universe = null;
@@ -315,29 +301,6 @@ public class ImageWindow3D extends JFrame implements UniverseListener,
 
 	private int lastToolID;
 
-	public void keyPressed(KeyEvent e) {
-		if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-			if (universe.ui.isHandTool())
-				universe.ui.setTool(lastToolID);
-			else {
-				lastToolID = universe.ui.getToolId();
-				universe.ui.setHandTool();
-			}
-		}
-		// AVOID forwarding the x,y,z commands to ImageJ when manipulating
-		// an orthoslice
-		Content c = universe.getSelected();
-		if (null != c) {
-			switch (e.getKeyCode()) {
-				case KeyEvent.VK_X:
-				case KeyEvent.VK_Y:
-				case KeyEvent.VK_Z:
-					e.consume();
-					break;
-			}
-		}
-	}
-
 	private class ErrorListener implements RenderingErrorListener {
 		public void errorOccurred(RenderingError error) {
 			throw new RuntimeException(error.getDetailMessage());
@@ -366,8 +329,5 @@ public class ImageWindow3D extends JFrame implements UniverseListener,
 			}
 		}
 	}
-
-	public void keyTyped(KeyEvent e) {}
-	public void keyReleased(KeyEvent e) {}
 }
 

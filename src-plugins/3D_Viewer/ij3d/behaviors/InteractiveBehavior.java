@@ -1,5 +1,7 @@
 package ij3d.behaviors;
 
+import ij.IJ;
+
 import java.util.Enumeration;
 import java.util.List;
 
@@ -61,6 +63,8 @@ public class InteractiveBehavior extends Behavior {
 	}
 	public List<InteractiveBehavior> getExternalBehaviors() { return external; }
 
+	private int lastToolID;
+
 	/**
 	 * Initializes a new InteractiveBehavior.
 	 * @param univ
@@ -72,6 +76,7 @@ public class InteractiveBehavior extends Behavior {
 		this.picker = univ.getPicker();
 		this.viewTransformer = univ.getViewPlatformTransformer();
 		mouseEvents = new WakeupOnAWTEvent[6];
+		lastToolID = univ.ui.getToolId();
 	}
 
 	/**
@@ -147,6 +152,14 @@ public class InteractiveBehavior extends Behavior {
 		return (mask & (onmask | offmask)) == onmask;
 	}
 
+	private boolean isXYZKey(KeyEvent e) {
+		int c = e.getKeyCode();
+		boolean b = c == KeyEvent.VK_X ||
+			c == KeyEvent.VK_Y ||
+			c == KeyEvent.VK_Z;
+		return b;
+	}
+
 	/**
 	 * Process key events.
 	 * @param e
@@ -162,12 +175,50 @@ public class InteractiveBehavior extends Behavior {
 		}
 
 		int id = e.getID();
+		int code = e.getKeyCode();
 
-		if(id == KeyEvent.KEY_RELEASED || id == KeyEvent.KEY_TYPED)
+		boolean consumed = true;
+		try {
+
+		/*
+		 * Forward keyReleased to the canvas, which keeps
+		 * track of pressed keys.
+		 */
+		if(id == KeyEvent.KEY_RELEASED) {
+			canvas.keyReleased(e);
+			if(!isXYZKey(e))
+				consumed = false;
+			return;
+		}
+
+		if(id == KeyEvent.KEY_TYPED)
 			return;
 
+		/*
+		 * Forward keyReleased to the canvas, which keeps
+		 * track of pressed keys.
+		 */
+		canvas.keyPressed(e);
+		if(!isXYZKey(e))
+			consumed = false;
+		else
+			return;
+
+		/*
+		 * Handle escape key, which switches between the
+		 * HAND tool and the last used tool.
+		 */
+		if (code == KeyEvent.VK_ESCAPE) {
+			if (univ.ui.isHandTool())
+				univ.ui.setTool(lastToolID);
+			else {
+				lastToolID = univ.ui.getToolId();
+				univ.ui.setHandTool();
+			}
+			return;
+		}
+
 		Content c = univ.getSelected();
-		int code = e.getKeyCode();
 		int axis = -1;
 		if(canvas.isKeyDown(KeyEvent.VK_X))
 			axis = VolumeRenderer.X_AXIS;
@@ -176,8 +227,6 @@ public class InteractiveBehavior extends Behavior {
 		else if(canvas.isKeyDown(KeyEvent.VK_Z))
 			axis = VolumeRenderer.Z_AXIS;
 		// Consume events if used, to avoid other listeners from reusing the event
-		boolean consumed = true;
-		try {
 		if(e.isShiftDown()) {
 			if(c != null && !c.isLocked())
 				contentTransformer.init(c, 0, 0);
@@ -265,12 +314,17 @@ public class InteractiveBehavior extends Behavior {
 
 			}
 		}
-		// must be last line in try/catch block
+		// If we arrive here, the event was not handled.
+		// We give it to ImageJ
 		consumed = false;
 		} finally {
 			// executed when returning anywhere above,
 			// since then consumed is not set to false
-			if (consumed) e.consume();
+			if (consumed)
+				e.consume();
+			if(!e.isConsumed() && IJ.getInstance() != null)
+				if(code == KeyEvent.VK_L)
+					IJ.getInstance().keyPressed(e);
 		}
 	}
 
