@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import os
+import stat
 import sys
 import urllib2
 import re
@@ -714,11 +715,12 @@ if options.clean:
     files_to_rewrite.append('bin/build-jython.sh')
 
     for filename in files_to_rewrite:
+        original_permissions = stat.S_IMODE(os.stat(filename).st_mode)
         with NamedTemporaryFile(delete=False) as tfp:
             with open(filename) as original:
                 for line in original:
                     tfp.write(re.sub('fiji\s+--ant',"fiji --ant --java-home '%s'"%(java_home,),line))
-
+        os.chmod(tfp.name, original_permissions)
         os.rename(tfp.name, original.name)
 
     # Remove all the files in precompiled - we want to build
