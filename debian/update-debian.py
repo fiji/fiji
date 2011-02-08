@@ -13,6 +13,7 @@ from lxml import etree
 from subprocess import call, check_call, Popen, PIPE
 from common import *
 import textwrap
+from tempfile import NamedTemporaryFile
 
 # On Ubuntu and Debian, the required Java3D jars are in these packages:
 #
@@ -347,6 +348,9 @@ options,args = parser.parse_args()
 
 source_directory = os.path.split(script_directory)[0]
 os.chdir(source_directory)
+
+with open('debian/java-home') as fp:
+    java_home = fp.read().strip()
 
 # ========================================================================
 # Fill in some template information at the top of the changelog, including
@@ -700,6 +704,18 @@ if options.clean:
         line = re.sub('jars/Jama-1\.0\.2\.jar','/usr/share/java/jama.jar',line)
         fp.write(line)
     fp.close()
+
+    # Hopefully there'll be a better fix for this at some stage, but
+    # for the moment rewrite any occurence of "fiji --ant" in
+    # staged-plugins/* to include the --java-home parameter
+    for s in os.listdir('staged-plugins'):
+        filename = os.path.join('staged-plugins',s)
+        with NamedTemporaryFile(delete=False) as tfp:
+            with open(filename) as original:
+                for line in original:
+                    tfp.write(re.sub('fiji\s+--ant',"fiji --java-home '%s' --ant"%(java_home,),line))
+
+        os.rename(tfp.name, original.name)
 
     # Remove all the files in precompiled - we want to build
     # everything from source:
