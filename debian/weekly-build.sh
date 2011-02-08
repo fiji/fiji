@@ -19,17 +19,18 @@ then
     git clone contrib@pacific.mpi-cbg.de:/srv/git/fiji.git
     ( cd fiji &&
 	git submodule update --init \
-	    AutoComplete \
-	    ImageJA \
-	    RSyntaxTextArea \
-	    TrakEM2 \
-	    bio-formats \
-	    commons-math \
-	    ij-plugins \
-	    imglib \
-	    mpicbg \
-	    tcljava \
-	    weka
+	    modules/AutoComplete \
+	    modules/ImageJA \
+	    modules/RSyntaxTextArea \
+	    modules/TrakEM2 \
+	    modules/bio-formats \
+	    modules/commons-math \
+	    modules/ij-plugins \
+	    modules/imglib \
+	    modules/jython \
+	    modules/mpicbg \
+	    modules/tcljava \
+	    modules/weka
     )
 
     VERSION=$( cd fiji && dpkg-parsechangelog | egrep '^Version' | sed 's/^Version: //' )
@@ -51,6 +52,7 @@ fi
 # This cleaning logic is taken from bin/nightly-build.sh in Fiji:
 
 ( cd $D &&
+    bin/gitignore-in-submodules.sh submodule
     git fetch origin master &&
     git reset --hard FETCH_HEAD &&
     git submodule update &&

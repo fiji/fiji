@@ -12,7 +12,6 @@ libxml-commons-external-java
 junit4 (>= 4.3)
 weka
 libitext1-java
-jython
 libjzlib-java
 clojure
 rhino
@@ -27,3 +26,4 @@ libjava3d-jni
 build-essential
 python2.6-minimal
 python-lxml
+zip
