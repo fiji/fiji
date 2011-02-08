@@ -12,7 +12,6 @@ libxml-commons-external-java
 junit4 (>= 4.3)
 weka
 libitext1-java
-jython
 libjzlib-java
 clojure
 rhino

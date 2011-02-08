@@ -175,7 +175,10 @@ package_name_to_file_matchers = {
         [ "plugins/3D_Viewer.jar" ],
 
     "fiji-tracer" :
-        [ "plugins/Simple_Neurite_Tracer.jar" ]
+        [ "plugins/Simple_Neurite_Tracer.jar" ],
+
+    "fiji-jython" :
+        [ "jars/jython.jar" ]
 
 }
 
@@ -197,7 +200,6 @@ conflicts_and_replaces = {
 # less brittle.
 map_to_external_dependencies = {
     'jars/batik\.jar' : ( 'libbatik-java', 'libxml-commons-external-java' ),
-    'jars/jython\.jar' : ( 'jython', ),
     'jars/bsh.*\.jar' : ('bsh', ),
     'jars/clojure.*\.jar' : ( 'clojure', ),
     'jars/junit.*\.jar' : ( 'junit', ),
@@ -226,7 +228,6 @@ replacement_files =  {
     'jars/js.jar' : ( '/usr/share/java/js.jar', ),
     'jars/jsch-0.1.37.jar' : ( '/usr/share/java/jsch.jar', ),
     'jars/junit-4.5.jar' : ( '/usr/share/java/junit4.jar', ),
-    'jars/jython.jar' : ( '/usr/share/java/jython.jar', ),
     'jars/jzlib-1.0.7.jar' : ( '/usr/share/java/jzlib.jar', ),
     'jars/postgresql-8.2-506.jdbc3.jar' : ( '/usr/share/java/postgresql.jar', ),
     '$TOOLS_JAR' : ('/usr/lib/jvm/java-6-openjdk/lib/tools.jar', ),
@@ -435,7 +436,7 @@ mkdir -p "$FIJI_DIRECTORY"/build &&
   $SYSTEM_JAVA -classpath "$FIJI_DIRECTORY"/build fiji.build.Fake fiji &&
   $SYSTEM_JAVA -classpath "$FIJI_DIRECTORY"/build fiji.build.Fake jars/fake.jar
 
-./fiji --build -Dpython.home=/usr/share/jython -Dpython.path=/usr/lib/site-python -- FALLBACK=false VERBOSE=true \\
+./fiji --build -- FALLBACK=false VERBOSE=true \\
 ''')
         for k in sorted(new_classpaths.keys()):
             f.write('    "CLASSPATH(%s)=%s" \\\n' % (k,':'.join(sorted(new_classpaths[k]))))
@@ -638,7 +639,6 @@ if options.clean:
     to_remove.append("java/win64")
     to_remove.append("livehelper")
     to_remove.append("Retrotranslator")
-    to_remove.append("jython")
     to_remove.append("clojure")
     to_remove.append("junit")
 
@@ -682,8 +682,6 @@ if options.clean:
             if re.search("TurboReg_",line):
                 continue
             if re.search("TransformJ_",line):
-                continue
-            if re.search("(^\s*jars|precompiled)/jython.jar",line):
                 continue
             if re.search("(^\s*jars|precompiled)/clojure.jar",line):
                 continue
