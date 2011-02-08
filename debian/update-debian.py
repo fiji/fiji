@@ -436,7 +436,7 @@ mkdir -p "$FIJI_DIRECTORY"/build &&
   $SYSTEM_JAVA -classpath "$FIJI_DIRECTORY"/build fiji.build.Fake fiji &&
   $SYSTEM_JAVA -classpath "$FIJI_DIRECTORY"/build fiji.build.Fake jars/fake.jar
 
-./fiji --build -- FALLBACK=false VERBOSE=true \\
+./fiji --build --java-home "$JAVA_HOME" -- FALLBACK=false VERBOSE=true \\
 ''')
         for k in sorted(new_classpaths.keys()):
             f.write('    "CLASSPATH(%s)=%s" \\\n' % (k,':'.join(sorted(new_classpaths[k]))))
