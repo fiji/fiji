@@ -719,7 +719,7 @@ if options.clean:
         with NamedTemporaryFile(delete=False) as tfp:
             with open(filename) as original:
                 for line in original:
-                    tfp.write(re.sub('fiji\s+--ant',"fiji --ant --java-home '%s'"%(java_home,),line))
+                    tfp.write(re.sub('fiji\s+--ant',"fiji --java-home '%s' --ant"%(java_home,),line))
         os.chmod(tfp.name, original_permissions)
         os.rename(tfp.name, original.name)
 
