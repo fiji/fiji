@@ -1117,6 +1117,8 @@ public class Executer {
 			}
 		}
 		out.getImage().setTitle(orig.getTitle() + "_transformed");
+		out.getImage().getProcessor().setColorModel(
+			orig.getProcessor().getColorModel());
 		out.getImage().show();
 	}
 
