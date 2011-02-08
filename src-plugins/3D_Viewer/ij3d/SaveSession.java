@@ -342,7 +342,7 @@ public class SaveSession {
 		String trans = toString(t);
 
 		out.println("BeginContentInstant");
-		out.println("name = "         + c.name);
+		out.println("name = "         + c.getName());
 		if(col != null)
 			out.println("color = "        + col);
 		out.println("timepoint = "    + c.timepoint);
@@ -582,7 +582,7 @@ System.out.println("loading " + sp[0]);
 		String ret = "";
 		for(CustomMesh cm : meshes) {
 			String name = cm.getName();
-			if(name == null) name = c.name;
+			if(name == null) name = c.getName();
 			name.replaceAll(" ", "_").
 				replaceAll("#", "--");
 			ret += "%%%" + cm.getFile() + "%%%" + name;

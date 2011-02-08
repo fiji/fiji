@@ -122,5 +122,13 @@ public class MeshGroup extends ContentNode {
 	public void transparencyUpdated(float transparency) {
 		mesh.setTransparency(transparency);
 	}
+
+	public void restoreDisplayedData(String path, String name) {
+		mesh.restoreDisplayedData(path, name);
+	}
+
+	public void swapDisplayedData(String path, String name) {
+		mesh.swapDisplayedData(path, name);
+	}
 }
 

@@ -304,6 +304,10 @@ public abstract class DefaultUniverse extends SimpleUniverse
 		fireTransformationUpdated();
 	}
 
+	/**
+	 * @deprecated This method should not be used any more from outside
+	 * this class. Use addInteractiveBehavior() instead.
+	 */
 	public void setInteractiveBehavior(InteractiveBehavior b) {
 		if(mouseBehavior != null)
 			scene.removeChild(mouseBehavior.getParent());
@@ -579,15 +583,17 @@ public abstract class DefaultUniverse extends SimpleUniverse
 	 * Close this universe and cleanup resources.
 	 */
 	public void close() {
+		win.close();
+	}
+
+	public void cleanup() {
 		UniverseSettings.save();
 		if(win != null) {
 			fireUniverseClosed();
 			while(!listeners.isEmpty())
 				listeners.remove(0);
-			win.close();
 			ImageWindow3D win2 = win;
 			win = null;
-			win2.destroy();
 			if (null != mouseBehavior) mouseBehavior.setExternalBehaviours(null);
 		}
 		// Flush native resources used by this universe:

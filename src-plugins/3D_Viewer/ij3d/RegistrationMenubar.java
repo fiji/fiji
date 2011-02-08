@@ -9,6 +9,7 @@ import ij.text.TextWindow;
 
 import java.text.DecimalFormat;
 
+import javax.swing.*;
 import java.awt.event.*;
 import java.awt.*;
 import java.util.Vector;
@@ -34,14 +35,14 @@ import javax.media.j3d.Transform3D;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Collection;
 
-public class RegistrationMenubar extends MenuBar implements ActionListener,
+public class RegistrationMenubar extends JMenuBar implements ActionListener,
 							UniverseListener {
 
 	private Image3DUniverse univ;
 
-	private Menu register;
-	private MenuItem exit;
-	private MenuItem adjustSlices;
+	private JMenu register;
+	private JMenuItem exit;
+	private JMenuItem adjustSlices;
 
 	private List openDialogs = new ArrayList();
 
@@ -54,13 +55,13 @@ public class RegistrationMenubar extends MenuBar implements ActionListener,
 
 		univ.addUniverseListener(this);
 
-		register = new Menu("Register");
+		register = new JMenu("Register");
 
-		exit = new MenuItem("Exit registration");
+		exit = new JMenuItem("Exit registration");
 		exit.addActionListener(this);
 		register.add(exit);
 
-		adjustSlices = new MenuItem("Adjust slices");
+		adjustSlices = new JMenuItem("Adjust slices");
 		adjustSlices.addActionListener(this);
 		register.add(adjustSlices);
 
@@ -100,7 +101,7 @@ public class RegistrationMenubar extends MenuBar implements ActionListener,
 	public void exitRegistration() {
 		templ.showPointList(false);
 		model.showPointList(false);
-		MenuBar mb = univ.getMenuBar();
+		JMenuBar mb = univ.getMenuBar();
 		univ.setMenubar(mb);
 		univ.clearSelection();
 		univ.setStatus("");

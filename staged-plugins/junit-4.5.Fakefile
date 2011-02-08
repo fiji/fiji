@@ -7,4 +7,4 @@ all <- $JAR
 MAINCLASS(junit-4.5.jar)=org.junit.runner.JUnitCore
 $JAR <- $DISTDIR/$JAR
 
-$DISTDIR/$JAR[../fiji --ant $ANTTARGET] <-
+$DISTDIR/$JAR[../../fiji --ant $ANTTARGET] <-

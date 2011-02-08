@@ -141,7 +141,6 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 	/** A mapping of the spots versus the color they must be drawn in. */
 	private Map<Spot, Color> spotColor = new HashMap<Spot, Color>();
 	
-
 	/*
 	 * CONSTRUCTORS
 	 */

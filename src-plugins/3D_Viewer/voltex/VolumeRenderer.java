@@ -4,7 +4,6 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij3d.AxisConstants;
 
-import javax.media.j3d.TextureUnitState;
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Canvas3D;
@@ -14,6 +13,8 @@ import javax.media.j3d.Node;
 import javax.media.j3d.OrderedGroup;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Switch;
+import javax.media.j3d.Texture;
+import javax.media.j3d.TextureUnitState;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.View;
 import javax.vecmath.Color3f;
@@ -93,6 +94,44 @@ public class VolumeRenderer implements AxisConstants {
 		root.addChild(axisSwitch);
 		root.setCapability(BranchGroup.ALLOW_DETACH);
 		root.setCapability(BranchGroup.ALLOW_LOCAL_TO_VWORLD_READ);
+	}
+
+	public void disableTextures() {
+		int[] size = new int[] {volume.xDim, volume.yDim, volume.zDim};
+
+		Appearance empty = new Appearance();
+		for(int axis = 0; axis < 3; axis++) {
+			for(int i = 0; i < size[axis]; i++) {
+				Group frontGroup = (Group)axisSwitch.
+					getChild(axisIndex[axis][FRONT]);
+				Group backGroup = (Group)axisSwitch.
+					getChild(axisIndex[axis][BACK]);
+
+				Appearance app = getAppearance(axis, i);
+				app.getTextureUnitState(0).setTexture(null);
+				((Shape3D)((Group)frontGroup.
+						getChild(i)).getChild(0)).setAppearance(empty);
+				((Shape3D)((Group)backGroup.
+						getChild(i)).getChild(0)).setAppearance(empty);
+			}
+		}
+	}
+
+	public void enableTextures() {
+		int[] size = new int[] {volume.xDim, volume.yDim, volume.zDim};
+		for(int axis = 0; axis < 3; axis++) {
+			for(int i = 0; i < size[axis]; i++) {
+				Appearance app = appCreator.getAppearance(axis, i);
+				Group frontGroup = (Group)axisSwitch.
+					getChild(axisIndex[axis][FRONT]);
+				((Shape3D)((Group)frontGroup.
+					getChild(i)).getChild(0)).setAppearance(app);
+				Group backGroup = (Group)axisSwitch.
+					getChild(axisIndex[axis][BACK]);
+				((Shape3D)((Group)backGroup.
+						getChild(size[axis] - i - 1)).getChild(0)).setAppearance(app);
+			}
+		}
 	}
 
 	/**
@@ -298,6 +337,7 @@ public class VolumeRenderer implements AxisConstants {
 		Appearance a = appCreator.getAppearance(axis, index);
 
 		Shape3D frontShape = new Shape3D(quadArray, a);
+		frontShape.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
 		frontShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
 
 		BranchGroup frontShapeGroup = new BranchGroup();
@@ -308,6 +348,7 @@ public class VolumeRenderer implements AxisConstants {
 
 		Shape3D backShape = new Shape3D(quadArray, a);
 		backShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
+		backShape.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
 
 		BranchGroup backShapeGroup = new BranchGroup();
 		backShapeGroup.setCapability(BranchGroup.ALLOW_DETACH);

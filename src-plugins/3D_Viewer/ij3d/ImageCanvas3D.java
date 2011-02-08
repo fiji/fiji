@@ -147,11 +147,13 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 	public synchronized void keyPressed(KeyEvent e) {
 		long when = e.getWhen();
 		pressed.put(e.getKeyCode(), when);
+		e.consume();
 	}
 
 	public synchronized void keyReleased(KeyEvent e) {
 		long when = e.getWhen();
 		released.put(e.getKeyCode(), when);
+		e.consume();
 	}
 
 	public synchronized void releaseKey(int keycode) {

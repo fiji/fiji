@@ -3,8 +3,11 @@ package fiji.plugin.trackmate.visualization;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 import ij3d.ContentNode;
+import ij3d.TimelapseListener;
 
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
@@ -23,7 +26,7 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 import customnode.CustomTriangleMesh;
 import customnode.MeshMaker;
 
-public class TrackDisplayNode extends ContentNode {
+public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 
 	private static final int DEFAULT_PARALLEL_NUMBER = 12;
 
@@ -44,6 +47,14 @@ public class TrackDisplayNode extends ContentNode {
 	protected BitSet switchMask;
 	/** Hold a reference of the meshes corresponding to each edge. */
 	protected HashMap<DefaultWeightedEdge, CustomTriangleMesh> edgeMeshes = new HashMap<DefaultWeightedEdge, CustomTriangleMesh>();
+	/** Hold a reference of the meshes indexed by frame. */
+	protected HashMap<Integer, List<CustomTriangleMesh>> frameMeshes = new HashMap<Integer, List<CustomTriangleMesh>>();
+
+	private TrackDisplayMode displayMode;
+
+	private int displayDepth;
+
+	private int currentTimePoint;
 	
 	
 	 
@@ -66,12 +77,75 @@ public class TrackDisplayNode extends ContentNode {
 		trackSwitch.setCapability(Switch.ALLOW_SWITCH_WRITE);
 		trackSwitch.setCapability(Switch.ALLOW_CHILDREN_WRITE);
 		trackSwitch.setCapability(Switch.ALLOW_CHILDREN_EXTEND);
+		for(int frame : spots.keySet()) 
+			frameMeshes.put(frame, new ArrayList<CustomTriangleMesh>());
 		makeMeshes();
 	}
 	
 	/*
 	 * PUBLIC METHODS
 	 */
+	
+	public void setDisplayTrackMode(TrackDisplayMode mode, int displayDepth) {
+		this.displayMode = mode;
+		this.displayDepth = displayDepth;
+		refresh();
+	}
+	
+	private void refresh() {
+		
+		switch(displayMode) {
+		case ALL_WHOLE_TRACKS: {
+			for(CustomTriangleMesh mesh : edgeMeshes.values())
+				mesh.setTransparency(0);
+			break;
+		}
+		case LOCAL_WHOLE_TRACKS: {
+			float tp;
+			int frameDist;
+			for(int frame : frameMeshes.keySet()) {
+				frameDist = Math.abs(frame - currentTimePoint); 
+				if (frameDist > displayDepth)
+					tp = 1;
+				else 
+					tp = (float) frameDist / displayDepth;
+				for(CustomTriangleMesh mesh : frameMeshes.get(frame))
+					mesh.setTransparency(tp);
+			}
+			break;
+		}
+		case LOCAL_FORWARD_TRACKS: {
+			float tp;
+			int frameDist;
+			for(int frame : frameMeshes.keySet()) {
+				frameDist = frame - currentTimePoint; 
+				if (frameDist < 0 || frameDist > displayDepth)
+					tp = 1;
+				else 
+					tp = (float) frameDist / displayDepth;
+				for(CustomTriangleMesh mesh : frameMeshes.get(frame))
+					mesh.setTransparency(tp);
+			}
+			break;
+		}
+		case LOCAL_BACKWARD_TRACKS: {
+			float tp;
+			int frameDist;
+			for(int frame : frameMeshes.keySet()) {
+				frameDist = currentTimePoint - frame; 
+				if (frameDist < 0 || frameDist > displayDepth)
+					tp = 1;
+				else 
+					tp = (float) frameDist / displayDepth;
+				for(CustomTriangleMesh mesh : frameMeshes.get(frame))
+					mesh.setTransparency(tp);
+			}
+			break;
+		}
+		}
+		
+	}
+
 	
 	/**
 	 * Set the color of the whole specified track.
@@ -99,6 +173,17 @@ public class TrackDisplayNode extends ContentNode {
 		return edgeMeshes.get(edge).getColor();
 	}
 	
+
+	/*
+	 * TIMELAPSE LISTENER
+	 */
+	
+	@Override
+	public void timepointChanged(int timepoint) {
+		this.currentTimePoint = timepoint;
+		refresh();
+	}
+	
 	/*
 	 * PRIVATE METHODS
 	 */
@@ -123,8 +208,10 @@ public class TrackDisplayNode extends ContentNode {
 					break;
 				}
 			mesh = makeMesh(source, target, colors.get(parentTrack));
-			// Store the individual mesh
+			// Store the individual mesh indexed by edge
 			edgeMeshes.put(edge, mesh);
+			// Store the mesh by frame index
+			frameMeshes.get(spots.getFrame(source)).add(mesh);			
 			// Add the tube to the content
 			trackSwitch.addChild(mesh);
 			index++;
@@ -246,5 +333,11 @@ public class TrackDisplayNode extends ContentNode {
 
 	@Override
 	public void lutUpdated(int[] r, int[] g, int[] b, int[] a) {}
+
+	@Override
+	public void swapDisplayedData(String path, String name) {}
+
+	@Override
+	public void restoreDisplayedData(String path, String name) {}
 
 }

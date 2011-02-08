@@ -46,7 +46,7 @@ public class TrackVisualizerTestDrive {
 	
 		ij.ImageJ.main(args);
 		
-		TmXmlReader reader = new TmXmlReader(CASE_4);
+		TmXmlReader reader = new TmXmlReader(CASE_5);
 		reader.parse();
 		
 		// Load objects 
@@ -76,8 +76,8 @@ public class TrackVisualizerTestDrive {
 		@SuppressWarnings("rawtypes")
 		TrackMateModelInterface model = new TrackMate_();
 		model.setSettings(settings);
-		final SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
-//		final SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
+//		final SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
+		final SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
 		displayer.render();
 		displayer.setSpots(allSpots);
 		displayer.setSpotsToShow(selectedSpots);

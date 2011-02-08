@@ -18,7 +18,7 @@ import javax.vecmath.Tuple3d;
 import customnode.CustomTriangleMesh;
 import customnode.MeshMaker;
 
-public class SpotGroupNode <K> extends ContentNode {
+public class SpotGroupNode<K> extends ContentNode {
 
 	private static final int DEFAULT_MERIDIAN_NUMBER = 12;
 	private static final int DEFAULT_PARALLEL_NUMBER = 12;
@@ -368,6 +368,12 @@ public class SpotGroupNode <K> extends ContentNode {
 
 	@Override
 	public void lutUpdated(int[] r, int[] g, int[] b, int[] a) {}
+
+	@Override
+	public void swapDisplayedData(String path, String name) {}
+
+	@Override
+	public void restoreDisplayedData(String path, String name) {}
 
 
 }

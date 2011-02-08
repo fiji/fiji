@@ -734,10 +734,9 @@ static int dir_exists(const char *directory);
 static int is_native_library(const char *path);
 static int file_exists(const char *path);
 
-static const char *get_java_home(void)
+__attribute__((unused))
+static const char *get_java_home_env(void)
 {
-	if (absolute_java_home)
-		return absolute_java_home;
 	const char *env = getenv("JAVA_HOME");
 	if (env) {
 		if (dir_exists(env)) {
@@ -761,6 +760,13 @@ static const char *get_java_home(void)
 			error("Ignoring invalid JAVA_HOME: %s", env);
 		unsetenv("JAVA_HOME");
 	}
+	return NULL;
+}
+
+static const char *get_java_home(void)
+{
+	if (absolute_java_home)
+		return absolute_java_home;
 	return fiji_path(relative_java_home);
 }
 
@@ -1315,26 +1321,9 @@ static int mkdir_p(const char *path)
 
 static void add_java_home_to_path(void)
 {
-	const char *java_home = absolute_java_home;
+	const char *java_home = get_java_home();
 	struct string *new_path = string_init(32), *buffer;
 	const char *env;
-
-	if (!java_home) {
-		const char *env = getenv("JAVA_HOME");
-		if (env)
-			java_home = env;
-		else {
-			int len;
-			java_home = fiji_path(relative_java_home);
-			len = strlen(java_home);
-			if (len > 4 && !strcmp(java_home + len - 4,
-						"/jre"))
-				java_home = xstrndup(java_home, len - 4);
-			else
-				java_home = xstrdup(java_home);
-			absolute_java_home = java_home;
-		}
-	}
 
 	buffer = string_initf("%s/bin", java_home);
 	if (dir_exists(buffer->buffer))
@@ -2770,6 +2759,7 @@ static void set_path_to_JVM(void)
 	}
 
 	if (!TargetJavaVM) {
+		retrotranslator = 1;
 		targetJVM = CFSTR("1.5");
 		TargetJavaVM =
 		CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault,
@@ -2970,8 +2960,6 @@ static int launch_32bit_on_tiger(int argc, char **argv)
 		replace = "-macosx";
 	}
 	else { /* Tiger */
-		if (!is_tiger())
-			retrotranslator = 1;
 		match = "-macosx";
 		replace = "-tiger";
 		if (sizeof(void *) < 8)
