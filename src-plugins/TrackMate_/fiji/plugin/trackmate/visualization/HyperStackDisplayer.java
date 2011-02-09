@@ -1,16 +1,18 @@
 package fiji.plugin.trackmate.visualization;
 
+import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.Settings;
+import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.SpotImp;
+import fiji.util.gui.OverlayedImageCanvas;
 import ij.ImagePlus;
 import ij.gui.NewImage;
 import ij.gui.StackWindow;
 
-import java.awt.AlphaComposite;
-import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -20,122 +22,19 @@ import java.util.Set;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
-import fiji.plugin.trackmate.Feature;
-import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.SpotImp;
-import fiji.util.gui.AbstractAnnotation;
-import fiji.util.gui.OverlayedImageCanvas;
-
 public class HyperStackDisplayer extends SpotDisplayer implements MouseListener {
 
-	/*
-	 * INNER CLASSES
-	 */
-	
-	private class TrackOverlay extends AbstractAnnotation {
-		protected ArrayList<Integer> X0 = new ArrayList<Integer>();
-		protected ArrayList<Integer> Y0 = new ArrayList<Integer>();
-		protected ArrayList<Integer> X1 = new ArrayList<Integer>();
-		protected ArrayList<Integer> Y1 = new ArrayList<Integer>();
-		protected ArrayList<Integer> frames = new ArrayList<Integer>();
-		protected float lineThickness = 1.0f;
-
-		public TrackOverlay(Color color) {
-			this.color = color;
-			this.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
-		}
-
-		@Override
-		public void draw(Graphics2D g2d) {
-			
-			if (!trackVisible)
-				return;
-			
-			g2d.setStroke(new BasicStroke((float) (lineThickness / canvas.getMagnification()),  BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-			switch (trackDisplayMode) {
-
-			case ALL_WHOLE_TRACKS:
-				for (int i = 0; i < frames.size(); i++) 
-					g2d.drawLine(X0.get(i), Y0.get(i), X1.get(i), Y1.get(i));
-				break;
-
-			case LOCAL_WHOLE_TRACKS: {
-				final int currentFrame = imp.getFrame()-1;
-				int frameDist;
-				for (int i = 0; i < frames.size(); i++) {
-					frameDist = Math.abs(frames.get(i) - currentFrame); 
-					if (frameDist > trackDisplayDepth)
-						continue;
-					g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1 - (float) frameDist / trackDisplayDepth));
-					g2d.drawLine(X0.get(i), Y0.get(i), X1.get(i), Y1.get(i));
-				}				
-				break;
-			}
-
-			case LOCAL_FORWARD_TRACKS: {
-				final int currentFrame = imp.getFrame()-1;
-				int frameDist;
-				for (int i = 0; i < frames.size(); i++) {
-					frameDist = frames.get(i) - currentFrame; 
-					if (frameDist < 0 || frameDist > trackDisplayDepth)
-						continue;
-					g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1 - (float) frameDist / trackDisplayDepth));
-					g2d.drawLine(X0.get(i), Y0.get(i), X1.get(i), Y1.get(i));
-				}
-				break;
-			}
-
-			case LOCAL_BACKWARD_TRACKS: {
-				final int currentFrame = imp.getFrame()-1;
-				int frameDist;
-				for (int i = 0; i < frames.size(); i++) {
-					frameDist = currentFrame - frames.get(i); 
-					if (frameDist < 0 || frameDist > trackDisplayDepth)
-						continue;
-					g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1  - (float) frameDist / trackDisplayDepth));
-					g2d.drawLine(X0.get(i), Y0.get(i), X1.get(i), Y1.get(i));
-				}
-				break;
-			}
-
-			}
-
-		}
-		
-		public void addEdge(final Spot source, final Spot target, final int frame) {
-			X0.add(Math.round(source.getFeature(Feature.POSITION_X) / calibration[0]) );
-			Y0.add(Math.round(source.getFeature(Feature.POSITION_Y) / calibration[1]) );
-			X1.add(Math.round(target.getFeature(Feature.POSITION_X) / calibration[0]) );
-			Y1.add(Math.round(target.getFeature(Feature.POSITION_Y) / calibration[1]) );
-			frames.add(frame);
-		}
-		
-	}
-		
-	private class HighlightTrackOverlay extends TrackOverlay {
-		
-		public HighlightTrackOverlay() {
-			super(HIGHLIGHT_COLOR);
-			this.lineThickness = 2.0f;
-		}
-	}
-	
-	
 	private ImagePlus imp;
 	private OverlayedImageCanvas canvas;
 	private float[] calibration;
-	/** Contains the track overlay objects. */
-	private HashMap<Set<Spot>, TrackOverlay> wholeTrackOverlays = new HashMap<Set<Spot>, TrackOverlay>();
 	private Feature currentFeature;
 	private float featureMaxValue;
 	private float featureMinValue;
 	private Settings settings;
-	private boolean trackVisible = true;
 	private StackWindow window;
-	private SpotOverlay 			spotOverlay;
-	private HighlightTrackOverlay 	highlightTrackOverlay;
+	private SpotOverlay spotOverlay;
+	private TrackOverlay trackOverlay;
+	
 	/** The spot currently being edited, empty if no spot is being edited. */
 	private Spot editedSpot;
 	/** A mapping of the spots versus the color they must be drawn in. */
@@ -152,31 +51,20 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 		this.settings = settings;
 	}
 	
-		
 	/*
 	 * PUBLIC METHODS
 	 */
+
+	@Override
+	public void setDisplayTrackMode(TrackDisplayMode mode, int displayDepth) {
+		super.setDisplayTrackMode(mode, displayDepth);
+		trackOverlay.setDisplayTrackMode(mode, displayDepth);
+		imp.updateAndDraw();
+	}
 	
 	@Override
 	public void highlightEdges(Set<DefaultWeightedEdge> edges) {
-		Spot source, target;
-		int frame;
-		if (null != highlightTrackOverlay)
-			canvas.removeOverlay(highlightTrackOverlay);
-		highlightTrackOverlay = new HighlightTrackOverlay();
-		for (DefaultWeightedEdge edge : edges) {
-			source = trackGraph.getEdgeSource(edge);
-			target = trackGraph.getEdgeTarget(edge);
-			frame = -1;
-			for (int key : spotsToShow.keySet())
-				if (spots.get(key).contains(source)) {
-					frame = key;
-					break;
-				}
-			highlightTrackOverlay.addEdge(source, target, frame);
-		}
-		canvas.addOverlay(highlightTrackOverlay);
-		imp.updateAndDraw();
+		trackOverlay.setHighlight(edges);
 	}
 		
 	@Override
@@ -199,17 +87,18 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 			return;
 		int z = Math.round(spot.getFeature(Feature.POSITION_Z) / calibration[2] ) + 1;
 		imp.setPosition(1, z, frame+1);
-//		window.setPosition(1, z, frame+1);
 	}
 	
 	@Override
-	public void setTrackVisible(boolean displayTrackSelected) {
-		trackVisible = displayTrackSelected;
+	public void setTrackVisible(boolean trackVisible) {
+		trackOverlay.setTrackVisisble(trackVisible);
+		imp.updateAndDraw();
 	}
 	
 	@Override
 	public void setSpotVisible(boolean spotVisible) {
 		spotOverlay.setSpotVisible(spotVisible);
+		imp.updateAndDraw();
 	}
 	
 	@Override
@@ -223,9 +112,11 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 		window = new StackWindow(imp, canvas);
 		window.show();
 		spotOverlay = new SpotOverlay(imp, calibration, radius);
+		trackOverlay = new TrackOverlay(imp, calibration);
 		canvas.addOverlay(spotOverlay);
+		canvas.addOverlay(trackOverlay);
 		canvas.addMouseListener(this);	
-		refresh();
+		imp.updateAndDraw();
 	}
 	
 	@Override
@@ -265,7 +156,10 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 	@Override
 	public void setTrackGraph(SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph) {
 		super.setTrackGraph(trackGraph);
-		prepareWholeTrackOverlay();
+		trackOverlay.setTrackGraph(trackGraph, spotsToShow);
+		trackOverlay.setTrackColor(trackColors);
+		imp.updateAndDraw();
+		
 	}
 	
 	@Override
@@ -277,8 +171,7 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 	@Override
 	public void clear() {
 		canvas.clearOverlay();
-	}
-	
+	}	
 	
 	/*
 	 * PRIVATE METHODS
@@ -308,40 +201,6 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 		spotOverlay.setTargettColor(spotColor);
 	}
 	
-	private void prepareWholeTrackOverlay() {
-		if (null == tracks)
-			return;
-		for (TrackOverlay wto : wholeTrackOverlays.values()) 
-			canvas.removeOverlay(wto);
-		wholeTrackOverlays.clear();
-		for (Set<Spot> track : tracks)
-			wholeTrackOverlays.put(track, new TrackOverlay(trackColors.get(track)));
-		
-		Spot source, target;
-		Set<DefaultWeightedEdge> edges = trackGraph.edgeSet();
-		int frame;
-		for (DefaultWeightedEdge edge : edges) {
-			source = trackGraph.getEdgeSource(edge);
-			target = trackGraph.getEdgeTarget(edge);
-			// Find to what frame it belongs to
-			frame = -1;
-			for (int key : spotsToShow.keySet())
-				if (spots.get(key).contains(source)) {
-					frame = key;
-					break;
-				}
-			for (Set<Spot> track : tracks) {
-				if (track.contains(source)) {
-					wholeTrackOverlays.get(track).addEdge(source, target, frame);
-					break;
-				}
-			}
-		}
-		
-		for (TrackOverlay wto : wholeTrackOverlays.values())
-			canvas.addOverlay(wto);
-	}
-
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		final Spot clickLocation = getCLickLocation(e);

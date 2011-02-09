@@ -22,8 +22,8 @@ public class HyperStackDisplayerTestDrive {
 
 	public static void main(String[] args) throws JDOMException, IOException {
 		
-		File file = new File("E:/Users/JeanYves/Desktop/data/Celegans-5pc_17timepoints_bis.xml");
-//		File file = new File("/Users/tinevez/Desktop/Celegans-5pc_17timepoints_bis.xml");
+//		File file = new File("E:/Users/JeanYves/Desktop/data/Celegans-5pc_17timepoints_bis.xml");
+		File file = new File("/Users/tinevez/Desktop/Celegans-5pc_17timepoints_bis.xml");
 		TmXmlReader reader = new TmXmlReader(file);
 		reader.parse();
 		
@@ -35,6 +35,7 @@ public class HyperStackDisplayerTestDrive {
 		Settings settings = reader.getSettings();
 		ImagePlus imp = reader.getImage();
 		settings.imp = imp;
+		
 		
 		SpotDisplayer displayer = new HyperStackDisplayer(settings);
 		displayer.setSpots(spots);

@@ -7,11 +7,10 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
@@ -22,33 +21,31 @@ import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 import fiji.util.gui.AbstractAnnotation;
 
 public class TrackOverlay extends AbstractAnnotation {
-	protected float lineThickness = 1.0f;
 	private SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph;
 	private SpotCollection spots;
-	private List<Set<Spot>> tracks;
 	private float[] calibration;
 	private ImagePlus imp;
 	private HashMap<Spot, Color> edgeColors;
 	private SpotDisplayer.TrackDisplayMode trackDisplayMode = TrackDisplayMode.ALL_WHOLE_TRACKS;
 	private boolean trackVisible = true;
 	private int trackDisplayDepth = 10;
+	private Set<DefaultWeightedEdge> highlight = new HashSet<DefaultWeightedEdge>();
 
-	public TrackOverlay(
-			final ImagePlus imp, 
-			final float[] calibration, 
-			final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph, 
-			final SpotCollection spots, 
-			final Map<Set<Spot>, Color> colors) {
+	/*
+	 * CONSTRUCTOR
+	 */
+	
+	public TrackOverlay(final ImagePlus imp, final float[] calibration) {
 		this.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
 		this.calibration = calibration;
-		this.graph = graph;
-		this.spots = spots;
-		this.tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets();
-		setTrackColor(colors);
 		this.imp = imp;
 	}
+	
+	/*
+	 * PUBLIC METHODS
+	 */
 
-	private void setTrackColor(Map<Set<Spot>, Color> colors) {
+	public void setTrackColor(final Map<Set<Spot>, Color> colors) {
 		edgeColors = new HashMap<Spot, Color>(spots.getNSpots());
 		Color color;
 		for(Set<Spot> track : colors.keySet()) {
@@ -57,74 +54,117 @@ public class TrackOverlay extends AbstractAnnotation {
 				edgeColors.put(spot, color);
 		}
 	}
+	
+	/**
+	 * Set the tracks that should be plotted by this class.
+	 * <p>
+	 * We require the corresponding {@link SpotCollection} to be set in the same time: the {@link SimpleWeightedGraph}
+	 * contains the information about the edges of the track, but does not contain any information about
+	 * what frame each edge belong to. This information is retrieved from the given {@link SpotCollection}, which
+	 * must be made with the same {@link Spot} objects that of the vertices of the graph.
+	 */
+	public void setTrackGraph(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph, final SpotCollection spots) {
+		this.graph = graph;
+		this.spots = spots;
+	}
+	
+	public void setTrackVisisble(boolean trackVisible) {
+		this.trackVisible = trackVisible;
+	}
+	
+	public void setHighlight(Set<DefaultWeightedEdge> edges) {
+		this.highlight = edges;
+	}
+
+	
+	public void setDisplayTrackMode(TrackDisplayMode mode, int displayDepth) {
+		this.trackDisplayMode = mode;
+		this.trackDisplayDepth = displayDepth;
+	}
 
 	@Override
 	public void draw(Graphics2D g2d) {
-		if (null == tracks || !trackVisible)
+		if (!trackVisible || graph == null)
 			return;
 
-		g2d.setStroke(new BasicStroke((float) (lineThickness /  imp.getCanvas().getMagnification()),  BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 
 		final int currentFrame = imp.getFrame() - 1;
-		int frameDist;
-		int x0, x1, y0, y1;
 		Spot source, target;
 		int frame;
 
+		g2d.setStroke(new BasicStroke((float) (1.0f /  imp.getCanvas().getMagnification()),  BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		Set<DefaultWeightedEdge> edges = graph.edgeSet();
 		for (DefaultWeightedEdge edge : edges) {
-			// Find x & y
+			if (highlight.contains(edge))
+				continue;
+			
 			source = graph.getEdgeSource(edge);
 			target = graph.getEdgeTarget(edge);
-			x0 = Math.round(source.getFeature(Feature.POSITION_X) / calibration[0]);
-			y0 = Math.round(source.getFeature(Feature.POSITION_Y) / calibration[1]);
-			x1 = Math.round(target.getFeature(Feature.POSITION_X) / calibration[0]);
-			y1 = Math.round(target.getFeature(Feature.POSITION_Y) / calibration[1]);
 			// Find to what frame it belongs to
 			frame = spots.getFrame(source);
 			// Color
 			g2d.setColor(edgeColors.get(source));
-
-			// Track display mode
-			switch (trackDisplayMode ) {
-
-			case ALL_WHOLE_TRACKS:
-				g2d.drawLine(x0, y0, x1, y1);
-				break;
-
-			case LOCAL_WHOLE_TRACKS: {
-				frameDist = Math.abs(frame - currentFrame); 
-				if (frameDist > trackDisplayDepth)
-					continue;
-				g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1 - (float) frameDist / trackDisplayDepth));
-				g2d.drawLine(x0, y0, x1, y1);
-				break;
-			}		
-
-			case LOCAL_FORWARD_TRACKS: {
-				frameDist = frame - currentFrame; 
-				if (frameDist < 0 || frameDist > trackDisplayDepth)
-					continue;
-				g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1 - (float) frameDist / trackDisplayDepth));
-				g2d.drawLine(x0, y0, x1, y1);
-				break;
-			}
-
-			case LOCAL_BACKWARD_TRACKS: {
-				frameDist = currentFrame - frame; 
-				if (frameDist < 0 || frameDist > trackDisplayDepth)
-					continue;
-				g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1  - (float) frameDist / trackDisplayDepth));
-				g2d.drawLine(x0, y0, x1, y1);
-				break;
-			}
-			}
-
-
+			// Draw
+			drawEdge(g2d, source, target, frame, currentFrame);
 		}
 
-
+		// Deal with highlighted edges
+		g2d.setStroke(new BasicStroke((float) (2.0f /  imp.getCanvas().getMagnification()),  BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+		g2d.setColor(SpotDisplayer.HIGHLIGHT_COLOR);
+		for (DefaultWeightedEdge edge : highlight) {
+			source = graph.getEdgeSource(edge);
+			target = graph.getEdgeTarget(edge);
+			frame = spots.getFrame(source);
+			drawEdge(g2d, source, target, frame, currentFrame);
+		}
 	}
 
+
+	/* 
+	 * PRIVATE METHODS
+	 */
+	
+	private final void drawEdge(final Graphics2D g2d, final Spot source, final Spot target, final int frame, final int currentFrame) {
+		// Find x & y
+		final int x0 = Math.round(source.getFeature(Feature.POSITION_X) / calibration[0]);
+		final int y0 = Math.round(source.getFeature(Feature.POSITION_Y) / calibration[1]);
+		final int x1 = Math.round(target.getFeature(Feature.POSITION_X) / calibration[0]);
+		final int y1 = Math.round(target.getFeature(Feature.POSITION_Y) / calibration[1]);
+ 
+		// Track display mode
+		switch (trackDisplayMode ) {
+
+		case ALL_WHOLE_TRACKS:
+			g2d.drawLine(x0, y0, x1, y1);
+			break;
+
+		case LOCAL_WHOLE_TRACKS: {
+			final int frameDist = Math.abs(frame - currentFrame); 
+			if (frameDist > trackDisplayDepth)
+				return;
+			g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1 - (float) frameDist / trackDisplayDepth));
+			g2d.drawLine(x0, y0, x1, y1);
+			break;
+		}		
+
+		case LOCAL_FORWARD_TRACKS: {
+			final int frameDist = frame - currentFrame; 
+			if (frameDist < 0 || frameDist > trackDisplayDepth)
+				return;
+			g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1 - (float) frameDist / trackDisplayDepth));
+			g2d.drawLine(x0, y0, x1, y1);
+			break;
+		}
+
+		case LOCAL_BACKWARD_TRACKS: {
+			final int frameDist = currentFrame - frame; 
+			if (frameDist < 0 || frameDist > trackDisplayDepth)
+				return;
+			g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1  - (float) frameDist / trackDisplayDepth));
+			g2d.drawLine(x0, y0, x1, y1);
+			break;
+		}
+		}
+	}
 
 }
