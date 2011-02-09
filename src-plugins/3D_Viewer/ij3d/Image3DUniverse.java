@@ -8,9 +8,11 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenu;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenuItem;
+import javax.swing.SwingUtilities;
 
 import java.awt.GraphicsEnvironment;
 import java.awt.GraphicsDevice;
+import java.awt.Rectangle;
 import java.awt.Menu;
 import java.awt.MenuItem;
 import java.awt.CheckboxMenuItem;
@@ -206,29 +208,48 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	/**
 	 * Sets fullscreen mode on or of.
 	 */
-	public void setFullScreen(boolean f) {
+	public void setFullScreen(final boolean f) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				doSetFullScreen(f);
+			}
+		});
+	}
+
+	private Rectangle lastNonFullscreenBounds;
+	private void doSetFullScreen(boolean f) {
 		if(win == null || f == fullscreen)
 			return;
 
-		GraphicsEnvironment ge =
-			GraphicsEnvironment.getLocalGraphicsEnvironment();
+		if(f)
+			lastNonFullscreenBounds = win.getBounds();
 
-		GraphicsDevice dev = ge.getDefaultScreenDevice();
-		if(f) {
+		GraphicsDevice dev = win.getGraphicsConfiguration().getDevice();
+
+		win.quitImageUpdater();
+		win.dispose();
+		dev.setFullScreenWindow(null);
+
+		win = new ImageWindow3D("ImageJ 3D Viewer", this);
+
+		if(!f) {
+			win.setUndecorated(false);
+			win.setJMenuBar(menubar);
+			fullscreen = false;
+			win.setBounds(lastNonFullscreenBounds);
+		} else {
 			try {
+				win.setUndecorated(true);
+				win.setJMenuBar(null);
 				dev.setFullScreenWindow(win);
 				fullscreen = true;
-				win.setJMenuBar(null);
 			} catch(Exception e) {
-				fullscreen = false;
 				e.printStackTrace();
+				fullscreen = false;
 				dev.setFullScreenWindow(null);
 			}
-		} else {
-			win.setJMenuBar(menubar);
-			dev.setFullScreenWindow(null);
-			fullscreen = false;
 		}
+		win.setVisible(true);
 		menubar.updateMenus();
 	}
 
@@ -1223,6 +1244,8 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	 * @return
 	 */
 	public Collection getContents() {
+		if(contents == null)
+			return null;
 		return contents.values();
 	}
 

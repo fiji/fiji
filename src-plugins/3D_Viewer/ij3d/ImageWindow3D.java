@@ -123,6 +123,10 @@ public class ImageWindow3D extends JFrame implements UniverseListener {
 		imp_updater.updateAndWait();
 	}
 
+	void quitImageUpdater() {
+		imp_updater.quit();
+	}
+
 	final ImagePlusUpdater imp_updater = new ImagePlusUpdater();
 
 	private class ImagePlusUpdater extends Thread {
