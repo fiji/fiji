@@ -153,6 +153,19 @@ public class FeatureStack
 		wholeStack = new ImageStack(width, height);
 		wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
 	}
+	
+	/**
+	 * Construct object to store stack of image features
+	 * @param ip original image
+	 */
+	public FeatureStack(ImageProcessor ip)
+	{
+		originalImage = new ImagePlus("original image", ip.convertToFloat());
+		width = ip.getWidth();
+		height = ip.getHeight();
+		wholeStack = new ImageStack(width, height);
+		wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
+	}
 
 	/**
 	 * Display feature stack
@@ -1643,7 +1656,7 @@ public class FeatureStack
 	 * Set list of boolean flags for enabled features
 	 * @param enableFeatures list of boolean flags to enable features
 	 */
-	public void setEnableFeatures(boolean[] enableFeatures) {
+	public void setEnabledFeatures(boolean[] enableFeatures) {
 		this.enableFeatures = enableFeatures;
 	}
 
@@ -1651,7 +1664,7 @@ public class FeatureStack
 	 * Get the list of enabled features flags
 	 * @return list of boolean flags (true means the feature is selected)
 	 */
-	public boolean[] getEnableFeatures() {
+	public boolean[] getEnabledFeatures() {
 		return enableFeatures;
 	}
 	
