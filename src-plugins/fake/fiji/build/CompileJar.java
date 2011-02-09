@@ -47,6 +47,8 @@ public class CompileJar extends Rule {
 			parser.cwd, buildDir, exclude, noCompile);
 		if (getVarBool("includeSource"))
 			addSources(files);
+		if (buildDir != null)
+			addNonClasses(files, buildDir, "");
 		parser.fake.makeJar(target, getMainClass(), files, parser.cwd,
 			buildDir, configPath, getStripPath(),
 			getVarBool("VERBOSE"));
@@ -56,6 +58,18 @@ public class CompileJar extends Rule {
 		for (String file : prerequisites)
 			if (file.endsWith(".java"))
 				files.add(file);
+	}
+
+	void addNonClasses(List<String> files, File buildDir, String prefix) {
+		for (File file : buildDir.listFiles()) {
+			String name = file.getName();
+			if (file.isDirectory()) {
+				if (!name.startsWith("."))
+					addNonClasses(files, file, prefix + name + "/");
+			}
+			else if (file.isFile() && !name.endsWith(".class"))
+				files.add(prefix + name + "[" + file.getAbsolutePath() + "]");
+		}
 	}
 
 	void maybeMake(Rule rule) throws FakeException {
