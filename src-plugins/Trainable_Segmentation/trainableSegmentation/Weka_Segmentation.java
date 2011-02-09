@@ -298,7 +298,8 @@ public class Weka_Segmentation implements PlugIn
 						setButtonsEnabled(false);
 
 						try{
-							if( wekaSegmentation.trainClassifier() ){
+							if( wekaSegmentation.trainClassifier() )
+							{
 								wekaSegmentation.applyClassifier(false);
 								classifiedImage = wekaSegmentation.getClassifiedImage();
 								if(showColorOverlay)
@@ -573,6 +574,11 @@ public class Weka_Segmentation implements PlugIn
 									displayImage.killRoi();
 									drawExamples();
 									updateExampleLists();
+									if(showColorOverlay)
+									{
+										updateResultOverlay();
+										displayImage.updateAndDraw();
+									}
 								}
 
 							}
@@ -594,6 +600,11 @@ public class Weka_Segmentation implements PlugIn
 								displayImage.killRoi();
 								drawExamples();
 								updateExampleLists();
+								if(showColorOverlay)
+								{
+									updateResultOverlay();
+									displayImage.updateAndDraw();
+								}
 							}
 						});
 
@@ -626,6 +637,11 @@ public class Weka_Segmentation implements PlugIn
 									displayImage.killRoi();
 									updateExampleLists();
 									drawExamples();
+									if(showColorOverlay)
+									{
+										updateResultOverlay();
+										displayImage.updateAndDraw();
+									}
 								}
 							}
 						});
@@ -804,6 +820,15 @@ public class Weka_Segmentation implements PlugIn
 			
 		}
 
+		/**
+		 * Set the slice selector enable option
+		 * @param b true/false to enable/disable the slice selector
+		 */
+		public void setSliceSelectorEnabled(boolean b)
+		{
+			if(null != sliceSelector)
+				sliceSelector.setEnabled(b);
+		}
 
 		/**
 		 * Repaint all panels
@@ -952,6 +977,7 @@ public class Weka_Segmentation implements PlugIn
 			exampleList[i].setEnabled(s);
 			addExampleButton[i].setEnabled(s);
 		}
+		win.setSliceSelectorEnabled(s);
 	}
 
 	/**
@@ -998,6 +1024,7 @@ public class Weka_Segmentation implements PlugIn
 			exampleList[i].setEnabled(true);
 			addExampleButton[i].setEnabled(true);
 		}
+		win.setSliceSelectorEnabled(true);
 	}
 
 	/**
@@ -1075,15 +1102,7 @@ try{
 		//IJ.log("toggle overlay to: " + showColorOverlay);
 		if (showColorOverlay && null != classifiedImage)
 		{
-
-			ImageProcessor overlay = classifiedImage.getProcessor().duplicate();
-
-			double shift = 255.0 / WekaSegmentation.MAX_NUM_CLASSES;
-			overlay.multiply(shift+1);
-			overlay = overlay.convertToByte(false);
-			overlay.setColorModel(overlayLUT);
-
-			resultOverlay.setImage(overlay);
+			updateResultOverlay();
 		}
 		else
 			resultOverlay.setImage(null);
@@ -1091,6 +1110,23 @@ try{
 		displayImage.updateAndDraw();
 	}
 
+	/**
+	 * Update the result image overlay with the corresponding slice
+	 */
+	public void updateResultOverlay()
+	{
+		ImageProcessor overlay = classifiedImage.getImageStack().getProcessor(displayImage.getCurrentSlice()).duplicate();
+
+		//IJ.log("updating overlay with result from slice " + displayImage.getCurrentSlice());
+		
+		double shift = 255.0 / WekaSegmentation.MAX_NUM_CLASSES;
+		overlay.multiply(shift+1);
+		overlay = overlay.convertToByte(false);
+		overlay.setColorModel(overlayLUT);
+
+		resultOverlay.setImage(overlay);
+	}
+	
 	/**
 	 * Select a list and deselect the others
 	 * 
@@ -1161,8 +1197,13 @@ try{
 	 */
 	void showClassificationImage()
 	{
-		ImagePlus resultImage = new ImagePlus("classification result", 
-				classifiedImage.getProcessor().convertToByte(true).duplicate());
+		ImagePlus resultImage = classifiedImage.duplicate();
+		
+		if(resultImage.getImageStackSize() > 1)
+			(new StackConverter(resultImage)).convertToGray8();
+		else
+			(new ImageConverter(resultImage)).convertToGray8();
+		
 		resultImage.show();
 	}
 
@@ -1664,7 +1705,7 @@ try{
 	{
 		GenericDialogPlus gd = new GenericDialogPlus("Segmentation settings");
 
-		final boolean[] oldEnableFeatures = wekaSegmentation.getFeatureStack(1).getEnableFeatures();
+		final boolean[] oldEnableFeatures = wekaSegmentation.getFeatureStack(1).getEnabledFeatures();
 
 		gd.addMessage("Training features:");
 		final int rows = (int)Math.round(FeatureStack.availableFeatures.length/2.0);
@@ -1835,7 +1876,7 @@ try{
 		if(featuresChanged)
 		{
 			//this.setButtonsEnabled(false);
-			wekaSegmentation.getFeatureStack(1).setEnableFeatures(newEnableFeatures);
+			wekaSegmentation.setEnabledFeatures(newEnableFeatures);
 			// Force features to be updated
 			wekaSegmentation.setFeaturesDirty();
 		}
