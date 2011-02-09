@@ -9,6 +9,8 @@ import javax.swing.JMenu;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenuItem;
 
+import java.awt.GraphicsEnvironment;
+import java.awt.GraphicsDevice;
 import java.awt.Menu;
 import java.awt.MenuItem;
 import java.awt.CheckboxMenuItem;
@@ -106,6 +108,11 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	private PointListDialog plDialog;
 
 	/**
+	 * Flag indicating if we are currently in fullscreen mode.
+	 */
+	private boolean fullscreen = false;
+
+	/**
 	 * The timelapse listeners.
 	 */
 	private ArrayList<TimelapseListener> timeListeners =
@@ -194,6 +201,39 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 
 		win.pack();
 		win.setVisible(true);
+	}
+
+	/**
+	 * Sets fullscreen mode on or of.
+	 */
+	public void setFullScreen(boolean f) {
+		if(win == null || f == fullscreen)
+			return;
+
+		GraphicsEnvironment ge =
+			GraphicsEnvironment.getLocalGraphicsEnvironment();
+
+		GraphicsDevice dev = ge.getDefaultScreenDevice();
+		if(f) {
+			try {
+				dev.setFullScreenWindow(win);
+				fullscreen = true;
+				win.setJMenuBar(null);
+			} catch(Exception e) {
+				fullscreen = false;
+				e.printStackTrace();
+				dev.setFullScreenWindow(null);
+			}
+		} else {
+			win.setJMenuBar(menubar);
+			dev.setFullScreenWindow(null);
+			fullscreen = false;
+		}
+		menubar.updateMenus();
+	}
+
+	public boolean isFullScreen() {
+		return fullscreen;
 	}
 
 	/**

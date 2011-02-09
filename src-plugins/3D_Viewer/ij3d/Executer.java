@@ -1260,6 +1260,10 @@ public class Executer {
 		univ.sync(b);
 	}
 
+	public void setFullScreen(boolean b) {
+		univ.setFullScreen(b);
+	}
+
 	public void editScalebar() {
 		Scalebar sc = univ.getScalebar();
 		final GenericDialog gd = new GenericDialog(

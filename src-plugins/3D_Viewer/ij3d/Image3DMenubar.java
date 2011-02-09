@@ -30,6 +30,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 	private JMenuItem importStl;
 	private JMenuItem color;
 	private JMenuItem bgColor;
+	private JCheckBoxMenuItem fullscreen;
 	private JMenuItem channels;
 	private JMenuItem luts;
 	private JMenuItem transparency;
@@ -385,6 +386,11 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		bgColor.addActionListener(this);
 		view.add(bgColor);
 
+		fullscreen = new JCheckBoxMenuItem("Fullscreen");
+		fullscreen.setState(univ.isFullScreen());
+		fullscreen.addItemListener(this);
+		view.add(fullscreen);
+
 		return view;
 	}
 
@@ -662,6 +668,8 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 			executer.showPointList(c, pl_show.getState());
 		else if (src == sync)
 			executer.sync(sync.getState());
+		else if (src == fullscreen)
+			executer.setFullScreen(fullscreen.getState());
 	}
 
 	private Content getSelected() {
@@ -731,6 +739,8 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 	}
 
 	private void doUpdateMenus() {
+
+		fullscreen.setState(univ.isFullScreen());
 
 		Content c = getSelected();
 

@@ -209,13 +209,15 @@ public class InteractiveBehavior extends Behavior {
 		 * HAND tool and the last used tool.
 		 */
 		if (code == KeyEvent.VK_ESCAPE) {
-			if (univ.ui.isHandTool())
+			if(((Image3DUniverse)univ).isFullScreen())
+				((Image3DUniverse)univ).setFullScreen(false);
+			else if (univ.ui.isHandTool())
 				univ.ui.setTool(lastToolID);
 			else {
 				lastToolID = univ.ui.getToolId();
 				univ.ui.setHandTool();
 			}
-			return;
+			return; // consumed
 		}
 
 		Content c = univ.getSelected();
