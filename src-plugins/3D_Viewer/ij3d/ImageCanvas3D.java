@@ -125,7 +125,6 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 				}});
 			}
 		});
-		addKeyListener(this);
 	}
 
 	public Roi getRoi() {
@@ -144,6 +143,8 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 	 * dependent on the operating system preferences,
 	 * even if the key is hold down.
 	 */
+	public void keyTyped(KeyEvent e) {}
+
 	public synchronized void keyPressed(KeyEvent e) {
 		long when = e.getWhen();
 		pressed.put(e.getKeyCode(), when);
@@ -168,8 +169,6 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 		long r = released.get(keycode);
 		return p >= r || System.currentTimeMillis() - r < 100;
 	}
-
-	public void keyTyped(KeyEvent e) {}
 
 	public void postRender() {
 		J3DGraphics2D g3d = getGraphics2D();

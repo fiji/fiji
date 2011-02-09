@@ -18,6 +18,9 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 import vib.BenesNamedPoint;
 import vib.PointList;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * This class is a helper class which implements functions for picking.
@@ -208,6 +211,34 @@ public class Picker {
 					return intersection;
 			}
 			return null;
+		} catch(Exception ex) {
+			ex.printStackTrace();
+			return null;
+		}
+	}
+
+	public List<Map.Entry<Point3d,Float>> getPickPointColumn(final Content c, final int x, final int y) {
+		if (c.getType() != Content.VOLUME) return null;
+		PickCanvas pickCanvas = new PickCanvas(canvas, c);
+		pickCanvas.setMode(PickInfo.PICK_GEOMETRY);
+		pickCanvas.setFlags(PickInfo.CLOSEST_INTERSECTION_POINT);
+		pickCanvas.setTolerance(3.0f);
+		pickCanvas.setShapeLocation(x, y);
+		try {
+			PickInfo[] result = pickCanvas.pickAllSorted();
+			if(result == null || result.length == 0)
+				return null;
+
+			final ArrayList<Map.Entry<Point3d,Float>> list = new ArrayList<Map.Entry<Point3d,Float>>();
+			for(int i = 0; i < result.length; i++) {
+				final Point3d intersection = result[i].getClosestIntersectionPoint();
+				list.add(new Map.Entry<Point3d,Float>() {
+					public Point3d getKey() { return intersection; }
+					public Float getValue() { return getVolumePoint(c, intersection); }
+					public Float setValue(final Float f) { throw new UnsupportedOperationException(); }
+				});
+			}
+			return list;
 		} catch(Exception ex) {
 			ex.printStackTrace();
 			return null;

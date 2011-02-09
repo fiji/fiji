@@ -5,6 +5,7 @@ import ij3d.shapes.BoundingBox;
 import ij3d.pointlist.PointListPanel;
 import ij3d.pointlist.PointListShape;
 import ij3d.pointlist.PointListDialog;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.io.FileInfo;
@@ -17,6 +18,8 @@ import orthoslice.OrthoGroup;
 import surfaceplot.SurfacePlotGroup;
 
 import java.util.BitSet;
+
+import java.io.File;
 
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Switch;
@@ -35,7 +38,7 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 	int timepoint = 0;
 
 	// attributes
-	protected String name;
+	private final String name;
 	protected Color3f color = null;
 	protected ImagePlus image;
 	protected boolean[] channels = new boolean[] {true, true, true};
@@ -73,6 +76,8 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 
 	protected TransformGroup localRotate;
 	protected TransformGroup localTranslate;
+
+	private boolean swapped = false;
 
 	public ContentInstant(String name) {
 		// create BranchGroup for this image
@@ -203,6 +208,76 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 	}
 
 	/* ************************************************************
+	 * swapping
+	 *
+	 * ***********************************************************/
+	public void swapOriginalData() {
+		if(image != null)
+			IJ.save(image, getOriginalDataSwapfile() + ".tif");
+		image = null;
+	}
+
+	public void swapDisplayedData() {
+		System.out.println("swapDisplayedData " + getName());
+		if(swapped) {
+			System.out.println("not swapping because it is already swapped");
+			return;
+		}
+		contentNode.swapDisplayedData(getDisplayedDataSwapfile(), getName());
+		swapped = true;
+	}
+
+	public void restoreOriginalData() {
+		this.image = IJ.openImage(getOriginalDataSwapfile() + ".tif");
+	}
+
+	public void restoreDisplayedData() {
+		System.out.println("restoreDisplayedData " + getName());
+		if(!swapped) {
+			System.out.println("not restoring because it is not swapped");
+			return;
+		}
+		contentNode.restoreDisplayedData(getDisplayedDataSwapfile(), getName());
+		swapped = false;
+	}
+
+	public boolean isSwapped() {
+		return swapped;
+	}
+
+	private String displayedDataSwapfile = null;
+	private String originalDataSwapfile = null;
+
+	private String getOriginalDataSwapfile() {
+		if(originalDataSwapfile != null)
+			return originalDataSwapfile;
+		File tmp = new File(System.getProperty("java.io.tmpdir"), "3D_Viewer");
+		if(!tmp.exists())
+			tmp.mkdirs();
+		tmp = new File(tmp, "original");
+		if(!tmp.exists())
+			tmp.mkdirs();
+		originalDataSwapfile = new File(tmp, getName()).
+			getAbsolutePath();
+		return originalDataSwapfile;
+	}
+
+	private String getDisplayedDataSwapfile() {
+		if(displayedDataSwapfile != null)
+			return displayedDataSwapfile;
+		File tmp = new File(System.getProperty("java.io.tmpdir"), "3D_Viewer");
+		if(!tmp.exists())
+			tmp.mkdirs();
+		tmp = new File(tmp, "displayed");
+		if(!tmp.exists())
+			tmp.mkdirs();
+		displayedDataSwapfile = new File(tmp, getName()).
+			getAbsolutePath();
+		return displayedDataSwapfile;
+	}
+
+
+	/* ************************************************************
 	 * setters - visibility flags
 	 *
 	 * ***********************************************************/
@@ -256,7 +331,7 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 		showPL = b;
 		bbSwitch.setChildMask(whichChild);
 		if(b && plDialog != null)
-			plDialog.addPointList(name, plPanel);
+			plDialog.addPointList(getName(), plPanel);
 		else if(!b && plDialog != null)
 			plDialog.removePointList(plPanel);
 	}
@@ -269,7 +344,7 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 
 	public void savePointList() {
 		String dir = OpenDialog.getDefaultDirectory();
-		String n = this.name;
+		String n = this.getName();
 		if(image != null) {
 			FileInfo fi = image.getFileInfo();
 			dir = fi.directory;
@@ -482,7 +557,7 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 	 **************************************************************/
 	@Override
 	public String getName() {
-		return name;
+		return name + "_#" + timepoint;
 	}
 
 	public int getTimepoint() {

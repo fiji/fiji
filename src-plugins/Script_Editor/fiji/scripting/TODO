@@ -4,8 +4,6 @@
 
 - take functions.html from ij.jar (or include it in Script_Editor.jar)
 
-- finally fix the Add import extra empty lines
-
 - Identify non-explicit imports and add an option to make them explicit.
 
 - enable Add import for all languages

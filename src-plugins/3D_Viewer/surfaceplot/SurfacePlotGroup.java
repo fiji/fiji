@@ -184,4 +184,14 @@ public class SurfacePlotGroup extends ContentNode implements AdjustmentListener{
 	public void shadeUpdated(boolean shaded) {
 		surfacep.setShaded(shaded);
 	}
+
+	@Override
+	public void restoreDisplayedData(String path, String name) {
+		// TODO not implemented yet
+	}
+
+	@Override
+	public void swapDisplayedData(String path, String name) {
+		// TODO not implemented yet
+	}
 }

@@ -1,6 +1,16 @@
 #!/bin/sh
 /*/. 2>/dev/null; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
 
+/*
+This script checks several preconditions of .jar files before uploading:
+
+- the source files should be committed
+- the latest commit touching the source files should be pushed
+- Fiji Build should report it as up-to-date
+- no stale leftover files from old versions
+- no debug information in the .class files
+*/
+
 if (bsh.args.length == 0) {
 	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
 		+ " <file>...");
@@ -187,7 +197,11 @@ boolean checkTimestamps(String path) {
 				name = name.substring(0, name.lastIndexOf('/') + 1) + sourceName;
 			}
 		}
-		if (!new File(sourcePath + name).exists()) {
+		if (!new File(sourcePath + name).exists() &&
+				(!path.endsWith("/Script_Editor.jar") ||
+				 !new File(sourcePath + "templates/Java/" + name).exists()) &&
+				(!path.endsWith("/ij.jar") ||
+				 (!name.equals("aboutja.jpg") && !name.equals("icon.gif")))) {
 			System.err.println(entry.getName() + " in " + path + " is missing the source " + name);
 			return false;
 		}
@@ -203,6 +217,8 @@ boolean checkPushed(String directory, String subdirectory, String path) {
 	upstreamBranch = "master";
 	if (path.endsWith("loci_tools.jar") && directory.endsWith("bio-formats/"))
 		upstreamBranch = "svn/4.2";
+	if (subdirectory.endsWith("/"))
+		subdirectory = subdirectory.substring(0, subdirectory.length() - 1);
 	executer = new SimpleExecuter(new File(directory), new String[] {
 		"git", "log", "--oneline", "origin/" + upstreamBranch + "..", "--", subdirectory == null ? "." : subdirectory
 	});

@@ -19,12 +19,14 @@ import javax.vecmath.Color3f;
 
 public class ContentCreator {
 
+	private static final boolean SWAP_TIMELAPSE_DATA = false;
+
 	public static Content createContent(
 				String name,
 				ImagePlus image,
 				int type) {
 		int resf = Content.getDefaultResamplingFactor(image, type);
-		return createContent(name, image, type, resf, -1);
+		return createContent(name, image, type, resf, 0);
 	}
 
 	public static Content createContent(
@@ -32,7 +34,7 @@ public class ContentCreator {
 				ImagePlus image,
 				int type,
 				int resf) {
-		return createContent(name, image, type, resf, -1);
+		return createContent(name, image, type, resf, 0);
 	}
 
 	public static Content createContent(
@@ -85,6 +87,8 @@ public class ContentCreator {
 
 		TreeMap<Integer, ContentInstant> instants =
 			new TreeMap<Integer, ContentInstant>();
+		boolean timelapse = images.length > 1;
+		boolean shouldSwap = SWAP_TIMELAPSE_DATA && timelapse;
 		for(ImagePlus imp : images) {
 			ContentInstant content = new ContentInstant(name);
 			content.image = imp;
@@ -92,17 +96,22 @@ public class ContentCreator {
 			content.threshold = thresh;
 			content.channels = channels;
 			content.resamplingF = resf;
+			content.timepoint = tp;
 			content.showCoordinateSystem(UniverseSettings.
 					showLocalCoordinateSystemsByDefault);
 			content.displayAs(type);
 			content.compile();
+			if(shouldSwap) {
+				content.swapOriginalData();
+				content.swapDisplayedData();
+			}
 			instants.put(tp++, content);
 		}
-		return new Content(name, instants);
+		return new Content(name, instants, shouldSwap);
 	}
 
 	public static Content createContent(CustomMesh mesh, String name) {
-		return createContent(mesh, name, -1);
+		return createContent(mesh, name, 0);
 	}
 
 	public static Content createContent(CustomMesh mesh, String name, int tp) {
@@ -118,7 +127,7 @@ public class ContentCreator {
 	}
 
 	public static Content createContent(CustomMultiMesh node, String name) {
-		return createContent(node, name, -1);
+		return createContent(node, name, 0);
 	}
 
 	public static Content createContent(CustomMultiMesh node, String name, int tp) {

@@ -149,6 +149,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/AnalyzeSkeleton_.jar \
 	plugins/Skeletonize3D_.jar \
 	plugins/TurboReg_.jar \
+	plugins/Feature_Detection.jar \
 	plugins/Bug_Submitter.jar \
 	plugins/Fiji_Plugins.jar \
 	plugins/ToAST_.jar \
@@ -188,7 +189,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/3D_Viewer.jar \
 	plugins/CPU_Meter.jar \
 	plugins/Graph_Cut.jar \
-	plugins/Macro_Examples.jar \
 	plugins/TopoJ_.jar \
 	plugins/Differentials_.jar \
 	plugins/MosaicJ_.jar \
@@ -204,13 +204,15 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Linear_Kuwahara.jar \
 	plugins/Thread_Killer.jar \
 	plugins/Jython_Scripts.jar \
-	plugins/Temporal_Color_Coder.jar \
 	plugins/Samples_.jar \
 	plugins/Lasso_and_Blow_Tool.jar \
 	jars/mij.jar \
 	jars/wavelets.jar \
 	jars/imageware.jar \
 	plugins/Extended_Depth_Field.jar \
+	plugins/panorama_.jar \
+	jars/weave_jy2java.jar \
+	plugins/3D_Blob_Segmentation.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
@@ -244,40 +246,40 @@ jars/jython.jar[] <-
 jars/batik.jar[] <-
 
 # From submodules
-jars/ij.jar <- jars/javac.jar ImageJA/
+jars/ij.jar <- jars/javac.jar modules/ImageJA/
 CLASSPATH(misc/headless.jar)=jars/ij.jar
-misc/headless.jar <- jars/javac.jar ImageJA/
+misc/headless.jar <- jars/javac.jar modules/ImageJA/
 CLASSPATH(plugins/mpicbg_.jar)=jars/ij.jar:jars/mpicbg.jar
-plugins/mpicbg_.jar <- mpicbg/
+plugins/mpicbg_.jar <- modules/mpicbg/
 CLASSPATH(jars/mpicbg.jar)=jars/ij.jar:jars/Jama-1.0.2.jar
-jars/mpicbg.jar <- mpicbg/
+jars/mpicbg.jar <- modules/mpicbg/
 CLASSPATH(jars/imglib.jar)=jars/mpicbg.jar
-jars/imglib.jar <- imglib/
+jars/imglib.jar <- modules/imglib/
 CLASSPATH(jars/imglib-ij.jar)=jars/ij.jar:jars/imglib.jar:jars/mpicbg.jar
-jars/imglib-ij.jar <- imglib/
+jars/imglib-ij.jar <- modules/imglib/
 CLASSPATH(jars/imglib-io.jar)=plugins/loci_tools.jar:jars/imglib.jar:jars/imglib-ij.jar
-jars/imglib-io.jar <- imglib/
+jars/imglib-io.jar <- modules/imglib/
 CLASSPATH(jars/imglib-algorithms.jar)=jars/Jama-1.0.2.jar:jars/imglib.jar:jars/edu_mines_jtk.jar:jars/mpicbg.jar
-jars/imglib-algorithms.jar <- imglib/
+jars/imglib-algorithms.jar <- modules/imglib/
 
-jars/clojure.jar <- fiji clojure/
-plugins/loci_tools.jar <- fiji bio-formats/
+jars/clojure.jar <- fiji modules/clojure/
+plugins/loci_tools.jar <- fiji modules/bio-formats/
 CLASSPATH(jars/VectorString.jar)=jars/ij.jar:jars/Jama-1.0.2.jar:$JAVA3D_JARS
-jars/VectorString.jar <- TrakEM2/
+jars/VectorString.jar <- modules/TrakEM2/
 CLASSPATH(plugins/TrakEM2_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar:jars/VectorString.jar:jars/postgresql-8.2-506.jdbc3.jar:jars/jcommon-1.0.12.jar:jars/jfreechart-1.0.13.jar:jars/edu_mines_jtk.jar:jars/VIB-lib.jar:plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama-1.0.2.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar:plugins/Lasso_and_Blow_Tool.jar:$JAVA3D_JARS
-plugins/TrakEM2_.jar <- TrakEM2/
-plugins/ij-ImageIO_.jar <- ij-plugins/
-jars/jacl.jar <- fiji tcljava/
-jars/batik.jar <- fiji batik/
-jars/junit-4.5.jar <- fiji junit/
-jars/rsyntaxtextarea.jar <- fiji RSyntaxTextArea/
-jars/autocomplete.jar <- fiji AutoComplete/
-jars/weka.jar <- fiji jars/Fiji.jar weka/
-jars/jython.jar <- fiji jython/
-jars/commons-math.jar <- fiji commons-math/
+plugins/TrakEM2_.jar <- modules/TrakEM2/
+plugins/ij-ImageIO_.jar <- modules/ij-plugins/
+jars/jacl.jar <- fiji modules/tcljava/
+jars/batik.jar <- fiji modules/batik/
+jars/junit-4.5.jar <- fiji modules/junit/
+jars/rsyntaxtextarea.jar <- fiji modules/RSyntaxTextArea/
+jars/autocomplete.jar <- fiji modules/AutoComplete/
+jars/weka.jar <- fiji jars/Fiji.jar modules/weka/
+jars/jython.jar <- fiji modules/jython/
+jars/commons-math.jar <- fiji modules/commons-math/
 
-CLASSPATH(jars/imglib-scripting.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-io.jars:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/loci_tools.jar:jars/mpicbg.jar
-jars/imglib-scripting.jar <- imglib/
+CLASSPATH(jars/imglib-scripting.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-io.jars:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/loci_tools.jar:jars/mpicbg.jar:jars/jfreechart-1.0.13.jar:jars/jcommon-1.0.12.jar:$JAVA3D_JARS
+jars/imglib-scripting.jar <- modules/imglib/
 
 # From source
 libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama-1.0.2.jar \
@@ -394,7 +396,6 @@ CLASSPATH(plugins/FlowJ_.jar)=jars/ij.jar
 CLASSPATH(plugins/View5D_.jar)=jars/ij.jar
 CLASSPATH(plugins/Time_Stamper.jar)=jars/ij.jar
 CLASSPATH(plugins/3D_Objects_Counter.jar)=jars/ij.jar
-CLASSPATH(plugins/Temporal_Color_Coder.jar)=jars/ij.jar
 CLASSPATH(plugins/Snakuscule_.jar)=jars/ij.jar
 CLASSPATH(plugins/UnwarpJ_.jar)=jars/ij.jar
 CLASSPATH(plugins/Graph_Cut.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/fiji-lib.jar
@@ -410,6 +411,10 @@ CLASSPATH(plugins/SheppLogan_.jar)=jars/ij.jar
 CLASSPATH(jars/wavelets.jar)=jars/ij.jar
 CLASSPATH(jars/imageware.jar)=jars/ij.jar
 CLASSPATH(plugins/Extended_Depth_Field.jar)=jars/ij.jar:jars/imageware.jar:jars/wavelets.jar
+CLASSPATH(plugins/panorama_.jar)=jars/ij.jar:jars/mpicbg.jar:/jars/mpicbg_.jar
+CLASSPATH(jars/weave_jy2java.jar)=plugins/Refresh_Javas.jar:jars/fiji-scripting.jar:jars/Fiji.jar:jars/ij.jar:plugins/Script_Editor.jar
+CLASSPATH(plugins/3D_Blob_Segmentation.jar)=jars/ij.jar:plugins/level_sets.jar:plugins/3D_Viewer.jar:jars/VIB-lib.jar:jars/imglib.jar:$JAVA3D_JARS
+CLASSPATH(plugins/Feature_Detection.jar)=jars/ij.jar:jars/imglib-ij.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/Jama-1.0.2.jar
 
 # pre-Java5 generics ;-)
 
@@ -439,13 +444,13 @@ JAVA_LIB_PATH(win32)=bin/client/jvm.dll
 JAVA_LIB_PATH(win64)=bin/server/jvm.dll
 JAVA_LIB_PATH(macosx)=
 
-# The variables CFLAGS, CXXFLAGS, LDFLAGS and LIBS will be used for compiling
+# The variables CFLAGS, LDFLAGS and LIBS will be used for compiling
 # C and C++ programs.
-CFLAGS(*)=-Wall -Iincludes \
+COMMONCFLAGS=-Wall -Iincludes \
 	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH"'
 WINOPTS=-mwindows -mno-cygwin -DMINGW32
-CFLAGS(win32)=$CFLAGS $WINOPTS
-CFLAGS(win64)=$CFLAGS $WINOPTS
+CFLAGS(win32)=$COMMONCFLAGS $WINOPTS
+CFLAGS(win64)=$COMMONCFLAGS $WINOPTS
 
 # Include 64-bit architectures only in ./fiji (as opposed to ./fiji-tiger),
 # and only on MacOSX
@@ -454,40 +459,42 @@ MACOPTS(osx10.3)=-I/System/Library/Frameworks/JavaVM.Framework/Headers \
 MACOPTS(osx10.4)=$MACOPTS(osx10.3) -mmacosx-version-min=10.3 -arch i386 -arch ppc
 MACOPTS(osx10.5)=$MACOPTS(osx10.3) -mmacosx-version-min=10.4 -arch i386 -arch x86_64
 
-CFLAGS(linux)=$CFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector
-CFLAGS(linux64)=$CFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector
+CFLAGS(linux)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector
+CFLAGS(linux64)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector
 
 LDFLAGS(win32)=$LDFLAGS $WINOPTS
 
-CFLAGS(fiji)=$CFLAGS $MACOPTS
+CFLAGS(fiji)=$COMMONCFLAGS $MACOPTS
 LDFLAGS(fiji)=$LDFLAGS $MACOPTS
 
 LIBS(linux)=-ldl
 LIBS(linux64)=-ldl
-LIBS(macosx)=-framework CoreFoundation -framework ApplicationServices \
+LIBS(macosx)=-weak -framework CoreFoundation -framework ApplicationServices \
 	-framework JavaVM
 
 fiji <- fiji.c
 
-CFLAGS(fiji-macosx)=$CFLAGS $MACOPTS(osx10.5)
+CFLAGS(fiji-macosx)=$COMMONCFLAGS $MACOPTS(osx10.5)
 LDFLAGS(fiji-macosx)=$LDFLAGS $MACOPTS(osx10.5)
 fiji-macosx <- fiji.c
 
-CFLAGS(fiji-tiger)=$CFLAGS $MACOPTS(osx10.4)
+CFLAGS(fiji-tiger)=$COMMONCFLAGS $MACOPTS(osx10.4)
 LDFLAGS(fiji-tiger)=$LDFLAGS $MACOPTS(osx10.4)
 fiji-tiger <- fiji.c
 
-CFLAGS(fiji-panther)=$CFLAGS $MACOPTS(osx10.3)
+CFLAGS(fiji-panther)=$COMMONCFLAGS $MACOPTS(osx10.3)
 LDFLAGS(fiji-panther)=$LDFLAGS $MACOPTS(osx10.3)
 fiji-panther <- fiji.c
 
 # Cross-compiling (works only on Linux64 so far)
 
-all-cross[] <- cross-win32 cross-win64 cross-linux
+all-cross[] <- cross-win32 cross-win64 cross-linux cross-macosx cross-tiger
 # cross-tiger does not work yet
 
-cross-tiger[bin/chrooted-cross-compiler.sh tiger \
-	$CFLAGS(macosx) $LIBS(macosx)] <- fiji.c
+cross-tiger[bin/cross-compiler.py tiger \
+	$CFLAGS(fiji-panther) $LIBS(macosx)] <- fiji.c
+cross-macosx[bin/cross-compiler.py macosx \
+	$CFLAGS(fiji-panther) $LIBS(macosx)] <- fiji.c
 cross-*[bin/cross-compiler.py * $CFLAGS(*) $LDFLAGS(*) $LIBS(*)] <- fiji.c
 
 # Precompiled stuff

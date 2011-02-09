@@ -64,6 +64,7 @@ Name					File					Author(s)						Contact								License
 * MTrack2				MTrack2_.jar				Nico Stuurman						http://valelab.ucsf.edu/~nico/IJplugins/MTrack2.html		BSDR
 * Multiple Image Processor 		M_I_P.jar				Nathaniel Gonzalez Santiago				http://ciar.rcm.upr.edu/projects/imageprocessor/multiples/	GPL
 * PAL Optimization			pal-optimization.jar			Alexei Drummond et al					http://ftp.cse.sc.edu/bioinformatics/PAL/pal-1.4/doc/index.html	LGPL
+* Panorama equirectangular view 	panorama_.jar 				Stephan Saalfeld 					http://fly.mpi-cbg.de/~saalfeld/Projects/panorama.html 		GPL
 * PDF Viewer 				PDF_Viewer.jar				Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * PointPicker				PointPicker_.jar			Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/pointpicker/			BIG (see below)
 * PostgreSQL JDBC 			postgresql-8.2-506.jdbc3.jar 		http://jdbc.postgresql.org/ 				http://jdbc.postgresql.org/					BSD
@@ -123,9 +124,7 @@ imagescience (Erik Meijering; http://www.imagescience.org/meijering/software/):
 
 Unresolved (TODO):
 * Example/ scripts folder
-* Graphics/Example_Plot.class   Wayne Rasband, PD ?
 * Java Advanced Imaging jai_codec.jar, jai_core.jar, jai_imageio.jar
-* ij-ImageIO
 
 
 Problematic:

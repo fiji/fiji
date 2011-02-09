@@ -44,10 +44,10 @@ public class Volume {
 	public static final int BYTE_DATA = 1;
 
 	/** The image holding the data */
-	public final ImagePlus imp;
+	protected ImagePlus imp;
 
 	/** Wraping the ImagePlus */
-	protected final Img image;
+	protected Img image;
 
 	/** The loader, initialized depending on the data type */
 	protected Loader loader;
@@ -80,7 +80,6 @@ public class Volume {
 
 	/** Create instance with a null imp. */
 	protected Volume() {
-		this.imp = null;
 		this.image = null;
 	}
 
@@ -98,11 +97,15 @@ public class Volume {
 	 * @param imp
 	 * @param ch A boolean[] array of length three, which indicates whether
 	 * the red, blue and green channel should be read. This has only an
-	 * effct when reading color images.
+	 * effect when reading color images.
 	 */
 	public Volume(ImagePlus imp, boolean[] ch) {
-		this.channels = ch;
+		setImage(imp, ch);
+	}
+
+	public void setImage(ImagePlus imp, boolean[] ch) {
 		this.imp = imp;
+		this.channels = ch;
 		switch(imp.getType()) {
 			case ImagePlus.GRAY8:
 			case ImagePlus.COLOR_256:
@@ -150,6 +153,21 @@ public class Volume {
 
 		initDataType();
 		initLoader();
+	}
+
+	public ImagePlus getImagePlus() {
+		return imp;
+	}
+
+	public void swap(String path) {
+		IJ.save(imp, path + ".tif");
+		imp = null;
+		image = null;
+		loader = null;
+	}
+
+	public void restore(String path) {
+		setImage(IJ.openImage(path + ".tif"), channels);
 	}
 
 	/**
@@ -264,6 +282,8 @@ public class Volume {
 	 * which is either INT_DATA or BYTE_DATA.
 	 */
 	protected void initLoader() {
+		if(image == null)
+			throw new RuntimeException("No image. Maybe it is swapped?");
 
 		if(dataType == INT_DATA) {
 			loader = new IntLoader(image);
@@ -291,6 +311,8 @@ public class Volume {
 	 * channel is used. For other cases, the data type is INT_DATA.
 	 */
 	protected boolean initDataType() {
+		if(image == null)
+			throw new RuntimeException("No image. Maybe it is swapped?");
 		int noChannels = 0;
 		if(image instanceof ByteImage) {
 			noChannels = 1;
@@ -310,11 +332,19 @@ public class Volume {
 	}
 
 	public void setNoCheck(int x, int y, int z, int v) {
-		loader.setNoCheck(x, y, z, v);
+		try {
+			loader.setNoCheck(x, y, z, v);
+		} catch(NullPointerException e) {
+			throw new RuntimeException("No image. Maybe it is swapped");
+		}
 	}
 
 	public void set(int x, int y, int z, int v) {
-		loader.set(x, y, z, v);
+		try {
+			loader.set(x, y, z, v);
+		} catch(NullPointerException e) {
+			throw new RuntimeException("No image. Maybe it is swapped");
+		}
 	}
 
 	/**
@@ -325,7 +355,11 @@ public class Volume {
 	 * @return value. Casted to int if it was a byte value before.
 	 */
 	public int load(int x, int y, int z) {
-		return loader.load(x, y, z);
+		try {
+			return loader.load(x, y, z);
+		} catch(NullPointerException e) {
+			throw new RuntimeException("No image. Maybe it is swapped");
+		}
 	}
 
 	/**
@@ -336,7 +370,11 @@ public class Volume {
 	 * @return value.
 	 */
 	public byte getAverage(int x, int y, int z) {
-		return image.getAverage(x, y, z);
+		try {
+			return image.getAverage(x, y, z);
+		} catch(NullPointerException e) {
+			throw new RuntimeException("No image. Maybe it is swapped");
+		}
 	}
 
 	/**
@@ -442,9 +480,9 @@ public class Volume {
 		public final int loadWithLUT(int x, int y, int z) {
 			image.get(x, y, z, color);
 			int sum = 0, av = 0, v = 0;
-			if(channels[0]) { int r = rLUT[color[0]]; sum++; av += r; v += (r << 16); }
-			if(channels[1]) { int g = gLUT[color[1]]; sum++; av += g; v += (g << 8); }
-			if(channels[2]) { int b = bLUT[color[2]]; sum++; av += b; v += b; }
+			if(channels[0]) { int r = rLUT[color[0]]; sum++; av += color[0]; v += (r << 16); }
+			if(channels[1]) { int g = gLUT[color[1]]; sum++; av += color[1]; v += (g << 8); }
+			if(channels[2]) { int b = bLUT[color[2]]; sum++; av += color[2]; v += b; }
 			av /= sum;
 			int a = aLUT[av];
 			return (a << 24) + v;
@@ -508,7 +546,7 @@ public class Volume {
 
 		public final int loadWithLUT(int x, int y, int z) {
 			image.get(x, y, z, color);
-			int sum = 0, av = 0, v = 0;
+			int sum = 0, av = 0;
 			if(channels[0]) { av += rLUT[color[0]]; sum++; }
 			if(channels[1]) { av += gLUT[color[1]]; sum++; }
 			if(channels[2]) { av += bLUT[color[2]]; sum++; }

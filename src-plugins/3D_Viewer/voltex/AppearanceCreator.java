@@ -174,6 +174,7 @@ public class AppearanceCreator implements AxisConstants {
 			getTexture(direction, index, volume),
 			texAttr,
 			getTg(direction));
+		tus[0].setCapability(TextureUnitState.ALLOW_STATE_WRITE);
 		tus[1] = null;
 		a.setTextureUnitState(tus);
 		return a;

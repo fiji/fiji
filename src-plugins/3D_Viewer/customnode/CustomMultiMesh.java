@@ -1,5 +1,7 @@
 package customnode;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -170,6 +172,37 @@ public class CustomMultiMesh extends CustomMeshNode {
 		}
 		center.sub(max, min);
 		center.scale(0.5f);
+	}
+
+	public void restoreDisplayedData(String path, String name) {
+		HashMap<String, CustomMesh> contents = null;
+		customMeshes = null;
+		try {
+			contents = WavefrontLoader.load(path);
+			for(int i = 0; i < contents.size(); i++) {
+				CustomMesh cm = contents.get(name + "###" + i);
+				customMeshes.add(cm);
+				cm.update();
+			}
+
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void swapDisplayedData(String path, String name) {
+		HashMap<String, CustomMesh> contents =
+			new HashMap<String, CustomMesh>();
+		for(int i = 0; i < customMeshes.size(); i++)
+			contents.put(name + "###" + i, customMeshes.get(i));
+
+		try {
+			WavefrontExporter.save(
+				contents,
+				path + ".obj");
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
 	}
 }
 

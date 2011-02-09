@@ -28,9 +28,6 @@ public class MeshMaker {
 	public static void main(String[] args) {
 		ij.ImageJ ij = new ij.ImageJ();
 		IJ.runPlugIn("ij3d.Mesh_Maker", "");
-		Image3DUniverse univ =  (Image3DUniverse) ((ImageWindow3D)WindowManager
-					.getCurrentWindow()).getUniverse();
-		System.out.println("bla");
 	}
 
 	static public List createSphere(final double x, final double y, final double z, final double r) {

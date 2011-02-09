@@ -1,10 +1,12 @@
-#!/usr/bin/python2.6
+#!/usr/bin/python
 
 import os
 from subprocess import check_call, call
 from common import *
 import sys
 from glob import glob
+
+ssh_identity_file = os.path.join(os.environ['HOME'],".ssh/id_dsa.pacific")
 
 script_directory = sys.path[0]
 if not script_directory:
@@ -35,6 +37,7 @@ def ssh( command, master=False, control_command=None ):
     if master and control_command:
         raise Exception, "You can't specify a control command when creating a control master"
     options = [ "-o", "ControlPath="+ssh_control_file ]
+    options += [ "-i", ssh_identity_file ]
     if master:
         options += [ "-N", "-f", "-o", "ControlMaster=yes" ]
     if control_command:
@@ -45,7 +48,7 @@ def ssh( command, master=False, control_command=None ):
     return 0 == call(full_command)
 
 def scp( src_paths, dst_path ):
-    return 0 == call(["scp","-o","ControlPath="+ssh_control_file]+src_paths+["longair@pacific.mpi-cbg.de:"+shellquote(dst_path)])
+    return 0 == call(["scp","-i",ssh_identity_file,"-o","ControlPath="+ssh_control_file]+src_paths+["longair@pacific.mpi-cbg.de:"+shellquote(dst_path)])
 
 # Just set up the control master:
 ssh( None, master=True )

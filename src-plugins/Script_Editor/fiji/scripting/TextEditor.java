@@ -83,6 +83,7 @@ import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rsyntaxtextarea.RSyntaxDocument;
 
 import org.fife.ui.rtextarea.RTextScrollPane;
 
@@ -100,9 +101,12 @@ public class TextEditor extends JFrame implements ActionListener,
 		  listBookmarks, openSourceForClass, newPlugin, installMacro,
 		  openSourceForMenuItem, showDiff, commit, ijToFront,
 		  openMacroFunctions, decreaseFontSize, increaseFontSize,
-		  chooseFontSize, chooseTabSize, gitGrep, loadToolsJar, openInGitweb;
+		  chooseFontSize, chooseTabSize, gitGrep, loadToolsJar, openInGitweb,
+		  replaceTabsWithSpaces, replaceSpacesWithTabs, toggleWhiteSpaceLabeling,
+		  zapGremlins;
 	protected RecentFilesMenuItem openRecent;
-	protected JMenu gitMenu, tabsMenu, fontSizeMenu, tabSizeMenu, toolsMenu, runMenu;
+	protected JMenu gitMenu, tabsMenu, fontSizeMenu, tabSizeMenu, toolsMenu, runMenu,
+		  whiteSpaceMenu;
 	protected int tabsMenuTabsStart;
 	protected Set<JMenuItem> tabsMenuItems;
 	protected FindAndReplaceDialog findDialog;
@@ -246,6 +250,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		clearScreen.setMnemonic(KeyEvent.VK_L);
 		//edit.addSeparator();
 		//autocomplete = addToMenu(edit, "Autocomplete", KeyEvent.VK_SPACE, ctrl);
+
+		zapGremlins = addToMenu(edit, "Zap Gremlins", 0, 0);
+
 		//autocomplete.setMnemonic(KeyEvent.VK_A);
 		edit.addSeparator();
 		addImport = addToMenu(edit, "Add import...", 0, 0);
@@ -254,9 +261,27 @@ public class TextEditor extends JFrame implements ActionListener,
 		removeUnusedImports.setMnemonic(KeyEvent.VK_U);
 		sortImports = addToMenu(edit, "Sort imports", 0, 0);
 		sortImports.setMnemonic(KeyEvent.VK_S);
-		removeTrailingWhitespace = addToMenu(edit, "Remove trailing whitespace", 0, 0);
-		removeTrailingWhitespace.setMnemonic(KeyEvent.VK_W);
 		mbar.add(edit);
+
+		whiteSpaceMenu = new JMenu("Whitespace");
+		whiteSpaceMenu.setMnemonic(KeyEvent.VK_W);
+		removeTrailingWhitespace = addToMenu(whiteSpaceMenu, "Remove trailing whitespace", 0, 0);
+		removeTrailingWhitespace.setMnemonic(KeyEvent.VK_W);
+		replaceTabsWithSpaces = addToMenu(whiteSpaceMenu, "Replace tabs with spaces", 0, 0);
+		replaceTabsWithSpaces.setMnemonic(KeyEvent.VK_S);
+		replaceSpacesWithTabs = addToMenu(whiteSpaceMenu, "Replace spaces with tabs", 0, 0);
+		replaceSpacesWithTabs.setMnemonic(KeyEvent.VK_T);
+		toggleWhiteSpaceLabeling = new JRadioButtonMenuItem("Label whitespace");
+		toggleWhiteSpaceLabeling.setMnemonic(KeyEvent.VK_L);
+		toggleWhiteSpaceLabeling.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				getTextArea().setWhitespaceVisible(toggleWhiteSpaceLabeling.isSelected());
+			}
+		});
+		whiteSpaceMenu.add(toggleWhiteSpaceLabeling);
+
+		edit.add(whiteSpaceMenu);
+
 
 		JMenu languages = new JMenu("Language");
 		languages.setMnemonic(KeyEvent.VK_L);
@@ -437,7 +462,11 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
-		pack();
+		try {
+			SwingUtilities.invokeAndWait(new Runnable() { public void run() {
+				pack();
+			}});
+		} catch (Exception ie) {}
 		getToolkit().setDynamicLayout(true);            //added to accomodate the autocomplete part
 		findDialog = new FindAndReplaceDialog(this);
 
@@ -496,8 +525,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		addAccelerator(component, key, modifiers, false);
 	}
 
-	public void addAccelerator(final JMenuItem component,
-			int key, int modifiers, boolean record) {
+	public void addAccelerator(final JMenuItem component, int key, int modifiers, boolean record) {
 		if (record) {
 			AcceleratorTriplet triplet = new AcceleratorTriplet();
 			triplet.component = component;
@@ -507,12 +535,13 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 
 		RSyntaxTextArea textArea = getTextArea();
-		if (textArea == null)
-			return;
+		if (textArea != null)
+			addAccelerator(textArea, component, key, modifiers);
+	}
+
+	public void addAccelerator(RSyntaxTextArea textArea, final JMenuItem component, int key, int modifiers) {
 		textArea.getInputMap().put(KeyStroke.getKeyStroke(key,
 					modifiers), component);
-		if (textArea.getActionMap().get(component) != null)
-			return;
 		textArea.getActionMap().put(component,
 				new AbstractAction() {
 			public void actionPerformed(ActionEvent e) {
@@ -525,10 +554,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		});
 	}
 
-	public void addDefaultAccelerators() {
+	public void addDefaultAccelerators(RSyntaxTextArea textArea) {
 		for (AcceleratorTriplet triplet : defaultAccelerators)
-			addAccelerator(triplet.component,
-					triplet.key, triplet.modifiers, false);
+			addAccelerator(textArea, triplet.component, triplet.key, triplet.modifiers);
 	}
 
 	protected JMenu getMenu(JMenu root, String menuItemPath, boolean createIfNecessary) {
@@ -779,8 +807,14 @@ public class TextEditor extends JFrame implements ActionListener,
 			new TokenFunctions(getTextArea()).sortImports();
 		else if (source == removeTrailingWhitespace)
 			new TokenFunctions(getTextArea()).removeTrailingWhitespace();
+		else if (source == replaceTabsWithSpaces)
+			getTextArea().convertTabsToSpaces();
+		else if (source == replaceSpacesWithTabs)
+			getTextArea().convertSpacesToTabs();
 		else if (source == clearScreen)
 			getTab().getScreen().setText("");
+		else if (source == zapGremlins)
+			zapGremlins();
 		else if (source == autocomplete) {
 			try {
 				getEditorPane().autocomp.doCompletion();
@@ -897,6 +931,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				editorPane.setLanguageByFileName(editorPane.getFileName());
+				toggleWhiteSpaceLabeling.setSelected(((RSyntaxTextArea)editorPane).isWhitespaceVisible());
 			}
 		});
 	}
@@ -1246,18 +1281,30 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 	}
 
-	public void open(String path) {
+	/** Open a new tab with some content; the languageExtension is like ".java", ".py", etc. */
+	public Tab newTab(String content, String language) {
+		Tab tab = open("");
+		if (null != language && language.length() > 0) {
+			language = language.trim().toLowerCase();
+			if ('.' != language.charAt(0)) language = "." + language;
+			tab.editorPane.setLanguage(Languages.getInstance().map.get(language));
+		}
+		if (null != content) tab.editorPane.setText(content);
+		return tab;
+	}
+
+	public Tab open(String path) {
 		if (path != null && path.startsWith("class:")) try {
 			path = new FileFunctions(this).getSourcePath(path.substring(6));
 			if (path == null)
-				return;
+				return null;
 		} catch (ClassNotFoundException e) {
 			error("Could not find " + path);
 		}
 
 		if (isBinary(path)) {
 			IJ.open(path);
-			return;
+			return null;
 		}
 
 		/*
@@ -1279,11 +1326,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			boolean wasNew = tab != null && tab.editorPane.isNew();
 			if (!wasNew) {
 				tab = new Tab();
-				SwingUtilities.invokeLater(new Runnable() {
-					public void run() {
-						addDefaultAccelerators();
-					}
-				});
+				addDefaultAccelerators(tab.editorPane);
 			}
 			synchronized(tab.editorPane) {
 				tab.editorPane.setFile("".equals(path) ? null : path);
@@ -1308,6 +1351,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			}
 			if (path != null && !"".equals(path))
 				openRecent.add(path);
+
+			return tab;
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			error("The file '" + path + "' was not found.");
@@ -1315,6 +1360,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			e.printStackTrace();
 			error("There was an error while opening '" + path + "': " + e);
 		}
+		return null;
 	}
 
 	public boolean saveAs() {
@@ -1585,12 +1631,12 @@ public class TextEditor extends JFrame implements ActionListener,
 		addImport.setVisible(isJava);
 		removeUnusedImports.setVisible(isJava);
 		sortImports.setVisible(isJava);
-		openSourceForClass.setVisible(isJava);
 		openSourceForMenuItem.setVisible(isJava);
 
 		boolean isMacro = language.menuLabel.equals("ImageJ Macro");
 		installMacro.setVisible(isMacro);
 		openMacroFunctions.setVisible(isMacro);
+		openSourceForClass.setVisible(!isMacro);
 
 		openHelp.setVisible(!isMacro && language.isRunnable());
 		openHelpWithoutFrames.setVisible(!isMacro && language.isRunnable());
@@ -1929,7 +1975,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	public String getSelectedTextOrAsk(String label) {
 		String selection = getTextArea().getSelectedText();
-		if (selection == null) {
+		if (selection == null || selection.indexOf('\n') >= 0) {
 			selection = JOptionPane.showInputDialog(this,
 				label + ":", label + "...",
 				JOptionPane.QUESTION_MESSAGE);
@@ -2169,5 +2215,14 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	void handleException(Throwable e) {
 		ij.IJ.handleException(e);
+	}
+
+	/** Removes invalid characters, shows a dialog.
+	 * @return The amount of invalid characters found. */
+	public int zapGremlins() {
+		int count = getEditorPane().zapGremlins();
+		String msg = count > 0 ? "Zap Gremlins converted " + count + " invalid characters to spaces" : "No invalid characters found!";
+		JOptionPane.showMessageDialog(this, msg);
+		return count;
 	}
 }
