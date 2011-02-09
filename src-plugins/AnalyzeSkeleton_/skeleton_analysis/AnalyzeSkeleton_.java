@@ -413,19 +413,21 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 				spStartPosition[i][2] = spz * this.imRef.getCalibration().pixelDepth;				
 			}
 			
-			// Display short paths in a new stack
-			ImagePlus shortIP = new ImagePlus("Longest shortest paths", shortPathImage);
-			shortIP.show();
+			if (!silent) {
+				// Display short paths in a new stack
+				ImagePlus shortIP = new ImagePlus("Longest shortest paths", shortPathImage);
+				shortIP.show();
 
-			// Set same calibration as the input image
-			shortIP.setCalibration(this.imRef.getCalibration());
+				// Set same calibration as the input image
+				shortIP.setCalibration(this.imRef.getCalibration());
 
-			// We apply the Fire LUT and reset the min and max to be between 0-255.
-			IJ.run(shortIP, "Fire", null);
+				// We apply the Fire LUT and reset the min and max to be between 0-255.
+				IJ.run(shortIP, "Fire", null);
 
-			//IJ.resetMinAndMax();
-			shortIP.resetDisplayRange();
-			shortIP.updateAndDraw();
+				//IJ.resetMinAndMax();
+				shortIP.resetDisplayRange();
+				shortIP.updateAndDraw();
+			}
 		
 		}
 		
@@ -624,10 +626,12 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		{
 			displayTagImage(taggedImage);
 		}
-		
+
 		// Mark trees
 		ImageStack treeIS = markTrees(taggedImage);
 		
+		if(this.numOfTrees == 0)
+			return;
 		
 		// Ask memory for every tree
 		initializeTrees();
@@ -635,7 +639,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		// Divide groups of end-points and junction voxels
 		if(this.numOfTrees > 1)
 			divideVoxelsByTrees(treeIS);
-		else
+		if(this.numOfTrees == 1)
 		{
 			if(debug)
 				IJ.log("list of end points size = " + this.listOfEndPoints.size());
@@ -1094,6 +1098,22 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	}// end method showResults
 
 	/**
+	 * Returns one of the two result images in an ImageStack object.
+	 *
+	 * @param longestShortestPath Get the tagged longest shortest paths instead of the standard tagged image
+	 *
+	 * @return The results image with a tagged skeleton 
+	 */
+	public ImageStack getResultImage(boolean longestShortestPath)
+	{
+		if (longestShortestPath) {
+			return this.shortPathImage;
+		}
+		return this.taggedImage;
+	}
+
+
+	/**
 	 * Returns the analysis results in a SkeletonResult object.
 	 * <p>
 	 *
@@ -1117,6 +1137,9 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		result.setListOfSlabVoxels(listOfSlabVoxels);
 		result.setListOfStartingSlabVoxels(listOfStartingSlabVoxels);
 
+		result.setShortestPathList(shortestPathList);
+		result.setSpStartPosition(spStartPosition);
+		
 		result.setGraph(graph);
 
 		result.calculateNumberOfVoxels();

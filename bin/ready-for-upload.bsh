@@ -1,0 +1,287 @@
+#!/bin/sh
+/*/. 2>/dev/null; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
+
+/*
+This script checks several preconditions of .jar files before uploading:
+
+- the source files should be committed
+- the latest commit touching the source files should be pushed
+- Fiji Build should report it as up-to-date
+- no stale leftover files from old versions
+- no debug information in the .class files
+*/
+
+if (bsh.args.length == 0) {
+	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
+		+ " <file>...");
+	System.exit(1);
+}
+
+import fiji.SimpleExecuter;
+
+import fiji.build.CompileJar;
+import fiji.build.Fake;
+import fiji.build.Rule;
+import fiji.build.SubFake;
+import fiji.build.Util;
+
+import fiji.updater.util.ByteCodeAnalyzer;
+import fiji.updater.util.Compressor;
+import fiji.updater.util.DependencyAnalyzer;
+
+import java.io.File;
+import java.io.IOException;
+
+import java.util.Collections;
+
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+
+fijiDir = System.getProperty("fiji.dir");
+if (!fijiDir.endsWith(File.separator))
+	fijiDir += File.separator;
+
+Rule getRule(String path) {
+	path = new File(path).getAbsolutePath();
+	if (!path.startsWith(fijiDir)) {
+		System.err.println("Warning: Not in $FIJI_ROOT: " + path);
+		return null;
+	}
+	path = path.substring(fijiDir.length());
+
+	fake = new Fake();
+	parser = fake.parse(new FileInputStream(fijiDir + "/Fakefile"), new File(fijiDir));
+	parser.parseRules(new ArrayList());
+
+	return parser.getRule(path);
+}
+
+String getSourcePathForTarget(String path, boolean fromSubFakefile) {
+	rule = getRule(path);
+	if (rule == null) {
+		System.err.println("Warning: No rule found for " + path);
+		return null;
+	}
+	if (rule instanceof SubFake) {
+		if (fromSubFakefile) {
+			if (rule.getLastPrerequisite().equals("mpicbg/"))
+				return fijiDir + "mpicbg/";
+			fakefile = rule.getFakefile();
+			if (fakefile == null)
+				return null;
+			fake = new Fake();
+			cwd = new File(fijiDir, rule.getLastPrerequisite());
+			if (!new File(cwd, ".git").exists()) {
+				System.err.println(rule.getLastPrerequisite() + " not checked out");
+				return null;
+			}
+			parser = fake.parse(new FileInputStream(fakefile), cwd);
+			parser.parseRules(new ArrayList());
+
+			target = rule.getTarget();
+			target = target.substring(target.lastIndexOf('/') + 1);
+			subRule = parser.getRule(target);
+			if (subRule == null) {
+				System.err.println("Warning: rule for " + target + " not found in " + rule.getLastPrerequisite());
+				return null;
+			}
+			if (!(subRule instanceof CompileJar)) {
+				System.err.println("Warning: ignoring rule for " + target);
+				return null;
+			}
+
+			prereq = subRule.getPrerequisiteString();
+			star = prereq.indexOf("*");
+			if (star >= 0)
+				prereq = prereq.substring(0, star);
+
+			return Util.makePath(cwd, prereq);
+		}
+		return rule.getLastPrerequisite();
+	}
+	if (!(rule instanceof CompileJar)) {
+		System.err.println("Warning: ignoring rule for " + path);
+		return null;
+	}
+
+	prereq = rule.getPrerequisiteString();
+	starstar = prereq.indexOf("**");
+	if (starstar >= 0)
+		prereq = prereq.substring(0, starstar);
+
+	return fijiDir + prereq;
+}
+
+boolean checkFakeTargetUpToDate(String path) {
+	rule = getRule(path);
+	if (rule == null) {
+		System.err.println("Warning: could not determine target for " + path);
+		return true; // ignore
+	}
+	return rule.upToDate();
+}
+
+boolean checkDirtyFiles(File directory, String fileName, String path) {
+	executer = new SimpleExecuter(directory, new String[] {
+		"git", "ls-files", "--exclude-standard", "--other", "--modified", fileName
+	});
+	if (executer.getExitCode() != 0) {
+		System.err.println("Failed looking for uncommitted/changed files for " + path + "\n" + executer.getError() + "\n" + executer.getOutput());
+		return false;
+	}
+	if (!"".equals(executer.getOutput())) {
+		System.err.println("Uncommitted files for " + path + ":\n" + executer.getOutput());
+		return false;
+	}
+	return true;
+}
+
+boolean checkDirtyFiles(String path) {
+	fullPath = new File(path).getAbsolutePath();
+
+	// check for uncommitted files
+	sourcePath = getSourcePathForTarget(fullPath, true);
+	if (sourcePath == null)
+		System.err.println("Warning: could not determine source directory for " + path);
+	else if (!checkDirtyFiles(new File(sourcePath), ".", path))
+		return false;
+
+	// check whether submodules are correctly committed
+	if (sourcePath == null)
+		sourcePath = getSourcePathForTarget(fullPath, false);
+	if (sourcePath != null && new File(sourcePath, ".git").exists()) {
+		dir = new File(sourcePath);
+		if (!checkDirtyFiles(dir.getParentFile(), dir.getName(), path))
+			return false;
+	}
+
+	return true;
+}
+
+String getSourceFileName(InputStream in) {
+	code = Compressor.readStream(in);
+	analyzer = new ByteCodeAnalyzer(code, true);
+	return analyzer.getSourceFile();
+}
+
+long getMTime(String path) {
+	return new File(path).lastModified();
+}
+
+boolean checkTimestamps(String path) {
+	fullPath = new File(path).getAbsolutePath();
+	sourcePath = getSourcePathForTarget(fullPath, true);
+	if (sourcePath == null)
+		return true; // ignore
+
+	if (!sourcePath.endsWith(File.separator))
+		sourcePath += File.separator;
+
+	zip = new ZipFile(fullPath);
+	for (ZipEntry entry : Collections.list(zip.entries())) {
+		name = entry.getName();
+		if (name.startsWith("META-INF/"))
+			continue;
+		if (name.endsWith(".class")) {
+			dollar = name.indexOf('$');
+			if (dollar >= 0)
+				name = name.substring(0, dollar) + ".java";
+			else
+				name = name.substring(0, name.length() - 5) + "java";
+			if (!new File(sourcePath + name).exists()) {
+				sourceName = getSourceFileName(zip.getInputStream(entry));
+				if (sourceName == null) {
+					System.err.println("No source file found for '" + sourcePath + entry.getName() + "'");
+					continue;
+				}
+				name = name.substring(0, name.lastIndexOf('/') + 1) + sourceName;
+			}
+		}
+		if (!new File(sourcePath + name).exists() &&
+				(!path.endsWith("/Script_Editor.jar") ||
+				 !new File(sourcePath + "templates/Java/" + name).exists()) &&
+				(!path.endsWith("/ij.jar") ||
+				 (!name.equals("aboutja.jpg") && !name.equals("icon.gif")))) {
+			System.err.println(entry.getName() + " in " + path + " is missing the source " + name);
+			return false;
+		}
+		if (entry.getTime() < getMTime(sourcePath + name)) {
+			System.err.println(entry.getName() + " in " + path + " is not up-to-date");
+			return false;
+		}
+	}
+	return true;
+}
+
+boolean checkPushed(String directory, String subdirectory, String path) {
+	upstreamBranch = "master";
+	if (path.endsWith("loci_tools.jar") && directory.endsWith("bio-formats/"))
+		upstreamBranch = "svn/4.2";
+	if (subdirectory.endsWith("/"))
+		subdirectory = subdirectory.substring(0, subdirectory.length() - 1);
+	executer = new SimpleExecuter(new File(directory), new String[] {
+		"git", "log", "--oneline", "origin/" + upstreamBranch + "..", "--", subdirectory == null ? "." : subdirectory
+	});
+	if (executer.getExitCode() != 0) {
+		System.err.println("Failed looking for unpushed commits for " + path + "\n" + executer.getError() + "\n" + executer.getOutput());
+		return false;
+	}
+	if (!"".equals(executer.getOutput())) {
+		System.err.println("Unpushed commits for " + path + ":\n" + executer.getOutput());
+		return false;
+	}
+	return true;
+}
+
+boolean checkPushed(String path) {
+	fullPath = new File(path).getAbsolutePath();
+	submodulePath = getSourcePathForTarget(fullPath, false);
+	if (fullPath.startsWith(fijiDir) && !checkPushed(fijiDir, submodulePath, path))
+		return false;
+
+	// check whether submodules are pushed
+	if (submodulePath != null && new File(submodulePath, ".git").exists() && !checkPushed(submodulePath, ".", path))
+		return false;
+
+	return true;
+}
+
+boolean check(String path) {
+	if (!path.endsWith(".jar")) {
+		System.err.println("Warning: ignoring " + path);
+		return true;
+	}
+
+	try {
+		if (!checkTimestamps(path))
+			return false;
+		if (DependencyAnalyzer.containsDebugInfo(path)) {
+			if (new File(path).getCanonicalPath().equals(new File(fijiDir, "plugins/loci_tools.jar").getCanonicalPath()))
+				System.err.println("Ignoring debug info in Bio-Formats");
+			else {
+				System.err.println(path + " contains debug information");
+				return false;
+			}
+		}
+
+		if (!checkFakeTargetUpToDate(path)) {
+			System.err.println(path + " is not up-to-date");
+			return false;
+		}
+		if (!checkDirtyFiles(path))
+			return false;
+		if (!checkPushed(path))
+			return false;
+	} catch (IOException e) {
+		e.printStackTrace();
+		System.err.println("Error opening " + path + ": " + e);
+		return false;
+	}
+	return true;
+}
+
+exitCode = 0;
+for (String arg : bsh.args)
+	if (!check(arg))
+		exitCode = 1;
+System.exit(exitCode);

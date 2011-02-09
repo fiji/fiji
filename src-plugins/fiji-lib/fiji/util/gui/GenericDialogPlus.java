@@ -1,5 +1,6 @@
 package fiji.util.gui;
 
+import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 
@@ -8,12 +9,14 @@ import ij.gui.GenericDialog;
 import ij.io.OpenDialog;
 
 import java.awt.Button;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Panel;
 import java.awt.TextField;
+import java.awt.Toolkit;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -25,6 +28,8 @@ import java.awt.dnd.DropTargetDropEvent;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyListener;
+import java.awt.event.KeyEvent;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,7 +46,7 @@ import javax.swing.JFileChooser;
  * an image chooser, a button, and makes string (and file) fields
  * drop targets.
  */
-public class GenericDialogPlus extends GenericDialog {
+public class GenericDialogPlus extends GenericDialog implements KeyListener {
 	private static final long serialVersionUID = 1L;
 
 	protected int[] windowIDs;
@@ -92,6 +97,7 @@ public class GenericDialogPlus extends GenericDialog {
 		Button button = new Button("Browse...");
 		DirectoryListener listener = new DirectoryListener("Browse for " + label, text);
 		button.addActionListener(listener);
+		button.addKeyListener(this);
 
 		Panel panel = new Panel();
 		panel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
@@ -116,6 +122,7 @@ public class GenericDialogPlus extends GenericDialog {
 		Button button = new Button("Browse...");
 		FileListener listener = new FileListener("Browse for " + label, text);
 		button.addActionListener(listener);
+		button.addKeyListener(this);
 
 		Panel panel = new Panel();
 		panel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
@@ -134,8 +141,26 @@ public class GenericDialogPlus extends GenericDialog {
 	public void addButton(String label, ActionListener listener)
 	{
 		Button button = new Button(label);
-		button.addActionListener(listener);					
-		
+
+		button.addActionListener(listener);
+		button.addKeyListener(this);
+
+		GridBagLayout layout = (GridBagLayout)getLayout();
+		Component[] children = getComponents();
+		GridBagConstraints constraints;
+		if (children != null && children.length > 0) {
+			constraints = layout.getConstraints(children[children.length - 1]);
+			constraints.insets = new Insets(0, 0, 3, 0);
+		}
+		else {
+			constraints = new GridBagConstraints();
+			constraints.insets = new Insets(5, 0, 3, 0);
+		}
+
+		constraints.gridx = 0;
+		constraints.anchor = GridBagConstraints.EAST;
+		constraints.gridwidth = 1;
+
 		Panel panel = new Panel();
 		panel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		panel.add(button);
@@ -247,5 +272,31 @@ public class GenericDialogPlus extends GenericDialog {
 				text.setText(getString(event));
 			} catch (Exception e) { e.printStackTrace(); }
 		}
+	}
+
+	public void keyPressed(KeyEvent e) {
+		int keyCode = e.getKeyCode();
+		if (keyCode == KeyEvent.VK_ESCAPE || (keyCode == KeyEvent.VK_W &&
+				(e.getModifiers() & Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) != 0))
+			// wasCanceled is private; workaround
+			windowClosing(null);
+	}
+
+	public void keyReleased(KeyEvent e) {}
+	public void keyTyped(KeyEvent e) {}
+
+	public static void main(String[] args) {
+		GenericDialogPlus gd = new GenericDialogPlus("GenericDialogPlus Test");
+		gd.addFileField("A_file", System.getProperty("fiji.dir") + "/jars/ij.jar");
+		gd.addDirectoryField("A_directory", System.getProperty("fiji.dir") + "/plugins");
+		gd.addButton("Click me!", new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				IJ.showMessage("You clicked me!");
+			}
+		});
+		gd.showDialog();
+		if (!gd.wasCanceled())
+			IJ.showMessage("You chose the file " + gd.getNextString()
+				+ "\nand the directory " + gd.getNextString());
 	}
 }

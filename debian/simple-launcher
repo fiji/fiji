@@ -20,4 +20,4 @@ fi
 
 export LD_LIBRARY_PATH=@@LD_LIBRARY_PATH@@:$(cat /usr/lib/fiji/jni/*.conf 2> /dev/null | tr '\n' ':')
 
-/usr/lib/fiji/fiji -Dfiji.debian=true --class-path @@ADDITIONAL_JARS@@ --fiji-dir /usr/lib/fiji/ -- "$@"
+/usr/lib/fiji/fiji -Dfiji.debian=true --java-home "$JAVA_HOME" --class-path @@ADDITIONAL_JARS@@ --fiji-dir /usr/lib/fiji/ -- "$@"

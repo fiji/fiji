@@ -4,6 +4,14 @@ import ij3d.pointlist.PointListDialog;
 import ij.ImagePlus;
 import ij.IJ;
 
+import javax.swing.JMenuBar;
+import javax.swing.JMenu;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JMenuItem;
+
+import java.awt.Menu;
+import java.awt.MenuItem;
+import java.awt.CheckboxMenuItem;
 import java.awt.BorderLayout;
 import java.awt.MenuBar;
 import java.awt.event.*;
@@ -49,6 +57,9 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	public static ArrayList<Image3DUniverse> universes =
 				new ArrayList<Image3DUniverse>();
 
+	private static final UniverseSynchronizer synchronizer =
+			new UniverseSynchronizer();
+
 	/** The current time point */
 	private int currentTimepoint = 0;
 
@@ -93,6 +104,12 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	private boolean autoAdjustView = true;
 
 	private PointListDialog plDialog;
+
+	/**
+	 * The timelapse listeners.
+	 */
+	private ArrayList<TimelapseListener> timeListeners =
+			new ArrayList<TimelapseListener>();
 
 	/**
 	 * An object used for synchronizing.
@@ -144,9 +161,12 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 					IJ.showStatus("");
 			}
 		});
+
 		canvas.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
+				if (e.isConsumed())
+					return;
 				Content c = picker.getPickedContent(
 						e.getX(), e.getY());
 				select(c);
@@ -161,7 +181,7 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	 */
 	@Override
 	public void show() {
-		super.show();
+		win = new ImageWindow3D("ImageJ 3D Viewer", this);
 		plDialog = new PointListDialog(win);
 		plDialog.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
@@ -171,23 +191,27 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 		menubar = new Image3DMenubar(this);
 		registrationMenubar = new RegistrationMenubar(this);
 		setMenubar(menubar);
+
+		win.pack();
+		win.setVisible(true);
 	}
 
 	/**
 	 * Close this universe. Remove all Contents and release all resources.
 	 */
 	@Override
-	public void close() {
+	public void cleanup() {
 		timeline.pause();
 		removeAllContents();
 		contents = null;
 		universes.remove(this);
 		adder.shutdownNow();
+		executer.flush();
 		WindowListener[] ls = plDialog.getWindowListeners();
 		for(WindowListener l : ls)
 			plDialog.removeWindowListener(l);
 		plDialog.dispose();
-		super.close();
+		super.cleanup();
 	}
 
 	/**
@@ -200,19 +224,60 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	}
 
 	/**
+	 * Set a custom menu bar to the viewer.
+	 * @deprecated Use swing instead.
+	 */
+	public void setMenubar(MenuBar mb) {
+		JMenuBar jmb = new JMenuBar();
+		int num = mb.getMenuCount();
+		for(int i = 0; i < num; i++)
+			jmb.add(menuToJMenu(mb.getMenu(i)));
+
+		setMenubar(jmb);
+	}
+
+	private JMenu menuToJMenu(Menu menu) {
+		JMenu jm = new JMenu(menu.getLabel());
+		int num = menu.getItemCount();
+		for(int i = 0; i < num; i++) {
+			MenuItem item = menu.getItem(i);
+			String label = item.getLabel();
+			JMenuItem jitem;
+			if(item instanceof Menu) {
+				jitem = menuToJMenu((Menu)item);
+			} else if(item instanceof CheckboxMenuItem) {
+				jitem = new JCheckBoxMenuItem(label);
+				((JCheckBoxMenuItem)jitem).setState(
+					((CheckboxMenuItem)item).getState());
+				for(ItemListener l : ((CheckboxMenuItem)item).getItemListeners())
+					jitem.addItemListener(l);
+			} else if(label.equals("-")) {
+				jm.addSeparator();
+				continue;
+			} else {
+				jitem = new JMenuItem(label);
+				for(ActionListener l : item.getActionListeners())
+					jitem.addActionListener(l);
+			}
+			jm.add(jitem);
+		}
+		return jm;
+	}
+
+	/**
 	 * Set a custom menu bar to the viewer
 	 * @param mb
 	 */
-	public void setMenubar(MenuBar mb) {
+	public void setMenubar(JMenuBar mb) {
 		if(win != null)
-			win.setMenuBar(mb);
+			win.setJMenuBar(mb);
 	}
 
 	/**
 	 * Returns a reference to the menu bar used by this universe.
 	 * @return
 	 */
-	public MenuBar getMenuBar() {
+	public JMenuBar getMenuBar() {
 		return menubar;
 	}
 
@@ -264,16 +329,33 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	/* *************************************************************
 	 * Timeline stuff
 	 * *************************************************************/
+
+	public void addTimelapseListener(TimelapseListener l) {
+		timeListeners.add(l);
+	}
+
+	public void removeTimelapseListener(TimelapseListener l) {
+		timeListeners.remove(l);
+	}
+
+	private void fireTimepointChanged(int timepoint) {
+		for(TimelapseListener l : timeListeners)
+			l.timepointChanged(timepoint);
+	}
+
 	public Timeline getTimeline() {
 		return timeline;
 	}
 
 	public void showTimepoint(int tp) {
+		if(currentTimepoint == tp)
+			return;
 		this.currentTimepoint = tp;
 		for(Content c : contents.values())
-			c.showTimepoint(tp);
+			c.showTimepoint(tp, false);
 		if(timelineGUIVisible)
 			timelineGUI.updateTimepoint(tp);
+		fireTimepointChanged(currentTimepoint);
 	}
 
 	public int getCurrentTimepoint() {
@@ -1128,6 +1210,17 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	/* *************************************************************
 	 * Methods changing the view of this universe
 	 * *************************************************************/
+
+	/**
+	 * Syncs this window.
+	 */
+	public void sync(boolean b) {
+		if(b)
+			synchronizer.addUniverse(this);
+		else
+			synchronizer.removeUniverse(this);
+	}
+
 	/**
 	 * Save the current view transformations to a file
 	 */
@@ -1367,11 +1460,6 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 				IJ.log("Mesh named '" + name + "' exists already");
 				return false;
 			}
-			TreeMap<Integer, ContentInstant> instants =
-				c.getInstants();
-			// in case the time point is not set, do so now
-			if(instants.firstKey() == -1)
-				c.startAt(currentTimepoint);
 			// update start and end time
 			int st = startTime;
 			int e = endTime;
@@ -1380,14 +1468,14 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 			if(c.getEndTime() > endTime)
 				e = c.getEndTime();
 			updateStartAndEndTime(st, e);
-			c.showTimepoint(currentTimepoint);
 
 			this.scene.addChild(c);
 			this.contents.put(name, c);
 			this.recalculateGlobalMinMax(c);
-			c.showTimepoint(currentTimepoint);
 
 			c.setPointListDialog(plDialog);
+
+			c.showTimepoint(currentTimepoint, true);
 		}
 		return true;
 	}

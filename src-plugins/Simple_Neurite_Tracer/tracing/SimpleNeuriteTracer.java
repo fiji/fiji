@@ -655,7 +655,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 	   image, but with values set to either 255 (if there's a point
 	   on a path there) or 0 */
 
-	synchronized public void makePathVolume( ) {
+	synchronized public ImagePlus makePathVolume( ) {
 
 		byte [][] snapshot_data = new byte[depth][];
 
@@ -672,8 +672,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 			newStack.addSlice( null, thisSlice );
 		}
 
-		ImagePlus ip = new ImagePlus( "Paths rendered in a Stack", newStack );
-		ip.show( );
+		return new ImagePlus( "Paths rendered in a Stack", newStack );
 	}
 
 	/* If non-null, holds a reference to the currently searching thread: */

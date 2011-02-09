@@ -12,13 +12,10 @@ import ij.Menus;
 import javax.swing.JOptionPane;
 
 public class OpenSourceForMenuItem extends MenuItemDiverter {
-	public void run(String arg) {
-		super.run(arg);
-	}
-
+	@Override
 	public void setActions() {
-		super.setActions();
 		IJ.getInstance().toFront();
+		super.setActions();
 		try {
 			IJ_Alt_Key_Listener.getOpener().run();
 		} catch (NullPointerException e) {
@@ -26,10 +23,12 @@ public class OpenSourceForMenuItem extends MenuItemDiverter {
 		}
 	}
 
+	@Override
 	protected String getTitle() {
 		return "Menu Item Source";
 	}
 
+	@Override
 	protected void action(String arg) {
 		String action = (String)Menus.getCommands().get(arg);
 		if (action != null) try {

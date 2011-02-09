@@ -2,8 +2,10 @@
 // 2>&1 | :; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji
 
 import fiji.build.Fake;
-import fiji.build.Fake.Parser.Rule;
-import fiji.build.Fake.Parser.CompileJar;
+import fiji.build.Parser;
+import fiji.build.Util;
+import fiji.build.Rule;
+import fiji.build.CompileJar;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -46,7 +48,7 @@ String fijiPath(String name) {
 }
 
 Fake fake = new Fake();
-Fake.Parser parser = fake.parse(new FileInputStream(new File(fijiDir, "Fakefile")), fijiDir);
+Parser parser = fake.parse(new FileInputStream(new File(fijiDir, "Fakefile")), fijiDir);
 parser.parseRules(new ArrayList());
 
 void saveFile(File path, String contents) {
@@ -56,7 +58,7 @@ void saveFile(File path, String contents) {
 }
 
 String getBaseName(String name, String suffix) {
-	name = fake.stripSuffix(name, suffix);
+	name = Util.stripSuffix(name, suffix);
 	return name.substring(name.lastIndexOf('/') + 1);
 }
 
@@ -74,18 +76,17 @@ void generateEclipseJarProject(CompileJar rule) {
 	String including = rule.getPrerequisiteString().replace(' ', '|');
 	String stripPath = rule.getStripPath();
 	if (including != null)
-		including = fake.stripPrefix(including, stripPath);
+		including = Util.stripPrefix(including, stripPath);
 	String excluding = rule.getVar("EXCLUDE_UNEXPANDED");
 	String noCompile = rule.getVar("NO_COMPILE_UNEXPANDED");
 	if (noCompile != null)
 		excluding = (excluding == null ? "" : excluding + ":") + noCompile;
 	if (excluding != null)
-		excluding = fake.stripPrefix(excluding.replace(' ', '|'), stripPath);
+		excluding = Util.stripPrefix(excluding.replace(' ', '|'), stripPath);
 	String libs = "", projects = "";
 	String classpath = rule.getVar("CLASSPATH");
-	classpath = (classpath == null ? "" : classpath + ":") + "jars/ij.jar";
-	for (String path : fake.split(classpath, ":")) {
-		path = fake.stripPrefix(path, fijiDir.getAbsolutePath() + File.separator);
+	for (String path : Util.split(classpath, ":")) {
+		path = Util.stripPrefix(path, fijiDir.getAbsolutePath() + File.separator);
 		libs += "\t<classpathentry kind=\"lib\" path=\"" + fijiPath(path) + "\"/>\n";
 		if (parser.getRule(path) != null)
 			projects += "\t\t<project>" + getBaseName(path, ".jar") + "</project>\n";
@@ -552,9 +553,8 @@ void generateIntelliJJarProject(CompileJar rule) {
 	String stripPath = rule.getStripPath();
 	String libs = "", deps = "";
 	String classpath = rule.getVar("CLASSPATH");
-	classpath = (classpath == null ? "" : classpath + ":") + "jars/ij.jar";
-	for (String path : fake.split(classpath, ":")) {
-		path = fake.stripPrefix(path, fijiDir.getAbsolutePath() + File.separator);
+	for (String path : Util.split(classpath, ":")) {
+		path = Util.stripPrefix(path, fijiDir.getAbsolutePath() + File.separator);
 		Rule dependency = parser.getRule(path);
 		if (dependency != null && (dependency instanceof CompileJar))
 			deps += "    <orderEntry type=\"module\" module-name=\"" + getBaseName(dependency.target, ".jar") + "\" />\n";
@@ -567,9 +567,9 @@ void generateIntelliJJarProject(CompileJar rule) {
 		excluding = (excluding == null ? "" : excluding + ":") + noCompile;
 	String excludes = "";
 	if (excluding != null)
-		for (String entry : fake.split(excluding, " "))
+		for (String entry : Util.split(excluding, " "))
 			if (entry.endsWith("/**/*"))
-				excludes += "      <excludeFolder url=\"file://" + fake.stripSuffix(entry, "/**/*") + "\" />\n";
+				excludes += "      <excludeFolder url=\"file://" + Util.stripSuffix(entry, "/**/*") + "\" />\n";
 
 	File projectDirectory = getProjectDirectory("intellij", name);
 	File iml = new File(projectDirectory, name + ".iml");
@@ -617,11 +617,10 @@ void generateNetbeansJarProject(rule) {
 	String stripPath = rule.getStripPath();
 	String libs = "", refs = "", refs2 = "", refs3 = "", deps = "", deps2 = "";
 	String classpath = rule.getVar("CLASSPATH");
-	classpath = (classpath == null ? "" : classpath + ":") + "jars/ij.jar";
-	String[] list = fake.split(classpath, ":");
+	String[] list = Util.split(classpath, ":");
 	Arrays.sort(list);
 	for (String path : list) {
-		path = fake.stripPrefix(path, fijiDir.getAbsolutePath() + File.separator);
+		path = Util.stripPrefix(path, fijiDir.getAbsolutePath() + File.separator);
 		Rule dependency = parser.getRule(path);
 		if (dependency != null && (dependency instanceof CompileJar)) {
 			String base = getBaseName(dependency.target, ".jar");
@@ -644,16 +643,16 @@ void generateNetbeansJarProject(rule) {
 			refs += "\\\n    ${file.reference." + base + "}:";
 		}
 	}
-	refs = fake.stripSuffix(refs + refs2, ":");
+	refs = Util.stripSuffix(refs + refs2, ":");
 	String excluding = rule.getVar("EXCLUDE_UNEXPANDED");
 	String noCompile = rule.getVar("NO_COMPILE_UNEXPANDED");
 	if (noCompile != null)
 		excluding = (excluding == null ? "" : excluding + ":") + noCompile;
 	String excludes = "";
 	if (excluding != null)
-		for (String entry : fake.split(excluding, " "))
+		for (String entry : Util.split(excluding, " "))
 			if (entry.endsWith("/**/*"))
-				excludes += "      <excludeFolder url=\"file://" + fake.stripSuffix(entry, "/**/*") + "\" />\n";
+				excludes += "      <excludeFolder url=\"file://" + Util.stripSuffix(entry, "/**/*") + "\" />\n";
 
 	File target = new File(fijiPath(rule.target));
 

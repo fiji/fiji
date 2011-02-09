@@ -105,7 +105,7 @@ public class Mask extends VoltexVolume {
 				image.xDim,
 				image.yDim,
 				image.zDim);
-		maskI.setCalibration(image.imp.getCalibration().copy());
+		maskI.setCalibration(image.getImagePlus().getCalibration().copy());
 		return maskI;
 	}
 

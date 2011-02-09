@@ -1,15 +1,14 @@
-- Git diff/commit should include the current open file and all opened files
-  in the same directory (git add -N if necessary)
+- "Dialog.create" and "drawText" are not identified as builtin functions correctly
 
-- add Tools>Open gitweb for class...
+- add proper help for Macro functions
 
-- finally fix the Add import extra empty lines
+- take functions.html from ij.jar (or include it in Script_Editor.jar)
 
 - Identify non-explicit imports and add an option to make them explicit.
 
 - enable Add import for all languages
 
-- BeanShell seems not to import the second time a BeanShell interpreter is
+- Beanshell seems not to import the second time a Beanshell interpreter is
   opened (reported by Stephan Saalfeld).
 
 - Enable to set breakpoints via the Breakpoints menu and F9 (IIRC).

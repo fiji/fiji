@@ -32,8 +32,10 @@ import java.awt.event.KeyListener;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
 import java.util.ArrayList;
+import java.io.ByteArrayInputStream;
 import java.io.PipedWriter;
 import java.io.PipedReader;
+import java.io.PushbackReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -53,8 +55,8 @@ import common.AbstractInterpreter;
 
 public class Clojure_Interpreter extends AbstractInterpreter {
 
-	static final Symbol USER = Symbol.create("user");
-	static final Symbol CLOJURE = Symbol.create("clojure.core");
+	static final Symbol USER = Symbol.intern("user");
+	static final Symbol CLOJURE = Symbol.intern("clojure.core");
 
 	static final Var in_ns = RT.var("clojure.core", "in-ns");
 	static final Var refer = RT.var("clojure.core", "refer");
@@ -218,6 +220,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 						//create and move into the user namespace
 						in_ns.invoke(USER);
 						refer.invoke(CLOJURE);
+
 					} catch (Throwable t) {
 						IJ.log("Could not initialize variables for the clojure worker thread!");
 						t.printStackTrace();
@@ -329,5 +332,9 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 			t.printStackTrace();
 		}
 		return super.getPrompt();
+	}
+
+	protected String getImportStatement(String packageName, Iterable<String> classNames) {
+		return null;
 	}
 }

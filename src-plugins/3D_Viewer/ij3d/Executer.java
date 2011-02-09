@@ -145,6 +145,7 @@ public class Executer {
 
 	public void addContent(final ImagePlus image, final File file) {
 		new Thread() {
+			{ setPriority(Thread.NORM_PRIORITY); }
 			@Override
 			public void run() {
 				addC(image, file);
@@ -306,6 +307,7 @@ public class Executer {
 		if(dir == null || name == null)
 			return;
 		new Thread() {
+			{ setPriority(Thread.NORM_PRIORITY); }
 			public void run() {
 				try {
 					univ.loadSession(dir + name);
@@ -440,6 +442,7 @@ public class Executer {
 		if(type != Content.VOLUME && type != Content.ORTHO)
 			return;
 		new Thread() {
+			{ setPriority(Thread.NORM_PRIORITY); }
 			@Override
 			public void run() {
 				ImageCanvas3D canvas = (ImageCanvas3D)univ.getCanvas();
@@ -474,6 +477,7 @@ public class Executer {
 			Runtime.getRuntime().availableProcessors()];
 		for (int i = 0; i<thread.length; i++) {
 			thread[i] = new Thread() {
+				{ setPriority(Thread.NORM_PRIORITY); }
 				@Override
 				public void run() {
 					try {
@@ -887,7 +891,7 @@ public class Executer {
 	public void showContent(Content c, boolean b) {
 		if(!checkSel(c))
 			return;
-		univ.getSelected().setVisible(b);
+		c.setVisible(b);
 		if(!b)
 			univ.clearSelection();
 	}
@@ -1074,11 +1078,12 @@ public class Executer {
 	public void exportTransformed(final Content c) {
 		if(!checkSel(c))
 			return;
-		new Thread(new Runnable() {
+		new Thread() {
+			{ setPriority(Thread.NORM_PRIORITY); }
 			public void run() {
 				exportTr(c);
 			}
-		}).start();
+		}.start();
 	}
 
 	private void exportTr(Content c) {
@@ -1112,6 +1117,8 @@ public class Executer {
 			}
 		}
 		out.getImage().setTitle(orig.getTitle() + "_transformed");
+		out.getImage().getProcessor().setColorModel(
+			orig.getProcessor().getColorModel());
 		out.getImage().show();
 	}
 
@@ -1154,10 +1161,14 @@ public class Executer {
 	}
 
 	public void record360() {
-		ImagePlus movie = univ.record360();
-		if(movie != null)
-			movie.show();
-		record(RECORD_360);
+		new Thread() {
+			public void run() {
+				ImagePlus movie = univ.record360();
+				if(movie != null)
+					movie.show();
+				record(RECORD_360);
+			}
+		}.start();
 	}
 
 	public void startFreehandRecording() {
@@ -1214,8 +1225,39 @@ public class Executer {
 		univ.setRotationInterval(interval);
 	}
 
+	public void snapshot() {
+		int w = univ.getCanvas().getWidth();
+		int h = univ.getCanvas().getHeight();
+
+		GenericDialog gd = new GenericDialog("Snapshot",
+				univ.getWindow());
+		gd.addNumericField("Target_width", w, 0);
+		gd.addNumericField("Target_height", h, 0);
+		gd.showDialog();
+		if(gd.wasCanceled())
+			return;
+		w = (int)gd.getNextNumber();
+		h = (int)gd.getNextNumber();
+
+		Map props = univ.getCanvas().queryProperties();
+		int maxW = (Integer)props.get("textureWidthMax");
+		int maxH = (Integer)props.get("textureHeightMax");
+
+		if(w < 0 || w >= maxW || h < 0 || h >= maxH) {
+			IJ.error("Width must be between 0 and " + maxW +
+				",\nheight between 0 and " + maxH);
+			return;
+		}
+		univ.takeSnapshot(w, h).show();
+	}
+
+
 	public void viewPreferences() {
 		UniverseSettings.initFromDialog(univ);
+	}
+
+	public void sync(boolean b) {
+		univ.sync(b);
 	}
 
 	public void editScalebar() {

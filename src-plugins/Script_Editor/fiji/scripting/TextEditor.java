@@ -9,10 +9,10 @@ import ij.WindowManager;
 
 import ij.gui.GenericDialog;
 
-import ij.io.OpenDialog;
 import ij.io.SaveDialog;
 
 import java.awt.Dimension;
+import java.awt.FileDialog;
 import java.awt.Font;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -82,6 +83,7 @@ import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rsyntaxtextarea.RSyntaxDocument;
 
 import org.fife.ui.rtextarea.RTextScrollPane;
 
@@ -99,18 +101,22 @@ public class TextEditor extends JFrame implements ActionListener,
 		  listBookmarks, openSourceForClass, newPlugin, installMacro,
 		  openSourceForMenuItem, showDiff, commit, ijToFront,
 		  openMacroFunctions, decreaseFontSize, increaseFontSize,
-		  chooseTabSize, gitGrep, loadToolsJar, openInGitweb;
+		  chooseFontSize, chooseTabSize, gitGrep, loadToolsJar, openInGitweb,
+		  replaceTabsWithSpaces, replaceSpacesWithTabs, toggleWhiteSpaceLabeling,
+		  zapGremlins;
 	protected RecentFilesMenuItem openRecent;
-	protected JMenu gitMenu, tabsMenu, tabSizeMenu, toolsMenu, runMenu;
+	protected JMenu gitMenu, tabsMenu, fontSizeMenu, tabSizeMenu, toolsMenu, runMenu,
+		  whiteSpaceMenu;
 	protected int tabsMenuTabsStart;
 	protected Set<JMenuItem> tabsMenuItems;
 	protected FindAndReplaceDialog findDialog;
-	protected JCheckBoxMenuItem autoSave;
+	protected JCheckBoxMenuItem autoSave, showDeprecation, wrapLines;
 	protected JTextArea errorScreen = new JTextArea();
 
 	protected final String templateFolder = "templates/";
 	protected Languages.Language[] availableLanguages = Languages.getInstance().languages;
 
+	protected int compileStartOffset;
 	protected Position compileStartPosition;
 	protected ErrorHandler errorHandler;
 
@@ -178,19 +184,35 @@ public class TextEditor extends JFrame implements ActionListener,
 		increaseFontSize = addToMenu(edit, "Increase font size", KeyEvent.VK_PLUS, ctrl);
 		increaseFontSize.setMnemonic(KeyEvent.VK_C);
 
-		JMenu fontSize = new JMenu("Font sizes");
-		fontSize.setMnemonic(KeyEvent.VK_Z);
+		fontSizeMenu = new JMenu("Font sizes");
+		fontSizeMenu.setMnemonic(KeyEvent.VK_Z);
+		boolean[] fontSizeShortcutUsed = new boolean[10];
+		ButtonGroup buttonGroup = new ButtonGroup();
 		for (final int size : new int[] { 8, 10, 12, 16, 20, 28, 42 } ) {
-			JMenuItem item = new JMenuItem("" + size + " pt");
+			JRadioButtonMenuItem item = new JRadioButtonMenuItem("" + size + " pt");
 			item.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent event) {
 					getEditorPane().setFontSize(size);
+					updateTabAndFontSize(false);
 				}
 			});
-			fontSize.add(item);
+			for (char c : ("" + size).toCharArray()) {
+				int digit = c - '0';
+				if (!fontSizeShortcutUsed[digit]) {
+					item.setMnemonic(KeyEvent.VK_0 + digit);
+					fontSizeShortcutUsed[digit] = true;
+					break;
+				}
+			}
+			buttonGroup.add(item);
+			fontSizeMenu.add(item);
 		}
-		edit.add(fontSize);
-		edit.addSeparator();
+		chooseFontSize = new JRadioButtonMenuItem("Other...", false);
+		chooseFontSize.setMnemonic(KeyEvent.VK_O);
+		chooseFontSize.addActionListener(this);
+		buttonGroup.add(chooseFontSize);
+		fontSizeMenu.add(chooseFontSize);
+		edit.add(fontSizeMenu);
 
 		// Add tab size adjusting menu
 		tabSizeMenu = new JMenu("Tab sizes");
@@ -201,7 +223,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			item.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent event) {
 					getEditorPane().setTabSize(size);
-					updateTabSize(false);
+					updateTabAndFontSize(false);
 				}
 			});
 			item.setMnemonic(KeyEvent.VK_0 + (size % 10));
@@ -214,12 +236,23 @@ public class TextEditor extends JFrame implements ActionListener,
 		bg.add(chooseTabSize);
 		tabSizeMenu.add(chooseTabSize);
 		edit.add(tabSizeMenu);
+
+		wrapLines = new JCheckBoxMenuItem("Wrap lines");
+		wrapLines.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				getEditorPane().setLineWrap(wrapLines.getState());
+			}
+		});
+		edit.add(wrapLines);
 		edit.addSeparator();
 
 		clearScreen = addToMenu(edit, "Clear output panel", 0, 0);
 		clearScreen.setMnemonic(KeyEvent.VK_L);
 		//edit.addSeparator();
 		//autocomplete = addToMenu(edit, "Autocomplete", KeyEvent.VK_SPACE, ctrl);
+
+		zapGremlins = addToMenu(edit, "Zap Gremlins", 0, 0);
+
 		//autocomplete.setMnemonic(KeyEvent.VK_A);
 		edit.addSeparator();
 		addImport = addToMenu(edit, "Add import...", 0, 0);
@@ -228,9 +261,27 @@ public class TextEditor extends JFrame implements ActionListener,
 		removeUnusedImports.setMnemonic(KeyEvent.VK_U);
 		sortImports = addToMenu(edit, "Sort imports", 0, 0);
 		sortImports.setMnemonic(KeyEvent.VK_S);
-		removeTrailingWhitespace = addToMenu(edit, "Remove trailing whitespace", 0, 0);
-		removeTrailingWhitespace.setMnemonic(KeyEvent.VK_W);
 		mbar.add(edit);
+
+		whiteSpaceMenu = new JMenu("Whitespace");
+		whiteSpaceMenu.setMnemonic(KeyEvent.VK_W);
+		removeTrailingWhitespace = addToMenu(whiteSpaceMenu, "Remove trailing whitespace", 0, 0);
+		removeTrailingWhitespace.setMnemonic(KeyEvent.VK_W);
+		replaceTabsWithSpaces = addToMenu(whiteSpaceMenu, "Replace tabs with spaces", 0, 0);
+		replaceTabsWithSpaces.setMnemonic(KeyEvent.VK_S);
+		replaceSpacesWithTabs = addToMenu(whiteSpaceMenu, "Replace spaces with tabs", 0, 0);
+		replaceSpacesWithTabs.setMnemonic(KeyEvent.VK_T);
+		toggleWhiteSpaceLabeling = new JRadioButtonMenuItem("Label whitespace");
+		toggleWhiteSpaceLabeling.setMnemonic(KeyEvent.VK_L);
+		toggleWhiteSpaceLabeling.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				getTextArea().setWhitespaceVisible(toggleWhiteSpaceLabeling.isSelected());
+			}
+		});
+		whiteSpaceMenu.add(toggleWhiteSpaceLabeling);
+
+		edit.add(whiteSpaceMenu);
+
 
 		JMenu languages = new JMenu("Language");
 		languages.setMnemonic(KeyEvent.VK_L);
@@ -274,6 +325,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		compile.setMnemonic(KeyEvent.VK_C);
 		autoSave = new JCheckBoxMenuItem("Auto-save before compiling");
 		runMenu.add(autoSave);
+		showDeprecation = new JCheckBoxMenuItem("Show deprecations");
+		runMenu.add(showDeprecation);
 
 		installMacro = addToMenu(runMenu, "Install Macro",
 				KeyEvent.VK_I, ctrl);
@@ -402,9 +455,18 @@ public class TextEditor extends JFrame implements ActionListener,
 			}
 		});
 
+		Font font = new Font("Courier", Font.PLAIN, 12);
+		errorScreen.setFont(font);
+		errorScreen.setEditable(false);
+		errorScreen.setLineWrap(true);
+
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
-		pack();
+		try {
+			SwingUtilities.invokeAndWait(new Runnable() { public void run() {
+				pack();
+			}});
+		} catch (Exception ie) {}
 		getToolkit().setDynamicLayout(true);            //added to accomodate the autocomplete part
 		findDialog = new FindAndReplaceDialog(this);
 
@@ -463,8 +525,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		addAccelerator(component, key, modifiers, false);
 	}
 
-	public void addAccelerator(final JMenuItem component,
-			int key, int modifiers, boolean record) {
+	public void addAccelerator(final JMenuItem component, int key, int modifiers, boolean record) {
 		if (record) {
 			AcceleratorTriplet triplet = new AcceleratorTriplet();
 			triplet.component = component;
@@ -474,12 +535,13 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 
 		RSyntaxTextArea textArea = getTextArea();
-		if (textArea == null)
-			return;
+		if (textArea != null)
+			addAccelerator(textArea, component, key, modifiers);
+	}
+
+	public void addAccelerator(RSyntaxTextArea textArea, final JMenuItem component, int key, int modifiers) {
 		textArea.getInputMap().put(KeyStroke.getKeyStroke(key,
 					modifiers), component);
-		if (textArea.getActionMap().get(component) != null)
-			return;
 		textArea.getActionMap().put(component,
 				new AbstractAction() {
 			public void actionPerformed(ActionEvent e) {
@@ -492,10 +554,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		});
 	}
 
-	public void addDefaultAccelerators() {
+	public void addDefaultAccelerators(RSyntaxTextArea textArea) {
 		for (AcceleratorTriplet triplet : defaultAccelerators)
-			addAccelerator(triplet.component,
-					triplet.key, triplet.modifiers, false);
+			addAccelerator(textArea, triplet.component, triplet.key, triplet.modifiers);
 	}
 
 	protected JMenu getMenu(JMenu root, String menuItemPath, boolean createIfNecessary) {
@@ -634,12 +695,15 @@ public class TextEditor extends JFrame implements ActionListener,
 				editorPane != null && editorPane.file != null ?
 				editorPane.file.getParent() :
 				System.getProperty("fiji.dir");
-			OpenDialog dialog = new OpenDialog("Open...",
-					defaultDir, "");
-			grabFocus(2);
-			String name = dialog.getFileName();
-			if (name != null)
-				open(dialog.getDirectory() + name);
+			final String path = openWithDialog("Open...", defaultDir, new String[] {
+				".class", ".jar"
+			}, false);
+			if (path != null)
+				new Thread() {
+					public void run() {
+						open(path);
+					}
+				}.start();
 			return;
 		}
 		else if (source == save)
@@ -721,11 +785,18 @@ public class TextEditor extends JFrame implements ActionListener,
 			getTextArea().setCaretPosition(0);
 			getTextArea().moveCaretPosition(getTextArea().getDocument().getLength());
 		}
+		else if (source == chooseFontSize) {
+			int fontSize = (int)IJ.getNumber("Font size", getEditorPane().getFontSize());
+			if (fontSize != IJ.CANCELED) {
+				getEditorPane().setFontSize(fontSize);
+				updateTabAndFontSize(false);
+			}
+		}
 		else if (source == chooseTabSize) {
 			int tabSize = (int)IJ.getNumber("Tab size", getEditorPane().getTabSize());
 			if (tabSize != IJ.CANCELED) {
 				getEditorPane().setTabSize(tabSize);
-				updateTabSize(false);
+				updateTabAndFontSize(false);
 			}
 		}
 		else if (source == addImport)
@@ -736,8 +807,14 @@ public class TextEditor extends JFrame implements ActionListener,
 			new TokenFunctions(getTextArea()).sortImports();
 		else if (source == removeTrailingWhitespace)
 			new TokenFunctions(getTextArea()).removeTrailingWhitespace();
+		else if (source == replaceTabsWithSpaces)
+			getTextArea().convertTabsToSpaces();
+		else if (source == replaceSpacesWithTabs)
+			getTextArea().convertSpacesToTabs();
 		else if (source == clearScreen)
-			getTab().screen.setText("");
+			getTab().getScreen().setText("");
+		else if (source == zapGremlins)
+			zapGremlins();
 		else if (source == autocomplete) {
 			try {
 				getEditorPane().autocomp.doCompletion();
@@ -807,8 +884,10 @@ public class TextEditor extends JFrame implements ActionListener,
 			new FileFunctions(this).newPlugin();
 		else if (source == ijToFront)
 			IJ.getInstance().toFront();
-		else if (source == increaseFontSize || source == decreaseFontSize)
+		else if (source == increaseFontSize || source == decreaseFontSize) {
 			getEditorPane().increaseFontSize((float)(source == increaseFontSize ? 1.2 : 1 / 1.2));
+			updateTabAndFontSize(false);
+		}
 		else if (source == nextTab)
 			switchTabRelative(1);
 		else if (source == previousTab)
@@ -852,6 +931,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				editorPane.setLanguageByFileName(editorPane.getFileName());
+				toggleWhiteSpaceLabeling.setSelected(((RSyntaxTextArea)editorPane).isWhitespaceVisible());
 			}
 		});
 	}
@@ -1078,6 +1158,10 @@ public class TextEditor extends JFrame implements ActionListener,
 				toggleErrors();
 		}
 
+		public JTextArea getScreen() {
+			return showingErrors ? errorScreen: screen;
+		}
+
 		boolean isExecuting() {
 			return null != executer;
 		}
@@ -1122,15 +1206,13 @@ public class TextEditor extends JFrame implements ActionListener,
 			try {
 				final String text;
 				if (selectionOnly) {
-					text = editorPane.getSelectedText();
-					if (text == null)
+					String selected = editorPane.getSelectedText();
+					if (selected == null) {
 						error("Selection required!");
-					else {
-						PrintWriter pw =
-							new PrintWriter(po);
-						pw.print(text);
-						pw.flush();
+						text = null;
 					}
+					else
+						text = selected + "\n"; // Ensure code blocks are terminated
 				} else {
 					text = editorPane.getText();
 				}
@@ -1199,18 +1281,30 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 	}
 
-	public void open(String path) {
+	/** Open a new tab with some content; the languageExtension is like ".java", ".py", etc. */
+	public Tab newTab(String content, String language) {
+		Tab tab = open("");
+		if (null != language && language.length() > 0) {
+			language = language.trim().toLowerCase();
+			if ('.' != language.charAt(0)) language = "." + language;
+			tab.editorPane.setLanguage(Languages.getInstance().map.get(language));
+		}
+		if (null != content) tab.editorPane.setText(content);
+		return tab;
+	}
+
+	public Tab open(String path) {
 		if (path != null && path.startsWith("class:")) try {
 			path = new FileFunctions(this).getSourcePath(path.substring(6));
 			if (path == null)
-				return;
+				return null;
 		} catch (ClassNotFoundException e) {
 			error("Could not find " + path);
 		}
 
 		if (isBinary(path)) {
 			IJ.open(path);
-			return;
+			return null;
 		}
 
 		/*
@@ -1232,11 +1326,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			boolean wasNew = tab != null && tab.editorPane.isNew();
 			if (!wasNew) {
 				tab = new Tab();
-				SwingUtilities.invokeLater(new Runnable() {
-					public void run() {
-						addDefaultAccelerators();
-					}
-				});
+				addDefaultAccelerators(tab.editorPane);
 			}
 			synchronized(tab.editorPane) {
 				tab.editorPane.setFile("".equals(path) ? null : path);
@@ -1254,13 +1344,15 @@ public class TextEditor extends JFrame implements ActionListener,
 				}
 				setFileName(tab.editorPane.file);
 				try {
-					updateTabSize(true);
+					updateTabAndFontSize(true);
 				} catch (NullPointerException e) {
 					/* ignore */
 				}
 			}
 			if (path != null && !"".equals(path))
 				openRecent.add(path);
+
+			return tab;
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			error("The file '" + path + "' was not found.");
@@ -1268,11 +1360,16 @@ public class TextEditor extends JFrame implements ActionListener,
 			e.printStackTrace();
 			error("There was an error while opening '" + path + "': " + e);
 		}
+		return null;
 	}
 
 	public boolean saveAs() {
+		EditorPane editorPane = getEditorPane();
 		SaveDialog sd = new SaveDialog("Save as ",
-				getEditorPane().getFileName() , "");
+				editorPane.file == null ?
+				System.getProperty("fiji.dir") :
+				editorPane.file.getParentFile().getAbsolutePath(),
+				editorPane.getFileName() , "");
 		grabFocus(2);
 		String name = sd.getFileName();
 		if (name == null)
@@ -1387,6 +1484,7 @@ public class TextEditor extends JFrame implements ActionListener,
 				sourcePath = generateScriptWrapper(tmpDir, sourceName, interpreter);
 				java = (Refresh_Javas)Languages.get(".java").newInterpreter();
 			}
+			java.showDeprecation(showDeprecation.getState());
 			java.compile(sourcePath, tmpDir.getAbsolutePath());
 			getClasses(tmpDir, paths, names);
 			if (includeSources) {
@@ -1504,7 +1602,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	void setLanguage(Languages.Language language) {
 		getEditorPane().setLanguage(language);
-		updateTabSize(true);
+		updateTabAndFontSize(true);
 	}
 
 	void updateLanguageMenu(Languages.Language language) {
@@ -1519,6 +1617,7 @@ public class TextEditor extends JFrame implements ActionListener,
 				!language.isCompileable());
 		compile.setVisible(language.isCompileable());
 		autoSave.setVisible(language.isCompileable());
+		showDeprecation.setVisible(language.isCompileable());
 		makeJarWithSource.setVisible(language.isCompileable());
 
 		debug.setVisible(language.isDebuggable());
@@ -1532,12 +1631,12 @@ public class TextEditor extends JFrame implements ActionListener,
 		addImport.setVisible(isJava);
 		removeUnusedImports.setVisible(isJava);
 		sortImports.setVisible(isJava);
-		openSourceForClass.setVisible(isJava);
 		openSourceForMenuItem.setVisible(isJava);
 
 		boolean isMacro = language.menuLabel.equals("ImageJ Macro");
 		installMacro.setVisible(isMacro);
 		openMacroFunctions.setVisible(isMacro);
+		openSourceForClass.setVisible(!isMacro);
 
 		openHelp.setVisible(!isMacro && language.isRunnable());
 		openHelpWithoutFrames.setVisible(!isMacro && language.isRunnable());
@@ -1549,10 +1648,10 @@ public class TextEditor extends JFrame implements ActionListener,
 		boolean isInGit = getEditorPane().getGitDirectory() != null;
 		gitMenu.setVisible(isInGit);
 
-		updateTabSize(false);
+		updateTabAndFontSize(false);
 	}
 
-	protected void updateTabSize(boolean setByLanguage) {
+	protected void updateTabAndFontSize(boolean setByLanguage) {
 		EditorPane pane = getEditorPane();
 		if (setByLanguage)
 			pane.setTabSize(pane.currentLanguage.menuLabel.equals("Python") ? 4 : 8);
@@ -1569,6 +1668,24 @@ public class TextEditor extends JFrame implements ActionListener,
 				defaultSize = true;
 			}
 		}
+		int fontSize = (int)pane.getFontSize();
+		defaultSize = false;
+		for (int i = 0; i < fontSizeMenu.getItemCount(); i++) {
+			JMenuItem item = fontSizeMenu.getItem(i);
+			if (item == chooseFontSize) {
+				item.setSelected(!defaultSize);
+				item.setLabel("Other" + (defaultSize ? "" : " (" + fontSize + ")") + "...");
+				continue;
+			}
+			String label = item.getLabel();
+			if (label.endsWith(" pt"))
+				label = label.substring(0, label.length() - 3);
+			if (fontSize == Integer.parseInt(label)) {
+				item.setSelected(true);
+				defaultSize = true;
+			}
+		}
+		wrapLines.setState(pane.getLineWrap());
 	}
 
 	public void setFileName(String baseName) {
@@ -1581,6 +1698,8 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	synchronized void setTitle() {
 		final Tab tab = getTab();
+		if (null == tab || null == tab.editorPane)
+			return;
 		final boolean fileChanged = tab.editorPane.fileChanged();
 		final String fileName = tab.editorPane.getFileName();
 		final String title = (fileChanged ? "*" : "") + fileName
@@ -1642,13 +1761,21 @@ public class TextEditor extends JFrame implements ActionListener,
 								activeCount = ts.size();
 								if (activeCount <= 1) break;
 								System.out.println("Waiting for " + ts.size() + " threads to die");
+								int count_zSelector = 0;
 								for (Thread t : ts) {
+									if (t.getName().equals("zSelector")) {
+										count_zSelector++;
+									}
 									System.out.println("THREAD: " + t.getName());
+								}
+								if (activeCount == count_zSelector + 1) {
+									// Do not wait on the stack slice selector thread.
+									break;
 								}
 							} catch (InterruptedException ie) {}
 						}
 					} catch (Throwable t) {
-						t.printStackTrace();
+						IJ.handleException(t);
 					} finally {
 						executingTasks.remove(Executer.this);
 						try {
@@ -1657,7 +1784,7 @@ public class TextEditor extends JFrame implements ActionListener,
 							if (null != errors)
 								errors.shutdown();
 						} catch (Exception e) {
-							e.printStackTrace();
+							IJ.handleException(e);
 						}
 						// Leave kill menu item enabled if other tasks are running
 						kill.setEnabled(executingTasks.size() > 0);
@@ -1834,11 +1961,12 @@ public class TextEditor extends JFrame implements ActionListener,
 			final Refresh_Javas java = (Refresh_Javas)interpreter;
 			final File file = getEditorPane().file;
 			final String sourcePath = file.getAbsolutePath();
+			java.showDeprecation(showDeprecation.getState());
 			markCompileStart();
 			new Thread() {
 				public void run() {
 					java.compileAndRun(sourcePath, true);
-					errorScreen.insert("Compilation finished.\n", getTab().screen.getDocument().getLength());
+					errorScreen.insert("Compilation finished.\n", errorScreen.getDocument().getLength());
 					markCompileEnd();
 				}
 			}.start();
@@ -1847,7 +1975,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	public String getSelectedTextOrAsk(String label) {
 		String selection = getTextArea().getSelectedText();
-		if (selection == null) {
+		if (selection == null || selection.indexOf('\n') >= 0) {
 			selection = JOptionPane.showInputDialog(this,
 				label + ":", label + "...",
 				JOptionPane.QUESTION_MESSAGE);
@@ -1879,6 +2007,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		int offset = errorScreen.getDocument().getLength();
 		append(errorScreen, started);
 		append(getTab().screen, started);
+		compileStartOffset = errorScreen.getDocument().getLength();
 		try {
 			compileStartPosition = errorScreen.getDocument().createPosition(offset);
 		} catch (BadLocationException e) {
@@ -1894,6 +2023,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			if (errorHandler.getErrorCount() > 0)
 				getTab().showErrors();
 		}
+		if (compileStartOffset != errorScreen.getDocument().getLength())
+			getTab().showErrors();
 	}
 
 	public void installMacro() {
@@ -2010,11 +2141,11 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public void extractSourceJar() {
-		OpenDialog dialog = new OpenDialog("Open...", "");
-		grabFocus();
-		String name = dialog.getFileName();
-		if (name != null)
-			extractSourceJar(dialog.getDirectory() + name);
+		String path = openWithDialog("Open...", null, new String[] {
+			".jar"
+		}, true);
+		if (path != null)
+			extractSourceJar(path);
 	}
 
 	public void extractSourceJar(String path) {
@@ -2033,6 +2164,29 @@ public class TextEditor extends JFrame implements ActionListener,
 			error("There was a problem opening " + path
 				+ ": " + e.getMessage());
 		}
+	}
+
+	/* extensionMustMatch == false means extension must not match */
+	protected String openWithDialog(final String title, final String directory,
+			final String[] extensions, final boolean extensionMustMatch) {
+		FileDialog dialog = new FileDialog(this, title);
+		if (directory != null)
+			dialog.setDirectory(directory);
+		if (extensions != null)
+			dialog.setFilenameFilter(new FilenameFilter() {
+				public boolean accept(File dir, String name) {
+					for (String extension : extensions)
+						if (name.endsWith(extension))
+							return extensionMustMatch;
+					return !extensionMustMatch;
+				}
+			});
+		dialog.setVisible(true);
+		String dir = dialog.getDirectory();
+		String name = dialog.getFile();
+		if (dir == null || name == null)
+			return null;
+		return new File(dir, name).getAbsolutePath();
 	}
 
 	/**
@@ -2061,5 +2215,14 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	void handleException(Throwable e) {
 		ij.IJ.handleException(e);
+	}
+
+	/** Removes invalid characters, shows a dialog.
+	 * @return The amount of invalid characters found. */
+	public int zapGremlins() {
+		int count = getEditorPane().zapGremlins();
+		String msg = count > 0 ? "Zap Gremlins converted " + count + " invalid characters to spaces" : "No invalid characters found!";
+		JOptionPane.showMessageDialog(this, msg);
+		return count;
 	}
 }
