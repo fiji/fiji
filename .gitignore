@@ -219,3 +219,5 @@
 /plugins/panorama_.jar
 /plugins/3D_Blob_Segmentation.jar
 /plugins/Feature_Detection.jar
+/plugins/JNI_Example.jar
+/lib/linux64/libJNI_Example.so

@@ -68,7 +68,9 @@ addClassPath(toolsJar.getAbsolutePath());
 // compile the Java class
 
 com.sun.tools.javac.Main.compile(new String[] {
-	"-classpath", System.getProperty("java.class.path"),
+	"-classpath", System.getProperty("java.class.path")
+		+ ":" + System.getProperty("fiji.dir") + "/jars/fiji-lib.jar"
+		+ ":" + System.getProperty("fiji.dir") + "/jars/ij.jar",
 	"-d", tmpDirectory.getAbsolutePath(),
 	bsh.args[1] });
 
@@ -95,11 +97,9 @@ List classes = addClasses(new ArrayList(), tmpDirectory, "");
 addClassPath(System.getProperty("fiji.dir") + "/jars/ij.jar");
 addClassPath(System.getProperty("fiji.dir") + "/jars/Fiji.jar");
 
-// run javah (not via class loader, because it does not find its doclet, then)
-
-File javah = getJavaStuff(isMac ? "Commands/javah" : "bin/javah" + (isWin ? ".exe" : ""));
 String[] cmdarray = append(new String[] {
-		javah.getAbsolutePath(),
+		System.getProperty("fiji.executable"),
+		"--javah",
 		"-classpath", tmpDirectory.getAbsolutePath(),
 		"-d", tmpDirectory.getAbsolutePath()
 	}, classes.toArray(new String[classes.size()]));
