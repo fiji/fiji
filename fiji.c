@@ -23,6 +23,12 @@
 #include <unistd.h>
 #include <errno.h>
 
+#ifdef __GNUC__
+#define MAYBE_UNUSED __attribute__ ((unused))
+#else
+#define MAYBE_UNUSED
+#endif
+
 #ifdef MACOSX
 #include <stdlib.h>
 #include <pthread.h>
@@ -2984,12 +2990,6 @@ static int launch_32bit_on_tiger(int argc, char **argv)
 #endif
 
 /* check whether there a file is a native library */
-
-#ifdef __GNUC__
-#define MAYBE_UNUSED __attribute__ ((unused))
-#else
-#define MAYBE_UNUSED
-#endif
 
 static int read_exactly(int fd, unsigned char *buffer, int size)
 {
