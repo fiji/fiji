@@ -280,7 +280,6 @@ public class WekaSegmentation {
 				if(list.isEmpty() == false)
 				{
 					updated = true;
-					IJ.log("updated true");
 					break;
 				}
 			if(updated == false && featureStackToUpdateTest[n-1] == true)
@@ -3440,7 +3439,7 @@ public class WekaSegmentation {
 				if (probabilityMaps)
 					classifiedSliceProcessor = classifiedSliceProcessor.convertToByte(true);
 				classStack.addSlice("", classifiedSliceProcessor);
-				IJ.log("" + i + " " + c);
+				//IJ.log("" + i + " " + c);
 			}
 		}
 		ImagePlus classImg = new ImagePlus("Classification result", classStack);
