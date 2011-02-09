@@ -3003,6 +3003,7 @@ public class WekaSegmentation {
 	private Instances updateTestSet(int n)
 	{
 		IJ.showStatus("Reading whole image data...");
+		IJ.log("Reading whole image data...");
 
 		long start = System.currentTimeMillis();
 		ArrayList<String> classNames = null;
@@ -3625,7 +3626,7 @@ public class WekaSegmentation {
 			for(int indexClass = 0; indexClass < numOfClasses; indexClass++)
 				if(examples[indexSlice].get(indexClass).size() > 0)
 				{
-					IJ.log("feature stack for slice " + (indexSlice+1) + " needs to updated for training");
+					//IJ.log("feature stack for slice " + (indexSlice+1) + " needs to be updated for training");
 					featureStackToUpdateTrain[indexSlice] = true;
 					featureStackToUpdateTest[indexSlice] = false;
 					break;
@@ -3670,6 +3671,15 @@ public class WekaSegmentation {
 	{
 		this.enabledFeatures = newFeatures;
 		featureStackArray.setEnabledFeatures(newFeatures);
+	}
+	
+	/**
+	 * Get the current enabled features
+	 * @return current enabled feature flags
+	 */
+	public boolean[] getEnabledFeatures() 
+	{
+		return this.enabledFeatures;
 	}
 	
 	public void mergeDataInPlace(Instances first, Instances second)

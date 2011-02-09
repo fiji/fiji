@@ -157,7 +157,7 @@ public class Weka_Segmentation implements PlugIn
 	/** plot result button */
 	JButton plotButton;
 	/** new image button */
-	JButton newImageButton;
+	//JButton newImageButton;
 	/** apply classifier button */
 	JButton applyButton;
 	/** load classifier button */
@@ -240,8 +240,8 @@ public class Weka_Segmentation implements PlugIn
 		plotButton.setToolTipText("Plot result based on different metrics");
 		plotButton.setEnabled(false);
 
-		newImageButton = new JButton("New image");
-		newImageButton.setToolTipText("Load a new image to segment");
+		//newImageButton = new JButton("New image");
+		//newImageButton.setToolTipText("Load a new image to segment");
 
 		applyButton = new JButton ("Apply classifier");
 		applyButton.setToolTipText("Apply current classifier to a single image or stack");
@@ -324,9 +324,9 @@ public class Weka_Segmentation implements PlugIn
 					else if(e.getSource() == plotButton){
 						plotResult();
 					}
-					else if(e.getSource() == newImageButton){
-						loadNewImage();
-					}
+					//else if(e.getSource() == newImageButton){
+					//	loadNewImage();
+					//}
 					else if(e.getSource() == applyButton){
 						applyClassifierToTestData();
 					}
@@ -548,7 +548,7 @@ public class Weka_Segmentation implements PlugIn
 			resultButton.addActionListener(listener);
 			probabilityButton.addActionListener(listener);
 			plotButton.addActionListener(listener);
-			newImageButton.addActionListener(listener);
+			//newImageButton.addActionListener(listener);
 			applyButton.addActionListener(listener);
 			loadClassifierButton.addActionListener(listener);
 			saveClassifierButton.addActionListener(listener);
@@ -616,10 +616,7 @@ public class Weka_Segmentation implements PlugIn
 				KeyListener keyListener = new KeyListener() {
 
 					@Override
-					public void keyTyped(KeyEvent e) {
-						// TODO Auto-generated method stub
-
-					}
+					public void keyTyped(KeyEvent e) {}
 
 					@Override
 					public void keyReleased(final KeyEvent e) {
@@ -649,9 +646,7 @@ public class Weka_Segmentation implements PlugIn
 					}
 
 					@Override
-					public void keyPressed(KeyEvent e) {
-
-					}
+					public void keyPressed(KeyEvent e) {}
 				};
 				// add key listener to the window and the canvas
 				addKeyListener(keyListener);
@@ -682,7 +677,7 @@ public class Weka_Segmentation implements PlugIn
 			trainingConstraints.gridy++;
 			trainingJPanel.add(plotButton, trainingConstraints);
 			trainingConstraints.gridy++;
-			trainingJPanel.add(newImageButton, trainingConstraints);
+			//trainingJPanel.add(newImageButton, trainingConstraints);
 			trainingConstraints.gridy++;
 
 			// Options panel
@@ -796,7 +791,7 @@ public class Weka_Segmentation implements PlugIn
 					resultButton.removeActionListener(listener);
 					probabilityButton.removeActionListener(listener);
 					plotButton.removeActionListener(listener);
-					newImageButton.removeActionListener(listener);
+					//newImageButton.removeActionListener(listener);
 					applyButton.removeActionListener(listener);
 					loadClassifierButton.removeActionListener(listener);
 					saveClassifierButton.removeActionListener(listener);
@@ -963,7 +958,7 @@ public class Weka_Segmentation implements PlugIn
 		resultButton.setEnabled(s);
 		probabilityButton.setEnabled(s);
 		plotButton.setEnabled(s);
-		newImageButton.setEnabled(s);
+		//newImageButton.setEnabled(s);
 		applyButton.setEnabled(s);
 		loadClassifierButton.setEnabled(s);
 		saveClassifierButton.setEnabled(s);
@@ -1000,7 +995,7 @@ public class Weka_Segmentation implements PlugIn
 
 		probabilityButton.setEnabled(classifierExists);
 
-		newImageButton.setEnabled(true);
+		//newImageButton.setEnabled(true);
 		loadClassifierButton.setEnabled(true);
 		loadDataButton.setEnabled(true);
 
@@ -1232,10 +1227,17 @@ try{
 		IJ.log("Evaluating current data...");
 		this.setButtonsEnabled(false);
 		final Instances data;
-		if (wekaSegmentation.getTraceTrainingData() == null)
+		if (wekaSegmentation.getTraceTrainingData() != null)
 			data = wekaSegmentation.getTraceTrainingData();
 		else
 			data = wekaSegmentation.getLoadedTrainingData();
+		
+		if(null == data)
+		{
+			IJ.error("Error in plot result", "No data available yet to display results");
+			return;
+		}
+		
 		displayGraphs(data, wekaSegmentation.getClassifier());
 		this.updateButtonsEnabling();
 		IJ.showStatus("Done.");
@@ -1705,7 +1707,7 @@ try{
 	{
 		GenericDialogPlus gd = new GenericDialogPlus("Segmentation settings");
 
-		final boolean[] oldEnableFeatures = wekaSegmentation.getFeatureStack(1).getEnabledFeatures();
+		final boolean[] oldEnableFeatures = wekaSegmentation.getEnabledFeatures();
 
 		gd.addMessage("Training features:");
 		final int rows = (int)Math.round(FeatureStack.availableFeatures.length/2.0);
