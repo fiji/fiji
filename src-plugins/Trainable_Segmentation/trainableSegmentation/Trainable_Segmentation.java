@@ -1727,7 +1727,7 @@ public class Trainable_Segmentation implements PlugIn
 					IJ.log("Creating features for slice " + i +  "...");
 					final FeatureStack testImageFeatures = new FeatureStack(testSlice);
 					// Use the same features as the current classifier
-					testImageFeatures.setEnableFeatures(featureStack.getEnableFeatures());
+					testImageFeatures.setEnabledFeatures(featureStack.getEnabledFeatures());
 					testImageFeatures.updateFeaturesMT();
 
 					final Instances testData = testImageFeatures.createInstances(classNames);
@@ -1829,7 +1829,7 @@ public class Trainable_Segmentation implements PlugIn
 					IJ.log("Creating features for test image " + i +  "...");
 					final FeatureStack testImageFeatures = new FeatureStack(testSlice);
 					// Use the same features as the current classifier
-					testImageFeatures.setEnableFeatures(featureStack.getEnableFeatures());
+					testImageFeatures.setEnabledFeatures(featureStack.getEnabledFeatures());
 					testImageFeatures.updateFeatures();
 	
 					final Instances testData = testImageFeatures.createInstances(classNames);
@@ -2010,7 +2010,7 @@ public class Trainable_Segmentation implements PlugIn
 	{
 		GenericDialogPlus gd = new GenericDialogPlus("Segmentation settings");
 		
-		final boolean[] oldEnableFeatures = this.featureStack.getEnableFeatures();
+		final boolean[] oldEnableFeatures = this.featureStack.getEnabledFeatures();
 		
 		gd.addMessage("Training features:");
 		final int rows = (int)Math.round(FeatureStack.availableFeatures.length/2.0);
@@ -2112,7 +2112,7 @@ public class Trainable_Segmentation implements PlugIn
 		if(featuresChanged)
 		{
 			this.setButtonsEnabled(false);
-			this.featureStack.setEnableFeatures(newEnableFeatures);
+			this.featureStack.setEnabledFeatures(newEnableFeatures);
 			this.featureStack.updateFeaturesMT();
 			this.setButtonsEnabled(true);
 			// Force whole data to be updated
@@ -2279,7 +2279,7 @@ public class Trainable_Segmentation implements PlugIn
 		IJ.log("Loaded data: " + loadedTrainingData.numInstances() + " instances, " + loadedTrainingData.numAttributes() + " attributes.");
 		
 		boolean featuresChanged = false;
-		final boolean[] oldEnableFeatures = this.featureStack.getEnableFeatures();
+		final boolean[] oldEnableFeatures = this.featureStack.getEnabledFeatures();
 		// Read checked features and check if any of them chasetButtonsEnablednged
 		for(int i = 0; i < numFeatures; i++)
 		{
@@ -2290,7 +2290,7 @@ public class Trainable_Segmentation implements PlugIn
 		if(featuresChanged)
 		{
 			this.setButtonsEnabled(false);
-			this.featureStack.setEnableFeatures(usedFeatures);
+			this.featureStack.setEnabledFeatures(usedFeatures);
 			this.featureStack.updateFeaturesMT();
 			this.setButtonsEnabled(true);
 			// Force whole data to be updated
