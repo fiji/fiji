@@ -174,7 +174,7 @@ class FastRandomTree
    * function.
    */
   public void run() {
-final long start = System.currentTimeMillis();
+//final long start = System.currentTimeMillis();
     // compute initial class counts
     double[] classProbs = new double[data.numClasses];
     for (int i = 0; i < data.numInstances; i++) {
@@ -200,8 +200,8 @@ final long start = System.currentTimeMillis();
             attIndicesWindow, 0);
   
     this.data = null;
-final long end = System.currentTimeMillis();
-IJ.log("Creating tree took: " + (end-start) + "ms" + ", max depth = " + this.m_MotherForest.maxRealDepth);     
+//final long end = System.currentTimeMillis();
+//IJ.log("Creating tree took: " + (end-start) + "ms" + ", max depth = " + this.m_MotherForest.maxRealDepth);     
   }
 
   
