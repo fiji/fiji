@@ -169,7 +169,10 @@ public class CommonFunctions
 		try 
 		{
 			r.setId(id);
-		
+
+			//final int numSeries = r.getSeriesCount();
+			//r.setSeries( 5 );
+
 			//final int num = r.getImageCount();
 			final int width = r.getSizeX();
 			final int height = r.getSizeY();
