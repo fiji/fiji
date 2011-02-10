@@ -476,8 +476,7 @@ public class UpdaterFrame extends JFrame
 	}
 
 	public void install() {
-		Installer installer =
-			new Installer(plugins, getProgress("Installing..."));
+		Installer installer = new Installer(plugins, getProgress("Installing..."));
 		try {
 			PluginCollection uninstalled = PluginCollection
 				.clone(plugins.toUninstall());
