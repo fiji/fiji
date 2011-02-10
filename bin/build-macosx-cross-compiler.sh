@@ -300,3 +300,7 @@ do
 		ln -s usr/i686-apple-darwin8/$d "$SYSROOT"
 	fi
 done
+if test ! -h "$SYSROOT"/usr/lib/libstdc++.dylib
+then
+	ln -s libstdc++.6.dylib "$SYSROOT"/usr/lib/libstdc++.dylib
+fi
