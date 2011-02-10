@@ -13,6 +13,7 @@ import ij.macro.Interpreter;
 import ij.plugin.PlugIn;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
@@ -82,7 +83,12 @@ public class UptodateCheck implements PlugIn {
 				if (!updateSite.isLastModified(lastModified))
 					return null;
 			}
-		} catch (Exception e) { /* ignore */ }
+		}
+		catch (FileNotFoundException e) { /* ignore */ }
+		catch (Exception e) {
+			IJ.handleException(e);
+			return null;
+		}
 		setLatestNag(-1);
 		return "Up-to-date";
 	}

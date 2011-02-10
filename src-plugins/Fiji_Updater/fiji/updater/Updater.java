@@ -24,6 +24,7 @@ import ij.Executer;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import java.net.UnknownHostException;
@@ -57,6 +58,16 @@ public class Updater implements PlugIn {
 		}
 
 		final PluginCollection plugins = new PluginCollection();
+		try {
+			plugins.read();
+		}
+		catch (FileNotFoundException e) { /* ignore */ }
+		catch (Exception e) {
+			e.printStackTrace();
+			IJ.error("There was an error reading the cached metadata: " + e);
+			return;
+		}
+
 		final UpdaterFrame main = new UpdaterFrame(plugins, hidden);
 		main.setLocationRelativeTo(IJ.getInstance());
 		main.setEasyMode(true);
@@ -179,5 +190,4 @@ public class Updater implements PlugIn {
 		} else
 			return false;
 	}
-
 }

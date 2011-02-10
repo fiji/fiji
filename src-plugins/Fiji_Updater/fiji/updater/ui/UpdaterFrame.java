@@ -446,6 +446,11 @@ public class UpdaterFrame extends JFrame
 		if (plugins.hasChanges() && !showQuestion("Quit?",
 				"You have specified changes. Are you sure you want to quit?"))
 			return;
+		try {
+			plugins.write();
+		} catch (Exception e) {
+			error("There was an error writing the local metadata cache: " + e);
+		}
 		dispose();
 	}
 
@@ -490,6 +495,7 @@ public class UpdaterFrame extends JFrame
 						Status.NOT_INSTALLED);
 			updatePluginsTable();
 			pluginsChanged();
+			plugins.write();
 			info("Updated successfully.  Please restart Fiji!");
 			dispose();
 		} catch (Canceled e) {
@@ -668,7 +674,8 @@ public class UpdaterFrame extends JFrame
 				}
 			updatePluginsTable();
 			canUpload = false;
-			info("Uploaded completed.");
+			plugins.write();
+			info("Uploaded successfully.");
 			enableUploadOrNot();
 			dispose();
 		} catch (Canceled e) {
