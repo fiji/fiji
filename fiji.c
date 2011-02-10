@@ -2352,6 +2352,9 @@ static int start_ij(void)
 	if (retrotranslator && build_classpath(class_path, fiji_path("retro"), 0))
 		return 1;
 
+	/* Handle update/ */
+	update_all_files();
+
 	/* set up class path */
 	if (skip_build_classpath) {
 		/* strip trailing ":" */
@@ -2364,7 +2367,6 @@ static int start_ij(void)
 			string_append_path_list(class_path, fiji_path("misc/headless.jar"));
 
 		if (is_default_main_class(main_class)) {
-			update_all_files();
 			string_append_path_list(class_path, fiji_path("jars/Fiji.jar"));
 			string_append_path_list(class_path, fiji_path("jars/ij.jar"));
 		}
@@ -2405,8 +2407,6 @@ static int start_ij(void)
 		else
 			add_option(&options, "-port7", 1);
 		add_option(&options, "-Dsun.java.command=Fiji", 0);
-
-		update_all_files();
 	}
 
 	/* handle "--headless script.ijm" gracefully */
