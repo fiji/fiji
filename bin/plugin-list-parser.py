@@ -4,6 +4,7 @@
 from fiji import User_Plugins
 from ij import IJ
 from java.io import File
+from java.util import LinkedHashMap
 import os, stat, types
 import zipfile
 import sys
@@ -156,7 +157,7 @@ PLUGINS_MENU_NAME = 'Plugins'
 URL = 'http://pacific.mpi-cbg.de/wiki/index.php'
 PAGE = 'Template:PluginList'
 
-allElements = dict()
+allElements = LinkedHashMap()
 allElements[''] = []
 
 uploadToWiki = False

@@ -48,13 +48,13 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
 
 public class UpdateJava implements PlugIn {
-	public final static String mainURL = "http://java.sun.com/javase/downloads/index.jsp";
+	public final static String mainURL = "http://www.oracle.com/technetwork/java/javase/downloads/index.html";
 	protected String cookie;
 	protected int totalBytes, currentBytes;
 	protected Progress progress;
 
 	public UpdateJava() {
-		this(new IJProgress());
+		this(IJ.getInstance() != null ? new IJProgress() : new StderrProgress());
 		progress.setTitle("");
 	}
 
@@ -69,14 +69,13 @@ public class UpdateJava implements PlugIn {
 		} catch (IOException e) {
 			progress.done();
 			e.printStackTrace();
-			IJ.error("Error downloading " + what + ": "
+			error("Error downloading " + what + ": "
 				+ (e instanceof UnknownHostException ? "unknown host " : "")
 				+ e.getMessage());
 		} catch (RuntimeException e) {
 			progress.done();
-			if (e.getMessage() == Macro.MACRO_CANCELED && !IJ.macroRunning())
-				return;
-			throw e;
+			if (e.getMessage() != Macro.MACRO_CANCELED)
+				abort(e.getMessage());
 		}
 	}
 
@@ -86,8 +85,9 @@ public class UpdateJava implements PlugIn {
 			+ (IJ.is64Bit() ? " x64" : "");
 		String ext = IJ.isLinux() ? "bin" : "exe";
 
-		String url = getLink("Download " + (isJRE ? "JRE" : "JDK"), mainURL);
-		Form form = getForm("post", url);
+		Form download = getForm("post", "Download " + (isJRE ? "JRE" : "JDK"), mainURL);
+		String url = download.url;
+		Form form = getForm("post", download.url, download.submit());
 		if (isJRE) {
 			form.variables.put(form.ids.get("dnld_platform"), platform);
 			form.variables.put(form.ids.get("dnld_license"), "true");
@@ -95,7 +95,9 @@ public class UpdateJava implements PlugIn {
 			url = getLink(Pattern.compile(" *jre-.*[^m]\\." + ext + " *"), form.submit(), form.url);
 		}
 		else {
-			form = getForm("post", form.url);
+			try {
+				form = getForm("post", form.url);
+			} catch (RuntimeException e) { /* ignore */ }
 			form.variables.put(form.ids.get("dnld_platform"), platform);
 			// avoid matching *-rpm.bin
 			url = getLink(Pattern.compile(" *jdk-.*[^m]\\." + ext + " *"), form.submit(), form.url);
@@ -123,8 +125,22 @@ public class UpdateJava implements PlugIn {
 	}
 
 	public static void abort(String message) {
-		IJ.error(message);
+		error(message);
 		throw new RuntimeException(Macro.MACRO_CANCELED);
+	}
+
+	public static void log(String message) {
+		if (IJ.getInstance() != null)
+			IJ.log(message);
+		else
+			System.err.println(message);
+	}
+
+	public static void error(String message) {
+		if (IJ.getInstance() != null)
+			IJ.error(message);
+		else
+			System.err.println(message);
 	}
 
 	public File copyToTemp(String url) throws IOException {
@@ -171,7 +187,8 @@ public class UpdateJava implements PlugIn {
 		if (url.startsWith("http://") || url.startsWith("https://")) try {
 			HttpURLConnection http = (HttpURLConnection)new URL(url).openConnection();
 			progress.addItem("Downloading " + url);
-			getOrSetCookies(http);
+			setCookies(http);
+			getCookies(http);
 			totalBytes = http.getContentLength();
 			currentBytes = 0;
 			return http.getInputStream();
@@ -194,10 +211,13 @@ public class UpdateJava implements PlugIn {
 		return callback.result;
 	}
 
-	protected void getOrSetCookies(HttpURLConnection http) {
+	protected void setCookies(HttpURLConnection http) {
 		if (cookie != null)
 			http.setRequestProperty("Cookie", cookie);
-		else {
+	}
+
+	protected void getCookies(HttpURLConnection http) {
+		if (cookie == null) {
 			List<String> cookies = http.getHeaderFields().get("Set-Cookie");
 			if (cookies != null && cookies.size() > 0) {
 				cookie = "";
@@ -279,7 +299,7 @@ public class UpdateJava implements PlugIn {
 		return getLink(in, getLinkParser(url, titlePattern), url);
 	}
 
-	public String getLink(InputStream in, ParserCallback callback, String url) {
+	public String getLink(InputStream in, ParserCallback<Link> callback, String url) {
 		try {
 			List<Link> list = getList(in, callback);
 			if (list.size() > 1)
@@ -346,7 +366,16 @@ public class UpdateJava implements PlugIn {
 
 	public Form getForm(final String method, String url) {
 		try {
-			List<Form> list = getList(getFormParser(url, method), url);
+			return getForm(method, url, openURL(url));
+		} catch (IOException e) {
+			abort("Could not fetch " + url);
+			return null; // shut up javac
+		}
+	}
+
+	public Form getForm(final String method, String url, InputStream in) {
+		try {
+			List<Form> list = getList(in, getFormParser(url, method));
 			if (list.size() > 1)
 				for (int i = 1; i < list.size(); i++)
 					if (!list.get(i).url.equals(list.get(0).url))
@@ -360,10 +389,25 @@ public class UpdateJava implements PlugIn {
 		}
 	}
 
+	public Form getForm(final String method, String submitLabel, String url) {
+		try {
+			List<Form> list = getList(getFormParser(url, method), url);
+			for (int i = 0; i < list.size(); i++)
+				if (submitLabel.equals(list.get(i).submitLabel))
+					return list.get(i);
+			if (list.size() == 0)
+				throw new RuntimeException("Could not find form of method '" + method + "' in " + url);
+			return list.get(0);
+		} catch (IOException e) {
+			abort("Could not fetch " + url);
+			return null; // shut up javac
+		}
+	}
+
 	protected class Form {
 		protected Map<String, String> variables = new HashMap<String, String>();
 		protected Map<String, String> ids = new HashMap<String, String>();
-		protected String name, method, url;
+		protected String name, method, url, submitLabel;
 
 		public String toString() {
 			String result = "FORM(" + name + "," + method + "," + url + ")";
@@ -391,14 +435,15 @@ public class UpdateJava implements PlugIn {
 					!(connection instanceof HttpURLConnection))
 				throw new IOException("Tried to " + method + ", but is not HTTP: " + url);
 			HttpURLConnection http = (HttpURLConnection)connection;
-			getOrSetCookies(http);
 			http.setRequestMethod(method.toUpperCase());
 			http.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 			http.setUseCaches(false);
 			http.setDoInput(true);
 			http.setDoOutput(true);
 			http.setRequestProperty("Content-Length", "" + bytes.length);
+			setCookies(http);
 			OutputStream out = http.getOutputStream();
+			getCookies(http);
 			out.write(bytes);
 			out.close();
 
@@ -431,7 +476,7 @@ public class UpdateJava implements PlugIn {
 			Form form = new Form();
 			form.name = (String)a.getAttribute(HTML.Attribute.NAME);
 			form.method = (String)a.getAttribute(HTML.Attribute.METHOD);
-			form.url = (String)a.getAttribute(HTML.Attribute.ACTION);
+			form.url = makeFullURL((String)a.getAttribute(HTML.Attribute.ACTION));
 			return form;
 		}
 
@@ -451,16 +496,20 @@ public class UpdateJava implements PlugIn {
 				String id = (String)a.getAttribute(HTML.Attribute.ID);
 				String name = (String)a.getAttribute(HTML.Attribute.NAME);
 				String value = (String)a.getAttribute(HTML.Attribute.VALUE);
+				String type = (String)a.getAttribute(HTML.Attribute.TYPE);
 				if (name == null)
 					name = id;
 				if (value == null)
 					value = "";
+				if (type != null && type.equals("submit"))
+					current.submitLabel = value;
 				else try {
 					value = URLDecoder.decode(value, "UTF-8");
 				} catch (UnsupportedEncodingException e) {
 					IJ.handleException(e);
 				}
-				current.variables.put(name, value);
+				if (name != null)
+					current.variables.put(name, value);
 				if (id != null)
 					current.ids.put(id, name);
 			}
@@ -494,7 +543,7 @@ public class UpdateJava implements PlugIn {
 
 		String[] cmdarray = IJ.isWindows() ?
 			// TODO: use 8.3 path on Windows to avoid quoting
-			new String[] { exe.getPath(), "/s", "INSTALLDIR=" + parentDirectory.getAbsolutePath(), "STATIC=1" } :
+			new String[] { exe.getPath(), "/qr", "INSTALLDIR=" + parentDirectory.getAbsolutePath(), "STATIC=1" } :
 			new String[] { "sh", exe.getPath() };
 		launchProgram(cmdarray, parentDirectory, IJ.isWindows() ? null : "yes\n");
 
@@ -550,13 +599,13 @@ public class UpdateJava implements PlugIn {
 			} catch (InterruptedException e) { /* ignore */ }
 			if (exitCode != 0) {
 				String cmd = joinArgs(cmdarray);
-				IJ.log("Command '" + cmd + "' failed.");
-				IJ.log("Error output:\n" + stderr.out);
-				IJ.log("Other output:\n" + stdout.out);
+				log("Command '" + cmd + "' failed.");
+				log("Error output:\n" + stderr.out);
+				log("Other output:\n" + stdout.out);
 				abort("Failed command:\n" + cmd);
 			}
 		} catch (IOException e) {
-			abort("I/O problem launching the command:\n" + joinArgs(cmdarray));
+			abort("I/O problem (" + e + ") launching the command:\n" + joinArgs(cmdarray));
 		}
 	}
 

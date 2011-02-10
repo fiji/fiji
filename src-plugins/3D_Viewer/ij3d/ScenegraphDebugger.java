@@ -13,7 +13,7 @@ import javax.swing.JTree;
 import javax.swing.tree.TreeNode;
 
 public class ScenegraphDebugger {
-	
+
 	public static void displayTree(Node root) {
 		displayTree(root, "");
 	}
@@ -26,7 +26,7 @@ public class ScenegraphDebugger {
 				displayTree((Node)ch.nextElement(), indent + "   ");
 		}
 	}
-	
+
 	public static void showTree(Node root) {
 		JTree tree = new JTree(new J3DNode(root, null));
 		JFrame parent = null;
@@ -36,13 +36,13 @@ public class ScenegraphDebugger {
 		dialog.pack();
 		dialog.setVisible(true);
 	}
-	
+
 	private static class J3DNode implements TreeNode {
-		
+
 		private Node node;
 		private J3DNode parent;
 		private J3DNode[] children = null;
-		
+
 		public J3DNode(Node n, J3DNode parent) {
 			this.node = n;
 			this.parent = parent;
@@ -90,7 +90,7 @@ public class ScenegraphDebugger {
 		public boolean isLeaf() {
 			return !(node instanceof Group);
 		}
-		
+
 		@Override
 		public String toString() {
 			return node.toString();

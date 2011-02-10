@@ -5,9 +5,11 @@ import com.sun.j3d.utils.pickfast.PickTool;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.measure.Calibration;
+import ij3d.Volume;
 import ij3d.Content;
 import ij3d.DefaultUniverse;
 import ij3d.ImageCanvas3D;
+import voltex.VoltexGroup;
 import java.awt.event.MouseEvent;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.PickInfo;
@@ -16,6 +18,9 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 import vib.BenesNamedPoint;
 import vib.PointList;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * This class is a helper class which implements functions for picking.
@@ -212,6 +217,34 @@ public class Picker {
 		}
 	}
 
+	public List<Map.Entry<Point3d,Float>> getPickPointColumn(final Content c, final int x, final int y) {
+		if (c.getType() != Content.VOLUME) return null;
+		PickCanvas pickCanvas = new PickCanvas(canvas, c);
+		pickCanvas.setMode(PickInfo.PICK_GEOMETRY);
+		pickCanvas.setFlags(PickInfo.CLOSEST_INTERSECTION_POINT);
+		pickCanvas.setTolerance(3.0f);
+		pickCanvas.setShapeLocation(x, y);
+		try {
+			PickInfo[] result = pickCanvas.pickAllSorted();
+			if(result == null || result.length == 0)
+				return null;
+
+			final ArrayList<Map.Entry<Point3d,Float>> list = new ArrayList<Map.Entry<Point3d,Float>>();
+			for(int i = 0; i < result.length; i++) {
+				final Point3d intersection = result[i].getClosestIntersectionPoint();
+				list.add(new Map.Entry<Point3d,Float>() {
+					public Point3d getKey() { return intersection; }
+					public Float getValue() { return getVolumePoint(c, intersection); }
+					public Float setValue(final Float f) { throw new UnsupportedOperationException(); }
+				});
+			}
+			return list;
+		} catch(Exception ex) {
+			ex.printStackTrace();
+			return null;
+		}
+	}
+
 	public int[] getPickedVertexIndices(BranchGroup bg, int x, int y) {
 		PickCanvas pickCanvas = new PickCanvas(univ.getCanvas(), bg);
 		pickCanvas.setTolerance(3f);
@@ -258,7 +291,8 @@ public class Picker {
 				if(c == null)
 					continue;
 
-				if(c.getType() != Content.VOLUME)
+				if(c.getType() != Content.VOLUME
+					&& c.getType() != Content.ORTHO)
 					return c;
 
 				Point3d intersection = result[i].getClosestIntersectionPoint();
@@ -276,20 +310,16 @@ public class Picker {
 
 	private static float getVolumePoint(Content c, Point3d p) {
 
-		ImagePlus img = c.getImage();
-		Calibration cal = img.getCalibration();
-		double pw = cal.pixelWidth;
-		double ph = cal.pixelHeight;
-		double pd = cal.pixelDepth;
-		int ix = (int)Math.round(p.x / pw);
-		int iy = (int)Math.round(p.y / ph);
-		int iz = (int)Math.round(p.z / pd);
-		if(iz < 0 || iz >= img.getStackSize() ||
-				iy < 0 || iy >= img.getHeight() ||
-				ix < 0 || ix >= img.getWidth())
-			return 0;
-		else
-			return img.getStack().getProcessor(iz + 1).getf(ix, iy);
+		Volume v = ((VoltexGroup)c.getContent()).getRenderer().
+				getVolume();
 
+		int ix = (int)Math.round(p.x / v.pw);
+		int iy = (int)Math.round(p.y / v.ph);
+		int iz = (int)Math.round(p.z / v.pd);
+		if(ix < 0 || ix >= v.xDim ||
+			iy < 0 || iy >= v.yDim ||
+			iz < 0 || iz >= v.zDim)
+			return 0;
+		return (v.getAverage(ix, iy, iz) & 0xff);
 	}
 }

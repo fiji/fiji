@@ -1,3 +1,15 @@
+/*
+ * This is the Fiji launcher, a small native program to handle the
+ * startup of Java and Fiji.
+ *
+ * Copyright 2007-2011 Johannes Schindelin, Mark Longair, Albert Cardona
+ * Benjamin Schmid, Erwin Frise and Gregory Jefferis
+ *
+ * The source is distributed under the GPLv2 or later.
+ *
+ * Clarification: the license of the Fiji launcher has no effect on
+ * the Java Runtime, ImageJ or any plugins, since they are not derivatives.
+ */
 #define _BSD_SOURCE
 #include <stdlib.h>
 #include "jni.h"
@@ -7,13 +19,21 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+
+#ifdef __GNUC__
+#define MAYBE_UNUSED __attribute__ ((unused))
+#else
+#define MAYBE_UNUSED
+#endif
 
 #ifdef MACOSX
 #include <stdlib.h>
 #include <pthread.h>
 #include <CoreFoundation/CoreFoundation.h>
+#include <ApplicationServices/ApplicationServices.h>
 
 struct string;
 static void append_icon_path(struct string *str);
@@ -31,6 +51,13 @@ static void open_win_console();
 /* TODO: use dup2() and freopen() and a thread to handle the output */
 #else
 #define PATH_SEP ":"
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
+#endif
+
+#ifdef __linux__
+#include "glibc-compat.h"
 #endif
 
 static void error(const char *fmt, ...)
@@ -619,6 +646,9 @@ static int is_ipv6_broken(void)
 	return 0;
 #else
 	int sock = socket(AF_INET6, SOCK_STREAM, 0);
+	static const struct in6_addr in6addr_loopback = {
+		{ { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 } }
+	};
 	struct sockaddr_in6 address = {
 		AF_INET6, 57294 + 7, 0, in6addr_loopback, 0
 	};
@@ -674,6 +704,15 @@ static int is_ipv6_broken(void)
 #define JNI_CREATEVM "JNI_CreateJavaVM"
 #endif
 
+static int is_slash(char c)
+{
+#ifdef WIN32
+	if (c == '\\')
+		return 1;
+#endif
+	return c == '/';
+}
+
 const char *fiji_dir;
 
 static const char *fiji_path(const char *relative_path)
@@ -683,9 +722,11 @@ static const char *fiji_path(const char *relative_path)
 
 	counter = ((counter + 1) % (sizeof(string) / sizeof(string[0])));
 	if (!string[counter])
-		string[counter] = string_initf("%s/%s", fiji_dir, relative_path);
+		string[counter] = string_initf("%s%s%s", fiji_dir,
+			is_slash(*relative_path) ? "" : "/", relative_path);
 	else
-		string_setf(string[counter], "%s/%s", fiji_dir, relative_path);
+		string_setf(string[counter], "%s%s%s", fiji_dir,
+			is_slash(*relative_path) ? "" : "/", relative_path);
 	return string[counter]->buffer;
 }
 
@@ -696,20 +737,42 @@ const char *main_class;
 int run_precompiled = 0;
 
 static int dir_exists(const char *directory);
+static int is_native_library(const char *path);
+static int file_exists(const char *path);
+
+__attribute__((unused))
+static const char *get_java_home_env(void)
+{
+	const char *env = getenv("JAVA_HOME");
+	if (env) {
+		if (dir_exists(env)) {
+			struct string* libjvm =
+				string_initf("%s/%s", env, library_path);
+			if (!file_exists(libjvm->buffer)) {
+				string_set_length(libjvm, 0);
+				string_addf(libjvm, "%s/jre/%s", env, library_path);
+			}
+			if (file_exists(libjvm->buffer) &&
+					!is_native_library(libjvm->buffer)) {
+				error("Ignoring JAVA_HOME (wrong arch): %s",
+					env);
+				env = NULL;
+			}
+			string_release(libjvm);
+			if (env)
+				return env;
+		}
+		else
+			error("Ignoring invalid JAVA_HOME: %s", env);
+		unsetenv("JAVA_HOME");
+	}
+	return NULL;
+}
 
 static const char *get_java_home(void)
 {
 	if (absolute_java_home)
 		return absolute_java_home;
-	const char *env = getenv("JAVA_HOME");
-	if (env) {
-		if (dir_exists(env))
-			return env;
-		else {
-			error("Ignoring invalid JAVA_HOME: %s", env);
-			unsetenv("JAVA_HOME");
-		}
-	}
 	return fiji_path(relative_java_home);
 }
 
@@ -837,6 +900,11 @@ static int is_absolute_path(const char *path)
 static int file_exists(const char *path)
 {
 	return !access(path, R_OK);
+}
+
+static inline int prefixcmp(const char *string, const char *prefix)
+{
+	return strncmp(string, prefix, strlen(prefix));
 }
 
 static inline int suffixcmp(const char *string, int len, const char *suffix)
@@ -1214,49 +1282,54 @@ static int dir_exists(const char *path)
 	return 0;
 }
 
+static int mkdir_recursively(struct string *buffer)
+{
+	int slash = buffer->length - 1, save_length;
+	char save_char;
+	while (slash > 0 && !is_slash(buffer->buffer[slash]))
+		slash--;
+	while (slash > 0 && is_slash(buffer->buffer[slash - 1]))
+		slash--;
+	if (slash <= 0)
+		return -1;
+	save_char = buffer->buffer[slash];
+	save_length = buffer->length;
+	buffer->buffer[slash] = '\0';
+	buffer->length = slash;
+	if (!dir_exists(buffer->buffer)) {
+		int result = mkdir_recursively(buffer);
+		if (result)
+			return result;
+	}
+	buffer->buffer[slash] = save_char;
+	buffer->length = save_length;
+	return mkdir(buffer->buffer, 0777);
+}
+
+/*
+   Ensures that a directory exists in the manner of "mkdir -p", creating
+   components with file mode 777 (& umask) where they do not exist.
+   Returns 0 on success, or the return code of mkdir in the case of
+   failure.
+*/
 static int mkdir_p(const char *path)
 {
-	const char *slash;
+	int result;
 	struct string *buffer;
 	if (dir_exists(path))
 		return 0;
 
 	buffer = string_copy(path);
-	for (;;) {
-		int result;
-		slash = last_slash(buffer->buffer);
-		if (!slash)
-			return -1;
-		string_set_length(buffer, slash - buffer->buffer);
-		result = mkdir(buffer->buffer, 0777);
-		if (result)
-			return result;
-	}
-	return 0;
+	result = mkdir_recursively(buffer);
+	string_release(buffer);
+	return result;
 }
 
 static void add_java_home_to_path(void)
 {
-	const char *java_home = absolute_java_home;
+	const char *java_home = get_java_home();
 	struct string *new_path = string_init(32), *buffer;
 	const char *env;
-
-	if (!java_home) {
-		const char *env = getenv("JAVA_HOME");
-		if (env)
-			java_home = env;
-		else {
-			int len;
-			java_home = fiji_path(relative_java_home);
-			len = strlen(java_home);
-			if (len > 4 && !strcmp(java_home + len - 4,
-						"/jre"))
-				java_home = xstrndup(java_home, len - 4);
-			else
-				java_home = xstrdup(java_home);
-			absolute_java_home = java_home;
-		}
-	}
 
 	buffer = string_initf("%s/bin", java_home);
 	if (dir_exists(buffer->buffer))
@@ -1500,6 +1573,37 @@ static void add_options(struct options *options, const char *cmd_line, int for_i
 		add_option_string(options, current, for_ij);
 
 	string_release(current);
+}
+
+/*
+ * If passing -Xmx=99999999g -Xmx=37m to Java, the former still triggers an
+ * error. So let's keep only the last, so that the command line can override
+ * invalid settings in jvm.cfg.
+ */
+static void keep_only_one_memory_option(struct string_array *options)
+{
+	int index_Xmx = -1, index_Xms = -1, index_Xmn = -1;
+	int i, j;
+
+	for (i = options->nr - 1; i >= 0; i--)
+		if (index_Xmx < 0 && !prefixcmp(options->list[i], "-Xmx"))
+			index_Xmx = i;
+		else if (index_Xms < 0 && !prefixcmp(options->list[i], "-Xms"))
+			index_Xms = i;
+		else if (index_Xmn < 0 && !prefixcmp(options->list[i], "-Xmn"))
+			index_Xmn = i;
+
+	for (i = j = 0; i < options->nr; i++)
+		if ((i < index_Xmx && !prefixcmp(options->list[i], "-Xmx")) ||
+				(i < index_Xms && !prefixcmp(options->list[i], "-Xms")) ||
+				(i < index_Xmn && !prefixcmp(options->list[i], "-Xmn")))
+			continue;
+		else {
+			if (i > j)
+				options->list[j] = options->list[i];
+			j++;
+		}
+	options->nr = j;
 }
 
 __attribute__((unused))
@@ -1753,7 +1857,7 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\trun <plugin> in ImageJ, optionally with arguments\n"
 		"--compile-and-run <path-to-.java-file>\n"
 		"\tcompile and run <plugin> in ImageJ\n"
-		"--edit <file>\n"
+		"--edit [<file>...]\n"
 		"\tedit the given file in the script editor\n"
 		"\n"
 		"Options to run programs other than ImageJ:\n"
@@ -1953,6 +2057,9 @@ static int start_ij(void)
 	read_file_as_string(fiji_path("jvm.cfg"), jvm_options);
 #endif
 
+	if (jvm_options->length)
+		add_options(&options, jvm_options->buffer, 0);
+
 	for (i = 1; i < main_argc; i++)
 		if (!strcmp(main_argv[i], "--") && !dashdash)
 			dashdash = count;
@@ -1996,6 +2103,10 @@ static int start_ij(void)
 			add_option_string(&options, buffer, 1);
 			headless_argc++;
 		}
+		else if (i == main_argc - 1 && !strcmp(main_argv[i], "--edit")) {
+			add_option(&options, "-eval", 1);
+			add_option(&options, "run(\"Script Editor\");", 1);
+		}
 		else if (handle_one_option(&i, "--edit", arg))
 			for (;;) {
 				add_option(&options, "-eval", 1);
@@ -2018,8 +2129,11 @@ static int start_ij(void)
 		else if (!strcmp(main_argv[i], "--jython")) {
 			main_class = "org.python.util.jython";
 			/* When running on Debian / Ubuntu we depend on the
-			   external version of jython, so add its jar: */
-			string_append_path_list(class_path, "/usr/share/java/jython.jar");
+			   external version of jython, so add its jar.
+			   Since that .jar does not contain the Lib/ folder,
+			   let's add that jar only if we do not have our own. */
+			if (!file_exists(fiji_path("jars/jython.jar")))
+				string_append_path_list(class_path, "/usr/share/java/jython.jar");
 		}
 		else if (!strcmp(main_argv[i], "--jruby"))
 			main_class = "org.jruby.Main";
@@ -2113,6 +2227,7 @@ static int start_ij(void)
 			string_append_path_list(class_path, "/usr/share/java/ant.jar");
 			string_append_path_list(class_path, "/usr/share/java/ant-launcher.jar");
 			string_append_path_list(class_path, "/usr/share/java/ant-nodeps.jar");
+			string_append_path_list(class_path, "/usr/share/java/ant-junit.jar");
 		}
 		else if (!strcmp(main_argv[i], "--retrotranslator") ||
 				!strcmp(main_argv[i], "--retro"))
@@ -2144,7 +2259,7 @@ static int start_ij(void)
 
 	if (!headless &&
 #ifdef MACOSX
-			!getenv("SECURITYSESSIONID") && !getenv("DISPLAY")
+			!CGSessionCopyCurrentDictionary()
 #elif defined(__linux__)
 			!getenv("DISPLAY")
 #else
@@ -2264,8 +2379,6 @@ static int start_ij(void)
 		add_option_string(&options, buffer, 0);
 	}
 
-	if (jvm_options->length)
-		add_options(&options, jvm_options->buffer, 0);
 	if (default_arguments->length)
 		add_options(&options, default_arguments->buffer, 1);
 
@@ -2327,6 +2440,8 @@ static int start_ij(void)
 		NULL
 	};
 
+	keep_only_one_memory_option(&options.java_options);
+
 	if (options.debug) {
 		for (i = 0; properties[i]; i += 2) {
 			string_setf(buffer, "-D%s=%s", properties[i], properties[i + 1]);
@@ -2353,8 +2468,10 @@ static int start_ij(void)
 			die("Out of memory!");
 		}
 		if (result) {
-			if (result != 2)
+			if (result != 2) {
 				error("Warning: falling back to System JVM");
+				unsetenv("JAVA_HOME");
+			}
 			env = NULL;
 		} else {
 			string_setf(buffer, "-Djava.home=%s", get_java_home());
@@ -2471,6 +2588,51 @@ static void append_icon_path(struct string *str)
 #include <sys/param.h>
 #include <string.h>
 
+static struct string *convert_cfstring(CFStringRef ref, struct string *buffer)
+{
+	string_ensure_alloc(buffer, (int)CFStringGetLength(ref) * 6);
+	if (!CFStringGetCString((CFStringRef)ref, buffer->buffer, buffer->alloc, kCFStringEncodingUTF8))
+		string_set_length(buffer, 0);
+	else
+		buffer->length = strlen(buffer->buffer);
+	return buffer;
+}
+
+static struct string *resolve_alias(CFDataRef ref, struct string *buffer)
+{
+	if (!ref)
+		string_set_length(buffer, 0);
+	else {
+		CFRange range = { 0, CFDataGetLength(ref) };
+		if (range.length <= 0) {
+			string_set_length(buffer, 0);
+			return buffer;
+		}
+		AliasHandle alias = (AliasHandle)NewHandle(range.length);
+		CFDataGetBytes(ref, range, (void *)*alias);
+
+		string_ensure_alloc(buffer, 1024);
+		FSRef fs;
+		Boolean changed;
+		if (FSResolveAlias(NULL, alias, &fs, &changed) == noErr)
+			FSRefMakePath(&fs, (unsigned char *)buffer->buffer, buffer->alloc);
+		else {
+			CFStringRef string;
+			if (FSCopyAliasInfo(alias, NULL, NULL, &string, NULL, NULL) == noErr) {
+				convert_cfstring(string, buffer);
+				CFRelease(string);
+			}
+			else
+				string_set_length(buffer, 0);
+		}
+		buffer->length = strlen(buffer->buffer);
+
+		DisposeHandle((Handle)alias);
+	}
+
+	return buffer;
+}
+
 static int is_intel(void)
 {
 	int mib[2] = { CTL_HW, HW_MACHINE };
@@ -2480,6 +2642,77 @@ static int is_intel(void)
 	if (sysctl(mib, 2, result, &len, NULL, 0) < 0)
 		return 0;
 	return !strcmp(result, "i386") || !strncmp(result, "x86", 3);
+}
+
+static int force_32_bit_mode(const char *argv0)
+{
+	int result = 0;
+	struct string *buffer = string_initf("%s/%s", getenv("HOME"),
+		"Library/Preferences/com.apple.LaunchServices.plist");
+	if (!buffer)
+		return 0;
+
+	CFURLRef launchServicesURL =
+		CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault,
+		(unsigned char *)buffer->buffer, buffer->length, 0);
+	if (!launchServicesURL)
+		goto release_buffer;
+
+	CFDataRef data;
+	SInt32 errorCode;
+	if (!CFURLCreateDataAndPropertiesFromResource(kCFAllocatorDefault,
+			launchServicesURL, &data, NULL, NULL, &errorCode))
+		goto release_url;
+
+	CFDictionaryRef dict;
+	CFStringRef errorString;
+	dict = (CFDictionaryRef)CFPropertyListCreateFromXMLData(kCFAllocatorDefault,
+		data, kCFPropertyListImmutable, &errorString);
+	if (!dict || errorString)
+		goto release_data;
+
+
+	CFDictionaryRef arch64 = (CFDictionaryRef)CFDictionaryGetValue(dict,
+		CFSTR("LSArchitecturesForX86_64"));
+	if (!arch64)
+		goto release_dict;
+
+	CFArrayRef app = (CFArrayRef)CFDictionaryGetValue(arch64, CFSTR("org.fiji"));
+	if (!app)
+		goto release_dict;
+
+	struct string *fiji_dir = string_copy(!strrchr(argv0, '/') ?
+		find_in_path(argv0) : make_absolute_path(argv0));
+	char *slash = strrchr(fiji_dir->buffer, '/');
+	if (!slash)
+		goto release_fiji_dir;
+	string_set_length(fiji_dir, slash - fiji_dir->buffer);
+	const char *suffix = "/Contents/MacOS";
+	if (!suffixcmp(fiji_dir->buffer, fiji_dir->length, suffix))
+		string_set_length(fiji_dir, fiji_dir->length - strlen(suffix));
+
+	int i, count = (int)CFArrayGetCount(app);
+	for (i = 0; i < count; i += 2) {
+		convert_cfstring((CFStringRef)CFArrayGetValueAtIndex(app, i + 1), buffer);
+		if (strcmp(buffer->buffer, "i386"))
+			continue;
+		resolve_alias((CFDataRef)CFArrayGetValueAtIndex(app, i), buffer);
+		if (!strcmp(buffer->buffer, fiji_dir->buffer)) {
+			result = 1;
+			break;
+		}
+	}
+release_fiji_dir:
+	string_release(fiji_dir);
+release_dict:
+	CFRelease(dict);
+release_data:
+	CFRelease(data);
+release_url:
+	CFRelease(launchServicesURL);
+release_buffer:
+	string_release(buffer);
+	return result;
 }
 
 static void set_path_to_JVM(void)
@@ -2532,6 +2765,7 @@ static void set_path_to_JVM(void)
 	}
 
 	if (!TargetJavaVM) {
+		retrotranslator = 1;
 		targetJVM = CFSTR("1.5");
 		TargetJavaVM =
 		CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault,
@@ -2627,9 +2861,12 @@ static int get_fiji_bundle_variable(const char *key, struct string *value)
 	if (!propertyString)
 		return -5;
 
+	const char *c_string = CFStringGetCStringPtr(propertyString, kCFStringEncodingMacRoman);
+	if (!c_string)
+		return -6;
+
 	string_set_length(value, 0);
-	string_append(value, CFStringGetCStringPtr(propertyString,
-			kCFStringEncodingMacRoman));
+	string_append(value, c_string);
 
 	return 0;
 }
@@ -2721,13 +2958,14 @@ static int launch_32bit_on_tiger(int argc, char **argv)
 {
 	const char *match, *replace;
 
+	if (force_32_bit_mode(argv[0]))
+		return 0;
+
 	if (is_intel() && is_leopard()) {
 		match = "-tiger";
 		replace = "-macosx";
 	}
 	else { /* Tiger */
-		if (!is_tiger())
-			retrotranslator = 1;
 		match = "-macosx";
 		replace = "-tiger";
 		if (sizeof(void *) < 8)
@@ -2751,6 +2989,110 @@ static int launch_32bit_on_tiger(int argc, char **argv)
 }
 #endif
 
+/* check whether there a file is a native library */
+
+static int read_exactly(int fd, unsigned char *buffer, int size)
+{
+	while (size > 0) {
+		int count = read(fd, buffer, size);
+		if (count < 0)
+			return 0;
+		buffer += count;
+		size -= count;
+	}
+	return 1;
+}
+
+/* returns bit-width (32, 64), or 0 if it is not a .dll */
+static int MAYBE_UNUSED is_dll(const char *path)
+{
+	int in;
+	unsigned char buffer[0x40];
+	unsigned char *p;
+	off_t offset;
+
+	if ((in = open(path, O_RDONLY | O_BINARY)) < 0)
+		return 0;
+
+	if (!read_exactly(in, buffer, sizeof(buffer)) ||
+			buffer[0] != 'M' || buffer[1] != 'Z') {
+		close(in);
+		return 0;
+	}
+
+	p = (unsigned char *)(buffer + 0x3c);
+	offset = p[0] | (p[1] << 8) | (p[2] << 16) | (p[2] << 24);
+	lseek(in, offset, SEEK_SET);
+	if (!read_exactly(in, buffer, 0x20) ||
+			buffer[0] != 'P' || buffer[1] != 'E' ||
+			buffer[2] != '\0' || buffer[3] != '\0') {
+		close(in);
+		return 0;
+	}
+
+	close(in);
+	if (buffer[0x17] & 0x20)
+		return (buffer[0x17] & 0x1) ? 32 : 64;
+	return 0;
+}
+
+static int MAYBE_UNUSED is_elf(const char *path)
+{
+	int in;
+	unsigned char buffer[0x40];
+
+	if ((in = open(path, O_RDONLY | O_BINARY)) < 0)
+		return 0;
+
+	if (!read_exactly(in, buffer, sizeof(buffer))) {
+		close(in);
+		return 0;
+	}
+
+	close(in);
+	if (buffer[0] == '\x7f' && buffer[1] == 'E' && buffer[2] == 'L' &&
+			buffer[3] == 'F')
+		return buffer[4] * 32;
+	return 0;
+}
+
+static int MAYBE_UNUSED is_dylib(const char *path)
+{
+	int in;
+	unsigned char buffer[0x40];
+
+	if ((in = open(path, O_RDONLY | O_BINARY)) < 0)
+		return 0;
+
+	if (!read_exactly(in, buffer, sizeof(buffer))) {
+		close(in);
+		return 0;
+	}
+
+	close(in);
+	if (buffer[0] == 0xca && buffer[1] == 0xfe && buffer[2] == 0xba &&
+			buffer[3] == 0xbe && buffer[4] == 0x00 &&
+			buffer[5] == 0x00 && buffer[6] == 0x00 &&
+			(buffer[7] >= 1 && buffer[7] < 20))
+		return 32 | 64; /* might be a fat one, containing both */
+	return 0;
+}
+
+static int is_native_library(const char *path)
+{
+#ifdef MACOSX
+	return is_dylib(path);
+#else
+	return
+#ifdef WIN32
+		is_dll(path)
+#else
+		is_elf(path)
+#endif
+		== sizeof(char *) * 8;
+#endif
+}
+
 static void find_newest(struct string *relative_path, int max_depth, const char *file, struct string *result)
 {
 	int len = relative_path->length;
@@ -2760,7 +3102,7 @@ static void find_newest(struct string *relative_path, int max_depth, const char 
 	string_add_char(relative_path, '/');
 
 	string_append(relative_path, file);
-	if (file_exists(fiji_path(relative_path->buffer))) {
+	if (file_exists(fiji_path(relative_path->buffer)) && is_native_library(fiji_path(relative_path->buffer))) {
 		string_set_length(relative_path, len);
 		if (!result->length || file_is_newer(fiji_path(relative_path->buffer), fiji_path(result->buffer)))
 			string_set(result, relative_path->buffer);

@@ -91,7 +91,7 @@ public class ConfigurationParserSPIM
 		}
 
 		// load assignments
-		ArrayList<ArrayList<?>> assignments = new ArrayList<ArrayList<?>>();
+		final ArrayList<ConfigurationParserObject> assignments = new ArrayList<ConfigurationParserObject>();
 		Field[] fields = conf.getClass().getDeclaredFields();
 
 		int lineCount = 0;
@@ -110,8 +110,8 @@ public class ConfigurationParserSPIM
 						throw new ConfigurationParserException("Wrong format in assignment file, should be 'entry = datatype name'");
 
 					// entry name
-					ArrayList temp = new ArrayList();
-					temp.add(words[0].trim());
+					final ConfigurationParserObject cpo = new ConfigurationParserObject();
+					cpo.setEntry( words[0].trim() );
 
 					words = words[1].trim().split(" ");
 					if (words.length != 2)
@@ -138,7 +138,7 @@ public class ConfigurationParserSPIM
 						throw new ConfigurationParserException("Unknown datatype '" + words[0] + "', available datatypes are: " + datatypes);
 					}
 
-					temp.add(words[0]);
+					cpo.setDataType( words[0] );
 
 					// variable name
 					int variablesPosition = -1;
@@ -158,10 +158,10 @@ public class ConfigurationParserSPIM
 						throw new ConfigurationParserException("Unknown variable '" + words[1] + "', available variables are:\n" + variables);
 					}
 
-					temp.add(words[1]);
-					temp.add(new Integer(variablesPosition));
+					cpo.setVariableName( words[1] );
+					cpo.setVariableFieldPosition( variablesPosition );
 
-					assignments.add(temp);
+					assignments.add( cpo );
 				}
 			}
 		} catch (Exception e)
@@ -194,43 +194,44 @@ public class ConfigurationParserSPIM
 					if (entryPos == -1)
 						throw new ConfigurationParserException("Entry '" + words[0] + "' does not exist!\nFollowing entries are available:\n" + getAllEntries(assignments));
 
-					int varFieldPos = getVariableFieldPosition(assignments, entryPos);
+					final ConfigurationParserObject cpo = assignments.get( entryPos );
+					final int varFieldPos = cpo.getVariableFieldPosition();
 
-					if (getDatatype(assignments, entryPos).compareTo("byte") == 0)
+					if ( cpo.getDataType().compareTo("byte") == 0 )
 					{
 						fields[varFieldPos].setByte(conf, Byte.parseByte(words[1]));
 					} 
-					else if (getDatatype(assignments, entryPos).compareTo("short") == 0)
+					else if ( cpo.getDataType().compareTo("short") == 0 )
 					{
 						fields[varFieldPos].setShort(conf, Short.parseShort(words[1]));
 					} 
-					else if (getDatatype(assignments, entryPos).compareTo("int") == 0)
+					else if ( cpo.getDataType().compareTo("int") == 0 )
 					{
 						fields[varFieldPos].setInt(conf, Integer.parseInt(words[1]));
 					} 
-					else if (getDatatype(assignments, entryPos).compareTo("long") == 0)
+					else if ( cpo.getDataType().compareTo("long") == 0)
 					{
 						fields[varFieldPos].setLong(conf, Long.parseLong(words[1]));
 					} 
-					else if (getDatatype(assignments, entryPos).compareTo("boolean") == 0)
+					else if ( cpo.getDataType().compareTo("boolean") == 0)
 					{
 						fields[varFieldPos].setBoolean(conf, Boolean.parseBoolean(words[1]));
 					} 
-					else if (getDatatype(assignments, entryPos).compareTo("float") == 0)
+					else if ( cpo.getDataType().compareTo("float") == 0)
 					{
 						if (words[1].toLowerCase().compareTo("nan") == 0)
 							fields[varFieldPos].setFloat(conf, Float.NaN);
 						else
 							fields[varFieldPos].setFloat(conf, Float.parseFloat(words[1]));
 					} 
-					else if (getDatatype(assignments, entryPos).compareTo("double") == 0)
+					else if ( cpo.getDataType().compareTo("double") == 0)
 					{
 						if (words[1].toLowerCase().compareTo("nan") == 0)
 							fields[varFieldPos].setDouble(conf, Double.NaN);
 						else
 							fields[varFieldPos].setDouble(conf, Double.parseDouble(words[1]));
 					} 
-					else if (getDatatype(assignments, entryPos).compareTo("String") == 0)
+					else if ( cpo.getDataType().compareTo("String") == 0)
 					{
 						if (words[1].equals("null"))
 							fields[varFieldPos].set(conf, null);
@@ -242,7 +243,7 @@ public class ConfigurationParserSPIM
 								throw new ConfigurationParserException("Strings have to be surrounded by  \"\" or be null");
 						}
 					} 
-					else if (getDatatype(assignments, entryPos).compareTo("ContainerFactory") == 0)
+					else if ( cpo.getDataType().compareTo("ContainerFactory") == 0)
 					{
 						if (words[1].startsWith("ArrayContainerFactory"))
 						{							
@@ -261,7 +262,7 @@ public class ConfigurationParserSPIM
 							throw new ConfigurationParserException("Unknown implementation of ContainerFactory '" + words[1] + "'");
 						}
 					}
-					else if (getDatatype(assignments, entryPos).compareTo("InterpolatorFactory") == 0)
+					else if ( cpo.getDataType().compareTo("InterpolatorFactory") == 0)
 					{
 						if (words[1].startsWith("LinearInterpolatorFactory"))
 						{
@@ -280,7 +281,7 @@ public class ConfigurationParserSPIM
 							throw new ConfigurationParserException("Unknown implementation of FloatInterpolatorFactory '" + words[1] + "'");
 						}						
 					}
-					else if (getDatatype(assignments, entryPos).compareTo("OutsideStrategyFactory") == 0)
+					else if ( cpo.getDataType().compareTo("OutsideStrategyFactory") == 0)
 					{
 						if (words[1].startsWith("OutsideStrategyMirrorFactory"))
 						{
@@ -301,7 +302,7 @@ public class ConfigurationParserSPIM
 					}
 					else
 					{
-						throw new ConfigurationParserException("Unknown datatype '" + getDatatype(assignments, entryPos) + "'");
+						throw new ConfigurationParserException("Unknown datatype '" + cpo.getDataType() + "'");
 					}
 
 				}
@@ -398,12 +399,11 @@ public class ConfigurationParserSPIM
 		if ( conf.debugLevel.toUpperCase().equals("DEBUG_ALL"))
 			conf.debugLevelInt = ViewStructure.DEBUG_ALL;
 		
+		// here all angles, timepoints and channels are parsed from the input strings
 		conf.getFileNames();
 		
 		// set interpolator stuff
-		conf.interpolatorFactorOutput.setOutOfBoundsStrategyFactory( conf.strategyFactoryOutput );
-
-		
+		conf.interpolatorFactorOutput.setOutOfBoundsStrategyFactory( conf.strategyFactoryOutput );	
 		
 		// close files
 		try
@@ -416,70 +416,28 @@ public class ConfigurationParserSPIM
 		return conf;
 	}
 
-	private static int findEntry( ArrayList list, String entry )
+	private static int findEntry( final ArrayList<ConfigurationParserObject> list, final String entry )
 	{
 		int pos = -1;
 
 		for (int i = 0; i < list.size() && pos == -1; i++)
 		{
-			if ((getEntry(list, i).toLowerCase()).compareTo(entry.toLowerCase()) == 0)
+			final ConfigurationParserObject cpo = list.get( i );
+			
+			if ( cpo.getEntry().toLowerCase().compareTo( entry.toLowerCase() ) == 0 )
 				pos = i;
 		}
 
 		return pos;
 	}
 
-	private static String getAllEntries( ArrayList list )
+	private static String getAllEntries( final ArrayList<ConfigurationParserObject> list )
 	{
 		String entries = "";
-		for (int i = 0; i < list.size(); i++)
-		{
-			entries += getEntry(list, i) + "\n";
-		}
+		
+		for( final ConfigurationParserObject cpo : list )
+			entries += cpo.getEntry() + "\n";
 
 		return entries;
 	}
-
-	private static String getAllDatatypes( ArrayList list )
-	{
-		String entries = "";
-		for (int i = 0; i < list.size(); i++)
-		{
-			entries += getDatatype(list, i) + "\n";
-		}
-
-		return entries;
-	}
-
-	private static String getAllVariableNames( ArrayList list )
-	{
-		String entries = "";
-		for (int i = 0; i < list.size(); i++)
-		{
-			entries += getVariableName(list, i) + "\n";
-		}
-
-		return entries;
-	}
-
-	private static String getEntry( ArrayList list, int pos )
-	{
-		return (String) (((ArrayList) list.get(pos)).get(0));
-	}
-
-	private static String getDatatype( ArrayList list, int pos )
-	{
-		return (String) (((ArrayList) list.get(pos)).get(1));
-	}
-
-	private static String getVariableName( ArrayList list, int pos )
-	{
-		return (String) (((ArrayList) list.get(pos)).get(2));
-	}
-
-	private static int getVariableFieldPosition( ArrayList list, int pos )
-	{
-		return ((Integer) (((ArrayList) list.get(pos)).get(3))).intValue();
-	}
-
 }

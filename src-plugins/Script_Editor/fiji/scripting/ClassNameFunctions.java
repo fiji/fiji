@@ -27,12 +27,12 @@ public class ClassNameFunctions {
 	}
 
 	public ClassNameFunctions(ClassCompletionProvider provider) {
-		this(provider.names);
+		this(provider.getClassNames());
 	}
 
 	public ClassNameFunctions(Frame parent,
 			ClassCompletionProvider provider) {
-		this(parent, provider.names);
+		this(parent, provider.getClassNames());
 	}
 
 	/**
@@ -46,7 +46,7 @@ public class ClassNameFunctions {
 		if (className.indexOf('.') > 0)
 			return className;
 
-		List<String> list = names.getFullPackageNames(className);
+		List<String> list = names.getFullClassNames(className);
 		if (list.size() == 0) {
 			JOptionPane.showMessageDialog(parent, "Class '"
 					+ className + "' was not found!");

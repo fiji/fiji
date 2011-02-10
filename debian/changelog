@@ -1,3 +1,60 @@
+fiji (20110209112532) unstable; urgency=low
+
+  * Based on fiji.git at bd0bde3bca342a496109c2cd8b969524fa82615b
+    This is the automatic weekly build
+
+ -- Mark Longair <mhl@pobox.com>  Wed, 09 Feb 2011 10:25:32 +0000
+
+fiji (20110208170426) unstable; urgency=low
+
+  * Based on fiji.git at 8a8547907cc02ad3c20d608bdf0e261524a6fa4f
+    This is the automatic weekly build
+
+ -- Mark Longair <mhl@pobox.com>  Tue, 08 Feb 2011 16:04:26 +0000
+
+fiji (20110202195426) unstable; urgency=low
+
+  * Based on fiji.git at 54584e7cc8aa70a22f41b9efd0d9e7dac8bb05c5
+    This is the automatic weekly build
+
+ -- Mark Longair <mhl@pobox.com>  Wed, 02 Feb 2011 18:54:26 +0000
+
+fiji (20110202185735) unstable; urgency=low
+
+  * Based on fiji.git at 1a997f689a4c7231157a55068142e823b5bf57ce
+    This is the automatic weekly build
+
+ -- Mark Longair <mhl@pobox.com>  Wed, 02 Feb 2011 17:57:35 +0000
+
+fiji (20110131234214) unstable; urgency=low
+
+  * Based on fiji.git at fb3106d6ea1456e1ef879ae9c2fd90553b199763
+    Updated to try another experimental public release
+
+ -- Mark Longair <mhl@pobox.com>  Mon, 31 Jan 2011 22:42:14 +0000
+
+fiji (20100824163202) unstable; urgency=low
+
+  * Based on fiji.git at 248327e63e6da7d807f04dd227e9af434bc3e28d
+    Switch back to fiji-jruby from jruby (in non-free)
+
+ -- Mark Longair <mhl@pobox.com>  Tue, 24 Aug 2010 14:32:02 +0000
+
+fiji (20100824113541) unstable; urgency=low
+
+  * Based on fiji.git at a8df3f71d49b294b99378336e248e2a078b6b8ab
+    The release before annoucing the apt-experimental repository
+    on fiji-devel
+
+ -- Mark Longair <mhl@pobox.com>  Tue, 24 Aug 2010 09:35:41 +0000
+
+fiji (20100824001747) unstable; urgency=low
+
+  * Based on fiji.git at 3ca7b92512101b4f7c4c17eecb11f1ed4ed38f14
+    [Fill in the rest of the commit message here.]
+
+ -- Mark Longair <mhl@pobox.com>  Mon, 23 Aug 2010 22:17:47 +0000
+
 fiji (20100823181328) unstable; urgency=low
 
   * Based on fiji.git at 0b97eb251852e26f380274e1a4e95a3dca439d2a

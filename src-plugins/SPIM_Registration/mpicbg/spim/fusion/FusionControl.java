@@ -32,7 +32,7 @@ public class FusionControl
 			isolatedWeightenerFactories.add( new GaussContentFactory( conf.entropyFactory ) );
 
 		if (conf.useLinearBlening)
-			combinedWeightenerFactories.add( new BlendingFactory() );
+			combinedWeightenerFactories.add( new BlendingSimpleFactory() );
 		
 		final SPIMImageFusion fusion;
 		
@@ -47,64 +47,85 @@ public class FusionControl
 			else
 				fusion = new MappingFusionSequential( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories, conf.numParalellViews );
 		}
-		
-		fusion.fuseSPIMImages();
-		
-		if (conf.showOutputImage)
+				
+		for ( int channelIndex = 0; channelIndex < viewStructure.getNumChannels(); ++channelIndex )
 		{
-			if ( !conf.multipleImageFusion )
+			fusion.fuseSPIMImages( channelIndex );
+		
+			final int channelID = viewStructure.getChannelNum( channelIndex );
+			
+			if (conf.showOutputImage)
 			{
-				if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-					IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Displaying image.");
-				
-				fusion.getFusedImage().getDisplay().setMinMax();
-				
-				String name = viewStructure.getSPIMConfiguration().inputFilePattern;			
-				String replaceTP = SPIMConfiguration.getReplaceStringTimePoints( name );
-				
-				if ( replaceTP != null )
-					name = name.replace( replaceTP, "" + timePoint );
-				
-				fusion.getFusedImage().setName( "Fused_" + name );
-				
-				ImageJFunctions.copyToImagePlus( fusion.getFusedImage() ).show();
-				//fusion.getFusedImageVirtual().show();
-			}
-			else
-			{
-				MappingFusionSequentialDifferentOutput multipleFusion = (MappingFusionSequentialDifferentOutput)fusion;
-				
-				int i = 0;
-				
-				for ( final ViewDataBeads view : viewStructure.getViews() )
+				if ( !conf.multipleImageFusion )
 				{
-					final Image<FloatType> fused = multipleFusion.getFusedImage( i++ );
-
+					if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+						IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Displaying image (Channel " + channelIndex +  ").");
+					
+					fusion.getFusedImage().getDisplay().setMinMax();
+					
 					String name = viewStructure.getSPIMConfiguration().inputFilePattern;			
 					String replaceTP = SPIMConfiguration.getReplaceStringTimePoints( name );
-					String replaceAngle = SPIMConfiguration.getReplaceStringAngle( name );
-					name = name.replace( replaceTP, "" + timePoint );
-					name = name.replace( replaceAngle, "" + view.getAcqusitionAngle() );
+					String replaceChannel = SPIMConfiguration.getReplaceStringChannels( name );
+					
+					if ( replaceTP != null )
+						name = name.replace( replaceTP, "" + timePoint );
 
-					fused.setName( name );
-					fused.getDisplay().setMinMax();
+					if ( replaceChannel != null )
+						name = name.replace( replaceChannel, "" + channelID );
+
+					fusion.getFusedImage().setName( "Fused_" + name );
 					
-					ImageJFunctions.copyToImagePlus( fused ).show();
-					
-					fused.close();
+					ImageJFunctions.copyToImagePlus( fusion.getFusedImage() ).show();
+					//fusion.getFusedImageVirtual().show();
+				}
+				else
+				{	
+					if ( channelIndex == 0 )
+					{
+						MappingFusionSequentialDifferentOutput multipleFusion = (MappingFusionSequentialDifferentOutput)fusion;
+						
+						int i = 0;
+						
+						for ( final ViewDataBeads view : viewStructure.getViews() )
+						{
+							final Image<FloatType> fused = multipleFusion.getFusedImage( i++ );
+		
+							String name = viewStructure.getSPIMConfiguration().inputFilePattern;			
+							String replaceTP = SPIMConfiguration.getReplaceStringTimePoints( name );
+							String replaceAngle = SPIMConfiguration.getReplaceStringAngle( name );
+							String replaceChannel = SPIMConfiguration.getReplaceStringChannels( name );
+							
+							try
+							{
+								name = name.replace( replaceAngle, "" + view.getAcqusitionAngle() );
+							}
+							catch (Exception e ){};
+		
+							try
+							{
+								name = name.replace( replaceTP, "" + timePoint );
+								name = name.replace( replaceChannel, "" + channelID );
+							}
+							catch (Exception e ){};
+							
+							fused.setName( name );
+							fused.getDisplay().setMinMax();
+							
+							ImageJFunctions.copyToImagePlus( fused ).show();
+						}
+					}
 				}
 			}
+			
+			if ( conf.writeOutputImage )
+			{			
+				if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+					IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Writing output file (Channel " + channelIndex +  ").");
+				
+				fusion.saveAsTiffs( conf.outputdirectory, "img_tl" + timePoint, channelIndex );
+			}					
 		}
 		
-		if (conf.writeOutputImage)
-		{			
-			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Writing output file.");
-			
-			fusion.saveAsTiffs( conf.outputdirectory, "img_tl" + timePoint );
-		}
-				
-		//if ( !conf.showOutputImage )
 		fusion.closeImages();
 	}
 	

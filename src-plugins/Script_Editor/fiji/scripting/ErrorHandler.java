@@ -1,5 +1,6 @@
 package fiji.scripting;
 
+import fiji.scripting.Languages;
 import fiji.scripting.Languages.Language;
 
 import ij.IJ;
@@ -16,11 +17,11 @@ import javax.swing.text.Position;
 
 
 public class ErrorHandler {
-	List<Error> list = new ArrayList<Error>();
-	int current = -1;
-	JTextArea textArea;
-	int currentOffset;
-	Parser parser;
+	protected List<Error> list = new ArrayList<Error>();
+	protected int current = -1;
+	protected JTextArea textArea;
+	protected int currentOffset;
+	protected Parser parser;
 
 	public ErrorHandler(JTextArea textArea) {
 		this.textArea = textArea;
@@ -29,7 +30,7 @@ public class ErrorHandler {
 	public ErrorHandler(Language language, JTextArea textArea,
 			int startOffset) {
 		this(textArea);
-		if (language.menuLabel.equals("Java"))
+		if (language.menuLabel.equals("Java") || language == Languages.fakefile)
 			parser = new JavacErrorParser();
 		else
 			return;
@@ -41,6 +42,17 @@ public class ErrorHandler {
 		} catch (BadLocationException e) {
 			IJ.handleException(e);
 		}
+	}
+
+	public int getErrorCount() {
+		return list.size();
+	}
+
+	public boolean setCurrent(int index) {
+		if (index < 0 || index >= list.size())
+			return false;
+		current = index;
+		return true;
 	}
 
 	public boolean nextError(boolean forward) {
@@ -105,7 +117,7 @@ public class ErrorHandler {
 			error.position = document.createPosition(offset + 1);
 			list.add(error);
 		} catch (BadLocationException e) {
-			e.printStackTrace();
+			IJ.handleException(e);
 		}
 	}
 
@@ -128,7 +140,7 @@ public class ErrorHandler {
 					.createPosition(start);
 				list.add(error);
 			} catch (BadLocationException e) {
-				e.printStackTrace();
+				IJ.handleException(e);
 			}
 		}
 	}

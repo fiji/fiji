@@ -46,6 +46,11 @@ public class CustomMeshNode extends ContentNode {
 	}
 
 	@Override
+	public void lutUpdated(int[] r, int[] g, int[] b, int[] a) {
+		// do nothing
+	}
+
+	@Override
 	public void colorUpdated(Color3f color) {
 		mesh.setColor(color);
 	}
@@ -80,5 +85,15 @@ public class CustomMeshNode extends ContentNode {
 		max = new Point3f();
 		center = new Point3f();
 		mesh.calculateMinMaxCenterPoint(min, max, center);
+	}
+
+	@Override
+	public void restoreDisplayedData(String path, String name) {
+		mesh.restoreDisplayedData(path, name);
+	}
+
+	@Override
+	public void swapDisplayedData(String path, String name) {
+		mesh.swapDisplayedData(path, name);
 	}
 }

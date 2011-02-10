@@ -8,13 +8,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
+import java.util.HashMap;
 
 import mpicbg.models.AffineModel3D;
 import mpicbg.spim.registration.ViewDataBeads;
@@ -22,6 +16,7 @@ import mpicbg.spim.registration.ViewStructure;
 import mpicbg.spim.registration.bead.Bead;
 import mpicbg.spim.registration.bead.BeadIdentification;
 import mpicbg.spim.registration.segmentation.Nucleus;
+import mpicbg.spim.registration.segmentation.NucleusIdentification;
 
 public class IOFunctions
 {
@@ -222,6 +217,271 @@ public class IOFunctions
 		
 		return nuclei;
 	}
+	
+	public static boolean writeNucleiCorrespondences( final ViewDataBeads view, final String directory )
+	{
+		final Collection<Nucleus> nuclei = view.getNucleiStructure().getDetectionList();
+		final String fileName = directory + view.getName() + ".nuclei.corresponding.txt";
+		
+		try
+		{
+			final PrintWriter out = TextFileAccess.openFileWriteEx( fileName );
+			out.println("ID" + "\t" + "ViewID" + "\t" + "Weight" + "\t" + "DescCorr"+ "\t" + "RansacCorr" + "\t" + "ICPCorr");
+			
+			for ( final Nucleus nucleus : nuclei )
+			{
+				out.print( nucleus.getID() + "\t" + nucleus.getViewID() + "\t" );
+				out.print( nucleus.getWeight() + "\t" );
+
+				for ( final NucleusIdentification descNucleus : nucleus.getDescriptorCorrespondence() )
+					out.print( descNucleus.getNucleusID() + ":" + descNucleus.getViewID() + ";" );
+
+				if ( nucleus.getDescriptorCorrespondence().size() == 0 )
+					out.print( "0\t" );
+				else
+					out.print( "\t" );
+				
+				for ( final NucleusIdentification ransacNucleus : nucleus.getRANSACCorrespondence() )
+					out.print( ransacNucleus.getNucleusID() + ":" + ransacNucleus.getViewID() + ";" );
+
+				if ( nucleus.getRANSACCorrespondence().size() == 0 )
+					out.print( "0\t" );
+				else
+					out.print( "\t" );
+
+				for ( final NucleusIdentification icpNucleus : nucleus.getICPCorrespondence() )
+					out.print( icpNucleus.getNucleusID() + ":" + icpNucleus.getViewID() + ";" );
+
+				if ( nucleus.getICPCorrespondence().size() == 0 )
+					out.print( "0" );
+				
+				out.println();
+			}
+						
+			out.close();
+		}
+		catch (IOException e)
+		{
+			IOFunctions.printErr("IOFunctions.writeNucleiCorrespondences(): " + e);
+			return false;
+		}		
+			
+		return true;
+	}
+
+	public static boolean readNucleiCorrespondences( final ViewDataBeads view, final String directory )
+	{
+		return readNucleiCorrespondences( view, directory, true );
+	}
+	
+	public static boolean readNucleiCorrespondences( final ViewDataBeads view, final String directory, final boolean removePreviousEntries )
+	{
+		final int debugLevel = view.getViewStructure().getDebugLevel();
+	
+		// remove previous entries if wanted
+		if ( removePreviousEntries )
+			for ( final Nucleus nucleus : view.getNucleiStructure().getNucleiList() )
+			{
+				nucleus.getDescriptorCorrespondence().clear();
+				nucleus.getRANSACCorrespondence().clear();
+				nucleus.getICPCorrespondence().clear();
+			}
+		
+		final HashMap<Integer, Nucleus> lookupTable = new HashMap<Integer, Nucleus>();
+
+		for ( final Nucleus nucleus : view.getNucleiStructure().getNucleiList() )
+			lookupTable.put( nucleus.getID(), nucleus );
+
+		int countLine = 0;
+		try
+		{			
+			BufferedReader in = TextFileAccess.openFileRead(directory + view.getName() + ".nuclei.corresponding.txt" );
+
+			// read header
+			in.readLine();
+			
+			boolean printedOnce = false;
+						
+			while ( in.ready() )
+			{
+				++countLine;
+				final String line = in.readLine();
+				final String entries[] = line.split( "\t" );
+				
+				// read nucleus and view identification
+				final int nucleusID = Integer.parseInt( entries[0] );
+				final int viewID = Integer.parseInt( entries[1] );
+
+				// check validity of view identification				
+				if ( view.getID() != viewID && !printedOnce )
+				{
+					if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
+						IOFunctions.printErr("ViewID messed up, should be " + viewID + "(file) but is " + view.getID() + "(view). We have to recompute the registration (WILL BE OVERWRITTEN).");
+					
+					for ( final Nucleus nucleus : view.getNucleiStructure().getNucleiList() )
+					{
+						nucleus.getDescriptorCorrespondence().clear();
+						nucleus.getRANSACCorrespondence().clear();
+						nucleus.getICPCorrespondence().clear();
+					}
+					
+					return false;
+				}
+
+				// get nucleus instance
+				final Nucleus nucleus = lookupTable.get( nucleusID );
+				
+				if ( nucleus == null )
+				{
+					if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
+						IOFunctions.printErr("Cannot find nucleus " + nucleusID + ". We have to recompute the registration (WILL BE OVERWRITTEN).");
+					
+					for ( final Nucleus n : view.getNucleiStructure().getNucleiList() )
+					{
+						n.getDescriptorCorrespondence().clear();
+						n.getRANSACCorrespondence().clear();
+						n.getICPCorrespondence().clear();
+					}
+					
+					return false;					
+				}
+				
+				// read weight
+				final double weight = Double.parseDouble( entries[2] );								
+				nucleus.setWeight( weight );
+				
+				// read corresponding nuclei
+				final String descCorrespondences = entries[3].trim();
+				if ( descCorrespondences.length() > 2 )
+				{
+					final String corr[] = descCorrespondences.split(";");
+					if (corr.length > 0)
+						for ( final String entry : corr )
+						{
+							final int corrNucleusID = Integer.parseInt(entry.substring(0, entry.indexOf(':')));
+							final int corrViewID = Integer.parseInt(entry.substring(entry.indexOf(':')+1, entry.length()));
+							try
+							{
+								nucleus.getDescriptorCorrespondence().add( new NucleusIdentification( corrNucleusID, view.getViewStructure().getViewFromID(corrViewID) ));
+							}
+							catch(Exception e )
+							{
+								if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
+									IOFunctions.printErr("Could not add descriptor correspondence " + nucleusID + ": " + e);
+								
+								for ( final Nucleus n : view.getNucleiStructure().getNucleiList() )
+								{
+									n.getDescriptorCorrespondence().clear();
+									n.getRANSACCorrespondence().clear();
+									n.getICPCorrespondence().clear();
+								}
+								
+								return false;													
+							}
+						}
+				}
+
+				// read ransac correspondences
+				final String ransacCorrespondences = entries[4].trim();
+				if ( ransacCorrespondences.length() > 2 )
+				{
+					final String corr[] = ransacCorrespondences.split(";");
+					if (corr.length > 0)
+						for ( final String entry : corr )
+						{
+							final int corrNucleusID = Integer.parseInt(entry.substring(0, entry.indexOf(':')));
+							final int corrViewID = Integer.parseInt(entry.substring(entry.indexOf(':')+1, entry.length()));
+							try
+							{
+								nucleus.getRANSACCorrespondence().add( new NucleusIdentification( corrNucleusID, view.getViewStructure().getViewFromID(corrViewID) ) );
+							}
+							catch(Exception e )
+							{
+								if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
+									IOFunctions.printErr("Could not add ransac correspondence " + nucleusID + ": " + e);
+								
+								for ( final Nucleus n : view.getNucleiStructure().getNucleiList() )
+								{
+									n.getDescriptorCorrespondence().clear();
+									n.getRANSACCorrespondence().clear();
+									n.getICPCorrespondence().clear();
+								}
+								
+								return false;													
+							}
+								
+						}
+				}
+
+				// read icp correspondences				
+				if ( entries.length > 5 )
+				{
+					final String icpCorrespondences = entries[5].trim();
+					if ( icpCorrespondences.length() > 2 )
+					{
+						final String corr[] = icpCorrespondences.split(";");
+						if (corr.length > 0)
+							for ( final String entry : corr )
+							{
+								final int corrNucleusID = Integer.parseInt(entry.substring(0, entry.indexOf(':')));
+								final int corrViewID = Integer.parseInt(entry.substring(entry.indexOf(':')+1, entry.length()));
+								try
+								{
+									nucleus.getICPCorrespondence().add( new NucleusIdentification( corrNucleusID, view.getViewStructure().getViewFromID(corrViewID) ) );
+								}
+								catch(Exception e )
+								{
+									if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
+										IOFunctions.printErr("Could not add ICP correspondence " + nucleusID + ": " + e);
+									
+									for ( final Nucleus n : view.getNucleiStructure().getNucleiList() )
+									{
+										n.getDescriptorCorrespondence().clear();
+										n.getRANSACCorrespondence().clear();
+										n.getICPCorrespondence().clear();
+									}
+									
+									return false;													
+								}
+									
+							}
+					}
+				}
+			}
+			
+			int numDescriptorCorrespondences = 0;
+			int numRANSACCorrespondences = 0;
+			int numICPCorrespondences = 0;
+			
+			for ( final Nucleus nucleus : view.getNucleiStructure().getNucleiList() )
+			{
+				numDescriptorCorrespondences += nucleus.getDescriptorCorrespondence().size();
+				numRANSACCorrespondences += nucleus.getRANSACCorrespondence().size();
+				numICPCorrespondences += nucleus.getICPCorrespondence().size();
+			}
+			
+			if ( debugLevel <= ViewStructure.DEBUG_MAIN )
+				IOFunctions.println("View " + view.getName() + " " + numRANSACCorrespondences + " RANSAC of "+ numDescriptorCorrespondences + " DescriptorCorrespences, " + numICPCorrespondences + " ICP correspondences." );
+			
+			in.close();
+		}
+		catch (Exception e)
+		{
+			if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
+				IOFunctions.println("IOFunctions.readNucleiCorrespondences(): " + e + " in view " + view.getName() + " of " + view.getViewStructure() + " in line " + countLine );
+
+			for ( final Nucleus n : view.getNucleiStructure().getNucleiList() )
+			{
+				n.getDescriptorCorrespondence().clear();
+				n.getRANSACCorrespondence().clear();
+				n.getICPCorrespondence().clear();
+			}
+
+			return false;
+		}
+		
+		return true;
+	}
 
 	public static boolean writeSegmentation( final ViewDataBeads view, final String directory )
 	{
@@ -370,7 +630,7 @@ public class IOFunctions
 					}
 				}
 				
-				view.getBeadStructure().addBead( bead );
+				view.getBeadStructure().addDetection( bead );
 			}
 			
 			if ( debugLevel <= ViewStructure.DEBUG_MAIN )

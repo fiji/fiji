@@ -189,6 +189,10 @@ public class Reconstruction
 		{
 			final ViewStructure viewStructure = ViewStructure.initViewStructure( conf, timePointIndex, new AffineModel3D(), "ViewStructure Timepoint " + timePointIndex, conf.debugLevelInt );						
 			
+			// no file found
+			if ( viewStructure == null )
+				continue;
+			
 			//
 			// Segmentation
 			//

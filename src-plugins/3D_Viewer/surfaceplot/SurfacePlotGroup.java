@@ -141,6 +141,13 @@ public class SurfacePlotGroup extends ContentNode implements AdjustmentListener{
 	}
 
 	/**
+	 * @see ContentNode#lutUpdated(int[], int[], int[], int[]) lutUpdated
+	 */
+	public void lutUpdated(int[] r, int[] g, int[] b, int[] a) {
+		// TODO
+	}
+
+	/**
 	 * @see ContentNode#channelsUpdated(Tupe3d) channelsUpdated
 	 */
 	public void channelsUpdated(boolean[] channels) {
@@ -176,5 +183,15 @@ public class SurfacePlotGroup extends ContentNode implements AdjustmentListener{
 	 */
 	public void shadeUpdated(boolean shaded) {
 		surfacep.setShaded(shaded);
+	}
+
+	@Override
+	public void restoreDisplayedData(String path, String name) {
+		// TODO not implemented yet
+	}
+
+	@Override
+	public void swapDisplayedData(String path, String name) {
+		// TODO not implemented yet
 	}
 }

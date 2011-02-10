@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.registration.ViewDataBeads;
@@ -17,8 +18,6 @@ import mpicbg.spim.registration.ViewStructure;
 public abstract class SPIMImageFusion
 {
 	protected SPIMConfiguration conf;
-	protected ArrayList <ViewDataBeads> views;
-	final protected int numViews;
 	final protected ArrayList <IsolatedPixelWeightenerFactory<?>> isolatedWeightenerFactories;
 	final protected ArrayList <CombinedPixelWeightenerFactory<?>> combinedWeightenerFactories;
 	protected Point3f min = null, max = null, size = null;	
@@ -32,8 +31,6 @@ public abstract class SPIMImageFusion
 	{
 		this.conf = viewStructure.getSPIMConfiguration();
 		this.viewStructure = viewStructure;
-		this.views = viewStructure.getViews();
-		this.numViews = viewStructure.getNumViews();
 		this.scale = conf.scale;
 		this.isolatedWeightenerFactories = isolatedWeightenerFactories;
 		this.combinedWeightenerFactories = combinedWeightenerFactories;
@@ -45,13 +42,13 @@ public abstract class SPIMImageFusion
 		initFusion();
 	}
 	
-	public abstract void fuseSPIMImages();	
+	public abstract void fuseSPIMImages( int channelIndex );	
 	public abstract Image<FloatType> getFusedImage();
 	
 	public ImagePlus getFusedImageCopy() { return ImageJFunctions.copyToImagePlus( getFusedImage() ); } 
 	public ImagePlus getFusedImageVirtual() { return ImageJFunctions.displayAsVirtualStack( getFusedImage() ); } 
 	public void closeImages() { getFusedImage().close(); }
-	public boolean saveAsTiffs( final String dir, final String name) { return ImageJFunctions.saveAsTiffs( getFusedImage(), dir, name, ImageJFunctions.GRAY32 ); }  
+	public boolean saveAsTiffs( final String dir, final String name, final int channelIndex ) { return ImageJFunctions.saveAsTiffs( getFusedImage(), dir, name + "_ch" + viewStructure.getChannelNum( channelIndex ), ImageJFunctions.GRAY32 ); }  
 
 	
 	public Point3f getOutputImageMinCoordinate() { return min; }
@@ -102,7 +99,7 @@ public abstract class SPIMImageFusion
 				
 		for ( final ViewDataBeads view : views )
 		{
-			if ( view.getViewErrorStatistics().getNumConnectedViews() <= 0 && view.getViewStructure().getNumViews() > 1 )
+			if ( Math.max( view.getViewErrorStatistics().getNumConnectedViews(), view.getTile().getConnectedTiles().size() ) <= 0 && view.getViewStructure().getNumViews() > 1 )
 			{
 				if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
 					IOFunctions.printErr( "Cannot use view " + view + ", it is not connected to any other view!" );
@@ -119,7 +116,7 @@ public abstract class SPIMImageFusion
 			final float[] minCoordinate = new float[]{ 0, 0, 0 };
 			final float[] maxCoordinate = new float[]{ dim[0], dim[1], dim[2] };
 			
-			view.getTile().getModel().estimateBounds( minCoordinate, maxCoordinate );
+			((AbstractAffineModel3D<?>)view.getTile().getModel()).estimateBounds( minCoordinate, maxCoordinate );
 
 			if ( minCoordinate[ 0 ] < min.x ) min.x = minCoordinate[ 0 ];
 			if ( minCoordinate[ 1 ] < min.y ) min.y = minCoordinate[ 1 ];

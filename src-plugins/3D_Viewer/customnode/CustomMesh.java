@@ -1,7 +1,10 @@
 package customnode;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Arrays;
+import java.util.Map;
 
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.geometry.NormalGenerator;
@@ -97,8 +100,12 @@ public abstract class CustomMesh extends Shape3D {
 	public void calculateMinMaxCenterPoint(Point3f min,
 				Point3f max, Point3f center) {
 
-		if(mesh == null)
+		if(mesh == null || mesh.size() == 0) {
+			min.set(0, 0, 0);
+			max.set(0, 0, 0);
+			center.set(0, 0, 0);
 			return;
+		}
 
 		min.x = min.y = min.z = Float.MAX_VALUE;
 		max.x = max.y = max.z = Float.MIN_VALUE;
@@ -336,6 +343,33 @@ public abstract class CustomMesh extends Shape3D {
 		material.setDiffuseColor(0.1f,0.1f,0.1f);
 		appearance.setMaterial(material);
 		return appearance;
+	}
+
+	public void restoreDisplayedData(String path, String name) {
+		HashMap<String, CustomMesh> contents = null;
+		try {
+			contents = WavefrontLoader.load(path);
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
+		if(contents.containsKey(name)) {
+			this.mesh = contents.get(name).getMesh();
+			update();
+		}
+	}
+
+	public void swapDisplayedData(String path, String name) {
+		HashMap<String, CustomMesh> contents =
+			new HashMap<String, CustomMesh>();
+		contents.put(name, this);
+		try {
+			WavefrontExporter.save(
+				contents,
+				path + ".obj");
+			this.mesh = null;
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	protected abstract GeometryArray createGeometry();

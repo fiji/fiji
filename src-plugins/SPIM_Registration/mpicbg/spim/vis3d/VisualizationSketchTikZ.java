@@ -9,12 +9,18 @@ import javax.vecmath.Point3f;
 
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.bead.Bead;
+import mpicbg.spim.registration.segmentation.Nucleus;
 
 public class VisualizationSketchTikZ
 {
 	public static String drawBeads( final Collection<Bead> beads, final Transform3D globalTransform, final String beadType, final float factor )
 	{
 		return drawBeads( beads, globalTransform, beadType, factor, 1 );
+	}
+
+	public static String drawNuclei( final Collection<Nucleus> nuclei, final Transform3D globalTransform, final String beadType, final float factor )
+	{
+		return drawNuclei( nuclei, globalTransform, beadType, factor, 1 );
 	}
 	
 	public static String drawBeads( final Collection<Bead> beads, final Transform3D globalTransform, final String beadType, final float factor, final int skipBeads )
@@ -54,6 +60,43 @@ public class VisualizationSketchTikZ
 		return insert;
 	}
 
+	public static String drawNuclei( final Collection<Nucleus> nuclei, final Transform3D globalTransform, final String beadType, final float factor, final int skipBeads )
+	{				
+		// we will insert lines like this
+		// put { translate([0,0,1]) } {Bead}
+		
+		final String template1 = "\t\tput { translate([";
+		final String template2 = "]) } {";
+		final String template3 = "}\n";
+		String insert = "";
+
+		// the transformed bead position
+		final Point3f translation = new Point3f();
+		
+		int beadCount = 0;
+		
+		// add all beads
+		for ( Iterator<Nucleus> i = nuclei.iterator(); i.hasNext(); )
+		{
+			final Nucleus nucleus = i.next();
+			
+			// if it is a RANSAC bead draw it anyways, otherwise draw only every nth bead
+			if ( nucleus.isTrueCorrespondence || beadCount % skipBeads == 0)
+			{
+				// set the bead coordinates
+				translation.set( nucleus.getL() );
+				
+				// transform the bead coordinates into the position of the view
+				globalTransform.transform( translation );
+				
+				insert += template1 + (translation.x*factor) + "," + (translation.y*factor) +"," + (translation.z*factor) + template2 + beadType + template3;
+			}
+			++beadCount;
+		}				
+
+		return insert;
+	}
+
 	public static String drawBead( final Bead bead, final Transform3D globalTransform, final String beadType, final float factor )
 	{				
 		// we will insert lines like this
@@ -71,6 +114,32 @@ public class VisualizationSketchTikZ
 		
 		// set the bead coordinates
 		translation.set( bead.getL() );
+		
+		// transform the bead coordinates into the position of the view
+		globalTransform.transform( translation );
+		
+		insert += template1 + (translation.x*factor) + "," + (translation.y*factor) +"," + (translation.z*factor) + template2 + beadType + template3;
+
+		return insert;
+	}
+
+	public static String drawNucleus( final Nucleus nucleus, final Transform3D globalTransform, final String beadType, final float factor )
+	{				
+		// we will insert lines like this
+		// put { translate([0,0,1]) } {Bead}
+		
+		final String template1 = "\t\tput { translate([";
+		final String template2 = "]) } {";
+		final String template3 = "}\n";
+		String insert = "";
+
+		// the transformed bead position
+		final Point3f translation = new Point3f();
+		
+		// add beads	
+		
+		// set the bead coordinates
+		translation.set( nucleus.getL() );
 		
 		// transform the bead coordinates into the position of the view
 		globalTransform.transform( translation );

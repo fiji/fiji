@@ -1,8 +1,8 @@
 [submodule "ImageJA"]
-	path = ImageJA
+	path = modules/ImageJA
 	url = ssh://mob@repo.or.cz/srv/git/imageja.git
 [submodule "TrakEM2"]
-	path = TrakEM2
+	path = modules/TrakEM2
 	url = ssh://mob@repo.or.cz/srv/git/trakem2.git
 [submodule "java/linux"]
 	path = java/linux
@@ -20,50 +20,47 @@
 	path = java/win64
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/java/win64.git
 [submodule "micromanager1.1"]
-	path = micromanager1.1
+	path = modules/micromanager1.1
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/micromanager1.1/.git
 [submodule "mpicbg"]
-	path = mpicbg
+	path = modules/mpicbg
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/mpicbg.git
 [submodule "clojure"]
-	path = clojure
+	path = modules/clojure
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/clojure/
 [submodule "bio-formats"]
-	path = bio-formats
+	path = modules/bio-formats
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/bio-formats
 [submodule "ij-plugins"]
-	path = ij-plugins
+	path = modules/ij-plugins
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/ij-plugins
 [submodule "Retrotranslator"]
-	path = Retrotranslator
+	path = modules/Retrotranslator
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/Retrotranslator
 [submodule "tcljava"]
-	path = tcljava
+	path = modules/tcljava
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/tcljava
 [submodule "batik"]
-	path = batik
+	path = modules/batik
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/batik/.git
 [submodule "junit"]
-	path = junit
+	path = modules/junit
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/junit
 [submodule "RSyntaxTextArea"]
-	path = RSyntaxTextArea
+	path = modules/RSyntaxTextArea
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/RSyntaxTextArea
 [submodule "AutoComplete"]
-	path = AutoComplete
+	path = modules/AutoComplete
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/AutoComplete
-[submodule "live-helper"]
-	path = live-helper
-	url = git://git.debian.net/git/debian-live/live-helper.git
 [submodule "weka"]
-	path = weka
+	path = modules/weka
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/weka/
 [submodule "jython"]
-	path = jython
+	path = modules/jython
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/jython/.git
 [submodule "imglib"]
-	path = imglib
+	path = modules/imglib
 	url = contrib@pacific.mpi-cbg.de:/srv/git/imglib.git
 [submodule "commons-math"]
-	path = commons-math
+	path = modules/commons-math
 	url = contrib@pacific.mpi-cbg.de:/srv/git/commons-math

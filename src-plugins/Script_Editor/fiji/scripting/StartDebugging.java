@@ -175,7 +175,7 @@ public class StartDebugging {
 		} catch (IOException exc) {
 			throw new Error("Unable to launch target VM: " + exc);
 		} catch (IllegalConnectorArgumentsException exc) {
-			exc.printStackTrace();
+			IJ.handleException(exc);
 		} catch (VMStartException exc) {
 			throw new Error("Target VM failed to initialize: " +
 			                exc.getMessage());

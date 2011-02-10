@@ -1,58 +1,24 @@
 package mpicbg.spim.registration.segmentation;
 
-import fiji.util.node.Leaf;
-import mpicbg.imglib.algorithm.math.MathLib;
-import mpicbg.models.Point;
+import mpicbg.imglib.util.Util;
 import mpicbg.spim.registration.ViewDataBeads;
+import mpicbg.spim.registration.detection.DetectionView;
 
-public class Nucleus extends Point implements Leaf<Nucleus>
+public class Nucleus extends DetectionView<NucleusIdentification, Nucleus>
 {
 	private static final long serialVersionUID = 1L;
 
-	final protected int id;
-	final protected ViewDataBeads myView;
-	
 	protected double weight = 1;
+	float diameter = 1;
 
 	public Nucleus( final int id, final float[] location, final ViewDataBeads myView ) 
 	{
-		super( location );
-		this.id = id;
-		this.myView = myView;
+		super( id, location, myView );
 	}
 
-	public ViewDataBeads getView() { return myView; }
-	public int getViewID() { return myView.getID(); }
-	public int getID() { return id; }	
-	public void setWeight( final double weight ){ this.weight = weight; }
-	public double getWeight(){ return weight; }
-	
-	final public void setW( final float[] wn )
-	{
-		for ( int i = 0; i < Math.min( w.length, wn.length ); ++i )
-			w[i] = wn[i];
-	}
-	
-	final public void resetW()
-	{
-		for ( int i = 0; i < w.length; ++i )
-			w[i] = l[i];
-	}
+	public void setDiameter( final float diameter ) { this.diameter = diameter; }
+	public float getDiameter() { return diameter; }
 
-	protected boolean useW = true;
-	
-	public void setUseW( final boolean useW ) { this.useW = useW; } 
-	public boolean getUseW() { return useW; } 
-
-	@Override
-	public float get( final int k ) 
-	{
-		if ( useW )
-			return w[ k ];
-		else
-			return l[ k ];
-	}	
-	
 	public void set( final float v, final int k ) 
 	{
 		if ( useW )
@@ -64,7 +30,7 @@ public class Nucleus extends Point implements Leaf<Nucleus>
 	@Override
 	public String toString()
 	{
-		String desc = "Nucleus " + getID() + " l"+ MathLib.printCoordinates( getL() ) + "; w"+ MathLib.printCoordinates( getW() );
+		String desc = "Nucleus " + getID() + " l"+ Util.printCoordinates( getL() ) + "; w"+ Util.printCoordinates( getW() );
 		
 		if ( myView != null)
 			return desc + " of view " + myView;
@@ -72,24 +38,9 @@ public class Nucleus extends Point implements Leaf<Nucleus>
 			return desc + " - no view assigned";
 	}
 
-	public boolean isLeaf() { return true; }
-
-	@Override
-	public float distanceTo( final Nucleus o )
-	{
-		final float x = o.get( 0 ) - get( 0 );
-		final float y = o.get( 1 ) - get( 1 );
-		final float z = o.get( 2 ) - get( 2 );
-		
-		return (float)Math.sqrt(x*x + y*y + z*z);
-	}
-	
 	@Override
 	public Nucleus[] createArray( final int n ){ return new Nucleus[ n ];	}
 
-	@Override
-	public int getNumDimensions(){ return 3; }
-	
 	public boolean equals( final Nucleus o )
 	{
 		if ( useW )
@@ -116,7 +67,15 @@ public class Nucleus extends Point implements Leaf<Nucleus>
 			return false;
 	}
 	
-	public boolean isCorrespondence = false;
-	public boolean isReference = false;
-	public boolean isCoordinate = false;
+	public boolean isTrueCorrespondence = false;
+	public boolean isFalseCorrespondence = false;
+	public boolean isAmbigous = false;
+	public boolean isUnique = false;
+	public int numCorr = 0;
+
+	@Override
+	public NucleusIdentification createIdentification() 
+	{
+		return new NucleusIdentification( this );
+	}
 }

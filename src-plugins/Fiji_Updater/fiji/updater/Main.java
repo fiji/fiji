@@ -9,6 +9,7 @@ import fiji.updater.logic.XMLFileWriter;
 
 import fiji.updater.util.Downloader;
 import fiji.updater.util.StderrProgress;
+import fiji.updater.util.UpdateJava;
 import fiji.updater.util.Util;
 
 import java.io.File;
@@ -176,20 +177,21 @@ public class Main {
 		return instance;
 	}
 
+	public static List<String> makeList(String[] list, int start) {
+		List<String> result = new ArrayList<String>();
+		while (start < list.length)
+			result.add(list[start++]);
+		return result;
+	}
+
 	public static void usage() {
 		System.err.println("Usage: fiji.update.Main <command>\n"
 			+ "\n"
 			+ "Commands:\n"
 			+ "\t--list [<files>]\n"
 			+ "\t--list-current [<files>]\n"
-			+ "\t--update [<files>]");
-	}
-
-	public static List<String> makeList(String[] list, int start) {
-		List<String> result = new ArrayList<String>();
-		while (start < list.length)
-			result.add(list[start++]);
-		return result;
+			+ "\t--update [<files>]\n"
+			+ "\t--update-java");
 	}
 
 	public static void main(String[] args) {
@@ -204,6 +206,8 @@ public class Main {
 			getInstance().listCurrent(makeList(args, 1));
 		else if (command.equals("--update"))
 			getInstance().update(makeList(args, 1));
+		else if (command.equals("--update-java"))
+			new UpdateJava().run(null);
 		else
 			usage();
 	}

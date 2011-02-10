@@ -5,16 +5,15 @@ import java.util.ArrayList;
 import javax.media.j3d.Transform3D;
 import javax.vecmath.AxisAngle4f;
 import javax.vecmath.Matrix3f;
-import javax.vecmath.Point3f;
+import javax.vecmath.Point3d;
 import javax.vecmath.Vector3f;
 
-import javax.vecmath.Point3d;
-import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.models.AffineModel3D;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
+import mpicbg.util.TransformUtils;
 
 public class AutomaticAngleSetup 
 {
@@ -27,7 +26,7 @@ public class AutomaticAngleSetup
 		
 		IOFunctions.println("Using view " + viewA.getName() + " and " + viewB.getName() + " for automatic angle setup." );
 		
-		final Vector3f rotationAxis = extractRotationAxis( viewA.getTile().getModel(), viewB.getTile().getModel() );
+		final Vector3f rotationAxis = extractRotationAxis( (AffineModel3D)viewA.getTile().getModel(), (AffineModel3D)viewB.getTile().getModel() );
 		//final float rotationAngle = extractRotationAngle( viewA.getTile().getModel(), viewB.getTile().getModel(), rotationAxis );
 		//IOFunctions.println( "rotation axis: " + rotationAxis + ", angle: " + rotationAngle );
 				
@@ -65,17 +64,17 @@ public class AutomaticAngleSetup
 		IOFunctions.println(c);
 		IOFunctions.println(b);
 				
-		Vector3f roationAxis = extractRotationAxis ( MathLib.getAffineModel3D( a ), MathLib.getAffineModel3D( b )  );
+		Vector3f roationAxis = extractRotationAxis ( TransformUtils.getAffineModel3D( a ), TransformUtils.getAffineModel3D( b )  );
 
 		IOFunctions.println( roationAxis );				
-		IOFunctions.println( extractRotationAngle( MathLib.getAffineModel3D( a ), MathLib.getAffineModel3D( b ), roationAxis) );		
+		IOFunctions.println( extractRotationAngle( TransformUtils.getAffineModel3D( a ), TransformUtils.getAffineModel3D( b ), roationAxis) );		
 		
 	}
 
 	public static float extractRotationAngle( final AffineModel3D modelA, final AffineModel3D modelB, final Vector3f rotationAxis )
 	{
-		final Transform3D transformA = MathLib.getTransform3D( modelA );
-		final Transform3D transformB = MathLib.getTransform3D( modelB );
+		final Transform3D transformA = TransformUtils.getTransform3D( modelA );
+		final Transform3D transformB = TransformUtils.getTransform3D( modelB );
 
 		// reset translational components
 		transformA.setTranslation( new Vector3f() );
@@ -290,8 +289,8 @@ public class AutomaticAngleSetup
 
 	protected void getCommonAreaPerpendicularViews( final ViewDataBeads viewA, final ViewDataBeads viewB )
 	{
-		final float[][] minMaxDimViewA = MathLib.getMinMaxDim( viewA.getImageSize(), viewA.getTile().getModel() );
-		final float[][] minMaxDimViewB = MathLib.getMinMaxDim( viewB.getImageSize(), viewB.getTile().getModel() );
+		final float[][] minMaxDimViewA = TransformUtils.getMinMaxDim( viewA.getImageSize(), viewA.getTile().getModel() );
+		final float[][] minMaxDimViewB = TransformUtils.getMinMaxDim( viewB.getImageSize(), viewB.getTile().getModel() );
 		
 		//final float minX = minMaxDimViewB[ 0 ][ 0 ];
 		final float maxX = minMaxDimViewB[ 0 ][ 1 ];

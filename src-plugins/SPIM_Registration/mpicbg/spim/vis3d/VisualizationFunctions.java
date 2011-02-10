@@ -23,6 +23,7 @@ import javax.vecmath.Vector3f;
 
 import com.sun.j3d.utils.geometry.Sphere;
 
+import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.models.Point;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.bead.Bead;
@@ -289,17 +290,17 @@ public class VisualizationFunctions
 		appearanceNon.setColoringAttributes( new ColoringAttributes( color, ColoringAttributes.SHADE_FLAT ) );
 		appearanceNon.setTransparencyAttributes( new TransparencyAttributes( TransparencyAttributes.FASTEST, transparency ) );
 
-		final Appearance appearanceCorr = new Appearance();
-		appearanceCorr.setColoringAttributes( new ColoringAttributes( new Color3f( 0, 1, 0 ), ColoringAttributes.SHADE_FLAT ) );
-		appearanceCorr.setTransparencyAttributes( new TransparencyAttributes( TransparencyAttributes.FASTEST, transparency/2 ) );
+		final Appearance appearanceICP = new Appearance();
+		appearanceICP.setColoringAttributes( new ColoringAttributes( new Color3f( 1, 0.5f, 0 ), ColoringAttributes.SHADE_FLAT ) );
+		appearanceICP.setTransparencyAttributes( new TransparencyAttributes( TransparencyAttributes.FASTEST, transparency/2 ) );
 
-		final Appearance appearanceRef = new Appearance();
-		appearanceRef.setColoringAttributes( new ColoringAttributes( new Color3f( 0, 0, 0 ), ColoringAttributes.SHADE_FLAT ) );
-		appearanceRef.setTransparencyAttributes( new TransparencyAttributes( TransparencyAttributes.FASTEST, 0 ) );
+		final Appearance appearanceTrue = new Appearance();
+		appearanceTrue.setColoringAttributes( new ColoringAttributes( new Color3f( 0, 1, 0 ), ColoringAttributes.SHADE_FLAT ) );
+		appearanceTrue.setTransparencyAttributes( new TransparencyAttributes( TransparencyAttributes.FASTEST, transparency/2 ) );
 
-		final Appearance appearanceNN = new Appearance();
-		appearanceNN.setColoringAttributes( new ColoringAttributes( new Color3f( 1, 0, 0 ), ColoringAttributes.SHADE_FLAT ) );
-		appearanceNN.setTransparencyAttributes( new TransparencyAttributes( TransparencyAttributes.FASTEST, 0.5f ) );
+		final Appearance appearanceFalse = new Appearance();
+		appearanceFalse.setColoringAttributes( new ColoringAttributes( new Color3f( 1, 0, 0 ), ColoringAttributes.SHADE_FLAT ) );
+		appearanceFalse.setTransparencyAttributes( new TransparencyAttributes( TransparencyAttributes.FASTEST, 0.5f ) );
 
 		// create a new branch group that contains all transform groups which contain one sphere each
 		final BranchGroup viewBranch = new BranchGroup();
@@ -349,12 +350,16 @@ public class VisualizationFunctions
 				continue;
 			*/
 			
-			if ( nucleus.isReference )
-				s = new Sphere( nucleusSize, Sphere.BODY, 10, appearanceRef );
-			else if ( nucleus.isCoordinate )
-				s = new Sphere( nucleusSize, Sphere.BODY, 10, appearanceNN );
-			else if ( nucleus.isCorrespondence )
-				s = new Sphere( nucleusSize, Sphere.BODY, 10, appearanceCorr );
+			if ( nucleus.isAmbigous )
+				s = new Sphere( nucleus.numCorr*1.5f, Sphere.BODY, 10, appearanceICP );
+			else if ( nucleus.isUnique )
+				s = new Sphere( nucleus.numCorr*1.5f, Sphere.BODY, 10, appearanceNon );
+			else if ( nucleus.getICPCorrespondence().size() > 0 )			
+				s = new Sphere( nucleusSize, Sphere.BODY, 10, appearanceICP );			
+			else if ( nucleus.getDescriptorCorrespondence().size() > 0 && nucleus.getRANSACCorrespondence().size() == 0 )
+				s = new Sphere( nucleusSize, Sphere.BODY, 10, appearanceFalse );
+			else if ( nucleus.getRANSACCorrespondence().size() > 0 )
+				s = new Sphere( nucleusSize, Sphere.BODY, 10, appearanceTrue );
 			else
 				s = new Sphere( nucleusSize, Sphere.BODY, 10, appearanceNon );
 			
@@ -544,43 +549,47 @@ public class VisualizationFunctions
 	public static ArrayList<Point3f> getBoundingBox( final ViewDataBeads view )
 	{
 		final ArrayList<Point3f> boundingBox = new ArrayList<Point3f>();
-		final int[] imageSize = view.getImageSize();
+		final int[] to = view.getImageSize();
+		final int[] fr = view.getImageSizeOffset();
 		
-		boundingBox.add( new Point3f(0,0,0) );
-		boundingBox.add( new Point3f(imageSize[0], 0, 0) );
+		for ( int d = 0; d < to.length; ++d )
+			to[ d ] += fr[ d ];
 		
-		boundingBox.add( new Point3f(imageSize[0], 0, 0) );
-		boundingBox.add( new Point3f(imageSize[0], imageSize[1], 0) );
-
-		boundingBox.add( new Point3f(imageSize[0], imageSize[1], 0) );
-		boundingBox.add( new Point3f(0, imageSize[1], 0) );
+		boundingBox.add( new Point3f(fr[0], fr[1], fr[2]) );
+		boundingBox.add( new Point3f(to[0], fr[1], fr[2]) );
 		
-		boundingBox.add( new Point3f(0, imageSize[1], 0) );
-		boundingBox.add( new Point3f(0, 0, 0) );
+		boundingBox.add( new Point3f(to[0], fr[1], fr[2]) );
+		boundingBox.add( new Point3f(to[0], to[1], fr[2]) );
 
-		boundingBox.add( new Point3f(0, 0, imageSize[2]) );
-		boundingBox.add( new Point3f(imageSize[0], 0, imageSize[2]) );
+		boundingBox.add( new Point3f(to[0], to[1], fr[2]) );
+		boundingBox.add( new Point3f(fr[0], to[1], fr[2]) );
+		
+		boundingBox.add( new Point3f(fr[0], to[1], fr[2]) );
+		boundingBox.add( new Point3f(fr[0], fr[1], fr[2]) );
 
-		boundingBox.add( new Point3f(imageSize[0], 0,  imageSize[2]) );
-		boundingBox.add( new Point3f(imageSize[0], imageSize[1],  imageSize[2]) );
+		boundingBox.add( new Point3f(fr[0], fr[1], to[2]) );
+		boundingBox.add( new Point3f(to[0], fr[1], to[2]) );
 
-		boundingBox.add( new Point3f(imageSize[0], imageSize[1],  imageSize[2]) );
-		boundingBox.add( new Point3f(0, imageSize[1], imageSize[2]) );
+		boundingBox.add( new Point3f(to[0], fr[1], to[2]) );
+		boundingBox.add( new Point3f(to[0], to[1], to[2]) );
 
-		boundingBox.add( new Point3f(0, imageSize[1],  imageSize[2]) );
-		boundingBox.add( new Point3f(0, 0, imageSize[2]) );
+		boundingBox.add( new Point3f(to[0], to[1], to[2]) );
+		boundingBox.add( new Point3f(fr[0], to[1], to[2]) );
 
-		boundingBox.add( new Point3f(0, 0, 0) );
-		boundingBox.add( new Point3f(0, 0, imageSize[2]) );
+		boundingBox.add( new Point3f(fr[0], to[1], to[2]) );
+		boundingBox.add( new Point3f(fr[0], fr[1], to[2]) );
 
-		boundingBox.add( new Point3f(imageSize[0], 0, 0) );
-		boundingBox.add( new Point3f(imageSize[0], 0, imageSize[2]) );
+		boundingBox.add( new Point3f(fr[0], fr[1], fr[2]) );
+		boundingBox.add( new Point3f(fr[0], fr[1], to[2]) );
 
-		boundingBox.add( new Point3f(imageSize[0], imageSize[1], 0) );
-		boundingBox.add( new Point3f(imageSize[0], imageSize[1], imageSize[2]) );
+		boundingBox.add( new Point3f(to[0], fr[1], fr[2]) );
+		boundingBox.add( new Point3f(to[0], fr[1], to[2]) );
 
-		boundingBox.add( new Point3f(0, imageSize[1], 0) );
-		boundingBox.add( new Point3f(0, imageSize[1], imageSize[2]) );
+		boundingBox.add( new Point3f(to[0], to[1], fr[2]) );
+		boundingBox.add( new Point3f(to[0], to[1], to[2]) );
+
+		boundingBox.add( new Point3f(fr[0], to[1], fr[2]) );
+		boundingBox.add( new Point3f(fr[0], to[1], to[2]) );
 		
 		return boundingBox;
 	}
@@ -651,7 +660,8 @@ public class VisualizationFunctions
 	public static Content drawView( final Image3DUniverse univ, final ViewDataBeads view, final Color3f color, final LineAttributes lineAttributes )
 	{
 		final Content content = univ.addLineMesh( getBoundingBox( view ), color, "BoundingBox" + view.getName(), false); //, 0, false, lineAttributes);
-		Motion3D.replaceTransformBranchGroup( content, view.getTransform3D() );
+		content.setTransform( view.getTransform3D() );
+		//Motion3D.replaceTransformBranchGroup( content, view.getTransform3D() );
 		content.showCoordinateSystem(false);
 		
 		return content;

@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.PrintWriter;
 
+import java.lang.reflect.Method;
+
 import mpicbg.spim.io.ConfigurationParserGeneral;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.ProgramConfiguration;
@@ -87,6 +89,11 @@ public class ClusterReconstruction
         		e.printStackTrace();
         		System.exit(0);
         	}   
+        	
+        	File f = new File(jobFile);
+        	setReadable(f, true, false);
+        	setWritable(f, true, false);
+        	setExecutable(f, true, false);
         }
         
     	//
@@ -112,6 +119,12 @@ public class ClusterReconstruction
     		e.printStackTrace();
     		System.exit(0);
     	}
+        
+    	File f = new File(submissionFile);
+    	setReadable(f, true, false);
+    	setWritable(f, true, false);
+    	setExecutable(f, true, false);
+    	
 	}
 
 	protected static String getLibraries(String directory)
@@ -244,5 +257,37 @@ public class ClusterReconstruction
 			}
 		}
 	}
-	
+
+	protected static Method setReadable, setWritable, setExecutable;
+
+	static {
+		try {
+			Class file = Class.forName("java.io.File");
+			Class[] types = { boolean.class, boolean.class };
+			setReadable = file.getMethod("setReadable", types);
+			setWritable = file.getMethod("setWritable", types);
+			setExecutable = file.getMethod("setExecutable", types);
+		} catch (Exception e) { /* ignore */ }
+	}
+
+	protected static boolean setReadable(File file, boolean readable, boolean ownerOnly)
+	{
+		try {
+			return ((Boolean)setReadable.invoke(file, new Object[] { readable, ownerOnly })).booleanValue();
+		} catch (Exception e) { return false; }
+	}
+
+	protected static boolean setWritable(File file, boolean writable, boolean ownerOnly)
+	{
+		try {
+			return ((Boolean)setWritable.invoke(file, new Object[] { writable, ownerOnly })).booleanValue();
+		} catch (Exception e) { return false; }
+	}
+
+	protected static boolean setExecutable(File file, boolean executable, boolean ownerOnly)
+	{
+		try {
+			return ((Boolean)setExecutable.invoke(file, new Object[] { executable, ownerOnly })).booleanValue();
+		} catch (Exception e) { return false; }
+	}
 }

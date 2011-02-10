@@ -46,6 +46,9 @@ import java.text.DecimalFormat;
 
 import ij.measure.Calibration;
 
+import Skeletonize3D_.Skeletonize3D_;
+import skeleton_analysis. AnalyzeSkeleton_;
+
 public class NeuriteTracerResultsDialog
 	extends Dialog
 	implements ActionListener, WindowListener, ItemListener, PathAndFillListener, TextListener, SigmaPalette.SigmaPaletteListener, ImageListener {
@@ -135,6 +138,7 @@ public class NeuriteTracerResultsDialog
 	Button makeLineStackButton;
 
 	Button showCorrespondencesToButton;
+	Button analyzeSkeletonButton;
 
 	Button saveButton;
 	Button loadButton;
@@ -400,6 +404,7 @@ public class NeuriteTracerResultsDialog
 
 		exportCSVButton.setEnabled(false);
 		showCorrespondencesToButton.setEnabled(false);
+		analyzeSkeletonButton.setEnabled(false);
 		saveButton.setEnabled(false);
 		loadButton.setEnabled(false);
 		if( uploadButton != null ) {
@@ -443,6 +448,7 @@ public class NeuriteTracerResultsDialog
 			loadButton.setEnabled(true);
 			exportCSVButton.setEnabled(true);
 			showCorrespondencesToButton.setEnabled(true);
+			analyzeSkeletonButton.setEnabled(true);
 			if( uploadButton != null ) {
 				uploadButton.setEnabled(true);
 				fetchButton.setEnabled(true);
@@ -838,10 +844,15 @@ public class NeuriteTracerResultsDialog
 			}
 			add(otherImportExportPanel,c);
 
-			++c.gridy;
+			// ++c.gridy;
 			showCorrespondencesToButton = new Button("Show Correspondences to Traces...");
 			showCorrespondencesToButton.addActionListener( this );
-			add(showCorrespondencesToButton,c);
+			// add(showCorrespondencesToButton,c);
+
+			++c.gridy;
+			analyzeSkeletonButton = new Button("Run \"Analyze Skelton\"");
+			analyzeSkeletonButton.addActionListener( this );
+			add(analyzeSkeletonButton,c);
 
 			saveButton = new Button("Save Traces File");
 			saveButton.addActionListener( this );
@@ -1083,7 +1094,23 @@ public class NeuriteTracerResultsDialog
 			if( pathAndFillManager.size() == 0 ) {
 				IJ.error("There are no paths traced yet - the stack would be empty");
 			} else {
-				plugin.makePathVolume();
+				ImagePlus imagePlus = plugin.makePathVolume();
+				imagePlus.show();
+			}
+
+		} else if( source == analyzeSkeletonButton ) {
+
+			if( pathAndFillManager.size() == 0 ) {
+				IJ.error("There are no paths traced yet!");
+			} else {
+				ImagePlus imagePlus = plugin.makePathVolume();
+				Skeletonize3D_ skeletonizer = new Skeletonize3D_();
+				skeletonizer.setup("",imagePlus);
+				skeletonizer.run(imagePlus.getProcessor());
+				AnalyzeSkeleton_ analyzer = new AnalyzeSkeleton_();
+				analyzer.setup("",imagePlus);
+				analyzer.run(imagePlus.getProcessor());
+				imagePlus.show();
 			}
 
 		} else if( source == cancelSearch ) {

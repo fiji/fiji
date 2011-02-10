@@ -5,6 +5,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.LookUpTable;
+import ij.gui.ImageWindow;
 import ij.io.FileInfo;
 import ij.io.ImageReader;
 import ij.io.OpenDialog;
@@ -50,7 +51,8 @@ public class Reader {
 			imp.show();
 			imp.updateAndDraw();
 			WindowFocusListener listener = null;
-			try {
+			ImageWindow window = imp.getWindow();
+			if (window != null) try {
 				Class toolbox = Class
 						.forName("org.imagearchive.lsm.toolbox.gui.ImageFocusListener");
 				Object o = null;
@@ -59,7 +61,7 @@ public class Reader {
 				listener = (WindowFocusListener) o;
 				Method toolboxMet = o.getClass().getMethod("windowGainedFocus",new Class[] {WindowEvent.class});
 				if (listener != null) {
-					imp.getWindow().addWindowFocusListener(listener);
+					window.addWindowFocusListener(listener);
 				}
 				if (toolboxMet != null)
 					toolboxMet.invoke(o,new Object[]{null});

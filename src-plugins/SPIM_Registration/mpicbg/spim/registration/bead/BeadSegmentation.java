@@ -3,26 +3,27 @@ package mpicbg.spim.registration.bead;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3i;
 
-import mpicbg.imglib.algorithm.gauss.GaussianConvolution;
-import mpicbg.imglib.algorithm.math.MathLib;
+import mpicbg.imglib.algorithm.math.LocalizablePoint;
+import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
+import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal1;
+import mpicbg.imglib.algorithm.scalespace.SubpixelLocalization;
 import mpicbg.imglib.cursor.LocalizableByDimCursor3D;
+import mpicbg.imglib.cursor.special.HyperSphereIterator;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.multithreading.SimpleMultiThreading;
+import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.integer.IntType;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.imglib.util.Util;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
-import mpicbg.spim.registration.bead.laplace.DoGMaximum;
 import mpicbg.spim.registration.bead.laplace.LaPlaceFunctions;
-import mpicbg.spim.registration.bead.laplace.RejectStatistics;
 import mpicbg.spim.registration.threshold.ComponentProperties;
 import mpicbg.spim.registration.threshold.ConnectedComponent;
 
@@ -43,7 +44,7 @@ public class BeadSegmentation
 	public void segment( final SPIMConfiguration conf, final ArrayList<ViewDataBeads> views )
 	{
 		final float threshold = conf.threshold;
-		
+				
 		//
 		// Extract the beads
 		// 			
@@ -54,17 +55,17 @@ public class BeadSegmentation
 	    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Scale Space Bead Extraction for " + view.getName() );
 				
-				view.setBeadStructure( extractBeadsLaPlace( view, conf ) );
+	    		view.setBeadStructure( extractBeadsLaPlaceImgLib( view, conf ) );
+	    		
+				//view.setBeadStructure( extractBeadsLaPlace( view, conf ) );
 				
 				/*
-				final Image<FloatType> img = getFoundBeads( view );
-				
+				img = getFoundBeads( view );				
+				img.setName( "imglib" );
 				img.getDisplay().setMinMax();
-				ImageJFunctions.copyToImagePlus( img ).show();
-				
+				ImageJFunctions.copyToImagePlus( img ).show();				
 				SimpleMultiThreading.threadHaltUnClean();
 				*/
-				
 				view.closeImage();
 			}
 			else
@@ -76,7 +77,10 @@ public class BeadSegmentation
 				
 				view.closeImage();				
 			}
-										
+				
+			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+				IOFunctions.println( "Found peaks (possible beads): " + view.getBeadStructure().getBeadList().size() );
+			
 			//
 			// Store segmentation in a file
 			//
@@ -96,8 +100,16 @@ public class BeadSegmentation
 		for ( Bead bead : view.getBeadStructure().getBeadList())
 		{
 			float[] pos = bead.getL();
-			cursor.setPosition((int)(pos[0] + 0.5), (int)(pos[1] + 0.5), (int)(pos[2] + 0.5));
-			cursor.getType().setOne();
+			
+			LocalizablePoint p = new LocalizablePoint( pos );
+			
+			HyperSphereIterator<FloatType> it = new HyperSphereIterator<FloatType>( img, p, 1, new OutOfBoundsStrategyValueFactory<FloatType>() );
+			
+			for ( final FloatType f : it )
+				f.setOne();
+			
+			//cursor.setPosition((int)(pos[0] + 0.5), (int)(pos[1] + 0.5), (int)(pos[2] + 0.5));
+			//cursor.getType().setOne();
 		}
 		
 		cursor.close();
@@ -322,24 +334,12 @@ public class BeadSegmentation
 		return beads;
 	}
 	*/
-	
-	protected BeadStructure extractBeadsLaPlace( final ViewDataBeads view, final SPIMConfiguration conf )
+		
+	protected BeadStructure extractBeadsLaPlaceImgLib( final ViewDataBeads view, final SPIMConfiguration conf )
 	{
-    	final RejectStatistics rsFinal = new RejectStatistics();
-        ArrayList<DoGMaximum> localMaximaFinal = new ArrayList<DoGMaximum>();
-        
-        final Image<FloatType> img = view.getImage();
-        
-		final int width = img.getDimension( 0 );
-		final int height = img.getDimension( 1 );
-		final int depth = img.getDimension( 2 );
-        
-        // found local maxima
-       
-        // start with sigma = 1,6
-        // assume it to be 0,5 in the original image
-        // d(sigma) = sqrt(sigmaB^2 - sigmaA^2)
-        		
+		// load the image
+		final Image<FloatType> img = view.getImage();
+
         float imageSigma = conf.imageSigma;
         float initialSigma = conf.initialSigma;
 
@@ -367,189 +367,78 @@ public class BeadSegmentation
         //
         final float[] sigma = LaPlaceFunctions.computeSigma(steps, k, initialSigma);
         final float[] sigmaDiff = LaPlaceFunctions.computeSigmaDiff(sigma, imageSigma);
-              
-        //
-        // Now initially fold with gaussian kernel to get to sigma = 1.6
-        //
-        final GaussianConvolution<FloatType> conv1 = new GaussianConvolution<FloatType>( img, conf.strategyFactoryGauss, sigmaDiff[0] );
-        final GaussianConvolution<FloatType> conv2 = new GaussianConvolution<FloatType>( img, conf.strategyFactoryGauss, sigmaDiff[1] );
-        
-        final Image<FloatType> gauss1, gauss2;
-        
-        if ( conv1.checkInput() && conv2.checkInput() )
-        {
-        	int numThreads = conf.numberOfThreads / 2;
-        	if ( numThreads < 1 )
-        		numThreads = 1;
-        	
-        	conv1.setNumThreads( numThreads );
-        	conv2.setNumThreads( numThreads );
-        	
-            final AtomicInteger ai = new AtomicInteger(0);					
-            Thread[] threads = SimpleMultiThreading.newThreads( 2 );
-
-        	for (int ithread = 0; ithread < threads.length; ++ithread)
-                threads[ithread] = new Thread(new Runnable()
-                {
-                    public void run()
-                    {
-                    	final int myNumber = ai.getAndIncrement();
-                    	if ( myNumber == 0 )
-                    	{
-                    		if ( !conv1.process() )
-                    		{
-                            	if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
-                            		IOFunctions.println( "Cannot compute gaussian convolution 1: " + conv1.getErrorMessage() );
-                    		}
-                    		
-                    	}
-                    	else
-                    	{
-                    		if ( !conv2.process() )
-                    		{
-                            	if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
-                            		IOFunctions.println( "Cannot compute gaussian convolution 2: " + conv2.getErrorMessage() );
-                    		}
-                    		
-                    	}                    	
-                    }
-                });
-        	
-    		SimpleMultiThreading.startAndJoin( threads );       	
-        }
-        else
-        {
-        	if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
-        		IOFunctions.println( "Cannot compute gaussian convolutions: " + conv1.getErrorMessage() + " & " + conv2.getErrorMessage() );
-        	
-        	gauss1 = gauss2 = null;
-        	return null;
-        }
-        
-        if ( conv1.getErrorMessage().length() == 0 && conv2.getErrorMessage().length() == 0 )
-        {
-	        gauss1 = conv1.getResult();
-	        gauss2 = conv2.getResult();
-        }
-        else
-        {
-        	gauss1 = gauss2 = null;
-        	return null;        	
-        }
-        
-        LaPlaceFunctions.subtractImagesInPlace( gauss2, gauss1, K_MIN1_INV );
-        gauss1.close();
-        
-	    // Fit quadratic function and reject points which do not fit
-	    // And also compute the principle curvatures which are
-	    //
-		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ALL )
-			IOFunctions.println( new Date(System.currentTimeMillis()) + ": Analyze Maxima " + new Date(System.currentTimeMillis()));
-
-	    final AtomicInteger ai = new AtomicInteger(0);					
-	    Thread[] threads = SimpleMultiThreading.newThreads( conf.numberOfThreads );
-	    final int numThreads = threads.length;
-	    
-	    final RejectStatistics rsList[] = new RejectStatistics[ numThreads ];
+         
+		// compute difference of gaussian
+		final DifferenceOfGaussianReal1<FloatType> dog = new DifferenceOfGaussianReal1<FloatType>( img, conf.strategyFactoryGauss, sigmaDiff[0], sigmaDiff[1], minInitialPeakValue, K_MIN1_INV );
+		dog.setKeepDoGImage( true );
 		
-	    @SuppressWarnings("unchecked")
-	    final ArrayList<DoGMaximum> localMaximaList[] = new ArrayList[ numThreads ];
-
-
-		for (int ithread = 0; ithread < threads.length; ++ithread)
-	        threads[ithread] = new Thread(new Runnable()
-	        {
-	            public void run()
-	            {
-	            	final int myNumber = ai.getAndIncrement();
-            	
-	            	rsList[ myNumber ] = new RejectStatistics();
-	            	localMaximaList[ myNumber ] = new ArrayList<DoGMaximum>();
-	            	
-	            	final RejectStatistics rs = rsList[ myNumber ];
-	            	final ArrayList<DoGMaximum> localMaxima = (ArrayList<DoGMaximum>) localMaximaList[ myNumber ];
-	
-	            	final LocalizableByDimCursor3D<FloatType> cursor = (LocalizableByDimCursor3D<FloatType>) gauss2.createLocalizableByDimCursor();
-	                
-	                while ( cursor.hasNext() )
-	                {
-	                	cursor.fwd();
-	                	
-	                	final int x = cursor.getX();
-	                	final int y = cursor.getY();
-	                	final int z = cursor.getZ();
-	                	
-	                	if ( z % numThreads == myNumber )
-	                	{
-	                    	if ( x > 0 && y > 0 && z > 0 && 
-	                    		 x < width - 1 && y < height - 1 && z < depth - 1 )
-	                    	{
-	                    		if ( LaPlaceFunctions.isSpecialPointMin( cursor , minInitialPeakValue) )
-	                    		{
-	                    			LaPlaceFunctions.analyzeMaximum( cursor, minPeakValue, width, height, depth, conf.initialSigma, conf.identityRadius, conf.maximaTolerance, rs, localMaxima );
-	                    		}
-	                    	}
-	                	}
-	                }
-                
-	                cursor.close();
-            }
-        });
-	
-		SimpleMultiThreading.startAndJoin( threads );				
-
-		gauss2.close();
-		
-		// now we check that this maxima is unique in its identity radius.
-		// if there are maxima which are smaller they get removed
-		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ALL )
-			IOFunctions.println( "Check Maxima " + new Date(System.currentTimeMillis()));		
-		
-		localMaximaFinal = LaPlaceFunctions.checkMaximaXTree( localMaximaFinal, conf.identityRadius );    
-		
-		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ALL )
-			IOFunctions.println("Finished Analyze Maxima " + new Date(System.currentTimeMillis()));
-
-		
-		// summarize RejectStatistics and LocalMaxima
-		for (int ithread = 0; ithread < threads.length; ++ithread)
+		if ( !dog.checkInput() || !dog.process() )
 		{
-			rsFinal.imaginaryEigenValues += rsList[ ithread ].imaginaryEigenValues;
-			rsFinal.noInverseOfHessianMatrix += rsList[ ithread ].noInverseOfHessianMatrix;
-			rsFinal.noStableMaxima += rsList[ ithread ].noStableMaxima;
-			rsFinal.notHighestValueInIdentityRadius += rsList[ ithread ].notHighestValueInIdentityRadius;
-			rsFinal.peakTooLow += rsList[ ithread ].peakTooLow;
-			rsFinal.tooHighEigenValueRatio += rsList[ ithread ].tooHighEigenValueRatio;
-						
-			for ( DoGMaximum dogM : localMaximaList[ ithread ] )
-				localMaximaFinal.add( dogM );
-		}
-		
-		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ALL )
-		{
-	        IOFunctions.println("noStableMaxima: " + rsFinal.noStableMaxima);
-	        IOFunctions.println("tooHighEigenValueRatio: " + rsFinal.tooHighEigenValueRatio);
-	        IOFunctions.println("noInverseOfHessianMatrix: " + rsFinal.noInverseOfHessianMatrix); 
-	        IOFunctions.println("peakTooLow: " + rsFinal.peakTooLow);
-	        IOFunctions.println("imaginaryEigenValues: " + rsFinal.imaginaryEigenValues);
+    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
+    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Cannot compute difference of gaussian for " + dog.getErrorMessage() );
+			
+			return new BeadStructure();
 		}
 
-		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-			IOFunctions.println("Found peaks (possible beads): " + localMaximaFinal.size());
+		// remove all minima
+        final ArrayList< DifferenceOfGaussianPeak<FloatType> > peakList = dog.getPeaks();
+        for ( int i = peakList.size() - 1; i >= 0; --i )
+        	if ( peakList.get( i ).isMin() )
+        		peakList.remove( i );
+		
+		final SubpixelLocalization<FloatType> spl = new SubpixelLocalization<FloatType>( dog.getDoGImage(), dog.getPeaks() );
+		spl.setAllowMaximaTolerance( true );
+		spl.setMaxNumMoves( 10 );
+		
+		if ( !spl.checkInput() || !spl.process() )
+		{
+    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
+    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Warning! Failed to compute subpixel localization " + spl.getErrorMessage() );
+		}
 
-				
+		dog.getDoGImage().close();
+			
         final BeadStructure beads = new BeadStructure();
         int id = 0;
+        final float[] pos = new float[ img.getNumDimensions() ];
         
-        for (Iterator <DoGMaximum>i = localMaximaFinal.iterator(); i.hasNext(); )
+        int peakTooLow = 0;
+        int invalid = 0;
+        int max = 0;
+                
+        for ( DifferenceOfGaussianPeak<FloatType> maximum : dog.getPeaks() )
         {
-        	DoGMaximum maximum = i.next();
-        	Bead bead = new Bead( id, new Point3d(maximum.x + maximum.xd, maximum.y + maximum.yd, maximum.z + maximum.zd), view );
-        	beads.addBead( bead );
-        	id++;        	
+        	if ( !maximum.isValid() )
+        		invalid++;
+        	if ( maximum.isMax() )
+        		max++;
+        	
+        	if ( maximum.isMax() ) 
+        	{
+        		if ( Math.abs( maximum.getValue().get() ) >= minPeakValue )
+        		{
+	        		maximum.getSubPixelPosition( pos );
+		        	final Bead bead = new Bead( id, new Point3d( pos[ 0 ], pos[ 1 ], pos[ 2 ] ), view );
+		        	beads.addDetection( bead );
+		        	id++;
+        		}
+        		else
+        		{
+        			peakTooLow++;
+        		}
+        	}
         }
         
+		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ALL )
+		{
+	        IOFunctions.println( "number of peaks: " + dog.getPeaks().size() );        
+	        IOFunctions.println( "invalid: " + invalid );
+	        IOFunctions.println( "max: " + max );
+	        IOFunctions.println( "peak to low: " + peakTooLow );
+		}
+		
 		return beads;
+		
 	}
 	
 	protected BeadStructure extractBeadsThresholdSegmentation( final ViewDataBeads view, final float thresholdI, final int minSize, final int maxSize, final int minBlackBorder)
@@ -568,7 +457,7 @@ public class BeadSegmentation
 		
 		img.getDisplay().setMinMax();
 		
-		final int maxValue = (int) MathLib.round( img.getDisplay().getMax() );
+		final int maxValue = (int) Util.round( img.getDisplay().getMax() );
 
 		final float thresholdImg;
 
@@ -669,7 +558,7 @@ public class BeadSegmentation
 		for ( final ComponentProperties comp : segmentedBeads )
 		{
 			Bead bead = new Bead( id, comp.center, view );
-			beads.addBead( bead );
+			beads.addDetection( bead );
 			id++;
 		}
 		

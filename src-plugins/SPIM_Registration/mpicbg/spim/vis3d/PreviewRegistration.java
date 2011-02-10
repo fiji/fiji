@@ -8,6 +8,7 @@ import mpicbg.imglib.interpolation.InterpolatorFactory;
 import mpicbg.imglib.interpolation.nearestneighbor.NearestNeighborInterpolatorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
@@ -25,15 +26,16 @@ public class PreviewRegistration
 		{
 			if ( view.isConnected() )
 			{
-				InverseTransformDescription<FloatType> i = new InverseTransformDescription<FloatType>( view.getTile().getModel(), interpolatorFactory, view.getImage() );
+				InverseTransformDescription<FloatType> i = new InverseTransformDescription<FloatType>( (AbstractAffineModel3D<?>)view.getTile().getModel(), interpolatorFactory, view.getImage() );
 				list.add( i );
 			}
 		}
 
+		/*
 		if ( list.size() > 0 )
 			ImageJFunctions.displayAsVirtualStack( list, ImageJFunctions.GRAY32, new int[]{0,1,2}, new int[3] ).show();
 		else
-			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
+			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )*/
 				IOFunctions.println("PreviewRegistration(): no view is connected to any other view, cannot display.");
 	}
 }

@@ -6,6 +6,6 @@ ABOUT=components/loci-plugins/build/src/loci/plugins/About.java
 MAINCLASS(loci_tools.jar)=loci.ome.notes.Notes
 loci_tools.jar <- artifacts/loci_tools.jar
 
-artifacts/loci_tools.jar[../fiji --ant tools] <- $ABOUT
+artifacts/loci_tools.jar[../../fiji --ant tools] <- $ABOUT
 
-$ABOUT[../fiji --ant clean] <- .git/HEAD
+$ABOUT[../../fiji --ant clean] <- .git/HEAD

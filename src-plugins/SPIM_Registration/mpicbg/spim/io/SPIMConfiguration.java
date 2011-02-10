@@ -22,7 +22,9 @@ public class SPIMConfiguration
 	public int angles[];
 	//public String angleString;
 	public String inputFilePattern;//spim_TL{i}_Angle\d*\.lsm
-	public File file[][];
+	public int[] channels;
+	public String channelPattern;
+	public File file[][][];
 	public String inputdirectory;
 	public String outputdirectory;// = "";
 	public String registrationFiledirectory;// = "";
@@ -239,6 +241,22 @@ public class SPIMConfiguration
     		}
     	}
     }
+
+    public void parseChannels() throws ConfigurationParserException
+    {
+    	if ( channelPattern != null )
+    	{
+	    	final ArrayList<Integer> tmp = parseIntegerString( channelPattern );
+	    	channels = new int[ tmp.size() ];
+	    	
+	    	for (int i = 0; i < tmp.size(); i++)
+	    		channels[i] = tmp.get(i);    
+    	}
+    	
+    	// there is always channel 0
+    	if ( channels == null || channels.length == 0 )
+    		channels = new int[ 1 ];
+    }
     
 	protected String[] getDirListing( final String directory, final String filePatternStart, final String filePatternEnd )
 	{
@@ -317,6 +335,28 @@ public class SPIMConfiguration
 		return fileName;
     }
     */
+    
+    public static String getReplaceStringChannels( String inputFilePattern )
+    {
+    	String replacePattern = null;
+    	int numDigitsTL = 0;
+    	
+		int i1 = inputFilePattern.indexOf("{c");
+		int i2 = inputFilePattern.indexOf("c}");
+		if (i1 >= 0 && i2 > 0)
+		{
+			replacePattern = "{";
+			
+			numDigitsTL = i2 - i1;
+			for (int i = 0; i < numDigitsTL; i++)
+				replacePattern += "c";
+			
+			replacePattern += "}";
+		}
+		
+		return replacePattern;
+    }
+
     public static String getReplaceStringTimePoints( String inputFilePattern )
     {
     	String replacePattern = null;
@@ -358,93 +398,67 @@ public class SPIMConfiguration
 		
 		return replacePattern;
     }
-    
+
     public void getFileNames() throws ConfigurationParserException
     {
 		// find how to parse
 		String replaceTL = getReplaceStringTimePoints( inputFilePattern );
 		String replaceAngle = getReplaceStringAngle( inputFilePattern );
+		String replaceChannel = getReplaceStringChannels( inputFilePattern ); 
 		
 		if ( replaceTL == null )
 			replaceTL = "\\";
 		
 		if ( replaceAngle == null )
 			replaceAngle = "\\";
-		
-		int numDigitsTL = replaceTL.length() - 2;
-		int numDigitsAngle = replaceAngle.length() - 2;
-		
-		if ( numDigitsTL < 0 )
-			numDigitsTL = 0;
-		
-		if ( numDigitsAngle < 0 )
-			numDigitsAngle = 0;
-		
-		/*
-		int i1 = inputFilePattern.indexOf("{t");
-		int i2 = inputFilePattern.indexOf("t}");
-		if (i1 > 0 && i2 > 0)
-		{
-			replaceTL = "{";
-			
-			numDigitsTL = i2 - i1;
-			for (int i = 0; i < numDigitsTL; i++)
-				replaceTL += "t";
-			
-			replaceTL += "}";
-		}
 
-		i1 = inputFilePattern.indexOf("{a");
-		i2 = inputFilePattern.indexOf("a}");
-		if (i1 > 0 && i2 > 0)
-		{
-			replaceAngle = "{";
-			
-			numDigitsAngle = i2 - i1;
-			for (int i = 0; i < numDigitsAngle; i++)
-				replaceAngle += "a";
-			
-			replaceAngle += "}";
-		}
-		*/
+		if ( replaceChannel == null )
+			replaceChannel = "\\";
+
+		final int numDigitsTL = Math.max( 0, replaceTL.length() - 2 );
+		final int numDigitsAngle = Math.max( 0, replaceAngle.length() - 2 );
+		final int numDigitsChannel = Math.max( 0, replaceChannel.length() - 2 );		
 		
 		parseTimePoints();
 		parseAngles();
+		parseChannels();
 		
-		if (replaceAngle == null)
+		if ( replaceAngle.equals( "\\" ) )
 			throw new ConfigurationParserException("You gave no pattern to substitute the angles in the file name");
 		
-		if (angles.length < 2)
+		if ( angles.length < 2 )
 			IOFunctions.println( "Warning: You gave less than two angles to process: " + anglePattern );
 		
 		//throw new ConfigurationParserException("You gave less than two angles to process: " + anglePattern);
 		
-		if (timepoints.length > 1 && replaceTL == null)
+		if (timepoints.length > 1 && replaceTL.equals( "\\" ) )
 			throw new ConfigurationParserException("You gave more than one timepoint but no pattern to replace");				
 		
-		file = new File[timepoints.length][angles.length];
+		file = new File[ timepoints.length ][ channels.length ][ angles.length ];
 		
-		for (int tp = 0; tp < timepoints.length; tp++)
-		{			
-			for (int angle = 0; angle < angles.length; angle++)
-			{
-				String fileName = inputFilePattern;
-				if (replaceTL != null)
-					fileName = fileName.replace(replaceTL, getLeadingZeros(numDigitsTL, timepoints[tp]));
-
-				fileName = fileName.replace(replaceAngle, getLeadingZeros(numDigitsAngle, angles[angle]));
-				
-				file[tp][angle] = new File(inputdirectory, fileName);
-			}
-		}
+		for ( int tp = 0; tp < timepoints.length; ++tp )
+			for ( int channel = 0; channel < channels.length; ++channel )
+				for ( int angle = 0; angle < angles.length; ++angle )
+				{
+					String fileName = inputFilePattern;
+					if (replaceTL != null)
+						fileName = fileName.replace( replaceTL, getLeadingZeros(numDigitsTL, timepoints[tp]) );
+	
+					fileName = fileName.replace( replaceAngle, getLeadingZeros(numDigitsAngle, angles[angle]) );
+	
+					fileName = fileName.replace( replaceChannel, getLeadingZeros(numDigitsChannel, channels[channel]) );
+					
+					file[ tp ][ channel ][ angle ] = new File( inputdirectory, fileName );
+				}
     }
     
-    public File[] getFileName(int timepoint)
+    public File[][] getFileName( final int timepoint )
     {
 		// find how to parse
-		String replaceTL = null, replaceAngle = null;
+		String replaceTL = null, replaceAngle = null, replaceChannel = null;
 		int numDigitsTL = 0;
 		int numDigitsAngle = 0;
+		int numDigitsChannel = 0;
 		
 		int i1 = inputFilePattern.indexOf("{t");
 		int i2 = inputFilePattern.indexOf("t}");
@@ -471,19 +485,40 @@ public class SPIMConfiguration
 			
 			replaceAngle += "}";
 		}
-						
-		File[] file = new File[angles.length];
-		
-		for (int angle = 0; angle < angles.length; angle++)
-		{
-			String fileName = inputFilePattern;
-			if (replaceTL != null)
-				fileName = fileName.replace(replaceTL, getLeadingZeros(numDigitsTL, timepoint));
 
-			fileName = fileName.replace(replaceAngle, getLeadingZeros(numDigitsAngle, angles[angle]));
+		i1 = inputFilePattern.indexOf("{c");
+		i2 = inputFilePattern.indexOf("c}");
+		if (i1 > 0 && i2 > 0)
+		{
+			replaceChannel = "{";
 			
-			file[angle] = new File(inputdirectory, fileName);
+			numDigitsChannel = i2 - i1;
+			for (int i = 0; i < numDigitsChannel; i++)
+				replaceChannel += "c";
+			
+			replaceChannel += "}";
 		}
+		
+		// there is one, but nothing to replace
+		if ( numDigitsChannel == 0 )
+			numDigitsChannel = 1;
+
+		File[][] file = new File[channels.length][angles.length];
+		
+		for (int channel = 0; channel < channels.length; channel++)
+			for (int angle = 0; angle < angles.length; angle++)
+			{
+				String fileName = inputFilePattern;
+				if (replaceTL != null)
+					fileName = fileName.replace(replaceTL, getLeadingZeros(numDigitsTL, timepoint));
+	
+				fileName = fileName.replace(replaceAngle, getLeadingZeros(numDigitsAngle, angles[angle]));
+
+				if ( replaceChannel != null )
+					fileName = fileName.replace(replaceChannel, getLeadingZeros(numDigitsChannel, channels[channel]));
+
+				file[channel][angle] = new File( inputdirectory, fileName );
+			}
 		
 		return file;
     }

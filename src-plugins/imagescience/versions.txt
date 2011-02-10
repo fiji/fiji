@@ -1,0 +1,90 @@
+2.4.0, September 17, 2010
+- Completely redesigned and reimplemented the Progressor class.
+- Added a public Progressor object to all relevant classes.
+- Modified all classes to work with the new Progressor class.
+- Reduced the Messenger class to support only log and status messages.
+- Added a public Messenger object to all relevant classes.
+- Modified all classes to work with the new Messenger class.
+- Added the bspline() method to the utility.FMath class.
+- Removed the CoordinatesArray class (unnecessary due to Java Generics).
+- Modified the Extremizer class to return Vector<Vector<Coordinates>>.
+- Removed the PointArray class (unnecessary due to Java Generics).
+- Modified the Polygon and Spline classes to use Vector<Point> instead.
+- Removed the separate() method in all classes of the feature package.
+- Added a public Differentiator in relevant classes of the feature package.
+- Increased the maximum differentiation order to 10 in Differentiator.
+- Simplified the Differentiator API and modified all related classes.
+- Modified all relevant classes to set the aspects of output images.
+- Renamed the s-dimension to c-dimension and updated all classes.
+- Modified the boundary conditions in the transform.Shift class.
+- Modified the boundary testing criteria in the transform.Affine class.
+- Added the transform.Transform class implementing affine transformation.
+- Simplified the transform.Affine code by using transform.Transform.
+- Removed number formatting code from FMath and created Formatter class.
+
+2.3.0, December 3, 2008
+- Added the Extremizer class to the segment package.
+- Added the CoordinatesArray class to the array package.
+- Added a check in Progressor.progress() for null Graphics.
+- Improved the API documentation for the utility.I5DResource class.
+- Removed calibration copy call in utility.I5DResource.convert() method.
+- Added the mode() method to the utility.I5DResource class.
+
+2.2.0, November 8, 2008
+- Added the MouseCursor class to the utility package.
+- Renamed method markused() to used() in color.Palette class.
+- Renamed indications() to updates() in utility.Progressor class.
+- Added log() methods in the utility.Messenger class.
+- Replaced debug() calls to log() calls everywhere.
+- Changed random.RandomGenerator from abstract class to interface.
+- Updated the random-package classes to implement RandomGenerator.
+- Added default constructors to all classes having no contructors.
+- Simplied constructor code of all classes in the random package.
+- Extended the array package classes and added the LongArray class.
+- Removed the internal margins in all array classes.
+- Major revision of the shape package classes and API.
+- Renamed and moved shape.Points to array.PointArray.
+- Made the PointArray API similar to the other arrays.
+- Removed the shape.Implicit and shape.Function classes.
+- Renamed and updated shape.CubicSpline to shape.Spline.
+- Added Bounds, Ellipse, and Region classes to the shape package.
+- Made all public classes in the package non-final.
+- Changed all equals() methods to allow a null argument.
+- Renamed and converted fields in utility.Progressor class.
+- Added invert() method to image.Image class.
+- Made utility.Timer.stop() method more efficient.
+- Added the pause() and resume() methods to utility.Timer.
+- Renamed class segment.ZeroCrossings to segment.ZeroCrosser.
+- Converted all java files to Unix format and redid layouting.
+- Fixed the incorrect return value of image.ShortImage.memory().
+- Added d2s() and related methods to the utility.FMath class.
+- Modified feature.Hessian to avoid eigenvalues becoming NaN.
+- Modified feature.Structure to avoid eigenvalues becoming NaN.
+
+2.1.1, December 27, 2007
+- Added processor() and density() methods to I5DResource class.
+
+2.1.0, July 16, 2007
+- Consistently renamed subpackages to singular form.
+- Renamed VTKLoader to VTKResource and improved DLL checking.
+- Made I5DResource class compliant with Image5D version 1.1.7.
+- Made Progressor class compliant with ImageJ version 1.38u.
+- Added a check in Progressor to avoid exceptions in batch mode.
+- Added methods to the Messenger class for user notification.
+- Refined exception throwing in Image.create() by adding UnknownError.
+- Added UnknownError in the docs of the transform classes.
+- Modified the Statistics class to allow the use of masks.
+- Added dots to progress indication strings in all classes.
+- Simplified methods floor, ceil, and round of class FMath.
+
+2.0.2, October 2, 2006
+- Added ImageScience class containing the version number of the library.
+- Added color palette class containing 100 spectral colors.
+- Added dynamic array class for each primitive type.
+
+2.0.1, March 22, 2006
+- Upgrade of the entire library to support 5D images.
+- Organizational changes to support distribution as a single jar-file.
+
+2.0.0, December 2, 2004
+- Complete reorganization of the previous library.

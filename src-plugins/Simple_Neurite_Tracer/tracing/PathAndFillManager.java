@@ -195,6 +195,16 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return null;
 	}
 
+	public synchronized Path getPathFrom3DViewerName( String name ) {
+		for( Path p : allPaths ) {
+			if( p.nameWhenAddedToViewer == null )
+				continue;
+			if( name.equals(p.nameWhenAddedToViewer) )
+				return p;
+		}
+		return null;
+	}
+
 	public synchronized Path getPathFromID( int id ) {
 		for( Path p : allPaths ) {
 			if( id == p.getID() ) {
@@ -1966,7 +1976,14 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	public void contentAdded(Content c) { }
 	public void contentRemoved(Content c) { }
 	public void contentChanged(Content c) { }
-	public void contentSelected(Content c) { }
+	public void contentSelected(Content c) {
+		if( c == null )
+			return;
+		String contentName = c.getName();
+		Path selectedPath = getPathFrom3DViewerName(contentName);
+		if( plugin != null && selectedPath != null )
+			plugin.selectPath( selectedPath, false );
+	}
 	public void canvasResized() { }
 	public void universeClosed() {
 		plugin.use3DViewer = false;

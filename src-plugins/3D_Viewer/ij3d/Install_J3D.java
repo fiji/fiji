@@ -29,7 +29,7 @@ import javax.media.j3d.VirtualUniverse;
 public class Install_J3D implements PlugIn {
 
 	/** Base URL to the folder containing the Java3D files */
-	private static final String JAVA3D_BASE_URL = 
+	private static final String JAVA3D_BASE_URL =
 		"http://download.java.net/media/java3d/builds/release/1.5.2/";
 
 	/** Base URL to the folder containing the Jogl files */
@@ -101,7 +101,7 @@ public class Install_J3D implements PlugIn {
 	/**
 	 * Detects the operating system and accordingly downloads the
 	 * needed Java3D files and extracts them.
-	 * In case of windows and linux, the j3djre.zip file, which is 
+	 * In case of windows and linux, the j3djre.zip file, which is
 	 * contained in the downloaded archive, is simply extracted in
 	 * the java.home directory.
 	 * In case of mac, the j3djre.zip is extracted into a temporary
@@ -123,7 +123,7 @@ public class Install_J3D implements PlugIn {
 			filename = IJ.is64Bit() ? WIN_64 : WIN_32;
 		else if(IJ.isMacOSX())
 			filename = MAC;
-		
+
 		if(filename == null) {
 			println("could not detect operating system");
 			return false;
@@ -180,14 +180,14 @@ public class Install_J3D implements PlugIn {
 			println("moving " + file.getAbsolutePath() +
 				" to " + dst.getAbsolutePath());
 			if(!file.renameTo(dst)) {
-				println("could not move " + file.getAbsolutePath() + 
+				println("could not move " + file.getAbsolutePath() +
 					" to " + dst.getAbsolutePath());
 			}
 		}
 		rm(tempdir);
 	}
 
-	
+
 	public static String getFirstExtDir() throws Exception {
 		String extdirs = System.getProperty("java.ext.dirs");
 		if(extdirs == null)
@@ -239,7 +239,7 @@ public class Install_J3D implements PlugIn {
 			println("moving " + file.getAbsolutePath() +
 				" to " + dst.getAbsolutePath());
 			if(!file.renameTo(dst)) {
-				println("could not move " + file.getAbsolutePath() + 
+				println("could not move " + file.getAbsolutePath() +
 					" to " + dst.getAbsolutePath());
 			}
 		}
@@ -345,7 +345,7 @@ public class Install_J3D implements PlugIn {
 			if(ze.isDirectory()) {
 				File newDir = createFolder(
 					dir.getAbsolutePath(), ze.getName(), false);
-			} else if(fileToExtract == null || 
+			} else if(fileToExtract == null ||
 					ze.getName().endsWith(fileToExtract)) {
 				println("Extracting " + ze.getName() + " to " + dir);
 				InputStream is = null;
@@ -413,7 +413,7 @@ public class Install_J3D implements PlugIn {
 	static void print(String s) {
 		IJ.log(s);
 	}
-	
+
 	/**
 	 * Recursively delete a file or directory.
 	 */

@@ -5,6 +5,7 @@ import ij3d.shapes.BoundingBox;
 import ij3d.pointlist.PointListPanel;
 import ij3d.pointlist.PointListShape;
 import ij3d.pointlist.PointListDialog;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.io.FileInfo;
@@ -17,6 +18,8 @@ import orthoslice.OrthoGroup;
 import surfaceplot.SurfacePlotGroup;
 
 import java.util.BitSet;
+
+import java.io.File;
 
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Switch;
@@ -35,10 +38,14 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 	int timepoint = 0;
 
 	// attributes
-	protected String name;
+	private final String name;
 	protected Color3f color = null;
 	protected ImagePlus image;
 	protected boolean[] channels = new boolean[] {true, true, true};
+	protected int[] rLUT = createDefaultLUT();
+	protected int[] gLUT = createDefaultLUT();
+	protected int[] bLUT = createDefaultLUT();
+	protected int[] aLUT = createDefaultLUT();
 	protected float transparency = 0f;
 	protected int resamplingF = 1;
 	protected int threshold = 0;
@@ -69,6 +76,8 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 
 	protected TransformGroup localRotate;
 	protected TransformGroup localTranslate;
+
+	private boolean swapped = false;
 
 	public ContentInstant(String name) {
 		// create BranchGroup for this image
@@ -118,6 +127,13 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 		display(contentNode);
 		// update type
 		this.type = type;
+	}
+
+	private static int[] createDefaultLUT() {
+		int[] lut = new int[256];
+		for(int i = 0; i < lut.length; i++)
+			lut[i] = i;
+		return lut;
 	}
 
 	public static int getDefaultThreshold(ImagePlus imp, int type) {
@@ -177,6 +193,9 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 		// create point list and add it to the switch
 		bbSwitch.addChild(plShape);
 
+		// adjust the landmark point size properly
+		plShape.setRadius((float)min.distance(max) / 100f);
+
 		// initialize child mask of the switch
 		whichChild.set(BS, selected);
 		whichChild.set(CS, coordVisible);
@@ -187,6 +206,76 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 		// update type
 		this.type = CUSTOM;
 	}
+
+	/* ************************************************************
+	 * swapping
+	 *
+	 * ***********************************************************/
+	public void swapOriginalData() {
+		if(image != null)
+			IJ.save(image, getOriginalDataSwapfile() + ".tif");
+		image = null;
+	}
+
+	public void swapDisplayedData() {
+		System.out.println("swapDisplayedData " + getName());
+		if(swapped) {
+			System.out.println("not swapping because it is already swapped");
+			return;
+		}
+		contentNode.swapDisplayedData(getDisplayedDataSwapfile(), getName());
+		swapped = true;
+	}
+
+	public void restoreOriginalData() {
+		this.image = IJ.openImage(getOriginalDataSwapfile() + ".tif");
+	}
+
+	public void restoreDisplayedData() {
+		System.out.println("restoreDisplayedData " + getName());
+		if(!swapped) {
+			System.out.println("not restoring because it is not swapped");
+			return;
+		}
+		contentNode.restoreDisplayedData(getDisplayedDataSwapfile(), getName());
+		swapped = false;
+	}
+
+	public boolean isSwapped() {
+		return swapped;
+	}
+
+	private String displayedDataSwapfile = null;
+	private String originalDataSwapfile = null;
+
+	private String getOriginalDataSwapfile() {
+		if(originalDataSwapfile != null)
+			return originalDataSwapfile;
+		File tmp = new File(System.getProperty("java.io.tmpdir"), "3D_Viewer");
+		if(!tmp.exists())
+			tmp.mkdirs();
+		tmp = new File(tmp, "original");
+		if(!tmp.exists())
+			tmp.mkdirs();
+		originalDataSwapfile = new File(tmp, getName()).
+			getAbsolutePath();
+		return originalDataSwapfile;
+	}
+
+	private String getDisplayedDataSwapfile() {
+		if(displayedDataSwapfile != null)
+			return displayedDataSwapfile;
+		File tmp = new File(System.getProperty("java.io.tmpdir"), "3D_Viewer");
+		if(!tmp.exists())
+			tmp.mkdirs();
+		tmp = new File(tmp, "displayed");
+		if(!tmp.exists())
+			tmp.mkdirs();
+		displayedDataSwapfile = new File(tmp, getName()).
+			getAbsolutePath();
+		return displayedDataSwapfile;
+	}
+
 
 	/* ************************************************************
 	 * setters - visibility flags
@@ -220,7 +309,8 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 
 	public void setSelected(boolean selected) {
 		this.selected = selected;
-		whichChild.set(BS, selected);
+		boolean sb = selected && UniverseSettings.showSelectionBox;
+		whichChild.set(BS, sb);
 		bbSwitch.setChildMask(whichChild);
 	}
 
@@ -241,7 +331,7 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 		showPL = b;
 		bbSwitch.setChildMask(whichChild);
 		if(b && plDialog != null)
-			plDialog.addPointList(name, plPanel);
+			plDialog.addPointList(getName(), plPanel);
 		else if(!b && plDialog != null)
 			plDialog.removePointList(plPanel);
 	}
@@ -254,7 +344,7 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 
 	public void savePointList() {
 		String dir = OpenDialog.getDefaultDirectory();
-		String n = this.name;
+		String n = this.getName();
 		if(image != null) {
 			FileInfo fi = image.getFileInfo();
 			dir = fi.directory;
@@ -368,6 +458,15 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 	 *
 	 * ***********************************************************/
 
+	public void setLUT(int[] rLUT, int[] gLUT, int[] bLUT, int[] aLUT) {
+		this.rLUT = rLUT;
+		this.gLUT = gLUT;
+		this.bLUT = bLUT;
+		this.aLUT = aLUT;
+		if(contentNode != null)
+			contentNode.lutUpdated(rLUT, gLUT, bLUT, aLUT);
+	}
+
 	public void setChannels(boolean[] channels) {
 		boolean channelsChanged = channels[0] != this.channels[0] ||
 				channels[1] != this.channels[1] ||
@@ -458,7 +557,7 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 	 **************************************************************/
 	@Override
 	public String getName() {
-		return name;
+		return name + "_#" + timepoint;
 	}
 
 	public int getTimepoint() {
@@ -479,6 +578,22 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 
 	public boolean[] getChannels() {
 		return channels;
+	}
+
+	public void getRedLUT(int[] l) {
+		System.arraycopy(rLUT, 0, l, 0, rLUT.length);
+	}
+
+	public void getGreenLUT(int[] l) {
+		System.arraycopy(gLUT, 0, l, 0, gLUT.length);
+	}
+
+	public void getBlueLUT(int[] l) {
+		System.arraycopy(bLUT, 0, l, 0, bLUT.length);
+	}
+
+	public void getAlphaLUT(int[] l) {
+		System.arraycopy(aLUT, 0, l, 0, aLUT.length);
 	}
 
 	public Color3f getColor() {

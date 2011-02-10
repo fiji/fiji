@@ -1923,8 +1923,7 @@ public class Path implements Comparable {
 			return;
 		}
 
-		/* Are we now asked to use the color image, but
-		   previously were not? */
+		/* Were we previously using a colour image, but now not? */
 
 		if( colorImage == null ) {
 			if( (paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS
@@ -1935,6 +1934,11 @@ public class Path implements Comparable {
 				pathToUse.addTo3DViewer(univ,color,colorImage);
 				return;
 			}
+
+		/* ... or, should we now use a colour image, where
+		   previously we were using a different colour image
+		   or no colour image? */
+
 		} else {
 			if( (paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS
 			     && pathToUse.content3DExtraMultiColored != colorImage) ||
@@ -1947,11 +1951,29 @@ public class Path implements Comparable {
 		}
 
 		// Is the (flat) color wrong?
+
 		if( pathToUse.realColor == null || ! pathToUse.realColor.equals(color) ) {
-			pathToUse.removeFrom3DViewer(univ);
-			pathToUse.paths3DDisplay = paths3DDisplay;
-			pathToUse.addTo3DViewer(univ,color,colorImage);
-			return;
+
+			/* If there's a representation of the path in
+			   the 3D viewer anyway, just set the color,
+			   don't recreate it, since the latter takes a long time: */
+
+			if( pathToUse.content3D != null || pathToUse.content3DExtra != null ) {
+
+				if( pathToUse.content3D != null )
+					pathToUse.content3D.setColor(color);
+				if( pathToUse.content3DExtra != null )
+					pathToUse.content3DExtra.setColor(color);
+				pathToUse.realColor = color;
+				return;
+
+			} else {
+				// ... but if it wasn't in the 3D viewer, recreate it:
+				pathToUse.removeFrom3DViewer(univ);
+				pathToUse.paths3DDisplay = paths3DDisplay;
+				pathToUse.addTo3DViewer(univ,color,colorImage);
+				return;
+			}
 		}
 
 		if( pathToUse.nameWhenAddedToViewer == null || ! univ.contains(pathToUse.nameWhenAddedToViewer) ) {

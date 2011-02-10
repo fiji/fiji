@@ -39,8 +39,25 @@ public class OverlayedImageCanvas extends ImageCanvas {
 		overlays.add(overlay);
 	}
 
+	/**
+	 * Add the collection of overlays to the display list of this canvas
+	 * @param overlays  the overlay collection to add
+	 */
+	public void addOverlay(Collection<Overlay> overlays) {
+		overlays.addAll(overlays);
+	}
+
+	
 	public void removeOverlay(Overlay overlay) {
 		overlays.remove(overlay);
+	}
+	
+
+	/**
+	 * Remove all {@link Overlay} components from this canvas.
+	 */
+	public void clearOverlay() {
+		overlays.clear();
 	}
 
 	public void paint(Graphics g) {
@@ -88,8 +105,18 @@ public class OverlayedImageCanvas extends ImageCanvas {
 	}
 	
 
-	public interface Overlay {				
-		public void setComposite (Composite composite);				
+	public interface Overlay {	
+		/**
+		 * Set the composite that will be used to paint this overlay.
+		 */
+		public void setComposite (Composite composite);
+		/**
+		 * Paint this overlay on the given graphic device.
+		 * @param g  the graphic device provided by the {@link OverlayedImageCanvas}
+		 * @param x  the top-left corner x-coordinate of the image rectangle currently displayed in the {@link OverlayedImageCanvas}
+		 * @param y  the top-left corner y-coordinate  
+		 * @param magnification  the {@link OverlayedImageCanvas} current magnification
+		 */
 		void paint(Graphics g, int x, int y, double magnification);
 	}
 }

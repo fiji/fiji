@@ -35,7 +35,12 @@ public class ViewStructure
 	/**
 	 * The time point of the current view constellation
 	 */
-	final protected int timePoint; 
+	final protected int timePoint;
+	
+	/**
+	 * The number of channels in this view constellation
+	 */
+	final protected int numChannels;
 	
 	/**
 	 * Arbitrary String for identification
@@ -72,17 +77,18 @@ public class ViewStructure
 	 */
 	protected FusionControl fusionControl;
 	
-	public ViewStructure( final ArrayList<ViewDataBeads> views, final SPIMConfiguration conf, final String id, final int timePointIndex )
+	public ViewStructure( final ArrayList<ViewDataBeads> views, final SPIMConfiguration conf, final String id, final int timePointIndex, final int numChannels )
 	{
-		this( views, conf, id, timePointIndex, ViewStructure.DEBUG_MAIN );
+		this( views, conf, id, timePointIndex, numChannels, ViewStructure.DEBUG_MAIN );
 	}
 	
-	public ViewStructure( final ArrayList<ViewDataBeads> views, final SPIMConfiguration conf, final String id, final int timePoint, final int debugLevel )
+	public ViewStructure( final ArrayList<ViewDataBeads> views, final SPIMConfiguration conf, final String id, final int timePoint, final int numChannels, final int debugLevel )
 	{
 		this.views = views;
 		this.identification = id;
 		this.conf = conf;
 		this.timePoint = timePoint;
+		this.numChannels = numChannels;
 		setDebugLevel( debugLevel );
 				
 		this.errorStatistics = new GlobalErrorStatisticsImpl();
@@ -97,7 +103,7 @@ public class ViewStructure
 		
 		beadSegment = new BeadSegmentation( this );
 		beadRegister = new BeadRegistration( this );
-		fusionControl = new FusionControl( );
+		fusionControl = new FusionControl( );				
 	}
 	
 	public BeadSegmentation getBeadSegmentation() { return beadSegment; }
@@ -109,6 +115,26 @@ public class ViewStructure
 	 * @return the number of views
 	 */
 	public int getNumViews() { return getViews().size(); }
+
+	/**
+	 * The number of channels in this view collection
+	 * @return the number of channels
+	 */
+	public int getNumChannels() { return numChannels; }
+
+	/**
+	 * Returns the channel id for a certain channelIndex
+	 * @param channelIndex
+	 * @return the naming of the channel
+	 */
+	public int getChannelNum( final int channelIndex )
+	{
+		for ( final ViewDataBeads view : getViews() )
+			if ( view.getChannelIndex() == channelIndex )
+				return view.getChannel();
+		
+		return -1;
+	}
 	
 	/**
 	 * The {@link GlobalErrorStatistics} collects error details of the registration prodedure 
@@ -283,11 +309,11 @@ public class ViewStructure
 		else
 		{
 			IOFunctions.println( "Opening first image to determine z-stretching." );
-			final Image<FloatType> image = LOCI.openLOCIFloatType( conf.file[ timePointIndex ][ 0 ].getPath(), conf.imageFactory );
+			final Image<FloatType> image = LOCI.openLOCIFloatType( conf.file[ timePointIndex ][ 0 ][ 0 ].getPath(), conf.imageFactory );
 			
 			if ( image == null )
 			{
-				IOFunctions.println( "Cannot open fie: '" + conf.file[ timePointIndex ][ 0 ].getPath() + "'" );
+				IOFunctions.println( "Cannot open fie: '" + conf.file[ timePointIndex ][ 0 ][ 0 ].getPath() + "'" );
 				return null;
 			}
 			
@@ -296,15 +322,20 @@ public class ViewStructure
 			image.close();
 		}
 		
-		for (int i = 0; i < conf.file[ timePointIndex ].length; i++)
-		{
-			final ViewDataBeads view = new ViewDataBeads( i, model.clone(), conf.file[ timePointIndex ][ i ].getPath(), zStretching );
-				
-			view.setAcqusitionAngle( conf.angles[ i ] );
-			views.add( view );
-		}
-		
-		final ViewStructure viewStructure = new ViewStructure( views, conf, id, conf.timepoints[ timePointIndex ], debugLevel );		
+		int idNr = 0;
+		for (int c = 0; c < conf.file[ timePointIndex ].length; c++)
+			for (int i = 0; i < conf.file[ timePointIndex ][ c ].length; i++)
+			{
+				final ViewDataBeads view = new ViewDataBeads( idNr++, model.copy(), conf.file[ timePointIndex ][ c ][ i ].getPath(), zStretching );
+					
+				view.setAcqusitionAngle( conf.angles[ i ] );
+				view.setChannel( conf.channels[ c ] );
+				view.setChannelIndex( c );
+				views.add( view );
+			}
+			
+		final int numChannels = conf.file[ timePointIndex ].length;
+		final ViewStructure viewStructure = new ViewStructure( views, conf, id, conf.timepoints[ timePointIndex ], numChannels, debugLevel );		
 		
 		return viewStructure;
 	}
@@ -320,7 +351,7 @@ public class ViewStructure
 	 * @param debugLevel - the debug level of the program ViewStructure.DEBUG_ALL, ViewStructure.DEBUG_MAIN or ViewStructure.DEBUG_ERRORONLY
 	 * @return an instance of the ViewStructure, completely intialized
 	 */
-	public static ViewStructure initViewStructure( final SPIMConfiguration conf, final int timePoint, final File[] files, final AffineModel3D model, final String id, final int debugLevel )
+	public static ViewStructure initViewStructure( final SPIMConfiguration conf, final int timePoint, final File[][] files, final AffineModel3D model, final String id, final int debugLevel )
 	{
 		final ArrayList<ViewDataBeads> views = new ArrayList<ViewDataBeads>();
 
@@ -333,10 +364,10 @@ public class ViewStructure
 		else
 		{
 			IOFunctions.println( "Opening first image to determine z-stretching." );
-			final Image<FloatType >image = LOCI.openLOCIFloatType( files[ 0 ].getPath(), conf.imageFactory );
+			final Image<FloatType >image = LOCI.openLOCIFloatType( files[ 0 ][ 0 ].getPath(), conf.imageFactory );
 			if ( image == null )
 			{
-				IOFunctions.println( "Cannot open fie: '" +files[ 0 ].getPath() + "'" );
+				IOFunctions.println( "Cannot open fie: '" +files[ 0 ][ 0 ].getPath() + "'" );
 				return null;
 			}
 			
@@ -345,13 +376,18 @@ public class ViewStructure
 			image.close();
 		}
 
-		for (int i = 0; i < files.length; i++)
-		{
-			ViewDataBeads view = new ViewDataBeads( i, model.clone(), files[ i ].getPath(), conf.zStretching );
-			views.add( view );
-		}
+		int idNr = 0;
+		for (int c = 0; c < files.length; c++)
+			for (int i = 0; i < files[c].length; i++)
+			{
+				ViewDataBeads view = new ViewDataBeads( idNr, model.copy(), files[ c ][ i ].getPath(), conf.zStretching );
+				view.setChannel( conf.channels[ c ] );
+				view.setChannelIndex( c );
+				views.add( view );
+			}
 		
-		final ViewStructure viewStructure = new ViewStructure( views, conf, id, timePoint, debugLevel );		
+		final int numChannels = files.length;
+		final ViewStructure viewStructure = new ViewStructure( views, conf, id, timePoint, numChannels, debugLevel );		
 		
 		return viewStructure;
 	}

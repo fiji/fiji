@@ -6,10 +6,10 @@ import ij.IJ;
 import ij.WindowManager;
 import ij.ImagePlus;
 import ij.text.TextWindow;
-import ij.gui.Toolbar;
 
 import java.text.DecimalFormat;
 
+import javax.swing.*;
 import java.awt.event.*;
 import java.awt.*;
 import java.util.Vector;
@@ -35,14 +35,14 @@ import javax.media.j3d.Transform3D;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Collection;
 
-public class RegistrationMenubar extends MenuBar implements ActionListener, 
+public class RegistrationMenubar extends JMenuBar implements ActionListener,
 							UniverseListener {
 
 	private Image3DUniverse univ;
-	
-	private Menu register;
-	private MenuItem exit;
-	private MenuItem adjustSlices;
+
+	private JMenu register;
+	private JMenuItem exit;
+	private JMenuItem adjustSlices;
 
 	private List openDialogs = new ArrayList();
 
@@ -55,13 +55,13 @@ public class RegistrationMenubar extends MenuBar implements ActionListener,
 
 		univ.addUniverseListener(this);
 
-		register = new Menu("Register");
+		register = new JMenu("Register");
 
-		exit = new MenuItem("Exit registration");
+		exit = new JMenuItem("Exit registration");
 		exit.addActionListener(this);
 		register.add(exit);
 
-		adjustSlices = new MenuItem("Adjust slices");
+		adjustSlices = new JMenuItem("Adjust slices");
 		adjustSlices.addActionListener(this);
 		register.add(adjustSlices);
 
@@ -101,12 +101,12 @@ public class RegistrationMenubar extends MenuBar implements ActionListener,
 	public void exitRegistration() {
 		templ.showPointList(false);
 		model.showPointList(false);
-		MenuBar mb = univ.getMenuBar();
+		JMenuBar mb = univ.getMenuBar();
 		univ.setMenubar(mb);
 		univ.clearSelection();
 		univ.setStatus("");
 		univ.getPointListDialog().removeExtraPanel();
-		Toolbar.getInstance().setTool(Toolbar.HAND);
+		univ.ui.setHandTool();
 	}
 
 	private void hideAll() {
@@ -115,13 +115,13 @@ public class RegistrationMenubar extends MenuBar implements ActionListener,
 	}
 
 
-	private void selectLandmarkSet(final Content content, 
+	private void selectLandmarkSet(final Content content,
 						String actionCommand) {
 		hideAll();
 		content.setVisible(true);
 		content.displayAs(Content.ORTHO);
 		content.showPointList(true);
-		Toolbar.getInstance().setTool(Toolbar.POINT);
+		univ.ui.setPointTool();
 		univ.select(content);
 
 		univ.setStatus("Select landmarks in " + content.getName() +
@@ -171,7 +171,7 @@ public class RegistrationMenubar extends MenuBar implements ActionListener,
 		// Select the landmarks of the template
 		selectLandmarkSet(templ, "LS_MODEL");
 	}
-	
+
 
 
 
@@ -235,7 +235,7 @@ public class RegistrationMenubar extends MenuBar implements ActionListener,
 		model.setLocked(true);
 
 		univ.clearSelection();
-		Toolbar.getInstance().setTool(Toolbar.HAND);
+		univ.ui.setHandTool();
 
 		IJ.showMessage("Contents are locked to prevent\n" +
 			"accidental transformations");
@@ -252,7 +252,7 @@ public class RegistrationMenubar extends MenuBar implements ActionListener,
 
 
 
-	
+
 	// Universe Listener interface
 	public void transformationStarted(View view) {}
 	public void transformationFinished(View view) {}
@@ -262,7 +262,7 @@ public class RegistrationMenubar extends MenuBar implements ActionListener,
 	public void universeClosed() {}
 	public void contentAdded(Content c) {}
 
-	public void contentRemoved(Content c) {} 
+	public void contentRemoved(Content c) {}
 	public void contentSelected(Content c) {}
 }
 

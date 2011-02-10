@@ -94,7 +94,7 @@ public class ProgressDialog extends JDialog implements Progress {
 		detailsToggle.addKeyListener(keyAdapter);
 		cancel.addKeyListener(keyAdapter);
 
-		show();
+		setVisible(true);
 	}
 
 	public void cancel() {
@@ -160,7 +160,7 @@ public class ProgressDialog extends JDialog implements Progress {
 		boolean show = !detailsScrollPane.isVisible();
 		detailsScrollPane.setVisible(show);
 		detailsScrollPane.invalidate();
-		detailsToggle.setLabel(show ?  "Hide Details" : "Show Details");
+		detailsToggle.setText(show ?  "Hide Details" : "Show Details");
 		setTitle();
 
 		Dimension dimension = getSize();
@@ -199,6 +199,6 @@ public class ProgressDialog extends JDialog implements Progress {
 		ProgressDialog dialog =
 			new ProgressDialog(null, "Hello");
 		dialog.addItem("Bello");
-		dialog.show();
+		dialog.setVisible(true);
 	}
 }

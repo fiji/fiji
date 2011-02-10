@@ -3,6 +3,9 @@ package fiji.scripting;
 import fiji.SimpleExecuter;
 
 import fiji.build.Fake;
+import fiji.build.Parser;
+import fiji.build.Rule;
+import fiji.build.SubFake;
 
 import ij.IJ;
 
@@ -177,20 +180,33 @@ public class FileFunctions {
 		if (fakefile.exists()) try {
 			Fake fake = new Fake();
 			if (parent != null) {
-				final JTextAreaOutputStream output = new JTextAreaOutputStream(parent.screen);
+				final JTextAreaOutputStream output = new JTextAreaOutputStream(parent.getTab().screen);
+				final JTextAreaOutputStream errors = new JTextAreaOutputStream(parent.errorScreen);
 				fake.out = new PrintStream(output);
-				fake.err = new PrintStream(output);
+				fake.err = new PrintStream(errors);
 			}
-			Fake.Parser parser = fake.parse(new FileInputStream(fakefile), new File(fijiDir));
+			Parser parser = fake.parse(new FileInputStream(fakefile), new File(fijiDir));
 			parser.parseRules(null);
-			Fake.Parser.Rule rule = parser.getRule("plugins/" + baseName + ".jar");
+			Rule rule = parser.getRule("plugins/" + baseName + ".jar");
 			if (rule == null)
 				rule = parser.getRule("jars/" + baseName + ".jar");
 			if (rule != null) {
-				String stripPath = (rule instanceof Fake.Parser.SubFake) ?
-					rule.getLastPrerequisite() : rule.getStripPath();
+				String stripPath = rule.getStripPath();
+				dir = fijiDir + "/";
+				if (rule instanceof SubFake) {
+					stripPath = rule.getLastPrerequisite();
+					fakefile = ((SubFake)rule).getFakefile();
+					if (fakefile != null) {
+						dir += rule.getLastPrerequisite();
+						parser = fake.parse(new FileInputStream(fakefile), new File(dir));
+						parser.parseRules(null);
+						rule = parser.getRule(baseName + ".jar");
+						if (rule != null)
+							stripPath = rule.getStripPath();
+					}
+				}
 				if (stripPath != null) {
-					dir = fijiDir + "/" + stripPath;
+					dir += stripPath;
 					path = dir + "/" + className.replace('.', '/') + ".java";
 					if (new File(path).exists())
 						return path;
@@ -533,11 +549,53 @@ public class FileFunctions {
 		showDiffOrCommit(file, gitDirectory, false);
 	}
 
+	public String firstNLines(String text, int maxLineCount) {
+		int offset = -1;
+		while (maxLineCount-- > 0) {
+			offset = text.indexOf('\n', offset + 1);
+			if (offset < 0)
+				return text;
+		}
+		int count = 0, next = offset;
+		while ((next = text.indexOf('\n', next + 1)) > 0)
+			count++;
+		return count == 0 ? text : text.substring(0, offset + 1)
+			+ "(" + count + " more line" + (count > 1 ? "s" : "") + ")...\n";
+	}
+
 	public void showDiffOrCommit(File file, File gitDirectory, boolean diffOnly) {
 		if (file == null || gitDirectory == null)
 			return;
 		boolean isInFijiGit = gitDirectory.equals(new File(System.getProperty("fiji.dir"), ".git"));
 		final File root = isInFijiGit ? getPluginRootDirectory(file) : gitDirectory.getParentFile();
+
+		try {
+			String[] cmdarray = {
+				"git", "ls-files", "--exclude-standard", "--other", "."
+			};
+			SimpleExecuter e = new SimpleExecuter(cmdarray, root);
+			if (e.getExitCode() != 0) {
+				error("Could not determine whether there are untracked files");
+				return;
+			}
+			String out = e.getOutput();
+			if (!out.equals(""))
+				if (JOptionPane.showConfirmDialog(parent,
+						"Do you want to commit the following untracked files?\n\n" + firstNLines(out, 10)) == JOptionPane.YES_OPTION) {
+					cmdarray = new String[] {
+						"git", "add", "-N", "."
+					};
+					e = new SimpleExecuter(cmdarray, root);
+					if (e.getExitCode() != 0) {
+						error("Could not add untracked files:\n" + e.getError());
+						return;
+					}
+				}
+		} catch (IOException e) {
+			IJ.handleException(e);
+			return;
+		}
+
 		final DiffView diff = new DiffView();
 		String configPath = System.getProperty("fiji.dir") + "/staged-plugins/"
 			+ root.getName() + ".config";
@@ -718,7 +776,8 @@ public class FileFunctions {
 
 	public class ScreenLineHandler implements SimpleExecuter.LineHandler {
 		public void handleLine(String line) {
-			parent.screen.insert(line + "\n", parent.screen.getDocument().getLength());
+			TextEditor.Tab tab = parent.getTab();
+			tab.screen.insert(line + "\n", tab.screen.getDocument().getLength());
 		}
 	}
 
@@ -745,7 +804,8 @@ public class FileFunctions {
 	}
 
 	public void gitGrep(String searchTerm, File directory) {
-		GrepLineHandler handler = new GrepLineHandler(parent.screen, directory.getAbsolutePath());
+		GrepLineHandler handler = new GrepLineHandler(parent.errorScreen, directory.getAbsolutePath());
+		parent.getTab().showErrors();
 		try {
 			SimpleExecuter executer = new SimpleExecuter(new String[] {
 				"git", "grep", "-n", searchTerm
@@ -922,6 +982,10 @@ public class FileFunctions {
 
 	public static void main(String[] args) {
 		String root = System.getProperty("fiji.dir");
-		new FileFunctions(null).commit(new File(root + "/src-plugins/Script_Editor/fiji/scripting/TextEditor.java"), new File(root + "/.git"));
+		try {
+			System.err.println(new FileFunctions(null).getSourcePath("script.imglib.analysis.DoGPeaks"));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }

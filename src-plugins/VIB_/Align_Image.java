@@ -1,12 +1,16 @@
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
+
 import ij.gui.GenericDialog;
 import ij.gui.Line;
 import ij.gui.Roi;
+
 import ij.plugin.PlugIn;
+
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -67,12 +71,22 @@ public class Align_Image implements PlugIn {
 		ImagePlus target = WindowManager.getImage(ids[gd.getNextChoiceIndex()]);
 		Line line2 = (Line)target.getRoi();
 
-		int w = source.getWidth(), h = source.getHeight();
+		ImageProcessor result = align(source.getProcessor(), line1, target.getProcessor(), line2);
+		ImagePlus imp = new ImagePlus(source.getTitle() + " aligned to " + target.getTitle(), result);
+		imp.setCalibration(source.getCalibration());
+		imp.setRoi(line2);
+		imp.show();
+	}
+
+	/**
+	 * Align an image to another image given line selections in each.
+	 */
+	public static ImageProcessor align(ImageProcessor source, Line line1, ImageProcessor target, Line line2) {
+		int w = target.getWidth(), h = target.getHeight();
 		ImageProcessor result = new FloatProcessor(w, h);
 		float[] pixels = (float[])result.getPixels();
 
-		ImageProcessor ip = source.getProcessor();
-		Interpolator inter = new BilinearInterpolator(ip);
+		Interpolator inter = new BilinearInterpolator(source);
 
 		/* the linear mapping to map line1 onto line2 */
 		float a00, a01, a02, a10, a11, a12;
@@ -97,26 +111,11 @@ public class Align_Image implements PlugIn {
 			IJ.showProgress(j + 1, h);
 		}
 
-		result.setMinAndMax(ip.getMin(), ip.getMax());
-
-		// convert back
-		switch (source.getType()) {
-			case ImagePlus.GRAY8:
-				result = result.convertToByte(false);
-				break;
-			case ImagePlus.GRAY16:
-				result = result.convertToShort(false);
-				break;
-		}
-
-		ImagePlus res = new ImagePlus("aligned " + target.getTitle(),
-			result);
-		res.setCalibration(source.getCalibration());
-		res.setRoi(line2);
-		res.show();
+		result.setMinAndMax(source.getMin(), source.getMax());
+		return result;
 	}
 
-	static abstract class Interpolator {
+	protected static abstract class Interpolator {
 		ImageProcessor ip;
 		int w, h;
 
@@ -129,7 +128,7 @@ public class Align_Image implements PlugIn {
 		public abstract float get(float x, float y);
 	}
 
-	static class BilinearInterpolator extends Interpolator {
+	protected static class BilinearInterpolator extends Interpolator {
 		public BilinearInterpolator(ImageProcessor ip) {
 			super(ip);
 		}
@@ -148,4 +147,3 @@ public class Align_Image implements PlugIn {
 		}
 	}
 }
-
