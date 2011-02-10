@@ -1016,6 +1016,8 @@ public class TrackMateFrameController {
 							displayer.setRadiusDisplayRatio((float) view.displayerPanel.getSpotDisplayRadiusRatio());
 						} else if (event == view.displayerPanel.TRACK_SCHEME_BUTTON_PRESSED) {
 							launchTrackScheme();
+						} else if (event == view.displayerPanel.COPY_OVERLAY_BUTTON_PRESSED) {
+							copyOverlayTo();
 						} else {
 							logger.error("Unknown event caught: "+event+'\n');
 						}
@@ -1026,6 +1028,30 @@ public class TrackMateFrameController {
 				updater.doUpdate();
 				
 				
+			}
+		});
+	}
+	
+	private void copyOverlayTo() {
+		final ImagePlusChooser impChooser = new ImagePlusChooser();
+		impChooser.setLocationRelativeTo(null);
+		impChooser.setVisible(true);
+		impChooser.addActionListener(new ActionListener() {			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (e == impChooser.OK_BUTTON_PUSHED) {
+					new Thread("TrackMate copying thread") {
+						public void run() {
+							// Instantiate displayer
+							ImagePlus dest = impChooser.getSelectedImagePlus();
+							model.getSettings().imp = dest; // TODO TODO DANGER DANGER
+							SpotDisplayer newDisplayer = SpotDisplayer.instantiateDisplayer(SpotDisplayer.DisplayerType.HYPERSTACK_DISPLAYER, model);
+							newDisplayer.setSpots(model.getSpots());
+							newDisplayer.setSpotsToShow(model.getSelectedSpots());
+							newDisplayer.setTrackGraph(model.getTrackGraph());
+						}
+					}.start();
+				}
 			}
 		});
 	}

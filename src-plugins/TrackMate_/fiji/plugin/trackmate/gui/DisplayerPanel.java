@@ -53,6 +53,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 	public ActionEvent SPOT_VISIBILITY_CHANGED 		= new ActionEvent(this, 2, "SpotVisibilityChanged");
 	public ActionEvent TRACK_SCHEME_BUTTON_PRESSED 	= new ActionEvent(this, 3, "TrackSchemeButtonPushed");
 	public ActionEvent SPOT_DISPLAY_RADIUS_CHANGED 	= new ActionEvent(this, 4, "SpotDisplayRadiusChanged");
+	public ActionEvent COPY_OVERLAY_BUTTON_PRESSED  = new ActionEvent(this, 5, "CopyOverlayTo");
 
 	private JLabel jLabelTrackDisplayMode;
 	private JComboBox jComboBoxDisplayMode;
@@ -312,7 +313,20 @@ public class DisplayerPanel extends ActionListenablePanel {
 					}
 				});
 				this.add(jButtonShowTrackScheme);
-				
+			}
+			{
+				JButton jButtonCopyOverlay = new JButton();
+				jButtonCopyOverlay.setText("Copy overlay to");
+//				jButtonCopyOverlay.setIcon(TRACK_SCHEME_ICON);
+				jButtonCopyOverlay.setFont(FONT);
+				jButtonCopyOverlay.setBounds(10, 320, 160, 30);
+				jButtonCopyOverlay.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						fireAction(COPY_OVERLAY_BUTTON_PRESSED);
+					}
+				});
+				this.add(jButtonCopyOverlay);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
