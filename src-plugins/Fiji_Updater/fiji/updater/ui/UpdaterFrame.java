@@ -443,13 +443,8 @@ public class UpdaterFrame extends JFrame
 	}
 
 	private void quit() {
-		if (plugins.hasChanges() &&
-				JOptionPane.showConfirmDialog(this,
-					"You have specified changes. Are you "
-					+ "sure you want to quit?",
-					"Quit?", JOptionPane.YES_NO_OPTION,
-					JOptionPane.WARNING_MESSAGE) !=
-				JOptionPane.YES_OPTION)
+		if (plugins.hasChanges() && !showQuestion("Quit?",
+				"You have specified changes. Are you sure you want to quit?"))
 			return;
 		dispose();
 	}
@@ -720,6 +715,33 @@ public class UpdaterFrame extends JFrame
 
 		Prefs.set(Updater.PREFS_USER, username);
 		return true;
+	}
+
+	public boolean showQuestion(String title, String question) {
+		if (hidden) {
+			// Do not show, but wait for dispose() to be called
+			JDialog fakeDialog = new JDialog(this, title) {
+				public void dispose() {
+					synchronized (this) {
+						notifyAll();
+					}
+					super.dispose();
+				}
+			};
+			final JOptionPane pane = new JOptionPane(question, JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+			fakeDialog.getContentPane().add(pane);
+			fakeDialog.pack();
+			try {
+				synchronized (fakeDialog) {
+					fakeDialog.wait();
+				}
+			} catch (InterruptedException e) { /* ignore */ }
+			return pane.getValue().equals(new Integer(JOptionPane.OK_OPTION));
+		}
+
+		return JOptionPane.showConfirmDialog(this, question, title,
+				JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE)
+			== JOptionPane.OK_OPTION;
 	}
 
 	public void showMessageBox(String message, int type) {
