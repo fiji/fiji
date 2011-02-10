@@ -19,3 +19,7 @@ download("initialUserCheck()");
 prepareSome();
 upload("uploadSome()");
 download("downloadSome()");
+
+prepareNewUpdater();
+upload("uploadNewUpdater()");
+download("downloadNewUpdater()");

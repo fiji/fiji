@@ -155,6 +155,49 @@ cleanWebRoot() {
 }
 
 
+// JAR HELPERS
+
+import java.io.ByteArrayInputStream;
+import java.io.FileOutputStream;
+
+import java.util.Collections;
+
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
+
+copyStream(in, out) {
+	byte[] buffer = new byte[16384];
+	for (;;) {
+		int count = in.read(buffer);
+		if (count < 0)
+			break;
+		out.write(buffer, 0, count);
+	}
+	in.close();
+}
+
+addToJar(path, filename, contents) {
+	if (!(path instanceof File))
+		path = new File(path);
+	newPath = new File(path.getAbsolutePath() + ".new");
+	input = new JarFile(path);
+	output = new JarOutputStream(new FileOutputStream(newPath));
+	for (JarEntry entry : Collections.list(input.entries()))
+		if (!entry.getName().equals(filename)) {
+			output.putNextEntry(entry);
+			copyStream(input.getInputStream(entry), output);
+		}
+	output.putNextEntry(new JarEntry(filename));
+	if (!(contents instanceof byte[]))
+		contents = contents.getBytes();
+	copyStream(new ByteArrayInputStream(contents), output);
+	output.close();
+	if (!path.delete() || !newPath.renameTo(path))
+		throw new Exception("Could not rename " + newPath + " to " + path);
+}
+
+
 /// LAUNCH HELPERS
 
 import fiji.SimpleExecuter;
@@ -215,6 +258,8 @@ public class WindowCollector implements AWTEventListener {
 	public void eventDispatched(AWTEvent event) {
 		source = event.getSource();
 		if ((source instanceof Dialog || source instanceof Frame) && source.getTitle() != null) {
+			if (!source.getTitle().equals("ImageJA") && source.getWidth() == 0) // make sure pack() has been called on the window
+				return;
 			if (discardedWindows.contains(source))
 				return;
 			title = source.getTitle();
@@ -222,12 +267,12 @@ public class WindowCollector implements AWTEventListener {
 				synchronized (windowMap) {
 					discardedWindows.add(windowMap.get(title));
 					windowMap.remove(title);
+					windowMap.notifyAll();
 				}
 				return;
 			}
-			if (hidden && source.isVisible()) {
-				source.setVisible(false);
-			}
+			if (!hidden && !source.isVisible())
+				return;
 			synchronized (windowMap) {
 				if (!windowMap.containsKey(title) || windowMap.get(title) != source) {
 					windowMap.put(title, source);
@@ -304,9 +349,27 @@ clickButton(container, title) {
 		}
 	});
 	*/
+	// The button must be clicked after the dialog was initialized
+	// (otherwise the value set by the "OK" button is ignored)
+	if (!hidden) {
+		window = container;
+		while (window != null && !(window instanceof Window))
+			window = window.getParent();
+		while (!window.isActive())
+			Thread.sleep(50);
+	}
 	event = new ActionEvent(button, ActionEvent.ACTION_PERFORMED, button.getText());
 	for (ActionListener listener : button.getActionListeners())
 		listener.actionPerformed(event);
+	if (hidden) {
+		while (container != null)
+			if (container instanceof Window) {
+				container.dispose();
+				break;
+			}
+			else
+				container = container.getParent();
+	}
 }
 
 import ij.IJ;
@@ -323,11 +386,7 @@ startUpdater() {
 	}.start();
 	print("Waiting for the updater");
 	global.updaterFrame = waitForWindow("Fiji Updater");
-	for (;;) {
-		if (updaterFrame.getContentPane().getWidth() > 0) // was pack() called yet?
-			break;
-		Thread.sleep(100);
-	}
+	print("Got the updater");
 	setAccessibility(true);
 	global.plugins = updaterFrame.plugins;
 }
@@ -337,16 +396,9 @@ import java.awt.event.WindowEvent;
 
 waitUntilClosed(window) {
 	print("Waiting until " + window.getTitle() + " is closed");
-	windowListener = new WindowAdapter() {
-		public void windowClosed(WindowEvent e) {
-			synchronized (this) {
-				notify();
-			}
-		}
-	};
-	window.addWindowListener(windowListener);
-	synchronized (windowListener) {
-		windowListener.wait();
+	synchronized (windowMap) {
+		while (windowMap.get(window.getTitle()) == window)
+			windowMap.wait();
 	}
 	print(window.getTitle() + " was closed");
 }
@@ -368,18 +420,14 @@ getOptionPane(container) {
 waitForMessageBox(title, message) {
 	print("Waiting for the " + title + " '" + message + "'");
 	window = waitForWindow(title);
-	for (;;) {
-		pane = getOptionPane(window);
-		if (pane != null)
-			break;
-		Thread.sleep(50);
-	}
+	pane = getOptionPane(window);
 	if (pane.getMessage().equals(message)) {
+		clickButton(window, "OK");
 		window.dispose();
 		print("Okay");
 	}
 	else
-		print("Not okay (" + title + "): " + pane.getMessage());
+		print("Not okay (" + title + "): " + pane.getMessage() + " instead of " + message);
 }
 
 waitForInformation(message) {
@@ -395,7 +443,7 @@ requireUpToDate() {
 }
 
 requireUploadOK() {
-	waitForInformation("Uploaded completed.");
+	waitForInformation("Uploaded successfully.");
 }
 
 requireDownloadFinished() {
@@ -404,6 +452,28 @@ requireDownloadFinished() {
 
 requireModified() {
 	waitForWarning("There are locally modified files!");
+}
+
+requireQuestion(title, question) {
+	print("Waiting for the question " + title + " '" + question + "'");
+	window = waitForWindow(title);
+	pane = getOptionPane(window);
+	if (pane.getMessage().equals(question)) {
+		if (getButton(pane, "Yes") != null)
+			clickButton(pane, "Yes");
+		else
+			clickButton(pane, "OK");
+		//pane.setValue(new Integer(JOptionPane.YES_OPTION));
+		//window.dispose();
+		print("Okay");
+	}
+	else
+		print("Not okay (" + title + "): " + pane.getMessage() + " instead of " + question);
+}
+
+requireUpdateUpdaterQuestion() {
+	requireQuestion("Update the updater",
+		"There is an update available for the Fiji Updater. Install now?");
 }
 
 advancedMode() {
@@ -464,6 +534,9 @@ initialUserCheck() {
 	for (PluginObject plugin : plugins)
 		assert(plugin.filename + " is up-to-date",
 			plugin.getStatus() == PluginObject.Status.INSTALLED);
+	clickButton(updaterFrame, "Close");
+	waitUntilClosed(updaterFrame);
+	assert("db.xml.gz exists now", new File(tmpUserRoot, "db.xml.gz").exists());
 	System.exit(0);
 }
 
@@ -498,5 +571,45 @@ downloadSome() {
 		!new File(tmpUserRoot, "update/macros/modified.ijm").exists());
 	assert("new file was downloaded",
 		readFile(tmpUserRoot, "update/macros/new.ijm").equals("macros/new.ijm"));
+	System.exit(0);
+}
+
+prepareNewUpdater() {
+	addToJar(new File(tmpDeveloperRoot, "plugins/Fiji_Updater.jar"),
+		"timestamp", "Current time is " + Util.timestamp(System.currentTimeMillis()));
+	writeFile(tmpDeveloperRoot, "macros/new2.ijm");
+	writeFile(tmpDeveloperRoot, "macros/modified.ijm", "modified again");
+	writeFile(tmpUserRoot, "macros/modified.ijm");
+}
+
+uploadNewUpdater() {
+	startUpdater();
+	requireModified();
+	advancedMode();
+	assert("8 plugins", count(plugins) == 8);
+	assert("5 up-to-date", count(plugins.upToDate()) == 5);
+	requireStatus("plugins/Fiji_Updater.jar", PluginObject.Status.MODIFIED);
+	requireStatus("macros/new2.ijm", PluginObject.Status.NOT_FIJI);
+	markForUpload("plugins/Fiji_Updater.jar");
+	markForUpload("macros/new2.ijm");
+	markForUpload("macros/modified.ijm");
+	startUpload();
+}
+
+downloadNewUpdater() {
+	dbXmlGz = new File(tmpUserRoot, "db.xml.gz");
+	lastModified = dbXmlGz.lastModified();
+	startUpdater();
+	requireUpdateUpdaterQuestion();
+	waitUntilClosed(updaterFrame);
+	assert("db.xml.gz unmodified", lastModified == dbXmlGz.lastModified());
+	startUpdater();
+	while (count(plugins.upToDate()) != 6)
+		Thread.sleep(500);
+	advancedMode();
+	assert("6 up-to-date", count(plugins.upToDate()) == 6);
+	requireStatus("macros/modified.ijm", PluginObject.Status.UPDATEABLE);
+	requireStatus("macros/new2.ijm", PluginObject.Status.NEW);
+	startDownload();
 	System.exit(0);
 }

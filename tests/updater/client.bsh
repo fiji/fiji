@@ -21,6 +21,8 @@ import ij.ImageJ;
 
 new Thread() {
 	void run() {
+		setAccessibility(true);
+		ImageJ.arguments = new String[] { "dummy", "dummy", "dummy", bsh.args[0] };
 		Main.premain();
 		new ImageJ(null, hidden ? ImageJ.NO_SHOW : ImageJ.STANDALONE);
 		Main.setup();
@@ -28,4 +30,11 @@ new Thread() {
 	}
 }.start();
 
-eval(bsh.args[0]);
+assert("update/ does not exist anymore", !new File(System.getProperty("fiji.dir"), "update").exists());
+print("Eval'ing " + bsh.args[0]);
+try {
+	eval(bsh.args[0]);
+} catch (Throwable e) {
+	e.printStackTrace();
+	System.exit(1);
+}
