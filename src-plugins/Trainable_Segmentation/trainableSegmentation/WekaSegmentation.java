@@ -883,6 +883,15 @@ public class WekaSegmentation {
 	}
 
 	/**
+	 * Get the current feature stack array
+	 * @return current feature stack array 
+	 */
+	public FeatureStackArray getFeatureStackArray()
+	{
+		return this.featureStackArray;
+	}
+	
+	/**
 	 * Get loaded (or accumulated) training instances
 	 *
 	 * @return loaded/accumulated training instances
