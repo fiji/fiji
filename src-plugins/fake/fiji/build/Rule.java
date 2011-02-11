@@ -378,6 +378,13 @@ public abstract class Rule {
 		String path = getVar("pluginsConfigDirectory");
 		if (path == null || path.equals(""))
 			return null;
+		path += "/" + getBaseName(target) + ".config";
+		if (!new File(path).exists())
+			return null;
+		return path;
+	}
+
+	protected String getBaseName(String target) {
 		String key = target;
 		if (key.endsWith(".jar"))
 			key = key.substring(0,
@@ -385,10 +392,7 @@ public abstract class Rule {
 		int slash = key.lastIndexOf('/');
 		if (slash >= 0)
 			key = key.substring(slash + 1);
-		path += "/" + key + ".config";
-		if (!new File(path).exists())
-			return null;
-		return path;
+		return key;
 	}
 
 	/* Copy source to target if target is not up-to-date */
