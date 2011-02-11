@@ -107,7 +107,7 @@ public class FeatureStackArray
 	}
 	
 	/**
-	 * Update all feature stacks in the list (multi-thread fashion)
+	 * Update specific feature stacks in the list (multi-thread fashion)
 	 * 
 	 * @param  update boolean array indicating which feature stack to update
 	 */
@@ -130,6 +130,27 @@ public class FeatureStackArray
 				}
 	}
 
+	/**
+	 * Update all feature stacks in the list (multi-thread fashion) 
+	 */
+	public void updateFeaturesMT()
+	{
+		for(int i=0; i<featureStackArray.length; i++)
+			if(null != featureStackArray[i])
+			{
+					IJ.log("Updating features of slice number " + (i+1));
+					featureStackArray[i].setEnabledFeatures(enabledFeatures);
+					featureStackArray[i].setMembranePatchSize(membranePatchSize);
+					featureStackArray[i].setMembraneSize(membraneThickness);
+					featureStackArray[i].setMaximumSigma(maximumSigma);
+					featureStackArray[i].setMinimumSigma(minimumSigma);
+					featureStackArray[i].setUseNeighbors(useNeighbors);
+					featureStackArray[i].updateFeaturesMT();
+					if(referenceStackIndex == -1)
+						this.referenceStackIndex = i;
+			}
+	}
+	
 	/**
 	 * Reset the reference index (used when the are 
 	 * changes in the features)
