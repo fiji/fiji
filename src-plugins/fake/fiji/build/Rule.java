@@ -334,7 +334,7 @@ public abstract class Rule {
 	}
 
 	public String getVar(String key) {
-		return parser.getVariable(key, target);
+		return getVar(key, target);
 	}
 
 	public String getVar(String key, String subkey) {
@@ -342,11 +342,11 @@ public abstract class Rule {
 	}
 
 	public boolean getVarBool(String key) {
-		return Util.getBool(parser.getVariable(key, target));
+		return Util.getBool(getVar(key, target));
 	}
 
 	public boolean getVarBool(String key, String subkey) {
-		return Util.getBool(parser.getVariable(key, subkey, target));
+		return Util.getBool(getVar(key, subkey));
 	}
 
 	public File getBuildDir() {
