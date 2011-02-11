@@ -29,6 +29,7 @@ import ij.ImagePlus;
 import ij.WindowManager;
 
 import java.util.ArrayList;
+import java.util.Properties;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -69,8 +70,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 
 import weka.classifiers.AbstractClassifier;
+import weka.classifiers.Classifier;
 
 import weka.classifiers.evaluation.EvaluationUtils;
 import weka.classifiers.evaluation.ThresholdCurve;
@@ -84,6 +87,7 @@ import weka.core.Utils;
 import weka.gui.GUIChooser;
 import weka.gui.GenericObjectEditor;
 import weka.gui.PropertyDialog;
+import weka.gui.PropertyPanel;
 
 import weka.gui.visualize.PlotData2D;
 import weka.gui.visualize.ThresholdVisualizePanel;
@@ -1711,8 +1715,28 @@ public class Weka_Segmentation implements PlugIn
 		if(wekaSegmentation.getLoadedTrainingData() != null)
 			((TextField) gd.getNumericFields().get(0)).setEnabled(false);
 
-		gd.addMessage("General options:");
+		gd.addMessage("Classifier options:");
 
+		// Add Weka panel for selecting the classifier and its options
+		GenericObjectEditor m_ClassifierEditor = new GenericObjectEditor();
+System.err.println("editor");
+		PropertyPanel m_CEPanel = new PropertyPanel(m_ClassifierEditor);
+		m_ClassifierEditor.setClassType(Classifier.class);
+		m_ClassifierEditor.setValue(wekaSegmentation.getClassifier());
+		
+		// add classifier editor panel
+		gd.addComponent( m_CEPanel );
+		
+		Object c = (Object)m_ClassifierEditor.getValue();
+	    String originalOptions = "";
+	    String originalClassifierName = c.getClass().getName();
+	    if (c instanceof OptionHandler) 
+	    {
+	    	originalOptions = Utils.joinOptions(((OptionHandler)c).getOptions());
+	    }
+	    //System.out.println("Original classifier: " + originalClassifierName + " " + originalOptions);
+		
+		/*
 		if( wekaSegmentation.getClassifier() instanceof FastRandomForest )
 		{
 			gd.addMessage("Fast Random Forest settings:");
@@ -1728,7 +1752,7 @@ public class Weka_Segmentation implements PlugIn
 			gd.addMessage(classifierName + " settings");
 			gd.addButton("Set Weka classifier options", new ClassifierSettingsButtonListener(wekaSegmentation.getClassifier()));
 		}
-
+		*/
 
 		gd.addMessage("Class names:");
 		for(int i = 0; i < wekaSegmentation.getNumOfClasses(); i++)
@@ -1793,6 +1817,35 @@ public class Weka_Segmentation implements PlugIn
 			wekaSegmentation.setMinimumSigma(0f);
 			wekaSegmentation.setMaximumSigma(16f);
 		}
+				
+		// Set classifier and options
+		c = (Object)m_ClassifierEditor.getValue();
+	    String options = "";
+	    if (c instanceof OptionHandler) 
+	    {
+	      options = Utils.joinOptions(((OptionHandler)c).getOptions());
+	    }
+	    //System.out.println("Classifier after choosing: " + c.getClass().getName() + " " + options);
+	    if(originalClassifierName.equals( c.getClass().getName() ) == false
+	    		|| originalOptions.equals( options ) == false)
+	    {
+	    	AbstractClassifier cls;
+	    	try{
+	    		cls = (AbstractClassifier) (c.getClass().newInstance());
+	    		cls.setOptions(options.split(" "));
+	    	}
+	    	catch(Exception ex)
+	    	{
+	    		ex.printStackTrace();
+	    		return false;
+	    	}
+	    	
+	    	wekaSegmentation.setClassifier( cls );
+	    	
+	    	IJ.log("Current classifier: " + c.getClass().getName() + " " + options);
+	    }
+		
+		/*
 		// Read fast random forest parameters and check if changed
 		if( wekaSegmentation.getClassifier() instanceof FastRandomForest )
 		{
@@ -1807,7 +1860,8 @@ public class Weka_Segmentation implements PlugIn
 
 				wekaSegmentation.updateClassifier(newNumTrees, newRandomFeatures, newMaxDepth);
 		}
-
+		*/
+		
 		boolean classNameChanged = false;
 		for(int i = 0; i < wekaSegmentation.getNumOfClasses(); i++)
 		{
@@ -1865,6 +1919,25 @@ public class Weka_Segmentation implements PlugIn
 		return true;
 	}
 
+	// Quite of a hack from Johannes Schindelin:
+	// use reflection to insert classifiers, since there is no other method to do that...
+	static {
+		try {
+			IJ.showStatus("Loading Weka properties...");
+			IJ.log("Loading Weka properties...");
+			Field field = GenericObjectEditor.class.getDeclaredField("EDITOR_PROPERTIES");
+			field.setAccessible(true);
+			Properties editorProperties = (Properties)field.get(null);
+			String key = "weka.classifiers.Classifier";
+			String value = editorProperties.getProperty(key);
+			value += ",hr.irb.fastRandomForest.FastRandomForest";
+			editorProperties.setProperty(key, value);
+			//new Exception("insert").printStackTrace();
+			//System.err.println("value: " + value);
+		} catch (Exception e) {
+			IJ.error("Could not insert my own cool classifiers!");
+		}
+	}
 
 	/**
 	 * Button listener class to handle the button action from the
@@ -1921,12 +1994,21 @@ public class Weka_Segmentation implements PlugIn
 		TextField text;
 		FeatureStackArray featureStackArray;
 
+		/**
+		 * Construct a listener for the save feature stack button
+		 * 
+		 * @param title save dialog title
+		 * @param featureStackArray array of feature stacks to save
+		 */
 		public SaveFeatureStackButtonListener(String title, FeatureStackArray featureStackArray)
 		{
 			this.title = title;
 			this.featureStackArray = featureStackArray;
 		}
 
+		/**
+		 * Method to run when pressing the save feature stack button
+		 */
 		public void actionPerformed(ActionEvent e)
 		{
 			if(featureStackArray.isEmpty())
