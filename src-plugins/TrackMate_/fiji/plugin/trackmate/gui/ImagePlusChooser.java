@@ -90,6 +90,7 @@ public class ImagePlusChooser extends javax.swing.JFrame {
 	 */
 	
 	public void addActionListener(ActionListener listener) {
+		System.out.println("Fire action in impchooser");// DEBUG
 		listeners.add(listener);
 	}
 	
@@ -97,8 +98,16 @@ public class ImagePlusChooser extends javax.swing.JFrame {
 		return listeners.remove(listener);
 	}
 	
+	/**
+	 * Return the selected {@link ImagePlus} in the combo list, or <code>null</code> if 
+	 * the first choice "3D viewer" was selected.
+	 */
 	public ImagePlus getSelectedImagePlus() {
-		return images.get(jComboBoxImage.getSelectedIndex());
+		int index = jComboBoxImage.getSelectedIndex();
+		if (index < 1) 
+			return null;
+		else 
+			return images.get(index-1);
 	}
 	
 	
@@ -120,7 +129,7 @@ public class ImagePlusChooser extends javax.swing.JFrame {
 		int[] IDs = WindowManager.getIDList();
 		String[] image_names = null;
 		if (null == IDs) {
-			image_names = new String[] { "No image opened!" };
+			image_names = new String[] { "New 3D viewer" };
 			images = new ArrayList<ImagePlus>();
 			return image_names;
 		}
@@ -131,12 +140,13 @@ public class ImagePlusChooser extends javax.swing.JFrame {
 			images.add(imp);
 		}
 		if (images.size() < 1) {
-			image_names = new String[] { "No image opened!" };
+			image_names = new String[] { "New 3D viewer" };
 		} else {
-			image_names = new String[images.size()];
+			image_names = new String[images.size() + 1];
 		}
+		image_names[0] = "New 3D viewer";
 		for (int i = 0; i < images.size(); i++) {
-			image_names[i] = images.get(i).getTitle();			
+			image_names[i+1] = images.get(i).getTitle();			
 		}
 		return image_names;
 	}

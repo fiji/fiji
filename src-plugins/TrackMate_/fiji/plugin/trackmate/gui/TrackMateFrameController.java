@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.List;
 
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -202,7 +203,7 @@ public class TrackMateFrameController {
 						controller.execLinkDisplayerToThresholdGUI();
 						break;
 					case TUNE_DISPLAY:
-						controller.execLinkDisplayerToTuningGUI();
+						TrackMateFrameController.execLinkDisplayerToTuningGUI(view.displayerPanel, controller.displayer, controller.model);
 						break;
 					}
 					
@@ -258,7 +259,7 @@ public class TrackMateFrameController {
 	private Logger logger;
 	private SpotDisplayer displayer;
 	private File file;
-	private DisplayUpdater updater;
+//	private DisplayUpdater updater;
 	
 	private TrackMateModelInterface model;
 	private final TrackMateFrame view;
@@ -333,7 +334,7 @@ public class TrackMateFrameController {
 		view.addActionListener(inProcessActionListener);
 		state = GuiState.START;
 		state.updateGUI(view, controller);
-		initUpdater();
+//		initUpdater();
 	}
 	
 	
@@ -660,7 +661,7 @@ public class TrackMateFrameController {
 		displayer.setSpots(model.getSpots());
 		displayer.setSpotsToShow(model.getSelectedSpots());
 		displayer.setTrackGraph(model.getTrackGraph());
-		updater.doUpdate();
+//		updater.doUpdate();
 		logger.log("Loading data finished, press 'next' to resume.\n");
 		switchNextButton(true);
 	}
@@ -801,15 +802,15 @@ public class TrackMateFrameController {
 	 * Instantiate the updater and make sure a "quit" hook is registered when
 	 * the view is closed.
 	 */
-	private void initUpdater() {
-		updater = new DisplayUpdater();
-		view.addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(WindowEvent we) {
-				updater.quit();
-			}
-		});
-	}
+//	private void initUpdater() {
+//		updater = new DisplayUpdater(displayer);
+//		view.addWindowListener(new WindowAdapter() {
+//			@Override
+//			public void windowClosing(WindowEvent we) {
+//				updater.quit();
+//			}
+//		});
+//	}
 	
 	
 	private void execGetStartSettings() {
@@ -895,7 +896,8 @@ public class TrackMateFrameController {
 				// Re-enable the GUI
 				logger.log("Rendering done.\n", Logger.BLUE_COLOR);
 				switchNextButton(true);
-				updater.doUpdate();
+//				updater.setDisplayer(displayer);
+//				updater.doUpdate();
 			}
 		}.start();
 	}
@@ -913,7 +915,7 @@ public class TrackMateFrameController {
 					@Override
 					public void actionPerformed(ActionEvent event) {
 						displayer.setColorByFeature(view.thresholdGuiPanel.getColorByFeature());
-						updater.doUpdate();
+//						updater.doUpdate();
 					}
 				});
 				
@@ -923,12 +925,12 @@ public class TrackMateFrameController {
 						// We set the thresholds field of the model but do not touch its selected spot field yet.
 						model.setFeatureThresholds(view.thresholdGuiPanel.getFeatureThresholds());
 						displayer.setSpotsToShow(model.getSpots().threshold(model.getFeatureThresholds()));
-						updater.doUpdate();
+//						updater.doUpdate();
 					}
 				});
 				
 				view.thresholdGuiPanel.stateChanged(null); // force redraw
-				updater.doUpdate();
+//				updater.doUpdate();
 			}
 		});
 	}
@@ -984,7 +986,7 @@ public class TrackMateFrameController {
 				model.execTracking();
 				displayer.setTrackGraph(model.getTrackGraph());
 				displayer.setDisplayTrackMode(TrackDisplayMode.ALL_WHOLE_TRACKS, 20);
-				updater.doUpdate();
+//				updater.doUpdate();
 				// Re-enable the GUI
 				switchNextButton(true);
 				long end = System.currentTimeMillis();
@@ -996,43 +998,41 @@ public class TrackMateFrameController {
 	/**
 	 * Link the displayer to the tuning display panel in the view.
 	 */
-	private void execLinkDisplayerToTuningGUI() {
+	private static void execLinkDisplayerToTuningGUI(final DisplayerPanel displayerPanel, final SpotDisplayer spotDisplayer, final TrackMateModelInterface model) {
 		SwingUtilities.invokeLater(new Runnable() {			
 			@Override
 			public void run() {
 				
-				view.displayerPanel.addActionListener(new ActionListener() {
+				displayerPanel.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent event) {
-						if (event == view.displayerPanel.SPOT_COLOR_MODE_CHANGED) {
-							displayer.setColorByFeature(view.displayerPanel.getColorSpotByFeature());
-						} else if (event == view.displayerPanel.SPOT_VISIBILITY_CHANGED) {
-							displayer.setSpotVisible(view.displayerPanel.isDisplaySpotSelected());
-						} else if (event == view.displayerPanel.TRACK_DISPLAY_MODE_CHANGED) {
-							displayer.setDisplayTrackMode(view.displayerPanel.getTrackDisplayMode(), view.displayerPanel.getTrackDisplayDepth());
-						} else if (event == view.displayerPanel.TRACK_VISIBILITY_CHANGED) {
-							displayer.setTrackVisible(view.displayerPanel.isDisplayTrackSelected());
-						} else if (event == view.displayerPanel.SPOT_DISPLAY_RADIUS_CHANGED) {
-							displayer.setRadiusDisplayRatio((float) view.displayerPanel.getSpotDisplayRadiusRatio());
-						} else if (event == view.displayerPanel.TRACK_SCHEME_BUTTON_PRESSED) {
-							launchTrackScheme();
-						} else if (event == view.displayerPanel.COPY_OVERLAY_BUTTON_PRESSED) {
-							copyOverlayTo();
-						} else {
-							logger.error("Unknown event caught: "+event+'\n');
-						}
-						updater.doUpdate();
+						if (event == displayerPanel.SPOT_COLOR_MODE_CHANGED) {
+							spotDisplayer.setColorByFeature(displayerPanel.getColorSpotByFeature());
+						} else if (event == displayerPanel.SPOT_VISIBILITY_CHANGED) {
+							spotDisplayer.setSpotVisible(displayerPanel.isDisplaySpotSelected());
+						} else if (event == displayerPanel.TRACK_DISPLAY_MODE_CHANGED) {
+							spotDisplayer.setDisplayTrackMode(displayerPanel.getTrackDisplayMode(), displayerPanel.getTrackDisplayDepth());
+						} else if (event == displayerPanel.TRACK_VISIBILITY_CHANGED) {
+							spotDisplayer.setTrackVisible(displayerPanel.isDisplayTrackSelected());
+						} else if (event == displayerPanel.SPOT_DISPLAY_RADIUS_CHANGED) {
+							spotDisplayer.setRadiusDisplayRatio((float) displayerPanel.getSpotDisplayRadiusRatio());
+						} else if (event == displayerPanel.TRACK_SCHEME_BUTTON_PRESSED) {
+							launchTrackScheme(model, spotDisplayer);
+						} else if (event == displayerPanel.COPY_OVERLAY_BUTTON_PRESSED) {
+							copyOverlayTo(model);
+						} 
+//						updater.doUpdate();
 					}
 				});
 				
-				updater.doUpdate();
+//				updater.doUpdate();
 				
 				
 			}
 		});
 	}
 	
-	private void copyOverlayTo() {
+	private static void copyOverlayTo(final TrackMateModelInterface model) {
 		final ImagePlusChooser impChooser = new ImagePlusChooser();
 		impChooser.setLocationRelativeTo(null);
 		impChooser.setVisible(true);
@@ -1044,19 +1044,37 @@ public class TrackMateFrameController {
 						public void run() {
 							// Instantiate displayer
 							ImagePlus dest = impChooser.getSelectedImagePlus();
-							model.getSettings().imp = dest; // TODO TODO DANGER DANGER
-							SpotDisplayer newDisplayer = SpotDisplayer.instantiateDisplayer(SpotDisplayer.DisplayerType.HYPERSTACK_DISPLAYER, model);
+							impChooser.setVisible(false);
+							SpotDisplayer newDisplayer;
+							if (null == dest) {
+								newDisplayer = SpotDisplayer.instantiateDisplayer(SpotDisplayer.DisplayerType.THREEDVIEWER_DISPLAYER, model);
+							} else {
+								model.getSettings().imp = dest; // TODO TODO DANGER DANGER
+								newDisplayer = SpotDisplayer.instantiateDisplayer(SpotDisplayer.DisplayerType.HYPERSTACK_DISPLAYER, model);
+							}
 							newDisplayer.setSpots(model.getSpots());
 							newDisplayer.setSpotsToShow(model.getSelectedSpots());
 							newDisplayer.setTrackGraph(model.getTrackGraph());
+							
+							final DisplayerPanel newDisplayerPanel = new DisplayerPanel(model.getFeatureValues());
+							JFrame newFrame = new JFrame(); 
+							newFrame.getContentPane().add(newDisplayerPanel);
+							newFrame.pack();
+							newFrame.setSize(300, 470);
+							newFrame.setLocationRelativeTo(null);
+							newFrame.setVisible(true);
+							
+							execLinkDisplayerToTuningGUI(newDisplayerPanel, newDisplayer, model);
 						}
 					}.start();
+				} else {
+					impChooser.setVisible(false);
 				}
 			}
 		});
 	}
 	
-	private void launchTrackScheme() {
+	private static void launchTrackScheme(final TrackMateModelInterface model, final SpotDisplayer displayer) {
 		// Update icons
 		if (null != model.getSettings().imp) {
 			SpotIconGrabber grabber = new SpotIconGrabber(model.getSettings());
@@ -1124,12 +1142,14 @@ public class TrackMateFrameController {
 	 * This is a helper class modified after a class by Albert Cardona. Here, it is in
 	 * charge of refreshing the displayer view of the spot and tracks.
 	 */
-	private class DisplayUpdater extends Thread {
+	private static class DisplayUpdater extends Thread {
 		long request = 0;
+		private SpotDisplayer displayer;
 
 		// Constructor autostarts thread
-		DisplayUpdater() {
+		DisplayUpdater(SpotDisplayer displayer) {
 			super("TrackMate displayer thread");
+			this.displayer = displayer;
 			setPriority(Thread.NORM_PRIORITY);
 			start();
 		}
@@ -1149,6 +1169,10 @@ public class TrackMateFrameController {
 				notify();
 			}
 		}
+		
+		public void setDisplayer(final SpotDisplayer displayer) {
+			this.displayer = displayer;
+		}
 
 		public void run() {
 			while (!isInterrupted()) {
@@ -1158,7 +1182,7 @@ public class TrackMateFrameController {
 						r = request;
 					}
 					// Call displayer update from this thread
-					if (r > 0)
+					if (r > 0 && null != displayer)
 						displayer.refresh(); // Is likely to generate NPE
 					synchronized (this) {
 						if (r == request) {
