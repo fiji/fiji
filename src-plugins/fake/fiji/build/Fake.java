@@ -48,8 +48,6 @@ import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
-import java.util.regex.Pattern;
-
 import java.util.zip.ZipException;
 
 public class Fake {
