@@ -45,7 +45,6 @@ import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.List;
 import java.awt.Panel;
 import java.awt.Rectangle;
 import java.awt.TextField;
@@ -884,18 +883,7 @@ public class Weka_Segmentation implements PlugIn
 			imp.setWindow(this);
 			repaint();
 		}
-/*
-		public void mouseWheelMoved(MouseWheelEvent e) 
-		{
-			super.mouseWheelMoved(e);
-			exec.submit(new Runnable() {
-				public void run() {
-					drawExamples();	
-				}
-			});
-			
-		}
-	*/	
+
 	}
 
 	/**
@@ -1038,18 +1026,12 @@ public class Weka_Segmentation implements PlugIn
 		// IJ.log("Adding trace to list " + i);
 		
 		final int n = displayImage.getCurrentSlice();
-try{		
+	
 		displayImage.killRoi();
 		wekaSegmentation.addExample(i, r, n);
-	//	exampleList[i].add("trace " + traceCounter[i]);
 		traceCounter[i]++;
 		drawExamples();
 		updateExampleLists();
-}catch(Exception ex)
-{
-	IJ.log("error when adding trace!");
-	ex.printStackTrace();
-}
 	}
 
 	/**
@@ -1160,7 +1142,7 @@ try{
 	 */
 	void deleteSelected(final ActionEvent e)
 	{
-try{
+
 		for(int i = 0; i < wekaSegmentation.getNumOfClasses(); i++)
 			if (e.getSource() == exampleList[i])
 			{
@@ -1180,11 +1162,6 @@ try{
 
 		drawExamples();
 		updateExampleLists();
-}catch(Exception ex)
-{
-	ex.printStackTrace();
-	IJ.log("Error while deleting trace!");
-}
 	}
 
 	/**
@@ -1192,7 +1169,9 @@ try{
 	 */
 	void showClassificationImage()
 	{
-		ImagePlus resultImage = classifiedImage.duplicate();
+		final ImagePlus resultImage = classifiedImage.duplicate();
+		
+		resultImage.setTitle("Classified image");
 		
 		if(resultImage.getImageStackSize() > 1)
 			(new StackConverter(resultImage)).convertToGray8();
@@ -1757,7 +1736,7 @@ try{
 
 		gd.addMessage("Advanced options:");
 		gd.addCheckbox("Homogenize classes", wekaSegmentation.doHomogenizeClasses());
-		gd.addButton("Save feature stack", new SaveFeatureStackButtonListener("Select location to save feature stack", wekaSegmentation.getFeatureStack(1)));
+		gd.addButton("Save feature stack", new SaveFeatureStackButtonListener("Select location to save feature stack", wekaSegmentation.getFeatureStackArray()));
 		gd.addSlider("Result overlay opacity", 0, 100, overlayOpacity);
 		gd.addHelp("http://pacific.mpi-cbg.de/wiki/Trainable_Segmentation_Plugin");
 
@@ -1940,37 +1919,42 @@ try{
 	{
 		String title;
 		TextField text;
-		FeatureStack featureStack;
+		FeatureStackArray featureStackArray;
 
-		public SaveFeatureStackButtonListener(String title, FeatureStack featureStack)
+		public SaveFeatureStackButtonListener(String title, FeatureStackArray featureStackArray)
 		{
 			this.title = title;
-			this.featureStack = featureStack;
+			this.featureStackArray = featureStackArray;
 		}
 
 		public void actionPerformed(ActionEvent e)
 		{
-			if(featureStack.isEmpty())
+			if(featureStackArray.isEmpty())
 			{
 				//IJ.error("Error", "The feature stack has not been initialized yet, please train first.");
 				//return;
-				featureStack.updateFeaturesMT();
+				featureStackArray.updateFeaturesMT();
 			}
 
 			SaveDialog sd = new SaveDialog(title, "feature-stack", ".tif");
 			final String dir = sd.getDirectory();
-			final String filename = sd.getFileName();
+			final String fileWithExt = sd.getFileName();
 
-			if(null == dir || null == filename)
+			if(null == dir || null == fileWithExt)
 				return;
 
-			if(false == this.featureStack.saveStackAsTiff(dir + filename))
+			for(int i=0; i<featureStackArray.getSize(); i++)
 			{
-				IJ.error("Error", "Feature stack could not be saved");
-				return;
-			}
+				final String fileName = dir + fileWithExt.substring(0, fileWithExt.length()-4) 
+										+ String.format("%04d", (i+1)) + ".tif";
+				if(false == this.featureStackArray.get(i).saveStackAsTiff(fileName))
+				{
+					IJ.error("Error", "Feature stack could not be saved");
+					return;
+				}
 
-			IJ.log("Feature stack saved as " + dir + filename);
+				IJ.log("Saved feature stack for slice " + (i+1) + " as " + fileName);
+			}
 		}
 	}
 }
