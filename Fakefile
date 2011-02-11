@@ -284,7 +284,7 @@ jars/imglib-scripting.jar <- modules/imglib/
 # From source
 libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama-1.0.2.jar \
 	jars/fiji-scripting.jar jars/fiji-lib.jar jars/jep.jar \
-	jars/pal-optimization.jar jars/Updater_Fix.jar
+	jars/pal-optimization.jar jars/Updater_Fix.jar plugins/JNI_Example.jar \
 
 plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Screen/**/*
 
@@ -415,6 +415,8 @@ CLASSPATH(plugins/panorama_.jar)=jars/ij.jar:jars/mpicbg.jar:/jars/mpicbg_.jar
 CLASSPATH(jars/weave_jy2java.jar)=plugins/Refresh_Javas.jar:jars/fiji-scripting.jar:jars/Fiji.jar:jars/ij.jar:plugins/Script_Editor.jar
 CLASSPATH(plugins/3D_Blob_Segmentation.jar)=jars/ij.jar:plugins/level_sets.jar:plugins/3D_Viewer.jar:jars/VIB-lib.jar:jars/imglib.jar:$JAVA3D_JARS
 CLASSPATH(plugins/Feature_Detection.jar)=jars/ij.jar:jars/imglib-ij.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/Jama-1.0.2.jar
+LIBS(plugins/JNI_Example.jar)=-lm
+CLASSPATH(plugins/JNI_Example.jar)=jars/ij.jar:jars/fiji-lib.jar
 
 # pre-Java5 generics ;-)
 

@@ -41,6 +41,20 @@ static void set_path_to_JVM(void);
 static int get_fiji_bundle_variable(const char *key, struct string *value);
 #endif
 
+static const char *get_platform(void)
+{
+#ifdef MACOSX
+	return "macosx";
+#endif
+#ifdef WIN32
+	return sizeof(void *) < 8 ? "win32" : "win64";
+#endif
+#ifdef __linux__
+	return sizeof(void *) < 8 ? "linux32" : "linux64";
+#endif
+	return NULL;
+}
+
 #ifdef WIN32
 #include <io.h>
 #include <process.h>
@@ -206,16 +220,30 @@ static void string_append(struct string *string, const char *append)
 	string->length += len;
 }
 
+static int path_list_contains(const char *list, const char *path)
+{
+	size_t len = strlen(path);
+	const char *p = list;
+	while (p && *p) {
+		if (!strncmp(p, path, len) &&
+				(p[len] == PATH_SEP[0] || !p[len]))
+			return 1;
+		p = strchr(p, PATH_SEP[0]);
+		if (!p)
+			break;
+		p++;
+	}
+	return 0;
+}
+
 static void string_append_path_list(struct string *string, const char *append)
 {
-	int len = strlen(append);
+	if (path_list_contains(string->buffer, append))
+		return;
 
 	if (string->length)
 		string_append(string, PATH_SEP);
-
-	string_ensure_alloc(string, string->length + len + 1);
-	memcpy(string->buffer + string->length, append, len + 1);
-	string->length += len;
+	string_append(string, append);
 }
 
 static void string_append_at_most(struct string *string, const char *append, int length)
@@ -989,23 +1017,6 @@ static struct string *get_parent_directory(const char *path)
 	return string_initf("%.*s", (int)(slash - path), path);
 }
 
-__attribute__((unused))
-static int path_list_contains(const char *list, const char *path)
-{
-	size_t len = strlen(path);
-	const char *p = list;
-	while (p && *p) {
-		if (!strncmp(p, path, len) &&
-				(p[len] == PATH_SEP[0] || !p[len]))
-			return 1;
-		p = strchr(p, PATH_SEP[0]);
-		if (!p)
-			break;
-		p++;
-	}
-	return 0;
-}
-
 /*
  * On Linux, JDK5 does not find the library path with libmlib_image.so,
  * so we have to add that explicitely to the LD_LIBRARY_PATH.
@@ -1323,6 +1334,33 @@ static int mkdir_p(const char *path)
 	result = mkdir_recursively(buffer);
 	string_release(buffer);
 	return result;
+}
+
+static void detect_library_path(struct string *library_path, struct string *directory)
+{
+	int original_length = directory->length;
+	char found = 0;
+	DIR *dir = opendir(directory->buffer);
+	struct dirent *entry;
+
+	if (!dir)
+		return;
+
+	while ((entry = readdir(dir))) {
+		if (entry->d_name[0] == '.')
+			continue;
+		string_addf(directory, "/%s", entry->d_name);
+		if (dir_exists(directory->buffer))
+			detect_library_path(library_path, directory);
+		else if (!found && is_native_library(directory->buffer)) {
+			string_set_length(directory, original_length);
+			string_append_path_list(library_path, directory->buffer);
+			found = 1;
+			continue;
+		}
+		string_set_length(directory, original_length);
+	}
+	closedir(dir);
 }
 
 static void add_java_home_to_path(void)
@@ -1887,6 +1925,8 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\tstart JavaC, the Java Compiler, instead of ImageJ\n"
 		"--ant\n"
 		"\trun Apache Ant\n"
+		"--javah\n"
+		"\tstart javah instead of ImageJ\n"
 		"--javap\n"
 		"\tstart javap instead of ImageJ\n"
 		"--javadoc\n"
@@ -1999,6 +2039,8 @@ static int start_ij(void)
 	struct string *default_arguments = string_init(32);
 	struct string *arg = string_init(32);
 	struct string *plugin_path = string_init(32);
+	struct string *java_library_path = string_init(32);
+	struct string *library_base_path;
 	int dashdash = 0;
 	int allow_multiple = 0, skip_build_classpath = 0;
 	int jdb = 0, add_class_path_option = 0, advanced_gc = 1, debug_gc = 0;
@@ -2017,6 +2059,25 @@ static int start_ij(void)
 			file_is_newer(fiji_path("fiji.c"), fiji_path("fiji" EXE_EXTENSION)) &&
 			!is_building("fiji"))
 		error("Warning: your Fiji executable is not up-to-date");
+
+	if (get_platform() != NULL) {
+		struct string *buffer = string_initf("%s/%s", fiji_path("lib"), get_platform());
+		string_append_path_list(java_library_path, buffer->buffer);
+		string_release(buffer);
+	}
+
+	library_base_path = string_copy(fiji_path("lib"));
+	detect_library_path(library_base_path, library_base_path);
+	string_release(library_base_path);
+
+#ifdef WIN32
+	if (java_library_path->length) {
+		struct string *new_path = string_initf("%s%s%s",
+			getenv("PATH"), PATH_SEP, java_library_path->buffer);
+		setenv("PATH", new_path->buffer, 1);
+		string_release(new_path);
+	}
+#endif
 
 	memset(&options, 0, sizeof(options));
 
@@ -2196,6 +2257,7 @@ static int start_ij(void)
 			main_class = "fiji.build.Fake";
 		}
 		else if (!strcmp(main_argv[i], "--javac") ||
+				!strcmp(main_argv[i], "--javah") ||
 				!strcmp(main_argv[i], "--javap") ||
 				!strcmp(main_argv[i], "--javadoc")) {
 			add_class_path_option = 1;
@@ -2212,6 +2274,8 @@ static int start_ij(void)
 			string_addf_path_list(class_path, "%s/../lib/tools.jar", get_jre_home());
 			if (!strcmp(main_argv[i], "--javac"))
 				main_class = "com.sun.tools.javac.Main";
+			else if (!strcmp(main_argv[i], "--javah"))
+				main_class = "com.sun.tools.javah.Main";
 			else if (!strcmp(main_argv[i], "--javap"))
 				main_class = "sun.tools.javap.Main";
 			else if (!strcmp(main_argv[i], "--javadoc"))
@@ -2437,6 +2501,7 @@ static int start_ij(void)
 		"fiji.dir", fiji_dir,
 		"fiji.defaultLibPath", JAVA_LIB_PATH,
 		"fiji.executable", main_argv0,
+		"java.library.path", java_library_path->buffer,
 		NULL
 	};
 
@@ -2949,7 +3014,7 @@ static int is_leopard(void)
 	return is_osrelease(9);
 }
 
-static int is_tiger(void)
+static MAYBE_UNUSED int is_tiger(void)
 {
 	return is_osrelease(8);
 }
