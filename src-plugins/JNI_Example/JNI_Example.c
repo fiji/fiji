@@ -17,7 +17,6 @@ static float cumulative, cumulative2, count;
 
 static void add(JNIEnv *env, int width, int height, jarray array)
 {
-	jclass clazz = (*env)->GetObjectClass(env, array);
 	int i;
 
 	if ((*env)->IsInstanceOf(env, array, byteArrayClass)) {
@@ -107,4 +106,6 @@ JNIEXPORT jobject JNICALL Java_JNI_1Example_run(JNIEnv *env, jclass clazz,
 
 	(*env)->ReleaseStringUTFChars(env, title, title_str);
 	(*env)->ReleaseStringUTFChars(env, arg, arg_str);
+
+	return 0;
 }

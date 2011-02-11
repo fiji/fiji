@@ -415,8 +415,8 @@ CLASSPATH(plugins/panorama_.jar)=jars/ij.jar:jars/mpicbg.jar:/jars/mpicbg_.jar
 CLASSPATH(jars/weave_jy2java.jar)=plugins/Refresh_Javas.jar:jars/fiji-scripting.jar:jars/Fiji.jar:jars/ij.jar:plugins/Script_Editor.jar
 CLASSPATH(plugins/3D_Blob_Segmentation.jar)=jars/ij.jar:plugins/level_sets.jar:plugins/3D_Viewer.jar:jars/VIB-lib.jar:jars/imglib.jar
 CLASSPATH(plugins/Feature_Detection.jar)=jars/ij.jar:jars/imglib-ij.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/Jama-1.0.2.jar
+LIBS(plugins/JNI_Example.jar)=-lm
 CLASSPATH(plugins/JNI_Example.jar)=jars/ij.jar:jars/fiji-lib.jar
-lib/linux64/libJNI_Example.so[bin/jni.bsh $TARGET src-plugins/JNI_Example/JNI_Example.java $PRE -lm] <- src-plugins/JNI_Example/JNI_Example.c
 
 # pre-Java5 generics ;-)
 

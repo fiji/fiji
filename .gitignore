@@ -220,4 +220,8 @@
 /plugins/3D_Blob_Segmentation.jar
 /plugins/Feature_Detection.jar
 /plugins/JNI_Example.jar
+/lib/win32/JNI_Example.dll
+/lib/win64/JNI_Example.dll
+/lib/linux32/libJNI_Example.so
 /lib/linux64/libJNI_Example.so
+/lib/macosx/libJNI_Example.dylib
