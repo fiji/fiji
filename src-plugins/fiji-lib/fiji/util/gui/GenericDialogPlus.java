@@ -14,7 +14,6 @@ import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Insets;
 import java.awt.Panel;
 import java.awt.TextField;
 import java.awt.Toolkit;
@@ -38,6 +37,8 @@ import java.io.IOException;
 import java.util.List;
 
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 /**
  * The GenericDialogPlus class enhances the GenericDialog by
@@ -146,27 +147,23 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 		button.addActionListener(listener);
 		button.addKeyListener(this);
 
+		addComponent(button);
+	}
+	
+	public void addComponent(Component component) {
 		GridBagLayout layout = (GridBagLayout)getLayout();
-		Component[] children = getComponents();
-		GridBagConstraints constraints;
-		if (children != null && children.length > 0) {
-			constraints = layout.getConstraints(children[children.length - 1]);
-			constraints.insets = new Insets(0, 0, 3, 0);
-		}
-		else {
-			constraints = new GridBagConstraints();
-			constraints.insets = new Insets(5, 0, 3, 0);
-		}
+		layout.setConstraints(component, getConstraints());
+		add(component);
+	}
 
-		constraints.gridx = 0;
-		constraints.anchor = GridBagConstraints.EAST;
-		constraints.gridwidth = 1;
-
+	// Work around too many private restrictions (add a new panel and remove it right away)
+	protected GridBagConstraints getConstraints() {
+		GridBagLayout layout = (GridBagLayout)getLayout();
 		Panel panel = new Panel();
-		panel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-		panel.add(button);
-		
 		addPanel(panel);
+		GridBagConstraints constraints = layout.getConstraints(panel);
+		remove(panel);
+		return constraints;
 	}
 
 	static class FileListener implements ActionListener {
@@ -295,6 +292,11 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 				IJ.showMessage("You clicked me!");
 			}
 		});
+		JLabel label = new JLabel("Hello, Ignacio! You're the BEST!");
+		JPanel jp = new JPanel();
+		jp.add(label);
+		gd.addComponent(jp);
+		gd.addMessage("(blush)");
 		gd.showDialog();
 		if (!gd.wasCanceled())
 			IJ.showMessage("You chose the file " + gd.getNextString()
