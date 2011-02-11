@@ -898,6 +898,10 @@ public class Fake {
 		execute(args, dir, verbose);
 	}
 
+	protected void execute(boolean verbose, File dir, String... args) throws IOException, FakeException {
+		execute(args, dir, verbose);
+	}
+
 	protected void execute(String[] args, File dir, boolean verbose)
 			throws IOException, FakeException {
 		if (verbose) {
