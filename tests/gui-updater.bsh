@@ -15,6 +15,7 @@ prepareNewFijiRoot(tmpUserRoot, false);
 print("About to upload");
 upload("initialUpload()");
 download("initialUserCheck()");
+download("testUptodateCheck()");
 
 prepareSome();
 upload("uploadSome()");

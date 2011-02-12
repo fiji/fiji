@@ -230,6 +230,31 @@ initialUserCheck() {
 	System.exit(0);
 }
 
+import fiji.updater.UptodateCheck;
+
+import java.util.regex.Pattern;
+
+testUptodateCheck() {
+	dbXmlGz = new File(tmpUserRoot, "db.xml.gz");
+	content = readGZippedStream(new FileInputStream(dbXmlGz));
+	timestampPattern = "(?s).*<update-site name=\"\"[^>]* timestamp=.*";
+	assert("local db.xml.gz has timestamp", content.matches(timestampPattern));
+	content = readGZippedStream(new FileInputStream(new File(tmpDeveloperRoot, "db.xml.gz")));
+	assert("developer's db.xml.gz has timestamp", content.matches(timestampPattern));
+	content = readGZippedStream(new FileInputStream(new File(tmpWebRoot, "db.xml.gz")));
+	assert("update site's db.xml.gz has no timestamp", !content.matches(timestampPattern));
+
+	startIJ();
+	newTimestamp = 20200101000000l;
+	assert("timestamp2millis works", newTimestamp == Long.parseLong(Util.timestamp(Util.timestamp2millis(newTimestamp))));
+	setTimestamp(dbXmlGz, newTimestamp);
+	check = new UptodateCheck();
+	assert("local db.xml.gz's mtime is no longer tested: " + check.check(), check.check().equals("Up-to-date"));
+	setTimestamp(new File(tmpWebRoot, "db.xml.gz"), newTimestamp);
+	assert("update-site's last-modified is tested: " + check.check(), check.check() == null);
+	System.exit(0);
+}
+
 prepareSome() {
 	print("Preparing some files");
 	writeFile(tmpDeveloperRoot, "macros/new.ijm");
