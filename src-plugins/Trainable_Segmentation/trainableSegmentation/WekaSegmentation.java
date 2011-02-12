@@ -3448,11 +3448,11 @@ public class WekaSegmentation {
 				ImageProcessor classifiedSliceProcessor = new FloatProcessor(w, h, classifiedSlice);
 				if (probabilityMaps)
 					classifiedSliceProcessor = classifiedSliceProcessor.convertToByte(true);
-				classStack.addSlice("", classifiedSliceProcessor);
+				classStack.addSlice(probabilityMaps ? classLabels[c] : "", classifiedSliceProcessor);
 				//IJ.log("" + i + " " + c);
 			}
 		}
-		ImagePlus classImg = new ImagePlus("Classification result", classStack);
+		ImagePlus classImg = new ImagePlus(probabilityMaps ? "Probability maps" : "Classification result", classStack);
 
 		return classImg;
 	}
