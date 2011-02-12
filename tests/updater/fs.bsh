@@ -38,8 +38,17 @@ fijiDir = new File(System.getProperty("fiji.executable")).getCanonicalFile().get
 import java.io.ByteArrayOutputStream;
 
 readFile(dir, name) {
+	return readStream(new FileInputStream(new File(dir, name)));
+}
+
+import java.util.zip.GZIPInputStream;
+
+readGZippedStream(in) {
+	return readStream(new GZIPInputStream(in));
+}
+
+readStream(in) {
 	out = new ByteArrayOutputStream();
-	in = new FileInputStream(new File(dir, name));
 	copyTo(in, out);
 	return out.toString().trim();
 }
