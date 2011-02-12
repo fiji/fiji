@@ -74,6 +74,10 @@ cleanWebRoot() {
 	execute(new String[] { "gzip", dbXml.getAbsolutePath() });
 }
 
+readDbXmlGz(File root) {
+	return readGZippedStream(new File(root, "db.xml.gz"));
+}
+
 
 /// ADDITIONAL LAUNCH HELPERS
 
