@@ -162,6 +162,12 @@ requireUpdateUpdaterQuestion() {
 }
 
 advancedMode() {
+	while (getButton(updaterFrame, "Advanced mode") == null) {
+		if (getButton(updaterFrame, "Easy mode") != null)
+			return;
+		listComponentsRecursively(updaterFrame);
+		Thread.sleep(500);
+	}
 	clickButton(updaterFrame, "Advanced mode");
 }
 
