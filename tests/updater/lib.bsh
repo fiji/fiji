@@ -95,10 +95,7 @@ download(bsh) {
 import ij.IJ;
 
 startUpdater() {
-	// The window is called ImageJA when being created
-	waitForWindow("ImageJA");
-	if (hidden)
-		Updater.hidden = true;
+	startIJ();
 	new Thread() {
 		public void run() {
 			IJ.run("Update Fiji");
@@ -109,6 +106,15 @@ startUpdater() {
 	print("Got the updater");
 	setAccessibility(true);
 	global.plugins = updaterFrame.plugins;
+}
+
+startIJ() {
+	if (global.ij != void)
+		return;
+	// The window is called ImageJA when being created
+	global.ij = waitForWindow("ImageJA");
+	if (hidden)
+		Updater.hidden = true;
 }
 
 waitForInformation(message) {
