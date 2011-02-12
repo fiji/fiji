@@ -112,6 +112,8 @@ public class UptodateCheck implements PlugIn {
 	}
 
 	public boolean isBatchMode() {
+		if (Updater.hidden)
+			return false;
 		return IJ.getInstance() == null || !IJ.getInstance().isVisible()
 			|| Interpreter.isBatchMode();
 	}
