@@ -28,7 +28,6 @@ import java.util.Enumeration;
 import javax.swing.JOptionPane;
 
 public class UptodateCheck implements PlugIn {
-	long localLastModified;
 	final static String latestReminderKey = "fiji.updater.latestNag";
 	final static long reminderInterval = 86400 * 7; // one week
 
@@ -167,9 +166,6 @@ public class UptodateCheck implements PlugIn {
 			"Remind me later"
 		};
 		switch (JOptionPane.showOptionDialog(IJ.getInstance(),
-				localLastModified == 0 ?
-				"You have not checked for updates yet.\n"
-				+ "Would you like to check now?" :
 				"There are updates available.\n"
 				+ "Do you want to start the Fiji Updater now?",
 				"Up-to-date check",
