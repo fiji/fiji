@@ -68,3 +68,17 @@ writeFile(dir, name, content) {
 
 	return file;
 }
+
+setTimestamp(file, timestamp) {
+	if (!(timestamp instanceof String))
+		timestamp = "" + timestamp;
+	setLastModified(file, Util.timestamp2millis(timestamp));
+}
+
+import fiji.updater.util.Util;
+
+setLastModified(file, lastModified) {
+	if (file instanceof String)
+		file = new File(file);
+	file.setLastModified(lastModified);
+}
