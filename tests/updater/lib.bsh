@@ -319,8 +319,10 @@ downloadNewUpdater() {
 	waitUntilClosed(updaterFrame);
 	assert("db.xml.gz unmodified", lastModified == dbXmlGz.lastModified());
 	startUpdater();
-	while (count(plugins.upToDate()) != 6)
+	while (count(plugins.upToDate()) != 6) {
+		print("Waiting until there are 6 up-to-date components (" + count(plugins.upToDate()) + ")");
 		Thread.sleep(500);
+	}
 	advancedMode();
 	assert("6 up-to-date", count(plugins.upToDate()) == 6);
 	requireStatus("macros/modified.ijm", PluginObject.Status.UPDATEABLE);
