@@ -1196,7 +1196,13 @@ public class Weka_Segmentation implements PlugIn
 		wekaSegmentation.applyClassifier(true);
 		final ImagePlus probImage = wekaSegmentation.getClassifiedImage();
 		if(null != probImage)
+		{
 			probImage.show();
+			IJ.run(probImage, "Stack to Hyperstack...", 
+					"order=xyczt(default) channels=" + numOfClasses + 
+					" slices=" + displayImage.getImageStackSize() + 
+					" frames=1 display=Grayscale");
+		}
 		this.updateButtonsEnabling();
 		IJ.showStatus("Done.");
 		IJ.log("Done");
@@ -1719,7 +1725,6 @@ public class Weka_Segmentation implements PlugIn
 
 		// Add Weka panel for selecting the classifier and its options
 		GenericObjectEditor m_ClassifierEditor = new GenericObjectEditor();
-System.err.println("editor");
 		PropertyPanel m_CEPanel = new PropertyPanel(m_ClassifierEditor);
 		m_ClassifierEditor.setClassType(Classifier.class);
 		m_ClassifierEditor.setValue(wekaSegmentation.getClassifier());
