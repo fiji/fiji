@@ -150,8 +150,6 @@ requireQuestion(title, question) {
 			clickButton(pane, "Yes");
 		else
 			clickButton(pane, "OK");
-		//pane.setValue(new Integer(JOptionPane.YES_OPTION));
-		//window.dispose();
 		print("Okay");
 	}
 	else
@@ -164,7 +162,6 @@ requireUpdateUpdaterQuestion() {
 }
 
 advancedMode() {
-	//listComponentsRecursively(updaterFrame);
 	clickButton(updaterFrame, "Advanced mode");
 }
 
