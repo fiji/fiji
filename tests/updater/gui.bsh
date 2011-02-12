@@ -61,11 +61,15 @@ waitForWindow(title) {
 
 import java.awt.Window;
 
+import javax.swing.AbstractButton;
+
 describeComponent(component) {
 	className = component.getClass().getName();
 	result = className.substring(className.lastIndexOf('.') + 1);
 	if (component instanceof Window)
 		result += "(" + component.getTitle() + ")";
+	else if (component instanceof AbstractButton)
+		result += "(" + component.getText() + ")";
 	return result;
 }
 
@@ -88,7 +92,7 @@ import java.awt.event.ActionListener;
 
 getButton(container, title) {
 	for (Component child : container.getComponents())
-		if (child instanceof JButton && child.getText().equals(title))
+		if (child instanceof AbstractButton && child.getText().equals(title))
 			return child;
 		else if (child instanceof Container) {
 			button = getButton(child, title);
