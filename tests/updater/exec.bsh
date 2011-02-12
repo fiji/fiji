@@ -24,6 +24,6 @@ startFiji(root, type, bsh) {
 		bsh,
 		hidden ? "" : "--no-hidden"
 	};
-	print("Starting fake " + type + " with " + bsh);
+	print("------ Starting fake " + type + " with " + bsh + " ------");
 	execute(args);
 }
