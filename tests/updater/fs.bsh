@@ -1,0 +1,61 @@
+/// FILESYSTEM HELPERS
+
+deleteRecursively(dir) {
+	for (File file : dir.listFiles())
+		if (file.getName().equals(".") || file.getName().equals(".."))
+			continue;
+		else if (file.isDirectory())
+			deleteRecursively(file);
+		else if (file.isFile())
+			file.delete();
+	dir.delete();
+}
+
+copyTo(inputStream, outputStream) {
+	byte[] buffer = new byte[16384];
+	for (;;) {
+		count = inputStream.read(buffer);
+		if (count < 0)
+			break;
+		outputStream.write(buffer, 0, count);
+	}
+	inputStream.close();
+	outputStream.close();
+}
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+
+copyFile(source, destination) {
+	destination.getCanonicalFile().getParentFile().mkdirs();
+	copyTo(new FileInputStream(source), new FileOutputStream(destination));
+	if (destination.getName().equals("fiji"))
+		execute(new String[] { "chmod", "a+x", destination.getAbsolutePath() });
+}
+
+fijiDir = new File(System.getProperty("fiji.executable")).getCanonicalFile().getParentFile();
+
+import java.io.ByteArrayOutputStream;
+
+readFile(dir, name) {
+	out = new ByteArrayOutputStream();
+	in = new FileInputStream(new File(dir, name));
+	copyTo(in, out);
+	return out.toString().trim();
+}
+
+import java.io.PrintWriter;
+
+writeFile(dir, name) {
+	return writeFile(dir, name,name);
+}
+
+writeFile(dir, name, content) {
+	file = new File(dir, name);
+	file.getParentFile().mkdirs();
+	writer = new PrintWriter(file);
+	writer.println(content);
+	writer.close();
+
+	return file;
+}
