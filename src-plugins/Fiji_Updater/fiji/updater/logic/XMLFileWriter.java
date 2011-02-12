@@ -52,6 +52,7 @@ public class XMLFileWriter {
 		+ "<!ATTLIST update-site name CDATA #REQUIRED>\n"
 		+ "<!ATTLIST update-site url CDATA #REQUIRED>\n"
 		+ "<!ATTLIST update-site timestamp CDATA #REQUIRED>\n"
+		+ "<!ATTLIST plugin update-site CDATA #IMPLIED>\n"
 		+ "<!ATTLIST plugin filename CDATA #REQUIRED>\n"
 		+ "<!ATTLIST dependency filename CDATA #REQUIRED>\n"
 		+ "<!ATTLIST dependency timestamp CDATA #IMPLIED>\n"
@@ -111,6 +112,8 @@ public class XMLFileWriter {
 
 		for (PluginObject plugin : plugins.fijiPlugins()) {
 			attr.clear();
+			if (local && plugin.updateSite != null && !plugin.updateSite.equals(""))
+				setAttribute(attr, "update-site", plugin.updateSite);
 			setAttribute(attr, "filename", plugin.filename);
 			handler.startElement("", "", "plugin", attr);
 			writeSimpleTags("platform", plugin.getPlatforms());
