@@ -680,9 +680,7 @@ public class UpdaterFrame extends JFrame
 		PluginUploader uploader = new PluginUploader(plugins, updateSiteName);
 
 		try {
-			if (Updater.SSH_HOST == null)
-				uploader.setUploader(new FileUploader(Updater.UPDATE_DIRECTORY));
-			else if (!interactiveSshLogin(uploader))
+			if (!uploader.hasUploader() && !interactiveSshLogin(uploader))
 				return;
 			uploader.upload(getProgress("Uploading..."));
 			for (PluginObject plugin : plugins.toUploadOrRemove())

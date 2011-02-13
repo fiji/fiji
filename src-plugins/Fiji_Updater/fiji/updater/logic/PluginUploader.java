@@ -55,6 +55,12 @@ public class PluginUploader {
 		siteName = updateSite;
 		site = plugins.getUpdateSite(updateSite);
 		compressed = Updater.XML_COMPRESSED;
+		if (site.sshHost == null || site.sshHost.equals(""))
+			uploader = new FileUploader(site.uploadDirectory);
+	}
+
+	public boolean hasUploader() {
+		return uploader != null;
 	}
 
 	public void setUploader(FileUploader uploader) {
