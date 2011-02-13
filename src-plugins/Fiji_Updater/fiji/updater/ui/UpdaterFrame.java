@@ -71,17 +71,16 @@ import javax.swing.event.TableModelListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-public class UpdaterFrame extends JFrame
-		implements TableModelListener, ListSelectionListener {
-	PluginCollection plugins;
+public class UpdaterFrame extends JFrame implements TableModelListener, ListSelectionListener {
+	protected PluginCollection plugins;
 
-	private JTextField txtSearch;
-	private ViewOptions viewOptions;
-	private PluginTable table;
-	private JLabel lblPluginSummary;
-	private PluginDetails pluginDetails;
-	private JButton apply, cancel, easy, updateSites;
-	boolean easyMode;
+	protected JTextField txtSearch;
+	protected ViewOptions viewOptions;
+	protected PluginTable table;
+	protected JLabel lblPluginSummary;
+	protected PluginDetails pluginDetails;
+	protected JButton apply, cancel, easy, updateSites;
+	protected boolean easyMode;
 
 	//For developers
 	protected JButton upload;

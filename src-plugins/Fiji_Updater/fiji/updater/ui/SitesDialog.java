@@ -294,6 +294,12 @@ public class SitesDialog extends JDialog implements ActionListener, ItemListener
 		}
 	}
 
+	@Override
+	public void dispose() {
+		super.dispose();
+		updaterFrame.updatePluginsTable();
+	}
+
 	public void error(String message) {
 		SwingTools.showMessageBox(updaterFrame != null && updaterFrame.hidden,
 			this, message, JOptionPane.ERROR_MESSAGE);

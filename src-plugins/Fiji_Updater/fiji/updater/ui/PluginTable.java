@@ -169,7 +169,7 @@ public class PluginTable extends JTable {
 		return true;
 	}
 
-	class PluginTableModel extends AbstractTableModel {
+	protected class PluginTableModel extends AbstractTableModel {
 		private PluginCollection plugins;
 		Map<PluginObject, Integer> pluginToRow;
 
