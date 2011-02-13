@@ -81,20 +81,20 @@ public class Updater implements PlugIn {
 			downloader.start();
 		} catch (Canceled e) {
 			downloader.done();
+			main.error("Canceled");
 			main.dispose();
-			IJ.error("Canceled");
 			return;
 		} catch (Exception e) {
 			e.printStackTrace();
 			downloader.done();
-			main.dispose();
 			String message;
 			if (e instanceof UnknownHostException)
 				message = "Failed to lookup host "
 					+ e.getMessage();
 			else
 				message = "Download/checksum failed: " + e;
-			IJ.error(message);
+			main.error(message);
+			main.dispose();
 			return;
 		}
 
@@ -107,8 +107,8 @@ public class Updater implements PlugIn {
 				checksummer.updateFromLocal();
 		} catch (Canceled e) {
 			checksummer.done();
+			main.error("Canceled");
 			main.dispose();
-			IJ.error("Canceled");
 			return;
 		}
 
