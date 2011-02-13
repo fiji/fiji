@@ -12,6 +12,8 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import java.util.List;
+
 import javax.swing.AbstractAction;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -203,6 +205,16 @@ public class SwingTools {
 		}
 		else
 			JOptionPane.showMessageDialog(owner, message, title, type);
+	}
+
+	public static String getChoice(boolean hidden, Component owner, List<String> list, String question, String title) {
+		String[] array = list.toArray(new String[list.size()]);
+		JOptionPane pane = new JOptionPane(question, JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION, null, array);
+		if (hidden)
+			waitForFakeDialog(title, pane);
+		else
+			pane.createDialog(owner, title).setVisible(true);
+		return (String)pane.getValue();
 	}
 
 	public static void waitForFakeDialog(String title, Component component) {

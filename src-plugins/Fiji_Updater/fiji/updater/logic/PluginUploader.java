@@ -44,20 +44,16 @@ public class PluginUploader {
 	protected PluginCollection plugins;
 	protected FileUploader uploader;
 
-	// checking race condition:
-	// if somebody else updated in the meantime, complain loudly.
+	protected String siteName;
 	protected UpdateSite site;
-	List<SourceFile> files;
-	String compressed;
+	protected List<SourceFile> files;
+	protected String compressed;
 
 	// TODO: add a button to check for new db.xml.gz, and merge if necessary
 	public PluginUploader(PluginCollection plugins, String updateSite) {
-		this(plugins, plugins.getUpdateSite(updateSite));
-	}
-
-	public PluginUploader(PluginCollection plugins, UpdateSite updateSite) {
 		this.plugins = plugins;
-		site = updateSite;
+		siteName = updateSite;
+		site = plugins.getUpdateSite(updateSite);
 		compressed = Updater.XML_COMPRESSED;
 	}
 
@@ -104,7 +100,7 @@ public class PluginUploader {
 		files = new ArrayList<SourceFile>();
 		List<String> locks = new ArrayList<String>();
 		files.add(new DbXmlFile());
-		for (PluginObject plugin : plugins.toUpload())
+		for (PluginObject plugin : plugins.toUpload(siteName))
 			files.add(new UploadableFile(plugin));
 
 		// must be last lock
@@ -135,7 +131,7 @@ public class PluginUploader {
 			}
 		}
 
-		XMLFileWriter writer = new XMLFileWriter(plugins);
+		XMLFileWriter writer = new XMLFileWriter(PluginCollection.clone(plugins.forUpdateSite(siteName)));
 		writer.validate(false);
 		((DbXmlFile)files.get(0)).bytes = writer.toCompressedByteArray(false);
 

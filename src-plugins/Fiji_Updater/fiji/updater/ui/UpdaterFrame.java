@@ -662,8 +662,22 @@ public class UpdaterFrame extends JFrame
 			return;
 		}
 
-		UpdateSite updateSite = plugins.getUpdateSite("");
-		PluginUploader uploader = new PluginUploader(plugins, updateSite);
+		List<String> possibleSites =
+			new ArrayList<String>(plugins.getSiteNamesToUpload());
+		if (possibleSites.size() == 0) {
+			error("Huh? No upload site?");
+			return;
+		}
+		String updateSiteName;
+		if (possibleSites.size() == 1)
+			updateSiteName = possibleSites.get(0);
+		else {
+			updateSiteName = SwingTools.getChoice(hidden, this, possibleSites,
+				"Which site do you want to upload to?", "Update site");
+			if (updateSiteName == null)
+				return;
+		}
+		PluginUploader uploader = new PluginUploader(plugins, updateSiteName);
 
 		try {
 			if (Updater.SSH_HOST == null)
