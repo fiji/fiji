@@ -7,6 +7,7 @@ import fiji.updater.logic.PluginCollection;
 
 import fiji.updater.logic.PluginCollection.UpdateSite;
 
+import fiji.updater.logic.PluginObject;
 import fiji.updater.logic.XMLFileReader;
 
 import fiji.updater.util.Util;
@@ -21,6 +22,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+
+import java.io.File;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -121,9 +124,24 @@ public class SitesDialog extends JDialog implements ActionListener, ItemListener
 
 	protected void delete(int row) {
 		String name = names.get(row);
+		PluginCollection toRemove = PluginCollection.clone(plugins.forUpdateSite(name));
+		if (toRemove.size() > 0) {
+			if (SwingTools.showQuestion(updaterFrame != null && updaterFrame.hidden,
+					this, "Remove files?",
+					"Remove " + toRemove.size()
+					+ " file" + (toRemove.size() > 1 ? "s" : "")
+					+ " associated with site '" + name + "'?"))
+				for (PluginObject plugin : toRemove) {
+					new File(Util.prefix(plugin.filename)).delete();
+					plugins.remove(plugin);
+				}
+			else
+				return;
+		}
 		plugins.removeUpdateSite(name);
 		names.remove(row);
-		tableModel.rowsChanged(row, names.size());
+		tableModel.rowChanged(row);
+		updaterFrame.updatePluginsTable();
 	}
 
 	@Override
