@@ -15,6 +15,7 @@ testDir = libDir.getCanonicalFile().getParentFile();
 tmpDeveloperRoot = new File(testDir, "tmpDeveloperRoot");
 tmpUserRoot = new File(testDir, "tmpUserRoot");
 tmpWebRoot = new File(testDir, "tmpWebRoot");
+tmpSecondaryWebRoot = new File(testDir, "tmpSecondaryWebRoot");
 
 import fiji.updater.Updater;
 
@@ -64,6 +65,10 @@ prepareNewFijiRoot(root, asDeveloper) {
 
 cleanWebRoot() {
 	cleanWebRoot(tmpWebRoot);
+}
+
+cleanSecondaryWebRoot() {
+	cleanWebRoot(tmpSecondaryWebRoot);
 }
 
 cleanWebRoot(root) {
@@ -330,5 +335,64 @@ downloadNewUpdater() {
 	requireStatus("macros/modified.ijm", PluginObject.Status.UPDATEABLE);
 	requireStatus("macros/new2.ijm", PluginObject.Status.NEW);
 	startDownload();
+	System.exit(0);
+}
+
+secondaryFile = "macros/secondary.ijm";
+prepareSecondary() {
+	cleanSecondaryWebRoot();
+	writeFile(tmpDeveloperRoot, secondaryFile);
+}
+
+primaryDbXmlGz = new File(tmpWebRoot, "db.xml.gz");
+secondaryDbXmlGz = new File(tmpSecondaryWebRoot, "db.xml.gz");
+uploadSecondary() {
+	setTimestamp(primaryDbXmlGz, 19990101000000l);
+	setTimestamp(secondaryDbXmlGz, 20000101000000l);
+
+	startUpdater();
+	requireUpToDate();
+	advancedMode();
+	assert("9 plugins", plugins.size() == 9);
+	plugins.addUpdateSite("Secondary", "file:" + tmpSecondaryWebRoot.getAbsolutePath() + "/", null,
+		tmpSecondaryWebRoot.getAbsolutePath(), 20000101000000l);
+	plugins.getPlugin(secondaryFile).updateSite = "Secondary";
+	markForUpload(secondaryFile);
+	startUpload();
+}
+
+import fiji.updater.logic.PluginCollection;
+
+downloadSecondary() {
+	primaryTimestamp = getTimestamp(primaryDbXmlGz);
+	secondaryTimestamp = getTimestamp(secondaryDbXmlGz);
+
+	assert("primary db.xml.gz is unchanged: " + primaryTimestamp, primaryTimestamp == 19990101000000l);
+	assert("secondary db.xml.gz is changed: " + secondaryTimestamp, secondaryTimestamp != 20000101000000l);
+
+	assert("secondary was not uploaded to primary", readGZippedFile(primaryDbXmlGz).indexOf("econdary") < 0);
+	secondaryContents = readGZippedFile(secondaryDbXmlGz);
+	assert("secondary was uploaded to secondary site", secondaryContents.indexOf("secondary") > 0);
+	assert("no update-site tags in secondary site", secondaryContents.indexOf("<update-site") < 0);
+	assert("no Fiji_Updater in secondary site", secondaryContents.indexOf("Fiji_Updater.jar") < 0);
+
+	plugins2 = new PluginCollection();
+	plugins2.read();
+	plugins2.addUpdateSite("Secondary", "file:" + tmpSecondaryWebRoot.getAbsolutePath() + "/", null,
+		tmpSecondaryWebRoot.getAbsolutePath(), 20000101000000l);
+	plugins2.write();
+
+	startUpdater();
+	advancedMode();
+	viewMode("all plugins");
+	assert("9 plugins", plugins.size() == 9);
+	assert("1 updateable", count(plugins.updateable(false)) == 1);
+	assert("0 modified", count(plugins.locallyModified()) == 0);
+	requireStatus(secondaryFile, PluginObject.Status.NEW);
+	assert(secondaryFile + " is from secondary update site",
+		plugins.getPlugin(secondaryFile).updateSite.equals("Secondary"));
+	startDownload();
+	assert("secondary file was downloaded",
+		secondaryFile.equals(readFile(tmpUserRoot, "update/" + secondaryFile)));
 	System.exit(0);
 }

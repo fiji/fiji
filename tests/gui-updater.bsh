@@ -24,3 +24,7 @@ download("downloadSome()");
 prepareNewUpdater();
 upload("uploadNewUpdater()");
 download("downloadNewUpdater()");
+
+prepareSecondary();
+upload("uploadSecondary()");
+download("downloadSecondary()");
