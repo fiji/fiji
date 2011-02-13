@@ -19,9 +19,9 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import java.util.zip.GZIPOutputStream;
 
@@ -53,7 +53,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	protected Map<String, UpdateSite> updateSites;
 
 	public PluginCollection() {
-		updateSites = new TreeMap<String, UpdateSite>();
+		updateSites = new LinkedHashMap<String, UpdateSite>();
 		addUpdateSite("", Updater.MAIN_URL, Util.getTimestamp(Updater.XML_COMPRESSED));
 	}
 
