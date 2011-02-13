@@ -1,8 +1,15 @@
 package fiji.updater.ui;
 
+import fiji.updater.Updater;
+import fiji.updater.UptodateCheck;
+
 import fiji.updater.logic.PluginCollection;
 
 import fiji.updater.logic.PluginCollection.UpdateSite;
+
+import fiji.updater.logic.XMLFileReader;
+
+import fiji.updater.util.Util;
 
 import java.awt.Container;
 import java.awt.Dimension;
@@ -257,10 +264,30 @@ public class SitesDialog extends JDialog implements ActionListener, ItemListener
 			setLocationRelativeTo(SitesDialog.this);
 		}
 
+		protected boolean validURL(String url) {
+			if (!url.endsWith("/"))
+				url += "/";
+			return UptodateCheck.getLastModified(url + Updater.XML_COMPRESSED) != -1;
+		}
+
+		protected boolean readFromSite(String name) {
+			try {
+				new XMLFileReader(plugins).read(name);
+			} catch (Exception e) {
+				error("Not a valid URL: " + url.getText());
+				return false;
+			}
+			return true;
+		}
+
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			Object source = e.getSource();
 			if (source == ok) {
+				if (!validURL(url.getText())) {
+					error("Not a valid URL: " + url.getText());
+					return;
+				}
 				if (row < 0) {
 					if (names.contains(name.getText())) {
 						error("Site '" + name.getText() + "' exists already!");
@@ -287,6 +314,7 @@ public class SitesDialog extends JDialog implements ActionListener, ItemListener
 					updateSite.sshHost = sshHost.getText();
 					updateSite.uploadDirectory = uploadDirectory.getText();
 				}
+				readFromSite(name.getText());
 				tableModel.rowChanged(row);
 				table.setRowSelectionInterval(row, row);
 			}
