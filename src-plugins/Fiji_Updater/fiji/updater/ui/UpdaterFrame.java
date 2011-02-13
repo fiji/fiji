@@ -176,7 +176,7 @@ public class UpdaterFrame extends JFrame
 		lblSummaryPanel.add(Box.createHorizontalGlue());
 
 		//Create the plugin table and set up its scrollpane
-		table = new PluginTable(plugins);
+		table = new PluginTable(this);
 		table.getSelectionModel().addListSelectionListener(this);
 		JScrollPane pluginListScrollpane = new JScrollPane(table);
 		pluginListScrollpane.getViewport().setBackground(table.getBackground());

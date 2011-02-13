@@ -1,31 +1,30 @@
 package fiji.updater.ui;
 
 import fiji.updater.logic.PluginCollection;
+import fiji.updater.logic.PluginCollection.UpdateSite;
 import fiji.updater.logic.PluginObject;
 
 import fiji.updater.logic.PluginObject.Action;
 import fiji.updater.logic.PluginObject.Status;
-
-import fiji.updater.util.Util;
 
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
+import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 
 import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -36,12 +35,14 @@ import javax.swing.table.TableColumn;
  * This class' role is to be in charge of how the Table should be displayed
  */
 public class PluginTable extends JTable {
+	protected UpdaterFrame updaterFrame;
 	protected PluginCollection plugins;
 	private PluginTableModel pluginTableModel;
 	protected Font plain, bold;
 
-	public PluginTable(PluginCollection plugins) {
-		this.plugins = plugins;
+	public PluginTable(UpdaterFrame updaterFrame) {
+		this.updaterFrame = updaterFrame;
+		plugins = updaterFrame.plugins;
 
 		//Set appearance of table
 		setShowGrid(false);
@@ -141,6 +142,33 @@ public class PluginTable extends JTable {
 		return Arrays.asList(result);
 	}
 
+	public boolean chooseUpdateSite(PluginCollection plugins, PluginObject plugin) {
+		if (plugin.getStatus() != Status.NOT_FIJI)
+			return true; // already decided
+		List<String> list = new ArrayList<String>();
+		for (String name : plugins.getUpdateSiteNames()) {
+			UpdateSite site = plugins.getUpdateSite(name);
+			if (site.uploadDirectory != null && !site.uploadDirectory.equals(""))
+				list.add(name);
+		}
+		if (list.size() == 0) {
+			SwingTools.showMessageBox(updaterFrame.hidden, updaterFrame,
+				"No upload site available", JOptionPane.ERROR_MESSAGE);
+			return false;
+		}
+		if (list.size() == 1 && list.get(0).equals("")) {
+			plugin.updateSite = "";
+			return true;
+		}
+		String updateSite = SwingTools.getChoice(updaterFrame.hidden, updaterFrame,
+			list, "To which upload site do you want to upload " + plugin.filename + "?",
+			"Upload site");
+		if (updateSite == null)
+			return false;
+		plugin.updateSite = updateSite;
+		return true;
+	}
+
 	class PluginTableModel extends AbstractTableModel {
 		private PluginCollection plugins;
 		Map<PluginObject, Integer> pluginToRow;
@@ -200,8 +228,12 @@ public class PluginTable extends JTable {
 		public void setValueAt(Object value, int row, int column) {
 			if (column == 1) {
 				Action action = (Action)value;
-				if (getPlugin(row).getStatus().isValid(action))
-					getPlugin(row).setAction(plugins, action);
+				PluginObject plugin = getPlugin(row);
+				if (plugin.getStatus().isValid(action)) {
+					if (action == Action.UPLOAD && !chooseUpdateSite(updaterFrame.plugins, plugin))
+						return;
+					plugin.setAction(plugins, action);
+				}
 				fireRowChanged(row);
 			}
 		}
