@@ -679,10 +679,12 @@ public class UpdaterFrame extends JFrame
 		}
 		PluginUploader uploader = new PluginUploader(plugins, updateSiteName);
 
+		Progress progress = null;
 		try {
 			if (!uploader.hasUploader() && !interactiveSshLogin(uploader))
 				return;
-			uploader.upload(getProgress("Uploading..."));
+			progress = getProgress("Uploading...");
+			uploader.upload(progress);
 			for (PluginObject plugin : plugins.toUploadOrRemove())
 				if (plugin.getAction() == Action.UPLOAD) {
 					plugin.markUploaded();
@@ -702,9 +704,13 @@ public class UpdaterFrame extends JFrame
 		} catch (Canceled e) {
 			// TODO: teach uploader to remove the lock file
 			error("Canceled");
+			if (progress != null)
+				progress.done();
 		} catch (Throwable e) {
 			e.printStackTrace();
 			error("Upload failed: " + e);
+			if (progress != null)
+				progress.done();
 		}
 	}
 
