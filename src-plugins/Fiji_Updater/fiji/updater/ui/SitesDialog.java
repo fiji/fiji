@@ -295,7 +295,8 @@ public class SitesDialog extends JDialog implements ActionListener, ItemListener
 	}
 
 	public void error(String message) {
-		JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+		SwingTools.showMessageBox(updaterFrame != null && updaterFrame.hidden,
+			this, message, JOptionPane.ERROR_MESSAGE);
 	}
 
 	public static void escapeCancels(final JDialog dialog) {

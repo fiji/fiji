@@ -3,22 +3,23 @@ package fiji.updater.ui;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Dialog;
 import java.awt.Dimension;
-import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Insets;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
-import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
@@ -180,4 +181,46 @@ public class SwingTools {
                         }
                 });
         }
+
+	public static boolean showQuestion(boolean hidden, Component owner, String title, String question) {
+		if (hidden) {
+			final JOptionPane pane = new JOptionPane(question, JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+			waitForFakeDialog(title, pane);
+			return pane.getValue().equals(new Integer(JOptionPane.OK_OPTION));
+		}
+
+		return JOptionPane.showConfirmDialog(owner, question, title,
+				JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE)
+			== JOptionPane.OK_OPTION;
+	}
+
+	public static void showMessageBox(boolean hidden, Component owner, String message, int type) {
+		String title = type == JOptionPane.ERROR_MESSAGE ? "Error" :
+			type == JOptionPane.WARNING_MESSAGE ? "Warning" : "Information";
+		if (hidden) {
+			JOptionPane pane = new JOptionPane(message, type);
+			waitForFakeDialog(title, pane);
+		}
+		else
+			JOptionPane.showMessageDialog(owner, message, title, type);
+	}
+
+	public static void waitForFakeDialog(String title, Component component) {
+		// Do not show, but wait for dispose() to be called
+		JDialog fakeDialog = new JDialog((Dialog)null, title) {
+			public void dispose() {
+				synchronized (this) {
+					notifyAll();
+				}
+				super.dispose();
+			}
+		};
+		fakeDialog.getContentPane().add(component);
+		fakeDialog.pack();
+		try {
+			synchronized (fakeDialog) {
+				fakeDialog.wait();
+			}
+		} catch (InterruptedException e) { /* ignore */ }
+	}
 }

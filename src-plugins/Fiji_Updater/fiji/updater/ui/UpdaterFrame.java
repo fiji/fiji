@@ -452,7 +452,7 @@ public class UpdaterFrame extends JFrame
 	}
 
 	private void quit() {
-		if (plugins.hasChanges() && !showQuestion("Quit?",
+		if (plugins.hasChanges() && !SwingTools.showQuestion(hidden, this, "Quit?",
 				"You have specified changes. Are you sure you want to quit?"))
 			return;
 		try {
@@ -732,68 +732,15 @@ public class UpdaterFrame extends JFrame
 		return true;
 	}
 
-	public boolean showQuestion(String title, String question) {
-		if (hidden) {
-			// Do not show, but wait for dispose() to be called
-			JDialog fakeDialog = new JDialog(this, title) {
-				public void dispose() {
-					synchronized (this) {
-						notifyAll();
-					}
-					super.dispose();
-				}
-			};
-			final JOptionPane pane = new JOptionPane(question, JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-			fakeDialog.getContentPane().add(pane);
-			fakeDialog.pack();
-			try {
-				synchronized (fakeDialog) {
-					fakeDialog.wait();
-				}
-			} catch (InterruptedException e) { /* ignore */ }
-			return pane.getValue().equals(new Integer(JOptionPane.OK_OPTION));
-		}
-
-		return JOptionPane.showConfirmDialog(this, question, title,
-				JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE)
-			== JOptionPane.OK_OPTION;
-	}
-
-	public void showMessageBox(String message, int type) {
-		String title = type == JOptionPane.ERROR_MESSAGE ? "Error" :
-			type == JOptionPane.WARNING_MESSAGE ? "Warning" : "Information";
-		if (hidden) {
-			// Do not show, but wait for dispose() to be called
-			JDialog fakeDialog = new JDialog(this, title) {
-				public void dispose() {
-					synchronized (this) {
-						notifyAll();
-					}
-					super.dispose();
-				}
-			};
-			JOptionPane pane = new JOptionPane(message, type);
-			fakeDialog.getContentPane().add(pane);
-			fakeDialog.pack();
-			try {
-				synchronized (fakeDialog) {
-					fakeDialog.wait();
-				}
-			} catch (InterruptedException e) { /* ignore */ }
-		}
-		else
-			JOptionPane.showMessageDialog(this, message, title, type);
-	}
-
 	public void error(String message) {
-		showMessageBox(message, JOptionPane.ERROR_MESSAGE);
+		SwingTools.showMessageBox(hidden, this, message, JOptionPane.ERROR_MESSAGE);
 	}
 
 	public void warn(String message) {
-		showMessageBox(message, JOptionPane.WARNING_MESSAGE);
+		SwingTools.showMessageBox(hidden, this, message, JOptionPane.WARNING_MESSAGE);
 	}
 
 	public void info(String message) {
-		showMessageBox(message, JOptionPane.INFORMATION_MESSAGE);
+		SwingTools.showMessageBox(hidden, this, message, JOptionPane.INFORMATION_MESSAGE);
 	}
 }

@@ -11,6 +11,7 @@ import fiji.updater.logic.PluginObject;
 import fiji.updater.logic.XMLFileDownloader;
 import fiji.updater.logic.XMLFileReader;
 
+import fiji.updater.ui.SwingTools;
 import fiji.updater.ui.UpdaterFrame;
 import fiji.updater.ui.ViewOptions;
 
@@ -118,7 +119,7 @@ public class Updater implements PlugIn {
 
 		PluginObject updater = plugins.getPlugin("plugins/Fiji_Updater.jar");
 		if (updater != null && updater.getStatus() == PluginObject.Status.UPDATEABLE) {
-			if (main.showQuestion("Update the updater",
+			if (SwingTools.showQuestion(hidden, main, "Update the updater",
 					"There is an update available for the Fiji Updater. Install now?")) {
 				// download just the updater
 				main.updateTheUpdater();
