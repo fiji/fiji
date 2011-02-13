@@ -4,8 +4,6 @@ import fiji.updater.logic.PluginCollection.UpdateSite;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -51,6 +49,8 @@ public class XMLFileWriter {
 		+ "<!ELEMENT category (#PCDATA)>\n"
 		+ "<!ATTLIST update-site name CDATA #REQUIRED>\n"
 		+ "<!ATTLIST update-site url CDATA #REQUIRED>\n"
+		+ "<!ATTLIST update-site ssh-host CDATA #IMPLIED>\n"
+		+ "<!ATTLIST update-site upload-directory CDATA #IMPLIED>\n"
 		+ "<!ATTLIST update-site timestamp CDATA #REQUIRED>\n"
 		+ "<!ATTLIST plugin update-site CDATA #IMPLIED>\n"
 		+ "<!ATTLIST plugin filename CDATA #REQUIRED>\n"
@@ -105,6 +105,10 @@ public class XMLFileWriter {
 				UpdateSite site = plugins.getUpdateSite(name);
 				setAttribute(attr, "name", name);
 				setAttribute(attr, "url", site.url);
+				if (site.sshHost != null)
+					setAttribute(attr, "ssh-host", site.sshHost);
+				if (site.uploadDirectory != null)
+					setAttribute(attr, "upload-directory", site.uploadDirectory);
 				setAttribute(attr, "timestamp", "" + site.timestamp);
 				writeSimpleTag("update-site", null, attr);
 			}

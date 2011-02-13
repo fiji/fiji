@@ -68,7 +68,7 @@ public class PluginUploader {
 	public synchronized boolean setLogin(String username, String password) {
 		try {
 			uploader = new SSHFileUploader(username, password,
-				Updater.UPDATE_DIRECTORY);
+				site.sshHost, site.uploadDirectory);
 			return true;
 		} catch (JSchException e) {
 			IJ.error("Failed to login");

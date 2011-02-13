@@ -146,7 +146,8 @@ public class XMLFileReader extends DefaultHandler {
 		}
 		else if (updateSite == null && currentTag.equals("update-site"))
 			plugins.addUpdateSite(atts.getValue("name"),
-				atts.getValue("url"), Long.parseLong(atts.getValue("timestamp")));
+				atts.getValue("url"), atts.getValue("ssh-host"), atts.getValue("upload-directory"),
+				Long.parseLong(atts.getValue("timestamp")));
 	}
 
 	public void endElement(String uri, String name, String qName) {

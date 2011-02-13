@@ -33,11 +33,13 @@ import org.xml.sax.SAXException;
 
 public class PluginCollection extends ArrayList<PluginObject> {
 	public static class UpdateSite {
-		public final String url;
+		public String url, sshHost, uploadDirectory;
 		public long timestamp;
 
-		public UpdateSite(String url, long timestamp) {
+		public UpdateSite(String url, String sshHost, String uploadDirectory, long timestamp) {
 			this.url = url;
+			this.sshHost = sshHost;
+			this.uploadDirectory = uploadDirectory;
 			this.timestamp = timestamp;
 		}
 
@@ -54,13 +56,14 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public PluginCollection() {
 		updateSites = new LinkedHashMap<String, UpdateSite>();
-		addUpdateSite("", Updater.MAIN_URL, Util.getTimestamp(Updater.XML_COMPRESSED));
+		addUpdateSite("", Updater.MAIN_URL, Updater.SSH_HOST, Updater.UPDATE_DIRECTORY,
+			Util.getTimestamp(Updater.XML_COMPRESSED));
 	}
 
-	public void addUpdateSite(String name, String url, long timestamp) {
+	public void addUpdateSite(String name, String url, String sshHost, String uploadDirectory, long timestamp) {
 		if (!url.endsWith("/"))
 			url += "/";
-		updateSites.put(name, new UpdateSite(url, timestamp));
+		updateSites.put(name, new UpdateSite(url, sshHost, uploadDirectory, timestamp));
 	}
 
 	public UpdateSite getUpdateSite(String name) {
