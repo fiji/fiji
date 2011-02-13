@@ -698,6 +698,7 @@ public class NeuriteTracerResultsDialog
 			cancelSearch.addActionListener( this );
 
 			JPanel statusChoicesPanel = new JPanel();
+			/*
 			statusChoicesPanel.setLayout( new GridBagLayout() );
 			GridBagConstraints cs = new GridBagConstraints();
 			cs.weightx = 1;
@@ -707,6 +708,11 @@ public class NeuriteTracerResultsDialog
 			statusChoicesPanel.add(junkSegment,cs);
 			cs.gridx = 2; cs.gridy = 0; cs.anchor = GridBagConstraints.LINE_START;
 			statusChoicesPanel.add(cancelSearch,cs);
+			*/
+			statusChoicesPanel.add(keepSegment);
+			statusChoicesPanel.add(junkSegment);
+			statusChoicesPanel.add(cancelSearch);
+			statusChoicesPanel.setLayout(new FlowLayout());
 
 			statusPanel.add(statusChoicesPanel,BorderLayout.SOUTH);
 
@@ -741,6 +747,7 @@ public class NeuriteTracerResultsDialog
 
 			viewOptionsPanel.setLayout(new GridBagLayout());
 			GridBagConstraints cv = new GridBagConstraints();
+			cv.insets = new Insets(3, 2, 3, 2);
 			cv.anchor = GridBagConstraints.LINE_START;
 			viewPathChoice = new JComboBox();
 			viewPathChoice.addItem(projectionChoice);
@@ -779,35 +786,33 @@ public class NeuriteTracerResultsDialog
 			++ cv.gridy;
 			cv.gridwidth = 1;
 			cv.anchor = GridBagConstraints.LINE_START;
-			viewOptionsPanel.add(nearbyPanel,cv);
+			viewOptionsPanel.add(nearbyPanel, cv);
 
+			JPanel flatColorOptionsPanel = new JPanel();
+			flatColorOptionsPanel.setLayout(new BorderLayout());
+			flatColorOptionsPanel.add(new JLabel("Click to change Path colours:"), BorderLayout.NORTH);
+			pathColorsCanvas = new PathColorsCanvas(plugin, 150, 18);
+			flatColorOptionsPanel.add(pathColorsCanvas, BorderLayout.CENTER);
 
-			JPanel colorOptionsPanel = new JPanel();
-			{
-				JPanel flatColorOptionsPanel = new JPanel();
-				flatColorOptionsPanel.setLayout(new BorderLayout());
-				flatColorOptionsPanel.add( new JLabel("Click to change Path colours:"), BorderLayout.NORTH );
-				pathColorsCanvas = new PathColorsCanvas( plugin, 150, 18 );
-				flatColorOptionsPanel.add(pathColorsCanvas, BorderLayout.CENTER);
+			JPanel imageColorOptionsPanel = new JPanel();
+			imageColorOptionsPanel.setLayout(new BorderLayout());
+			imageColorOptionsPanel.add(new JLabel("Use colors / labels from:"), BorderLayout.NORTH);
 
-				JPanel imageColorOptionsPanel = new JPanel();
-				imageColorOptionsPanel.setLayout(new BorderLayout());
-				imageColorOptionsPanel.add(new JLabel("Use colors / labels from:"),BorderLayout.NORTH);
+			colorImageChoice = new JComboBox();
+			updateColorImageChoice();
+			colorImageChoice.addItemListener(this);
+			imageColorOptionsPanel.add(colorImageChoice, BorderLayout.CENTER);
+			ImagePlus.addImageListener(this);
 
-				colorImageChoice = new JComboBox();
-				updateColorImageChoice();
-				colorImageChoice.addItemListener(this);
-				imageColorOptionsPanel.add(colorImageChoice,BorderLayout.CENTER);
-				ImagePlus.addImageListener(this);
-
-				colorOptionsPanel.add(flatColorOptionsPanel);
-				colorOptionsPanel.add(imageColorOptionsPanel);
-			}
+			cv.gridx = 0;
+			++cv.gridy;
+			cv.gridwidth = 2;
+			viewOptionsPanel.add(flatColorOptionsPanel,cv);
 
 			cv.gridx = 0;
 			++ cv.gridy;
 			cv.gridwidth = 2;
-			viewOptionsPanel.add(colorOptionsPanel,cv);
+			viewOptionsPanel.add(imageColorOptionsPanel,cv);
 
 			justShowSelected = new JCheckBox( "Show only selected paths" );
 			justShowSelected.addItemListener( this );
@@ -822,8 +827,6 @@ public class NeuriteTracerResultsDialog
 			++ c.gridy;
 			getContentPane().add(viewOptionsPanel,c);
 		}
-
-
 
 		{ /* Add the panel with other options - preprocessing and the view of paths */
 
