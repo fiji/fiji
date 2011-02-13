@@ -63,15 +63,17 @@ prepareNewFijiRoot(root, asDeveloper) {
 }
 
 cleanWebRoot() {
-	if (tmpWebRoot.exists())
-		deleteRecursively(tmpWebRoot);
-	tmpWebRoot.mkdirs();
+	cleanWebRoot(tmpWebRoot);
+}
 
-	dbXml = writeFile(tmpWebRoot, "db.xml",
+cleanWebRoot(root) {
+	if (root.exists())
+		deleteRecursively(root);
+	root.mkdirs();
+
+	dbXmlGz = writeGZippedFile(root, "db.xml.gz",
 		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 		+ "<pluginRecords/>");
-
-	execute(new String[] { "gzip", dbXml.getAbsolutePath() });
 }
 
 readDbXmlGz(File root) {
