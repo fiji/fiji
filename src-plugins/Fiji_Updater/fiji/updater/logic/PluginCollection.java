@@ -66,6 +66,32 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		updateSites.put(name, new UpdateSite(url, sshHost, uploadDirectory, timestamp));
 	}
 
+	public void renameUpdateSite(String oldName, String newName) {
+		if (getUpdateSite(newName) != null)
+			throw new RuntimeException("Update site " + newName + " exists already!");
+		if (getUpdateSite(oldName) == null)
+			throw new RuntimeException("Update site " + oldName + " does not exist!");
+
+		// handle all plugins
+		for (PluginObject plugin : this)
+			if (plugin.updateSite.equals(oldName))
+				plugin.updateSite = newName;
+
+		// preserve order
+		HashMap<String, UpdateSite> newMap = new LinkedHashMap<String, UpdateSite>();
+		for (String name : updateSites.keySet())
+			if (name.equals(oldName))
+				newMap.put(newName, getUpdateSite(oldName));
+			else
+				newMap.put(name, getUpdateSite(name));
+
+		updateSites = newMap;
+	}
+
+	public void removeUpdateSite(String name) {
+		updateSites.remove(name);
+	}
+
 	public UpdateSite getUpdateSite(String name) {
 		return updateSites.get(name);
 	}
