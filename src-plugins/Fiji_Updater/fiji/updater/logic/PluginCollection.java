@@ -50,6 +50,11 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		public void setLastModified(long lastModified) {
 			timestamp = Long.parseLong(Util.timestamp(lastModified));
 		}
+
+		public String toString() {
+			return url + (sshHost != null ? ", " + sshHost : "")
+				+ (uploadDirectory != null ? ", " + uploadDirectory : "");
+		}
 	}
 
 	protected Map<String, UpdateSite> updateSites;
