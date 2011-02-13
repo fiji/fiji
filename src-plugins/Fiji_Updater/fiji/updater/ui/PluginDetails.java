@@ -1,25 +1,21 @@
 package fiji.updater.ui;
 
-import ij.IJ;
-
-import ij.plugin.BrowserLauncher;
-
-import fiji.updater.logic.Dependency;
-import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginObject;
 
 import fiji.updater.util.Util;
+
+import ij.IJ;
+
+import ij.plugin.BrowserLauncher;
 
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.Rectangle;
 
-import java.awt.event.MouseEvent;
 import java.awt.event.MouseAdapter;
-import java.awt.event.MouseListener;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.awt.event.MouseMotionListener;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -261,6 +257,11 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 		list("Link", true, plugin.getLinks(), "\n", plugin);
 		list("Dependency", false, plugin.getDependencies(), ",\n",
 				plugin);
+		if (plugin.updateSite != null && !plugin.updateSite.equals("")) {
+			blankLine();
+			bold("Update site:\n");
+			normal(plugin.updateSite);
+		}
 
 		// scroll to top
 		scrollRectToVisible(new Rectangle(0, 0, 1, 1));
