@@ -8,8 +8,6 @@ import fiji.updater.logic.PluginObject.Status;
 
 import fiji.updater.util.Util;
 
-import ij.Prefs;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -48,12 +46,19 @@ public class XMLFileReader extends DefaultHandler {
 	// every plugin newer than this was not seen by the user yet
 	protected long newTimestamp;
 
+	// There might have been warnings
+	protected StringBuffer warnings = new StringBuffer();
+
 	// currently parsed
 	private PluginObject current;
 	private String currentTag, body;
 
 	public XMLFileReader(PluginCollection plugins) {
 		this.plugins = plugins;
+	}
+
+	public String getWarnings() {
+		return warnings.toString();
 	}
 
 	public void read(String updateSite) throws ParserConfigurationException, IOException, SAXException {
@@ -114,6 +119,15 @@ public class XMLFileReader extends DefaultHandler {
 			}
 			current = new PluginObject(updateSite, atts.getValue("filename"),
 				null, 0, Status.NOT_INSTALLED);
+			if (this.updateSite != null && !this.updateSite.equals("")) {
+				PluginObject already = plugins.getPlugin(current.filename);
+				if (already != null && !this.updateSite.equals(already.updateSite))
+					warnings.append("Warning: '" + current.filename + "' from update site '"
+						+ this.updateSite
+						+ "' shadows the one from update site '"
+						+ (already.updateSite.equals("") ? "Fiji" : already.updateSite)
+						+ "'\n");
+			}
 		}
 		else if (currentTag.equals("previous-version"))
 			current.addPreviousVersion(atts.getValue("checksum"),

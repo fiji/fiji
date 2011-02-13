@@ -36,6 +36,7 @@ import java.util.zip.GZIPInputStream;
 public class XMLFileDownloader extends Progressable {
 	protected PluginCollection plugins;
 	protected Collection<String> updateSites;
+	protected String warnings;
 
 	public XMLFileDownloader(PluginCollection plugins) {
 		this(plugins, plugins.getUpdateSiteNames());
@@ -69,6 +70,11 @@ public class XMLFileDownloader extends Progressable {
 			itemDone(title);
 		}
 		done();
+		warnings = reader.getWarnings();
+	}
+
+	public String getWarnings() {
+		return warnings;
 	}
 
 	public InputStream getInputStream(final InputStream in, final int fileSize) {

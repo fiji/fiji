@@ -98,6 +98,10 @@ public class Updater implements PlugIn {
 			return;
 		}
 
+		String warnings = downloader.getWarnings();
+		if (!warnings.equals(""))
+			main.warn(warnings);
+
 		progress = main.getProgress("Matching with local files...");
 		Checksummer checksummer = new Checksummer(plugins, progress);
 		try {
