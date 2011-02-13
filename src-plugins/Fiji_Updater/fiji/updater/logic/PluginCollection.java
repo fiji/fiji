@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -105,6 +106,22 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		return updateSites.keySet();
 	}
 
+	public Collection<String> getSiteNamesToUpload() {
+		Collection<String> set = new HashSet<String>();
+		for (PluginObject plugin : toUpload())
+			set.add(plugin.updateSite);
+		// keep the update sites' order
+		List<String> result = new ArrayList<String>();
+		for (String name : getUpdateSiteNames())
+			if (set.contains(name))
+				result.add(name);
+		if (result.size() != set.size())
+			throw new RuntimeException("Unknown update site in "
+				+ set.toString() + " (known: "
+				+ result.toString() + ")");
+		return result;
+	}
+
 	public void read() throws IOException, ParserConfigurationException, SAXException {
 		new XMLFileReader(this).read(new File(Util.prefix(Updater.XML_COMPRESSED)));
 	}
@@ -132,6 +149,10 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public Iterable<PluginObject> toUpload() {
 		return filter(is(Action.UPLOAD));
+	}
+
+	public Iterable<PluginObject> toUpload(String updateSite) {
+		return filter(and(is(Action.UPLOAD), isUpdateSite(updateSite)));
 	}
 
 	public Iterable<PluginObject> toUninstall() {
@@ -176,6 +197,10 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	public Iterable<PluginObject> locallyModified() {
 		return filter(oneOf(new Status[] {Status.MODIFIED,
 					Status.OBSOLETE_MODIFIED}));
+	}
+
+	public Iterable<PluginObject> forUpdateSite(String name) {
+		return filter(isUpdateSite(name));
 	}
 
 	public Iterable<PluginObject> fijiPlugins() {
@@ -337,6 +362,14 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		return new Filter() {
 			public boolean matches(PluginObject plugin) {
 				return plugin.getStatus() == status;
+			}
+		};
+	}
+
+	public Filter isUpdateSite(final String updateSite) {
+		return new Filter() {
+			public boolean matches(PluginObject plugin) {
+				return plugin.updateSite.equals(updateSite);
 			}
 		};
 	}
