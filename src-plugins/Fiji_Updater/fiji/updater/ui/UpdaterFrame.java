@@ -80,7 +80,7 @@ public class UpdaterFrame extends JFrame
 	private PluginTable table;
 	private JLabel lblPluginSummary;
 	private PluginDetails pluginDetails;
-	private JButton apply, cancel, easy;
+	private JButton apply, cancel, easy, updateSites;
 	boolean easyMode;
 
 	//For developers
@@ -244,6 +244,15 @@ public class UpdaterFrame extends JFrame
 			}
 		}, bottomPanel);
 		apply.setEnabled(false);
+
+		// Manage update sites
+		updateSites = SwingTools.button("Manage update sites",
+				"Manage multiple update sites for updating and uploading", new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				new SitesDialog(UpdaterFrame.this, UpdaterFrame.this.plugins,
+					Util.isDeveloper).setVisible(true);
+			}
+		}, bottomPanel);
 
 		//includes button to upload to server if is a Developer using
 		if (Util.isDeveloper) {
