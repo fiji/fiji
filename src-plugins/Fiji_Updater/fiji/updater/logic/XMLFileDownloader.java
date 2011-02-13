@@ -51,26 +51,27 @@ public class XMLFileDownloader extends Progressable {
 		setTitle("Updating the Fiji database");
 		XMLFileReader reader = new XMLFileReader(plugins);
 		int current = 0, total = updateSites.size();
+		warnings = "";
 		for (String name : updateSites) {
 			UpdateSite updateSite = plugins.getUpdateSite(name);
 			String title = "Updating from " + (name.equals("") ? "main" : name) + " site";
 			addItem(title);
 			setCount(current, total);
-			URLConnection connection = new URL(updateSite.url + Updater.XML_COMPRESSED).openConnection();
-			long lastModified = connection.getLastModified();
-			int fileSize = (int)connection.getContentLength();
-			InputStream in = getInputStream(new GZIPInputStream(connection.getInputStream()), fileSize);
 			try {
+				URLConnection connection = new URL(updateSite.url + Updater.XML_COMPRESSED).openConnection();
+				long lastModified = connection.getLastModified();
+				int fileSize = (int)connection.getContentLength();
+				InputStream in = getInputStream(new GZIPInputStream(connection.getInputStream()), fileSize);
 				reader.read(name, in, updateSite.timestamp);
 				updateSite.setLastModified(lastModified);
 			} catch (Exception e) {
 				e.printStackTrace();
-				throw new IOException("Could not update from " + name + ": " + e);
+				warnings += "Could not update from site '" + name + "': " + e;
 			}
 			itemDone(title);
 		}
 		done();
-		warnings = reader.getWarnings();
+		warnings += reader.getWarnings();
 	}
 
 	public String getWarnings() {
