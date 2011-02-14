@@ -739,6 +739,45 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		return gd;
 	}
 
+	protected UserInfo getUserInfo(final String password) {
+		return new UserInfo() {
+			protected String prompt;
+			protected int count = 0;
+
+			public String getPassphrase() {
+				GenericDialog gd = getPasswordDialog(prompt, null);
+				gd.showDialog();
+				return gd.wasCanceled() ? null : gd.getNextString();
+			}
+
+			public String getPassword() {
+				if (count == 1)
+					return password;
+				GenericDialog gd = getPasswordDialog(prompt, null);
+				gd.showDialog();
+				return gd.wasCanceled() ? null : gd.getNextString();
+			}
+
+			public boolean promptPassphrase(String message) {
+				prompt = message;
+				return count++ < 3;
+			}
+
+			public boolean promptPassword(String message) {
+				prompt = message;
+				return count++ < 4;
+			}
+
+			public boolean promptYesNo(String message) {
+				return SwingTools.showYesNoQuestion(hidden, UpdaterFrame.this, "Password", message);
+			}
+
+			public void showMessage(String message) {
+				info(message);
+			}
+		};
+	}
+
 	protected boolean interactiveSshLogin(PluginUploader uploader) {
 		String username = uploader.getDefaultUsername();
 		for (;;) {
@@ -750,44 +789,9 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 
 			//Get the required login information
 			username = gd.getNextString();
-			final String password = gd.getNextString();
+			String password = gd.getNextString();
 
-			UserInfo userInfo = new UserInfo() {
-				protected String prompt;
-				protected int count = 0;
-
-				public String getPassphrase() {
-					GenericDialog gd = getPasswordDialog(prompt, null);
-					gd.showDialog();
-					return gd.wasCanceled() ? null : gd.getNextString();
-				}
-
-				public String getPassword() {
-					if (count == 1)
-						return password;
-					GenericDialog gd = getPasswordDialog(prompt, null);
-					gd.showDialog();
-					return gd.wasCanceled() ? null : gd.getNextString();
-				}
-
-				public boolean promptPassphrase(String message) {
-					prompt = message;
-					return count++ < 3;
-				}
-
-				public boolean promptPassword(String message) {
-					prompt = message;
-					return count++ < 4;
-				}
-
-				public boolean promptYesNo(String message) {
-					return SwingTools.showYesNoQuestion(hidden, UpdaterFrame.this, "Password", message);
-				}
-
-				public void showMessage(String message) {
-					info(message);
-				}
-			};
+			UserInfo userInfo = getUserInfo(password);
 			if (uploader.setLogin(username, userInfo))
 				break;
 		}
