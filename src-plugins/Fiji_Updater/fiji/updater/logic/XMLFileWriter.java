@@ -116,7 +116,8 @@ public class XMLFileWriter {
 
 		for (PluginObject plugin : plugins.fijiPlugins()) {
 			attr.clear();
-			if (local && plugin.updateSite != null && !plugin.updateSite.equals(""))
+			assert(plugin.updateSite != null && !plugin.updateSite.equals(""));
+			if (local && !plugin.updateSite.equals(PluginCollection.DEFAULT_UPDATE_SITE))
 				setAttribute(attr, "update-site", plugin.updateSite);
 			setAttribute(attr, "filename", plugin.filename);
 			handler.startElement("", "", "plugin", attr);

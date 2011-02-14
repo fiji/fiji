@@ -40,7 +40,7 @@ import org.xml.sax.helpers.DefaultHandler;
 public class XMLFileReader extends DefaultHandler {
 	private PluginCollection plugins;
 
-	// this is the name of the update site ("" is the main site, null means we read the local db.xml.gz)
+	// this is the name of the update site (null means we read the local db.xml.gz)
 	protected String updateSite;
 
 	// every plugin newer than this was not seen by the user yet
@@ -115,17 +115,17 @@ public class XMLFileReader extends DefaultHandler {
 			if (updateSite == null) {
 				updateSite = atts.getValue("update-site");
 				if (updateSite == null)
-					updateSite = "";
+					updateSite = PluginCollection.DEFAULT_UPDATE_SITE;
 			}
 			current = new PluginObject(updateSite, atts.getValue("filename"),
 				null, 0, Status.NOT_INSTALLED);
-			if (this.updateSite != null && !this.updateSite.equals("")) {
+			if (this.updateSite != null && !this.updateSite.equals(PluginCollection.DEFAULT_UPDATE_SITE)) {
 				PluginObject already = plugins.getPlugin(current.filename);
 				if (already != null && !this.updateSite.equals(already.updateSite))
 					warnings.append("Warning: '" + current.filename + "' from update site '"
 						+ this.updateSite
 						+ "' shadows the one from update site '"
-						+ (already.updateSite.equals("") ? "Fiji" : already.updateSite)
+						+ already.updateSite
 						+ "'\n");
 			}
 		}

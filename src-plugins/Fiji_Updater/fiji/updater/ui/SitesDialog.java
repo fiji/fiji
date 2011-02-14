@@ -107,7 +107,7 @@ public class SitesDialog extends JDialog implements ActionListener, ItemListener
 	}
 
 	protected UpdateSite getUpdateSite(String name) {
-		return plugins.getUpdateSite(name.equals("Fiji") ? "" : name);
+		return plugins.getUpdateSite(name);
 	}
 
 	protected void add() {

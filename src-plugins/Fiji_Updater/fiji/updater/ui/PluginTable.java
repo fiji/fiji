@@ -162,8 +162,8 @@ public class PluginTable extends JTable {
 			error("No upload site available");
 			return false;
 		}
-		if (list.size() == 1 && list.get(0).equals("")) {
-			plugin.updateSite = "";
+		if (list.size() == 1 && list.get(0).equals(PluginCollection.DEFAULT_UPDATE_SITE)) {
+			plugin.updateSite = PluginCollection.DEFAULT_UPDATE_SITE;
 			return true;
 		}
 		String updateSite = SwingTools.getChoice(updaterFrame.hidden, updaterFrame,

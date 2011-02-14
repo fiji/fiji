@@ -33,6 +33,8 @@ import javax.xml.transform.TransformerConfigurationException;
 import org.xml.sax.SAXException;
 
 public class PluginCollection extends ArrayList<PluginObject> {
+	public final static String DEFAULT_UPDATE_SITE = "Fiji";
+
 	public static class UpdateSite {
 		public String url, sshHost, uploadDirectory;
 		public long timestamp;
@@ -62,7 +64,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public PluginCollection() {
 		updateSites = new LinkedHashMap<String, UpdateSite>();
-		addUpdateSite("", Updater.MAIN_URL, Updater.SSH_HOST, Updater.UPDATE_DIRECTORY,
+		addUpdateSite(DEFAULT_UPDATE_SITE, Updater.MAIN_URL, Updater.SSH_HOST, Updater.UPDATE_DIRECTORY,
 			Util.getTimestamp(Updater.XML_COMPRESSED));
 	}
 
@@ -369,7 +371,8 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	public Filter isUpdateSite(final String updateSite) {
 		return new Filter() {
 			public boolean matches(PluginObject plugin) {
-				return plugin.updateSite.equals(updateSite);
+				return plugin.updateSite != null && // is null for non-Fiji files
+					plugin.updateSite.equals(updateSite);
 			}
 		};
 	}
@@ -535,8 +538,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public String getURL(PluginObject plugin) {
 		String siteName = plugin.updateSite;
-		if (siteName == null)
-			siteName = "";
+		assert(siteName != null && !siteName.equals(""));
 		UpdateSite site = getUpdateSite(siteName);
 		return site.url + plugin.filename.replace(" ", "%20") + "-" + plugin.getTimestamp();
 	}

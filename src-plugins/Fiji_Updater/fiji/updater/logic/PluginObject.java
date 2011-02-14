@@ -116,7 +116,8 @@ public class PluginObject {
 
 	public PluginObject(String updateSite, String filename, String checksum, long timestamp,
 			Status status) {
-		this.updateSite = updateSite == null ? "" : updateSite;
+		assert(updateSite != null && !updateSite.equals(""));
+		this.updateSite = updateSite;
 		this.filename = filename;
 		if (checksum != null)
 			current = new Version(checksum, timestamp);

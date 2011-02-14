@@ -38,8 +38,14 @@ requireStatus(filename, status) {
 }
 
 markForUpload(filename) {
+	markForUpload(filename, PluginCollection.DEFAULT_UPDATE_SITE);
+}
+
+markForUpload(filename, updateSite) {
 	print("Marking " + filename + " for upload");
-	plugins.getPlugin(filename).setAction(plugins, PluginObject.Action.UPLOAD);
+	plugin = plugins.getPlugin(filename);
+	plugin.updateSite = updateSite;
+	plugin.setAction(plugins, PluginObject.Action.UPLOAD);
 }
 
 
@@ -244,7 +250,7 @@ import java.util.regex.Pattern;
 testUptodateCheck() {
 	dbXmlGz = new File(tmpUserRoot, "db.xml.gz");
 	content = readGZippedStream(new FileInputStream(dbXmlGz));
-	timestampPattern = "(?s).*<update-site name=\"\"[^>]* timestamp=.*";
+	timestampPattern = "(?s).*<update-site name=\"Fiji\"[^>]* timestamp=.*";
 	assert("local db.xml.gz has timestamp", content.matches(timestampPattern));
 	content = readGZippedStream(new FileInputStream(new File(tmpDeveloperRoot, "db.xml.gz")));
 	assert("developer's db.xml.gz has timestamp", content.matches(timestampPattern));
@@ -356,8 +362,7 @@ uploadSecondary() {
 	assert("9 plugins", plugins.size() == 9);
 	plugins.addUpdateSite("Secondary", "file:" + tmpSecondaryWebRoot.getAbsolutePath() + "/", null,
 		tmpSecondaryWebRoot.getAbsolutePath(), 20000101000000l);
-	plugins.getPlugin(secondaryFile).updateSite = "Secondary";
-	markForUpload(secondaryFile);
+	markForUpload(secondaryFile, "Secondary");
 	startUpload();
 }
 

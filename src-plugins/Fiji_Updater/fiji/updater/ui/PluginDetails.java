@@ -1,5 +1,6 @@
 package fiji.updater.ui;
 
+import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginObject;
 
 import fiji.updater.util.Util;
@@ -257,7 +258,8 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 		list("Link", true, plugin.getLinks(), "\n", plugin);
 		list("Dependency", false, plugin.getDependencies(), ",\n",
 				plugin);
-		if (plugin.updateSite != null && !plugin.updateSite.equals("")) {
+		if (plugin.updateSite != null &&
+				!plugin.updateSite.equals(PluginCollection.DEFAULT_UPDATE_SITE)) {
 			blankLine();
 			bold("Update site:\n");
 			normal(plugin.updateSite);
