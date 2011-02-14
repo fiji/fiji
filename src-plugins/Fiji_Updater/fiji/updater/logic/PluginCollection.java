@@ -72,7 +72,9 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public PluginCollection() {
 		updateSites = new LinkedHashMap<String, UpdateSite>();
-		addUpdateSite(DEFAULT_UPDATE_SITE, Updater.MAIN_URL, Updater.SSH_HOST, Updater.UPDATE_DIRECTORY,
+		addUpdateSite(DEFAULT_UPDATE_SITE, Updater.MAIN_URL,
+			Util.isDeveloper ? Updater.SSH_HOST : null,
+			Util.isDeveloper ? Updater.UPDATE_DIRECTORY : null,
 			Util.getTimestamp(Updater.XML_COMPRESSED));
 	}
 
@@ -128,6 +130,19 @@ public class PluginCollection extends ArrayList<PluginObject> {
 				+ set.toString() + " (known: "
 				+ result.toString() + ")");
 		return result;
+	}
+
+	public boolean hasUploadableSites() {
+		for (String name : updateSites.keySet())
+			if (getUpdateSite(name).isUploadable())
+				return true;
+		return false;
+	}
+
+	public Action[] getActions(PluginObject plugin) {
+		return hasUploadableSites() ?
+			plugin.getStatus().getDeveloperActions() :
+			plugin.getStatus().getActions();
 	}
 
 	public void read() throws IOException, ParserConfigurationException, SAXException {
@@ -329,7 +344,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public Filter doesPlatformMatch() {
 		// If we're a developer or no platform was specified, return yes
-		if (Util.isDeveloper)
+		if (hasUploadableSites())
 			return yes();
 		return new Filter() {
 			public boolean matches(PluginObject plugin) {

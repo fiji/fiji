@@ -79,7 +79,8 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 		});
 
 		reset();
-		if (Util.isDeveloper)
+		// TODO: enable depending on the update site
+		if (updaterFrame.plugins.hasUploadableSites())
 			getDocument().addUndoableEditListener(this);
 	}
 
@@ -101,7 +102,7 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 	}
 
 	public void setEditableForDevelopers() {
-		if (!Util.isDeveloper)
+		if (!updaterFrame.plugins.hasUploadableSites())
 			return;
 		removeDummySpace();
 		setEditable(true);
@@ -167,7 +168,7 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 	}
 
 	public void description(String description, PluginObject plugin) {
-		if (!Util.isDeveloper && (description == null ||
+		if (!updaterFrame.plugins.hasUploadableSites() && (description == null ||
 					description.trim().equals("")))
 			return;
 		blankLine();
@@ -183,7 +184,7 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 		for (Object object : items)
 			list.add(object);
 
-		if (!Util.isDeveloper && list.size() == 0)
+		if (!updaterFrame.plugins.hasUploadableSites() && list.size() == 0)
 			return;
 
 		blankLine();
@@ -251,7 +252,7 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 		}
 		description(plugin.getDescription(), plugin);
 		list("Author", false, plugin.getAuthors(), ", ", plugin);
-		if (Util.isDeveloper)
+		if (updaterFrame.plugins.hasUploadableSites())
 			list("Platform", false, plugin.getPlatforms(), ", ",
 				plugin);
 		list("Category", false, plugin.getCategories(), ", ", plugin);

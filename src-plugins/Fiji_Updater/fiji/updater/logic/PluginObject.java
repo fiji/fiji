@@ -70,29 +70,33 @@ public class PluginObject {
 		OBSOLETE (new Action[] { Action.OBSOLETE, Action.UNINSTALL }, Action.UPLOAD),
 		OBSOLETE_MODIFIED (new Action[] { Action.MODIFIED, Action.UNINSTALL }, Action.UPLOAD);
 
-		private Action[] actions;
+		private Action[] actions, developerActions;
 
 		Status(Action[] actions) {
 			this(actions, null);
 		}
 
 		Status(Action[] actions, Action developerAction) {
-			if (developerAction != null && Util.isDeveloper) {
-				this.actions = new Action[actions.length + 1];
-				System.arraycopy(actions, 0, this.actions, 0,
-						actions.length);
-				this.actions[actions.length] = developerAction;
+			if (developerAction != null) {
+				developerActions = new Action[actions.length + 1];
+				System.arraycopy(actions, 0, developerActions, 0, actions.length);
+				developerActions[actions.length] = developerAction;
 			}
 			else
-				this.actions = actions;
+				developerActions = actions;
+			this.actions = actions;
 		}
 
 		public Action[] getActions() {
 			return actions;
 		}
 
+		public Action[] getDeveloperActions() {
+			return developerActions;
+		}
+
 		public boolean isValid(Action action) {
-			for (Action a : actions)
+			for (Action a : developerActions)
 				if (a.equals(action))
 					return true;
 			return false;

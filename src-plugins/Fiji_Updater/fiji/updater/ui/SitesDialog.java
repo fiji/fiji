@@ -372,6 +372,7 @@ public class SitesDialog extends JDialog implements ActionListener, ItemListener
 				readFromSite(name.getText());
 				tableModel.rowChanged(row);
 				table.setRowSelectionInterval(row, row);
+				updaterFrame.enableUploadOrNot();
 			}
 			dispose();
 		}
@@ -381,6 +382,7 @@ public class SitesDialog extends JDialog implements ActionListener, ItemListener
 	public void dispose() {
 		super.dispose();
 		updaterFrame.updatePluginsTable();
+		updaterFrame.enableUploadOrNot();
 	}
 
 	public void info(String message) {

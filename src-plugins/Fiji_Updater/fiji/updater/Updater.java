@@ -160,7 +160,7 @@ public class Updater implements PlugIn {
 					+ Util.join(", ", plugins.changes()));
 			else if (plugins.hasForcableUpdates()) {
 				main.warn("There are locally modified files!");
-				if (Util.isDeveloper && !plugins.hasChanges()) {
+				if (plugins.hasUploadableSites() && !plugins.hasChanges()) {
 					main.setViewOption(Option
 							.LOCALLY_MODIFIED);
 					main.setEasyMode(false);

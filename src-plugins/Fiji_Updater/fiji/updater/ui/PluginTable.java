@@ -126,7 +126,7 @@ public class PluginTable extends JTable {
 		//As we follow PluginTableModel, 1st column is filename
 		if (col == 0)
 			return super.getCellEditor(row,col);
-		Action[] actions = plugin.getStatus().getActions();
+		Action[] actions = plugins.getActions(plugin);
 		return new DefaultCellEditor(new JComboBox(actions));
 	}
 

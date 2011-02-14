@@ -93,7 +93,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		this(plugins, false);
 	}
 
-	public UpdaterFrame(PluginCollection plugins, boolean hidden) {
+	public UpdaterFrame(final PluginCollection plugins, boolean hidden) {
 		super("Fiji Updater");
 
 		this.plugins = plugins;
@@ -251,44 +251,43 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 				"Manage multiple update sites for updating and uploading", new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				new SitesDialog(UpdaterFrame.this, UpdaterFrame.this.plugins,
-					Util.isDeveloper).setVisible(true);
+					UpdaterFrame.this.plugins.hasUploadableSites()).setVisible(true);
 			}
 		}, bottomPanel);
 
 		//includes button to upload to server if is a Developer using
-		if (Util.isDeveloper) {
-			bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
-			upload = SwingTools.button("Upload to server",
-					"Upload selected plugins to server", new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					new Thread() {
-						public void run() {
-							upload();
-						}
-					}.start();
-				}
-			}, bottomPanel);
-			upload.setEnabled(false);
+		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
+		upload = SwingTools.button("Upload to server",
+				"Upload selected plugins to server", new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				new Thread() {
+					public void run() {
+						upload();
+					}
+				}.start();
+			}
+		}, bottomPanel);
+		upload.setEnabled(false);
+		upload.setVisible(plugins.hasUploadableSites());
 
-			try {
-				Class pluginChangesClass = Class.forName("fiji.scripting.ShowPluginChanges");
-				if (pluginChangesClass != null && new File(System.getProperty("fiji.dir"), ".git").isDirectory()) {
-					final PlugIn pluginChanges = (PlugIn)pluginChangesClass.newInstance();
-					bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
-					JButton showChanges = SwingTools.button("Show changes",
-							"Show the changes in Git since the last upload", new ActionListener() {
-						public void actionPerformed(ActionEvent e) {
-							new Thread() {
-								public void run() {
-									for (PluginObject plugin : table.getSelectedPlugins())
-										pluginChanges.run(plugin.filename);
-								}
-							}.start();
-						}
-					}, bottomPanel);
-				}
-			} catch (Exception e) { /* ignore */ }
-		}
+		if (Util.isDeveloper) try {
+			Class pluginChangesClass = Class.forName("fiji.scripting.ShowPluginChanges");
+			if (pluginChangesClass != null && new File(System.getProperty("fiji.dir"), ".git").isDirectory()) {
+				final PlugIn pluginChanges = (PlugIn)pluginChangesClass.newInstance();
+				bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
+				JButton showChanges = SwingTools.button("Show changes",
+						"Show the changes in Git since the last upload", new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						new Thread() {
+							public void run() {
+								for (PluginObject plugin : table.getSelectedPlugins())
+									pluginChanges.run(plugin.filename);
+							}
+						}.start();
+					}
+				}, bottomPanel);
+			}
+		} catch (Exception e) { /* ignore */ }
 
 		// offer to update Java, but only on non-Macs
 		if (!IJ.isMacOSX() && new File(Util.fijiRoot, "java").canWrite()) {
@@ -469,7 +468,10 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 			if ((child instanceof Container) &&
 					child != table.getParent().getParent())
 				setEasyMode((Container)child);
-			child.setVisible(!easyMode);
+			if (child == upload && !easyMode && !plugins.hasUploadableSites())
+				child.setVisible(false);
+			else
+				child.setVisible(!easyMode);
 		}
 	}
 
@@ -550,7 +552,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		pluginDetails.reset();
 		for (PluginObject plugin : table.getSelectedPlugins())
 			pluginDetails.showPluginDetails(plugin);
-		if (Util.isDeveloper &&
+		if (plugins.hasUploadableSites() &&
 				pluginDetails.getDocument().getLength() > 0)
 			pluginDetails.setEditableForDevelopers();
 
@@ -560,7 +562,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		apply.setEnabled(plugins.hasChanges());
 		cancel.setText(plugins.hasChanges() ? "Cancel" : "Close");
 
-		if (Util.isDeveloper)
+		if (plugins.hasUploadableSites())
 			// TODO: has to change when details editor is embedded
 			enableUploadOrNot();
 
@@ -597,7 +599,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 				+ sizeToString(bytesToDownload);
 		if (uninstall > 0)
 			text += " uninstall: " + uninstall;
-		if (Util.isDeveloper)
+		if (plugins.hasUploadableSites())
 			text += ", upload: " + upload + ", upload size: "
 				+ sizeToString(bytesToUpload);
 		lblPluginSummary.setText(text);
@@ -648,6 +650,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 	}
 
 	void enableUploadOrNot() {
+		upload.setVisible(!easyMode && plugins.hasUploadableSites());
 		upload.setEnabled(canUpload || plugins.hasUploadOrRemove());
 	}
 
