@@ -126,8 +126,7 @@ public class SitesDialog extends JDialog implements ActionListener, ItemListener
 		String name = names.get(row);
 		PluginCollection toRemove = PluginCollection.clone(plugins.forUpdateSite(name));
 		if (toRemove.size() > 0) {
-			if (SwingTools.showQuestion(updaterFrame != null && updaterFrame.hidden,
-					this, "Remove files?",
+			if (showYesNoQuestion("Remove files?",
 					"Remove " + toRemove.size()
 					+ " file" + (toRemove.size() > 1 ? "s" : "")
 					+ " associated with site '" + name + "'?"))
@@ -351,6 +350,10 @@ public class SitesDialog extends JDialog implements ActionListener, ItemListener
 			this, message, JOptionPane.ERROR_MESSAGE);
 	}
 
+	public boolean showYesNoQuestion(String title, String message) {
+		return SwingTools.showYesNoQuestion(updaterFrame != null && updaterFrame.hidden,
+			this, title, message);
+	}
 	public static void escapeCancels(final JDialog dialog) {
 		dialog.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ESCAPE"), "ESCAPE");
 		dialog.getRootPane().getActionMap().put("ESCAPE", new AbstractAction() {
