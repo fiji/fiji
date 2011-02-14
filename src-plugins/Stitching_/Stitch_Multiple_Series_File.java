@@ -62,6 +62,7 @@ public class Stitch_Multiple_Series_File implements PlugIn
 	public static double thresholdDisplacementRelativeStatic = 2.5;
 	public static double thresholdDisplacementAbsoluteStatic = 3.5;
 	public static boolean previewOnlyStatic = false;
+	public static boolean ignoreCalibrationStatic = true;
 	
 	public void run(String arg0)
 	{
@@ -69,6 +70,7 @@ public class Stitch_Multiple_Series_File implements PlugIn
 		
 		gd.addFileField( "File", fileNameStatic, 50 );		
 		gd.addCheckbox( "Compute_overlap (or trust coordinates in the file)", computeOverlapStatic );
+		gd.addCheckbox("Ignore_Calibration", ignoreCalibrationStatic );
 		gd.addSlider( "Increase_overlap [%]", 0, 100, overlapStatic );
 		             
 		gd.addChoice( "Fusion_Method", methodListCollection, fusionMethodStatic );
@@ -93,6 +95,9 @@ public class Stitch_Multiple_Series_File implements PlugIn
 		boolean computeOverlap = gd.getNextBoolean();
 		computeOverlapStatic = computeOverlap;
 
+		boolean ignoreCalibration = gd.getNextBoolean();
+		ignoreCalibrationStatic = ignoreCalibration;
+		
 		double overlap = gd.getNextNumber();
 		overlapStatic = overlap;
 
@@ -114,7 +119,7 @@ public class Stitch_Multiple_Series_File implements PlugIn
 		boolean previewOnly = gd.getNextBoolean();
 		previewOnlyStatic = previewOnly;
 
-		ArrayList<ImageInformation> imageInformationList = parseMultiSeriesFile( fileName, overlap );
+		ArrayList<ImageInformation> imageInformationList = parseMultiSeriesFile( fileName, overlap,  ignoreCalibration );
 		
 		if ( imageInformationList == null )
 			return;
@@ -144,7 +149,7 @@ public class Stitch_Multiple_Series_File implements PlugIn
 		new Stitch_Image_Collection().work( gridLayout, previewOnly, computeOverlap, fileName + ".txt" );
 	}
 
-	protected ArrayList<ImageInformation> parseMultiSeriesFile( final String filename, final double increaseOverlap )
+	protected ArrayList<ImageInformation> parseMultiSeriesFile( final String filename, final double increaseOverlap, final boolean ignoreCalibration )
 	{
 		if ( filename == null || filename.length() == 0 )
 		{
@@ -215,37 +220,39 @@ public class Stitch_Multiple_Series_File implements PlugIn
 					locationZ = 0;				
 				// IJ.log( "locationZ:  " + locationZ );
 
-				// calibration
-				double calX = 1, calY = 1, calZ = 1;
-				Double cal;
-				final String dimOrder = r.getDimensionOrder().toUpperCase();
+				if ( !ignoreCalibration )
+				{
+					// calibration
+					double calX = 1, calY = 1, calZ = 1;
+					Double cal;
+					final String dimOrder = r.getDimensionOrder().toUpperCase();
+					
+					final int posX = dimOrder.indexOf( 'X' );
+					cal = retrieve.getPixelsPhysicalSizeX( 0 );
+					if ( posX >= 0 && cal != null && cal.floatValue() != 0 )
+						calX = cal.floatValue(); 
+	
+					// IJ.log( "calibrationX:  " + calX );
+	
+					final int posY = dimOrder.indexOf( 'Y' );
+					cal = retrieve.getPixelsPhysicalSizeY( 0 );
+					if ( posY >= 0 && cal != null && cal.floatValue() != 0 )
+						calY = cal.floatValue();
+	
+					// IJ.log( "calibrationY:  " + calY );
+	
+					final int posZ = dimOrder.indexOf( 'Z' );
+					cal = retrieve.getPixelsPhysicalSizeZ( 0 );
+					if ( posZ >= 0 && cal != null && cal.floatValue() != 0 )
+						calZ = cal.floatValue();
 				
-				final int posX = dimOrder.indexOf( 'X' );
-				cal = retrieve.getPixelsPhysicalSizeX( 0 );
-				if ( posX >= 0 && cal != null && cal.floatValue() != 0 )
-					calX = cal.floatValue(); 
-
-				// IJ.log( "calibrationX:  " + calX );
-
-				final int posY = dimOrder.indexOf( 'Y' );
-				cal = retrieve.getPixelsPhysicalSizeY( 0 );
-				if ( posY >= 0 && cal != null && cal.floatValue() != 0 )
-					calY = cal.floatValue();
-
-				// IJ.log( "calibrationY:  " + calY );
-
-				final int posZ = dimOrder.indexOf( 'Z' );
-				cal = retrieve.getPixelsPhysicalSizeZ( 0 );
-				if ( posZ >= 0 && cal != null && cal.floatValue() != 0 )
-					calZ = cal.floatValue();
-			
-				// IJ.log( "calibrationZ:  " + calZ );
-
-				// location in pixel values;
-				locationX /= calX;
-				locationY /= calY;
-				locationZ /= calZ;
-
+					// IJ.log( "calibrationZ:  " + calZ );
+	
+					// location in pixel values;
+					locationX /= calX;
+					locationY /= calY;
+					locationZ /= calZ;
+				}
 				// IJ.log( "locationX [px]:  " + locationX );
 				// IJ.log( "locationY [px]:  " + locationY );
 				// IJ.log( "locationZ [px]:  " + locationZ );
