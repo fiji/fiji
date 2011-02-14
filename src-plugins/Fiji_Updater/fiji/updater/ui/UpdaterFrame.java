@@ -1,5 +1,7 @@
 package fiji.updater.ui;
 
+import com.jcraft.jsch.UserInfo;
+
 import fiji.updater.Updater;
 
 import fiji.updater.logic.FileUploader;
@@ -713,20 +715,18 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		}
 	}
 
-	protected boolean interactiveSshLogin(PluginUploader uploader) {
-		String username = Prefs.get(Updater.PREFS_USER, "");
-		String password = "";
-		do {
-			//Dialog to enter username and password
-			GenericDialog gd = new GenericDialog("Login");
+	protected GenericDialog getPasswordDialog(String title, String username) {
+		GenericDialog gd = new GenericDialog(title);
+		if (username != null)
 			gd.addStringField("Username", username, 20);
-			gd.addStringField("Password", "", 20);
+		gd.addStringField("Password", "", 20);
 
+		final TextField pwd =
+			(TextField)gd.getStringFields().lastElement();
+		pwd.setEchoChar('*');
+		if (username != null) {
 			final TextField user =
 				(TextField)gd.getStringFields().firstElement();
-			final TextField pwd =
-				(TextField)gd.getStringFields().lastElement();
-			pwd.setEchoChar('*');
 			if (!username.equals(""))
 				user.addFocusListener(new FocusAdapter() {
 					public void focusGained(FocusEvent e) {
@@ -734,16 +734,63 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 						user.removeFocusListener(this);
 					}
 				});
+		}
 
+		return gd;
+	}
+
+	protected boolean interactiveSshLogin(PluginUploader uploader) {
+		String username = uploader.getDefaultUsername();
+		for (;;) {
+			//Dialog to enter username and password
+			GenericDialog gd = getPasswordDialog("Login", username);
 			gd.showDialog();
 			if (gd.wasCanceled())
 				return false; //return back to user interface
 
 			//Get the required login information
 			username = gd.getNextString();
-			password = gd.getNextString();
+			final String password = gd.getNextString();
 
-		} while (!uploader.setLogin(username, password));
+			UserInfo userInfo = new UserInfo() {
+				protected String prompt;
+				protected int count = 0;
+
+				public String getPassphrase() {
+					GenericDialog gd = getPasswordDialog(prompt, null);
+					gd.showDialog();
+					return gd.wasCanceled() ? null : gd.getNextString();
+				}
+
+				public String getPassword() {
+					if (count == 1)
+						return password;
+					GenericDialog gd = getPasswordDialog(prompt, null);
+					gd.showDialog();
+					return gd.wasCanceled() ? null : gd.getNextString();
+				}
+
+				public boolean promptPassphrase(String message) {
+					prompt = message;
+					return count++ < 3;
+				}
+
+				public boolean promptPassword(String message) {
+					prompt = message;
+					return count++ < 4;
+				}
+
+				public boolean promptYesNo(String message) {
+					return SwingTools.showYesNoQuestion(hidden, UpdaterFrame.this, "Password", message);
+				}
+
+				public void showMessage(String message) {
+					info(message);
+				}
+			};
+			if (uploader.setLogin(username, userInfo))
+				break;
+		}
 
 		Prefs.set(Updater.PREFS_USER, username);
 		return true;

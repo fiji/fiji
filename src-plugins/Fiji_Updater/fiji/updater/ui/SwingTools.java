@@ -192,8 +192,20 @@ public class SwingTools {
 		}
 
 		return JOptionPane.showConfirmDialog(owner, question, title,
-				JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE)
+				JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE)
 			== JOptionPane.OK_OPTION;
+	}
+
+	public static boolean showYesNoQuestion(boolean hidden, Component owner, String title, String question) {
+		if (hidden) {
+			final JOptionPane pane = new JOptionPane(question, JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION);
+			waitForFakeDialog(title, pane);
+			return pane.getValue().equals(new Integer(JOptionPane.YES_OPTION));
+		}
+
+		return JOptionPane.showConfirmDialog(owner, question, title,
+				JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE)
+			== JOptionPane.YES_OPTION;
 	}
 
 	public static void showMessageBox(boolean hidden, Component owner, String message, int type) {

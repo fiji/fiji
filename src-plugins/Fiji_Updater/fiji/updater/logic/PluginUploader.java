@@ -1,6 +1,7 @@
 package fiji.updater.logic;
 
 import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.UserInfo;
 
 import fiji.updater.Updater;
 
@@ -67,10 +68,11 @@ public class PluginUploader {
 		this.uploader = uploader;
 	}
 
-	public synchronized boolean setLogin(String username, String password) {
+	public synchronized boolean setLogin(String username, UserInfo userInfo) {
 		try {
-			uploader = new SSHFileUploader(username, password,
-				site.sshHost, site.uploadDirectory);
+			uploader = new SSHFileUploader(username,
+				site.sshHost, site.uploadDirectory,
+				userInfo);
 			return true;
 		} catch (JSchException e) {
 			IJ.error("Failed to login");
