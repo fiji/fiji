@@ -40,6 +40,10 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		public long timestamp;
 
 		public UpdateSite(String url, String sshHost, String uploadDirectory, long timestamp) {
+			if (!url.endsWith("/"))
+				url += "/";
+			if (uploadDirectory != null && !uploadDirectory.equals("") && !uploadDirectory.endsWith("/"))
+				uploadDirectory += "/";
 			this.url = url;
 			this.sshHost = sshHost;
 			this.uploadDirectory = uploadDirectory;
@@ -69,8 +73,6 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	}
 
 	public void addUpdateSite(String name, String url, String sshHost, String uploadDirectory, long timestamp) {
-		if (!url.endsWith("/"))
-			url += "/";
 		updateSites.put(name, new UpdateSite(url, sshHost, uploadDirectory, timestamp));
 	}
 
