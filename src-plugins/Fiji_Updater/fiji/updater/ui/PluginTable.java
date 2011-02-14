@@ -15,8 +15,10 @@ import java.awt.Font;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
@@ -142,9 +144,14 @@ public class PluginTable extends JTable {
 		return Arrays.asList(result);
 	}
 
+	public String[] getUpdateSitesWithUploads(PluginCollection plugins) {
+		Set<String> sites = new HashSet<String>();
+		for (PluginObject plugin : plugins.toUpload())
+			sites.add(plugin.updateSite);
+		return sites.toArray(new String[sites.size()]);
+	}
+
 	public boolean chooseUpdateSite(PluginCollection plugins, PluginObject plugin) {
-		if (plugin.getStatus() != Status.NOT_FIJI)
-			return true; // already decided
 		List<String> list = new ArrayList<String>();
 		for (String name : plugins.getUpdateSiteNames()) {
 			UpdateSite site = plugins.getUpdateSite(name);
@@ -152,8 +159,7 @@ public class PluginTable extends JTable {
 				list.add(name);
 		}
 		if (list.size() == 0) {
-			SwingTools.showMessageBox(updaterFrame.hidden, updaterFrame,
-				"No upload site available", JOptionPane.ERROR_MESSAGE);
+			error("No upload site available");
 			return false;
 		}
 		if (list.size() == 1 && list.get(0).equals("")) {
@@ -230,8 +236,28 @@ public class PluginTable extends JTable {
 				Action action = (Action)value;
 				PluginObject plugin = getPlugin(row);
 				if (plugin.getStatus().isValid(action)) {
-					if (action == Action.UPLOAD && !chooseUpdateSite(updaterFrame.plugins, plugin))
-						return;
+					if (action == Action.UPLOAD) {
+						String[] sitesWithUploads = getUpdateSitesWithUploads(updaterFrame.plugins);
+						if (sitesWithUploads.length > 1) {
+							error("Internal error: multiple upload sites selected");
+							return;
+						}
+						boolean isNew = plugin.getStatus() == Status.NOT_FIJI;
+						if (sitesWithUploads.length == 0) {
+							if (isNew && !chooseUpdateSite(updaterFrame.plugins, plugin))
+								return;
+						}
+						else {
+							String siteName = sitesWithUploads[0];
+							if (isNew)
+								plugin.updateSite = siteName;
+							else if (!plugin.updateSite.equals(siteName)) {
+								error("Already have uploads for site '" + siteName
+									+ "', cannot upload to '" + plugin.updateSite +"', too!");
+								return;
+							}
+						}
+					}
 					plugin.setAction(plugins, action);
 				}
 				fireRowChanged(row);
@@ -259,5 +285,9 @@ public class PluginTable extends JTable {
 
 	public void firePluginChanged(PluginObject plugin) {
 		pluginTableModel.firePluginChanged(plugin);
+	}
+
+	protected void error(String message) {
+		SwingTools.showMessageBox(updaterFrame.hidden, updaterFrame, message, JOptionPane.ERROR_MESSAGE);
 	}
 }
