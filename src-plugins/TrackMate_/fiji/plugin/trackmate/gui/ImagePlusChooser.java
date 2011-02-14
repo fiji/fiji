@@ -18,6 +18,8 @@ import javax.swing.JPanel;
 
 import javax.swing.WindowConstants;
 import javax.swing.SwingUtilities;
+import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
+import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 
 
 public class ImagePlusChooser extends javax.swing.JFrame {
@@ -90,7 +92,6 @@ public class ImagePlusChooser extends javax.swing.JFrame {
 	 */
 	
 	public void addActionListener(ActionListener listener) {
-		System.out.println("Fire action in impchooser");// DEBUG
 		listeners.add(listener);
 	}
 	
@@ -162,21 +163,24 @@ public class ImagePlusChooser extends javax.swing.JFrame {
 				{
 					jLabelSelect = new JLabel();
 					jPanelMain.add(jLabelSelect);
-					jLabelSelect.setText("Select an image");
+					jLabelSelect.setFont(FONT);
+					jLabelSelect.setText("Copy overlay to:");
 					jLabelSelect.setBounds(12, 10, 258, 15);
 				}
 				{
 					ComboBoxModel jComboBoxImageModel = new DefaultComboBoxModel(getImageNames());
 					jComboBoxImage = new JComboBox();
 					jPanelMain.add(jComboBoxImage);
+					jComboBoxImage.setFont(SMALL_FONT);
 					jComboBoxImage.setModel(jComboBoxImageModel);
 					jComboBoxImage.setBounds(12, 31, 258, 22);
 				}
 				{
 					jButtonCancel = new JButton();
 					jPanelMain.add(jButtonCancel);
+					jButtonCancel.setFont(FONT);
 					jButtonCancel.setText("Cancel");
-					jButtonCancel.setBounds(12, 65, 64, 22);
+					jButtonCancel.setBounds(12, 65, 64, 26);
 					jButtonCancel.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
@@ -187,8 +191,9 @@ public class ImagePlusChooser extends javax.swing.JFrame {
 				{
 					jButtonOK = new JButton();
 					jPanelMain.add(jButtonOK);
+					jButtonOK.setFont(FONT);
 					jButtonOK.setText("OK");
-					jButtonOK.setBounds(205, 65, 65, 22);
+					jButtonOK.setBounds(205, 65, 65, 26);
 					jButtonOK.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
@@ -199,6 +204,8 @@ public class ImagePlusChooser extends javax.swing.JFrame {
 			}
 			pack();
 			this.setSize(280, 130);
+			this.setTitle("Copy overlay");
+			this.setResizable(false);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

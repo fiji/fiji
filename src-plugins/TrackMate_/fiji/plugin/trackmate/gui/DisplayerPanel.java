@@ -15,6 +15,8 @@ import java.util.EnumMap;
 
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -37,6 +39,7 @@ import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 public class DisplayerPanel extends ActionListenablePanel {
 
 	private static final long serialVersionUID = 1L;
+	private static final Icon COPY_OVERLAY_ICON = new ImageIcon(DisplayerPanel.class.getResource("images/page_copy.png"));;
 
 	{
 		//Set Look & Feel
@@ -316,10 +319,10 @@ public class DisplayerPanel extends ActionListenablePanel {
 			}
 			{
 				JButton jButtonCopyOverlay = new JButton();
-				jButtonCopyOverlay.setText("Copy overlay to");
-//				jButtonCopyOverlay.setIcon(TRACK_SCHEME_ICON);
+				jButtonCopyOverlay.setText("Copy overlay");
+				jButtonCopyOverlay.setIcon(COPY_OVERLAY_ICON);
 				jButtonCopyOverlay.setFont(FONT);
-				jButtonCopyOverlay.setBounds(10, 320, 160, 30);
+				jButtonCopyOverlay.setBounds(140, 320, 120, 30);
 				jButtonCopyOverlay.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {

@@ -54,7 +54,7 @@ public abstract class SpotDisplayer {
 		HYPERSTACK_DISPLAYER;
 		
 		public static DisplayerType[] get2DDisplayers() {
-			return new DisplayerType[] { HYPERSTACK_DISPLAYER };
+			return new DisplayerType[] { HYPERSTACK_DISPLAYER, THREEDVIEWER_DISPLAYER };
 		}
 
 		public static DisplayerType[] get3DDisplayers() {
@@ -65,9 +65,9 @@ public abstract class SpotDisplayer {
 		public String toString() {
 			switch(this) {
 			case HYPERSTACK_DISPLAYER:
-				return "HyperStack displayer";
+				return "HyperStack Displayer";
 			case THREEDVIEWER_DISPLAYER:
-				return "3D viewer";
+				return "3D Viewer";
 			}
 			return null;
 		}
@@ -82,8 +82,7 @@ public abstract class SpotDisplayer {
 			case THREEDVIEWER_DISPLAYER:
 				return "<html>" +
 						"This invokes a new 3D viewer (over time) window, which receive a<br>" +
-						"8-bit copy of the image data. Spots and tracks are rendered in 3D,<br>" +
-						"and track display mode settings is ignored." +
+						"8-bit copy of the image data. Spots and tracks are rendered in 3D." +
 						"</html>"; 
 			}
 			return null;

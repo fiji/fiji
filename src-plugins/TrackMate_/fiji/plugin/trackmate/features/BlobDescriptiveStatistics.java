@@ -38,10 +38,6 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 		}
 		this.npixels = cursor.getNPixels();
 	}
-
-	public BlobDescriptiveStatistics(Image<T> originalImage, float radius) {
-		this(originalImage, radius, originalImage.getCalibration());
-	}
 	
 	/*
 	 * PUBLIC METHODS
