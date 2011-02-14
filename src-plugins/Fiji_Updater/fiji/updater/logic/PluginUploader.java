@@ -148,7 +148,8 @@ public class PluginUploader {
 		}
 
 		XMLFileWriter writer = new XMLFileWriter(PluginCollection.clone(plugins.forUpdateSite(siteName)));
-		writer.validate(false);
+		if (plugins.size() > 0)
+			writer.validate(false);
 		((DbXmlFile)files.get(0)).bytes = writer.toCompressedByteArray(false);
 
 		uploader.calculateTotalSize(files);
@@ -196,6 +197,8 @@ public class PluginUploader {
 			return lastModified;
 		}
 		catch (Exception e) {
+			if (plugins.size() == 0)
+				return -1; // assume initial upload
 			e.printStackTrace();
 			return 0;
 		}

@@ -715,6 +715,29 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		}
 	}
 
+	protected boolean initializeUpdateSite(String url, String sshHost, String uploadDirectory) {
+		String updateSiteName = "Dummy";
+		PluginCollection plugins = new PluginCollection();
+		plugins.addUpdateSite(updateSiteName, url, sshHost, uploadDirectory, Long.parseLong(Util.timestamp(-1)));
+		PluginUploader uploader = new PluginUploader(plugins, updateSiteName);
+		Progress progress = null;
+		try {
+			if (!uploader.hasUploader() && !interactiveSshLogin(uploader))
+				return false;
+			progress = getProgress("Initializing Update Site...");
+			uploader.upload(progress);
+			return true;
+		} catch (Canceled e) {
+			if (progress != null)
+				progress.done();
+		} catch (Throwable e) {
+			e.printStackTrace();
+			if (progress != null)
+				progress.done();
+		}
+		return false;
+	}
+
 	protected GenericDialog getPasswordDialog(String title, String username) {
 		GenericDialog gd = new GenericDialog(title);
 		if (username != null)

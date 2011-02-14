@@ -8,6 +8,7 @@ import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginCollection.UpdateSite;
 
 import fiji.updater.logic.PluginObject;
+import fiji.updater.logic.PluginUploader;
 import fiji.updater.logic.XMLFileReader;
 
 import fiji.updater.util.Util;
@@ -24,6 +25,9 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 import java.io.File;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -297,13 +301,47 @@ public class SitesDialog extends JDialog implements ActionListener, ItemListener
 			return true;
 		}
 
+		protected boolean initializeUpdateSite(String siteName, String url, String host, String uploadDirectory) {
+			boolean result = updaterFrame.initializeUpdateSite(url, host, uploadDirectory) && validURL(url);
+			if (result)
+				info("Initialized update site '" + siteName + "'");
+			else
+				error("Could not initialize update site '" + siteName + "'");
+			return result;
+		}
+
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			Object source = e.getSource();
 			if (source == ok) {
-				if (!validURL(url.getText())) {
-					error("Not a valid URL: " + url.getText());
+				if (name.getText().equals("")) {
+					error("Need a name");
 					return;
+				}
+				if (!validURL(url.getText())) {
+					try {
+						new URL(url.getText());
+					} catch (MalformedURLException e2) {
+						error("Not a valid URL: " + url.getText());
+						return;
+					}
+					if (!uploadDirectory.getText().equals("")) {
+						if (!showYesNoQuestion("Initialize upload site?",
+								"It appears that the URL is not (yet) valid.\n"
+								+ "Do you want to upload an empty db.xml.gz to "
+								+ sshHost.getText() + ":" + uploadDirectory.getText() + "?"))
+							return;
+						String host = sshHost.getText();
+						if (host.equals(""))
+							host = null; // Try the file system
+						if (!initializeUpdateSite(name.getText(), url.getText(),
+								host, uploadDirectory.getText()))
+							return;
+					}
+					else {
+						error("URL does not refer to an update site: " + url.getText());
+						return;
+					}
 				}
 				if (row < 0) {
 					if (names.contains(name.getText())) {
@@ -343,6 +381,11 @@ public class SitesDialog extends JDialog implements ActionListener, ItemListener
 	public void dispose() {
 		super.dispose();
 		updaterFrame.updatePluginsTable();
+	}
+
+	public void info(String message) {
+		SwingTools.showMessageBox(updaterFrame != null && updaterFrame.hidden,
+			this, message, JOptionPane.INFORMATION_MESSAGE);
 	}
 
 	public void error(String message) {
