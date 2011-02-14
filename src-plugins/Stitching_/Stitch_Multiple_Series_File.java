@@ -133,6 +133,7 @@ public class Stitch_Multiple_Series_File implements PlugIn
 		final GridLayout gridLayout = new GridLayout();
 
 		gridLayout.imageInformationList = imageInformationList;
+		gridLayout.fusionMethod = fusionMethod;
 		gridLayout.alpha = this.alpha;
 		gridLayout.thresholdR = this.thresholdR;
 		gridLayout.thresholdDisplacementRelative = this.thresholdDisplacementRelative;
