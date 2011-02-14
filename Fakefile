@@ -119,7 +119,26 @@ SUBMODULE_TARGETS=\
 	jars/commons-math.jar \
 	jars/javassist.jar \
 	jars/jsch-0.1.44.jar \
-	jars/imglib-scripting.jar
+	jars/imglib-scripting.jar \
+	jars/ij-core-plugins.jar \
+	jars/ij-core-tools.jar \
+	jars/ij-core.jar \
+	jars/ij-data.jar \
+	jars/ij-display.jar \
+	jars/ij-event.jar \
+	jars/ij-legacy.jar \
+	jars/ij-module.jar \
+	jars/ij-object.jar \
+	jars/ij-platform.jar \
+	jars/ij-plugin.jar \
+	jars/ij-tool.jar \
+	jars/ij-ui.jar \
+	jars/ij-util.jar \
+	jars/ij-awt-common.jar \
+	jars/ij-imagej.jar \
+	jars/ij-platform-macosx.jar \
+	jars/ij-plugin-swing.jar \
+	jars/ij-ui-swing.jar \
 
 PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \
@@ -300,6 +319,25 @@ jars/jython.jar <- fiji modules/jython/
 jars/commons-math.jar <- fiji modules/commons-math/
 jars/javassist.jar <- modules/javassist/
 jars/jsch-0.1.44.jar <- modules/jsch/
+jars/ij-core-plugins.jar <- modules/imagej2/
+jars/ij-core-tools.jar <- modules/imagej2/
+jars/ij-core.jar <- modules/imagej2/
+jars/ij-data.jar <- modules/imagej2/
+jars/ij-display.jar <- modules/imagej2/
+jars/ij-event.jar <- modules/imagej2/
+jars/ij-legacy.jar <- modules/imagej2/
+jars/ij-module.jar <- modules/imagej2/
+jars/ij-object.jar <- modules/imagej2/
+jars/ij-platform.jar <- modules/imagej2/
+jars/ij-plugin.jar <- modules/imagej2/
+jars/ij-tool.jar <- modules/imagej2/
+jars/ij-ui.jar <- modules/imagej2/
+jars/ij-util.jar <- modules/imagej2/
+jars/ij-awt-common.jar <- modules/imagej2/
+jars/ij-imagej.jar <- modules/imagej2/
+jars/ij-platform-macosx.jar <- modules/imagej2/
+jars/ij-plugin-swing.jar <- modules/imagej2/
+jars/ij-ui-swing.jar <- modules/imagej2/
 
 # From source
 libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama-1.0.2.jar \
