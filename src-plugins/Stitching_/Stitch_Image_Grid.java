@@ -322,7 +322,7 @@ public class Stitch_Image_Grid implements PlugIn
             	
             	if (i == 0)
             	{
-            		ImagePlus imp = CommonFunctions.loadImage(inputDirectory, file, gridLayout.rgbOrder);
+            		ImagePlus imp = CommonFunctions.loadImage(inputDirectory, file, -1, gridLayout.rgbOrder);
             		if (imp == null)
             		{
             			IJ.error("Cannot open first file: '" + inputDirectory + file + "' - Quitting.");
