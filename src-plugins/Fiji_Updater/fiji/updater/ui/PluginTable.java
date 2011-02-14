@@ -155,7 +155,7 @@ public class PluginTable extends JTable {
 		List<String> list = new ArrayList<String>();
 		for (String name : plugins.getUpdateSiteNames()) {
 			UpdateSite site = plugins.getUpdateSite(name);
-			if (site.uploadDirectory != null && !site.uploadDirectory.equals(""))
+			if (site.isUploadable())
 				list.add(name);
 		}
 		if (list.size() == 0) {

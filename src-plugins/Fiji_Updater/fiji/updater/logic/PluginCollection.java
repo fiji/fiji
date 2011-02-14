@@ -58,6 +58,10 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			timestamp = Long.parseLong(Util.timestamp(lastModified));
 		}
 
+		public boolean isUploadable() {
+			return uploadDirectory != null && !uploadDirectory.equals("");
+		}
+
 		public String toString() {
 			return url + (sshHost != null ? ", " + sshHost : "")
 				+ (uploadDirectory != null ? ", " + uploadDirectory : "");
