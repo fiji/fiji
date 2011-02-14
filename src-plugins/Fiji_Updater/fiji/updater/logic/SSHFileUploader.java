@@ -36,12 +36,17 @@ public class SSHFileUploader extends FileUploader {
 			UserInfo userInfo) throws JSchException {
 		super(uploadDirectory);
 
+		int port = 22, colon = sshHost.indexOf(':');
+		if (colon > 0) {
+			port = Integer.parseInt(sshHost.substring(colon + 1));
+			sshHost = sshHost.substring(0, colon);
+		}
+
 		JSch jsch = new JSch();
 
 		// Reuse ~/.ssh/known_hosts file
 		File knownHosts = new File(new File(System.getProperty("user.home"), ".ssh"), "known_hosts");
 		jsch.setKnownHosts(knownHosts.getAbsolutePath());
-
 
 		session = jsch.getSession(username, sshHost, 22);
 		session.setUserInfo(userInfo);

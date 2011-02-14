@@ -13,6 +13,7 @@ import fiji.updater.util.Progress;
 import fiji.updater.util.Util;
 
 import ij.IJ;
+import ij.Prefs;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -64,6 +65,13 @@ public class PluginUploader {
 		return uploader != null;
 	}
 
+	public String getDefaultUsername() {
+		int at = site.sshHost.indexOf('@');
+		if (at > 0)
+			return site.sshHost.substring(0, at);
+		return Prefs.get(Updater.PREFS_USER, "");
+	}
+
 	public void setUploader(FileUploader uploader) {
 		this.uploader = uploader;
 	}
@@ -71,7 +79,7 @@ public class PluginUploader {
 	public synchronized boolean setLogin(String username, UserInfo userInfo) {
 		try {
 			uploader = new SSHFileUploader(username,
-				site.sshHost, site.uploadDirectory,
+				site.sshHost.substring(site.sshHost.indexOf('@') + 1), site.uploadDirectory,
 				userInfo);
 			return true;
 		} catch (JSchException e) {
