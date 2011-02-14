@@ -177,7 +177,8 @@ public class XMLFileReader extends DefaultHandler {
 					PluginObject.Action.NEW);
 			}
 			PluginObject plugin = plugins.getPlugin(current.filename);
-			if (plugin == null)
+			if (plugin == null ||
+					(updateSite != null && !plugin.updateSite.equals(current.updateSite)))
 				plugins.add(current);
 			else
 				plugin.merge(current);
