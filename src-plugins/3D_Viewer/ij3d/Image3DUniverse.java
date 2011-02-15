@@ -264,7 +264,7 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	public void cleanup() {
 		timeline.pause();
 		removeAllContents();
-		contents = null;
+		contents.clear();
 		universes.remove(this);
 		adder.shutdownNow();
 		executer.flush();
