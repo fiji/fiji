@@ -676,8 +676,11 @@ public class NeuriteTracerResultsDialog
 		GridBagConstraints c = new GridBagConstraints();
 
 		c.anchor = GridBagConstraints.LINE_START;
-
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 0;
 		c.insets = new Insets( 10, 10, 4, 10 );
+		c.gridy = 0;
+		c.weightx = 1;
 
 		{ /* Add the status panel */
 
@@ -719,13 +722,9 @@ public class NeuriteTracerResultsDialog
 
 			statusPanel.add(statusChoicesPanel,BorderLayout.SOUTH);
 
-			c.gridx = 0;
-			c.gridy = 0;
-			c.weightx = 1;
 			getContentPane().add(statusPanel,c);
 		}
 
-		c.weightx = 0;
 		c.insets = new Insets( 4, 10, 10, 10 );
 
 		{ /* Add the panel of actions to take on half-constructed paths */
@@ -738,7 +737,6 @@ public class NeuriteTracerResultsDialog
 			pathActionPanel.add(completePath);
 			pathActionPanel.add(cancelPath);
 
-			c.gridx = 0;
 			++ c.gridy;
 			getContentPane().add(pathActionPanel,c);
 		}
@@ -826,7 +824,6 @@ public class NeuriteTracerResultsDialog
 			cv.insets = new Insets( 0, 0, 0, 0 );
 			viewOptionsPanel.add(justShowSelected,cv);
 
-			c.gridx = 0;
 			++ c.gridy;
 			getContentPane().add(viewOptionsPanel,c);
 		}
@@ -877,13 +874,11 @@ public class NeuriteTracerResultsDialog
 			++ co.gridy;
 			otherOptionsPanel.add(sigmaButtonPanel,co);
 
-			c.gridx = 0;
 			++ c.gridy;
 			getContentPane().add(otherOptionsPanel,c);
 		}
 
 		{
-			++ c.gridy;
 			JPanel hideWindowsPanel = new JPanel();
 			showOrHidePathList = new JButton("Show / Hide Path List");
 			showOrHidePathList.addActionListener(this);
@@ -892,6 +887,7 @@ public class NeuriteTracerResultsDialog
 			hideWindowsPanel.add( showOrHidePathList );
 			hideWindowsPanel.add( showOrHideFillList );
 			c.fill = GridBagConstraints.HORIZONTAL;
+			++ c.gridy;
 			getContentPane().add( hideWindowsPanel, c );
 		}
 
