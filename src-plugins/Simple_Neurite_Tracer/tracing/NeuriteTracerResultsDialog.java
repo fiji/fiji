@@ -196,7 +196,7 @@ public class NeuriteTracerResultsDialog
 		// Try to preserve the old selection:
 		String oldSelection = (String) colorImageChoice.getSelectedItem();
 
-		colorImageChoice.removeAll();
+		colorImageChoice.removeAllItems();
 
 		int j = 0;
 		colorImageChoice.addItem(noColorImageString);
