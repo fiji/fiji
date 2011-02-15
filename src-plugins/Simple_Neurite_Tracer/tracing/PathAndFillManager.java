@@ -1032,7 +1032,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				throw new TracesFileFormatException("If startson is specified for a path, then startsindex or starts[xyz] must also be specified.");
 			}
 
-			if( endsonString != null && (endsindexString == null && ! accurateStartProvided)  ) {
+			if( endsonString != null && (endsindexString == null && ! accurateEndProvided)  ) {
 				throw new TracesFileFormatException("If endson is specified for a path, then endsindex or ends[xyz] must also be specified.");
 			}
 
