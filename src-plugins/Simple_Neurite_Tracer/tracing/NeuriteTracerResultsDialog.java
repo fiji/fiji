@@ -283,12 +283,15 @@ public class NeuriteTracerResultsDialog
 	// ------------------------------------------------------------------------
 	// FIXME: consider moving these into SimpleNeuriteTracer
 
+	@Override
 	public void setPathList( String [] newList, Path justAdded, boolean expandAll ) { }
 
+	@Override
 	public void setFillList( String [] newList ) { }
 
 	// Note that rather unexpectedly the p.setSelcted calls make sure that
 	// the colour of the path in the 3D viewer is right...  (FIXME)
+	@Override
 	public void setSelectedPaths( HashSet<Path> selectedPathsSet, Object source ) {
 		if( source == this )
 			return;
@@ -1281,6 +1284,7 @@ public class NeuriteTracerResultsDialog
 
 	}
 
+	@Override
 	public void paint(Graphics g) {
 		super.paint(g);
 	}

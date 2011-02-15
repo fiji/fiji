@@ -302,14 +302,17 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 		}
 	}
 
+	@Override
 	public void setPathList( String [] pathList, Path justAdded, boolean expandAll ) { }
 
+	@Override
 	public void setFillList( String [] newList ) {
 		listModel.removeAllElements();
 		for( int i = 0; i < newList.length; ++i )
 			listModel.addElement( newList[i] );
 	}
 
+	@Override
 	public void setSelectedPaths( HashSet<Path> selectedPathSet, Object source ) {
 
 	}
@@ -416,6 +419,7 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 		thresholdField.setText(""+f);
 	}
 
+	@Override
 	public void maximumDistanceCompletelyExplored( SearchThread source, float f ) {
 		maxThreshold.setText("("+f+")");
 		maxThresholdValue = f;

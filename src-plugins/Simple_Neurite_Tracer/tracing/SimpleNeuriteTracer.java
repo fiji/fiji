@@ -1176,7 +1176,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 	}
 
 	// This is the implementation of GaussianGenerationCallback
-
+	@Override
 	public void proportionDone( double proportion ) {
 		if( proportion < 0 ) {
 			hessianEnabled = false;

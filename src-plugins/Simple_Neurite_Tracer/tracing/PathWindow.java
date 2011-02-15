@@ -408,6 +408,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 
 	}
 
+	@Override
 	public void setSelectedPaths( HashSet<Path> selectedPaths, Object source ) {
 		if( source == this )
 			return;
@@ -430,6 +431,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 
 	}
 
+	@Override
 	public void setPathList( String [] pathList, Path justAdded, boolean expandAll ) {
 
 		// Save the selection state:
@@ -486,6 +488,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			addNode( newNode, p, model );
 	}
 
+	@Override
 	public void setFillList( String [] fillList ) {
 
 	}

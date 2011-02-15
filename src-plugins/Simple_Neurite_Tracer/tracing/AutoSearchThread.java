@@ -81,6 +81,7 @@ public class AutoSearchThread extends SearchThread {
 		addNode(s,true);
 	}
 
+	@Override
 	protected double costMovingTo( int new_x, int new_y, int new_z ) {
 
 		double cost;
@@ -94,6 +95,7 @@ public class AutoSearchThread extends SearchThread {
 		return cost;
 	}
 
+	@Override
 	protected void addingNode( SearchNode n ) {
 		if( tubeValues[n.z][n.y*width+n.x] > tubenessThreshold ) {
 			AutoPoint p=new AutoPoint(n.x,n.y,n.z);

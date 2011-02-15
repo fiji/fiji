@@ -56,6 +56,7 @@ public class SWCPoint implements Comparable {
 	public void setPreviousPoint( SWCPoint p ) {
 		previousPoint = p;
 	}
+	@Override
 	public String toString( ) {
 		return "SWCPoint ["+id+"] "+Path.swcTypeNames[type]+" "+
 			"("+x+","+y+","+z+") "+

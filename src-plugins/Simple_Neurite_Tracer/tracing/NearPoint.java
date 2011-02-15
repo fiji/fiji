@@ -81,6 +81,7 @@ public class NearPoint implements Comparable<NearPoint> {
 		return (d < od) ? -1 : ((d > od) ? 1 : 0);
 	}
 
+	@Override
 	public String toString() {
 		return "  near: ("+nearX+","+nearY+","+nearZ+")\n"+
 			"  pathPoint: ("+pathPointX+","+pathPointY+","+pathPointZ+")\n"+

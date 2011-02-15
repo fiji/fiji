@@ -60,6 +60,7 @@ public class PointInImage {
 		return Math.sqrt( xdiff * xdiff + ydiff * ydiff + zdiff * zdiff );
 	}
 
+	@Override
 	public String toString() {
 		return "( "+x+", "+y+", "+z+" ) [onPath "+onPath+"]";
 	}
