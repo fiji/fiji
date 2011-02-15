@@ -685,6 +685,9 @@ public class NeuriteTracerResultsDialog
 			statusPanel.setLayout(new BorderLayout());
 			statusPanel.add(new JLabel("Instructions:"), BorderLayout.NORTH);
 			statusText = new JLabel("");
+			statusText.setOpaque(true);
+			statusText.setForeground(Color.black);
+			statusText.setBackground(Color.white);
 			updateStatusText("Initial status text");
 			statusText.setBorder( new EmptyBorder( 5, 5, 5, 5 ) );
 			statusPanel.add(statusText,BorderLayout.CENTER);
