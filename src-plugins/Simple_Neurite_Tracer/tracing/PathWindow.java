@@ -52,6 +52,9 @@ import javax.swing.event.TreeSelectionEvent;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 
 import java.util.Set;
 import java.util.HashSet;
@@ -104,7 +107,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 	public void actionPerformed(ActionEvent e) {
 		Object source = e.getSource();
 		Set<Path> selectedPaths = getSelectedPaths();
-		if( source == deleteButton ) {
+		if( source == deleteButton || source == deleteMenuItem ) {
 			if( selectedPaths.isEmpty() ) {
 				IJ.error("No paths were selected for deletion");
 				return;
@@ -113,7 +116,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				p.disconnectFromAll();
 				pathAndFillManager.deletePath( p );
 			}
-		} else if( source == makePrimaryButton ) {
+		} else if( source == makePrimaryButton || source == makePrimaryMenuItem ) {
 			if( selectedPaths.size() != 1 ) {
 				IJ.error("You must have exactly one path selected");
 				return;
@@ -125,7 +128,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			pathsExplored.add(p);
 			p.unsetPrimaryForConnected(pathsExplored);
 			pathAndFillManager.resetListeners(null);
-		} else if( source == exportAsSWCButton ) {
+		} else if( source == exportAsSWCButton || source == exportAsSWCMenuItem ) {
 			ArrayList<SWCPoint> swcPoints = null;
 			try {
 				swcPoints = pathAndFillManager.getSWCFor(selectedPaths);
@@ -166,13 +169,13 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				return;
 			}
 
-		} else if( source == fillOutButton ) {
+		} else if( source == fillOutButton || source == fillOutMenuItem) {
 			if( selectedPaths.size() < 1 ) {
 				IJ.error("You must have one or more paths in the list selected");
 				return;
 			}
 			plugin.startFillingPaths(selectedPaths);
-		} else if( source == fitVolumeButton ) {
+		} else if( source == fitVolumeButton || source == fitVolumeMenuItem) {
 			if( selectedPaths.size() < 1 ) {
 				IJ.error("You must have one or more paths in the list selected");
 				return;
@@ -200,7 +203,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				}
 			}
 			pathAndFillManager.resetListeners(null);
-		} else if( source == renameButton ) {
+		} else if( source == renameButton || source == renameMenuItem ) {
 			if( selectedPaths.size() != 1 ) {
 				IJ.error("You must have exactly one path selected");
 				return;
@@ -238,27 +241,57 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		}
 	}
 
+	void renameSetEnabled(boolean enabled) {
+		renameButton.setEnabled(enabled);
+		renameMenuItem.setEnabled(enabled);
+	}
+	void fitVolumeSetEnabled(boolean enabled) {
+		fitVolumeButton.setEnabled(enabled);
+		fitVolumeMenuItem.setEnabled(enabled);
+	}
+	void fillOutSetEnabled(boolean enabled) {
+		fillOutButton.setEnabled(enabled);
+		fillOutMenuItem.setEnabled(enabled);
+	}
+	void makePrimarySetEnabled(boolean enabled) {
+		makePrimaryButton.setEnabled(enabled);
+		makePrimaryMenuItem.setEnabled(enabled);
+	}
+	void deleteSetEnabled(boolean enabled) {
+		deleteButton.setEnabled(enabled);
+		deleteMenuItem.setEnabled(enabled);
+	}
+	void exportAsSWCSetEnabled(boolean enabled) {
+		exportAsSWCButton.setEnabled(enabled);
+		exportAsSWCMenuItem.setEnabled(enabled);
+	}
+
+	void fitVolumeSetText(String s) {
+		fitVolumeButton.setText(s);
+		fitVolumeMenuItem.setText(s);
+	}
+
 	public void updateButtonsNoneSelected( ) {
-		renameButton.setEnabled(false);
-		fitVolumeButton.setText("Fit Volume");
-		fitVolumeButton.setEnabled(false);
-		fillOutButton.setEnabled(false);
-		makePrimaryButton.setEnabled(false);
-		deleteButton.setEnabled(false);
-		exportAsSWCButton.setEnabled(false);
+		renameSetEnabled(false);
+		fitVolumeSetText("Fit Volume");
+		fitVolumeSetEnabled(false);
+		fillOutSetEnabled(false);
+		makePrimarySetEnabled(false);
+		deleteSetEnabled(false);
+		exportAsSWCSetEnabled(false);
 	}
 
 	public void updateButtonsOneSelected( Path p ) {
-		renameButton.setEnabled(true);
+		renameSetEnabled(true);
 		if( p.getUseFitted() )
-			fitVolumeButton.setText("Un-fit Volume");
+			fitVolumeSetText("Un-fit Volume");
 		else
-			fitVolumeButton.setText("Fit Volume");
-		fitVolumeButton.setEnabled(true);
-		fillOutButton.setEnabled(true);
-		makePrimaryButton.setEnabled(true);
-		deleteButton.setEnabled(true);
-		exportAsSWCButton.setEnabled(true);
+			fitVolumeSetText("Fit Volume");
+		fitVolumeSetEnabled(true);
+		fillOutSetEnabled(true);
+		makePrimarySetEnabled(true);
+		deleteSetEnabled(true);
+		exportAsSWCSetEnabled(true);
 	}
 
 	public boolean allSelectedUsingFittedVersion() {
@@ -274,18 +307,18 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 	}
 
 	public void updateButtonsManySelected( ) {
-		renameButton.setEnabled(false);
+		renameSetEnabled(false);
 		{
 			if( allSelectedUsingFittedVersion() )
-				fitVolumeButton.setText("Un-fit Volumes");
+				fitVolumeSetText("Un-fit Volumes");
 			else
-				fitVolumeButton.setText("Fit Volumes");
+				fitVolumeSetText("Fit Volumes");
 		}
-		fitVolumeButton.setEnabled(true);
-		fillOutButton.setEnabled(true);
-		makePrimaryButton.setEnabled(false);
-		deleteButton.setEnabled(true);
-		exportAsSWCButton.setEnabled(true);
+		fitVolumeSetEnabled(true);
+		fillOutSetEnabled(true);
+		makePrimarySetEnabled(false);
+		deleteSetEnabled(true);
+		exportAsSWCSetEnabled(true);
 	}
 
 	public void valueChanged( TreeSelectionEvent e ) {
@@ -314,6 +347,8 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 	HelpfulJTree tree;
 	DefaultMutableTreeNode root;
 
+	JPopupMenu popup;
+
 	JPanel buttonPanel;
 
 	JButton renameButton;
@@ -322,6 +357,13 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 	JButton makePrimaryButton;
 	JButton deleteButton;
 	JButton exportAsSWCButton;
+
+	JMenuItem renameMenuItem;
+	JMenuItem fitVolumeMenuItem;
+	JMenuItem fillOutMenuItem;
+	JMenuItem makePrimaryMenuItem;
+	JMenuItem deleteMenuItem;
+	JMenuItem exportAsSWCMenuItem;
 
 	SimpleNeuriteTracer plugin;
 	PathAndFillManager pathAndFillManager;
@@ -347,6 +389,35 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 
 		buttonPanel = new JPanel();
 
+		add(buttonPanel, BorderLayout.PAGE_END);
+
+		// Create all the menu items:
+
+		popup = new JPopupMenu();
+
+		renameMenuItem = new JMenuItem("Rename");
+		fitVolumeMenuItem = new JMenuItem("Fit Volume");
+		fillOutMenuItem = new JMenuItem("Fill Out");
+		makePrimaryMenuItem = new JMenuItem("Make Primary");
+		deleteMenuItem = new JMenuItem("Delete");
+		exportAsSWCMenuItem = new JMenuItem("Export as SWC");
+
+		popup.add(renameMenuItem);
+		popup.add(fitVolumeMenuItem);
+		popup.add(fillOutMenuItem);
+		popup.add(makePrimaryMenuItem);
+		popup.add(deleteMenuItem);
+		popup.add(exportAsSWCMenuItem);
+
+		renameMenuItem.addActionListener(this);
+		fitVolumeMenuItem.addActionListener(this);
+		fillOutMenuItem.addActionListener(this);
+		makePrimaryMenuItem.addActionListener(this);
+		deleteMenuItem.addActionListener(this);
+		exportAsSWCMenuItem.addActionListener(this);
+
+		// Create all the menu items:
+
 		renameButton = new JButton("Rename");
 		fitVolumeButton = new JButton("Fit Volume");
 		fillOutButton = new JButton("Fill Out");
@@ -368,17 +439,38 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		deleteButton.addActionListener(this);
 		exportAsSWCButton.addActionListener(this);
 
-		add(buttonPanel, BorderLayout.PAGE_END);
 
+		MouseListener ml = new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent me) {
+				maybeShowPopup(me);
+			}
+			@Override
+			public void mouseReleased(MouseEvent me) {
+				maybeShowPopup(me);
+			}
+			protected void maybeShowPopup(MouseEvent me) {
+				if( me.isPopupTrigger() )
+					showPopup(me);
+			}
+		};
+		tree.addMouseListener(ml);
+	}
+
+	void showPopup(MouseEvent me) {
+		// Possibly adjust the selection here:
+		popup.show(me.getComponent(),
+				me.getX(),
+				me.getY());
 	}
 
 	void setButtonsEnabled( boolean enable ) {
-		renameButton.setEnabled(enable);
-		fitVolumeButton.setEnabled(enable);
-		fillOutButton.setEnabled(enable);
-		makePrimaryButton.setEnabled(enable);
-		deleteButton.setEnabled(enable);
-		exportAsSWCButton.setEnabled(enable);
+		renameSetEnabled(enable);
+		fitVolumeSetEnabled(enable);
+		fillOutSetEnabled(enable);
+		makePrimarySetEnabled(enable);
+		deleteSetEnabled(enable);
+		exportAsSWCSetEnabled(enable);
 	}
 
 	void getExpandedPaths( HelpfulJTree tree, TreeModel model, MutableTreeNode node, HashSet<Path> set ) {
