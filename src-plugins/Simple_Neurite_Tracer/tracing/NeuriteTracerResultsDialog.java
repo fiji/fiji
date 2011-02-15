@@ -255,7 +255,7 @@ public class NeuriteTracerResultsDialog
 		String selectedTitle = (String) colorImageChoice.getSelectedItem();
 
 		ImagePlus intendedColorImage = null;
-		if( ! selectedTitle.equals(noColorImageString) ) {
+		if( selectedTitle != null && ! selectedTitle.equals(noColorImageString) ) {
 			intendedColorImage = WindowManager.getImage(selectedTitle);
 		}
 
