@@ -35,13 +35,6 @@ import javax.swing.*;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.MutableTreeNode;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
-import javax.swing.tree.TreeModel;
-
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemListener;
@@ -51,11 +44,11 @@ import java.awt.GridBagConstraints;
 import java.awt.Insets;
 
 import java.util.HashSet;
-import java.util.Iterator;
 
 import java.io.File;
 import java.io.IOException;
 
+@SuppressWarnings("serial")
 public class FillWindow extends JFrame implements PathAndFillListener, ActionListener, ItemListener, FillerProgressCallback {
 
 	SimpleNeuriteTracer plugin;
@@ -317,7 +310,7 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 			listModel.addElement( newList[i] );
 	}
 
-	public void setSelectedPaths( HashSet selectedPathSet, Object source ) {
+	public void setSelectedPaths( HashSet<Path> selectedPathSet, Object source ) {
 
 	}
 
@@ -384,7 +377,6 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 						       "fills",
 						       ".csv");
 
-			String savePath;
 			if(sd.getFileName()==null) {
 				return;
 			}
@@ -440,17 +432,17 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 	public void threadStatus( SearchThread source, int currentStatus ) {
 		switch(currentStatus) {
 		case FillerThread.STOPPING:
-			pauseOrRestartFilling.setLabel("Stopped");
+			pauseOrRestartFilling.setText("Stopped");
 			pauseOrRestartFilling.setEnabled(false);
 			saveFill.setEnabled(false);
 
 			break;
 		case FillerThread.PAUSED:
-			pauseOrRestartFilling.setLabel("Continue");
+			pauseOrRestartFilling.setText("Continue");
 			saveFill.setEnabled(true);
 			break;
 		case FillerThread.RUNNING:
-			pauseOrRestartFilling.setLabel("Pause");
+			pauseOrRestartFilling.setText("Pause");
 			saveFill.setEnabled(false);
 			break;
 		}

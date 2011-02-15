@@ -289,7 +289,7 @@ public class NeuriteTracerResultsDialog
 
 	// Note that rather unexpectedly the p.setSelcted calls make sure that
 	// the colour of the path in the 3D viewer is right...  (FIXME)
-	public void setSelectedPaths( HashSet selectedPathsSet, Object source ) {
+	public void setSelectedPaths( HashSet<Path> selectedPathsSet, Object source ) {
 		if( source == this )
 			return;
 		for( int i = 0; i < pathAndFillManager.size(); ++i ) {

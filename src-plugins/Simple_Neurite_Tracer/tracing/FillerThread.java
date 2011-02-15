@@ -144,7 +144,6 @@ public class FillerThread extends SearchThread {
 					     Fill fill ) {
 
 		boolean reciprocal;
-		float initialThreshold;
 		String metric = fill.getMetric();
 
 		if( metric.equals("reciprocal-intensity-scaled") ) {
@@ -229,8 +228,6 @@ public class FillerThread extends SearchThread {
 
                 this.reciprocal = reciprocal;
                 setThreshold( initialThreshold );
-
-                long lastThresholdChange = 0;
 
 		setPriority( MIN_PRIORITY );
         }

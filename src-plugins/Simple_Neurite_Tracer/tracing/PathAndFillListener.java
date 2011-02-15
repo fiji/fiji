@@ -35,6 +35,6 @@ public interface PathAndFillListener {
 
 	void setFillList( String [] fillList );
 
-	void setSelectedPaths( HashSet selectedPathSet, Object source );
+	void setSelectedPaths( HashSet<Path> selectedPathSet, Object source );
 
 }

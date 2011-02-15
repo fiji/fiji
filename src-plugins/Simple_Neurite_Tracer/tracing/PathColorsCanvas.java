@@ -32,6 +32,7 @@ import java.awt.event.*;
 
 import ij.gui.ColorChooser;
 
+@SuppressWarnings("serial")
 public class PathColorsCanvas extends Canvas implements MouseListener {
 
 	SimpleNeuriteTracer plugin;

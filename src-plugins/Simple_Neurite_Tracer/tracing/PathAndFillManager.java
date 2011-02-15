@@ -506,7 +506,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			if( p == null ) {
 				throw new RuntimeException("BUG: A path in allPaths was null!");
 			}
-			String pathName;
 			String name = p.getName();
 			if( name == null )
 				name = "Path [" + pathID + "]";
@@ -994,7 +993,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		} else if( qName.equals("path") ) {
 
 			String idString = attributes.getValue("id");
-			String d = attributes.getValue("d");
 
 			String useFittedString = attributes.getValue("usefitted");
 			String fittedIDString = attributes.getValue("fitted");
@@ -1038,9 +1036,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				throw new TracesFileFormatException("If endson is specified for a path, then endsindex or ends[xyz] must also be specified.");
 			}
 
-			int startson, startsindex, endson, endsindex;
-			double startsx, startsy, startsz;
-			double endsx, endsy, endsz;
+			int startson, endson, endsindex;
 
 			current_path = new Path( x_spacing, y_spacing, z_spacing, spacing_units );
 
@@ -1070,14 +1066,13 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 					maxUsedID = id;
 
 				if( startsonString == null ) {
-					startson = startsindex = -1;
+					startson = -1;
 				} else {
 					startson = Integer.parseInt(startsonString);
 					startsOnInteger = new Integer( startson );
 
 					if( startsxString == null ) {
 						// The index (older file format) was supplied:
-						startsindex = Integer.parseInt(startsindexString);
 						startsIndexInteger = new Integer( startsindexString );
 					} else {
 						startJoinPoint = new PointInImage( Double.parseDouble( startsxString ),

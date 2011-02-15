@@ -44,7 +44,6 @@ import java.io.*;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import client.ArchiveClient;
@@ -1340,7 +1339,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 	}
 
 	public void selectPath( Path p, boolean addToExistingSelection ) {
-		HashSet pathsToSelect = new HashSet();
+		HashSet<Path> pathsToSelect = new HashSet<Path>();
 		if( p.isFittedVersionOfAnotherPath() )
 			pathsToSelect.add(p.fittedVersionOf);
 		else

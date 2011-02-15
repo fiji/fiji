@@ -55,9 +55,9 @@ import java.awt.event.ActionEvent;
 
 import java.util.Set;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.ArrayList;
 
+@SuppressWarnings("serial")
 public class PathWindow extends JFrame implements PathAndFillListener, TreeSelectionListener, ActionListener {
 
 	public static class HelpfulJTree extends JTree {
@@ -138,7 +138,6 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 						       plugin.getImagePlus().getShortTitle(),
 						       ".swc");
 
-			String savePath;
 			if(sd.getFileName()==null) {
 				return;
 			}
@@ -382,7 +381,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		exportAsSWCButton.setEnabled(enable);
 	}
 
-	void getExpandedPaths( HelpfulJTree tree, TreeModel model, MutableTreeNode node, HashSet set ) {
+	void getExpandedPaths( HelpfulJTree tree, TreeModel model, MutableTreeNode node, HashSet<Path> set ) {
 		int count = model.getChildCount(node);
 		for( int i = 0; i < count;  i++ ) {
 			DefaultMutableTreeNode child = (DefaultMutableTreeNode) model.getChild( node, i );
@@ -395,7 +394,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		}
 	}
 
-	void setExpandedPaths( HelpfulJTree tree, TreeModel model, MutableTreeNode node, HashSet set, Path justAdded ) {
+	void setExpandedPaths( HelpfulJTree tree, TreeModel model, MutableTreeNode node, HashSet<Path> set, Path justAdded ) {
 		int count = model.getChildCount(node);
 		for( int i = 0; i < count;  i++ ) {
 			DefaultMutableTreeNode child = (DefaultMutableTreeNode) model.getChild( node, i );
@@ -409,7 +408,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 
 	}
 
-	public void setSelectedPaths( HashSet selectedPaths, Object source ) {
+	public void setSelectedPaths( HashSet<Path> selectedPaths, Object source ) {
 		if( source == this )
 			return;
 		TreePath [] noTreePaths = {};
@@ -417,7 +416,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		setSelectedPaths( tree, tree.getModel(), root, selectedPaths );
 	}
 
-	void setSelectedPaths( HelpfulJTree tree, TreeModel model, MutableTreeNode node, HashSet set ) {
+	void setSelectedPaths( HelpfulJTree tree, TreeModel model, MutableTreeNode node, HashSet<Path> set ) {
 		int count = model.getChildCount(node);
 		for( int i = 0; i < count;  i++ ) {
 			DefaultMutableTreeNode child = (DefaultMutableTreeNode) model.getChild( node, i );
@@ -436,8 +435,8 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		// Save the selection state:
 
 		TreePath [] selectedBefore = tree.getSelectionPaths();
-		HashSet selectedPathsBefore = new HashSet();
-		HashSet expandedPathsBefore = new HashSet();
+		HashSet<Path> selectedPathsBefore = new HashSet<Path>();
+		HashSet<Path> expandedPathsBefore = new HashSet<Path>();
 
 		if( selectedBefore != null )
 			for( int i = 0; i < selectedBefore.length; ++i ) {
