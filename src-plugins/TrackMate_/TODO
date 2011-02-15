@@ -1,4 +1,3 @@
-- Move the choice of tracker to after spot thresholding.
 - Make a better loading logic and GUI interaction.
 - Offer to select displayer at load.
 - Fix GUI update when calculating feature.
