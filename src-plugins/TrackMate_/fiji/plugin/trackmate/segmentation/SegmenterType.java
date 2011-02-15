@@ -1,6 +1,8 @@
 package fiji.plugin.trackmate.segmentation;
 
-public enum SegmenterType {
+import fiji.plugin.trackmate.InfoTextable;
+
+public enum SegmenterType implements InfoTextable {
 	PEAKPICKER_SEGMENTER,
 	LOG_SEGMENTER,
 	DOG_SEGMENTER;
@@ -39,6 +41,7 @@ public enum SegmenterType {
 		return null;
 	}
 
+	@Override
 	public String getInfoText() {
 		switch(this) {
 		case PEAKPICKER_SEGMENTER:

@@ -3,13 +3,13 @@ package fiji.plugin.trackmate.gui;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.TEXTFIELD_DIMENSION;
+import fiji.plugin.trackmate.Settings;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.NewImage;
 import ij.gui.Roi;
 
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -18,21 +18,12 @@ import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import javax.swing.Action;
-import javax.swing.ComboBoxModel;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
-
-import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.segmentation.SegmenterType;
-import fiji.plugin.trackmate.tracking.TrackerType;
 
 public class StartDialogPanel extends ActionListenablePanel {
 
@@ -47,7 +38,6 @@ public class StartDialogPanel extends ActionListenablePanel {
 	
 
 	private static final long serialVersionUID = -969185878762294241L;
-	private static final String INFO_ICON = "images/information.png";
 	
 	private JLabel jLabelCheckCalibration;
 	private JNumericTextField jTextFieldPixelWidth;
@@ -84,13 +74,6 @@ public class StartDialogPanel extends ActionListenablePanel {
 	private JLabel jLabelUnits4;
 
 	private ImagePlus imp;
-	private JLabel jLabelSegmenterChoice;
-	private JLabel jLabelTrackerChoice;
-	private JComboBox jComboBoxSegmenterChoice;
-	private JComboBox jComboBoxTrackerChoice;
-	private JButton jButtonSegmenterInfo;
-
-	private JButton jButtonTrackerInfo;
 	private Settings settings;
 	private Component target;
 	
@@ -154,20 +137,6 @@ public class StartDialogPanel extends ActionListenablePanel {
 			settings.imageFileName	= imp.getOriginalFileInfo().fileName;
 			settings.imageFolder 	= imp.getOriginalFileInfo().directory;
 		}
-		// Parse segmenter choice
-		SegmenterType segmenterChoice = SegmenterType.values()[jComboBoxSegmenterChoice.getSelectedIndex()];
-		settings.segmenterSettings = segmenterChoice.createSettings();
-		settings.segmenterType = segmenterChoice;
-		settings.segmenterSettings.segmenterType = segmenterChoice;
-		settings.segmenterSettings.spaceUnits = imp.getCalibration().getUnit();
-		// Parse tracker choice
-		TrackerType trackerChoice = TrackerType.values()[jComboBoxTrackerChoice.getSelectedIndex()];
-		settings.trackerSettings = trackerChoice.createSettings();
-		settings.trackerType = trackerChoice;
-		settings.trackerSettings.trackerType = trackerChoice;
-		settings.trackerSettings.spaceUnits = imp.getCalibration().getUnit();
-		settings.trackerSettings.timeUnits = imp.getCalibration().getTimeUnit();
-		// Hop!
 		return settings;
 	}
 	
@@ -177,7 +146,7 @@ public class StartDialogPanel extends ActionListenablePanel {
 	 */
 	
 	/**
-	 * Fill the text fields with the paramters grabbed in the {@link Settings} argument.
+	 * Fill the text fields with the parameters grabbed in the {@link Settings} argument.
 	 */
 	private void echoSettings(Settings settings) {
 		jLabelImageName.setText(settings.imp.getTitle());
@@ -262,68 +231,6 @@ public class StartDialogPanel extends ActionListenablePanel {
 				jLabelImageName.setText("Image name");
 				jLabelImageName.setFont(FONT.deriveFont(Font.BOLD));
 				jLabelImageName.setHorizontalAlignment(SwingConstants.CENTER);
-			}
-			{
-				jLabelSegmenterChoice = new JLabel();
-				this.add(jLabelSegmenterChoice, new GridBagConstraints(0, 1, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 10), 0, 0));
-				jLabelSegmenterChoice.setText("Select a segmenter:");
-				jLabelSegmenterChoice.setFont(FONT);
-			}
-			{
-				String[] segmenterNames = new String[SegmenterType.values().length];
-				for (int i = 0; i < segmenterNames.length; i++) 
-					segmenterNames[i] = SegmenterType.values()[i].toString();
-				ComboBoxModel jComboBoxSegmenterModel = new DefaultComboBoxModel(segmenterNames);
-				jComboBoxSegmenterChoice = new JComboBox();
-				this.add(jComboBoxSegmenterChoice, new GridBagConstraints(0, 2, 2, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 10), 0, 0));
-				jComboBoxSegmenterChoice.setModel(jComboBoxSegmenterModel);
-				jComboBoxSegmenterChoice.setFont(FONT);
-			}
-			{
-				jButtonSegmenterInfo = new JButton();
-				this.add(jButtonSegmenterInfo, new GridBagConstraints(2, 2, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.CENTER, new Insets(0, 10, 0, 10), 0, 0));
-				jButtonSegmenterInfo.setIcon(new ImageIcon(getClass().getResource(INFO_ICON)));
-				jButtonSegmenterInfo.setPreferredSize(new Dimension(24, 24));				
-				jButtonSegmenterInfo.addActionListener(new ActionListener() {
-					public void actionPerformed(ActionEvent e) {						
-						String text = SegmenterType.values()[jComboBoxSegmenterChoice.getSelectedIndex()].getInfoText();
-						jButtonSegmenterInfo.setToolTipText(text);
-						Action toolTipAction = jButtonSegmenterInfo.getActionMap().get("postTip");						
-						ActionEvent postTip = new ActionEvent(jButtonSegmenterInfo, ActionEvent.ACTION_PERFORMED, "");
-						toolTipAction.actionPerformed( postTip );
-					}
-				});
-			}
-			{
-				jLabelTrackerChoice = new JLabel();
-				this.add(jLabelTrackerChoice, new GridBagConstraints(0, 3, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 10), 0, 0));
-				jLabelTrackerChoice.setText("Select a tracker:");
-				jLabelTrackerChoice.setFont(FONT);
-			}
-			{
-				String[] trackerNames = new String[TrackerType.values().length];
-				for (int i = 0; i < trackerNames.length; i++) 
-					trackerNames[i] = TrackerType.values()[i].toString();
-				ComboBoxModel jComboBoxTrackerModel = new DefaultComboBoxModel(trackerNames);
-				jComboBoxTrackerChoice = new JComboBox();
-				this.add(jComboBoxTrackerChoice, new GridBagConstraints(0, 4, 2, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 10), 0, 0));
-				jComboBoxTrackerChoice.setModel(jComboBoxTrackerModel);
-				jComboBoxTrackerChoice.setFont(FONT);
-			}
-			{
-				jButtonTrackerInfo = new JButton();
-				this.add(jButtonTrackerInfo, new GridBagConstraints(2, 4, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.CENTER, new Insets(0, 10, 0, 10), 0, 0));
-				jButtonTrackerInfo.setIcon(new ImageIcon(getClass().getResource(INFO_ICON)));
-				jButtonTrackerInfo.setPreferredSize(new Dimension(24, 24));
-				jButtonTrackerInfo.addActionListener(new ActionListener() {
-					public void actionPerformed(ActionEvent e) {						
-						String text = TrackerType.values()[jComboBoxTrackerChoice.getSelectedIndex()].getInfoText();
-						jButtonTrackerInfo.setToolTipText(text);
-						Action toolTipAction = jButtonTrackerInfo.getActionMap().get("postTip");						
-						ActionEvent postTip = new ActionEvent(jButtonTrackerInfo, ActionEvent.ACTION_PERFORMED, "");
-						toolTipAction.actionPerformed( postTip );
-					}
-				});
 			}
 			{
 				jLabelCheckCalibration = new JLabel();

@@ -83,6 +83,11 @@ public class SegmenterSettingsPanel extends ActionListenablePanel {
 	public static SegmenterSettingsPanel createSegmenterSettingsPanel(final Settings settings) {
 		SegmenterType segmenterType = settings.segmenterType;
 		SegmenterSettings segmenterSettings = settings.segmenterSettings;
+		if (null == segmenterSettings || null == segmenterSettings.segmenterType) {
+			segmenterSettings = segmenterType.createSettings();
+			segmenterSettings.segmenterType = segmenterType;
+			segmenterSettings.spaceUnits = settings.spaceUnits;
+		}
 		switch (segmenterType) {
 		case DOG_SEGMENTER:
 		case LOG_SEGMENTER:

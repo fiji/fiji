@@ -21,6 +21,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.InfoTextable;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
@@ -49,7 +50,7 @@ public abstract class SpotDisplayer {
 	/**
 	 * This enum stores the list of {@link SpotDisplayer} currently available.
 	 */
-	public static enum DisplayerType {
+	public static enum DisplayerType implements InfoTextable {
 		THREEDVIEWER_DISPLAYER,
 		HYPERSTACK_DISPLAYER;
 		
@@ -72,6 +73,7 @@ public abstract class SpotDisplayer {
 			return null;
 		}
 		
+		@Override
 		public String getInfoText() {
 			switch(this) {
 			case HYPERSTACK_DISPLAYER:
@@ -305,11 +307,20 @@ public abstract class SpotDisplayer {
 	 * used. The {@link #refresh()} method must be called for display.
 	 */
 	public abstract void setColorByFeature(final Feature feature);
-	
+
+	/**
+	 * Refresh the displayer display with current content.
+	 */
 	public abstract void refresh();
 
+	/**
+	 * Switch visibility of tracks on/off. 
+	 */
 	public abstract void setTrackVisible(boolean displayTrackSelected);
 
+	/**
+	 * Switch visibility of spots on/off.
+	 */
 	public abstract void setSpotVisible(boolean displaySpotSelected);
 
 	/**

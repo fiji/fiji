@@ -16,6 +16,10 @@ import javax.swing.WindowConstants;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.segmentation.SegmenterType;
+import fiji.plugin.trackmate.tracking.TrackerType;
+import fiji.plugin.trackmate.visualization.SpotDisplayer;
+import fiji.plugin.trackmate.visualization.SpotDisplayer.DisplayerType;
 
 /**
  * A view for the TrackMate_ plugin, strongly inspired from the spots segmentation GUI of the Imaris® software 
@@ -64,10 +68,12 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	StartDialogPanel startDialogPanel;
 	SegmenterSettingsPanel segmenterSettingsPanel;
 	InitThresholdPanel initThresholdingPanel;
-	DisplayerChooserPanel displayerChooserPanel;
+	EnumChooserPanel<DisplayerType> displayerChooserPanel;
 	ThresholdGuiPanel thresholdGuiPanel;
 	TrackerSettingsPanel trackerSettingsPanel;
 	DisplayerPanel displayerPanel;
+	EnumChooserPanel<SegmenterType> segmenterChoicePanel;
+	EnumChooserPanel<TrackerType> trackerChoicePanel;
 
 	/*
 	 * FIELDS
@@ -88,10 +94,12 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	
 	public enum PanelCard {
 		START_DIALOG_KEY,
+		SEGMENTER_CHOICE_KEY,
 		TUNE_SEGMENTER_KEY,
 		INITIAL_THRESHOLDING_KEY,
 		DISPLAYER_CHOICE_KEY,
 		THRESHOLD_GUI_KEY,
+		TRACKER_CHOICE_KEY,
 		TUNE_TRACKER_KEY,
 		LOG_PANEL_KEY,
 		DISPLAYER_PANEL_KEY;
@@ -141,10 +149,16 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		switch (key) {
 		
 		case START_DIALOG_KEY:
-			if (null != startDialogPanel)
-				jPanelMain.remove(startDialogPanel);
+//			if (null != startDialogPanel)
+//				jPanelMain.remove(startDialogPanel);
 			startDialogPanel = new StartDialogPanel(model.getSettings(), jButtonNext);
 			panel = startDialogPanel;
+			break;
+			
+		case SEGMENTER_CHOICE_KEY:
+			if (null == segmenterChoicePanel)
+				segmenterChoicePanel = new EnumChooserPanel<SegmenterType>(SegmenterType.PEAKPICKER_SEGMENTER, "segmenter");
+			panel = segmenterChoicePanel;
 			break;
 			
 		case TUNE_SEGMENTER_KEY:
@@ -164,7 +178,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		case DISPLAYER_CHOICE_KEY:
 			if (null != displayerChooserPanel)
 				jPanelMain.remove(displayerChooserPanel);
-			displayerChooserPanel = new DisplayerChooserPanel(model.getSettings());
+			displayerChooserPanel = new EnumChooserPanel<SpotDisplayer.DisplayerType>(SpotDisplayer.DisplayerType.HYPERSTACK_DISPLAYER, "displayer");
 			panel = displayerChooserPanel;
 			break;
 			
@@ -173,6 +187,12 @@ public class TrackMateFrame extends javax.swing.JFrame {
 				jPanelMain.remove(thresholdGuiPanel);
 			thresholdGuiPanel = new ThresholdGuiPanel(model.getFeatureValues(), model.getFeatureThresholds());
 			panel = thresholdGuiPanel;
+			break;
+			
+		case TRACKER_CHOICE_KEY:
+			if (null == trackerChoicePanel)
+				trackerChoicePanel = new EnumChooserPanel<TrackerType>(TrackerType.SIMPLE_LAP_TRACKER, "tracker");
+			panel = trackerChoicePanel;
 			break;
 			
 		case TUNE_TRACKER_KEY:

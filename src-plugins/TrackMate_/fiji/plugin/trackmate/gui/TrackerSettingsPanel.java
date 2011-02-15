@@ -22,6 +22,11 @@ public abstract class TrackerSettingsPanel extends ActionListenablePanel {
 	public static TrackerSettingsPanel createPanel(Settings settings) {
 		TrackerType trackerType = settings.trackerType;
 		TrackerSettings trackerSettings = settings.trackerSettings;
+		if (null == trackerSettings) {
+			trackerSettings = trackerType.createSettings();
+			trackerSettings.spaceUnits = settings.spaceUnits;
+			trackerSettings.timeUnits = settings.timeUnits;
+		}
 		switch (trackerType) {
 		case LAP_TRACKER:
 			return new LAPTrackerSettingsPanel(trackerSettings);

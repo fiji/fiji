@@ -50,8 +50,8 @@ public class Settings {
 	public SegmenterType segmenterType = SegmenterType.PEAKPICKER_SEGMENTER;
 	public TrackerType trackerType = TrackerType.LAP_TRACKER;
 	
-	public SegmenterSettings segmenterSettings = new SegmenterSettings();
-	public TrackerSettings trackerSettings = new TrackerSettings();
+	public SegmenterSettings segmenterSettings = null;
+	public TrackerSettings trackerSettings = null;
 	
 	/*
 	 * METHODS

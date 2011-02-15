@@ -1,6 +1,8 @@
 package fiji.plugin.trackmate.tracking;
 
-public enum TrackerType {
+import fiji.plugin.trackmate.InfoTextable;
+
+public enum TrackerType implements InfoTextable {
 	SIMPLE_LAP_TRACKER,
 	LAP_TRACKER;
 	
@@ -31,6 +33,7 @@ public enum TrackerType {
 		return null;
 	}
 
+	@Override
 	public String getInfoText() {
 		switch(this) {
 		case LAP_TRACKER:

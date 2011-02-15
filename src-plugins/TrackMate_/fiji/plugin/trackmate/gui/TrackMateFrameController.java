@@ -56,6 +56,7 @@ public class TrackMateFrameController {
 
 	private enum GuiState {
 		START,
+		CHOOSE_SEGMENTER,
 		TUNE_SEGMENTER,
 		SEGMENTING,
 		INITIAL_THRESHOLDING,
@@ -63,6 +64,7 @@ public class TrackMateFrameController {
 		CALCULATE_FEATURES,
 		TUNE_THRESHOLDS,
 		THRESHOLD_BLOBS,
+		CHOOSE_TRACKER,
 		TUNE_TRACKER,
 		TRACKING,
 		TUNE_DISPLAY;
@@ -73,6 +75,8 @@ public class TrackMateFrameController {
 		public GuiState nextState() {
 			switch (this) {
 			case START:
+				return CHOOSE_SEGMENTER;
+			case CHOOSE_SEGMENTER:
 				return TUNE_SEGMENTER;
 			case TUNE_SEGMENTER:
 				return SEGMENTING;
@@ -87,6 +91,8 @@ public class TrackMateFrameController {
 			case TUNE_THRESHOLDS:
 				return THRESHOLD_BLOBS;
 			case THRESHOLD_BLOBS:
+				return CHOOSE_TRACKER;
+			case CHOOSE_TRACKER:					
 				return TUNE_TRACKER;
 			case TUNE_TRACKER:
 				return TRACKING;
@@ -104,8 +110,10 @@ public class TrackMateFrameController {
 		 */
 		public GuiState previousState() {
 			switch (this) {
-			case TUNE_SEGMENTER:
+			case CHOOSE_SEGMENTER:
 				return START;
+			case TUNE_SEGMENTER:
+				return CHOOSE_SEGMENTER;
 			case SEGMENTING:
 				return TUNE_SEGMENTER;
 			case INITIAL_THRESHOLDING:
@@ -119,6 +127,8 @@ public class TrackMateFrameController {
 			case THRESHOLD_BLOBS:
 				return TUNE_THRESHOLDS;
 			case TUNE_TRACKER:
+				return CHOOSE_TRACKER;
+			case CHOOSE_TRACKER:
 				return THRESHOLD_BLOBS;
 			case TRACKING:
 				return TUNE_TRACKER;
@@ -150,6 +160,10 @@ public class TrackMateFrameController {
 			case START:
 				key = PanelCard.START_DIALOG_KEY;
 				break;
+				
+			case CHOOSE_SEGMENTER:
+				key = PanelCard.SEGMENTER_CHOICE_KEY;
+				break;
 			
 			case TUNE_SEGMENTER:
 				key = PanelCard.TUNE_SEGMENTER_KEY;
@@ -165,6 +179,10 @@ public class TrackMateFrameController {
 			
 			case TUNE_THRESHOLDS:
 				key = PanelCard.THRESHOLD_GUI_KEY;
+				break;
+				
+			case CHOOSE_TRACKER:
+				key = PanelCard.TRACKER_CHOICE_KEY;
 				break;
 			
 			case TUNE_TRACKER:
@@ -209,10 +227,25 @@ public class TrackMateFrameController {
 			});
 		}
 		
-		public void performTask(final TrackMateFrameController controller) {
+		public void performPreGUITask(final TrackMateFrameController controller) {
 			switch(this) {
-			case TUNE_SEGMENTER:
-				// Get the settings field from the 
+			case CHOOSE_SEGMENTER:
+				controller.execGetSegmenterChoice();
+				break;
+			case CHOOSE_TRACKER:
+				controller.execGetTrackerChoice();
+				break;
+			}
+		}
+		
+		/**
+		 * Action taken after the GUI has been displayed. 
+		 * @param controller
+		 */
+		public void performPostGUITask(final TrackMateFrameController controller) {
+			switch(this) {
+			case CHOOSE_SEGMENTER:
+				// Get the settings basic fields from the start dialog panel 
 				controller.execGetStartSettings();
 				return;
 			case SEGMENTING:
@@ -240,8 +273,6 @@ public class TrackMateFrameController {
 			}
 		}
 	}
-
-
 	
 	/*
 	 * CONSTANTS
@@ -296,10 +327,11 @@ public class TrackMateFrameController {
 
 				if (actionFlag) {
 
-					if (event == view.NEXT_BUTTON_PRESSED) {					
+					if (event == view.NEXT_BUTTON_PRESSED) {
+						state.performPreGUITask(controller);
 						state = state.nextState();
 						state.updateGUI(view, controller);
-						state.performTask(controller);
+						state.performPostGUITask(controller);
 					} else if (event == view.PREVIOUS_BUTTON_PRESSED) {
 						state = state.previousState();
 						state.updateGUI(view, controller);
@@ -798,6 +830,18 @@ public class TrackMateFrameController {
 		model.setSettings(view.startDialogPanel.getSettings());
 	}
 	
+	private void execGetSegmenterChoice() {
+		Settings settings = model.getSettings();
+		settings.segmenterType = view.segmenterChoicePanel.getChoice();
+		model.setSettings(settings);
+	}
+
+	private void execGetTrackerChoice() {
+		Settings settings = model.getSettings();
+		settings.trackerType = view.trackerChoicePanel.getChoice();
+		model.setSettings(settings);
+	}
+	
 	/**
 	 * Switch to the log panel, and execute the segmentation step, which will be delegated to 
 	 * the {@link TrackMate_} glue class in a new Thread.
@@ -872,7 +916,7 @@ public class TrackMateFrameController {
 				if (null != displayer) {
 					displayer.clear();
 				}
-				displayer = SpotDisplayer.instantiateDisplayer(view.displayerChooserPanel.getDisplayerType(), model);
+				displayer = SpotDisplayer.instantiateDisplayer(view.displayerChooserPanel.getChoice(), model);
 				displayer.setSpots(model.getSpots());
 				// Re-enable the GUI
 				logger.log("Rendering done.\n", Logger.BLUE_COLOR);
@@ -894,6 +938,7 @@ public class TrackMateFrameController {
 					@Override
 					public void actionPerformed(ActionEvent event) {
 						displayer.setColorByFeature(view.thresholdGuiPanel.getColorByFeature());
+						displayer.refresh();
 					}
 				});
 				
@@ -903,6 +948,7 @@ public class TrackMateFrameController {
 						// We set the thresholds field of the model but do not touch its selected spot field yet.
 						model.setFeatureThresholds(view.thresholdGuiPanel.getFeatureThresholds());
 						displayer.setSpotsToShow(model.getSpots().threshold(model.getFeatureThresholds()));
+						displayer.refresh();
 					}
 				});
 				
