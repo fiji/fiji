@@ -29,7 +29,6 @@ package tracing;
 
 import ij.ImagePlus;
 
-import java.util.PriorityQueue;
 import java.util.ArrayList;
 
 public class AutoSearchThread extends SearchThread {

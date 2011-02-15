@@ -29,8 +29,6 @@ package tracing;
 
 class GraphNode implements Comparable {
 
-
-
 	public int id;
 
 	public int x;

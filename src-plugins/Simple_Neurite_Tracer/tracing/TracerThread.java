@@ -27,8 +27,6 @@
 
 package tracing;
 
-import java.util.*;
-
 import features.ComputeCurvatures;
 
 import ij.ImagePlus;
@@ -246,7 +244,6 @@ public class TracerThread extends SearchThread {
 					   curvilinear structures in medical images".
 					   The rule I'm using here probably isn't optimal. */
 
-					double e0 = hessianEigenValues[0];
 					double e1 = hessianEigenValues[1];
 					double e2 = hessianEigenValues[2];
 

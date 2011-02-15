@@ -28,18 +28,11 @@ package tracing;
 import java.util.Hashtable;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Iterator;
 import java.io.*;
 import java.util.zip.GZIPOutputStream;
 
 import ij.*;
-import ij.plugin.*;
-import ij.gui.*;
-import ij.io.*;
-import ij.process.*;
 
-import java.io.*;
-import java.awt.*;
 import java.util.StringTokenizer;
 
 public class SinglePathsGraph {

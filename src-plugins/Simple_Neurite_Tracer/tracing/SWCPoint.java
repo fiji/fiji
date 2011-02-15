@@ -30,7 +30,7 @@ package tracing;
 import java.util.ArrayList;
 import java.io.PrintWriter;
 
-public class SWCPoint implements Comparable {
+public class SWCPoint implements Comparable<SWCPoint> {
 	ArrayList<SWCPoint> nextPoints;
 	SWCPoint previousPoint;
 	int id, type, previous;
@@ -63,8 +63,8 @@ public class SWCPoint implements Comparable {
 			"radius: "+radius+", "+
 			"[previous: "+ previous+"]";
 	}
-	public int compareTo( Object o ) {
-		int oid = ((SWCPoint)o).id;
+	public int compareTo( SWCPoint o ) {
+		int oid = o.id;
 		return (id < oid) ? -1 : ((id > oid) ? 1 : 0);
 	}
 	public void println(PrintWriter pw) {

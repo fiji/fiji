@@ -493,7 +493,4 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 
 	}
 
-	public void setSelectedPaths( int [] selectedIndices ) {
-
-	}
 }

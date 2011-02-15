@@ -27,13 +27,8 @@ package tracing;
 
 import ij.*;
 import ij.plugin.*;
-import ij.gui.*;
 import ij.io.*;
 import ij.process.*;
-
-import java.io.*;
-import java.awt.*;
-import java.util.StringTokenizer;
 
 public class Load_Auto_Traces implements PlugIn, TraceLoaderListener {
 

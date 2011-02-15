@@ -69,7 +69,7 @@ import features.TubenessProcessor;
 */
 
 public class SimpleNeuriteTracer extends ThreePanes
-	implements SearchProgressCallback, FillerProgressCallback, GaussianGenerationCallback {
+	implements SearchProgressCallback, GaussianGenerationCallback {
 
 	public static final String PLUGIN_VERSION = "1.9.0";
 	protected static final boolean verbose = false;
@@ -1116,10 +1116,6 @@ public class SimpleNeuriteTracer extends ThreePanes
 			xz_tracer_canvas.setFillTransparent(transparent);
 			zy_tracer_canvas.setFillTransparent(transparent);
 		}
-	}
-
-	public void maximumDistanceCompletelyExplored( SearchThread source, float f ) {
-		// Unused
 	}
 
 	public double getMinimumSeparation() {

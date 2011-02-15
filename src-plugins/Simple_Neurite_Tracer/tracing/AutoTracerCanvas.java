@@ -30,6 +30,7 @@ package tracing;
 import ij.ImagePlus;
 import stacks.PaneOwner;
 
+@SuppressWarnings("serial")
 public class AutoTracerCanvas extends TracerCanvas {
 
 	public AutoTracerCanvas( ImagePlus imagePlus, PaneOwner owner, int plane, PathAndFillManager pathAndFillManager ) {

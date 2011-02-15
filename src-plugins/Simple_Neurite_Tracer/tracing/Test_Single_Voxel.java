@@ -4,17 +4,10 @@ package tracing;
 
 import ij.*;
 import ij.process.*;
-import ij.gui.*;
 import ij.plugin.*;
-import ij.plugin.filter.*;
-import ij.text.*;
-import ij.measure.Calibration;
-import ij.io.*;
 
 import ij3d.Image3DUniverse;
-import ij3d.Image3DMenubar;
 import ij3d.Content;
-import ij3d.Pipe;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
 import ij.gui.GUI;
@@ -44,13 +37,13 @@ public class Test_Single_Voxel implements PlugIn {
 		univ.show();
 		GUI.center(univ.getWindow());
 		boolean [] channels = { true, true, true };
-		Content c = univ.addContent(i,
-					    new Color3f(Color.white),
-					    "Volume Rendering of a Single Voxel at (1,1,1)",
-					    10, // threshold
-					    channels,
-					    1, // resampling factor
-					    Content.VOLUME);
+		univ.addContent(i,
+				new Color3f(Color.white),
+				"Volume Rendering of a Single Voxel at (1,1,1)",
+				10, // threshold
+				channels, 1, // resampling
+				// factor
+				Content.VOLUME);
 		List<Point3f> linePoints = new ArrayList<Point3f>();
 		boolean fudgeCoordinates = false;
 		if( fudgeCoordinates ) {

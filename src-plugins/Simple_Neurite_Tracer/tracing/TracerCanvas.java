@@ -35,6 +35,7 @@ import ij.ImagePlus;
 import stacks.ThreePanesCanvas;
 import stacks.PaneOwner;
 
+@SuppressWarnings("serial")
 public class TracerCanvas extends ThreePanesCanvas {
 
 	protected PathAndFillManager pathAndFillManager;
