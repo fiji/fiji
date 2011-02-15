@@ -189,8 +189,6 @@ public class NeuriteTracerResultsDialog
 		statusText.setText("<html><strong>"+newStatus+"</strong></html>");
 	}
 
-	public static final boolean onlySameSizedImages = false;
-
 	synchronized public void updateColorImageChoice() {
 
 		// Try to preserve the old selection:
@@ -207,16 +205,11 @@ public class NeuriteTracerResultsDialog
 		if (wList!=null) {
 			for (int i=0; i<wList.length; i++) {
 				ImagePlus imp = WindowManager.getImage(wList[i]);
-				if( (! onlySameSizedImages) ||
-				    ((imp.getWidth() == plugin.width) &&
-				     (imp.getHeight() == plugin.height) &&
-				     (imp.getStackSize() == plugin.depth)) ) {
-					j ++;
-					String title = imp.getTitle();
-					colorImageChoice.addItem(title);
-					if( title == oldSelection )
-						selectedIndex = j;
-				}
+				j++;
+				String title = imp.getTitle();
+				colorImageChoice.addItem(title);
+				if (title == oldSelection)
+					selectedIndex = j;
 			}
 		}
 
@@ -268,8 +261,7 @@ public class NeuriteTracerResultsDialog
 							   colorImageCalibration ) ) {
 					IJ.error("Warning: the calibration of '"+intendedColorImage.getTitle()+"' is different from the image you're tracing ('"+image.getTitle()+"')'\nThis may produce unexpected results.");
 				}
-				if( (! onlySameSizedImages) &&
-				    ! (intendedColorImage.getWidth() == image.getWidth() &&
+				if( ! (intendedColorImage.getWidth() == image.getWidth() &&
 				       intendedColorImage.getHeight() == image.getHeight() &&
 				       intendedColorImage.getStackSize() == image.getStackSize()) )
 					IJ.error("Warning: the dimensions (in voxels) of '"+intendedColorImage.getTitle()+"' is different from the image you're tracing ('"+image.getTitle()+"')'\nThis may produce unexpected results.");
