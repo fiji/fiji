@@ -2067,7 +2067,7 @@ static int start_ij(void)
 	}
 
 	library_base_path = string_copy(fiji_path("lib"));
-	detect_library_path(library_base_path, library_base_path);
+	detect_library_path(java_library_path, library_base_path);
 	string_release(library_base_path);
 
 #ifdef WIN32
