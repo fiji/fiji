@@ -128,18 +128,26 @@ public class SitesDialog extends JDialog implements ActionListener, ItemListener
 
 	protected void delete(int row) {
 		String name = names.get(row);
-		PluginCollection toRemove = PluginCollection.clone(plugins.forUpdateSite(name));
-		if (toRemove.size() > 0) {
-			if (showYesNoQuestion("Remove files?",
-					"Remove " + toRemove.size()
-					+ " file" + (toRemove.size() > 1 ? "s" : "")
-					+ " associated with site '" + name + "'?"))
-				for (PluginObject plugin : toRemove) {
-					new File(Util.prefix(plugin.filename)).delete();
-					plugins.remove(plugin);
-				}
-			else
-				return;
+		List<PluginObject> list = new ArrayList<PluginObject>();
+		int count = 0;
+		for (PluginObject plugin : plugins.forUpdateSite(name))
+			switch (plugin.getStatus()) {
+			case NEW:
+			case NOT_INSTALLED:
+			case OBSOLETE_UNINSTALLED:
+				count--;
+			default:
+				count++;
+				list.add(plugin);
+			}
+		if (count > 0)
+			info("" + count + " files are installed from the site '"
+				+ name + "'\n"
+				+ "These files will not be deleted automatically.\n"
+				+ "Note: even if marked as 'Not Fiji', they might be available from other sites.");
+		for (PluginObject plugin : list) {
+			plugin.updateSite = null;
+			plugin.setStatus(PluginObject.Status.NOT_FIJI);
 		}
 		plugins.removeUpdateSite(name);
 		names.remove(row);
