@@ -42,4 +42,8 @@ upload("uploadCrossSiteDependency()");
 upload("uploadCrossSiteDependencee()");
 download("downloadCrossSiteDependencies()");
 
+prepare("prepareNativeDependency()");
+upload("uploadNativeDependency()");
+download("downloadNativeDependency()");
+
 checkpoint("done");

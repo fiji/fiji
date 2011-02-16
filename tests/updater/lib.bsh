@@ -41,6 +41,11 @@ requireStatus(filename, status) {
 		plugins.getPlugin(filename).getStatus() == status);
 }
 
+requireAction(filename, action) {
+	assert(filename + " has status " + action,
+		plugins.getPlugin(filename).getAction() == action);
+}
+
 markForUpload(filename) {
 	markForUpload(filename, PluginCollection.DEFAULT_UPDATE_SITE);
 }
@@ -462,5 +467,44 @@ downloadCrossSiteDependencies() {
 	startDownload();
 	assert("dependency was downloaded",
 		readFile(tmpUserRoot, "update/" + crossSiteDependency).equals(crossSiteDependency));
+	System.exit(0);
+}
+
+nativeDependency1 = "macros/native-dependency1.ijm";
+nativeDependency2 = "macros/native-dependency2.ijm";
+prepareNativeDependency() {
+	writeFile(tmpDeveloperRoot, nativeDependency1);
+	writeFile(tmpDeveloperRoot, nativeDependency2);
+}
+
+uploadNativeDependency() {
+	startUpdater();
+	requireUpToDate();
+	advancedMode();
+	assert("13 plugins", plugins.size() == 13);
+	markForUpload(nativeDependency1);
+	plugins.getPlugin(nativeDependency1).addPlatform(Util.platform);
+	markForUpload(nativeDependency2);
+	plugins.getPlugin(nativeDependency2).addPlatform("other-platform");
+	plugins.getPlugin("macros/new.ijm").addDependency(nativeDependency1);
+	plugins.getPlugin("macros/new.ijm").addDependency(nativeDependency2);
+	startUpload();
+}
+
+downloadNativeDependency() {
+	startUpdater();
+	advancedMode();
+	viewMode("all plugins");
+	assert("13 plugins", plugins.size() == 13);
+	while (count(plugins.updateable(false)) != 1)
+		Thread.sleep(50);
+	assert("0 modified", count(plugins.locallyModified()) == 0);
+	requireAction(nativeDependency1, PluginObject.Action.INSTALL);
+	requireAction(nativeDependency2, PluginObject.Action.NEW);
+	startDownload();
+	assert("dependency1 was downloaded",
+		readFile(tmpUserRoot, "update/" + nativeDependency1).equals(nativeDependency1));
+	assert("dependency2 was not downloaded",
+		!new File(tmpUserRoot, "update/" + nativeDependency2).exists());
 	System.exit(0);
 }
