@@ -7,10 +7,11 @@ import java.util.List;
 import java.util.Set;
 
 public class CompileJar extends Rule {
-	String configPath;
-	String classPath;
+	protected String configPath;
+	protected String classPath;
+	protected CompileNativeLibrary compileLibrary;
 
-	CompileJar(Parser parser, String target, List<String> prerequisites) {
+	public CompileJar(Parser parser, String target, List<String> prerequisites) {
 		super(parser, target, Util.uniq(prerequisites));
 		configPath = getPluginsConfig();
 		for (String prereq : prerequisites) {
@@ -21,6 +22,16 @@ public class CompileJar extends Rule {
 				classPath = prereq;
 			else
 				classPath += ":" + prereq;
+		}
+
+		List<String> nativeSources = CompileNativeLibrary.filterNativeSources(prerequisites);
+		if (nativeSources.size() > 0) {
+			File buildDir = getVarBool("includeSources") ? getBuildDir() : null;
+			compileLibrary = new CompileNativeLibrary(parser, getBaseName(target), new File(target), buildDir, nativeSources);
+			if (parser.allRules.containsKey(compileLibrary.target) && (parser.getRule(compileLibrary.target) instanceof CompileNativeLibrary))
+				compileLibrary = (CompileNativeLibrary)parser.getRule(compileLibrary.target);
+			else
+				parser.allRules.put(compileLibrary.target, compileLibrary);
 		}
 	}
 
@@ -45,17 +56,39 @@ public class CompileJar extends Rule {
 			compileJavas(prerequisites, buildDir, exclude, noCompile);
 		List<String> files = parser.fake.java2classFiles(prerequisites,
 			parser.cwd, buildDir, exclude, noCompile);
+
 		if (getVarBool("includeSource"))
 			addSources(files);
+		else if (compileLibrary != null)
+			for (String fileName : compileLibrary.prerequisites)
+				files.remove(fileName);
+
+		if (buildDir != null)
+			addNonClasses(files, buildDir, "");
+
 		parser.fake.makeJar(target, getMainClass(), files, parser.cwd,
 			buildDir, configPath, getStripPath(),
 			getVarBool("VERBOSE"));
+		if (compileLibrary != null)
+			compileLibrary.action();
 	}
 
 	void addSources(List<String> files) {
 		for (String file : prerequisites)
 			if (file.endsWith(".java"))
 				files.add(file);
+	}
+
+	void addNonClasses(List<String> files, File buildDir, String prefix) {
+		for (File file : buildDir.listFiles()) {
+			String name = file.getName();
+			if (file.isDirectory()) {
+				if (!name.startsWith("."))
+					addNonClasses(files, file, prefix + name + "/");
+			}
+			else if (file.isFile() && !name.endsWith(".class"))
+				files.add(prefix + name + "[" + file.getAbsolutePath() + "]");
+		}
 	}
 
 	void maybeMake(Rule rule) throws FakeException {
@@ -102,6 +135,8 @@ public class CompileJar extends Rule {
 			if (rule != null && !rule.upToDate())
 				return notUpToDate(rule.target);
 		}
+		if (compileLibrary != null && !compileLibrary.upToDate())
+			return notUpToDate("Native library: " + compileLibrary.target);
 		return super.checkUpToDate() &&
 			upToDate(configPath);
 	}

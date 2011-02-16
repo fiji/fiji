@@ -54,8 +54,8 @@ public class CommonFunctions
 	public static String[] rgbTypes = {"rgb", "rbg", "grb", "gbr", "brg", "bgr"}; 
 	public static String[] colorList = { "Red", "Green", "Blue", "Red and Green", "Red and Blue", "Green and Blue", "Red, Green and Blue" };
 	
-	public static ImagePlus loadImage(String directory, String file) { return loadImage(directory, file, "rgb"); }
-	public static ImagePlus loadImage(String directory, String file, String rgb)
+	public static ImagePlus loadImage(String directory, String file, int seriesNumber) { return loadImage(directory, file, seriesNumber, "rgb"); }
+	public static ImagePlus loadImage(String directory, String file, int seriesNumber, String rgb)
 	{
 		ImagePlus imp = null;
 		
@@ -68,7 +68,7 @@ public class CommonFunctions
 		}
 		else
 		{
-			imp = openLOCIImagePlus(directory, file, rgb);
+			imp = openLOCIImagePlus(directory, file, seriesNumber, rgb);
 			if (imp == null)
 				imp = new Opener().openImage((new File(directory, file)).getPath());
 		}
@@ -107,17 +107,17 @@ public class CommonFunctions
 		});
 	}
 
-	public static ImagePlus openLOCIImagePlus(String path, String fileName, String rgb) 
+	public static ImagePlus openLOCIImagePlus(String path, String fileName, int seriesNumber, String rgb) 
 	{
-		return openLOCIImagePlus(path, fileName, rgb, -1, -1);
+		return openLOCIImagePlus(path, fileName, seriesNumber, rgb, -1, -1);
 	}
 
-	public static ImagePlus openLOCIImagePlus(String path, String fileName) 
+	public static ImagePlus openLOCIImagePlus(String path, String fileName, int seriesNumber) 
 	{
-		return openLOCIImagePlus(path, fileName, "rgb", -1, -1);
+		return openLOCIImagePlus(path, fileName, seriesNumber, "rgb", -1, -1);
 	}
 
-	public static ImagePlus openLOCIImagePlus(String path, String fileName, String rgb, int from, int to) 
+	public static ImagePlus openLOCIImagePlus(String path, String fileName, int seriesNumber, String rgb, int from, int to) 
 	{
 		if (path.length() > 1) 
 		{
@@ -169,7 +169,11 @@ public class CommonFunctions
 		try 
 		{
 			r.setId(id);
-		
+
+			// if loaded from a multiple series file (like LSM 710) select the correct series
+			if ( seriesNumber >= 0 )
+				r.setSeries( seriesNumber );
+
 			//final int num = r.getImageCount();
 			final int width = r.getSizeX();
 			final int height = r.getSizeY();
@@ -298,7 +302,7 @@ public class CommonFunctions
 			imp = new ImagePlus(fileName, stack);
 		}
 		catch (IOException exc) { IJ.log("IOException: " + exc.getMessage()); return null;}
-		catch (FormatException exc) { /*IJ.log("FormatException: " + exc.getMessage());*/ return null;}
+		catch (FormatException exc) { IJ.log("FormatException: " + exc.getMessage()); return null;}
 	                
 		return imp;
 	}
