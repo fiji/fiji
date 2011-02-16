@@ -3079,6 +3079,9 @@ static int MAYBE_UNUSED is_dll(const char *path)
 	unsigned char *p;
 	off_t offset;
 
+	if (suffixcmp(path, strlen(path), ".dll"))
+		return 0;
+
 	if ((in = open(path, O_RDONLY | O_BINARY)) < 0)
 		return 0;
 
@@ -3109,6 +3112,9 @@ static int MAYBE_UNUSED is_elf(const char *path)
 	int in;
 	unsigned char buffer[0x40];
 
+	if (suffixcmp(path, strlen(path), ".so"))
+		return 0;
+
 	if ((in = open(path, O_RDONLY | O_BINARY)) < 0)
 		return 0;
 
@@ -3128,6 +3134,10 @@ static int MAYBE_UNUSED is_dylib(const char *path)
 {
 	int in;
 	unsigned char buffer[0x40];
+
+	if (suffixcmp(path, strlen(path), ".dylib") &&
+			suffixcmp(path, strlen(path), ".jnilib"))
+		return 0;
 
 	if ((in = open(path, O_RDONLY | O_BINARY)) < 0)
 		return 0;
