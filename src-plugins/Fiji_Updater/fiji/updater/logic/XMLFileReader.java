@@ -177,11 +177,16 @@ public class XMLFileReader extends DefaultHandler {
 					PluginObject.Action.NEW);
 			}
 			PluginObject plugin = plugins.getPlugin(current.filename);
-			if (plugin == null ||
-					(updateSite != null && !plugin.updateSite.equals(current.updateSite)))
+			if (updateSite == null && current.updateSite != null &&
+					plugins.getUpdateSite(current.updateSite) == null)
+				; // ignore plugin with invalid update site
+			else if (plugin == null)
 				plugins.add(current);
-			else
+			else {
 				plugin.merge(current);
+				if (updateSite != null && (plugin.updateSite == null || !plugin.updateSite.equals(current.updateSite)))
+					plugin.updateSite = current.updateSite;
+			}
 			current = null;
 		}
 		body = "";
