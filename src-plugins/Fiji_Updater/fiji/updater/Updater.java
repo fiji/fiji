@@ -72,8 +72,6 @@ public class Updater implements PlugIn {
 		final UpdaterFrame main = new UpdaterFrame(plugins, hidden);
 		main.setLocationRelativeTo(IJ.getInstance());
 		main.setEasyMode(true);
-		main.setVisible(true);
-		WindowManager.addWindow(main);
 
 		Progress progress = main.getProgress("Starting up...");
 		XMLFileDownloader downloader = new XMLFileDownloader(plugins);
@@ -83,7 +81,6 @@ public class Updater implements PlugIn {
 		} catch (Canceled e) {
 			downloader.done();
 			main.error("Canceled");
-			main.dispose();
 			return;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -95,7 +92,6 @@ public class Updater implements PlugIn {
 			else
 				message = "Download/checksum failed: " + e;
 			main.error(message);
-			main.dispose();
 			return;
 		}
 
@@ -113,7 +109,6 @@ public class Updater implements PlugIn {
 		} catch (Canceled e) {
 			checksummer.done();
 			main.error("Canceled");
-			main.dispose();
 			return;
 		}
 
@@ -145,9 +140,10 @@ public class Updater implements PlugIn {
 					});
 			}
 			// we do not save the plugins to prevent the mtime from changing
-			main.dispose();
 			return;
 		}
+
+		main.setVisible(true);
 
 		if ("update".equals(arg)) {
 			plugins.markForUpdate(false);

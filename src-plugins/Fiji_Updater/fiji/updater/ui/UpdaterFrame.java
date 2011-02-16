@@ -338,6 +338,8 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 
 	public void setVisible(boolean visible) {
 		super.setVisible(visible && !hidden);
+		if (visible)
+			WindowManager.addWindow(this);
 	}
 
 	public void dispose() {
