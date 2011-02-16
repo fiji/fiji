@@ -1,6 +1,8 @@
 /// FILESYSTEM HELPERS
 
 deleteRecursively(dir) {
+	if (!dir.exists())
+		return;
 	for (File file : dir.listFiles())
 		if (file.getName().equals(".") || file.getName().equals(".."))
 			continue;
@@ -9,6 +11,14 @@ deleteRecursively(dir) {
 		else if (file.isFile())
 			file.delete();
 	dir.delete();
+}
+
+copyRecursively(fromDir, toDir) {
+	for (File file : fromDir.listFiles())
+		if (file.isDirectory())
+			copyRecursively(file, new File(toDir, file.getName()));
+		else if (file.isFile())
+			copyFileWithMTime(file, new File(toDir, file.getName()));
 }
 
 copyTo(inputStream, outputStream) {
@@ -33,12 +43,21 @@ copyFile(source, destination) {
 		execute(new String[] { "chmod", "a+x", destination.getAbsolutePath() });
 }
 
+copyFileWithMTime(source, destination) {
+	copyFile(source, destination);
+	destination.setLastModified(source.lastModified());
+}
+
 fijiDir = new File(System.getProperty("fiji.executable")).getCanonicalFile().getParentFile();
 
 import java.io.ByteArrayOutputStream;
 
 readFile(dir, name) {
-	return readStream(new FileInputStream(new File(dir, name)));
+	return readFile(new File(dir, name));
+}
+
+readFile(file) {
+	return readStream(new FileInputStream(file));
 }
 
 import java.util.zip.GZIPInputStream;

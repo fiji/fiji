@@ -5,6 +5,7 @@ source(new File(libDir, "fs.bsh").getPath());
 source(new File(libDir, "jar.bsh").getPath());
 source(new File(libDir, "exec.bsh").getPath());
 source(new File(libDir, "gui.bsh").getPath());
+source(new File(libDir, "checkpoint.bsh").getPath());
 
 if (hidden == void) // not defined?
 	hidden = true;
@@ -16,6 +17,9 @@ tmpDeveloperRoot = new File(testDir, "tmpDeveloperRoot");
 tmpUserRoot = new File(testDir, "tmpUserRoot");
 tmpWebRoot = new File(testDir, "tmpWebRoot");
 tmpSecondaryWebRoot = new File(testDir, "tmpSecondaryWebRoot");
+
+initializeCheckpointSystem(new File(testDir, "tmpCheckpoints"),
+	new File[] { tmpDeveloperRoot, tmpUserRoot, tmpWebRoot, tmpSecondaryWebRoot });
 
 import fiji.updater.Updater;
 
@@ -94,12 +98,19 @@ readDbXmlGz(File root) {
 
 /// ADDITIONAL LAUNCH HELPERS
 
+prepare(bsh) {
+	if (checkpoint(bsh))
+		eval(bsh);
+}
+
 upload(bsh) {
-	startFiji(tmpDeveloperRoot, "developer", bsh);
+	if (checkpoint(bsh))
+		startFiji(tmpDeveloperRoot, "developer", bsh);
 }
 
 download(bsh) {
-	startFiji(tmpUserRoot, "user", bsh);
+	if (checkpoint(bsh))
+		startFiji(tmpUserRoot, "user", bsh);
 }
 
 

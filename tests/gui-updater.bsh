@@ -1,8 +1,15 @@
 #!/bin/sh
 /*/. 2>/dev/null; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
 
-if (bsh.args.length > 0 && bsh.args[0].equals("--no-hidden"))
-	hidden = false;
+for (int i = 0; i < bsh.args.length; i++)
+	if (bsh.args[i].equals("--no-hidden"))
+		hidden = false;
+	else if (bsh.args[i].equals("--checkpoint"))
+		startAtCheckpoint = bsh.args[++i];
+	else {
+		System.err.println("Unknown option: " + bsh.args[i]);
+		System.exit(1);
+	}
 
 thisDir = new File(this.interpreter.getSourceFileInfo()).getParentFile();
 libDir = new File(thisDir, "updater");
@@ -17,14 +24,16 @@ upload("initialUpload()");
 download("initialUserCheck()");
 download("testUptodateCheck()");
 
-prepareSome();
+prepare("prepareSome()");
 upload("uploadSome()");
 download("downloadSome()");
 
-prepareNewUpdater();
+prepare("prepareNewUpdater()");
 upload("uploadNewUpdater()");
 download("downloadNewUpdater()");
 
-prepareSecondary();
+prepare("prepareSecondary()");
 upload("uploadSecondary()");
 download("downloadSecondary()");
+
+checkpoint("done");
