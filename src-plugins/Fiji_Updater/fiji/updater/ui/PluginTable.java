@@ -12,6 +12,11 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -22,7 +27,9 @@ import java.util.Set;
 
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 
@@ -74,6 +81,13 @@ public class PluginTable extends JTable {
 						row, column);
 				setStyle(comp, row, column);
 				return comp;
+			}
+		});
+
+		addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				maybeShowPopupMenu(e);
 			}
 		});
 	}
@@ -130,6 +144,35 @@ public class PluginTable extends JTable {
 		return new DefaultCellEditor(new JComboBox(actions));
 	}
 
+	public void maybeShowPopupMenu(MouseEvent e) {
+		if (!e.isPopupTrigger())
+			return;
+		final Iterable<PluginObject> selected = getSelectedPlugins(e.getY() / getRowHeight());
+		if (!selected.iterator().hasNext())
+			return;
+		JPopupMenu menu = new JPopupMenu();
+		int count = 0;
+		for (final PluginObject.Action action : plugins.getActions(selected)) {
+			JMenuItem item = new JMenuItem(action.toString());
+			item.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					for (PluginObject plugin : selected) {
+						plugin.setAction(plugins, action);
+						firePluginChanged(plugin);
+					}
+				}
+			});
+			menu.add(item);
+			count++;
+		}
+		if (count == 0) {
+			JMenuItem noActions = new JMenuItem("<No common actions>");
+			noActions.setEnabled(false);
+			menu.add(noActions);
+		}
+		menu.show(e.getComponent(), e.getX(), e.getY());
+	}
+
 	public PluginObject getPlugin(int row) {
 		PluginObject.LabeledPlugin plugin =
 			(PluginObject.LabeledPlugin)getValueAt(row, 0);
@@ -137,7 +180,13 @@ public class PluginTable extends JTable {
 	}
 
 	public Iterable<PluginObject> getSelectedPlugins() {
+		return getSelectedPlugins(-1);
+	}
+
+	public Iterable<PluginObject> getSelectedPlugins(int fallbackRow) {
 		int[] rows = getSelectedRows();
+		if (rows.length == 0 && fallbackRow >= 0 && getPlugin(fallbackRow) != null)
+			rows = new int[] { fallbackRow };
 		PluginObject[] result = new PluginObject[rows.length];
 		for (int i = 0; i < rows.length; i++)
 			result[i] = getPlugin(rows[i]);

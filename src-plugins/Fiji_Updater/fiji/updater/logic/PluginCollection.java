@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import java.util.zip.GZIPOutputStream;
 
@@ -143,6 +144,29 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		return hasUploadableSites() ?
 			plugin.getStatus().getDeveloperActions() :
 			plugin.getStatus().getActions();
+	}
+
+	public Action[] getActions(Iterable<PluginObject> plugins) {
+		List<Action> result = null;
+		int count = 0;
+		for (PluginObject plugin : plugins) {
+			Action[] actions = getActions(plugin);
+			if (result == null) {
+				result = new ArrayList<Action>();
+				for (Action action : actions)
+					result.add(action);
+			}
+			else {
+				Set<Action> set = new TreeSet<Action>();
+				for (Action action : actions)
+					set.add(action);
+				Iterator iter = result.iterator();
+				while (iter.hasNext())
+					if (!set.contains(iter.next()))
+						iter.remove();
+			}
+		}
+		return result.toArray(new Action[result.size()]);
 	}
 
 	public void read() throws IOException, ParserConfigurationException, SAXException {
