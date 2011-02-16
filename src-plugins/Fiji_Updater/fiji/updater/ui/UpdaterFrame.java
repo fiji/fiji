@@ -354,7 +354,6 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 	}
 
 	public void valueChanged(ListSelectionEvent event) {
-		table.requestFocusInWindow();
 		pluginsChanged();
 	}
 
