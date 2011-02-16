@@ -414,3 +414,53 @@ downloadSecondary() {
 		secondaryFile.equals(readFile(tmpUserRoot, "update/" + secondaryFile)));
 	System.exit(0);
 }
+
+crossSiteDependency = "macros/dependency.ijm";
+crossSiteDependencee = "macros/dependencee.ijm";
+prepareCrossSiteDependencies() {
+	writeFile(tmpDeveloperRoot, crossSiteDependency);
+	writeFile(tmpDeveloperRoot, crossSiteDependencee);
+}
+
+uploadCrossSiteDependency() {
+	startUpdater();
+	requireUpToDate();
+	advancedMode();
+	assert("11 plugins", plugins.size() == 11);
+	markForUpload(crossSiteDependency);
+	startUpload();
+}
+
+uploadCrossSiteDependencee() {
+	startUpdater();
+	requireUpToDate();
+	advancedMode();
+	assert("11 plugins", plugins.size() == 11);
+	markForUpload(crossSiteDependencee, "Secondary");
+	plugins.getPlugin(crossSiteDependencee).addDependency(crossSiteDependency);
+	startUpload();
+}
+
+downloadCrossSiteDependencies() {
+	startUpdater();
+	advancedMode();
+	viewMode("all plugins");
+	assert("11 plugins", plugins.size() == 11);
+	while (count(plugins.updateable(false)) != 2)
+		Thread.sleep(50);
+	assert("0 modified", count(plugins.locallyModified()) == 0);
+	requireStatus(crossSiteDependency, PluginObject.Status.NEW);
+	requireStatus(crossSiteDependencee, PluginObject.Status.NEW);
+	// Unmark the dependency
+	plugins.getPlugin(crossSiteDependency).setAction(plugins, PluginObject.Action.NEW);
+	new Thread() {
+		public void run() {
+			resolve = waitForWindow("Resolve dependencies");
+			clickButton(resolve, "OK");
+		}
+	}.start();
+	startDownload();
+	assert("dependency was downloaded",
+		readFile(tmpUserRoot, "update/" + crossSiteDependency).equals(crossSiteDependency));
+	System.exit(0);
+}

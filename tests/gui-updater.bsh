@@ -36,4 +36,10 @@ prepare("prepareSecondary()");
 upload("uploadSecondary()");
 download("downloadSecondary()");
 
+prepare("prepareCrossSiteDependencies()");
+upload("uploadCrossSiteDependency()");
+// can only upload to one update site at a time
+upload("uploadCrossSiteDependencee()");
+download("downloadCrossSiteDependencies()");
+
 checkpoint("done");
