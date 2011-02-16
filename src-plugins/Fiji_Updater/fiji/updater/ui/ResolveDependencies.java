@@ -33,6 +33,7 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
 public class ResolveDependencies extends JDialog implements ActionListener {
+	UpdaterFrame updaterFrame;
 	JPanel rootPanel;
 	public JTextPane panel; // this is public for debugging purposes
 	SimpleAttributeSet bold, indented, italic, normal, red;
@@ -44,13 +45,14 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 	int conflicts;
 	boolean forUpload, wasCanceled;
 
-	public ResolveDependencies(Frame owner, PluginCollection plugins) {
+	public ResolveDependencies(UpdaterFrame owner, PluginCollection plugins) {
 		this(owner, plugins, false);
 	}
 
-	public ResolveDependencies(Frame owner, PluginCollection plugins, boolean forUpload) {
+	public ResolveDependencies(UpdaterFrame owner, PluginCollection plugins, boolean forUpload) {
 		super(owner, "Resolve dependencies");
 
+		updaterFrame = owner;
 		this.forUpload = forUpload;
 		this.plugins = plugins;
 
@@ -92,6 +94,18 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 				KeyEvent.VK_ENTER, 0);
 
 		ignore = new HashSet<PluginObject>();
+	}
+
+	public void setVisible(boolean visible) {
+		if (updaterFrame == null || !updaterFrame.hidden)
+			super.setVisible(visible);
+	}
+
+	public void dispose() {
+		if (updaterFrame != null && updaterFrame.hidden) synchronized (this) {
+			notifyAll();
+		}
+		super.dispose();
 	}
 
 	public void actionPerformed(ActionEvent e) {
