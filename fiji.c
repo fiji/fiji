@@ -3062,6 +3062,9 @@ static int read_exactly(int fd, unsigned char *buffer, int size)
 		int count = read(fd, buffer, size);
 		if (count < 0)
 			return 0;
+		if (count == 0)
+			/* short file */
+			return 1;
 		buffer += count;
 		size -= count;
 	}
