@@ -852,7 +852,7 @@ public class NeuriteTracerResultsDialog
 
 					colorImageChoice = new JComboBox();
 					updateColorImageChoice();
-					colorImageChoice.addItemListener(thisDialog);
+					colorImageChoice.addActionListener(thisDialog);
 					imageColorOptionsPanel.add(colorImageChoice, BorderLayout.CENTER);
 					ImagePlus.addImageListener(thisDialog);
 
@@ -1265,6 +1265,10 @@ public class NeuriteTracerResultsDialog
 
 			preSigmaPaletteState = currentState;
 			changeState( WAITING_FOR_SIGMA_POINT );
+
+		} else if( source == colorImageChoice ) {
+
+			checkForColorImageChange();
 		}
 	}
 
@@ -1353,8 +1357,6 @@ public class NeuriteTracerResultsDialog
 			int selectedIndex = paths3DChoice.getSelectedIndex();
 			plugin.setPaths3DDisplay( selectedIndex + 1 );
 
-		} else if( source == colorImageChoice ) {
-			checkForColorImageChange();
 		}
 
 	}
