@@ -1,7 +1,20 @@
 package ij3d;
 
+import ij.IJ;
+
 import ij3d.pointlist.PointListDialog;
 import ij.ImagePlus;
+
+import ij.io.FileInfo;
+import ij.io.OpenDialog;
+import ij.io.SaveDialog;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
 
 import vib.PointList;
 
@@ -16,6 +29,9 @@ import javax.vecmath.Point3d;
 
 import java.util.TreeMap;
 import java.util.HashMap;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Content extends BranchGroup implements UniverseListener, ContentConstants {
 
@@ -239,12 +255,93 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 			c.showPointList(b);
 	}
 
+	protected final static Pattern startFramePattern =
+		Pattern.compile("(?s)(?m).*?^(# frame:? (\\d+)\n).*");
+
 	public void loadPointList() {
-		getCurrent().loadPointList();
+		String dir = null, fileName = null;
+		ImagePlus image = contents.get(0).image;
+		if (image != null) {
+			FileInfo fi = image.getFileInfo();
+			dir = fi.directory;
+			fileName = fi.fileName + ".points";
+		}
+		OpenDialog od = new OpenDialog("Open points annotation file", dir, fileName);
+		if (od.getFileName() == null)
+			return;
+
+		File file = new File(od.getDirectory(), od.getFileName());
+		try {
+			String fileContents = readFile(new FileInputStream(file));
+			Matcher matcher = startFramePattern.matcher(fileContents);
+			if (matcher.matches()) {
+				while (matcher.matches()) {
+					int frame = Integer.parseInt(matcher.group(2));
+					fileContents = fileContents.substring(matcher.end(1));
+					matcher = startFramePattern.matcher(fileContents);
+					String pointsForFrame = matcher.matches() ?
+						fileContents.substring(0, matcher.start(1)) : fileContents;
+					PointList points = PointList.parseString(pointsForFrame);
+					if (points != null)
+						contents.get(frame).setPointList(points);
+				}
+			}
+			else {
+				// fall back to old-style one-per-frame point lists
+				PointList points = PointList.parseString(fileContents);
+				if (points != null)
+					getCurrent().setPointList(points);
+			}
+			showPointList(true);
+		}
+		catch (IOException e) {
+			IJ.error("Could not read point list from " + file);
+		}
+	}
+
+	String readFile(InputStream in) throws IOException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		byte[] buffer = new byte[1024];
+		for (;;) {
+			int count = in.read(buffer);
+			if (count < 0)
+				break;
+			out.write(buffer, 0, count);
+		}
+		in.close();
+		out.close();
+		return out.toString("UTF-8");
 	}
 
 	public void savePointList() {
-		getCurrent().savePointList();
+		String dir = OpenDialog.getDefaultDirectory();
+		String fileName = getName();
+		ImagePlus image = contents.get(0).image;
+		if (image != null) {
+			FileInfo fi = image.getFileInfo();
+			dir = fi.directory;
+			fileName = fi.fileName;
+		}
+		SaveDialog sd = new SaveDialog("Save points annotation file as...",
+			dir, fileName, ".points");
+		if (sd.getFileName() == null)
+			return;
+
+		File file = new File(sd.getDirectory(), sd.getFileName());
+		try {
+			PrintStream out = new PrintStream(file);
+			for (Integer frame : contents.keySet()) {
+				ContentInstant ci = contents.get(frame);
+				if (ci.getPointList().size() != 0) {
+					out.println("# frame " + frame);
+					ci.savePointList(out);
+				}
+			}
+			out.close();
+		}
+		catch (IOException e) {
+			IJ.error("Could not save points to " + file);
+		}
 	}
 
 	/**

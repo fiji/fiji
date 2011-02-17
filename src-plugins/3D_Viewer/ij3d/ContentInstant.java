@@ -23,6 +23,8 @@ import surfaceplot.SurfacePlotGroup;
 import java.util.BitSet;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
 
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Switch;
@@ -341,8 +343,11 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 
 	public void loadPointList() {
 		PointList points = PointList.load(image);
-		if (points == null)
-			return;
+		if (points != null)
+			setPointList(points);
+	}
+
+	public void setPointList(PointList points) {
 		this.points = points;
 		plPanel.setPointList(points);
 		plShape.setPointList(points);
@@ -357,6 +362,10 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 			n = fi.fileName;
 		}
 		points.save(dir, n);
+	}
+
+	public void savePointList(PrintStream out) throws IOException {
+		points.save(out, false);
 	}
 
 	/**
