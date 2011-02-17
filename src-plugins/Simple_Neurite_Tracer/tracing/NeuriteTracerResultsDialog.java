@@ -201,7 +201,11 @@ public class NeuriteTracerResultsDialog
 		statusText.setText("<html><strong>"+newStatus+"</strong></html>");
 	}
 
+	volatile boolean ignoreColorImageChoiceEvents = false;
+
 	synchronized protected void updateColorImageChoice() {
+
+		ignoreColorImageChoiceEvents = true;
 
 		// Try to preserve the old selection:
 		String oldSelection = (String) colorImageChoice.getSelectedItem();
@@ -226,6 +230,9 @@ public class NeuriteTracerResultsDialog
 		}
 
 		colorImageChoice.setSelectedIndex(selectedIndex);
+
+		ignoreColorImageChoiceEvents = false;
+
 		// This doesn't trigger an item event
 		checkForColorImageChange();
 	}
@@ -1268,7 +1275,8 @@ public class NeuriteTracerResultsDialog
 
 		} else if( source == colorImageChoice ) {
 
-			checkForColorImageChange();
+			if( ! ignoreColorImageChoiceEvents )
+				checkForColorImageChange();
 		}
 	}
 
