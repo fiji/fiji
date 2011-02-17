@@ -110,6 +110,8 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	}
 
 	public UpdateSite getUpdateSite(String name) {
+		if (name == null)
+			return null;
 		return updateSites.get(name);
 	}
 
