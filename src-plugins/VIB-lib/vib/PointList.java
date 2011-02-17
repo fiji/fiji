@@ -8,11 +8,16 @@ import ij.io.SaveDialog;
 import ij.measure.Calibration;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.io.Reader;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -223,17 +228,24 @@ public class PointList implements Iterable<BenesNamedPoint>{
 		return null;
 	}
 
-	public static PointList load(FileReader reader) throws IOException {
+	public static PointList load(Reader reader) throws IOException {
 		PointList list = new PointList();
 		BufferedReader f = new BufferedReader(reader);
 		String line;
-		while ((line=f.readLine())!=null) {
+		while ((line = f.readLine()) != null) {
 			BenesNamedPoint p = BenesNamedPoint.
 						fromLine(line);
 			if(p != null)
 				list.add(p);
 		}
+		f.close();
 		return list;
+	}
+
+	public static PointList parseString(String fileContents) throws IOException {
+		InputStream inputStream = new ByteArrayInputStream(fileContents.getBytes());
+		Reader reader = new InputStreamReader(inputStream);
+		return load(reader);
 	}
 
 	public void save(String directory, String fileName ) {
