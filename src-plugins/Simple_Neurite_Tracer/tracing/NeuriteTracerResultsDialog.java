@@ -189,14 +189,10 @@ public class NeuriteTracerResultsDialog
 		});
 	}
 
-	// Called when an image's pixel data is updated
 	@Override
 	public void imageUpdated(ImagePlus imp) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				updateColorImageChoice();
-			}
-		});
+		/* This is called whenever ImagePlus.updateAndDraw
+		  is called - i.e. potentially very often */
 	}
 
 	// ------------------------------------------------------------------------
