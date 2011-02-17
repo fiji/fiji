@@ -340,7 +340,10 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 	}
 
 	public void loadPointList() {
-		points = PointList.load(image);
+		PointList points = PointList.load(image);
+		if (points == null)
+			return;
+		this.points = points;
 		plPanel.setPointList(points);
 		plShape.setPointList(points);
 	}
