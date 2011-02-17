@@ -317,6 +317,7 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 
 	}
 
+	@Override
 	public void actionPerformed(ActionEvent ae) {
 
 		Object source = ae.getSource();
@@ -410,6 +411,7 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 
 	}
 
+	@Override
 	public void itemStateChanged(ItemEvent ie) {
 		if( ie.getSource() == transparent )
 			plugin.setFillTransparent( transparent.isSelected() );
@@ -425,14 +427,17 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 		maxThresholdValue = f;
 	}
 
+	@Override
 	public void pointsInSearch( SearchThread source, int inOpen, int inClosed ) {
 		// Do nothing...
 	}
 
+	@Override
 	public void finished( SearchThread source, boolean success ) {
 		// Do nothing...
 	}
 
+	@Override
 	public void threadStatus( SearchThread source, int currentStatus ) {
 		switch(currentStatus) {
 		case FillerThread.STOPPING:

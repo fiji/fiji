@@ -104,6 +104,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		return result;
 	}
 
+	@Override
 	public void actionPerformed(ActionEvent e) {
 		Object source = e.getSource();
 		Set<Path> selectedPaths = getSelectedPaths();
@@ -321,6 +322,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		exportAsSWCSetEnabled(true);
 	}
 
+	@Override
 	public void valueChanged( TreeSelectionEvent e ) {
 		Set<Path> selectedPaths = getSelectedPaths();
 		if( selectedPaths.isEmpty() ) {

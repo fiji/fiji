@@ -169,16 +169,19 @@ public class NeuriteTracerResultsDialog
 	// ------------------------------------------------------------------------
 	// Implementing the ImageListener interface:
 
+	@Override
 	public void imageOpened(ImagePlus imp) {
 		updateColorImageChoice();
 	}
 
 	// Called when an image is closed
+	@Override
 	public void imageClosed(ImagePlus imp) {
 		updateColorImageChoice();
 	}
 
 	// Called when an image's pixel data is updated
+	@Override
 	public void imageUpdated(ImagePlus imp) {
 		updateColorImageChoice();
 	}
@@ -271,10 +274,12 @@ public class NeuriteTracerResultsDialog
 		}
 	}
 
+	@Override
 	public void newSigmaSelected( double sigma ) {
 		setSigma( sigma, false );
 	}
 
+	@Override
 	public void newMaximum( double max ) {
 		double multiplier = 256 / max;
 		setMultiplier( multiplier );
@@ -587,15 +592,22 @@ public class NeuriteTracerResultsDialog
 
 	// ------------------------------------------------------------------------
 
+	@Override
 	public void windowClosing( WindowEvent e ) {
 		exitRequested();
 	}
 
+	@Override
 	public void windowActivated( WindowEvent e ) { }
+	@Override
 	public void windowDeactivated( WindowEvent e ) { }
+	@Override
 	public void windowClosed( WindowEvent e ) { }
+	@Override
 	public void windowOpened( WindowEvent e ) { }
+	@Override
 	public void windowIconified( WindowEvent e ) { }
+	@Override
 	public void windowDeiconified( WindowEvent e ) { }
 
 	public void updateSearchingStatistics( int pointsInOpenBoundary ) {
@@ -919,6 +931,7 @@ public class NeuriteTracerResultsDialog
 		fw.fillStatus.setText( newStatus );
 	}
 
+	@Override
 	public void actionPerformed( ActionEvent e ) {
 
 		Object source = e.getSource();
@@ -1199,6 +1212,7 @@ public class NeuriteTracerResultsDialog
 		}
 	}
 
+	@Override
 	public void sigmaPaletteClosing() {
 		changeState(preSigmaPaletteState);
 		setSigma( currentSigma, true );
@@ -1246,6 +1260,7 @@ public class NeuriteTracerResultsDialog
 		return ( viewPathChoice.getSelectedIndex() > 0 );
 	}
 
+	@Override
 	public void itemStateChanged( ItemEvent e ) {
 
 		Object source = e.getSource();
@@ -1322,6 +1337,7 @@ public class NeuriteTracerResultsDialog
 
 	}
 
+	@Override
 	public void textValueChanged( TextEvent e ) {
 		plugin.justDisplayNearSlices(nearbySlices(),getEitherSide());
 	}
