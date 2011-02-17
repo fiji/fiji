@@ -416,6 +416,16 @@ public class PluginObject {
 		return status.getNoAction() == Action.MODIFIED;
 	}
 
+	/**
+	 * Tell whether this plugin can be uploaded to its update site
+	 *
+	 * Note: this does not check whether the plugin is locally modified.
+	 */
+	public boolean isUploadable(PluginCollection plugins) {
+		PluginCollection.UpdateSite updateSite = plugins.getUpdateSite(this.updateSite);
+		return updateSite != null && updateSite.isUploadable();
+	}
+
 	public boolean actionSpecified() {
 		return action != status.getNoAction();
 	}

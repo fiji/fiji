@@ -143,8 +143,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	}
 
 	public Action[] getActions(PluginObject plugin) {
-		UpdateSite updateSite = getUpdateSite(plugin.updateSite);
-		return updateSite != null && updateSite.isUploadable() ?
+		return plugin.isUploadable(this) ?
 			plugin.getStatus().getDeveloperActions() :
 			plugin.getStatus().getActions();
 	}
@@ -289,8 +288,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	public Iterable<PluginObject> uploadable() {
 		return filter(new Filter() {
 			public boolean matches(PluginObject plugin) {
-				return plugin.getStatus()
-				.isValid(Action.UPLOAD);
+				return plugin.isUploadable(PluginCollection.this);
 			}
 		});
 	}
