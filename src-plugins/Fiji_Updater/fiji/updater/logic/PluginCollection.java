@@ -121,7 +121,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public Collection<String> getSiteNamesToUpload() {
 		Collection<String> set = new HashSet<String>();
-		for (PluginObject plugin : toUpload())
+		for (PluginObject plugin : toUpload(true))
 			set.add(plugin.updateSite);
 		// keep the update sites' order
 		List<String> result = new ArrayList<String>();
@@ -197,7 +197,17 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	}
 
 	public Iterable<PluginObject> toUpload() {
-		return filter(is(Action.UPLOAD));
+		return toUpload(false);
+	}
+
+	public Iterable<PluginObject> toUpload(boolean includeMetadataChanges) {
+		if (!includeMetadataChanges)
+			return filter(is(Action.UPLOAD));
+		return filter(or(is(Action.UPLOAD), new Filter() {
+			public boolean matches(PluginObject plugin) {
+				return plugin.metadataChanged;
+			}
+		}));
 	}
 
 	public Iterable<PluginObject> toUpload(String updateSite) {

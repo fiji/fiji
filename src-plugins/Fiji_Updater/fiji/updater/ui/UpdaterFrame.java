@@ -553,8 +553,8 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		pluginDetails.reset();
 		for (PluginObject plugin : table.getSelectedPlugins())
 			pluginDetails.showPluginDetails(plugin);
-		if (plugins.hasUploadableSites() &&
-				pluginDetails.getDocument().getLength() > 0)
+		if (pluginDetails.getDocument().getLength() > 0 &&
+				table.areAllSelectedPluginsUploadable())
 			pluginDetails.setEditableForDevelopers();
 
 		for (PluginAction button : pluginActions)
@@ -564,7 +564,6 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		cancel.setText(plugins.hasChanges() ? "Cancel" : "Close");
 
 		if (plugins.hasUploadableSites())
-			// TODO: has to change when details editor is embedded
 			enableUploadOrNot();
 
 		int size = plugins.size();

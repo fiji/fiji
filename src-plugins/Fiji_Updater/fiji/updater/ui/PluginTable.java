@@ -200,6 +200,15 @@ public class PluginTable extends JTable {
 		return sites.toArray(new String[sites.size()]);
 	}
 
+	public boolean areAllSelectedPluginsUploadable() {
+		if (getSelectedRows().length == 0)
+			return false;
+		for (PluginObject plugin : getSelectedPlugins())
+			if (!plugin.isUploadable(updaterFrame.plugins))
+				return false;
+		return true;
+	}
+
 	public boolean chooseUpdateSite(PluginCollection plugins, PluginObject plugin) {
 		List<String> list = new ArrayList<String>();
 		for (String name : plugins.getUpdateSiteNames()) {

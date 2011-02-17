@@ -113,6 +113,7 @@ public class PluginObject {
 	public Version current;
 	public Map<Version, Object> previous;
 	public long filesize, newTimestamp;
+	public boolean metadataChanged;
 
 	// These are LinkedHashMaps to retain the order of the entries
 	protected Map<String, Dependency> dependencies;

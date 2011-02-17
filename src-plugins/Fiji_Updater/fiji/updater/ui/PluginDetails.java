@@ -102,8 +102,6 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 	}
 
 	public void setEditableForDevelopers() {
-		if (!updaterFrame.plugins.hasUploadableSites())
-			return;
 		removeDummySpace();
 		setEditable(true);
 	}
@@ -343,6 +341,7 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 		try { text = getDocument().getText(start, end + 1 - start); }
 		catch (BadLocationException e) { return false; }
 
+		editable.plugin.metadataChanged = true;
 		if (editable.tag.equals("Description")) {
 			editable.plugin.description = text;
 			return true;
