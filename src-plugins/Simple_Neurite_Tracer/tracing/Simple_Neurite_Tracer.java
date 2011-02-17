@@ -302,13 +302,11 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 									this,
 									applet != null );
 
-			/* FIXME: the first could be changed to add
+			/* FIXME: this could be changed to add
 			   'this', and move the small implementation
 			   out of NeuriteTracerResultsDialog into this
 			   class. */
 			pathAndFillManager.addPathAndFillListener(resultsDialog);
-			pathAndFillManager.addPathAndFillListener(resultsDialog.pw);
-			pathAndFillManager.addPathAndFillListener(resultsDialog.fw);
 
 			if( (x_spacing == 0.0) ||
 			    (y_spacing == 0.0) ||
