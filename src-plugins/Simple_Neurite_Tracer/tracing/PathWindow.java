@@ -242,32 +242,32 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		}
 	}
 
-	void renameSetEnabled(boolean enabled) {
+	protected void renameSetEnabled(boolean enabled) {
 		renameButton.setEnabled(enabled);
 		renameMenuItem.setEnabled(enabled);
 	}
-	void fitVolumeSetEnabled(boolean enabled) {
+	protected void fitVolumeSetEnabled(boolean enabled) {
 		fitVolumeButton.setEnabled(enabled);
 		fitVolumeMenuItem.setEnabled(enabled);
 	}
-	void fillOutSetEnabled(boolean enabled) {
+	protected void fillOutSetEnabled(boolean enabled) {
 		fillOutButton.setEnabled(enabled);
 		fillOutMenuItem.setEnabled(enabled);
 	}
-	void makePrimarySetEnabled(boolean enabled) {
+	protected void makePrimarySetEnabled(boolean enabled) {
 		makePrimaryButton.setEnabled(enabled);
 		makePrimaryMenuItem.setEnabled(enabled);
 	}
-	void deleteSetEnabled(boolean enabled) {
+	protected void deleteSetEnabled(boolean enabled) {
 		deleteButton.setEnabled(enabled);
 		deleteMenuItem.setEnabled(enabled);
 	}
-	void exportAsSWCSetEnabled(boolean enabled) {
+	protected void exportAsSWCSetEnabled(boolean enabled) {
 		exportAsSWCButton.setEnabled(enabled);
 		exportAsSWCMenuItem.setEnabled(enabled);
 	}
 
-	void fitVolumeSetText(String s) {
+	protected void fitVolumeSetText(String s) {
 		fitVolumeButton.setText(s);
 		fitVolumeMenuItem.setText(s);
 	}
@@ -344,31 +344,31 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 	public static class PathTreeNode extends DefaultMutableTreeNode {
 	}
 
-	JScrollPane scrollPane;
+	protected JScrollPane scrollPane;
 
-	HelpfulJTree tree;
-	DefaultMutableTreeNode root;
+	protected HelpfulJTree tree;
+	protected DefaultMutableTreeNode root;
 
-	JPopupMenu popup;
+	protected JPopupMenu popup;
 
-	JPanel buttonPanel;
+	protected JPanel buttonPanel;
 
-	JButton renameButton;
-	JButton fitVolumeButton;
-	JButton fillOutButton;
-	JButton makePrimaryButton;
-	JButton deleteButton;
-	JButton exportAsSWCButton;
+	protected JButton renameButton;
+	protected JButton fitVolumeButton;
+	protected JButton fillOutButton;
+	protected JButton makePrimaryButton;
+	protected JButton deleteButton;
+	protected JButton exportAsSWCButton;
 
-	JMenuItem renameMenuItem;
-	JMenuItem fitVolumeMenuItem;
-	JMenuItem fillOutMenuItem;
-	JMenuItem makePrimaryMenuItem;
-	JMenuItem deleteMenuItem;
-	JMenuItem exportAsSWCMenuItem;
+	protected JMenuItem renameMenuItem;
+	protected JMenuItem fitVolumeMenuItem;
+	protected JMenuItem fillOutMenuItem;
+	protected JMenuItem makePrimaryMenuItem;
+	protected JMenuItem deleteMenuItem;
+	protected JMenuItem exportAsSWCMenuItem;
 
-	SimpleNeuriteTracer plugin;
-	PathAndFillManager pathAndFillManager;
+	protected SimpleNeuriteTracer plugin;
+	protected PathAndFillManager pathAndFillManager;
 
 	public PathWindow(PathAndFillManager pathAndFillManager, SimpleNeuriteTracer plugin) {
 		this( pathAndFillManager, plugin, 200, 60 );
@@ -459,14 +459,14 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		tree.addMouseListener(ml);
 	}
 
-	void showPopup(MouseEvent me) {
+	protected void showPopup(MouseEvent me) {
 		// Possibly adjust the selection here:
 		popup.show(me.getComponent(),
 				me.getX(),
 				me.getY());
 	}
 
-	void setButtonsEnabled( boolean enable ) {
+	protected void setButtonsEnabled( boolean enable ) {
 		renameSetEnabled(enable);
 		fitVolumeSetEnabled(enable);
 		fillOutSetEnabled(enable);
@@ -475,7 +475,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		exportAsSWCSetEnabled(enable);
 	}
 
-	void getExpandedPaths( HelpfulJTree tree, TreeModel model, MutableTreeNode node, HashSet<Path> set ) {
+	protected void getExpandedPaths( HelpfulJTree tree, TreeModel model, MutableTreeNode node, HashSet<Path> set ) {
 		int count = model.getChildCount(node);
 		for( int i = 0; i < count;  i++ ) {
 			DefaultMutableTreeNode child = (DefaultMutableTreeNode) model.getChild( node, i );
@@ -488,7 +488,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		}
 	}
 
-	void setExpandedPaths( HelpfulJTree tree, TreeModel model, MutableTreeNode node, HashSet<Path> set, Path justAdded ) {
+	protected void setExpandedPaths( HelpfulJTree tree, TreeModel model, MutableTreeNode node, HashSet<Path> set, Path justAdded ) {
 		int count = model.getChildCount(node);
 		for( int i = 0; i < count;  i++ ) {
 			DefaultMutableTreeNode child = (DefaultMutableTreeNode) model.getChild( node, i );
@@ -511,7 +511,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		setSelectedPaths( tree, tree.getModel(), root, selectedPaths );
 	}
 
-	void setSelectedPaths( HelpfulJTree tree, TreeModel model, MutableTreeNode node, HashSet<Path> set ) {
+	protected void setSelectedPaths( HelpfulJTree tree, TreeModel model, MutableTreeNode node, HashSet<Path> set ) {
 		int count = model.getChildCount(node);
 		for( int i = 0; i < count;  i++ ) {
 			DefaultMutableTreeNode child = (DefaultMutableTreeNode) model.getChild( node, i );

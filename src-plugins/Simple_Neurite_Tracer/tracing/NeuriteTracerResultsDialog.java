@@ -63,7 +63,7 @@ public class NeuriteTracerResultsDialog
 	extends JDialog
 	implements ActionListener, WindowListener, ItemListener, PathAndFillListener, TextListener, SigmaPalette.SigmaPaletteListener, ImageListener {
 
-	static final boolean verbose = SimpleNeuriteTracer.verbose;
+	public static final boolean verbose = SimpleNeuriteTracer.verbose;
 
 	public PathWindow pw;
 	public FillWindow fw;
@@ -113,58 +113,58 @@ public class NeuriteTracerResultsDialog
 
 	static final String SEARCHING_STRING = "Searching for path between points...";
 
-	private int currentState;
+	protected int currentState;
 
-	SimpleNeuriteTracer plugin;
+	protected SimpleNeuriteTracer plugin;
 
-	JPanel statusPanel;
-	JLabel statusText;
-	JButton keepSegment, junkSegment;
-	JButton cancelSearch;
+	protected JPanel statusPanel;
+	protected JLabel statusText;
+	protected JButton keepSegment, junkSegment;
+	protected JButton cancelSearch;
 
-	JPanel pathActionPanel;
-	JButton completePath;
-	JButton cancelPath;
+	protected JPanel pathActionPanel;
+	protected JButton completePath;
+	protected JButton cancelPath;
 
-	JComboBox viewPathChoice;
-	String projectionChoice = "projected through all slices";
-	String partsNearbyChoice = "parts in nearby slices";
+	protected JComboBox viewPathChoice;
+	protected String projectionChoice = "projected through all slices";
+	protected String partsNearbyChoice = "parts in nearby slices";
 
-	TextField nearbyField;
+	protected TextField nearbyField;
 
-	PathColorsCanvas pathColorsCanvas;
+	protected PathColorsCanvas pathColorsCanvas;
 
-	JComboBox colorImageChoice;
-	String noColorImageString = "[None]";
-	ImagePlus currentColorImage;
+	protected JComboBox colorImageChoice;
+	protected String noColorImageString = "[None]";
+	protected ImagePlus currentColorImage;
 
-	JCheckBox justShowSelected;
+	protected JCheckBox justShowSelected;
 
-	JComboBox paths3DChoice;
-	String [] paths3DChoicesStrings = {
+	protected JComboBox paths3DChoice;
+	protected String [] paths3DChoicesStrings = {
 		"BUG",
 		"as surface reconstructions",
 		"as lines",
 		"as lines and discs" };
 
-	JCheckBox preprocess;
-	JCheckBox usePreprocessed;
+	protected JCheckBox preprocess;
+	protected JCheckBox usePreprocessed;
 
-	double currentSigma;
-	double currentMultiplier;
+	protected double currentSigma;
+	protected double currentMultiplier;
 
-	JLabel currentSigmaAndMultiplierLabel;
+	protected JLabel currentSigmaAndMultiplierLabel;
 
-	JButton editSigma;
-	JButton sigmaWizard;
+	protected JButton editSigma;
+	protected JButton sigmaWizard;
 
-	JButton showCorrespondencesToButton;
+	protected JButton showCorrespondencesToButton;
 
-	JButton uploadButton;
-	JButton fetchButton;
+	protected JButton uploadButton;
+	protected JButton fetchButton;
 
-	JButton showOrHidePathList;
-	JButton showOrHideFillList;
+	protected JButton showOrHidePathList;
+	protected JButton showOrHideFillList;
 
 	// ------------------------------------------------------------------------
 	// Implementing the ImageListener interface:
@@ -312,8 +312,8 @@ public class NeuriteTracerResultsDialog
 
 	// ------------------------------------------------------------------------
 
-	int preGaussianState;
-	int preSigmaPaletteState;
+	protected int preGaussianState;
+	protected int preSigmaPaletteState;
 
 	public void gaussianCalculated(boolean succeeded) {
 		if( !succeeded )
@@ -356,8 +356,8 @@ public class NeuriteTracerResultsDialog
 		plugin.enableHessian(true);
 	}
 
-	DecimalFormat threeDecimalPlaces = new DecimalFormat("0.0000");
-	DecimalFormat threeDecimalPlacesScientific = new DecimalFormat("0.00E00");
+	protected DecimalFormat threeDecimalPlaces = new DecimalFormat("0.0000");
+	protected DecimalFormat threeDecimalPlacesScientific = new DecimalFormat("0.00E00");
 
 	public String formatDouble( double value ) {
 		double absValue = Math.abs( value );
@@ -616,7 +616,7 @@ public class NeuriteTracerResultsDialog
 
 	private PathAndFillManager pathAndFillManager;
 
-	boolean launchedByArchive;
+	protected boolean launchedByArchive;
 
 	public NeuriteTracerResultsDialog( String title,
 					   SimpleNeuriteTracer plugin,

@@ -51,43 +51,43 @@ import java.io.IOException;
 @SuppressWarnings("serial")
 public class FillWindow extends JFrame implements PathAndFillListener, ActionListener, ItemListener, FillerProgressCallback {
 
-	SimpleNeuriteTracer plugin;
-	PathAndFillManager pathAndFillManager;
+	protected SimpleNeuriteTracer plugin;
+	protected PathAndFillManager pathAndFillManager;
 
 	public FillWindow(PathAndFillManager pathAndFillManager, SimpleNeuriteTracer plugin) {
 		this( pathAndFillManager, plugin, 200, 60 );
 	}
 
-	JScrollPane scrollPane;
+	protected JScrollPane scrollPane;
 
-	JList fillList;
-	DefaultListModel listModel;
+	protected JList fillList;
+	protected DefaultListModel listModel;
 
-	JButton deleteFills;
-	JButton reloadFill;
+	protected JButton deleteFills;
+	protected JButton reloadFill;
 
-	JPanel fillControlPanel;
+	protected JPanel fillControlPanel;
 
-	JLabel fillStatus;
+	protected JLabel fillStatus;
 
-	float maxThresholdValue = 0;
+	protected float maxThresholdValue = 0;
 
-	JTextField thresholdField;
-	JLabel maxThreshold;
-	JButton setThreshold;
-	JButton setMaxThreshold;
+	protected JTextField thresholdField;
+	protected JLabel maxThreshold;
+	protected JButton setThreshold;
+	protected JButton setMaxThreshold;
 
-	JButton view3D;
-	JCheckBox maskNotReal;
-	JCheckBox transparent;
+	protected JButton view3D;
+	protected JCheckBox maskNotReal;
+	protected JCheckBox transparent;
 
-	boolean currentlyFilling = true;
-	JButton pauseOrRestartFilling;
+	protected boolean currentlyFilling = true;
+	protected JButton pauseOrRestartFilling;
 
-	JButton saveFill;
-	JButton discardFill;
+	protected JButton saveFill;
+	protected JButton discardFill;
 
-	JButton exportAsCSV;
+	protected JButton exportAsCSV;
 
 	public void setControlsEnabled( boolean enable ) {
 
