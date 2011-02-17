@@ -143,7 +143,8 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	}
 
 	public Action[] getActions(PluginObject plugin) {
-		return hasUploadableSites() ?
+		UpdateSite updateSite = getUpdateSite(plugin.updateSite);
+		return updateSite != null && updateSite.isUploadable() ?
 			plugin.getStatus().getDeveloperActions() :
 			plugin.getStatus().getActions();
 	}
