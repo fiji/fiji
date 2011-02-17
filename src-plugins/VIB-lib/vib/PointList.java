@@ -213,25 +213,27 @@ public class PointList implements Iterable<BenesNamedPoint>{
 				openPath = od.getDirectory()+od.getFileName();
 			}
 		}
-
-		PointList list = new PointList();
 		try {
-			BufferedReader f = new BufferedReader(
-						new FileReader(openPath));
-			String line;
-			while ((line=f.readLine())!=null) {
-				BenesNamedPoint p = BenesNamedPoint.
-							fromLine(line);
-				if(p != null)
-					list.add(p);
-			}
-			return list;
+			return load(new FileReader(openPath));
 		} catch (FileNotFoundException e) {
 			IJ.showMessage("Could not find file " + openPath);
 		} catch (IOException e) {
 			IJ.showMessage("Could not read file " + openPath);
 		}
 		return null;
+	}
+
+	public static PointList load(FileReader reader) throws IOException {
+		PointList list = new PointList();
+		BufferedReader f = new BufferedReader(reader);
+		String line;
+		while ((line=f.readLine())!=null) {
+			BenesNamedPoint p = BenesNamedPoint.
+						fromLine(line);
+			if(p != null)
+				list.add(p);
+		}
+		return list;
 	}
 
 	public void save(String directory, String fileName ) {
@@ -256,17 +258,19 @@ public class PointList implements Iterable<BenesNamedPoint>{
 				return;
 		}
 		IJ.showStatus("Saving point annotations to "+savePath);
-
 		try {
-			PrintStream fos = new PrintStream(savePath);
-			for(BenesNamedPoint p : points)
-				if(p.set)
-					fos.println(p.toYAML() + "\n");
-			fos.close();
+			save(new PrintStream(savePath));
+			IJ.showStatus("Saved point annotations.");
 		} catch( IOException e ) {
 			IJ.error("Error saving to: "+savePath+"\n"+e);
 		}
-		IJ.showStatus("Saved point annotations.");
+	}
+
+	public void save(PrintStream fos) throws IOException {
+		for(BenesNamedPoint p : points)
+			if(p.set)
+				fos.println(p.toYAML() + "\n");
+		fos.close();
 	}
 
 	public static ArrayList<String> pointsInBothAsString(PointList points0,
