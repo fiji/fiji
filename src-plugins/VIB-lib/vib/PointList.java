@@ -269,7 +269,7 @@ public class PointList implements Iterable<BenesNamedPoint>{
 	public void save(PrintStream fos) throws IOException {
 		for(BenesNamedPoint p : points)
 			if(p.set)
-				fos.println(p.toYAML() + "\n");
+				fos.println(p.toYAML());
 		fos.close();
 	}
 
