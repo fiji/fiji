@@ -271,18 +271,21 @@ public class PointList implements Iterable<BenesNamedPoint>{
 		}
 		IJ.showStatus("Saving point annotations to "+savePath);
 		try {
-			save(new PrintStream(savePath));
+			save(new PrintStream(savePath), true);
 			IJ.showStatus("Saved point annotations.");
 		} catch( IOException e ) {
 			IJ.error("Error saving to: "+savePath+"\n"+e);
 		}
 	}
 
-	public void save(PrintStream fos) throws IOException {
+	public void save(PrintStream fos, boolean close) throws IOException {
 		for(BenesNamedPoint p : points)
 			if(p.set)
 				fos.println(p.toYAML());
-		fos.close();
+		if (close)
+			fos.close();
+		else
+			fos.flush();
 	}
 
 	public static ArrayList<String> pointsInBothAsString(PointList points0,
