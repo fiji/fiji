@@ -190,6 +190,10 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	 */
 	@Override
 	public void show() {
+		// Java 1.6.0_12 fixes the issues occurring when mixing
+		// AWT heavyweight and Swing lightweight components.
+		if(System.getProperty("java.version").compareTo("1.6.0_12") < 0)
+			JPopupMenu.setDefaultLightWeightPopupEnabled(false);
 		win = new ImageWindow3D("ImageJ 3D Viewer", this);
 		plDialog = new PointListDialog(win);
 		plDialog.addWindowListener(new WindowAdapter() {
