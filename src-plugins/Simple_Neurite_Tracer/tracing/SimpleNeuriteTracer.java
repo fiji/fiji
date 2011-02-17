@@ -1318,6 +1318,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 		update3DViewerContents();
 	}
 
+	/* FIXME: this can be very slow ... Perhaps do it in a
+	   separate thread? */
 	public void setColorImage( ImagePlus newColorImage ) {
 		colorImage = newColorImage;
 		update3DViewerContents();
