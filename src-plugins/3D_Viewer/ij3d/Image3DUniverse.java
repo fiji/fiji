@@ -264,7 +264,7 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	public void cleanup() {
 		timeline.pause();
 		removeAllContents();
-		contents = null;
+		contents.clear();
 		universes.remove(this);
 		adder.shutdownNow();
 		executer.flush();
@@ -784,7 +784,7 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 			return null;
 		}
 		Content c = ContentCreator.createContent(name, image, type,
-			resf, -1, color, thresh, channels);
+			resf, 0, color, thresh, channels);
 		return addContent(c);
 	}
 

@@ -2067,7 +2067,7 @@ static int start_ij(void)
 	}
 
 	library_base_path = string_copy(fiji_path("lib"));
-	detect_library_path(library_base_path, library_base_path);
+	detect_library_path(java_library_path, library_base_path);
 	string_release(library_base_path);
 
 #ifdef WIN32
@@ -3062,6 +3062,9 @@ static int read_exactly(int fd, unsigned char *buffer, int size)
 		int count = read(fd, buffer, size);
 		if (count < 0)
 			return 0;
+		if (count == 0)
+			/* short file */
+			return 1;
 		buffer += count;
 		size -= count;
 	}
@@ -3075,6 +3078,9 @@ static int MAYBE_UNUSED is_dll(const char *path)
 	unsigned char buffer[0x40];
 	unsigned char *p;
 	off_t offset;
+
+	if (suffixcmp(path, strlen(path), ".dll"))
+		return 0;
 
 	if ((in = open(path, O_RDONLY | O_BINARY)) < 0)
 		return 0;
@@ -3106,6 +3112,9 @@ static int MAYBE_UNUSED is_elf(const char *path)
 	int in;
 	unsigned char buffer[0x40];
 
+	if (suffixcmp(path, strlen(path), ".so"))
+		return 0;
+
 	if ((in = open(path, O_RDONLY | O_BINARY)) < 0)
 		return 0;
 
@@ -3125,6 +3134,10 @@ static int MAYBE_UNUSED is_dylib(const char *path)
 {
 	int in;
 	unsigned char buffer[0x40];
+
+	if (suffixcmp(path, strlen(path), ".dylib") &&
+			suffixcmp(path, strlen(path), ".jnilib"))
+		return 0;
 
 	if ((in = open(path, O_RDONLY | O_BINARY)) < 0)
 		return 0;
