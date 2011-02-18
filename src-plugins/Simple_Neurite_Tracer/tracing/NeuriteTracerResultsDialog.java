@@ -1426,8 +1426,4 @@ public class NeuriteTracerResultsDialog
 		plugin.justDisplayNearSlices(nearbySlices(),getEitherSide());
 	}
 
-	protected void threadStatus( SearchThread source, int threadStatus ) {
-		if (verbose) System.out.println("threadStatus reported as: "+threadStatus);
-	}
-
 }
