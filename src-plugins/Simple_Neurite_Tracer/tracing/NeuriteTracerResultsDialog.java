@@ -62,7 +62,7 @@ import skeleton_analysis. AnalyzeSkeleton_;
 @SuppressWarnings("serial")
 public class NeuriteTracerResultsDialog
 	extends JDialog
-	implements ActionListener, WindowListener, ItemListener, PathAndFillListener, TextListener, SigmaPalette.SigmaPaletteListener, ImageListener {
+	implements ActionListener, WindowListener, ItemListener, TextListener, SigmaPalette.SigmaPaletteListener, ImageListener {
 
 	public static final boolean verbose = SimpleNeuriteTracer.verbose;
 
@@ -309,31 +309,6 @@ public class NeuriteTracerResultsDialog
 				setMultiplier( multiplier );
 			}
 		});
-	}
-
-	// ------------------------------------------------------------------------
-	// FIXME: consider moving these into SimpleNeuriteTracer
-
-	@Override
-	public void setPathList( String [] newList, Path justAdded, boolean expandAll ) { }
-
-	@Override
-	public void setFillList( String [] newList ) { }
-
-	// Note that rather unexpectedly the p.setSelcted calls make sure that
-	// the colour of the path in the 3D viewer is right...  (FIXME)
-	@Override
-	public void setSelectedPaths( HashSet<Path> selectedPathsSet, Object source ) {
-		if( source == this )
-			return;
-		for( int i = 0; i < pathAndFillManager.size(); ++i ) {
-			Path p = pathAndFillManager.getPath(i);
-			if( selectedPathsSet.contains(p) ) {
-				p.setSelected( true );
-			} else {
-				p.setSelected( false );
-			}
-		}
 	}
 
 	// ------------------------------------------------------------------------

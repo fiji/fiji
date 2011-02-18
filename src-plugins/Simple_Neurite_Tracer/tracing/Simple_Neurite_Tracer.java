@@ -306,7 +306,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 			   'this', and move the small implementation
 			   out of NeuriteTracerResultsDialog into this
 			   class. */
-			pathAndFillManager.addPathAndFillListener(resultsDialog);
+			pathAndFillManager.addPathAndFillListener(this);
 
 			if( (x_spacing == 0.0) ||
 			    (y_spacing == 0.0) ||
