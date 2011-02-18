@@ -142,9 +142,11 @@ public class Checksummer extends Progressable {
 			if (checksum == null)
 				throw new RuntimeException("Tried to remove "
 					+ path + ", which is not known to Fiji");
-			if (fijiRoot == null)
+			if (fijiRoot == null) {
 				plugin = new PluginObject(null, path, checksum,
 						timestamp, Status.NOT_FIJI);
+				tryToGuessPlatform(plugin);
+			}
 			else {
 				plugin = new PluginObject(null, path, null, 0,
 						Status.OBSOLETE);
@@ -194,6 +196,31 @@ public class Checksummer extends Progressable {
 			if (plugin.isLocallyModified())
 				plugin.addPreviousVersion(plugin.newChecksum,
 						plugin.newTimestamp);
+	}
+
+	protected static boolean tryToGuessPlatform(PluginObject plugin) {
+		// Look for platform names as subdirectories of lib/ and mm/
+		String platform;
+		if (plugin.filename.startsWith("lib/"))
+			platform = plugin.filename.substring(4);
+		else if (plugin.filename.startsWith("mm/"))
+			platform = plugin.filename.substring(3);
+		else
+			return false;
+
+		int slash = platform.indexOf('/');
+		if (slash < 0)
+			return false;
+		platform = platform.substring(0, slash);
+
+		if (platform.equals("linux32"))
+			platform = "linux";
+		for (String valid : Util.platforms)
+			if (platform.equals(valid)) {
+				plugin.addPlatform(platform);
+				return true;
+			}
+		return false;
 	}
 
 	public static final String[][] directories = {
