@@ -34,6 +34,8 @@ import ij.plugin.*;
 import ij.measure.Calibration;
 import ij3d.Image3DUniverse;
 import ij3d.Content;
+
+import javax.swing.SwingUtilities;
 import javax.vecmath.Color3f;
 import ij.gui.GUI;
 
@@ -43,6 +45,7 @@ import java.awt.*;
 import java.awt.image.IndexColorModel;
 
 import java.io.*;
+import java.util.concurrent.Callable;
 
 import client.ArchiveClient;
 
@@ -82,7 +85,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 				macroOptions, "tracesfilename", null );
 		}
 
-		Applet applet = IJ.getApplet();
+		final Applet applet = IJ.getApplet();
 		if( applet != null ) {
 			archiveClient = new ArchiveClient( applet, macroOptions );
 		}
@@ -298,9 +301,15 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 			zy_tracer_canvas = (InteractiveTracerCanvas)zy_canvas;
 
 			setupTrace = true;
-			resultsDialog = new NeuriteTracerResultsDialog( "Tracing for: " + xy.getShortTitle(),
-									this,
-									applet != null );
+			final Simple_Neurite_Tracer thisPlugin = this;
+			resultsDialog = SwingSafeResult.getResult( new Callable<NeuriteTracerResultsDialog>() {
+				public NeuriteTracerResultsDialog call() {
+					return new NeuriteTracerResultsDialog( "Tracing for: " + xy.getShortTitle(),
+									       thisPlugin,
+									       applet != null );
+				}
+			});
+
 
 			/* FIXME: this could be changed to add
 			   'this', and move the small implementation
