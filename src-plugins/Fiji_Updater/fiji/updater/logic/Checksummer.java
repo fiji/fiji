@@ -89,9 +89,10 @@ public class Checksummer extends Progressable {
 		for (String item : file.list()) {
 			String path = dir + "/" + item;
 			file = new File(prefix(path));
+			if (item.startsWith("."))
+				continue;
 			if (file.isDirectory()) {
-				if (!item.equals(".") && !item.equals(".."))
-					queueDir(path, extensions);
+				queueDir(path, extensions);
 				continue;
 			}
 			if (!extensions.contains("")) {
