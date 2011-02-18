@@ -1598,6 +1598,7 @@ public class ComputeCurvatures implements Runnable
     public abstract class FloatArray
     {
         public float data[] = null;
+        @Override
         public abstract FloatArray clone();
     }
 
@@ -1627,6 +1628,7 @@ public class ComputeCurvatures implements Runnable
             this.height = height;
         }
 
+        @Override
         public FloatArray2D clone()
         {
             FloatArray2D clone = new FloatArray2D(width, height);
@@ -1736,6 +1738,7 @@ public class ComputeCurvatures implements Runnable
             this.depth = depth;
         }
 
+        @Override
         public FloatArray3D clone()
         {
             FloatArray3D clone = new FloatArray3D(width, height, depth);
