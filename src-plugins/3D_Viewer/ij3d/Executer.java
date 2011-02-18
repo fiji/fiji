@@ -507,14 +507,11 @@ public class Executer {
 
 	private interface ColorListener {
 		public void colorChanged(Color3f color);
-	}
-
-	private interface OKListener {
 		public void ok(GenericDialog gd);
 	}
 
 	protected void showColorDialog(final String title,
-			final Color3f oldC, final ColorListener colorListener, final OKListener okListener,
+			final Color3f oldC, final ColorListener colorListener,
 			boolean showDefaultCheckbox, boolean showTimepointsCheckbox) {
 		final GenericDialog gd = new GenericDialog(title, univ.getWindow());
 
@@ -573,7 +570,7 @@ public class Executer {
 					colorListener.colorChanged(oldC);
 				else {
 					gd.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-					okListener.ok(gd);
+					colorListener.ok(gd);
 					gd.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 				}
 			}
@@ -594,8 +591,7 @@ public class Executer {
 				ci.setColor(color);
 				univ.fireContentChanged(c);
 			}
-		};
-		final OKListener okListener = new OKListener() {
+
 			public void ok(final GenericDialog gd) {
 				if (gd.getNextBoolean())
 					record(SET_COLOR, "null", "null", "null");
@@ -609,7 +605,7 @@ public class Executer {
 				univ.fireContentChanged(c);
 			}
 		};
-		showColorDialog("Change color...", oldC, colorListener, okListener, true, true);
+		showColorDialog("Change color...", oldC, colorListener, true, true);
 	}
 
 	/** Adjust the background color in place. */
@@ -625,13 +621,12 @@ public class Executer {
 				status.setBackground(color.get());
 				((ImageCanvas3D)univ.getCanvas()).render();
 			}
-		};
-		final OKListener okListener = new OKListener() {
+
 			public void ok(final GenericDialog gd) {
 				// TODO macro record
 			}
 		};
-		showColorDialog("Adjust background color ...", oldC, colorListener, okListener, false, false);
+		showColorDialog("Adjust background color ...", oldC, colorListener, false, false);
 	}
 
 	public void changePointColor(final Content c) {
@@ -644,8 +639,7 @@ public class Executer {
 				ci.setLandmarkColor(color);
 				univ.fireContentChanged(c);
 			}
-		};
-		final OKListener okListener = new OKListener() {
+
 			public void ok(final GenericDialog gd) {
 				// TODO: record
 				// gd.wasOKed: apply to all time points
@@ -654,7 +648,7 @@ public class Executer {
 				univ.fireContentChanged(c);
 			}
 		};
-		showColorDialog("Change point color...", oldC, colorListener, okListener, false, true);
+		showColorDialog("Change point color...", oldC, colorListener, false, true);
 	}
 
 	public void adjustLUTs(final Content c) {
