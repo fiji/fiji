@@ -204,6 +204,7 @@ public class Weka_Segmentation implements PlugIn
 	public static final String GET_RESULT = "getResult";
 	public static final String GET_PROBABILITY = "getProbability";
 	public static final String PLOT_RESULT = "plotResultGraphs";
+	public static final String APPLY_CLASSIFIER = "applyClassifier";
 	
 
 	/**
@@ -1473,6 +1474,15 @@ public class Weka_Segmentation implements PlugIn
 		for (int i = 0; i < numThreads; i++) {
 
 			threads[i] = new ImageProcessingThread(i, numThreads, imageFiles, storeResults, showResults, storeDir);
+			// Record
+			String[] arg = new String[] {
+				imageFiles[i].getParent(),
+				imageFiles[i].getName(),
+				"showResults=" + showResults,
+				"storeResults=" + storeResults,
+				"probabilityMaps="+ probabilityMaps,
+				storeDir	};
+			record(APPLY_CLASSIFIER, arg);
 			threads[i].start();
 		}
 
@@ -1491,8 +1501,6 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public void loadClassifier()
 	{
-		int oldNumOfClasses = wekaSegmentation.getNumOfClasses();
-
 		OpenDialog od = new OpenDialog("Choose Weka classifier file","");
 		if (od.getFileName()==null)
 			return;
@@ -2279,6 +2287,56 @@ public class Weka_Segmentation implements PlugIn
 		win.updateButtonsEnabling();
 		IJ.showStatus("Done.");
 		IJ.log("Done");
+	}
+
+	/**
+	 * Apply current classifier to specific image (2D or stack)
+	 * 
+	 * @param dir input image directory path
+	 * @param fileName input image name
+	 * @param showResultsFlag boolean flag to display results
+	 * @param storeResultsFlag boolean flag to store result in a directory
+	 * @param probabilityMapsFlag boolean flag to calculate probabilities instead of a binary result
+	 * @param storeDir directory to store the results
+	 */
+	public static void applyClassifier(
+			String dir,
+			String fileName,
+			String showResultsFlag,
+			String storeResultsFlag,
+			String probabilityMapsFlag,
+			String storeDir)
+	{
+		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
+		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+		ImagePlus testImage = IJ.openImage( dir +"/"+ fileName );
+
+		if(null == testImage)
+		{
+			IJ.log("Error: " + dir +"/"+ fileName + " could not be opened");
+			return;
+		}
+		
+		boolean probabilityMaps = probabilityMapsFlag.contains("true");
+		boolean storeResults = storeResultsFlag.contains("true");
+		boolean showResults = showResultsFlag.contains("true");
+		
+		IJ.log("Processing image " + dir + "/" + fileName );
+
+		ImagePlus segmentation = wekaSegmentation.applyClassifier(testImage, 0, probabilityMaps);
+
+		if (showResults) {
+			segmentation.show();
+			testImage.show();
+		}
+
+		if (storeResults) {
+			String filename = storeDir + File.separator + fileName;
+			IJ.log("Saving results to " + filename);
+			IJ.save(segmentation, filename);
+			segmentation.close();
+			testImage.close();
+		}
 	}
 	
 }// end of Weka_Segmentation class
