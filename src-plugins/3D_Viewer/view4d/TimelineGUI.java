@@ -4,6 +4,8 @@ import ij.gui.GenericDialog;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 import java.net.URL;
 import java.awt.image.ImageProducer;
@@ -15,7 +17,7 @@ import vib.segment.ImageButton;
  *
  * @author Benjamin Schmid
  */
-public class TimelineGUI implements ActionListener {
+public class TimelineGUI implements ActionListener, KeyListener {
 
 	private final Panel p;
 	private boolean visible = false;
@@ -158,6 +160,39 @@ public class TimelineGUI implements ActionListener {
 		return img;
 	}
 
+	/**
+	 * Toggle play/pause
+	 */
+	public synchronized void togglePlay() {
+		if (!p.isVisible())
+			return;
+		if (buttons[playIndex].getActionCommand().equals("PLAY")) {
+			buttons[playIndex].setUnarmedImage(pauseImage);
+			buttons[playIndex].setActionCommand("PAUSE");
+			buttons[playIndex].repaint();
+			timeline.play();
+		}
+		else {
+			buttons[playIndex].setUnarmedImage(playImage);
+			buttons[playIndex].setActionCommand("PLAY");
+			buttons[playIndex].repaint();
+			timeline.pause();
+		}
+	}
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+		if (e.getKeyCode() == KeyEvent.VK_BACK_SLASH ||
+				e.getKeyCode() == KeyEvent.VK_SPACE)
+			togglePlay();
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {}
+	@Override
+	public void keyTyped(KeyEvent e) {}
+
+	@Override
 	public void actionPerformed(ActionEvent e) {
 		for(int i = 0; i < buttons.length; i++)
 			buttons[i].repaint();
