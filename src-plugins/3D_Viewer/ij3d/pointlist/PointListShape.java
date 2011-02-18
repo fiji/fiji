@@ -41,7 +41,7 @@ public class PointListShape extends BranchGroup
 	private Appearance appearance;
 
 	/** The radius of the points */
-	private float radius = 10;
+	private float radius = 1;
 
 	/**
 	 * Constructor.
@@ -85,14 +85,17 @@ public class PointListShape extends BranchGroup
 	public void setRadius(float r) {
 		this.radius = r;
 		Transform3D t3d = new Transform3D();
-		t3d.set(radius);
 		for(int i = 0; i < numChildren(); i++) {
 			BranchGroup bg = (BranchGroup)getChild(i);
 			TransformGroup tg = (TransformGroup)bg.getChild(0);
 			ScaleInterpolator si = (ScaleInterpolator)tg.getChild(1);
-			si.setMaximumScale(5 * radius);
-			si.setMinimumScale(radius);
+			if (si != null) {
+				si.setMaximumScale(5 * radius);
+				si.setMinimumScale(radius);
+			}
 			TransformGroup sig = (TransformGroup)tg.getChild(0);
+			sig.getTransform(t3d);
+			t3d.setScale(radius);
 			sig.setTransform(t3d);
 		}
 	}
@@ -239,7 +242,13 @@ public class PointListShape extends BranchGroup
 		sig.addChild(sphere);
 
 		addChild(bg);
-		si.setEnable(true);
+
+		si.setEnable(false);
+
+		Transform3D scaleTransform = new Transform3D();
+		sig.getTransform(scaleTransform);
+		scaleTransform.setScale(radius);
+		sig.setTransform(scaleTransform);
 	}
 
 	/**
