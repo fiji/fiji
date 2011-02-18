@@ -95,7 +95,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 
 	public Set<Path> getSelectedPaths() {
 
-		FutureTask<Set<Path>> ft = new FutureTask<Set<Path>>( new Callable<Set<Path>>() {
+		return SwingSafeResult.getResult( new Callable<Set<Path>>() {
 			public Set<Path> call() {
 				HashSet<Path> result = new HashSet<Path>();
 				TreePath [] selectedPaths = tree.getSelectionPaths();
@@ -114,22 +114,6 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				return result;
 			}
 		});
-
-		if( SwingUtilities.isEventDispatchThread() )
-			ft.run();
-		else
-			SwingUtilities.invokeLater(ft);
-
-		while( true ) {
-			try {
-				return ft.get();
-			} catch( InterruptedException e ) {
-				// just try again...
-			} catch( ExecutionException e ) {
-				e.getCause().printStackTrace();
-				return null;
-			}
-		}
 	}
 
 	@Override
