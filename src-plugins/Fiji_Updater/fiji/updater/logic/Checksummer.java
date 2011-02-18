@@ -94,9 +94,11 @@ public class Checksummer extends Progressable {
 					queueDir(path, extensions);
 				continue;
 			}
-			int dot = item.lastIndexOf('.');
-			if (dot < 0 || !extensions.contains(item.substring(dot)))
-				continue;
+			if (!extensions.contains("")) {
+				int dot = item.lastIndexOf('.');
+				if (dot < 0 || !extensions.contains(item.substring(dot)))
+					continue;
+			}
 			if (exists(file))
 				queue(path, file.getAbsolutePath());
 		}
