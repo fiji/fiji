@@ -198,12 +198,14 @@ public class NeuriteTracerResultsDialog
 	// ------------------------------------------------------------------------
 
 	protected void updateStatusText(String newStatus) {
+		assert SwingUtilities.isEventDispatchThread();
 		statusText.setText("<html><strong>"+newStatus+"</strong></html>");
 	}
 
 	volatile boolean ignoreColorImageChoiceEvents = false;
 
 	synchronized protected void updateColorImageChoice() {
+		assert SwingUtilities.isEventDispatchThread();
 
 		ignoreColorImageChoiceEvents = true;
 
@@ -405,6 +407,7 @@ public class NeuriteTracerResultsDialog
 	}
 
 	protected void updateLabel( ) {
+		assert SwingUtilities.isEventDispatchThread();
 		currentSigmaAndMultiplierLabel.setText(
 			"\u03C3 = " +
 			formatDouble( currentSigma ) +
@@ -420,6 +423,7 @@ public class NeuriteTracerResultsDialog
 	}
 
 	protected void exitRequested() {
+		assert SwingUtilities.isEventDispatchThread();
 
 		// FIXME: check that everything is saved...
 
@@ -441,6 +445,7 @@ public class NeuriteTracerResultsDialog
 	}
 
 	protected void disableEverything() {
+		assert SwingUtilities.isEventDispatchThread();
 
 		fw.setEnabledNone();
 		pw.setButtonsEnabled(false);
@@ -996,6 +1001,7 @@ public class NeuriteTracerResultsDialog
 
 	@Override
 	public void actionPerformed( ActionEvent e ) {
+		assert SwingUtilities.isEventDispatchThread();
 
 		Object source = e.getSource();
 
@@ -1291,6 +1297,7 @@ public class NeuriteTracerResultsDialog
 	}
 
 	protected void setPathListVisible(boolean makeVisible) {
+		assert SwingUtilities.isEventDispatchThread();
 		if( makeVisible ) {
 			showOrHidePathList.setText("Hide Path List");
 			pw.setVisible(true);
@@ -1302,12 +1309,14 @@ public class NeuriteTracerResultsDialog
 	}
 
 	protected void togglePathListVisibility() {
+		assert SwingUtilities.isEventDispatchThread();
 		synchronized (pw) {
 			setPathListVisible( ! pw.isVisible() );
 		}
 	}
 
 	protected void setFillListVisible(boolean makeVisible) {
+		assert SwingUtilities.isEventDispatchThread();
 		if( makeVisible ) {
 			showOrHideFillList.setText("Hide Fill List");
 			fw.setVisible(true);
@@ -1319,6 +1328,7 @@ public class NeuriteTracerResultsDialog
 	}
 
 	protected void toggleFillListVisibility() {
+		assert SwingUtilities.isEventDispatchThread();
 		synchronized (fw) {
 			setFillListVisible( ! fw.isVisible() );
 		}
@@ -1329,11 +1339,13 @@ public class NeuriteTracerResultsDialog
 	}
 
 	public boolean nearbySlices( ) {
+		assert SwingUtilities.isEventDispatchThread();
 		return ( viewPathChoice.getSelectedIndex() > 0 );
 	}
 
 	@Override
 	public void itemStateChanged( ItemEvent e ) {
+		assert SwingUtilities.isEventDispatchThread();
 
 		Object source = e.getSource();
 
@@ -1377,6 +1389,7 @@ public class NeuriteTracerResultsDialog
 	volatile boolean reportedInvalid;
 
 	protected int getEitherSide( ) {
+		assert SwingUtilities.isEventDispatchThread();
 
 		String s = nearbyField.getText();
 		if( s.equals("") ) {
@@ -1409,6 +1422,7 @@ public class NeuriteTracerResultsDialog
 
 	@Override
 	public void textValueChanged( TextEvent e ) {
+		assert SwingUtilities.isEventDispatchThread();
 		plugin.justDisplayNearSlices(nearbySlices(),getEitherSide());
 	}
 
