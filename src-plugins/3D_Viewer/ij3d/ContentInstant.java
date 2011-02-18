@@ -395,6 +395,14 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 		plShape.setRadius(r);
 	}
 
+	public Color3f getLandmarkColor() {
+		return plShape.getColor();
+	}
+
+	public void setLandmarkColor(Color3f color) {
+		plShape.setColor(color);
+	}
+
 	public PointList getPointList() {
 		return points;
 	}

@@ -78,6 +78,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 	private JMenuItem pl_load;
 	private JMenuItem pl_save;
 	private JMenuItem pl_size;
+	private JMenuItem pl_color;
 	private JCheckBoxMenuItem pl_show;
 	private JMenuItem j3dproperties;
 	private JCheckBoxMenuItem coordinateSystem;
@@ -426,6 +427,10 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		pl_size.addActionListener(this);
 		pl.add(pl_size);
 
+		pl_color = new JMenuItem("Point color");
+		pl_color.addActionListener(this);
+		pl.add(pl_color);
+
 		return pl;
 	}
 
@@ -611,6 +616,8 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 			executer.savePointList(getSelected());
 		else if (src == pl_size)
 			executer.changePointSize(getSelected());
+		else if (src == pl_color)
+			executer.changePointColor(getSelected());
 		else if (src == saveView)
 			executer.saveView();
 		else if (src == loadView)
@@ -776,6 +783,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		pl_save.setEnabled(c != null);
 		pl_show.setEnabled(c != null);
 		pl_size.setEnabled(c != null);
+		pl_color.setEnabled(c != null);
 
 		lock.setEnabled(c != null);
 		setTransform.setEnabled(c != null);

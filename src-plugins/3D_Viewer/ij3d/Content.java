@@ -370,6 +370,15 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 			c.setLandmarkPointSize(r);
 	}
 
+	public Color3f getLandmarkColor() {
+		return getCurrent().getLandmarkColor();
+	}
+
+	public void setLandmarkColor(Color3f color) {
+		for(ContentInstant c : contents.values())
+			c.setLandmarkColor(color);
+	}
+
 	public PointList getPointList() {
 		return getCurrent().getPointList();
 	}

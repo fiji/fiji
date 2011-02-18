@@ -634,6 +634,29 @@ public class Executer {
 		showColorDialog("Adjust background color ...", oldC, colorListener, okListener, false, false);
 	}
 
+	public void changePointColor(final Content c) {
+		if(!checkSel(c))
+			return;
+		final ContentInstant ci = c.getCurrent();
+		final Color3f oldC = ci.getLandmarkColor();
+		final ColorListener colorListener = new ColorListener() {
+			public void colorChanged(Color3f color) {
+				ci.setLandmarkColor(color);
+				univ.fireContentChanged(c);
+			}
+		};
+		final OKListener okListener = new OKListener() {
+			public void ok(final GenericDialog gd) {
+				// TODO: record
+				// gd.wasOKed: apply to all time points
+				if (gd.getNextBoolean())
+					c.setLandmarkColor(ci.getLandmarkColor());
+				univ.fireContentChanged(c);
+			}
+		};
+		showColorDialog("Change point color...", oldC, colorListener, okListener, false, true);
+	}
+
 	public void adjustLUTs(final Content c) {
 		if(!checkSel(c))
 			return;

@@ -113,6 +113,9 @@ public class PointListShape extends BranchGroup
 		}
 	}
 
+	public Color3f getColor() {
+		return color;
+	}
 
 	/* *************************************************************
 	 * PointList.PointListListener interface
