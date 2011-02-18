@@ -153,6 +153,7 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 		executer = new Executer(this);
 		this.timeline = new Timeline(this);
 		this.timelineGUI = new TimelineGUI(timeline);
+		canvas.addKeyListener(timelineGUI);
 
 		BranchGroup bg = new BranchGroup();
 		scene.addChild(bg);
