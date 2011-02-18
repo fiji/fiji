@@ -643,311 +643,300 @@ public class NeuriteTracerResultsDialog
 					   boolean launchedByArchive ) {
 
 		super( IJ.getInstance(), title, false );
+		assert SwingUtilities.isEventDispatchThread();
 		this.plugin = plugin;
 		final SimpleNeuriteTracer thisPlugin = plugin;
 		this.launchedByArchive = launchedByArchive;
 
 		pathAndFillManager = plugin.getPathAndFillManager();
 
-		final NeuriteTracerResultsDialog thisDialog = this;
+		// Create the menu bar and menus:
 
-		/* Sun seem to have changed their advice, so that even creation
-		 * of Swing GUI components needs to happen in the Event Dispatch
-		 * Thread:
-		 *   http://bitguru.wordpress.com/2007/03/21/will-the-real-swing-single-threading-rule-please-stand-up/
-		 */
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
+		menuBar = new JMenuBar();
 
-				// Create the menu bar and menus:
+		fileMenu = new JMenu("File");
+		menuBar.add(fileMenu);
 
-				menuBar = new JMenuBar();
+		analysisMenu = new JMenu("Analysis");
+		menuBar.add(analysisMenu);
 
-				fileMenu = new JMenu("File");
-				menuBar.add(fileMenu);
+		loadMenuItem = new JMenuItem("Load traces / SWC file...");
+		loadMenuItem.addActionListener(this);
+		fileMenu.add(loadMenuItem);
 
-				analysisMenu = new JMenu("Analysis");
-				menuBar.add(analysisMenu);
+		loadLabelsMenuItem = new JMenuItem("Load labels file...");
+		loadLabelsMenuItem.addActionListener(this);
+		fileMenu.add(loadLabelsMenuItem);
 
-				loadMenuItem = new JMenuItem("Load traces / SWC file...");
-				loadMenuItem.addActionListener(thisDialog);
-				fileMenu.add(loadMenuItem);
+		saveMenuItem = new JMenuItem("Save traces file...");
+		saveMenuItem.addActionListener(this);
+		fileMenu.add(saveMenuItem);
 
-				loadLabelsMenuItem = new JMenuItem("Load labels file...");
-				loadLabelsMenuItem.addActionListener(thisDialog);
-				fileMenu.add(loadLabelsMenuItem);
+		exportCSVMenuItem = new JMenuItem("Export as CSV...");
+		exportCSVMenuItem.addActionListener(this);
+		fileMenu.add(exportCSVMenuItem);
 
-				saveMenuItem = new JMenuItem("Save traces file...");
-				saveMenuItem.addActionListener(thisDialog);
-				fileMenu.add(saveMenuItem);
+		quitMenuItem = new JMenuItem("Quit");
+		quitMenuItem.addActionListener(this);
+		fileMenu.add(quitMenuItem);
 
-				exportCSVMenuItem = new JMenuItem("Export as CSV...");
-				exportCSVMenuItem.addActionListener(thisDialog);
-				fileMenu.add(exportCSVMenuItem);
+		analyzeSkeletonMenuItem = new JMenuItem("Run \"Analyze Skeleton\"");
+		analyzeSkeletonMenuItem.addActionListener(this);
+		analysisMenu.add(analyzeSkeletonMenuItem);
 
-				quitMenuItem = new JMenuItem("Quit");
-				quitMenuItem.addActionListener(thisDialog);
-				fileMenu.add(quitMenuItem);
+		makeLineStackMenuItem = new JMenuItem("Make Line Stack");
+		makeLineStackMenuItem.addActionListener(this);
+		analysisMenu.add(makeLineStackMenuItem);
 
-				analyzeSkeletonMenuItem = new JMenuItem("Run \"Analyze Skeleton\"");
-				analyzeSkeletonMenuItem.addActionListener(thisDialog);
-				analysisMenu.add(analyzeSkeletonMenuItem);
+		exportCSVMenuItemAgain = new JMenuItem("Export as CSV...");
+		exportCSVMenuItemAgain.addActionListener(this);
+		analysisMenu.add(exportCSVMenuItemAgain);
 
-				makeLineStackMenuItem = new JMenuItem("Make Line Stack");
-				makeLineStackMenuItem.addActionListener(thisDialog);
-				analysisMenu.add(makeLineStackMenuItem);
+		shollAnalysiHelpMenuItem = new JMenuItem("Sholl Analysis help...");
+		shollAnalysiHelpMenuItem.addActionListener(this);
+		analysisMenu.add(shollAnalysiHelpMenuItem);
 
-				exportCSVMenuItemAgain = new JMenuItem("Export as CSV...");
-				exportCSVMenuItemAgain.addActionListener(thisDialog);
-				analysisMenu.add(exportCSVMenuItemAgain);
+		setJMenuBar(menuBar);
 
-				shollAnalysiHelpMenuItem = new JMenuItem("Sholl Analysis help...");
-				shollAnalysiHelpMenuItem.addActionListener(thisDialog);
-				analysisMenu.add(shollAnalysiHelpMenuItem);
+		addWindowListener(this);
 
-				setJMenuBar(menuBar);
+		getContentPane().setLayout(new GridBagLayout());
 
-				addWindowListener(thisDialog);
+		GridBagConstraints c = new GridBagConstraints();
 
-				getContentPane().setLayout(new GridBagLayout());
+		c.anchor = GridBagConstraints.LINE_START;
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 0;
+		c.insets = new Insets( 10, 10, 4, 10 );
+		c.gridy = 0;
+		c.weightx = 1;
 
-				GridBagConstraints c = new GridBagConstraints();
+		{ /* Add the status panel */
 
-				c.anchor = GridBagConstraints.LINE_START;
-				c.fill = GridBagConstraints.HORIZONTAL;
-				c.gridx = 0;
-				c.insets = new Insets( 10, 10, 4, 10 );
-				c.gridy = 0;
-				c.weightx = 1;
+			statusPanel = new JPanel();
+			statusPanel.setLayout(new BorderLayout());
+			statusPanel.add(new JLabel("Instructions:"), BorderLayout.NORTH);
+			statusText = new JLabel("");
+			statusText.setOpaque(true);
+			statusText.setForeground(Color.black);
+			statusText.setBackground(Color.white);
+			updateStatusText("Initial status text");
+			statusText.setBorder( new EmptyBorder( 5, 5, 5, 5 ) );
+			statusPanel.add(statusText,BorderLayout.CENTER);
 
-				{ /* Add the status panel */
+			keepSegment = new JButton("Yes");
+			junkSegment = new JButton("No");
+			cancelSearch = new JButton("Abandon Search");
 
-					statusPanel = new JPanel();
-					statusPanel.setLayout(new BorderLayout());
-					statusPanel.add(new JLabel("Instructions:"), BorderLayout.NORTH);
-					statusText = new JLabel("");
-					statusText.setOpaque(true);
-					statusText.setForeground(Color.black);
-					statusText.setBackground(Color.white);
-					updateStatusText("Initial status text");
-					statusText.setBorder( new EmptyBorder( 5, 5, 5, 5 ) );
-					statusPanel.add(statusText,BorderLayout.CENTER);
+			keepSegment.addActionListener( this );
+			junkSegment.addActionListener( this );
+			cancelSearch.addActionListener( this );
 
-					keepSegment = new JButton("Yes");
-					junkSegment = new JButton("No");
-					cancelSearch = new JButton("Abandon Search");
+			JPanel statusChoicesPanel = new JPanel();
+			/*
+			statusChoicesPanel.setLayout( new GridBagLayout() );
+			GridBagConstraints cs = new GridBagConstraints();
+			cs.weightx = 1;
+			cs.gridx = 0; cs.gridy = 0; cs.anchor = GridBagConstraints.LINE_START;
+			statusChoicesPanel.add(keepSegment,cs);
+			cs.gridx = 1; cs.gridy = 0; cs.anchor = GridBagConstraints.LINE_START;
+			statusChoicesPanel.add(junkSegment,cs);
+			cs.gridx = 2; cs.gridy = 0; cs.anchor = GridBagConstraints.LINE_START;
+			statusChoicesPanel.add(cancelSearch,cs);
+			*/
+			statusChoicesPanel.add(keepSegment);
+			statusChoicesPanel.add(junkSegment);
+			statusChoicesPanel.add(cancelSearch);
+			statusChoicesPanel.setLayout(new FlowLayout());
 
-					keepSegment.addActionListener( thisDialog );
-					junkSegment.addActionListener( thisDialog );
-					cancelSearch.addActionListener( thisDialog );
+			statusPanel.add(statusChoicesPanel,BorderLayout.SOUTH);
 
-					JPanel statusChoicesPanel = new JPanel();
-					/*
-					statusChoicesPanel.setLayout( new GridBagLayout() );
-					GridBagConstraints cs = new GridBagConstraints();
-					cs.weightx = 1;
-					cs.gridx = 0; cs.gridy = 0; cs.anchor = GridBagConstraints.LINE_START;
-					statusChoicesPanel.add(keepSegment,cs);
-					cs.gridx = 1; cs.gridy = 0; cs.anchor = GridBagConstraints.LINE_START;
-					statusChoicesPanel.add(junkSegment,cs);
-					cs.gridx = 2; cs.gridy = 0; cs.anchor = GridBagConstraints.LINE_START;
-					statusChoicesPanel.add(cancelSearch,cs);
-					*/
-					statusChoicesPanel.add(keepSegment);
-					statusChoicesPanel.add(junkSegment);
-					statusChoicesPanel.add(cancelSearch);
-					statusChoicesPanel.setLayout(new FlowLayout());
+			getContentPane().add(statusPanel,c);
+		}
 
-					statusPanel.add(statusChoicesPanel,BorderLayout.SOUTH);
+		c.insets = new Insets( 4, 10, 10, 10 );
 
-					getContentPane().add(statusPanel,c);
-				}
+		{ /* Add the panel of actions to take on half-constructed paths */
 
-				c.insets = new Insets( 4, 10, 10, 10 );
+			pathActionPanel = new JPanel();
+			completePath = new JButton("Complete Path");
+			cancelPath = new JButton("Cancel Path");
+			completePath.addActionListener( this );
+			cancelPath.addActionListener( this );
+			pathActionPanel.add(completePath);
+			pathActionPanel.add(cancelPath);
 
-				{ /* Add the panel of actions to take on half-constructed paths */
+			++ c.gridy;
+			getContentPane().add(pathActionPanel,c);
+		}
 
-					pathActionPanel = new JPanel();
-					completePath = new JButton("Complete Path");
-					cancelPath = new JButton("Cancel Path");
-					completePath.addActionListener( thisDialog );
-					cancelPath.addActionListener( thisDialog );
-					pathActionPanel.add(completePath);
-					pathActionPanel.add(cancelPath);
+		c.insets = new Insets( 10, 10, 10, 10 );
 
-					++ c.gridy;
-					getContentPane().add(pathActionPanel,c);
-				}
+		{
+			JPanel viewOptionsPanel = new JPanel();
 
-				c.insets = new Insets( 10, 10, 10, 10 );
+			viewOptionsPanel.setLayout(new GridBagLayout());
+			GridBagConstraints cv = new GridBagConstraints();
+			cv.insets = new Insets(3, 2, 3, 2);
+			cv.anchor = GridBagConstraints.LINE_START;
+			viewPathChoice = new JComboBox();
+			viewPathChoice.addItem(projectionChoice);
+			viewPathChoice.addItem(partsNearbyChoice);
+			viewPathChoice.addItemListener(this);
 
-				{
-					JPanel viewOptionsPanel = new JPanel();
+			JPanel nearbyPanel = new JPanel();
+			nearbyPanel.setLayout(new BorderLayout());
+			nearbyPanel.add(new JLabel("(up to"),BorderLayout.WEST);
+			nearbyField = new TextField("2",2);
+			nearbyField.addTextListener(this);
+			nearbyPanel.add(nearbyField,BorderLayout.CENTER);
+			nearbyPanel.add(new JLabel("slices to each side)"),BorderLayout.EAST);
 
-					viewOptionsPanel.setLayout(new GridBagLayout());
-					GridBagConstraints cv = new GridBagConstraints();
-					cv.insets = new Insets(3, 2, 3, 2);
-					cv.anchor = GridBagConstraints.LINE_START;
-					viewPathChoice = new JComboBox();
-					viewPathChoice.addItem(projectionChoice);
-					viewPathChoice.addItem(partsNearbyChoice);
-					viewPathChoice.addItemListener(thisDialog);
+			cv.gridx = 0;
+			cv.gridy = 0;
+			viewOptionsPanel.add(new JLabel("View paths (2D): "),cv);
+			cv.gridx = 1;
+			cv.gridy = 0;
+			viewOptionsPanel.add(viewPathChoice,cv);
 
-					JPanel nearbyPanel = new JPanel();
-					nearbyPanel.setLayout(new BorderLayout());
-					nearbyPanel.add(new JLabel("(up to"),BorderLayout.WEST);
-					nearbyField = new TextField("2",2);
-					nearbyField.addTextListener(thisDialog);
-					nearbyPanel.add(nearbyField,BorderLayout.CENTER);
-					nearbyPanel.add(new JLabel("slices to each side)"),BorderLayout.EAST);
+			paths3DChoice = new JComboBox();
+			if( thisPlugin != null && thisPlugin.use3DViewer ) {
+				for( int choice = 1; choice < paths3DChoicesStrings.length; ++choice )
+					paths3DChoice.addItem(paths3DChoicesStrings[choice]);
 
-					cv.gridx = 0;
-					cv.gridy = 0;
-					viewOptionsPanel.add(new JLabel("View paths (2D): "),cv);
-					cv.gridx = 1;
-					cv.gridy = 0;
-					viewOptionsPanel.add(viewPathChoice,cv);
-
-					paths3DChoice = new JComboBox();
-					if( thisPlugin != null && thisPlugin.use3DViewer ) {
-						for( int choice = 1; choice < paths3DChoicesStrings.length; ++choice )
-							paths3DChoice.addItem(paths3DChoicesStrings[choice]);
-
-						cv.gridx = 0;
-						++ cv.gridy;
-						viewOptionsPanel.add(new JLabel("View paths (3D): "),cv);
-						cv.gridx = 1;
-						viewOptionsPanel.add(paths3DChoice,cv);
-					}
-					paths3DChoice.addItemListener(thisDialog);
-
-					cv.gridx = 1;
-					++ cv.gridy;
-					cv.gridwidth = 1;
-					cv.anchor = GridBagConstraints.LINE_START;
-					viewOptionsPanel.add(nearbyPanel, cv);
-
-					JPanel flatColorOptionsPanel = new JPanel();
-					flatColorOptionsPanel.setLayout(new BorderLayout());
-					flatColorOptionsPanel.add(new JLabel("Click to change Path colours:"), BorderLayout.NORTH);
-					pathColorsCanvas = new PathColorsCanvas(thisPlugin, 150, 18);
-					flatColorOptionsPanel.add(pathColorsCanvas, BorderLayout.CENTER);
-
-					JPanel imageColorOptionsPanel = new JPanel();
-					imageColorOptionsPanel.setLayout(new BorderLayout());
-					imageColorOptionsPanel.add(new JLabel("Use colors / labels from:"), BorderLayout.NORTH);
-
-					colorImageChoice = new JComboBox();
-					updateColorImageChoice();
-					colorImageChoice.addActionListener(thisDialog);
-					imageColorOptionsPanel.add(colorImageChoice, BorderLayout.CENTER);
-					ImagePlus.addImageListener(thisDialog);
-
-					cv.gridx = 0;
-					++cv.gridy;
-					cv.gridwidth = 2;
-					viewOptionsPanel.add(flatColorOptionsPanel,cv);
-
-					cv.gridx = 0;
-					++ cv.gridy;
-					cv.gridwidth = 2;
-					viewOptionsPanel.add(imageColorOptionsPanel,cv);
-
-					justShowSelected = new JCheckBox( "Show only selected paths" );
-					justShowSelected.addItemListener( thisDialog );
-					cv.gridx = 0;
-					++ cv.gridy;
-					cv.gridwidth = 2;
-					cv.anchor = GridBagConstraints.LINE_START;
-					cv.insets = new Insets( 0, 0, 0, 0 );
-					viewOptionsPanel.add(justShowSelected,cv);
-
-					++ c.gridy;
-					getContentPane().add(viewOptionsPanel,c);
-				}
-
-				{ /* Add the panel with other options - preprocessing and the view of paths */
-
-					JPanel otherOptionsPanel = new JPanel();
-
-					otherOptionsPanel.setLayout(new GridBagLayout());
-					GridBagConstraints co = new GridBagConstraints();
-					co.anchor = GridBagConstraints.LINE_START;
-
-					preprocess = new JCheckBox("Hessian-based analysis");
-					preprocess.addItemListener( thisDialog );
-
-					co.gridx = 0;
-					++ co.gridy;
-					co.gridwidth = 2;
-					co.anchor = GridBagConstraints.LINE_START;
-					otherOptionsPanel.add(preprocess,co);
-
-					++ co.gridy;
-					usePreprocessed = new JCheckBox("Use preprocessed image");
-					usePreprocessed.addItemListener( thisDialog );
-					usePreprocessed.setEnabled( thisPlugin.tubeness != null );
-					otherOptionsPanel.add(usePreprocessed,co);
-
-					co.fill = GridBagConstraints.HORIZONTAL;
-
-					currentSigmaAndMultiplierLabel = new JLabel();
-					++ co.gridy;
-					otherOptionsPanel.add(currentSigmaAndMultiplierLabel,co);
-					setSigma( thisPlugin.getMinimumSeparation(), false );
-					setMultiplier( 4 );
-					updateLabel( );
-					++ co.gridy;
-
-					JPanel sigmaButtonPanel = new JPanel( );
-
-					editSigma = new JButton( "Pick Sigma Manually" );
-					editSigma.addActionListener( thisDialog );
-					sigmaButtonPanel.add(editSigma);
-
-					sigmaWizard = new JButton( "Pick Sigma Visually" );
-					sigmaWizard.addActionListener( thisDialog );
-					sigmaButtonPanel.add(sigmaWizard);
-
-					++ co.gridy;
-					otherOptionsPanel.add(sigmaButtonPanel,co);
-
-					++ c.gridy;
-					getContentPane().add(otherOptionsPanel,c);
-				}
-
-				{
-					JPanel hideWindowsPanel = new JPanel();
-					showOrHidePathList = new JButton("Show / Hide Path List");
-					showOrHidePathList.addActionListener(thisDialog);
-					showOrHideFillList = new JButton("Show / Hide Fill List");
-					showOrHideFillList.addActionListener(thisDialog);
-					hideWindowsPanel.add( showOrHidePathList );
-					hideWindowsPanel.add( showOrHideFillList );
-					c.fill = GridBagConstraints.HORIZONTAL;
-					++ c.gridy;
-					getContentPane().add( hideWindowsPanel, c );
-				}
-
-				pack();
-
-				pw = new PathWindow(
-					pathAndFillManager,
-					thisPlugin,
-					getX() + getWidth(),
-					getY() );
-				pathAndFillManager.addPathAndFillListener(pw);
-
-				fw = new FillWindow(
-					pathAndFillManager,
-					thisPlugin,
-					getX() + getWidth(),
-					getY() + pw.getHeight() );
-				pathAndFillManager.addPathAndFillListener(fw);
-
-				changeState( WAITING_TO_START_PATH );
+				cv.gridx = 0;
+				++ cv.gridy;
+				viewOptionsPanel.add(new JLabel("View paths (3D): "),cv);
+				cv.gridx = 1;
+				viewOptionsPanel.add(paths3DChoice,cv);
 			}
-		});
+			paths3DChoice.addItemListener(this);
+
+			cv.gridx = 1;
+			++ cv.gridy;
+			cv.gridwidth = 1;
+			cv.anchor = GridBagConstraints.LINE_START;
+			viewOptionsPanel.add(nearbyPanel, cv);
+
+			JPanel flatColorOptionsPanel = new JPanel();
+			flatColorOptionsPanel.setLayout(new BorderLayout());
+			flatColorOptionsPanel.add(new JLabel("Click to change Path colours:"), BorderLayout.NORTH);
+			pathColorsCanvas = new PathColorsCanvas(thisPlugin, 150, 18);
+			flatColorOptionsPanel.add(pathColorsCanvas, BorderLayout.CENTER);
+
+			JPanel imageColorOptionsPanel = new JPanel();
+			imageColorOptionsPanel.setLayout(new BorderLayout());
+			imageColorOptionsPanel.add(new JLabel("Use colors / labels from:"), BorderLayout.NORTH);
+
+			colorImageChoice = new JComboBox();
+			updateColorImageChoice();
+			colorImageChoice.addActionListener(this);
+			imageColorOptionsPanel.add(colorImageChoice, BorderLayout.CENTER);
+			ImagePlus.addImageListener(this);
+
+			cv.gridx = 0;
+			++cv.gridy;
+			cv.gridwidth = 2;
+			viewOptionsPanel.add(flatColorOptionsPanel,cv);
+
+			cv.gridx = 0;
+			++ cv.gridy;
+			cv.gridwidth = 2;
+			viewOptionsPanel.add(imageColorOptionsPanel,cv);
+
+			justShowSelected = new JCheckBox( "Show only selected paths" );
+			justShowSelected.addItemListener( this );
+			cv.gridx = 0;
+			++ cv.gridy;
+			cv.gridwidth = 2;
+			cv.anchor = GridBagConstraints.LINE_START;
+			cv.insets = new Insets( 0, 0, 0, 0 );
+			viewOptionsPanel.add(justShowSelected,cv);
+
+			++ c.gridy;
+			getContentPane().add(viewOptionsPanel,c);
+		}
+
+		{ /* Add the panel with other options - preprocessing and the view of paths */
+
+			JPanel otherOptionsPanel = new JPanel();
+
+			otherOptionsPanel.setLayout(new GridBagLayout());
+			GridBagConstraints co = new GridBagConstraints();
+			co.anchor = GridBagConstraints.LINE_START;
+
+			preprocess = new JCheckBox("Hessian-based analysis");
+			preprocess.addItemListener( this );
+
+			co.gridx = 0;
+			++ co.gridy;
+			co.gridwidth = 2;
+			co.anchor = GridBagConstraints.LINE_START;
+			otherOptionsPanel.add(preprocess,co);
+
+			++ co.gridy;
+			usePreprocessed = new JCheckBox("Use preprocessed image");
+			usePreprocessed.addItemListener( this );
+			usePreprocessed.setEnabled( thisPlugin.tubeness != null );
+			otherOptionsPanel.add(usePreprocessed,co);
+
+			co.fill = GridBagConstraints.HORIZONTAL;
+
+			currentSigmaAndMultiplierLabel = new JLabel();
+			++ co.gridy;
+			otherOptionsPanel.add(currentSigmaAndMultiplierLabel,co);
+			setSigma( thisPlugin.getMinimumSeparation(), false );
+			setMultiplier( 4 );
+			updateLabel( );
+			++ co.gridy;
+
+			JPanel sigmaButtonPanel = new JPanel( );
+
+			editSigma = new JButton( "Pick Sigma Manually" );
+			editSigma.addActionListener( this );
+			sigmaButtonPanel.add(editSigma);
+
+			sigmaWizard = new JButton( "Pick Sigma Visually" );
+			sigmaWizard.addActionListener( this );
+			sigmaButtonPanel.add(sigmaWizard);
+
+			++ co.gridy;
+			otherOptionsPanel.add(sigmaButtonPanel,co);
+
+			++ c.gridy;
+			getContentPane().add(otherOptionsPanel,c);
+		}
+
+		{
+			JPanel hideWindowsPanel = new JPanel();
+			showOrHidePathList = new JButton("Show / Hide Path List");
+			showOrHidePathList.addActionListener(this);
+			showOrHideFillList = new JButton("Show / Hide Fill List");
+			showOrHideFillList.addActionListener(this);
+			hideWindowsPanel.add( showOrHidePathList );
+			hideWindowsPanel.add( showOrHideFillList );
+			c.fill = GridBagConstraints.HORIZONTAL;
+			++ c.gridy;
+			getContentPane().add( hideWindowsPanel, c );
+		}
+
+		pack();
+
+		pw = new PathWindow(
+			pathAndFillManager,
+			thisPlugin,
+			getX() + getWidth(),
+			getY() );
+		pathAndFillManager.addPathAndFillListener(pw);
+
+		fw = new FillWindow(
+			pathAndFillManager,
+			thisPlugin,
+			getX() + getWidth(),
+			getY() + pw.getHeight() );
+		pathAndFillManager.addPathAndFillListener(fw);
+
+		changeState( WAITING_TO_START_PATH );
 	}
 
 	protected void displayOnStarting( ) {

@@ -416,91 +416,87 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 
 	public PathWindow(PathAndFillManager pathAndFillManager, SimpleNeuriteTracer plugin, final int x, final int y) {
 		super("All Paths");
+		assert SwingUtilities.isEventDispatchThread();
 
 		this.pathAndFillManager = pathAndFillManager;
 		this.plugin = plugin;
-		final PathWindow thisPlugin = this;
 
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				setBounds(x,y,700,300);
-				root = new DefaultMutableTreeNode("All Paths");
-				tree = new HelpfulJTree(root);
-				// tree.setRootVisible(false);
-				tree.addTreeSelectionListener(thisPlugin);
-				scrollPane = new JScrollPane();
-				scrollPane.getViewport().add(tree);
-				add(scrollPane, BorderLayout.CENTER);
+		setBounds(x,y,700,300);
+		root = new DefaultMutableTreeNode("All Paths");
+		tree = new HelpfulJTree(root);
+		// tree.setRootVisible(false);
+		tree.addTreeSelectionListener(this);
+		scrollPane = new JScrollPane();
+		scrollPane.getViewport().add(tree);
+		add(scrollPane, BorderLayout.CENTER);
 
-				buttonPanel = new JPanel();
+		buttonPanel = new JPanel();
 
-				add(buttonPanel, BorderLayout.PAGE_END);
+		add(buttonPanel, BorderLayout.PAGE_END);
 
-				// Create all the menu items:
+		// Create all the menu items:
 
-				popup = new JPopupMenu();
+		popup = new JPopupMenu();
 
-				renameMenuItem = new JMenuItem("Rename");
-				fitVolumeMenuItem = new JMenuItem("Fit Volume");
-				fillOutMenuItem = new JMenuItem("Fill Out");
-				makePrimaryMenuItem = new JMenuItem("Make Primary");
-				deleteMenuItem = new JMenuItem("Delete");
-				exportAsSWCMenuItem = new JMenuItem("Export as SWC");
+		renameMenuItem = new JMenuItem("Rename");
+		fitVolumeMenuItem = new JMenuItem("Fit Volume");
+		fillOutMenuItem = new JMenuItem("Fill Out");
+		makePrimaryMenuItem = new JMenuItem("Make Primary");
+		deleteMenuItem = new JMenuItem("Delete");
+		exportAsSWCMenuItem = new JMenuItem("Export as SWC");
 
-				popup.add(renameMenuItem);
-				popup.add(fitVolumeMenuItem);
-				popup.add(fillOutMenuItem);
-				popup.add(makePrimaryMenuItem);
-				popup.add(deleteMenuItem);
-				popup.add(exportAsSWCMenuItem);
+		popup.add(renameMenuItem);
+		popup.add(fitVolumeMenuItem);
+		popup.add(fillOutMenuItem);
+		popup.add(makePrimaryMenuItem);
+		popup.add(deleteMenuItem);
+		popup.add(exportAsSWCMenuItem);
 
-				renameMenuItem.addActionListener(thisPlugin);
-				fitVolumeMenuItem.addActionListener(thisPlugin);
-				fillOutMenuItem.addActionListener(thisPlugin);
-				makePrimaryMenuItem.addActionListener(thisPlugin);
-				deleteMenuItem.addActionListener(thisPlugin);
-				exportAsSWCMenuItem.addActionListener(thisPlugin);
+		renameMenuItem.addActionListener(this);
+		fitVolumeMenuItem.addActionListener(this);
+		fillOutMenuItem.addActionListener(this);
+		makePrimaryMenuItem.addActionListener(this);
+		deleteMenuItem.addActionListener(this);
+		exportAsSWCMenuItem.addActionListener(this);
 
-				// Create all the menu items:
+		// Create all the menu items:
 
-				renameButton = new JButton("Rename");
-				fitVolumeButton = new JButton("Fit Volume");
-				fillOutButton = new JButton("Fill Out");
-				makePrimaryButton = new JButton("Make Primary");
-				deleteButton = new JButton("Delete");
-				exportAsSWCButton = new JButton("Export as SWC");
+		renameButton = new JButton("Rename");
+		fitVolumeButton = new JButton("Fit Volume");
+		fillOutButton = new JButton("Fill Out");
+		makePrimaryButton = new JButton("Make Primary");
+		deleteButton = new JButton("Delete");
+		exportAsSWCButton = new JButton("Export as SWC");
 
-				buttonPanel.add(renameButton);
-				buttonPanel.add(fitVolumeButton);
-				buttonPanel.add(fillOutButton);
-				buttonPanel.add(makePrimaryButton);
-				buttonPanel.add(deleteButton);
-				buttonPanel.add(exportAsSWCButton);
+		buttonPanel.add(renameButton);
+		buttonPanel.add(fitVolumeButton);
+		buttonPanel.add(fillOutButton);
+		buttonPanel.add(makePrimaryButton);
+		buttonPanel.add(deleteButton);
+		buttonPanel.add(exportAsSWCButton);
 
-				renameButton.addActionListener(thisPlugin);
-				fitVolumeButton.addActionListener(thisPlugin);
-				fillOutButton.addActionListener(thisPlugin);
-				makePrimaryButton.addActionListener(thisPlugin);
-				deleteButton.addActionListener(thisPlugin);
-				exportAsSWCButton.addActionListener(thisPlugin);
+		renameButton.addActionListener(this);
+		fitVolumeButton.addActionListener(this);
+		fillOutButton.addActionListener(this);
+		makePrimaryButton.addActionListener(this);
+		deleteButton.addActionListener(this);
+		exportAsSWCButton.addActionListener(this);
 
-				MouseListener ml = new MouseAdapter() {
-					@Override
-					public void mousePressed(MouseEvent me) {
-						maybeShowPopup(me);
-					}
-					@Override
-					public void mouseReleased(MouseEvent me) {
-						maybeShowPopup(me);
-					}
-					protected void maybeShowPopup(MouseEvent me) {
-						if( me.isPopupTrigger() )
-							showPopup(me);
-					}
-				};
-				tree.addMouseListener(ml);
+		MouseListener ml = new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent me) {
+				maybeShowPopup(me);
 			}
-		});
+			@Override
+			public void mouseReleased(MouseEvent me) {
+				maybeShowPopup(me);
+			}
+			protected void maybeShowPopup(MouseEvent me) {
+				if( me.isPopupTrigger() )
+					showPopup(me);
+			}
+		};
+		tree.addMouseListener(ml);
 	}
 
 	protected void showPopup(MouseEvent me) {
