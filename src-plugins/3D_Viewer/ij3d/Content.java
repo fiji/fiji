@@ -333,6 +333,8 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 			return;
 
 		File file = new File(sd.getDirectory(), sd.getFileName());
+		if (file.exists() && !IJ.showMessageWithCancel("File exists", "Overwrite " + file + "?"))
+			return;
 		try {
 			PrintStream out = new PrintStream(file);
 			for (Integer frame : contents.keySet()) {
