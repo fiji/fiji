@@ -297,6 +297,18 @@ public class WekaSegmentation {
 	}
 
 	/**
+	 * Remove an example list from a class and specific slice
+	 * 
+	 * @param classNum the number of the examples' class
+	 * @param nSlice the slice number
+	 * @param index the index of the example list to remove
+	 */
+	public void deleteExample(int classNum, int nSlice, int index)
+	{
+		getExamples(classNum, nSlice).remove(index);
+	}
+	
+	/**
 	 * Return the list of examples for a certain class.
 	 * 
 	 * @param classNum the number of the examples' class
