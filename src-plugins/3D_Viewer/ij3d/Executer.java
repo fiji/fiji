@@ -505,11 +505,11 @@ public class Executer {
 		c.displayAs(type);
 	}
 
-	public interface ColorListener {
+	private interface ColorListener {
 		public void colorChanged(Color3f color);
 	}
 
-	public interface OKListener {
+	private interface OKListener {
 		public void ok(GenericDialog gd);
 	}
 
