@@ -438,10 +438,6 @@ public class ComputeCurvatures implements Runnable
                         FloatArrayToImagePlus((FloatArray2D)data, "Gauss image", 0, 255).show();
                 }
 
-            if( callback != null )
-                callback.proportionDone( 1.0 );
-
-
         } catch( OutOfMemoryError e ) {
 
             long requiredMiB = ( imp.getWidth() *
@@ -1317,7 +1313,7 @@ public class ComputeCurvatures implements Runnable
                     output.set(temp[y], x, y);
 
                 pointsDone += input.height;
-                if(callback != null)
+                if(callback != null && pointsDone < totalPoints)
                     callback.proportionDone( pointsDone / totalPoints );
 
             }
@@ -1456,7 +1452,7 @@ public class ComputeCurvatures implements Runnable
 
             }
             pointsDone += input.height * input.depth;
-            if(callback != null)
+            if(callback != null && pointsDone < totalPoints)
                 callback.proportionDone( pointsDone / totalPoints );
 
         }
