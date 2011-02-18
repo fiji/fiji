@@ -238,11 +238,17 @@ public class Stitch_Image_Collection implements PlugIn
 	        out.println("# Define the image coordinates");
 
 	        for ( ImageInformation iI : imageInformationList )
-	        {	        		        	
+	        {
+	        	String name = iI.imageName;
+	        	
+	        	// if it is a multiseries file add a funny string at the end that marks it
+	        	if ( iI.seriesNumber >= 0 )
+	        		name = name + "(((" + iI.seriesNumber + ")))";
+	        	
 		        if (dim == 3)
-	    			out.println(iI.imageName + "; ; (" + iI.position[0] + ", " + iI.position[1] + ", " + iI.position[2] + ")");
+	    			out.println( name + "; ; (" + iI.position[0] + ", " + iI.position[1] + ", " + iI.position[2] + ")");
 	    		else
-	    			out.println(iI.imageName + "; ; (" + iI.position[0] + ", " + iI.position[1] + ")");
+	    			out.println( name + "; ; (" + iI.position[0] + ", " + iI.position[1] + ")");
 	        }
 
 			out.close();
@@ -325,7 +331,7 @@ public class Stitch_Image_Collection implements PlugIn
 				final ImagePlus imp;
 				
 				if (iI.imp == null)
-					imp = CommonFunctions.loadImage("", iI.imageName, rgbOrder);
+					imp = CommonFunctions.loadImage("", iI.imageName, iI.seriesNumber, rgbOrder);
 				else
 					imp = iI.imp;
 
@@ -489,7 +495,7 @@ public class Stitch_Image_Collection implements PlugIn
 	        for (ImageInformation iI : imageInformationList)
 	        {
 				if (iI.imp == null)
-					iI.tmp = CommonFunctions.loadImage("", iI.imageName, rgbOrder);
+					iI.tmp = CommonFunctions.loadImage("", iI.imageName, iI.seriesNumber, rgbOrder);
 				else
 					iI.tmp = iI.imp;		
 				
@@ -1154,7 +1160,7 @@ public class Stitch_Image_Collection implements PlugIn
 
 			if (o.i1.imp == null)
 			{
-				imp1 = CommonFunctions.loadImage("", o.i1.imageName, rgbOrder);
+				imp1 = CommonFunctions.loadImage("", o.i1.imageName, o.i1.seriesNumber, rgbOrder);
 				o.i1.closeAtEnd = true;
 			}
 			else
@@ -1162,7 +1168,7 @@ public class Stitch_Image_Collection implements PlugIn
 
 			if (o.i2.imp == null)
 			{
-				imp2 = CommonFunctions.loadImage("", o.i2.imageName, rgbOrder);
+				imp2 = CommonFunctions.loadImage("", o.i2.imageName, o.i2.seriesNumber, rgbOrder);
 				o.i2.closeAtEnd = true;
 			}
 			else
@@ -1301,7 +1307,7 @@ public class Stitch_Image_Collection implements PlugIn
 		{
 			if (iI.imp == null)
 			{
-				iI.imp = CommonFunctions.loadImage("", iI.imageName, rgbOrder);
+				iI.imp = CommonFunctions.loadImage("", iI.imageName, iI.seriesNumber, rgbOrder);
 				iI.closeAtEnd = true;
 			}
 			else
@@ -1546,6 +1552,18 @@ public class Stitch_Image_Collection implements PlugIn
 							imageInformation = new ImageInformation(dim, imageInformationList.size(), new TranslationModel2D());
 						
 						imageInformation.imageName = imageName;
+						
+						if ( imageInformation.imageName.contains( "(((" ) && imageInformation.imageName.contains( ")))" ) )
+						{
+							// it is a multiseries file
+							int index1 = imageInformation.imageName.indexOf( "(((" );
+							int index2 = imageInformation.imageName.indexOf( ")))" );
+							
+							String seriesString = imageInformation.imageName.substring( index1 + 3, index2 );
+							imageInformation.seriesNumber = Integer.parseInt( seriesString );
+							imageInformation.imageName = imageInformation.imageName.substring( 0, index1 );
+						}
+						
 						if (imp.length() > 0)
 							imageInformation.imp = WindowManager.getImage(imp);
 						else

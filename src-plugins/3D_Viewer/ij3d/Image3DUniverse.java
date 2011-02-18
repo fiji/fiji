@@ -4,11 +4,16 @@ import ij3d.pointlist.PointListDialog;
 import ij.ImagePlus;
 import ij.IJ;
 
+import javax.swing.JPopupMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenu;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenuItem;
+import javax.swing.SwingUtilities;
 
+import java.awt.GraphicsEnvironment;
+import java.awt.GraphicsDevice;
+import java.awt.Rectangle;
 import java.awt.Menu;
 import java.awt.MenuItem;
 import java.awt.CheckboxMenuItem;
@@ -106,6 +111,11 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	private PointListDialog plDialog;
 
 	/**
+	 * Flag indicating if we are currently in fullscreen mode.
+	 */
+	private boolean fullscreen = false;
+
+	/**
 	 * The timelapse listeners.
 	 */
 	private ArrayList<TimelapseListener> timeListeners =
@@ -181,6 +191,10 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	 */
 	@Override
 	public void show() {
+		// Java 1.6.0_12 fixes the issues occurring when mixing
+		// AWT heavyweight and Swing lightweight components.
+		if(System.getProperty("java.version").compareTo("1.6.0_12") < 0)
+			JPopupMenu.setDefaultLightWeightPopupEnabled(false);
 		win = new ImageWindow3D("ImageJ 3D Viewer", this);
 		plDialog = new PointListDialog(win);
 		plDialog.addWindowListener(new WindowAdapter() {
@@ -197,13 +211,65 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	}
 
 	/**
+	 * Sets fullscreen mode on or of.
+	 */
+	public void setFullScreen(final boolean f) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				doSetFullScreen(f);
+			}
+		});
+	}
+
+	private Rectangle lastNonFullscreenBounds;
+	private void doSetFullScreen(boolean f) {
+		if(win == null || f == fullscreen)
+			return;
+
+		if(f)
+			lastNonFullscreenBounds = win.getBounds();
+
+		GraphicsDevice dev = win.getGraphicsConfiguration().getDevice();
+
+		win.quitImageUpdater();
+		win.dispose();
+		dev.setFullScreenWindow(null);
+
+		win = new ImageWindow3D("ImageJ 3D Viewer", this);
+
+		if(!f) {
+			win.setUndecorated(false);
+			win.setJMenuBar(menubar);
+			fullscreen = false;
+			win.setBounds(lastNonFullscreenBounds);
+		} else {
+			try {
+				win.setUndecorated(true);
+				win.setJMenuBar(null);
+				dev.setFullScreenWindow(win);
+				fullscreen = true;
+			} catch(Exception e) {
+				e.printStackTrace();
+				fullscreen = false;
+				dev.setFullScreenWindow(null);
+			}
+		}
+		win.setVisible(true);
+		menubar.updateMenus();
+	}
+
+	public boolean isFullScreen() {
+		return fullscreen;
+	}
+
+	/**
 	 * Close this universe. Remove all Contents and release all resources.
 	 */
 	@Override
 	public void cleanup() {
 		timeline.pause();
 		removeAllContents();
-		contents = null;
+		contents.clear();
 		universes.remove(this);
 		adder.shutdownNow();
 		executer.flush();
@@ -723,7 +789,7 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 			return null;
 		}
 		Content c = ContentCreator.createContent(name, image, type,
-			resf, -1, color, thresh, channels);
+			resf, 0, color, thresh, channels);
 		return addContent(c);
 	}
 
@@ -1183,6 +1249,8 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	 * @return
 	 */
 	public Collection getContents() {
+		if(contents == null)
+			return null;
 		return contents.values();
 	}
 

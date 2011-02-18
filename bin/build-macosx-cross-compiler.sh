@@ -6,7 +6,7 @@ TARGET=i686-apple-darwin8
 TARGET64=x86_64-apple-darwin8
 TARGET_PPC=powerpc-apple-darwin8
 SDK=MacOSX10.6u.sdk
-SYSROOT="$(pwd)/mac-sysroot"
+SYSROOT="$(pwd -P)/mac-sysroot"
 test -d "$SYSROOT" || mkdir -p "$SYSROOT"
 PARALLEL=-j5
 
@@ -198,6 +198,28 @@ index 8fe7ea1..c49fed2 100644
  
  # Native linker and preprocessor flags.  For x-fragment overrides.
  BUILD_LDFLAGS=$(LDFLAGS)
+diff --git a/gcc/c-incpath.c b/gcc/c-incpath.c
+index 44b581d..43dc7ba 100644
+--- a/gcc/c-incpath.c
++++ b/gcc/c-incpath.c
+@@ -165,7 +165,16 @@ add_standard_paths (const char *sysroot, const char *iprefix,
+ 
+ 	  /* Should this directory start with the sysroot?  */
+ 	  if (sysroot && p->add_sysroot)
+-	    str = concat (sysroot, p->fname, NULL);
++	    {
++	      if (p->fname[0] == DIR_SEPARATOR)
++		{
++		  str = xstrdup (p->fname);
++		}
++	      else
++		{
++		  str = concat (sysroot, p->fname, NULL);
++		}
++	    }
+ 	  else
+ 	    str = update_path (p->fname, p->component);
+ 
 EOF
 		 patch -p1 < build-cflags.patch)
 	fi &&
@@ -278,3 +300,7 @@ do
 		ln -s usr/i686-apple-darwin8/$d "$SYSROOT"
 	fi
 done
+if test ! -h "$SYSROOT"/usr/lib/libstdc++.dylib
+then
+	ln -s libstdc++.6.dylib "$SYSROOT"/usr/lib/libstdc++.dylib
+fi

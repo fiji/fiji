@@ -29,15 +29,15 @@ mkdir -p "$FIJI_DIRECTORY"/build &&
   $SYSTEM_JAVA -classpath "$FIJI_DIRECTORY"/build fiji.build.Fake fiji &&
   $SYSTEM_JAVA -classpath "$FIJI_DIRECTORY"/build fiji.build.Fake jars/fake.jar
 
-./fiji --build -Dpython.home=/usr/share/jython -Dpython.path=/usr/lib/site-python -- FALLBACK=false VERBOSE=true \
+./fiji --build --java-home "$JAVA_HOME" -- FALLBACK=false VERBOSE=true \
     "CLASSPATH(jars/VIB-lib.jar)=/usr/share/java/jama.jar:/usr/share/java/junit4.jar:/usr/share/java/jzlib.jar:jars/fiji-lib.jar:jars/ij.jar:jars/pal-optimization.jar" \
     "CLASSPATH(jars/VectorString.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jama.jar:/usr/share/java/vecmath.jar:jars/ij.jar" \
-    "CLASSPATH(jars/batik.jar)=/usr/share/java/jython.jar:jars/jacl.jar:plugins/loci_tools.jar" \
-    "CLASSPATH(jars/fiji-scripting.jar)=/usr/share/java/bsh.jar:/usr/share/java/js.jar:/usr/share/java/jython.jar:jars/Fiji.jar:jars/ij.jar" \
+    "CLASSPATH(jars/fiji-scripting.jar)=/usr/share/java/bsh.jar:/usr/share/java/js.jar:jars/Fiji.jar:jars/ij.jar:jars/jython.jar" \
     "CLASSPATH(jars/imglib-scripting.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jcommon.jar:/usr/share/java/jfreechart.jar:/usr/share/java/vecmath.jar:jars/ij.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jars:jars/imglib.jar:jars/mpicbg.jar:plugins/loci_tools.jar" \
     "CLASSPATH(jars/jep.jar)=/usr/share/java/jama.jar:/usr/share/java/junit4.jar:jars/ij.jar" \
     "CLASSPATH(jars/jython.jar)=/usr/share/java/junit4.jar:jars/jna.jar" \
     "CLASSPATH(jars/test-fiji.jar)=/usr/share/java/junit4.jar" \
+    "CLASSPATH(plugins/3D_Blob_Segmentation.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/vecmath.jar:jars/VIB-lib.jar:jars/ij.jar:jars/imglib.jar:plugins/3D_Viewer.jar:plugins/level_sets.jar" \
     "CLASSPATH(plugins/3D_Viewer.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jama.jar:/usr/share/java/vecmath.jar:jars/VIB-lib.jar:jars/ij.jar:jars/imglib.jar" \
     "CLASSPATH(plugins/BeanShell_Interpreter.jar)=/usr/share/java/bsh.jar:jars/fiji-scripting.jar:jars/ij.jar" \
     "CLASSPATH(plugins/Clojure_Interpreter.jar)=/usr/share/java/clojure.jar:jars/fiji-scripting.jar:jars/ij.jar" \
@@ -48,7 +48,6 @@ mkdir -p "$FIJI_DIRECTORY"/build &&
     "CLASSPATH(plugins/IO_.jar)=/usr/share/java/batik-all.jar:/usr/share/java/itext1.jar:/usr/share/java/jzlib.jar:/usr/share/java/xml-apis-ext.jar:jars/ij.jar:jars/jpedalSTD.jar" \
     "CLASSPATH(plugins/Image_Expression_Parser.jar)=/usr/share/java/junit4.jar:jars/ij.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib.jar:jars/jep.jar" \
     "CLASSPATH(plugins/Javascript_.jar)=/usr/share/java/js.jar:jars/fiji-scripting.jar:jars/ij.jar" \
-    "CLASSPATH(plugins/Jython_Interpreter.jar)=/usr/share/java/jython.jar:jars/fiji-scripting.jar:jars/ij.jar" \
     "CLASSPATH(plugins/SPIM_Registration.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jama.jar:/usr/share/java/vecmath.jar:jars/VIB-lib.jar:jars/fiji-lib.jar:jars/ij.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:jars/imglib.jar:jars/mpicbg.jar:jars/weka.jar:plugins/3D_Viewer.jar:plugins/Fiji_Plugins.jar:plugins/loci_tools.jar" \
     "CLASSPATH(plugins/Script_Editor.jar)=/usr/lib/jvm/java-6-openjdk/lib/tools.jar:/usr/share/java/jfreechart.jar:jars/Fiji.jar:jars/autocomplete.jar:jars/fake.jar:jars/fiji-lib.jar:jars/fiji-scripting.jar:jars/ij.jar:jars/imglib-ij.jar:jars/imglib.jar:jars/rsyntaxtextarea.jar:plugins/BeanShell_Interpreter.jar:plugins/CLI_.jar:plugins/Clojure_Interpreter.jar:plugins/JRuby_Interpreter.jar:plugins/Javascript_.jar:plugins/Jython_Interpreter.jar:plugins/Refresh_Javas.jar" \
     "CLASSPATH(plugins/Simple_Neurite_Tracer.jar)=/usr/share/java/batik-all.jar:/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jcommon.jar:/usr/share/java/jfreechart.jar:/usr/share/java/junit4.jar:/usr/share/java/vecmath.jar:/usr/share/java/xml-apis-ext.jar:jars/VIB-lib.jar:jars/commons-math.jar:jars/ij.jar:jars/pal-optimization.jar:plugins/3D_Viewer.jar:plugins/AnalyzeSkeleton_.jar:plugins/Skeletonize3D_.jar:plugins/VIB_.jar" \

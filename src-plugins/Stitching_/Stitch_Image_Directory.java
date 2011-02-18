@@ -45,7 +45,7 @@ import ij.plugin.*;
 import ij.gui.*;
 
 /**
- * @author Stephan
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
 public class Stitch_Image_Directory implements PlugIn
@@ -165,7 +165,7 @@ public class Stitch_Image_Directory implements PlugIn
     		
         	if (!seenFirst)
         	{        		
-        		ImagePlus imp = CommonFunctions.loadImage( dir.getPath(), file, gridLayout.rgbOrder );
+        		ImagePlus imp = CommonFunctions.loadImage( dir.getPath(), file, -1, gridLayout.rgbOrder );
         		
         		if (imp == null)
         		{

@@ -627,12 +627,11 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			displayTagImage(taggedImage);
 		}
 
-		if(this.numOfTrees == 0)
-			return;
-
 		// Mark trees
 		ImageStack treeIS = markTrees(taggedImage);
 		
+		if(this.numOfTrees == 0)
+			return;
 		
 		// Ask memory for every tree
 		initializeTrees();

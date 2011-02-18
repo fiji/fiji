@@ -1051,8 +1051,8 @@ public class Directionality_ implements PlugIn {
 		gd.addNumericField("Nbins: ", setting_nbins, 0);
 		gd.addNumericField("Histogram start", setting_bin_start , 0, 4, "º");
 		gd.addCheckbox("Build orientation map", setting_build_orientation_map);
-		gd.addCheckbox("Display color wheel", setting_display_color_wheel);
-		gd.addCheckbox("Display table", setting_display_table);
+		gd.addCheckbox("Display_color_wheel", setting_display_color_wheel);
+		gd.addCheckbox("Display_table", setting_display_table);
 		gd.addCheckbox("Debug", setting_debug);
 		gd.showDialog();
 

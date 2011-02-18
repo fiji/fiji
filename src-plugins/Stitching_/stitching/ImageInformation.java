@@ -41,6 +41,11 @@ public class ImageInformation extends Tile implements Comparable<ImageInformatio
 	public int w, d, h;
 
 	public int imageType;
+	
+	// -1 means ignore the series number, it is needed when loading
+	// stacks that are in one file
+	public int seriesNumber = -1;
+	
 	public String imageName;
 	public ImagePlus imp = null, maxIntensity = null, tmp = null;
 	public boolean overlaps = false;

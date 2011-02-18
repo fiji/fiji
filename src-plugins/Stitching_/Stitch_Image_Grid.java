@@ -43,6 +43,37 @@ import ij.ImagePlus;
 import ij.plugin.*;
 import ij.gui.*;
 
+/* from Curtis
+ * 
+import loci.common.Location;
+import loci.formats.FilePattern;
+
+public class ChooseFile {
+  public static void main(String[] args) {
+    String s = args[0];
+    FilePattern fp = new FilePattern(new Location(s));
+    System.out.println("pattern = " + fp.getPattern());
+
+    String[] prefixes = fp.getPrefixes();
+    int[] count = fp.getCount();
+
+    StringBuilder sb = new StringBuilder();
+    char letter = 'i';
+    for (String prefix : prefixes) {
+      sb.append(prefix + "{" + letter + "}");
+      letter++;
+    }
+    sb.append(fp.getSuffix());
+    System.out.println("Steffi's pattern = " + sb.toString());
+  }
+}
+[8:04:38 PM] Curtis Rueden: That's how you generate a pattern for the Stitcher like you need.
+[8:04:53 PM] Curtis Rueden: E.g.:
+[8:04:54 PM | Edited 8:05:08 PM] Curtis Rueden: j ChooseFile data/jayne/032610\ h2b\ low\ mag_C1_TP1.tiff
+pattern = /Users/curtis/data/jayne/032610 h2b low mag_C<1-2>_TP<1-237>.tiff
+Steffi's pattern = 032610 h2b low mag_C{i}_TP{j}.tiff
+[8:05:20 PM] Curtis Rueden: Hopefully I did that right, and it makes sense. * 
+ */
 
 /**
  * @author Stephan
@@ -291,7 +322,7 @@ public class Stitch_Image_Grid implements PlugIn
             	
             	if (i == 0)
             	{
-            		ImagePlus imp = CommonFunctions.loadImage(inputDirectory, file, gridLayout.rgbOrder);
+            		ImagePlus imp = CommonFunctions.loadImage(inputDirectory, file, -1, gridLayout.rgbOrder);
             		if (imp == null)
             		{
             			IJ.error("Cannot open first file: '" + inputDirectory + file + "' - Quitting.");

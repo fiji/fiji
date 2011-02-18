@@ -342,6 +342,11 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 			c.setShaded(b);
 	}
 
+	public void applySurfaceColors(ImagePlus img) {
+		for(ContentInstant c : contents.values())
+			c.applySurfaceColors(img);
+	}
+
 	public void setColor(Color3f color) {
 		for(ContentInstant c : contents.values())
 			c.setColor(color);

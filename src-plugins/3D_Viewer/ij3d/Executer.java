@@ -871,6 +871,31 @@ public class Executer {
 			ci.setShaded(b);
 	}
 
+	public void applySurfaceColors(Content c) {
+		if(!checkSel(c))
+			return;
+		int t = c.getType();
+		if(t != Content.SURFACE && t != Content.CUSTOM)
+			return;
+
+		GenericDialog gd = new GenericDialog("Apply color from image");
+		int[] ids = WindowManager.getIDList();
+		String[] titles = new String[ids.length];
+		for(int i = 0; i < ids.length; i++)
+			titles[i] = WindowManager.getImage(ids[i]).getTitle();
+
+		gd.addChoice("Color image", titles, titles[0]);
+		gd.addCheckbox("Apply to all timepoints", true);
+		gd.showDialog();
+		if(gd.wasCanceled())
+			return;
+
+		ImagePlus colorImage = WindowManager.getImage(gd.getNextChoice());
+		if(gd.getNextBoolean())
+			c.applySurfaceColors(colorImage);
+		else if(c.getCurrent() != null)
+			c.getCurrent().applySurfaceColors(colorImage);
+	}
 
 	/* ----------------------------------------------------------
 	 * Hide/Show submenu
@@ -1258,6 +1283,10 @@ public class Executer {
 
 	public void sync(boolean b) {
 		univ.sync(b);
+	}
+
+	public void setFullScreen(boolean b) {
+		univ.setFullScreen(b);
 	}
 
 	public void editScalebar() {

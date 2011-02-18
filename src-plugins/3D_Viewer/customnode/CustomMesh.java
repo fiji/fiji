@@ -1,5 +1,12 @@
 package customnode;
 
+import ij.ImagePlus;
+import ij.measure.Calibration;
+import ij.plugin.Duplicator;
+import ij.process.StackConverter;
+
+import vib.InterpolatedImage;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -291,6 +298,39 @@ public abstract class CustomMesh extends Shape3D {
 		if(ga == null)
 			return;
 		ga.setColor(vtxIndex, color);
+		changed = true;
+	}
+
+	public void loadSurfaceColorsFromImage(ImagePlus imp) {
+		GeometryArray ga = (GeometryArray)getGeometry();
+		if(ga == null)
+			return;
+
+		if(imp.getType() != ImagePlus.COLOR_RGB) {
+			imp = new Duplicator().run(imp);
+			new StackConverter(imp).convertToRGB();
+		}
+		InterpolatedImage ii = new InterpolatedImage(imp);
+
+		int N = ga.getValidVertexCount();
+		Color3f[] colors = new Color3f[N];
+		Calibration cal = imp.getCalibration();
+		double pw = cal.pixelWidth;
+		double ph = cal.pixelHeight;
+		double pd = cal.pixelDepth;
+		Point3f coord = new Point3f();
+		for(int i = 0; i < N; i++) {
+			ga.getCoordinate(i, coord);
+			int v = ii.getNoInterpolInt(
+				(int)Math.round(coord.x / pw),
+				(int)Math.round(coord.y / ph),
+				(int)Math.round(coord.z / pd));
+			colors[i] = new Color3f(
+				((v & 0xff0000) >> 16) / 255f,
+				((v & 0xff00) >> 8) / 255f,
+				(v & 0xff) / 255f);
+		}
+		ga.setColors(0, colors);
 		changed = true;
 	}
 

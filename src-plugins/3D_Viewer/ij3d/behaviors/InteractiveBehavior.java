@@ -1,5 +1,7 @@
 package ij3d.behaviors;
 
+import ij.IJ;
+
 import java.util.Enumeration;
 import java.util.List;
 
@@ -10,6 +12,7 @@ import java.awt.event.KeyEvent;
 import java.awt.AWTEvent;
 
 import ij3d.Content;
+import ij3d.ContentInstant;
 import ij3d.DefaultUniverse;
 import ij3d.ImageCanvas3D;
 import ij3d.Image3DUniverse;
@@ -61,6 +64,8 @@ public class InteractiveBehavior extends Behavior {
 	}
 	public List<InteractiveBehavior> getExternalBehaviors() { return external; }
 
+	private int lastToolID;
+
 	/**
 	 * Initializes a new InteractiveBehavior.
 	 * @param univ
@@ -72,6 +77,7 @@ public class InteractiveBehavior extends Behavior {
 		this.picker = univ.getPicker();
 		this.viewTransformer = univ.getViewPlatformTransformer();
 		mouseEvents = new WakeupOnAWTEvent[6];
+		lastToolID = univ.ui.getToolId();
 	}
 
 	/**
@@ -147,6 +153,14 @@ public class InteractiveBehavior extends Behavior {
 		return (mask & (onmask | offmask)) == onmask;
 	}
 
+	private boolean isXYZKey(KeyEvent e) {
+		int c = e.getKeyCode();
+		boolean b = c == KeyEvent.VK_X ||
+			c == KeyEvent.VK_Y ||
+			c == KeyEvent.VK_Z;
+		return b;
+	}
+
 	/**
 	 * Process key events.
 	 * @param e
@@ -162,12 +176,52 @@ public class InteractiveBehavior extends Behavior {
 		}
 
 		int id = e.getID();
+		int code = e.getKeyCode();
 
-		if(id == KeyEvent.KEY_RELEASED || id == KeyEvent.KEY_TYPED)
+		boolean consumed = true;
+		try {
+
+		/*
+		 * Forward keyReleased to the canvas, which keeps
+		 * track of pressed keys.
+		 */
+		if(id == KeyEvent.KEY_RELEASED) {
+			canvas.keyReleased(e);
+			if(!isXYZKey(e))
+				consumed = false;
+			return;
+		}
+
+		if(id == KeyEvent.KEY_TYPED)
 			return;
 
+		/*
+		 * Forward keyReleased to the canvas, which keeps
+		 * track of pressed keys.
+		 */
+		canvas.keyPressed(e);
+		if(!isXYZKey(e))
+			consumed = false;
+		else
+			return;
+
+		/*
+		 * Handle escape key, which switches between the
+		 * HAND tool and the last used tool.
+		 */
+		if (code == KeyEvent.VK_ESCAPE) {
+			if(((Image3DUniverse)univ).isFullScreen())
+				((Image3DUniverse)univ).setFullScreen(false);
+			else if (univ.ui.isHandTool())
+				univ.ui.setTool(lastToolID);
+			else {
+				lastToolID = univ.ui.getToolId();
+				univ.ui.setHandTool();
+			}
+			return; // consumed
+		}
+
 		Content c = univ.getSelected();
-		int code = e.getKeyCode();
 		int axis = -1;
 		if(canvas.isKeyDown(KeyEvent.VK_X))
 			axis = VolumeRenderer.X_AXIS;
@@ -176,8 +230,6 @@ public class InteractiveBehavior extends Behavior {
 		else if(canvas.isKeyDown(KeyEvent.VK_Z))
 			axis = VolumeRenderer.Z_AXIS;
 		// Consume events if used, to avoid other listeners from reusing the event
-		boolean consumed = true;
-		try {
 		if(e.isShiftDown()) {
 			if(c != null && !c.isLocked())
 				contentTransformer.init(c, 0, 0);
@@ -213,23 +265,28 @@ public class InteractiveBehavior extends Behavior {
 				case KeyEvent.VK_DOWN: viewTransformer.zoom(-1); return;
 			}
 		} else if(c != null && c.getType() == Content.ORTHO && axis != -1) {
-			OrthoGroup og = (OrthoGroup)c.getContent();
-			switch(code) {
-				case KeyEvent.VK_RIGHT:
-				case KeyEvent.VK_UP:
-					og.increase(axis);
-					univ.fireContentChanged(c);
-					return;
-				case KeyEvent.VK_LEFT:
-				case KeyEvent.VK_DOWN:
-					og.decrease(axis);
-					univ.fireContentChanged(c);
-					return;
-				case KeyEvent.VK_SPACE:
-					og.setVisible(axis, !og.isVisible(axis));
-					univ.fireContentChanged(c);
-					return;
+			boolean changed = false;
+			for(ContentInstant ci : c.getInstants().values()) {
+				OrthoGroup og = (OrthoGroup)ci.getContent();
+				switch(code) {
+					case KeyEvent.VK_RIGHT:
+					case KeyEvent.VK_UP:
+						og.increase(axis);
+						changed = true;
+						break;
+					case KeyEvent.VK_LEFT:
+					case KeyEvent.VK_DOWN:
+						og.decrease(axis);
+						changed = true;
+						break;
+					case KeyEvent.VK_SPACE:
+						og.setVisible(axis, !og.isVisible(axis));
+						changed = true;
+						break;
+				}
 			}
+			if(changed)
+				univ.fireContentChanged(c);
 		} else {
 			if(c != null && !c.isLocked())
 				contentTransformer.init(c, 0, 0);
@@ -265,12 +322,17 @@ public class InteractiveBehavior extends Behavior {
 
 			}
 		}
-		// must be last line in try/catch block
+		// If we arrive here, the event was not handled.
+		// We give it to ImageJ
 		consumed = false;
 		} finally {
 			// executed when returning anywhere above,
 			// since then consumed is not set to false
-			if (consumed) e.consume();
+			if (consumed)
+				e.consume();
+			if(!e.isConsumed() && IJ.getInstance() != null)
+				if(code == KeyEvent.VK_L)
+					IJ.getInstance().keyPressed(e);
 		}
 	}
 
@@ -341,14 +403,16 @@ public class InteractiveBehavior extends Behavior {
 				axis = VolumeRenderer.Z_AXIS;
 			if(c != null && c.getType() == Content.ORTHO
 								&& axis != -1) {
-				OrthoGroup og = (OrthoGroup)c.getContent();
 				MouseWheelEvent we = (MouseWheelEvent)e;
 				int units = 0;
 				if(we.getScrollType() ==
 					MouseWheelEvent.WHEEL_UNIT_SCROLL)
 					units = we.getUnitsToScroll();
-				if(units > 0) og.increase(axis);
-				else if(units < 0) og.decrease(axis);
+				for(ContentInstant ci : c.getInstants().values()) {
+					OrthoGroup og = (OrthoGroup)ci.getContent();
+					if(units > 0) og.increase(axis);
+					else if(units < 0) og.decrease(axis);
+				}
 				univ.fireContentChanged(c);
 			} else {
 				viewTransformer.wheel_zoom(e);

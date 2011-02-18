@@ -97,8 +97,11 @@ public class Jython_Interpreter extends AbstractInterpreter {
 
 	/** Evaluate python code. */
 	protected Object eval(String text) {
-		//pi.exec(text);
-		//return null;
+		// Ensure MacOSX and Windows work fine until the alternative is tested
+		if ( ! IJ.isLinux()) {
+			pi.exec(text);
+			return null;
+		}
 
 		// A. Prints None
 		//Py.setSystemState(pystate);

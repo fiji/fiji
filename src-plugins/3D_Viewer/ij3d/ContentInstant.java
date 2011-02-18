@@ -11,6 +11,9 @@ import ij.ImageStack;
 import ij.io.FileInfo;
 import ij.io.OpenDialog;
 
+import customnode.CustomMeshNode;
+import customnode.CustomMesh;
+
 import vib.PointList;
 import isosurface.MeshGroup;
 import voltex.VoltexGroup;
@@ -496,6 +499,23 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 
 	public boolean isShaded() {
 		return shaded;
+	}
+
+	public void applySurfaceColors(ImagePlus imp) {
+		if(contentNode == null)
+			return;
+		CustomMesh mesh = null;
+		switch(type) {
+			case SURFACE:
+				mesh = ((MeshGroup)contentNode).getMesh();
+				break;
+			case CUSTOM:
+				mesh = ((CustomMeshNode)contentNode).getMesh();
+				break;
+		}
+		if(mesh == null)
+			return;
+		mesh.loadSurfaceColorsFromImage(imp);
 	}
 
 	public void setColor(Color3f color) {
