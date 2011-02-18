@@ -156,10 +156,8 @@ public class PluginTable extends JTable {
 			JMenuItem item = new JMenuItem(action.toString());
 			item.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					for (PluginObject plugin : selected) {
-						plugin.setAction(plugins, action);
-						firePluginChanged(plugin);
-					}
+					for (PluginObject plugin : selected)
+						setPluginAction(plugin, action);
 				}
 			});
 			menu.add(item);
@@ -233,6 +231,35 @@ public class PluginTable extends JTable {
 		return true;
 	}
 
+	protected void setPluginAction(PluginObject plugin, Action action) {
+		if (!plugin.getStatus().isValid(action))
+			return;
+		if (action == Action.UPLOAD) {
+			String[] sitesWithUploads = getUpdateSitesWithUploads(updaterFrame.plugins);
+			if (sitesWithUploads.length > 1) {
+				error("Internal error: multiple upload sites selected");
+				return;
+			}
+			boolean isNew = plugin.getStatus() == Status.NOT_FIJI;
+			if (sitesWithUploads.length == 0) {
+				if (isNew && !chooseUpdateSite(updaterFrame.plugins, plugin))
+					return;
+			}
+			else {
+				String siteName = sitesWithUploads[0];
+				if (isNew)
+					plugin.updateSite = siteName;
+				else if (!plugin.updateSite.equals(siteName)) {
+					error("Already have uploads for site '" + siteName
+						+ "', cannot upload to '" + plugin.updateSite +"', too!");
+					return;
+				}
+			}
+		}
+		plugin.setAction(updaterFrame.plugins, action);
+		firePluginChanged(plugin);
+	}
+
 	protected class PluginTableModel extends AbstractTableModel {
 		private PluginCollection plugins;
 		Map<PluginObject, Integer> pluginToRow;
@@ -293,32 +320,7 @@ public class PluginTable extends JTable {
 			if (column == 1) {
 				Action action = (Action)value;
 				PluginObject plugin = getPlugin(row);
-				if (plugin.getStatus().isValid(action)) {
-					if (action == Action.UPLOAD) {
-						String[] sitesWithUploads = getUpdateSitesWithUploads(updaterFrame.plugins);
-						if (sitesWithUploads.length > 1) {
-							error("Internal error: multiple upload sites selected");
-							return;
-						}
-						boolean isNew = plugin.getStatus() == Status.NOT_FIJI;
-						if (sitesWithUploads.length == 0) {
-							if (isNew && !chooseUpdateSite(updaterFrame.plugins, plugin))
-								return;
-						}
-						else {
-							String siteName = sitesWithUploads[0];
-							if (isNew)
-								plugin.updateSite = siteName;
-							else if (!plugin.updateSite.equals(siteName)) {
-								error("Already have uploads for site '" + siteName
-									+ "', cannot upload to '" + plugin.updateSite +"', too!");
-								return;
-							}
-						}
-					}
-					plugin.setAction(plugins, action);
-				}
-				fireRowChanged(row);
+				setPluginAction(plugin, action);
 			}
 		}
 
