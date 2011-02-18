@@ -52,7 +52,7 @@ public class InteractiveBehavior extends Behavior {
 	private static final int CTRL  = InputEvent.CTRL_DOWN_MASK;
 
 	private static final int PICK_POINT_MASK = MouseEvent.BUTTON1_DOWN_MASK;
-	private static final int DELETE_POINT_MASK = InputEvent.SHIFT_DOWN_MASK |
+	private static final int DELETE_POINT_MASK = InputEvent.ALT_DOWN_MASK |
 						MouseEvent.BUTTON1_DOWN_MASK;
 
 	public static final double TWO_RAD = 2 * Math.PI / 180;
@@ -366,7 +366,7 @@ public class InteractiveBehavior extends Behavior {
 				} if(mask == PICK_POINT_MASK) {
 					picker.addPoint(sel, e);
 					e.consume();
-				} else if(mask == DELETE_POINT_MASK) {
+				} else if((mask & DELETE_POINT_MASK) == DELETE_POINT_MASK) {
 					picker.deletePoint(sel, e);
 					e.consume();
 				}
