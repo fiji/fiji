@@ -1604,25 +1604,25 @@ public class Path implements Comparable<Path> {
 	// Going by the meanings of the types given in:
 	//   http://www.soton.ac.uk/~dales/morpho/morpho_doc/
 
-	static final int SWC_UNDEFINED       = 0;
-	static final int SWC_SOMA            = 1;
-	static final int SWC_AXON            = 2;
-	static final int SWC_DENDRITE        = 3;
-	static final int SWC_APICAL_DENDRITE = 4;
-	static final int SWC_FORK_POINT      = 5;
-	static final int SWC_END_POINT       = 6;
-	static final int SWC_CUSTOM          = 7;
+	public static final int SWC_UNDEFINED       = 0;
+	public static final int SWC_SOMA            = 1;
+	public static final int SWC_AXON            = 2;
+	public static final int SWC_DENDRITE        = 3;
+	public static final int SWC_APICAL_DENDRITE = 4;
+	public static final int SWC_FORK_POINT      = 5;
+	public static final int SWC_END_POINT       = 6;
+	public static final int SWC_CUSTOM          = 7;
 
-	static final String [] swcTypeNames = { "undefined",
-						"soma",
-						"axon",
-						"dendrite",
-						"apical dendrite",
-						"fork point",
-						"end point",
-						"custom" };
+	public static final String [] swcTypeNames = { "undefined",
+						       "soma",
+						       "axon",
+						       "dendrite",
+						       "apical dendrite",
+						       "fork point",
+						       "end point",
+						       "custom" };
 
-	int swcType = 0;
+	int swcType = SWC_UNDEFINED;
 
 	public boolean circlesOverlap( double n1x, double n1y, double n1z,
 				       double c1x, double c1y, double c1z,
@@ -1815,7 +1815,34 @@ public class Path implements Comparable<Path> {
 		if( endJoins != null ) {
 			name += ", ends on " + endJoins.getName();
 		}
+		if( swcType != SWC_UNDEFINED )
+			name += " (SWC: "+swcTypeNames[swcType]+")";
 		return name;
+	}
+
+
+	public void setSWCType(final int newSWCType) {
+		setSWCType(newSWCType,true);
+	}
+
+	public void setSWCType(final int newSWCType, boolean alsoSetInFittedVersion) {
+		if( newSWCType < 0 || newSWCType >= swcTypeNames.length)
+			throw new RuntimeException("BUG: Unknown SWC type "+newSWCType);
+		swcType = newSWCType;
+		if( alsoSetInFittedVersion ) {
+			/* If we've been asked to also set the fitted version, this
+		           should only be called on the non-fitted version
+			   of the path, so raise an error if it's been called on
+			   the fitted version by mistake instead: */
+			if( isFittedVersionOfAnotherPath() && fittedVersionOf.getSWCType() != newSWCType )
+				throw new RuntimeException("BUG: only call setSWCType on the unfitted path");
+			if( fitted != null )
+				fitted.setSWCType(newSWCType);
+		}
+	}
+
+	public int getSWCType() {
+		return swcType;
 	}
 
 /*

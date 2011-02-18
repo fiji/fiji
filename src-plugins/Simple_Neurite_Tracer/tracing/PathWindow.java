@@ -250,8 +250,27 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				pathAndFillManager.resetListeners(null);
 			}
 		} else {
-			IJ.error("Unexpectedly got an event from an unknown source");
-			return;
+			// Check if the source was from one of the SWC menu
+			// items:
+			int swcType = -1;
+			int i = 0;
+			for( JMenuItem menuItem : swcTypeMenuItems ) {
+				if( source == menuItem ) {
+					swcType = i;
+					break;
+				}
+				++i;
+			}
+
+			if( swcType >= 0 ) {
+				for( Path p : selectedPaths )
+					p.setSWCType(swcType);
+				pathAndFillManager.resetListeners(null);
+			} else {
+
+				IJ.error("Unexpectedly got an event from an unknown source");
+				return;
+			}
 		}
 	}
 
@@ -301,6 +320,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		makePrimarySetEnabled(false);
 		deleteSetEnabled(false);
 		exportAsSWCSetEnabled(false);
+		swcTypeMenu.setEnabled(false);
 	}
 
 	protected void updateButtonsOneSelected( Path p ) {
@@ -315,6 +335,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		makePrimarySetEnabled(true);
 		deleteSetEnabled(true);
 		exportAsSWCSetEnabled(true);
+		swcTypeMenu.setEnabled(true);
 	}
 
 	public boolean allSelectedUsingFittedVersion() {
@@ -343,6 +364,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		makePrimarySetEnabled(false);
 		deleteSetEnabled(true);
 		exportAsSWCSetEnabled(true);
+		swcTypeMenu.setEnabled(true);
 	}
 
 	@Override
@@ -374,6 +396,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 	protected DefaultMutableTreeNode root;
 
 	protected JPopupMenu popup;
+	protected JMenu swcTypeMenu;
 
 	protected JPanel buttonPanel;
 
@@ -390,6 +413,8 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 	protected JMenuItem makePrimaryMenuItem;
 	protected JMenuItem deleteMenuItem;
 	protected JMenuItem exportAsSWCMenuItem;
+
+	protected ArrayList<JMenuItem> swcTypeMenuItems = new ArrayList<JMenuItem>();
 
 	protected SimpleNeuriteTracer plugin;
 	protected PathAndFillManager pathAndFillManager;
@@ -442,6 +467,16 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		makePrimaryMenuItem.addActionListener(this);
 		deleteMenuItem.addActionListener(this);
 		exportAsSWCMenuItem.addActionListener(this);
+
+		// Now also add the SWC types submenu:
+		swcTypeMenu = new JMenu("Set SWC type");
+		for( String s : Path.swcTypeNames ) {
+			JMenuItem jmi = new JMenuItem(s);
+			jmi.addActionListener(this);
+			swcTypeMenu.add(jmi);
+			swcTypeMenuItems.add(jmi);
+		}
+		popup.add(swcTypeMenu);
 
 		// Create all the menu items:
 

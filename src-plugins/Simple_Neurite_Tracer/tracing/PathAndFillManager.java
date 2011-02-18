@@ -430,7 +430,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				if( realRadius )
 					radius = pathToUse.radiuses[i];
 				SWCPoint swcPoint = new SWCPoint(currentPointID,
-								 Path.SWC_UNDEFINED,
+								 pathToUse.getSWCType(),
 								 pathToUse.precise_x_positions[i],
 								 pathToUse.precise_y_positions[i],
 								 pathToUse.precise_z_positions[i],
@@ -454,7 +454,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				if( realRadius )
 					radius = pathToUse.radiuses[i];
 				SWCPoint swcPoint = new SWCPoint(currentPointID,
-								 Path.SWC_UNDEFINED,
+								 pathToUse.getSWCType(),
 								 pathToUse.precise_x_positions[i],
 								 pathToUse.precise_y_positions[i],
 								 pathToUse.precise_z_positions[i],
@@ -757,6 +757,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			pw.println("  <!ATTLIST path           usefitted         (true|false)    #IMPLIED>");
 			pw.println("  <!ATTLIST path           fitted            CDATA           #IMPLIED>");
 			pw.println("  <!ATTLIST path           fittedversionof   CDATA           #IMPLIED>");
+			pw.println("  <!ATTLIST path           swctype           CDATA           #IMPLIED>");
 			pw.println("  <!ATTLIST point          x                 CDATA           #REQUIRED>"); // deprecated
 			pw.println("  <!ATTLIST point          y                 CDATA           #REQUIRED>"); // deprecated
 			pw.println("  <!ATTLIST point          z                 CDATA           #REQUIRED>"); // deprecated
@@ -795,6 +796,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				// This probably should be a String returning
 				// method of Path.
 				pw.print("  <path id=\"" + p.getID() + "\"" );
+				pw.print(" swctype=\""+p.getSWCType()+"\"");
 				String startsString = "";
 				String endsString = "";
 				if( p.startJoins != null ) {
@@ -994,6 +996,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 			String idString = attributes.getValue("id");
 
+			String swcTypeString = attributes.getValue("swctype");
 			String useFittedString = attributes.getValue("usefitted");
 			String fittedIDString = attributes.getValue("fitted");
 			String fittedVersionOfIDString = attributes.getValue("fittedversionof");
@@ -1064,6 +1067,11 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				current_path.setID(id);
 				if( id > maxUsedID )
 					maxUsedID = id;
+
+				if( swcTypeString != null ) {
+					int swcType = Integer.parseInt(swcTypeString);
+					current_path.setSWCType(swcType,false);
+				}
 
 				if( startsonString == null ) {
 					startson = -1;
