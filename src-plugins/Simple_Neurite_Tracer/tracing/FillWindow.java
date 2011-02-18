@@ -89,10 +89,6 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 
 	protected JButton exportAsCSV;
 
-	public void setControlsEnabled( boolean enable ) {
-
-	}
-
 	public void setEnabledWhileFilling( ) {
 		fillList.setEnabled(false);
 		deleteFills.setEnabled(false);
