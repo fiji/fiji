@@ -311,8 +311,8 @@ public class NeuriteTracerResultsDialog
 
 	// ------------------------------------------------------------------------
 
-	protected int preGaussianState;
-	protected int preSigmaPaletteState;
+	volatile protected int preGaussianState;
+	volatile protected int preSigmaPaletteState;
 
 	public void gaussianCalculated(final boolean succeeded) {
 		SwingUtilities.invokeLater(new Runnable() {
