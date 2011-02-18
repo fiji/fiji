@@ -780,7 +780,7 @@ public abstract class SearchThread extends Thread {
 			nodes_as_image[n.z][n.y*width+n.x] = n;
 
 		} else if( n.searchStatus == OPEN_FROM_GOAL ) {
-			assert( ! (bidirectional && definedGoal ) );
+			assert bidirectional && definedGoal;
 
 			open_from_goal.add( n );
 			nodes_as_image[n.z][n.y*width+n.x] = n;
@@ -791,7 +791,7 @@ public abstract class SearchThread extends Thread {
 			nodes_as_image[n.z][n.y*width+n.x] = n;
 
 		} else if( n.searchStatus == CLOSED_FROM_GOAL ) {
-			assert( ! (bidirectional && definedGoal ) );
+			assert bidirectional && definedGoal;
 
 			closed_from_goal.add( n );
 			nodes_as_image[n.z][n.y*width+n.x] = n;
