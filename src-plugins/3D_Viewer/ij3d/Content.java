@@ -287,11 +287,14 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 					int frame = Integer.parseInt(matcher.group(2));
 					fileContents = fileContents.substring(matcher.end(1));
 					matcher = startFramePattern.matcher(fileContents);
+					ContentInstant ci = contents.get(frame);
+					if (ci == null)
+						continue;
 					String pointsForFrame = matcher.matches() ?
 						fileContents.substring(0, matcher.start(1)) : fileContents;
 					PointList points = PointList.parseString(pointsForFrame);
 					if (points != null)
-						contents.get(frame).setPointList(points);
+						ci.setPointList(points);
 				}
 			}
 			else {
