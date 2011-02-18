@@ -199,7 +199,8 @@ public class Checksummer extends Progressable {
 			".py", ".rb", ".clj", ".js", ".bsh" },
 		{ "scripts" }, { ".py", ".rb", ".clj", ".js", ".bsh", ".m" },
 		{ "macros" }, { ".txt", ".ijm" },
-		{ "luts" }, { ".lut" }
+		{ "luts" }, { ".lut" },
+		{ "lib" }, { "" }
 	};
 
 	protected static final Map<String, Set<String>> extensions;
