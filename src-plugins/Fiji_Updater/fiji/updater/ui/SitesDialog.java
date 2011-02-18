@@ -310,6 +310,10 @@ public class SitesDialog extends JDialog implements ActionListener, ItemListener
 		}
 
 		protected boolean initializeUpdateSite(String siteName, String url, String host, String uploadDirectory) {
+			if (!url.endsWith("/"))
+				url += "/";
+			if (!uploadDirectory.endsWith("/"))
+				uploadDirectory += "/";
 			boolean result = updaterFrame.initializeUpdateSite(url, host, uploadDirectory) && validURL(url);
 			if (result)
 				info("Initialized update site '" + siteName + "'");
