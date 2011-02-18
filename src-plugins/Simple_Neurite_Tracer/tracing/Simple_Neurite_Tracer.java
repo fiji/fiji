@@ -35,7 +35,6 @@ import ij.measure.Calibration;
 import ij3d.Image3DUniverse;
 import ij3d.Content;
 
-import javax.swing.SwingUtilities;
 import javax.vecmath.Color3f;
 import ij.gui.GUI;
 
