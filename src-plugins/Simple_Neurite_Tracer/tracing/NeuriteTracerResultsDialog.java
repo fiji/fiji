@@ -362,7 +362,6 @@ public class NeuriteTracerResultsDialog
 		});
 	}
 
-	// FIXME: continue here
 	protected void turnOnHessian( ) {
 		preGaussianState = currentState;
 		plugin.enableHessian(true);
