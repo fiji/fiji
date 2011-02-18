@@ -90,6 +90,7 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 	protected JButton exportAsCSV;
 
 	public void setEnabledWhileFilling( ) {
+		assert SwingUtilities.isEventDispatchThread();
 		fillList.setEnabled(false);
 		deleteFills.setEnabled(false);
 		reloadFill.setEnabled(false);
@@ -107,6 +108,7 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 	}
 
 	public void setEnabledWhileNotFilling( ) {
+		assert SwingUtilities.isEventDispatchThread();
 		fillList.setEnabled(true);
 		deleteFills.setEnabled(true);
 		reloadFill.setEnabled(true);
@@ -124,6 +126,7 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 	}
 
 	public void setEnabledNone( ) {
+		assert SwingUtilities.isEventDispatchThread();
 		fillList.setEnabled(false);
 		deleteFills.setEnabled(false);
 		reloadFill.setEnabled(false);
@@ -142,6 +145,7 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 
 	public FillWindow(PathAndFillManager pathAndFillManager, SimpleNeuriteTracer plugin, int x, int y) {
 		super("All Fills");
+		assert SwingUtilities.isEventDispatchThread();
 		this.plugin = plugin;
 		this.pathAndFillManager = pathAndFillManager;
 		setBounds(x,y,400,400);
@@ -302,19 +306,24 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 	public void setPathList( String [] pathList, Path justAdded, boolean expandAll ) { }
 
 	@Override
-	public void setFillList( String [] newList ) {
-		listModel.removeAllElements();
-		for( int i = 0; i < newList.length; ++i )
-			listModel.addElement( newList[i] );
+	public void setFillList( final String [] newList ) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				listModel.removeAllElements();
+				for( int i = 0; i < newList.length; ++i )
+					listModel.addElement( newList[i] );
+			}
+		});
 	}
 
 	@Override
 	public void setSelectedPaths( HashSet<Path> selectedPathSet, Object source ) {
-
+		// This dialog doesn't deal with paths, so ignore this.
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent ae) {
+		assert SwingUtilities.isEventDispatchThread();
 
 		Object source = ae.getSource();
 
@@ -409,18 +418,28 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 
 	@Override
 	public void itemStateChanged(ItemEvent ie) {
+		assert SwingUtilities.isEventDispatchThread();
 		if( ie.getSource() == transparent )
 			plugin.setFillTransparent( transparent.isSelected() );
 	}
 
-	public void thresholdChanged( double f ) {
-		thresholdField.setText(""+f);
+	public void thresholdChanged( final double f ) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				assert SwingUtilities.isEventDispatchThread();
+				thresholdField.setText(""+f);
+			}
+		});
 	}
 
 	@Override
-	public void maximumDistanceCompletelyExplored( SearchThread source, float f ) {
-		maxThreshold.setText("("+f+")");
-		maxThresholdValue = f;
+	public void maximumDistanceCompletelyExplored( SearchThread source, final float f ) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				maxThreshold.setText("("+f+")");
+				maxThresholdValue = f;
+			}
+		});
 	}
 
 	@Override
@@ -434,24 +453,28 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 	}
 
 	@Override
-	public void threadStatus( SearchThread source, int currentStatus ) {
-		switch(currentStatus) {
-		case FillerThread.STOPPING:
-			pauseOrRestartFilling.setText("Stopped");
-			pauseOrRestartFilling.setEnabled(false);
-			saveFill.setEnabled(false);
+	public void threadStatus( SearchThread source, final int currentStatus ) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				switch(currentStatus) {
+				case FillerThread.STOPPING:
+					pauseOrRestartFilling.setText("Stopped");
+					pauseOrRestartFilling.setEnabled(false);
+					saveFill.setEnabled(false);
 
-			break;
-		case FillerThread.PAUSED:
-			pauseOrRestartFilling.setText("Continue");
-			saveFill.setEnabled(true);
-			break;
-		case FillerThread.RUNNING:
-			pauseOrRestartFilling.setText("Pause");
-			saveFill.setEnabled(false);
-			break;
-		}
-		fillControlPanel.doLayout();
+					break;
+				case FillerThread.PAUSED:
+					pauseOrRestartFilling.setText("Continue");
+					saveFill.setEnabled(true);
+					break;
+				case FillerThread.RUNNING:
+					pauseOrRestartFilling.setText("Pause");
+					saveFill.setEnabled(false);
+					break;
+				}
+				fillControlPanel.doLayout();
+			}
+		});
 	}
 
 
