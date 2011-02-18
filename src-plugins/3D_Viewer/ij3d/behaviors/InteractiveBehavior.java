@@ -331,7 +331,7 @@ public class InteractiveBehavior extends Behavior {
 			if (consumed)
 				e.consume();
 			if(!e.isConsumed() && IJ.getInstance() != null)
-				if(code == KeyEvent.VK_L)
+				if(code == KeyEvent.VK_L || code == KeyEvent.VK_ENTER)
 					IJ.getInstance().keyPressed(e);
 		}
 	}
