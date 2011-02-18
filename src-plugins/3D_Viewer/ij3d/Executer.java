@@ -50,6 +50,8 @@ import customnode.CustomMesh;
 import customnode.CustomMeshNode;
 import customnode.CustomTriangleMesh;
 
+import java.awt.event.TextListener;
+
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.vecmath.Point3d;
 import octree.OctreeDialog;
@@ -952,10 +954,20 @@ public class Executer {
 		final float minS = oldS / 10f;
 		final float maxS = oldS * 10f;
 		gd.addSlider("Size", minS, maxS, oldS);
+		final TextField textField = (TextField)gd.getNumericFields().get(0);
+		textField.addTextListener(new TextListener() {
+			public void textValueChanged(TextEvent e2) {
+				try {
+					c.setLandmarkPointSize(Float.parseFloat(textField.getText()));
+				} catch (NumberFormatException e) {
+					// ignore
+				}
+			}
+		});
 		((Scrollbar)gd.getSliders().get(0)).
 			addAdjustmentListener(new AdjustmentListener() {
 			public void adjustmentValueChanged(AdjustmentEvent e) {
-				float newS = (float)e.getValue();
+				float newS = Float.parseFloat(textField.getText());
 				c.setLandmarkPointSize(newS);
 			}
 		});
