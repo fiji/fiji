@@ -35,8 +35,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 
-import java.util.HashSet;
-
 import features.SigmaPalette;
 import ij.gui.GenericDialog;
 
