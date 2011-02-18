@@ -41,6 +41,7 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 	private Switch contentSwitch;
 	private boolean showAllTimepoints = false;
 	private final String name;
+	private boolean showPointList = false;
 
 	private final boolean swapTimelapseData;
 
@@ -138,17 +139,21 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 	public void showTimepoint(int tp, boolean force) {
 		if(tp == currentTimePoint && !force)
 			return;
-		if(!showAllTimepoints && swapTimelapseData) {
-			ContentInstant old = contents.get(currentTimePoint);
-			if(old != null)
+		ContentInstant old = getCurrent();
+		if(old != null && !showAllTimepoints) {
+			if(swapTimelapseData)
 				old.swapDisplayedData();
+			getCurrent().showPointList(false);
 		}
 		currentTimePoint = tp;
 		if(showAllTimepoints)
 			return;
-		ContentInstant next = contents.get(currentTimePoint);
-		if(next != null && swapTimelapseData)
-			next.restoreDisplayedData();
+		ContentInstant next = getCurrent();
+		if(next != null) {
+			if(swapTimelapseData)
+				next.restoreDisplayedData();
+			next.showPointList(showPointList);
+		}
 
 		Integer idx = timepointToSwitchIndex.get(tp);
 		if(idx == null)
@@ -251,8 +256,8 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 	}
 
 	public void showPointList(boolean b) {
-		for(ContentInstant c : contents.values())
-			c.showPointList(b);
+		getCurrent().showPointList(b);
+		this.showPointList = b;
 	}
 
 	protected final static Pattern startFramePattern =
