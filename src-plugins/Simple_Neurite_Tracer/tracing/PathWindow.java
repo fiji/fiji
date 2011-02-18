@@ -60,8 +60,6 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
 
 @SuppressWarnings("serial")
 public class PathWindow extends JFrame implements PathAndFillListener, TreeSelectionListener, ActionListener {
