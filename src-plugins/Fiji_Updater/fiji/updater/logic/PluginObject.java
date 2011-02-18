@@ -423,6 +423,8 @@ public class PluginObject {
 	 * Note: this does not check whether the plugin is locally modified.
 	 */
 	public boolean isUploadable(PluginCollection plugins) {
+		if (updateSite == null)
+			return plugins.hasUploadableSites();
 		PluginCollection.UpdateSite updateSite = plugins.getUpdateSite(this.updateSite);
 		return updateSite != null && updateSite.isUploadable();
 	}
