@@ -200,7 +200,10 @@ public class Checksummer extends Progressable {
 		{ "scripts" }, { ".py", ".rb", ".clj", ".js", ".bsh", ".m" },
 		{ "macros" }, { ".txt", ".ijm" },
 		{ "luts" }, { ".lut" },
-		{ "lib" }, { "" }
+		{ "lib" }, { "" },
+		{ "mm" }, { "" },
+		{ "mmautofocus" }, { "" },
+		{ "mmplugins" }, { "" }
 	};
 
 	protected static final Map<String, Set<String>> extensions;
