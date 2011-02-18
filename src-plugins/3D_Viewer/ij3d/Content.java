@@ -143,17 +143,19 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 		if(old != null && !showAllTimepoints) {
 			if(swapTimelapseData)
 				old.swapDisplayedData();
+			if (!showAllTimepoints) {
+				ContentInstant next = contents.get(tp);
+				if (next != null)
+					next.showPointList(showPointList);
+			}
 			getCurrent().showPointList(false);
 		}
 		currentTimePoint = tp;
 		if(showAllTimepoints)
 			return;
 		ContentInstant next = getCurrent();
-		if(next != null) {
-			if(swapTimelapseData)
+		if(next != null && swapTimelapseData)
 				next.restoreDisplayedData();
-			next.showPointList(showPointList);
-		}
 
 		Integer idx = timepointToSwitchIndex.get(tp);
 		if(idx == null)
