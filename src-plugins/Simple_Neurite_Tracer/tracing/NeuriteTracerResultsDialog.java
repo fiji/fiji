@@ -201,6 +201,7 @@ public class NeuriteTracerResultsDialog
 	}
 
 	volatile boolean ignoreColorImageChoiceEvents = false;
+	volatile boolean ignorePreprocessEvents = false;
 
 	synchronized protected void updateColorImageChoice() {
 		assert SwingUtilities.isEventDispatchThread();
@@ -317,8 +318,11 @@ public class NeuriteTracerResultsDialog
 	public void gaussianCalculated(final boolean succeeded) {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				if( !succeeded )
+				if( !succeeded ) {
+					ignorePreprocessEvents = true;
 					preprocess.setSelected(false);
+					ignorePreprocessEvents = false;
+				}
 				changeState(preGaussianState);
 				if( preprocess.isSelected() ) {
 					editSigma.setEnabled(false);
@@ -350,7 +354,9 @@ public class NeuriteTracerResultsDialog
 						IJ.error( "[BUG] The preprocess checkbox should never be on when setSigma is called" );
 					} else {
 						// Turn on the checkbox:
+						ignorePreprocessEvents = true;
 						preprocess.setSelected( true );
+						ignorePreprocessEvents = false;
 						/* ... according to the documentation
 						   this doesn't generate an event, so
 						   we manually turn on the Gaussian
@@ -1314,7 +1320,7 @@ public class NeuriteTracerResultsDialog
 
 			plugin.justDisplayNearSlices(nearbySlices(),getEitherSide());
 
-		} else if( source == preprocess ) {
+		} else if( source == preprocess && ! ignorePreprocessEvents) {
 
 			if( preprocess.isSelected() )
 				turnOnHessian();
