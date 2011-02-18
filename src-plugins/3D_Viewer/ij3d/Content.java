@@ -280,6 +280,9 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 			String fileContents = readFile(new FileInputStream(file));
 			Matcher matcher = startFramePattern.matcher(fileContents);
 			if (matcher.matches()) {
+				// empty point lists
+				for (Integer frame : contents.keySet())
+					contents.get(frame).setPointList(new PointList());
 				while (matcher.matches()) {
 					int frame = Integer.parseInt(matcher.group(2));
 					fileContents = fileContents.substring(matcher.end(1));
