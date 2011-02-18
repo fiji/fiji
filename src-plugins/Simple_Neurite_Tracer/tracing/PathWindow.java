@@ -124,6 +124,16 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				IJ.error("No paths were selected for deletion");
 				return;
 			}
+			int n = selectedPaths.size();
+			String message = "Are you sure you want to delete ";
+			if( n == 1 ) {
+				message += "the path \""+selectedPaths.iterator().next()+"\"";
+			} else {
+				message += "these "+n+" paths?";
+			}
+			message += "?";
+			if (!IJ.showMessageWithCancel("Delete paths...",message))
+				return;
 			for( Path p : selectedPaths ) {
 				p.disconnectFromAll();
 				pathAndFillManager.deletePath( p );
