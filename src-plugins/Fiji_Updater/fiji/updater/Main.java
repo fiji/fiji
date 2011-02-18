@@ -165,10 +165,10 @@ public class Main {
 		System.err.println("Usage: fiji.update.Main <command>\n"
 			+ "\n"
 			+ "Commands:\n"
-			+ "\t--list [<files>]\n"
-			+ "\t--list-current [<files>]\n"
-			+ "\t--update [<files>]\n"
-			+ "\t--update-java");
+			+ "\tlist [<files>]\n"
+			+ "\tlist-current [<files>]\n"
+			+ "\tupdate [<files>]\n"
+			+ "\tupdate-java");
 	}
 
 	public static void main(String[] args) {
@@ -177,13 +177,13 @@ public class Main {
 			System.exit(0);
 		}
 		String command = args[0];
-		if (command.equals("--list"))
+		if (command.equals("list"))
 			getInstance().list(makeList(args, 1));
-		else if (command.equals("--list-current"))
+		else if (command.equals("list-current"))
 			getInstance().listCurrent(makeList(args, 1));
-		else if (command.equals("--update"))
+		else if (command.equals("update"))
 			getInstance().update(makeList(args, 1));
-		else if (command.equals("--update-java"))
+		else if (command.equals("update-java"))
 			new UpdateJava().run(null);
 		else
 			usage();
