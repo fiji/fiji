@@ -156,6 +156,15 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 		add(component);
 	}
 
+	public void addComponent(Component component, int fill, double weightx) {
+		GridBagLayout layout = (GridBagLayout)getLayout();
+		GridBagConstraints constraints = getConstraints();
+		constraints.fill = fill;
+		constraints.weightx = weightx;
+		layout.setConstraints(component, constraints);
+		add(component);
+	}
+	
 	// Work around too many private restrictions (add a new panel and remove it right away)
 	protected GridBagConstraints getConstraints() {
 		GridBagLayout layout = (GridBagLayout)getLayout();
