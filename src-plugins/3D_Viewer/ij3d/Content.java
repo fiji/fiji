@@ -265,7 +265,7 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 
 	public void loadPointList() {
 		String dir = null, fileName = null;
-		ImagePlus image = contents.get(0).image;
+		ImagePlus image = contents.firstEntry().getValue().image;
 		if (image != null) {
 			FileInfo fi = image.getFileInfo();
 			dir = fi.directory;
@@ -321,7 +321,7 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 	public void savePointList() {
 		String dir = OpenDialog.getDefaultDirectory();
 		String fileName = getName();
-		ImagePlus image = contents.get(0).image;
+		ImagePlus image = contents.firstEntry().getValue().image;
 		if (image != null) {
 			FileInfo fi = image.getFileInfo();
 			dir = fi.directory;
