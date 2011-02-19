@@ -65,6 +65,7 @@ import org.jgraph.graph.GraphConstants;
 import org.jgraph.graph.GraphLayoutCache;
 import org.jgraph.graph.GraphModel;
 import org.jgraph.graph.PortView;
+import org.jgraph.plaf.basic.BasicGraphUI;
 import org.jgrapht.Graph;
 import org.jgrapht.event.GraphEdgeChangeEvent;
 import org.jgrapht.event.GraphListener;
@@ -275,6 +276,7 @@ public class TrackSchemeFrame extends JFrame {
 		GraphLayoutCache graphLayoutCache = new GraphLayoutCache(jGMAdapter, factory);		
 		MyGraph myGraph = new MyGraph(jGMAdapter, graphLayoutCache);
 		myGraph.setMarqueeHandler(new MyMarqueeHandler());
+		myGraph.setUI(new MyBasicGraphUI());
 		AbstractCellView.cellEditor = new MyGraphCellEditor();
 		return myGraph;
 	}
@@ -774,13 +776,25 @@ public class TrackSchemeFrame extends JFrame {
 			setTolerance(2);
 			// Accept edits if click on background
 			setInvokesStopCellEditing(true);
-			// Allows control-drag
-			setCloneable(true);
+			// Forbid control-drag
+			setCloneable(false);
 			// Jump to default port on connect
 			setJumpToDefaultPort(true);
 		}
 	}
 
+	/**
+	 * Custom GraphUI, made so that the shift key only toggles selection.
+	 * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Feb 19, 2011
+	 *
+	 */
+	private static class MyBasicGraphUI extends BasicGraphUI {
+		private static final long serialVersionUID = -7709945526696961651L;
+		public boolean isToggleSelectionEvent(MouseEvent e) {
+			return e.isShiftDown();
+		}
+	}
+	
 	/**
 	 * Custom MarqueeHandler
 	 * MarqueeHandler that Connects Vertices and Displays PopupMenus
