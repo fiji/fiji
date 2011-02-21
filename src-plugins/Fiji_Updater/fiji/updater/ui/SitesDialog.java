@@ -395,6 +395,7 @@ public class SitesDialog extends JDialog implements ActionListener, ItemListener
 		super.dispose();
 		updaterFrame.updatePluginsTable();
 		updaterFrame.enableUploadOrNot();
+		updaterFrame.addCustomViewOptions();
 	}
 
 	public void info(String message) {

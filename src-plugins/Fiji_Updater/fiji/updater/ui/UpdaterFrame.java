@@ -49,6 +49,7 @@ import java.io.File;
 import java.io.IOException;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -334,6 +335,8 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		SwingTools.addAccelerator(cancel, (JComponent)getContentPane(),
 				cancel.getActionListeners()[0],
 				KeyEvent.VK_ESCAPE, 0);
+
+		addCustomViewOptions();
 	}
 
 	public void setVisible(boolean visible) {
@@ -415,6 +418,15 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 				(enable ? label + "/" : "") + otherLabel);
 			setEnabled(enable || enableOther);
 		}
+	}
+
+	public void addCustomViewOptions() {
+		viewOptions.clearCustomOptions();
+
+		Collection<String> names = plugins.getUpdateSiteNames();
+		if (names.size() > 1)
+			for (String name : names)
+				viewOptions.addCustomOption("View files of the '" + name + "' site", plugins.forUpdateSite(name));
 	}
 
 	public void setViewOption(ViewOptions.Option option) {
