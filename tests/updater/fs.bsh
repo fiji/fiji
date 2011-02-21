@@ -1,0 +1,126 @@
+/// FILESYSTEM HELPERS
+
+deleteRecursively(dir) {
+	if (!dir.exists())
+		return;
+	for (File file : dir.listFiles())
+		if (file.getName().equals(".") || file.getName().equals(".."))
+			continue;
+		else if (file.isDirectory())
+			deleteRecursively(file);
+		else if (file.isFile())
+			file.delete();
+	dir.delete();
+}
+
+copyRecursively(fromDir, toDir) {
+	for (File file : fromDir.listFiles())
+		if (file.isDirectory())
+			copyRecursively(file, new File(toDir, file.getName()));
+		else if (file.isFile())
+			copyFileWithMTime(file, new File(toDir, file.getName()));
+}
+
+copyTo(inputStream, outputStream) {
+	byte[] buffer = new byte[16384];
+	for (;;) {
+		count = inputStream.read(buffer);
+		if (count < 0)
+			break;
+		outputStream.write(buffer, 0, count);
+	}
+	inputStream.close();
+	outputStream.close();
+}
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+
+copyFile(source, destination) {
+	destination.getCanonicalFile().getParentFile().mkdirs();
+	copyTo(new FileInputStream(source), new FileOutputStream(destination));
+	if (destination.getName().equals("fiji"))
+		execute(new String[] { "chmod", "a+x", destination.getAbsolutePath() });
+}
+
+copyFileWithMTime(source, destination) {
+	copyFile(source, destination);
+	destination.setLastModified(source.lastModified());
+}
+
+fijiDir = new File(System.getProperty("fiji.executable")).getCanonicalFile().getParentFile();
+
+import java.io.ByteArrayOutputStream;
+
+readFile(dir, name) {
+	return readFile(new File(dir, name));
+}
+
+readFile(file) {
+	return readStream(new FileInputStream(file));
+}
+
+import java.util.zip.GZIPInputStream;
+
+readGZippedFile(file) {
+	return readGZippedStream(new FileInputStream(file));
+}
+
+readGZippedStream(in) {
+	return readStream(new GZIPInputStream(in));
+}
+
+readStream(in) {
+	out = new ByteArrayOutputStream();
+	copyTo(in, out);
+	return out.toString().trim();
+}
+
+import java.io.PrintWriter;
+
+writeFile(dir, name) {
+	return writeFile(dir, name,name);
+}
+
+writeFile(dir, name, content) {
+	file = new File(dir, name);
+	file.getParentFile().mkdirs();
+	writer = new PrintWriter(file);
+	writer.println(content);
+	writer.close();
+
+	return file;
+}
+
+writeStream(out, content) {
+	writer = new PrintWriter(out);
+	writer.println(content);
+	writer.close();
+}
+
+import java.util.zip.GZIPOutputStream;
+
+writeGZippedFile(dir, name, content) {
+	file = new File(dir, name);
+	file.getParentFile().mkdirs();
+	writeStream(new GZIPOutputStream(new FileOutputStream(file)), content);
+	return file;
+}
+
+getTimestamp(File file) {
+	return Util.getTimestamp(file.getAbsolutePath());
+}
+
+setTimestamp(file, timestamp) {
+	if (!(timestamp instanceof String))
+		timestamp = "" + timestamp;
+	setLastModified(file, Util.timestamp2millis(timestamp));
+}
+
+import fiji.updater.util.Util;
+
+setLastModified(file, lastModified) {
+	if (file instanceof String)
+		file = new File(file);
+	file.setLastModified(lastModified);
+}

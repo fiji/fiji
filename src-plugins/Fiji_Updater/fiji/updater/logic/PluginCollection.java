@@ -1,33 +1,185 @@
 package fiji.updater.logic;
 
+import fiji.updater.Updater;
+
 import fiji.updater.logic.PluginObject.Action;
 import fiji.updater.logic.PluginObject.Status;
 
 import fiji.updater.util.DependencyAnalyzer;
-
 import fiji.updater.util.Util;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
+
+import java.util.zip.GZIPOutputStream;
+
+import javax.xml.parsers.ParserConfigurationException;
+
+import javax.xml.transform.TransformerConfigurationException;
+
+import org.xml.sax.SAXException;
 
 public class PluginCollection extends ArrayList<PluginObject> {
-	protected PluginCollection() { }
-	protected static PluginCollection instance;
-	public static PluginCollection getInstance() {
-		if (instance == null)
-			instance = new PluginCollection();
-		return instance;
+	public final static String DEFAULT_UPDATE_SITE = "Fiji";
+
+	public static class UpdateSite {
+		public String url, sshHost, uploadDirectory;
+		public long timestamp;
+
+		public UpdateSite(String url, String sshHost, String uploadDirectory, long timestamp) {
+			if (!url.endsWith("/"))
+				url += "/";
+			if (uploadDirectory != null && !uploadDirectory.equals("") && !uploadDirectory.endsWith("/"))
+				uploadDirectory += "/";
+			this.url = url;
+			this.sshHost = sshHost;
+			this.uploadDirectory = uploadDirectory;
+			this.timestamp = timestamp;
+		}
+
+		public boolean isLastModified(long lastModified) {
+			return timestamp == Long.parseLong(Util.timestamp(lastModified));
+		}
+
+		public void setLastModified(long lastModified) {
+			timestamp = Long.parseLong(Util.timestamp(lastModified));
+		}
+
+		public boolean isUploadable() {
+			return uploadDirectory != null && !uploadDirectory.equals("");
+		}
+
+		public String toString() {
+			return url + (sshHost != null ? ", " + sshHost : "")
+				+ (uploadDirectory != null ? ", " + uploadDirectory : "");
+		}
 	}
 
-	static DependencyAnalyzer dependencyAnalyzer;
+	protected Map<String, UpdateSite> updateSites;
+
+	public PluginCollection() {
+		updateSites = new LinkedHashMap<String, UpdateSite>();
+		addUpdateSite(DEFAULT_UPDATE_SITE, Updater.MAIN_URL,
+			Util.isDeveloper ? Updater.SSH_HOST : null,
+			Util.isDeveloper ? Updater.UPDATE_DIRECTORY : null,
+			Util.getTimestamp(Updater.XML_COMPRESSED));
+	}
+
+	public void addUpdateSite(String name, String url, String sshHost, String uploadDirectory, long timestamp) {
+		updateSites.put(name, new UpdateSite(url, sshHost, uploadDirectory, timestamp));
+	}
+
+	public void renameUpdateSite(String oldName, String newName) {
+		if (getUpdateSite(newName) != null)
+			throw new RuntimeException("Update site " + newName + " exists already!");
+		if (getUpdateSite(oldName) == null)
+			throw new RuntimeException("Update site " + oldName + " does not exist!");
+
+		// handle all plugins
+		for (PluginObject plugin : this)
+			if (plugin.updateSite.equals(oldName))
+				plugin.updateSite = newName;
+
+		// preserve order
+		HashMap<String, UpdateSite> newMap = new LinkedHashMap<String, UpdateSite>();
+		for (String name : updateSites.keySet())
+			if (name.equals(oldName))
+				newMap.put(newName, getUpdateSite(oldName));
+			else
+				newMap.put(name, getUpdateSite(name));
+
+		updateSites = newMap;
+	}
+
+	public void removeUpdateSite(String name) {
+		updateSites.remove(name);
+	}
+
+	public UpdateSite getUpdateSite(String name) {
+		if (name == null)
+			return null;
+		return updateSites.get(name);
+	}
+
+	public Collection<String> getUpdateSiteNames() {
+		return updateSites.keySet();
+	}
+
+	public Collection<String> getSiteNamesToUpload() {
+		Collection<String> set = new HashSet<String>();
+		for (PluginObject plugin : toUpload(true))
+			set.add(plugin.updateSite);
+		// keep the update sites' order
+		List<String> result = new ArrayList<String>();
+		for (String name : getUpdateSiteNames())
+			if (set.contains(name))
+				result.add(name);
+		if (result.size() != set.size())
+			throw new RuntimeException("Unknown update site in "
+				+ set.toString() + " (known: "
+				+ result.toString() + ")");
+		return result;
+	}
+
+	public boolean hasUploadableSites() {
+		for (String name : updateSites.keySet())
+			if (getUpdateSite(name).isUploadable())
+				return true;
+		return false;
+	}
+
+	public Action[] getActions(PluginObject plugin) {
+		return plugin.isUploadable(this) ?
+			plugin.getStatus().getDeveloperActions() :
+			plugin.getStatus().getActions();
+	}
+
+	public Action[] getActions(Iterable<PluginObject> plugins) {
+		List<Action> result = null;
+		int count = 0;
+		for (PluginObject plugin : plugins) {
+			Action[] actions = getActions(plugin);
+			if (result == null) {
+				result = new ArrayList<Action>();
+				for (Action action : actions)
+					result.add(action);
+			}
+			else {
+				Set<Action> set = new TreeSet<Action>();
+				for (Action action : actions)
+					set.add(action);
+				Iterator iter = result.iterator();
+				while (iter.hasNext())
+					if (!set.contains(iter.next()))
+						iter.remove();
+			}
+		}
+		return result.toArray(new Action[result.size()]);
+	}
+
+	public void read() throws IOException, ParserConfigurationException, SAXException {
+		new XMLFileReader(this).read(new File(Util.prefix(Updater.XML_COMPRESSED)));
+	}
+
+	public void write() throws IOException, SAXException, TransformerConfigurationException, ParserConfigurationException {
+		new XMLFileWriter(this).write(new GZIPOutputStream(new FileOutputStream(Util.prefix(Updater.XML_COMPRESSED))), true);
+	}
+
+	protected static DependencyAnalyzer dependencyAnalyzer;
 
 	public interface Filter {
 		boolean matches(PluginObject plugin);
@@ -45,7 +197,21 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	}
 
 	public Iterable<PluginObject> toUpload() {
-		return filter(is(Action.UPLOAD));
+		return toUpload(false);
+	}
+
+	public Iterable<PluginObject> toUpload(boolean includeMetadataChanges) {
+		if (!includeMetadataChanges)
+			return filter(is(Action.UPLOAD));
+		return filter(or(is(Action.UPLOAD), new Filter() {
+			public boolean matches(PluginObject plugin) {
+				return plugin.metadataChanged;
+			}
+		}));
+	}
+
+	public Iterable<PluginObject> toUpload(String updateSite) {
+		return filter(and(is(Action.UPLOAD), isUpdateSite(updateSite)));
 	}
 
 	public Iterable<PluginObject> toUninstall() {
@@ -92,6 +258,10 @@ public class PluginCollection extends ArrayList<PluginObject> {
 					Status.OBSOLETE_MODIFIED}));
 	}
 
+	public Iterable<PluginObject> forUpdateSite(String name) {
+		return filter(isUpdateSite(name));
+	}
+
 	public Iterable<PluginObject> fijiPlugins() {
 		return filter(not(is(Status.NOT_FIJI)));
 	}
@@ -128,8 +298,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	public Iterable<PluginObject> uploadable() {
 		return filter(new Filter() {
 			public boolean matches(PluginObject plugin) {
-				return plugin.getStatus()
-				.isValid(Action.UPLOAD);
+				return plugin.isUploadable(PluginCollection.this);
 			}
 		});
 	}
@@ -210,7 +379,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public Filter doesPlatformMatch() {
 		// If we're a developer or no platform was specified, return yes
-		if (Util.isDeveloper)
+		if (hasUploadableSites())
 			return yes();
 		return new Filter() {
 			public boolean matches(PluginObject plugin) {
@@ -251,6 +420,15 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		return new Filter() {
 			public boolean matches(PluginObject plugin) {
 				return plugin.getStatus() == status;
+			}
+		};
+	}
+
+	public Filter isUpdateSite(final String updateSite) {
+		return new Filter() {
+			public boolean matches(PluginObject plugin) {
+				return plugin.updateSite != null && // is null for non-Fiji files
+					plugin.updateSite.equals(updateSite);
 			}
 		};
 	}
@@ -397,16 +575,10 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	}
 
 	public void markForUpdate(boolean evenForcedUpdates) {
-		PluginObject updater = getPlugin("plugins/Fiji_Updater.jar");
-		if (updater != null &&
-				updater.getStatus() == Status.UPDATEABLE) {
-			updater.setAction(Action.UPDATE);
-			return;
-		}
 		for (PluginObject plugin : updateable(evenForcedUpdates)) {
 			if (Util.isDeveloper && Util.isLauncher(plugin.filename))
 				continue;
-			plugin.setFirstValidAction(new Action[] {
+			plugin.setFirstValidAction(this, new Action[] {
 				Action.UPDATE, Action.UNINSTALL, Action.INSTALL
 			});
 		}
@@ -416,8 +588,15 @@ public class PluginCollection extends ArrayList<PluginObject> {
 				if (launcher == null)
 					continue; // the regression test triggers this
 				if (launcher.getStatus() == Status.NOT_INSTALLED)
-					launcher.setAction(Action.INSTALL);
+					launcher.setAction(this, Action.INSTALL);
 			}
+	}
+
+	public String getURL(PluginObject plugin) {
+		String siteName = plugin.updateSite;
+		assert(siteName != null && !siteName.equals(""));
+		UpdateSite site = getUpdateSite(siteName);
+		return site.url + plugin.filename.replace(" ", "%20") + "-" + plugin.getTimestamp();
 	}
 
 	public static class DependencyMap

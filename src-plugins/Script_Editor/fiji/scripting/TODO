@@ -6,6 +6,9 @@
 
 - Identify non-explicit imports and add an option to make them explicit.
 
+- fix add-plugin by analyzing the imports and initializing the CLASSPATH in
+  the Fakefile properly.
+
 - enable Add import for all languages
 
 - Beanshell seems not to import the second time a Beanshell interpreter is
