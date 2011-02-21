@@ -16,8 +16,6 @@ What does not work yet:
 
 Other (nice-to-haves, longer-term goals):
 
-- Add filters for the updater sites to the view modes
-
 - Think about reusing maven's repository structure for the update sites
 
 - If the developer tries to upload a version that has already be marked
