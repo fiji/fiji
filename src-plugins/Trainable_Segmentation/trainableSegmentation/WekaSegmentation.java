@@ -502,6 +502,8 @@ public class WekaSegmentation {
 	 */
 	public boolean loadClassifier(String filename)
 	{
+		AbstractClassifier newClassifier = null;
+		Instances newHeader = null;
 		File selected = new File(filename);
 		try {
 			InputStream is = new FileInputStream( selected );
@@ -509,7 +511,7 @@ public class WekaSegmentation {
 			{
 				PMMLModel model = PMMLFactory.getPMMLModel(is, null);
 				if (model instanceof PMMLClassifier)
-					classifier = (PMMLClassifier)model;
+					newClassifier = (PMMLClassifier)model;
 				else
 					throw new Exception("PMML model is not a classification/regression model!");
 			}
@@ -519,10 +521,10 @@ public class WekaSegmentation {
 					is = new GZIPInputStream(is);
 
 				ObjectInputStream objectInputStream = new ObjectInputStream(is);
-				classifier = (AbstractClassifier) objectInputStream.readObject();
+				newClassifier = (AbstractClassifier) objectInputStream.readObject();
 				try
 				{ // see if we can load the header
-					trainHeader = (Instances) objectInputStream.readObject();
+					newHeader = (Instances) objectInputStream.readObject();
 				}
 				catch (Exception e)
 				{
@@ -545,16 +547,20 @@ public class WekaSegmentation {
 		try{
 			// Check if the loaded information corresponds to current state of the segmentator
 			// (the attributes can be adjusted, but the classes must match)
-			if(false == adjustSegmentationStateToData(trainHeader))
+			if(false == adjustSegmentationStateToData(newHeader))
 			{
 				IJ.log("Error: current segmentator state could not be updated to loaded data requirements (attributes and classes)");
+				return false;
 			}
 		}catch(Exception e)
 		{
 			IJ.log("Error while adjusting data!");
 			e.printStackTrace();
+			return false;
 		}
-
+		
+		this.classifier = newClassifier;
+		this.trainHeader = newHeader;
 
 		return true;
 	}
