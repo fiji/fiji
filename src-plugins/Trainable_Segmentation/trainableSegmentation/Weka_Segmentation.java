@@ -201,12 +201,19 @@ public class Weka_Segmentation implements PlugIn
 	public static final String ADD_TRACE = "addTrace";
 	public static final String DELETE_TRACE = "deleteTrace";
 	public static final String TRAIN_CLASSIFIER = "trainClassifier";
+	public static final String TOGGLE_OVERLAY = "toggleOverlay";
 	public static final String GET_RESULT = "getResult";
 	public static final String GET_PROBABILITY = "getProbability";
 	public static final String PLOT_RESULT = "plotResultGraphs";
 	public static final String APPLY_CLASSIFIER = "applyClassifier";
+	public static final String LOAD_CLASSIFIER = "loadClassifier";
+	public static final String SAVE_CLASSIFIER = "saveClassifier";
+	public static final String LOAD_DATA = "loadData";
+	public static final String SAVE_DATA = "saveData";
+	public static final String CREATE_CLASS = "createNewClass";
+	public static final String LAUNCH_WEKA = "launchWeka";
 	
-
+	
 	/**
 	 * Basic constructor for graphical user interface use
 	 */
@@ -313,7 +320,7 @@ public class Weka_Segmentation implements PlugIn
 						win.setButtonsEnabled(false);
 
 						try{
-							// Record
+							// Macro recording
 							String[] arg = new String[] {};
 							record(TRAIN_CLASSIFIER, arg);
 							
@@ -332,22 +339,25 @@ public class Weka_Segmentation implements PlugIn
 						}
 					}
 					else if(e.getSource() == overlayButton){
+						// Macro recording
+						String[] arg = new String[] {};
+						record(TOGGLE_OVERLAY, arg);
 						win.toggleOverlay();
 					}
 					else if(e.getSource() == resultButton){
-						// Record
+						// Macro recording
 						String[] arg = new String[] {};
 						record(GET_RESULT, arg);
 						showClassificationImage();
 					}
 					else if(e.getSource() == probabilityButton){
-						// Record
+						// Macro recording
 						String[] arg = new String[] {};
 						record(GET_PROBABILITY, arg);
 						showProbabilityImage();
 					}
 					else if(e.getSource() == plotButton){
-						// Record
+						// Macro recording
 						String[] arg = new String[] {};
 						record(PLOT_RESULT, arg);
 						plotResult();
@@ -377,6 +387,9 @@ public class Weka_Segmentation implements PlugIn
 						showSettingsDialog();
 					}
 					else if(e.getSource() == wekaButton){
+						// Macro recording
+						String[] arg = new String[] {};
+						record(LAUNCH_WEKA, arg);
 						launchWeka();
 					}
 					else{
@@ -1071,9 +1084,28 @@ public class Weka_Segmentation implements PlugIn
 			displayImage.updateAndDraw();
 		}
 
+		/**
+		 * Set a new result (classified) image
+		 * @param classifiedImage new result image
+		 */
 		protected void setClassfiedImage(ImagePlus classifiedImage) 
 		{
 			updateClassifiedImage(classifiedImage);	
+		}
+		
+		/**
+		 * Update the buttons to add classes with current information
+		 */
+		public void updateAddClassButtons() 
+		{
+			int wekaNumOfClasses = wekaSegmentation.getNumOfClasses();
+			while (numOfClasses < wekaNumOfClasses)
+				win.addClass();
+			for (int i = 0; i < numOfClasses; i++)
+				addExampleButton[i].setText("Add to " + wekaSegmentation.getClassLabel(i));
+
+			win.updateButtonsEnabling();
+			repaintWindow();
 		}
 		
 	}// end class CustomWindow
@@ -1292,6 +1324,7 @@ public class Weka_Segmentation implements PlugIn
 		IJ.showStatus("Done.");
 		IJ.log("Done");
 	}
+	
 	/**
 	 * Plot the current result
 	 */
@@ -1358,6 +1391,7 @@ public class Weka_Segmentation implements PlugIn
 		jf.getContentPane().add(vmc, BorderLayout.CENTER);
 		jf.setVisible(true);
 	}
+	
 	/**
 	 * Apply classifier to test data
 	 */
@@ -1505,6 +1539,9 @@ public class Weka_Segmentation implements PlugIn
 		if (od.getFileName()==null)
 			return;
 		IJ.log("Loading Weka classifier from " + od.getDirectory() + od.getFileName() + "...");
+		// Record
+		String[] arg = new String[] { od.getDirectory() + od.getFileName() };
+		record(LOAD_CLASSIFIER, arg);
 
 		win.setButtonsEnabled(false);
 
@@ -1515,7 +1552,6 @@ public class Weka_Segmentation implements PlugIn
 		if( false == wekaSegmentation.loadClassifier(od.getDirectory() + od.getFileName()) )
 		{
 			IJ.error("Error when loading Weka classifier from file");
-			wekaSegmentation.setClassifier(oldClassifier);
 			win.updateButtonsEnabling();
 			return;
 		}
@@ -1531,18 +1567,10 @@ public class Weka_Segmentation implements PlugIn
 		}
 
 		// update GUI
-		int wekaNumOfClasses = wekaSegmentation.getNumOfClasses();
-		while (numOfClasses < wekaNumOfClasses)
-			win.addClass();
-		for (int i = 0; i < numOfClasses; i++)
-			addExampleButton[i].setText("Add to " + wekaSegmentation.getClassLabel(i));
-
-		win.updateButtonsEnabling();
-		repaintWindow();
+		win.updateAddClassButtons();
 
 		IJ.log("Loaded " + od.getDirectory() + od.getFileName());
 	}
-
 
 	/**
 	 * Load a Weka model (classifier) from a file
@@ -1571,6 +1599,10 @@ public class Weka_Segmentation implements PlugIn
 		if (sd.getFileName()==null)
 			return;
 
+		// Record
+		String[] arg = new String[] { sd.getDirectory() + sd.getFileName() };
+		record(SAVE_CLASSIFIER, arg);
+		
 		if( false == wekaSegmentation.saveClassifier(sd.getDirectory() + sd.getFileName()) )
 		{
 			IJ.error("Error while writing classifier into a file");
@@ -1696,8 +1728,15 @@ public class Weka_Segmentation implements PlugIn
 		OpenDialog od = new OpenDialog("Choose data file","", "data.arff");
 		if (od.getFileName()==null)
 			return;
+		
+		// Macro recording
+		String[] arg = new String[] { od.getDirectory() + od.getFileName() };
+		record(LOAD_DATA, arg);
+		
+		win.setButtonsEnabled(false);
 		IJ.log("Loading data from " + od.getDirectory() + od.getFileName() + "...");
 		wekaSegmentation.loadTrainingData(od.getDirectory() + od.getFileName());
+		win.updateButtonsEnabling();
 	}
 
 	/**
@@ -1709,6 +1748,10 @@ public class Weka_Segmentation implements PlugIn
 		if (sd.getFileName()==null)
 			return;
 
+		// Macro recording
+		String[] arg = new String[] { sd.getDirectory() + sd.getFileName() };
+		record(SAVE_DATA, arg);
+		
 		if(false == wekaSegmentation.saveData(sd.getDirectory() + sd.getFileName()))
 			IJ.showMessage("There is no data to save");
 	}
@@ -1731,7 +1774,8 @@ public class Weka_Segmentation implements PlugIn
 			return;
 
 
-		if (null == inputName || 0 == inputName.length()) {
+		if (null == inputName || 0 == inputName.length()) 
+		{
 			IJ.error("Invalid name for class");
 			return;
 		}
@@ -1748,6 +1792,10 @@ public class Weka_Segmentation implements PlugIn
 		win.addClass();
 
 		repaintWindow();
+		
+		// Macro recording
+		String[] arg = new String[] { inputName };
+		record(CREATE_CLASS, arg);
 	}
 
 	/**
@@ -2325,12 +2373,14 @@ public class Weka_Segmentation implements PlugIn
 
 		ImagePlus segmentation = wekaSegmentation.applyClassifier(testImage, 0, probabilityMaps);
 
-		if (showResults) {
+		if (showResults) 
+		{
 			segmentation.show();
 			testImage.show();
 		}
 
-		if (storeResults) {
+		if (storeResults) 
+		{
 			String filename = storeDir + File.separator + fileName;
 			IJ.log("Saving results to " + filename);
 			IJ.save(segmentation, filename);
@@ -2338,5 +2388,131 @@ public class Weka_Segmentation implements PlugIn
 			testImage.close();
 		}
 	}
+
+	/**
+	 * Toggle current result overlay image
+	 */
+	public static void toggleOverlay()
+	{
+		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
+		win.toggleOverlay();
+	}
+
+	/**
+	 * Load a new classifier
+	 * 
+	 * @param newClassifierPathName classifier file name with complete path
+	 */
+	public static void loadClassifier(String newClassifierPathName)
+	{
+		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
+		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+		
+		IJ.log("Loading Weka classifier from " + newClassifierPathName + "...");
+
+		win.setButtonsEnabled(false);
+
+		final AbstractClassifier oldClassifier = wekaSegmentation.getClassifier();
+
+		// Try to load Weka model (classifier and train header)
+		if( false == wekaSegmentation.loadClassifier(newClassifierPathName) )
+		{
+			IJ.error("Error when loading Weka classifier from file");
+			win.updateButtonsEnabling();
+			return;
+		}
+
+		IJ.log("Read header from " + newClassifierPathName + " (number of attributes = " + wekaSegmentation.getTrainHeader().numAttributes() + ")");
+
+		if(wekaSegmentation.getTrainHeader().numAttributes() < 1)
+		{
+			IJ.error("Error", "No attributes were found on the model header");
+			wekaSegmentation.setClassifier(oldClassifier);
+			win.updateButtonsEnabling();
+			return;
+		}
+
+		// update GUI
+		win.updateAddClassButtons();
+
+		IJ.log("Loaded " + newClassifierPathName);
+	}
+	
+	/**
+	 * Save current classifier into a file
+	 * 
+	 * @param classifierPathName complete path name for the classifier file
+	 */
+	public static void saveClassifier( String classifierPathName )
+	{
+		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
+		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+		if( false == wekaSegmentation.saveClassifier( classifierPathName ) )
+		{
+			IJ.error("Error while writing classifier into a file");
+			return;
+		}
+	}
+
+	/**
+	 * Load training data from file
+	 * 
+	 * @param arffFilePathName complete path name of the ARFF file
+	 */
+	public static void loadData(String arffFilePathName )
+	{
+		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
+		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+		
+		win.setButtonsEnabled(false);
+		IJ.log("Loading data from " + arffFilePathName + "...");
+		wekaSegmentation.loadTrainingData( arffFilePathName );
+		win.updateButtonsEnabling();
+	}
+	
+	/**
+	 * Save training data into an ARFF file
+	 * 
+	 * @param arffFilePathName complete path name of the ARFF file
+	 */
+	public static void saveData(String arffFilePathName)
+	{
+		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
+		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+		
+		if(false == wekaSegmentation.saveData( arffFilePathName ))
+			IJ.showMessage("There is no data to save");
+	}
+
+	/**
+	 * Create a new class 
+	 * 
+	 * @param inputName new class name
+	 */
+	public static void createNewClass( String inputName )
+	{
+		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
+		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+		
+		if (null == inputName || 0 == inputName.length()) 
+		{
+			IJ.error("Invalid name for class");
+			return;
+		}
+		inputName = inputName.trim();
+
+		if (0 == inputName.toLowerCase().indexOf("add to "))
+			inputName = inputName.substring(7);
+
+		// Add new name to the list of labels
+		wekaSegmentation.setClassLabel(wekaSegmentation.getNumOfClasses(), inputName);
+		wekaSegmentation.addClass();
+
+		// Add new class label and list
+		win.addClass();
+		
+		win.updateAddClassButtons();
+	}
 	
 }// end of Weka_Segmentation class
+
