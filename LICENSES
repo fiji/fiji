@@ -32,6 +32,7 @@ Name					File					Author(s)						Contact								License
 * Color Histogram 			Color_Histogram.jar			Dimiter Prodanov 					dimiterpp@gmail.com 						GPL 2
 * Color Inspector 3D 			Color_Inspector_3D.jar			Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
 * Differentials				Differentials_.jar			Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/differentials/			BIG (see below)
+* Extended Depth of Focus		Extended_Depth_Field.jar		Alex Prudencio, Daniel Sage et al			http://bigwww.epfl.ch/demo/edf/					BIG (see below)
 * FeatureJ	 			FeatureJ_.jar	 			Erik Meijering	 					http://www.imagescience.org/meijering/software/featurej/	imagescience (see below)
 * Fiji_Plugins.jar 			Fiji_Plugins.jar 			Various authors 					http://pacific.mpi-cbg.de/contributors 				PD,GPL
 * Fiji as a framework																							GPL
@@ -39,6 +40,7 @@ Name					File					Author(s)						Contact								License
 * ij-ImageIO 				ij-ImageIO_.jar				Jarek Sacha 						jarek@ieee.org 							LGPL
 * ImageJA				ij.jar					Johannes Schindelin, Wayne Rasband			Johannes.Schindelin@gmx.de					PD
 * imagescience.jar 			imagescience.jar 			Erik Meijering 						meijering@imagescience.org 					imagescience (see below)
+* imageware.jar				imageware.jar				Daniel Sage et al					http://bigwww.epfl.ch/						BIG (see below)
 * Interactive 3D Surface Plot 		Interactive_3D_Surface_Plot.jar		Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
 * itext-1.3.jar 			itext-1.3.jar 				Bruno Lowagie, Paulo Soares 				http://www.lowagie.com/iText/ 					MPL/LGPL
 * IO package 				IO_.jar 				A. Cardona, S. Saalfeld, J. Schindelin, G. Jefferis 	acardona@ini.phys.ethz.ch 					GPL/public domain
@@ -62,6 +64,7 @@ Name					File					Author(s)						Contact								License
 * MTrack2				MTrack2_.jar				Nico Stuurman						http://valelab.ucsf.edu/~nico/IJplugins/MTrack2.html		BSDR
 * Multiple Image Processor 		M_I_P.jar				Nathaniel Gonzalez Santiago				http://ciar.rcm.upr.edu/projects/imageprocessor/multiples/	GPL
 * PAL Optimization			pal-optimization.jar			Alexei Drummond et al					http://ftp.cse.sc.edu/bioinformatics/PAL/pal-1.4/doc/index.html	LGPL
+* Panorama equirectangular view 	panorama_.jar 				Stephan Saalfeld 					http://fly.mpi-cbg.de/~saalfeld/Projects/panorama.html 		GPL
 * PDF Viewer 				PDF_Viewer.jar				Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * PointPicker				PointPicker_.jar			Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/pointpicker/			BIG (see below)
 * PostgreSQL JDBC 			postgresql-8.2-506.jdbc3.jar 		http://jdbc.postgresql.org/ 				http://jdbc.postgresql.org/					BSD
@@ -80,6 +83,7 @@ Name					File					Author(s)						Contact								License
 * Video Editing			Video_Editing.jar				Benjamin Schmid						bene.schmid@gmail.com						GPL
 * View5D 				View5D_.jar 				Rainer Heintzmann					heintzmannd@gmail.com						GPL 2
 * Volume Viewer / 3D Reslicer 		Volume_Viewer.jar 			Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
+* wavelets.jar				wavelets.jar				Daniel Sage et al					http://bigwww.epfl.ch/						BIG (see below)
 
 
 TurboReg (Citationware):
@@ -120,9 +124,7 @@ imagescience (Erik Meijering; http://www.imagescience.org/meijering/software/):
 
 Unresolved (TODO):
 * Example/ scripts folder
-* Graphics/Example_Plot.class   Wayne Rasband, PD ?
 * Java Advanced Imaging jai_codec.jar, jai_core.jar, jai_imageio.jar
-* ij-ImageIO
 
 
 Problematic:

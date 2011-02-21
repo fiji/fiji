@@ -299,7 +299,7 @@ public class UpdateJava implements PlugIn {
 		return getLink(in, getLinkParser(url, titlePattern), url);
 	}
 
-	public String getLink(InputStream in, ParserCallback callback, String url) {
+	public String getLink(InputStream in, ParserCallback<Link> callback, String url) {
 		try {
 			List<Link> list = getList(in, callback);
 			if (list.size() > 1)

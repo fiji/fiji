@@ -94,7 +94,18 @@ for line in response.split('\n'):
 					start += 1
 				time = line[start:start + 5]
 		else:
-			author = '<unknown>'
+			i = line.find('>Talk</a>')
+			if i > 0:
+				end = line.rfind('</a>', 0, i)
+				start = line.rfind('>', 0, end) + 1
+				author = line[start:end]
+				end = line.rfind('; ', 0, start)
+				time = line[end + 2:end + 7]
+				end = line.rfind('</a>', 0, end)
+				start = line.rfind('">', 0, end) + 2
+				title = line[start:end]
+			else:
+				author = '<unknown>'
 		i = line.find('uploaded "<a href=')
 		if i > 0:
 			start = line.find('>', i) + 1

@@ -1,7 +1,17 @@
 package customnode;
 
+import ij.ImagePlus;
+import ij.measure.Calibration;
+import ij.plugin.Duplicator;
+import ij.process.StackConverter;
+
+import vib.InterpolatedImage;
+
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Arrays;
+import java.util.Map;
 
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.geometry.NormalGenerator;
@@ -97,8 +107,12 @@ public abstract class CustomMesh extends Shape3D {
 	public void calculateMinMaxCenterPoint(Point3f min,
 				Point3f max, Point3f center) {
 
-		if(mesh == null)
+		if(mesh == null || mesh.size() == 0) {
+			min.set(0, 0, 0);
+			max.set(0, 0, 0);
+			center.set(0, 0, 0);
 			return;
+		}
 
 		min.x = min.y = min.z = Float.MAX_VALUE;
 		max.x = max.y = max.z = Float.MIN_VALUE;
@@ -287,6 +301,39 @@ public abstract class CustomMesh extends Shape3D {
 		changed = true;
 	}
 
+	public void loadSurfaceColorsFromImage(ImagePlus imp) {
+		GeometryArray ga = (GeometryArray)getGeometry();
+		if(ga == null)
+			return;
+
+		if(imp.getType() != ImagePlus.COLOR_RGB) {
+			imp = new Duplicator().run(imp);
+			new StackConverter(imp).convertToRGB();
+		}
+		InterpolatedImage ii = new InterpolatedImage(imp);
+
+		int N = ga.getValidVertexCount();
+		Color3f[] colors = new Color3f[N];
+		Calibration cal = imp.getCalibration();
+		double pw = cal.pixelWidth;
+		double ph = cal.pixelHeight;
+		double pd = cal.pixelDepth;
+		Point3f coord = new Point3f();
+		for(int i = 0; i < N; i++) {
+			ga.getCoordinate(i, coord);
+			int v = ii.getNoInterpolInt(
+				(int)Math.round(coord.x / pw),
+				(int)Math.round(coord.y / ph),
+				(int)Math.round(coord.z / pd));
+			colors[i] = new Color3f(
+				((v & 0xff0000) >> 16) / 255f,
+				((v & 0xff00) >> 8) / 255f,
+				(v & 0xff) / 255f);
+		}
+		ga.setColors(0, colors);
+		changed = true;
+	}
+
 	public void setTransparency(float transparency) {
 		TransparencyAttributes  ta = getAppearance().
 						getTransparencyAttributes();
@@ -336,6 +383,33 @@ public abstract class CustomMesh extends Shape3D {
 		material.setDiffuseColor(0.1f,0.1f,0.1f);
 		appearance.setMaterial(material);
 		return appearance;
+	}
+
+	public void restoreDisplayedData(String path, String name) {
+		HashMap<String, CustomMesh> contents = null;
+		try {
+			contents = WavefrontLoader.load(path);
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
+		if(contents.containsKey(name)) {
+			this.mesh = contents.get(name).getMesh();
+			update();
+		}
+	}
+
+	public void swapDisplayedData(String path, String name) {
+		HashMap<String, CustomMesh> contents =
+			new HashMap<String, CustomMesh>();
+		contents.put(name, this);
+		try {
+			WavefrontExporter.save(
+				contents,
+				path + ".obj");
+			this.mesh = null;
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	protected abstract GeometryArray createGeometry();

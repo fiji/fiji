@@ -13,14 +13,17 @@ import java.awt.event.ActionEvent;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 
 import java.util.Vector;
 
 import javax.swing.JScrollPane;
 import javax.swing.JViewport;
+import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 
 import javax.swing.event.DocumentEvent;
@@ -60,6 +63,7 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 
 	public EditorPane(TextEditor frame) {
 		this.frame = frame;
+		setLineWrap(false);
 		setTabSize(8);
 		getActionMap().put(DefaultEditorKit
 				.nextWordAction, wordMovement(+1, false));
@@ -81,6 +85,11 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 		ToolTipManager.sharedInstance().registerComponent(this);
 		getDocument().addDocumentListener(this);
 		currentLanguage = Languages.get("");
+	}
+
+	public void setTabSize(int width) {
+		if (getTabSize() != width)
+			super.setTabSize(width);
 	}
 
 	public void embedWithScrollbars(Container container) {
@@ -198,7 +207,7 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 
 	public void write(File file) throws IOException {
 		BufferedWriter outFile =
-			new BufferedWriter(new FileWriter(file));
+			new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
 		outFile.write(getText());
 		outFile.close();
 		modifyCount = 0;
@@ -224,8 +233,17 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 				setFileName(file);
 				return;
 			}
-			read(new BufferedReader(new FileReader(file)),
-				null);
+			StringBuffer string = new StringBuffer();
+			BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+			char[] buffer = new char[16384];
+			for (;;) {
+				int count = reader.read(buffer);
+				if (count < 0)
+					break;
+				string.append(buffer, 0, count);
+			}
+			reader.close();
+			setText(string.toString());
 			this.file = file;
 			if (line > getLineCount())
 				line = getLineCount() - 1;
@@ -235,7 +253,8 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 		}
 		discardAllEdits();
 		modifyCount = 0;
-		setFileName(file);
+		fileLastModified = file == null || !file.exists() ? 0 :
+			file.lastModified();
 	}
 
 	public void setFileName(String baseName) {
@@ -248,12 +267,16 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 			new TokenFunctions(this).setClassName(name);
 	}
 
-	public void setFileName(File file) {
+	public void setFileName(final File file) {
 		this.file = file;
 		updateGitDirectory();
 		setTitle();
 		if (file != null) {
-			setLanguageByFileName(file.getName());
+			SwingUtilities.invokeLater(new Thread() {
+				public void run() {
+					setLanguageByFileName(file.getName());
+				}
+			});
 			fallBackBaseName = null;
 		}
 		fileLastModified = file == null || !file.exists() ? 0 :
@@ -326,17 +349,22 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 		provider.setProviderLanguage(language.menuLabel);
 
 		// TODO: these should go to upstream RSyntaxTextArea
-		if (language.syntaxStyle != null)
-			setSyntaxEditingStyle(language.syntaxStyle);
-		else if (language.extension.equals(".clj"))
-			getRSyntaxDocument()
-				.setSyntaxStyle(new ClojureTokenMaker());
-		else if (language.extension.equals(".m"))
-			getRSyntaxDocument()
-				.setSyntaxStyle(new MatlabTokenMaker());
-		else if (language.extension.equals(".ijm"))
-			getRSyntaxDocument()
-				.setSyntaxStyle(new ImageJMacroTokenMaker());
+		 try {
+			if (language.syntaxStyle != null)
+				setSyntaxEditingStyle(language.syntaxStyle);
+			else if (language.extension.equals(".clj"))
+				getRSyntaxDocument()
+					.setSyntaxStyle(new ClojureTokenMaker());
+			else if (language.extension.equals(".m"))
+				getRSyntaxDocument()
+					.setSyntaxStyle(new MatlabTokenMaker());
+			else if (language.extension.equals(".ijm"))
+				getRSyntaxDocument()
+					.setSyntaxStyle(new ImageJMacroTokenMaker());
+		}
+		catch (NullPointerException e) {
+			// ignore; this sometimes happens in the TokenMaker...
+		}
 
 		frame.setTitle();
 		frame.updateLanguageMenu(language);
@@ -447,5 +475,59 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 
 	public void terminate() {
 		throw new RuntimeException("TODO: unimplemented!");
+	}
+
+	/** Adapted from ij.plugin.frame.Editor */
+	public int zapGremlins() {
+		final char[] chars = getText().toCharArray();
+		int count=0;
+		boolean inQuotes = false;
+		char quoteChar = 0;
+		for (int i=0; i<chars.length; i++) {
+			char c = chars[i];
+			if (!inQuotes && (c=='"' || c=='\'')) {
+				inQuotes = true;
+				quoteChar = c;
+			} else  {
+				if (inQuotes && (c==quoteChar || c=='\n'))
+				inQuotes = false;
+			}
+			if (!inQuotes && c!='\n' && c!='\t' && (c<32||c>127)) {
+				count++;
+				chars[i] = ' ';
+			}
+		}
+		if (count>0) {
+			beginAtomicEdit();
+			try {
+				setText(new String(chars));
+			} catch (Throwable t) {
+				t.printStackTrace();
+			} finally {
+				endAtomicEdit();
+			}
+		}
+		return count;
+	}
+
+	public void convertTabsToSpaces() {
+		beginAtomicEdit();
+		try {
+			super.convertTabsToSpaces();
+		} catch (Throwable t) {
+			t.printStackTrace();
+		} finally {
+			endAtomicEdit();
+		}
+	}
+	public void convertSpacesToTabs() {
+		beginAtomicEdit();
+		try {
+			super.convertSpacesToTabs();
+		} catch (Throwable t) {
+			t.printStackTrace();
+		} finally {
+			endAtomicEdit();
+		}
 	}
 }

@@ -4,6 +4,8 @@
 ## with debian/update-debian --generate-build-command
 
 DEBIAN_DIRECTORY=$(dirname $(readlink -f "$BASH_SOURCE"))
+FIJI_DIRECTORY=$(readlink -f "$DEBIAN_DIRECTORY"/..)
+
 export JAVA_HOME=`cat "$DEBIAN_DIRECTORY"/java-home`
 JAVAC_PATH=$JAVA_HOME/bin/javac
 
@@ -15,27 +17,40 @@ fi
 
 echo In build-command, found JAVA_HOME was $JAVA_HOME
 
-sh -x Fake.sh FALLBACK=false VERBOSE=true \
-    "CLASSPATH(jars/VIB-lib.jar)=/usr/share/java/jama.jar:/usr/share/java/junit4.jar:/usr/share/java/jzlib.jar:jars/pal-optimization.jar" \
-    "CLASSPATH(jars/VectorString.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jama.jar:/usr/share/java/vecmath.jar" \
-    "CLASSPATH(jars/fiji-scripting.jar)=/usr/share/java/bsh.jar:/usr/share/java/js.jar:/usr/share/java/jython.jar:jars/Fiji.jar" \
-    "CLASSPATH(jars/imglib.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/vecmath.jar:jars/mpicbg.jar" \
-    "CLASSPATH(jars/jep.jar)=/usr/share/java/jama.jar:/usr/share/java/junit4.jar" \
+# These lines are taken from Build.sh to ensure that Fake
+# is built:
+source_dir=src-plugins/fake
+source=$source_dir/fiji/build/*.java
+export SYSTEM_JAVAC=$JAVA_HOME/bin/javac
+export SYSTEM_JAVA=$JAVA_HOME/bin/java
+
+mkdir -p "$FIJI_DIRECTORY"/build &&
+  $SYSTEM_JAVAC -d "$FIJI_DIRECTORY"/build/ "$FIJI_DIRECTORY"/$source &&
+  $SYSTEM_JAVA -classpath "$FIJI_DIRECTORY"/build fiji.build.Fake fiji &&
+  $SYSTEM_JAVA -classpath "$FIJI_DIRECTORY"/build fiji.build.Fake jars/fake.jar
+
+./fiji --build --java-home "$JAVA_HOME" -- FALLBACK=false VERBOSE=true \
+    "CLASSPATH(jars/VIB-lib.jar)=/usr/share/java/jama.jar:/usr/share/java/junit4.jar:/usr/share/java/jzlib.jar:jars/fiji-lib.jar:jars/ij.jar:jars/pal-optimization.jar" \
+    "CLASSPATH(jars/VectorString.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jama.jar:/usr/share/java/vecmath.jar:jars/ij.jar" \
+    "CLASSPATH(jars/fiji-scripting.jar)=/usr/share/java/bsh.jar:/usr/share/java/js.jar:jars/Fiji.jar:jars/ij.jar:jars/jython.jar" \
+    "CLASSPATH(jars/imglib-scripting.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jcommon.jar:/usr/share/java/jfreechart.jar:/usr/share/java/vecmath.jar:jars/ij.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jars:jars/imglib.jar:jars/mpicbg.jar:plugins/loci_tools.jar" \
+    "CLASSPATH(jars/jep.jar)=/usr/share/java/jama.jar:/usr/share/java/junit4.jar:jars/ij.jar" \
+    "CLASSPATH(jars/jython.jar)=/usr/share/java/junit4.jar:jars/jna.jar" \
     "CLASSPATH(jars/test-fiji.jar)=/usr/share/java/junit4.jar" \
-    "CLASSPATH(plugins/3D_Viewer.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jama.jar:/usr/share/java/vecmath.jar:jars/VIB-lib.jar:jars/imglib.jar" \
-    "CLASSPATH(plugins/BeanShell_Interpreter.jar)=/usr/share/java/bsh.jar:jars/fiji-scripting.jar" \
-    "CLASSPATH(plugins/Clojure_Interpreter.jar)=/usr/share/java/clojure.jar:jars/fiji-scripting.jar" \
-    "CLASSPATH(plugins/Directionality_.jar)=/usr/share/java/jcommon.jar:/usr/share/java/jfreechart.jar" \
-    "CLASSPATH(plugins/Fiji_Developer.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/vecmath.jar:jars/rsyntaxtextarea.jar:plugins/3D_Viewer.jar:plugins/Fiji_Plugins.jar:plugins/Script_Editor.jar" \
-    "CLASSPATH(plugins/Fiji_Plugins.jar)=/usr/share/java/jsch.jar:jars/fiji-lib.jar" \
-    "CLASSPATH(plugins/Fiji_Updater.jar)=/usr/share/java/jsch.jar" \
-    "CLASSPATH(plugins/IO_.jar)=/usr/share/java/batik-all.jar:/usr/share/java/itext1.jar:/usr/share/java/jzlib.jar:/usr/share/java/xml-apis-ext.jar:jars/jpedalSTD.jar" \
-    "CLASSPATH(plugins/Image_Expression_Parser.jar)=/usr/share/java/junit4.jar:jars/imglib.jar:jars/jep.jar" \
-    "CLASSPATH(plugins/Javascript_.jar)=/usr/share/java/js.jar:jars/fiji-scripting.jar" \
-    "CLASSPATH(plugins/Jython_Interpreter.jar)=/usr/share/java/jython.jar:jars/fiji-scripting.jar" \
-    "CLASSPATH(plugins/SPIM_Registration.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jama.jar:/usr/share/java/vecmath.jar:jars/VIB-lib.jar:jars/fiji-lib.jar:jars/imglib.jar:jars/mpicbg.jar:jars/weka.jar:plugins/3D_Viewer.jar:plugins/Fiji_Plugins.jar:plugins/loci_tools.jar" \
-    "CLASSPATH(plugins/Script_Editor.jar)=/usr/lib/jvm/java-6-openjdk/lib/tools.jar:jars/Fiji.jar:jars/autocomplete.jar:jars/fake.jar:jars/fiji-lib.jar:jars/fiji-scripting.jar:jars/imglib.jar:jars/rsyntaxtextarea.jar:plugins/BeanShell_Interpreter.jar:plugins/CLI_.jar:plugins/Clojure_Interpreter.jar:plugins/JRuby_Interpreter.jar:plugins/Javascript_.jar:plugins/Jython_Interpreter.jar:plugins/Refresh_Javas.jar" \
-    "CLASSPATH(plugins/Simple_Neurite_Tracer.jar)=/usr/share/java/batik-all.jar:/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jcommon.jar:/usr/share/java/jfreechart.jar:/usr/share/java/junit4.jar:/usr/share/java/vecmath.jar:/usr/share/java/xml-apis-ext.jar:jars/VIB-lib.jar:jars/commons-math.jar:jars/pal-optimization.jar:plugins/3D_Viewer.jar:plugins/VIB_.jar" \
-    "CLASSPATH(plugins/TrakEM2_.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jama.jar:/usr/share/java/jfreechart.jar:/usr/share/java/postgresql.jar:/usr/share/java/vecmath.jar:jars/imglib.jar:jars/mpicbg.jar:plugins/3D_Viewer.jar:plugins/Fiji_Plugins.jar:plugins/Simple_Neurite_Tracer.jar:plugins/VIB_.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/loci_tools.jar" \
-    "CLASSPATH(plugins/VIB_.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/vecmath.jar:jars/VIB-lib.jar:jars/imglib.jar:jars/pal-optimization.jar:plugins/3D_Viewer.jar" \
+    "CLASSPATH(plugins/3D_Blob_Segmentation.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/vecmath.jar:jars/VIB-lib.jar:jars/ij.jar:jars/imglib.jar:plugins/3D_Viewer.jar:plugins/level_sets.jar" \
+    "CLASSPATH(plugins/3D_Viewer.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jama.jar:/usr/share/java/vecmath.jar:jars/VIB-lib.jar:jars/ij.jar:jars/imglib.jar" \
+    "CLASSPATH(plugins/BeanShell_Interpreter.jar)=/usr/share/java/bsh.jar:jars/fiji-scripting.jar:jars/ij.jar" \
+    "CLASSPATH(plugins/Clojure_Interpreter.jar)=/usr/share/java/clojure.jar:jars/fiji-scripting.jar:jars/ij.jar" \
+    "CLASSPATH(plugins/Directionality_.jar)=/usr/share/java/jcommon.jar:/usr/share/java/jfreechart.jar:jars/ij.jar" \
+    "CLASSPATH(plugins/Fiji_Developer.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/vecmath.jar:jars/ij.jar:jars/rsyntaxtextarea.jar:plugins/3D_Viewer.jar:plugins/Fiji_Plugins.jar:plugins/Script_Editor.jar" \
+    "CLASSPATH(plugins/Fiji_Plugins.jar)=/usr/share/java/jsch.jar:jars/VIB-lib.jar:jars/fiji-lib.jar:jars/ij.jar" \
+    "CLASSPATH(plugins/Fiji_Updater.jar)=/usr/share/java/jsch.jar:jars/ij.jar" \
+    "CLASSPATH(plugins/IO_.jar)=/usr/share/java/batik-all.jar:/usr/share/java/itext1.jar:/usr/share/java/jzlib.jar:/usr/share/java/xml-apis-ext.jar:jars/ij.jar:jars/jpedalSTD.jar" \
+    "CLASSPATH(plugins/Image_Expression_Parser.jar)=/usr/share/java/junit4.jar:jars/ij.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib.jar:jars/jep.jar" \
+    "CLASSPATH(plugins/Javascript_.jar)=/usr/share/java/js.jar:jars/fiji-scripting.jar:jars/ij.jar" \
+    "CLASSPATH(plugins/SPIM_Registration.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jama.jar:/usr/share/java/vecmath.jar:jars/VIB-lib.jar:jars/fiji-lib.jar:jars/ij.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:jars/imglib.jar:jars/mpicbg.jar:jars/weka.jar:plugins/3D_Viewer.jar:plugins/Fiji_Plugins.jar:plugins/loci_tools.jar" \
+    "CLASSPATH(plugins/Script_Editor.jar)=/usr/lib/jvm/java-6-openjdk/lib/tools.jar:/usr/share/java/jfreechart.jar:jars/Fiji.jar:jars/autocomplete.jar:jars/fake.jar:jars/fiji-lib.jar:jars/fiji-scripting.jar:jars/ij.jar:jars/imglib-ij.jar:jars/imglib.jar:jars/rsyntaxtextarea.jar:plugins/BeanShell_Interpreter.jar:plugins/CLI_.jar:plugins/Clojure_Interpreter.jar:plugins/JRuby_Interpreter.jar:plugins/Javascript_.jar:plugins/Jython_Interpreter.jar:plugins/Refresh_Javas.jar" \
+    "CLASSPATH(plugins/Simple_Neurite_Tracer.jar)=/usr/share/java/batik-all.jar:/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jcommon.jar:/usr/share/java/jfreechart.jar:/usr/share/java/junit4.jar:/usr/share/java/vecmath.jar:/usr/share/java/xml-apis-ext.jar:jars/VIB-lib.jar:jars/commons-math.jar:jars/ij.jar:jars/pal-optimization.jar:plugins/3D_Viewer.jar:plugins/AnalyzeSkeleton_.jar:plugins/Skeletonize3D_.jar:plugins/VIB_.jar" \
+    "CLASSPATH(plugins/TrakEM2_.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jama.jar:/usr/share/java/jcommon.jar:/usr/share/java/jfreechart.jar:/usr/share/java/postgresql.jar:/usr/share/java/vecmath.jar:jars/VIB-lib.jar:jars/VectorString.jar:jars/edu_mines_jtk.jar:jars/ij.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib.jar:jars/jai_codec.jar:jars/jai_core.jar:jars/mpicbg.jar:plugins/3D_Viewer.jar:plugins/Fiji_Plugins.jar:plugins/Lasso_and_Blow_Tool.jar:plugins/Simple_Neurite_Tracer.jar:plugins/VIB_.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/loci_tools.jar" \
+    "CLASSPATH(plugins/VIB_.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/vecmath.jar:jars/VIB-lib.jar:jars/fiji-lib.jar:jars/ij.jar:jars/imglib.jar:jars/pal-optimization.jar:plugins/3D_Viewer.jar" \
     "$@"

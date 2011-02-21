@@ -34,18 +34,18 @@ public class ImageJ3DViewer implements PlugIn {
 		} catch(Exception e) {
 			StringBuffer buf = new StringBuffer();
 			StackTraceElement[] st = e.getStackTrace();
-			buf.append("An unexpected exception occurred. \n" + 
+			buf.append("An unexpected exception occurred. \n" +
 				"Please mail me the following lines if you \n"+
-				"need help.\n" + 
+				"need help.\n" +
 				"bene.schmid@gmail.com\n   \n");
-			buf.append(e.getClass().getName()  + ":" + 
+			buf.append(e.getClass().getName()  + ":" +
 						e.getMessage() + "\n");
 			for(int i = 0; i < st.length; i++) {
 				buf.append(
-					"    at " + st[i].getClassName() + 
-					"." + st[i].getMethodName() + 
-					"(" + st[i].getFileName() + 
-					":" + st[i].getLineNumber() + 
+					"    at " + st[i].getClassName() +
+					"." + st[i].getMethodName() +
+					"(" + st[i].getFileName() +
+					":" + st[i].getLineNumber() +
 					")\n");
 			}
 			new ij.text.TextWindow("Error", buf.toString(), 500, 400);
@@ -122,10 +122,10 @@ public class ImageJ3DViewer implements PlugIn {
 		int factor = getInt(resamplingF);
 		int thresh = getInt(th);
 		boolean[] channels = new boolean[]{getBoolean(r),
-						getBoolean(g), 
+						getBoolean(g),
 						getBoolean(b)};
 		int ty = getInt(type);
-		univ.addContent(grey, color, 
+		univ.addContent(grey, color,
 			name, thresh, channels, factor, ty);
 	}
 
@@ -138,7 +138,7 @@ public class ImageJ3DViewer implements PlugIn {
 
 		int factor = getInt(resamplingF);
 		boolean[] channels = new boolean[]{getBoolean(r),
-						getBoolean(g), 
+						getBoolean(g),
 						getBoolean(b)};
 		univ.addVoltex(grey, color, name, 0, channels, factor);
 	}
@@ -152,7 +152,7 @@ public class ImageJ3DViewer implements PlugIn {
 
 		int factor = getInt(resamplingF);
 		boolean[] channels = new boolean[]{getBoolean(r),
-						getBoolean(g), 
+						getBoolean(g),
 						getBoolean(b)};
 		univ.addOrthoslice(grey, color, name, 0, channels, factor);
 	}
@@ -168,7 +168,7 @@ public class ImageJ3DViewer implements PlugIn {
 	// Individual content's menu
 	public static void setSlices(String x, String y, String z) {
 		Image3DUniverse univ = getUniv();
-		if(univ != null && univ.getSelected() != null && 
+		if(univ != null && univ.getSelected() != null &&
 			univ.getSelected().getType() == Content.ORTHO) {
 
 			OrthoGroup vg = (OrthoGroup)univ.
@@ -181,7 +181,7 @@ public class ImageJ3DViewer implements PlugIn {
 
 	public static void fillSelection() {
 		Image3DUniverse univ = getUniv();
-		if(univ != null && univ.getSelected() != null && 
+		if(univ != null && univ.getSelected() != null &&
 			univ.getSelected().getType() == Content.VOLUME) {
 
 			VoltexGroup vg = (VoltexGroup)univ.
@@ -254,7 +254,7 @@ public class ImageJ3DViewer implements PlugIn {
 			univ.getSelected().setThreshold(getInt(s));
 		}
 	}
-		
+
 
 	public static void applyTransform(String transform) {
 		Image3DUniverse univ = getUniv();

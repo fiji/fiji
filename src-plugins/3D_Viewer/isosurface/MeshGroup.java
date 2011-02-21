@@ -76,6 +76,10 @@ public class MeshGroup extends ContentNode {
 		mesh.setMesh(tri);
 	}
 
+	public void lutUpdated(int[] r, int[] g, int[] b, int[] a) {
+		// TODO
+	}
+
 	public void channelsUpdated(boolean[] channels) {
 		if(c.getImage() == null) {
 			IJ.error("Mesh was not calculated of a grayscale " +
@@ -117,6 +121,14 @@ public class MeshGroup extends ContentNode {
 
 	public void transparencyUpdated(float transparency) {
 		mesh.setTransparency(transparency);
+	}
+
+	public void restoreDisplayedData(String path, String name) {
+		mesh.restoreDisplayedData(path, name);
+	}
+
+	public void swapDisplayedData(String path, String name) {
+		mesh.swapDisplayedData(path, name);
 	}
 }
 

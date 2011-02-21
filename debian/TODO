@@ -1,12 +1,27 @@
+Sign the packages
+
+Should there be a dependency on python-2.5-minimal?  Yes - it's
+  required to build fiji-jython, where if /usr/lib/python2.5 doesn't
+  exist, it downloads an archive to include in the jar.  However,
+  python2.5 has been removed from Ubuntu, so I automatic
+  build-dependency resolution on Lucide won't work...
+
 Could we use the packaged commons-math?
   http://packages.debian.org/squeeze/libcommons-math-java
   http://packages.ubuntu.com/lucid/libcommons-math-java
 
 jna.jar is packaged in libjna-java - should use that
 
+The man page for fiji should be in fiji-base, not fiji.
+
 Need all the fiji-*.copyright files - needs more detail than in
    LICENSES, with the source of the information and a link
    to the full license in /usr/share/common-licenses/ where possible.
+
+Problematic packages for copyright in that they have many authors
+include:
+   - fiji-examples
+   - fiji-plugins
 
 Allow a per-user plugins directory as well as the system-wide one.
 
@@ -21,12 +36,8 @@ debian/update-debian.py has a lot of hard-coded data, which should be
    at all.)  In general, that's now very hacky - especially the
    cleaning steps and rewriting of the Fakefile.)
 
-AutoComplete and RSyntaxTextArea can usefully be non-Fiji jars,
+bio-formats, AutoComplete and RSyntaxTextArea can usefully be non-Fiji jars,
    i.e. just a jar in /usr/share/java/
-
-The menu icon seems to have stopped working at some point
-
-The upload-to-pacific.py script should use an SSH control master
 
 Need to document and enforce the right submodules being present.  At
    the moment I think the required minimum is:
@@ -39,6 +50,7 @@ Need to document and enforce the right submodules being present.  At
        bio-formats
        commons-math
        ij-plugins
+       jython
        imglib
        live-helper
        mpicbg

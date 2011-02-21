@@ -5,14 +5,14 @@ import java.util.Date;
 
 import javax.vecmath.Point3f;
 
-import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.interpolation.Interpolator;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import mpicbg.models.AffineModel3D;
+import mpicbg.imglib.util.Util;
+import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.NoninvertibleModelException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.registration.ViewDataBeads;
@@ -114,7 +114,7 @@ public class MappingFusionSequentialDifferentOutput extends SPIMImageFusion
 			final int h = imageSize[ 1 ];
 			final int d = imageSize[ 2 ];
 			
-			final AffineModel3D model = view.getTile().getModel();
+			final AbstractAffineModel3D<?> model = (AbstractAffineModel3D<?>)view.getTile().getModel();
 
 			// temporary float array
         	final float[] tmp = new float[ 3 ];
@@ -122,12 +122,9 @@ public class MappingFusionSequentialDifferentOutput extends SPIMImageFusion
         	
     		final CombinedPixelWeightener<?>[] combW = new CombinedPixelWeightener<?>[combinedWeightenerFactories.size()];
     		for (int i = 0; i < combW.length; i++)
-    		{
-    			System.out.println( "init " + combinedWeightenerFactories.get(i).getDescriptiveName() );
     			combW[i] = combinedWeightenerFactories.get(i).createInstance( views );
-    		}
 
-			final float[][] loc = new float[ numViews ][3];
+			final float[][] loc = new float[ numViews ][ 3 ];
 			final boolean[] use = new boolean[ numViews ];
 			
 			for ( int v = 0; v < numViews; ++v )
@@ -159,9 +156,9 @@ public class MappingFusionSequentialDifferentOutput extends SPIMImageFusion
 	
 					mpicbg.spim.mpicbg.Java3d.applyInverseInPlace( model, tmpCoordinates, tmp );
 						
-					final int locX = MathLib.round( tmpCoordinates.x );
-					final int locY = MathLib.round( tmpCoordinates.y );
-					final int locZ = MathLib.round( tmpCoordinates.z );
+					final int locX = Util.round( tmpCoordinates.x );
+					final int locY = Util.round( tmpCoordinates.y );
+					final int locZ = Util.round( tmpCoordinates.z );
 					
 					// do we hit the source image?
 					if (locX >= 0 && locY >= 0 && locZ >= 0 && 

@@ -33,17 +33,28 @@ public class BSH_Interpreter extends AbstractInterpreter {
 		super.window.setTitle("BeanShell Interpreter");
 		super.run(arg);
 		interp = new Interpreter();
-		print("Starting BeanShell...");
+		println("Starting BeanShell...");
 		if (out != null) {
 			PrintStream out = new PrintStream(this.out);
 			interp.setOut(out);
 			interp.setErr(out);
 		}
-		println(" Ready -- have fun.\n>>>");
+		importAll();
+		println("Ready -- have fun.\n>>>");
 	}
 
 	protected Object eval(final String text) throws Throwable {
 		return interp.eval(text);
+	}
+
+	protected String getImportStatement(String packageName, Iterable<String> classNames) {
+		StringBuffer sb = new StringBuffer();
+		if (!"".equals(packageName))
+			packageName += ".";
+		for (String className : classNames)
+			sb.append("import ").append(packageName)
+				.append(className).append(";\n");
+		return sb.toString();
 	}
 
 	protected String getLineCommentMark() {

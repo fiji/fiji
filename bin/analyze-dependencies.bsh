@@ -7,19 +7,60 @@ import fiji.updater.util.DependencyAnalyzer;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 if (bsh.args.length == 0) {
-	System.err.println(
-		"Usage: analyze-dependencies <file.jar> [<file2.jar> ...]");
+	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
+		"<file.jar>...");
 	System.exit(1);
 }
 
+String editClasspath(String contents, String target, String match, String replacement) {
+	String before = "([^\n]*\\\\\n)*([^\n]*:)*";
+	String after = "[:\n]";
+	if (match.equals("")) {
+		before = "()()";
+		after = ".";
+		if (!replacement.endsWith(":"))
+			replacement += ":";
+	}
+	String regex = ".*\nCLASSPATH\\(" + target + "\\)=" + before + "(" + match + ")" + after + ".*";
+	Pattern pattern = Pattern.compile(regex, Pattern.DOTALL | Pattern.MULTILINE);
+	Matcher matcher = pattern.matcher(contents);
+	if (matcher.matches()) {
+		int start = matcher.start(3);
+		int end = matcher.end(3);
+		if (replacement.equals("")) {
+			if (contents.charAt(start - 1) == ':')
+				start--;
+			else if (contents.charAt(end) == ':')
+				end++;
+		}
+		else if (contents.charAt(end) == '\n' && replacement.endsWith(":"))
+			replacement = replacement.substring(0, replacement.length() - 1);
+		return contents.substring(0, start) + replacement + contents.substring(end);
+	}
+	if (match.equals("")) {
+		int offset = contents.indexOf("\nCLASSPATH(" + target +")=");
+		if (offset < 0 && (offset = contents.indexOf("\n\n# pre-Java5 generics ;-)\n")) >= 0)
+			return contents.substring(0, offset + 1)
+				+ "CLASSPATH(" + target + ")=" + replacement.substring(0, replacement.length() - 1)
+				+ contents.substring(offset);
+	}
+	print("Warning: " + match + " not found in " + target + "'s CLASSPATH");
+	return contents;
+}
+
 DependencyAnalyzer da = new DependencyAnalyzer();
-if (bsh.args.length > 0 && bsh.args[0].equals("--check-fakefile")) {
+if (bsh.args.length > 0 && (bsh.args[0].equals("--check-fakefile") || bsh.args[0].equals("--fix-fakefile"))) {
+	fix = bsh.args[0].equals("--fix-fakefile");
 	fijiDir = System.getProperty("fiji.dir");
 	if (!fijiDir.endsWith("/"))
 		fijiDir += "/";
@@ -33,9 +74,14 @@ if (bsh.args.length > 0 && bsh.args[0].equals("--check-fakefile")) {
 		for (i = 1; i < bsh.args.length; i++)
 			targets.add(bsh.args[i]);
 	else
-		for (String target : parser.getAllRules().keySet())
-			if (parser.getRule(target).getClass().getName().endsWith("CompileJar"))
+		for (String target : parser.getAllRules().keySet()) {
+			String className = parser.getRule(target).getClass().getName();
+			if (className.endsWith("CompileJar") || className.endsWith("CompileClass") || className.endsWith("SubFake"))
 				targets.add(target);
+		}
+
+	if (fix)
+		contents = new String(fake.readFile(fijiDir + "Fakefile"));
 
 	for (String target : targets) {
 		rule = parser.getRule(target);
@@ -65,23 +111,36 @@ if (bsh.args.length > 0 && bsh.args[0].equals("--check-fakefile")) {
 			if (dependency.endsWith("/tools.jar") &&
 					target.equals("plugins/Script_Editor.jar"))
 				continue;
-			if (!analyzed.contains(dependency))
+			if (!analyzed.contains(dependency)) {
 				message += " " + dependency;
+				if (fix)
+					contents = editClasspath(contents, target, dependency, "");
+			}
 		}
 		if (!message.equals(""))
 			print("Target " + target + " has extra elements in the "
-				+ "classpath: " + message);
+				+ "classpath:" + message);
 
 		message = "";
 		for (String dependency : analyzed)
-			if (!dependency.equals("jars/ij.jar") &&
-					!inFakefile.contains(dependency) &&
-					parser.getRule(dependency) != null)
+			if (!inFakefile.contains(dependency) &&
+					parser.getRule(dependency) != null) {
 				message += " " + dependency;
+				if (fix)
+					contents = editClasspath(contents, target, "", dependency);
+			}
+
 		if (!message.equals(""))
 			print("Target " + target + " misses elements in the "
 				+ "classpath: " + message);
 	}
+
+	if (fix) {
+		FileOutputStream out = new FileOutputStream(fijiDir + "Fakefile");
+		out.write(contents.getBytes());
+		out.close();
+	}
+
 	return;
 }
 

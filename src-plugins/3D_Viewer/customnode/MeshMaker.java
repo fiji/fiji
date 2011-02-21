@@ -9,36 +9,28 @@
 package customnode;
 
 import ij.IJ;
-import ij.WindowManager;
-import ij.plugin.PlugIn;
-import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
-import javax.media.j3d.Transform3D;
+import javax.vecmath.Vector3f;
 import java.util.List;
 import java.util.ArrayList;
-import java.awt.Color;
-import ij3d.Image3DUniverse;
-import ij3d.ImageWindow3D;
+import java.util.HashMap;
 import ij3d.Pipe;
 
 public class MeshMaker {
 
 	public static void main(String[] args) {
-		ij.ImageJ ij = new ij.ImageJ();
+		new ij.ImageJ();
 		IJ.runPlugIn("ij3d.Mesh_Maker", "");
-		Image3DUniverse univ =  (Image3DUniverse) ((ImageWindow3D)WindowManager
-					.getCurrentWindow()).getUniverse();
-		System.out.println("bla");
 	}
 
-	static public List createSphere(final double x, final double y, final double z, final double r) {
+	static public List<Point3f> createSphere(final double x, final double y, final double z, final double r) {
 		return createSphere(x, y, z, r, 12, 12);
 	}
 
-	static public List createSphere(final double x, final double y, final double z,
+	static public List<Point3f> createSphere(final double x, final double y, final double z,
 			                final double r, final int meridians, final int parallels) {
 		final double[][][] globe = generateGlobe(meridians, parallels);
-		// Scale by radius 'r', and traslate to x,y,z
+		// Scale by radius 'r', and translate to x,y,z
 		for (int j=0; j<globe.length; j++) {
 			for (int k=0; k<globe[0].length; k++) {
 				globe[j][k][0] = globe[j][k][0] * r + x;
@@ -47,7 +39,7 @@ public class MeshMaker {
 			}
 		}
 		// create triangular faces and add them to the list
-		final ArrayList list = new ArrayList();
+		final ArrayList<Point3f> list = new ArrayList<Point3f>();
 		for (int j=0; j<globe.length-1; j++) { // the parallels
 			for (int k=0; k<globe[0].length -1; k++) { // meridian points
 				if(j != globe.length-2) {
@@ -73,7 +65,7 @@ public class MeshMaker {
 		if (parallels < 3) parallels = 3;
 		/* to do: 2 loops:
 		-first loop makes horizontal circle using meridian points.
-		-second loop scales it appropiately and makes parallels.
+		-second loop scales it appropriately and makes parallels.
 		Both loops are common for all balls and so should be done just once.
 		Then this globe can be properly translocated and resized for each ball.
 		*/
@@ -93,13 +85,12 @@ public class MeshMaker {
 
 		// Build parallels from circle
 		angle_increase = Math.PI / parallels;   // = 180 / parallels in radians
-		final double angle90 = Math.toRadians(90);
 		final double[][][] xyz = new double[parallels+1][xy_points.length][3];
 		for (int p=1; p<xyz.length-1; p++) {
 			double radius = Math.sin(angle_increase*p);
 			double Z = Math.cos(angle_increase*p);
 			for (int mm=0; mm<xyz[0].length-1; mm++) {
-				//scaling circle to apropiate radius, and positioning the Z
+				//scaling circle to appropriate radius, and positioning the Z
 				xyz[p][mm][0] = xy_points[mm][0] * radius;
 				xyz[p][mm][1] = xy_points[mm][1] * radius;
 				xyz[p][mm][2] = Z;
@@ -122,12 +113,12 @@ public class MeshMaker {
 		return xyz;
 	}
 
-	static public List createTube(final double[] x, final double[] y, final double[] z,
+	static public List<Point3f> createTube(final double[] x, final double[] y, final double[] z,
 			              final double[] r, final int parallels, final boolean do_resample) {
 		return Pipe.generateTriangles(Pipe.makeTube(x, y, z, r, 1, parallels, do_resample, null, null, null), 1, null, null);
 	}
 
-	static public List createDisc(double x, double y, double z,
+	static public List<Point3f> createDisc(double x, double y, double z,
 				      double nx, double ny, double nz,
 				      double radius,
 				      int edgePoints ) {
@@ -168,7 +159,7 @@ public class MeshMaker {
 			circleY[i] = y + radius * c * ay + radius * s * by;
 			circleZ[i] = z + radius * c * az + radius * s * bz;
 		}
-		final ArrayList list = new ArrayList();
+		final ArrayList<Point3f> list = new ArrayList<Point3f>();
 		Point3f centre = new Point3f( (float)x, (float)y, (float)z );
 		for( int i = 0; i < edgePoints; ++i ) {
 			Point3f t2 = new Point3f( (float)circleX[i], (float)circleY[i], (float)circleZ[i] );
@@ -182,5 +173,103 @@ public class MeshMaker {
 		}
 		return list;
 	}
-}
 
+	static final private float phi = (1 + (float)Math.sqrt(5)) / 2;
+	static final private float[][] icosahedron = { { phi, 1, 0 },
+					{ -phi, 1, 0 },
+					{ phi, -1, 0 },
+					{ -phi, -1, 0 },
+					{ 1, 0, phi },
+					{ 1, 0, -phi },
+					{-1, 0, phi },
+					{-1, 0, -phi },
+					{0, phi, 1 },
+					{0, -phi, 1},
+					{0, phi, -1 },
+					{0, -phi, -1} };
+	static final private int[][] icosfaces =    { { 0, 8, 4 },
+					{ 0, 5, 10 },
+					{ 2, 4, 9 },
+					{ 2, 11, 5 },
+					{ 1, 6, 8 },
+					{ 1, 10, 7 },
+					{ 3, 9, 6 },
+					{ 3, 7, 11 },
+					{ 0, 10, 8 },
+					{ 1, 8, 10 },
+					{ 2, 9, 11 },
+					{ 3, 11, 9 },
+					{ 4, 2, 0 },
+					{ 5, 0, 2 },
+					{ 6, 1, 3 },
+					{ 7, 3, 1 },
+					{ 8, 6, 4 },
+					{ 9, 4, 6 },
+					{ 10, 5, 7 },
+					{ 11, 7, 5 } };
+
+	/** Returns a "3D Viewer"-ready list mesh, centered at 0,0,0 and with radius as the radius of the enclosing sphere. */
+	static public final List<Point3f> createIcosahedron(int subdivisions, final float radius) {
+		List<Point3f> ps = new ArrayList<Point3f>();
+		for (int i=0; i<icosfaces.length; i++) {
+			for (int k=0; k<3; k++) {
+				ps.add(new Point3f(icosahedron[icosfaces[i][k]]));
+			}
+		}
+		while (subdivisions-- > 0) {
+			final List<Point3f> sub = new ArrayList<Point3f>();
+			// Take three consecutive points, which define a face, and create 4 faces out of them.
+			for (int i=0; i<ps.size(); i+=3) {
+				Point3f p0 = ps.get(i);
+				Point3f p1 = ps.get(i+1);
+				Point3f p2 = ps.get(i+2);
+
+				Point3f p01 = new Point3f((p0.x + p1.x)/2, (p0.y + p1.y)/2, (p0.z + p1.z)/2);
+				Point3f p02 = new Point3f((p0.x + p2.x)/2, (p0.y + p2.y)/2, (p0.z + p2.z)/2);
+				Point3f p12 = new Point3f((p1.x + p2.x)/2, (p1.y + p2.y)/2, (p1.z + p2.z)/2);
+				// lower left:
+				sub.add(p0);
+				sub.add(p01);
+				sub.add(p02);
+				// upper:
+				sub.add(new Point3f(p01)); // as copies
+				sub.add(p1);
+				sub.add(p12);
+				// lower right:
+				sub.add(new Point3f(p12));
+				sub.add(p2);
+				sub.add(new Point3f(p02));
+				// center:
+				sub.add(new Point3f(p01));
+				sub.add(new Point3f(p12));
+				sub.add(new Point3f(p02));
+			}
+			ps = sub;
+		}
+
+		// Project all vertices to the surface of a sphere of radius 1
+		final Vector3f v = new Vector3f();
+		for (final Point3f p : ps) {
+			v.set(p);
+			v.normalize();
+			v.scale(radius);
+			p.set(v);
+		}
+
+		return ps;
+	}
+
+	static public final List<Point3f> copyTranslated(final List<Point3f> ps, final float dx, final float dy, final float dz) {
+		final HashMap<Point3f,Point3f> m = new HashMap<Point3f,Point3f>();
+		final ArrayList<Point3f> verts = new ArrayList<Point3f>();
+		for (final Point3f p : ps) {
+			Point3f p2 = m.get(p);
+			if (null == p2) {
+				p2 = new Point3f(p.x + dx, p.y + dy, p.z + dz);
+				m.put(p, p2);
+			}
+			verts.add(p2);
+		}
+		return verts;
+	}
+}

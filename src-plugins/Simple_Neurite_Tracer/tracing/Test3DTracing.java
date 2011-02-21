@@ -15,7 +15,6 @@ import org.junit.Test;
 import org.junit.After;
 import org.junit.Before;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class Test3DTracing {
@@ -41,12 +40,8 @@ public class Test3DTracing {
 		double pixelWidth = 1;
 		double pixelHeight = 1;
 		double pixelDepth = 1;
-		double minimumSeparation = 1;
 		Calibration calibration = image.getCalibration();
 		if( calibration != null ) {
-			minimumSeparation = Math.min(Math.abs(calibration.pixelWidth),
-						     Math.min(Math.abs(calibration.pixelHeight),
-							      Math.abs(calibration.pixelDepth)));
 			pixelWidth = calibration.pixelWidth;
 			pixelHeight = calibration.pixelHeight;
 			pixelDepth = calibration.pixelDepth;

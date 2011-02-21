@@ -44,9 +44,16 @@ public class ClassCompletionProvider extends CompletionProviderBase
 	 */
 	private CompletionProvider docCommentCompletionProvider;
 
-	Package topLevel;
-	final public ClassNames names;
-	String language;
+	protected String language;
+	protected ClassNames names;
+	protected Thread classNamesThread;
+
+	public ClassNames getClassNames() {
+		synchronized (classNamesThread) {
+			return names;
+		}
+	}
+
 	/**
 	 * Constructor.
 	 *
@@ -56,9 +63,13 @@ public class ClassCompletionProvider extends CompletionProviderBase
 	public ClassCompletionProvider(CompletionProvider provider, RSyntaxTextArea textArea, String language) {
 		setDefaultProvider(provider);
 		this.textArea = textArea;
-		names = new ClassNames(defaultProvider);
 		this.language = language;
-		topLevel = names.getRoot();
+		classNamesThread = new Thread() {
+			public synchronized void run() {
+				names = new ClassNames(defaultProvider);
+			}
+		};
+		classNamesThread.start();
 	}
 
 
@@ -134,7 +145,7 @@ public class ClassCompletionProvider extends CompletionProviderBase
 	public CompletionProvider getDefaultProvider() {
 		defaultProvider.clear();
 		KeywordsCompletion.completeKeywords(defaultProvider, language, defaultProvider.getEnteredText(textArea));
-		names.setClassCompletions(topLevel, textArea, language);
+		names.setClassCompletions(textArea, language);
 		return defaultProvider;
 	}
 

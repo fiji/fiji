@@ -5,7 +5,17 @@ die () {
 	exit 1
 }
 
-../fiji --ant -Dpython.lib=/usr/lib/python2.5 -f jython/build.xml jar-complete copy-lib >&2 ||
+PYTHON_LIB=/usr/lib/python2.5
+if test ! -d "$PYTHON_LIB"
+then
+	PYTHON_LIB="$(pwd)/python-d5876b1"
+	if test ! -d "$PYTHON_LIB"
+	then
+		curl "http://pacific.mpi-cbg.de/cgi-bin/gitweb.cgi?p=python/.git;a=snapshot;h=d5876b11b8c086b51b73ec5f32a309b425be906a;sf=tgz" | tar xzvf -
+	fi
+fi
+
+../../fiji --ant -Dpython.lib="$PYTHON_LIB" -f jython/build.xml jar-complete copy-lib >&2 ||
 die "Could not run ant"
 
 cd jython/dist &&

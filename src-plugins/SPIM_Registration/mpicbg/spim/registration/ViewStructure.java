@@ -326,7 +326,7 @@ public class ViewStructure
 		for (int c = 0; c < conf.file[ timePointIndex ].length; c++)
 			for (int i = 0; i < conf.file[ timePointIndex ][ c ].length; i++)
 			{
-				final ViewDataBeads view = new ViewDataBeads( idNr++, model.clone(), conf.file[ timePointIndex ][ c ][ i ].getPath(), zStretching );
+				final ViewDataBeads view = new ViewDataBeads( idNr++, model.copy(), conf.file[ timePointIndex ][ c ][ i ].getPath(), zStretching );
 					
 				view.setAcqusitionAngle( conf.angles[ i ] );
 				view.setChannel( conf.channels[ c ] );
@@ -380,7 +380,7 @@ public class ViewStructure
 		for (int c = 0; c < files.length; c++)
 			for (int i = 0; i < files[c].length; i++)
 			{
-				ViewDataBeads view = new ViewDataBeads( idNr, model.clone(), files[ c ][ i ].getPath(), conf.zStretching );
+				ViewDataBeads view = new ViewDataBeads( idNr, model.copy(), files[ c ][ i ].getPath(), conf.zStretching );
 				view.setChannel( conf.channels[ c ] );
 				view.setChannelIndex( c );
 				views.add( view );

@@ -2,25 +2,19 @@
 
 package tracing;
 
-import java.awt.*;
 import java.util.Hashtable;
 import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.PriorityQueue;
 import java.io.*;
-import java.util.Enumeration;
 
 import amira.AmiraParameters;
 
 import ij.*;
 import ij.io.*;
-import ij.gui.*;
 import ij.plugin.PlugIn;
 import ij.process.ByteProcessor;
-
-import vib.transforms.OrderedTransformations;
 
 import util.FileAndChannel;
 import landmarks.Bookstein_From_Landmarks;
@@ -139,8 +133,6 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 	PathWithLength findPath( NewGraphNode start, int endMaterial ) {
 
 		// System.out.println("Starting path finding:");
-
-		int startMaterial = label_data[start.z][start.y*width+start.x];
 
 		// First reset all the search parameters:
 		{

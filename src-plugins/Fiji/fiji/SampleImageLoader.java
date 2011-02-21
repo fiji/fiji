@@ -7,6 +7,7 @@ import ij.plugin.PlugIn;
 import ij.plugin.URLOpener;
 
 import java.awt.Menu;
+import java.awt.MenuItem;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -110,10 +111,12 @@ public class SampleImageLoader implements PlugIn {
 		InstallHandler handler = new InstallHandler(commands);
 		handleSamples(handler);
 
-		if (!commands.containsKey(menuItemLabel))
-			User_Plugins.installPlugin(menuPath, menuItemLabel,
-				thisPlugin + "(\"cache\")")
-			.setEnabled(handler.hasUncached);
+		if (!commands.containsKey(menuItemLabel)) {
+			MenuItem item = User_Plugins.installPlugin(menuPath, menuItemLabel,
+				thisPlugin + "(\"cache\")");
+			if (item != null)
+				item.setEnabled(handler.hasUncached);
+		}
 	}
 
 	public static void fetchSamples() {

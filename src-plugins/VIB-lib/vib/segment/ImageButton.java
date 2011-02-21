@@ -422,6 +422,10 @@ public class ImageButton extends Canvas implements MouseListener {
 		this.command = command;
 	}
 
+	public String getActionCommand() {
+		return command;
+	}
+
     public void addActionListener(ActionListener l) {
 	actionListeners.add(l);
     }

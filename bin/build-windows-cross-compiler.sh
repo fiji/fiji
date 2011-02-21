@@ -8,6 +8,13 @@ SYSROOT="$(pwd)/win-sysroot"
 test -d "$SYSROOT" || mkdir -p "$SYSROOT"
 PARALLEL=-j5
 
+makeinfo --help > /dev/null 2>&1
+if test $? != 0
+then
+	echo "You need to install makeinfo (texinfo package)." >&2
+	exit 1
+fi
+
 if test ! -f "$SYSROOT"/bin/$TARGET-objdump
 then
 	(if test ! -d binutils

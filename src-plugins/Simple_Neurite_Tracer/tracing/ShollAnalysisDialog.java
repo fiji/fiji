@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010, 2011 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Simple Neurite Tracer".
@@ -29,7 +29,6 @@ package tracing;
 
 import ij.*;
 import ij.io.*;
-import ij.gui.YesNoCancelDialog;
 
 import java.awt.Dialog;
 import java.awt.Insets;
@@ -55,13 +54,10 @@ import java.awt.image.IndexColorModel;
 
 import java.io.*;
 
-import java.util.HashSet;import java.util.ArrayList;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Iterator;
 
-import features.SigmaPalette;
-import ij.gui.GenericDialog;
 import ij.gui.GUI;
 import ij.measure.Calibration;
 import ij.process.ShortProcessor;
@@ -69,17 +65,12 @@ import ij.process.ImageProcessor;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.Analyzer;
 
-import java.text.DecimalFormat;
-
 import util.FindConnectedRegions;
-
-import org.jfree.chart.plot.PlotOrientation;
 
 import org.jfree.chart.JFreeChart;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.axis.NumberAxis;
@@ -101,6 +92,7 @@ import org.apache.batik.svggen.SVGGraphics2D;
 
 import org.apache.commons.math.stat.regression.SimpleRegression;
 
+@SuppressWarnings("serial")
 public class ShollAnalysisDialog extends Dialog implements WindowListener, ActionListener, TextListener, ItemListener {
 
 	protected double x_start, y_start, z_start;
@@ -885,11 +877,10 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		}
 	}
 
-	public static class ShollPoint implements Comparable {
+	public static class ShollPoint implements Comparable<ShollPoint> {
 		protected boolean nearer;
 		protected double distanceSquared;
-		public int compareTo(Object o) {
-			ShollPoint other = (ShollPoint)o;
+		public int compareTo(ShollPoint other) {
 			return Double.compare(this.distanceSquared,other.distanceSquared);
 		}
 		ShollPoint(double distanceSquared,boolean nearer) {

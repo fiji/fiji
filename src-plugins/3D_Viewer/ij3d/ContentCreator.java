@@ -3,6 +3,7 @@ package ij3d;
 import ij.ImageStack;
 import ij.ImagePlus;
 import ij.IJ;
+import ij.io.FileInfo;
 import ij.process.ColorProcessor;
 import ij.process.ImageConverter;
 import ij.process.StackConverter;
@@ -19,12 +20,14 @@ import javax.vecmath.Color3f;
 
 public class ContentCreator {
 
+	private static final boolean SWAP_TIMELAPSE_DATA = false;
+
 	public static Content createContent(
 				String name,
 				ImagePlus image,
 				int type) {
 		int resf = Content.getDefaultResamplingFactor(image, type);
-		return createContent(name, image, type, resf, -1);
+		return createContent(name, image, type, resf, 0);
 	}
 
 	public static Content createContent(
@@ -32,7 +35,7 @@ public class ContentCreator {
 				ImagePlus image,
 				int type,
 				int resf) {
-		return createContent(name, image, type, resf, -1);
+		return createContent(name, image, type, resf, 0);
 	}
 
 	public static Content createContent(
@@ -85,6 +88,8 @@ public class ContentCreator {
 
 		TreeMap<Integer, ContentInstant> instants =
 			new TreeMap<Integer, ContentInstant>();
+		boolean timelapse = images.length > 1;
+		boolean shouldSwap = SWAP_TIMELAPSE_DATA && timelapse;
 		for(ImagePlus imp : images) {
 			ContentInstant content = new ContentInstant(name);
 			content.image = imp;
@@ -92,17 +97,22 @@ public class ContentCreator {
 			content.threshold = thresh;
 			content.channels = channels;
 			content.resamplingF = resf;
+			content.timepoint = tp;
 			content.showCoordinateSystem(UniverseSettings.
 					showLocalCoordinateSystemsByDefault);
 			content.displayAs(type);
 			content.compile();
+			if(shouldSwap) {
+				content.swapOriginalData();
+				content.swapDisplayedData();
+			}
 			instants.put(tp++, content);
 		}
-		return new Content(name, instants);
+		return new Content(name, instants, shouldSwap);
 	}
 
 	public static Content createContent(CustomMesh mesh, String name) {
-		return createContent(mesh, name, -1);
+		return createContent(mesh, name, 0);
 	}
 
 	public static Content createContent(CustomMesh mesh, String name, int tp) {
@@ -118,7 +128,7 @@ public class ContentCreator {
 	}
 
 	public static Content createContent(CustomMultiMesh node, String name) {
-		return createContent(node, name, -1);
+		return createContent(node, name, 0);
 	}
 
 	public static Content createContent(CustomMultiMesh node, String name, int tp) {
@@ -134,7 +144,7 @@ public class ContentCreator {
 	}
 
 	/**
-	 * Get an array of images of the specified image; if the image is a 
+	 * Get an array of images of the specified image; if the image is a
 	 * hyperstack, it is splitted into several individual images, otherwise,
 	 * it the returned array contains the given image only.
 	 * @param imp
@@ -156,8 +166,10 @@ public class ContentCreator {
 
 		ImageStack oldStack = imp.getStack();
 		String oldTitle = imp.getTitle();
+		FileInfo fi = imp.getFileInfo();
 		for(int i = 0; i < nFrames; i++) {
 			ImageStack newStack = new ImageStack(w, h);
+			newStack.setColorModel(oldStack.getColorModel());
 			for(int j = 0; j < nSlices; j++) {
 				int index = imp.getStackIndex(1, j+1, i+1);
 				Object pixels;
@@ -175,6 +187,7 @@ public class ContentCreator {
 			ret[i] = new ImagePlus(oldTitle
 				+ " (frame " + i + ")", newStack);
 			ret[i].setCalibration(imp.getCalibration().copy());
+			ret[i].setFileInfo((FileInfo)fi.clone());
 		}
 		if (nChannels > 1)
 			imp.setPositionWithoutUpdate(channel, slice, frame);
@@ -217,14 +230,6 @@ public class ContentCreator {
 			return;
 		int s = image.getStackSize();
 		switch(imaget) {
-			case ImagePlus.COLOR_256:
-				if(s == 1)
-					new ImageConverter(image).
-						convertToRGB();
-				else
-					new StackConverter(image).
-						convertToRGB();
-				break;
 			case ImagePlus.GRAY16:
 			case ImagePlus.GRAY32:
 				if(s == 1)

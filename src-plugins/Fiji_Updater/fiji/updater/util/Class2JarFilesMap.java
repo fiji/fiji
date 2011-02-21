@@ -78,7 +78,7 @@ public class Class2JarFilesMap extends HashMap<String, ArrayList<String>> {
 		if (ignore(className, jar))
 			return;
 		if (containsKey(className)) {
-			List jarList = get(className);
+			List<String> jarList = get(className);
 			jarList.add(jar);
 		} else {
 			// Make the ArrayList initially of capacity 1, since it's

@@ -342,7 +342,7 @@ public class SaveSession {
 		String trans = toString(t);
 
 		out.println("BeginContentInstant");
-		out.println("name = "         + c.name);
+		out.println("name = "         + c.getName());
 		if(col != null)
 			out.println("color = "        + col);
 		out.println("timepoint = "    + c.timepoint);
@@ -582,7 +582,7 @@ System.out.println("loading " + sp[0]);
 		String ret = "";
 		for(CustomMesh cm : meshes) {
 			String name = cm.getName();
-			if(name == null) name = c.name;
+			if(name == null) name = c.getName();
 			name.replaceAll(" ", "_").
 				replaceAll("#", "--");
 			ret += "%%%" + cm.getFile() + "%%%" + name;
@@ -592,11 +592,11 @@ System.out.println("loading " + sp[0]);
 
 	private static final String getOrthoString(ContentNode c) {
 		OrthoGroup og = (OrthoGroup)c;
-		int xSlide = og.isVisible(AxisConstants.X_AXIS) ? 
+		int xSlide = og.isVisible(AxisConstants.X_AXIS) ?
 			og.getSlice(AxisConstants.X_AXIS) : -1;
-		int ySlide = og.isVisible(AxisConstants.Y_AXIS) ? 
+		int ySlide = og.isVisible(AxisConstants.Y_AXIS) ?
 			og.getSlice(AxisConstants.Y_AXIS) : -1;
-		int zSlide = og.isVisible(AxisConstants.Z_AXIS) ? 
+		int zSlide = og.isVisible(AxisConstants.Z_AXIS) ?
 			og.getSlice(AxisConstants.Z_AXIS) : -1;
 		return xSlide + "%%%" + ySlide + "%%%" + zSlide;
 	}

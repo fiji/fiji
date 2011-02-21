@@ -117,21 +117,21 @@ public class Stitching_2D implements PlugIn
 		
 		// create generic dialog
 		GenericDialog gd = new GenericDialog("Stitching of 2D Images");
-		gd.addChoice("First image (reference)", nostackList, nostackList[0]);
+		gd.addChoice("First_image (reference)", nostackList, nostackList[0]);
 		gd.addChoice("Use_Channel_for_First", colorList, handleRGB1Static);
 		enableChannelChoice((Choice) gd.getChoices().get(0), (Choice) gd.getChoices().get(1), nostackIDs);
 
-		gd.addChoice("Second image (to register)", nostackList, nostackList[1]);
+		gd.addChoice("Second_image (to register)", nostackList, nostackList[1]);
 		gd.addChoice("Use_Channel_for_Second", colorList, handleRGB2Static);
 		enableChannelChoice((Choice) gd.getChoices().get(2), (Choice) gd.getChoices().get(3), nostackIDs);
 
-		gd.addCheckbox("Use windowing", windowingStatic);
-		gd.addNumericField("How many peaks should be checked", checkPeaksStatic, 0);
+		gd.addCheckbox("Use_windowing", windowingStatic);
+		gd.addNumericField("How_many_peaks should be checked", checkPeaksStatic, 0);
 		gd.addMessage("");
-		gd.addCheckbox("Create merged image (fusion)", fuseImagesStatic);
-		gd.addChoice("Fusion method", methodList, methodStatic);
-		gd.addNumericField("Fusion alpha", alphaStatic, 2);		
-		gd.addStringField("Fused image name: ", "Fused_" + nostackList[0] + "_" + nostackList[1]);
+		gd.addCheckbox("Create_merged_image (fusion)", fuseImagesStatic);
+		gd.addChoice("Fusion_method", methodList, methodStatic);
+		gd.addNumericField("Fusion_alpha", alphaStatic, 2);		
+		gd.addStringField("Fused_image name: ", "Fused_" + nostackList[0] + "_" + nostackList[1]);
 		gd.addCheckbox("compute_overlap", computeOverlapStatic );
 		gd.addNumericField("x", xOffset, xOffsetStatic);
 		gd.addNumericField("y", yOffset, yOffsetStatic);

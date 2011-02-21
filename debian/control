@@ -2,7 +2,7 @@ Source: fiji
 Section: graphics
 Priority: extra
 Maintainer: Mark Longair <mhl@pobox.com>
-Build-Depends: debhelper (>= 5), gcc, lsb-release, dpkg-dev, openjdk-6-jdk, libjama-java (>= 1.0.2), ant, ant-optional, bsh, libbatik-java, libxml-commons-external-java, junit4 (>= 4.3), weka, libitext1-java, jython, libjzlib-java, clojure, rhino, libxml-commons-external-java, libpg-java, libjsch-java, libjcommon-java, libjfreechart-java, libjava3d-java, libvecmath-java, libjava3d-jni, build-essential, python2.6-minimal, python-lxml
+Build-Depends: debhelper (>= 5), gcc, lsb-release, dpkg-dev, openjdk-6-jdk, libjama-java (>= 1.0.2), ant, ant-optional, bsh, libbatik-java, libxml-commons-external-java, junit4 (>= 4.3), weka, libitext1-java, libjzlib-java, clojure, rhino, libxml-commons-external-java, libpg-java, libjsch-java, libjcommon-java, libjfreechart-java, libjava3d-java, libvecmath-java, libjava3d-jni, build-essential, python2.6-minimal, python-lxml, zip
 Standards-Version: 3.7.2
 
 Package: fiji-tcljava
@@ -21,7 +21,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: libjava3d-java, libbatik-java, libxml-commons-external-java, fiji-vib (>= 20100820121053), fiji-imagej (>= 20100822145051), fiji-3d-viewer (>= 20100818134817), fiji-plugins (>= 20100723130401), libjfreechart-java, junit, libvecmath-java
+Depends: libjava3d-java, libbatik-java, libxml-commons-external-java, fiji-vib (>= 20110203214538), fiji-imagej (>= 20110201204601), fiji-3d-viewer (>= 20110203214538), fiji-plugins (>= 20100723130401), libjfreechart-java, junit, libvecmath-java
 Description: Semi-automatic tracing, analysis and visualization of neurons, f [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -55,6 +55,12 @@ Description: components from Fiji, including: Command Launcher Ruby, Fiji Cub [.
  plugins/Examples/downsample_.js: Downsampling heeding the sampling
  theory.
  .
+ plugins/Examples/Extended_Profile_Plot.bsh: A simple script to make
+ profiles from non-linear selections. To this end, the selection's
+ outline is turned into a polyline (ovals start at the right-most point
+ and continue in clockwise direction). Then, the profile plot is
+ calculated as with linear selections.
+ .
  plugins/Examples/Fiji_Logo_3D.js: A demonstration how to access the API
  of the 3D Viewer from Javascript.
  .
@@ -64,6 +70,9 @@ Description: components from Fiji, including: Command Launcher Ruby, Fiji Cub [.
  plugins/Examples/Find_Dimension_of_Raw_Image.py: A helper to determine
  the width and height of a raw image (i.e. just the pixel values in one
  file, without any metadata).
+ .
+ plugins/Examples/Add_Popup_Split_Channels.bsh: A demonstration how to
+ add entries to the popup menu in images.
  .
  plugins/Examples/Plasma_Cloud.rb: A demonstration how to use JRuby.
  .
@@ -77,8 +86,8 @@ Architecture: any
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-imagej (>= 20100822145051), libjsch-java
-Description: components from Fiji, including: fiji, Fiji, fake, fiji-logo-32x [...]
+Depends: fiji-imagej (>= 20110201204601), libjsch-java
+Description: components from Fiji, including: Fiji, fake, fiji-logo-32x32, he [...]
  The descriptions below are extracted from the Fiji Updater database:
  .
  jars/fake.jar: The Fiji Build System
@@ -88,6 +97,10 @@ Description: components from Fiji, including: fiji, Fiji, fake, fiji-logo-32x [.
  description has been made. User has to request an account at Pacific's
  Bugzilla Account Creation page in which the link would be provided by
  the Bug Submitter for the user to conveniently go to.
+ .
+ jars/fiji-lib.jar: fiji-lib a convenience library for functionality
+ needed by several Fiji components. It includes, but is not limited to,
+ an enhanced GenericDialog and an AbstractTool class.
  .
  plugins/Fiji_Updater.jar: The Fiji Updater takes care that the plugins
  and other core files of every Fiji installation are kept up-to-date.
@@ -120,7 +133,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: libxml-commons-external-java, junit, libbatik-java, fiji-imagej (>= 20100822145051)
+Depends: libxml-commons-external-java, junit, libbatik-java, fiji-imagej (>= 20110201204601)
 Description: loci_tools.jar is a bundle containing the functionality of Bio-F [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -139,7 +152,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-imagej (>= 20100822145051)
+Depends: fiji-imagej (>= 20110201204601)
 Description: bUnwarpJ allows simultaneous and consistent registration of two [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -159,7 +172,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-imagej (>= 20100822145051)
+Depends: fiji-imagej (>= 20110201204601)
 Description: This plugin displays histograms in three different channels (Red [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -183,7 +196,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-mpicbg (>= 20100812201753), libpg-java, libjava3d-java, fiji-imglib (>= 20100629163441), fiji-tracer (>= 20100818134817), fiji-bunwarpj (>= 20100417005423), fiji-jai (>= 20080801134354), fiji-vib (>= 20100820121053), fiji-edu-mines-jtk (>= 20080801134354), libjama-java, libvecmath-java, fiji-loci-tools (>= 20100814020501), fiji-3d-viewer (>= 20100818134817), fiji-plugins (>= 20100818200853), libjfreechart-java, fiji-imagej (>= 20100822145051)
+Depends: fiji-mpicbg (>= 20110130214001), fiji-bunwarpj (>= 20100417005423), libjava3d-java, fiji-imglib (>= 20110113161806), fiji-tracer (>= 20101022110032), libpg-java, libjcommon-java, fiji-jai (>= 20080801134354), fiji-vib (>= 20110203214538), fiji-edu-mines-jtk (>= 20080801134354), libjama-java, libvecmath-java, fiji-loci-tools (>= 20110208193953), fiji-3d-viewer (>= 20110203214538), fiji-plugins (>= 20110203214538), libjfreechart-java, fiji-imagej (>= 20110201204601)
 Description: TrakEM2 is a program to model from images, it is used for morpho [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -213,9 +226,76 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-mpicbg (>= 20100812201753), fiji-bunwarpj (>= 20100417005423), libjava3d-java, fiji-imglib (>= 20100629163441), fiji-vib (>= 20100820121053), fiji-weka (>= 20100609224141), fiji-trakem2 (>= 20100822185613), libjsch-java, fiji-base (>= 20100804172048), fiji-edu-mines-jtk (>= 20080801134354), libjama-java, fiji-loci-tools (>= 20100814020501), fiji-3d-viewer (>= 20100818134817), libvecmath-java, libjfreechart-java, junit, fiji-imagej (>= 20100822145051)
-Description: components from Fiji, including: ToAST, PIV analyser, RATS, Trai [...]
+Depends: fiji-mpicbg (>= 20110130214001), fiji-bunwarpj (>= 20100417005423), libjava3d-java, fiji-imglib (>= 20110113161806), fiji-vib (>= 20110203214538), fiji-weka (>= 20100609224141), fiji-trakem2 (>= 20110203030319), libjsch-java, fiji-base (>= 20110203214538), fiji-edu-mines-jtk (>= 20080801134354), fiji-imagej (>= 20110201204601), fiji-loci-tools (>= 20110208193953), fiji-3d-viewer (>= 20110203214538), libvecmath-java, libjfreechart-java, junit, fiji-scripting (>= 20110204190232), libjama-java
+Description: components from Fiji, including: PIV analyser, listManagement, P [...]
  The descriptions below are extracted from the Fiji Updater database:
+ .
+ plugins/PIV_analyser.jar: Calculates the optic flow for each pair of
+ images made with the given stack. It uses the PIV method, which is the
+ most basic technique for optic flow. This technique, mainly used in
+ acoustics or in fluids mechanics, enables the measurements of a velocity
+ field in one plane, using imaging and image analysis.
+ .
+ plugins/PointPicker_.jar: This plugin allows you to pick some points in
+ an image or a stack and to save the list of pixel coordinates as a text
+ file, which may be useful to further process the list within another
+ application (e.g., for the computation of a path length). Alternatively,
+ it is possible to read back the text file so as to restore the display
+ of the coordinates, perhaps over another image if desired (e.g., to
+ compare positions).
+ .
+ jars/imageware.jar: A core library for many of the plugins of the
+ Biomedical Imaging Group of the EPFL.
+ .
+ plugins/Directionality_.jar: This plugin is used to infer the preferred
+ orientation of structures present in the input image. It computes a
+ histogram indicating the amount of structures in a given direction.
+ Images with completely isotropic content are expected to give a flat
+ histogram, whereas images in which there is a preferred orientation are
+ expected to give a histogram with a peak at that orientation.
+ .
+ plugins/Auto_Threshold.jar: This plugin uses Thresholding, a simple
+ method of image segmentation. Given a grayscale image, the plugin
+ creates a binary image (Black and White) out of it. The plugin allows
+ you to do either Global Threshold or Local Threshold. Here, global means
+ histogram-derived. For local thresholding, the threshold is computed for
+ each pixel according to the image characteristics within a window of a
+ specified radius around it.
+ .
+ plugins/TopoJ_.jar: Evaluate the topography of surfaces of objects given
+ in image stacks.
+ .
+ plugins/Siox_Segmentation.jar: SIOX stands for Simple Interactive Object
+ Extraction and is a solution for extracting foreground from still images
+ with very little user interaction. SIOX is fast, noise robust, and can
+ therefore also be used for the segmentation of videos. It avoids many of
+ the drawbacks of graph-based segmentation methods but performs about
+ equally well on different benchmarks.
+ .
+ plugins/Snakuscule_.jar: Are you afraid of snakes? or, as Emily
+ Dickinson put it:      But never met this fellow,     Attended or alone,
+ Without a tighter breathing,     And zero at the bone.  This ImageJ
+ plugin detects circular bright blobs in images and quantifies them. It
+ allows one to keep record of their location and size.
+ .
+ plugins/Gray_Morphology.jar: Performs the basic morphologic operations
+ on a selected grayscale image: erosion, dilation, opening and closing
+ with several types of structuring elements (circles, diamonds,
+ horizontal lines, vertical lines, and more).
+ .
+ plugins/FeatureJ_.jar: Extract differential features from images
+ .
+ plugins/Scripts/Image/Hyperstacks/Temporal-Color_Code.ijm: This macro
+ makes a projection of the time dimension after coloring each frame using
+ the colors of a user-specified color map.
+ .
+ plugins/UnwarpJ_.jar: An ImageJ plugin that performs a spline-based
+ elastic registration of two images.
+ .
+ plugins/Extended_Depth_Field.jar: This plugin provides an extended depth
+ of field algorithm to obtain in focus microscopic images of 3D objects
+ and organisms using different algorithms :  Sobel, variance, real and
+ complex wavelets.
  .
  plugins/ToAST_.jar: Tool for Automated Sporozoite Tracking (ToAST)
  allows the rapid simultaneous analysis of several hundred motile
@@ -225,26 +305,9 @@ Description: components from Fiji, including: ToAST, PIV analyser, RATS, Trai [.
  and comparing overall movement parameters, such as average speed or the
  persistence of sporozoites undergoing a certain type of movement.
  .
- plugins/PIV_analyser.jar: Calculates the optic flow for each pair of
- images made with the given stack. It uses the PIV method, which is the
- most basic technique for optic flow. This technique, mainly used in
- acoustics or in fluids mechanics, enables the measurements of a velocity
- field in one plane, using imaging and image analysis.
- .
- plugins/RATS_.jar: Robust Automatic Threshold Selection (RATS)  This
- algorithm determines local thresholds based on the pixel values and
- their gradient.
- .
  plugins/Trainable_Segmentation.jar: This plugin trains a classifier on
  manual annotations. Afterwards the classifier can be applied to other
  images or stacks.
- .
- plugins/IsoData_Classifier.jar: An extension of the classical IsoData
- thresholding to multiple classes.
- .
- plugins/Arrow_.jar: This version replaces the old Arrow_.class tool that
- was present in Fiji before. The main changes are the ability to draw the
- arrow as a floating selection, and to tune its shape.
  .
  plugins/Video_Editing.jar: Accessible through Image>Video Editing. ¶
  Used for special video editing tasks, which makes use of a writable
@@ -256,12 +319,129 @@ Description: components from Fiji, including: ToAST, PIV analyser, RATS, Trai [.
  for animated drawing via "Draw Roi" and "Move Roi", where the user has
  to provide a ROI.
  .
- plugins/SplineDeformationGenerator_.jar: Allows different types of
- deformations over any given image. The images are represented by cubic
- B-splines, which allows the correct interpolation of non-integer
- positions and ensures the images' continuity. It can perform 5 different
- types of image deformations: Elastic, Fisheye, Perspective,
- Barrel/Pincushion, and 2D gels.
+ plugins/Image_Expression_Parser.jar: This plugin parses arbitrary
+ mathematical expressions and compute results using images as variables.
+ .
+ plugins/StackReg_.jar: Register a stack of image slices. In turn, each
+ slice is used as the template with respect to which the next slice is
+ aligned, so that the alignment proceeds by propagation. When the plugin
+ is launched, the current slice acts as a global anchor.
+ .
+ plugins/Daltonize_.jar: Simulates Colour Blindness for a selected image.
+ There are different modes available to choose from, such as Protanopia,
+ Deutanopia, Tritanopia, and others as well.
+ .
+ plugins/Series_Labeler.jar: This plugin allows the user to put a
+ customizable time code into time series.
+ .
+ plugins/SheppLogan_.jar: The purpose of this plugin is to generate
+ sampled versions of the Shepp-Logan phantom. It is possible to specify
+ the location of the origin (so that the figure may be made symmetric
+ with respect to the center of a pixel or with respect to the boundary
+ between pixels). Unfortunately, what is apparently a typo has crept into
+ the original paper. There, Table I pp. 32 mentions that Ellipse g should
+ have intensity 0.01, while Figure 1 pp. 34 clearly suggests that the
+ intensity of Ellipse g should be instead 0.02, which is apparent both
+ from the caption of Figure 1 and from the figure itself. The SheppLogan
+ plugin can be configured to generate both versions.
+ .
+ plugins/register_virtual_stack_slices.jar: Takes a sequence of image
+ slices stored in a folder, and delivers a list of registered image
+ slices (with enlarged canvas). One of the images in the sequence can be
+ selected by the user as reference and it will remain intact. ¶ The
+ plugin can perform 6 types of image registration techniques: ¶ -
+ Translation ¶ - Rigid (translation + rotation) ¶ - Similarity
+ (translation + rotation + isotropic scaling) ¶ - Affine ¶ - Elastic (via
+ bUnwarpJ with cubic B-splines) ¶ - Moving least squares
+ .
+ plugins/RandomJ_.jar: Add all kind of parameterized noise to images
+ .
+ plugins/Feature_Detection.jar: A plugin for detecting vessel or tubelike
+ structures in images.
+ .
+ plugins/IJ_Robot.jar: The purpose of the plugin is to allow the macro
+ language to control other programs via clicking and key presses in which
+ these "orders" are specified by the user to this plugin. Orders include
+ "Move", "Clicks", "CaptureScreen" and others, and for some orders
+ parameters like position (x, y) are required.
+ .
+ plugins/MosaicJ_.jar: The purpose of this plugin is to facilitate the
+ assembly of a mosaic of overlapping individual images, or tiles. It
+ provides a semi-automated solution where the initial rough positioning
+ of the tiles must be performed by the user, and where the final delicate
+ adjustments are performed by the plugin.
+ .
+ plugins/Samples_.jar: A package adding links to File>Open Samples.
+ .
+ plugins/Analyze_Reader_Writer.jar: Enables reading and saving of .img
+ file format. Does this through menus File>Import>Analyze... and
+ File>Save As>Analyze... respectively.
+ .
+ plugins/registration_3d.jar: Uses the Fast Fourier Transform algorithm
+ to decompose an image into its sine and cosine components. The input
+ image is the spatial domain while the output of the transformation
+ represents the image in the frequency domain.
+ .
+ plugins/RATS_.jar: Robust Automatic Threshold Selection (RATS)  This
+ algorithm determines local thresholds based on the pixel values and
+ their gradient.
+ .
+ plugins/Statistical_Region_Merging.jar: Performs segmentation on an
+ 8-bit grayscale image of a user's choice by using the statistical region
+ merging segmentation algorithm. The user may specify a parameter Q that
+ determines how precise the segmentation would be.
+ .
+ plugins/Record_Screen.jar: Relies on python scripts to provide an
+ utility where upon given the user-desired settings, would allow the user
+ to record activity through screenshots of either the desktop or of a
+ user-selected window of an application that is opened by Fiji.
+ .
+ plugins/Stack_Manipulation.jar: This is a collection of various "small
+ plugins", like an utility package, dedicated to the manipulation of
+ stacks, namely combining, concatenating, interleaving, sorting and so
+ on. You can find them in the Image > Stack > Manipulation menu.
+ .
+ plugins/Differentials_.jar: This plugin allows you to perform several
+ differentiation operations on images, seen as continuous functions, even
+ though they are stored as discrete pixels.
+ .
+ jars/Fiji.jar: The main class and support classes for Fiji.
+ .
+ plugins/Skeletonize3D_.jar: Used for shape analysis. Given an 8-bit
+ grayscale image or stack, the Skeletonize3D plugin will generate a thin
+ version of the present shape (Skeleton image), making it equidistant to
+ its boundaries. Some may regard this method as binary thinning. The
+ shape is eroded iteratively until only the skeleton remains - It is
+ performed symmetrically in order to guarantee the medial position of the
+ skeleton lines and to preserve the connectedness of the object.
+ .
+ plugins/Colocalisation_Analysis.jar: The plugin consists of two
+ functions. Colocalization Test performs one of a set of three
+ statistical tests, comparing the Persons correlation coefficient of 2
+ colour channels in the real image data against the same image data with
+ one of the colour channels scrambled or spatially shifted, repeated a
+ number of times. Colocalization Threshold sets the thresholds for
+ colocalization analysis, and also calculates Manders coefficients, 2D
+ histogram / scatter plot, and other stats.
+ .
+ jars/wavelets.jar: A core library for many of the plugins of the
+ Biomedical Imaging Group of the EPFL.
+ .
+ plugins/Stitching_.jar: Taking an image of a biological specimen at a
+ high resolution may not fit in the field view of a microscope. Thus
+ there are motorized stages which would help create a tiled scan of the
+ specimen. ¶ Stitching_.jar allows one to reconstruct big images/stacks
+ from a number of tiled input images/stacks, making use of the Fourier
+ Shift Theorem that computes all possible translations (x, y[, z])
+ between two 2D/3D images at once, yielding the best overlap in terms of
+ the cross correlation measure. ¶ If more than two input images/stacks
+ are used the correct placement of all tiles is determined using a global
+ optimization. To remove brightness differences at the tile borders, non-
+ linear intensity blending is applied.
+ .
+ plugins/Arrow_.jar: This version replaces the old Arrow_.class tool that
+ was present in Fiji before. The main changes are the ability to draw the
+ arrow as a floating selection, and to tune its shape.
  .
  plugins/Image_5D.jar: The plugin extend image stacks to 5 dimensions: x,
  y, channel (color), slice (z), and frame (t). An Image5D has a "true" 5D
@@ -274,35 +454,31 @@ Description: components from Fiji, including: ToAST, PIV analyser, RATS, Trai [.
  one channel in gray, one channel in color and an overlay of selected
  channels.
  .
+ plugins/IsoData_Classifier.jar: An extension of the classical IsoData
+ thresholding to multiple classes.
+ .
+ plugins/SplineDeformationGenerator_.jar: Allows different types of
+ deformations over any given image. The images are represented by cubic
+ B-splines, which allows the correct interpolation of non-integer
+ positions and ensures the images' continuity. It can perform 5 different
+ types of image deformations: Elastic, Fisheye, Perspective,
+ Barrel/Pincushion, and 2D gels.
+ .
+ plugins/Graph_Cut.jar: The Graph Cut plugin provides a way to obtain a
+ globally smooth binary segmentation. As input, you have to provide a
+ gray-scale image that represents the pixel affinities for belonging to
+ the foreground. Via a single parameter you can adjust the smoothness of
+ the segmentation.
+ .
  plugins/QuickPALM_.jar: The software side of the QuickPALM project, to
  obtain super-resolution images.
  .
- plugins/Auto_Threshold.jar: This plugin uses Thresholding, a simple
- method of image segmentation. Given a grayscale image, the plugin
- creates a binary image (Black and White) out of it. The plugin allows
- you to do either Global Threshold or Local Threshold. Here, global means
- histogram-derived. For local thresholding, the threshold is computed for
- each pixel according to the image characteristics within a window of a
- specified radius around it.
- .
- plugins/Statistical_Region_Merging.jar: Performs segmentation on an
- 8-bit grayscale image of a user's choice by using the statistical region
- merging segmentation algorithm. The user may specify a parameter Q that
- determines how precise the segmentation would be.
+ jars/imglib-scripting.jar: A simple layer of classes on top of imglib to
+ make it super-easy to use in scripts.
  .
  plugins/SPIM_Registration.jar: Bead-based registration of multi-angle
  recordings, offers reconstruction of a single image with close to
  isotropic resolution.
- .
- plugins/Gray_Morphology.jar: Performs the basic morphologic operations
- on a selected grayscale image: erosion, dilation, opening and closing
- with several types of structuring elements (circles, diamonds,
- horizontal lines, vertical lines, and more).
- .
- plugins/Stack_Manipulation.jar: This is a collection of various "small
- plugins", like an utility package, dedicated to the manipulation of
- stacks, namely combining, concatenating, interleaving, sorting and so
- on. You can find them in the Image > Stack > Manipulation menu.
  .
  plugins/level_sets.jar: Level Sets segmentation techniques are based on
  partial differential equations (PDE), i.e. progressive evaluation of the
@@ -324,6 +500,9 @@ Description: components from Fiji, including: ToAST, PIV analyser, RATS, Trai [.
  analysis would also be displayed, with voxels having different colours
  according to their tag.
  .
+ jars/weave_jy2java.jar: The library class fiji.scripting.Weaver to
+ inline java code in a script.
+ .
  plugins/Time_Stamper.jar: Adds time stamps to a stack. The times are
  drawn in the current foreground color. A dialog box allows the user to
  specify the starting time, time between frames, location, font size,
@@ -335,61 +514,7 @@ Description: components from Fiji, including: ToAST, PIV analyser, RATS, Trai [.
  It can measure and visualize the image flow (related to motion) in any
  open stack.
  .
- jars/Fiji.jar: The main class and support classes for Fiji.
- .
- plugins/Daltonize_.jar: Simulates Colour Blindness for a selected image.
- There are different modes available to choose from, such as Protanopia,
- Deutanopia, Tritanopia, and others as well.
- .
- plugins/Directionality_.jar: This plugin is used to infer the preferred
- orientation of structures present in the input image. It computes a
- histogram indicating the amount of structures in a given direction.
- Images with completely isotropic content are expected to give a flat
- histogram, whereas images in which there is a preferred orientation are
- expected to give a histogram with a peak at that orientation.
- .
- plugins/TopoJ_.jar: Evaluate the topography of surfaces of objects given
- in image stacks.
- .
- plugins/registration_3d.jar: Uses the Fast Fourier Transform algorithm
- to decompose an image into its sine and cosine components. The input
- image is the spatial domain while the output of the transformation
- represents the image in the frequency domain.
- .
- plugins/Siox_Segmentation.jar: SIOX stands for Simple Interactive Object
- Extraction and is a solution for extracting foreground from still images
- with very little user interaction. SIOX is fast, noise robust, and can
- therefore also be used for the segmentation of videos. It avoids many of
- the drawbacks of graph-based segmentation methods but performs about
- equally well on different benchmarks.
- .
- plugins/register_virtual_stack_slices.jar: Takes a sequence of image
- slices stored in a folder, and delivers a list of registered image
- slices (with enlarged canvas). One of the images in the sequence can be
- selected by the user as reference and it will remain intact. ¶ The
- plugin can perform 6 types of image registration techniques: ¶ -
- Translation ¶ - Rigid (translation + rotation) ¶ - Similarity
- (translation + rotation + isotropic scaling) ¶ - Affine ¶ - Elastic (via
- bUnwarpJ with cubic B-splines) ¶ - Moving least squares
- .
- plugins/Skeletonize3D_.jar: Used for shape analysis. Given an 8-bit
- grayscale image or stack, the Skeletonize3D plugin will generate a thin
- version of the present shape (Skeleton image), making it equidistant to
- its boundaries. Some may regard this method as binary thinning. The
- shape is eroded iteratively until only the skeleton remains - It is
- performed symmetrically in order to guarantee the medial position of the
- skeleton lines and to preserve the connectedness of the object.
- .
- plugins/Record_Screen.jar: Relies on python scripts to provide an
- utility where upon given the user-desired settings, would allow the user
- to record activity through screenshots of either the desktop or of a
- user-selected window of an application that is opened by Fiji.
- .
- plugins/IJ_Robot.jar: The purpose of the plugin is to allow the macro
- language to control other programs via clicking and key presses in which
- these "orders" are specified by the user to this plugin. Orders include
- "Move", "Clicks", "CaptureScreen" and others, and for some orders
- parameters like position (x, y) are required.
+ jars/mij.jar: MIJ - Access ImageJ from within Matlab
  .
  plugins/Fiji_Plugins.jar: A collection of single-shot plugins for Fiji.
  On Edit>Selection, "Fit Circle to Image" will fit a circle selection to
@@ -399,39 +524,12 @@ Description: components from Fiji, including: ToAST, PIV analyser, RATS, Trai [.
  dynamically this slice as the ROI is displaced or deformed. One may also
  upload a sample image to Fiji server through Help>Upload Sample Image.
  .
- macros/spirals.txt: An optical illusion proving that we cannot trust
- red-green color merges.
+ plugins/Linear_Kuwahara.jar: This plugin extends the idea of the
+ original Kuwahara filter from rectangular kernels to (straight) linear
+ ones.
  .
- macros/grey-squares.ijm: An optical illusion proving that we cannot
- trust perception of gray levels.
- .
- plugins/Image_Expression_Parser.jar: This plugin parses arbitrary
- mathematical expressions and compute results using images as variables.
- .
- plugins/Stitching_.jar: Taking an image of a biological specimen at a
- high resolution may not fit in the field view of a microscope. Thus
- there are motorized stages which would help create a tiled scan of the
- specimen. ¶ Stitching_.jar allows one to reconstruct big images/stacks
- from a number of tiled input images/stacks, making use of the Fourier
- Shift Theorem that computes all possible translations (x, y[, z])
- between two 2D/3D images at once, yielding the best overlap in terms of
- the cross correlation measure. ¶ If more than two input images/stacks
- are used the correct placement of all tiles is determined using a global
- optimization. To remove brightness differences at the tile borders, non-
- linear intensity blending is applied.
- .
- plugins/Colocalisation_Analysis.jar: The plugin consists of two
- functions. Colocalization Test performs one of a set of three
- statistical tests, comparing the Persons correlation coefficient of 2
- colour channels in the real image data against the same image data with
- one of the colour channels scrambled or spatially shifted, repeated a
- number of times. Colocalization Threshold sets the thresholds for
- colocalization analysis, and also calculates Manders coefficients, 2D
- histogram / scatter plot, and other stats.
- .
- plugins/Analyze_Reader_Writer.jar: Enables reading and saving of .img
- file format. Does this through menus File>Import>Analyze... and
- File>Save As>Analyze... respectively.
+ jars/imagescience.jar: A library for generic 5D image access. Needed for
+ TransformJ, FeatureJ and RandomJ.
 
 
 Package: fiji-scripting
@@ -440,7 +538,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: jython, clojure, fiji-imglib (>= 20100629163441), fiji-rsyntaxtextarea (>= 20100822163606), fiji-vib (>= 20100813145758), fiji-base (>= 20100818200853), fiji-autocomplete (>= 20090524213156), libjava3d-java, bsh, fiji-imagej (>= 20100822145051), fiji-3d-viewer (>= 20100818134817), fiji-plugins (>= 20100818200853), libvecmath-java, rhino, fiji-jruby (>= 20080801134354)
+Depends: clojure, fiji-imglib (>= 20110113161806), fiji-rsyntaxtextarea (>= 20100822163606), libjfreechart-java, fiji-vib (>= 20110203214538), libvecmath-java, fiji-base (>= 20110204154411), fiji-autocomplete (>= 20090524213156), libjava3d-java, bsh, fiji-imagej (>= 20110201204601), fiji-jython (>= 20100925003646), fiji-3d-viewer (>= 20110203214538), fiji-plugins (>= 20110204154411), libjcommon-java, rhino, fiji-jruby (>= 20100925003646)
 Description: components from Fiji, including: Script Editor, Javascript, JRub [...]
  The descriptions below are extracted from the Fiji Updater database:
  .
@@ -493,7 +591,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-imagej (>= 20100822145051)
+Depends: fiji-imagej (>= 20110201204601), libjama-java
 Description: components from Fiji, including: mpicbg, mpicbg
  The descriptions below are extracted from the Fiji Updater database:
  .
@@ -511,7 +609,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-lsm-reader (>= 20100322140540), fiji-imagej (>= 20100822145051)
+Depends: fiji-lsm-reader (>= 20101208094455), fiji-imagej (>= 20110201204601)
 Description: The LSM_Toolbox is a project aiming at the integration of common [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -527,7 +625,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-imagej (>= 20100822145051)
+Depends: fiji-imagej (>= 20110201204601)
 Description: The program View5D interactively displays of up to 5 dimensional [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -542,7 +640,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-mpicbg (>= 20100812201753), libjava3d-java, fiji-edu-mines-jtk (>= 20080801134354), fiji-imagej (>= 20100822145051), fiji-loci-tools (>= 20100814020501), libvecmath-java
+Depends: fiji-mpicbg (>= 20110130214001), libjama-java, fiji-edu-mines-jtk (>= 20080801134354), fiji-imagej (>= 20110201204601), fiji-loci-tools (>= 20110208193953)
 Description: A generic, Open Source library for image access to arbitrary dim [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -557,7 +655,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-imagej (>= 20100822145051)
+Depends: fiji-imagej (>= 20110201204601)
 Description: MTrack2 is used for tracking objects in 2D over time. It will id [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -576,7 +674,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: libjava3d-java, fiji-imglib (>= 20100629163441), fiji-imagej (>= 20100822145051), fiji-3d-viewer (>= 20100818134817), fiji-plugins (>= 20100809175955), libvecmath-java, junit, libjzlib-java, libjama-java
+Depends: libjava3d-java, fiji-imglib (>= 20110113161806), fiji-base (>= 20110203214538), fiji-imagej (>= 20110201204601), fiji-3d-viewer (>= 20110203214538), fiji-plugins (>= 20110203214538), libvecmath-java, junit, libjzlib-java, libjama-java
 Description: components from Fiji, including: VIB, VIB-lib
  The descriptions below are extracted from the Fiji Updater database:
  .
@@ -599,13 +697,27 @@ Depends: fiji-rsyntaxtextarea (>= 20100822163606)
 Description: components from Fiji, including: autocomplete
 
 
+Package: fiji-jython
+Section: graphics
+Architecture: all
+Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
+Depends: ant, fiji-plugins (>= 20100925003646), ant-optional, junit
+Description: A pure Java implementation of the Python language, conforming to [...]
+ The description below is extracted from the Fiji Updater database.
+ .
+ jars/jython.jar: A pure Java implementation of the Python language,
+ conforming to version 2.5 of the Python language specification.
+
+
 Package: fiji-ij-imageio
 Section: graphics
 Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-jai (>= 20080801134354), fiji-imagej (>= 20100822145051)
+Depends: fiji-jai (>= 20080801134354), fiji-imagej (>= 20110201204601)
 Description: ij-ImageIO plugins add support for additional image file formats [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -621,8 +733,11 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: 
-Description: components from Fiji, including: jruby
+Depends: fiji-plugins (>= 20100925003646)
+Description: A pure Java implementation of Ruby.
+ The description below is extracted from the Fiji Updater database.
+ .
+ jars/jruby.jar: A pure Java implementation of Ruby.
 
 
 Package: fiji-lsm-reader
@@ -631,7 +746,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-imagej (>= 20100822145051)
+Depends: fiji-imagej (>= 20110201204601)
 Description: components from Fiji, including: LSM Reader
 
 
@@ -651,7 +766,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-loci-tools (>= 20100814020501)
+Depends: fiji-loci-tools (>= 20110208193953)
 Description: components from Fiji, including: clibwrapper jiio, jai core, jai codec
 
 
@@ -671,7 +786,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-imagej (>= 20100822145051)
+Depends: fiji-imagej (>= 20110201204601)
 Description: This is the Multiple Image Processor plugin, where it is able to [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -687,7 +802,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513), fiji-plugins (< 20100821202529)
 Conflicts: fiji (<= 20090513), fiji-plugins (< 20100821202529)
-Depends: libjava3d-java, fiji-imglib (>= 20100629163441), fiji-vib (>= 20100820121053), fiji-imagej (>= 20100822145051), libjama-java, libvecmath-java
+Depends: libjava3d-java, fiji-imglib (>= 20110113161806), fiji-vib (>= 20110203214538), fiji-imagej (>= 20110201204601), libjama-java, libvecmath-java
 Description: A hardware-accelerated 3D/4D viewer offering volume rendering, o [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -701,7 +816,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: libbatik-java, fiji-jpedal (>= 20080801134354), libxml-commons-external-java, fiji-imagej (>= 20100822145051), libitext1-java, libjzlib-java
+Depends: libbatik-java, fiji-jpedal (>= 20080801134354), libxml-commons-external-java, fiji-imagej (>= 20110201204601), libitext1-java, libjzlib-java
 Description: The plugin allows one to: - Import and save PDF file format - Ex [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -724,7 +839,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-imagej (>= 20100822145051)
+Depends: fiji-imagej (>= 20110201204601)
 Description: components from Fiji, including: Color Inspector 3D, Volume View [...]
  The descriptions below are extracted from the Fiji Updater database:
  .
@@ -757,7 +872,7 @@ Package: fiji
 Section: graphics
 Architecture: all
 Priority: extra
-Depends: fiji-tracer (>= 20100818134817), fiji-jpedal (>= 20080801134354), fiji-examples (>= 20100813144310), fiji-base (>= 20100818200853), fiji-imagej (>= 20100822145051), fiji-loci-tools (>= 20100814020501), fiji-bunwarpj (>= 20100417005423), fiji-color-histogram (>= 20100607205357), fiji-edu-mines-jtk (>= 20080801134354), fiji-trakem2 (>= 20100822185613), fiji-luts (>= 20100610024221), fiji-plugins (>= 20100820145305), fiji-scripting (>= 20100818200853), fiji-mip (>= 20100818200853), fiji-mpicbg (>= 20100812201753), fiji-lsm-toolbox (>= 20100813145758), fiji-view5d (>= 20100609192927), fiji-imglib (>= 20100629163441), fiji-mtrack2 (>= 20100607205357), fiji-vib (>= 20100820121053), fiji-autocomplete (>= 20090524213156), fiji-ij-imageio (>= 20081218211215), fiji-jruby (>= 20080801134354), fiji-lsm-reader (>= 20100322140540), fiji-rsyntaxtextarea (>= 20100822163606), fiji-jai (>= 20080801134354), fiji-weka (>= 20100609224141), fiji-tcljava (>= 20081218211215), fiji-3d-viewer (>= 20100818134817), fiji-io (>= 20100628114332), fiji-barthel-plugins (>= 20100607205357)
+Depends: fiji-tracer (>= 20101022110032), fiji-jpedal (>= 20080801134354), fiji-examples (>= 20101230180757), fiji-base (>= 20110204154411), fiji-imagej (>= 20110201204601), fiji-loci-tools (>= 20110208193953), fiji-bunwarpj (>= 20100417005423), fiji-color-histogram (>= 20100607205357), fiji-edu-mines-jtk (>= 20080801134354), fiji-trakem2 (>= 20110203030319), fiji-luts (>= 20100610024221), fiji-plugins (>= 20110209031923), fiji-scripting (>= 20110204190232), fiji-mip (>= 20100818200853), fiji-mpicbg (>= 20110130214001), fiji-lsm-toolbox (>= 20100813145758), fiji-view5d (>= 20100609192927), fiji-imglib (>= 20110113161806), fiji-mtrack2 (>= 20100607205357), fiji-vib (>= 20110203214538), fiji-autocomplete (>= 20090524213156), fiji-jython (>= 20100925003646), fiji-ij-imageio (>= 20081218211215), fiji-jruby (>= 20100925003646), fiji-lsm-reader (>= 20101208094455), fiji-rsyntaxtextarea (>= 20100822163606), fiji-jai (>= 20080801134354), fiji-weka (>= 20100609224141), fiji-tcljava (>= 20081218211215), fiji-3d-viewer (>= 20110203214538), fiji-io (>= 20101221053508), fiji-barthel-plugins (>= 20100607205357)
 Description: A metapackage for the Fiji image processing suite (based on ImageJ)
  Fiji is a project aiming at simplifying:
     * the installation of ImageJ

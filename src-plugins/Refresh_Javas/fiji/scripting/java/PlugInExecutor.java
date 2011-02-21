@@ -4,7 +4,6 @@ import fiji.FijiClassLoader;
 import fiji.User_Plugins;
 
 import ij.IJ;
-import ij.ImageJ;
 import ij.ImagePlus;
 import ij.Macro;
 import ij.WindowManager;
@@ -15,8 +14,6 @@ import ij.plugin.PlugIn;
 
 import ij.plugin.filter.PlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
-
-import ij.util.Tools;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,6 +26,9 @@ import java.net.URL;
 import java.net.URLClassLoader;
 
 import java.util.List;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /*
  * This class should have been public instead of being hidden in
@@ -102,6 +102,9 @@ public class PlugInExecutor {
 		tryRun(plugin, arg, null, newClassLoader);
 	}
 
+	private final static Pattern wrongClassNamePattern =
+		Pattern.compile("^([^ ]*) \\(wrong name: ([^ ]*)\\)$");
+
 	public void tryRun(String plugin, String arg, String jarPath, boolean newClassLoader)
 			throws ClassNotFoundException, IOException,
 				IllegalAccessException,
@@ -114,20 +117,55 @@ public class PlugInExecutor {
 			}) : getClassLoader();
 		if (newClassLoader && jarPath != null)
 			((FijiClassLoader)classLoader).addPath(jarPath);
-		Class clazz = classLoader.loadClass(plugin);
+		Class clazz;
 		try {
-			Object object = clazz.newInstance();
-			if (object instanceof PlugIn) {
+			clazz = classLoader.loadClass(plugin);
+		} catch (NoClassDefFoundError e) {
+			Matcher matcher = wrongClassNamePattern.matcher(e.getMessage());
+			if (!matcher.matches())
+				throw e;
+			String correctClassName = matcher.group(2);
+
+			String path = plugin.replace('.', '/') + ".class";
+			URL url = classLoader.getResource(path);
+			if (url == null)
+				throw new RuntimeException("Could not find resource for class " + plugin, e);
+			String classPath = url.toString();
+			if (classPath.startsWith("file:"))
+				classPath = classPath.substring(5);
+			classPath += plugin.replace('.', '/');
+			classPath = classPath.substring(0, classPath.length() - correctClassName.length());
+			((FijiClassLoader)classLoader).addPath(jarPath);
+			clazz = classLoader.loadClass(correctClassName);
+		}
+		try {
+			if (PlugIn.class.isAssignableFrom(clazz)) {
+				Object object = clazz.newInstance();
 				((PlugIn)object).run(arg);
 				return;
 			}
-			if (object instanceof PlugInFilter) {
+			if (PlugInFilter.class.isAssignableFrom(clazz)) {
+				Object object = clazz.newInstance();
+				ImagePlus image = WindowManager.getCurrentImage();
+				if (image != null && image.isLocked()) {
+					if (!IJ.showMessageWithCancel("Unlock image?", "The image '" + image.getTitle()
+							+ "'appears to be unlocked... Unlock?"))
+						return;
+					image.unlock();
+				}
 				new PlugInFilterRunner(object,
 						plugin, arg);
 				return;
 			}
-		} catch (InstantiationException e) { /* ignore */ }
-		runMain(clazz, arg);
+			runMain(clazz, arg);
+		} catch (InstantiationException e) {
+			e.printStackTrace();
+			Throwable cause = e.getCause();
+			if (cause != null) {
+				System.err.print("Cause: ");
+				cause.printStackTrace();
+			}
+		}
 	}
 
 	public void runOneOf(String jar, boolean newClassLoader)

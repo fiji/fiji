@@ -1,6 +1,22 @@
 A loose TODO list for Fiji
 ==========================
 
+- fix Temporal-Color Code for recent ImageJ hyperstack breakage
+- provide a Fiji exception handler that
+	- suggests updating if Fiji is out of date; and then
+	- suggest bug reporting if it is up-to-date.
+- ignore JAVA_HOME by default, add an innocuous option to jvm.cfg to force system java (either by using JAVA_HOME or by specific path)
+- teach RefreshScripts to special-case plugins/Scripts/ to be able to put scripts anywhere into the menu structure
+- include Piotr's parallel deconvolution plugins, StackReg and BoneJ
+- updater:
+	- special-case updating the updater even more: just download the updater,
+		start a thread that downloads the updater and overwrites the old
+		one and refreshes the menus and relaunches the updater (possibly
+		using a macro to avoid classloader clashes)
+	- multiple updater sites
+	- close after upload
+	- close after download
+- fix merge channels with 4 grayscale images
 - fix z-project, split channels for virtual stacks
 - fix substack maker for hyperstacks
 - provide preview for auto threshold plugin
@@ -9,25 +25,19 @@ A loose TODO list for Fiji
   progress infrastructure of the Fiji Updater; maybe need to use reflection
   to access java.util.prefs.WindowsPreferences)
 - win: verify that console window stays open when falling back to system Java
-- TrakEM2: use CommandListener to override the "File>Save" menu item
 - move Amira I/O into bio-formats already
 - headless: should we activate "batch"?
-- exclude ij.jar, headless.jar and precompiled/ij.jar from netbeans project
-  (otherwise Netbeans will not use the ImageJ it compiled itself)
-- netbeans: exclude the classes found in src-plugins/ij/**/*.java from ImageJA/
 - test Bilateral Filter
 - Segmentation Editor fails
-- Building "jars/fake.jar" on Windows should warn and resort to making
-  precompiled/fake.jar directly.  Same goes for the Fiji launcher.
 - add script recorder for the new scripting languages
 - check which Reader Plugins do not extend ImagePlus
-- extend GenericDialog to provide Help, Advanced button
+- extend GenericDialogPlus to provide Help, Advanced button
 - GenericDialog.addToolText()
+- make a GenericSwingDialog
 - add tests (test that all plugins are found, test which image types
   they support, add regression tests, if file importers return ImagePlus)
 - in ImageJA: add isCanceled() method to SaveDialog (is getDirectory() == null).
 - in ImageJA: what about a file extension based construct similar to
   HandleExtraFileTypes for save?  This would allow to work on top of custom
   file formats seamlessly.
-- reimplement TransformJ (Stephan Preibisch)
 - look at ITK

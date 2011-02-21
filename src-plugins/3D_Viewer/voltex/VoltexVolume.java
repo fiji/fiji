@@ -33,13 +33,13 @@ import javax.vecmath.Point3d;
 public class VoltexVolume extends Volume {
 
 	/** The textures' size. These are powers of two. */
-	public final int xTexSize, yTexSize, zTexSize;
+	int xTexSize, yTexSize, zTexSize;
 
 	/** The texGenScale */
-	public final float xTexGenScale, yTexGenScale, zTexGenScale;
+	float xTexGenScale, yTexGenScale, zTexGenScale;
 
 	/** The mid point in the data */
-	public final Point3d volRefPt = new Point3d();
+	final Point3d volRefPt = new Point3d();
 
 	/** The ColorModel used for 8-bit textures */
 	protected static final ColorModel greyCM = createGreyColorModel();
@@ -73,11 +73,14 @@ public class VoltexVolume extends Volume {
 	 * @param imp
 	 * @param ch A boolean[] array of length three, which indicates whether
 	 * the red, blue and green channel should be read. This has only an
-	 * effct when reading color images.
+	 * effect when reading color images.
 	 */
 	public VoltexVolume(ImagePlus imp, boolean[] ch) {
+		setImage(imp, ch);
+	}
 
-		super(imp, ch);
+	public void setImage(ImagePlus imp, boolean[] ch) {
+		super.setImage(imp, ch);
 		// tex size is next power of two greater than max - min
 		// regarding pixels
 		xTexSize = powerOfTwo(xDim);
@@ -99,9 +102,32 @@ public class VoltexVolume extends Volume {
 		volRefPt.y = (maxCoord.y + minCoord.y) / 2;
 		volRefPt.z = (maxCoord.z + minCoord.z) / 2;
 
-		initLoader2();
+		initDataType();
+		initVoltexLoader();
 		createImageComponents();
 		updateData();
+	}
+
+	public void swap(String path) {
+		super.swap(path);
+		xy = null;
+		xz = null;
+		yz = null;
+		xyComp = null;
+		xzComp = null;
+		yzComp = null;
+	}
+
+	public void restore(String path) {
+		ImagePlus imp = IJ.openImage(path + ".tif");
+		try {
+			setImage(IJ.openImage(path + ".tif"), channels);
+		} catch(NullPointerException e) {
+			throw new IllegalArgumentException("Cannot load image from " + path);
+		} catch(RuntimeException e) {
+			System.out.println("Cannot load " + path);
+			throw e;
+		}
 	}
 
 	private void createImageComponents() {
@@ -141,22 +167,13 @@ public class VoltexVolume extends Volume {
 	}
 
 	public void setNoCheckNoUpdate(int x, int y, int z, int v) {
-		((Loader)loader).setNoCheckNoUpdate(x, y, z, v);
-	}
-
-	/*
-	 * Initializes the specific loader which is used for the current
-	 * settings. The choice depends on the specific values of channels,
-	 * average and data type.
-	 */
-	@Override
-	protected void initLoader() {
+		voltexLoader.setNoCheckNoUpdate(x, y, z, v);
 	}
 
 	@Override
 	public boolean setAverage(boolean average) {
 		if(super.setAverage(average)) {
-			initLoader2();
+			initVoltexLoader();
 			createImageComponents();
 			updateData();
 			return true;
@@ -164,10 +181,15 @@ public class VoltexVolume extends Volume {
 		return false;
 	}
 
+	/**
+	 * Sets the channels which are to be used in this
+	 * volume rendering. Returns true if the
+	 * channel settings has changed.
+	 */
 	@Override
 	public boolean setChannels(boolean[] ch) {
 		if(super.setChannels(ch)) {
-			initLoader2();
+			initVoltexLoader();
 			createImageComponents();
 			updateData();
 			return true;
@@ -175,46 +197,38 @@ public class VoltexVolume extends Volume {
 		return false;
 	}
 
-	private void initLoader2() {
-		boolean[] c = channels;
-		int usedCh = 0;
-		for(int i = 0; i < 3; i++)
-			if(channels[i]) usedCh++;
-		switch(imp.getType()) {
-			case ImagePlus.GRAY8:
-				loader = new ByteLoader(imp);
+	/**
+	 * Set the lookup tables for this volume rendering. Returns
+	 * true if the data type of the textures has changed.
+	 */
+	@Override
+	public boolean setLUTs(int[] r, int[] g, int[] b, int[] a) {
+		boolean ret = super.setLUTs(r, g, b, a);
+		if(ret) {
+			initVoltexLoader();
+			createImageComponents();
+		}
+		updateData();
+		return ret;
+	}
+
+	private VoltexLoader voltexLoader;
+
+	/**
+	 * Init the loader, based on the currently set data type,
+	 * which is either INT_DATA or BYTE_DATA.
+	 */
+	protected void initVoltexLoader() {
+		switch(dataType) {
+			case BYTE_DATA:
+				voltexLoader = new VoltexByteLoader(
+					(ByteLoader)loader);
 				compCreator = new GreyComponentCreator();
-				dataType = BYTE_DATA;
 				break;
-			case ImagePlus.COLOR_RGB:
-				if(usedCh == 1) {
-					loader = new ByteFromIntLoader(imp, c);
-					compCreator = new GreyComponentCreator();
-					dataType = BYTE_DATA;
-				} else if(usedCh == 2) {
-					if(average) {
-						loader = new ByteFromIntLoader(imp, c);
-						dataType = BYTE_DATA;
-						compCreator = new GreyComponentCreator();
-					} else {
-						loader = new IntFromIntLoader(imp, c);
-						compCreator = new ColorComponentCreator();
-						dataType = INT_DATA;
-					}
-				} else {
-					if(average) {
-						loader = new ByteFromIntLoader(imp, c);
-						compCreator = new GreyComponentCreator();
-						dataType = BYTE_DATA;
-					} else {
-						loader = new IntLoader(imp);
-						compCreator = new ColorComponentCreator();
-						dataType = INT_DATA;
-					}
-				}
-				break;
-			default:
-				IJ.error("image format not supported");
+			case INT_DATA:
+				voltexLoader = new VoltexIntLoader(
+					(IntLoader) loader);
+				compCreator = new ColorComponentCreator();
 				break;
 		}
 	}
@@ -239,7 +253,7 @@ public class VoltexVolume extends Volume {
 	 * (If the data type is INT_DATA, it must be 4 times as long).
 	 */
 	private void loadZ(int z, byte[] dst) {
-		((Loader)loader).loadZ(z, dst);
+		voltexLoader.loadZ(z, dst);
 	}
 
 	/**
@@ -249,7 +263,7 @@ public class VoltexVolume extends Volume {
 	 * (If the data type is INT_DATA, it must be 4 times as long).
 	 */
 	private void loadY(int y, byte[] dst) {
-		((Loader)loader).loadY(y, dst);
+		voltexLoader.loadY(y, dst);
 	}
 
 	/**
@@ -259,7 +273,7 @@ public class VoltexVolume extends Volume {
 	 * (If the data type is INT_DATA, it must be 4 times as long).
 	 */
 	private void loadX(int x, byte[] dst) {
-		((Loader)loader).loadX(x, dst);
+		voltexLoader.loadX(x, dst);
 	}
 
 	private static final ColorModel createGreyColorModel() {
@@ -357,7 +371,7 @@ public class VoltexVolume extends Volume {
 	/**
 	 * Abstract interface for the loader classes.
 	 */
-	protected interface Loader extends Volume.Loader {
+	protected interface VoltexLoader extends Loader {
 		/**
 		 * Loads an xy-slice, with the given z value
 		 * (x changes fastest) and stores the data in the provided object
@@ -383,18 +397,30 @@ public class VoltexVolume extends Volume {
 	}
 
 	/**
-	 * This class loads bytes from byte data.
+	 * This class is used if the data type is BYTE_DATA.
 	 */
-	private final class ByteLoader extends Volume.ByteLoader implements Loader {
-		ByteLoader(ImagePlus imp) {
-			super(imp);
+	private final class VoltexByteLoader implements VoltexLoader {
+
+		private ByteLoader l;
+
+		public VoltexByteLoader(ByteLoader l) {
+			this.l = l;
 			xy = new byte[zDim][xTexSize * yTexSize];
 			xz = new byte[yDim][xTexSize * zTexSize];
 			yz = new byte[xDim][yTexSize * zTexSize];
 		}
 
+		public int load(int x, int y, int z) {
+			return l.load(x, y, z);
+		}
+
+		public int loadWithLUT(int x, int y, int z) {
+			return l.load(x, y, z);
+		}
+
 		public void setNoCheck(int x, int y, int z, int v) {
-			super.setNoCheck(x, y, z, v);
+			l.setNoCheck(x, y, z, v);
+			v = l.loadWithLUT(x, y, z);
 			xy[z][y * xTexSize + x] = (byte)v;
 			xz[y][z * xTexSize + x] = (byte)v;
 			yz[x][z * yTexSize + y] = (byte)v;
@@ -404,7 +430,7 @@ public class VoltexVolume extends Volume {
 		}
 
 		public void setNoCheckNoUpdate(int x, int y, int z, int v) {
-			super.setNoCheck(x, y, z, v);
+			l.setNoCheck(x, y, z, v);
 		}
 
 		public void set(int x, int y, int z, int v) {
@@ -414,53 +440,61 @@ public class VoltexVolume extends Volume {
 			}
 		}
 
-		public void loadZ(int zValue, byte[] dst) {
-			byte[] src = fData[zValue];
-			for (int y=0; y < yDim; y++){
-				int offsSrc = y * xDim;
-				int offsDst = y * xTexSize;
-				System.arraycopy(src, offsSrc, dst, offsDst, xDim);
+		public void loadZ(int z, byte[] d) {
+			for (int y = 0; y < yDim; y++) {
+				int offs = y * xTexSize;
+				for(int x = 0; x < xDim; x++)
+					d[offs++] = (byte)l.loadWithLUT(x, y, z);
 			}
 		}
 
-		public void loadY(int yValue, byte[] dst)  {
-			for (int z=0; z < zDim; z++){
-				byte[] src = fData[z];
-				int offsSrc = yValue * xDim;
-				int offsDst = z * xTexSize;
-				System.arraycopy(src, offsSrc, dst, offsDst, xDim);
+		public void loadY(int y, byte[] d)  {
+			for (int z = 0; z < zDim; z++) {
+				int offs = z * xTexSize;
+				for(int x = 0; x < xDim; x++)
+					d[offs++] = (byte)l.loadWithLUT(x, y, z);
 			}
 		}
 
-		public void loadX(int xValue, byte[] dst)  {
-			for (int z=0; z < zDim; z++){
-				int offsDst = z * yTexSize;
-				for (int y=0; y < yDim; y++){
-					int offsSrc = y * xDim + xValue;
-					dst[offsDst + y] = fData[z][offsSrc];
-				}
+		public void loadX(int x, byte[] d)  {
+			for (int z = 0; z < zDim; z++) {
+				int offs = z * yTexSize;
+				for (int y = 0; y < yDim; y++)
+					d[offs++] = (byte)l.loadWithLUT(x, y, z);
 			}
 		}
 	}
 
 	/**
-	 * This class loads all channels from int data and returns
-	 * it as int array.
+	 * This class is used when the data type is INT_DATA.
 	 */
-	private final class IntLoader extends Volume.IntLoader implements Loader {
-		IntLoader(ImagePlus imp) {
-			super(imp);
+	private final class VoltexIntLoader implements VoltexLoader {
+
+		protected IntLoader l;
+
+		VoltexIntLoader(IntLoader l) {
+			this.l = l;
 			xy = new byte[zDim][4 * xTexSize * yTexSize];
 			xz = new byte[yDim][4 * xTexSize * zTexSize];
 			yz = new byte[xDim][4 * yTexSize * zTexSize];
 		}
 
+		public int load(int x, int y, int z) {
+			return l.load(x, y, z);
+		}
+
+		public int loadWithLUT(int x, int y, int z) {
+			return l.load(x, y, z);
+		}
+
 		public void setNoCheckNoUpdate(int x, int y, int z, int v) {
-			super.setNoCheck(x, y, z, v);
+			l.setNoCheck(x, y, z, v);
 		}
 
 		public void setNoCheck(int x, int y, int z, int v) {
-			super.setNoCheck(x, y, z, v);
+			l.setNoCheck(x, y, z, v);
+			v = l.loadWithLUT(x, y, z);
+
 			int a = (v & 0xff000000) >> 24;
 			int r = (v & 0xff0000) >> 16;
 			int g = (v & 0xff00) >> 8;
@@ -496,16 +530,14 @@ public class VoltexVolume extends Volume {
 		}
 
 		public void loadZ(int zValue, byte[] dst) {
-			int[] src = fData[zValue];
 			for (int y=0; y < yDim; y++){
-				int offsSrc = y * xDim;
 				int offsDst = y * xTexSize * 4;
 				for(int x = 0; x < xDim; x++) {
-					int c = src[offsSrc + x];
+					int c = l.loadWithLUT(x, y, zValue);
+					int a = (c & 0xff000000) >> 24;
 					int r = (c & 0xff0000) >> 16;
 					int g = (c & 0xff00) >> 8;
 					int b = c & 0xff;
-					int a = Math.min(255, r + g + b);
 					dst[offsDst++] = (byte)r;
 					dst[offsDst++] = (byte)g;
 					dst[offsDst++] = (byte)b;
@@ -516,15 +548,13 @@ public class VoltexVolume extends Volume {
 
 		public void loadY(int yValue, byte[] dst)  {
 			for (int z=0; z < zDim; z++){
-				int[] src = fData[z];
-				int offsSrc = yValue * xDim;
 				int offsDst = z * xTexSize * 4;
 				for(int x = 0; x < xDim; x++) {
-					int c = src[offsSrc + x];
+					int c = l.loadWithLUT(x, yValue, z);
+					int a = (c & 0xff000000) >> 24;
 					int r = (c & 0xff0000) >> 16;
 					int g = (c & 0xff00) >> 8;
 					int b = c & 0xff;
-					int a = Math.min(255, r + g + b);
 					dst[offsDst++] = (byte)r;
 					dst[offsDst++] = (byte)g;
 					dst[offsDst++] = (byte)b;
@@ -537,218 +567,18 @@ public class VoltexVolume extends Volume {
 			for (int z=0; z < zDim; z++){
 				int offsDst = z * yTexSize * 4;
 				for (int y=0; y < yDim; y++){
-					int offsSrc = y * xDim + xValue;
-					int c = fData[z][offsSrc];
+					int c = l.loadWithLUT(xValue, y, z);
+					int a = (c & 0xff000000) >> 24;
 					int r = (c & 0xff0000) >> 16;
 					int g = (c & 0xff00) >> 8;
 					int b = c & 0xff;
-					int a = Math.min(255, r + g + b);
 					dst[offsDst++] = (byte)r;
 					dst[offsDst++] = (byte)g;
 					dst[offsDst++] = (byte)b;
 					dst[offsDst++] = (byte)a;
-				}
-			}
-		}
-	}
-
-	/**
-	 * This class loads the specified channels from int data
-	 * This class should only be used if not all channels are
-	 * used. Otherwise, it's faster to use the IntLoader.
-	 */
-	private final class IntFromIntLoader extends Volume.IntFromIntLoader implements Loader {
-		IntFromIntLoader(ImagePlus imp, boolean[] channels) {
-			super(imp, channels);
-			xy = new byte[zDim][4 * xTexSize * yTexSize];
-			xz = new byte[yDim][4 * xTexSize * zTexSize];
-			yz = new byte[xDim][4 * yTexSize * zTexSize];
-		}
-
-		public void setNoCheckNoUpdate(int x, int y, int z, int v) {
-			super.setNoCheck(x, y, z, v);
-		}
-
-		public void setNoCheck(int x, int y, int z, int v) {
-			super.setNoCheck(x, y, z, v);
-			int a = (v & 0xff000000) >> 24;
-			int r = (v & 0xff0000) >> 16;
-			int g = (v & 0xff00) >> 8;
-			int b = (v & 0xff);
-
-			int i = 4 * (y * xTexSize + x);
-			xy[z][i++] = ch[0] ? (byte)r : 0;
-			xy[z][i++] = ch[1] ? (byte)g : 0;
-			xy[z][i++] = ch[2] ? (byte)b : 0;
-			xy[z][i++] = (byte)a;
-			xyComp[z].updateData(updater, x, y, 1, 1);
-
-			i = 4 * (z * xTexSize + x);
-			xz[y][i++] = ch[0] ? (byte)r : 0;
-			xz[y][i++] = ch[1] ? (byte)g : 0;
-			xz[y][i++] = ch[2] ? (byte)b : 0;
-			xz[y][i++] = (byte)a;
-			xzComp[y].updateData(updater, x, z, 1, 1);
-
-			i = 4 * (z * yTexSize + y);
-			yz[x][i++] = ch[0] ? (byte)r : 0;
-			yz[x][i++] = ch[1] ? (byte)g : 0;
-			yz[x][i++] = ch[2] ? (byte)b : 0;
-			yz[x][i++] = (byte)a;
-			yzComp[x].updateData(updater, y, z, 1, 1);
-		}
-
-		public void set(int x, int y, int z, int v) {
-			if(x >= 0 && x < xDim &&
-					y >= 0 && y < yDim && z >= 0 && z < zDim) {
-				setNoCheck(x, y, z, v);
-			}
-		}
-
-		public void loadZ(int zValue, byte[] dst) {
-			int[] src = fData[zValue];
-			for (int y=0; y < yDim; y++){
-				int offsSrc = y * xDim;
-				int offsDst = y * xTexSize * 4;
-				for (int x=0; x < xDim; x++){
-					int c = src[offsSrc + x];
-					int a = (c & 0xff000000) >> 24;
-					int r = (c & 0xff0000) >> 16;
-					int g = (c & 0xff00) >> 8;
-					int b = c & 0xff;
-					dst[offsDst++] = ch[0] ? (byte)r : 0;
-					dst[offsDst++] = ch[1] ? (byte)g : 0;
-					dst[offsDst++] = ch[2] ? (byte)b : 0;
-					dst[offsDst++] = (byte)a;
-				}
-			}
-		}
-
-		public void loadY(int yValue, byte[] dst)  {
-			for (int z=0; z < zDim; z++){
-				int[] src = fData[z];
-				int offsSrc = yValue * xDim;
-				int offsDst = z * xTexSize * 4;
-				for (int x=0; x < xDim; x++){
-					int c = src[offsSrc + x];
-					int a = (c & 0xff000000) >> 24;
-					int r = (c & 0xff0000) >> 16;
-					int g = (c & 0xff00) >> 8;
-					int b = c & 0xff;
-					dst[offsDst++] = ch[0] ? (byte)r : 0;
-					dst[offsDst++] = ch[1] ? (byte)g : 0;
-					dst[offsDst++] = ch[2] ? (byte)b : 0;
-					dst[offsDst++] = (byte)a;
-				}
-			}
-		}
-
-		public void loadX(int xValue, byte[] dst)  {
-			for (int z=0; z < zDim; z++){
-				int offsDst = z * yTexSize * 4;
-				for (int y=0; y < yDim; y++){
-					int offsSrc = y * xDim + xValue;
-					int c = fData[z][offsSrc];
-					int a = (c & 0xff000000) >> 24;
-					int r = (c & 0xff0000) >> 16;
-					int g = (c & 0xff00) >> 8;
-					int b = c & 0xff;
-					dst[offsDst++] = ch[0] ? (byte)r : 0;
-					dst[offsDst++] = ch[1] ? (byte)g : 0;
-					dst[offsDst++] = ch[2] ? (byte)b : 0;
-					dst[offsDst++] = (byte)a;
-				}
-			}
-		}
-	}
-
-	/**
-	 * This class loads from the specified channels an average byte from int
-	 * data.
-	 */
-	private final class ByteFromIntLoader extends Volume.ByteFromIntLoader implements Loader {
-		ByteFromIntLoader(ImagePlus imp, boolean[] channels) {
-			super(imp, channels);
-			xy = new byte[zDim][xTexSize * yTexSize];
-			xz = new byte[yDim][xTexSize * zTexSize];
-			yz = new byte[xDim][yTexSize * zTexSize];
-		}
-
-		public void setNoCheckNoUpdate(int x, int y, int z, int v) {
-			super.setNoCheck(x, y, z, v);
-		}
-
-		public void setNoCheck(int x, int y, int z, int v) {
-			super.setNoCheck(x, y, z, v);
-			int l = 0;
-			if(channels[0]) l += (v & 0xff0000) >> 16;
-			if(channels[1]) l += (v & 0xff00) >> 8;
-			if(channels[2]) l += (v & 0xff);
-			l /= usedCh;
-			xy[z][y * xTexSize + x] = (byte)l;
-			xz[y][z * xTexSize + x] = (byte)l;
-			yz[x][z * yTexSize + y] = (byte)l;
-			xyComp[z].updateData(updater, x, y, 1, 1);
-			xzComp[y].updateData(updater, x, z, 1, 1);
-			yzComp[x].updateData(updater, y, z, 1, 1);
-		}
-
-		public void set(int x, int y, int z, int v) {
-			if(x >= 0 && x < xDim &&
-					y >= 0 && y < yDim && z >= 0 && z < zDim) {
-				setNoCheck(x, y, z, v);
-			}
-		}
-
-		public void loadZ(int zValue, byte[] dst) {
-			int[] src = fdata[zValue];
-			for (int y=0; y < yDim; y++){
-				int offssrc = y * xDim;
-				int offsdst = y * xTexSize;
-				for(int x = 0; x < xDim; x++) {
-					int v = src[offssrc + x];
-					int n = 0;
-					if(channels[0]) n += (v&0xff0000)>>16;
-					if(channels[1]) n += (v&0xff00)>>8;
-					if(channels[2]) n += (v&0xff);
-					n /= usedCh;
-					dst[offsdst + x] = (byte)n;
-				}
-			}
-		}
-
-		public void loadY(int yValue, byte[] dst)  {
-			for (int z=0; z < zDim; z++){
-				int[] src = fdata[z];
-				int offssrc = yValue * xDim;
-				int offsdst = z * xTexSize;
-				for(int x = 0; x < xDim; x++) {
-					int v = src[offssrc + x];
-					int n = 0;
-					if(channels[0]) n += (v&0xff0000)>>16;
-					if(channels[1]) n += (v&0xff00)>>8;
-					if(channels[2]) n += (v&0xff);
-					n /= usedCh;
-					dst[offsdst + x] = (byte)n;
-				}
-			}
-		}
-
-		public void loadX(int xValue, byte[] dst)  {
-			for (int z=0; z < zDim; z++){
-				int[] src = fdata[z];
-				int offsdst = z * yTexSize;
-				for (int y=0; y < yDim; y++){
-					int offssrc = y * xDim + xValue;
-					int v = src[offssrc];
-					int n = 0;
-					if(channels[0]) n += (v&0xff0000)>>16;
-					if(channels[1]) n += (v&0xff00)>>8;
-					if(channels[2]) n += (v&0xff);
-					n /= usedCh;
-					dst[offsdst + y] = (byte)n;
 				}
 			}
 		}
 	}
 }
+

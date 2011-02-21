@@ -2,27 +2,30 @@ package mpicbg.spim.registration.bead;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.media.j3d.Transform3D;
 import javax.vecmath.Vector3d;
 
-import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
+import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.IllDefinedDataPointsException;
+import mpicbg.models.Model;
 import mpicbg.models.NotEnoughDataPointsException;
-import mpicbg.models.PointMatch;
+import mpicbg.pointdescriptor.model.RigidModel3D;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
+import mpicbg.spim.mpicbg.PointMatchGeneric;
 import mpicbg.spim.mpicbg.TileConfigurationSPIM;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
-import mpicbg.spim.registration.bead.descriptor.CorrespondenceExtraction;
-import mpicbg.spim.registration.bead.descriptor.LocalCoordinateCorrespondenceExtraction;
 import mpicbg.spim.registration.bead.error.GlobalErrorStatistics;
+import mpicbg.spim.registration.detection.DetectionRegistration;
+import mpicbg.spim.registration.detection.descriptor.CoordSystem3d;
+import mpicbg.spim.registration.detection.descriptor.CorrespondenceExtraction;
+import mpicbg.util.TransformUtils;
 
 public class BeadRegistration
 {
@@ -154,7 +157,9 @@ public class BeadRegistration
                 public void run()
                 {
                     final int myNumber = ai.getAndIncrement();
-                    final CorrespondenceExtraction ce = new LocalCoordinateCorrespondenceExtraction( conf, LocalCoordinateCorrespondenceExtraction.DONOT_NORMALIZE, debugLevel );
+                    final CorrespondenceExtraction<Bead> ce = new CoordSystem3d<Bead>();
+                    //final CorrespondenceExtraction<Bead> ce = new Quaternion3d<Bead>();
+                    //final CorrespondenceExtraction<Bead> ce = new CoordSystemSecure3d<Bead>( 800 );
                     
                     for ( int i = 0; i < comparePairs.size(); i++ )
                     	if ( i%numThreads == myNumber )
@@ -167,20 +172,42 @@ public class BeadRegistration
                     		if ( debugLevel <= ViewStructure.DEBUG_ALL )
                     			IOFunctions.println( viewA.getName() + "<->" + viewB.getName() +  ": Starting Correspondence Extraction, " +  viewA.getBeadStructure().getBeadList().size() + " <-> " + viewB.getBeadStructure().getBeadList().size() + " detection comparisons.");
 
-                    		final ArrayList<BeadCorrespondence> candidates = ce.extractCorrespondenceCandidates( viewA, viewB, conf.differenceThreshold, conf.ratioOfDistance, conf.useAssociatedBeads );
+                    		final ArrayList< PointMatchGeneric<Bead> > candidates = 
+                    			ce.extractCorrespondenceCandidates( viewA.getBeadStructure().getBeadList(), viewB.getBeadStructure().getBeadList(), conf.differenceThreshold, conf.ratioOfDistance, conf.useAssociatedBeads );
                     		
-                    		// remove inconsistent candidates
-                    		removeInconsistentCorrespondences( candidates, viewA, viewB, debugLevel );
+                    		// compute ransac and remove inconsistent candidates
+                    		final ArrayList< PointMatchGeneric<Bead> > correspondences = new ArrayList<PointMatchGeneric<Bead>>();
+                    		final Model<?> model = viewA.getTile().getModel().copy();                    		
                     		
-                    		// confirm them if wanted
-                    		final ArrayList< PointMatch > correspondences;
-                    		if ( conf.useRANSAC )
-                    			correspondences = getCorrespondencesRANSAC( candidates, viewA, viewB, errorStatistics, conf.numIterations, conf.max_epsilon, conf.min_inlier_ratio, 3, debugLevel );
-                    		else
-                    			correspondences = getCorrespondences( candidates, viewA, viewB, 3, debugLevel );
+                    		String result = DetectionRegistration.computeRANSAC( candidates, correspondences, model, conf.max_epsilon, conf.min_inlier_ratio, 3, conf.numIterations );
+                    		if ( debugLevel <= ViewStructure.DEBUG_MAIN )
+                    			IOFunctions.println( viewA.getName() + "<->" + viewB.getName() +  ": " + result );                    		
 
+                    		// update the error statistics
+                    		synchronized ( errorStatistics ) { errorStatistics.setNumCandidates( errorStatistics.getNumCandidates() + candidates.size() ); }
+                    		if ( correspondences.size() == 0 )
+                    		{
+                    			viewA.getViewErrorStatistics().resetViewSpecificError( viewB );
+                    		}
+                    		else
+                    		{
+                    			synchronized ( errorStatistics )
+                    			{
+                    				errorStatistics.setNumCorrespondences( errorStatistics.getNumCorrespondences() + correspondences.size() );
+                    				errorStatistics.setAbsoluteLocalAlignmentError( errorStatistics.getAbsoluteLocalAlignmentError() + model.getCost() );
+                    				errorStatistics.setAlignmentErrorCount( errorStatistics.getAlignmentErrorCount() + 1 );								
+                    			}
+                    			
+                    			// this does not has to be synchronized as there is always one pair only which is unique
+                    			if ( viewA.getViewStructure() == viewB.getViewStructure() )
+                    			{
+                    				viewA.getViewErrorStatistics().setViewSpecificError( viewB, model.getCost() );
+                    				viewB.getViewErrorStatistics().setViewSpecificError( viewA, model.getCost() );
+                    			}                    			
+                    		}
+                    		
                     		// add them to the tiles
-                    		addPointMatches( correspondences, viewA, viewB );	                    			                    		
+                    		DetectionRegistration.addPointMatches( correspondences, viewA.getTile(), viewB.getTile() );	                    			                    		
                     	}
                 }
             });
@@ -279,11 +306,6 @@ public class BeadRegistration
 		for ( int viewIndexA = 0; viewIndexA < views.size() - 1; viewIndexA++ )
     		for ( int viewIndexB = viewIndexA + 1; viewIndexB < views.size(); viewIndexB++ )
     				comparePairs.add( new int[]{viewIndexA, viewIndexB} );
-				
-		// if a rigid global optimization is wanted
-		//final ArrayList<Tile<RigidModel3D>> rigidTileList = new ArrayList<Tile<RigidModel3D>>();
-		//for ( ViewDataBeads view : viewStructure.getViews() )
-		//	rigidTileList.add( new Tile<RigidModel3D>( new RigidModel3D() ) );
 		
 		final AtomicInteger ai = new AtomicInteger(0);					
         Thread[] threads = SimpleMultiThreading.newThreads();
@@ -294,9 +316,10 @@ public class BeadRegistration
             {
                 public void run()
                 {
-                    final int myNumber = ai.getAndIncrement();
-                    //final CorrespondenceExtraction ce = new QuaternionCorrespondenceExtraction( conf );
-                    final CorrespondenceExtraction ce = new LocalCoordinateCorrespondenceExtraction( conf, LocalCoordinateCorrespondenceExtraction.DONOT_NORMALIZE, viewStructure.getDebugLevel() );
+                	final int myNumber = ai.getAndIncrement();
+                    final CorrespondenceExtraction<Bead> ce = new CoordSystem3d<Bead>();
+                    //final CorrespondenceExtraction<Bead> ce = new ModelBased3d<Bead>( new SubsetMatcher( 3, 4 ) );
+                    //final CorrespondenceExtraction<Bead> ce = new CoordSystemSecure3d<Bead>( 2 );
                     
                     for ( int i = 0; i < comparePairs.size(); i++ )
                     	if ( i%numThreads == myNumber )
@@ -309,22 +332,42 @@ public class BeadRegistration
                     		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ALL )
                     			IOFunctions.println( viewA.getName() + "<->" + viewB.getName() +  ": Starting Correspondence Extraction, " +  viewA.getBeadStructure().getBeadList().size() + " <-> " + viewB.getBeadStructure().getBeadList().size() + " detection comparisons.");
                     		
-                    		final ArrayList<BeadCorrespondence> candidates = ce.extractCorrespondenceCandidates( viewA, viewB, conf.differenceThreshold, conf.ratioOfDistance, conf.useAssociatedBeads );
+                    		final ArrayList< PointMatchGeneric<Bead> > candidates = 
+                    			ce.extractCorrespondenceCandidates( viewA.getBeadStructure().getBeadList(), viewB.getBeadStructure().getBeadList(), conf.differenceThreshold, conf.ratioOfDistance, conf.useAssociatedBeads );
                     		
-                    		// remove inconsistent candidates
-                    		removeInconsistentCorrespondences( candidates, viewA, viewB, viewStructure.getDebugLevel() );
+                    		// compute ransac and remove inconsistent candidates
+                    		final ArrayList< PointMatchGeneric<Bead> > correspondences = new ArrayList<PointMatchGeneric<Bead>>();
+                    		final Model<?> model = viewA.getTile().getModel().copy();                    		
                     		
-                    		// confirm them if wanted
-                    		final ArrayList< PointMatch > correspondences;
-                    		if ( conf.useRANSAC )
-                    			correspondences = getCorrespondencesRANSAC( candidates, viewA, viewB, viewStructure.getGlobalErrorStatistics(), conf.numIterations, conf.max_epsilon, conf.min_inlier_ratio, 3, viewStructure.getDebugLevel() );
-                    		else
-                    			correspondences = getCorrespondences( candidates, viewA, viewB, 3, viewStructure.getDebugLevel() );
+                    		String result = DetectionRegistration.computeRANSAC( candidates, correspondences, model, conf.max_epsilon, conf.min_inlier_ratio, 3, conf.numIterations );
+                    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+                    			IOFunctions.println( viewA.getName() + "<->" + viewB.getName() +  ": " + result );                    		
 
+                    		// update the error statistics
+                    		synchronized ( errorStatistics ) { errorStatistics.setNumCandidates( errorStatistics.getNumCandidates() + candidates.size() ); }
+                    		if ( correspondences.size() == 0 )
+                    		{
+                    			viewA.getViewErrorStatistics().resetViewSpecificError( viewB );
+                    		}
+                    		else
+                    		{
+                    			synchronized ( errorStatistics )
+                    			{
+                    				errorStatistics.setNumCorrespondences( errorStatistics.getNumCorrespondences() + correspondences.size() );
+                    				errorStatistics.setAbsoluteLocalAlignmentError( errorStatistics.getAbsoluteLocalAlignmentError() + model.getCost() );
+                    				errorStatistics.setAlignmentErrorCount( errorStatistics.getAlignmentErrorCount() + 1 );								
+                    			}
+                    			
+                    			// this does not has to be synchronized as there is always one pair only which is unique
+                    			if ( viewA.getViewStructure() == viewB.getViewStructure() )
+                    			{
+                    				viewA.getViewErrorStatistics().setViewSpecificError( viewB, model.getCost() );
+                    				viewB.getViewErrorStatistics().setViewSpecificError( viewA, model.getCost() );
+                    			}                    			
+                    		}
+                    		
                     		// add them to the tiles
-                    		addPointMatches( correspondences, viewA, viewB );	    
-                    		//Rigid:
-                    		//NucleiRegistration.addPointMatches( correspondences, rigidTileList.get( pair[0] ), rigidTileList.get( pair[1] ) );
+                    		DetectionRegistration.addPointMatches( correspondences, viewA.getTile(), viewB.getTile() );	    
                     	}
                 }
             });
@@ -471,17 +514,25 @@ public class BeadRegistration
 		
 		for ( final ViewDataBeads view : views )
 		{
-			if (view.getTile().getConnectedTiles().size() > 0)
+			if ( view.getTile().getConnectedTiles().size() > 0 )
 			{				
 				if ( debugLevel <= ViewStructure.DEBUG_MAIN )
 				{
 					IOFunctions.println( view + ":");
 					IOFunctions.println( "Transformation:\n"+ view.getTile().getModel() );	
 					
-					Transform3D t = MathLib.getTransform3D( view.getTile().getModel() );
+					Transform3D t = TransformUtils.getTransform3D1( (AbstractAffineModel3D<?>)view.getTile().getModel() );
 					Vector3d s = new Vector3d();
 					t.getScale( s );
-					System.out.println( s );
+					System.out.println( "Scaling: " + s );
+					
+					// TODO: Rigidmodel
+					/*
+					if ( view.getTile().getModel() instanceof RigidModel3D )
+					{
+						
+					}
+					*/
 				}
 			}
 			else
@@ -499,24 +550,42 @@ public class BeadRegistration
 		return tc;
 	}
 
-	public static void concatenateAxialScaling( final AffineModel3D model, final double zStretching )
+	public static void concatenateAxialScaling( final AbstractAffineModel3D model, final double zStretching )
 	{
 		if ( model != null )
 		{
-			final AffineModel3D tmpModel = new AffineModel3D();				
-			final float z = (float)zStretching;
-			
-			tmpModel.set( 1f, 0f, 0f, 0f, 
-			              0f, 1f, 0f, 0f,
-			              0f, 0f, z,  0f );
-			
-			model.concatenate( tmpModel );
+			if ( model instanceof AffineModel3D )
+			{
+				final AffineModel3D tmpModel = new AffineModel3D();				
+				final float z = (float)zStretching;
+				
+				tmpModel.set( 1f, 0f, 0f, 0f, 
+				              0f, 1f, 0f, 0f,
+				              0f, 0f, z,  0f );
+				
+				((AffineModel3D)model).concatenate( tmpModel );
+			}
+			else if ( model instanceof RigidModel3D )
+			{
+				final RigidModel3D tmpModel = new RigidModel3D();				
+				final float z = (float)zStretching;
+				
+				final Transform3D t = new Transform3D();
+				t.setScale( new Vector3d( 1, 1, z ) );				
+				tmpModel.set( t );
+				
+				((RigidModel3D)model).concatenate( tmpModel );				
+			}
+			else
+			{
+				System.out.println( "Cannot concatenate Axial Scaling, unknown model!" );
+			}
 		}		
 	}
 
 	public static void concatenateAxialScaling( final ViewDataBeads view, final int debugLevel )
 	{
-		final AffineModel3D m = view.getTile().getModel();
+		final AbstractAffineModel3D<?> m = (AbstractAffineModel3D<?>)view.getTile().getModel();
 		
 		if ( m != null )
 		{
@@ -548,231 +617,5 @@ public class BeadRegistration
 		//
 		for ( final ViewDataBeads view : views)
 			concatenateAxialScaling( view, debugLevel );		
-	}
-	
-	
-	//
-	// Remove possible inconsistent correspondences 
-	// (where one bead in viewB corresponds to more than one bead in viewA)
-	//
-	public static void removeInconsistentCorrespondences( ArrayList<BeadCorrespondence> correspondences, final ViewDataBeads viewA, final ViewDataBeads viewB, final int debugLevel )
-	{
-		ArrayList<Integer> inconsistentCorrespondences = new ArrayList<Integer>();
-		
-		for ( int i = 0; i < correspondences.size(); i++ )
-		{
-			Bead beadViewB = correspondences.get( i ).getBeadB();
-			ArrayList<Integer> inconsistent = BeadCorrespondence.getOccurencesB( beadViewB, correspondences );
-			
-			if ( inconsistent.size() > 1 )
-			{
-				for ( int index : inconsistent )
-					if ( !inconsistentCorrespondences.contains( index ) )						
-						inconsistentCorrespondences.add( index );
-			}
-		}
-
-		if ( inconsistentCorrespondences.size() > 0 )
-		{
-			Collections.sort( inconsistentCorrespondences );
-			
-			for ( int i = inconsistentCorrespondences.size() - 1; i >= 0; i-- )
-				correspondences.remove( (int)inconsistentCorrespondences.get(i) );
-		}		
-
-		if ( debugLevel <= ViewStructure.DEBUG_ALL )
-			IOFunctions.println( viewA + "<->" + viewB +  ": " + correspondences.size() + " correspondences remaining.");
-	}
-	
-	public static ArrayList< PointMatch > getCorrespondencesRANSAC( final ArrayList<BeadCorrespondence> correspondenceCandidates, 
-			 														final ViewDataBeads viewA, final ViewDataBeads viewB, 
-			 														final GlobalErrorStatistics errorStatistics,
-	                                                                final int numIterations, final float maxEpsilon, final float minInlierRatio, 
-	                                                                final int minNumberInlierFactor, final int debugLevel )
-	{
-		final int numCorrespondences = correspondenceCandidates.size();
-		final int minNumCorrespondences = Math.max( viewA.getTile().getModel().getMinNumMatches(), viewB.getTile().getModel().getMinNumMatches() ) * minNumberInlierFactor;
-
-		if ( debugLevel <= ViewStructure.DEBUG_ALL )
-			IOFunctions.println( viewA.getName() + "<->" + viewB.getName() +  ": Starting RANSAC, correspondences = " +  numCorrespondences );
-
-		/**
-		 * The ArrayList that stores the inliers after RANSAC, contains PointMatches of CLONED beads
-		 * so that MultiThreading is possible
-		 */
-		final ArrayList< PointMatch > inliers = new ArrayList< PointMatch >();
-				
-		// if there are not enough correspondences for the used model
-		if ( numCorrespondences < minNumCorrespondences )
-		{
-			viewA.getViewErrorStatistics().resetViewSpecificError( viewB );						
-			
-			if ( debugLevel <= ViewStructure.DEBUG_MAIN )
-				IOFunctions.println( viewA.getName() + "<->" + viewB.getName() + ": Not enough correspondences found " + numCorrespondences + ", should be at least " + minNumCorrespondences );
-			
-			return inliers;
-		}
-
-		/**
-		 * The ArrayList that stores the candiates for RANSAC, contains PointMatches of CLONED beads
-		 * so that MultiThreading is possible
-		 */
-		final ArrayList< PointMatch > candidates = new ArrayList< PointMatch >();
-
-		// clone the beads for the RANSAC as we are working multithreaded and they will be modified
-		for ( final BeadCorrespondence correspondence : correspondenceCandidates )
-		{
-			final Bead beadViewA = correspondence.getBeadA().clone();
-			final Bead beadViewB = correspondence.getBeadB().clone();
-			final float weight = correspondence.getWeight(); 
-
-			candidates.add( new PointMatch( beadViewA, beadViewB, weight ) );
-		}
-		
-		// update the overall number of candidates
-		synchronized ( errorStatistics ) { errorStatistics.setNumCandidates( errorStatistics.getNumCandidates() + candidates.size() ); }		
-				
-		/**
-		 * The model that RANSAC will use to find the inliers
-		 */
-		final AffineModel3D m = new AffineModel3D();
-		//RigidModel3D m = new RigidModel3D();
-		
-		boolean modelFound;
-		
-		try
-		{
-			/*modelFound = m.ransac(
-					candidates,
-					inliers,
-					conf.numIterations,
-					conf.max_epsilon,
-					conf.min_inlier_ratio );*/
-		
-			modelFound = m.filterRansac(
-					candidates,
-					inliers,
-					numIterations,
-					maxEpsilon, minInlierRatio );
-		}
-		catch ( NotEnoughDataPointsException e )
-		{
-			if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
-			{
-				IOFunctions.println( viewA.getName() + "<->" + viewB.getName() + ": " + e );
-				e.printStackTrace();
-			}
-			
-			modelFound = false;
-		}
-		
-		// we found a model and it still has enough correspondences
-		if ( modelFound && inliers.size() >= minNumCorrespondences )
-		{
-			if ( debugLevel <= ViewStructure.DEBUG_MAIN )
-			{
-				final float ratio = ((float)inliers.size() / (float)candidates.size());
-				IOFunctions.println( viewA.getName() + "<->" + viewB.getName() + ": Remaining inliers after RANSAC: " + inliers.size() + " of " + candidates.size() + " (" + nf.format(ratio) + ") with average error " + m.getCost() );
-			}
-			
-			/**
-			 * The ArrayList that stores the inliers after RANSAC, contains PointMatches of the ORIGINAL bead instances for the global optimization later
-			 */
-			final ArrayList< PointMatch > inliersParentBeads = new ArrayList< PointMatch >();
-			
-			for ( final PointMatch pm : inliers )
-			{
-				// we are working multithreaded here
-				// THESE ARE THE CLONED BEADS, that's why we need their parents
-				final Bead beadViewA = ( (Bead)pm.getP1() ).getParent();
-				final Bead beadViewB = ( (Bead)pm.getP2() ).getParent();
-				final float weight = pm.getWeight();
-
-				// we are working multithreaded here, so avoid collisions while adding correspondences to the ArrayLists
-				synchronized ( beadViewA ) { beadViewA.addRANSACCorrespondence( beadViewB, weight ); }
-				synchronized ( beadViewB ) { beadViewB.addRANSACCorrespondence( beadViewA, weight ); }
-				
-				// reset the beads in the inliers arraylist to the original instances ( remove the clones )
-				final PointMatch pmParentBeads = new PointMatch( beadViewA, beadViewB, weight );
-				inliersParentBeads.add( pmParentBeads );
-			}
-						
-			// we are working multithreaded here, so avoid collisions while setting the error statistics
-			synchronized ( errorStatistics )
-			{
-				errorStatistics.setNumCorrespondences( errorStatistics.getNumCorrespondences() + inliers.size() );
-				errorStatistics.setAbsoluteLocalAlignmentError( errorStatistics.getAbsoluteLocalAlignmentError() + m.getCost() );
-				errorStatistics.setAlignmentErrorCount( errorStatistics.getAlignmentErrorCount() + 1 );								
-			}
-			
-			// this does not has to be synchronized as there is always one pair only which is unique
-			if ( viewA.getViewStructure() == viewB.getViewStructure() )
-			{
-				viewA.getViewErrorStatistics().setViewSpecificError( viewB, m.getCost() );
-				viewB.getViewErrorStatistics().setViewSpecificError( viewA, m.getCost() );
-			}
-			
-			return inliersParentBeads;
-			
-		}
-		else
-		{
-			if ( debugLevel <= ViewStructure.DEBUG_MAIN )
-			{
-				if ( modelFound )					
-					IOFunctions.println( viewA.getName() + "<->" + viewB.getName() + ": Model found but not enough remaining inliers (" + inliers.size() + "/" + minNumCorrespondences + ") after RANSAC of " + candidates.size() );
-				else
-					IOFunctions.println( viewA.getName() + "<->" + viewB.getName() + ": NO Model found after RANSAC of " + candidates.size() );
-			}
-			
-			inliers.clear();
-			
-			viewA.getViewErrorStatistics().resetViewSpecificError( viewB );
-			
-			return inliers;
-		}					
-	}
-	
-	public static ArrayList< PointMatch > getCorrespondences( final ArrayList<BeadCorrespondence> correspondences, final ViewDataBeads viewA, final ViewDataBeads viewB, 
-	                                                                final int minNumberInlierFactor, final int debugLevel )
-	{
-		final int minNumCorrespondences = Math.max( viewA.getTile().getModel().getMinNumMatches(), viewB.getTile().getModel().getMinNumMatches() ) * minNumberInlierFactor;
-		final int numCorrespondences = correspondences.size(); 
-		
-		final ArrayList< PointMatch > inliers = new ArrayList< PointMatch >();
-
-		// if enough beads for the model are found
-		if ( numCorrespondences >= minNumCorrespondences )
-		{			
-			for ( final BeadCorrespondence correspondence : correspondences )
-			{
-				final Bead beadViewA = correspondence.getBeadA();
-				final Bead beadViewB = correspondence.getBeadB();
-				final float weight = correspondence.getWeight(); 
-				
-				inliers.add( new PointMatch( beadViewA, beadViewB, weight ) );				
-			}
-			
-			if ( debugLevel <= ViewStructure.DEBUG_MAIN )
-				IOFunctions.println( viewA + "<->" + viewB + ": Added " + numCorrespondences + " correspondence candiates as true correspondences." );
-		}
-		else
-		{
-			if ( debugLevel <= ViewStructure.DEBUG_MAIN )
-				IOFunctions.println( viewA + "<->" + viewB + ": Not enough correspondences available " + numCorrespondences + ", should be at least " + minNumCorrespondences );			
-		}
-		
-		return inliers;
-	}
-	
-	public synchronized static void addPointMatches( final ArrayList<PointMatch> correspondences, final ViewDataBeads viewA, final ViewDataBeads viewB )
-	{		
-		if ( correspondences.size() > 0 )
-		{
-			viewA.getTile().addMatches( correspondences );							
-			viewB.getTile().addMatches( PointMatch.flip( correspondences ) );
-			viewA.getTile().addConnectedTile( viewB.getTile() );
-			viewB.getTile().addConnectedTile( viewA.getTile() );
-		}
-	}  
+	}	
 }

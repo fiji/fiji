@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010, 2011 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Simple Neurite Tracer".
@@ -44,7 +44,6 @@ import java.io.*;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import client.ArchiveClient;
@@ -70,9 +69,9 @@ import features.TubenessProcessor;
 */
 
 public class SimpleNeuriteTracer extends ThreePanes
-	implements SearchProgressCallback, FillerProgressCallback, GaussianGenerationCallback {
+	implements SearchProgressCallback, GaussianGenerationCallback, PathAndFillListener {
 
-	public static final String PLUGIN_VERSION = "1.9.0";
+	public static final String PLUGIN_VERSION = "2.0.0";
 	protected static final boolean verbose = false;
 
 	protected static final int DISPLAY_PATHS_SURFACE = 1;
@@ -655,7 +654,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 	   image, but with values set to either 255 (if there's a point
 	   on a path there) or 0 */
 
-	synchronized public void makePathVolume( ) {
+	synchronized public ImagePlus makePathVolume( ) {
 
 		byte [][] snapshot_data = new byte[depth][];
 
@@ -672,8 +671,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 			newStack.addSlice( null, thisSlice );
 		}
 
-		ImagePlus ip = new ImagePlus( "Paths rendered in a Stack", newStack );
-		ip.show( );
+		return new ImagePlus( "Paths rendered in a Stack", newStack );
 	}
 
 	/* If non-null, holds a reference to the currently searching thread: */
@@ -1120,10 +1118,6 @@ public class SimpleNeuriteTracer extends ThreePanes
 		}
 	}
 
-	public void maximumDistanceCompletelyExplored( SearchThread source, float f ) {
-		// Unused
-	}
-
 	public double getMinimumSeparation() {
 		return Math.min(Math.abs(x_spacing),Math.min(Math.abs(y_spacing),Math.abs(z_spacing)));
 	}
@@ -1178,7 +1172,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 	}
 
 	// This is the implementation of GaussianGenerationCallback
-
+	@Override
 	public void proportionDone( double proportion ) {
 		if( proportion < 0 ) {
 			hessianEnabled = false;
@@ -1324,6 +1318,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 		update3DViewerContents();
 	}
 
+	/* FIXME: this can be very slow ... Perhaps do it in a
+	   separate thread? */
 	public void setColorImage( ImagePlus newColorImage ) {
 		colorImage = newColorImage;
 		update3DViewerContents();
@@ -1341,7 +1337,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 	}
 
 	public void selectPath( Path p, boolean addToExistingSelection ) {
-		HashSet pathsToSelect = new HashSet();
+		HashSet<Path> pathsToSelect = new HashSet<Path>();
 		if( p.isFittedVersionOfAnotherPath() )
 			pathsToSelect.add(p.fittedVersionOf);
 		else
@@ -1359,5 +1355,26 @@ public class SimpleNeuriteTracer extends ThreePanes
 		throw new RuntimeException("getSelectedPaths was called when resultsDialog.pw was null");
 	}
 
+	@Override
+	public void setPathList( String [] newList, Path justAdded, boolean expandAll ) { }
+
+	@Override
+	public void setFillList( String [] newList ) { }
+
+	// Note that rather unexpectedly the p.setSelcted calls make sure that
+	// the colour of the path in the 3D viewer is right...  (FIXME)
+	@Override
+	public void setSelectedPaths( HashSet<Path> selectedPathsSet, Object source ) {
+		if( source == this )
+			return;
+		for( int i = 0; i < pathAndFillManager.size(); ++i ) {
+			Path p = pathAndFillManager.getPath(i);
+			if( selectedPathsSet.contains(p) ) {
+				p.setSelected( true );
+			} else {
+				p.setSelected( false );
+			}
+		}
+	}
 }
 

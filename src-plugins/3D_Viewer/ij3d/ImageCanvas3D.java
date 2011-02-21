@@ -31,7 +31,7 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 
 	private RoiImagePlus roiImagePlus;
 	private ImageCanvas roiImageCanvas;
-	private Map<Integer, Long> pressed, released; 
+	private Map<Integer, Long> pressed, released;
 	private Background background;
 	private UIAdapter ui;
 	final private ExecutorService exec = Executors.newSingleThreadExecutor();
@@ -58,7 +58,7 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 		this.ui = uia;
 		setPreferredSize(new Dimension(width, height));
 		ByteProcessor ip = new ByteProcessor(width, height);
-		roiImagePlus = new RoiImagePlus("RoiImage", ip); 
+		roiImagePlus = new RoiImagePlus("RoiImage", ip);
 		roiImageCanvas = new ImageCanvas(roiImagePlus) {
 			/* prevent ROI to enlarge/move on mouse click */
 			public void mousePressed(MouseEvent e) {
@@ -118,14 +118,13 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 			public void componentResized(ComponentEvent e) {
 				exec.submit(new Runnable() { public void run() {
 					ByteProcessor ip = new ByteProcessor(
-									getWidth(), 
+									getWidth(),
 									getHeight());
 					roiImagePlus.setProcessor("RoiImagePlus", ip);
 					render();
 				}});
 			}
 		});
-		addKeyListener(this);
 	}
 
 	public Roi getRoi() {
@@ -140,10 +139,12 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 
 	/*
 	 * Needed for the isKeyDown() method. Problem:
-	 * keyPressed() and keyReleased is fired periodically, 
+	 * keyPressed() and keyReleased is fired periodically,
 	 * dependent on the operating system preferences,
 	 * even if the key is hold down.
 	 */
+	public void keyTyped(KeyEvent e) {}
+
 	public synchronized void keyPressed(KeyEvent e) {
 		long when = e.getWhen();
 		pressed.put(e.getKeyCode(), when);
@@ -169,8 +170,6 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 		return p >= r || System.currentTimeMillis() - r < 100;
 	}
 
-	public void keyTyped(KeyEvent e) {}
-
 	public void postRender() {
 		J3DGraphics2D g3d = getGraphics2D();
 		Roi roi = roiImagePlus.getRoi();
@@ -179,5 +178,5 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 		}
 		g3d.flush(true);
 	}
-} 
+}
 
