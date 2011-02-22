@@ -43,8 +43,9 @@
 
 import ij.IJ;
 import ij.IJEventListener;
+import ij.ImageListener;
 import ij.ImagePlus;
-import ij.Macro;
+import ij.Prefs;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.gui.ImageRoi;
@@ -53,6 +54,7 @@ import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.gui.TextRoi;
 import ij.gui.Toolbar;
+import ij.measure.Calibration;
 import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
 import ij.plugin.frame.ColorPicker;
@@ -60,9 +62,6 @@ import ij.plugin.frame.Fonts;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-import ij.ImageListener;
-import ij.measure.Calibration;
-import ij.Prefs;
 
 import java.awt.AWTEvent;
 import java.awt.Button;
@@ -77,11 +76,9 @@ import java.awt.Label;
 import java.awt.Panel;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.TextArea;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.text.DateFormat;
@@ -157,7 +154,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 * actual processing
 	 */
 	protected boolean preview = true;
-	// the current state of the preview checkbox
+	// the current state of the preview check box
 	protected boolean previewCheckState = false;
 	// the current frame
 	protected int frame;
@@ -186,7 +183,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	protected final AbstractStampFormat[] timeFormats = {new DecimalLabelFormat(),
 		new DigitalLabelFormat(), new CustomLabelFormat()};
 
-	// the availble z-stack formats
+	// the available z-stack formats
 	protected final AbstractStampFormat[] zFormats = {
 		new DecimalLabelFormat( new String[] {"pixel", "pm", "Å",
 			"nm", "um", "mm", "cm", "m", "km", "Mm",
@@ -194,7 +191,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			false),
 		new CustomLabelFormat()};
 
-	// the availble spectral formats
+	// the available spectral formats
 	protected final AbstractStampFormat[] spectralFormats = {
 		new DecimalLabelFormat( new String[] {"Hz", "pm⁻¹", "Å⁻¹",
 			"um⁻¹", "mm⁻¹", "cm⁻¹", "m⁻¹", "km⁻¹", "Mm⁻¹",
@@ -328,6 +325,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		 */
 		generalSettingsContainer = createContainerPanel(70, "General Settings");
 
+
 		//add combobox for stack type
 		String[] stacks = convertStackTypesToStrings(stackTypes);
 		Panel stackTypePanel = createComboBoxPanel( "Stack_Type", stacks, stackType, 100, 180);
@@ -338,15 +336,15 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		/*
 		 * Units formatting panel
 		 */
-		unitsFormattingContainer = createContainerPanel(100, "Units_Formatting");
+		unitsFormattingContainer = createContainerPanel(100, "Units Formatting");
 
-		// add combobox for label format
+		// add combo box for label format
 		Panel pLabelFormat = createComboBoxPanel("Label_Format",
 			convertFormatsToStrings(selectedStackType.getSupportedFormats()), format);
 		formatsComboBox = (Choice) gd.getChoices().lastElement();
 		pLabelFormat.setLocation(left, 30);
 
-		// add combobox for label unit
+		// add combo box for label unit
 		labelUnitsPanel = createComboBoxPanel("Label_Unit",
 			selectedFormat.getAllowedFormatUnits(), unitIndex);
 		labelUnitsComboBox = (Choice) gd.getChoices().lastElement();
@@ -359,7 +357,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 
 		// add Custom Format panel
 		customLabelFormatPanel = createTextFieldPanel("Custom_Format", customFormat);
-		customLabelFormatPanel.setLocation(300, 30);
+		customLabelFormatPanel.setLocation(280, 30);
 
 		// add Decimal Places panel
 		decimalPlacesPanel = createNumericFieldPanel("Decimal_Places", decimalPlaces, 0);
@@ -415,7 +413,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		locationYTextField = (TextField) gd.getNumericFields().lastElement();
 		pLocationY.setLocation(120, 30);
 
-		// add combobox for location presets
+		// add combo box for location presets
 		Panel pLocationPresets = createComboBoxPanel( "Location_Presets", locations, locationPreset, 110, 130);
 		locationPresetsComboBox = (Choice) gd.getChoices().lastElement();
 		pLocationPresets.setLocation(240, 30);
@@ -625,13 +623,13 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 */
 	protected Panel createContainerPanel(int height, String label, boolean border){
 		Panel panel;
-        // create a bordered banel if needed
+		// create a bordered panel if needed
 		if (border) {
 			panel = new BorderPanel(label, null);
 		} else {
-            panel = new Panel(null);
-        }
-        // set the wanted height of the panel
+			panel = new Panel(null);
+		}
+		// set the wanted height of the panel
 		panel.setPreferredSize(new Dimension(490, height));
 
 		return panel;
@@ -785,10 +783,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	}
 
 	/**
-	 * Updates the preview.
-	 *
-	 * @param dialog     are these params still right?
-	 * @param e
+	 * Updates the label preview.
 	 */
 	protected void updatePreview() {
 		if (gd != null && preview){
@@ -999,7 +994,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 * Method to take the meta data units from the calibration in the imp
 	 * and give it to the required member variables and drop down list
 	 * and custom suffix field. Tries to find the units test from the read
-	 * metadata in the list of available units for that stack type,
+	 * meta data in the list of available units for that stack type,
 	 * and uses that list entry if it finds it, but if its not in the list
 	 * then use that unit text in the custom suffix field.
 	 */
@@ -1258,7 +1253,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 * A class representing a supported label format
 	 * It relates supported format units/suffixes to a format
 	 * name. Besides that it determines if a custom suffix
-	 * should be avaialble to the user.
+	 * should be available to the user.
 	 */
 	protected abstract class AbstractStampFormat {
 		// an array of all the supported units for this format
@@ -1308,7 +1303,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		 * should be the longest string the label will be. we should use
 		 * this in maxWidth method and for the preview of the label used to
 		 * be: maxWidth = ip.getStringWidth(decimalString(start +
-		 * interval*imp.getStackSize())); but should use last not stacksize,
+		 * interval*imp.getStackSize())); but should use last not stack size,
 		 * since no label is made for slices after last? It also needs to
 		 * calculate maxWidth for both digital and decimal label formats:
 		 *

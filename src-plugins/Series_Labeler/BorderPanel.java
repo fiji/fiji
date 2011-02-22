@@ -1,4 +1,3 @@
-import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.LayoutManager;
@@ -13,24 +12,36 @@ public class BorderPanel extends Panel {
      */
     protected static final Insets insets = new Insets(10,10,10,10);
 
-    // an optional tex message to display at the top
+    // an optional text message to display at the top
     protected String label;
 
+    /**
+     * Creates a new BorderPanel without label and without
+     * layout manager.
+     */
     public BorderPanel() {
         this("", null);
     }
 
+    /**
+     * Creates a new BorderPanel with the given label and
+     * layout manager.
+     */
     public BorderPanel(String label, LayoutManager layoutManager) {
         super(layoutManager);
         this.label = label;
     }
 
-    // return the insets object of the border panel
+    /**
+     * Return the insets object of the border panel.
+     */
     public Insets getInsets() {
         return insets;
     }
 
-    // the paint mathod that draws the border
+    /**
+     *  The paint method that draws the border.
+     */
     public void paint(Graphics g) {
         super.paint(g);
         g.setColor(getForeground());
