@@ -117,6 +117,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
 	/* GUI related members */
 	String[] roiLabels =  { "None","Channel 1", "Channel 2",};
+	// indicates if a PDF should be saved automatically
+	protected boolean autoSavePdf;
 
 	public void run(String arg0) {
 		if (showDialog()) {
@@ -184,6 +186,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		gd.addCheckbox("Manders' Correlation", true);
 		gd.addCheckbox("2D Instensity Histogram", true);
 		gd.addCheckbox("Costes' Significance Test", true);
+		gd.addCheckbox("Show \"save PDF\" dialog", true);
 		gd.addNumericField("PSF", 3.0, 1);
 		gd.addNumericField("Costes randomisations", 10.0, 0);
 
@@ -245,6 +248,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		boolean useManders = gd.getNextBoolean();
 		boolean useScatterplot = gd.getNextBoolean();
 		boolean useCostes = gd.getNextBoolean();
+		autoSavePdf = gd.getNextBoolean();
 		int psf = (int) gd.getNextNumber();
 		int nrCostesRandomisations = (int) gd.getNextNumber();
 
@@ -301,7 +305,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		// create a results handler
 		List<ResultHandler<T>> listOfResultHandlers = new ArrayList<ResultHandler<T>>();
 		PDFWriter<T> pdfWriter = new PDFWriter<T>(container);
-		listOfResultHandlers.add(new SingleWindowDisplay<T>(container, pdfWriter));
+		SingleWindowDisplay<T> swDisplay = new SingleWindowDisplay<T>(container, pdfWriter);
+		listOfResultHandlers.add(swDisplay);
 		listOfResultHandlers.add(pdfWriter);
 		//ResultHandler<T> resultHandler = new EasyDisplay<T>(container);
 
@@ -353,8 +358,9 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			}
 		}
 		// do the actual results processing
-		for (ResultHandler<T> r : listOfResultHandlers)
-			r.process();
+		swDisplay.process();
+		if (autoSavePdf)
+			pdfWriter.process();
     }
 
 	/**
