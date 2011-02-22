@@ -103,7 +103,7 @@ public class ContentCreator {
 			content.displayAs(type);
 			content.compile();
 			if(shouldSwap) {
-				content.swapOriginalData();
+				content.clearOriginalData();
 				content.swapDisplayedData();
 			}
 			instants.put(tp++, content);
