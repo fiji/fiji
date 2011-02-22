@@ -321,10 +321,10 @@ public abstract class CustomMesh extends Shape3D {
 		Point3f coord = new Point3f();
 		for(int i = 0; i < N; i++) {
 			ga.getCoordinate(i, coord);
-			int v = ii.getNoInterpolInt(
-				(int)Math.round(coord.x / pw),
-				(int)Math.round(coord.y / ph),
-				(int)Math.round(coord.z / pd));
+			int v = (int)Math.round(ii.interpol.get(
+				coord.x / pw,
+				coord.y / ph,
+				coord.z / pd));
 			colors[i] = new Color3f(
 				((v & 0xff0000) >> 16) / 255f,
 				((v & 0xff00) >> 8) / 255f,
