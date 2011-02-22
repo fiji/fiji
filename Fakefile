@@ -117,6 +117,7 @@ SUBMODULE_TARGETS=\
 	jars/imglib-io.jar \
 	jars/mpicbg.jar \
 	jars/commons-math.jar \
+	jars/javassist.jar \
 	jars/imglib-scripting.jar
 
 PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
@@ -261,6 +262,7 @@ CLASSPATH(jars/imglib-io.jar)=plugins/loci_tools.jar:jars/imglib.jar:jars/imglib
 jars/imglib-io.jar <- modules/imglib/
 CLASSPATH(jars/imglib-algorithms.jar)=jars/Jama-1.0.2.jar:jars/imglib.jar:jars/edu_mines_jtk.jar:jars/mpicbg.jar
 jars/imglib-algorithms.jar <- modules/imglib/
+jars/javassist.jar <- modules/javassist/
 
 jars/clojure.jar <- fiji modules/clojure/
 plugins/loci_tools.jar <- fiji modules/bio-formats/
@@ -538,6 +540,7 @@ precompile-submodules[] <- \
 	precompiled/imglib.jar \
 	precompiled/commons-math.jar \
 	precompiled/imglib-algorithms.jar \
+	precompiled/javassist.jar \
 
 precompiled/ij.jar <- jars/ij.jar
 precompiled/clojure.jar <- jars/clojure.jar
@@ -554,6 +557,7 @@ precompiled/imglib-ij.jar <- jars/imglib-ij.jar
 precompiled/imglib-io.jar <- jars/imglib-io.jar
 precompiled/imglib-scripting.jar <- jars/imglib-scripting.jar
 precompiled/commons-math.jar <- jars/commons-math.jar
+precompiled/javassist.jar <- jars/javassist.jar
 precompiled/* <- plugins/*
 
 precompile[] <- precompile-fiji precompile-fake precompile-submodules

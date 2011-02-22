@@ -225,3 +225,4 @@
 /lib/linux32/libJNI_Example.so
 /lib/linux64/libJNI_Example.so
 /lib/macosx/libJNI_Example.dylib
+/jars/javassist.jar
