@@ -627,7 +627,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		Panel panel;
         // create a bordered banel if needed
 		if (border) {
-	    panel = new BorderPanel(label);
+			panel = new BorderPanel(label, null);
 		} else {
             panel = new Panel(null);
         }

@@ -1,6 +1,7 @@
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Insets;
+import java.awt.LayoutManager;
 import java.awt.Panel;
 
 /**
@@ -16,11 +17,11 @@ public class BorderPanel extends Panel {
     protected String label;
 
     public BorderPanel() {
-        this("");
+        this("", null);
     }
 
-    public BorderPanel(String label) {
-        super();
+    public BorderPanel(String label, LayoutManager layoutManager) {
+        super(layoutManager);
         this.label = label;
     }
 
