@@ -23,7 +23,7 @@ import java.util.zip.GZIPInputStream;
 fijiDir = System.getProperty("fiji.dir");
 dbPath = fijiDir + "/db.xml.gz";
 plugins = new PluginCollection();
-new XMLFileReader(plugins).read(new GZIPInputStream(new FileInputStream(dbPath)), 0);
+new XMLFileReader(plugins).read(null, new GZIPInputStream(new FileInputStream(dbPath)), 0);
 
 dependencees = new TreeMap();
 

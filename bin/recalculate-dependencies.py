@@ -11,7 +11,7 @@ from java.util.zip import GZIPInputStream, GZIPOutputStream
 
 dbPath = getProperty('fiji.dir') + '/db.xml.gz'
 plugins = PluginCollection()
-XMLFileReader(plugins).read(GZIPInputStream(FileInputStream(dbPath)), 0)
+XMLFileReader(plugins).read(None, GZIPInputStream(FileInputStream(dbPath)), 0)
 
 for plugin in plugins:
 	if plugin.current == None or not plugin.filename.endswith('.jar'):

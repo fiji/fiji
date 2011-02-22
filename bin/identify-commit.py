@@ -13,7 +13,7 @@ def getTimestamp(plugin, checksum):
 	from java.io import FileInputStream
 	from java.util.zip import GZIPInputStream
 	print 'Reading db.xml.gz'
-	XMLFileReader(plugins).read(GZIPInputStream(FileInputStream(dbPath)), 0)
+	XMLFileReader(plugins).read(None, GZIPInputStream(FileInputStream(dbPath)), 0)
 	if plugin.startswith('precompiled/'):
 		plugin = plugin[12:]
 	plugin = plugins.getPlugin(plugin)

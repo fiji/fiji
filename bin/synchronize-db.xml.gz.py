@@ -17,7 +17,7 @@ from java.util.zip import GZIPInputStream, GZIPOutputStream
 
 dbPath = getProperty('fiji.dir') + '/db.xml.gz'
 plugins = PluginCollection()
-XMLFileReader(plugins).read(GZIPInputStream(FileInputStream(dbPath)))
+XMLFileReader(plugins).read(None, GZIPInputStream(FileInputStream(dbPath)))
 
 def addPreviousVersion(plugin, checksum, timestamp):
 	p = plugins.getPlugin(plugin)
