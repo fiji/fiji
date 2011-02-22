@@ -412,5 +412,9 @@ public abstract class CustomMesh extends Shape3D {
 		}
 	}
 
+	public void clearDisplayedData() {
+		this.mesh = null;
+	}
+
 	protected abstract GeometryArray createGeometry();
 }
