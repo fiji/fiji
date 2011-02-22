@@ -1,6 +1,7 @@
 import gadgets.DataContainer;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.Prefs;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.Roi;
@@ -86,7 +87,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		}
 		public MaskInfo() { };
 	}
-
+	// the storage key for Fiji preferences
+	static String PREF_KEY = "Coloc_2.";
 	// Allowed types of ROI configuration
 	protected enum RoiConfiguration {None, Img1, Img2, Mask};
 	// the ROI configuration to use
@@ -166,6 +168,17 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			}
 		}
 
+		// set up the users preferences
+		boolean useLiCh1 = Prefs.get(PREF_KEY+"useLiCh1", true);
+		boolean useLiCh2 = Prefs.get(PREF_KEY+"useLiCh2", true);
+		boolean useLiICQ = Prefs.get(PREF_KEY+"useLiICQ", true);
+		boolean useManders = Prefs.get(PREF_KEY+"useManders", true);
+		boolean useScatterplot = Prefs.get(PREF_KEY+"useScatterplot", true);
+		boolean useCostes = Prefs.get(PREF_KEY+"useCostes", true);
+		autoSavePdf = Prefs.get(PREF_KEY+"autoSavePdf", true);
+		int psf = (int) Prefs.get(PREF_KEY+"psf", 3);
+		int nrCostesRandomisations = (int) Prefs.get(PREF_KEY+"nrCostesRandomisations", 10);
+
 		/* make sure the default indices are no bigger
 		 * than the amount of images we have
 		 */
@@ -180,15 +193,15 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
 		// Add algorithm options
 		gd.addMessage("Algorithms:");
-		gd.addCheckbox("Li Histogram Channel 1", true);
-		gd.addCheckbox("Li Histogram Channel 2", true);
-		gd.addCheckbox("Li ICQ", true);
-		gd.addCheckbox("Manders' Correlation", true);
-		gd.addCheckbox("2D Instensity Histogram", true);
-		gd.addCheckbox("Costes' Significance Test", true);
-		gd.addCheckbox("Show \"save PDF\" dialog", true);
-		gd.addNumericField("PSF", 3.0, 1);
-		gd.addNumericField("Costes randomisations", 10.0, 0);
+		gd.addCheckbox("Li Histogram Channel 1", useLiCh1);
+		gd.addCheckbox("Li Histogram Channel 2", useLiCh2);
+		gd.addCheckbox("Li ICQ", useLiICQ);
+		gd.addCheckbox("Manders' Correlation", useManders);
+		gd.addCheckbox("2D Instensity Histogram", useScatterplot);
+		gd.addCheckbox("Costes' Significance Test", useCostes);
+		gd.addCheckbox("Show \"save PDF\" dialog", autoSavePdf);
+		gd.addNumericField("PSF", psf, 1);
+		gd.addNumericField("Costes randomisations", nrCostesRandomisations, 0);
 
 		// show the dialog, finally
 		gd.showDialog();
@@ -242,15 +255,26 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		}
 
 		// read out GUI data
-		boolean useLiCh1 = gd.getNextBoolean();
-		boolean useLiCh2 = gd.getNextBoolean();
-		boolean useLiICQ = gd.getNextBoolean();
-		boolean useManders = gd.getNextBoolean();
-		boolean useScatterplot = gd.getNextBoolean();
-		boolean useCostes = gd.getNextBoolean();
+		useLiCh1 = gd.getNextBoolean();
+		useLiCh2 = gd.getNextBoolean();
+		useLiICQ = gd.getNextBoolean();
+		useManders = gd.getNextBoolean();
+		useScatterplot = gd.getNextBoolean();
+		useCostes = gd.getNextBoolean();
 		autoSavePdf = gd.getNextBoolean();
-		int psf = (int) gd.getNextNumber();
-		int nrCostesRandomisations = (int) gd.getNextNumber();
+		psf = (int) gd.getNextNumber();
+		nrCostesRandomisations = (int) gd.getNextNumber();
+
+		// save user preferences
+		Prefs.set(PREF_KEY+"useLiCh1", useLiCh1);
+		Prefs.set(PREF_KEY+"useLiCh2", useLiCh2);
+		Prefs.set(PREF_KEY+"useLiICQ", useLiICQ);
+		Prefs.set(PREF_KEY+"useManders", useManders);
+		Prefs.set(PREF_KEY+"useScatterplot", useScatterplot);
+		Prefs.set(PREF_KEY+"useCostes", useCostes);
+		Prefs.set(PREF_KEY+"autoSavePdf", autoSavePdf);
+		Prefs.set(PREF_KEY+"psf", psf);
+		Prefs.set(PREF_KEY+"nrCostesRandomisations", nrCostesRandomisations);
 
 		// Parse algorithm options
 		pearsonsCorrelation = new PearsonsCorrelation<T>(PearsonsCorrelation.Implementation.Fast);
