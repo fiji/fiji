@@ -80,6 +80,8 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	//make a cursor so we can get pixel values from the image
 	protected LocalizableByDimCursor<? extends RealType> pixelAccessCursor;
 
+	// A PDF writer to call if user wants PDF print
+	PDFWriter<T> pdfWriter;
 
 	// GUI elements
 	JButton listButton, copyButton;
@@ -89,10 +91,11 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	 */
 	DataContainer<T> dataContainer = null;
 
-	public SingleWindowDisplay(DataContainer<T> container){
+	public SingleWindowDisplay(DataContainer<T> container, PDFWriter<T> pdfWriter){
 		super(NewImage.createFloatImage("Single Window Display", WIN_WIDTH, WIN_HEIGHT, 1, NewImage.FILL_WHITE));
 		// save a reference to the container
 		dataContainer = container;
+		this.pdfWriter = pdfWriter;
 		// don't show ourself on instantiation
 		this.setVisible(false);
 		// add ourself to the list of single window displays
@@ -142,6 +145,14 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 			}
 		});
 		buttons.add(copyButton);
+		// add button for PDF printing
+		JButton pdfButten = new JButton("PDF");
+		pdfButten.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				pdfWriter.process();
+			}
+		});
+		buttons.add(pdfButten);
 
 		/* We want the image to be log scale by default
 		 * so the user can see something.

@@ -300,8 +300,9 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
 		// create a results handler
 		List<ResultHandler<T>> listOfResultHandlers = new ArrayList<ResultHandler<T>>();
-		listOfResultHandlers.add(new SingleWindowDisplay<T>(container));
-		listOfResultHandlers.add(new PDFWriter<T>(container));
+		PDFWriter<T> pdfWriter = new PDFWriter<T>(container);
+		listOfResultHandlers.add(new SingleWindowDisplay<T>(container, pdfWriter));
+		listOfResultHandlers.add(pdfWriter);
 		//ResultHandler<T> resultHandler = new EasyDisplay<T>(container);
 
 		// this list contains the algorithms that will be run when the user clicks ok
