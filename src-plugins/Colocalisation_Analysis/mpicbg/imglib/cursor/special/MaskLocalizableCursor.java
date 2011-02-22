@@ -1,6 +1,6 @@
 package mpicbg.imglib.cursor.special;
 
-import mpicbg.imglib.cursor.Cursor;
+import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.type.Type;
 
@@ -11,7 +11,7 @@ import mpicbg.imglib.type.Type;
  * Author: Tom Kazimiers
  */
 public class MaskLocalizableCursor< T extends Type<T> & Comparable<T> > extends MaskCursor<T> implements LocalizableCursor<T> {
-	// the curser of the original image
+	// the cursor of the original image
 	LocalizableCursor<T> imageCursor;
 	// the offset of the masks bounding box
 	final int[] offset;
@@ -23,11 +23,11 @@ public class MaskLocalizableCursor< T extends Type<T> & Comparable<T> > extends 
 	 * mask that is larger than this, will be "on". This variant is localizable,
 	 * which means position information can be obtained.
 	 *
-	 * @param cursor The cursor over which the masked walk should happen.
 	 * @param mask The mask for the cursor.
+	 * @param cursor The cursor over which the masked walk should happen.
 	 * @param offValue The value specifying the "off" state in the mask.
 	 */
-	public MaskLocalizableCursor(LocalizableCursor<T> cursor, Cursor<T> mask, T offValue, int[] offset) {
+	public MaskLocalizableCursor(LocalizableCursor<T> cursor, LocalizableByDimCursor<T> mask, T offValue, int[] offset) {
 		super( cursor, mask, offValue );
 		imageCursor = cursor;
 		this.offset = offset;

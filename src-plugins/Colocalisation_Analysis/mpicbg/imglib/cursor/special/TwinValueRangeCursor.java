@@ -3,7 +3,7 @@ package mpicbg.imglib.cursor.special;
 import java.util.Iterator;
 
 import mpicbg.imglib.container.Container;
-import mpicbg.imglib.cursor.Cursor;
+import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.special.meta.AlwaysTruePredicate;
 import mpicbg.imglib.cursor.special.meta.Predicate;
 import mpicbg.imglib.image.Image;
@@ -22,7 +22,7 @@ public class TwinValueRangeCursor< T extends Type<T> & Comparable<T> > extends C
 	 * Creates a TwinValueRangeCursor without any restrictions in values.
 	 * It allows iteration over all values of both cursors.
 	 */
-	public TwinValueRangeCursor(Cursor<T> cursor1, Cursor<T> cursor2) {
+	public TwinValueRangeCursor(LocalizableByDimCursor<T> cursor1, LocalizableByDimCursor<T> cursor2) {
 		this( cursor1, cursor2,
 			new AlwaysTruePredicate<T>(),
 			new AlwaysTruePredicate<T>() );
@@ -38,7 +38,7 @@ public class TwinValueRangeCursor< T extends Type<T> & Comparable<T> > extends C
 	 * @param predicate1 The predicate for channel one
 	 * @param predicate2 The predicate for channel two
 	 */
-	public TwinValueRangeCursor(Cursor<T> cursor1, Cursor<T> cursor2, Predicate<T> predicate1, Predicate<T> predicate2 ) {
+	public TwinValueRangeCursor(LocalizableByDimCursor<T> cursor1, LocalizableByDimCursor<T> cursor2, Predicate<T> predicate1, Predicate<T> predicate2 ) {
 		super( cursor1, cursor2, predicate1, predicate2 );
 	}
 

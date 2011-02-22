@@ -101,14 +101,14 @@ public class RoiImage<T extends Type<T>> extends Image<T> {
 	@Override
 	public LocalizableByDimCursor<T> createLocalizableByDimCursor() {
 		LocalizableByDimCursor<T> cursor = super.createLocalizableByDimCursor();
-		return new RoiShiftingLocalizableByDimCursor<T>(cursor, roiOffset);
+		return new RoiShiftingLocalizableByDimCursor<T>(cursor, roiOffset, true);
 	}
 
 	@Override
 	public LocalizableByDimCursor<T> createLocalizableByDimCursor(
 			OutOfBoundsStrategyFactory<T> factory) {
 		LocalizableByDimCursor<T> cursor = super.createLocalizableByDimCursor( factory );
-		return new RoiShiftingLocalizableByDimCursor<T>(cursor, roiOffset);
+		return new RoiShiftingLocalizableByDimCursor<T>(cursor, roiOffset, true);
 	}
 
 

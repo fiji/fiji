@@ -55,7 +55,7 @@ public class MandersCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			Predicate<T> img2Predicate =
 				new AboveThresholdPredicate<T>( autoThreshold.getCh2MaxThreshold() );
 			TwinValueRangeCursor<T> cursor =
-				new TwinValueRangeCursor<T>(img1.createCursor(), img2.createCursor(), img1Predicate, img2Predicate);
+				new TwinValueRangeCursor<T>(img1.createLocalizableByDimCursor(), img2.createLocalizableByDimCursor(), img1Predicate, img2Predicate);
 			// calculate Mander's values
 			results = calculateMandersCorrelation(cursor, container.getIntegralCh1(), container.getIntegralCh2() );
 

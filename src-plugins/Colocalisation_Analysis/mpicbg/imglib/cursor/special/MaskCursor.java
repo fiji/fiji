@@ -4,6 +4,8 @@ import java.util.Iterator;
 
 import mpicbg.imglib.container.Container;
 import mpicbg.imglib.cursor.Cursor;
+import mpicbg.imglib.cursor.LocalizableByDimCursor;
+import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.cursor.special.meta.AboveThresholdPredicate;
 import mpicbg.imglib.cursor.special.meta.AlwaysTruePredicate;
 import mpicbg.imglib.image.Image;
@@ -27,16 +29,16 @@ public class MaskCursor< T extends Type<T> & Comparable<T> > extends ConstraintC
 	 * Creates a new MaskCursor, based on a cursor over an existing
 	 * image and a mask that is used to drive the cursor. If the mask is
 	 * "on" or "off" is specified by the "offValue". Every value in the
-	 * mask that is langer than this, will be "on".
+	 * mask that is larger than this, will be "on".
 	 *
 	 * It assumes the cursor to be reset and will require ownership
 	 * of it, i.e. it will be closed if the MaskCursor gets closed.
 	 *
 	 * @param cursor The cursor over which the masked walk should happen.
 	 * @param mask The mask for the cursor.
-	 * @param offValue The value specifing the "off" state in the mask.
+	 * @param offValue The value specifying the "off" state in the mask.
 	 */
-	public MaskCursor(Cursor<T> cursor, Cursor<T> mask, T offValue) {
+	public MaskCursor(LocalizableCursor<T> cursor, LocalizableByDimCursor<T> mask, T offValue) {
 		super( cursor, mask,
 			new AlwaysTruePredicate<T>(),
 			new AboveThresholdPredicate<T>( offValue ) );
@@ -45,22 +47,6 @@ public class MaskCursor< T extends Type<T> & Comparable<T> > extends ConstraintC
 		imageCursor = cursor;
 		this.maskCursor = mask;
 		this.mask = mask.getImage();
-	}
-
-	@Override
-	public boolean hasNext() {
-		/* The constraint cursor expects an image of the same size to evaluate
-		 * constraints for us in "And" forward mode. If the mask gets out of
-		 * bounds we need to handle that. For now we just reset it. This essentially
-		 * repeats the mask over and over again until the end of the image is
-		 * reached.
-		 */
-		if ( !super.hasNext() && !maskCursor.hasNext() && imageCursor.hasNext() ) {
-			maskCursor.reset();
-			hasNextChecked = false;
-		}
-
-		return super.hasNext();
 	}
 
 	/**
@@ -103,10 +89,10 @@ public class MaskCursor< T extends Type<T> & Comparable<T> > extends ConstraintC
 	}
 
 	public int[] getDimensions() {
-		return cursor1.getDimensions();
+		return cursor2.getDimensions();
 	}
 
 	public void getDimensions( int[] position ) {
-		cursor1.getDimensions( position );
+		cursor2.getDimensions( position );
 	}
 }

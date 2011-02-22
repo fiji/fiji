@@ -17,22 +17,32 @@ public class RoiShiftingLocalizableByDimCursor< T extends Type<T>> extends Curso
 	LocalizableByDimCursor<T> cursor;
 	// the offset to apply to requests
 	int shiftingOffset[];
-	//
+	// indicates if destination position data should be projected
+	boolean reducePositions;
+	// the number of the dimensions of the underlying cursor
+	int dimensions;
+
 	/**
-	 * Creates a new RoiShiftingLocalizableByDimCursor, based on a Maskcursor for an
-	 * existing image and a mask that is used to drive the cursor. If the mask is
-	 * "on" or "off" is specified by the "offValue". Every value in the
-	 * mask that is langer than this, will be "on". This variant is localizable,
-	 * which means position information can be obtained.
+	 * Creates a new RoiShiftingLocalizableByDimCursor, based on
+	 * another cursor and an offset. Requests for a RegionOfInterestCursor
+	 * will be shifted by this offset. This is especially helpful for
+	 * creating ROIs in masked cursors.
+	 *
+	 * The cursor offers to project position information used as a
+	 * destination into the space of the underlying cursor. This can
+	 * be helpful if one wants to ignore higher dimensions like if
+	 * a mask should be repeated in a stack.
 	 *
 	 * @param cursor The cursor over which the masked walk should happen.
-	 * @param mask The mask for the cursor.
-	 * @param offValue The value specifing the "off" state in the mask.
+	 * @param offset The offset by which ROICursor requests get shifted
+	 * @param projectPositions
 	 */
-	public RoiShiftingLocalizableByDimCursor(LocalizableByDimCursor<T> cursor, int offset[]) {
+	public RoiShiftingLocalizableByDimCursor(LocalizableByDimCursor<T> cursor, int offset[], boolean reducePositions) {
 		super( cursor.getImage().getContainer(), cursor.getImage() );
 		shiftingOffset = offset;
 		this.cursor = cursor;
+		this.reducePositions = reducePositions;
+		dimensions = cursor.getNumDimensions();
 	}
 
 	public String getPositionAsString() {
@@ -45,10 +55,6 @@ public class RoiShiftingLocalizableByDimCursor< T extends Type<T>> extends Curso
 
 	public void bck( int dim ) {
 		cursor.bck( dim );
-	}
-
-	public void setPosition( int position[] ) {
-		cursor.setPosition( position );
 	}
 
 	public RegionOfInterestCursor<T> createRegionOfInterestCursor( final int[] offset,
@@ -81,12 +87,42 @@ public class RoiShiftingLocalizableByDimCursor< T extends Type<T>> extends Curso
 		cursor.moveRel( position );
 	}
 
+	public void setPosition( int position[] ) {
+		/* If positions of other dimensionality should be possible
+		 * to be set (projectPositions = true), every element of the
+		 * positions array form is used separately.
+		 */
+		if (reducePositions) {
+			for (int i=0; i < position.length; i++)
+				setPosition(position[i], i);
+		} else {
+			cursor.setPosition( position );
+		}
+	}
+
 	public void setPosition( Localizable localizable ) {
-		cursor.setPosition( localizable );
+		/* If positions of other dimensionality should be possible
+		 * to be set (projectPositions = true), the array form of
+		 * the position is used and used separately.
+		 */
+		if (reducePositions)
+			setPosition(localizable.getPosition());
+		else
+			cursor.setPosition( localizable );
 	}
 
 	public void setPosition( int position, int dim ) {
-		cursor.setPosition( position, dim );
+		/* If positions of other dimensionality should be possible
+		 * to be set (projectPositions = true), the passed position
+		 * element is only used if it is within the underlying
+		 * cursors bounds. It is ignored otherwise.
+		 */
+		if (reducePositions) {
+			if (dim < dimensions) {
+				cursor.setPosition( position, dim );
+			}
+		} else
+			cursor.setPosition( position, dim );
 	}
 
 	public int getStorageIndex() {

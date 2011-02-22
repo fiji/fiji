@@ -151,7 +151,7 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm<T>
 		BelowThresholdPredicate<T> predicate1 = new BelowThresholdPredicate<T>(threshold1);
 		BelowThresholdPredicate<T> predicate2 = new BelowThresholdPredicate<T>(threshold2);
 		TwinValueRangeCursor<T> cursor = new TwinValueRangeCursor<T>(
-				img1.createCursor(), img2.createCursor(), predicate1, predicate2);
+				img1.createLocalizableByDimCursor(), img2.createLocalizableByDimCursor(), predicate1, predicate2);
 
 		// do regression
 		while (!thresholdFound && iteration<maxIterations) {

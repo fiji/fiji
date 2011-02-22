@@ -22,7 +22,7 @@ public class TwinValueRangeCursorFactory
 	 * @return A TwinValueRangeCursor that walks over all values of the images.
 	 */
 	public static < T extends Type<T> & Comparable<T> > TwinValueRangeCursor<T> generateAlwaysTrueCursor(Image<T> img1, Image<T> img2) {
-		return new TwinValueRangeCursor< T > (img1.createCursor(), img2.createCursor());
+		return new TwinValueRangeCursor< T > (img1.createLocalizableByDimCursor(), img2.createLocalizableByDimCursor());
 	}
 
 	/**
@@ -41,7 +41,7 @@ public class TwinValueRangeCursorFactory
 			T threshold1, T threshold2) {
 		AboveThresholdPredicate< T > predicate1 = new AboveThresholdPredicate< T >(threshold1);
 		AboveThresholdPredicate< T > predicate2 = new AboveThresholdPredicate< T >(threshold2);
-		return new TwinValueRangeCursor< T > (img1.createCursor(), img2.createCursor(), predicate1, predicate2);
+		return new TwinValueRangeCursor< T > (img1.createLocalizableByDimCursor(), img2.createLocalizableByDimCursor(), predicate1, predicate2);
 	}
 
 	/**
@@ -60,6 +60,6 @@ public class TwinValueRangeCursorFactory
 			T threshold1, T threshold2) {
 		BelowThresholdPredicate< T > predicate1 = new BelowThresholdPredicate< T >(threshold1);
 		BelowThresholdPredicate< T > predicate2 = new BelowThresholdPredicate< T >(threshold2);
-		return new TwinValueRangeCursor< T > (img1.createCursor(), img2.createCursor(), predicate1, predicate2);
+		return new TwinValueRangeCursor< T > (img1.createLocalizableByDimCursor(), img2.createLocalizableByDimCursor(), predicate1, predicate2);
 	}
 }

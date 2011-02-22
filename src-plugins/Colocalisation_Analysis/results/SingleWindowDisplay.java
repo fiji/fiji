@@ -105,7 +105,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 
 		JComboBox dropDownList = new JComboBox();
 		for(Image<? extends RealType> img : listOfImages) {
-			dropDownList.addItem(new NamedImageContainer(img));
+			dropDownList.addItem(new NamedContainer<Image<? extends RealType> >(img, img.getName()));
 		}
 		dropDownList.addItemListener(this);
 		imageSelectionPanel.add(dropDownList);
@@ -522,7 +522,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 
 	public void itemStateChanged(ItemEvent e) {
 		if (e.getStateChange() == ItemEvent.SELECTED) {
-			Image<? extends RealType> img = ((NamedImageContainer)(e.getItem())).getImage();
+			Image<? extends RealType> img = ((NamedContainer<Image<? extends RealType> >)(e.getItem())).getObject();
 			adjustDisplayedImage(img);
 		}
 	}

@@ -22,15 +22,8 @@ public abstract class MetaCursor< T extends Type< T > > implements Cursor<T>
 		if (cursors.contains(null))
 			throw new IllegalArgumentException("At least one cursor is null");
 
+		// save first cursor separately as driver
 		this.cursors.addAll(cursors);
-	}
-
-	/**
-	 * Calls fwd() on all managed cursors.
-	 */
-	public void fwd() {
-		for(Cursor<T> c : cursors)
-			c.fwd();
 	}
 
 	/**
@@ -43,14 +36,6 @@ public abstract class MetaCursor< T extends Type< T > > implements Cursor<T>
 			hasNext &= c.hasNext();
 
 		return hasNext;
-	}
-
-	/**
-	 * Calls fwd(long arg) on all managed cursors.
-	 */
-	public void fwd(long arg) {
-		for(Cursor<T> c : cursors)
-			c.fwd(arg);
 	}
 
 	/**

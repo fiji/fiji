@@ -3,6 +3,8 @@ package mpicbg.imglib.cursor.special;
 import java.util.Arrays;
 
 import mpicbg.imglib.cursor.Cursor;
+import mpicbg.imglib.cursor.LocalizableByDimCursor;
+import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.cursor.special.meta.AlwaysTruePredicate;
 import mpicbg.imglib.cursor.special.meta.Predicate;
 import mpicbg.imglib.type.Type;
@@ -30,7 +32,8 @@ public abstract class ConstraintCursor< T extends Type<T> & Comparable<T> > exte
 	// the predicates for checking if the channel positions are valid
 	protected Predicate<T> predicate1, predicate2;
 	// the cursors to simplify access within class
-	protected Cursor<T> cursor1, cursor2;
+	protected LocalizableCursor<T> cursor1;
+	protected LocalizableByDimCursor<T> cursor2;
 	/* Available forwarding modes for the predicates:
 	 * And: Both predicates need to be true
 	 * Or: One and/or the other has to be true
@@ -49,7 +52,7 @@ public abstract class ConstraintCursor< T extends Type<T> & Comparable<T> > exte
 	 * Creates a ConstraintCursor without any restrictions in values.
 	 * It allows iteration over all values of both cursors.
 	 */
-	public ConstraintCursor(Cursor<T> cursor1, Cursor<T> cursor2) {
+	public ConstraintCursor(LocalizableCursor<T> cursor1, LocalizableByDimCursor<T> cursor2) {
 		this( cursor1, cursor2,
 			new AlwaysTruePredicate<T>(),
 			new AlwaysTruePredicate<T>() );
@@ -66,8 +69,8 @@ public abstract class ConstraintCursor< T extends Type<T> & Comparable<T> > exte
 	 * @param predicate2 The predicate for channel two
 	 */
 	@SuppressWarnings("unchecked")
-	public ConstraintCursor(Cursor<T> cursor1, Cursor<T> cursor2, Predicate<T> predicate1, Predicate<T> predicate2 ) {
-		super( Arrays.asList(cursor1, cursor2) );
+	public ConstraintCursor(LocalizableCursor<T> cursor1, LocalizableByDimCursor<T> cursor2, Predicate<T> predicate1, Predicate<T> predicate2 ) {
+		super( Arrays.asList( (Cursor<T>) cursor1, (Cursor<T>) cursor2) );
 		this.cursor1 = cursor1;
 		this.cursor2 = cursor2;
 		this.predicate1 = predicate1;
@@ -91,7 +94,7 @@ public abstract class ConstraintCursor< T extends Type<T> & Comparable<T> > exte
 	protected boolean walkToNextElement() {
 		boolean found = false;
 		while( super.hasNext() ) {
-			super.fwd();
+			fwdCursors();
 			boolean ch1Valid = predicate1.evaluate( cursor1.getType() );
 			boolean ch2Valid = predicate2.evaluate( cursor2.getType() );
 
@@ -130,7 +133,11 @@ public abstract class ConstraintCursor< T extends Type<T> & Comparable<T> > exte
 		return found;
 	}
 
-	@Override
+	protected void fwdCursors() {
+		cursor1.fwd();
+		cursor2.setPosition(cursor1);
+	}
+
 	public void fwd() {
 		/* if we did not check for a next valid element before
 		 * (and thus have no cached types) walk to the next element
@@ -142,6 +149,14 @@ public abstract class ConstraintCursor< T extends Type<T> & Comparable<T> > exte
 		 * information is not valid any more
 		 */
 		hasNextChecked = false;
+	}
+
+	/**
+	 * Calls fwd(long arg) on all managed cursors.
+	 */
+	public void fwd(long arg) {
+		cursor1.fwd(arg);
+		cursor2.setPosition(cursor1);
 	}
 
 	@Override

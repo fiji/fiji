@@ -184,7 +184,7 @@ public class MaskAndRoiTest extends ColocalisationTest {
 		/* first test - using itself as a mask */
 		MaskedImage<UnsignedByteType> maskedImg1 =
 			new MaskedImage<UnsignedByteType>(img, img, maskOffset, maskSize);
-		Cursor<UnsignedByteType> maskedCursor = maskedImg1.createCursor();
+		LocalizableCursor<UnsignedByteType> maskedCursor = maskedImg1.createLocalizableCursor();
 
 		while (maskedCursor.hasNext()) {
 			maskedCursor.fwd();
@@ -198,7 +198,7 @@ public class MaskAndRoiTest extends ColocalisationTest {
 
 		while (invMaskedCursor.hasNext()) {
 			invMaskedCursor.fwd();
-			assertTrue( invMaskedCursor.getType().getInteger() == 0 );
+			assertEquals( 0, invMaskedCursor.getType().getInteger() );
 		}
 	}
 
