@@ -129,7 +129,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 
 		Panel buttons = new Panel();
 		buttons.setLayout(new FlowLayout(FlowLayout.RIGHT));
-
+		// add button for data display of histograms
 		listButton = new JButton("List");
 		listButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -137,7 +137,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 			}
 		});
 		buttons.add(listButton);
-
+		// add button for data copy of histograms
 		copyButton = new JButton("Copy");
 		copyButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -165,7 +165,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 		remove(ic);
 		add(imageSelectionPanel);
 		add(ic);
-	    add(textPanel);
+		add(textPanel);
 		add(buttons);
 		pack();
     }

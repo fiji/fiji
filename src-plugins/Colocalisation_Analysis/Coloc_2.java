@@ -129,7 +129,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	public boolean showDialog() {
 		// get IDs of open windows
 		int[] windowList = WindowManager.getIDList();
-		// if theer are no windows open, cancel
+		// if there are no windows open, cancel
 		if (windowList == null) {
 			IJ.noImage();
 			return false;
