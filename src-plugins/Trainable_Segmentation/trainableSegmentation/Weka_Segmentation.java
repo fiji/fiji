@@ -212,7 +212,13 @@ public class Weka_Segmentation implements PlugIn
 	public static final String SAVE_DATA = "saveData";
 	public static final String CREATE_CLASS = "createNewClass";
 	public static final String LAUNCH_WEKA = "launchWeka";
-	
+	public static final String SET_FEATURES = "setFeatures";
+	public static final String SET_MEMBRANE_THICKNESS = "setMembraneThickness";
+	public static final String SET_MEMBRANE_PATCH = "setMembranePatchSize";
+	public static final String SET_MINIMUM_SIGMA = "setMinimumSigma";
+	public static final String SET_MAXIMUM_SIGMA = "setMaximumSigma";
+	public static final String SET_HOMOGENIZATION = "setClassHomogenization";
+	public static final String SET_CLASSIFIER = "setClassifier";
 	
 	/**
 	 * Basic constructor for graphical user interface use
@@ -1878,26 +1884,7 @@ public class Weka_Segmentation implements PlugIn
 	    if (c instanceof OptionHandler) 
 	    {
 	    	originalOptions = Utils.joinOptions(((OptionHandler)c).getOptions());
-	    }
-	    //System.out.println("Original classifier: " + originalClassifierName + " " + originalOptions);
-		
-		/*
-		if( wekaSegmentation.getClassifier() instanceof FastRandomForest )
-		{
-			gd.addMessage("Fast Random Forest settings:");
-			gd.addNumericField("Number of trees:", wekaSegmentation.getNumOfTrees(), 0);
-			gd.addNumericField("Random features", wekaSegmentation.getNumRandomFeatures(), 0);
-			gd.addNumericField("Max depth", wekaSegmentation.getMaxDepth(), 0);
-		}
-		else
-		{
-			String classifierName = (wekaSegmentation.getClassifier().getClass()).toString();
-			int index = classifierName.indexOf(" ");
-			classifierName = classifierName.substring(index + 1);
-			gd.addMessage(classifierName + " settings");
-			gd.addButton("Set Weka classifier options", new ClassifierSettingsButtonListener(wekaSegmentation.getClassifier()));
-		}
-		*/
+	    }		
 
 		gd.addMessage("Class names:");
 		for(int i = 0; i < wekaSegmentation.getNumOfClasses(); i++)
@@ -1927,6 +1914,17 @@ public class Weka_Segmentation implements PlugIn
 			if (newEnableFeatures[i] != oldEnableFeatures[i])
 				featuresChanged = true;
 		}
+		if(featuresChanged)
+		{
+			wekaSegmentation.setEnabledFeatures(newEnableFeatures);
+			// Macro recording
+			String[] args = new String[ newEnableFeatures.length ];
+			for(int i=0; i<newEnableFeatures.length; i++)
+			{
+				args[i] = FeatureStack.availableFeatures[ i ] + "=" + newEnableFeatures[ i ];
+			}
+			record(SET_FEATURES, args);
+		}		
 
 		// Membrane thickness
 		final int newThickness = (int) gd.getNextNumber();
@@ -1934,12 +1932,16 @@ public class Weka_Segmentation implements PlugIn
 		{
 			featuresChanged = true;
 			wekaSegmentation.setMembraneThickness(newThickness);
+			// Macro recording
+			record(SET_MEMBRANE_THICKNESS, new String[] { Integer.toString( newThickness )});
 		}
 		// Membrane patch size
 		final int newPatch = (int) gd.getNextNumber();
 		if(newPatch != wekaSegmentation.getMembranePatchSize())
 		{
 			featuresChanged = true;
+			// Macro recording
+			record(SET_MEMBRANE_PATCH, new String[] { Integer.toString( newPatch )});
 			wekaSegmentation.setMembranePatchSize(newPatch);
 		}
 		// Field of view (minimum and maximum sigma/radius for the filters)
@@ -1947,6 +1949,8 @@ public class Weka_Segmentation implements PlugIn
 		if(newMinSigma != wekaSegmentation.getMinimumSigma() && newMinSigma > 0)
 		{
 			featuresChanged = true;
+			// Macro recording
+			record(SET_MINIMUM_SIGMA, new String[] { Float.toString( newMinSigma )});
 			wekaSegmentation.setMinimumSigma(newMinSigma);
 		}
 
@@ -1954,6 +1958,8 @@ public class Weka_Segmentation implements PlugIn
 		if(newMaxSigma != wekaSegmentation.getMaximumSigma() && newMaxSigma > wekaSegmentation.getMinimumSigma())
 		{
 			featuresChanged = true;
+			// Macro recording
+			record(SET_MAXIMUM_SIGMA, new String[] { Float.toString( newMaxSigma )});
 			wekaSegmentation.setMaximumSigma(newMaxSigma);
 		}
 		if(wekaSegmentation.getMinimumSigma() >= wekaSegmentation.getMaximumSigma())
@@ -1986,27 +1992,12 @@ public class Weka_Segmentation implements PlugIn
 	    	}
 	    	
 	    	wekaSegmentation.setClassifier( cls );
-	    	
+	    	// Macro recording
+			record(SET_CLASSIFIER, new String[] { c.getClass().getName(), options} );
+	    		    	
 	    	IJ.log("Current classifier: " + c.getClass().getName() + " " + options);
 	    }
-		
-		/*
-		// Read fast random forest parameters and check if changed
-		if( wekaSegmentation.getClassifier() instanceof FastRandomForest )
-		{
-			final int newNumTrees = (int) gd.getNextNumber();
-			final int newRandomFeatures = (int) gd.getNextNumber();
-			final int newMaxDepth = (int) gd.getNextNumber();
-
-			// Update random forest if necessary
-			if(newNumTrees != wekaSegmentation.getNumOfTrees()
-					||	newRandomFeatures != wekaSegmentation.getNumRandomFeatures()
-					||	newMaxDepth != wekaSegmentation.getMaxDepth())
-
-				wekaSegmentation.updateClassifier(newNumTrees, newRandomFeatures, newMaxDepth);
-		}
-		*/
-		
+				
 		boolean classNameChanged = false;
 		for(int i = 0; i < wekaSegmentation.getNumOfClasses(); i++)
 		{
@@ -2024,12 +2015,14 @@ public class Weka_Segmentation implements PlugIn
 				wekaSegmentation.setClassLabel(i, s);
 				classNameChanged = true;
 				addExampleButton[i].setText("Add to " + s);
-
 			}
 		}
 
-		// Update flag to homogenize number of class instances
-		wekaSegmentation.setDoHomogenizeClasses(gd.getNextBoolean());
+		// Update flag to homogenize number of class instances		
+		final boolean homogenizeClasses = gd.getNextBoolean();
+		wekaSegmentation.setDoHomogenizeClasses( homogenizeClasses );
+		// Macro recording
+		record(SET_HOMOGENIZATION, new String[] { Boolean.toString( homogenizeClasses )});
 
 		// Update result overlay alpha
 		final int newOpacity = (int) gd.getNextNumber();
@@ -2054,9 +2047,7 @@ public class Weka_Segmentation implements PlugIn
 
 		// Update feature stack if necessary
 		if(featuresChanged)
-		{
-			//this.setButtonsEnabled(false);
-			wekaSegmentation.setEnabledFeatures(newEnableFeatures);
+		{			
 			// Force features to be updated
 			wekaSegmentation.setFeaturesDirty();
 		}
@@ -2188,6 +2179,14 @@ public class Weka_Segmentation implements PlugIn
 	/* **********************************************************
 	 * Macro recording related methods
 	 * *********************************************************/
+
+	/**
+	 * Macro-record a specific command. The command names match the static 
+	 * methods that reproduce that part of the code.
+	 * 
+	 * @param command name of the command including package info
+	 * @param args set of arguments for the command
+	 */
 	public static void record(String command, String... args) 
 	{
 		command = "call(\"trainableSegmentation.Weka_Segmentation." + command;
@@ -2205,13 +2204,14 @@ public class Weka_Segmentation implements PlugIn
 	 * @param nSlice slice number
 	 */
 	public static void addTrace(
-			int classNum,
-			int nSlice)
+			String classNum,
+			String nSlice)
 	{
 		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
 		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
 		final Roi roi = win.getDisplayImage().getRoi();
-		wekaSegmentation.addExample(classNum, roi, nSlice);
+		wekaSegmentation.addExample(Integer.parseInt(classNum), 
+				roi, Integer.parseInt(nSlice));
 		win.getDisplayImage().killRoi();
 		win.drawExamples();
 		win.updateExampleLists();
@@ -2225,13 +2225,15 @@ public class Weka_Segmentation implements PlugIn
 	 * @param index the index of the trace to remove
 	 */
 	public static void deleteTrace(
-			int classNum,
-			int nSlice,
-			int index)
+			String classNum,
+			String nSlice,
+			String index)
 	{
 		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
 		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
-		wekaSegmentation.deleteExample(classNum, nSlice, index);
+		wekaSegmentation.deleteExample(Integer.parseInt(classNum),
+				Integer.parseInt(nSlice),
+				Integer.parseInt(index) );
 		win.getDisplayImage().killRoi();
 		win.drawExamples();
 		win.updateExampleLists();
@@ -2512,6 +2514,154 @@ public class Weka_Segmentation implements PlugIn
 		win.addClass();
 		
 		win.updateAddClassButtons();
+	}
+
+	/**
+	 * Set the enabled features for the current segmentation
+	 * 
+	 * @param features string names with the enabled features names plus "=true" or "=false"
+	 */
+	public static void setFeatures(String ...features)
+	{
+		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
+		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+
+		if( features.length != FeatureStack.availableFeatures.length)
+		{
+			IJ.error("Error: the number of features do not match. Expected " 
+					+ FeatureStack.availableFeatures.length + ", found " + features.length +" .");
+			return;
+		}
+		
+		boolean[] enabledFeatures = new boolean[ features.length ];
+		boolean forceUpdate = false;
+		for(int i=0; i<enabledFeatures.length; i++)
+		{
+			if(features[i].contains("true"))
+				enabledFeatures[i] = true;
+			if( enabledFeatures[i] != wekaSegmentation.getEnabledFeatures()[i])
+				forceUpdate = true;
+		}
+		wekaSegmentation.setEnabledFeatures(enabledFeatures);
+		
+		if(forceUpdate)
+		{
+			// Force features to be updated
+			wekaSegmentation.setFeaturesDirty();
+		}
+	}
+
+	/**
+	 * Set membrane thickness for current feature stack
+	 * 
+	 * @param newThicknessStr new membrane thickness (in pixel units)
+	 */
+	public static void setMembraneThickness(String newThicknessStr)
+	{
+		final int newThickness = Integer.parseInt(newThicknessStr);
+		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
+		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+		
+		if( newThickness != wekaSegmentation.getMembraneThickness() )
+			wekaSegmentation.setFeaturesDirty();
+		wekaSegmentation.setMembraneThickness(newThickness);
+	}
+	
+	/**
+	 * Set a new membrane patch size for current feature stack
+	 * 
+	 * @param newPatchSizeStr new patch size (in pixel units)
+	 */
+	public static void setMembranePatchSize(String newPatchSizeStr)
+	{
+		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
+		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+		
+		int newPatchSize = Integer.parseInt(newPatchSizeStr);
+		if( newPatchSize  != wekaSegmentation.getMembranePatchSize() )
+			wekaSegmentation.setFeaturesDirty();
+		wekaSegmentation.setMembranePatchSize( newPatchSize );
+	}
+	
+	/**
+	 * Set a new minimum radius for the feature filters
+	 * 
+	 * @param newMinSigmaStr new minimum radius (in float pixel units)
+	 */
+	public static void setMinimumSigma(String newMinSigmaStr)
+	{
+		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
+		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+		
+		float newMinSigma = Float.parseFloat(newMinSigmaStr);
+		if(newMinSigma  != wekaSegmentation.getMinimumSigma() && newMinSigma > 0)
+		{
+			wekaSegmentation.setFeaturesDirty();
+			wekaSegmentation.setMinimumSigma(newMinSigma);
+		}
+		if(wekaSegmentation.getMinimumSigma() >= wekaSegmentation.getMaximumSigma())
+		{
+			IJ.error("Error in the field of view parameters: they will be reset to default values");
+			wekaSegmentation.setMinimumSigma(0f);
+			wekaSegmentation.setMaximumSigma(16f);
+		}
+	}
+	
+	/**
+	 * Set a new maximum radius for the feature filters
+	 * 
+	 * @param newMaxSigmaStr new maximum radius (in float pixel units)
+	 */
+	public static void setMaximumSigma(String newMaxSigmaStr)
+	{
+		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
+		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+		float newMaxSigma = Float.parseFloat(newMaxSigmaStr);
+		if(newMaxSigma  != wekaSegmentation.getMaximumSigma() && newMaxSigma > wekaSegmentation.getMinimumSigma())
+		{
+			wekaSegmentation.setFeaturesDirty();
+			wekaSegmentation.setMaximumSigma(newMaxSigma);
+		}
+		if(wekaSegmentation.getMinimumSigma() >= wekaSegmentation.getMaximumSigma())
+		{
+			IJ.error("Error in the field of view parameters: they will be reset to default values");
+			wekaSegmentation.setMinimumSigma(0f);
+			wekaSegmentation.setMaximumSigma(16f);
+		}
+	}
+
+	/**
+	 * Set the class homogenization flag for training
+	 * 
+	 * @param flagStr true/false if you want to balance the number of samples per class before training
+	 */
+	public static void setClassHomogenization(String flagStr)
+	{
+		boolean flag = Boolean.parseBoolean(flagStr);
+		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
+		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+		wekaSegmentation.setHomogenizeClasses(flag);
+	}
+
+	/**
+	 * Set classifier for current segmentation
+	 * 
+	 * @param classifierName classifier name with complete package information
+	 * @param options classifier options
+	 */
+	public static void setClassifier(String classifierName, String options)
+	{
+		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
+		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+				
+		try {
+			AbstractClassifier cls = (AbstractClassifier)( Class.forName(classifierName).newInstance() );
+			cls.setOptions( options.split(" "));
+			wekaSegmentation.setClassifier(cls);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 	}
 	
 }// end of Weka_Segmentation class
