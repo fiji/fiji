@@ -847,10 +847,14 @@ const char *last_slash(const char *path)
 	return slash;
 }
 
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
+
 static const char *make_absolute_path(const char *path)
 {
 	static char bufs[2][PATH_MAX + 1], *buf = bufs[0];
-	char cwd[1024] = "";
+	char cwd[PATH_MAX] = "";
 #ifndef WIN32
 	static char *next_buf = bufs[1];
 	int buf_index = 1, len;
