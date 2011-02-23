@@ -1,0 +1,177 @@
+/// GUI INTERACTION HELPERS
+
+// waitForWindow (not fiji.Main's, because we're interested even in non-showing windows
+
+import java.awt.AWTEvent;
+import java.awt.Dialog;
+import java.awt.Frame;
+import java.awt.Tookit;
+
+import java.awt.event.AWTEventListener;
+import java.awt.event.WindowEvent;
+
+import java.util.HashMap;
+import java.util.HashSet;
+
+windowMap = null;
+
+public class WindowCollector implements AWTEventListener {
+	public void eventDispatched(AWTEvent event) {
+		source = event.getSource();
+		if ((source instanceof Dialog || source instanceof Frame) && source.getTitle() != null) {
+			if (!source.getTitle().equals("ImageJA") && source.getWidth() == 0) // make sure pack() has been called on the window
+				return;
+			if (discardedWindows.contains(source))
+				return;
+			title = source.getTitle();
+			if (event.getID() == WindowEvent.WINDOW_CLOSED) {
+				synchronized (windowMap) {
+					discardedWindows.add(windowMap.get(title));
+					windowMap.remove(title);
+					windowMap.notifyAll();
+				}
+				return;
+			}
+			if (!hidden && !source.isVisible())
+				return;
+			synchronized (windowMap) {
+				if (!windowMap.containsKey(title) || windowMap.get(title) != source) {
+					windowMap.put(title, source);
+					windowMap.notifyAll();
+				}
+			}
+		}
+	}
+}
+
+waitForWindow(title) {
+	if (windowMap == null) {
+		windowMap = new HashMap();
+		global.discardedWindows = new HashSet();
+		Toolkit.getDefaultToolkit().addAWTEventListener(new WindowCollector(), -1);
+	}
+	synchronized (windowMap) {
+		for (;;) {
+			if (windowMap.containsKey(title))
+				return windowMap.get(title);
+			windowMap.wait();
+		}
+	}
+}
+
+import java.awt.Window;
+
+import javax.swing.AbstractButton;
+
+describeComponent(component) {
+	className = component.getClass().getName();
+	result = className.substring(className.lastIndexOf('.') + 1);
+	if (component instanceof Window)
+		result += "(" + component.getTitle() + ")";
+	else if (component instanceof AbstractButton)
+		result += "(" + component.getText() + ")";
+	return result;
+}
+
+listComponentsRecursively(container) {
+	listComponentsRecursively(container, "");
+}
+
+import java.awt.Component;
+import java.awt.Container;
+
+listComponentsRecursively(component, indent) {
+	print(indent + describeComponent(component));
+	if (component instanceof Container)
+		for (Component child : component.getComponents())
+			listComponentsRecursively(child, indent + "\t");
+}
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+getButton(container, title) {
+	for (Component child : container.getComponents())
+		if (child instanceof AbstractButton && child.getText().equals(title))
+			return child;
+		else if (child instanceof Container) {
+			button = getButton(child, title);
+			if (button != null)
+				return button;
+		}
+	return null;
+}
+
+clickButton(container, title) {
+	button = getButton(container, title);
+	if (button == null)
+		error("Button " + title + " not found in " + container);
+	/*
+	child.addActionListener(new ActionListener() {
+		void actionPerformed(ActionEvent e) {
+			print(e.getActionCommand());
+			print(e.getID());
+		}
+	});
+	*/
+	// The button must be clicked after the dialog was initialized
+	// (otherwise the value set by the "OK" button is ignored)
+	if (!hidden) {
+		window = container;
+		while (window != null && !(window instanceof Window))
+			window = window.getParent();
+		while (!window.isActive())
+			Thread.sleep(50);
+	}
+	event = new ActionEvent(button, ActionEvent.ACTION_PERFORMED, button.getText());
+	for (ActionListener listener : button.getActionListeners())
+		listener.actionPerformed(event);
+	if (hidden) {
+		while (container != null)
+			if (container instanceof Window) {
+				container.dispose();
+				break;
+			}
+			else
+				container = container.getParent();
+	}
+}
+
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+waitUntilClosed(window) {
+	print("Waiting until " + window.getTitle() + " is closed");
+	synchronized (windowMap) {
+		while (windowMap.get(window.getTitle()) == window)
+			windowMap.wait();
+	}
+	print(window.getTitle() + " was closed");
+}
+
+import javax.swing.JOptionPane;
+
+getOptionPane(container) {
+	for (Component child : container.getComponents())
+		if (child instanceof JOptionPane)
+			return child;
+		else if (child instanceof Container) {
+			pane = getOptionPane(child);
+			if (pane != null)
+				return pane;
+		}
+	return null;
+}
+
+waitForMessageBox(title, message) {
+	print("Waiting for the " + title + " '" + message + "'");
+	window = waitForWindow(title);
+	pane = getOptionPane(window);
+	if (pane.getMessage().equals(message)) {
+		clickButton(window, "OK");
+		window.dispose();
+		print("Okay");
+	}
+	else
+		print("Not okay (" + title + "): " + pane.getMessage() + " instead of " + message);
+}

@@ -91,6 +91,7 @@ import java.awt.Toolkit;
 
 import fiji.updater.UptodateCheck;
 import fiji.updater.logic.Checksummer;
+import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginObject;
 import fiji.updater.ui.ProgressDialog;
 import fiji.updater.util.Canceled;
@@ -204,7 +205,7 @@ public class Bug_Submitter implements PlugIn {
 	protected String getInstalledVersions() {
 
 		ProgressDialog progress = new ProgressDialog(IJ.getInstance(),"Finding installed plugin versions...");
-		Checksummer checksummer = new Checksummer(progress);
+		Checksummer checksummer = new Checksummer(new PluginCollection(), progress);
 		try {
 				checksummer.updateFromLocal();
 		} catch (Canceled e) {

@@ -1899,6 +1899,8 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\tedit the given file in the script editor\n"
 		"\n"
 		"Options to run programs other than ImageJ:\n"
+		"--update\n"
+		"\tstart the command-line version of the Fiji updater\n"
 		"--jdb\n"
 		"\tstart in JDB, the Java debugger\n"
 		"--jython\n"
@@ -2219,6 +2221,10 @@ static int start_ij(void)
 			main_class = "fiji.JarLauncher";
 			add_option_string(&options, arg, 1);
 		}
+		else if (!strcmp(main_argv[i], "--update")) {
+			string_append_path_list(class_path, fiji_path("plugins/Fiji_Updater.jar"));
+			main_class = "fiji.updater.Main";
+		}
 		else if (handle_one_option(&i, "--class-path", arg) ||
 				handle_one_option(&i, "--classpath", arg) ||
 				handle_one_option(&i, "-classpath", arg) ||
@@ -2416,6 +2422,9 @@ static int start_ij(void)
 	if (retrotranslator && build_classpath(class_path, fiji_path("retro"), 0))
 		return 1;
 
+	/* Handle update/ */
+	update_all_files();
+
 	/* set up class path */
 	if (skip_build_classpath) {
 		/* strip trailing ":" */
@@ -2428,7 +2437,6 @@ static int start_ij(void)
 			string_append_path_list(class_path, fiji_path("misc/headless.jar"));
 
 		if (is_default_main_class(main_class)) {
-			update_all_files();
 			string_append_path_list(class_path, fiji_path("jars/Fiji.jar"));
 			string_append_path_list(class_path, fiji_path("jars/ij.jar"));
 		}
@@ -2469,8 +2477,6 @@ static int start_ij(void)
 		else
 			add_option(&options, "-port7", 1);
 		add_option(&options, "-Dsun.java.command=Fiji", 0);
-
-		update_all_files();
 	}
 
 	/* handle "--headless script.ijm" gracefully */

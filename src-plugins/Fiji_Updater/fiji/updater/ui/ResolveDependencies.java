@@ -33,6 +33,7 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
 public class ResolveDependencies extends JDialog implements ActionListener {
+	UpdaterFrame updaterFrame;
 	JPanel rootPanel;
 	public JTextPane panel; // this is public for debugging purposes
 	SimpleAttributeSet bold, indented, italic, normal, red;
@@ -44,15 +45,16 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 	int conflicts;
 	boolean forUpload, wasCanceled;
 
-	public ResolveDependencies(Frame owner) {
-		this(owner, false);
+	public ResolveDependencies(UpdaterFrame owner, PluginCollection plugins) {
+		this(owner, plugins, false);
 	}
 
-	public ResolveDependencies(Frame owner, boolean forUpload) {
+	public ResolveDependencies(UpdaterFrame owner, PluginCollection plugins, boolean forUpload) {
 		super(owner, "Resolve dependencies");
 
+		updaterFrame = owner;
 		this.forUpload = forUpload;
-		plugins = PluginCollection.getInstance();
+		this.plugins = plugins;
 
 		rootPanel = SwingTools.verticalPanel();
 		setContentPane(rootPanel);
@@ -94,6 +96,18 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 		ignore = new HashSet<PluginObject>();
 	}
 
+	public void setVisible(boolean visible) {
+		if (updaterFrame == null || !updaterFrame.hidden)
+			super.setVisible(visible);
+	}
+
+	public void dispose() {
+		if (updaterFrame != null && updaterFrame.hidden) synchronized (this) {
+			notifyAll();
+		}
+		super.dispose();
+	}
+
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == cancel) {
 			wasCanceled = true;
@@ -103,7 +117,7 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 			if (!ok.isEnabled())
 				return;
 			for (PluginObject plugin : automatic)
-				plugin.setFirstValidAction(new Action[] {
+				plugin.setFirstValidAction(plugins, new Action[] {
 					Action.INSTALL, Action.UPDATE,
 					Action.UNINSTALL
 				});
@@ -361,7 +375,7 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 					if (action == null)
 						plugin.setNoAction();
 					else
-						plugin.setAction(action);
+						plugin.setAction(ResolveDependencies.this.plugins, action);
 				listIssues();
 			}
 		});
@@ -424,31 +438,31 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 		for (int i = 0; i < 20; i++)
 			fakeChecksum += Integer.toHexString(random.nextInt() & 0xf) + Integer.toHexString(random.nextInt() & 0xf);
 		long fakeTimestamp = 19700000000000l + (random.nextLong() % 400000000000l);
-		return new PluginObject(label, fakeChecksum, fakeTimestamp, PluginObject.Status.NOT_INSTALLED);
+		return new PluginObject("", label, fakeChecksum, fakeTimestamp, PluginObject.Status.NOT_INSTALLED);
 	}
 
 	public static void main(String[] args) {
-		ResolveDependencies frame = new ResolveDependencies(null);
+		PluginCollection plugins = new PluginCollection();
+		ResolveDependencies frame = new ResolveDependencies(null, plugins);
 
-		PluginCollection plugins = PluginCollection.getInstance();
 		PluginObject plugin = fakePlugin("Install_.jar");
 		plugin.addDependency("Obsoleted_.jar");
 		plugin.addDependency("Locally_Modified.jar");
 		plugin.setStatus(PluginObject.Status.NOT_INSTALLED);
-		plugin.setAction(PluginObject.Action.INSTALL);
+		plugin.setAction(plugins, PluginObject.Action.INSTALL);
 		plugins.add(plugin);
 		plugin = fakePlugin("Obsoleting_.jar");
 		plugin.addDependency("Obsoleted_.jar");
 		plugin.setStatus(PluginObject.Status.NOT_INSTALLED);
-		plugin.setAction(PluginObject.Action.INSTALL);
+		plugin.setAction(plugins, PluginObject.Action.INSTALL);
 		plugins.add(plugin);
 		plugin = fakePlugin("Locally_Modified.jar");
 		plugin.setStatus(PluginObject.Status.MODIFIED);
-		plugin.setAction(PluginObject.Action.MODIFIED);
+		plugin.setAction(plugins, PluginObject.Action.MODIFIED);
 		plugins.add(plugin);
 		plugin = fakePlugin("Obsoleted_.jar");
 		plugin.setStatus(PluginObject.Status.OBSOLETE);
-		plugin.setAction(PluginObject.Action.OBSOLETE);
+		plugin.setAction(plugins, PluginObject.Action.OBSOLETE);
 		plugins.add(plugin);
 
 		System.err.println("resolved: " + frame.resolve());

@@ -3,6 +3,7 @@ package ij3d;
 import ij.ImageStack;
 import ij.ImagePlus;
 import ij.IJ;
+import ij.io.FileInfo;
 import ij.process.ColorProcessor;
 import ij.process.ImageConverter;
 import ij.process.StackConverter;
@@ -165,6 +166,7 @@ public class ContentCreator {
 
 		ImageStack oldStack = imp.getStack();
 		String oldTitle = imp.getTitle();
+		FileInfo fi = imp.getFileInfo();
 		for(int i = 0; i < nFrames; i++) {
 			ImageStack newStack = new ImageStack(w, h);
 			newStack.setColorModel(oldStack.getColorModel());
@@ -185,6 +187,7 @@ public class ContentCreator {
 			ret[i] = new ImagePlus(oldTitle
 				+ " (frame " + i + ")", newStack);
 			ret[i].setCalibration(imp.getCalibration().copy());
+			ret[i].setFileInfo((FileInfo)fi.clone());
 		}
 		if (nChannels > 1)
 			imp.setPositionWithoutUpdate(channel, slice, frame);

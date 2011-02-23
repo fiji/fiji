@@ -2,22 +2,23 @@ package view4d;
 
 import ij.gui.GenericDialog;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 import java.net.URL;
 import java.awt.image.ImageProducer;
-
-import vib.segment.ImageButton;
 
 /**
  * This class implements the window with the controls for the 4D viewer.
  *
  * @author Benjamin Schmid
  */
-public class TimelineGUI implements ActionListener {
+public class TimelineGUI implements ActionListener, KeyListener {
 
-	private final Panel p;
+	private final JPanel p;
 	private boolean visible = false;
 
 	final String nbbFile = "icons/nobounceback.png";
@@ -45,10 +46,10 @@ public class TimelineGUI implements ActionListener {
 			"PLAY", "RECORD", "FASTER", "SLOWER"};
 
 
-	private ImageButton[] buttons = new ImageButton[FILES.length];
+	private JButton[] buttons = new JButton[FILES.length];
 	private final Timeline timeline;
-	private final Scrollbar scroll;
-	private final TextField tf;
+	private final JScrollBar scroll;
+	private final JTextField tf;
 
 	/**
 	 * Initializes a new Viewer4DController;
@@ -66,18 +67,15 @@ public class TimelineGUI implements ActionListener {
 		GridBagLayout gridbag = new GridBagLayout();
 		GridBagConstraints c = new GridBagConstraints();
 
-		p = new Panel(gridbag);
+		p = new JPanel(gridbag);
 		c.gridx = c.gridy = 0;
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.anchor = GridBagConstraints.EAST;
 		c.weightx = c.weighty = 0.0;
 
 		for(int i = 0; i < FILES.length; i++) {
-			buttons[i] = new ImageButton(loadIcon(FILES[i]));
-			buttons[i].setUnarmedBorder(new Border(false));
-			buttons[i].setArmedBorder(new Border(true));
-			buttons[i].setOverBorder(new Border(true));
-			buttons[i].setDisabledBorder(new Border(true));
+			buttons[i] = new JButton(new ImageIcon(loadIcon(FILES[i])));
+			buttons[i].setBorder(null);
 			buttons[i].addActionListener(this);
 			buttons[i].setActionCommand(COMMANDS[i]);
 			gridbag.setConstraints(buttons[i], c);
@@ -91,7 +89,7 @@ public class TimelineGUI implements ActionListener {
 		
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.weightx = 1.0;
-		scroll = new Scrollbar(Scrollbar.HORIZONTAL, cur, 1, min, max);
+		scroll = new JScrollBar(JScrollBar.HORIZONTAL, cur, 1, min, max);
 		scroll.addAdjustmentListener(new AdjustmentListener() {
 			public void adjustmentValueChanged(AdjustmentEvent e) {
 				timeline.pause();
@@ -102,7 +100,7 @@ public class TimelineGUI implements ActionListener {
 		p.add(scroll);
 
 		// set up text field
-		tf = new TextField(2);
+		tf = new JTextField(2);
 		tf.setText(Integer.toString(cur));
 		tf.addKeyListener(new KeyAdapter() {
 			public void keyReleased(KeyEvent e) {
@@ -129,7 +127,7 @@ public class TimelineGUI implements ActionListener {
 		timeline.getUniverse().showTimepoint(v);
 	}
 
-	public Panel getPanel() {
+	public JPanel getPanel() {
 		return p;
 	}
 
@@ -158,28 +156,55 @@ public class TimelineGUI implements ActionListener {
 		return img;
 	}
 
+	/**
+	 * Toggle play/pause
+	 */
+	public synchronized void togglePlay() {
+		if (!p.isVisible())
+			return;
+		if (buttons[playIndex].getActionCommand().equals("PLAY")) {
+			buttons[playIndex].setActionCommand("PAUSE");
+			buttons[playIndex].repaint();
+			timeline.play();
+		}
+		else {
+			buttons[playIndex].setActionCommand("PLAY");
+			buttons[playIndex].repaint();
+			timeline.pause();
+		}
+	}
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+		if (e.getKeyCode() == KeyEvent.VK_BACK_SLASH ||
+				e.getKeyCode() == KeyEvent.VK_SPACE)
+			togglePlay();
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {}
+	@Override
+	public void keyTyped(KeyEvent e) {}
+
+	@Override
 	public void actionPerformed(ActionEvent e) {
 		for(int i = 0; i < buttons.length; i++)
 			buttons[i].repaint();
 
 		String command = e.getActionCommand();
 		if(command.equals("BOUNCEBACK")) {
-			buttons[bbIndex].setUnarmedImage(nbbImage);
 			buttons[bbIndex].setActionCommand("NOBOUNCEBACK");
 			buttons[bbIndex].repaint();
 			timeline.setBounceBack(true);
 		} else if(command.equals("NOBOUNCEBACK")) {
-			buttons[bbIndex].setUnarmedImage(bbImage);
 			buttons[bbIndex].setActionCommand("BOUNCEBACK");
 			buttons[bbIndex].repaint();
 			timeline.setBounceBack(false);
 		} else if(command.equals("PLAY")) {
-			buttons[playIndex].setUnarmedImage(pauseImage);
 			buttons[playIndex].setActionCommand("PAUSE");
 			buttons[playIndex].repaint();
 			timeline.play();
 		} else if(command.equals("PAUSE")) {
-			buttons[playIndex].setUnarmedImage(playImage);
 			buttons[playIndex].setActionCommand("PLAY");
 			buttons[playIndex].repaint();
 			timeline.pause();
@@ -193,23 +218,6 @@ public class TimelineGUI implements ActionListener {
 			timeline.faster();
 		} else if(command.equals("SLOWER")) {
 			timeline.slower();
-		}
-	}
-
-	static class Border extends vib.segment.Border {
-		public Border(boolean armed) {
-// 			setBorderThickness(2);
-			setBorderThickness(0);
-			if (armed) {
-				setType(THREED_IN);
-// 				setMargins(4, 4, 2, 2);
-				setMargins(0, 0, 0, 0);
-			}
-			else {
-				setType( THREED_OUT );
-// 				setMargins(3);
-				setMargins(0);
-			}
 		}
 	}
 }

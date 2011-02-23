@@ -51,7 +51,7 @@ public class BenesNamedPoint extends Point3d {
 		} else if (m_empty.matches()) {
 			return null;
 		} else {
-			IJ.error("There was a points file, but this line was malformed:\n"+
+			IJ.log("There was a points file, but this line was malformed:\n"+
 				 line);
 			return null;
 		}

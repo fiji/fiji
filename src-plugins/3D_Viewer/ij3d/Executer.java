@@ -50,6 +50,8 @@ import customnode.CustomMesh;
 import customnode.CustomMeshNode;
 import customnode.CustomTriangleMesh;
 
+import java.awt.event.TextListener;
+
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.vecmath.Point3d;
 import octree.OctreeDialog;
@@ -505,58 +507,57 @@ public class Executer {
 		c.displayAs(type);
 	}
 
+	private interface ColorListener {
+		public void colorChanged(Color3f color);
+		public void ok(GenericDialog gd);
+	}
 
-	/* ----------------------------------------------------------
-	 * Attributes submenu
-	 * --------------------------------------------------------*/
-	public void changeColor(final Content c) {
-		if(!checkSel(c))
-			return;
-		final ContentInstant ci = c.getCurrent();
-		final GenericDialog gd =
-			new GenericDialog("Adjust color ...", univ.getWindow());
-		final Color3f oldC = ci.getColor();
+	protected void showColorDialog(final String title,
+			final Color3f oldC, final ColorListener colorListener,
+			boolean showDefaultCheckbox, boolean showTimepointsCheckbox) {
+		final GenericDialog gd = new GenericDialog(title, univ.getWindow());
 
-		gd.addCheckbox("Use default color", oldC == null);
+		if (showDefaultCheckbox)
+			gd.addCheckbox("Use default color", oldC == null);
 		gd.addSlider("Red",0,255,oldC == null ? 255 : oldC.x*255);
 		gd.addSlider("Green",0,255,oldC == null ? 0 : oldC.y*255);
 		gd.addSlider("Blue",0,255,oldC == null ? 0 : oldC.z*255);
 
-		gd.addCheckbox("Apply to all timepoints", true);
+		if (showTimepointsCheckbox)
+			gd.addCheckbox("Apply to all timepoints", true);
 
 		final Scrollbar rSlider = (Scrollbar)gd.getSliders().get(0);
 		final Scrollbar gSlider = (Scrollbar)gd.getSliders().get(1);
 		final Scrollbar bSlider = (Scrollbar)gd.getSliders().get(2);
-		final Checkbox cBox = (Checkbox)gd.getCheckboxes().get(0);
-		final Checkbox aBox = (Checkbox)gd.getCheckboxes().get(1);
 
 		rSlider.setEnabled(oldC != null);
 		gSlider.setEnabled(oldC != null);
 		bSlider.setEnabled(oldC != null);
 
-		cBox.addItemListener(new ItemListener() {
-			public void itemStateChanged(ItemEvent e) {
-				gd.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-				rSlider.setEnabled(!cBox.getState());
-				gSlider.setEnabled(!cBox.getState());
-				bSlider.setEnabled(!cBox.getState());
-				ci.setColor(cBox.getState() ? null :
-					new Color3f(
-						rSlider.getValue() / 255f,
-						gSlider.getValue() / 255f,
-						bSlider.getValue() / 255f));
-				gd.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-				univ.fireContentChanged(c);
-			}
-		});
+		if (showDefaultCheckbox) {
+			final Checkbox cBox = (Checkbox)gd.getCheckboxes().get(0);
+			cBox.addItemListener(new ItemListener() {
+				public void itemStateChanged(ItemEvent e) {
+					gd.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+					rSlider.setEnabled(!cBox.getState());
+					gSlider.setEnabled(!cBox.getState());
+					bSlider.setEnabled(!cBox.getState());
+					colorListener.colorChanged(
+						new Color3f(
+							rSlider.getValue() / 255f,
+							gSlider.getValue() / 255f,
+							bSlider.getValue() / 255f));
+					gd.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+				}
+			});
+		}
 
 		AdjustmentListener listener = new AdjustmentListener() {
 			public void adjustmentValueChanged(AdjustmentEvent e) {
-				ci.setColor(new Color3f(
+				colorListener.colorChanged(new Color3f(
 						rSlider.getValue() / 255f,
 						gSlider.getValue() / 255f,
 						bSlider.getValue() / 255f));
-				univ.fireContentChanged(c);
 			}
 		};
 		rSlider.addAdjustmentListener(listener);
@@ -567,87 +568,89 @@ public class Executer {
 		gd.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosed(WindowEvent e) {
-				if(gd.wasCanceled()) {
-					ci.setColor(oldC);
-					univ.fireContentChanged(c);
-					return;
-				}
-				// gd.wasOKed: apply to all time points
-				if(aBox.getState()) {
-					c.setColor(ci.getColor());
-				}
-				univ.fireContentChanged(c);
-				if(cBox.getState()){
-					record(SET_COLOR,
-					"null", "null", "null");
-				} else {
-					record(SET_COLOR,
-					Integer.toString(rSlider.getValue()),
-					Integer.toString(gSlider.getValue()),
-					Integer.toString(bSlider.getValue()));
+				if (gd.wasCanceled())
+					colorListener.colorChanged(oldC);
+				else {
+					gd.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+					colorListener.ok(gd);
+					gd.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 				}
 			}
 		});
 		gd.showDialog();
 	}
 
+	/* ----------------------------------------------------------
+	 * Attributes submenu
+	 * --------------------------------------------------------*/
+	public void changeColor(final Content c) {
+		if(!checkSel(c))
+			return;
+		final ContentInstant ci = c.getCurrent();
+		final Color3f oldC = ci.getColor();
+		final ColorListener colorListener = new ColorListener() {
+			public void colorChanged(Color3f color) {
+				ci.setColor(color);
+				univ.fireContentChanged(c);
+			}
+
+			public void ok(final GenericDialog gd) {
+				if (gd.getNextBoolean())
+					record(SET_COLOR, "null", "null", "null");
+				else
+					record(SET_COLOR, "" + (int)gd.getNextNumber(),
+						"" + (int)gd.getNextNumber(), "" + (int)gd.getNextNumber());
+
+				// gd.wasOKed: apply to all time points
+				if (gd.getNextBoolean())
+					c.setColor(ci.getColor());
+				univ.fireContentChanged(c);
+			}
+		};
+		showColorDialog("Change color...", oldC, colorListener, true, true);
+	}
+
 	/** Adjust the background color in place. */
 	public void changeBackgroundColor() {
-		final GenericDialog gd =
-			new GenericDialog("Adjust background color ...", univ.getWindow());
-
 		final Background background = ((ImageCanvas3D)univ.getCanvas()).getBG();
 		final Label status = univ.getWindow().getStatusLabel();
 		final Color3f oldC = new Color3f();
 		background.getColor(oldC);
 
-		gd.addSlider("Red",0,255,oldC == null ? 255 : oldC.x*255);
-		gd.addSlider("Green",0,255,oldC == null ? 0 : oldC.y*255);
-		gd.addSlider("Blue",0,255,oldC == null ? 0 : oldC.z*255);
-
-		final Scrollbar rSlider = (Scrollbar)gd.getSliders().get(0);
-		final Scrollbar gSlider = (Scrollbar)gd.getSliders().get(1);
-		final Scrollbar bSlider = (Scrollbar)gd.getSliders().get(2);
-
-		rSlider.setEnabled(oldC != null);
-		gSlider.setEnabled(oldC != null);
-		bSlider.setEnabled(oldC != null);
-
-		AdjustmentListener listener = new AdjustmentListener() {
-			public void adjustmentValueChanged(AdjustmentEvent e) {
-				float r = rSlider.getValue() / 255f;
-				float g = gSlider.getValue() / 255f;
-				float b = bSlider.getValue() / 255f;
-				background.setColor(r, g, b);
-				status.setBackground(new Color(r, g, b));
+		final ColorListener colorListener = new ColorListener() {
+			public void colorChanged(Color3f color) {
+				background.setColor(color);
+				status.setBackground(color.get());
 				((ImageCanvas3D)univ.getCanvas()).render();
 			}
-		};
-		rSlider.addAdjustmentListener(listener);
-		gSlider.addAdjustmentListener(listener);
-		bSlider.addAdjustmentListener(listener);
 
-		gd.setModal(false);
-		gd.addWindowListener(new WindowAdapter() {
-			public void windowClosed(WindowEvent e) {
-				if(gd.wasCanceled()) {
-					background.setColor(oldC);
-					status.setBackground(new Color(oldC.x, oldC.y, oldC.z));
-					((ImageCanvas3D)univ.getCanvas()).render();
-					return;
-				} else {
-					// TODO macro record
-					// Apply:
-					float r = rSlider.getValue() / 255f;
-					float g = gSlider.getValue() / 255f;
-					float b = bSlider.getValue() / 255f;
-					background.setColor(r, g, b);
-					status.setBackground(new Color(r, g, b));
-					((ImageCanvas3D)univ.getCanvas()).render();
-				}
+			public void ok(final GenericDialog gd) {
+				// TODO macro record
 			}
-		});
-		gd.showDialog();
+		};
+		showColorDialog("Adjust background color ...", oldC, colorListener, false, false);
+	}
+
+	public void changePointColor(final Content c) {
+		if(!checkSel(c))
+			return;
+		final ContentInstant ci = c.getCurrent();
+		final Color3f oldC = ci.getLandmarkColor();
+		final ColorListener colorListener = new ColorListener() {
+			public void colorChanged(Color3f color) {
+				ci.setLandmarkColor(color);
+				univ.fireContentChanged(c);
+			}
+
+			public void ok(final GenericDialog gd) {
+				// TODO: record
+				// gd.wasOKed: apply to all time points
+				if (gd.getNextBoolean())
+					c.setLandmarkColor(ci.getLandmarkColor());
+				univ.fireContentChanged(c);
+			}
+		};
+		showColorDialog("Change point color...", oldC, colorListener, false, true);
 	}
 
 	public void adjustLUTs(final Content c) {
@@ -951,10 +954,20 @@ public class Executer {
 		final float minS = oldS / 10f;
 		final float maxS = oldS * 10f;
 		gd.addSlider("Size", minS, maxS, oldS);
+		final TextField textField = (TextField)gd.getNumericFields().get(0);
+		textField.addTextListener(new TextListener() {
+			public void textValueChanged(TextEvent e2) {
+				try {
+					c.setLandmarkPointSize(Float.parseFloat(textField.getText()));
+				} catch (NumberFormatException e) {
+					// ignore
+				}
+			}
+		});
 		((Scrollbar)gd.getSliders().get(0)).
 			addAdjustmentListener(new AdjustmentListener() {
 			public void adjustmentValueChanged(AdjustmentEvent e) {
-				float newS = (float)e.getValue();
+				float newS = Float.parseFloat(textField.getText());
 				c.setLandmarkPointSize(newS);
 			}
 		});

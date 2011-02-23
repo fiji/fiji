@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010, 2011 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Simple Neurite Tracer".
@@ -52,31 +52,39 @@ import javax.swing.event.TreeSelectionEvent;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 
 import java.util.Set;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.ArrayList;
+import java.util.concurrent.Callable;
 
+@SuppressWarnings("serial")
 public class PathWindow extends JFrame implements PathAndFillListener, TreeSelectionListener, ActionListener {
 
 	public static class HelpfulJTree extends JTree {
 
 		public HelpfulJTree(TreeNode root) {
 			super( root );
+			assert SwingUtilities.isEventDispatchThread();
 		}
 
 		public boolean isExpanded( Object [] path ) {
+			assert SwingUtilities.isEventDispatchThread();
 			TreePath tp = new TreePath( path );
 			return isExpanded( tp );
 		}
 
 		public void setExpanded( Object [] path, boolean expanded ) {
+			assert SwingUtilities.isEventDispatchThread();
 			TreePath tp = new TreePath( path );
 			setExpandedState( tp, expanded );
 		}
 
 		public void setSelected( Object [] path ) {
+			assert SwingUtilities.isEventDispatchThread();
 			TreePath tp = new TreePath( path );
 			setSelectionPath( tp );
 		}
@@ -84,36 +92,53 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 	}
 
 	public Set<Path> getSelectedPaths() {
-		HashSet<Path> result = new HashSet<Path>();
-		TreePath [] selectedPaths = tree.getSelectionPaths();
-		if( selectedPaths == null || selectedPaths.length == 0 ) {
-			return result;
-		}
-		for( int i = 0; i < selectedPaths.length; ++i ) {
-			TreePath tp = selectedPaths[i];
-			DefaultMutableTreeNode node =
-				(DefaultMutableTreeNode)(tp.getLastPathComponent());
-			if( node != root ) {
-				Path p = (Path)node.getUserObject();
-				result.add(p);
+
+		return SwingSafeResult.getResult( new Callable<Set<Path>>() {
+			public Set<Path> call() {
+				HashSet<Path> result = new HashSet<Path>();
+				TreePath [] selectedPaths = tree.getSelectionPaths();
+				if( selectedPaths == null || selectedPaths.length == 0 ) {
+					return result;
+				}
+				for( int i = 0; i < selectedPaths.length; ++i ) {
+					TreePath tp = selectedPaths[i];
+					DefaultMutableTreeNode node =
+						(DefaultMutableTreeNode)(tp.getLastPathComponent());
+					if( node != root ) {
+						Path p = (Path)node.getUserObject();
+						result.add(p);
+					}
+				}
+				return result;
 			}
-		}
-		return result;
+		});
 	}
 
+	@Override
 	public void actionPerformed(ActionEvent e) {
+		assert SwingUtilities.isEventDispatchThread();
 		Object source = e.getSource();
 		Set<Path> selectedPaths = getSelectedPaths();
-		if( source == deleteButton ) {
+		if( source == deleteButton || source == deleteMenuItem ) {
 			if( selectedPaths.isEmpty() ) {
 				IJ.error("No paths were selected for deletion");
 				return;
 			}
+			int n = selectedPaths.size();
+			String message = "Are you sure you want to delete ";
+			if( n == 1 ) {
+				message += "the path \""+selectedPaths.iterator().next()+"\"";
+			} else {
+				message += "these "+n+" paths?";
+			}
+			message += "?";
+			if (!IJ.showMessageWithCancel("Delete paths...",message))
+				return;
 			for( Path p : selectedPaths ) {
 				p.disconnectFromAll();
 				pathAndFillManager.deletePath( p );
 			}
-		} else if( source == makePrimaryButton ) {
+		} else if( source == makePrimaryButton || source == makePrimaryMenuItem ) {
 			if( selectedPaths.size() != 1 ) {
 				IJ.error("You must have exactly one path selected");
 				return;
@@ -125,7 +150,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			pathsExplored.add(p);
 			p.unsetPrimaryForConnected(pathsExplored);
 			pathAndFillManager.resetListeners(null);
-		} else if( source == exportAsSWCButton ) {
+		} else if( source == exportAsSWCButton || source == exportAsSWCMenuItem ) {
 			ArrayList<SWCPoint> swcPoints = null;
 			try {
 				swcPoints = pathAndFillManager.getSWCFor(selectedPaths);
@@ -138,7 +163,6 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 						       plugin.getImagePlus().getShortTitle(),
 						       ".swc");
 
-			String savePath;
 			if(sd.getFileName()==null) {
 				return;
 			}
@@ -167,13 +191,13 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				return;
 			}
 
-		} else if( source == fillOutButton ) {
+		} else if( source == fillOutButton || source == fillOutMenuItem) {
 			if( selectedPaths.size() < 1 ) {
 				IJ.error("You must have one or more paths in the list selected");
 				return;
 			}
 			plugin.startFillingPaths(selectedPaths);
-		} else if( source == fitVolumeButton ) {
+		} else if( source == fitVolumeButton || source == fitVolumeMenuItem) {
 			if( selectedPaths.size() < 1 ) {
 				IJ.error("You must have one or more paths in the list selected");
 				return;
@@ -201,7 +225,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				}
 			}
 			pathAndFillManager.resetListeners(null);
-		} else if( source == renameButton ) {
+		} else if( source == renameButton || source == renameMenuItem ) {
 			if( selectedPaths.size() != 1 ) {
 				IJ.error("You must have exactly one path selected");
 				return;
@@ -234,32 +258,92 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				pathAndFillManager.resetListeners(null);
 			}
 		} else {
-			IJ.error("Unexpectedly got an event from an unknown source");
-			return;
+			// Check if the source was from one of the SWC menu
+			// items:
+			int swcType = -1;
+			int i = 0;
+			for( JMenuItem menuItem : swcTypeMenuItems ) {
+				if( source == menuItem ) {
+					swcType = i;
+					break;
+				}
+				++i;
+			}
+
+			if( swcType >= 0 ) {
+				for( Path p : selectedPaths )
+					p.setSWCType(swcType);
+				pathAndFillManager.resetListeners(null);
+			} else {
+
+				IJ.error("Unexpectedly got an event from an unknown source");
+				return;
+			}
 		}
 	}
 
-	public void updateButtonsNoneSelected( ) {
-		renameButton.setEnabled(false);
-		fitVolumeButton.setText("Fit Volume");
-		fitVolumeButton.setEnabled(false);
-		fillOutButton.setEnabled(false);
-		makePrimaryButton.setEnabled(false);
-		deleteButton.setEnabled(false);
-		exportAsSWCButton.setEnabled(false);
+	protected void renameSetEnabled(boolean enabled) {
+		assert SwingUtilities.isEventDispatchThread();
+		renameButton.setEnabled(enabled);
+		renameMenuItem.setEnabled(enabled);
+	}
+	protected void fitVolumeSetEnabled(boolean enabled) {
+		assert SwingUtilities.isEventDispatchThread();
+		fitVolumeButton.setEnabled(enabled);
+		fitVolumeMenuItem.setEnabled(enabled);
+	}
+	protected void fillOutSetEnabled(boolean enabled) {
+		assert SwingUtilities.isEventDispatchThread();
+		fillOutButton.setEnabled(enabled);
+		fillOutMenuItem.setEnabled(enabled);
+	}
+	protected void makePrimarySetEnabled(boolean enabled) {
+		assert SwingUtilities.isEventDispatchThread();
+		makePrimaryButton.setEnabled(enabled);
+		makePrimaryMenuItem.setEnabled(enabled);
+	}
+	protected void deleteSetEnabled(boolean enabled) {
+		assert SwingUtilities.isEventDispatchThread();
+		deleteButton.setEnabled(enabled);
+		deleteMenuItem.setEnabled(enabled);
+	}
+	protected void exportAsSWCSetEnabled(boolean enabled) {
+		assert SwingUtilities.isEventDispatchThread();
+		exportAsSWCButton.setEnabled(enabled);
+		exportAsSWCMenuItem.setEnabled(enabled);
 	}
 
-	public void updateButtonsOneSelected( Path p ) {
-		renameButton.setEnabled(true);
+	protected void fitVolumeSetText(String s) {
+		assert SwingUtilities.isEventDispatchThread();
+		fitVolumeButton.setText(s);
+		fitVolumeMenuItem.setText(s);
+	}
+
+	protected void updateButtonsNoneSelected( ) {
+		assert SwingUtilities.isEventDispatchThread();
+		renameSetEnabled(false);
+		fitVolumeSetText("Fit Volume");
+		fitVolumeSetEnabled(false);
+		fillOutSetEnabled(false);
+		makePrimarySetEnabled(false);
+		deleteSetEnabled(false);
+		exportAsSWCSetEnabled(false);
+		swcTypeMenu.setEnabled(false);
+	}
+
+	protected void updateButtonsOneSelected( Path p ) {
+		assert SwingUtilities.isEventDispatchThread();
+		renameSetEnabled(true);
 		if( p.getUseFitted() )
-			fitVolumeButton.setText("Un-fit Volume");
+			fitVolumeSetText("Un-fit Volume");
 		else
-			fitVolumeButton.setText("Fit Volume");
-		fitVolumeButton.setEnabled(true);
-		fillOutButton.setEnabled(true);
-		makePrimaryButton.setEnabled(true);
-		deleteButton.setEnabled(true);
-		exportAsSWCButton.setEnabled(true);
+			fitVolumeSetText("Fit Volume");
+		fitVolumeSetEnabled(true);
+		fillOutSetEnabled(true);
+		makePrimarySetEnabled(true);
+		deleteSetEnabled(true);
+		exportAsSWCSetEnabled(true);
+		swcTypeMenu.setEnabled(true);
 	}
 
 	public boolean allSelectedUsingFittedVersion() {
@@ -274,22 +358,26 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		return true;
 	}
 
-	public void updateButtonsManySelected( ) {
-		renameButton.setEnabled(false);
+	protected void updateButtonsManySelected( ) {
+		assert SwingUtilities.isEventDispatchThread();
+		renameSetEnabled(false);
 		{
 			if( allSelectedUsingFittedVersion() )
-				fitVolumeButton.setText("Un-fit Volumes");
+				fitVolumeSetText("Un-fit Volumes");
 			else
-				fitVolumeButton.setText("Fit Volumes");
+				fitVolumeSetText("Fit Volumes");
 		}
-		fitVolumeButton.setEnabled(true);
-		fillOutButton.setEnabled(true);
-		makePrimaryButton.setEnabled(false);
-		deleteButton.setEnabled(true);
-		exportAsSWCButton.setEnabled(true);
+		fitVolumeSetEnabled(true);
+		fillOutSetEnabled(true);
+		makePrimarySetEnabled(false);
+		deleteSetEnabled(true);
+		exportAsSWCSetEnabled(true);
+		swcTypeMenu.setEnabled(true);
 	}
 
+	@Override
 	public void valueChanged( TreeSelectionEvent e ) {
+		assert SwingUtilities.isEventDispatchThread();
 		Set<Path> selectedPaths = getSelectedPaths();
 		if( selectedPaths.isEmpty() ) {
 			pathAndFillManager.setSelected(new Path[]{},this);
@@ -310,29 +398,42 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 	public static class PathTreeNode extends DefaultMutableTreeNode {
 	}
 
-	JScrollPane scrollPane;
+	protected JScrollPane scrollPane;
 
-	HelpfulJTree tree;
-	DefaultMutableTreeNode root;
+	protected HelpfulJTree tree;
+	protected DefaultMutableTreeNode root;
 
-	JPanel buttonPanel;
+	protected JPopupMenu popup;
+	protected JMenu swcTypeMenu;
 
-	JButton renameButton;
-	JButton fitVolumeButton;
-	JButton fillOutButton;
-	JButton makePrimaryButton;
-	JButton deleteButton;
-	JButton exportAsSWCButton;
+	protected JPanel buttonPanel;
 
-	SimpleNeuriteTracer plugin;
-	PathAndFillManager pathAndFillManager;
+	protected JButton renameButton;
+	protected JButton fitVolumeButton;
+	protected JButton fillOutButton;
+	protected JButton makePrimaryButton;
+	protected JButton deleteButton;
+	protected JButton exportAsSWCButton;
+
+	protected JMenuItem renameMenuItem;
+	protected JMenuItem fitVolumeMenuItem;
+	protected JMenuItem fillOutMenuItem;
+	protected JMenuItem makePrimaryMenuItem;
+	protected JMenuItem deleteMenuItem;
+	protected JMenuItem exportAsSWCMenuItem;
+
+	protected ArrayList<JMenuItem> swcTypeMenuItems = new ArrayList<JMenuItem>();
+
+	protected SimpleNeuriteTracer plugin;
+	protected PathAndFillManager pathAndFillManager;
 
 	public PathWindow(PathAndFillManager pathAndFillManager, SimpleNeuriteTracer plugin) {
 		this( pathAndFillManager, plugin, 200, 60 );
 	}
 
-	public PathWindow(PathAndFillManager pathAndFillManager, SimpleNeuriteTracer plugin, int x, int y) {
+	public PathWindow(PathAndFillManager pathAndFillManager, SimpleNeuriteTracer plugin, final int x, final int y) {
 		super("All Paths");
+		assert SwingUtilities.isEventDispatchThread();
 
 		this.pathAndFillManager = pathAndFillManager;
 		this.plugin = plugin;
@@ -347,6 +448,45 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		add(scrollPane, BorderLayout.CENTER);
 
 		buttonPanel = new JPanel();
+
+		add(buttonPanel, BorderLayout.PAGE_END);
+
+		// Create all the menu items:
+
+		popup = new JPopupMenu();
+
+		renameMenuItem = new JMenuItem("Rename");
+		fitVolumeMenuItem = new JMenuItem("Fit Volume");
+		fillOutMenuItem = new JMenuItem("Fill Out");
+		makePrimaryMenuItem = new JMenuItem("Make Primary");
+		deleteMenuItem = new JMenuItem("Delete");
+		exportAsSWCMenuItem = new JMenuItem("Export as SWC");
+
+		popup.add(renameMenuItem);
+		popup.add(fitVolumeMenuItem);
+		popup.add(fillOutMenuItem);
+		popup.add(makePrimaryMenuItem);
+		popup.add(deleteMenuItem);
+		popup.add(exportAsSWCMenuItem);
+
+		renameMenuItem.addActionListener(this);
+		fitVolumeMenuItem.addActionListener(this);
+		fillOutMenuItem.addActionListener(this);
+		makePrimaryMenuItem.addActionListener(this);
+		deleteMenuItem.addActionListener(this);
+		exportAsSWCMenuItem.addActionListener(this);
+
+		// Now also add the SWC types submenu:
+		swcTypeMenu = new JMenu("Set SWC type");
+		for( String s : Path.swcTypeNames ) {
+			JMenuItem jmi = new JMenuItem(s);
+			jmi.addActionListener(this);
+			swcTypeMenu.add(jmi);
+			swcTypeMenuItems.add(jmi);
+		}
+		popup.add(swcTypeMenu);
+
+		// Create all the menu items:
 
 		renameButton = new JButton("Rename");
 		fitVolumeButton = new JButton("Fit Volume");
@@ -369,20 +509,46 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		deleteButton.addActionListener(this);
 		exportAsSWCButton.addActionListener(this);
 
-		add(buttonPanel, BorderLayout.PAGE_END);
-
+		MouseListener ml = new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent me) {
+				maybeShowPopup(me);
+			}
+			@Override
+			public void mouseReleased(MouseEvent me) {
+				maybeShowPopup(me);
+			}
+			protected void maybeShowPopup(MouseEvent me) {
+				if( me.isPopupTrigger() )
+					showPopup(me);
+			}
+		};
+		tree.addMouseListener(ml);
 	}
 
-	void setButtonsEnabled( boolean enable ) {
-		renameButton.setEnabled(enable);
-		fitVolumeButton.setEnabled(enable);
-		fillOutButton.setEnabled(enable);
-		makePrimaryButton.setEnabled(enable);
-		deleteButton.setEnabled(enable);
-		exportAsSWCButton.setEnabled(enable);
+	protected void showPopup(MouseEvent me) {
+		assert SwingUtilities.isEventDispatchThread();
+		// Possibly adjust the selection here:
+		popup.show(me.getComponent(),
+				me.getX(),
+				me.getY());
 	}
 
-	void getExpandedPaths( HelpfulJTree tree, TreeModel model, MutableTreeNode node, HashSet set ) {
+	protected void setButtonsEnabled( final boolean enable ) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				renameSetEnabled(enable);
+				fitVolumeSetEnabled(enable);
+				fillOutSetEnabled(enable);
+				makePrimarySetEnabled(enable);
+				deleteSetEnabled(enable);
+				exportAsSWCSetEnabled(enable);
+			}
+		});
+	}
+
+	protected void getExpandedPaths( HelpfulJTree tree, TreeModel model, MutableTreeNode node, HashSet<Path> set ) {
+		assert SwingUtilities.isEventDispatchThread();
 		int count = model.getChildCount(node);
 		for( int i = 0; i < count;  i++ ) {
 			DefaultMutableTreeNode child = (DefaultMutableTreeNode) model.getChild( node, i );
@@ -395,7 +561,8 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		}
 	}
 
-	void setExpandedPaths( HelpfulJTree tree, TreeModel model, MutableTreeNode node, HashSet set, Path justAdded ) {
+	protected void setExpandedPaths( HelpfulJTree tree, TreeModel model, MutableTreeNode node, HashSet<Path> set, Path justAdded ) {
+		assert SwingUtilities.isEventDispatchThread();
 		int count = model.getChildCount(node);
 		for( int i = 0; i < count;  i++ ) {
 			DefaultMutableTreeNode child = (DefaultMutableTreeNode) model.getChild( node, i );
@@ -409,15 +576,21 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 
 	}
 
-	public void setSelectedPaths( HashSet selectedPaths, Object source ) {
-		if( source == this )
-			return;
-		TreePath [] noTreePaths = {};
-		tree.setSelectionPaths( noTreePaths );
-		setSelectedPaths( tree, tree.getModel(), root, selectedPaths );
+	@Override
+	public void setSelectedPaths( final HashSet<Path> selectedPaths, final Object source ) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				if( source == this )
+					return;
+				TreePath [] noTreePaths = {};
+				tree.setSelectionPaths( noTreePaths );
+				setSelectedPaths( tree, tree.getModel(), root, selectedPaths );
+			}
+		});
 	}
 
-	void setSelectedPaths( HelpfulJTree tree, TreeModel model, MutableTreeNode node, HashSet set ) {
+	protected void setSelectedPaths( final HelpfulJTree tree, final TreeModel model, final MutableTreeNode node, final HashSet<Path> set ) {
+		assert SwingUtilities.isEventDispatchThread();
 		int count = model.getChildCount(node);
 		for( int i = 0; i < count;  i++ ) {
 			DefaultMutableTreeNode child = (DefaultMutableTreeNode) model.getChild( node, i );
@@ -428,70 +601,74 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			if( ! model.isLeaf(child) )
 				setSelectedPaths( tree, model, child, set );
 		}
-
 	}
 
-	public void setPathList( String [] pathList, Path justAdded, boolean expandAll ) {
+	@Override
+	public void setPathList( String [] pathList, final Path justAdded, final boolean expandAll ) {
 
-		// Save the selection state:
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
 
-		TreePath [] selectedBefore = tree.getSelectionPaths();
-		HashSet selectedPathsBefore = new HashSet();
-		HashSet expandedPathsBefore = new HashSet();
+				// Save the selection state:
 
-		if( selectedBefore != null )
-			for( int i = 0; i < selectedBefore.length; ++i ) {
-				TreePath tp = selectedBefore[i];
-				DefaultMutableTreeNode dmtn = (DefaultMutableTreeNode)tp.getLastPathComponent();
-				if( dmtn != root ) {
-					Path p = (Path)dmtn.getUserObject();
-					selectedPathsBefore.add(p);
+				TreePath [] selectedBefore = tree.getSelectionPaths();
+				HashSet<Path> selectedPathsBefore = new HashSet<Path>();
+				HashSet<Path> expandedPathsBefore = new HashSet<Path>();
+
+				if( selectedBefore != null )
+					for( int i = 0; i < selectedBefore.length; ++i ) {
+						TreePath tp = selectedBefore[i];
+						DefaultMutableTreeNode dmtn = (DefaultMutableTreeNode)tp.getLastPathComponent();
+						if( dmtn != root ) {
+							Path p = (Path)dmtn.getUserObject();
+							selectedPathsBefore.add(p);
+						}
+					}
+
+				// Save the expanded state:
+				getExpandedPaths( tree, tree.getModel(), root, expandedPathsBefore );
+
+				/* Ignore the arguments and get the real path list
+				   from the PathAndFillManager: */
+
+				DefaultMutableTreeNode newRoot = new DefaultMutableTreeNode("All Paths");
+				DefaultTreeModel model = new DefaultTreeModel(newRoot);
+				// DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
+				Path [] primaryPaths = pathAndFillManager.getPathsStructured();
+				for( int i = 0; i < primaryPaths.length; ++i ) {
+					Path primaryPath = primaryPaths[i];
+					// Add the primary path if it's not just a fitted version of another:
+					if( primaryPath.fittedVersionOf == null )
+						addNode( newRoot, primaryPath, model );
 				}
+				root = newRoot;
+				tree.setModel(model);
+
+				model.reload();
+
+				// Set back the expanded state:
+				if( expandAll ) {
+					for( int i = 0; i < tree.getRowCount(); ++i )
+						tree.expandRow(i);
+				} else
+					setExpandedPaths( tree, model, root, expandedPathsBefore, justAdded );
+
+				setSelectedPaths( tree, model, root, selectedPathsBefore );
 			}
-
-		// Save the expanded state:
-		getExpandedPaths( tree, tree.getModel(), root, expandedPathsBefore );
-
-		/* Ignore the arguments and get the real path list
-		   from the PathAndFillManager: */
-
-		DefaultMutableTreeNode newRoot = new DefaultMutableTreeNode("All Paths");
-		DefaultTreeModel model = new DefaultTreeModel(newRoot);
-		// DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
-		Path [] primaryPaths = pathAndFillManager.getPathsStructured();
-		for( int i = 0; i < primaryPaths.length; ++i ) {
-			Path primaryPath = primaryPaths[i];
-			// Add the primary path if it's not just a fitted version of another:
-			if( primaryPath.fittedVersionOf == null )
-				addNode( newRoot, primaryPath, model );
-		}
-		root = newRoot;
-		tree.setModel(model);
-
-		model.reload();
-
-		// Set back the expanded state:
-		if( expandAll ) {
-			for( int i = 0; i < tree.getRowCount(); ++i )
-				tree.expandRow(i);
-		} else
-			setExpandedPaths( tree, model, root, expandedPathsBefore, justAdded );
-
-		setSelectedPaths( tree, model, root, selectedPathsBefore );
+		});
 	}
 
-	public void addNode( MutableTreeNode parent, Path childPath, DefaultTreeModel model ) {
+	protected void addNode( MutableTreeNode parent, Path childPath, DefaultTreeModel model ) {
+		assert SwingUtilities.isEventDispatchThread();
 		MutableTreeNode newNode = new DefaultMutableTreeNode(childPath);
 		model.insertNodeInto(newNode, parent, parent.getChildCount());
 		for( Path p : childPath.children )
 			addNode( newNode, p, model );
 	}
 
+	@Override
 	public void setFillList( String [] fillList ) {
 
 	}
 
-	public void setSelectedPaths( int [] selectedIndices ) {
-
-	}
 }

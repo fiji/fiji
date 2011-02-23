@@ -31,8 +31,7 @@ import java.util.List;
  * 1.) Set db.xml.gz to read-only
  * 2.) Verify db.xml.gz has not been modified, if not, upload process cancelled
  * 3.) Upload db.xml.gz.lock (Lock file, prevent others from writing it ATM)
- * 4.) Upload plugin files and current.txt
- * 5.) If all goes well, force rename db.xml.gz.lock to db.xml.gz
+ * 4.) If all goes well, force rename db.xml.gz.lock to db.xml.gz
  */
 public class FileUploader extends Progressable {
 	protected final String uploadDir;
@@ -40,7 +39,7 @@ public class FileUploader extends Progressable {
 	long timestamp;
 
 	public FileUploader() {
-		this("/var/www/update/");
+		this(Updater.UPDATE_DIRECTORY);
 	}
 
 	public FileUploader(String uploadDir) {
@@ -56,8 +55,7 @@ public class FileUploader extends Progressable {
 	//Steps to accomplish entire upload task
 	public synchronized void upload(List<SourceFile> sources,
 			List<String> locks) throws IOException {
-		long now = new Date().getTime();
-		timestamp = Long.parseLong(Util.timestamp(now));
+		timestamp = Long.parseLong(Util.timestamp(System.currentTimeMillis()));
 		setTitle("Uploading");
 
 		calculateTotalSize(sources);
@@ -65,7 +63,7 @@ public class FileUploader extends Progressable {
 
 		byte[] buffer = new byte[65536];
 		for (SourceFile source : sources) {
-			File file = new File(uploadDir + source.getFilename());
+			File file = new File(uploadDir, source.getFilename());
 			File dir = file.getParentFile();
 			if (!dir.exists())
 				dir.mkdirs();
@@ -95,9 +93,9 @@ public class FileUploader extends Progressable {
 		}
 
 		for (String lock : locks) {
-			File file = new File(uploadDir + lock);
-			File lockFile = new File(uploadDir + lock + ".lock");
-			File backup = new File(uploadDir + lock + ".old");
+			File file = new File(uploadDir, lock);
+			File lockFile = new File(uploadDir, lock + ".lock");
+			File backup = new File(uploadDir, lock + ".old");
 			if (backup.exists())
 				backup.delete();
 			file.renameTo(backup);

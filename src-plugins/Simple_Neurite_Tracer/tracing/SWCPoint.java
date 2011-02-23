@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010, 2011 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Simple Neurite Tracer".
@@ -30,7 +30,7 @@ package tracing;
 import java.util.ArrayList;
 import java.io.PrintWriter;
 
-public class SWCPoint implements Comparable {
+public class SWCPoint implements Comparable<SWCPoint> {
 	ArrayList<SWCPoint> nextPoints;
 	SWCPoint previousPoint;
 	int id, type, previous;
@@ -56,14 +56,15 @@ public class SWCPoint implements Comparable {
 	public void setPreviousPoint( SWCPoint p ) {
 		previousPoint = p;
 	}
+	@Override
 	public String toString( ) {
 		return "SWCPoint ["+id+"] "+Path.swcTypeNames[type]+" "+
 			"("+x+","+y+","+z+") "+
 			"radius: "+radius+", "+
 			"[previous: "+ previous+"]";
 	}
-	public int compareTo( Object o ) {
-		int oid = ((SWCPoint)o).id;
+	public int compareTo( SWCPoint o ) {
+		int oid = o.id;
 		return (id < oid) ? -1 : ((id > oid) ? 1 : 0);
 	}
 	public void println(PrintWriter pw) {

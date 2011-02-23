@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010, 2011 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Simple Neurite Tracer".
@@ -780,7 +780,7 @@ public abstract class SearchThread extends Thread {
 			nodes_as_image[n.z][n.y*width+n.x] = n;
 
 		} else if( n.searchStatus == OPEN_FROM_GOAL ) {
-			assert( ! (bidirectional && definedGoal ) );
+			assert bidirectional && definedGoal;
 
 			open_from_goal.add( n );
 			nodes_as_image[n.z][n.y*width+n.x] = n;
@@ -791,7 +791,7 @@ public abstract class SearchThread extends Thread {
 			nodes_as_image[n.z][n.y*width+n.x] = n;
 
 		} else if( n.searchStatus == CLOSED_FROM_GOAL ) {
-			assert( ! (bidirectional && definedGoal ) );
+			assert bidirectional && definedGoal;
 
 			closed_from_goal.add( n );
 			nodes_as_image[n.z][n.y*width+n.x] = n;

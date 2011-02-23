@@ -67,6 +67,22 @@ public class SimpleExecuter {
 		} catch (InterruptedException e) { /* ignore */ }
 	}
 
+	public static void exec(String... args) {
+		LineHandler ijLogHandler = new LineHandler() {
+			public void handleLine(String line) {
+				IJ.log(line);
+			}
+		};
+		try {
+			SimpleExecuter executer = new SimpleExecuter(args, ijLogHandler, ijLogHandler);
+			if (executer.getExitCode() != 0)
+				throw new RuntimeException("exit status: " + executer.getExitCode());
+		}
+		catch (IOException e) {
+			throw new RuntimeException("Could not execute", e);
+		}
+	}
+
 	public int getExitCode() {
 		return exitCode;
 	}

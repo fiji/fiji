@@ -1,0 +1,41 @@
+// JAR HELPERS
+
+import java.io.ByteArrayInputStream;
+import java.io.FileOutputStream;
+
+import java.util.Collections;
+
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
+
+copyStream(in, out) {
+	byte[] buffer = new byte[16384];
+	for (;;) {
+		int count = in.read(buffer);
+		if (count < 0)
+			break;
+		out.write(buffer, 0, count);
+	}
+	in.close();
+}
+
+addToJar(path, filename, contents) {
+	if (!(path instanceof File))
+		path = new File(path);
+	newPath = new File(path.getAbsolutePath() + ".new");
+	input = new JarFile(path);
+	output = new JarOutputStream(new FileOutputStream(newPath));
+	for (JarEntry entry : Collections.list(input.entries()))
+		if (!entry.getName().equals(filename)) {
+			output.putNextEntry(entry);
+			copyStream(input.getInputStream(entry), output);
+		}
+	output.putNextEntry(new JarEntry(filename));
+	if (!(contents instanceof byte[]))
+		contents = contents.getBytes();
+	copyStream(new ByteArrayInputStream(contents), output);
+	output.close();
+	if (!path.delete() || !newPath.renameTo(path))
+		throw new Exception("Could not rename " + newPath + " to " + path);
+}

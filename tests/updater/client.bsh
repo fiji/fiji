@@ -1,0 +1,43 @@
+#!/bin/sh
+/*/. 2>/dev/null; exec "$(dirname "$0")"/../../fiji "$0" "$@" # exec with fiji */
+
+import java.io.File;
+
+if (bsh.args.length == 0) {
+	print("Usage: "  + this.interpreter.getSourceFileInfo()
+                + " <beanshell-script>");
+        System.exit(1);
+}
+
+if (bsh.args.length > 1 && bsh.args[1].equals("--no-hidden"))
+	hidden = false;
+
+libDir = new File(this.interpreter.getSourceFileInfo()).getParentFile();
+source(new File(libDir, "lib.bsh").getAbsolutePath());
+
+import fiji.Main;
+
+import ij.ImageJ;
+
+new Thread() {
+	void run() {
+		setAccessibility(true);
+		ImageJ.arguments = new String[] { "dummy", "dummy", "dummy", bsh.args[0] };
+		Main.premain();
+		new ImageJ(null, hidden ? ImageJ.NO_SHOW : ImageJ.STANDALONE);
+		Main.setup();
+		Main.postmain();
+	}
+}.start();
+
+assert("update/ does not exist anymore", !new File(System.getProperty("fiji.dir"), "update").exists());
+print("Eval'ing " + bsh.args[0]);
+try {
+	eval(bsh.args[0]);
+} catch (Throwable e) {
+	if (e instanceof bsh.EvalError)
+		print(e.toString());
+	else
+		e.printStackTrace();
+	System.exit(1);
+}

@@ -1,7 +1,20 @@
 package ij3d;
 
+import ij.IJ;
+
 import ij3d.pointlist.PointListDialog;
 import ij.ImagePlus;
+
+import ij.io.FileInfo;
+import ij.io.OpenDialog;
+import ij.io.SaveDialog;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
 
 import vib.PointList;
 
@@ -17,6 +30,9 @@ import javax.vecmath.Point3d;
 import java.util.TreeMap;
 import java.util.HashMap;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class Content extends BranchGroup implements UniverseListener, ContentConstants {
 
 	private HashMap<Integer, Integer> timepointToSwitchIndex;
@@ -25,6 +41,7 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 	private Switch contentSwitch;
 	private boolean showAllTimepoints = false;
 	private final String name;
+	private boolean showPointList = false;
 
 	private final boolean swapTimelapseData;
 
@@ -122,17 +139,23 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 	public void showTimepoint(int tp, boolean force) {
 		if(tp == currentTimePoint && !force)
 			return;
-		if(!showAllTimepoints && swapTimelapseData) {
-			ContentInstant old = contents.get(currentTimePoint);
-			if(old != null)
+		ContentInstant old = getCurrent();
+		if(old != null && !showAllTimepoints) {
+			if(swapTimelapseData)
 				old.swapDisplayedData();
+			if (!showAllTimepoints) {
+				ContentInstant next = contents.get(tp);
+				if (next != null)
+					next.showPointList(showPointList);
+			}
+			getCurrent().showPointList(false);
 		}
 		currentTimePoint = tp;
 		if(showAllTimepoints)
 			return;
-		ContentInstant next = contents.get(currentTimePoint);
+		ContentInstant next = getCurrent();
 		if(next != null && swapTimelapseData)
-			next.restoreDisplayedData();
+				next.restoreDisplayedData();
 
 		Integer idx = timepointToSwitchIndex.get(tp);
 		if(idx == null)
@@ -235,16 +258,105 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 	}
 
 	public void showPointList(boolean b) {
-		for(ContentInstant c : contents.values())
-			c.showPointList(b);
+		getCurrent().showPointList(b);
+		this.showPointList = b;
 	}
 
+	protected final static Pattern startFramePattern =
+		Pattern.compile("(?s)(?m).*?^(# frame:? (\\d+)\n).*");
+
 	public void loadPointList() {
-		getCurrent().loadPointList();
+		String dir = null, fileName = null;
+		ImagePlus image = contents.firstEntry().getValue().image;
+		if (image != null) {
+			FileInfo fi = image.getFileInfo();
+			dir = fi.directory;
+			fileName = fi.fileName + ".points";
+		}
+		OpenDialog od = new OpenDialog("Open points annotation file", dir, fileName);
+		if (od.getFileName() == null)
+			return;
+
+		File file = new File(od.getDirectory(), od.getFileName());
+		try {
+			String fileContents = readFile(new FileInputStream(file));
+			Matcher matcher = startFramePattern.matcher(fileContents);
+			if (matcher.matches()) {
+				// empty point lists
+				for (Integer frame : contents.keySet())
+					contents.get(frame).setPointList(new PointList());
+				while (matcher.matches()) {
+					int frame = Integer.parseInt(matcher.group(2));
+					fileContents = fileContents.substring(matcher.end(1));
+					matcher = startFramePattern.matcher(fileContents);
+					ContentInstant ci = contents.get(frame);
+					if (ci == null)
+						continue;
+					String pointsForFrame = matcher.matches() ?
+						fileContents.substring(0, matcher.start(1)) : fileContents;
+					PointList points = PointList.parseString(pointsForFrame);
+					if (points != null)
+						ci.setPointList(points);
+				}
+			}
+			else {
+				// fall back to old-style one-per-frame point lists
+				PointList points = PointList.parseString(fileContents);
+				if (points != null)
+					getCurrent().setPointList(points);
+			}
+			showPointList(true);
+		}
+		catch (IOException e) {
+			IJ.error("Could not read point list from " + file);
+		}
+	}
+
+	String readFile(InputStream in) throws IOException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		byte[] buffer = new byte[1024];
+		for (;;) {
+			int count = in.read(buffer);
+			if (count < 0)
+				break;
+			out.write(buffer, 0, count);
+		}
+		in.close();
+		out.close();
+		return out.toString("UTF-8");
 	}
 
 	public void savePointList() {
-		getCurrent().savePointList();
+		String dir = OpenDialog.getDefaultDirectory();
+		String fileName = getName();
+		ImagePlus image = contents.firstEntry().getValue().image;
+		if (image != null) {
+			FileInfo fi = image.getFileInfo();
+			dir = fi.directory;
+			fileName = fi.fileName;
+		}
+		SaveDialog sd = new SaveDialog("Save points annotation file as...",
+			dir, fileName, ".points");
+		if (sd.getFileName() == null)
+			return;
+
+		File file = new File(sd.getDirectory(), sd.getFileName());
+		if (file.exists() && !IJ.showMessageWithCancel("File exists", "Overwrite " + file + "?"))
+			return;
+		try {
+			PrintStream out = new PrintStream(file);
+			for (Integer frame : contents.keySet()) {
+				ContentInstant ci = contents.get(frame);
+				if (ci.getPointList().size() != 0) {
+					out.println("# frame " + frame);
+					ci.savePointList(out);
+				}
+			}
+			out.close();
+		}
+		catch (IOException e) {
+			IJ.error("Could not save points to " + file);
+		}
 	}
 
 	/**
@@ -271,6 +383,15 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 	public void setLandmarkPointSize(float r) {
 		for(ContentInstant c : contents.values())
 			c.setLandmarkPointSize(r);
+	}
+
+	public Color3f getLandmarkColor() {
+		return getCurrent().getLandmarkColor();
+	}
+
+	public void setLandmarkColor(Color3f color) {
+		for(ContentInstant c : contents.values())
+			c.setLandmarkColor(color);
 	}
 
 	public PointList getPointList() {

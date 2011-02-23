@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010, 2011 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Simple Neurite Tracer".
@@ -30,9 +30,6 @@ package tracing;
 import java.awt.Color;
 import java.awt.Graphics;
 
-import java.awt.image.IndexColorModel;
-import java.awt.image.ColorModel;
-
 import ij.gui.*;
 import ij.*;
 import ij.process.*;
@@ -49,11 +46,8 @@ import ij3d.MeshMaker;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
 
-import javax.swing.tree.DefaultMutableTreeNode;
-
 import java.util.ArrayList;
 import java.util.Set;
-import java.util.Iterator;
 import java.util.HashSet;
 import java.util.Arrays;
 import java.util.List;
@@ -61,13 +55,12 @@ import java.util.List;
 /* This class represents a list of points, and has methods for drawing
  * them onto ThreePanes-style image canvases. */
 
-public class Path implements Comparable {
+public class Path implements Comparable<Path> {
 
-	public int compareTo(Object o) {
-		Path casted = (Path)o;
-		if( id == casted.id )
+	public int compareTo(Path o) {
+		if( id == o.id )
 			return 0;
-		if( id < casted.id )
+		if( id < o.id )
 			return -1;
 		else
 			return 1;
@@ -744,7 +737,7 @@ public class Path implements Comparable {
 
 				double cross_x = n_y * t_z - n_z * t_y;
 				double cross_y = n_z * t_x - n_x * t_z;
-				double cross_z = n_x * t_y - n_y * t_x;
+				// double cross_z = n_x * t_y - n_y * t_x;
 
 				double sizeInPlane = Math.sqrt( cross_x * cross_x + cross_y * cross_y );
 				double normalized_cross_x = cross_x / sizeInPlane;
@@ -808,10 +801,6 @@ public class Path implements Comparable {
 		if( size() < 1 )
 			throw new RuntimeException("indexNearestTo called on a Path of size() = 0");
 
-		PointInImage result = new PointInImage( Double.MIN_VALUE,
-							Double.MIN_VALUE,
-							Double.MIN_VALUE );
-
 		double minimumDistanceSquared = Double.MAX_VALUE;
 		int indexOfMinimum = -1;
 
@@ -835,7 +824,7 @@ public class Path implements Comparable {
 	// ------------------------------------------------------------------------
 	// FIXME: adapt these for Path rather than SegmentedConnection, down to EOFIT
 
-	class CircleAttempt implements MultivariateFunction, Comparable {
+	class CircleAttempt implements MultivariateFunction, Comparable<CircleAttempt> {
 
 		double min;
 		double [] best;
@@ -857,8 +846,7 @@ public class Path implements Comparable {
 			initial = start;
 		}
 
-		public int compareTo(Object other) {
-			CircleAttempt o = (CircleAttempt)other;
+		public int compareTo(CircleAttempt o) {
 			if (min < o.min)
 				return -1;
 			else if (min > o.min)
@@ -1616,25 +1604,25 @@ public class Path implements Comparable {
 	// Going by the meanings of the types given in:
 	//   http://www.soton.ac.uk/~dales/morpho/morpho_doc/
 
-	static final int SWC_UNDEFINED       = 0;
-	static final int SWC_SOMA            = 1;
-	static final int SWC_AXON            = 2;
-	static final int SWC_DENDRITE        = 3;
-	static final int SWC_APICAL_DENDRITE = 4;
-	static final int SWC_FORK_POINT      = 5;
-	static final int SWC_END_POINT       = 6;
-	static final int SWC_CUSTOM          = 7;
+	public static final int SWC_UNDEFINED       = 0;
+	public static final int SWC_SOMA            = 1;
+	public static final int SWC_AXON            = 2;
+	public static final int SWC_DENDRITE        = 3;
+	public static final int SWC_APICAL_DENDRITE = 4;
+	public static final int SWC_FORK_POINT      = 5;
+	public static final int SWC_END_POINT       = 6;
+	public static final int SWC_CUSTOM          = 7;
 
-	static final String [] swcTypeNames = { "undefined",
-						"soma",
-						"axon",
-						"dendrite",
-						"apical dendrite",
-						"fork point",
-						"end point",
-						"custom" };
+	public static final String [] swcTypeNames = { "undefined",
+						       "soma",
+						       "axon",
+						       "dendrite",
+						       "apical dendrite",
+						       "fork point",
+						       "end point",
+						       "custom" };
 
-	int swcType = 0;
+	int swcType = SWC_UNDEFINED;
 
 	public boolean circlesOverlap( double n1x, double n1y, double n1z,
 				       double c1x, double c1y, double c1z,
@@ -1817,7 +1805,6 @@ public class Path implements Comparable {
 	public String toString() {
 		if( useFitted )
 			return fitted.toString();
-		String pathName;
 		String name = getName();
 		if( name == null )
 			name = "Path " + id;
@@ -1828,7 +1815,34 @@ public class Path implements Comparable {
 		if( endJoins != null ) {
 			name += ", ends on " + endJoins.getName();
 		}
+		if( swcType != SWC_UNDEFINED )
+			name += " (SWC: "+swcTypeNames[swcType]+")";
 		return name;
+	}
+
+
+	public void setSWCType(final int newSWCType) {
+		setSWCType(newSWCType,true);
+	}
+
+	public void setSWCType(final int newSWCType, boolean alsoSetInFittedVersion) {
+		if( newSWCType < 0 || newSWCType >= swcTypeNames.length)
+			throw new RuntimeException("BUG: Unknown SWC type "+newSWCType);
+		swcType = newSWCType;
+		if( alsoSetInFittedVersion ) {
+			/* If we've been asked to also set the fitted version, this
+		           should only be called on the non-fitted version
+			   of the path, so raise an error if it's been called on
+			   the fitted version by mistake instead: */
+			if( isFittedVersionOfAnotherPath() && fittedVersionOf.getSWCType() != newSWCType )
+				throw new RuntimeException("BUG: only call setSWCType on the unfitted path");
+			if( fitted != null )
+				fitted.setSWCType(newSWCType);
+		}
+	}
+
+	public int getSWCType() {
+		return swcType;
 	}
 
 /*
@@ -2194,7 +2208,7 @@ public class Path implements Comparable {
 		if (verbose)
 			System.out.println("... so"+(resample?"":" not")+" resampling");
 
-		ArrayList tubeColors = new ArrayList<Color3f>();
+		ArrayList<Color3f> tubeColors = new ArrayList<Color3f>();
 
 		double [][][] allPoints = Pipe.makeTube(x_points_d_trimmed,
 							y_points_d_trimmed,
@@ -2215,8 +2229,8 @@ public class Path implements Comparable {
 
 		// Make tube adds an extra point at the beginning and end:
 
-		List vertexColorList = new ArrayList<Color3f>();
-		java.util.List triangles = Pipe.generateTriangles(allPoints,
+		List<Color3f> vertexColorList = new ArrayList<Color3f>();
+		List<Point3f> triangles = Pipe.generateTriangles(allPoints,
 								  1, // scale
 								  tubeColors,
 								  vertexColorList);
@@ -2300,14 +2314,6 @@ public class Path implements Comparable {
 
 	public Path transform( PathTransformer transformation, ImagePlus template, ImagePlus model ) {
 
-		int modelWidth = model.getWidth();
-		int modelHeight = model.getHeight();
-		int modelDepth = model.getStackSize();
-
-		int templateWidth = template.getWidth();
-		int templateHeight = template.getHeight();
-		int templateDepth = template.getStackSize();
-
 		double templatePixelWidth = 1;
 		double templatePixelHeight = 1;
 		double templatePixelDepth = 1;
@@ -2319,17 +2325,6 @@ public class Path implements Comparable {
 			templatePixelHeight = templateCalibration.pixelHeight;
 			templatePixelDepth = templateCalibration.pixelDepth;
 			templateUnits = templateCalibration.getUnits();
-		}
-
-		double modelPixelWidth = 1;
-		double modelPixelHeight = 1;
-		double modelPixelDepth = 1;
-
-		Calibration modelCalibration = model.getCalibration();
-		if( modelCalibration != null ) {
-			modelPixelWidth = modelCalibration.pixelWidth;
-			modelPixelHeight = modelCalibration.pixelHeight;
-			modelPixelDepth = modelCalibration.pixelDepth;
 		}
 
 		Path result = new Path( templatePixelWidth, templatePixelHeight, templatePixelDepth, templateUnits, size() );

@@ -15,7 +15,10 @@ import java.util.Iterator;
 import java.util.List;
 
 public class Installer extends Downloader {
-	public Installer(Progress progress) {
+	protected PluginCollection plugins;
+
+	public Installer(PluginCollection plugins, Progress progress) {
+		this.plugins = plugins;
 		addProgress(progress);
 		addProgress(new VerifyFiles());
 	}
@@ -49,8 +52,6 @@ public class Installer extends Downloader {
 	}
 
 	public synchronized void start() throws IOException {
-		PluginCollection plugins = PluginCollection.getInstance();
-
 		// mark for removal
 		for (PluginObject plugin : plugins.toUninstall()) try {
 			plugin.stageForUninstall();
@@ -73,8 +74,7 @@ public class Installer extends Downloader {
 				orig.renameTo(old);
 			}
 
-			String url = Updater.MAIN_URL + name.replace(" ", "%20")
-				+ "-" + plugin.getTimestamp();
+			String url = plugins.getURL(plugin);
 			Download file = new Download(plugin, url, saveTo);
 			list.add(file);
 		}

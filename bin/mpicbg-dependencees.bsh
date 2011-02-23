@@ -22,9 +22,9 @@ import java.util.zip.GZIPInputStream;
 
 fijiDir = System.getProperty("fiji.dir");
 dbPath = fijiDir + "/db.xml.gz";
-new XMLFileReader(new GZIPInputStream(new FileInputStream(dbPath)), 0);
+plugins = new PluginCollection();
+new XMLFileReader(plugins).read(null, new GZIPInputStream(new FileInputStream(dbPath)), 0);
 
-plugins = PluginCollection.getInstance();
 dependencees = new TreeMap();
 
 for (PluginObject plugin : plugins)

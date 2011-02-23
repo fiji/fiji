@@ -9,35 +9,28 @@
 package customnode;
 
 import ij.IJ;
-import ij.WindowManager;
-import ij.plugin.PlugIn;
-import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
-import javax.media.j3d.Transform3D;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.awt.Color;
-import ij3d.Image3DUniverse;
-import ij3d.ImageWindow3D;
 import ij3d.Pipe;
 
 public class MeshMaker {
 
 	public static void main(String[] args) {
-		ij.ImageJ ij = new ij.ImageJ();
+		new ij.ImageJ();
 		IJ.runPlugIn("ij3d.Mesh_Maker", "");
 	}
 
-	static public List createSphere(final double x, final double y, final double z, final double r) {
+	static public List<Point3f> createSphere(final double x, final double y, final double z, final double r) {
 		return createSphere(x, y, z, r, 12, 12);
 	}
 
-	static public List createSphere(final double x, final double y, final double z,
+	static public List<Point3f> createSphere(final double x, final double y, final double z,
 			                final double r, final int meridians, final int parallels) {
 		final double[][][] globe = generateGlobe(meridians, parallels);
-		// Scale by radius 'r', and traslate to x,y,z
+		// Scale by radius 'r', and translate to x,y,z
 		for (int j=0; j<globe.length; j++) {
 			for (int k=0; k<globe[0].length; k++) {
 				globe[j][k][0] = globe[j][k][0] * r + x;
@@ -46,7 +39,7 @@ public class MeshMaker {
 			}
 		}
 		// create triangular faces and add them to the list
-		final ArrayList list = new ArrayList();
+		final ArrayList<Point3f> list = new ArrayList<Point3f>();
 		for (int j=0; j<globe.length-1; j++) { // the parallels
 			for (int k=0; k<globe[0].length -1; k++) { // meridian points
 				if(j != globe.length-2) {
@@ -72,7 +65,7 @@ public class MeshMaker {
 		if (parallels < 3) parallels = 3;
 		/* to do: 2 loops:
 		-first loop makes horizontal circle using meridian points.
-		-second loop scales it appropiately and makes parallels.
+		-second loop scales it appropriately and makes parallels.
 		Both loops are common for all balls and so should be done just once.
 		Then this globe can be properly translocated and resized for each ball.
 		*/
@@ -92,13 +85,12 @@ public class MeshMaker {
 
 		// Build parallels from circle
 		angle_increase = Math.PI / parallels;   // = 180 / parallels in radians
-		final double angle90 = Math.toRadians(90);
 		final double[][][] xyz = new double[parallels+1][xy_points.length][3];
 		for (int p=1; p<xyz.length-1; p++) {
 			double radius = Math.sin(angle_increase*p);
 			double Z = Math.cos(angle_increase*p);
 			for (int mm=0; mm<xyz[0].length-1; mm++) {
-				//scaling circle to apropiate radius, and positioning the Z
+				//scaling circle to appropriate radius, and positioning the Z
 				xyz[p][mm][0] = xy_points[mm][0] * radius;
 				xyz[p][mm][1] = xy_points[mm][1] * radius;
 				xyz[p][mm][2] = Z;
@@ -121,12 +113,12 @@ public class MeshMaker {
 		return xyz;
 	}
 
-	static public List createTube(final double[] x, final double[] y, final double[] z,
+	static public List<Point3f> createTube(final double[] x, final double[] y, final double[] z,
 			              final double[] r, final int parallels, final boolean do_resample) {
 		return Pipe.generateTriangles(Pipe.makeTube(x, y, z, r, 1, parallels, do_resample, null, null, null), 1, null, null);
 	}
 
-	static public List createDisc(double x, double y, double z,
+	static public List<Point3f> createDisc(double x, double y, double z,
 				      double nx, double ny, double nz,
 				      double radius,
 				      int edgePoints ) {
@@ -167,7 +159,7 @@ public class MeshMaker {
 			circleY[i] = y + radius * c * ay + radius * s * by;
 			circleZ[i] = z + radius * c * az + radius * s * bz;
 		}
-		final ArrayList list = new ArrayList();
+		final ArrayList<Point3f> list = new ArrayList<Point3f>();
 		Point3f centre = new Point3f( (float)x, (float)y, (float)z );
 		for( int i = 0; i < edgePoints; ++i ) {
 			Point3f t2 = new Point3f( (float)circleX[i], (float)circleY[i], (float)circleZ[i] );

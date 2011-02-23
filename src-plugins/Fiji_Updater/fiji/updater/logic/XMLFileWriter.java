@@ -1,10 +1,14 @@
 package fiji.updater.logic;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import fiji.updater.logic.PluginCollection.UpdateSite;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+
+import java.util.zip.GZIPOutputStream;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -26,12 +30,14 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.AttributesImpl;
 
 public class XMLFileWriter {
+	protected PluginCollection plugins;
 	protected TransformerHandler handler;
 	protected final String XALAN_INDENT_AMOUNT =
 		"{http://xml.apache.org/xslt}" + "indent-amount";
 	protected final static String dtd =
 		"<!DOCTYPE pluginRecords [\n"
-		+ "<!ELEMENT pluginRecords (plugin*)>\n"
+		+ "<!ELEMENT pluginRecords (update-site*, plugin*)>\n"
+		+ "<!ELEMENT update-site EMPTY>\n"
 		+ "<!ELEMENT plugin (platform*, category*, version?, previous-version*)>\n"
 		+ "<!ELEMENT version (description?, dependency*, link*, author*)>\n"
 		+ "<!ELEMENT previous-version EMPTY>\n"
@@ -41,6 +47,12 @@ public class XMLFileWriter {
 		+ "<!ELEMENT author (#PCDATA)>\n"
 		+ "<!ELEMENT platform (#PCDATA)>\n"
 		+ "<!ELEMENT category (#PCDATA)>\n"
+		+ "<!ATTLIST update-site name CDATA #REQUIRED>\n"
+		+ "<!ATTLIST update-site url CDATA #REQUIRED>\n"
+		+ "<!ATTLIST update-site ssh-host CDATA #IMPLIED>\n"
+		+ "<!ATTLIST update-site upload-directory CDATA #IMPLIED>\n"
+		+ "<!ATTLIST update-site timestamp CDATA #REQUIRED>\n"
+		+ "<!ATTLIST plugin update-site CDATA #IMPLIED>\n"
 		+ "<!ATTLIST plugin filename CDATA #REQUIRED>\n"
 		+ "<!ATTLIST dependency filename CDATA #REQUIRED>\n"
 		+ "<!ATTLIST dependency timestamp CDATA #IMPLIED>\n"
@@ -51,27 +63,62 @@ public class XMLFileWriter {
 		+ "<!ATTLIST previous-version timestamp CDATA #REQUIRED>\n"
 		+ "<!ATTLIST previous-version checksum CDATA #REQUIRED>]>\n";
 
-	protected XMLFileWriter() {} // only instantiate from write()
-
-	public static void writeAndValidate(String path) throws SAXException,
-			TransformerConfigurationException, IOException,
-			ParserConfigurationException {
-		XMLFileWriter writer = new XMLFileWriter();
-		writer.write(new FileOutputStream(path));
-		writer.validate(new FileInputStream(path));
+	public XMLFileWriter(PluginCollection plugins) {
+		this.plugins = plugins;
 	}
 
-	protected void write(OutputStream out) throws SAXException,
+	public byte[] toByteArray(boolean local) throws SAXException,
+			TransformerConfigurationException, IOException,
+			ParserConfigurationException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		write(out, local);
+		return out.toByteArray();
+	}
+
+	public byte[] toCompressedByteArray(boolean local) throws SAXException,
+			TransformerConfigurationException, IOException,
+			ParserConfigurationException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		write(new GZIPOutputStream(out), local);
+		return out.toByteArray();
+	}
+
+	public void validate(boolean local) throws SAXException,
+			TransformerConfigurationException, IOException,
+			ParserConfigurationException {
+		ByteArrayInputStream in = new ByteArrayInputStream(toByteArray(local));
+		validate(in);
+	}
+
+	public void write(OutputStream out, boolean local) throws SAXException,
 			TransformerConfigurationException, IOException,
 			ParserConfigurationException {
 		createHandler(out);
 
 		handler.startDocument();
 		AttributesImpl attr = new AttributesImpl();
+
 		handler.startElement("", "", "pluginRecords", attr);
-		for (PluginObject plugin :
-				PluginCollection.getInstance().fijiPlugins()) {
+		if (local) {
+			for (String name : plugins.getUpdateSiteNames()) {
+				attr.clear();
+				UpdateSite site = plugins.getUpdateSite(name);
+				setAttribute(attr, "name", name);
+				setAttribute(attr, "url", site.url);
+				if (site.sshHost != null)
+					setAttribute(attr, "ssh-host", site.sshHost);
+				if (site.uploadDirectory != null)
+					setAttribute(attr, "upload-directory", site.uploadDirectory);
+				setAttribute(attr, "timestamp", "" + site.timestamp);
+				writeSimpleTag("update-site", null, attr);
+			}
+		}
+
+		for (PluginObject plugin : plugins.fijiPlugins()) {
 			attr.clear();
+			assert(plugin.updateSite != null && !plugin.updateSite.equals(""));
+			if (local && !plugin.updateSite.equals(PluginCollection.DEFAULT_UPDATE_SITE))
+				setAttribute(attr, "update-site", plugin.updateSite);
 			setAttribute(attr, "filename", plugin.filename);
 			handler.startElement("", "", "plugin", attr);
 			writeSimpleTags("platform", plugin.getPlatforms());
@@ -124,6 +171,7 @@ public class XMLFileWriter {
                 }
                 handler.endElement("", "", "pluginRecords");
                 handler.endDocument();
+                out.flush();
                 out.close();
         }
 
