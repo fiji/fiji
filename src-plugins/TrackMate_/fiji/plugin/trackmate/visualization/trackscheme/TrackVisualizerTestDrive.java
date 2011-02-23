@@ -46,7 +46,7 @@ public class TrackVisualizerTestDrive {
 	
 		ij.ImageJ.main(args);
 		
-		TmXmlReader reader = new TmXmlReader(CELEGANS_2HOURS);
+		TmXmlReader reader = new TmXmlReader(CASE_5);
 		reader.parse();
 		
 		// Load objects 
@@ -59,11 +59,10 @@ public class TrackVisualizerTestDrive {
 		for(Set<Spot> track : trackList) {
 			System.out.println(" - "+track.size()+" spots in track.");// DEBUG
 		}
-		
-		
-		
+			
 		ImagePlus imp = reader.getImage();
 		Settings settings = reader.getSettings();
+		settings.segmenterSettings = reader.getSegmenterSettings();
 		settings.imp = imp;
 		
 		// Launch ImageJ and display
