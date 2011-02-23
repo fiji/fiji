@@ -28,6 +28,20 @@ append(args, args2) {
 	return result;
 }
 
+filterOut(args, arg) {
+	j = 0;
+	for (i = 0; i < args.length; i++)
+		if (!args[i].equals(arg))
+			args[j++] = args[i];
+	if (j < i) {
+		result = new String[j];
+		System.arraycopy(args, 0, result, 0, j);
+		return result;
+	}
+
+	return args;
+}
+
 dump(inputStream, printStream) {
 	reader = new BufferedReader(new InputStreamReader(inputStream));
 	for (;;) {
@@ -62,13 +76,14 @@ compile(prefix, platform, cflags, exe) {
 
 	source = "fiji.c";
 	if (platform.startsWith("win")) {
+		cflags = filterOut(cflags, "-mno-cygwin");
 		res = new FileWriter("tmp.rc");
-		res.writeln("101 ICON images/fiji.ico");
+		res.write("101 ICON images/fiji.ico\n");
 		res.close();
 		if (platform.equals("win32"))
 			m32 = "--target=pe-i386";
 		else
-			m32 = "";
+			m32 = "--target=pe-x86-64";
 		args = new String[] { windres, m32, "-o", "tmp.o", "-i", "tmp.rc" };
 		execute(args);
 		source = append(source, "tmp.o");
