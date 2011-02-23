@@ -212,6 +212,7 @@ public class Weka_Segmentation implements PlugIn
 	public static final String SAVE_DATA = "saveData";
 	public static final String CREATE_CLASS = "createNewClass";
 	public static final String LAUNCH_WEKA = "launchWeka";
+	public static final String SET_FEATURE = "setFeature";
 	public static final String SET_FEATURES = "setFeatures";
 	public static final String SET_MEMBRANE_THICKNESS = "setMembraneThickness";
 	public static final String SET_MEMBRANE_PATCH = "setMembranePatchSize";
@@ -219,6 +220,8 @@ public class Weka_Segmentation implements PlugIn
 	public static final String SET_MAXIMUM_SIGMA = "setMaximumSigma";
 	public static final String SET_HOMOGENIZATION = "setClassHomogenization";
 	public static final String SET_CLASSIFIER = "setClassifier";
+	public static final String SAVE_FEATURE_STACK = "saveFeatureStack";
+	public static final String CHANGE_CLASS_NAME = "changeClassName";
 	
 	/**
 	 * Basic constructor for graphical user interface use
@@ -1912,18 +1915,22 @@ public class Weka_Segmentation implements PlugIn
 		{
 			newEnableFeatures[i] = gd.getNextBoolean();
 			if (newEnableFeatures[i] != oldEnableFeatures[i])
+			{
 				featuresChanged = true;
+				// Macro recording
+				record(SET_FEATURE, new String[]{ FeatureStack.availableFeatures[ i ] + "=" + newEnableFeatures[ i ] });
+			}
 		}
 		if(featuresChanged)
 		{
 			wekaSegmentation.setEnabledFeatures(newEnableFeatures);
 			// Macro recording
-			String[] args = new String[ newEnableFeatures.length ];
-			for(int i=0; i<newEnableFeatures.length; i++)
-			{
-				args[i] = FeatureStack.availableFeatures[ i ] + "=" + newEnableFeatures[ i ];
-			}
-			record(SET_FEATURES, args);
+			//String[] args = new String[ newEnableFeatures.length ];
+			//for(int i=0; i<newEnableFeatures.length; i++)
+			//{
+			//	args[i] = FeatureStack.availableFeatures[ i ] + "=" + newEnableFeatures[ i ];
+			//}
+			//record(SET_FEATURES, args);
 		}		
 
 		// Membrane thickness
@@ -2015,6 +2022,8 @@ public class Weka_Segmentation implements PlugIn
 				wekaSegmentation.setClassLabel(i, s);
 				classNameChanged = true;
 				addExampleButton[i].setText("Add to " + s);
+				// Macro recording
+				record(CHANGE_CLASS_NAME, new String[]{ Integer.toString(i), s});
 			}
 		}
 
@@ -2173,6 +2182,9 @@ public class Weka_Segmentation implements PlugIn
 
 				IJ.log("Saved feature stack for slice " + (i+1) + " as " + fileName);
 			}
+			
+			// macro recording
+			record(SAVE_FEATURE_STACK, new String[]{ dir, fileWithExt });			
 		}
 	}
 
@@ -2663,6 +2675,93 @@ public class Weka_Segmentation implements PlugIn
 		}
 
 	}
+
+	/**
+	 * Save current feature stack(s)
+	 * 
+	 * @param dir directory to save the stack(s)
+	 * @param fileWithExt file name with extension for the file(s)
+	 */
+	public static void saveFeatureStack(String dir, String fileWithExt)
+	{
+		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
+		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+		final FeatureStackArray featureStackArray = wekaSegmentation.getFeatureStackArray();
+		if(featureStackArray.isEmpty())
+		{
+			featureStackArray.updateFeaturesMT();
+		}
+		
+		if(null == dir || null == fileWithExt)
+			return;
+
+		for(int i=0; i<featureStackArray.getSize(); i++)
+		{
+			final String fileName = dir + fileWithExt.substring(0, fileWithExt.length()-4) 
+									+ String.format("%04d", (i+1)) + ".tif";
+			if(false == featureStackArray.get(i).saveStackAsTiff(fileName))
+			{
+				IJ.error("Error", "Feature stack could not be saved");
+				return;
+			}
+
+			IJ.log("Saved feature stack for slice " + (i+1) + " as " + fileName);
+		}
+	}
+	
+	/**
+	 * Change a class name
+	 * 
+	 * @param classIndex index of the class to change
+	 * @param className new class name
+	 */
+	public static void changeClassName(String classIndex, String className)
+	{
+		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
+		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+		
+		int classNum = Integer.parseInt(classIndex);
+		wekaSegmentation.setClassLabel(classNum, className);
+		win.updateAddClassButtons();
+		win.pack();
+	}
+	
+	/**
+	 * Enable/disable a single feature of the feature stack(s)
+	 * 
+	 * @param feature name of the feature + "=" true/false to enable/disable
+	 */
+	public static void setFeature(String feature)
+	{
+		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
+		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+
+		int index = feature.indexOf("=");
+		String featureName = feature.substring(0, index);
+		boolean featureValue = feature.contains("true");
+		
+		boolean[] enabledFeatures = wekaSegmentation.getEnabledFeatures();
+		boolean forceUpdate = false;
+		for(int i=0; i<enabledFeatures.length; i++)
+		{
+			if(FeatureStack.availableFeatures[i].contains( featureName ))
+			{	
+				if(featureValue != enabledFeatures[i])
+				{
+					enabledFeatures[i] = featureValue;
+					forceUpdate = true;
+				}
+			}
+		}
+		wekaSegmentation.setEnabledFeatures(enabledFeatures);
+		
+		if(forceUpdate)
+		{
+			// Force features to be updated
+			wekaSegmentation.setFeaturesDirty();
+		}
+	}
+	
 	
 }// end of Weka_Segmentation class
 
