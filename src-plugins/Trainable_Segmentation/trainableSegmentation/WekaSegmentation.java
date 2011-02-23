@@ -344,7 +344,8 @@ public class WekaSegmentation {
 	 *
 	 * @return the current number of classes
 	 */
-	public int getNumOfClasses() {
+	public int getNumOfClasses() 
+	{
 		return numOfClasses;
 	}
 
@@ -364,16 +365,23 @@ public class WekaSegmentation {
 
 	/**
 	 * Set the name of a class.
+	 * 
+	 * @param classNum class index
+	 * @param label new name for the class
 	 */
-	public void setClassLabel(int classNum, String label) {
+	public void setClassLabel(int classNum, String label) 
+	{
 		classLabels[classNum] = label;
 		updateWholeData = true;
 	}
 
 	/**
 	 * Get the label name of a class.
+	 * 
+	 * @param classNum class index
 	 */
-	public String getClassLabel(int classNum) {
+	public String getClassLabel(int classNum) 
+	{
 		return classLabels[classNum];
 	}
 
