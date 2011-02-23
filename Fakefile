@@ -448,21 +448,25 @@ JAVA_LIB_PATH(macosx)=
 
 # The variables CFLAGS, LDFLAGS and LIBS will be used for compiling
 # C and C++ programs.
-COMMONCFLAGS=-Wall -Iincludes \
-	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH"'
+COMMONCFLAGS=-Wall -Iincludes
 WINOPTS=-mwindows -mno-cygwin -DMINGW32
-CFLAGS(win32)=$COMMONCFLAGS $WINOPTS
-CFLAGS(win64)=$COMMONCFLAGS $WINOPTS
+CFLAGS(win32)=$COMMONCFLAGS $WINOPTS \
+	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(win32)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(win32)"'
+CFLAGS(win64)=$COMMONCFLAGS $WINOPTS \
+	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(win64)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(win64)"'
 
 # Include 64-bit architectures only in ./fiji (as opposed to ./fiji-tiger),
 # and only on MacOSX
 MACOPTS(osx10.3)=-I/System/Library/Frameworks/JavaVM.Framework/Headers \
-	-DMACOSX
+	-DMACOSX \
+	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(macosx)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(macosx)"'
 MACOPTS(osx10.4)=$MACOPTS(osx10.3) -mmacosx-version-min=10.3 -arch i386 -arch ppc
 MACOPTS(osx10.5)=$MACOPTS(osx10.3) -mmacosx-version-min=10.4 -arch i386 -arch x86_64
 
-CFLAGS(linux)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector
-CFLAGS(linux64)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector
+CFLAGS(linux)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector \
+	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(linux)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(linux)"'
+CFLAGS(linux64)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector \
+	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(linux64)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(linux64)"'
 
 LDFLAGS(win32)=$LDFLAGS $WINOPTS
 
