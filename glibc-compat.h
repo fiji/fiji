@@ -8,3 +8,4 @@ GLIBC_COMPAT_SYMBOL(fclose);
 GLIBC_COMPAT_SYMBOL(fopen);
 GLIBC_COMPAT_SYMBOL(dlopen);
 GLIBC_COMPAT_SYMBOL(in6addr_loopback);
+GLIBC_COMPAT_SYMBOL(__stack_chk_fail);
