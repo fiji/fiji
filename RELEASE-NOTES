@@ -20,1127 +20,121 @@ Tischer, Daniel White, David Hovis, Francisco Jiménez Hernández,
 Philippe Thévenaz, Robert Bryson-Richardson, Tobias Pietzsch, Wilhelm
 Burger, Yili Zhao, and many other helpers.
 
-Submodule 'AutoComplete':
-    Move the submodules into modules/
-
-Submodule 'batik':
-    Move the submodules into modules/
-
-bin/analyze-dependencies.bsh:
-    analyze-dependencies: do not special-case the ij.jar dependency
-    analyze-dependencies: add --fix-fakefile option
-    analyze-dependencies: Handle CompileClass and SubFake targets, too
-    analyze-dependencies: use Beanshell-equivalent of $0
-
-bin/build-itk.sh:
-    Add a script to compile and cross-compile ITK
-
-bin/build-jython.sh:
-    Remove JNA from Jython and JRuby
-    Jython: use Python 2.6 library if 2.5 is not available
-    build-jython: don't try 2.6
-    Move the submodules into modules/
-
-bin/build-last-imagej-versions.sh:
-    Add a helper to compile a few ImageJ versions
-
-bin/build-macosx-cross-compiler.sh:
-    Add a script to build a MacOSX cross compiler
-    cross-mac: require bison, too
-    cross-mac: support PowerPC, too
-    Merge branch 'cross-mac' of pacific.mpi-cbg.de:/srv/git/fiji into cross-mac
-    build-macosx-cross-compiler: do not append absolute path to sysroot
-    build-macosx-cross-compiler: fix linking for C++
-
-bin/build-windows-cross-compiler.sh:
-    Add a script to build a MinGW (32/64-bit) cross compiler
-    build-windows-cross-compiler: makeinfo is needed to build the binutils
-
-bin/calculate-checksums.py:
-    Update scripts for the change in PluginCollection
-
-bin/cross-compiler.bsh:
-    Convert cross-compiler from Jython to Beanshell
-    Fiji launcher: fix cross-compilation for Windows
-
-bin/cross-compiler.py:
-    Avoid chroots for cross compilation
-    Start to cross-compile the MacOSX launcher, too
-    Cross compile fat binaries for MacOSX
-    Include ppc support even in the cross-compiled fiji-tiger
-    Convert cross-compiler from Jython to Beanshell
-
-bin/eclipse-project-generator.bsh:
-    First stab at the Eclipse building script
-    Eclipse generator: generate all CompileJar targets; fix projects dependencies
-    Eclipse project generator: fix Java 3D "access problem"
-    Eclipse project generator: require Java 6
-    Eclipse project generator: skip javac.jar due to too many problems
-    Eclipse projects generator: make UTF-8 and Unix line endings the default
-    Eclipse projects generator: run Fake only after builds, and not in extra-foreground
-    Eclipse projects generator: skip no_compile files, too
-    Eclipse projects generator: make use of unexpanded variables
-    Eclipse projects generator: put the excluding attribute into the correct tag
-    Eclipse projects generator: set some code styles, too
-    Eclipse projects generator: use default JVM library
-    Eclipse projects generator: make sure that Fiji Build is run
-    Eclipse projects generator: make it more generic
-
-bin/fiji-other.sh:
-    Add a fall-back shell script for otherwise unsupported platforms
-
-bin/find-package-directory-mismatches.py:
-    Add a script to find package declarations that don't match the directory they're in
-    find-package-directory-mismatches: skip submodules
-    Ease Python version requirement
-    find-package-directory-mismatches: fix submodule detection logic
-    Document that find-package-directory-mismatches works with Jython now
-
-bin/force-glibc-compat.sh:
-    Do not require super-up-to-date glibc on Linux
-    Fix bin/force-glibc-compat.sh for 64-bit Linux
-    force-glibc-compat: do not remove old overrides
-
-bin/get-sample-images.py:
-    get-sample-images: support headless operation
-
-bin/gitignore-in-submodules.sh:
-    gitignore-in-submodules: add an 'ignoredirty' action
-
-bin/identify-commit.py:
-    Fix identify-commit for precompiled Fiji launchers
-    identify-commit: avoid cryptic error message when db.xml.gz lacks the plugin
-    Update scripts using Updater's XMLFileReader
-    Update scripts for the change in PluginCollection
-    Adjust scripts to recent changes in the updater
-
-bin/intellij-project-generator.bsh:
-    Add an IntelliJ projects generator
-
-bin/log-plugin-commits.bsh:
-    Fix log-plugin-commits for Fiji launchers
-    log-plugin-commits: show differences in the manifest, too
-    log-plugin-commits: avoid NullPointerException
-    log-plugin-commits: Be more lenient about the type of manifest's keys
-    Update scripts using Updater's XMLFileReader
-    Update scripts for the change in PluginCollection
-    Adjust scripts to recent changes in the updater
-
-bin/make-app.py:
-    make-app: include samples/ if there is one
-
-bin/maven.sh:
-    maven: let the Maven website choose an appropriate mirror
-    Fix maven for MacOSX
-
-bin/mpicbg-dependencees.bsh:
-    Demonstrate how to find out which plugins depend on a given .jar file
-    mpicbg-dependencees: optionally find dependencees of other files
-    Update scripts using Updater's XMLFileReader
-    Update scripts for the change in PluginCollection
-    Adjust scripts to recent changes in the updater
-
-bin/netbeans-project-generator.bsh:
-    Offer to generate projects for Netbeans, too
-
-bin/nightly-build.sh:
-    full nightly build: Actually make stable WebStart, too
-    full nightly build: Generate Template:PluginList on the Wiki
-
-bin/pdf-reverse-pages.bsh:
-    Add a simple script to reverse the page order of a .pdf file
-
-bin/plugin-list-parser.py:
-    Plugin list parser: change import to make script runnable in Ubuntu.
-    Make plugin-list-parser a Jython script
-    Fix some whitespace in the plugin-list-parser script
-    plugin-list-parser: make list consistent
-    plugin-list-parser: optionally upload to Wiki right away
-    Let plugin-list-parser use Fiji's headless mode
-    plugin-list-parser --upload-to-wiki: compare with the corrected text
-    Make plugin-list-parser work within Fiji (don't exit)
-    Rewrite plugin-list-parser: It's faster now and the order is consistent.
-    Remove a leftover from debugging
-    plugin-list-parser: maintain order properly by using a LinkedHashMap
-
-bin/projects-generator.bsh:
-    Eclipse projects generator: make it more generic
-    Add an IntelliJ projects generator
-    Offer to generate projects for Netbeans, too
-    Stop adding ij.jar to the Eclipse/IntelliJ/Netbeans projects
-    Fiji Build: further, rather massive, refactoring
-    fix projects-generator script
-
-bin/ready-for-upload.bsh:
-    Add a new script to test whether it is safe to upload a file to the updater
-    read-for-upload: test whether there are uncommitted changes
-    ready-for-upload: check whether the files inside the .jar are up-to-date
-    Also check whether submodules are properly committed
-    ready-for-upload: also check the Fiji Build status
-    ready-for-upload: check submodules' source directories only when possible
-    ready-for-upload: tone down warnings
-    ready-for-upload: ignore debug information in Bio-Formats
-    ready-for-upload: be more verbose when an IOException was thrown
-    ready-for-upload: check complete submodule's directory for dirty files
-    ready-for-upload: make sure it's pushed
-    ready-for-upload: special-case Bio-Formats
-    Fix ready-for-upload for mpicbg.jar
-    ready-for-upload: catch obsolete .class files in .jar files
-    ready-for-upload: first check up-to-date files
-    ready-for-upload: do not try to find sources for uninitialized submodules
-    ready-for-upload: do not check timestamps of the manifests
-    ready-for-upload: special-case mpicbg
-    ready-for-upload: special-case Script Editor's templates
-    Add a rationale to ready-for-upload
-    ready-for-upload: special-case two pictures in ij.jar
-    ready-for-upload: fix check whether submodules have been pushed
-
-bin/recalculate-dependencies.py:
-    Update scripts using Updater's XMLFileReader
-    Update scripts for the change in PluginCollection
-    Adjust scripts for XMLFileWriter changes
-    Adjust scripts to recent changes in the updater
-
-bin/synchronize-db.xml.gz.py:
-    Update scripts using Updater's XMLFileReader
-    Update scripts for the change in PluginCollection
-    Adjust scripts for XMLFileWriter changes
-    Adjust scripts to recent changes in the updater
-
-bin/update-fiji.py:
-    Update scripts using Updater's XMLFileReader
-    Update scripts for the change in PluginCollection
-    Adjust scripts to recent changes in the updater
-
-bin/wiki-monitor.py:
-    Fix wiki-monitor for non-ASCII characters
-    wiki-monitor: show recent changes of bots, too
-    wiki-monitor: support older MediaWikis, too
-
-Submodule 'bio-formats':
-    Update Bio-Formats to an early preview of version 4.2
-    Update Bio-Formats to include the Huygens .ome fix
-    Update Bio-Formats to current 4.2 branch
-    Update Bio-Formats to include the most recent .lsm fixes
-    Update Bio-Formats to include the fix for bug 208
-    Update Bio-Formats
-    Update Bio-Formats to version 4.2.2
-    Update Bio-Formats to include the Tillvision fix
-    Move the submodules into modules/
-    Update Bio-Formats
-    Update Bio-Formats to contain the LSM 710 and the Git fixes
-
-Build.sh:
-    Fix Build.sh for MacOSX (again)
-    Build.sh: adjust to recent Fiji Build changes
-
-Submodule 'clojure':
-    Move the submodules into modules/
-
-Submodule 'commons-math':
-    Add the submodule "commons-math"
-    Move the submodules into modules/
-
-debian/build-command:
-    debian: update the build command
-    debian: Store the JVM path in one place, and check for javac before building
-    debian: split the command in debian/build-command over multiple lines
-    debian: Add /usr/share/java/vecmath.jar to the VectorString.jar's CLASSPATH
-    debian: jars/VectorString.jar also needs j3dcore.jar
-    debian: build-command for the Debian packages now fixed
-    debian: try adding the system junit-4.jar and jzlib.jar to VIB-lib's classpath
-    debian: switch more plugins to use the system's junit4.jar
-    debian: jars/pal-optimization.jar requires junit
-    debian: Add the jfreechart jar to Simple_Neurite_Tracer
-    debian: add jcommon.jar to the Simple_Neurite_Tracer classpath
-    debian: Trainable Segmentation needs a later weka than is in Ubuntu Lucid Lynx, so use the Fiji version
-    debian: add rhino to the classpath for fiji-scripting
-    debian: Add rhino to the plugins/Javascript_.jar classpath
-    debian: Just build Trainable Segmentation with the default CLASSPATH
-    debian: jars/jep.jar is new...
-    debian: override the classpath for plugins/Image_Expression_Parser.jar
-    debian: don't allow fallback to downloading missing jars
-    debian: add some debugging for JAVA_HOME
-    debian: correct a minor typo in build-command
-    debian: don't rely on the bundled jruby.jar
-    debian: sort the CLASSPATH() arguments in build-command to make it easier to compare with the new automatically generated version
-    debian: a new (generated) debian/build-command
-    debian: updates of debian/control and debian/build-command
-    An automatic commit of the new debian/build-command from debian/update-debian.py
-    An automatic commit of the new debian/build-command from debian/update-debian.py
-    An automatic commit of the new debian/build-command from debian/update-debian.py
-    debian: update the code that generates the build-command
-    debian: updates to the package building machinery in preparation for another experimental release
-    debian: Changes produced by the weekly build
-
-debian/build-dependencies:
-    debian: move the build dependencies into a new file
-    debian: add some missing build dependencies
-    debian: changes in 9a77ff75 require a new Jython than is packaged
-    debian: now zip needs to be a build-dependency - it's used by bin/build-jython.sh
-
-debian/build-in-i386-chroot.py:
-    debian: a script for building 32-bit packages in the chroot jail
-    debian: don't specify a particular Python version in the shebang lines
-
-debian/changelog:
-    debian: update the changelog
-    debian: bump the version in the changelog
-    debian: bump the changelog version
-    debian: Bump the changelog version
-    debian: random updates to the changelog
-    debian: bump the changelog version
-    debian: bump the changelog version for moving packages to "all" from "i386" and "amd64"
-    debian: update the changelog
-    debian: bump the changelog
-    debian: bump the version in the changelog
-    debian: Bump the version in the changelog
-    debian: bump the changelog version
-    debian: updates to the package building machinery in preparation for another experimental release
-    debian: Changes produced by the weekly build
-    debian: Changes produced by the weekly build
-    Add the changelog, updated with the weekly build version
-    debian: Changes produced by the weekly build
-
-debian/common.py:
-    debian: move some common definitions and useful function into common.py
-    debian: Add some useful functions for unescaping HTML / XML entities
-    debian: factor out the code for parsing CLASSPATH(foo)=bar:baz lines in a file
-    debian: generate debian/build-command from the Fakefile
-
-debian/complete-build:
-    debian: Now build the source package as well
-    debian: remember to ignore the .git directory
-    debian: ignore wekadocs and bio-formats/dist
-    debian: update the build-command in debian/complete-build
-
-debian/control:
-    An automatic commit of the new debian/control from debian/update-debian.py
-    An automatic commit of the new debian/control from debian/update-debian.py
-    An automatic commit of the new debian/control from debian/update-debian.py
-    An automatic commit of the new debian/control from debian/update-debian.py
-    An automatic commit of the new debian/control from debian/update-debian.py
-    An automatic commit of the new debian/control from debian/update-debian.py
-    An automatic commit of the new debian/control from debian/update-debian.py
-    An automatic commit of the new debian/control from debian/update-debian.py
-    debian: updates of debian/control and debian/build-command
-    An automatic commit of the new debian/control from debian/update-debian.py
-    An automatic commit of the new debian/control from debian/update-debian.py
-    An automatic commit of the new debian/control from debian/update-debian.py
-    An automatic commit of the new debian/control from debian/update-debian.py
-    An automatic commit of the new debian/control from debian/update-debian.py
-    An automatic commit of the new debian/control from debian/update-debian.py
-    An automatic commit of the new debian/control from debian/update-debian.py
-    debian: updates to the package building machinery in preparation for another experimental release
-    An automatic commit of the new debian/control from debian/update-debian.py
-    An automatic commit of the new debian/control from debian/update-debian.py
-    debian: Changes produced by the weekly build
-    debian: Changes produced by the weekly build
-    Move the macros from Macro_Examples.jar into plugins/Scripts/
-    debian: Changes produced by the weekly build
-
-debian/copyright:
-    debian: update the default copyright file and that for fiji-imagej
-
-debian/create-i386-chroot.py:
-    debian: add a script to create a Debian squeeze i386 directory for chroot
-    debian: make /home/mark/ in the chroot jail owned by mark.mark
-    debian: move some common definitions and useful function into common.py
-    debian: we also need fakeroot in the chroot jail
-    debian: also create /etc in the chroot jail
-    debian: don't specify a particular Python version in the shebang lines
-
-debian/fiji-barthel-plugins.copyright:
-    debian: add some initial copyright files and descriptions
-
-debian/fiji-base.copyright:
-    debian: add 4 more copyright files
-
-debian/fiji.copyright:
-    debian: add 4 more copyright files
-
-debian/fiji.desktop:
-    debian: fix for the Fiji icon not appearing in the menus
-
-debian/fiji-imagej.copyright:
-    debian: update the default copyright file and that for fiji-imagej
-
-debian/fiji-jpedal.copyright:
-    debian: add 4 more copyright files
-
-debian/fiji-loci-tools.copyright:
-    debian: add author and copyright information for loci-tools
-    debian: update the fiji-loci-tools.copyright with a link to the main site
-
-debian/fiji-tcljava.copyright:
-    debian: add 4 more copyright files
-
-debian/fiji-tracer.copyright:
-    debian: add some initial copyright files and descriptions
-
-debian/fiji-tracer.README.Debian:
-    debian: add an example README.Debian file for Simple Neurite Tracer
-
-debian/find-non-fiji-jars.py:
-    debian: find the jars for the launcher's classpath from the build-command script
-    debian: factor out the code for parsing CLASSPATH(foo)=bar:baz lines in a file
-    debian: don't specify a particular Python version in the shebang lines
-
-debian/java-home:
-    debian: Store the JVM path in one place, and check for javac before building
-
-debian/package-extras:
-    debian: add some initial copyright files and descriptions
-
-debian/rules:
-    debian: Store the JVM path in one place, and check for javac before building
-    debian: fix the debian/rules file
-    debian: we can hardcode the location of the Java 3D jars now
-    debian: remove a rules variable that's no longer used
-    debian: find the jars for the launcher's classpath from the build-command script
-    debian: use 'readlink -n -f' instead of 'realpath'
-
-debian/simple-launcher:
-    debian: add more jars that are needed in the launcher script
-    debian: we can hardcode the location of the Java 3D jars now
-    debian: find the jars for the launcher's classpath from the build-command script
-    debian: don't run the updater if this seems to be the Debian packaged version
-    debian: add a '--' to the launcher, so that -Dfiji.debian=true is passed to Java
-    debian: We also need to set the Jython properties in the launcher
-    debian: changes in 9a77ff75 require a new Jython than is packaged
-    debian: simple-launcher also needs to use --java-home now
-
-debian/TODO:
-    debian: a few TODO notes
-    Update the TODO list
-    debian: update the TODO file
-    debian: Update the TODO file
-    debian: update the TODO file
-    debian: update the TODO list
-    debian: update the TODO file
-
-debian/update-debian.py:
-    debian: Use python2.6, since Ubuntu Lucid Lynx doesn't support anything before 2.6
-    debian: use dpkg-checkbuilddeps to check the build dependencies in update-debian.py
-    debian: add --verify to "git rev-parse" in case HEAD points somewhere invalid
-    debian: don't remove the Fiji weka
-    debian: add a couple more packages for weka and Simple Neurite Tracer
-    debian: correct a typo
-    debian: move the build dependencies into a new file
-    debian: a minor refactoring - use the script_directory, not a relative path
-    debian: move some common definitions and useful function into common.py
-    debian: before the "git clean -X", make sure the submodule excludes are up to date
-    debian: make sure the binary packages conflict with and replace the earlier fiji package
-    debian: use the descriptions from db.xml.gz
-    debian: reword the introduction to the automatically generated message
-    debian: remember to create dependencies on non-Fiji debian packages too
-    debian: add the per binary package Java 3D dependencies
-    debian: give the 3D Viewer its own package
-    debian: don't rely on the bundled jruby.jar
-    debian: generate debian/build-command from the Fakefile
-    debian: manually add missing dependencies of TrakEM2
-    debian: Some parts of batik are in another package...
-    debian: add a Conflicts: and Replaces: for the new 3D viewer package
-    debian: correct the Conflicts: / Replaces: for the 3D Viewer
-    debian: everything but fiji-base can be Architecture: all
-    debian: remove the missingPrecompiledFallBack rule
-    debian: remove any instructions to build batik.jar from the Fakefile
-    debian: remove the included Jama 1.0.2 sources
-    debian: more ridiculous rewriting of the Fakefile
-    debian: remove a now-fixed FIXME
-    debian: add lots of comments and FIXMEs to the update-debian.py script
-    debian: switch back to using a fiji-jruby package instead of jruby
-    debian: We need dummy targets for both jython.jar and batik.jar in jars
-    debian: update the code that generates the build-command
-    debian: don't specify a particular Python version in the shebang lines
-    debian: when adding a changelog entry, allow a message to be supplied
-    debian: changes in 9a77ff75 require a new Jython than is packaged
-    debian: Now we have to explicitly add --java-home to the build command
-    debian: rewrite staged-plugins/* to include --java-home in "fiji --ant" invocations
-    debian: we also have to rewrite 'fiji --ant' in bin/build-jython.sh
-    debian: we also have to preserve the permissions of bin/build-jython.sh
-    debian: for some reason, these need to be the other way around
-
-debian/upload-to-pacific.py:
-    debian: add a script for uploading the packages to pacific
-    debian: Do all the rotation in a script on the server
-    debian: make upload-to-pacific.py use a single ssh connection with the ControlMaster option
-    debian: don't specify a particular Python version in the shebang lines
-    debian: specify a particular SSH identity file for uploading to pacific
-
-debian/weekly-build.sh:
-    debian: Add the script I use for weekly builds of the Debian packages
-    debian: use a passwordless GIT_SSH for all the weekly build operations
-    Remove trailing whitespace
-    debian: cope with the move of the submodules
-    debian: changes in 9a77ff75 require a new Jython than is packaged
-    debian: in the weekly build, update the submodule .gitignore files
-
-Fiji Launcher:
-    Fix automatic script type exception when there is a -- parameter
-    Restrict RAM to available RAM on Linux
-    Avoid compile error on Mac and Windows
-    Fiji (MacOSX): identify 64-bit CPUs as Intel, too
-    debian: when building commons-math, ant-junit.jar is also required
-    Fiji launcher: allow --edit without paths
-    MacOSX: do not rely on the environment variable SECURITYSESSIONID
-    Do not require super-up-to-date glibc on Linux
-    Fiji launcher: only add system's jython.jar to the classpath if we have to
-    Fiji launcher: Make sure to find only Java of correct architecture
-    Fiji launcher: use correct path when checking for correct architecture
-    Fiji launcher: fix mkdir_p()
-    Fiji launcher: avoid substring '//' in paths
-    Handle jvm.cfg _before_ the command line options
-    Fiji launcher: strip out redundant Java memory options
-    Fiji launcher: when falling back to system Java, unset the JAVA_HOME
-    Fiji launcher: test whether JAVA_HOME points to correct architecture
-    Fiji launcher: look harder whether libjvm is of correct architecture
-    Fiji launcher (macosx): avoid potential segmentation fault
-    Merge branch 'cross-mac'
-    Clarify the license of the Fiji launcher
-    Fiji launcher (MacOSX): respect when the user said '32-bit'
-    Fiji launcher: remove the JAVA_HOME override
-    Activate retrotranslator on MacOSX whenever Java 1.6 was not found
-    Fiji launcher: fix compile error with MacOSX
-    Fiji launcher (MacOSX): silence compiler warning
-    Fiji launcher: move around path_list_contains() and use it earlier
-    Fiji launcher: add $FIJIROOT/lib/$PLATFORM to java.library.path
-    Fiji launcher: add appropriate directories under $FIJIROOT/lib to libpath
-    Fiji launcher: add the --javah option
-    Teach the Fiji launcher the '--update' option
-    Fiji launcher: try to update even when not executing ImageJ
-    Fiji launcher: fix native library path detection
-    Fiji launcher: read_exactly() should handle short reads as an error
-    Fiji launcher: only ever look at native libraries with correct extensions
-    Merge remote-tracking branch 'origin/updater'
-    Fiji launcher: fix cross compilation for MacOSX
-
-.gitignore:
-    Time Stamper Enhanced: Rename to Series Labeler
-    Merge branch 'dan' of http://github.com/tomka/fiji into SeriesLabeler
-    Merge branch 'contrib' of ssh://contrib@pacific.mpi-cbg.de/srv/git/fiji into contrib
-    Update ImageJA to build misc/headless.jar by default
-    Add the submodule "commons-math"
-    Ignore another build directory in bio-formats
-    Update .gitignore to ignore build products in the commons-math submodule
-    Ignore cached checksums file
-    Add the plugin "TopoJ "
-    Ignore output produced by projects-generator
-    Add a JNA-based CPU meter (works on Linux and MacOSX)
-    Merge branch 'topoj'
-    Add the skeleton of the plugin "Graph Cut"
-    Add the dummy plugin "Macro Examples"
-    Add the Differentials plugin from the Biomedical Imaging Group
-    Add MosaicJ
-    Add Philippe Thevenaz' PointPicker
-    Add Philippe Thenevaz' Shepp-Logan Phantom plugin
-    Add the StackReg plugin
-    Add the UnwarpJ plugin
-    The snakuscule is here!
-    Add the open-sourced version of imagescience 2.4.0
-    Add the open-sourced version of TransformJ 2.8.0
-    Add FeatureJ
-    Add RandomJ
-    Avoid chroots for cross compilation
-    Include the Linear Kuwahara plugin
-    Add MIJ
-    Update Fakefile to build split imglib jars.
-    Ignore generated file
-    Move the Thread Killer into its own .jar file
-    Add fiji-scripting.jar as submodule target
-    Merge branch 'miji'
-    Ignore generated .jar
-    Add the plugin "Samples "
-    Extract the "Lasso and Blow Tool" plugin from VIB
-    Add a generic wavelet library
-    Add the 'imageware' library
-    Add the plugin "Extended Depth Field"
-    Merge branch 'edf'
-    Ignore some cross-mac related stuff
-    Ignore the full nightly build directory, too
-    Merge branch 'cross-mac'
-    Add missing generated files to .gitignore
-    Move the macros from Macro_Examples.jar into plugins/Scripts/
-    Also move the Temporal Color Coder from a .jar into plugins/Scripts/
-    Add Blob_Segmentation and Feature_Detection to .gitignore
-    .gitignore: update submodule paths after moves from ab53394d9
-    Add a JNI example plugin
-    Adjust the JNI Example to the recent changes in the Fiji Build
-    Merge remote branch 'origin/native-libs'
-
-.gitmodules:
-    Add the submodule "commons-math"
-    Remove the live-helper submodule
-    Move the submodules into modules/
-
-glibc-compat.h:
-    Do not require super-up-to-date glibc on Linux
-    Update glibc-compat.h
-
-Submodule 'ij-plugins':
-    Move the submodules into modules/
-
-Submodule 'ImageJA':
-    Update ImageJA to build misc/headless.jar by default
-    Update ImageJA
-    Really fix bug 183 (updating ImageJA)
-    Update ImageJA to version 1.44d (including .lsm fix)
-    Update ImageJA to unbreak macros writing to newly opened text windows
-    Update ImageJA to 1.44e
-    Update ImageJA to include the latest Refresh Menus work
-    Update ImageJA to version 1.44f
-    Update ImageJA to interpret the IJ_PREFS_DIR variable
-    Update ImageJA to 1.44i
-    Update to ImageJA 1.44k
-    Update ImageJA to fix the Merge Channels bug noticed by Anna Kaufmann
-    Synchronize with ImageJ
-    Update ImageJA to include fix for bug 264
-    Update ImageJA
-    Update ImageJA and headless.jar
-    Move the submodules into modules/
-    Update ImageJA to include the quicksort() fix in headless.jar
-
-images/gnome:
-    We no longer need the old versions of the Fiji logo
-
-Submodule 'imglib':
-    Adjust imglib to current Bio-Formats
-    Released imglib master branch to the Fiji Updater, with the approval of Stephan Preibisch.
-    Do the imglib split build properly
-    Update imglib
-    Updated imglib, includes addition to shapelist and some changes in algorithms
-    Add fiji-scripting.jar as submodule target
-    img lib and mpicbg committed, tracking mpicbg models getting interfaces
-    Include Albert's last minute changes
-    Updated imglib and the precompiled/imglib-scripting.jar
-    Committing imglib, to release imglib-scripting.jar
-    IntArray: use better names
-    Update the submodule "imglib"
-    Move the submodules into modules/
-
-jars/ant-junit.jar:
-    Add the JUnit task for Ant (needed by commons-math)
-
-jars/imagescience.jar:
-    Add the open-sourced version of imagescience 2.4.0
-
-jars/jfreechart-1.0.13.jar:
-    Upgrade jfreechart to 1.0.13 (from 1.0.9)
-
-jars/jfreechart-1.0.9.jar:
-    Upgrade jfreechart to 1.0.13 (from 1.0.9)
-
-jars/jna.jar:
-    Update JNA to version 3.2.7
-
-jars/jruby.jar:
-    Remove JNA from Jython and JRuby
-
-java/linux:
-    Update Java to 1.6u21
-
-java/linux-amd64:
-    Update Java to 1.6u21
-
-java/win32:
-    Update Java to 1.6u21
-
-java/win64:
-    Update Java to 1.6u21
-
-Submodule 'junit':
-    Move the submodules into modules/
-
-Submodule 'jython':
-    Move the submodules into modules/
-
-LICENSES:
-    Documented license for plugin Graph Cut
-    Add the Differentials plugin from the Biomedical Imaging Group
-    Add MosaicJ
-    Add Philippe Thevenaz' PointPicker
-    Add Philippe Thenevaz' Shepp-Logan Phantom plugin
-    Add the StackReg plugin
-    Add the UnwarpJ plugin
-    Clarify the Snakuscule license
-    Add the open-sourced version of imagescience 2.4.0
-    Add the open-sourced version of TransformJ 2.8.0
-    Add FeatureJ
-    Add RandomJ
-    Merge remote branch 'origin/transformj'
-    Linear Kuwahara: clarify license
-    Clarify the license of the Extended Depth of Focus plugin
-    Clarify the license for imageware.jar and wavelets.jar
-    Remove the Example_Plot source
-    License for "Panorama equirectangular view" plugin.
-
-live-helper:
-    Remove the live-helper submodule
-
-macros/grey-squares.ijm:
-    Move the macros from Macro_Examples.jar into plugins/Scripts/
-
-macros/Set_Color_By_Wavelength.ijm:
-    Add a toy macro to set the foreground color by wavelength
-
-macros/spirals.txt:
-    Move the macros from Macro_Examples.jar into plugins/Scripts/
-
-macros/toolsets:
-    Add a toolset to clear the custom tools
-
-.mailmap:
-    Adjust .mailmap to help analyze the logs better
-
-misc/headless.jar:
-    Update ImageJA to build misc/headless.jar by default
-
-Submodule 'AutoComplete':
-    Move the submodules into modules/
-
-Submodule 'batik':
-    Move the submodules into modules/
-
-Submodule 'bio-formats':
-    Update Bio-Formats to an early preview of version 4.2
-    Update Bio-Formats to include the Huygens .ome fix
-    Update Bio-Formats to current 4.2 branch
-    Update Bio-Formats to include the most recent .lsm fixes
-    Update Bio-Formats to include the fix for bug 208
-    Update Bio-Formats
-    Update Bio-Formats to version 4.2.2
-    Update Bio-Formats to include the Tillvision fix
-    Move the submodules into modules/
-    Update Bio-Formats
-    Update Bio-Formats to contain the LSM 710 and the Git fixes
-
-Submodule 'clojure':
-    Move the submodules into modules/
-
-Submodule 'commons-math':
-    Add the submodule "commons-math"
-    Move the submodules into modules/
-
-Submodule 'ij-plugins':
-    Move the submodules into modules/
-
-Submodule 'ImageJA':
-    Update ImageJA to build misc/headless.jar by default
-    Update ImageJA
-    Really fix bug 183 (updating ImageJA)
-    Update ImageJA to version 1.44d (including .lsm fix)
-    Update ImageJA to unbreak macros writing to newly opened text windows
-    Update ImageJA to 1.44e
-    Update ImageJA to include the latest Refresh Menus work
-    Update ImageJA to version 1.44f
-    Update ImageJA to interpret the IJ_PREFS_DIR variable
-    Update ImageJA to 1.44i
-    Update to ImageJA 1.44k
-    Update ImageJA to fix the Merge Channels bug noticed by Anna Kaufmann
-    Synchronize with ImageJ
-    Update ImageJA to include fix for bug 264
-    Update ImageJA
-    Update ImageJA and headless.jar
-    Move the submodules into modules/
-    Update ImageJA to include the quicksort() fix in headless.jar
-
-Submodule 'imglib':
-    Adjust imglib to current Bio-Formats
-    Released imglib master branch to the Fiji Updater, with the approval of Stephan Preibisch.
-    Do the imglib split build properly
-    Update imglib
-    Updated imglib, includes addition to shapelist and some changes in algorithms
-    Add fiji-scripting.jar as submodule target
-    img lib and mpicbg committed, tracking mpicbg models getting interfaces
-    Include Albert's last minute changes
-    Updated imglib and the precompiled/imglib-scripting.jar
-    Committing imglib, to release imglib-scripting.jar
-    IntArray: use better names
-    Update the submodule "imglib"
-    Move the submodules into modules/
-
-Submodule 'junit':
-    Move the submodules into modules/
-
-Submodule 'jython':
-    Move the submodules into modules/
-
-Submodule 'mpicbg':
-    Update mpicbg submodule, see its git log for the changes...
-    mpicbg: CLAHE update * fix a bug in Flat (the accurate version) when ROIs were present   for each pixel-row, the histogram was initialized with the `previous'   pixel row missing at the left which accumulated through the whole row * made `Appliers' standalone classes to better share them among different   CLAHE versions * Flat uses the `Appliers' now instead of applying itself * non-visible ImagePlus instances do not update per row/cell nay more * added support for CompositeImages / Multi-Channel Images:   * if the composite box is checked, the displayed image in the window     is used to estimate the intensity transfer that is then applied to all     channels individually.  This is the desired mode for getting local     contrast compression for color photographs with a higher bit-depth and     a higher dynamic range than appropriate for a digital display   * if the composite box is unchecked, the selected channel is processed     individually.  This is the classic behavior as it was before.
-    mpicbg: Model to interface tracking the changes for all available Fiji projects: * SPIM * TrakEM2 * lens-correction
-    img lib and mpicbg committed, tracking mpicbg models getting interfaces
-    this is another part... ;-)
-    Update the mpicbg submodule
-    Fix the compilation of the mpicbg submodule
-    update mpicbg
-    mpicbg: added integral images including a handy scaler that plays particularly fast when you need many different scales of a single image.
-    Move the submodules into modules/
-
-Submodule 'Retrotranslator':
-    IntArray: use better names
-    Move the submodules into modules/
-
-Submodule 'RSyntaxTextArea':
-    Update RSyntaxTextArea to version 1.4.2
-    Move the submodules into modules/
-    Update RSyntaxTextArea
-
-Submodule 'tcljava':
-    Move the submodules into modules/
-
-Submodule 'TrakEM2':
-    Soft commit TrakEM2: fix occasional lack of canvas refresh after a prepaint operation with lower-resolution images.
-    Soft-commit TrakEM2: 0.8d error fix release.
-    Soft-commit TrakEM2: fixing logic of fixed tiles and hide/delete tiles of graphs other than the largest graph.
-    Soft-commit TrakEM2 * fixing errors with AreaTree painting * fixing potential errors with buckets with other Displayable classes * added "Display - "Show layers as orthoslices in 3D" * added ability to alter colors of sequences of nodes in a Tree.   (Shows in 3D as well except not yet for AreaTree.) * added ability to alter the radius for sequences of nodes in a Treeline
-    Soft-commit TrakEM2: fixing errors with trees.
-    Soft-commit TrakEM2:  * fixing potential error in saving the XML file  * fixing potential error in brushing an area (didn't stop)
-    Soft-commit TrakEM2: improved tree review system
-    Soft-commit TrakEM2: fixing errors with review system usability.
-    Soft-commit TrakEM2: potential fix for the area brushing issue.
-    Soft-commit TrakEM2: fixing potential minor error with area brushing.
-    Soft-commit TrakEM2: fixing thread loop logic, thanks to Mark Longair.
-    Soft-commit TrakEM2: fixed once and for all the AreaWrapper brushing problem (had to do with locked objects only).
-    Soft-commit TrakEM2: fix for brush strokes getting stuck at the start
-    Soft-commit TrakEM2: v0.8e
-    Soft-commit TrakEM2: fixing an undo step for manual alignment mode.
-    Soft-commit TrakEM2: fixed occasional error with area brush.
-    Soft-commit TrakEM2: added node-to-node measurements for trees. Thanks to Johannes Schindelin for the algorithm to find the path between two nodes in a tree in linear time.
-    soft-commit TrakEM2: 0.8e, fixes an error with setting up the undo for manual alignment mode.
-    Soft-commit TrakEM2: fixed several errors
-    Soft-commit TrakEM2: fixing small errors and adding export graph feature.
-    Soft-commit TrakEM2: 0.8h
-    Soft-commit TrakEM2: 0.8i
-    Soft commit TrakEM2: fixed error related to running GUI operations in EDT.
-    Soft-commit TrakEM2: fixing errors and more features for tree reviews.
-    Soft-commit TrakEM2: v0.8i; set layer color cues to 0 by default.
-    Soft-commit TrakEM2: fixing lack of id label update in the Display, as reported by Casey Schneider-Mizell.
-    Soft-commit TrakEM2: updates and fixes
-    Soft-commit TrakEM2: updated Merger
-    Soft-commit TrakEM2: fixing errors
-    TrakEM2 0.8l: fixing minor issues, adding more measurement features.
-    TrakEM2: fixed an error in finding incomming and outgoing connectors.
-    TrakEM2: fixed branch centrality and added ability to go back to 2D from 3D Viewer (Thanks to Mark Longair for the latter)
-    TrakEM2: fixed error in painting treelines, areatrees and connectors.
-    mpicbg: Model to interface tracking the changes for all available Fiji projects: * SPIM * TrakEM2 * lens-correction
-    TrakEM2: fixed NPE with 'g' -- thanks to Mark Longair
-    TrakEM2: Mark Longair fixed and error in brushing areas that belonged to a Displayable object with an affine transform different than a translation.
-    Merge branch 'master' into mpicbg-model-interface
-    TrakEM2: fixed errors with contrast enhancement.
-    Soft-commit TrakEM2: fix errors in contrast adjustment, and add ability to use magic wand for segmenting areas.
-    Soft-commit TrakEM2: fixed errors in select all and select all under ROI.
-    Soft-commit TrakEM2: fixing errors in canceling a task, and ensuring multi-layer mosaic does not rely on Display.getFront
-    Soft-commit TrakEM2: fixed a number of errors involving deleting objects and 3D of treelines.
-    Soft-commit TrakEM2: fixing errors with undo and repainting.
-    Soft-commit TrakEM2: fixing errors reported by Dan Bumbarger (CLAHE live filter and lock up when repainting an area of an AreaTree).
-    Soft-commit TrakEM2: updated to new 3D Viewer's way of creating image volumes. Fixes broken "View volume" and "View orthoslices" command.
-    Soft-commit TrakEM2: interpolation for arealist
-    Soft-commit TrakEM2: fixed error in interpolating areas. Thanks to Alexander Böhm for feedback.
-    Soft-commit TrakEM2: area interpolation for AreaTree.
-    Soft-commit TrakEM2: ability to configure area interpolation.
-    Soft-commit TrakEM2: fix bug #278
-    Soft-commit TrakEM2: fix meaning of enabled mipmaps flags, and honor it.
-    Move the submodules into modules/
-    Soft-commit TrakEM2: fixes for contrast adjustment mode.
-
-Submodule 'weka':
-    Move the submodules into modules/
-
-Submodule 'mpicbg':
-    Update mpicbg submodule, see its git log for the changes...
-    mpicbg: CLAHE update * fix a bug in Flat (the accurate version) when ROIs were present   for each pixel-row, the histogram was initialized with the `previous'   pixel row missing at the left which accumulated through the whole row * made `Appliers' standalone classes to better share them among different   CLAHE versions * Flat uses the `Appliers' now instead of applying itself * non-visible ImagePlus instances do not update per row/cell nay more * added support for CompositeImages / Multi-Channel Images:   * if the composite box is checked, the displayed image in the window     is used to estimate the intensity transfer that is then applied to all     channels individually.  This is the desired mode for getting local     contrast compression for color photographs with a higher bit-depth and     a higher dynamic range than appropriate for a digital display   * if the composite box is unchecked, the selected channel is processed     individually.  This is the classic behavior as it was before.
-    mpicbg: Model to interface tracking the changes for all available Fiji projects: * SPIM * TrakEM2 * lens-correction
-    img lib and mpicbg committed, tracking mpicbg models getting interfaces
-    this is another part... ;-)
-    Update the mpicbg submodule
-    Fix the compilation of the mpicbg submodule
-    update mpicbg
-    mpicbg: added integral images including a handy scaler that plays particularly fast when you need many different scales of a single image.
-    Move the submodules into modules/
-
-plugins/Examples:
-    Delayed Snapshot Window: Work around Metacity (GNOME) bugs
-    A demo how to add entries to the popup menu
-    Unbreak Delayed Snapshot
-    Add a simple tool to generate tool icons
-    Add the Extended Profile Plot example
-    Updated plugins/Examples/random_noise_example.clj
-    Add a script for resizing to a particular DPI.
-    Add "Scale to DPI" function to Image>Adjust menu
-
-plugins/Scripts:
-    Move the macros from Macro_Examples.jar into plugins/Scripts/
-    Also move the Temporal Color Coder from a .jar into plugins/Scripts/
-    Add "Scale to DPI" function to Image>Adjust menu
-
-precompiled/commons-math.jar:
-    Add the submodule "commons-math"
-
-precompiled/fake.jar:
-    Precompile Fiji Build
-    Precompile fake.jar
-
-precompiled/fiji-linux:
-    Precompile the non-Mac launchers again
-    And again a precompile of the launcher
-    Precompile Fiji launchers with recent fix
-    Precompile win & lin launchers
-    Precompile Fiji launchers
-
-precompiled/fiji-linux64:
-    Precompile the non-Mac launchers again
-    And again a precompile of the launcher
-    Precompile Fiji launchers with recent fix
-    Precompile win & lin launchers
-    Precompile Fiji launchers
-
-precompiled/fiji-macosx:
-    Add new precompiled launchers for MacOSX
-    precompiled/fiji-macosx: Add back PowerPC support
-    Precompile the current Fiji launchers
-    Remove ppc support from fiji-macosx
-    Precompile mac launchers
-    Update precompiled MacOSX launchers
-    Precompile MacOSX Fiji launchers
-    Precompile Fiji launchers
-
-precompiled/fiji-tiger:
-    Add new precompiled launchers for MacOSX
-    precompiled/fiji-macosx: Add back PowerPC support
-    Precompile the current Fiji launchers
-    Remove ppc support from fiji-macosx
-    Precompile mac launchers
-    Update precompiled MacOSX launchers
-    Precompile MacOSX Fiji launchers
-    Precompile Fiji launchers
-
-precompiled/fiji-win32.exe:
-    Precompile the non-Mac launchers again
-    And again a precompile of the launcher
-    Precompile Fiji launchers with recent fix
-    Precompile win & lin launchers
-    Precompile Fiji launchers
-
-precompiled/fiji-win64.exe:
-    Precompile the non-Mac launchers again
-    And again a precompile of the launcher
-    Precompile Fiji launchers with recent fix
-    Precompile win & lin launchers
-    Precompile Fiji launchers
-
-precompiled/headless.jar:
-    Update ImageJA to build misc/headless.jar by default
-
-precompiled/imglib-algorithms.jar:
-    Do the imglib split build properly
-    Update imglib
-    Updated imglib, includes addition to shapelist and some changes in algorithms
-    let's precompile
-    Update the submodule "imglib"
-
-precompiled/imglib-ij.jar:
-    Do the imglib split build properly
-    Update imglib
-    Updated imglib, includes addition to shapelist and some changes in algorithms
-    let's precompile
-
-precompiled/imglib-io.jar:
-    Do the imglib split build properly
-    Update imglib
-    Updated imglib, includes addition to shapelist and some changes in algorithms
-    let's precompile
-    Include Albert's last minute changes
-
-precompiled/imglib.jar:
-    Do the imglib split build properly
-    Update imglib
-    Updated imglib, includes addition to shapelist and some changes in algorithms
-    let's precompile
-
-precompiled/imglib-scripting.jar:
-    Add fiji-scripting.jar as submodule target
-    let's precompile
-    Include Albert's last minute changes
-
-precompiled/jython.jar:
-    Remove JNA from Jython and JRuby
-
-precompiled/loci_tools.jar:
-    Add a precompiled loci_tools.jar
-
-precompiled/mpicbg_.jar:
-    Updated precompiled mpicbg-targets
-    mpicbg: CLAHE update * fix a bug in Flat (the accurate version) when ROIs were present   for each pixel-row, the histogram was initialized with the `previous'   pixel row missing at the left which accumulated through the whole row * made `Appliers' standalone classes to better share them among different   CLAHE versions * Flat uses the `Appliers' now instead of applying itself * non-visible ImagePlus instances do not update per row/cell nay more * added support for CompositeImages / Multi-Channel Images:   * if the composite box is checked, the displayed image in the window     is used to estimate the intensity transfer that is then applied to all     channels individually.  This is the desired mode for getting local     contrast compression for color photographs with a higher bit-depth and     a higher dynamic range than appropriate for a digital display   * if the composite box is unchecked, the selected channel is processed     individually.  This is the classic behavior as it was before.
-    let's precompile
-    Update the mpicbg submodule
-
-precompiled/mpicbg.jar:
-    Updated precompiled mpicbg-targets
-    mpicbg: CLAHE update * fix a bug in Flat (the accurate version) when ROIs were present   for each pixel-row, the histogram was initialized with the `previous'   pixel row missing at the left which accumulated through the whole row * made `Appliers' standalone classes to better share them among different   CLAHE versions * Flat uses the `Appliers' now instead of applying itself * non-visible ImagePlus instances do not update per row/cell nay more * added support for CompositeImages / Multi-Channel Images:   * if the composite box is checked, the displayed image in the window     is used to estimate the intensity transfer that is then applied to all     channels individually.  This is the desired mode for getting local     contrast compression for color photographs with a higher bit-depth and     a higher dynamic range than appropriate for a digital display   * if the composite box is unchecked, the selected channel is processed     individually.  This is the classic behavior as it was before.
-    let's precompile
-    Update the mpicbg submodule
-
-precompiled/TrakEM2_.jar:
-    let's precompile
-
-Submodule 'Retrotranslator':
-    IntArray: use better names
-    Move the submodules into modules/
-
-Submodule 'RSyntaxTextArea':
-    Update RSyntaxTextArea to version 1.4.2
-    Move the submodules into modules/
-    Update RSyntaxTextArea
-
-scripts/bfopen.m:
-    Add a Matlab script to use Bio-Formats
-
-scripts/Miji.m:
-    Add a convenience Matlab script to call MIJ
-    Miji: Add some rudimentary documentation
-    Miji: add an option not to start ImageJ
-    Miji: avoid warnings
-
-scripts/Miji_Test.m:
-    Add a demonstration how to use Miji
-
-3D_Blob_Segmentation:
-    Blob segmentation plugin for the 3D Viewer works by clicking with the wand tool on a 3D image.
-    Blob segmentation with WAND tool for 3D Viewer: enhaced usability.
-
-3D_Viewer:
-    3DViewer: MCCube: Remove the unused SIZE variable.
-    3DViewer: MCCube: Prevent non-manifold meshes.
-    3D Viewer: Potentially show the bounding box even without 3D object.
-    3D_Viewer: Let slice changes be recorded in orthoslice mode.
-    3D Viewer: Fix a bug in ContentInstant which prohibited color updating.
-    3D-Viewer: Fix a bug in ij3d.Executer.
-    3D Viewer: Fix setChannels().
-    3D Viewer: Allow to set the animation axis.
-    3D Viewer: Every stack with nFrames>1 should be displayed in 4D.
-    3D Viewer: Make sure to reset stop flag before starting animation.
-    3D_Viewer: Be aware of ImagePlus starting inices with 1.
-    3D_Viewer: Set J3D capabilities for adding ContentInstants to a Content.
-    3D Viewer: Make the rotation step size adjustable.
-    Add concrete type specifications to avoid warnings from Eclipse
-    Remove trailing whitespace from a couple of files
-    Change the implementation of ij3d.Pipe.makeTube
-    Simple_Neurite_Tracer: removing some stdout noise
-    3D_Viewer: Remove two comments.
-    3D_Viewer: Allow to programmatically avoid to show the bounding box
-    3D Viewer: respect IJ_PREFS_DIR
-    3D Viewer: Add STL (ASCII) export option
-    3D Viewer: Add support for exporting surfaces as binary STL
-    Add Binary and ASCII STL file reading support
-    Actually import .stl files upon File>Import STL
-    3D Viewer: use parseFloat method to handle + in 1.2345E+06
-    3D Viewer: Group ifs into if-else-if when parsing ASCII STL.
-    STL Loader: Remove 'unused' warning suppression for normal Point3f
-    Handle lower-case e in scientific number format
-    3D_Viewer: Make it runnable without the need to start ImageJ.
-    3D_Viewer: Allow to show all ContentInstants of a Content at all time points.
-    3D Viewer: Bounding box contains now calibration ticks.
-    3D Viewer: Merge branch 'stl'
-    3D_Viewer: Implement arbitrary lookup tables for individual color channels
-    3D_Viewer: ContentCreator should respect the color model.
-    3D_Viewer: No longer convert 8-bit color images to RGB.
-    3D_Viewer: fix bug when setting the lookup tables.
-    3D_Viewer: Initialize lookup tables of 8-bit color images.
-    3D_Viewer: Draw only the current transfer function in the dialog.
-    3D_Viewer: Allow to change the LUTs of several channels together.
-    3D_Viewer: add a hint to the LUT dialog how to create straight lines.
-    3D Viewer: Fix picking problem with RGB images.
-    3D Viewer: Restore setColor() functionality.
-    3D Viewer: remove some trailing whitespace.
-    3D_Viewer: mv ij3d.LUTDialog to ij3d.gui
-    Merge branch 'stl'
-    3D_Viewer: Avoid ArrayIndexOutOfBoundsException.
-    3D_Viewer: Strg -> Ctrl
-    3D_Viewer: Merge branch 'transfer_functions'
-    3D Viewer: added Image<T> getImage() to ij3d.ImgLibVolume
-    3D Viewer: MCCube handles imglib ShapeList images smartly avoiding ever iterating over voxels outside the bounding boxes of the Shape instances.
-    3D Viewer: corrected typo
-    3D_Viewer: fixed errors in MCCube for ShapeList imglib images.
-    3D_Viewer: Initialize the landmark point size with a reasonable default.
-    3D_Viewer: Avoid triangulation error with bounding box text.
-    Merge branch 'master' of ssh+git://pacific.mpi-cbg.de/srv/git/fiji
-    Limit the number of ticks of the bounding box
-    3D_Viewer: On 64-bit systems, texture alpha values must not be 255.
-    Merge branch 'issue251'
-    3D_Viewer: Min and max points of an empty mesh should both be O.
-    3D Viewer: do not add as 'null' to the Window menu
-    3D Viewer: on closing, remove from the Window menu
-    3D Viewer: suggest unique content label
-    3D Viewer: do not offer images with null dimensions in the dialog
-    3D Viewer: error out if there are no images open
-    3D Viewer: default to the current image
-    3D Viewer: fix stupid thinko with fixing bug 251
-    Merge branch 'master' of pacific:/srv/git/fiji
-    3D Viewer MeshMaker: added createIcosahedron and copyTranslated static methods.
-    3D Viewer: added Image3DUniverse.addIcospheres method, which adds one icosphere for each point in the list.
-    3D Viewer: set the priority of the threads to NORM_PRIORITY. These threads are launched from the event dispatch thread, and would inherit its top-priority otherwise. Setting the priority to NORM_PRIORITY results in better repainting of the canvas while dialogs show or operations are in progress.
-    3D_Viewer: Fix transfer function with 8-bit color images.
-    3D_Viewer: Update menus after changing the display type.
-    Merge branch 'master' into blob-segmentation
-    3D Viewer: enable adding interactive behaviours as plugins.
-    3D Viewer: Make the name of the ContentInstant the same as Content.
-    3D_Viewer: consume key events.
-    3D_Viewer: Remove some unused lines of code.
-    3D_Viewer: If no time point is specified, add objects at time 0.
-    3D Viewer: Use the timepoint of created ContentInstant.
-    3D_Viewer: allow to set a new image in Volume and VoltexVolume.
-    3D Viewer: only change the ContentInstants if the time really changed.
-    3D Viewer: allow to swap unused time instances.
-    Merge remote branch 'origin/master'
-    3D Viewer: Mark setInteractiveBehavior() deprecated.
-    3D Viewer: Be graceful if nothing is selected but only one object is present.
-    3D Viewer: Minor bug fixes.
-    3D_Viewer: Show an error message when the resampling factor is 0.
-    3D_Viewer: Create the TimelapseListener interface.
-    3D Viewer: Allow to sync several viewer windows.
-    3D Viewer: Fix first frame problem when recording a rotation.
-    3D Viewer: Fix bug in the "Select" menu.
-    3D Viewer: If only one object exists, treat it as selected when using the point tool.
-    3D Viewer: Try to cleanup the destroy(), cleanup() and close() function calls.
-    3D Viewer: ImageWindow3D inherits no longer from ImageWindow.
-    3D Viewer: call pack() and show() after setting the menu bar.
-    3D Viewer: Minor change.
-    3D Viewer: Switch to Swing.
-    3D Viewer: remove some outcommented lines.
-    3D Viewer: Keep some compatibility with the old AWT interface.
-    3D Viewer: Add a 'Take snapshot' menu item.
-    3D Viewer: Take color model into account of tranformed stacks.
-    3D Viewer: Clean up key listeners.
-    3D Viewer: Add fullscreen support.
-    3D Viewer: Fix fullscreen support.
-    3D Viewer: Allow to set mesh colors from an open image.
-    3D Viewer: Apply slice changes of orthoslices to all time points.
-    3D Viewer: By default, add new contents at timepoint 0.
-    3D Viewer: Avoid NPE when closing the viewer window.
-    3D Viewer: Fix issue when mixing AWT and Swing components.
-    3D Viewer: Add missing import.
-    3D Viewer: do not set points = null when Load Point List was canceled
-    3D Viewer: load/save Points of all frames, not just the current one
-    3D Viewer: refactor the Color Dialog
-    3D Viewer: offer to change the color of the landmarks
-    3D Viewer: avoid animation for frames not shown
-    No need to make the color listeners public right now.
-    No need to put the ColorListener and OKListener in 2 interfaces.
-    Show only the points in the dialog which belong to the current time point.
-    A content's timeline does not necessarily start at time point 0.
-    When splitting hyperstacks, set the FileInfos appropriately.
-    3D Viewer: ask before overwriting point list files
-    3D Viewer: empty point lists before loading new ones
-    3D Viewer: do not try to load points for non-existing frames
-    3D Viewer: Let Alt+Click remove landmarks instead of Shift+Click
-    3D Viewer: leave Point List dialog in place when switching between frames
-    3D Viewer: fix Point Size dialog
-    3D Viewer: animate upon '\' or Space
-    3D Viewer: Upon Return (or Enter, as AWT calls it), focus on the main window
-    3D Viewer: Port the timeline GUI to Swing.
-    3D Viewer: Comment out Java version check.
-    Simple_Neurite_Tracer: Lots of minor tidying-up suggested by Eclipse
+Changes since Fiji Heidelberg:
+
+New plugins
+===========
+
+The Time Stamper plugin was much enhanced and eventually renamed into
+Series Labeler, thanks to Daniel James White and Tom Kazimiers.
+
+The plugin "TopoJ" was added, thanks to David Hovis.
+
+A simple Graph Cut segmentation plugin was added, thanks to Jan Funke.
+
+Two "Macro Examples" were added to demonstrate optical illusions which should
+convince everybody that quantitative analysis of biological images is really
+much better than looking at a red-green picture and convincing oneself that
+there might be colocalized signals. Thanks to Daniel James White and
+Gabriel Landini.
+
+Thanks to a generous license by Michael Unser of the Biomedical Imaging Group
+at the EPFL, the Differentials plugin, MosaicJ, Philippe Thevenaz' PointPicker,
+his Shepp-Logan Phantom plugin, the StackReg plugin and the Snakuscule plugin
+and Daniel Sage's plugin "Extended Depth Field" are distributed with Fiji now.
+
+Thanks to the generous license by Erik Meijering to distribute the source code
+for a few of his plugins with Fiji, FeatureJ, RandomJ and TransformJ are
+available in Fiji now, too.
+
+The Linear Kuwahara plugin was contributed by Christian Tischer.
+
+Daniel Sage's MIJ library to use Fiji/ImageJ from within Matlab is included
+with Fiji now. Just add Fiji.app/scripts/ to the search path and call 'Miji'.
+
+Kota Miura contributed the Temporal Color Coder which makes a t-projection
+color-coding the original time points.
+
+Bio-Format's bfopen.m was added to use Fiji's Bio-Formats from Matlab. Thanks
+to Curtis Rueden.
+
+The new 3D Blob Segmentation plugin allows interactive 3D segmentation in
+the 3D Viewer backed by Fiji's level sets framework. Thanks to Erwin Frise,
+Albert Cardona and Benjamin Schmid.
+
+User-visible changes
+====================
+
+On Linux, the Fiji launcher will run even with older setups than the launcher
+was compiled on.
+
+The Bio-Formats plugins were updated frequently to include bug fixes and
+improvements, e.h. support for the new LSM 710 format. Thanks to the LOCI
+& Glencoe team.
+
+The Debian packages are being rebuilt on a weekly basis now. This was a lot
+of work competently completed by Mark Longair.
+
+In the course of Debianization, a number of licenses have been clarified.
+
+On Linux, RAM will not be overcommitted anymore (this used to lead to serious
+paging delays in multi-user environments).
+
+Fiji will now correctly identify 64-bit Intel CPUs on MacOSX.
+
+The Fiji launcher accepts --edit without paths now, opening the Script Editor
+with a new, empty file.
+
+With newer MacOSX versions, the absence of the SECURITYSESSIONID does not
+imply headless operation.
+
+When calling Fiji from a multi-platform Fiji.app/ directory, it will not
+try to use the Java Runtime environment for another architecture.
+
+The Fiji launcher will interpret jvm.cfg before command line options so that
+the user has a chance to override faulty settings. Thanks to Jacques Pecreaux.
+
+On MacOSX, when the user specified "Open in 32-bit mode", Fiji will no longer
+ignore the user's wish. Thanks to Erwin Frise and Arthur Edelstein.
+
+Since many parts of Fiji's source code rely on Java 1.6 or better now, the
+retrotranslator is activated automatically on MacOSX when only Java 1.5 or
+earlier is available. Thanks to Mark Longair.
+
+Fiji will be able to use native libraries put into Fiji.app/lib/<platform>/.
+
+Calling "fiji-<platform> --updater" calls a command-line version of the Fiji
+Updater; this is useful in headless setups.
+
+Any script or macro can now live in any menu, by putting it into
+Fiji.app/plugins/Scripts/. For example, if you want to have a macro in
+File>Import, you might save it to Fiji.app/plugins/Scripts/File/Import/.
+
+As always, Fiji was synchronized frequently with ImageJ, and a few bug fixes
+were contributed to ImageJ through Fiji. Thanks to Wayne Rasband.
+
+Fiji's bundled Java Runtime Environment is now at version 1.6u24 (to update,
+run "Update Java" from Fiji Updater's "Advanced mode").
+
+Too many bug fixes and improvements to count in both the TrakEM2 and the
+mpicbg (including CLAHE) components. Thanks Albert Cardona and Stephan
+Saalfeld.
+
+Add the Plugins>Examples>Extended Profile Plot script to get profile plots
+of closed polygons.
+
+Add "Scale to DPI" function to Image>Adjust menu, thanks to Curtis Rueden.
+
+Lots of bug fixes and improvements in the 3D Viewer. To name just a few:
+orthoslice changes are now recordable, the animation axis can be specified,
+the rotation step is adjustable, import/export for .stl files was added (for
+3D printers), the bounding box now has ticks, the transfer function is
+adjustable, single objects are auto-selected, the current image is added
+by default, ImageJ is no longer allowed to intercept key presses, multiple
+3D Viewers can be synchronized, there is now a "Take snapshot" menu item,
+fullscreen mode, colorize meshes from given images, load/save landmarks
+for all timepoints, make color of landmarks adjustable, etc. Thanks to
+Benjamin Schmid.
 
 AnalyzeSkeleton_:
     Analyze Skeleton: added method to get the array of graphs, pointed out by Peter C. Marks.
@@ -1177,10 +171,7 @@ Auto_Threshold:
     Auto Threshold: fix Intermodes' in-place smoothing
 
 BeanShell_Interpreter:
-    Move BeanShell Interpreter sources to the appropriate subdirectory
-    Beanshell: show much more informative error information
     Import default imports into all available interpreters
-    Make Refresh_BSH_Scripts.runScript get all the default imports. Closes http://pacific.mpi-cbg.de/cgi-bin/bugzilla/show_bug.cgi?id=280
 
 Bug_Submitter:
     Bug_Submitter: deal with warnings from Eclipse
@@ -1192,10 +183,7 @@ Bug_Submitter:
 
 CLI_:
     Import default imports into all available interpreters
-    Remove redundant plugins.config files
     Refresh Macros: fix stupid tyop
-    Allow macros to live in all menus, too
-    Add some @Override annotations to CLI and Javascript interpreter sources
 
 Clojure_Interpreter:
     Move the Clojure sources into a subdirectory of Clojure_ called Clojure
@@ -1213,24 +201,9 @@ Colocalisation_Analysis:
     Colocalization Test: avoid duplicate column headers
     Colocalisation Test: output to a saveable text window
 
-CPU_Meter:
-    Add a JNA-based CPU meter (works on Linux and MacOSX)
-    CPU Meter: use the OperatingSystemMXBean (requires Java5)
-    Revert "CPU Meter: use the OperatingSystemMXBean (requires Java5)"
-
-Differentials_:
-    Add the Differentials plugin from the Biomedical Imaging Group
-
 Directionality_:
     Directionality_: fix macro recording
     Directionality: Use Display_color_wheel in GenericDialog
-
-Examples:
-    Remove the Example_Plot source
-
-Extended_Depth_Field:
-    Add the plugin "Extended Depth Field"
-    Move the Extended Depth of Field items into Plugin>Process
 
 fake:
     Fiji build: redirect Jython output correctly
@@ -1319,10 +292,6 @@ Feature_Detection:
     Added the vessel detection method from Frangi (1998)
     Add an interface for reporting progress from multi-threaded tasks
     Move a plugins.config into src-plugins/ structure
-
-FeatureJ_:
-    Add FeatureJ
-    Move TransformJ, FeatureJ and RandomJ into more specific menus
 
 Fiji:
     Fix headless startup of User_Plugins and RecentCommands
@@ -1574,21 +543,6 @@ Fiji_Updater:
     Just squashed a TODO
     Fiji Updater: avoid misleading error message when updating Java
 
-Graph_Cut:
-    Add the skeleton of the plugin "Graph Cut"
-    finished implementation of the core GraphCut algorithm
-    GraphCut: bugfix, first version of plugin
-    GraphCut: added a GUI to the plugin
-    GraphCut: added documentation, reformatted code
-    GraphCut: checks for an open image now, fixed menu entry location
-    GraphCut: added channel selection support for multi-channel images
-    Graph_Cut: ensure button is re-enabled even in the event of execution failure.
-    Graph Cut: components are enabled by default on instantiation.
-    Move the config for Graph Cut into the correct place
-
-Image_5D:
-    beautify menu separators in Image5D and QuickPalm
-
 Image_Expression_Parser:
     IEP: Fixed field not set
     Image Expression Parser: avoid NullPointerException The error came up with: 1. Open Fiji 2. Open IEP 3. Open a test image -- NullPointerException at the trim(), which didn't check for null.
@@ -1596,12 +550,6 @@ Image_Expression_Parser:
     Image Expression Parser: do not load an example image for testing
     Image Expression Parser: work around CompositeImage's resetDisplayRange()
     Image Expression Parser: force CompositeImages to update
-
-imagescience:
-    Add the open-sourced version of imagescience 2.4.0
-
-imageware:
-    Add the 'imageware' library
 
 IO_:
     HEFT: Add a new static method to check whether loci is present
@@ -1611,19 +559,12 @@ IO_:
     A plugin that saves the current image in EPS (Encapsulated PostScript) format
     Enhance the EPS Exporter substantially
 
-Jama-1.0.2:
-    Move the Jama sources into a subdirectory of Jama-1.0.2 called Jama
-
 Javascript_:
     Move the Javascript sources into a subdirectory of Javascript_ called Javascript
     Import default imports into all available interpreters
     Javascript Interpreter: avoid importing classes defined internally already
     RefreshScripts: refactor Javascript special casing
     Add some @Override annotations to CLI and Javascript interpreter sources
-
-JNI_Example:
-    Add a JNI example plugin
-    Adjust the JNI Example to the recent changes in the Fiji Build
 
 JRuby_Interpreter:
     Move the JRuby sources into a subdirectory of JRuby_Interpreter called JRuby
@@ -1651,65 +592,14 @@ Lasso_and_Blow_Tool:
     Lasso Tool: drag the FibonacciHeap into this century
     Lasso: re-add back ctor for backwards compatibility
 
-level_sets:
-    Level sets: Fix warning when recording a macro
-    Remove redundant plugins.config files
-
-Linear_Kuwahara:
-    Add the initial version of the Linear Kuwahara filter
-    Linear Kuwahara: clarify license
-    Linear Kuwahara: show dialog
-    Linear Kuwahara: remove trailing whitespace
-    Linear Kuwahara: let the user choose the criterion
-    Linear Kuwahara: throw out over-engineered abstract class design
-    Linear Kuwahara: show progress
-    Linear Kuwahara: remove debug statement
-    Linear Kuwahara: user "variance" criterion by default
-    Include the Linear Kuwahara plugin
-    Remove the test image from the Linear Kuwahara plugin
-
-LSM_Reader:
-    Fix LSM Reader for batch mode
-
-LSM_Toolbox:
-    LSM_Toolbox: fixed png images
-    LSM_Toolbox: chnaged images access right modes
-
-MacOSX_Updater_Fix:
-    Add a convenient .jar target to fix the MacOSX Updater bug
-    Modify MacOSX_Updater_Fix to fix update/ issue
-
-mij:
-    Add MIJ
-    MIJ: make it possible to wrap images as ImagePlus without showing them
-
 M_I_P:
     Multiple Image Processor: reset Escape before starting
     Multiple Image Processor: handle .pgm files as claimed in the documentation
-
-MosaicJ_:
-    Add MosaicJ
 
 panorama_:
     Added "Plugins - Transform - Panorama equirectangular view" command.
     License for "Panorama equirectangular view" plugin.
     Oops forgot to commit the plugins.config for Panorama.
-
-PIV_analyser:
-    Removed useless eclipse files from tracking
-    Fix another leftover from the package-directory-mismatches mess
-    Remove left-over Eclipse file
-
-PointPicker_:
-    Add Philippe Thevenaz' PointPicker
-
-QuickPALM_:
-    beautify menu separators in Image5D and QuickPalm
-    Move the QuickPALM sources into a subdirectory of QuickPALM_ called QuickPALM
-
-RandomJ_:
-    Add RandomJ
-    Move TransformJ, FeatureJ and RandomJ into more specific menus
 
 Refresh_Javas:
     Refresh Javas: do not show the FakeException upon compile errors
@@ -1736,9 +626,6 @@ Refresh_Javas:
 
 register_virtual_stack_slices:
     Register/Transform Virtual Stack Slices got a checkbox to toggle interpolation
-
-Samples_:
-    Add the plugin "Samples "
 
 Script_Editor:
     Script Editor: allow exporting script "plugin" .jar files
@@ -1883,44 +770,6 @@ Script_Editor:
     Script Editor: hide unnerving messages unless in debug mode
     Merge remote-tracking branch 'origin/updater'
 
-Series_Labeler:
-    Time Stamper Enhanced: Rename to Series Labeler
-    Series Labeler: Code formatting
-    Series Labeler: Remove debug output
-    Series Labeler: Remove some traces of "time"
-    Stack Labeler: Add GUI feedback to stack type choice and length format
-    Series Labeler: Draw preview on overlay and allow user to drag slider
-    Series Labeler: Add Spectral stack type
-    Series labeler - update of todo list
-    series labeler - add pixels as a spatial unit
-    series labeler - make custom label format a separate option for z stacks
-    series labeler - hyperstacks... we will leave for a rainy day.
-    series labeler - read the image meta data and use it to fill gui fields as defaults
-    series labeler - make m a time unit in the choice list
-    series labeler -  extend StackType to store the position of custom format
-    series labeler - pixel is the default imageJ spatial unit, not pixels
-    series labeler - added new methd to StackType class to abstract getting meta data units from imp
-    Series labeler - new methods handling meta data units
-    series labeler - fix up GUI to save space on the screen
-    Series Labeler - fix interval and startup gui fields to 10 decimal palaces from 2
-    Series Labeler - support RGB images in preview by testing for COLOR_RGB
-    Series Labeler - make sure overaly for preview is removed on click Cancel
-    Sereis Labeler - attach to and detatch from listeners in Static fashion
-    Series Labeler - style fixes, comments, and GPL license text
-    change help url to Series_labeler pacific wiki page.
-    Change a few awkward line breaks
-    Series Labeler - Provide sensible default start time
-    Series Labelr - Turn back on Swing, use AWT
-    Series Labeler - Add border panel for control grouping in AWT
-    Merge remote branch 'tomka/SeriesLabeler'
-    Series Labeler: fix indentation
-    Series Labeler: fix typo
-    Series Labeler: fix line break
-    Move the config for Series Labeler into the correct place
-
-SheppLogan_:
-    Add Philippe Thenevaz' Shepp-Logan Phantom plugin
-
 Simple_Neurite_Tracer:
     Simple_Neurite_Tracer: fix whitespace (outdent the SimpleNeuriteTracer class)
     Simple_Neurite_Tracer: some input fixes and clarifications
@@ -2033,9 +882,6 @@ Simple_Neurite_Tracer:
     Simple_Neurite_Tracer: bump the plugin version to 2.0.0
     Simple_Neurite_Tracer: add a confirmation for deleting paths from the path window
 
-Snakuscule_:
-    The snakuscule is here!
-
 SPIM_Registration:
     SPIM Registration: fix typo
     Updated the SPIM Registration to Multi Channel
@@ -2051,14 +897,6 @@ SPIM_Registration:
     let's see if this is the last part
     Work around missing setReadable() and friends in Java 1.5
     Get rid of ParsePattern
-
-Stack_Manipulation:
-    Stack_Manipulation: removed the SubStack_Maker plugin
-    Stack_Manipulation: removed Grouped_Z_stack_projector
-    Make Stack Combiner recordable
-
-StackReg_:
-    Add the StackReg plugin
 
 Stitching_:
     If no overlapping tiles are found he will put only the first image to (0,0,0)
@@ -2078,28 +916,9 @@ Thread_Killer:
     Thread Killer: exclude a few more (system) threads
     Exclude contrast and threshold adjuster from being killable
 
-ToAST_:
-    Add the plugin "Samples "
-
-TopoJ_:
-    Add the plugin "TopoJ "
-    TopoJ: Fix NullPointerException when there is no image
-    TopoJ: rename "Level " to "Remove Slope"
-    Add a sample for TopoJ
-
 Trainable_Segmentation:
     Trainable Segmentation: fixed bug when painting traces of stroke bigger than 1 at the borders of the image.
     Trainable Segmentation: updated applyClassifierToTestImage to be able to handle ImageStacks.
-
-TransformJ_:
-    Add the open-sourced version of TransformJ 2.8.0
-    Move TransformJ, FeatureJ and RandomJ into more specific menus
-
-UnwarpJ_:
-    Add the UnwarpJ plugin
-
-Updater_Fix:
-    Modify MacOSX_Updater_Fix to fix update/ issue
 
 VIB_:
     Particle Analyzer (3D): avoid ArraySizeException when there are < 3 objects
@@ -2136,9 +955,6 @@ VIB-lib:
     ComputeCurvatures: add some missing @Override annotations
     ComputeCurvatures: make sure we only call callback.proportionDone(1.0) once
 
-wavelets:
-    Add a generic wavelet library
-
 weave_jy2java:
     Jython Weave.inline(...) to insert java code snippets into jython (or any scripting language).
     Weave: edits to the documentation.
@@ -2148,63 +964,78 @@ weave_jy2java:
     Weaver: discover closest public class of each binding. No more instanceof, and all classes covered.
     Weaver: detect best possible class for each binding. Added as well ability to open the generated java file in the Script Editor.
 
-Submodule 'tcljava':
-    Move the submodules into modules/
+Developer-visible changes
+=========================
 
-Submodule 'TrakEM2':
-    Soft commit TrakEM2: fix occasional lack of canvas refresh after a prepaint operation with lower-resolution images.
-    Soft-commit TrakEM2: 0.8d error fix release.
-    Soft-commit TrakEM2: fixing logic of fixed tiles and hide/delete tiles of graphs other than the largest graph.
-    Soft-commit TrakEM2 * fixing errors with AreaTree painting * fixing potential errors with buckets with other Displayable classes * added "Display - "Show layers as orthoslices in 3D" * added ability to alter colors of sequences of nodes in a Tree.   (Shows in 3D as well except not yet for AreaTree.) * added ability to alter the radius for sequences of nodes in a Treeline
-    Soft-commit TrakEM2: fixing errors with trees.
-    Soft-commit TrakEM2:  * fixing potential error in saving the XML file  * fixing potential error in brushing an area (didn't stop)
-    Soft-commit TrakEM2: improved tree review system
-    Soft-commit TrakEM2: fixing errors with review system usability.
-    Soft-commit TrakEM2: potential fix for the area brushing issue.
-    Soft-commit TrakEM2: fixing potential minor error with area brushing.
-    Soft-commit TrakEM2: fixing thread loop logic, thanks to Mark Longair.
-    Soft-commit TrakEM2: fixed once and for all the AreaWrapper brushing problem (had to do with locked objects only).
-    Soft-commit TrakEM2: fix for brush strokes getting stuck at the start
-    Soft-commit TrakEM2: v0.8e
-    Soft-commit TrakEM2: fixing an undo step for manual alignment mode.
-    Soft-commit TrakEM2: fixed occasional error with area brush.
-    Soft-commit TrakEM2: added node-to-node measurements for trees. Thanks to Johannes Schindelin for the algorithm to find the path between two nodes in a tree in linear time.
-    soft-commit TrakEM2: 0.8e, fixes an error with setting up the undo for manual alignment mode.
-    Soft-commit TrakEM2: fixed several errors
-    Soft-commit TrakEM2: fixing small errors and adding export graph feature.
-    Soft-commit TrakEM2: 0.8h
-    Soft-commit TrakEM2: 0.8i
-    Soft commit TrakEM2: fixed error related to running GUI operations in EDT.
-    Soft-commit TrakEM2: fixing errors and more features for tree reviews.
-    Soft-commit TrakEM2: v0.8i; set layer color cues to 0 by default.
-    Soft-commit TrakEM2: fixing lack of id label update in the Display, as reported by Casey Schneider-Mizell.
-    Soft-commit TrakEM2: updates and fixes
-    Soft-commit TrakEM2: updated Merger
-    Soft-commit TrakEM2: fixing errors
-    TrakEM2 0.8l: fixing minor issues, adding more measurement features.
-    TrakEM2: fixed an error in finding incomming and outgoing connectors.
-    TrakEM2: fixed branch centrality and added ability to go back to 2D from 3D Viewer (Thanks to Mark Longair for the latter)
-    TrakEM2: fixed error in painting treelines, areatrees and connectors.
-    mpicbg: Model to interface tracking the changes for all available Fiji projects: * SPIM * TrakEM2 * lens-correction
-    TrakEM2: fixed NPE with 'g' -- thanks to Mark Longair
-    TrakEM2: Mark Longair fixed and error in brushing areas that belonged to a Displayable object with an affine transform different than a translation.
-    Merge branch 'master' into mpicbg-model-interface
-    TrakEM2: fixed errors with contrast enhancement.
-    Soft-commit TrakEM2: fix errors in contrast adjustment, and add ability to use magic wand for segmenting areas.
-    Soft-commit TrakEM2: fixed errors in select all and select all under ROI.
-    Soft-commit TrakEM2: fixing errors in canceling a task, and ensuring multi-layer mosaic does not rely on Display.getFront
-    Soft-commit TrakEM2: fixed a number of errors involving deleting objects and 3D of treelines.
-    Soft-commit TrakEM2: fixing errors with undo and repainting.
-    Soft-commit TrakEM2: fixing errors reported by Dan Bumbarger (CLAHE live filter and lock up when repainting an area of an AreaTree).
-    Soft-commit TrakEM2: updated to new 3D Viewer's way of creating image volumes. Fixes broken "View volume" and "View orthoslices" command.
-    Soft-commit TrakEM2: interpolation for arealist
-    Soft-commit TrakEM2: fixed error in interpolating areas. Thanks to Alexander Böhm for feedback.
-    Soft-commit TrakEM2: area interpolation for AreaTree.
-    Soft-commit TrakEM2: ability to configure area interpolation.
-    Soft-commit TrakEM2: fix bug #278
-    Soft-commit TrakEM2: fix meaning of enabled mipmaps flags, and honor it.
-    Move the submodules into modules/
-    Soft-commit TrakEM2: fixes for contrast adjustment mode.
+There have been quite a few cleanups of the project structure; the sources
+for plugins and libraries which are not contained in submodules are supposed
+to live in src-plugins/<jarname>/<package>/<classname>.java, where <jarname>
+is the base name of the generated .jar file.
 
-Submodule 'weka':
-    Move the submodules into modules/
+There is now a script to compile and cross-compile ITK.
+
+JNA was extracted from Jython and JRuby so that a newer jna.jar can be used
+without being shadowed by Jython's or JRuby's idea of JNA.
+
+There is a helper now to compile a few ImageJ versions.
+
+We have helper scripts to build cross-compilers on Linux 64-bit to target
+win32, win64, MacOSX (32-bit and 64-bit Intel, 32-bit PowerPC).
+
+There is a Fiji launcher for MacOSX PowerPC again, sadly not met with any
+feedback from the complaining person, let alone positive one.
+
+We have a script now to generate Eclipse, Netbeans and IntelliJ projects
+from the master Fakefile.
+
+FreeBSD is supported for developers, for now.
+
+There is a fall-back shell script -- fiji-other.sh -- for otherwise
+unsupported platforms.
+
+The get-sample-images script supports headless operations now.
+
+To prevent long waiting times with "git status" when a number of submodules
+are checked out, gitignore-in-submodules now understands an 'ignoredirty'
+subcommand.
+
+bin/identify-commit.py can be used on the precompiled Fiji launchers, too.
+
+In developer mode, the Updater's "Show changes" also lists changes for
+the Fiji launchers and the .jar file's manifest.
+
+When samples/ is present, it is included in generated Fiji.app bundles.
+
+A convenience script was added to use Maven.
+
+There is a helper now to find all dependencees (even transitive ones) of
+a given .jar file.
+
+The nightly build generates a stable WebStart (reflecting the current version
+according to the Fiji Updater) and the PluginList on the Wiki.
+
+A simple script to reverse the page order of a .pdf file was added, as an
+example how to use iText.
+
+The helper script bin/ready-for-upload.bsh can determine whether all
+prerequisite steps prior to uploading have been completed.
+
+The commons-math library from the Apache project is now available.
+
+Fiji Build can now build JNI-backed plugins; just add .c or .cxx files to
+a .jar rule, and a shared library of the same name as the .jar file will
+be generated from the native sources. Use fiji.JNI.loadLibrary("<name>") to
+load the shared library.
+
+Upgrade jfreechart to 1.0.13 (from 1.0.9).
+
+Update JNA to version 3.2.7.
+
+Fiji contains a base class fiji.tool.AbstractTool which makes it easy to add
+tools to the toolbar that are not backed by polling macros, but by a proper
+event-driven Java class.
+
+To generate tool icons from 16x16 pictures, use Plugins>Examples>Image To
+Tool Icon.
+
+The submodules have been moved into the modules/ directory.
