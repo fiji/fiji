@@ -203,7 +203,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/RandomJ_.jar \
 	plugins/Linear_Kuwahara.jar \
 	plugins/Thread_Killer.jar \
-	plugins/Jython_Scripts.jar \
 	plugins/Samples_.jar \
 	plugins/Lasso_and_Blow_Tool.jar \
 	jars/mij.jar \
@@ -344,11 +343,6 @@ CLASSPATH(plugins/Arrow_.jar)=jars/ij.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/TransformJ_.jar)=jars/ij.jar:jars/imagescience.jar
 CLASSPATH(plugins/FeatureJ_.jar)=jars/ij.jar:jars/imagescience.jar
 CLASSPATH(plugins/RandomJ_.jar)=jars/ij.jar:jars/imagescience.jar
-CLASSPATH(plugins/Jython_Scripts.jar)=jars/ij.jar:plugins/Jython_Interpreter.jar:jars/fiji-scripting.jar
-plugins/Jython_Scripts.jar <- \
-	src-plugins/Jython_Scripts/**/*java \
-	src-plugins/Jython_Scripts/scripts/*py \
-	src-plugins/Jython_Scripts/plugins.config
 CLASSPATH(plugins/Auto_Threshold.jar)=jars/ij.jar
 CLASSPATH(plugins/Colocalisation_Analysis.jar)=jars/ij.jar
 CLASSPATH(plugins/Series_Labeler.jar)=jars/ij.jar
