@@ -25,7 +25,7 @@ git replace $revert $parent
 get_numbers () {
 	added=0
 	removed=0
-	git log --numstat "$@" |
+	git log --no-merges --numstat "$@" |
 	grep "^[0-9]" |
 	sed -n 's/^\([0-9]\+\)[^0-9]*\([0-9]\+\).*/\1 \2/p' | {
 		while read add remove
@@ -38,7 +38,7 @@ get_numbers () {
 }
 
 get_authors () {
-	git shortlog -n -s "$@" |
+	git shortlog --no-merges -n -s "$@" |
 	cut -c 8-
 }
 
@@ -58,7 +58,7 @@ get_authors () {
 	echo "and many other helpers.") |
 fmt -76
 
-files=$(git log --format=%% --name-only Fiji-Heidelberg.. |
+files=$(git log --no-merges --format=%% --name-only "$@" |
 	grep -ve '^$' -e '^%$' -e '^staged-plugins/' -e '^tests/' -e '^\\.' \
 		-e '/\.' -e '^Fakefile' -e '^TODO' -e '^RELEASE-NOTES' |
 	cut -d / -f1-2 |
@@ -75,11 +75,11 @@ do
 		;;
 	*)
 		test -d modules/"$f" &&
-		f="modules/$f $f"
+		continue # avoid double-listing
 		;;
 	esac
 
-	log="$(git log --format="%s" --reverse "$@" -- $f)"
+	log="$(git log --no-merges --format="%s" --reverse "$@" -- $f)"
 	test -z "$log" || {
 		case "$f" in
 		fiji.c)
