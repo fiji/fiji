@@ -470,7 +470,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		/* add a help button that opens a link to the
 		 * documentation wiki page.
 		 */
-		gd.addHelp("http://pacific.mpi-cbg.de/wiki/index.php/Series_labeler");
+		gd.addHelp("http://pacific.mpi-cbg.de/wiki/index.php/Series_Labeler");
 
 		if (!IJ.isMacro()){
 			// update GUI parts that are dependent on current variable contents
