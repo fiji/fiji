@@ -112,12 +112,16 @@ public class SpotOverlay extends AbstractAnnotation {
 				}
 			}
 			
-			// Deal with edting spot
-			if (null != editingSpot){
+			// Deal with editing spot - we always draw it with its center at the current z, current t 
+			// (it moves along with the current slice) 
+			if (null != editingSpot) {
 				g2d.setColor(SpotDisplayer.HIGHLIGHT_COLOR);
 				g2d.setStroke(new BasicStroke((float) (2 / canvas.getMagnification()), 
 						BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[] {4, 4} , 0));
-				drawSpot(g2d, editingSpot, zslice);
+				final float x = editingSpot.getFeature(Feature.POSITION_X);
+				final float y = editingSpot.getFeature(Feature.POSITION_Y);
+				g2d.drawOval(Math.round((x-radius)/calibration[0]), Math.round((y-radius)/calibration[1]) , 
+						Math.round(2*radius/calibration[0]), Math.round(2*radius/calibration[1]));		
 			}
 
 		}

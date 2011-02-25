@@ -12,7 +12,6 @@ import ij.gui.StackWindow;
 
 import java.awt.Color;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -22,23 +21,22 @@ import java.util.Set;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
-public class HyperStackDisplayer extends SpotDisplayer implements MouseListener {
+public class HyperStackDisplayer extends SpotDisplayer {
 
-	private ImagePlus imp;
-	private OverlayedImageCanvas canvas;
-	private float[] calibration;
+	ImagePlus imp;
+	OverlayedImageCanvas canvas;
+	float[] calibration;
 	private Feature currentFeature;
 	private float featureMaxValue;
 	private float featureMinValue;
-	private Settings settings;
+	Settings settings;
 	private StackWindow window;
-	private SpotOverlay spotOverlay;
+	SpotOverlay spotOverlay;
 	private TrackOverlay trackOverlay;
 	
-	/** The spot currently being edited, empty if no spot is being edited. */
-	private Spot editedSpot;
 	/** A mapping of the spots versus the color they must be drawn in. */
 	private Map<Spot, Color> spotColor = new HashMap<Spot, Color>();
+	private SpotEditTool editTool;
 	
 	/*
 	 * CONSTRUCTORS
@@ -49,8 +47,23 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 		this.imp = settings.imp;
 		this.calibration = new float[] { settings.dx, settings.dy, settings.dz };
 		this.settings = settings;
+		this.editTool = new SpotEditTool(this);
 	}
 	
+	
+	/*
+	 * DEFAULT METHODS
+	 */
+	
+	final Spot getCLickLocation(final MouseEvent e) {
+		final int ix = canvas.offScreenX(e.getX());
+		final int iy =  canvas.offScreenX(e.getY());
+		final float x = ix * calibration[0];
+		final float y = iy * calibration[1];
+		final float z = (imp.getSlice()-1) * calibration[2];
+		return new SpotImp(new float[] {x, y, z});
+	}
+
 	/*
 	 * PUBLIC METHODS
 	 */
@@ -115,7 +128,7 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 		trackOverlay = new TrackOverlay(imp, calibration);
 		canvas.addOverlay(spotOverlay);
 		canvas.addOverlay(trackOverlay);
-		canvas.addMouseListener(this);	
+		editTool.run("");
 		imp.updateAndDraw();
 	}
 	
@@ -172,20 +185,7 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 	public void clear() {
 		canvas.clearOverlay();
 	}	
-	
-	/*
-	 * PRIVATE METHODS
-	 */
-	
-	private final Spot getCLickLocation(final MouseEvent e) {
-		final int ix = canvas.offScreenX(e.getX());
-		final int iy =  canvas.offScreenX(e.getY());
-		final float x = ix * calibration[0];
-		final float y = iy * calibration[1];
-		final float z = (imp.getSlice()-1) * calibration[2];
-		return new SpotImp(new float[] {x, y, z});
-	}
-	
+		
 	private void prepareSpotOverlay() {
 		if (null == spotsToShow)
 			return;
@@ -200,74 +200,4 @@ public class HyperStackDisplayer extends SpotDisplayer implements MouseListener 
 		spotOverlay.setTarget(spotsToShow);
 		spotOverlay.setTargettColor(spotColor);
 	}
-	
-	@Override
-	public void mouseClicked(MouseEvent e) {
-		final Spot clickLocation = getCLickLocation(e);
-		final int frame = imp.getFrame() - 1;		
-		Spot target = spotsToShow.getClosestSpot(clickLocation, frame);
-		
-		// Check desired behavior
-		switch (e.getClickCount()) {
-		case 1: {
-			// Change selection
-			// only if we are nut currently editing
-			if (null != editedSpot)
-				return;
-			final int addToSelectionMask = MouseEvent.SHIFT_DOWN_MASK;
-			final int flag;
-			if ((e.getModifiersEx() & addToSelectionMask) == addToSelectionMask) 
-				flag = MODIFY_SELECTION_FLAG;
-			else 
-				flag = REPLACE_SELECTION_FLAG;
-			spotSelectionChanged(target, frame, flag);
-			break;
-		}
-		
-		case 2: {
-			// Edit spot
-			
-			// Empty current selection
-			spotSelectionChanged(null, frame, REPLACE_SELECTION_FLAG);
-			
-			if (null == editedSpot) {
-				// No spot is currently edited, we pick one to edit
-				System.out.println("Entering edit mode");// DEBUG
-				if (target.squareDistanceTo(clickLocation) > radius*radius) {
-					// Create a new spot if not inside one
-					target = clickLocation;
-					System.out.println("Creating new spot");// DEBUG
-				} else {
-					System.out.println("Editing spot "+target.getName());// DEBUG
-				}
-				editedSpot = target;
-				
-			} else {
-				// We leave editing mode
-				System.out.println("Leaving edit mode");// DEBUG
-				editedSpot = null;
-			}
-			spotOverlay.setEditedSpot(editedSpot);
-			break;
-		}
-		}
-	} 
-
-
-	@Override
-	public void mousePressed(MouseEvent e) {}
-
-
-	@Override
-	public void mouseReleased(MouseEvent e) {}
-
-
-	@Override
-	public void mouseEntered(MouseEvent e) {}
-
-
-	@Override
-	public void mouseExited(MouseEvent e) {}
-
-
 }

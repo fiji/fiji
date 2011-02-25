@@ -120,7 +120,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 			if (segmenter.checkInput() && segmenter.process()) {
 				spotsThisFrame = segmenter.getResult(settings);
 				for (Spot spot : spotsThisFrame)
-					spot.putFeature(Feature.POSITION_T, i);
+					spot.putFeature(Feature.POSITION_T, i * settings.dt);
 				spots.put(i, spotsThisFrame);
 				spotFound += spotsThisFrame.size();
 			} else {
