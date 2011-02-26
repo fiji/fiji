@@ -62,6 +62,28 @@ The new 3D Blob Segmentation plugin allows interactive 3D segmentation in
 the 3D Viewer backed by Fiji's level sets framework. Thanks to Erwin Frise,
 Albert Cardona and Benjamin Schmid.
 
+Mark Longair contributed plugins to calculate the curvature of n-dimensional
+images, and to detect vessels according to Frangi's method.
+
+The Correct 3D drift script registers time frames using the Stitching 3D
+plugin. Thanks to Stephan Preibisch, Robert Bryson-Richardson and Albert
+Cardona.
+
+The Retinex plugin was added by Francisco Jiménez Hernández and Gabriel
+Landini.
+
+There is now a plugin calculating the 'Shape Index Map', a per-pixel value
+describing the shape of the height-field corresponding to the image.
+
+It is now possible to turn a binary image of points into a point selection,
+by starting Edit>Selection>Points from Mask.
+
+There is now a plugin that saves the current image in EPS (Encapsulated
+PostScript) format. Thanks to Wilhelm Burger.
+
+Use "Plugins>Transform>Panorama equirectangular view" to look at 360° panorama
+photographs and pan around. Thanks to Stephan Saalfeld.
+
 User-visible changes
 ====================
 
@@ -136,833 +158,157 @@ fullscreen mode, colorize meshes from given images, load/save landmarks
 for all timepoints, make color of landmarks adjustable, etc. Thanks to
 Benjamin Schmid.
 
-AnalyzeSkeleton_:
-    Analyze Skeleton: added method to get the array of graphs, pointed out by Peter C. Marks.
-    Analyze Skeleton: fixed bug that was assigning wrong final vertices (V2) to the edges when visiting the trees from end-points if the branches were ending on already visited junctions. Reported by Peter C. Marks.
-    Analyze Skeleton: added option to prune branches with end-points (as it is in BoneJ).
-    Analyze Skeleton: added methods and GUI option calculate and display the largest shortest path of each tree. Code was merged with the one provided by Huub Hovens Huub Hovens.
-    Analyze Skeleton: fixed bug to remove one-voxel branches from the graph when removing end-point branches. Added as well debug prints.
-    Analyze Skeleton: added calibration to the shortest path origin coordinates.
-    AnalyzeSkeleton: allow silent mode for longest shortest path calculation
-    AnalyzeSkeleton: add method to access result images from plugins and scripts
-    AnalyzeSkeleton: fix previous erroneous commit
-    AnalyzeSkeleton: avoid throwing an exception when there is no skeleton (numOfTrees == 0)
-    AnalyzeSkeleton: avoid throwing an exception when there is no skeleton (numOfTrees == 0)
-    AnalyzeSkeleton: fix issue with Results table not showing
+The Analyze Skeleton plugin underwent many bug fixes and improvements, thanks
+to Peter C. Marks, Huub Hovens, Michael Doube and Ignacio Arganda-Carreras.
 
-Arrow_:
-    Make Arrow Tool recordable
-    Clean up AbstractTool a little
-    Move AbstractTool into fiji-lib.jar
-    Split abstract tool into two
-    Abstract tool: make subclassing safer
-    Fix white space in the ArrowTool class
-    Abstract Tool: major design change
-    Abstract tool: use duck typing for the option dialog
-    Move the AbstractTool into the fiji.tool package
+Fiji's Arrow Tool is now recordable and -- as was intended originally,
+before ImageJ grew its own version of the tool -- gave rise to a generic
+tool infrastructure allowing new tools to be developed more easily (and
+using proper Java instead of macros).
 
-Auto_Threshold:
-    Auto Threshold: offer individual methods via public API
-    Auto Local Threshold: fix typo
-    Auto Threshold: support 16-bit images, too
-    Remove debug statements
-    16-bit Auto Threshold: Fix display
-    Auto Threshold: reimplement Huang a bit more efficiently
-    Auto Threshold: fix Intermodes' in-place smoothing
+The Auto Threshold plugin supports 16-bit images now, too. This mode respects
+the true 16-bit histogram rather than taking shortcuts. While at it, the
+Huang method has been accelerated tremendously.
 
-BeanShell_Interpreter:
-    Import default imports into all available interpreters
+Scripting with the scripting languages is quicker now because ImageJ, Java
+and ImgLib classes are imported by default when running scripts from the
+Script Editor.
 
-Bug_Submitter:
-    Bug_Submitter: deal with warnings from Eclipse
-    Bug_Submitter: include the currently installed plugin versions in the bug report
-    Bug_Submitter: center the bug submission dialog
-    Bug_Submitter: include the output of UptodateCheck.check() in the bug report text
-    Bug_Submitter: also include JAVA_HOME and fiji.dir in the output
-    Adjust Bug Submitter for recent changes in the Fiji Updater
+The Bug Submitter plugin collects more information in the bug report
+automatically, to help developers understand the environment better. Thanks
+to Mark Longair.
 
-CLI_:
-    Import default imports into all available interpreters
-    Refresh Macros: fix stupid tyop
+Some bugs were fixed with Clojure scripting, thanks to Albert Cardona.
 
-Clojure_Interpreter:
-    Move the Clojure sources into a subdirectory of Clojure_ called Clojure
-    Clojure Interpreter: ensure the reader is always closed. It was not being closed when an Exception was thrown. On surface it was all ok: the Script Editor printed the Exception. But the PipedOutputStream wasn't flushed and closed, and the script was being reported as "running", since the Executer thread didn't die.
-    Clojure Interpreter: improved some comments.
-    Refresh Clojure Scripts: ensure the Clojure Interpreter is destroyed.
-    Import default imports into all available interpreters
-    Clojure Interepreter: intern symbols instead of creating them.
-    Merge remote branch 'origin/master'
-    Clojure Interpreter: remove default imports.
+Some errors were fixed in the Colocalisation_Analysis plugins, thanks to
+Daniel James White.
 
-Colocalisation_Analysis:
-    colocalisation threshold - fix calc of Rcoloc (pearsons above thresholds) to use only Ncoloc(pixels above thresholds) not N (total pixel)
-    Colocalization Threshold: fix column header/data mismatch
-    Colocalization Test: avoid duplicate column headers
-    Colocalisation Test: output to a saveable text window
+Macro recording of the Directionality plugin was fixed, thanks to Jan
+Eglinger.
 
-Directionality_:
-    Directionality_: fix macro recording
-    Directionality: Use Display_color_wheel in GenericDialog
+Fiji's handling of Help>Refresh Menus has seen a number of bug fixes, as
+well as Fiji's headless mode (which will stop being a clever hack with
+ImageJ2, but instead be a proper solution).
 
-fake:
-    Fiji build: redirect Jython output correctly
-    Fiji build: Execute Beanshell scripts in-process if possible
-    Fiji Build: handle CLASSPATH more reliably
-    Fiji Build: fix NullPointerException
-    Fiji Build: do not include .DS_Store into .jar files
-    Brown paper bag fix
-    Fiji Build: exclude Eclipse files from being included in the .jar targets
-    Fiji Build: accept prebuilt classes via the "prebuiltdir" variable
-    Fiji Build: Also ignore Netbeans and KDE files
-    Fiji Build: remember the unexpanded variables with the _UNEXPANDED prefix
-    Merge branch 'eclipse'
-    Drag the Fiji Build System into the future
-    Fiji Build: sort imports
-    Fiji Build: always store the 'All' rule in allRules
-    Fiji Build: add an accessor for the default rule
-    Fiji Build: add convenience method to access the dependencies of a rule
-    Fiji Build: add the special targets to output a dependency map
-    Fiji Build: make a few things public
-    Fiji Build: stop to include all .jar files in plugins/ and jars/ with javac
-    Fiji Build: call javac in a thread-safe manner
-    Fiji Build: detect cycles when building the dependency map
-    Fiji Build: support parallel builds
-    Fiji Build getDependenciesWithRules(): return no duplicate rules
-    Fiji Build: make sure that Jython is built before executing scripts
-    When loading jython.jar, load jna.jar, too
-    Fiji Build: make upToDate() public
-    Enable the call of win32 sh on win64 from Fakefile
-    Merge remote branch 'origin/jna'
-    Fiji Build: fix path to jna.jar
-    Fiji Build: clarify some convoluted code
-    Fiji Build: fix '<submodule-target>-clean' rule
-    Oops commit
-    Fiji Build: offer a method to access the prerequisites list
-    Fiji Build: introduce the 'rebuild' variable
-    Fiji Build: pull out classes of package-local
-    Merge remote-tracking branch 'origin/parallel-fake' into 'master'
-    Fiji Parallel Build: determine up-to-date status very early
-    Fiji Build: in verbose mode, be more concise
-    Fiji Build: don't claim that prereqs are checked when they aren't
-    Fiji Build: make getPrerequisites() respect the CLASSPATH
-    Fiji Build: redesign parallel mode
-    Fiji Build: refactor a bit
-    Fiji Build: further, rather massive, refactoring
-    Fiji Build: undo misguided 'fix' for prefixing CLASSPATH in subfakes
-    Fiji Build: the tools.jar path may need prefixing, too
-    Parallel Fiji Build: build javac and fake first
-    Fiji Build: add a comment
-    Fiji Build: make jars/jython.jar dependency for scripts reliable
-    Parallel Fiji Build: synchronize Jython
-    Fiji Build: set classloader correctly for Jython
-    Fiji Build: add a method to get a Rule's target
-    Fiji Build: whitespace fixes
-    Fiji Build: make the constructor of the Parser public
-    Fiji Build: Note when javac.jar could not be found
-    Fiji Build: for non-Fiji builds, include jars/**/*.jar
-    Fiji Build: accept FIJIHOME/plugins/fake.jar as location of fiji.build.Fake
-    debian: If there are existing Jython properties set, don't override them
-    debian: Don't try to add jython.jar to the class loader if it doesn't exist
-    Prevent './Build.sh clean' from removing committed files
-    Merge remote-tracking branch 'origin/for-mark'
-    Fiji Build: fix tools.jar (and JAVA_HOME) prefixing
-    Fiji Build: do not prefix paths again in a SubFake
-    Fiji Build: avoid prefixing paths obtained by expanding variables
-    Fiji Build: leave variables overridden from the environment as-are
-    Fiji Build: add special <target>-rebuild rules
-    Fiji Build: pass the ext dirs to javac
-    Prepare Fiji Build for the upcoming move of all the submodules
-    Fiji Build: include the META-INF/ files generated by annotators
-    Fiji Build: revamp the ByteCodeAnalyzer
-    Fiji Build: remove no longer needed import
-    Fiji Build: add convenient varargs execute() method
-    Fiji Build: Rule subclasses should need to override just one getVar() method
-    Fiji Build: refactor Rule to provide a getBaseName() method
-    Fiji Build: add a rule to build native libraries
-    Fiji Build (CompileJar): make native libraries when sources were found
-    Merge remote branch 'origin/native-libs'
-    Fiji Build (CompileCProgram): use platform-dependent CFLAGS
+For teachers' and instructors' convenience, Fiji can cache sample images
+locally, avoiding huge network traffic during courses.
 
-Feature_Detection:
-    Curvatures_: an (imglib) plugin for calculating curvatures of n-dimensional images
-    Curvatures_: Take into account the calibration (i.e. spacing) information
-    Update Curvatures_ for recent changes to imglib
-    Feature_Detection: use GaussianConvolutionReal to avoid 8-bit overflow
-    Added the vessel detection method from Frangi (1998)
-    Add an interface for reporting progress from multi-threaded tasks
-    Move a plugins.config into src-plugins/ structure
+When using the Recent Commands (available via the '9' key), the Recorder
+properly records which action was chosen.
 
-Fiji:
-    Fix headless startup of User_Plugins and RecentCommands
-    Script Editor (Open Source for Menu Item): open menu automatically
-    Adjust Fiji.jar for the latest Refresh Menus work (avoid running twice)
-    Fix Alt Key listener for X11 after Help>Refresh Menus
-    Teach the SimpleExecuter how to run scripts on Windows
-    User Plugins: fix auto-plugins.config generation
-    Offer a convenient way to cache the sample images locally
-    Cache Sample Images: make sure that the directory exists
-    Fix Compile and Run
-    SimpleExecuter: add convenient varargs constructors
-    Fix --headless
-    User_Plugins: make getMenuItem() a bit more robust
-    User_Plugins: add javadocs
-    Fix compilation
-    Allow macros to live in all menus, too
-    SimpleExecuter: add a very simple convenience method
+In addition to macros available as menu items, scripts are also opened
+in the Script Editor rather than executed when holding down the Shift key
+prior to opening the menu. While at it, the status of the main window tells
+the user what is currently happening.
 
-Fiji_Developer:
-    Fiji Wiki Client: avoid asking the user for the password too often
-    Tutorial Maker: insert current date in infobox
-    Tutorial Maker: try harder to fix invalid image titles
-    Tutorial Maker: add an option to use PNG when saving and uploading images
-    Wiki Editor: enum'ize image format handling
-    Tutorial Maker: offer to make a white background window
-    Wiki Editor: add Wiki>Import HTML from URL...
-    Wiki Editor: allow mixed image types
-    Wiki Editor: set the encoding of the preview to UTF-8
-    Wiki Editor's HTML import: add rudimentary table handling
-    Add some TODOs
-    Fiji Wiki Screenshot: clarify what the project title is about
-    Fiji Wiki Screenshot: choose sensible file name for the image
-    Fiji Wiki Screenshot: make sure that there is a separating empty line
-    Fiji Wiki Screenshot: upload and preview on their own thread
-    Fiji Wiki Screenshot: fix NullPointerException
-    Ensure TextEditor.setVisible(true) is called in the event dispatch thread.
+The Fiji Updater now uses the system-wide proxy settings.
 
-fiji-lib:
-    GenericDialogPlus: whitespace fixes
-    GenericDialogPlus: fix indentation
-    GenericDialogPlus: initialize file/dir browser with current settings
-    Add rudimentary documentation to GenericDialogPlus
-    Teach GenericDialogPlus two new tricks: addImageChoice() and getNextImage()
-    fiji-lib: Add a class to split command lines and macro option strings
-    Fix a NullPointerException from the file field of GenericDialogPlus
-    Fiji-lib: facilities to draw floating annotations on an ImagePlus
-    Fiji-lib: modified the AbstractAnnotation class
-    GenericDialogPlus: avoid NullPointerException
-    Move AbstractTool into fiji-lib.jar
-    Split abstract tool into two
-    Abstract Tool: be a bit more defensive
-    Abstract tool: make subclassing safer
-    Abstract tool: get rid of unneeded import
-    Abstract tool: refactor the check whether the tool is active
-    Abstract tool: refactor the code detecting whether to unregister the tool
-    Abstract tool: offer overrideable methods for mouse enter/exit
-    Abstract tool: provide a default icon
-    Abstract tool: make unregister check safer
-    Abstract Tool: default the tool name to the class name
-    Abstract Tool: simplify code
-    Abstract Tool: major design change
-    Abstract Tool: avoid reinstalling the same tool twice
-    Abstract tool: add a convenient way to debug
-    Add the TicToc helper class to the fiji-lib
-    Abstract tool: add an optional slice listener
-    Abstract Tool with Options: run maybeUnregister() also on double click
-    Abstract tool: use duck typing for the option dialog
-    Abstract tool: check maybeUnregister also on slice change
-    Make SliceObserver also a MouseWheelListener
-    SliceObservers should trigger a sliceChanged() upon startup
-    SliceObservers: defensive programming
-    Unbreak GenericDialogPlus when the first call is addButton()
-    Abstract tool: add convenience methods to get image coordinates from events
-    Move the AbstractTool into the fiji.tool package
-    Abstract Tool: optionally notify when the tool was enabled/disabled
-    Move IntArray and DoubleArray from VIB-lib into fiji-lib
-    Merge remote branch 'origin/master' into parallel-fake
-    Add a simple test for the GenericDialogPlus class
-    GenericDialogPlus: cancel upon Escape or Ctrl+W when a button is focused
-    Let instances of AbstractTool be KeyListeners, too
-    AbstractTool: monitor windows focus, too
-    AbstractTool: a MouseMotionListener overrides ImageJ's default one
-    Abstract Tool: add convenience method getImageWindow(event)
-    Abstract Tool: handle mouse wheel listeners properly
-    AbstractTool: let getImageCanvas(e) handle ImageWindows components, too
-    Abstract Tool: fix shtupid tyop
-    IntArray: use better names
-    Fix indentation of IntArray & friends
-    Fix quite a few quirks in IntArray & friends
-    MenuItemDiverter: reset when windows focus was gained again
-    MenuItemDiverter: register key listener also with children of main window
-    Add a base class for tracking tools
-    Abstract Tool: tool toggle listeners want to listen to the Toolbar, too
-    Provide Abstract Tracking Tool with its own default icon
-    Add a base class for Command Launchers (and a subclass for JFrames)
-    Add a JNI helper class
-    JNI helper: add loadLibraries() method accepting globs
-    Merge remote branch 'origin/native-libs'
+By caching the checksums of the files, the Updater was speeded up dramatically.
 
-Fiji_Plugins:
-    Fix headless startup of User_Plugins and RecentCommands
-    Circle Fitter: avoid ArrayIndexOutOfBoundsException
-    Add the Retinex plugin to the Fiji plugins
-    Add the 'Shape Index Map' plugin
-    Shape Index Map: assume that NaN means an index of 0
-    Auto Crop: mark images as changed
-    Recent Commands: make it recordable
-    Make it possible to turn a binary image of points into a point selection
-    Move IntArray and DoubleArray from VIB-lib into fiji-lib
+The Updater is disabled when Fiji was installed via the Debian packages.
 
-fiji-scripting:
-    RefreshScripts: add a runScript(inputStream, fileName) method
-    Jython_Interpreter: remove the call to fix() (allows "
-    " in the interpreter)
-    Scripting: auto-import ImgLib's scripting
-    scripting: avoid non-unique class names in the default imports
-    Scripting: get default imports only once
-    Import default imports into all available interpreters
-    RefreshScripts: simplify by reusing fiji.User_Plugins' getMenuItem
-    fiji-scripting: allow scripts in plugins/Scripts/ to insert into any menu
-    RefreshScripts: scripts can be added into all menus now
-    RefreshScripts: refactor Javascript special casing
-    Refresh Scripts: remove emptied submenus
-    Refresh Scripts: with Shift key down, open the script in the editor
-    Refresh Scripts: replace underscores also in directory names
-    RefreshScripts: show whether we're about to run or edit scripts/macros
-    Refresh Scripts: do not show exception when macro/script was aborted
+The Fiji Updater supports multiple Update sites now. If you have a web server
+which you can access via SSH, you can publish your own plugin suites.
 
-Fiji_Updater:
-    Fiji Updater: properly identify precompiled/fiji-* as Fiji launcher
-    Fiji Updater: try to use the system-wide proxy settings
-    Updater: do not mark launchers for update in developer mode
-    Updater: fix progress reporting
-    Speed up the Updater dramatically
-    Bug_Submitter: include the currently installed plugin versions in the bug report
-    UptodateCheck: fix a typo
-    UptodateCheck.check(): distinguish "Never remind me" from "Remind me later"
-    debian: don't run the updater if this seems to be the Debian packaged version
-    Add a forgotten newline in an error message
-    DependencyAnalyzer: use LinkedHashSet rather than LinkedHashMap
-    DependencyAnalyzer: consider interfaces of needed classes, too
-    DependencyAnalyzer: also consider super classes
-    Fiji Updater: provide comman line option --update-java
-    Adjust Update Java to new (Oracle) web layout
-    Update Java: make sure that all headers are set before receiving cookies
-    Update Java: be more verbose
-    Update Java: show a bit more progress on Windows
-    Fix 'Update Java'
-    Fiji Updater: add missing newline to the usage
-    Fiji Updater: also handle .m files in scripts/
-    Merge remote-tracking branch 'origin/parallel-fake' into 'master'
-    Updater: add lines between the dependency resolution options
-    Updater: fix deprecation warnings
-    Updater: use less confusing field name
-    Updater: Add a very simple interactive test for the resolution dialog
-    Merge remote branch 'origin/master' into parallel-fake
-    Fiji Updater: Disallow uploading invalid dependencies
-    Fiji Updater: make ByteCodeAnalyzer a public class
-    Fiji Updater: teach the ByteCodeAnalyzer to reveal more
-    Teach Fiji Updater to determine whether a .jar was compiled with -g
-    ByteCodeAnalyzer: offer the source file name stored in the byte code
-    Updater: make XMLFileReader more object-oriented
-    Updater: PluginCollection cannot be a singleton
-    Updater: at long last, do not write current.txt anymore
-    Updater: validate _before_ writing the file
-    Updater: avoid writing db.xml.gz when uploading
-    Updater: add placeholders for multiple update sites
-    Updater: do not write db.xml.bak anymore
-    Updater: store timestamp of update sites in db.xml.gz
-    Updater: remove last direct users of MAIN_URL
-    Updater: remove some hardcoded filenames
-    Updater: add a method to merge two plugin records
-    Updater: fix compilation of interactive test
-    Fix whitespace
-    Force the Updater to quit when there is an updates/ directory
-    Updater: fix the XML DTD
-    Updater: allow uploading via cp for debugging
-    Updater: close window after successful upload
-    Updater: close window after successful download
-    Updater: use System.currentTimeMillis() instead of new Date().getTime()
-    Updater: use correct File constructor
-    Updater: fix lock file name for 'uploading' via cp
-    Updater: provide the developer with a success message after uploading
-    Updater: remove stale code
-    Updater: remove last remnant of Hungarian notation
-    Updater: add an option to suppress display of the Updater GUI
-    Updater: do not display message boxes in hidden mode
-    Fiji Updater: update the Updater before continuing
-    Updater: use Swing-based error messages always
-    Updater: support hidden mode even when asking questions
-    Updater: trivial whitespace change
-    Updater: now we need to read in the db.xml.gz explicitly
-    Updater: add convenience methods to convert timestamps to millis
-    Updater: we can no longer tell whether there was an update at all or not
-    Updater: do not say it's batch mode when testing
-    Updater: note each plugin's update-site in the local db.xml.gz
-    Updater: do not use ImageJ's error() anymore
-    Updater: warn if an update site's plugin shadows another site's
-    Updater: make sure that the order of update sites is preserved
-    Updater: store ssh-host and upload directory in the update sites, too
-    Updater: add methods to rename and remove update sites to PluginCollection
-    Updater: show update site in the details if it is not 'Fiji'
-    Updater: just warn when an update site's URL could not be accessed
-    Updater: Provide a button to manage update sites
-    Updater: move the message box and question handling into SwingTools
-    Updater: add a sensible toString() method to the UpdateSite class
-    Updater: add methods to PluginCollection needed for multi-site uploading
-    Updater: handle ambiguous 'Upload to Server'
-    Updater: fix non-SSH multi-site uploading in tests
-    Updater: when a new file is marked for upload, maybe ask for update site
-    Updater: make sure progress is closed when uploading fails
-    Updater: refresh plugins table after editing the update sites
-    Updater: when adding or modifying an update site, read from it right away
-    Updater: when removing an update site, remove the corresponding files, too
-    Updater: disallow upload to multiple update sites at the same time
-    Updater: rename the default site from '' to 'Fiji'
-    Updater: use .ssh/known_hosts for uploading
-    Updater: allow SSH hosts of the form user@host:port
-    Updater: refactor the code to get a UserInfo for the SSHFileUploader
-    Updater: make sure that all updater sites' URL and dir end in a slash
-    Updater: refactor the question dialog in the Site Manager
-    Updater: offer to initialize new update sites
-    Updater: refactor the check whether an update site can be uploaded to
-    Updater: allow uploading also without fiji.c present
-    Updater: let later update sites shadow earlier ones in case of conflicts
-    Updater: hide the 'Resolve dependencies' dialog for the tests, too
-    Updater: hide the main window until after the checksum
-    Updater: fix annoying automatic combobox closing
-    Updater: Do not remove files associated with to-be-removed update site
-    Updater: add a context menu
-    Updater: implement plugin shadowing by later update sites properly
-    Updater: safeguard getUpdateSite() against NOT_FIJI plugins
-    Updater: fix logic to determine whether a plugin is uploadable
-    Updater: refactor code to determine whether a plugin could be uploaded
-    Updater: offer the Upload button even when only metadata changed
-    Update TODOs
-    Updater: allow uploading of any files in Fiji.app/lib/ and subdirectories
-    Updater: allow uploading of any MicroManager files
-    Updater: make extra sure that there is a trailing slash in the URL
-    Updater: allow files with no (or unknown) extension)
-    Updater: disallow file names to start with a dot
-    Updater (cmdline): do not start subcommands with '--'
-    Updater: allow new files to be uploaded
-    Updater: reconcile context menu and table cell handling
-    Updater: guess platforms for files in lib/ and mm/ from the directory name
-    Updater: Give JSch a bit more time after disconnect()...
-    Updater: add view options to filter individual update sites
-    Just squashed a TODO
-    Fiji Updater: avoid misleading error message when updating Java
+The Image_Expression_Parser was fixed for a regression in ImageJ 1.44n and
+later, as well as two bugs related to filename detection. Thanks to Albert
+Cardona and Jean-Yves Tinevez.
 
-Image_Expression_Parser:
-    IEP: Fixed field not set
-    Image Expression Parser: avoid NullPointerException The error came up with: 1. Open Fiji 2. Open IEP 3. Open a test image -- NullPointerException at the trim(), which didn't check for null.
-    Fix compilation of the Image Expression Parser for ImageJ 1.44n
-    Image Expression Parser: do not load an example image for testing
-    Image Expression Parser: work around CompositeImage's resetDisplayRange()
-    Image Expression Parser: force CompositeImages to update
+The extra file type handling when opening images was fixed with regard to
+the Bio-Formats plugin. Thanks to Curtis Rueden and Gregory Jefferis.
 
-IO_:
-    HEFT: Add a new static method to check whether loci is present
-    HEFT: Use new headless safe LOCI_PRESENT to suppress plugin not found errors
-    Do not set IMAGE_OPENED flag if plugin failed to run.
-    HEFT: Some additional comments to try to clarify logic
-    A plugin that saves the current image in EPS (Encapsulated PostScript) format
-    Enhance the EPS Exporter substantially
+Thanks to Albert Cardona, the Jython Interpreter now prints the last evaluated
+expression return value.
 
-Javascript_:
-    Move the Javascript sources into a subdirectory of Javascript_ called Javascript
-    Import default imports into all available interpreters
-    Javascript Interpreter: avoid importing classes defined internally already
-    RefreshScripts: refactor Javascript special casing
-    Add some @Override annotations to CLI and Javascript interpreter sources
+The Lasso/Blow Tool is more robust now, using the new AbstractTool framework
+(thereby avoiding timing issues due to a macro handling all the mouse input).
 
-JRuby_Interpreter:
-    Move the JRuby sources into a subdirectory of JRuby_Interpreter called JRuby
-    Import default imports into all available interpreters
+The Multiple Image Processor now resets Escape before starting, and it handles
+.pgm files as claimed in the documentation.
 
-Jython_Interpreter:
-    Jython_Interpreter: remove the call to fix() (allows "
-    " in the interpreter)
-    Jython: there is a PythonInterpreter.cleanup() -- use it.
-    Jython Interpreter: always fall back to printing to console
-    Import default imports into all available interpreters
-    Jython Interpreter: print the last evaluated expression when it's a value.
-    Work around error with jython interpreter in MacOSX. Removes bug #286 but a better solution is needed.
+The Compile & Run command no longer needs write access to Fiji.app/plugins/,
+and it offers to unlock images when appropriate.
 
-Jython_Scripts:
-    Added Correct_3D_drift.py as part of new plugins/Jython_Scripts.jar
-    Correct 3D drift: check if no images are open.
-    Correct 3D drift: fixing file name structure for proper importing of image sequence.
+A bug was fixed which prevented MBF plugins from being compiled and run on
+the fly when a .java file was present in a subdirectoy of Fiji.app/plugins/.
 
-Lasso_and_Blow_Tool:
-    Extract the "Lasso and Blow Tool" plugin from VIB
-    Make Lasso/Blow tool subclass of AbstractTool
-    Move the AbstractTool into the fiji.tool package
-    Lasso Tool: be backwards-compatible, at least a tiny little bit
-    Lasso Tool: drag the FibonacciHeap into this century
-    Lasso: re-add back ctor for backwards compatibility
+Register>Transform Virtual Stack Slices got a checkbox to toggle interpolation.
+Thanks to Stephan Saalfeld.
 
-M_I_P:
-    Multiple Image Processor: reset Escape before starting
-    Multiple Image Processor: handle .pgm files as claimed in the documentation
+The Script_Editor can export scripts bundled in .jar files for other Fiji users
+to install and run.
 
-panorama_:
-    Added "Plugins - Transform - Panorama equirectangular view" command.
-    License for "Panorama equirectangular view" plugin.
-    Oops forgot to commit the plugins.config for Panorama.
+A couple of templates have been added to the Script Editor.
 
-Refresh_Javas:
-    Refresh Javas: do not show the FakeException upon compile errors
-    Refresh Javas: when Fake failed, do not try to compile again right away
-    Refresh Javas: respect compileOnly also for out-of-tree plugins
-    Refresh Javas: enable assertions when running plugins
-    Refresh Javas: optionally take a Fakefile
-    Refresh Javas: when executing a plugin, make sure it's in the classpath
-    Refresh Javas: offer to unlock images when appropriate
-    Refresh Javas: show instantiation errors at least on the error console
-    Refresh Javas: look harder for a Fakefile
-    Refresh Javas: fix running after fake outside default package
-    Refresh Javas: fall back to compiling .java when there was no Fakefile rule
-    Remove no longer needed imports
-    At long last, allow .class files in subdirectories of plugins/
-    Fix Fakefile compilation again
-    Script Editor (Java): add a toggle whether to show deprecations
-    Refresh Javas: only try to instantiate PlugIn and PlugInFilter instances
-    Refresh Javas: re-add convenient compile & run of Fakefile targets
-    Fiji Build: refactor a bit
-    Fiji Build: further, rather massive, refactoring
-    Merge remote branch 'origin/master' into parallel-fake
-    Refresh Javas: adjust to recently refactored Fiji Build
+In the script editor, the font and tab size can be adjusted. Thank you, Yili
+Zhao.
 
-register_virtual_stack_slices:
-    Register/Transform Virtual Stack Slices got a checkbox to toggle interpolation
+The Script Editor can auto-save before compiling now. Thanks to Philippe
+Thévenaz.
 
-Script_Editor:
-    Script Editor: allow exporting script "plugin" .jar files
-    Script Editor: make sure that exported .jar files have a '_' in the name
-    Script Editor: take focus back after showing file dialog
-    Script Editor: speed up 'Open Source for Class'
-    Add two plugin templates to the Script Editor
-    Script Editor: make sure the editor gets the focus after the OpenDialog
-    Script Editor (Open Source for Menu Item): open menu automatically
-    Script Editor: make sure to grab the focus after SaveDialog
-    Script Editor: add a tool to bring the Fiji window into focus
-    Script Editor: add short cut to 'Macro Functions...'
-    Script Editor: avoid NPE when Fiji's main menu could not be opened
-    RefreshScripts: add a runScript(inputStream, fileName) method
-    Script Editor: support Git functions also outside of fiji.git
-    Script Editor: update TODOs
-    Script Editor: unify the code asking for a class name
-    Script Editor: add a menu to adjust the font size
-    Script Editor: avoid yet another NullPointerException
-    Script Editor: Add tab size adjusting menu
-    Script Editor: update tab size menu correctly when switching tabs
-    Script Editor: set tab size to 4 for Python, 8 otherwise by default
-    Script Editor: make tab size menu leaner, add "Other..."
-    Script Editor: add a convenient method to add entries to the error list
-    Script Editor: add the Git>Grep... menu entry
-    Script Editor: work around some timing issues with RSyntaxTextArea
-    Script Editor: make template code saner
-    Script Editor: lazily load tools.jar via internet when asked for it
-    Script Editor: make sure tools.jar is loaded when starting debugging
-    Add a few more TODOs for the Script Editor
-    Script Editor: do not try to go to line 'null' when the dialog was canceled
-    Script Editor: add a convenient method to write to the output screen
-    Script Editor: add Git>Open in gitweb menu entry
-    Script Editor: open current line in gitweb
-    Script Editor: fix off-by-one
-    Script Editor: remove underscores from name when creating a new plugin
-    Script Editor's Git commit: warn about too long subject, wrap the body
-    Add a template for a Reader plugin
-    Script Editor: turn CR (Mac) and CRLF (Windows) line endings into LF ones
-    Script Editor: remove trailing white space when importing source code
-    Script Editor (Git>Commit): offer to add untracked files, if there are any
-    Script Editor: avoid package-local member variables
-    Script Editor: offer an 'auto-save before compiling' option
-    Script Editor: brown paper bag fix
-    TextEditor: more careful logic for piping text from text area to the script interpreter.
-    TextEditor: ensure PrintWriter is flushed.
-    TextEditor: ensure setTitle runs GUI operations on the event despatch thread.
-    Merge branch 'master' into ac-texteditor
-    TextEditor: don't wrap the Executer.execute() body in try/catch. It's already done where it's called.
-    TextEditor: made tabs an object with their own editor and output screen. The buttons are laid out correctly and the screen are independent. The buttons will become icons. The "kill" button doesn't work (yet).
-    Script Editor: let ImageJ open binary files
-    Allow subclasses of the Script Editor in other .jar files
-    Script Editor: allow File>New again
-    Script Editor (git diff): handle a large number of untracked files
-    Script Editor: do not execute git diff or git commit on the event thread
-    Merge remote branch 'origin/ac-texteditor'
-    Script Editor: unclutter menus
-    Script Editor: a Language stores the class, not the instance, of a RefreshScripts. In this fashion, the interpreters are independent for each open script, and the output streams cannot get mixed when two scripts output to stdout at the same time.
-    Script Editor: moved new TextEditor.Executer code to Tab subclass.
-    Script Editor: enable/disable run/kill buttons when appropriate. And kill finally does so.
-    Script Editor: update all tab titles upon calling setTitle()
-    Script Editor: after execution, not all threads were waited for.
-    Script Editor: fix improper tabbed panel resizing with the window.
-    Script Editor: moved kill() to Tab class, ensuring restore() is always called. Also ensure restore() is invoked within event dispatch thread.
-    Script Editor: removed debug msg
-    Merge branch 'master' into ac-texteditor
-    Script Editor: allow to compile (and run) a Fakefile
-    Script Editor: do not claim that a file was not found erroneously
-    Merge branch 'master' into ac-texteditor
-    Script Editor: fix startup with a given path
-    Script Editor: remove the editorPane field from TextEditor
-    Script Editor: avoid some package-private access permissions
-    Script Editor: let ImageJ handle a couple of exceptions
-    Script Editor: camelCase field
-    Script Editor: remove debug code
-    Script Editor: pipe text from yet another thread. Avoids lock-ups of the event dispatch thread in linux-amd64
-    Script Editor: fixed error; can't close the PipedOutputStream before writing anything to it.
-    Script Editor: handle Next Error correctly even for Fakefiles
-    Script Editor: support running under ImageJ in addition to ImageJA
-    Add File>Open Recent to Script Editor
-    Fix sign error...
-    Script Editor: do not switch error list upon next error
-    Script Editor: Set the line wrapping to 'false' early
-    Script Editor: avoid asking for a tab width when it did not change
-    Script Editor: read files in one shot
-    Script Editor: update the file name only after adding the tab
-    Script Editor: open files later in the constructor
-    Script Editor: avoid NullPointerExceptions harder
-    Script Editor: avoid doing unnecessary work
-    Script Editor: delay going to a specific line when switching tabs
-    Script Editor: delay setting the language to avoid timing issues
-    Script Editor: properly re-enable error screen
-    Script Editor: avoid unnecessary repainting
-    Script Editor: make ErrorHandler's fields protected
-    Script Editor: show output by default, even when there were errors previously
-    Script Editor: upon errors, switch to error screen
-    Script Editor: show 'Started' message both in error and output screen
-    Add a JFreeChart template to the Script Editor
-    Script Editor: when the error screen is shown, Edit>Clear Screen that...
-    Script Editor: switch to error screen when something was shown there
-    Script Editor: also find sources in submodules
-    Script Editor: ensure code blocks are terminated. It's necessary for example for executing selected jython code.
-    Script Editor: ignore the zSelector Thread when counting active threads.
-    Merge remote branch 'origin/master'
-    Script Editor: avoid throwing Exception when closing.
-    Script Editor: give our exception handler a chance
-    Script Editor: set font in error screen to Courier
-    Text Editor: make error screen non-editable and wrapping
-    Script Editor: use custom FileDialog to add extension filters
-    Script Editor: force UTF-8 encoding for both reading and writing
-    Script Editor (Java): add a toggle whether to show deprecations
-    Script Editor: add keyboard mnemonics for the font size menu
-    Script Editor: allow arbitrary font sizes
-    Speed up Script Editor startup by initializing completions lazily
-    Script Editor: update the font size menu after de-/increasing the font
-    Script Editor: use generics properly
-    Script Editor: rip out a lot of inefficient completion code
-    Fiji Build: further, rather massive, refactoring
-    Merge remote branch 'origin/master' into parallel-fake
-    Script Editor: don't call open() on the Event Dispatch Thread
-    Open Source for Menu Item: first focus the main window, then register
-    Add a template for a tool to the Script Editor templates
-    Script Editor: offer to save in the Fiji.app/ directory
-    Script Editor: run selected text only once
-    Script Editor: optionally wrap the lines
-    Add a few Script Editor TODOs
-    Script Editor: try to get rid of some NPEs on the event dispatcher thread
-    Script Editor: fix 'Compilation finished' message
-    Script Editor: the language is actually called 'Beanshell'...
-    Script Editor: fix 'Add Import'
-    Ensure TextEditor.setVisible(true) is called in the event dispatch thread.
-    Script Editor: pack() can also realize the components so ensure it is run inside the event dispatch thread and waited for, since subsequent calls depend on the component being properly sized and its layout done.
-    Script Editor: white space menu under "Edit" to label tabs and spaces in the text.
-    Script Editor: added Zap Gremlins, added undo for replace tabs for spaces and viceversa.
-    Script Editor: add a few hotkeys for the recently added menu items
-    Script Editor: 'Open .java for class' is too useful to hide by default
-    Script Editor: make sure accelerators are added to the correct JTextArea
-    Script Editor: add a Tracking Tool template
-    Script Editor: TextEditor.open(String) returns the Tab, and there is a Tab newTab(String,String) method.
-    Script Editor: when looking for class names, ignore multi-line selections
-    Update TODOs
-    Script Editor: hide unnerving messages unless in debug mode
-    Merge remote-tracking branch 'origin/updater'
+The output of multiple scripts in the Script Editor is now separate; you will
+see the output only when the corresponding script's tab is active. Likewise,
+the script interpreters running the scripts are now independent of each other.
 
-Simple_Neurite_Tracer:
-    Simple_Neurite_Tracer: fix whitespace (outdent the SimpleNeuriteTracer class)
-    Simple_Neurite_Tracer: some input fixes and clarifications
-    Simple_Neurite_Tracer: allow subclasses of TracerCanvas to see the PathAndFillManager
-    Simple_Neurite_Tracer: basic support for Sholl analysis (squash whitespace fixes into this)
-    Simple_Neurite_Tracer: (Sholl) basic support for drawing graphs
-    Add the option to export Sholl graphs as SVG
-    Simple_Neurite_Tracer: (Sholl) calculate regression coefficients and update the existing graph
-    Simple_Neurite_Tracer: suggest a filename that encodes the parameters used
-    Simple_Neurite_Tracer: remove verbose tracing statements
-    Simple_Neurite_Tracer: (Sholl) Support exporting of results to CSV
-    Simple_Neurite_Tracer: (Sholl) Ignore empty ranges in CSV output
-    Simple_Neurite_Tracer: (Sholl) Factor out a getOriginalFilename() method
-    Simple_Neurite_Tracer: (Sholl) Add a button to send the summary results to the results table
-    Simple_Neurite_Tracer: Add a FIXME describing why Path.toString() may be confusing
-    Simple_Neurite_Tracer: Fix to check the colour of the correct path
-    Simple_Neurite_Tracer: add the approximate fitted volume of paths to CSV output
-    Simple_Neurite_Tracer: fix the layout of the Fill List window
-    Fix some spaces which should be tabs under the ImageJ / Fiji convention
-    Simple_Neurite_Tracer: fix a stupid long-standing bug relating to saving fills
-    Simple_Neurite_Tracer: just warn about out-of-order fill IDs
-    Simple_Neurite_Tracer: make "return" in the fill threshold box also set the threshold
-    Simple_Neurite_Tracer: don't add null source Paths when reloading or restarting fills
-    Simple_Neurite_Tracer: small refactoring - use the helper method
-    Simple_Neurite_Tracer: whitespace fixes
-    Simple_Neurite_Tracer: add a method to "fill" to calculate the volume
-    Simple_Neurite_Tracer: add two methods for outputing the source paths of a fill as a String
-    Simple_Neurite_Tracer: add a method to output a summary of the Fill list as CSV
-    Simple_Neurite_Tracer: use the new helper methods for formatting source paths in Fills
-    Simple_Neurite_Tracer: remove unnecessary code
-    Simple_Neurite_Tracer: there's no need to build the pathToID hashtable any more
-    Simple_Neurite_Tracer: add the fill volume to the XML file
-    Simple_Neurite_Tracer: add a button to output Fill summary data to CSV
-    These thread-stopping flags need to be volatile
-    Simple_Neurite_Tracer: a simple fix for some filling interface problems
-    Simple_Neurite_Tracer: bump the plugin version before release
-    Simple_Neurite_Tracer: always include 0 on the y axis for non-log axis
-    Simple Neurite Tracer: make the Path Window slightly bigger
-    Simple Neurite Tracer: remove a comment that is no longer correct
-    Simple_Neurite_Tracer: move the SWCPoint class into a separate file
-    Simple_Neurite_Tracer: update years in copyright declaration
-    Simple_Neurite_Tracer: add an "Export as SWC" option
-    Simple Neurite Tracer: bump the plugin version to 1.9.0
-    Simple Neurite Tracer: fix so that zooming now zooms in on the crosshair, not the top left corner
-    Simple_Neurite_Tracer: show both world and image coordinates on mouse movement
-    Simple_Neurite_Tracer: some trivial refactoring suggested by Eclipse
-    Simple_Neurite_Tracer: at 4x magnification or greater, the path nodes can be smaller
-    Simple_Neurite_Tracer: remember the directory that files were last loaded from, and use that as a default
-    Simple_Neurite_Tracer: fix setPathPointsInVolume()
-    Simple_Neurite_Tracer: replace all explicit use of iterators for the foreach syntax
-    Simple_Neurite_Tracer: fix some Eclipse warnings
-    Simple_Neurite_Tracer: remove an unused method
-    Simple_Neurite_Tracer: when cancelling half-built paths, remove any joins that they have made
-    Simple_Neurite_Tracer: export the "Make Path Volume" functionality in the interface
-    Simple_Neurite_Tracer: removing some stdout noise
-    Simple_Neurite_Tracer: Improve the comments describing some complex conditions
-    Simple_Neurite_Tracer: fix performance problems with selecting and deselecting paths
-    Simple_Neurite_Tracer: fix midrawn start and join points in the XZ and ZY panes
-    Simple_Neurite_Tracer: move the simplified modifier variables earlier in the keyPressed method
-    Simple_Neurite_Tracer: NearPoint needs a getPath() getter so you can access the Path
-    Simple_Neurite_Tracer: now you can use 'g' to select the nearest path to mouse pointer
-    Simple_Neurite_Tracer: now selecting a Path in the 3D Viewer also selects it in the tracer interface
-    Simple_Neurite_Tracer: fix a bug with path selection with the key 'g'
-    Simple_Neurite_Tracer: increase the distance to look for paths within
-    Simple_Neurite_Tracer: Remove the "Show Correspondences To ..." button
-    Simple_Neurite_Tracer: Add a button to run "Analyze Skeleton (2D/3D)"
-    Simple_Neurite_Tracer: switch the main dialog to Swing and add menus
-    Simple_Neurite_Tracer: remove unnecessary imports
-    Simple_Neurite_Tracer: suppress an Eclipse warning
-    Simple_Neurite_Tracer: switch to JPanels and add padding
-    Simple_Neurite_Tracer: switch the instructions to an HTML JLabel
-    Simple_Neurite_Tracer: don't use the deprecated setLabel
-    Simple_Neurite_Tracer: remove an unused import
-    Simple_Neurite_Tracer: dialog tidying WiP
-    Simple_Neurite_Tracer: Render the instructions on a white background for clarity
-    Simple_Neurite_Tracer: Fix the strange jumping layout
-    Simple_Neurite_Tracer: fix a bug where items weren't removed from the combobox
-    Simple_Neurite_Tracer: selectedTitle can now be null
-    Simple_Neurite_Tracer: the onlySameSizedImages flag is not longer useful
-    Simple_Neurite_Tracer: Lots of minor tidying-up suggested by Eclipse
-    Simple_Neurite_Tracer: fix a minor typo
-    Simple_Neurite_Tracer: add missing @Override annotations
-    Simple_Neurite_Tracer: more tidying suggested by Eclipse
-    Simple_Neurite_Tracer: add a context menu to the PathWindow
-    Simple_Neurite_Tracer: add many more @Override annotations
-    Simple_Neurite_Tracer: make many fields that were package-private protected instead
-    Simple_Neurite_Tracer: make the new Swing dialog thread safe with invokeLater()s
-    Simple_Neurite_Tracer: don't call updateColorImageChoice from imageUpdated
-    Simple_Neurite_Tracer: we only need an ActionListener for the JComboBox
-    Simple_Neurite_Tracer: ignore events while updating the JComboBox
-    Simple_Neurite_Tracer: add a possible FIXME
-    Simple_Neurite_Tracer: make PathWindow strictly thread safe
-    Simple_Neurite_Tracer: add more assertions for Event Dispatch Thread safety
-    Simple_Neurite_Tracer: Remove an unusued method
-    Simple_Neurite_Tracer: remove an unused method
-    Simple_Neurite_Tracer: improve the thread safety of FillWindow
-    Simple_Neurite_Tracer: an old FIXME - move implementation into a more sensible class
-    Simple_Neurite_Tracer: the new JDialog and JFrame must be in the EDT
-    Simple_Neurite_Tracer: remove an unnecessary import
-    Simple_Neurite_Tracer: fix two old and broken assertions
-    Simple_Neurite_Tracer: factor out a SwingSafeResult.getResult static method
-    Simple_Neurite_Tracer: the dialog must be created from the EDT
-    Simple_Neurite_Tracer: update copyright dates
-    Simple_Neurite_Tracer: remove an old comment
-    Simple_Neurite_Tracer: make a couple of instance variables volatile
-    Simple_Neurite_Tracer: ignore events from the checks when it's being set programmatically
-    Simple_Neurite_Tracer: remove an unused import
-    Simple_Neurite_Tracer: support changing the SWC type of paths from the Path Window context menu
-    Simple_Neurite_Tracer: remove a couple of unused imports
-    Simple_Neurite_Tracer: bump the plugin version to 2.0.0
-    Simple_Neurite_Tracer: add a confirmation for deleting paths from the path window
+When the Script Editor is asked to open images, it lets ImageJ open them
+rather than opening gibberish in a new tab. Thanks to Thomas Julou.
 
-SPIM_Registration:
-    SPIM Registration: fix typo
-    Updated the SPIM Registration to Multi Channel
-    Fixed typo
-    Work around missing setReadable() and friends in Java 1.5
-    Make SPIM Registration work with new imglib, new cosine blending
-    Removed stupid comment
-    mpicbg: Model to interface tracking the changes for all available Fiji projects: * SPIM * TrakEM2 * lens-correction
-    SPIM registration update
-    Merge branch 'spim-new' into mpicbg-model-interface
-    Updated to new mpicbg
-    last missing parts...
-    let's see if this is the last part
-    Work around missing setReadable() and friends in Java 1.5
-    Get rid of ParsePattern
+The Script Editor is now usable even if the user updated ImageJ to the
+daily version. Thanks to Wayne Rasband.
 
-Stitching_:
-    If no overlapping tiles are found he will put only the first image to (0,0,0)
-    In fusion use faster round() method
-    Fixed underscores in dialog
-    Added commented code from Curtis and Melissa
-    Merge branch 'master' of ssh://pacific.mpi-cbg.de/srv/git/fiji
-    Added support for series files
-    Fixed small bug
-    And another small bug
-    Added option to ignore calibration in stage coordinates
-    Made it default to use calibration
+The Script Editor offers to File>Open Recent. Thanks to Albert Cardona.
 
-Thread_Killer:
-    Move the Thread Killer into its own .jar file
-    Thread Killer: unlock all images, too
-    Thread Killer: exclude a few more (system) threads
-    Exclude contrast and threshold adjuster from being killable
+The startup time of the Script Editor was reduced dramatically.
 
-Trainable_Segmentation:
-    Trainable Segmentation: fixed bug when painting traces of stroke bigger than 1 at the borders of the image.
-    Trainable Segmentation: updated applyClassifierToTestImage to be able to handle ImageStacks.
+In the Script Editor, File>Open will no longer offer to open .class or .jar
+files.
 
-VIB_:
-    Particle Analyzer (3D): avoid ArraySizeException when there are < 3 objects
-    Align image: use target image dimensions
-    Move the Thread Killer into its own .jar file
-    Extract the "Lasso and Blow Tool" plugin from VIB
-    Move IntArray and DoubleArray from VIB-lib into fiji-lib
-    Fix quite a few quirks in IntArray & friends
-    Update segmentation editor TODOs
-    Let the Segmentation_Editor be controllable by ImageJ macros.
+For interoperability, the Script Editor now enforces UTF-8 encoding for both
+reading and writing files.
 
-VIB-lib:
-    Find_Connected_Regions: the color model generation static methods public
-    These thread-stopping flags need to be volatile
-    Simple Neurite Tracer: fix so that zooming now zooms in on the crosshair, not the top left corner
-    Segmentation editor: some style/grammar fixes
-    Segmentation Editor: do not make CompactStandard the default label set
-    Add a 3D version of Bresenham's line drawing algorithm
-    Make src-plugins/VIB-lib/sed.py executable
-    ComputeCurvatures: deal with virtual stacks
-    Work around sys.argv being global in Jython
-    A minor whitespace correction
-    ThreePanes: zoom in / out on the right point in all panes
-    Extract the "Lasso and Blow Tool" plugin from VIB
-    Merge remote-tracking branch 'origin/parallel-fake' into 'master'
-    Move IntArray and DoubleArray from VIB-lib into fiji-lib
-    Let the Segmentation_Editor be controllable by ImageJ macros.
-    PointList: refactor the I/O not to require path names
-    Save Point List: insert an empty line between points
-    Complain into the log when loading Point Lists
-    Offer to parse Point Lists from a String instead of a file
-    Offer to save Point Lists into an OutputStream without closing
-    3D Viewer: animate upon '\' or Space
-    ComputeCurvatures: add some missing @Override annotations
-    ComputeCurvatures: make sure we only call callback.proportionDone(1.0) once
+When saving a new file, the Script Editor will default to the Fiji.app/
+directory. This helps when trying to save macros on MacOSX, where the Save
+Dialog does not allow switching into .app directories.
 
-weave_jy2java:
-    Jython Weave.inline(...) to insert java code snippets into jython (or any scripting language).
-    Weave: edits to the documentation.
-    Weave: detect more java.util and java.lang interfaces and secure the deletion of files on exiting the JVM even if the compilation fails.
-    Moved Weave to Weaver, and back to its own jar. Otherwise would create circular dependencies.
-    Weaver: Oops forgot to commit the name change. Thanks to Mark Longair for spotting it.
-    Weaver: discover closest public class of each binding. No more instanceof, and all classes covered.
-    Weaver: detect best possible class for each binding. Added as well ability to open the generated java file in the Script Editor.
+You can ask the Script Editor to wrap the lines around instead of showing
+a horizontal scrollbar. Additionally, it can label whitespace and zap gremlins,
+thanks to Albert Cardona.
+
+The Simple Neurite Tracer can perform Sholl analysis and export the graphs as
+.svg or .csv files now. Additionally, there were many fixes and improvements,
+including an export as .swc option, or being able to select the path nearest
+to the mouse pointer with the 'g' key. Further, selecting a path in the 3D
+Viewer selects it in the Neurite Tracer, too. For convenience, there is a
+button to run Fiji's "Analyze Skeleton (2D/3D)" plugin on the paths. The
+user interface was converted to the nicer Swing look.  Thanks to Mark Longair.
+
+The SPIM Registration can now handle multi-channel files, too. It provides
+the cosine blending option and has many more improvements. Thanks to
+Stephan Preibisch.
+
+The Stitching plugins were speeded up, and it uses calibration info by
+default now. Thanks to Stephan Preibisch.
+
+The Thread Killer now unlock all images, and it is more careful about
+what it offers to kill.
+
+The Trainable Segmentation plugin can handle image stacks now. Thanks to
+Verena Kaynig, Ignacio Arganda-Carreras and Albert Cardona.
+
+The Particle Analyzer (3D) handles the case when there are less than 3 objects
+now.
+
+The Align image plugin uses the target image's dimensions for the result.
+
+The Segmentation_Editor can be controllable by ImageJ macros. Thanks to
+Benjamin Schmid.
+
+When zooming in the Three Panes, the right center point is used in all panes.
+Thanks to Mark Longair.
+
+When scripting, you can accelerate crucial parts by inserting Java code
+snippets using the new Weaver.inline(...) method in any scripting language.
+Thanks to Albert Cardona.
 
 Developer-visible changes
 =========================
@@ -1038,4 +384,44 @@ event-driven Java class.
 To generate tool icons from 16x16 pictures, use Plugins>Examples>Image To
 Tool Icon.
 
+The Auto Threshold plugin has an API usable by developers of other plugins
+now.
+
+The Fiji Build system handles rules involving Jython or Beanshell more
+efficiently now. It avoids to include unwanted files such as .DS_Store into
+.jar targets. The code uses generics now, and is more accessible to scripts
+and plugins. Fiji Build can use multiple CPU cores simultaneously now.
+A target can be force-rebuilt by appending "-rebuild" to the parameter.
+Building rules depending on Java3D is now possible even on MacOSX.
+Thanks to Mark Longair, Jacques Pecreaux and Curtis Rueden.
+
+There is an easy way for developers to run external programs now:
+fiji.SimpleExecuter. This class offers a number of convenience functions
+to execute programs with specified parameters in a given working directory,
+and it offers several modes how the output should be handled: print to
+ImageJ's Log window, print to a stream, or save into Strings.
+
+For Fiji Developer, adding documentation to the Fiji Wiki has been made
+even more convenient with enhancements to Plugins>Utilities>Fiji>New Fiji
+Tutorial and New Fiji Wiki Screenshot in the same menu.
+
+The file and directory fields in the GenericDialogPlus class have been
+improved, and the methods addImageChoice() and getNextImage() have been
+added.
+
+fiji-lib now offers a class to split command lines and macro option strings,
+and a TicToc helper for simple performance benchmarking.
+
+If you want to add functionality similar to ImageJ's Command Finder to your
+own code, you can use fiji.util.gui.CommandFinderBase. If you have a JMenuBar
+you want to make accessible, you can use the JFrameCommandFinder class in
+the same package straight away. Thanks to Benjamin Schmid.
+
+When looking at a specific file and number in a developer checkout of Fiji,
+the Script Editor offers to open that particular location via gitweb in
+the web browser (this helps collaboration via IRC, for example).
+
 The submodules have been moved into the modules/ directory.
+
+You can use the short-cut URL http://pacific.mpi-cbg.de/<filename> for
+source files in Fiji's Git-managed repositories.
