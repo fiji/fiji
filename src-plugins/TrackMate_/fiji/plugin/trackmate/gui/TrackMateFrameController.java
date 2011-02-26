@@ -1102,7 +1102,7 @@ public class TrackMateFrameController {
 		}
 		
 		// Display Track scheme
-		final TrackSchemeFrame trackScheme = new TrackSchemeFrame(model.getTrackGraph());
+		final TrackSchemeFrame trackScheme = new TrackSchemeFrame(model.getTrackGraph(), model.getSettings());
 		trackScheme.setVisible(true);
 
 		// Link it with displayer:		

@@ -46,7 +46,7 @@ public class TrackVisualizerTestDrive {
 	
 		ij.ImageJ.main(args);
 		
-		TmXmlReader reader = new TmXmlReader(CASE_5);
+		TmXmlReader reader = new TmXmlReader(CASE_4);
 		reader.parse();
 		
 		// Load objects 
@@ -90,7 +90,7 @@ public class TrackVisualizerTestDrive {
 		}
 		
 		// Display Track scheme
-		final TrackSchemeFrame frame = new TrackSchemeFrame(tracks);
+		final TrackSchemeFrame frame = new TrackSchemeFrame(tracks, settings);
 		frame.setVisible(true);
 		
 		// Listeners

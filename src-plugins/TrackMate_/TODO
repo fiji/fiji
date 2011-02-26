@@ -1,8 +1,6 @@
 - Make a better loading logic and GUI interaction.
 - Offer to select displayer at load.
 - Fix GUI update when calculating feature.
-- Forward actual units and calibration to trackscheme plots.
-- Have a manual spot editing tool in the HyperStackDisplayer.
 - Have a manual spot editing tool in the 3D viewer displayer.
 - In trackscheme: allow to edit the name of the whole selection in batch.
 - Put back Nick's tracking optimization, based on prunning rows and columns in the cost matrix.

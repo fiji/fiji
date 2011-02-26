@@ -38,33 +38,6 @@ public enum Feature {
 		SIZE,   // we separate size and dimension so that x,y,z are plotted on a different graph from spot sizes
 		TIME,
 		ANGLE;
-		
-		public static String QualityUnits = "Quality";
-		public static String IntensityUnits = "Counts";
-		public static String LengthUnits = "Pixels";
-		public static String AngleUnits = "Radians";
-		public static String TimeUnits = "Frames";
-
-		public String getUnits() {
-			switch(this) {
-			case ANGLE:
-				return AngleUnits;
-			default:
-			case NONE:
-				return "";
-			case INTENSITY:
-				return IntensityUnits;
-			case INTENSITY_SQUARED:
-				return IntensityUnits+"^2";
-			case POSITION:
-			case SIZE:
-				return LengthUnits;
-			case TIME:
-				return TimeUnits;
-			case QUALITY:
-				return QualityUnits;
-			}
-		}
 	}
 	
 	public Dimension getDimension() {

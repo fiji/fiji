@@ -22,7 +22,6 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		this.displayer = displayer;
 	}
 	
-
 	/*
 	 * METHODS
 	 */

@@ -79,6 +79,7 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 import com.jgraph.layout.JGraphFacade;
 
 import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 
 public class TrackSchemeFrame extends JFrame {
@@ -135,15 +136,17 @@ public class TrackSchemeFrame extends JFrame {
 	/** The spots currently selected. */
 	private HashSet<Spot> spotSelection = new HashSet<Spot>();
 	private JScrollPane scrollPane;
+	private Settings settings;
 
 	/*
 	 * CONSTRUCTORS
 	 */
 
-	public TrackSchemeFrame(SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph) {
+	public TrackSchemeFrame(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph, final Settings settings) {
 		this.trackGraph = trackGraph;
 		this.lGraph = new ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge>(trackGraph);
 		this.jGraph = createGraph();
+		this.settings = settings;
 		init();
 		setSize(DEFAULT_SIZE);
 	}
@@ -189,6 +192,8 @@ public class TrackSchemeFrame extends JFrame {
 	
 	public void centerViewOn(DefaultGraphCell cell) {
 		Rectangle2D bounds = jGraph.getCellBounds(cell);
+		if (null == bounds)
+			return;
 		Point2D center = new Point2D.Double(bounds.getCenterX()*jGraph.getScale(), bounds.getCenterY()*jGraph.getScale());
 		scrollPane.getHorizontalScrollBar().setValue((int) center.getX() - scrollPane.getWidth()/2);
 		scrollPane.getVerticalScrollBar().setValue((int) center.getY() - scrollPane.getHeight()/2);
@@ -216,7 +221,7 @@ public class TrackSchemeFrame extends JFrame {
 		if (spots.isEmpty())
 			return;
 		
-		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, spots, trackGraph);
+		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, spots, trackGraph, settings);
 		grapher.setVisible(true);
 		
 	}
@@ -560,7 +565,8 @@ public class TrackSchemeFrame extends JFrame {
 			y = 3 * ycs / 2;
 			g.setFont(FONT.deriveFont(12*scale).deriveFont(Font.BOLD));
 			for(Float instant : instants) {
-				g.drawString(String.format("Frame %.0f", instant+1), x, y);
+				g.drawString(String.format("%.1f "+settings.timeUnits, instant+1), x, y);
+				g.drawString(String.format("frame %.0f", (instant+1)/settings.dt), x, Math.round(y+12*scale));
 				y += ycs;
 			}
 

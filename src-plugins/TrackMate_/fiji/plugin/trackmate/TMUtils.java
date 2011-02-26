@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate;
 
+import fiji.plugin.trackmate.Feature.Dimension;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.Roi;
@@ -455,6 +456,35 @@ public class TMUtils {
 			
 		}
 		return ret;
+	}
+	
+	public static final String getUnitsFor(final Dimension dimension, final Settings settings) {
+		String units = "no unit";
+		switch (dimension) {
+		case ANGLE:
+			units = "Radians";
+			break;
+		case INTENSITY:
+			units = "Counts";
+			break;
+		case INTENSITY_SQUARED:
+			units = "Counts^2";
+			break;
+		case NONE:
+			units = "";
+			break;
+		case POSITION:
+		case SIZE:
+			units = settings.spaceUnits;
+			break;
+		case QUALITY:
+			units = "Quality";
+			break;
+		case TIME:
+			units = settings.timeUnits;
+			break;
+		}
+		return units;
 	}
 	
 
