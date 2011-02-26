@@ -22,7 +22,9 @@ boolean checkpoint(String name) {
 			System.err.println("Restoring state at checkpoint " + name);
 			for (File dir : checkpointDirectories) {
 				deleteRecursively(dir);
-				copyRecursively(new File(backupDir, dir.getName()), dir);
+				File fromDir = new File(backupDir, dir.getName());
+				if (fromDir.isDirectory())
+					copyRecursively(fromDir, dir);
 			}
 			global.startAtCheckpoint = null;
 			return true;
@@ -43,7 +45,8 @@ boolean checkpoint(String name) {
 	for (File dir : checkpointDirectories) {
 		toDir = new File(backupDir, dir.getName());
 		deleteRecursively(toDir);
-		copyRecursively(dir, toDir);
+		if (dir.isDirectory())
+			copyRecursively(dir, toDir);
 	}
 	writeFile(checkpointDir, "latest", name);
 	return true;
