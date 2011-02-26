@@ -20,6 +20,7 @@ prepareNewFijiRoot(tmpDeveloperRoot, true);
 prepareNewFijiRoot(tmpUserRoot, false);
 
 print("About to upload");
+upload("uploadFailsIfChanged()");
 upload("initialUpload()");
 download("initialUserCheck()");
 download("testUptodateCheck()");
