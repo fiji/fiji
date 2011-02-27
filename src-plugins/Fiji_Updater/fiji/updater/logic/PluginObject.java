@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class PluginObject {
-	public static class Version {
+	public static class Version implements Comparable<Version> {
 		public String checksum;
 		// This timestamp is not a Unix epoch!
 		// Instead, it is Long.parseLong(Util.timestamp(epoch))
@@ -27,8 +27,32 @@ public class PluginObject {
 			this.timestamp = timestamp;
 		}
 
+		@Override
+		public int compareTo(Version other) {
+			long diff = timestamp - other.timestamp;
+			if (diff != 0)
+				return diff < 0 ? -1 : +1;
+			return checksum.compareTo(other.checksum);
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			return other instanceof Version ? equals((Version)other) : false;
+		}
+
 		public boolean equals(Version other) {
 			return timestamp == other.timestamp && checksum.equals(other.checksum);
+		}
+
+		@Override
+		public int hashCode() {
+			return (checksum == null ? 0 : checksum.hashCode())
+				^ new Long(timestamp).hashCode();
+		}
+
+		@Override
+		public String toString() {
+			return "Version(" + checksum + ";" + timestamp + ")";
 		}
 	}
 
@@ -314,7 +338,9 @@ public class PluginObject {
 	}
 
 	public void addPreviousVersion(String checksum, long timestamp) {
-		previous.add(new Version(checksum, timestamp));
+		Version version = new Version(checksum, timestamp);
+		if (!previous.contains(version))
+			previous.add(version);
 	}
 
 	public void setNoAction() {
