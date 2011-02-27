@@ -113,14 +113,15 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 			Image<T> img = TMUtils.getSingleFrameAsImage(imp, i, settings); // will be cropped according to settings
 			
 			/* 2 Segment it */
-
 			logger.setStatus("Frame "+(i+1)+": Segmenting...");
 			logger.setProgress((i-settings.tstart) / (float)numFrames );
 			segmenter.setImage(img);
 			if (segmenter.checkInput() && segmenter.process()) {
 				spotsThisFrame = segmenter.getResult(settings);
-				for (Spot spot : spotsThisFrame)
+				for (Spot spot : spotsThisFrame) {
 					spot.putFeature(Feature.POSITION_T, i * settings.dt);
+					spot.putFeature(Feature.RADIUS, settings.segmenterSettings.expectedRadius);
+				}
 				spots.put(i, spotsThisFrame);
 				spotFound += spotsThisFrame.size();
 			} else {
@@ -156,7 +157,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 			/* 2 - Compute features. */
 			logger.setProgress((2*(i-settings.tstart)) / (2f * numFrames + 1));
 			logger.setStatus("Frame "+(i+1)+": Calculating features...");
-			featureCalculator = new FeatureFacade<T>(img, settings.segmenterSettings.expectedRadius, calibration);
+			featureCalculator = new FeatureFacade<T>(img, calibration);
 			spotsThisFrame = spots.get(i);
 			featureCalculator.processAllFeatures(spotsThisFrame);
 						

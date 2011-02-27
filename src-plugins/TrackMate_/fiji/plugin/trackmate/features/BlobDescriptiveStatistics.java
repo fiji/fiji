@@ -17,32 +17,20 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 	
 	/** The original image that is analyzed. */
 	private Image<T> img;
-	/** The number of pixels in the sphere or disc that will be iterated through to build statistics. */
-	private int npixels;
-	private DomainCursor<T> cursor;
-	/** Utility holder. */
-	private float[] coords;
+	private float[] calibration;
 	
 	/*
 	 * CONSTRUCTORS
 	 */
 	
-	public BlobDescriptiveStatistics(Image<T> originalImage, float radius, float[] calibration) {
+	public BlobDescriptiveStatistics(Image<T> originalImage, float[] calibration) {
 		this.img = originalImage;
-		if (img.getNumDimensions() == 3) {
-			this.cursor = new SphereCursor<T>(img, new float[3], radius, calibration);
-			coords = new float[3];
-		} else { 
-			this.cursor = new DiscCursor<T>(img, new float[2], radius, calibration);
-			coords = new float[2];
-		}
-		this.npixels = cursor.getNPixels();
+		this.calibration = calibration;
 	}
 	
 	/*
 	 * PUBLIC METHODS
 	 */
-	
 	
 	@Override
 	public Feature getFeature() {
@@ -55,6 +43,18 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 	 */
 	@Override
 	public void process(Spot spot) {
+		final DomainCursor<T> cursor;
+		final float[] coords;
+		final float radius = spot.getFeature(Feature.RADIUS);
+		if (img.getNumDimensions() == 3) {
+			cursor = new SphereCursor<T>(img, new float[3], radius, calibration);
+			coords = new float[3];
+		} else { 
+			cursor = new DiscCursor<T>(img, new float[2], radius, calibration);
+			coords = new float[2];
+		}
+		final int npixels = cursor.getNPixels();
+
 		// For variance, kurtosis and skewness 
 		float sum = 0;
 		float sum_sqr = 0;

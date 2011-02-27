@@ -58,9 +58,11 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			
 			if (null == editedSpot) {
 				// No spot is currently edited, we pick one to edit
-				if (target.squareDistanceTo(clickLocation) > displayer.radius*displayer.radius) {
+				final float radius = target.getFeature(Feature.RADIUS);
+				if (target.squareDistanceTo(clickLocation) > radius*radius) {
 					// Create a new spot if not inside one
 					target = clickLocation;
+					target.putFeature(Feature.RADIUS, displayer.settings.segmenterSettings.expectedRadius);
 					// Add it to collections
 					displayer.spotsToShow.add(target, frame);
 					displayer.spots.add(target, frame);

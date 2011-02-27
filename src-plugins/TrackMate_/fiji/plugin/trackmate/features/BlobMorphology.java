@@ -37,8 +37,6 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	
 	/** The image to extract the Feature characteristics from. */
 	private Image<T> img;
-	/** The estimated radius of the blob. */
-	private float radius;
 	/** The Image calibration information. */
 	private float[] calibration;
 	/** Utility holder. */
@@ -49,38 +47,16 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	 */
 	
 	
-	public BlobMorphology (Image<T> img, float radius, float[] calibration) {
+	public BlobMorphology (Image<T> img, float[] calibration) {
 		this.img = img;
-		this.radius = radius;
 		this.calibration = calibration;
 		this.coords = new float[img.getNumDimensions()];
 	}
 	
 	
-	public BlobMorphology (Image<T> img, float radius) {
-		this(img, radius, img.getCalibration());
+	public BlobMorphology (Image<T> img) {
+		this(img, img.getCalibration());
 	}
-	
-	
-	public BlobMorphology (Image<T> img, double radius, double[] calibration) {
-		
-		// 1 - Convert double[] to float[]
-		float[] fCalibration = new float[3];
-		for (int i = 0; i < calibration.length; i++) {
-			fCalibration[i] = (float) calibration[i];
-		}
-		
-		// 2 - Construct
-		this.img = img;
-		this.radius = (float) radius;
-		this.calibration = fCalibration;
-		this.coords = new float[img.getNumDimensions()];
-	}
-	
-	public BlobMorphology (Image<T> img, double radius) {
-		this(img, (float) radius, img.getCalibration());
-	}
-	
 	
 	/*
 	 * PUBLIC METHODS
@@ -94,7 +70,8 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	
 	
 	@Override
-	public void process(Spot spot) {
+	public void process(final Spot spot) {
+		final float radius = spot.getFeature(Feature.RADIUS);
 		for (int i = 0; i < coords.length; i++) 
 			coords[i] = spot.getFeature(Spot.POSITION_FEATURES[i]);
 
@@ -288,7 +265,6 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 			}
 			if (significantlyLarger) return ELLIPSOID;
 		}
-		
 		return SPHERICAL;
 	}
 	
@@ -343,8 +319,9 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 		ImageJFunctions.copyToImagePlus(img).show();
 		
 		start = System.currentTimeMillis();
-		BlobMorphology<UnsignedByteType> bm = new BlobMorphology<UnsignedByteType>(img, 2*max_radius, calibration);
+		BlobMorphology<UnsignedByteType> bm = new BlobMorphology<UnsignedByteType>(img, calibration);
 		SpotImp spot = new SpotImp(center);
+		spot.putFeature(Feature.RADIUS, max_radius);
 		bm.process(spot);
 		end = System.currentTimeMillis();
 		System.out.println("Blob morphology analyzed in " + (end-start) + " ms.");

@@ -19,6 +19,7 @@ public enum Feature {
 	POSITION_Y,
 	POSITION_Z,
 	POSITION_T,
+	RADIUS, 
 	ELLIPSOIDFIT_SEMIAXISLENGTH_A,
 	ELLIPSOIDFIT_SEMIAXISLENGTH_B,
 	ELLIPSOIDFIT_SEMIAXISLENGTH_C,
@@ -74,6 +75,7 @@ public enum Feature {
 		case ELLIPSOIDFIT_SEMIAXISLENGTH_B:
 		case ELLIPSOIDFIT_SEMIAXISLENGTH_C:
 		case ESTIMATED_DIAMETER:
+		case RADIUS:
 			return Dimension.SIZE;
 		case POSITION_T:
 			return Dimension.TIME;		
@@ -90,6 +92,8 @@ public enum Feature {
 			return "Z";
 		case POSITION_T:
 			return "T";
+		case RADIUS:
+			return "Radius";
 		case VARIANCE:
 			return "Variance";
 		case QUALITY:
@@ -117,17 +121,17 @@ public enum Feature {
 		case STANDARD_DEVIATION:
 			return "Standard deviation";
 		case ELLIPSOIDFIT_AXISPHI_A:
-			return "Ellipsoid A axis φ azimuth (rad)";
+			return "Ellipsoid A axis φ azimuth";
 		case ELLIPSOIDFIT_AXISPHI_B:
-			return "Ellipsoid B axis φ azimuth (rad)";
+			return "Ellipsoid B axis φ azimuth";
 		case ELLIPSOIDFIT_AXISPHI_C:
-			return "Ellipsoid C axis φ azimuth (rad)";
+			return "Ellipsoid C axis φ azimuth";
 		case ELLIPSOIDFIT_AXISTHETA_A:
-			return "Ellipsoid A axis θ zenith (rad)";
+			return "Ellipsoid A axis θ zenith";
 		case ELLIPSOIDFIT_AXISTHETA_B:
-			return "Ellipsoid B axis θ zenith (rad)";
+			return "Ellipsoid B axis θ zenith";
 		case ELLIPSOIDFIT_AXISTHETA_C:
-			return "Ellipsoid C axis θ zenith (rad)";
+			return "Ellipsoid C axis θ zenith";
 		case ELLIPSOIDFIT_SEMIAXISLENGTH_A:
 			return "Ellipsoid A semi-axis length";
 		case ELLIPSOIDFIT_SEMIAXISLENGTH_B:
@@ -183,6 +187,8 @@ public enum Feature {
 			return "Y";
 		case POSITION_Z:
 			return "Z";
+		case RADIUS:
+			return "R";
 		case QUALITY:
 			return "Quality";
 		case SKEWNESS:

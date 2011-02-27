@@ -23,7 +23,6 @@ public class FeatureFacade <T extends RealType<T>> {
 	
 	private Image<T> rawImage;
 	private float[] calibration;
-	private float radius;
 	/** The number of radiuses to use in the {@link RadiusEstimator} feature analyzer. */
 	private int nDiameters = 10;
 	/** The contrast feature analyzer. */
@@ -37,15 +36,14 @@ public class FeatureFacade <T extends RealType<T>> {
 	/** Hold all the feature analyzers this facade deals with. */
 	private ArrayList<FeatureAnalyzer> featureAnalyzers;
 
-	public FeatureFacade(Image<T> rawImage, float radius, float[] calibration) {
+	public FeatureFacade(Image<T> rawImage, float[] calibration) {
 		this.rawImage = rawImage;
 		this.calibration = calibration;
-		this.radius = radius;
 		initFeatureAnalyzer();
 	}
 	
-	public FeatureFacade(Image<T> rawImage, float radius) {
-		this(rawImage, radius, rawImage.getCalibration());
+	public FeatureFacade(Image<T> rawImage) {
+		this(rawImage, rawImage.getCalibration());
 	}
 	
 	/*
@@ -135,10 +133,10 @@ public class FeatureFacade <T extends RealType<T>> {
 	 * called only once. 
 	 */
 	private void initFeatureAnalyzer() {
-		this.contrast = new BlobContrast<T>(rawImage, radius, calibration);
-		this.descriptiveStatistics = new BlobDescriptiveStatistics<T>(rawImage, radius, calibration);
-		this.morphology = new BlobMorphology<T>(rawImage, radius, calibration);
-		this.radiusEstimator = new RadiusEstimator<T>(rawImage, radius, nDiameters , calibration);
+		this.contrast = new BlobContrast<T>(rawImage, calibration);
+		this.descriptiveStatistics = new BlobDescriptiveStatistics<T>(rawImage, calibration);
+		this.morphology = new BlobMorphology<T>(rawImage, calibration);
+		this.radiusEstimator = new RadiusEstimator<T>(rawImage, nDiameters , calibration);
 		
 		featureAnalyzers = new ArrayList<FeatureAnalyzer>();
 		featureAnalyzers.add(descriptiveStatistics);

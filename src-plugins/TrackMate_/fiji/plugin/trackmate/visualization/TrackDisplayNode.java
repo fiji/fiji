@@ -29,6 +29,8 @@ import customnode.MeshMaker;
 public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 
 	private static final int DEFAULT_PARALLEL_NUMBER = 12;
+	/** The track tube radius ratio (ratio of source radius). */
+	protected final static double RADIUS_RATIO = 0.1;
 
 	/** The graph containing the connectivity. */
 	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph;
@@ -38,9 +40,6 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	protected List<Set<Spot>> tracks;
 	/** Hold the color and transparency of all spots for a given track. */
 	protected Map<Set<Spot>, Color4f> colors;
-	/** The track tube radius. */
-	protected double radius;
-	
 	/** Switch used for display. Is the only child of this {@link ContentNode}.	 */
 	protected Switch trackSwitch;
 	/** Boolean set that controls the visibility of each mesh.	 */
@@ -66,13 +65,11 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 			SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph, 
 			SpotCollection spots, 
 			List<Set<Spot>> tracks, 
-			Map<Set<Spot>, Color4f> colors, 
-			double radius) {
+			Map<Set<Spot>, Color4f> colors) {
 		this.graph = graph;
 		this.spots = spots;
 		this.tracks = tracks;
 		this.colors = colors;
-		this.radius = radius;
 		this.trackSwitch = new Switch(Switch.CHILD_MASK);
 		trackSwitch.setCapability(Switch.ALLOW_SWITCH_WRITE);
 		trackSwitch.setCapability(Switch.ALLOW_CHILDREN_WRITE);
@@ -226,10 +223,11 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	
 	@SuppressWarnings("unchecked")
 	private CustomTriangleMesh makeMesh(final Spot source, final Spot target, final Color4f color) {
+		final float radius = source.getFeature(Feature.RADIUS);
 		double[] x = new double[] { source.getFeature(Feature.POSITION_X), target.getFeature(Feature.POSITION_X) };
 		double[] y = new double[] { source.getFeature(Feature.POSITION_Y), target.getFeature(Feature.POSITION_Y) };
 		double[] z = new double[] { source.getFeature(Feature.POSITION_Z), target.getFeature(Feature.POSITION_Z) };
-		double[] r = new double[] { radius, radius };
+		double[] r = new double[] { radius * RADIUS_RATIO, radius * RADIUS_RATIO };
 		// Avoid trouble if the source and target are at the same location
 		if (x[0] == x[1] && y[0] == y[1] && z[0] == z[1])
 			z[1] += radius/100;
@@ -276,7 +274,9 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		double xmax = Double.NEGATIVE_INFINITY;
 		double ymax = Double.NEGATIVE_INFINITY;
 		double zmax = Double.NEGATIVE_INFINITY;
+		float radius;
 		for (Spot spot : graph.vertexSet()) {
+			radius = spot.getFeature(Feature.RADIUS);
 			if (xmax < spot.getFeature(Feature.POSITION_X) + radius)
 				xmax = spot.getFeature(Feature.POSITION_X) + radius;
 			if (ymax < spot.getFeature(Feature.POSITION_Y) + radius)
@@ -295,7 +295,9 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		double xmin = Double.POSITIVE_INFINITY;
 		double ymin = Double.POSITIVE_INFINITY;
 		double zmin = Double.POSITIVE_INFINITY;
+		float radius;
 		for (Spot spot : graph.vertexSet()) {
+			radius = spot.getFeature(Feature.RADIUS);
 			if (xmin > spot.getFeature(Feature.POSITION_X) - radius)
 				xmin = spot.getFeature(Feature.POSITION_X) - radius;
 			if (ymin > spot.getFeature(Feature.POSITION_Y) - radius)

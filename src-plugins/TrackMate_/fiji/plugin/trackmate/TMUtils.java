@@ -458,6 +458,10 @@ public class TMUtils {
 		return ret;
 	}
 	
+	/**
+	 * Return a String unit for the given dimension. When suitable, the unit is taken from the settings
+	 * field, which contains the spatial and time units. Otherwise, default units are used.
+	 */
 	public static final String getUnitsFor(final Dimension dimension, final Settings settings) {
 		String units = "no unit";
 		switch (dimension) {

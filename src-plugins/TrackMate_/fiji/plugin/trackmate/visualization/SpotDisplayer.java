@@ -42,7 +42,6 @@ import fiji.plugin.trackmate.visualization.trackscheme.SpotSelectionListener;
  */
 public abstract class SpotDisplayer {
 
-	
 	/*
 	 * ENUMS
 	 */
@@ -138,8 +137,6 @@ public abstract class SpotDisplayer {
 	/** Flag to state that object should replace the current selection. */
 	protected static final int REPLACE_SELECTION_FLAG  = 1;
 	
-	/** The display radius. */
-	protected float radius = DEFAULT_DISPLAY_RADIUS;
 	/** The ratio setting the actual display size of the spots, with respect to the physical radius. */
 	protected float radiusRatio = 1.0f;
 	
@@ -202,7 +199,7 @@ public abstract class SpotDisplayer {
 						new boolean[] {true, true, true});
 				universe.addContentLater(imageContent);	
 			}
-			disp = new SpotDisplayer3D(universe, settings.segmenterSettings.expectedRadius);
+			disp = new SpotDisplayer3D(universe);
 			disp.render();
 			break;
 

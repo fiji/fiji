@@ -43,7 +43,6 @@ public class HyperStackDisplayer extends SpotDisplayer {
 	 */
 	
 	public HyperStackDisplayer(final Settings settings) {
-		this.radius = settings.segmenterSettings.expectedRadius;
 		this.imp = settings.imp;
 		this.calibration = new float[] { settings.dx, settings.dy, settings.dz };
 		this.settings = settings;
@@ -124,7 +123,7 @@ public class HyperStackDisplayer extends SpotDisplayer {
 		canvas = new OverlayedImageCanvas(imp);
 		window = new StackWindow(imp, canvas);
 		window.show();
-		spotOverlay = new SpotOverlay(imp, calibration, radius);
+		spotOverlay = new SpotOverlay(imp, calibration);
 		trackOverlay = new TrackOverlay(imp, calibration);
 		canvas.addOverlay(spotOverlay);
 		canvas.addOverlay(trackOverlay);
@@ -135,7 +134,7 @@ public class HyperStackDisplayer extends SpotDisplayer {
 	@Override
 	public void setRadiusDisplayRatio(float ratio) {
 		super.setRadiusDisplayRatio(ratio);
-		spotOverlay.setRadius(ratio*radius);
+		spotOverlay.setRadiusRatio(ratio);
 		refresh();
 	}
 	

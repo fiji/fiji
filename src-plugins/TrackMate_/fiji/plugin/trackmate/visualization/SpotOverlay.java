@@ -28,18 +28,17 @@ public class SpotOverlay extends AbstractAnnotation {
 		private ImagePlus imp;
 		private float[] calibration;
 		private ImageCanvas canvas;
-		private float radius;
+		private float radiusRatio = 1.0f;
 		
 		/*
 		 * CONSTRUCTOR
 		 */
 		
-		public SpotOverlay(final ImagePlus imp, final float[] calibration, final float radius) {
+		public SpotOverlay(final ImagePlus imp, final float[] calibration) {
 			this.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
 			this.imp = imp;
 			this.calibration = calibration;
 			this.canvas = imp.getCanvas();
-			this.radius = radius;
 		}
 
 		/*
@@ -66,8 +65,8 @@ public class SpotOverlay extends AbstractAnnotation {
 			this.targetColor = colors;
 		}
 		
-		public void setRadius(float radius) {
-			this.radius = radius;
+		public void setRadiusRatio(float radiusRatio) {
+			this.radiusRatio = radiusRatio;
 		}
 		
 		@Override
@@ -78,7 +77,6 @@ public class SpotOverlay extends AbstractAnnotation {
 			
 			final int frame = imp.getFrame()-1;
 			final float zslice = (imp.getSlice()-1) * calibration[2];
-			
 			
 			// Deal with normal spots.
 			g2d.setStroke(new BasicStroke((float) (1 / canvas.getMagnification())));
@@ -120,8 +118,11 @@ public class SpotOverlay extends AbstractAnnotation {
 						BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[] {4, 4} , 0));
 				final float x = editingSpot.getFeature(Feature.POSITION_X);
 				final float y = editingSpot.getFeature(Feature.POSITION_Y);
-				g2d.drawOval(Math.round((x-radius)/calibration[0]), Math.round((y-radius)/calibration[1]) , 
-						Math.round(2*radius/calibration[0]), Math.round(2*radius/calibration[1]));		
+				final float radius = editingSpot.getFeature(Feature.RADIUS);
+				g2d.drawOval(Math.round((x-radius*radiusRatio)/calibration[0]),
+						Math.round((y-radius*radiusRatio)/calibration[1]) , 
+						Math.round(2*radius*radiusRatio/calibration[0]), 
+						Math.round(2*radius*radiusRatio/calibration[1]));		
 			}
 
 		}
@@ -131,6 +132,7 @@ public class SpotOverlay extends AbstractAnnotation {
 			final float y = spot.getFeature(Feature.POSITION_Y);
 			final float z = spot.getFeature(Feature.POSITION_Z);
 			final float dz2 = (z - zslice) * (z - zslice);
+			final float radius = spot.getFeature(Feature.RADIUS)*radiusRatio;
 			if (dz2 >= radius*radius)
 				g2d.fillOval(Math.round(x/calibration[0]) - 2, Math.round(y/calibration[1]) - 2, 4, 4);
 			else {

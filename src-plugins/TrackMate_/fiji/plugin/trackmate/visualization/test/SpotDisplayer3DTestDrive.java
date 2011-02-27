@@ -94,12 +94,13 @@ public class SpotDisplayer3DTestDrive {
 		SpotImp spot;
 		for (int i = 0; i < N_BLOBS; i++)  {
 			spot = new SpotImp(centers.get(i), "Spot "+i);
-			spot.setFrame(0);
+			spot.putFeature(Feature.POSITION_T, 0);
+			spot.putFeature(Feature.RADIUS, RADIUS);
 			spots.add(spot);
 		}
 		
 		System.out.println("Grabbing features...");
-		new FeatureFacade<UnsignedByteType>(img, RADIUS, CALIBRATION).processFeature(Feature.MEAN_INTENSITY, spots);
+		new FeatureFacade<UnsignedByteType>(img, CALIBRATION).processFeature(Feature.MEAN_INTENSITY, spots);
 		for (Spot s : spots) 
 			System.out.println(s);
 
@@ -110,7 +111,7 @@ public class SpotDisplayer3DTestDrive {
 
 		final SpotCollection allSpots = new SpotCollection();
 		allSpots.put(0, spots);
-		final SpotDisplayer3D displayer = new SpotDisplayer3D(universe, RADIUS);
+		final SpotDisplayer3D displayer = new SpotDisplayer3D(universe);
 		displayer.render();
 		displayer.setSpots(allSpots);
 		

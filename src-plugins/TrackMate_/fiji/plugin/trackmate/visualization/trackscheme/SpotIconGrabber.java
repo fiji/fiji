@@ -25,12 +25,10 @@ public class SpotIconGrabber {
 	
 	private ImagePlus imp;
 	private float[] calibration;
-	private float radius;
-
+	
 	public SpotIconGrabber(Settings settings) {
 		this.imp = settings.imp;
 		this.calibration = new float[] { settings.dx, settings.dy, settings.dz };
-		this.radius = settings.segmenterSettings.expectedRadius;
 	}
 	
 	public void updateIcon(SpotCollection spots) {
@@ -44,6 +42,7 @@ public class SpotIconGrabber {
 	}
 	
 	public void updateIcon(Spot spot) {
+		final float radius = spot.getFeature(Feature.RADIUS);
 		int slice = 1;
 		if (calibration.length > 2)
 			slice = Math.round(spot.getFeature(Feature.POSITION_Z) / calibration[2]) + 1;

@@ -6,4 +6,5 @@
 - Put back Nick's tracking optimization, based on prunning rows and columns in the cost matrix.
 - Offer a entry point for the plugin starting with loading a data file.
 - Externalize the part loading the data from the TrackMateFrameController.
+- Fix the morphology estimator, so that the MORPHOLOGY feature is useful
 

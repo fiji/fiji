@@ -20,7 +20,6 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentFeatureA
 	/** The number of different diameters to try. */
 	private int nDiameters;
 	private Image<T> img;
-	private float radius;
 	private float[] calibration;
 	/** Utility holder. */
 	private float[] coords;
@@ -38,9 +37,8 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentFeatureA
 	 * @param nDiameters  the number of different diameter to compute
 	 * @param calibration  the spatial calibration array containing the pixel size in X, Y, Z
 	 */
-	public RadiusEstimator(Image<T> originalImage, float radius, int nDiameters,  float[] calibration) {
+	public RadiusEstimator(Image<T> originalImage, int nDiameters,  float[] calibration) {
 		this.img = originalImage;
-		this.radius = radius;
 		this.nDiameters = nDiameters;
 		this.calibration = calibration;
 		this.coords = new float[img.getNumDimensions()];
@@ -59,6 +57,7 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentFeatureA
 			coords[i] = spot.getFeature(Spot.POSITION_FEATURES[i]);
 
 		// Get diameter array and radius squared
+		final float radius = spot.getFeature(Feature.RADIUS);
 		final float[] diameters = prepareDiameters(radius*2, nDiameters);
 		final float[] r2 = new float[nDiameters];
 		for (int i = 0; i < r2.length; i++) 
@@ -148,7 +147,7 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentFeatureA
 		SpotImp s3 = new SpotImp(new float[] {100, 100, 300});
 		SpotImp[] spots = new SpotImp[] {s1, s2, s3};
 		float[] radiuses = new float[]  {12, 20, 32};
-		float[] calibration = null; //new float[] {1, 1, 1};
+		float[] calibration = new float[] {1, 1, 1};
 		
 		// Create 3 spots image
 		Image<UnsignedByteType> testImage = new ImageFactory<UnsignedByteType>(
@@ -159,6 +158,7 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentFeatureA
 		SphereCursor<UnsignedByteType> cursor;
 		int index = 0;
 		for (SpotImp s : spots) {
+			s.putFeature(Feature.RADIUS, radiuses[index]);
 			cursor = new SphereCursor<UnsignedByteType>(
 					testImage,
 					s.getPosition(null),
@@ -177,7 +177,6 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentFeatureA
 		// Apply the estimator
 		RadiusEstimator<UnsignedByteType> es = new RadiusEstimator<UnsignedByteType>(
 				testImage, 
-				40.5f, 
 				20, 
 				calibration);
 		

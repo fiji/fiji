@@ -160,10 +160,6 @@ public class SpotImp implements Spot {
 		return s.toString();
 	}
 	
-	public void setFrame(int frame) {
-		putFeature(Feature.POSITION_T, frame);
-	}
-	
 	@Override
 	public float[] getPosition(float[] position) {
 		if (null == position) 

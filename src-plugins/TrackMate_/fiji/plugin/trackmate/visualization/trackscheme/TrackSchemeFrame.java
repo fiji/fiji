@@ -565,7 +565,7 @@ public class TrackSchemeFrame extends JFrame {
 			y = 3 * ycs / 2;
 			g.setFont(FONT.deriveFont(12*scale).deriveFont(Font.BOLD));
 			for(Float instant : instants) {
-				g.drawString(String.format("%.1f "+settings.timeUnits, instant+1), x, y);
+				g.drawString(String.format("%.1f "+settings.timeUnits, instant), x, y);
 				g.drawString(String.format("frame %.0f", (instant+1)/settings.dt), x, Math.round(y+12*scale));
 				y += ycs;
 			}

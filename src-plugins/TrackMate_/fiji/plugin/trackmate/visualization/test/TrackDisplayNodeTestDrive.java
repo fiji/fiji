@@ -108,7 +108,7 @@ public class TrackDisplayNodeTestDrive {
 			index++;
 		}
 
-		TrackDisplayNode tdn = new TrackDisplayNode(graph, timeSpots, tracks, trackColors, RADIUS/4);
+		TrackDisplayNode tdn = new TrackDisplayNode(graph, timeSpots, tracks, trackColors);
 		ContentInstant ciTracks = new ContentInstant("TracksInstant");
 		ciTracks.display(tdn);
 		TreeMap<Integer, ContentInstant> trackInstants = new TreeMap<Integer, ContentInstant>();

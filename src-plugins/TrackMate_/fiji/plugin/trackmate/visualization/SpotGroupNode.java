@@ -108,7 +108,6 @@ public class SpotGroupNode<K> extends ContentNode {
 	 * <p>
 	 * This resets the {@link #spotSwitch} and the {@link #switchMask} fields with new values.
 	 */
-	@SuppressWarnings("unchecked")
 	protected void makeMeshes() {
 		List<Point3f> points;
 		CustomTriangleMesh node;
@@ -234,7 +233,6 @@ public class SpotGroupNode<K> extends ContentNode {
 	 * Move the spot <code>key</code> center to the position given by the {@link Point3f}.
 	 * Its radius is unchanged.
 	 */
-	@SuppressWarnings("unchecked")
 	public void setCenter(final K key, final Point3f center) {
 		CustomTriangleMesh mesh = meshes.get(key);
 		if (null == mesh)
@@ -251,7 +249,6 @@ public class SpotGroupNode<K> extends ContentNode {
 	 * <code>x</code>,  <code>y</code>,  <code>z</code> fields of the {@link Point4f}.
 	 * Its radius is set by the <code>w</code> field.
 	 */
-	@SuppressWarnings("unchecked")
 	public void setCenter(final K key, final Point4f center) {
 		CustomTriangleMesh mesh = meshes.get(key);
 		if (null == mesh)
@@ -263,7 +260,6 @@ public class SpotGroupNode<K> extends ContentNode {
 	/**
 	 * Change the radius of the spot <code>key</code>. Its position is unchanged.
 	 */
-	@SuppressWarnings("unchecked")
 	public void setRadius(final K key, final float radius) {
 		CustomTriangleMesh mesh = meshes.get(key);
 		if (null == mesh)
@@ -272,10 +268,6 @@ public class SpotGroupNode<K> extends ContentNode {
 		mesh.setMesh(MeshMaker.createSphere(center.x, center.y, center.z, radius, DEFAULT_MERIDIAN_NUMBER, DEFAULT_PARALLEL_NUMBER));
 		center.w = radius;
 	}
-	
-	
-	
-	
 	
 	/*
 	 * CONTENTNODE METHODS

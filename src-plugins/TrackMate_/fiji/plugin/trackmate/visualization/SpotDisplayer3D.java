@@ -43,15 +43,9 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	private HashMap<Spot, Integer> previousFrameHighlight;
 	private HashMap<DefaultWeightedEdge, Color3f> previousEdgeHighlight;
 	
-	public SpotDisplayer3D(Image3DUniverse universe, final float radius) {
-		this.radius = radius;
+	public SpotDisplayer3D(Image3DUniverse universe) {
 		this.universe = universe;
 	}
-	
-	public SpotDisplayer3D(Image3DUniverse universe) {
-		this(universe, DEFAULT_DISPLAY_RADIUS);
-	}
-
 	
 	/*
 	 * OVERRIDDEN METHODS
@@ -137,8 +131,8 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		for(int key : blobs.keySet()) {
 			spotsThisFrame = spots.get(key);
 			spotGroup = blobs.get(key);
-			for ( Spot spot : spotsThisFrame) 
-				spotGroup.setRadius(spot, radius*radiusRatio);
+			for(Spot spot : spotsThisFrame)
+				spotGroup.setRadius(spot, radiusRatio*spot.getFeature(Feature.RADIUS));
 		}
 	}
 	
@@ -256,7 +250,7 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		}
 		
 		// Prepare tracks instant
-		trackNode = new TrackDisplayNode(trackGraph, spots, tracks, colors, radius/10);
+		trackNode = new TrackDisplayNode(trackGraph, spots, tracks, colors);
 		
 		// Pass tracks instant to all instants
 		TreeMap<Integer, ContentInstant> instants = new TreeMap<Integer,ContentInstant>();
@@ -282,9 +276,11 @@ public class SpotDisplayer3D extends SpotDisplayer {
 			spotsThisFrame = spots.get(i);
 			HashMap<Spot, Point4f> centers = new HashMap<Spot, Point4f>(spotsThisFrame.size());
 			float[] pos;
+			float radius;
 			float[] coords = new float[3];
 			for(Spot spot : spotsThisFrame) {
 				spot.getPosition(coords);
+				radius = spot.getFeature(Feature.RADIUS);
 				pos = new float[] {coords[0], coords[1], coords[2], radius*radiusRatio};
 				centers.put(spot, new Point4f(pos));
 			}

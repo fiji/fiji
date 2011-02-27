@@ -19,8 +19,6 @@ public class Branched3DTrackTestDrive {
 	
 	private static final String 	FILE_NAME_1 = "Celegans-5pc_17timepoints.xml";
 	private static final File 		SPLITTING_CASE_1 = new File(Branched3DTrackTestDrive.class.getResource(FILE_NAME_1).getFile());
-	private static final float 		RADIUS = 3.0f; 
-	
 	
 	public static void main(String[] args) throws JDOMException, IOException {
 		
@@ -37,12 +35,10 @@ public class Branched3DTrackTestDrive {
 		
 		// Render them
 		final Image3DUniverse universe = new Image3DUniverse();
-		final SpotDisplayer3D displayer = new SpotDisplayer3D(universe, RADIUS);
+		final SpotDisplayer3D displayer = new SpotDisplayer3D(universe);
 		displayer.setSpots(selectedSpots);
 		displayer.render();
 		universe.show();
 		displayer.setTrackGraph(tracks);
-		
 	}
-
 }

@@ -13,15 +13,13 @@ public class BlobContrast <T extends RealType<T>> extends IndependentFeatureAnal
 	private static final Feature FEATURE = Feature.CONTRAST;
 	protected static final float RAD_PERCENTAGE = .2f;  
 	protected Image<T> img;
-	protected float radius;
 	protected float[] calibration;
 	/** Utility holder. */
 	private float[] coords;
 	
 	
-	public BlobContrast(Image<T> originalImage, float radius, float[] calibration) {
+	public BlobContrast(Image<T> originalImage, float[] calibration) {
 		this.img = originalImage;
-		this.radius = radius;
 		this.calibration = calibration;
 		this.coords = new float[3];
 	}
@@ -33,7 +31,7 @@ public class BlobContrast <T extends RealType<T>> extends IndependentFeatureAnal
 
 	@Override
 	public void process(Spot spot) {
-		float contrast = getContrast(spot, radius);
+		float contrast = getContrast(spot);
 		spot.putFeature(FEATURE, Math.abs(contrast));
 	}
 	
@@ -43,7 +41,8 @@ public class BlobContrast <T extends RealType<T>> extends IndependentFeatureAnal
 	 * @param diameter  the diameter to search for is in physical units
 	 * @return
 	 */
-	protected float getContrast(final Spot spot, float radius) {
+	protected float getContrast(final Spot spot) {
+		final float radius = spot.getFeature(Feature.RADIUS);
 		final DomainCursor<T> cursor;
 		if (img.getNumDimensions() == 3) 
 			cursor = new SphereCursor<T>(img, spot.getPosition(coords), radius * (1+RAD_PERCENTAGE), calibration);
