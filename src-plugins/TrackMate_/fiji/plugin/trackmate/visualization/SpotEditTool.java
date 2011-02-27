@@ -3,14 +3,18 @@ package fiji.plugin.trackmate.visualization;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.tool.AbstractTool;
 
 
-public class SpotEditTool extends AbstractTool implements MouseMotionListener, MouseListener {
+public class SpotEditTool extends AbstractTool implements MouseMotionListener, MouseListener, MouseWheelListener {
 	
+	private static final float COARSE_STEP = 2;
+	private static final float FINE_STEP = 0.2f;
 	Spot editedSpot;
 	private HyperStackDisplayer displayer;
 
@@ -132,6 +136,20 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 
 	@Override
 	public void mouseMoved(MouseEvent e) {	}
+
+	@Override
+	public void mouseWheelMoved(MouseWheelEvent e) {
+		if (null == editedSpot || !e.isAltDown())
+			return;
+		float radius = editedSpot.getFeature(Feature.RADIUS);
+		if (e.isShiftDown()) 
+			radius += e.getWheelRotation() * displayer.calibration[0] * COARSE_STEP;
+		else 
+			radius += e.getWheelRotation() * displayer.calibration[0] * FINE_STEP;
+		e.consume();
+		editedSpot.putFeature(Feature.RADIUS, radius);
+		displayer.imp.updateAndDraw();
+	}
 
 
 	

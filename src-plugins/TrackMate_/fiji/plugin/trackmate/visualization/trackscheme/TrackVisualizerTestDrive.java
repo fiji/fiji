@@ -29,24 +29,15 @@ import fiji.plugin.trackmate.visualization.test.Branched3DTrackTestDrive;
 public class TrackVisualizerTestDrive {
 
 	private static final long serialVersionUID = 1L;
-	private static final String 	FILE_NAME_1 = "Test2.xml";
-	private static final File 		CASE_1 = new File(LAPTrackerTestDrive.class.getResource(FILE_NAME_1).getFile());
 	private static final String 	FILE_NAME_2 = "FakeTracks.xml";
 	private static final File 		CASE_2 = new File(Branched3DTrackTestDrive.class.getResource(FILE_NAME_2).getFile());
-	private static final String 	FILE_NAME_3 ="Celegans-5pc_17timepoints.xml";
-	private static final File 		CASE_3 = new File(TrackVisualizerTestDrive.class.getResource(FILE_NAME_3).getFile());
-	private static final String 	FILE_NAME_4 ="Celegans-5pc.xml";
-	private static final File 		CASE_4 = new File(TrackVisualizerTestDrive.class.getResource(FILE_NAME_4).getFile());
-	private static final String 	FILE_NAME_5 ="SwimmingAlgae.xml";
-	private static final File 		CASE_5 = new File(TrackVisualizerTestDrive.class.getResource(FILE_NAME_5).getFile());
-	// Yeeeehaaaa!
 	private static final File		CELEGANS_2HOURS = new File("/Volumes/Data/Data/Confocal_LSM700/10-01-21/10-01-21-after-removal2.xml");
 	
 	public static void main(String[] args) throws JDOMException, IOException {
 	
 		ij.ImageJ.main(args);
 		
-		TmXmlReader reader = new TmXmlReader(CASE_4);
+		TmXmlReader reader = new TmXmlReader(CASE_2);
 		reader.parse();
 		
 		// Load objects 

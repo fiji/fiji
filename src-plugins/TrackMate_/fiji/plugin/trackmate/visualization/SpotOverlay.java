@@ -115,7 +115,7 @@ public class SpotOverlay extends AbstractAnnotation {
 			if (null != editingSpot) {
 				g2d.setColor(SpotDisplayer.HIGHLIGHT_COLOR);
 				g2d.setStroke(new BasicStroke((float) (2 / canvas.getMagnification()), 
-						BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[] {4, 4} , 0));
+						BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[] {1.5f, 1.5f} , 0));
 				final float x = editingSpot.getFeature(Feature.POSITION_X);
 				final float y = editingSpot.getFeature(Feature.POSITION_Y);
 				final float radius = editingSpot.getFeature(Feature.RADIUS);

@@ -22,8 +22,7 @@ public class HyperStackDisplayerTestDrive {
 
 	public static void main(String[] args) throws JDOMException, IOException {
 		
-//		File file = new File("E:/Users/JeanYves/Desktop/data/Celegans-5pc_17timepoints_bis.xml");
-		File file = new File("/Users/tinevez/Desktop/Data/Celegans-5pc_17timepoints.xml");
+		File file = new File(HyperStackDisplayerTestDrive.class.getResource("FakeTracks.xml").getFile());
 		TmXmlReader reader = new TmXmlReader(file);
 		reader.parse();
 		
@@ -44,7 +43,7 @@ public class HyperStackDisplayerTestDrive {
 		displayer.setSpotsToShow(selectedSpots);
 		displayer.setTrackGraph(trackGraph);
 		displayer.setDisplayTrackMode(TrackDisplayMode.LOCAL_WHOLE_TRACKS, 5);
-		displayer.setRadiusDisplayRatio(0.5f);
+//		displayer.setRadiusDisplayRatio(0.5f);
 	}
 	
 }
