@@ -35,15 +35,13 @@ public class HyperStackDisplayerTestDrive {
 		settings.segmenterSettings = reader.getSegmenterSettings();
 		ImagePlus imp = reader.getImage();
 		settings.imp = imp;
-		
-		
+				
 		SpotDisplayer displayer = new HyperStackDisplayer(settings);
 		displayer.setSpots(spots);
 		displayer.render();
 		displayer.setSpotsToShow(selectedSpots);
 		displayer.setTrackGraph(trackGraph);
 		displayer.setDisplayTrackMode(TrackDisplayMode.LOCAL_WHOLE_TRACKS, 5);
-//		displayer.setRadiusDisplayRatio(0.5f);
 	}
 	
 }

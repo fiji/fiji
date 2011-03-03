@@ -46,9 +46,7 @@ public class HyperStackDisplayer extends SpotDisplayer {
 		this.imp = settings.imp;
 		this.calibration = new float[] { settings.dx, settings.dy, settings.dz };
 		this.settings = settings;
-		this.editTool = new SpotEditTool(this);
 	}
-	
 	
 	/*
 	 * DEFAULT METHODS
@@ -127,8 +125,8 @@ public class HyperStackDisplayer extends SpotDisplayer {
 		trackOverlay = new TrackOverlay(imp, calibration);
 		canvas.addOverlay(spotOverlay);
 		canvas.addOverlay(trackOverlay);
-		editTool.run("");
 		imp.updateAndDraw();
+		registerEditTool();
 	}
 	
 	@Override
@@ -184,6 +182,17 @@ public class HyperStackDisplayer extends SpotDisplayer {
 	public void clear() {
 		canvas.clearOverlay();
 	}	
+	
+	/*
+	 * PRIVATE METHODS
+	 */
+	
+	private void registerEditTool() {
+		editTool = SpotEditTool.getInstance();
+		if (!SpotEditTool.isLaunched())
+			editTool.run("");
+		editTool.register(imp, this);
+	}
 		
 	private void prepareSpotOverlay() {
 		if (null == spotsToShow)
