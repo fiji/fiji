@@ -75,38 +75,34 @@ public class Main {
 		}
 	}
 
-	public void list(List<String> files) {
-		checksum(files);
-		for (PluginObject plugin : plugins.filter(new FileFilter(files)))
-			System.out.println(plugin.filename + "\t("
-				+ plugin.getStatus() + ")\t"
-				+ plugin.getTimestamp());
-	}
-
 	public void listCurrent(List<String> files) {
 		for (PluginObject plugin : plugins.filter(new FileFilter(files)))
 			System.out.println(plugin.filename + "-"
 				+ plugin.getTimestamp());
 	}
 
-	public void listUptodate(List<String> files) {
+	public void list(List<String> files, Filter filter) {
 		checksum(files);
-		Filter filter = plugins.and(new FileFilter(files),
-				plugins.is(Status.INSTALLED));
+		if (filter == null)
+			filter = new FileFilter(files);
+		else
+			filter = plugins.and(new FileFilter(files), filter);
 		for (PluginObject plugin : plugins.filter(filter))
 			System.out.println(plugin.filename + "\t("
 				+ plugin.getStatus() + ")\t"
 				+ plugin.getTimestamp());
 	}
 
+	public void list(List<String> files) {
+		list(files, null);
+	}
+
+	public void listUptodate(List<String> files) {
+		list(files, plugins.is(Status.INSTALLED));
+	}
+
 	public void listNotUptodate(List<String> files) {
-		checksum(files);
-		Filter filter = plugins.and(new FileFilter(files),
-				plugins.not(plugins.is(Status.INSTALLED)));
-		for (PluginObject plugin : plugins.filter(filter))
-			System.out.println(plugin.filename + "\t("
-				+ plugin.getStatus() + ")\t"
-				+ plugin.getTimestamp());
+		list(files, plugins.not(plugins.is(Status.INSTALLED)));
 	}
 
 	class OnePlugin implements Downloader.FileDownload {
