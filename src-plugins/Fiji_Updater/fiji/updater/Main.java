@@ -15,6 +15,7 @@ import fiji.updater.util.StderrProgress;
 import fiji.updater.util.UpdateJava;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import java.util.ArrayList;
@@ -35,7 +36,9 @@ public class Main {
 
 	public Main() throws IOException, ParserConfigurationException, SAXException {
 		plugins = new PluginCollection();
-		plugins.read();
+		try {
+			plugins.read();
+		} catch (FileNotFoundException e) { /* ignore */ }
 		progress = new StderrProgress();
 		XMLFileDownloader downloader = new XMLFileDownloader(plugins);
 		downloader.addProgress(progress);
