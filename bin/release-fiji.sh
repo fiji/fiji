@@ -98,7 +98,7 @@ verify_archive () {
 	*) echo "Error: unknown archive type $1" >&2
 	esac |
 	grep -e fiji- -e rt.jar |
-	grep -ve Archive -e Listing -e fiji-scripting |
+	grep -ve Archive -e Listing -e fiji-scripting -e = |
 	sed -e 's/^.*Fiji.app\///' -e 's/\(java\/[^\/]*\).*/\1/' |
 	sort | uniq | tr '\012' ' ')"
 	if test a"$2" != a"$platformfiles"
