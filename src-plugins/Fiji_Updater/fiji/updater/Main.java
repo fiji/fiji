@@ -1,11 +1,15 @@
 package fiji.updater;
 
+import com.jcraft.jsch.UserInfo;
+
 import fiji.updater.logic.Checksummer;
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginCollection.Filter;
 import fiji.updater.logic.PluginCollection.UpdateSite;
 import fiji.updater.logic.PluginObject;
+import fiji.updater.logic.PluginUploader;
 
+import fiji.updater.logic.PluginObject.Action;
 import fiji.updater.logic.PluginObject.Status;
 
 import fiji.updater.logic.XMLFileDownloader;
@@ -15,6 +19,7 @@ import fiji.updater.util.Progress;
 import fiji.updater.util.StderrProgress;
 import fiji.updater.util.UpdateJava;
 
+import java.io.Console;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -174,6 +179,81 @@ public class Main {
 		}
 	}
 
+	public void upload(List<String> files) {
+		if (files == null || files.size() == 0)
+			die("Which files do you mean to upload?");
+
+		checksum(files);
+
+		ConsoleUserInfo userInfo = new ConsoleUserInfo();
+		String updateSite = null;
+		for (String file : files) {
+			PluginObject plugin = plugins.getPlugin(file);
+			if (plugin == null)
+				die("No plugin '" + file + "' found!");
+			if (updateSite == null) {
+				updateSite = plugin.updateSite;
+				if (updateSite == null)
+					updateSite = plugin.updateSite =
+						chooseUploadSite(file, userInfo);
+				if (updateSite == null)
+					die("Canceled");
+			}
+			else if (plugin.updateSite == null) {
+				System.err.println("Uploading new plugin '" + file + "' to  site '" + updateSite + "'");
+				plugin.updateSite = updateSite;
+			}
+			else if (!plugin.updateSite.equals(updateSite))
+				die("Cannot upload to multiple update sites ("
+					+ files.get(0) + " to " + updateSite + " and "
+					+ file + " to " + plugin.updateSite + ")");
+			plugin.setAction(plugins, Action.UPLOAD);
+		}
+		UpdateSite site = plugins.getUpdateSite(updateSite);
+		System.err.println("Uploading to " + getLongUpdateSiteName(updateSite));
+
+		PluginUploader uploader = new PluginUploader(plugins, updateSite);
+		String username = uploader.getDefaultUsername();
+		if (username == null || username.equals(""))
+			userInfo.getUsername("Login for " + getLongUpdateSiteName(updateSite));
+		if (!uploader.setLogin(username, userInfo))
+			die("Aborting");
+		try {
+			uploader.upload(progress);
+			plugins.write();
+		}
+		catch (Throwable e) {
+			e.printStackTrace();
+			die("Error during upload: " + e);
+		}
+	}
+
+	public String chooseUploadSite(String file, ConsoleUserInfo userInfo) {
+		List<String> names = new ArrayList<String>();
+		List<String> options = new ArrayList<String>();
+		for (String name : plugins.getUpdateSiteNames()) {
+			UpdateSite updateSite = plugins.getUpdateSite(name);
+			if (updateSite.uploadDirectory == null || updateSite.uploadDirectory.equals(""))
+				continue;
+			names.add(name);
+			options.add(getLongUpdateSiteName(name));
+		}
+		if (names.size() == 0) {
+			System.err.println("No uploadable sites found");
+			return null;
+		}
+		System.err.println("Choose upload site for plugin '" + file + "'");
+		int index = userInfo.askChoice(options.toArray(new String[options.size()]));
+		return index < 0 ? null : names.get(index);
+	}
+
+	public String getLongUpdateSiteName(String name) {
+		UpdateSite site = plugins.getUpdateSite(name);
+		return name + " ("
+			+ (site.sshHost == null || site.equals("") ? "" : site.sshHost + ":")
+			+ site.uploadDirectory + ")";
+	}
+
 	public static Main getInstance() {
 		try {
 			return new Main();
@@ -189,6 +269,11 @@ public class Main {
 		while (start < list.length)
 			result.add(list[start++]);
 		return result;
+	}
+
+	public static void die(String message) {
+		System.err.println(message);
+		System.exit(1);
 	}
 
 	public static void usage() {
@@ -224,7 +309,76 @@ public class Main {
 			getInstance().update(makeList(args, 1));
 		else if (command.equals("update-java"))
 			new UpdateJava().run(null);
+		else if (command.equals("upload"))
+			getInstance().upload(makeList(args, 1));
 		else
 			usage();
+	}
+
+	protected static class ConsoleUserInfo implements UserInfo {
+		protected Console console = System.console();
+		protected int count;
+
+		@Override
+		public String getPassword() {
+			return new String(console.readPassword());
+		}
+
+		@Override
+		public String getPassphrase() {
+			return getPassword();
+		}
+
+		@Override
+		public boolean promptPassword(String prompt) {
+			if (++count > 3)
+				return false;
+			showPrompt(prompt);
+			if (count > 1)
+				System.err.print(" (try " + count + ")");
+			return true;
+		}
+
+		@Override
+		public boolean promptPassphrase(String prompt) {
+			return promptPassword(prompt);
+		}
+
+		@Override
+		public boolean promptYesNo(String message) {
+			System.err.print(message);
+			String line = console.readLine();
+			return line.startsWith("y") || line.startsWith("Y");
+		}
+
+		@Override
+		public void showMessage(String message) {
+			System.err.println(message);
+		}
+
+		public void showPrompt(String prompt) {
+			if (!prompt.endsWith(": "))
+				prompt += ": ";
+			System.err.print(prompt);
+		}
+
+		public String getUsername(String prompt) {
+			showPrompt(prompt);
+			return console.readLine();
+		}
+
+		public int askChoice(String[] options) {
+			for (int i = 0; i < options.length; i++)
+				System.err.println("" + (i + 1) + ": " + options[i]);
+			for (;;) {
+				System.err.print("Choice? ");
+				String answer = console.readLine();
+				if (answer.equals(""))
+					return -1;
+				try {
+					return Integer.parseInt(answer) - 1;
+				} catch (Exception e) { /* ignore */ }
+			}
+		}
 	}
 }
