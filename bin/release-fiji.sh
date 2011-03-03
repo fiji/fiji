@@ -71,7 +71,7 @@ checkout_and_build='
 		fi
 		;;
 	 esac) >&2 &&
-	./bin/calculate-checksums.py
+	./bin/calculate-checksums.bsh
 '
 
 build_rest='
