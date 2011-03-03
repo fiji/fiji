@@ -105,6 +105,10 @@ public class Main {
 		list(files, plugins.not(plugins.is(Status.INSTALLED)));
 	}
 
+	public void listUpdateable(List<String> files) {
+		list(files, plugins.is(Status.UPDATEABLE));
+	}
+
 	class OnePlugin implements Downloader.FileDownload {
 		PluginObject plugin;
 
@@ -186,9 +190,10 @@ public class Main {
 			+ "\n"
 			+ "Commands:\n"
 			+ "\tlist [<files>]\n"
-			+ "\tlist-current [<files>]\n"
 			+ "\tlist-uptodate [<files>]\n"
 			+ "\tlist-not-uptodate [<files>]\n"
+			+ "\tlist-updateable [<files>]\n"
+			+ "\tlist-current [<files>]\n"
 			+ "\tupdate [<files>]\n"
 			+ "\tupdate-java");
 	}
@@ -207,6 +212,8 @@ public class Main {
 			getInstance().listUptodate(makeList(args, 1));
 		else if (command.equals("list-not-uptodate"))
 			getInstance().listNotUptodate(makeList(args, 1));
+		else if (command.equals("list-updateable"))
+			getInstance().listUpdateable(makeList(args, 1));
 		else if (command.equals("update"))
 			getInstance().update(makeList(args, 1));
 		else if (command.equals("update-java"))
