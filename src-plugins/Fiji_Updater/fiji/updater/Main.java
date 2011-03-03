@@ -2,6 +2,7 @@ package fiji.updater;
 
 import fiji.updater.logic.Checksummer;
 import fiji.updater.logic.PluginCollection;
+import fiji.updater.logic.PluginCollection.Filter;
 import fiji.updater.logic.PluginCollection.UpdateSite;
 import fiji.updater.logic.PluginObject;
 
@@ -57,10 +58,10 @@ public class Main {
 			checksummer.updateFromLocal();
 	}
 
-	protected class Filter implements PluginCollection.Filter {
+	protected class FileFilter implements Filter {
 		protected Set<String> fileNames;
 
-		public Filter(List<String> files) {
+		public FileFilter(List<String> files) {
 			if (files != null && files.size() > 0)
 				fileNames = new HashSet<String>(files);
 		}
@@ -76,21 +77,21 @@ public class Main {
 
 	public void list(List<String> files) {
 		checksum(files);
-		for (PluginObject plugin : plugins.filter(new Filter(files)))
+		for (PluginObject plugin : plugins.filter(new FileFilter(files)))
 			System.out.println(plugin.filename + "\t("
 				+ plugin.getStatus() + ")\t"
 				+ plugin.getTimestamp());
 	}
 
 	public void listCurrent(List<String> files) {
-		for (PluginObject plugin : plugins.filter(new Filter(files)))
+		for (PluginObject plugin : plugins.filter(new FileFilter(files)))
 			System.out.println(plugin.filename + "-"
 				+ plugin.getTimestamp());
 	}
 
 	public void listNotUptodate(List<String> files) {
 		checksum(files);
-		PluginCollection.Filter filter = plugins.and(new Filter(files),
+		Filter filter = plugins.and(new FileFilter(files),
 				plugins.not(plugins.is(Status.INSTALLED)));
 		for (PluginObject plugin : plugins.filter(filter))
 			System.out.println(plugin.filename + "\t("
@@ -142,7 +143,7 @@ public class Main {
 
 	public void update(List<String> files) {
 		checksum(files);
-		for (PluginObject plugin : plugins.filter(new Filter(files)))
+		for (PluginObject plugin : plugins.filter(new FileFilter(files)))
 			switch (plugin.getStatus()) {
 			case UPDATEABLE:
 			case MODIFIED:
