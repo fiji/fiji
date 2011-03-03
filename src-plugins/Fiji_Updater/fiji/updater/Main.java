@@ -57,10 +57,10 @@ public class Main {
 			checksummer.updateFromLocal();
 	}
 
-	class Filter implements PluginCollection.Filter {
-		Set<String> fileNames;
+	protected class Filter implements PluginCollection.Filter {
+		protected Set<String> fileNames;
 
-		Filter(List<String> files) {
+		public Filter(List<String> files) {
 			if (files != null && files.size() > 0)
 				fileNames = new HashSet<String>(files);
 		}
