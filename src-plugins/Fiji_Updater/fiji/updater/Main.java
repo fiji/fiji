@@ -166,6 +166,12 @@ public class Main {
 				delete(plugin);
 				break;
 			}
+		try {
+			plugins.write();
+		} catch (Exception e) {
+			System.err.println("Could not write db.xml.gz:");
+			e.printStackTrace();
+		}
 	}
 
 	public static Main getInstance() {
