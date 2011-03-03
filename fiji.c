@@ -2000,7 +2000,7 @@ static void try_with_less_memory(size_t memory_size)
 	new_argv[0] = dos_path(new_argv[0]);
 	for (i = 0; i < j; i++)
 		new_argv[i] = quote_win32(new_argv[i]);
-	execve(new_argv[0], (const char * const *)new_argv, NULL);
+	execve(new_argv[0], (char * const *)new_argv, NULL);
 #else
 	execve(new_argv[0], new_argv, NULL);
 #endif
@@ -2634,7 +2634,7 @@ static int start_ij(void)
 		for (i = 0; i < options.java_options.nr - 1; i++)
 			options.java_options.list[i] =
 				quote_win32(options.java_options.list[i]);
-		execvp(buffer->buffer, (const char * const *)options.java_options.list);
+		execvp(buffer->buffer, (char * const *)options.java_options.list);
 		char message[16384];
 		int off = sprintf(message, "Error: '%s' while executing\n\n",
 				strerror(errno));

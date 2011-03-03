@@ -138,9 +138,8 @@ were contributed to ImageJ through Fiji. Thanks to Wayne Rasband.
 Fiji's bundled Java Runtime Environment is now at version 1.6u24 (to update,
 run "Update Java" from Fiji Updater's "Advanced mode").
 
-Too many bug fixes and improvements to count in both the TrakEM2 and the
-mpicbg (including CLAHE) components. Thanks Albert Cardona and Stephan
-Saalfeld.
+Too many bug fixes and improvements to count in the TrakEM2 components. Thanks
+Albert Cardona and Stephan Saalfeld.
 
 Add the Plugins>Examples>Extended Profile Plot script to get profile plots
 of closed polygons.
@@ -310,6 +309,20 @@ When scripting, you can accelerate crucial parts by inserting Java code
 snippets using the new Weaver.inline(...) method in any scripting language.
 Thanks to Albert Cardona.
 
+Several fixes and improvements in the mpicbg submodule for feature extraction
+and transformation, e.g.:  Feature matching can be performed without geometric
+consensus filter.  Geometric consensus filter got a new parameter, minimal
+absolute number of inliers.  Added robust regression outlier filter to
+TileConfiguration.  Several fixes and improvements to the CLAHE local contrast
+enhancer, e.g.: Added a fast (real-time) version of the filter.  Fixed
+selection handling.  Fixed transfer of values beyond the current min/max range.
+Support CompositeImages in variable ways.  Added homogeneous least squares fit
+for perspective transformations using Jama SVD.  Interactive transforms can
+handle Composites, Stacks and HyperStacks.  Added a simple but comparably
+fast Optic Flow variant based on the sum of square differences in a Gaussian
+weighted neighborhood of a pixel.  Thanks to Stephan Saalfeld.
+
+
 Developer-visible changes
 =========================
 
@@ -425,3 +438,7 @@ The submodules have been moved into the modules/ directory.
 
 You can use the short-cut URL http://pacific.mpi-cbg.de/<filename> for
 source files in Fiji's Git-managed repositories.
+
+Added IntegralImages as library components to the mpicbg submodule for
+rapid box-filter operations (mean, scale, difference of mean, ...).  Thanks
+to Stephan Saalfeld.
