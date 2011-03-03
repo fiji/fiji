@@ -89,6 +89,16 @@ public class Main {
 				+ plugin.getTimestamp());
 	}
 
+	public void listUptodate(List<String> files) {
+		checksum(files);
+		Filter filter = plugins.and(new FileFilter(files),
+				plugins.is(Status.INSTALLED));
+		for (PluginObject plugin : plugins.filter(filter))
+			System.out.println(plugin.filename + "\t("
+				+ plugin.getStatus() + ")\t"
+				+ plugin.getTimestamp());
+	}
+
 	public void listNotUptodate(List<String> files) {
 		checksum(files);
 		Filter filter = plugins.and(new FileFilter(files),
@@ -181,6 +191,8 @@ public class Main {
 			+ "Commands:\n"
 			+ "\tlist [<files>]\n"
 			+ "\tlist-current [<files>]\n"
+			+ "\tlist-uptodate [<files>]\n"
+			+ "\tlist-not-uptodate [<files>]\n"
 			+ "\tupdate [<files>]\n"
 			+ "\tupdate-java");
 	}
@@ -195,6 +207,8 @@ public class Main {
 			getInstance().list(makeList(args, 1));
 		else if (command.equals("list-current"))
 			getInstance().listCurrent(makeList(args, 1));
+		else if (command.equals("list-uptodate"))
+			getInstance().listUptodate(makeList(args, 1));
 		else if (command.equals("list-not-uptodate"))
 			getInstance().listNotUptodate(makeList(args, 1));
 		else if (command.equals("update"))
