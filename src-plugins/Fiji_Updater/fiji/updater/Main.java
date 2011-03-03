@@ -88,6 +88,16 @@ public class Main {
 				+ plugin.getTimestamp());
 	}
 
+	public void listNotUptodate(List<String> files) {
+		checksum(files);
+		PluginCollection.Filter filter = plugins.and(new Filter(files),
+				plugins.not(plugins.is(Status.INSTALLED)));
+		for (PluginObject plugin : plugins.filter(filter))
+			System.out.println(plugin.filename + "\t("
+				+ plugin.getStatus() + ")\t"
+				+ plugin.getTimestamp());
+	}
+
 	class OnePlugin implements Downloader.FileDownload {
 		PluginObject plugin;
 
@@ -184,6 +194,8 @@ public class Main {
 			getInstance().list(makeList(args, 1));
 		else if (command.equals("list-current"))
 			getInstance().listCurrent(makeList(args, 1));
+		else if (command.equals("list-not-uptodate"))
+			getInstance().listNotUptodate(makeList(args, 1));
 		else if (command.equals("update"))
 			getInstance().update(makeList(args, 1));
 		else if (command.equals("update-java"))
