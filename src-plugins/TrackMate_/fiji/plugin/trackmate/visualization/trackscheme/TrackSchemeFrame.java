@@ -70,6 +70,7 @@ import org.jgrapht.Graph;
 import org.jgrapht.event.GraphEdgeChangeEvent;
 import org.jgrapht.event.GraphListener;
 import org.jgrapht.event.GraphVertexChangeEvent;
+import org.jgrapht.event.VertexSetListener;
 import org.jgrapht.ext.JGraphModelAdapter;
 import org.jgrapht.ext.JGraphModelAdapter.CellFactory;
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -81,8 +82,10 @@ import com.jgraph.layout.JGraphFacade;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.visualization.SpotCollectionEditEvent;
+import fiji.plugin.trackmate.visualization.SpotCollectionEditListener;
 
-public class TrackSchemeFrame extends JFrame {
+public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListener {
 
 	{
 		//Set Look & Feel
@@ -151,10 +154,21 @@ public class TrackSchemeFrame extends JFrame {
 		setSize(DEFAULT_SIZE);
 	}
 
+	
 	/*
 	 * PUBLIC METHODS
 	 */
 
+	@Override
+	public void collectionChanged(SpotCollectionEditEvent event) {
+		if (event.getFlag() == SpotCollectionEditEvent.SPOT_CREATED) {
+			for (Spot spot : event.getSpots()) {
+				
+			}
+		}
+		
+	}
+	
 	public void addGraphListener(GraphListener<Spot, DefaultWeightedEdge> listener) {
 		graphListeners.add(listener);
 	}
@@ -367,6 +381,8 @@ public class TrackSchemeFrame extends JFrame {
 	}
 	
 	private void doTrackLayout() {
+//		jGMAdapter.
+		
 		JGraphFacade facade = new JGraphFacade(jGraph);
 		JGraphTimeLayout graphLayout = new JGraphTimeLayout(trackGraph, jGMAdapter);
 		graphLayout.run(facade);
@@ -1080,6 +1096,8 @@ public class TrackSchemeFrame extends JFrame {
 
 
 	} // End of Editor.MyMarqueeHandler
+
+	
 
 	
 

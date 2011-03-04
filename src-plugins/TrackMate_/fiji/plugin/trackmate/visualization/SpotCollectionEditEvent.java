@@ -41,6 +41,10 @@ public class SpotCollectionEditEvent extends EventObject {
 	public Integer getFromFrame() {
 		return fromFrame;
 	}
+
+	public void setSource(Object source) {
+		this.source = source;
+	}
 	
 	
 }

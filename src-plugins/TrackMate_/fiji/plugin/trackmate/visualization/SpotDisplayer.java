@@ -384,8 +384,7 @@ public abstract class SpotDisplayer {
 			listener.valueChanged(event);
 	}
 
-	protected void fireSpotCollectionEdit(Spot[] spots, int flag, Integer fromFrame, Integer toFrame) {
-		SpotCollectionEditEvent event = new SpotCollectionEditEvent(this, spots, flag, fromFrame, toFrame);
+	protected void fireSpotCollectionEdit(SpotCollectionEditEvent event) {
 		for (SpotCollectionEditListener listener : spotCollectionEditListeners)
 			listener.collectionChanged(event);
 	}

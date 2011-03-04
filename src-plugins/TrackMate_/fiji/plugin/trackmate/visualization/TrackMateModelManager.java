@@ -47,22 +47,38 @@ public class TrackMateModelManager implements SpotCollectionEditListener {
 		}
 		
 		case SpotCollectionEditEvent.SPOT_FRAME_CHANGED: {
-			deleteSpotsFrom(event.getSpots(), event.getFromFrame());
-			addSpotsTo(event.getSpots(), event.getToFrame());
+			moveSpotsFrom(event.getSpots(), event.getFromFrame(), event.getToFrame());
 			updateFeatures(event.getSpots());
 			break;
 		}
 		
 		case SpotCollectionEditEvent.SPOT_MODIFIED: {
 			updateFeatures(event.getSpots());
+			break;
+		}	
 		}
 		
-		}
-		
-	}	
+	}
 
 	
+	public void moveSpotsFrom(Spot[] spots, Integer fromFrame, Integer toFrame) {
+		System.out.println("Moving "+spots.length+" spots from frame "+fromFrame+" to frame "+toFrame);// DEBUG
+		SpotCollection sc = model.getSpots();
+		if (null != sc) 
+			for (Spot spot : spots) { 
+				sc.add(spot, toFrame);
+				sc.remove(spot, fromFrame);
+			}
+		SpotCollection ssc = model.getSelectedSpots();
+		if (null != ssc) 
+			for (Spot spot : spots) {
+				ssc.add(spot, toFrame);
+				ssc.remove(spot, fromFrame);
+			}
+	}
+
 	public void addSpotsTo(Spot[] spots, Integer toFrame) {
+		System.out.println("Adding "+spots.length+" spots to frame "+toFrame);// DEBUG
 		SpotCollection sc = model.getSpots();
 		if (null != sc) 
 			for (Spot spot : spots) 
@@ -78,6 +94,7 @@ public class TrackMateModelManager implements SpotCollectionEditListener {
 	}
 	
 	public void deleteSpotsFrom(Spot[] spots, Integer fromFrame) {
+		System.out.println("Removing "+spots.length+" from frame "+fromFrame);// DEBUG
 		SpotCollection sc = model.getSpots();
 		if (null != sc) 
 			for (Spot spot : spots) 
@@ -94,6 +111,7 @@ public class TrackMateModelManager implements SpotCollectionEditListener {
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void updateFeatures(Spot[] spots) {
+		System.out.println("Updating the features of "+spots.length+" spots");// DEBUG
 		SpotCollection sc = model.getSpots();
 		if (null == sc)
 			return;

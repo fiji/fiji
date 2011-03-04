@@ -21,7 +21,7 @@ import java.util.Set;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
-public class HyperStackDisplayer extends SpotDisplayer {
+public class HyperStackDisplayer extends SpotDisplayer implements SpotCollectionEditListener {
 
 	ImagePlus imp;
 	OverlayedImageCanvas canvas;
@@ -65,6 +65,11 @@ public class HyperStackDisplayer extends SpotDisplayer {
 	 * PUBLIC METHODS
 	 */
 
+	public void collectionChanged(SpotCollectionEditEvent event) {
+		event.setSource(this);
+		fireSpotCollectionEdit(event);
+	}
+	
 	@Override
 	public void setDisplayTrackMode(TrackDisplayMode mode, int displayDepth) {
 		super.setDisplayTrackMode(mode, displayDepth);
@@ -127,6 +132,7 @@ public class HyperStackDisplayer extends SpotDisplayer {
 		canvas.addOverlay(trackOverlay);
 		imp.updateAndDraw();
 		registerEditTool();
+		editTool.addSpotCollectionEditListener(this);
 	}
 	
 	@Override

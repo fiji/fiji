@@ -164,10 +164,10 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 					target = clickLocation;
 					target.putFeature(Feature.RADIUS, displayer.settings.segmenterSettings.expectedRadius);
 					// Add it to collections
-					displayer.spotsToShow.add(target, frame);
-					displayer.spots.add(target, frame);
-					if (null != displayer.trackGraph)
-						displayer.trackGraph.addVertex(target);
+//					displayer.spotsToShow.add(target, frame);
+//					displayer.spots.add(target, frame);
+//					if (null != displayer.trackGraph)
+//						displayer.trackGraph.addVertex(target);
 				}
 				editedSpot = target;
 				
@@ -178,12 +178,19 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				final float zslice = (displayer.imp.getSlice()-1) * displayer.calibration[2];
 				editedSpot.putFeature(Feature.POSITION_Z, zslice);
 				Integer initFrame = displayer.spotsToShow.getFrame(editedSpot);
-				if (initFrame != frame) {
+				if (initFrame == null) {
+					// Means that the spot was created 
+					fireSpotCollectionEdit(new Spot[] { editedSpot }, SpotCollectionEditEvent.SPOT_CREATED, null, frame);					
+				} else if (initFrame != frame) {
 					// Move it to the new frame
-					displayer.spotsToShow.remove(editedSpot, initFrame);
-					displayer.spots.remove(editedSpot, initFrame);
-					displayer.spotsToShow.add(editedSpot, frame);
-					displayer.spots.add(editedSpot, frame);
+					fireSpotCollectionEdit(new Spot[] { editedSpot }, SpotCollectionEditEvent.SPOT_FRAME_CHANGED, initFrame, frame);
+//					displayer.spotsToShow.remove(editedSpot, initFrame);
+//					displayer.spots.remove(editedSpot, initFrame);
+//					displayer.spotsToShow.add(editedSpot, frame);
+//					displayer.spots.add(editedSpot, frame);
+				} else {
+					// The spots pre-existed and was not moved accross frames
+					fireSpotCollectionEdit(new Spot[] { editedSpot }, SpotCollectionEditEvent.SPOT_MODIFIED, null, null);
 				}
 				// Move it in Z
 				final float z = (displayer.imp.getSlice()-1) * displayer.calibration[2];
@@ -267,7 +274,6 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	 * KEYLISTENER
 	 */
 	
-
 	@Override
 	public void keyTyped(KeyEvent e) {
 		final ImagePlus imp = getImagePlus(e);

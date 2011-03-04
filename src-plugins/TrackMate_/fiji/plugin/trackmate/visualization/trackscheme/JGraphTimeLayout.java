@@ -120,8 +120,12 @@ public class JGraphTimeLayout implements JGraphLayout {
 				
 				// Get corresponding JGraph cell 
 				Object facadeTarget = adapter.getVertexCell(spot);
-				SpotView vView = (SpotView) graphFacade.getCellView(facadeTarget);
 				
+				if (null == facadeTarget)
+					System.out.println("Null object for spot "+spot);// DEBUG
+				
+				SpotView vView = (SpotView) graphFacade.getCellView(facadeTarget);
+								
 				// Tune aspect of cell according to context
 				vView.setColor(trackColor);
 				
