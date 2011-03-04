@@ -25,10 +25,10 @@ import org.jgrapht.graph.SimpleWeightedGraph;
  * 
  * <p><b>Required input:</b> A 2D or 3D time-lapse image with bright blobs.</p>
  *
- * @author Nicholas Perry, Jean-Yves Tinevez - Institut Pasteur - July 2010 - January 2011
+ * @author Nicholas Perry, Jean-Yves Tinevez - Institut Pasteur - July 2010 - 2011
  *
  */
-public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateModelInterface {
+public class TrackMate_ implements PlugIn, TrackMateModelInterface {
 	
 	public static final String PLUGIN_NAME_STR = "Track Mate";
 	public static final String PLUGIN_NAME_VERSION = ".alpha";
@@ -44,7 +44,8 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 	private Logger logger = Logger.DEFAULT_LOGGER;
 	private Settings settings;
 	private List<FeatureThreshold> thresholds = new ArrayList<FeatureThreshold>();
-	private SpotSegmenter<T> segmenter;	
+	@SuppressWarnings("rawtypes")
+	private SpotSegmenter<? extends RealType> segmenter;	
 	private Float initialThreshold;
 
 	/*
@@ -86,6 +87,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 			logger.error("Problem occured in tracking:\n"+tracker.getErrorMessage()+'\n');
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public void execSegmentation() {
 		final ImagePlus imp = settings.imp;
@@ -110,7 +112,8 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 		for (int i = settings.tstart-1; i < settings.tend; i++) {
 			
 			/* 1 - Prepare stack for use with Imglib. */
-			Image<T> img = TMUtils.getSingleFrameAsImage(imp, i, settings); // will be cropped according to settings
+			@SuppressWarnings("rawtypes")
+			Image img = TMUtils.getSingleFrameAsImage(imp, i, settings); // will be cropped according to settings
 			
 			/* 2 Segment it */
 			logger.setStatus("Frame "+(i+1)+": Segmenting...");
@@ -142,22 +145,23 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn, TrackMateMode
 		this.spots = spots.threshold(featureThreshold);
 	}
 		
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public void computeFeatures() {
 		int numFrames = settings.tend - settings.tstart + 1;
 		List<Spot> spotsThisFrame;
-		FeatureFacade<T> featureCalculator;
+		FeatureFacade<?> featureCalculator;
 		final float[] calibration = new float[] { settings.dx, settings.dy, settings.dz };
 		
 		for (int i = settings.tstart-1; i < settings.tend; i++) {
 			
 			/* 1 - Prepare stack for use with Imglib. */
-			Image<T> img = TMUtils.getSingleFrameAsImage(settings.imp, i, settings); // will be cropped according to settings
+			Image<? extends RealType> img = TMUtils.getSingleFrameAsImage(settings.imp, i, settings); // will be cropped according to settings
 			
 			/* 2 - Compute features. */
 			logger.setProgress((2*(i-settings.tstart)) / (2f * numFrames + 1));
 			logger.setStatus("Frame "+(i+1)+": Calculating features...");
-			featureCalculator = new FeatureFacade<T>(img, calibration);
+			featureCalculator = new FeatureFacade(img, calibration);
 			spotsThisFrame = spots.get(i);
 			featureCalculator.processAllFeatures(spotsThisFrame);
 						

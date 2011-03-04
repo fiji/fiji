@@ -167,6 +167,9 @@ public abstract class SpotDisplayer {
 	/** The spots currently selected in this displayer. Can be empty, but no t null. */
 	protected Collection<Spot> spotSelection = new ArrayList<Spot>();
 	
+	/** The list of listener to warn for spot selection change. */
+	private  ArrayList<SpotCollectionEditListener> spotCollectionEditListeners = new ArrayList<SpotCollectionEditListener>();
+	
 
 	/*
 	 * STATIC METHOD
@@ -220,6 +223,28 @@ public abstract class SpotDisplayer {
 	 * PUBLIC METHODS
 	 */
 	
+	/*
+	 * listeners
+	 */
+	
+	/**
+	 * Add a listener to this displayer that will be notified when the spot collection is being changed 
+	 * by this displayer.
+	 */
+	public void addSpotCollectionEditListener(SpotCollectionEditListener listener) {
+		this.spotCollectionEditListeners .add(listener);
+	}
+	
+	/**
+	 * Remove a listener from the list of the spot collection edit listeners list. 
+	 * @param listener  the listener to remove
+	 * @return  true if the listener was found in the list maintained by 
+	 * this displayer and successfully removed.
+	 */
+	public boolean removeSpotCollectionEditListener(SpotCollectionEditListener listener) {
+		return spotCollectionEditListeners.remove(listener);
+	}
+
 	/**
 	 * Add a listener to this displayer that will be notified when the spot selection changes.
 	 */
@@ -237,6 +262,10 @@ public abstract class SpotDisplayer {
 		return spotSelectionListeners.remove(listener);
 	}
 
+	/*
+	 * tracks
+	 */
+		
 	/**
 	 * Set the display mode for tracks. The {@link #refresh()} method must be called to refresh
 	 * the display.
@@ -260,6 +289,10 @@ public abstract class SpotDisplayer {
 			counter++;
 		}
 	}
+	
+	/*
+	 * spot collections
+	 */
 	
 	/**
 	 * Set the spots that can be displayed by this displayer. Note that calling this method this 
@@ -342,13 +375,19 @@ public abstract class SpotDisplayer {
 	
 	
 	/*
-	 * PRIVATE METHODS
+	 * PROTECTED METHODS
 	 */
 	
 	protected void fireSpotSelectionChange(Spot[] spotArray, boolean[] areNew) {
 		SpotSelectionEvent event = new SpotSelectionEvent(this, spotArray, areNew);
 		for (SpotSelectionListener listener : spotSelectionListeners)
 			listener.valueChanged(event);
+	}
+
+	protected void fireSpotCollectionEdit(Spot[] spots, int flag, Integer fromFrame, Integer toFrame) {
+		SpotCollectionEditEvent event = new SpotCollectionEditEvent(this, spots, flag, fromFrame, toFrame);
+		for (SpotCollectionEditListener listener : spotCollectionEditListeners)
+			listener.collectionChanged(event);
 	}
 	
 	protected void spotSelectionChanged(Spot target, int frame, int flag) {

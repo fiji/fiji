@@ -63,7 +63,6 @@ public class TrackVisualizerTestDrive {
 		}
 		
 		// Instantiate displayer
-		@SuppressWarnings("rawtypes")
 		TrackMateModelInterface model = new TrackMate_();
 		model.setSettings(settings);
 //		final SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);

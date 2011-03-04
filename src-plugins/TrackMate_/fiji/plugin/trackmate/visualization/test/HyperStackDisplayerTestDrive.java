@@ -12,8 +12,9 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import fiji.plugin.trackmate.visualization.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 
@@ -32,16 +33,23 @@ public class HyperStackDisplayerTestDrive {
 		SpotCollection selectedSpots = reader.getSpotSelection(spots);
 		SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph = reader.getTracks(selectedSpots);
 		Settings settings = reader.getSettings();
-		settings.segmenterSettings = reader.getSegmenterSettings();
 		ImagePlus imp = reader.getImage();
 		settings.imp = imp;
+		settings.segmenterSettings = reader.getSegmenterSettings();
+		
+		TrackMateModelInterface model = new TrackMate_();
+		model.setSettings(settings);
+		model.setSpots(spots);
+		model.setSpotSelection(selectedSpots);
+		model.setTrackGraph(trackGraph);
 				
-		SpotDisplayer displayer = new HyperStackDisplayer(settings);
+		SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(SpotDisplayer.DisplayerType.HYPERSTACK_DISPLAYER, model);
 		displayer.setSpots(spots);
-		displayer.render();
 		displayer.setSpotsToShow(selectedSpots);
 		displayer.setTrackGraph(trackGraph);
 		displayer.setDisplayTrackMode(TrackDisplayMode.LOCAL_WHOLE_TRACKS, 5);
+		
+//		TrackMateModelManager manager = new TrackMateModelManager(model);
 	}
 	
 }

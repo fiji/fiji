@@ -3,11 +3,14 @@ package fiji.plugin.trackmate.visualization;
 import ij.ImagePlus;
 import ij.gui.Toolbar;
 
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import fiji.plugin.trackmate.Feature;
@@ -15,14 +18,30 @@ import fiji.plugin.trackmate.Spot;
 import fiji.tool.AbstractTool;
 
 
-public class SpotEditTool extends AbstractTool implements MouseMotionListener, MouseListener, MouseWheelListener {
+public class SpotEditTool extends AbstractTool implements MouseMotionListener, MouseListener, MouseWheelListener, KeyListener {
 	
 	private static final float COARSE_STEP = 2;
 	private static final float FINE_STEP = 0.2f;
 	private static final String TOOL_NAME = "Spot edit tool";
+	private static final String TOOL_ICON = "C444D01C777D11C999D21C000D31C777L4151C222D61CcccD71C222D81C331D91Ceb5Da1Cd95Lb1c1Cda3Dd1Ca82De1C000Df1"
+		+ "CbbbD02C000D32CdddD42CcccD62C777D82C100D92Ca85Da2CfedLb2c2Cd94Dd2C641De2C111Df2"
+		+ "C000D33CdddD43C761D83C664D93C544Da3CfedLb3c3CdcaDd3C863De3C111Df3"
+		+ "C000D34CdddD44Cec3D74C776D84Cdc9D94C000Da4Cdb9Db4CfdaDc4C776Dd4Cc95De4C111Df4"
+		+ "C000D35CdddD45Cec3D65CffcD75C875D85Cfe7D95C542La5b5Cda7Dc5C653Dd5C111Df5"
+		+ "C000D36CdddD46Cec3D56CffcD66CffbD76C773D86Cfd4D96Ccb7Da6C000Db6C642Dc6CeeeDd6C111Df6"
+		+ "C000D37Cb92D47CffcD57CffbD67Cfe6D77C541D87Cff9D97Ceb6Da7C321Db7C555Dc7C111Df7"
+		+ "C999D28C000D38C665D48CeeaD58Cfe6D68Ca93D78C110D88C974D98Ce94Da8CaaaDb8CcccDc8CaaaDe8C000Df8"
+		+ "Cc92D29CfecD39CffbD49Cfe6D59Cfd4D69Cff9D79Ceb6D89Ce94D99"
+		+ "Ca62D0aCc92D1aCedbD2aCdb6D3aCfe6D4aCfd4D5aCff9D6aCeb6D7aCe94D8a"
+		+ "C972D0bCfedL1b2bCb83D3bCca3D4bCec7D5bCda5D6bCc83D7b"
+		+ "C972D0cCfedD1cCfb6D2cCfa4D3cCc61D4cCb61D5cCb73D6c"
+		+ "C641D0dCda6D1dCfdaD2dCfdbD3dCc95D4dCb73D5d"
+		+ "C641L0e1eCa72D2eCb73D3eCc94D4e";
+	
 	private static SpotEditTool instance;
 	private HashMap<ImagePlus, Spot> editedSpots = new HashMap<ImagePlus, Spot>();
 	private HashMap<ImagePlus, HyperStackDisplayer> displayers = new HashMap<ImagePlus, HyperStackDisplayer>();
+	private ArrayList<SpotCollectionEditListener> spotCollectionEditListeners = new ArrayList<SpotCollectionEditListener>();
 
 	/*
 	 * CONSTRUCTOR
@@ -57,17 +76,48 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	 * METHODS
 	 */
 	
-	@Override
-	public String getToolName() {
-		return TOOL_NAME;
+	/**
+	 * Add a listener to this displayer that will be notified when the spot collection is being changed 
+	 * by this tool.
+	 */
+	public void addSpotCollectionEditListener(SpotCollectionEditListener listener) {
+		this.spotCollectionEditListeners.add(listener);
 	}
 	
 	/**
-	 * Register the given {@link HyperStackDisplayer}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+	 * Remove a listener from the list of the spot collection edit listeners list. 
+	 * @param listener  the listener to remove
+	 * @return  true if the listener was found in the list maintained by 
+	 * this displayer and successfully removed.
+	 */
+	public boolean removeSpotCollectionEditListener(SpotCollectionEditListener listener) {
+		return spotCollectionEditListeners.remove(listener);
+	}
+
+	
+	@Override
+	public String getToolName() {
+		return TOOL_NAME;
+	}	
+
+	@Override
+	public String getToolIcon() {
+		return TOOL_ICON;
+	}
+	
+	/**
+	 * Register the given {@link HyperStackDisplayer}. If this method id not called, the tool will not
+	 * respond.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
 	 */
 	public void register(final ImagePlus imp, final HyperStackDisplayer displayer) {
 		displayers.put(imp, displayer);
+		System.out.println("SpotEditTool: Registered "+imp+" with "+displayer);// DEBUG
 	}
+	
+	
+	/*
+	 * MOUSE AND MOUSE MOTION
+	 */
 	
 	
 	@Override
@@ -189,6 +239,11 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	@Override
 	public void mouseMoved(MouseEvent e) {	}
 
+	
+	/*
+	 * MOUSEWHEEL 
+	 */
+	
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent e) {
 		final ImagePlus imp = getImagePlus(e);
@@ -203,27 +258,55 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			radius += e.getWheelRotation() * displayer.calibration[0] * COARSE_STEP;
 		else 
 			radius += e.getWheelRotation() * displayer.calibration[0] * FINE_STEP;
-		e.consume();
-		editedSpot.putFeature(Feature.RADIUS, radius);
+ 		editedSpot.putFeature(Feature.RADIUS, radius);
 		displayer.imp.updateAndDraw();
+		e.consume();
+	}
+
+	/*
+	 * KEYLISTENER
+	 */
+	
+
+	@Override
+	public void keyTyped(KeyEvent e) {
+		final ImagePlus imp = getImagePlus(e);
+		final HyperStackDisplayer displayer = displayers.get(imp);
+		if (null == displayer)
+			return;
+		Spot editedSpot = editedSpots.get(imp);
+		if (null == editedSpot)
+			return;
+		
+		if (e.getKeyCode() == KeyEvent.VK_DELETE) {
+			Integer initFrame = displayer.spotsToShow.getFrame(editedSpot);
+			if (initFrame != null) {
+				displayer.spotsToShow.remove(editedSpot, initFrame);
+				displayer.spots.remove(editedSpot, initFrame);
+			}
+			editedSpot = null;
+			editedSpots.put(imp, null);
+			imp.updateAndDraw();
+		} else {
+			System.out.println("Got the key: "+e.paramString());// DEBUG
+		}
 	}
 
 	@Override
-	public String getToolIcon() {
-		return "C444D01C777D11C999D21C000D31C777L4151C222D61CcccD71C222D81C331D91Ceb5Da1Cd95Lb1c1Cda3Dd1Ca82De1C000Df1"
-		+ "CbbbD02C000D32CdddD42CcccD62C777D82C100D92Ca85Da2CfedLb2c2Cd94Dd2C641De2C111Df2"
-		+ "C000D33CdddD43C761D83C664D93C544Da3CfedLb3c3CdcaDd3C863De3C111Df3"
-		+ "C000D34CdddD44Cec3D74C776D84Cdc9D94C000Da4Cdb9Db4CfdaDc4C776Dd4Cc95De4C111Df4"
-		+ "C000D35CdddD45Cec3D65CffcD75C875D85Cfe7D95C542La5b5Cda7Dc5C653Dd5C111Df5"
-		+ "C000D36CdddD46Cec3D56CffcD66CffbD76C773D86Cfd4D96Ccb7Da6C000Db6C642Dc6CeeeDd6C111Df6"
-		+ "C000D37Cb92D47CffcD57CffbD67Cfe6D77C541D87Cff9D97Ceb6Da7C321Db7C555Dc7C111Df7"
-		+ "C999D28C000D38C665D48CeeaD58Cfe6D68Ca93D78C110D88C974D98Ce94Da8CaaaDb8CcccDc8CaaaDe8C000Df8"
-		+ "Cc92D29CfecD39CffbD49Cfe6D59Cfd4D69Cff9D79Ceb6D89Ce94D99"
-		+ "Ca62D0aCc92D1aCedbD2aCdb6D3aCfe6D4aCfd4D5aCff9D6aCeb6D7aCe94D8a"
-		+ "C972D0bCfedL1b2bCb83D3bCca3D4bCec7D5bCda5D6bCc83D7b"
-		+ "C972D0cCfedD1cCfb6D2cCfa4D3cCc61D4cCb61D5cCb73D6c"
-		+ "C641D0dCda6D1dCfdaD2dCfdbD3dCc95D4dCb73D5d"
-		+ "C641L0e1eCa72D2eCb73D3eCc94D4e";
-	}	
+	public void keyPressed(KeyEvent e) { }
 
+	@Override
+	public void keyReleased(KeyEvent e) { }	
+	
+
+	/*
+	 * PRIVATE METHODS
+	 */
+	
+	private void fireSpotCollectionEdit(Spot[] spots, int flag, Integer fromFrame, Integer toFrame) {
+		SpotCollectionEditEvent event = new SpotCollectionEditEvent(this, spots, flag, fromFrame, toFrame);
+		for (SpotCollectionEditListener listener : spotCollectionEditListeners)
+			listener.collectionChanged(event);
+	}
+	
 }

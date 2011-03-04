@@ -32,7 +32,8 @@ public class TMUtils {
 	 * @param iFrame  the frame number to extract, 0-based
 	 * @return  a 3D or 2D {@link Image} with the single time-point required 
 	 */
-	public static <T extends RealType<T>> Image<T> getSingleFrameAsImage(ImagePlus imp, int iFrame, Settings settings) {
+	@SuppressWarnings("rawtypes")
+	public static Image<? extends RealType> getSingleFrameAsImage(ImagePlus imp, int iFrame, Settings settings) {
 		ImageStack stack = imp.getImageStack();
 		ImageStack frame = new ImageStack(settings.xend-settings.xstart, settings.yend-settings.ystart, stack.getColorModel());
 		int numSlices = imp.getNSlices();
@@ -48,7 +49,9 @@ public class TMUtils {
 		}
 		
 		ImagePlus ipSingleFrame = new ImagePlus(imp.getShortTitle()+"-Frame_" + Integer.toString(iFrame + 1), frame);
-		return ImagePlusAdapter.wrap(ipSingleFrame);
+		@SuppressWarnings("unchecked")
+		Image<? extends RealType> img =  ImagePlusAdapter.wrap(ipSingleFrame);
+		return img;
 	}
 
 
