@@ -263,8 +263,11 @@ public class MeshEditor {
 	 *  All kudos to Blender's authors. Thanks for sharing with GPL license.
 	 */
 	static public void smooth2(final CustomTriangleMesh c, final int iterations) {
-		final List<Point3f> triangles = c.getMesh();
+		smooth2(c.getMesh(), iterations);
+		c.update();
+	}
 
+	static protected void smooth2(final List<Point3f> triangles, final int iterations) {
 		final HashMap<Point3f,Vertex> verts = new HashMap<Point3f,Vertex>();
 		final HashSet<Edge> edges = new HashSet<Edge>();
 
@@ -300,7 +303,5 @@ public class MeshEditor {
 				}
 			}
 		}
-
-		c.update();
 	}
 }
