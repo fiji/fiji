@@ -464,7 +464,14 @@ public class Executer {
 			if(cn instanceof CustomMeshNode) {
 				CustomMesh mesh = ((CustomMeshNode)cn).getMesh();
 				if(mesh instanceof CustomTriangleMesh)
-					MeshEditor.smooth((CustomTriangleMesh)mesh, 0.25f);
+					MeshEditor.smooth2((CustomTriangleMesh)mesh, 1); // 0.25f);
+			} else if(cn instanceof CustomMultiMesh) {
+				CustomMultiMesh multi = (CustomMultiMesh)cn;
+				for(int i=0; i<multi.size(); i++) {
+					CustomMesh m = multi.getMesh(i);
+					if(m instanceof CustomTriangleMesh)
+						MeshEditor.smooth2((CustomTriangleMesh)m, 1);
+				}
 			}
 		}
 	}
