@@ -364,7 +364,8 @@ public abstract class CustomMesh extends Shape3D {
 
 		ColoringAttributes colorAttrib = new ColoringAttributes();
 		colorAttrib.setShadeModel(ColoringAttributes.SHADE_GOURAUD);
-		colorAttrib.setColor(color);
+		if (null != color) // is null when colors are vertex-wise
+			colorAttrib.setColor(color);
 		appearance.setColoringAttributes(colorAttrib);
 
 		TransparencyAttributes tr = new TransparencyAttributes();
