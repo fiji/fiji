@@ -2513,7 +2513,7 @@ static int start_ij(void)
 		"fiji.executable", main_argv0,
 		"java.library.path", java_library_path->buffer,
 #ifdef WIN32
-		"sun.direct2d.noddraw", "true",
+		"sun.java2d.noddraw", "true",
 #endif
 		NULL
 	};

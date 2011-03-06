@@ -63,7 +63,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 	static final Var ns = RT.var("clojure.core", "*ns*");
 	static final Var compile_path = RT.var("clojure.core", "*compile-path*");
 	static final Var warn_on_reflection = RT.var("clojure.core", "*warn-on-reflection*");
-	static final Var warn_on_reflection = RT.var("clojure.core", "*unchecked-math*");
+	static final Var unchecked_math = RT.var("clojure.core", "*unchecked-math*");
 	static final Var print_meta = RT.var("clojure.core", "*print-meta*");
 	static final Var print_length = RT.var("clojure.core", "*print-length*");
 	static final Var print_level = RT.var("clojure.core", "*print-level*");
@@ -207,6 +207,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 						Var.pushThreadBindings(
 							RT.map(ns, ns.get(),
 							       warn_on_reflection, warn_on_reflection.get(),
+							       unchecked_math, unchecked_math.get(),
 							       print_meta, print_meta.get(),
 							       print_length, print_length.get(),
 							       print_level, print_level.get(),
