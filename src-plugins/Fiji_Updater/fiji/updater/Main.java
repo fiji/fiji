@@ -215,7 +215,7 @@ public class Main {
 		PluginUploader uploader = new PluginUploader(plugins, updateSite);
 		String username = uploader.getDefaultUsername();
 		if (username == null || username.equals(""))
-			userInfo.getUsername("Login for " + getLongUpdateSiteName(updateSite));
+			username = userInfo.getUsername("Login for " + getLongUpdateSiteName(updateSite));
 		if (!uploader.setLogin(username, userInfo))
 			die("Aborting");
 		try {
