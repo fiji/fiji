@@ -163,6 +163,7 @@ public class Main {
 			case UPDATEABLE:
 			case MODIFIED:
 			case NEW:
+			case NOT_INSTALLED:
 				download(plugin);
 				break;
 			case NOT_FIJI:
@@ -170,6 +171,8 @@ public class Main {
 			case OBSOLETE_MODIFIED:
 				delete(plugin);
 				break;
+			default:
+				System.err.println("Not updating " + plugin.filename + " (" + plugin.getStatus() + ")");
 			}
 		try {
 			plugins.write();
