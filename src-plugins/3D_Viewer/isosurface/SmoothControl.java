@@ -162,27 +162,7 @@ public class SmoothControl {
 			{ setPriority(Thread.NORM_PRIORITY); }
 			public void run() {
 				try {
-					SwingUtilities.invokeAndWait(new Runnable() {
-						public void run() {
-							s.setEnabled(false);
-							c.setEnabled(false);
-							gd.setEnabled(false);
-						}
-					});
-					try {
-						r.run();
-					} catch (Throwable t) {
-						t.printStackTrace();
-					}
-					SwingUtilities.invokeAndWait(new Runnable() {
-						public void run() {
-							s.setEnabled(true);
-							c.setEnabled(true);
-							gd.setEnabled(true);
-						}
-					});
-				} catch (InterruptedException ie) {
-					System.out.println("task was interrupted");
+					r.run();
 				} catch (Throwable e) {
 					e.printStackTrace();
 				}
@@ -250,6 +230,10 @@ public class SmoothControl {
 			}
 			public void adjustmentValueChanged(AdjustmentEvent ae) {
 				if (ae.getValueIsAdjusting()) return; // wait until the slider stops
+				if (!slider.isEnabled()) {
+					IJ.log("slider not enabled!");
+					return;
+				}
 				// Check that the value has really changed
 				final int v = slider.getValue();
 				if (v == lastValue[0]) return;
