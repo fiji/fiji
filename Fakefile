@@ -558,7 +558,7 @@ precompile[] <- precompile-fiji precompile-fake precompile-submodules
 
 # precompiled fall back
 
-missingPrecompiledFallBack[./fiji --jar plugins/Fiji_Updater.jar --update $TARGET] <- \
+missingPrecompiledFallBack[./fiji --update update $TARGET] <- \
 	jars/Fiji.jar plugins/Fiji_Updater.jar
 
 # Portable application/.app
