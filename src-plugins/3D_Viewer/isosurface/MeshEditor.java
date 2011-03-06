@@ -282,9 +282,13 @@ public class MeshEditor {
 			edges.add(new Edge(v1, v2));
 			edges.add(new Edge(v2, v3));
 			edges.add(new Edge(v1, v3));
+
+			if (0 == i % 300 && Thread.currentThread().isInterrupted()) return;
 		}
 
 		for (int i=0; i<iterations; ++i) {
+
+			if (Thread.currentThread().isInterrupted()) return;
 
 			// First pass: accumulate averages
 			for (final Edge e : edges) {
