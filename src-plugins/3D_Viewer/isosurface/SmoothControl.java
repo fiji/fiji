@@ -26,6 +26,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Set;
+import java.util.HashSet;
 
 import javax.vecmath.Point3f;
 import javax.swing.SwingUtilities;
@@ -47,8 +49,10 @@ public class SmoothControl {
 		private Originals() {}
 
 		/** Restore the coordinates of the points in all meshes. */
-		private void restore() {
+		private void restore(final Content except) {
+			final Set<CustomTriangleMesh> avoid = findMeshes(except);
 			for (final Map.Entry<CustomTriangleMesh,List<Point3f>> e : data.entrySet()) {
+				if (avoid.contains(e.getKey())) continue;
 				apply(e.getKey(), e.getValue());
 			}
 			IJ.showStatus("Restored meshes");
@@ -67,30 +71,36 @@ public class SmoothControl {
 			return deepCopy(data.get(tm));
 		}
 
-		/** Add any CustomTriangleMesh contained in {@param content} only if not there already. */
-		private void add(final Content content) {
-			if (null == content) return;
+		private Set<CustomTriangleMesh> findMeshes(final Content content) {
+			final HashSet<CustomTriangleMesh> meshes = new HashSet<CustomTriangleMesh>();
+			if (null == content) return meshes;
 			ContentInstant ci = content.getCurrent();
-			if (null == ci) return;
+			if (null == ci) return meshes;
 			ContentNode node = ci.getContent();
-			if (null == node) return;
+			if (null == node) return meshes;
+			// Must check first for multi, since it is also a CustomMeshNode
 			if (node instanceof CustomMultiMesh) {
 				CustomMultiMesh multi = (CustomMultiMesh)node;
 				for (int i=0; i<multi.size(); ++i) {
 					CustomMesh m = multi.getMesh(i);
 					if (m instanceof CustomTriangleMesh) {
-						CustomTriangleMesh tm = (CustomTriangleMesh)m;
-						if (data.containsKey(tm)) continue; // already stored
-						data.put(tm, deepCopy(tm.getMesh()));
+						meshes.add((CustomTriangleMesh)m);
 					}
 				}
 			} else if (node instanceof CustomMeshNode) {
 				CustomMesh m = ((CustomMeshNode)node).getMesh();
 				if (m instanceof CustomTriangleMesh) {
-					CustomTriangleMesh tm = (CustomTriangleMesh)m;
-					if (data.containsKey(tm)) return; // already stored
-					data.put(tm, deepCopy(tm.getMesh()));
+					meshes.add((CustomTriangleMesh)m);
 				}
+			}
+			return meshes;
+		}
+
+		/** Add any CustomTriangleMesh contained in {@param content} only if not there already. */
+		private void add(final Content content) {
+			for (final CustomTriangleMesh tm : findMeshes(content)) {
+				if (data.containsKey(tm)) continue; // already stored
+				data.put(tm, deepCopy(tm.getMesh()));
 			}
 		}
 
@@ -143,6 +153,7 @@ public class SmoothControl {
 		}
 		private void launchWhenDone(final Task next) {
 			this.next = next;
+			interrupt(); // will stop the MeshEditor.smooth2
 		}
 	}
 
@@ -170,6 +181,8 @@ public class SmoothControl {
 							gd.setEnabled(true);
 						}
 					});
+				} catch (InterruptedException ie) {
+					System.out.println("task was interrupted");
 				} catch (Throwable e) {
 					e.printStackTrace();
 				}
@@ -193,6 +206,8 @@ public class SmoothControl {
 		// Start with a copy of the selected mesh, if any
 		originals = new Originals();
 		originals.copy(univ, false);
+		final Task[] lastTask = new Task[1];
+		final Object pivot = new Object();
 
 		// Prepare the dialog
 		final GenericDialog gd = new GenericDialog("Smooth meshes") {
@@ -200,7 +215,18 @@ public class SmoothControl {
 				GenericDialog gd = (GenericDialog) we.getSource();
 				if (gd.wasCanceled()) {
 					// ... or the window closed.
-					originals.restore();
+					synchronized (pivot) {
+						if (null != lastTask[0]) {
+							lastTask[0].interrupt();
+							lastTask[0] = null;
+						}
+					}
+					new Thread() {
+						{ setPriority(Thread.NORM_PRIORITY); }
+						public void run() {
+							originals.restore(null);
+						}
+					}.start();
 					return;
 				}
 				if (gd.wasOKed()) {
@@ -217,8 +243,6 @@ public class SmoothControl {
 
 		final int[] all = new int[1]; // zero by default, meaning selected mesh only
 		final int[] lastValue = new int[1];
-		final Task[] lastTask = new Task[1];
-		final Object pivot = new Object();
 
 		final Listener listener = new Listener() {
 			public void itemStateChanged(ItemEvent ie) {
@@ -234,6 +258,7 @@ public class SmoothControl {
 			}
 			private final void run(final int iterations) {
 				synchronized (pivot) {
+					if (!gd.isVisible()) return;
 					if (null != lastTask[0]) {
 						lastTask[0].launchWhenDone(task(iterations));
 					} else {
@@ -247,23 +272,27 @@ public class SmoothControl {
 				return launchTask(gd, slider, choice, pivot, lastTask, new Runnable() {
 					public void run() {
 						final int choiceValue = choice.getSelectedIndex();
-						// Quit if nothing to smooth (zero iterations)
+						// Restore if nothing should be smoothed (zero iterations)
 						if (0 == iterations) {
-							originals.restore();
+							originals.restore(null);
 							return;
 						} else if (1 == all[0] && 0 == choiceValue) {
-							// changing from smooth all to smooth only the selected mesh
-							originals.restore();
+							// Changing from smooth all to smooth only the selected mesh.
+							// The selected mesh is already smoothed, so skip it:
+							originals.restore(univ.getSelected());
+							return;
 						}
-						all[0] = choiceValue;
 						// Smooth meshes
-						if (1 == choice.getSelectedIndex()) {
+						if (1 == choiceValue) {
+							// All meshes
 							for (final Content c : (Collection<Content>)(Collection) univ.getContents()) {
+								if (0 == all[0] && 1 == choiceValue && c == univ.getSelected()) continue; // skip selected when going from selected to all.
 								smooth(c, iterations, originals);
 							}
 						} else {
 							smooth(univ.getSelected(), iterations, originals);
 						}
+						all[0] = choiceValue;
 					}
 				});
 			}
@@ -275,8 +304,5 @@ public class SmoothControl {
 		gd.setModal(false);
 
 		gd.showDialog();
-		if (gd.wasCanceled()) {
-			originals.restore();
-		}
 	}
 }
