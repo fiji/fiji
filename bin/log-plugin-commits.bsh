@@ -55,6 +55,7 @@ usage(message) {
 fuzz = 0;
 verbose = 0;
 gui = false;
+color = false;
 extraArgs = new ArrayList();
 
 while (bsh.args.length > 0 && bsh.args[0].startsWith("-")) {
@@ -66,6 +67,7 @@ while (bsh.args.length > 0 && bsh.args[0].startsWith("-")) {
 		handled = 2;
 	}
 	else if (bsh.args[0].equals("-p") || bsh.args[0].equals("--color")) {
+		color = true;
 		extraArgs.add(bsh.args[0]);
 		if (bsh.args[0].equals("-p")) {
 			extraArgs.add("-M");
@@ -310,7 +312,7 @@ void compareToUploaded(String plugin) {
 							javap(tmpJar, className, remoteFile);
 							javap(localPath, className, localFile);
 						}
-						execute(new String[] { "git", "diff", "--no-index", remoteFile, localFile }, null);
+						execute(new String[] { "git", "diff", "--color=" + (color ? "always" : "auto"), "--no-index", remoteFile, localFile }, null);
 					}
 				}
 				i++; j++;
