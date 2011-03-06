@@ -131,28 +131,58 @@ public class SmoothControl {
 		}
 	}
 
-	static private void launchTask(final GenericDialog gd, final Scrollbar s, final Choice c, final Runnable r) {
-		s.setEnabled(false);
-		c.setEnabled(false);
-		gd.setEnabled(false);
-		new Thread() {
+	static private class Task extends Thread {
+		final Task[] state;
+		final Object pivot;
+		Task next = null;
+
+		private Task(final Object pivot, final Task[] state) {
+			super();
+			this.pivot = pivot;
+			this.state = state;
+		}
+		private void launchWhenDone(final Task next) {
+			this.next = next;
+		}
+	}
+
+	static private Task launchTask(final GenericDialog gd, final Scrollbar s, final Choice c, final Object pivot, final Task[] state, final Runnable r) {
+		return new Task(pivot, state) {
 			{ setPriority(Thread.NORM_PRIORITY); }
 			public void run() {
 				try {
-					r.run();
-				} catch (Throwable t) {
-					t.printStackTrace();
-				} finally {
-					SwingUtilities.invokeLater(new Runnable() {
+					SwingUtilities.invokeAndWait(new Runnable() {
+						public void run() {
+							s.setEnabled(false);
+							c.setEnabled(false);
+							gd.setEnabled(false);
+						}
+					});
+					try {
+						r.run();
+					} catch (Throwable t) {
+						t.printStackTrace();
+					}
+					SwingUtilities.invokeAndWait(new Runnable() {
 						public void run() {
 							s.setEnabled(true);
 							c.setEnabled(true);
 							gd.setEnabled(true);
 						}
 					});
+				} catch (Throwable e) {
+					e.printStackTrace();
+				}
+				// Reset state
+				synchronized (pivot) {
+					if (null == next) state[0] = null;
+					else {
+						state[0] = next;
+						next.start();
+					}
 				}
 			}
-		}.start();
+		};
 	}
 
 	private static interface Listener extends AdjustmentListener, ItemListener {}
@@ -185,11 +215,14 @@ public class SmoothControl {
 		gd.addChoice("Process", c, c[0]);
 		final Choice choice = (Choice)gd.getChoices().get(0);
 
+		final int[] all = new int[1]; // zero by default, meaning selected mesh only
 		final int[] lastValue = new int[1];
+		final Task[] lastTask = new Task[1];
+		final Object pivot = new Object();
 
 		final Listener listener = new Listener() {
 			public void itemStateChanged(ItemEvent ie) {
-				task(slider.getValue());
+				run(slider.getValue());
 			}
 			public void adjustmentValueChanged(AdjustmentEvent ae) {
 				if (ae.getValueIsAdjusting()) return; // wait until the slider stops
@@ -197,17 +230,32 @@ public class SmoothControl {
 				final int v = slider.getValue();
 				if (v == lastValue[0]) return;
 				lastValue[0] = v;
-				task(v);
+				run(v);
 			}
-			private final void task(final int iterations) {
+			private final void run(final int iterations) {
+				synchronized (pivot) {
+					if (null != lastTask[0]) {
+						lastTask[0].launchWhenDone(task(iterations));
+					} else {
+						lastTask[0] = task(iterations);
+						lastTask[0].start();
+					}
+				}
+			}
+			private final Task task(final int iterations) {
 				IJ.showStatus("Smoothing with " + iterations + " iterations");
-				launchTask(gd, slider, choice, new Runnable() {
+				return launchTask(gd, slider, choice, pivot, lastTask, new Runnable() {
 					public void run() {
+						final int choiceValue = choice.getSelectedIndex();
 						// Quit if nothing to smooth (zero iterations)
 						if (0 == iterations) {
 							originals.restore();
 							return;
+						} else if (1 == all[0] && 0 == choiceValue) {
+							// changing from smooth all to smooth only the selected mesh
+							originals.restore();
 						}
+						all[0] = choiceValue;
 						// Smooth meshes
 						if (1 == choice.getSelectedIndex()) {
 							for (final Content c : (Collection<Content>)(Collection) univ.getContents()) {
