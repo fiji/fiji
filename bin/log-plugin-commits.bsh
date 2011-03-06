@@ -194,7 +194,7 @@ toStringArray(list) {
 javap(String jar, String className, String outputFile) {
 	args = new ArrayList(Arrays.asList(new String[] {
 		System.getProperty("fiji.executable"),
-			"--javap", "-cp", jar, "-c",
+			"--javap", "-cp", jar, "-c", "-l",
 	}));
 	if (verbose > 1)
 		args.add("-verbose");
