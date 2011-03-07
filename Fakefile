@@ -260,7 +260,6 @@ CLASSPATH(jars/imglib-io.jar)=plugins/loci_tools.jar:jars/imglib.jar:jars/imglib
 jars/imglib-io.jar <- modules/imglib/
 CLASSPATH(jars/imglib-algorithms.jar)=jars/Jama-1.0.2.jar:jars/imglib.jar:jars/edu_mines_jtk.jar:jars/mpicbg.jar
 jars/imglib-algorithms.jar <- modules/imglib/
-
 jars/clojure.jar <- fiji modules/clojure/
 plugins/loci_tools.jar <- fiji modules/bio-formats/
 CLASSPATH(jars/VectorString.jar)=jars/ij.jar:jars/Jama-1.0.2.jar:$JAVA3D_JARS
@@ -276,7 +275,6 @@ jars/autocomplete.jar <- fiji modules/AutoComplete/
 jars/weka.jar <- fiji jars/Fiji.jar modules/weka/
 jars/jython.jar <- fiji modules/jython/
 jars/commons-math.jar <- fiji modules/commons-math/
-
 CLASSPATH(jars/imglib-scripting.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-io.jars:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/loci_tools.jar:jars/mpicbg.jar:jars/jfreechart-1.0.13.jar:jars/jcommon-1.0.12.jar:$JAVA3D_JARS
 jars/imglib-scripting.jar <- modules/imglib/
 
