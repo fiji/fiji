@@ -188,6 +188,9 @@ then
 	exit 1
 fi
 
+echo " Note: Asked for the files which are not up-to-date, the Updater says:"
+./fiji --update list-not-uptodate
+
 echo "Uploading" &&
 copy_files || exit
 
@@ -206,4 +209,4 @@ read dummy
 echo "Tagging" &&
 git tag -m "Fiji $RELEASE" Fiji-$RELEASE &&
 git push fiji.git Fiji-$RELEASE &&
-./bin/update-fiji.py || exit
+echo "Please start the updater and make sure that all files are uploaded." || exit
