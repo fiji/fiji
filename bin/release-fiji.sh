@@ -14,7 +14,7 @@
 
 test a"$1" = a--copy-files && set "$2" "$1"
 
-RELEASE="$1"
+RELEASE="${1#Fiji-}"
 test -z "$RELEASE" && {
 	echo "Need a release"
 	exit 1
@@ -142,6 +142,7 @@ git diff-index --cached --quiet HEAD || {
 	exit 1
 }
 
+echo Checking for tag Fiji-$RELEASE
 git rev-parse --verify refs/tags/Fiji-$RELEASE 2>/dev/null && {
 	echo "Tag Fiji-$RELEASE already exists!" >&2
 	exit 1
