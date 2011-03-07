@@ -15,11 +15,13 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,6 +43,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.JToolBar;
 import javax.swing.ListCellRenderer;
@@ -543,6 +546,45 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 					jGraph.startEditingAtCell(cell);
 				}
 			});
+			
+		} else if (spotSelection.size() > 0) {
+			
+			// Multi edit
+			
+			menu.add(new AbstractAction("Edit " + spotSelection.size() +" spots") {
+				public void actionPerformed(ActionEvent e) {
+					
+					final SpotView[] cellViews = new SpotView[spotSelection.size()];
+					final JGraphFacade facade = new JGraphFacade(jGraph);
+					Iterator<Spot> it = spotSelection.iterator();
+					for (int i = 0; i < spotSelection.size(); i++) {
+						Object facadeTarget = jGMAdapter.getVertexCell(it.next());
+						SpotView vView = (SpotView) facade.getCellView(facadeTarget);
+						cellViews[i] = vView;
+					}
+					
+					final JTextField editField = new JTextField(20);
+					editField.setFont(FONT);
+					editField.setBounds(pt.x, pt.y, 100, 20);
+					jGraph.add(editField);
+					editField.setVisible(true);
+					editField.revalidate();
+					jGraph.repaint();
+					editField.requestFocusInWindow();
+					editField.addActionListener(new ActionListener() {
+						
+						@Override
+						public void actionPerformed(ActionEvent e) {
+							System.out.println("Editing finished");// DEBUG
+							for(Spot spot : spotSelection)
+								spot.setName(editField.getText());
+							jGraph.remove(editField);
+							jGraph.refresh();
+						}
+					});
+				}
+			});
+			
 		}
 		// Remove
 		menu.addSeparator();

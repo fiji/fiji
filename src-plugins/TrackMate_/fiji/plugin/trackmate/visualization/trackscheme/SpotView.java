@@ -48,5 +48,5 @@ public class SpotView extends VertexView {
 
 	public void setColor(Color color) {
 		this.color = color;		
-	}	
+	}
 }
