@@ -1,25 +1,22 @@
 package fiji.updater.ui;
 
-import ij.IJ;
-
-import ij.plugin.BrowserLauncher;
-
-import fiji.updater.logic.Dependency;
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginObject;
 
 import fiji.updater.util.Util;
+
+import ij.IJ;
+
+import ij.plugin.BrowserLauncher;
 
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.Rectangle;
 
-import java.awt.event.MouseEvent;
 import java.awt.event.MouseAdapter;
-import java.awt.event.MouseListener;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.awt.event.MouseMotionListener;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -82,7 +79,8 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 		});
 
 		reset();
-		if (Util.isDeveloper)
+		// TODO: enable depending on the update site
+		if (updaterFrame.plugins.hasUploadableSites())
 			getDocument().addUndoableEditListener(this);
 	}
 
@@ -104,8 +102,6 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 	}
 
 	public void setEditableForDevelopers() {
-		if (!Util.isDeveloper)
-			return;
 		removeDummySpace();
 		setEditable(true);
 	}
@@ -170,7 +166,7 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 	}
 
 	public void description(String description, PluginObject plugin) {
-		if (!Util.isDeveloper && (description == null ||
+		if (!updaterFrame.plugins.hasUploadableSites() && (description == null ||
 					description.trim().equals("")))
 			return;
 		blankLine();
@@ -186,7 +182,7 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 		for (Object object : items)
 			list.add(object);
 
-		if (!Util.isDeveloper && list.size() == 0)
+		if (!updaterFrame.plugins.hasUploadableSites() && list.size() == 0)
 			return;
 
 		blankLine();
@@ -254,13 +250,19 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 		}
 		description(plugin.getDescription(), plugin);
 		list("Author", false, plugin.getAuthors(), ", ", plugin);
-		if (Util.isDeveloper)
+		if (updaterFrame.plugins.hasUploadableSites())
 			list("Platform", false, plugin.getPlatforms(), ", ",
 				plugin);
 		list("Category", false, plugin.getCategories(), ", ", plugin);
 		list("Link", true, plugin.getLinks(), "\n", plugin);
 		list("Dependency", false, plugin.getDependencies(), ",\n",
 				plugin);
+		if (plugin.updateSite != null &&
+				!plugin.updateSite.equals(PluginCollection.DEFAULT_UPDATE_SITE)) {
+			blankLine();
+			bold("Update site:\n");
+			normal(plugin.updateSite);
+		}
 
 		// scroll to top
 		scrollRectToVisible(new Rectangle(0, 0, 1, 1));
@@ -339,6 +341,7 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 		try { text = getDocument().getText(start, end + 1 - start); }
 		catch (BadLocationException e) { return false; }
 
+		editable.plugin.metadataChanged = true;
 		if (editable.tag.equals("Description")) {
 			editable.plugin.description = text;
 			return true;

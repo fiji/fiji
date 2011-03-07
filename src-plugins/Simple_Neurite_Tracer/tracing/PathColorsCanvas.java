@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010, 2011 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Simple Neurite Tracer".
@@ -32,6 +32,7 @@ import java.awt.event.*;
 
 import ij.gui.ColorChooser;
 
+@SuppressWarnings("serial")
 public class PathColorsCanvas extends Canvas implements MouseListener {
 
 	SimpleNeuriteTracer plugin;

@@ -76,10 +76,10 @@ precompiledDirectory=precompiled/
 
 buildDir=build/
 
-FIJI_JAVA_HOME(linux)=java/linux/jdk1.6.0_21/jre
-FIJI_JAVA_HOME(linux64)=java/linux-amd64/jdk1.6.0_21/jre
-FIJI_JAVA_HOME(win32)=java/win32/jdk1.6.0_21/jre
-FIJI_JAVA_HOME(win64)=java/win64/jdk1.6.0_21/jre
+FIJI_JAVA_HOME(linux)=java/linux/jdk1.6.0_24/jre
+FIJI_JAVA_HOME(linux64)=java/linux-amd64/jdk1.6.0_24/jre
+FIJI_JAVA_HOME(win32)=java/win32/jdk1.6.0_24/jre
+FIJI_JAVA_HOME(win64)=java/win64/jdk1.6.0_24/jre
 FIJI_JAVA_HOME(macosx)=java/macosx-java3d
 JAVA_HOME=$FIJI_JAVA_HOME
 ENVOVERRIDES(JAVA_HOME)=true
@@ -203,7 +203,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/RandomJ_.jar \
 	plugins/Linear_Kuwahara.jar \
 	plugins/Thread_Killer.jar \
-	plugins/Jython_Scripts.jar \
 	plugins/Samples_.jar \
 	plugins/Lasso_and_Blow_Tool.jar \
 	jars/mij.jar \
@@ -261,7 +260,6 @@ CLASSPATH(jars/imglib-io.jar)=plugins/loci_tools.jar:jars/imglib.jar:jars/imglib
 jars/imglib-io.jar <- modules/imglib/
 CLASSPATH(jars/imglib-algorithms.jar)=jars/Jama-1.0.2.jar:jars/imglib.jar:jars/edu_mines_jtk.jar:jars/mpicbg.jar
 jars/imglib-algorithms.jar <- modules/imglib/
-
 jars/clojure.jar <- fiji modules/clojure/
 plugins/loci_tools.jar <- fiji modules/bio-formats/
 CLASSPATH(jars/VectorString.jar)=jars/ij.jar:jars/Jama-1.0.2.jar:$JAVA3D_JARS
@@ -277,7 +275,6 @@ jars/autocomplete.jar <- fiji modules/AutoComplete/
 jars/weka.jar <- fiji jars/Fiji.jar modules/weka/
 jars/jython.jar <- fiji modules/jython/
 jars/commons-math.jar <- fiji modules/commons-math/
-
 CLASSPATH(jars/imglib-scripting.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-io.jars:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/loci_tools.jar:jars/mpicbg.jar:jars/jfreechart-1.0.13.jar:jars/jcommon-1.0.12.jar:$JAVA3D_JARS
 jars/imglib-scripting.jar <- modules/imglib/
 
@@ -344,11 +341,6 @@ CLASSPATH(plugins/Arrow_.jar)=jars/ij.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/TransformJ_.jar)=jars/ij.jar:jars/imagescience.jar
 CLASSPATH(plugins/FeatureJ_.jar)=jars/ij.jar:jars/imagescience.jar
 CLASSPATH(plugins/RandomJ_.jar)=jars/ij.jar:jars/imagescience.jar
-CLASSPATH(plugins/Jython_Scripts.jar)=jars/ij.jar:plugins/Jython_Interpreter.jar:jars/fiji-scripting.jar
-plugins/Jython_Scripts.jar <- \
-	src-plugins/Jython_Scripts/**/*java \
-	src-plugins/Jython_Scripts/scripts/*py \
-	src-plugins/Jython_Scripts/plugins.config
 CLASSPATH(plugins/Auto_Threshold.jar)=jars/ij.jar
 CLASSPATH(plugins/Colocalisation_Analysis.jar)=jars/ij.jar
 CLASSPATH(plugins/Series_Labeler.jar)=jars/ij.jar
@@ -448,21 +440,25 @@ JAVA_LIB_PATH(macosx)=
 
 # The variables CFLAGS, LDFLAGS and LIBS will be used for compiling
 # C and C++ programs.
-COMMONCFLAGS=-Wall -Iincludes \
-	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH"'
+COMMONCFLAGS=-Wall -Iincludes
 WINOPTS=-mwindows -mno-cygwin -DMINGW32
-CFLAGS(win32)=$COMMONCFLAGS $WINOPTS
-CFLAGS(win64)=$COMMONCFLAGS $WINOPTS
+CFLAGS(win32)=$COMMONCFLAGS $WINOPTS \
+	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(win32)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(win32)"'
+CFLAGS(win64)=$COMMONCFLAGS $WINOPTS \
+	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(win64)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(win64)"'
 
 # Include 64-bit architectures only in ./fiji (as opposed to ./fiji-tiger),
 # and only on MacOSX
 MACOPTS(osx10.3)=-I/System/Library/Frameworks/JavaVM.Framework/Headers \
-	-DMACOSX
+	-DMACOSX \
+	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(macosx)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(macosx)"'
 MACOPTS(osx10.4)=$MACOPTS(osx10.3) -mmacosx-version-min=10.3 -arch i386 -arch ppc
 MACOPTS(osx10.5)=$MACOPTS(osx10.3) -mmacosx-version-min=10.4 -arch i386 -arch x86_64
 
-CFLAGS(linux)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector
-CFLAGS(linux64)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector
+CFLAGS(linux)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector \
+	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(linux)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(linux)"'
+CFLAGS(linux64)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector \
+	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(linux64)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(linux64)"'
 
 LDFLAGS(win32)=$LDFLAGS $WINOPTS
 
@@ -493,11 +489,11 @@ fiji-panther <- fiji.c
 all-cross[] <- cross-win32 cross-win64 cross-linux cross-macosx cross-tiger
 # cross-tiger does not work yet
 
-cross-tiger[bin/cross-compiler.py tiger \
+cross-tiger[bin/cross-compiler.bsh tiger \
 	$CFLAGS(fiji-panther) $LIBS(macosx)] <- fiji.c
-cross-macosx[bin/cross-compiler.py macosx \
+cross-macosx[bin/cross-compiler.bsh macosx \
 	$CFLAGS(fiji-panther) $LIBS(macosx)] <- fiji.c
-cross-*[bin/cross-compiler.py * $CFLAGS(*) $LDFLAGS(*) $LIBS(*)] <- fiji.c
+cross-*[bin/cross-compiler.bsh * $CFLAGS(*) $LDFLAGS(*) $LIBS(*)] <- fiji.c
 
 # Precompiled stuff
 
@@ -560,7 +556,7 @@ precompile[] <- precompile-fiji precompile-fake precompile-submodules
 
 # precompiled fall back
 
-missingPrecompiledFallBack[./fiji --jar plugins/Fiji_Updater.jar --update $TARGET] <- \
+missingPrecompiledFallBack[./fiji --update update $TARGET] <- \
 	jars/Fiji.jar plugins/Fiji_Updater.jar
 
 # Portable application/.app

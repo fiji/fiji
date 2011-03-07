@@ -1871,6 +1871,9 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 				if(debug)
 					IJ.log("found unvisited junction point: " + nextPoint);
 				this.auxFinalVertex = findPointVertex(this.junctionVertex[iTree], nextPoint);
+				// Add the length to the first point of the vertex (to prevent later from having
+				// euclidean distances larger than the actual distance)
+				length += calculateDistance(auxFinalVertex.getPoints().get(0), nextPoint);
 				/*
 				int j = 0;
 				for(j = 0; j < this.junctionVertex[iTree].length; j++)

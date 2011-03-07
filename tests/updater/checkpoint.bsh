@@ -1,0 +1,53 @@
+/// CHECKPOINT SYSTEM (resume at a given checkpoint)
+/// requires fs.bsh
+
+initializeCheckpointSystem(checkpointDir, directories) {
+	if (global.startAtCheckpoint == void) {
+		global.startAtCheckpoint = null;
+		latest = new File(checkpointDir, "latest");
+		if (latest.exists())
+			global.startAtCheckpoint = readFile(latest);
+	}
+	if (startAtCheckpoint != null && !new File(checkpointDir, startAtCheckpoint).exists())
+		startAtCheckpoint = null;
+	global.checkpointDir = checkpointDir;
+	global.checkpointDirectories = directories;
+}
+
+boolean checkpoint(String name) {
+	name = name.replaceAll("[();/]", "");
+	backupDir = new File(checkpointDir, name);
+	if (startAtCheckpoint != null) {
+		if (name.equals(startAtCheckpoint)) {
+			System.err.println("Restoring state at checkpoint " + name);
+			for (File dir : checkpointDirectories) {
+				deleteRecursively(dir);
+				File fromDir = new File(backupDir, dir.getName());
+				if (fromDir.isDirectory())
+					copyRecursively(fromDir, dir);
+			}
+			global.startAtCheckpoint = null;
+			return true;
+		}
+		if (name.equals("done"))
+			System.err.println("ERROR: checkpoint " + name + " was not seen!");
+		else
+			System.err.println("Skipping checkpoint " + name);
+		return false;
+	}
+
+	if (name.equals("done")) {
+		writeFile(checkpointDir, "latest", name);
+		return true;
+	}
+
+	System.err.println("Storing state at checkpoint " + name);
+	for (File dir : checkpointDirectories) {
+		toDir = new File(backupDir, dir.getName());
+		deleteRecursively(toDir);
+		if (dir.isDirectory())
+			copyRecursively(dir, toDir);
+	}
+	writeFile(checkpointDir, "latest", name);
+	return true;
+}

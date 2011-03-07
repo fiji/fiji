@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010, 2011 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Simple Neurite Tracer".
@@ -27,23 +27,17 @@
 
 package tracing;
 
-import java.awt.*;
 import java.util.ArrayList;
-import java.io.*;
 
 import amira.AmiraParameters;
 
 import ij.*;
-import ij.io.*;
 import ij.process.ColorProcessor;
 
-import ij.gui.*;
 
 import ij.plugin.PlugIn;
 
 import landmarks.Bookstein_From_Landmarks;
-
-import vib.transforms.OrderedTransformations;
 
 import util.BatchOpener;
 import util.FileAndChannel;
@@ -90,13 +84,12 @@ public class CreateTracingVolume_ implements PlugIn {
 
 		PathAndFillManager manager=new PathAndFillManager();
 		manager.loadGuessingType(tracesFileName);
+		// FIXME: this will get too many paths:
 		ArrayList< Path > allPaths=manager.getAllPaths();
 
                 Bookstein_From_Landmarks matcher=new Bookstein_From_Landmarks();
                 matcher.loadImages(standardBrainFC,realImageFC);
 		matcher.generateTransformation();
-
-                ImageStack realImageStack=matcher.getDomain().getStack();
 
 		ImagePlus standardBrain=matcher.getTemplate();
 
@@ -135,7 +128,6 @@ public class CreateTracingVolume_ implements PlugIn {
                 ImageStack labelStack=labels.getStack();
 
                 int templateWidth=labelStack.getWidth();
-                int templateHeight=labelStack.getHeight();
                 int templateDepth=labelStack.getSize();
 
                 if (verbose) System.out.println("About to create stack of size: "+newWidth+","+newHeight+","+newDepth);

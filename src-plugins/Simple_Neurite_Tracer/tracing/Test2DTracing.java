@@ -15,7 +15,6 @@ import org.junit.Test;
 import org.junit.After;
 import org.junit.Before;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class Test2DTracing {
@@ -40,7 +39,6 @@ public class Test2DTracing {
 
 		double pixelWidth = 1;
 		double pixelHeight = 1;
-		double pixelDepth = 1;
 		double minimumSeparation = 1;
 		Calibration calibration = image.getCalibration();
 		if( calibration != null ) {
@@ -49,7 +47,6 @@ public class Test2DTracing {
 							      Math.abs(calibration.pixelDepth)));
 			pixelWidth = calibration.pixelWidth;
 			pixelHeight = calibration.pixelHeight;
-			pixelDepth = calibration.pixelDepth;
 		}
 
 		int pointsExploredNormal = 0;

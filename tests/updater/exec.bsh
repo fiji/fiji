@@ -1,0 +1,29 @@
+/// LAUNCH HELPERS
+
+import fiji.SimpleExecuter;
+
+execute(args) {
+	lineHandler = new SimpleExecuter.LineHandler() {
+		handleLine(line) {
+			print(line);
+		}
+	};
+	executer = new SimpleExecuter(args, lineHandler, lineHandler);
+	status = executer.getExitCode();
+	if (status != 0) {
+		print("Failed with error " + status);
+		System.exit(status);
+	}
+}
+
+startFiji(root, type, bsh) {
+	args = new String[] {
+		new File(root, "fiji").getAbsolutePath(),
+		"--java-home=" + System.getProperty("java.home"),
+		new File(libDir, "client.bsh").getAbsolutePath(),
+		bsh,
+		hidden ? "" : "--no-hidden"
+	};
+	print("------ Starting fake " + type + " with " + bsh + " ------");
+	execute(args);
+}
