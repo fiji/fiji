@@ -76,10 +76,10 @@ precompiledDirectory=precompiled/
 
 buildDir=build/
 
-FIJI_JAVA_HOME(linux)=java/linux/jdk1.6.0_21/jre
-FIJI_JAVA_HOME(linux64)=java/linux-amd64/jdk1.6.0_21/jre
-FIJI_JAVA_HOME(win32)=java/win32/jdk1.6.0_21/jre
-FIJI_JAVA_HOME(win64)=java/win64/jdk1.6.0_21/jre
+FIJI_JAVA_HOME(linux)=java/linux/jdk1.6.0_24/jre
+FIJI_JAVA_HOME(linux64)=java/linux-amd64/jdk1.6.0_24/jre
+FIJI_JAVA_HOME(win32)=java/win32/jdk1.6.0_24/jre
+FIJI_JAVA_HOME(win64)=java/win64/jdk1.6.0_24/jre
 FIJI_JAVA_HOME(macosx)=java/macosx-java3d
 JAVA_HOME=$FIJI_JAVA_HOME
 ENVOVERRIDES(JAVA_HOME)=true
