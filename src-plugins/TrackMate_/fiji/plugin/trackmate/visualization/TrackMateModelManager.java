@@ -122,6 +122,7 @@ public class TrackMateModelManager implements SpotCollectionEditListener {
 			Integer frame = sc.getFrame(spot);
 			if (null == frame)
 				continue;
+			toCompute.add(spot, frame);
 		}
 		
 		// Calculate features

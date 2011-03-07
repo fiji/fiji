@@ -42,6 +42,7 @@ import fiji.plugin.trackmate.io.TmXmlWriter;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
+import fiji.plugin.trackmate.visualization.TrackMateModelManager;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.DisplayerType;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotIconGrabber;
@@ -305,6 +306,11 @@ public class TrackMateFrameController {
 	 * re-generate the data.
 	 */
 	private boolean actionFlag = true;
+	/**
+	 * The model manager that will be used to change the model content when doing manual editing.
+	 */
+	private TrackMateModelManager manager;
+
 	
 	
 	/*
@@ -316,6 +322,8 @@ public class TrackMateFrameController {
 		this.view = new TrackMateFrame(model);
 		this.controller = this;
 		this.logger = view.getLogger();
+		
+		this.manager = new TrackMateModelManager(model);
 		
 		// Instantiate action listeners
 		this.inProcessActionListener = new ActionListener() {
@@ -381,7 +389,6 @@ public class TrackMateFrameController {
 		view.displayPanel(PanelCard.LOG_PANEL_KEY);
 		
 		// New model to feed
-		@SuppressWarnings("rawtypes")
 		TrackMateModelInterface newModel = new TrackMate_();
 		newModel.setLogger(logger);
 		
@@ -918,6 +925,8 @@ public class TrackMateFrameController {
 				}
 				displayer = SpotDisplayer.instantiateDisplayer(view.displayerChooserPanel.getChoice(), model);
 				displayer.setSpots(model.getSpots());
+				// Have the manager listen to manual edits made in this displayer
+				displayer.addSpotCollectionEditListener(manager);
 				// Re-enable the GUI
 				logger.log("Rendering done.\n", Logger.BLUE_COLOR);
 				switchNextButton(true);
@@ -1106,6 +1115,10 @@ public class TrackMateFrameController {
 		trackScheme.setVisible(true);
 
 		// Link it with displayer:		
+		
+		// Manual edit listener
+		displayer.addSpotCollectionEditListener(trackScheme);
+		
 		// Selection manager
 		new SpotSelectionManager(displayer, trackScheme);
 		

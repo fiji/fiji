@@ -308,7 +308,6 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	* JPanel inside a new JFrame.
 	 * @throws IOException 
 	*/
-	@SuppressWarnings("unchecked" )
 	public static void main(String[] args) throws IOException {
 		// Generate fake Spot data
 		final int NSPOT = 100;
@@ -323,7 +322,6 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 		}
 		
 		// Generate GUI
-		@SuppressWarnings("rawtypes")
 		TrackMate_ trackmate = new TrackMate_();
 		System.out.println("Type <Enter> to ad spots to this");
 		System.in.read();

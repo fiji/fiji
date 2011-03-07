@@ -77,10 +77,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.ListenableUndirectedWeightedGraph;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
-import sun.tools.javap.JavapPrinter;
-
 import com.jgraph.layout.JGraphFacade;
-import com.jgraph.util.JGraphPrintingScrollPane;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
