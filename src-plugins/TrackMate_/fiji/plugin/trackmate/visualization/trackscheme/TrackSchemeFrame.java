@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import javax.swing.AbstractAction;
@@ -70,14 +71,16 @@ import org.jgrapht.Graph;
 import org.jgrapht.event.GraphEdgeChangeEvent;
 import org.jgrapht.event.GraphListener;
 import org.jgrapht.event.GraphVertexChangeEvent;
-import org.jgrapht.event.VertexSetListener;
 import org.jgrapht.ext.JGraphModelAdapter;
 import org.jgrapht.ext.JGraphModelAdapter.CellFactory;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.ListenableUndirectedWeightedGraph;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
+import sun.tools.javap.JavapPrinter;
+
 import com.jgraph.layout.JGraphFacade;
+import com.jgraph.util.JGraphPrintingScrollPane;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
@@ -162,9 +165,27 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	@Override
 	public void collectionChanged(SpotCollectionEditEvent event) {
 		if (event.getFlag() == SpotCollectionEditEvent.SPOT_CREATED) {
+			final JGraphFacade facade = new JGraphFacade(jGraph);
+			
+			int targetColumn = 0;
+			for (int i = 0; i < backPane.columnWidths.length; i++)
+				targetColumn += backPane.columnWidths[i];
+			
+			SpotCell cell = null;
 			for (Spot spot : event.getSpots()) {
-				
+				float instant = spot.getFeature(Feature.POSITION_T);
+				cell = new SpotCell(spot);
+				cell.addPort();
+				jGraph.getGraphLayoutCache().insert(cell);
+				facade.setLocation(cell,  (targetColumn-2) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2, (0.5 + backPane.rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2);
+				int height = Math.min(DEFAULT_CELL_WIDTH, spot.getIcon().getIconHeight());
+				height = Math.max(height, 12);
+				facade.setSize(cell, DEFAULT_CELL_WIDTH, height);
 			}
+			@SuppressWarnings("rawtypes")
+			Map nested = facade.createNestedMap(false, false); // Obtain a map of the resulting attribute changes from the facade 
+			jGraph.getGraphLayoutCache().edit(nested); // Apply the results to the actual graph 
+			centerViewOn(cell);
 		}
 		
 	}
@@ -393,6 +414,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 
 		// Forward painting info to back pane
 		backPane.setColumnWidths(graphLayout.getTrackColumnWidths());
+		backPane.setRowForInstant(graphLayout.getRowForInstant());
 		backPane.setColumnColor(graphLayout.getTrackColors());
 
 	}
@@ -438,8 +460,14 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		zoomInAction = new AbstractAction(null, ZOOM_IN_ICON) {
 			public void actionPerformed(ActionEvent e) {
 				double scale = jGraph.getScale();
-				if (scale < 2)
+				if (scale < 2) {
+					Rectangle oldView = scrollPane.getViewport().getViewRect();
 					jGraph.setScale(2 * scale);
+					Point newViewPos = new Point();
+					newViewPos.x = (int) Math.max(0, (oldView.x + (float) oldView.width / 2) * 2- oldView.width / 2);
+					newViewPos.y = (int) Math.max(0, (oldView.y + (float) oldView.height / 2) * 2 - oldView.height / 2);
+					scrollPane.getViewport().setViewPosition(newViewPos);
+				}
 				if (scale > 2)
 					zoomInButton.setEnabled(false);
 				zoomOutButton.setEnabled(true);
@@ -448,8 +476,14 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		zoomOutAction = new AbstractAction(null, ZOOM_OUT_ICON) {
 			public void actionPerformed(ActionEvent e) {
 				double scale = jGraph.getScale();
-				if (scale > (double)1/16)
+				if (scale > (double)1/16) {
+					Rectangle oldView = scrollPane.getViewport().getViewRect();
 					jGraph.setScale(scale/2);
+					Point newViewPos = new Point();
+					newViewPos.x = (int) Math.max(0, (oldView.x + (float) oldView.width / 2) / 2- oldView.width / 2);
+					newViewPos.y = (int) Math.max(0, (oldView.y + (float) oldView.height / 2) / 2 - oldView.height / 2);
+					scrollPane.getViewport().setViewPosition(newViewPos);
+				}
 				if (scale < (double)1/16)
 					zoomOutButton.setEnabled(false);
 				zoomInButton.setEnabled(true);
@@ -540,6 +574,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 
 		private static final long serialVersionUID = 1L;
 		private TreeSet<Float> instants;
+		private TreeMap<Float, Integer> rows;
 		private int[] columnWidths = null;
 		private Color[] columnColors;
 
@@ -550,6 +585,10 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			instants = new TreeSet<Float>();
 			for (Spot s : graph.vertexSet())
 				instants.add(s.getFeature(Feature.POSITION_T));
+		}
+
+		public void setRowForInstant(TreeMap<Float, Integer> rowForInstant) {
+			rows = rowForInstant;
 		}
 
 		@Override

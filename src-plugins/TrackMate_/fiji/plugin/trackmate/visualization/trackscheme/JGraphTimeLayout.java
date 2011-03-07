@@ -40,6 +40,7 @@ public class JGraphTimeLayout implements JGraphLayout {
 	private int[] columnWidths;
 	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
 	private Color[] trackColorArray;
+	private TreeMap<Float, Integer> rows;
 
 	/*
 	 * CONSTRUCTOR
@@ -72,7 +73,7 @@ public class JGraphTimeLayout implements JGraphLayout {
 		for(Float instant : instants)
 			columns.put(instant, -1);
 		
-		TreeMap<Float, Integer> rows = new TreeMap<Float, Integer>();
+		rows = new TreeMap<Float, Integer>();
 		Iterator<Float> it = instants.iterator();
 		int rowIndex = 1; // Start at 1 to let room for column headers
 		while (it.hasNext()) {
@@ -120,10 +121,6 @@ public class JGraphTimeLayout implements JGraphLayout {
 				
 				// Get corresponding JGraph cell 
 				Object facadeTarget = adapter.getVertexCell(spot);
-				
-				if (null == facadeTarget)
-					System.out.println("Null object for spot "+spot);// DEBUG
-				
 				SpotView vView = (SpotView) graphFacade.getCellView(facadeTarget);
 								
 				// Tune aspect of cell according to context
@@ -160,6 +157,13 @@ public class JGraphTimeLayout implements JGraphLayout {
 	 */
 	public int[] getTrackColumnWidths() {
 		return columnWidths;
+	}
+	
+	/**
+	 * Return map linking the the row number for a given instant.
+	 */
+	public TreeMap<Float, Integer> getRowForInstant() {
+		return rows;
 	}
 	
 	/**

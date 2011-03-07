@@ -53,9 +53,11 @@ public class HyperStackDisplayerTestDrive {
 		
 		TrackSchemeFrame trackScheme = new TrackSchemeFrame(trackGraph, settings);
 		trackScheme.setVisible(true);
+		displayer.addSpotCollectionEditListener(trackScheme);
 		
 		TrackMateModelManager manager = new TrackMateModelManager(model);
 		displayer.addSpotCollectionEditListener(manager);
+		
 	}
 	
 }

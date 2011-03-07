@@ -178,6 +178,10 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				final float zslice = (displayer.imp.getSlice()-1) * displayer.calibration[2];
 				editedSpot.putFeature(Feature.POSITION_Z, zslice);
 				Integer initFrame = displayer.spotsToShow.getFrame(editedSpot);
+				// Move it in Z
+				final float z = (displayer.imp.getSlice()-1) * displayer.calibration[2];
+				editedSpot.putFeature(Feature.POSITION_Z, z);
+				editedSpot.putFeature(Feature.POSITION_T, frame * displayer.settings.dt);
 				if (initFrame == null) {
 					// Means that the spot was created 
 					fireSpotCollectionEdit(new Spot[] { editedSpot }, SpotCollectionEditEvent.SPOT_CREATED, null, frame);					
@@ -192,10 +196,6 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 					// The spots pre-existed and was not moved accross frames
 					fireSpotCollectionEdit(new Spot[] { editedSpot }, SpotCollectionEditEvent.SPOT_MODIFIED, null, null);
 				}
-				// Move it in Z
-				final float z = (displayer.imp.getSlice()-1) * displayer.calibration[2];
-				editedSpot.putFeature(Feature.POSITION_Z, z);
-				editedSpot.putFeature(Feature.POSITION_T, frame * displayer.settings.dt);
 
 				// Forget edited spot
 				editedSpot = null;
