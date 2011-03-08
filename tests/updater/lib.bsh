@@ -237,6 +237,18 @@ startDownload() {
 
 /// THE DEVELOPER/USER IMPERSONATIONS
 
+
+uploadFailsIfChanged() {
+	startUpdater();
+	requireUpToDate();
+	advancedMode();
+	markForUpload("jars/ij.jar");
+	setTimestamp(new File(tmpDeveloperRoot, "jars/ij.jar"), 20000812120000l);
+	clickButton(updaterFrame, "Upload to server");
+	waitForMessageBox("Error", "Timestamp of jars/ij.jar-0 changed since being checksummed!");
+	System.exit(0);
+}
+
 initialUpload() {
 	startUpdater();
 	requireUpToDate();

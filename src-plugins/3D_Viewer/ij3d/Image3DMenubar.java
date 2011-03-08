@@ -60,6 +60,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 	private JMenuItem exportAsciiSTL;
 	private JMenuItem exportBinarySTL;
 	private JMenuItem smoothMesh;
+	private JMenuItem smoothDialog;
 	private JMenuItem scalebar;
 	private JMenuItem smoothAllMeshes;
 	private JMenuItem displayAsVolume;
@@ -225,13 +226,20 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		fill.addActionListener(this);
 		edit.add(fill);
 
+		JMenu smooth = new JMenu("Smooth");
+		edit.add(smooth);
+
 		smoothMesh = new JMenuItem("Smooth mesh");
 		smoothMesh.addActionListener(this);
-		edit.add(smoothMesh);
+		smooth.add(smoothMesh);
 
 		smoothAllMeshes = new JMenuItem("Smooth all meshes");
 		smoothAllMeshes.addActionListener(this);
-		edit.add(smoothAllMeshes);
+		smooth.add(smoothAllMeshes);
+
+		smoothDialog = new JMenuItem("Smooth control");
+		smoothDialog.addActionListener(this);
+		smooth.add(smoothDialog);
 
 		edit.addSeparator();
 
@@ -642,6 +650,8 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 			executer.smoothMesh(getSelected());
 		else if (src == smoothAllMeshes)
 			executer.smoothAllMeshes();
+		else if (src == smoothDialog)
+			executer.smoothControl();
 		else if (src == viewPreferences)
 			executer.viewPreferences();
 		else if(src == j3dproperties)

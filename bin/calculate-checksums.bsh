@@ -1,0 +1,25 @@
+#!/bin/sh
+/*/. 2>/dev/null; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
+
+import fiji.updater.logic.Checksummer;
+import fiji.updater.logic.PluginCollection;
+import fiji.updater.logic.PluginObject;
+
+import fiji.updater.util.StderrProgress;
+
+dbPath = System.getProperty("fiji.dir") + "/db.xml.gz";
+
+plugins = new PluginCollection();
+progress = new StderrProgress();
+checksummer = new Checksummer(plugins, progress);
+
+if (bsh.args.length > 1) {
+	String[] args = new String[bsh.args.length - 1];
+	System.arraycopy(bsh.args, 1, args, 0, args.length);
+	checksummer.updateFromLocal(args);
+}
+else
+	checksummer.updateFromLocal();
+plugins.sort();
+for (PluginObject plugin : plugins)
+	print(plugin + " " + plugin.current.checksum);

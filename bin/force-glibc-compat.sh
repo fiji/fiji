@@ -2,6 +2,12 @@
 
 cd "$(dirname "$0")"/..
 
+symbols=
+if test -f glibc-compat.h
+then
+	symbols="$(echo; grep ^GLIBC < glibc-compat.h)"
+fi
+
 # From http://www.trevorpounds.com/blog/?p=103
 
 cat << EOF > glibc-compat.h
@@ -10,7 +16,7 @@ cat << EOF > glibc-compat.h
 #else
    #define GLIBC_COMPAT_SYMBOL(FFF) __asm__(".symver " #FFF "," #FFF "@GLIBC_2.0")
 #endif /*__amd64__*/
-
+$symbols
 EOF
 
 case "$(uname -m)" in

@@ -93,6 +93,8 @@ public abstract class ContentNode extends BranchGroup {
 
 	public abstract void swapDisplayedData(String path, String name);
 
+	public abstract void clearDisplayedData();
+
 	public abstract void restoreDisplayedData(String path, String name);
 }
 

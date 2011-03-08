@@ -139,7 +139,7 @@ if write_fakefile:
 
 # update .gitmodules
 path = submodule[:-1]
-modules_config = 'git config -f .gitmodules submodule.' + path
+modules_config = 'git config -f .gitmodules submodule.' + path[path.rfind('/') + 1:]
 try:
 	print 'URL: ' + execute(modules_config + '.url')
 except:

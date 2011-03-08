@@ -847,10 +847,14 @@ const char *last_slash(const char *path)
 	return slash;
 }
 
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
+
 static const char *make_absolute_path(const char *path)
 {
 	static char bufs[2][PATH_MAX + 1], *buf = bufs[0];
-	char cwd[1024] = "";
+	char cwd[PATH_MAX] = "";
 #ifndef WIN32
 	static char *next_buf = bufs[1];
 	int buf_index = 1, len;
@@ -1996,7 +2000,7 @@ static void try_with_less_memory(size_t memory_size)
 	new_argv[0] = dos_path(new_argv[0]);
 	for (i = 0; i < j; i++)
 		new_argv[i] = quote_win32(new_argv[i]);
-	execve(new_argv[0], (const char * const *)new_argv, NULL);
+	execve(new_argv[0], (char * const *)new_argv, NULL);
 #else
 	execve(new_argv[0], new_argv, NULL);
 #endif
@@ -2508,6 +2512,9 @@ static int start_ij(void)
 		"fiji.defaultLibPath", JAVA_LIB_PATH,
 		"fiji.executable", main_argv0,
 		"java.library.path", java_library_path->buffer,
+#ifdef WIN32
+		"sun.java2d.noddraw", "true",
+#endif
 		NULL
 	};
 
@@ -2627,7 +2634,7 @@ static int start_ij(void)
 		for (i = 0; i < options.java_options.nr - 1; i++)
 			options.java_options.list[i] =
 				quote_win32(options.java_options.list[i]);
-		execvp(buffer->buffer, (const char * const *)options.java_options.list);
+		execvp(buffer->buffer, (char * const *)options.java_options.list);
 		char message[16384];
 		int off = sprintf(message, "Error: '%s' while executing\n\n",
 				strerror(errno));

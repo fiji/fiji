@@ -82,7 +82,7 @@ public class SSHFileUploader extends FileUploader {
 				uploadDir + lock);
 
 		out.close();
-		channel.disconnect();
+		disconnectSession();
 	}
 
 	private void uploadFiles(List<SourceFile> sources) throws IOException {

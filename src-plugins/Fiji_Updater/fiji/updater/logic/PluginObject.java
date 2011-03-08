@@ -8,12 +8,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class PluginObject {
-	public static class Version {
+	public static class Version implements Comparable<Version> {
 		public String checksum;
 		// This timestamp is not a Unix epoch!
 		// Instead, it is Long.parseLong(Util.timestamp(epoch))
@@ -24,8 +27,32 @@ public class PluginObject {
 			this.timestamp = timestamp;
 		}
 
+		@Override
+		public int compareTo(Version other) {
+			long diff = timestamp - other.timestamp;
+			if (diff != 0)
+				return diff < 0 ? -1 : +1;
+			return checksum.compareTo(other.checksum);
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			return other instanceof Version ? equals((Version)other) : false;
+		}
+
 		public boolean equals(Version other) {
 			return timestamp == other.timestamp && checksum.equals(other.checksum);
+		}
+
+		@Override
+		public int hashCode() {
+			return (checksum == null ? 0 : checksum.hashCode())
+				^ new Long(timestamp).hashCode();
+		}
+
+		@Override
+		public String toString() {
+			return "Version(" + checksum + ";" + timestamp + ")";
 		}
 	}
 
@@ -111,7 +138,7 @@ public class PluginObject {
 	private Action action;
 	public String updateSite, filename, description, newChecksum;
 	public Version current;
-	public Map<Version, Object> previous;
+	public Set<Version> previous;
 	public long filesize, newTimestamp;
 	public boolean metadataChanged;
 
@@ -126,7 +153,7 @@ public class PluginObject {
 		this.filename = filename;
 		if (checksum != null)
 			current = new Version(checksum, timestamp);
-		previous = new LinkedHashMap<Version, Object>();
+		previous = new LinkedHashSet<Version>();
 		this.status = status;
 		dependencies = new LinkedHashMap<String, Dependency>();
 		authors = new LinkedHashMap<String, Object>();
@@ -139,7 +166,7 @@ public class PluginObject {
 	}
 
 	public void merge(PluginObject upstream) {
-		for (Version previous : upstream.previous.keySet())
+		for (Version previous : upstream.previous)
 			addPreviousVersion(previous.checksum, previous.timestamp);
 		if (updateSite == null || updateSite.equals(upstream.updateSite)) {
 			updateSite = upstream.updateSite;
@@ -166,7 +193,7 @@ public class PluginObject {
 	public boolean hasPreviousVersion(String checksum) {
 		if (current != null && current.checksum.equals(checksum))
 			return true;
-		for (Version version : previous.keySet())
+		for (Version version : previous)
 			if (version.checksum.equals(checksum))
 				return true;
 		return false;
@@ -175,7 +202,7 @@ public class PluginObject {
 	public boolean isNewerThan(long timestamp) {
 		if (current != null && current.timestamp <= timestamp)
 			return false;
-		for (Version version : previous.keySet())
+		for (Version version : previous)
 			if (version.timestamp <= timestamp)
 				return false;
 		return true;
@@ -183,7 +210,7 @@ public class PluginObject {
 
 	void setVersion(String checksum, long timestamp) {
 		if (current != null)
-			previous.put(current, (Object)null);
+			previous.add(current);
 		current = new Version(checksum, timestamp);
 	}
 
@@ -307,11 +334,13 @@ public class PluginObject {
 	}
 
 	public Iterable<Version> getPrevious() {
-		return previous.keySet();
+		return previous;
 	}
 
 	public void addPreviousVersion(String checksum, long timestamp) {
-		previous.put(new Version(checksum, timestamp), (Object)null);
+		Version version = new Version(checksum, timestamp);
+		if (!previous.contains(version))
+			previous.add(version);
 	}
 
 	public void setNoAction() {

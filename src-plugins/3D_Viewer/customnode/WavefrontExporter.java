@@ -93,8 +93,14 @@ public class WavefrontExporter {
 
 			final List<Point3f> vertices = cmesh.getMesh();
 			// make material, and see whether it exists already
+			Color3f color = cmesh.getColor();
+			if (null == color) {
+				// happens when independent colors
+				// have been set for each vertex.
+				color = CustomMesh.DEFAULT_COLOR;
+			}
 			Mtl mat = new Mtl(1 - cmesh.getTransparency(),
-					cmesh.getColor());
+					color);
 			if(ht_mat.containsKey(mat))
 				mat = ht_mat.get(mat);
 			else

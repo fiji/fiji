@@ -73,7 +73,10 @@ public class UptodateCheck implements PlugIn {
 			return "No network connection available!";
 		PluginCollection plugins = new PluginCollection();
 		try {
-			plugins.read();
+			try {
+				plugins.read();
+			}
+			catch (FileNotFoundException e) { /* ignore */ }
 			for (String name : plugins.getUpdateSiteNames()) {
 				UpdateSite updateSite = plugins.getUpdateSite(name);
 				long lastModified = getLastModified(updateSite.url + Updater.XML_COMPRESSED);

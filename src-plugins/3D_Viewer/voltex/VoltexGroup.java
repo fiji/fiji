@@ -350,6 +350,12 @@ public class VoltexGroup extends ContentNode {
 	}
 
 	@Override
+	public void clearDisplayedData() {
+		renderer.volume.clear();
+		renderer.disableTextures();
+	}
+
+	@Override
 	public void restoreDisplayedData(String path, String name) {
 		renderer.volume.restore(path + ".tif");
 		renderer.enableTextures();

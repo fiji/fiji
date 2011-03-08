@@ -38,6 +38,7 @@ import voltex.VoltexGroup;
 import voltex.VolumeRenderer;
 import isosurface.MeshExporter;
 import isosurface.MeshEditor;
+import isosurface.SmoothControl;
 
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
@@ -48,6 +49,7 @@ import javax.media.j3d.Background;
 
 import customnode.CustomMesh;
 import customnode.CustomMeshNode;
+import customnode.CustomMultiMesh;
 import customnode.CustomTriangleMesh;
 
 import java.awt.event.TextListener;
@@ -459,13 +461,19 @@ public class Executer {
 	public void smoothMesh(Content c) {
 		if(!checkSel(c))
 			return;
-		if(c.getType() == Content.SURFACE || c.getType() == Content.CUSTOM) {
-			ContentNode cn = c.getContent();
-			if(cn instanceof CustomMeshNode) {
-				CustomMesh mesh = ((CustomMeshNode)cn).getMesh();
-				if(mesh instanceof CustomTriangleMesh)
-					MeshEditor.smooth((CustomTriangleMesh)mesh, 0.25f);
+		ContentNode cn = c.getContent();
+		// Check multi first; it extends CustomMeshNode
+		if(cn instanceof CustomMultiMesh) {
+			CustomMultiMesh multi = (CustomMultiMesh)cn;
+			for(int i=0; i<multi.size(); i++) {
+				CustomMesh m = multi.getMesh(i);
+				if(m instanceof CustomTriangleMesh)
+					MeshEditor.smooth2((CustomTriangleMesh)m, 1);
 			}
+		} else if(cn instanceof CustomMeshNode) {
+			CustomMesh mesh = ((CustomMeshNode)cn).getMesh();
+			if(mesh instanceof CustomTriangleMesh)
+				MeshEditor.smooth2((CustomTriangleMesh)mesh, 1); // 0.25f);
 		}
 	}
 
@@ -497,6 +505,10 @@ public class Executer {
 		}
 	}
 
+	/** Interactively smooth meshes, with undo. */
+	public void smoothControl() {
+		new SmoothControl(univ);
+	}
 
 	/* ----------------------------------------------------------
 	 * Display As submenu

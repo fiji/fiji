@@ -87,7 +87,18 @@ public class CustomTriangleMesh extends CustomMesh {
 		tri.toArray(coords);
 
 		Color3f colors[] = new Color3f[nValid];
-		Arrays.fill(colors, color);
+		if (null == color) {
+			// Vertex-wise colors are not stored
+			// so they have to be retrieved from the geometry:
+			for (int i=0; i<colors.length; ++i) {
+				colors[i] = new Color3f(DEFAULT_COLOR);
+			}
+			GeometryArray gaOld = (GeometryArray) getGeometry();
+			if (null != gaOld)
+				gaOld.getColors(0, colors);
+		} else {
+			Arrays.fill(colors, color);
+		}
 
 		GeometryArray ta = new TriangleArray(nAll,
 						TriangleArray.COORDINATES |

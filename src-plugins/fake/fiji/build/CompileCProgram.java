@@ -40,7 +40,7 @@ public class CompileCProgram extends Rule {
 	}
 
 	void addFlags(String variable, String path, List<String> arguments) throws FakeException {
-		String value = parser.getVariable(variable, path, target);
+		String value = parser.getVariable(variable, path, Util.getPlatform());
 		arguments.addAll(Util.splitCommandLine(value));
 	}
 

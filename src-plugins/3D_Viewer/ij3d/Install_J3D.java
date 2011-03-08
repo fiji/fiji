@@ -30,7 +30,7 @@ public class Install_J3D implements PlugIn {
 
 	/** Base URL to the folder containing the Java3D files */
 	private static final String JAVA3D_BASE_URL =
-		"http://download.java.net/media/java3d/builds/release/1.5.2/";
+		"http://132.187.25.13/java3d/";
 
 	/** Base URL to the folder containing the Jogl files */
 	private static final String JOGL_BASE_URL =

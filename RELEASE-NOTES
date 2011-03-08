@@ -1,399 +1,458 @@
-Date: Mon, 14 June 2010
+Date: ?
 From: Johannes Schindelin <johannes.schindelin@gmx.de>
 
 I proudly announce a new version of Fiji (Fiji Is Just ImageJ -- batteries
 included).
 
-In our cherished tradition, the current version is named after the location
-of a big hackathon: Heidelberg. We were honored to have some Fiji developers
-invited by the EMBL in Heidelberg from March 15 -- 26, 2010, thanks to the
-generous support of Francesca Peri and Kota Miura.
+So: what is Fiji? It is just a distribution of ImageJ, i.e. putting a nice
+and convenient infrastructure around ImageJ such as: automatic updates,
+extensive documentation, a powerful yet small Script Editor, reusable
+components for users and developers, bug tracking, etc.
 
-There have been 524190 lines added and 245463 removed since the previous
-release, with the help of (in alphabetical order): Albert Cardona, Andreas
-Wiese, Benjamin Schmid, Ben Tupper, Chris Elliott, Curtis Rueden, Daniel
-Hornung, Daniel James White, Davi Bock, Gabriel Landini, Gregory Jefferis,
-Ignacio Arganda-Carreras, Jacques Pecreaux, Jan Eglinger, Jean-Yves Tinevez,
-Johannes Schindelin, Larry Lindsey, Mark Longair, Nick Weiler, pixelhead,
-pogo, Ricardo Henriques, Stephan Preibisch, Stephan Saalfeld, Tom Kazimiers
-and Verena Kaynig, and many other helpers.
+For details and downloads, see: http://pacific.mpi-cbg.de/.
 
-Changes since Fiji Plzeň:
+Note: if you already have a Fiji installation, you can use the Fiji
+Updater to upgrade; no need to download and install from scratch. Just
+make sure that you update just the Updater first if you have not updated
+in a long time, and update Java in the advanced mode (unless you are using
+MacOSX).
 
-- There is a new plugin called Trainable Segmentation:
+In our beloved tradition, the current version is named after the location
+of a big hackathon: Madison. It was not strictly a Fiji hackathon, but
+the first ImageJ2 hackathon, made possible by Kevin Eliceiri and Curtis
+Rueden. Nevertheless, quite some work on Fiji and its plugins got done,
+so here goes "Fiji Madison".
 
-	http://pacific.mpi-cbg.de/Trainable_Segmentation
+There have been more than 150 thousand lines added and 40 thousand removed,
+with the help of (in alphabetical order):
 
-  This plugin offers advanced machine learning techniques to train a model
-  that segments your images into different classes.
+Albert Cardona, Benjamin Schmid, Christian Tischer, Curtis Rueden, Daniel
+James White, Daniel Sage, David Hovis, Francisco Jiménez Hernández, Gregory
+Jefferis, Ignacio Arganda Carreras, Jacques Pecreaux, Jan Eglinger, Jan
+Funke, Jean-Yves Tinevez, Johannes Schindelin, Kota Miura, Mark Longair,
+Michael Doube, Philippe Thévenaz, pogo, Robert Bryson-Richardson, Stephan
+Preibisch, Stephan Saalfeld, Tobias Pietzsch, Tom Kazimiers, Wilhelm Burger,
+Yili Zhao, and many other helpers.
 
-  While it is developed actively, it is already quite powerful and easily
-  usable by non-programmers.
+Changes since Fiji Heidelberg:
 
-- Fixed a critical bug in the Fiji Updater that affected MacOSX. Symptom:
-  Fiji no longer starts after an update). If you have not updated between
-  April 8, 2010 and June 3rd, 2010, this bug affects you and you have to
-  follow the instructions at:
+New plugins
+===========
 
-  http://pacific.mpi-cbg.de/Fix_non-functional_Fiji_after_Update_on_MacOSX
+The Time Stamper plugin was much enhanced and eventually renamed into
+Series Labeler, thanks to Daniel James White and Tom Kazimiers.
 
-- Unfortunately, we had to drop support for MacOSX PPC. If you need Fiji
-  on such a system, please contact fiji-devel@googlegroups.com, and we will
-  try to provide a special edition.
+The plugin "TopoJ" was added, thanks to David Hovis.
 
-- For Debian/Ubuntu users, there will be fine-grained packages of Fiji
-  Heidelberg available soon.
+A simple Graph Cut segmentation plugin was added, thanks to Jan Funke.
 
-Other changes:
+Two "Macro Examples" were added to demonstrate optical illusions which should
+convince everybody that quantitative analysis of biological images is really
+much better than looking at a red-green picture and convincing oneself that
+there might be colocalized signals. Thanks to Daniel James White and
+Gabriel Landini.
 
-- Fiji's core was frequently synchronized with ImageJ.
+Thanks to a generous license by Michael Unser of the Biomedical Imaging Group
+at the EPFL, the Differentials plugin, MosaicJ, Philippe Thevenaz' PointPicker,
+his Shepp-Logan Phantom plugin, the StackReg plugin and the Snakuscule plugin
+and Daniel Sage's plugin "Extended Depth Field" are distributed with Fiji now.
 
-- many, many improvements in bUnwarpJ (thanks Ignacio Arganda-Carreras).
+Thanks to the generous license by Erik Meijering to distribute the source code
+for a few of his plugins with Fiji, FeatureJ, RandomJ and TransformJ are
+available in Fiji now, too.
 
-- Context Help: If you click on Help>Help on Menu Item, the next click on
-  a menu item will open the corresponding page (if there is one) on the Fiji
-  Wiki.
+The Linear Kuwahara plugin was contributed by Christian Tischer.
 
-- Statistical Region Merging can work in 3D now (this uses lots of memory).
+Daniel Sage's MIJ library to use Fiji/ImageJ from within Matlab is included
+with Fiji now. Just add Fiji.app/scripts/ to the search path and call 'Miji'.
 
-- The Stack Manipulation menu got another entry: Slice Keeper (thanks
-  Jean-Yves Tinevez).
+Kota Miura contributed the Temporal Color Coder which makes a t-projection
+color-coding the original time points.
 
-- many, many improvements to the Simple Neurite Tracer and 3D Viewer, which
-  were split off from the VIB Protocol plugin (thanks Mark Longair and
-  Benjamin Schmid).
+Bio-Format's bfopen.m was added to use Fiji's Bio-Formats from Matlab. Thanks
+to Curtis Rueden.
 
-- many updates for the Register Virtual Slices plugin (thanks Ignacio
-  Arganda-Carreras).
+The new 3D Blob Segmentation plugin allows interactive 3D segmentation in
+the 3D Viewer backed by Fiji's level sets framework. Thanks to Erwin Frise,
+Albert Cardona and Benjamin Schmid.
 
-- Auto Threshold was improved, and made accessible to other plugins (thanks
-  Gabriel Landini).
+Mark Longair contributed plugins to calculate the curvature of n-dimensional
+images, and to detect vessels according to Frangi's method.
 
-- implemented CLAHE, a filter for adaptive local contrast enhancement
-  (thanks to Stephan Saalfeld).
+The Correct 3D drift script registers time frames using the Stitching 3D
+plugin. Thanks to Stephan Preibisch, Robert Bryson-Richardson and Albert
+Cardona.
 
-- removed dependency on Jama of mpicbg plugins (thanks to Stephan Saalfeld).
+The Retinex plugin was added by Francisco Jiménez Hernández and Gabriel
+Landini.
 
-- separated libraries from plugins, e.g. mpicbg plugins from mpicbg library
-  (thanks to Stephan Saalfeld).
+There is now a plugin calculating the 'Shape Index Map', a per-pixel value
+describing the shape of the height-field corresponding to the image.
 
-- added several mpicbg library tools, many bug-fixes and improvements
-  (thanks to Stephan Saalfeld).
+It is now possible to turn a binary image of points into a point selection,
+by starting Edit>Selection>Points from Mask.
 
-- TrakEM2 was updated several times, with tons of new goodies (thanks Albert
-  Cardona and Stephan Saalfeld). For example:
+There is now a plugin that saves the current image in EPS (Encapsulated
+PostScript) format. Thanks to Wilhelm Burger.
 
-  * extended multi-layer-mosaic alignment to handle
-    - adjustable weights for cross-section vs intra section features
-    - handle multiple disconnected graphs
-    - non-linearly deform section graphs
-  * properly propagate non-linear manual deformations
-  * speed up rendering of deformed images
-  * calibrate exported snapshots
-  * several bug-fixes
+Use "Plugins>Transform>Panorama equirectangular view" to look at 360° panorama
+photographs and pan around. Thanks to Stephan Saalfeld.
 
-- A plugin was added that performs the SIOX algorithm (color segmentation
-  by example, thanks Ignacio Arganda-Carreras).
+User-visible changes
+====================
 
-- Some bugs in Stitching 2D/3D were fixed (thanks Stephan Preibisch and
-  Ignacio Arganda-Carreras).
+On Linux, the Fiji launcher will run even with older setups than the launcher
+was compiled on.
 
-- A plugin "IsoData Classifier" was added that extends the default automatic
-  threshold of ImageJ to multiple classes (more than two).
+The Bio-Formats plugins were updated frequently to include bug fixes and
+improvements, e.h. support for the new LSM 710 format. Thanks to the LOCI
+& Glencoe team.
 
-- Fiji's arrow tool offers interactive manipulation of the arrow (which is
-  a ROI now), with different widths, head sizes, and head shapes (thanks
-  to Jean-Yves Tinevez).
+The Debian packages are being rebuilt on a weekly basis now. This was a lot
+of work competently completed by Mark Longair.
 
-- A bug was fixed in the MTrack2 plugin (thanks to Chris Elliott).
+In the course of Debianization, a number of licenses have been clarified.
 
-- There is a GenericDialogPlus in fiji-lib.jar now that supports adding
-  "file" and "directory" fields with a button to choose the value via a
-  file dialog (thanks Stephan Preibisch and Ignacio Arganda-Carreras).
+On Linux, RAM will not be overcommitted anymore (this used to lead to serious
+paging delays in multi-user environments).
 
-- Many improvements to the Analyze Skeleton/Skeletonize 3D plugins (thanks
-  Ignacio Arganda-Carreras and Daniel Hornung).
+Fiji will now correctly identify 64-bit Intel CPUs on MacOSX.
 
-- The Robust Automatic Threshold Selection plugin was added, providing a
-  very powerful automatic local thresholding technique (thanks Ben Tupper).
+The Fiji launcher accepts --edit without paths now, opening the Script Editor
+with a new, empty file.
 
-- Jython was updated to version 2.5.
+With newer MacOSX versions, the absence of the SECURITYSESSIONID does not
+imply headless operation.
 
-- The code of the VIB Protocol was improved (thanks to Mark Longair,
-  Benjamin Schmid and Nick Weiler).
+When calling Fiji from a multi-platform Fiji.app/ directory, it will not
+try to use the Java Runtime environment for another architecture.
 
-- Plugins>Macros>About Startup Macros works again (thanks Gabriel Landini).
+The Fiji launcher will interpret jvm.cfg before command line options so that
+the user has a chance to override faulty settings. Thanks to Jacques Pecreaux.
 
-- The Fiji launcher was modified to work around a Java 1.5 bug on Linux.
+On MacOSX, when the user specified "Open in 32-bit mode", Fiji will no longer
+ignore the user's wish. Thanks to Erwin Frise and Arthur Edelstein.
 
-- The Java WebStart'able Fiji was fixed.
+Since many parts of Fiji's source code rely on Java 1.6 or better now, the
+retrotranslator is activated automatically on MacOSX when only Java 1.5 or
+earlier is available. Thanks to Mark Longair.
 
-- The Script Editor offers code templates now (thanks Tom Kazimiers).
+Fiji will be able to use native libraries put into Fiji.app/lib/<platform>/.
 
-- The Find/Replace function in the Script Editor now defaults to the
-  selected text (thanks Tom Kazimiers).
+Calling "fiji-<platform> --updater" calls a command-line version of the Fiji
+Updater; this is useful in headless setups.
 
-- The Tutorial Maker was renamed to Plugins>Utilities>Fiji>New Fiji Tutorial,
-  and you can choose to upload to another Wiki than the Fiji Wiki (provided
-  that it is powered by MediaWiki). It also uses the Script Editor for better
-  usability now.
+Any script or macro can now live in any menu, by putting it into
+Fiji.app/plugins/Scripts/. For example, if you want to have a macro in
+File>Import, you might save it to Fiji.app/plugins/Scripts/File/Import/.
 
-- The Image Expression Parser plugin was added, providing much more powerful
-  operations on Images than the simple Image Calculator or Image Calculator
-  Plus plugins (thanks to Jean-Yves Tinevez).
+As always, Fiji was synchronized frequently with ImageJ, and a few bug fixes
+were contributed to ImageJ through Fiji. Thanks to Wayne Rasband.
 
-- There is an Image>Adjust>Auto Crop plugin (cropping the maximal border that
-  matches the background color), and an Image>Adjust>Auto Crop (guess
-  background color) plugin (estimating the most likely background color from
-  the border).
+Fiji's bundled Java Runtime Environment is now at version 1.6u24 (to update,
+run "Update Java" from Fiji Updater's "Advanced mode").
 
-- We have a Linear Gradient and Radial Gradient plugin now, to generate
-  gradients in existing images.
+Too many bug fixes and improvements to count in the TrakEM2 components. Thanks
+Albert Cardona and Stephan Saalfeld.
 
-- There was a bug fix in .mrc reading (thanks Jean-Marc Verbavatz and Quentin
-  de Robillard).
+Add the Plugins>Examples>Extended Profile Plot script to get profile plots
+of closed polygons.
 
-- Fiji starts with Java settings optimized for heavy-duty usage now (thanks
-  Albert Cardona).
+Add "Scale to DPI" function to Image>Adjust menu, thanks to Curtis Rueden.
 
-- when using a .java plugin transparently (by putting it into
-  Fiji's plugins/ directory), the error output will be shown now.
+Lots of bug fixes and improvements in the 3D Viewer. To name just a few:
+orthoslice changes are now recordable, the animation axis can be specified,
+the rotation step is adjustable, import/export for .stl files was added (for
+3D printers), the bounding box now has ticks, the transfer function is
+adjustable, single objects are auto-selected, the current image is added
+by default, ImageJ is no longer allowed to intercept key presses, multiple
+3D Viewers can be synchronized, there is now a "Take snapshot" menu item,
+fullscreen mode, colorize meshes from given images, load/save landmarks
+for all timepoints, make color of landmarks adjustable, etc. Thanks to
+Benjamin Schmid.
 
-- The Script Editor offers tabs now.
+The Analyze Skeleton plugin underwent many bug fixes and improvements, thanks
+to Peter C. Marks, Huub Hovens, Michael Doube and Ignacio Arganda-Carreras.
 
-- When a file changed outside the Script Editor, it offers to reload the
-  file now.
+Fiji's Arrow Tool is now recordable and -- as was intended originally,
+before ImageJ grew its own version of the tool -- gave rise to a generic
+tool infrastructure allowing new tools to be developed more easily (and
+using proper Java instead of macros).
 
-- The Script Editor offers the ImageJ Macro Language in the Languages menu,
-  with syntax-highlighting. Consequently, it is now the default editor for
-  macros.
+The Auto Threshold plugin supports 16-bit images now, too. This mode respects
+the true 16-bit histogram rather than taking shortcuts. While at it, the
+Huang method has been accelerated tremendously.
 
-- The Script Editor got a function to run just the selected part of the script.
+Scripting with the scripting languages is quicker now because ImageJ, Java
+and ImgLib classes are imported by default when running scripts from the
+Script Editor.
 
-- Many more improvements in the Script Editor.
+The Bug Submitter plugin collects more information in the bug report
+automatically, to help developers understand the environment better. Thanks
+to Mark Longair.
 
-- Many improvements to the Colocalization plugins (e.g. the output of
-  Colocalization Threshold can be saved to a file now, etc). Thanks to
-  Daniel James White and Tom Kazimiers.
+Some bugs were fixed with Clojure scripting, thanks to Albert Cardona.
 
-- The Directionality plugin was added to analyze images containing oriented
-  structures (thanks Jean-Yves Tinevez).
+Some errors were fixed in the Colocalisation_Analysis plugins, thanks to
+Daniel James White.
 
-- The Time Stamper plugin was updated (thanks Jean-Yves Tinevez, Daniel James
-  White and Tom Kazimiers).
+Macro recording of the Directionality plugin was fixed, thanks to Jan
+Eglinger.
 
-- Add a Recent Commands menu entry to list the most recent and the most
-  frequent commands.
+Fiji's handling of Help>Refresh Menus has seen a number of bug fixes, as
+well as Fiji's headless mode (which will stop being a clever hack with
+ImageJ2, but instead be a proper solution).
 
-- The FileDialogs on Linux have more sensible keyboard handling now, and are
-  Drag 'n Drop targets, as on other platforms, too.
+For teachers' and instructors' convenience, Fiji can cache sample images
+locally, avoiding huge network traffic during courses.
 
-- There is an Imglib Algorithm Launcher now, which makes it easy to use the
-  full power of imglib for users, and which is easily extensible to future
-  algorithms in imglib (thanks to Curtis Rueden).
+When using the Recent Commands (available via the '9' key), the Recorder
+properly records which action was chosen.
 
-- In Fiji, the menu entry is called Help>Refresh Menus instead of
-  Help>Update Menus, to clarify what the function is about.
+In addition to macros available as menu items, scripts are also opened
+in the Script Editor rather than executed when holding down the Shift key
+prior to opening the menu. While at it, the status of the main window tells
+the user what is currently happening.
 
-- When Fiji detects that the user attempted to launch a plugin that was
-  compiled for Java 1.6, but run on Java 1.5, it tries very hard to convert
-  the classes to be usable on Java 1.5 nevertheless.
+The Fiji Updater now uses the system-wide proxy settings.
 
-- There is another optical illusion in macros/grey-squares.ijm now:
-  Adelson's checker illusion. It shows that we cannot trust our perception
-  of absolute gray values. Thanks to Gabriel Landini for improvements of
-  the script, and Daniel James White for the idea.
+By caching the checksums of the files, the Updater was speeded up dramatically.
 
-- The Exact Euclidean Distance Transform (3D) plugin was added, providing
-  a real exact EDT, still with linear complexity. A signed version is
-  available, too (attaching negative distances to outside pixels).
+The Updater is disabled when Fiji was installed via the Debian packages.
 
-- The Script Editor supports bookmarks now.
+The Fiji Updater supports multiple Update sites now. If you have a web server
+which you can access via SSH, you can publish your own plugin suites.
 
-- The 3D Viewer is now actually a 4D Viewer, handling hyperstacks correctly,
-  and was improved in many other ways, too (thanks to Benjamin Schmid and
-  Gabriel Landini).
+The Image Expression Parser was fixed for a regression in ImageJ 1.44n and
+later, as well as two bugs related to filename detection. Thanks to Albert
+Cardona and Jean-Yves Tinevez.
 
-- The 3D Viewer can export any kind of mesh now (thanks to Albert Cardona).
+The extra file type handling when opening images was fixed with regard to
+the Bio-Formats plugin. Thanks to Curtis Rueden and Gregory Jefferis.
 
-- The Anisotropic Diffusion 2D plugin was added.
+Thanks to Albert Cardona, the Jython Interpreter now prints the last evaluated
+expression return value.
 
-- The LSM Toolbox was updated to version 4.0g (thanks to Patrick Pirotte and
-  Jean-Yves Tinevez).
+The Lasso/Blow Tool is more robust now, using the new AbstractTool framework
+(thereby avoiding timing issues due to a macro handling all the mouse input).
 
-- The HandleExtraFileTypes class was synchronized with the upstream version,
-  handling more file formats by default (thanks Albert Cardona for a fixup).
+The Multiple Image Processor now resets Escape before starting, and it handles
+.pgm files as claimed in the documentation.
 
-- There is no need for a StartupMacros.txt anymore, so you can create/modify
-  it without making the Fiji Updater report it as "Locally modified". Thanks
-  Ilan Tal for the suggestion.
+The Compile & Run command no longer needs write access to Fiji.app/plugins/,
+and it offers to unlock images when appropriate.
 
-- View5D was updated to version 1.2.17, thanks to Rainer Heintzmann and
-  Jean-Yves Tinevez.
+A bug was fixed which prevented MBF plugins from being compiled and run on
+the fly when a .java file was present in a subdirectoy of Fiji.app/plugins/.
 
-- The Find Connected Regions plugin was updated, thanks to Mark Longair.
+Register>Transform Virtual Stack Slices got a checkbox to toggle interpolation.
+Thanks to Stephan Saalfeld.
 
-- The Fiji launcher is no longer a C++ program, but a C program. This results
-  in smaller executables, less requirements when building, and a larger range
-  of supported Linux setups.
+The Script_Editor can export scripts bundled in .jar files for other Fiji users
+to install and run.
 
-- The Fiji Updater up-to-date check is no longer run when you call Fiji with
-  an argument (e.g. by Drag 'n Drop of an image onto the Fiji icon). Thanks to
-  Jean-Marc Verbavatz for the suggestion.
+A couple of templates have been added to the Script Editor.
 
-- The Fiji Updater offers to update Java on Windows and Linux in the Advanced
-  Mode, thanks to one of the rare less-exciting talks at the ELMI meeting.
+In the script editor, the font and tab size can be adjusted. Thank you, Yili
+Zhao.
 
-- The Java WebStart generator was fixed, and is now run every night. The URL is:
+The Script Editor can auto-save before compiling now. Thanks to Philippe
+Thévenaz.
 
-	http://pacific.mpi-cbg.de/webstart/Fiji.jnlp
+The output of multiple scripts in the Script Editor is now separate; you will
+see the output only when the corresponding script's tab is active. Likewise,
+the script interpreters running the scripts are now independent of each other.
 
-- The SPIM Registration plugin was added, offering multi-angle registration
-  and reconstruction typically needed in Selective Plane Illumination
-  Microscopy (thanks to Stephan Preibisch, Stephan Saalfeld and Pavel Tomancak).
+When the Script Editor is asked to open images, it lets ImageJ open them
+rather than opening gibberish in a new tab. Thanks to Thomas Julou.
 
-- Clojure was updated to a newer version (thanks to Albert Cardona).
+The Script Editor is now usable even if the user updated ImageJ to the
+daily version. Thanks to Wayne Rasband.
 
-- clojure-contrib is no longer required, and was therefore removed (thanks to
-  Albert Cardona).
+The Script Editor offers to File>Open Recent. Thanks to Albert Cardona.
 
-- The QuickPALM plugin was added (thanks to Ricardo Henriques).
+The startup time of the Script Editor was reduced dramatically.
 
-- Loads of bugfixes
+In the Script Editor, File>Open will no longer offer to open .class or .jar
+files.
 
-Developer-visible changes:
+For interoperability, the Script Editor now enforces UTF-8 encoding for both
+reading and writing files.
 
-- There are two nightly builds, one including all the submodules, and the
-  other to make sure that Fiji builds using Java 5 (which we are stuck to,
-  because there will not be any Java 6 for MacOSX 10.4, or for 32-bit
-  MacOSX 10.5).
+When saving a new file, the Script Editor will default to the Fiji.app/
+directory. This helps when trying to save macros on MacOSX, where the Save
+Dialog does not allow switching into .app directories.
 
-- The full javadocs are built after the nightly build, accessible at
+You can ask the Script Editor to wrap the lines around instead of showing
+a horizontal scrollbar. Additionally, it can label whitespace and zap gremlins,
+thanks to Albert Cardona.
 
-	http://pacific.mpi-cbg.de/javadoc/
+The Simple Neurite Tracer can perform Sholl analysis and export the graphs as
+.svg or .csv files now. Additionally, there were many fixes and improvements,
+including an export as .swc option, or being able to select the path nearest
+to the mouse pointer with the 'g' key. Further, selecting a path in the 3D
+Viewer selects it in the Neurite Tracer, too. For convenience, there is a
+button to run Fiji's "Analyze Skeleton (2D/3D)" plugin on the paths. The
+user interface was converted to the nicer Swing look.  Thanks to Mark Longair.
 
-- Developers can upload new plugins or updates from the Fiji Updater GUI, if
-  they have the write permissions on the server (includes bug fixes by
-  Mark Longair).
+The SPIM Registration can now handle multi-channel files, too. It provides
+the cosine blending option and has many more improvements. Thanks to
+Stephan Preibisch.
 
-- Many improvements in the build system (less unnecessary rebuilds, separate
-  output directory, excluding files from a .jar target, etc). Thanks to
-  Jacques Pecreaux, Mark Longair and Curtis Rueden.
+The Stitching plugins were speeded up, and it uses calibration info by
+default now. Thanks to Stephan Preibisch.
 
-- There is a generic way to define a tool in Java now, fiji.util.AbstractTool,
-  rather than going the awkward way to define a macro that calls back into the
-  Java code (thanks Jean-Yves Tinevez).
+The Thread Killer now unlock all images, and it is more careful about
+what it offers to kill.
 
-- The Script Editor can launch classes outside of plugins/ now.
+The Trainable Segmentation plugin can handle image stacks now. Thanks to
+Verena Kaynig, Ignacio Arganda-Carreras and Albert Cardona.
 
-- The Script Editor can make .jar files from .java plugins now.
+The Particle Analyzer (3D) handles the case when there are less than 3 objects
+now.
 
-- The Script Editor can build and launch Fiji plugins from
-  $FIJI_ROOT/src-plugins/<name>/ now.
+The Align image plugin uses the target image's dimensions for the result.
 
-- The Script Editor recognizes errors from the Java compiler and offers to
-  jump to the location of the next/previous error.
+The Segmentation Editor can be controllable by ImageJ macros. Thanks to
+Benjamin Schmid.
 
-- The Script Editor recognizes exceptions thrown during the execution of a
-  script and offers to jump to the next/previous location in the stacktrace.
+When zooming in the Three Panes, the right center point is used in all panes.
+Thanks to Mark Longair.
 
-- You can ask the Script Editor to open the JavaDoc for a given class using
-  Tools>Open Help on Class...
+When scripting, you can accelerate crucial parts by inserting Java code
+snippets using the new Weaver.inline(...) method in any scripting language.
+Thanks to Albert Cardona.
 
-- The WEKA library is now part of Fiji; the FijiClassLoader is now an instance
-  of URLClassLoader just because of that (thanks for Verena Kaynig, Albert
-  Cardona and Ignacio Arganda-Carreras for the prodding).
+Several fixes and improvements in the mpicbg submodule for feature extraction
+and transformation, e.g.:  Feature matching can be performed without geometric
+consensus filter.  Geometric consensus filter got a new parameter, minimal
+absolute number of inliers.  Added robust regression outlier filter to
+TileConfiguration.  Several fixes and improvements to the CLAHE local contrast
+enhancer, e.g.: Added a fast (real-time) version of the filter.  Fixed
+selection handling.  Fixed transfer of values beyond the current min/max range.
+Support CompositeImages in variable ways.  Added homogeneous least squares fit
+for perspective transformations using Jama SVD.  Interactive transforms can
+handle Composites, Stacks and HyperStacks.  Added a simple but comparably
+fast Optic Flow variant based on the sum of square differences in a Gaussian
+weighted neighborhood of a pixel.  Thanks to Stephan Saalfeld.
 
-- There is an easy way to add a screenshot to be shown on the front page
-  of the Fiji Wiki: Plugins>Utilities>Fiji>New Fiji Wiki Screenshot.
 
-- The new versatile and most generic image processing library -- fully Open
-  Source! -- was added (thanks Stephan Saalfeld and Stephan Preibisch).
+Developer-visible changes
+=========================
 
-- imglib was improved dramatically (thanks to Stephan Saalfeld, Stephan
-  Preibisch, Larry Lindsey and Curtis Rueden).
+There have been quite a few cleanups of the project structure; the sources
+for plugins and libraries which are not contained in submodules are supposed
+to live in src-plugins/<jarname>/<package>/<classname>.java, where <jarname>
+is the base name of the generated .jar file.
 
-- To use the imglib, just select the Imglib Plugin item of Script Editor's
-  Templates menu.
+There is now a script to compile and cross-compile ITK.
 
-- The Script Editor learnt quite a number of functions that are useful when
-  developing plugins written in Java (e.g. opening the sources for a menu
-  item, or opening the directory of the current file upon File>Open, or
-  offering to search for the sources of a class).
+JNA was extracted from Jython and JRuby so that a newer jna.jar can be used
+without being shadowed by Jython's or JRuby's idea of JNA.
 
-- If you have an account on the Fiji Wiki, you can easily add News entries
-  using the Plugins>Utilities>Fiji>New Fiji News menu item.
+There is a helper now to compile a few ImageJ versions.
 
-- There is a simple Object Inspector for Java objects now, accessible via
-  fiji.debugging.Object_Inspector.openFrame(label, object).
+We have helper scripts to build cross-compilers on Linux 64-bit to target
+win32, win64, MacOSX (32-bit and 64-bit Intel, 32-bit PowerPC).
 
-- The MediaWikiClient is now scriptable.
+There is a Fiji launcher for MacOSX PowerPC again, sadly not met with any
+feedback from the complaining person, let alone positive one.
 
-- The Fiji Updater offers developers to see the plugin changes since the
-  latest upload of said plugin.
+We have a script now to generate Eclipse, Netbeans and IntelliJ projects
+from the master Fakefile.
 
-- The sources for Jama are bundled now.
+FreeBSD is supported for developers, for now.
 
-- Both plugins/*.jar and jars/*.jar are loaded via the FijiClassLoader now,
-  which allows .jar files from jars/ to call functions in .jar files from
-  plugins/ (notable exception: jars/ij.jar and jars/Fiji.jar).
+There is a fall-back shell script -- fiji-other.sh -- for otherwise
+unsupported platforms.
 
-- You can use the analyze-dependencies.bsh script to check dependencies
-  of .jar files, reusing the functionality of the Fiji Updater's upload
-  functionality.
+The get-sample-images script supports headless operations now.
 
-- You can make your own "View on Fiji Development" movie, as seen on
+To prevent long waiting times with "git status" when a number of submodules
+are checked out, gitignore-in-submodules now understands an 'ignoredirty'
+subcommand.
 
-	http://youtube.com/fijichannel
+bin/identify-commit.py can be used on the precompiled Fiji launchers, too.
 
-  using the combined-gource-video.bsh script (requires Gource:
-  http://github.com/dscho/Gource).
+In developer mode, the Updater's "Show changes" also lists changes for
+the Fiji launchers and the .jar file's manifest.
 
-- The VIB sources were moved from a submodule directly into fiji.git.
+When samples/ is present, it is included in generated Fiji.app bundles.
 
-- The sources for plugins and libraries are now expected to live either in
-  submodules, or in src-plugins/<name>/<package>/<class-name>.java, where
-  <name> is the base name of the resulting .jar file.
+A convenience script was added to use Maven.
 
-- There is a command line interface to the Fiji Updater now (e.g. run
-  'fiji --jar plugins/Fiji_Updater.jar --list jars/ij.jar' to find out
-  the status of ij.jar).
+There is a helper now to find all dependencees (even transitive ones) of
+a given .jar file.
 
-- Fiji Build allows falling back to the updater if there is no precompiled/
-  file for a not-checked-out submodule.
+The nightly build generates a stable WebStart (reflecting the current version
+according to the Fiji Updater) and the PluginList on the Wiki.
 
-- The Fiji Build is more easily called via a public API now.
+A simple script to reverse the page order of a .pdf file was added, as an
+example how to use iText.
 
-- Fiji now has a working implementation of a KD-Tree (thanks to Stephan
-  Preibisch).
+The helper script bin/ready-for-upload.bsh can determine whether all
+prerequisite steps prior to uploading have been completed.
 
-- All submodules' main branches are called 'master' now, thanks to Curtis
-  Rueden.
+The commons-math library from the Apache project is now available.
 
-- You can include plugins.config in src-plugins/<name>/ directly, instead of
-  using staged-plugins/<name>.config.
+Fiji Build can now build JNI-backed plugins; just add .c or .cxx files to
+a .jar rule, and a shared library of the same name as the .jar file will
+be generated from the native sources. Use fiji.JNI.loadLibrary("<name>") to
+load the shared library.
 
-- You may link VIB-lib.jar and APLv2-licensed code (such as commons-math)
-  together now, due to a slight license change in VIB-lib.
+Upgrade jfreechart to 1.0.13 (from 1.0.9).
 
-- "git diff" shows Java method names in the hunk headers now.
+Update JNA to version 3.2.7.
 
-- You can call "fiji --compile-and-run /path/to/class.java" now.
+Fiji contains a base class fiji.tool.AbstractTool which makes it easy to add
+tools to the toolbar that are not backed by polling macros, but by a proper
+event-driven Java class.
 
-- You can rebuild the Windows 64-bit launcher on said platform now, using
-  the mingw-w64 compiler (e.g. by running /src/mingw-w64/release-easy.sh in
-  msysGit).
+To generate tool icons from 16x16 pictures, use Plugins>Examples>Image To
+Tool Icon.
 
-- There are functions in fiji.Main now to identify and recall AWT components
-  by a "component path" a la "Some Dialog>Panel[2]>TextField{Name:}".
+The Auto Threshold plugin has an API usable by developers of other plugins
+now.
 
-- Fiji can be asked to use the G1 garbace collector available since Java 1.6
-  Update 20, via the --gc-g1 option (thanks to Albert Cardona).
+The Fiji Build system handles rules involving Jython or Beanshell more
+efficiently now. It avoids to include unwanted files such as .DS_Store into
+.jar targets. The code uses generics now, and is more accessible to scripts
+and plugins. Fiji Build can use multiple CPU cores simultaneously now.
+A target can be force-rebuilt by appending "-rebuild" to the parameter.
+Building rules depending on Java3D is now possible even on MacOSX.
+Thanks to Mark Longair, Jacques Pecreaux and Curtis Rueden.
 
-- When developing a Fiji plugin in the Script Editor, one can see the diff
-  and commit the changes from within the Script Editor now.
+There is an easy way for developers to run external programs now:
+fiji.SimpleExecuter. This class offers a number of convenience functions
+to execute programs with specified parameters in a given working directory,
+and it offers several modes how the output should be handled: print to
+ImageJ's Log window, print to a stream, or save into Strings.
 
-- You can open the source for a class with 'fiji --edit class:<class-name>'.
+For Fiji Developer, adding documentation to the Fiji Wiki has been made
+even more convenient with enhancements to Plugins>Utilities>Fiji>New Fiji
+Tutorial and New Fiji Wiki Screenshot in the same menu.
 
-- There is a maven helper in bin/maven.sh now, you can call it from Fakefiles
-  to download maven if necessary, and then run it.
+The file and directory fields in the GenericDialogPlus class have been
+improved, and the methods addImageChoice() and getNextImage() have been
+added.
+
+fiji-lib now offers a class to split command lines and macro option strings,
+and a TicToc helper for simple performance benchmarking.
+
+If you want to add functionality similar to ImageJ's Command Finder to your
+own code, you can use fiji.util.gui.CommandFinderBase. If you have a JMenuBar
+you want to make accessible, you can use the JFrameCommandFinder class in
+the same package straight away. Thanks to Benjamin Schmid.
+
+When looking at a specific file and number in a developer checkout of Fiji,
+the Script Editor offers to open that particular location via gitweb in
+the web browser (this helps collaboration via IRC, for example).
+
+The submodules have been moved into the modules/ directory.
+
+You can use the short-cut URL http://pacific.mpi-cbg.de/<filename> for
+source files in Fiji's Git-managed repositories.
+
+Added IntegralImages as library components to the mpicbg submodule for
+rapid box-filter operations (mean, scale, difference of mean, ...).  Thanks
+to Stephan Saalfeld.

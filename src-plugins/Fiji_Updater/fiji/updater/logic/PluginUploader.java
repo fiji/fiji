@@ -122,9 +122,30 @@ public class PluginUploader {
 		// must be last lock
 		locks.add(Updater.XML_COMPRESSED);
 
+		// verify that the files have not changed in the meantime
+		for (SourceFile file : files)
+			verifyUnchanged(file, true);
+
 		uploader.upload(files, locks);
 
 		site.setLastModified(getCurrentLastModified());
+	}
+
+	protected void verifyUnchanged(SourceFile file, boolean checkTimestamp) {
+		if (!(file instanceof UploadableFile))
+			return;
+		UploadableFile uploadable = (UploadableFile)file;
+		if (uploadable.filesize != Util.getFilesize(uploadable.sourceFilename))
+			throw new RuntimeException("File size of "
+				+ uploadable.plugin.filename + " changed since being checksummed!");
+		if (checkTimestamp) {
+			long stored = uploadable.plugin.getStatus() == PluginObject.Status.NOT_FIJI ?
+				uploadable.plugin.current.timestamp :
+				uploadable.plugin.newTimestamp;
+			if (stored != Util.getTimestamp(uploadable.sourceFilename))
+				throw new RuntimeException("Timestamp of "
+					+ uploadable.plugin.filename + " changed since being checksummed!");
+		}
 	}
 
 	protected void updateUploadTimestamp(long timestamp)
@@ -182,8 +203,12 @@ public class PluginUploader {
 			}
 		}
 
+		public void itemDone(Object item) {
+			if (item instanceof UploadableFile)
+				verifyUnchanged((UploadableFile)item, false);
+		}
+
 		public void setCount(int count, int total) {}
-		public void itemDone(Object item) {}
 		public void setItemCount(int count, int total) {}
 		public void done() {}
 	}
