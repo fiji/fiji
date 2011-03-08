@@ -2,6 +2,7 @@ package fiji.plugin.trackmate.visualization.trackscheme;
 
 import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
+import ij.ImagePlus;
 
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
@@ -19,6 +20,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -46,6 +48,7 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.JToolBar;
+import javax.swing.JViewport;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -127,6 +130,8 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	private static final ImageIcon ZOOM_OUT_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/zoom_out.png")); 
 	private static final ImageIcon REFRESH_ICON		= new ImageIcon(TrackSchemeFrame.class.getResource("resources/refresh.png"));
 	private static final ImageIcon PLOT_ICON		= new ImageIcon(TrackSchemeFrame.class.getResource("resources/plots.png"));
+	private static final ImageIcon CAPTURE_UNDECORATED_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/camera_go.png"));
+	private static final ImageIcon CAPTURE_DECORATED_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/camera_edit.png"));
 
 	/*
 	 * FIELDS
@@ -528,7 +533,34 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 				plotSelectionData();
 			}
 		});
-		
+
+		// Separator
+		toolbar.addSeparator();
+
+		// Capture track scheme
+		toolbar.add(new AbstractAction("Capture undecorated track scheme", CAPTURE_UNDECORATED_ICON) {			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				BufferedImage image = jGraph.getImage(Color.WHITE, 0);
+				ImagePlus imp = new ImagePlus("Track scheme capture", image);
+				imp.show();
+			}
+		});
+
+		// Capture with decoration
+		toolbar.add(new AbstractAction("Capture decorated track scheme", CAPTURE_DECORATED_ICON) {			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JViewport view = scrollPane.getViewport();
+				Dimension size = view.getViewSize();
+				BufferedImage image =  (BufferedImage) view.createImage(size.width, size.height);
+				Graphics captureG = image.getGraphics();
+				view.paintComponents(captureG);
+				ImagePlus imp = new ImagePlus("Track scheme capture", image);
+				imp.show();
+			}
+		});
+
 		return toolbar;
 	}
 
