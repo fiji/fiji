@@ -68,7 +68,8 @@ while (bsh.args.length > 0 && bsh.args[0].startsWith("-")) {
 		handled = 2;
 	}
 	else if (bsh.args[0].equals("-p") || bsh.args[0].equals("--color")) {
-		color = true;
+		if (bsh.args[0].equals("--color"))
+			color = true;
 		extraArgs.add(bsh.args[0]);
 		if (bsh.args[0].equals("-p")) {
 			extraArgs.add("-M");
