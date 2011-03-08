@@ -17,6 +17,7 @@ import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
+import fiji.plugin.trackmate.visualization.trackscheme.SpotSelectionManager;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 import fiji.plugin.trackmate.visualization.TrackMateModelManager;
 
@@ -57,6 +58,8 @@ public class HyperStackDisplayerTestDrive {
 		
 		TrackMateModelManager manager = new TrackMateModelManager(model);
 		displayer.addSpotCollectionEditListener(manager);
+		
+		new SpotSelectionManager(displayer, trackScheme);
 		
 	}
 	

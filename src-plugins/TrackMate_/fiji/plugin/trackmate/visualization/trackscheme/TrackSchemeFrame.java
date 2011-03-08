@@ -539,9 +539,10 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	@SuppressWarnings("serial")
 	private JPopupMenu createPopupMenu(final Point pt, final Object cell) {
 		JPopupMenu menu = new JPopupMenu();
+		
 		if (cell != null) {
 			// Edit
-			menu.add(new AbstractAction("Edit") {
+			menu.add(new AbstractAction("Edit spot name") {
 				public void actionPerformed(ActionEvent e) {
 					jGraph.startEditingAtCell(cell);
 				}
@@ -551,7 +552,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			
 			// Multi edit
 			
-			menu.add(new AbstractAction("Edit " + spotSelection.size() +" spots") {
+			menu.add(new AbstractAction("Edit " + spotSelection.size() +" spot names") {
 				public void actionPerformed(ActionEvent e) {
 					
 					final SpotView[] cellViews = new SpotView[spotSelection.size()];
@@ -575,7 +576,6 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 						
 						@Override
 						public void actionPerformed(ActionEvent e) {
-							System.out.println("Editing finished");// DEBUG
 							for(Spot spot : spotSelection)
 								spot.setName(editField.getText());
 							jGraph.remove(editField);
@@ -586,16 +586,52 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			});
 			
 		}
+		
+		// Link
+		if (spotSelection.size() > 1) {
+			Action linkAction = new AbstractAction("Link spots") {
+
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					// Sort spots by time
+					TreeMap<Float, Spot> spotsInTime = new TreeMap<Float, Spot>();
+					for(Spot spot : spotSelection) 
+						spotsInTime.put(spot.getFeature(Feature.POSITION_T), spot);
+					// Then link them in this order
+					Iterator<Float> it = spotsInTime.keySet().iterator();
+					Float previousTime = it.next();
+					Spot previousSpot = spotsInTime.get(previousTime);
+					Float currentTime;
+					Spot currentSpot;
+					while(it.hasNext()) {
+						currentTime = it.next();
+						currentSpot = spotsInTime.get(currentTime);
+						// Link if not linked already
+						if (trackGraph.containsEdge(previousSpot, currentSpot))
+							continue;
+						DefaultWeightedEdge edge = lGraph.addEdge(previousSpot, currentSpot);
+						if (null == edge)
+							infoPane.textPane.setText("Invalid edge.");
+						lGraph.setEdgeWeight(edge, -1); // Default Weight
+						// Update the MODEL graph as well
+						trackGraph.addEdge(previousSpot, currentSpot, edge);
+						previousSpot = currentSpot;
+					}
+				}
+			};
+			menu.add(linkAction);
+		}
+
 		// Remove
-		menu.addSeparator();
-		Action removeAction = new AbstractAction("Remove") {
-			public void actionPerformed(ActionEvent e) {
-				remove(jGraph.getSelectionCells());
-			}
-		};
-		menu.add(removeAction);
-		if (jGraph.isSelectionEmpty()) 
-			removeAction.setEnabled(false);
+		if (!jGraph.isSelectionEmpty()) {
+			Action removeAction = new AbstractAction("Remove spots and links") {
+				public void actionPerformed(ActionEvent e) {
+					remove(jGraph.getSelectionCells());
+				}
+			};
+			menu.add(removeAction);
+		}
+		
 		return menu;
 	}
 
