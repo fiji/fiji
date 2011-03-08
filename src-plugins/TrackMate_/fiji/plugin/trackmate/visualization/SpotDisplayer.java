@@ -385,8 +385,9 @@ public abstract class SpotDisplayer {
 	}
 
 	protected void fireSpotCollectionEdit(SpotCollectionEditEvent event) {
-		for (SpotCollectionEditListener listener : spotCollectionEditListeners)
+		for (SpotCollectionEditListener listener : spotCollectionEditListeners) {
 			listener.collectionChanged(event);
+		}
 	}
 	
 	protected void spotSelectionChanged(Spot target, int frame, int flag) {

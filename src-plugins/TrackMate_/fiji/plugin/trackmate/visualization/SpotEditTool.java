@@ -137,8 +137,8 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		
 		case 1: {
 			// Change selection
-			// only if we are not currently editing
-			if (null != editedSpot)
+			// only if we are not currently editing and if target is non null
+			if (null != editedSpot || target == null)
 				return;
 			final int addToSelectionMask = MouseEvent.SHIFT_DOWN_MASK;
 			final int flag;
@@ -158,16 +158,15 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			
 			if (null == editedSpot) {
 				// No spot is currently edited, we pick one to edit
-				final float radius = target.getFeature(Feature.RADIUS);
-				if (target.squareDistanceTo(clickLocation) > radius*radius) {
+				float radius;
+				if (null != target)
+					radius = target.getFeature(Feature.RADIUS);
+				else 
+					radius = displayer.settings.segmenterSettings.expectedRadius;
+				if (null == target || target.squareDistanceTo(clickLocation) > radius*radius) {
 					// Create a new spot if not inside one
 					target = clickLocation;
-					target.putFeature(Feature.RADIUS, displayer.settings.segmenterSettings.expectedRadius);
-					// Add it to collections
-//					displayer.spotsToShow.add(target, frame);
-//					displayer.spots.add(target, frame);
-//					if (null != displayer.trackGraph)
-//						displayer.trackGraph.addVertex(target);
+					target.putFeature(Feature.RADIUS, radius);
 				}
 				editedSpot = target;
 				
@@ -184,14 +183,10 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				editedSpot.putFeature(Feature.POSITION_T, frame * displayer.settings.dt);
 				if (initFrame == null) {
 					// Means that the spot was created 
-					fireSpotCollectionEdit(new Spot[] { editedSpot }, SpotCollectionEditEvent.SPOT_CREATED, null, frame);					
+					fireSpotCollectionEdit(new Spot[] { editedSpot }, SpotCollectionEditEvent.SPOT_CREATED, null, frame);
 				} else if (initFrame != frame) {
 					// Move it to the new frame
 					fireSpotCollectionEdit(new Spot[] { editedSpot }, SpotCollectionEditEvent.SPOT_FRAME_CHANGED, initFrame, frame);
-//					displayer.spotsToShow.remove(editedSpot, initFrame);
-//					displayer.spots.remove(editedSpot, initFrame);
-//					displayer.spotsToShow.add(editedSpot, frame);
-//					displayer.spots.add(editedSpot, frame);
 				} else {
 					// The spots pre-existed and was not moved accross frames
 					fireSpotCollectionEdit(new Spot[] { editedSpot }, SpotCollectionEditEvent.SPOT_MODIFIED, null, null);
@@ -311,8 +306,9 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	
 	private void fireSpotCollectionEdit(Spot[] spots, int flag, Integer fromFrame, Integer toFrame) {
 		SpotCollectionEditEvent event = new SpotCollectionEditEvent(this, spots, flag, fromFrame, toFrame);
-		for (SpotCollectionEditListener listener : spotCollectionEditListeners)
+		for (SpotCollectionEditListener listener : spotCollectionEditListeners) {
 			listener.collectionChanged(event);
+		}
 	}
 	
 }

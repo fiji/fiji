@@ -4,6 +4,7 @@ import fiji.plugin.trackmate.features.FeatureFacade;
 import fiji.plugin.trackmate.gui.TrackMateFrameController;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.SpotTracker;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.plugin.PlugIn;
@@ -256,7 +257,16 @@ public class TrackMate_ implements PlugIn, TrackMateModelInterface {
 		this.initialThreshold = initialThreshold;
 	}
 
-
+	/*
+	 * MAIN METHOD
+	 */
+	
+	public static void main(String[] args) {
+		ij.ImageJ.main(args);
+		IJ.open("/Users/tinevez/Desktop/Data/FakeTracks.tif");
+		TrackMate_ model = new TrackMate_();
+		model.run(null);
+	}
 	
 	
 }

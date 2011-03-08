@@ -435,18 +435,24 @@ public class LAPTracker extends AbstractSpotTracker {
 			frame1 = frameIterator.next();			
 
 			// Extend track segments using solutions: we update the graph edges
+			List<Spot> t0 = spots.get(frame0);
+			List<Spot> t1 = spots.get(frame1);
+			System.out.println("LAPTracker: spots are: "+frame0+": "+t0.size()+" spots - "+frame1+": "+t1.size()+" spots.");// DEBUG
 			for (int i = 0; i < solutions.length; i++) {
 				if (solutions[i].length == 0)
 					continue;
 				int i0 = solutions[i][0];
 				int i1 = solutions[i][1];
-				List<Spot> t0 = spots.get(frame0);
-				List<Spot> t1 = spots.get(frame1);				
+				
 				if (i0 < t0.size() && i1 < t1.size() ) {
 					// Solution belong to the upper-left quadrant: we can connect the spots
 					Spot s0 = t0.get(i0);
 					Spot s1 = t1.get(i1);
 					edge = trackGraph.addEdge(s0, s1);
+					if (null == edge) {
+						System.out.println("Could not add edge between spot "+s0+" and spot "+s1);// DEBUG
+						continue;						
+					}
 					// We set the edge weight to be the linking cost, for future reference. 
 					// This is NOT used in further tracking steps
 					weight = costMatrix[i0][i1]; 
@@ -592,27 +598,6 @@ public class LAPTracker extends AbstractSpotTracker {
 					SortedSet<Spot> segmentStart = trackSegments.get(j);
 					Spot start = segmentStart.first();
 					Spot mother = splittingMiddlePoints.get(i - numTrackSegments);
-					/*
-					// But we want to link with the PREVIOUS spot in track
-					SortedSet<Spot> trackTarget = null;
-					// Find encompassing track
-					for (SortedSet<Spot> t: trackSegments) {
-						for (Spot s : t) {
-							if (s == mother)  {
-								trackTarget = t; 
-								break;
-							}
-						}
-					}
-					// Find previous spot in order
-					Spot target = null;
-					for (Spot s : trackTarget) {
-						if (s == mother)
-							break;
-						target = s;
-					}
-					// Create link
-					*/
 					Spot target = mother;
 					edge = trackGraph.addEdge(start, target);
 					// Set weight to be the linking cost

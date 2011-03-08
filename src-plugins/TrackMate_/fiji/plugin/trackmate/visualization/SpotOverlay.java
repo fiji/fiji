@@ -71,7 +71,6 @@ public class SpotOverlay extends AbstractAnnotation {
 		
 		@Override
 		public void draw(Graphics2D g2d) {
-			
 			if (!spotVisible || null == target)
 				return;
 			
@@ -82,19 +81,19 @@ public class SpotOverlay extends AbstractAnnotation {
 			g2d.setStroke(new BasicStroke((float) (1 / canvas.getMagnification())));
 			Color color;
 			List<Spot> spots = target.get(frame);
-			if (null == spots)
-				return;
-			for (Spot spot : spots) {
-				
-				if (editingSpot == spot || (spotSelection != null && spotSelection.contains(spot)))
-					continue;
-				
-				color = targetColor.get(spot);
-				if (null == color)
-					color = SpotDisplayer.DEFAULT_COLOR;
-				g2d.setColor(color);
-				drawSpot(g2d, spot, zslice);
-				
+			if (null != spots) { 
+				for (Spot spot : spots) {
+
+					if (editingSpot == spot || (spotSelection != null && spotSelection.contains(spot)))
+						continue;
+
+					color = targetColor.get(spot);
+					if (null == color)
+						color = SpotDisplayer.DEFAULT_COLOR;
+					g2d.setColor(color);
+					drawSpot(g2d, spot, zslice);
+
+				}
 			}
 			
 			// Deal with spot selection

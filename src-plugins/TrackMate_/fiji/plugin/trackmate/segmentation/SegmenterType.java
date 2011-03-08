@@ -5,11 +5,14 @@ import fiji.plugin.trackmate.InfoTextable;
 public enum SegmenterType implements InfoTextable {
 	PEAKPICKER_SEGMENTER,
 	LOG_SEGMENTER,
-	DOG_SEGMENTER;
+	DOG_SEGMENTER, 
+	MANUAL_SEGMENTER;
 
 	@Override
 	public String toString() {
 		switch(this) {
+		case MANUAL_SEGMENTER:
+			return "Manual segmentation";
 		case LOG_SEGMENTER:
 			return "Downsample LoG segmenter";
 		case PEAKPICKER_SEGMENTER:
@@ -32,6 +35,7 @@ public enum SegmenterType implements InfoTextable {
 		}
 		case PEAKPICKER_SEGMENTER:
 		case DOG_SEGMENTER: 
+		case MANUAL_SEGMENTER: // We will return a classic segmenter settings, but only exploit the expected radius
 		{
 			SegmenterSettings s = new SegmenterSettings();
 			s.segmenterType = this;
@@ -56,12 +60,18 @@ public enum SegmenterType implements InfoTextable {
 			return "<html>" +
 			"This segmenter is basically identical to the LoG segmenter, except <br>" +
 			"that images are downsampled before filtering, giving it a small <br>" +
-			"kick in speed." +
+			"kick in speed, particularly for large spot sizes." +
 			"</html>";
 		case DOG_SEGMENTER:
 			return "<html>" +
-			"This segmented is based on an approximation of the LoG operator <br>" +
-			"by differences of gaussian (DoG)." +
+			"This segmenter is based on an approximation of the LoG operator <br>" +
+			"by differences of gaussian (DoG). Computations are made in direct space. " +
+			"It is the quickest for small spot sizes." +
+			"</html>";
+		case MANUAL_SEGMENTER:
+			return "<html>" +
+			"Selecting this will skip the automatic segmentation phase, and jump directly " +
+			"to manual segmentation. A default spot size will be asked for. " +
 			"</html>";
 		}
 		return null;

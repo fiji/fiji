@@ -83,7 +83,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	/**
 	 * Add the given spot to this collection, at the given frame. If the frame collection does not exist yet,
 	 * it is created. If <code>null</code> is passed for the frame, nothing is done and false is returned. 
-	 * @return true if adding was succesful.
+	 * @return true if adding was successful.
 	 */
 	public boolean add(Spot spot, Integer frame) {
 		if (null == frame)
@@ -197,6 +197,8 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	 */
 	public final Spot getClosestSpot(final Spot location, final int frame) {
 		final List<Spot> spots = content.get(frame);
+		if (null == spots)	
+			return null;
 		float d2;
 		float minDist = Float.POSITIVE_INFINITY;
 		Spot target = null;

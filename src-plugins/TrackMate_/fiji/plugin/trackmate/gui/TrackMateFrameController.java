@@ -40,6 +40,7 @@ import fiji.plugin.trackmate.gui.TrackMateFrame.PanelCard;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.io.TmXmlWriter;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
+import fiji.plugin.trackmate.segmentation.SegmenterType;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.TrackMateModelManager;
@@ -249,19 +250,36 @@ public class TrackMateFrameController {
 				// Get the settings basic fields from the start dialog panel 
 				controller.execGetStartSettings();
 				return;
+			case TUNE_SEGMENTER:
+				// If we choose to skip segmentation, initialize the model spot content and skip directly to state where we will be asked for a displayer.
+				if (controller.model.getSettings().segmenterType == SegmenterType.MANUAL_SEGMENTER) {
+					controller.model.setSpots(new SpotCollection());
+					controller.model.setSpotSelection(new SpotCollection());
+					controller.state = CHOOSE_DISPLAYER.previousState();
+				}
+				break;
 			case SEGMENTING:
 				controller.execSegmentationStep();
 				return;
 			case CHOOSE_DISPLAYER:
-				// Before we switch to the log display when calculating features, we *execute* the initial thresholding step.
-				controller.execInitialThresholding();
+				// Before we switch to the log display when calculating features, we *execute* the initial thresholding step,
+				// only if we did not skip segmentation.
+				if (controller.model.getSettings().segmenterType != SegmenterType.MANUAL_SEGMENTER)
+					controller.execInitialThresholding();
 				return;
-			case CALCULATE_FEATURES:
-				// Compute the feature first
-				controller.execCalculateFeatures();
+			case CALCULATE_FEATURES: {
+				// Compute the feature first, again, only if we did not skip segmentation.
+				if (controller.model.getSettings().segmenterType != SegmenterType.MANUAL_SEGMENTER)
+					controller.execCalculateFeatures();
+				else {
+					// Otherwise we get the manual spot diameter,  and plan to jump to tracking
+					controller.model.getSettings().segmenterSettings = controller.view.segmenterSettingsPanel.getSettings();
+					controller.state = CHOOSE_TRACKER.previousState();
+				}
 				// Then we launch the displayer
 				controller.execLaunchdisplayer();
 				return;
+			}
 			case THRESHOLD_BLOBS:
 				controller.execThresholding();
 				return;
@@ -925,6 +943,9 @@ public class TrackMateFrameController {
 				}
 				displayer = SpotDisplayer.instantiateDisplayer(view.displayerChooserPanel.getChoice(), model);
 				displayer.setSpots(model.getSpots());
+				// Forward the model to the displayer (not done if we skip automatic segmentation steps)
+				if (model.getSettings().segmenterType == SegmenterType.MANUAL_SEGMENTER) 
+					displayer.setSpotsToShow(model.getSelectedSpots());
 				// Have the manager listen to manual edits made in this displayer
 				displayer.addSpotCollectionEditListener(manager);
 				// Re-enable the GUI

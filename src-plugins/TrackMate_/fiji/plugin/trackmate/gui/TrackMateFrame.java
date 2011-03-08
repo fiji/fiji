@@ -149,8 +149,6 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		switch (key) {
 		
 		case START_DIALOG_KEY:
-//			if (null != startDialogPanel)
-//				jPanelMain.remove(startDialogPanel);
 			startDialogPanel = new StartDialogPanel(model.getSettings(), jButtonNext);
 			panel = startDialogPanel;
 			break;

@@ -16,6 +16,7 @@ import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 
+import javax.swing.JComponent;
 import javax.swing.WindowConstants;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -93,6 +94,17 @@ public class SegmenterSettingsPanel extends ActionListenablePanel {
 		case LOG_SEGMENTER:
 		case PEAKPICKER_SEGMENTER:
 			return new SegmenterSettingsPanel(segmenterSettings);
+		case MANUAL_SEGMENTER: {
+			SegmenterSettingsPanel panel = new SegmenterSettingsPanel(segmenterSettings);
+			JComponent[] uselessComponents = new JComponent[] {
+					panel.jCheckBoxMedianFilter,
+					panel.jLabelThreshold,
+					panel.jTextFieldThreshold,
+					panel.jButtonRefresh };
+			for(JComponent c : uselessComponents)
+				c.setVisible(false);
+			return panel;
+		}
 		}
 		return null;
 	}	
