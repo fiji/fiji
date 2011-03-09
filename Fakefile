@@ -454,6 +454,7 @@ MACOPTS(osx10.3)=-I/System/Library/Frameworks/JavaVM.Framework/Headers \
 	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(macosx)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(macosx)"'
 MACOPTS(osx10.4)=$MACOPTS(osx10.3) -mmacosx-version-min=10.3 -arch i386 -arch ppc
 MACOPTS(osx10.5)=$MACOPTS(osx10.3) -mmacosx-version-min=10.4 -arch i386 -arch x86_64
+CFLAGS(macosx)=$MACOPTS
 
 CFLAGS(linux)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector \
 	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(linux)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(linux)"'
