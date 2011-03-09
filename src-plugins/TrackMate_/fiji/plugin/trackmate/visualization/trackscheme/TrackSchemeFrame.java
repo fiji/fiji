@@ -60,19 +60,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 
-import org.jgraph.JGraph;
-import org.jgraph.event.GraphSelectionEvent;
-import org.jgraph.event.GraphSelectionListener;
-import org.jgraph.graph.AbstractCellView;
-import org.jgraph.graph.BasicMarqueeHandler;
-import org.jgraph.graph.CellView;
-import org.jgraph.graph.DefaultGraphCell;
-import org.jgraph.graph.DefaultGraphCellEditor;
-import org.jgraph.graph.GraphConstants;
-import org.jgraph.graph.GraphLayoutCache;
-import org.jgraph.graph.GraphModel;
-import org.jgraph.graph.PortView;
-import org.jgraph.plaf.basic.BasicGraphUI;
+
 import org.jgrapht.Graph;
 import org.jgrapht.event.GraphEdgeChangeEvent;
 import org.jgrapht.event.GraphListener;
@@ -83,13 +71,21 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.ListenableUndirectedWeightedGraph;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
-import com.jgraph.layout.JGraphFacade;
+import com.mxgraph.model.mxCell;
+import com.mxgraph.swing.mxGraphComponent;
+import com.mxgraph.util.mxCellRenderer;
+import com.mxgraph.util.mxEventObject;
+import com.mxgraph.util.mxRectangle;
+import com.mxgraph.util.mxEventSource.mxIEventListener;
+import com.mxgraph.view.mxGraph;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.visualization.SpotCollectionEditEvent;
 import fiji.plugin.trackmate.visualization.SpotCollectionEditListener;
+import fiji.plugin.trackmate.visualization.trackscheme.SpotCellViewFactory.SpotCell;
+import fiji.plugin.trackmate.visualization.trackscheme.SpotCellViewFactory.TrackEdgeCell;
 
 public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListener {
 
@@ -138,16 +134,15 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	 */
 
 	private SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph;
-	private JGraphModelAdapter<Spot, DefaultWeightedEdge> jGMAdapter;
 	private ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge> lGraph;
-	private JGraph jGraph;
+	private JGraphXAdapter<Spot, DefaultWeightedEdge> graph;
 	private InfoPane infoPane;
 	private ArrayList<GraphListener<Spot, DefaultWeightedEdge>> graphListeners = new ArrayList<GraphListener<Spot,DefaultWeightedEdge>>();
 	private GraphPane backPane;
 	/** The spots currently selected. */
 	private HashSet<Spot> spotSelection = new HashSet<Spot>();
-	private JScrollPane scrollPane;
 	private Settings settings;
+	private mxGraphComponent graphComponent;
 
 	/*
 	 * CONSTRUCTORS
@@ -156,7 +151,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	public TrackSchemeFrame(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph, final Settings settings) {
 		this.trackGraph = trackGraph;
 		this.lGraph = new ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge>(trackGraph);
-		this.jGraph = createGraph();
+		this.graph = createGraph();
 		this.settings = settings;
 		init();
 		setSize(DEFAULT_SIZE);
@@ -169,29 +164,28 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 
 	@Override
 	public void collectionChanged(SpotCollectionEditEvent event) {
-		if (event.getFlag() == SpotCollectionEditEvent.SPOT_CREATED) {
-			final JGraphFacade facade = new JGraphFacade(jGraph);
-			
-			int targetColumn = 0;
-			for (int i = 0; i < backPane.columnWidths.length; i++)
-				targetColumn += backPane.columnWidths[i];
-			
-			SpotCell cell = null;
-			for (Spot spot : event.getSpots()) {
-				float instant = spot.getFeature(Feature.POSITION_T);
-				cell = new SpotCell(spot);
-				cell.addPort();
-				jGraph.getGraphLayoutCache().insert(cell);
-				facade.setLocation(cell,  (targetColumn-2) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2, (0.5 + backPane.rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2);
-				int height = Math.min(DEFAULT_CELL_WIDTH, spot.getIcon().getIconHeight());
-				height = Math.max(height, 12);
-				facade.setSize(cell, DEFAULT_CELL_WIDTH, height);
-			}
-			@SuppressWarnings("rawtypes")
-			Map nested = facade.createNestedMap(false, false); // Obtain a map of the resulting attribute changes from the facade 
-			jGraph.getGraphLayoutCache().edit(nested); // Apply the results to the actual graph 
-			centerViewOn(cell);
-		}
+//		if (event.getFlag() == SpotCollectionEditEvent.SPOT_CREATED) {
+//			final JGraphFacade facade = new JGraphFacade(jGraph);
+//			
+//			int targetColumn = 0;
+//			for (int i = 0; i < backPane.columnWidths.length; i++)
+//				targetColumn += backPane.columnWidths[i];
+//			
+//			SpotCell cell = null;
+//			for (Spot spot : event.getSpots()) {
+//				float instant = spot.getFeature(Feature.POSITION_T);
+//				cell = new SpotCell(spot);
+//				graph.getGraphLayoutCache().insert(cell);
+//				facade.setLocation(cell,  (targetColumn-2) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2, (0.5 + backPane.rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2);
+//				int height = Math.min(DEFAULT_CELL_WIDTH, spot.getIcon().getIconHeight());
+//				height = Math.max(height, 12);
+//				facade.setSize(cell, DEFAULT_CELL_WIDTH, height);
+//			}
+//			@SuppressWarnings("rawtypes")
+//			Map nested = facade.createNestedMap(false, false); // Obtain a map of the resulting attribute changes from the facade 
+//			jGraph.getGraphLayoutCache().edit(nested); // Apply the results to the actual graph 
+//			centerViewOn(cell);
+//		}
 		
 	}
 	
@@ -216,27 +210,20 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	}
 	
 	/**
-	 * Return a reference to the {@link JGraph} view in charge of rendering the track scheme.
+	 * Return a reference to the {@link mxGraph} view in charge of rendering the track scheme.
 	 */
-	public JGraph getJGraph() {
-		return jGraph;
+	public JGraphXAdapter<Spot, DefaultWeightedEdge> getGraph() {
+		return graph;
 	}
 	
-	/**
-	 * Return a reference to the adapter in charge of converting the {@link Spot} and
-	 * {@link DefaultWeightedEdge} for display in this JGraph frame.
-	 */
-	public JGraphModelAdapter<Spot, DefaultWeightedEdge> getAdapter() {
-		return jGMAdapter;
-	}
-	
-	public void centerViewOn(DefaultGraphCell cell) {
-		Rectangle2D bounds = jGraph.getCellBounds(cell);
+	public void centerViewOn(mxCell cell) {
+		mxRectangle bounds = graph.getCellBounds(cell);
 		if (null == bounds)
 			return;
-		Point2D center = new Point2D.Double(bounds.getCenterX()*jGraph.getScale(), bounds.getCenterY()*jGraph.getScale());
-		scrollPane.getHorizontalScrollBar().setValue((int) center.getX() - scrollPane.getWidth()/2);
-		scrollPane.getVerticalScrollBar().setValue((int) center.getY() - scrollPane.getHeight()/2);
+		double scale = graphComponent.getZoomFactor();
+		Point2D center = new Point2D.Double(bounds.getCenterX()*scale, bounds.getCenterY()*scale);
+		graphComponent.getHorizontalScrollBar().setValue((int) center.getX() - graphComponent.getWidth()/2);
+		graphComponent.getVerticalScrollBar().setValue((int) center.getY() - graphComponent.getHeight()/2);
 	}
 	
 
@@ -250,7 +237,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		if (yFeatures.isEmpty())
 			return;
 		
-		Object[] selectedCells = jGraph.getSelectionCells();
+		Object[] selectedCells = graph.getSelectionCells();
 		if (selectedCells == null || selectedCells.length == 0)
 			return;
 		
@@ -299,31 +286,16 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		}
 	}
 	
-	private JGraph createGraph() {
-		jGMAdapter = new JGraphModelAdapter<Spot, DefaultWeightedEdge>(
-				lGraph,
-				JGraphModelAdapter.createDefaultVertexAttributes(), 
-				JGraphModelAdapter.createDefaultEdgeAttributes(lGraph),
-				new CellFactory<Spot, DefaultWeightedEdge>() {
-
-					@Override
-					public org.jgraph.graph.DefaultEdge createEdgeCell(DefaultWeightedEdge edge) {
-						return new TrackEdgeCell(edge, lGraph);			}
-
-					@Override
-					public DefaultGraphCell createVertexCell(Spot spot) {
-						return new SpotCell(spot);
-					}
-					
-				});
+	private JGraphXAdapter<Spot, DefaultWeightedEdge> createGraph() {
+		JGraphXAdapter<Spot, DefaultWeightedEdge> graph = new JGraphXAdapter<Spot, DefaultWeightedEdge>(lGraph, new SpotCellViewFactory(lGraph));
 		
-		SpotCellViewFactory factory = new SpotCellViewFactory();
-		GraphLayoutCache graphLayoutCache = new GraphLayoutCache(jGMAdapter, factory);		
-		MyGraph myGraph = new MyGraph(jGMAdapter, graphLayoutCache);
-		myGraph.setMarqueeHandler(new MyMarqueeHandler());
-		myGraph.setUI(new MyBasicGraphUI());
-		AbstractCellView.cellEditor = new MyGraphCellEditor();
-		return myGraph;
+//		SpotCellViewFactory factory = new SpotCellViewFactory();
+//		GraphLayoutCache graphLayoutCache = new GraphLayoutCache(jGMAdapter, factory);
+//		MyGraph myGraph = new MyGraph(jGMAdapter, graphLayoutCache);
+//		myGraph.setMarqueeHandler(new MyMarqueeHandler());
+//		myGraph.setUI(new MyBasicGraphUI());
+//		AbstractCellView.cellEditor = new MyGraphCellEditor();
+		return graph;
 	}
 
 	
@@ -335,51 +307,52 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		getContentPane().setLayout(new BorderLayout());
 		// Add a ToolBar
 		getContentPane().add(createToolBar(), BorderLayout.NORTH);
-		
-		// Create back pane
-		backPane = new GraphPane(lGraph);
-		BorderLayout layout = new BorderLayout();
-		backPane.setLayout(layout);
-		backPane.add(jGraph, BorderLayout.CENTER);
-		jGraph.setOpaque(false);
 
 		// Arrange graph layout
 		doTrackLayout();
 		
 		// Add the back pane as Center Component
-		scrollPane = new JScrollPane(backPane);
-		scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-		scrollPane.getHorizontalScrollBar().setUnitIncrement(16);
+		graphComponent = new mxGraphComponent(graph);
+		graphComponent.getVerticalScrollBar().setUnitIncrement(16);
+		graphComponent.getHorizontalScrollBar().setUnitIncrement(16);
 		
 		// Add the info pane
 		infoPane = new InfoPane();
 		
-		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, infoPane, scrollPane);
+		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, infoPane, graphComponent);
 		splitPane.setDividerLocation(170);
 		getContentPane().add(splitPane, BorderLayout.CENTER);
 
 		// Listeners
-		jGraph.addGraphSelectionListener(new GraphSelectionListener() {
-
+		graph.addListener(null, new mxIEventListener() {
+			
 			@Override
-			public void valueChanged(GraphSelectionEvent e) {
-				Object[] cells = e.getCells();
-				for(Object cell : cells) {
-					if (cell instanceof SpotCell) {
-						SpotCell spotCell = (SpotCell) cell;
-						if (e.isAddedCell(cell))
-							spotSelection.add(spotCell.getSpot());
-						else 
-							spotSelection.remove(spotCell.getSpot());
-					}
-				}
-				infoPane.echo(spotSelection);
-				if (spotSelection.isEmpty())
-					infoPane.scrollTable.setVisible(false);
-				else
-					infoPane.scrollTable.setVisible(true);
+			public void invoke(Object sender, mxEventObject evt) {
+				System.out.println("Received event: "+evt+" from: "+sender);// DEBUG
+				
 			}
 		});
+//		addGraphSelectionListener(new GraphSelectionListener() {
+//
+//			@Override
+//			public void valueChanged(GraphSelectionEvent e) {
+//				Object[] cells = e.getCells();
+//				for(Object cell : cells) {
+//					if (cell instanceof SpotCell) {
+//						SpotCell spotCell = (SpotCell) cell;
+//						if (e.isAddedCell(cell))
+//							spotSelection.add(spotCell.getSpot());
+//						else 
+//							spotSelection.remove(spotCell.getSpot());
+//					}
+//				}
+//				infoPane.echo(spotSelection);
+//				if (spotSelection.isEmpty())
+//					infoPane.scrollTable.setVisible(false);
+//				else
+//					infoPane.scrollTable.setVisible(true);
+//			}
+//		});
 
 		// Forward graph change events to the listeners registered with this frame 
 		lGraph.addGraphListener(new GraphListener<Spot, DefaultWeightedEdge>() {
@@ -409,18 +382,18 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	private void doTrackLayout() {
 //		jGMAdapter.
 		
-		JGraphFacade facade = new JGraphFacade(jGraph);
-		JGraphTimeLayout graphLayout = new JGraphTimeLayout(trackGraph, jGMAdapter);
-		graphLayout.run(facade);
-
-		@SuppressWarnings("rawtypes")
-		Map nested = facade.createNestedMap(false, false); // Obtain a map of the resulting attribute changes from the facade 
-		jGraph.getGraphLayoutCache().edit(nested); // Apply the results to the actual graph 
+//		JGraphFacade facade = new JGraphFacade(jGraph);
+//		JGraphTimeLayout graphLayout = new JGraphTimeLayout(trackGraph, jGMAdapter);
+//		graphLayout.run(facade);
+//
+//		@SuppressWarnings("rawtypes")
+//		Map nested = facade.createNestedMap(false, false); // Obtain a map of the resulting attribute changes from the facade 
+//		jGraph.getGraphLayoutCache().edit(nested); // Apply the results to the actual graph 
 
 		// Forward painting info to back pane
-		backPane.setColumnWidths(graphLayout.getTrackColumnWidths());
-		backPane.setRowForInstant(graphLayout.getRowForInstant());
-		backPane.setColumnColor(graphLayout.getTrackColors());
+//		backPane.setColumnWidths(graphLayout.getTrackColumnWidths());
+//		backPane.setRowForInstant(graphLayout.getRowForInstant());
+//		backPane.setColumnColor(graphLayout.getTrackColors());
 
 	}
 	
@@ -443,13 +416,13 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		// Toggle Connect Mode
 		toolbar.add(new AbstractAction("Toggle linking", LINKING_ON_ICON) {
 			public void actionPerformed(ActionEvent e) {
-				jGraph.setPortsVisible(!jGraph.isPortsVisible());
-				ImageIcon connectIcon;
-				if (jGraph.isPortsVisible())
-					connectIcon = LINKING_ON_ICON;
-				else
-					connectIcon = LINKING_OFF_ICON;
-				putValue(SMALL_ICON, connectIcon);
+//				graph.set
+//				ImageIcon connectIcon;
+//				if (graph.isPortsVisible())
+//					connectIcon = LINKING_ON_ICON;
+//				else
+//					connectIcon = LINKING_OFF_ICON;
+//				putValue(SMALL_ICON, connectIcon);
 			}
 		});
 
@@ -464,14 +437,14 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		
 		zoomInAction = new AbstractAction(null, ZOOM_IN_ICON) {
 			public void actionPerformed(ActionEvent e) {
-				double scale = jGraph.getScale();
+				double scale = graphComponent.getZoomFactor();
 				if (scale < 2) {
-					Rectangle oldView = scrollPane.getViewport().getViewRect();
-					jGraph.setScale(2 * scale);
+					Rectangle oldView = graphComponent.getViewport().getViewRect();
+					graphComponent.zoom(2 * scale);
 					Point newViewPos = new Point();
 					newViewPos.x = (int) Math.max(0, (oldView.x + (float) oldView.width / 2) * 2- oldView.width / 2);
 					newViewPos.y = (int) Math.max(0, (oldView.y + (float) oldView.height / 2) * 2 - oldView.height / 2);
-					scrollPane.getViewport().setViewPosition(newViewPos);
+					graphComponent.getViewport().setViewPosition(newViewPos);
 				}
 				if (scale > 2)
 					zoomInButton.setEnabled(false);
@@ -480,14 +453,14 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		};
 		zoomOutAction = new AbstractAction(null, ZOOM_OUT_ICON) {
 			public void actionPerformed(ActionEvent e) {
-				double scale = jGraph.getScale();
+				double scale = graphComponent.getZoomFactor();
 				if (scale > (double)1/16) {
-					Rectangle oldView = scrollPane.getViewport().getViewRect();
-					jGraph.setScale(scale/2);
+					Rectangle oldView = graphComponent.getViewport().getViewRect();
+					graphComponent.zoom(scale/2);
 					Point newViewPos = new Point();
 					newViewPos.x = (int) Math.max(0, (oldView.x + (float) oldView.width / 2) / 2- oldView.width / 2);
 					newViewPos.y = (int) Math.max(0, (oldView.y + (float) oldView.height / 2) / 2 - oldView.height / 2);
-					scrollPane.getViewport().setViewPosition(newViewPos);
+					graphComponent.getViewport().setViewPosition(newViewPos);
 				}
 				if (scale < (double)1/16)
 					zoomOutButton.setEnabled(false);
@@ -504,7 +477,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		// Zoom Std
 		toolbar.add(new AbstractAction("Reset zoom", RESET_ZOOM_ICON) {
 			public void actionPerformed(ActionEvent e) {
-				jGraph.setScale(1.0);
+				graphComponent.zoomActual();
 			}
 		});
 		// Zoom In
@@ -541,7 +514,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		toolbar.add(new AbstractAction("Capture undecorated track scheme", CAPTURE_UNDECORATED_ICON) {			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				BufferedImage image = jGraph.getImage(Color.WHITE, 0);
+				BufferedImage image = mxCellRenderer.createBufferedImage(graph, null, 1, Color.WHITE, false, null);
 				ImagePlus imp = new ImagePlus("Track scheme capture", image);
 				imp.show();
 			}
@@ -551,7 +524,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		toolbar.add(new AbstractAction("Capture decorated track scheme", CAPTURE_DECORATED_ICON) {			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JViewport view = scrollPane.getViewport();
+				JViewport view = graphComponent.getViewport();
 				Dimension size = view.getViewSize();
 				BufferedImage image =  (BufferedImage) view.createImage(size.width, size.height);
 				Graphics captureG = image.getGraphics();
@@ -576,7 +549,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			// Edit
 			menu.add(new AbstractAction("Edit spot name") {
 				public void actionPerformed(ActionEvent e) {
-					jGraph.startEditingAtCell(cell);
+//					graph.startEditingAtCell(cell);
 				}
 			});
 			
@@ -584,38 +557,38 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			
 			// Multi edit
 			
-			menu.add(new AbstractAction("Edit " + spotSelection.size() +" spot names") {
-				public void actionPerformed(ActionEvent e) {
-					
-					final SpotView[] cellViews = new SpotView[spotSelection.size()];
-					final JGraphFacade facade = new JGraphFacade(jGraph);
-					Iterator<Spot> it = spotSelection.iterator();
-					for (int i = 0; i < spotSelection.size(); i++) {
-						Object facadeTarget = jGMAdapter.getVertexCell(it.next());
-						SpotView vView = (SpotView) facade.getCellView(facadeTarget);
-						cellViews[i] = vView;
-					}
-					
-					final JTextField editField = new JTextField(20);
-					editField.setFont(FONT);
-					editField.setBounds(pt.x, pt.y, 100, 20);
-					jGraph.add(editField);
-					editField.setVisible(true);
-					editField.revalidate();
-					jGraph.repaint();
-					editField.requestFocusInWindow();
-					editField.addActionListener(new ActionListener() {
-						
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							for(Spot spot : spotSelection)
-								spot.setName(editField.getText());
-							jGraph.remove(editField);
-							jGraph.refresh();
-						}
-					});
-				}
-			});
+//			menu.add(new AbstractAction("Edit " + spotSelection.size() +" spot names") {
+//				public void actionPerformed(ActionEvent e) {
+//					
+//					final SpotView[] cellViews = new SpotView[spotSelection.size()];
+//					final JGraphFacade facade = new JGraphFacade(jGraph);
+//					Iterator<Spot> it = spotSelection.iterator();
+//					for (int i = 0; i < spotSelection.size(); i++) {
+//						Object facadeTarget = jGMAdapter.getVertexCell(it.next());
+//						SpotView vView = (SpotView) facade.getCellView(facadeTarget);
+//						cellViews[i] = vView;
+//					}
+//					
+//					final JTextField editField = new JTextField(20);
+//					editField.setFont(FONT);
+//					editField.setBounds(pt.x, pt.y, 100, 20);
+//					jGraph.add(editField);
+//					editField.setVisible(true);
+//					editField.revalidate();
+//					jGraph.repaint();
+//					editField.requestFocusInWindow();
+//					editField.addActionListener(new ActionListener() {
+//						
+//						@Override
+//						public void actionPerformed(ActionEvent e) {
+//							for(Spot spot : spotSelection)
+//								spot.setName(editField.getText());
+//							jGraph.remove(editField);
+//							jGraph.refresh();
+//						}
+//					});
+//				}
+//			});
 			
 		}
 		
@@ -655,10 +628,10 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		}
 
 		// Remove
-		if (!jGraph.isSelectionEmpty()) {
+		if (!graph.isSelectionEmpty()) {
 			Action removeAction = new AbstractAction("Remove spots and links") {
 				public void actionPerformed(ActionEvent e) {
-					remove(jGraph.getSelectionCells());
+					remove(graph.getSelectionCells());
 				}
 			};
 			menu.add(removeAction);
@@ -677,7 +650,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	 * The customized JPanel used to display a useful background under the graph.
 	 * It displays in Y the time, and in X the track identity.
 	 */
-	private class GraphPane extends JPanel {
+	private class GraphPane extends mxGraphComponent {
 
 		private static final long serialVersionUID = 1L;
 		private TreeSet<Float> instants;
@@ -685,12 +658,12 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		private int[] columnWidths = null;
 		private Color[] columnColors;
 
-		public GraphPane(Graph<Spot, DefaultWeightedEdge> graph) {
-			super();
+		public GraphPane(mxGraph graph) {
+			super(graph);
 			setBackground(BACKGROUND_COLOR_1);
 
 			instants = new TreeSet<Float>();
-			for (Spot s : graph.vertexSet())
+			for (Spot s : trackGraph.vertexSet())
 				instants.add(s.getFeature(Feature.POSITION_T));
 		}
 
@@ -703,7 +676,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			super.paintComponent(g);
 			int width = getSize().width;
 			int height = getSize().height;
-			float scale = (float) jGraph.getScale();
+			float scale = (float) getZoomFactor();
 
 			// Scaled sizes
 			int xcs 			= Math.round(X_COLUMN_SIZE*scale);
@@ -893,356 +866,36 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	}
 	
 	
-	@SuppressWarnings("serial")
-	private static class MyGraphCellEditor extends DefaultGraphCellEditor {
-		private Object target;
-		
-		public MyGraphCellEditor() {
-			addCellEditorListener(new CellEditorListener() {
-
-				@Override
-				public void editingStopped(ChangeEvent e) {
-					if (target instanceof SpotCell) {
-						SpotCell spotCell = (SpotCell) target;
-						spotCell.getSpot().setName(""+getCellEditorValue());
-					}
-				}
-
-				@Override
-				public void editingCanceled(ChangeEvent e) {}
-			});
-		}
-		
-		@Override
-		public Component getGraphCellEditorComponent(JGraph graph, Object cell, boolean isSelected) {
-			target = cell;
-			return super.getGraphCellEditorComponent(graph, cell, isSelected);
-		};
-		
-		
-	};
+//	@SuppressWarnings("serial")
+//	private static class MyGraphCellEditor extends DefaultGraphCellEditor {
+//		private Object target;
+//		
+//		public MyGraphCellEditor() {
+//			addCellEditorListener(new CellEditorListener() {
+//
+//				@Override
+//				public void editingStopped(ChangeEvent e) {
+//					if (target instanceof SpotCell) {
+//						SpotCell spotCell = (SpotCell) target;
+//						spotCell.getSpot().setName(""+getCellEditorValue());
+//					}
+//				}
+//
+//				@Override
+//				public void editingCanceled(ChangeEvent e) {}
+//			});
+//		}
+//		
+//		@Override
+//		public Component getGraphCellEditorComponent(JGraph graph, Object cell, boolean isSelected) {
+//			target = cell;
+//			return super.getGraphCellEditorComponent(graph, cell, isSelected);
+//		};
+//		
+//		
+//	};
 
 	
-	/**
-	 * Defines a Graph that uses the Shift-Button (Instead of the Right
-	 * Mouse Button, which is Default) to add/remove point to/from an edge.
-	 */
-	private static class MyGraph extends JGraph {
-
-		private static final long serialVersionUID = 5454138486162686890L;
-		
-		// Construct the Graph using the Model as its Data Source
-		public MyGraph(GraphModel model, GraphLayoutCache cache) {
-			super(model, cache);
-			// Make Ports Visible by Default
-			setPortsVisible(true);
-			// Use the Grid (but don't make it Visible)
-			setGridEnabled(true);
-			// Set the Grid Size to 10 Pixel
-			setGridSize(6);
-			// Set the Tolerance to 2 Pixel
-			setTolerance(2);
-			// Accept edits if click on background
-			setInvokesStopCellEditing(true);
-			// Forbid control-drag
-			setCloneable(false);
-			// Jump to default port on connect
-			setJumpToDefaultPort(true);
-		}
-	}
-
-	/**
-	 * Custom GraphUI, made so that the shift key only toggles selection.
-	 * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Feb 19, 2011
-	 *
-	 */
-	private static class MyBasicGraphUI extends BasicGraphUI {
-		private static final long serialVersionUID = -7709945526696961651L;
-		public boolean isToggleSelectionEvent(MouseEvent e) {
-			return e.isShiftDown();
-		}
-	}
-	
-	/**
-	 * Custom MarqueeHandler
-	 * MarqueeHandler that Connects Vertices and Displays PopupMenus
-	 */
-	private class MyMarqueeHandler extends BasicMarqueeHandler {
-
-		// Holds the Start and the Current Point
-		protected Point2D start, current;
-
-		// Holds the First and the Current Port
-		protected PortView port, firstPort;
-
-		/**
-		 * Component that is used for highlighting cells if
-		 * the graph does not allow XOR painting.
-		 */
-		protected JComponent highlight = new JPanel();
-
-		private Object targetObject;
-
-		private Object sourceObject;
-
-		public MyMarqueeHandler() {
-			// Configures the panel for highlighting ports
-			highlight = createHighlight();
-		}
-	
-		/**
-		 * Creates the component that is used for highlighting cells if
-		 * the graph does not allow XOR painting.
-		 */
-		protected JComponent createHighlight() {
-			JPanel panel = new JPanel();
-			panel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-			panel.setVisible(false);
-			panel.setOpaque(false);
-	
-			return panel;
-		}
-		
-		// Override to Gain Control (for PopupMenu and ConnectMode)
-		public boolean isForceMarqueeEvent(MouseEvent e) {
-			if (e.isShiftDown())
-				return false;
-			// If Right Mouse Button we want to Display the PopupMenu
-			if (SwingUtilities.isRightMouseButton(e))
-				// Return Immediately
-				return true;
-			// Find and Remember Port
-			port = getSourcePortAt(e.getPoint());
-			// If Port Found and in ConnectMode (=Ports Visible)
-			if (port != null && jGraph.isPortsVisible())
-				return true;
-			// Else Call Superclass
-			return super.isForceMarqueeEvent(e);
-		}
-
-		// Display PopupMenu or Remember Start Location and First Port
-		public void mousePressed(final MouseEvent e) {
-			// If Right Mouse Button
-			if (SwingUtilities.isRightMouseButton(e)) {
-				// Find Cell in Model Coordinates
-				Object cell = jGraph.getFirstCellForLocation(e.getX(), e.getY());
-				// Create PopupMenu for the Cell
-				JPopupMenu menu = createPopupMenu(e.getPoint(), cell);
-				// Display PopupMenu
-				menu.show(jGraph, e.getX(), e.getY());
-				// Else if in ConnectMode and Remembered Port is Valid
-			} else if (port != null && jGraph.isPortsVisible()) {
-				// Remember Start Location
-				start = jGraph.toScreen(port.getLocation());
-				// Remember First Port
-				firstPort = port;
-			} else {
-				// Call Superclass
-				super.mousePressed(e);
-			}
-		}
-
-		// Find Port under Mouse and Repaint Connector
-		public void mouseDragged(MouseEvent e) {
-			// If remembered Start Point is Valid
-			if (start != null) {
-				// Fetch Graphics from Graph
-				Graphics g = jGraph.getGraphics();
-				// Reset Remembered Port
-				PortView newPort = getTargetPortAt(e.getPoint());
-				// Do not flicker (repaint only on real changes)
-				if (newPort == null || newPort != port) {
-					// Xor-Paint the old Connector (Hide old Connector)
-					paintConnector(Color.black, jGraph.getBackground(), g);
-					// If Port was found then Point to Port Location
-					port = newPort;
-					if (port != null)
-						current = jGraph.toScreen(port.getLocation());
-					// Else If no Port was found then Point to Mouse Location
-					else
-						current = jGraph.snap(e.getPoint());
-					// Xor-Paint the new Connector
-					paintConnector(jGraph.getBackground(), Color.black, g);
-				}
-			}
-			// Call Superclass
-			super.mouseDragged(e);
-		}
-
-		public PortView getSourcePortAt(Point2D point) {
-			// Disable jumping
-			jGraph.setJumpToDefaultPort(false);
-			PortView result;
-			try {
-				// Find a Port View in Model Coordinates and Remember
-				result = jGraph.getPortViewAt(point.getX(), point.getY());
-			} finally {
-				jGraph.setJumpToDefaultPort(true);
-			}
-			Object obj = jGraph.getFirstCellForLocation(point.getX(), point.getY());
-			sourceObject = obj;
-			return result;
-		}
-
-		// Find a Cell at point and Return its first Port as a PortView
-		protected PortView getTargetPortAt(Point2D point) {
-			Object obj = jGraph.getFirstCellForLocation(point.getX(), point.getY());
-			targetObject = obj;
-			// Find a Port View in Model Coordinates and Remember
-			return jGraph.getPortViewAt(point.getX(), point.getY());
-		}
-
-		// Connect the First Port and the Current Port in the Graph or Repaint
-		public void mouseReleased(MouseEvent e) {
-			highlight(jGraph, null);
-			
-			// If Valid Event, Current and First Port
-			if (e != null && port != null && firstPort != null	&& firstPort != port) {
-				// Then Establish Connection
-				connect(sourceObject, targetObject);
-				e.consume();
-				// Else Repaint the Graph
-			} else
-				jGraph.repaint();
-			// Reset Global Vars
-			firstPort = port = null;
-			start = current = null;
-			// Call Superclass
-			super.mouseReleased(e);
-		}
-
-		// Show Special Cursor if Over Port
-		public void mouseMoved(MouseEvent e) {
-			// Check Mode and Find Port
-			if (e != null && getSourcePortAt(e.getPoint()) != null && jGraph.isPortsVisible()) {
-				// Set Cusor on Graph (Automatically Reset)
-				jGraph.setCursor(new Cursor(Cursor.HAND_CURSOR));
-				// Consume Event
-				// Note: This is to signal the BasicGraphUI's
-				// MouseHandle to stop further event processing.
-				e.consume();
-			} else
-				// Call Superclass
-				super.mouseMoved(e);
-		}
-
-		// Use Xor-Mode on Graphics to Paint Connector
-		protected void paintConnector(Color fg, Color bg, Graphics g) {
-			if (jGraph.isXorEnabled()) {
-				// Set Foreground
-				g.setColor(fg);
-				// Set Xor-Mode Color
-				g.setXORMode(bg);
-				// Highlight the Current Port
-				paintPort(jGraph.getGraphics());
-				
-				drawConnectorLine(g);
-			} else {
-				Rectangle dirty = new Rectangle((int) start.getX(), (int) start.getY(), 1, 1);
-				
-				if (current != null) {
-					dirty.add(current);
-				}
-				
-				dirty.grow(1, 1);
-				
-				jGraph.repaint(dirty);
-				highlight(jGraph, port);
-			}
-		}
-		
-		// Overrides parent method to paint connector if
-		// XOR painting is disabled in the graph
-		public void paint(JGraph graph, Graphics g)
-		{
-			super.paint(graph, g);
-			
-			if (!graph.isXorEnabled())
-			{
-				g.setColor(Color.black);
-				drawConnectorLine(g);
-			}
-		}
-		
-		protected void drawConnectorLine(Graphics g) {
-			if (firstPort != null && start != null && current != null) {
-				// Then Draw A Line From Start to Current Point
-				Graphics2D g2d = (Graphics2D) g;
-				g2d.setStroke(new BasicStroke(2));
-				g.drawLine((int) start.getX(), (int) start.getY(), (int) current.getX(), (int) current.getY());
-			}
-		}
-
-		// Use the Preview Flag to Draw a Highlighted Port
-		protected void paintPort(Graphics g) {
-			// If Current Port is Valid
-			if (port != null) {
-				// If Not Floating Port...
-				boolean o = (GraphConstants.getOffset(port.getAllAttributes()) != null);
-				// ...Then use Parent's Bounds
-				Rectangle2D r = (o) ? port.getBounds() : port.getParentView()
-						.getBounds();
-				// Scale from Model to Screen
-				r = jGraph.toScreen((Rectangle2D) r.clone());
-				// Add Space For the Highlight Border
-				r.setFrame(r.getX() - 3, r.getY() - 3, r.getWidth() + 6, r
-						.getHeight() + 6);
-				// Paint Port in Preview (=Highlight) Mode
-				jGraph.getUI().paintCell(g, port, r, true);
-			}
-		}
-
-		/**
-		 * Highlights the given cell view or removes the highlight if
-		 * no cell view is specified.
-		 * 
-		 * @param graph
-		 * @param cellView
-		 */
-		protected void highlight(JGraph graph, CellView cellView)
-		{
-			if (cellView != null)
-			{
-				highlight.setBounds(getHighlightBounds(graph, cellView));
-
-				if (highlight.getParent() == null)
-				{
-					graph.add(highlight);
-					highlight.setVisible(true);
-				}
-			}
-			else
-			{
-				if (highlight.getParent() != null)
-				{
-					highlight.setVisible(false);
-					highlight.getParent().remove(highlight);
-				}
-			}
-		}
-
-		/**
-		 * Returns the bounds to be used to highlight the given cell view.
-		 * 
-		 * @param graph
-		 * @param cellView
-		 * @return
-		 */
-		protected Rectangle getHighlightBounds(JGraph graph, CellView cellView)
-		{
-			boolean offset = (GraphConstants.getOffset(cellView.getAllAttributes()) != null);
-			Rectangle2D r = (offset) ? cellView.getBounds() : cellView
-					.getParentView().getBounds();
-			r = graph.toScreen((Rectangle2D) r.clone());
-			int s = 3;
-
-			return new Rectangle((int) (r.getX() - s), (int) (r.getY() - s),
-					(int) (r.getWidth() + 2 * s), (int) (r.getHeight() + 2 * s));
-		}
-
-
-	} // End of Editor.MyMarqueeHandler
-
 	
 
 	

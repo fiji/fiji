@@ -15,28 +15,24 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
-import org.jgraph.graph.EdgeView;
-import org.jgraph.graph.GraphConstants;
 import org.jgrapht.UndirectedGraph;
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.ext.JGraphModelAdapter;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
 
-import com.jgraph.layout.JGraphFacade;
-import com.jgraph.layout.JGraphLayout;
+import com.mxgraph.layout.mxIGraphLayout;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 
-public class JGraphTimeLayout implements JGraphLayout {
+public class JGraphTimeLayout implements mxIGraphLayout {
 
 	
 	
 	private UndirectedGraph<Spot, DefaultWeightedEdge> graph;
 	private List<Set<Spot>> tracks;
-	private JGraphModelAdapter<Spot, DefaultWeightedEdge> adapter;
 	private int[] columnWidths;
 	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
 	private Color[] trackColorArray;
@@ -49,13 +45,12 @@ public class JGraphTimeLayout implements JGraphLayout {
 
 	public JGraphTimeLayout(UndirectedGraph<Spot, DefaultWeightedEdge> graph, JGraphModelAdapter<Spot, DefaultWeightedEdge> adapter) {
 		this.graph = graph;
-		this.adapter = adapter;
 		this.tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets();
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void run(JGraphFacade graphFacade) {
+	public void execute(Object parent) {
 		
 		HashMap<Set<Spot>, Color> trackColors = new HashMap<Set<Spot>, Color>(tracks.size());
 		int counter = 0;
@@ -120,24 +115,24 @@ public class JGraphTimeLayout implements JGraphLayout {
 				columns.put(instant, targetColumn);
 				
 				// Get corresponding JGraph cell 
-				Object facadeTarget = adapter.getVertexCell(spot);
-				SpotView vView = (SpotView) graphFacade.getCellView(facadeTarget);
+//				Object facadeTarget = adapter.getVertexCell(spot);
+//				SpotView vView = (SpotView) graphFacade.getCellView(facadeTarget);
 								
 				// Tune aspect of cell according to context
-				vView.setColor(trackColor);
+//				vView.setColor(trackColor);
 				
 				// Move the corresponding cell in the facade
-				graphFacade.setLocation(facadeTarget, (targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2, (0.5 + rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2);
+//				graphFacade.setLocation(facadeTarget, (targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2, (0.5 + rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2);
 				int height = Math.min(DEFAULT_CELL_WIDTH, spot.getIcon().getIconHeight());
 				height = Math.max(height, 12);
-				graphFacade.setSize(facadeTarget, DEFAULT_CELL_WIDTH, height);
+//				graphFacade.setSize(facadeTarget, DEFAULT_CELL_WIDTH, height);
 				
-				Object[] objEdges = graphFacade.getEdges(facadeTarget);
-				for(Object obj : objEdges) {
+//				Object[] objEdges = graphFacade.getEdges(facadeTarget);
+//				for(Object obj : objEdges) {
 //					org.jgraph.graph.DefaultWeightedEdge edge = (org.jgraph.graph.DefaultWeightedEdge) obj;
-					EdgeView eView = (EdgeView) graphFacade.getCellView(obj);
-					eView.getAttributes().put(GraphConstants.LINECOLOR, trackColor);
-				}
+//					EdgeView eView = (EdgeView) graphFacade.getCellView(obj);
+//					eView.getAttributes().put(GraphConstants.LINECOLOR, trackColor);
+//				}
 			}
 		
 			for(Float instant : instants)
@@ -171,6 +166,11 @@ public class JGraphTimeLayout implements JGraphLayout {
 	 */
 	public Color[] getTrackColors() {
 		return trackColorArray;
+	}
+
+	@Override
+	public void moveCell(Object cell, double x, double y) {
+		System.out.println();// DEBUG
 	}
 
 }
