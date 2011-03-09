@@ -19,7 +19,7 @@ fi
 die "Could not run ant"
 
 cd jython/dist &&
-zip -d jython.jar com/sun/jna/\* &&
+(zip -d jython.jar com/sun/jna/\* || true) &&
 cp jython.jar ../../ &&
 zip -9r ../../jython.jar Lib ||
 die "Could not add Lib/ to jython.jar"
