@@ -342,4 +342,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	@Override
 	public void restoreDisplayedData(String path, String name) {}
 
+	@Override
+	public void clearDisplayedData() {}
+
 }

@@ -367,5 +367,8 @@ public class SpotGroupNode<K> extends ContentNode {
 	@Override
 	public void restoreDisplayedData(String path, String name) {}
 
+	@Override
+	public void clearDisplayedData() {}
+
 
 }
