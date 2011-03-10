@@ -22,7 +22,6 @@ public class JGraphXAdapter<V, E> extends mxGraph implements GraphListener<V, E>
 	private HashMap<V, mxCell> vertexMap 	= new HashMap<V, mxCell>();
 	private HashMap<E, mxCell> edgeMap 		= new HashMap<E, mxCell>();
 	private CellFactory<V, E> cellFactory;
-	private GeometryFactory geometryFactory;
 
 	private static final int DEFAULT_WIDTH = 80;
 	private static final int DEFAULT_HEIGHT = 30;
@@ -35,7 +34,6 @@ public class JGraphXAdapter<V, E> extends mxGraph implements GraphListener<V, E>
 		super();
 		this.jgtGraph = jgtGraph;
 		this.cellFactory 		= factory;
-		this.geometryFactory 	= new GeometryFactory();
 		
 		jgtGraph.addGraphListener(this);
 		
@@ -50,8 +48,11 @@ public class JGraphXAdapter<V, E> extends mxGraph implements GraphListener<V, E>
 		}
 	}
 	
+	/*
+	 * METHODS
+	 */
 	
-	private void addJGraphTVertex(V vertex) {
+	public void addJGraphTVertex(V vertex) {
 		getModel().beginUpdate();
 		try {
 			mxCell cell = cellFactory.createVertexCell(vertex);
@@ -77,6 +78,14 @@ public class JGraphXAdapter<V, E> extends mxGraph implements GraphListener<V, E>
 	
 	public void setCellFactory(CellFactory<V, E> factory) {
 		this.cellFactory = factory;
+	}
+	
+	public mxCell getCellForVertex(V vertex) {
+		return vertexMap.get(vertex);
+	}
+	
+	public mxCell getCellForEdge(E edge) {
+		return edgeMap.get(edge);
 	}
 	
 	
@@ -213,6 +222,9 @@ public class JGraphXAdapter<V, E> extends mxGraph implements GraphListener<V, E>
 
 
 	}
+
+
+	
 
 	
 }

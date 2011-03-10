@@ -47,7 +47,7 @@ public class SpotCellViewFactory implements JGraphXAdapter.CellFactory<Spot, Def
 		private String label;
 
 		public TrackEdgeCell(final DefaultWeightedEdge edge) {
-			super(edge);
+			super(String.format("%.1f", jGraphT.getEdgeWeight(edge)));
 			this.edge = edge;
 			this.label = String.format("%.1f", jGraphT.getEdgeWeight(edge));
 			setEdge(true);
@@ -70,7 +70,7 @@ public class SpotCellViewFactory implements JGraphXAdapter.CellFactory<Spot, Def
 		private Spot spot;
 		
 		public SpotCell(Spot spot) {
-			super(spot);
+			super(spot.getName());
 			this.spot = spot;
 			setVertex(true);
 		}

@@ -21,130 +21,148 @@ import org.jgrapht.ext.JGraphModelAdapter;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
 
-import com.mxgraph.layout.mxIGraphLayout;
+import com.mxgraph.layout.mxGraphLayout;
+import com.mxgraph.model.mxGeometry;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.visualization.trackscheme.SpotCellViewFactory.SpotCell;
 
-public class JGraphTimeLayout implements mxIGraphLayout {
+public class JGraphTimeLayout extends mxGraphLayout {
 
-	
-	
-	private UndirectedGraph<Spot, DefaultWeightedEdge> graph;
+
+
+	private JGraphXAdapter<Spot, DefaultWeightedEdge> graph;
 	private List<Set<Spot>> tracks;
 	private int[] columnWidths;
 	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
 	private Color[] trackColorArray;
 	private TreeMap<Float, Integer> rows;
+	private UndirectedGraph<Spot, DefaultWeightedEdge> jGraphT;
 
 	/*
 	 * CONSTRUCTOR
 	 */
-	
 
-	public JGraphTimeLayout(UndirectedGraph<Spot, DefaultWeightedEdge> graph, JGraphModelAdapter<Spot, DefaultWeightedEdge> adapter) {
+
+	public JGraphTimeLayout(UndirectedGraph<Spot, DefaultWeightedEdge> jGraphT, JGraphXAdapter<Spot, DefaultWeightedEdge> graph) {
+		super(graph);
 		this.graph = graph;
-		this.tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets();
+		this.jGraphT = jGraphT;
+		this.tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(jGraphT).connectedSets();
 	}
-	
-	@SuppressWarnings("unchecked")
+
 	@Override
 	public void execute(Object parent) {
-		
-		HashMap<Set<Spot>, Color> trackColors = new HashMap<Set<Spot>, Color>(tracks.size());
-		int counter = 0;
-		int ntracks = tracks.size();
-		for(Set<Spot> track : tracks) {
-			trackColors.put(track, colorMap.getPaint((float) counter / (ntracks-1)));
-			counter++;
-		}
-				
-		SortedSet<Float> instants = new TreeSet<Float>();
-		for (Spot s : graph.vertexSet())
-			instants.add(s.getFeature(Feature.POSITION_T));
-			
-		TreeMap<Float, Integer> columns = new TreeMap<Float, Integer>();
-		for(Float instant : instants)
-			columns.put(instant, -1);
-		
-		rows = new TreeMap<Float, Integer>();
-		Iterator<Float> it = instants.iterator();
-		int rowIndex = 1; // Start at 1 to let room for column headers
-		while (it.hasNext()) {
-			rows.put(it.next(), rowIndex);
-			rowIndex++;
+
+		graph.getModel().beginUpdate();
+		try {
+
+			// Generate colors
+			HashMap<Set<Spot>, Color> trackColors = new HashMap<Set<Spot>, Color>(tracks.size());
+			int counter = 0;
+			int ntracks = tracks.size();
+			for(Set<Spot> track : tracks) {
+				trackColors.put(track, colorMap.getPaint((float) counter / (ntracks-1)));
+				counter++;
+			}
+
+			// Collect unique instants
+			SortedSet<Float> instants = new TreeSet<Float>();
+			for (Spot s : jGraphT.vertexSet())
+				instants.add(s.getFeature(Feature.POSITION_T));
+
+			TreeMap<Float, Integer> columns = new TreeMap<Float, Integer>();
+			for(Float instant : instants)
+				columns.put(instant, -1);
+
+			// Build row indices from instants
+			rows = new TreeMap<Float, Integer>();
+			Iterator<Float> it = instants.iterator();
+			int rowIndex = 1; // Start at 1 to let room for column headers
+			while (it.hasNext()) {
+				rows.put(it.next(), rowIndex);
+				rowIndex++;
+			}
+
+			int currentColumn = 1;
+			int previousColumn = 0;
+			Spot previousSpot = null;
+			int columnIndex = 0;
+			columnWidths = new int[tracks.size()];
+			trackColorArray = new Color[tracks.size()];
+			Color trackColor = null;
+
+
+			for (Set<Spot> track : tracks) {
+
+				// Get track color
+				trackColor = trackColors.get(track);
+
+				// Sort by ascending order
+				SortedSet<Spot> sortedTrack = new TreeSet<Spot>(SpotImp.frameComparator);
+				sortedTrack.addAll(track);
+				Spot root = sortedTrack.first();
+
+				DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = new DepthFirstIterator<Spot, DefaultWeightedEdge>(jGraphT, root);
+				while (iterator.hasNext()) {
+					Spot spot = iterator.next();
+
+					// Determine in what column to put the spot
+					Float instant = spot.getFeature(Feature.POSITION_T);
+					int freeColumn = columns.get(instant) + 1;
+
+					// If we have no direct edge with the previous spot, we add 1 to the current column
+					if (!jGraphT.containsEdge(spot, previousSpot))
+						currentColumn = currentColumn + 1;
+					previousSpot = spot;
+
+					int targetColumn = Math.max(freeColumn, currentColumn);
+					currentColumn = targetColumn;
+
+					// Keep track of column filling
+					columns.put(instant, targetColumn);
+
+					// Get corresponding JGraphX cell 
+					SpotCell cell = (SpotCell) graph.getCellForVertex(spot);
+
+					// Tune aspect of cell according to context
+					cell.setStyle("ROUNDED;strokeColor="+Integer.toHexString(trackColor.getRGB()));
+
+					// Move the corresponding cell in the facade
+					double x = (targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
+					double y = (0.5 + rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2;
+					int height = Math.min(DEFAULT_CELL_WIDTH, spot.getIcon().getIconHeight());
+					height = Math.max(height, 12);
+					mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
+					cell.setGeometry(geometry);
+
+					//				Object[] objEdges = graphFacade.getEdges(facadeTarget);
+					//				for(Object obj : objEdges) {
+					//					org.jgraph.graph.DefaultWeightedEdge edge = (org.jgraph.graph.DefaultWeightedEdge) obj;
+					//					EdgeView eView = (EdgeView) graphFacade.getCellView(obj);
+					//					eView.getAttributes().put(GraphConstants.LINECOLOR, trackColor);
+					//				}
+				}
+
+				for(Float instant : instants)
+					columns.put(instant, currentColumn+1);
+
+				columnWidths[columnIndex] = currentColumn - previousColumn + 1;
+				trackColorArray[columnIndex] = trackColor;
+				columnIndex++;
+				previousColumn = currentColumn;	
+
+
+			}  // loop over tracks
+
+		} finally {
+
+			graph.getModel().endUpdate();
 		}
 
-		int currentColumn = 1;
-		int previousColumn = 0;
-		Spot previousSpot = null;
-		int columnIndex = 0;
-		columnWidths = new int[tracks.size()];
-		trackColorArray = new Color[tracks.size()];
-		Color trackColor = null;
-		
-		
-		for (Set<Spot> track : tracks) {
-			
-			// Get track color
-			trackColor = trackColors.get(track);
-			
-			// Sort by ascending order
-			SortedSet<Spot> sortedTrack = new TreeSet<Spot>(SpotImp.frameComparator);
-			sortedTrack.addAll(track);
-			Spot root = sortedTrack.first();
-			
-			DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = new DepthFirstIterator<Spot, DefaultWeightedEdge>(graph, root);
-			while (iterator.hasNext()) {
-				Spot spot = iterator.next();
-				
-				// Determine in what column to put the spot
-				Float instant = spot.getFeature(Feature.POSITION_T);
-				int freeColumn = columns.get(instant) + 1;
-				
-				// If we have no direct edge with the previous spot, we add 1 to the current column
-				if (!graph.containsEdge(spot, previousSpot))
-					currentColumn = currentColumn + 1;
-				previousSpot = spot;
-				
-				int targetColumn = Math.max(freeColumn, currentColumn);
-				currentColumn = targetColumn;
-				
-				// Keep track of column filling
-				columns.put(instant, targetColumn);
-				
-				// Get corresponding JGraph cell 
-//				Object facadeTarget = adapter.getVertexCell(spot);
-//				SpotView vView = (SpotView) graphFacade.getCellView(facadeTarget);
-								
-				// Tune aspect of cell according to context
-//				vView.setColor(trackColor);
-				
-				// Move the corresponding cell in the facade
-//				graphFacade.setLocation(facadeTarget, (targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2, (0.5 + rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2);
-				int height = Math.min(DEFAULT_CELL_WIDTH, spot.getIcon().getIconHeight());
-				height = Math.max(height, 12);
-//				graphFacade.setSize(facadeTarget, DEFAULT_CELL_WIDTH, height);
-				
-//				Object[] objEdges = graphFacade.getEdges(facadeTarget);
-//				for(Object obj : objEdges) {
-//					org.jgraph.graph.DefaultWeightedEdge edge = (org.jgraph.graph.DefaultWeightedEdge) obj;
-//					EdgeView eView = (EdgeView) graphFacade.getCellView(obj);
-//					eView.getAttributes().put(GraphConstants.LINECOLOR, trackColor);
-//				}
-			}
-		
-			for(Float instant : instants)
-				columns.put(instant, currentColumn+1);
-			
-			columnWidths[columnIndex] = currentColumn - previousColumn + 1;
-			trackColorArray[columnIndex] = trackColor;
-			columnIndex++;
-			previousColumn = currentColumn;			
-			
-		}  // loop over tracks
-		
+
 	}
 
 	/**
@@ -153,14 +171,14 @@ public class JGraphTimeLayout implements mxIGraphLayout {
 	public int[] getTrackColumnWidths() {
 		return columnWidths;
 	}
-	
+
 	/**
 	 * Return map linking the the row number for a given instant.
 	 */
 	public TreeMap<Float, Integer> getRowForInstant() {
 		return rows;
 	}
-	
+
 	/**
 	 * Return the color affected to each track.
 	 */
@@ -170,7 +188,7 @@ public class JGraphTimeLayout implements mxIGraphLayout {
 
 	@Override
 	public void moveCell(Object cell, double x, double y) {
-		System.out.println();// DEBUG
+		System.out.println("Moving cell: "+cell+" to x="+x+" y="+y);// DEBUG
 	}
 
 }

@@ -380,15 +380,8 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	}
 	
 	private void doTrackLayout() {
-//		jGMAdapter.
-		
-//		JGraphFacade facade = new JGraphFacade(jGraph);
-//		JGraphTimeLayout graphLayout = new JGraphTimeLayout(trackGraph, jGMAdapter);
-//		graphLayout.run(facade);
-//
-//		@SuppressWarnings("rawtypes")
-//		Map nested = facade.createNestedMap(false, false); // Obtain a map of the resulting attribute changes from the facade 
-//		jGraph.getGraphLayoutCache().edit(nested); // Apply the results to the actual graph 
+		JGraphTimeLayout graphLayout = new JGraphTimeLayout(trackGraph, graph);
+		graphLayout.execute(graph.getDefaultParent());
 
 		// Forward painting info to back pane
 //		backPane.setColumnWidths(graphLayout.getTrackColumnWidths());
