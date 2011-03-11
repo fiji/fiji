@@ -149,7 +149,7 @@ public class JGraphTimeLayout extends mxGraphLayout {
 					height = Math.max(height, 12);
 					mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
 					graph.getModel().setGeometry(cell, geometry);
-					graph.getModel().setStyle(cell, "strokeColor=red;fillColor=green");
+					graph.getModel().setStyle(cell, "strokeColor="+Integer.toHexString(trackColor.getRGB()));
 
 //					// Edges
 					Object[] objEdges = graph.getEdges(cell);

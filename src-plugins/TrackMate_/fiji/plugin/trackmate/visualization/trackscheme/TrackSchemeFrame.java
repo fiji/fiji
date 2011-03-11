@@ -84,6 +84,7 @@ import com.mxgraph.util.mxCellRenderer;
 import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxRectangle;
 import com.mxgraph.util.mxEventSource.mxIEventListener;
+import com.mxgraph.view.mxCellState;
 import com.mxgraph.view.mxGraph;
 import com.mxgraph.view.mxGraphView;
 
@@ -321,7 +322,19 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		getContentPane().add(createToolBar(), BorderLayout.NORTH);
 		
 		// Add the back pane as Center Component
-		graphComponent = new mxGraphComponent(graph);
+//		graphComponent = new mxGraphComponent(graph);
+		graphComponent = new mxGraphComponent(graph) {
+		  public Component[] createComponents(mxCellState state) {
+			  
+			  if (state.getCell() instanceof SpotCell) {
+		    	SpotCell cell = (SpotCell) state.getCell();
+		    	return new Component[] { new JLabel("prout", cell.getSpot().getIcon(), JLabel.LEFT) };
+		    }
+
+		    return null;
+		  }
+		};
+		
 		graphComponent.getVerticalScrollBar().setUnitIncrement(16);
 		graphComponent.getHorizontalScrollBar().setUnitIncrement(16);
 		
