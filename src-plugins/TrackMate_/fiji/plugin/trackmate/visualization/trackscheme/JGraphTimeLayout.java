@@ -7,6 +7,7 @@ import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.Y
 
 import java.awt.Color;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -17,17 +18,20 @@ import java.util.TreeSet;
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.UndirectedGraph;
 import org.jgrapht.alg.ConnectivityInspector;
-import org.jgrapht.ext.JGraphModelAdapter;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
 
 import com.mxgraph.layout.mxGraphLayout;
 import com.mxgraph.model.mxGeometry;
+import com.mxgraph.util.mxConstants;
+import com.mxgraph.util.mxUtils;
+import com.mxgraph.view.mxStylesheet;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotCellViewFactory.SpotCell;
+import fiji.plugin.trackmate.visualization.trackscheme.SpotCellViewFactory.TrackEdgeCell;
 
 public class JGraphTimeLayout extends mxGraphLayout {
 
@@ -56,6 +60,15 @@ public class JGraphTimeLayout extends mxGraphLayout {
 	@Override
 	public void execute(Object parent) {
 
+		// Create rounded style
+		mxStylesheet stylesheet = graph.getStylesheet();
+		Hashtable<String, Object> style = new Hashtable<String, Object>();
+		style.put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_RECTANGLE);
+		style.put(mxConstants.STYLE_OPACITY, 50);
+		style.put(mxConstants.STYLE_FONTCOLOR, "#774400");
+		stylesheet.putCellStyle("ROUNDED", style);
+		
+		
 		graph.getModel().beginUpdate();
 		try {
 
@@ -128,7 +141,6 @@ public class JGraphTimeLayout extends mxGraphLayout {
 					SpotCell cell = (SpotCell) graph.getCellForVertex(spot);
 
 					// Tune aspect of cell according to context
-					cell.setStyle("ROUNDED;strokeColor="+Integer.toHexString(trackColor.getRGB()));
 
 					// Move the corresponding cell in the facade
 					double x = (targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
@@ -136,15 +148,17 @@ public class JGraphTimeLayout extends mxGraphLayout {
 					int height = Math.min(DEFAULT_CELL_WIDTH, spot.getIcon().getIconHeight());
 					height = Math.max(height, 12);
 					mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
-					cell.setGeometry(geometry);
+					graph.getModel().setGeometry(cell, geometry);
+					graph.getModel().setStyle(cell, "strokeColor=red;fillColor=green");
 
-					//				Object[] objEdges = graphFacade.getEdges(facadeTarget);
-					//				for(Object obj : objEdges) {
-					//					org.jgraph.graph.DefaultWeightedEdge edge = (org.jgraph.graph.DefaultWeightedEdge) obj;
-					//					EdgeView eView = (EdgeView) graphFacade.getCellView(obj);
-					//					eView.getAttributes().put(GraphConstants.LINECOLOR, trackColor);
-					//				}
+//					// Edges
+					Object[] objEdges = graph.getEdges(cell);
+					for(Object obj : objEdges) {
+						TrackEdgeCell edge = (TrackEdgeCell) obj;
+						graph.getModel().setStyle(edge, "startArrow=none;endArrow=none;strokeWidth=2;strokeColor="+Integer.toHexString(trackColor.getRGB())); //
+					}
 				}
+
 
 				for(Float instant : instants)
 					columns.put(instant, currentColumn+1);

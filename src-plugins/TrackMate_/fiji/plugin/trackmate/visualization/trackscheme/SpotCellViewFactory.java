@@ -1,16 +1,20 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
+import java.io.Serializable;
+
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import com.mxgraph.model.mxCell;
+import com.mxgraph.model.mxGeometry;
 
+import edu.mines.jtk.mesh.Geometry;
 import fiji.plugin.trackmate.Spot;
 
 
-public class SpotCellViewFactory implements JGraphXAdapter.CellFactory<Spot, DefaultWeightedEdge> {
+public class SpotCellViewFactory implements JGraphXAdapter.CellFactory<Spot, DefaultWeightedEdge>, Serializable {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 762434565251709869L;
 	private Graph<Spot, DefaultWeightedEdge> jGraphT;
 
 	/*
@@ -47,10 +51,12 @@ public class SpotCellViewFactory implements JGraphXAdapter.CellFactory<Spot, Def
 		private String label;
 
 		public TrackEdgeCell(final DefaultWeightedEdge edge) {
-			super(String.format("%.1f", jGraphT.getEdgeWeight(edge)));
+			super(String.format("%.1f", jGraphT.getEdgeWeight(edge)), new mxGeometry(), "edge");
 			this.edge = edge;
 			this.label = String.format("%.1f", jGraphT.getEdgeWeight(edge));
 			setEdge(true);
+			setId(null);
+			getGeometry().setRelative(true);
 		}
 		
 		public DefaultWeightedEdge getEdge() {
@@ -70,9 +76,11 @@ public class SpotCellViewFactory implements JGraphXAdapter.CellFactory<Spot, Def
 		private Spot spot;
 		
 		public SpotCell(Spot spot) {
-			super(spot.getName());
+			super( (spot.getName() == null || spot.getName().equals("")) ? "ID "+spot.ID() : spot.getName(), new mxGeometry(), "spot");
 			this.spot = spot;
 			setVertex(true);
+			setId(null);
+			setConnectable(true);
 		}
 		
 		public Spot getSpot() {

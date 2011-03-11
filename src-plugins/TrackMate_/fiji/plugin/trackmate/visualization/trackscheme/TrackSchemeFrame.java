@@ -21,6 +21,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -71,6 +72,12 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.ListenableUndirectedWeightedGraph;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
+import com.mxgraph.layout.mxCircleLayout;
+import com.mxgraph.layout.mxCompactTreeLayout;
+import com.mxgraph.layout.mxEdgeLabelLayout;
+import com.mxgraph.layout.mxGraphLayout;
+import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
+import com.mxgraph.layout.orthogonal.mxOrthogonalLayout;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.util.mxCellRenderer;
@@ -78,6 +85,7 @@ import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxRectangle;
 import com.mxgraph.util.mxEventSource.mxIEventListener;
 import com.mxgraph.view.mxGraph;
+import com.mxgraph.view.mxGraphView;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
@@ -289,6 +297,10 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	private JGraphXAdapter<Spot, DefaultWeightedEdge> createGraph() {
 		JGraphXAdapter<Spot, DefaultWeightedEdge> graph = new JGraphXAdapter<Spot, DefaultWeightedEdge>(lGraph, new SpotCellViewFactory(lGraph));
 		
+		graph.setAllowLoops(false);
+		graph.setAllowDanglingEdges(false);
+		graph.setGridEnabled(false);
+		
 //		SpotCellViewFactory factory = new SpotCellViewFactory();
 //		GraphLayoutCache graphLayoutCache = new GraphLayoutCache(jGMAdapter, factory);
 //		MyGraph myGraph = new MyGraph(jGMAdapter, graphLayoutCache);
@@ -307,14 +319,14 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		getContentPane().setLayout(new BorderLayout());
 		// Add a ToolBar
 		getContentPane().add(createToolBar(), BorderLayout.NORTH);
-
-		// Arrange graph layout
-		doTrackLayout();
 		
 		// Add the back pane as Center Component
 		graphComponent = new mxGraphComponent(graph);
 		graphComponent.getVerticalScrollBar().setUnitIncrement(16);
 		graphComponent.getHorizontalScrollBar().setUnitIncrement(16);
+		
+		// Arrange graph layout
+		doTrackLayout();
 		
 		// Add the info pane
 		infoPane = new InfoPane();
@@ -324,14 +336,14 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		getContentPane().add(splitPane, BorderLayout.CENTER);
 
 		// Listeners
-		graph.addListener(null, new mxIEventListener() {
-			
-			@Override
-			public void invoke(Object sender, mxEventObject evt) {
-				System.out.println("Received event: "+evt+" from: "+sender);// DEBUG
-				
-			}
-		});
+//		graph.addListener(null, new mxIEventListener() {
+//			
+//			@Override
+//			public void invoke(Object sender, mxEventObject evt) {
+//				System.out.println("Received event: "+evt+" from: "+sender);// DEBUG
+//				
+//			}
+//		});
 //		addGraphSelectionListener(new GraphSelectionListener() {
 //
 //			@Override
@@ -355,32 +367,12 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 //		});
 
 		// Forward graph change events to the listeners registered with this frame 
-		lGraph.addGraphListener(new GraphListener<Spot, DefaultWeightedEdge>() {
-			@Override
-			public void vertexAdded(GraphVertexChangeEvent<Spot> e) {
-				for (GraphListener<Spot, DefaultWeightedEdge> graphListener : graphListeners)
-					graphListener.vertexAdded(e);
-			}
-			@Override
-			public void vertexRemoved(GraphVertexChangeEvent<Spot> e) {
-				for (GraphListener<Spot, DefaultWeightedEdge> graphListener : graphListeners)
-					graphListener.vertexRemoved(e);
-			}
-			@Override
-			public void edgeAdded(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
-				for (GraphListener<Spot, DefaultWeightedEdge> graphListener : graphListeners)
-					graphListener.edgeAdded(e);
-			}
-			@Override
-			public void edgeRemoved(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
-				for (GraphListener<Spot, DefaultWeightedEdge> graphListener : graphListeners)
-					graphListener.edgeRemoved(e);
-			}
-		});	
+//		lGraph.addGraphListener(new MyGraphListener());
 	}
 	
 	private void doTrackLayout() {
-		JGraphTimeLayout graphLayout = new JGraphTimeLayout(trackGraph, graph);
+//		JGraphTimeLayout graphLayout = new JGraphTimeLayout(trackGraph, graph);
+		mxGraphLayout graphLayout = new JGraphTimeLayout(lGraph, graph);
 		graphLayout.execute(graph.getDefaultParent());
 
 		// Forward painting info to back pane
@@ -729,10 +721,9 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	}
 
 
-	@SuppressWarnings("serial")
 	private class InfoPane extends JPanel {
 
-		private class RowHeaderRenderer extends JLabel implements ListCellRenderer {
+		private class RowHeaderRenderer extends JLabel implements ListCellRenderer, Serializable {
 
 			RowHeaderRenderer(JTable table) {
 				JTableHeader header = table.getTableHeader();
@@ -888,10 +879,35 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 //		
 //	};
 
-	
-	
 
-	
+	/**
+	 * Used to forwad listenable graph model changes to the listener of this frame.
+	 */
+	private class MyGraphListener implements GraphListener<Spot, DefaultWeightedEdge>, Serializable {
+
+		private static final long serialVersionUID = -1054534879013143084L;
+
+		@Override
+		public void vertexAdded(GraphVertexChangeEvent<Spot> e) {
+			for (GraphListener<Spot, DefaultWeightedEdge> graphListener : graphListeners)
+				graphListener.vertexAdded(e);
+		}
+		@Override
+		public void vertexRemoved(GraphVertexChangeEvent<Spot> e) {
+			for (GraphListener<Spot, DefaultWeightedEdge> graphListener : graphListeners)
+				graphListener.vertexRemoved(e);
+		}
+		@Override
+		public void edgeAdded(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
+			for (GraphListener<Spot, DefaultWeightedEdge> graphListener : graphListeners)
+				graphListener.edgeAdded(e);
+		}
+		@Override
+		public void edgeRemoved(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
+			for (GraphListener<Spot, DefaultWeightedEdge> graphListener : graphListeners)
+				graphListener.edgeRemoved(e);
+		}
+	}
 
 
 	

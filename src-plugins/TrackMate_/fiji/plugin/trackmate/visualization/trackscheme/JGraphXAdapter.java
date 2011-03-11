@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
+import java.io.Serializable;
 import java.util.HashMap;
 
 import javax.swing.JFrame;
@@ -16,8 +17,9 @@ import com.mxgraph.model.mxGeometry;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.view.mxGraph;
 
-public class JGraphXAdapter<V, E> extends mxGraph implements GraphListener<V, E> {
+public class JGraphXAdapter<V, E> extends mxGraph implements GraphListener<V, E>, Serializable {
 	
+	private static final long serialVersionUID = -6889237398498812783L;
 	private ListenableGraph<V, E> jgtGraph;
 	private HashMap<V, mxCell> vertexMap 	= new HashMap<V, mxCell>();
 	private HashMap<E, mxCell> edgeMap 		= new HashMap<E, mxCell>();
@@ -153,7 +155,7 @@ public class JGraphXAdapter<V, E> extends mxGraph implements GraphListener<V, E>
 		@Override
 		public mxCell createEdgeCell(EE jGraphTEdge) {
 			mxCell cell = new mxCell(jGraphTEdge, new mxGeometry(), null);
-			cell.setId(jGraphTEdge.toString());
+			cell.setId(null);
 			cell.setEdge(true);
 			cell.getGeometry().setRelative(true);
 			return cell;
@@ -163,7 +165,7 @@ public class JGraphXAdapter<V, E> extends mxGraph implements GraphListener<V, E>
 		public mxCell createVertexCell(VV vertex) {
 			mxGeometry geometry = geometryFactory.nextGeometry();
 			mxCell cell = new mxCell(vertex, geometry, null);
-			cell.setId(vertex.toString());
+			cell.setId(null);
 			cell.setVertex(true);
 			cell.setConnectable(true);
 			return cell;
