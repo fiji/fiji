@@ -108,7 +108,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			e.printStackTrace();
 		}
 	}
-	
+
 	/*
 	 * CONSTANTS
 	 */
@@ -118,7 +118,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 
 	static final int DEFAULT_CELL_WIDTH = 128;
 	static final int DEFAULT_CELL_HEIGHT = 80;
-	
+
 	public static final ImageIcon TRACK_SCHEME_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/track_scheme.png"));
 
 	private static final long serialVersionUID = 1L;
@@ -129,7 +129,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	private static final int TABLE_CELL_WIDTH 		= 40;
 	private static final int TABLE_ROW_HEADER_WIDTH = 50;
 	private static final Color GRID_COLOR = Color.GRAY;
-	
+
 	private static final ImageIcon LINKING_ON_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/connect.png")); 
 	private static final ImageIcon LINKING_OFF_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/forbid_connect.png")); 
 	private static final ImageIcon RESET_ZOOM_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/zoom.png")); 
@@ -168,38 +168,38 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		setSize(DEFAULT_SIZE);
 	}
 
-	
+
 	/*
 	 * PUBLIC METHODS
 	 */
 
 	@Override
 	public void collectionChanged(SpotCollectionEditEvent event) {
-//		if (event.getFlag() == SpotCollectionEditEvent.SPOT_CREATED) {
-//			final JGraphFacade facade = new JGraphFacade(jGraph);
-//			
-//			int targetColumn = 0;
-//			for (int i = 0; i < backPane.columnWidths.length; i++)
-//				targetColumn += backPane.columnWidths[i];
-//			
-//			SpotCell cell = null;
-//			for (Spot spot : event.getSpots()) {
-//				float instant = spot.getFeature(Feature.POSITION_T);
-//				cell = new SpotCell(spot);
-//				graph.getGraphLayoutCache().insert(cell);
-//				facade.setLocation(cell,  (targetColumn-2) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2, (0.5 + backPane.rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2);
-//				int height = Math.min(DEFAULT_CELL_WIDTH, spot.getIcon().getIconHeight());
-//				height = Math.max(height, 12);
-//				facade.setSize(cell, DEFAULT_CELL_WIDTH, height);
-//			}
-//			@SuppressWarnings("rawtypes")
-//			Map nested = facade.createNestedMap(false, false); // Obtain a map of the resulting attribute changes from the facade 
-//			jGraph.getGraphLayoutCache().edit(nested); // Apply the results to the actual graph 
-//			centerViewOn(cell);
-//		}
-		
+		//		if (event.getFlag() == SpotCollectionEditEvent.SPOT_CREATED) {
+		//			final JGraphFacade facade = new JGraphFacade(jGraph);
+		//			
+		//			int targetColumn = 0;
+		//			for (int i = 0; i < backPane.columnWidths.length; i++)
+		//				targetColumn += backPane.columnWidths[i];
+		//			
+		//			SpotCell cell = null;
+		//			for (Spot spot : event.getSpots()) {
+		//				float instant = spot.getFeature(Feature.POSITION_T);
+		//				cell = new SpotCell(spot);
+		//				graph.getGraphLayoutCache().insert(cell);
+		//				facade.setLocation(cell,  (targetColumn-2) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2, (0.5 + backPane.rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2);
+		//				int height = Math.min(DEFAULT_CELL_WIDTH, spot.getIcon().getIconHeight());
+		//				height = Math.max(height, 12);
+		//				facade.setSize(cell, DEFAULT_CELL_WIDTH, height);
+		//			}
+		//			@SuppressWarnings("rawtypes")
+		//			Map nested = facade.createNestedMap(false, false); // Obtain a map of the resulting attribute changes from the facade 
+		//			jGraph.getGraphLayoutCache().edit(nested); // Apply the results to the actual graph 
+		//			centerViewOn(cell);
+		//		}
+
 	}
-	
+
 	public void addGraphListener(GraphListener<Spot, DefaultWeightedEdge> listener) {
 		graphListeners.add(listener);
 	}
@@ -207,11 +207,11 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	public boolean removeGraphListener(GraphListener<Spot, DefaultWeightedEdge> listener) {
 		return graphListeners.remove(listener);
 	}
-	
+
 	public List<GraphListener<Spot, DefaultWeightedEdge>> getGraphListeners() {
 		return graphListeners;
 	}
-	
+
 	/**
 	 * Return an updated reference of the {@link Graph} that acts as a model for tracks. This graph will
 	 * have his edges and vertices updated by the manual interaction occuring in this view.
@@ -219,14 +219,14 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> getTrackModel() {
 		return trackGraph;
 	}
-	
+
 	/**
 	 * Return a reference to the {@link mxGraph} view in charge of rendering the track scheme.
 	 */
 	public JGraphXAdapter<Spot, DefaultWeightedEdge> getGraph() {
 		return graph;
 	}
-	
+
 	public void centerViewOn(mxCell cell) {
 		mxRectangle bounds = graph.getCellBounds(cell);
 		if (null == bounds)
@@ -236,34 +236,34 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		graphComponent.getHorizontalScrollBar().setValue((int) center.getX() - graphComponent.getWidth()/2);
 		graphComponent.getVerticalScrollBar().setValue((int) center.getY() - graphComponent.getHeight()/2);
 	}
-	
+
 
 	/*
 	 * PRIVATE METHODS
 	 */
-	
+
 	private void plotSelectionData() {
 		Feature xFeature = infoPane.featureSelectionPanel.getXKey();
 		Set<Feature> yFeatures = infoPane.featureSelectionPanel.getYKeys();
 		if (yFeatures.isEmpty())
 			return;
-		
+
 		Object[] selectedCells = graph.getSelectionCells();
 		if (selectedCells == null || selectedCells.length == 0)
 			return;
-		
+
 		List<Spot> spots = new ArrayList<Spot>();
 		for(Object cell : selectedCells)
 			if (cell instanceof SpotCell)
 				spots.add(((SpotCell)cell).getSpot());
 		if (spots.isEmpty())
 			return;
-		
+
 		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, spots, trackGraph, settings);
 		grapher.setVisible(true);
-		
+
 	}
-	
+
 	private void connect(Object source, Object target) {
 		if (source instanceof SpotCell && target instanceof SpotCell) {
 			SpotCell s = (SpotCell) source;
@@ -281,7 +281,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			System.out.println("Try to connect a "+source.getClass().getCanonicalName()+" with a "+target.getClass().getCanonicalName());// DEBUG
 		}
 	}
-	
+
 	private void remove(Object[] cells) {
 		for (Object cell : cells) {
 			if (cell instanceof TrackEdgeCell) {
@@ -296,7 +296,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			}
 		}
 	}
-	
+
 	private JGraphXAdapter<Spot, DefaultWeightedEdge> createGraph() {
 		JGraphXAdapter<Spot, DefaultWeightedEdge> graph = new JGraphXAdapter<Spot, DefaultWeightedEdge>(lGraph, new SpotCellViewFactory(lGraph));
 		graph.setAllowLoops(false);
@@ -306,18 +306,18 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		return graph;
 	}
 
-	
+
 	private void init() {
 		// Frame look
 		setIconImage(TRACK_SCHEME_ICON.getImage());
 		setTitle("Track scheme");
-		
+
 		getContentPane().setLayout(new BorderLayout());
 		// Add a ToolBar
 		getContentPane().add(createToolBar(), BorderLayout.NORTH);
-		
+
 		// Add the back pane as Center Component
-		graphComponent = new mxGraphComponent(graph) {
+		graphComponent = new GraphPane(graph) {
 			@Override
 			public mxInteractiveCanvas createCanvas() {
 				return new mxTrackSchemeCanvas(this);
@@ -327,65 +327,65 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		graphComponent.getHorizontalScrollBar().setUnitIncrement(16);
 		graphComponent.setExportEnabled(false);
 		graphComponent.setImportEnabled(false);
-		
+
 		// Arrange graph layout
 		doTrackLayout();
-		
+
 		// Add the info pane
 		infoPane = new InfoPane();
-		
+
 		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, infoPane, graphComponent);
 		splitPane.setDividerLocation(170);
 		getContentPane().add(splitPane, BorderLayout.CENTER);
 
 		// Listeners
-//		graph.addListener(null, new mxIEventListener() {
-//			
-//			@Override
-//			public void invoke(Object sender, mxEventObject evt) {
-//				System.out.println("Received event: "+evt+" from: "+sender);// DEBUG
-//				
-//			}
-//		});
-//		addGraphSelectionListener(new GraphSelectionListener() {
-//
-//			@Override
-//			public void valueChanged(GraphSelectionEvent e) {
-//				Object[] cells = e.getCells();
-//				for(Object cell : cells) {
-//					if (cell instanceof SpotCell) {
-//						SpotCell spotCell = (SpotCell) cell;
-//						if (e.isAddedCell(cell))
-//							spotSelection.add(spotCell.getSpot());
-//						else 
-//							spotSelection.remove(spotCell.getSpot());
-//					}
-//				}
-//				infoPane.echo(spotSelection);
-//				if (spotSelection.isEmpty())
-//					infoPane.scrollTable.setVisible(false);
-//				else
-//					infoPane.scrollTable.setVisible(true);
-//			}
-//		});
+		//		graph.addListener(null, new mxIEventListener() {
+		//			
+		//			@Override
+		//			public void invoke(Object sender, mxEventObject evt) {
+		//				System.out.println("Received event: "+evt+" from: "+sender);// DEBUG
+		//				
+		//			}
+		//		});
+		//		addGraphSelectionListener(new GraphSelectionListener() {
+		//
+		//			@Override
+		//			public void valueChanged(GraphSelectionEvent e) {
+		//				Object[] cells = e.getCells();
+		//				for(Object cell : cells) {
+		//					if (cell instanceof SpotCell) {
+		//						SpotCell spotCell = (SpotCell) cell;
+		//						if (e.isAddedCell(cell))
+		//							spotSelection.add(spotCell.getSpot());
+		//						else 
+		//							spotSelection.remove(spotCell.getSpot());
+		//					}
+		//				}
+		//				infoPane.echo(spotSelection);
+		//				if (spotSelection.isEmpty())
+		//					infoPane.scrollTable.setVisible(false);
+		//				else
+		//					infoPane.scrollTable.setVisible(true);
+		//			}
+		//		});
 
 		// Forward graph change events to the listeners registered with this frame 
-//		lGraph.addGraphListener(new MyGraphListener());
+		//		lGraph.addGraphListener(new MyGraphListener());
 	}
-	
+
 	private void doTrackLayout() {
-//		JGraphTimeLayout graphLayout = new JGraphTimeLayout(trackGraph, graph);
+		//		JGraphTimeLayout graphLayout = new JGraphTimeLayout(trackGraph, graph);
 		mxGraphLayout graphLayout = new JGraphTimeLayout(lGraph, graph);
 		graphLayout.execute(graph.getDefaultParent());
 
 		// Forward painting info to back pane
-//		backPane.setColumnWidths(graphLayout.getTrackColumnWidths());
-//		backPane.setRowForInstant(graphLayout.getRowForInstant());
-//		backPane.setColumnColor(graphLayout.getTrackColors());
+		//		backPane.setColumnWidths(graphLayout.getTrackColumnWidths());
+		//		backPane.setRowForInstant(graphLayout.getRowForInstant());
+		//		backPane.setColumnColor(graphLayout.getTrackColors());
 
 	}
-	
-	
+
+
 	/**
 	 * Instantiate the toolbar of the track scheme. For now, the toolbar only has the following actions:
 	 * <ul>
@@ -400,29 +400,29 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	private JToolBar createToolBar() {
 		JToolBar toolbar = new JToolBar();
 		toolbar.setFloatable(false);
-		
+
 		// Toggle Connect Mode
 		toolbar.add(new AbstractAction("Toggle linking", LINKING_ON_ICON) {
 			public void actionPerformed(ActionEvent e) {
-//				graph.set
-//				ImageIcon connectIcon;
-//				if (graph.isPortsVisible())
-//					connectIcon = LINKING_ON_ICON;
-//				else
-//					connectIcon = LINKING_OFF_ICON;
-//				putValue(SMALL_ICON, connectIcon);
+				//				graph.set
+				//				ImageIcon connectIcon;
+				//				if (graph.isPortsVisible())
+				//					connectIcon = LINKING_ON_ICON;
+				//				else
+				//					connectIcon = LINKING_OFF_ICON;
+				//				putValue(SMALL_ICON, connectIcon);
 			}
 		});
 
 		// Separator
 		toolbar.addSeparator();
-		
+
 
 		final Action zoomInAction;
 		final Action zoomOutAction;
 		final JButton zoomInButton = new JButton();
 		final JButton zoomOutButton = new JButton();
-		
+
 		zoomInAction = new AbstractAction(null, ZOOM_IN_ICON) {
 			public void actionPerformed(ActionEvent e) {
 				double scale = graphComponent.getZoomFactor();
@@ -455,13 +455,13 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 				zoomInButton.setEnabled(true);
 			}
 		};
-		
+
 		zoomInButton.setAction(zoomInAction);
 		zoomInButton.setToolTipText("Zoom in 2x");
 		zoomOutButton.setAction(zoomOutAction);
 		zoomOutButton.setToolTipText("Zoom out 2x");
-		
-			
+
+
 		// Zoom Std
 		toolbar.add(new AbstractAction("Reset zoom", RESET_ZOOM_ICON) {
 			public void actionPerformed(ActionEvent e) {
@@ -469,7 +469,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			}
 		});
 		// Zoom In
-		
+
 		toolbar.add(zoomInButton);
 		// Zoom Out
 		toolbar.add(zoomOutButton);
@@ -483,10 +483,10 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 				doTrackLayout();
 			}
 		});
-		
+
 		// Separator
 		toolbar.addSeparator();
-		
+
 		// Plot selection data
 		toolbar.add(new AbstractAction("Plot selection data", PLOT_ICON) {
 			@Override
@@ -525,61 +525,61 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		return toolbar;
 	}
 
-	
+
 	/**
 	 *  PopupMenu
 	 */
 	@SuppressWarnings("serial")
 	private JPopupMenu createPopupMenu(final Point pt, final Object cell) {
 		JPopupMenu menu = new JPopupMenu();
-		
+
 		if (cell != null) {
 			// Edit
 			menu.add(new AbstractAction("Edit spot name") {
 				public void actionPerformed(ActionEvent e) {
-//					graph.startEditingAtCell(cell);
+					//					graph.startEditingAtCell(cell);
 				}
 			});
-			
+
 		} else if (spotSelection.size() > 0) {
-			
+
 			// Multi edit
-			
-//			menu.add(new AbstractAction("Edit " + spotSelection.size() +" spot names") {
-//				public void actionPerformed(ActionEvent e) {
-//					
-//					final SpotView[] cellViews = new SpotView[spotSelection.size()];
-//					final JGraphFacade facade = new JGraphFacade(jGraph);
-//					Iterator<Spot> it = spotSelection.iterator();
-//					for (int i = 0; i < spotSelection.size(); i++) {
-//						Object facadeTarget = jGMAdapter.getVertexCell(it.next());
-//						SpotView vView = (SpotView) facade.getCellView(facadeTarget);
-//						cellViews[i] = vView;
-//					}
-//					
-//					final JTextField editField = new JTextField(20);
-//					editField.setFont(FONT);
-//					editField.setBounds(pt.x, pt.y, 100, 20);
-//					jGraph.add(editField);
-//					editField.setVisible(true);
-//					editField.revalidate();
-//					jGraph.repaint();
-//					editField.requestFocusInWindow();
-//					editField.addActionListener(new ActionListener() {
-//						
-//						@Override
-//						public void actionPerformed(ActionEvent e) {
-//							for(Spot spot : spotSelection)
-//								spot.setName(editField.getText());
-//							jGraph.remove(editField);
-//							jGraph.refresh();
-//						}
-//					});
-//				}
-//			});
-			
+
+			//			menu.add(new AbstractAction("Edit " + spotSelection.size() +" spot names") {
+			//				public void actionPerformed(ActionEvent e) {
+			//					
+			//					final SpotView[] cellViews = new SpotView[spotSelection.size()];
+			//					final JGraphFacade facade = new JGraphFacade(jGraph);
+			//					Iterator<Spot> it = spotSelection.iterator();
+			//					for (int i = 0; i < spotSelection.size(); i++) {
+			//						Object facadeTarget = jGMAdapter.getVertexCell(it.next());
+			//						SpotView vView = (SpotView) facade.getCellView(facadeTarget);
+			//						cellViews[i] = vView;
+			//					}
+			//					
+			//					final JTextField editField = new JTextField(20);
+			//					editField.setFont(FONT);
+			//					editField.setBounds(pt.x, pt.y, 100, 20);
+			//					jGraph.add(editField);
+			//					editField.setVisible(true);
+			//					editField.revalidate();
+			//					jGraph.repaint();
+			//					editField.requestFocusInWindow();
+			//					editField.addActionListener(new ActionListener() {
+			//						
+			//						@Override
+			//						public void actionPerformed(ActionEvent e) {
+			//							for(Spot spot : spotSelection)
+			//								spot.setName(editField.getText());
+			//							jGraph.remove(editField);
+			//							jGraph.refresh();
+			//						}
+			//					});
+			//				}
+			//			});
+
 		}
-		
+
 		// Link
 		if (spotSelection.size() > 1) {
 			Action linkAction = new AbstractAction("Link spots") {
@@ -624,11 +624,11 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			};
 			menu.add(removeAction);
 		}
-		
+
 		return menu;
 	}
 
-	
+
 
 	/*
 	 * INNER CLASSES
@@ -646,8 +646,10 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		private int[] columnWidths = null;
 		private Color[] columnColors;
 
+
 		public GraphPane(mxGraph graph) {
 			super(graph);
+
 			setBackground(BACKGROUND_COLOR_1);
 
 			instants = new TreeSet<Float>();
@@ -660,36 +662,43 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		}
 
 		@Override
-		public void paintComponent(Graphics g) {
-			super.paintComponent(g);
-			int width = getSize().width;
-			int height = getSize().height;
-			float scale = (float) getZoomFactor();
+		public void paintBackground(Graphics g) {
+			
+			Rectangle paintBounds = g.getClipBounds();
+			
+			int width = getViewport().getView().getSize().width;
+			int height = getViewport().getView().getSize().height;
+			float scale = (float) graph.getView().getScale();
 
 			// Scaled sizes
 			int xcs 			= Math.round(X_COLUMN_SIZE*scale);
 			int ycs 			= Math.round(Y_COLUMN_SIZE*scale);
-			
+
 			// Alternating row color
 			g.setColor(BACKGROUND_COLOR_2);
 			int y = 0;
 			while (y < height) {
-				g.fillRect(0, y, width, ycs);
+				if (y > paintBounds.y - ycs && y < paintBounds.y + paintBounds.height)
+					g.fillRect(0, y, width, ycs);
 				y += 2*ycs;
 			}
 
 			// Header separator
 			g.setColor(LINE_COLOR);
-			g.drawLine(0, ycs, width, ycs);
-			g.drawLine(xcs, 0, xcs, height);
+			if (ycs > paintBounds.y && ycs < paintBounds.y + paintBounds.height)
+				g.drawLine(paintBounds.x, ycs, paintBounds.x + paintBounds.width, ycs);
+			if (xcs > paintBounds.x && xcs < paintBounds.x + paintBounds.width)
+				g.drawLine(xcs, paintBounds.y, xcs, paintBounds.y + paintBounds.height);
 
 			// Row headers
 			int x = xcs / 4;
 			y = 3 * ycs / 2;
 			g.setFont(FONT.deriveFont(12*scale).deriveFont(Font.BOLD));
 			for(Float instant : instants) {
-				g.drawString(String.format("%.1f "+settings.timeUnits, instant), x, y);
-				g.drawString(String.format("frame %.0f", (instant+1)/settings.dt), x, Math.round(y+12*scale));
+				if (xcs > paintBounds.x && y > paintBounds.y - ycs && y < paintBounds.y + paintBounds.height) {
+					g.drawString(String.format("%.1f "+settings.timeUnits, instant), x, y);
+					g.drawString(String.format("frame %.0f", (instant+1)/settings.dt), x, Math.round(y+12*scale));
+				}
 				y += ycs;
 			}
 
@@ -700,11 +709,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 					int cw = columnWidths[i]-1;
 					g.setColor(columnColors[i]);
 					g.drawString(String.format("Track %d", i+1), x+20, ycs/2);
-					g.setColor(LINE_COLOR);
-//					((Graphics2D)g).setStroke(new BasicStroke(1));
-//					for (int x2 = x + xcs; x2 < x + cw * xcs; x2 = x2 + xcs) 
-//						g.drawLine(x2, 0, x2, height);						
-//					((Graphics2D)g).setStroke(new BasicStroke(2));					
+					g.setColor(LINE_COLOR);					
 					x += cw * xcs;
 					g.drawLine(x, 0, x, height);
 				}
@@ -715,12 +720,10 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		public void setColumnWidths(int[] columnWidths) {
 			this.columnWidths  = columnWidths;
 		}
-		
+
 		public void setColumnColor(Color[] columnColors) {
 			this.columnColors = columnColors;
 		}
-
-
 	}
 
 
@@ -743,7 +746,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 				return this;
 			}
 		}
-		
+
 		private JTextPane textPane;
 		private JTable table;
 		private JScrollPane scrollTable;
@@ -767,7 +770,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			}
 			table.setModel(dm);
 			// Tune look
-			
+
 			DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer() {
 				public boolean isOpaque() { return false; };
 				@Override
@@ -776,8 +779,8 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 				}
 			};
 			headerRenderer.setBackground(Color.RED);
-			
-			
+
+
 			DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
 			renderer.setOpaque(false);
 			renderer.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -789,7 +792,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			for (Component c : scrollTable.getColumnHeader().getComponents())
 				c.setBackground(getBackground());
 			scrollTable.getColumnHeader().setOpaque(false);
-			
+
 			// Set text
 			textPane.setText("Selection:");
 		}
@@ -820,13 +823,13 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			table.getTableHeader().setOpaque(false);
 			table.setSelectionForeground(Color.YELLOW.darker());
 			table.setGridColor(GRID_COLOR);
-			
+
 			JList rowHeader = new JList(lm);
 			rowHeader.setFixedCellWidth(TABLE_ROW_HEADER_WIDTH);
 			rowHeader.setFixedCellHeight(table.getRowHeight());
 			rowHeader.setCellRenderer(new RowHeaderRenderer(table));
 			rowHeader.setBackground(getBackground());
-			
+
 			scrollTable = new JScrollPane(table);
 			scrollTable.setRowHeaderView(rowHeader);
 			scrollTable.getRowHeader().setOpaque(false);
@@ -836,51 +839,51 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 
 			textPane = new JTextPane();
 			textPane.setCaretPosition(0);
-//			StyledDocument styledDoc = textPane.getStyledDocument();
+			//			StyledDocument styledDoc = textPane.getStyledDocument();
 			textPane.setEditable(false);
 			textPane.setOpaque(false);
 			textPane.setFont(SMALL_FONT);
-			
+
 			featureSelectionPanel = new FeaturePlotSelectionPanel<Feature>(Feature.POSITION_T);
-			
+
 			setLayout(new BorderLayout());
 			add(textPane, BorderLayout.NORTH);
 			add(scrollTable, BorderLayout.CENTER);
 			add(featureSelectionPanel, BorderLayout.SOUTH);
-			
+
 		}
-		
+
 	}
-	
-	
-//	@SuppressWarnings("serial")
-//	private static class MyGraphCellEditor extends DefaultGraphCellEditor {
-//		private Object target;
-//		
-//		public MyGraphCellEditor() {
-//			addCellEditorListener(new CellEditorListener() {
-//
-//				@Override
-//				public void editingStopped(ChangeEvent e) {
-//					if (target instanceof SpotCell) {
-//						SpotCell spotCell = (SpotCell) target;
-//						spotCell.getSpot().setName(""+getCellEditorValue());
-//					}
-//				}
-//
-//				@Override
-//				public void editingCanceled(ChangeEvent e) {}
-//			});
-//		}
-//		
-//		@Override
-//		public Component getGraphCellEditorComponent(JGraph graph, Object cell, boolean isSelected) {
-//			target = cell;
-//			return super.getGraphCellEditorComponent(graph, cell, isSelected);
-//		};
-//		
-//		
-//	};
+
+
+	//	@SuppressWarnings("serial")
+	//	private static class MyGraphCellEditor extends DefaultGraphCellEditor {
+	//		private Object target;
+	//		
+	//		public MyGraphCellEditor() {
+	//			addCellEditorListener(new CellEditorListener() {
+	//
+	//				@Override
+	//				public void editingStopped(ChangeEvent e) {
+	//					if (target instanceof SpotCell) {
+	//						SpotCell spotCell = (SpotCell) target;
+	//						spotCell.getSpot().setName(""+getCellEditorValue());
+	//					}
+	//				}
+	//
+	//				@Override
+	//				public void editingCanceled(ChangeEvent e) {}
+	//			});
+	//		}
+	//		
+	//		@Override
+	//		public Component getGraphCellEditorComponent(JGraph graph, Object cell, boolean isSelected) {
+	//			target = cell;
+	//			return super.getGraphCellEditorComponent(graph, cell, isSelected);
+	//		};
+	//		
+	//		
+	//	};
 
 
 	/**
@@ -913,6 +916,6 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	}
 
 
-	
-	
+
+
 }

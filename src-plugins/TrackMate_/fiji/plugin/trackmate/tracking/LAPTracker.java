@@ -437,7 +437,6 @@ public class LAPTracker extends AbstractSpotTracker {
 			// Extend track segments using solutions: we update the graph edges
 			List<Spot> t0 = spots.get(frame0);
 			List<Spot> t1 = spots.get(frame1);
-			System.out.println("LAPTracker: spots are: "+frame0+": "+t0.size()+" spots - "+frame1+": "+t1.size()+" spots.");// DEBUG
 			for (int i = 0; i < solutions.length; i++) {
 				if (solutions[i].length == 0)
 					continue;

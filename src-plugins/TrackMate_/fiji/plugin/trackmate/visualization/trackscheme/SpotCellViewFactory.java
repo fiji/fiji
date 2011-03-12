@@ -24,7 +24,6 @@ public class SpotCellViewFactory implements JGraphXAdapter.CellFactory<Spot, Def
 		this.jGraphT = jGraphT;
 	}
 
-	
 	/*
 	 * METHODS
 	 */
