@@ -7,7 +7,6 @@ import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.Y
 
 import java.awt.Color;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -23,9 +22,6 @@ import org.jgrapht.traverse.DepthFirstIterator;
 
 import com.mxgraph.layout.mxGraphLayout;
 import com.mxgraph.model.mxGeometry;
-import com.mxgraph.util.mxConstants;
-import com.mxgraph.util.mxUtils;
-import com.mxgraph.view.mxStylesheet;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
@@ -59,15 +55,6 @@ public class JGraphTimeLayout extends mxGraphLayout {
 
 	@Override
 	public void execute(Object parent) {
-
-		// Create rounded style
-		mxStylesheet stylesheet = graph.getStylesheet();
-		Hashtable<String, Object> style = new Hashtable<String, Object>();
-		style.put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_RECTANGLE);
-		style.put(mxConstants.STYLE_OPACITY, 50);
-		style.put(mxConstants.STYLE_FONTCOLOR, "#774400");
-		stylesheet.putCellStyle("ROUNDED", style);
-		
 		
 		graph.getModel().beginUpdate();
 		try {
@@ -140,19 +127,23 @@ public class JGraphTimeLayout extends mxGraphLayout {
 					// Get corresponding JGraphX cell 
 					SpotCell cell = (SpotCell) graph.getCellForVertex(spot);
 
-					// Tune aspect of cell according to context
-
-					// Move the corresponding cell in the facade
+					// Move the corresponding cell 
 					double x = (targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
 					double y = (0.5 + rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2;
-					int height = Math.min(DEFAULT_CELL_WIDTH, spot.getIcon().getIconHeight());
+					int height = Math.min(DEFAULT_CELL_WIDTH, spot.getIcon().getIconWidth());
 					height = Math.max(height, 12);
 					mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
 					graph.getModel().setGeometry(cell, geometry);
-					graph.getModel().setStyle(cell, "strokeColor="+Integer.toHexString(trackColor.getRGB()));
-
+					
+					// Set cell style
+					String style = "strokeColor="+Integer.toHexString(trackColor.getRGB());
+					style += ";fillColor="+Integer.toHexString(Color.LIGHT_GRAY.getRGB());
+					style += ";fontColor=black";
+					style += ";align=right";
+					graph.getModel().setStyle(cell, style);
+					
 //					// Edges
-					Object[] objEdges = graph.getEdges(cell);
+					Object[] objEdges = graph.getEdges(cell, parent, true, false, false);
 					for(Object obj : objEdges) {
 						TrackEdgeCell edge = (TrackEdgeCell) obj;
 						graph.getModel().setStyle(edge, "startArrow=none;endArrow=none;strokeWidth=2;strokeColor="+Integer.toHexString(trackColor.getRGB())); //

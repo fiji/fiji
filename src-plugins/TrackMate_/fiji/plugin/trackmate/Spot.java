@@ -109,7 +109,7 @@ public interface Spot {
 	public ImageIcon getIcon();
 	
 	/**
-	 * Set the icon used to display this spot. 
+	 * Set the image used to display / represent this spot. 
 	 */
 	public void setIcon(ImageIcon icon);
 }

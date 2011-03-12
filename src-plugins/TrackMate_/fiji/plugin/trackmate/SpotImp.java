@@ -4,9 +4,8 @@ import java.util.EnumMap;
 
 import javax.swing.ImageIcon;
 
-import fiji.plugin.trackmate.gui.TrackMateFrame;
-
 import mpicbg.imglib.util.Util;
+import fiji.plugin.trackmate.gui.TrackMateFrame;
 
 /**
  * Plain implementation of the {@link Spot} interface.
@@ -29,7 +28,7 @@ public class SpotImp implements Spot {
 	private String name;
 	/** This spot ID */
 	private int ID;
-	/** This pot's icon */
+	/** This spot's image */
 	private ImageIcon icon = DEFAULT_ICON;
 
 	/*

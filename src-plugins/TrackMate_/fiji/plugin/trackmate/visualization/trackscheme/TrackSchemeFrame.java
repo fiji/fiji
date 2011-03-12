@@ -13,6 +13,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -80,6 +81,7 @@ import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
 import com.mxgraph.layout.orthogonal.mxOrthogonalLayout;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.swing.mxGraphComponent;
+import com.mxgraph.swing.view.mxInteractiveCanvas;
 import com.mxgraph.util.mxCellRenderer;
 import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxRectangle;
@@ -297,17 +299,10 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	
 	private JGraphXAdapter<Spot, DefaultWeightedEdge> createGraph() {
 		JGraphXAdapter<Spot, DefaultWeightedEdge> graph = new JGraphXAdapter<Spot, DefaultWeightedEdge>(lGraph, new SpotCellViewFactory(lGraph));
-		
 		graph.setAllowLoops(false);
 		graph.setAllowDanglingEdges(false);
 		graph.setGridEnabled(false);
-		
-//		SpotCellViewFactory factory = new SpotCellViewFactory();
-//		GraphLayoutCache graphLayoutCache = new GraphLayoutCache(jGMAdapter, factory);
-//		MyGraph myGraph = new MyGraph(jGMAdapter, graphLayoutCache);
-//		myGraph.setMarqueeHandler(new MyMarqueeHandler());
-//		myGraph.setUI(new MyBasicGraphUI());
-//		AbstractCellView.cellEditor = new MyGraphCellEditor();
+		graph.setLabelsVisible(false);
 		return graph;
 	}
 
@@ -322,21 +317,16 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		getContentPane().add(createToolBar(), BorderLayout.NORTH);
 		
 		// Add the back pane as Center Component
-//		graphComponent = new mxGraphComponent(graph);
 		graphComponent = new mxGraphComponent(graph) {
-		  public Component[] createComponents(mxCellState state) {
-			  
-			  if (state.getCell() instanceof SpotCell) {
-		    	SpotCell cell = (SpotCell) state.getCell();
-		    	return new Component[] { new JLabel("prout", cell.getSpot().getIcon(), JLabel.LEFT) };
-		    }
-
-		    return null;
-		  }
+			@Override
+			public mxInteractiveCanvas createCanvas() {
+				return new mxTrackSchemeCanvas(this);
+			};
 		};
-		
 		graphComponent.getVerticalScrollBar().setUnitIncrement(16);
 		graphComponent.getHorizontalScrollBar().setUnitIncrement(16);
+		graphComponent.setExportEnabled(false);
+		graphComponent.setImportEnabled(false);
 		
 		// Arrange graph layout
 		doTrackLayout();

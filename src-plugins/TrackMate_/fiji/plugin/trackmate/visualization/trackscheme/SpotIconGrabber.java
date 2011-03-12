@@ -4,7 +4,6 @@ import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
 
-import java.awt.Image;
 import java.util.Collection;
 
 import javax.swing.ImageIcon;
@@ -57,8 +56,7 @@ public class SpotIconGrabber {
 		ip.setRoi(roi);
 		ip = ip.crop();
 		ip.resetMinAndMax();
-		Image image = ip.createImage();
-		ImageIcon icon = new ImageIcon(image);
+		ImageIcon icon = new ImageIcon(ip.createImage());
 		spot.setIcon(icon);
 	}
 }
