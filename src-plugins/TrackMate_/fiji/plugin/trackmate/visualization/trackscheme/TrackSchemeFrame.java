@@ -130,16 +130,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	private static final int TABLE_ROW_HEADER_WIDTH = 50;
 	private static final Color GRID_COLOR = Color.GRAY;
 
-	private static final ImageIcon LINKING_ON_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/connect.png")); 
-	private static final ImageIcon LINKING_OFF_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/forbid_connect.png")); 
-	private static final ImageIcon RESET_ZOOM_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/zoom.png")); 
-	private static final ImageIcon ZOOM_IN_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/zoom_in.png")); 
-	private static final ImageIcon ZOOM_OUT_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/zoom_out.png")); 
-	private static final ImageIcon REFRESH_ICON		= new ImageIcon(TrackSchemeFrame.class.getResource("resources/refresh.png"));
-	private static final ImageIcon PLOT_ICON		= new ImageIcon(TrackSchemeFrame.class.getResource("resources/plots.png"));
-	private static final ImageIcon CAPTURE_UNDECORATED_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/camera_go.png"));
-	private static final ImageIcon CAPTURE_DECORATED_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/camera_edit.png"));
-
+	
 	/*
 	 * FIELDS
 	 */
@@ -152,7 +143,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	/** The spots currently selected. */
 	private HashSet<Spot> spotSelection = new HashSet<Spot>();
 	Settings settings;
-	private mxTrackGraphComponent graphComponent;
+	mxTrackGraphComponent graphComponent;
 
 	/*
 	 * CONSTRUCTORS
@@ -236,12 +227,18 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		graphComponent.getVerticalScrollBar().setValue((int) center.getY() - graphComponent.getHeight()/2);
 	}
 
+	public void doTrackLayout() {
+		mxTrackGraphLayout graphLayout = new mxTrackGraphLayout(lGraph, graph);
+		graphLayout.execute(graph.getDefaultParent());
 
-	/*
-	 * PRIVATE METHODS
-	 */
+//		 Forward painting info to graph component
+		graphComponent.setColumnWidths(graphLayout.getTrackColumnWidths());
+		graphComponent.setRowForInstant(graphLayout.getRowForInstant());
+		graphComponent.setColumnColor(graphLayout.getTrackColors());
 
-	private void plotSelectionData() {
+	}
+	
+	public void plotSelectionData() {
 		Feature xFeature = infoPane.featureSelectionPanel.getXKey();
 		Set<Feature> yFeatures = infoPane.featureSelectionPanel.getYKeys();
 		if (yFeatures.isEmpty())
@@ -263,23 +260,47 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 
 	}
 
-	private void connect(Object source, Object target) {
-		if (source instanceof SpotCell && target instanceof SpotCell) {
-			SpotCell s = (SpotCell) source;
-			SpotCell t = (SpotCell) target;
-			// Update the listenable graph so that the VIEW is updated
-			DefaultWeightedEdge edge = lGraph.addEdge(s.getSpot(), t.getSpot());
-			if (null == edge) {
-				infoPane.textPane.setText("Invalid edge.");
-				return;
-			}
-			lGraph.setEdgeWeight(edge, -1); // Default Weight
-			// Update the MODEL graph as well
-			trackGraph.addEdge(s.getSpot(), t.getSpot(), edge);
-		} else {
-			System.out.println("Try to connect a "+source.getClass().getCanonicalName()+" with a "+target.getClass().getCanonicalName());// DEBUG
-		}
+	
+	/*
+	 * PROTECTED METHODS
+	 */
+	
+	/**
+	 * Used to instantiate and configure the {@link JGraphXAdapter} that will be used for display.
+	 */
+	protected JGraphXAdapter<Spot, DefaultWeightedEdge> createGraph() {
+		JGraphXAdapter<Spot, DefaultWeightedEdge> graph = new JGraphXAdapter<Spot, DefaultWeightedEdge>(lGraph, new SpotCellViewFactory(lGraph));
+		graph.setAllowLoops(false);
+		graph.setAllowDanglingEdges(false);
+		graph.setCellsCloneable(false);
+		graph.setGridEnabled(false);
+		graph.setLabelsVisible(false);
+		graph.setDropEnabled(false);
+		graph.setSwimlaneNesting(true);
+		return graph;
 	}
+
+	protected mxTrackGraphComponent createGraphComponent() {
+		mxTrackGraphComponent gc = new mxTrackGraphComponent(this);
+		gc.getVerticalScrollBar().setUnitIncrement(16);
+		gc.getHorizontalScrollBar().setUnitIncrement(16);
+		gc.setExportEnabled(false);
+		gc.setImportEnabled(false);
+		return gc;
+		
+	}
+	
+	
+	/**
+	 * Instantiate the toolbar of the track scheme. Hook for subclassers.
+	 */
+	protected JToolBar createToolBar() {
+		return new TrackSchemeToolbar(this);		
+	}
+
+	/*
+	 * PRIVATE METHODS
+	 */
 
 	private void remove(Object[] cells) {
 		for (Object cell : cells) {
@@ -296,18 +317,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		}
 	}
 
-	private JGraphXAdapter<Spot, DefaultWeightedEdge> createGraph() {
-		JGraphXAdapter<Spot, DefaultWeightedEdge> graph = new JGraphXAdapter<Spot, DefaultWeightedEdge>(lGraph, new SpotCellViewFactory(lGraph));
-		graph.setAllowLoops(false);
-		graph.setAllowDanglingEdges(false);
-		graph.setCellsCloneable(false);
-		graph.setGridEnabled(false);
-		graph.setLabelsVisible(false);
-		graph.setDropEnabled(false);
-		graph.setSwimlaneNesting(true);
-		return graph;
-	}
-
+	
 
 	private void init() {
 		// Frame look
@@ -318,13 +328,8 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		// Add a ToolBar
 		getContentPane().add(createToolBar(), BorderLayout.NORTH);
 
-		// Add the back pane as Center Component
-		graphComponent = new mxTrackGraphComponent(this);
-		graphComponent.getVerticalScrollBar().setUnitIncrement(16);
-		graphComponent.getHorizontalScrollBar().setUnitIncrement(16);
-		graphComponent.setExportEnabled(false);
-		graphComponent.setImportEnabled(false);
-		
+		// GraphComponent
+		graphComponent = createGraphComponent();
 		
 
 		// Arrange graph layout
@@ -372,156 +377,9 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		//		lGraph.addGraphListener(new MyGraphListener());
 	}
 
-	private void doTrackLayout() {
-		mxTrackGraphLayout graphLayout = new mxTrackGraphLayout(lGraph, graph);
-		graphLayout.execute(graph.getDefaultParent());
+	
 
-//		 Forward painting info to graph component
-		graphComponent.setColumnWidths(graphLayout.getTrackColumnWidths());
-		graphComponent.setRowForInstant(graphLayout.getRowForInstant());
-		graphComponent.setColumnColor(graphLayout.getTrackColors());
-
-	}
-
-
-	/**
-	 * Instantiate the toolbar of the track scheme. For now, the toolbar only has the following actions:
-	 * <ul>
-	 * 	<li> Connect on/off
-	 * 	<li> Reset zoom
-	 * 	<li> Zoom in
-	 * 	<li> Zoom out
-	 * </ul>
-	 * @return
-	 */
-	@SuppressWarnings("serial")
-	private JToolBar createToolBar() {
-		JToolBar toolbar = new JToolBar();
-		toolbar.setFloatable(false);
-
-		// Toggle Connect Mode
-		toolbar.add(new AbstractAction("Toggle linking", LINKING_ON_ICON) {
-			public void actionPerformed(ActionEvent e) {
-				//				graph.set
-				//				ImageIcon connectIcon;
-				//				if (graph.isPortsVisible())
-				//					connectIcon = LINKING_ON_ICON;
-				//				else
-				//					connectIcon = LINKING_OFF_ICON;
-				//				putValue(SMALL_ICON, connectIcon);
-			}
-		});
-
-		// Separator
-		toolbar.addSeparator();
-
-
-		final Action zoomInAction;
-		final Action zoomOutAction;
-		final JButton zoomInButton = new JButton();
-		final JButton zoomOutButton = new JButton();
-
-		zoomInAction = new AbstractAction(null, ZOOM_IN_ICON) {
-			public void actionPerformed(ActionEvent e) {
-				double scale = graphComponent.getZoomFactor();
-				if (scale < 2) {
-					Rectangle oldView = graphComponent.getViewport().getViewRect();
-					graphComponent.zoom(2 * scale);
-					Point newViewPos = new Point();
-					newViewPos.x = (int) Math.max(0, (oldView.x + (float) oldView.width / 2) * 2- oldView.width / 2);
-					newViewPos.y = (int) Math.max(0, (oldView.y + (float) oldView.height / 2) * 2 - oldView.height / 2);
-					graphComponent.getViewport().setViewPosition(newViewPos);
-				}
-				if (scale > 2)
-					zoomInButton.setEnabled(false);
-				zoomOutButton.setEnabled(true);
-			}
-		};
-		zoomOutAction = new AbstractAction(null, ZOOM_OUT_ICON) {
-			public void actionPerformed(ActionEvent e) {
-				double scale = graphComponent.getZoomFactor();
-				if (scale > (double)1/16) {
-					Rectangle oldView = graphComponent.getViewport().getViewRect();
-					graphComponent.zoom(scale/2);
-					Point newViewPos = new Point();
-					newViewPos.x = (int) Math.max(0, (oldView.x + (float) oldView.width / 2) / 2- oldView.width / 2);
-					newViewPos.y = (int) Math.max(0, (oldView.y + (float) oldView.height / 2) / 2 - oldView.height / 2);
-					graphComponent.getViewport().setViewPosition(newViewPos);
-				}
-				if (scale < (double)1/16)
-					zoomOutButton.setEnabled(false);
-				zoomInButton.setEnabled(true);
-			}
-		};
-
-		zoomInButton.setAction(zoomInAction);
-		zoomInButton.setToolTipText("Zoom in 2x");
-		zoomOutButton.setAction(zoomOutAction);
-		zoomOutButton.setToolTipText("Zoom out 2x");
-
-
-		// Zoom Std
-		toolbar.add(new AbstractAction("Reset zoom", RESET_ZOOM_ICON) {
-			public void actionPerformed(ActionEvent e) {
-				graphComponent.zoomActual();
-			}
-		});
-		// Zoom In
-
-		toolbar.add(zoomInButton);
-		// Zoom Out
-		toolbar.add(zoomOutButton);
-
-		// Separator
-		toolbar.addSeparator();
-
-		// Redo layout
-		toolbar.add(new AbstractAction("Refresh", REFRESH_ICON) {
-			public void actionPerformed(ActionEvent e) {
-				doTrackLayout();
-			}
-		});
-
-		// Separator
-		toolbar.addSeparator();
-
-		// Plot selection data
-		toolbar.add(new AbstractAction("Plot selection data", PLOT_ICON) {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				plotSelectionData();
-			}
-		});
-
-		// Separator
-		toolbar.addSeparator();
-
-		// Capture track scheme
-		toolbar.add(new AbstractAction("Capture undecorated track scheme", CAPTURE_UNDECORATED_ICON) {			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				BufferedImage image = mxCellRenderer.createBufferedImage(graph, null, 1, Color.WHITE, false, null);
-				ImagePlus imp = new ImagePlus("Track scheme capture", image);
-				imp.show();
-			}
-		});
-
-		// Capture with decoration
-		toolbar.add(new AbstractAction("Capture decorated track scheme", CAPTURE_DECORATED_ICON) {			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JViewport view = graphComponent.getViewport();
-				Dimension size = view.getViewSize();
-				BufferedImage image =  (BufferedImage) view.createImage(size.width, size.height);
-				Graphics captureG = image.getGraphics();
-				view.paintComponents(captureG);
-				ImagePlus imp = new ImagePlus("Track scheme capture", image);
-				imp.show();
-			}
-		});
-
-		return toolbar;
-	}
+	
 
 
 	/**

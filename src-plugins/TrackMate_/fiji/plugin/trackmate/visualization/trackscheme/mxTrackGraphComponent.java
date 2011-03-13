@@ -43,6 +43,7 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		super(frame.getGraph());
 		this.frame = frame;
 		setBackground(BACKGROUND_COLOR_1);
+		setZoomFactor(2.0);
 
 		instants = new TreeSet<Float>();
 		for (Spot s : frame.trackGraph.vertexSet())
