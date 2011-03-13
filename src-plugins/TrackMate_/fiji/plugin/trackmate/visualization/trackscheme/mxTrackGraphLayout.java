@@ -29,9 +29,15 @@ import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotCellViewFactory.SpotCell;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotCellViewFactory.TrackEdgeCell;
 
-public class JGraphTimeLayout extends mxGraphLayout {
-
-
+/**
+ * This {@link mxGraphLayout} arranges cells on a graph in lanes corresponding to tracks. 
+ * It also sets the style of each cell so that they have a coloring depending on the lane
+ * they belong to.
+ * Each lane's width and color is available to other classes for further exploitation.
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Mar 13, 2011
+ *
+ */
+public class mxTrackGraphLayout extends mxGraphLayout {
 
 	private JGraphXAdapter<Spot, DefaultWeightedEdge> graph;
 	private List<Set<Spot>> tracks;
@@ -46,7 +52,7 @@ public class JGraphTimeLayout extends mxGraphLayout {
 	 */
 
 
-	public JGraphTimeLayout(UndirectedGraph<Spot, DefaultWeightedEdge> jGraphT, JGraphXAdapter<Spot, DefaultWeightedEdge> graph) {
+	public mxTrackGraphLayout(UndirectedGraph<Spot, DefaultWeightedEdge> jGraphT, JGraphXAdapter<Spot, DefaultWeightedEdge> graph) {
 		super(graph);
 		this.graph = graph;
 		this.jGraphT = jGraphT;
@@ -190,10 +196,4 @@ public class JGraphTimeLayout extends mxGraphLayout {
 	public Color[] getTrackColors() {
 		return trackColorArray;
 	}
-
-	@Override
-	public void moveCell(Object cell, double x, double y) {
-		System.out.println("Moving cell: "+cell+" to x="+x+" y="+y);// DEBUG
-	}
-
 }

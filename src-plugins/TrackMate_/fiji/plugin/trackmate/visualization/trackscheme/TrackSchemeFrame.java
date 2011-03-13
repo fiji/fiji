@@ -123,9 +123,6 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 
 	private static final long serialVersionUID = 1L;
 	private static final Dimension DEFAULT_SIZE = new Dimension(800, 600);
-	private static final Color BACKGROUND_COLOR_1 = Color.GRAY;
-	private static final Color BACKGROUND_COLOR_2 = Color.LIGHT_GRAY;
-	private static final Color LINE_COLOR = Color.BLACK;
 	private static final int TABLE_CELL_WIDTH 		= 40;
 	private static final int TABLE_ROW_HEADER_WIDTH = 50;
 	private static final Color GRID_COLOR = Color.GRAY;
@@ -144,16 +141,15 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	 * FIELDS
 	 */
 
-	private SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph;
+	SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph;
 	private ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge> lGraph;
 	private JGraphXAdapter<Spot, DefaultWeightedEdge> graph;
 	private InfoPane infoPane;
 	private ArrayList<GraphListener<Spot, DefaultWeightedEdge>> graphListeners = new ArrayList<GraphListener<Spot,DefaultWeightedEdge>>();
-	private GraphPane backPane;
 	/** The spots currently selected. */
 	private HashSet<Spot> spotSelection = new HashSet<Spot>();
-	private Settings settings;
-	private mxGraphComponent graphComponent;
+	Settings settings;
+	private mxTrackGraphComponent graphComponent;
 
 	/*
 	 * CONSTRUCTORS
@@ -317,12 +313,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		getContentPane().add(createToolBar(), BorderLayout.NORTH);
 
 		// Add the back pane as Center Component
-		graphComponent = new GraphPane(graph) {
-			@Override
-			public mxInteractiveCanvas createCanvas() {
-				return new mxTrackSchemeCanvas(this);
-			};
-		};
+		graphComponent = new mxTrackGraphComponent(this);
 		graphComponent.getVerticalScrollBar().setUnitIncrement(16);
 		graphComponent.getHorizontalScrollBar().setUnitIncrement(16);
 		graphComponent.setExportEnabled(false);
@@ -374,14 +365,13 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	}
 
 	private void doTrackLayout() {
-		//		JGraphTimeLayout graphLayout = new JGraphTimeLayout(trackGraph, graph);
-		mxGraphLayout graphLayout = new JGraphTimeLayout(lGraph, graph);
+		mxTrackGraphLayout graphLayout = new mxTrackGraphLayout(lGraph, graph);
 		graphLayout.execute(graph.getDefaultParent());
 
-		// Forward painting info to back pane
-		//		backPane.setColumnWidths(graphLayout.getTrackColumnWidths());
-		//		backPane.setRowForInstant(graphLayout.getRowForInstant());
-		//		backPane.setColumnColor(graphLayout.getTrackColors());
+//		 Forward painting info to back pane
+		graphComponent.setColumnWidths(graphLayout.getTrackColumnWidths());
+		graphComponent.setRowForInstant(graphLayout.getRowForInstant());
+		graphComponent.setColumnColor(graphLayout.getTrackColors());
 
 	}
 
@@ -633,99 +623,6 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	/*
 	 * INNER CLASSES
 	 */
-
-	/**
-	 * The customized JPanel used to display a useful background under the graph.
-	 * It displays in Y the time, and in X the track identity.
-	 */
-	private class GraphPane extends mxGraphComponent {
-
-		private static final long serialVersionUID = 1L;
-		private TreeSet<Float> instants;
-		private TreeMap<Float, Integer> rows;
-		private int[] columnWidths = null;
-		private Color[] columnColors;
-
-
-		public GraphPane(mxGraph graph) {
-			super(graph);
-
-			setBackground(BACKGROUND_COLOR_1);
-
-			instants = new TreeSet<Float>();
-			for (Spot s : trackGraph.vertexSet())
-				instants.add(s.getFeature(Feature.POSITION_T));
-		}
-
-		public void setRowForInstant(TreeMap<Float, Integer> rowForInstant) {
-			rows = rowForInstant;
-		}
-
-		@Override
-		public void paintBackground(Graphics g) {
-			
-			Rectangle paintBounds = g.getClipBounds();
-			
-			int width = getViewport().getView().getSize().width;
-			int height = getViewport().getView().getSize().height;
-			float scale = (float) graph.getView().getScale();
-
-			// Scaled sizes
-			int xcs 			= Math.round(X_COLUMN_SIZE*scale);
-			int ycs 			= Math.round(Y_COLUMN_SIZE*scale);
-
-			// Alternating row color
-			g.setColor(BACKGROUND_COLOR_2);
-			int y = 0;
-			while (y < height) {
-				if (y > paintBounds.y - ycs && y < paintBounds.y + paintBounds.height)
-					g.fillRect(0, y, width, ycs);
-				y += 2*ycs;
-			}
-
-			// Header separator
-			g.setColor(LINE_COLOR);
-			if (ycs > paintBounds.y && ycs < paintBounds.y + paintBounds.height)
-				g.drawLine(paintBounds.x, ycs, paintBounds.x + paintBounds.width, ycs);
-			if (xcs > paintBounds.x && xcs < paintBounds.x + paintBounds.width)
-				g.drawLine(xcs, paintBounds.y, xcs, paintBounds.y + paintBounds.height);
-
-			// Row headers
-			int x = xcs / 4;
-			y = 3 * ycs / 2;
-			g.setFont(FONT.deriveFont(12*scale).deriveFont(Font.BOLD));
-			for(Float instant : instants) {
-				if (xcs > paintBounds.x && y > paintBounds.y - ycs && y < paintBounds.y + paintBounds.height) {
-					g.drawString(String.format("%.1f "+settings.timeUnits, instant), x, y);
-					g.drawString(String.format("frame %.0f", (instant+1)/settings.dt), x, Math.round(y+12*scale));
-				}
-				y += ycs;
-			}
-
-			// Column headers
-			if (null != columnWidths) {
-				x = xcs;
-				for (int i = 0; i < columnWidths.length; i++) {
-					int cw = columnWidths[i]-1;
-					g.setColor(columnColors[i]);
-					g.drawString(String.format("Track %d", i+1), x+20, ycs/2);
-					g.setColor(LINE_COLOR);					
-					x += cw * xcs;
-					g.drawLine(x, 0, x, height);
-				}
-			}
-		}
-
-
-		public void setColumnWidths(int[] columnWidths) {
-			this.columnWidths  = columnWidths;
-		}
-
-		public void setColumnColor(Color[] columnColors) {
-			this.columnColors = columnColors;
-		}
-	}
-
 
 	private class InfoPane extends JPanel {
 
