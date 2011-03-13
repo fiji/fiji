@@ -1,5 +1,5 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
-
+ 
 import java.io.Serializable;
 
 import org.jgrapht.Graph;
@@ -9,7 +9,7 @@ import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
 
 import fiji.plugin.trackmate.Spot;
-
+import fiji.plugin.trackmate.visualization.SpotDisplayer;
 
 public class SpotCellViewFactory implements JGraphXAdapter.CellFactory<Spot, DefaultWeightedEdge>, Serializable {
 
@@ -39,16 +39,15 @@ public class SpotCellViewFactory implements JGraphXAdapter.CellFactory<Spot, Def
 		return new SpotCell(spot);
 	}
 	
-
-
-
 	public class TrackEdgeCell extends mxCell {
 
 		private static final long serialVersionUID = 2793596686481829376L;
 		private DefaultWeightedEdge edge;
 
 		public TrackEdgeCell(final DefaultWeightedEdge edge) {
-			super(String.format("%.1f", jGraphT.getEdgeWeight(edge)), new mxGeometry(), null);
+			super(String.format("%.1f", jGraphT.getEdgeWeight(edge)), new mxGeometry(), "");
+			String style = "startArrow=none;endArrow=none;strokeWidth=2;strokeColor="+Integer.toHexString(SpotDisplayer.DEFAULT_COLOR.getRGB());
+			setStyle(style);
 			this.edge = edge;
 			setEdge(true);
 			setId(null);
@@ -58,7 +57,6 @@ public class SpotCellViewFactory implements JGraphXAdapter.CellFactory<Spot, Def
 		public DefaultWeightedEdge getEdge() {
 			return edge;
 		}
-		
 	}
 	
 	public class SpotCell extends mxCell {

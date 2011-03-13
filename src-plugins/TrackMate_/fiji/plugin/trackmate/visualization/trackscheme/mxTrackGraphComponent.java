@@ -8,21 +8,29 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import org.jgrapht.graph.DefaultWeightedEdge;
+
+import com.mxgraph.model.mxCell;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.swing.view.mxInteractiveCanvas;
+import com.mxgraph.util.mxEvent;
+import com.mxgraph.util.mxEventObject;
+import com.mxgraph.util.mxEventSource.mxIEventListener;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.visualization.trackscheme.SpotCellViewFactory.SpotCell;
+import fiji.plugin.trackmate.visualization.trackscheme.SpotCellViewFactory.TrackEdgeCell;
 
-public class mxTrackGraphComponent extends mxGraphComponent {
+public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventListener {
 	
 	private static final Color BACKGROUND_COLOR_1 	= Color.GRAY;
 	private static final Color BACKGROUND_COLOR_2 	= Color.LIGHT_GRAY;
 	private static final Color LINE_COLOR 			= Color.BLACK;
-	
 	
 	private TreeSet<Float> instants;
 	private TreeMap<Float, Integer> rows;
@@ -39,6 +47,8 @@ public class mxTrackGraphComponent extends mxGraphComponent {
 		instants = new TreeSet<Float>();
 		for (Spot s : frame.trackGraph.vertexSet())
 			instants.add(s.getFeature(Feature.POSITION_T));
+		
+		connectionHandler.addListener(mxEvent.CONNECT, this);
 	}
 
 	
@@ -115,5 +125,27 @@ public class mxTrackGraphComponent extends mxGraphComponent {
 
 	public void setColumnColor(Color[] columnColors) {
 		this.columnColors = columnColors;
+	}
+
+
+	/** 
+	 * This listener method will be invoked when a new edge has been created interactively
+	 * in the graph component. 
+	 */
+	@Override
+	public void invoke(Object sender, mxEventObject evt) {
+		Map<String, Object> props = evt.getProperties();
+		Object obj = (Object) props.get("cell");
+		mxCell cell = (mxCell) obj;
+		if (cell.isEdge()) {
+			SpotCell source = (SpotCell) cell.getSource();
+			SpotCell target = (SpotCell) cell.getTarget();
+			// We add a new jGraphT edge to the underlying model
+			DefaultWeightedEdge edge = frame.lGraph.addEdge(source.getSpot(), target.getSpot());
+			 frame.lGraph.setEdgeWeight(edge, -1);
+			// Then, remove the old JGraphX edge.
+			frame.getGraph().removeCells(new Object[] { cell });
+			evt.consume();
+		}
 	}
 }

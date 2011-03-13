@@ -1,6 +1,5 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
-import java.io.Serializable;
 import java.util.HashMap;
 
 import javax.swing.JFrame;
@@ -17,7 +16,7 @@ import com.mxgraph.model.mxGeometry;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.view.mxGraph;
 
-public class JGraphXAdapter<V, E> extends mxGraph implements GraphListener<V, E>, Serializable {
+public class JGraphXAdapter<V, E> extends mxGraph implements GraphListener<V, E> {
 	
 	private static final long serialVersionUID = -6889237398498812783L;
 	private ListenableGraph<V, E> jgtGraph;
@@ -53,6 +52,7 @@ public class JGraphXAdapter<V, E> extends mxGraph implements GraphListener<V, E>
 	/*
 	 * METHODS
 	 */
+
 	
 	public void addJGraphTVertex(V vertex) {
 		getModel().beginUpdate();
@@ -224,6 +224,7 @@ public class JGraphXAdapter<V, E> extends mxGraph implements GraphListener<V, E>
 
 
 	}
+
 
 
 	

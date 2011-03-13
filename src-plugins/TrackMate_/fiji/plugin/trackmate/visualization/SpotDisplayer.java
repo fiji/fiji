@@ -128,7 +128,7 @@ public abstract class SpotDisplayer {
 	/** The default display radius. */
 	protected static final float DEFAULT_DISPLAY_RADIUS = 5;
 	/** The default color. */
-	static final Color DEFAULT_COLOR = new Color(1f, 0, 1f);
+	public static final Color DEFAULT_COLOR = new Color(1f, 0, 1f);
 	/** The color used when highlighting spots. */
 	static final Color HIGHLIGHT_COLOR = new Color(0, 1f, 0);
 	

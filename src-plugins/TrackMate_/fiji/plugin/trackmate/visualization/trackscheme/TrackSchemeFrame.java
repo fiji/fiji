@@ -83,7 +83,10 @@ import com.mxgraph.model.mxCell;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.swing.view.mxInteractiveCanvas;
 import com.mxgraph.util.mxCellRenderer;
+import com.mxgraph.util.mxConstants;
+import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
+import com.mxgraph.util.mxEventSource;
 import com.mxgraph.util.mxRectangle;
 import com.mxgraph.util.mxEventSource.mxIEventListener;
 import com.mxgraph.view.mxCellState;
@@ -142,7 +145,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	 */
 
 	SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph;
-	private ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge> lGraph;
+	ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge> lGraph;
 	private JGraphXAdapter<Spot, DefaultWeightedEdge> graph;
 	private InfoPane infoPane;
 	private ArrayList<GraphListener<Spot, DefaultWeightedEdge>> graphListeners = new ArrayList<GraphListener<Spot,DefaultWeightedEdge>>();
@@ -297,8 +300,11 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		JGraphXAdapter<Spot, DefaultWeightedEdge> graph = new JGraphXAdapter<Spot, DefaultWeightedEdge>(lGraph, new SpotCellViewFactory(lGraph));
 		graph.setAllowLoops(false);
 		graph.setAllowDanglingEdges(false);
+		graph.setCellsCloneable(false);
 		graph.setGridEnabled(false);
 		graph.setLabelsVisible(false);
+		graph.setDropEnabled(false);
+		graph.setSwimlaneNesting(true);
 		return graph;
 	}
 
@@ -318,6 +324,8 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		graphComponent.getHorizontalScrollBar().setUnitIncrement(16);
 		graphComponent.setExportEnabled(false);
 		graphComponent.setImportEnabled(false);
+		
+		
 
 		// Arrange graph layout
 		doTrackLayout();
@@ -368,7 +376,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		mxTrackGraphLayout graphLayout = new mxTrackGraphLayout(lGraph, graph);
 		graphLayout.execute(graph.getDefaultParent());
 
-//		 Forward painting info to back pane
+//		 Forward painting info to graph component
 		graphComponent.setColumnWidths(graphLayout.getTrackColumnWidths());
 		graphComponent.setRowForInstant(graphLayout.getRowForInstant());
 		graphComponent.setColumnColor(graphLayout.getTrackColors());
