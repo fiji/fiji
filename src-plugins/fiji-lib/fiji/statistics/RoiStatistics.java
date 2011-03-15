@@ -70,26 +70,27 @@ public class RoiStatistics {
 			this.y = y;
 			width = mask.getWidth();
 			height = mask.getHeight();
-			pixels = (byte[])mask.getPixels();
 
-			accumulate(new Accessor() {
-				public final float getf(int x, int y) {
-					return 1;
-				}
-			});
-			count = (int)cumulative;
+			pixels = (byte[])mask.getPixels();
 		}
 
 		public final void accumulate(final Accessor accessor) {
 			cumulative = 0;
-			for (int j = 0; j < height; j++)
-				for (int i = 0; i < width; i++)
-					if (pixels[i + width * j] != 0)
+			count = 0;
+			int width = Math.min(this.width, accessor.getWidth() - x);
+			int height = Math.min(this.height, accessor.getHeight() - y);
+			for (int j = Math.max(0, -y); j < height; j++)
+				for (int i = Math.max(0, -x); i < width; i++)
+					if (pixels[i + width * j] != 0) {
 						cumulative += accessor.getf(x + i, y + j);
+						count++;
+					}
 		}
 	}
 
 	protected interface Accessor {
+		int getWidth();
+		int getHeight();
 		float getf(int x, int y);
 	}
 
@@ -101,6 +102,14 @@ public class RoiStatistics {
 			w = ip.getWidth();
 			h = ip.getHeight();
 			pixels = (byte[])ip.getPixels();
+		}
+
+		public final int getWidth() {
+			return w;
+		}
+
+		public final int getHeight() {
+			return h;
 		}
 
 		public final float getf(int x, int y) {
@@ -118,6 +127,14 @@ public class RoiStatistics {
 			pixels = (short[])ip.getPixels();
 		}
 
+		public final int getWidth() {
+			return w;
+		}
+
+		public final int getHeight() {
+			return h;
+		}
+
 		public final float getf(int x, int y) {
 			return pixels[x + w * y] & 0xffff;
 		}
@@ -133,6 +150,14 @@ public class RoiStatistics {
 			pixels = (float[])ip.getPixels();
 		}
 
+		public final int getWidth() {
+			return w;
+		}
+
+		public final int getHeight() {
+			return h;
+		}
+
 		public final float getf(int x, int y) {
 			return pixels[x + w * y];
 		}
@@ -144,6 +169,14 @@ public class RoiStatistics {
 
 		public RGBAccessor(ColorProcessor ip) {
 			this.ip = ip;
+		}
+
+		public final int getWidth() {
+			return ip.getWidth();
+		}
+
+		public final int getHeight() {
+			return ip.getHeight();
 		}
 
 		public final float getf(int x, int y) {
