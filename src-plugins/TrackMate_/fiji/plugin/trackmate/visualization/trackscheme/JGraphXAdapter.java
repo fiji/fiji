@@ -47,6 +47,9 @@ public class JGraphXAdapter<V, E> extends mxGraph implements GraphListener<V, E>
 		} finally {
 			getModel().endUpdate();
 		}
+		
+		
+		
 	}
 	
 	/*

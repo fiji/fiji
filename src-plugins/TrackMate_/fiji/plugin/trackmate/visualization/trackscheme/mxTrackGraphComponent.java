@@ -14,9 +14,9 @@ import java.util.TreeSet;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
+import com.mxgraph.canvas.mxGraphics2DCanvas;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.swing.mxGraphComponent;
-import com.mxgraph.swing.view.mxInteractiveCanvas;
 import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxEventSource.mxIEventListener;
@@ -24,7 +24,6 @@ import com.mxgraph.util.mxEventSource.mxIEventListener;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotCellViewFactory.SpotCell;
-import fiji.plugin.trackmate.visualization.trackscheme.SpotCellViewFactory.TrackEdgeCell;
 
 public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventListener {
 	
@@ -38,11 +37,11 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 	private Color[] columnColors;
 	private TrackSchemeFrame frame;
 
-
 	public mxTrackGraphComponent(TrackSchemeFrame frame) {
 		super(frame.getGraph());
 		this.frame = frame;
-		setBackground(BACKGROUND_COLOR_1);
+		getViewport().setOpaque(true);
+		getViewport().setBackground(BACKGROUND_COLOR_1);
 		setZoomFactor(2.0);
 
 		instants = new TreeSet<Float>();
@@ -50,14 +49,10 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 			instants.add(s.getFeature(Feature.POSITION_T));
 		
 		connectionHandler.addListener(mxEvent.CONNECT, this);
+		
+		mxGraphics2DCanvas.putShape(mxScaledLabelShape.SHAPE_NAME, new mxScaledLabelShape());
 	}
 
-	
-	@Override
-	public mxInteractiveCanvas createCanvas() {
-		return new mxTrackSchemeCanvas(this);
-	};
-	
 	@Override
 	public void paintBackground(Graphics g) {
 		
@@ -149,4 +144,5 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 			evt.consume();
 		}
 	}
+
 }

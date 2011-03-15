@@ -274,9 +274,12 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		graph.setAllowDanglingEdges(false);
 		graph.setCellsCloneable(false);
 		graph.setGridEnabled(false);
-		graph.setLabelsVisible(false);
+		graph.setLabelsVisible(true);
 		graph.setDropEnabled(false);
-		graph.setSwimlaneNesting(true);
+
+
+		
+		
 		return graph;
 	}
 

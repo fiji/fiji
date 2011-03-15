@@ -6,6 +6,10 @@ import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.X
 import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.Y_COLUMN_SIZE;
 
 import java.awt.Color;
+import java.awt.Image;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -14,14 +18,22 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
+
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.UndirectedGraph;
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
 
+import apple.awt.OSXImage;
+
 import com.mxgraph.layout.mxGraphLayout;
 import com.mxgraph.model.mxGeometry;
+import com.mxgraph.util.mxBase64;
+import com.mxgraph.util.mxConstants;
+import com.mxgraph.util.mxImageBundle;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
@@ -39,6 +51,16 @@ import fiji.plugin.trackmate.visualization.trackscheme.SpotCellViewFactory.Track
  */
 public class mxTrackGraphLayout extends mxGraphLayout {
 
+	private static final String BASIC_VERTEX_STYLE = 
+		"fillColor="+Integer.toHexString(Color.WHITE.getRGB()) + 
+		";fontColor=black" +
+		";align=right" + 
+		// ";"+mxConstants.STYLE_GLASS+"=1"+
+		";"+mxConstants.STYLE_SHAPE+"="+mxScaledLabelShape.SHAPE_NAME +
+		";"+mxConstants.STYLE_IMAGE_ALIGN+"="+mxConstants.ALIGN_LEFT; // normally ignore by mxScaledLabelShape, but for consistancy
+
+	private static final String BASIC_EDGE_STYLE = "startArrow=none;endArrow=none;strokeWidth=2";
+	
 	private JGraphXAdapter<Spot, DefaultWeightedEdge> graph;
 	private List<Set<Spot>> tracks;
 	private int[] columnWidths;
@@ -46,6 +68,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 	private Color[] trackColorArray;
 	private TreeMap<Float, Integer> rows;
 	private UndirectedGraph<Spot, DefaultWeightedEdge> jGraphT;
+	private mxImageBundle imageBundle;
 
 	/*
 	 * CONSTRUCTOR
@@ -57,6 +80,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 		this.graph = graph;
 		this.jGraphT = jGraphT;
 		this.tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(jGraphT).connectedSets();
+		this.imageBundle = new mxImageBundle();
 	}
 
 	@Override
@@ -100,7 +124,6 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 			trackColorArray = new Color[tracks.size()];
 			Color trackColor = null;
 
-
 			for (Set<Spot> track : tracks) {
 
 				// Get track color
@@ -141,18 +164,22 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
 					graph.getModel().setGeometry(cell, geometry);
 					
+					// Grab spot image
+					ByteArrayOutputStream bos = new ByteArrayOutputStream();
+					BufferedImage img = getImage(spot.getIcon());
+					ImageIO.write(img, "png", bos);
+					imageBundle.putImage(cell.getId(), mxBase64.encodeToString(bos.toByteArray(), false));
+
 					// Set cell style
-					String style = "strokeColor="+Integer.toHexString(trackColor.getRGB());
-					style += ";fillColor="+Integer.toHexString(Color.LIGHT_GRAY.getRGB());
-					style += ";fontColor=black";
-					style += ";align=right";
+					String style = BASIC_VERTEX_STYLE + "strokeColor="+Integer.toHexString(trackColor.getRGB());
+					style += ";"+mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+mxBase64.encodeToString(bos.toByteArray(), false);					
 					graph.getModel().setStyle(cell, style);
 					
-//					// Edges
+					// Edges
 					Object[] objEdges = graph.getEdges(cell, parent, true, false, false);
 					for(Object obj : objEdges) {
 						TrackEdgeCell edge = (TrackEdgeCell) obj;
-						graph.getModel().setStyle(edge, "startArrow=none;endArrow=none;strokeWidth=2;strokeColor="+Integer.toHexString(trackColor.getRGB())); //
+						graph.getModel().setStyle(edge, BASIC_EDGE_STYLE+";strokeColor="+Integer.toHexString(trackColor.getRGB()));
 					}
 				}
 
@@ -168,6 +195,9 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 
 			}  // loop over tracks
 
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		} finally {
 
 			graph.getModel().endUpdate();
@@ -195,5 +225,26 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 	 */
 	public Color[] getTrackColors() {
 		return trackColorArray;
+	}
+
+	public mxImageBundle getImageBundle() {
+		return imageBundle;
+	}
+	
+	
+	/**
+	 * Return a {@link BufferedImage} from an {@link ImageIcon}. This utility class is here to protect
+	 * us from weird hidden Apple APIs. 
+	 */
+	private static final BufferedImage getImage(ImageIcon icon) {
+		Image img = icon.getImage();
+		BufferedImage bi;
+		if (img instanceof apple.awt.OSXImage) {
+			apple.awt.OSXImage osximage = (OSXImage) img; // hidden Apple API ...
+			bi = osximage.getBufferedImage();
+		} else {
+			bi = (BufferedImage) icon.getImage();
+		}
+		return bi;
 	}
 }
