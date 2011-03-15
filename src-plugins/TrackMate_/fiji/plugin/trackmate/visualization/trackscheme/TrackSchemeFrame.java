@@ -1,44 +1,26 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
-import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
-import ij.ImagePlus;
 
-import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import javax.swing.AbstractAction;
 import javax.swing.AbstractListModel;
 import javax.swing.Action;
-import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -47,59 +29,32 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
-import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.JToolBar;
-import javax.swing.JViewport;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import javax.swing.border.BevelBorder;
-import javax.swing.event.CellEditorListener;
-import javax.swing.event.ChangeEvent;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
-
 
 import org.jgrapht.Graph;
 import org.jgrapht.event.GraphEdgeChangeEvent;
 import org.jgrapht.event.GraphListener;
 import org.jgrapht.event.GraphVertexChangeEvent;
-import org.jgrapht.ext.JGraphModelAdapter;
-import org.jgrapht.ext.JGraphModelAdapter.CellFactory;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.ListenableUndirectedWeightedGraph;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
-import com.mxgraph.layout.mxCircleLayout;
-import com.mxgraph.layout.mxCompactTreeLayout;
-import com.mxgraph.layout.mxEdgeLabelLayout;
-import com.mxgraph.layout.mxGraphLayout;
-import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
-import com.mxgraph.layout.orthogonal.mxOrthogonalLayout;
 import com.mxgraph.model.mxCell;
-import com.mxgraph.swing.mxGraphComponent;
-import com.mxgraph.swing.view.mxInteractiveCanvas;
-import com.mxgraph.util.mxCellRenderer;
-import com.mxgraph.util.mxConstants;
-import com.mxgraph.util.mxEvent;
-import com.mxgraph.util.mxEventObject;
-import com.mxgraph.util.mxEventSource;
 import com.mxgraph.util.mxRectangle;
-import com.mxgraph.util.mxEventSource.mxIEventListener;
-import com.mxgraph.view.mxCellState;
 import com.mxgraph.view.mxGraph;
-import com.mxgraph.view.mxGraphView;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.visualization.SpotCollectionEditEvent;
 import fiji.plugin.trackmate.visualization.SpotCollectionEditListener;
-import fiji.plugin.trackmate.visualization.trackscheme.SpotCellViewFactory.SpotCell;
-import fiji.plugin.trackmate.visualization.trackscheme.SpotCellViewFactory.TrackEdgeCell;
 
 public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListener {
 
@@ -249,9 +204,13 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			return;
 
 		List<Spot> spots = new ArrayList<Spot>();
-		for(Object cell : selectedCells)
-			if (cell instanceof SpotCell)
-				spots.add(((SpotCell)cell).getSpot());
+		for(Object obj : selectedCells) {
+			mxCell cell = (mxCell) obj;
+			if (cell.isVertex()) {
+				Spot spot = graph.getCellToVertexMap().get(cell);
+				spots.add(spot);
+			}
+		}
 		if (spots.isEmpty())
 			return;
 
@@ -260,7 +219,6 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 
 	}
 
-	
 	/*
 	 * PROTECTED METHODS
 	 */
@@ -269,17 +227,13 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	 * Used to instantiate and configure the {@link JGraphXAdapter} that will be used for display.
 	 */
 	protected JGraphXAdapter<Spot, DefaultWeightedEdge> createGraph() {
-		JGraphXAdapter<Spot, DefaultWeightedEdge> graph = new JGraphXAdapter<Spot, DefaultWeightedEdge>(lGraph, new SpotCellViewFactory(lGraph));
+		JGraphXAdapter<Spot, DefaultWeightedEdge> graph = new JGraphXAdapter<Spot, DefaultWeightedEdge>(lGraph);
 		graph.setAllowLoops(false);
 		graph.setAllowDanglingEdges(false);
 		graph.setCellsCloneable(false);
 		graph.setGridEnabled(false);
 		graph.setLabelsVisible(true);
 		graph.setDropEnabled(false);
-
-
-		
-		
 		return graph;
 	}
 
@@ -306,16 +260,16 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	 */
 
 	private void remove(Object[] cells) {
-		for (Object cell : cells) {
-			if (cell instanceof TrackEdgeCell) {
-				TrackEdgeCell trackEdge = (TrackEdgeCell) cell;
-				DefaultWeightedEdge edge = trackEdge.getEdge();
+		for (Object obj : cells) {
+			mxCell cell = (mxCell) obj;
+			if (cell.isEdge()) {
+				DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(cell);
 				lGraph.removeEdge(edge);
 				trackGraph.removeEdge(edge);
-			} else if (cell instanceof SpotCell) {
-				SpotCell spotCell = (SpotCell) cell;
-				lGraph.removeVertex(spotCell.getSpot());
-				trackGraph.removeVertex(spotCell.getSpot());
+			} else if (cell.isVertex()) {
+				Spot spot = graph.getCellToVertexMap().get(cell);
+				lGraph.removeVertex(spot);
+				trackGraph.removeVertex(spot);
 			}
 		}
 	}

@@ -23,7 +23,6 @@ import com.mxgraph.util.mxEventSource.mxIEventListener;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.visualization.trackscheme.SpotCellViewFactory.SpotCell;
 
 public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventListener {
 	
@@ -133,15 +132,30 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		Map<String, Object> props = evt.getProperties();
 		Object obj = (Object) props.get("cell");
 		mxCell cell = (mxCell) obj;
+		DefaultWeightedEdge edge;
 		if (cell.isEdge()) {
-			SpotCell source = (SpotCell) cell.getSource();
-			SpotCell target = (SpotCell) cell.getTarget();
-			// We add a new jGraphT edge to the underlying model
-			DefaultWeightedEdge edge = frame.lGraph.addEdge(source.getSpot(), target.getSpot());
-			 frame.lGraph.setEdgeWeight(edge, -1);
-			// Then, remove the old JGraphX edge.
-			frame.getGraph().removeCells(new Object[] { cell });
-			evt.consume();
+			frame.getGraph().getModel().beginUpdate();
+			try {
+				Spot source = frame.getGraph().getCellToVertexMap().get(cell.getSource());
+				Spot target = frame.getGraph().getCellToVertexMap().get(cell.getTarget());
+				// We add a new jGraphT edge to the underlying model
+				edge = frame.lGraph.addEdge(source, target);
+				frame.lGraph.setEdgeWeight(edge, -1);
+				// Then, remove the old JGraphX edge.
+				frame.getGraph().removeCells(new Object[] { cell });
+				evt.consume();
+			} finally {
+				frame.getGraph().getModel().endUpdate();
+			}
+			// Then we do the update, and get the new JGraphX edge (through the map in the adapter) and change its value and style. Easy.
+			frame.getGraph().getModel().beginUpdate();
+			try {
+				mxCell newEdgeCell = frame.getGraph().getEdgeToCellMap().get(edge);
+				newEdgeCell.setValue("N");
+				newEdgeCell.setStyle(mxTrackGraphLayout.BASIC_EDGE_STYLE);
+			} finally {
+				frame.getGraph().getModel().endUpdate();
+			}
 		}
 	}
 

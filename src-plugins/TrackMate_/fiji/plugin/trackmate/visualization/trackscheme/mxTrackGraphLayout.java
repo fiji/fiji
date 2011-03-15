@@ -30,6 +30,7 @@ import org.jgrapht.traverse.DepthFirstIterator;
 import apple.awt.OSXImage;
 
 import com.mxgraph.layout.mxGraphLayout;
+import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
 import com.mxgraph.util.mxBase64;
 import com.mxgraph.util.mxConstants;
@@ -38,8 +39,7 @@ import com.mxgraph.util.mxImageBundle;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.visualization.trackscheme.SpotCellViewFactory.SpotCell;
-import fiji.plugin.trackmate.visualization.trackscheme.SpotCellViewFactory.TrackEdgeCell;
+import fiji.plugin.trackmate.visualization.SpotDisplayer;
 
 /**
  * This {@link mxGraphLayout} arranges cells on a graph in lanes corresponding to tracks. 
@@ -51,15 +51,16 @@ import fiji.plugin.trackmate.visualization.trackscheme.SpotCellViewFactory.Track
  */
 public class mxTrackGraphLayout extends mxGraphLayout {
 
-	private static final String BASIC_VERTEX_STYLE = 
+	public static final String BASIC_VERTEX_STYLE = 
 		"fillColor="+Integer.toHexString(Color.WHITE.getRGB()) + 
 		";fontColor=black" +
 		";align=right" + 
 		// ";"+mxConstants.STYLE_GLASS+"=1"+
 		";"+mxConstants.STYLE_SHAPE+"="+mxScaledLabelShape.SHAPE_NAME +
-		";"+mxConstants.STYLE_IMAGE_ALIGN+"="+mxConstants.ALIGN_LEFT; // normally ignore by mxScaledLabelShape, but for consistancy
+		";"+mxConstants.STYLE_IMAGE_ALIGN+"="+mxConstants.ALIGN_LEFT; // normally ignore by mxScaledLabelShape, but for consistency
 
-	private static final String BASIC_EDGE_STYLE = "startArrow=none;endArrow=none;strokeWidth=2";
+	public static final String BASIC_EDGE_STYLE = "startArrow=none;endArrow=none;strokeWidth=2;strokeColor=" 
+		+ Integer.toHexString(SpotDisplayer.DEFAULT_COLOR.getRGB());
 	
 	private JGraphXAdapter<Spot, DefaultWeightedEdge> graph;
 	private List<Set<Spot>> tracks;
@@ -135,7 +136,9 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 				Spot root = sortedTrack.first();
 
 				DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = new DepthFirstIterator<Spot, DefaultWeightedEdge>(jGraphT, root);
-				while (iterator.hasNext()) {
+				
+				while(iterator.hasNext()) {
+					
 					Spot spot = iterator.next();
 
 					// Determine in what column to put the spot
@@ -154,7 +157,9 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					columns.put(instant, targetColumn);
 
 					// Get corresponding JGraphX cell 
-					SpotCell cell = (SpotCell) graph.getCellForVertex(spot);
+					mxCell cell = graph.getVertexToCellMap().get(spot);
+					String spotName = (spot.getName() == null || spot.getName() != "") ? "ID"+spot.ID() : spot.getName();
+					cell.setValue(spotName);
 
 					// Move the corresponding cell 
 					double x = (targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
@@ -178,8 +183,10 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					// Edges
 					Object[] objEdges = graph.getEdges(cell, parent, true, false, false);
 					for(Object obj : objEdges) {
-						TrackEdgeCell edge = (TrackEdgeCell) obj;
-						graph.getModel().setStyle(edge, BASIC_EDGE_STYLE+";strokeColor="+Integer.toHexString(trackColor.getRGB()));
+						mxCell edgeCell = (mxCell) obj;
+						DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(edgeCell);
+						edgeCell.setValue(String.format("%.1f", jGraphT.getEdgeWeight(edge)));
+						graph.getModel().setStyle(edgeCell, BASIC_EDGE_STYLE+";strokeColor="+Integer.toHexString(trackColor.getRGB()));
 					}
 				}
 
