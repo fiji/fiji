@@ -11,8 +11,10 @@ import ij.gui.NewImage;
 import ij.gui.Roi;
 import ij.measure.CurveFitter;
 import ij.measure.ResultsTable;
+import ij.plugin.Duplicator;
 import ij.plugin.PlugIn;
 import ij.plugin.filter.Convolver;
+import ij.plugin.filter.Duplicater;
 import ij.plugin.filter.GaussianBlur;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
@@ -336,7 +338,11 @@ public class Directionality_ implements PlugIn {
 		if (null == imp) {
 			IJ.error("Directionality", "No images are open.");
 			return;
-		}		
+		}
+		
+		Roi roi = imp.getRoi();
+		if (null != roi)
+			imp = new Duplicator().run(imp, 1, imp.getNSlices());
 
 		// Non-interactive mode?
 		if (null != arg && arg.length() > 0) {
@@ -384,16 +390,18 @@ public class Directionality_ implements PlugIn {
 		JFrame plot_frame = plotResults();
 		JFrame data_frame = displayFitAnalysis();
 		
-		int x = Math.max(0, imp.getWindow().getLocation().x - plot_frame.getSize().width);
-		int y = imp.getWindow().getLocation().y;
-		plot_frame.setLocation(x, y);
-		plot_frame.setVisible(true);
+//		int x = Math.max(0, imp.getWindow().getLocation().x - plot_frame.getSize().width);
+//		int y = imp.getWindow().getLocation().y;
+//		plot_frame.setLocation(x, y);
 		
-		y += plot_frame.getHeight();
-		if (y>Toolkit.getDefaultToolkit().getScreenSize().getHeight()) {
-			y = (int) (0.9 * Toolkit.getDefaultToolkit().getScreenSize().getHeight());
-		}
-		data_frame.setLocation(x, y);
+//		y += plot_frame.getHeight();
+//		if (y>Toolkit.getDefaultToolkit().getScreenSize().getHeight()) {
+//			y = (int) (0.9 * Toolkit.getDefaultToolkit().getScreenSize().getHeight());
+//		}
+//		data_frame.setLocation(x, y);
+		plot_frame.setLocationRelativeTo(imp.getWindow());
+		data_frame.setLocationRelativeTo(plot_frame);
+		plot_frame.setVisible(true);
 		data_frame.setVisible(true);
 		
 		if (display_table) {
