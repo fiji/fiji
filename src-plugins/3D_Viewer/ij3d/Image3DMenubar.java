@@ -65,6 +65,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 	private JMenuItem smoothAllMeshes;
 	private JMenuItem displayAsVolume;
 	private JMenuItem displayAsOrtho;
+	private JMenuItem displayAsMultiOrtho;
 	private JMenuItem displayAsSurface;
 	private JMenuItem displayAsSurfacePlot;
 	private JMenuItem centerSelected;
@@ -515,6 +516,10 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		displayAsOrtho.addActionListener(this);
 		display.add(displayAsOrtho);
 
+		displayAsMultiOrtho = new JMenuItem("Multi-orthoslice");
+		displayAsMultiOrtho.addActionListener(this);
+		display.add(displayAsMultiOrtho);
+
 		displayAsSurface = new JMenuItem("Surface");
 		displayAsSurface.addActionListener(this);
 		display.add(displayAsSurface);
@@ -590,6 +595,9 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 			updateMenus();
 		} else if(src == displayAsOrtho) {
 			executer.displayAs(getSelected(), Content.ORTHO);
+			updateMenus();
+		} else if(src == displayAsMultiOrtho) {
+			executer.displayAs(getSelected(), Content.MULTIORTHO);
 			updateMenus();
 		} else if(src == displayAsSurface) {
 			executer.displayAs(getSelected(), Content.SURFACE);

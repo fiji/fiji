@@ -13,4 +13,5 @@ public interface ContentConstants {
 	public static final int SURFACE = 2;
 	public static final int SURFACE_PLOT2D = 3;
 	public static final int CUSTOM = 4;
+	public static final int MULTIORTHO = 5;
 }
