@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TrackMate>
   <BasicSettings xstart="1" xend="129" ystart="1" yend="129" zstart="1" zend="1" tstart="1" tend="50" />
-  <ImageData filename="FakeTracks.tif" folder="E:\Users\JeanYves\Desktop\data\" width="128" height="128" nslices="1" nframes="50" pixelwidth="1.0" pixelheight="1.0" voxeldepth="1.0" timeinterval="1.0" spatialunits="pixel" timeunits="sec" />
+  <ImageData filename="FakeTracks.tif" folder="/Users/tinevez/Desktop/Data" width="128" height="128" nslices="1" nframes="50" pixelwidth="1.0" pixelheight="1.0" voxeldepth="1.0" timeinterval="1.0" spatialunits="pixel" timeunits="sec" />
   <SegmenterSettings segmentertype="DOG_SEGMENTER" expectedradius="2.5" units="pixel" threshold="0.0" usemedianfilter="false" />
   <TrackerSettings trackertype="SIMPLE_LAP_TRACKER" timeunits="sec" spaceunits="pixel" alternatecostfactor="1.05" cutoffpercentile="0.9" blockingvalue="1.7976931348623157E308">
     <LinkingCondition>

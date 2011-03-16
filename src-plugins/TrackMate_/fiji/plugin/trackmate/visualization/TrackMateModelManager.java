@@ -28,7 +28,7 @@ public class TrackMateModelManager implements SpotCollectionEditListener {
 	}
 	
 	/*
-	 * METHODS
+	 * LISTENER METHODS
 	 */
 	
 	@Override
@@ -60,6 +60,9 @@ public class TrackMateModelManager implements SpotCollectionEditListener {
 		
 	}
 
+	/*
+	 * UPDATING METHODS
+	 */
 	
 	public void moveSpotsFrom(Spot[] spots, Integer fromFrame, Integer toFrame) {
 		System.out.println("Moving "+spots.length+" spots from frame "+fromFrame+" to frame "+toFrame);// DEBUG

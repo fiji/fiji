@@ -15,6 +15,9 @@ import org.jgrapht.graph.ListenableDirectedGraph;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
 import com.mxgraph.swing.mxGraphComponent;
+import com.mxgraph.util.mxEvent;
+import com.mxgraph.util.mxEventObject;
+import com.mxgraph.util.mxEventSource.mxIEventListener;
 import com.mxgraph.view.mxGraph;
 
 public class JGraphXAdapter<V, E> extends mxGraph implements GraphListener<V, E> {
@@ -36,6 +39,7 @@ public class JGraphXAdapter<V, E> extends mxGraph implements GraphListener<V, E>
 		graphT.addGraphListener(this);
 		
 		insertJGraphT(graphT);
+		
 	}
 	
 	
@@ -161,18 +165,30 @@ public class JGraphXAdapter<V, E> extends mxGraph implements GraphListener<V, E>
         
         JGraphXAdapter<String, DefaultEdge> graph = new JGraphXAdapter<String, DefaultEdge>(g);
         
+        
         JFrame frame = new JFrame();
         mxGraphComponent graphComponent = new mxGraphComponent(graph);
 		frame.getContentPane().add(graphComponent);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setSize(400, 320);
 		frame.setVisible(true);
-
 		
         g.addVertex( "v5" );
         g.addVertex( "v6" );
         g.addVertex( "v7" );
         g.addVertex( "v8" );
+        
+        graph.getModel().beginUpdate();
+        double x = 20, y = 20;
+        for (mxCell cell : graph.getVertexToCellMap().values()) {
+        	graph.getModel().setGeometry(cell, new mxGeometry(x, y, 20, 20));
+        	x += 40;
+        	if (x > 200) {
+        		x = 20;
+        		y += 40;
+        	}
+        }
+        graph.getModel().endUpdate();
 
 
 	}

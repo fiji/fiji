@@ -54,7 +54,6 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 
 	@Override
 	public void paintBackground(Graphics g) {
-		
 		Graphics2D g2d = (Graphics2D) g;
 		Rectangle paintBounds = g.getClipBounds();
 		
@@ -113,6 +112,10 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 	public void setRowForInstant(TreeMap<Float, Integer> rowForInstant) {
 		rows = rowForInstant;
 	}
+	
+	public TreeMap<Float, Integer> getRowForInstant() {
+		return rows;
+	}
 
 	public void setColumnWidths(int[] columnWidths) {
 		this.columnWidths  = columnWidths;
@@ -122,6 +125,9 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		this.columnColors = columnColors;
 	}
 
+	public int[] getColumnWidths() {
+		return columnWidths;
+	}
 
 	/** 
 	 * This listener method will be invoked when a new edge has been created interactively
