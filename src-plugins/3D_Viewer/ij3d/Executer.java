@@ -378,6 +378,9 @@ public class Executer {
 			"Adjust slices...", univ.getWindow());
 		final MultiOrthoGroup os = (MultiOrthoGroup)c.getContent();
 
+		gd.addMessage("Number of slices {x: " + os.getSliceCount(0)
+				+ ", y: " + os.getSliceCount(1)
+				+ ", z: " + os.getSliceCount(2) + "}");
 		gd.addStringField("x_slices (e.g. 1, 2-5, 20)", "", 10);
 		gd.addStringField("y_slices (e.g. 1, 2-5, 20)", "", 10);
 		gd.addStringField("z_slices (e.g. 1, 2-5, 20)", "", 10);
@@ -412,10 +415,10 @@ public class Executer {
 			for(String tok1 : tokens1) {
 				String[] tokens2 = tok1.split("-");
 				if(tokens2.length == 1) {
-					b[Integer.parseInt(tokens2[0])] = true;
+					b[Integer.parseInt(tokens2[0].trim())] = true;
 				} else {
-					int start = Integer.parseInt(tokens2[0]);
-					int end = Integer.parseInt(tokens2[1]);
+					int start = Integer.parseInt(tokens2[0].trim());
+					int end = Integer.parseInt(tokens2[1].trim());
 					for(int i = start; i <= end; i++) {
 						if(i >= 0 && i < b.length)
 							b[i] = true;
