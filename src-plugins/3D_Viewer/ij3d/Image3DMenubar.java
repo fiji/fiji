@@ -824,9 +824,9 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 
 		int t = c.getType();
 
-		slices.setEnabled(t == Content.ORTHO);
+		slices.setEnabled(t == Content.ORTHO || t == Content.MULTIORTHO);
 		updateVol.setEnabled(t == Content.VOLUME ||
-			t == Content.ORTHO);
+			t == Content.ORTHO || t == Content.MULTIORTHO);
 		fill.setEnabled(t == Content.VOLUME);
 		shaded.setEnabled(t == Content.SURFACE_PLOT2D ||
 			t == Content.SURFACE || t == Content.CUSTOM);
@@ -845,6 +845,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		displayAsSurface.setEnabled(t != Content.SURFACE && i != null);
 		displayAsSurfacePlot.setEnabled(
 				t != Content.SURFACE_PLOT2D && i != null);
+		displayAsMultiOrtho.setEnabled(t != Content.MULTIORTHO && i != null);
 	}
 }
 

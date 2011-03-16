@@ -4,6 +4,11 @@ import java.util.Arrays;
 import java.util.BitSet;
 import ij.ImagePlus;
 import voltex.VolumeRenderer;
+
+import javax.media.j3d.GeometryArray;
+import javax.media.j3d.Appearance;
+import javax.media.j3d.Shape3D;
+import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Group;
 import javax.media.j3d.Switch;
 import javax.media.j3d.View;
@@ -11,15 +16,17 @@ import javax.vecmath.Color3f;
 
 public class MultiOrthoslice extends VolumeRenderer {
 
+	/**
+	 * For each axis, a boolean array indicating if the slice should
+	 * be visible
+	 */
+	private boolean[][] slices = new boolean[3][];
+
 	/** The dimensions in x-, y- and z- direction */
 	private int[] dimensions = new int[3];
 
 	/** The visible children of the axis Switch in VolumeRenderer */
-	private BitSet whichChild;
-
-	/** Half the whichChild.size(), or the sum of the number of slices
-	 * in all three dimensions. */
-	private int sliceSum;
+	private BitSet whichChild = new BitSet(6);
 
 	/**
 	 * @param img The image stack
@@ -36,26 +43,28 @@ public class MultiOrthoslice extends VolumeRenderer {
 		dimensions[1] = img.getHeight();
 		dimensions[2] = img.getStackSize();
 
-		this.sliceSum = dimensions[0] + dimensions[1] + dimensions[2];
-
-		// double, there are FRONT and BACK slices
-		whichChild = new BitSet(2 * sliceSum);
-		whichChild.set(0, 2 * sliceSum);
+		for(int i = 0; i < 3; i++) {
+			// by default, show only the middle slice
+			slices[i] = new boolean[dimensions[i]];
+			slices[i][dimensions[i] / 2] = true;;
+			whichChild.set(i, true);
+			whichChild.set(i + 3, true);
+		}
 	}
 
 	/**
-	 * Overwrites loadAxis() in VolumeRenderer to show only a few planes
-	 * in each direction.
+	 * Overwrites loadAxis() in VolumeRenderer to skip the slices
+	 * for which the visibility flag is not set.
 	 * @param axis Must be one of X_AXIS, Y_AXIS or Z_AXIS in
 	 * VolumeRendConstants.
+	 * @param index The index within the axis
+	 * @param front the front group
+	 * @param back the back group
 	 */
 	@Override
-	protected void loadAxis(int axis) {
-		Group front = (Group)axisSwitch.getChild(axisIndex[axis][FRONT]);
-		Group back  = (Group)axisSwitch.getChild(axisIndex[axis][BACK]);
-		for (int i=0; i<dimensions[axis]; i++) {
-			loadAxis(axis, i, front, back);
-		}
+	protected void loadAxis(int axis, int index, Group front, Group back) {
+		if(slices[axis][index])
+			super.loadAxis(axis, index, front, back);
 	}
 
 	/**
@@ -73,45 +82,88 @@ public class MultiOrthoslice extends VolumeRenderer {
 		return dimensions[axis];
 	}
 
-	private int offset(int axis) {
-		int offset = 0;
-		switch (axis) {
-			case 0: break;
-			case 1: offset = dimensions[0]; break;
-			case 2: offset = dimensions[1] + dimensions[1]; break;
+	public void setVisible(int axis, boolean[] b) {
+		// cache existing children in the front group
+		BranchGroup[] cachedFrontGroups =
+			new BranchGroup[dimensions[axis]];
+		int axisFront = axisIndex[axis][FRONT];
+		Group frontGroup = (Group)axisSwitch.getChild(axisFront);
+		int groupIndex = 0;
+		for(int i = 0; i < slices[axis].length; i++)
+			if(slices[axis][i])
+				cachedFrontGroups[i] = (BranchGroup)
+					frontGroup.getChild(groupIndex++);
+		frontGroup.removeAllChildren();
+
+		// cache existing children in the back group
+		BranchGroup[] cachedBackGroups  =
+			new BranchGroup[dimensions[axis]];
+		int axisBack = axisIndex[axis][BACK];
+		Group backGroup = (Group)axisSwitch.getChild(axisBack);
+		groupIndex = backGroup.numChildren() - 1;
+		for(int i = 0; i < slices[axis].length; i++)
+			if(slices[axis][i])
+				cachedBackGroups[i] = (BranchGroup)
+					backGroup.getChild(groupIndex--);
+		backGroup.removeAllChildren();
+
+		for(int i = 0; i < slices[axis].length; i++) {
+			slices[axis][i] = b[i];
+
+			if(!slices[axis][i])
+				continue;
+
+			// see if we have something in the cache
+			BranchGroup frontShapeGroup = cachedFrontGroups[i];
+			BranchGroup backShapeGroup = cachedBackGroups[i];
+
+			// if not cached, create it
+			if(frontShapeGroup == null || backShapeGroup == null) {
+				GeometryArray quadArray = geomCreator.getQuad(axis, i);
+				Appearance a = appCreator.getAppearance(axis, i);
+
+				Shape3D frontShape = new Shape3D(quadArray, a);
+				frontShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
+				frontShape.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
+				frontShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
+
+				frontShapeGroup = new BranchGroup();
+				frontShapeGroup.setCapability(BranchGroup.ALLOW_DETACH);
+				frontShapeGroup.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
+				frontShapeGroup.addChild(frontShape);
+
+				Shape3D backShape = new Shape3D(quadArray, a);
+				backShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
+				backShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
+				backShape.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
+
+				backShapeGroup = new BranchGroup();
+				backShapeGroup.setCapability(BranchGroup.ALLOW_DETACH);
+				backShapeGroup.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
+				backShapeGroup.addChild(backShape);
+			}
+
+			// add the groups to the appropriate axis
+			frontGroup.addChild(frontShapeGroup);
+			backGroup.insertChild(backShapeGroup, 0);
 		}
-		return offset;
 	}
 
 	/** Hide/show the whole set of slices in the given axis. */
 	public void setVisible(int axis, boolean b) {
-		int offset = offset(axis);
-		// front:
-		whichChild.set(offset, offset + dimensions[axis]);
-		// back:
-		whichChild.set(sliceSum + offset, sliceSum + offset + dimensions[axis]);
-		axisSwitch.setChildMask(whichChild);
+		boolean[] bs = new boolean[dimensions[axis]];
+		Arrays.fill(bs, b);
+		setVisible(axis, bs);
 	}
 
 	/** Show a slice every {@param interval} slices, and hide the rest.
 	 * Starts by showing slice at {@param offset}, and counts slices up to {@param range}.
 	 */
 	public void setVisible(int axis, int interval, int offset, int range) {
-		for (int i=offset(axis) + offset, k=0; k < (dimensions[axis] - offset) && k<range; ++k, ++i) {
-			boolean b = 0 == k % interval;
-			whichChild.set(i, b);
-			whichChild.set(sliceSum + i, b);
-		}
-		axisSwitch.setChildMask(whichChild);
-	}
-
-	public void setVisible(int axis, boolean[] b) {
-		int end = Math.min(b.length, dimensions[axis]);
-		for (int i=offset(axis), k=0; k<end; ++i, ++k) {
-			whichChild.set(i, b[k]);
-			whichChild.set(sliceSum + i, b[k]);
-		}
-		axisSwitch.setChildMask(whichChild);
+		boolean[] bs = new boolean[dimensions[axis]];
+		for (int i = offset, k = 0; k < (dimensions[axis] - offset) && k < range; ++k, i += interval)
+			bs[i] = true;
+		setVisible(axis, bs);
 	}
 
 	/**
@@ -119,16 +171,15 @@ public class MultiOrthoslice extends VolumeRenderer {
 	 * @param axis
 	 */
 	public void translateVisibilityState(int axis, int shift) {
-		int first = offset(axis);
-		int last = first + dimensions[axis] - 1;
-		BitSet c = whichChild.get(first, first + dimensions[axis]);
-		whichChild.clear(first, first + dimensions[axis]);
-		for (int i=first; i<last; ++i) {
+		boolean[] bs = new boolean[dimensions[axis]];
+		int first = 0;
+		int len = dimensions[axis];
+		for (int i = 0; i < dimensions[axis]; ++i) {
 			int target = i + shift;
-			if (target < first || target > last) continue;
-			whichChild.set(i);
-			whichChild.set(sliceSum + i);
+			if (target < 0 || target > dimensions[axis])
+				continue;
+			bs[target] = slices[axis][i];
 		}
-		axisSwitch.setChildMask(whichChild);
+		setVisible(axis, bs);
 	}
 }

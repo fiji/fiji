@@ -23,6 +23,7 @@ import javax.swing.JFileChooser;
 import javax.swing.filechooser.*;
 import java.awt.event.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Vector;
 import java.util.Iterator;
 import java.util.Collection;
@@ -33,6 +34,7 @@ import java.io.File;
 import vib.InterpolatedImage;
 import vib.FastMatrix;
 
+import orthoslice.MultiOrthoGroup;
 import orthoslice.OrthoGroup;
 import voltex.VoltexGroup;
 import voltex.VolumeRenderer;
@@ -361,6 +363,72 @@ public class Executer {
 	}
 
 	public void changeSlices(final Content c) {
+		if(!checkSel(c))
+			return;
+		switch(c.getType()) {
+			case Content.ORTHO: changeOrthslices(c); break;
+			case Content.MULTIORTHO: changeMultiOrthslices(c); break;
+		}
+	}
+
+	private void changeMultiOrthslices(final Content c) {
+		if(!checkSel(c))
+			return;
+		final GenericDialog gd = new GenericDialog(
+			"Adjust slices...", univ.getWindow());
+		final MultiOrthoGroup os = (MultiOrthoGroup)c.getContent();
+
+		gd.addStringField("x_slices (e.g. 1, 2-5, 20)", "", 10);
+		gd.addStringField("y_slices (e.g. 1, 2-5, 20)", "", 10);
+		gd.addStringField("z_slices (e.g. 1, 2-5, 20)", "", 10);
+
+		gd.showDialog();
+		if(gd.wasCanceled())
+			return;
+
+		int X = AxisConstants.X_AXIS;
+		int Y = AxisConstants.Y_AXIS;
+		int Z = AxisConstants.Z_AXIS;
+
+		boolean[] xAxis = new boolean[os.getSliceCount(X)];
+		boolean[] yAxis = new boolean[os.getSliceCount(Y)];
+		boolean[] zAxis = new boolean[os.getSliceCount(Z)];
+
+		parseRange(gd.getNextString(), xAxis);
+		parseRange(gd.getNextString(), yAxis);
+		parseRange(gd.getNextString(), zAxis);
+
+		os.setVisible(X, xAxis);
+		os.setVisible(Y, yAxis);
+		os.setVisible(Z, zAxis);
+	}
+
+	private static void parseRange(String rangeString, boolean[] b) {
+		Arrays.fill(b, false);
+		if(rangeString.trim().length() == 0)
+			return;
+		try {
+			String[] tokens1 = rangeString.split(",");
+			for(String tok1 : tokens1) {
+				String[] tokens2 = tok1.split("-");
+				if(tokens2.length == 1) {
+					b[Integer.parseInt(tokens2[0])] = true;
+				} else {
+					int start = Integer.parseInt(tokens2[0]);
+					int end = Integer.parseInt(tokens2[1]);
+					for(int i = start; i <= end; i++) {
+						if(i >= 0 && i < b.length)
+							b[i] = true;
+					}
+				}
+			}
+		} catch(Exception e) {
+			IJ.error("Cannot parse " + rangeString);
+			return;
+		}
+	}
+
+	private void changeOrthslices(final Content c) {
 		if(!checkSel(c))
 			return;
 		final GenericDialog gd = new GenericDialog(
