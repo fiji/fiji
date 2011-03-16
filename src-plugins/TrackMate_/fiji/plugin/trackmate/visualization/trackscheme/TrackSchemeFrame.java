@@ -40,7 +40,6 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 
 import org.jgrapht.Graph;
-import org.jgrapht.event.GraphChangeEvent;
 import org.jgrapht.event.GraphEdgeChangeEvent;
 import org.jgrapht.event.GraphListener;
 import org.jgrapht.event.GraphVertexChangeEvent;
@@ -64,6 +63,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.visualization.SpotCollectionEditEvent;
 import fiji.plugin.trackmate.visualization.SpotCollectionEditListener;
+import fiji.plugin.trackmate.visualization.SpotDisplayer;
 
 public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListener {
 
@@ -129,9 +129,12 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	 * PUBLIC METHODS
 	 */
 
+	/**
+	 * Used to catch spot creation events that occured elsewhere, for instance by manual editing in 
+	 * the {@link SpotDisplayer}. 
+	 */
 	@Override
 	public void collectionChanged(SpotCollectionEditEvent event) {
-		System.out.println("TrackSchemeFrame: +received "+event);// DEBUG
 
 		if (event.getFlag() == SpotCollectionEditEvent.SPOT_CREATED) {
 
@@ -211,7 +214,6 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		graphComponent.setColumnWidths(graphLayout.getTrackColumnWidths());
 		graphComponent.setRowForInstant(graphLayout.getRowForInstant());
 		graphComponent.setColumnColor(graphLayout.getTrackColors());
-
 	}
 
 	public void plotSelectionData() {

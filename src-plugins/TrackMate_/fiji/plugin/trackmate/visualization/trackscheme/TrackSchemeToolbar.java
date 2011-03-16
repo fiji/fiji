@@ -127,13 +127,12 @@ public class TrackSchemeToolbar extends JToolBar {
 		};
 		final JButton plotSelectionButton = new JButton(plotSelection);
 		plotSelectionButton.setToolTipText("Plot selection data");
+		add(plotSelectionButton);
 
 		// Separator
 		addSeparator();
 
 		// Capture 
-		
-		// TODO BUGGY BUGGY
 		final Action captureUndecoratedAction = new AbstractAction(null, CAPTURE_UNDECORATED_ICON) {			
 			@Override
 			public void actionPerformed(ActionEvent e) {
