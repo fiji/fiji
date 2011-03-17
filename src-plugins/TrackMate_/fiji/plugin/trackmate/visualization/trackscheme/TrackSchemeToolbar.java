@@ -4,7 +4,6 @@ import ij.ImagePlus;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -17,7 +16,6 @@ import javax.swing.JButton;
 import javax.swing.JToolBar;
 import javax.swing.JViewport;
 
-import com.mxgraph.canvas.mxGraphics2DCanvas;
 import com.mxgraph.util.mxCellRenderer;
 
 public class TrackSchemeToolbar extends JToolBar {
@@ -136,7 +134,7 @@ public class TrackSchemeToolbar extends JToolBar {
 		final Action captureUndecoratedAction = new AbstractAction(null, CAPTURE_UNDECORATED_ICON) {			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				BufferedImage image = mxCellRenderer.createBufferedImage(frame.getGraph(), null, 1, Color.WHITE, true, null, frame.graphComponent.getCanvas());
+				BufferedImage image = mxCellRenderer.createBufferedImage(frame.graph, null, 1, Color.WHITE, true, null, frame.graphComponent.getCanvas());
 				ImagePlus imp = new ImagePlus("Track scheme capture", image);
 				imp.show();
 			}

@@ -9,7 +9,6 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.geom.Point2D;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,7 +23,6 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
@@ -52,8 +50,6 @@ import com.mxgraph.util.mxConstants;
 import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxEventSource.mxIEventListener;
-import com.mxgraph.util.mxRectangle;
-import com.mxgraph.view.mxGraph;
 import com.mxgraph.view.mxGraphSelectionModel;
 import com.mxgraph.view.mxPerimeter;
 
@@ -100,15 +96,17 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 
 	SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph;
 	ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge> lGraph;
-	private JGraphXAdapter<Spot, DefaultWeightedEdge> graph;
-	InfoPane infoPane;
+	Settings settings;
+	JGraphXAdapter<Spot, DefaultWeightedEdge> graph;
+
 	private ArrayList<GraphListener<Spot, DefaultWeightedEdge>> graphListeners = new ArrayList<GraphListener<Spot,DefaultWeightedEdge>>();
 	/** The spots currently selected. */
 	private HashSet<Spot> spotSelection = new HashSet<Spot>();
-	Settings settings;
-	mxTrackGraphComponent graphComponent;
 	private mxRubberband rubberband;
 	private mxKeyboardHandler keyboardHandler;
+
+	InfoPane infoPane;
+	mxTrackGraphComponent graphComponent;
 	
 	private static final HashMap<String, Object> BASIC_VERTEX_STYLE = new HashMap<String, Object>();
 	private static final HashMap<String, Object> BASIC_EDGE_STYLE = new HashMap<String, Object>();
@@ -209,13 +207,6 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	 */
 	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> getTrackModel() {
 		return trackGraph;
-	}
-
-	/**
-	 * Return a reference to the {@link mxGraph} view in charge of rendering the track scheme.
-	 */
-	public JGraphXAdapter<Spot, DefaultWeightedEdge> getGraph() {
-		return graph;
 	}
 
 	public void centerViewOn(mxCell cell) {

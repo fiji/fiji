@@ -39,7 +39,7 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 	private void init() {
 		
 		// Build selection categories
-		final Object[] selection = frame.getGraph().getSelectionCells();
+		final Object[] selection = frame.graph.getSelectionCells();
 		final ArrayList<mxCell> vertices = new ArrayList<mxCell>();
 		final ArrayList<mxCell> edges = new ArrayList<mxCell>();
 		for(Object obj : selection) {
@@ -80,7 +80,7 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 							@Override
 							public void actionPerformed(ActionEvent e) {
 								for (mxCell cell : vertices)
-									frame.getGraph().getCellToVertexMap().get(cell).setName(editField.getText());
+									frame.graph.getCellToVertexMap().get(cell).setName(editField.getText());
 								frame.graphComponent.remove(editField);
 								frame.graphComponent.refresh();
 							}
@@ -98,7 +98,7 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 					// Sort spots by time
 					TreeMap<Float, Spot> spotsInTime = new TreeMap<Float, Spot>();
 					for (mxCell cell : vertices) {
-						Spot spot = frame.getGraph().getCellToVertexMap().get(cell);
+						Spot spot = frame.graph.getCellToVertexMap().get(cell);
 						spotsInTime.put(spot.getFeature(Feature.POSITION_T), spot);
 					}
 					// Then link them in this order
@@ -128,7 +128,7 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 		if (selection.length > 0) {
 			Action removeAction = new AbstractAction("Remove spots and links") {
 				public void actionPerformed(ActionEvent e) {
-					frame.getGraph().removeCells(selection);
+					frame.graph.removeCells(selection);
 				}
 			};
 			add(removeAction);

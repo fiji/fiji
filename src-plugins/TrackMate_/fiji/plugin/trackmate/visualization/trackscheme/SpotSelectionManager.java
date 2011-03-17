@@ -51,7 +51,7 @@ public class SpotSelectionManager {
 	 */
 	
 	private void initListeners() {
-		final mxGraphSelectionModel selectionModel = trackScheme.getGraph().getSelectionModel();
+		final mxGraphSelectionModel selectionModel = trackScheme.graph.getSelectionModel();
 			
 		// Listen to spot selection modification in DISPLAYER and forward it to the trackscheme.
 		displayer.addSpotSelectionListener(new SpotSelectionListener() {
@@ -62,7 +62,7 @@ public class SpotSelectionManager {
 				ArrayList<mxCell> toRemove = new ArrayList<mxCell>();
 				Spot[] spots = event.getSpots();
 				for(Spot spot : spots) {
-					mxCell cell = (mxCell) trackScheme.getGraph().getVertexToCellMap().get(spot);
+					mxCell cell = (mxCell) trackScheme.graph.getVertexToCellMap().get(spot);
 					if (event.isAddedSpot(spot)) {
 						toAdd.add(cell);
 						currentSpotSelection.add(spot);
@@ -76,7 +76,7 @@ public class SpotSelectionManager {
 				selectionModel.removeCells(toRemove.toArray());
 				doNotify = true;
 				if (spots.length > 0)
-					trackScheme.centerViewOn(trackScheme.getGraph().getVertexToCellMap().get(spots[0]));
+					trackScheme.centerViewOn(trackScheme.graph.getVertexToCellMap().get(spots[0]));
 			}
 		});
 
@@ -96,24 +96,24 @@ public class SpotSelectionManager {
 					for(Object obj : added) {
 						mxCell cell = (mxCell) obj;
 						if (cell.isVertex())
-							currentSpotSelection.add(trackScheme.getGraph().getCellToVertexMap().get(cell));
+							currentSpotSelection.add(trackScheme.graph.getCellToVertexMap().get(cell));
 						else if (cell.isEdge())
-							currentEdgeSelection.add(trackScheme.getGraph().getCellToEdgeMap().get(cell));
+							currentEdgeSelection.add(trackScheme.graph.getCellToEdgeMap().get(cell));
 					}
 
 				if (null != removed)
 					for(Object obj : removed) {
 						mxCell cell = (mxCell) obj;
 						if (cell.isVertex())
-							currentSpotSelection.remove(trackScheme.getGraph().getCellToVertexMap().get(cell));
+							currentSpotSelection.remove(trackScheme.graph.getCellToVertexMap().get(cell));
 						else if (cell.isEdge())
-							currentEdgeSelection.remove(trackScheme.getGraph().getCellToEdgeMap().get(cell));
+							currentEdgeSelection.remove(trackScheme.graph.getCellToEdgeMap().get(cell));
 					}
 				
 				displayer.highlightEdges(currentEdgeSelection);
 				displayer.highlightSpots(currentSpotSelection);
 				if (added != null && added.size() > 0) {
-					Spot first = trackScheme.getGraph().getCellToVertexMap().get(added.iterator().next());
+					Spot first = trackScheme.graph.getCellToVertexMap().get(added.iterator().next());
 					if (null != first)
 						displayer.centerViewOn(first);
 				}
