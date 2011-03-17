@@ -219,13 +219,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	}
 
 	public void centerViewOn(mxCell cell) {
-		mxRectangle bounds = graph.getCellBounds(cell);
-		if (null == bounds)
-			return;
-		double scale = graphComponent.getZoomFactor();
-		Point2D center = new Point2D.Double(bounds.getCenterX()*scale, bounds.getCenterY()*scale);
-		graphComponent.getHorizontalScrollBar().setValue((int) center.getX() - graphComponent.getWidth()/2);
-		graphComponent.getVerticalScrollBar().setValue((int) center.getY() - graphComponent.getHeight()/2);
+		graphComponent.scrollCellToVisible(cell, true);
 	}
 
 	public void doTrackLayout() {
@@ -335,14 +329,17 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		keyboardHandler = new mxKeyboardHandler(gc);
 		gc.getGraphHandler();
 
+		// Popup menu
 		gc.getGraphControl().addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
-				if (e.isPopupTrigger()) {
-					TrackSchemePopupMenu menu = new TrackSchemePopupMenu(TrackSchemeFrame.this, e.getPoint(), gc.getCellAt(e.getX(), e.getY(), false));
-					menu.show(gc.getViewport().getView(), e.getX(), e.getY());
-					e.consume();
-				}
+				if (e.isPopupTrigger()) 
+					displayPopupMenu(e.getPoint(), gc.getCellAt(e.getX(), e.getY(), false));
+			}
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				if (e.isPopupTrigger()) 
+					displayPopupMenu(e.getPoint(), gc.getCellAt(e.getX(), e.getY(), false));
 			}
 		});
 		
@@ -392,27 +389,13 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		infoPane.echo(spotSelection);		
 	}
 
-	private void remove(Object[] cells) {
-		for (Object obj : cells) {
-			mxCell cell = (mxCell) obj;
-			if (cell.isEdge()) {
-				DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(cell);
-				lGraph.removeEdge(edge);
-				trackGraph.removeEdge(edge);
-			} else if (cell.isVertex()) {
-				Spot spot = graph.getCellToVertexMap().get(cell);
-				lGraph.removeVertex(spot);
-				trackGraph.removeVertex(spot);
-			}
-		}
-	}
-
-
-
 	private void init() {
 		// Frame look
 		setIconImage(TRACK_SCHEME_ICON.getImage());
-		setTitle("Track scheme");
+		String title = "Track scheme";
+		if (null != settings.imp)
+			title += settings.imp.getShortTitle();
+		setTitle(title);
 
 		getContentPane().setLayout(new BorderLayout());
 		// Add a ToolBar
@@ -420,7 +403,6 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 
 		// GraphComponent
 		graphComponent = createGraphComponent();
-
 
 		// Arrange graph layout
 		doTrackLayout();
@@ -441,8 +423,9 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	/**
 	 *  PopupMenu
 	 */
-	protected JPopupMenu createPopupMenu(final Point point, final Object cell) {
-		return new TrackSchemePopupMenu(this, point, cell);
+	protected void displayPopupMenu(final Point point, final Object cell) {
+		TrackSchemePopupMenu menu = new TrackSchemePopupMenu(TrackSchemeFrame.this, point, cell);
+		menu.show(graphComponent.getViewport().getView(), (int) point.getX(), (int) point.getY());
 		
 	}
 
