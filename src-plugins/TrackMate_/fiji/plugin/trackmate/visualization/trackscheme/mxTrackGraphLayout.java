@@ -6,8 +6,16 @@ import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.X
 import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.Y_COLUMN_SIZE;
 
 import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.HeadlessException;
 import java.awt.Image;
+import java.awt.Transparency;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.PixelGrabber;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
@@ -27,7 +35,7 @@ import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
 
-import apple.awt.OSXImage;
+//import apple.awt.OSXImage;
 
 import com.mxgraph.layout.mxGraphLayout;
 import com.mxgraph.model.mxCell;
@@ -243,14 +251,47 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 	 * us from weird hidden Apple APIs. 
 	 */
 	private static final BufferedImage getImage(ImageIcon icon) {
-		Image img = icon.getImage();
-		BufferedImage bi;
-		if (img instanceof apple.awt.OSXImage) {
-			apple.awt.OSXImage osximage = (OSXImage) img; // hidden Apple API ...
-			bi = osximage.getBufferedImage();
-		} else {
-			bi = (BufferedImage) icon.getImage();
-		}
-		return bi;
+		Image image = icon.getImage();
+		if (image == null) return null;
+	    if (image instanceof BufferedImage) return (BufferedImage) image;
+	    image = new ImageIcon(image).getImage();
+	    boolean hasAlpha = hasAlpha(image);
+	    BufferedImage bimage = null;
+	    GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+	    try {
+	        int transparency = Transparency.OPAQUE;
+	        if (hasAlpha)
+	            transparency = Transparency.BITMASK;
+	        GraphicsDevice gs = ge.getDefaultScreenDevice();
+	        GraphicsConfiguration gc = gs.getDefaultConfiguration();
+	        bimage = gc.createCompatibleImage(image.getWidth(null), image.getHeight(null), transparency);
+	    } catch (HeadlessException e) {
+	        // erreur pas d'ecran
+	    }
+	    if (bimage == null) {
+	        int type = BufferedImage.TYPE_INT_RGB;
+	        if (hasAlpha)
+	            type = BufferedImage.TYPE_INT_ARGB;
+	        bimage = new BufferedImage(image.getWidth(null), image.getHeight(null), type);
+	    }
+	    Graphics g = bimage.createGraphics();
+	    g.drawImage(image, 0, 0, null);
+	    g.dispose();
+	    return bimage;
 	}
+	
+
+	private static final boolean hasAlpha(Image image) {
+	    if (image instanceof BufferedImage) {
+	        BufferedImage bimage = (BufferedImage) image;
+	        return bimage.getColorModel().hasAlpha();
+	    }
+	    PixelGrabber pg = new PixelGrabber(image, 0, 0, 1, 1, false);
+	    try {
+	        pg.grabPixels();
+	    } catch (InterruptedException e) { return false;}
+	    ColorModel cm = pg.getColorModel();
+	    return cm.hasAlpha();
+	}
+
 }
