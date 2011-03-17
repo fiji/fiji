@@ -28,7 +28,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
-import javax.swing.JTextPane;
 import javax.swing.JToolBar;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
@@ -154,7 +153,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	 */
 
 	/**
-	 * Used to catch spot creation events that occured elsewhere, for instance by manual editing in 
+	 * Used to catch spot creation events that occurred elsewhere, for instance by manual editing in 
 	 * the {@link SpotDisplayer}. 
 	 */
 	@Override
@@ -173,7 +172,6 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 				cell = new mxCell(spotName);
 				cell.setId(null);
 				cell.setVertex(true);
-//				cell.setStyle(mxTrackGraphLayout.BASIC_VERTEX_STYLE);
 				// Position it
 				float instant = spot.getFeature(Feature.POSITION_T);
 				double x = (targetColumn-2) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
@@ -384,8 +382,14 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	
 
 	private void selectionChanged(mxGraphSelectionModel model, Collection<Object> added, Collection<Object> removed) { // Seems to be inverted
-		System.out.println("Selection: added "+added);
-		System.out.println("Selection: removed "+removed);
+		spotSelection.clear();
+		Object[] objects = model.getCells();
+		for(Object obj : objects) {
+			mxCell cell = (mxCell) obj;
+			if (cell.isVertex())
+				spotSelection.add(graph.getCellToVertexMap().get(cell));
+		}
+		infoPane.echo(spotSelection);		
 	}
 
 	private void remove(Object[] cells) {
@@ -427,40 +431,6 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, infoPane, graphComponent);
 		splitPane.setDividerLocation(170);
 		getContentPane().add(splitPane, BorderLayout.CENTER);
-
-		// Listeners
-		//		graph.addListener(null, new mxIEventListener() {
-		//			
-		//			@Override
-		//			public void invoke(Object sender, mxEventObject evt) {
-		//				System.out.println("Received event: "+evt+" from: "+sender);// DEBUG
-		//				
-		//			}
-		//		});
-		//		addGraphSelectionListener(new GraphSelectionListener() {
-		//
-		//			@Override
-		//			public void valueChanged(GraphSelectionEvent e) {
-		//				Object[] cells = e.getCells();
-		//				for(Object cell : cells) {
-		//					if (cell instanceof SpotCell) {
-		//						SpotCell spotCell = (SpotCell) cell;
-		//						if (e.isAddedCell(cell))
-		//							spotSelection.add(spotCell.getSpot());
-		//						else 
-		//							spotSelection.remove(spotCell.getSpot());
-		//					}
-		//				}
-		//				infoPane.echo(spotSelection);
-		//				if (spotSelection.isEmpty())
-		//					infoPane.scrollTable.setVisible(false);
-		//				else
-		//					infoPane.scrollTable.setVisible(true);
-		//			}
-		//		});
-
-		// Forward graph change events to the listeners registered with this frame 
-		//		lGraph.addGraphListener(new MyGraphListener());
 	}
 
 
@@ -482,9 +452,13 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	 * INNER CLASSES
 	 */
 
-	class InfoPane extends JPanel {
+	private class InfoPane extends JPanel {
+
+		private static final long serialVersionUID = 5889316637017869042L;
 
 		private class RowHeaderRenderer extends JLabel implements ListCellRenderer, Serializable {
+
+			private static final long serialVersionUID = -4068369886241557528L;
 
 			RowHeaderRenderer(JTable table) {
 				JTableHeader header = table.getTableHeader();
@@ -502,7 +476,6 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			}
 		}
 
-		JTextPane textPane;
 		private JTable table;
 		private JScrollPane scrollTable;
 		private FeaturePlotSelectionPanel<Feature> featureSelectionPanel;
@@ -511,7 +484,13 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			init();
 		}
 
+		@SuppressWarnings("serial")
 		public void echo(Set<Spot> spots) {
+			if (spots.size() == 0) {
+				scrollTable.setVisible(false);
+				return;
+			}
+			
 			// Fill feature table
 			DefaultTableModel dm = new DefaultTableModel() { // Un-editable model
 				@Override
@@ -521,7 +500,8 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 				Object[] columnData = new Object[Feature.values().length];
 				for (int i = 0; i < columnData.length; i++) 
 					columnData[i] = String.format("%.1f", spot.getFeature(Feature.values()[i]));
-				dm.addColumn(spot.getName(), columnData);
+				String spotName = (spot.getName() == null || spot.getName() != "") ? "ID"+spot.ID() : spot.getName();
+				dm.addColumn(spotName, columnData);
 			}
 			table.setModel(dm);
 			// Tune look
@@ -535,7 +515,6 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			};
 			headerRenderer.setBackground(Color.RED);
 
-
 			DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
 			renderer.setOpaque(false);
 			renderer.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -547,13 +526,13 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			for (Component c : scrollTable.getColumnHeader().getComponents())
 				c.setBackground(getBackground());
 			scrollTable.getColumnHeader().setOpaque(false);
-
-			// Set text
-			textPane.setText("Selection:");
+			scrollTable.setVisible(true);
+			revalidate();
 		}
 
 		private void init() {
 
+			@SuppressWarnings("serial")
 			AbstractListModel lm = new AbstractListModel() {
 				String headers[] = new String[Feature.values().length];
 				{
@@ -592,20 +571,11 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			scrollTable.getViewport().setOpaque(false);
 			scrollTable.setVisible(false); // for now
 
-			textPane = new JTextPane();
-			textPane.setCaretPosition(0);
-			//			StyledDocument styledDoc = textPane.getStyledDocument();
-			textPane.setEditable(false);
-			textPane.setOpaque(false);
-			textPane.setFont(SMALL_FONT);
-
 			featureSelectionPanel = new FeaturePlotSelectionPanel<Feature>(Feature.POSITION_T);
 
 			setLayout(new BorderLayout());
-			add(textPane, BorderLayout.NORTH);
 			add(scrollTable, BorderLayout.CENTER);
 			add(featureSelectionPanel, BorderLayout.SOUTH);
-
 		}
 	}
 }
