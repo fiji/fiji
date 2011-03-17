@@ -6,8 +6,6 @@ import ij.process.ImageProcessor;
 
 import java.util.Collection;
 
-import javax.swing.ImageIcon;
-
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
@@ -56,7 +54,6 @@ public class SpotIconGrabber {
 		ip.setRoi(roi);
 		ip = ip.crop();
 		ip.resetMinAndMax();
-		ImageIcon icon = new ImageIcon(ip.createImage());
-		spot.setIcon(icon);
+		spot.setImage(ip.getBufferedImage());
 	}
 }

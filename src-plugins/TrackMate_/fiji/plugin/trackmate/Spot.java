@@ -1,9 +1,8 @@
 package fiji.plugin.trackmate;
 
+import java.awt.image.BufferedImage;
 import java.util.Comparator;
 import java.util.EnumMap;
-
-import javax.swing.ImageIcon;
 
 /**
  * Interface for objects that can store and retrieve feature values.
@@ -104,12 +103,12 @@ public interface Spot {
 	public void setName(String name);
 	
 	/**
-	 * Get the icon image used to display this spot.
+	 * Get the image used to display this spot.
 	 */
-	public ImageIcon getIcon();
+	public BufferedImage getImage();
 	
 	/**
 	 * Set the image used to display / represent this spot. 
 	 */
-	public void setIcon(ImageIcon icon);
+	public void setImage(BufferedImage image);
 }

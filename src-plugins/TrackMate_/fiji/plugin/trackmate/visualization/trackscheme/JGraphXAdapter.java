@@ -15,9 +15,6 @@ import org.jgrapht.graph.ListenableDirectedGraph;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
 import com.mxgraph.swing.mxGraphComponent;
-import com.mxgraph.util.mxEvent;
-import com.mxgraph.util.mxEventObject;
-import com.mxgraph.util.mxEventSource.mxIEventListener;
 import com.mxgraph.view.mxGraph;
 
 public class JGraphXAdapter<V, E> extends mxGraph implements GraphListener<V, E> {

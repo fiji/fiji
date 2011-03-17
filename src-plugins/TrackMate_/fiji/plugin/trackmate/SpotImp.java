@@ -1,8 +1,10 @@
 package fiji.plugin.trackmate;
 
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.EnumMap;
 
-import javax.swing.ImageIcon;
+import javax.imageio.ImageIO;
 
 import mpicbg.imglib.util.Util;
 import fiji.plugin.trackmate.gui.TrackMateFrame;
@@ -18,7 +20,14 @@ public class SpotImp implements Spot {
 	 * FIELDS
 	 */
 	
-	public static final ImageIcon DEFAULT_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/spot_icon.png"));
+	private static BufferedImage DEFAULT_IMAGE;
+	static {
+		try {
+			DEFAULT_IMAGE = ImageIO.read(TrackMateFrame.class.getResource("images/spot_icon.png"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 	
 	public static int IDcounter = 0;
 	
@@ -29,7 +38,7 @@ public class SpotImp implements Spot {
 	/** This spot ID */
 	private int ID;
 	/** This spot's image */
-	private ImageIcon icon = DEFAULT_ICON;
+	private BufferedImage image = DEFAULT_IMAGE;
 
 	/*
 	 * CONSTRUCTORS
@@ -214,13 +223,13 @@ public class SpotImp implements Spot {
 	}
 
 	@Override
-	public ImageIcon getIcon() {
-		return icon;
+	public BufferedImage getImage() {
+		return image;
 	}
 
 	@Override
-	public void setIcon(ImageIcon icon) {
-		this.icon = icon;		
+	public void setImage(BufferedImage image) {
+		this.image = image;		
 	}
 
 }

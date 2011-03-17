@@ -6,16 +6,7 @@ import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.X
 import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.Y_COLUMN_SIZE;
 
 import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.HeadlessException;
-import java.awt.Image;
-import java.awt.Transparency;
 import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
-import java.awt.image.PixelGrabber;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
@@ -27,15 +18,12 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.UndirectedGraph;
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
-
-//import apple.awt.OSXImage;
 
 import com.mxgraph.layout.mxGraphLayout;
 import com.mxgraph.model.mxCell;
@@ -171,14 +159,14 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					// Move the corresponding cell 
 					double x = (targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
 					double y = (0.5 + rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2;
-					int height = Math.min(DEFAULT_CELL_WIDTH, spot.getIcon().getIconWidth());
+					int height = Math.min(DEFAULT_CELL_WIDTH, spot.getImage().getHeight());
 					height = Math.max(height, 12);
 					mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
 					graph.getModel().setGeometry(cell, geometry);
 					
 					// Grab spot image
 					ByteArrayOutputStream bos = new ByteArrayOutputStream();
-					BufferedImage img = getImage(spot.getIcon());
+					BufferedImage img = spot.getImage();
 					ImageIO.write(img, "png", bos);
 					imageBundle.putImage(cell.getId(), mxBase64.encodeToString(bos.toByteArray(), false));
 
@@ -243,55 +231,5 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 
 	public mxImageBundle getImageBundle() {
 		return imageBundle;
-	}
-	
-	
-	/**
-	 * Return a {@link BufferedImage} from an {@link ImageIcon}. This utility class is here to protect
-	 * us from weird hidden Apple APIs. 
-	 */
-	private static final BufferedImage getImage(ImageIcon icon) {
-		Image image = icon.getImage();
-		if (image == null) return null;
-	    if (image instanceof BufferedImage) return (BufferedImage) image;
-	    image = new ImageIcon(image).getImage();
-	    boolean hasAlpha = hasAlpha(image);
-	    BufferedImage bimage = null;
-	    GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-	    try {
-	        int transparency = Transparency.OPAQUE;
-	        if (hasAlpha)
-	            transparency = Transparency.BITMASK;
-	        GraphicsDevice gs = ge.getDefaultScreenDevice();
-	        GraphicsConfiguration gc = gs.getDefaultConfiguration();
-	        bimage = gc.createCompatibleImage(image.getWidth(null), image.getHeight(null), transparency);
-	    } catch (HeadlessException e) {
-	        // erreur pas d'ecran
-	    }
-	    if (bimage == null) {
-	        int type = BufferedImage.TYPE_INT_RGB;
-	        if (hasAlpha)
-	            type = BufferedImage.TYPE_INT_ARGB;
-	        bimage = new BufferedImage(image.getWidth(null), image.getHeight(null), type);
-	    }
-	    Graphics g = bimage.createGraphics();
-	    g.drawImage(image, 0, 0, null);
-	    g.dispose();
-	    return bimage;
-	}
-	
-
-	private static final boolean hasAlpha(Image image) {
-	    if (image instanceof BufferedImage) {
-	        BufferedImage bimage = (BufferedImage) image;
-	        return bimage.getColorModel().hasAlpha();
-	    }
-	    PixelGrabber pg = new PixelGrabber(image, 0, 0, 1, 1, false);
-	    try {
-	        pg.grabPixels();
-	    } catch (InterruptedException e) { return false;}
-	    ColorModel cm = pg.getColorModel();
-	    return cm.hasAlpha();
-	}
-
+	}	
 }

@@ -46,7 +46,6 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
-import com.mxgraph.swing.handler.mxGraphHandler;
 import com.mxgraph.swing.handler.mxKeyboardHandler;
 import com.mxgraph.swing.handler.mxRubberband;
 import com.mxgraph.util.mxEvent;
@@ -152,7 +151,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 				float instant = spot.getFeature(Feature.POSITION_T);
 				double x = (targetColumn-2) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
 				double y = (0.5 + graphComponent.getRowForInstant().get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2; 
-				int height = Math.min(DEFAULT_CELL_WIDTH, spot.getIcon().getIconHeight());
+				int height = Math.min(DEFAULT_CELL_WIDTH, spot.getImage().getHeight());
 				height = Math.max(height, 12);
 				mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
 				cell.setGeometry(geometry);
