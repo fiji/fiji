@@ -39,11 +39,9 @@ public class JGraphXAdapter<V, E> extends mxGraph implements GraphListener<V, E>
 		
 	}
 	
-	
 	/*
 	 * METHODS
 	 */
-
 	
 	public void addJGraphTVertex(V vertex) {
 		getModel().beginUpdate();
@@ -64,9 +62,10 @@ public class JGraphXAdapter<V, E> extends mxGraph implements GraphListener<V, E>
 		try {
 			V source = graphT.getEdgeSource(edge);
 			V target = graphT.getEdgeTarget(edge);				
-			mxCell cell = new mxCell(edge, new mxGeometry(), "");
+			mxCell cell = new mxCell(edge);
 			cell.setEdge(true);
 			cell.setId(null);
+			cell.setGeometry(new mxGeometry());
 			cell.getGeometry().setRelative(true);
 			addEdge(cell, defaultParent, vertexToCellMap.get(source),  vertexToCellMap.get(target), null);
 			edgeToCellMap.put(edge, cell);

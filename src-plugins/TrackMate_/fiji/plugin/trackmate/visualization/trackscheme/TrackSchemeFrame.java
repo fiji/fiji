@@ -13,6 +13,7 @@ import java.awt.geom.Point2D;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -48,12 +49,14 @@ import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
 import com.mxgraph.swing.handler.mxKeyboardHandler;
 import com.mxgraph.swing.handler.mxRubberband;
+import com.mxgraph.util.mxConstants;
 import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxEventSource.mxIEventListener;
 import com.mxgraph.util.mxRectangle;
 import com.mxgraph.view.mxGraph;
 import com.mxgraph.view.mxGraphSelectionModel;
+import com.mxgraph.view.mxPerimeter;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
@@ -107,6 +110,29 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	mxTrackGraphComponent graphComponent;
 	private mxRubberband rubberband;
 	private mxKeyboardHandler keyboardHandler;
+	
+	private static final HashMap<String, Object> BASIC_VERTEX_STYLE = new HashMap<String, Object>();
+	private static final HashMap<String, Object> BASIC_EDGE_STYLE = new HashMap<String, Object>();
+	static {
+
+		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_FILLCOLOR, Integer.toHexString(Color.WHITE.getRGB()));
+		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_FONTCOLOR, Integer.toHexString(Color.BLACK.getRGB()));
+		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_ALIGN, mxConstants.ALIGN_RIGHT);
+		BASIC_EDGE_STYLE.put(mxConstants.STYLE_VERTICAL_ALIGN, mxConstants.ALIGN_MIDDLE);
+		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_SHAPE, mxScaledLabelShape.SHAPE_NAME);
+		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_IMAGE_ALIGN, mxConstants.ALIGN_LEFT);
+		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_ROUNDED, true);
+		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_PERIMETER, mxPerimeter.RectanglePerimeter);
+		
+		BASIC_EDGE_STYLE.put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_CONNECTOR);
+		BASIC_EDGE_STYLE.put(mxConstants.STYLE_ALIGN, mxConstants.ALIGN_CENTER);
+		BASIC_EDGE_STYLE.put(mxConstants.STYLE_VERTICAL_ALIGN, mxConstants.ALIGN_MIDDLE);
+		BASIC_EDGE_STYLE.put(mxConstants.STYLE_STARTARROW, mxConstants.NONE);
+		BASIC_EDGE_STYLE.put(mxConstants.STYLE_ENDARROW, mxConstants.NONE);
+		BASIC_EDGE_STYLE.put(mxConstants.STYLE_STROKEWIDTH, 2.0f);
+		BASIC_EDGE_STYLE.put(mxConstants.STYLE_STROKECOLOR, Integer.toHexString(SpotDisplayer.DEFAULT_COLOR.getRGB()));
+
+	}
 
 	/*
 	 * CONSTRUCTORS
@@ -116,6 +142,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		this.trackGraph = trackGraph;
 		this.lGraph = new ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge>(trackGraph);
 		this.graph = createGraph();
+		graph.getStylesheet().getDefaultVertexStyle();
 		this.settings = settings;
 		init();
 		setSize(DEFAULT_SIZE);
@@ -146,7 +173,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 				cell = new mxCell(spotName);
 				cell.setId(null);
 				cell.setVertex(true);
-				cell.setStyle(mxTrackGraphLayout.BASIC_VERTEX_STYLE);
+//				cell.setStyle(mxTrackGraphLayout.BASIC_VERTEX_STYLE);
 				// Position it
 				float instant = spot.getFeature(Feature.POSITION_T);
 				double x = (targetColumn-2) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
@@ -256,6 +283,8 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		graph.setGridEnabled(false);
 		graph.setLabelsVisible(true);
 		graph.setDropEnabled(false);
+		graph.getStylesheet().setDefaultEdgeStyle(BASIC_EDGE_STYLE);
+		graph.getStylesheet().setDefaultVertexStyle(BASIC_VERTEX_STYLE);
 
 		// Set up listeners
 

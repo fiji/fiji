@@ -322,8 +322,7 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 			frame.getGraph().getModel().beginUpdate();
 			try {
 				mxCell newEdgeCell = frame.getGraph().getEdgeToCellMap().get(edge);
-				newEdgeCell.setValue("N");
-				newEdgeCell.setStyle(mxTrackGraphLayout.BASIC_EDGE_STYLE);
+				newEdgeCell.setValue("New");
 			} finally {
 				frame.getGraph().getModel().endUpdate();
 			}

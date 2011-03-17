@@ -35,7 +35,6 @@ import com.mxgraph.util.mxImageBundle;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.visualization.SpotDisplayer;
 
 /**
  * This {@link mxGraphLayout} arranges cells on a graph in lanes corresponding to tracks. 
@@ -47,16 +46,6 @@ import fiji.plugin.trackmate.visualization.SpotDisplayer;
  */
 public class mxTrackGraphLayout extends mxGraphLayout {
 
-	public static final String BASIC_VERTEX_STYLE = 
-		"fillColor="+Integer.toHexString(Color.WHITE.getRGB())  
-		+ ";fontColor=black" 
-		+ ";align=right" 
-		+ ";"+mxConstants.STYLE_SHAPE+"="+mxScaledLabelShape.SHAPE_NAME 
-		+ ";"+mxConstants.STYLE_IMAGE_ALIGN+"="+mxConstants.ALIGN_LEFT; // normally ignore by mxScaledLabelShape, but for consistency
-
-	public static final String BASIC_EDGE_STYLE = "startArrow=none;endArrow=none;strokeWidth=2;strokeColor="  
-		+ Integer.toHexString(SpotDisplayer.DEFAULT_COLOR.getRGB());
-	
 	private JGraphXAdapter<Spot, DefaultWeightedEdge> graph;
 	private List<Set<Spot>> tracks;
 	private int[] columnWidths;
@@ -171,7 +160,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					imageBundle.putImage(cell.getId(), mxBase64.encodeToString(bos.toByteArray(), false));
 
 					// Set cell style
-					String style = BASIC_VERTEX_STYLE + "strokeColor="+Integer.toHexString(trackColor.getRGB());
+					String style = "strokeColor="+Integer.toHexString(trackColor.getRGB());
 					style += ";"+mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+mxBase64.encodeToString(bos.toByteArray(), false);					
 					graph.getModel().setStyle(cell, style);
 					
@@ -181,7 +170,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 						mxCell edgeCell = (mxCell) obj;
 						DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(edgeCell);
 						edgeCell.setValue(String.format("%.1f", jGraphT.getEdgeWeight(edge)));
-						graph.getModel().setStyle(edgeCell, BASIC_EDGE_STYLE+";strokeColor="+Integer.toHexString(trackColor.getRGB()));
+						graph.getModel().setStyle(edgeCell, "strokeColor="+Integer.toHexString(trackColor.getRGB()));
 					}
 				}
 
@@ -198,7 +187,6 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 			}  // loop over tracks
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
 

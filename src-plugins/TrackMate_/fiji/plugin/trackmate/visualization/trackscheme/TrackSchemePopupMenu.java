@@ -114,8 +114,6 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 						if (frame.trackGraph.containsEdge(previousSpot, currentSpot))
 							continue;
 						DefaultWeightedEdge edge = frame.lGraph.addEdge(previousSpot, currentSpot);
-						if (null == edge)
-							frame.infoPane.textPane.setText("Invalid edge.");
 						frame.lGraph.setEdgeWeight(edge, -1); // Default Weight
 						// Update the MODEL graph as well
 						frame.trackGraph.addEdge(previousSpot, currentSpot, edge);
