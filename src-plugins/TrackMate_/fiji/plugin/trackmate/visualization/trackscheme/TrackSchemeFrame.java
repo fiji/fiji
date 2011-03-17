@@ -307,16 +307,15 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 
 		rubberband = new mxRubberband(gc);
 		keyboardHandler = new mxKeyboardHandler(gc);
-		mxGraphHandler handler = new mxGraphHandler(gc);
-		handler.setSelectEnabled(false);
+		gc.getGraphHandler();
 
 		gc.getGraphControl().addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				if (e.isPopupTrigger()) {
 					TrackSchemePopupMenu menu = new TrackSchemePopupMenu(TrackSchemeFrame.this, e.getPoint(), gc.getCellAt(e.getX(), e.getY(), false));
-					gc.add(menu, WHAT WHAT WHTA);
-					menu.setVisible(true);
+					menu.show(gc.getViewport().getView(), e.getX(), e.getY());
+					e.consume();
 				}
 			}
 		});
