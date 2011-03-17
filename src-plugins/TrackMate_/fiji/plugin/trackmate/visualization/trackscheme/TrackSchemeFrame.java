@@ -7,20 +7,17 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Point;
-import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeMap;
 
-import javax.swing.AbstractAction;
 import javax.swing.AbstractListModel;
-import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -49,6 +46,7 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
+import com.mxgraph.swing.handler.mxGraphHandler;
 import com.mxgraph.swing.handler.mxKeyboardHandler;
 import com.mxgraph.swing.handler.mxRubberband;
 import com.mxgraph.util.mxEvent;
@@ -102,7 +100,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph;
 	ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge> lGraph;
 	private JGraphXAdapter<Spot, DefaultWeightedEdge> graph;
-	private InfoPane infoPane;
+	InfoPane infoPane;
 	private ArrayList<GraphListener<Spot, DefaultWeightedEdge>> graphListeners = new ArrayList<GraphListener<Spot,DefaultWeightedEdge>>();
 	/** The spots currently selected. */
 	private HashSet<Spot> spotSelection = new HashSet<Spot>();
@@ -301,7 +299,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	}
 
 	protected mxTrackGraphComponent createGraphComponent() {
-		mxTrackGraphComponent gc = new mxTrackGraphComponent(this);
+		final mxTrackGraphComponent gc = new mxTrackGraphComponent(this);
 		gc.getVerticalScrollBar().setUnitIncrement(16);
 		gc.getHorizontalScrollBar().setUnitIncrement(16);
 		gc.setExportEnabled(true); // Seems to be required to have a preview when we move cells. Also give the ability to export a cell as an image clipping 
@@ -309,7 +307,20 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 
 		rubberband = new mxRubberband(gc);
 		keyboardHandler = new mxKeyboardHandler(gc);
+		mxGraphHandler handler = new mxGraphHandler(gc);
+		handler.setSelectEnabled(false);
 
+		gc.getGraphControl().addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				if (e.isPopupTrigger()) {
+					TrackSchemePopupMenu menu = new TrackSchemePopupMenu(TrackSchemeFrame.this, e.getPoint(), gc.getCellAt(e.getX(), e.getY(), false));
+					gc.add(menu, WHAT WHAT WHTA);
+					menu.setVisible(true);
+				}
+			}
+		});
+		
 		return gc;
 
 	}
@@ -433,103 +444,9 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	/**
 	 *  PopupMenu
 	 */
-	@SuppressWarnings("serial")
-	private JPopupMenu createPopupMenu(final Point pt, final Object cell) {
-		JPopupMenu menu = new JPopupMenu();
-
-		if (cell != null) {
-			// Edit
-			menu.add(new AbstractAction("Edit spot name") {
-				public void actionPerformed(ActionEvent e) {
-					//					graph.startEditingAtCell(cell);
-				}
-			});
-
-		} else if (spotSelection.size() > 0) {
-
-			// Multi edit
-
-			//			menu.add(new AbstractAction("Edit " + spotSelection.size() +" spot names") {
-			//				public void actionPerformed(ActionEvent e) {
-			//					
-			//					final SpotView[] cellViews = new SpotView[spotSelection.size()];
-			//					final JGraphFacade facade = new JGraphFacade(jGraph);
-			//					Iterator<Spot> it = spotSelection.iterator();
-			//					for (int i = 0; i < spotSelection.size(); i++) {
-			//						Object facadeTarget = jGMAdapter.getVertexCell(it.next());
-			//						SpotView vView = (SpotView) facade.getCellView(facadeTarget);
-			//						cellViews[i] = vView;
-			//					}
-			//					
-			//					final JTextField editField = new JTextField(20);
-			//					editField.setFont(FONT);
-			//					editField.setBounds(pt.x, pt.y, 100, 20);
-			//					jGraph.add(editField);
-			//					editField.setVisible(true);
-			//					editField.revalidate();
-			//					jGraph.repaint();
-			//					editField.requestFocusInWindow();
-			//					editField.addActionListener(new ActionListener() {
-			//						
-			//						@Override
-			//						public void actionPerformed(ActionEvent e) {
-			//							for(Spot spot : spotSelection)
-			//								spot.setName(editField.getText());
-			//							jGraph.remove(editField);
-			//							jGraph.refresh();
-			//						}
-			//					});
-			//				}
-			//			});
-
-		}
-
-		// Link
-		if (spotSelection.size() > 1) {
-			Action linkAction = new AbstractAction("Link spots") {
-
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					// Sort spots by time
-					TreeMap<Float, Spot> spotsInTime = new TreeMap<Float, Spot>();
-					for(Spot spot : spotSelection) 
-						spotsInTime.put(spot.getFeature(Feature.POSITION_T), spot);
-					// Then link them in this order
-					Iterator<Float> it = spotsInTime.keySet().iterator();
-					Float previousTime = it.next();
-					Spot previousSpot = spotsInTime.get(previousTime);
-					Float currentTime;
-					Spot currentSpot;
-					while(it.hasNext()) {
-						currentTime = it.next();
-						currentSpot = spotsInTime.get(currentTime);
-						// Link if not linked already
-						if (trackGraph.containsEdge(previousSpot, currentSpot))
-							continue;
-						DefaultWeightedEdge edge = lGraph.addEdge(previousSpot, currentSpot);
-						if (null == edge)
-							infoPane.textPane.setText("Invalid edge.");
-						lGraph.setEdgeWeight(edge, -1); // Default Weight
-						// Update the MODEL graph as well
-						trackGraph.addEdge(previousSpot, currentSpot, edge);
-						previousSpot = currentSpot;
-					}
-				}
-			};
-			menu.add(linkAction);
-		}
-
-		// Remove
-		if (!graph.isSelectionEmpty()) {
-			Action removeAction = new AbstractAction("Remove spots and links") {
-				public void actionPerformed(ActionEvent e) {
-					remove(graph.getSelectionCells());
-				}
-			};
-			menu.add(removeAction);
-		}
-
-		return menu;
+	protected JPopupMenu createPopupMenu(final Point point, final Object cell) {
+		return new TrackSchemePopupMenu(this, point, cell);
+		
 	}
 
 
@@ -538,7 +455,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	 * INNER CLASSES
 	 */
 
-	private class InfoPane extends JPanel {
+	class InfoPane extends JPanel {
 
 		private class RowHeaderRenderer extends JLabel implements ListCellRenderer, Serializable {
 
@@ -558,7 +475,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			}
 		}
 
-		private JTextPane textPane;
+		JTextPane textPane;
 		private JTable table;
 		private JScrollPane scrollTable;
 		private FeaturePlotSelectionPanel<Feature> featureSelectionPanel;
@@ -663,70 +580,5 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			add(featureSelectionPanel, BorderLayout.SOUTH);
 
 		}
-
 	}
-
-
-	//	@SuppressWarnings("serial")
-	//	private static class MyGraphCellEditor extends DefaultGraphCellEditor {
-	//		private Object target;
-	//		
-	//		public MyGraphCellEditor() {
-	//			addCellEditorListener(new CellEditorListener() {
-	//
-	//				@Override
-	//				public void editingStopped(ChangeEvent e) {
-	//					if (target instanceof SpotCell) {
-	//						SpotCell spotCell = (SpotCell) target;
-	//						spotCell.getSpot().setName(""+getCellEditorValue());
-	//					}
-	//				}
-	//
-	//				@Override
-	//				public void editingCanceled(ChangeEvent e) {}
-	//			});
-	//		}
-	//		
-	//		@Override
-	//		public Component getGraphCellEditorComponent(JGraph graph, Object cell, boolean isSelected) {
-	//			target = cell;
-	//			return super.getGraphCellEditorComponent(graph, cell, isSelected);
-	//		};
-	//		
-	//		
-	//	};
-//
-//
-//	/**
-//	 * Used to forward listenable graph model changes to the listener of this frame.
-//	 */
-//	private class MyGraphListener implements GraphListener<Spot, DefaultWeightedEdge>, Serializable {
-//
-//		private static final long serialVersionUID = -1054534879013143084L;
-//
-//		@Override
-//		public void vertexAdded(GraphVertexChangeEvent<Spot> e) {
-//			for (GraphListener<Spot, DefaultWeightedEdge> graphListener : graphListeners)
-//				graphListener.vertexAdded(e);
-//		}
-//		@Override
-//		public void vertexRemoved(GraphVertexChangeEvent<Spot> e) {
-//			for (GraphListener<Spot, DefaultWeightedEdge> graphListener : graphListeners)
-//				graphListener.vertexRemoved(e);
-//		}
-//		@Override
-//		public void edgeAdded(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
-//			for (GraphListener<Spot, DefaultWeightedEdge> graphListener : graphListeners)
-//				graphListener.edgeAdded(e);
-//		}
-//		@Override
-//		public void edgeRemoved(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
-//			for (GraphListener<Spot, DefaultWeightedEdge> graphListener : graphListeners)
-//				graphListener.edgeRemoved(e);
-//		}
-//	}
-
-
-
-
 }

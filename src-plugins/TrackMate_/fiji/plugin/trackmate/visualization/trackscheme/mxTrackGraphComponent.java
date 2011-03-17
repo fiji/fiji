@@ -26,6 +26,7 @@ import fiji.plugin.trackmate.Spot;
 
 public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventListener {
 	
+	private static final long serialVersionUID = -281620557095353617L;
 	private static final Color BACKGROUND_COLOR_1 	= Color.GRAY;
 	private static final Color BACKGROUND_COLOR_2 	= Color.LIGHT_GRAY;
 	private static final Color LINE_COLOR 			= Color.BLACK;

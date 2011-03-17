@@ -52,14 +52,13 @@ import fiji.plugin.trackmate.visualization.SpotDisplayer;
 public class mxTrackGraphLayout extends mxGraphLayout {
 
 	public static final String BASIC_VERTEX_STYLE = 
-		"fillColor="+Integer.toHexString(Color.WHITE.getRGB()) + 
-		";fontColor=black" +
-		";align=right" + 
-		// ";"+mxConstants.STYLE_GLASS+"=1"+
-		";"+mxConstants.STYLE_SHAPE+"="+mxScaledLabelShape.SHAPE_NAME +
-		";"+mxConstants.STYLE_IMAGE_ALIGN+"="+mxConstants.ALIGN_LEFT; // normally ignore by mxScaledLabelShape, but for consistency
+		"fillColor="+Integer.toHexString(Color.WHITE.getRGB())  
+		+ ";fontColor=black" 
+		+ ";align=right" 
+		+ ";"+mxConstants.STYLE_SHAPE+"="+mxScaledLabelShape.SHAPE_NAME 
+		+ ";"+mxConstants.STYLE_IMAGE_ALIGN+"="+mxConstants.ALIGN_LEFT; // normally ignore by mxScaledLabelShape, but for consistency
 
-	public static final String BASIC_EDGE_STYLE = "startArrow=none;endArrow=none;strokeWidth=2;strokeColor=" 
+	public static final String BASIC_EDGE_STYLE = "startArrow=none;endArrow=none;strokeWidth=2;strokeColor="  
 		+ Integer.toHexString(SpotDisplayer.DEFAULT_COLOR.getRGB());
 	
 	private JGraphXAdapter<Spot, DefaultWeightedEdge> graph;
