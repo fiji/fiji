@@ -53,6 +53,24 @@ public class MultiOrthoslice extends VolumeRenderer {
 	}
 
 	/**
+	 * Returns whether the textures are transparent or not.
+	 */
+	public boolean getTexturesOpaque() {
+		return appCreator.getOpaqueTextures();
+	}
+
+	/**
+	 * Makes the textures transparent or not.
+	 */
+	public void setTexturesOpaque(boolean opaque) {
+		boolean before = appCreator.getOpaqueTextures();
+		if(before != opaque) {
+			appCreator.setOpaqueTextures(opaque);
+			fullReload();
+		}
+	}
+
+	/**
 	 * Overwrites loadAxis() in VolumeRenderer to skip the slices
 	 * for which the visibility flag is not set.
 	 * @param axis Must be one of X_AXIS, Y_AXIS or Z_AXIS in

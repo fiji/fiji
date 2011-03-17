@@ -40,6 +40,20 @@ public class MultiOrthoGroup extends VoltexGroup {
 		addChild(renderer.getVolumeNode());
 	}
 
+	/**
+	 * Returns whether the textures are transparent or not.
+	 */
+	public boolean getTexturesOpaque() {
+		return ((MultiOrthoslice)renderer).getTexturesOpaque();
+	}
+
+	/**
+	 * Makes the textures transparent or not.
+	 */
+	public void setTexturesOpaque(boolean opaque) {
+		((MultiOrthoslice)renderer).setTexturesOpaque(opaque);
+	}
+
 	/** Show/hide all slices in the given axis. */
 	public void setVisible(int axis, boolean b) {
 		((MultiOrthoslice)renderer).setVisible(axis, b);

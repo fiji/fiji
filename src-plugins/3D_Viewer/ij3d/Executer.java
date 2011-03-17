@@ -378,12 +378,16 @@ public class Executer {
 			"Adjust slices...", univ.getWindow());
 		final MultiOrthoGroup os = (MultiOrthoGroup)c.getContent();
 
+		boolean opaque = os.getTexturesOpaque();
+
 		gd.addMessage("Number of slices {x: " + os.getSliceCount(0)
 				+ ", y: " + os.getSliceCount(1)
 				+ ", z: " + os.getSliceCount(2) + "}");
 		gd.addStringField("x_slices (e.g. 1, 2-5, 20)", "", 10);
 		gd.addStringField("y_slices (e.g. 1, 2-5, 20)", "", 10);
 		gd.addStringField("z_slices (e.g. 1, 2-5, 20)", "", 10);
+
+		gd.addCheckbox("Opaque textures", opaque);
 
 		gd.showDialog();
 		if(gd.wasCanceled())
@@ -404,6 +408,8 @@ public class Executer {
 		os.setVisible(X, xAxis);
 		os.setVisible(Y, yAxis);
 		os.setVisible(Z, zAxis);
+
+		os.setTexturesOpaque(gd.getNextBoolean());
 	}
 
 	private static void parseRange(String rangeString, boolean[] b) {
