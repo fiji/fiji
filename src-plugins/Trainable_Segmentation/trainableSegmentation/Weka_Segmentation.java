@@ -832,8 +832,11 @@ public class Weka_Segmentation implements PlugIn
 			addWindowListener(new WindowAdapter() {
 				public void windowClosing(WindowEvent e) {
 					//IJ.log("closing window");
-					// cleanup
-					exec.shutdownNow();
+					// cleanup								
+					// Stop any thread from the segmentator
+					wekaSegmentation.shutDownNow();
+					exec.shutdownNow();	
+					
 					for(int i = 0; i < wekaSegmentation.getNumOfClasses(); i++)
 						addExampleButton[i].removeActionListener(listener);
 					trainButton.removeActionListener(listener);
@@ -852,7 +855,7 @@ public class Weka_Segmentation implements PlugIn
 					wekaButton.removeActionListener(listener);
 
 					// Set number of classes back to 2
-					wekaSegmentation.setNumOfClasses(2);
+					wekaSegmentation.setNumOfClasses(2);					
 				}
 			});
 

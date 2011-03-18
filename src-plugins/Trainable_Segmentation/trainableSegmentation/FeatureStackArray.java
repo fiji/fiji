@@ -161,6 +161,18 @@ public class FeatureStackArray
 	}
 	
 	/**
+	 * Shut down the executor service
+	 */
+	public void shutDownNow()
+	{
+		for(int i=0; i<featureStackArray.length; i++)
+			if(null != featureStackArray[i])
+			{
+				featureStackArray[i].shutDownNow();
+			}
+	}
+	
+	/**
 	 * Check if the array has not been yet initialized
 	 * 
 	 * @return true if the array has been initialized
@@ -229,15 +241,13 @@ public class FeatureStackArray
 		this.membranePatchSize = patchSize;
 		if(referenceStackIndex != -1)
 			featureStackArray[referenceStackIndex].setMembranePatchSize(patchSize);
-		
 	}
 
 	public void setMaximumSigma(float sigma) 
 	{
 		this.maximumSigma = sigma;
 		if(referenceStackIndex != -1)
-			featureStackArray[referenceStackIndex].setMaximumSigma(sigma);
-		
+			featureStackArray[referenceStackIndex].setMaximumSigma(sigma);		
 	}
 
 	public void setMinimumSigma(float sigma) 

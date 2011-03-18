@@ -161,6 +161,10 @@ public class WekaSegmentation {
 	private String tempFolder = null;
 
 	public static final double SIMPLE_POINT_THRESHOLD = 0;
+	
+	/** executor service to launch threads for the library operations */
+	private ExecutorService exe = Executors.newFixedThreadPool(1);
+	
 
 	/**
 	 * Default constructor.
@@ -2290,7 +2294,7 @@ public class WekaSegmentation {
 			mismatches = new ArrayList[sourceSlices.getSize()];
 
 		// Executor service to produce concurrent threads
-		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
 		final ArrayList< Future<WarpingResults> > futures = new ArrayList< Future<WarpingResults> >();
 
@@ -3405,7 +3409,7 @@ public class WekaSegmentation {
 
 		final long start = System.currentTimeMillis();
 
-		final ExecutorService exe = Executors.newFixedThreadPool(numThreads);
+		exe = Executors.newFixedThreadPool(numThreads);
 		final double[][][] results = new double[numThreads][][];
 		final Instances[] partialData = new Instances[numThreads];
 		final int partialSize = numInstances / numThreads;
@@ -3721,6 +3725,15 @@ public class WekaSegmentation {
 	{
 		for(int i=0; i<second.numInstances(); i++)
 			first.add(second.get(i));
+	}
+
+	/**
+	 * Shut down the executor service
+	 */
+	public void shutDownNow()
+	{
+		featureStackArray.shutDownNow();
+		exe.shutdownNow();		
 	}
 	
 }

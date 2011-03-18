@@ -141,6 +141,9 @@ public class FeatureStack
 	/** number of rotating angles for membrane, Kuwahara and Gabor features */
 	private int nAngles = 30;
 	
+	/** executor service to produce concurrent threads */
+	final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+	
 	/**
 	 * Construct object to store stack of image features
 	 * @param image original image
@@ -167,6 +170,14 @@ public class FeatureStack
 		wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
 	}
 
+	/**
+	 * Shut down the executor service
+	 */
+	public void shutDownNow()
+	{
+		exe.shutdownNow();
+	}
+	
 	/**
 	 * Display feature stack
 	 */
@@ -1399,9 +1410,7 @@ public class FeatureStack
 		wholeStack = new ImageStack(width, height);
 		//wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
 
-		// Executor service to produce concurrent threads
-		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-
+		
 		final ArrayList< Future<ImagePlus> > futures = new ArrayList< Future<ImagePlus> >();
 		
 		try
@@ -1444,9 +1453,6 @@ public class FeatureStack
 	{
 		wholeStack = new ImageStack(width, height);
 		wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
-
-		// Executor service to produce concurrent threads
-		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
 		final ArrayList< Future<ImagePlus> > futures = new ArrayList< Future<ImagePlus> >();
 		//int n=0;
