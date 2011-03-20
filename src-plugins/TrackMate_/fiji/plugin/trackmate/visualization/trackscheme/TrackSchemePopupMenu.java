@@ -17,6 +17,10 @@ import javax.swing.JTextField;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import com.mxgraph.model.mxCell;
+import com.mxgraph.swing.view.mxCellEditor;
+import com.mxgraph.util.mxEvent;
+import com.mxgraph.util.mxEventObject;
+import com.mxgraph.util.mxEventSource.mxIEventListener;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
@@ -66,23 +70,17 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 				add(new AbstractAction("Edit " + vertices.size() +" spot names") {
 					
 					public void actionPerformed(ActionEvent e) {
-
-						final JTextField editField = new JTextField();
-						editField.setFont(FONT);
-						editField.setBounds(point.x, point.y, 100, 20);
-						frame.graphComponent.add(editField);
-						editField.setVisible(true);
-						editField.revalidate();
-						frame.graphComponent.repaint();
-						editField.requestFocusInWindow();
-						editField.addActionListener(new ActionListener() {
-
+						final mxCell firstCell = vertices.remove(0);
+						frame.graphComponent.startEditingAtCell(firstCell, e);
+						frame.graphComponent.addListener(mxEvent.LABEL_CHANGED, new mxIEventListener() {
+							
 							@Override
-							public void actionPerformed(ActionEvent e) {
-								for (mxCell cell : vertices)
-									frame.graph.getCellToVertexMap().get(cell).setName(editField.getText());
-								frame.graphComponent.remove(editField);
-								frame.graphComponent.refresh();
+							public void invoke(Object sender, mxEventObject evt) {
+								for (mxCell cell : vertices) {
+									cell.setValue(firstCell.getValue());
+									frame.graph.getCellToVertexMap().get(cell).setName(firstCell.getValue().toString());
+								}
+								frame.graphComponent.removeListener(this);
 							}
 						});
 					}

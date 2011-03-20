@@ -9,6 +9,7 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.MouseEvent;
+import java.util.EventObject;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -17,8 +18,11 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import com.mxgraph.canvas.mxGraphics2DCanvas;
 import com.mxgraph.model.mxCell;
+import com.mxgraph.model.mxIGraphModel;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.swing.handler.mxGraphHandler;
+import com.mxgraph.swing.view.mxCellEditor;
+import com.mxgraph.swing.view.mxICellEditor;
 import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxPoint;
@@ -58,6 +62,26 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		mxGraphics2DCanvas.putShape(mxScaledLabelShape.SHAPE_NAME, new mxScaledLabelShape());
 	}
 	
+	/*
+	 * METHODS
+	 */
+	
+	/**
+	 * Overridden to customize the look of the editor. We want to hide the image in the
+	 * background.
+	 */
+	@Override
+	protected mxICellEditor createCellEditor() {
+		mxCellEditor editor = new mxCellEditor(this) {
+			@Override
+			public void startEditing(Object cell, EventObject evt) {
+				textArea.setOpaque(true);
+				super.startEditing(cell, evt);
+			}
+		};
+		editor.setShiftEnterSubmitsText(true);
+		return editor;
+	}
 	
 	/**
 	 * Custom {@link mxGraphHandler} so as to avoid clearing the selection when right-clicking elsewhere than

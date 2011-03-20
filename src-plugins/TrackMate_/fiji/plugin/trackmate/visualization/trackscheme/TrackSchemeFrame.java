@@ -145,7 +145,6 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		setSize(DEFAULT_SIZE);
 	}
 
-
 	/*
 	 * PUBLIC METHODS
 	 */
@@ -256,7 +255,29 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	 * Used to instantiate and configure the {@link JGraphXAdapter} that will be used for display.
 	 */
 	protected JGraphXAdapter<Spot, DefaultWeightedEdge> createGraph() {
-		final JGraphXAdapter<Spot, DefaultWeightedEdge> graph = new JGraphXAdapter<Spot, DefaultWeightedEdge>(lGraph);
+		final JGraphXAdapter<Spot, DefaultWeightedEdge> graph = new JGraphXAdapter<Spot, DefaultWeightedEdge>(lGraph) {
+			
+			/**
+			 * Overridden method so that when a label is changed, we change the target spot's name.
+			 */
+			@Override
+			public void cellLabelChanged(Object cell, Object value, boolean autoSize) {
+				model.beginUpdate();
+				try {
+					Spot spot = getCellToVertexMap().get(cell);
+					String str = (String) value;
+					spot.setName(str);
+					getModel().setValue(cell, str);
+
+					if (autoSize) {
+						cellSizeUpdated(cell, false);
+					}
+				} finally {
+					model.endUpdate();
+				}
+			}
+		};
+		
 		graph.setAllowLoops(false);
 		graph.setAllowDanglingEdges(false);
 		graph.setCellsCloneable(false);
@@ -268,6 +289,9 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		graph.getStylesheet().setDefaultEdgeStyle(BASIC_EDGE_STYLE);
 		graph.getStylesheet().setDefaultVertexStyle(BASIC_VERTEX_STYLE);
 
+		
+		
+		
 		// Set up listeners
 
 		// Cells removed from JGraphX
@@ -473,8 +497,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 				Object[] columnData = new Object[Feature.values().length];
 				for (int i = 0; i < columnData.length; i++) 
 					columnData[i] = String.format("%.1f", spot.getFeature(Feature.values()[i]));
-				String spotName = (spot.getName() == null || spot.getName() != "") ? "ID"+spot.ID() : spot.getName();
-				dm.addColumn(spotName, columnData);
+				dm.addColumn(spot.toString(), columnData);
 			}
 			table.setModel(dm);
 			// Tune look
