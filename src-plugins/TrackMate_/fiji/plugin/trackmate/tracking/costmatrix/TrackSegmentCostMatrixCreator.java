@@ -7,12 +7,12 @@ import java.util.SortedSet;
 
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TMUtils;
 import fiji.plugin.trackmate.tracking.LAPUtils;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.tracking.costfunction.GapClosingCostFunction;
 import fiji.plugin.trackmate.tracking.costfunction.MergingCostFunction;
 import fiji.plugin.trackmate.tracking.costfunction.SplittingCostFunction;
+import fiji.plugin.trackmate.util.TMUtils;
 
 /**
  * <p>Creates the cost matrix <b><u>roughly</u></b> described in Figure 1c in the paper:

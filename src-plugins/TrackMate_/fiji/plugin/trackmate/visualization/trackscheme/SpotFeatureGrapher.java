@@ -33,9 +33,9 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Feature.Dimension;
+import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TMUtils;
 
 public class SpotFeatureGrapher extends JFrame {
 

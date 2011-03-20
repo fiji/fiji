@@ -154,12 +154,16 @@ public class TrackSchemeToolbar extends JToolBar {
 				imp.show();
 			}
 		};
+		final Action saveAction = new SaveAction(frame);
 		final JButton captureUndecoratedButton = new JButton(captureUndecoratedAction);
 		final JButton captureDecoratedButton = new JButton(captureDecoratedAction);
+		final JButton saveButton = new JButton(saveAction);
 		captureUndecoratedButton.setToolTipText("Capture undecorated track scheme");
 		captureDecoratedButton.setToolTipText("Capture decorated track scheme");
+		saveButton.setToolTipText("Export to..");
 		add(captureUndecoratedButton);
 		add(captureDecoratedButton);
+		add(saveButton);
 
 	}
 }

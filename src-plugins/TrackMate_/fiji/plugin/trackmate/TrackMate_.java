@@ -4,6 +4,7 @@ import fiji.plugin.trackmate.features.FeatureFacade;
 import fiji.plugin.trackmate.gui.TrackMateFrameController;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.SpotTracker;
+import fiji.plugin.trackmate.util.TMUtils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;

@@ -41,7 +41,7 @@ import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.data.statistics.LogHistogramDataset;
 
-import fiji.plugin.trackmate.TMUtils;
+import fiji.plugin.trackmate.util.TMUtils;
 
 /**
  * 

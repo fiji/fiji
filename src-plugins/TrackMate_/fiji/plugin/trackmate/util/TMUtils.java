@@ -1,5 +1,11 @@
-package fiji.plugin.trackmate;
+package fiji.plugin.trackmate.util;
 
+import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.FeatureThreshold;
+import fiji.plugin.trackmate.Settings;
+import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.Feature.Dimension;
 import ij.ImagePlus;
 import ij.ImageStack;

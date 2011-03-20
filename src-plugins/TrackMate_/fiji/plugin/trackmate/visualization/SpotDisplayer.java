@@ -25,9 +25,9 @@ import fiji.plugin.trackmate.InfoTextable;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TMUtils;
 import fiji.plugin.trackmate.TrackMateModelInterface;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
+import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotSelectionEvent;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotSelectionListener;
 

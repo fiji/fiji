@@ -11,9 +11,9 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TMUtils;
 import fiji.plugin.trackmate.TrackMateModelInterface;
 import fiji.plugin.trackmate.features.FeatureFacade;
+import fiji.plugin.trackmate.util.TMUtils;
 
 public class TrackMateModelManager implements SpotCollectionEditListener {
 
