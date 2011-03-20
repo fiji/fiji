@@ -23,7 +23,8 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	private static final float COARSE_STEP = 2;
 	private static final float FINE_STEP = 0.2f;
 	private static final String TOOL_NAME = "Spot edit tool";
-	private static final String TOOL_ICON = "C444D01C777D11C999D21C000D31C777L4151C222D61CcccD71C222D81C331D91Ceb5Da1Cd95Lb1c1Cda3Dd1Ca82De1C000Df1"
+	private static final String TOOL_ICON = "C444D01C777D11C999D21C000D31C777L4151C222D61"
+		+ "CcccD71C222D81C331D91Ceb5Da1Cd95Lb1c1Cda3Dd1Ca82De1C000Df1"
 		+ "CbbbD02C000D32CdddD42CcccD62C777D82C100D92Ca85Da2CfedLb2c2Cd94Dd2C641De2C111Df2"
 		+ "C000D33CdddD43C761D83C664D93C544Da3CfedLb3c3CdcaDd3C863De3C111Df3"
 		+ "C000D34CdddD44Cec3D74C776D84Cdc9D94C000Da4Cdb9Db4CfdaDc4C776Dd4Cc95De4C111Df4"
@@ -111,7 +112,6 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	 */
 	public void register(final ImagePlus imp, final HyperStackDisplayer displayer) {
 		displayers.put(imp, displayer);
-		System.out.println("SpotEditTool: Registered "+imp+" with "+displayer);// DEBUG
 	}
 	
 	

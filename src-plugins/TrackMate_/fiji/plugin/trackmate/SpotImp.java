@@ -126,11 +126,20 @@ public class SpotImp implements Spot {
 		return ID;
 	}
 	
+	@Override
+	public String toString() {
+		String str;
+		if (name == null || name.equals(""))
+			str = "ID"+ID;
+		else 
+			str = name;
+		return str;
+	}
+	
 	/**
 	 * Return a string representation of this spot, with calculated features.
 	 */
-	@Override
-	public String toString() {
+	public String echo() {
 		StringBuilder s = new StringBuilder();
 		
 		// Name

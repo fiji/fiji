@@ -22,10 +22,12 @@ public class SpotIconGrabber {
 	
 	private ImagePlus imp;
 	private float[] calibration;
+	private float dt;
 	
 	public SpotIconGrabber(Settings settings) {
 		this.imp = settings.imp;
 		this.calibration = new float[] { settings.dx, settings.dy, settings.dz };
+		this.dt = settings.dt;
 	}
 	
 	public void updateIcon(SpotCollection spots) {
@@ -39,11 +41,11 @@ public class SpotIconGrabber {
 	}
 	
 	public void updateIcon(Spot spot) {
-		final float radius = spot.getFeature(Feature.RADIUS);
+		final float radius = spot.getFeature(Feature.RADIUS); // physical units
 		int slice = 1;
 		if (calibration.length > 2)
 			slice = Math.round(spot.getFeature(Feature.POSITION_Z) / calibration[2]) + 1;
-		int frame = Math.round(spot.getFeature(Feature.POSITION_T)) + 1;
+		int frame = Math.round(spot.getFeature(Feature.POSITION_T) / dt) + 1;
 		int index = imp.getStackIndex(1, slice, frame);
 		int x = Math.round((spot.getFeature(Feature.POSITION_X) - ENLARGE_FACTOR*radius) / calibration[0]); 
 		int y = Math.round((spot.getFeature(Feature.POSITION_Y) - ENLARGE_FACTOR*radius) / calibration[1]);

@@ -30,7 +30,6 @@ import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
 import com.mxgraph.util.mxBase64;
 import com.mxgraph.util.mxConstants;
-import com.mxgraph.util.mxImageBundle;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
@@ -53,19 +52,16 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 	private Color[] trackColorArray;
 	private TreeMap<Float, Integer> rows;
 	private UndirectedGraph<Spot, DefaultWeightedEdge> jGraphT;
-	private mxImageBundle imageBundle;
 
 	/*
 	 * CONSTRUCTOR
 	 */
-
 
 	public mxTrackGraphLayout(UndirectedGraph<Spot, DefaultWeightedEdge> jGraphT, JGraphXAdapter<Spot, DefaultWeightedEdge> graph) {
 		super(graph);
 		this.graph = graph;
 		this.jGraphT = jGraphT;
 		this.tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(jGraphT).connectedSets();
-		this.imageBundle = new mxImageBundle();
 	}
 
 	@Override
@@ -142,9 +138,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 
 					// Get corresponding JGraphX cell 
 					mxCell cell = graph.getVertexToCellMap().get(spot);
-					String spotName = (spot.getName() == null || spot.getName() != "") ? "ID"+spot.ID() : spot.getName();
-					cell.setValue(spotName);
-
+					
 					// Move the corresponding cell 
 					double x = (targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
 					double y = (0.5 + rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2;
@@ -157,9 +151,8 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					ByteArrayOutputStream bos = new ByteArrayOutputStream();
 					BufferedImage img = spot.getImage();
 					ImageIO.write(img, "png", bos);
-					imageBundle.putImage(cell.getId(), mxBase64.encodeToString(bos.toByteArray(), false));
 
-					// Set cell style
+					// Set cell style and image
 					String style = "strokeColor="+Integer.toHexString(trackColor.getRGB());
 					style += ";"+mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+mxBase64.encodeToString(bos.toByteArray(), false);					
 					graph.getModel().setStyle(cell, style);
@@ -174,7 +167,6 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					}
 				}
 
-
 				for(Float instant : instants)
 					columns.put(instant, currentColumn+1);
 
@@ -183,17 +175,13 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 				columnIndex++;
 				previousColumn = currentColumn;	
 
-
 			}  // loop over tracks
 
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
-
 			graph.getModel().endUpdate();
 		}
-
-
 	}
 
 	/**
@@ -216,8 +204,4 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 	public Color[] getTrackColors() {
 		return trackColorArray;
 	}
-
-	public mxImageBundle getImageBundle() {
-		return imageBundle;
-	}	
 }
