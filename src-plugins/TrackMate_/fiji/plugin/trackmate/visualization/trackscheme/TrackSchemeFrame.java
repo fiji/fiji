@@ -112,8 +112,8 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	private static final HashMap<String, Object> BASIC_EDGE_STYLE = new HashMap<String, Object>();
 	static {
 
-		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_FILLCOLOR, Integer.toHexString(Color.WHITE.getRGB()));
-		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_FONTCOLOR, Integer.toHexString(Color.BLACK.getRGB()));
+		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_FILLCOLOR, "white");
+		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_FONTCOLOR, "black");
 		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_ALIGN, mxConstants.ALIGN_RIGHT);
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_VERTICAL_ALIGN, mxConstants.ALIGN_MIDDLE);
 		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_SHAPE, mxScaledLabelShape.SHAPE_NAME);
@@ -127,7 +127,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_STARTARROW, mxConstants.NONE);
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_ENDARROW, mxConstants.NONE);
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_STROKEWIDTH, 2.0f);
-		BASIC_EDGE_STYLE.put(mxConstants.STYLE_STROKECOLOR, Integer.toHexString(SpotDisplayer.DEFAULT_COLOR.getRGB()));
+		BASIC_EDGE_STYLE.put(mxConstants.STYLE_STROKECOLOR, "#FF00FF");
 
 	}
 

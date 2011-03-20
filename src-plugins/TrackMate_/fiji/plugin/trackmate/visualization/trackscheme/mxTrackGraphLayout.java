@@ -154,7 +154,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					ImageIO.write(img, "png", bos);
 
 					// Set cell style and image
-					String style = "strokeColor="+Integer.toHexString(trackColor.getRGB());
+					String style = "strokeColor=#"+Integer.toHexString(trackColor.getRGB()).substring(2);
 					style += ";"+mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+mxBase64.encodeToString(bos.toByteArray(), false);					
 					graph.getModel().setStyle(cell, style);
 					
@@ -164,7 +164,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 						mxCell edgeCell = (mxCell) obj;
 						DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(edgeCell);
 						edgeCell.setValue(String.format("%.1f", jGraphT.getEdgeWeight(edge)));
-						graph.getModel().setStyle(edgeCell, "strokeColor="+Integer.toHexString(trackColor.getRGB()));
+						graph.getModel().setStyle(edgeCell, "strokeColor=#"+Integer.toHexString(trackColor.getRGB()).substring(2));
 					}
 				}
 
