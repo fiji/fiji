@@ -166,7 +166,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			mxCell cell = null;
 			for (Spot spot : event.getSpots()) {
 				// Instantiate JGraphX cell
-				cell = new mxCell(spot);
+				cell = new mxCell(spot.toString());
 				cell.setId(null);
 				cell.setVertex(true);
 				// Position it

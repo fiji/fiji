@@ -138,6 +138,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 
 					// Get corresponding JGraphX cell 
 					mxCell cell = graph.getVertexToCellMap().get(spot);
+					cell.setValue(spot.toString());
 					
 					// Move the corresponding cell 
 					double x = (targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;

@@ -23,8 +23,9 @@ public class mxScaledLabelShape extends mxLabelShape {
 	@Override
 	public Rectangle getImageBounds(mxGraphics2DCanvas canvas, mxCellState state) {
 		Rectangle cellR = state.getRectangle();
-		int minSize = Math.min(cellR.width, cellR.height);
-		Rectangle imageBounds = new Rectangle(cellR.x, cellR.y, minSize, minSize);
+		int arc = getArcSize(cellR.width, cellR.height) / 2;
+		int minSize = Math.min(cellR.width - arc*2, cellR.height - 4);
+		Rectangle imageBounds = new Rectangle(cellR.x + arc, cellR.y+2, minSize, minSize);
 		return imageBounds;
 	}
 	
