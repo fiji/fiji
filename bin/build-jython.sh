@@ -6,7 +6,7 @@ die () {
 }
 
 PYTHON_LIB=/usr/lib/python2.5
-if test ! -d "$PYTHON_LIB"
+if test ! -f "$PYTHON_LIB"/re.py
 then
 	PYTHON_LIB="$(pwd)/python-d5876b1"
 	if test ! -d "$PYTHON_LIB"
