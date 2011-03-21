@@ -105,6 +105,10 @@ public class JarClassLoader extends ClassLoader {
 			input.close();
 			result = defineClass(name,
 					buffer, 0, buffer.length);
+			if (result.getPackage() == null) {
+				String packageName = name.substring(0, name.lastIndexOf('.'));
+				definePackage(packageName, null, null, null, null, null, null, null);
+			}
 			cache.put(name, result);
 			return result;
 		} catch (IOException e) {
