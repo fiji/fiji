@@ -238,7 +238,7 @@ static int path_list_contains(const char *list, const char *path)
 
 static void string_append_path_list(struct string *string, const char *append)
 {
-	if (path_list_contains(string->buffer, append))
+	if (!append || path_list_contains(string->buffer, append))
 		return;
 
 	if (string->length)
@@ -2065,6 +2065,13 @@ static int start_ij(void)
 			file_is_newer(fiji_path("fiji.c"), fiji_path("fiji" EXE_EXTENSION)) &&
 			!is_building("fiji"))
 		error("Warning: your Fiji executable is not up-to-date");
+
+#ifdef linux
+	string_append_path_list(java_library_path, getenv("LD_LIBRARY_PATH"));
+#endif
+#ifdef MACOSX
+	string_append_path_list(java_library_path, getenv("DYLD_LIBRARY_PATH"));
+#endif
 
 	if (get_platform() != NULL) {
 		struct string *buffer = string_initf("%s/%s", fiji_path("lib"), get_platform());
