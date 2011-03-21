@@ -1,9 +1,27 @@
-- Make a better loading logic and GUI interaction.
-- Offer to select displayer at load.
+GUI
 - Fix GUI update when calculating feature.
 - Have a manual spot editing tool in the 3D viewer displayer.
-- Put back Nick's tracking optimization, based on prunning rows and columns in the cost matrix.
-- Offer a entry point for the plugin starting with loading a data file.
-- Externalize the part loading the data from the TrackMateFrameController.
+- When manually creating a spot, update its image as well.
+- Add actions. 
+
+Features
 - Fix the morphology estimator, so that the MORPHOLOGY feature is useful
 
+Segmenting
+- Implement the C.elegans alo from Santella et al 2010
+
+Tracking
+- Put back Nick's tracking optimization, based on prunning rows and columns in the cost matrix.
+- Evaluate, and add Johannes Hungarian algorithm.
+
+Export/Import
+- Make a better loading logic and GUI interaction.
+- Offer to select displayer at load.
+- Externalize the part loading the data from the TrackMateFrameController.
+- Save the spot images in the xml file.
+
+Making it available.
+- Tune Fiji integration.
+- Write wiki doc.
+- Publish an application note. 
+- Offer a entry point for the plugin starting with loading a data file.
