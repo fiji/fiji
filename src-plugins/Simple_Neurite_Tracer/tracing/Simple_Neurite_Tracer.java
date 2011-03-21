@@ -122,6 +122,9 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 				return;
 			}
 
+			if( currentImage.getStackSize() == 1 )
+				singleSlice = true;
+
 			imageType = currentImage.getType();
 
 			if( imageType == ImagePlus.COLOR_RGB ) {
@@ -137,10 +140,18 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 				currentImage = RGB_to_Luminance.convertToLuminance(currentImage);
 				currentImage.show();
 				imageType = currentImage.getType();
+			} else if( imageType == ImagePlus.GRAY16 ) {
+				YesNoCancelDialog query16to8 = new YesNoCancelDialog( IJ.getInstance(),
+										      "Convert 16 bit image",
+										      "This image is 16-bit. You can still trace this using 16-bit values,\n"+
+										      "but if you want to use the 3D viewer, you must convert it to\n"+
+										      "8-bit first.  Convert stack to 8 bit?");
+				if( query16to8.yesPressed() ) {
+					new StackConverter(currentImage).convertToGray8();
+					imageType = currentImage.getType();
+				} else if( query16to8.cancelPressed() )
+					return;
 			}
-
-			if( currentImage.getStackSize() == 1 )
-				singleSlice = true;
 
 			width = currentImage.getWidth();
 			height = currentImage.getHeight();
