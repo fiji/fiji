@@ -44,7 +44,10 @@ public interface TrackMateModelInterface {
 	public void setSpotSelection(SpotCollection selectedSpots);
 
 	/**
-	 * Return the spots filtered by feature threshold. Feature thresholds can be set / added / cleared by 
+	 * Return the spots filtered by feature threshold. 
+	 * These spots will be used for subsequent tracking and display.
+	 * <p>
+	 * Feature thresholds can be set / added / cleared by 
 	 * {@link #setFeatureThresholds(List)}, {@link #addThreshold(FeatureThreshold)} and {@link #clearTresholds()}.
 	 */
 	public SpotCollection getSelectedSpots();
