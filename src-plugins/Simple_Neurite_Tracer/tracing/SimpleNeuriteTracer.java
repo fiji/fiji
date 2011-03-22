@@ -39,6 +39,7 @@ import ij3d.MeshMaker;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
 import java.awt.*;
+import java.awt.event.KeyListener;
 import java.io.*;
 
 import java.util.HashSet;
@@ -1376,5 +1377,18 @@ public class SimpleNeuriteTracer extends ThreePanes
 			}
 		}
 	}
-}
 
+	/** This method will remove the existing keylisteners from the
+	    component 'c', tells 'firstKeyListener' to call those key
+	    listeners if it has not dealt with the key, and then sets
+	    'firstKeyListener' as the key listener for 'c' */
+	public static void setAsFirstKeyListener(Component c, QueueJumpingKeyListener firstKeyListener) {
+		KeyListener [] oldKeyListeners = c.getKeyListeners();
+		for( KeyListener kl : oldKeyListeners ) {
+			c.removeKeyListener(kl);
+		}
+		firstKeyListener.addOtherKeyListeners(oldKeyListeners);
+		c.addKeyListener(firstKeyListener);
+	}
+
+}
