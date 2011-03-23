@@ -25,6 +25,7 @@ public class JRuby_Interpreter extends AbstractInterpreter {
 				 "the JRuby interpreter");
 			return;
 		}
+		Thread.currentThread().setContextClassLoader(IJ.getClassLoader());
 		super.run(ignored);
 		setTitle("JRuby Interpreter");
 		println("Starting JRuby ...");
