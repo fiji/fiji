@@ -3,6 +3,8 @@ GUI
 - Have a manual spot editing tool in the 3D viewer displayer.
 - When manually creating a spot, update its image as well.
 - Add actions. 
+- Add the ability to show / hide tracks
+- Add the ability to name tracks
 
 Features
 - Fix the morphology estimator, so that the MORPHOLOGY feature is useful
@@ -13,6 +15,9 @@ Segmenting
 Tracking
 - Put back Nick's tracking optimization, based on prunning rows and columns in the cost matrix.
 - Evaluate, and add Johannes Hungarian algorithm.
+
+Track scheme
+- More efficient spot image display. Base64 is nice for a few cells, but not for 1000.
 
 Export/Import
 - Make a better loading logic and GUI interaction.
