@@ -38,6 +38,7 @@ import ij3d.Content;
 import ij3d.MeshMaker;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
+import javax.vecmath.Point3d;
 import java.awt.*;
 import java.awt.event.KeyListener;
 import java.io.*;
@@ -843,6 +844,19 @@ public class SimpleNeuriteTracer extends ThreePanes
 		resultsDialog.changeState( NeuriteTracerResultsDialog.WAITING_TO_START_PATH );
 
 		repaintAllPanes( );
+	}
+
+	/** This method should really be called by the other clickForTrace:
+	    FIXME - this needs some refactoring */
+
+	synchronized public void clickForTrace( Point3d p, boolean join ) {
+		double x_unscaled = p.x / x_spacing;
+		double y_unscaled = p.y / y_spacing;
+		double z_unscaled = p.z / z_spacing;
+		setSlicesAllPanes( (int)x_unscaled,
+				   (int)y_unscaled,
+				   (int)z_unscaled );
+		clickForTrace( x_unscaled, y_unscaled, ThreePanes.XY_PLANE, join );
 	}
 
 	synchronized public void clickForTrace( double x_in_pane_precise, double y_in_pane_precise, int plane, boolean join ) {
