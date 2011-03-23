@@ -436,6 +436,10 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 				if( ! reusing )
 					univ.resetView();
 				univ.setAutoAdjustView(false);
+
+				PointSelectionBehavior psb = new PointSelectionBehavior(univ, this);
+				univ.addInteractiveBehavior(psb);
+
 			}
 
 			File tracesFileToLoad = null;
