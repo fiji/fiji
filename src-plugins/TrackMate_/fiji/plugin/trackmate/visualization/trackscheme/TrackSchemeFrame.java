@@ -56,6 +56,7 @@ import com.mxgraph.view.mxPerimeter;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TrackMateModelInterface;
 import fiji.plugin.trackmate.visualization.SpotCollectionEditEvent;
 import fiji.plugin.trackmate.visualization.SpotCollectionEditListener;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
@@ -152,6 +153,10 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	/**
 	 * Used to catch spot creation events that occurred elsewhere, for instance by manual editing in 
 	 * the {@link SpotDisplayer}. 
+	 * <p>
+	 * We have to deal with the graph modification ourselves here, because the {@link TrackMateModelInterface} model
+	 * holds a non-listenable JGraphT instance. A modification made to the model would not be reflected
+	 * on the graph here.
 	 */
 	@Override
 	public void collectionChanged(SpotCollectionEditEvent event) {
@@ -162,27 +167,48 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			for (int i = 0; i < graphComponent.getColumnWidths().length; i++)
 				targetColumn += graphComponent.getColumnWidths()[i];
 
-			mxCell cell = null;
-			for (Spot spot : event.getSpots()) {
-				// Instantiate JGraphX cell
-				cell = new mxCell(spot.toString());
-				cell.setId(null);
-				cell.setVertex(true);
-				// Position it
-				float instant = spot.getFeature(Feature.POSITION_T);
-				double x = (targetColumn-2) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
-				double y = (0.5 + graphComponent.getRowForInstant().get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2; 
-				int height = Math.min(DEFAULT_CELL_WIDTH, spot.getImage().getHeight());
-				height = Math.max(height, 12);
-				mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
-				cell.setGeometry(geometry);
-				// Finally add it to the mxGraph
-				graph.addCell(cell, graph.getDefaultParent());
-				// Echo the new cell to the maps
-				graph.getVertexToCellMap().put(spot, cell);
-				graph.getCellToVertexMap().put(cell, spot);
+			try {
+				graph.getModel().beginUpdate();
+				mxCell cell = null;
+				for (Spot spot : event.getSpots()) {
+					// Instantiate JGraphX cell
+					cell = new mxCell(spot.toString());
+					cell.setId(null);
+					cell.setVertex(true);
+					// Position it
+					float instant = spot.getFeature(Feature.POSITION_T);
+					double x = (targetColumn-2) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
+					double y = (0.5 + graphComponent.getRowForInstant().get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2; 
+					int height = Math.min(DEFAULT_CELL_WIDTH, spot.getImage().getHeight());
+					height = Math.max(height, 12);
+					mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
+					cell.setGeometry(geometry);
+					// Finally add it to the mxGraph
+					graph.addCell(cell, graph.getDefaultParent());
+					// Echo the new cell to the maps
+					graph.getVertexToCellMap().put(spot, cell);
+					graph.getCellToVertexMap().put(cell, spot);
+				}
+				centerViewOn(cell);
+			} finally {
+				graph.getModel().endUpdate();
 			}
-			centerViewOn(cell);
+
+		} else if (event.getFlag() == SpotCollectionEditEvent.SPOT_DELETED) {
+
+			try {
+				graph.getModel().beginUpdate();
+				mxCell[] cells = new mxCell[event.getSpots().length];
+				Spot[] spots = event.getSpots();
+				for(int i = 0; i < spots.length; i++) {
+					Spot spot = spots[i];
+					mxCell cell = graph.getVertexToCellMap().get(spot);
+					cells[i] = cell;
+				}
+				graph.removeCells(cells, true);
+			} finally {
+				graph.getModel().endUpdate();
+			}
 		}
 
 	}
@@ -301,16 +327,18 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 				Object[] objects = (Object[]) evt.getProperty("cells");
 				for(Object obj : objects) {
 					mxCell cell = (mxCell) obj;
-					if (cell.isVertex()) {
-						Spot spot = graph.getCellToVertexMap().get(cell);
-						lGraph.removeVertex(spot);
-						trackGraph.removeVertex(spot);
-						fireVertexChangeEvent(new GraphVertexChangeEvent<Spot>(graph, GraphVertexChangeEvent.VERTEX_REMOVED, spot));
-					} else if (cell.isEdge()) {
-						DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(cell);
-						lGraph.removeEdge(edge);
-						trackGraph.removeEdge(edge);
-						fireEdgeChangeEvent(new GraphEdgeChangeEvent<Spot, DefaultWeightedEdge>(graph, GraphEdgeChangeEvent.EDGE_REMOVED, edge));
+					if (null != cell) {
+						if (cell.isVertex()) {
+							Spot spot = graph.getCellToVertexMap().get(cell);
+							lGraph.removeVertex(spot);
+							trackGraph.removeVertex(spot);
+							fireVertexChangeEvent(new GraphVertexChangeEvent<Spot>(graph, GraphVertexChangeEvent.VERTEX_REMOVED, spot));
+						} else if (cell.isEdge()) {
+							DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(cell);
+							lGraph.removeEdge(edge);
+							trackGraph.removeEdge(edge);
+							fireEdgeChangeEvent(new GraphEdgeChangeEvent<Spot, DefaultWeightedEdge>(graph, GraphEdgeChangeEvent.EDGE_REMOVED, edge));
+						}
 					}
 				}
 			}

@@ -29,6 +29,7 @@ import org.jgrapht.event.GraphVertexChangeEvent;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
+import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.FeatureThreshold;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
@@ -543,7 +544,7 @@ public class TrackMateFrameController {
 				switchNextButton(true);
 				return;
 			}
-
+			
 			// We have a spot field, update the model.
 			newModel.setSpots(spots);
 			logger.log("  Reading spots done.\n");

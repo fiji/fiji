@@ -270,7 +270,10 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	 */
 	
 	@Override
-	public void keyTyped(KeyEvent e) {
+	public void keyTyped(KeyEvent e) {	}
+
+	@Override
+	public void keyPressed(KeyEvent e) { 
 		final ImagePlus imp = getImagePlus(e);
 		final HyperStackDisplayer displayer = displayers.get(imp);
 		if (null == displayer)
@@ -281,20 +284,14 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		
 		if (e.getKeyCode() == KeyEvent.VK_DELETE) {
 			Integer initFrame = displayer.spotsToShow.getFrame(editedSpot);
-			if (initFrame != null) {
-				displayer.spotsToShow.remove(editedSpot, initFrame);
-				displayer.spots.remove(editedSpot, initFrame);
-			}
+			fireSpotCollectionEdit(new Spot[] { editedSpot }, SpotCollectionEditEvent.SPOT_DELETED, initFrame, null);
 			editedSpot = null;
+			displayer.spotOverlay.setEditedSpot(null);
 			editedSpots.put(imp, null);
 			imp.updateAndDraw();
-		} else {
-			System.out.println("Got the key: "+e.paramString());// DEBUG
-		}
+			e.consume();
+		}	
 	}
-
-	@Override
-	public void keyPressed(KeyEvent e) { }
 
 	@Override
 	public void keyReleased(KeyEvent e) { }	

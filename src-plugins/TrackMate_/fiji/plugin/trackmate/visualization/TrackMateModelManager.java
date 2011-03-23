@@ -65,7 +65,7 @@ public class TrackMateModelManager implements SpotCollectionEditListener {
 	 */
 	
 	public void moveSpotsFrom(Spot[] spots, Integer fromFrame, Integer toFrame) {
-		System.out.println("Moving "+spots.length+" spots from frame "+fromFrame+" to frame "+toFrame);// DEBUG
+		System.out.println("TrackMateModelManager: Moving "+spots.length+" spots from frame "+fromFrame+" to frame "+toFrame);// DEBUG
 		SpotCollection sc = model.getSpots();
 		if (null != sc) 
 			for (Spot spot : spots) { 
@@ -81,7 +81,7 @@ public class TrackMateModelManager implements SpotCollectionEditListener {
 	}
 
 	public void addSpotsTo(Spot[] spots, Integer toFrame) {
-		System.out.println("Adding "+spots.length+" spots to frame "+toFrame);// DEBUG
+		System.out.println("TrackMateModelManager: Adding "+spots.length+" spots to frame "+toFrame);// DEBUG
 		SpotCollection sc = model.getSpots();
 		if (null != sc) 
 			for (Spot spot : spots) 
@@ -97,7 +97,7 @@ public class TrackMateModelManager implements SpotCollectionEditListener {
 	}
 	
 	public void deleteSpotsFrom(Spot[] spots, Integer fromFrame) {
-		System.out.println("Removing "+spots.length+" from frame "+fromFrame);// DEBUG
+		System.out.println("TrackMateModelManager: Removing "+spots.length+" spots from frame "+fromFrame);// DEBUG
 		SpotCollection sc = model.getSpots();
 		if (null != sc) 
 			for (Spot spot : spots) 
@@ -114,7 +114,7 @@ public class TrackMateModelManager implements SpotCollectionEditListener {
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void updateFeatures(Spot[] spots) {
-		System.out.println("Updating the features of "+spots.length+" spots");// DEBUG
+		System.out.println("TrackMateModelManager: Updating the features of "+spots.length+" spots");// DEBUG
 		SpotCollection sc = model.getSpots();
 		if (null == sc)
 			return;
