@@ -66,7 +66,7 @@ public class ContentCreatorDialog {
 		else
 			name = imp == null ? images[0] : imp.getTitle();
 		String[] types = new String[] {
-			"Volume", "Orthoslice", "Surface", "Surface Plot 2D"};
+			"Volume", "Orthoslice", "Surface", "Surface Plot 2D", "Multiorthoslices"};
 		type = type < 0 ? 0 : type;
 		threshold = type == Content.SURFACE ? 50 : 0;
 		resamplingFactor = 2;

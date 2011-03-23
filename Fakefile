@@ -468,8 +468,8 @@ LDFLAGS(win32)=$LDFLAGS $WINOPTS
 CFLAGS(fiji)=$COMMONCFLAGS $MACOPTS
 LDFLAGS(fiji)=$LDFLAGS $MACOPTS
 
-LIBS(linux)=-ldl
-LIBS(linux64)=-ldl
+LIBS(linux)=-ldl -lpthread
+LIBS(linux64)=-ldl -lpthread
 LIBS(macosx)=-weak -framework CoreFoundation -framework ApplicationServices \
 	-framework JavaVM
 

@@ -123,6 +123,13 @@ public class AppearanceCreator implements AxisConstants {
 	}
 
 	/**
+	 * Returns whether the created textures are supposed to be opaque.
+	 */
+	public boolean getOpaqueTextures() {
+		return opaque;
+	}
+
+	/**
 	 * This flag indicates whether textures are opaque or not.
 	 * This changes effectively the texture mode, (depending on whether
 	 * RGB or 8-bit textures are used) between RGB <-> RGBA, or

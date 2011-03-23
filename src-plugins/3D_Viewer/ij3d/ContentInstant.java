@@ -18,6 +18,7 @@ import vib.PointList;
 import isosurface.MeshGroup;
 import voltex.VoltexGroup;
 import orthoslice.OrthoGroup;
+import orthoslice.MultiOrthoGroup;
 import surfaceplot.SurfacePlotGroup;
 
 import java.util.BitSet;
@@ -125,6 +126,7 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 			case SURFACE: contentNode = new MeshGroup(this); break;
 			case SURFACE_PLOT2D: contentNode =
 				new SurfacePlotGroup(this); break;
+			case MULTIORTHO: contentNode = new MultiOrthoGroup(this); break;
 			default: throw new IllegalArgumentException(
 					"Specified type is neither VOLUME, ORTHO," +
 					"SURFACE or SURFACEPLOT2D");
