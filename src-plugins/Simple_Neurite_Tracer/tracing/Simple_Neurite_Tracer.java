@@ -237,6 +237,8 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 			single_pane = true;
 			Image3DUniverse universeToUse = null;
 			String [] choices3DViewer = null;;
+			int defaultResamplingFactor = guessResamplingFactor();
+			int resamplingFactor = defaultResamplingFactor;
 
 			if( ! singleSlice ) {
 				boolean java3DAvailable = haveJava3D();
@@ -278,6 +280,8 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 						choices3DViewer[i] = "Use 3D viewer ["+i+"] containing " + shortContentsString;
 					}
 					gd.addChoice( "Choice of 3D Viewer:", choices3DViewer, useNewString );
+					gd.addMessage( "Advanced option (can be left at the default):");
+					gd.addNumericField( "        Resampling factor:", defaultResamplingFactor, 0 );
 				}
 
 				gd.showDialog();
@@ -300,6 +304,13 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 					} else {
 						use3DViewer = true;
 						universeToUse = Image3DUniverse.universes.get(chosenIndex);;
+					}
+					double rawResamplingFactor = gd.getNextNumber();
+					resamplingFactor = (int)Math.round(rawResamplingFactor);
+					if( resamplingFactor < 1 ) {
+						IJ.error("The resampling factor "+rawResamplingFactor+" was invalid - \n"+
+							 "using the default of "+defaultResamplingFactor+" instead.");
+						resamplingFactor = defaultResamplingFactor;
 					}
 				}
 			}
@@ -387,16 +398,19 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 				}
 			}
 
-			xy_tracer_canvas.addKeyListener( xy_tracer_canvas );
-			xy_window.addKeyListener( xy_tracer_canvas );
+			QueueJumpingKeyListener xy_listener = new QueueJumpingKeyListener( this, xy_tracer_canvas );
+			setAsFirstKeyListener( xy_tracer_canvas, xy_listener );
+			setAsFirstKeyListener( xy_window, xy_listener );
 
 			if( ! single_pane ) {
 
-				xz_tracer_canvas.addKeyListener( xz_tracer_canvas );
-				xz_window.addKeyListener( xz_tracer_canvas );
+				QueueJumpingKeyListener xz_listener = new QueueJumpingKeyListener( this, xz_tracer_canvas );
+				setAsFirstKeyListener( xz_tracer_canvas, xz_listener );
+				setAsFirstKeyListener( xz_window, xz_listener );
 
-				zy_tracer_canvas.addKeyListener( zy_tracer_canvas );
-				zy_window.addKeyListener( zy_tracer_canvas );
+				QueueJumpingKeyListener zy_listener = new QueueJumpingKeyListener( this, zy_tracer_canvas );
+				setAsFirstKeyListener( zy_tracer_canvas, zy_listener );
+				setAsFirstKeyListener( zy_window, zy_listener );
 
 			}
 
@@ -426,7 +440,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 							    contentName,
 							    10, // threshold
 							    channels,
-							    guessResamplingFactor(), // resampling factor
+							    resamplingFactor,
 							    Content.VOLUME);
 				c.setLocked(true);
 				c.setTransparency(0.5f);
