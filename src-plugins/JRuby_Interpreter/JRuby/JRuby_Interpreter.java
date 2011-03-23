@@ -32,11 +32,11 @@ public class JRuby_Interpreter extends AbstractInterpreter {
 		prompt.setEnabled(false);
 		PrintStream stream = new PrintStream(out);
 		rubyRuntime = Ruby.newInstance(System.in,stream,stream);
-		importAll();
 		println("done.");
 		prompt.setEnabled(true);
 
 		rubyRuntime.evalScriptlet(getStartupScript());
+		importAll();
 	}
 
 	public static String getImageJRubyPath() {
