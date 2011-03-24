@@ -5,7 +5,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModelInterface;
 
-public class RadiusToEstimatedAction implements TrackMateAction { // extends AbstractTMAction {
+public class RadiusToEstimatedAction extends AbstractTMAction {
 
 	@Override
 	public String getInfoText() {
@@ -22,6 +22,7 @@ public class RadiusToEstimatedAction implements TrackMateAction { // extends Abs
 
 	@Override
 	public void execute(final TrackMateModelInterface model) {
+		logger.log("Setting all spot radiuses to their estimated value.\n");
 		SpotCollection spots = model.getSelectedSpots();
 		for(Spot spot : spots)
 			spot.putFeature(Feature.RADIUS, spot.getFeature(Feature.ESTIMATED_DIAMETER) / 2);

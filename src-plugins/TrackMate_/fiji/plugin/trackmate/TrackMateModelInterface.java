@@ -86,6 +86,10 @@ public interface TrackMateModelInterface {
 	 */
 	public void setLogger(Logger logger);
 
+	/**
+	 * Return the logger currently set for this model.
+	 */
+	public Logger getLogger();
 	
 	/*
 	 * FEATURE THRESHOLDS AND VALUES
@@ -186,6 +190,8 @@ public interface TrackMateModelInterface {
 	 * @see #getSelectedSpots()
 	 */
 	public void execThresholding();
+
+
 
 
 }

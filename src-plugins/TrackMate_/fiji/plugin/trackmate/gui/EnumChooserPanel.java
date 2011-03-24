@@ -71,7 +71,7 @@ public class EnumChooserPanel <K extends Enum<K> & InfoTextable> extends ActionL
 				this.add(jLabelHeader);
 				jLabelHeader.setFont(FONT.deriveFont(Font.BOLD));
 				jLabelHeader.setText("Select a "+typeName);
-				jLabelHeader.setBounds(6, 20, 276, 16);
+				jLabelHeader.setBounds(6, 20, 270, 16);
 				jLabelHeader.setHorizontalAlignment(SwingConstants.CENTER);
 			}
 			{
@@ -84,7 +84,7 @@ public class EnumChooserPanel <K extends Enum<K> & InfoTextable> extends ActionL
 				jComboBoxChoice.setSelectedIndex(defaultChoice.ordinal());
 				this.add(jComboBoxChoice);
 				jComboBoxChoice.setFont(FONT);
-				jComboBoxChoice.setBounds(12, 48, 276, 27);
+				jComboBoxChoice.setBounds(12, 48, 270, 27);
 				jComboBoxChoice.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
@@ -95,7 +95,7 @@ public class EnumChooserPanel <K extends Enum<K> & InfoTextable> extends ActionL
 			{
 				jLabelHelpText = new JLabel();
 				jLabelHelpText.setFont(FONT.deriveFont(Font.ITALIC));
-				jLabelHelpText.setBounds(12, 50, 276, 200);
+				jLabelHelpText.setBounds(12, 40, 270, 150);
 				echo(defaultChoice);
 				this.add(jLabelHelpText);
 			}

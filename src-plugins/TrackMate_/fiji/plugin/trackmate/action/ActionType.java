@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate.action;
 
 import fiji.plugin.trackmate.InfoTextable;
+import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModelInterface;
 
 public enum ActionType implements InfoTextable {
@@ -28,6 +29,11 @@ public enum ActionType implements InfoTextable {
 	
 	public void execute(final TrackMateModelInterface model) {
 		action.execute(model);
+	}
+
+
+	public void setLogger(Logger logger) {
+		action.setLogger(logger);
 	}
 
 }

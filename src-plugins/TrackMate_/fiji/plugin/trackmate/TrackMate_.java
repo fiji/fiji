@@ -219,6 +219,11 @@ public class TrackMate_ implements PlugIn, TrackMateModelInterface {
 	}
 	
 	@Override
+	public Logger getLogger() {
+		return logger;
+	}
+	
+	@Override
 	public Settings getSettings() {
 		return settings;
 	}

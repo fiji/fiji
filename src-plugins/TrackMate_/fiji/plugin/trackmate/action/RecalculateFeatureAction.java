@@ -1,12 +1,17 @@
 package fiji.plugin.trackmate.action;
 
+import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModelInterface;
 
 public class RecalculateFeatureAction extends AbstractTMAction {
 
 	@Override
 	public void execute(TrackMateModelInterface model) {
+		logger.log("Recalculating all features.\n");
+		Logger oldLogger = model.getLogger();
+		model.setLogger(logger);
 		model.computeFeatures();
+		model.setLogger(oldLogger);
 	}
 
 	@Override

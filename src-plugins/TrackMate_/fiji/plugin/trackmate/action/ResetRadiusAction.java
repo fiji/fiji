@@ -12,6 +12,7 @@ public class ResetRadiusAction extends AbstractTMAction {
 	public void execute(final TrackMateModelInterface model) {
 		final SegmenterSettings segSettings = model.getSettings().segmenterSettings;
 		final float radius = segSettings.expectedRadius;
+		logger.log(String.format("Setting all spot radiuses to %.1f "+segSettings.spaceUnits+"\n", radius));
 		SpotCollection spots = model.getSelectedSpots();
 		for(Spot spot : spots)
 			spot.putFeature(Feature.RADIUS, radius);

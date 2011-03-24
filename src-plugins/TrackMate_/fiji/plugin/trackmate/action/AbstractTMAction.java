@@ -1,15 +1,16 @@
 package fiji.plugin.trackmate.action;
 
+import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModelInterface;
 
 public abstract class AbstractTMAction implements TrackMateAction {
 
 	protected TrackMateModelInterface model = null;
-
-//	@Override
-//	public void setModel(TrackMateModelInterface model) {
-//		this.model = model;
-//	}
-		
+	protected Logger logger = Logger.VOID_LOGGER;
+	
+	@Override
+	public void setLogger(Logger logger) {
+		this.logger = logger;
+	}
 
 }
