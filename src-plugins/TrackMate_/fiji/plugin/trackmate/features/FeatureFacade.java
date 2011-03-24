@@ -35,6 +35,7 @@ public class FeatureFacade <T extends RealType<T>> {
 	private RadiusEstimator<T> radiusEstimator;
 	/** Hold all the feature analyzers this facade deals with. */
 	private ArrayList<FeatureAnalyzer> featureAnalyzers;
+	private SpotIconGrabber<T> imageGrabber;
 
 	public FeatureFacade(Image<T> rawImage, float[] calibration) {
 		this.rawImage = rawImage;
@@ -137,12 +138,14 @@ public class FeatureFacade <T extends RealType<T>> {
 		this.descriptiveStatistics = new BlobDescriptiveStatistics<T>(rawImage, calibration);
 		this.morphology = new BlobMorphology<T>(rawImage, calibration);
 		this.radiusEstimator = new RadiusEstimator<T>(rawImage, nDiameters , calibration);
+		this.imageGrabber = new SpotIconGrabber<T>(rawImage, calibration);
 		
 		featureAnalyzers = new ArrayList<FeatureAnalyzer>();
 		featureAnalyzers.add(descriptiveStatistics);
 		featureAnalyzers.add(contrast);
 		featureAnalyzers.add(morphology);
 		featureAnalyzers.add(radiusEstimator);
+		featureAnalyzers.add(imageGrabber);
 	}
 	
 	

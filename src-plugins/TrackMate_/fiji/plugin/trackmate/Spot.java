@@ -1,8 +1,9 @@
 package fiji.plugin.trackmate;
 
-import java.awt.image.BufferedImage;
 import java.util.Comparator;
 import java.util.EnumMap;
+
+import com.mxgraph.util.mxBase64;
 
 /**
  * Interface for objects that can store and retrieve feature values.
@@ -103,12 +104,14 @@ public interface Spot {
 	public void setName(String name);
 	
 	/**
-	 * Get the image used to display this spot.
+	 * Set the image, encoded as a Base64 string, that is used to represent this spot. 
+	 * @see mxBase64 
 	 */
-	public BufferedImage getImage();
+	public void setImageString(String str);
 	
 	/**
-	 * Set the image used to display / represent this spot. 
+	 * Get the image, encoded as a Base64 string, that is used to represent this spot. 
+	 * @see mxBase64 
 	 */
-	public void setImage(BufferedImage image);
+	public String getImageStrin();
 }

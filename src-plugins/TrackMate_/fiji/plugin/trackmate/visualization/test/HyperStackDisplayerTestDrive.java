@@ -21,18 +21,18 @@ import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
-import fiji.plugin.trackmate.visualization.trackscheme.SpotIconGrabber;
+import fiji.plugin.trackmate.visualization.TrackMateModelManager;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotSelectionManager;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
-import fiji.plugin.trackmate.visualization.TrackMateModelManager;
 
 
 public class HyperStackDisplayerTestDrive {
 
 	public static void main(String[] args) throws JDOMException, IOException {
 		
-		File file = new File(HyperStackDisplayerTestDrive.class.getResource("FakeTracks.xml").getFile());
+//		File file = new File(HyperStackDisplayerTestDrive.class.getResource("FakeTracks.xml").getFile());
 //		File file = new File("E:/Users/JeanYves/Desktop/data/MAX_Celegans-5pc_17timepoints.xml");
+		File file = new File("/Volumes/Data/Data/Confocal_LSM700/10-01-21/10-01-21-2hours.xml");
 		TmXmlReader reader = new TmXmlReader(file);
 		reader.parse();
 		
@@ -51,15 +51,15 @@ public class HyperStackDisplayerTestDrive {
 		model.setSpots(spots);
 		model.setSpotSelection(selectedSpots);
 		model.setTrackGraph(trackGraph);
+
+		// Grab spot icons
+		model.computeFeatures();
 				
 		final SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(SpotDisplayer.DisplayerType.HYPERSTACK_DISPLAYER, model);
 		displayer.setSpots(spots);
 		displayer.setSpotsToShow(selectedSpots);
 		displayer.setTrackGraph(trackGraph);
 		displayer.setDisplayTrackMode(TrackDisplayMode.LOCAL_WHOLE_TRACKS, 5);
-		
-		SpotIconGrabber grabber = new SpotIconGrabber(model.getSettings());
-		grabber.updateIcon(model.getSelectedSpots());		
 		
 		final TrackSchemeFrame trackScheme = new TrackSchemeFrame(trackGraph, settings);
 		trackScheme.setVisible(true);

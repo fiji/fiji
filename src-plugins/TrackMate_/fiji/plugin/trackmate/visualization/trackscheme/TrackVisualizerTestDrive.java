@@ -21,7 +21,6 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModelInterface;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import fiji.plugin.trackmate.tracking.test.LAPTrackerTestDrive;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.DisplayerType;
 import fiji.plugin.trackmate.visualization.test.Branched3DTrackTestDrive;
@@ -72,12 +71,6 @@ public class TrackVisualizerTestDrive {
 		displayer.setSpotsToShow(selectedSpots);
 		displayer.setTrackGraph(tracks);
 		displayer.refresh();
-		
-		// Update icons
-		if (null != imp) {
-			SpotIconGrabber grabber = new SpotIconGrabber(settings);
-			grabber.updateIcon(allSpots);
-		}
 		
 		// Display Track scheme
 		final TrackSchemeFrame frame = new TrackSchemeFrame(tracks, settings);

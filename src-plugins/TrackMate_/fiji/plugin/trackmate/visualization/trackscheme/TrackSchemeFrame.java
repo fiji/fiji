@@ -179,7 +179,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 					float instant = spot.getFeature(Feature.POSITION_T);
 					double x = (targetColumn-2) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
 					double y = (0.5 + graphComponent.getRowForInstant().get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2; 
-					int height = Math.min(DEFAULT_CELL_WIDTH, spot.getImage().getHeight());
+					int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Feature.RADIUS)));
 					height = Math.max(height, 12);
 					mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
 					cell.setGeometry(geometry);
@@ -238,7 +238,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	}
 
 	public void doTrackLayout() {
-		mxTrackGraphLayout graphLayout = new mxTrackGraphLayout(lGraph, graph);
+		mxTrackGraphLayout graphLayout = new mxTrackGraphLayout(lGraph, graph, settings.dx);
 		graphLayout.execute(graph.getDefaultParent());
 
 		// Forward painting info to graph component
@@ -315,7 +315,16 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		graph.getStylesheet().setDefaultEdgeStyle(BASIC_EDGE_STYLE);
 		graph.getStylesheet().setDefaultVertexStyle(BASIC_VERTEX_STYLE);
 
-		
+		// Set spot image to cell style
+		try {
+			graph.getModel().beginUpdate();
+			for(mxCell cell : graph.getCellToVertexMap().keySet()) {
+				Spot spot = graph.getCellToVertexMap().get(cell);
+				graph.getModel().setStyle(cell, mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+spot.getImageStrin());
+			}
+		} finally {
+			graph.getModel().endUpdate();
+		}
 		
 		
 		// Set up listeners

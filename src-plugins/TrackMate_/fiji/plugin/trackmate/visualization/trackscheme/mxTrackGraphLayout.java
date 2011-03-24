@@ -6,9 +6,6 @@ import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.X
 import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.Y_COLUMN_SIZE;
 
 import java.awt.Color;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -16,8 +13,6 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
-
-import javax.imageio.ImageIO;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.UndirectedGraph;
@@ -28,8 +23,8 @@ import org.jgrapht.traverse.DepthFirstIterator;
 import com.mxgraph.layout.mxGraphLayout;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
-import com.mxgraph.util.mxBase64;
 import com.mxgraph.util.mxConstants;
+import com.mxgraph.util.mxUtils;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
@@ -52,16 +47,21 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 	private Color[] trackColorArray;
 	private TreeMap<Float, Integer> rows;
 	private UndirectedGraph<Spot, DefaultWeightedEdge> jGraphT;
+	/**
+	 * The spatial calibration in X. We need it to compute cell's height from spot radiuses.
+	 */
+	private float dx;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public mxTrackGraphLayout(UndirectedGraph<Spot, DefaultWeightedEdge> jGraphT, JGraphXAdapter<Spot, DefaultWeightedEdge> graph) {
+	public mxTrackGraphLayout(UndirectedGraph<Spot, DefaultWeightedEdge> jGraphT, JGraphXAdapter<Spot, DefaultWeightedEdge> graph, float dx) {
 		super(graph);
 		this.graph = graph;
 		this.jGraphT = jGraphT;
 		this.tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(jGraphT).connectedSets();
+		this.dx = dx;
 	}
 
 	@Override
@@ -104,11 +104,13 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 			columnWidths = new int[tracks.size()];
 			trackColorArray = new Color[tracks.size()];
 			Color trackColor = null;
+			String trackColorStr = null;
 
 			for (Set<Spot> track : tracks) {
 
 				// Get track color
 				trackColor = trackColors.get(track);
+				trackColorStr =  Integer.toHexString(trackColor.getRGB()).substring(2);
 
 				// Sort by ascending order
 				SortedSet<Spot> sortedTrack = new TreeSet<Spot>(SpotImp.frameComparator);
@@ -143,20 +145,17 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					// Move the corresponding cell 
 					double x = (targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
 					double y = (0.5 + rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2;
-					int height = Math.min(DEFAULT_CELL_WIDTH, spot.getImage().getHeight());
+					int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Feature.RADIUS) / dx));
 					height = Math.max(height, 12);
 					mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
 					graph.getModel().setGeometry(cell, geometry);
-					
-					// Grab spot image
-					ByteArrayOutputStream bos = new ByteArrayOutputStream();
-					BufferedImage img = spot.getImage();
-					ImageIO.write(img, "png", bos);
 
 					// Set cell style and image
-					String style = "strokeColor=#"+Integer.toHexString(trackColor.getRGB()).substring(2);
-					style += ";"+mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+mxBase64.encodeToString(bos.toByteArray(), false);					
-					graph.getModel().setStyle(cell, style);
+					String style = cell.getStyle();
+					style = mxUtils.setStyle(style, 
+							mxConstants.STYLE_STROKECOLOR, 
+							trackColorStr);
+					style = graph.getModel().setStyle(cell, style);
 					
 					// Edges
 					Object[] objEdges = graph.getEdges(cell, parent, true, false, false);
@@ -164,7 +163,11 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 						mxCell edgeCell = (mxCell) obj;
 						DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(edgeCell);
 						edgeCell.setValue(String.format("%.1f", jGraphT.getEdgeWeight(edge)));
-						graph.getModel().setStyle(edgeCell, "strokeColor=#"+Integer.toHexString(trackColor.getRGB()).substring(2));
+						String edgeStyle = edgeCell.getStyle();
+						edgeStyle = mxUtils.setStyle(edgeStyle, 
+								mxConstants.STYLE_STROKECOLOR, 
+								trackColorStr);
+						graph.getModel().setStyle(edgeCell, style);
 					}
 				}
 
@@ -178,8 +181,6 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 
 			}  // loop over tracks
 
-		} catch (IOException e) {
-			e.printStackTrace();
 		} finally {
 			graph.getModel().endUpdate();
 		}

@@ -29,7 +29,6 @@ import org.jgrapht.event.GraphVertexChangeEvent;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
-import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.FeatureThreshold;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
@@ -44,10 +43,9 @@ import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
-import fiji.plugin.trackmate.visualization.TrackMateModelManager;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.DisplayerType;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
-import fiji.plugin.trackmate.visualization.trackscheme.SpotIconGrabber;
+import fiji.plugin.trackmate.visualization.TrackMateModelManager;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotSelectionManager;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
@@ -1126,11 +1124,6 @@ public class TrackMateFrameController {
 	}
 	
 	private static void launchTrackScheme(final TrackMateModelInterface model, final SpotDisplayer displayer) {
-		// Update icons
-		if (null != model.getSettings().imp) {
-			SpotIconGrabber grabber = new SpotIconGrabber(model.getSettings());
-			grabber.updateIcon(model.getSpots());
-		}
 		
 		// Display Track scheme
 		final TrackSchemeFrame trackScheme = new TrackSchemeFrame(model.getTrackGraph(), model.getSettings());

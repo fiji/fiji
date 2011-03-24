@@ -1,10 +1,13 @@
 package fiji.plugin.trackmate;
 
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.EnumMap;
 
 import javax.imageio.ImageIO;
+
+import com.mxgraph.util.mxBase64;
 
 import mpicbg.imglib.util.Util;
 import fiji.plugin.trackmate.gui.TrackMateFrame;
@@ -20,10 +23,13 @@ public class SpotImp implements Spot {
 	 * FIELDS
 	 */
 	
-	private static BufferedImage DEFAULT_IMAGE;
+	private static String DEFAULT_IMAGE_STRING = "";
 	static {
 		try {
-			DEFAULT_IMAGE = ImageIO.read(TrackMateFrame.class.getResource("images/spot_icon.png"));
+			BufferedImage img = ImageIO.read(TrackMateFrame.class.getResource("images/spot_icon.png"));
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			ImageIO.write(img, "png", bos);
+			DEFAULT_IMAGE_STRING = mxBase64.encodeToString(bos.toByteArray(), false);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -37,8 +43,8 @@ public class SpotImp implements Spot {
 	private String name;
 	/** This spot ID */
 	private int ID;
-	/** This spot's image */
-	private BufferedImage image = DEFAULT_IMAGE;
+	/** This spot's image. */
+	private String imageString = DEFAULT_IMAGE_STRING;
 
 	/*
 	 * CONSTRUCTORS
@@ -232,13 +238,15 @@ public class SpotImp implements Spot {
 	}
 
 	@Override
-	public BufferedImage getImage() {
-		return image;
+	public void setImageString(String str) {
+		this.imageString = str;
 	}
 
 	@Override
-	public void setImage(BufferedImage image) {
-		this.image = image;		
+	public String getImageStrin() {
+		return imageString;
 	}
+	
+	
 
 }
