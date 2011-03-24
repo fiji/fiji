@@ -28,7 +28,11 @@
 package tracing;
 
 import java.awt.event.MouseEvent;
+import java.awt.event.KeyEvent;
+import java.awt.Point;
 import java.awt.event.InputEvent;
+
+import javax.swing.SwingUtilities;
 
 import ij.IJ;
 
@@ -52,34 +56,100 @@ public class PointSelectionBehavior extends InteractiveBehavior {
 		this.tracerPlugin = tracerPlugin;
 	}
 
-	public void doProcess(final MouseEvent me) {
-		if( me.getID() != MouseEvent.MOUSE_PRESSED )
+	public void doProcess(final KeyEvent e) {
+
+		if( e.getID() != KeyEvent.KEY_TYPED )
 			return;
+
+		if( e.isConsumed() )
+			return;
+
+		if( ! tracerPlugin.isReady() )
+			return;
+
+		final int keyCode = e.getKeyCode();
+		final char keyChar = e.getKeyChar();
+
+		SwingUtilities.invokeLater( new Runnable() {
+				public void run() {
+
+					if( keyChar == 'y' || keyChar == 'Y' ) {
+
+						tracerPlugin.confirmTemporary( );
+						e.consume();
+
+					} else if( keyCode == KeyEvent.VK_ESCAPE ) {
+
+						tracerPlugin.cancelTemporary( );
+						e.consume();
+
+					} else if( keyChar == 'f' || keyChar == 'F' ) {
+
+						tracerPlugin.finishedPath( );
+						e.consume();
+
+					} else if( keyChar == 'v' || keyChar == 'V' ) {
+
+						tracerPlugin.makePathVolume( );
+						e.consume();
+
+					} else if( keyChar == '5' ) {
+
+						tracerPlugin.getXYCanvas().toggleJustNearSlices();
+						e.consume();
+
+					} else if( keyChar == 'g' || keyChar == 'G' ) {
+
+						Point p = univ.getCanvas().getMousePosition();
+						if( p == null )
+							return;
+						Picker picker = univ.getPicker();
+						Content c = picker.getPickedContent(p.x, p.y);
+						if (null == c)
+							return;
+						final Point3d point = picker.getPickPointGeometry(c, p.x, p.y);
+						double diagonalLength = tracerPlugin.getStackDiagonalLength();
+
+						/* Find the nearest point on any path - we'll
+						   select that path... */
+
+						NearPoint np = tracerPlugin.getPathAndFillManager().nearestPointOnAnyPath( point.x,
+															   point.y,
+															   point.z,
+															   diagonalLength);
+						if( np == null ) {
+							IJ.error("BUG: No nearby path was found within "+diagonalLength+" of the pointer");
+							return;
+						}
+
+						Path path = np.getPath();
+						tracerPlugin.selectPath( path, keyChar == 'G' );
+						e.consume();
+					}
+
+				}} );
+	}
+
+	public void doProcess(final MouseEvent me) {
 		if( me.isConsumed() || Toolbar.getToolId() != Toolbar.WAND )
+			return;
+		if( me.getID() != MouseEvent.MOUSE_CLICKED )
 			return;
 		Picker picker = univ.getPicker();
 		Content c = picker.getPickedContent(me.getX(), me.getY());
 		if (null == c)
 			return;
 
-		/*
-		ImagePlus imp = c.getImage();
-		if (null == imp) {
-			IJ.log("Cannot segment non-image object!");
-			return null; // not a volume
-		}
-		*/
+		final Point3d point = picker.getPickPointGeometry(c, me.getX(), me.getY());
 
-		Point3d point = picker.getPickPointGeometry(c, me.getX(), me.getY());
-
-		// FIXME: occurs elsewhere, DRY:
 		boolean mac = IJ.isMacintosh();
 
 		boolean shift_key_down = (me.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0;
-		boolean joiner_modifier_down = mac ? ((me.getModifiersEx() & InputEvent.ALT_DOWN_MASK) != 0) : ((me.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0);
+		final boolean joiner_modifier_down = mac ? ((me.getModifiersEx() & InputEvent.ALT_DOWN_MASK) != 0) : ((me.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0);
 
-		tracerPlugin.clickForTrace(point,joiner_modifier_down);
-		me.consume();
+		SwingUtilities.invokeLater( new Runnable() {
+				public void run() {
+					tracerPlugin.clickForTrace(point,joiner_modifier_down);
+				}} );
 	}
-
 }
