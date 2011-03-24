@@ -19,8 +19,10 @@ public class ResetRadiusAction extends AbstractTMAction {
 
 	@Override
 	public String getInfoText() {
-		return "This action resets the radius of all retained spots back to the value" +
-				"given in the segmenter settings.";
+		return "<html>" +
+				"This action resets the radius of all retained spots back to the value <br> " +
+				"given in the segmenter settings. " +
+				"</html>";
 	}
 	
 	@Override

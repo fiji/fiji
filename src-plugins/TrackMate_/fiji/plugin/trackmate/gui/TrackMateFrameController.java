@@ -68,7 +68,8 @@ public class TrackMateFrameController {
 		CHOOSE_TRACKER,
 		TUNE_TRACKER,
 		TRACKING,
-		TUNE_DISPLAY;
+		TUNE_DISPLAY,
+		ACTIONS;
 		
 		/**
 		 * Provide the next state the view should be into when pushing the 'next' button.
@@ -100,7 +101,8 @@ public class TrackMateFrameController {
 			case TRACKING:
 				return TUNE_DISPLAY;
 			case TUNE_DISPLAY:
-				return TUNE_DISPLAY;
+			case ACTIONS:
+				return ACTIONS;				
 			}
 			return null;
 		}
@@ -112,6 +114,7 @@ public class TrackMateFrameController {
 		public GuiState previousState() {
 			switch (this) {
 			case CHOOSE_SEGMENTER:
+			case START:
 				return START;
 			case TUNE_SEGMENTER:
 				return CHOOSE_SEGMENTER;
@@ -135,8 +138,8 @@ public class TrackMateFrameController {
 				return TUNE_TRACKER;
 			case TUNE_DISPLAY:
 				return TRACKING;
-			case START:
-				return START;
+			case ACTIONS:
+				return TUNE_DISPLAY;
 			}
 			return null;
 		}
@@ -193,6 +196,9 @@ public class TrackMateFrameController {
 			case TUNE_DISPLAY:
 				key = PanelCard.DISPLAYER_PANEL_KEY;
 				break;
+				
+			case ACTIONS:
+				key = PanelCard.ACTION_PANEL_KEY;
 			}
 			final GuiState state = this;
 			SwingUtilities.invokeLater(new Runnable() {
@@ -205,7 +211,7 @@ public class TrackMateFrameController {
 						view.jButtonPrevious.setEnabled(false);
 						view.jButtonNext.setEnabled(true);
 						break;
-					case TUNE_DISPLAY:
+					case ACTIONS:
 						view.jButtonPrevious.setEnabled(true);
 						view.jButtonNext.setEnabled(false);
 						break;

@@ -86,6 +86,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	private JPanel jPanelMain;
 	private LogPanel logPanel;
 	private CardLayout cardLayout;
+	private ActionChooserPanel actionPanel;
 
 
 	/*
@@ -102,7 +103,8 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		TRACKER_CHOICE_KEY,
 		TUNE_TRACKER_KEY,
 		LOG_PANEL_KEY,
-		DISPLAYER_PANEL_KEY;
+		DISPLAYER_PANEL_KEY, 
+		ACTION_PANEL_KEY;
 	}
 	
 	
@@ -205,6 +207,12 @@ public class TrackMateFrame extends javax.swing.JFrame {
 				jPanelMain.remove(displayerPanel);
 			displayerPanel = new DisplayerPanel(model.getFeatureValues());
 			panel = displayerPanel;
+			break;
+			
+		case ACTION_PANEL_KEY:
+			if (null == actionPanel)
+				actionPanel = new ActionChooserPanel(model);
+			panel = actionPanel;
 			break;
 		}
 		

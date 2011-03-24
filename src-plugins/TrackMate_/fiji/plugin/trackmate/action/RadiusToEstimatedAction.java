@@ -9,8 +9,10 @@ public class RadiusToEstimatedAction implements TrackMateAction { // extends Abs
 
 	@Override
 	public String getInfoText() {
-		return "This action changes the radius feature of all retained spots" +
-				"to its estimated value, calculated with the radius estimator";
+		return "<html>" +
+				"This action changes the radius feature of all retained spots <br> " +
+				"to its estimated value, calculated with the radius estimator <br> " +
+				"</html>" ;
 	}
 	
 	@Override

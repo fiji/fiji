@@ -5,8 +5,8 @@ import fiji.plugin.trackmate.TrackMateModelInterface;
 
 public enum ActionType implements InfoTextable {
 	SET_RADIUS_TO_ESTIMATED (new RadiusToEstimatedAction()),
-	RESET_RADIUS_TO_EXPECTED (new ResetRadiusAction());
-
+	RESET_RADIUS_TO_EXPECTED (new ResetRadiusAction()),
+	RECOMPUTE_ALL_FEATURES (new RecalculateFeatureAction());
 	
 	private TrackMateAction action;
 

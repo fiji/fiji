@@ -6,15 +6,19 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JFrame;
 
 import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.action.ActionType;
 
 public class ActionChooserPanel extends EnumChooserPanel<ActionType> {
 
 	private static final long serialVersionUID = 1L;
-	private static final Icon EXECUTE_ICON = null;
+	private static final Icon EXECUTE_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/control_play_blue.png"));
+	
 	public final ActionEvent ACTION_STARTED = new ActionEvent(this, 0, "ActionStarted");
 	public final ActionEvent ACTION_FINISHED = new ActionEvent(this, 1, "ActionFinished");
 	private TrackMateModelInterface model;
@@ -27,7 +31,7 @@ public class ActionChooserPanel extends EnumChooserPanel<ActionType> {
 	
 	private void init() {
 		final JButton executeButton = new JButton("Execute", EXECUTE_ICON);
-		executeButton.setBounds(12, 270, 80, 40);
+		executeButton.setBounds(15, 370, 100, 40);
 		executeButton.setFont(FONT);
 		executeButton.addActionListener(new ActionListener() {			
 			@Override
@@ -35,16 +39,31 @@ public class ActionChooserPanel extends EnumChooserPanel<ActionType> {
 				new Thread("TrackMate action thread") {
 					@Override
 					public void run() {
-						executeButton.setEnabled(false);
-						fireAction(ACTION_STARTED);
-						ActionType type = getChoice();
-						type.execute(model);
-						fireAction(ACTION_FINISHED);
-						executeButton.setEnabled(true);
+						try {
+							executeButton.setEnabled(false);
+							fireAction(ACTION_STARTED);
+							ActionType type = getChoice();
+							type.execute(model);
+							fireAction(ACTION_FINISHED);
+						} finally {
+							executeButton.setEnabled(true);
+						}
 					}
 				}.start();
 			}
 		});
+		add(executeButton);
+	}
+	
+	/*
+	 * MAIN METHOD
+	 */
+	
+	public static void main(String[] args) {
+		JFrame frame = new JFrame();
+		frame.getContentPane().add(new ActionChooserPanel(new TrackMate_()));
+		frame.setSize(300, 520);
+		frame.setVisible(true);
 	}
 
 }
