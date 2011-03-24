@@ -101,10 +101,10 @@ public class HyperStackDisplayerTestDrive {
 
 		});
 
-		displayer.addSpotCollectionEditListener(trackScheme);
 		
 		TrackMateModelManager manager = new TrackMateModelManager(model);
-		displayer.addSpotCollectionEditListener(manager);
+		displayer.addSpotCollectionEditListener(manager); // Needed to compute the new feature first
+		displayer.addSpotCollectionEditListener(trackScheme); // In the other order, it does not work (edge)
 		
 		new SpotSelectionManager(displayer, trackScheme);
 		

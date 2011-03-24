@@ -1,10 +1,7 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
-import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
-
 import java.awt.Point;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.TreeMap;
@@ -12,12 +9,10 @@ import java.util.TreeMap;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JPopupMenu;
-import javax.swing.JTextField;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import com.mxgraph.model.mxCell;
-import com.mxgraph.swing.view.mxCellEditor;
 import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxEventSource.mxIEventListener;
@@ -111,6 +106,7 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 						// Link if not linked already
 						if (frame.trackGraph.containsEdge(previousSpot, currentSpot))
 							continue;
+						// This will update the mxGraph view
 						DefaultWeightedEdge edge = frame.lGraph.addEdge(previousSpot, currentSpot);
 						frame.lGraph.setEdgeWeight(edge, -1); // Default Weight
 						// Update the MODEL graph as well

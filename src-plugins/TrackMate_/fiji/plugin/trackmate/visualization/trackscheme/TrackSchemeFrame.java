@@ -49,6 +49,7 @@ import com.mxgraph.swing.handler.mxRubberband;
 import com.mxgraph.util.mxConstants;
 import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
+import com.mxgraph.util.mxUtils;
 import com.mxgraph.util.mxEventSource.mxIEventListener;
 import com.mxgraph.view.mxGraphSelectionModel;
 import com.mxgraph.view.mxPerimeter;
@@ -116,11 +117,11 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_FILLCOLOR, "white");
 		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_FONTCOLOR, "black");
 		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_ALIGN, mxConstants.ALIGN_RIGHT);
-		BASIC_EDGE_STYLE.put(mxConstants.STYLE_VERTICAL_ALIGN, mxConstants.ALIGN_MIDDLE);
 		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_SHAPE, mxScaledLabelShape.SHAPE_NAME);
 		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_IMAGE_ALIGN, mxConstants.ALIGN_LEFT);
 		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_ROUNDED, true);
 		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_PERIMETER, mxPerimeter.RectanglePerimeter);
+		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_STROKECOLOR, "#FF00FF");
 		
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_CONNECTOR);
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_ALIGN, mxConstants.ALIGN_CENTER);
@@ -162,7 +163,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	public void collectionChanged(SpotCollectionEditEvent event) {
 
 		if (event.getFlag() == SpotCollectionEditEvent.SPOT_CREATED) {
-
+			
 			int targetColumn = 0;
 			for (int i = 0; i < graphComponent.getColumnWidths().length; i++)
 				targetColumn += graphComponent.getColumnWidths()[i];
@@ -179,10 +180,12 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 					float instant = spot.getFeature(Feature.POSITION_T);
 					double x = (targetColumn-2) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
 					double y = (0.5 + graphComponent.getRowForInstant().get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2; 
-					int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Feature.RADIUS)));
+					int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Feature.RADIUS) / settings.dx));
 					height = Math.max(height, 12);
 					mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
 					cell.setGeometry(geometry);
+					// Set its style
+					graph.getModel().setStyle(cell, mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+spot.getImageString());
 					// Finally add it to the mxGraph
 					graph.addCell(cell, graph.getDefaultParent());
 					// Echo the new cell to the maps
@@ -194,8 +197,26 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 				graph.getModel().endUpdate();
 			}
 
+		} else if (event.getFlag() == SpotCollectionEditEvent.SPOT_MODIFIED) {
+			
+			mxCell cell = null;
+			String style;
+			try {
+				graph.getModel().beginUpdate();
+				for (Spot spot : event.getSpots()) {
+					cell = graph.getVertexToCellMap().get(spot);
+					style = cell.getStyle();
+					style = mxUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64,"+spot.getImageString());
+					graph.getModel().setStyle(cell, style);
+					int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Feature.RADIUS) / settings.dx));
+					graph.getModel().getGeometry(cell).setHeight(height);
+				}
+			} finally {
+				graph.getModel().endUpdate();
+			}
+			
 		} else if (event.getFlag() == SpotCollectionEditEvent.SPOT_DELETED) {
-
+		
 			try {
 				graph.getModel().beginUpdate();
 				mxCell[] cells = new mxCell[event.getSpots().length];
@@ -320,7 +341,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			graph.getModel().beginUpdate();
 			for(mxCell cell : graph.getCellToVertexMap().keySet()) {
 				Spot spot = graph.getCellToVertexMap().get(cell);
-				graph.getModel().setStyle(cell, mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+spot.getImageStrin());
+				graph.getModel().setStyle(cell, mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+spot.getImageString());
 			}
 		} finally {
 			graph.getModel().endUpdate();

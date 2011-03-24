@@ -243,7 +243,7 @@ public class SpotImp implements Spot {
 	}
 
 	@Override
-	public String getImageStrin() {
+	public String getImageString() {
 		return imageString;
 	}
 	

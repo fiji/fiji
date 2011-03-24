@@ -113,5 +113,5 @@ public interface Spot {
 	 * Get the image, encoded as a Base64 string, that is used to represent this spot. 
 	 * @see mxBase64 
 	 */
-	public String getImageStrin();
+	public String getImageString();
 }

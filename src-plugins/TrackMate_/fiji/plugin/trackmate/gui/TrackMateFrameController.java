@@ -586,6 +586,7 @@ public class TrackMateFrameController {
 				// No feature thresholds, we assume we have the features calculated, and put ourselves
 				// in a state such that the threshold GUI will be displayed.
 				this.model = newModel;
+				this.manager = new TrackMateModelManager(model);
 				view.setModel(model);
 				state = GuiState.CALCULATE_FEATURES;
 				actionFlag = true;
@@ -593,7 +594,8 @@ public class TrackMateFrameController {
 				if (is3D)
 					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
 				else 
-					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);					 
+					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);	
+				displayer.addSpotCollectionEditListener(manager);				 
 				logger.log("Loading data finished, press 'next' to resume.\n");
 				switchNextButton(true);
 				return;
@@ -617,6 +619,7 @@ public class TrackMateFrameController {
 			// already in place.
 			if (null == selectedSpots) {
 				this.model = newModel;
+				manager = new TrackMateModelManager(model);
 				view.setModel(model);
 				state = GuiState.CALCULATE_FEATURES;
 				actionFlag = true;
@@ -626,6 +629,7 @@ public class TrackMateFrameController {
 				else 
 					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
 				displayer.setSpots(model.getSpots());
+				displayer.addSpotCollectionEditListener(manager);
 				logger.log("Loading data finished, press 'next' to resume.\n");
 				switchNextButton(true);
 				return;
@@ -650,6 +654,7 @@ public class TrackMateFrameController {
 				settings.trackerSettings = trackerSettings;
 				settings.trackerType = trackerSettings.trackerType;
 				newModel.setSettings(settings);
+				manager = new TrackMateModelManager(model);
 				this.model = newModel;
 				view.setModel(model);
 				// Stop at tune tracker panel
@@ -661,6 +666,7 @@ public class TrackMateFrameController {
 					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
 				displayer.setSpots(model.getSpots());
 				displayer.setSpotsToShow(model.getSelectedSpots());
+				displayer.addSpotCollectionEditListener(manager);
 				logger.log("Loading data finished, press 'next' to resume.\n");
 				switchNextButton(true);
 				return;
@@ -683,6 +689,7 @@ public class TrackMateFrameController {
 			}
 			if (null == trackGraph) {
 				this.model = newModel;
+				manager = new TrackMateModelManager(model);
 				view.setModel(model);
 				// Stop at tune tracker panel
 				state = GuiState.TUNE_TRACKER;
@@ -693,6 +700,7 @@ public class TrackMateFrameController {
 					displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
 				displayer.setSpots(model.getSpots());
 				displayer.setSpotsToShow(model.getSelectedSpots());
+				displayer.addSpotCollectionEditListener(manager);
 				logger.log("Loading data finished, press 'next' to resume.\n");
 				switchNextButton(true);
 				return;
@@ -703,6 +711,7 @@ public class TrackMateFrameController {
 		}
 		
 		this.model = newModel;
+		manager = new TrackMateModelManager(model);
 		view.setModel(model);
 		state = GuiState.TRACKING;
 		actionFlag = true; // force redraw and relinking
@@ -714,6 +723,7 @@ public class TrackMateFrameController {
 		displayer.setSpots(model.getSpots());
 		displayer.setSpotsToShow(model.getSelectedSpots());
 		displayer.setTrackGraph(model.getTrackGraph());
+		displayer.addSpotCollectionEditListener(manager);
 		logger.log("Loading data finished, press 'next' to resume.\n");
 		switchNextButton(true);
 	}
