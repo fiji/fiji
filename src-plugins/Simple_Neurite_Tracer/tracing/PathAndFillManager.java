@@ -265,7 +265,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		TreeSet<Path> pathsLeft = new TreeSet<Path>();
 
 		for( int i = 0; i < allPaths.size(); ++i ) {
-			pathsLeft.add(allPaths.get(i));
+			Path p = allPaths.get(i);
+			if( ! p.isFittedVersionOfAnotherPath() )
+				pathsLeft.add(allPaths.get(i));
 		}
 
 		int markedAsPrimary = 0;
