@@ -65,6 +65,8 @@ import ij3d.UniverseListener;
 import util.Bresenham3D;
 import util.XMLFunctions;
 
+import java.text.DecimalFormat;
+
 @SuppressWarnings("serial")
 class TracesFileFormatException extends SAXException {
 	public TracesFileFormatException(String message) {
@@ -244,6 +246,78 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	public boolean anySelected( ) {
 		return selectedPathsSet.size() > 0;
+	}
+
+	private static final DecimalFormat fileIndexFormatter = new DecimalFormat("000");
+	protected File getSWCFileForIndex(String prefix, int index) {
+		return new File(prefix+"-"+fileIndexFormatter.format(index)+".swc");
+	}
+
+	public boolean checkOKToWriteAllAsSWC( String prefix ) {
+		List<Path> primaryPaths = Arrays.asList(getPathsStructured());
+		int n = primaryPaths.size();
+		String errorMessage = "";
+		for( int i = 0; i < n; ++i ) {
+			System.out.println("primaryPath is: "+primaryPaths.get(i).realToString());
+			File swcFile = getSWCFileForIndex( prefix, i );
+			System.out.println("Checking the existence of: "+swcFile.getAbsolutePath());
+			if( swcFile.exists() )
+				errorMessage += swcFile.getAbsolutePath()+"\n";
+		}
+		if( errorMessage.length() == 0 )
+			return true;
+		else {
+			errorMessage = "The following files would be overwritten:\n"+errorMessage;
+			errorMessage += "Continue to save, overwriting these files?";
+			return IJ.showMessageWithCancel("Confirm overwriting SWC files...",
+							errorMessage);
+		}
+	}
+
+	public synchronized boolean exportAllAsSWC( String prefix ) {
+		List<Path> primaryPaths = Arrays.asList(getPathsStructured());
+		int i = 0;
+		for( Path primaryPath : primaryPaths ) {
+			System.out.println("writing out path: "+primaryPath.realToString());
+			File swcFile = getSWCFileForIndex( prefix, i );
+			HashSet<Path> connectedPaths = new HashSet<Path>();
+			LinkedList<Path> nextPathsToConsider = new LinkedList<Path>();
+			nextPathsToConsider.add(primaryPath);
+			while( nextPathsToConsider.size() > 0 ) {
+				Path currentPath = nextPathsToConsider.removeFirst();
+				connectedPaths.add(currentPath);
+				for( Path joinedPath : currentPath.somehowJoins ) {
+					if( ! connectedPaths.contains(joinedPath) )
+						nextPathsToConsider.add( joinedPath );
+				}
+			}
+
+			ArrayList<SWCPoint> swcPoints = null;
+			try {
+				swcPoints = getSWCFor( connectedPaths );
+			} catch( SWCExportException see ) {
+				IJ.error(""+see.getMessage());
+				return false;
+			}
+
+			IJ.showStatus("Exporting SWC data to "+swcFile.getAbsolutePath());
+
+			// FIXME: done elsewhere - DRY
+			try {
+				PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(swcFile),"UTF-8"));
+				pw.println("# Exported from \"Simple Neurite Tracer\" version "+SimpleNeuriteTracer.PLUGIN_VERSION);
+				for( SWCPoint p : swcPoints )
+					p.println(pw);
+				pw.close();
+
+			} catch( IOException ioe) {
+				IJ.error("Saving to "+swcFile.getAbsolutePath()+" failed");
+				return false;
+			}
+			++ i;
+		}
+		IJ.showStatus("Export finished.");
+		return true;
 	}
 
 	/* This method returns an array of the "primary paths", which
