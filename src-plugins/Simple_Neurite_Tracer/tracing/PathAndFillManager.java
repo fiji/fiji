@@ -258,9 +258,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		int n = primaryPaths.size();
 		String errorMessage = "";
 		for( int i = 0; i < n; ++i ) {
-			System.out.println("primaryPath is: "+primaryPaths.get(i).realToString());
 			File swcFile = getSWCFileForIndex( prefix, i );
-			System.out.println("Checking the existence of: "+swcFile.getAbsolutePath());
 			if( swcFile.exists() )
 				errorMessage += swcFile.getAbsolutePath()+"\n";
 		}
@@ -278,7 +276,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		List<Path> primaryPaths = Arrays.asList(getPathsStructured());
 		int i = 0;
 		for( Path primaryPath : primaryPaths ) {
-			System.out.println("writing out path: "+primaryPath.realToString());
 			File swcFile = getSWCFileForIndex( prefix, i );
 			HashSet<Path> connectedPaths = new HashSet<Path>();
 			LinkedList<Path> nextPathsToConsider = new LinkedList<Path>();
