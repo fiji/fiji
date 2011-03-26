@@ -830,12 +830,12 @@ public class Path implements Comparable<Path> {
 		double [] best;
 		double [] initial;
 
-		byte [] data;
-		int minValueInData;
-		int maxValueInData;
+		float [] data;
+		float minValueInData;
+		float maxValueInData;
 		int side;
 
-		public CircleAttempt(double [] start, byte [] data, int minValueInData, int maxValueInData, int side ) {
+		public CircleAttempt(double [] start, float [] data, float minValueInData, float maxValueInData, int side ) {
 
 			this.data = data;
 			this.minValueInData = minValueInData;
@@ -886,7 +886,7 @@ public class Path implements Comparable<Path> {
 
 			for( int i = 0; i < side; ++i ) {
 				for( int j = 0; j < side; ++j ) {
-					int value = data[j*side+i] & 0xFF;
+					float value = data[j*side+i];
 					if( r * r > ((i - x) * (i - x)  + (j - y) * (j - y)) )
 						badness += (maxValueInData - value) * (maxValueInData - value);
 					else
@@ -970,19 +970,19 @@ public class Path implements Comparable<Path> {
 		result[2] = precise_z_positions[max_index] - precise_z_positions[min_index];
 	}
 
-	public byte [] squareNormalToVector( int side,        // The number of samples in x and y in the plane, separated by step
-					     double step,     // step is in the same units as the _spacing, etc. variables.
-					     double ox,      /* These are scaled now */
-					     double oy,
-					     double oz,
-					     double nx,
-					     double ny,
-					     double nz,
-					     double [] x_basis_vector, /* The basis vectors are returned here  */
-					     double [] y_basis_vector, /* they *are* scaled by _spacing        */
-					     ImagePlus image ) {
+	public float [] squareNormalToVector( int side,        // The number of samples in x and y in the plane, separated by step
+					      double step,     // step is in the same units as the _spacing, etc. variables.
+					      double ox,      /* These are scaled now */
+					      double oy,
+					      double oz,
+					      double nx,
+					      double ny,
+					      double nz,
+					      double [] x_basis_vector, /* The basis vectors are returned here  */
+					      double [] y_basis_vector, /* they *are* scaled by _spacing        */
+					      ImagePlus image ) {
 
-		byte [] result = new byte[side*side];
+		float [] result = new float[side*side];
 
 		double epsilon = 0.000001;
 
@@ -1056,10 +1056,12 @@ public class Path implements Comparable<Path> {
 		int width = image.getWidth();
 		int height = image.getHeight();
 		int depth = image.getStackSize();
-		byte [][] v = new byte[depth][];
+		float [][] v = new float[depth][];
 		ImageStack s = image.getStack();
-		for( int z = 0; z < depth; ++z )
-			v[z] = (byte []) s.getPixels( z + 1 );
+		for( int z = 0; z < depth; ++z ) {
+			FloatProcessor fp = (FloatProcessor)s.getProcessor(z+1).convertToFloat();
+			v[z] = (float []) fp.getPixels();
+		}
 
 		for( int grid_i = 0; grid_i < side; ++grid_i ) {
 			for( int grid_j = 0; grid_j < side; ++grid_j ) {
@@ -1118,17 +1120,17 @@ public class Path implements Comparable<Path> {
 
 				} else {
 
-					fff = v[z_f][width*y_f+x_f]&0xFF;
-					cff = v[z_c][width*y_f+x_f]&0xFF;
+					fff = v[z_f][width*y_f+x_f];
+					cff = v[z_c][width*y_f+x_f];
 
-					fcf = v[z_f][width*y_c+x_f]&0xFF;
-					ccf = v[z_c][width*y_c+x_f]&0xFF;
+					fcf = v[z_f][width*y_c+x_f];
+					ccf = v[z_c][width*y_c+x_f];
 
-					ffc = v[z_f][width*y_f+x_c]&0xFF;
-					cfc = v[z_c][width*y_f+x_c]&0xFF;
+					ffc = v[z_f][width*y_f+x_c];
+					cfc = v[z_c][width*y_f+x_c];
 
-					fcc = v[z_f][width*y_c+x_c]&0xFF;
-					ccc = v[z_c][width*y_c+x_c]&0xFF;
+					fcc = v[z_f][width*y_c+x_c];
+					ccc = v[z_c][width*y_c+x_c];
 
 				}
 
@@ -1145,12 +1147,7 @@ public class Path implements Comparable<Path> {
 
 				double value_f = w1 * (1 - x_d) + w2 * x_d;
 
-				int value = (int)value_f;
-				if( (value < 0) || (value > 255) ) {
-					System.out.println("BUG: Out of range value!");
-				}
-
-				result[grid_j*side+grid_i] = (byte)value;
+				result[grid_j*side+grid_i] = (float)value_f;
 			}
 		}
 
@@ -1233,7 +1230,7 @@ public class Path implements Comparable<Path> {
 			double [] x_basis_in_plane = new double[3];
 			double [] y_basis_in_plane = new double[3];
 
-			byte [] normalPlane = squareNormalToVector(
+			float [] normalPlane = squareNormalToVector(
 				side,
 				scaleInNormalPlane,   // This is in the same units as the _spacing, etc. variables.
 				x_world,      // These are scaled now
@@ -1266,14 +1263,12 @@ public class Path implements Comparable<Path> {
 			if( verbose )
 				System.out.println("start search at: "+startValues[0]+","+startValues[1]+" with radius: "+startValues[2]);
 
-			int minValueInSquare = Integer.MAX_VALUE;
-			int maxValueInSquare = Integer.MIN_VALUE;
+			float minValueInSquare = Float.MAX_VALUE;
+			float maxValueInSquare = Float.MIN_VALUE;
 			for( int j = 0; j < (side * side); ++j ) {
-				int value = normalPlane[j]&0xFF;
-				if( value > maxValueInSquare )
-					maxValueInSquare = value;
-				if( value < minValueInSquare )
-					minValueInSquare = value;
+				float value = normalPlane[j];
+				maxValueInSquare = Math.max(value, maxValueInSquare);
+				minValueInSquare = Math.min(value, minValueInSquare);
 			}
 
 			CircleAttempt attempt = new CircleAttempt(
@@ -1352,7 +1347,7 @@ public class Path implements Comparable<Path> {
 			if( verbose )
 				System.out.println("Adding a real slice.");
 
-			ByteProcessor bp = new ByteProcessor( side, side );
+			FloatProcessor bp = new FloatProcessor( side, side );
 			bp.setPixels(normalPlane);
 			stack.addSlice(null,bp);
 		}
