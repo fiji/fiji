@@ -59,6 +59,9 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		connectionHandler.addListener(mxEvent.CONNECT, this);
 		
 		mxGraphics2DCanvas.putShape(mxScaledLabelShape.SHAPE_NAME, new mxScaledLabelShape());
+		
+		setSwimlaneSelectionEnabled(true);
+		
 	}
 	
 	/*

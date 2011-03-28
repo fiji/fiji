@@ -53,6 +53,7 @@ import com.mxgraph.util.mxUtils;
 import com.mxgraph.util.mxEventSource.mxIEventListener;
 import com.mxgraph.view.mxGraphSelectionModel;
 import com.mxgraph.view.mxPerimeter;
+import com.mxgraph.view.mxSwimlaneManager;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
@@ -141,7 +142,6 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		this.trackGraph = trackGraph;
 		this.lGraph = new ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge>(trackGraph);
 		this.graph = createGraph();
-		graph.getStylesheet().getDefaultVertexStyle();
 		this.settings = settings;
 		init();
 		setSize(DEFAULT_SIZE);
@@ -335,7 +335,10 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		graph.setDropEnabled(false);
 		graph.getStylesheet().setDefaultEdgeStyle(BASIC_EDGE_STYLE);
 		graph.getStylesheet().setDefaultVertexStyle(BASIC_VERTEX_STYLE);
+		graph.setSwimlaneNesting(true);
 
+		mxSwimlaneManager manager = new mxSwimlaneManager(graph);
+		
 		// Set spot image to cell style
 		try {
 			graph.getModel().beginUpdate();

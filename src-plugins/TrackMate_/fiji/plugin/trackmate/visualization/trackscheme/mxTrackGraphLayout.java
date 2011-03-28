@@ -24,6 +24,7 @@ import com.mxgraph.layout.mxGraphLayout;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
 import com.mxgraph.util.mxConstants;
+import com.mxgraph.util.mxRectangle;
 import com.mxgraph.util.mxUtils;
 
 import fiji.plugin.trackmate.Feature;
@@ -107,6 +108,14 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 			String trackColorStr = null;
 
 			for (Set<Spot> track : tracks) {
+				
+				String rootStyle = "strokeColor=black";
+				rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_SHAPE, mxConstants.SHAPE_SWIMLANE);
+				mxCell rootCell = new mxCell();
+				rootCell.setStyle(rootStyle);
+				mxGeometry rootGeometry = new mxGeometry();
+				rootCell.setGeometry(rootGeometry);
+				graph.getModel().add(graph.getDefaultParent(), rootCell, 0);
 
 				// Get track color
 				trackColor = trackColors.get(track);
@@ -116,7 +125,13 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 				SortedSet<Spot> sortedTrack = new TreeSet<Spot>(SpotImp.frameComparator);
 				sortedTrack.addAll(track);
 				Spot root = sortedTrack.first();
-
+				
+				// Set this as parent for the coming track in JGraphX
+//				mxCell rootCell = graph.getVertexToCellMap().get(root);
+//				rootCell.setParent((mxICell) parent);
+//				mxGeometry rootGeometry = null; // will be set later
+				mxGeometry geometry = null;
+				
 				DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = new DepthFirstIterator<Spot, DefaultWeightedEdge>(jGraphT, root);
 				
 				while(iterator.hasNext()) {
@@ -140,16 +155,29 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 
 					// Get corresponding JGraphX cell 
 					mxCell cell = graph.getVertexToCellMap().get(spot);
-					cell.setValue(spot.toString());
+					cell.setValue(spot.toString());			
+					
+					if (cell != rootCell) {
+						System.out.println("Settings the parent of "+cell+" to "+rootCell); // DEBUG
+						graph.getModel().add(rootCell, cell, 0);
+						System.out.println("Done");
+					} else {
+						System.out.println("Dealing with track root");
+					}
 					
 					// Move the corresponding cell 
 					double x = (targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
 					double y = (0.5 + rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2;
 					int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Feature.RADIUS) / dx));
 					height = Math.max(height, 12);
-					mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
+					geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
+					
+					if (cell == rootCell) 
+						rootGeometry = geometry;
+					else
+						geometry.translate(- rootGeometry.getX(), - rootGeometry.getY());					
 					graph.getModel().setGeometry(cell, geometry);
-
+					
 					// Set cell style and image
 					String style = cell.getStyle();
 					style = mxUtils.setStyle(style, 
@@ -158,11 +186,12 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					style = graph.getModel().setStyle(cell, style);
 					
 					// Edges
-					Object[] objEdges = graph.getEdges(cell, parent, true, false, false);
+					Object[] objEdges = graph.getEdges(cell, null, true, false, false);
 					for(Object obj : objEdges) {
 						mxCell edgeCell = (mxCell) obj;
 						DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(edgeCell);
 						edgeCell.setValue(String.format("%.1f", jGraphT.getEdgeWeight(edge)));
+//						edgeCell.setParent(rootCell);
 						String edgeStyle = edgeCell.getStyle();
 						edgeStyle = mxUtils.setStyle(edgeStyle, 
 								mxConstants.STYLE_STROKECOLOR, 
@@ -170,6 +199,12 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 						graph.getModel().setStyle(edgeCell, style);
 					}
 				}
+				
+				rootGeometry.setAlternateBounds(new mxRectangle(
+						rootGeometry.getX(), 
+						rootGeometry.getY(), 
+						geometry.getX() + geometry.getWidth(), 
+						geometry.getY() + geometry.getHeight()));
 
 				for(Float instant : instants)
 					columns.put(instant, currentColumn+1);

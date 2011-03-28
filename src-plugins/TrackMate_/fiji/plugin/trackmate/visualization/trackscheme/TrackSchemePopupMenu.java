@@ -56,6 +56,21 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 					frame.graphComponent.startEditingAtCell(cell);
 				}
 			});
+			
+			// Fold
+			add(new AbstractAction("Fold track") {
+				public void actionPerformed(ActionEvent e) {
+					
+//					if (frame.graph.isCellFoldable(cell, true)) {
+						Object parent = frame.graph.getModel().getParent(cell);
+						frame.graph.setSwimlaneNesting(true);
+						frame.graph.foldCells(true, true, new Object[] { parent });
+//					} else {
+//						System.out.println("Non collapsable"); // DEBUG
+//					}
+					
+				}
+			});
 
 		} else { 
 			
@@ -127,6 +142,9 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 			};
 			add(removeAction);
 		}
+		
+		// Fold
+		
 
 	}
 	
