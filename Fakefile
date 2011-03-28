@@ -451,7 +451,7 @@ CFLAGS(win64)=$COMMONCFLAGS $WINOPTS \
 
 # Include 64-bit architectures only in ./fiji (as opposed to ./fiji-tiger),
 # and only on MacOSX
-MACOPTS(osx10.3)=-I/System/Library/Frameworks/JavaVM.Framework/Headers \
+MACOPTS(osx10.3)=-I/System/Library/Frameworks/JavaVM.Framework/Headers -Iincludes \
 	-DMACOSX \
 	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(macosx)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(macosx)"'
 MACOPTS(osx10.4)=$MACOPTS(osx10.3) -mmacosx-version-min=10.3 -arch i386 -arch ppc
