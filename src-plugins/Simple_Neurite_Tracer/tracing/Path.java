@@ -1052,15 +1052,33 @@ public class Path implements Comparable<Path> {
 
 		}
 
-		// FIXME: do other image types too...
 		int width = image.getWidth();
 		int height = image.getHeight();
 		int depth = image.getStackSize();
 		float [][] v = new float[depth][];
 		ImageStack s = image.getStack();
-		for( int z = 0; z < depth; ++z ) {
-			FloatProcessor fp = (FloatProcessor)s.getProcessor(z+1).convertToFloat();
-			v[z] = (float []) fp.getPixels();
+		int imageType = image.getType();
+		final int arraySize = width * height;
+		if( imageType == ImagePlus.GRAY8 || imageType == ImagePlus.COLOR_256 ) {
+			for( int z = 0; z < depth; ++z ) {
+				byte [] bytePixels = (byte[])s.getPixels(z+1);
+				float [] fa = new float[arraySize];
+				for( int i = 0; i < arraySize; ++i  )
+					fa[i] = bytePixels[i] & 0xFF;
+				v[z] = fa;
+			}
+		} else if( imageType == ImagePlus.GRAY16 ) {
+			for( int z = 0; z < depth; ++z ) {
+				short [] shortPixels = (short[])s.getPixels(z+1);
+				float [] fa = new float[arraySize];
+				for( int i = 0; i < arraySize; ++i  )
+					fa[i] = shortPixels[i];
+				v[z] = fa;
+			}
+		} else if( imageType == ImagePlus.GRAY32 ) {
+			for( int z = 0; z < depth; ++z ) {
+				v[z] = (float[])s.getPixels(z+1);
+			}
 		}
 
 		for( int grid_i = 0; grid_i < side; ++grid_i ) {
