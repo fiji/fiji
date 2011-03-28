@@ -32,7 +32,6 @@ package mpicbg.imglib.algorithm.math;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.util.RealSum;
 import mpicbg.imglib.type.Type;
 
 /**
@@ -49,6 +48,20 @@ public class ImageStatistics {
 	final public static <T extends RealType<T>> double getImageMean( final Image<T> img )
 	{
 		return getImageIntegral(img) / img.getNumPixels();
+	}
+
+	protected static class RealSum {
+		protected double sum;
+
+		protected void add( double value )
+		{
+			sum += value;
+		}
+
+		protected double getSum()
+		{
+			return sum;
+		}
 	}
 
 	/**
