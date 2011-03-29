@@ -335,9 +335,6 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		graph.setDropEnabled(false);
 		graph.getStylesheet().setDefaultEdgeStyle(BASIC_EDGE_STYLE);
 		graph.getStylesheet().setDefaultVertexStyle(BASIC_VERTEX_STYLE);
-		graph.setSwimlaneNesting(true);
-
-		mxSwimlaneManager manager = new mxSwimlaneManager(graph);
 		
 		// Set spot image to cell style
 		try {
@@ -349,7 +346,6 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		} finally {
 			graph.getModel().endUpdate();
 		}
-		
 		
 		// Set up listeners
 

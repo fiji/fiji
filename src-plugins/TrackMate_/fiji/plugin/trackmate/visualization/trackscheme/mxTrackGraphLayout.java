@@ -102,21 +102,18 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 			int previousColumn = 0;
 			Spot previousSpot = null;
 			int columnIndex = 0;
+			int trackIndex = 0;
+			int spotIndex;
 			columnWidths = new int[tracks.size()];
 			trackColorArray = new Color[tracks.size()];
 			Color trackColor = null;
 			String trackColorStr = null;
+			mxCell rootCell = null;
+			mxGeometry rootGeometry = null;
+			mxGeometry geometry = null;
 
 			for (Set<Spot> track : tracks) {
 				
-				String rootStyle = "strokeColor=black";
-				rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_SHAPE, mxConstants.SHAPE_SWIMLANE);
-				mxCell rootCell = new mxCell();
-				rootCell.setStyle(rootStyle);
-				mxGeometry rootGeometry = new mxGeometry();
-				rootCell.setGeometry(rootGeometry);
-				graph.getModel().add(graph.getDefaultParent(), rootCell, 0);
-
 				// Get track color
 				trackColor = trackColors.get(track);
 				trackColorStr =  Integer.toHexString(trackColor.getRGB()).substring(2);
@@ -127,24 +124,33 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 				Spot root = sortedTrack.first();
 				
 				// Set this as parent for the coming track in JGraphX
-//				mxCell rootCell = graph.getVertexToCellMap().get(root);
-//				rootCell.setParent((mxICell) parent);
-//				mxGeometry rootGeometry = null; // will be set later
-				mxGeometry geometry = null;
+				rootCell = graph.getVertexToCellMap().get(root);
+				graph.getModel().add(parent, rootCell, trackIndex++);
 				
 				DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = new DepthFirstIterator<Spot, DefaultWeightedEdge>(jGraphT, root);
-				
+				spotIndex = 0;
 				while(iterator.hasNext()) {
 					
 					Spot spot = iterator.next();
+
+					// Get corresponding JGraphX cell 
+					mxCell cell = graph.getVertexToCellMap().get(spot);
+					cell.setValue(spot.toString());			
+
+					// Get default style					
+					String style = cell.getStyle();
 
 					// Determine in what column to put the spot
 					Float instant = spot.getFeature(Feature.POSITION_T);
 					int freeColumn = columns.get(instant) + 1;
 
 					// If we have no direct edge with the previous spot, we add 1 to the current column
-					if (!jGraphT.containsEdge(spot, previousSpot))
+					if (!jGraphT.containsEdge(spot, previousSpot)) {
 						currentColumn = currentColumn + 1;
+						// Switching column generates a new root
+						rootCell = cell;
+						spotIndex = 0;						
+					}
 					previousSpot = spot;
 
 					int targetColumn = Math.max(freeColumn, currentColumn);
@@ -153,16 +159,12 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					// Keep track of column filling
 					columns.put(instant, targetColumn);
 
-					// Get corresponding JGraphX cell 
-					mxCell cell = graph.getVertexToCellMap().get(spot);
-					cell.setValue(spot.toString());			
 					
+					// Tune for root cells
 					if (cell != rootCell) {
-						System.out.println("Settings the parent of "+cell+" to "+rootCell); // DEBUG
-						graph.getModel().add(rootCell, cell, 0);
-						System.out.println("Done");
+						graph.getModel().add(rootCell, cell, spotIndex++);
 					} else {
-						System.out.println("Dealing with track root");
+						style = mxUtils.setStyle(style, mxConstants.STYLE_ROUNDED, "false");
 					}
 					
 					// Move the corresponding cell 
@@ -179,7 +181,6 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					graph.getModel().setGeometry(cell, geometry);
 					
 					// Set cell style and image
-					String style = cell.getStyle();
 					style = mxUtils.setStyle(style, 
 							mxConstants.STYLE_STROKECOLOR, 
 							trackColorStr);
@@ -203,8 +204,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 				rootGeometry.setAlternateBounds(new mxRectangle(
 						rootGeometry.getX(), 
 						rootGeometry.getY(), 
-						geometry.getX() + geometry.getWidth(), 
-						geometry.getY() + geometry.getHeight()));
+						100, 100));
 
 				for(Float instant : instants)
 					columns.put(instant, currentColumn+1);
