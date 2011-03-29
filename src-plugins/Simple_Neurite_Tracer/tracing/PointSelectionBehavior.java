@@ -138,7 +138,13 @@ public class PointSelectionBehavior extends InteractiveBehavior {
 	public void doProcess(final MouseEvent me) {
 		if( me.isConsumed() || Toolbar.getToolId() != Toolbar.WAND )
 			return;
-		if( me.getID() != MouseEvent.MOUSE_CLICKED )
+		int mouseEventID = me.getID();
+		/* It's nice to still be able to zoom with the mouse wheel, so
+		   don't consume this event. */
+		if( mouseEventID == MouseEvent.MOUSE_WHEEL )
+			return;
+		me.consume();
+		if( mouseEventID != MouseEvent.MOUSE_CLICKED )
 			return;
 		Picker picker = univ.getPicker();
 		Content c = picker.getPickedContent(me.getX(), me.getY());
