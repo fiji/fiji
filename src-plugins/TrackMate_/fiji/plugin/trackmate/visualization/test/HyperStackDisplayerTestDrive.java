@@ -30,8 +30,8 @@ public class HyperStackDisplayerTestDrive {
 
 	public static void main(String[] args) throws JDOMException, IOException {
 		
-		File file = new File(HyperStackDisplayerTestDrive.class.getResource("FakeTracks.xml").getFile());
-//		File file = new File("E:/Users/JeanYves/Desktop/data/MAX_Celegans-5pc_17timepoints.xml");
+//		File file = new File(HyperStackDisplayerTestDrive.class.getResource("FakeTracks.xml").getFile());
+		File file = new File("E:/Users/JeanYves/Desktop/data/MAX_Celegans-5pc_17timepoints.xml");
 //		File file = new File("/Volumes/Data/Data/Confocal_LSM700/10-01-21/10-01-21-2hours.xml");
 		TmXmlReader reader = new TmXmlReader(file);
 		reader.parse();

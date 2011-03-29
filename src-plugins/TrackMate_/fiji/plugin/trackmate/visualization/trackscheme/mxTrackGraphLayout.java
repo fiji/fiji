@@ -103,16 +103,25 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 			Spot previousSpot = null;
 			int columnIndex = 0;
 			int trackIndex = 0;
+			int partIndex = 0;
 			int spotIndex;
+			int nEdgesPreviousSpot = 0;
+			boolean createNewRoot = false;
+			
 			columnWidths = new int[tracks.size()];
 			trackColorArray = new Color[tracks.size()];
 			Color trackColor = null;
 			String trackColorStr = null;
 			mxCell rootCell = null;
-			mxGeometry rootGeometry = null;
 			mxGeometry geometry = null;
 
 			for (Set<Spot> track : tracks) {
+				
+				// Init track variables
+				double maxX = 0;
+				double maxY = 0;
+				double laneTopX = 0;
+				double laneTopY = 0;
 				
 				// Get track color
 				trackColor = trackColors.get(track);
@@ -121,13 +130,14 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 				// Sort by ascending order
 				SortedSet<Spot> sortedTrack = new TreeSet<Spot>(SpotImp.frameComparator);
 				sortedTrack.addAll(track);
-				Spot root = sortedTrack.first();
+				Spot first = sortedTrack.first();
+				mxCell firstCell = graph.getVertexToCellMap().get(first);
 				
-				// Set this as parent for the coming track in JGraphX
-				rootCell = graph.getVertexToCellMap().get(root);
-				graph.getModel().add(parent, rootCell, trackIndex++);
+				// Create track root
+				rootCell = makeRootCell(trackColorStr, trackIndex++, partIndex++);
 				
-				DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = new DepthFirstIterator<Spot, DefaultWeightedEdge>(jGraphT, root);
+				// Loop over track child
+				DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = new DepthFirstIterator<Spot, DefaultWeightedEdge>(jGraphT, first);
 				spotIndex = 0;
 				while(iterator.hasNext()) {
 					
@@ -135,8 +145,9 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 
 					// Get corresponding JGraphX cell 
 					mxCell cell = graph.getVertexToCellMap().get(spot);
-					cell.setValue(spot.toString());			
-
+					cell.setValue(spot.toString());
+					
+					
 					// Get default style					
 					String style = cell.getStyle();
 
@@ -147,44 +158,61 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					// If we have no direct edge with the previous spot, we add 1 to the current column
 					if (!jGraphT.containsEdge(spot, previousSpot)) {
 						currentColumn = currentColumn + 1;
-						// Switching column generates a new root
-						rootCell = cell;
-						spotIndex = 0;						
+						createNewRoot = true;
 					}
 					previousSpot = spot;
-
+					
+					
 					int targetColumn = Math.max(freeColumn, currentColumn);
 					currentColumn = targetColumn;
 
 					// Keep track of column filling
 					columns.put(instant, targetColumn);
-
-					
-					// Tune for root cells
-					if (cell != rootCell) {
-						graph.getModel().add(rootCell, cell, spotIndex++);
-					} else {
-						style = mxUtils.setStyle(style, mxConstants.STYLE_ROUNDED, "false");
-					}
-					
+				
 					// Move the corresponding cell 
 					double x = (targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
 					double y = (0.5 + rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2;
+//					if (cell == firstCell) {
+//						laneTopX = x; // - DEFAULT_CELL_WIDTH/2; //X_COLUMN_SIZE/2;
+//						laneTopY = y; // - DEFAULT_CELL_HEIGHT/2; //Y_COLUMN_SIZE/2 + DEFAULT_CELL_HEIGHT/2;
+//					}
 					int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Feature.RADIUS) / dx));
 					height = Math.max(height, 12);
 					geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
+
+					// Create a new root if needed
+					if (createNewRoot) {
+						makeRootGeometry(rootCell, laneTopX, laneTopY, maxX, maxY);
+						rootCell = makeRootCell(trackColorStr, trackIndex, partIndex++);
+						firstCell = cell;
+						maxX = 0;
+						maxY = 0;
+						laneTopX = x - DEFAULT_CELL_WIDTH/8; //- X_COLUMN_SIZE/2;
+						laneTopY = y - DEFAULT_CELL_HEIGHT/2; // - Y_COLUMN_SIZE/2 + DEFAULT_CELL_HEIGHT/2;
+						spotIndex = 0;
+						createNewRoot = false;
+					}
 					
-					if (cell == rootCell) 
-						rootGeometry = geometry;
-					else
-						geometry.translate(- rootGeometry.getX(), - rootGeometry.getY());					
+					// Add it to its root holder
+					graph.getModel().add(rootCell, cell, spotIndex++);
+
+					
+					// Translate geometry with respect to root cell
+					geometry.translate(- laneTopX, - laneTopY);					
 					graph.getModel().setGeometry(cell, geometry);
+					
+					// Store max position
+					if (x > maxX)
+						maxX = x;
+					if (y > maxY)
+						maxY = y;
 					
 					// Set cell style and image
 					style = mxUtils.setStyle(style, 
 							mxConstants.STYLE_STROKECOLOR, 
 							trackColorStr);
 					style = graph.getModel().setStyle(cell, style);
+					geometry.setRelative(false);
 					
 					// Edges
 					Object[] objEdges = graph.getEdges(cell, null, true, false, false);
@@ -192,20 +220,26 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 						mxCell edgeCell = (mxCell) obj;
 						DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(edgeCell);
 						edgeCell.setValue(String.format("%.1f", jGraphT.getEdgeWeight(edge)));
-//						edgeCell.setParent(rootCell);
 						String edgeStyle = edgeCell.getStyle();
 						edgeStyle = mxUtils.setStyle(edgeStyle, 
 								mxConstants.STYLE_STROKECOLOR, 
 								trackColorStr);
 						graph.getModel().setStyle(edgeCell, style);
 					}
+					
+					// Determine if we need to create a new root
+//					if (nEdgesPreviousSpot > 2)
+//						createNewRoot = true;
+					
+					
+					
+					
+					nEdgesPreviousSpot =  graph.getEdges(cell, null, true, true, false).length;
+					
 				}
 				
-				rootGeometry.setAlternateBounds(new mxRectangle(
-						rootGeometry.getX(), 
-						rootGeometry.getY(), 
-						100, 100));
-
+				makeRootGeometry(rootCell, laneTopX, laneTopY, maxX, maxY);
+				
 				for(Float instant : instants)
 					columns.put(instant, currentColumn+1);
 
@@ -240,5 +274,35 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 	 */
 	public Color[] getTrackColors() {
 		return trackColorArray;
+	}
+	
+	private mxCell makeRootCell(String trackColorStr, int trackIndex, int partIndex) {
+		// Set this as parent for the coming track in JGraphX
+		mxCell rootCell = (mxCell) graph.insertVertex(graph.getDefaultParent(), null, "Track "+trackIndex+"\npart "+partIndex, 100, 100, 100, 100);
+		rootCell.setConnectable(false);
+		
+		// Set the root style
+		String rootStyle = rootCell.getStyle();
+		rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_STROKECOLOR, "black");
+		rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_ROUNDED, "false");
+		rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_FILLCOLOR, "none");
+		rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_DASHED, "true");
+		rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_VERTICAL_ALIGN, mxConstants.ALIGN_TOP);
+		rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_FONTCOLOR, trackColorStr);
+		rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_FONTSTYLE, ""+mxConstants.FONT_BOLD);
+		graph.getModel().setStyle(rootCell, rootStyle);
+		
+		return rootCell;
+	}
+	
+	private void makeRootGeometry(mxCell rootCell, double laneTopX, double laneTopY, double maxX, double maxY) {
+		mxGeometry rootGeometry = new mxGeometry();
+		rootGeometry.setX(laneTopX);
+		rootGeometry.setY(laneTopY);
+		rootGeometry.setWidth(maxX - laneTopX + 9 * DEFAULT_CELL_WIDTH / 8);
+		rootGeometry.setHeight(maxY - laneTopY + DEFAULT_CELL_HEIGHT);
+		rootGeometry.setAlternateBounds(new mxRectangle(laneTopX, laneTopY, DEFAULT_CELL_WIDTH, DEFAULT_CELL_HEIGHT));
+		graph.getModel().setGeometry(rootCell, rootGeometry);
+
 	}
 }

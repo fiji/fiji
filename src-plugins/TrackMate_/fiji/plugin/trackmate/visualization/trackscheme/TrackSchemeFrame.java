@@ -312,6 +312,8 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 				model.beginUpdate();
 				try {
 					Spot spot = getCellToVertexMap().get(cell);
+					if (null == spot)
+						return;
 					String str = (String) value;
 					spot.setName(str);
 					getModel().setValue(cell, str);
@@ -551,6 +553,8 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 				public boolean isCellEditable(int row, int column) { return false; }
 			};
 			for (Spot spot : spots) {
+				if (null == spot)
+					continue;
 				Object[] columnData = new Object[Feature.values().length];
 				for (int i = 0; i < columnData.length; i++) 
 					columnData[i] = String.format("%.1f", spot.getFeature(Feature.values()[i]));
