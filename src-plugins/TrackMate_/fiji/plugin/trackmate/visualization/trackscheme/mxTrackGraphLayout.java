@@ -25,13 +25,12 @@ import com.mxgraph.layout.mxGraphLayout;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
 import com.mxgraph.util.mxConstants;
-import com.mxgraph.util.mxRectangle;
 import com.mxgraph.util.mxUtils;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.util.TMUtils;
+import fiji.plugin.trackmate.tracking.TrackSplitter;
 
 /**
  * This {@link mxGraphLayout} arranges cells on a graph in lanes corresponding to tracks. 
@@ -55,10 +54,6 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 	 * The spatial calibration in X. We need it to compute cell's height from spot radiuses.
 	 */
 	private float dx;
-	/**
-	 * We store swimlane cells (roots) so that we can purge them from the graph when redoing the layout.
-	 */
-	private ArrayList<Object> parentCells = new ArrayList<Object>();
 
 	/*
 	 * CONSTRUCTOR
@@ -73,8 +68,6 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 
 	@Override
 	public void execute(Object parent) {
-		
-		ArrayList<Object> newParents = new ArrayList<Object>();
 		
 		// Compute tracks
 		List<Set<Spot>> tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(jGraphT).connectedSets();
@@ -113,8 +106,6 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 			int previousColumn = 0;
 			int columnIndex = 0;
 			int trackIndex = 0;
-			int partIndex;
-			boolean createNewRoot = false;
 			
 			columnWidths = new int[tracks.size()];
 			trackColorArray = new Color[tracks.size()];
@@ -122,16 +113,10 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 			String trackColorStr = null;
 			Object currentParent = graph.getDefaultParent();
 			mxGeometry geometry = null;
-			boolean branchIsNew = false; // Used to make sure we add edges to the right parent
 						
 			for (Set<Spot> track : tracks) {
 				
 				// Init track variables
-				double maxX = 0;
-				double maxY = 0;
-				double laneTopX = 0;
-				double laneTopY = 0;
-				partIndex = 1;
 				trackIndex++;
 				Spot previousSpot = null;
 				
@@ -149,7 +134,6 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 				while(iterator.hasNext()) {
 					
 					Spot spot = iterator.next();
-					int vertexType = TMUtils.getVertexType(jGraphT, spot);
 					
 					// Get corresponding JGraphX cell 
 					mxCell cell = graph.getVertexToCellMap().get(spot);
@@ -165,8 +149,6 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					// If we have no direct edge with the previous spot, we add 1 to the current column
 					if (previousSpot != null && !jGraphT.containsEdge(spot, previousSpot)) {
 						currentColumn = currentColumn + 1;
-						createNewRoot = true;
-						branchIsNew = true;
 					}
 					previousSpot = spot;
 					
@@ -185,63 +167,20 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					height = Math.max(height, 12);
 					geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
 
-					if ((vertexType & TMUtils.BRANCH_START) > 0) {
-						createNewRoot = true;
-					}
-					
-					if ((vertexType & TMUtils.SPLITTING_POINT) > 0) {
-						// Close previous parent
-						makeRootGeometry(currentParent, laneTopX, laneTopY, maxX, maxY);
-						currentParent = graph.getDefaultParent();
-					}
-					
-					if ((vertexType & TMUtils.BRANCH_END) > 0) {
-						// Close this parent
-						makeRootGeometry(currentParent, laneTopX, laneTopY, maxX, maxY);
-					}
-					
-					// Create a new root if needed
-					if (createNewRoot) {
-						currentParent = makeRootCell(trackColorStr, trackIndex, partIndex++);
-						newParents.add(currentParent);
-						maxX = 0;
-						maxY = 0;
-						laneTopX = x - DEFAULT_CELL_WIDTH/8;
-						laneTopY = y - DEFAULT_CELL_HEIGHT/2;
-						createNewRoot = false;
-					}
-					
 					// Add it to its root cell holder
 					graph.getModel().add(currentParent, cell, 0); //spotIndex++);
-					if (currentParent == graph.getDefaultParent())
-						createNewRoot = true;
-					else
-						geometry.translate(- laneTopX, - laneTopY);	// Translate geometry with respect to root cell
-	
 					graph.getModel().setGeometry(cell, geometry);
-					
-					// Store max & min position
-					if (x > maxX)
-						maxX = x;
-					if (y > maxY)
-						maxY = y;
 					
 					// Set cell style and image
 					style = mxUtils.setStyle(style, mxConstants.STYLE_STROKECOLOR, trackColorStr);
 					style = graph.getModel().setStyle(cell, style);
-					geometry.setRelative(false);
 					
 					// Edges
 					Object[] objEdges = graph.getEdges(cell, null, true, false, false);
 					for(Object obj : objEdges) {
 						mxCell edgeCell = (mxCell) obj;
 						
-						if (branchIsNew) {
-							graph.getModel().add(graph.getDefaultParent(), edgeCell, 0);
-							branchIsNew = false;
-						}
-						else
-							graph.getModel().add(currentParent, edgeCell, 0);
+						graph.getModel().add(currentParent, edgeCell, 0);
 						
 						DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(edgeCell);
 						edgeCell.setValue(String.format("%.1f", jGraphT.getEdgeWeight(edge)));
@@ -252,8 +191,6 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					
 				}
 				
-				makeRootGeometry(currentParent, laneTopX, laneTopY, maxX, maxY);
-				
 				for(Float instant : instants)
 					columns.put(instant, currentColumn+1);
 
@@ -261,15 +198,53 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 				trackColorArray[columnIndex] = trackColor;
 				columnIndex++;
 				previousColumn = currentColumn;	
+				
+				// Change the parent of some spots to add them to branches
+				ArrayList<ArrayList<Spot>> branches = new TrackSplitter(jGraphT).splitTrackInBranches(track);
+				
+				for (ArrayList<Spot> branch : branches) {
+					
+					int partIndex = 0;
+					mxCell branchParent = makeParentCell(trackColorStr, trackIndex, partIndex++);
+					
+					double minX = Double.MAX_VALUE;
+					double minY = Double.MAX_VALUE;
+					double maxX = 0;
+					double maxY = 0;
+					
+					for (Spot spot : branch) {
+						
+						mxCell cell = graph.getVertexToCellMap().get(spot);
+						
+						mxGeometry geom = graph.getModel().getGeometry(cell);
+						if (minX > geom.getX()) 
+							minX = geom.getX(); 
+						if (minY > geom.getY()) 
+							minY = geom.getY(); 
+						if (maxX < geom.getX() + geom.getWidth()) 
+							maxX = geom.getX() + geom.getWidth(); 
+						if (maxY < geom.getY() + geom.getHeight()) 
+							maxY = geom.getY() + geom.getHeight();
+						
+						graph.getModel().add(branchParent, cell, 0);
+						
+					}
+					
+					mxGeometry branchGeometry = new mxGeometry(minX, minY, maxX-minX, maxY-minY);
+					graph.getModel().setGeometry(branchParent, branchGeometry);
+					
+					for (Spot spot : branch) {
+						mxCell cell = graph.getVertexToCellMap().get(spot);
+						graph.getModel().getGeometry(cell).translate(-branchGeometry.getX(), -branchGeometry.getY());
+					}
+					
+				}
+				
+				
+				
 
 			}  // loop over tracks
 
-			// Purge previous root cells
-			for (Object rc : parentCells) 
-				graph.getModel().remove(rc);
-			
-			// Store root cells for next call to #execute
-			parentCells = newParents;
 
 		} finally {
 			graph.getModel().endUpdate();
@@ -297,7 +272,10 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 		return trackColorArray;
 	}
 	
-	private mxCell makeRootCell(String trackColorStr, int trackIndex, int partIndex) {
+	
+	
+	
+	private mxCell makeParentCell(String trackColorStr, int trackIndex, int partIndex) {
 		// Set this as parent for the coming track in JGraphX
 		mxCell rootCell = (mxCell) graph.insertVertex(graph.getDefaultParent(), null, "Track "+trackIndex+"\nBranch "+partIndex, 100, 100, 100, 100);
 		rootCell.setConnectable(false);
@@ -318,14 +296,4 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 		return rootCell;
 	}
 	
-	private void makeRootGeometry(Object rootCell, double laneTopX, double laneTopY, double maxX, double maxY) {
-		mxGeometry rootGeometry = new mxGeometry();
-		rootGeometry.setX(laneTopX);
-		rootGeometry.setY(laneTopY);
-		rootGeometry.setWidth(maxX - laneTopX + 9 * DEFAULT_CELL_WIDTH / 8);
-		rootGeometry.setHeight(maxY - laneTopY + DEFAULT_CELL_HEIGHT);
-		rootGeometry.setAlternateBounds(new mxRectangle(laneTopX, laneTopY, rootGeometry.getWidth(), SWIMLANE_HEADER_SIZE));
-		graph.getModel().setGeometry(rootCell, rootGeometry);
-
-	}
 }
