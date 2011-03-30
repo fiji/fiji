@@ -43,46 +43,49 @@ public class TrackSplitter {
 	
 	
 	public ArrayList<ArrayList<Spot>> splitTrackInBranches(Set<Spot> track) {
+		
 		SortedSet<Spot> sortedTrack = new TreeSet<Spot>(SpotImp.frameComparator);
 		sortedTrack.addAll(track);
 		Spot first = sortedTrack.first();
 
-		ArrayList<Spot> trackParent = new ArrayList<Spot>();
-		ArrayList<ArrayList<Spot>> branchParent = new ArrayList<ArrayList<Spot>>();
-		ArrayList<Spot> currentParent = trackParent;
+		ArrayList<ArrayList<Spot>> branches = new ArrayList<ArrayList<Spot>>();
+		ArrayList<Spot> currentParent = null;
 		
 		DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = new DepthFirstIterator<Spot, DefaultWeightedEdge>(graph, first);
+		Spot previousSpot = null;
 		while (iterator.hasNext()) {
 			Spot spot = iterator.next();
 			
-			switch (getVertexType(graph, spot)) {
+			int type = getVertexType(graph, spot);
 			
-			case BRANCH_START:
-				if (currentParent.size() > 0)
-					currentParent = new ArrayList<Spot>();
+			if (type == BRANCH_START) {
+				branches.add(currentParent);
+				currentParent = new ArrayList<Spot>();
 				currentParent.add(spot);
-				break;
-				
-			case SPLITTING_EVENT:
-			case MERGING_EVENT:
-				branchParent.add(currentParent); // finish current branch
-				trackParent.add(spot); // add current spot to privilege list
+			
+			} else if (type == SPLITTING_POINT || type == MERGING_POINT) {
+				branches.add(currentParent); // finish current branch
 				currentParent = new ArrayList<Spot>(); // make a new branch
-				break;
 				
-			case BRANCH_END:
+			} else if (type == BRANCH_END) {
 				currentParent.add(spot);
-				branchParent.add(currentParent); // Finish this one
+				branches.add(currentParent); // Finish this one
 				currentParent = new ArrayList<Spot>(); // Create a new branch for the next spot
-				break;
 				
-			default:
+			} else if (!graph.containsEdge(spot, previousSpot)) {
+				branches.add(currentParent);
+				currentParent = new ArrayList<Spot>(); // make a new branch
 				currentParent.add(spot);
-				break;
-			}
+					
+			} else { 
+				currentParent.add(spot);
+			} 
+			
+			previousSpot = spot;
 			
 		}
-		return branchParent;
+				
+		return branches;
 	}
 	
 	

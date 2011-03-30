@@ -53,7 +53,8 @@ public class HyperStackDisplayerTestDrive {
 		model.setTrackGraph(trackGraph);
 
 		// Grab spot icons
-		model.computeFeatures();
+		if (null != settings.imp)
+			model.computeFeatures();
 				
 		final SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(SpotDisplayer.DisplayerType.HYPERSTACK_DISPLAYER, model);
 		displayer.setSpots(spots);

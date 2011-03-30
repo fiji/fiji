@@ -25,6 +25,7 @@ import com.mxgraph.layout.mxGraphLayout;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
 import com.mxgraph.util.mxConstants;
+import com.mxgraph.util.mxRectangle;
 import com.mxgraph.util.mxUtils;
 
 import fiji.plugin.trackmate.Feature;
@@ -54,6 +55,13 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 	 * The spatial calibration in X. We need it to compute cell's height from spot radiuses.
 	 */
 	private float dx;
+
+	private boolean doBranchGrouping = true;
+
+	/**
+	 * Used to keep a reference to the branch cell which will contain spot cells.
+	 * We need this to be able to purge them from the graph when we redo a layout.	 */
+	private ArrayList<mxCell> branchCells = new ArrayList<mxCell>();
 
 	/*
 	 * CONSTRUCTOR
@@ -113,6 +121,9 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 			String trackColorStr = null;
 			Object currentParent = graph.getDefaultParent();
 			mxGeometry geometry = null;
+			
+			// To keep a reference of branch cells, if any
+			ArrayList<mxCell> newBranchCells = new ArrayList<mxCell>();
 						
 			for (Set<Spot> track : tracks) {
 				
@@ -137,7 +148,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					
 					// Get corresponding JGraphX cell 
 					mxCell cell = graph.getVertexToCellMap().get(spot);
-					cell.setValue(spot.toString());
+					cell.setValue(""+TrackSplitter.getVertexType(jGraphT, spot)); //spot.toString());
 					
 					// Get default style					
 					String style = cell.getStyle();
@@ -200,51 +211,65 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 				previousColumn = currentColumn;	
 				
 				// Change the parent of some spots to add them to branches
-				ArrayList<ArrayList<Spot>> branches = new TrackSplitter(jGraphT).splitTrackInBranches(track);
 				
-				for (ArrayList<Spot> branch : branches) {
+				if (doBranchGrouping ) {
 					
-					int partIndex = 0;
-					mxCell branchParent = makeParentCell(trackColorStr, trackIndex, partIndex++);
 					
-					double minX = Double.MAX_VALUE;
-					double minY = Double.MAX_VALUE;
-					double maxX = 0;
-					double maxY = 0;
+					ArrayList<ArrayList<Spot>> branches = new TrackSplitter(jGraphT).splitTrackInBranches(track);
+
+					int partIndex = 1;
 					
-					for (Spot spot : branch) {
+					for (ArrayList<Spot> branch : branches) {
+
+						mxCell branchParent = makeParentCell(trackColorStr, trackIndex, partIndex++);
+						newBranchCells.add(branchParent);
+
+						double minX = Double.MAX_VALUE;
+						double minY = Double.MAX_VALUE;
+						double maxX = 0;
+						double maxY = 0;
+
+						for (Spot spot : branch) {
+
+							mxCell cell = graph.getVertexToCellMap().get(spot);
+
+							mxGeometry geom = graph.getModel().getGeometry(cell);
+							if (minX > geom.getX()) 
+								minX = geom.getX(); 
+							if (minY > geom.getY()) 
+								minY = geom.getY(); 
+							if (maxX < geom.getX() + geom.getWidth()) 
+								maxX = geom.getX() + geom.getWidth(); 
+							if (maxY < geom.getY() + geom.getHeight()) 
+								maxY = geom.getY() + geom.getHeight();
+
+							graph.getModel().add(branchParent, cell, 0);
+
+						}
+
+						minY -= SWIMLANE_HEADER_SIZE;
+						mxGeometry branchGeometry = new mxGeometry(minX, minY, maxX-minX, maxY-minY);
+						branchGeometry.setAlternateBounds(new mxRectangle(minX, minY, DEFAULT_CELL_WIDTH, SWIMLANE_HEADER_SIZE));
+						graph.getModel().setGeometry(branchParent, branchGeometry);
+
+						for (Spot spot : branch) {
+							mxCell cell = graph.getVertexToCellMap().get(spot);
+							graph.getModel().getGeometry(cell).translate(-branchGeometry.getX(), -branchGeometry.getY());
+						}
 						
-						mxCell cell = graph.getVertexToCellMap().get(spot);
-						
-						mxGeometry geom = graph.getModel().getGeometry(cell);
-						if (minX > geom.getX()) 
-							minX = geom.getX(); 
-						if (minY > geom.getY()) 
-							minY = geom.getY(); 
-						if (maxX < geom.getX() + geom.getWidth()) 
-							maxX = geom.getX() + geom.getWidth(); 
-						if (maxY < geom.getY() + geom.getHeight()) 
-							maxY = geom.getY() + geom.getHeight();
-						
-						graph.getModel().add(branchParent, cell, 0);
-						
-					}
-					
-					mxGeometry branchGeometry = new mxGeometry(minX, minY, maxX-minX, maxY-minY);
-					graph.getModel().setGeometry(branchParent, branchGeometry);
-					
-					for (Spot spot : branch) {
-						mxCell cell = graph.getVertexToCellMap().get(spot);
-						graph.getModel().getGeometry(cell).translate(-branchGeometry.getX(), -branchGeometry.getY());
 					}
 					
 				}
-				
-				
-				
 
 			}  // loop over tracks
 
+			// Clean previous branch cells
+			if (doBranchGrouping) {
+				for (mxCell branchCell : branchCells )
+					graph.getModel().remove(branchCell);
+				branchCells = newBranchCells;
+			}
+			
 
 		} finally {
 			graph.getModel().endUpdate();
