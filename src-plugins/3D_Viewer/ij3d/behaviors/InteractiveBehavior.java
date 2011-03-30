@@ -371,6 +371,8 @@ public class InteractiveBehavior extends Behavior {
 					e.consume();
 				}
 			}
+			if(!e.isConsumed())
+				canvas.getRoiCanvas().mousePressed(e);
 		} else if(id == MouseEvent.MOUSE_DRAGGED) {
 			if(shouldTranslate(mask)) {
 				if(c != null && !c.isLocked()) contentTransformer.translate(e);
@@ -387,11 +389,17 @@ public class InteractiveBehavior extends Behavior {
 				picker.movePoint(c, e);
 				e.consume();
 			}
+			if(!e.isConsumed()) {
+				canvas.getRoiCanvas().mouseDragged(e);
+				canvas.render();
+			}
 		} else if(id == MouseEvent.MOUSE_RELEASED) {
 			if(univ.ui.isPointTool()) {
 				picker.stopMoving();
 				e.consume();
 			}
+			if(!e.isConsumed())
+				canvas.getRoiCanvas().mouseReleased(e);
 		}
 		if(id == MouseEvent.MOUSE_WHEEL) {
 			int axis = -1;

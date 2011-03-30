@@ -273,7 +273,6 @@ public abstract class DefaultUniverse extends SimpleUniverse
 		scene.compile();
 		addBranchGraph(scene);
 
-		((ImageCanvas3D)getCanvas()).addListeners(this);
 		getCanvas().addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
