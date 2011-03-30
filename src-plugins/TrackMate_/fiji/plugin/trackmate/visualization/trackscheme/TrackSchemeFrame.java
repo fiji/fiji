@@ -53,7 +53,6 @@ import com.mxgraph.util.mxUtils;
 import com.mxgraph.util.mxEventSource.mxIEventListener;
 import com.mxgraph.view.mxGraphSelectionModel;
 import com.mxgraph.view.mxPerimeter;
-import com.mxgraph.view.mxSwimlaneManager;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
@@ -110,6 +109,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 
 	InfoPane infoPane;
 	mxTrackGraphComponent graphComponent;
+	private mxTrackGraphLayout graphLayout;
 	
 	private static final HashMap<String, Object> BASIC_VERTEX_STYLE = new HashMap<String, Object>();
 	private static final HashMap<String, Object> BASIC_EDGE_STYLE = new HashMap<String, Object>();
@@ -143,6 +143,8 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		this.lGraph = new ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge>(trackGraph);
 		this.graph = createGraph();
 		this.settings = settings;
+		this.graphLayout = new mxTrackGraphLayout(lGraph, graph, settings.dx);
+
 		init();
 		setSize(DEFAULT_SIZE);
 	}
@@ -259,7 +261,6 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	}
 
 	public void doTrackLayout() {
-		mxTrackGraphLayout graphLayout = new mxTrackGraphLayout(lGraph, graph, settings.dx);
 		graphLayout.execute(graph.getDefaultParent());
 
 		// Forward painting info to graph component
