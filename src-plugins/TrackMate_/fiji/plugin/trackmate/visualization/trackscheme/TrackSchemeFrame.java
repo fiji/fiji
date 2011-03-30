@@ -339,6 +339,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		graph.getStylesheet().setDefaultEdgeStyle(BASIC_EDGE_STYLE);
 		graph.getStylesheet().setDefaultVertexStyle(BASIC_VERTEX_STYLE);
 		
+		
 		// Set spot image to cell style
 		try {
 			graph.getModel().beginUpdate();
