@@ -132,6 +132,9 @@ public class LAPTracker extends AbstractSpotTracker {
 	/** Each index corresponds to a Spot in middleSplittingPoints, and holds
 	 * the track segment index that the middle point belongs to. */
 	protected int[] splittingMiddlePointsSegmentIndices;
+	/** The assignment problem solver that will be used by this tracker. 
+	 * @see #createAssignmentProblemSolver()	 */
+	protected AssignmentAlgorithm solver = null;
 	
 	
 	private final static String BASE_ERROR_MESSAGE = "LAPTracker: ";
@@ -153,6 +156,7 @@ public class LAPTracker extends AbstractSpotTracker {
 	public LAPTracker (SpotCollection spots, TrackerSettings settings) {
 		super(settings);
 		this.spots = spots;
+		this.solver  = createAssignmentProblemSolver();
 		// Add all spots to the graph
 		for(int frame : spots.keySet())
 			for(Spot spot : spots.get(frame))
@@ -164,7 +168,23 @@ public class LAPTracker extends AbstractSpotTracker {
 		this(spots, new TrackerSettings());
 	}
 
-
+	/*	
+	 * PROTECTED METHODS
+	 */
+	
+	/**
+	 * Hook for subclassers. Generate the assignment algorithm that will be used to solve 
+	 * the {@link AssignmentProblem} held by this tracker.
+	 * <p>
+	 * Here, by default, it returns the Hungarian algorithm implementation by Gary Baker and Nick
+	 * Perry that solves an assignment problem in O(n^4).  
+	 */
+	protected AssignmentAlgorithm createAssignmentProblemSolver() {
+		return new HungarianAlgorithm();
+	}
+	
+	
+	
 	/*
 	 * METHODS
 	 */
@@ -420,7 +440,6 @@ public class LAPTracker extends AbstractSpotTracker {
 	 * @see LAPTracker#createLinkingCostMatrices()
 	 */
 	public void solveLAPForTrackSegments() {
-		final AssignmentAlgorithm solver = new HungarianAlgorithm();
 		// Iterate properly over frame pair in order, not necessarily separated by 1.
 		Iterator<Integer> frameIterator = spots.keySet().iterator(); 
 		DefaultWeightedEdge edge;
@@ -474,8 +493,8 @@ public class LAPTracker extends AbstractSpotTracker {
 	 */
 	public int[][] solveLAPForFinalTracks() {
 		// Solve the LAP using the Hungarian Algorithm
-		AssignmentProblem hung = new AssignmentProblem(segmentCosts);
-		int[][] solutions = hung.solve(new HungarianAlgorithm());
+		AssignmentProblem problem = new AssignmentProblem(segmentCosts);
+		int[][] solutions = problem.solve(solver);
 		return solutions;
 	}
 

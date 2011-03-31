@@ -7,6 +7,7 @@ import fiji.plugin.trackmate.segmentation.PeakPickerSegmenter;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
+import fiji.plugin.trackmate.tracking.FastLAPTracker;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
@@ -80,6 +81,9 @@ public class Settings {
 		case LAP_TRACKER:
 		case SIMPLE_LAP_TRACKER:
 			return new LAPTracker(spots, trackerSettings);
+		case FAST_LAPT:
+		case SIMPLE_FAST_LAPT:
+			return new FastLAPTracker(spots, trackerSettings);
 		}
 		return null;
 	}

@@ -4,7 +4,9 @@ import fiji.plugin.trackmate.InfoTextable;
 
 public enum TrackerType implements InfoTextable {
 	SIMPLE_LAP_TRACKER,
-	LAP_TRACKER;
+	LAP_TRACKER,
+	SIMPLE_FAST_LAPT,
+	FAST_LAPT;
 	
 	@Override
 	public String toString() {
@@ -13,6 +15,10 @@ public enum TrackerType implements InfoTextable {
 			return "Simple LAP tracker";
 		case LAP_TRACKER:
 			return "LAP tracker";
+		case SIMPLE_FAST_LAPT:
+			return "Simple Fast LAP tracker";
+		case FAST_LAPT:
+			return "Fast LAP tracker";
 		}
 		return null;
 	}
@@ -23,8 +29,10 @@ public enum TrackerType implements InfoTextable {
 	public TrackerSettings createSettings() {
 		switch(this) {
 		case LAP_TRACKER:
+		case FAST_LAPT:
 			return new TrackerSettings();
 		case SIMPLE_LAP_TRACKER:
+		case SIMPLE_FAST_LAPT:
 			TrackerSettings ts = new TrackerSettings();
 			ts.allowMerging = false;
 			ts.allowSplitting = false;
@@ -49,7 +57,20 @@ public enum TrackerType implements InfoTextable {
 				"proposes fewer tuning options. Namely, only gap closing is allowed, based solely on <br>" +
 				"a distance and time condition. Track splitting and merging are not allowed, resulting <br>" +
 				"in having non-branching tracks." +
-			" </html>";
+				" </html>";
+		case FAST_LAPT:
+			return "<html>" +
+				"This tracker is identical to the " + TrackerType.LAP_TRACKER.toString() + ", expect that it <br>" +
+				"uses Johannes Schindelin implementation of the Hungarian solver, that solves an assignment <br>" +
+				"problem in O(n^3) instead of O(n^4)." +
+				" </html>";
+		case SIMPLE_FAST_LAPT:
+			return "<html>" +
+				"This tracker is identical to the " + TrackerType.SIMPLE_LAP_TRACKER.toString() + ", expect that it <br>" +
+				"uses Johannes Schindelin implementation of the Hungarian solver, that solves an assignment <br>" +
+				"problem in O(n^3) instead of O(n^4)." +
+				" </html>";
+
 		}
 		
 		return null;
