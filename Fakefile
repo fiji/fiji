@@ -212,7 +212,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/panorama_.jar \
 	jars/weave_jy2java.jar \
 	plugins/3D_Blob_Segmentation.jar \
-	plugins/Kuwahara_Filter.jar
+	plugins/Kuwahara_Filter.jar \
+	plugins/Multi_Kymograph.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
@@ -411,6 +412,7 @@ CLASSPATH(plugins/Feature_Detection.jar)=jars/ij.jar:jars/imglib-ij.jar:jars/img
 LIBS(plugins/JNI_Example.jar)=-lm
 CLASSPATH(plugins/JNI_Example.jar)=jars/ij.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Kuwahara_Filter.jar)=jars/ij.jar
+CLASSPATH(plugins/Multi_Kymograph.jar)=jars/ij.jar
 
 # pre-Java5 generics ;-)
 
