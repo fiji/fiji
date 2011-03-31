@@ -189,7 +189,7 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerSettingsPanel {
 	public static void main(String[] args) {
 		JFrame frame = new JFrame();
 		TrackerSettings ts = new TrackerSettings();
-		ts.tracker = new TrackerFactory().simpleLAPTracker;
+		ts.tracker = new TrackerFactory().getList().get(0);
 		frame.getContentPane().add(new SimpleLAPTrackerSettingsPanel(ts));
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();

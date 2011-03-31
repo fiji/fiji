@@ -28,8 +28,8 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModelInterface;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
+import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
-import fiji.plugin.trackmate.tracking.TrackerType;
 
 public class TmXmlWriter implements TmXmlKeys {
 	
@@ -168,11 +168,11 @@ public class TmXmlWriter implements TmXmlKeys {
 	
 	private void echoTrackerSettings() {
 		TrackerSettings settings = model.getSettings().trackerSettings;
-		TrackerType type = settings.trackerType;
-		if (null == type)
+		SpotTracker tracker = settings.tracker;
+		if (null == tracker)
 			return;
 		Element trackerSettingsElement = new Element(TRACKER_SETTINGS_ELEMENT_KEY);
-		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_TRACKER_TYPE_ATTRIBUTE_NAME, 		settings.trackerType.name());
+		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_TRACKER_TYPE_ATTRIBUTE_NAME, 		settings.tracker.toString());
 		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_TIME_UNITS_ATTNAME, 				settings.timeUnits);
 		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_SPACE_UNITS_ATTNAME, 				settings.spaceUnits);
 		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_ALTERNATE_COST_FACTOR_ATTNAME, 	""+settings.alternativeObjectLinkingCostFactor);
