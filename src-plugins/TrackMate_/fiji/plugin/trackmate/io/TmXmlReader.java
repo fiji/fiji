@@ -30,11 +30,10 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
+import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
-import fiji.plugin.trackmate.tracking.TrackerType;
 
 public class TmXmlReader implements TmXmlKeys {
-
 	
 	private Document document = null;
 	private File file;
@@ -167,9 +166,9 @@ public class TmXmlReader implements TmXmlKeys {
 			Element trackerSettingsEl = root.getChild(TRACKER_SETTINGS_ELEMENT_KEY);
 			if (null != trackerSettingsEl) {
 				String trackerTypeStr 			= trackerSettingsEl.getAttributeValue(TRACKER_SETTINGS_TRACKER_TYPE_ATTRIBUTE_NAME);
-				TrackerType trackerType 		= TrackerType.valueOf(trackerTypeStr);
-				trackerSettings = trackerType.createSettings();
-				trackerSettings.trackerType		= trackerType;
+				SpotTracker tracker 		= TrackerType.valueOf(trackerTypeStr);
+				trackerSettings = tracker.createSettings();
+				trackerSettings.tracker			= tracker;
 				trackerSettings.timeUnits		= trackerSettingsEl.getAttributeValue(TRACKER_SETTINGS_TIME_UNITS_ATTNAME);
 				trackerSettings.spaceUnits		= trackerSettingsEl.getAttributeValue(TRACKER_SETTINGS_SPACE_UNITS_ATTNAME);
 				trackerSettings.alternativeObjectLinkingCostFactor = trackerSettingsEl.getAttribute(TRACKER_SETTINGS_ALTERNATE_COST_FACTOR_ATTNAME).getDoubleValue();

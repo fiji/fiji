@@ -13,12 +13,15 @@ import javax.swing.JFrame;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModelInterface;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.action.ActionType;
+import fiji.plugin.trackmate.action.ActionFactory;
+import fiji.plugin.trackmate.action.TrackMateAction;
 
-public class ActionChooserPanel extends EnumChooserPanel<ActionType> {
+public class ActionChooserPanel extends ChooserPanel<ActionFactory, TrackMateAction> {
 
 	private static final long serialVersionUID = 1L;
 	private static final Icon EXECUTE_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/control_play_blue.png"));
+	
+	private static ActionFactory factory = new ActionFactory();
 	
 	public final ActionEvent ACTION_STARTED = new ActionEvent(this, 0, "ActionStarted");
 	public final ActionEvent ACTION_FINISHED = new ActionEvent(this, 1, "ActionFinished");
@@ -27,7 +30,7 @@ public class ActionChooserPanel extends EnumChooserPanel<ActionType> {
 	private Logger logger;
 
 	public ActionChooserPanel(TrackMateModelInterface model) {
-		super(ActionType.SET_RADIUS_TO_ESTIMATED, "Action");
+		super(factory, factory.radiusToEstimatedValue, "Action");
 		this.model = model;
 		this.logPanel = new LogPanel();
 		this.logger = logPanel.getLogger();
@@ -51,9 +54,9 @@ public class ActionChooserPanel extends EnumChooserPanel<ActionType> {
 						try {
 							executeButton.setEnabled(false);
 							fireAction(ACTION_STARTED);
-							ActionType type = getChoice();
-							type.setLogger(logger);
-							type.execute(model);
+							TrackMateAction action = getChoice();
+							action.setLogger(logger);
+							action.execute(model);
 							fireAction(ACTION_FINISHED);
 						} finally {
 							executeButton.setEnabled(true);

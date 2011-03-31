@@ -510,7 +510,7 @@ public class TrackMateFrameController {
 				settings.segmenterSettings = segmenterSettings;
 				settings.segmenterType = segmenterSettings.segmenterType;
 				settings.trackerSettings = new TrackerSettings();
-				settings.trackerType = settings.trackerSettings.trackerType;
+				settings.tracker = settings.trackerSettings.tracker;
 				newModel.setSettings(settings);
 				this.model = newModel;
 				view.setModel(model);
@@ -524,7 +524,7 @@ public class TrackMateFrameController {
 			settings.segmenterSettings = segmenterSettings;
 			settings.segmenterType = segmenterSettings.segmenterType;
 			settings.trackerSettings = new TrackerSettings(); // put defaults for now
-			settings.trackerType = settings.trackerSettings.trackerType;
+			settings.tracker = settings.trackerSettings.tracker;
 			newModel.setSettings(settings);
 			logger.log("  Reading segmenter settings done.\n");
 		}
@@ -658,7 +658,7 @@ public class TrackMateFrameController {
 				// Fill in defaults
 				trackerSettings = new TrackerSettings();
 				settings.trackerSettings = trackerSettings;
-				settings.trackerType = trackerSettings.trackerType;
+				settings.tracker = trackerSettings.tracker;
 				newModel.setSettings(settings);
 				manager = new TrackMateModelManager(model);
 				this.model = newModel;
@@ -679,7 +679,7 @@ public class TrackMateFrameController {
 			}
 
 			settings.trackerSettings = trackerSettings;
-			settings.trackerType = trackerSettings.trackerType;
+			settings.tracker = trackerSettings.tracker;
 			newModel.setSettings(settings);
 			logger.log("  Reading tracker settings done.\n");
 		}

@@ -135,43 +135,23 @@ public class LAPTracker extends AbstractSpotTracker {
 	/** The assignment problem solver that will be used by this tracker. 
 	 * @see #createAssignmentProblemSolver()	 */
 	protected AssignmentAlgorithm solver = null;
-	
-	
+
+
 	private final static String BASE_ERROR_MESSAGE = "LAPTracker: ";
 	private static final boolean DEBUG = false;
-
-	
 
 	/*
 	 * CONSTRUCTORS
 	 */
 
-	/** 
-	 * Default constructor.
-	 * 
-	 * @param objects Holds a list of Spots for each frame in the time-lapse image.
-	 * @param linkingCosts The cost matrix for step 1, linking objects, specified for every frame.
-	 * @param settings The settings to use for this tracker.
-	 */
-	public LAPTracker (SpotCollection spots, TrackerSettings settings) {
-		super(settings);
-		this.spots = spots;
-		this.solver  = createAssignmentProblemSolver();
-		// Add all spots to the graph
-		for(int frame : spots.keySet())
-			for(Spot spot : spots.get(frame))
-				trackGraph.addVertex(spot);
-	}
-
-
-	public LAPTracker (SpotCollection spots) {
-		this(spots, new TrackerSettings());
+	public LAPTracker () {
+		this.solver  = createAssignmentProblemSolver();	
 	}
 
 	/*	
 	 * PROTECTED METHODS
 	 */
-	
+
 	/**
 	 * Hook for subclassers. Generate the assignment algorithm that will be used to solve 
 	 * the {@link AssignmentProblem} held by this tracker.
@@ -182,13 +162,33 @@ public class LAPTracker extends AbstractSpotTracker {
 	protected AssignmentAlgorithm createAssignmentProblemSolver() {
 		return new HungarianAlgorithm();
 	}
-	
-	
-	
+
 	/*
 	 * METHODS
 	 */
+	
+	public TrackerSettings createSettings() {
+		return new TrackerSettings();
+	};
 
+	@Override
+	public void setSpots(SpotCollection spots) {
+		super.setSpots(spots);
+		// Add all spots to the graph
+		for(int frame : spots.keySet())
+			for(Spot spot : spots.get(frame))
+				trackGraph.addVertex(spot);
+	}
+	
+	@Override
+	public String getInfoText() {
+		return "<html>" +
+		"This tracker is based on the Linear Assignment Problem mathematical framework. <br>" +
+		"Its implementation is derived from the following paper: <br>" +
+		"<i>Robust single-particle tracking in live-cell time-lapse sequences</i> - <br>" +
+		"Jaqaman <i> et al.</i>, 2008, Nature Methods. <br>" +
+		" </html>";
+	}
 
 	/**
 	 * Set the cost matrices used for step 1, linking objects into track segments.
@@ -220,7 +220,7 @@ public class LAPTracker extends AbstractSpotTracker {
 		this.segmentCosts = segmentCosts;
 	}
 
-	
+
 
 	/**
 	 * Get the cost matrix used for step 2, linking track segments into final tracks.
@@ -421,7 +421,7 @@ public class LAPTracker extends AbstractSpotTracker {
 
 		// Solve LAP
 		int[][] finalTrackSolutions = solveLAPForFinalTracks();
-		
+
 		if (DEBUG) {
 			LAPUtils.displayCostMatrix(segmentCosts, trackSegments.size(), splittingMiddlePoints.size(), settings.blockingValue, finalTrackSolutions);
 		}
@@ -461,7 +461,7 @@ public class LAPTracker extends AbstractSpotTracker {
 					continue;
 				int i0 = solutions[i][0];
 				int i1 = solutions[i][1];
-				
+
 				if (i0 < t0.size() && i1 < t1.size() ) {
 					// Solution belong to the upper-left quadrant: we can connect the spots
 					Spot s0 = t0.get(i0);
@@ -560,7 +560,7 @@ public class LAPTracker extends AbstractSpotTracker {
 		for (int[] solution : finalTrackSolutions) {
 			int i = solution[0];
 			int j = solution[1];
-			
+
 			if (i < numTrackSegments) {
 
 				// Case 1: Gap closing
@@ -578,7 +578,7 @@ public class LAPTracker extends AbstractSpotTracker {
 						System.out.println("Gap closing from segment "+i+" to segment "+j+".");
 
 				} else if (j < (numTrackSegments + numMergingMiddlePoints)) {
-					
+
 					// Case 2: Merging
 					SortedSet<Spot> segmentEnd = trackSegments.get(i);
 					Spot end =  segmentEnd.last();

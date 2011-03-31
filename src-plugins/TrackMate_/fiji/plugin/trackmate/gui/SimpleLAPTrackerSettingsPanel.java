@@ -14,6 +14,7 @@ import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
 import fiji.plugin.trackmate.tracking.LAPTracker;
+import fiji.plugin.trackmate.tracking.TrackerFactory;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 /**
@@ -104,13 +105,13 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerSettingsPanel {
 				jLabelTrackerName.setHorizontalTextPosition(SwingConstants.CENTER);
 				jLabelTrackerName.setHorizontalAlignment(SwingConstants.CENTER);
 				jLabelTrackerName.setFont(FONT.deriveFont(Font.BOLD));
-				jLabelTrackerName.setText(settings.trackerType.toString());
+				jLabelTrackerName.setText(settings.tracker.toString());
 			}
 			{
 				jLabelTrackerDescription = new JLabel();
 				this.add(jLabelTrackerDescription, new GridBagConstraints(0, 2, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 10, 10, 10), 0, 0));
 				jLabelTrackerDescription.setFont(FONT.deriveFont(Font.ITALIC));
-				jLabelTrackerDescription.setText(settings.trackerType.getInfoText().replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
+				jLabelTrackerDescription.setText(settings.tracker.getInfoText().replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
 			}
 			{
 				jLabel2 = new JLabel();
@@ -188,7 +189,7 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerSettingsPanel {
 	public static void main(String[] args) {
 		JFrame frame = new JFrame();
 		TrackerSettings ts = new TrackerSettings();
-		ts.trackerType = fiji.plugin.trackmate.tracking.TrackerType.SIMPLE_LAP_TRACKER;
+		ts.tracker = new TrackerFactory().simpleLAPTracker;
 		frame.getContentPane().add(new SimpleLAPTrackerSettingsPanel(ts));
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();

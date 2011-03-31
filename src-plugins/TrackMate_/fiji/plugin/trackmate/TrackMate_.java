@@ -81,7 +81,9 @@ public class TrackMate_ implements PlugIn, TrackMateModelInterface {
 	
 	@Override
 	public void execTracking() {
-		SpotTracker tracker = settings.getSpotTracker(selectedSpots);
+		SpotTracker tracker = settings.tracker;
+		tracker.setSpots(selectedSpots);
+		tracker.setSettings(settings.trackerSettings);
 		tracker.setLogger(logger);
 		if (tracker.checkInput() && tracker.process())
 			trackGraph = tracker.getTrackGraph();
