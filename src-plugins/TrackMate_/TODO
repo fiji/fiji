@@ -1,23 +1,19 @@
 GUI
 - Fix GUI update when calculating feature.
 - Have a manual spot editing tool in the 3D viewer displayer.
-- When manually creating a spot, update its image as well.
-- Add actions. 
-- Add the ability to show / hide tracks
-- Add the ability to name tracks
 
 Features
 - Fix the morphology estimator, so that the MORPHOLOGY feature is useful
 
 Segmenting
-- Implement the C.elegans alo from Santella et al 2010
+- Implement the C.elegans algo from Santella et al 2010
 
 Tracking
 - Put back Nick's tracking optimization, based on prunning rows and columns in the cost matrix.
-- Evaluate, and add Johannes Hungarian algorithm.
 
 Track scheme
-- More efficient spot image display. Base64 is nice for a few cells, but not for 1000.
+- Add the ability to show / hide tracks
+- Add the ability to name tracks
 
 Export/Import
 - Make a better loading logic and GUI interaction.
