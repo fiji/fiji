@@ -109,11 +109,13 @@ public class FeatureStackArray
 	/**
 	 * Update specific feature stacks in the list (multi-thread fashion)
 	 * 
-	 * @param  update boolean array indicating which feature stack to update
+	 * @param update boolean array indicating which feature stack to update
+	 * @return false if any feature stack was not properly updated
 	 */
-	public void updateFeaturesMT(boolean[] update)
+	public boolean updateFeaturesMT(boolean[] update)
 	{
 		for(int i=0; i<featureStackArray.length; i++)
+		{
 			if(null != featureStackArray[i])
 				if(update[i])
 				{
@@ -124,18 +126,23 @@ public class FeatureStackArray
 					featureStackArray[i].setMaximumSigma(maximumSigma);
 					featureStackArray[i].setMinimumSigma(minimumSigma);
 					featureStackArray[i].setUseNeighbors(useNeighbors);
-					featureStackArray[i].updateFeaturesMT();
+					if(false == featureStackArray[i].updateFeaturesMT())
+						return false;
 					if(referenceStackIndex == -1)
 						this.referenceStackIndex = i;
 				}
+				
+		}
+		return true;
 	}
 
 	/**
 	 * Update all feature stacks in the list (multi-thread fashion) 
 	 */
-	public void updateFeaturesMT()
+	public boolean updateFeaturesMT()
 	{
 		for(int i=0; i<featureStackArray.length; i++)
+		{
 			if(null != featureStackArray[i])
 			{
 					IJ.log("Updating features of slice number " + (i+1));
@@ -145,10 +152,16 @@ public class FeatureStackArray
 					featureStackArray[i].setMaximumSigma(maximumSigma);
 					featureStackArray[i].setMinimumSigma(minimumSigma);
 					featureStackArray[i].setUseNeighbors(useNeighbors);
-					featureStackArray[i].updateFeaturesMT();
+					if(false == featureStackArray[i].updateFeaturesMT())
+						return false;
 					if(referenceStackIndex == -1)
 						this.referenceStackIndex = i;
 			}
+			
+			if (Thread.currentThread().isInterrupted() )
+				return false;			
+		}
+		return true;
 	}
 	
 	/**

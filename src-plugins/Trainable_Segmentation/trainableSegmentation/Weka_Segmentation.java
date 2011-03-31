@@ -335,6 +335,11 @@ public class Weka_Segmentation implements PlugIn
 							
 							if( wekaSegmentation.trainClassifier() )
 							{
+								if( Thread.currentThread().isInterrupted() )
+								{
+									IJ.log("Training was interrupted by the user.");
+									return;
+								}
 								wekaSegmentation.applyClassifier(false);
 								classifiedImage = wekaSegmentation.getClassifiedImage();
 								if(showColorOverlay)

@@ -648,7 +648,8 @@ public class WekaSegmentation {
 		if(featureStackArray.isEmpty() || updateFeatures)
 		{
 			IJ.log("Creating feature stack...");
-			featureStackArray.updateFeaturesMT(featureStackToUpdateTrain);
+			if ( false == featureStackArray.updateFeaturesMT(featureStackToUpdateTrain) )
+				return false;
 			Arrays.fill(featureStackToUpdateTrain, false);
 			filterFeatureStackByList();
 			updateFeatures = false;
@@ -3094,7 +3095,8 @@ public class WekaSegmentation {
 		{
 			IJ.showStatus("Creating feature stack...");
 			IJ.log("Creating feature stack...");
-			featureStackArray.updateFeaturesMT(featureStackToUpdateTrain);
+			if ( false == featureStackArray.updateFeaturesMT(featureStackToUpdateTrain) )
+				return false;
 			Arrays.fill(featureStackToUpdateTrain, false);
 			filterFeatureStackByList();
 			updateFeatures = false;
@@ -3150,6 +3152,9 @@ public class WekaSegmentation {
 		IJ.showStatus("Training classifier...");
 		IJ.log("Training classifier...");
 
+		if (Thread.currentThread().isInterrupted() )
+			return false;
+		
 		// Train the classifier on the current data
 		final long start = System.currentTimeMillis();
 		try{
@@ -3166,6 +3171,9 @@ public class WekaSegmentation {
 
 		final long end = System.currentTimeMillis();
 
+		if (Thread.currentThread().isInterrupted() )
+			return false;
+		
 		IJ.log("Finished training in "+(end-start)+"ms");
 		return true;
 	}
@@ -3318,6 +3326,11 @@ public class WekaSegmentation {
 	 */
 	public void applyClassifier(boolean classify)
 	{
+		if( Thread.currentThread().isInterrupted() )
+		{
+			IJ.log("Classification was interrupted by the user.");
+			return;
+		}
 		applyClassifier(0, classify);
 	}
 
@@ -3330,6 +3343,12 @@ public class WekaSegmentation {
 	 */
 	public void applyClassifier(int numThreads, boolean classify)
 	{
+		if( Thread.currentThread().isInterrupted() )
+		{
+			IJ.log("Training was interrupted by the user.");
+			return;
+		}
+		
 		if (numThreads == 0)
 			numThreads = Runtime.getRuntime().availableProcessors();
 
@@ -3347,7 +3366,8 @@ public class WekaSegmentation {
 		{
 			IJ.showStatus("Creating feature stack...");
 			IJ.log("Creating feature stack...");
-			featureStackArray.updateFeaturesMT(featureStackToUpdateTest);
+			if ( false == featureStackArray.updateFeaturesMT(featureStackToUpdateTest) )
+				return;
 			Arrays.fill(featureStackToUpdateTest, false);
 			filterFeatureStackByList();
 			updateFeatures = false;
@@ -3361,6 +3381,9 @@ public class WekaSegmentation {
 
 			for(int z = 1; z<=trainingImage.getImageStackSize(); z++)
 			{
+				if( Thread.currentThread().isInterrupted() )							
+					return;
+				
 				Instances data = null;
 
 				data = updateTestSet(z);
@@ -3419,6 +3442,8 @@ public class WekaSegmentation {
 
 		for(int i = 0; i < numThreads; i++)
 		{
+			if (Thread.currentThread().isInterrupted()) 
+				return null;
 			if(i == numThreads - 1)
 				partialData[i] = new Instances(data, i*partialSize, numInstances - i*partialSize);
 			else
@@ -3501,6 +3526,9 @@ public class WekaSegmentation {
 			final AtomicInteger counter,
 			final boolean probabilityMaps)
 	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
 		return new Callable<double[][]>(){
 
 			public double[][] call(){

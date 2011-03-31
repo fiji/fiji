@@ -264,6 +264,9 @@ public class FeatureStack
 			final ImagePlus originalImage,
 			final float sigma)
 	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
 		return new Callable<ImagePlus>(){
 			public ImagePlus call(){
 		
@@ -327,6 +330,9 @@ public class FeatureStack
 			final ImagePlus originalImage,
 			final float radius)
 	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
 		return new Callable<ImagePlus>(){
 			public ImagePlus call(){
 		
@@ -356,7 +362,10 @@ public class FeatureStack
 	public Callable<ImagePlus> getMin(
 			final ImagePlus originalImage,
 			final float radius)
-	{
+	{		
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
 		return new Callable<ImagePlus>(){
 			public ImagePlus call(){
 		
@@ -439,6 +448,9 @@ public class FeatureStack
 			final ImagePlus originalImage,
 			final float radius)
 	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
 		return new Callable<ImagePlus>(){
 			public ImagePlus call(){
 		
@@ -469,6 +481,9 @@ public class FeatureStack
 			final ImagePlus originalImage,
 			final float radius)
 	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
 		return new Callable<ImagePlus>(){
 			public ImagePlus call(){
 		
@@ -539,6 +554,9 @@ public class FeatureStack
 			final ImagePlus originalImage,
 			final float sigma)
 	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
 		return new Callable<ImagePlus>(){
 			public ImagePlus call(){
 		
@@ -639,6 +657,9 @@ public class FeatureStack
 			final ImagePlus originalImage,
 			final float sigma)
 	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
 		return new Callable<ImagePlus>(){
 			public ImagePlus call(){
 		
@@ -781,6 +802,9 @@ public class FeatureStack
 			final float sigma1,
 			final float sigma2)
 	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
 		return new Callable<ImagePlus>(){
 			public ImagePlus call(){
 		
@@ -870,6 +894,9 @@ public class FeatureStack
 			final int patchSize, 
 			final int membraneSize)
 	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
 		return new Callable<ImagePlus>(){
 			public ImagePlus call(){
 		
@@ -933,6 +960,9 @@ public class FeatureStack
 			final ImageProcessor filter,
 			final String title)
 	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
 		return new Callable<ImagePlus>(){
 			public ImagePlus call(){
 
@@ -970,6 +1000,9 @@ public class FeatureStack
 			final double frequency,
 			final int nAngles)
 	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
 		return new Callable<ImagePlus>()
 		{
 			public ImagePlus call()
@@ -1416,7 +1449,11 @@ public class FeatureStack
 		try
 		{
 			for(int i=1; i<=filterList.getStackSize(); i++)
+			{
+				if (Thread.currentThread().isInterrupted()) 
+					return;
 				futures.add(exe.submit( getFilter(originalImage, filterList.getImageStack().getProcessor(i), filterList.getImageStack().getSliceLabel(i)) ) );
+			}
 			
 			// Wait for the jobs to be done
 			for(Future<ImagePlus> f : futures)
@@ -1448,8 +1485,10 @@ public class FeatureStack
 	
 	/**
 	 * Update features with current list in a multi-thread fashion
+	 * 
+	 * @return true if the features are correctly updated 
 	 */
-	public void updateFeaturesMT()
+	public boolean updateFeaturesMT()
 	{
 		wholeStack = new ImageStack(width, height);
 		wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
@@ -1465,6 +1504,8 @@ public class FeatureStack
 				for (float i=minimumSigma; i<= maximumSigma; i *=2)
 					for(float j = 0.10f; j < 0.5f; j+= 0.25f)
 					{
+						if (Thread.currentThread().isInterrupted()) 
+							return false;
 						//IJ.log( n++ +": Calculating anisotropic diffusion (20, 20, " + i + ", " + j + ", 0.9f" + ", " + membraneSize + ")");
 					//for(float j = 0.10f; j <= 0.5f; j+= 0.2f)
 						//for(float k = 0.5f; k < 6f; k+= 1f)
@@ -1479,6 +1520,8 @@ public class FeatureStack
 				for(double i = 5; i < 20; i *= 2)
 					for(double j = 50; j <= 100; j*= 2)
 					{
+						if (Thread.currentThread().isInterrupted()) 
+							return false;
 						//IJ.log( n++ +": Calculating bilateral filter (" + i + ", " + j + ")");
 						futures.add(exe.submit( getBilateralFilter(originalImage, i, j) ) );
 					}
@@ -1489,6 +1532,8 @@ public class FeatureStack
 			{
 				for(double i = 5; i < 30; i += 5)					
 				{
+					if (Thread.currentThread().isInterrupted()) 
+						return false;
 					//IJ.log( n++ +": Calculating Lipschitz filter (true, true, " + i + ")");
 					futures.add(exe.submit( getLipschitzFilter(originalImage, true, true, i) ) );
 				}
@@ -1499,6 +1544,8 @@ public class FeatureStack
 			{			
 				for(int i = 0; i < 3; i++)
 				{
+					if (Thread.currentThread().isInterrupted()) 
+						return false;
 					//IJ.log( n++ +": Calculating Kuwahara filter (" + membranePatchSize + ", " + nAngles + ", " + i + ")");
 					futures.add(exe.submit( getKuwaharaFeatures(originalImage, membranePatchSize, nAngles, i) ) );
 				}
@@ -1512,6 +1559,8 @@ public class FeatureStack
 					for(double gamma = 1; gamma >= 0.25; gamma /= 2)						
 						for(int frequency = 2; frequency<=3; frequency ++)
 						{
+							if (Thread.currentThread().isInterrupted()) 
+								return false;
 							final double psi = Math.PI / 4 * i;
 							//IJ.log( n++ +": Calculating Gabor filter (1.0, " + gamma + ", " + psi + ", " + frequency + ", " + nAngles + ")");
 							futures.add(exe.submit( getGabor(originalImage, 1.0, gamma, psi, frequency, nAngles) ) );
@@ -1522,23 +1571,27 @@ public class FeatureStack
 						for(double gamma = 1.0; gamma <= 2.0; gamma *= 2)
 							for(int frequency = 2; frequency<=3; frequency ++)
 							{
+								if (Thread.currentThread().isInterrupted()) 
+									return false;
 								final double psi = Math.PI / 4 * i;
 								//IJ.log( n++ +": Calculating Gabor filter (" + sigma + " , " + gamma + ", " + psi + ", " + frequency + ", " + nAngles + ")");
 								futures.add(exe.submit( getGabor(originalImage, sigma, gamma, psi, frequency, nAngles) ) );
-							}
-				
-				
+							}								
 			}
 			
 			// Sobel (no blur)
 			if(enableFeatures[SOBEL])
 			{
+				if ( Thread.currentThread().isInterrupted() ) 
+					return false;
 				//IJ.log(n++ + ": Calculating Sobel filter (0.0)");
 				futures.add(exe.submit( getGradient(originalImage, 0)) );
 			}
 			// Hessian (no blur)
 			if(enableFeatures[HESSIAN])
 			{
+				if (Thread.currentThread().isInterrupted()) 
+					return false;
 				//IJ.log( n++ +": Calculating Hessian filter (0.0)");
 				futures.add(exe.submit( getHessian(originalImage, 0)) );
 			}
@@ -1546,7 +1599,8 @@ public class FeatureStack
 			
 			for (float i=minimumSigma; i<= maximumSigma; i *=2)
 			{		
-				
+				if (Thread.currentThread().isInterrupted()) 
+					return false;
 				// Gaussian blur
 				if(enableFeatures[GAUSSIAN])
 				{
@@ -1624,6 +1678,8 @@ public class FeatureStack
 			// Membrane projections
 			if(enableFeatures[MEMBRANE])
 			{
+				if (Thread.currentThread().isInterrupted()) 
+					return false;
 				//IJ.log( n++ +": Calculating Membranes projections ("+ membranePatchSize + ", " + membraneSize + ")");
 				futures.add(exe.submit( getMembraneFeatures(originalImage, membranePatchSize, membraneSize) ));
 			}
@@ -1645,10 +1701,16 @@ public class FeatureStack
 			}
 		
 		}
+		catch(InterruptedException ie)
+		{
+			IJ.log("The features udpate was interrupted by the user.");
+			return false;
+		}
 		catch(Exception ex)
 		{
 			IJ.log("Error when updating feature stack.");
 			ex.printStackTrace();
+			return false;
 		}
 		finally{
 			exe.shutdown();
@@ -1656,6 +1718,7 @@ public class FeatureStack
 		
 		IJ.showProgress(1.0);
 		IJ.showStatus("Features stack is updated now!");
+		return true;
 	}
 	
 	/**
