@@ -59,18 +59,39 @@ public class TrackSplitter {
 			int type = getVertexType(graph, spot);
 			
 			if (type == BRANCH_START) {
-				branches.add(currentParent);
-				currentParent = new ArrayList<Spot>();
-				currentParent.add(spot);
+				// This can be a real branch start, unless we are iterating backward in time. 
+				// Then this event should be a branch stop. We discriminate between the 2 using
+				//	the previous spot: if it is connected to this one, then we are moving backward
+				// and it is a branch stop.
+				if (graph.containsEdge(spot, previousSpot)) {
+					// branch stop
+					currentParent.add(spot);
+					branches.add(currentParent);
+					currentParent = new ArrayList<Spot>(); // make a new branch
+				} else {
+					// branch start
+					branches.add(currentParent);
+					currentParent = new ArrayList<Spot>();
+					currentParent.add(spot);
+				}
 			
 			} else if (type == SPLITTING_POINT || type == MERGING_POINT) {
 				branches.add(currentParent); // finish current branch
 				currentParent = new ArrayList<Spot>(); // make a new branch
 				
+			
 			} else if (type == BRANCH_END) {
-				currentParent.add(spot);
-				branches.add(currentParent); // Finish this one
-				currentParent = new ArrayList<Spot>(); // Create a new branch for the next spot
+				// See BRANCH_START comment
+				if (graph.containsEdge(spot, previousSpot)) {
+					currentParent.add(spot);
+					branches.add(currentParent); // Finish this one
+					currentParent = new ArrayList<Spot>(); // Create a new branch for the next spot
+				} else {
+					// branch start
+					branches.add(currentParent);
+					currentParent = new ArrayList<Spot>();
+					currentParent.add(spot);
+				}
 				
 			} else if (!graph.containsEdge(spot, previousSpot)) {
 				branches.add(currentParent);
@@ -84,8 +105,17 @@ public class TrackSplitter {
 			previousSpot = spot;
 			
 		}
+		
+		// In the general case, there might be empty branches. We prune them here
+		ArrayList<ArrayList<Spot>> prunedBranches = new ArrayList<ArrayList<Spot>>();
+		for (ArrayList<Spot> branch : branches) {
+			if (branch == null || branch.size() == 0)
+				continue;
+			prunedBranches.add(branch);
 				
-		return branches;
+		}
+		
+		return prunedBranches;
 	}
 	
 	
