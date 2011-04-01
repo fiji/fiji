@@ -2,9 +2,6 @@ GUI
 - Fix GUI update when calculating feature.
 - Have a manual spot editing tool in the 3D viewer displayer.
 
-Features
-- Fix the morphology estimator, so that the MORPHOLOGY feature is useful
-
 Segmenting
 - Implement the C.elegans algo from Santella et al 2010
 
@@ -14,6 +11,8 @@ Tracking
 Track scheme
 - Add the ability to show / hide tracks
 - Add the ability to name tracks
+- Fix the NPE when plotting features and a parent cell is in the selection
+- Offer an option to toggle branch grouping on/off.
 
 Export/Import
 - Make a better loading logic and GUI interaction.
