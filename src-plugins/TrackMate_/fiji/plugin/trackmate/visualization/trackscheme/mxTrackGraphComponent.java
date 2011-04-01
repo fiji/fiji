@@ -68,6 +68,11 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 	 * METHODS
 	 */
 	
+	@Override
+	public boolean isToggleEvent(MouseEvent event) {
+		return event.isShiftDown();
+	}
+	
 	/**
 	 * Overridden to customize the look of the editor. We want to hide the image in the
 	 * background.
