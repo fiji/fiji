@@ -44,6 +44,7 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
+import com.mxgraph.model.mxICell;
 import com.mxgraph.swing.handler.mxKeyboardHandler;
 import com.mxgraph.swing.handler.mxRubberband;
 import com.mxgraph.util.mxConstants;
@@ -90,7 +91,6 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	private static final int TABLE_CELL_WIDTH 		= 40;
 	private static final int TABLE_ROW_HEADER_WIDTH = 50;
 	private static final Color GRID_COLOR = Color.GRAY;
-
 
 	/*
 	 * FIELDS
@@ -279,18 +279,31 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		if (selectedCells == null || selectedCells.length == 0)
 			return;
 
-		List<Spot> spots = new ArrayList<Spot>();
+		HashSet<Spot> spots = new HashSet<Spot>();
 		for(Object obj : selectedCells) {
 			mxCell cell = (mxCell) obj;
 			if (cell.isVertex()) {
 				Spot spot = graph.getCellToVertexMap().get(cell);
-				spots.add(spot);
+				
+				if (spot == null) {
+					// We might have a parent cell, that holds many vertices in it
+					// Retrieve them and add them if they are not already.
+					int n = cell.getChildCount();
+					for (int i = 0; i < n; i++) {
+						mxICell child = cell.getChildAt(i);
+						Spot childSpot = graph.getCellToVertexMap().get(child);
+						if (null != childSpot)
+							spots.add(childSpot);
+					}
+					
+				} else 
+					spots.add(spot);
 			}
 		}
 		if (spots.isEmpty())
 			return;
 
-		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, spots, trackGraph, settings);
+		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, new ArrayList<Spot>(spots), trackGraph, settings);
 		grapher.setVisible(true);
 
 	}
