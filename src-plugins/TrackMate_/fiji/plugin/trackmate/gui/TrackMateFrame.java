@@ -17,7 +17,7 @@ import javax.swing.WindowConstants;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModelInterface;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
-import fiji.plugin.trackmate.tracking.SpotTracker;
+import fiji.plugin.trackmate.tracking.TrackerType;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.DisplayerType;
 
@@ -73,7 +73,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	TrackerSettingsPanel trackerSettingsPanel;
 	DisplayerPanel displayerPanel;
 	EnumChooserPanel<SegmenterType> segmenterChoicePanel;
-	EnumChooserPanel<SpotTracker> trackerChoicePanel;
+	EnumChooserPanel<TrackerType> trackerChoicePanel;
 
 	/*
 	 * FIELDS

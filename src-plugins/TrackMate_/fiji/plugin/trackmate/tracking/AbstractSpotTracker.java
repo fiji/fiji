@@ -10,14 +10,6 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 
-/**
- * Abstract class that offer small facilities for the tracker that aim at
- * implementing {@link SpotTracker}. 
- * <p>
- * This class only advantage is that it deals with fields and setters/getters.
- * 
- * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Mar 31, 2011
- */
 public abstract class AbstractSpotTracker implements SpotTracker {
 
 	/** The settings to use for this tracker. */
@@ -42,24 +34,26 @@ public abstract class AbstractSpotTracker implements SpotTracker {
 	protected SpotCollection spots;
 
 	
+
+	/*
+	 * CONSTRUCTOR
+	 */
+	
+	protected AbstractSpotTracker(TrackerSettings settings) {
+		this.settings = settings;
+	}
+	
+	
 	/*
 	 * METHODS
 	 */
 	
 	@Override
-	public void setSettings(TrackerSettings settings) {
-		this.settings = settings;
-	}
-	
-	@Override
-	public void setSpots(SpotCollection spots) {
-		this.spots = spots;	
-	}
-	
-	@Override
 	public void setLogger(Logger logger) {
 		this.logger = logger;
 	}
+
+
 
 	@Override
 	public SimpleWeightedGraph<Spot,DefaultWeightedEdge> getTrackGraph() {

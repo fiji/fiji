@@ -145,7 +145,7 @@ public class JPanelTrackerSettingsMain extends javax.swing.JPanel {
 			{
 				jLabelTrackerName = new JLabel();
 				this.add(jLabelTrackerName, new GridBagConstraints(0, 1, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-				jLabelTrackerName.setText(settings.tracker.toString());
+				jLabelTrackerName.setText(settings.trackerType.toString());
 				jLabelTrackerName.setHorizontalTextPosition(SwingConstants.CENTER);
 				jLabelTrackerName.setHorizontalAlignment(SwingConstants.CENTER);
 				jLabelTrackerName.setFont(FONT.deriveFont(Font.BOLD));
@@ -153,7 +153,7 @@ public class JPanelTrackerSettingsMain extends javax.swing.JPanel {
 			{
 				jLabelTrackDescription = new JLabel();
 				this.add(jLabelTrackDescription, new GridBagConstraints(0, 2, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 10, 10, 10), 0, 0));
-				jLabelTrackDescription.setText(settings.tracker.getInfoText().replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
+				jLabelTrackDescription.setText(settings.trackerType.getInfoText().replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
 				jLabelTrackDescription.setFont(SMALL_FONT.deriveFont(Font.ITALIC));
 			}
 			{

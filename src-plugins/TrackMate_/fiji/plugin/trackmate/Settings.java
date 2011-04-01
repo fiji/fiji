@@ -7,9 +7,11 @@ import fiji.plugin.trackmate.segmentation.PeakPickerSegmenter;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
+import fiji.plugin.trackmate.tracking.FastLAPTracker;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
+import fiji.plugin.trackmate.tracking.TrackerType;
 import ij.ImagePlus;
 import mpicbg.imglib.type.numeric.RealType;
 
@@ -46,9 +48,8 @@ public class Settings {
 	public String timeUnits 		= "frames";
 	public String spaceUnits 		= "pixels";
 	
-	public SegmenterType segmenterType = SegmenterType.PEAKPICKER_SEGMENTER; // TODO
-	
-	public SpotTracker tracker = new LAPTracker();
+	public SegmenterType segmenterType = SegmenterType.PEAKPICKER_SEGMENTER;
+	public TrackerType trackerType = TrackerType.LAP_TRACKER;
 	
 	public SegmenterSettings segmenterSettings = null;
 	public TrackerSettings trackerSettings = null;
@@ -71,6 +72,22 @@ public class Settings {
 		}
 		return null;
 	}
+	
+	/**
+	 * Return a new {@link SpotTracker} as selected in this settings object. 
+	 */
+	public SpotTracker getSpotTracker(SpotCollection spots) {
+		switch(trackerType) {
+		case LAP_TRACKER:
+		case SIMPLE_LAP_TRACKER:
+			return new LAPTracker(spots, trackerSettings);
+		case FAST_LAPT:
+		case SIMPLE_FAST_LAPT:
+			return new FastLAPTracker(spots, trackerSettings);
+		}
+		return null;
+	}
+	
 	
 	@Override
 	public String toString() {

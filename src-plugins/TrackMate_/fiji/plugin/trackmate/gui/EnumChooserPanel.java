@@ -5,7 +5,6 @@ import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
 
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
@@ -16,19 +15,17 @@ import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
 import fiji.plugin.trackmate.InfoTextable;
-import fiji.plugin.trackmate.Listable;
-import fiji.plugin.trackmate.tracking.SpotTracker;
-import fiji.plugin.trackmate.tracking.TrackerFactory;
+import fiji.plugin.trackmate.segmentation.SegmenterType;
 
 /**
  * A panel to let the user choose what displayer he wants to use.
  */
-public class ChooserPanel <L extends Listable<K>, K extends InfoTextable> extends ActionListenablePanel {
+public class EnumChooserPanel <K extends Enum<K> & InfoTextable> extends ActionListenablePanel {
 	
 	private static final long serialVersionUID = -2349025481368788479L;
 	private JLabel jLabelHeader;
 	private JComboBox jComboBoxChoice;
-	private List<K> types;
+	private K[] types;
 	private JLabel jLabelHelpText;
 	private String typeName;
 
@@ -45,10 +42,10 @@ public class ChooserPanel <L extends Listable<K>, K extends InfoTextable> extend
 	 * CONSTRUCTOR
 	 */
 	
-	public ChooserPanel(L factory, K defaultChoice, String typeName) {
+	public EnumChooserPanel(K defaultChoice, String typeName) {
 		super();
 		this.typeName = typeName;
-		this.types = factory.getList();
+		this.types = defaultChoice.getDeclaringClass().getEnumConstants();
 		initGUI(defaultChoice);
 	}
 	
@@ -57,7 +54,7 @@ public class ChooserPanel <L extends Listable<K>, K extends InfoTextable> extend
 	 */
 	
 	public K getChoice() {
-		return types.get(jComboBoxChoice.getSelectedIndex());
+		return types[jComboBoxChoice.getSelectedIndex()];
 	}
 	
 
@@ -78,20 +75,20 @@ public class ChooserPanel <L extends Listable<K>, K extends InfoTextable> extend
 				jLabelHeader.setHorizontalAlignment(SwingConstants.CENTER);
 			}
 			{
-				String[] names = new String[types.size()];
-				for (int i = 0; i < types.size(); i++) 
-					names[i] = types.get(i).toString();
+				String[] names = new String[types.length];
+				for (int i = 0; i < types.length; i++) 
+					names[i] = types[i].toString();
 				ComboBoxModel jComboBoxDisplayerChoiceModel = new DefaultComboBoxModel(names);
 				jComboBoxChoice = new JComboBox();
 				jComboBoxChoice.setModel(jComboBoxDisplayerChoiceModel);
-				jComboBoxChoice.setSelectedIndex(types.indexOf(defaultChoice));
+				jComboBoxChoice.setSelectedIndex(defaultChoice.ordinal());
 				this.add(jComboBoxChoice);
 				jComboBoxChoice.setFont(FONT);
 				jComboBoxChoice.setBounds(12, 48, 270, 27);
 				jComboBoxChoice.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						echo(types.get(jComboBoxChoice.getSelectedIndex()));
+						echo(types[jComboBoxChoice.getSelectedIndex()]);
 					}
 				});
 			}
@@ -122,9 +119,7 @@ public class ChooserPanel <L extends Listable<K>, K extends InfoTextable> extend
 		frame.pack();
 		frame.setVisible(true);
 		{
-			TrackerFactory factory = new TrackerFactory();
-			SpotTracker defaultChoice = factory.fastLAPTracker;
-			ChooserPanel<TrackerFactory, SpotTracker> instance = new ChooserPanel<TrackerFactory, SpotTracker>(factory, defaultChoice, "Tracker" );
+			EnumChooserPanel<SegmenterType> instance = new EnumChooserPanel<SegmenterType>(SegmenterType.LOG_SEGMENTER, "segmenter");
 			frame.getContentPane().add(instance);
 			instance.setPreferredSize(new java.awt.Dimension(300, 469));
 		}
