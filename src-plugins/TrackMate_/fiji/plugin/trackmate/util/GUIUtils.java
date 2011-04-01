@@ -57,7 +57,15 @@ public class GUIUtils {
 	}
 	
 
-	public static void launchTrackScheme(final TrackMateModelInterface model, final SpotDisplayer displayer) {
+	/**
+	 * Launch and display a track scheme frame, based on the given model, and ensures it is properly
+	 * linked to the given displayer. 
+	 *  
+	 * @param model  The model to picture in the {@link TrackSchemeFrame}
+	 * @param displayer  The {@link SpotDisplayer} to link the {@link TrackSchemeFrame} to
+	 * @return  the created track scheme frame
+	 */
+	public static TrackSchemeFrame launchTrackScheme(final TrackMateModelInterface model, final SpotDisplayer displayer) {
 
 		// Display Track scheme
 		final TrackSchemeFrame trackScheme = new TrackSchemeFrame(model.getTrackGraph(), model.getSettings());
@@ -100,6 +108,8 @@ public class GUIUtils {
 				displayer.refresh();
 			}
 		});
+		
+		return trackScheme;
 	}
 
 

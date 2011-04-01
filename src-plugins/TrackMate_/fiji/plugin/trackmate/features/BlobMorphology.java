@@ -16,6 +16,47 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.SpotImp;
 
+/**
+ * This {@link FeatureAnalyzer} computes morphology features for the given spots. 
+ * <p>
+ * It estimates shape parameters by computing the most resembling ellipsoid from the pixels
+ * contained within the spot radius. From this ellipsoid, it determines what are its semi-axes lengths,
+ * and their orientation.
+ * <p>
+ * In the 3D case, the features ELLIPSOIDFIT_SEMIAXISLENGTH_* contains the semi-axes lengths, ordered from 
+ * the largest (A) to the smallest (C). ELLIPSOIDFIT_AXISPHI_* and ELLIPSOIDFIT_AXISTHETA_* give the 
+ * orientation angles of the corresponding ellipsoid axis, in spherical coordinates. Angles are expressed
+ * in radians. 
+ * <ul>
+ * 	<li>φ is the azimuth int the XY plane and its range is ]-π/2 ; π/2]  
+ * 	<li>ϑ is the elevation with respect to the Z axis and ranges from 0 to π
+ * </ul>
+ * <p>
+ * In the 2D case, ELLIPSOIDFIT_SEMIAXISLENGTH_A and ELLIPSOIDFIT_AXISPHI_A are always 0, the THETA angles are 0, and  
+ * ELLIPSOIDFIT_AXISPHI_B and ELLIPSOIDFIT_AXISPHI_C differ by π/2.
+ * <p>
+ * From the semi-axis length, a morphology index is computed, echoed in the {@link Feature#MORPHOLOGY} feature.
+ * Spots are classified according to the shape of their most-resembling ellipsoid. We look for equality between
+ * semi-axes, with a certain tolerance, which value is {@link #SIGNIFICANCE_FACTOR}. 
+ * <p>
+ * In the 2D case, if b > c are the semi-axes length
+ * <ul>
+ * 	<li> if b ≅ c, then this index has the value {@link #SPHERE}
+ * 	<li> otherwise, it has the value {@link #PROLATE}
+ * </ul>
+ * <p>
+ * In the 2D case, if a > b > c are the semi-axes length
+ * <ul>
+ * 	<li> if a ≅ b ≅ c, then this index has the value {@link #SPHERE}
+ * 	<li> if a ≅ b > c, then this index has the value {@link #OBLATE}: the spot resembles a flat disk
+ * 	<li> if a > b ≅ c, then this index has the value {@link #PROLATE}: the spot resembles a rugby ball
+ * 	<li> otherwise it has the value {@link #SCALENE}; the spot's shape has nothing particular
+ * </ul>
+ * 
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Apr 1, 2011
+ *
+ * @param <T>  the type of the input {@link Image}
+ */
 public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAnalyzer {
 
 	/*
@@ -27,10 +68,16 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	private final static Feature[] featurelist_theta = {Feature.ELLIPSOIDFIT_AXISTHETA_C, 		Feature.ELLIPSOIDFIT_AXISTHETA_B, 		Feature.ELLIPSOIDFIT_AXISTHETA_A}; 
 	/** The Feature characteristics this class computes. */
 	private static final Feature FEATURE = Feature.MORPHOLOGY;
-	/** Stores that a Spot has an ellipsoid shape. */
-	public static final int ELLIPSOID = 1;
-	/** Stores that a Spot has a spherical shape. */
-	public static final int SPHERICAL = 0;
+	
+	/** Spherical shape, that is roughly a = b = c. */
+	public static final int SPHERE = 0;
+	/** Oblate shape, disk shaped, that is roughly a = b > c. */
+	public static final int OBLATE = 1;
+	/** Prolate shape, rugby ball shape, that is roughly a = b < c. */
+	public static final int PROLATE = 2;
+	/** Scalene shape, nothing particular, a > b > c. */
+	public static final int SCALENE = 3;
+	
 	/** Significance factor to determine when a semiaxis length should be
 	 *  considered significantly larger than the others. */
 	private static final double SIGNIFICANCE_FACTOR = 1.2;
@@ -160,7 +207,7 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 			}
 
 			// Store the Spot morphology (needs to be outside the above loop)
-			spot.putFeature(Feature.MORPHOLOGY, estimateMorphology(semiaxes));
+			spot.putFeature(Feature.MORPHOLOGY, estimateMorphology(semiaxes_ordered));
 			
 		} else if (img.getNumDimensions() == 2) {
 			
@@ -238,34 +285,53 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 			spot.putFeature(featurelist_theta[2], 0);
 
 			// Store the Spot morphology (needs to be outside the above loop)
-			spot.putFeature(Feature.MORPHOLOGY, estimateMorphology(semiaxes));
+			spot.putFeature(Feature.MORPHOLOGY, estimateMorphology(semiaxes_ordered));
 			
 		}
 	}
 	
 	
 	/**
-	 * Estimates whether a Spot's shape is ellipsoidal or spherical based on
-	 * the semiaxis lengths. If one or two of the semiaxis lengths are significantly
-	 * larger than the other(s), Ellipsoid is returned. Otherwise, spherical
-	 * is returned.
-	 * @param semiaxes The semiaxis lengths in any order.
-	 * @return 1 [Ellipsoid] if any semiaxis length(s) are significantly larger than the other(s). 0 [Spherical] otherwise. 
+	 * Estimates whether a Spot morphology from the semi-axes lengths of its
+	 * most resembling ellipsoid. 
+	 * @param semiaxes The semi-axis lengths <b>in ascending order</b>.
+	 * @return 1 [Ellipsoid] if any semi-axis length(s) are significantly larger than the other(s). 0 [Spherical] otherwise. 
 	 */
-	private int estimateMorphology(double[] semiaxes) {
+	private static final int estimateMorphology(final double[] semiaxes) {
 		
-		// For each semiaxis length
-		for (int i = 0; i < semiaxes.length; i++) {
-			boolean significantlyLarger = false;	// False until proven otherwise
+		if (semiaxes.length == 2) {
+			// 2D case
+			double a = semiaxes[0];
+			double b = semiaxes[1];
+			if (b >= SIGNIFICANCE_FACTOR * a)
+				return PROLATE;
+			else 
+				return SPHERE;
+		
+		} else {
+			// 3D case 
 			
-			// Compare to the others
-			for (int j = 0; j < semiaxes.length; j++) {
-				if (i==j) continue;
-				if (semiaxes[i] >= SIGNIFICANCE_FACTOR * semiaxes[j]) significantlyLarger = true;
-			}
-			if (significantlyLarger) return ELLIPSOID;
+			double a = semiaxes[0]; // Smallest
+			double b = semiaxes[1];
+			double c = semiaxes[2]; // Largest
+			
+			// Sphere: all equals with respect to significance, that is: the largest semi-axes must not
+			// be larger that factor * the smallest
+			if (c < SIGNIFICANCE_FACTOR * a)
+				return SPHERE;
+			
+			// Oblate: the 2 largest are equals with respect to significance
+			if (c < SIGNIFICANCE_FACTOR * b) 
+				return OBLATE;
+			
+			// Prolate: the 2 smallest are equals with respect to significance
+			if (b < SIGNIFICANCE_FACTOR * a)
+				return PROLATE;
+			
+			return SCALENE;
+			
 		}
-		return SPHERICAL;
+		
 	}
 	
 	public static void main(String[] args) {
@@ -333,14 +399,10 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 			System.out.println(String.format("For axis of semi-length %.1f, orientation is phi = %.1f°, theta = %.1f°",
 					lv, Math.toDegrees(phiv), Math.toDegrees(thetav)));
 		}
-		System.out.println(spot);
+		System.out.println(spot.echo());
 	
-		
-		
-		
-		
+				
 		// TEST 3D case
-		
 		/*
 		
 		// Parameters
@@ -348,9 +410,9 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 		int size_y = 200;
 		int size_z = 200;
 		
-		float a = 10;
-		float b = 5;
-		float c = 7;
+		float a = 5.5f;
+		float b = 4.9f;
+		float c = 5;
 		float theta_r = (float) Math.toRadians(0); // I am unable to have it working for theta_r != 0
 		float phi_r = (float) Math.toRadians(45);
 
@@ -397,8 +459,9 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 		ImageJFunctions.copyToImagePlus(img).show();
 		
 		start = System.currentTimeMillis();
-		BlobMorphology<UnsignedByteType> bm = new BlobMorphology<UnsignedByteType>(img, 2*max_radius, calibration);
+		BlobMorphology<UnsignedByteType> bm = new BlobMorphology<UnsignedByteType>(img, calibration);
 		SpotImp spot = new SpotImp(center);
+		spot.putFeature(Feature.RADIUS, max_radius);
 		bm.process(spot);
 		end = System.currentTimeMillis();
 		System.out.println("Blob morphology analyzed in " + (end-start) + " ms.");
@@ -410,7 +473,7 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 			System.out.println(String.format("For axis of semi-length %.1f, orientation is phi = %.1f°, theta = %.1f°",
 					lv, Math.toDegrees(phiv), Math.toDegrees(thetav)));
 		}
-		System.out.println(spot);
+		System.out.println(spot.echo());
 		
 		*/
 	}
