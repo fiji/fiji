@@ -2,13 +2,18 @@ package fiji.plugin.trackmate.gui;
 
 import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
 
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.HashMap;
 
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModelInterface;
@@ -63,6 +68,16 @@ public class ActionChooserPanel extends EnumChooserPanel<ActionType> {
 			}
 		});
 		add(executeButton);
+		
+		HashMap<String, ImageIcon> icons = new HashMap<String, ImageIcon>();
+		String[] names = new String[types.length];
+		for (int i = 0; i < types.length; i++) { 
+			names[i] = types[i].toString();
+			icons.put(names[i], ActionType.values()[i].getAction().getIcon());
+		}
+		IconListRenderer renderer = new IconListRenderer(icons);
+		jComboBoxChoice.setRenderer(renderer);
+
 	}
 	
 	/*
@@ -76,4 +91,24 @@ public class ActionChooserPanel extends EnumChooserPanel<ActionType> {
 		frame.setVisible(true);
 	}
 
+	/*
+	 * INNER CLASS
+	 */
+
+	private class IconListRenderer extends DefaultListCellRenderer {
+		private static final long serialVersionUID = 1L;
+		private HashMap<String, ImageIcon> icons = null;
+
+		public IconListRenderer(HashMap<String, ImageIcon> icons) {
+			this.icons = icons;
+		}
+
+		@Override
+		public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+			JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+			ImageIcon icon = icons.get(value);
+			label.setIcon(icon);
+			return label;
+		}
+	}
 }

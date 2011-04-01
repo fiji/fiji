@@ -5,6 +5,7 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModelInterface;
 
 public enum ActionType implements InfoTextable {
+	COPY_OVERLAY_TO (new CopyOverlayAction()), 
 	SET_RADIUS_TO_ESTIMATED (new RadiusToEstimatedAction()),
 	RESET_RADIUS_TO_EXPECTED (new ResetRadiusAction()),
 	RECOMPUTE_ALL_FEATURES (new RecalculateFeatureAction());
@@ -16,6 +17,10 @@ public enum ActionType implements InfoTextable {
 		this.action = action;
 	}
 	
+	
+	public TrackMateAction getAction() {
+		return action;
+	}
 	
 	@Override
 	public String getInfoText() {

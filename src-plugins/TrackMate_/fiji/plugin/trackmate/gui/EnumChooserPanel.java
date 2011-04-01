@@ -23,11 +23,11 @@ import fiji.plugin.trackmate.segmentation.SegmenterType;
 public class EnumChooserPanel <K extends Enum<K> & InfoTextable> extends ActionListenablePanel {
 	
 	private static final long serialVersionUID = -2349025481368788479L;
-	private JLabel jLabelHeader;
-	private JComboBox jComboBoxChoice;
-	private K[] types;
-	private JLabel jLabelHelpText;
-	private String typeName;
+	protected JLabel jLabelHeader;
+	protected JComboBox jComboBoxChoice;
+	protected K[] types;
+	protected JLabel jLabelHelpText;
+	protected String typeName;
 
 	{
 		//Set Look & Feel
@@ -124,5 +124,7 @@ public class EnumChooserPanel <K extends Enum<K> & InfoTextable> extends ActionL
 			instance.setPreferredSize(new java.awt.Dimension(300, 469));
 		}
 	}
-
+	
+	
+	
 }

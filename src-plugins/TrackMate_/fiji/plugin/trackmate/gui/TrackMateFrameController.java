@@ -15,7 +15,6 @@ import java.util.Collection;
 import java.util.List;
 
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -23,9 +22,6 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.jdom.DataConversionException;
 import org.jdom.JDOMException;
-import org.jgrapht.event.GraphEdgeChangeEvent;
-import org.jgrapht.event.GraphListener;
-import org.jgrapht.event.GraphVertexChangeEvent;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
@@ -42,12 +38,11 @@ import fiji.plugin.trackmate.io.TmXmlWriter;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
+import fiji.plugin.trackmate.util.GUIUtils;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.DisplayerType;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 import fiji.plugin.trackmate.visualization.TrackMateModelManager;
-import fiji.plugin.trackmate.visualization.trackscheme.SpotSelectionManager;
-import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 public class TrackMateFrameController {
 
@@ -226,7 +221,7 @@ public class TrackMateFrameController {
 						controller.execLinkDisplayerToThresholdGUI();
 						break;
 					case TUNE_DISPLAY:
-						TrackMateFrameController.execLinkDisplayerToTuningGUI(view.displayerPanel, controller.displayer, controller.model);
+						GUIUtils.execLinkDisplayerToTuningGUI(view.displayerPanel, controller.displayer, controller.model);
 						break;
 					}
 					
@@ -1057,131 +1052,6 @@ public class TrackMateFrameController {
 				logger.log(String.format("Tracking done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
 			}
 		}.start();
-	}
-	
-	/**
-	 * Link the displayer to the tuning display panel in the view.
-	 */
-	private static void execLinkDisplayerToTuningGUI(final DisplayerPanel displayerPanel, final SpotDisplayer spotDisplayer, final TrackMateModelInterface model) {
-		SwingUtilities.invokeLater(new Runnable() {			
-			@Override
-			public void run() {
-				
-				displayerPanel.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent event) {
-						if (event == displayerPanel.SPOT_COLOR_MODE_CHANGED) {
-							spotDisplayer.setColorByFeature(displayerPanel.getColorSpotByFeature());
-						} else if (event == displayerPanel.SPOT_VISIBILITY_CHANGED) {
-							spotDisplayer.setSpotVisible(displayerPanel.isDisplaySpotSelected());
-						} else if (event == displayerPanel.TRACK_DISPLAY_MODE_CHANGED) {
-							spotDisplayer.setDisplayTrackMode(displayerPanel.getTrackDisplayMode(), displayerPanel.getTrackDisplayDepth());
-						} else if (event == displayerPanel.TRACK_VISIBILITY_CHANGED) {
-							spotDisplayer.setTrackVisible(displayerPanel.isDisplayTrackSelected());
-						} else if (event == displayerPanel.SPOT_DISPLAY_RADIUS_CHANGED) {
-							spotDisplayer.setRadiusDisplayRatio((float) displayerPanel.getSpotDisplayRadiusRatio());
-						} else if (event == displayerPanel.TRACK_SCHEME_BUTTON_PRESSED) {
-							launchTrackScheme(model, spotDisplayer);
-						} else if (event == displayerPanel.COPY_OVERLAY_BUTTON_PRESSED) {
-							copyOverlayTo(model);
-						} 
-					}
-				});
-			}
-		});
-	}
-	
-	private static void copyOverlayTo(final TrackMateModelInterface model) {
-		final ImagePlusChooser impChooser = new ImagePlusChooser();
-		impChooser.setLocationRelativeTo(null);
-		impChooser.setVisible(true);
-		final ActionListener copyOverlayListener = new ActionListener() {			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (e == impChooser.OK_BUTTON_PUSHED) {
-					new Thread("TrackMate copying thread") {
-						public void run() {
-							// Instantiate displayer
-							ImagePlus dest = impChooser.getSelectedImagePlus();
-							impChooser.setVisible(false);
-							SpotDisplayer newDisplayer;
-							String title;
-							if (null == dest) {
-								newDisplayer = SpotDisplayer.instantiateDisplayer(SpotDisplayer.DisplayerType.THREEDVIEWER_DISPLAYER, model);
-								title = "3D viewer overlay";
-							} else {
-								model.getSettings().imp = dest; // TODO TODO DANGER DANGER
-								newDisplayer = SpotDisplayer.instantiateDisplayer(SpotDisplayer.DisplayerType.HYPERSTACK_DISPLAYER, model);
-								title = dest.getShortTitle() + " ctrl";
-							}
-							newDisplayer.setSpots(model.getSpots());
-							newDisplayer.setSpotsToShow(model.getSelectedSpots());
-							newDisplayer.setTrackGraph(model.getTrackGraph());
-							
-							final DisplayerPanel newDisplayerPanel = new DisplayerPanel(model.getFeatureValues());
-							JFrame newFrame = new JFrame(); 
-							newFrame.getContentPane().add(newDisplayerPanel);
-							newFrame.pack();
-							newFrame.setTitle(title);
-							newFrame.setSize(300, 470);
-							newFrame.setLocationRelativeTo(null);
-							newFrame.setVisible(true);
-							
-							execLinkDisplayerToTuningGUI(newDisplayerPanel, newDisplayer, model);
-						}
-					}.start();
-				} else {
-					impChooser.removeActionListener(this);
-					impChooser.setVisible(false);
-				}
-			}
-		};
-		impChooser.addActionListener(copyOverlayListener);
-	}
-	
-	private static void launchTrackScheme(final TrackMateModelInterface model, final SpotDisplayer displayer) {
-		
-		// Display Track scheme
-		final TrackSchemeFrame trackScheme = new TrackSchemeFrame(model.getTrackGraph(), model.getSettings());
-		trackScheme.setVisible(true);
-
-		// Link it with displayer:		
-		
-		// Manual edit listener
-		displayer.addSpotCollectionEditListener(trackScheme);
-		
-		// Selection manager
-		new SpotSelectionManager(displayer, trackScheme);
-		
-		// Graph modification listener
-		trackScheme.addGraphListener(new GraphListener<Spot, DefaultWeightedEdge>() {
-			@Override
-			public void vertexRemoved(GraphVertexChangeEvent<Spot> e) {
-				Spot removedSpot = e.getVertex();
-				SpotCollection spots = model.getSelectedSpots();
-				for(List<Spot> st : spots.values())
-					if (st.remove(removedSpot))
-						break;
-				model.setSpotSelection(spots);
-				model.setTrackGraph(trackScheme.getTrackModel());
-				displayer.setSpotsToShow(spots);
-				displayer.setTrackGraph(trackScheme.getTrackModel());
-				displayer.refresh();
-			}
-			@Override
-			public void vertexAdded(GraphVertexChangeEvent<Spot> e) {}
-			@Override
-			public void edgeRemoved(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
-				model.setTrackGraph(trackScheme.getTrackModel());
-				displayer.setTrackGraph(trackScheme.getTrackModel());
-				displayer.refresh();
-			}
-			@Override
-			public void edgeAdded(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
-				displayer.setTrackGraph(trackScheme.getTrackModel());
-				displayer.refresh();
-			}
-		});
 	}
 	
 	private void switchNextButton(final boolean state) {

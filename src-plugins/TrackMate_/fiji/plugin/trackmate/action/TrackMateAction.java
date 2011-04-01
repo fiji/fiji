@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.action;
 
+import javax.swing.ImageIcon;
+
 import fiji.plugin.trackmate.InfoTextable;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModelInterface;
@@ -22,5 +24,10 @@ public interface TrackMateAction  extends InfoTextable {
 	 * Set the logger that will receive logs when this action is executed.
 	 */
 	public void setLogger(Logger logger);
+	
+	/**
+	 * Return the icon for this action. Can be null.
+	 */
+	public ImageIcon getIcon();
 		
 }

@@ -15,8 +15,6 @@ import java.util.EnumMap;
 
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -39,7 +37,6 @@ import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 public class DisplayerPanel extends ActionListenablePanel {
 
 	private static final long serialVersionUID = 1L;
-	private static final Icon COPY_OVERLAY_ICON = new ImageIcon(DisplayerPanel.class.getResource("images/page_copy.png"));;
 
 	{
 		//Set Look & Feel
@@ -56,7 +53,6 @@ public class DisplayerPanel extends ActionListenablePanel {
 	public ActionEvent SPOT_VISIBILITY_CHANGED 		= new ActionEvent(this, 2, "SpotVisibilityChanged");
 	public ActionEvent TRACK_SCHEME_BUTTON_PRESSED 	= new ActionEvent(this, 3, "TrackSchemeButtonPushed");
 	public ActionEvent SPOT_DISPLAY_RADIUS_CHANGED 	= new ActionEvent(this, 4, "SpotDisplayRadiusChanged");
-	public ActionEvent COPY_OVERLAY_BUTTON_PRESSED  = new ActionEvent(this, 5, "CopyOverlayTo");
 
 	private JLabel jLabelTrackDisplayMode;
 	private JComboBox jComboBoxDisplayMode;
@@ -316,20 +312,6 @@ public class DisplayerPanel extends ActionListenablePanel {
 					}
 				});
 				this.add(jButtonShowTrackScheme);
-			}
-			{
-				JButton jButtonCopyOverlay = new JButton();
-				jButtonCopyOverlay.setText("Copy overlay");
-				jButtonCopyOverlay.setIcon(COPY_OVERLAY_ICON);
-				jButtonCopyOverlay.setFont(FONT);
-				jButtonCopyOverlay.setBounds(140, 320, 120, 30);
-				jButtonCopyOverlay.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						fireAction(COPY_OVERLAY_BUTTON_PRESSED);
-					}
-				});
-				this.add(jButtonCopyOverlay);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
