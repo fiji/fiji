@@ -31,7 +31,6 @@ import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
 import fiji.plugin.trackmate.tracking.SpotTracker;
-import fiji.plugin.trackmate.tracking.TrackerFactory;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 public class TmXmlReader implements TmXmlKeys {
@@ -167,7 +166,7 @@ public class TmXmlReader implements TmXmlKeys {
 			Element trackerSettingsEl = root.getChild(TRACKER_SETTINGS_ELEMENT_KEY);
 			if (null != trackerSettingsEl) {
 				String trackerTypeStr 			= trackerSettingsEl.getAttributeValue(TRACKER_SETTINGS_TRACKER_TYPE_ATTRIBUTE_NAME);
-				SpotTracker tracker 			= new TrackerFactory().getFromString(trackerTypeStr);
+				SpotTracker tracker 		= TrackerType.valueOf(trackerTypeStr);
 				trackerSettings = tracker.createSettings();
 				trackerSettings.tracker			= tracker;
 				trackerSettings.timeUnits		= trackerSettingsEl.getAttributeValue(TRACKER_SETTINGS_TIME_UNITS_ATTNAME);

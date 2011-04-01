@@ -68,12 +68,12 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	StartDialogPanel startDialogPanel;
 	SegmenterSettingsPanel segmenterSettingsPanel;
 	InitThresholdPanel initThresholdingPanel;
-	ChooserPanel<DisplayerType> displayerChooserPanel;
+	EnumChooserPanel<DisplayerType> displayerChooserPanel;
 	ThresholdGuiPanel thresholdGuiPanel;
 	TrackerSettingsPanel trackerSettingsPanel;
 	DisplayerPanel displayerPanel;
-	ChooserPanel<SegmenterType> segmenterChoicePanel;
-	ChooserPanel<SpotTracker> trackerChoicePanel;
+	EnumChooserPanel<SegmenterType> segmenterChoicePanel;
+	EnumChooserPanel<SpotTracker> trackerChoicePanel;
 
 	/*
 	 * FIELDS

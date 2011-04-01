@@ -123,7 +123,7 @@ public class ChooserPanel <L extends Listable<K>, K extends InfoTextable> extend
 		frame.setVisible(true);
 		{
 			TrackerFactory factory = new TrackerFactory();
-			SpotTracker defaultChoice = factory.getList().get(0);
+			SpotTracker defaultChoice = factory.fastLAPTracker;
 			ChooserPanel<TrackerFactory, SpotTracker> instance = new ChooserPanel<TrackerFactory, SpotTracker>(factory, defaultChoice, "Tracker" );
 			frame.getContentPane().add(instance);
 			instance.setPreferredSize(new java.awt.Dimension(300, 469));

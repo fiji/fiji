@@ -16,10 +16,10 @@ public class TrackerFactory implements Listable<SpotTracker> {
 	 */
 	
 	protected ArrayList<SpotTracker> trackers = null;
-	protected SpotTracker simpleLAPTracker = createSimpleLAPTracker();
-	protected SpotTracker lapTracker = new LAPTracker();
-	protected SpotTracker simpleFastLAPTracker = createSimpleFastLAPTracker();
-	protected SpotTracker fastLAPTracker = new FastLAPTracker();
+	public SpotTracker simpleLAPTracker = createSimpleLAPTracker();
+	public SpotTracker lapTracker = new LAPTracker();
+	public SpotTracker simpleFastLAPTracker = createSimpleFastLAPTracker();
+	public SpotTracker fastLAPTracker = new FastLAPTracker();
 	
 	/*
 	 * CONSTRUCTOR
@@ -28,6 +28,7 @@ public class TrackerFactory implements Listable<SpotTracker> {
 	public TrackerFactory() {
 		trackers = createTrackerList();
 	}
+	
 	
 	/*
 	 * METHODS
@@ -40,7 +41,7 @@ public class TrackerFactory implements Listable<SpotTracker> {
 	
 	/**
 	 * Generate a suitable configuration panel for the tracker set in the 
-	 * given settings. Return <code>null</code> if the tracker is unknown.
+	 * given settings.
 	 */
 	public TrackerSettingsPanel createPanel(Settings settings) {
 		SpotTracker tracker = settings.tracker;
@@ -51,12 +52,11 @@ public class TrackerFactory implements Listable<SpotTracker> {
 			trackerSettings.timeUnits = settings.timeUnits;
 		}
 		
-		if (tracker instanceof LAPTracker || tracker instanceof FastLAPTracker)
+		if (tracker == lapTracker || tracker == fastLAPTracker)
 			return new LAPTrackerSettingsPanel(trackerSettings);
 		
-		if (tracker.getClass() == simpleLAPTracker.getClass() || tracker.getClass() == simpleFastLAPTracker.getClass())
+		if (tracker == simpleLAPTracker || tracker == simpleFastLAPTracker)
 			return new SimpleLAPTrackerSettingsPanel(trackerSettings);
-		
 		return null;
 	}
 	
@@ -132,13 +132,6 @@ public class TrackerFactory implements Listable<SpotTracker> {
 		};
 		
 		return simpleLapTracker;
-	}
-
-	public SpotTracker getFromString(String trackerTypeStr) {
-		for(SpotTracker tracker : trackers) 
-			if (tracker.toString().equals(trackerTypeStr))
-				return tracker;
-		return null;
 	}
 	
 	

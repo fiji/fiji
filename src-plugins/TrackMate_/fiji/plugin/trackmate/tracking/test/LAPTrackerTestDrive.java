@@ -24,6 +24,7 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
+import fiji.plugin.trackmate.tracking.TrackerType;
 import fiji.plugin.trackmate.visualization.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 
@@ -70,7 +71,7 @@ public class LAPTrackerTestDrive {
 		
 		// 1.5 - Set the tracking settings
 		TrackerSettings settings = new TrackerSettings();
-		settings.tracker = new LAPTracker();
+		settings.trackerType = TrackerType.LAP_TRACKER;
 		settings.linkingDistanceCutOff = 10;
 		settings.allowGapClosing = false; //true;
 		settings.gapClosingDistanceCutoff = 100;
@@ -86,9 +87,7 @@ public class LAPTrackerTestDrive {
 		
 		// 2 - Track the test spots
 		LAPTracker lap;
-		lap = (LAPTracker) settings.tracker;
-		lap.setSpots(spotSelection);
-		lap.setSettings(settings);
+		lap = new LAPTracker(spotSelection, inFileSettings.trackerSettings);
 		lap.setLogger(Logger.DEFAULT_LOGGER);
 		if (!lap.checkInput())
 			System.err.println("Error checking input: "+lap.getErrorMessage());
