@@ -56,7 +56,11 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 	 */
 	private float dx;
 
-	private boolean doBranchGrouping = true;
+	/**
+	 * Do we group branches and display branch cells.
+	 * False by default.
+	 */
+	private boolean doBranchGrouping = false;
 
 	/**
 	 * Used to keep a reference to the branch cell which will contain spot cells.
@@ -264,11 +268,10 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 			}  // loop over tracks
 
 			// Clean previous branch cells
-			if (doBranchGrouping) {
-				for (mxCell branchCell : branchCells )
-					graph.getModel().remove(branchCell);
-				branchCells = newBranchCells;
-			}
+			for (mxCell branchCell : branchCells )
+				graph.getModel().remove(branchCell);
+			branchCells = newBranchCells;
+
 			
 
 		} finally {
@@ -319,6 +322,18 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 		graph.getModel().setStyle(rootCell, rootStyle);
 		
 		return rootCell;
+	}
+
+	public boolean isBranchGroupingEnabled() {
+		return doBranchGrouping;
+	}
+	
+	public void setBranchGrouping(boolean enable) {
+		this.doBranchGrouping = enable;
+	}
+
+	public void setAllFolded(boolean collapsed) {
+		graph.foldCells(collapsed, false, branchCells.toArray());
 	}
 	
 }

@@ -104,12 +104,15 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	private ArrayList<GraphListener<Spot, DefaultWeightedEdge>> graphListeners = new ArrayList<GraphListener<Spot,DefaultWeightedEdge>>();
 	/** The spots currently selected. */
 	private HashSet<Spot> spotSelection = new HashSet<Spot>();
-	private mxRubberband rubberband;
-	private mxKeyboardHandler keyboardHandler;
-
+	
+	/** The side pane in which spot selection info will be displayed.	 */
 	InfoPane infoPane;
+	/** The graph component in charge of painting the graph. */
 	mxTrackGraphComponent graphComponent;
-	private mxTrackGraphLayout graphLayout;
+	/** The layout manager that can be called to re-arrange cells in the graph. */
+	mxTrackGraphLayout graphLayout;
+	/** Is linking allowed by default? Can be changed in the toolbar. */
+	boolean defaultLinkingEnabled = false;
 	
 	private static final HashMap<String, Object> BASIC_VERTEX_STYLE = new HashMap<String, Object>();
 	private static final HashMap<String, Object> BASIC_EDGE_STYLE = new HashMap<String, Object>();
@@ -314,6 +317,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 
 	/**
 	 * Used to instantiate and configure the {@link JGraphXAdapter} that will be used for display.
+	 * Hook for subclassers.
 	 */
 	protected JGraphXAdapter<Spot, DefaultWeightedEdge> createGraph() {
 		final JGraphXAdapter<Spot, DefaultWeightedEdge> graph = new JGraphXAdapter<Spot, DefaultWeightedEdge>(lGraph) {
@@ -406,16 +410,19 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		return graph;
 	}
 
+	/**
+	 * Instantiate the graph compoenent in charge of painting the graph.
+	 * Hook for subclassers.
+	 */
 	protected mxTrackGraphComponent createGraphComponent() {
 		final mxTrackGraphComponent gc = new mxTrackGraphComponent(this);
 		gc.getVerticalScrollBar().setUnitIncrement(16);
 		gc.getHorizontalScrollBar().setUnitIncrement(16);
 		gc.setExportEnabled(true); // Seems to be required to have a preview when we move cells. Also give the ability to export a cell as an image clipping 
-		gc.setSwimlaneSelectionEnabled(true);
+		gc.getConnectionHandler().setEnabled(defaultLinkingEnabled); // By default, can be changed in the track scheme toolbar
 
-		rubberband = new mxRubberband(gc);
-		keyboardHandler = new mxKeyboardHandler(gc);
-		gc.getGraphHandler();
+		new mxRubberband(gc);
+		new mxKeyboardHandler(gc);
 
 		// Popup menu
 		gc.getGraphControl().addMouseListener(new MouseAdapter() {
@@ -432,9 +439,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		});
 		
 		return gc;
-
 	}
-
 
 	/**
 	 * Instantiate the toolbar of the track scheme. Hook for subclassers.

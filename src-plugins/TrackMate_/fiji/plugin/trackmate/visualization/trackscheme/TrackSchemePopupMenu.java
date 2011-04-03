@@ -58,17 +58,14 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 			});
 			
 			// Fold
-			add(new AbstractAction("Fold track") {
+			add(new AbstractAction("Fold/Unfold branch") {
 				public void actionPerformed(ActionEvent e) {
-					
-//					if (frame.graph.isCellFoldable(cell, true)) {
-						Object parent = frame.graph.getModel().getParent(cell);
-						frame.graph.setSwimlaneNesting(true);
-						frame.graph.foldCells(true, true, new Object[] { parent });
-//					} else {
-//						System.out.println("Non collapsable"); // DEBUG
-//					}
-					
+					Object parent;
+					if (frame.graph.isCellFoldable(cell, true))
+						parent = cell;
+					else
+						parent = frame.graph.getModel().getParent(cell);
+					frame.graph.foldCells(!frame.graph.isCellCollapsed(parent), false, new Object[] { parent });
 				}
 			});
 
@@ -110,23 +107,28 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 						spotsInTime.put(spot.getFeature(Feature.POSITION_T), spot);
 					}
 					// Then link them in this order
-					Iterator<Float> it = spotsInTime.keySet().iterator();
-					Float previousTime = it.next();
-					Spot previousSpot = spotsInTime.get(previousTime);
-					Float currentTime;
-					Spot currentSpot;
-					while(it.hasNext()) {
-						currentTime = it.next();
-						currentSpot = spotsInTime.get(currentTime);
-						// Link if not linked already
-						if (frame.trackGraph.containsEdge(previousSpot, currentSpot))
-							continue;
-						// This will update the mxGraph view
-						DefaultWeightedEdge edge = frame.lGraph.addEdge(previousSpot, currentSpot);
-						frame.lGraph.setEdgeWeight(edge, -1); // Default Weight
-						// Update the MODEL graph as well
-						frame.trackGraph.addEdge(previousSpot, currentSpot, edge);
-						previousSpot = currentSpot;
+					try {
+						frame.graph.getModel().beginUpdate();
+						Iterator<Float> it = spotsInTime.keySet().iterator();
+						Float previousTime = it.next();
+						Spot previousSpot = spotsInTime.get(previousTime);
+						Float currentTime;
+						Spot currentSpot;
+						while(it.hasNext()) {
+							currentTime = it.next();
+							currentSpot = spotsInTime.get(currentTime);
+							// Link if not linked already
+							if (frame.trackGraph.containsEdge(previousSpot, currentSpot))
+								continue;
+							// This will update the mxGraph view
+							DefaultWeightedEdge edge = frame.lGraph.addEdge(previousSpot, currentSpot);
+							frame.lGraph.setEdgeWeight(edge, -1); // Default Weight
+							// Update the MODEL graph as well
+							frame.trackGraph.addEdge(previousSpot, currentSpot, edge);
+							previousSpot = currentSpot;
+						}
+					} finally {
+						frame.graph.getModel().endUpdate();
 					}
 				}
 			};
@@ -137,7 +139,12 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 		if (selection.length > 0) {
 			Action removeAction = new AbstractAction("Remove spots and links") {
 				public void actionPerformed(ActionEvent e) {
+					try {
+					frame.graph.getModel().beginUpdate();
 					frame.graph.removeCells(selection);
+					} finally {
+						frame.graph.getModel().endUpdate();
+					}
 				}
 			};
 			add(removeAction);
