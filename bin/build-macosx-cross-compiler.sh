@@ -208,7 +208,7 @@ index 44b581d..43dc7ba 100644
  	  if (sysroot && p->add_sysroot)
 -	    str = concat (sysroot, p->fname, NULL);
 +	    {
-+	      if (p->fname[0] == DIR_SEPARATOR)
++	      if (p->component && p->fname[0] == DIR_SEPARATOR)
 +		{
 +		  str = xstrdup (p->fname);
 +		}
