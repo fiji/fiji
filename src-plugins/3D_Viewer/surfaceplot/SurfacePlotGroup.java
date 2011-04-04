@@ -191,6 +191,11 @@ public class SurfacePlotGroup extends ContentNode implements AdjustmentListener{
 	}
 
 	@Override
+	public void clearDisplayedData() {
+		// TODO not implemented yet
+	}
+
+	@Override
 	public void swapDisplayedData(String path, String name) {
 		// TODO not implemented yet
 	}
