@@ -21,7 +21,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: libjava3d-java, libbatik-java, libxml-commons-external-java, libjcommon-java, fiji-vib (>= 20110221103151), fiji-imagej (>= 20110301173529), fiji-3d-viewer (>= 20110306173005), fiji-plugins (>= 20110303180014), libjfreechart-java, junit, libvecmath-java
+Depends: libjava3d-java, libbatik-java, libxml-commons-external-java, libjcommon-java, fiji-vib (>= 20110221103151), fiji-imagej (>= 20110301173529), fiji-3d-viewer (>= 20110310175008), fiji-plugins (>= 20110303180014), libjfreechart-java, junit, libvecmath-java
 Description: Semi-automatic tracing, analysis and visualization of neurons, f [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -196,7 +196,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-mpicbg (>= 20110228212511), fiji-bunwarpj (>= 20100417005423), libjava3d-java, fiji-imglib (>= 20110113161806), fiji-tracer (>= 20110221103151), libpg-java, libjcommon-java, fiji-jai (>= 20080801134354), fiji-vib (>= 20110221103151), fiji-edu-mines-jtk (>= 20080801134354), fiji-imagej (>= 20110301173529), libvecmath-java, fiji-loci-tools (>= 20110216230726), fiji-3d-viewer (>= 20110306173005), fiji-plugins (>= 20110306193643), libjfreechart-java, libjama-java
+Depends: fiji-mpicbg (>= 20110321215354), fiji-bunwarpj (>= 20100417005423), libjava3d-java, fiji-imglib (>= 20110113161806), fiji-tracer (>= 20110329115310), libpg-java, libjcommon-java, fiji-jai (>= 20080801134354), fiji-vib (>= 20110221103151), fiji-edu-mines-jtk (>= 20080801134354), fiji-imagej (>= 20110301173529), libvecmath-java, fiji-loci-tools (>= 20110216230726), fiji-3d-viewer (>= 20110310175008), fiji-plugins (>= 20110306193643), libjfreechart-java, libjama-java
 Description: TrakEM2 is a program to model from images, it is used for morpho [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -226,7 +226,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-mpicbg (>= 20110228212511), fiji-bunwarpj (>= 20100417005423), libjava3d-java, fiji-imglib (>= 20110113161806), libjcommon-java, fiji-weka (>= 20100609224141), fiji-trakem2 (>= 20110306213956), libjsch-java, fiji-base (>= 20110223010317), fiji-vib (>= 20110221103151), fiji-edu-mines-jtk (>= 20080801134354), libjama-java, fiji-loci-tools (>= 20110216230726), fiji-3d-viewer (>= 20110306173005), libvecmath-java, libjfreechart-java, junit, fiji-scripting (>= 20110228153841), fiji-imagej (>= 20110301173529)
+Depends: fiji-mpicbg (>= 20110321215354), fiji-bunwarpj (>= 20100417005423), libjava3d-java, fiji-imglib (>= 20110113161806), libjcommon-java, fiji-weka (>= 20100609224141), fiji-trakem2 (>= 20110322100159), libjsch-java, fiji-base (>= 20110223010317), fiji-vib (>= 20110221103151), fiji-edu-mines-jtk (>= 20080801134354), libjama-java, libvecmath-java, fiji-loci-tools (>= 20110216230726), fiji-3d-viewer (>= 20110310175008), libitext1-java, libjfreechart-java, junit, fiji-scripting (>= 20110307144855), fiji-imagej (>= 20110301173529)
 Description: components from Fiji, including: PIV analyser, listManagement, P [...]
  The descriptions below are extracted from the Fiji Updater database:
  .
@@ -243,6 +243,9 @@ Description: components from Fiji, including: PIV analyser, listManagement, P [.
  it is possible to read back the text file so as to restore the display
  of the coordinates, perhaps over another image if desired (e.g., to
  compare positions).
+ .
+ plugins/Scripts/Plugins/Registration/Correct_3D_drift.py: Correct for 3D
+ drift of long recordings.
  .
  jars/imageware.jar: A core library for many of the plugins of the
  Biomedical Imaging Group of the EPFL.
@@ -272,6 +275,10 @@ Description: components from Fiji, including: PIV analyser, listManagement, P [.
  the drawbacks of graph-based segmentation methods but performs about
  equally well on different benchmarks.
  .
+ plugins/Scripts/File/Open_Samples/Spirals_.ijm: A demonstration why
+ colocalization analysis requires statistics: the "green" and "blue"
+ spirals are actually the same color.
+ .
  plugins/Snakuscule_.jar: Are you afraid of snakes? or, as Emily
  Dickinson put it:      But never met this fellow,     Attended or alone,
  Without a tighter breathing,     And zero at the bone.  This ImageJ
@@ -284,6 +291,9 @@ Description: components from Fiji, including: PIV analyser, listManagement, P [.
  horizontal lines, vertical lines, and more).
  .
  plugins/FeatureJ_.jar: Extract differential features from images
+ .
+ plugins/Scripts/Image/Hyperstacks/Temporal-Color_Code.ijm: Color-code
+ time series into a 2D image.
  .
  plugins/UnwarpJ_.jar: An ImageJ plugin that performs a spline-based
  elastic registration of two images.
@@ -411,14 +421,24 @@ Description: components from Fiji, including: PIV analyser, listManagement, P [.
  performed symmetrically in order to guarantee the medial position of the
  skeleton lines and to preserve the connectedness of the object.
  .
- plugins/Colocalisation_Analysis.jar: The plugin consists of two
- functions. Colocalization Test performs one of a set of three
- statistical tests, comparing the Persons correlation coefficient of 2
- colour channels in the real image data against the same image data with
- one of the colour channels scrambled or spatially shifted, repeated a
- number of times. Colocalization Threshold sets the thresholds for
- colocalization analysis, and also calculates Manders coefficients, 2D
- histogram / scatter plot, and other stats.
+ plugins/Scripts/Image/Adjust/Scale_to_DPI.js: A Javascript to scale an
+ image to a given dots per inch.
+ .
+ plugins/Colocalisation_Analysis.jar: This plugin (AKA Coloc 2) is
+ supposed to be the One Colocalisation Plugin to Rule Them All. It
+ implements Pearson's, Manders', Li's and Costes' methods for
+ colocalisation analysis by pixel intensity correlation over space (ie.
+ not object based coloc).  For backwards compatibility, Tony Collins' two
+ plugins are included as well: Colocalization Test performs one of a set
+ of three statistical tests, comparing the Pearson's correlation
+ coefficient of 2 colour channels in the real image data against the same
+ image data with one of the colour channels scrambled or spatially
+ shifted, repeated a number of times. Colocalization Threshold sets the
+ thresholds for colocalization analysis, and also calculates Manders'
+ coefficients, 2D histogram / scatter plot, and other stats.
+ .
+ plugins/Scripts/Image/Color/Set_Color_By_Wavelength.ijm: A toy "set
+ color by wavelength" macro. Not very precise (yet).
  .
  jars/wavelets.jar: A core library for many of the plugins of the
  Biomedical Imaging Group of the EPFL.
@@ -488,6 +508,10 @@ Description: components from Fiji, including: PIV analyser, listManagement, P [.
  boundary. The strength of the rubber band and a gray level difference
  can be pre-selected.
  .
+ plugins/Scripts/File/Open_Samples/Adelsons_Squares.ijm: An example macro
+ demonstrating that human vision is not optimized to measure absolute
+ gray values.
+ .
  plugins/AnalyzeSkeleton_.jar: Given an 8-bit grayscale image or stack,
  this plugin will analyze how the skeleton image is like. It would tag
  all pixels/voxels, counting all its junctions, triple points and
@@ -534,7 +558,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: clojure, fiji-imglib (>= 20110113161806), fiji-rsyntaxtextarea (>= 20110223005940), libjfreechart-java, fiji-vib (>= 20110203214538), libvecmath-java, fiji-base (>= 20110228153841), fiji-autocomplete (>= 20090524213156), libjava3d-java, bsh, fiji-imagej (>= 20110301173529), fiji-jython (>= 20100925003646), fiji-3d-viewer (>= 20110306173005), fiji-plugins (>= 20110223005940), libjcommon-java, rhino, fiji-jruby (>= 20100925003646)
+Depends: clojure, fiji-imglib (>= 20110113161806), fiji-rsyntaxtextarea (>= 20110223005940), libjfreechart-java, fiji-vib (>= 20110203214538), libvecmath-java, fiji-base (>= 20110321224809), fiji-autocomplete (>= 20090524213156), libjava3d-java, bsh, fiji-imagej (>= 20110301173529), fiji-jython (>= 20100925003646), fiji-3d-viewer (>= 20110310175008), fiji-plugins (>= 20110223005940), libjcommon-java, rhino, fiji-jruby (>= 20100925003646)
 Description: components from Fiji, including: Script Editor, Javascript, JRub [...]
  The descriptions below are extracted from the Fiji Updater database:
  .
@@ -636,7 +660,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-mpicbg (>= 20110228212511), libjama-java, fiji-edu-mines-jtk (>= 20080801134354), fiji-imagej (>= 20110301173529), fiji-loci-tools (>= 20110216230726)
+Depends: fiji-mpicbg (>= 20110321215354), libjama-java, fiji-edu-mines-jtk (>= 20080801134354), fiji-imagej (>= 20110301173529), fiji-loci-tools (>= 20110216230726)
 Description: A generic, Open Source library for image access to arbitrary dim [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -670,7 +694,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: libjava3d-java, fiji-imglib (>= 20110113161806), fiji-base (>= 20110223010317), fiji-imagej (>= 20110301173529), fiji-3d-viewer (>= 20110306173005), fiji-plugins (>= 20110203214538), libvecmath-java, junit, libjzlib-java, libjama-java
+Depends: libjava3d-java, fiji-imglib (>= 20110113161806), fiji-base (>= 20110223010317), fiji-imagej (>= 20110301173529), fiji-3d-viewer (>= 20110310175008), fiji-plugins (>= 20110203214538), libvecmath-java, junit, libjzlib-java, libjama-java
 Description: components from Fiji, including: VIB, VIB-lib
  The descriptions below are extracted from the Fiji Updater database:
  .
@@ -873,7 +897,7 @@ Package: fiji
 Section: graphics
 Architecture: all
 Priority: extra
-Depends: fiji-tracer (>= 20110221103151), fiji-jpedal (>= 20080801134354), fiji-examples (>= 20110306193643), fiji-base (>= 20110301173529), fiji-imagej (>= 20110301173529), fiji-loci-tools (>= 20110216230726), fiji-bunwarpj (>= 20100417005423), fiji-color-histogram (>= 20100607205357), fiji-edu-mines-jtk (>= 20080801134354), fiji-trakem2 (>= 20110306213956), fiji-luts (>= 20100610024221), fiji-plugins (>= 20110306205542), fiji-scripting (>= 20110306205542), fiji-mip (>= 20100818200853), fiji-mpicbg (>= 20110228212511), fiji-lsm-toolbox (>= 20100813145758), fiji-view5d (>= 20100609192927), fiji-imglib (>= 20110113161806), fiji-mtrack2 (>= 20100607205357), fiji-vib (>= 20110221103151), fiji-autocomplete (>= 20090524213156), fiji-jython (>= 20100925003646), fiji-ij-imageio (>= 20081218211215), fiji-jruby (>= 20100925003646), fiji-lsm-reader (>= 20101208094455), fiji-rsyntaxtextarea (>= 20110223005940), fiji-jai (>= 20080801134354), fiji-weka (>= 20100609224141), fiji-tcljava (>= 20081218211215), fiji-3d-viewer (>= 20110306173005), fiji-io (>= 20101221053508), fiji-barthel-plugins (>= 20100607205357)
+Depends: fiji-tracer (>= 20110329115310), fiji-jpedal (>= 20080801134354), fiji-examples (>= 20110306193643), fiji-base (>= 20110321224809), fiji-imagej (>= 20110307144855), fiji-loci-tools (>= 20110216230726), fiji-bunwarpj (>= 20100417005423), fiji-color-histogram (>= 20100607205357), fiji-edu-mines-jtk (>= 20080801134354), fiji-trakem2 (>= 20110322100159), fiji-luts (>= 20100610024221), fiji-plugins (>= 20110328144640), fiji-scripting (>= 20110307144855), fiji-mip (>= 20100818200853), fiji-mpicbg (>= 20110321215354), fiji-lsm-toolbox (>= 20100813145758), fiji-view5d (>= 20100609192927), fiji-imglib (>= 20110113161806), fiji-mtrack2 (>= 20100607205357), fiji-vib (>= 20110221103151), fiji-autocomplete (>= 20090524213156), fiji-jython (>= 20100925003646), fiji-ij-imageio (>= 20081218211215), fiji-jruby (>= 20100925003646), fiji-lsm-reader (>= 20101208094455), fiji-rsyntaxtextarea (>= 20110223005940), fiji-jai (>= 20080801134354), fiji-weka (>= 20100609224141), fiji-tcljava (>= 20081218211215), fiji-3d-viewer (>= 20110310175008), fiji-io (>= 20101221053508), fiji-barthel-plugins (>= 20100607205357)
 Description: A metapackage for the Fiji image processing suite (based on ImageJ)
  Fiji is a project aiming at simplifying:
     * the installation of ImageJ
