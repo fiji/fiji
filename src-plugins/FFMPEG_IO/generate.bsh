@@ -77,7 +77,7 @@ if (ffmpegDir.exists()) {
 }
 
 String libraryTarget = System.getProperty("fiji.dir") + "/lib/" + platform + "/" + target;
-String avformatTarget = "classes/fiji/ffmpeg/AVFORMAT.java";
+String avformatTarget = "fiji/ffmpeg/AVFORMAT.java";
 String pluginJarName = "FFMPEG_IO.jar";
 
 String fakefile = fakefilePrefix +
@@ -106,21 +106,12 @@ if (!parser.getRule(avformatTarget).upToDate() ||
 	addClassPath(cwd2 + "helper.jar");
 	GenerateFFMPEGClasses.main(new String[] {
 		cwd2 + "ffmpeg/",
-		cwd2 + "classes/"
+		cwd2
 	});
 }
 
 fakefile += "\n" +
-	"EXCLUDE(jna-wrapper.jar)=classes/.gitignore\n" +
-	"CLASSPATH(jna-wrapper.jar)=$FIJIHOME/jars/jna.jar\n" +
-	"jna-wrapper.jar <- classes/**/*\n";
-parser = parse(fakefile);
-parser.getRule("jna-wrapper.jar").make();
-
-fakefile += "\n" +
-	pluginJarName + " <- plugin.jar/ jna-wrapper.jar/\n" +
-	"\n" +
-	"CLASSPATH(plugin.jar)=jna-wrapper.jar:$FIJIHOME/jars/ij.jar:$FIJIHOME/jars/jna.jar\n" +
-	"plugin.jar <- plugin/**/*\n";
+	"CLASSPATH(" + pluginJarName + ")=jna-wrapper.jar:$FIJIHOME/jars/ij.jar:$FIJIHOME/jars/jna.jar\n" +
+	pluginJarName + " <- **/*.java plugins.config\n";
 parser = parse(fakefile);
 parser.getRule(pluginJarName).make();

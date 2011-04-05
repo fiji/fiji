@@ -1,6 +1,11 @@
 /ffmpeg
 /build/
-/jna-wrapper.jar
 /helper.jar
 /FFMPEG_IO.jar
 /avlog.[do]
+/fiji/ffmpeg/AVUTIL.java
+/fiji/ffmpeg/AVCORE.java
+/fiji/ffmpeg/AVDEVICE.java
+/fiji/ffmpeg/AVCODEC.java
+/fiji/ffmpeg/AVFORMAT.java
+/fiji/ffmpeg/SWSCALE.java
