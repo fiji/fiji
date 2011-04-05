@@ -1797,14 +1797,7 @@ public class Path implements Comparable<Path> {
 		this.precise_z_positions = optimized_z.clone();
 	}
 
-	/** This toString() method shows details of the path which is
-            actually being displayed, not necessarily this path
-            object.  FIXME: this is probably horribly confusing. */
-
-	@Override
-	public String toString() {
-		if( useFitted )
-			return fitted.toString();
+	public String realToString() {
 		String name = getName();
 		if( name == null )
 			name = "Path " + id;
@@ -1818,6 +1811,18 @@ public class Path implements Comparable<Path> {
 		if( swcType != SWC_UNDEFINED )
 			name += " (SWC: "+swcTypeNames[swcType]+")";
 		return name;
+	}
+
+	/** This toString() method shows details of the path which is
+            actually being displayed, not necessarily this path
+            object.  FIXME: this is probably horribly confusing. */
+
+	@Override
+	public String toString() {
+		if( useFitted )
+			return fitted.realToString();
+		else
+			return realToString();
 	}
 
 

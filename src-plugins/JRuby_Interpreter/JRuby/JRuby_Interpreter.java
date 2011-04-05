@@ -25,17 +25,18 @@ public class JRuby_Interpreter extends AbstractInterpreter {
 				 "the JRuby interpreter");
 			return;
 		}
+		Thread.currentThread().setContextClassLoader(IJ.getClassLoader());
 		super.run(ignored);
 		setTitle("JRuby Interpreter");
 		println("Starting JRuby ...");
 		prompt.setEnabled(false);
 		PrintStream stream = new PrintStream(out);
 		rubyRuntime = Ruby.newInstance(System.in,stream,stream);
-		importAll();
 		println("done.");
 		prompt.setEnabled(true);
 
 		rubyRuntime.evalScriptlet(getStartupScript());
+		importAll();
 	}
 
 	public static String getImageJRubyPath() {
