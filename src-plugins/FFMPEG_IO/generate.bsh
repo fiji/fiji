@@ -95,15 +95,15 @@ if (!parser.getRule(libraryTarget).upToDate())
 	Util.copyFile("ffmpeg/" + target, libraryTarget, cwd);
 
 fakefile += "\n" +
-	avformatTarget + "[generate-classes] <- " + (ffmpegDir.exists() ? "ffmpeg/**/*.h " : "") + "generator.jar\n" +
+	avformatTarget + "[generate-classes] <- " + (ffmpegDir.exists() ? "ffmpeg/**/*.h " : "") + "helper.jar\n" +
 	"\n" +
-	"generator.jar <- GenerateFFMPEGClasses.java\n";
+	"helper.jar <- GenerateFFMPEGClasses.java\n";
 parser = parse(fakefile);
 if (!parser.getRule(avformatTarget).upToDate() ||
-		!parser.getRule("generator.jar").upToDate()) {
-	parser.getRule("generator.jar").make();
+		!parser.getRule("helper.jar").upToDate()) {
+	parser.getRule("helper.jar").make();
 	String cwd2 = cwd == null ? "" : cwd.getAbsolutePath() + "/";
-	addClassPath(cwd2 + "generator.jar");
+	addClassPath(cwd2 + "helper.jar");
 	GenerateFFMPEGClasses.main(new String[] {
 		cwd2 + "ffmpeg/",
 		cwd2 + "classes/"

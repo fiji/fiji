@@ -1,5 +1,6 @@
 /ffmpeg
 /build/
 /jna-wrapper.jar
+/helper.jar
 /FFMPEG_IO.jar
 /avlog.[do]
