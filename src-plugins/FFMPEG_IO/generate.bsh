@@ -7,10 +7,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 
-File cwd = new File(bsh.cwd, this.interpreter.getSourceFileInfo())
-	.getParentFile();
-if (cwd.getName().equals("."))
-	cwd = null;
+File cwd = new File(System.getProperty("fiji.dir"), "src-plugins/FFMPEG_IO");
 
 String platform, target;
 
@@ -77,22 +74,29 @@ if (ffmpegDir.exists()) {
 	}
 }
 
-String ffmpegFakefile = fakefilePrefix +
+String libraryTarget = System.getProperty("fiji.dir") + "/lib/" + platform + "/" + target;
+String avformatTarget = "classes/fiji/ffmpeg/AVFORMAT.java";
+String pluginJarName = "FFMPEG_IO.jar";
+
+String fakefile = fakefilePrefix +
 	"all <- ffmpeg/" + target + "\n" +
 	"\n" +
 	"ffmpeg/" + target + "[sh build.sh " + platform + " " + target + "] <-"
 		+ " avlog.c"
-		+ (ffmpegDir.exists() ? " ffmpeg/**/*" : "");
-make(ffmpegFakefile, "all");
-
-String avformatTarget = "classes/fiji/ffmpeg/AVFORMAT.java";
-String generateClassesFakefile = fakefilePrefix +
-	"all <- " + avformatTarget + "\n" +
+		+ (ffmpegDir.exists() ? " ffmpeg/**/*" : "") + "\n" +
 	"\n" +
-	avformatTarget + "[generate-classes] <- ffmpeg/**/*.h generator.jar\n" +
+	libraryTarget + "[cp $PRE $TARGET] <- ffmpeg/" + target + "\n";
+
+Parser parser = parse(fakefile);
+parser.getRule("ffmpeg/" + target).make();
+if (!parser.getRule(libraryTarget).upToDate())
+	Util.copyFile("ffmpeg/" + target, libraryTarget, cwd);
+
+fakefile += "\n" +
+	avformatTarget + "[generate-classes] <- " + (ffmpegDir.exists() ? "ffmpeg/**/*.h " : "") + "generator.jar\n" +
 	"\n" +
 	"generator.jar <- GenerateFFMPEGClasses.java\n";
-Parser parser = parse(generateClassesFakefile);
+parser = parse(fakefile);
 if (!parser.getRule(avformatTarget).upToDate() ||
 		!parser.getRule("generator.jar").upToDate()) {
 	parser.getRule("generator.jar").make();
@@ -104,16 +108,17 @@ if (!parser.getRule(avformatTarget).upToDate() ||
 	});
 }
 
-String pluginName = "FFMPEG_" + platform + ".jar";
-String pluginFakefile = fakefilePrefix +
-	"all <- " + pluginName + "\n" +
-	"\n" +
-	pluginName + " <- plugin.jar/ jna-wrapper.jar/ " +
-		platform + "/" + target + "[ffmpeg/" + target + "]\n" +
-	"\n" +
-	"CLASSPATH(plugin.jar)=jna-wrapper.jar\n" +
-	"plugin.jar <- plugin/**/*\n" +
-	"\n" +
+fakefile += "\n" +
 	"EXCLUDE(jna-wrapper.jar)=classes/.gitignore\n" +
+	"CLASSPATH(jna-wrapper.jar)=$FIJIHOME/jars/jna.jar\n" +
 	"jna-wrapper.jar <- classes/**/*\n";
-make(pluginFakefile, "all");
+parser = parse(fakefile);
+parser.getRule("jna-wrapper.jar").make();
+
+fakefile += "\n" +
+	pluginJarName + " <- plugin.jar/ jna-wrapper.jar/\n" +
+	"\n" +
+	"CLASSPATH(plugin.jar)=jna-wrapper.jar:$FIJIHOME/jars/ij.jar:$FIJIHOME/jars/jna.jar\n" +
+	"plugin.jar <- plugin/**/*\n";
+parser = parse(fakefile);
+parser.getRule(pluginJarName).make();

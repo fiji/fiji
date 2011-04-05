@@ -32,6 +32,9 @@ public class JNALibraryLoader {
 					baseURL = string.substring(0, string.length() - classFile.length());
 			}
 		}
+		if (libraryDirectory == null)
+			libraryDirectory = new File(new File(System.getProperty("fiji.dir"), "lib"), getPlatform());
+
 	}
 
 	public static void showException(Throwable e) {
@@ -56,8 +59,7 @@ public class JNALibraryLoader {
 				IJ.isWindows() ? "dll" : "so");
 	}
 
-	protected static File getLibraryDirectory() {
-		// TODO: try to write into $IMAGEJ_ROOT/lib/$PLATFORM/ to avoid having to unpack all the time
+	protected static File getTempLibraryDirectory() {
 		try {
 			File tmp = File.createTempFile("ffmpeg", "");
 			if (!tmp.delete() || !tmp.mkdirs())
@@ -70,9 +72,6 @@ public class JNALibraryLoader {
 	}
 
 	protected Object loadLibrary(String name, int version, Class libraryClass) {
-		if (libraryDirectory == null)
-			libraryDirectory = getLibraryDirectory();
-
 		String fileName = getLibraryName(name, version);
 		File file = new File(libraryDirectory, fileName);
 		if (!file.exists()) {
