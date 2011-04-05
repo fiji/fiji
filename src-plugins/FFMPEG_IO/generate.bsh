@@ -1,6 +1,9 @@
 #!/bin/sh
 // 2> /dev/null || exec fiji --headless --bsh "$0" "$@"
 
+import fiji.build.Parser;
+import fiji.build.Util;
+
 import ij.IJ;
 
 import java.io.ByteArrayInputStream;
@@ -38,7 +41,6 @@ else {
 // Fake stuff
 
 addClassPath(System.getProperty("fiji.dir") + "/jars/fake.jar");
-import fiji.build.Fake.Parser;
 
 // Using fiji.build.Fake to avoid getting the Fake in the default package
 fiji.build.Fake fake = new fiji.build.Fake();
