@@ -162,10 +162,7 @@ pseudo_submodule_update () {
 echo "Making sure that ffmpeg and libswscale are at correct revision" &&
 pseudo_submodule_update ffmpeg \
 	contrib@pacific.mpi-cbg.de:/srv/git/ffmpeg.git \
-	90d23d8677612ee974261eacea53ca95de5c95a4 &&
-pseudo_submodule_update ffmpeg/libswscale \
-	contrib@pacific.mpi-cbg.de:/srv/git/libswscale.git \
-	a88e950fe043e419d0f9e7f851d2d8e35aea2b83 &&
+	6c3d021891a942403eb644eae0e6378a0dcf8b3c &&
 
 # Build FFMPEG
 
