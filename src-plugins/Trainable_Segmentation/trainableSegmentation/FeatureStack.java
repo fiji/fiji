@@ -248,7 +248,8 @@ public class FeatureStack
 	 * Add Gaussian blur slice to current stack
 	 * @param sigma Gaussian radius
 	 */
-	public void addGaussianBlur(float sigma){
+	public void addGaussianBlur(float sigma)
+	{
 		ImageProcessor ip = originalImage.getProcessor().duplicate();
 		GaussianBlur gs = new GaussianBlur();
 		gs.blur(ip, sigma);
@@ -1100,6 +1101,114 @@ public class FeatureStack
 	}	
 	
 	/**
+	 * Add Gabor features to current stack
+	 * @param originalImage input image
+	 * @param sigma
+	 * @param gamma
+	 * @param psi
+	 * @param frequency
+	 * @param nAngles
+	 */
+	public void addGabor(
+			final ImagePlus originalImage,
+			final double sigma,
+			final double gamma,
+			final double psi,
+			final double frequency,
+			final int nAngles)
+	{
+		if (Thread.currentThread().isInterrupted()) 
+			return;
+
+
+		final int width = originalImage.getWidth();
+		final int height = originalImage.getHeight();
+
+		// Apply aspect ratio to the Gaussian curves
+		final double sigma_x = sigma;
+		final double sigma_y = sigma / gamma;
+
+		// Decide size of the filters based on the sigma
+		int largerSigma = (sigma_x > sigma_y) ? (int) sigma_x : (int) sigma_y;
+		if(largerSigma < 1)
+			largerSigma = 1;
+
+		// Create set of filters			
+		final int filterSizeX = 6 * largerSigma + 1;
+		final int filterSizeY = 6 * largerSigma + 1;
+
+		final int middleX = (int) Math.round(filterSizeX / 2);
+		final int middleY = (int) Math.round(filterSizeY / 2);
+
+		final ImageStack kernels = new ImageStack(filterSizeX, filterSizeY);
+
+		final double rotationAngle = Math.PI/nAngles;
+		final double sigma_x2 = sigma_x * sigma_x;
+		final double sigma_y2 = sigma_y * sigma_y;
+
+		// Rotate kernel from 0 to 180 degrees
+		for (int i=0; i<nAngles; i++)
+		{	
+			final double theta = rotationAngle * i;
+			final ImageProcessor filter = new FloatProcessor(filterSizeX, filterSizeY);	
+			for (int x=-middleX; x<=middleX; x++)
+			{
+				for (int y=-middleY; y<=middleY; y++)
+				{			
+					final double xPrime = x * Math.cos(theta) + y * Math.sin(theta);
+					final double yPrime = y * Math.cos(theta) - x * Math.sin(theta);
+
+					final double a = 1.0 / ( 2* Math.PI * sigma_x * sigma_y ) * Math.exp(-0.5 * (xPrime*xPrime / sigma_x2 + yPrime*yPrime / sigma_y2) );
+					final double c = Math.cos( 2 * Math.PI * (frequency * xPrime) / filterSizeX + psi); 
+
+					filter.setf(x+middleX, y+middleY, (float)(a*c) );
+				}
+			}
+			kernels.addSlice("kernel angle = " + i, filter);
+		}
+
+		// Show kernels
+		//ImagePlus ip_kernels = new ImagePlus("kernels", kernels);
+		//ip_kernels.show();
+
+		final ImageStack is = new ImageStack(width, height);
+		// Apply kernels
+		for (int i=0; i<nAngles; i++)
+		{
+			//final double theta = rotationAngle * i;		
+			final Convolver c = new Convolver();				
+
+			final float[] kernel = (float[]) kernels.getProcessor(i+1).getPixels();
+			final ImageProcessor ip = originalImage.getProcessor().duplicate();		
+			c.convolveFloat(ip, kernel, filterSizeX, filterSizeY);		
+
+			is.addSlice("gabor angle = " + i, ip);
+		}
+
+
+		final ImagePlus projectStack = new ImagePlus("filtered stack",is);
+		//projectStack.show();
+
+		// Normalize filtered stack (it seems necessary to have proper results)
+		IJ.run(projectStack, "Enhance Contrast", "saturated=0.4 normalize normalize_all");
+		//final ContrastEnhancer c = new ContrastEnhancer();
+		//c.stretchHistogram(projectStack, 0.4);
+		//projectStack.updateAndDraw();
+
+
+		final ZProjector zp = new ZProjector(projectStack);
+		zp.setStopSlice(is.getSize());
+		for (int i=1;i<=2; i++)
+		{
+			zp.setMethod(i);
+			zp.doProjection();
+			wholeStack.addSlice(availableFeatures[GABOR] + "_" + i 
+					+"_"+sigma+"_" + gamma + "_"+ (int) (psi / (Math.PI/4) ) +"_"+frequency, 
+					zp.getProjection().getChannelProcessor());
+		}
+	}	
+	
+	/**
 	 * Get Kuwahara filter features (to be submitted in an ExecutorService)
 	 * @param originalImage input image
 	 * @param kernelSize orientation kernel size
@@ -1124,6 +1233,25 @@ public class FeatureStack
 				return new ImagePlus (availableFeatures[KUWAHARA] + "_" + kernelSize + "_ " + nAngles + "_" + criterion, ip);
 			}
 		};
+	}
+	
+	/**
+	 * Add Kuwahara filter features to the current stack
+	 * @param originalImage input image
+	 * @param kernelSize orientation kernel size
+	 * @param nAngles number of angles
+	 * @param criterion 
+	 */
+	public void addKuwaharaFeatures(
+			final ImagePlus originalImage,
+			final int kernelSize, 
+			final int nAngles,
+			final int criterion)
+	{
+		final ImageProcessor ip = originalImage.getProcessor().duplicate();
+		final Kuwahara filter = new Kuwahara();
+		filter.applyFilter(ip, kernelSize, nAngles, criterion);
+		wholeStack.addSlice(availableFeatures[KUWAHARA] + "_" + kernelSize + "_ " + nAngles + "_" + criterion, ip);
 	}
 	
 	/**
@@ -1182,6 +1310,53 @@ public class FeatureStack
 	}
 
 	/**
+	 * Add anisotropic diffusion filtering images to current stack
+	 * 
+	 * @param originalImage input image
+	 * @param nb_iter number of iterations
+	 * @param saveSteps number of steps after which we save the intermediate results
+	 * @param nb_smoothings number of smoothings per iteration
+	 * @param a1 diffusion limiter along minimal variations
+	 * @param a2 diffusion limiter along maximal variations
+	 * @param edgeThreshold edge threshold 
+	 */
+	public void addAnisotropicDiffusion(
+			final ImagePlus originalImage,
+			final int nb_iter, 
+			final int saveSteps,
+			final int nb_smoothings,
+			final float a1,
+			final float a2,
+			final float edgeThreshold)
+	{
+		Anisotropic_Diffusion_2D ad = new Anisotropic_Diffusion_2D();
+
+		ad.setup("", originalImage);
+
+		ad.setSaveSteps(saveSteps);
+		ad.setNumOfIterations(nb_iter);
+		ad.setLimiterMinimalVariations(a1);
+		ad.setLimiterMaximalVariations(a2);
+		ad.setSmoothings(nb_smoothings);
+		ad.setEdgeThreshold(edgeThreshold);
+
+		final ImagePlus result = ad.runTD(originalImage.getProcessor());
+
+
+		if(result.getImageStackSize() == 1)
+		{
+			wholeStack.addSlice(availableFeatures[ANISOTROPIC_DIFFUSION] + "_" + nb_iter + "_" + nb_smoothings + "_" + a1 + "_" + a2 + "_" + edgeThreshold, result.getProcessor());
+		}
+		else
+		{
+			final ImageStack slices = result.getImageStack();
+			slices.deleteSlice(1); // delete original image
+			for(int i = 1; i <= slices.getSize() ; i++)
+				wholeStack.addSlice(availableFeatures[ANISOTROPIC_DIFFUSION] + "_" + (saveSteps * i) + "_" + nb_smoothings + "_" + a1 + "_" + a2 +"_" + edgeThreshold, slices.getProcessor(i));										
+		}					
+	}
+	
+	/**
 	 * Apply bilateral filter in a concurrent way (to be submitted in an ExecutorService)
 	 * 
 	 * @param originalImage input image
@@ -1206,6 +1381,25 @@ public class FeatureStack
 		};
 	}	
 	
+	/**
+	 * Add bilateral filter image to current stack
+	 * 
+	 * @param originalImage input image
+	 * @param spatialRadius spatial radius
+	 * @param rangeRadius range radius	  
+	 * @return result image
+	 */
+	public void addBilateralFilter(
+			final ImagePlus originalImage,					
+			final double spatialRadius,
+			final double rangeRadius)
+	{			
+		//IJ.log("calling bilateral filter with spatiaRadius =" + spatialRadius + " and rangeRadius = " + rangeRadius);
+		final ImagePlus result = BilateralFilter.filter(
+				new ImagePlus("", originalImage.getProcessor().convertToByte(true)), spatialRadius, rangeRadius);								
+
+		wholeStack.addSlice(availableFeatures[BILATERAL] + "_" + spatialRadius + "_" + rangeRadius, result.getProcessor().convertToFloat());								
+	}		
 	
 	/**
 	 * Apply Lipschitz filter in a concurrent way (to be submitted in an ExecutorService)
@@ -1234,7 +1428,27 @@ public class FeatureStack
 			}
 		};
 	}	
-	
+
+	/**
+	 * Add Lipschitz filter image to current stack
+	 * 
+	 * @param originalImage input image
+ 	 */
+	public void addLipschitzFilter(
+			final ImagePlus originalImage,					
+			final boolean downHat,
+			final boolean topHat,
+			final double slope)
+	{
+		final Lipschitz_ filter = new Lipschitz_();
+		filter.setDownHat(downHat);
+		filter.setTopHat(topHat);
+		filter.m_Slope = slope;
+
+		ImageProcessor result = originalImage.getProcessor().duplicate().convertToByte(true);
+		filter.Lipschitz2D(result);				
+		wholeStack.addSlice(availableFeatures[LIPSCHITZ] + "_" + downHat + "_" + topHat + "_" + slope, result.convertToFloat());								
+	}
 	
 	public void addTest()
 	{
@@ -1482,6 +1696,193 @@ public class FeatureStack
 		}	
 		
 	}
+	
+	/**
+	 * Update features with current list in a single-thread fashion
+	 * 
+	 * @return true if the features are correctly updated 
+	 */
+	public boolean updateFeaturesST()
+	{
+		wholeStack = new ImageStack(width, height);
+		wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
+		
+		// Anisotropic Diffusion
+		if(enableFeatures[ANISOTROPIC_DIFFUSION])
+		{
+			//for(int i = 1; i < 8; i += 3)
+			for (float i=minimumSigma; i<= maximumSigma; i *=2)
+				for(float j = 0.10f; j < 0.5f; j+= 0.25f)
+				{
+					if (Thread.currentThread().isInterrupted()) 
+						return false;
+
+					addAnisotropicDiffusion(originalImage, 20, 20,(int) i, j, 0.9f, (float) membraneSize)  ;
+				}
+		}
+
+		// Bilateral filter
+		if(enableFeatures[BILATERAL])			
+		{
+			for(double i = 5; i < 20; i *= 2)
+				for(double j = 50; j <= 100; j*= 2)
+				{
+					if (Thread.currentThread().isInterrupted()) 
+						return false;
+					//IJ.log( n++ +": Calculating bilateral filter (" + i + ", " + j + ")");
+					addBilateralFilter(originalImage, i, j);
+				}
+		}
+
+		// Bilateral filter
+		if(enableFeatures[LIPSCHITZ])			
+		{
+			for(double i = 5; i < 30; i += 5)					
+			{
+				if (Thread.currentThread().isInterrupted()) 
+					return false;
+				//IJ.log( n++ +": Calculating Lipschitz filter (true, true, " + i + ")");
+				addLipschitzFilter(originalImage, true, true, i);
+			}
+		}
+
+		// Kuwahara filter
+		if(enableFeatures[KUWAHARA])			
+		{			
+			for(int i = 0; i < 3; i++)
+			{
+				if (Thread.currentThread().isInterrupted()) 
+					return false;
+				//IJ.log( n++ +": Calculating Kuwahara filter (" + membranePatchSize + ", " + nAngles + ", " + i + ")");
+				addKuwaharaFeatures(originalImage, membranePatchSize, nAngles, i);
+			}
+		}
+
+		// Gabor filters
+		if ( enableFeatures[ GABOR ] )
+		{
+			// elongated filters in y- axis (sigma = 1.0, gamma = [1.0 - 0.25])
+			for(int i=0; i < 3; i++)
+				for(double gamma = 1; gamma >= 0.25; gamma /= 2)						
+					for(int frequency = 2; frequency<=3; frequency ++)
+					{
+						if (Thread.currentThread().isInterrupted()) 
+							return false;
+						final double psi = Math.PI / 4 * i;
+						//IJ.log( n++ +": Calculating Gabor filter (1.0, " + gamma + ", " + psi + ", " + frequency + ", " + nAngles + ")");
+						addGabor(originalImage, 1.0, gamma, psi, frequency, nAngles);
+					}
+			// elongated filters in x- axis (sigma = [2.0 - 4.0], gamma = [1.0 - 2.0])
+			for(int i=0; i < 3; i++)
+				for(double sigma = 2.0; sigma <= 4.0; sigma *= 2)					
+					for(double gamma = 1.0; gamma <= 2.0; gamma *= 2)
+						for(int frequency = 2; frequency<=3; frequency ++)
+						{
+							if (Thread.currentThread().isInterrupted()) 
+								return false;
+							final double psi = Math.PI / 4 * i;
+							//IJ.log( n++ +": Calculating Gabor filter (" + sigma + " , " + gamma + ", " + psi + ", " + frequency + ", " + nAngles + ")");
+							addGabor(originalImage, sigma, gamma, psi, frequency, nAngles);
+						}								
+		}
+
+		// Sobel (no blur)
+		if(enableFeatures[SOBEL])
+		{
+			if ( Thread.currentThread().isInterrupted() ) 
+				return false;
+			//IJ.log(n++ + ": Calculating Sobel filter (0.0)");
+			addGradient(0);
+		}
+		// Hessian (no blur)
+		if(enableFeatures[HESSIAN])
+		{
+			if (Thread.currentThread().isInterrupted()) 
+				return false;
+			//IJ.log( n++ +": Calculating Hessian filter (0.0)");
+			addHessian(0);
+		}
+
+
+		for (float i=minimumSigma; i<= maximumSigma; i *=2)
+		{		
+			if (Thread.currentThread().isInterrupted()) 
+				return false;
+			// Gaussian blur
+			if(enableFeatures[GAUSSIAN])
+			{
+				//IJ.log( n++ +": Calculating Gaussian filter ("+ i + ")");
+				addGaussianBlur(i);
+			}
+			// Sobel
+			if(enableFeatures[SOBEL])
+			{
+				//IJ.log( n++ +": Calculating Sobel filter ("+ i + ")");
+				addGradient(i);
+			}
+			// Hessian
+			if(enableFeatures[HESSIAN])
+			{
+				//IJ.log("Calculating Hessian filter ("+ i + ")");
+				addHessian(i);
+			}
+			// Difference of gaussians
+			if(enableFeatures[DOG])
+			{
+				for (float j=minimumSigma; j<i; j*=2)
+				{
+					//IJ.log( n++ +": Calculating DoG filter ("+ i + ", " + j + ")");
+					addDoG(i, j);
+				}
+			}
+			// Variance
+			if(enableFeatures[VARIANCE])
+			{
+				//IJ.log( n++ +": Calculating Variance filter ("+ i + ")");
+				addVariance(i);
+			}
+			// Mean
+			if(enableFeatures[MEAN])
+			{
+				//IJ.log( n++ +": Calculating Mean filter ("+ i + ")");
+				addMean(i);
+			}
+
+			// Min
+			if(enableFeatures[MINIMUM])
+			{
+				//IJ.log( n++ +": Calculating Minimum filter ("+ i + ")");
+				addMin(i);
+			}
+			// Max
+			if(enableFeatures[MAXIMUM])
+			{
+				//IJ.log( n++ +": Calculating Maximum filter ("+ i + ")");
+				addMax(i);
+			}
+			
+			// Median
+			if(enableFeatures[MEDIAN])
+			{
+				//IJ.log( n++ +": Calculating Median filter ("+ i + ")");
+				addMedian(i);
+			}
+
+		}
+		// Membrane projections
+		if(enableFeatures[MEMBRANE])
+		{
+			if (Thread.currentThread().isInterrupted()) 
+				return false;
+			//IJ.log( n++ +": Calculating Membranes projections ("+ membranePatchSize + ", " + membraneSize + ")");
+			addMembraneFeatures(membranePatchSize, membraneSize);
+		}
+		
+		IJ.showProgress(1.0);
+		IJ.showStatus("Features stack is updated now!");
+		return true;
+	}
+	
 	
 	/**
 	 * Update features with current list in a multi-thread fashion
