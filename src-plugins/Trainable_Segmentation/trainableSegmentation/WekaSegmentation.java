@@ -3069,6 +3069,29 @@ public class WekaSegmentation {
 	}
 
 	/**
+	 * Create instances of a feature stack (to be submitted to an Executor Service)
+	 * 
+	 * @param classNames names of the classes of data
+	 * @param featureStack feature stack to create the instances from
+	 * @return set of instances
+	 */
+	public Callable<Instances> createInstances(
+			final ArrayList<String> classNames,
+			final FeatureStack featureStack)
+	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
+		return new Callable<Instances>(){
+			public Instances call()
+			{
+				return featureStack.createInstances(classNames);
+			}
+		};
+	}
+	
+	
+	/**
 	 * Train classifier with the current instances
 	 */
 	public boolean trainClassifier()
@@ -3096,7 +3119,11 @@ public class WekaSegmentation {
 			IJ.showStatus("Creating feature stack...");
 			IJ.log("Creating feature stack...");
 			if ( false == featureStackArray.updateFeaturesMT(featureStackToUpdateTrain) )
+			{
+				IJ.log("Feature stack was not updated.");
+				IJ.showStatus("Feature stack was not updated.");
 				return false;
+			}
 			Arrays.fill(featureStackToUpdateTrain, false);
 			filterFeatureStackByList();
 			updateFeatures = false;
@@ -3367,7 +3394,11 @@ public class WekaSegmentation {
 			IJ.showStatus("Creating feature stack...");
 			IJ.log("Creating feature stack...");
 			if ( false == featureStackArray.updateFeaturesMT(featureStackToUpdateTest) )
+			{
+				IJ.log("Feature stack was not updated.");
+				IJ.showStatus("Feature stack was not updated.");
 				return;
+			}
 			Arrays.fill(featureStackToUpdateTest, false);
 			filterFeatureStackByList();
 			updateFeatures = false;
@@ -3377,36 +3408,102 @@ public class WekaSegmentation {
 		
 		if(updateWholeData)
 		{			
-			wholeImageData = null;
-
-			for(int z = 1; z<=trainingImage.getImageStackSize(); z++)
-			{
-				if( Thread.currentThread().isInterrupted() )							
-					return;
-				
-				Instances data = null;
-
-				data = updateTestSet(z);
-				IJ.log("Test dataset updated ("+ data.numInstances() + " instances, " + data.numAttributes() + " attributes).");
-
-				if(null == wholeImageData)
-					wholeImageData = data;
-				else
-					mergeDataInPlace(wholeImageData, data);
-
-
-				IJ.log("Accumulated dataset: "+ wholeImageData.numInstances() + 
-						" instances, " + wholeImageData.numAttributes() + " attributes).");
-
-			}
-			// Set the whole data update to false after classification
-			updateWholeData = false;
+			wholeImageData = updateWholeImageData();
+			if( null == wholeImageData)
+				return;
 		}
 
 		IJ.log("Classifying whole image...");
 		classifiedImage = applyClassifier(wholeImageData, trainingImage.getWidth(), trainingImage.getHeight(), numThreads, classify);
 		
 		IJ.log("Finished segmentation of whole image.\n");
+	}
+
+	/**
+	 * 
+	 * @return
+	 */
+	public Instances updateWholeImageData() 
+	{
+		Instances wholeImageData = null;
+		
+		IJ.showStatus("Reading whole image data...");
+		IJ.log("Reading whole image data...");
+
+		long start = System.currentTimeMillis();
+		ArrayList<String> classNames = null;
+
+		if(null != loadedClassNames)
+			classNames = loadedClassNames;
+		else
+		{
+			classNames = new ArrayList<String>();
+
+			for(int j=0; j<trainingImage.getImageStackSize(); j++)
+				for(int i = 0; i < numOfClasses; i++)					
+					if(examples[j].get(i).size() > 0)
+						if(false == classNames.contains(classLabels[i]))
+							classNames.add(classLabels[i]);
+		}
+		
+		final int numProcessors = Runtime.getRuntime().availableProcessors();
+		final ExecutorService exe = Executors.newFixedThreadPool( numProcessors );
+		
+		final ArrayList< Future<Instances> > futures = new ArrayList< Future<Instances> >();
+		
+		try{
+			
+
+			for(int z = 1; z<=trainingImage.getImageStackSize(); z++)
+			{
+				futures.add( exe.submit( createInstances(classNames, featureStackArray.get(z-1))) );
+			}
+
+			Instances data[] = new Instances[ futures.size() ];
+
+			for(int z = 1; z<=trainingImage.getImageStackSize(); z++)
+			{
+				data[z-1] = futures.get(z-1).get();
+
+				long end = System.currentTimeMillis();
+				IJ.log("Creating whole image data for section " + z + " took: " + (end-start) + "ms");
+				data[z-1].setClassIndex(data[z-1].numAttributes() - 1);
+			}						
+					
+			for(int n =0; n<data.length; n++)
+			{
+				//IJ.log("Test dataset updated ("+ data[n].numInstances() + " instances, " + data[n].numAttributes() + " attributes).");
+
+				if(null == wholeImageData)
+					wholeImageData = data[n];
+				else
+					mergeDataInPlace(wholeImageData, data[n]);				
+			}
+			
+			IJ.log("Total dataset: "+ wholeImageData.numInstances() + 
+					" instances, " + wholeImageData.numAttributes() + " attributes).");
+		
+		}
+		catch(InterruptedException e) 
+		{
+			IJ.log("The data update was interrupted by the user.");
+			exe.shutdownNow();
+			return null;
+		}
+		catch(Exception ex)
+		{
+			IJ.log("Error when updating data for the whole image test set.");
+			ex.printStackTrace();
+			exe.shutdownNow();
+			return null;
+		}
+		finally{
+			exe.shutdown();
+		}
+		
+		// Set the whole data update to false after classification
+		updateWholeData = false;
+		return wholeImageData;
 	}
 	
 	/**
