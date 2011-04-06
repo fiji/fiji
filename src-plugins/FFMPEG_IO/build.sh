@@ -49,7 +49,9 @@ case "$1" in
 	esac
 	CFLAGS="-m$(case "$PLATFORM" in *64) echo 64;; *) echo 32;; esac)"
 	LDFLAGS="$CFLAGS"
-	export CFLAGS LDFLAGS
+	FIJIHOME="$(cd "$(dirname "$0")"/../../ && pwd)"
+	PATH=$FIJIHOME/bin/mac-sysroot/bin:$FIJIHOME/bin/win-sysroot/bin:$PATH
+	export CFLAGS LDFLAGS PATH
 
 	CONFIGURE_CROSS_COMPILE="--enable-cross-compile --cross-prefix=$CROSS_PREFIX --target-os=$TARGET_OS --arch=$ARCH"
 	;;
