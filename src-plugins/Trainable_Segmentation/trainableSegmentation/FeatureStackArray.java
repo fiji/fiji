@@ -22,7 +22,13 @@ package trainableSegmentation;
  */
 
 import ij.IJ;
+import ij.ImagePlus;
 
+import java.util.ArrayList;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 
 public class FeatureStackArray 
@@ -114,25 +120,57 @@ public class FeatureStackArray
 	 */
 	public boolean updateFeaturesMT(boolean[] update)
 	{
-		for(int i=0; i<featureStackArray.length; i++)
-		{
-			if(null != featureStackArray[i])
-				if(update[i])
-				{
-					IJ.log("Updating features of slice number " + (i+1));
-					featureStackArray[i].setEnabledFeatures(enabledFeatures);
-					featureStackArray[i].setMembranePatchSize(membranePatchSize);
-					featureStackArray[i].setMembraneSize(membraneThickness);
-					featureStackArray[i].setMaximumSigma(maximumSigma);
-					featureStackArray[i].setMinimumSigma(minimumSigma);
-					featureStackArray[i].setUseNeighbors(useNeighbors);
-					if(false == featureStackArray[i].updateFeaturesMT())
-						return false;
-					if(referenceStackIndex == -1)
-						this.referenceStackIndex = i;
-				}
-				
+		final int numProcessors = Runtime.getRuntime().availableProcessors();
+		final ExecutorService exe = Executors.newFixedThreadPool( numProcessors );
+		
+		final ArrayList< Future<Boolean> > futures = new ArrayList< Future<Boolean> >();
+		
+		try{
+			for(int i=0; i<featureStackArray.length; i++)
+			{
+				if(null != featureStackArray[i])
+					if(update[i])
+					{
+						IJ.log("Updating features of slice number " + (i+1) + "...");						
+						featureStackArray[i].setEnabledFeatures(enabledFeatures);
+						featureStackArray[i].setMembranePatchSize(membranePatchSize);
+						featureStackArray[i].setMembraneSize(membraneThickness);
+						featureStackArray[i].setMaximumSigma(maximumSigma);
+						featureStackArray[i].setMinimumSigma(minimumSigma);
+						featureStackArray[i].setUseNeighbors(useNeighbors);
+						futures.add(exe.submit( updateFeatures( featureStackArray[i] ) ));
+
+						if(referenceStackIndex == -1)
+							this.referenceStackIndex = i;
+					}
+			}
+			
+			// Wait for the jobs to be done
+			for(Future<Boolean> f : futures)
+			{
+				final boolean result = f.get();
+				if(false == result)
+					return false;
+			}			
 		}
+		catch (InterruptedException e) 
+		{
+			IJ.log("The feature update was interrupted by the user.");
+			exe.shutdownNow();
+			return false;
+		}
+		catch(Exception ex)
+		{
+			IJ.log("Error when updating feature stack array.");
+			ex.printStackTrace();
+			exe.shutdownNow();
+			return false;
+		}
+		finally{
+			exe.shutdown();
+		}	
+		
+		
 		return true;
 	}
 
@@ -141,28 +179,81 @@ public class FeatureStackArray
 	 */
 	public boolean updateFeaturesMT()
 	{
-		for(int i=0; i<featureStackArray.length; i++)
-		{
-			if(null != featureStackArray[i])
+		final int numProcessors = Runtime.getRuntime().availableProcessors();
+		final ExecutorService exe = Executors.newFixedThreadPool( numProcessors );
+		//IJ.log("Num of processors = " + numProcessors);
+		
+		final ArrayList< Future<Boolean> > futures = new ArrayList< Future<Boolean> >();
+		
+		try{
+			for(int i=0; i<featureStackArray.length; i++)
 			{
-					IJ.log("Updating features of slice number " + (i+1));
+				if(null != featureStackArray[i])
+				{
+					IJ.log("Updating features of slice number " + (i+1) + "...");
+					//System.out.println("Updating features of slice number " + (i+1));
 					featureStackArray[i].setEnabledFeatures(enabledFeatures);
 					featureStackArray[i].setMembranePatchSize(membranePatchSize);
 					featureStackArray[i].setMembraneSize(membraneThickness);
 					featureStackArray[i].setMaximumSigma(maximumSigma);
 					featureStackArray[i].setMinimumSigma(minimumSigma);
 					featureStackArray[i].setUseNeighbors(useNeighbors);
-					if(false == featureStackArray[i].updateFeaturesMT())
-						return false;
+					futures.add(exe.submit( updateFeatures( featureStackArray[i] ) ));
+
 					if(referenceStackIndex == -1)
 						this.referenceStackIndex = i;
+				}
 			}
 			
-			if (Thread.currentThread().isInterrupted() )
-				return false;			
+			// Wait for the jobs to be done
+			for(Future<Boolean> f : futures)
+			{
+				final boolean result = f.get();
+				if(false == result)
+					return false;
+			}			
+		
+		} 
+		catch (InterruptedException e) 
+		{
+			IJ.log("The feature update was interrupted by the user.");
+			exe.shutdownNow();
+			return false;
 		}
+		catch(Exception ex)
+		{
+			IJ.log("Error when updating feature stack array.");
+			ex.printStackTrace();
+			exe.shutdownNow();
+			return false;
+		}
+		finally{
+			exe.shutdown();
+		}	
+		
+		
 		return true;
 	}
+	
+	/**
+	 * Update features of a feature stack (to be submitted to an Executor Service)
+	 * 
+	 * @param fs feature stack to be updated
+	 * @return true if everything went correct
+	 */
+	public Callable<Boolean> updateFeatures(
+			final FeatureStack fs)
+	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
+		return new Callable<Boolean>(){
+			public Boolean call(){
+				return fs.updateFeaturesST();
+			}
+		};
+	}
+	
 	
 	/**
 	 * Reset the reference index (used when the are 
