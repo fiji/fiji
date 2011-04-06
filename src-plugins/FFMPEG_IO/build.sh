@@ -11,7 +11,7 @@ case "$(uname -s)" in
 Linux)
 	if test "$(uname -m)" = i686
 	then
-		PLATFORM=linux
+		PLATFORM=linux32
 	else
 		PLATFORM=linux64
 	fi
@@ -34,7 +34,7 @@ case "$1" in
 	PLATFORM="$1"
 	ARCH="$(case "$PLATFORM" in *64) echo x86_64;; *) echo i686;; esac)"
 	case "$1" in
-	linux)
+	linux32)
 		TARGET_OS="linux"
 		CROSS_PREFIX=
 		;;

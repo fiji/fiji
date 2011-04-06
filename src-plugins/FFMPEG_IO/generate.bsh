@@ -19,7 +19,7 @@ if (bsh.args.length > 0)
 else if (IJ.isMacOSX())
 	platform = "macosx";
 else if (IJ.isLinux())
-	platform = "linux" + (IJ.is64Bit() ? "64" : "");
+	platform = "linux" + (IJ.is64Bit() ? "64" : "32");
 else if (IJ.isWindows())
 	platform = "win" + (IJ.is64Bit() ? "64" : "32");
 else {
@@ -29,7 +29,7 @@ else {
 
 if (platform.equals("macosx"))
 	target = "libffmpeg.dylib";
-else if (platform.equals("linux") || platform.equals("linux64"))
+else if (platform.equals("linux32") || platform.equals("linux64"))
 	target = "libffmpeg.so";
 else if (platform.equals("win32") || platform.equals("win64"))
 	target = "ffmpeg.dll";
