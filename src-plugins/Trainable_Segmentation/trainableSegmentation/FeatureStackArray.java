@@ -198,7 +198,15 @@ public class FeatureStackArray
 					featureStackArray[i].setMaximumSigma(maximumSigma);
 					featureStackArray[i].setMinimumSigma(minimumSigma);
 					featureStackArray[i].setUseNeighbors(useNeighbors);
-					futures.add(exe.submit( updateFeatures( featureStackArray[i] ) ));
+					if ( featureStackArray.length == 1 )
+					{
+						if(false == featureStackArray[i].updateFeaturesMT() )
+						{
+							return false;
+						}
+					}
+					else
+						futures.add(exe.submit( updateFeatures( featureStackArray[i] ) ));
 
 					if(referenceStackIndex == -1)
 						this.referenceStackIndex = i;
