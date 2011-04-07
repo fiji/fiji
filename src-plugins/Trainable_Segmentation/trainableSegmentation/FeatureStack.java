@@ -1496,6 +1496,9 @@ public class FeatureStack
 	 */
 	public Instances createInstances(ArrayList<String> classes)
 	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
 		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 		for (int i=1; i<=wholeStack.getSize(); i++){
 			String attString = wholeStack.getSliceLabel(i);
@@ -1512,23 +1515,15 @@ public class FeatureStack
 		attributes.add(new Attribute("class", classes));
 		
 		Instances data =  new Instances("segment", attributes, width*height);
-		
-		//Object[] pixelData = wholeStack.getImageArray();
-		
+				
 		for (int y=0; y<wholeStack.getHeight(); y++)
 		{
+			if (Thread.currentThread().isInterrupted()) 
+				return null;
 			IJ.showProgress(y, wholeStack.getHeight());
 			for (int x=0; x<wholeStack.getWidth(); x++)
 			{
-				//double[] values = new double[wholeStack.getSize()+1];
-				//for (int z=1; z<=wholeStack.getSize(); z++)
-				//{
-					//values[z-1] = ((float[]) pixelData[z-1])[y*width+x];
-					data.add(createInstance(x, y, 0));
-					//System.out.println("" + wholeStack.getProcessor(z).getPixelValue(x, y) + " * " + values[z-1]);
-			//	}
-				//values[wholeStack.getSize()] = 0.0;
-				//data.add(new DenseInstance(1.0, values));
+				data.add(createInstance(x, y, 0));
 			}
 		}
 		IJ.showProgress(1.0);
