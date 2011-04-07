@@ -3118,6 +3118,7 @@ public class WekaSegmentation {
 		{
 			IJ.showStatus("Creating feature stack...");
 			IJ.log("Creating feature stack...");
+			long start = System.currentTimeMillis();
 			if ( false == featureStackArray.updateFeaturesMT(featureStackToUpdateTrain) )
 			{
 				IJ.log("Feature stack was not updated.");
@@ -3128,6 +3129,8 @@ public class WekaSegmentation {
 			filterFeatureStackByList();
 			updateFeatures = false;
 			updateWholeData = true;
+			long end = System.currentTimeMillis();
+			IJ.log("Feature stack is now updated (" + (end-start) + "ms).");
 			IJ.log("Feature stack array is now updated.");
 		}
 
@@ -3393,6 +3396,7 @@ public class WekaSegmentation {
 		{
 			IJ.showStatus("Creating feature stack...");
 			IJ.log("Creating feature stack...");
+			long start = System.currentTimeMillis();
 			if ( false == featureStackArray.updateFeaturesMT(featureStackToUpdateTest) )
 			{
 				IJ.log("Feature stack was not updated.");
@@ -3403,7 +3407,8 @@ public class WekaSegmentation {
 			filterFeatureStackByList();
 			updateFeatures = false;
 			updateWholeData = true;
-			IJ.log("Feature stack is now updated.");
+			long end = System.currentTimeMillis();
+			IJ.log("Feature stack is now updated (" + (end-start) + "ms).");
 		}
 		
 		if(updateWholeData)
@@ -3456,6 +3461,7 @@ public class WekaSegmentation {
 
 			for(int z = 1; z<=trainingImage.getImageStackSize(); z++)
 			{
+				IJ.log("Creating fetaure vectors for slice number " + z + "...");
 				futures.add( exe.submit( createInstances(classNames, featureStackArray.get(z-1))) );
 			}
 
@@ -3463,10 +3469,7 @@ public class WekaSegmentation {
 
 			for(int z = 1; z<=trainingImage.getImageStackSize(); z++)
 			{
-				data[z-1] = futures.get(z-1).get();
-
-				long end = System.currentTimeMillis();
-				IJ.log("Creating whole image data for section " + z + " took: " + (end-start) + "ms");
+				data[z-1] = futures.get(z-1).get();				
 				data[z-1].setClassIndex(data[z-1].numAttributes() - 1);
 			}						
 					
@@ -3482,11 +3485,15 @@ public class WekaSegmentation {
 			
 			IJ.log("Total dataset: "+ wholeImageData.numInstances() + 
 					" instances, " + wholeImageData.numAttributes() + " attributes).");
+			long end = System.currentTimeMillis();
+			IJ.log("Creating whole image data took: " + (end-start) + "ms");
 		
 		}
 		catch(InterruptedException e) 
 		{
 			IJ.log("The data update was interrupted by the user.");
+			IJ.showStatus("The data update was interrupted by the user.");
+			IJ.showProgress(1.0);
 			exe.shutdownNow();
 			return null;
 		}
