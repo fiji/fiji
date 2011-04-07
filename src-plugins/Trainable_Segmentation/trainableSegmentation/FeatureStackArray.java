@@ -138,7 +138,13 @@ public class FeatureStackArray
 						featureStackArray[i].setMaximumSigma(maximumSigma);
 						featureStackArray[i].setMinimumSigma(minimumSigma);
 						featureStackArray[i].setUseNeighbors(useNeighbors);
-						futures.add(exe.submit( updateFeatures( featureStackArray[i] ) ));
+						if ( featureStackArray.length == 1 )
+						{
+							if(false == featureStackArray[i].updateFeaturesMT() )							
+								return false;							
+						}
+						else
+							futures.add(exe.submit( updateFeatures( featureStackArray[i] ) ));
 
 						if(referenceStackIndex == -1)
 							this.referenceStackIndex = i;
@@ -200,10 +206,8 @@ public class FeatureStackArray
 					featureStackArray[i].setUseNeighbors(useNeighbors);
 					if ( featureStackArray.length == 1 )
 					{
-						if(false == featureStackArray[i].updateFeaturesMT() )
-						{
-							return false;
-						}
+						if(false == featureStackArray[i].updateFeaturesMT() )						
+							return false;						
 					}
 					else
 						futures.add(exe.submit( updateFeatures( featureStackArray[i] ) ));
@@ -225,6 +229,8 @@ public class FeatureStackArray
 		catch (InterruptedException e) 
 		{
 			IJ.log("The feature update was interrupted by the user.");
+			IJ.showStatus("The feature update was interrupted by the user.");
+			IJ.showProgress(1.0);
 			exe.shutdownNow();
 			return false;
 		}
