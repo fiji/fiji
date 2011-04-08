@@ -105,7 +105,7 @@ if (platform.equals("all")) {
 	for (String platform2 : new String[] { "linux64", "linux32", "win32", "win64", "macosx" })
 		buildFFMPEG(platform2);
 }
-else
+else if (!platform.equals("none"))
 	buildFFMPEG(platform);
 
 fakefile += "\n" +
