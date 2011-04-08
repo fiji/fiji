@@ -1181,10 +1181,10 @@ public class Path implements Comparable<Path> {
 	}
 
 	public Path fitCircles( int side, ImagePlus image, boolean display ) {
-		return fitCircles( side, image, display, null );
+		return fitCircles( side, image, display, null, -1, null );
 	}
 
-	public Path fitCircles( int side, ImagePlus image, boolean display, SimpleNeuriteTracer plugin ) {
+	public Path fitCircles( int side, ImagePlus image, boolean display, SimpleNeuriteTracer plugin, int progressIndex, MultiTaskProgress progress ) {
 
 		Path fitted = new Path( x_spacing, y_spacing, z_spacing, spacing_units );
 
@@ -1235,11 +1235,12 @@ public class Path implements Comparable<Path> {
 
 		double [] tangent = new double[3];
 
+		if( progress != null )
+			progress.updateProgress(progressIndex,0);
+
 		for( int i = 0; i < totalPoints; ++i ) {
 
 			getTangent( i, pointsEitherSide, tangent );
-
-			IJ.showProgress( i / (float)totalPoints );
 
 			double x_world = precise_x_positions[i];
 			double y_world = precise_y_positions[i];
@@ -1368,9 +1369,10 @@ public class Path implements Comparable<Path> {
 			FloatProcessor bp = new FloatProcessor( side, side );
 			bp.setPixels(normalPlane);
 			stack.addSlice(null,bp);
-		}
 
-		IJ.showProgress( 1.0 );
+			if( progress != null )
+				progress.updateProgress(((double)i+1)/totalPoints,progressIndex);
+		}
 
 		/* Now at each point along the path we calculate the
 		   mode of the radiuses in the nearby region: */

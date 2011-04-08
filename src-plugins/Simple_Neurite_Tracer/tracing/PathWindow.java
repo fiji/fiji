@@ -59,7 +59,13 @@ import java.awt.event.MouseListener;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 @SuppressWarnings("serial")
 public class PathWindow extends JFrame implements PathAndFillListener, TreeSelectionListener, ActionListener {
@@ -202,6 +208,9 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				IJ.error("You must have one or more paths in the list selected");
 				return;
 			}
+			boolean showDetailedFittingResults = (e.getModifiers() & ActionEvent.SHIFT_MASK) > 0;
+
+			final ArrayList<PathFitter> pathsToFit = new ArrayList<PathFitter>();
 			boolean allAlreadyFitted = allUsingFittedVersion( selectedPaths );
 			for( Path p : selectedPaths ) {
 				if( allAlreadyFitted ) {
@@ -212,12 +221,11 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 					}
 					if( p.fitted == null ) {
 						// There's not already a fitted version:
-						Path fitted = p.fitCircles( 40, plugin.getImagePlus(), (e.getModifiers() & ActionEvent.SHIFT_MASK) > 0, plugin );
-						if( fitted == null )
-							continue;
-						p.setFitted(fitted);
-						p.setUseFitted(true, plugin);
-						pathAndFillManager.addPath( fitted );
+						PathFitter pathFitter = new PathFitter(
+							plugin,
+							p,
+							showDetailedFittingResults );
+						pathsToFit.add(pathFitter);
 					} else {
 						// Just use the existing fitted version:
 						p.setUseFitted(true, plugin);
@@ -225,6 +233,45 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				}
 			}
 			pathAndFillManager.resetListeners(null);
+
+			final int numberOfPathsToFit = pathsToFit.size();
+			if( numberOfPathsToFit > 0 ) {
+
+				new Thread( new Runnable(){
+						public void run(){
+
+							FittingProgress progress = new FittingProgress(numberOfPathsToFit);
+							for( int i = 0; i < numberOfPathsToFit; ++i ) {
+								PathFitter pf = pathsToFit.get(i);
+								pf.setProgressCallback( i, progress );
+							}
+							int processors = Runtime.getRuntime().availableProcessors();
+							ExecutorService es = Executors.newFixedThreadPool(processors);
+							List<Future<Path>> futures = null;
+							try {
+								futures = es.invokeAll(pathsToFit);
+							} catch( InterruptedException ie ) {
+								/* We never call interrupt on these threads,
+								   so this should never happen... */
+							}
+							try {
+								for( Future<Path> future : futures ) {
+									Path result = future.get();
+									pathAndFillManager.addPath( result );
+								}
+							} catch( InterruptedException id ) {
+								/* Similarly this should never happen */
+							} catch( Exception e ) {
+								IJ.error("The following exception was thrown: "+e);
+								e.printStackTrace();
+								return;
+							}
+							pathAndFillManager.resetListeners(null);
+							progress.done();
+						}
+					}).start();
+
+			}
 		} else if( source == renameButton || source == renameMenuItem ) {
 			if( selectedPaths.size() != 1 ) {
 				IJ.error("You must have exactly one path selected");
