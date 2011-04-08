@@ -35,8 +35,8 @@ public class IO extends FFMPEGSingle implements Progress {
 	protected IntByReference gotPicture = new IntByReference();
 	protected AVFrame frame, frameRGB;
 	protected Pointer swsContext;
-	protected byte[] video_outbuf;
-	protected Memory video_outbuf_memory;
+	protected byte[] videoOutbut;
+	protected Memory videoOutbutMemory;
 	protected AVPacket packet = new AVPacket();
 	protected Progress progress;
 
@@ -338,9 +338,9 @@ public class IO extends FFMPEGSingle implements Progress {
 	public void writeMovie(ImagePlus image, String path, int frameRate, int bitRate) throws IOException {
 		final int STREAM_PIX_FMT = AVUTIL.PIX_FMT_YUV420P;
 
-		//int sws_flags = SWScaleLibrary.SWS_BICUBIC;
+		//int swsFlags = SWScaleLibrary.SWS_BICUBIC;
 		AVOutputFormat fmt = null;
-		double video_pts;
+		double videoPts;
 		int i;
 		ImageStack stack;
 
@@ -372,8 +372,8 @@ public class IO extends FFMPEGSingle implements Progress {
 		 * codec and initialize the codec */
 		if (fmt.video_codec == AVCODEC.CODEC_ID_NONE)
 			throw new IOException("Could not determine codec for " + path);
-		AVStream video_st = add_video_stream(formatContext, fmt.video_codec, stack.getWidth(), stack.getHeight(), frameRate, bitRate, STREAM_PIX_FMT);
-		if (video_st == null)
+		AVStream videoSt = addVideoStream(formatContext, fmt.video_codec, stack.getWidth(), stack.getHeight(), frameRate, bitRate, STREAM_PIX_FMT);
+		if (videoSt == null)
 			throw new IOException("Could not add a video stream");
 
 		/* set the output parameters (mustbe done even if no
@@ -384,19 +384,19 @@ public class IO extends FFMPEGSingle implements Progress {
 		/* now that all the parameters are set, we can open the
 		 * video codec and allocate the necessary encode buffer */
 		step("Opening " + path, 0);
-		open_video(formatContext, video_st);
+		openVideo(formatContext, videoSt);
 
 		// Dump the format to stderr
 		AVFORMAT.dump_format(formatContext, 0, path, 1);
 
-		AVOutputFormat tmp_fmt = new AVOutputFormat(formatContext.oformat);
-		if ((tmp_fmt.flags & AVFORMAT.AVFMT_RAWPICTURE) == 0) {
+		AVOutputFormat tmpFmt = new AVOutputFormat(formatContext.oformat);
+		if ((tmpFmt.flags & AVFORMAT.AVFMT_RAWPICTURE) == 0) {
 			/* allocate output buffer */
 			/* buffers passed into lav* can be allocated any way you prefer,
 			   as long as they're aligned enough for the architecture, and
 			   they're freed appropriately (such as using av_free for buffers
 			   allocated with av_malloc) */
-			video_outbuf = new byte[200000];
+			videoOutbut = new byte[200000];
 		}
 
 		/* open the output file, if needed */
@@ -411,27 +411,27 @@ public class IO extends FFMPEGSingle implements Progress {
 
 		AVFORMAT.av_write_header(formatContext);
 
-		video_pts = (double)video_st.pts.val * video_st.time_base.num / video_st.time_base.den;
+		videoPts = (double)videoSt.pts.val * videoSt.time_base.num / videoSt.time_base.den;
 
 		for (int frameCount = 1; frameCount <= stack.getSize(); frameCount++) {
 			/* write video frame */
 			step("Writing frame " + frameCount, frameCount / (double)stack.getSize());
-			write_video_frame(stack.getProcessor(frameCount), formatContext, video_st);
+			writeVideoFrame(stack.getProcessor(frameCount), formatContext, videoSt);
 		}
 
 		// flush last frame
-		//write_video_frame(null, formatContext, video_st);
+		//writeVideoFrame(null, formatContext, videoSt);
 
 		/* write the trailer, if any */
 		AVFORMAT.av_write_trailer(formatContext);
 
 		/* close codec */
-		//close_video(formatContext, video_st);
+		//closeVideo(formatContext, videoSt);
 
 		/* free the streams */
 		for (i = 0; i < formatContext.nb_streams; i++) {
-			AVStream tmp_stream = new AVStream(formatContext.streams[i]);
-			AVUTIL.av_free(tmp_stream.codec);
+			AVStream tmpStream = new AVStream(formatContext.streams[i]);
+			AVUTIL.av_free(tmpStream.codec);
 			AVUTIL.av_free(formatContext.streams[i]);
 		}
 		if ((fmt.flags & AVFORMAT.AVFMT_NOFILE) == 0) {
@@ -442,9 +442,9 @@ public class IO extends FFMPEGSingle implements Progress {
 		//free();
 	}
 
-	protected void write_video_frame(ImageProcessor ip, AVFormatContext formatContext, AVStream st) throws IOException {
-		int out_size = 0;
-		//SwsContext img_convert_ctx = null;
+	protected void writeVideoFrame(ImageProcessor ip, AVFormatContext formatContext, AVStream st) throws IOException {
+		int outSize = 0;
+		//SwsContext imgConvertCtx = null;
 
 		if (ip == null) {
 			/* no more frame to compress. The codec has a latency of a few
@@ -452,15 +452,15 @@ public class IO extends FFMPEGSingle implements Progress {
 			   passing the same picture again */
 		} else {
 			if (codecContext.pix_fmt == AVUTIL.PIX_FMT_RGB24)
-				fill_image(frame, ip);
+				fillImage(frame, ip);
 			else {
-				fill_image(frameRGB, ip);
+				fillImage(frameRGB, ip);
 				convertFromRGB();
 			}
 		}
 
-		AVOutputFormat tmp_fmt = new AVOutputFormat(formatContext.oformat);
-		if ((tmp_fmt.flags & AVFORMAT.AVFMT_RAWPICTURE) != 0) {
+		AVOutputFormat tmpFmt = new AVOutputFormat(formatContext.oformat);
+		if ((tmpFmt.flags & AVFORMAT.AVFMT_RAWPICTURE) != 0) {
 			/* raw video case. The API will change slightly in the near
 			   future for that */
 			AVCODEC.av_init_packet(packet);
@@ -474,22 +474,22 @@ public class IO extends FFMPEGSingle implements Progress {
 				throw new IOException("Error while writing video frame");
 		} else {
 			/* encode the image */
-			if (video_outbuf_memory == null)
-				video_outbuf_memory = new Memory(video_outbuf.length);
+			if (videoOutbutMemory == null)
+				videoOutbutMemory = new Memory(videoOutbut.length);
 			// TODO: special-case avcodec_encode_video() to take a Pointer to avoid frequent copying
-			out_size = AVCODEC.avcodec_encode_video(codecContext, video_outbuf, video_outbuf.length, frame);
+			outSize = AVCODEC.avcodec_encode_video(codecContext, videoOutbut, videoOutbut.length, frame);
 			/* if zero size, it means the image was buffered */
-			if (out_size > 0) {
+			if (outSize > 0) {
 				AVCODEC.av_init_packet(packet);
 
-				AVFrame tmp_frame = new AVFrame(codecContext.coded_frame);
-				packet.pts = AVUTIL.av_rescale_q(tmp_frame.pts, new AVUTIL.AVRational.ByValue(codecContext.time_base), new AVUTIL.AVRational.ByValue(st.time_base));
-				if (tmp_frame.key_frame == 1)
+				AVFrame tmpFrame = new AVFrame(codecContext.coded_frame);
+				packet.pts = AVUTIL.av_rescale_q(tmpFrame.pts, new AVUTIL.AVRational.ByValue(codecContext.time_base), new AVUTIL.AVRational.ByValue(st.time_base));
+				if (tmpFrame.key_frame == 1)
 					packet.flags |= AVCODEC.PKT_FLAG_KEY;
 				packet.stream_index = st.index;
-				video_outbuf_memory.write(0, video_outbuf, 0, out_size);
-				packet.data = video_outbuf_memory;
-				packet.size = out_size;
+				videoOutbutMemory.write(0, videoOutbut, 0, outSize);
+				packet.data = videoOutbutMemory;
+				packet.size = outSize;
 
 				/* write the compressed frame in the media file */
 				if (AVFORMAT.av_interleaved_write_frame(formatContext, packet) != 0)
@@ -500,7 +500,7 @@ public class IO extends FFMPEGSingle implements Progress {
 		}
 	}
 
-	protected static void fill_image(AVFrame pict, ImageProcessor ip) {
+	protected static void fillImage(AVFrame pict, ImageProcessor ip) {
 		if (!(ip instanceof ColorProcessor))
 			ip = ip.convertToRGB();
 		int[] pixels = (int[])ip.getPixels();
@@ -514,7 +514,7 @@ public class IO extends FFMPEGSingle implements Progress {
 		}
 	}
 
-	protected void open_video(AVFormatContext formatContext, AVStream st) throws IOException {
+	protected void openVideo(AVFormatContext formatContext, AVStream st) throws IOException {
 		AVCodec codec;
 
 		/* find the video encoder */
@@ -527,12 +527,12 @@ public class IO extends FFMPEGSingle implements Progress {
 			throw new IOException("Could not open video codec");
 	}
 
-	protected static void close_video(AVFormatContext formatContext, AVStream st) {
-		AVCodecContext tmp_codec = new AVCodecContext(st.codec);
-		AVCODEC.avcodec_close(tmp_codec);
+	protected static void closeVideo(AVFormatContext formatContext, AVStream st) {
+		AVCodecContext tmpCodec = new AVCodecContext(st.codec);
+		AVCODEC.avcodec_close(tmpCodec);
 	}
 
-	protected AVStream add_video_stream(AVFormatContext formatContext, int codec_id, int width, int height, int frameRate, int bitRate, int pixelFormat) {
+	protected AVStream addVideoStream(AVFormatContext formatContext, int codecId, int width, int height, int frameRate, int bitRate, int pixelFormat) {
 		AVStream st;
 
 		st = AVFORMAT.av_new_stream(formatContext, 0);
@@ -541,7 +541,7 @@ public class IO extends FFMPEGSingle implements Progress {
 			return null;
 		}
 		codecContext = new AVCodecContext(st.codec);
-		codecContext.codec_id = codec_id;
+		codecContext.codec_id = codecId;
 		codecContext.codec_type = AVCODEC.CODEC_TYPE_VIDEO;
 
 		/* put sample parameters */
