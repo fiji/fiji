@@ -37,9 +37,8 @@ public class Exporter implements PlugIn {
 			return;
 		}
 
-		// TODO: transform on the fly
-		if (image.getType() != ImagePlus.COLOR_RGB) {
-			IJ.error("Need a color image");
+		if (image.getType() == ImagePlus.GRAY32) {
+			IJ.error("Need a color, 8-bit or 16-bit image");
 			return;
 		}
 

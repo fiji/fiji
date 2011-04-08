@@ -12,7 +12,9 @@ import ij.ImageStack;
 import ij.VirtualStack;
 
 import ij.process.ColorProcessor;
+import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 
 import fiji.ffmpeg.AVCODEC.AVCodec;
 import fiji.ffmpeg.AVCODEC.AVCodecContext;
@@ -33,7 +35,8 @@ public class IO extends FFMPEGSingle implements Progress {
 	protected AVCodecContext codecContext;
 	protected AVCodec codec;
 	protected IntByReference gotPicture = new IntByReference();
-	protected AVFrame frame, frameRGB;
+	protected int bufferFramePixelFormat = AVUTIL.PIX_FMT_RGB24;
+	protected AVFrame frame, bufferFrame;
 	protected Pointer swsContext;
 	protected byte[] videoOutbut;
 	protected Memory videoOutbutMemory;
@@ -243,23 +246,33 @@ public class IO extends FFMPEGSingle implements Progress {
 		}
 
 		// Allocate an AVFrame structure
-		if (frameRGB == null) {
-			frameRGB = AVCODEC.avcodec_alloc_frame();
-			if (frameRGB == null)
+		if (bufferFrame == null) {
+			bufferFramePixelFormat = AVUTIL.PIX_FMT_RGB24;
+			if (codecContext.pix_fmt == AVUTIL.PIX_FMT_GRAY8 ||
+					codecContext.pix_fmt == AVUTIL.PIX_FMT_MONOWHITE ||
+					codecContext.pix_fmt == AVUTIL.PIX_FMT_MONOBLACK ||
+					codecContext.pix_fmt == AVUTIL.PIX_FMT_PAL8)
+				bufferFramePixelFormat = AVUTIL.PIX_FMT_GRAY8;
+			else if (codecContext.pix_fmt == AVUTIL.PIX_FMT_GRAY16BE ||
+					codecContext.pix_fmt == AVUTIL.PIX_FMT_GRAY16LE)
+				bufferFramePixelFormat = AVUTIL.PIX_FMT_GRAY16BE;
+
+			bufferFrame = AVCODEC.avcodec_alloc_frame();
+			if (bufferFrame == null)
 				throw new RuntimeException("Could not allocate frame");
 
 			// Allocate buffer
-			if (AVCODEC.avpicture_alloc(new AVPicture(frameRGB.getPointer()),
-					AVUTIL.PIX_FMT_RGB24, codecContext.width, codecContext.height) < 0)
+			if (AVCODEC.avpicture_alloc(new AVPicture(bufferFrame.getPointer()),
+					bufferFramePixelFormat, codecContext.width, codecContext.height) < 0)
 				throw new OutOfMemoryError("Could not allocate tmp frame");
-			frameRGB.read();
+			bufferFrame.read();
 		}
 
 		if (swsContext == null) {
 			swsContext = SWSCALE.sws_getContext(codecContext.width, codecContext.height,
-					forEncoding ? AVUTIL.PIX_FMT_RGB24 : codecContext.pix_fmt,
+					forEncoding ? bufferFramePixelFormat : codecContext.pix_fmt,
 					codecContext.width, codecContext.height,
-					forEncoding ? codecContext.pix_fmt : AVUTIL.PIX_FMT_RGB24,
+					forEncoding ? codecContext.pix_fmt : bufferFramePixelFormat,
 					SWSCALE.SWS_BICUBIC, null, null, null);
 			if (swsContext == null)
 				throw new OutOfMemoryError("Could not allocate swscale context");
@@ -275,23 +288,23 @@ public class IO extends FFMPEGSingle implements Progress {
 			return null;
 
 		// Convert the image from its native format to RGB
-		convertToRGB();
-		return toSlice(frameRGB, codecContext.width, codecContext.height);
+		convertTo();
+		return toSlice(bufferFrame, codecContext.width, codecContext.height);
 	}
 
-	protected void convertToRGB() {
-		SWSCALE.sws_scale(swsContext, frame.data, frame.linesize, 0, codecContext.height, frameRGB.data, frameRGB.linesize);
+	protected void convertTo() {
+		SWSCALE.sws_scale(swsContext, frame.data, frame.linesize, 0, codecContext.height, bufferFrame.data, bufferFrame.linesize);
 	}
 
-	protected void convertFromRGB() {
-		SWSCALE.sws_scale(swsContext, frameRGB.data, frameRGB.linesize, 0, codecContext.height, frame.data, frame.linesize);
+	protected void convertFrom() {
+		SWSCALE.sws_scale(swsContext, bufferFrame.data, bufferFrame.linesize, 0, codecContext.height, frame.data, frame.linesize);
 	}
 
 	protected void free() {
 		// Free the RGB image
-		if (frameRGB != null) {
-			AVUTIL.av_free(frameRGB.getPointer());
-			frameRGB = null;
+		if (bufferFrame != null) {
+			AVUTIL.av_free(bufferFrame.getPointer());
+			bufferFrame = null;
 		}
 
 		// Close the codec
@@ -313,19 +326,45 @@ public class IO extends FFMPEGSingle implements Progress {
 		}
 	}
 
-	protected static ColorProcessor toSlice(AVFrame frame, int width, int height) {
+	protected ImageProcessor toSlice(AVFrame frame, int width, int height) {
 		final int len = height * frame.linesize[0];
 		final byte[] data = frame.data[0].getByteArray(0, len);
-		int[] pixels = new int[width * height];
-		for (int j = 0; j < height; j++) {
-			final int off = j * frame.linesize[0];
-			for (int i = 0; i < width; i++)
-				pixels[i + j * width] =
-					((data[off + 3 * i]) & 0xff) << 16 |
-					((data[off + 3 * i + 1]) & 0xff) << 8 |
-					((data[off + 3 * i + 2]) & 0xff);
+		if (bufferFramePixelFormat == AVUTIL.PIX_FMT_RGB24) {
+			int[] pixels = new int[width * height];
+			for (int j = 0; j < height; j++) {
+				final int off = j * frame.linesize[0];
+				for (int i = 0; i < width; i++)
+					pixels[i + j * width] =
+						((data[off + 3 * i]) & 0xff) << 16 |
+						((data[off + 3 * i + 1]) & 0xff) << 8 |
+						((data[off + 3 * i + 2]) & 0xff);
+			}
+			return new ColorProcessor(width, height, pixels);
 		}
-		return new ColorProcessor(width, height, pixels);
+		if (bufferFramePixelFormat == AVUTIL.PIX_FMT_GRAY16BE) {
+			short[] pixels = new short[width * height];
+			for (int j = 0; j < height; j++) {
+				final int off = j * frame.linesize[0];
+				for (int i = 0; i < width; i++)
+					pixels[i + j * width] = (short)
+						(((data[off + 2 * i]) & 0xff) << 8 |
+						((data[off + 2 * i + 1]) & 0xff));
+			}
+			return new ShortProcessor(width, height, pixels, null);
+		}
+		if (bufferFramePixelFormat == AVUTIL.PIX_FMT_GRAY8 ||
+				bufferFramePixelFormat == AVUTIL.PIX_FMT_PAL8) {
+			byte[] pixels = new byte[width * height];
+			for (int j = 0; j < height; j++) {
+				final int off = j * frame.linesize[0];
+				for (int i = 0; i < width; i++)
+					pixels[i + j * width] = (byte)
+						((data[off +  i]) & 0xff);
+			}
+			/* TODO: in case of PAL8, we should get a colormap */
+			return new ByteProcessor(width, height, pixels, null);
+		}
+		throw new RuntimeException("Unhandled pixel format: " + bufferFramePixelFormat);
 	}
 
 	public static int strncpy(byte[] dst, String src) {
@@ -407,6 +446,14 @@ public class IO extends FFMPEGSingle implements Progress {
 			formatContext.pb = p.getValue();
 		}
 
+		bufferFramePixelFormat = AVUTIL.PIX_FMT_RGB24;
+		switch (image.getType()) {
+		case ImagePlus.GRAY8:
+			bufferFramePixelFormat = AVUTIL.PIX_FMT_PAL8;
+		case ImagePlus.GRAY16:
+			bufferFramePixelFormat = AVUTIL.PIX_FMT_GRAY16BE;
+		}
+
 		allocateFrames(true);
 
 		AVFORMAT.av_write_header(formatContext);
@@ -451,11 +498,11 @@ public class IO extends FFMPEGSingle implements Progress {
 			   frames if using B frames, so we get the last frames by
 			   passing the same picture again */
 		} else {
-			if (codecContext.pix_fmt == AVUTIL.PIX_FMT_RGB24)
+			if (codecContext.pix_fmt == bufferFramePixelFormat)
 				fillImage(frame, ip);
 			else {
-				fillImage(frameRGB, ip);
-				convertFromRGB();
+				fillImage(bufferFrame, ip);
+				convertFrom();
 			}
 		}
 
@@ -500,18 +547,46 @@ public class IO extends FFMPEGSingle implements Progress {
 		}
 	}
 
-	protected static void fillImage(AVFrame pict, ImageProcessor ip) {
-		if (!(ip instanceof ColorProcessor))
-			ip = ip.convertToRGB();
-		int[] pixels = (int[])ip.getPixels();
+	protected void fillImage(AVFrame pict, ImageProcessor ip) {
+		if (bufferFramePixelFormat == AVUTIL.PIX_FMT_RGB24) {
+			if (!(ip instanceof ColorProcessor))
+				ip = ip.convertToRGB();
+			int[] pixels = (int[])ip.getPixels();
 
-		int i = 0, total = ip.getWidth() * ip.getHeight();
-		for (int j = 0; j < total; j++) {
-			int v = pixels[j];
-			pict.data[0].setByte(i++, (byte)((v >> 16) & 0xff));
-			pict.data[0].setByte(i++, (byte)((v >> 8) & 0xff));
-			pict.data[0].setByte(i++, (byte)(v & 0xff));
+			int i = 0, total = ip.getWidth() * ip.getHeight();
+			for (int j = 0; j < total; j++) {
+				int v = pixels[j];
+				pict.data[0].setByte(i++, (byte)((v >> 16) & 0xff));
+				pict.data[0].setByte(i++, (byte)((v >> 8) & 0xff));
+				pict.data[0].setByte(i++, (byte)(v & 0xff));
+			}
 		}
+		else if (bufferFramePixelFormat == AVUTIL.PIX_FMT_GRAY16BE) {
+			if (!(ip instanceof ShortProcessor))
+				ip = ip.convertToShort(false);
+			short[] pixels = (short[])ip.getPixels();
+
+			int i = 0, total = ip.getWidth() * ip.getHeight();
+			for (int j = 0; j < total; j++) {
+				int v = pixels[j] & 0xffff;
+				pict.data[0].setByte(i++, (byte)((v >> 8) & 0xff));
+				pict.data[0].setByte(i++, (byte)(v & 0xff));
+			}
+		}
+		else if (bufferFramePixelFormat == AVUTIL.PIX_FMT_GRAY8 ||
+				bufferFramePixelFormat == AVUTIL.PIX_FMT_PAL8) {
+			if (!(ip instanceof ByteProcessor))
+				ip = ip.convertToByte(false);
+			byte[] pixels = (byte[])ip.getPixels();
+
+			int i = 0, total = ip.getWidth() * ip.getHeight();
+			for (int j = 0; j < total; j++) {
+				int v = pixels[j] & 0xff;
+				pict.data[0].setByte(i++, (byte)(v & 0xff));
+			}
+		}
+		else
+			throw new RuntimeException("Unhandled pixel format: " + bufferFramePixelFormat);
 	}
 
 	protected void openVideo(AVFormatContext formatContext, AVStream st) throws IOException {
