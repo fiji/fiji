@@ -283,6 +283,7 @@ jars/imglib-scripting.jar <- modules/imglib/
 libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama-1.0.2.jar \
 	jars/fiji-scripting.jar jars/fiji-lib.jar jars/jep.jar \
 	jars/pal-optimization.jar jars/Updater_Fix.jar plugins/JNI_Example.jar \
+	plugins/FFMPEG_IO.jar \
 
 plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Screen/**/*
 
@@ -426,6 +427,14 @@ MAINCLASS(jars/test-fiji.jar)=fiji.Tests
 CLASSPATH(jars/test-fiji.jar)=jars/junit-4.5.jar
 
 MAINCLASS(jars/Updater_Fix.jar)=fiji.updater.Fix
+
+# This also compiles lib/<platform>/<ffmpeg-library>
+CLASSPATH(plugins/FFMPEG_IO.jar)=jars/ij.jar
+plugins/FFMPEG_IO.jar[src-plugins/FFMPEG_IO/generate.bsh] <- src-plugins/FFMPEG_IO/**/*
+
+# This compiles and cross-compiles lib/<platform>/<ffmpeg-library>
+CLASSPATH(plugins/FFMPEG_IO.jar-cross)=jars/ij.jar
+plugins/FFMPEG_IO.jar-cross[src-plugins/FFMPEG_IO/generate.bsh all] <- src-plugins/FFMPEG_IO/**/*
 
 # the default rules
 

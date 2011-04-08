@@ -4,6 +4,7 @@
 import fiji.build.Parser;
 import fiji.build.Util;
 
+addClassPath(System.getProperty("fiji.dir") + "/jars/ij.jar");
 import ij.IJ;
 
 import java.io.ByteArrayInputStream;
