@@ -147,6 +147,14 @@ public class SimpleNeuriteTracer extends ThreePanes
 		// Ignore this information.
 	}
 
+	public void changeUIState(int newState) {
+		resultsDialog.changeState(newState);
+	}
+
+	public int getUIState() {
+		return resultsDialog.getCurrentState();
+	}
+
 	synchronized public void saveFill( ) {
 
 		if( filler != null ) {

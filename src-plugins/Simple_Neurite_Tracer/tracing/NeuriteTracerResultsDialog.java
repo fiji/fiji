@@ -115,6 +115,10 @@ public class NeuriteTracerResultsDialog
 
 	protected volatile int currentState;
 
+	public int getCurrentState() {
+		return currentState;
+	}
+
 	final protected SimpleNeuriteTracer plugin;
 
 	protected JPanel statusPanel;
