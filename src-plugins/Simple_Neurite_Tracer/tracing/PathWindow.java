@@ -240,6 +240,9 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				new Thread( new Runnable(){
 						public void run(){
 
+							int preFittingState = plugin.getUIState();
+							plugin.changeUIState(NeuriteTracerResultsDialog.FITTING_PATHS);
+
 							FittingProgress progress = new FittingProgress(numberOfPathsToFit);
 							for( int i = 0; i < numberOfPathsToFit; ++i ) {
 								PathFitter pf = pathsToFit.get(i);
@@ -268,6 +271,8 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 							}
 							pathAndFillManager.resetListeners(null);
 							progress.done();
+
+							plugin.changeUIState(preFittingState);
 						}
 					}).start();
 

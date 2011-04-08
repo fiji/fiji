@@ -97,6 +97,7 @@ public class NeuriteTracerResultsDialog
 	static final int WAITING_FOR_SIGMA_CHOICE = 9;
 	static final int SAVING                   = 10;
 	static final int LOADING                  = 11;
+	static final int FITTING_PATHS            = 12;
 
 	static final String [] stateNames = { "WAITING_TO_START_PATH",
 					      "PARTIAL_PATH",
@@ -109,7 +110,8 @@ public class NeuriteTracerResultsDialog
 					      "WAITING_FOR_SIGMA_POINT",
 					      "WAITING_FOR_SIGMA_CHOICE",
 					      "SAVING",
-					      "LOADING" };
+					      "LOADING",
+					      "FITTING_PATHS" };
 
 	static final String SEARCHING_STRING = "Searching for path between points...";
 
@@ -568,6 +570,11 @@ public class NeuriteTracerResultsDialog
 
 					fw.setEnabledWhileFilling();
 
+					break;
+
+				case FITTING_PATHS:
+					updateStatusText("Fitting volumes around neurons...");
+					disableEverything();
 					break;
 
 				case CALCULATING_GAUSSIAN:
