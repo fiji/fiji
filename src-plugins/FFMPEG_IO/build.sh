@@ -28,6 +28,8 @@ CFLAGS=
 LDFLAGS=
 CONFIGURE_CROSS_COMPILE=
 CROSS_PREFIX=
+CROSS_64_PREFIX=
+CROSS_PPC_PREFIX=
 case "$1" in
 "$PLATFORM") ;;
 *)
@@ -41,6 +43,12 @@ case "$1" in
 	win*)
 		TARGET_OS="$(case "$PLATFORM" in win*) echo mingw32;; esac)"
 		CROSS_PREFIX=x86_64-w64-mingw32-
+		;;
+	macosx)
+		TARGET_OS="darwin"
+		CROSS_PREFIX=i686-apple-darwin8-
+		CROSS_64_PREFIX=x86_64-apple-darwin8-
+		CROSS_PPC_PREFIX=powerpc-apple-darwin8-
 		;;
 	*)
 		echo "Unsupported cross compile target: $1" >&2
@@ -56,6 +64,9 @@ case "$1" in
 	CONFIGURE_CROSS_COMPILE="--enable-cross-compile --cross-prefix=$CROSS_PREFIX --target-os=$TARGET_OS --arch=$ARCH"
 	;;
 esac
+
+test -z "$CROSS_64_PREFIX" && CROSS_64_PREFIX=$CROSS_PREFIX
+test -z "$CROSS_PPC_PREFIX" && CROSS_PPC_PREFIX=$CROSS_PREFIX
 
 PLATFORM="$1"
 TARGET="$2"
@@ -192,17 +203,30 @@ echo "Checking whether FFMPEG needs to be built" &&
 	true)
 		save="$EXTRA_CONFIGURE" &&
 		save_CFLAGS="$CFLAGS" &&
-		for cpu in i386 x86_64
+		for cpu in i386 powerpc x86_64
 		do
-			bits=${cpu#*86} &&
-			bits=${bits#_} &&
-			bits=${bits:-32} &&
-			export CFLAGS="$save_CFLAGS -arch $cpu -m$bits" &&
+			bits=32 &&
+			case $cpu in
+			powerpc)
+				CROSS_PREFIX=$CROSS_PPC_PREFIX
+				;;
+			x86_64)
+				CROSS_PREFIX=$CROSS_64_PREFIX &&
+				bits=64
+				;;
+			esac &&
+			ARCHFLAG= &&
+			if test -z "$CROSS_PREFIX"
+			then
+				ARCHFLAG="-arch $cpu"
+			fi &&
+			export CFLAGS="$save_CFLAGS $ARCHFLAG -m$bits" &&
 			export LDFLAGS="$CFLAGS" &&
+			CONFIGURE_CROSS_COMPILE="--enable-cross-compile --cross-prefix=$CROSS_PREFIX --target-os=$TARGET_OS" &&
 			EXTRA_CONFIGURE="$save --arch=$cpu" \
-			build_ffmpeg lib$bits$LIBEXT || break
+			build_ffmpeg lib$cpu$LIBEXT || break
 		done &&
-		lipo -create lib32$LIBEXT lib64$LIBEXT -output $TARGET
+		${CROSS_PREFIX}lipo -create libi386$LIBEXT libpowerpc$LIBEXT libx86_64$LIBEXT -output $TARGET
 		;;
 	*)
 		build_ffmpeg $TARGET
