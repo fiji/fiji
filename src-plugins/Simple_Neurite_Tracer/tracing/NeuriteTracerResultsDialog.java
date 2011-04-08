@@ -650,6 +650,9 @@ public class NeuriteTracerResultsDialog
 
 		super( IJ.getInstance(), title, false );
 		assert SwingUtilities.isEventDispatchThread();
+
+		new ClarifyingKeyListener().addKeyAndContainerListenerRecursively(this);
+
 		this.plugin = plugin;
 		final SimpleNeuriteTracer thisPlugin = plugin;
 		this.launchedByArchive = launchedByArchive;

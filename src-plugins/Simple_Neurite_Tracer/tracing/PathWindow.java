@@ -435,6 +435,8 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		super("All Paths");
 		assert SwingUtilities.isEventDispatchThread();
 
+		new ClarifyingKeyListener().addKeyAndContainerListenerRecursively(this);
+
 		this.pathAndFillManager = pathAndFillManager;
 		this.plugin = plugin;
 
