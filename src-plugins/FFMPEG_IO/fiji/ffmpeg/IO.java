@@ -67,6 +67,11 @@ public class IO extends FFMPEGSingle implements Progress {
 		});
 	}
 
+	public void start(String message) {
+		if (progress != null)
+			progress.start(message);
+	}
+
 	public void step(String message, double progress) {
 		if (this.progress != null)
 			this.progress.step(message, progress);
@@ -94,11 +99,10 @@ public class IO extends FFMPEGSingle implements Progress {
 			throw new IOException("ffmpeg versions mismatch: native " + AVCODEC.avcodec_version()
 					+ " != Java-bindings " + AVCODEC.LIBAVCODEC_VERSION_INT);
 
-		step("Initializing FFMPEG", 0);
+		step("Opening " + path, 0);
 		AVFORMAT.av_register_all();
 
 		// Open video file
-		step("Opening " + path, 0);
 		final PointerByReference formatContextPointer = new PointerByReference();
 		if (AVFORMAT.av_open_input_file(formatContextPointer, path, null, 0, null) != 0)
 			throw new IOException("Could not open " + path);
@@ -204,13 +208,14 @@ public class IO extends FFMPEGSingle implements Progress {
 			factor = 1.0 / last;
 		ImageStack stack = new ImageStack(codecContext.width, codecContext.height);
 		int frameCounter = 0;
+		start("Writing " + path);
 		while (AVFORMAT.av_read_frame(formatContext, packet) >= 0 &&
 				(last < 0 || frameCounter < last)) {
 			// Is this a packet from the video stream?
 			if (packet.stream_index != videoStream)
 				continue;
 
-			step("Reading frame " + (frameCounter + 1), frameCounter * factor);
+			step(null, frameCounter * factor);
 			ImageProcessor ip = readOneFrame(packet);
 			if (ip != null && frameCounter++ >= first)
 				stack.addSlice(null, ip);
@@ -385,7 +390,7 @@ public class IO extends FFMPEGSingle implements Progress {
 
 		stack = image.getStack();
 
-		step("Initializing FFMPEG", 0);
+		start("Writing " + path);
 		/* initialize libavcodec, and register all codecs and formats */
 		AVFORMAT.av_register_all();
 
@@ -422,7 +427,6 @@ public class IO extends FFMPEGSingle implements Progress {
 
 		/* now that all the parameters are set, we can open the
 		 * video codec and allocate the necessary encode buffer */
-		step("Opening " + path, 0);
 		openVideo(formatContext, videoSt);
 
 		// Dump the format to stderr
@@ -462,7 +466,7 @@ public class IO extends FFMPEGSingle implements Progress {
 
 		for (int frameCount = 1; frameCount <= stack.getSize(); frameCount++) {
 			/* write video frame */
-			step("Writing frame " + frameCount, frameCount / (double)stack.getSize());
+			step(null, frameCount / (double)stack.getSize());
 			writeVideoFrame(stack.getProcessor(frameCount), formatContext, videoSt);
 		}
 

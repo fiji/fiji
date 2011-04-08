@@ -3,6 +3,10 @@ package fiji.ffmpeg;
 import ij.IJ;
 
 public class IJProgress implements Progress {
+	public void start(String message) {
+		IJ.showStatus(message);
+	}
+
 	public void step(String message, double progress) {
 		if (message != null)
 			IJ.showStatus(message);
