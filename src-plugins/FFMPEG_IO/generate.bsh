@@ -95,7 +95,7 @@ String fakefilePrefix =
 // Make sure that ffmpeg/ is dirty when the platform is different than last time
 File ffmpegDir = new File(cwd, "ffmpeg");
 String avformatTarget = "fiji/ffmpeg/AVFORMAT.java";
-String pluginJarName = "FFMPEG_IO.jar";
+String pluginJarName = System.getProperty("fiji.dir") + "/plugins/FFMPEG_IO.jar";
 
 String fakefile = fakefilePrefix +
 	"all <- " + pluginJarName + "\n";
