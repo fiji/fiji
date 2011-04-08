@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010, 2011 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Simple Neurite Tracer".
@@ -29,7 +29,6 @@ package tracing;
 
 import ij.ImagePlus;
 
-import java.util.PriorityQueue;
 import java.util.ArrayList;
 
 public class AutoSearchThread extends SearchThread {
@@ -81,6 +80,7 @@ public class AutoSearchThread extends SearchThread {
 		addNode(s,true);
 	}
 
+	@Override
 	protected double costMovingTo( int new_x, int new_y, int new_z ) {
 
 		double cost;
@@ -94,6 +94,7 @@ public class AutoSearchThread extends SearchThread {
 		return cost;
 	}
 
+	@Override
 	protected void addingNode( SearchNode n ) {
 		if( tubeValues[n.z][n.y*width+n.x] > tubenessThreshold ) {
 			AutoPoint p=new AutoPoint(n.x,n.y,n.z);

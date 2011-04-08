@@ -39,13 +39,20 @@ then
     mv fiji $D
     ln -s $D fiji
 
-else
+elif [ -L fiji ]
+then
 
   VERSION=$( cd fiji && dpkg-parsechangelog | egrep '^Version' | sed 's/^Version: //' )
   OLD_D=$(readlink -n fiji)
   D=fiji-$VERSION
+  mv $OLD_D $D
   rm fiji
   ln -s $D fiji
+
+else
+
+  echo "fiji existed, but was not a symlink"
+  exit 1
 
 fi
 

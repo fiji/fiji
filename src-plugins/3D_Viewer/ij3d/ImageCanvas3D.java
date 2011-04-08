@@ -7,7 +7,9 @@ import javax.media.j3d.Background;
 import javax.vecmath.Color3f;
 
 import java.awt.event.MouseAdapter;
+import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionAdapter;
+import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -23,6 +25,8 @@ import ij.process.ByteProcessor;
 import ij.gui.ImageCanvas;
 import ij.ImagePlus;
 import ij.gui.Roi;
+
+import ij3d.behaviors.Behavior2ListenerProxy;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
@@ -72,10 +76,6 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 		background = new Background(
 			new Color3f(UniverseSettings.defaultBackground));
 		background.setCapability(Background.ALLOW_COLOR_WRITE);
-
-		addListeners();
-		addMouseListener(roiImageCanvas);
-		addMouseMotionListener(roiImageCanvas);
 	}
 
 	public Background getBG() { //can't use getBackground()
@@ -87,16 +87,16 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 		render();
 	}
 
-	private void addListeners() {
-		addMouseMotionListener(new MouseMotionAdapter() {
+	void addListeners(DefaultUniverse universe) {
+		MouseMotionListener mouseMotionListener = new MouseMotionAdapter() {
 			public void mouseDragged(MouseEvent e) {
 				if(ui.isRoiTool())
 					exec.submit(new Runnable() { public void run() {
 						postRender();
 					}});
 			}
-		});
-		addMouseListener(new MouseAdapter() {
+		};
+		MouseListener mouseListener = new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 				if(ui.isRoiTool())
 					exec.submit(new Runnable() { public void run() {
@@ -113,7 +113,8 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 				if(!ui.isRoiTool())
 					roiImagePlus.killRoi();
 			}
-		});
+		};
+		universe.addInteractiveBehavior(new Behavior2ListenerProxy(universe, null, mouseListener, mouseMotionListener, null));
 		addComponentListener(new ComponentAdapter() {
 			public void componentResized(ComponentEvent e) {
 				exec.submit(new Runnable() { public void run() {

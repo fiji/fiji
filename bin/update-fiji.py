@@ -7,7 +7,7 @@ from sys import argv, exit, stderr
 from fiji.updater import Updater
 from fiji.updater.logic import Checksummer, FileUploader, \
 	PluginCollection, PluginObject, PluginUploader, \
-	XMLFileDownloader, XMLFileReader
+	XMLFileDownloader
 from fiji.updater.logic.PluginObject import Action
 from fiji.updater.util import StderrProgress, Util
 from java.io import ByteArrayInputStream
@@ -29,11 +29,10 @@ files = [stripPrecompiled(file) for file in argv[1:]]
 Updater.MAIN_URL = 'file:' + updateDirectory
 downloader = XMLFileDownloader()
 downloader.start()
-reader = XMLFileReader(downloader.getInputStream(), 0)
+plugins = PluginCollection()
 
 progress = StderrProgress()
 checksummer = Checksummer(progress)
-plugins = PluginCollection.getInstance()
 if len(files) == 0:
 	checksummer.updateFromLocal()
 else:

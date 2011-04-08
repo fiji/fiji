@@ -62,7 +62,7 @@ public class Stitch_Multiple_Series_File implements PlugIn
 	public static double thresholdDisplacementRelativeStatic = 2.5;
 	public static double thresholdDisplacementAbsoluteStatic = 3.5;
 	public static boolean previewOnlyStatic = false;
-	public static boolean ignoreCalibrationStatic = true;
+	public static boolean ignoreCalibrationStatic = false;
 	
 	public void run(String arg0)
 	{

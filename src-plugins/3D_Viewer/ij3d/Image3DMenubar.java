@@ -60,10 +60,12 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 	private JMenuItem exportAsciiSTL;
 	private JMenuItem exportBinarySTL;
 	private JMenuItem smoothMesh;
+	private JMenuItem smoothDialog;
 	private JMenuItem scalebar;
 	private JMenuItem smoothAllMeshes;
 	private JMenuItem displayAsVolume;
 	private JMenuItem displayAsOrtho;
+	private JMenuItem displayAsMultiOrtho;
 	private JMenuItem displayAsSurface;
 	private JMenuItem displayAsSurfacePlot;
 	private JMenuItem centerSelected;
@@ -78,6 +80,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 	private JMenuItem pl_load;
 	private JMenuItem pl_save;
 	private JMenuItem pl_size;
+	private JMenuItem pl_color;
 	private JCheckBoxMenuItem pl_show;
 	private JMenuItem j3dproperties;
 	private JCheckBoxMenuItem coordinateSystem;
@@ -224,13 +227,20 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		fill.addActionListener(this);
 		edit.add(fill);
 
+		JMenu smooth = new JMenu("Smooth");
+		edit.add(smooth);
+
 		smoothMesh = new JMenuItem("Smooth mesh");
 		smoothMesh.addActionListener(this);
-		edit.add(smoothMesh);
+		smooth.add(smoothMesh);
 
 		smoothAllMeshes = new JMenuItem("Smooth all meshes");
 		smoothAllMeshes.addActionListener(this);
-		edit.add(smoothAllMeshes);
+		smooth.add(smoothAllMeshes);
+
+		smoothDialog = new JMenuItem("Smooth control");
+		smoothDialog.addActionListener(this);
+		smooth.add(smoothDialog);
 
 		edit.addSeparator();
 
@@ -426,6 +436,10 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		pl_size.addActionListener(this);
 		pl.add(pl_size);
 
+		pl_color = new JMenuItem("Point color");
+		pl_color.addActionListener(this);
+		pl.add(pl_color);
+
 		return pl;
 	}
 
@@ -501,6 +515,10 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		displayAsOrtho = new JMenuItem("Orthoslice");
 		displayAsOrtho.addActionListener(this);
 		display.add(displayAsOrtho);
+
+		displayAsMultiOrtho = new JMenuItem("Multi-orthoslice");
+		displayAsMultiOrtho.addActionListener(this);
+		display.add(displayAsMultiOrtho);
 
 		displayAsSurface = new JMenuItem("Surface");
 		displayAsSurface.addActionListener(this);
@@ -578,6 +596,9 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		} else if(src == displayAsOrtho) {
 			executer.displayAs(getSelected(), Content.ORTHO);
 			updateMenus();
+		} else if(src == displayAsMultiOrtho) {
+			executer.displayAs(getSelected(), Content.MULTIORTHO);
+			updateMenus();
 		} else if(src == displayAsSurface) {
 			executer.displayAs(getSelected(), Content.SURFACE);
 			updateMenus();
@@ -611,6 +632,8 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 			executer.savePointList(getSelected());
 		else if (src == pl_size)
 			executer.changePointSize(getSelected());
+		else if (src == pl_color)
+			executer.changePointColor(getSelected());
 		else if (src == saveView)
 			executer.saveView();
 		else if (src == loadView)
@@ -635,6 +658,8 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 			executer.smoothMesh(getSelected());
 		else if (src == smoothAllMeshes)
 			executer.smoothAllMeshes();
+		else if (src == smoothDialog)
+			executer.smoothControl();
 		else if (src == viewPreferences)
 			executer.viewPreferences();
 		else if(src == j3dproperties)
@@ -776,6 +801,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		pl_save.setEnabled(c != null);
 		pl_show.setEnabled(c != null);
 		pl_size.setEnabled(c != null);
+		pl_color.setEnabled(c != null);
 
 		lock.setEnabled(c != null);
 		setTransform.setEnabled(c != null);
@@ -798,9 +824,9 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 
 		int t = c.getType();
 
-		slices.setEnabled(t == Content.ORTHO);
+		slices.setEnabled(t == Content.ORTHO || t == Content.MULTIORTHO);
 		updateVol.setEnabled(t == Content.VOLUME ||
-			t == Content.ORTHO);
+			t == Content.ORTHO || t == Content.MULTIORTHO);
 		fill.setEnabled(t == Content.VOLUME);
 		shaded.setEnabled(t == Content.SURFACE_PLOT2D ||
 			t == Content.SURFACE || t == Content.CUSTOM);
@@ -819,6 +845,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		displayAsSurface.setEnabled(t != Content.SURFACE && i != null);
 		displayAsSurfacePlot.setEnabled(
 				t != Content.SURFACE_PLOT2D && i != null);
+		displayAsMultiOrtho.setEnabled(t != Content.MULTIORTHO && i != null);
 	}
 }
 

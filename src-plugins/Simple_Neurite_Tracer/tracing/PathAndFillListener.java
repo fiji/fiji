@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010, 2011 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Simple Neurite Tracer".
@@ -35,6 +35,6 @@ public interface PathAndFillListener {
 
 	void setFillList( String [] fillList );
 
-	void setSelectedPaths( HashSet selectedPathSet, Object source );
+	void setSelectedPaths( HashSet<Path> selectedPathSet, Object source );
 
 }

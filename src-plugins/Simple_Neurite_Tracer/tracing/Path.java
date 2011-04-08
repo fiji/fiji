@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010, 2011 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Simple Neurite Tracer".
@@ -30,9 +30,6 @@ package tracing;
 import java.awt.Color;
 import java.awt.Graphics;
 
-import java.awt.image.IndexColorModel;
-import java.awt.image.ColorModel;
-
 import ij.gui.*;
 import ij.*;
 import ij.process.*;
@@ -49,11 +46,8 @@ import ij3d.MeshMaker;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
 
-import javax.swing.tree.DefaultMutableTreeNode;
-
 import java.util.ArrayList;
 import java.util.Set;
-import java.util.Iterator;
 import java.util.HashSet;
 import java.util.Arrays;
 import java.util.List;
@@ -61,13 +55,12 @@ import java.util.List;
 /* This class represents a list of points, and has methods for drawing
  * them onto ThreePanes-style image canvases. */
 
-public class Path implements Comparable {
+public class Path implements Comparable<Path> {
 
-	public int compareTo(Object o) {
-		Path casted = (Path)o;
-		if( id == casted.id )
+	public int compareTo(Path o) {
+		if( id == o.id )
 			return 0;
-		if( id < casted.id )
+		if( id < o.id )
 			return -1;
 		else
 			return 1;
@@ -744,7 +737,7 @@ public class Path implements Comparable {
 
 				double cross_x = n_y * t_z - n_z * t_y;
 				double cross_y = n_z * t_x - n_x * t_z;
-				double cross_z = n_x * t_y - n_y * t_x;
+				// double cross_z = n_x * t_y - n_y * t_x;
 
 				double sizeInPlane = Math.sqrt( cross_x * cross_x + cross_y * cross_y );
 				double normalized_cross_x = cross_x / sizeInPlane;
@@ -808,10 +801,6 @@ public class Path implements Comparable {
 		if( size() < 1 )
 			throw new RuntimeException("indexNearestTo called on a Path of size() = 0");
 
-		PointInImage result = new PointInImage( Double.MIN_VALUE,
-							Double.MIN_VALUE,
-							Double.MIN_VALUE );
-
 		double minimumDistanceSquared = Double.MAX_VALUE;
 		int indexOfMinimum = -1;
 
@@ -835,18 +824,18 @@ public class Path implements Comparable {
 	// ------------------------------------------------------------------------
 	// FIXME: adapt these for Path rather than SegmentedConnection, down to EOFIT
 
-	class CircleAttempt implements MultivariateFunction, Comparable {
+	class CircleAttempt implements MultivariateFunction, Comparable<CircleAttempt> {
 
 		double min;
 		double [] best;
 		double [] initial;
 
-		byte [] data;
-		int minValueInData;
-		int maxValueInData;
+		float [] data;
+		float minValueInData;
+		float maxValueInData;
 		int side;
 
-		public CircleAttempt(double [] start, byte [] data, int minValueInData, int maxValueInData, int side ) {
+		public CircleAttempt(double [] start, float [] data, float minValueInData, float maxValueInData, int side ) {
 
 			this.data = data;
 			this.minValueInData = minValueInData;
@@ -857,8 +846,7 @@ public class Path implements Comparable {
 			initial = start;
 		}
 
-		public int compareTo(Object other) {
-			CircleAttempt o = (CircleAttempt)other;
+		public int compareTo(CircleAttempt o) {
 			if (min < o.min)
 				return -1;
 			else if (min > o.min)
@@ -898,7 +886,7 @@ public class Path implements Comparable {
 
 			for( int i = 0; i < side; ++i ) {
 				for( int j = 0; j < side; ++j ) {
-					int value = data[j*side+i] & 0xFF;
+					float value = data[j*side+i];
 					if( r * r > ((i - x) * (i - x)  + (j - y) * (j - y)) )
 						badness += (maxValueInData - value) * (maxValueInData - value);
 					else
@@ -982,19 +970,19 @@ public class Path implements Comparable {
 		result[2] = precise_z_positions[max_index] - precise_z_positions[min_index];
 	}
 
-	public byte [] squareNormalToVector( int side,        // The number of samples in x and y in the plane, separated by step
-					     double step,     // step is in the same units as the _spacing, etc. variables.
-					     double ox,      /* These are scaled now */
-					     double oy,
-					     double oz,
-					     double nx,
-					     double ny,
-					     double nz,
-					     double [] x_basis_vector, /* The basis vectors are returned here  */
-					     double [] y_basis_vector, /* they *are* scaled by _spacing        */
-					     ImagePlus image ) {
+	public float [] squareNormalToVector( int side,        // The number of samples in x and y in the plane, separated by step
+					      double step,     // step is in the same units as the _spacing, etc. variables.
+					      double ox,      /* These are scaled now */
+					      double oy,
+					      double oz,
+					      double nx,
+					      double ny,
+					      double nz,
+					      double [] x_basis_vector, /* The basis vectors are returned here  */
+					      double [] y_basis_vector, /* they *are* scaled by _spacing        */
+					      ImagePlus image ) {
 
-		byte [] result = new byte[side*side];
+		float [] result = new float[side*side];
 
 		double epsilon = 0.000001;
 
@@ -1064,14 +1052,34 @@ public class Path implements Comparable {
 
 		}
 
-		// FIXME: do other image types too...
 		int width = image.getWidth();
 		int height = image.getHeight();
 		int depth = image.getStackSize();
-		byte [][] v = new byte[depth][];
+		float [][] v = new float[depth][];
 		ImageStack s = image.getStack();
-		for( int z = 0; z < depth; ++z )
-			v[z] = (byte []) s.getPixels( z + 1 );
+		int imageType = image.getType();
+		final int arraySize = width * height;
+		if( imageType == ImagePlus.GRAY8 || imageType == ImagePlus.COLOR_256 ) {
+			for( int z = 0; z < depth; ++z ) {
+				byte [] bytePixels = (byte[])s.getPixels(z+1);
+				float [] fa = new float[arraySize];
+				for( int i = 0; i < arraySize; ++i  )
+					fa[i] = bytePixels[i] & 0xFF;
+				v[z] = fa;
+			}
+		} else if( imageType == ImagePlus.GRAY16 ) {
+			for( int z = 0; z < depth; ++z ) {
+				short [] shortPixels = (short[])s.getPixels(z+1);
+				float [] fa = new float[arraySize];
+				for( int i = 0; i < arraySize; ++i  )
+					fa[i] = shortPixels[i];
+				v[z] = fa;
+			}
+		} else if( imageType == ImagePlus.GRAY32 ) {
+			for( int z = 0; z < depth; ++z ) {
+				v[z] = (float[])s.getPixels(z+1);
+			}
+		}
 
 		for( int grid_i = 0; grid_i < side; ++grid_i ) {
 			for( int grid_j = 0; grid_j < side; ++grid_j ) {
@@ -1130,17 +1138,17 @@ public class Path implements Comparable {
 
 				} else {
 
-					fff = v[z_f][width*y_f+x_f]&0xFF;
-					cff = v[z_c][width*y_f+x_f]&0xFF;
+					fff = v[z_f][width*y_f+x_f];
+					cff = v[z_c][width*y_f+x_f];
 
-					fcf = v[z_f][width*y_c+x_f]&0xFF;
-					ccf = v[z_c][width*y_c+x_f]&0xFF;
+					fcf = v[z_f][width*y_c+x_f];
+					ccf = v[z_c][width*y_c+x_f];
 
-					ffc = v[z_f][width*y_f+x_c]&0xFF;
-					cfc = v[z_c][width*y_f+x_c]&0xFF;
+					ffc = v[z_f][width*y_f+x_c];
+					cfc = v[z_c][width*y_f+x_c];
 
-					fcc = v[z_f][width*y_c+x_c]&0xFF;
-					ccc = v[z_c][width*y_c+x_c]&0xFF;
+					fcc = v[z_f][width*y_c+x_c];
+					ccc = v[z_c][width*y_c+x_c];
 
 				}
 
@@ -1157,12 +1165,7 @@ public class Path implements Comparable {
 
 				double value_f = w1 * (1 - x_d) + w2 * x_d;
 
-				int value = (int)value_f;
-				if( (value < 0) || (value > 255) ) {
-					System.out.println("BUG: Out of range value!");
-				}
-
-				result[grid_j*side+grid_i] = (byte)value;
+				result[grid_j*side+grid_i] = (float)value_f;
 			}
 		}
 
@@ -1178,10 +1181,10 @@ public class Path implements Comparable {
 	}
 
 	public Path fitCircles( int side, ImagePlus image, boolean display ) {
-		return fitCircles( side, image, display, null );
+		return fitCircles( side, image, display, null, -1, null );
 	}
 
-	public Path fitCircles( int side, ImagePlus image, boolean display, SimpleNeuriteTracer plugin ) {
+	public Path fitCircles( int side, ImagePlus image, boolean display, SimpleNeuriteTracer plugin, int progressIndex, MultiTaskProgress progress ) {
 
 		Path fitted = new Path( x_spacing, y_spacing, z_spacing, spacing_units );
 
@@ -1232,11 +1235,12 @@ public class Path implements Comparable {
 
 		double [] tangent = new double[3];
 
+		if( progress != null )
+			progress.updateProgress(progressIndex,0);
+
 		for( int i = 0; i < totalPoints; ++i ) {
 
 			getTangent( i, pointsEitherSide, tangent );
-
-			IJ.showProgress( i / (float)totalPoints );
 
 			double x_world = precise_x_positions[i];
 			double y_world = precise_y_positions[i];
@@ -1245,7 +1249,7 @@ public class Path implements Comparable {
 			double [] x_basis_in_plane = new double[3];
 			double [] y_basis_in_plane = new double[3];
 
-			byte [] normalPlane = squareNormalToVector(
+			float [] normalPlane = squareNormalToVector(
 				side,
 				scaleInNormalPlane,   // This is in the same units as the _spacing, etc. variables.
 				x_world,      // These are scaled now
@@ -1278,14 +1282,12 @@ public class Path implements Comparable {
 			if( verbose )
 				System.out.println("start search at: "+startValues[0]+","+startValues[1]+" with radius: "+startValues[2]);
 
-			int minValueInSquare = Integer.MAX_VALUE;
-			int maxValueInSquare = Integer.MIN_VALUE;
+			float minValueInSquare = Float.MAX_VALUE;
+			float maxValueInSquare = Float.MIN_VALUE;
 			for( int j = 0; j < (side * side); ++j ) {
-				int value = normalPlane[j]&0xFF;
-				if( value > maxValueInSquare )
-					maxValueInSquare = value;
-				if( value < minValueInSquare )
-					minValueInSquare = value;
+				float value = normalPlane[j];
+				maxValueInSquare = Math.max(value, maxValueInSquare);
+				minValueInSquare = Math.min(value, minValueInSquare);
 			}
 
 			CircleAttempt attempt = new CircleAttempt(
@@ -1364,12 +1366,13 @@ public class Path implements Comparable {
 			if( verbose )
 				System.out.println("Adding a real slice.");
 
-			ByteProcessor bp = new ByteProcessor( side, side );
+			FloatProcessor bp = new FloatProcessor( side, side );
 			bp.setPixels(normalPlane);
 			stack.addSlice(null,bp);
-		}
 
-		IJ.showProgress( 1.0 );
+			if( progress != null )
+				progress.updateProgress(((double)i+1)/totalPoints,progressIndex);
+		}
 
 		/* Now at each point along the path we calculate the
 		   mode of the radiuses in the nearby region: */
@@ -1616,25 +1619,25 @@ public class Path implements Comparable {
 	// Going by the meanings of the types given in:
 	//   http://www.soton.ac.uk/~dales/morpho/morpho_doc/
 
-	static final int SWC_UNDEFINED       = 0;
-	static final int SWC_SOMA            = 1;
-	static final int SWC_AXON            = 2;
-	static final int SWC_DENDRITE        = 3;
-	static final int SWC_APICAL_DENDRITE = 4;
-	static final int SWC_FORK_POINT      = 5;
-	static final int SWC_END_POINT       = 6;
-	static final int SWC_CUSTOM          = 7;
+	public static final int SWC_UNDEFINED       = 0;
+	public static final int SWC_SOMA            = 1;
+	public static final int SWC_AXON            = 2;
+	public static final int SWC_DENDRITE        = 3;
+	public static final int SWC_APICAL_DENDRITE = 4;
+	public static final int SWC_FORK_POINT      = 5;
+	public static final int SWC_END_POINT       = 6;
+	public static final int SWC_CUSTOM          = 7;
 
-	static final String [] swcTypeNames = { "undefined",
-						"soma",
-						"axon",
-						"dendrite",
-						"apical dendrite",
-						"fork point",
-						"end point",
-						"custom" };
+	public static final String [] swcTypeNames = { "undefined",
+						       "soma",
+						       "axon",
+						       "dendrite",
+						       "apical dendrite",
+						       "fork point",
+						       "end point",
+						       "custom" };
 
-	int swcType = 0;
+	int swcType = SWC_UNDEFINED;
 
 	public boolean circlesOverlap( double n1x, double n1y, double n1z,
 				       double c1x, double c1y, double c1z,
@@ -1809,15 +1812,7 @@ public class Path implements Comparable {
 		this.precise_z_positions = optimized_z.clone();
 	}
 
-	/** This toString() method shows details of the path which is
-            actually being displayed, not necessarily this path
-            object.  FIXME: this is probably horribly confusing. */
-
-	@Override
-	public String toString() {
-		if( useFitted )
-			return fitted.toString();
-		String pathName;
+	public String realToString() {
 		String name = getName();
 		if( name == null )
 			name = "Path " + id;
@@ -1828,7 +1823,46 @@ public class Path implements Comparable {
 		if( endJoins != null ) {
 			name += ", ends on " + endJoins.getName();
 		}
+		if( swcType != SWC_UNDEFINED )
+			name += " (SWC: "+swcTypeNames[swcType]+")";
 		return name;
+	}
+
+	/** This toString() method shows details of the path which is
+            actually being displayed, not necessarily this path
+            object.  FIXME: this is probably horribly confusing. */
+
+	@Override
+	public String toString() {
+		if( useFitted )
+			return fitted.realToString();
+		else
+			return realToString();
+	}
+
+
+	public void setSWCType(final int newSWCType) {
+		setSWCType(newSWCType,true);
+	}
+
+	public void setSWCType(final int newSWCType, boolean alsoSetInFittedVersion) {
+		if( newSWCType < 0 || newSWCType >= swcTypeNames.length)
+			throw new RuntimeException("BUG: Unknown SWC type "+newSWCType);
+		swcType = newSWCType;
+		if( alsoSetInFittedVersion ) {
+			/* If we've been asked to also set the fitted version, this
+		           should only be called on the non-fitted version
+			   of the path, so raise an error if it's been called on
+			   the fitted version by mistake instead: */
+			if( isFittedVersionOfAnotherPath() && fittedVersionOf.getSWCType() != newSWCType )
+				throw new RuntimeException("BUG: only call setSWCType on the unfitted path");
+			if( fitted != null )
+				fitted.setSWCType(newSWCType);
+		}
+	}
+
+	public int getSWCType() {
+		return swcType;
 	}
 
 /*
@@ -2194,7 +2228,7 @@ public class Path implements Comparable {
 		if (verbose)
 			System.out.println("... so"+(resample?"":" not")+" resampling");
 
-		ArrayList tubeColors = new ArrayList<Color3f>();
+		ArrayList<Color3f> tubeColors = new ArrayList<Color3f>();
 
 		double [][][] allPoints = Pipe.makeTube(x_points_d_trimmed,
 							y_points_d_trimmed,
@@ -2215,8 +2249,8 @@ public class Path implements Comparable {
 
 		// Make tube adds an extra point at the beginning and end:
 
-		List vertexColorList = new ArrayList<Color3f>();
-		java.util.List triangles = Pipe.generateTriangles(allPoints,
+		List<Color3f> vertexColorList = new ArrayList<Color3f>();
+		List<Point3f> triangles = Pipe.generateTriangles(allPoints,
 								  1, // scale
 								  tubeColors,
 								  vertexColorList);
@@ -2300,14 +2334,6 @@ public class Path implements Comparable {
 
 	public Path transform( PathTransformer transformation, ImagePlus template, ImagePlus model ) {
 
-		int modelWidth = model.getWidth();
-		int modelHeight = model.getHeight();
-		int modelDepth = model.getStackSize();
-
-		int templateWidth = template.getWidth();
-		int templateHeight = template.getHeight();
-		int templateDepth = template.getStackSize();
-
 		double templatePixelWidth = 1;
 		double templatePixelHeight = 1;
 		double templatePixelDepth = 1;
@@ -2319,17 +2345,6 @@ public class Path implements Comparable {
 			templatePixelHeight = templateCalibration.pixelHeight;
 			templatePixelDepth = templateCalibration.pixelDepth;
 			templateUnits = templateCalibration.getUnits();
-		}
-
-		double modelPixelWidth = 1;
-		double modelPixelHeight = 1;
-		double modelPixelDepth = 1;
-
-		Calibration modelCalibration = model.getCalibration();
-		if( modelCalibration != null ) {
-			modelPixelWidth = modelCalibration.pixelWidth;
-			modelPixelHeight = modelCalibration.pixelHeight;
-			modelPixelDepth = modelCalibration.pixelDepth;
 		}
 
 		Path result = new Path( templatePixelWidth, templatePixelHeight, templatePixelDepth, templateUnits, size() );

@@ -18,11 +18,14 @@ import vib.PointList;
 import isosurface.MeshGroup;
 import voltex.VoltexGroup;
 import orthoslice.OrthoGroup;
+import orthoslice.MultiOrthoGroup;
 import surfaceplot.SurfacePlotGroup;
 
 import java.util.BitSet;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
 
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Switch;
@@ -80,7 +83,7 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 	protected TransformGroup localRotate;
 	protected TransformGroup localTranslate;
 
-	private boolean swapped = false;
+	private boolean available = true;
 
 	public ContentInstant(String name) {
 		// create BranchGroup for this image
@@ -123,6 +126,7 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 			case SURFACE: contentNode = new MeshGroup(this); break;
 			case SURFACE_PLOT2D: contentNode =
 				new SurfacePlotGroup(this); break;
+			case MULTIORTHO: contentNode = new MultiOrthoGroup(this); break;
 			default: throw new IllegalArgumentException(
 					"Specified type is neither VOLUME, ORTHO," +
 					"SURFACE or SURFACEPLOT2D");
@@ -214,38 +218,37 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 	 * swapping
 	 *
 	 * ***********************************************************/
-	public void swapOriginalData() {
-		if(image != null)
-			IJ.save(image, getOriginalDataSwapfile() + ".tif");
+	public void clearOriginalData() {
+		if (image != null)
+			image.close();
 		image = null;
 	}
 
 	public void swapDisplayedData() {
-		System.out.println("swapDisplayedData " + getName());
-		if(swapped) {
-			System.out.println("not swapping because it is already swapped");
+		if(!available)
 			return;
-		}
 		contentNode.swapDisplayedData(getDisplayedDataSwapfile(), getName());
-		swapped = true;
-	}
-
-	public void restoreOriginalData() {
-		this.image = IJ.openImage(getOriginalDataSwapfile() + ".tif");
+		available = false;
 	}
 
 	public void restoreDisplayedData() {
 		System.out.println("restoreDisplayedData " + getName());
-		if(!swapped) {
+		if(available) {
 			System.out.println("not restoring because it is not swapped");
 			return;
 		}
 		contentNode.restoreDisplayedData(getDisplayedDataSwapfile(), getName());
-		swapped = false;
+		available = true;
 	}
 
-	public boolean isSwapped() {
-		return swapped;
+	public void clearDisplayedData() {
+		if(!available) return;
+		contentNode.clearDisplayedData();
+		available = false;
+	}
+
+	public boolean isAvailable() {
+		return available;
 	}
 
 	private String displayedDataSwapfile = null;
@@ -340,7 +343,13 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 	}
 
 	public void loadPointList() {
-		points = PointList.load(image);
+		PointList points = PointList.load(image);
+		if (points != null)
+			setPointList(points);
+	}
+
+	public void setPointList(PointList points) {
+		this.points = points;
 		plPanel.setPointList(points);
 		plShape.setPointList(points);
 	}
@@ -354,6 +363,10 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 			n = fi.fileName;
 		}
 		points.save(dir, n);
+	}
+
+	public void savePointList(PrintStream out) throws IOException {
+		points.save(out, false);
 	}
 
 	/**
@@ -381,6 +394,14 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 
 	public void setLandmarkPointSize(float r) {
 		plShape.setRadius(r);
+	}
+
+	public Color3f getLandmarkColor() {
+		return plShape.getColor();
+	}
+
+	public void setLandmarkColor(Color3f color) {
+		plShape.setColor(color);
 	}
 
 	public PointList getPointList() {

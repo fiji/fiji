@@ -463,9 +463,12 @@ public class TextEditor extends JFrame implements ActionListener,
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
 		try {
-			SwingUtilities.invokeAndWait(new Runnable() { public void run() {
+			if (SwingUtilities.isEventDispatchThread())
 				pack();
-			}});
+			else
+				SwingUtilities.invokeAndWait(new Runnable() { public void run() {
+					pack();
+				}});
 		} catch (Exception ie) {}
 		getToolkit().setDynamicLayout(true);            //added to accomodate the autocomplete part
 		findDialog = new FindAndReplaceDialog(this);
@@ -1760,13 +1763,15 @@ public class TextEditor extends JFrame implements ActionListener,
 								List<Thread> ts = getAllThreads();
 								activeCount = ts.size();
 								if (activeCount <= 1) break;
-								System.out.println("Waiting for " + ts.size() + " threads to die");
+								if (IJ.debugMode)
+									System.err.println("Waiting for " + ts.size() + " threads to die");
 								int count_zSelector = 0;
 								for (Thread t : ts) {
 									if (t.getName().equals("zSelector")) {
 										count_zSelector++;
 									}
-									System.out.println("THREAD: " + t.getName());
+									if (IJ.debugMode)
+										System.err.println("THREAD: " + t.getName());
 								}
 								if (activeCount == count_zSelector + 1) {
 									// Do not wait on the stack slice selector thread.

@@ -1,0 +1,522 @@
+// A library of useful variables and functions
+
+source(new File(libDir, "general.bsh").getPath());
+source(new File(libDir, "fs.bsh").getPath());
+source(new File(libDir, "jar.bsh").getPath());
+source(new File(libDir, "exec.bsh").getPath());
+source(new File(libDir, "gui.bsh").getPath());
+source(new File(libDir, "checkpoint.bsh").getPath());
+
+if (hidden == void) // not defined?
+	hidden = true;
+
+/// SETUP
+
+testDir = libDir.getCanonicalFile().getParentFile();
+tmpDeveloperRoot = new File(testDir, "tmpDeveloperRoot");
+tmpUserRoot = new File(testDir, "tmpUserRoot");
+tmpWebRoot = new File(testDir, "tmpWebRoot");
+tmpSecondaryWebRoot = new File(testDir, "tmpSecondaryWebRoot");
+
+initializeCheckpointSystem(new File(testDir, "tmpCheckpoints"),
+	new File[] { tmpDeveloperRoot, tmpUserRoot, tmpWebRoot, tmpSecondaryWebRoot });
+
+import fiji.updater.Updater;
+
+import fiji.updater.logic.PluginObject;
+
+import fiji.updater.util.Util;
+
+Updater.MAIN_URL = "file:" + tmpWebRoot.getAbsolutePath() + "/";
+Updater.UPDATE_DIRECTORY = tmpWebRoot.getAbsolutePath() + "/";
+
+if (Util.isDeveloper)
+	Updater.SSH_HOST = null;
+
+
+/// DATA STRUCTURE HELPERS
+
+requireStatus(filename, status) {
+	assert(filename + " has status " + status,
+		plugins.getPlugin(filename).getStatus() == status);
+}
+
+requireAction(filename, action) {
+	assert(filename + " has status " + action,
+		plugins.getPlugin(filename).getAction() == action);
+}
+
+markForUpload(filename) {
+	markForUpload(filename, PluginCollection.DEFAULT_UPDATE_SITE);
+}
+
+markForUpload(filename, updateSite) {
+	print("Marking " + filename + " for upload");
+	plugin = plugins.getPlugin(filename);
+	plugin.updateSite = updateSite;
+	plugin.setAction(plugins, PluginObject.Action.UPLOAD);
+}
+
+
+// ADDITIONAL FILESYSTEM HELPERS
+
+prepareNewFijiRoot(root, asDeveloper) {
+	if (root.exists())
+		deleteRecursively(root);
+	root.mkdirs();
+
+	toCopy = new String[] {
+		"fiji",
+		"jars/ij.jar", "jars/Fiji.jar", "plugins/Fiji_Updater.jar",
+		"jars/bsh-2.0b4.jar", "jars/jsch-0.1.37.jar"
+	};
+
+	if (asDeveloper)
+		toCopy = unshiftArray(toCopy, "fiji.c");
+
+	for (String name : toCopy)
+		copyFile(new File(fijiDir, name),  new File(root, name));
+}
+
+cleanWebRoot() {
+	cleanWebRoot(tmpWebRoot);
+}
+
+cleanSecondaryWebRoot() {
+	cleanWebRoot(tmpSecondaryWebRoot);
+}
+
+cleanWebRoot(root) {
+	if (root.exists())
+		deleteRecursively(root);
+	root.mkdirs();
+
+	dbXmlGz = writeGZippedFile(root, "db.xml.gz",
+		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		+ "<pluginRecords/>");
+}
+
+readDbXmlGz(File root) {
+	return readGZippedStream(new File(root, "db.xml.gz"));
+}
+
+
+/// ADDITIONAL LAUNCH HELPERS
+
+prepare(bsh) {
+	if (checkpoint(bsh))
+		eval(bsh);
+}
+
+upload(bsh) {
+	if (checkpoint(bsh))
+		startFiji(tmpDeveloperRoot, "developer", bsh);
+}
+
+download(bsh) {
+	if (checkpoint(bsh))
+		startFiji(tmpUserRoot, "user", bsh);
+}
+
+
+/// ADDITIONAL GUI INTERACTION HELPERS
+
+import ij.IJ;
+
+startUpdater() {
+	startIJ();
+	new Thread() {
+		public void run() {
+			IJ.run("Update Fiji");
+		}
+	}.start();
+	print("Waiting for the updater");
+	global.updaterFrame = waitForWindow("Fiji Updater");
+	print("Got the updater");
+	setAccessibility(true);
+	global.plugins = updaterFrame.plugins;
+}
+
+startIJ() {
+	if (global.ij != void)
+		return;
+	// The window is called ImageJA when being created
+	global.ij = waitForWindow("ImageJA");
+	if (hidden)
+		Updater.hidden = true;
+}
+
+waitForInformation(message) {
+	waitForMessageBox("Information", message);
+}
+
+waitForWarning(message) {
+	waitForMessageBox("Warning", message);
+}
+
+requireUpToDate() {
+	waitForInformation("Your Fiji is up to date!");
+}
+
+requireUploadOK() {
+	waitForInformation("Uploaded successfully.");
+}
+
+requireDownloadFinished() {
+	waitForInformation("Updated successfully.  Please restart Fiji!");
+}
+
+requireModified() {
+	waitForWarning("There are locally modified files!");
+}
+
+requireQuestion(title, question) {
+	print("Waiting for the question " + title + " '" + question + "'");
+	window = waitForWindow(title);
+	pane = getOptionPane(window);
+	if (pane.getMessage().equals(question)) {
+		if (getButton(pane, "Yes") != null)
+			clickButton(pane, "Yes");
+		else
+			clickButton(pane, "OK");
+		print("Okay");
+	}
+	else
+		print("Not okay (" + title + "): " + pane.getMessage() + " instead of " + question);
+}
+
+requireUpdateUpdaterQuestion() {
+	requireQuestion("Update the updater",
+		"There is an update available for the Fiji Updater. Install now?");
+}
+
+advancedMode() {
+	count = 0;
+	while (getButton(updaterFrame, "Advanced mode") == null) {
+		if (getButton(updaterFrame, "Easy mode") != null)
+			return;
+		if (++count > 5)
+			listComponentsRecursively(updaterFrame);
+		Thread.sleep(500);
+	}
+	clickButton(updaterFrame, "Advanced mode");
+}
+
+viewMode(label) {
+	if (!label.startsWith("View "))
+		label = "View " + label;
+	options = updaterFrame.viewOptions;
+	selected = false;
+	for (i = 0; i < options.getItemCount(); i++)
+		if (options.getItemAt(i).toString().equals(label)) {
+			options.setSelectedIndex(i);
+			selected = true;
+			break;
+		}
+	assert(label, selected);
+}
+
+exitWhenClosed() {
+	waitUntilClosed(updaterFrame);
+	System.exit(0);
+}
+
+startUpload() {
+	print("Uploading");
+	clickButton(updaterFrame, "Upload to server");
+	requireUploadOK();
+	exitWhenClosed();
+}
+
+startDownload() {
+	print("Downloading");
+	clickButton(updaterFrame, "Apply changes");
+	requireDownloadFinished();
+}
+
+
+/// THE DEVELOPER/USER IMPERSONATIONS
+
+
+uploadFailsIfChanged() {
+	startUpdater();
+	requireUpToDate();
+	advancedMode();
+	markForUpload("jars/ij.jar");
+	setTimestamp(new File(tmpDeveloperRoot, "jars/ij.jar"), 20000812120000l);
+	clickButton(updaterFrame, "Upload to server");
+	waitForMessageBox("Error", "Timestamp of jars/ij.jar-0 changed since being checksummed!");
+	System.exit(0);
+}
+
+initialUpload() {
+	startUpdater();
+	requireUpToDate();
+	advancedMode();
+	assert("5 plugins", plugins.size() == 5);
+	for (PluginObject plugin : plugins)
+		markForUpload(plugin.filename);
+	startUpload();
+}
+
+initialUserCheck() {
+	startUpdater();
+	requireUpToDate();
+	advancedMode();
+	assert("5 plugins", plugins.size() == 5);
+	for (PluginObject plugin : plugins)
+		assert(plugin.filename + " is up-to-date",
+			plugin.getStatus() == PluginObject.Status.INSTALLED);
+	clickButton(updaterFrame, "Close");
+	waitUntilClosed(updaterFrame);
+	assert("db.xml.gz exists now", new File(tmpUserRoot, "db.xml.gz").exists());
+	System.exit(0);
+}
+
+import fiji.updater.UptodateCheck;
+
+import java.util.regex.Pattern;
+
+testUptodateCheck() {
+	dbXmlGz = new File(tmpUserRoot, "db.xml.gz");
+	content = readGZippedStream(new FileInputStream(dbXmlGz));
+	timestampPattern = "(?s).*<update-site name=\"Fiji\"[^>]* timestamp=.*";
+	assert("local db.xml.gz has timestamp", content.matches(timestampPattern));
+	content = readGZippedStream(new FileInputStream(new File(tmpDeveloperRoot, "db.xml.gz")));
+	assert("developer's db.xml.gz has timestamp", content.matches(timestampPattern));
+	content = readGZippedStream(new FileInputStream(new File(tmpWebRoot, "db.xml.gz")));
+	assert("update site's db.xml.gz has no timestamp", !content.matches(timestampPattern));
+
+	startIJ();
+	newTimestamp = 20200101000000l;
+	assert("timestamp2millis works", newTimestamp == Long.parseLong(Util.timestamp(Util.timestamp2millis(newTimestamp))));
+	setTimestamp(dbXmlGz, newTimestamp);
+	check = new UptodateCheck();
+	assert("local db.xml.gz's mtime is no longer tested: " + check.check(), check.check().equals("Up-to-date"));
+	setTimestamp(new File(tmpWebRoot, "db.xml.gz"), newTimestamp);
+	assert("update-site's last-modified is tested: " + check.check(), check.check() == null);
+	System.exit(0);
+}
+
+prepareSome() {
+	print("Preparing some files");
+	writeFile(tmpDeveloperRoot, "macros/new.ijm");
+	writeFile(tmpDeveloperRoot, "macros/modified.ijm");
+	writeFile(tmpUserRoot, "macros/modified.ijm", "modified");
+}
+
+uploadSome() {
+	startUpdater();
+	requireUpToDate();
+	advancedMode();
+	assert("7 plugins", plugins.size() == 7);
+	markForUpload("macros/new.ijm");
+	markForUpload("macros/modified.ijm");
+	startUpload();
+}
+
+downloadSome() {
+	startUpdater();
+	requireModified();
+	advancedMode();
+	viewMode("all plugins");
+	assert("7 plugins", plugins.size() == 7);
+	assert("2 updateable", count(plugins.updateable(true)) == 2);
+	assert("1 modified", count(plugins.locallyModified()) == 1);
+	requireStatus("macros/modified.ijm", PluginObject.Status.MODIFIED);
+	startDownload();
+	assert("modified was left alone",
+		!new File(tmpUserRoot, "update/macros/modified.ijm").exists());
+	assert("new file was downloaded",
+		readFile(tmpUserRoot, "update/macros/new.ijm").equals("macros/new.ijm"));
+	System.exit(0);
+}
+
+prepareNewUpdater() {
+	addToJar(new File(tmpDeveloperRoot, "plugins/Fiji_Updater.jar"),
+		"timestamp", "Current time is " + Util.timestamp(System.currentTimeMillis()));
+	writeFile(tmpDeveloperRoot, "macros/new2.ijm");
+	writeFile(tmpDeveloperRoot, "macros/modified.ijm", "modified again");
+	writeFile(tmpUserRoot, "macros/modified.ijm");
+}
+
+uploadNewUpdater() {
+	startUpdater();
+	requireModified();
+	advancedMode();
+	assert("8 plugins", count(plugins) == 8);
+	assert("5 up-to-date", count(plugins.upToDate()) == 5);
+	requireStatus("plugins/Fiji_Updater.jar", PluginObject.Status.MODIFIED);
+	requireStatus("macros/new2.ijm", PluginObject.Status.NOT_FIJI);
+	markForUpload("plugins/Fiji_Updater.jar");
+	markForUpload("macros/new2.ijm");
+	markForUpload("macros/modified.ijm");
+	startUpload();
+}
+
+downloadNewUpdater() {
+	dbXmlGz = new File(tmpUserRoot, "db.xml.gz");
+	lastModified = dbXmlGz.lastModified();
+	startUpdater();
+	requireUpdateUpdaterQuestion();
+	waitUntilClosed(updaterFrame);
+	assert("db.xml.gz unmodified", lastModified == dbXmlGz.lastModified());
+	startUpdater();
+	while (count(plugins.upToDate()) != 6) {
+		print("Waiting until there are 6 up-to-date components (" + count(plugins.upToDate()) + ")");
+		Thread.sleep(500);
+	}
+	advancedMode();
+	assert("6 up-to-date", count(plugins.upToDate()) == 6);
+	requireStatus("macros/modified.ijm", PluginObject.Status.UPDATEABLE);
+	requireStatus("macros/new2.ijm", PluginObject.Status.NEW);
+	startDownload();
+	System.exit(0);
+}
+
+secondaryFile = "macros/secondary.ijm";
+prepareSecondary() {
+	cleanSecondaryWebRoot();
+	writeFile(tmpDeveloperRoot, secondaryFile);
+}
+
+primaryDbXmlGz = new File(tmpWebRoot, "db.xml.gz");
+secondaryDbXmlGz = new File(tmpSecondaryWebRoot, "db.xml.gz");
+uploadSecondary() {
+	setTimestamp(primaryDbXmlGz, 19990101000000l);
+	setTimestamp(secondaryDbXmlGz, 20000101000000l);
+
+	startUpdater();
+	requireUpToDate();
+	advancedMode();
+	assert("9 plugins", plugins.size() == 9);
+	plugins.addUpdateSite("Secondary", "file:" + tmpSecondaryWebRoot.getAbsolutePath() + "/", null,
+		tmpSecondaryWebRoot.getAbsolutePath(), 20000101000000l);
+	markForUpload(secondaryFile, "Secondary");
+	startUpload();
+}
+
+import fiji.updater.logic.PluginCollection;
+
+downloadSecondary() {
+	primaryTimestamp = getTimestamp(primaryDbXmlGz);
+	secondaryTimestamp = getTimestamp(secondaryDbXmlGz);
+
+	assert("primary db.xml.gz is unchanged: " + primaryTimestamp, primaryTimestamp == 19990101000000l);
+	assert("secondary db.xml.gz is changed: " + secondaryTimestamp, secondaryTimestamp != 20000101000000l);
+
+	assert("secondary was not uploaded to primary", readGZippedFile(primaryDbXmlGz).indexOf("econdary") < 0);
+	secondaryContents = readGZippedFile(secondaryDbXmlGz);
+	assert("secondary was uploaded to secondary site", secondaryContents.indexOf("secondary") > 0);
+	assert("no update-site tags in secondary site", secondaryContents.indexOf("<update-site") < 0);
+	assert("no Fiji_Updater in secondary site", secondaryContents.indexOf("Fiji_Updater.jar") < 0);
+
+	plugins2 = new PluginCollection();
+	plugins2.read();
+	plugins2.addUpdateSite("Secondary", "file:" + tmpSecondaryWebRoot.getAbsolutePath() + "/", null,
+		tmpSecondaryWebRoot.getAbsolutePath(), 20000101000000l);
+	plugins2.write();
+
+	startUpdater();
+	advancedMode();
+	viewMode("all plugins");
+	assert("9 plugins", plugins.size() == 9);
+	assert("1 updateable", count(plugins.updateable(false)) == 1);
+	assert("0 modified", count(plugins.locallyModified()) == 0);
+	requireStatus(secondaryFile, PluginObject.Status.NEW);
+	assert(secondaryFile + " is from secondary update site",
+		plugins.getPlugin(secondaryFile).updateSite.equals("Secondary"));
+	startDownload();
+	assert("secondary file was downloaded",
+		secondaryFile.equals(readFile(tmpUserRoot, "update/" + secondaryFile)));
+	System.exit(0);
+}
+
+crossSiteDependency = "macros/dependency.ijm";
+crossSiteDependencee = "macros/dependencee.ijm";
+prepareCrossSiteDependencies() {
+	writeFile(tmpDeveloperRoot, crossSiteDependency);
+	writeFile(tmpDeveloperRoot, crossSiteDependencee);
+}
+
+uploadCrossSiteDependency() {
+	startUpdater();
+	requireUpToDate();
+	advancedMode();
+	assert("11 plugins", plugins.size() == 11);
+	markForUpload(crossSiteDependency);
+	startUpload();
+}
+
+uploadCrossSiteDependencee() {
+	startUpdater();
+	requireUpToDate();
+	advancedMode();
+	assert("11 plugins", plugins.size() == 11);
+	markForUpload(crossSiteDependencee, "Secondary");
+	plugins.getPlugin(crossSiteDependencee).addDependency(crossSiteDependency);
+	startUpload();
+}
+
+downloadCrossSiteDependencies() {
+	startUpdater();
+	advancedMode();
+	viewMode("all plugins");
+	assert("11 plugins", plugins.size() == 11);
+	while (count(plugins.updateable(false)) != 2)
+		Thread.sleep(50);
+	assert("0 modified", count(plugins.locallyModified()) == 0);
+	requireStatus(crossSiteDependency, PluginObject.Status.NEW);
+	requireStatus(crossSiteDependencee, PluginObject.Status.NEW);
+	// Unmark the dependency
+	plugins.getPlugin(crossSiteDependency).setAction(plugins, PluginObject.Action.NEW);
+	new Thread() {
+		public void run() {
+			resolve = waitForWindow("Resolve dependencies");
+			clickButton(resolve, "OK");
+		}
+	}.start();
+	startDownload();
+	assert("dependency was downloaded",
+		readFile(tmpUserRoot, "update/" + crossSiteDependency).equals(crossSiteDependency));
+	System.exit(0);
+}
+
+nativeDependency1 = "macros/native-dependency1.ijm";
+nativeDependency2 = "macros/native-dependency2.ijm";
+prepareNativeDependency() {
+	writeFile(tmpDeveloperRoot, nativeDependency1);
+	writeFile(tmpDeveloperRoot, nativeDependency2);
+}
+
+uploadNativeDependency() {
+	startUpdater();
+	requireUpToDate();
+	advancedMode();
+	assert("13 plugins", plugins.size() == 13);
+	markForUpload(nativeDependency1);
+	plugins.getPlugin(nativeDependency1).addPlatform(Util.platform);
+	markForUpload(nativeDependency2);
+	plugins.getPlugin(nativeDependency2).addPlatform("other-platform");
+	plugins.getPlugin("macros/new.ijm").addDependency(nativeDependency1);
+	plugins.getPlugin("macros/new.ijm").addDependency(nativeDependency2);
+	startUpload();
+}
+
+downloadNativeDependency() {
+	startUpdater();
+	advancedMode();
+	viewMode("all plugins");
+	assert("13 plugins", plugins.size() == 13);
+	while (count(plugins.updateable(false)) != 1)
+		Thread.sleep(50);
+	assert("0 modified", count(plugins.locallyModified()) == 0);
+	requireAction(nativeDependency1, PluginObject.Action.INSTALL);
+	requireAction(nativeDependency2, PluginObject.Action.NEW);
+	startDownload();
+	assert("dependency1 was downloaded",
+		readFile(tmpUserRoot, "update/" + nativeDependency1).equals(nativeDependency1));
+	assert("dependency2 was not downloaded",
+		!new File(tmpUserRoot, "update/" + nativeDependency2).exists());
+	System.exit(0);
+}

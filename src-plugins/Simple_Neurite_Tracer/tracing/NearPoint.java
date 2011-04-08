@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010, 2011 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Simple Neurite Tracer".
@@ -27,42 +27,6 @@
 
 package tracing;
 
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.TreeSet;
-import java.util.PriorityQueue;
-import java.util.LinkedList;
-
-import java.io.*;
-
-import ij.*;
-
-import client.ArchiveClient;
-import ij.measure.Calibration;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
-
-import javax.xml.parsers.SAXParserFactory;
-import javax.xml.parsers.SAXParser;
-
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.helpers.DefaultHandler;
-import org.xml.sax.SAXException;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.HashMap;
-
-import java.awt.Color;
-
-import javax.media.j3d.View;
-import ij3d.Content;
-import ij3d.UniverseListener;
-
 /* This is a class that encapsulates the relationship between an
    arbitrary point (nearX,nearY,nearZ) close to a particular point on
    a particular path.
@@ -77,7 +41,7 @@ import ij3d.UniverseListener;
    be "off the end" of the Path.
  */
 
-public class NearPoint implements Comparable {
+public class NearPoint implements Comparable<NearPoint> {
 
 	public NearPoint( double nearX, double nearY, double nearZ,
 			  Path path,
@@ -111,12 +75,13 @@ public class NearPoint implements Comparable {
 		return path;
 	}
 
-	public int compareTo( Object other ) {
+	public int compareTo( NearPoint other ) {
 		double d = distanceSquared;
 		double od = ((NearPoint)other).distanceSquared;
 		return (d < od) ? -1 : ((d > od) ? 1 : 0);
 	}
 
+	@Override
 	public String toString() {
 		return "  near: ("+nearX+","+nearY+","+nearZ+")\n"+
 			"  pathPoint: ("+pathPointX+","+pathPointY+","+pathPointZ+")\n"+

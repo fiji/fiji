@@ -1,0 +1,50 @@
+#!/bin/sh
+/*/. 2>/dev/null; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
+
+for (int i = 0; i < bsh.args.length; i++)
+	if (bsh.args[i].equals("--no-hidden"))
+		hidden = false;
+	else if (bsh.args[i].equals("--checkpoint"))
+		startAtCheckpoint = bsh.args[++i];
+	else {
+		System.err.println("Unknown option: " + bsh.args[i]);
+		System.exit(1);
+	}
+
+thisDir = new File(this.interpreter.getSourceFileInfo()).getParentFile();
+libDir = new File(thisDir, "updater");
+source(new File(libDir, "lib.bsh").getAbsolutePath());
+
+cleanWebRoot();
+prepareNewFijiRoot(tmpDeveloperRoot, true);
+prepareNewFijiRoot(tmpUserRoot, false);
+
+print("About to upload");
+upload("uploadFailsIfChanged()");
+upload("initialUpload()");
+download("initialUserCheck()");
+download("testUptodateCheck()");
+
+prepare("prepareSome()");
+upload("uploadSome()");
+download("downloadSome()");
+
+prepare("prepareNewUpdater()");
+upload("uploadNewUpdater()");
+download("downloadNewUpdater()");
+
+prepare("prepareSecondary()");
+upload("uploadSecondary()");
+download("downloadSecondary()");
+
+prepare("prepareCrossSiteDependencies()");
+upload("uploadCrossSiteDependency()");
+// can only upload to one update site at a time
+upload("uploadCrossSiteDependencee()");
+download("downloadCrossSiteDependencies()");
+
+prepare("prepareNativeDependency()");
+upload("uploadNativeDependency()");
+download("downloadNativeDependency()");
+
+checkpoint("done");

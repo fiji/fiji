@@ -67,8 +67,6 @@ import java.util.Arrays;
 import javax.vecmath.Point3f;
 import javax.vecmath.Color3f;
 
-import Jama.Matrix;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -77,11 +75,10 @@ import ij.measure.Calibration;
 
 import java.awt.Color;
 import java.awt.image.IndexColorModel;
-import java.awt.image.ColorModel;
 
 public class Pipe {
 
-	static public List generateTriangles(final double[][][] all_points, final double scale) {
+	static public List<Point3f> generateTriangles(final double[][][] all_points, final double scale) {
 		return generateTriangles(all_points,scale,null,null);
 	}
 

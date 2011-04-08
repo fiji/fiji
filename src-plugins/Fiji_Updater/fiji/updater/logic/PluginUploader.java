@@ -1,22 +1,27 @@
 package fiji.updater.logic;
 
 import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.UserInfo;
 
 import fiji.updater.Updater;
 
 import fiji.updater.logic.FileUploader.SourceFile;
 
-import fiji.updater.util.Compressor;
+import fiji.updater.logic.PluginCollection.UpdateSite;
+
 import fiji.updater.util.Progress;
 import fiji.updater.util.Util;
 
 import ij.IJ;
+import ij.Prefs;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 
 import java.net.URL;
@@ -38,35 +43,68 @@ import java.util.Map;
  *   (i.e.: XML file)
  */
 public class PluginUploader {
+	protected PluginCollection plugins;
 	protected FileUploader uploader;
 
-	// checking race condition:
-	// if somebody else updated in the meantime, complain loudly.
-	protected long xmlLastModified;
-	public long newLastModified;
-	List<SourceFile> files;
-	String backup, compressed, text;
+	protected String siteName;
+	protected UpdateSite site;
+	protected List<SourceFile> files;
+	protected String compressed;
 
 	// TODO: add a button to check for new db.xml.gz, and merge if necessary
-	public PluginUploader(long xmlLastModified) {
-		this.xmlLastModified = xmlLastModified;
-		backup = Util.prefix(Updater.XML_BACKUP);
-		compressed = Util.prefix(Updater.XML_COMPRESSED);
-		text = Util.prefix(Updater.TXT_FILENAME);
+	public PluginUploader(PluginCollection plugins, String updateSite) {
+		this.plugins = plugins;
+		siteName = updateSite;
+		site = plugins.getUpdateSite(updateSite);
+		compressed = Updater.XML_COMPRESSED;
+		if (site.sshHost == null || site.sshHost.equals(""))
+			uploader = new FileUploader(site.uploadDirectory);
+	}
+
+	public boolean hasUploader() {
+		return uploader != null;
+	}
+
+	public String getDefaultUsername() {
+		int at = site.sshHost.indexOf('@');
+		if (at > 0)
+			return site.sshHost.substring(0, at);
+		return Prefs.get(Updater.PREFS_USER, "");
 	}
 
 	public void setUploader(FileUploader uploader) {
 		this.uploader = uploader;
 	}
 
-	public synchronized boolean setLogin(String username, String password) {
+	public synchronized boolean setLogin(String username, UserInfo userInfo) {
 		try {
-			uploader = new SSHFileUploader(username, password,
-				Updater.UPDATE_DIRECTORY);
+			uploader = new SSHFileUploader(username,
+				site.sshHost.substring(site.sshHost.indexOf('@') + 1), site.uploadDirectory,
+				userInfo);
 			return true;
 		} catch (JSchException e) {
 			IJ.error("Failed to login");
 			return false;
+		}
+	}
+
+	protected class DbXmlFile implements SourceFile {
+		public byte[] bytes;
+
+		public String getFilename() {
+			return compressed + ".lock";
+		}
+
+		public String getPermissions() {
+			return "C0444";
+		}
+
+		public long getFilesize() {
+			return bytes.length;
+		}
+
+		public InputStream getInputStream() {
+			return new ByteArrayInputStream(bytes);
 		}
 	}
 
@@ -77,25 +115,37 @@ public class PluginUploader {
 		// TODO: rename "UpdateSource" to "Transferable", reuse!
 		files = new ArrayList<SourceFile>();
 		List<String> locks = new ArrayList<String>();
-		files.add(new UploadableFile(compressed,
-					Updater.XML_LOCK, "C0444"));
-		for (PluginObject plugin :
-				PluginCollection.getInstance().toUpload())
+		files.add(new DbXmlFile());
+		for (PluginObject plugin : plugins.toUpload(siteName))
 			files.add(new UploadableFile(plugin));
 
-		files.add(new UploadableFile(text,
-			Updater.TXT_FILENAME + ".lock", "C0644"));
-
-		locks.add(Updater.TXT_FILENAME);
 		// must be last lock
 		locks.add(Updater.XML_COMPRESSED);
 
+		// verify that the files have not changed in the meantime
+		for (SourceFile file : files)
+			verifyUnchanged(file, true);
+
 		uploader.upload(files, locks);
 
-		// No errors thrown -> just remove temporary files
-		new File(backup).delete();
-		new File(Util.prefix(Updater.TXT_FILENAME)).delete();
-		newLastModified = getCurrentLastModified();
+		site.setLastModified(getCurrentLastModified());
+	}
+
+	protected void verifyUnchanged(SourceFile file, boolean checkTimestamp) {
+		if (!(file instanceof UploadableFile))
+			return;
+		UploadableFile uploadable = (UploadableFile)file;
+		if (uploadable.filesize != Util.getFilesize(uploadable.sourceFilename))
+			throw new RuntimeException("File size of "
+				+ uploadable.plugin.filename + " changed since being checksummed!");
+		if (checkTimestamp) {
+			long stored = uploadable.plugin.getStatus() == PluginObject.Status.NOT_FIJI ?
+				uploadable.plugin.current.timestamp :
+				uploadable.plugin.newTimestamp;
+			if (stored != Util.getTimestamp(uploadable.sourceFilename))
+				throw new RuntimeException("Timestamp of "
+					+ uploadable.plugin.filename + " changed since being checksummed!");
+		}
 	}
 
 	protected void updateUploadTimestamp(long timestamp)
@@ -118,35 +168,12 @@ public class PluginUploader {
 			}
 		}
 
-		XMLFileWriter.writeAndValidate(backup);
-		// TODO: only save _compressed_ backup, and not as db.bak!
-		compress(backup, compressed);
-		((UploadableFile)files.get(0)).updateFilesize();
-		// TODO: do no save text file at all!
-		saveTextFile(text);
-		((UploadableFile)files.get(files.size() - 1)).updateFilesize();
+		XMLFileWriter writer = new XMLFileWriter(PluginCollection.clone(plugins.forUpdateSite(siteName)));
+		if (plugins.size() > 0)
+			writer.validate(false);
+		((DbXmlFile)files.get(0)).bytes = writer.toCompressedByteArray(false);
 
 		uploader.calculateTotalSize(files);
-	}
-
-	protected void compress(String uncompressed, String compressed)
-			throws IOException {
-		FileOutputStream out = new FileOutputStream(compressed);
-		FileInputStream in = new FileInputStream(uncompressed);
-		Compressor.compressAndSave(Compressor.readStream(in), out);
-		out.close();
-		in.close();
-	}
-
-	// TODO: in-memory only, please
-	protected void saveTextFile(String path) throws FileNotFoundException {
-		PrintStream out = new PrintStream(path);
-		for (PluginObject plugin :
-				PluginCollection.getInstance().forCurrentTXT())
-			out.println(plugin.getFilename() + " "
-					+ plugin.getTimestamp() + " "
-					+ plugin.getChecksum());
-		out.close();
 	}
 
 	/*
@@ -159,7 +186,7 @@ public class PluginUploader {
 	 *   of all files to be uploaded, so that local time skews do not
 	 *   harm
 	 */
-	class VerifyTimestamp implements Progress {
+	protected class VerifyTimestamp implements Progress {
 		public void addItem(Object item) {
 			if (item != files.get(0))
 				return;
@@ -176,29 +203,34 @@ public class PluginUploader {
 			}
 		}
 
+		public void itemDone(Object item) {
+			if (item instanceof UploadableFile)
+				verifyUnchanged((UploadableFile)item, false);
+		}
+
 		public void setCount(int count, int total) {}
-		public void itemDone(Object item) {}
 		public void setItemCount(int count, int total) {}
 		public void done() {}
 	}
 
 	protected long getCurrentLastModified() {
 		try {
-			URLConnection connection = new URL(Updater.MAIN_URL
-				+ Updater.XML_COMPRESSED).openConnection();
+			URLConnection connection = new URL(site.url + Updater.XML_COMPRESSED).openConnection();
 			connection.setUseCaches(false);
 			long lastModified = connection.getLastModified();
 			connection.getInputStream().close();
 			return lastModified;
 		}
 		catch (Exception e) {
+			if (plugins.size() == 0)
+				return -1; // assume initial upload
 			e.printStackTrace();
 			return 0;
 		}
 	}
 
 	protected void verifyTimestamp() {
-		if (xmlLastModified != getCurrentLastModified())
+		if (!site.isLastModified(getCurrentLastModified()))
 			throw new RuntimeException("db.xml.gz was "
 				+ "changed in the meantime");
 	}
