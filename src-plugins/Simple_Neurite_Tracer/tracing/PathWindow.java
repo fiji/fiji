@@ -120,6 +120,51 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		});
 	}
 
+	public void fitPaths( final List<PathFitter> pathsToFit ) {
+
+		final int numberOfPathsToFit = pathsToFit.size();
+
+		new Thread( new Runnable(){
+				public void run(){
+
+					final int preFittingState = plugin.getUIState();
+					plugin.changeUIState(NeuriteTracerResultsDialog.FITTING_PATHS);
+
+					try {
+
+						final FittingProgress progress = new FittingProgress(numberOfPathsToFit);
+						for( int i = 0; i < numberOfPathsToFit; ++i ) {
+							PathFitter pf = pathsToFit.get(i);
+							pf.setProgressCallback( i, progress );
+						}
+						final int processors = Runtime.getRuntime().availableProcessors();
+						ExecutorService es = Executors.newFixedThreadPool(processors);
+						final List<Future<Path>> futures = es.invokeAll(pathsToFit);
+						SwingUtilities.invokeLater(new Runnable() {
+								public void run() {
+									try {
+										for( Future<Path> future : futures ) {
+											Path result = future.get();
+											pathAndFillManager.addPath( result );
+										}
+									} catch( Exception e ) {
+										IJ.error("The following exception was thrown: "+e);
+										e.printStackTrace();
+										return;
+									}
+									pathAndFillManager.resetListeners(null);
+									progress.done();
+								}});
+					} catch( InterruptedException ie ) {
+						/* We never call interrupt on these threads,
+						   so this should never happen... */
+					} finally {
+						plugin.changeUIState(preFittingState);
+					}
+				}
+			}).start();
+	}
+
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		assert SwingUtilities.isEventDispatchThread();
@@ -234,49 +279,9 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			}
 			pathAndFillManager.resetListeners(null);
 
-			final int numberOfPathsToFit = pathsToFit.size();
-			if( numberOfPathsToFit > 0 ) {
+			if( pathsToFit.size() > 0 )
+				fitPaths(pathsToFit);
 
-				new Thread( new Runnable(){
-						public void run(){
-
-							int preFittingState = plugin.getUIState();
-							plugin.changeUIState(NeuriteTracerResultsDialog.FITTING_PATHS);
-
-							FittingProgress progress = new FittingProgress(numberOfPathsToFit);
-							for( int i = 0; i < numberOfPathsToFit; ++i ) {
-								PathFitter pf = pathsToFit.get(i);
-								pf.setProgressCallback( i, progress );
-							}
-							int processors = Runtime.getRuntime().availableProcessors();
-							ExecutorService es = Executors.newFixedThreadPool(processors);
-							List<Future<Path>> futures = null;
-							try {
-								futures = es.invokeAll(pathsToFit);
-							} catch( InterruptedException ie ) {
-								/* We never call interrupt on these threads,
-								   so this should never happen... */
-							}
-							try {
-								for( Future<Path> future : futures ) {
-									Path result = future.get();
-									pathAndFillManager.addPath( result );
-								}
-							} catch( InterruptedException id ) {
-								/* Similarly this should never happen */
-							} catch( Exception e ) {
-								IJ.error("The following exception was thrown: "+e);
-								e.printStackTrace();
-								return;
-							}
-							pathAndFillManager.resetListeners(null);
-							progress.done();
-
-							plugin.changeUIState(preFittingState);
-						}
-					}).start();
-
-			}
 		} else if( source == renameButton || source == renameMenuItem ) {
 			if( selectedPaths.size() != 1 ) {
 				IJ.error("You must have exactly one path selected");
