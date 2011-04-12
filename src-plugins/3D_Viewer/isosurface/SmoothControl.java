@@ -71,31 +71,6 @@ public class SmoothControl {
 			return deepCopy(data.get(tm));
 		}
 
-		private Set<CustomTriangleMesh> findMeshes(final Content content) {
-			final HashSet<CustomTriangleMesh> meshes = new HashSet<CustomTriangleMesh>();
-			if (null == content) return meshes;
-			ContentInstant ci = content.getCurrent();
-			if (null == ci) return meshes;
-			ContentNode node = ci.getContent();
-			if (null == node) return meshes;
-			// Must check first for multi, since it is also a CustomMeshNode
-			if (node instanceof CustomMultiMesh) {
-				CustomMultiMesh multi = (CustomMultiMesh)node;
-				for (int i=0; i<multi.size(); ++i) {
-					CustomMesh m = multi.getMesh(i);
-					if (m instanceof CustomTriangleMesh) {
-						meshes.add((CustomTriangleMesh)m);
-					}
-				}
-			} else if (node instanceof CustomMeshNode) {
-				CustomMesh m = ((CustomMeshNode)node).getMesh();
-				if (m instanceof CustomTriangleMesh) {
-					meshes.add((CustomTriangleMesh)m);
-				}
-			}
-			return meshes;
-		}
-
 		/** Add any CustomTriangleMesh contained in {@param content} only if not there already. */
 		private void add(final Content content) {
 			for (final CustomTriangleMesh tm : findMeshes(content)) {
@@ -112,6 +87,36 @@ public class SmoothControl {
 		}
 	}
 
+	static public final Set<CustomTriangleMesh> findMeshes(final Content content) {
+		final HashSet<CustomTriangleMesh> meshes = new HashSet<CustomTriangleMesh>();
+		if (null == content) return meshes;
+		ContentInstant ci = content.getCurrent();
+		if (null == ci) return meshes;
+		ContentNode node = ci.getContent();
+		if (null == node) return meshes;
+		// Must check first for multi, since it is also a CustomMeshNode
+		if (node instanceof CustomMultiMesh) {
+			CustomMultiMesh multi = (CustomMultiMesh)node;
+			for (int i=0; i<multi.size(); ++i) {
+				CustomMesh m = multi.getMesh(i);
+				if (m instanceof CustomTriangleMesh) {
+					meshes.add((CustomTriangleMesh)m);
+				}
+			}
+		} else if (node instanceof CustomMeshNode) {
+			CustomMesh m = ((CustomMeshNode)node).getMesh();
+			if (m instanceof CustomTriangleMesh) {
+				meshes.add((CustomTriangleMesh)m);
+			}
+		} else if (node instanceof MeshGroup) {
+			CustomMesh m = ((MeshGroup)node).getMesh();
+			if (m instanceof CustomTriangleMesh) {
+				meshes.add((CustomTriangleMesh)m);
+			}
+		}
+		return meshes;
+	}
+
 	static private final void smooth(final CustomTriangleMesh tm, final int iterations, final Originals originals) {
 		// Start always from the original mesh
 		final List<Point3f> triangles = originals.getCopyOfOriginals(tm);
@@ -121,23 +126,15 @@ public class SmoothControl {
 
 	static private final void smooth(final Content c, final int iterations, final Originals originals) {
 		if (null == c) return;
-		ContentNode cn = c.getContent();
-		// First check for CustomMultiMesh, given that it extends CustomMeshNode
-		if(cn instanceof CustomMultiMesh) {
-			originals.add(c); // ensure it's there
-			CustomMultiMesh multi = (CustomMultiMesh)cn;
-			for(int i=0; i<multi.size(); i++) {
-				CustomMesh m = multi.getMesh(i);
-				if(m instanceof CustomTriangleMesh)
-					smooth((CustomTriangleMesh)m, iterations, originals);
-			}
-		} else if(cn instanceof CustomMeshNode) {
-			originals.add(c); // ensure it's there
-			CustomMesh mesh = ((CustomMeshNode)cn).getMesh();
-			if(mesh instanceof CustomTriangleMesh)
-				smooth((CustomTriangleMesh)mesh, iterations, originals);
-		} else {
+		final ContentNode cn = c.getContent();
+		final Set<CustomTriangleMesh> meshes = findMeshes(c);
+		if (meshes.isEmpty()) {
 			IJ.log("Cannot smooth content of class " + cn.getClass());
+			return;
+		}
+		originals.add(c); // ensure it's there
+		for (CustomTriangleMesh tm : meshes) {
+			smooth(tm, iterations, originals);
 		}
 	}
 
