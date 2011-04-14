@@ -751,6 +751,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 				progress.done();
 		} catch (Throwable e) {
 			e.printStackTrace();
+			IJ.handleException(e);
 			if (progress != null)
 				progress.done();
 		}
