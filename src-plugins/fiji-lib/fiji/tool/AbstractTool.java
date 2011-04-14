@@ -339,6 +339,10 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 			return;
 	}
 
+	public final int getToolID() {
+		return toolID;
+	}
+
 	public final boolean isThisTool() {
 		boolean active = Toolbar.getToolId() == toolID;
 		if (toolToggleListener != null && active != toolActive)
