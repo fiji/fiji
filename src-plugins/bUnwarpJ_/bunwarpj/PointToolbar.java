@@ -120,22 +120,25 @@ public class PointToolbar extends Canvas implements MouseListener
 		this.previousInstance = previousToolbar;
 		this.dialog = dialog;
 		this.instance = this;
-		final Container container = previousToolbar.getParent();
-		final Component[] component = container.getComponents();
-		for (int i = 0; (i < component.length); i++) {
-			if (component[i] == previousToolbar) {
-				container.remove(previousToolbar);
-				container.add(this, i);
-				break;
+		if(null != previousToolbar)
+		{
+			final Container container = previousToolbar.getParent();
+			final Component[] component = container.getComponents();
+			for (int i = 0; (i < component.length); i++) {
+				if (component[i] == previousToolbar) {
+					container.remove(previousToolbar);
+					container.add(this, i);
+					break;
+				}
 			}
+			resetButtons();
+			down[currentTool] = true;
+			setTool(currentTool);
+			setForeground(evenDarker);
+			setBackground(gray);
+			addMouseListener(this);
+			container.validate();
 		}
-		resetButtons();
-		down[currentTool] = true;
-		setTool(currentTool);
-		setForeground(evenDarker);
-		setBackground(gray);
-		addMouseListener(this);
-		container.validate();
 	} /* end PointToolbar */
 
 
@@ -262,13 +265,16 @@ public class PointToolbar extends Canvas implements MouseListener
 	public void restorePreviousToolbar ()
 	{
 		final Container container = instance.getParent();
-		final Component[] component = container.getComponents();
-		for (int i = 0; (i < component.length); i++) {
-			if (component[i] == instance) {
-				container.remove(instance);
-				container.add(previousInstance, i);
-				container.validate();
-				break;
+		if(null != container)
+		{
+			final Component[] component = container.getComponents();
+			for (int i = 0; (i < component.length); i++) {
+				if (component[i] == instance) {
+					container.remove(instance);
+					container.add(previousInstance, i);
+					container.validate();
+					break;
+				}
 			}
 		}
 	} /* end restorePreviousToolbar */
