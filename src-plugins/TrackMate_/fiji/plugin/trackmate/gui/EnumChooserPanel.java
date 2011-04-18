@@ -95,7 +95,7 @@ public class EnumChooserPanel <K extends Enum<K> & InfoTextable> extends ActionL
 			{
 				jLabelHelpText = new JLabel();
 				jLabelHelpText.setFont(FONT.deriveFont(Font.ITALIC));
-				jLabelHelpText.setBounds(12, 40, 270, 150);
+				jLabelHelpText.setBounds(12, 80, 270, 150);
 				echo(defaultChoice);
 				this.add(jLabelHelpText);
 			}

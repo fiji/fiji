@@ -33,10 +33,13 @@ public enum SegmenterType implements InfoTextable {
 			s.segmenterType = LOG_SEGMENTER;
 			return s;
 		}
+		case DOG_SEGMENTER: {
+			DogSegmenterSettings s = new DogSegmenterSettings();
+			s.segmenterType = DOG_SEGMENTER;
+			return s;
+		}
 		case PEAKPICKER_SEGMENTER:
-		case DOG_SEGMENTER: 
-		case MANUAL_SEGMENTER: // We will return a classic segmenter settings, but only exploit the expected radius
-		{
+		case MANUAL_SEGMENTER: { // We will return a classic segmenter settings, but only exploit the expected radius
 			SegmenterSettings s = new SegmenterSettings();
 			s.segmenterType = this;
 			return s;
@@ -65,8 +68,15 @@ public enum SegmenterType implements InfoTextable {
 		case DOG_SEGMENTER:
 			return "<html>" +
 			"This segmenter is based on an approximation of the LoG operator <br>" +
-			"by differences of gaussian (DoG). Computations are made in direct space. " +
-			"It is the quickest for small spot sizes." +
+			"by differences of gaussian (DoG). Computations are made in direct space. <br>" +
+			"It is the quickest for small spot sizes. " +
+			"<p> " +
+			"This segmenter can do sub-pixel localization of spots. It is recommended <br>" +
+			"to set the threshold value to something useful, so as to discard useless <br>" +
+			"spot soon, before the sub-pixel localization kicks in." +
+			"<p>" +
+			"This segmenter is based on the scale-space framework made by Stephan Preibisch <br>" +
+			"for ImgLib." +
 			"</html>";
 		case MANUAL_SEGMENTER:
 			return "<html>" +

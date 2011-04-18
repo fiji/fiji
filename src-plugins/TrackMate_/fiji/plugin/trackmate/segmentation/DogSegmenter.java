@@ -1,10 +1,12 @@
 package fiji.plugin.trackmate.segmentation;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import mpicbg.imglib.algorithm.gauss.DifferenceOfGaussianRealNI;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussian;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
+import mpicbg.imglib.algorithm.scalespace.SubpixelLocalization;
+import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
@@ -22,6 +24,7 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 	
 	public final static String BASE_ERROR_MESSAGE = "DogSegmenter: ";
 	
+	private boolean doSubPixelLocalization = false;
 	
 	
 	/*
@@ -31,6 +34,7 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 	public DogSegmenter(SegmenterSettings segmenterSettings) {
 		super(segmenterSettings);
 		this.baseErrorMessage = BASE_ERROR_MESSAGE;
+		this.doSubPixelLocalization = ((DogSegmenterSettings) segmenterSettings).doSubPixelLocalization;
 	}
 	
 	
@@ -48,6 +52,8 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 			if (!applyMedianFilter())
 				return false;
 		
+			
+		
 		float radius = settings.expectedRadius;
 		// first we need an image factory for FloatType
 		final ImageFactory<FloatType> imageFactory = new ImageFactory<FloatType>( new FloatType(), img.getContainerFactory() );
@@ -61,15 +67,30 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 		minPeakValue = settings.threshold;
 		
 		final DifferenceOfGaussianRealNI<T, FloatType> dog = new DifferenceOfGaussianRealNI<T, FloatType>(intermediateImage, imageFactory, oobs2, sigma1, sigma2, minPeakValue, 1.0, calibration);
-		// execute
-		if ( !dog.checkInput() || !dog.process() )
-		{
+		
+		// Keep laplace image if needed
+		if (doSubPixelLocalization)
+			dog.setKeepDoGImage(true);
+		
+		// Execute
+		if ( !dog.checkInput() || !dog.process() )	{
 			errorMessage = baseErrorMessage + dog.getErrorMessage();
 			return false;
 		}
 				
-		// get all peaks
-		final ArrayList<DifferenceOfGaussianPeak<FloatType>> list = dog.getPeaks();
+		// Get all peaks
+		List<DifferenceOfGaussianPeak<FloatType>> list = dog.getPeaks();
+
+		// Deal with sub-pixel localization if required
+		if (doSubPixelLocalization) {
+			Image<FloatType> laplacian = dog.getDoGImage();
+			SubpixelLocalization<FloatType> locator = new SubpixelLocalization<FloatType>(laplacian , list);
+			if ( !locator.checkInput() || !locator.process() )	{
+				errorMessage = baseErrorMessage + locator.getErrorMessage();
+				return false;
+			}
+			list = locator.getDoGPeaks();
+		}
 
 		// Create spots
 		spots.clear();
@@ -80,7 +101,7 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 			
 			float[] coords = new float[3];
 			for (int i = 0; i < img.getNumDimensions(); i++) 
-				coords[i] = dogpeak.getPosition(i) * calibration[i];
+				coords[i] = dogpeak.getPosition(i) * calibration[i];				
 			Spot spot = new SpotImp(coords);
 			spot.putFeature(Feature.QUALITY, -dogpeak.getValue().get());
 			spots.add(spot);

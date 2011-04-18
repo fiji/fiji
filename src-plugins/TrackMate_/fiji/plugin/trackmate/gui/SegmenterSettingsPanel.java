@@ -28,8 +28,8 @@ import fiji.plugin.trackmate.segmentation.SegmenterType;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 
 /**
- * Mother class for spot segmenter settings panel. This panel is actually suitable for the 3 segmenters
- * currently implemented, which is why it is a class concrete for now.  
+ * Mother class for spot segmenter settings panel. This panel is actually suitable for 2 implemented segmenters,
+ * which is why it is a class concrete for now.  
  * <p>
  * Also offer a factory method to instantiate the correct panel pointed by a tracker type.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2010 - 2011
@@ -47,7 +47,8 @@ public class SegmenterSettingsPanel extends ActionListenablePanel {
 	private JCheckBox jCheckBoxMedianFilter;
 	private JLabel jLabelBlobDiameterUnit;
 	private JTextField jTextFieldBlobDiameter;
-	private SegmenterSettings settings;
+	/** The {@link SegmenterSettings} object set by this panel. */
+	protected SegmenterSettings settings;
 
 	{
 		//Set Look & Feel
@@ -90,7 +91,9 @@ public class SegmenterSettingsPanel extends ActionListenablePanel {
 			segmenterSettings.spaceUnits = settings.spaceUnits;
 		}
 		switch (segmenterType) {
-		case DOG_SEGMENTER:
+		case DOG_SEGMENTER: {
+			return new DogSegmenterSettingsPanel(segmenterSettings);
+		}
 		case LOG_SEGMENTER:
 		case PEAKPICKER_SEGMENTER:
 			return new SegmenterSettingsPanel(segmenterSettings);
@@ -142,7 +145,7 @@ public class SegmenterSettingsPanel extends ActionListenablePanel {
 		jTextFieldThreshold.setText(String.format("%.0f", imp.getProcessor().getMinThreshold()));
 	}
 	
-	private void initGUI() {
+	protected void initGUI() {
 		try {
 			GridBagLayout thisLayout = new GridBagLayout();
 			this.setPreferredSize(new java.awt.Dimension(246, 399));
