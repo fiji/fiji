@@ -104,8 +104,6 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	private ArrayList<GraphListener<Spot, DefaultWeightedEdge>> graphListeners = new ArrayList<GraphListener<Spot,DefaultWeightedEdge>>();
 	/** The spots currently selected. */
 	private HashSet<Spot> spotSelection = new HashSet<Spot>();
-	private mxRubberband rubberband;
-	private mxKeyboardHandler keyboardHandler;
 
 	InfoPane infoPane;
 	mxTrackGraphComponent graphComponent;
@@ -413,10 +411,9 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		gc.setExportEnabled(true); // Seems to be required to have a preview when we move cells. Also give the ability to export a cell as an image clipping 
 		gc.setSwimlaneSelectionEnabled(true);
 
-		rubberband = new mxRubberband(gc);
-		keyboardHandler = new mxKeyboardHandler(gc);
-		gc.getGraphHandler();
-
+		new mxRubberband(gc);
+		new mxKeyboardHandler(gc);
+		
 		// Popup menu
 		gc.getGraphControl().addMouseListener(new MouseAdapter() {
 			@Override
