@@ -168,22 +168,15 @@ public class Transform_Virtual_Stack_MT implements PlugIn
 		}
 		
 		// Apply transforms
-		
-		// Executor service to run concurrent tasks
-		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-		
+			
 		// Create transformed images
 		IJ.showStatus("Calculating transformed images...");
-		if(Register_Virtual_Stack_MT.createResults(source_dir, src_names, target_dir, null, exe, transform, interpolate) == false)
+		if(Register_Virtual_Stack_MT.createResults(source_dir, src_names, target_dir, null, transform, interpolate) == false)
 		{
 			IJ.log("Error when creating transformed images");
-			exe.shutdownNow();
 			return false;
 		}
-		
-		exe.shutdownNow();
-		
-		
+				
 		return true;
 	}
 	
