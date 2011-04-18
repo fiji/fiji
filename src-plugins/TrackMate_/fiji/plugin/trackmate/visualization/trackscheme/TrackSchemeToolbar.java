@@ -7,6 +7,7 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 
 import javax.swing.AbstractAction;
@@ -31,7 +32,11 @@ public class TrackSchemeToolbar extends JToolBar {
 	private static final ImageIcon CAPTURE_UNDECORATED_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/camera_go.png"));
 	private static final ImageIcon CAPTURE_DECORATED_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/camera_edit.png"));
 
-
+	private static final ImageIcon BRANCH_FOLDING_ON_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/shape_square.png"));
+	private static final ImageIcon BRANCH_FOLDING_OFF_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/shape_square-forbid.png"));
+	private static final ImageIcon FOLD_ALL_BRANCHES_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/shape_group.png"));
+	private static final ImageIcon UNFOLD_ALL_BRANCHES_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/shape_ungroup.png"));
+	
 	private TrackSchemeFrame frame;
 
 	public TrackSchemeToolbar(TrackSchemeFrame frame) {
@@ -45,8 +50,12 @@ public class TrackSchemeToolbar extends JToolBar {
 		
 		setFloatable(false);
 
-		// Toggle Connect Mode
-		final Action toggleLinkingAction = new AbstractAction(null, LINKING_ON_ICON) {
+		/*
+		 *  Toggle Connect Mode
+		 */
+		
+		boolean defaultLinkingEnabled = frame.defaultLinkingEnabled;
+		final Action toggleLinkingAction = new AbstractAction(null, defaultLinkingEnabled ? LINKING_ON_ICON : LINKING_OFF_ICON) {
 			public void actionPerformed(ActionEvent e) {
 				boolean enabled = frame.graphComponent.getConnectionHandler().isEnabled();
 				ImageIcon connectIcon;
@@ -61,19 +70,17 @@ public class TrackSchemeToolbar extends JToolBar {
 		};
 		final JButton toggleLinkingButton = new JButton(toggleLinkingAction);
 		toggleLinkingButton.setToolTipText("Toggle linking");
-		add(toggleLinkingButton);
-
-		// Separator
-		addSeparator();
-
-		// Zoom 
+		
+		/*
+		 *  Zoom 
+		 */
+		
 		final Action zoomInAction;
 		final Action zoomOutAction;
 		final Action resetZoomAction;
 		final JButton zoomInButton = new JButton();
 		final JButton zoomOutButton = new JButton();
 		final JButton  resetZoomButton = new JButton();
-
 		zoomInAction = new AbstractAction(null, ZOOM_IN_ICON) {
 			public void actionPerformed(ActionEvent e) {
 				frame.graphComponent.zoomIn();
@@ -89,20 +96,13 @@ public class TrackSchemeToolbar extends JToolBar {
 				frame.graphComponent.zoomTo(1.0, false);
 			}
 		};
-
 		zoomInButton.setAction(zoomInAction);
 		zoomOutButton.setAction(zoomOutAction);
 		resetZoomButton.setAction(resetZoomAction);
 		zoomInButton.setToolTipText("Zoom in 2x");
 		zoomOutButton.setToolTipText("Zoom out 2x");
 		resetZoomButton.setToolTipText("Reset zoom");
-		add(zoomInButton);
-		add(zoomOutButton);
-		add(resetZoomButton);
-
-		// Separator
-		addSeparator();
-
+		
 		// Redo layout
 		final Action redoLayoutAction = new AbstractAction(null, REFRESH_ICON) {
 			public void actionPerformed(ActionEvent e) {
@@ -111,11 +111,7 @@ public class TrackSchemeToolbar extends JToolBar {
 		};
 		final JButton redoLayoutButton = new JButton(redoLayoutAction);
 		redoLayoutButton.setToolTipText("Redo layout");
-		add(redoLayoutButton);
-
-		// Separator
-		addSeparator();
-
+		
 		// Plot selection data
 		final Action plotSelection = new AbstractAction(null, PLOT_ICON) {
 			@Override
@@ -125,11 +121,55 @@ public class TrackSchemeToolbar extends JToolBar {
 		};
 		final JButton plotSelectionButton = new JButton(plotSelection);
 		plotSelectionButton.setToolTipText("Plot selection data");
-		add(plotSelectionButton);
-
-		// Separator
-		addSeparator();
-
+	
+		/* 
+		 * Folding
+		 */
+		
+		boolean defaultEnabled = frame.graphLayout.isBranchGroupingEnabled();
+		final JButton foldAllButton = new JButton(null, FOLD_ALL_BRANCHES_ICON);
+		foldAllButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				frame.graphLayout.setAllFolded(true);
+			}
+		});
+		final JButton unFoldAllButton = new JButton(null, UNFOLD_ALL_BRANCHES_ICON);
+		unFoldAllButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				frame.graphLayout.setAllFolded(false);
+			}
+		});
+		final JButton toggleEnableFoldingButton = new JButton(null, 
+						defaultEnabled ? 
+						BRANCH_FOLDING_ON_ICON : BRANCH_FOLDING_OFF_ICON);
+		toggleEnableFoldingButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				boolean enabled = frame.graphLayout.isBranchGroupingEnabled();
+				frame.graphLayout.setBranchGrouping(!enabled);
+				
+				if (enabled) {
+					toggleEnableFoldingButton.setIcon(BRANCH_FOLDING_OFF_ICON);	
+					foldAllButton.setEnabled(false);
+					unFoldAllButton.setEnabled(false);
+				} else {
+					toggleEnableFoldingButton.setIcon(BRANCH_FOLDING_ON_ICON);
+					foldAllButton.setEnabled(true);
+					unFoldAllButton.setEnabled(true);
+				}
+			}
+		});
+		toggleEnableFoldingButton.setToolTipText("Toggle folding (requires redoing layout)");
+		foldAllButton.setToolTipText("Fold all branches");
+		unFoldAllButton.setToolTipText("Unfold all branches");
+		if (!defaultEnabled) {
+			foldAllButton.setEnabled(false);
+			unFoldAllButton.setEnabled(false);
+		}
+		
+		
 		// Capture 
 		final Action captureUndecoratedAction = new AbstractAction(null, CAPTURE_UNDECORATED_ICON) {			
 			@Override
@@ -161,6 +201,37 @@ public class TrackSchemeToolbar extends JToolBar {
 		captureUndecoratedButton.setToolTipText("Capture undecorated track scheme");
 		captureDecoratedButton.setToolTipText("Capture decorated track scheme");
 		saveButton.setToolTipText("Export to..");
+		
+		
+		/*
+		 * ADD TO TOOLBAR
+		 */
+		
+		// Layout
+		add(redoLayoutButton);
+		// Separator
+		addSeparator();
+		// Linking
+		add(toggleLinkingButton);
+		// Separator
+		addSeparator();
+		// Folding
+		add(toggleEnableFoldingButton);
+		add(foldAllButton);
+		add(unFoldAllButton);
+		// Separator
+		addSeparator();
+		// Plotting
+		add(plotSelectionButton);
+		// Separator
+		addSeparator();
+		// Zoom
+		add(zoomInButton);
+		add(zoomOutButton);
+		add(resetZoomButton);	
+		// Separator
+		addSeparator();
+		// Capture / Export
 		add(captureUndecoratedButton);
 		add(captureDecoratedButton);
 		add(saveButton);
