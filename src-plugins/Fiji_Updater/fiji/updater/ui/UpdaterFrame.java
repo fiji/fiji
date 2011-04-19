@@ -465,10 +465,12 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 	}
 
 	private void quit() {
-		if (plugins.hasChanges() && !SwingTools.showQuestion(hidden, this, "Quit?",
+		if (plugins.hasChanges()) {
+			if (!SwingTools.showQuestion(hidden, this, "Quit?",
 				"You have specified changes. Are you sure you want to quit?"))
 			return;
-		try {
+		}
+		else try {
 			plugins.write();
 		} catch (Exception e) {
 			error("There was an error writing the local metadata cache: " + e);
