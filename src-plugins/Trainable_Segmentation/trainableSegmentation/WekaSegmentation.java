@@ -3604,11 +3604,8 @@ public class WekaSegmentation {
 			for (int c = 0; c < numChannels; c++)
 			{
 				System.arraycopy(classificationResult[c], i*(w*h), classifiedSlice, 0, w*h);
-				ImageProcessor classifiedSliceProcessor = new FloatProcessor(w, h, classifiedSlice);
-				if (probabilityMaps)
-					classifiedSliceProcessor = classifiedSliceProcessor.convertToByte(true);
+				ImageProcessor classifiedSliceProcessor = new FloatProcessor(w, h, classifiedSlice);				
 				classStack.addSlice(probabilityMaps ? classLabels[c] : "", classifiedSliceProcessor);
-				//IJ.log("" + i + " " + c);
 			}
 		}
 		ImagePlus classImg = new ImagePlus(probabilityMaps ? "Probability maps" : "Classification result", classStack);
