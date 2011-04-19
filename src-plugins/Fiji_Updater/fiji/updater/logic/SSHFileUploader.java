@@ -194,6 +194,8 @@ public class SSHFileUploader extends FileUploader {
 			channel.disconnect();
 		}
 		try {
+			if (IJ.debugMode)
+				IJ.log("launching command " + command);
 			channel = session.openChannel("exec");
 			((ChannelExec)channel).setCommand(command);
 			channel.setInputStream(null);
@@ -241,7 +243,7 @@ public class SSHFileUploader extends FileUploader {
 		//          -1
 		if (b == 0)
 			return b;
-		new Exception("checkAck returns " + b).printStackTrace();
+		IJ.handleException(new Exception("checkAck returns " + b));
 		if (b == -1)
 			return b;
 
@@ -252,6 +254,7 @@ public class SSHFileUploader extends FileUploader {
 				c = in.read();
 				sb.append((char)c);
 			} while (c != '\n');
+			IJ.log("checkAck returned '" + sb.toString() + "'");
 			IJ.error(sb.toString());
 		}
 		return b;
