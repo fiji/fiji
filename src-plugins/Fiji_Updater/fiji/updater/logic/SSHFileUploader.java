@@ -11,6 +11,8 @@ import com.jcraft.jsch.UserInfo;
 import fiji.updater.Updater;
 
 import fiji.updater.util.Canceled;
+import fiji.updater.util.IJLogOutputStream;
+import fiji.updater.util.InputStream2IJLog;
 
 import ij.IJ;
 
@@ -32,11 +34,14 @@ public class SSHFileUploader extends FileUploader {
 	private long uploadedBytes;
 	private long uploadSize;
 	private OutputStream out;
+	protected OutputStream err;
 	private InputStream in;
 
 	public SSHFileUploader(String username, String sshHost, String uploadDirectory,
 			UserInfo userInfo) throws JSchException {
 		super(uploadDirectory);
+
+		err = new IJLogOutputStream();
 
 		int port = 22, colon = sshHost.indexOf(':');
 		if (colon > 0) {
@@ -192,6 +197,7 @@ public class SSHFileUploader extends FileUploader {
 			channel = session.openChannel("exec");
 			((ChannelExec)channel).setCommand(command);
 			channel.setInputStream(null);
+			((ChannelExec)channel).setErrStream(err);
 
 			// get I/O streams for remote scp
 			out = channel.getOutputStream();
@@ -209,9 +215,11 @@ public class SSHFileUploader extends FileUploader {
 	}
 
 	public void disconnectSession() throws IOException {
+		new InputStream2IJLog(in);
 		out.close();
 		channel.disconnect();
 		session.disconnect();
+		err.close();
 	}
 
 	protected long readNumber(InputStream in) throws IOException {
