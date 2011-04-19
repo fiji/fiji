@@ -746,7 +746,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 			uploader.upload(progress);
 			// JSch needs some time to finalize the SSH connection
 			try {
-				Thread.sleep(100);
+				Thread.sleep(1000);
 			} catch (InterruptedException e) { /* ignore */ }
 			return true;
 		} catch (Canceled e) {

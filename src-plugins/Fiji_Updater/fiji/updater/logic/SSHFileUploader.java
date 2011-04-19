@@ -218,7 +218,19 @@ public class SSHFileUploader extends FileUploader {
 
 	public void disconnectSession() throws IOException {
 		new InputStream2IJLog(in);
+		try {
+			Thread.sleep(100);
+		}
+		catch (InterruptedException e) {
+			/* ignore */
+		}
 		out.close();
+		try {
+			Thread.sleep(1000);
+		}
+		catch (InterruptedException e) {
+			/* ignore */
+		}
 		channel.disconnect();
 		session.disconnect();
 		err.close();
