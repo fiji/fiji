@@ -219,9 +219,13 @@ public class PluginUploader {
 			connection.setUseCaches(false);
 			long lastModified = connection.getLastModified();
 			connection.getInputStream().close();
+			if (IJ.debugMode)
+				IJ.log("got last modified " + lastModified + " = timestamp " + Util.timestamp(lastModified));
 			return lastModified;
 		}
 		catch (Exception e) {
+			if (IJ.debugMode)
+				IJ.handleException(e);
 			if (plugins.size() == 0)
 				return -1; // assume initial upload
 			e.printStackTrace();
@@ -230,8 +234,11 @@ public class PluginUploader {
 	}
 
 	protected void verifyTimestamp() {
-		if (!site.isLastModified(getCurrentLastModified()))
+		long lastModified = getCurrentLastModified();
+		if (!site.isLastModified(lastModified))
 			throw new RuntimeException("db.xml.gz was "
-				+ "changed in the meantime");
+				+ "changed in the meantime (was "
+				+ site.timestamp + " but now is "
+				+ Util.timestamp(lastModified) + ")");
 	}
 }
