@@ -142,7 +142,7 @@ public class FeatureStack
 	private int nAngles = 30;
 	
 	/** executor service to produce concurrent threads */
-	final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+	ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 	
 	/**
 	 * Construct object to store stack of image features
@@ -712,22 +712,22 @@ public class FeatureStack
 						float s_xx = ip_xx.getf(x,y);
 						float s_xy = ip_xy.getf(x,y);
 						float s_yy = ip_yy.getf(x,y);
-						// Hessian
+						// Hessian module: sqrt (a^2 + b*c + d^2)
 						ip.setf(x,y, (float) Math.sqrt(s_xx*s_xx + s_xy*s_xy+ s_yy*s_yy));
-						// Trace
+						// Trace: a + d
 						final float trace = (float) s_xx + s_yy;
 						ipTr.setf(x,y,  trace);
-						// Determinant
+						// Determinant: a*d - c*b
 						final float determinant = (float) s_xx*s_yy-s_xy*s_xy;
 						ipDet.setf(x,y, determinant);
 						// Ratio
 						//ipRatio.setf(x,y, (float)(trace*trace) / determinant);
-						// First eigenvalue
+						// First eigenvalue: (a + d) / 2 + sqrt( ( 4*b^2 + (a - d)^2) ) / 2 )
 						ipEig1.setf(x,y, (float) ( trace/2.0 + Math.sqrt((4*s_xy*s_xy + (s_xx - s_yy)*(s_xx - s_yy)) / 2.0 ) ) );
-						// Second eigenvalue
+						// Second eigenvalue: (a + d) / 2 - sqrt( ( 4*b^2 + (a - d)^2) ) / 2 )
 						ipEig2.setf(x,y, (float) ( trace/2.0 - Math.sqrt((4*s_xy*s_xy + (s_xx - s_yy)*(s_xx - s_yy)) / 2.0 ) ) );
 						// Orientation
-						if (s_xy < 0.0) 
+						if (s_xy < 0.0) // -0.5 * acos( (a-d) / sqrt( 4*b^2 + (a - d)^2)) )
 						{
 							float orientation =(float)( -0.5 * Math.acos((s_xx	- s_yy) 
 									/ Math.sqrt(4.0 * s_xy * s_xy + (s_xx - s_yy) * (s_xx - s_yy)) ));							
@@ -735,7 +735,7 @@ public class FeatureStack
 								orientation = 0;
 							ipOri.setf(x, y,  orientation);
 						}
-						else 
+						else 	// 0.5 * acos( (a-d) / sqrt( 4*b^2 + (a - d)^2)) )
 						{
 							float orientation =(float)( 0.5 * Math.acos((s_xx	- s_yy) 
 									/ Math.sqrt(4.0 * s_xy * s_xy + (s_xx - s_yy) * (s_xx - s_yy)) ));							
@@ -1649,6 +1649,7 @@ public class FeatureStack
 	 */
 	public void addFeaturesMT(final ImagePlus filterList)
 	{
+		exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 		wholeStack = new ImageStack(width, height);
 		//wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
 
@@ -1886,6 +1887,7 @@ public class FeatureStack
 	 */
 	public boolean updateFeaturesMT()
 	{
+		exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 		wholeStack = new ImageStack(width, height);
 		wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
 
