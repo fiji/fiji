@@ -157,8 +157,17 @@ public class TrackMate_ implements PlugIn, TrackMateModelInterface {
 		
 		for (int i = settings.tstart-1; i < settings.tend; i++) {
 			
-			/* 1 - Prepare stack for use with Imglib. */
-			Image<? extends RealType> img = TMUtils.getSingleFrameAsImage(settings.imp, i, settings); // will be cropped according to settings
+			/* 1 - Prepare stack for use with Imglib.
+			 * This time, since the spot coordinates are with respect to the top-left corner of the image, 
+			 * we must not generate a cropped version of the image, but a full snapshot. 	 */
+			Settings uncroppedSettings = new Settings();
+			uncroppedSettings.xstart = 1;
+			uncroppedSettings.xend   = settings.imp.getWidth();
+			uncroppedSettings.ystart = 1;
+			uncroppedSettings.yend   = settings.imp.getHeight();
+			uncroppedSettings.zstart = 1;
+			uncroppedSettings.zend   = settings.imp.getNSlices();
+			Image<? extends RealType> img = TMUtils.getSingleFrameAsImage(settings.imp, i, uncroppedSettings); // will be cropped according to settings
 			
 			/* 2 - Compute features. */
 			logger.setProgress((2*(i-settings.tstart)) / (2f * numFrames + 1));
