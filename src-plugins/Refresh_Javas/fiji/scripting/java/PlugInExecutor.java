@@ -103,7 +103,7 @@ public class PlugInExecutor {
 	}
 
 	private final static Pattern wrongClassNamePattern =
-		Pattern.compile("^([^ ]*) \\(wrong name: ([^ ]*)\\)$");
+		Pattern.compile("^(.*) \\(wrong name: ([^ ]*)\\)$");
 
 	public void tryRun(String plugin, String arg, String jarPath, boolean newClassLoader)
 			throws ClassNotFoundException, IOException,

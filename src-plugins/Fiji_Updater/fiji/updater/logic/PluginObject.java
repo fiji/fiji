@@ -8,12 +8,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class PluginObject {
-	public static class Version {
+	public static class Version implements Comparable<Version> {
 		public String checksum;
 		// This timestamp is not a Unix epoch!
 		// Instead, it is Long.parseLong(Util.timestamp(epoch))
@@ -22,6 +25,34 @@ public class PluginObject {
 		Version(String checksum, long timestamp) {
 			this.checksum = checksum;
 			this.timestamp = timestamp;
+		}
+
+		@Override
+		public int compareTo(Version other) {
+			long diff = timestamp - other.timestamp;
+			if (diff != 0)
+				return diff < 0 ? -1 : +1;
+			return checksum.compareTo(other.checksum);
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			return other instanceof Version ? equals((Version)other) : false;
+		}
+
+		public boolean equals(Version other) {
+			return timestamp == other.timestamp && checksum.equals(other.checksum);
+		}
+
+		@Override
+		public int hashCode() {
+			return (checksum == null ? 0 : checksum.hashCode())
+				^ new Long(timestamp).hashCode();
+		}
+
+		@Override
+		public String toString() {
+			return "Version(" + checksum + ";" + timestamp + ")";
 		}
 	}
 
@@ -66,29 +97,33 @@ public class PluginObject {
 		OBSOLETE (new Action[] { Action.OBSOLETE, Action.UNINSTALL }, Action.UPLOAD),
 		OBSOLETE_MODIFIED (new Action[] { Action.MODIFIED, Action.UNINSTALL }, Action.UPLOAD);
 
-		private Action[] actions;
+		private Action[] actions, developerActions;
 
 		Status(Action[] actions) {
 			this(actions, null);
 		}
 
 		Status(Action[] actions, Action developerAction) {
-			if (developerAction != null && Util.isDeveloper) {
-				this.actions = new Action[actions.length + 1];
-				System.arraycopy(actions, 0, this.actions, 0,
-						actions.length);
-				this.actions[actions.length] = developerAction;
+			if (developerAction != null) {
+				developerActions = new Action[actions.length + 1];
+				System.arraycopy(actions, 0, developerActions, 0, actions.length);
+				developerActions[actions.length] = developerAction;
 			}
 			else
-				this.actions = actions;
+				developerActions = actions;
+			this.actions = actions;
 		}
 
 		public Action[] getActions() {
 			return actions;
 		}
 
+		public Action[] getDeveloperActions() {
+			return developerActions;
+		}
+
 		public boolean isValid(Action action) {
-			for (Action a : actions)
+			for (Action a : developerActions)
 				if (a.equals(action))
 					return true;
 			return false;
@@ -101,21 +136,24 @@ public class PluginObject {
 
 	private Status status;
 	private Action action;
-	public String filename, description, newChecksum;
+	public String updateSite, filename, description, newChecksum;
 	public Version current;
-	public Map<Version, Object> previous;
+	public Set<Version> previous;
 	public long filesize, newTimestamp;
+	public boolean metadataChanged;
 
 	// These are LinkedHashMaps to retain the order of the entries
 	protected Map<String, Dependency> dependencies;
 	protected Map<String, Object> links, authors, platforms, categories;
 
-	public PluginObject(String filename, String checksum, long timestamp,
+	public PluginObject(String updateSite, String filename, String checksum, long timestamp,
 			Status status) {
+		assert(updateSite != null && !updateSite.equals(""));
+		this.updateSite = updateSite;
 		this.filename = filename;
 		if (checksum != null)
 			current = new Version(checksum, timestamp);
-		previous = new LinkedHashMap<Version, Object>();
+		previous = new LinkedHashSet<Version>();
 		this.status = status;
 		dependencies = new LinkedHashMap<String, Dependency>();
 		authors = new LinkedHashMap<String, Object>();
@@ -127,10 +165,35 @@ public class PluginObject {
 		setNoAction();
 	}
 
+	public void merge(PluginObject upstream) {
+		for (Version previous : upstream.previous)
+			addPreviousVersion(previous.checksum, previous.timestamp);
+		if (updateSite == null || updateSite.equals(upstream.updateSite)) {
+			updateSite = upstream.updateSite;
+			description = upstream.description;
+			dependencies = upstream.dependencies;
+			authors = upstream.authors;
+			platforms = upstream.platforms;
+			categories = upstream.categories;
+			links = upstream.links;
+			filesize = upstream.filesize;
+			if (current != null && !upstream.hasPreviousVersion(current.checksum))
+				addPreviousVersion(current.checksum, current.timestamp);
+			current = upstream.current;
+			status = upstream.status;
+			action = upstream.action;
+		}
+		else {
+			Version other = upstream.current;
+			if (other != null && !hasPreviousVersion(other.checksum))
+				addPreviousVersion(other.checksum, other.timestamp);
+		}
+	}
+
 	public boolean hasPreviousVersion(String checksum) {
 		if (current != null && current.checksum.equals(checksum))
 			return true;
-		for (Version version : previous.keySet())
+		for (Version version : previous)
 			if (version.checksum.equals(checksum))
 				return true;
 		return false;
@@ -139,7 +202,7 @@ public class PluginObject {
 	public boolean isNewerThan(long timestamp) {
 		if (current != null && current.timestamp <= timestamp)
 			return false;
-		for (Version version : previous.keySet())
+		for (Version version : previous)
 			if (version.timestamp <= timestamp)
 				return false;
 		return true;
@@ -147,7 +210,7 @@ public class PluginObject {
 
 	void setVersion(String checksum, long timestamp) {
 		if (current != null)
-			previous.put(current, (Object)null);
+			previous.add(current);
 		current = new Version(checksum, timestamp);
 	}
 
@@ -271,25 +334,25 @@ public class PluginObject {
 	}
 
 	public Iterable<Version> getPrevious() {
-		return previous.keySet();
+		return previous;
 	}
 
 	public void addPreviousVersion(String checksum, long timestamp) {
-		previous.put(new Version(checksum, timestamp), (Object)null);
+		Version version = new Version(checksum, timestamp);
+		if (!previous.contains(version))
+			previous.add(version);
 	}
 
 	public void setNoAction() {
 		action = status.getNoAction();
 	}
 
-	public void setAction(Action action) {
+	public void setAction(PluginCollection plugins, Action action) {
 		if (!status.isValid(action))
 			throw new Error("Invalid action requested for plugin "
 					+ filename + "(" + action
 					+ ", " + status + ")");
 		if (action == Action.UPLOAD) {
-			PluginCollection plugins =
-				PluginCollection.getInstance();
 			Iterable<String> dependencies =
 				plugins.analyzeDependencies(this);
 			if (dependencies != null)
@@ -299,10 +362,10 @@ public class PluginObject {
 		this.action = action;
 	}
 
-	public boolean setFirstValidAction(Action[] actions) {
+	public boolean setFirstValidAction(PluginCollection plugins, Action[] actions) {
 		for (Action action : actions)
 			if (status.isValid(action)) {
-				setAction(action);
+				setAction(plugins, action);
 				return true;
 			}
 		return false;
@@ -381,6 +444,18 @@ public class PluginObject {
 
 	public boolean isLocallyModified() {
 		return status.getNoAction() == Action.MODIFIED;
+	}
+
+	/**
+	 * Tell whether this plugin can be uploaded to its update site
+	 *
+	 * Note: this does not check whether the plugin is locally modified.
+	 */
+	public boolean isUploadable(PluginCollection plugins) {
+		if (updateSite == null)
+			return plugins.hasUploadableSites();
+		PluginCollection.UpdateSite updateSite = plugins.getUpdateSite(this.updateSite);
+		return updateSite != null && updateSite.isUploadable();
 	}
 
 	public boolean actionSpecified() {

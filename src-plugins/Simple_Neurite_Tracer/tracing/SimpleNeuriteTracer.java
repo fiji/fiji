@@ -38,7 +38,9 @@ import ij3d.Content;
 import ij3d.MeshMaker;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
+import javax.vecmath.Point3d;
 import java.awt.*;
+import java.awt.event.KeyListener;
 import java.io.*;
 
 import java.util.HashSet;
@@ -78,6 +80,10 @@ public class SimpleNeuriteTracer extends ThreePanes
 	protected static final int DISPLAY_PATHS_LINES = 2;
 	protected static final int DISPLAY_PATHS_LINES_AND_DISCS = 3;
 
+	protected static final String startBallName = "Start point";
+	protected static final String targetBallName = "Target point";
+	protected static final int ballRadiusMultiplier = 5;
+
 	protected PathAndFillManager pathAndFillManager;
 
 	protected boolean use3DViewer;
@@ -92,6 +98,10 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	public PathAndFillManager getPathAndFillManager() {
 		return pathAndFillManager;
+	}
+
+	public InteractiveTracerCanvas getXYCanvas() {
+		return xy_tracer_canvas;
 	}
 
 	/* Just for convenience, keep casted references to the
@@ -135,6 +145,14 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	public void threadStatus( SearchThread source, int status ) {
 		// Ignore this information.
+	}
+
+	public void changeUIState(int newState) {
+		resultsDialog.changeState(newState);
+	}
+
+	public int getUIState() {
+		return resultsDialog.getCurrentState();
 	}
 
 	synchronized public void saveFill( ) {
@@ -187,6 +205,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 		   so distinguish these cases: */
 
 		if( source == currentSearchThread ) {
+
+			removeSphere(targetBallName);
 
 			if( success ) {
 				Path result = currentSearchThread.getResult();
@@ -579,6 +599,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 		if( temporaryPath != null )
 			temporaryPath.setName("Temporary Path");
 		if( use3DViewer ) {
+
+
 			if( oldTemporaryPath != null ) {
 				oldTemporaryPath.removeFrom3DViewer(univ);
 			}
@@ -696,18 +718,31 @@ public class SimpleNeuriteTracer extends ThreePanes
 		double [] p = new double[3];
 		findPointInStackPrecise( x_in_pane_precise, y_in_pane_precise, plane, p );
 
+		double real_x_end, real_y_end, real_z_end;
+
 		int x_end, y_end, z_end;
 		if( joinPoint == null ) {
-			x_end = (int)Math.round(p[0]);
-			y_end = (int)Math.round(p[1]);
-			z_end = (int)Math.round(p[2]);
+			real_x_end = p[0] * x_spacing;
+			real_y_end = p[1] * y_spacing;
+			real_z_end = p[2] * z_spacing;
 		} else {
-			x_end = (int)Math.round(joinPoint.x / x_spacing);
-			y_end = (int)Math.round(joinPoint.y / y_spacing);
-			z_end = (int)Math.round(joinPoint.z / z_spacing);
+			real_x_end = joinPoint.x;
+			real_y_end = joinPoint.y;
+			real_z_end = joinPoint.z;
 			endJoin = joinPoint.onPath;
 			endJoinPoint = joinPoint;
 		}
+
+		addSphere( targetBallName,
+			   real_x_end,
+			   real_y_end,
+			   real_z_end,
+			   Color.BLUE,
+			   x_spacing * ballRadiusMultiplier );
+
+		x_end = (int)Math.round( real_x_end / x_spacing );
+		y_end = (int)Math.round( real_y_end / y_spacing );
+		z_end = (int)Math.round( real_z_end / z_spacing );
 
 		currentSearchThread = new TracerThread(
 			xy,
@@ -781,6 +816,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 			return;
 		}
 
+		removeSphere( targetBallName );
+
 		if( temporaryPath.endJoins != null ) {
 			temporaryPath.unsetEndJoin();
 		}
@@ -802,6 +839,9 @@ public class SimpleNeuriteTracer extends ThreePanes
 			if( currentPath.endJoins != null )
 				currentPath.unsetEndJoin();
 		}
+
+		removeSphere( targetBallName );
+		removeSphere( startBallName );
 
 		setCurrentPath( null );
 		setTemporaryPath( null );
@@ -828,6 +868,9 @@ public class SimpleNeuriteTracer extends ThreePanes
 			return;
 		}
 
+		removeSphere(startBallName);
+		removeSphere(targetBallName);
+
 		lastStartPointSet = false;
 		setPathUnfinished( false );
 
@@ -842,6 +885,19 @@ public class SimpleNeuriteTracer extends ThreePanes
 		resultsDialog.changeState( NeuriteTracerResultsDialog.WAITING_TO_START_PATH );
 
 		repaintAllPanes( );
+	}
+
+	/** This method should really be called by the other clickForTrace:
+	    FIXME - this needs some refactoring */
+
+	synchronized public void clickForTrace( Point3d p, boolean join ) {
+		double x_unscaled = p.x / x_spacing;
+		double y_unscaled = p.y / y_spacing;
+		double z_unscaled = p.z / z_spacing;
+		setSlicesAllPanes( (int)x_unscaled,
+				   (int)y_unscaled,
+				   (int)z_unscaled );
+		clickForTrace( x_unscaled, y_unscaled, ThreePanes.XY_PLANE, join );
 	}
 
 	synchronized public void clickForTrace( double x_in_pane_precise, double y_in_pane_precise, int plane, boolean join ) {
@@ -930,18 +986,50 @@ public class SimpleNeuriteTracer extends ThreePanes
 		Path path = new Path(x_spacing,y_spacing,z_spacing,spacing_units);
 		path.setName("New Path");
 
+		Color ballColor;
+
+		double real_last_start_x, real_last_start_y, real_last_start_z;
+
 		if( joinPoint == null ) {
-			last_start_point_x = (int)Math.round(p[0]);
-			last_start_point_y = (int)Math.round(p[1]);
-			last_start_point_z = (int)Math.round(p[2]);
+			real_last_start_x = p[0] * x_spacing;
+			real_last_start_y = p[1] * y_spacing;
+			real_last_start_z = p[2] * z_spacing;
+			ballColor = Color.BLUE;
 		} else {
-			last_start_point_x = (int)Math.round( joinPoint.x / x_spacing );
-			last_start_point_y = (int)Math.round( joinPoint.y / y_spacing );
-			last_start_point_z = (int)Math.round( joinPoint.z / z_spacing );
+			real_last_start_x = joinPoint.x;
+			real_last_start_y = joinPoint.y;
+			real_last_start_z = joinPoint.z;
 			path.setStartJoin( joinPoint.onPath, joinPoint );
+			ballColor = Color.GREEN;
 		}
 
+		last_start_point_x = (int)Math.round( real_last_start_x / x_spacing );
+		last_start_point_y = (int)Math.round( real_last_start_y / y_spacing );
+		last_start_point_z = (int)Math.round( real_last_start_z / z_spacing );
+
+		addSphere( startBallName,
+			   real_last_start_x,
+			   real_last_start_y,
+			   real_last_start_z,
+			   ballColor,
+			   x_spacing * ballRadiusMultiplier );
+
 		setCurrentPath( path );
+	}
+
+	protected void addSphere( String name, double x, double y, double z, Color color, double radius ) {
+		if( use3DViewer ) {
+			List<Point3f> sphere = MeshMaker.createSphere( x,
+								       y,
+								       z,
+								       radius);
+			univ.addTriangleMesh( sphere, new Color3f(color), name );
+		}
+	}
+
+	protected void removeSphere( String name ) {
+		if( use3DViewer )
+			univ.removeContent(name);
 	}
 
 	/* Return true if we have just started a new path, but have
@@ -1376,5 +1464,18 @@ public class SimpleNeuriteTracer extends ThreePanes
 			}
 		}
 	}
-}
 
+	/** This method will remove the existing keylisteners from the
+	    component 'c', tells 'firstKeyListener' to call those key
+	    listeners if it has not dealt with the key, and then sets
+	    'firstKeyListener' as the key listener for 'c' */
+	public static void setAsFirstKeyListener(Component c, QueueJumpingKeyListener firstKeyListener) {
+		KeyListener [] oldKeyListeners = c.getKeyListeners();
+		for( KeyListener kl : oldKeyListeners ) {
+			c.removeKeyListener(kl);
+		}
+		firstKeyListener.addOtherKeyListeners(oldKeyListeners);
+		c.addKeyListener(firstKeyListener);
+	}
+
+}

@@ -30,14 +30,43 @@ public class ViewOptions extends JComboBox {
 		}
 	}
 
+	protected final int customOptionStart;
+
 	public ViewOptions() {
 		super(Option.values());
+
+		customOptionStart = getItemCount();
+
 		setMaximumRowCount(15);
 	}
 
+	public void clearCustomOptions() {
+		while (getItemCount() > customOptionStart)
+			removeItemAt(customOptionStart);
+	}
+
+	protected interface CustomOption {
+		Iterable<PluginObject> getIterable();
+	}
+
+	public void addCustomOption(final String title, final Iterable<PluginObject> iterable) {
+		addItem(new CustomOption() {
+			public String toString() {
+				return title;
+			}
+
+			public Iterable<PluginObject> getIterable() {
+				return iterable;
+			}
+		});
+	}
+
 	public Iterable<PluginObject> getView(PluginTable table) {
+		if (getSelectedIndex() >= customOptionStart)
+			return ((CustomOption)getSelectedItem()).getIterable();
+
 		PluginCollection plugins = PluginCollection
-			.clone(PluginCollection.getInstance().notHidden());
+			.clone(table.getAllPlugins().notHidden());
 		plugins.sort();
 		switch ((Option)getSelectedItem()) {
 			case INSTALLED: return plugins.installed();

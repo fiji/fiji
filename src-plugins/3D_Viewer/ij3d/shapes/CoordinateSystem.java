@@ -66,7 +66,8 @@ public class CoordinateSystem extends BranchGroup {
 		TransformGroup tg = new TransformGroup(translate);
 		addChild(tg);
 		// text
-		Font3D font3D = new Font3D(new Font("Helvetica", Font.PLAIN, (int)length/3),
+		int fontSize = (int)length/3;
+		Font3D font3D = new Font3D(new Font("Helvetica", Font.PLAIN, fontSize > 0 ? fontSize : 1),
                                     new FontExtrusion());
 		Text3D textGeom = new Text3D(font3D, s);
 		textGeom.setAlignment(Text3D.ALIGN_CENTER);

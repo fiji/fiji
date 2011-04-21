@@ -23,6 +23,7 @@ import javax.swing.JFileChooser;
 import javax.swing.filechooser.*;
 import java.awt.event.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Vector;
 import java.util.Iterator;
 import java.util.Collection;
@@ -33,11 +34,13 @@ import java.io.File;
 import vib.InterpolatedImage;
 import vib.FastMatrix;
 
+import orthoslice.MultiOrthoGroup;
 import orthoslice.OrthoGroup;
 import voltex.VoltexGroup;
 import voltex.VolumeRenderer;
 import isosurface.MeshExporter;
 import isosurface.MeshEditor;
+import isosurface.SmoothControl;
 
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
@@ -48,6 +51,7 @@ import javax.media.j3d.Background;
 
 import customnode.CustomMesh;
 import customnode.CustomMeshNode;
+import customnode.CustomMultiMesh;
 import customnode.CustomTriangleMesh;
 
 import java.awt.event.TextListener;
@@ -361,6 +365,81 @@ public class Executer {
 	public void changeSlices(final Content c) {
 		if(!checkSel(c))
 			return;
+		switch(c.getType()) {
+			case Content.ORTHO: changeOrthslices(c); break;
+			case Content.MULTIORTHO: changeMultiOrthslices(c); break;
+		}
+	}
+
+	private void changeMultiOrthslices(final Content c) {
+		if(!checkSel(c))
+			return;
+		final GenericDialog gd = new GenericDialog(
+			"Adjust slices...", univ.getWindow());
+		final MultiOrthoGroup os = (MultiOrthoGroup)c.getContent();
+
+		boolean opaque = os.getTexturesOpaque();
+
+		gd.addMessage("Number of slices {x: " + os.getSliceCount(0)
+				+ ", y: " + os.getSliceCount(1)
+				+ ", z: " + os.getSliceCount(2) + "}");
+		gd.addStringField("x_slices (e.g. 1, 2-5, 20)", "", 10);
+		gd.addStringField("y_slices (e.g. 1, 2-5, 20)", "", 10);
+		gd.addStringField("z_slices (e.g. 1, 2-5, 20)", "", 10);
+
+		gd.addCheckbox("Opaque textures", opaque);
+
+		gd.showDialog();
+		if(gd.wasCanceled())
+			return;
+
+		int X = AxisConstants.X_AXIS;
+		int Y = AxisConstants.Y_AXIS;
+		int Z = AxisConstants.Z_AXIS;
+
+		boolean[] xAxis = new boolean[os.getSliceCount(X)];
+		boolean[] yAxis = new boolean[os.getSliceCount(Y)];
+		boolean[] zAxis = new boolean[os.getSliceCount(Z)];
+
+		parseRange(gd.getNextString(), xAxis);
+		parseRange(gd.getNextString(), yAxis);
+		parseRange(gd.getNextString(), zAxis);
+
+		os.setVisible(X, xAxis);
+		os.setVisible(Y, yAxis);
+		os.setVisible(Z, zAxis);
+
+		os.setTexturesOpaque(gd.getNextBoolean());
+	}
+
+	private static void parseRange(String rangeString, boolean[] b) {
+		Arrays.fill(b, false);
+		if(rangeString.trim().length() == 0)
+			return;
+		try {
+			String[] tokens1 = rangeString.split(",");
+			for(String tok1 : tokens1) {
+				String[] tokens2 = tok1.split("-");
+				if(tokens2.length == 1) {
+					b[Integer.parseInt(tokens2[0].trim())] = true;
+				} else {
+					int start = Integer.parseInt(tokens2[0].trim());
+					int end = Integer.parseInt(tokens2[1].trim());
+					for(int i = start; i <= end; i++) {
+						if(i >= 0 && i < b.length)
+							b[i] = true;
+					}
+				}
+			}
+		} catch(Exception e) {
+			IJ.error("Cannot parse " + rangeString);
+			return;
+		}
+	}
+
+	private void changeOrthslices(final Content c) {
+		if(!checkSel(c))
+			return;
 		final GenericDialog gd = new GenericDialog(
 			"Adjust slices...", univ.getWindow());
 		final OrthoGroup os = (OrthoGroup)c.getContent();
@@ -459,13 +538,19 @@ public class Executer {
 	public void smoothMesh(Content c) {
 		if(!checkSel(c))
 			return;
-		if(c.getType() == Content.SURFACE || c.getType() == Content.CUSTOM) {
-			ContentNode cn = c.getContent();
-			if(cn instanceof CustomMeshNode) {
-				CustomMesh mesh = ((CustomMeshNode)cn).getMesh();
-				if(mesh instanceof CustomTriangleMesh)
-					MeshEditor.smooth((CustomTriangleMesh)mesh, 0.25f);
+		ContentNode cn = c.getContent();
+		// Check multi first; it extends CustomMeshNode
+		if(cn instanceof CustomMultiMesh) {
+			CustomMultiMesh multi = (CustomMultiMesh)cn;
+			for(int i=0; i<multi.size(); i++) {
+				CustomMesh m = multi.getMesh(i);
+				if(m instanceof CustomTriangleMesh)
+					MeshEditor.smooth2((CustomTriangleMesh)m, 1);
 			}
+		} else if(cn instanceof CustomMeshNode) {
+			CustomMesh mesh = ((CustomMeshNode)cn).getMesh();
+			if(mesh instanceof CustomTriangleMesh)
+				MeshEditor.smooth2((CustomTriangleMesh)mesh, 1); // 0.25f);
 		}
 	}
 
@@ -497,6 +582,10 @@ public class Executer {
 		}
 	}
 
+	/** Interactively smooth meshes, with undo. */
+	public void smoothControl() {
+		new SmoothControl(univ);
+	}
 
 	/* ----------------------------------------------------------
 	 * Display As submenu

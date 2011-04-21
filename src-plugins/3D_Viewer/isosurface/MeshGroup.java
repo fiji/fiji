@@ -127,6 +127,10 @@ public class MeshGroup extends ContentNode {
 		mesh.restoreDisplayedData(path, name);
 	}
 
+	public void clearDisplayedData() {
+		mesh.clearDisplayedData();
+	}
+
 	public void swapDisplayedData(String path, String name) {
 		mesh.swapDisplayedData(path, name);
 	}

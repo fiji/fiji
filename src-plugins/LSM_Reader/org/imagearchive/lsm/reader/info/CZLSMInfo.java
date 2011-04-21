@@ -8,6 +8,10 @@ public class CZLSMInfo {
 
 	public long DimensionZ = 0;
 
+	public long DimensionP = 0;
+
+	public long DimensionM = 0;
+
 	public long DimensionChannels = 0;
 
 	public long DimensionTime = 0;
