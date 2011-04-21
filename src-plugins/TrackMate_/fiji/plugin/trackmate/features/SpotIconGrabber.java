@@ -52,32 +52,38 @@ public class SpotIconGrabber <T extends RealType<T>> extends IndependentFeatureA
 			slice = Math.round(spot.getFeature(Feature.POSITION_Z) / calibration[2]);
 			sourceCursor.setPosition(slice, 2);
 		}
-		for (int i = 0; i < width; i++) {
-			sourceCursor.setPosition(i + x, 0);
-			targetCursor.setPosition(i, 0);
-			for (int j = 0; j < height; j++) {
-				sourceCursor.setPosition(j + y, 1);
-				targetCursor.setPosition(j, 1);
-				targetCursor.getType().set(sourceCursor.getType());
-			}
-		}
-		targetCursor.close();
-		sourceCursor.close();
 		
-		// Convert to ImagePlus
-		ImagePlus imp = ImageJFunctions.copyToImagePlus(crop);
-		ImageProcessor ip = imp.getProcessor();
-		ip.resetMinAndMax();
-		
-		// Convert to base64
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		BufferedImage img = ip.getBufferedImage();
 		try {
-			ImageIO.write(img, "png", bos);
-			spot.setImageString(mxBase64.encodeToString(bos.toByteArray(), false));
-		} catch (IOException e) {
-			e.printStackTrace();
+			for (int i = 0; i < width; i++) {
+				sourceCursor.setPosition(i + x, 0);
+				targetCursor.setPosition(i, 0);
+				for (int j = 0; j < height; j++) {
+					sourceCursor.setPosition(j + y, 1);
+					targetCursor.setPosition(j, 1);
+					targetCursor.getType().set(sourceCursor.getType());
+				}
+			}
+			// Convert to ImagePlus
+			ImagePlus imp = ImageJFunctions.copyToImagePlus(crop);
+			ImageProcessor ip = imp.getProcessor();
+			ip.resetMinAndMax();
+
+			// Convert to base64
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			BufferedImage img = ip.getBufferedImage();
+			try {
+				ImageIO.write(img, "png", bos);
+				spot.setImageString(mxBase64.encodeToString(bos.toByteArray(), false));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} catch (ArrayIndexOutOfBoundsException aioe) {
+			// Do nothing, we do not set the icon field
+		} finally {
+			targetCursor.close();
+			sourceCursor.close();
 		}
+		
 	}
 
 	@Override

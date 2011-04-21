@@ -71,11 +71,8 @@ public enum SegmenterType implements InfoTextable {
 			"by differences of gaussian (DoG). Computations are made in direct space. <br>" +
 			"It is the quickest for small spot sizes. " +
 			"<p> " +
-			"This segmenter can do sub-pixel localization of spots. It is recommended <br>" +
-			"to set the threshold value to something useful, so as to discard useless <br>" +
-			"spot soon, before the sub-pixel localization kicks in." +
-			"<p>" +
-			"This segmenter is based on the scale-space framework made by Stephan Preibisch <br>" +
+			"This segmenter can do sub-pixel localization of spots. This segmenter is <br> " +
+			"based on the scale-space framework made by Stephan Preibisch <br>" +
 			"for ImgLib." +
 			"</html>";
 		case MANUAL_SEGMENTER:

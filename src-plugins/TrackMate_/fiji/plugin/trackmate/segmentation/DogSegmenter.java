@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate.segmentation;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import mpicbg.imglib.algorithm.gauss.DifferenceOfGaussianRealNI;
@@ -52,8 +53,6 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 			if (!applyMedianFilter())
 				return false;
 		
-			
-		
 		float radius = settings.expectedRadius;
 		// first we need an image factory for FloatType
 		final ImageFactory<FloatType> imageFactory = new ImageFactory<FloatType>( new FloatType(), img.getContainerFactory() );
@@ -80,28 +79,37 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 				
 		// Get all peaks
 		List<DifferenceOfGaussianPeak<FloatType>> list = dog.getPeaks();
+		
+		// Prune non-relevant peaks
+		List<DifferenceOfGaussianPeak<FloatType>> pruned_list = new ArrayList<DifferenceOfGaussianPeak<FloatType>>();
+		for(DifferenceOfGaussianPeak<FloatType> dogpeak : list) {
+			if (dogpeak.getPeakType() != DifferenceOfGaussian.SpecialPoint.MAX)
+				continue;
+			pruned_list.add(dogpeak);
+		}
 
 		// Deal with sub-pixel localization if required
 		if (doSubPixelLocalization) {
 			Image<FloatType> laplacian = dog.getDoGImage();
-			SubpixelLocalization<FloatType> locator = new SubpixelLocalization<FloatType>(laplacian , list);
+			SubpixelLocalization<FloatType> locator = new SubpixelLocalization<FloatType>(laplacian , pruned_list);
 			if ( !locator.checkInput() || !locator.process() )	{
 				errorMessage = baseErrorMessage + locator.getErrorMessage();
 				return false;
 			}
-			list = locator.getDoGPeaks();
+			pruned_list = locator.getDoGPeaks();
 		}
 
 		// Create spots
 		spots.clear();
-		for(DifferenceOfGaussianPeak<FloatType> dogpeak : list) {
-			
-			if (dogpeak.getPeakType() != DifferenceOfGaussian.SpecialPoint.MAX)
-				continue;	
-			
+		for(DifferenceOfGaussianPeak<FloatType> dogpeak : pruned_list) {
 			float[] coords = new float[3];
-			for (int i = 0; i < img.getNumDimensions(); i++) 
-				coords[i] = dogpeak.getPosition(i) * calibration[i];				
+			if (doSubPixelLocalization) {
+				for (int i = 0; i < img.getNumDimensions(); i++) 
+					coords[i] = dogpeak.getSubPixelPosition(i) * calibration[i];
+			} else {
+				for (int i = 0; i < img.getNumDimensions(); i++) 
+					coords[i] = dogpeak.getPosition(i) * calibration[i];
+			}
 			Spot spot = new SpotImp(coords);
 			spot.putFeature(Feature.QUALITY, -dogpeak.getValue().get());
 			spots.add(spot);
