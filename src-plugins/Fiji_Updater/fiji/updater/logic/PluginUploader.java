@@ -137,14 +137,14 @@ public class PluginUploader {
 		UploadableFile uploadable = (UploadableFile)file;
 		if (uploadable.filesize != Util.getFilesize(uploadable.sourceFilename))
 			throw new RuntimeException("File size of "
-				+ uploadable.plugin.filename + " changed since being checksummed!");
+				+ uploadable.plugin.filename + " changed since being checksummed (was " + uploadable.filesize + " but is " + Util.getFilesize(uploadable.sourceFilename) + ")!");
 		if (checkTimestamp) {
 			long stored = uploadable.plugin.getStatus() == PluginObject.Status.NOT_FIJI ?
 				uploadable.plugin.current.timestamp :
 				uploadable.plugin.newTimestamp;
 			if (stored != Util.getTimestamp(uploadable.sourceFilename))
 				throw new RuntimeException("Timestamp of "
-					+ uploadable.plugin.filename + " changed since being checksummed!");
+					+ uploadable.plugin.filename + " changed since being checksummed (was " + stored + " but is " + Util.getTimestamp(uploadable.sourceFilename) + ")!");
 		}
 	}
 
