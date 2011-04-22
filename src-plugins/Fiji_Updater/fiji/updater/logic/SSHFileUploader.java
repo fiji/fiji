@@ -11,6 +11,8 @@ import com.jcraft.jsch.UserInfo;
 import fiji.updater.Updater;
 
 import fiji.updater.util.Canceled;
+import fiji.updater.util.IJLogOutputStream;
+import fiji.updater.util.InputStream2IJLog;
 
 import ij.IJ;
 
@@ -32,11 +34,14 @@ public class SSHFileUploader extends FileUploader {
 	private long uploadedBytes;
 	private long uploadSize;
 	private OutputStream out;
+	protected OutputStream err;
 	private InputStream in;
 
 	public SSHFileUploader(String username, String sshHost, String uploadDirectory,
 			UserInfo userInfo) throws JSchException {
 		super(uploadDirectory);
+
+		err = new IJLogOutputStream();
 
 		int port = 22, colon = sshHost.indexOf(':');
 		if (colon > 0) {
@@ -189,9 +194,12 @@ public class SSHFileUploader extends FileUploader {
 			channel.disconnect();
 		}
 		try {
+			if (IJ.debugMode)
+				IJ.log("launching command " + command);
 			channel = session.openChannel("exec");
 			((ChannelExec)channel).setCommand(command);
 			channel.setInputStream(null);
+			((ChannelExec)channel).setErrStream(err);
 
 			// get I/O streams for remote scp
 			out = channel.getOutputStream();
@@ -209,9 +217,26 @@ public class SSHFileUploader extends FileUploader {
 	}
 
 	public void disconnectSession() throws IOException {
+		new InputStream2IJLog(in);
+		try {
+			Thread.sleep(100);
+		}
+		catch (InterruptedException e) {
+			/* ignore */
+		}
 		out.close();
+		int exitStatus = channel.getExitStatus();
+		try {
+			Thread.sleep(1000);
+		}
+		catch (InterruptedException e) {
+			/* ignore */
+		}
 		channel.disconnect();
 		session.disconnect();
+		err.close();
+		if (exitStatus != 0)
+			throw new IOException("Command failed (see Log)!");
 	}
 
 	protected long readNumber(InputStream in) throws IOException {
@@ -233,7 +258,7 @@ public class SSHFileUploader extends FileUploader {
 		//          -1
 		if (b == 0)
 			return b;
-		new Exception("checkAck returns " + b).printStackTrace();
+		IJ.handleException(new Exception("checkAck returns " + b));
 		if (b == -1)
 			return b;
 
@@ -244,6 +269,7 @@ public class SSHFileUploader extends FileUploader {
 				c = in.read();
 				sb.append((char)c);
 			} while (c != '\n');
+			IJ.log("checkAck returned '" + sb.toString() + "'");
 			IJ.error(sb.toString());
 		}
 		return b;

@@ -390,9 +390,12 @@ public class TokenFunctions implements Iterable<Token> {
 
 		// Turn CR and CRLF into LF
 		for (int i = end - 1; i >= 0; i--)
-			if (getText(i, i + 1).equals("\r"))
-				textArea.replaceRange("\n", i, i + 1
-					+ (i < end - 1 && getText(i + 1, i + 2).equals("\n") ? 1 : 0));
+			if (getText(i, i + 1).equals("\r")) {
+				boolean isCRLF = i < end - 1 && getText(i + 1, i + 2).equals("\n");
+				textArea.replaceRange("\n", i, i + 1 + (isCRLF ? 1 : 0));
+				if (isCRLF)
+					end--;
+			}
 
 		// remove trailing empty lines
 		int realEnd = end;
@@ -413,7 +416,7 @@ public class TokenFunctions implements Iterable<Token> {
 				continue;
 			String line = getText(start, end);
 			realEnd = end;
-			while (start < end && Character.isWhitespace(line
+			while (end - start - 1 >= 0 && Character.isWhitespace(line
 					.charAt(end - start - 1)))
 				end--;
 			if (end < realEnd)
