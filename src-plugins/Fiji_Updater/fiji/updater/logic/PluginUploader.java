@@ -78,7 +78,7 @@ public class PluginUploader {
 
 	public synchronized boolean setLogin(String username, UserInfo userInfo) {
 		try {
-			uploader = new SSHFileUploader(username,
+			uploader = new SFTPFileUploader(username,
 				site.sshHost.substring(site.sshHost.indexOf('@') + 1), site.uploadDirectory,
 				userInfo);
 			return true;
