@@ -36,7 +36,7 @@ public abstract class Rule {
 	 */
 	protected int upToDateStage;
 
-	public Rule(Parser parser, String target, List<String> prerequisites) {
+	public Rule(Parser parser, String target, final List<String> prerequisites) {
 		this.parser = parser;
 		this.target = target;
 		this.prerequisites = prerequisites;
@@ -47,7 +47,11 @@ public abstract class Rule {
 			name = "PRE(" + target + ")";
 			if (!parser.variables.containsKey(name))
 				parser.setVariable(name,
-					Util.join(prerequisites));
+					new Object() {
+						public String toString() {
+							return Util.join(prerequisites);
+						}
+					});
 		} catch (FakeException e) { /* ignore */ }
 	}
 
