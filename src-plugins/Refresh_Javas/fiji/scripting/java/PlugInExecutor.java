@@ -50,7 +50,7 @@ public class PlugInExecutor {
 
 	public PlugInExecutor(String[] paths) throws MalformedURLException {
 		try {
-			classLoader = new FijiClassLoader(paths);
+			classLoader = new FijiClassLoader(paths, false);
 			classLoader.setDefaultAssertionStatus(true);
 		} catch (IOException e) {
 			IJ.handleException(e);
