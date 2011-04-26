@@ -259,15 +259,6 @@ public class Fake {
 				all.makeParallel(Integer.parseInt(parallel));
 			else
 				all.make();
-
-			/*
-			 * By definition, everything is up-to-date now, but for
-			 * performance, we set the mtimes so that we do not need
-			 * to run our clever .jar checking again (which is
-			 * quite expensive performance-wise, even if not as
-			 * expensive as compiling everything again.
-			 */
-			all.setUpToDate();
 		}
 		catch (FakeException e) {
 			System.err.println(e);

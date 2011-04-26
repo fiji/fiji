@@ -199,6 +199,7 @@ public abstract class Rule {
 				upToDateStage = 0;
 				wasAlreadyChecked = false;
 			}
+			setUpToDate();
 		} catch (Exception e) {
 			if (!(e instanceof FakeException))
 				e.printStackTrace();
@@ -209,12 +210,6 @@ public abstract class Rule {
 	}
 
 	void setUpToDate() throws IOException {
-		for (String prereq : prerequisites) {
-			Rule rule = getRule(prereq);
-			if (rule != null && rule != this)
-				rule.setUpToDate();
-		}
-
 		if (!checkUpToDate())
 			Util.touchFile(target);
 	}
