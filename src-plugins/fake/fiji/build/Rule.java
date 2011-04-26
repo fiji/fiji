@@ -209,9 +209,17 @@ public abstract class Rule {
 		wasAlreadyInvoked = false;
 	}
 
-	void setUpToDate() throws IOException {
-		if (!checkUpToDate())
-			Util.touchFile(target);
+	protected void setUpToDate() throws IOException, FakeException {
+		upToDateStage = 2;
+		if (target.equals(""))
+			return;
+		if (prerequisites.size() == 0) {
+			if (newerThanFake(new File(target)))
+				return;
+		}
+		else if (checkUpToDate())
+			return;
+		Util.touchFile(target);
 	}
 
 	protected void clean(boolean dry_run) {
