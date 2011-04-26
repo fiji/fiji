@@ -10,6 +10,7 @@ import java.io.OutputStream;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -127,7 +128,9 @@ public abstract class Rule {
 
 	boolean upToDateError(File source, File target) {
 		verbose("" + target + " is not up-to-date "
-			+ "because " + source + " is newer.");
+			+ "because " + source + " is newer: "
+			+ new Date(target.lastModified()) + " < "
+			+ new Date(source.lastModified()));
 		return false;
 	}
 
