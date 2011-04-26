@@ -1118,16 +1118,7 @@ public class Fake {
 		try {
 			if (tryFake) {
 				// Try "Fake"
-				Parser parser = new Parser(this, fakeFile);
-				if (verbose)
-					parser.setVariable("VERBOSE", "true");
-				if (toolsPath != null)
-					parser.variables.put("TOOLSPATH", parser.expandVariables(toolsPath));
-				if (classPath != null)
-					parser.variables.put("CLASSPATH", parser.expandVariables(classPath));
-				if (buildDir != null)
-					parser.setVariable("BUILDDIR", buildDir.getAbsolutePath());
-				parser.cwd = new File(cwd, directory);
+				Parser parser = parseFakefile(new File(cwd, directory), new File(fakeFile), verbose, toolsPath, classPath, buildDir);
 				Rule all = parser.parseRules(null);
 				if (defaultTarget != null) {
 					Rule rule = all.getRule(defaultTarget);
@@ -1146,6 +1137,25 @@ public class Fake {
 				+ " failed: " + e);
 		}
 		err.println("Leaving " + directory);
+	}
+
+	protected Parser parseFakefile(File cwd, File fakefile, boolean verbose, String toolsPath, String classPath, File buildDir) throws FakeException {
+		try {
+			Parser parser = new Parser(this, new FileInputStream(fakefile), cwd);
+			if (verbose)
+				parser.setVariable("VERBOSE", "true");
+			if (toolsPath != null)
+				parser.variables.put("TOOLSPATH", parser.expandVariables(toolsPath));
+			if (classPath != null)
+				parser.variables.put("CLASSPATH", parser.expandVariables(classPath));
+			if (buildDir != null)
+				parser.setVariable("BUILDDIR", buildDir.getAbsolutePath());
+			parser.cwd = cwd;
+			return parser;
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new FakeException(e.getMessage());
+		}
 	}
 
 	protected boolean jarUpToDate(String source, String target,
