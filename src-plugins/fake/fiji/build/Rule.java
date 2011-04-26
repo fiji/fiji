@@ -77,15 +77,10 @@ public abstract class Rule {
 			nonUpToDates = prerequisites;
 			return false;
 		}
+		if (!newerThanFake(file))
+			return false;
+
 		long targetModifiedTime = file.lastModified();
-
-		if (getVarBool("rebuildIfFakeIsNewer")) {
-			if (targetModifiedTime < parser.mtimeFakefile)
-				return upToDateError(file, new File(parser.path));
-			if (targetModifiedTime < Fake.mtimeFijiBuild)
-				return upToDateError(new File(Fake.fijiBuildJar), file);
-		}
-
 		nonUpToDates = new ArrayList<String>();
 		for (String prereq : prerequisites) {
 			String path = Util.makePath(parser.cwd, prereq);
@@ -95,6 +90,18 @@ public abstract class Rule {
 		}
 
 		return nonUpToDates.size() == 0;
+	}
+
+	protected boolean newerThanFake(File file) {
+		long modifiedTime = file.lastModified();
+
+		if (getVarBool("rebuildIfFakeIsNewer")) {
+			if (modifiedTime < parser.mtimeFakefile)
+				return upToDateError(file, new File(parser.path));
+			if (modifiedTime < Fake.mtimeFijiBuild)
+				return upToDateError(new File(Fake.fijiBuildJar), file);
+		}
+		return true;
 	}
 
 	boolean upToDate(String path) {
