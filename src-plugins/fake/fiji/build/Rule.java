@@ -134,7 +134,11 @@ public abstract class Rule {
 		return false;
 	}
 
-	boolean upToDateRecursive(File source, File target) {
+	protected boolean upToDateRecursive(File source, File target) {
+		return upToDateRecursive(source, target, false);
+	}
+
+	protected boolean upToDateRecursive(File source, File target, boolean excludeTopLevelJars) {
 		if (!source.exists())
 			return true;
 		if (!source.isDirectory())
@@ -143,9 +147,11 @@ public abstract class Rule {
 		for (int i = 0; i < entries.length; i++) {
 			if (entries[i].startsWith("."))
 				continue;
+			if (excludeTopLevelJars && entries[i].endsWith(".jar"))
+				continue;
 			File file = new File(source,
 					entries[i]);
-			if (!upToDateRecursive(file, target))
+			if (!upToDateRecursive(file, target, false))
 				return false;
 		}
 		return true;
