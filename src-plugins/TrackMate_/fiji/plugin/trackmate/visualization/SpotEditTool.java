@@ -21,6 +21,7 @@ import fiji.tool.AbstractTool;
 
 public class SpotEditTool extends AbstractTool implements MouseMotionListener, MouseListener, MouseWheelListener, KeyListener {
 	
+	private static final boolean DEBUG = false;
 	private static final float COARSE_STEP = 2;
 	private static final float FINE_STEP = 0.2f;
 	private static final String TOOL_NAME = "Spot edit tool";
@@ -59,8 +60,13 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	 * instantiates it. 
 	 */
 	public static SpotEditTool getInstance() {
-		if (null == instance)
+		if (null == instance) {
 			instance = new SpotEditTool();
+			if (DEBUG)
+				System.out.println("[SpotEditTool] Instantiating: "+instance);
+		}
+		if (DEBUG)
+			System.out.println("[SpotEditTool] Returning instance: "+instance);
 		return instance;
 	}
 
@@ -112,6 +118,9 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	 * respond.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
 	 */
 	public void register(final ImagePlus imp, final HyperStackDisplayer displayer) {
+		if (DEBUG)
+			System.out.println("[SpotEditTool] Registering "+imp+" and "+displayer);
+		registerTool(imp);
 		displayers.put(imp, displayer);
 	}
 	
@@ -125,6 +134,12 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	public void mouseClicked(MouseEvent e) {
 		final ImagePlus imp = getImagePlus(e);
 		final HyperStackDisplayer displayer = displayers.get(imp);
+		if (DEBUG) {
+			System.out.println("[SpotEditTool] @mouseClicked");
+			System.out.println("[SpotEditTool] Got "+imp+ " as ImagePlus");
+			System.out.println("[SpotEditTool] Matching displayer: "+displayer);
+		}
+		
 		if (null == displayer)
 			return;
 		
@@ -313,6 +328,8 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	}
 	
 	private void updateStatusBar(final Spot spot, final String units) {
+		if (null == spot)
+			return;
 		String statusString = "";
 		if (null == spot.getName() || spot.getName().equals("")) { 
 			statusString = String.format("Spot ID%d, x = %.1f, y = %.1f, z = %.1f, r = %.1f %s", 
