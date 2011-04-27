@@ -231,3 +231,4 @@
 /lib/win32/ffmpeg.dll
 /lib/win64/ffmpeg.dll
 /plugins/FFMPEG_IO.jar
+/plugins/Action_Bar.jar

@@ -1,0 +1,53 @@
+//  sample actionbar
+run("Action Bar","/plugins/ActionBar/_Demo.txt");
+exit();
+// <noGrid>
+<line>
+<button>
+label=revert to saved
+icon=_Demo/reload.png
+arg=run("Revert");
+
+<button>
+label=zoom toolbar
+icon=_Demo/kview.png
+arg=run("Action Bar","/plugins/ActionBar/_ZoomBar.txt");
+
+<button>
+label=lookup tables
+icon=_Demo/kcoloredit.png
+arg=run("Action Bar","/plugins/ActionBar/_lookuptables.txt");
+
+<button>
+label=rotations
+icon=_Demo/rotations.gif
+arg=run("Action Bar","/plugins/ActionBar/rotation_bar.txt");
+
+<button>
+label=animation toolbar
+icon=_Demo/aktion.png
+arg=run("Action Bar","/plugins/ActionBar/_AnimationBar.txt");
+
+<button>
+label=New Macro
+icon=_Demo/source.png
+arg=run("Macro");
+
+<button>
+label=close all windows
+icon=_Demo/button_cancel.png
+arg=while (nImages >0) close();
+
+<button>
+label=IJ
+icon=IJ.gif
+arg=<hide>
+</line>
+
+<codeLibrary>
+</codeLibrary>
+
+<startupAction>
+</startupAction>
+//<main>
+//<DnD>

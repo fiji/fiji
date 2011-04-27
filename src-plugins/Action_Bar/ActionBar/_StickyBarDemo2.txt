@@ -1,0 +1,68 @@
+//  sample sticky actionbar
+run("Action Bar","/plugins/ActionBar/_StickyBarDemo2.txt");
+exit();
+
+<sticky>
+
+<line>
+<button>
+label=8
+icon=no
+arg=run("8-bit");
+</line>
+
+<line>
+<button>
+label=16
+icon=no
+arg=run("16-bit");
+</line>
+
+<line>
+<button>
+label=32
+icon=no
+arg=run("32-bit");
+</line>
+
+<line>
+<button>
+label=RGB
+icon=no
+arg=run("RGB Color");
+</line>
+
+<line>
+<button>
+label=resize
+icon=_StickyBarDemo2/resize.png
+arg=run("Size...");
+</line>
+
+<line>
+<button>
+label=SaveAs
+icon=_StickyBarDemo2/saveas.png
+arg=<macro>
+Dialog.create("Save As...");
+Dialog.addChoice("Select format", newArray("Tiff...","Jpeg..."),"Jpeg...");
+Dialog.show();
+format=Dialog.getChoice();
+if (format=="Jpeg...") {
+quality=call("ij.Prefs.get","AB.quality",80);
+quality=getNumber("Jpeg quality",quality);
+call("ij.Prefs.set","AB.quality",quality);
+run("Input/Output...", "jpeg="+quality+" gif=-1 file=.xls copy");
+}
+run(format);
+</macro>
+</line>
+
+<codeLibrary>
+</codeLibrary>
+
+<startupAction>
+</startupAction>
+//<main>
+//<DnD>
+//<popup>
