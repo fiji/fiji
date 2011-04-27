@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate.visualization;
 
+import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Toolbar;
 
@@ -131,7 +132,8 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		final int frame = displayer.imp.getFrame() - 1;		
 		Spot target = displayer.spotsToShow.getClosestSpot(clickLocation, frame);
 		Spot editedSpot = editedSpots.get(imp);
-		
+		updateStatusBar(target, imp.getCalibration().getUnits());
+
 		// Check desired behavior
 		switch (e.getClickCount()) {
 		
@@ -159,7 +161,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			if (null == editedSpot) {
 				// No spot is currently edited, we pick one to edit
 				float radius;
-				if (null != target)
+				if (null != target && null != target.getFeature(Feature.RADIUS))
 					radius = target.getFeature(Feature.RADIUS);
 				else 
 					radius = displayer.settings.segmenterSettings.expectedRadius;
@@ -227,15 +229,16 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		Spot editedSpot = editedSpots.get(imp);
 		if (null == editedSpot)
 			return;
-		final int ix = displayer.canvas.offScreenX(e.getX());
-		final int iy =  displayer.canvas.offScreenX(e.getY());
-		final float x = ix * displayer.calibration[0];
-		final float y = iy * displayer.calibration[1];
+		final double ix = displayer.canvas.offScreenXD(e.getX());
+		final double iy =  displayer.canvas.offScreenYD(e.getY());
+		final float x = (float) (ix * displayer.calibration[0]);
+		final float y = (float) (iy * displayer.calibration[1]);
 		final float z = (displayer.imp.getSlice()-1) * displayer.calibration[2];
 		editedSpot.putFeature(Feature.POSITION_X, x);
 		editedSpot.putFeature(Feature.POSITION_Y, y);
 		editedSpot.putFeature(Feature.POSITION_Z, z);
 		displayer.imp.updateAndDraw();
+		updateStatusBar(editedSpot, imp.getCalibration().getUnits());	
 	}
 
 	@Override
@@ -263,6 +266,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
  		editedSpot.putFeature(Feature.RADIUS, radius);
 		displayer.imp.updateAndDraw();
 		e.consume();
+		updateStatusBar(editedSpot, imp.getCalibration().getUnits());
 	}
 
 	/*
@@ -306,6 +310,20 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		for (SpotCollectionEditListener listener : spotCollectionEditListeners) {
 			listener.collectionChanged(event);
 		}
+	}
+	
+	private void updateStatusBar(final Spot spot, final String units) {
+		String statusString = "";
+		if (null == spot.getName() || spot.getName().equals("")) { 
+			statusString = String.format("Spot ID%d, x = %.1f, y = %.1f, z = %.1f, r = %.1f %s", 
+					spot.ID(), spot.getFeature(Feature.POSITION_X), spot.getFeature(Feature.POSITION_Y), 
+					spot.getFeature(Feature.POSITION_Z), spot.getFeature(Feature.RADIUS), units );
+		} else {
+			statusString = String.format("Spot %s, x = %.1f, y = %.1f, z = %.1f %s", 
+					spot.getName(), spot.getFeature(Feature.POSITION_X), spot.getFeature(Feature.POSITION_Y), 
+					spot.getFeature(Feature.POSITION_Z), spot.getFeature(Feature.RADIUS), units );
+		}
+		IJ.showStatus(statusString);
 	}
 	
 }

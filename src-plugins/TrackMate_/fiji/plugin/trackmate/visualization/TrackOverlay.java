@@ -5,6 +5,8 @@ import ij.ImagePlus;
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Composite;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,9 +20,9 @@ import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
-import fiji.util.gui.AbstractAnnotation;
+import fiji.util.gui.OverlayedImageCanvas.Overlay;
 
-public class TrackOverlay extends AbstractAnnotation {
+public class TrackOverlay implements Overlay {
 	private SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph;
 	private SpotCollection spots;
 	private float[] calibration;
@@ -30,6 +32,7 @@ public class TrackOverlay extends AbstractAnnotation {
 	private boolean trackVisible = true;
 	private int trackDisplayDepth = 10;
 	private Set<DefaultWeightedEdge> highlight = new HashSet<DefaultWeightedEdge>();
+	private Composite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
 
 	/*
 	 * CONSTRUCTOR
@@ -83,11 +86,13 @@ public class TrackOverlay extends AbstractAnnotation {
 	}
 
 	@Override
-	public void draw(Graphics2D g2d) {
+	public void paint(final Graphics g, final int xcorner, final int ycorner, final double magnification) {
 		if (!trackVisible || graph == null)
 			return;
-
-
+		
+		final Graphics2D g2d = (Graphics2D)g;
+		g2d.setComposite(composite);
+		final float mag = (float) magnification;
 		final int currentFrame = imp.getFrame() - 1;
 		Spot source, target;
 		int frame;
@@ -105,7 +110,7 @@ public class TrackOverlay extends AbstractAnnotation {
 			// Color
 			g2d.setColor(edgeColors.get(source));
 			// Draw
-			drawEdge(g2d, source, target, frame, currentFrame);
+			drawEdge(g2d, source, target, frame, currentFrame, xcorner, ycorner, mag);
 		}
 
 		// Deal with highlighted edges
@@ -115,7 +120,7 @@ public class TrackOverlay extends AbstractAnnotation {
 			source = graph.getEdgeSource(edge);
 			target = graph.getEdgeTarget(edge);
 			frame = spots.getFrame(source);
-			drawEdge(g2d, source, target, frame, currentFrame);
+			drawEdge(g2d, source, target, frame, currentFrame, xcorner, ycorner, mag);
 		}
 	}
 
@@ -124,12 +129,28 @@ public class TrackOverlay extends AbstractAnnotation {
 	 * PRIVATE METHODS
 	 */
 	
-	private final void drawEdge(final Graphics2D g2d, final Spot source, final Spot target, final int frame, final int currentFrame) {
-		// Find x & y
-		final int x0 = Math.round(source.getFeature(Feature.POSITION_X) / calibration[0]);
-		final int y0 = Math.round(source.getFeature(Feature.POSITION_Y) / calibration[1]);
-		final int x1 = Math.round(target.getFeature(Feature.POSITION_X) / calibration[0]);
-		final int y1 = Math.round(target.getFeature(Feature.POSITION_Y) / calibration[1]);
+	private final void drawEdge(final Graphics2D g2d, final Spot source, final Spot target, final int frame, final int currentFrame,
+			final int xcorner, final int ycorner, final float magnification) {
+		// Find x & y in physical coordinates
+		final float x0i = source.getFeature(Feature.POSITION_X);
+		final float y0i = source.getFeature(Feature.POSITION_Y);
+		final float x1i = target.getFeature(Feature.POSITION_X);
+		final float y1i = target.getFeature(Feature.POSITION_Y);
+		// In pixel units
+		final float x0p = x0i / calibration[0];
+		final float y0p = y0i / calibration[1];
+		final float x1p = x1i / calibration[0];
+		final float y1p = y1i / calibration[1];
+		// Scale to image zoom
+		final float x0s = (x0p - xcorner) * magnification ;
+		final float y0s = (y0p - ycorner) * magnification ;
+		final float x1s = (x1p - xcorner) * magnification ;
+		final float y1s = (y1p - ycorner) * magnification ;
+		// Round
+		final int x0 = Math.round(x0s);
+		final int y0 = Math.round(y0s);
+		final int x1 = Math.round(x1s);
+		final int y1 = Math.round(y1s);
  
 		// Track display mode
 		switch (trackDisplayMode ) {
@@ -165,6 +186,11 @@ public class TrackOverlay extends AbstractAnnotation {
 			break;
 		}
 		}
+	}
+
+	@Override
+	public void setComposite(Composite composite) {
+		this.composite = composite;
 	}
 
 }

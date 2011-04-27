@@ -53,10 +53,10 @@ public class HyperStackDisplayer extends SpotDisplayer implements SpotCollection
 	 */
 	
 	final Spot getCLickLocation(final MouseEvent e) {
-		final int ix = canvas.offScreenX(e.getX());
-		final int iy =  canvas.offScreenX(e.getY());
-		final float x = ix * calibration[0];
-		final float y = iy * calibration[1];
+		final double ix = canvas.offScreenXD(e.getX());
+		final double iy =  canvas.offScreenYD(e.getY());
+		final float x = (float) (ix * calibration[0]);
+		final float y = (float) (iy * calibration[1]);
 		final float z = (imp.getSlice()-1) * calibration[2];
 		return new SpotImp(new float[] {x, y, z});
 	}
