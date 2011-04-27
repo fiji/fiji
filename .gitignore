@@ -232,3 +232,4 @@
 /lib/win64/ffmpeg.dll
 /plugins/FFMPEG_IO.jar
 /plugins/Action_Bar.jar
+/jars/javassist.jar
