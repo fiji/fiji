@@ -4,21 +4,35 @@ From: Johannes Schindelin <johannes.schindelin@gmx.de>
 I proudly announce a new version of Fiji (Fiji Is Just ImageJ -- batteries
 included).
 
+So: what is Fiji? It is just a distribution of ImageJ, i.e. putting a nice
+and convenient infrastructure around ImageJ such as: automatic updates,
+extensive documentation, a powerful yet small Script Editor, reusable
+components for users and developers, bug tracking, etc.
+
+For details and downloads, see: http://pacific.mpi-cbg.de/.
+
+Note: if you already have a Fiji installation, you can use the Fiji
+Updater to upgrade; no need to download and install from scratch. Just
+make sure that you update just the Updater first if you have not updated
+in a long time, and update Java in the advanced mode (unless you are using
+MacOSX).
+
 In our beloved tradition, the current version is named after the location
 of a big hackathon: Madison. It was not strictly a Fiji hackathon, but
 the first ImageJ2 hackathon, made possible by Kevin Eliceiri and Curtis
 Rueden. Nevertheless, quite some work on Fiji and its plugins got done,
 so here goes "Fiji Madison".
 
-There have been 149348 lines added and 41614 lines removed, with the
-help of (in alphabetical order): Johannes Schindelin, Mark Longair,
-Albert Cardona, Benjamin Schmid, Daniel James White, Stephan Preibisch,
-Ignacio Arganda Carreras, Tom Kazimiers, Stephan Saalfeld, Jan Eglinger,
-Jean-Yves Tinevez, Jan Funke, Michael Doube, Curtis Rueden, Jacques
-Pecreaux, Daniel Sage, Gregory Jefferis, Kota Miura, pogo, Christian
-Tischer, Daniel White, David Hovis, Francisco Jiménez Hernández,
-Philippe Thévenaz, Robert Bryson-Richardson, Tobias Pietzsch, Wilhelm
-Burger, Yili Zhao, and many other helpers.
+There have been more than 150 thousand lines added and 40 thousand removed,
+with the help of (in alphabetical order):
+
+Albert Cardona, Benjamin Schmid, Christian Tischer, Curtis Rueden, Daniel
+James White, Daniel Sage, David Hovis, Francisco Jiménez Hernández, Gregory
+Jefferis, Ignacio Arganda Carreras, Jacques Pecreaux, Jan Eglinger, Jan
+Funke, Jean-Yves Tinevez, Johannes Schindelin, Kota Miura, Mark Longair,
+Michael Doube, Philippe Thévenaz, pogo, Robert Bryson-Richardson, Stephan
+Preibisch, Stephan Saalfeld, Tobias Pietzsch, Tom Kazimiers, Wilhelm Burger,
+Yili Zhao, and many other helpers.
 
 Changes since Fiji Heidelberg:
 
@@ -138,9 +152,8 @@ were contributed to ImageJ through Fiji. Thanks to Wayne Rasband.
 Fiji's bundled Java Runtime Environment is now at version 1.6u24 (to update,
 run "Update Java" from Fiji Updater's "Advanced mode").
 
-Too many bug fixes and improvements to count in both the TrakEM2 and the
-mpicbg (including CLAHE) components. Thanks Albert Cardona and Stephan
-Saalfeld.
+Too many bug fixes and improvements to count in the TrakEM2 components. Thanks
+Albert Cardona and Stephan Saalfeld.
 
 Add the Plugins>Examples>Extended Profile Plot script to get profile plots
 of closed polygons.
@@ -210,7 +223,7 @@ The Updater is disabled when Fiji was installed via the Debian packages.
 The Fiji Updater supports multiple Update sites now. If you have a web server
 which you can access via SSH, you can publish your own plugin suites.
 
-The Image_Expression_Parser was fixed for a regression in ImageJ 1.44n and
+The Image Expression Parser was fixed for a regression in ImageJ 1.44n and
 later, as well as two bugs related to filename detection. Thanks to Albert
 Cardona and Jean-Yves Tinevez.
 
@@ -300,7 +313,7 @@ now.
 
 The Align image plugin uses the target image's dimensions for the result.
 
-The Segmentation_Editor can be controllable by ImageJ macros. Thanks to
+The Segmentation Editor can be controllable by ImageJ macros. Thanks to
 Benjamin Schmid.
 
 When zooming in the Three Panes, the right center point is used in all panes.
@@ -309,6 +322,20 @@ Thanks to Mark Longair.
 When scripting, you can accelerate crucial parts by inserting Java code
 snippets using the new Weaver.inline(...) method in any scripting language.
 Thanks to Albert Cardona.
+
+Several fixes and improvements in the mpicbg submodule for feature extraction
+and transformation, e.g.:  Feature matching can be performed without geometric
+consensus filter.  Geometric consensus filter got a new parameter, minimal
+absolute number of inliers.  Added robust regression outlier filter to
+TileConfiguration.  Several fixes and improvements to the CLAHE local contrast
+enhancer, e.g.: Added a fast (real-time) version of the filter.  Fixed
+selection handling.  Fixed transfer of values beyond the current min/max range.
+Support CompositeImages in variable ways.  Added homogeneous least squares fit
+for perspective transformations using Jama SVD.  Interactive transforms can
+handle Composites, Stacks and HyperStacks.  Added a simple but comparably
+fast Optic Flow variant based on the sum of square differences in a Gaussian
+weighted neighborhood of a pixel.  Thanks to Stephan Saalfeld.
+
 
 Developer-visible changes
 =========================
@@ -425,3 +452,7 @@ The submodules have been moved into the modules/ directory.
 
 You can use the short-cut URL http://pacific.mpi-cbg.de/<filename> for
 source files in Fiji's Git-managed repositories.
+
+Added IntegralImages as library components to the mpicbg submodule for
+rapid box-filter operations (mean, scale, difference of mean, ...).  Thanks
+to Stephan Saalfeld.

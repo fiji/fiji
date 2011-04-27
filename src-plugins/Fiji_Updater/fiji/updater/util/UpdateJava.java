@@ -92,7 +92,7 @@ public class UpdateJava implements PlugIn {
 			form.variables.put(form.ids.get("dnld_platform"), platform);
 			form.variables.put(form.ids.get("dnld_license"), "true");
 			// avoid matching *-rpm.bin
-			url = getLink(Pattern.compile(" *jre-.*[^m]\\." + ext + " *"), form.submit(), form.url);
+			url = getLink(Pattern.compile(" *jre-(?!.*-iftw).*[^m]\\." + ext + " *"), form.submit(), form.url);
 		}
 		else {
 			try {

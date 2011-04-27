@@ -1,0 +1,70 @@
+// Action Bar description file :color_mixer
+run("Action Bar","/plugins/ActionBar/color_mixer.txt");
+exit();
+
+<line>
+
+<button>
+label=Cyan
+icon=no
+arg=increment("cyan");
+
+<button>
+label=Magenta
+icon=no
+arg=increment("magenta");
+
+<button>
+label=Yellow
+icon=no
+arg=increment("yellow");
+
+</line>
+
+<line>
+
+<button>
+label=water
+icon=no
+arg=<macro>
+if (get("cyan")>0) set("cyan",get("cyan")-10);
+if (get("magenta")>0) set("magenta",get("magenta")-10);
+if (get("yellow")>0) set("yellow",get("yellow")-10);
+updateMixer();
+</macro>
+
+</line>
+
+<codeLibrary>
+
+
+function increment(s) {c=get(s);if (c<100) { c+=10; set(s,c); } updateMixer(); }
+function get(s) {return parseInt(call("ij.Prefs.get","mixer."+s,0));}
+function set(s,v) {call("ij.Prefs.set","mixer."+s,v); return;}
+function updateMixer(){
+selectImage("Mixer");
+r= 255 * (1-(get("cyan")/100));
+g= 255 * (1-(get("magenta")/100));
+b= 255 * (1-( get("yellow")/100));
+setColor(r,g,b);
+fill();
+}
+
+
+</codeLibrary>
+
+
+<startupAction>
+if (!isOpen("Mixer")) {
+newImage("Mixer", "RGB Color White", 100, 100, 1);
+}
+set("cyan",0);
+set("magenta",0);
+set("yellow",0);
+function get(s) {return parseInt(call("ij.Prefs.get","mixer."+s,0));}
+function set(s,v) {call("ij.Prefs.set","mixer."+s,v); return;}
+</startupAction>
+
+
+
+// end of file

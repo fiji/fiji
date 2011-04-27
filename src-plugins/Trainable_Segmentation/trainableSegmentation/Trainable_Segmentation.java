@@ -1327,10 +1327,19 @@ public class Trainable_Segmentation implements PlugIn
 
 		setButtonsEnabled(false);
 
-		applyClassifierToTestImage(testImage).show();
-		testImage.show();
-		
-		setButtonsEnabled(true);
+		try{
+			applyClassifierToTestImage(testImage).show();
+			testImage.show();
+		}
+		catch(Exception ex)
+		{
+			IJ.error("Error", "An exception occurred: " + ex.toString());
+			ex.printStackTrace();
+		}
+		finally
+		{
+			setButtonsEnabled(true);
+		}
 	}
 
 	/**

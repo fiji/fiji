@@ -108,6 +108,16 @@ public class VoltexVolume extends Volume {
 		updateData();
 	}
 
+	public void clear() {
+		super.clear();
+		xy = null;
+		xz = null;
+		yz = null;
+		xyComp = null;
+		xzComp = null;
+		yzComp = null;
+	}
+
 	public void swap(String path) {
 		super.swap(path);
 		xy = null;

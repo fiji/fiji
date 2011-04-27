@@ -238,7 +238,7 @@ static int path_list_contains(const char *list, const char *path)
 
 static void string_append_path_list(struct string *string, const char *append)
 {
-	if (path_list_contains(string->buffer, append))
+	if (!append || path_list_contains(string->buffer, append))
 		return;
 
 	if (string->length)
@@ -2000,7 +2000,7 @@ static void try_with_less_memory(size_t memory_size)
 	new_argv[0] = dos_path(new_argv[0]);
 	for (i = 0; i < j; i++)
 		new_argv[i] = quote_win32(new_argv[i]);
-	execve(new_argv[0], (const char * const *)new_argv, NULL);
+	execve(new_argv[0], (char * const *)new_argv, NULL);
 #else
 	execve(new_argv[0], new_argv, NULL);
 #endif
@@ -2065,6 +2065,13 @@ static int start_ij(void)
 			file_is_newer(fiji_path("fiji.c"), fiji_path("fiji" EXE_EXTENSION)) &&
 			!is_building("fiji"))
 		error("Warning: your Fiji executable is not up-to-date");
+
+#ifdef linux
+	string_append_path_list(java_library_path, getenv("LD_LIBRARY_PATH"));
+#endif
+#ifdef MACOSX
+	string_append_path_list(java_library_path, getenv("DYLD_LIBRARY_PATH"));
+#endif
 
 	if (get_platform() != NULL) {
 		struct string *buffer = string_initf("%s/%s", fiji_path("lib"), get_platform());
@@ -2513,7 +2520,7 @@ static int start_ij(void)
 		"fiji.executable", main_argv0,
 		"java.library.path", java_library_path->buffer,
 #ifdef WIN32
-		"sun.direct2d.noddraw", "true",
+		"sun.java2d.noddraw", "true",
 #endif
 		NULL
 	};
@@ -2634,7 +2641,7 @@ static int start_ij(void)
 		for (i = 0; i < options.java_options.nr - 1; i++)
 			options.java_options.list[i] =
 				quote_win32(options.java_options.list[i]);
-		execvp(buffer->buffer, (const char * const *)options.java_options.list);
+		execvp(buffer->buffer, (char * const *)options.java_options.list);
 		char message[16384];
 		int off = sprintf(message, "Error: '%s' while executing\n\n",
 				strerror(errno));

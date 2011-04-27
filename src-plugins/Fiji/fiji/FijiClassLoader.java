@@ -55,9 +55,13 @@ public class FijiClassLoader extends URLClassLoader {
 	}
 
 	public FijiClassLoader(String[] paths) throws IOException {
+		this(paths, true);
+	}
+
+	public FijiClassLoader(String[] paths, boolean recurse) throws IOException {
 		this();
 		for (String path : paths)
-			addPath(path);
+			addPath(path, recurse);
 	}
 
 	public void addClassMap(String url) {
@@ -84,12 +88,21 @@ public class FijiClassLoader extends URLClassLoader {
 	}
 
 	public void addPath(String path) throws IOException {
+		addPath(path, true);
+	}
+
+	public void addPath(String path, boolean recurse) throws IOException {
 		if (path == null)
 			return;
 		if (path.endsWith("/.rsrc"))
 			return;
 		File file = new File(path);
-		if (file.isDirectory()) {
+		if (!recurse && file.isDirectory()) try {
+			addURL(file.toURI().toURL());
+		} catch (MalformedURLException e) {
+			IJ.log("FijiClassLoader: " + e);
+		}
+		else if (file.isDirectory()) {
 			try {
 				// Add first level subdirectories to search path
 				addURL(file.toURI().toURL());
@@ -98,7 +111,8 @@ public class FijiClassLoader extends URLClassLoader {
 			}
 			String[] paths = file.list();
 			for (int i = 0; i < paths.length; i++)
-				addPath(path + File.separator + paths[i]);
+				if (!paths[i].startsWith("."))
+					addPath(path + File.separator + paths[i]);
 		}
 		else if (path.endsWith(".jar")) {
 			try {

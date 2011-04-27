@@ -40,7 +40,7 @@ public class Blob_Segmentation_in_3D implements PlugIn {
 
 	/** Initialize. */
 	public void run(String arg) {
-		IJ.log("Click with the WAND tool on any 3D blob.\nShift-click with WAND to edit Level Sets options.");
+		IJ.log("Segment blob in 3D Viewer:\n * Click with the WAND tool on any 3D blob.\n * Shift-click with WAND to edit Level Sets options.");
 		if (Image3DUniverse.universes.isEmpty()) {
 			Image3DUniverse univ = new Image3DUniverse();
 			univ.addInteractiveBehavior(new GrowBlob(univ));

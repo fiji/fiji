@@ -115,18 +115,20 @@ public class PointHandler extends Roi
 		this.dialog = dialog;
 		this.pa = new PointAction(imp, this, tb, dialog);
 		final ImageWindow iw = imp.getWindow();
-		final ImageCanvas ic = iw.getCanvas();
-		//iw.requestFocus();
-		iw.removeKeyListener(IJ.getInstance());
-		iw.addKeyListener(pa);
-		ic.removeMouseMotionListener(ic);
-		ic.removeMouseListener(ic);
-		ic.removeKeyListener(IJ.getInstance());
-		ic.addKeyListener(pa);
-		ic.addMouseListener(pa);
-		ic.addMouseMotionListener(pa);
-		started = true;
-
+		if(null != iw)
+		{
+			final ImageCanvas ic = iw.getCanvas();
+			//iw.requestFocus();
+			iw.removeKeyListener(IJ.getInstance());
+			iw.addKeyListener(pa);
+			ic.removeMouseMotionListener(ic);
+			ic.removeMouseListener(ic);
+			ic.removeKeyListener(IJ.getInstance());
+			ic.addKeyListener(pa);
+			ic.addMouseListener(pa);
+			ic.addMouseMotionListener(pa);
+			started = true;
+		}
 		this.mask = mask;
 		//clearMask(); // This line was commented to allow loading masks from the second slice of a stack.
 	} /* end PointHandler */
@@ -476,14 +478,17 @@ public class PointHandler extends Roi
 		if(imp != null)
 		{
 			final ImageWindow iw = imp.getWindow();
-			final ImageCanvas ic = iw.getCanvas();
-		
-			ic.removeKeyListener(pa);
-			ic.removeMouseListener(pa);
-			ic.removeMouseMotionListener(pa);
-			ic.addMouseMotionListener(ic);
-			ic.addMouseListener(ic);
-			ic.addKeyListener(IJ.getInstance());
+			if(null != iw)
+			{
+				final ImageCanvas ic = iw.getCanvas();
+
+				ic.removeKeyListener(pa);
+				ic.removeMouseListener(pa);
+				ic.removeMouseMotionListener(pa);
+				ic.addMouseMotionListener(ic);
+				ic.addMouseListener(ic);
+				ic.addKeyListener(IJ.getInstance());
+			}
 		}
 	} /* end killListeners */
 

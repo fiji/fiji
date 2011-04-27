@@ -59,7 +59,13 @@ import java.awt.event.MouseListener;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 @SuppressWarnings("serial")
 public class PathWindow extends JFrame implements PathAndFillListener, TreeSelectionListener, ActionListener {
@@ -112,6 +118,51 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				return result;
 			}
 		});
+	}
+
+	public void fitPaths( final List<PathFitter> pathsToFit ) {
+
+		final int numberOfPathsToFit = pathsToFit.size();
+
+		new Thread( new Runnable(){
+				public void run(){
+
+					final int preFittingState = plugin.getUIState();
+					plugin.changeUIState(NeuriteTracerResultsDialog.FITTING_PATHS);
+
+					try {
+
+						final FittingProgress progress = new FittingProgress(numberOfPathsToFit);
+						for( int i = 0; i < numberOfPathsToFit; ++i ) {
+							PathFitter pf = pathsToFit.get(i);
+							pf.setProgressCallback( i, progress );
+						}
+						final int processors = Runtime.getRuntime().availableProcessors();
+						ExecutorService es = Executors.newFixedThreadPool(processors);
+						final List<Future<Path>> futures = es.invokeAll(pathsToFit);
+						SwingUtilities.invokeLater(new Runnable() {
+								public void run() {
+									try {
+										for( Future<Path> future : futures ) {
+											Path result = future.get();
+											pathAndFillManager.addPath( result );
+										}
+									} catch( Exception e ) {
+										IJ.error("The following exception was thrown: "+e);
+										e.printStackTrace();
+										return;
+									}
+									pathAndFillManager.resetListeners(null);
+									progress.done();
+								}});
+					} catch( InterruptedException ie ) {
+						/* We never call interrupt on these threads,
+						   so this should never happen... */
+					} finally {
+						plugin.changeUIState(preFittingState);
+					}
+				}
+			}).start();
 	}
 
 	@Override
@@ -202,6 +253,9 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				IJ.error("You must have one or more paths in the list selected");
 				return;
 			}
+			boolean showDetailedFittingResults = (e.getModifiers() & ActionEvent.SHIFT_MASK) > 0;
+
+			final ArrayList<PathFitter> pathsToFit = new ArrayList<PathFitter>();
 			boolean allAlreadyFitted = allUsingFittedVersion( selectedPaths );
 			for( Path p : selectedPaths ) {
 				if( allAlreadyFitted ) {
@@ -212,12 +266,11 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 					}
 					if( p.fitted == null ) {
 						// There's not already a fitted version:
-						Path fitted = p.fitCircles( 40, plugin.getImagePlus(), (e.getModifiers() & ActionEvent.SHIFT_MASK) > 0, plugin );
-						if( fitted == null )
-							continue;
-						p.setFitted(fitted);
-						p.setUseFitted(true, plugin);
-						pathAndFillManager.addPath( fitted );
+						PathFitter pathFitter = new PathFitter(
+							plugin,
+							p,
+							showDetailedFittingResults );
+						pathsToFit.add(pathFitter);
 					} else {
 						// Just use the existing fitted version:
 						p.setUseFitted(true, plugin);
@@ -225,6 +278,10 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				}
 			}
 			pathAndFillManager.resetListeners(null);
+
+			if( pathsToFit.size() > 0 )
+				fitPaths(pathsToFit);
+
 		} else if( source == renameButton || source == renameMenuItem ) {
 			if( selectedPaths.size() != 1 ) {
 				IJ.error("You must have exactly one path selected");
@@ -434,6 +491,8 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 	public PathWindow(PathAndFillManager pathAndFillManager, SimpleNeuriteTracer plugin, final int x, final int y) {
 		super("All Paths");
 		assert SwingUtilities.isEventDispatchThread();
+
+		new ClarifyingKeyListener().addKeyAndContainerListenerRecursively(this);
 
 		this.pathAndFillManager = pathAndFillManager;
 		this.plugin = plugin;

@@ -416,6 +416,10 @@ public class Colocalisation_Threshold implements PlugIn {
 		double ch2Mean = ch2Sum/N;
 		double ch3Mean = ch3Sum/N;
 		N=0;
+
+		// Do some rather simple performance testing
+		long startTime = System.currentTimeMillis();
+
 		//calulate variances
 		for (int s=1; s<=nslices; s++) {
 			if (IJ.escapePressed()) {
@@ -454,6 +458,12 @@ public class Colocalisation_Threshold implements PlugIn {
 		pearsons2 = sumXX - (sumX*sumX/N);
 		pearsons3 = sumYY - (sumY*sumY/N);
 		double rTotal = pearsons1/(Math.sqrt(pearsons2*pearsons3));
+
+		// End performance testing
+		long finishTime = System.currentTimeMillis();
+		long elapsed = finishTime - startTime;
+
+		System.out.println("Pearson calculation took " + elapsed + " ms.");
 
 		//http://mathworld.wolfram.com/Covariance.html
 		//?2 = X2?(X)2
