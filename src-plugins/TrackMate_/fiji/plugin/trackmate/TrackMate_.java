@@ -8,8 +8,10 @@ import fiji.plugin.trackmate.util.TMUtils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
+import ij.gui.Roi;
 import ij.plugin.PlugIn;
 
+import java.awt.Polygon;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -97,6 +99,11 @@ public class TrackMate_ implements PlugIn, TrackMateModelInterface {
 			logger.error("No image to operate on.\n");
 			return;
 		}
+		
+		Roi roi = imp.getRoi();
+		Polygon polygon = null;
+		if (roi != null)
+			polygon = roi.getPolygon();
 
 		int numFrames = settings.tend - settings.tstart + 1;
 
@@ -107,7 +114,6 @@ public class TrackMate_ implements PlugIn, TrackMateModelInterface {
 		segmenter.setCalibration(calibration);
 		
 		spots = new SpotCollection();
-		List<Spot> spotsThisFrame;
 		
 		// For each frame...
 		int spotFound = 0;
@@ -122,13 +128,25 @@ public class TrackMate_ implements PlugIn, TrackMateModelInterface {
 			logger.setProgress((i-settings.tstart) / (float)numFrames );
 			segmenter.setImage(img);
 			if (segmenter.checkInput() && segmenter.process()) {
-				spotsThisFrame = segmenter.getResult(settings);
-				for (Spot spot : spotsThisFrame) {
+				List<Spot> spotsThisFrame = segmenter.getResult(settings);
+				List<Spot> prunedSpots;
+				// Prune if outside of ROI
+				if (null != polygon) {
+					prunedSpots = new ArrayList<Spot>();
+					for (Spot spot : spotsThisFrame) {
+						if (polygon.contains(spot.getFeature(Feature.POSITION_X)/calibration[0], spot.getFeature(Feature.POSITION_Y)/calibration[1])) 
+							prunedSpots.add(spot);
+					}
+				} else {
+					prunedSpots = spotsThisFrame;
+				}
+				// Add segmentation feature other than position
+				for (Spot spot : prunedSpots) {
 					spot.putFeature(Feature.POSITION_T, i * settings.dt);
 					spot.putFeature(Feature.RADIUS, settings.segmenterSettings.expectedRadius);
 				}
-				spots.put(i, spotsThisFrame);
-				spotFound += spotsThisFrame.size();
+				spots.put(i, prunedSpots);
+				spotFound += prunedSpots.size();
 			} else {
 				logger.error(segmenter.getErrorMessage()+'\n');
 				return;
