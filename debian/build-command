@@ -41,6 +41,7 @@ mkdir -p "$FIJI_DIRECTORY"/build &&
     "CLASSPATH(plugins/3D_Viewer.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jama.jar:/usr/share/java/vecmath.jar:jars/VIB-lib.jar:jars/ij.jar:jars/imglib.jar" \
     "CLASSPATH(plugins/BeanShell_Interpreter.jar)=/usr/share/java/bsh.jar:jars/fiji-scripting.jar:jars/ij.jar" \
     "CLASSPATH(plugins/Clojure_Interpreter.jar)=/usr/share/java/clojure.jar:jars/fiji-scripting.jar:jars/ij.jar" \
+    "CLASSPATH(plugins/Colocalisation_Analysis.jar)=/usr/share/java/itext1.jar:/usr/share/java/junit4.jar:jars/ij.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib.jar" \
     "CLASSPATH(plugins/Directionality_.jar)=/usr/share/java/jcommon.jar:/usr/share/java/jfreechart.jar:jars/ij.jar" \
     "CLASSPATH(plugins/Fiji_Developer.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/vecmath.jar:jars/ij.jar:jars/rsyntaxtextarea.jar:plugins/3D_Viewer.jar:plugins/Fiji_Plugins.jar:plugins/Script_Editor.jar" \
     "CLASSPATH(plugins/Fiji_Plugins.jar)=/usr/share/java/jsch.jar:jars/VIB-lib.jar:jars/fiji-lib.jar:jars/ij.jar" \

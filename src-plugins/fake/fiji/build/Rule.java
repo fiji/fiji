@@ -10,6 +10,7 @@ import java.io.OutputStream;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -36,7 +37,7 @@ public abstract class Rule {
 	 */
 	protected int upToDateStage;
 
-	public Rule(Parser parser, String target, List<String> prerequisites) {
+	public Rule(Parser parser, String target, final List<String> prerequisites) {
 		this.parser = parser;
 		this.target = target;
 		this.prerequisites = prerequisites;
@@ -47,7 +48,11 @@ public abstract class Rule {
 			name = "PRE(" + target + ")";
 			if (!parser.variables.containsKey(name))
 				parser.setVariable(name,
-					Util.join(prerequisites));
+					new Object() {
+						public String toString() {
+							return Util.join(prerequisites);
+						}
+					});
 		} catch (FakeException e) { /* ignore */ }
 	}
 
@@ -72,15 +77,10 @@ public abstract class Rule {
 			nonUpToDates = prerequisites;
 			return false;
 		}
+		if (!newerThanFake(file))
+			return false;
+
 		long targetModifiedTime = file.lastModified();
-
-		if (getVarBool("rebuildIfFakeIsNewer")) {
-			if (targetModifiedTime < parser.mtimeFakefile)
-				return upToDateError(file, new File(parser.path));
-			if (targetModifiedTime < Fake.mtimeFijiBuild)
-				return upToDateError(new File(Fake.fijiBuildJar), file);
-		}
-
 		nonUpToDates = new ArrayList<String>();
 		for (String prereq : prerequisites) {
 			String path = Util.makePath(parser.cwd, prereq);
@@ -90,6 +90,18 @@ public abstract class Rule {
 		}
 
 		return nonUpToDates.size() == 0;
+	}
+
+	protected boolean newerThanFake(File file) {
+		long modifiedTime = file.lastModified();
+
+		if (getVarBool("rebuildIfFakeIsNewer")) {
+			if (modifiedTime < parser.mtimeFakefile)
+				return upToDateError(file, new File(parser.path));
+			if (modifiedTime < Fake.mtimeFijiBuild)
+				return upToDateError(new File(Fake.fijiBuildJar), file);
+		}
+		return true;
 	}
 
 	boolean upToDate(String path) {
@@ -123,11 +135,17 @@ public abstract class Rule {
 
 	boolean upToDateError(File source, File target) {
 		verbose("" + target + " is not up-to-date "
-			+ "because " + source + " is newer.");
+			+ "because " + source + " is newer: "
+			+ new Date(target.lastModified()) + " < "
+			+ new Date(source.lastModified()));
 		return false;
 	}
 
-	boolean upToDateRecursive(File source, File target) {
+	protected boolean upToDateRecursive(File source, File target) {
+		return upToDateRecursive(source, target, false);
+	}
+
+	protected boolean upToDateRecursive(File source, File target, boolean excludeTopLevelJars) {
 		if (!source.exists())
 			return true;
 		if (!source.isDirectory())
@@ -136,9 +154,11 @@ public abstract class Rule {
 		for (int i = 0; i < entries.length; i++) {
 			if (entries[i].startsWith("."))
 				continue;
+			if (excludeTopLevelJars && entries[i].endsWith(".jar"))
+				continue;
 			File file = new File(source,
 					entries[i]);
-			if (!upToDateRecursive(file, target))
+			if (!upToDateRecursive(file, target, false))
 				return false;
 		}
 		return true;
@@ -179,6 +199,7 @@ public abstract class Rule {
 				upToDateStage = 0;
 				wasAlreadyChecked = false;
 			}
+			setUpToDate();
 		} catch (Exception e) {
 			if (!(e instanceof FakeException))
 				e.printStackTrace();
@@ -188,15 +209,17 @@ public abstract class Rule {
 		wasAlreadyInvoked = false;
 	}
 
-	void setUpToDate() throws IOException {
-		for (String prereq : prerequisites) {
-			Rule rule = getRule(prereq);
-			if (rule != null && rule != this)
-				rule.setUpToDate();
+	protected void setUpToDate() throws IOException, FakeException {
+		upToDateStage = 2;
+		if (target.equals(""))
+			return;
+		if (prerequisites.size() == 0) {
+			if (newerThanFake(new File(target)))
+				return;
 		}
-
-		if (!checkUpToDate())
-			Util.touchFile(target);
+		else if (checkUpToDate())
+			return;
+		Util.touchFile(target);
 	}
 
 	protected void clean(boolean dry_run) {

@@ -75,6 +75,7 @@ public class NeuriteTracerResultsDialog
 	protected JMenuItem loadLabelsMenuItem;
 	protected JMenuItem saveMenuItem;
 	protected JMenuItem exportCSVMenuItem;
+	protected JMenuItem exportAllSWCMenuItem;
 	protected JMenuItem quitMenuItem;
 
 	protected JMenuItem analyzeSkeletonMenuItem;
@@ -96,6 +97,7 @@ public class NeuriteTracerResultsDialog
 	static final int WAITING_FOR_SIGMA_CHOICE = 9;
 	static final int SAVING                   = 10;
 	static final int LOADING                  = 11;
+	static final int FITTING_PATHS            = 12;
 
 	static final String [] stateNames = { "WAITING_TO_START_PATH",
 					      "PARTIAL_PATH",
@@ -108,11 +110,16 @@ public class NeuriteTracerResultsDialog
 					      "WAITING_FOR_SIGMA_POINT",
 					      "WAITING_FOR_SIGMA_CHOICE",
 					      "SAVING",
-					      "LOADING" };
+					      "LOADING",
+					      "FITTING_PATHS" };
 
 	static final String SEARCHING_STRING = "Searching for path between points...";
 
 	protected volatile int currentState;
+
+	public int getCurrentState() {
+		return currentState;
+	}
 
 	final protected SimpleNeuriteTracer plugin;
 
@@ -443,6 +450,7 @@ public class NeuriteTracerResultsDialog
 		preprocess.setEnabled(false);
 
 		exportCSVMenuItem.setEnabled(false);
+		exportAllSWCMenuItem.setEnabled(false);
 		exportCSVMenuItemAgain.setEnabled(false);
 		analyzeSkeletonMenuItem.setEnabled(false);
 		saveMenuItem.setEnabled(false);
@@ -489,6 +497,7 @@ public class NeuriteTracerResultsDialog
 					saveMenuItem.setEnabled(true);
 					loadMenuItem.setEnabled(true);
 					exportCSVMenuItem.setEnabled(true);
+					exportAllSWCMenuItem.setEnabled(true);
 					exportCSVMenuItemAgain.setEnabled(true);
 					analyzeSkeletonMenuItem.setEnabled(true);
 					if( uploadButton != null ) {
@@ -561,6 +570,11 @@ public class NeuriteTracerResultsDialog
 
 					fw.setEnabledWhileFilling();
 
+					break;
+
+				case FITTING_PATHS:
+					updateStatusText("Fitting volumes around neurons...");
+					disableEverything();
 					break;
 
 				case CALCULATING_GAUSSIAN:
@@ -647,6 +661,9 @@ public class NeuriteTracerResultsDialog
 
 		super( IJ.getInstance(), title, false );
 		assert SwingUtilities.isEventDispatchThread();
+
+		new ClarifyingKeyListener().addKeyAndContainerListenerRecursively(this);
+
 		this.plugin = plugin;
 		final SimpleNeuriteTracer thisPlugin = plugin;
 		this.launchedByArchive = launchedByArchive;
@@ -678,6 +695,10 @@ public class NeuriteTracerResultsDialog
 		exportCSVMenuItem = new JMenuItem("Export as CSV...");
 		exportCSVMenuItem.addActionListener(this);
 		fileMenu.add(exportCSVMenuItem);
+
+		exportAllSWCMenuItem = new JMenuItem("Export all as SWC...");
+		exportAllSWCMenuItem.addActionListener(this);
+		fileMenu.add(exportAllSWCMenuItem);
 
 		quitMenuItem = new JMenuItem("Quit");
 		quitMenuItem.addActionListener(this);
@@ -1049,6 +1070,43 @@ public class NeuriteTracerResultsDialog
 			changeState( LOADING );
 			plugin.loadTracings();
 			changeState( preLoadingState );
+
+		} else if( source == exportAllSWCMenuItem ) {
+
+			FileInfo info = plugin.file_info;
+			SaveDialog sd;
+
+			if( info == null ) {
+
+				sd = new SaveDialog("Export all as SWC...",
+						    "exported",
+						    "");
+
+			} else {
+
+				String suggestedFilename;
+				int extensionIndex = info.fileName.lastIndexOf(".");
+				if (extensionIndex == -1)
+					suggestedFilename = info.fileName;
+				else
+					suggestedFilename = info.fileName.substring(0, extensionIndex);
+
+				sd = new SaveDialog("Export all as SWC...",
+						    info.directory,
+						    suggestedFilename+"-exported",
+						    "");
+			}
+
+			String savePath;
+			if(sd.getFileName()==null) {
+				return;
+			} else {
+				savePath = sd.getDirectory()+sd.getFileName();
+			}
+			IJ.error("got savePath: "+savePath);
+			if( ! pathAndFillManager.checkOKToWriteAllAsSWC( savePath ) )
+				return;
+			pathAndFillManager.exportAllAsSWC( savePath );
 
 		} else if( source == exportCSVMenuItem || source == exportCSVMenuItemAgain ) {
 

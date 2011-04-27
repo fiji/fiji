@@ -1146,6 +1146,8 @@ public class bUnwarpJ_ implements PlugIn
        double  imageWeight = ((Double) new Double(args[10])).doubleValue();
        
        int     accurate_mode = MainDialog.ACCURATE_MODE;
+       
+       boolean save_transformation = false;
 
        double  consistencyWeight = ((Double) new Double(args[11])).doubleValue();
 
@@ -1169,20 +1171,44 @@ public class bUnwarpJ_ implements PlugIn
               fn_affine_2 = args[16];
           }
        }
-       else if(args.length == 15)
+       else if(args.length == 15 || args.length == 16)
        {
     	   if(args[14].equalsIgnoreCase("-mono"))
     	   {
     		   accurate_mode = MainDialog.MONO_MODE;
     		   fn_out_2 = "NULL (Mono mode)";
     	   }
+    	   else if (args[14].equalsIgnoreCase("-save_transformation"))
+    	   {
+    		   save_transformation = true;
+    	   }
     	   else
     	   {
     		   dumpSyntax();
                System.exit(0);
     	   }
+    	   
+    	   if(args.length == 16)
+           {
+        	   if(args[15].equalsIgnoreCase("-mono"))
+        	   {
+        		   accurate_mode = MainDialog.MONO_MODE;
+        		   fn_out_2 = "NULL (Mono mode)";
+        	   }
+        	   else if (args[15].equalsIgnoreCase("-save_transformation"))
+        	   {
+        		   save_transformation = true;
+        	   }
+        	   else
+        	   {
+        		   dumpSyntax();
+                   System.exit(0);
+        	   }
+        		   
+           }
     		   
        }
+       
 
        // Show parameters
        IJ.log("Target image           : " + fn_target);
@@ -1203,7 +1229,7 @@ public class bUnwarpJ_ implements PlugIn
        IJ.log("Affine matrix file 1   : " + fn_affine_1);
        IJ.log("Affine matrix file 2   : " + fn_affine_2);
        String sMode = (accurate_mode == MainDialog.MONO_MODE) ? "Mono" : "Accurate";
-       IJ.log("Registration mode	    : " + sMode);
+       IJ.log("Registration mode      : " + sMode);
 
        // Produce side information
        int     imagePyramidDepth=max_scale_deformation-min_scale_deformation+1;
@@ -1336,6 +1362,17 @@ public class bUnwarpJ_ implements PlugIn
        else
     	   warp.doBidirectionalRegistration();
        
+       if(save_transformation)
+       {
+    	   IJ.log("Saving direct transformation as " + fn_tnf_1 + "...");
+    	   warp.saveDirectTransformation();
+    	   if(accurate_mode != MainDialog.MONO_MODE)
+    	   {
+    		   IJ.log("Saving inverse transformation as " + fn_tnf_2 + "...");
+    		   warp.saveInverseTransformation();
+    	   }
+       }
+       
        long stop = System.currentTimeMillis(); // stop timing
        IJ.log("Registration time: " + (stop - start) + "ms"); // print execution time
 
@@ -1428,7 +1465,8 @@ public class bUnwarpJ_ implements PlugIn
        IJ.log("             OR -affine        ");
        IJ.log("                   Affine_file_1    : Initial source affine matrix transformation");
        IJ.log("                   Affine_file_2    : Initial target affine matrix transformation");
-       IJ.log("             OR -mono    : Unidirectional registration (source to target)");      
+       IJ.log("             OR -mono    : Unidirectional registration (source to target)");   
+       IJ.log("             OR -save_transformation    : Save calculated transformation to file");
        IJ.log("");
        IJ.log("  -elastic_transform          : TRANSFORM A SOURCE IMAGE WITH A GIVEN ELASTIC DEFORMATION");
        IJ.log("          target_image        : In any image format");

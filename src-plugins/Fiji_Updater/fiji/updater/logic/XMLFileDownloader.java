@@ -16,6 +16,7 @@ import ij.Prefs;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -65,6 +66,8 @@ public class XMLFileDownloader extends Progressable {
 				reader.read(name, in, updateSite.timestamp);
 				updateSite.setLastModified(lastModified);
 			} catch (Exception e) {
+				if (e instanceof FileNotFoundException)
+					updateSite.setLastModified(0); // it was deleted
 				e.printStackTrace();
 				warnings += "Could not update from site '" + name + "': " + e;
 			}

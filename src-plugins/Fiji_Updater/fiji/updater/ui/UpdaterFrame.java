@@ -465,10 +465,12 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 	}
 
 	private void quit() {
-		if (plugins.hasChanges() && !SwingTools.showQuestion(hidden, this, "Quit?",
+		if (plugins.hasChanges()) {
+			if (!SwingTools.showQuestion(hidden, this, "Quit?",
 				"You have specified changes. Are you sure you want to quit?"))
 			return;
-		try {
+		}
+		else try {
 			plugins.write();
 		} catch (Exception e) {
 			error("There was an error writing the local metadata cache: " + e);
@@ -723,6 +725,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 			if (progress != null)
 				progress.done();
 		} catch (Throwable e) {
+			IJ.handleException(e);
 			e.printStackTrace();
 			error("Upload failed: " + e);
 			if (progress != null)
@@ -743,7 +746,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 			uploader.upload(progress);
 			// JSch needs some time to finalize the SSH connection
 			try {
-				Thread.sleep(100);
+				Thread.sleep(1000);
 			} catch (InterruptedException e) { /* ignore */ }
 			return true;
 		} catch (Canceled e) {
@@ -751,6 +754,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 				progress.done();
 		} catch (Throwable e) {
 			e.printStackTrace();
+			IJ.handleException(e);
 			if (progress != null)
 				progress.done();
 		}

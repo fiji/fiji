@@ -87,7 +87,7 @@ EOF
 		main_class=fiji.build.Fake
 		;;
 	f,*)
-		java_options="$ij_options `sq_quote "$option"`"
+		java_options="$java_options `sq_quote "$option"`"
 		;;
 	t,*)
 		ij_options="$ij_options `sq_quote "$option"`"

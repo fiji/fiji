@@ -208,7 +208,7 @@ index 44b581d..43dc7ba 100644
  	  if (sysroot && p->add_sysroot)
 -	    str = concat (sysroot, p->fname, NULL);
 +	    {
-+	      if (p->fname[0] == DIR_SEPARATOR)
++	      if (p->component && p->fname[0] == DIR_SEPARATOR)
 +		{
 +		  str = xstrdup (p->fname);
 +		}
@@ -292,6 +292,10 @@ then
 		--with-sysroot="$SYSROOT" --prefix="$SYSROOT" &&
 	make &&
 	make $PARALLEL install)
+fi &&
+if test ! -e "$SYSROOT/x86_64-apple-darwin8/include"
+then
+	ln -s ../usr/include "$SYSROOT"/x86_64-apple-darwin8/
 fi &&
 for d in Library System
 do

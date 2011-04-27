@@ -5,7 +5,6 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.LookUpTable;
-import ij.gui.ImageWindow;
 import ij.io.FileInfo;
 import ij.io.ImageReader;
 import ij.io.OpenDialog;
@@ -51,8 +50,7 @@ public class Reader {
 			imp.show();
 			imp.updateAndDraw();
 			WindowFocusListener listener = null;
-			ImageWindow window = imp.getWindow();
-			if (window != null) try {
+			try {
 				Class toolbox = Class
 						.forName("org.imagearchive.lsm.toolbox.gui.ImageFocusListener");
 				Object o = null;
@@ -61,7 +59,7 @@ public class Reader {
 				listener = (WindowFocusListener) o;
 				Method toolboxMet = o.getClass().getMethod("windowGainedFocus",new Class[] {WindowEvent.class});
 				if (listener != null) {
-					window.addWindowFocusListener(listener);
+					imp.getWindow().addWindowFocusListener(listener);
 				}
 				if (toolboxMet != null)
 					toolboxMet.invoke(o,new Object[]{null});
@@ -269,6 +267,7 @@ public class Reader {
 	private CZLSMInfo getCZ_LSMINFO(RandomAccessStream stream, long position,
 			boolean thumb) {
 		CZLSMInfo cz = new CZLSMInfo();
+
 		try {
 			if (position == 0)
 				return cz;
@@ -296,6 +295,13 @@ public class Reader {
 			cz.OffsetChannelColors = swap(stream.readInt());
 			stream.seek((int) position + 120);
 			cz.OffsetChannelDataTypes = swap(stream.readInt());
+			stream.seek((int) position + 264);
+			cz.DimensionP = swap(stream.readInt());
+			if (cz.DimensionP < 1) cz.DimensionP =1;
+			// not used so far...
+			cz.DimensionM = swap(stream.readInt());
+			if (cz.DimensionM < 1) cz.DimensionM =1;
+
 
 			if (cz.OffsetChannelDataTypes != 0) {
 				cz.OffsetChannelDataTypesValues = getOffsetChannelDataTypesValues(
@@ -598,11 +604,11 @@ public class Reader {
 					.get(imageCounter);
 			for (int i = 0; i < imDir.TIF_STRIPBYTECOUNTS.length; i++)
 
-				flength = (int) new File(lsmFi.directory
-						+ System.getProperty("file.separator")
-						+ lsmFi.fileName).length();
 				if (imDir.TIF_COMPRESSION == 5) {
 					lsmFi.compression = FileInfo.LZW;
+					flength = (int) new File(lsmFi.directory
+							+ System.getProperty("file.separator")
+							+ lsmFi.fileName).length();
 					if (imDir.TIF_PREDICTOR == 2)
 						lsmFi.compression = FileInfo.LZW_WITH_DIFFERENCING;
 				} else
@@ -683,8 +689,9 @@ public class Reader {
 		}
 		IJ.showProgress(1.0);
 		ImagePlus imp = new ImagePlus(lsmFi.fileName, st);
+		// this is a hack, cast Positions as Timepoints
 		imp.setDimensions((int) cz.DimensionChannels, (int) cz.DimensionZ,
-				(int) cz.DimensionTime);
+				(int) (cz.DimensionTime * cz.DimensionP));
 		if (cz.DimensionChannels >= 2
 				&& (imp.getStackSize() % cz.DimensionChannels) == 0) {
 			imp = new CompositeImage(imp, CompositeImage.COLOR);
@@ -778,6 +785,8 @@ public class Reader {
 		String voxelsize_z = IJ.d2s(cz.VoxelSizeZ * 1000000, 2) + " "
 				+ micrometer;
 		String timestacksize = IJ.d2s(cz.DimensionTime, 0);
+		String positionssize = IJ.d2s(cz.DimensionP, 0);
+		String mosaicsize = IJ.d2s(cz.DimensionM, 0);
 
 		String plane_width = IJ.d2s(cz.DimensionX * cz.VoxelSizeX, 2) + " "
 				+ micrometer;
@@ -790,15 +799,17 @@ public class Reader {
 		infos += "Width: " + width + "\n";
 		infos += "Height: " + height + "\n";
 		infos += "Channels: " + channels + "\n";
-		infos += "Z-stack size:" + stacksize + "\n";
-		infos += "T-stack size: " + timestacksize + "\n";
-		infos += "Scan type: " + scantype + "\n";
-		infos += "Voxel size X: " + voxelsize_x + "\n";
-		infos += "Voxel size Y: " + voxelsize_y + "\n";
-		infos += "Voxel size Z: " + voxelsize_z + "\n";
-		infos += "Plane width: " + plane_width + "\n";
-		infos += "Plane height: " + plane_height + "\n";
-		infos += "Plane depth: " + volume_depth + "\n";
+		infos += "Z_size:" + stacksize + "\n";
+		infos += "T_size: " + timestacksize + "\n";
+		infos += "P_size: " + positionssize + "\n";
+		infos += "M_size: " + mosaicsize + "\n";
+		infos += "Scan_type: " + scantype + "\n";
+		infos += "Voxel_size_X: " + voxelsize_x + "\n";
+		infos += "Voxel_size_Y: " + voxelsize_y + "\n";
+		infos += "Voxel_size_Z: " + voxelsize_z + "\n";
+		infos += "Plane_width: " + plane_width + "\n";
+		infos += "Plane_height: " + plane_height + "\n";
+		infos += "Plane_depth: " + volume_depth + "\n";
 		imp.setProperty("Info", infos);
 		return imp;
 	}

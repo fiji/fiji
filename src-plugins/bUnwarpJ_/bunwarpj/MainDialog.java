@@ -744,7 +744,8 @@ public class MainDialog extends GenericDialog
 		cancelSource();
 		cancelTarget();
 		tb.restorePreviousToolbar();
-		Toolbar.getInstance().repaint();
+		if(null != Toolbar.getInstance())
+			Toolbar.getInstance().repaint();
 		ProgressBar.resetProgressBar();
 		Runtime.getRuntime().gc();
 	} /* end restoreAll */
@@ -932,7 +933,7 @@ public class MainDialog extends GenericDialog
 		source.setPyramidDepth(imagePyramidDepth + min_scale_image);
 		// The thread is longer started here but in startPyramids
 		//source.getThread().start();
-		sourceIc  = sourceImp.getWindow().getCanvas();
+		sourceIc  = (null == sourceImp.getWindow()) ? null : sourceImp.getWindow().getCanvas();
 		
 		// If it is an stack, the second slice is considered a mask
 		if (sourceImp.getStackSize() == 1) 
@@ -986,7 +987,7 @@ public class MainDialog extends GenericDialog
 		this.computeImagePyramidDepth();
 		this.target.setPyramidDepth(imagePyramidDepth + min_scale_image);
 		//target.getThread().start();
-		this.targetIc  = targetImp.getWindow().getCanvas();
+		this.targetIc  = (null == targetImp.getWindow()) ? null : targetImp.getWindow().getCanvas();
 
 		// If it is an stack, the second slice is considered a mask
 		if (targetImp.getStackSize()==1) 

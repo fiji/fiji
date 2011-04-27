@@ -146,6 +146,9 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 	public FillWindow(PathAndFillManager pathAndFillManager, SimpleNeuriteTracer plugin, int x, int y) {
 		super("All Fills");
 		assert SwingUtilities.isEventDispatchThread();
+
+		new ClarifyingKeyListener().addKeyAndContainerListenerRecursively(this);
+
 		this.plugin = plugin;
 		this.pathAndFillManager = pathAndFillManager;
 		setBounds(x,y,400,400);

@@ -212,7 +212,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Extended_Depth_Field.jar \
 	plugins/panorama_.jar \
 	jars/weave_jy2java.jar \
-	plugins/3D_Blob_Segmentation.jar
+	plugins/3D_Blob_Segmentation.jar \
+	plugins/Kuwahara_Filter.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
@@ -242,7 +243,6 @@ jars/jna.jar[] <-
 jars/postgresql-8.2-506.jdbc3.jar[] <-
 jars/jai_core.jar[] <-
 jars/jai_codec.jar[] <-
-jars/jython.jar[] <-
 jars/batik.jar[] <-
 
 # From submodules
@@ -283,6 +283,7 @@ jars/imglib-scripting.jar <- modules/imglib/
 libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama-1.0.2.jar \
 	jars/fiji-scripting.jar jars/fiji-lib.jar jars/jep.jar \
 	jars/pal-optimization.jar jars/Updater_Fix.jar plugins/JNI_Example.jar \
+	plugins/FFMPEG_IO.jar \
 
 plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Screen/**/*
 
@@ -344,7 +345,7 @@ CLASSPATH(plugins/TransformJ_.jar)=jars/ij.jar:jars/imagescience.jar
 CLASSPATH(plugins/FeatureJ_.jar)=jars/ij.jar:jars/imagescience.jar
 CLASSPATH(plugins/RandomJ_.jar)=jars/ij.jar:jars/imagescience.jar
 CLASSPATH(plugins/Auto_Threshold.jar)=jars/ij.jar
-CLASSPATH(plugins/Colocalisation_Analysis.jar)=jars/ij.jar
+CLASSPATH(plugins/Colocalisation_Analysis.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/imglib-algorithms.jar:jars/junit-4.5.jar:jars/itext-1.3.jar
 CLASSPATH(plugins/Series_Labeler.jar)=jars/ij.jar
 CLASSPATH(plugins/Gray_Morphology.jar)=jars/ij.jar
 CLASSPATH(plugins/IsoData_Classifier.jar)=jars/ij.jar
@@ -411,6 +412,7 @@ CLASSPATH(plugins/3D_Blob_Segmentation.jar)=jars/ij.jar:plugins/level_sets.jar:p
 CLASSPATH(plugins/Feature_Detection.jar)=jars/ij.jar:jars/imglib-ij.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/Jama-1.0.2.jar
 LIBS(plugins/JNI_Example.jar)=-lm
 CLASSPATH(plugins/JNI_Example.jar)=jars/ij.jar:jars/fiji-lib.jar
+CLASSPATH(plugins/Kuwahara_Filter.jar)=jars/ij.jar
 
 # pre-Java5 generics ;-)
 
@@ -426,6 +428,14 @@ MAINCLASS(jars/test-fiji.jar)=fiji.Tests
 CLASSPATH(jars/test-fiji.jar)=jars/junit-4.5.jar
 
 MAINCLASS(jars/Updater_Fix.jar)=fiji.updater.Fix
+
+# This also compiles lib/<platform>/<ffmpeg-library>
+CLASSPATH(plugins/FFMPEG_IO.jar)=jars/ij.jar
+plugins/FFMPEG_IO.jar[src-plugins/FFMPEG_IO/generate.bsh] <- src-plugins/FFMPEG_IO/**/*
+
+# This compiles and cross-compiles lib/<platform>/<ffmpeg-library>
+CLASSPATH(plugins/FFMPEG_IO.jar-cross)=jars/ij.jar
+plugins/FFMPEG_IO.jar-cross[src-plugins/FFMPEG_IO/generate.bsh all] <- src-plugins/FFMPEG_IO/**/*
 
 # the default rules
 
@@ -451,7 +461,7 @@ CFLAGS(win64)=$COMMONCFLAGS $WINOPTS \
 
 # Include 64-bit architectures only in ./fiji (as opposed to ./fiji-tiger),
 # and only on MacOSX
-MACOPTS(osx10.3)=-I/System/Library/Frameworks/JavaVM.Framework/Headers \
+MACOPTS(osx10.3)=-I/System/Library/Frameworks/JavaVM.Framework/Headers -Iincludes \
 	-DMACOSX \
 	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(macosx)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(macosx)"'
 MACOPTS(osx10.4)=$MACOPTS(osx10.3) -mmacosx-version-min=10.3 -arch i386 -arch ppc
@@ -460,7 +470,7 @@ CFLAGS(macosx)=$MACOPTS
 
 CFLAGS(linux)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector \
 	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(linux)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(linux)"'
-CFLAGS(linux64)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector \
+CFLAGS(linux64)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector -rdynamic -g \
 	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(linux64)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(linux64)"'
 
 LDFLAGS(win32)=$LDFLAGS $WINOPTS

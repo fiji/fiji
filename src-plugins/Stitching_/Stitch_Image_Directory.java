@@ -128,7 +128,7 @@ public class Stitch_Image_Directory implements PlugIn
 		for (String fileName : imageFiles )
 		{
 			File file = new File( dir, fileName );
-			if ( file.isFile() )
+			if ( file.isFile() && !file.isHidden() )
 			{
 				IJ.log( file.getPath() );
 				files.add( fileName );

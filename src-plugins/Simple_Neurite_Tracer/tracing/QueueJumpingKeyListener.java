@@ -81,6 +81,11 @@ public class QueueJumpingKeyListener implements KeyListener {
 			tracerPlugin.cancelTemporary( );
 			e.consume();
 
+		} else if( keyChar == 'n' || keyChar == 'N' ) {
+
+			tracerPlugin.cancelTemporary( );
+			e.consume();
+
 		} else if( keyChar == 'f' || keyChar == 'F' ) {
 
 			// if (verbose) System.out.println( "Finalizing that path" );

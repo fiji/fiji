@@ -137,14 +137,14 @@ public class PluginUploader {
 		UploadableFile uploadable = (UploadableFile)file;
 		if (uploadable.filesize != Util.getFilesize(uploadable.sourceFilename))
 			throw new RuntimeException("File size of "
-				+ uploadable.plugin.filename + " changed since being checksummed!");
+				+ uploadable.plugin.filename + " changed since being checksummed (was " + uploadable.filesize + " but is " + Util.getFilesize(uploadable.sourceFilename) + ")!");
 		if (checkTimestamp) {
 			long stored = uploadable.plugin.getStatus() == PluginObject.Status.NOT_FIJI ?
 				uploadable.plugin.current.timestamp :
 				uploadable.plugin.newTimestamp;
 			if (stored != Util.getTimestamp(uploadable.sourceFilename))
 				throw new RuntimeException("Timestamp of "
-					+ uploadable.plugin.filename + " changed since being checksummed!");
+					+ uploadable.plugin.filename + " changed since being checksummed (was " + stored + " but is " + Util.getTimestamp(uploadable.sourceFilename) + ")!");
 		}
 	}
 
@@ -219,9 +219,13 @@ public class PluginUploader {
 			connection.setUseCaches(false);
 			long lastModified = connection.getLastModified();
 			connection.getInputStream().close();
+			if (IJ.debugMode)
+				IJ.log("got last modified " + lastModified + " = timestamp " + Util.timestamp(lastModified));
 			return lastModified;
 		}
 		catch (Exception e) {
+			if (IJ.debugMode)
+				IJ.handleException(e);
 			if (plugins.size() == 0)
 				return -1; // assume initial upload
 			e.printStackTrace();
@@ -230,8 +234,11 @@ public class PluginUploader {
 	}
 
 	protected void verifyTimestamp() {
-		if (!site.isLastModified(getCurrentLastModified()))
+		long lastModified = getCurrentLastModified();
+		if (!site.isLastModified(lastModified))
 			throw new RuntimeException("db.xml.gz was "
-				+ "changed in the meantime");
+				+ "changed in the meantime (was "
+				+ site.timestamp + " but now is "
+				+ Util.timestamp(lastModified) + ")");
 	}
 }

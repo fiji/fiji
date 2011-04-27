@@ -452,11 +452,11 @@ public class Frangi_<T extends RealType<T>> implements PlugIn {
 			new ByteType(),
 			new ArrayContainerFactory() );
 
-		Image<ByteType> whichImage = null;
-		LocalizableCursor<ByteType> whichCursor = null;
+		Image<FloatType> whichImage = null;
+		LocalizableCursor<FloatType> whichCursor = null;
 
 		if( showWhichScales ) {
-			whichImage = byteFactory.createImage( image.getDimensions() );
+			whichImage = floatFactory.createImage( image.getDimensions() );
 			whichCursor = whichImage.createLocalizableCursor();
 		}
 
@@ -489,7 +489,7 @@ public class Frangi_<T extends RealType<T>> implements PlugIn {
 				++ scaleIndex;
 			}
 			if( showWhichScales )
-				whichCursor.getType().set((byte)((bestScale*255)/scales));
+				whichCursor.getType().set( bestScale == 0 ? 0 : (float)minimumScale + (bestScale - 1) * (float)increment );
 			resultCursor.getType().set(largestValue);
 			maximumValueInResult = Math.max(maximumValueInResult,largestValue);
 			minimumValueInResult = Math.min(minimumValueInResult,largestValue);
@@ -504,8 +504,9 @@ public class Frangi_<T extends RealType<T>> implements PlugIn {
 		resultCursor.close();
 
 		if( showWhichScales ) {
-			ImagePlus whichImagePlus = ImageJFunctions.copyToImagePlus( whichImage, ImageJFunctions.GRAY8 );
+			ImagePlus whichImagePlus = ImageJFunctions.copyToImagePlus( whichImage, ImageJFunctions.GRAY32 );
 			whichImagePlus.setTitle("Scales used");
+			whichImagePlus.getProcessor().setMinAndMax(0,maximumScale);
 			whichImagePlus.show();
 		}
 

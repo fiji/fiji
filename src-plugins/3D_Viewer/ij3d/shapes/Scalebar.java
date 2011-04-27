@@ -133,8 +133,9 @@ public class Scalebar extends BranchGroup {
 
 	public Geometry createTextGeometry() {
 		String text = df.format(length) + " " + unit;
+		int fontSize = (int)length/3;
 		Font3D font3D = new Font3D(
-			new Font("Helvetica", Font.PLAIN, (int)length/3), 
+			new Font("Helvetica", Font.PLAIN, fontSize > 0 ? fontSize : 1),
 			new FontExtrusion());
 		try {
 			Text3D textGeom = new Text3D(font3D, text);
@@ -146,7 +147,7 @@ public class Scalebar extends BranchGroup {
 
 	public Geometry createLineGeometry() {
 		Point3f origin = new Point3f();
-		Point3f onX = new Point3f(length, 0, 0);
+		Point3f onX = new Point3f(length < 1 ? 1f : length, 0, 0);
 
 		Point3f[] coords = {origin, onX};
 		int N = coords.length;

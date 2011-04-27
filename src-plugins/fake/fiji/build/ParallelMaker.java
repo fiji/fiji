@@ -85,14 +85,6 @@ public class ParallelMaker {
 		}
 		FakeException result = results.get(finalRule);
 		pool.shutdown();
-
-		for (Rule rule : new ArrayList<Rule>(results.keySet()))
-			if (results.get(rule) == success) try {
-				rule.setUpToDate();
-			} catch (IOException e) {
-				results.put(rule, new FakeException("Could not set up-to-date: " + e));
-			}
-
 		return result == success ? null : result;
 	}
 

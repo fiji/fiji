@@ -417,6 +417,8 @@ public class FileFunctions {
 
 		try {
 			String content = readStream(new FileInputStream(file));
+
+			// insert plugin target
 			int start = content.indexOf("\nPLUGIN_TARGETS=");
 			if (start < 0)
 				return false;
@@ -426,14 +428,24 @@ public class FileFunctions {
 			int offset = content.indexOf("\n\t" + name, start);
 			if (offset < end && offset > start)
 				return false;
+			String insert = "\n\t" + name;
+			if (content.charAt(end - 1) != '\\')
+				insert = " \\" + insert;
+			content = content.substring(0, end) + insert + content.substring(end);
+
+			// insert classpath
+			offset = content.lastIndexOf("\nCLASSPATH(");
+			if (offset > 0 && content.substring(offset).startsWith("\nCLASSPATH(jars/test-fiji.jar)"))
+				offset = content.lastIndexOf("\nCLASSPATH(", offset - 1);
+			if (offset < 0)
+				return false;
+			offset = content.indexOf('\n', offset + 1);
+			if (offset < 0)
+				return false;
+			content = content.substring(0, offset) + "\nCLASSPATH(" + name + ")=jars/ij.jar" + content.substring(offset);
 
 			FileOutputStream out = new FileOutputStream(file);
-			out.write(content.substring(0, end).getBytes());
-			if (content.charAt(end - 1) != '\\')
-				out.write(" \\".getBytes());
-			out.write("\n\t".getBytes());
-			out.write(name.getBytes());
-			out.write(content.substring(end).getBytes());
+			out.write(content.getBytes());
 			out.close();
 
 			return true;
