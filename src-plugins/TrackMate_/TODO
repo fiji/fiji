@@ -17,7 +17,6 @@ Track scheme
 Export/Import
 - Make a better loading logic and GUI interaction.
 - Offer to select displayer at load.
-- Externalize the part loading the data from the TrackMateFrameController.
 - Save the spot images in the xml file.
 
 Making it available.
