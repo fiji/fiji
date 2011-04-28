@@ -85,14 +85,14 @@ zip -9r configs.jar plugins.config class.map
 files="$files configs.jar"
 plugins="$plugins $CODEBASE/configs.jar"
 
-test -e ImageJA/.git/jarsignerrc && (
-	cd ImageJA &&
+test -e modules/ImageJA/.git/jarsignerrc && (
+	cd modules/ImageJA &&
 	for jar in $files
 	do
 		set_target $jar &&
 		if test $jar = ${jar#/}
 		then
-			jar=../$jar
+			jar=../../$jar
 		fi &&
 		if test -f $FIJIPATH/$target &&
 			test ! $jar -nt $FIJIPATH/$target
