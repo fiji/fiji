@@ -388,6 +388,8 @@ public class TmXmlWriter implements TmXmlKeys {
 		Collection<Attribute> attributes = new ArrayList<Attribute>();
 		Attribute IDattribute = new Attribute(SPOT_ID_ATTRIBUTE_NAME, ""+spot.ID());
 		attributes.add(IDattribute);
+		Attribute nameAttribute = new Attribute(SPOT_NAME_ATTRIBUTE_NAME, spot.getName());
+		attributes.add(nameAttribute);
 		Float val;
 		Attribute featureAttribute;
 		for (Feature feature : Feature.values()) {

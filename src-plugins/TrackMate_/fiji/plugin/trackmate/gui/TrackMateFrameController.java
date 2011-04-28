@@ -423,7 +423,6 @@ public class TrackMateFrameController {
 			
 		} finally {
 			
-			actionFlag = false;
 			SwingUtilities.invokeLater(new Runnable() {			
 				@Override
 				public void run() {

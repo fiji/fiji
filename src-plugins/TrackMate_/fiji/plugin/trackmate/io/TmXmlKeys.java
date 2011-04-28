@@ -13,6 +13,7 @@ public interface TmXmlKeys {
 	
 	public static final String FRAME_ATTRIBUTE_NAME 				= "frame"; 
 	public static final String SPOT_ID_ATTRIBUTE_NAME 				= "ID";
+	public static final String SPOT_NAME_ATTRIBUTE_NAME 			= "name";
 	
 	/*
 	 * ROOT ELEMENT

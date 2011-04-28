@@ -414,6 +414,10 @@ public class TmXmlReader implements TmXmlKeys {
 	private static Spot createSpotFrom(Element spotEl) throws DataConversionException {
 		int ID = spotEl.getAttribute(SPOT_ID_ATTRIBUTE_NAME).getIntValue();
 		Spot spot = new SpotImp(ID);
+		String name = spotEl.getAttributeValue(SPOT_NAME_ATTRIBUTE_NAME);
+		if (null == name || name.equals(""))
+			name = "ID"+ID;
+		spot.setName(name);
 		for (Feature feature : Feature.values()) {
 			Attribute att = spotEl.getAttribute(feature.name());
 			if (null == att)

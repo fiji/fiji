@@ -347,14 +347,15 @@ public class GuiReader {
 		
 		controller.manager = new TrackMateModelManager(model);
 		view.setModel(model);
-		controller.state = GuiState.TRACKING;
 		controller.actionFlag = true; // force redraw and relinking
+		controller.state = GuiState.TRACKING;
 		controller.displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
 		controller.displayer.setSpots(model.getSpots());
 		controller.displayer.setSpotsToShow(model.getSelectedSpots());
 		controller.displayer.setTrackGraph(model.getTrackGraph());
 		controller.displayer.addSpotCollectionEditListener(controller.manager);
-		imp.show();
+		if (!imp.isVisible())
+			imp.show();
 		logger.log("Loading data finished.\n");
 		return model;
 	}
