@@ -59,11 +59,14 @@ public class SpotImp implements Spot {
 	 * when calculating distances and so on.
 	 */
 	public SpotImp(float[] coordinates, String name) {
-		for (int i = 0; i < 3; i++)
-			putFeature(POSITION_FEATURES[i], coordinates[i]);
-		this.name = name;
 		this.ID = IDcounter;
 		IDcounter++;
+		for (int i = 0; i < 3; i++)
+			putFeature(POSITION_FEATURES[i], coordinates[i]);
+		if (null == name)
+			this.name = "ID"+ID;
+		else
+			this.name = name;
 	}
 	
 	public SpotImp(float[] coordinates) {
@@ -135,7 +138,7 @@ public class SpotImp implements Spot {
 	@Override
 	public String toString() {
 		String str;
-		if (name == null || name.equals(""))
+		if (null == name || name.equals(""))
 			str = "ID"+ID;
 		else 
 			str = name;

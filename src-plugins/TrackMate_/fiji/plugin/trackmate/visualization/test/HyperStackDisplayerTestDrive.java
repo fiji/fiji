@@ -30,9 +30,9 @@ public class HyperStackDisplayerTestDrive {
 
 	public static void main(String[] args) throws JDOMException, IOException {
 		
-		File file = new File(HyperStackDisplayerTestDrive.class.getResource("FakeTracks.xml").getFile());
+//		File file = new File(HyperStackDisplayerTestDrive.class.getResource("FakeTracks.xml").getFile());
 //		File file = new File("E:/Users/JeanYves/Desktop/data/MAX_Celegans-5pc_17timepoints.xml");
-//		File file = new File("/Volumes/Data/Data/Confocal_LSM700/10-01-21/10-01-21-2hours.xml");
+		File file = new File("/Volumes/Data/Data/Confocal_LSM700/10-01-21/10-01-21-2hours.xml");
 		TmXmlReader reader = new TmXmlReader(file);
 		reader.parse();
 		
@@ -61,6 +61,8 @@ public class HyperStackDisplayerTestDrive {
 		displayer.setSpotsToShow(selectedSpots);
 		displayer.setTrackGraph(trackGraph);
 		displayer.setDisplayTrackMode(TrackDisplayMode.LOCAL_WHOLE_TRACKS, 5);
+		displayer.setSpotNameVisible(true);
+		
 		
 		final TrackSchemeFrame trackScheme = new TrackSchemeFrame(trackGraph, settings);
 		trackScheme.setVisible(true);

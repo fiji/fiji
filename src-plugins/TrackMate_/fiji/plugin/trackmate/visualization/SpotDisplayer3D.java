@@ -121,7 +121,11 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		spotContent.setVisible(displaySpotSelected);
 	}
 	
-	
+
+	@Override
+	public void setSpotNameVisible(boolean spotNameVisible) {
+		// TODO 
+	}
 	
 	@Override
 	public void setRadiusDisplayRatio(float ratio) {
@@ -295,6 +299,5 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		blobContent.showCoordinateSystem(false);
 		return blobContent;
 	}
-
 
 }

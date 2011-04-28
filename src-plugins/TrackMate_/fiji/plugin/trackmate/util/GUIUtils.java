@@ -47,6 +47,8 @@ public class GUIUtils {
 							spotDisplayer.setTrackVisible(displayerPanel.isDisplayTrackSelected());
 						} else if (event == displayerPanel.SPOT_DISPLAY_RADIUS_CHANGED) {
 							spotDisplayer.setRadiusDisplayRatio((float) displayerPanel.getSpotDisplayRadiusRatio());
+						} else if (event == displayerPanel.SPOT_DISPLAY_LABEL_CHANGED) {
+							spotDisplayer.setSpotNameVisible(displayerPanel.isDisplaySpotNameSelected());
 						} else if (event == displayerPanel.TRACK_SCHEME_BUTTON_PRESSED) {
 							launchTrackScheme(model, spotDisplayer);
 						} 

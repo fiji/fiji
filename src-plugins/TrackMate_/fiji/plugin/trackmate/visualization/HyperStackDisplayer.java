@@ -106,13 +106,20 @@ public class HyperStackDisplayer extends SpotDisplayer implements SpotCollection
 	
 	@Override
 	public void setTrackVisible(boolean trackVisible) {
-		trackOverlay.setTrackVisisble(trackVisible);
+		trackOverlay.setTrackVisible(trackVisible);
 		imp.updateAndDraw();
 	}
 	
 	@Override
 	public void setSpotVisible(boolean spotVisible) {
 		spotOverlay.setSpotVisible(spotVisible);
+		imp.updateAndDraw();
+	}
+	
+
+	@Override
+	public void setSpotNameVisible(boolean spotNameVisible) {
+		spotOverlay.setSpotNameVisible(spotNameVisible);
 		imp.updateAndDraw();
 	}
 	
@@ -212,6 +219,6 @@ public class HyperStackDisplayer extends SpotDisplayer implements SpotCollection
 				spotColor.put(spot, colorMap.getPaint((val-featureMinValue)/(featureMaxValue-featureMinValue)) );
 		}
 		spotOverlay.setTarget(spotsToShow);
-		spotOverlay.setTargettColor(spotColor);
+		spotOverlay.setTargetColor(spotColor);
 	}
 }

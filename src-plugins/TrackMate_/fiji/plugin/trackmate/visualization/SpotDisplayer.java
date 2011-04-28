@@ -353,6 +353,12 @@ public abstract class SpotDisplayer {
 	 */
 	public abstract void setSpotVisible(boolean displaySpotSelected);
 
+
+	/** 
+	 * Switch visibility of spot names on/off.
+	 */
+	public abstract void setSpotNameVisible(boolean spotNameVisible);	
+	
 	/**
 	 * Remove any overlay (for spots or tracks) from this displayer.
 	 */
@@ -450,4 +456,5 @@ public abstract class SpotDisplayer {
 		} 
 		highlightSpots(spotSelection);
 	}
+
 }

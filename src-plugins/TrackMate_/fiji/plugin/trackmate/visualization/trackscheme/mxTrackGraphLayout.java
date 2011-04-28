@@ -152,7 +152,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					
 					// Get corresponding JGraphX cell 
 					mxCell cell = graph.getVertexToCellMap().get(spot);
-					cell.setValue(""+TrackSplitter.getVertexType(jGraphT, spot)); //spot.toString());
+					cell.setValue(spot.getName());
 					
 					// Get default style					
 					String style = cell.getStyle();

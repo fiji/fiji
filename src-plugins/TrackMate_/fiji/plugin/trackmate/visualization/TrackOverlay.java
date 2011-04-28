@@ -8,6 +8,8 @@ import java.awt.Color;
 import java.awt.Composite;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Stroke;
+import java.awt.geom.AffineTransform;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -71,7 +73,7 @@ public class TrackOverlay implements Overlay {
 		this.spots = spots;
 	}
 	
-	public void setTrackVisisble(boolean trackVisible) {
+	public void setTrackVisible(boolean trackVisible) {
 		this.trackVisible = trackVisible;
 	}
 	
@@ -91,6 +93,12 @@ public class TrackOverlay implements Overlay {
 			return;
 		
 		final Graphics2D g2d = (Graphics2D)g;
+		// Save graphic device original settings
+		final AffineTransform originalTransform = g2d.getTransform();
+		final Composite originalComposite = g2d.getComposite();
+		final Stroke originalStroke = g2d.getStroke();
+		final Color originalColor = g2d.getColor();		
+		
 		g2d.setComposite(composite);
 		final float mag = (float) magnification;
 		final int currentFrame = imp.getFrame() - 1;
@@ -122,6 +130,12 @@ public class TrackOverlay implements Overlay {
 			frame = spots.getFrame(source);
 			drawEdge(g2d, source, target, frame, currentFrame, xcorner, ycorner, mag);
 		}
+		
+		// Restore graphic device original settings
+		g2d.setTransform( originalTransform );
+		g2d.setComposite(originalComposite);
+		g2d.setStroke(originalStroke);
+		g2d.setColor(originalColor);
 	}
 
 

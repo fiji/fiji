@@ -120,10 +120,8 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	public void register(final ImagePlus imp, final HyperStackDisplayer displayer) {
 		if (DEBUG)
 			System.out.println("[SpotEditTool] Registering "+imp+" and "+displayer);
-		registerTool(imp);
 		displayers.put(imp, displayer);
 	}
-	
 	
 	/*
 	 * MOUSE AND MOUSE MOTION
@@ -149,6 +147,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		Spot editedSpot = editedSpots.get(imp);
 		updateStatusBar(target, imp.getCalibration().getUnits());
 
+		
 		// Check desired behavior
 		switch (e.getClickCount()) {
 		
@@ -169,6 +168,8 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		
 		case 2: {
 			// Edit spot
+			if (DEBUG)
+				System.out.println("[SpotEditTool] Got "+editedSpot+" as editing spot for this imp.");
 			
 			// Empty current selection
 			displayer.spotSelectionChanged(null, frame, SpotDisplayer.REPLACE_SELECTION_FLAG);

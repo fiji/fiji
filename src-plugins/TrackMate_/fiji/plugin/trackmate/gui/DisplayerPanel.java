@@ -53,6 +53,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 	public ActionEvent SPOT_VISIBILITY_CHANGED 		= new ActionEvent(this, 2, "SpotVisibilityChanged");
 	public ActionEvent TRACK_SCHEME_BUTTON_PRESSED 	= new ActionEvent(this, 3, "TrackSchemeButtonPushed");
 	public ActionEvent SPOT_DISPLAY_RADIUS_CHANGED 	= new ActionEvent(this, 4, "SpotDisplayRadiusChanged");
+	public ActionEvent SPOT_DISPLAY_LABEL_CHANGED 	= new ActionEvent(this, 5, "SpotDisplayLabelChanged");
 
 	private JLabel jLabelTrackDisplayMode;
 	private JComboBox jComboBoxDisplayMode;
@@ -69,6 +70,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 	private EnumMap<Feature, double[]> featureValues;
 	private JButton jButtonShowTrackScheme;
 	private JNumericTextField jTextFieldSpotRadius;
+	private JCheckBox jCheckBoxDisplayNames;
 
 	
 	
@@ -110,8 +112,10 @@ public class DisplayerPanel extends ActionListenablePanel {
 	public Feature getColorSpotByFeature() {
 		return jPanelSpotColor.setColorByFeature;
 	}
-	
-	
+
+	public boolean isDisplaySpotNameSelected() {
+		return jCheckBoxDisplayNames.isSelected();
+	}
 	
 	/*
 	 * PRIVATE METHODS
@@ -160,12 +164,12 @@ public class DisplayerPanel extends ActionListenablePanel {
 				jPanelTrackOptionsLayout.setAlignment(FlowLayout.LEFT);
 				jPanelTrackOptions.setLayout(jPanelTrackOptionsLayout);
 				this.add(jPanelTrackOptions);
-				jPanelTrackOptions.setBounds(10, 187, 280, 117);
+				jPanelTrackOptions.setBounds(10, 212, 280, 117);
 				jPanelTrackOptions.setBorder(new LineBorder(new java.awt.Color(192,192,192), 1, true));
 				{
 					jLabelTrackDisplayMode = new JLabel();
 					jPanelTrackOptions.add(jLabelTrackDisplayMode);
-					jLabelTrackDisplayMode.setText("Track display mode:");
+					jLabelTrackDisplayMode.setText("  Track display mode:");
 					jLabelTrackDisplayMode.setBounds(10, 163, 268, 15);
 					jLabelTrackDisplayMode.setFont(FONT);
 					jLabelTrackDisplayMode.setPreferredSize(new java.awt.Dimension(261, 14));
@@ -197,7 +201,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 				{
 					jLabelFrameDepth = new JLabel();
 					jPanelTrackOptions.add(jLabelFrameDepth);
-					jLabelFrameDepth.setText("Frame depth:");
+					jLabelFrameDepth.setText("  Frame depth:");
 					jLabelFrameDepth.setFont(SMALL_FONT);
 					jLabelFrameDepth.setPreferredSize(new java.awt.Dimension(103, 14));
 				}
@@ -216,7 +220,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 				this.add(jCheckBoxDisplayTracks);
 				jCheckBoxDisplayTracks.setText("Display tracks");
 				jCheckBoxDisplayTracks.setFont(FONT);
-				jCheckBoxDisplayTracks.setBounds(10, 163, 233, 23);
+				jCheckBoxDisplayTracks.setBounds(10, 188, 233, 23);
 				jCheckBoxDisplayTracks.setSelected(true);
 				jCheckBoxDisplayTracks.addActionListener(new ActionListener() {
 					@Override
@@ -251,7 +255,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 				jPanelSpotOptionsLayout.setAlignment(FlowLayout.LEFT);
 				jPanelSpotOptions.setLayout(jPanelSpotOptionsLayout);
 				this.add(jPanelSpotOptions);
-				jPanelSpotOptions.setBounds(10, 63, 280, 85);
+				jPanelSpotOptions.setBounds(10, 63, 280, 110);
 				jPanelSpotOptions.setBorder(new LineBorder(new java.awt.Color(192,192,192), 1, true));
 				{
 					jPanelSpotColor = new JPanelSpotColorGUI(this);
@@ -267,7 +271,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 				}
 				{
 					JLabel jLabelSpotRadius = new JLabel();
-					jLabelSpotRadius.setText("Spot display radius ratio:");
+					jLabelSpotRadius.setText("  Spot display radius ratio:");
 					jLabelSpotRadius.setFont(SMALL_FONT);
 					jPanelSpotOptions.add(jLabelSpotRadius);
 					
@@ -290,6 +294,19 @@ public class DisplayerPanel extends ActionListenablePanel {
 						public void focusGained(FocusEvent e) {	}
 					});
 				}
+				{
+					jCheckBoxDisplayNames = new JCheckBox();
+					jCheckBoxDisplayNames.setText("Display spot names");
+					jCheckBoxDisplayNames.setFont(SMALL_FONT);
+					jCheckBoxDisplayNames.setSelected(false);
+					jPanelSpotOptions.add(jCheckBoxDisplayNames);
+					jCheckBoxDisplayNames.addActionListener(new ActionListener() {
+						@Override
+						public void actionPerformed(ActionEvent e) {
+							fireAction(SPOT_DISPLAY_LABEL_CHANGED);
+						}
+					});
+				}
 			}
 			{
 				jLabelDisplayOptions = new JLabel();
@@ -304,7 +321,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 				jButtonShowTrackScheme.setText("Track scheme");
 				jButtonShowTrackScheme.setIcon(TRACK_SCHEME_ICON);
 				jButtonShowTrackScheme.setFont(FONT);
-				jButtonShowTrackScheme.setBounds(10, 320, 120, 30);
+				jButtonShowTrackScheme.setBounds(10, 345, 120, 30);
 				jButtonShowTrackScheme.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
@@ -333,4 +350,6 @@ public class DisplayerPanel extends ActionListenablePanel {
 			displayerPanel_IL.setPreferredSize(new java.awt.Dimension(300, 469));
 		}
 	}
+
+
 }
