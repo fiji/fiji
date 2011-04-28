@@ -44,7 +44,7 @@ for jar in $(case "$mode" in
 		find plugins jars -name \*.jar
 		;;
 	updater)
-		./fiji --jar plugins/Fiji_Updater.jar --list-current |
+		./fiji --update list-current |
 		grep -e '^plugins/' -e '^jars/' |
 		sed -n -e 's|^|/var/www/update/|' -e '/\.jar-/p'
 		;;
