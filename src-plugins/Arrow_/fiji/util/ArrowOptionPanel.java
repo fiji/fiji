@@ -37,14 +37,6 @@ import javax.swing.event.EventListenerList;
 public class ArrowOptionPanel extends javax.swing.JFrame {
 
 	private static final long serialVersionUID = 1;
-	{
-		//Set Look & Feel
-		try {
-			javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
     /** A list of event listeners for this component. */
     private  EventListenerList listenerList = new EventListenerList();
     private boolean firingActionEvent = false;
