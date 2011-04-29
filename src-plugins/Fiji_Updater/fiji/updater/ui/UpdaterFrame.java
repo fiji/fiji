@@ -1,10 +1,14 @@
 package fiji.updater.ui;
 
+import com.jcraft.jsch.UserInfo;
+
 import fiji.updater.Updater;
 
+import fiji.updater.logic.FileUploader;
 import fiji.updater.logic.Installer;
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginCollection.DependencyMap;
+import fiji.updater.logic.PluginCollection.UpdateSite;
 import fiji.updater.logic.PluginObject;
 import fiji.updater.logic.PluginObject.Action;
 import fiji.updater.logic.PluginObject.Status;
@@ -13,6 +17,7 @@ import fiji.updater.logic.PluginUploader;
 import fiji.updater.util.Downloader;
 import fiji.updater.util.Canceled;
 import fiji.updater.util.Progress;
+import fiji.updater.util.StderrProgress;
 import fiji.updater.util.UpdateJava;
 import fiji.updater.util.Util;
 
@@ -44,6 +49,7 @@ import java.io.File;
 import java.io.IOException;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -52,6 +58,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -67,29 +74,31 @@ import javax.swing.event.TableModelListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-public class UpdaterFrame extends JFrame
-		implements TableModelListener, ListSelectionListener {
-	PluginCollection plugins;
-	protected long xmlLastModified;
+public class UpdaterFrame extends JFrame implements TableModelListener, ListSelectionListener {
+	protected PluginCollection plugins;
 
-	private JFrame loadedFrame;
-	private JTextField txtSearch;
-	private ViewOptions viewOptions;
-	private PluginTable table;
-	private JLabel lblPluginSummary;
-	private PluginDetails pluginDetails;
-	private JButton apply, cancel, easy;
-	boolean easyMode;
+	protected JTextField txtSearch;
+	protected ViewOptions viewOptions;
+	protected PluginTable table;
+	protected JLabel lblPluginSummary;
+	protected PluginDetails pluginDetails;
+	protected JButton apply, cancel, easy, updateSites;
+	protected boolean easyMode;
 
 	//For developers
-	// TODO: no more Hungarian notation
-	private JButton btnUpload;
+	protected JButton upload;
 	boolean canUpload;
+	protected boolean hidden;
 
-	public UpdaterFrame() {
+	public UpdaterFrame(PluginCollection plugins) {
+		this(plugins, false);
+	}
+
+	public UpdaterFrame(final PluginCollection plugins, boolean hidden) {
 		super("Fiji Updater");
 
-		plugins = PluginCollection.getInstance();
+		this.plugins = plugins;
+		this.hidden = hidden;
 
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		addWindowListener(new WindowAdapter() {
@@ -169,7 +178,7 @@ public class UpdaterFrame extends JFrame
 		lblSummaryPanel.add(Box.createHorizontalGlue());
 
 		//Create the plugin table and set up its scrollpane
-		table = new PluginTable(plugins);
+		table = new PluginTable(this);
 		table.getSelectionModel().addListSelectionListener(this);
 		JScrollPane pluginListScrollpane = new JScrollPane(table);
 		pluginListScrollpane.getViewport().setBackground(table.getBackground());
@@ -238,40 +247,48 @@ public class UpdaterFrame extends JFrame
 		}, bottomPanel);
 		apply.setEnabled(false);
 
-		//includes button to upload to server if is a Developer using
-		if (Util.isDeveloper) {
-			bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
-			btnUpload = SwingTools.button("Upload to server",
-					"Upload selected plugins to server", new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					new Thread() {
-						public void run() {
-							upload();
-						}
-					}.start();
-				}
-			}, bottomPanel);
-			btnUpload.setEnabled(false);
+		// Manage update sites
+		updateSites = SwingTools.button("Manage update sites",
+				"Manage multiple update sites for updating and uploading", new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				new SitesDialog(UpdaterFrame.this, UpdaterFrame.this.plugins,
+					UpdaterFrame.this.plugins.hasUploadableSites()).setVisible(true);
+			}
+		}, bottomPanel);
 
-			try {
-				Class pluginChangesClass = Class.forName("fiji.scripting.ShowPluginChanges");
-				if (pluginChangesClass != null && new File(System.getProperty("fiji.dir"), ".git").isDirectory()) {
-					final PlugIn pluginChanges = (PlugIn)pluginChangesClass.newInstance();
-					bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
-					JButton showChanges = SwingTools.button("Show changes",
-							"Show the changes in Git since the last upload", new ActionListener() {
-						public void actionPerformed(ActionEvent e) {
-							new Thread() {
-								public void run() {
-									for (PluginObject plugin : table.getSelectedPlugins())
-										pluginChanges.run(plugin.filename);
-								}
-							}.start();
-						}
-					}, bottomPanel);
-				}
-			} catch (Exception e) { /* ignore */ }
-		}
+		//includes button to upload to server if is a Developer using
+		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
+		upload = SwingTools.button("Upload to server",
+				"Upload selected plugins to server", new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				new Thread() {
+					public void run() {
+						upload();
+					}
+				}.start();
+			}
+		}, bottomPanel);
+		upload.setEnabled(false);
+		upload.setVisible(plugins.hasUploadableSites());
+
+		if (Util.isDeveloper) try {
+			Class pluginChangesClass = Class.forName("fiji.scripting.ShowPluginChanges");
+			if (pluginChangesClass != null && new File(System.getProperty("fiji.dir"), ".git").isDirectory()) {
+				final PlugIn pluginChanges = (PlugIn)pluginChangesClass.newInstance();
+				bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
+				JButton showChanges = SwingTools.button("Show changes",
+						"Show the changes in Git since the last upload", new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						new Thread() {
+							public void run() {
+								for (PluginObject plugin : table.getSelectedPlugins())
+									pluginChanges.run(plugin.filename);
+							}
+						}.start();
+					}
+				}, bottomPanel);
+			}
+		} catch (Exception e) { /* ignore */ }
 
 		// offer to update Java, but only on non-Macs
 		if (!IJ.isMacOSX() && new File(Util.fijiRoot, "java").canWrite()) {
@@ -318,6 +335,14 @@ public class UpdaterFrame extends JFrame
 		SwingTools.addAccelerator(cancel, (JComponent)getContentPane(),
 				cancel.getActionListeners()[0],
 				KeyEvent.VK_ESCAPE, 0);
+
+		addCustomViewOptions();
+	}
+
+	public void setVisible(boolean visible) {
+		super.setVisible(visible && !hidden);
+		if (visible)
+			WindowManager.addWindow(this);
 	}
 
 	public void dispose() {
@@ -326,11 +351,12 @@ public class UpdaterFrame extends JFrame
 	}
 
 	public Progress getProgress(String title) {
+		if (hidden)
+			return new StderrProgress();
 		return new ProgressDialog(this, title);
 	}
 
 	public void valueChanged(ListSelectionEvent event) {
-		table.requestFocusInWindow();
 		pluginsChanged();
 	}
 
@@ -369,7 +395,7 @@ public class UpdaterFrame extends JFrame
 		}
 
 		protected boolean setAction(PluginObject plugin) {
-			return plugin.setFirstValidAction(new Action[] {
+			return plugin.setFirstValidAction(plugins, new Action[] {
 					action, otherAction
 			});
 		}
@@ -392,6 +418,15 @@ public class UpdaterFrame extends JFrame
 				(enable ? label + "/" : "") + otherLabel);
 			setEnabled(enable || enableOther);
 		}
+	}
+
+	public void addCustomViewOptions() {
+		viewOptions.clearCustomOptions();
+
+		Collection<String> names = plugins.getUpdateSiteNames();
+		if (names.size() > 1)
+			for (String name : names)
+				viewOptions.addCustomOption("View files of the '" + name + "' site", plugins.forUpdateSite(name));
 	}
 
 	public void setViewOption(ViewOptions.Option option) {
@@ -419,7 +454,7 @@ public class UpdaterFrame extends JFrame
 	}
 
 	public void applyChanges() {
-		ResolveDependencies resolver = new ResolveDependencies(this);
+		ResolveDependencies resolver = new ResolveDependencies(this, plugins);
 		if (!resolver.resolve())
 			return;
 		new Thread() {
@@ -430,14 +465,16 @@ public class UpdaterFrame extends JFrame
 	}
 
 	private void quit() {
-		if (plugins.hasChanges() &&
-				JOptionPane.showConfirmDialog(this,
-					"You have specified changes. Are you "
-					+ "sure you want to quit?",
-					"Quit?", JOptionPane.YES_NO_OPTION,
-					JOptionPane.WARNING_MESSAGE) !=
-				JOptionPane.YES_OPTION)
+		if (plugins.hasChanges()) {
+			if (!SwingTools.showQuestion(hidden, this, "Quit?",
+				"You have specified changes. Are you sure you want to quit?"))
 			return;
+		}
+		else try {
+			plugins.write();
+		} catch (Exception e) {
+			error("There was an error writing the local metadata cache: " + e);
+		}
 		dispose();
 	}
 
@@ -446,7 +483,10 @@ public class UpdaterFrame extends JFrame
 			if ((child instanceof Container) &&
 					child != table.getParent().getParent())
 				setEasyMode((Container)child);
-			child.setVisible(!easyMode);
+			if (child == upload && !easyMode && !plugins.hasUploadableSites())
+				child.setVisible(false);
+			else
+				child.setVisible(!easyMode);
 		}
 	}
 
@@ -467,48 +507,58 @@ public class UpdaterFrame extends JFrame
 		setEasyMode(!easyMode);
 	}
 
-	private void showFrame() {
-		if (loadedFrame != null) {
-			loadedFrame.setVisible(true);
-			loadedFrame.setLocationRelativeTo(null); //center of the screen
-		}
-	}
-
 	public void install() {
-		Installer installer =
-			new Installer(getProgress("Installing..."));
+		Installer installer = new Installer(plugins, getProgress("Installing..."));
 		try {
 			PluginCollection uninstalled = PluginCollection
 				.clone(plugins.toUninstall());
 			installer.start();
 			for (PluginObject plugin : uninstalled)
 				if (!plugin.isFiji())
-					PluginCollection.getInstance()
-						.remove(plugin);
+					plugins.remove(plugin);
 				else
 					plugin.setStatus(plugin.isObsolete() ?
 						Status.OBSOLETE_UNINSTALLED :
 						Status.NOT_INSTALLED);
 			updatePluginsTable();
 			pluginsChanged();
+			plugins.write();
 			info("Updated successfully.  Please restart Fiji!");
+			dispose();
 		} catch (Canceled e) {
 			// TODO: remove "update/" directory
-			IJ.error("Canceled");
+			error("Canceled");
 			installer.done();
-		} catch (IOException e) {
+		} catch (Exception e) {
+			e.printStackTrace();
 			// TODO: remove "update/" directory
-			// TODO: make error() method
-			IJ.error("Installer failed: " + e);
+			error("Installer failed: " + e);
 			installer.done();
 		}
 	}
 
-	private void removeLoadedFrameIfExists() {
-		if (loadedFrame != null) {
-			loadedFrame.setVisible(false);
-			loadedFrame.dispose();
-			loadedFrame = null;
+	public void updateTheUpdater() {
+		PluginCollection.Filter filter = new PluginCollection.Filter() {
+			public boolean matches(PluginObject plugin) {
+				if (plugin.filename.equals("plugins/Fiji_Updater.jar")) {
+					plugin.setAction(plugins, Action.UPDATE);
+					return true;
+				}
+				return false;
+			}
+		};
+		PluginCollection justTheUpdater = PluginCollection.clone(plugins.filter(filter));
+		Installer installer = new Installer(justTheUpdater, getProgress("Installing the updater..."));
+		try {
+			installer.start();
+		} catch (Canceled e) {
+			// TODO: remove "update/" directory
+			error("Canceled");
+			installer.done();
+		} catch (IOException e) {
+			// TODO: remove "update/" directory
+			error("Installer failed: " + e);
+			installer.done();
 		}
 	}
 
@@ -517,8 +567,8 @@ public class UpdaterFrame extends JFrame
 		pluginDetails.reset();
 		for (PluginObject plugin : table.getSelectedPlugins())
 			pluginDetails.showPluginDetails(plugin);
-		if (Util.isDeveloper &&
-				pluginDetails.getDocument().getLength() > 0)
+		if (pluginDetails.getDocument().getLength() > 0 &&
+				table.areAllSelectedPluginsUploadable())
 			pluginDetails.setEditableForDevelopers();
 
 		for (PluginAction button : pluginActions)
@@ -527,8 +577,7 @@ public class UpdaterFrame extends JFrame
 		apply.setEnabled(plugins.hasChanges());
 		cancel.setText(plugins.hasChanges() ? "Cancel" : "Close");
 
-		if (Util.isDeveloper)
-			// TODO: has to change when details editor is embedded
+		if (plugins.hasUploadableSites())
 			enableUploadOrNot();
 
 		int size = plugins.size();
@@ -564,7 +613,7 @@ public class UpdaterFrame extends JFrame
 				+ sizeToString(bytesToDownload);
 		if (uninstall > 0)
 			text += " uninstall: " + uninstall;
-		if (Util.isDeveloper)
+		if (plugins.hasUploadableSites())
 			text += ", upload: " + upload + ", upload size: "
 				+ sizeToString(bytesToUpload);
 		lblPluginSummary.setText(text);
@@ -590,14 +639,8 @@ public class UpdaterFrame extends JFrame
 		pluginsChanged();
 	}
 
-	public long getLastModified() {
-		return xmlLastModified;
-	}
-
-	// setLastModified() is guaranteed to be called after Checksummer ran
-	public void setLastModified(long lastModified) {
-		xmlLastModified = lastModified;
-
+	// checkWritable() is guaranteed to be called after Checksummer ran
+	public void checkWritable() {
 		String list = null;
 		for (PluginObject plugin : plugins) {
 			File file = new File(Util.prefix(plugin.getFilename()));
@@ -621,12 +664,13 @@ public class UpdaterFrame extends JFrame
 	}
 
 	void enableUploadOrNot() {
-		btnUpload.setEnabled(canUpload || plugins.hasUploadOrRemove());
+		upload.setVisible(!easyMode && plugins.hasUploadableSites());
+		upload.setEnabled(canUpload || plugins.hasUploadOrRemove());
 	}
 
 	protected void upload() {
 		ResolveDependencies resolver =
-			new ResolveDependencies(this, true);
+			new ResolveDependencies(this, plugins, true);
 		if (!resolver.resolve())
 			return;
 
@@ -636,12 +680,29 @@ public class UpdaterFrame extends JFrame
 			return;
 		}
 
-		PluginUploader uploader = new PluginUploader(xmlLastModified);
-
-		try {
-			if (!interactiveSshLogin(uploader))
+		List<String> possibleSites =
+			new ArrayList<String>(plugins.getSiteNamesToUpload());
+		if (possibleSites.size() == 0) {
+			error("Huh? No upload site?");
+			return;
+		}
+		String updateSiteName;
+		if (possibleSites.size() == 1)
+			updateSiteName = possibleSites.get(0);
+		else {
+			updateSiteName = SwingTools.getChoice(hidden, this, possibleSites,
+				"Which site do you want to upload to?", "Update site");
+			if (updateSiteName == null)
 				return;
-			uploader.upload(getProgress("Uploading..."));
+		}
+		PluginUploader uploader = new PluginUploader(plugins, updateSiteName);
+
+		Progress progress = null;
+		try {
+			if (!uploader.hasUploader() && !interactiveSshLogin(uploader))
+				return;
+			progress = getProgress("Uploading...");
+			uploader.upload(progress);
 			for (PluginObject plugin : plugins.toUploadOrRemove())
 				if (plugin.getAction() == Action.UPLOAD) {
 					plugin.markUploaded();
@@ -654,31 +715,64 @@ public class UpdaterFrame extends JFrame
 				}
 			updatePluginsTable();
 			canUpload = false;
-			xmlLastModified = uploader.newLastModified;
+			plugins.write();
+			info("Uploaded successfully.");
 			enableUploadOrNot();
+			dispose();
 		} catch (Canceled e) {
 			// TODO: teach uploader to remove the lock file
-			IJ.error("Canceled");
+			error("Canceled");
+			if (progress != null)
+				progress.done();
 		} catch (Throwable e) {
+			IJ.handleException(e);
 			e.printStackTrace();
-			IJ.error("Upload failed: " + e);
+			error("Upload failed: " + e);
+			if (progress != null)
+				progress.done();
 		}
 	}
 
-	protected boolean interactiveSshLogin(PluginUploader uploader) {
-		String username = Prefs.get(Updater.PREFS_USER, "");
-		String password = "";
-		do {
-			//Dialog to enter username and password
-			GenericDialog gd = new GenericDialog("Login");
-			gd.addStringField("Username", username, 20);
-			gd.addStringField("Password", "", 20);
+	protected boolean initializeUpdateSite(String url, String sshHost, String uploadDirectory) {
+		String updateSiteName = "Dummy";
+		PluginCollection plugins = new PluginCollection();
+		plugins.addUpdateSite(updateSiteName, url, sshHost, uploadDirectory, Long.parseLong(Util.timestamp(-1)));
+		PluginUploader uploader = new PluginUploader(plugins, updateSiteName);
+		Progress progress = null;
+		try {
+			if (!uploader.hasUploader() && !interactiveSshLogin(uploader))
+				return false;
+			progress = getProgress("Initializing Update Site...");
+			uploader.upload(progress);
+			// JSch needs some time to finalize the SSH connection
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) { /* ignore */ }
+			return true;
+		} catch (Canceled e) {
+			if (progress != null)
+				progress.done();
+		} catch (Throwable e) {
+			e.printStackTrace();
+			IJ.handleException(e);
+			if (progress != null)
+				progress.done();
+		}
+		return false;
+	}
 
+	protected GenericDialog getPasswordDialog(String title, String username) {
+		GenericDialog gd = new GenericDialog(title);
+		if (username != null)
+			gd.addStringField("Username", username, 20);
+		gd.addStringField("Password", "", 20);
+
+		final TextField pwd =
+			(TextField)gd.getStringFields().lastElement();
+		pwd.setEchoChar('*');
+		if (username != null) {
 			final TextField user =
 				(TextField)gd.getStringFields().firstElement();
-			final TextField pwd =
-				(TextField)gd.getStringFields().lastElement();
-			pwd.setEchoChar('*');
 			if (!username.equals(""))
 				user.addFocusListener(new FocusAdapter() {
 					public void focusGained(FocusEvent e) {
@@ -686,33 +780,81 @@ public class UpdaterFrame extends JFrame
 						user.removeFocusListener(this);
 					}
 				});
+		}
 
+		return gd;
+	}
+
+	protected UserInfo getUserInfo(final String password) {
+		return new UserInfo() {
+			protected String prompt;
+			protected int count = 0;
+
+			public String getPassphrase() {
+				GenericDialog gd = getPasswordDialog(prompt, null);
+				gd.showDialog();
+				return gd.wasCanceled() ? null : gd.getNextString();
+			}
+
+			public String getPassword() {
+				if (count == 1)
+					return password;
+				GenericDialog gd = getPasswordDialog(prompt, null);
+				gd.showDialog();
+				return gd.wasCanceled() ? null : gd.getNextString();
+			}
+
+			public boolean promptPassphrase(String message) {
+				prompt = message;
+				return count++ < 3;
+			}
+
+			public boolean promptPassword(String message) {
+				prompt = message;
+				return count++ < 4;
+			}
+
+			public boolean promptYesNo(String message) {
+				return SwingTools.showYesNoQuestion(hidden, UpdaterFrame.this, "Password", message);
+			}
+
+			public void showMessage(String message) {
+				info(message);
+			}
+		};
+	}
+
+	protected boolean interactiveSshLogin(PluginUploader uploader) {
+		String username = uploader.getDefaultUsername();
+		for (;;) {
+			//Dialog to enter username and password
+			GenericDialog gd = getPasswordDialog("Login", username);
 			gd.showDialog();
 			if (gd.wasCanceled())
 				return false; //return back to user interface
 
 			//Get the required login information
 			username = gd.getNextString();
-			password = gd.getNextString();
+			String password = gd.getNextString();
 
-		} while (!uploader.setLogin(username, password));
+			UserInfo userInfo = getUserInfo(password);
+			if (uploader.setLogin(username, userInfo))
+				break;
+		}
 
 		Prefs.set(Updater.PREFS_USER, username);
 		return true;
 	}
 
 	public void error(String message) {
-		JOptionPane.showMessageDialog(this, message, "Error",
-				JOptionPane.ERROR_MESSAGE);
+		SwingTools.showMessageBox(hidden, this, message, JOptionPane.ERROR_MESSAGE);
 	}
 
 	public void warn(String message) {
-		JOptionPane.showMessageDialog(this, message, "Warning",
-				JOptionPane.WARNING_MESSAGE);
+		SwingTools.showMessageBox(hidden, this, message, JOptionPane.WARNING_MESSAGE);
 	}
 
 	public void info(String message) {
-		JOptionPane.showMessageDialog(this, message, "Information",
-				JOptionPane.INFORMATION_MESSAGE);
+		SwingTools.showMessageBox(hidden, this, message, JOptionPane.INFORMATION_MESSAGE);
 	}
 }

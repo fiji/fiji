@@ -4,6 +4,7 @@ import ij3d.pointlist.PointListDialog;
 import ij.ImagePlus;
 import ij.IJ;
 
+import javax.swing.JPopupMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenu;
 import javax.swing.JCheckBoxMenuItem;
@@ -152,6 +153,7 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 		executer = new Executer(this);
 		this.timeline = new Timeline(this);
 		this.timelineGUI = new TimelineGUI(timeline);
+		canvas.addKeyListener(timelineGUI);
 
 		BranchGroup bg = new BranchGroup();
 		scene.addChild(bg);
@@ -190,6 +192,12 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	 */
 	@Override
 	public void show() {
+		// Java 1.6.0_12 fixes the issues occurring when mixing
+		// AWT heavyweight and Swing lightweight components.
+		// Unfortunately, not everything is working so far, so
+		// comment out the check for the Java version.
+// 		if(System.getProperty("java.version").compareTo("1.6.0_12") < 0)
+		JPopupMenu.setDefaultLightWeightPopupEnabled(false);
 		win = new ImageWindow3D("ImageJ 3D Viewer", this);
 		plDialog = new PointListDialog(win);
 		plDialog.addWindowListener(new WindowAdapter() {

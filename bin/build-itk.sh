@@ -32,13 +32,28 @@ then
 	 eval $CMAKE_COMMAND ../Insight &&
 	 make $PARALLEL)
 fi &&
-MAC_ROOT="$FIJI_ROOT/bin/mac-sysroot" &&
-MAC32_PREFIX="$MAC_ROOT/bin/i686-apple-darwin8" &&
-if test ! -d ITK-build-macosx32/bin/libITKAlgorithms.a
-then
-	if test ! -f TryRunResults-macosx.cmake
+for target in macosx32 macosx64
+do
+	case $target in
+	macosx32)
+		SYSTEMNAME=Darwin &&
+		SO=dylib &&
+		SYSROOT="$FIJI_ROOT/bin/mac-sysroot" &&
+		SYSPREFIX="$SYSROOT/bin/i686-apple-darwin8"
+		;;
+	macosx64)
+		SYSTEMNAME=Darwin &&
+		SO=dylib &&
+		SYSROOT="$FIJI_ROOT/bin/mac-sysroot" &&
+		SYSPREFIX="$SYSROOT/bin/x86_64-apple-darwin8"
+		;;
+	esac &&
+	TRYRUN=TryRunResults-$target.cmake &&
+	if test ! -e ITK-build-$target/bin/libITKAlgorithms.$SO
 	then
-		cat > TryRunResults-macosx.cmake << EOF
+		if test ! -f $TRYRUN
+		then
+			cat > $TRYRUN << EOF
 # DUMMY
 #    indicates whether the executable would have been able to run on its
 #    target platform. If so, set DUMMY to
@@ -78,15 +93,15 @@ SET(VCL_HAS_LFS__TRYRUN_OUTPUT "" CACHE STRING "Output from TRY_RUN" FORCE)
 #    indicates whether the executable would have been able to run on its
 #    target platform. If so, set VXL_HAS_SSE2_HARDWARE_SUPPORT to
 #    the exit code (in many cases 0 for success), otherwise enter "FAILED_TO_RUN".
-SET(VXL_HAS_SSE2_HARDWARE_SUPPORT "VXL_HAS_SSE2_HARDWARE_SUPPORT" CACHE STRING "Result from TRY_RUN" FORCE)
-SET(VXL_HAS_SSE2_HARDWARE_SUPPORT__TRYRUN_OUTPUT "1" CACHE STRING "Output from TRY_RUN" FORCE)
+SET(VXL_HAS_SSE2_HARDWARE_SUPPORT "1" CACHE STRING "Result from TRY_RUN" FORCE)
+SET(VXL_HAS_SSE2_HARDWARE_SUPPORT__TRYRUN_OUTPUT "" CACHE STRING "Output from TRY_RUN" FORCE)
 
 # VXL_SSE2_HARDWARE_SUPPORT_POSSIBLE
 #    indicates whether the executable would have been able to run on its
 #    target platform. If so, set VXL_SSE2_HARDWARE_SUPPORT_POSSIBLE to
 #    the exit code (in many cases 0 for success), otherwise enter "FAILED_TO_RUN".
-SET(VXL_SSE2_HARDWARE_SUPPORT_POSSIBLE "VXL_SSE2_HARDWARE_SUPPORT_POSSIBLE" CACHE STRING "Result from TRY_RUN" FORCE)
-SET(VXL_SSE2_HARDWARE_SUPPORT_POSSIBLE__TRYRUN_OUTPUT "1" CACHE STRING "Output from TRY_RUN" FORCE)
+SET(VXL_SSE2_HARDWARE_SUPPORT_POSSIBLE "1" CACHE STRING "Result from TRY_RUN" FORCE)
+SET(VXL_SSE2_HARDWARE_SUPPORT_POSSIBLE__TRYRUN_OUTPUT "" CACHE STRING "Output from TRY_RUN" FORCE)
 
 # VCL_COMPLEX_POW_WORKS
 #    indicates whether the executable would have been able to run on its
@@ -134,10 +149,10 @@ SET(KWSYS_LFS_WORKS__TRYRUN_OUTPUT "" CACHE STRING "Output from TRY_RUN" FORCE)
 #    indicates whether the executable would have been able to run on its
 #    target platform. If so, set KWSYS_CHAR_IS_SIGNED to
 #    the exit code (in many cases 0 for success), otherwise enter "FAILED_TO_RUN".
-SET(KWSYS_CHAR_IS_SIGNED "FAILED-TO-RUN" CACHE STRING "Result from TRY_RUN" FORCE)
+SET(KWSYS_CHAR_IS_SIGNED "1" CACHE STRING "Result from TRY_RUN" FORCE)
 SET(KWSYS_CHAR_IS_SIGNED__TRYRUN_OUTPUT "" CACHE STRING "Output from TRY_RUN" FORCE)
 
-SET(COREFOUNDATION_LIBRARY "$MAC_ROOT/System/Library/Frameworks/CoreFoundation.framework" CACHE STRING "" FORCE)
+SET(COREFOUNDATION_LIBRARY "$SYSROOT/System/Library/Frameworks/CoreFoundation.framework" CACHE STRING "" FORCE)
 SET(VXL_HAS_INT_8 "1" CACHE STRING "" FORCE)
 SET(VXL_INT_8 "char" CACHE STRING "" FORCE)
 SET(VXL_HAS_INT_16 "1" CACHE STRING "" FORCE)
@@ -149,23 +164,24 @@ SET(VXL_INT_64 "long long" CACHE STRING "" FORCE)
 SET(VXL_HAS_BYTE "1" CACHE STRING "" FORCE)
 SET(VXL_BYTE "char" CACHE STRING "" FORCE)
 EOF
-	fi &&
-	mkdir -p ITK-build-macosx32/bin &&
-	(cd ITK-build-macosx32 &&
-	 eval $CMAKE_COMMAND -D CMAKE_SYSTEM_NAME=Darwin \
-		-D CMAKE_C_COMPILER="$MAC32_PREFIX-gcc" \
-		-D CMAKE_CXX_COMPILER="$MAC32_PREFIX-g++" \
-		-C ../TryRunResults-macosx.cmake ../Insight/ &&
-	 make $PARALLEL || {
-		: most likely, itkmkg3states was built for the _target_ &&
-		cp ../ITK-build/bin/itkmkg3states bin/ &&
-		make $PARALLEL
-	} || {
-		: make sure that vxl_int_32 is set properly &&
-		eval $CMAKE_COMMAND -D CMAKE_SYSTEM_NAME=Darwin \
-			-D CMAKE_C_COMPILER="$MAC32_PREFIX-gcc" \
-			-D CMAKE_CXX_COMPILER="$MAC32_PREFIX-g++" \
-			-C ../TryRunResults-macosx.cmake ../Insight/ &&
-		make $PARALLEL
-	})
-fi
+		fi &&
+		mkdir -p ITK-build-$target/bin &&
+		(cd ITK-build-$target &&
+		 eval $CMAKE_COMMAND -D CMAKE_SYSTEM_NAME=$SYSTEMNAME \
+			-D CMAKE_C_COMPILER="$SYSPREFIX-gcc" \
+			-D CMAKE_CXX_COMPILER="$SYSPREFIX-g++" \
+			-C ../$TRYRUN ../Insight/ &&
+		 make $PARALLEL || {
+			: most likely, itkmkg3states was built for the _target_ &&
+			cp ../ITK-build/bin/itkmkg3states bin/ &&
+			make $PARALLEL
+		} || {
+			: make sure that vxl_int_32 is set properly &&
+			eval $CMAKE_COMMAND -D CMAKE_SYSTEM_NAME=$SYSTEMNAME \
+				-D CMAKE_C_COMPILER="$SYSPREFIX-gcc" \
+				-D CMAKE_CXX_COMPILER="$SYSPREFIX-g++" \
+				-C ../$TRYRUN ../Insight/ &&
+			make $PARALLEL
+		})
+	fi || exit 1
+done

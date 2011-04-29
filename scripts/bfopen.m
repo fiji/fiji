@@ -117,6 +117,9 @@ canTypecast = versionCheck(version, 7, 1);
 bioFormatsVersion = char(loci.formats.FormatTools.VERSION);
 isBioFormatsTrunk = versionCheck(bioFormatsVersion, 5, 0);
 
+% initialize logging
+loci.common.DebugTools.enableLogging('INFO');
+
 r = loci.formats.ChannelFiller();
 r = loci.formats.ChannelSeparator(r);
 if stitchFiles
@@ -124,6 +127,7 @@ if stitchFiles
 end
 
 tic
+r.setMetadataStore(loci.formats.MetadataTools.createOMEXMLMetadata());
 r.setId(id);
 numSeries = r.getSeriesCount();
 result = cell(numSeries, 2);
@@ -267,6 +271,7 @@ for s = 1:numSeries
     result{s, 1} = imageList;
     result{s, 2} = metadataList;
     result{s, 3} = colorMaps;
+    result{s, 4} = r.getMetadataStore();
     fprintf('\n');
 end
 r.close();

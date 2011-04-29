@@ -9,6 +9,7 @@
 import fiji.CheckClassVersions;
 
 import fiji.build.Fake;
+import fiji.build.ByteCodeAnalyzer;
 
 import fiji.updater.Updater;
 
@@ -55,6 +56,7 @@ usage(message) {
 fuzz = 0;
 verbose = 0;
 gui = false;
+color = false;
 extraArgs = new ArrayList();
 
 while (bsh.args.length > 0 && bsh.args[0].startsWith("-")) {
@@ -66,6 +68,8 @@ while (bsh.args.length > 0 && bsh.args[0].startsWith("-")) {
 		handled = 2;
 	}
 	else if (bsh.args[0].equals("-p") || bsh.args[0].equals("--color")) {
+		if (bsh.args[0].equals("--color"))
+			color = true;
 		extraArgs.add(bsh.args[0]);
 		if (bsh.args[0].equals("-p")) {
 			extraArgs.add("-M");
@@ -92,9 +96,8 @@ if (bsh.args.length == 0)
 
 fijiDir = System.getProperty("fiji.dir");
 dbPath = fijiDir + "/db.xml.gz";
-new XMLFileReader(new GZIPInputStream(new FileInputStream(dbPath)), 0);
-
-plugins = PluginCollection.getInstance();
+plugins = new PluginCollection();
+new XMLFileReader(plugins).read(null, new GZIPInputStream(new FileInputStream(dbPath)), 0);
 
 // Read the Fakefile
 
@@ -195,7 +198,7 @@ toStringArray(list) {
 javap(String jar, String className, String outputFile) {
 	args = new ArrayList(Arrays.asList(new String[] {
 		System.getProperty("fiji.executable"),
-			"--javap", "-cp", jar, "-c",
+			"--javap", "-cp", jar, "-c", "-l",
 	}));
 	if (verbose > 1)
 		args.add("-verbose");
@@ -208,6 +211,14 @@ hexdump(String file, String outputFile) {
 	out = new ByteArrayOutputStream();
 	execute(new String[] { "hexdump", "-C", file }, null, out);
 	copyFile(new ByteArrayInputStream(out.toByteArray()), new FileOutputStream(outputFile));
+}
+
+analyzeByteCode(String file, String outputFile) {
+	outStream = new ByteArrayOutputStream();
+	copyFile(new FileInputStream(file), outStream);
+	analyzer = new ByteCodeAnalyzer(outStream.toByteArray(), true);
+	inStream = new ByteArrayInputStream(analyzer.toString().getBytes());
+	copyFile(inStream, new FileOutputStream(outputFile));
 }
 
 String toString(Map map, Object key) {
@@ -301,9 +312,13 @@ void compareToUploaded(String plugin) {
 							if (remoteVersion != localVersion)
 								System.out.println("class versions differ! remote: " + remoteVersion + ", local: " + localVersion);
 						}
-						if (verbose > 2) {
+						if (verbose == 3) {
 							hexdump(remoteFile, remoteFile);
 							hexdump(localFile, localFile);
+						}
+						else if (verbose > 3) {
+							analyzeByteCode(remoteFile, remoteFile);
+							analyzeByteCode(localFile, localFile);
 						}
 						else if (e1.getName().endsWith(".class")) {
 							className = e1.getName();
@@ -311,7 +326,7 @@ void compareToUploaded(String plugin) {
 							javap(tmpJar, className, remoteFile);
 							javap(localPath, className, localFile);
 						}
-						execute(new String[] { "git", "diff", "--no-index", remoteFile, localFile }, null);
+						execute(new String[] { "git", "diff", "--color=" + (color ? "always" : "auto"), "--no-index", remoteFile, localFile }, null);
 					}
 				}
 				i++; j++;

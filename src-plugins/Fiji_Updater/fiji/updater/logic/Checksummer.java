@@ -39,15 +39,17 @@ import java.util.zip.ZipException;
  * plugins
  */
 public class Checksummer extends Progressable {
-	int counter, total;
-	Map<String, PluginObject.Version> cachedChecksums;
+	protected PluginCollection plugins;
+	protected int counter, total;
+	protected Map<String, PluginObject.Version> cachedChecksums;
 
-	public Checksummer(Progress progress) {
+	public Checksummer(PluginCollection plugins, Progress progress) {
+		this.plugins = plugins;
 		addProgress(progress);
 		setTitle("Checksumming");
 	}
 
-	static class StringPair {
+	protected static class StringPair {
 		String path, realPath;
 		StringPair(String path, String realPath) {
 			this.path = path;
@@ -87,14 +89,17 @@ public class Checksummer extends Progressable {
 		for (String item : file.list()) {
 			String path = dir + "/" + item;
 			file = new File(prefix(path));
+			if (item.startsWith("."))
+				continue;
 			if (file.isDirectory()) {
-				if (!item.equals(".") && !item.equals(".."))
-					queueDir(path, extensions);
+				queueDir(path, extensions);
 				continue;
 			}
-			int dot = item.lastIndexOf('.');
-			if (dot < 0 || !extensions.contains(item.substring(dot)))
-				continue;
+			if (!extensions.contains("")) {
+				int dot = item.lastIndexOf('.');
+				if (dot < 0 || !extensions.contains(item.substring(dot)))
+					continue;
+			}
 			if (exists(file))
 				queue(path, file.getAbsolutePath());
 		}
@@ -128,34 +133,36 @@ public class Checksummer extends Progressable {
 		if (new File(realPath).exists()) try {
 			timestamp = Util.getTimestamp(realPath);
 			checksum = getDigest(path, realPath, timestamp);
+
+			PluginObject plugin = plugins.getPlugin(path);
+			if (plugin == null) {
+				if (checksum == null)
+					throw new RuntimeException("Tried to remove "
+						+ path + ", which is not known to Fiji");
+				if (fijiRoot == null) {
+					plugin = new PluginObject(null, path, checksum,
+							timestamp, Status.NOT_FIJI);
+					tryToGuessPlatform(plugin);
+				}
+				else {
+					plugin = new PluginObject(null, path, null, 0,
+							Status.OBSOLETE);
+					plugin.addPreviousVersion(checksum, timestamp);
+					// for re-upload
+					plugin.newChecksum = checksum;
+					plugin.newTimestamp = timestamp;
+				}
+				plugins.add(plugin);
+			}
+			else if (checksum != null) {
+				plugin.setLocalVersion(checksum, timestamp);
+				if (plugin.getStatus() == Status.OBSOLETE_UNINSTALLED)
+					plugin.setStatus(Status.OBSOLETE);
+			}
 		} catch (ZipException e) {
 			System.err.println("Problem digesting " + realPath);
 		} catch (Exception e) { e.printStackTrace(); }
 
-		PluginCollection plugins = PluginCollection.getInstance();
-		PluginObject plugin = plugins.getPlugin(path);
-		if (plugin == null) {
-			if (checksum == null)
-				throw new RuntimeException("Tried to remove "
-					+ path + ", which is not known to Fiji");
-			if (fijiRoot == null)
-				plugin = new PluginObject(path, checksum,
-						timestamp, Status.NOT_FIJI);
-			else {
-				plugin = new PluginObject(path, null, 0,
-						Status.OBSOLETE);
-				plugin.addPreviousVersion(checksum, timestamp);
-				// for re-upload
-				plugin.newChecksum = checksum;
-				plugin.newTimestamp = timestamp;
-			}
-			plugins.add(plugin);
-		}
-		else if (checksum != null) {
-			plugin.setLocalVersion(checksum, timestamp);
-			if (plugin.getStatus() == Status.OBSOLETE_UNINSTALLED)
-				plugin.setStatus(Status.OBSOLETE);
-		}
 		counter += (int)Util.getFilesize(realPath);
 		itemDone(path);
 		setCount(counter, total);
@@ -186,10 +193,35 @@ public class Checksummer extends Progressable {
 			throw new RuntimeException("Must be developer");
 		this.fijiRoot = new File(fijiRoot).getAbsolutePath() + "/";
 		updateFromLocal();
-		for (PluginObject plugin : PluginCollection.getInstance())
+		for (PluginObject plugin : plugins)
 			if (plugin.isLocallyModified())
 				plugin.addPreviousVersion(plugin.newChecksum,
 						plugin.newTimestamp);
+	}
+
+	protected static boolean tryToGuessPlatform(PluginObject plugin) {
+		// Look for platform names as subdirectories of lib/ and mm/
+		String platform;
+		if (plugin.filename.startsWith("lib/"))
+			platform = plugin.filename.substring(4);
+		else if (plugin.filename.startsWith("mm/"))
+			platform = plugin.filename.substring(3);
+		else
+			return false;
+
+		int slash = platform.indexOf('/');
+		if (slash < 0)
+			return false;
+		platform = platform.substring(0, slash);
+
+		if (platform.equals("linux32"))
+			platform = "linux";
+		for (String valid : Util.platforms)
+			if (platform.equals(valid)) {
+				plugin.addPlatform(platform);
+				return true;
+			}
+		return false;
 	}
 
 	public static final String[][] directories = {
@@ -198,10 +230,14 @@ public class Checksummer extends Progressable {
 			".py", ".rb", ".clj", ".js", ".bsh" },
 		{ "scripts" }, { ".py", ".rb", ".clj", ".js", ".bsh", ".m" },
 		{ "macros" }, { ".txt", ".ijm" },
-		{ "luts" }, { ".lut" }
+		{ "luts" }, { ".lut" },
+		{ "lib" }, { "" },
+		{ "mm" }, { "" },
+		{ "mmautofocus" }, { "" },
+		{ "mmplugins" }, { "" }
 	};
 
-	static final Map<String, Set<String>> extensions;
+	protected static final Map<String, Set<String>> extensions;
 
 	static {
 		extensions = new HashMap<String, Set<String>>();

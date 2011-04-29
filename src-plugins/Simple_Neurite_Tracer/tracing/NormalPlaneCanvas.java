@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010, 2011 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Simple Neurite Tracer".
@@ -31,9 +31,9 @@ import ij.*;
 import ij.gui.*;
 
 import java.awt.*;
-import java.awt.event.*;
 import java.util.*;
 
+@SuppressWarnings("serial")
 class NormalPlaneCanvas extends ImageCanvas {
 
 	HashMap<Integer,Integer> indexToValidIndex = new HashMap<Integer,Integer>();
@@ -58,7 +58,6 @@ class NormalPlaneCanvas extends ImageCanvas {
 		this.angles = angles;
 		this.valid = valid;
 		this.fittedPath = fittedPath;
-		int slices = imp.getStackSize();
 		for( int i = 0; i < scores.length; ++i )
 			if( scores[i] > maxScore )
 				maxScore = scores[i];
@@ -128,6 +127,7 @@ class NormalPlaneCanvas extends ImageCanvas {
 
 	int last_slice = -1;
 
+	// FIXME: drawOverlay in ImageCanvas arrived after I wrote this code, I think
 	protected void drawOverlay(Graphics g) {
 
 		int z = imp.getCurrentSlice() - 1;

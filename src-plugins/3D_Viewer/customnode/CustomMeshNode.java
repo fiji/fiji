@@ -96,4 +96,9 @@ public class CustomMeshNode extends ContentNode {
 	public void swapDisplayedData(String path, String name) {
 		mesh.swapDisplayedData(path, name);
 	}
+
+	@Override
+	public void clearDisplayedData() {
+		mesh.clearDisplayedData();
+	}
 }

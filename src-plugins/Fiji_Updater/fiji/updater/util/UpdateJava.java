@@ -87,17 +87,19 @@ public class UpdateJava implements PlugIn {
 
 		Form download = getForm("post", "Download " + (isJRE ? "JRE" : "JDK"), mainURL);
 		String url = download.url;
-		Form form = getForm("post", download.url, download.submit());
+		Form form = getForm("post", download.url, download.submit(), false);
 		if (isJRE) {
 			form.variables.put(form.ids.get("dnld_platform"), platform);
 			form.variables.put(form.ids.get("dnld_license"), "true");
 			// avoid matching *-rpm.bin
-			url = getLink(Pattern.compile(" *jre-.*[^m]\\." + ext + " *"), form.submit(), form.url);
+			url = getLink(Pattern.compile(" *jre-(?!.*-iftw).*[^m]\\." + ext + " *"), form.submit(), form.url);
 		}
 		else {
 			try {
-				form = getForm("post", form.url);
-			} catch (RuntimeException e) { /* ignore */ }
+				form = getForm("post", form.url, true);
+			} catch (RuntimeException e) {
+				e.printStackTrace();
+			}
 			form.variables.put(form.ids.get("dnld_platform"), platform);
 			// avoid matching *-rpm.bin
 			url = getLink(Pattern.compile(" *jdk-.*[^m]\\." + ext + " *"), form.submit(), form.url);
@@ -125,6 +127,7 @@ public class UpdateJava implements PlugIn {
 	}
 
 	public static void abort(String message) {
+		System.err.println(message);
 		error(message);
 		throw new RuntimeException(Macro.MACRO_CANCELED);
 	}
@@ -364,24 +367,27 @@ public class UpdateJava implements PlugIn {
 		}
 	}
 
-	public Form getForm(final String method, String url) {
+	public Form getForm(final String method, String url, boolean silent) {
 		try {
-			return getForm(method, url, openURL(url));
+			return getForm(method, url, openURL(url), silent);
 		} catch (IOException e) {
 			abort("Could not fetch " + url);
 			return null; // shut up javac
 		}
 	}
 
-	public Form getForm(final String method, String url, InputStream in) {
+	public Form getForm(final String method, String url, InputStream in, boolean silent) {
 		try {
 			List<Form> list = getList(in, getFormParser(url, method));
 			if (list.size() > 1)
 				for (int i = 1; i < list.size(); i++)
 					if (!list.get(i).url.equals(list.get(0).url))
 						abort("Ambiguous form of method '" + method + "' in " + url);
-			if (list.size() == 0)
+			if (list.size() == 0) {
+				if (silent)
+					throw new RuntimeException("None found");
 				abort("Could not find form of method '" + method + "' in " + url);
+			}
 			return list.get(0);
 		} catch (IOException e) {
 			abort("Could not fetch " + url);

@@ -2,24 +2,19 @@
 
 package tracing;
 
-import java.awt.*;
 import java.util.Hashtable;
 import java.util.HashSet;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.io.*;
 import java.util.Enumeration;
 
 import amira.AmiraParameters;
 
 import ij.*;
-import ij.io.*;
-import ij.gui.*;
 import ij.plugin.PlugIn;
 
 import landmarks.Bookstein_From_Landmarks;
 
-import vib.transforms.OrderedTransformations;
 import vib.oldregistration.RegistrationAlgorithm;
 
 import util.FileAndChannel;

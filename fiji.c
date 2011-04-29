@@ -238,7 +238,7 @@ static int path_list_contains(const char *list, const char *path)
 
 static void string_append_path_list(struct string *string, const char *append)
 {
-	if (path_list_contains(string->buffer, append))
+	if (!append || path_list_contains(string->buffer, append))
 		return;
 
 	if (string->length)
@@ -847,10 +847,14 @@ const char *last_slash(const char *path)
 	return slash;
 }
 
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
+
 static const char *make_absolute_path(const char *path)
 {
 	static char bufs[2][PATH_MAX + 1], *buf = bufs[0];
-	char cwd[1024] = "";
+	char cwd[PATH_MAX] = "";
 #ifndef WIN32
 	static char *next_buf = bufs[1];
 	int buf_index = 1, len;
@@ -1899,6 +1903,8 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\tedit the given file in the script editor\n"
 		"\n"
 		"Options to run programs other than ImageJ:\n"
+		"--update\n"
+		"\tstart the command-line version of the Fiji updater\n"
 		"--jdb\n"
 		"\tstart in JDB, the Java debugger\n"
 		"--jython\n"
@@ -1994,7 +2000,7 @@ static void try_with_less_memory(size_t memory_size)
 	new_argv[0] = dos_path(new_argv[0]);
 	for (i = 0; i < j; i++)
 		new_argv[i] = quote_win32(new_argv[i]);
-	execve(new_argv[0], (const char * const *)new_argv, NULL);
+	execve(new_argv[0], (char * const *)new_argv, NULL);
 #else
 	execve(new_argv[0], new_argv, NULL);
 #endif
@@ -2059,6 +2065,13 @@ static int start_ij(void)
 			file_is_newer(fiji_path("fiji.c"), fiji_path("fiji" EXE_EXTENSION)) &&
 			!is_building("fiji"))
 		error("Warning: your Fiji executable is not up-to-date");
+
+#ifdef linux
+	string_append_path_list(java_library_path, getenv("LD_LIBRARY_PATH"));
+#endif
+#ifdef MACOSX
+	string_append_path_list(java_library_path, getenv("DYLD_LIBRARY_PATH"));
+#endif
 
 	if (get_platform() != NULL) {
 		struct string *buffer = string_initf("%s/%s", fiji_path("lib"), get_platform());
@@ -2218,6 +2231,10 @@ static int start_ij(void)
 			string_addf_path_list(class_path, "%s", arg->buffer);
 			main_class = "fiji.JarLauncher";
 			add_option_string(&options, arg, 1);
+		}
+		else if (!strcmp(main_argv[i], "--update")) {
+			string_append_path_list(class_path, fiji_path("plugins/Fiji_Updater.jar"));
+			main_class = "fiji.updater.Main";
 		}
 		else if (handle_one_option(&i, "--class-path", arg) ||
 				handle_one_option(&i, "--classpath", arg) ||
@@ -2416,6 +2433,9 @@ static int start_ij(void)
 	if (retrotranslator && build_classpath(class_path, fiji_path("retro"), 0))
 		return 1;
 
+	/* Handle update/ */
+	update_all_files();
+
 	/* set up class path */
 	if (skip_build_classpath) {
 		/* strip trailing ":" */
@@ -2428,7 +2448,6 @@ static int start_ij(void)
 			string_append_path_list(class_path, fiji_path("misc/headless.jar"));
 
 		if (is_default_main_class(main_class)) {
-			update_all_files();
 			string_append_path_list(class_path, fiji_path("jars/Fiji.jar"));
 			string_append_path_list(class_path, fiji_path("jars/ij.jar"));
 		}
@@ -2469,8 +2488,6 @@ static int start_ij(void)
 		else
 			add_option(&options, "-port7", 1);
 		add_option(&options, "-Dsun.java.command=Fiji", 0);
-
-		update_all_files();
 	}
 
 	/* handle "--headless script.ijm" gracefully */
@@ -2502,6 +2519,9 @@ static int start_ij(void)
 		"fiji.defaultLibPath", JAVA_LIB_PATH,
 		"fiji.executable", main_argv0,
 		"java.library.path", java_library_path->buffer,
+#ifdef WIN32
+		"sun.java2d.noddraw", "true",
+#endif
 		NULL
 	};
 
@@ -2621,7 +2641,7 @@ static int start_ij(void)
 		for (i = 0; i < options.java_options.nr - 1; i++)
 			options.java_options.list[i] =
 				quote_win32(options.java_options.list[i]);
-		execvp(buffer->buffer, (const char * const *)options.java_options.list);
+		execvp(buffer->buffer, (char * const *)options.java_options.list);
 		char message[16384];
 		int off = sprintf(message, "Error: '%s' while executing\n\n",
 				strerror(errno));

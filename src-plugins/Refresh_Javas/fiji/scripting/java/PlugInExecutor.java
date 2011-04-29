@@ -49,11 +49,12 @@ public class PlugInExecutor {
 	}
 
 	public PlugInExecutor(String[] paths) throws MalformedURLException {
-		URL[] urls = new URL[paths.length];
-		for (int i = 0; i < urls.length; i++)
-			urls[i] = new File(paths[i]).toURI().toURL();
-		classLoader = new URLClassLoader(urls);
-		classLoader.setDefaultAssertionStatus(true);
+		try {
+			classLoader = new FijiClassLoader(paths, false);
+			classLoader.setDefaultAssertionStatus(true);
+		} catch (IOException e) {
+			IJ.handleException(e);
+		}
 	}
 
 	/** Create a new object that runs the specified plugin
@@ -103,7 +104,7 @@ public class PlugInExecutor {
 	}
 
 	private final static Pattern wrongClassNamePattern =
-		Pattern.compile("^([^ ]*) \\(wrong name: ([^ ]*)\\)$");
+		Pattern.compile("^(.*) \\(wrong name: ([^ ]*)\\)$");
 
 	public void tryRun(String plugin, String arg, String jarPath, boolean newClassLoader)
 			throws ClassNotFoundException, IOException,

@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010, 2011 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Simple Neurite Tracer".
@@ -64,6 +64,8 @@ import ij3d.UniverseListener;
 
 import util.Bresenham3D;
 import util.XMLFunctions;
+
+import java.text.DecimalFormat;
 
 @SuppressWarnings("serial")
 class TracesFileFormatException extends SAXException {
@@ -246,6 +248,75 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return selectedPathsSet.size() > 0;
 	}
 
+	private static final DecimalFormat fileIndexFormatter = new DecimalFormat("000");
+	protected File getSWCFileForIndex(String prefix, int index) {
+		return new File(prefix+"-"+fileIndexFormatter.format(index)+".swc");
+	}
+
+	public boolean checkOKToWriteAllAsSWC( String prefix ) {
+		List<Path> primaryPaths = Arrays.asList(getPathsStructured());
+		int n = primaryPaths.size();
+		String errorMessage = "";
+		for( int i = 0; i < n; ++i ) {
+			File swcFile = getSWCFileForIndex( prefix, i );
+			if( swcFile.exists() )
+				errorMessage += swcFile.getAbsolutePath()+"\n";
+		}
+		if( errorMessage.length() == 0 )
+			return true;
+		else {
+			errorMessage = "The following files would be overwritten:\n"+errorMessage;
+			errorMessage += "Continue to save, overwriting these files?";
+			return IJ.showMessageWithCancel("Confirm overwriting SWC files...",
+							errorMessage);
+		}
+	}
+
+	public synchronized boolean exportAllAsSWC( String prefix ) {
+		List<Path> primaryPaths = Arrays.asList(getPathsStructured());
+		int i = 0;
+		for( Path primaryPath : primaryPaths ) {
+			File swcFile = getSWCFileForIndex( prefix, i );
+			HashSet<Path> connectedPaths = new HashSet<Path>();
+			LinkedList<Path> nextPathsToConsider = new LinkedList<Path>();
+			nextPathsToConsider.add(primaryPath);
+			while( nextPathsToConsider.size() > 0 ) {
+				Path currentPath = nextPathsToConsider.removeFirst();
+				connectedPaths.add(currentPath);
+				for( Path joinedPath : currentPath.somehowJoins ) {
+					if( ! connectedPaths.contains(joinedPath) )
+						nextPathsToConsider.add( joinedPath );
+				}
+			}
+
+			ArrayList<SWCPoint> swcPoints = null;
+			try {
+				swcPoints = getSWCFor( connectedPaths );
+			} catch( SWCExportException see ) {
+				IJ.error(""+see.getMessage());
+				return false;
+			}
+
+			IJ.showStatus("Exporting SWC data to "+swcFile.getAbsolutePath());
+
+			// FIXME: done elsewhere - DRY
+			try {
+				PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(swcFile),"UTF-8"));
+				pw.println("# Exported from \"Simple Neurite Tracer\" version "+SimpleNeuriteTracer.PLUGIN_VERSION);
+				for( SWCPoint p : swcPoints )
+					p.println(pw);
+				pw.close();
+
+			} catch( IOException ioe) {
+				IJ.error("Saving to "+swcFile.getAbsolutePath()+" failed");
+				return false;
+			}
+			++ i;
+		}
+		IJ.showStatus("Export finished.");
+		return true;
+	}
+
 	/* This method returns an array of the "primary paths", which
 	   should be displayed at the top of a tree-like hierarchy.
 
@@ -265,7 +336,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		TreeSet<Path> pathsLeft = new TreeSet<Path>();
 
 		for( int i = 0; i < allPaths.size(); ++i ) {
-			pathsLeft.add(allPaths.get(i));
+			Path p = allPaths.get(i);
+			if( ! p.isFittedVersionOfAnotherPath() )
+				pathsLeft.add(allPaths.get(i));
 		}
 
 		int markedAsPrimary = 0;
@@ -430,7 +503,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				if( realRadius )
 					radius = pathToUse.radiuses[i];
 				SWCPoint swcPoint = new SWCPoint(currentPointID,
-								 Path.SWC_UNDEFINED,
+								 pathToUse.getSWCType(),
 								 pathToUse.precise_x_positions[i],
 								 pathToUse.precise_y_positions[i],
 								 pathToUse.precise_z_positions[i],
@@ -454,7 +527,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				if( realRadius )
 					radius = pathToUse.radiuses[i];
 				SWCPoint swcPoint = new SWCPoint(currentPointID,
-								 Path.SWC_UNDEFINED,
+								 pathToUse.getSWCType(),
 								 pathToUse.precise_x_positions[i],
 								 pathToUse.precise_y_positions[i],
 								 pathToUse.precise_z_positions[i],
@@ -506,7 +579,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			if( p == null ) {
 				throw new RuntimeException("BUG: A path in allPaths was null!");
 			}
-			String pathName;
 			String name = p.getName();
 			if( name == null )
 				name = "Path [" + pathID + "]";
@@ -758,6 +830,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			pw.println("  <!ATTLIST path           usefitted         (true|false)    #IMPLIED>");
 			pw.println("  <!ATTLIST path           fitted            CDATA           #IMPLIED>");
 			pw.println("  <!ATTLIST path           fittedversionof   CDATA           #IMPLIED>");
+			pw.println("  <!ATTLIST path           swctype           CDATA           #IMPLIED>");
 			pw.println("  <!ATTLIST point          x                 CDATA           #REQUIRED>"); // deprecated
 			pw.println("  <!ATTLIST point          y                 CDATA           #REQUIRED>"); // deprecated
 			pw.println("  <!ATTLIST point          z                 CDATA           #REQUIRED>"); // deprecated
@@ -796,6 +869,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				// This probably should be a String returning
 				// method of Path.
 				pw.print("  <path id=\"" + p.getID() + "\"" );
+				pw.print(" swctype=\""+p.getSWCType()+"\"");
 				String startsString = "";
 				String endsString = "";
 				if( p.startJoins != null ) {
@@ -994,8 +1068,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		} else if( qName.equals("path") ) {
 
 			String idString = attributes.getValue("id");
-			String d = attributes.getValue("d");
 
+			String swcTypeString = attributes.getValue("swctype");
 			String useFittedString = attributes.getValue("usefitted");
 			String fittedIDString = attributes.getValue("fitted");
 			String fittedVersionOfIDString = attributes.getValue("fittedversionof");
@@ -1034,13 +1108,11 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				throw new TracesFileFormatException("If startson is specified for a path, then startsindex or starts[xyz] must also be specified.");
 			}
 
-			if( endsonString != null && (endsindexString == null && ! accurateStartProvided)  ) {
+			if( endsonString != null && (endsindexString == null && ! accurateEndProvided)  ) {
 				throw new TracesFileFormatException("If endson is specified for a path, then endsindex or ends[xyz] must also be specified.");
 			}
 
-			int startson, startsindex, endson, endsindex;
-			double startsx, startsy, startsz;
-			double endsx, endsy, endsz;
+			int startson, endson, endsindex;
 
 			current_path = new Path( x_spacing, y_spacing, z_spacing, spacing_units );
 
@@ -1069,15 +1141,19 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				if( id > maxUsedID )
 					maxUsedID = id;
 
+				if( swcTypeString != null ) {
+					int swcType = Integer.parseInt(swcTypeString);
+					current_path.setSWCType(swcType,false);
+				}
+
 				if( startsonString == null ) {
-					startson = startsindex = -1;
+					startson = -1;
 				} else {
 					startson = Integer.parseInt(startsonString);
 					startsOnInteger = new Integer( startson );
 
 					if( startsxString == null ) {
 						// The index (older file format) was supplied:
-						startsindex = Integer.parseInt(startsindexString);
 						startsIndexInteger = new Integer( startsindexString );
 					} else {
 						startJoinPoint = new PointInImage( Double.parseDouble( startsxString ),

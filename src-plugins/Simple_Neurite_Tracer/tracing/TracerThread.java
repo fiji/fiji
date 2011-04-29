@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010, 2011 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Simple Neurite Tracer".
@@ -26,8 +26,6 @@
 */
 
 package tracing;
-
-import java.util.*;
 
 import features.ComputeCurvatures;
 
@@ -246,7 +244,6 @@ public class TracerThread extends SearchThread {
 					   curvilinear structures in medical images".
 					   The rule I'm using here probably isn't optimal. */
 
-					double e0 = hessianEigenValues[0];
 					double e1 = hessianEigenValues[1];
 					double e2 = hessianEigenValues[2];
 

@@ -159,6 +159,12 @@ public class Volume {
 		return imp;
 	}
 
+	public void clear() {
+		imp = null;
+		image = null;
+		loader = null;
+	}
+
 	public void swap(String path) {
 		IJ.save(imp, path + ".tif");
 		imp = null;
