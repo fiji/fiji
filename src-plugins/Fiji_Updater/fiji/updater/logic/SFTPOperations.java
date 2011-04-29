@@ -12,12 +12,12 @@ import java.util.logging.Logger;
  * @author Jarek Sacha
  * @since 4/21/11 2:15 PM
  */
-final class SFTPUtils {
+final class SFTPOperations {
 
-    private static final Logger LOGGER = Logger.getLogger(SFTPUtils.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(SFTPOperations.class.getName());
 
 
-    private SFTPUtils() {
+    private SFTPOperations() {
     }
 
 
@@ -41,7 +41,7 @@ final class SFTPUtils {
 
     public static void rm(final ChannelSftp sftp, final String path) throws SftpException {
 
-        if (SFTPUtils.fileExists(sftp, path)) {
+        if (SFTPOperations.fileExists(sftp, path)) {
             sftp.rm(path);
         }
     }
