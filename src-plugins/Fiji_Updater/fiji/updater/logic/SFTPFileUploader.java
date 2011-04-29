@@ -1,12 +1,13 @@
 package fiji.updater.logic;
 
-import com.jcraft.jsch.*;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.UserInfo;
 import fiji.updater.util.Canceled;
 import ij.IJ;
 
-import java.io.*;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 
@@ -20,57 +21,28 @@ import java.util.List;
  */
 final public class SFTPFileUploader extends FileUploader {
 
-    private Session session;
-    private ChannelSftp sftp;
-
     // TODO handle situation when *.lock file already exists on the server
     // TODO preserve modification times of uploaded files
     // TODO Use SFTP progress monitor to have more detailed progress notifications (?)
     // TODO Share ConfigInfo and getIdentity with SSHFileUploader (through a separate class SSHConfigInfo?)
 
+    final SFTPOperations sftp;
 
-    public SFTPFileUploader(String username, String sshHost, final String uploadDirectory,
+
+    public SFTPFileUploader(final String username, final String sshHost, final String uploadDirectory,
                             final UserInfo userInfo) throws JSchException {
         super(uploadDirectory);
 
-        int port = 22, colon = sshHost.indexOf(':');
-        if (colon > 0) {
-            port = Integer.parseInt(sshHost.substring(colon + 1));
-            sshHost = sshHost.substring(0, colon);
-        }
-
-        final JSch jsch = new JSch();
-
-        // Reuse ~/.ssh/known_hosts file
-        final File knownHosts = new File(new File(System.getProperty("user.home"), ".ssh"), "known_hosts");
-        jsch.setKnownHosts(knownHosts.getAbsolutePath());
-
-        final ConfigInfo configInfo = getIdentity(username, sshHost);
-        if (configInfo != null) {
-            if (configInfo.username != null) {
-                username = configInfo.username;
-            }
-            if (configInfo.sshHost != null) {
-                sshHost = configInfo.sshHost;
-            }
-            if (configInfo.identity != null) {
-                jsch.addIdentity(configInfo.identity);
-            }
-        }
-
-        session = jsch.getSession(username, sshHost, port);
-        session.setUserInfo(userInfo);
-        session.connect();
-
-        sftp = (ChannelSftp) session.openChannel("sftp");
-        sftp.connect();
+        sftp = new SFTPOperations(username, sshHost, userInfo);
     }
 
 
     //Steps to accomplish entire upload task
     public synchronized void upload(final List<SourceFile> sources, final List<String> locks) throws IOException {
-        timestamp = remoteTimeStamp();
+
         setTitle("Uploading");
+
+        timestamp = remoteTimeStamp();
 
         try {
             uploadFiles(sources);
@@ -79,11 +51,9 @@ final public class SFTPFileUploader extends FileUploader {
             for (final String lock : locks) {
                 final String path = uploadDir + lock + ".lock";
                 try {
-                    SFTPUtils.rm(sftp, path);
-                } catch (final SftpException ex) {
-                    // Handle so it ges to log, but do not re-throw, since 'cancel' exception will be thrown.
-                    //noinspection ThrowableResultOfMethodCallIgnored
-                    wrapException("Failed to remove remote file '" + path + "'.", ex);
+                    sftp.rm(path);
+                } catch (final IOException ex) {
+                    // Do not re-throw, since 'cancel' exception will be thrown.
                 }
             }
             throw cancel;
@@ -93,11 +63,7 @@ final public class SFTPFileUploader extends FileUploader {
         for (final String lock : locks) {
             final String src = uploadDir + lock + ".lock";
             final String dest = uploadDir + lock;
-            try {
-                SFTPUtils.rename(sftp, src, dest);
-            } catch (final SftpException ex) {
-                throw wrapException("Failed to rename remote file '" + src + "' to '" + dest + "'.", ex);
-            }
+            sftp.rename(src, dest);
         }
 
         disconnectSession();
@@ -122,10 +88,8 @@ final public class SFTPFileUploader extends FileUploader {
             final InputStream input = source.getInputStream();
             final String dest = this.uploadDir + target;
             try {
-                log("Upload '" + source.getFilename() + ", size " + source.getFilesize());
-                SFTPUtils.put(sftp, input, dest);
-            } catch (final SftpException ex) {
-                throw wrapException("Failed to upload file '" + target + "'.", ex);
+                log("Upload '" + source.getFilename() + "', size " + source.getFilesize());
+                sftp.put(input, dest);
             } finally {
                 input.close();
             }
@@ -145,22 +109,7 @@ final public class SFTPFileUploader extends FileUploader {
 
 
     public void disconnectSession() throws IOException {
-        // TODO Are those sleep commands needed with SFTP?
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            /* ignore */
-        }
-        int exitStatus = sftp.getExitStatus();
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            /* ignore */
-        }
         sftp.disconnect();
-        session.disconnect();
-        if (exitStatus != -1)
-            throw new IOException("Command failed (see Log)!");
     }
 
 
@@ -177,25 +126,12 @@ final public class SFTPFileUploader extends FileUploader {
 
         final InputStream in = new ByteArrayInputStream("".getBytes());
         final String destFile = uploadDir + "timestamp";
-        final int mTime;
-        try {
-            SFTPUtils.put(sftp, in, destFile);
-            final SftpATTRS stats = sftp.stat(destFile);
-            SFTPUtils.rm(sftp, destFile);
-            mTime = stats.getMTime();
-        } catch (final SftpException ex) {
-            throw wrapException("Failed to extract remote timestamp.", ex);
-        }
+        final long timestamp;
+        sftp.put(in, destFile);
+        timestamp = sftp.timestamp(destFile);
+        sftp.rm(destFile);
 
-        final Date date = new Date(((long) mTime) * 1000);
-        return Long.parseLong(new SimpleDateFormat("yyyyMMddHHmmss").format(date));
-    }
-
-
-    private IOException wrapException(final String message, final SftpException ex) {
-        final String m = message + " SFTP error id=" + ex.id + ": " + ex.getMessage();
-        IJ.log(m);
-        return new IOException(m);
+        return timestamp;
     }
 
 
@@ -204,52 +140,4 @@ final public class SFTPFileUploader extends FileUploader {
     }
 
 
-    protected static class ConfigInfo {
-
-        String username, sshHost, identity;
-    }
-
-
-    protected ConfigInfo getIdentity(final String username, final String sshHost) {
-        final File config = new File(new File(System.getProperty("user.home"), ".ssh"), "config");
-        if (!config.exists()) {
-            return null;
-        }
-
-        try {
-            final ConfigInfo result = new ConfigInfo();
-            final BufferedReader reader = new BufferedReader(new FileReader(config));
-            boolean hostMatches = false;
-            for (; ;) {
-                String line = reader.readLine();
-                if (line == null)
-                    break;
-                line = line.trim();
-                int space = line.indexOf(' ');
-                if (space < 0) {
-                    continue;
-                }
-                final String key = line.substring(0, space).toLowerCase();
-                if (key.equals("host")) {
-                    hostMatches = line.substring(5).trim().equals(sshHost);
-                } else if (hostMatches) {
-                    if (key.equals("user")) {
-                        if (username == null || username.equals("")) {
-                            result.username = line.substring(5).trim();
-                        }
-                    } else if (key.equals("hostname")) {
-                        result.sshHost = line.substring(9).trim();
-                    } else if (key.equals("identityfile")) {
-                        result.identity = line.substring(13).trim();
-                    }
-                    // TODO what if condition do match any here?
-                }
-            }
-            reader.close();
-            return result;
-        } catch (final Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
 }

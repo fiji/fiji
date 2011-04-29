@@ -2,13 +2,9 @@ package fiji.updater.logic;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
-import com.jcraft.jsch.HostKey;
-import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.UserInfo;
-
-import fiji.updater.Updater;
 
 import fiji.updater.util.Canceled;
 import fiji.updater.util.IJLogOutputStream;
@@ -16,23 +12,15 @@ import fiji.updater.util.InputStream2IJLog;
 
 import ij.IJ;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class SSHFileUploader extends FileUploader {
 	private Session session;
 	private Channel channel;
-	private long uploadedBytes;
-	private long uploadSize;
 	private OutputStream out;
 	protected OutputStream err;
 	private InputStream in;
@@ -43,31 +31,7 @@ public class SSHFileUploader extends FileUploader {
 
 		err = new IJLogOutputStream();
 
-		int port = 22, colon = sshHost.indexOf(':');
-		if (colon > 0) {
-			port = Integer.parseInt(sshHost.substring(colon + 1));
-			sshHost = sshHost.substring(0, colon);
-		}
-
-		JSch jsch = new JSch();
-
-		// Reuse ~/.ssh/known_hosts file
-		File knownHosts = new File(new File(System.getProperty("user.home"), ".ssh"), "known_hosts");
-		jsch.setKnownHosts(knownHosts.getAbsolutePath());
-
-		ConfigInfo configInfo = getIdentity(username, sshHost);
-		if (configInfo != null) {
-			if (configInfo.username != null)
-				username = configInfo.username;
-			if (configInfo.sshHost != null)
-				sshHost = configInfo.sshHost;
-			if (configInfo.identity != null)
-				jsch.addIdentity(configInfo.identity);
-		}
-
-		session = jsch.getSession(username, sshHost, 22);
-		session.setUserInfo(userInfo);
-		session.connect();
+        session = SSHSessionCreator.connect(username, sshHost, userInfo);
 	}
 
 	//Steps to accomplish entire upload task
@@ -275,49 +239,5 @@ public class SSHFileUploader extends FileUploader {
 			IJ.error(sb.toString());
 		}
 		return b;
-	}
-
-	protected static class ConfigInfo {
-		String username, sshHost, identity;
-	}
-
-	protected ConfigInfo getIdentity(String username, String sshHost) {
-		File config = new File(new File(System.getProperty("user.home"), ".ssh"), "config");
-		if (!config.exists())
-			return null;
-
-		try {
-			ConfigInfo result = new ConfigInfo();
-			BufferedReader reader = new BufferedReader(new FileReader(config));
-			boolean hostMatches = false;
-			for (;;) {
-				String line = reader.readLine();
-				if (line == null)
-					break;
-				line = line.trim();
-				int space = line.indexOf(' ');
-				if (space < 0)
-					continue;
-				String key = line.substring(0, space).toLowerCase();
-				if (key.equals("host"))
-					hostMatches = line.substring(5).trim().equals(sshHost);
-				else if (hostMatches) {
-					if (key.equals("user")) {
-						if (username == null || username.equals(""))
-							result.username = line.substring(5).trim();
-					}
-					else if (key.equals("hostname"))
-						result.sshHost = line.substring(9).trim();
-					else if (key.equals("identityfile"))
-						result.identity = line.substring(13).trim();
-				}
-			}
-			reader.close();
-			return result;
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
 	}
 }
