@@ -35,7 +35,7 @@ public class ExecuteProgram extends Rule {
 	boolean checkUpToDate() {
 		boolean result = super.checkUpToDate();
 
-		if (!result)
+		if (!result || prerequisites.size() == 0)
 			return result;
 
 		/*
