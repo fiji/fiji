@@ -76,17 +76,6 @@ import fiji.expressionparser.ImgLibParser;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>, Albert Cardona <acardona@ini.phys.ethz.ch>
  */
 public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implements ImageListener, WindowListener {
-
-
-	{
-		//Set Look & Feel
-		try {
-			javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
-
 	/*
 	 * FIELDS
 	 */
