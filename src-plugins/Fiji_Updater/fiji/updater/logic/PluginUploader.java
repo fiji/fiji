@@ -106,6 +106,10 @@ public class PluginUploader {
 		public InputStream getInputStream() {
 			return new ByteArrayInputStream(bytes);
 		}
+
+		public String toString() {
+			return compressed;
+		}
 	}
 
 	public void upload(Progress progress) throws Exception  {
