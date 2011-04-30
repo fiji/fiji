@@ -68,22 +68,28 @@ public class Select_Bounding_Box implements PlugInFilter {
 					ip.getWidth(), ip.getHeight());
 
 		// get the border's values
-		double[] values =
-			new double[(rect.width + rect.height - 2) * 2];
-		for (int i = 0; i < rect.width; i++) {
-			values[i] = ip.getf(rect.x + i, rect.y + 0);
-			values[i + rect.width] =
-				ip.getf(rect.x + i, rect.y + rect.height - 1);
+		float[] values = new float[(rect.width + rect.height - 2) * 2];
+		if (ip instanceof ColorProcessor) {
+			ColorProcessor cp = (ColorProcessor)ip;
+			for (int i = 0; i < rect.width; i++) {
+				values[i] = cp.get(rect.x + i, rect.y + 0) & 0xffffff;
+				values[i + rect.width] = cp.get(rect.x + i, rect.y + rect.height - 1) & 0xffffff;
+			}
+			for (int i = 1; i < rect.height - 1; i++) {
+				values[i + 2 * rect.width - 1] = cp.get(rect.x + 0, rect.y + i) & 0xffffff;
+				values[i + 2 * rect.width - 1 + rect.height - 2] = cp.get(rect.x + rect.width - 1, rect.y + i) & 0xffffff;
+			}
 		}
-		for (int i = 1; i < rect.height - 1; i++) {
-			values[i + 2 * rect.width - 1] =
-				ip.getf(rect.x + 0, rect.y + i);
-			values[i + 2 * rect.width - 1 + rect.height - 2] =
-				ip.getf(rect.x + rect.width - 1, rect.y + i);
+		else {
+			for (int i = 0; i < rect.width; i++) {
+				values[i] = ip.getf(rect.x + i, rect.y + 0);
+				values[i + rect.width] = ip.getf(rect.x + i, rect.y + rect.height - 1);
+			}
+			for (int i = 1; i < rect.height - 1; i++) {
+				values[i + 2 * rect.width - 1] = ip.getf(rect.x + 0, rect.y + i);
+				values[i + 2 * rect.width - 1 + rect.height - 2] = ip.getf(rect.x + rect.width - 1, rect.y + i);
+			}
 		}
-		if (ip instanceof ColorProcessor)
-			for (int i = 0; i < values.length; i++)
-				values[i] = ((int)values[i]) & 0xffffff;
 
 		// return the most frequent value
 		Arrays.sort(values);
