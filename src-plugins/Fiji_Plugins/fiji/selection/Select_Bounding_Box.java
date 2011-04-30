@@ -19,7 +19,7 @@ import java.awt.Rectangle;
 import java.util.Arrays;
 
 public class Select_Bounding_Box implements PlugInFilter {
-	enum Mode { SELECTION, AUTOCROP, AUTOAUTOCROP };
+	enum Mode { SELECTION, AUTOCROP, AUTOAUTOCROP, AUTOSELECTION };
 	Mode mode = Mode.SELECTION;
 
 	ImagePlus image;
@@ -30,12 +30,14 @@ public class Select_Bounding_Box implements PlugInFilter {
 			mode = Mode.AUTOCROP;
 		else if ("autoautocrop".equals(arg))
 			mode = Mode.AUTOAUTOCROP;
+		else if ("autoselect".equals(arg))
+			mode = Mode.AUTOSELECTION;
 		return DOES_ALL | DOES_STACKS | SUPPORTS_MASKING | NO_CHANGES;
 	}
 
 	public void run(ImageProcessor ip) {
 		double background;
-		if (mode == Mode.AUTOAUTOCROP)
+		if (mode == Mode.AUTOAUTOCROP || mode == Mode.AUTOSELECTION)
 			background = guessBackground(ip);
 		else if (ip instanceof ColorProcessor) {
 			Color color = Toolbar.getBackgroundColor();
@@ -53,6 +55,7 @@ public class Select_Bounding_Box implements PlugInFilter {
 		Rectangle rect = getBoundingBox(ip, ip.getRoi(), background);
 		switch (mode) {
 			case SELECTION:
+			case AUTOSELECTION:
 				image.setRoi(rect);
 				break;
 			case AUTOCROP: case AUTOAUTOCROP:
