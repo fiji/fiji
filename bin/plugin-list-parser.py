@@ -94,6 +94,8 @@ def createPluginsTree(fiji_folder):
                 menuPath = top[top.find(PLUGINS_FOLDER) + len(PLUGINS_FOLDER) + 1:].replace('/', '>')
                 if menuPath == '':
                     menuPath = 'Plugins'
+                elif menuPath.startswith('Scripts>'):
+                    menuPath = menuPath[8:]
                 else:
                     menuPath = 'Plugins>' + menuPath
                 menuItemLabel = name[:-len(file_extension)].replace('_', ' ')
