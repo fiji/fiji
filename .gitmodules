@@ -67,3 +67,6 @@
 [submodule "modules/javassist"]
 	path = modules/javassist
 	url = contrib@pacific.mpi-cbg.de:/srv/git/javassist
+[submodule "jsch"]
+	path = modules/jsch
+	url = contrib@pacific.mpi-cbg.de:/srv/git/jsch
