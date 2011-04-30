@@ -146,6 +146,7 @@ JAR_EXTENSION = '.jar'
 PLUGINS_TYPE = {JAR_EXTENSION:'java jar file',
                 '.class':'java class file',
                 '.txt':'macro',
+                '.ijm':'macro',
                 '.js':'javascript file',
                 '.rb':'jruby script',
                 '.py':'jython script',
