@@ -90,7 +90,7 @@ def createPluginsTree(fiji_folder):
                 continue
             elif type == PLUGINS_TYPE.get(JAR_EXTENSION):
                 appendJar(os.path.join(plugins_location, name), type)
-            else: # Plain plugin
+            elif file_name.find('_') >= 0: # Plain plugin
                 menuPath = top[top.find(PLUGINS_FOLDER) + len(PLUGINS_FOLDER) + 1:].replace('/', '>')
                 if menuPath == '':
                     menuPath = 'Plugins'
