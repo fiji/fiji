@@ -133,7 +133,6 @@ SUBMODULE_TARGETS=\
 	jars/ij-plugin.jar \
 	jars/ij-tool.jar \
 	jars/ij-ui.jar \
-	jars/ij-util.jar \
 	jars/ij-awt-common.jar \
 	jars/ij-imagej.jar \
 	jars/ij-platform-macosx.jar \
@@ -332,7 +331,6 @@ jars/ij-platform.jar <- modules/imagej2/
 jars/ij-plugin.jar <- modules/imagej2/
 jars/ij-tool.jar <- modules/imagej2/
 jars/ij-ui.jar <- modules/imagej2/
-jars/ij-util.jar <- modules/imagej2/
 jars/ij-awt-common.jar <- modules/imagej2/
 jars/ij-imagej.jar <- modules/imagej2/
 jars/ij-platform-macosx.jar <- modules/imagej2/
