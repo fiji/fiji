@@ -166,7 +166,10 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 	private JPanel buttonsPanel;
 
 	// panel containing the potts slider
-	private JPanel weightPanel;
+	private JPanel dataPanel;
+	private JPanel pottsPanel;
+	private JPanel edgesPanel;
+	private JPanel edgeSelectorPanel;
 
 	// start graph cut button
 	private JButton applyButton;
@@ -351,7 +354,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			sequenceButton.setToolTipText("Create a sequence of segmentations with different parameters");
 	
 			dataSlider = new JSlider(JSlider.HORIZONTAL, DATA_MIN, DATA_MAX, (int)(DATA_INIT/DATA_SCALE));
-			dataSlider.setToolTipText("Adjust the influence of the data term.");
+			dataSlider.setToolTipText("Adjust the expected numbers of foreground pixels.");
 			dataSlider.setMajorTickSpacing(500);
 			dataSlider.setMinorTickSpacing(10);
 			dataSlider.setPaintTicks(true);
@@ -443,27 +446,66 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			applyConstraints.gridy++;
 	
 			// Potts panel
-			GridBagLayout weightsLayout = new GridBagLayout();
-			GridBagConstraints weightsConstraints = new GridBagConstraints();
-			weightPanel = new JPanel();
-			weightPanel.setBorder(BorderFactory.createTitledBorder("Smoothness"));
-			weightPanel.setLayout(weightsLayout);
-			weightsConstraints.anchor = GridBagConstraints.NORTHWEST;
-			weightsConstraints.fill = GridBagConstraints.HORIZONTAL;
-			weightsConstraints.gridwidth = 1;
-			weightsConstraints.gridheight = 1;
-			weightsConstraints.gridx = 0;
-			weightsConstraints.gridy = 0;
-			weightPanel.add(dataSlider, weightsConstraints);
-			weightsConstraints.gridy++;
-			weightPanel.add(pottsSlider, weightsConstraints);
-			weightsConstraints.gridy++;
-			weightPanel.add(edgeSlider, weightsConstraints);
-			weightsConstraints.gridy++;
-			weightPanel.add(edgeSelector, weightsConstraints);
-			weightsConstraints.gridy++;
-			weightsConstraints.insets = new Insets(5, 5, 6, 6);
-	
+			GridBagLayout dataLayout = new GridBagLayout();
+			GridBagConstraints dataConstraints = new GridBagConstraints();
+			dataPanel = new JPanel();
+			dataPanel.setBorder(BorderFactory.createTitledBorder("Foreground bias"));
+			dataPanel.setLayout(dataLayout);
+			dataConstraints.anchor = GridBagConstraints.NORTHWEST;
+			dataConstraints.fill = GridBagConstraints.HORIZONTAL;
+			dataConstraints.gridwidth = 1;
+			dataConstraints.gridheight = 1;
+			dataConstraints.gridx = 0;
+			dataConstraints.gridy = 0;
+			dataPanel.add(dataSlider, dataConstraints);
+			dataConstraints.gridy++;
+			dataConstraints.insets = new Insets(5, 5, 6, 6);
+
+			GridBagLayout pottsLayout = new GridBagLayout();
+			GridBagConstraints pottsConstraints = new GridBagConstraints();
+			pottsPanel = new JPanel();
+			pottsPanel.setBorder(BorderFactory.createTitledBorder("Smoothness"));
+			pottsPanel.setLayout(pottsLayout);
+			pottsConstraints.anchor = GridBagConstraints.NORTHWEST;
+			pottsConstraints.fill = GridBagConstraints.HORIZONTAL;
+			pottsConstraints.gridwidth = 1;
+			pottsConstraints.gridheight = 1;
+			pottsConstraints.gridx = 0;
+			pottsConstraints.gridy = 0;
+			pottsPanel.add(pottsSlider, pottsConstraints);
+			pottsConstraints.gridy++;
+			pottsConstraints.insets = new Insets(5, 5, 6, 6);
+
+			GridBagLayout edgesLayout = new GridBagLayout();
+			GridBagConstraints edgesConstraints = new GridBagConstraints();
+			edgesPanel = new JPanel();
+			edgesPanel.setBorder(BorderFactory.createTitledBorder("Edge image influence"));
+			edgesPanel.setLayout(edgesLayout);
+			edgesConstraints.anchor = GridBagConstraints.NORTHWEST;
+			edgesConstraints.fill = GridBagConstraints.HORIZONTAL;
+			edgesConstraints.gridwidth = 1;
+			edgesConstraints.gridheight = 1;
+			edgesConstraints.gridx = 0;
+			edgesConstraints.gridy = 0;
+			edgesPanel.add(edgeSlider, edgesConstraints);
+			edgesConstraints.gridy++;
+			edgesConstraints.insets = new Insets(5, 5, 6, 6);
+
+			GridBagLayout edgeSelectorLayout = new GridBagLayout();
+			GridBagConstraints edgeSelectorConstraints = new GridBagConstraints();
+			edgeSelectorPanel = new JPanel();
+			edgeSelectorPanel.setBorder(BorderFactory.createTitledBorder("Edge image"));
+			edgeSelectorPanel.setLayout(edgeSelectorLayout);
+			edgeSelectorConstraints.anchor = GridBagConstraints.NORTHWEST;
+			edgeSelectorConstraints.fill = GridBagConstraints.HORIZONTAL;
+			edgeSelectorConstraints.gridwidth = 1;
+			edgeSelectorConstraints.gridheight = 1;
+			edgeSelectorConstraints.gridx = 0;
+			edgeSelectorConstraints.gridy = 0;
+			edgeSelectorPanel.add(edgeSelector, edgeSelectorConstraints);
+			edgeSelectorConstraints.gridy++;
+			edgeSelectorConstraints.insets = new Insets(5, 5, 6, 6);
+
 			// Buttons panel
 			GridBagLayout buttonsLayout = new GridBagLayout();
 			GridBagConstraints buttonsConstraints = new GridBagConstraints();
@@ -477,7 +519,13 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			buttonsConstraints.gridy = 0;
 			buttonsPanel.add(applyPanel, buttonsConstraints);
 			buttonsConstraints.gridy++;
-			buttonsPanel.add(weightPanel, buttonsConstraints);
+			buttonsPanel.add(dataPanel, buttonsConstraints);
+			buttonsConstraints.gridy++;
+			buttonsPanel.add(pottsPanel, buttonsConstraints);
+			buttonsConstraints.gridy++;
+			buttonsPanel.add(edgesPanel, buttonsConstraints);
+			buttonsConstraints.gridy++;
+			buttonsPanel.add(edgeSelectorPanel, buttonsConstraints);
 			buttonsConstraints.gridy++;
 			buttonsConstraints.insets = new Insets(5, 5, 6, 6);
 
