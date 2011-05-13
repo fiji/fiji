@@ -3,6 +3,7 @@ package fiji.plugin.trackmate.segmentation;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.TreeMap;
 
 import mpicbg.imglib.algorithm.extremafinder.RegionalExtremaFactory;
 import mpicbg.imglib.algorithm.extremafinder.RegionalExtremaFinder;
@@ -149,9 +150,30 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 			extremaValues.add(cursor.getType().getRealFloat());
 		}
 		
+		// Create spots
+		TreeMap<Float, Spot> spotQuality = new TreeMap<Float, Spot>();
 		spots = convertToSpots(centeredExtrema, calibration, downsampleFactors);
-		for (int i = 0; i < spots.size(); i++)
+		for (int i = 0; i < spots.size(); i++) {
 			spots.get(i).putFeature(Feature.QUALITY, extremaValues.get(i));
+			spotQuality.put(extremaValues.get(i), spots.get(i));
+		}
+		
+		// Prune spots too close to each other
+		ArrayList<Spot> toRemove = new ArrayList<Spot>();
+		for (Float qual1 : spotQuality.descendingKeySet()) { // Iterate through spot sorted by descending quality
+			
+			Spot spot1 = spotQuality.get(qual1);
+			if (toRemove.contains(spot1))
+				continue;
+			
+			for (Spot spot2 : spotQuality.headMap(qual1).values()) { // Iterate through spots with lower quality
+
+				if (spot1.squareDistanceTo(spot2) < radius*radius) // If they are too close, flag the one with the lowest quality for removal.
+					toRemove.add(spot2);
+				
+			}
+		}
+		spots.removeAll(toRemove);
 		
 		return true;
 	}
