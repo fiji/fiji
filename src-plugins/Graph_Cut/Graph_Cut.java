@@ -113,6 +113,13 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 	private float edgeWeight   = EDGE_INIT;
 	private float edgeVariance = 10.0f;
 
+	// Indicates that edge weights are given implicity as gray-scale differences
+	// of the edge image. This will be false for edge images with 2n-1 pixels
+	// per dimension of the imp image. In this case, the edge weights are stored
+	// directly in the edge image between the doubled pixel coordinates, e.g.,
+	// [2x,2y,...] and [x+2,y,...].
+	private boolean implicitEdgeWeights = true;
+
 	private static final float DATA_SCALE = 0.01f;
 	private static final int DATA_MIN  = 0;
 	private static final int DATA_MAX  = 100;
@@ -614,6 +621,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 		int width   = dimensions[0];
 		int height  = dimensions[1];
 		int zslices = dimensions[3];
+
 		ImagePlus seg = IJ.createImage(imp.getTitle() + " GraphCut segmentation", "8-bit",
 		                               width, height, zslices);
 
@@ -862,6 +870,15 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 		int   numNodes   = image.size();
 		int   numEdges   = 0;
 
+		// determine type of edge image
+		if (edge != null) {
+			int[] edgeDimensions = edge.getDimensions();
+			if (edgeDimensions[0] == 2*dimensions[0] - 1)
+				implicitEdgeWeights = false;
+			else
+				implicitEdgeWeights = true;
+		}
+
 		// compute number of edges
 
 		// straight edges
@@ -881,9 +898,10 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			IJ.log("" + (edgesPerNode*eightEdges) + " diagonal edges");
 		}
 
-		// setup imglib cursor
-		LocalizableByDimCursor<T> cursor = image.createLocalizableByDimCursor();
-		int[] imagePosition              = new int[dimensions.length];
+		// setup imglib cursors
+		LocalizableByDimCursor<T> cursor     = image.createLocalizableByDimCursor();
+		LocalizableByDimCursor<T> edgeCursor = null;
+		int[] imagePosition                  = new int[dimensions.length];
 
 		// create a new graph cut instance
 		// TODO: reuse an old one
@@ -966,12 +984,20 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 		IJ.log("Setting edge weights to " + pottsWeight + "...");
 		if (edge != null) {
 			IJ.log("   (under consideration of edge image with weight " + edgeWeight + ")");
-			cursor   = edgeImage.createLocalizableByDimCursor();
+			if (implicitEdgeWeights)
+				cursor   = edgeImage.createLocalizableByDimCursor();
+			else {
+				cursor     = image.createLocalizableByDimCursor();
+				edgeCursor = edgeImage.createLocalizableByDimCursor();
+			}
 		} else
 			cursor   = image.createLocalizableByDimCursor();
+
 		int[] neighborPosition = new int[dimensions.length];
+		int[] edgePosition     = new int[dimensions.length];
 		int e = 0;
 		start = System.currentTimeMillis();
+
 		while (cursor.hasNext()) {
 
 			cursor.fwd();
@@ -986,7 +1012,9 @@ A:			for (int i = 0; i < neighborPositions.length; i++) {
 
 				for (int d = 0; d < dimensions.length; d++) {
 
-					neighborPosition[d] = imagePosition[d] + neighborPositions[i][d];
+					neighborPosition[d] = imagePosition[d]   + neighborPositions[i][d];
+					edgePosition[d]     = 2*imagePosition[d] + neighborPositions[i][d];
+
 					if (neighborPosition[d] < 0 || neighborPosition[d] >= dimensions[d])
 						continue A;
 				}
@@ -998,12 +1026,23 @@ A:			for (int i = 0; i < neighborPositions.length; i++) {
 
 				if (edge != null) {
 
-					cursor.setPosition(neighborPosition);
-					float neighborValue = cursor.getType().getRealFloat();
+					if (implicitEdgeWeights) {
 
-					// TODO:
-					// cache neighbor distances
-					weight += edgeWeight*edgeLikelihood(value, neighborValue, imagePosition, neighborPosition, dimensions);
+						cursor.setPosition(neighborPosition);
+						float neighborValue = cursor.getType().getRealFloat();
+
+						// TODO:
+						// cache neighbor distances
+						weight += edgeWeight*edgeLikelihood(value, neighborValue, imagePosition, neighborPosition, dimensions);
+					} else {
+
+						edgeCursor.setPosition(edgePosition);
+						float edgeValue = edgeCursor.getType().getRealFloat();
+
+						// TODO:
+						// cache neighbor distances
+						weight += edgeWeight*edgeLikelihood(0, edgeValue, imagePosition, neighborPosition, dimensions);
+					}
 				}
 
 				graphCut.setEdgeWeight(nodeNum, neighborNum, weight);
@@ -1181,7 +1220,6 @@ A:			for (int i = 0; i < neighborPositions.length; i++) {
 			int height   = sequenceImage.getHeight();
 			int channels = sequenceImage.getNChannels();
 			int zslices  = sequenceImage.getNSlices();
-			int frames   = sequenceImage.getNFrames();
 			int sequenceLength = -1;
 
 			if (zslices > 1 && rememberDecision == false) {
