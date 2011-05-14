@@ -1,0 +1,565 @@
+// Action Bar description file : _Magic_Montage2
+run("Action Bar","/plugins/ActionBar/_Magic_Montage2.txt");
+exit();
+
+<line>
+<button>
+label=Images to Stack
+icon=noicon
+arg=run("Images to Stack");
+</line>
+<line>
+<button>
+label=Magic Montage
+icon=noicon
+arg=<macro>
+names=newArray(nSlices);
+imageList = "<imageList>\n";
+for(i=1; i<=nSlices; i++) {
+    setSlice(i);
+    label = getMetadata("Label");
+    if (label=="") label = getTitle;
+    names[i-1] = "image_"+i+"="+label;
+    imageList = imageList+names[i-1]+"\n";
+}
+imageList = imageList+"</imageList>\n";
+
+
+    setBatchMode(true);
+    b=bitDepth;
+    if ((b!=24)&&(nSlices==1)) 	{ run ("Add Slice");}
+    if ((b==24)&&(nSlices==1)) 	{ run("Make Composite"); b=8;}
+    Stack.getDimensions(width, height, channels, slices, frames);
+
+    getVoxelSize(xp,yp,zp,unit);
+    if (channels==1) { channels = channels* frames*slices; Stack.setDimensions(channels,1,1); }
+    id=getImageID;
+    t=getTitle;
+    if (b!=24) {
+        newImage("tempmont", "RGB", width, height,channels);
+        id2=getImageID;
+        for (i=1;i<=channels;i++) {
+            setPasteMode("copy");
+            selectImage(id);
+            Stack.setChannel(i);
+            getLut(r,g,b);
+            run("Duplicate...", "title=temp"+i);
+            setLut(r,g,b);
+            run("RGB Color");
+            run("Copy");
+	selectImage(id2);
+            setSlice(i);
+            run("Paste");
+        }
+    }
+    run("Make Montage...", "scale=1 border=0");
+    rename(getTitle+" of "+t);
+    setVoxelSize(xp,yp,zp,unit);
+    addMetadata(imageList);
+    setBatchMode(false);
+</macro>
+
+<button>
+label=Swap/extend
+icon=noicon
+arg=<tool>
+   id=getImageID;
+    run("Select None");
+    setPasteMode("copy");
+    w = getWidth;
+    h = getHeight;
+    getCursorLoc(x, y, z, flags);
+    xn = info("xMontage");
+    yn = info("yMontage");
+    if ((xn==0)||(yn==0)) exit;
+    xstart = x; ystart = y;
+    x2=x; y2=y;
+    while (flags&16 !=0) {
+        getCursorLoc(x, y, z, flags);
+        if (x!=x2 || y!=y2) spring(xstart, ystart, x, y);
+        x2=x; y2=y;
+        wait(10);
+    }
+    if (x!=xstart || y!=ystart) {
+        xext=0;
+        yext=0;
+        if (x>w) xext=1;
+        if (y>h) yext=1;
+        if ((xext>0)||(yext>0)) {
+            run("Canvas Size...", "width="+w+xext*(w/xn)+" height="+h+yext*(h/yn)+" position=Top-Left zero");
+
+            setMetadata("xMontage="+(parseInt(xn)+parseInt(xext))+"\nyMontage="+(parseInt(yn)+parseInt(yext))+"\n");
+	exit;
+        }
+        sc = floor(xstart/(w/xn));
+        tc = floor(x/(w/xn));
+        sr = floor(ystart/(h/yn));
+        tr = floor(y/(h/yn));
+        swap(sc,sr,tc,tr);
+    }
+</tool>
+</line>
+
+<line>
+<button>
+label=Select panels
+icon=noicon
+arg=<tool>
+    run("Select None");
+    setPasteMode("copy");
+    w = getWidth;
+    h = getHeight;
+    getCursorLoc(x, y, z, flags);
+    id=getImageID;
+    t=getTitle;
+    selectImage(id);
+     xn = info("xMontage");
+    yn = info("yMontage");
+    if ((xn==0)||(yn==0)) {exit;}
+    xc = floor(x/(w/xn));
+    yc = floor(y/(h/yn));
+    panelNumber = yc*xn+xc+1;
+    showStatus(info("image_"+panelNumber ));
+    makeRectangle(xc*(w/xn),yc*(h/yn),(w/xn),(h/yn));
+    xstart = x; ystart = y;
+    x2=x; y2=y;
+    x2c=xc;y2c=yc;
+    while (flags&16 !=0) {
+        getCursorLoc(x, y, z, flags);
+        if (x!=x2 || y!=y2) {
+            x2c = floor(x/(w/xn));
+            y2c = floor(y/(h/yn));
+            makeRectangle(xc*(w/xn),yc*(h/yn),(w/xn)*(x2c-xc+1),(h/yn)*(y2c-yc+1));
+            x2=x; y2=y;
+            wait(10);
+        }
+    }
+    setPasteMode("add");
+</tool>
+
+<button>
+label=Extract selected
+icon=noicon
+arg=<macro>
+    t=getTitle;
+    xn = info("xMontage");
+    yn = info("yMontage");
+    pw = getWidth/xn;
+    ph = getHeight/yn;
+    run("Duplicate...", "title=[Extract of "+t+"]");
+    setMetadata("xMontage="+getWidth/pw+"\nyMontage="+getHeight/ph+"\n");
+</macro>
+</line>
+
+<line>
+<button>
+label=Mark
+icon=noicon
+arg=<macro>
+    roiManager("Add");
+    setOption("Show All",true);
+</macro>
+
+<button>
+label=Extract marked
+icon=noicon
+arg=<macro>
+    id=getImageID;
+    t=getTitle;
+    selectImage(id);
+    roiManager("select",0);
+    getSelectionBounds(x,y,sw,sh);
+    setBatchMode(true);
+    newImage("Extracted Panels of "+t, "RGB", sw,sh,roiManager("count"));
+    id2=getImageID;
+    setPasteMode("copy");
+    for (i=0;i<roiManager("count");i++) {
+        selectImage(id);
+        roiManager("select",i);
+        run("Copy");
+        selectImage(id2);
+        setSlice(i+1);
+        run("Paste");
+    }
+    setBatchMode(false);
+    run("Select None");
+</macro>
+
+</line>
+<line>
+<button>
+label=Draw ROI
+icon=noicon
+arg=<macro>
+setTool(0);
+</macro>
+
+<button>
+label=Crop montage
+icon=noicon
+arg=<macro>
+    setBatchMode(true);
+    setPasteMode("copy");
+    w=getWidth;
+    h= getHeight;
+    b=bitDepth;
+    getSelectionBounds(x,y,sw,sh);
+    t=getTitle;
+    id=getImageID;
+    getVoxelSize(xp,yp,zp,unit);
+    xn = info("xMontage");
+    yn = info("yMontage");
+    xc = floor(x/(w/xn));
+    yc = floor(y/(h/yn));
+    xpa = x-xc*(w/xn);
+    ypa= y-yc*(h/yn);
+    newImage("Crop of "+t,b+"RGB",sw,sh,(xn)*(yn));
+    id2=getImageID;
+    for (j=0;j<yn;j++) {
+        for (i=0;i<xn;i++) {
+            selectImage(id);
+            makeRectangle(i*(w/xn)+xpa,j*(h/yn)+ypa,sw,sh);
+            run("Copy");
+            selectImage(id2);
+            setSlice(j*(xn)+i+1);
+            run("Paste");
+        }
+    }
+    setVoxelSize(xp,yp,zp,unit);
+    setBatchMode(false);
+</macro>
+</line>
+
+<line>
+<button>
+label=Copy (c)
+icon=noicon
+arg=<macro>
+run("Copy");
+</macro>
+<button>
+label=Paste/overlay (v)
+icon=noicon
+arg=<macro>
+run("Paste");
+</macro>
+</line>
+
+<line>
+<button>
+label=Fit clipboard in panel
+icon=noicon
+arg=<macro>
+    getSelectionBounds(x,y,sw,sh);
+    id=getImageID;
+    setBatchMode(true);
+    ffp=sw/sh;
+    run("Internal Clipboard");
+    run("RGB Color");
+    ffc=getWidth/getHeight;
+    if (ffc>ffp) {
+        run("Size...", "width="+sw+" height="+sw/ffc+" constrain interpolate");
+        run("Canvas Size...", "width="+sw+" height="+sh+" position=Center zero");
+    } else {
+        run("Size...", "width="+sh*ffc+" height="+sh+" constrain interpolate");
+        run("Canvas Size...", "width="+sw+" height="+sh+" position=Center zero");
+    }
+    run("Copy");
+    close;
+    selectImage(id);
+    setBatchMode(false);
+    setPasteMode("Copy");
+    run("Paste");
+</macro>
+</line>
+
+<line>
+<button>
+label=Fill panel with clipboard
+icon=noicon
+arg=<macro>
+    getSelectionBounds(x,y,sw,sh);
+    id=getImageID;
+    setBatchMode(true);
+    ffp=sw/sh;
+    run("Internal Clipboard");
+    run("RGB Color");
+    ffc=getWidth/getHeight;
+    if (ffc>ffp) {
+        run("Size...", "width="+sw*ffc+" height="+sh+" constrain interpolate");
+        run("Canvas Size...", "width="+sw+" height="+sh+" position=Center zero");
+    } else {
+        run("Size...", "width="+sw+" height="+sh/ffc+" constrain interpolate");
+        run("Canvas Size...", "width="+sw+" height="+sh+" position=Center zero");
+    }
+    run("Copy");
+    close;
+    selectImage(id);
+    setBatchMode(false);
+    setPasteMode("Copy");
+    run("Paste");
+</macro>
+</line>
+
+<line>
+<button>
+label=Sync crosses
+icon=noicon
+arg=<tool>
+    w=getWidth;
+    h= getHeight;
+    getCursorLoc(x,y,z,flags);
+    xn = info("xMontage");
+    yn = info("yMontage");
+    if ((xn==0)||(yn==0)) {exit("Not a Magic Montage\nset layout first");}
+    xc = floor(x/(w/xn));
+    yc = floor(y/(h/yn));
+    x0 = x-xc*w/xn;
+    y0 = y-yc*h/yn;
+    xp =newArray(xn*yn);
+    yp =newArray(xn*yn);
+    for (i=0;i<xn;i++) {
+        for (j=0;j<yn;j++) {
+            xp[j*xn+i] = x0+i*(w/xn);
+            yp[j*xn+i] = y0+j*(h/yn);
+        }
+    }
+    makeSelection("point",xp,yp);
+</tool>
+</line>
+
+<line>
+<button>
+label=A B C D
+icon=noicon
+arg=<tool>
+    xn = info("xMontage");
+    yn = info("yMontage");
+str=getpref("MM.str","ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+lcas=getpref("MM.lcas",0);
+antialiasedLabels = getpref("MM.antialiased",1);
+n=parseInt(getpref("MM.n","0"));
+xoffset=getpref("MM.xoffset",0.05);
+yoffset=getpref("MM.yoffset",0.05);
+pos=getpref("MM.pos","Clicked quadrant");
+
+    getCursorLoc(x, y, z, flags);
+    iw = getWidth/xn;
+    ih = getHeight/yn;
+    co = floor(x/iw);
+    li = floor(y/ih);
+    fontsize = ih/10;
+    if (fontsize<12) fontsize=12;
+    marque = substring(str,n,n+1);
+    if (lcas==1) marque= toLowerCase(marque);
+    opt="";
+    if (pos == "Clicked quadrant") {
+    xoffset=0.05; yoffset=0.05;
+    if (x>((co+0.5)*iw)) xoffset=0.90;
+    if (y<((li+0.5)*ih)) yoffset=0.85;
+    }
+    if (antialiasedLabels==true) opt=opt+"antialiased";
+    setFont("SanSerif",fontsize, opt);
+    if (isKeyDown('shift')) {  setForegroundColor(255,255,255); } else {setForegroundColor(0,0,0); }
+    drawString(marque ,co*iw+xoffset*iw,(li+1)*ih-yoffset*ih);
+    if (isKeyDown('shift')) { setForegroundColor(0,0,0); } else { setForegroundColor(255,255,255); }
+    drawString(marque ,co*iw+xoffset*iw+1,(li+1)*ih-yoffset*ih+1);
+    n++; if (n>lengthOf(str)-1) n=0;
+    setpref ("MM.n",n);
+</tool>
+
+<button>
+label=...
+icon=noicon
+arg=<macro>
+str=getpref("MM.str","ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+lcas=getpref("MM.lcas",0);
+antialiasedLabels = getpref("MM.antialiased",1);
+n=parseInt(getpref("MM.n","0"));
+xoffset=getpref("MM.xoffset",0.05);
+yoffset=getpref("MM.yoffset",0.05);
+pos=getpref("MM.pos","Clicked quadrant");
+    if (nImages>0) setupUndo;
+    Dialog.create("Annotation - Options");
+    Dialog.addString("Labels",str);
+    Dialog.addCheckbox("Lowercase labels",lcas);
+    Dialog.addCheckbox("Reset label counter",true);
+    Dialog.addCheckbox("Antialiased",true);
+    Dialog.addChoice("Position",newArray("Clicked quadrant","Lower left","Lower right","Upper right","Upper left"),pos);
+    Dialog.show;
+    str  = Dialog.getString;
+    lcas = Dialog.getCheckbox;
+    resetCounter = Dialog.getCheckbox;
+    if (resetCounter==true)	n=0;
+    antialiasedLabels = Dialog.getCheckbox;
+    pos=Dialog.getChoice();
+    if (pos=="Lower left") {xoffset=0.05; yoffset=0.05;}
+    else if (pos=="Lower right") {xoffset=0.90; yoffset=0.05;}
+    else if (pos=="Upper left") {xoffset=0.05; yoffset=0.85;}
+    else if (pos=="Upper right") {xoffset=0.90; yoffset=0.85;}
+setpref("MM.str",str);
+setpref("MM.lcas",lcas);
+setpref("MM.antialiased",antialiasedLabels );
+setpref("MM.n","0");
+setpref("MM.xoffset",xoffset);
+setpref("MM.yoffset",yoffset);
+setpref("MM.pos",pos);
+</macro>
+</line>
+
+<line>
+<button>
+label=Borders
+icon=noicon
+arg=<macro>
+w = getWidth;
+h = getHeight;
+xn = info("xMontage");
+yn = info("yMontage");
+iw=w/xn;
+ih=h/yn;
+x=newArray(3*(xn+yn));
+y=newArray(3*(xn+yn));
+for (i=0;i<=xn;i++) {
+x[3*i]=i*iw;y[3*i]=0;
+x[3*i+1]=i*iw;y[3*i+1]=h;
+x[3*i+2]=i*iw;y[3*i+2]=0;
+}
+n=3*xn+3;
+for (i=0;i<=yn;i++) {
+x[n+3*i]=0;y[n+3*i]=i*ih;
+x[n+3*i+1]=w;y[n+3*i+1]=i*ih;
+x[n+3*i+2]=0;y[n+3*i+2]=i*ih;
+}
+makeSelection ("polyline",x,y);
+</macro>
+<button>
+label=Width
+icon=noicon
+arg=<macro>
+run("Line Width...");
+</macro>
+</line>
+
+
+<line>
+<button>
+label=Colors
+icon=noicon
+arg=<macro>
+run("Color Picker...");
+</macro>
+<button>
+label=Draw
+icon=noicon
+arg=<macro>
+run("Draw");
+</macro>
+</line>
+
+
+<line>
+<button>
+label=Duplicate
+icon=noicon
+arg=<macro>
+t=getString("New title","copy_"+getTitle);
+run("Duplicate...", "title="+t);
+</macro>
+<button>
+label=Capture
+icon=noicon
+arg=<macro>
+run("Capture Image");
+</macro>
+</line>
+
+<line>
+<button>
+label=Set montage layout
+icon=noicon
+arg=<macro>
+    Dialog.create("Set Montage Layout");
+    Dialog.addNumber("Width:", 2);
+    Dialog.addNumber("Height:", 2);
+    Dialog.show;
+    mw = Dialog.getNumber;
+    mh = Dialog.getNumber;
+    setMetadata("xMontage="+mw+"\nyMontage="+mh+"\n");
+</macro>
+</line>
+
+<codeLibrary>
+
+function info(key) {
+  i = getMetadata;
+  List.setList(i);
+  return List.get(key);
+}
+
+function addMetadata(s) {
+  i = getMetadata;
+  i=i+"\n"+s;
+ setMetadata (i);
+}
+
+function getpref(s,d) { return call("ij.Prefs.get",s,d); }
+function setpref(s,v) { return call("ij.Prefs.set",s,v); }
+
+function swap(a,b,c,d) {
+    setupUndo;
+    setBatchMode(true);
+    if (isKeyDown('shift')) {
+    makeRectangle(a*(w/xn),b*(h/yn),(w/xn),(h/yn));
+    run("Copy");
+    makeRectangle(c*(w/xn),d*(h/yn),(w/xn),(h/yn));
+    setPasteMode("add");
+    run("Paste");
+    setPasteMode("copy");
+    }
+    else {
+    makeRectangle(a*(w/xn),b*(h/yn),(w/xn),(h/yn));
+    run("Duplicate...", "title=tmp");
+    selectImage(id);
+    makeRectangle(c*(w/xn),d*(h/yn),(w/xn),(h/yn));
+    run("Copy");
+    makeRectangle(a*(w/xn),b*(h/yn),(w/xn),(h/yn));
+    run("Paste");
+    selectWindow("tmp");
+    run("Select All");
+    run("Copy");
+    selectImage(id);
+    makeRectangle(c*(w/xn),d*(h/yn),(w/xn),(h/yn));
+    run("Paste");
+    run("Select None");
+    }
+
+    setBatchMode(false);
+}
+
+function spring(x0,y0,x1,y1) {
+    d = sqrt((y1-y0)*(y1-y0)+(x1-x0)*(x1-x0));
+    step=3;
+    r=15;
+    xa = newArray(floor(d/step));
+    ya = newArray(xa.length);
+    for (i=0;i<xa.length;i++) {
+        j=i*step;
+        xa[i]=x0+j*(x1-x0)/d+sin(j/7)*r;
+        ya[i]=y0+j*(y1-y0)/d+cos(j/7)*r;
+    }
+    if (xa.length>1){
+        xa[0]=x0;
+        ya[0]=y0;
+        xa[xa.length-1]=x1;
+        ya[ya.length-1]=y1;
+    }
+    makeSelection("freeline",xa,ya);
+}
+
+</codeLibrary>
+
+
+<startupAction>
+setpref("MM.n","0");
+</startupAction>

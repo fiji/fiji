@@ -2030,6 +2030,11 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 		if (compileStartOffset != errorScreen.getDocument().getLength())
 			getTab().showErrors();
+		if (getTab().showingErrors) try {
+			errorHandler.scrollToVisible(compileStartOffset);
+		} catch (BadLocationException e) {
+			// ignore
+		}
 	}
 
 	public void installMacro() {

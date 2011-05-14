@@ -259,15 +259,6 @@ public class Fake {
 				all.makeParallel(Integer.parseInt(parallel));
 			else
 				all.make();
-
-			/*
-			 * By definition, everything is up-to-date now, but for
-			 * performance, we set the mtimes so that we do not need
-			 * to run our clever .jar checking again (which is
-			 * quite expensive performance-wise, even if not as
-			 * expensive as compiling everything again.
-			 */
-			all.setUpToDate();
 		}
 		catch (FakeException e) {
 			System.err.println(e);
@@ -1100,7 +1091,7 @@ public class Fake {
 			return;
 		files = null;
 
-		String fakeFile = directory + '/' + Parser.path;
+		String fakeFile = cwd.getPath() + '/' + directory + '/' + Parser.path;
 		boolean tryFake = new File(fakeFile).exists();
 		if (!tryFake) {
 			fakeFile = fallBackFakefile;
@@ -1118,16 +1109,7 @@ public class Fake {
 		try {
 			if (tryFake) {
 				// Try "Fake"
-				Parser parser = new Parser(this, fakeFile);
-				if (verbose)
-					parser.setVariable("VERBOSE", "true");
-				if (toolsPath != null)
-					parser.variables.put("TOOLSPATH", parser.expandVariables(toolsPath));
-				if (classPath != null)
-					parser.variables.put("CLASSPATH", parser.expandVariables(classPath));
-				if (buildDir != null)
-					parser.setVariable("BUILDDIR", buildDir.getAbsolutePath());
-				parser.cwd = new File(cwd, directory);
+				Parser parser = parseFakefile(new File(cwd, directory), new File(fakeFile), verbose, toolsPath, classPath, buildDir);
 				Rule all = parser.parseRules(null);
 				if (defaultTarget != null) {
 					Rule rule = all.getRule(defaultTarget);
@@ -1146,6 +1128,25 @@ public class Fake {
 				+ " failed: " + e);
 		}
 		err.println("Leaving " + directory);
+	}
+
+	protected Parser parseFakefile(File cwd, File fakefile, boolean verbose, String toolsPath, String classPath, File buildDir) throws FakeException {
+		try {
+			Parser parser = new Parser(this, new FileInputStream(fakefile), cwd);
+			if (verbose)
+				parser.setVariable("VERBOSE", "true");
+			if (toolsPath != null)
+				parser.variables.put("TOOLSPATH", parser.expandVariables(toolsPath));
+			if (classPath != null)
+				parser.variables.put("CLASSPATH", parser.expandVariables(classPath));
+			if (buildDir != null)
+				parser.setVariable("BUILDDIR", buildDir.getAbsolutePath());
+			parser.cwd = cwd;
+			return parser;
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new FakeException(e.getMessage());
+		}
 	}
 
 	protected boolean jarUpToDate(String source, String target,
