@@ -932,7 +932,6 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 		// straight edges
 		for (int d = 0; d < dimensions.length; d++)
 			numEdges += numNodes - numNodes/dimensions[d];
-		IJ.log("" + numEdges + " straight edges");
 
 		// diagonal edges
 		if (eightConnect) {
@@ -943,7 +942,16 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			int edgesPerNode = ((int)Math.pow(3, dimensions.length) - 1 - 2*dimensions.length)/2;
 
 			numEdges += edgesPerNode*eightEdges;
-			IJ.log("" + (edgesPerNode*eightEdges) + " diagonal edges");
+
+			// n = (2*a-1)*(2*b-1)*...
+			//   - a*b*c*...
+			numEdges = 1;
+			for (int d = 0; d < dimensions.length; d++)
+				numEdges *= (2*dimensions[d] - 1);
+			int volume = 1;
+			for (int d = 0; d < dimensions.length; d++)
+				volume *= dimensions[d];
+			numEdges -= volume;
 		}
 
 		// setup imglib cursors
@@ -989,7 +997,16 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 
 		if (eightConnect) {
 
-			neighborPositions = new int[((int)Math.pow(3, dimensions.length)-1)/2][dimensions.length];
+			int numNeighbors = dimensions.length*2;
+			int numDiagonal = 1;
+			for (int d = 0; d < dimensions.length; d++)
+				numDiagonal *= 2;
+			numNeighbors += numDiagonal;
+			numNeighbors /= 2; // consider only half of the edges per pixel
+
+			IJ.log("num neighbors per pixel: " + numNeighbors);
+
+			neighborPositions = new int[numNeighbors][dimensions.length];
 
 			Arrays.fill(neighborPositions[0], -1);
 
@@ -1066,7 +1083,6 @@ A:			for (int i = 0; i < neighborPositions.length; i++) {
 					if (neighborPosition[d] < 0 || neighborPosition[d] >= dimensions[d])
 						continue A;
 				}
-
 
 				int neighborNum = listPosition(neighborPosition, dimensions);
 
