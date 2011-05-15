@@ -111,7 +111,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 	private float dataWeight   = DATA_INIT;
 	private float pottsWeight  = POTTS_INIT;
 	private float edgeWeight   = EDGE_INIT;
-	private float edgeVariance = 10.0f;
+	private float edgeVariance = EDGE_VARIANCE_INIT;
 
 	// Indicates that edge weights are given implicity as gray-scale differences
 	// of the edge image. This will be false for edge images with 2n-1 pixels
@@ -134,6 +134,11 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 	private static final int EDGE_MIN  = 0;
 	private static final int EDGE_MAX  = 1000;
 	private static final float EDGE_INIT = EDGE_SCALE*((float)EDGE_MAX/2.0f);
+
+	private static final float EDGE_VARIANCE_SCALE = 0.1f;
+	private static final int EDGE_VARIANCE_MIN  = 0;
+	private static final int EDGE_VARIANCE_MAX  = 1000;
+	private static final float EDGE_VARIANCE_INIT = EDGE_VARIANCE_SCALE*((float)EDGE_VARIANCE_MAX/2.0f);
 
 	// use an eight connected neighborhood?
 	private boolean eightConnect = true;
@@ -169,6 +174,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 	private JPanel dataPanel;
 	private JPanel pottsPanel;
 	private JPanel edgesPanel;
+	private JPanel edgeVariancePanel;
 	private JPanel edgeSelectorPanel;
 
 	// start graph cut button
@@ -191,6 +197,9 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 
 	// slider to adjust the edge weight
 	private JSlider edgeSlider;
+
+	// slider to adjust the edge image value variance 
+	private JSlider edgeVarianceSlider;
 
 	// combo box to select the edge image
 	private JComboBox edgeSelector;
@@ -326,7 +335,9 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 				if (e.getSource() == pottsSlider)
 					pottsWeight = source.getValue()*POTTS_SCALE;
 				if (e.getSource() == edgeSlider)
-					edgeWeight = source.getValue()*EDGE_SCALE;
+					edgeWeight = source.getValue()*EDGE_VARIANCE_SCALE;
+				if (e.getSource() == edgeVarianceSlider)
+					edgeVariance = source.getValue()*EDGE_VARIANCE_SCALE;
 				if (e.getSource() == dataSlider)
 					dataWeight = source.getValue()*DATA_SCALE;
 			}
@@ -374,6 +385,13 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			edgeSlider.setPaintTicks(true);
 			edgeSlider.setPaintLabels(true);
 
+			edgeVarianceSlider = new JSlider(JSlider.HORIZONTAL, EDGE_VARIANCE_MIN, EDGE_VARIANCE_MAX, (int)(EDGE_VARIANCE_INIT/EDGE_VARIANCE_SCALE));
+			edgeVarianceSlider.setToolTipText("Set the variance of the edge image.");
+			edgeVarianceSlider.setMajorTickSpacing(500);
+			edgeVarianceSlider.setMinorTickSpacing(10);
+			edgeVarianceSlider.setPaintTicks(true);
+			edgeVarianceSlider.setPaintLabels(true);
+
 			Vector<ImagePlus> windowList = new Vector<ImagePlus>();
 			final int[] windowIds = WindowManager.getIDList();
 
@@ -420,6 +438,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			dataSlider.addChangeListener(changeListener);
 			pottsSlider.addChangeListener(changeListener);
 			edgeSlider.addChangeListener(changeListener);
+			edgeVarianceSlider.addChangeListener(changeListener);
 			edgeSelector.addActionListener(actionListener);
 	
 			// Apply panel (left side of the GUI)
@@ -491,6 +510,21 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			edgesConstraints.gridy++;
 			edgesConstraints.insets = new Insets(5, 5, 6, 6);
 
+			GridBagLayout edgeVarianceLayout = new GridBagLayout();
+			GridBagConstraints edgeVarianceConstraints = new GridBagConstraints();
+			edgeVariancePanel = new JPanel();
+			edgeVariancePanel.setBorder(BorderFactory.createTitledBorder("Edge image decay"));
+			edgeVariancePanel.setLayout(edgeVarianceLayout);
+			edgeVarianceConstraints.anchor = GridBagConstraints.NORTHWEST;
+			edgeVarianceConstraints.fill = GridBagConstraints.HORIZONTAL;
+			edgeVarianceConstraints.gridwidth = 1;
+			edgeVarianceConstraints.gridheight = 1;
+			edgeVarianceConstraints.gridx = 0;
+			edgeVarianceConstraints.gridy = 0;
+			edgeVariancePanel.add(edgeVarianceSlider, edgeVarianceConstraints);
+			edgeVarianceConstraints.gridy++;
+			edgeVarianceConstraints.insets = new Insets(5, 5, 6, 6);
+
 			GridBagLayout edgeSelectorLayout = new GridBagLayout();
 			GridBagConstraints edgeSelectorConstraints = new GridBagConstraints();
 			edgeSelectorPanel = new JPanel();
@@ -524,6 +558,8 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			buttonsPanel.add(pottsPanel, buttonsConstraints);
 			buttonsConstraints.gridy++;
 			buttonsPanel.add(edgesPanel, buttonsConstraints);
+			buttonsConstraints.gridy++;
+			buttonsPanel.add(edgeVariancePanel, buttonsConstraints);
 			buttonsConstraints.gridy++;
 			buttonsPanel.add(edgeSelectorPanel, buttonsConstraints);
 			buttonsConstraints.gridy++;
@@ -1109,6 +1145,14 @@ A:			for (int i = 0; i < neighborPositions.length; i++) {
 					}
 				}
 
+				// add weight_00 to source weight of node,
+				// add weight_11 to sink weight of neighbor,
+				// set edge weight node->neighbor to weight_10,
+				// set edge weight neighbor->node to weight_01 - weight_00 -
+				// weight_11
+				//
+				// since weight_00 = weight_11 = 0 and weight_01 = weight_10 =
+				// weight, the following does it:
 				graphCut.setEdgeWeight(nodeNum, neighborNum, weight);
 				e++;
 			}
