@@ -76,17 +76,6 @@ import fiji.expressionparser.ImgLibParser;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>, Albert Cardona <acardona@ini.phys.ethz.ch>
  */
 public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implements ImageListener, WindowListener {
-
-
-	{
-		//Set Look & Feel
-		try {
-			javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
-
 	/*
 	 * FIELDS
 	 */
@@ -717,7 +706,10 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 						Map<String, Image<T>> img_map = image_expression_parser.convertToImglib(imp_map);
 						image_expression_parser.setImageMap(img_map);
 						// Call calculation
-						image_expression_parser.process();
+						if (!image_expression_parser.process()) {
+							IJ.error(image_expression_parser.getErrorMessage());
+							return;
+						}
 						// Collect result
 						result_img = image_expression_parser.getResult();
 

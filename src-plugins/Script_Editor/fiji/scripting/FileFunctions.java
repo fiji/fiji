@@ -760,6 +760,8 @@ public class FileFunctions {
 				while (offset - newLine > width) {
 					int remove = 0;
 					int space = text.lastIndexOf(' ', newLine + width);
+					if (space < newLine)
+						break;
 					if (space > 0) {
 						int first = space;
 						while (first > newLine + 1 && text.charAt(first - 1) == ' ')

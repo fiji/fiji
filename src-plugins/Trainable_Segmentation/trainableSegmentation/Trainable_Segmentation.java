@@ -1678,6 +1678,7 @@ public class Trainable_Segmentation implements PlugIn
 		}
 		
 		setButtonsEnabled(true);
+
 	}
 
 	/**

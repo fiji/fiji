@@ -1,0 +1,82 @@
+j=0; cat = newArray(50); c = true;
+if (isOpen("Results")) { selectWindow("Results"); run("Close"); }
+pluginsdir = getDirectory("plugins");
+actionbardir = pluginsdir+"ActionBar"+File.separator;
+if (!File.exists(actionbardir ))
+  exit("Error\nInstall Action Bar in \nplugins/ActionBar/");
+name = getString("A name for this new counter","name");
+if (indexOf(name,"_")==-1) name="_"+name;
+iconsdir = actionbardir+"icons"+File.separator;
+if (!File.exists(iconsdir ))
+  exit("Error\nReinstall Action Bar with an plugins/ActionBar/icons/");
+newiconsdir = iconsdir+name+File.separator;
+if (File.exists(newiconsdir)||File.exists(actionbardir+name+".txt"))
+  exit("Error\nAn Action Bar with the same name already exists");
+File.makeDirectory(newiconsdir );
+if (!File.exists(newiconsdir ))
+  exit("Error\nProblem creating the new icons folder");
+
+
+while (c) {
+j=j+1;
+Dialog.create("New counter categories...");
+for (i=0;i<(j-1);i++) Dialog.addString ("cat_"+i,cat[i],20);
+Dialog.addString ("cat_"+i,"",20);
+Dialog.addCheckbox("I need more categories",true);
+Dialog.show();
+for (i=0;i<j;i++) cat[i]=Dialog.getString();
+c=Dialog.getCheckbox();
+}
+i=0;
+while ((cat[i]!=0)&&(cat[i]!="")) {
+setResult ("Label",i,cat[i]);
+setResult ("Value",i,0);
+updateResults();
+i++;
+}
+
+f = File.open(actionbardir+name+".txt");
+print (f,"// Action Bar description file :"+name);
+print (f,"if (isOpen('Results')) { selectWindow('Results'); run('Close'); }");
+i=0; cats="";
+while ((cat[i]!=0)&&(cat[i]!="")) {
+cats=cats+"'"+cat[i]+"',";
+i++; }
+cats = substring(cats, 0, lengthOf(cats)-1);
+print (f, "cat=newArray("+cats+");");
+print (f, "for (i=0;i<cat.length;i++) { setResult ('Label',i,cat[i]); setResult ('Value',i,0); }");
+print (f, "updateResults();");
+print (f,"run(\"Action Bar\",\"/plugins/ActionBar/"+name+".txt\");");
+print (f,"exit();");
+print (f,"");
+for (i=0;i<nResults; i++) {
+	print (f,"<line>");
+		print (f,"<button>");
+		print (f,"label="+cat[i]);
+		print (f,"icon=no");
+		print (f,"arg=<macro>");
+		print (f,"num = getNumber('set "+cat[i]+" to ', getResult('Value',"+i+")); ");
+		print (f,"setResult('Value',"+i+", num);  ");
+		print (f,"updateResults(); ");
+		print (f,"</macro>");
+		print (f,"<button>");
+		print (f,"label=-");
+		print (f,"icon=no");
+		print (f,"arg=setResult('Value',"+i+", getResult('Value',"+i+")-1);updateResults();");
+		print (f,"<button>");
+		print (f,"label=+");
+		print (f,"icon=no");
+		print (f,"arg=setResult('Value',"+i+", getResult('Value',"+i+")+1);updateResults();");
+	print (f,"</line>");
+}
+	print (f,"<line>");
+		print (f,"<button>");
+		print (f,"label=Save");
+		print (f,"icon=no");
+		print (f,"arg=<macro>");
+		print (f,"saveAs('Measurements', '');");
+		print (f,"</macro>");
+	print (f,"</line>");
+print (f,"// end of file");
+File.close(f);
+run("Action Bar","/plugins/ActionBar/"+name+".txt");

@@ -17,8 +17,14 @@ import ij.plugin.*;
 // 1.7  2009/Apr/14 small fixes, restore histogram in Triangle if reversed
 // 1.8  2009/Jun/01 Set the threshold to foreground colour
 // 1.9  2009/Oct/30 report both isodata and IJ's default methods
-// 1.10 2010/May/25  We are a package!
-                
+// 1.10 2010/May/25 We are a package! 
+// 1.10 2011/Jan/31 J. Schindelin added support for 16 bit images and speedup of the Huang method 
+// 1.11 2011/Mar/31 Alex Herbert submitted a patch to threshold the stack from any slice position 
+// 1.12 2011/Apr/09 Fixed: Minimum with 16bit images (search data range only), setting threshold without applying the mask, Yen and Isodata with 16 bits offset images, histogram bracketing to speed up
+// 1.13 2011/Apr/13 Revised the way 16bit thresholds are shown
+// 1.14 2011/Apr/14 IsoData issues a warning if threhsold not found
+
+
 public class Auto_Threshold implements PlugIn {
         /** Ask for parameters and then execute.*/
         public void run(String arg) {
@@ -38,7 +44,7 @@ public class Auto_Threshold implements PlugIn {
 		 // 2 - Ask for parameters:
 		GenericDialog gd = new GenericDialog("Auto Threshold");
 //		String [] methods={"Bernsen", "Huang", "Intermodes", "IsoData",  "Li", "MaxEntropy", "MinError", "Minimum", "Moments", "Niblack", "Otsu", "Percentile", "RenyiEntropy", "Sauvola", "Shanbhag" , "Triangle", "Yen"};
-		gd.addMessage("Auto Threshold v1.10");
+		gd.addMessage("Auto Threshold v1.14");
 		String [] methods={"Try all", "Default", "Huang", "Intermodes", "IsoData",  "Li", "MaxEntropy","Mean", "MinError(I)", "Minimum", "Moments", "Otsu", "Percentile", "RenyiEntropy", "Shanbhag" , "Triangle", "Yen"};
 		gd.addChoice("Method", methods, methods[0]);
 		String[] labels = new String[2];
@@ -55,7 +61,8 @@ public class Auto_Threshold implements PlugIn {
 			gd.addCheckbox("Stack",false);
 			gd.addCheckbox("Use_stack_histogram",false);
 		}
-		gd.addMessage("Thresholded result is always shown in white [255].");
+		gd.addMessage("The thresholded result of 8 & 16 bit images is shown\nin white [255] in 8 bits.\nFor 16 bit images, results of \'Try all\' and single slices\nof a stack are shown in white [65535] in 16 bits.\nUnsuccessfully thresholded images are left unchanged.");
+
 		gd.showDialog();
 		if (gd.wasCanceled()) return;
  
@@ -178,43 +185,54 @@ public class Auto_Threshold implements PlugIn {
 			}
 		}
 		else { // selected a method
+			boolean success=false;
 			if (stackSize>1 &&( doIstack || doIstackHistogram) ) { //whole stack
 				if (doIstackHistogram) {// one global histogram
 					Object[] result = exec(imp, myMethod, noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram );
+					if (((Integer) result[0]) != -1 && imp.getBitDepth()==16)
+						new StackConverter(imp).convertToGray8();
 				}
 				else{ // slice by slice
+					success=true;
 					for (int k=1; k<=stackSize; k++){
 						imp.setSlice(k);
 						Object[] result = exec(imp, myMethod, noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram );
+						if (((Integer) result[0]) == -1) success = false;// the threshold existed
 					}
+					if (success && imp.getBitDepth()==16)
+						new StackConverter(imp).convertToGray8();
 				}
 				imp.setSlice(1);
 			}
-			else { //just one slice
+			else { //just one slice, leave as it is
 				Object[] result = exec(imp, myMethod, noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram );
+				if(((Integer) result[0]) != -1 && stackSize==1 &&  imp.getBitDepth()==16) {
+					imp.setDisplayRange(0, 65535);  
+					imp.setProcessor(null, imp.getProcessor().convertToByte(true));
+				}
 			}
 			// 5 - If all went well, show the image:
-			// not needed here as the source image is binarised 
+			// not needed here as the source image is binarised
 		}
 	}
 	//IJ.showStatus(IJ.d2s((System.currentTimeMillis()-start)/1000.0, 2)+" seconds");
 
-
-
-	/** Execute the plugin functionality: duplicate and scale the given image.
-	* @return an Object[] array with the name and the scaled ImagePlus.
+	/** Execute the plugin functionality.
+	* @return an Object[] array with the threshold and the ImagePlus.
 	* Does NOT show the new, image; just returns it. */
 	 public Object[] exec(ImagePlus imp, String myMethod, boolean noWhite, boolean noBlack, boolean doIwhite, boolean doIset, boolean doIlog , boolean doIstackHistogram ) {
 
 		// 0 - Check validity of parameters
 		if (null == imp) return null;
 		int threshold=-1;
+		int currentSlice = imp.getCurrentSlice();
 		ImageProcessor ip = imp.getProcessor();
 		int xe = ip.getWidth();
 		int ye = ip.getHeight();
-		int x, y, b=255, c=0;
+		int x, y, c=0;
+		int b = imp.getBitDepth()==8?255:65535;
 		if (doIwhite){
-			c=255;
+			c=b;
 			b=0;
 		}
 		int [] data = (ip.getHistogram());
@@ -230,8 +248,11 @@ public class Auto_Threshold implements PlugIn {
 		else if (doIstackHistogram){
 			//get the stack histogram into the data[] array
 			temp=data;
-			for(int i=2; i<=imp.getStackSize();i++) {
-				imp.setSlice(i);
+			for(int i=1; i<=imp.getStackSize();i++) {
+				// Ignore the slice that has already been included
+				if (i==currentSlice)
+					continue;
+				imp.setSliceWithoutUpdate(i);
 				ip = imp.getProcessor();
 				temp= ip.getHistogram();
 				for(int j=0; j<data.length; j++) {
@@ -239,60 +260,77 @@ public class Auto_Threshold implements PlugIn {
 					//IJ.log(""+j+": "+ data[j]);
 				}
 			}
+			imp.setSliceWithoutUpdate(currentSlice);
 		}
 
 		if (noBlack) data[0]=0;
 		if (noWhite) data[data.length - 1]=0;
 
+		// bracket the histogram to the range that holds data to make it quicker
+		int minbin=-1, maxbin=-1;
+		for (int i=0; i<data.length; i++){
+			if (data[i]>0) maxbin = i;
+		}
+		for (int i=data.length-1; i>=0; i--){
+			if (data[i]>0) minbin = i;
+		}
+		//IJ.log (""+minbin+" "+maxbin);
+		int [] data2 = new int [(maxbin-minbin)+1];
+		for (int i=minbin; i<=maxbin; i++){
+			data2[i-minbin]= data[i];;
+		}
+
 		// Apply the selected algorithm
 		 if(myMethod.equals("Default")){
-			threshold = IJDefault(data); // re-implemeted so we can ignore black/white and set the bright or dark objects
+			threshold = IJDefault(data2); // re-implemeted so we can ignore black/white and set the bright or dark objects
 		}
 		else if(myMethod.equals("Huang")){
-			threshold =  Huang(data);
+			threshold =  Huang(data2);
 		}
 		else if(myMethod.equals("Intermodes")){
-			threshold = Intermodes(data);
+			threshold = Intermodes(data2);
 		}
 		else if(myMethod.equals("IsoData")){
-			threshold = IsoData (data);
+			threshold = IsoData (data2);
 		}
 		else if(myMethod.equals("Li")){
-			threshold = Li(data);
+			threshold = Li(data2);
 		}
 		else if(myMethod.equals("MaxEntropy")){
-			threshold = MaxEntropy(data);
+			threshold = MaxEntropy(data2);
 		}
 		else if(myMethod.equals("Mean")){
-			threshold = Mean(data);
+			threshold = Mean(data2);
 		}
 		else if(myMethod.equals("MinError(I)")){
-			threshold = MinErrorI(data);
+			threshold = MinErrorI(data2);
 		}
 		else if(myMethod.equals("Minimum")){
-			threshold = Minimum(data);
+			threshold = Minimum(data2);
 		}
 		else if(myMethod.equals("Moments")){
-			threshold = Moments(data);
+			threshold = Moments(data2);
 		}
 		else if(myMethod.equals("Otsu")){
-			threshold = Otsu(data);
+			threshold = Otsu(data2);
 		}
 		else if(myMethod.equals("Percentile")){
-			threshold = Percentile(data);
+			threshold = Percentile(data2);
 		}
 		else if(myMethod.equals("RenyiEntropy")){
-			threshold = RenyiEntropy(data);
+			threshold = RenyiEntropy(data2);
 		}
 		else if(myMethod.equals("Shanbhag")){
-			threshold = Shanbhag(data);
+			threshold = Shanbhag(data2);
 		}
 		else if(myMethod.equals("Triangle")){
-			threshold = Triangle(data); 
+			threshold = Triangle(data2); 
 		}
 		else if(myMethod.equals("Yen")){
-			threshold = Yen(data);
+			threshold = Yen(data2);
 		}
+
+		threshold+=minbin; // add the offset of the histogram
 
 		// show treshold in log window if required
 		if (doIlog) IJ.log(myMethod+": "+threshold);
@@ -300,11 +338,12 @@ public class Auto_Threshold implements PlugIn {
 			//threshold it
 			if (doIset){
 				if (doIwhite) 
-					IJ.setThreshold(threshold+1, data.length - 1);
+					imp.getProcessor().setThreshold(threshold+1, data.length - 1, ImageProcessor.RED_LUT);//IJ.setThreshold(threshold+1, data.length - 1);
 				else
-					IJ.setThreshold(0,threshold);
+					imp.getProcessor().setThreshold(0, threshold, ImageProcessor.RED_LUT);//IJ.setThreshold(0,threshold);
 			}
 			else{
+				imp.setDisplayRange(0, Math.max(b,c)); //otherwise we can never set the threshold 
 				if( doIstackHistogram) {
 					for(int j=1; j<=imp.getStackSize(); j++) {
 						imp.setSlice(j);
@@ -329,11 +368,10 @@ public class Auto_Threshold implements PlugIn {
 								ip.putPixel(x,y,b);
 						}
 					}
-				}
+				} //just this slice
 				imp.getProcessor().setThreshold(data.length - 1, data.length - 1, ImageProcessor.NO_LUT_UPDATE);
 			}
 		}
-		imp.setDisplayRange(0, 255);
 		//IJ.showProgress((double)(255-i)/255);
 		imp.updateAndDraw();
 		// 2 - Return the threshold and the image
@@ -552,8 +590,10 @@ public class Auto_Threshold implements PlugIn {
 					break;
 			}
 			g++;
-			if (g > 254)
+			if (g >data.length-2){
+				IJ.log("IsoData Threshold not found.");
 				return -1;
+			}
 		}
 		return g;
 	}
@@ -592,7 +632,7 @@ public class Auto_Threshold implements PlugIn {
 
 		/* Calculate the mean gray-level */
 		mean = 0.0;
-		for ( ih = 0 + 1; ih < data.length; ih++ ) //0 + 1?
+		for ( ih = 0; ih < data.length; ih++ ) //0 + 1?
 			mean += ih * data[ih];
 		mean /= num_pixels;
 		/* Initial estimate */
@@ -824,11 +864,13 @@ public class Auto_Threshold implements PlugIn {
 		// ﬂat valley are unsuitable for this method.
 		int iter =0;
 		int threshold = -1;
+		int max = -1;
 		double [] iHisto = new double [data.length];
 
-		for (int i=0; i<data.length; i++)
+		for (int i=0; i<data.length; i++){
 			iHisto[i]=(double) data[i];
-
+			if (data[i]>0) max =i;
+		}
 		double [] tHisto = iHisto;
 
 		while (!bimodalTest(iHisto) ) {
@@ -845,8 +887,8 @@ public class Auto_Threshold implements PlugIn {
 				return threshold;
 			}
 		}
-		// The threshold is the minimum between the two peaks.
-		for (int i=1; i<data.length - 1; i++) {
+		// The threshold is the minimum between the two peaks. modified for 16 bits
+		for (int i=1; i<max; i++) {
 			//IJ.log(" "+i+"  "+iHisto[i]);
 			if (iHisto[i-1] > iHisto[i] && iHisto[i+1] >= iHisto[i])
 				threshold = i;
@@ -1422,7 +1464,7 @@ public class Auto_Threshold implements PlugIn {
 			P1_sq[ih]= P1_sq[ih-1] + norm_histo[ih] * norm_histo[ih];
 
 		P2_sq[data.length - 1] = 0.0;
-		for ( ih = 254; ih >= 0; ih-- )
+		for ( ih = data.length-2; ih >= 0; ih-- )
 			P2_sq[ih] = P2_sq[ih + 1] + norm_histo[ih + 1] * norm_histo[ih + 1];
 
 		/* Find the threshold that maximizes the criterion */

@@ -488,7 +488,7 @@ public class Parser {
 
 	// the variables
 
-	protected Map<String, String> variables = new HashMap<String, String>();
+	protected Map<String, Object> variables = new HashMap<String, Object>();
 
 	public int getClosingParenthesis(String value, int offset) {
 		char closing;
@@ -562,46 +562,49 @@ public class Parser {
 		}
 	}
 
-	public void setVariable(String key, String value)
+	public void setVariable(String key, Object value)
 			throws FakeException {
-		String origValue = value;
+		Object origValue = value;
 		int paren = key.indexOf('(');
 		String name = (paren < 0 ? key :
 			key.substring(0, paren)).toUpperCase();
 
 		if (key.charAt(paren + 1) == '*') {
-			setVariableWildcard(name, value);
+			setVariableWildcard(name, value.toString());
 			return;
 		}
 
 		if (isVarName(name, "CLASSPATH") || isVarName(name, "TOOLSPATH") || isVarName(name, "TOOLS_JAR")  || isVarName(name, "FIJI_JAVA_HOME"))
-			value = fake.prefixPaths(cwd, value, true);
+			value = fake.prefixPaths(cwd, value.toString(), true);
 
-		value = expandVariables(value, paren < 0 ? null :
-			key.substring(paren + 1, key.length() - 1));
+		if (value instanceof String) {
+			String string = (String)value;
+			string = expandVariables(string, paren < 0 ? null :
+				key.substring(paren + 1, key.length() - 1));
 
-
-		if (value.indexOf('*') >= 0 ||
-				value.indexOf('?') >= 0) {
-			String separator = isVarName(name, "CLASSPATH") ?
-				":" : " ";
-			List<String> files = new ArrayList<String>();
-			StringTokenizer tokenizer = new
-				StringTokenizer(value.replace('\t',
-						' '), separator);
-			while (tokenizer.hasMoreTokens()) {
-				String token = tokenizer.nextToken();
-				if (fake.expandGlob(token, files, cwd, 0,
-							buildDir) < 1)
-					fake.err.println("Warning: "
-						+ "no match for "
-						+ token);
+			if (string.indexOf('*') >= 0 ||
+					string.indexOf('?') >= 0) {
+				String separator = isVarName(name, "CLASSPATH") ?
+					":" : " ";
+				List<String> files = new ArrayList<String>();
+				StringTokenizer tokenizer = new
+					StringTokenizer(string.replace('\t',
+							' '), separator);
+				while (tokenizer.hasMoreTokens()) {
+					String token = tokenizer.nextToken();
+					if (fake.expandGlob(token, files, cwd, 0,
+								buildDir) < 1)
+						fake.err.println("Warning: "
+							+ "no match for "
+							+ token);
+				}
+				string = "";
+				if (separator.equals(":"))
+					separator = File.separator;
+				for (String file : files)
+					string += separator + fake.quoteArg(file);
 			}
-			value = "";
-			if (separator.equals(":"))
-				separator = File.separator;
-			for (String file : files)
-				value += separator + fake.quoteArg(file);
+			value = string;
 		}
 
 		String origName = name.toUpperCase() + "_UNEXPANDED"
@@ -612,7 +615,7 @@ public class Parser {
 			"" : key.substring(paren));
 		variables.put(name, value);
 		if (name.equals("BUILDDIR"))
-			buildDir = value;
+			buildDir = value.toString();
 	}
 
 	public String expandVariables(String value) {
@@ -639,10 +642,12 @@ public class Parser {
 				substitute =
 					getVariable(name.toUpperCase(),
 					subkey, subkey2);
-			else
-				substitute = (String)variables.get(
-				name.substring(0, paren).toUpperCase()
-				+ name.substring(paren));
+			else {
+				Object object = variables.get(
+					name.substring(0, paren).toUpperCase()
+					+ name.substring(paren));
+				substitute = object == null ? null : object.toString();
+			}
 			if (substitute == null)
 				substitute = "";
 			value = value.substring(0, dollar)
@@ -685,16 +690,16 @@ public class Parser {
 
 	public String getVariable(String key,
 			String subkey, String subkey2) {
-		String res = null;
+		Object res = null;
 		if ("true".equals(variables.get("ENVOVERRIDES("
 						+ key + ")")))
 			res = System.getenv(key);
 		key = key.toUpperCase();
 		if (subkey != null && res == null)
-			res = (String)variables.get(key
+			res = variables.get(key
 					+ "(" + subkey + ")");
 		if (subkey2 != null && res == null)
-			res = (String)variables.get(key
+			res = variables.get(key
 					+ "(" + subkey2 + ")");
 		if (res == null && Util.getPlatform().equals("macosx")) {
 			String version =
@@ -709,15 +714,15 @@ public class Parser {
 				}
 			}
 			while (i > 0 && res == null)
-				res = (String)variables.get(key
+				res = variables.get(key
 					+ "(osx10." + (i--) + ")");
 		}
 		if (res == null)
-			res = (String)variables.get(key
+			res = variables.get(key
 					+ "(" + Util.getPlatform() + ")");
 		if (res == null)
-			res = (String)variables.get(key);
-		return res;
+			res = variables.get(key);
+		return res == null ? null : res.toString();
 	}
 
 	public void dumpVariables() {

@@ -228,7 +228,7 @@ replacement_files =  {
     'jars/jcommon-1.0.12.jar' : ( '/usr/share/java/jcommon.jar', ),
     'jars/jfreechart-1.0.13.jar' : ( '/usr/share/java/jfreechart.jar', ),
     'jars/js.jar' : ( '/usr/share/java/js.jar', ),
-    'jars/jsch-0.1.37.jar' : ( '/usr/share/java/jsch.jar', ),
+    'jars/jsch-0.1.44.jar' : ( '/usr/share/java/jsch.jar', ),
     'jars/junit-4.5.jar' : ( '/usr/share/java/junit4.jar', ),
     'jars/jzlib-1.0.7.jar' : ( '/usr/share/java/jzlib.jar', ),
     'jars/postgresql-8.2-506.jdbc3.jar' : ( '/usr/share/java/postgresql.jar', ),
