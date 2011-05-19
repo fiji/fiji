@@ -18,6 +18,7 @@ import javax.media.j3d.Switch;
 import javax.media.j3d.View;
 import javax.vecmath.Color3f;
 import javax.vecmath.Color4f;
+import javax.vecmath.Point3f;
 import javax.vecmath.Tuple3d;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -49,7 +50,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	/** Hold a reference of the meshes indexed by frame. */
 	protected HashMap<Integer, List<CustomTriangleMesh>> frameMeshes = new HashMap<Integer, List<CustomTriangleMesh>>();
 
-	private TrackDisplayMode displayMode;
+	private TrackDisplayMode displayMode = TrackDisplayMode.ALL_WHOLE_TRACKS;
 
 	private int displayDepth;
 
@@ -130,7 +131,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 			int frameDist;
 			for(int frame : frameMeshes.keySet()) {
 				frameDist = currentTimePoint - frame; 
-				if (frameDist < 0 || frameDist > displayDepth)
+				if (frameDist <= 0 || frameDist > displayDepth)
 					tp = 1;
 				else 
 					tp = (float) frameDist / displayDepth;
@@ -221,7 +222,6 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	}
 	
 	
-	@SuppressWarnings("unchecked")
 	private CustomTriangleMesh makeMesh(final Spot source, final Spot target, final Color4f color) {
 		final float radius = source.getFeature(Feature.RADIUS);
 		double[] x = new double[] { source.getFeature(Feature.POSITION_X), target.getFeature(Feature.POSITION_X) };
@@ -231,8 +231,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		// Avoid trouble if the source and target are at the same location
 		if (x[0] == x[1] && y[0] == y[1] && z[0] == z[1])
 			z[1] += radius/100;
-		@SuppressWarnings("rawtypes")
-		List points = MeshMaker.createTube(x, y, z, r, DEFAULT_PARALLEL_NUMBER, false);
+		List<Point3f> points = MeshMaker.createTube(x, y, z, r, DEFAULT_PARALLEL_NUMBER, false);
 		CustomTriangleMesh node = new CustomTriangleMesh(points, new Color3f(color.x, color.y, color.z), color.w);
 		return node;
 	}
