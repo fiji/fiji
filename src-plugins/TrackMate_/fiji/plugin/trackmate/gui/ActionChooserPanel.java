@@ -45,7 +45,7 @@ public class ActionChooserPanel extends EnumChooserPanel<ActionType> {
 		add(logPanel);
 		
 		final JButton executeButton = new JButton("Execute", EXECUTE_ICON);
-		executeButton.setBounds(6, 170, 100, 30);
+		executeButton.setBounds(6, 210, 100, 30);
 		executeButton.setFont(FONT);
 		executeButton.addActionListener(new ActionListener() {			
 			@Override
