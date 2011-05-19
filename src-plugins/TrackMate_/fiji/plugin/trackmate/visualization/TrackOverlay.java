@@ -193,7 +193,7 @@ public class TrackOverlay implements Overlay {
 
 		case LOCAL_BACKWARD_TRACKS: {
 			final int frameDist = currentFrame - frame; 
-			if (frameDist < 0 || frameDist > trackDisplayDepth)
+			if (frameDist <= 0 || frameDist > trackDisplayDepth)
 				return;
 			g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1  - (float) frameDist / trackDisplayDepth));
 			g2d.drawLine(x0, y0, x1, y1);

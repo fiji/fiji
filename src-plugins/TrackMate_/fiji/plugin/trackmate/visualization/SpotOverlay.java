@@ -24,7 +24,7 @@ import fiji.util.gui.OverlayedImageCanvas.Overlay;
 
 public class SpotOverlay implements Overlay {
 
-	private static final Font LABEL_FONT = new Font("Arial", Font.PLAIN, 9);
+	private static final Font LABEL_FONT = new Font("Arial", Font.BOLD, 12);
 
 	/** The spot collection this annotation should draw. */
 	protected SpotCollection target;
