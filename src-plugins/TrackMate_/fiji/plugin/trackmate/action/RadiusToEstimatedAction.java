@@ -1,12 +1,21 @@
 package fiji.plugin.trackmate.action;
 
+import javax.swing.ImageIcon;
+
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.gui.DisplayerPanel;
 
 public class RadiusToEstimatedAction extends AbstractTMAction {
 
+	private static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/lightbulb.png"));
+	
+	public RadiusToEstimatedAction() {
+		this.icon = ICON;
+	}
+	
 	@Override
 	public String getInfoText() {
 		return "<html>" +

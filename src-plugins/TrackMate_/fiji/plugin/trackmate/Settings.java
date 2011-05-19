@@ -88,6 +88,14 @@ public class Settings {
 		return null;
 	}
 	
+	/**
+	 * A utility method that returns a new float array with the 3 elements building the spatial calibration
+	 * (pixel size).
+	 */
+	public float[] getCalibration() {
+		return new float[] {dx, dy, dz};
+	}
+	
 	
 	@Override
 	public String toString() {

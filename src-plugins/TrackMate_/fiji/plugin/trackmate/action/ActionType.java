@@ -8,7 +8,8 @@ public enum ActionType implements InfoTextable {
 	COPY_OVERLAY_TO (new CopyOverlayAction()), 
 	SET_RADIUS_TO_ESTIMATED (new RadiusToEstimatedAction()),
 	RESET_RADIUS_TO_EXPECTED (new ResetRadiusAction()),
-	RECOMPUTE_ALL_FEATURES (new RecalculateFeatureAction());
+	RECOMPUTE_ALL_FEATURES (new RecalculateFeatureAction()),
+	GRAB_SPOT_IMAGES(new GrabSpotImageAction());
 	
 	private TrackMateAction action;
 

@@ -16,7 +16,7 @@ import fiji.plugin.trackmate.visualization.SpotDisplayer;
 
 public class CopyOverlayAction extends AbstractTMAction {
 
-	private static final ImageIcon COPY_OVERLAY_ICON = new ImageIcon(DisplayerPanel.class.getResource("images/page_copy.png"));;
+	private static final ImageIcon COPY_OVERLAY_ICON = new ImageIcon(DisplayerPanel.class.getResource("images/page_copy.png"));
 	
 	public CopyOverlayAction() {
 		icon = COPY_OVERLAY_ICON;

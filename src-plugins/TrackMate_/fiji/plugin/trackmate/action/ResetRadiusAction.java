@@ -1,13 +1,22 @@
 package fiji.plugin.trackmate.action;
 
+import javax.swing.ImageIcon;
+
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.gui.DisplayerPanel;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 
 public class ResetRadiusAction extends AbstractTMAction {
 
+	private static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/lightbulb_off.png"));
+
+	public ResetRadiusAction() {
+	this.icon = ICON;
+	}
+	
 	@Override
 	public void execute(final TrackMateModelInterface model) {
 		final SegmenterSettings segSettings = model.getSettings().segmenterSettings;
