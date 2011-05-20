@@ -2,6 +2,7 @@ package fiji.plugin.trackmate.visualization;
 
 import ij3d.ContentNode;
 
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
@@ -49,6 +50,11 @@ public class SpotGroupNode<K> extends ContentNode {
 	 * @see #spotSwitch
 	 */
 	protected HashMap<K, Integer> indices;
+	/**
+	 * Holder (cache) for the coordinates of the mesh of a globe of radius 1, centered at (0, 0, 0), that will be used to 
+	 * generate all spheres in this group.
+	 */
+	private float[][][] globe;
 
 
 	/**
@@ -109,6 +115,8 @@ public class SpotGroupNode<K> extends ContentNode {
 	 * This resets the {@link #spotSwitch} and the {@link #switchMask} fields with new values.
 	 */
 	protected void makeMeshes() {
+		generateGlobe();
+		
 		List<Point3f> points;
 		CustomTriangleMesh node;
 		Color4f color;
@@ -121,7 +129,7 @@ public class SpotGroupNode<K> extends ContentNode {
 			center = centers.get(key);
 			color = colors.get(key);
 			// Create mesh
-			points = MeshMaker.createSphere(center.x, center.y, center.z, center.w, DEFAULT_MERIDIAN_NUMBER, DEFAULT_PARALLEL_NUMBER);
+			points = createSphere(center.x, center.y, center.z, center.w);
 			node = new CustomTriangleMesh(points, new Color3f(color.x, color.y, color.z), color.w);
 			// Add it to the switch. We keep an index of the position it is added to for later retrieval by key
 			meshes.put(key, node);
@@ -136,6 +144,67 @@ public class SpotGroupNode<K> extends ContentNode {
 		addChild(spotSwitch);
 	}
 	
+	/**
+	 * Generate the globe that will be used as a template to build all the meshes
+	 * of each sphere. We put it here, so that we do not rebuild it every time we generate 
+	 * a sphere.
+	 * <p>
+	 * This method must be called before the meshes are created by {@link #makeMeshes()}, otherwise
+	 * a NPE will be thrown.
+	 */
+	private void generateGlobe() {
+		globe = generateGlobe(DEFAULT_MERIDIAN_NUMBER, DEFAULT_PARALLEL_NUMBER);
+	}
+	
+	/**
+	 * Create the list of points of the mesh of sphere, centered on (x, y, z) of radius r, based on
+	 * the {@link #globe} cache calculated by {@link #generateGlobe()}.
+	 * <p>
+	 * Will throw a NPE if {@link #generateGlobe()} is not called before.
+	 */
+	private List<Point3f> createSphere(final float x, final float y, final float z, final float r) {
+		
+		// Create triangular faces and add them to the list
+		final ArrayList<Point3f> list = new ArrayList<Point3f>();
+		for (int j=0; j<globe.length-1; j++) { // the parallels
+			for (int k=0; k<globe[0].length -1; k++) { // meridian points
+				if(j != globe.length-2) {
+					
+					// Half quadrant (a triangle)
+					list.add(new Point3f(
+							globe[j+1][k+1][0] * r + x, 
+							globe[j+1][k+1][1] * r + y, 
+							globe[j+1][k+1][2] * r + z));
+					list.add(new Point3f(
+							globe[j][k][0] * r + x, 
+							globe[j][k][1] * r + y, 
+							globe[j][k][2] * r + z));
+					list.add(new Point3f(
+							globe[j+1][k][0] * r + x, 
+							globe[j+1][k][1] * r + y, 
+							globe[j+1][k][2] * r + z));
+				}
+				if(j != 0) {
+					// The other half quadrant
+					list.add(new Point3f(
+							globe[j][k][0] * r + x, 
+							globe[j][k][1] * r + y, 
+							globe[j][k][2] * r + z));
+					list.add(new Point3f(
+							globe[j+1][k+1][0] * r + x, 
+							globe[j+1][k+1][1] * r + y, 
+							globe[j+1][k+1][2] * r + z));
+					list.add(new Point3f(
+							globe[j][k+1][0] * r + x, 
+							globe[j][k+1][1] * r + y, 
+							globe[j][k+1][2] * r + z));
+				}
+			}
+		}
+		return list;
+	}
+
+
 	/*
 	 * SINGLE ELEMENT GETTERS/SETTERS
 	 */
@@ -371,4 +440,63 @@ public class SpotGroupNode<K> extends ContentNode {
 	public void clearDisplayedData() {}
 
 
+	/** 
+	 * Generate a globe of radius 1.0 that can be used for any Ball. First dimension is Z, 
+	 * then comes a double array x,y. Minimal accepted meridians and parallels is 3.
+	 * <p>
+	 * Taken from Albert and Bene's MeshMaker, simply changed the primitives from double to float.
+	 */
+	private static float[][][] generateGlobe(int meridians, int parallels) {
+		if (meridians < 3) meridians = 3;
+		if (parallels < 3) parallels = 3;
+		/* to do: 2 loops:
+		-first loop makes horizontal circle using meridian points.
+		-second loop scales it appropriately and makes parallels.
+		Both loops are common for all balls and so should be done just once.
+		Then this globe can be properly translocated and resized for each ball.
+		*/
+		// a circle of radius 1
+		float angle_increase = (float) (2*Math.PI / meridians);
+		float temp_angle = 0;
+		final float[][] xy_points = new float[meridians+1][2];    //plus 1 to repeat last point
+		xy_points[0][0] = 1;     // first point
+		xy_points[0][1] = 0;
+		for (int m=1; m<meridians; m++) {
+			temp_angle = angle_increase*m;
+			xy_points[m][0] = (float) Math.cos(temp_angle);
+			xy_points[m][1] = (float) Math.sin(temp_angle);
+		}
+		xy_points[xy_points.length-1][0] = 1; // last point
+		xy_points[xy_points.length-1][1] = 0;
+
+		// Build parallels from circle
+		angle_increase = (float) (Math.PI / parallels);   // = 180 / parallels in radians
+		final float[][][] xyz = new float[parallels+1][xy_points.length][3];
+		for (int p=1; p<xyz.length-1; p++) {
+			float radius = (float) Math.sin(angle_increase*p);
+			float Z = (float) Math.cos(angle_increase*p);
+			for (int mm=0; mm<xyz[0].length-1; mm++) {
+				//scaling circle to appropriate radius, and positioning the Z
+				xyz[p][mm][0] = xy_points[mm][0] * radius;
+				xyz[p][mm][1] = xy_points[mm][1] * radius;
+				xyz[p][mm][2] = Z;
+			}
+			xyz[p][xyz[0].length-1][0] = xyz[p][0][0];  //last one equals first one
+			xyz[p][xyz[0].length-1][1] = xyz[p][0][1];
+			xyz[p][xyz[0].length-1][2] = xyz[p][0][2];
+		}
+
+		// south and north poles
+		for (int ns=0; ns<xyz[0].length; ns++) {
+			xyz[0][ns][0] = 0;	//south pole
+			xyz[0][ns][1] = 0;
+			xyz[0][ns][2] = 1;
+			xyz[xyz.length-1][ns][0] = 0;    //north pole
+			xyz[xyz.length-1][ns][1] = 0;
+			xyz[xyz.length-1][ns][2] = -1;
+		}
+
+		return xyz;
+	}
+	
 }
