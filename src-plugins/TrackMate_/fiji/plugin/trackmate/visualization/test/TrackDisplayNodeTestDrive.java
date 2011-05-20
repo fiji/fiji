@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
+import javax.vecmath.Color3f;
 import javax.vecmath.Color4f;
 import javax.vecmath.Point4f;
 
@@ -23,6 +24,7 @@ import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 import fiji.plugin.trackmate.visualization.SpotGroupNode;
 import fiji.plugin.trackmate.visualization.TrackDisplayNode;
 
@@ -56,6 +58,7 @@ public class TrackDisplayNodeTestDrive {
 			coords = new float[] { x, y, z };
 			spot = new SpotImp(coords);
 			spot.putFeature(Feature.POSITION_T, i);
+			spot.putFeature(Feature.RADIUS, r);
 			
 			spots[i] = spot;
 			
@@ -64,7 +67,7 @@ public class TrackDisplayNodeTestDrive {
 			
 			center = new Point4f(coords[0], coords[1], coords[2], (float)RADIUS);
 			color = new Color4f(Color.MAGENTA);
-			color.w = 0f;
+			color.w = 0;
 			
 			centers.put(spot, center);
 			spotColors.put(spot, color);
@@ -96,15 +99,15 @@ public class TrackDisplayNodeTestDrive {
 		// Track content
 		List<Set<Spot>> tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets();
 		int ntracks = tracks.size();
-		HashMap<Set<Spot>, Color4f> trackColors = new HashMap<Set<Spot>, Color4f>(tracks.size());
+		HashMap<Set<Spot>, Color3f> trackColors = new HashMap<Set<Spot>, Color3f>(tracks.size());
 
 		int index = 0;
 		float value;
+		Color3f color3;
 		for(Set<Spot> track : tracks) {
 			value = (float) index / ntracks;
-			color = new Color4f(InterpolatePaintScale.Jet.getPaint(value));
-			color.w = 0f;
-			trackColors.put(track, color);
+			color3 = new Color3f(InterpolatePaintScale.Jet.getPaint(value));
+			trackColors.put(track, color3);
 			index++;
 		}
 
@@ -116,6 +119,8 @@ public class TrackDisplayNodeTestDrive {
 		Content trackContent = new Content("Tracks", trackInstants);
 		trackContent.setShowAllTimepoints(true);
 		universe.addContentLater(trackContent);
+		tdn.setDisplayTrackMode(TrackDisplayMode.LOCAL_WHOLE_TRACKS, 5);
+		universe.addTimelapseListener(tdn);
 		
 	}
 	

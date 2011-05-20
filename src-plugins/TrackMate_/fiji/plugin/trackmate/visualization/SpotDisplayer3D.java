@@ -13,7 +13,6 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 
 import javax.vecmath.Color3f;
-import javax.vecmath.Color4f;
 import javax.vecmath.Point4f;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -241,14 +240,13 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	
 	private Content makeTrackContent() {
 		// Prepare track color
-		HashMap<Set<Spot>, Color4f> colors = new HashMap<Set<Spot>, Color4f>();
+		HashMap<Set<Spot>, Color3f> colors = new HashMap<Set<Spot>, Color3f>();
 		float value;
-		Color4f color;
+		Color3f color;
 		int index = 0;
 		for(Set<Spot> track : tracks) {
 			value = (float) index / tracks.size();
-			color = new Color4f(colorMap.getPaint(value));
-			color.w = 0f;
+			color = new Color3f(colorMap.getPaint(value));
 			colors.put(track, color);
 			index++;
 		}

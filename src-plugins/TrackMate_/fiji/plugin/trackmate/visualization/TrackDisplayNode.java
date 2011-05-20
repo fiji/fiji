@@ -14,24 +14,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.media.j3d.Appearance;
+import javax.media.j3d.ColoringAttributes;
+import javax.media.j3d.LineArray;
+import javax.media.j3d.LineAttributes;
+import javax.media.j3d.Shape3D;
 import javax.media.j3d.Switch;
+import javax.media.j3d.TransparencyAttributes;
 import javax.media.j3d.View;
 import javax.vecmath.Color3f;
-import javax.vecmath.Color4f;
-import javax.vecmath.Point3f;
+import javax.vecmath.Point3d;
 import javax.vecmath.Tuple3d;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
-import customnode.CustomTriangleMesh;
-import customnode.MeshMaker;
-
 public class TrackDisplayNode extends ContentNode implements TimelapseListener {
-
-	private static final int DEFAULT_PARALLEL_NUMBER = 12;
-	/** The track tube radius ratio (ratio of source radius). */
-	protected final static double RADIUS_RATIO = 0.1;
 
 	/** The graph containing the connectivity. */
 	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph;
@@ -40,15 +38,15 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	/** The list of tracks. */
 	protected List<Set<Spot>> tracks;
 	/** Hold the color and transparency of all spots for a given track. */
-	protected Map<Set<Spot>, Color4f> colors;
+	protected Map<Set<Spot>, Color3f> colors;
 	/** Switch used for display. Is the only child of this {@link ContentNode}.	 */
 	protected Switch trackSwitch;
 	/** Boolean set that controls the visibility of each mesh.	 */
 	protected BitSet switchMask;
 	/** Hold a reference of the meshes corresponding to each edge. */
-	protected HashMap<DefaultWeightedEdge, CustomTriangleMesh> edgeMeshes = new HashMap<DefaultWeightedEdge, CustomTriangleMesh>();
+	protected HashMap<DefaultWeightedEdge, Shape3D> edgeMeshes = new HashMap<DefaultWeightedEdge, Shape3D>();
 	/** Hold a reference of the meshes indexed by frame. */
-	protected HashMap<Integer, List<CustomTriangleMesh>> frameMeshes = new HashMap<Integer, List<CustomTriangleMesh>>();
+	protected HashMap<Integer, List<Shape3D>> frameMeshes = new HashMap<Integer, List<Shape3D>>();
 
 	private TrackDisplayMode displayMode = TrackDisplayMode.ALL_WHOLE_TRACKS;
 
@@ -66,7 +64,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 			SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph, 
 			SpotCollection spots, 
 			List<Set<Spot>> tracks, 
-			Map<Set<Spot>, Color4f> colors) {
+			Map<Set<Spot>, Color3f> colors) {
 		this.graph = graph;
 		this.spots = spots;
 		this.tracks = tracks;
@@ -76,7 +74,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		trackSwitch.setCapability(Switch.ALLOW_CHILDREN_WRITE);
 		trackSwitch.setCapability(Switch.ALLOW_CHILDREN_EXTEND);
 		for(int frame : spots.keySet()) 
-			frameMeshes.put(frame, new ArrayList<CustomTriangleMesh>());
+			frameMeshes.put(frame, new ArrayList<Shape3D>());
 		makeMeshes();
 	}
 	
@@ -94,8 +92,8 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		
 		switch(displayMode) {
 		case ALL_WHOLE_TRACKS: {
-			for(CustomTriangleMesh mesh : edgeMeshes.values())
-				mesh.setTransparency(0);
+			for(Shape3D mesh : edgeMeshes.values())
+				mesh.getAppearance().getTransparencyAttributes().setTransparency(0f);
 			break;
 		}
 		case LOCAL_WHOLE_TRACKS: {
@@ -107,8 +105,8 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 					tp = 1;
 				else 
 					tp = (float) frameDist / displayDepth;
-				for(CustomTriangleMesh mesh : frameMeshes.get(frame))
-					mesh.setTransparency(tp);
+				for(Shape3D mesh : frameMeshes.get(frame))
+					mesh.getAppearance().getTransparencyAttributes().setTransparency(tp);
 			}
 			break;
 		}
@@ -121,8 +119,8 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 					tp = 1;
 				else 
 					tp = (float) frameDist / displayDepth;
-				for(CustomTriangleMesh mesh : frameMeshes.get(frame))
-					mesh.setTransparency(tp);
+				for(Shape3D mesh : frameMeshes.get(frame))
+					mesh.getAppearance().getTransparencyAttributes().setTransparency(tp);
 			}
 			break;
 		}
@@ -135,8 +133,8 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 					tp = 1;
 				else 
 					tp = (float) frameDist / displayDepth;
-				for(CustomTriangleMesh mesh : frameMeshes.get(frame))
-					mesh.setTransparency(tp);
+				for(Shape3D mesh : frameMeshes.get(frame))
+					mesh.getAppearance().getTransparencyAttributes().setTransparency(tp);
 			}
 			break;
 		}
@@ -161,14 +159,16 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	 * Set the color of the given edge mesh.
 	 */
 	public void setColor(final DefaultWeightedEdge edge, final Color3f color) {
-		edgeMeshes.get(edge).setColor(color);
+		edgeMeshes.get(edge).getAppearance().getColoringAttributes().setColor(color);
 	}
 	
 	/**
 	 * Return the color of the specified edge mesh.
 	 */
 	public Color3f getColor(final DefaultWeightedEdge edge) {
-		return edgeMeshes.get(edge).getColor();
+		Color3f color = new Color3f();
+		edgeMeshes.get(edge).getAppearance().getColoringAttributes().getColor(color);
+		return color;
 	}
 	
 
@@ -187,11 +187,11 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	 */
 	
 	private void makeMeshes() {
-		
-		CustomTriangleMesh mesh;
+		Shape3D mesh;
 		Spot target, source;
 		Set<Spot> parentTrack;
-		
+		LineAttributes atts = new LineAttributes(4f, LineAttributes.PATTERN_SOLID, true);
+
 		Set<DefaultWeightedEdge> allEdges = graph.edgeSet();
 		int index = 0;
 		for(DefaultWeightedEdge edge : allEdges) {
@@ -205,7 +205,10 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 					parentTrack = track;
 					break;
 				}
+			
+			// Create line and set common attributes
 			mesh = makeMesh(source, target, colors.get(parentTrack));
+			mesh.getAppearance().setLineAttributes(atts);
 			// Store the individual mesh indexed by edge
 			edgeMeshes.put(edge, mesh);
 			// Store the mesh by frame index
@@ -222,18 +225,28 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	}
 	
 	
-	private CustomTriangleMesh makeMesh(final Spot source, final Spot target, final Color4f color) {
-		final float radius = source.getFeature(Feature.RADIUS);
-		double[] x = new double[] { source.getFeature(Feature.POSITION_X), target.getFeature(Feature.POSITION_X) };
-		double[] y = new double[] { source.getFeature(Feature.POSITION_Y), target.getFeature(Feature.POSITION_Y) };
-		double[] z = new double[] { source.getFeature(Feature.POSITION_Z), target.getFeature(Feature.POSITION_Z) };
-		double[] r = new double[] { radius * RADIUS_RATIO, radius * RADIUS_RATIO };
-		// Avoid trouble if the source and target are at the same location
-		if (x[0] == x[1] && y[0] == y[1] && z[0] == z[1])
-			z[1] += radius/100;
-		List<Point3f> points = MeshMaker.createTube(x, y, z, r, DEFAULT_PARALLEL_NUMBER, false);
-		CustomTriangleMesh node = new CustomTriangleMesh(points, new Color3f(color.x, color.y, color.z), color.w);
-		return node;
+	private Shape3D makeMesh(final Spot source, final Spot target, final Color3f color) {
+		double x0 = source.getFeature(Feature.POSITION_X);
+		double x1 = target.getFeature(Feature.POSITION_X);
+		double y0 = source.getFeature(Feature.POSITION_Y);
+		double y1 = target.getFeature(Feature.POSITION_Y);
+		double z0 = source.getFeature(Feature.POSITION_Z);
+		double z1 = target.getFeature(Feature.POSITION_Z);
+		
+		LineArray line = new LineArray(2, LineArray.COORDINATES);
+		Point3d p1 = new Point3d(new double[] {x0, y0, z0});
+		Point3d p2 = new Point3d(new double[] {x1, y1, z1});
+		line.setCoordinate(0, p1);
+		line.setCoordinate(1, p2);
+		
+		Appearance appearance = new Appearance();
+		ColoringAttributes coloringAttributes = new ColoringAttributes(color, ColoringAttributes.SHADE_FLAT);
+		appearance.setColoringAttributes(coloringAttributes);
+		TransparencyAttributes transpaAtt = new TransparencyAttributes(TransparencyAttributes.BLENDED, 0f);
+		transpaAtt.setCapability(TransparencyAttributes.ALLOW_VALUE_WRITE);
+		appearance.setTransparencyAttributes(transpaAtt);
+		Shape3D sh = new Shape3D(line, appearance);
+		return sh;
 	}
 	
 	
@@ -247,8 +260,8 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 
 	@Override
 	public void colorUpdated(Color3f color) {
-		for(CustomTriangleMesh mesh : edgeMeshes.values())
-			mesh.setColor(color);
+		for(Shape3D mesh : edgeMeshes.values())
+			mesh.getAppearance().getColoringAttributes().setColor(color);
 	}
 
 	@Override
@@ -311,26 +324,25 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 
 	@Override
 	public float getVolume() {
-		float volume = 0;
-		for (CustomTriangleMesh mesh : edgeMeshes.values()) 
-			volume += mesh.getVolume();
-		return volume;
+		return 0;
 	}
 
 	@Override
 	public void shadeUpdated(boolean shaded) {
-		for (CustomTriangleMesh mesh : edgeMeshes.values())
-			 mesh.setShaded(shaded);
+		int shadeModel;
+		if (shaded) 
+			shadeModel = ColoringAttributes.SHADE_GOURAUD;
+		else 
+			shadeModel = ColoringAttributes.SHADE_FLAT;
+		for (Shape3D mesh : edgeMeshes.values())
+			 mesh.getAppearance().getColoringAttributes().setShadeModel(shadeModel);
 	}
 
 	@Override
 	public void thresholdUpdated(int threshold) {}
 
 	@Override
-	public void transparencyUpdated(float transparency) {
-		for(CustomTriangleMesh mesh : edgeMeshes.values()) 
-			mesh.setTransparency(transparency);
-	}
+	public void transparencyUpdated(float transparency) {}
 
 	@Override
 	public void lutUpdated(int[] r, int[] g, int[] b, int[] a) {}
