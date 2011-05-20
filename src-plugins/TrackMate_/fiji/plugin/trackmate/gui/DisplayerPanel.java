@@ -11,7 +11,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashSet;
 
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
@@ -27,14 +29,18 @@ import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
 
 import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.util.GUIUtils;
+import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 
 /**
- * A configuration panel used to tune the aspect of spots and tracks in {@link SpotDisplayer}.
+ * A configuration panel used to tune the aspect of spots and tracks in multiple {@link SpotDisplayer}.
+ * This GUI takes the role of a controller.
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr>   -  2010 - 2011
  */
-public class DisplayerPanel extends ActionListenablePanel {
+public class DisplayerPanel extends ActionListenablePanel implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
 
@@ -72,19 +78,33 @@ public class DisplayerPanel extends ActionListenablePanel {
 	private JNumericTextField jTextFieldSpotRadius;
 	private JCheckBox jCheckBoxDisplayNames;
 
+	/**
+	 * The set of {@link SpotDisplayer} views controlled by this controller.
+	 * It is a set, so that we work around trying to link multiple times with the 
+	 * same displayer.
+	 */
+	private HashSet<SpotDisplayer> spotDisplayers = new HashSet<SpotDisplayer>();
+	private TrackMateModelInterface model;
 	
 	
-	public DisplayerPanel(final  EnumMap<Feature, double[]> featureValues) {
+	public DisplayerPanel(TrackMateModelInterface model) {
 		super();
-		this.featureValues = featureValues;
+		this.model = model;
+		this.featureValues = TMUtils.getFeatureValues(model.getSelectedSpots().values());
 		initGUI();
+		addActionListener(this);
 	}
-	
-	
 	
 	/*
 	 * PUBLIC METHODS
 	 */
+	
+	/**
+	 * Add the given {@link SpotDisplayer} to the list managed by this controller.
+	 */
+	public void register(final SpotDisplayer spotDisplayer) {
+		this.spotDisplayers.add(spotDisplayer);
+	}
 	
 	public double getSpotDisplayRadiusRatio() {
 		return jTextFieldSpotRadius.getValue();
@@ -335,6 +355,40 @@ public class DisplayerPanel extends ActionListenablePanel {
 		}
 	}
 
+
+	/**
+	 * Fired when the user change a setting displayed on this GUI. 
+	 */
+	@Override
+	public void actionPerformed(final ActionEvent event) {
+		if (event == SPOT_COLOR_MODE_CHANGED) {
+			for(SpotDisplayer spotDisplayer : spotDisplayers)
+				spotDisplayer.setColorByFeature(getColorSpotByFeature());
+
+		} else if (event == SPOT_VISIBILITY_CHANGED) {
+			for(SpotDisplayer spotDisplayer : spotDisplayers)
+				spotDisplayer.setSpotVisible(isDisplaySpotSelected());
+
+		} else if (event == TRACK_DISPLAY_MODE_CHANGED) {
+			for(SpotDisplayer spotDisplayer : spotDisplayers)
+				spotDisplayer.setDisplayTrackMode(getTrackDisplayMode(), getTrackDisplayDepth());
+
+		} else if (event == TRACK_VISIBILITY_CHANGED) {
+			for(SpotDisplayer spotDisplayer : spotDisplayers)
+				spotDisplayer.setTrackVisible(isDisplayTrackSelected());
+
+		} else if (event == SPOT_DISPLAY_RADIUS_CHANGED) {
+			for(SpotDisplayer spotDisplayer : spotDisplayers)
+				spotDisplayer.setRadiusDisplayRatio((float) getSpotDisplayRadiusRatio());
+
+		} else if (event == SPOT_DISPLAY_LABEL_CHANGED) {
+			for(SpotDisplayer spotDisplayer : spotDisplayers)
+				spotDisplayer.setSpotNameVisible(isDisplaySpotNameSelected());
+			
+		} else if (event == TRACK_SCHEME_BUTTON_PRESSED) {
+			GUIUtils.launchTrackScheme(model, spotDisplayers);
+		} 		
+	}
 	/*
 	 * MAIN METHOD
 	 */
@@ -350,6 +404,8 @@ public class DisplayerPanel extends ActionListenablePanel {
 			displayerPanel_IL.setPreferredSize(new java.awt.Dimension(300, 469));
 		}
 	}
+
+	
 
 
 }

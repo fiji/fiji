@@ -11,7 +11,6 @@ import javax.swing.JFrame;
 import fiji.plugin.trackmate.TrackMateModelInterface;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 import fiji.plugin.trackmate.gui.ImagePlusChooser;
-import fiji.plugin.trackmate.util.GUIUtils;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 
 public class CopyOverlayAction extends AbstractTMAction {
@@ -50,7 +49,7 @@ public class CopyOverlayAction extends AbstractTMAction {
 							newDisplayer.setSpotsToShow(model.getSelectedSpots());
 							newDisplayer.setTrackGraph(model.getTrackGraph());
 							
-							final DisplayerPanel newDisplayerPanel = new DisplayerPanel(model.getFeatureValues());
+							final DisplayerPanel newDisplayerPanel = new DisplayerPanel(model);
 							JFrame newFrame = new JFrame(); 
 							newFrame.getContentPane().add(newDisplayerPanel);
 							newFrame.pack();
@@ -59,7 +58,6 @@ public class CopyOverlayAction extends AbstractTMAction {
 							newFrame.setLocationRelativeTo(null);
 							newFrame.setVisible(true);
 							
-							GUIUtils.execLinkDisplayerToTuningGUI(newDisplayerPanel, newDisplayer, model);
 						}
 					}.start();
 				} else {

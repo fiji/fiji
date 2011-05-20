@@ -3,16 +3,18 @@ package fiji.plugin.trackmate.action;
 import fiji.plugin.trackmate.InfoTextable;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.gui.TrackMateFrame;
 
 public enum ActionType implements InfoTextable {
-	COPY_OVERLAY_TO (new CopyOverlayAction()), 
+	
+	COPY_OVERLAY_TO 		(new CopyOverlayAction()), 
+	LINK_TO_NEW_3D_VIEWER 	(new LinkNew3DViewerAction()),
 	SET_RADIUS_TO_ESTIMATED (new RadiusToEstimatedAction()),
 	RESET_RADIUS_TO_EXPECTED (new ResetRadiusAction()),
-	RECOMPUTE_ALL_FEATURES (new RecalculateFeatureAction()),
-	GRAB_SPOT_IMAGES(new GrabSpotImageAction());
+	RECOMPUTE_ALL_FEATURES 	(new RecalculateFeatureAction()),
+	GRAB_SPOT_IMAGES		(new GrabSpotImageAction());
 	
 	private TrackMateAction action;
-
 
 	private ActionType(TrackMateAction action) {
 		this.action = action;
@@ -40,6 +42,11 @@ public enum ActionType implements InfoTextable {
 
 	public void setLogger(Logger logger) {
 		action.setLogger(logger);
+	}
+
+
+	public void setView(TrackMateFrame view) {
+		action.setView(view);
 	}
 
 }

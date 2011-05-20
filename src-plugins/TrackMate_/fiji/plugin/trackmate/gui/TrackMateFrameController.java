@@ -19,7 +19,6 @@ import fiji.plugin.trackmate.TrackMateModelInterface;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.TrackMateFrame.PanelCard;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
-import fiji.plugin.trackmate.util.GUIUtils;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 import fiji.plugin.trackmate.visualization.TrackMateModelManager;
@@ -204,8 +203,7 @@ public class TrackMateFrameController {
 						controller.execLinkDisplayerToThresholdGUI();
 						break;
 					case TUNE_DISPLAY:
-						GUIUtils.execLinkDisplayerToTuningGUI(view.displayerPanel, controller.displayer, controller.model);
-						break;
+						view.displayerPanel.register(controller.displayer);
 					}
 					
 				}
@@ -225,7 +223,6 @@ public class TrackMateFrameController {
 		
 		/**
 		 * Action taken after the GUI has been displayed. 
-		 * @param controller
 		 */
 		public void performPostGUITask(final TrackMateFrameController controller) {
 			switch(this) {

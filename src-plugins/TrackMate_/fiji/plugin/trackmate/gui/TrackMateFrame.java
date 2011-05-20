@@ -30,18 +30,18 @@ import fiji.plugin.trackmate.visualization.SpotDisplayer.DisplayerType;
 public class TrackMateFrame extends javax.swing.JFrame {
 
 	/*
-	 * DEFAULT VISIBILITY CONSTANTS
+	 * DEFAULT VISIBILITY & PUBLIC CONSTANTS
 	 */
-	
+
 	public static final Font FONT = new Font("Arial", Font.PLAIN, 10);
 	public static final Font SMALL_FONT = FONT.deriveFont(8);
 	static final Dimension TEXTFIELD_DIMENSION = new Dimension(40,18);
-	
+
 	/*
-	 * CONSTANTS
+	 * PRIVATE CONSTANTS
 	 */
-	
-	private static final long serialVersionUID = 6161909075663429689L;
+
+	private static final long serialVersionUID = -4092131926852771798L;
 	private static final Icon NEXT_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/arrow_right.png"));
 	private static final Icon PREVIOUS_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/arrow_left.png"));
 	private static final Icon LOAD_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/page_go.png"));
@@ -50,7 +50,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	/*
 	 * DEFAULT VISIBILITY FIELDS
 	 */
-	
+
 	/** This {@link ActionEvent} is fired when the 'next' button is pressed. */
 	final ActionEvent NEXT_BUTTON_PRESSED = new ActionEvent(this, 0, "NextButtonPressed");
 	/** This {@link ActionEvent} is fired when the 'previous' button is pressed. */
@@ -59,12 +59,12 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	final ActionEvent LOAD_BUTTON_PRESSED = new ActionEvent(this, 2, "LoadButtonPressed");
 	/** This {@link ActionEvent} is fired when the 'save' button is pressed. */
 	final ActionEvent SAVE_BUTTON_PRESSED = new ActionEvent(this, 3, "SaveButtonPressed");
-	
+
 	JButton jButtonSave;
 	JButton jButtonLoad;
 	JButton jButtonPrevious;
 	JButton jButtonNext;
-	
+
 	StartDialogPanel startDialogPanel;
 	SegmenterSettingsPanel segmenterSettingsPanel;
 	InitThresholdPanel initThresholdingPanel;
@@ -78,7 +78,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	/*
 	 * FIELDS
 	 */
-	
+
 	private TrackMateModelInterface model;
 	private ArrayList<ActionListener> listeners = new ArrayList<ActionListener>();
 
@@ -92,7 +92,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	/*
 	 * ENUM
 	 */
-	
+
 	public enum PanelCard {
 		START_DIALOG_KEY,
 		SEGMENTER_CHOICE_KEY,
@@ -106,8 +106,8 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		DISPLAYER_PANEL_KEY, 
 		ACTION_PANEL_KEY;
 	}
-	
-	
+
+
 	{
 		//Set Look & Feel
 		try {
@@ -116,110 +116,109 @@ public class TrackMateFrame extends javax.swing.JFrame {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/*
 	 * CONSTRUCTOR
 	 */
-	
+
 	public TrackMateFrame(TrackMateModelInterface model) {
 		this.model = model;
 		initGUI();
-		
+
 	}
-	
+
 	/*
 	 * PUBLIC METHODS
 	 */
-	
+
 	public void setModel(TrackMateModelInterface model) {
 		this.model = model;		
 	}
 
-	
+
 	/**
 	 * Display the panel whose key is given. If needed, instantiate it or update it by getting 
 	 * required parameters from the model this view represent.
 	 */
 	public void displayPanel(PanelCard key) {
-		
+
 		if (key == PanelCard.LOG_PANEL_KEY) {
 			cardLayout.show(jPanelMain, PanelCard.LOG_PANEL_KEY.name());
 			return;
 		}
-		
+
 		ActionListenablePanel panel = null;
 		switch (key) {
-		
+
 		case START_DIALOG_KEY:
 			startDialogPanel = new StartDialogPanel(model.getSettings(), jButtonNext);
 			panel = startDialogPanel;
 			break;
-			
+
 		case SEGMENTER_CHOICE_KEY:
 			if (null == segmenterChoicePanel)
 				segmenterChoicePanel = new EnumChooserPanel<SegmenterType>(SegmenterType.PEAKPICKER_SEGMENTER, "segmenter");
 			panel = segmenterChoicePanel;
 			break;
-			
+
 		case TUNE_SEGMENTER_KEY:
 			if (null != segmenterSettingsPanel)
 				jPanelMain.remove(segmenterSettingsPanel);
 			segmenterSettingsPanel = SegmenterSettingsPanel.createSegmenterSettingsPanel(model.getSettings());
 			panel = segmenterSettingsPanel;
 			break;
-			
+
 		case INITIAL_THRESHOLDING_KEY:
 			if (null != initThresholdingPanel)
 				jPanelMain.remove(initThresholdingPanel);
 			initThresholdingPanel = new InitThresholdPanel(model.getFeatureValues(), model.getInitialThreshold());
 			panel = initThresholdingPanel;
 			break;
-			
+
 		case DISPLAYER_CHOICE_KEY:
 			if (null != displayerChooserPanel)
 				jPanelMain.remove(displayerChooserPanel);
 			displayerChooserPanel = new EnumChooserPanel<SpotDisplayer.DisplayerType>(SpotDisplayer.DisplayerType.HYPERSTACK_DISPLAYER, "displayer");
 			panel = displayerChooserPanel;
 			break;
-			
+
 		case THRESHOLD_GUI_KEY:
 			if (null != thresholdGuiPanel) 
 				jPanelMain.remove(thresholdGuiPanel);
 			thresholdGuiPanel = new ThresholdGuiPanel(model.getFeatureValues(), model.getFeatureThresholds());
 			panel = thresholdGuiPanel;
 			break;
-			
+
 		case TRACKER_CHOICE_KEY:
 			if (null == trackerChoicePanel)
 				trackerChoicePanel = new EnumChooserPanel<TrackerType>(TrackerType.SIMPLE_LAP_TRACKER, "tracker");
 			panel = trackerChoicePanel;
 			break;
-			
+
 		case TUNE_TRACKER_KEY:
 			if (null != trackerSettingsPanel)
 				jPanelMain.remove(trackerSettingsPanel);
 			trackerSettingsPanel = TrackerSettingsPanel.createPanel(model.getSettings());
 			panel = trackerSettingsPanel;
 			break;
-			
+
 		case DISPLAYER_PANEL_KEY:
-			if (null != displayerPanel)
-				jPanelMain.remove(displayerPanel);
-			displayerPanel = new DisplayerPanel(model.getFeatureValues());
+			if (null == displayerPanel) 
+				displayerPanel = new DisplayerPanel(model);
 			panel = displayerPanel;
 			break;
-			
+
 		case ACTION_PANEL_KEY:
 			if (null == actionPanel)
-				actionPanel = new ActionChooserPanel(model);
+				actionPanel = new ActionChooserPanel(model, this);
 			panel = actionPanel;
 			break;
 		}
-		
+
 		jPanelMain.add(panel, key.name());
 		cardLayout.show(jPanelMain, key.name());
 	}
-	
+
 	/** 
 	 * Add an {@link ActionListener} to the list of listeners of this GUI, that will be notified 
 	 * when one the of push buttons is pressed.
@@ -227,7 +226,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	public void addActionListener(ActionListener listener) {
 		listeners.add(listener);
 	}
-	
+
 	/** 
 	 * Remove an {@link ActionListener} from the list of listeners of this GUI.
 	 * @return  true if the listener was present in the list for this GUI and was sucessfully removed from it.
@@ -235,19 +234,19 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	public boolean removeActionListener(ActionListener listener) {
 		return listeners.remove(listener);
 	}
-	
+
 	/** 
 	 * Return a {@link Logger} suitable for use with this view.
 	 */
 	public Logger getLogger() {
 		return logPanel.getLogger();
 	}
-	
-	
+
+
 	/*
 	 * PRIVATE METHODS
 	 */
-	
+
 	/**
 	 * Forward the given {@link ActionEvent} to the listeners of this GUI.
 	 */
@@ -257,7 +256,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 				listener.actionPerformed(event);
 		}
 	}
-	
+
 	/**
 	 * Layout this GUI.
 	 */
@@ -343,5 +342,40 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		}
 		repaint();
 		validate();
+	}
+
+	/**
+	 * Return the GUI panel associated with the given {@link PanelCard}. 
+	 * Warning: Some panels may not be instantiated (yet) at the time when this method is called
+	 */
+	public ActionListenablePanel getPanelFor(PanelCard card) {
+		switch(card) {
+
+		case ACTION_PANEL_KEY:
+			return displayerPanel;
+		case DISPLAYER_CHOICE_KEY:
+			return displayerChooserPanel;
+		case DISPLAYER_PANEL_KEY:
+			return displayerPanel;
+		case INITIAL_THRESHOLDING_KEY:
+			return initThresholdingPanel;
+		case LOG_PANEL_KEY:
+			return logPanel;
+		case SEGMENTER_CHOICE_KEY:
+			return segmenterChoicePanel;
+		case START_DIALOG_KEY:
+			return startDialogPanel;
+		case THRESHOLD_GUI_KEY:
+			return thresholdGuiPanel;
+		case TRACKER_CHOICE_KEY:
+			return trackerChoicePanel;
+		case TUNE_SEGMENTER_KEY:
+			return segmenterSettingsPanel;
+		case TUNE_TRACKER_KEY:
+			return trackerSettingsPanel;
+		default:
+			return null;
+		}
+
 	}	
 }

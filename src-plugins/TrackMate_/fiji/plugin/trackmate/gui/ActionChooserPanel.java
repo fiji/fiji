@@ -30,10 +30,13 @@ public class ActionChooserPanel extends EnumChooserPanel<ActionType> {
 	private TrackMateModelInterface model;
 	private LogPanel logPanel;
 	private Logger logger;
+	/** The view linked to the given model, in case some actions need it. */ 
+	private TrackMateFrame view;
 
-	public ActionChooserPanel(TrackMateModelInterface model) {
-		super(ActionType.SET_RADIUS_TO_ESTIMATED, "Action");
+	public ActionChooserPanel(TrackMateModelInterface model, TrackMateFrame view) {
+		super(ActionType.GRAB_SPOT_IMAGES, "Action");
 		this.model = model;
+		this.view = view;
 		this.logPanel = new LogPanel();
 		this.logger = logPanel.getLogger();
 		init();
@@ -58,6 +61,7 @@ public class ActionChooserPanel extends EnumChooserPanel<ActionType> {
 							fireAction(ACTION_STARTED);
 							ActionType type = getChoice();
 							type.setLogger(logger);
+							type.setView(view);
 							type.execute(model);
 							fireAction(ACTION_FINISHED);
 						} finally {
@@ -86,7 +90,7 @@ public class ActionChooserPanel extends EnumChooserPanel<ActionType> {
 	
 	public static void main(String[] args) {
 		JFrame frame = new JFrame();
-		frame.getContentPane().add(new ActionChooserPanel(new TrackMate_()));
+		frame.getContentPane().add(new ActionChooserPanel(new TrackMate_(), null));
 		frame.setSize(300, 520);
 		frame.setVisible(true);
 	}
