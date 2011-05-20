@@ -4,6 +4,7 @@ import ij3d.Content;
 import ij3d.ContentInstant;
 import ij3d.Image3DUniverse;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -40,7 +41,7 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	private ArrayList<Spot> previousSpotHighlight;
 	private HashMap<Spot, Color3f> previousColorHighlight;
 	private HashMap<Spot, Integer> previousFrameHighlight;
-	private HashMap<DefaultWeightedEdge, Color3f> previousEdgeHighlight;
+	private HashMap<DefaultWeightedEdge, Color> previousEdgeHighlight;
 	
 	public SpotDisplayer3D(Image3DUniverse universe) {
 		this.universe = universe;
@@ -100,13 +101,13 @@ public class SpotDisplayer3D extends SpotDisplayer {
 					trackNode.setColor(edge, previousEdgeHighlight.get(edge));
 		
 		// Store current color settings
-		previousEdgeHighlight = new HashMap<DefaultWeightedEdge, Color3f>();
+		previousEdgeHighlight = new HashMap<DefaultWeightedEdge, Color>();
 		for(DefaultWeightedEdge edge :edges)
 			previousEdgeHighlight.put(edge, trackNode.getColor(edge));
 		
 		// Change edge color
 		for(DefaultWeightedEdge edge :edges)
-			trackNode.setColor(edge, HIGHLIGHT_COLOR3F);
+			trackNode.setColor(edge, HIGHLIGHT_COLOR);
 		
 	}
 	
@@ -240,14 +241,12 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	
 	private Content makeTrackContent() {
 		// Prepare track color
-		HashMap<Set<Spot>, Color3f> colors = new HashMap<Set<Spot>, Color3f>();
+		HashMap<Set<Spot>, Color> colors = new HashMap<Set<Spot>, Color>();
 		float value;
-		Color3f color;
 		int index = 0;
 		for(Set<Spot> track : tracks) {
 			value = (float) index / tracks.size();
-			color = new Color3f(colorMap.getPaint(value));
-			colors.put(track, color);
+			colors.put(track, colorMap.getPaint(value));
 			index++;
 		}
 		

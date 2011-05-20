@@ -114,4 +114,5 @@ public interface Spot {
 	 * @see mxBase64 
 	 */
 	public String getImageString();
+	
 }

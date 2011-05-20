@@ -7,22 +7,20 @@ import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 import ij3d.ContentNode;
 import ij3d.TimelapseListener;
 
+import java.awt.Color;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import javax.media.j3d.Appearance;
-import javax.media.j3d.ColoringAttributes;
 import javax.media.j3d.LineArray;
 import javax.media.j3d.LineAttributes;
 import javax.media.j3d.Shape3D;
-import javax.media.j3d.Switch;
-import javax.media.j3d.TransparencyAttributes;
 import javax.media.j3d.View;
 import javax.vecmath.Color3f;
+import javax.vecmath.Color4f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Tuple3d;
 
@@ -38,115 +36,139 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	/** The list of tracks. */
 	protected List<Set<Spot>> tracks;
 	/** Hold the color and transparency of all spots for a given track. */
-	protected Map<Set<Spot>, Color3f> colors;
-	/** Switch used for display. Is the only child of this {@link ContentNode}.	 */
-	protected Switch trackSwitch;
-	/** Boolean set that controls the visibility of each mesh.	 */
-	protected BitSet switchMask;
-	/** Hold a reference of the meshes corresponding to each edge. */
-	protected HashMap<DefaultWeightedEdge, Shape3D> edgeMeshes = new HashMap<DefaultWeightedEdge, Shape3D>();
-	/** Hold a reference of the meshes indexed by frame. */
-	protected HashMap<Integer, List<Shape3D>> frameMeshes = new HashMap<Integer, List<Shape3D>>();
+	protected Map<Set<Spot>, Color> colors;
+
 
 	private TrackDisplayMode displayMode = TrackDisplayMode.ALL_WHOLE_TRACKS;
 
 	private int displayDepth;
 
 	private int currentTimePoint;
-	
-	
-	 
+
+	/** Dictionary referencing the line vertices indexed by frame. */
+	protected HashMap<Integer, ArrayList<Integer>> frameIndex = new HashMap<Integer, ArrayList<Integer>>();
+	/** Dictionary referencing the line vertices corresponding to each edge. */
+	protected HashMap<DefaultWeightedEdge, Integer> edgeIndex = new HashMap<DefaultWeightedEdge, Integer>();
+	/** Primitive containing all lines reprenseting track edges. */
+	private LineArray line;
+
+
+
 	/*
 	 * CONSTRUCTOR
 	 */
-	
+
 	public TrackDisplayNode(
 			SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph, 
 			SpotCollection spots, 
 			List<Set<Spot>> tracks, 
-			Map<Set<Spot>, Color3f> colors) {
+			Map<Set<Spot>, Color> colors) {
 		this.graph = graph;
 		this.spots = spots;
 		this.tracks = tracks;
 		this.colors = colors;
-		this.trackSwitch = new Switch(Switch.CHILD_MASK);
-		trackSwitch.setCapability(Switch.ALLOW_SWITCH_WRITE);
-		trackSwitch.setCapability(Switch.ALLOW_CHILDREN_WRITE);
-		trackSwitch.setCapability(Switch.ALLOW_CHILDREN_EXTEND);
-		for(int frame : spots.keySet()) 
-			frameMeshes.put(frame, new ArrayList<Shape3D>());
+
+		for(int frame : spots.keySet())
+			frameIndex.put(frame, new ArrayList<Integer>());
+
 		makeMeshes();
 	}
-	
+
 	/*
 	 * PUBLIC METHODS
 	 */
-	
+
 	public void setDisplayTrackMode(TrackDisplayMode mode, int displayDepth) {
 		this.displayMode = mode;
 		this.displayDepth = displayDepth;
+		
+		if (displayMode == TrackDisplayMode.ALL_WHOLE_TRACKS) {
+			Color4f color = new Color4f();
+			for (int i = 0; i < line.getVertexCount(); i++) {
+				line.getColor(i, color);
+				color.w = 1f;
+				line.setColor(i, color);
+			}
+		}
+		
 		refresh();
 	}
-	
+
 	private void refresh() {
-		
+		// Holder for passing values 
+		Color4f color = new Color4f();
+
 		switch(displayMode) {
 		case ALL_WHOLE_TRACKS: {
-			for(Shape3D mesh : edgeMeshes.values())
-				mesh.getAppearance().getTransparencyAttributes().setTransparency(0f);
 			break;
 		}
+
 		case LOCAL_WHOLE_TRACKS: {
 			float tp;
 			int frameDist;
-			for(int frame : frameMeshes.keySet()) {
+			for(int frame : frameIndex.keySet()) {
 				frameDist = Math.abs(frame - currentTimePoint); 
 				if (frameDist > displayDepth)
-					tp = 1;
+					tp = 0f;
 				else 
-					tp = (float) frameDist / displayDepth;
-				for(Shape3D mesh : frameMeshes.get(frame))
-					mesh.getAppearance().getTransparencyAttributes().setTransparency(tp);
+					tp = 1f - (float) frameDist / displayDepth;
+				
+				for (Integer index : frameIndex.get(frame)) {
+					line.getColor(index, color);
+					color.w = tp;
+					line.setColor(index, color);
+					line.setColor(index+1, color);
+				}
 			}
 			break;
 		}
 		case LOCAL_FORWARD_TRACKS: {
 			float tp;
 			int frameDist;
-			for(int frame : frameMeshes.keySet()) {
+			for(int frame : frameIndex.keySet()) {
 				frameDist = frame - currentTimePoint; 
 				if (frameDist < 0 || frameDist > displayDepth)
-					tp = 1;
+					tp = 0f;
 				else 
-					tp = (float) frameDist / displayDepth;
-				for(Shape3D mesh : frameMeshes.get(frame))
-					mesh.getAppearance().getTransparencyAttributes().setTransparency(tp);
+					tp = 1f - (float) frameDist / displayDepth;
+
+				for (Integer index : frameIndex.get(frame)) {
+					line.getColor(index, color);
+					color.w = tp;
+					line.setColor(index, color);
+					line.setColor(index+1, color);
+				}
 			}
 			break;
 		}
 		case LOCAL_BACKWARD_TRACKS: {
 			float tp;
 			int frameDist;
-			for(int frame : frameMeshes.keySet()) {
+			for(int frame : frameIndex.keySet()) {
 				frameDist = currentTimePoint - frame; 
 				if (frameDist <= 0 || frameDist > displayDepth)
-					tp = 1;
+					tp = 0f;
 				else 
-					tp = (float) frameDist / displayDepth;
-				for(Shape3D mesh : frameMeshes.get(frame))
-					mesh.getAppearance().getTransparencyAttributes().setTransparency(tp);
+					tp = 1f - (float) frameDist / displayDepth;
+
+				for (Integer index : frameIndex.get(frame)) {
+					line.getColor(index, color);
+					color.w = tp;
+					line.setColor(index, color);
+					line.setColor(index+1, color);
+				}
 			}
 			break;
 		}
 		}
-		
+
 	}
 
-	
+
 	/**
 	 * Set the color of the whole specified track.
 	 */
-	public void setColor(final Set<Spot> track, final Color3f color) {
+	public void setColor(final Set<Spot> track, final Color color) {
 		Set<DefaultWeightedEdge> edges;
 		for(Spot spot : track) {
 			edges = graph.edgesOf(spot);
@@ -154,115 +176,111 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 				setColor(edge, color);
 		}
 	}
-	
+
 	/**
 	 * Set the color of the given edge mesh.
 	 */
-	public void setColor(final DefaultWeightedEdge edge, final Color3f color) {
-		edgeMeshes.get(edge).getAppearance().getColoringAttributes().setColor(color);
+	public void setColor(final DefaultWeightedEdge edge, final Color color) {		
+		Color4f color4 = new Color4f(); 
+		int index = edgeIndex.get(edge);
+		line.getColor(index, color4);
+		float[] val = color.getRGBColorComponents(null);
+		color4.x = val[0];
+		color4.y = val[1];
+		color4.z = val[2];
+		line.setColor(index, color4);
+		line.setColor(index+1, color4);
 	}
-	
+
 	/**
 	 * Return the color of the specified edge mesh.
 	 */
-	public Color3f getColor(final DefaultWeightedEdge edge) {
-		Color3f color = new Color3f();
-		edgeMeshes.get(edge).getAppearance().getColoringAttributes().getColor(color);
-		return color;
+	public Color getColor(final DefaultWeightedEdge edge) {
+		Color4f color = new Color4f();
+		int index = edgeIndex.get(edge);
+		line.getColor(index, color);
+		return color.get();
 	}
-	
+
 
 	/*
 	 * TIMELAPSE LISTENER
 	 */
-	
+
 	@Override
 	public void timepointChanged(int timepoint) {
 		this.currentTimePoint = timepoint;
 		refresh();
 	}
-	
+
 	/*
 	 * PRIVATE METHODS
 	 */
-	
-	private void makeMeshes() {
-		Shape3D mesh;
-		Spot target, source;
-		Set<Spot> parentTrack;
-		LineAttributes atts = new LineAttributes(4f, LineAttributes.PATTERN_SOLID, true);
 
+	private void makeMeshes() {
+
+		// All edges
 		Set<DefaultWeightedEdge> allEdges = graph.edgeSet();
+
+		// Holder for coordinates (array ref will not be used, just its elements)
+		float[] coordinates = new float[3];
+
+		// One big object to display all edges
+		line = new LineArray(2 * allEdges.size(), LineArray.COORDINATES | LineArray.COLOR_4);
+		line.setCapability(LineArray.ALLOW_COLOR_WRITE);
+
 		int index = 0;
 		for(DefaultWeightedEdge edge : allEdges) {
 			// Find source and target
-			target = graph.getEdgeTarget(edge);
-			source = graph.getEdgeSource(edge);
+			Spot target = graph.getEdgeTarget(edge);
+			Spot source = graph.getEdgeSource(edge);
 			// Find track it belongs to
-			parentTrack = null;
+			Set<Spot> parentTrack = null;
 			for (Set<Spot> track : tracks) 
 				if (track.contains(source)) {
 					parentTrack = track;
 					break;
 				}
-			
-			// Create line and set common attributes
-			mesh = makeMesh(source, target, colors.get(parentTrack));
-			mesh.getAppearance().setLineAttributes(atts);
-			// Store the individual mesh indexed by edge
-			edgeMeshes.put(edge, mesh);
-			// Store the mesh by frame index
-			frameMeshes.get(spots.getFrame(source)).add(mesh);			
-			// Add the tube to the content
-			trackSwitch.addChild(mesh);
+
+			// Color
+			Color trackColor = colors.get(parentTrack);
+			Color4f color = new Color4f(trackColor);
+			color.w = 1f; // opaque edge for now
+
+			// Add coords and colors of each vertex
+			line.setCoordinate(index, source.getPosition(coordinates));
+			line.setColor(index, color);
 			index++;
-			}
-		switchMask = new BitSet(index);
-		switchMask.set(0, index, true); // all visible
-		trackSwitch.setChildMask(switchMask);
-		removeAllChildren();
-		addChild(trackSwitch);
-	}
-	
-	
-	private Shape3D makeMesh(final Spot source, final Spot target, final Color3f color) {
-		double x0 = source.getFeature(Feature.POSITION_X);
-		double x1 = target.getFeature(Feature.POSITION_X);
-		double y0 = source.getFeature(Feature.POSITION_Y);
-		double y1 = target.getFeature(Feature.POSITION_Y);
-		double z0 = source.getFeature(Feature.POSITION_Z);
-		double z1 = target.getFeature(Feature.POSITION_Z);
-		
-		LineArray line = new LineArray(2, LineArray.COORDINATES);
-		Point3d p1 = new Point3d(new double[] {x0, y0, z0});
-		Point3d p2 = new Point3d(new double[] {x1, y1, z1});
-		line.setCoordinate(0, p1);
-		line.setCoordinate(1, p2);
-		
+			line.setCoordinate(index, target.getPosition(coordinates));
+			line.setColor(index, color);
+			index++;
+			
+			// Keep refs
+			edgeIndex.put(edge, index-2);
+			frameIndex.get(spots.getFrame(source)).add(index-2);			
+		}
+
 		Appearance appearance = new Appearance();
-		ColoringAttributes coloringAttributes = new ColoringAttributes(color, ColoringAttributes.SHADE_FLAT);
-		appearance.setColoringAttributes(coloringAttributes);
-		TransparencyAttributes transpaAtt = new TransparencyAttributes(TransparencyAttributes.BLENDED, 0f);
-		transpaAtt.setCapability(TransparencyAttributes.ALLOW_VALUE_WRITE);
-		appearance.setTransparencyAttributes(transpaAtt);
-		Shape3D sh = new Shape3D(line, appearance);
-		return sh;
+		LineAttributes lineAtts = new LineAttributes(4f, LineAttributes.PATTERN_SOLID, true);
+		appearance.setLineAttributes(lineAtts);
+		Shape3D shape = new Shape3D(line, appearance);
+		removeAllChildren();
+		addChild(shape);
+
 	}
-	
-	
+
+
 	/*
 	 * CONTENTNODE METHODS
 	 */
-	
-	
+
+	/** Ignored for {@link TrackDisplayNode} */
 	@Override
 	public void channelsUpdated(boolean[] channels) {}
 
+	/** Ignored for {@link TrackDisplayNode} */
 	@Override
-	public void colorUpdated(Color3f color) {
-		for(Shape3D mesh : edgeMeshes.values())
-			mesh.getAppearance().getColoringAttributes().setColor(color);
-	}
+	public void colorUpdated(Color3f color) {}
 
 	@Override
 	public void eyePtChanged(View view) {}
@@ -324,35 +342,39 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 
 	@Override
 	public float getVolume() {
-		return 0;
+		Point3d min = new Point3d();
+		Point3d max = new Point3d();
+		getMin(min);
+		getMax(max);
+		max.sub(min);
+		return (float) (max.x * max.y * max.z);
 	}
 
+	/** Ignored for {@link TrackDisplayNode} */
 	@Override
-	public void shadeUpdated(boolean shaded) {
-		int shadeModel;
-		if (shaded) 
-			shadeModel = ColoringAttributes.SHADE_GOURAUD;
-		else 
-			shadeModel = ColoringAttributes.SHADE_FLAT;
-		for (Shape3D mesh : edgeMeshes.values())
-			 mesh.getAppearance().getColoringAttributes().setShadeModel(shadeModel);
-	}
+	public void shadeUpdated(boolean shaded) {}
 
+	/** Ignored for {@link TrackDisplayNode} */
 	@Override
 	public void thresholdUpdated(int threshold) {}
 
+	/** Ignored for {@link TrackDisplayNode} */
 	@Override
 	public void transparencyUpdated(float transparency) {}
 
+	/** Ignored for {@link TrackDisplayNode} */
 	@Override
 	public void lutUpdated(int[] r, int[] g, int[] b, int[] a) {}
 
+	/** Ignored for {@link TrackDisplayNode} */
 	@Override
 	public void swapDisplayedData(String path, String name) {}
 
+	/** Ignored for {@link TrackDisplayNode} */
 	@Override
 	public void restoreDisplayedData(String path, String name) {}
 
+	/** Ignored for {@link TrackDisplayNode} */
 	@Override
 	public void clearDisplayedData() {}
 

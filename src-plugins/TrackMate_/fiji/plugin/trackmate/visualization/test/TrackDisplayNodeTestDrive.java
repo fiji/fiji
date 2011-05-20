@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
-import javax.vecmath.Color3f;
 import javax.vecmath.Color4f;
 import javax.vecmath.Point4f;
 
@@ -99,15 +98,13 @@ public class TrackDisplayNodeTestDrive {
 		// Track content
 		List<Set<Spot>> tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets();
 		int ntracks = tracks.size();
-		HashMap<Set<Spot>, Color3f> trackColors = new HashMap<Set<Spot>, Color3f>(tracks.size());
+		HashMap<Set<Spot>, Color> trackColors = new HashMap<Set<Spot>, Color>(tracks.size());
 
 		int index = 0;
 		float value;
-		Color3f color3;
 		for(Set<Spot> track : tracks) {
 			value = (float) index / ntracks;
-			color3 = new Color3f(InterpolatePaintScale.Jet.getPaint(value));
-			trackColors.put(track, color3);
+			trackColors.put(track, InterpolatePaintScale.Jet.getPaint(value));
 			index++;
 		}
 
@@ -119,7 +116,7 @@ public class TrackDisplayNodeTestDrive {
 		Content trackContent = new Content("Tracks", trackInstants);
 		trackContent.setShowAllTimepoints(true);
 		universe.addContentLater(trackContent);
-		tdn.setDisplayTrackMode(TrackDisplayMode.LOCAL_WHOLE_TRACKS, 5);
+		tdn.setDisplayTrackMode(TrackDisplayMode.LOCAL_WHOLE_TRACKS, 10);
 		universe.addTimelapseListener(tdn);
 		
 	}
