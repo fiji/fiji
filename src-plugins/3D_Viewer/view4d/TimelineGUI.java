@@ -86,13 +86,12 @@ public class TimelineGUI implements ActionListener, KeyListener {
 		int min = timeline.getUniverse().getStartTime();
 		int max = timeline.getUniverse().getEndTime() + 1;
 		int cur = timeline.getUniverse().getCurrentTimepoint();
-		
+
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.weightx = 1.0;
 		scroll = new JScrollBar(JScrollBar.HORIZONTAL, cur, 1, min, max);
 		scroll.addAdjustmentListener(new AdjustmentListener() {
 			public void adjustmentValueChanged(AdjustmentEvent e) {
-				timeline.pause();
 				showTimepoint(scroll.getValue());
 			}
 		});
