@@ -21,8 +21,8 @@ import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
+import fiji.plugin.trackmate.visualization.TMSelectionManager;
 import fiji.plugin.trackmate.visualization.TrackMateModelManager;
-import fiji.plugin.trackmate.visualization.trackscheme.SpotSelectionManager;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 
@@ -109,7 +109,12 @@ public class HyperStackDisplayerTestDrive {
 		displayer.addSpotCollectionEditListener(manager); // Needed to compute the new feature first
 		displayer.addSpotCollectionEditListener(trackScheme); // In the other order, it does not work (edge)
 		
-		new SpotSelectionManager(displayer, trackScheme);
+		TMSelectionManager selectionManager = new TMSelectionManager();
+		selectionManager.registerDisplayer(displayer);
+		selectionManager.registerDisplayer(trackScheme);
+		
+		displayer.addTMSelectionChangeListener(selectionManager);
+		trackScheme.addTMSelectionChangeListener(selectionManager);
 		
 	}
 	

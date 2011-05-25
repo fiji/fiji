@@ -7,8 +7,6 @@ import ij3d.Image3DUniverse;
 
 import java.awt.Color;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,8 +26,6 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModelInterface;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.util.TMUtils;
-import fiji.plugin.trackmate.visualization.trackscheme.SpotSelectionEvent;
-import fiji.plugin.trackmate.visualization.trackscheme.SpotSelectionListener;
 
 /**
  * The mother abstract class for spot displayers, that can overlay segmented spots and tracks on top
@@ -40,7 +36,7 @@ import fiji.plugin.trackmate.visualization.trackscheme.SpotSelectionListener;
  * <p>
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Jan 2011
  */
-public abstract class SpotDisplayer {
+public abstract class SpotDisplayer implements SpotCollectionEditListener, TMSelectionDisplayer {
 
 	/*
 	 * ENUMS
@@ -132,11 +128,6 @@ public abstract class SpotDisplayer {
 	/** The color used when highlighting spots. */
 	static final Color HIGHLIGHT_COLOR = new Color(0, 1f, 0);
 	
-	/** Flag to state that object should be added or removed to selection. */
-	protected static final int MODIFY_SELECTION_FLAG  = 0;
-	/** Flag to state that object should replace the current selection. */
-	protected static final int REPLACE_SELECTION_FLAG  = 1;
-	
 	/** The ratio setting the actual display size of the spots, with respect to the physical radius. */
 	protected float radiusRatio = 1.0f;
 	
@@ -163,13 +154,12 @@ public abstract class SpotDisplayer {
 	protected int trackDisplayDepth = DEFAULT_TRACK_DISPLAY_DEPTH;
 	
 	/** The list of listener to warn for spot selection change. */
-	protected ArrayList<SpotSelectionListener> spotSelectionListeners = new ArrayList<SpotSelectionListener>();
-	/** The spots currently selected in this displayer. Can be empty, but no t null. */
-	protected Collection<Spot> spotSelection = new ArrayList<Spot>();
+	protected ArrayList<TMSelectionChangeListener> selectionChangeListeners = new ArrayList<TMSelectionChangeListener>();
 	
 	/** The list of listener to warn for spot selection change. */
 	private  ArrayList<SpotCollectionEditListener> spotCollectionEditListeners = new ArrayList<SpotCollectionEditListener>();
-	
+	/** We need to maintain our own selection. */
+	private ArrayList<Spot> spotSelection = new ArrayList<Spot>();
 
 	/*
 	 * STATIC METHOD
@@ -248,18 +238,18 @@ public abstract class SpotDisplayer {
 	/**
 	 * Add a listener to this displayer that will be notified when the spot selection changes.
 	 */
-	public void addSpotSelectionListener(SpotSelectionListener listener) {
-		spotSelectionListeners.add(listener);
+	public void addTMSelectionChangeListener(TMSelectionChangeListener listener) {
+		selectionChangeListeners.add(listener);
 	}
 	
 	/**
-	 * Remove a listener from the list of the spot selection listeners list. 
+	 * Remove a listener from the list of the spot selection change listeners list. 
 	 * @param listener  the listener to remove
 	 * @return  true if the listener was found in the list maintained by 
 	 * this displayer and successfully removed.
 	 */
-	public boolean removeSpotSelectionListener(SpotSelectionListener listener) {
-		return spotSelectionListeners.remove(listener);
+	public boolean removeTMSelectionChangeListener(TMSelectionChangeListener listener) {
+		return selectionChangeListeners.remove(listener);
 	}
 
 	/*
@@ -363,98 +353,76 @@ public abstract class SpotDisplayer {
 	 * Remove any overlay (for spots or tracks) from this displayer.
 	 */
 	public abstract void clear();
-
-	/**
-	 * Highlight visually the spot given in argument. Do nothing if the given spot is not in {@link #spotsToShow}.
-	 */
-	public abstract void highlightSpots(final Collection<Spot> spots);
-	
-	/**
-	 * Highlight visually the edges given in argument.
-	 */
-	public abstract void highlightEdges(final Set<DefaultWeightedEdge> edges);
-	
-	/**
-	 * Center the view on the given spot.
-	 */
-	public abstract void centerViewOn(final Spot spot);
-	
 	
 	/*
 	 * PROTECTED METHODS
 	 */
+
+	/**
+	 * Sub-classers must use this method when the user makes a change in the current selection.
+	 * This method will pack and forward changes to registered {@link TMSelectionChangeListener}s.
+	 * @param  target  the {@link Spot} to add to / remove from / replace with selection
+	 * @param  replace  a boolean flag specifying if the change relate a a modification of the current selection
+	 * (<code>false</code>) or if current selection should be erased and replaced by target (<code>true</code>). 
+	 */
+	protected void spotSelectionChanged(Spot target, boolean replace) {
+		HashMap<Spot, Boolean> spotSelectionChange = new HashMap<Spot, Boolean>();
+
+		if (!replace) {
+
+			if (!spotSelection.contains(target)) {
+				// Not in the selection, add target to current selection
+				spotSelection.add(target);
+				spotSelectionChange.put(target, true);
+
+			} else  {
+				// Remove target from selection if it was in
+				if (!spotSelection.remove(target))
+					return;
+				spotSelectionChange.put(target, false);
+			}
+
+		} else {
+
+			if (null == target) {
+				// A null target means that we must empty the current selection
+				for (Spot spot : spotSelection) 
+					spotSelectionChange.put(spot, false);
+				spotSelection.clear();
+
+			} else {
+
+				// Forget previous selection, and set selection to be target
+				spotSelection.remove(target); // If target was in selection, so we just have to remove all other
+				spotSelectionChange.put(target, true);
+				for (Spot spot : spotSelection) 
+					spotSelectionChange.put(spot, false);
+
+				spotSelection.clear();
+				spotSelection.add(target);
+			}
+		}
+		highlightSpots(spotSelection);
+		TMSelectionChangeEvent event = new TMSelectionChangeEvent(this, spotSelectionChange, null);
+		fireTMSelectionChange(event);
+	}
 	
-	protected void fireSpotSelectionChange(Spot[] spotArray, boolean[] areNew) {
-		SpotSelectionEvent event = new SpotSelectionEvent(this, spotArray, areNew);
-		for (SpotSelectionListener listener : spotSelectionListeners)
-			listener.valueChanged(event);
+	
+	/**
+	 * Simply forward the spot selection event to the listeners of this class.
+	 */
+	protected void fireTMSelectionChange(TMSelectionChangeEvent event) {
+		for (TMSelectionChangeListener listener : selectionChangeListeners)
+			listener.selectionChanged(event);
 	}
 
+	/**
+	 * Simply forward the {@link SpotCollectionEditEvent} to the listeners of this class.
+	 */
 	protected void fireSpotCollectionEdit(SpotCollectionEditEvent event) {
 		for (SpotCollectionEditListener listener : spotCollectionEditListeners) {
 			listener.collectionChanged(event);
 		}
 	}
 	
-	protected void spotSelectionChanged(Spot target, int frame, int flag) {
-		Spot[] spotArray;
-		boolean[] areNew;
-
-		if (flag == MODIFY_SELECTION_FLAG) {
-			
-			if (!spotSelection.contains(target)) {
-				// Not in the selection, add target to current selection
-				spotArray = new Spot[] { target };
-				areNew = new boolean[] { true };
-				spotSelection.add(target);
-				fireSpotSelectionChange(spotArray, areNew);
-
-			} else  {
-				// Remove target from selection if it was in
-				if (!spotSelection.remove(target)) 
-					return;
-				spotArray = new Spot[] { target };
-				areNew = new boolean[] { false };
-				fireSpotSelectionChange(spotArray, areNew);
-			}
-
-		} else if (flag == REPLACE_SELECTION_FLAG) {
-
-			if (null == target) {
-				// A null target means that we must empty the current selection
-				spotArray = spotSelection.toArray(new Spot[0]);
-				areNew = new boolean[spotArray.length];
-				Arrays.fill(areNew, false);
-				spotSelection.clear();
-				fireSpotSelectionChange(spotArray, areNew);
-				highlightSpots(spotSelection);
-				return;
-			}
-			
-			// Forget previous selection, and set selection to be target
-			if (spotSelection.remove(target)) {
-				// Target was in selection, so we just have to remove all other
-				spotArray = spotSelection.toArray(new Spot[0]);
-				areNew = new boolean[spotArray.length];
-				Arrays.fill(areNew, false);
-			} else {
-				// Target is not in selection, so we remove others and add it
-				spotArray = new Spot[spotSelection.size()+1];
-				areNew = new boolean[spotSelection.size()+1];
-				spotArray[0] = target;
-				areNew[0] = true;
-				int index = 1;
-				for (Spot spot : spotSelection) {
-					spotArray[index] = spot;
-					areNew[index] = false;
-					index++;
-				}
-			}
-			spotSelection.clear();
-			spotSelection.add(target);
-			fireSpotSelectionChange(spotArray, areNew);
-		} 
-		highlightSpots(spotSelection);
-	}
-
 }

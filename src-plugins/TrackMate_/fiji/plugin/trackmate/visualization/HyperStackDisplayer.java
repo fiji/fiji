@@ -21,7 +21,7 @@ import java.util.Set;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
-public class HyperStackDisplayer extends SpotDisplayer implements SpotCollectionEditListener {
+public class HyperStackDisplayer extends SpotDisplayer  {
 
 	ImagePlus imp;
 	OverlayedImageCanvas canvas;
@@ -65,6 +65,15 @@ public class HyperStackDisplayer extends SpotDisplayer implements SpotCollection
 	 * PUBLIC METHODS
 	 */
 
+	
+	@Override
+	protected void fireTMSelectionChange(TMSelectionChangeEvent event) {
+		// Forward to listeners, subtituting ourselves as source of the event
+		TMSelectionChangeEvent newEvent = new TMSelectionChangeEvent(this, event.getSpots(), event.getEdges());
+		super.fireTMSelectionChange(newEvent);
+	}
+	
+	
 	public void collectionChanged(SpotCollectionEditEvent event) {
 		event.setSource(this);
 		fireSpotCollectionEdit(event);
@@ -221,4 +230,5 @@ public class HyperStackDisplayer extends SpotDisplayer implements SpotCollection
 		spotOverlay.setTarget(spotsToShow);
 		spotOverlay.setTargetColor(spotColor);
 	}
+
 }

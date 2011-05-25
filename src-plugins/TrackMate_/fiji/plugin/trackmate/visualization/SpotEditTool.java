@@ -41,11 +41,13 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		+ "C641D0dCda6D1dCfdaD2dCfdbD3dCc95D4dCb73D5d"
 		+ "C641L0e1eCa72D2eCb73D3eCc94D4e";
 	
+
+	
 	private static SpotEditTool instance;
 	private HashMap<ImagePlus, Spot> editedSpots = new HashMap<ImagePlus, Spot>();
 	private HashMap<ImagePlus, HyperStackDisplayer> displayers = new HashMap<ImagePlus, HyperStackDisplayer>();
 	private ArrayList<SpotCollectionEditListener> spotCollectionEditListeners = new ArrayList<SpotCollectionEditListener>();
-
+	
 	/*
 	 * CONSTRUCTOR
 	 */
@@ -127,7 +129,6 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	 * MOUSE AND MOUSE MOTION
 	 */
 	
-	
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		final ImagePlus imp = getImagePlus(e);
@@ -140,7 +141,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		
 		if (null == displayer)
 			return;
-		
+
 		final Spot clickLocation = displayer.getCLickLocation(e);
 		final int frame = displayer.imp.getFrame() - 1;		
 		Spot target = displayer.spotsToShow.getClosestSpot(clickLocation, frame);
@@ -157,12 +158,12 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			if (null != editedSpot || target == null)
 				return;
 			final int addToSelectionMask = MouseEvent.SHIFT_DOWN_MASK;
-			final int flag;
+			final boolean replace;
 			if ((e.getModifiersEx() & addToSelectionMask) == addToSelectionMask) 
-				flag = SpotDisplayer.MODIFY_SELECTION_FLAG;
+				replace = false;
 			else 
-				flag = SpotDisplayer.REPLACE_SELECTION_FLAG;
-			displayer.spotSelectionChanged(target, frame, flag);
+				replace = true;
+			displayer.spotSelectionChanged(target, replace);
 			break;
 		}
 		
@@ -172,7 +173,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				System.out.println("[SpotEditTool] Got "+editedSpot+" as editing spot for this imp.");
 			
 			// Empty current selection
-			displayer.spotSelectionChanged(null, frame, SpotDisplayer.REPLACE_SELECTION_FLAG);
+			displayer.spotSelectionChanged(null, true);
 			
 			if (null == editedSpot) {
 				// No spot is currently edited, we pick one to edit

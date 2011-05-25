@@ -51,7 +51,7 @@ public class LinkNew3DViewerAction extends AbstractTMAction {
 
 	@Override
 	public String toString() {
-		return "Link with new 2D viewer";
+		return "Link with new 3D viewer";
 	}
 
 }

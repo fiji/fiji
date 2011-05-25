@@ -1,38 +1,24 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
-import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import javax.swing.AbstractListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.JTable;
 import javax.swing.JToolBar;
-import javax.swing.ListCellRenderer;
-import javax.swing.SwingConstants;
-import javax.swing.UIManager;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
 
 import org.jgrapht.Graph;
 import org.jgrapht.event.GraphEdgeChangeEvent;
@@ -50,8 +36,8 @@ import com.mxgraph.swing.handler.mxRubberband;
 import com.mxgraph.util.mxConstants;
 import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
-import com.mxgraph.util.mxUtils;
 import com.mxgraph.util.mxEventSource.mxIEventListener;
+import com.mxgraph.util.mxUtils;
 import com.mxgraph.view.mxGraphSelectionModel;
 import com.mxgraph.view.mxPerimeter;
 
@@ -62,8 +48,11 @@ import fiji.plugin.trackmate.TrackMateModelInterface;
 import fiji.plugin.trackmate.visualization.SpotCollectionEditEvent;
 import fiji.plugin.trackmate.visualization.SpotCollectionEditListener;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
+import fiji.plugin.trackmate.visualization.TMSelectionChangeEvent;
+import fiji.plugin.trackmate.visualization.TMSelectionChangeListener;
+import fiji.plugin.trackmate.visualization.TMSelectionDisplayer;
 
-public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListener {
+public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListener, TMSelectionDisplayer {
 
 	{
 		//Set Look & Feel
@@ -88,9 +77,9 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 
 	private static final long serialVersionUID = 1L;
 	private static final Dimension DEFAULT_SIZE = new Dimension(800, 600);
-	private static final int TABLE_CELL_WIDTH 		= 40;
-	private static final int TABLE_ROW_HEADER_WIDTH = 50;
-	private static final Color GRID_COLOR = Color.GRAY;
+	static final int TABLE_CELL_WIDTH 		= 40;
+	static final int TABLE_ROW_HEADER_WIDTH = 50;
+	static final Color GRID_COLOR = Color.GRAY;
 
 	/*
 	 * FIELDS
@@ -102,6 +91,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	JGraphXAdapter<Spot, DefaultWeightedEdge> graph;
 
 	private ArrayList<GraphListener<Spot, DefaultWeightedEdge>> graphListeners = new ArrayList<GraphListener<Spot,DefaultWeightedEdge>>();
+	private ArrayList<TMSelectionChangeListener> selectionChangeListeners = new ArrayList<TMSelectionChangeListener>();
 	/** The spots currently selected. */
 	private HashSet<Spot> spotSelection = new HashSet<Spot>();
 	/** The side pane in which spot selection info will be displayed.	 */
@@ -112,6 +102,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	mxTrackGraphLayout graphLayout;
 	/** Is linking allowed by default? Can be changed in the toolbar. */
 	boolean defaultLinkingEnabled = false;
+	
 	
 	private static final HashMap<String, Object> BASIC_VERTEX_STYLE = new HashMap<String, Object>();
 	private static final HashMap<String, Object> BASIC_EDGE_STYLE = new HashMap<String, Object>();
@@ -154,6 +145,59 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	/*
 	 * PUBLIC METHODS
 	 */
+	
+	public void addTMSelectionChangeListener(TMSelectionChangeListener listener) {
+		selectionChangeListeners.add(listener);
+	}
+	
+	public boolean removeTMSelectionChangeListener(TMSelectionChangeListener listener) {
+		return selectionChangeListeners.remove(listener);
+	}
+	
+	@Override
+	public void highlightSpots(Collection<Spot> spots) {
+		mxGraphSelectionModel model = graph.getSelectionModel();
+		model.setEventsEnabled(false);
+		// Remove old spots
+		Object[] objects = model.getCells();
+		for (Object obj : objects) {
+			mxCell cell = (mxCell) obj;
+			if (cell.isVertex())
+				model.removeCell(cell);
+		}
+		// Add new ones
+		Object[] newSpots = new Object[spots.size()];
+		Iterator<Spot> it = spots.iterator();
+		for (int i = 0; i < newSpots.length; i++) 
+			newSpots[i] = graph.getVertexToCellMap().get(it.next());
+		model.addCells(newSpots);
+		model.setEventsEnabled(true);
+	}
+
+	@Override
+	public void highlightEdges(Set<DefaultWeightedEdge> edges) {
+		mxGraphSelectionModel model = graph.getSelectionModel();
+		model.setEventsEnabled(false);
+		// Remove old edges
+		Object[] objects = model.getCells();
+		for (Object obj : objects) {
+			mxCell cell = (mxCell) obj;
+			if (!cell.isVertex())
+				model.removeCell(cell);
+		}
+		// Add new ones
+		Object[] newEdges = new Object[edges.size()];
+		Iterator<DefaultWeightedEdge> it = edges.iterator();
+		for (int i = 0; i < newEdges.length; i++) 
+			newEdges[i] = graph.getEdgeToCellMap().get(it.next());
+		model.addCells(newEdges);
+		model.setEventsEnabled(true);
+	}
+
+	@Override
+	public void centerViewOn(Spot spot) {
+		centerViewOn(graph.getVertexToCellMap().get(spot));
+	}
 
 	/**
 	 * Used to catch spot creation events that occurred elsewhere, for instance by manual editing in 
@@ -410,8 +454,8 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	}
 
 	/**
-	 * Instantiate the graph compoenent in charge of painting the graph.
-	 * Hook for subclassers.
+	 * Instantiate the graph component in charge of painting the graph.
+	 * Hook for sub-classers.
 	 */
 	protected mxTrackGraphComponent createGraphComponent() {
 		final mxTrackGraphComponent gc = new mxTrackGraphComponent(this);
@@ -441,12 +485,21 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	}
 
 	/**
-	 * Instantiate the toolbar of the track scheme. Hook for subclassers.
+	 * Instantiate the toolbar of the track scheme. Hook for sub-classers.
 	 */
 	protected JToolBar createToolBar() {
 		return new TrackSchemeToolbar(this);		
 	}
 
+	/**
+	 *  PopupMenu
+	 */
+	protected void displayPopupMenu(final Point point, final Object cell) {
+		TrackSchemePopupMenu menu = new TrackSchemePopupMenu(TrackSchemeFrame.this, point, cell);
+		menu.show(graphComponent.getViewport().getView(), (int) point.getX(), (int) point.getY());
+	}
+
+	
 	/*
 	 * PRIVATE METHODS
 	 */
@@ -469,8 +522,15 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		}
 	}
 	
-
+	/**
+	 * Called when the user makes a selection change in the graph. Used to forward this event 
+	 * to the {@link InfoPane} and to other {@link TMSelectionChangeListener}s.
+	 * @param model the selection model 
+	 * @param added  the cells  <b>removed</b> from selection (careful, inverted)
+	 * @param removed  the cells <b>added</b> to selection (careful, inverted)
+	 */
 	private void selectionChanged(mxGraphSelectionModel model, Collection<Object> added, Collection<Object> removed) { // Seems to be inverted
+		// Forward to info pane
 		spotSelection.clear();
 		Object[] objects = model.getCells();
 		for(Object obj : objects) {
@@ -478,7 +538,43 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			if (cell.isVertex())
 				spotSelection.add(graph.getCellToVertexMap().get(cell));
 		}
-		infoPane.echo(spotSelection);		
+		infoPane.highlightSpots(spotSelection);
+		
+		// Forward to other listeners
+		HashMap<Spot, Boolean> spots = new HashMap<Spot, Boolean>();
+		HashMap<DefaultWeightedEdge, Boolean> edges = new HashMap<DefaultWeightedEdge, Boolean>();
+		
+		
+		if (null != removed) {
+			spots = new HashMap<Spot, Boolean>();
+			for(Object obj : removed) {
+				mxCell cell = (mxCell) obj;
+				if (cell.isVertex()) {
+					Spot spot = graph.getCellToVertexMap().get(cell);
+					spots.put(spot, true);
+				} else {
+					DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(cell);
+					edges.put(edge, true);
+				}
+			}
+		}
+		
+		if (null != added) {
+			for(Object obj : added) {
+				mxCell cell = (mxCell) obj;
+				if (cell.isVertex()) {
+					Spot spot = graph.getCellToVertexMap().get(cell);
+					spots.put(spot, false);
+				} else {
+					DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(cell);
+					edges.put(edge, false);
+				}
+			}
+		}
+
+		TMSelectionChangeEvent event = new TMSelectionChangeEvent(this, spots, edges);
+		for(TMSelectionChangeListener listener : selectionChangeListeners) 
+			listener.selectionChanged(event);
 	}
 
 	private void init() {
@@ -507,151 +603,4 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		getContentPane().add(splitPane, BorderLayout.CENTER);
 	}
 
-
-
-
-
-
-	/**
-	 *  PopupMenu
-	 */
-	protected void displayPopupMenu(final Point point, final Object cell) {
-		TrackSchemePopupMenu menu = new TrackSchemePopupMenu(TrackSchemeFrame.this, point, cell);
-		menu.show(graphComponent.getViewport().getView(), (int) point.getX(), (int) point.getY());
-		
-	}
-
-
-
-	/*
-	 * INNER CLASSES
-	 */
-
-	private class InfoPane extends JPanel {
-
-		private static final long serialVersionUID = 5889316637017869042L;
-
-		private class RowHeaderRenderer extends JLabel implements ListCellRenderer, Serializable {
-
-			private static final long serialVersionUID = -4068369886241557528L;
-
-			RowHeaderRenderer(JTable table) {
-				JTableHeader header = table.getTableHeader();
-				setOpaque(false);
-				setBorder(UIManager.getBorder("TableHeader.cellBorder"));
-				setForeground(header.getForeground());
-				setBackground(header.getBackground());
-				setFont(SMALL_FONT.deriveFont(9.0f));
-				setHorizontalAlignment(SwingConstants.LEFT);				
-			}
-
-			public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-				setText((value == null) ? "" : value.toString());
-				return this;
-			}
-		}
-
-		private JTable table;
-		private JScrollPane scrollTable;
-		private FeaturePlotSelectionPanel<Feature> featureSelectionPanel;
-
-		public InfoPane() {
-			init();
-		}
-
-		@SuppressWarnings("serial")
-		public void echo(Set<Spot> spots) {
-			if (spots.size() == 0) {
-				scrollTable.setVisible(false);
-				return;
-			}
-			
-			// Fill feature table
-			DefaultTableModel dm = new DefaultTableModel() { // Un-editable model
-				@Override
-				public boolean isCellEditable(int row, int column) { return false; }
-			};
-			for (Spot spot : spots) {
-				if (null == spot)
-					continue;
-				Object[] columnData = new Object[Feature.values().length];
-				for (int i = 0; i < columnData.length; i++) 
-					columnData[i] = String.format("%.1f", spot.getFeature(Feature.values()[i]));
-				dm.addColumn(spot.toString(), columnData);
-			}
-			table.setModel(dm);
-			// Tune look
-
-			DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer() {
-				public boolean isOpaque() { return false; };
-				@Override
-				public Color getBackground() {
-					return Color.BLUE;
-				}
-			};
-			headerRenderer.setBackground(Color.RED);
-
-			DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
-			renderer.setOpaque(false);
-			renderer.setHorizontalAlignment(SwingConstants.RIGHT);
-			renderer.setFont(SMALL_FONT);			
-			for(int i=0; i<table.getColumnCount(); i++) {
-				table.setDefaultRenderer(table.getColumnClass(i), renderer);
-				table.getColumnModel().getColumn(i).setPreferredWidth(TABLE_CELL_WIDTH);
-			}
-			for (Component c : scrollTable.getColumnHeader().getComponents())
-				c.setBackground(getBackground());
-			scrollTable.getColumnHeader().setOpaque(false);
-			scrollTable.setVisible(true);
-			revalidate();
-		}
-
-		private void init() {
-
-			@SuppressWarnings("serial")
-			AbstractListModel lm = new AbstractListModel() {
-				String headers[] = new String[Feature.values().length];
-				{
-					for(int i=0; i<headers.length; i++)
-						headers[i] = Feature.values()[i].shortName();			    	  
-				}
-
-				public int getSize() {
-					return headers.length;
-				}
-
-				public Object getElementAt(int index) {
-					return headers[index];
-				}
-			};
-
-			table = new JTable();
-			table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-			table.setOpaque(false);
-			table.setFont(SMALL_FONT);
-			table.setPreferredScrollableViewportSize(new Dimension(120, 400));
-			table.getTableHeader().setOpaque(false);
-			table.setSelectionForeground(Color.YELLOW.darker());
-			table.setGridColor(GRID_COLOR);
-
-			JList rowHeader = new JList(lm);
-			rowHeader.setFixedCellWidth(TABLE_ROW_HEADER_WIDTH);
-			rowHeader.setFixedCellHeight(table.getRowHeight());
-			rowHeader.setCellRenderer(new RowHeaderRenderer(table));
-			rowHeader.setBackground(getBackground());
-
-			scrollTable = new JScrollPane(table);
-			scrollTable.setRowHeaderView(rowHeader);
-			scrollTable.getRowHeader().setOpaque(false);
-			scrollTable.setOpaque(false);
-			scrollTable.getViewport().setOpaque(false);
-			scrollTable.setVisible(false); // for now
-
-			featureSelectionPanel = new FeaturePlotSelectionPanel<Feature>(Feature.POSITION_T);
-
-			setLayout(new BorderLayout());
-			add(scrollTable, BorderLayout.CENTER);
-			add(featureSelectionPanel, BorderLayout.SOUTH);
-		}
-	}
 }

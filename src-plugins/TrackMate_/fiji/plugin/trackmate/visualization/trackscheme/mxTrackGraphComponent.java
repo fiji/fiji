@@ -90,6 +90,7 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		return editor;
 	}
 	
+	
 	/**
 	 * Custom {@link mxGraphHandler} so as to avoid clearing the selection when right-clicking elsewhere than
 	 * on a cell, which is reserved for aimed at displaying a popup menu.
@@ -119,9 +120,7 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 				}
 			}
 			
-			/**
-			 * 
-			 */
+			
 			public void mouseReleased(MouseEvent e) {
 				if (graphComponent.isEnabled() && isEnabled() && !e.isConsumed()) {
 					mxGraph graph = graphComponent.getGraph();
@@ -242,8 +241,6 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 			}
 		};
 	}
-	
-	
 	
 	/**
 	 * Override this so as to paint the background with colored rows and columns. 

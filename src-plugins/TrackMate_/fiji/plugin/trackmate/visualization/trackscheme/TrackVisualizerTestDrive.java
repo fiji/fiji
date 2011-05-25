@@ -23,6 +23,7 @@ import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.DisplayerType;
+import fiji.plugin.trackmate.visualization.TMSelectionManager;
 import fiji.plugin.trackmate.visualization.test.Branched3DTrackTestDrive;
 
 public class TrackVisualizerTestDrive {
@@ -66,7 +67,6 @@ public class TrackVisualizerTestDrive {
 		model.setSettings(settings);
 //		final SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
 		final SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
-		displayer.render();
 		displayer.setSpots(allSpots);
 		displayer.setSpotsToShow(selectedSpots);
 		displayer.setTrackGraph(tracks);
@@ -77,33 +77,39 @@ public class TrackVisualizerTestDrive {
 		frame.setVisible(true);
 		
 		// Listeners
-		new SpotSelectionManager(displayer, frame);
-
-		frame.addGraphListener(new GraphListener<Spot, DefaultWeightedEdge>() {
-
-			@Override
-			public void vertexRemoved(GraphVertexChangeEvent<Spot> e) {
-				System.out.println("Removed a spot");
-			}
-			
-			@Override
-			public void vertexAdded(GraphVertexChangeEvent<Spot> e) {
-				System.out.println("Added a spot");
-			}
-			
-			@Override
-			public void edgeRemoved(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
-				displayer.setTrackGraph(frame.getTrackModel());
-				displayer.refresh();
-			}
-			
-			@Override
-			public void edgeAdded(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
-				displayer.setTrackGraph(frame.getTrackModel());
-				displayer.refresh();
-			}
-		});
+		TMSelectionManager selectionManager = new TMSelectionManager();
 		
+		selectionManager.registerDisplayer(displayer);
+		selectionManager.registerDisplayer(frame);
+		
+		displayer.addTMSelectionChangeListener(selectionManager);
+		frame.addTMSelectionChangeListener(selectionManager);
+
+//		frame.addGraphListener(new GraphListener<Spot, DefaultWeightedEdge>() {
+//
+//			@Override
+//			public void vertexRemoved(GraphVertexChangeEvent<Spot> e) {
+//				System.out.println("Removed a spot");
+//			}
+//			
+//			@Override
+//			public void vertexAdded(GraphVertexChangeEvent<Spot> e) {
+//				System.out.println("Added a spot");
+//			}
+//			
+//			@Override
+//			public void edgeRemoved(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
+//				displayer.setTrackGraph(frame.getTrackModel());
+//				displayer.refresh();
+//			}
+//			
+//			@Override
+//			public void edgeAdded(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
+//				displayer.setTrackGraph(frame.getTrackModel());
+//				displayer.refresh();
+//			}
+//		});
+//		
 		
 		
 	}

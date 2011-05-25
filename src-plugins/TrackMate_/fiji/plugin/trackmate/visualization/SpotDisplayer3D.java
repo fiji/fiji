@@ -51,6 +51,17 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	 * OVERRIDDEN METHODS
 	 */
 
+
+	@Override
+	public void collectionChanged(SpotCollectionEditEvent event) {
+		// TODO 
+	}
+
+	@Override
+	public void setSpotNameVisible(boolean spotNameVisible) {
+		// TODO 
+	}
+	
 	@Override
 	public void highlightSpots(Collection<Spot> spots) {
 		// Restore previous display settings for previously highlighted spot
@@ -92,7 +103,6 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		universe.showTimepoint(frame);
 	}
 
-	
 	@Override
 	public void highlightEdges(Set<DefaultWeightedEdge> edges) {
 		// Restore previous display settings for previously highlighted edges
@@ -108,7 +118,6 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		// Change edge color
 		for(DefaultWeightedEdge edge :edges)
 			trackNode.setColor(edge, HIGHLIGHT_COLOR);
-		
 	}
 	
 	@Override
@@ -119,12 +128,6 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	@Override
 	public void setSpotVisible(boolean displaySpotSelected) {
 		spotContent.setVisible(displaySpotSelected);
-	}
-	
-
-	@Override
-	public void setSpotNameVisible(boolean spotNameVisible) {
-		// TODO 
 	}
 	
 	@Override
@@ -296,5 +299,6 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		blobContent.showCoordinateSystem(false);
 		return blobContent;
 	}
+
 
 }
