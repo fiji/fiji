@@ -60,9 +60,11 @@ public class TransformIO {
 			String s;
 			int nLines=0;
 			while((s = in.readLine()) != null){
+				if(s.startsWith("#"))
+					continue;
 				String[] floatStrings = s.split("\\s+");
             	if(floatStrings.length!=4) throw new 
-            		Exception("Could not read 4 floats from line "+in.getLineNumber()+" of file "+path);
+            		Exception("Could not read 4 floats from line "+in.getLineNumber()+" (" + s + ") of file "+path);
 				for(int i=0;i<floatStrings.length;i++){
                     	mat[nLines*matCols+i]=s2f(floatStrings[i]);
 				}
