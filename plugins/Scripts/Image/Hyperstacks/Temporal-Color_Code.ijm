@@ -78,6 +78,7 @@ macro "Time-Lapse Color Coder" {
 	tempID = getImageID();
 
 	for (i = 0; i < totalframes; i++) {
+		selectImage(tempID);
 		colorscale = floor((256 / totalframes) * i);
 		for (j = 0; j < 256; j++) {
 			intensityfactor = j / 255;

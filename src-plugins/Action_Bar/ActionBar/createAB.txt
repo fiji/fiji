@@ -1,0 +1,71 @@
+Dialog.create("Create an Action Bar");
+	Dialog.addMessage("Tip : the name should contain an underscore _");
+	Dialog.addString("Enter the bar's name","new_action_bar",30);
+	Dialog.addNumber("How many buttons per line",8);
+	Dialog.addNumber("How many lines in the bar",2);
+	Dialog.addCheckbox("Create default icons",true);
+	Dialog.addNumber("Icons width",16);
+	Dialog.addNumber("Icons height",16);
+	Dialog.addCheckbox("Run this bar when finished",true);
+	Dialog.addCheckbox("Edit the bar's config file",true);
+Dialog.show();
+
+name = Dialog.getString();
+cols = Dialog.getNumber();
+rows = Dialog.getNumber();
+icons = Dialog.getCheckbox();
+w = Dialog.getNumber();
+h = Dialog.getNumber();
+runbar = Dialog.getCheckbox();
+editbar = Dialog.getCheckbox();
+setBatchMode (true);
+
+pluginsdir = getDirectory("plugins");
+actionbardir = pluginsdir+"ActionBar"+File.separator;
+if (!File.exists(actionbardir)) {
+  File.makeDirectory(pluginsdir+"ActionBar");
+  if (!File.exists(actionbardir))
+    exit("Error\nInstall Action Bar in \nplugins/ActionBar/");
+}
+iconsdir = actionbardir+"icons"+File.separator;
+if (!File.exists(iconsdir)) {
+  File.makeDirectory(actionbardir+"icons");
+  if (!File.exists(iconsdir))
+    exit("Error\nReinstall Action Bar with an plugins/ActionBar/icons/");
+}
+newiconsdir = iconsdir+name+File.separator;
+if (File.exists(newiconsdir)||File.exists(actionbardir+name+".txt"))
+  exit("Error\nAn Action Bar with the same name already exists");
+File.makeDirectory(newiconsdir );
+if (!File.exists(newiconsdir ))
+  exit("Error\nProblem creating the new icons folder");
+
+f = File.open(actionbardir+name+".txt");
+print (f,"// Action Bar description file :"+name);
+print (f,"run(\"Action Bar\",\"/plugins/ActionBar/"+name+".txt\");");
+print (f,"exit();");
+print (f,"");
+for (i=1;i<=rows; i++) {
+	print (f,"<line>");
+	for (j=1;j<=cols; j++) {
+		iconname = "noicon";
+		if (icons) {
+			newImage("/image"+j+"_"+i+".png", "RGB White", w, h, 1);
+			setColor ((i-1)*255/rows,128,(j-1)*255/cols);
+			fill();
+			saveAs("PNG",newiconsdir+"image"+j+"_"+i+".png");
+			close();
+			iconname = name+"/image"+j+"_"+i+".png";
+		}
+		print (f,"<button>"+" "+j+" line "+i);
+		print (f,"label=button_"+j+"_"+i);
+		print (f,"icon="+ iconname);
+		print (f,"arg=<macro>\nshowMessage(\"You pressed button "+j+" line "+i+"\");\n</macro>");
+	}
+	print (f,"</line>");
+}
+
+print (f,"// end of file");
+File.close(f);
+if (runbar) { run("Action Bar","/plugins/ActionBar/"+name+".txt");}
+if (editbar) {run("Edit...", "open=["+actionbardir+name+".txt]"); }

@@ -64,3 +64,12 @@
 [submodule "commons-math"]
 	path = modules/commons-math
 	url = contrib@pacific.mpi-cbg.de:/srv/git/commons-math
+[submodule "modules/javassist"]
+	path = modules/javassist
+	url = contrib@pacific.mpi-cbg.de:/srv/git/javassist
+[submodule "jsch"]
+	path = modules/jsch
+	url = contrib@pacific.mpi-cbg.de:/srv/git/jsch
+[submodule "modules/imagej2"]
+	path = modules/imagej2
+	url = contrib@pacific.mpi-cbg.de:/srv/git/imagej2

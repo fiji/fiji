@@ -1,0 +1,63 @@
+//  stack animation bar
+run("Action Bar","/plugins/ActionBar/_AnimationBar.txt");
+exit();
+
+<line>
+
+<button>
+label=Start Animation
+icon=_AnimationBar/player_play.png
+arg=run("Start Animation");
+
+<button>
+label=Stop Animation
+icon=_AnimationBar/player_stop.png
+arg=run("Stop Animation");
+
+<button>
+label=Animation Options
+icon=_AnimationBar/konqsidebar_mediaplayer.png
+arg=run("Animation Options...");
+
+<button>
+label=Go to First Slice
+icon=_AnimationBar/player_start.png
+arg=run("Set Slice...", "slice=1");
+
+<button>
+label=Previous Slice
+icon=_AnimationBar/previous.png
+arg=run("Previous Slice [<]");
+
+<button>
+label=Next Slice
+icon=_AnimationBar/next.png
+arg=run("Next Slice [>]");
+
+<button>
+label=Go to Last Slice
+icon=_AnimationBar/player_end.png
+arg=run("Set Slice...", "slice="+nSlices);
+
+<button>
+label=Delete Slice
+icon=_AnimationBar/cut.png
+arg=run("Delete Slice");
+
+<button>
+label=Add Slice
+icon=_AnimationBar/filenew.png
+arg=run("Add Slice");
+
+<button>
+label=Duplicate Slice
+icon=_AnimationBar/kpager.jpg
+arg=run("Select All");run("Copy");run("Add Slice");run("Paste");
+
+<button>
+label=About this Bar
+icon=_AnimationBar/help.png
+arg=showMessage("Animation Bar", "An Action Bar \nto animate stacks \nwith icons from NUVOLA ICON THEME");
+
+
+</line>

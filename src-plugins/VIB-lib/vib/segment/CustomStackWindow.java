@@ -108,8 +108,10 @@ public class CustomStackWindow extends StackWindow
 		ok = null;
 		cc.releaseImage();
 		cc = null;
-		imp.close();
-		imp = null;
+		if (imp != null) {
+			imp.close();
+			imp = null;
+		}
 	}
 
 	public ImagePlus getLabels() {

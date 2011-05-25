@@ -225,18 +225,20 @@ public class SSHFileUploader extends FileUploader {
 			/* ignore */
 		}
 		out.close();
-		int exitStatus = channel.getExitStatus();
 		try {
 			Thread.sleep(1000);
 		}
 		catch (InterruptedException e) {
 			/* ignore */
 		}
+		int exitStatus = channel.getExitStatus();
+		if (IJ.debugMode)
+			IJ.log("disconnect session; exit status is " + exitStatus);
 		channel.disconnect();
 		session.disconnect();
 		err.close();
 		if (exitStatus != 0)
-			throw new IOException("Command failed (see Log)!");
+			throw new IOException("Command failed with status " + exitStatus + " (see Log)!");
 	}
 
 	protected long readNumber(InputStream in) throws IOException {

@@ -202,6 +202,7 @@ public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, O
 			return true;
 
 		} catch (ParseException e) {
+			e.printStackTrace();
 			error_message = e.getErrorInfo();
 			return false;
 		}

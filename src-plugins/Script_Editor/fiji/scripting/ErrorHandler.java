@@ -89,8 +89,12 @@ public class ErrorHandler {
 		textArea.getHighlighter().removeAllHighlights();
 		textArea.getHighlighter().addHighlight(start, end,
 			DefaultHighlighter.DefaultPainter);
+		scrollToVisible(start);
+	}
+
+	public void scrollToVisible(int offset) throws BadLocationException {
 		textArea.scrollRectToVisible(textArea.modelToView(textArea.getDocument().getLength()));
-		textArea.scrollRectToVisible(textArea.modelToView(start));
+		textArea.scrollRectToVisible(textArea.modelToView(offset));
 	}
 
 	static class Error {

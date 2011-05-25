@@ -12,6 +12,8 @@ import java.awt.MenuContainer;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
 
+import java.awt.event.KeyEvent;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -118,6 +120,10 @@ public class User_Plugins implements PlugIn {
 
 		SampleImageLoader.install();
 		Main.installRecentCommands();
+
+		// install '{' as short cut for the Script Editor
+		Menus.getShortcuts().put(KeyEvent.VK_OPEN_BRACKET, "Script Editor");
+		Menus.getShortcuts().put(200 + KeyEvent.VK_OPEN_BRACKET, "Script Editor");
 	}
 
 	/**

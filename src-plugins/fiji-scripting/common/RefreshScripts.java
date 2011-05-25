@@ -9,7 +9,7 @@ them at the corresponding place in the "Plugins" menu hierarchy.
 
 ------------------------------------------------------------------------
 
-A Jython utility plugin for ImageJ(C).
+Based on the Jython utility plugin for ImageJ(C).
 Copyright (C) 2005 Albert Cardona.
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -249,6 +249,24 @@ abstract public class RefreshScripts implements PlugIn {
 
 		if( arg != null && ! arg.equals("") ) {
 			String path = arg;
+			if (path.startsWith("jar:")) {
+				path = path.substring(4);
+				if (!path.startsWith("/"))
+					path = "/" + path;
+				InputStream input = getClass().getResourceAsStream(path);
+				if (input == null) {
+					IJ.error("Did not find resource '" + path + "'");
+					return;
+				}
+				if (IJ.shiftKeyDown())
+					IJ.error("Opening resources in the script editor is not yet implemented!");
+				else {
+					IJ.showStatus("Running resource " + path);
+					runScript(input, path);
+				}
+				return;
+			}
+
 			if (!new File(path).isAbsolute())
 				path = new StringBuffer(Menus.getPlugInsPath()).append(path).toString(); // blackslash-safe
 

@@ -20,6 +20,7 @@ import ij.io.PluginClassLoader;
 import ij.text.TextWindow;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -164,13 +165,40 @@ public class Refresh_Javas extends RefreshScripts {
 		path = file.getName();
 		String name = path;
 
-		File fakefile;
+		File srcPlugins = new File(System.getProperty("fiji.dir"), "src-plugins");
+		try {
+			srcPlugins = srcPlugins.getCanonicalFile();
+		}
+		catch (IOException e) {
+			e.printStackTrace(new PrintStream(err));
+			return null;
+		}
+
+		InputStream fakefileStream;
+		String projectName = null; // if it is in Fiji.app/src-plugins/
+		String path2 = null;
 		for (;;) {
-			if (dir == null)
-				return null;
-			fakefile = new File(dir, "Fakefile");
-			if (fakefile.exists())
+			if (dir == null) {
+				if (projectName == null)
+					return null;
+				dir = srcPlugins;
+				path = path2;
+				fakefileStream = fakeFakefile(projectName);
 				break;
+			}
+			if (srcPlugins.equals(dir.getParentFile())) {
+				projectName = dir.getName();
+				path2 = projectName + "/" + path;
+			}
+			File fakefile = new File(dir, "Fakefile");
+			if (fakefile.exists()) try {
+				fakefileStream = new FileInputStream(fakefile);
+				break;
+			}
+			catch (FileNotFoundException e) {
+				e.printStackTrace(new PrintStream(err));
+				return null;
+			}
 			path = dir.getName() + "/" + path;
 			dir = dir.getParentFile();
 		}
@@ -178,17 +206,12 @@ public class Refresh_Javas extends RefreshScripts {
 		if (name.endsWith(".java"))
 			name = name.substring(0, name.length() - 5);
 
-		try {
-			String[] result = fake(new FileInputStream(fakefile), dir, name, null, path, false);
-			if (result != null)
-				return result;
-		}
-		catch (FileNotFoundException e) {
-			e.printStackTrace(new PrintStream(err));
-		}
+		String[] result = fake(fakefileStream, dir, name, null, path, false);
+		if (result != null)
+			return result;
 
 		String absolutePath = file.getAbsolutePath();
-		String srcPluginsDir = new File(System.getProperty("fiji.dir"), "src-plugins").getAbsolutePath();
+		String srcPluginsDir = srcPlugins.getAbsolutePath();
 		if (!absolutePath.startsWith(srcPluginsDir + File.separator))
 			return null;
 
@@ -273,6 +296,14 @@ public class Refresh_Javas extends RefreshScripts {
 			e.printStackTrace(new PrintStream(err));
 		}
 		return new String[] { name, new File(dir, target).getAbsolutePath() };
+	}
+
+	public static InputStream fakeFakefile(String projectName) {
+		StringBuilder buffer = new StringBuilder();
+		String target = System.getProperty("fiji.dir") + "/plugins/" + projectName + ".jar";
+		buffer.append("all <- ").append(target).append("\n")
+			.append(target).append(" <- ").append(projectName).append("/**/*\n");
+		return new ByteArrayInputStream(buffer.toString().getBytes());
 	}
 
 	static Method javac;

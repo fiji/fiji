@@ -1,0 +1,132 @@
+// Action Bar description file :design_action_bar
+run("Action Bar","/plugins/ActionBar/design_action_bar.txt");
+exit();
+
+<line>
+<button>
+label=New Action Bar
+icon=noicon
+arg=<macro>
+run("Macro");
+wait(200);
+p('// Action Bar description file : NAME_HERE');
+p('run("Action Bar","/plugins/ActionBar/NAME_HERE.txt");');
+p('exit();\n');
+</macro>
+</line>
+
+<line>
+<button>
+label=Line
+icon=noicon
+arg=<macro>
+p('<line>\n\n</line>');
+</macro>
+
+<button>
+label=Button
+icon=noicon
+arg=<macro>
+p('<button>\nlabel=LABEL\nicon=noicon\narg=<macro>\nprint("hello");\n</macro>');
+</macro>
+</line>
+
+<line>
+<button>
+label=Tool Button
+icon=noicon
+arg=<macro>
+p('<button>\nlabel=my Tool\nicon=noicon\narg=<tool>\n');
+p('getCursorLoc(x, y, z, modifiers)');
+p('print(x, y, z, modifiers)');
+p('</tool>');
+</macro>
+
+<button>
+label=Hide IJ Button
+icon=noicon
+arg=<macro>
+p('<button>\nlabel=Hide IJ\nicon=noicon\narg=<hide>');
+</macro>
+</line>
+
+<line>
+<button>
+label=Close Button
+icon=noicon
+arg=<macro>
+p('<button>\nlabel=Close\nicon=noicon\narg=<close>');
+</macro>
+
+<button>
+label=Text label
+icon=noicon
+arg=<macro>
+p('<text>One line of text label here');
+</macro>
+
+</line>
+
+<line>
+<button>
+label=Button spacer
+icon=noicon
+arg=<macro>
+p('<separator>');
+</macro>
+
+<button>
+label=Remove Layout
+icon=noicon
+arg=<macro>
+p('<noGrid>');
+</macro>
+
+</line>
+
+<line>
+<button>
+label=Stay On Top
+icon=noicon
+arg=<macro>
+p('<onTop>');
+</macro>
+
+<button>
+label=Pop Up Bar
+icon=noicon
+arg=<macro>
+p('<popup>');
+</macro>
+
+</line>
+
+
+</line>
+
+<line>
+<button>
+label=Add Startup action
+icon=noicon
+arg=<macro>
+p('<startupAction>\nprint("the bar just started");\n</startupAction>');
+</macro>
+</line>
+
+<line>
+<button>
+label=Add Shared Code library
+icon=noicon
+arg=<macro>
+p('<codeLibrary>\nfunction myFunction() {\n return true;\n}\n</codeLibrary>');
+</macro>
+</line>
+
+
+<codeLibrary>
+function p(s) { call("Action_Bar.pasteIntoEditor",s + "\n"); }
+function get(s,d) { return call("ij.Prefs.get",s,d); }
+function set(s,v) { return call("ij.Prefs.set",s,v); }
+</codeLibrary>
+
+// end of file

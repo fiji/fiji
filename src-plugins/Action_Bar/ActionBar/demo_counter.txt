@@ -1,0 +1,89 @@
+// Action Bar description file :demo_counter
+if (isOpen('Results')) { selectWindow('Results'); run('Close'); }
+cat=newArray('nucleus','cytoplasm','mitochondria','chloroplasts');
+for (i=0;i<cat.length;i++) { setResult ('Label',i,cat[i]); setResult ('Value',i,0); }
+updateResults();
+run("Action Bar","/plugins/ActionBar/demo_counter.txt");
+exit();
+
+<line>
+<button>
+label=nucleus
+icon=no
+arg=<macro>
+num = getNumber('set nucleus to ', getResult('Value',0));
+setResult('Value',0, num);
+updateResults();
+</macro>
+<button>
+label=-
+icon=_democnt/remove.png
+arg=setResult('Value',0, getResult('Value',0)-1);updateResults();
+<button>
+label=+
+icon=_democnt/add.png
+arg=setResult('Value',0, getResult('Value',0)+1);updateResults();
+</line>
+<line>
+<button>
+label=cytoplasm
+icon=no
+arg=<macro>
+num = getNumber('set cytoplasm to ', getResult('Value',1));
+setResult('Value',1, num);
+updateResults();
+</macro>
+<button>
+label=-
+icon=_democnt/remove.png
+arg=setResult('Value',1, getResult('Value',1)-1);updateResults();
+<button>
+label=+
+icon=_democnt/add.png
+arg=setResult('Value',1, getResult('Value',1)+1);updateResults();
+</line>
+<line>
+<button>
+label=mitochondria
+icon=no
+arg=<macro>
+num = getNumber('set mitochondria to ', getResult('Value',2));
+setResult('Value',2, num);
+updateResults();
+</macro>
+<button>
+label=-
+icon=_democnt/remove.png
+arg=setResult('Value',2, getResult('Value',2)-1);updateResults();
+<button>
+label=+
+icon=_democnt/add.png
+arg=setResult('Value',2, getResult('Value',2)+1);updateResults();
+</line>
+<line>
+<button>
+label=chloroplasts
+icon=no
+arg=<macro>
+num = getNumber('set chloroplasts to ', getResult('Value',3));
+setResult('Value',3, num);
+updateResults();
+</macro>
+<button>
+label=-
+icon=_democnt/remove.png
+arg=setResult('Value',3, getResult('Value',3)-1);updateResults();
+<button>
+label=+
+icon=_democnt/add.png
+arg=setResult('Value',3, getResult('Value',3)+1);updateResults();
+</line>
+<line>
+<button>
+label=Save
+icon=_democnt/filesaveas.png
+arg=<macro>
+saveAs('Measurements', '');
+</macro>
+</line>
+// end of file

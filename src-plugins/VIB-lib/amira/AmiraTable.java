@@ -1,9 +1,13 @@
 package amira;
 
+import ij.WindowManager;
+
 import ij.macro.Interpreter;
-import ij.text.TextPanel;
+
 import ij.text.TextWindow;
+
 import java.text.DecimalFormat;
+
 import java.util.Hashtable;
 import java.util.Properties;
 
@@ -30,6 +34,7 @@ public class AmiraTable extends TextWindow {
 			AmiraParameters parameters = new AmiraParameters(p);
 			parameters.setParameters(properties);
 		}
+		WindowManager.removeWindow(this);
 	}
 
 	public static String getParameterString(int rows, String[] headings) {
@@ -68,8 +73,10 @@ public class AmiraTable extends TextWindow {
 	}
 
 	public void show() {
-		if (!Interpreter.isBatchMode() && show)
+		if (!Interpreter.isBatchMode() && show) {
 			super.show();
+			WindowManager.removeWindow(this);
+		}
 	}
 }
 

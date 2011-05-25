@@ -1091,7 +1091,7 @@ public class Fake {
 			return;
 		files = null;
 
-		String fakeFile = directory + '/' + Parser.path;
+		String fakeFile = cwd.getPath() + '/' + directory + '/' + Parser.path;
 		boolean tryFake = new File(fakeFile).exists();
 		if (!tryFake) {
 			fakeFile = fallBackFakefile;

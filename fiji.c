@@ -1412,6 +1412,7 @@ int build_classpath_for_string(struct string *result, struct string *jar_directo
 			len = jar_directory->length;
 			string_addf(jar_directory, "/%s", filename);
 			if (build_classpath_for_string(result, jar_directory, 1)) {
+				closedir(directory);
 				string_set_length(jar_directory, len);
 				return 1;
 			}
@@ -1419,6 +1420,7 @@ int build_classpath_for_string(struct string *result, struct string *jar_directo
 		}
 
 	}
+	closedir(directory);
 	return 0;
 }
 
@@ -3222,6 +3224,7 @@ static void find_newest(struct string *relative_path, int max_depth, const char 
 			find_newest(relative_path, max_depth - 1, file, result);
 		string_set_length(relative_path, len + 1);
 	}
+	closedir(directory);
 	string_set_length(relative_path, len);
 }
 

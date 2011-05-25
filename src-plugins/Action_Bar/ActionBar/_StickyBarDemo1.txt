@@ -1,0 +1,81 @@
+run("Action Bar","plugins/ActionBar/_StickyBarDemo1.txt");
+exit();
+
+<sticky>
+
+<line>
+<button>
+label= info
+icon=_StickyBarDemo1/messagebox_info.png
+arg=run("Show Info...");
+</line>
+<line>
+<button>
+label= -
+icon=_StickyBarDemo1/viewmag-.png
+arg=run("Out");
+</line>
+<line>
+<button>
+label= +
+icon=_StickyBarDemo1/viewmag+.png
+arg=run("In");
+</line>
+<line>
+<button>
+label= R
+icon=_StickyBarDemo1/ledred.png
+arg=<macro>
+if (bitDepth==24) {
+run("Duplicate...","title=red");
+setRGBWeights(1, 0, 0);
+run("8-bit");
+}
+run("Red");
+</macro>
+</line>
+<line>
+<button>
+label= G
+icon=_StickyBarDemo1/ledgreen.png
+arg=<macro>
+if (bitDepth==24) {
+run("Duplicate...","title=green");
+setRGBWeights(0, 1, 0);
+run("8-bit");
+}
+run("Green");
+</macro>
+</line>
+<line>
+<button>
+label= B
+icon=_StickyBarDemo1/ledlightblue.png
+arg=<macro>
+if (bitDepth==24) {
+run("Duplicate...","title=blue");
+setRGBWeights(0, 0, 1);
+run("8-bit");
+}
+run("Blue");
+</macro>
+</line>
+<line>
+<button>
+label= K
+icon=_StickyBarDemo1/ledgray.png
+arg=<macro>
+if (bitDepth==24) {
+run("8-bit");
+}
+run("Grays");
+</macro>
+</line>
+<line>
+<button>
+label=Inv
+icon=_StickyBarDemo1/invert.png
+arg=<macro>
+run("Invert");
+</macro>
+</line>

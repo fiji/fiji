@@ -31,6 +31,9 @@ import weka.core.OptionHandler;
 import weka.core.Utils;
 import weka.core.WeightedInstancesHandler;
 import weka.core.Capabilities.Capability;
+
+import ij.IJ;
+
 import java.util.Random;
 import weka.core.RevisionUtils;
 
@@ -49,7 +52,8 @@ import weka.core.RevisionUtils;
  * @author Eibe Frank (eibe@cs.waikato.ac.nz) - original code
  * @author Richard Kirkby (rkirkby@cs.waikato.ac.nz) - original code
  * @author Fran Supek (fran.supek[AT]irb.hr) - adapted code
- * @version Adapted by Ignacio Arganda-Carreras (iarganda at mit.edu) to work on Weka 3.7
+ * @author Ignacio Arganda-Carreras (iarganda at mit.edu)
+ * @version $Revision 2010$ adapted by Ignacio Arganda-Carreras to work on Weka 3.7 and correctly use instance weights
  */
 class FastRandomTree
         extends AbstractClassifier
@@ -79,7 +83,7 @@ class FastRandomTree
 
   /** Minimum number of instances for leaf. */
   protected static final int m_MinNum = 1;
-
+  
   /**
    * Get the value of MinNum.
    *
@@ -170,7 +174,7 @@ class FastRandomTree
    * function.
    */
   public void run() {
-
+//final long start = System.currentTimeMillis();
     // compute initial class counts
     double[] classProbs = new double[data.numClasses];
     for (int i = 0; i < data.numInstances; i++) {
@@ -194,9 +198,10 @@ class FastRandomTree
 
     buildTree(data.sortedIndices, classProbs, m_Debug,
             attIndicesWindow, 0);
-
+  
     this.data = null;
-      
+//final long end = System.currentTimeMillis();
+//IJ.log("Creating tree took: " + (end-start) + "ms" + ", max depth = " + this.m_MotherForest.maxRealDepth);     
   }
 
   
@@ -251,8 +256,12 @@ class FastRandomTree
       return returnedDist;
 
     } else { // =============================================== node is a leaf
-
-      return m_ClassProbs;
+    	double[] normalizedDistribution = (double[]) m_ClassProbs.clone();
+    	if ( Utils.sum(normalizedDistribution) == 0)
+    		return normalizedDistribution;
+        Utils.normalize(normalizedDistribution);
+        return normalizedDistribution;
+      //return m_ClassProbs;
 
     }
 
@@ -269,7 +278,7 @@ class FastRandomTree
    * <li>m_ClassProbs are now remembered only in leaves, not in every node of
    *     the tree
    *
-   * <li>m_Distribution has beed removed
+   * <li>m_Distribution has been removed
    *
    * <li>members of dists, splits, props and vals arrays which are not used are
    *     dereferenced prior to recursion to reduce memory requirements
@@ -280,7 +289,8 @@ class FastRandomTree
    *     two categories
    *
    * <li>each new 'tree' (i.e. node or leaf) is passed a reference to its
-   *     'mother forest', necessary to look up parameters such as maxDepth and K
+   *     'mother forest'instead of forcing the sum of class probabilities to 1.0;
+   *     this has a large effect when class/instance weights are set by use, necessary to look up parameters such as maxDepth and K
    *
    * <li>pre-split entropy is not recalculated unnecessarily
    *
@@ -291,9 +301,9 @@ class FastRandomTree
    * <li>similarly, a reference to the random number generator is stored
    *     in a field of the DataCache
    *
-   * <li>m_ClassProbs are now normalized by dividing with number of instances
-   *     in leaf, instead of forcing the sum of class probabilities to 1.0;
-   *     this has a large effect when class/instance weights are set by user
+   * <li>m_ClassProbs are no longer normalized by dividing with number of instances
+   *     in leaf (2010 version), the use of instance weights is taken care of when
+   *     re-sampling the bag  
    *
    * <li>a little imprecision is allowed in checking whether there was a
    *     decrease in entropy after splitting
@@ -323,15 +333,15 @@ class FastRandomTree
 
       m_Attribute = -1;
       
-      // normalize by dividing with the number of instances (as of ver. 0.97)
-      // unless leaf is empty - this can happen with splits on nominal
-      // attributes with more than two categories
-      if ( sortedIndices[0].length != 0 )
-        for (int c = 0; c < classProbs.length; c++) {
-          classProbs[c] /= sortedIndices[0].length;
-        }
       m_ClassProbs = classProbs;
       this.data = null;
+      
+      if(depth > this.m_MotherForest.maxRealDepth)
+      {
+    	  //System.out.println("Changed maxDepth to " + depth);
+    	  this.m_MotherForest.maxRealDepth = depth;
+      }
+      
       return;
     }
     
@@ -393,18 +403,6 @@ class FastRandomTree
         m_Successors[i].m_MotherForest = this.m_MotherForest;
         m_Successors[i].data = this.data;
 
-        // check if we're about to make an empty branch - this can happen with
-        // nominal attributes with more than two categories (as of ver. 0.98)
-        if ( subsetIndices[i][0].length == 0  ) {
-            // in this case, modify the chosenAttDists[i] so that it contains
-            // the current, before-split class probabilities, properly normalized
-            // by the number of instances (as we won't be able to normalize
-            // after the split)
-            for ( int j = 0; j < chosenAttDists[i].length; j++ )
-              chosenAttDists[i][j] = classProbs[j] / sortedIndices[0].length;
-        }
-
-
         m_Successors[i].buildTree(subsetIndices[i], 
                 chosenAttDists[i], m_Debug,
                 attIndicesWindow, depth + 1);
@@ -419,21 +417,12 @@ class FastRandomTree
 
       m_Attribute = -1;
       
-      // normalize by dividing with the number of instances (as of ver. 0.97)
-      // unless leaf is empty - this can happen with splits on nominal attributes
-      if ( sortedIndices[0].length != 0 )
-        for (int c = 0; c < classProbs.length; c++) {
-          classProbs[c] /= sortedIndices[0].length;
-        }
-
-      m_ClassProbs = classProbs;
-      
+      m_ClassProbs = classProbs;      
     }
 
     this.data = null; // dereference all pointers so data can be GC'd after tree is built
     
   }
-
 
 
   /**
@@ -682,7 +671,7 @@ class FastRandomTree
         if ( data.vals[att][inst] > data.vals[att][prevInst] ) {
 
           // we want the lowest impurity after split; at this point, we don't
-          // really care what we've had before spliting
+          // really care what we've had before splitting
           currVal = -SplitCriteria.entropyConditionedOnRows(currDist);          
           
           if (currVal > bestVal) {
