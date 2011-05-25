@@ -391,7 +391,6 @@ public class InteractiveBehavior extends Behavior {
 			}
 			if(!e.isConsumed()) {
 				canvas.getRoiCanvas().mouseDragged(e);
-				canvas.render();
 			}
 		} else if(id == MouseEvent.MOUSE_RELEASED) {
 			if(univ.ui.isPointTool()) {
