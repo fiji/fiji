@@ -964,30 +964,31 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 		}
 
 		// compute number of edges
-
-		// straight edges
-		for (int d = 0; d < dimensions.length; d++)
-			numEdges += numNodes - numNodes/dimensions[d];
-
-		// diagonal edges
 		if (eightConnect) {
 
-			int eightEdges = 1;
-			for (int d = 0; d < dimensions.length; d++)
-				eightEdges *= dimensions[d] - 1;
-			int edgesPerNode = ((int)Math.pow(3, dimensions.length) - 1 - 2*dimensions.length)/2;
-
-			numEdges += edgesPerNode*eightEdges;
+			// straight and diagonal edges
 
 			// n = (2*a-1)*(2*b-1)*...
 			//   - a*b*c*...
-			numEdges = 1;
+			//   + (a-1)*(b-1)*...
+			int prod1 = 1;
 			for (int d = 0; d < dimensions.length; d++)
-				numEdges *= (2*dimensions[d] - 1);
-			int volume = 1;
+				prod1 *= (2*dimensions[d] - 1);
+
+			int prod2 = 1;
 			for (int d = 0; d < dimensions.length; d++)
-				volume *= dimensions[d];
-			numEdges -= volume;
+				prod2 *= dimensions[d];
+
+			int prod3 = 1;
+			for (int d = 0; d < dimensions.length; d++)
+				prod3 *= (dimensions[d] - 1);
+
+			numEdges = prod1 - prod2 + prod3;
+		} else {
+
+			// straight edges
+			for (int d = 0; d < dimensions.length; d++)
+				numEdges += numNodes - numNodes/dimensions[d];
 		}
 
 		// setup imglib cursors
@@ -1071,6 +1072,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 					}
 
 				} while (!valid);
+				System.out.println(Arrays.toString(neighborPositions[i]));
 			}
 		} else {
 
