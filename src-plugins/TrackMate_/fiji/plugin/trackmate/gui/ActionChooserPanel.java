@@ -16,7 +16,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.action.ActionType;
 
@@ -27,13 +27,13 @@ public class ActionChooserPanel extends EnumChooserPanel<ActionType> {
 	
 	public final ActionEvent ACTION_STARTED = new ActionEvent(this, 0, "ActionStarted");
 	public final ActionEvent ACTION_FINISHED = new ActionEvent(this, 1, "ActionFinished");
-	private TrackMateModelInterface model;
+	private TrackMateModel model;
 	private LogPanel logPanel;
 	private Logger logger;
 	/** The view linked to the given model, in case some actions need it. */ 
 	private TrackMateFrame view;
 
-	public ActionChooserPanel(TrackMateModelInterface model, TrackMateFrame view) {
+	public ActionChooserPanel(TrackMateModel model, TrackMateFrame view) {
 		super(ActionType.GRAB_SPOT_IMAGES, "Action");
 		this.model = model;
 		this.view = view;

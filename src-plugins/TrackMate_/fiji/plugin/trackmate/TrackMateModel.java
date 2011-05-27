@@ -16,7 +16,7 @@ import fiji.plugin.trackmate.segmentation.SpotSegmenter;
  * 
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Jan 1, 2011
  */
-public interface TrackMateModelInterface {
+public interface TrackMateModel {
 
 
 	/*

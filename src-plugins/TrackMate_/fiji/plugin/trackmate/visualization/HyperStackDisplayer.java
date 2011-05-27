@@ -21,7 +21,7 @@ import java.util.Set;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
-public class HyperStackDisplayer extends SpotDisplayer  {
+public class HyperStackDisplayer extends TrackMateModelView  {
 
 	ImagePlus imp;
 	OverlayedImageCanvas canvas;

@@ -24,19 +24,18 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.TrackMateFrameController.GuiState;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
-import fiji.plugin.trackmate.visualization.SpotDisplayer;
-import fiji.plugin.trackmate.visualization.TrackMateModelManager;
-import fiji.plugin.trackmate.visualization.SpotDisplayer.DisplayerType;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.TrackMateModelView.ViewType;
 
 /**
  * This class is in charge of reading a whole TrackMate file, and return a  
- * {@link TrackMateModelInterface} with its field set. Optionally, 
+ * {@link TrackMateModel} with its field set. Optionally, 
  * it can also position correctly the state of the GUI.
  * 
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Apr 28, 2011
@@ -65,7 +64,7 @@ public class GuiReader {
 	public GuiReader(TrackMateFrameController controller) {
 		this.controller = controller;
 		if (null != controller)
-			logger = controller.view.getLogger();
+			logger = controller.getView().getLogger();
 	}
 	
 	
@@ -74,15 +73,15 @@ public class GuiReader {
 	 */
 	
 	
-	public TrackMateModelInterface loadFile(File file) {
+	public TrackMateModel loadFile(File file) {
 		
 		TrackMateFrame view;
 		if (null == controller) 
 			view = null;
 		else
-			view = controller.view;
+			view = controller.getView();
 		
-		TrackMateModelInterface model = new TrackMate_();
+		TrackMateModel model = new TrackMate_();
 		logger.log("Opening file "+file.getName()+'\n');
 		TmXmlReader reader = new TmXmlReader(file);
 		try {
@@ -142,10 +141,10 @@ public class GuiReader {
 				settings.trackerType = settings.trackerSettings.trackerType;
 				model.setSettings(settings);
 				if (null != controller) {
-					controller.model = model;
+					controller.setModel(model);
 					view.setModel(model);
 					// Stop at start panel
-					controller.state = GuiState.START;
+					controller.setState(GuiState.START);
 					if (!imp.isVisible())
 						imp.show();
 				}
@@ -173,8 +172,8 @@ public class GuiReader {
 			if (null == spots) {
 				// No spots, so we stop here, and switch to the segmenter panel
 				if (null != controller) {
-					controller.model = model;
-					controller.state = GuiState.TUNE_SEGMENTER;
+					controller.setModel(model);
+					controller.setState(GuiState.TUNE_SEGMENTER);
 					view.setModel(model);
 					if (!imp.isVisible())
 						imp.show();
@@ -201,9 +200,9 @@ public class GuiReader {
 			if (initialThreshold == null) {
 				// No initial threshold, so set it
 				if (null != controller) {
-					controller.model = model;
+					controller.setModel(model);
 					view.setModel(model);
-					controller.state = GuiState.INITIAL_THRESHOLDING;
+					controller.setState(GuiState.INITIAL_THRESHOLDING);
 					if (!imp.isVisible())
 						imp.show();
 				}
@@ -229,12 +228,10 @@ public class GuiReader {
 				// No feature thresholds, we assume we have the features calculated, and put ourselves
 				// in a state such that the threshold GUI will be displayed.
 				if (null != controller) {
-					controller.manager = new TrackMateModelManager(model);
 					view.setModel(model);
-					controller.state = GuiState.CALCULATE_FEATURES;
+					controller.setState(GuiState.CALCULATE_FEATURES);
 					controller.actionFlag = true;
-					controller.displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);	
-					controller.displayer.addSpotCollectionEditListener(controller.manager);	
+					controller.setModelView(TrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));	
 					if (!imp.isVisible())
 						imp.show();
 				}
@@ -260,13 +257,11 @@ public class GuiReader {
 			// already in place.
 			if (null == selectedSpots) {
 				if (null != controller) {
-					controller.manager = new TrackMateModelManager(model);
 					view.setModel(model);
-					controller.state = GuiState.CALCULATE_FEATURES;
+					controller.setState(GuiState.CALCULATE_FEATURES);
 					controller.actionFlag = true;
-					controller.displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
-					controller.displayer.setSpots(model.getSpots());
-					controller.displayer.addSpotCollectionEditListener(controller.manager);
+					controller.setModelView(TrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
+					controller.getModelView().setSpots(model.getSpots());
 					if (!imp.isVisible())
 						imp.show();
 				}
@@ -294,14 +289,12 @@ public class GuiReader {
 				settings.trackerType = trackerSettings.trackerType;
 				model.setSettings(settings);
 				if (null != controller) {
-					controller.manager = new TrackMateModelManager(model);
 					view.setModel(model);
 					// Stop at tune tracker panel
-					controller.state = GuiState.TUNE_TRACKER;
-					controller.displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
-					controller.displayer.setSpots(model.getSpots());
-					controller.displayer.setSpotsToShow(model.getSelectedSpots());
-					controller.displayer.addSpotCollectionEditListener(controller.manager);
+					controller.setState(GuiState.TUNE_TRACKER);
+					controller.setModelView(TrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
+					controller.getModelView().setSpots(model.getSpots());
+					controller.getModelView().setSpotsToShow(model.getSelectedSpots());
 					if (!imp.isVisible())
 						imp.show();
 				}
@@ -326,14 +319,12 @@ public class GuiReader {
 			}
 			if (null == trackGraph) {
 				if (null != controller) {
-					controller.manager = new TrackMateModelManager(model);
 					view.setModel(model);
 					// Stop at tune tracker panel
-					controller.state = GuiState.TUNE_TRACKER;
-					controller.displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
-					controller.displayer.setSpots(model.getSpots());
-					controller.displayer.setSpotsToShow(model.getSelectedSpots());
-					controller.displayer.addSpotCollectionEditListener(controller.manager);
+					controller.setState(GuiState.TUNE_TRACKER);
+					controller.setModelView(TrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
+					controller.getModelView().setSpots(model.getSpots());
+					controller.getModelView().setSpotsToShow(model.getSelectedSpots());
 					if (!imp.isVisible())
 						imp.show();
 				}
@@ -345,15 +336,13 @@ public class GuiReader {
 			model.setTrackGraph(trackGraph);
 		}
 		
-		controller.manager = new TrackMateModelManager(model);
 		view.setModel(model);
 		controller.actionFlag = true; // force redraw and relinking
-		controller.state = GuiState.TRACKING;
-		controller.displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
-		controller.displayer.setSpots(model.getSpots());
-		controller.displayer.setSpotsToShow(model.getSelectedSpots());
-		controller.displayer.setTrackGraph(model.getTrackGraph());
-		controller.displayer.addSpotCollectionEditListener(controller.manager);
+		controller.setState(GuiState.TRACKING);
+		controller.setModelView(TrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
+		controller.getModelView().setSpots(model.getSpots());
+		controller.getModelView().setSpotsToShow(model.getSelectedSpots());
+		controller.getModelView().setTrackGraph(model.getTrackGraph());
 		if (!imp.isVisible())
 			imp.show();
 		logger.log("Loading data finished.\n");
@@ -366,7 +355,7 @@ public class GuiReader {
 		if (null == controller) 
 			parent = null;
 		else
-			parent = controller.view;
+			parent = controller.getView();
 		
 		if(IJ.isMacintosh()) {
 			// use the native file dialog on the mac

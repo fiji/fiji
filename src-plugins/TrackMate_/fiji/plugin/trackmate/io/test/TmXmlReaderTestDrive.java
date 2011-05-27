@@ -20,7 +20,7 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.test.LAPTrackerTestDrive;
 import fiji.plugin.trackmate.visualization.HyperStackDisplayer;
-import fiji.plugin.trackmate.visualization.SpotDisplayer;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class TmXmlReaderTestDrive {
 
@@ -95,7 +95,7 @@ public class TmXmlReaderTestDrive {
 		}
 		
 		// Instantiate displayer
-		SpotDisplayer displayer = new HyperStackDisplayer(settings);
+		TrackMateModelView displayer = new HyperStackDisplayer(settings);
 		displayer.render();
 		displayer.setSpots(spots);
 		displayer.setSpotsToShow(selectedSpots);

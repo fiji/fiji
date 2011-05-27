@@ -4,7 +4,7 @@ import ij3d.Image3DUniverse;
 
 import javax.swing.ImageIcon;
 
-import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 import fiji.plugin.trackmate.gui.TrackMateFrame;
 import fiji.plugin.trackmate.visualization.SpotDisplayer3D;
@@ -18,7 +18,7 @@ public class LinkNew3DViewerAction extends AbstractTMAction {
 	}
 	
 	@Override
-	public void execute(final TrackMateModelInterface model) {
+	public void execute(final TrackMateModel model) {
 		new Thread("TrackMate copying thread") {
 			public void run() {
 				

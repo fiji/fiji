@@ -119,7 +119,7 @@ public class SpotOverlay implements Overlay {
 
 				color = targetColor.get(spot);
 				if (null == color)
-					color = SpotDisplayer.DEFAULT_COLOR;
+					color = TrackMateModelView.DEFAULT_COLOR;
 				g2d.setColor(color);
 				drawSpot(g2d, spot, zslice, xcorner, ycorner, mag);
 
@@ -129,7 +129,7 @@ public class SpotOverlay implements Overlay {
 		// Deal with spot selection
 		if (null != spotSelection) {
 			g2d.setStroke(new BasicStroke((float) (2 / canvas.getMagnification())));
-			g2d.setColor(SpotDisplayer.HIGHLIGHT_COLOR);
+			g2d.setColor(TrackMateModelView.HIGHLIGHT_COLOR);
 			Integer sFrame;
 			for(Spot spot : spotSelection) {
 				sFrame = target.getFrame(spot);
@@ -142,7 +142,7 @@ public class SpotOverlay implements Overlay {
 		// Deal with editing spot - we always draw it with its center at the current z, current t 
 		// (it moves along with the current slice) 
 		if (null != editingSpot) {
-			g2d.setColor(SpotDisplayer.HIGHLIGHT_COLOR);
+			g2d.setColor(TrackMateModelView.HIGHLIGHT_COLOR);
 			g2d.setStroke(new BasicStroke((float) (2 / canvas.getMagnification()), 
 					BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[] {5f, 5f} , 0));
 			final float x = editingSpot.getFeature(Feature.POSITION_X);

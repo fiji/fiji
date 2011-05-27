@@ -13,12 +13,13 @@ import javax.swing.JFrame;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.gui.TrackMateFrame.PanelCard;
 import fiji.plugin.trackmate.gui.TrackMateFrameController.GuiState;
 import fiji.plugin.trackmate.io.TmXmlWriter;
 
 /**
- * This class is in charge of writing a {@link TrackMateModelInterface} to a file, from
+ * This class is in charge of writing a {@link TrackMateModel} to a file, from
  * the current state and content of the controller {@link TrackMateFrameController}.
  * 
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Apr 28, 2011
@@ -39,7 +40,7 @@ public class GuiSaver {
 	 */
 	public GuiSaver(TrackMateFrameController controller) {
 		this.controller = controller;
-		logger = controller.view.getLogger();
+		logger = controller.getView().getLogger();
 	}
 	
 	
@@ -50,13 +51,13 @@ public class GuiSaver {
 	
 	public void writeFile(File file) {
 		
-		TrackMateModelInterface model = controller.model;
-		GuiState state = controller.state;
+		TrackMateModel model = controller.getModel();
+		GuiState state = controller.getState();
 		
 		TmXmlWriter writer = new TmXmlWriter(model, logger);
 		switch (state) {
 		case START:
-			model.setSettings(controller.view.startDialogPanel.getSettings());
+			model.setSettings(((StartDialogPanel) controller.getView().getPanelFor(PanelCard.START_DIALOG_KEY)).getSettings());
 			writer.appendBasicSettings();
 			break;
 		case TUNE_SEGMENTER:
@@ -120,7 +121,7 @@ public class GuiSaver {
 		if (null == controller) 
 			parent = null;
 		else
-			parent = controller.view;
+			parent = controller.getView();
 		
 		if(IJ.isMacintosh()) {
 			// use the native file dialog on the mac

@@ -23,7 +23,7 @@ import fiji.plugin.trackmate.InfoTextable;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.util.TMUtils;
 
@@ -36,27 +36,19 @@ import fiji.plugin.trackmate.util.TMUtils;
  * <p>
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Jan 2011
  */
-public abstract class SpotDisplayer implements SpotCollectionEditListener, TMSelectionDisplayer {
+public abstract class TrackMateModelView implements SpotCollectionEditListener, TMSelectionDisplayer {
 
 	/*
 	 * ENUMS
 	 */
 	
 	/**
-	 * This enum stores the list of {@link SpotDisplayer} currently available.
+	 * This enum stores the list of {@link TrackMateModelView} currently available.
 	 */
-	public static enum DisplayerType implements InfoTextable {
+	public static enum ViewType implements InfoTextable {
 		THREEDVIEWER_DISPLAYER,
 		HYPERSTACK_DISPLAYER;
-		
-		public static DisplayerType[] get2DDisplayers() {
-			return new DisplayerType[] { HYPERSTACK_DISPLAYER, THREEDVIEWER_DISPLAYER };
-		}
-
-		public static DisplayerType[] get3DDisplayers() {
-			return new DisplayerType[] { HYPERSTACK_DISPLAYER, THREEDVIEWER_DISPLAYER };
-		}
-		
+				
 		@Override
 		public String toString() {
 			switch(this) {
@@ -166,11 +158,11 @@ public abstract class SpotDisplayer implements SpotCollectionEditListener, TMSel
 	 */
 	
 	/**
-	 * Instantiate and render the displayer specified by the given {@link DisplayerType}, using the data from
-	 * the model given. This will render the chosen {@link SpotDisplayer} only with image data.
+	 * Instantiate and render the displayer specified by the given {@link ViewType}, using the data from
+	 * the model given. This will render the chosen {@link TrackMateModelView} only with image data.
 	 */
-	public static SpotDisplayer instantiateDisplayer(final DisplayerType displayerType, final TrackMateModelInterface model) {
-		final SpotDisplayer disp;
+	public static TrackMateModelView instantiateView(final ViewType displayerType, final TrackMateModel model) {
+		final TrackMateModelView disp;
 		Settings settings = model.getSettings();
 		switch (displayerType) {
 		case THREEDVIEWER_DISPLAYER:

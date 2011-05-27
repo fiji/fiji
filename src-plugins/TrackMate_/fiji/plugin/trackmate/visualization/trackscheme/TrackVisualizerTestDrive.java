@@ -18,11 +18,11 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import fiji.plugin.trackmate.visualization.SpotDisplayer;
-import fiji.plugin.trackmate.visualization.SpotDisplayer.DisplayerType;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.TrackMateModelView.ViewType;
 import fiji.plugin.trackmate.visualization.TMSelectionManager;
 import fiji.plugin.trackmate.visualization.test.Branched3DTrackTestDrive;
 
@@ -63,10 +63,10 @@ public class TrackVisualizerTestDrive {
 		}
 		
 		// Instantiate displayer
-		TrackMateModelInterface model = new TrackMate_();
+		TrackMateModel model = new TrackMate_();
 		model.setSettings(settings);
 //		final SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
-		final SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.HYPERSTACK_DISPLAYER, model);
+		final TrackMateModelView displayer = TrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model);
 		displayer.setSpots(allSpots);
 		displayer.setSpotsToShow(selectedSpots);
 		displayer.setTrackGraph(tracks);

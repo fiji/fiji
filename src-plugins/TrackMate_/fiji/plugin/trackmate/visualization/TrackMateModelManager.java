@@ -11,25 +11,26 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.FeatureFacade;
 import fiji.plugin.trackmate.util.TMUtils;
 
 public class TrackMateModelManager implements SpotCollectionEditListener {
 
-	private TrackMateModelInterface model;
+	private TrackMateModel model;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 	
-	public TrackMateModelManager(TrackMateModelInterface model) {
+	public TrackMateModelManager(TrackMateModel model) {
 		this.model = model;
 	}
 	
 	/*
 	 * LISTENER METHODS
 	 */
+
 	
 	@Override
 	public void collectionChanged(SpotCollectionEditEvent event) {
@@ -139,5 +140,6 @@ public class TrackMateModelManager implements SpotCollectionEditListener {
 			featureCalculator.processAllFeatures(spotsToCompute);
 		}
 	}
+
 
 }

@@ -32,7 +32,7 @@ import org.jgrapht.graph.SimpleWeightedGraph;
  * @author Nicholas Perry, Jean-Yves Tinevez - Institut Pasteur - July 2010 - 2011
  *
  */
-public class TrackMate_ implements PlugIn, TrackMateModelInterface {
+public class TrackMate_ implements PlugIn, TrackMateModel {
 	
 	public static final String PLUGIN_NAME_STR = "Track Mate";
 	public static final String PLUGIN_NAME_VERSION = ".alpha";

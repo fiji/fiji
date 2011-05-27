@@ -9,8 +9,8 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModelInterface;
-import fiji.plugin.trackmate.visualization.SpotDisplayer;
+import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 /**
@@ -25,10 +25,10 @@ public class GUIUtils {
 	 * linked to the given displayer. 
 	 *  
 	 * @param model  The model to picture in the {@link TrackSchemeFrame}
-	 * @param displayer  The {@link SpotDisplayer} to link the {@link TrackSchemeFrame} to
+	 * @param displayer  The {@link TrackMateModelView} to link the {@link TrackSchemeFrame} to
 	 * @return  the created track scheme frame
 	 */
-	public static TrackSchemeFrame launchTrackScheme(final TrackMateModelInterface model, final Iterable<SpotDisplayer> displayers) {
+	public static TrackSchemeFrame launchTrackScheme(final TrackMateModel model) {
 
 		// Display Track scheme
 		final TrackSchemeFrame trackScheme = new TrackSchemeFrame(model.getTrackGraph(), model.getSettings());
@@ -37,12 +37,8 @@ public class GUIUtils {
 		// Link it with displayer:		
 
 		// Manual edit listener
-		for(SpotDisplayer displayer : displayers)
+		for(TrackMateModelView displayer : displayers)
 			displayer.addSpotCollectionEditListener(trackScheme);
-
-		// Selection manager
-//		for(SpotDisplayer displayer : displayers)
-//			new SpotSelectionManager(displayer, trackScheme);
 
 		// Graph modification listener
 		trackScheme.addGraphListener(new GraphListener<Spot, DefaultWeightedEdge>() {
@@ -55,7 +51,7 @@ public class GUIUtils {
 						break;
 				model.setSpotSelection(spots);
 				model.setTrackGraph(trackScheme.getTrackModel());
-				for(SpotDisplayer displayer : displayers) {
+				for(TrackMateModelView displayer : displayers) {
 					displayer.setSpotsToShow(spots);
 					displayer.setTrackGraph(trackScheme.getTrackModel());
 					displayer.refresh();
@@ -66,14 +62,14 @@ public class GUIUtils {
 			@Override
 			public void edgeRemoved(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
 				model.setTrackGraph(trackScheme.getTrackModel());
-				for(SpotDisplayer displayer : displayers) {
+				for(TrackMateModelView displayer : displayers) {
 					displayer.setTrackGraph(trackScheme.getTrackModel());
 					displayer.refresh();
 				}
 			}
 			@Override
 			public void edgeAdded(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
-				for(SpotDisplayer displayer : displayers) {
+				for(TrackMateModelView displayer : displayers) {
 					displayer.setTrackGraph(trackScheme.getTrackModel());
 					displayer.refresh();
 				}

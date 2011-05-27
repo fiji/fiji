@@ -15,11 +15,11 @@ import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
 import fiji.plugin.trackmate.tracking.TrackerType;
-import fiji.plugin.trackmate.visualization.SpotDisplayer;
-import fiji.plugin.trackmate.visualization.SpotDisplayer.DisplayerType;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.TrackMateModelView.ViewType;
 
 /**
  * A view for the TrackMate_ plugin, strongly inspired from the spots segmentation GUI of the Imaris® software 
@@ -68,7 +68,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	StartDialogPanel startDialogPanel;
 	SegmenterSettingsPanel segmenterSettingsPanel;
 	InitThresholdPanel initThresholdingPanel;
-	EnumChooserPanel<DisplayerType> displayerChooserPanel;
+	EnumChooserPanel<ViewType> displayerChooserPanel;
 	ThresholdGuiPanel thresholdGuiPanel;
 	TrackerSettingsPanel trackerSettingsPanel;
 	DisplayerPanel displayerPanel;
@@ -79,7 +79,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	 * FIELDS
 	 */
 
-	private TrackMateModelInterface model;
+	private TrackMateModel model;
 	private ArrayList<ActionListener> listeners = new ArrayList<ActionListener>();
 
 	private JPanel jPanelButtons;
@@ -121,7 +121,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	 * CONSTRUCTOR
 	 */
 
-	public TrackMateFrame(TrackMateModelInterface model) {
+	public TrackMateFrame(TrackMateModel model) {
 		this.model = model;
 		initGUI();
 
@@ -131,7 +131,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	 * PUBLIC METHODS
 	 */
 
-	public void setModel(TrackMateModelInterface model) {
+	public void setModel(TrackMateModel model) {
 		this.model = model;		
 	}
 
@@ -178,7 +178,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		case DISPLAYER_CHOICE_KEY:
 			if (null != displayerChooserPanel)
 				jPanelMain.remove(displayerChooserPanel);
-			displayerChooserPanel = new EnumChooserPanel<SpotDisplayer.DisplayerType>(SpotDisplayer.DisplayerType.HYPERSTACK_DISPLAYER, "displayer");
+			displayerChooserPanel = new EnumChooserPanel<TrackMateModelView.ViewType>(TrackMateModelView.ViewType.HYPERSTACK_DISPLAYER, "displayer");
 			panel = displayerChooserPanel;
 			break;
 

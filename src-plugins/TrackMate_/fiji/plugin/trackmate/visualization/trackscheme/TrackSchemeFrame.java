@@ -44,10 +44,10 @@ import com.mxgraph.view.mxPerimeter;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.visualization.SpotCollectionEditEvent;
 import fiji.plugin.trackmate.visualization.SpotCollectionEditListener;
-import fiji.plugin.trackmate.visualization.SpotDisplayer;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.TMSelectionChangeEvent;
 import fiji.plugin.trackmate.visualization.TMSelectionChangeListener;
 import fiji.plugin.trackmate.visualization.TMSelectionDisplayer;
@@ -204,9 +204,9 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 
 	/**
 	 * Used to catch spot creation events that occurred elsewhere, for instance by manual editing in 
-	 * the {@link SpotDisplayer}. 
+	 * the {@link TrackMateModelView}. 
 	 * <p>
-	 * We have to deal with the graph modification ourselves here, because the {@link TrackMateModelInterface} model
+	 * We have to deal with the graph modification ourselves here, because the {@link TrackMateModel} model
 	 * holds a non-listenable JGraphT instance. A modification made to the model would not be reflected
 	 * on the graph here.
 	 */

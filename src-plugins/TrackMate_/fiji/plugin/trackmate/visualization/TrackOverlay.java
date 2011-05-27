@@ -21,7 +21,7 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
+import fiji.plugin.trackmate.visualization.TrackMateModelView.TrackDisplayMode;
 import fiji.util.gui.OverlayedImageCanvas.Overlay;
 
 public class TrackOverlay implements Overlay {
@@ -30,7 +30,7 @@ public class TrackOverlay implements Overlay {
 	private float[] calibration;
 	private ImagePlus imp;
 	private HashMap<Spot, Color> edgeColors;
-	private SpotDisplayer.TrackDisplayMode trackDisplayMode = TrackDisplayMode.ALL_WHOLE_TRACKS;
+	private TrackMateModelView.TrackDisplayMode trackDisplayMode = TrackDisplayMode.ALL_WHOLE_TRACKS;
 	private boolean trackVisible = true;
 	private int trackDisplayDepth = 10;
 	private Set<DefaultWeightedEdge> highlight = new HashSet<DefaultWeightedEdge>();
@@ -123,7 +123,7 @@ public class TrackOverlay implements Overlay {
 
 		// Deal with highlighted edges
 		g2d.setStroke(new BasicStroke((float) (2.0f /  imp.getCanvas().getMagnification()),  BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-		g2d.setColor(SpotDisplayer.HIGHLIGHT_COLOR);
+		g2d.setColor(TrackMateModelView.HIGHLIGHT_COLOR);
 		for (DefaultWeightedEdge edge : highlight) {
 			source = graph.getEdgeSource(edge);
 			target = graph.getEdgeTarget(edge);

@@ -10,7 +10,7 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.SpotIconGrabber;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 import fiji.plugin.trackmate.util.TMUtils;
@@ -25,7 +25,7 @@ public class GrabSpotImageAction extends AbstractTMAction {
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
-	public void execute(TrackMateModelInterface model) {
+	public void execute(TrackMateModel model) {
 		logger.log("Grabbing spot images.\n");
 		Logger oldLogger = model.getLogger();
 		model.setLogger(logger);

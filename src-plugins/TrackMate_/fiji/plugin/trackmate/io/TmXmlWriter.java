@@ -25,7 +25,7 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
@@ -37,7 +37,7 @@ public class TmXmlWriter implements TmXmlKeys {
 	 * FIELD
 	 */
 	
-	private TrackMateModelInterface model;
+	private TrackMateModel model;
 	private Element root;
 	private Logger logger;
 
@@ -45,11 +45,11 @@ public class TmXmlWriter implements TmXmlKeys {
 	 * CONSTRUCTORS
 	 */
 	
-	public TmXmlWriter(TrackMateModelInterface model) {
+	public TmXmlWriter(TrackMateModel model) {
 		this(model, null);
 	}
 
-	public TmXmlWriter(TrackMateModelInterface model, Logger logger) {
+	public TmXmlWriter(TrackMateModel model, Logger logger) {
 		this.model = model;
 		this.root = new Element(ROOT_ELEMENT_KEY);
 		if (null == logger) 
@@ -85,7 +85,7 @@ public class TmXmlWriter implements TmXmlKeys {
 	
 	/**
 	 * Append the initial threshold on quality to the {@link Document}. Because 
-	 * this initial threshold is not stored in the {@link TrackMateModelInterface},
+	 * this initial threshold is not stored in the {@link TrackMateModel},
 	 * it has to be provided here.
 	 */
 	public void appendInitialThreshold() {

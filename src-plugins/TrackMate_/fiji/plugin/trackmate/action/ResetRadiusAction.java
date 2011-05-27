@@ -5,7 +5,7 @@ import javax.swing.ImageIcon;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 
@@ -18,7 +18,7 @@ public class ResetRadiusAction extends AbstractTMAction {
 	}
 	
 	@Override
-	public void execute(final TrackMateModelInterface model) {
+	public void execute(final TrackMateModel model) {
 		final SegmenterSettings segSettings = model.getSettings().segmenterSettings;
 		final float radius = segSettings.expectedRadius;
 		logger.log(String.format("Setting all spot radiuses to %.1f "+segSettings.spaceUnits+"\n", radius));

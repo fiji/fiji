@@ -3,7 +3,7 @@ package fiji.plugin.trackmate.action;
 import javax.swing.ImageIcon;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 
 public class RecalculateFeatureAction extends AbstractTMAction {
@@ -15,7 +15,7 @@ public class RecalculateFeatureAction extends AbstractTMAction {
 	}
 	
 	@Override
-	public void execute(TrackMateModelInterface model) {
+	public void execute(TrackMateModel model) {
 		logger.log("Recalculating all features.\n");
 		Logger oldLogger = model.getLogger();
 		model.setLogger(logger);

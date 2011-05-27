@@ -5,7 +5,7 @@ import javax.swing.ImageIcon;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 
 public class RadiusToEstimatedAction extends AbstractTMAction {
@@ -30,7 +30,7 @@ public class RadiusToEstimatedAction extends AbstractTMAction {
 	}
 
 	@Override
-	public void execute(final TrackMateModelInterface model) {
+	public void execute(final TrackMateModel model) {
 		logger.log("Setting all spot radiuses to their estimated value.\n");
 		SpotCollection spots = model.getSelectedSpots();
 		for(Spot spot : spots)

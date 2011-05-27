@@ -3,12 +3,12 @@ package fiji.plugin.trackmate.action;
 import javax.swing.ImageIcon;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.gui.TrackMateFrame;
 
 public abstract class AbstractTMAction implements TrackMateAction {
 
-	protected TrackMateModelInterface model = null;
+	protected TrackMateModel model = null;
 	protected Logger logger = Logger.VOID_LOGGER;
 	protected ImageIcon icon = null;
 	protected TrackMateFrame view;

@@ -16,11 +16,11 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import fiji.plugin.trackmate.visualization.SpotDisplayer;
-import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.TrackMateModelView.TrackDisplayMode;
 import fiji.plugin.trackmate.visualization.TMSelectionManager;
 import fiji.plugin.trackmate.visualization.TrackMateModelManager;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
@@ -46,7 +46,7 @@ public class HyperStackDisplayerTestDrive {
 		settings.imp = imp;
 		settings.segmenterSettings = reader.getSegmenterSettings();
 		
-		final TrackMateModelInterface model = new TrackMate_();
+		final TrackMateModel model = new TrackMate_();
 		model.setSettings(settings);
 		model.setSpots(spots);
 		model.setSpotSelection(selectedSpots);
@@ -56,7 +56,7 @@ public class HyperStackDisplayerTestDrive {
 		if (null != settings.imp)
 			model.computeFeatures();
 				
-		final SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(SpotDisplayer.DisplayerType.HYPERSTACK_DISPLAYER, model);
+		final TrackMateModelView displayer = TrackMateModelView.instantiateView(TrackMateModelView.ViewType.HYPERSTACK_DISPLAYER, model);
 		displayer.setSpots(spots);
 		displayer.setSpotsToShow(selectedSpots);
 		displayer.setTrackGraph(trackGraph);

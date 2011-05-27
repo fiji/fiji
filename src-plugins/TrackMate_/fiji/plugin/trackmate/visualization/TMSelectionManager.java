@@ -11,7 +11,7 @@ import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 /**
  * A utility class that ensures coherent behavior when playing with spot selection across
- * a {@link SpotDisplayer} showing the spot and track data on the image and a {@link TrackSchemeFrame}
+ * a {@link TrackMateModelView} showing the spot and track data on the image and a {@link TrackSchemeFrame}
  * showing a map of tracks.
  * <p>
  * This class maintains a selection list (actually two; one for spots, one for track edges) and offer

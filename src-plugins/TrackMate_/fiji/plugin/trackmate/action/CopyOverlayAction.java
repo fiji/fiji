@@ -8,10 +8,10 @@ import java.awt.event.ActionListener;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
-import fiji.plugin.trackmate.TrackMateModelInterface;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 import fiji.plugin.trackmate.gui.ImagePlusChooser;
-import fiji.plugin.trackmate.visualization.SpotDisplayer;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class CopyOverlayAction extends AbstractTMAction {
 
@@ -22,7 +22,7 @@ public class CopyOverlayAction extends AbstractTMAction {
 	}	
 	
 	@Override
-	public void execute(final TrackMateModelInterface model) {
+	public void execute(final TrackMateModel model) {
 		final ImagePlusChooser impChooser = new ImagePlusChooser();
 		impChooser.setLocationRelativeTo(null);
 		impChooser.setVisible(true);
@@ -35,14 +35,14 @@ public class CopyOverlayAction extends AbstractTMAction {
 							// Instantiate displayer
 							ImagePlus dest = impChooser.getSelectedImagePlus();
 							impChooser.setVisible(false);
-							SpotDisplayer newDisplayer;
+							TrackMateModelView newDisplayer;
 							String title;
 							if (null == dest) {
-								newDisplayer = SpotDisplayer.instantiateDisplayer(SpotDisplayer.DisplayerType.THREEDVIEWER_DISPLAYER, model);
+								newDisplayer = TrackMateModelView.instantiateView(TrackMateModelView.ViewType.THREEDVIEWER_DISPLAYER, model);
 								title = "3D viewer overlay";
 							} else {
 								model.getSettings().imp = dest; // TODO TODO DANGER DANGER
-								newDisplayer = SpotDisplayer.instantiateDisplayer(SpotDisplayer.DisplayerType.HYPERSTACK_DISPLAYER, model);
+								newDisplayer = TrackMateModelView.instantiateView(TrackMateModelView.ViewType.HYPERSTACK_DISPLAYER, model);
 								title = dest.getShortTitle() + " ctrl";
 							}
 							newDisplayer.setSpots(model.getSpots());
