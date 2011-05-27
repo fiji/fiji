@@ -15,4 +15,6 @@ public interface TMSelectionChangeListener extends EventListener {
 	 * @param event  the event that characterizes the change.
 	 */
 	public void selectionChanged(TMSelectionChangeEvent event);
+
+
 }

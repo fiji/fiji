@@ -214,7 +214,7 @@ public abstract class SpotDisplayer implements SpotCollectionEditListener, TMSel
 	 */
 	
 	/*
-	 * listeners
+	 * Spot collection edit 
 	 */
 	
 	/**
@@ -235,6 +235,11 @@ public abstract class SpotDisplayer implements SpotCollectionEditListener, TMSel
 		return spotCollectionEditListeners.remove(listener);
 	}
 
+	
+	/*
+	 * TMSelectionChangeListener
+	 */
+	
 	/**
 	 * Add a listener to this displayer that will be notified when the spot selection changes.
 	 */
@@ -251,7 +256,7 @@ public abstract class SpotDisplayer implements SpotCollectionEditListener, TMSel
 	public boolean removeTMSelectionChangeListener(TMSelectionChangeListener listener) {
 		return selectionChangeListeners.remove(listener);
 	}
-
+	
 	/*
 	 * tracks
 	 */

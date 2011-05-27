@@ -56,6 +56,7 @@ class InfoPane extends JPanel implements TMSelectionDisplayer {
 	private JTable table;
 	private JScrollPane scrollTable;
 	FeaturePlotSelectionPanel<Feature> featureSelectionPanel;
+	private boolean doHighlightSelection = true;
 
 	/*
 	 * CONSTRUCTOR
@@ -87,6 +88,8 @@ class InfoPane extends JPanel implements TMSelectionDisplayer {
 	@Override
 	@SuppressWarnings("serial")
 	public void highlightSpots(Collection<Spot> spots) {
+		if (!doHighlightSelection)
+			return;
 		if (spots.size() == 0) {
 			scrollTable.setVisible(false);
 			return;

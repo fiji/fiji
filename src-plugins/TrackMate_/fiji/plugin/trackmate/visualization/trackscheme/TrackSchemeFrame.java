@@ -102,6 +102,8 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	mxTrackGraphLayout graphLayout;
 	/** Is linking allowed by default? Can be changed in the toolbar. */
 	boolean defaultLinkingEnabled = false;
+	/** A flag used to prevent double event firing when setting the selection programmatically. */
+	private boolean doFireTMSelectionChangeEvent = true;
 	
 	
 	private static final HashMap<String, Object> BASIC_VERTEX_STYLE = new HashMap<String, Object>();
@@ -154,10 +156,11 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		return selectionChangeListeners.remove(listener);
 	}
 	
+
 	@Override
 	public void highlightSpots(Collection<Spot> spots) {
+		doFireTMSelectionChangeEvent  = false;
 		mxGraphSelectionModel model = graph.getSelectionModel();
-		model.setEventsEnabled(false);
 		// Remove old spots
 		Object[] objects = model.getCells();
 		for (Object obj : objects) {
@@ -171,13 +174,13 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		for (int i = 0; i < newSpots.length; i++) 
 			newSpots[i] = graph.getVertexToCellMap().get(it.next());
 		model.addCells(newSpots);
-		model.setEventsEnabled(true);
+		doFireTMSelectionChangeEvent  = true;
 	}
 
 	@Override
 	public void highlightEdges(Set<DefaultWeightedEdge> edges) {
+		doFireTMSelectionChangeEvent  = false;
 		mxGraphSelectionModel model = graph.getSelectionModel();
-		model.setEventsEnabled(false);
 		// Remove old edges
 		Object[] objects = model.getCells();
 		for (Object obj : objects) {
@@ -191,7 +194,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		for (int i = 0; i < newEdges.length; i++) 
 			newEdges[i] = graph.getEdgeToCellMap().get(it.next());
 		model.addCells(newEdges);
-		model.setEventsEnabled(true);
+		doFireTMSelectionChangeEvent  = true;
 	}
 
 	@Override
@@ -445,7 +448,8 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 						mxGraphSelectionModel model = (mxGraphSelectionModel) sender;
 						Collection<Object> added = (Collection<Object>) evt.getProperty("added");
 						Collection<Object> removed = (Collection<Object>) evt.getProperty("removed");
-						selectionChanged(model, added, removed);
+						if (doFireTMSelectionChangeEvent)
+							userChangedSelection(model, added, removed);
 					}
 				});
 		
@@ -529,7 +533,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	 * @param added  the cells  <b>removed</b> from selection (careful, inverted)
 	 * @param removed  the cells <b>added</b> to selection (careful, inverted)
 	 */
-	private void selectionChanged(mxGraphSelectionModel model, Collection<Object> added, Collection<Object> removed) { // Seems to be inverted
+	private void userChangedSelection(mxGraphSelectionModel model, Collection<Object> added, Collection<Object> removed) { // Seems to be inverted
 		// Forward to info pane
 		spotSelection.clear();
 		Object[] objects = model.getCells();
@@ -573,8 +577,9 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		}
 
 		TMSelectionChangeEvent event = new TMSelectionChangeEvent(this, spots, edges);
-		for(TMSelectionChangeListener listener : selectionChangeListeners) 
+		for(TMSelectionChangeListener listener : selectionChangeListeners) {
 			listener.selectionChanged(event);
+		}
 	}
 
 	private void init() {

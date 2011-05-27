@@ -26,7 +26,7 @@ import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
  */
 public class TMSelectionManager implements TMSelectionChangeListener {
 
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 	private HashSet<Spot> currentSpotSelection = new HashSet<Spot>();
 	private HashSet<DefaultWeightedEdge> currentEdgeSelection = new HashSet<DefaultWeightedEdge>();
 	private ArrayList<TMSelectionDisplayer> selectionDisplayers = new ArrayList<TMSelectionDisplayer>();
