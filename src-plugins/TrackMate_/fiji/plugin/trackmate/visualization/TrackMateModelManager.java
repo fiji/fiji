@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.visualization;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import mpicbg.imglib.image.Image;
@@ -15,9 +17,11 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.FeatureFacade;
 import fiji.plugin.trackmate.util.TMUtils;
 
-public class TrackMateModelManager implements SpotCollectionEditListener {
+public class TrackMateModelManager implements TMModelEditListener {
 
 	private TrackMateModel model;
+	
+	private static final boolean DEBUG = true;
 
 	/*
 	 * CONSTRUCTOR
@@ -31,82 +35,106 @@ public class TrackMateModelManager implements SpotCollectionEditListener {
 	 * LISTENER METHODS
 	 */
 
-	
 	@Override
-	public void collectionChanged(SpotCollectionEditEvent event) {
-		switch (event.getFlag()) {
+	public void modelChanged(TMModelEditEvent event) {
 		
-		case SpotCollectionEditEvent.SPOT_CREATED: {
-			addSpotsTo(event.getSpots(), event.getToFrame());
-			updateFeatures(event.getSpots());
-			break;
+		ArrayList<Spot> spotsToAdd = new ArrayList<Spot>();
+		ArrayList<Integer> addToFrame = new ArrayList<Integer>();
+		ArrayList<Spot> spotsToRemove = new ArrayList<Spot>();
+		ArrayList<Integer> removeFromFrame = new ArrayList<Integer>();
+		ArrayList<Spot> spotsToMove = new ArrayList<Spot>();
+		ArrayList<Integer> moveFrom = new ArrayList<Integer>();
+		ArrayList<Integer> moveTo = new ArrayList<Integer>();
+		ArrayList<Spot> spotsToModify = new ArrayList<Spot>();
+		
+		for(Spot spot : event.getSpots()) {
+			
+			switch (event.getSpotFlag(spot)) {
+
+			case TMModelEditEvent.SPOT_ADDED: 
+				spotsToAdd.add(spot);
+				addToFrame.add(event.getToFrame(spot));
+				break;
+			
+			case TMModelEditEvent.SPOT_DELETED:
+				spotsToRemove.add(spot);
+				removeFromFrame.add(event.getFromFrame(spot));
+				break;
+			
+			case TMModelEditEvent.SPOT_FRAME_CHANGED: 
+				spotsToMove.add(spot);
+				moveFrom.add(event.getFromFrame(spot));
+				moveTo.add(event.getToFrame(spot));
+				break;
+
+			case TMModelEditEvent.SPOT_MODIFIED: 
+				spotsToModify.add(spot);
+				break;	
+			}
 		}
 		
-		case SpotCollectionEditEvent.SPOT_DELETED: {
-			deleteSpotsFrom(event.getSpots(), event.getFromFrame());
-			break;
-		}
-		
-		case SpotCollectionEditEvent.SPOT_FRAME_CHANGED: {
-			moveSpotsFrom(event.getSpots(), event.getFromFrame(), event.getToFrame());
-			updateFeatures(event.getSpots());
-			break;
-		}
-		
-		case SpotCollectionEditEvent.SPOT_MODIFIED: {
-			updateFeatures(event.getSpots());
-			break;
-		}	
-		}
-		
+		addSpotsTo(spotsToAdd, addToFrame);
+		deleteSpotsFrom(spotsToRemove, removeFromFrame);
+		moveSpotsFrom(spotsToMove, moveFrom, moveTo);
+	
+		ArrayList<Spot> toUpdate = new ArrayList<Spot>(spotsToAdd.size() + spotsToMove.size() + spotsToModify.size());
+		toUpdate.addAll(spotsToAdd);
+		toUpdate.addAll(spotsToMove);
+		toUpdate.addAll(spotsToModify);
+		updateFeatures(toUpdate);
 	}
 
 	/*
 	 * UPDATING METHODS
 	 */
 	
-	public void moveSpotsFrom(Spot[] spots, Integer fromFrame, Integer toFrame) {
-		System.out.println("TrackMateModelManager: Moving "+spots.length+" spots from frame "+fromFrame+" to frame "+toFrame);// DEBUG
+	public void moveSpotsFrom(List<Spot> spots, List<Integer> fromFrame, List<Integer> toFrame) {
 		SpotCollection sc = model.getSpots();
 		if (null != sc) 
-			for (Spot spot : spots) { 
-				sc.add(spot, toFrame);
-				sc.remove(spot, fromFrame);
+			for (int i = 0; i < spots.size(); i++) {
+				sc.add(spots.get(i), toFrame.get(i));
+				sc.remove(spots.get(i), fromFrame.get(i));
+				if (DEBUG)
+					System.out.println("[TrackMateModelManager] Moving "+spots.get(i)+" from frame "+fromFrame.get(i)+" to frame "+toFrame.get(i));
 			}
 		SpotCollection ssc = model.getSelectedSpots();
 		if (null != ssc) 
-			for (Spot spot : spots) {
-				ssc.add(spot, toFrame);
-				ssc.remove(spot, fromFrame);
+			for (int i = 0; i < spots.size(); i++) {
+				ssc.add(spots.get(i), toFrame.get(i));
+				ssc.remove(spots.get(i), fromFrame.get(i));
 			}
 	}
 
-	public void addSpotsTo(Spot[] spots, Integer toFrame) {
-		System.out.println("TrackMateModelManager: Adding "+spots.length+" spots to frame "+toFrame);// DEBUG
+	public void addSpotsTo(List<Spot> spots, List<Integer> toFrame) {
 		SpotCollection sc = model.getSpots();
 		if (null != sc) 
-			for (Spot spot : spots) 
-				sc.add(spot, toFrame);
+			for (int i = 0; i < spots.size(); i++) {
+				sc.add(spots.get(i), toFrame.get(i));
+				if (DEBUG)
+					System.out.println("[TrackMateModelManager] Adding "+spots.get(i)+" spots to frame "+ toFrame.get(i));
+			}
 		SpotCollection ssc = model.getSelectedSpots();
 		if (null != ssc) 
-			for (Spot spot : spots) 
-				ssc.add(spot, toFrame);
+			for (int i = 0; i < spots.size(); i++) 
+				ssc.add(spots.get(i), toFrame.get(i));
 		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = model.getTrackGraph();
 		if (null != graph)
 			for (Spot spot : spots) 
 				graph.addVertex(spot);
 	}
-	
-	public void deleteSpotsFrom(Spot[] spots, Integer fromFrame) {
-		System.out.println("TrackMateModelManager: Removing "+spots.length+" spots from frame "+fromFrame);// DEBUG
+
+	public void deleteSpotsFrom(List<Spot> spots, List<Integer> fromFrame) {
 		SpotCollection sc = model.getSpots();
 		if (null != sc) 
-			for (Spot spot : spots) 
-				sc.remove(spot, fromFrame);
+			for (int i = 0; i < spots.size(); i++) {
+				sc.remove(spots.get(i), fromFrame.get(i));
+				if (DEBUG)
+					System.out.println("[TrackMateModelManager] Removing "+spots.get(i)+" spots to frame "+ fromFrame.get(i));
+			}
 		SpotCollection ssc = model.getSelectedSpots();
 		if (null != ssc) 
-			for (Spot spot : spots) 
-				ssc.remove(spot, fromFrame);
+			for (int i = 0; i < spots.size(); i++) 
+				ssc.remove(spots.get(i), fromFrame.get(i));
 		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = model.getTrackGraph();
 		if (null != graph)
 			for (Spot spot : spots) 
@@ -114,8 +142,9 @@ public class TrackMateModelManager implements SpotCollectionEditListener {
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public void updateFeatures(Spot[] spots) {
-		System.out.println("TrackMateModelManager: Updating the features of "+spots.length+" spots");// DEBUG
+	public void updateFeatures(Collection<Spot> spots) {
+		if (DEBUG)
+			System.out.println("TrackMateModelManager: Updating the features of "+spots.size()+" spots");
 		SpotCollection sc = model.getSpots();
 		if (null == sc)
 			return;

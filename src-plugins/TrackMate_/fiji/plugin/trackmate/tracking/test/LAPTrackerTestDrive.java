@@ -25,8 +25,8 @@ import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.tracking.TrackerType;
-import fiji.plugin.trackmate.visualization.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
 public class LAPTrackerTestDrive {
 	

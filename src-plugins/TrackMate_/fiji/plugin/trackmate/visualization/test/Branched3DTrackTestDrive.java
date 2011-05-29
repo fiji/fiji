@@ -12,7 +12,7 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import fiji.plugin.trackmate.visualization.SpotDisplayer3D;
+import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 
 
 public class Branched3DTrackTestDrive {

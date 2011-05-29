@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.visualization;
+package fiji.plugin.trackmate.visualization.threedviewer;
 
 import ij3d.ContentNode;
 

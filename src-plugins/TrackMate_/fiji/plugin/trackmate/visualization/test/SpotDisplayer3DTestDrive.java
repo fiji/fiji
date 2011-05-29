@@ -7,7 +7,7 @@ import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.features.FeatureFacade;
 import fiji.plugin.trackmate.gui.ThresholdGuiPanel;
 import fiji.plugin.trackmate.util.TMUtils;
-import fiji.plugin.trackmate.visualization.SpotDisplayer3D;
+import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 import ij.ImagePlus;
 import ij.process.StackConverter;
 import ij3d.Image3DUniverse;

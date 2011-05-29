@@ -7,7 +7,7 @@ import javax.swing.ImageIcon;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 import fiji.plugin.trackmate.gui.TrackMateFrame;
-import fiji.plugin.trackmate.visualization.SpotDisplayer3D;
+import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 
 public class LinkNew3DViewerAction extends AbstractTMAction {
 

@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.visualization;
+package fiji.plugin.trackmate.visualization.hyperstack;
 
 import ij.ImagePlus;
 
@@ -21,6 +21,7 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView.TrackDisplayMode;
 import fiji.util.gui.OverlayedImageCanvas.Overlay;
 

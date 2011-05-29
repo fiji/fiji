@@ -1,6 +1,5 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -12,7 +11,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 import javax.swing.ImageIcon;
@@ -22,7 +20,6 @@ import javax.swing.JToolBar;
 
 import org.jgrapht.Graph;
 import org.jgrapht.event.GraphEdgeChangeEvent;
-import org.jgrapht.event.GraphListener;
 import org.jgrapht.event.GraphVertexChangeEvent;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.ListenableUndirectedWeightedGraph;
@@ -45,14 +42,14 @@ import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.visualization.SpotCollectionEditEvent;
-import fiji.plugin.trackmate.visualization.SpotCollectionEditListener;
-import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.TMModelEditEvent;
+import fiji.plugin.trackmate.visualization.TMModelEditListener;
 import fiji.plugin.trackmate.visualization.TMSelectionChangeEvent;
 import fiji.plugin.trackmate.visualization.TMSelectionChangeListener;
 import fiji.plugin.trackmate.visualization.TMSelectionDisplayer;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
-public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListener, TMSelectionDisplayer {
+public class TrackSchemeFrame extends JFrame implements TMModelEditListener, TMSelectionDisplayer {
 
 	{
 		//Set Look & Feel
@@ -90,8 +87,6 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	Settings settings;
 	JGraphXAdapter<Spot, DefaultWeightedEdge> graph;
 
-	private ArrayList<GraphListener<Spot, DefaultWeightedEdge>> graphListeners = new ArrayList<GraphListener<Spot,DefaultWeightedEdge>>();
-	private ArrayList<TMSelectionChangeListener> selectionChangeListeners = new ArrayList<TMSelectionChangeListener>();
 	/** The spots currently selected. */
 	private HashSet<Spot> spotSelection = new HashSet<Spot>();
 	/** The side pane in which spot selection info will be displayed.	 */
@@ -104,8 +99,12 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	boolean defaultLinkingEnabled = false;
 	/** A flag used to prevent double event firing when setting the selection programmatically. */
 	private boolean doFireTMSelectionChangeEvent = true;
-	
-	
+
+	private ArrayList<TMModelEditListener> modelEditListeners = new ArrayList<TMModelEditListener>();
+	private ArrayList<TMSelectionChangeListener> selectionChangeListeners = new ArrayList<TMSelectionChangeListener>();
+	private TrackMateModel model;
+
+
 	private static final HashMap<String, Object> BASIC_VERTEX_STYLE = new HashMap<String, Object>();
 	private static final HashMap<String, Object> BASIC_EDGE_STYLE = new HashMap<String, Object>();
 	static {
@@ -118,7 +117,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_ROUNDED, true);
 		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_PERIMETER, mxPerimeter.RectanglePerimeter);
 		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_STROKECOLOR, "#FF00FF");
-		
+
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_CONNECTOR);
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_ALIGN, mxConstants.ALIGN_CENTER);
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_VERTICAL_ALIGN, mxConstants.ALIGN_MIDDLE);
@@ -133,11 +132,12 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	 * CONSTRUCTORS
 	 */
 
-	public TrackSchemeFrame(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph, final Settings settings) {
-		this.trackGraph = trackGraph;
+	public TrackSchemeFrame(TrackMateModel model) {
+		this.model = model;
+		this.trackGraph = model.getTrackGraph();
 		this.lGraph = new ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge>(trackGraph);
 		this.graph = createGraph();
-		this.settings = settings;
+		this.settings = model.getSettings();
 		this.graphLayout = new mxTrackGraphLayout(lGraph, graph, settings.dx);
 
 		init();
@@ -147,15 +147,19 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	/*
 	 * PUBLIC METHODS
 	 */
-	
+
+	/*
+	 * Selection management
+	 */
+
 	public void addTMSelectionChangeListener(TMSelectionChangeListener listener) {
 		selectionChangeListeners.add(listener);
 	}
-	
+
 	public boolean removeTMSelectionChangeListener(TMSelectionChangeListener listener) {
 		return selectionChangeListeners.remove(listener);
 	}
-	
+
 
 	@Override
 	public void highlightSpots(Collection<Spot> spots) {
@@ -202,6 +206,18 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		centerViewOn(graph.getVertexToCellMap().get(spot));
 	}
 
+	/*
+	 * TM model editing management
+	 */
+
+	public void addTMModelEditListener(TMModelEditListener listener) {
+		modelEditListeners.add(listener);
+	}
+
+	public boolean removeTMModelEditListener(TMModelEditListener listener) {
+		return modelEditListeners.remove(listener);
+	}
+
 	/**
 	 * Used to catch spot creation events that occurred elsewhere, for instance by manual editing in 
 	 * the {@link TrackMateModelView}. 
@@ -211,22 +227,26 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	 * on the graph here.
 	 */
 	@Override
-	public void collectionChanged(SpotCollectionEditEvent event) {
+	public void modelChanged(final TMModelEditEvent event) {
 
-		if (event.getFlag() == SpotCollectionEditEvent.SPOT_CREATED) {
-			
+		try {
+			graph.getModel().beginUpdate();
+			mxCell cellAdded = null;
+			ArrayList<mxCell> cellsToRemove = new ArrayList<mxCell>();
+
 			int targetColumn = 0;
 			for (int i = 0; i < graphComponent.getColumnWidths().length; i++)
 				targetColumn += graphComponent.getColumnWidths()[i];
 
-			try {
-				graph.getModel().beginUpdate();
-				mxCell cell = null;
-				for (Spot spot : event.getSpots()) {
+
+			for (Spot spot : event.getSpots() ) {
+
+				if (event.getSpotFlag(spot) == TMModelEditEvent.SPOT_ADDED) {
+
 					// Instantiate JGraphX cell
-					cell = new mxCell(spot.toString());
-					cell.setId(null);
-					cell.setVertex(true);
+					cellAdded = new mxCell(spot.toString());
+					cellAdded.setId(null);
+					cellAdded.setVertex(true);
 					// Position it
 					float instant = spot.getFeature(Feature.POSITION_T);
 					double x = (targetColumn-2) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
@@ -234,67 +254,38 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 					int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Feature.RADIUS) / settings.dx));
 					height = Math.max(height, 12);
 					mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
-					cell.setGeometry(geometry);
+					cellAdded.setGeometry(geometry);
 					// Set its style
-					graph.getModel().setStyle(cell, mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+spot.getImageString());
+					graph.getModel().setStyle(cellAdded, mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+spot.getImageString());
 					// Finally add it to the mxGraph
-					graph.addCell(cell, graph.getDefaultParent());
+					graph.addCell(cellAdded, graph.getDefaultParent());
 					// Echo the new cell to the maps
-					graph.getVertexToCellMap().put(spot, cell);
-					graph.getCellToVertexMap().put(cell, spot);
-				}
-				centerViewOn(cell);
-			} finally {
-				graph.getModel().endUpdate();
-			}
+					graph.getVertexToCellMap().put(spot, cellAdded);
+					graph.getCellToVertexMap().put(cellAdded, spot);
+					targetColumn++;
 
-		} else if (event.getFlag() == SpotCollectionEditEvent.SPOT_MODIFIED) {
-			
-			mxCell cell = null;
-			String style;
-			try {
-				graph.getModel().beginUpdate();
-				for (Spot spot : event.getSpots()) {
-					cell = graph.getVertexToCellMap().get(spot);
-					style = cell.getStyle();
+				} else if (event.getSpotFlag(spot) == TMModelEditEvent.SPOT_MODIFIED) {
+
+					mxCell cell = graph.getVertexToCellMap().get(spot);
+					String style = cell.getStyle();
 					style = mxUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64,"+spot.getImageString());
 					graph.getModel().setStyle(cell, style);
 					int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Feature.RADIUS) / settings.dx));
 					graph.getModel().getGeometry(cell).setHeight(height);
-				}
-			} finally {
-				graph.getModel().endUpdate();
-			}
-			
-		} else if (event.getFlag() == SpotCollectionEditEvent.SPOT_DELETED) {
-		
-			try {
-				graph.getModel().beginUpdate();
-				mxCell[] cells = new mxCell[event.getSpots().length];
-				Spot[] spots = event.getSpots();
-				for(int i = 0; i < spots.length; i++) {
-					Spot spot = spots[i];
+
+				}  else if (event.getSpotFlag(spot) == TMModelEditEvent.SPOT_DELETED) {
+
 					mxCell cell = graph.getVertexToCellMap().get(spot);
-					cells[i] = cell;
+					cellsToRemove .add(cell);
 				}
-				graph.removeCells(cells, true);
-			} finally {
-				graph.getModel().endUpdate();
+
 			}
+
+			graph.removeCells(cellsToRemove.toArray(), true);
+
+		} finally {
+			graph.getModel().endUpdate();
 		}
-
-	}
-
-	public void addGraphListener(GraphListener<Spot, DefaultWeightedEdge> listener) {
-		graphListeners.add(listener);
-	}
-
-	public boolean removeGraphListener(GraphListener<Spot, DefaultWeightedEdge> listener) {
-		return graphListeners.remove(listener);
-	}
-
-	public List<GraphListener<Spot, DefaultWeightedEdge>> getGraphListeners() {
-		return graphListeners;
 	}
 
 	/**
@@ -333,7 +324,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 			mxCell cell = (mxCell) obj;
 			if (cell.isVertex()) {
 				Spot spot = graph.getCellToVertexMap().get(cell);
-				
+
 				if (spot == null) {
 					// We might have a parent cell, that holds many vertices in it
 					// Retrieve them and add them if they are not already.
@@ -344,7 +335,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 						if (null != childSpot)
 							spots.add(childSpot);
 					}
-					
+
 				} else 
 					spots.add(spot);
 			}
@@ -367,7 +358,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 	 */
 	protected JGraphXAdapter<Spot, DefaultWeightedEdge> createGraph() {
 		final JGraphXAdapter<Spot, DefaultWeightedEdge> graph = new JGraphXAdapter<Spot, DefaultWeightedEdge>(lGraph) {
-			
+
 			/**
 			 * Overridden method so that when a label is changed, we change the target spot's name.
 			 */
@@ -390,7 +381,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 				}
 			}
 		};
-		
+
 		graph.setAllowLoops(false);
 		graph.setAllowDanglingEdges(false);
 		graph.setCellsCloneable(false);
@@ -401,8 +392,8 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		graph.setDropEnabled(false);
 		graph.getStylesheet().setDefaultEdgeStyle(BASIC_EDGE_STYLE);
 		graph.getStylesheet().setDefaultVertexStyle(BASIC_VERTEX_STYLE);
-		
-		
+
+
 		// Set spot image to cell style
 		try {
 			graph.getModel().beginUpdate();
@@ -413,7 +404,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		} finally {
 			graph.getModel().endUpdate();
 		}
-		
+
 		// Set up listeners
 
 		// Cells removed from JGraphX
@@ -452,7 +443,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 							userChangedSelection(model, added, removed);
 					}
 				});
-		
+
 		// Return graph
 		return graph;
 	}
@@ -484,7 +475,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 					displayPopupMenu(e.getPoint(), gc.getCellAt(e.getX(), e.getY(), false));
 			}
 		});
-		
+
 		return gc;
 	}
 
@@ -503,29 +494,29 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 		menu.show(graphComponent.getViewport().getView(), (int) point.getX(), (int) point.getY());
 	}
 
-	
+
 	/*
 	 * PRIVATE METHODS
 	 */
-	
+
 	private void fireEdgeChangeEvent(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> event) {
-		for(GraphListener<Spot, DefaultWeightedEdge> listener : graphListeners) {
-			if (event.getType() == GraphEdgeChangeEvent.EDGE_ADDED)
-				listener.edgeAdded(event);
-			else if (event.getType() == GraphEdgeChangeEvent.EDGE_REMOVED)
-				listener.edgeRemoved(event);
-		}
+		//		for(GraphListener<Spot, DefaultWeightedEdge> listener : graphListeners) {
+		//			if (event.getType() == GraphEdgeChangeEvent.EDGE_ADDED)
+		//				listener.edgeAdded(event);
+		//			else if (event.getType() == GraphEdgeChangeEvent.EDGE_REMOVED)
+		//				listener.edgeRemoved(event);
+		//		}
 	}
 
 	private void fireVertexChangeEvent(GraphVertexChangeEvent<Spot> event) {
-		for(GraphListener<Spot, DefaultWeightedEdge> listener : graphListeners) {
-			if (event.getType() == GraphVertexChangeEvent.VERTEX_ADDED)
-				listener.vertexAdded(event);
-			else if (event.getType() == GraphVertexChangeEvent.VERTEX_REMOVED)
-				listener.vertexRemoved(event);
-		}
+		//		for(GraphListener<Spot, DefaultWeightedEdge> listener : graphListeners) {
+		//			if (event.getType() == GraphVertexChangeEvent.VERTEX_ADDED)
+		//				listener.vertexAdded(event);
+		//			else if (event.getType() == GraphVertexChangeEvent.VERTEX_REMOVED)
+		//				listener.vertexRemoved(event);
+		//		}
 	}
-	
+
 	/**
 	 * Called when the user makes a selection change in the graph. Used to forward this event 
 	 * to the {@link InfoPane} and to other {@link TMSelectionChangeListener}s.
@@ -543,12 +534,12 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 				spotSelection.add(graph.getCellToVertexMap().get(cell));
 		}
 		infoPane.highlightSpots(spotSelection);
-		
+
 		// Forward to other listeners
 		HashMap<Spot, Boolean> spots = new HashMap<Spot, Boolean>();
 		HashMap<DefaultWeightedEdge, Boolean> edges = new HashMap<DefaultWeightedEdge, Boolean>();
-		
-		
+
+
 		if (null != removed) {
 			spots = new HashMap<Spot, Boolean>();
 			for(Object obj : removed) {
@@ -562,7 +553,7 @@ public class TrackSchemeFrame extends JFrame implements SpotCollectionEditListen
 				}
 			}
 		}
-		
+
 		if (null != added) {
 			for(Object obj : added) {
 				mxCell cell = (mxCell) obj;

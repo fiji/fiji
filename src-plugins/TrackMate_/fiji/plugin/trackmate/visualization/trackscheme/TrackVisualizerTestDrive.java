@@ -9,9 +9,6 @@ import java.util.Set;
 
 import org.jdom.JDOMException;
 import org.jgrapht.alg.ConnectivityInspector;
-import org.jgrapht.event.GraphEdgeChangeEvent;
-import org.jgrapht.event.GraphListener;
-import org.jgrapht.event.GraphVertexChangeEvent;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
@@ -21,9 +18,9 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.io.TmXmlReader;
+import fiji.plugin.trackmate.visualization.TMSelectionManager;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView.ViewType;
-import fiji.plugin.trackmate.visualization.TMSelectionManager;
 import fiji.plugin.trackmate.visualization.test.Branched3DTrackTestDrive;
 
 public class TrackVisualizerTestDrive {
@@ -73,7 +70,7 @@ public class TrackVisualizerTestDrive {
 		displayer.refresh();
 		
 		// Display Track scheme
-		final TrackSchemeFrame frame = new TrackSchemeFrame(tracks, settings);
+		final TrackSchemeFrame frame = new TrackSchemeFrame(model);
 		frame.setVisible(true);
 		
 		// Listeners

@@ -4,12 +4,8 @@ import ij.ImagePlus;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import org.jdom.JDOMException;
-import org.jgrapht.event.GraphEdgeChangeEvent;
-import org.jgrapht.event.GraphListener;
-import org.jgrapht.event.GraphVertexChangeEvent;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
@@ -19,10 +15,10 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import fiji.plugin.trackmate.visualization.TrackMateModelView;
-import fiji.plugin.trackmate.visualization.TrackMateModelView.TrackDisplayMode;
 import fiji.plugin.trackmate.visualization.TMSelectionManager;
 import fiji.plugin.trackmate.visualization.TrackMateModelManager;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.TrackMateModelView.TrackDisplayMode;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 
@@ -64,45 +60,45 @@ public class HyperStackDisplayerTestDrive {
 		displayer.setSpotNameVisible(true);
 		
 		
-		final TrackSchemeFrame trackScheme = new TrackSchemeFrame(trackGraph, settings);
+		final TrackSchemeFrame trackScheme = new TrackSchemeFrame(model);
 		trackScheme.setVisible(true);
 		
 		/**
 		 * This is used to echo the modifications made by the user in the track scheme.
 		 */
-		trackScheme.addGraphListener(new GraphListener<Spot, DefaultWeightedEdge>() {
-
-			@Override
-			public void vertexRemoved(GraphVertexChangeEvent<Spot> e) {
-				Spot removedSpot = e.getVertex();
-				SpotCollection spots = model.getSelectedSpots();
-				for(List<Spot> st : spots.values())
-					if (st.remove(removedSpot))
-						break;
-				model.setSpotSelection(spots);
-				model.setTrackGraph(trackScheme.getTrackModel());
-				displayer.setSpotsToShow(spots);
-				displayer.setTrackGraph(trackScheme.getTrackModel());
-				displayer.refresh();
-			}
-
-			@Override
-			public void vertexAdded(GraphVertexChangeEvent<Spot> e) {}
-			
-			@Override
-			public void edgeRemoved(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
-				model.setTrackGraph(trackScheme.getTrackModel());
-				displayer.setTrackGraph(trackScheme.getTrackModel());
-				displayer.refresh();
-			}
-
-			@Override
-			public void edgeAdded(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
-				displayer.setTrackGraph(trackScheme.getTrackModel());
-				displayer.refresh();
-			}
-
-		});
+//		trackScheme.addGraphListener(new GraphListener<Spot, DefaultWeightedEdge>() {
+//
+//			@Override
+//			public void vertexRemoved(GraphVertexChangeEvent<Spot> e) {
+//				Spot removedSpot = e.getVertex();
+//				SpotCollection spots = model.getSelectedSpots();
+//				for(List<Spot> st : spots.values())
+//					if (st.remove(removedSpot))
+//						break;
+//				model.setSpotSelection(spots);
+//				model.setTrackGraph(trackScheme.getTrackModel());
+//				displayer.setSpotsToShow(spots);
+//				displayer.setTrackGraph(trackScheme.getTrackModel());
+//				displayer.refresh();
+//			}
+//
+//			@Override
+//			public void vertexAdded(GraphVertexChangeEvent<Spot> e) {}
+//			
+//			@Override
+//			public void edgeRemoved(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
+//				model.setTrackGraph(trackScheme.getTrackModel());
+//				displayer.setTrackGraph(trackScheme.getTrackModel());
+//				displayer.refresh();
+//			}
+//
+//			@Override
+//			public void edgeAdded(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
+//				displayer.setTrackGraph(trackScheme.getTrackModel());
+//				displayer.refresh();
+//			}
+//
+//		});
 
 		
 		TrackMateModelManager manager = new TrackMateModelManager(model);

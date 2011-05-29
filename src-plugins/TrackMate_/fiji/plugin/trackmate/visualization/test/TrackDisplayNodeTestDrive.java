@@ -24,8 +24,8 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.visualization.TrackMateModelView.TrackDisplayMode;
-import fiji.plugin.trackmate.visualization.SpotGroupNode;
-import fiji.plugin.trackmate.visualization.TrackDisplayNode;
+import fiji.plugin.trackmate.visualization.threedviewer.SpotGroupNode;
+import fiji.plugin.trackmate.visualization.threedviewer.TrackDisplayNode;
 
 public class TrackDisplayNodeTestDrive {
 

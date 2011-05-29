@@ -1,10 +1,14 @@
-package fiji.plugin.trackmate.visualization;
+package fiji.plugin.trackmate.visualization.hyperstack;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.visualization.TMModelEditEvent;
+import fiji.plugin.trackmate.visualization.TMSelectionChangeEvent;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.TrackMateModelView.TrackDisplayMode;
 import fiji.util.gui.OverlayedImageCanvas;
 import ij.ImagePlus;
 import ij.gui.NewImage;
@@ -65,6 +69,12 @@ public class HyperStackDisplayer extends TrackMateModelView  {
 	 * PUBLIC METHODS
 	 */
 
+
+	@Override
+	public void modelChanged(TMModelEditEvent event) {
+		// TODO Auto-generated method stub
+		
+	}
 	
 	@Override
 	protected void fireTMSelectionChange(TMSelectionChangeEvent event) {
@@ -74,7 +84,7 @@ public class HyperStackDisplayer extends TrackMateModelView  {
 	}
 	
 	
-	public void collectionChanged(SpotCollectionEditEvent event) {
+	public void collectionChanged(TMModelEditEvent event) {
 		event.setSource(this);
 		fireSpotCollectionEdit(event);
 	}
@@ -230,5 +240,6 @@ public class HyperStackDisplayer extends TrackMateModelView  {
 		spotOverlay.setTarget(spotsToShow);
 		spotOverlay.setTargetColor(spotColor);
 	}
+
 
 }

@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.visualization;
+package fiji.plugin.trackmate.visualization.hyperstack;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -16,6 +16,8 @@ import java.util.HashMap;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.visualization.TMModelEditEvent;
+import fiji.plugin.trackmate.visualization.TMModelEditListener;
 import fiji.tool.AbstractTool;
 
 
@@ -46,7 +48,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	private static SpotEditTool instance;
 	private HashMap<ImagePlus, Spot> editedSpots = new HashMap<ImagePlus, Spot>();
 	private HashMap<ImagePlus, HyperStackDisplayer> displayers = new HashMap<ImagePlus, HyperStackDisplayer>();
-	private ArrayList<SpotCollectionEditListener> spotCollectionEditListeners = new ArrayList<SpotCollectionEditListener>();
+	private ArrayList<TMModelEditListener> spotCollectionEditListeners = new ArrayList<TMModelEditListener>();
 	
 	/*
 	 * CONSTRUCTOR
@@ -90,7 +92,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	 * Add a listener to this displayer that will be notified when the spot collection is being changed 
 	 * by this tool.
 	 */
-	public void addSpotCollectionEditListener(SpotCollectionEditListener listener) {
+	public void addSpotCollectionEditListener(TMModelEditListener listener) {
 		this.spotCollectionEditListeners.add(listener);
 	}
 	
@@ -100,7 +102,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	 * @return  true if the listener was found in the list maintained by 
 	 * this displayer and successfully removed.
 	 */
-	public boolean removeSpotCollectionEditListener(SpotCollectionEditListener listener) {
+	public boolean removeSpotCollectionEditListener(TMModelEditListener listener) {
 		return spotCollectionEditListeners.remove(listener);
 	}
 
@@ -202,13 +204,13 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				editedSpot.putFeature(Feature.POSITION_T, frame * displayer.settings.dt);
 				if (initFrame == null) {
 					// Means that the spot was created 
-					fireSpotCollectionEdit(new Spot[] { editedSpot }, SpotCollectionEditEvent.SPOT_CREATED, null, frame);
+					fireSpotCollectionEdit(editedSpot, TMModelEditEvent.SPOT_ADDED, null, frame);
 				} else if (initFrame != frame) {
 					// Move it to the new frame
-					fireSpotCollectionEdit(new Spot[] { editedSpot }, SpotCollectionEditEvent.SPOT_FRAME_CHANGED, initFrame, frame);
+					fireSpotCollectionEdit(editedSpot, TMModelEditEvent.SPOT_FRAME_CHANGED, initFrame, frame);
 				} else {
-					// The spots pre-existed and was not moved accross frames
-					fireSpotCollectionEdit(new Spot[] { editedSpot }, SpotCollectionEditEvent.SPOT_MODIFIED, null, null);
+					// The spots pre-existed and was not moved across frames
+					fireSpotCollectionEdit(editedSpot, TMModelEditEvent.SPOT_MODIFIED, null, null);
 				}
 
 				// Forget edited spot
@@ -305,7 +307,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		
 		if (e.getKeyCode() == KeyEvent.VK_DELETE) {
 			Integer initFrame = displayer.spotsToShow.getFrame(editedSpot);
-			fireSpotCollectionEdit(new Spot[] { editedSpot }, SpotCollectionEditEvent.SPOT_DELETED, initFrame, null);
+			fireSpotCollectionEdit(editedSpot, TMModelEditEvent.SPOT_DELETED, initFrame, null);
 			editedSpot = null;
 			displayer.spotOverlay.setEditedSpot(null);
 			editedSpots.put(imp, null);
@@ -322,10 +324,19 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	 * PRIVATE METHODS
 	 */
 	
-	private void fireSpotCollectionEdit(Spot[] spots, int flag, Integer fromFrame, Integer toFrame) {
-		SpotCollectionEditEvent event = new SpotCollectionEditEvent(this, spots, flag, fromFrame, toFrame);
-		for (SpotCollectionEditListener listener : spotCollectionEditListeners) {
-			listener.collectionChanged(event);
+	private void fireSpotCollectionEdit(Spot spot, int flag, Integer fromFrame, Integer toFrame) {
+		ArrayList<Spot> spots = new ArrayList<Spot>(1);
+		spots.add(spot);
+		ArrayList<Integer> flags = new ArrayList<Integer>(1);
+		flags.add(flag);
+		ArrayList<Integer> fromFrames = new ArrayList<Integer>(1);
+		fromFrames.add(fromFrame);
+		ArrayList<Integer> toFrames = new ArrayList<Integer>(1);
+		toFrames.add(toFrame);
+		
+		TMModelEditEvent event = new TMModelEditEvent(this, spots, flags, fromFrames, toFrames);
+		for (TMModelEditListener listener : spotCollectionEditListeners) {
+			listener.modelChanged(event);
 		}
 	}
 	

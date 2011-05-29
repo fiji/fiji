@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.visualization;
+package fiji.plugin.trackmate.visualization.hyperstack;
 
 import ij.ImagePlus;
 import ij.gui.ImageCanvas;
@@ -20,6 +20,7 @@ import java.util.Map;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.util.gui.OverlayedImageCanvas.Overlay;
 
 public class SpotOverlay implements Overlay {

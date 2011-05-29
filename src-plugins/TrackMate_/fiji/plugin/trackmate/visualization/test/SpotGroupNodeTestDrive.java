@@ -1,6 +1,6 @@
 package fiji.plugin.trackmate.visualization.test;
 
-import fiji.plugin.trackmate.visualization.SpotGroupNode;
+import fiji.plugin.trackmate.visualization.threedviewer.SpotGroupNode;
 import ij3d.Content;
 import ij3d.ContentInstant;
 import ij3d.Image3DUniverse;

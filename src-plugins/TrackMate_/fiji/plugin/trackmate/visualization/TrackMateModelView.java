@@ -26,6 +26,8 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.util.TMUtils;
+import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
+import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 
 /**
  * The mother abstract class for spot displayers, that can overlay segmented spots and tracks on top
@@ -36,7 +38,7 @@ import fiji.plugin.trackmate.util.TMUtils;
  * <p>
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Jan 2011
  */
-public abstract class TrackMateModelView implements SpotCollectionEditListener, TMSelectionDisplayer {
+public abstract class TrackMateModelView implements TMModelEditListener, TMSelectionDisplayer {
 
 	/*
 	 * ENUMS
@@ -118,7 +120,7 @@ public abstract class TrackMateModelView implements SpotCollectionEditListener, 
 	/** The default color. */
 	public static final Color DEFAULT_COLOR = new Color(1f, 0, 1f);
 	/** The color used when highlighting spots. */
-	static final Color HIGHLIGHT_COLOR = new Color(0, 1f, 0);
+	public static final Color HIGHLIGHT_COLOR = new Color(0, 1f, 0);
 	
 	/** The ratio setting the actual display size of the spots, with respect to the physical radius. */
 	protected float radiusRatio = 1.0f;
@@ -149,7 +151,7 @@ public abstract class TrackMateModelView implements SpotCollectionEditListener, 
 	protected ArrayList<TMSelectionChangeListener> selectionChangeListeners = new ArrayList<TMSelectionChangeListener>();
 	
 	/** The list of listener to warn for spot selection change. */
-	private  ArrayList<SpotCollectionEditListener> spotCollectionEditListeners = new ArrayList<SpotCollectionEditListener>();
+	private  ArrayList<TMModelEditListener> spotCollectionEditListeners = new ArrayList<TMModelEditListener>();
 	/** We need to maintain our own selection. */
 	private ArrayList<Spot> spotSelection = new ArrayList<Spot>();
 
@@ -213,7 +215,7 @@ public abstract class TrackMateModelView implements SpotCollectionEditListener, 
 	 * Add a listener to this displayer that will be notified when the spot collection is being changed 
 	 * by this displayer.
 	 */
-	public void addSpotCollectionEditListener(SpotCollectionEditListener listener) {
+	public void addSpotCollectionEditListener(TMModelEditListener listener) {
 		this.spotCollectionEditListeners .add(listener);
 	}
 	
@@ -223,7 +225,7 @@ public abstract class TrackMateModelView implements SpotCollectionEditListener, 
 	 * @return  true if the listener was found in the list maintained by 
 	 * this displayer and successfully removed.
 	 */
-	public boolean removeSpotCollectionEditListener(SpotCollectionEditListener listener) {
+	public boolean removeSpotCollectionEditListener(TMModelEditListener listener) {
 		return spotCollectionEditListeners.remove(listener);
 	}
 
@@ -414,11 +416,11 @@ public abstract class TrackMateModelView implements SpotCollectionEditListener, 
 	}
 
 	/**
-	 * Simply forward the {@link SpotCollectionEditEvent} to the listeners of this class.
+	 * Simply forward the {@link TMModelEditEvent} to the listeners of this class.
 	 */
-	protected void fireSpotCollectionEdit(SpotCollectionEditEvent event) {
-		for (SpotCollectionEditListener listener : spotCollectionEditListeners) {
-			listener.collectionChanged(event);
+	protected void fireSpotCollectionEdit(TMModelEditEvent event) {
+		for (TMModelEditListener listener : spotCollectionEditListeners) {
+			listener.modelChanged(event);
 		}
 	}
 	

@@ -19,8 +19,8 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.test.LAPTrackerTestDrive;
-import fiji.plugin.trackmate.visualization.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
 public class TmXmlReaderTestDrive {
 

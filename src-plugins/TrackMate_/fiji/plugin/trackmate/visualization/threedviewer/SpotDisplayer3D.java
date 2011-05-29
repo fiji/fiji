@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.visualization;
+package fiji.plugin.trackmate.visualization.threedviewer;
 
 import ij3d.Content;
 import ij3d.ContentInstant;
@@ -22,6 +22,9 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.visualization.TMModelEditEvent;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.TrackMateModelView.TrackDisplayMode;
 
 public class SpotDisplayer3D extends TrackMateModelView {
 	
@@ -52,9 +55,11 @@ public class SpotDisplayer3D extends TrackMateModelView {
 	 */
 
 
+
 	@Override
-	public void collectionChanged(SpotCollectionEditEvent event) {
-		// TODO 
+	public void modelChanged(TMModelEditEvent event) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
