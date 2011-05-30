@@ -118,7 +118,26 @@ SUBMODULE_TARGETS=\
 	jars/mpicbg.jar \
 	jars/commons-math.jar \
 	jars/javassist.jar \
-	jars/imglib-scripting.jar
+	jars/jsch-0.1.44.jar \
+	jars/imglib-scripting.jar \
+	jars/ij-core-plugins.jar \
+	jars/ij-core-tools.jar \
+	jars/ij-core.jar \
+	jars/ij-data.jar \
+	jars/ij-display.jar \
+	jars/ij-event.jar \
+	jars/ij-legacy.jar \
+	jars/ij-module.jar \
+	jars/ij-object.jar \
+	jars/ij-platform.jar \
+	jars/ij-plugin.jar \
+	jars/ij-tool.jar \
+	jars/ij-ui.jar \
+	jars/ij-awt-common.jar \
+	jars/ij-imagej.jar \
+	jars/ij-platform-macosx.jar \
+	jars/ij-plugin-swing.jar \
+	jars/ij-ui-swing.jar \
 
 PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \
@@ -259,7 +278,7 @@ CLASSPATH(jars/imglib.jar)=jars/mpicbg.jar
 jars/imglib.jar <- modules/imglib/
 CLASSPATH(jars/imglib-ij.jar)=jars/ij.jar:jars/imglib.jar:jars/mpicbg.jar
 jars/imglib-ij.jar <- modules/imglib/
-CLASSPATH(jars/imglib-io.jar)=plugins/loci_tools.jar:jars/imglib.jar:jars/imglib-ij.jar
+CLASSPATH(jars/imglib-io.jar)=plugins/loci_tools.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/ij.jar
 jars/imglib-io.jar <- modules/imglib/
 CLASSPATH(jars/imglib-algorithms.jar)=jars/Jama-1.0.2.jar:jars/imglib.jar:jars/edu_mines_jtk.jar:jars/mpicbg.jar
 jars/imglib-algorithms.jar <- modules/imglib/
@@ -298,6 +317,25 @@ jars/weka.jar <- fiji jars/Fiji.jar modules/weka/
 jars/jython.jar <- fiji modules/jython/
 jars/commons-math.jar <- fiji modules/commons-math/
 jars/javassist.jar <- modules/javassist/
+jars/jsch-0.1.44.jar <- modules/jsch/
+jars/ij-core-plugins.jar <- modules/imagej2/
+jars/ij-core-tools.jar <- modules/imagej2/
+jars/ij-core.jar <- modules/imagej2/
+jars/ij-data.jar <- modules/imagej2/
+jars/ij-display.jar <- modules/imagej2/
+jars/ij-event.jar <- modules/imagej2/
+jars/ij-legacy.jar <- modules/imagej2/
+jars/ij-module.jar <- modules/imagej2/
+jars/ij-object.jar <- modules/imagej2/
+jars/ij-platform.jar <- modules/imagej2/
+jars/ij-plugin.jar <- modules/imagej2/
+jars/ij-tool.jar <- modules/imagej2/
+jars/ij-ui.jar <- modules/imagej2/
+jars/ij-awt-common.jar <- modules/imagej2/
+jars/ij-imagej.jar <- modules/imagej2/
+jars/ij-platform-macosx.jar <- modules/imagej2/
+jars/ij-plugin-swing.jar <- modules/imagej2/
+jars/ij-ui-swing.jar <- modules/imagej2/
 
 # From source
 libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama-1.0.2.jar \
@@ -306,6 +344,8 @@ libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama-1.0.2.jar \
 	plugins/FFMPEG_IO.jar \
 
 plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Screen/**/*
+
+plugins/Trainable_Segmentation.jar <- src-plugins/Trainable_Segmentation/**/*java src-plugins/Trainable_Segmentation/trainableSegmentation/images/*png src-plugins/Trainable_Segmentation/*
 
 mainClass(jars/Fiji.jar)=fiji.Main
 src-plugins/Fiji/icon.png[cp $PRE $TARGET] <- images/icon.png
@@ -343,13 +383,13 @@ CLASSPATH(plugins/LSM_Toolbox.jar)=jars/ij.jar:plugins/LSM_Reader.jar
 MAINCLASS(plugins/LSM_Toolbox.jar)=org.imagearchive.lsm.toolbox.gui.AboutDialog
 MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
 CLASSPATH(plugins/Stitching_.jar)=jars/ij.jar:plugins/loci_tools.jar:jars/fiji-lib.jar:jars/imglib.jar:jars/edu_mines_jtk.jar
-CLASSPATH(plugins/Fiji_Plugins.jar)=jars/ij.jar:jars/jsch-0.1.37.jar:jars/fiji-lib.jar:jars/VIB-lib.jar
+CLASSPATH(plugins/Fiji_Plugins.jar)=jars/ij.jar:jars/jsch-0.1.44.jar:jars/fiji-lib.jar:jars/VIB-lib.jar
 MAINCLASS(plugins/Fiji_Updater.jar)=fiji.updater.Main
-CLASSPATH(plugins/Fiji_Updater.jar)=jars/ij.jar:jars/jsch-0.1.37.jar
+CLASSPATH(plugins/Fiji_Updater.jar)=jars/ij.jar:jars/jsch-0.1.44.jar
 CLASSPATH(plugins/IO_.jar)=jars/ij.jar:jars/batik.jar:jars/jpedalSTD.jar:jars/itext-1.3.jar:jars/jzlib-1.0.7.jar
 CLASSPATH(plugins/Sync_Win.jar)=jars/ij.jar:plugins/Image_5D.jar
 CLASSPATH(plugins/Fiji_Developer.jar)=jars/ij.jar:plugins/Script_Editor.jar:plugins/Fiji_Plugins.jar:jars/rsyntaxtextarea.jar:plugins/3D_Viewer.jar:$JAVA3D_JARS
-CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/ij.jar:jars/weka.jar:plugins/Stitching_.jar:jars/fiji-lib.jar
+CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/ij.jar:jars/weka.jar:plugins/Stitching_.jar:jars/fiji-lib.jar:plugins/Anisotropic_Diffusion_2D.jar:jars/Jama-1.0.2.jar:jars/VIB-lib.jar:jars/commons-math.jar
 CLASSPATH(plugins/VIB_.jar)=jars/ij.jar:$JAVA3D_JARS:jars/VIB-lib.jar:jars/pal-optimization.jar:plugins/3D_Viewer.jar:jars/imglib.jar:jars/fiji-lib.jar
 CLASSPATH(jars/VIB-lib.jar)=jars/ij.jar:jars/Jama-1.0.2.jar:jars/junit-4.5.jar:jars/pal-optimization.jar:jars/jzlib-1.0.7.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Simple_Neurite_Tracer.jar)=jars/ij.jar:$JAVA3D_JARS:jars/VIB-lib.jar:plugins/VIB_.jar:jars/pal-optimization.jar:jars/junit-4.5.jar:plugins/3D_Viewer.jar:jars/commons-math.jar:jars/jfreechart-1.0.13.jar:jars/jcommon-1.0.12.jar:jars/batik.jar:plugins/AnalyzeSkeleton_.jar:plugins/Skeletonize3D_.jar
@@ -569,6 +609,7 @@ precompile-submodules[] <- \
 	precompiled/commons-math.jar \
 	precompiled/imglib-algorithms.jar \
 	precompiled/javassist.jar \
+	precompiled/jsch-0.1.44.jar \
 
 precompiled/ij.jar <- jars/ij.jar
 precompiled/clojure.jar <- jars/clojure.jar
@@ -586,6 +627,7 @@ precompiled/imglib-io.jar <- jars/imglib-io.jar
 precompiled/imglib-scripting.jar <- jars/imglib-scripting.jar
 precompiled/commons-math.jar <- jars/commons-math.jar
 precompiled/javassist.jar <- jars/javassist.jar
+precompiled/jsch-0.1.44.jar <- jars/jsch-0.1.44.jar
 precompiled/* <- plugins/*
 
 precompile[] <- precompile-fiji precompile-fake precompile-submodules

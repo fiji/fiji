@@ -104,7 +104,8 @@ import weka.core.RevisionUtils;
  *
  * @author Richard Kirkby (rkirkby@cs.waikato.ac.nz) - original code
  * @author Fran Supek (fran.supek[AT]irb.hr) - adapted code
- * @version Adapted by Ignacio Arganda-Carreras (iarganda at mit.edu) to work on Weka 3.7
+ * @author Ignacio Arganda-Carreras (iarganda at mit.edu)
+ * @version $Revision 2010$ adapted by Ignacio Arganda-Carreras to work on Weka 3.7 and correctly use instance weights
  */
 public class FastRandomForest 
   extends AbstractClassifier 
@@ -141,6 +142,8 @@ public class FastRandomForest
   
   /** a ZeroR model in case no model can be built from the data */
   protected Classifier m_ZeroR;  
+ 
+  int maxRealDepth = 0;
   
   /**
    * Returns a string describing classifier
@@ -563,7 +566,7 @@ public class FastRandomForest
     
     m_bagger = new FastRfBagging();
 
-    // Set up the ree options which are held in the motherForest.
+    // Set up the tree options which are held in the motherForest.
     m_KValue = m_numFeatures;
     if (m_KValue > data.numAttributes()-1) m_KValue = data.numAttributes()-1;
     if (m_KValue < 1) m_KValue = (int) Utils.log2(data.numAttributes())+1;

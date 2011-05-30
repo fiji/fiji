@@ -706,7 +706,10 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 						Map<String, Image<T>> img_map = image_expression_parser.convertToImglib(imp_map);
 						image_expression_parser.setImageMap(img_map);
 						// Call calculation
-						image_expression_parser.process();
+						if (!image_expression_parser.process()) {
+							IJ.error(image_expression_parser.getErrorMessage());
+							return;
+						}
 						// Collect result
 						result_img = image_expression_parser.getResult();
 

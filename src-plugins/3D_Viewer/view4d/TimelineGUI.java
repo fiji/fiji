@@ -86,13 +86,12 @@ public class TimelineGUI implements ActionListener, KeyListener {
 		int min = timeline.getUniverse().getStartTime();
 		int max = timeline.getUniverse().getEndTime() + 1;
 		int cur = timeline.getUniverse().getCurrentTimepoint();
-		
+
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.weightx = 1.0;
 		scroll = new JScrollBar(JScrollBar.HORIZONTAL, cur, 1, min, max);
 		scroll.addAdjustmentListener(new AdjustmentListener() {
 			public void adjustmentValueChanged(AdjustmentEvent e) {
-				timeline.pause();
 				showTimepoint(scroll.getValue());
 			}
 		});
@@ -164,11 +163,13 @@ public class TimelineGUI implements ActionListener, KeyListener {
 			return;
 		if (buttons[playIndex].getActionCommand().equals("PLAY")) {
 			buttons[playIndex].setActionCommand("PAUSE");
+			buttons[playIndex].setIcon(new ImageIcon(pauseImage));
 			buttons[playIndex].repaint();
 			timeline.play();
 		}
 		else {
 			buttons[playIndex].setActionCommand("PLAY");
+			buttons[playIndex].setIcon(new ImageIcon(playImage));
 			buttons[playIndex].repaint();
 			timeline.pause();
 		}
@@ -192,20 +193,25 @@ public class TimelineGUI implements ActionListener, KeyListener {
 			buttons[i].repaint();
 
 		String command = e.getActionCommand();
+
 		if(command.equals("BOUNCEBACK")) {
 			buttons[bbIndex].setActionCommand("NOBOUNCEBACK");
+			buttons[bbIndex].setIcon(new ImageIcon(nbbImage));
 			buttons[bbIndex].repaint();
 			timeline.setBounceBack(true);
 		} else if(command.equals("NOBOUNCEBACK")) {
 			buttons[bbIndex].setActionCommand("BOUNCEBACK");
+			buttons[bbIndex].setIcon(new ImageIcon(bbImage));
 			buttons[bbIndex].repaint();
 			timeline.setBounceBack(false);
 		} else if(command.equals("PLAY")) {
 			buttons[playIndex].setActionCommand("PAUSE");
+			buttons[playIndex].setIcon(new ImageIcon(pauseImage));
 			buttons[playIndex].repaint();
 			timeline.play();
 		} else if(command.equals("PAUSE")) {
 			buttons[playIndex].setActionCommand("PLAY");
+			buttons[playIndex].setIcon(new ImageIcon(playImage));
 			buttons[playIndex].repaint();
 			timeline.pause();
 		} else if(command.equals("RECORD")) {

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 public class FijiClassLoader extends URLClassLoader {
+
 	List<ClassLoader> fallBacks;
 	Map<String, String> classMap;
 
@@ -97,13 +98,16 @@ public class FijiClassLoader extends URLClassLoader {
 		if (path.endsWith("/.rsrc"))
 			return;
 		File file = new File(path);
+
 		if (!recurse && file.isDirectory()) try {
 			addURL(file.toURI().toURL());
 		} catch (MalformedURLException e) {
 			IJ.log("FijiClassLoader: " + e);
 		}
 		else if (file.isDirectory()) {
+
 			try {
+
 				// Add first level subdirectories to search path
 				addURL(file.toURI().toURL());
 			} catch (MalformedURLException e) {
@@ -130,6 +134,7 @@ public class FijiClassLoader extends URLClassLoader {
 	public void removeFallBack(ClassLoader loader) {
 		fallBacks.remove(loader);
 	}
+
 
 	public Class forceLoadClass(String name)
 		throws ClassNotFoundException {

@@ -106,6 +106,10 @@ public class PluginUploader {
 		public InputStream getInputStream() {
 			return new ByteArrayInputStream(bytes);
 		}
+
+		public String toString() {
+			return compressed;
+		}
 	}
 
 	public void upload(Progress progress) throws Exception  {
@@ -215,7 +219,14 @@ public class PluginUploader {
 
 	protected long getCurrentLastModified() {
 		try {
-			URLConnection connection = new URL(site.url + Updater.XML_COMPRESSED).openConnection();
+			URLConnection connection;
+			try {
+				connection = new URL(site.url + Updater.XML_COMPRESSED).openConnection();
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+				Thread.sleep(500);
+				connection = new URL(site.url + Updater.XML_COMPRESSED).openConnection();
+			}
 			connection.setUseCaches(false);
 			long lastModified = connection.getLastModified();
 			connection.getInputStream().close();
