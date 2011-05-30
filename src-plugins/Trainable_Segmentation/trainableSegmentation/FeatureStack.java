@@ -1887,6 +1887,9 @@ public class FeatureStack
 	 */
 	public boolean updateFeaturesMT()
 	{
+		if (Thread.currentThread().isInterrupted() )
+			return false;
+		
 		exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 		wholeStack = new ImageStack(width, height);
 		wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
