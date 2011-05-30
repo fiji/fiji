@@ -38,75 +38,7 @@ import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
  * <p>
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Jan 2011
  */
-public abstract class TrackMateModelView implements TMModelEditListener, TMSelectionDisplayer {
-
-	/*
-	 * ENUMS
-	 */
-	
-	/**
-	 * This enum stores the list of {@link TrackMateModelView} currently available.
-	 */
-	public static enum ViewType implements InfoTextable {
-		THREEDVIEWER_DISPLAYER,
-		HYPERSTACK_DISPLAYER;
-				
-		@Override
-		public String toString() {
-			switch(this) {
-			case HYPERSTACK_DISPLAYER:
-				return "HyperStack Displayer";
-			case THREEDVIEWER_DISPLAYER:
-				return "3D Viewer";
-			}
-			return null;
-		}
-		
-		@Override
-		public String getInfoText() {
-			switch(this) {
-			case HYPERSTACK_DISPLAYER:
-				return "<html>" +
-						"This displayer overlays the spots and tracks on the current<br>" +
-						"ImageJ hyperstack window." +
-						"</html>";
-			case THREEDVIEWER_DISPLAYER:
-				return "<html>" +
-						"This invokes a new 3D viewer (over time) window, which receive a<br>" +
-						"8-bit copy of the image data. Spots and tracks are rendered in 3D." +
-						"</html>"; 
-			}
-			return null;
-		}
-
-	}
-
-	/**
-	 * This enum stores the different display mode for tracks. Note that it might be ignored 
-	 * by some displayers.
-	 */
-	public enum TrackDisplayMode {
-		ALL_WHOLE_TRACKS,
-		LOCAL_WHOLE_TRACKS,
-		LOCAL_BACKWARD_TRACKS,
-		LOCAL_FORWARD_TRACKS;
-		
-		@Override
-		public String toString() {
-			switch(this) {
-			case ALL_WHOLE_TRACKS:
-				return "Show all entire tracks";
-			case LOCAL_WHOLE_TRACKS:
-				return "Show current tracks";
-			case LOCAL_BACKWARD_TRACKS:
-				return "Show current tracks, only backward";
-			case LOCAL_FORWARD_TRACKS:
-				return "Show current tracks, only forward";
-			}
-			return "Not implemented";
-		}
-		
-	}
+public abstract class TrackMateModelView implements TMSelectionDisplayer, TrackMateModelViewI {
 	
 	/*
 	 * FIELDS
@@ -121,6 +53,10 @@ public abstract class TrackMateModelView implements TMModelEditListener, TMSelec
 	public static final Color DEFAULT_COLOR = new Color(1f, 0, 1f);
 	/** The color used when highlighting spots. */
 	public static final Color HIGHLIGHT_COLOR = new Color(0, 1f, 0);
+	
+	
+	/** The model displayed by this class. */
+	protected TrackMateModel model;
 	
 	/** The ratio setting the actual display size of the spots, with respect to the physical radius. */
 	protected float radiusRatio = 1.0f;
@@ -150,85 +86,23 @@ public abstract class TrackMateModelView implements TMModelEditListener, TMSelec
 	/** The list of listener to warn for spot selection change. */
 	protected ArrayList<TMSelectionChangeListener> selectionChangeListeners = new ArrayList<TMSelectionChangeListener>();
 	
-	/** The list of listener to warn for spot selection change. */
-	private  ArrayList<TMModelEditListener> spotCollectionEditListeners = new ArrayList<TMModelEditListener>();
 	/** We need to maintain our own selection. */
 	private ArrayList<Spot> spotSelection = new ArrayList<Spot>();
 
-	/*
-	 * STATIC METHOD
-	 */
-	
-	/**
-	 * Instantiate and render the displayer specified by the given {@link ViewType}, using the data from
-	 * the model given. This will render the chosen {@link TrackMateModelView} only with image data.
-	 */
-	public static TrackMateModelView instantiateView(final ViewType displayerType, final TrackMateModel model) {
-		final TrackMateModelView disp;
-		Settings settings = model.getSettings();
-		switch (displayerType) {
-		case THREEDVIEWER_DISPLAYER:
-		{ 
-			final Image3DUniverse universe = new Image3DUniverse();
-			universe.show();
-			if (null != settings.imp) {
-				if (!settings.imp.isVisible())
-					settings.imp.show();
-				ImagePlus[] images = TMUtils.makeImageForViewer(settings);
-				final Content imageContent = ContentCreator.createContent(
-						settings.imp.getTitle(), 
-						images, 
-						Content.VOLUME, 
-						SpotDisplayer3D.DEFAULT_RESAMPLING_FACTOR, 
-						0,
-						null, 
-						SpotDisplayer3D.DEFAULT_THRESHOLD, 
-						new boolean[] {true, true, true});
-				universe.addContentLater(imageContent);	
-			}
-			disp = new SpotDisplayer3D(universe);
-			disp.render();
-			break;
-
-		} 
-		case HYPERSTACK_DISPLAYER:
-		default:
-			{
-				disp = new HyperStackDisplayer(settings);
-				disp.render();
-				break;
-			}
-		}
-		return disp;
-	}
 
 
 	/*
 	 * PUBLIC METHODS
 	 */
 	
-	/*
-	 * Spot collection edit 
-	 */
-	
-	/**
-	 * Add a listener to this displayer that will be notified when the spot collection is being changed 
-	 * by this displayer.
-	 */
-	public void addSpotCollectionEditListener(TMModelEditListener listener) {
-		this.spotCollectionEditListeners .add(listener);
+	@Override
+	public TrackMateModel getModel() {
+		return model;
 	}
 	
-	/**
-	 * Remove a listener from the list of the spot collection edit listeners list. 
-	 * @param listener  the listener to remove
-	 * @return  true if the listener was found in the list maintained by 
-	 * this displayer and successfully removed.
-	 */
-	public boolean removeSpotCollectionEditListener(TMModelEditListener listener) {
-		return spotCollectionEditListeners.remove(listener);
-	}
-
+	@Override
+	public void setModel(TrackMateModel model) {
+		this.model = model;	}
 	
 	/*
 	 * TMSelectionChangeListener
@@ -415,13 +289,120 @@ public abstract class TrackMateModelView implements TMModelEditListener, TMSelec
 			listener.selectionChanged(event);
 	}
 
-	/**
-	 * Simply forward the {@link TMModelEditEvent} to the listeners of this class.
+	/*
+	 * ENUMS
 	 */
-	protected void fireSpotCollectionEdit(TMModelEditEvent event) {
-		for (TMModelEditListener listener : spotCollectionEditListeners) {
-			listener.modelChanged(event);
+	
+	/**
+	 * This enum stores the list of {@link TrackMateModelView} currently available.
+	 */
+	public static enum ViewType implements InfoTextable {
+		THREEDVIEWER_DISPLAYER,
+		HYPERSTACK_DISPLAYER;
+				
+		@Override
+		public String toString() {
+			switch(this) {
+			case HYPERSTACK_DISPLAYER:
+				return "HyperStack Displayer";
+			case THREEDVIEWER_DISPLAYER:
+				return "3D Viewer";
+			}
+			return null;
 		}
+		
+		@Override
+		public String getInfoText() {
+			switch(this) {
+			case HYPERSTACK_DISPLAYER:
+				return "<html>" +
+						"This displayer overlays the spots and tracks on the current<br>" +
+						"ImageJ hyperstack window." +
+						"</html>";
+			case THREEDVIEWER_DISPLAYER:
+				return "<html>" +
+						"This invokes a new 3D viewer (over time) window, which receive a<br>" +
+						"8-bit copy of the image data. Spots and tracks are rendered in 3D." +
+						"</html>"; 
+			}
+			return null;
+		}
+
 	}
+
+	/**
+	 * This enum stores the different display mode for tracks. Note that it might be ignored 
+	 * by some displayers.
+	 */
+	public enum TrackDisplayMode {
+		ALL_WHOLE_TRACKS,
+		LOCAL_WHOLE_TRACKS,
+		LOCAL_BACKWARD_TRACKS,
+		LOCAL_FORWARD_TRACKS;
+		
+		@Override
+		public String toString() {
+			switch(this) {
+			case ALL_WHOLE_TRACKS:
+				return "Show all entire tracks";
+			case LOCAL_WHOLE_TRACKS:
+				return "Show current tracks";
+			case LOCAL_BACKWARD_TRACKS:
+				return "Show current tracks, only backward";
+			case LOCAL_FORWARD_TRACKS:
+				return "Show current tracks, only forward";
+			}
+			return "Not implemented";
+		}
+		
+	}
+	
+	/*
+	 * STATIC METHOD
+	 */
+	
+	/**
+	 * Instantiate and render the displayer specified by the given {@link ViewType}, using the data from
+	 * the model given. This will render the chosen {@link TrackMateModelView} only with image data.
+	 */
+	public static TrackMateModelView instantiateView(final ViewType displayerType, final TrackMateModel model) {
+		final TrackMateModelView disp;
+		Settings settings = model.getSettings();
+		switch (displayerType) {
+		case THREEDVIEWER_DISPLAYER:
+		{ 
+			final Image3DUniverse universe = new Image3DUniverse();
+			universe.show();
+			if (null != settings.imp) {
+				if (!settings.imp.isVisible())
+					settings.imp.show();
+				ImagePlus[] images = TMUtils.makeImageForViewer(settings);
+				final Content imageContent = ContentCreator.createContent(
+						settings.imp.getTitle(), 
+						images, 
+						Content.VOLUME, 
+						SpotDisplayer3D.DEFAULT_RESAMPLING_FACTOR, 
+						0,
+						null, 
+						SpotDisplayer3D.DEFAULT_THRESHOLD, 
+						new boolean[] {true, true, true});
+				universe.addContentLater(imageContent);	
+			}
+			disp = new SpotDisplayer3D(universe);
+			disp.render();
+			break;
+
+		} 
+		case HYPERSTACK_DISPLAYER:
+		default:
+			{
+				disp = new HyperStackDisplayer(model);
+				disp.render();
+				break;
+			}
+		}
+		return disp;
+	}
+	
 	
 }

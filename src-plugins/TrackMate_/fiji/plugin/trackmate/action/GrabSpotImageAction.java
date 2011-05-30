@@ -32,7 +32,7 @@ public class GrabSpotImageAction extends AbstractTMAction {
 		Settings settings = model.getSettings();
 		float[] calibration = settings.getCalibration();
 		
-		SpotCollection allSpots = model.getSelectedSpots();
+		SpotCollection allSpots = model.getFilteredSpots();
 		for (int frame : allSpots.keySet()) {
 			List<Spot> spots = allSpots.get(frame);
 			Image img = TMUtils.getSingleFrameAsImage(settings.imp, frame, settings);

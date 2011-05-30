@@ -28,7 +28,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import fiji.plugin.trackmate.Feature;
-import fiji.plugin.trackmate.FeatureThreshold;
+import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
@@ -63,7 +63,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	private EnumMap<Feature, double[]> featureValues = new EnumMap<Feature, double[]>(Feature.class);
 	private int newFeatureIndex;
 	
-	private List<FeatureThreshold> featureThresholds = new ArrayList<FeatureThreshold>();
+	private List<FeatureFilter> featureThresholds = new ArrayList<FeatureFilter>();
 	private ArrayList<ChangeListener> changeListeners = new ArrayList<ChangeListener>();
 	
 	
@@ -80,7 +80,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	 * CONSTRUCTORS
 	 */
 
-	public ThresholdGuiPanel(EnumMap<Feature, double[]> featureValues, List<FeatureThreshold> featureThresholds) {
+	public ThresholdGuiPanel(EnumMap<Feature, double[]> featureValues, List<FeatureFilter> featureThresholds) {
 		super();
 		this.featureValues = featureValues;
 		initGUI();
@@ -88,7 +88,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 			
 			if (null != featureThresholds) {
 				
-				for (FeatureThreshold ft : featureThresholds)
+				for (FeatureFilter ft : featureThresholds)
 					addThresholdPanel(ft);
 				if (featureThresholds.isEmpty())
 					newFeatureIndex = 0;
@@ -116,9 +116,9 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	 */
 	@Override
 	public void stateChanged(ChangeEvent e) {
-		featureThresholds = new ArrayList<FeatureThreshold>(thresholdPanels.size());
+		featureThresholds = new ArrayList<FeatureFilter>(thresholdPanels.size());
 		for (ThresholdPanel<Feature> tp : thresholdPanels) {
-			featureThresholds.add(new FeatureThreshold(tp.getKey(), new Float(tp.getThreshold()), tp.isAboveThreshold()));
+			featureThresholds.add(new FeatureFilter(tp.getKey(), new Float(tp.getThreshold()), tp.isAboveThreshold()));
 		}
 		fireThresholdChanged(e);
 	}
@@ -126,7 +126,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	/**
 	 * Return the thresholds currently set by this GUI.
 	 */
-	public List<FeatureThreshold> getFeatureThresholds() {
+	public List<FeatureFilter> getFeatureThresholds() {
 		return featureThresholds;
 	}
 	
@@ -174,7 +174,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 		addThresholdPanel(Feature.values()[newFeatureIndex]);		
 	}
 	
-	public void addThresholdPanel(FeatureThreshold threshold) {
+	public void addThresholdPanel(FeatureFilter threshold) {
 		if (null == threshold)
 			return;
 		ThresholdPanel<Feature> tp = new ThresholdPanel<Feature>(featureValues, threshold.feature);

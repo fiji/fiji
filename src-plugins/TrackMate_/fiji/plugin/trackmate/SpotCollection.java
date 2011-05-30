@@ -100,7 +100,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	 * Return a subset of this collection, containing only the spots with the 
 	 * feature satisfying the threshold given. 
 	 */
-	public final SpotCollection threshold(final FeatureThreshold featureThreshold) {
+	public final SpotCollection threshold(final FeatureFilter featureThreshold) {
 		SpotCollection selectedSpots = new SpotCollection();
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
@@ -146,7 +146,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	 * Return a subset of this collection, containing only the spots with the 
 	 * feature satisfying all the thresholds given. 
 	 */
-	public final SpotCollection threshold(final Collection<FeatureThreshold> thresholds) {
+	public final SpotCollection threshold(final Collection<FeatureFilter> thresholds) {
 		SpotCollection selectedSpots = new SpotCollection();
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
@@ -158,7 +158,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 			spotToKeep = new ArrayList<Spot>(spotThisFrame);
 			spotToRemove = new ArrayList<Spot>(spotThisFrame.size());
 
-			for (FeatureThreshold threshold : thresholds) {
+			for (FeatureFilter threshold : thresholds) {
 
 				tval = threshold.value;
 				if (null == tval)

@@ -3,7 +3,6 @@ package fiji.plugin.trackmate.visualization.threedviewer;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView.TrackDisplayMode;
 import ij3d.ContentNode;
 import ij3d.TimelapseListener;

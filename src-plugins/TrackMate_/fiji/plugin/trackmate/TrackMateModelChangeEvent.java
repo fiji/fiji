@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.visualization;
+package fiji.plugin.trackmate;
 
 import java.util.EventObject;
 import java.util.List;
@@ -6,17 +6,14 @@ import java.util.Map;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
 
-public class TMModelEditEvent extends EventObject {
+public class TrackMateModelChangeEvent extends EventObject {
 	
-	private static final long serialVersionUID = 4058348875135759901L;
-	
+	private static final long serialVersionUID = -355025496111237715L;
 	/** Indicate a spot added to the model. */
 	public static final int 	SPOT_ADDED = 0;
 	/** Indicate a spot removed from the model. */
-	public static final int 	SPOT_DELETED = 1;
+	public static final int 	SPOT_REMOVED = 1;
 	/** Indicate a modification of the features of a spot. */
 	public static final int 	SPOT_MODIFIED = 2;
 	/** Indicate that a spot has changed of frame. */
@@ -36,16 +33,16 @@ public class TMModelEditEvent extends EventObject {
 	 * specify that no spots are affected by this event. In this case, <code>spotFlags</code>,
 	 * <code>fromFrame</code> and <code>toFrame</code>should be <code>null</code> as well.
 	 * @param spotFlags  a list of integers stating what happened to the spot of the
-	 * same index in the previous list. See {@link #SPOT_ADDED}, {@link #SPOT_DELETED},
+	 * same index in the previous list. See {@link #SPOT_ADDED}, {@link #SPOT_REMOVED},
 	 * {@link #SPOT_MODIFIED} and {@link #SPOT_FRAME_CHANGED}.
 	 * @param fromFrame  a list of integers specifying the frame the corresponding spot 
 	 * belonged to before this event. If the corresponding flag is {@link #SPOT_ADDED} or
 	 * {@link #SPOT_MODIFIED}, then this integer is <code>null</code>.
 	 * @param toFrame  a list of integers specifying the destination frame of the 
-	 * corresponding spot. If the corresponding flag is {@link #SPOT_DELETED} or
+	 * corresponding spot. If the corresponding flag is {@link #SPOT_REMOVED} or
 	 * {@link #SPOT_MODIFIED}, then this integer is <code>null</code>.
 	 */
-	public TMModelEditEvent(Object source, 
+	public TrackMateModelChangeEvent(Object source, 
 			List<Spot> spots, 
 			List<Integer> spotFlags,
 			List<Integer> fromFrame,

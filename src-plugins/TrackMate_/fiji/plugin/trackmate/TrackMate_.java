@@ -1,26 +1,9 @@
 package fiji.plugin.trackmate;
 
-import fiji.plugin.trackmate.features.FeatureFacade;
 import fiji.plugin.trackmate.gui.TrackMateFrameController;
-import fiji.plugin.trackmate.segmentation.SpotSegmenter;
-import fiji.plugin.trackmate.tracking.SpotTracker;
-import fiji.plugin.trackmate.util.TMUtils;
 import ij.IJ;
-import ij.ImagePlus;
 import ij.WindowManager;
-import ij.gui.Roi;
 import ij.plugin.PlugIn;
-
-import java.awt.Polygon;
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.List;
-
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.numeric.RealType;
-
-import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
 
 
 /**
@@ -32,26 +15,11 @@ import org.jgrapht.graph.SimpleWeightedGraph;
  * @author Nicholas Perry, Jean-Yves Tinevez - Institut Pasteur - July 2010 - 2011
  *
  */
-public class TrackMate_ implements PlugIn, TrackMateModel {
+public class TrackMate_ extends TrackMateModel implements PlugIn {
 	
 	public static final String PLUGIN_NAME_STR = "Track Mate";
 	public static final String PLUGIN_NAME_VERSION = ".alpha";
 	
-	
-	/** Contain the segmentation result, un-filtered.*/
-	private SpotCollection spots;
-	/** Contain the Spot retained for tracking, after thresholding by features. */
-	private SpotCollection selectedSpots;
-	/** The tracks as a graph. */
-	private SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph;
-
-	private Logger logger = Logger.DEFAULT_LOGGER;
-	private Settings settings;
-	private List<FeatureThreshold> thresholds = new ArrayList<FeatureThreshold>();
-	@SuppressWarnings("rawtypes")
-	private SpotSegmenter<? extends RealType> segmenter;	
-	private Float initialThreshold;
-
 	/*
 	 * CONSTRUCTORS
 	 */
@@ -77,219 +45,6 @@ public class TrackMate_ implements PlugIn, TrackMateModel {
 		new TrackMateFrameController(this);
 	}
 	
-	/*
-	 * PUBLIC METHODS
-	 */
-	
-	@Override
-	public void execTracking() {
-		SpotTracker tracker = settings.getSpotTracker(selectedSpots);
-		tracker.setLogger(logger);
-		if (tracker.checkInput() && tracker.process())
-			trackGraph = tracker.getTrackGraph();
-		else
-			logger.error("Problem occured in tracking:\n"+tracker.getErrorMessage()+'\n');
-	}
-	
-	@SuppressWarnings("unchecked")
-	@Override
-	public void execSegmentation() {
-		final ImagePlus imp = settings.imp;
-		if (null == imp) {
-			logger.error("No image to operate on.\n");
-			return;
-		}
-		
-		Roi roi = imp.getRoi();
-		Polygon polygon = null;
-		if (roi != null)
-			polygon = roi.getPolygon();
-
-		int numFrames = settings.tend - settings.tstart + 1;
-
-		/* 0 -- Initialize local variables */
-		final float[] calibration = new float[] {(float) imp.getCalibration().pixelWidth, (float) imp.getCalibration().pixelHeight, (float) imp.getCalibration().pixelDepth};
-
-		segmenter = settings.getSpotSegmenter();
-		segmenter.setCalibration(calibration);
-		
-		spots = new SpotCollection();
-		
-		// For each frame...
-		int spotFound = 0;
-		for (int i = settings.tstart-1; i < settings.tend; i++) {
-			
-			/* 1 - Prepare stack for use with Imglib. */
-			@SuppressWarnings("rawtypes")
-			Image img = TMUtils.getSingleFrameAsImage(imp, i, settings); // will be cropped according to settings
-			
-			/* 2 Segment it */
-			logger.setStatus("Frame "+(i+1)+": Segmenting...");
-			logger.setProgress((i-settings.tstart) / (float)numFrames );
-			segmenter.setImage(img);
-			if (segmenter.checkInput() && segmenter.process()) {
-				List<Spot> spotsThisFrame = segmenter.getResult(settings);
-				List<Spot> prunedSpots;
-				// Prune if outside of ROI
-				if (null != polygon) {
-					prunedSpots = new ArrayList<Spot>();
-					for (Spot spot : spotsThisFrame) {
-						if (polygon.contains(spot.getFeature(Feature.POSITION_X)/calibration[0], spot.getFeature(Feature.POSITION_Y)/calibration[1])) 
-							prunedSpots.add(spot);
-					}
-				} else {
-					prunedSpots = spotsThisFrame;
-				}
-				// Add segmentation feature other than position
-				for (Spot spot : prunedSpots) {
-					spot.putFeature(Feature.POSITION_T, i * settings.dt);
-					spot.putFeature(Feature.RADIUS, settings.segmenterSettings.expectedRadius);
-				}
-				spots.put(i, prunedSpots);
-				spotFound += prunedSpots.size();
-			} else {
-				logger.error(segmenter.getErrorMessage()+'\n');
-				return;
-			}
-						
-		} // Finished looping over frames
-		logger.log("Found "+spotFound+" spots.\n");
-		logger.setProgress(1);
-		logger.setStatus("");
-		return;
-	}
-	
-	@Override
-	public void execInitialThresholding() {
-		FeatureThreshold featureThreshold = new FeatureThreshold(Feature.QUALITY, initialThreshold, true);
-		this.spots = spots.threshold(featureThreshold);
-	}
-		
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	@Override
-	public void computeFeatures() {
-		int numFrames = settings.tend - settings.tstart + 1;
-		List<Spot> spotsThisFrame;
-		FeatureFacade<?> featureCalculator;
-		final float[] calibration = new float[] { settings.dx, settings.dy, settings.dz };
-		
-		for (int i = settings.tstart-1; i < settings.tend; i++) {
-			
-			/* 1 - Prepare stack for use with Imglib.
-			 * This time, since the spot coordinates are with respect to the top-left corner of the image, 
-			 * we must not generate a cropped version of the image, but a full snapshot. 	 */
-			Settings uncroppedSettings = new Settings();
-			uncroppedSettings.xstart = 1;
-			uncroppedSettings.xend   = settings.imp.getWidth();
-			uncroppedSettings.ystart = 1;
-			uncroppedSettings.yend   = settings.imp.getHeight();
-			uncroppedSettings.zstart = 1;
-			uncroppedSettings.zend   = settings.imp.getNSlices();
-			Image<? extends RealType> img = TMUtils.getSingleFrameAsImage(settings.imp, i, uncroppedSettings); // will be cropped according to settings
-			
-			/* 2 - Compute features. */
-			logger.setProgress((2*(i-settings.tstart)) / (2f * numFrames + 1));
-			logger.setStatus("Frame "+(i+1)+": Calculating features...");
-			featureCalculator = new FeatureFacade(img, calibration);
-			spotsThisFrame = spots.get(i);
-			featureCalculator.processAllFeatures(spotsThisFrame);
-						
-		} // Finished looping over frames
-		logger.setProgress(1);
-		logger.setStatus("");
-		return;
-	}
-
-
-	@Override
-	public void execThresholding() {
-		this.selectedSpots = spots.threshold(thresholds);
-	}
-	
-	/*
-	 * GETTERS / SETTERS
-	 */
-	
-	@Override
-	public SimpleWeightedGraph<Spot,DefaultWeightedEdge> getTrackGraph() {
-		return trackGraph;
-	}
-	
-	@Override
-	public SpotCollection getSpots() {
-		return spots;
-	}
-
-	@Override
-	public SpotCollection getSelectedSpots() {
-		return selectedSpots;
-	}
-	
-	@Override
-	public void addThreshold(final FeatureThreshold threshold) { thresholds .add(threshold); }
-	
-	@Override
-	public void removeThreshold(final FeatureThreshold threshold) { thresholds .remove(threshold); }
-	
-	@Override
-	public void clearTresholds() { thresholds.clear(); }
-	
-	@Override
-	public List<FeatureThreshold> getFeatureThresholds() { return thresholds; }
-	
-	@Override
-	public void setFeatureThresholds(List<FeatureThreshold> thresholds) { this.thresholds = thresholds; }
-	
-	@Override
-	public void setLogger(Logger logger) {
-		this.logger = logger;
-	}
-	
-	@Override
-	public Logger getLogger() {
-		return logger;
-	}
-	
-	@Override
-	public Settings getSettings() {
-		return settings;
-	}
-
-	@Override
-	public void setSettings(Settings settings) {
-		this.settings = settings;
-	}
-
-	@Override
-	public void setSpots(SpotCollection spots) {
-		this.spots = spots;
-	}
-
-	@Override
-	public void setSpotSelection(SpotCollection selectedSpots) {
-		this.selectedSpots = selectedSpots;
-	}
-	
-	@Override
-	public void setTrackGraph(SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph) {
-		this.trackGraph = trackGraph;
-	}
-
-	@Override
-	public EnumMap<Feature, double[]> getFeatureValues() {
-		return TMUtils.getFeatureValues(spots.values());
-	}
-
-	@Override
-	public Float getInitialThreshold() {
-		return initialThreshold;
-	}
-
-	@Override
-	public void setInitialThreshold(Float initialThreshold) {
-		this.initialThreshold = initialThreshold;
-	}
-
 	/*
 	 * MAIN METHOD
 	 */

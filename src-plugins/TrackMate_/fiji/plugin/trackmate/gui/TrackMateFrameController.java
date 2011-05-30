@@ -10,7 +10,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import fiji.plugin.trackmate.FeatureThreshold;
+import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
@@ -19,13 +19,11 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.TrackMateFrame.PanelCard;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
-import fiji.plugin.trackmate.util.GUIUtils;
+import fiji.plugin.trackmate.visualization.TMSelectionDisplayer;
+import fiji.plugin.trackmate.visualization.TMSelectionManager;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView.TrackDisplayMode;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
-import fiji.plugin.trackmate.visualization.TMSelectionDisplayer;
-import fiji.plugin.trackmate.visualization.TMSelectionManager;
-import fiji.plugin.trackmate.visualization.TrackMateModelManager;
 
 public class TrackMateFrameController implements ActionListener {
 
@@ -54,10 +52,7 @@ public class TrackMateFrameController implements ActionListener {
 	 * re-generate the data.
 	 */
 	boolean actionFlag = true;
-	/** 
-	 * The model manager that will be used to change the model content when doing manual editing.  
-	 */
-	private TrackMateModelManager modelChangeManager;
+	
 	/**
 	 * The selection manager that will be in charge of ensuring that selection is shared across the 
 	 * possible multiple {@link TMSelectionDisplayer}s that are launched by this controller. 
@@ -74,9 +69,7 @@ public class TrackMateFrameController implements ActionListener {
 		this.model = model;
 		this.view = new TrackMateFrame(model);
 		this.logger = view.getLogger();
-		
-		this.modelChangeManager = new TrackMateModelManager(model);
-		
+				
 		// Set up GUI and communications
 		model.setLogger(logger);
 		if (null != model.getSettings().imp)
@@ -129,7 +122,7 @@ public class TrackMateFrameController implements ActionListener {
 		} else if (event == displayerPanel.TRACK_SCHEME_BUTTON_PRESSED) {
 			
 			// Display Track scheme
-			final TrackSchemeFrame trackScheme = new TrackSchemeFrame(model.getTrackGraph(), model.getSettings());
+			final TrackSchemeFrame trackScheme = new TrackSchemeFrame(model);
 			
 
 			// TODO TODO put listeners for spot edition here
@@ -276,7 +269,7 @@ public class TrackMateFrameController implements ActionListener {
 			// If we choose to skip segmentation, initialize the model spot content and skip directly to state where we will be asked for a displayer.
 			if (model.getSettings().segmenterType == SegmenterType.MANUAL_SEGMENTER) {
 				model.setSpots(new SpotCollection());
-				model.setSpotSelection(new SpotCollection());
+				model.setFilteredSpots(new SpotCollection());
 				state = GuiState.CHOOSE_DISPLAYER.previousState();
 			}
 			break;
@@ -364,9 +357,7 @@ public class TrackMateFrameController implements ActionListener {
 			}
 			file = tmpFile;
 			model = reader.loadFile(file);
-			modelChangeManager = new TrackMateModelManager(model);
-			displayer.addSpotCollectionEditListener(modelChangeManager);
-			
+						
 		} finally {
 			
 			SwingUtilities.invokeLater(new Runnable() {			
@@ -487,14 +478,14 @@ public class TrackMateFrameController implements ActionListener {
 	 * the {@link Spot} collection of the {@link TrackMateModel} with the result.
 	 */
 	private void execInitialThresholding() {
-		FeatureThreshold initialThreshold = view.initThresholdingPanel.getFeatureThreshold();
+		FeatureFilter initialThreshold = view.initThresholdingPanel.getFeatureThreshold();
 		String str = "Initial thresholding with a quality threshold above "+ String.format("%.1f", initialThreshold.value) + " ...\n";
 		logger.log(str,Logger.BLUE_COLOR);
 		int ntotal = 0;
 		for (Collection<Spot> spots : model.getSpots().values())
 			ntotal += spots.size();
-		model.setInitialThreshold(initialThreshold.value);
-		model.execInitialThresholding();
+		model.setInitialFilterValue(initialThreshold.value);
+		model.execInitialFiltering();
 		int nselected = 0;
 		for (Collection<Spot> spots : model.getSpots().values())
 			nselected += spots.size();
@@ -532,9 +523,8 @@ public class TrackMateFrameController implements ActionListener {
 				getModelView().setSpots(model.getSpots());
 				// Forward the model to the displayer (not done if we skip automatic segmentation steps)
 				if (model.getSettings().segmenterType == SegmenterType.MANUAL_SEGMENTER) 
-					getModelView().setSpotsToShow(model.getSelectedSpots());
-				// Have the manager listen to manual edits made in this displayer
-				getModelView().addSpotCollectionEditListener(modelChangeManager);
+					getModelView().setSpotsToShow(model.getFilteredSpots());
+				
 				// Re-enable the GUI
 				logger.log("Rendering done.\n", Logger.BLUE_COLOR);
 				switchNextButton(true);
@@ -563,8 +553,8 @@ public class TrackMateFrameController implements ActionListener {
 					@Override
 					public void stateChanged(ChangeEvent event) {
 						// We set the thresholds field of the model but do not touch its selected spot field yet.
-						model.setFeatureThresholds(view.thresholdGuiPanel.getFeatureThresholds());
-						getModelView().setSpotsToShow(model.getSpots().threshold(model.getFeatureThresholds()));
+						model.setFeatureFilters(view.thresholdGuiPanel.getFeatureThresholds());
+						getModelView().setSpotsToShow(model.getSpots().threshold(model.getFeatureFilters()));
 						getModelView().refresh();
 					}
 				});
@@ -580,10 +570,10 @@ public class TrackMateFrameController implements ActionListener {
 	 */
 	private void execThresholding() {
 		logger.log("Performing feature threholding on the following features:\n", Logger.BLUE_COLOR);
-		List<FeatureThreshold> featureThresholds = view.thresholdGuiPanel.getFeatureThresholds();
-		model.setFeatureThresholds(featureThresholds);
-		model.execThresholding();
-		getModelView().setSpotsToShow(model.getSelectedSpots());
+		List<FeatureFilter> featureThresholds = view.thresholdGuiPanel.getFeatureThresholds();
+		model.setFeatureFilters(featureThresholds);
+		model.execFiltering();
+		getModelView().setSpotsToShow(model.getFilteredSpots());
 		
 		int ntotal = 0;
 		for(Collection<Spot> spots : model.getSpots().values())
@@ -591,7 +581,7 @@ public class TrackMateFrameController implements ActionListener {
 		if (featureThresholds == null || featureThresholds.isEmpty()) {
 			logger.log("No feature threshold set, kept the " + ntotal + " spots.\n");
 		} else {
-			for (FeatureThreshold ft : featureThresholds) {
+			for (FeatureFilter ft : featureThresholds) {
 				String str = "  - on "+ft.feature.name();
 				if (ft.isAbove) 
 					str += " above ";
@@ -602,7 +592,7 @@ public class TrackMateFrameController implements ActionListener {
 				logger.log(str);
 			}
 			int nselected = 0;
-			for(Collection<Spot> spots : model.getSelectedSpots().values())
+			for(Collection<Spot> spots : model.getFilteredSpots().values())
 				nselected += spots.size();
 			logger.log("Kept "+nselected+" spots out of " + ntotal + ".\n");
 		}		

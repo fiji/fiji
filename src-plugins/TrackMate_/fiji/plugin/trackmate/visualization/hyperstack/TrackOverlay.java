@@ -106,7 +106,7 @@ public class TrackOverlay implements Overlay {
 		Spot source, target;
 		int frame;
 
-		g2d.setStroke(new BasicStroke((float) (1.0f /  imp.getCanvas().getMagnification()),  BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+		g2d.setStroke(new BasicStroke(2.0f,  BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		Set<DefaultWeightedEdge> edges = graph.edgeSet();
 		for (DefaultWeightedEdge edge : edges) {
 			if (highlight.contains(edge))
@@ -123,7 +123,7 @@ public class TrackOverlay implements Overlay {
 		}
 
 		// Deal with highlighted edges
-		g2d.setStroke(new BasicStroke((float) (2.0f /  imp.getCanvas().getMagnification()),  BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+		g2d.setStroke(new BasicStroke(4.0f,  BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		g2d.setColor(TrackMateModelView.HIGHLIGHT_COLOR);
 		for (DefaultWeightedEdge edge : highlight) {
 			source = graph.getEdgeSource(edge);

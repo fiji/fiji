@@ -29,7 +29,7 @@ public class LinkNew3DViewerAction extends AbstractTMAction {
 				newDisplayer.render();
 				
 				newDisplayer.setSpots(model.getSpots());
-				newDisplayer.setSpotsToShow(model.getSelectedSpots());
+				newDisplayer.setSpotsToShow(model.getFilteredSpots());
 				newDisplayer.setTrackGraph(model.getTrackGraph());
 
 				DisplayerPanel displayerPanel = (DisplayerPanel) view.getPanelFor(TrackMateFrame.PanelCard.ACTION_PANEL_KEY);

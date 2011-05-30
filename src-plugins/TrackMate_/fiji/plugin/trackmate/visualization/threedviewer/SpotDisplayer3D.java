@@ -22,9 +22,7 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.visualization.TMModelEditEvent;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
-import fiji.plugin.trackmate.visualization.TrackMateModelView.TrackDisplayMode;
 
 public class SpotDisplayer3D extends TrackMateModelView {
 	
@@ -54,13 +52,6 @@ public class SpotDisplayer3D extends TrackMateModelView {
 	 * OVERRIDDEN METHODS
 	 */
 
-
-
-	@Override
-	public void modelChanged(TMModelEditEvent event) {
-		// TODO Auto-generated method stub
-		
-	}
 
 	@Override
 	public void setSpotNameVisible(boolean spotNameVisible) {

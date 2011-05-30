@@ -2,11 +2,10 @@ package fiji.plugin.trackmate.visualization;
 
 import fiji.plugin.trackmate.TrackMateModel;
 
-public interface TrackModelViewI {
-
+public interface TrackMateModelViewI {
 	
 	public TrackMateModel getModel();
 	
-	//TODO TODO
+	public void setModel(TrackMateModel model);
 	
 }

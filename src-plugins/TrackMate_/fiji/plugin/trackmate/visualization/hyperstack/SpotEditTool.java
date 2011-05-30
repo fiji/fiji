@@ -16,8 +16,6 @@ import java.util.HashMap;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.visualization.TMModelEditEvent;
-import fiji.plugin.trackmate.visualization.TMModelEditListener;
 import fiji.tool.AbstractTool;
 
 
@@ -48,7 +46,6 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	private static SpotEditTool instance;
 	private HashMap<ImagePlus, Spot> editedSpots = new HashMap<ImagePlus, Spot>();
 	private HashMap<ImagePlus, HyperStackDisplayer> displayers = new HashMap<ImagePlus, HyperStackDisplayer>();
-	private ArrayList<TMModelEditListener> spotCollectionEditListeners = new ArrayList<TMModelEditListener>();
 	
 	/*
 	 * CONSTRUCTOR
@@ -79,7 +76,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	 */
 	public static boolean isLaunched() {
 		Toolbar toolbar = Toolbar.getInstance();
-		if (toolbar.getToolId(TOOL_NAME) >= 0) 
+		if (null != toolbar && toolbar.getToolId(TOOL_NAME) >= 0) 
 			return true;
 		return false;
 	}
@@ -87,25 +84,6 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	/*
 	 * METHODS
 	 */
-	
-	/**
-	 * Add a listener to this displayer that will be notified when the spot collection is being changed 
-	 * by this tool.
-	 */
-	public void addSpotCollectionEditListener(TMModelEditListener listener) {
-		this.spotCollectionEditListeners.add(listener);
-	}
-	
-	/**
-	 * Remove a listener from the list of the spot collection edit listeners list. 
-	 * @param listener  the listener to remove
-	 * @return  true if the listener was found in the list maintained by 
-	 * this displayer and successfully removed.
-	 */
-	public boolean removeSpotCollectionEditListener(TMModelEditListener listener) {
-		return spotCollectionEditListeners.remove(listener);
-	}
-
 	
 	@Override
 	public String getToolName() {
@@ -146,7 +124,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 
 		final Spot clickLocation = displayer.getCLickLocation(e);
 		final int frame = displayer.imp.getFrame() - 1;		
-		Spot target = displayer.spotsToShow.getClosestSpot(clickLocation, frame);
+		Spot target = displayer.getModel().getFilteredSpots().getClosestSpot(clickLocation, frame);
 		Spot editedSpot = editedSpots.get(imp);
 		updateStatusBar(target, imp.getCalibration().getUnits());
 
@@ -197,7 +175,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				// because it is not updated otherwise: there is no way to listen to slice change
 				final float zslice = (displayer.imp.getSlice()-1) * displayer.calibration[2];
 				editedSpot.putFeature(Feature.POSITION_Z, zslice);
-				Integer initFrame = displayer.spotsToShow.getFrame(editedSpot);
+				Integer initFrame = displayer.getModel().getFilteredSpots().getFrame(editedSpot);
 				// Move it in Z
 				final float z = (displayer.imp.getSlice()-1) * displayer.calibration[2];
 				editedSpot.putFeature(Feature.POSITION_Z, z);
@@ -306,7 +284,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			return;
 		
 		if (e.getKeyCode() == KeyEvent.VK_DELETE) {
-			Integer initFrame = displayer.spotsToShow.getFrame(editedSpot);
+			Integer initFrame = displayer.getModel().getFilteredSpots().getFrame(editedSpot);
 			fireSpotCollectionEdit(editedSpot, TMModelEditEvent.SPOT_DELETED, initFrame, null);
 			editedSpot = null;
 			displayer.spotOverlay.setEditedSpot(null);

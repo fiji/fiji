@@ -42,23 +42,13 @@ import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.visualization.TMModelEditEvent;
-import fiji.plugin.trackmate.visualization.TMModelEditListener;
 import fiji.plugin.trackmate.visualization.TMSelectionChangeEvent;
 import fiji.plugin.trackmate.visualization.TMSelectionChangeListener;
 import fiji.plugin.trackmate.visualization.TMSelectionDisplayer;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.TrackMateModelViewI;
 
-public class TrackSchemeFrame extends JFrame implements TMModelEditListener, TMSelectionDisplayer {
-
-	{
-		//Set Look & Feel
-		try {
-			javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
+public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, TrackMateModelViewI {
 
 	/*
 	 * CONSTANTS
@@ -100,7 +90,6 @@ public class TrackSchemeFrame extends JFrame implements TMModelEditListener, TMS
 	/** A flag used to prevent double event firing when setting the selection programmatically. */
 	private boolean doFireTMSelectionChangeEvent = true;
 
-	private ArrayList<TMModelEditListener> modelEditListeners = new ArrayList<TMModelEditListener>();
 	private ArrayList<TMSelectionChangeListener> selectionChangeListeners = new ArrayList<TMSelectionChangeListener>();
 	private TrackMateModel model;
 
@@ -133,13 +122,7 @@ public class TrackSchemeFrame extends JFrame implements TMModelEditListener, TMS
 	 */
 
 	public TrackSchemeFrame(TrackMateModel model) {
-		this.model = model;
-		this.trackGraph = model.getTrackGraph();
-		this.lGraph = new ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge>(trackGraph);
-		this.graph = createGraph();
-		this.settings = model.getSettings();
-		this.graphLayout = new mxTrackGraphLayout(lGraph, graph, settings.dx);
-
+		setModel(model);
 		init();
 		setSize(DEFAULT_SIZE);
 	}
@@ -148,6 +131,25 @@ public class TrackSchemeFrame extends JFrame implements TMModelEditListener, TMS
 	 * PUBLIC METHODS
 	 */
 
+	@Override
+	public TrackMateModel getModel() {
+		return model;
+	}
+
+	@Override
+	public void setModel(TrackMateModel model) {
+		this.model = model;
+		this.trackGraph = model.getTrackGraph();
+		this.lGraph = new ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge>(trackGraph);
+		this.graph = createGraph();
+		this.settings = model.getSettings();
+		this.graphLayout = new mxTrackGraphLayout(lGraph, graph, settings.dx);
+		String title = "Track scheme";
+		if (null != settings.imp)
+			title += settings.imp.getShortTitle();
+		setTitle(title);
+	}
+	
 	/*
 	 * Selection management
 	 */
@@ -204,18 +206,6 @@ public class TrackSchemeFrame extends JFrame implements TMModelEditListener, TMS
 	@Override
 	public void centerViewOn(Spot spot) {
 		centerViewOn(graph.getVertexToCellMap().get(spot));
-	}
-
-	/*
-	 * TM model editing management
-	 */
-
-	public void addTMModelEditListener(TMModelEditListener listener) {
-		modelEditListeners.add(listener);
-	}
-
-	public boolean removeTMModelEditListener(TMModelEditListener listener) {
-		return modelEditListeners.remove(listener);
 	}
 
 	/**
@@ -576,11 +566,7 @@ public class TrackSchemeFrame extends JFrame implements TMModelEditListener, TMS
 	private void init() {
 		// Frame look
 		setIconImage(TRACK_SCHEME_ICON.getImage());
-		String title = "Track scheme";
-		if (null != settings.imp)
-			title += settings.imp.getShortTitle();
-		setTitle(title);
-
+		
 		getContentPane().setLayout(new BorderLayout());
 		// Add a ToolBar
 		getContentPane().add(createToolBar(), BorderLayout.NORTH);

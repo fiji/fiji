@@ -137,7 +137,7 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 	 */
 	
 	private void setModel(TrackMateModel model) {
-		this.featureValues = TMUtils.getFeatureValues(model.getSelectedSpots().values());
+		this.featureValues = TMUtils.getFeatureValues(model.getFilteredSpots().values());
 	}
 	
 	private void displayTrackFlagChanged(boolean display) {

@@ -1,7 +1,5 @@
 package fiji.plugin.trackmate.tracking.test;
 
-import ij.ImagePlus;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -10,7 +8,6 @@ import java.util.SortedSet;
 
 import mpicbg.imglib.util.Util;
 
-import org.jdom.DataConversionException;
 import org.jdom.JDOMException;
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -18,9 +15,8 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
@@ -30,13 +26,7 @@ import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
 public class LAPTrackerTestDrive {
 	
-	private static final String FILE_NAME_1 = "Test1.xml";
-	private static final String FILE_NAME_2 = "Test2.xml";
-
-	@SuppressWarnings("unused")
-	private static final File SPLITTING_CASE_1 = new File(LAPTrackerTestDrive.class.getResource(FILE_NAME_1).getFile());
-	private static final File SPLITTING_CASE_2 = new File(LAPTrackerTestDrive.class.getResource(FILE_NAME_2).getFile());
-	private static final File SPLITTING_CASE_3 = new File("/Users/tinevez/Desktop/Celegans-5pc.xml");
+	private static final File SPLITTING_CASE_3 = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
 	
 	/*
 	 * MAIN METHOD
@@ -49,25 +39,17 @@ public class LAPTrackerTestDrive {
 		// 1 - Load test spots
 		System.out.println("Opening file: "+file.getAbsolutePath());		
 		TmXmlReader reader = new TmXmlReader(file);
+		TrackMateModel model = null;
 		// Parse
 		try {
 			reader.parse();
+			model = reader.getModel();
 		} catch (JDOMException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		// All spots
-		Settings inFileSettings = null;
-		SpotCollection spots = null;
-		SpotCollection spotSelection = null;
-		try {
-			spots = reader.getAllSpots();
-			spotSelection = reader.getSpotSelection(spots);
-			inFileSettings = reader.getSettings();
-		} catch (DataConversionException e) {
-			e.printStackTrace();
-		}
+		
 		
 		// 1.5 - Set the tracking settings
 		TrackerSettings settings = new TrackerSettings();
@@ -83,11 +65,11 @@ public class LAPTrackerTestDrive {
 		settings.splittingFeatureCutoffs.clear();
 		System.out.println("Tracker settings:");
 		System.out.println(settings.toString());
-		inFileSettings.trackerSettings = settings;
+		model.getSettings().trackerSettings = settings;
 		
 		// 2 - Track the test spots
 		LAPTracker lap;
-		lap = new LAPTracker(spotSelection, inFileSettings.trackerSettings);
+		lap = new LAPTracker(model.getFilteredSpots(), model.getSettings().trackerSettings);
 		lap.setLogger(Logger.DEFAULT_LOGGER);
 		if (!lap.checkInput())
 			System.err.println("Error checking input: "+lap.getErrorMessage());
@@ -134,15 +116,11 @@ public class LAPTrackerTestDrive {
 		// 5 - Display tracks
 		// Load Image
 		ij.ImageJ.main(args);
-		ImagePlus imp = null;
-		imp = reader.getImage();
-		if (imp != null)
-			inFileSettings.imp = imp;
 		
-		TrackMateModelView sd2d = new HyperStackDisplayer(inFileSettings);
+		TrackMateModelView sd2d = new HyperStackDisplayer(model);
 		sd2d.render();
-		sd2d.setSpots(spots);
-		sd2d.setSpotsToShow(spotSelection);
+		sd2d.setSpots(model.getSpots());
+		sd2d.setSpotsToShow(model.getFilteredSpots());
 		sd2d.setTrackGraph(graph);
 		sd2d.setDisplayTrackMode(TrackMateModelView.TrackDisplayMode.ALL_WHOLE_TRACKS, 1);
 	}

@@ -23,11 +23,12 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Feature;
-import fiji.plugin.trackmate.FeatureThreshold;
+import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
@@ -66,28 +67,59 @@ public class TmXmlReader implements TmXmlKeys {
 	}
 	
 	/**
+	 * Return a {@link TrackMateModel} from all the information stored in this file.
+	 * Fields not set in the field will be <code>null</code> in the model. 
+	 * @throws DataConversionException 
+	 */
+	public TrackMateModel getModel() throws DataConversionException {
+		TrackMateModel model = new TrackMateModel();
+		// Settings
+		Settings settings = getSettings();
+		settings.segmenterSettings = getSegmenterSettings();
+		settings.trackerSettings = getTrackerSettings();
+		settings.imp = getImage();
+		model.setSettings(settings);
+		// Filters
+		List<FeatureFilter> filters = getFeatureFilters();
+		FeatureFilter initialFilter = getInitialFilter();
+		model.setInitialFilterValue(initialFilter.value);
+		model.setFeatureFilters(filters);
+		// Spots
+		SpotCollection allSpots = getAllSpots();
+		SpotCollection filteredSpots = getFilteredSpots(allSpots);
+		model.setSpots(allSpots);
+		model.setFilteredSpots(filteredSpots);
+		// Tracks
+		SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph = getTracks(filteredSpots);
+		model.setTrackGraph(trackGraph);
+		
+		return model;
+	}
+	
+	
+	/**
 	 * Return the initial threshold on quality stored in this file.
 	 * Return <code>null</code> if the initial threshold data cannot be found in the file.
 	 */
-	public FeatureThreshold getInitialThreshold() throws DataConversionException {
+	public FeatureFilter getInitialFilter() throws DataConversionException {
 		Element itEl = root.getChild(INITIAL_THRESHOLD_ELEMENT_KEY);
 		if (null == itEl)
 			return null;
 		Feature feature = Feature.valueOf(itEl.getAttributeValue(THRESHOLD_FEATURE_ATTRIBUTE_NAME));
 		Float value 	= itEl.getAttribute(THRESHOLD_VALUE_ATTRIBUTE_NAME).getFloatValue();
 		boolean isAbove	= itEl.getAttribute(THRESHOLD_ABOVE_ATTRIBUTE_NAME).getBooleanValue();
-		FeatureThreshold ft = new FeatureThreshold(feature, value, isAbove);
+		FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
 		return ft;
 	}
 	
 	
 	/**
-	 * Return the list of {@link FeatureThreshold} stored in this file.
-	 * Return <code>null</code> if the feature thresholds data cannot be found in the file.
+	 * Return the list of {@link FeatureFilter} stored in this file.
+	 * Return <code>null</code> if the feature filters data cannot be found in the file.
 	 */
 	@SuppressWarnings("unchecked")
-	public List<FeatureThreshold> getFeatureThresholds() throws DataConversionException {
-		List<FeatureThreshold> featureThresholds = new ArrayList<FeatureThreshold>();
+	public List<FeatureFilter> getFeatureFilters() throws DataConversionException {
+		List<FeatureFilter> featureThresholds = new ArrayList<FeatureFilter>();
 		Element ftCollectionEl = root.getChild(THRESHOLD_COLLECTION_ELEMENT_KEY);
 		if (null == ftCollectionEl)
 			return null;
@@ -96,7 +128,7 @@ public class TmXmlReader implements TmXmlKeys {
 			Feature feature = Feature.valueOf(ftEl.getAttributeValue(THRESHOLD_FEATURE_ATTRIBUTE_NAME));
 			Float value 	= ftEl.getAttribute(THRESHOLD_VALUE_ATTRIBUTE_NAME).getFloatValue();
 			boolean isAbove	= ftEl.getAttribute(THRESHOLD_ABOVE_ATTRIBUTE_NAME).getBooleanValue();
-			FeatureThreshold ft = new FeatureThreshold(feature, value, isAbove);
+			FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
 			featureThresholds.add(ft);
 		}
 		return featureThresholds;
@@ -234,7 +266,7 @@ public class TmXmlReader implements TmXmlKeys {
 	}
 	
 	/**
-	 * Return the spot selection stored in this file, taken from the list of all spots, given in argument.
+	 * Return the filtered spots stored in this file, taken from the list of all spots, given in argument.
 	 * <p>
 	 * The {@link Spot} objects in this list will be the same that of the main list given in argument. 
 	 * If a spot ID referenced in the file is in the selection but not in the list given in argument,
@@ -246,7 +278,7 @@ public class TmXmlReader implements TmXmlKeys {
 	 * @throws DataConversionException  if the attribute values are not formatted properly in the file.
 	 */
 	@SuppressWarnings("unchecked")
-	public SpotCollection getSpotSelection(SpotCollection allSpots) throws DataConversionException {
+	public SpotCollection getFilteredSpots(SpotCollection allSpots) throws DataConversionException {
 		Element selectedSpotCollection = root.getChild(SELECTED_SPOT_ELEMENT_KEY);
 		if (null == selectedSpotCollection)
 			return null;
@@ -294,7 +326,7 @@ public class TmXmlReader implements TmXmlKeys {
 	 * @throws DataConversionException  if the attribute values are not formatted properly in the file.
 	 */
 	@SuppressWarnings("unchecked")
-	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> getTracks(SpotCollection selectedSpots) throws DataConversionException {
+	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> getTracks(SpotCollection filteredSpots) throws DataConversionException {
 		
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
 		if (null == allTracksElement)
@@ -302,13 +334,9 @@ public class TmXmlReader implements TmXmlKeys {
 		
 		// Add all spots to the graph
 		SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
-//		for(int frame : selectedSpots.keySet())
-//			for(Spot spot : selectedSpots.get(frame))
-//				trackGraph.addVertex(spot);		
-//		Set<Spot> spots = trackGraph.vertexSet();
 
 		Set<Spot> spots = new HashSet<Spot>();
-		for(List<Spot> st : selectedSpots.values())
+		for(List<Spot> st : filteredSpots.values())
 			spots.addAll(st);
 		
 		// Load tracks

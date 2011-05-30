@@ -171,7 +171,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		case INITIAL_THRESHOLDING_KEY:
 			if (null != initThresholdingPanel)
 				jPanelMain.remove(initThresholdingPanel);
-			initThresholdingPanel = new InitThresholdPanel(model.getFeatureValues(), model.getInitialThreshold());
+			initThresholdingPanel = new InitThresholdPanel(model.getFeatureValues(), model.getInitialFilterValue());
 			panel = initThresholdingPanel;
 			break;
 
@@ -185,7 +185,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		case THRESHOLD_GUI_KEY:
 			if (null != thresholdGuiPanel) 
 				jPanelMain.remove(thresholdGuiPanel);
-			thresholdGuiPanel = new ThresholdGuiPanel(model.getFeatureValues(), model.getFeatureThresholds());
+			thresholdGuiPanel = new ThresholdGuiPanel(model.getFeatureValues(), model.getFeatureFilters());
 			panel = thresholdGuiPanel;
 			break;
 

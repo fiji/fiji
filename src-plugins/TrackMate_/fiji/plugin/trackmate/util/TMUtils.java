@@ -20,7 +20,7 @@ import mpicbg.imglib.image.ImagePlusAdapter;
 import mpicbg.imglib.type.numeric.RealType;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Feature.Dimension;
-import fiji.plugin.trackmate.FeatureThreshold;
+import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
@@ -70,7 +70,7 @@ public class TMUtils {
 	 * Given a list of spots, only spots with the feature satisfying the threshold given
 	 * in argument are returned. 
 	 */
-	public static TreeMap<Integer, List<Spot>> thresholdSpots(final TreeMap<Integer, List<Spot>> spots, final FeatureThreshold featureThreshold) {
+	public static TreeMap<Integer, List<Spot>> thresholdSpots(final TreeMap<Integer, List<Spot>> spots, final FeatureFilter featureThreshold) {
 		TreeMap<Integer, List<Spot>> selectedSpots = new TreeMap<Integer, List<Spot>>();
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
@@ -118,7 +118,7 @@ public class TMUtils {
 	 * Given a list of spots, only spots with the feature satisfying <b>all</b> of the thresholds given
 	 * in argument are returned. 
 	 */
-	public static TreeMap<Integer, List<Spot>> thresholdSpots(final TreeMap<Integer, List<Spot>> spots, final List<FeatureThreshold> featureThresholds) {
+	public static TreeMap<Integer, List<Spot>> thresholdSpots(final TreeMap<Integer, List<Spot>> spots, final List<FeatureFilter> featureThresholds) {
 		TreeMap<Integer, List<Spot>> selectedSpots = new TreeMap<Integer, List<Spot>>();
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
@@ -130,7 +130,7 @@ public class TMUtils {
 			spotToKeep = new ArrayList<Spot>(spotThisFrame);
 			spotToRemove = new ArrayList<Spot>(spotThisFrame.size());
 
-			for (FeatureThreshold threshold : featureThresholds) {
+			for (FeatureFilter threshold : featureThresholds) {
 
 				tval = threshold.value;
 				if (null == tval)

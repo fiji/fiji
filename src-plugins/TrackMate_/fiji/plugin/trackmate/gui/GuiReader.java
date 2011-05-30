@@ -19,7 +19,7 @@ import org.jdom.JDOMException;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
-import fiji.plugin.trackmate.FeatureThreshold;
+import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
@@ -189,9 +189,9 @@ public class GuiReader {
 		
 		
 		{ // Try to read the initial threshold
-			FeatureThreshold initialThreshold = null;
+			FeatureFilter initialThreshold = null;
 			try {
-				initialThreshold = reader.getInitialThreshold();
+				initialThreshold = reader.getInitialFilter();
 			} catch (DataConversionException e) {
 				logger.error("Problem reading the initial threshold field of "+file.getName()
 						+". Error message is\n"+e.getLocalizedMessage()+'\n');
@@ -211,14 +211,14 @@ public class GuiReader {
 			}
 
 			// Store it in model
-			model.setInitialThreshold(initialThreshold.value);
+			model.setInitialFilterValue(initialThreshold.value);
 			logger.log("  Reading initial threshold done.\n");
 		}		
 		
 		{ // Try to read feature thresholds
-			List<FeatureThreshold> featureThresholds = null;
+			List<FeatureFilter> featureThresholds = null;
 			try {
-				featureThresholds = reader.getFeatureThresholds();
+				featureThresholds = reader.getFeatureFilters();
 			} catch (DataConversionException e) {
 				logger.error("Problem reading the feature threholds field of "+file.getName()
 						+". Error message is\n"+e.getLocalizedMessage()+'\n');
@@ -240,7 +240,7 @@ public class GuiReader {
 			}
 
 			// Store thresholds in model
-			model.setFeatureThresholds(featureThresholds);
+			model.setFeatureFilters(featureThresholds);
 			logger.log("  Reading feature thresholds done.\n");
 		}
 
@@ -248,7 +248,7 @@ public class GuiReader {
 		{ // Try to read spot selection
 			SpotCollection selectedSpots = null;
 			try {
-				selectedSpots = reader.getSpotSelection(model.getSpots());
+				selectedSpots = reader.getFilteredSpots(model.getSpots());
 			} catch (DataConversionException e) {
 				logger.error("Problem reading the spot selection field of "+file.getName()+". Error message is\n"+e.getLocalizedMessage()+'\n');
 			}
@@ -269,7 +269,7 @@ public class GuiReader {
 				return model;
 			}
 
-			model.setSpotSelection(selectedSpots);
+			model.setFilteredSpots(selectedSpots);
 			logger.log("  Reading spot selection done.\n");
 		}
 		
@@ -294,7 +294,7 @@ public class GuiReader {
 					controller.setState(GuiState.TUNE_TRACKER);
 					controller.setModelView(TrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
 					controller.getModelView().setSpots(model.getSpots());
-					controller.getModelView().setSpotsToShow(model.getSelectedSpots());
+					controller.getModelView().setSpotsToShow(model.getFilteredSpots());
 					if (!imp.isVisible())
 						imp.show();
 				}
@@ -312,7 +312,7 @@ public class GuiReader {
 		{ // Try reading the tracks 
 			SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph = null; 
 			try {
-				trackGraph = reader.getTracks(model.getSelectedSpots());
+				trackGraph = reader.getTracks(model.getFilteredSpots());
 			} catch (DataConversionException e) {
 				logger.error("Problem reading the track field of "+file.getName()
 						+". Error message is\n"+e.getLocalizedMessage()+'\n');
@@ -324,7 +324,7 @@ public class GuiReader {
 					controller.setState(GuiState.TUNE_TRACKER);
 					controller.setModelView(TrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
 					controller.getModelView().setSpots(model.getSpots());
-					controller.getModelView().setSpotsToShow(model.getSelectedSpots());
+					controller.getModelView().setSpotsToShow(model.getFilteredSpots());
 					if (!imp.isVisible())
 						imp.show();
 				}
@@ -341,7 +341,7 @@ public class GuiReader {
 		controller.setState(GuiState.TRACKING);
 		controller.setModelView(TrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
 		controller.getModelView().setSpots(model.getSpots());
-		controller.getModelView().setSpotsToShow(model.getSelectedSpots());
+		controller.getModelView().setSpotsToShow(model.getFilteredSpots());
 		controller.getModelView().setTrackGraph(model.getTrackGraph());
 		if (!imp.isVisible())
 			imp.show();

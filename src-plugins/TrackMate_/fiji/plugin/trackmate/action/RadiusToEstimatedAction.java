@@ -32,7 +32,7 @@ public class RadiusToEstimatedAction extends AbstractTMAction {
 	@Override
 	public void execute(final TrackMateModel model) {
 		logger.log("Setting all spot radiuses to their estimated value.\n");
-		SpotCollection spots = model.getSelectedSpots();
+		SpotCollection spots = model.getFilteredSpots();
 		for(Spot spot : spots)
 			spot.putFeature(Feature.RADIUS, spot.getFeature(Feature.ESTIMATED_DIAMETER) / 2);
 	}

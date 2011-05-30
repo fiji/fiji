@@ -1,7 +1,6 @@
 package fiji.plugin.trackmate.visualization.hyperstack;
 
 import ij.ImagePlus;
-import ij.gui.ImageCanvas;
 
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
@@ -11,6 +10,7 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
 import java.util.Collection;
@@ -36,7 +36,6 @@ public class SpotOverlay implements Overlay {
 	protected boolean spotVisible = true;
 	private ImagePlus imp;
 	private float[] calibration;
-	private ImageCanvas canvas;
 	private float radiusRatio = 1.0f;
 	private Composite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
 	private boolean spotNameVisible;
@@ -50,7 +49,6 @@ public class SpotOverlay implements Overlay {
 	public SpotOverlay(final ImagePlus imp, final float[] calibration) {
 		this.imp = imp;
 		this.calibration = calibration;
-		this.canvas = imp.getCanvas();
 	}
 
 	/*
@@ -102,6 +100,7 @@ public class SpotOverlay implements Overlay {
 		
 		g2d.setComposite(composite);
 		g2d.setFont(LABEL_FONT);
+		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		fm = g2d.getFontMetrics();
 		
 		final int frame = imp.getFrame()-1;
@@ -109,7 +108,7 @@ public class SpotOverlay implements Overlay {
 		final float mag = (float) magnification;
 
 		// Deal with normal spots.
-		g2d.setStroke(new BasicStroke((float) (1 / magnification)));
+		g2d.setStroke(new BasicStroke(1.0f));
 		Color color;
 		List<Spot> spots = target.get(frame);
 		if (null != spots) { 
@@ -129,7 +128,7 @@ public class SpotOverlay implements Overlay {
 
 		// Deal with spot selection
 		if (null != spotSelection) {
-			g2d.setStroke(new BasicStroke((float) (2 / canvas.getMagnification())));
+			g2d.setStroke(new BasicStroke(2.0f));
 			g2d.setColor(TrackMateModelView.HIGHLIGHT_COLOR);
 			Integer sFrame;
 			for(Spot spot : spotSelection) {
@@ -144,8 +143,7 @@ public class SpotOverlay implements Overlay {
 		// (it moves along with the current slice) 
 		if (null != editingSpot) {
 			g2d.setColor(TrackMateModelView.HIGHLIGHT_COLOR);
-			g2d.setStroke(new BasicStroke((float) (2 / canvas.getMagnification()), 
-					BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[] {5f, 5f} , 0));
+			g2d.setStroke(new BasicStroke(1.0f,	BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[] {5f, 5f} , 0));
 			final float x = editingSpot.getFeature(Feature.POSITION_X);
 			final float y = editingSpot.getFeature(Feature.POSITION_Y);
 			final float radius = editingSpot.getFeature(Feature.RADIUS) / calibration[0] * mag;

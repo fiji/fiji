@@ -17,17 +17,16 @@ import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 
 public class Branched3DTrackTestDrive {
 	
-	private static final String 	FILE_NAME_1 = "Celegans-5pc_17timepoints.xml";
-	private static final File 		SPLITTING_CASE_1 = new File(Branched3DTrackTestDrive.class.getResource(FILE_NAME_1).getFile());
-	
+	private static final File file = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
+
 	public static void main(String[] args) throws JDOMException, IOException {
 		
-		TmXmlReader reader = new TmXmlReader(SPLITTING_CASE_1);
+		TmXmlReader reader = new TmXmlReader(file);
 		reader.parse();
 		
 		// Load objects 
 		SpotCollection allSpots 		= reader.getAllSpots();
-		SpotCollection selectedSpots 	= reader.getSpotSelection(allSpots);
+		SpotCollection selectedSpots 	= reader.getFilteredSpots(allSpots);
 		SimpleWeightedGraph<Spot, DefaultWeightedEdge> tracks = reader.getTracks(selectedSpots);
 		
 		// Launch ImageJ

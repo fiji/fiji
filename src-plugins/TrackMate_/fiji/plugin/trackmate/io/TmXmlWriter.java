@@ -20,7 +20,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Feature;
-import fiji.plugin.trackmate.FeatureThreshold;
+import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
@@ -89,11 +89,11 @@ public class TmXmlWriter implements TmXmlKeys {
 	 * it has to be provided here.
 	 */
 	public void appendInitialThreshold() {
-		echoInitialThreshold(model.getInitialThreshold());
+		echoInitialThreshold(model.getInitialFilterValue());
 	}
 
 	/**
-	 * Append the list of {@link FeatureThreshold} to the {@link Document}.
+	 * Append the list of {@link FeatureFilter} to the {@link Document}.
 	 */
 	public void appendFeatureThresholds() {
 		echoThresholds();
@@ -340,10 +340,10 @@ public class TmXmlWriter implements TmXmlKeys {
 	}
 	
 	private void echoThresholds() {
-		List<FeatureThreshold> featureThresholds = model.getFeatureThresholds();
+		List<FeatureFilter> featureThresholds = model.getFeatureFilters();
 		
 		Element allTresholdElement = new Element(THRESHOLD_COLLECTION_ELEMENT_KEY);
-		for (FeatureThreshold threshold : featureThresholds) {
+		for (FeatureFilter threshold : featureThresholds) {
 			Element thresholdElement = new Element(THRESHOLD_ELEMENT_KEY);
 			thresholdElement.setAttribute(THRESHOLD_FEATURE_ATTRIBUTE_NAME, threshold.feature.name());
 			thresholdElement.setAttribute(THRESHOLD_VALUE_ATTRIBUTE_NAME, threshold.value.toString());
@@ -357,7 +357,7 @@ public class TmXmlWriter implements TmXmlKeys {
 	}
 	
 	private void echoSpotSelection() {
-		SpotCollection selectedSpots =  model.getSelectedSpots();
+		SpotCollection selectedSpots =  model.getFilteredSpots();
 		if (null == selectedSpots)
 			return;
 		List<Spot> spots;

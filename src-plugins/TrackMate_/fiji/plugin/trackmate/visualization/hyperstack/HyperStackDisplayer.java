@@ -1,15 +1,5 @@
 package fiji.plugin.trackmate.visualization.hyperstack;
 
-import fiji.plugin.trackmate.Feature;
-import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.visualization.TMModelEditEvent;
-import fiji.plugin.trackmate.visualization.TMSelectionChangeEvent;
-import fiji.plugin.trackmate.visualization.TrackMateModelView;
-import fiji.plugin.trackmate.visualization.TrackMateModelView.TrackDisplayMode;
-import fiji.util.gui.OverlayedImageCanvas;
 import ij.ImagePlus;
 import ij.gui.NewImage;
 import ij.gui.StackWindow;
@@ -24,6 +14,16 @@ import java.util.Set;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
+
+import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.Settings;
+import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.visualization.TMSelectionChangeEvent;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.util.gui.OverlayedImageCanvas;
 
 public class HyperStackDisplayer extends TrackMateModelView  {
 
@@ -46,10 +46,11 @@ public class HyperStackDisplayer extends TrackMateModelView  {
 	 * CONSTRUCTORS
 	 */
 	
-	public HyperStackDisplayer(final Settings settings) {
+	public HyperStackDisplayer(final TrackMateModel model) {
+		this.model = model;
+		this.settings = model.getSettings();
 		this.imp = settings.imp;
-		this.calibration = new float[] { settings.dx, settings.dy, settings.dz };
-		this.settings = settings;
+		this.calibration = settings.getCalibration();
 	}
 	
 	/*
@@ -68,25 +69,17 @@ public class HyperStackDisplayer extends TrackMateModelView  {
 	/*
 	 * PUBLIC METHODS
 	 */
-
-
-	@Override
-	public void modelChanged(TMModelEditEvent event) {
-		// TODO Auto-generated method stub
-		
-	}
 	
+	@Override
+	protected void spotSelectionChanged(Spot target, boolean replace) {
+		super.spotSelectionChanged(target, replace);
+	}
+
 	@Override
 	protected void fireTMSelectionChange(TMSelectionChangeEvent event) {
-		// Forward to listeners, subtituting ourselves as source of the event
+		// Forward to listeners, substituting ourselves as source of the event
 		TMSelectionChangeEvent newEvent = new TMSelectionChangeEvent(this, event.getSpots(), event.getEdges());
 		super.fireTMSelectionChange(newEvent);
-	}
-	
-	
-	public void collectionChanged(TMModelEditEvent event) {
-		event.setSource(this);
-		fireSpotCollectionEdit(event);
 	}
 	
 	@Override
@@ -158,7 +151,6 @@ public class HyperStackDisplayer extends TrackMateModelView  {
 		canvas.addOverlay(trackOverlay);
 		imp.updateAndDraw();
 		registerEditTool();
-		editTool.addSpotCollectionEditListener(this);
 	}
 	
 	@Override
