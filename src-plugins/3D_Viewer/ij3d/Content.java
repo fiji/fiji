@@ -24,6 +24,7 @@ import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.media.j3d.View;
 
+import javax.vecmath.Vector3f;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
 
@@ -33,7 +34,7 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Content extends BranchGroup implements UniverseListener, ContentConstants {
+public class Content extends BranchGroup implements UniverseListener, ContentConstants, AxisConstants {
 
 	private HashMap<Integer, Integer> timepointToSwitchIndex;
 	private TreeMap<Integer, ContentInstant> contents;
@@ -429,6 +430,22 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 			c.applyTransform(transform);
 	}
 
+	public void applyRotation(int axis, double degree) {
+		Transform3D t = new Transform3D();
+		switch(axis) {
+			case X_AXIS: t.rotX(deg2rad(degree)); break;
+			case Y_AXIS: t.rotY(deg2rad(degree)); break;
+			case Z_AXIS: t.rotZ(deg2rad(degree)); break;
+		}
+		applyTransform(t);
+	}
+
+	public void applyTranslation(float dx, float dy, float dz) {
+		Transform3D t = new Transform3D();
+		t.setTranslation(new Vector3f(dx, dy, dz));
+		applyTransform(t);
+	}
+
 	public void setTransform(double[] matrix) {
 		setTransform(new Transform3D(matrix));
 	}
@@ -436,6 +453,26 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 	public void setTransform(Transform3D transform) {
 		for(ContentInstant c : contents.values())
 			c.setTransform(transform);
+	}
+
+	public void setRotation(int axis, double degree) {
+		Transform3D t = new Transform3D();
+		switch(axis) {
+			case X_AXIS: t.rotX(deg2rad(degree)); break;
+			case Y_AXIS: t.rotY(deg2rad(degree)); break;
+			case Z_AXIS: t.rotZ(deg2rad(degree)); break;
+		}
+		setTransform(t);
+	}
+
+	public void setTranslation(float dx, float dy, float dz) {
+		Transform3D t = new Transform3D();
+		t.setTranslation(new Vector3f(dx, dy, dz));
+		setTransform(t);
+	}
+
+	private double deg2rad(double deg) {
+		return deg * Math.PI / 180.0;
 	}
 
 	/* ************************************************************
