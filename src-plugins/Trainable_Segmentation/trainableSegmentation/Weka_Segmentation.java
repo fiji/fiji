@@ -833,6 +833,8 @@ public class Weka_Segmentation implements PlugIn
 					//IJ.log("closing window");
 					// cleanup								
 					// Stop any thread from the segmentator
+					if(null != trainingTask)
+						trainingTask.interrupt();
 					wekaSegmentation.shutDownNow();
 					exec.shutdownNow();	
 					
