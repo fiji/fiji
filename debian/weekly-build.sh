@@ -16,7 +16,7 @@ then
     # from scratch:
 
     rm -rf fiji-*
-    git clone contrib@pacific.mpi-cbg.de:/srv/git/fiji.git
+    git clone contrib@fiji.sc:/srv/git/fiji.git
     ( cd fiji &&
 	git submodule update --init \
 	    modules/AutoComplete \
@@ -107,6 +107,6 @@ fi
     git commit -m "debian: Changes produced by the weekly build" &&
     git fetch origin master &&
     git rebase origin/master &&
-    git config remote.origin.url longair@pacific.mpi-cbg.de:/srv/git/fiji.git &&
+    git config remote.origin.url longair@fiji.sc:/srv/git/fiji.git &&
     git push origin master
 )
