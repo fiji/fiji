@@ -50,6 +50,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.ImagePlusAdapter;
+import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.imglib.algorithm.fft.FourierConvolution;
+
 import anisotropic_diffusion.Anisotropic_Diffusion_2D;
 
 import stitching.FloatArray2D;
@@ -139,7 +144,7 @@ public class FeatureStack
 	/** size of the patch to use to enhance membranes (in pixels, NxN) */
 	private int membranePatchSize = 19;
 	/** number of rotating angles for membrane, Kuwahara and Gabor features */
-	private int nAngles = 30;
+	private int nAngles = 10;
 	
 	/** executor service to produce concurrent threads */
 	ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
@@ -1063,14 +1068,21 @@ public class FeatureStack
 				// Apply kernels
 				for (int i=0; i<nAngles; i++)
 				{
-					//final double theta = rotationAngle * i;		
-					final Convolver c = new Convolver();				
-					
-					final float[] kernel = (float[]) kernels.getProcessor(i+1).getPixels();
-					final ImageProcessor ip = originalImage.getProcessor().duplicate();		
-					c.convolveFloat(ip, kernel, filterSizeX, filterSizeY);		
+					Image<FloatType> kernel = ImagePlusAdapter.wrap( new ImagePlus("", kernels.getProcessor(i+1)) );
+					Image<FloatType> image2 = ImagePlusAdapter.wrap(originalImage); 
 
-					is.addSlice("gabor angle = " + i, ip);
+					// compute fourier convolution
+					FourierConvolution<FloatType, FloatType> fourierConvolution = new FourierConvolution<FloatType, FloatType>( image2, kernel );
+					
+					if ( !fourierConvolution.checkInput() || !fourierConvolution.process() )
+					{
+						IJ.log( "Cannot compute fourier convolution: " + fourierConvolution.getErrorMessage() );
+						return null;
+					}
+						
+					Image<FloatType>  convolved = fourierConvolution.getResult();
+								
+					is.addSlice("gabor angle = " + i, ImageJFunctions.copyToImagePlus( convolved ).getProcessor() );					
 				}
 				
 				
@@ -1954,27 +1966,27 @@ public class FeatureStack
 			
 			// Gabor filters
 			if ( enableFeatures[ GABOR ] )
-			{
+			{				
 				// elongated filters in y- axis (sigma = 1.0, gamma = [1.0 - 0.25])
-				for(int i=0; i < 3; i++)
+				for(int i=0; i < 2; i++)
 					for(double gamma = 1; gamma >= 0.25; gamma /= 2)						
-						for(int frequency = 2; frequency<=3; frequency ++)
+						for(int frequency = 2; frequency<3; frequency ++)
 						{
 							if (Thread.currentThread().isInterrupted()) 
 								return false;
-							final double psi = Math.PI / 4 * i;
+							final double psi = Math.PI / 2 * i;
 							//IJ.log( n++ +": Calculating Gabor filter (1.0, " + gamma + ", " + psi + ", " + frequency + ", " + nAngles + ")");
 							futures.add(exe.submit( getGabor(originalImage, 1.0, gamma, psi, frequency, nAngles) ) );
 						}
 				// elongated filters in x- axis (sigma = [2.0 - 4.0], gamma = [1.0 - 2.0])
-				for(int i=0; i < 3; i++)
+				for(int i=0; i < 2; i++)
 					for(double sigma = 2.0; sigma <= 4.0; sigma *= 2)					
 						for(double gamma = 1.0; gamma <= 2.0; gamma *= 2)
 							for(int frequency = 2; frequency<=3; frequency ++)
 							{
 								if (Thread.currentThread().isInterrupted()) 
 									return false;
-								final double psi = Math.PI / 4 * i;
+								final double psi = Math.PI / 2 * i;
 								//IJ.log( n++ +": Calculating Gabor filter (" + sigma + " , " + gamma + ", " + psi + ", " + frequency + ", " + nAngles + ")");
 								futures.add(exe.submit( getGabor(originalImage, sigma, gamma, psi, frequency, nAngles) ) );
 							}								
