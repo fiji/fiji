@@ -24,6 +24,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMateModelChangeListener;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
@@ -38,7 +39,7 @@ import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
  * <p>
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Jan 2011
  */
-public abstract class TrackMateModelView implements TMSelectionDisplayer, TrackMateModelViewI {
+public abstract class TrackMateModelView implements TMSelectionDisplayer, TrackMateModelViewI, TrackMateModelChangeListener {
 	
 	/*
 	 * FIELDS
@@ -102,7 +103,16 @@ public abstract class TrackMateModelView implements TMSelectionDisplayer, TrackM
 	
 	@Override
 	public void setModel(TrackMateModel model) {
-		this.model = model;	}
+		if (null != this.model)
+			this.model.removeTrackMateModelChangeListener(this);
+		this.model = model;
+		this.model.addTrackMateModelChangeListener(this);
+	}
+	
+	public void modelChanged(fiji.plugin.trackmate.TrackMateModelChangeEvent event) {
+		refresh();
+	};
+
 	
 	/*
 	 * TMSelectionChangeListener

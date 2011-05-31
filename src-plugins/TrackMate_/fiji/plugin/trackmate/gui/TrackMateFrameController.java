@@ -123,11 +123,6 @@ public class TrackMateFrameController implements ActionListener {
 			
 			// Display Track scheme
 			final TrackSchemeFrame trackScheme = new TrackSchemeFrame(model);
-			
-
-			// TODO TODO put listeners for spot edition here
-			
-			
 			trackScheme.setVisible(true);
 
 			

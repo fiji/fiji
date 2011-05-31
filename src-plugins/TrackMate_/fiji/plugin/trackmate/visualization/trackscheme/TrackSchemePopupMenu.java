@@ -22,6 +22,7 @@ import fiji.plugin.trackmate.Spot;
 
 public class TrackSchemePopupMenu extends JPopupMenu {
 
+	private static final long serialVersionUID = -5168784267411318961L;
 	private Object cell;
 	private TrackSchemeFrame frame;
 	private Point point;
@@ -38,7 +39,7 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 	private void init() {
 		
 		// Build selection categories
-		final Object[] selection = frame.graph.getSelectionCells();
+		final Object[] selection = frame.getGraph().getSelectionCells();
 		final ArrayList<mxCell> vertices = new ArrayList<mxCell>();
 		final ArrayList<mxCell> edges = new ArrayList<mxCell>();
 		for(Object obj : selection) {
@@ -53,7 +54,7 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 			// Edit
 			add(new AbstractAction("Edit spot name") {
 				public void actionPerformed(ActionEvent e) {
-					frame.graphComponent.startEditingAtCell(cell);
+					frame.getGraphComponent().startEditingAtCell(cell);
 				}
 			});
 			
@@ -61,11 +62,11 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 			add(new AbstractAction("Fold/Unfold branch") {
 				public void actionPerformed(ActionEvent e) {
 					Object parent;
-					if (frame.graph.isCellFoldable(cell, true))
+					if (frame.getGraph().isCellFoldable(cell, true))
 						parent = cell;
 					else
-						parent = frame.graph.getModel().getParent(cell);
-					frame.graph.foldCells(!frame.graph.isCellCollapsed(parent), false, new Object[] { parent });
+						parent = frame.getGraph().getModel().getParent(cell);
+					frame.getGraph().foldCells(!frame.getGraph().isCellCollapsed(parent), false, new Object[] { parent });
 				}
 			});
 
@@ -78,16 +79,16 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 					
 					public void actionPerformed(ActionEvent e) {
 						final mxCell firstCell = vertices.remove(0);
-						frame.graphComponent.startEditingAtCell(firstCell, e);
-						frame.graphComponent.addListener(mxEvent.LABEL_CHANGED, new mxIEventListener() {
+						frame.getGraphComponent().startEditingAtCell(firstCell, e);
+						frame.getGraphComponent().addListener(mxEvent.LABEL_CHANGED, new mxIEventListener() {
 							
 							@Override
 							public void invoke(Object sender, mxEventObject evt) {
 								for (mxCell cell : vertices) {
 									cell.setValue(firstCell.getValue());
-									frame.graph.getCellToVertexMap().get(cell).setName(firstCell.getValue().toString());
+									frame.getGraph().getCellToVertexMap().get(cell).setName(firstCell.getValue().toString());
 								}
-								frame.graphComponent.removeListener(this);
+								frame.getGraphComponent().removeListener(this);
 							}
 						});
 					}
@@ -103,12 +104,12 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 					// Sort spots by time
 					TreeMap<Float, Spot> spotsInTime = new TreeMap<Float, Spot>();
 					for (mxCell cell : vertices) {
-						Spot spot = frame.graph.getCellToVertexMap().get(cell);
+						Spot spot = frame.getGraph().getCellToVertexMap().get(cell);
 						spotsInTime.put(spot.getFeature(Feature.POSITION_T), spot);
 					}
 					// Then link them in this order
 					try {
-						frame.graph.getModel().beginUpdate();
+						frame.getGraph().getModel().beginUpdate();
 						Iterator<Float> it = spotsInTime.keySet().iterator();
 						Float previousTime = it.next();
 						Spot previousSpot = spotsInTime.get(previousTime);
@@ -118,17 +119,17 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 							currentTime = it.next();
 							currentSpot = spotsInTime.get(currentTime);
 							// Link if not linked already
-							if (frame.trackGraph.containsEdge(previousSpot, currentSpot))
+							if (frame.getModel().getTrackGraph().containsEdge(previousSpot, currentSpot))
 								continue;
 							// This will update the mxGraph view
-							DefaultWeightedEdge edge = frame.lGraph.addEdge(previousSpot, currentSpot);
-							frame.lGraph.setEdgeWeight(edge, -1); // Default Weight
+							DefaultWeightedEdge edge = frame.getGraphT().addEdge(previousSpot, currentSpot);
+							frame.getGraphT().setEdgeWeight(edge, -1); // Default Weight
 							// Update the MODEL graph as well
-							frame.trackGraph.addEdge(previousSpot, currentSpot, edge);
+							frame.getModel().getTrackGraph().addEdge(previousSpot, currentSpot, edge);
 							previousSpot = currentSpot;
 						}
 					} finally {
-						frame.graph.getModel().endUpdate();
+						frame.getGraph().getModel().endUpdate();
 					}
 				}
 			};
@@ -140,10 +141,10 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 			Action removeAction = new AbstractAction("Remove spots and links") {
 				public void actionPerformed(ActionEvent e) {
 					try {
-					frame.graph.getModel().beginUpdate();
-					frame.graph.removeCells(selection);
+					frame.getGraph().getModel().beginUpdate();
+					frame.getGraph().removeCells(selection);
 					} finally {
-						frame.graph.getModel().endUpdate();
+						frame.getGraph().getModel().endUpdate();
 					}
 				}
 			};

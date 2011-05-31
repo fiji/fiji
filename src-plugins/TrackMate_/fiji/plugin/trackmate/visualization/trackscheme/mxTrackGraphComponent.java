@@ -46,14 +46,14 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 	private TrackSchemeFrame frame;
 
 	public mxTrackGraphComponent(TrackSchemeFrame frame) {
-		super(frame.graph);
+		super(frame.getGraph());
 		this.frame = frame;
 		getViewport().setOpaque(true);
 		getViewport().setBackground(BACKGROUND_COLOR_1);
 		setZoomFactor(2.0);
 
 		instants = new TreeSet<Float>();
-		for (Spot s : frame.trackGraph.vertexSet())
+		for (Spot s : frame.getModel().getTrackGraph().vertexSet())
 			instants.add(s.getFeature(Feature.POSITION_T));
 		
 		connectionHandler.addListener(mxEvent.CONNECT, this);
@@ -282,8 +282,8 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		for(Float instant : instants) {
 			if (xcs > paintBounds.x && y > paintBounds.y - ycs && y < paintBounds.y + paintBounds.height) {
-				g.drawString(String.format("%.1f "+frame.settings.timeUnits, instant), x, y);
-				g.drawString(String.format("frame %.0f", (instant+1)/frame.settings.dt), x, Math.round(y+12*scale));
+				g.drawString(String.format("%.1f "+frame.getModel().getSettings().timeUnits, instant), x, y);
+				g.drawString(String.format("frame %.0f", (instant+1)/frame.getModel().getSettings().dt), x, Math.round(y+12*scale));
 			}
 			y += ycs;
 		}
@@ -333,26 +333,26 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		mxCell cell = (mxCell) obj;
 		DefaultWeightedEdge edge;
 		if (cell.isEdge()) {
-			frame.graph.getModel().beginUpdate();
+			frame.getGraph().getModel().beginUpdate();
 			try {
-				Spot source = frame.graph.getCellToVertexMap().get(cell.getSource());
-				Spot target = frame.graph.getCellToVertexMap().get(cell.getTarget());
+				Spot source = frame.getGraph().getCellToVertexMap().get(cell.getSource());
+				Spot target = frame.getGraph().getCellToVertexMap().get(cell.getTarget());
 				// We add a new jGraphT edge to the underlying model
-				edge = frame.lGraph.addEdge(source, target);
-				frame.lGraph.setEdgeWeight(edge, -1);
+				edge = frame.getGraphT().addEdge(source, target);
+				frame.getGraphT().setEdgeWeight(edge, -1);
 				// Then, remove the old JGraphX edge.
-				frame.graph.removeCells(new Object[] { cell });
+				frame.getGraph().removeCells(new Object[] { cell });
 				evt.consume();
 			} finally {
-				frame.graph.getModel().endUpdate();
+				frame.getGraph().getModel().endUpdate();
 			}
 			// Then we do the update, and get the new JGraphX edge (through the map in the adapter) and change its value and style. Easy.
-			frame.graph.getModel().beginUpdate();
+			frame.getGraph().getModel().beginUpdate();
 			try {
-				mxCell newEdgeCell = frame.graph.getEdgeToCellMap().get(edge);
+				mxCell newEdgeCell = frame.getGraph().getEdgeToCellMap().get(edge);
 				newEdgeCell.setValue("New");
 			} finally {
-				frame.graph.getModel().endUpdate();
+				frame.getGraph().getModel().endUpdate();
 			}
 		}
 	}

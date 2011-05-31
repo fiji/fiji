@@ -57,14 +57,14 @@ public class TrackSchemeToolbar extends JToolBar {
 		boolean defaultLinkingEnabled = frame.defaultLinkingEnabled;
 		final Action toggleLinkingAction = new AbstractAction(null, defaultLinkingEnabled ? LINKING_ON_ICON : LINKING_OFF_ICON) {
 			public void actionPerformed(ActionEvent e) {
-				boolean enabled = frame.graphComponent.getConnectionHandler().isEnabled();
+				boolean enabled = frame.getGraphComponent().getConnectionHandler().isEnabled();
 				ImageIcon connectIcon;
 				if (enabled)
 					connectIcon = LINKING_OFF_ICON;
 				else
 					connectIcon = LINKING_ON_ICON;
 				putValue(SMALL_ICON, connectIcon);
-				frame.graphComponent.getConnectionHandler().setEnabled(!enabled);
+				frame.getGraphComponent().getConnectionHandler().setEnabled(!enabled);
 			}
 			
 		};
@@ -83,17 +83,17 @@ public class TrackSchemeToolbar extends JToolBar {
 		final JButton  resetZoomButton = new JButton();
 		zoomInAction = new AbstractAction(null, ZOOM_IN_ICON) {
 			public void actionPerformed(ActionEvent e) {
-				frame.graphComponent.zoomIn();
+				frame.getGraphComponent().zoomIn();
 			}
 		};
 		zoomOutAction = new AbstractAction(null, ZOOM_OUT_ICON) {
 			public void actionPerformed(ActionEvent e) {
-				frame.graphComponent.zoomOut();
+				frame.getGraphComponent().zoomOut();
 			}
 		};
 		resetZoomAction  = new AbstractAction(null, RESET_ZOOM_ICON) {
 			public void actionPerformed(ActionEvent e) {
-				frame.graphComponent.zoomTo(1.0, false);
+				frame.getGraphComponent().zoomTo(1.0, false);
 			}
 		};
 		zoomInButton.setAction(zoomInAction);
@@ -126,19 +126,19 @@ public class TrackSchemeToolbar extends JToolBar {
 		 * Folding
 		 */
 		
-		boolean defaultEnabled = frame.graphLayout.isBranchGroupingEnabled();
+		boolean defaultEnabled = frame.getGraphLayout().isBranchGroupingEnabled();
 		final JButton foldAllButton = new JButton(null, FOLD_ALL_BRANCHES_ICON);
 		foldAllButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				frame.graphLayout.setAllFolded(true);
+				frame.getGraphLayout().setAllFolded(true);
 			}
 		});
 		final JButton unFoldAllButton = new JButton(null, UNFOLD_ALL_BRANCHES_ICON);
 		unFoldAllButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				frame.graphLayout.setAllFolded(false);
+				frame.getGraphLayout().setAllFolded(false);
 			}
 		});
 		final JButton toggleEnableFoldingButton = new JButton(null, 
@@ -147,8 +147,8 @@ public class TrackSchemeToolbar extends JToolBar {
 		toggleEnableFoldingButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				boolean enabled = frame.graphLayout.isBranchGroupingEnabled();
-				frame.graphLayout.setBranchGrouping(!enabled);
+				boolean enabled = frame.getGraphLayout().isBranchGroupingEnabled();
+				frame.getGraphLayout().setBranchGrouping(!enabled);
 				
 				if (enabled) {
 					toggleEnableFoldingButton.setIcon(BRANCH_FOLDING_OFF_ICON);	
@@ -174,7 +174,8 @@ public class TrackSchemeToolbar extends JToolBar {
 		final Action captureUndecoratedAction = new AbstractAction(null, CAPTURE_UNDECORATED_ICON) {			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				BufferedImage image = mxCellRenderer.createBufferedImage(frame.graph, null, 1, Color.WHITE, true, null, frame.graphComponent.getCanvas());
+				BufferedImage image = mxCellRenderer.createBufferedImage(frame.getGraph(), null, 1, Color.WHITE, true, null, 
+						frame.getGraphComponent().getCanvas());
 				ImagePlus imp = new ImagePlus("Track scheme capture", image);
 				imp.show();
 			}
@@ -182,7 +183,7 @@ public class TrackSchemeToolbar extends JToolBar {
 		final Action captureDecoratedAction = new AbstractAction(null, CAPTURE_DECORATED_ICON) {			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JViewport view = frame.graphComponent.getViewport();
+				JViewport view = frame.getGraphComponent().getViewport();
 				Point currentPos = view.getViewPosition();
 				view.setViewPosition(new Point(0, 0)); // We have to do that otherwise, top left is not painted
 				Dimension size = view.getViewSize();

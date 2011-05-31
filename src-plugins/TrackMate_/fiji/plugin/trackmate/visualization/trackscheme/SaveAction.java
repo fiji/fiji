@@ -60,8 +60,8 @@ public class SaveAction extends AbstractAction {
 	 * Saves XML+PNG format.
 	 */
 	protected void saveXmlPng(TrackSchemeFrame frame, String filename, Color bg) throws IOException {
-		mxGraphComponent graphComponent = frame.graphComponent;
-		mxGraph graph = frame.graph;
+		mxGraphComponent graphComponent = frame.getGraphComponent();
+		mxGraph graph = frame.getGraph();
 
 		// Creates the image for the PNG file
 		BufferedImage image = mxCellRenderer.createBufferedImage(graph,	null, 1, bg, graphComponent.isAntiAlias(), null, graphComponent.getCanvas());
@@ -92,8 +92,8 @@ public class SaveAction extends AbstractAction {
 	 */
 	public void actionPerformed(ActionEvent e) {
 
-		mxGraphComponent graphComponent = frame.graphComponent;
-		mxGraph graph =frame.graph;
+		mxGraphComponent graphComponent = frame.getGraphComponent();
+		mxGraph graph =frame.getGraph();
 		FileFilter selectedFilter = null;
 		DefaultFileFilter xmlPngFilter = new DefaultFileFilter(".png", "PNG+XML file (.png)");
 		FileFilter vmlFileFilter = new DefaultFileFilter(".html", "VML file (.html)");

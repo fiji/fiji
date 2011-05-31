@@ -21,6 +21,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 import fiji.plugin.trackmate.visualization.TMSelectionChangeEvent;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.util.gui.OverlayedImageCanvas;
@@ -47,7 +48,7 @@ public class HyperStackDisplayer extends TrackMateModelView  {
 	 */
 	
 	public HyperStackDisplayer(final TrackMateModel model) {
-		this.model = model;
+		setModel(model);
 		this.settings = model.getSettings();
 		this.imp = settings.imp;
 		this.calibration = settings.getCalibration();
@@ -69,6 +70,21 @@ public class HyperStackDisplayer extends TrackMateModelView  {
 	/*
 	 * PUBLIC METHODS
 	 */
+	
+	@Override
+	public void modelChanged(TrackMateModelChangeEvent event) {
+		// The only events type that will not be automatically taken into account here is
+		// the ones that modifies the track numbers.
+		boolean redoOverlay = false;
+		for (Spot spot : event.getSpots()) {
+			if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.SPOT_REMOVED) {
+				redoOverlay = true;
+				break;
+			}
+		}
+		if (redoOverlay)
+			setTrackGraph(model.getTrackGraph());
+	}
 	
 	@Override
 	protected void spotSelectionChanged(Spot target, boolean replace) {

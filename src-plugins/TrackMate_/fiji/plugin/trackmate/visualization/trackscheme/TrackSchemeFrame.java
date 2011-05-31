@@ -18,12 +18,8 @@ import javax.swing.JFrame;
 import javax.swing.JSplitPane;
 import javax.swing.JToolBar;
 
-import org.jgrapht.Graph;
-import org.jgrapht.event.GraphEdgeChangeEvent;
-import org.jgrapht.event.GraphVertexChangeEvent;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.ListenableUndirectedWeightedGraph;
-import org.jgrapht.graph.SimpleWeightedGraph;
 
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
@@ -42,13 +38,15 @@ import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMateModelChangeEvent;
+import fiji.plugin.trackmate.TrackMateModelChangeListener;
 import fiji.plugin.trackmate.visualization.TMSelectionChangeEvent;
 import fiji.plugin.trackmate.visualization.TMSelectionChangeListener;
 import fiji.plugin.trackmate.visualization.TMSelectionDisplayer;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelViewI;
 
-public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, TrackMateModelViewI {
+public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, TrackMateModelViewI, TrackMateModelChangeListener {
 
 	/*
 	 * CONSTANTS
@@ -72,24 +70,24 @@ public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, Tr
 	 * FIELDS
 	 */
 
-	SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph;
-	ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge> lGraph;
-	Settings settings;
-	JGraphXAdapter<Spot, DefaultWeightedEdge> graph;
+//	SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph;
+	private ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge> lGraph;
+	private Settings settings;
+	private JGraphXAdapter<Spot, DefaultWeightedEdge> graph;
 
 	/** The spots currently selected. */
 	private HashSet<Spot> spotSelection = new HashSet<Spot>();
 	/** The side pane in which spot selection info will be displayed.	 */
-	InfoPane infoPane;
+	private InfoPane infoPane;
 	/** The graph component in charge of painting the graph. */
-	mxTrackGraphComponent graphComponent;
+	private mxTrackGraphComponent graphComponent;
 	/** The layout manager that can be called to re-arrange cells in the graph. */
-	mxTrackGraphLayout graphLayout;
+	private mxTrackGraphLayout graphLayout;
 	/** Is linking allowed by default? Can be changed in the toolbar. */
 	boolean defaultLinkingEnabled = false;
 	/** A flag used to prevent double event firing when setting the selection programmatically. */
 	private boolean doFireTMSelectionChangeEvent = true;
-
+	
 	private ArrayList<TMSelectionChangeListener> selectionChangeListeners = new ArrayList<TMSelectionChangeListener>();
 	private TrackMateModel model;
 
@@ -138,9 +136,11 @@ public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, Tr
 
 	@Override
 	public void setModel(TrackMateModel model) {
+		if (null != this.model)
+			this.model.removeTrackMateModelChangeListener(this);
 		this.model = model;
-		this.trackGraph = model.getTrackGraph();
-		this.lGraph = new ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge>(trackGraph);
+		this.model.addTrackMateModelChangeListener(this);
+		this.lGraph = new ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge>(model.getTrackGraph());
 		this.graph = createGraph();
 		this.settings = model.getSettings();
 		this.graphLayout = new mxTrackGraphLayout(lGraph, graph, settings.dx);
@@ -217,7 +217,7 @@ public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, Tr
 	 * on the graph here.
 	 */
 	@Override
-	public void modelChanged(final TMModelEditEvent event) {
+	public void modelChanged(final TrackMateModelChangeEvent event) {
 
 		try {
 			graph.getModel().beginUpdate();
@@ -231,7 +231,7 @@ public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, Tr
 
 			for (Spot spot : event.getSpots() ) {
 
-				if (event.getSpotFlag(spot) == TMModelEditEvent.SPOT_ADDED) {
+				if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.SPOT_ADDED) {
 
 					// Instantiate JGraphX cell
 					cellAdded = new mxCell(spot.toString());
@@ -254,7 +254,7 @@ public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, Tr
 					graph.getCellToVertexMap().put(cellAdded, spot);
 					targetColumn++;
 
-				} else if (event.getSpotFlag(spot) == TMModelEditEvent.SPOT_MODIFIED) {
+				} else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.SPOT_MODIFIED) {
 
 					mxCell cell = graph.getVertexToCellMap().get(spot);
 					String style = cell.getStyle();
@@ -263,7 +263,7 @@ public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, Tr
 					int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Feature.RADIUS) / settings.dx));
 					graph.getModel().getGeometry(cell).setHeight(height);
 
-				}  else if (event.getSpotFlag(spot) == TMModelEditEvent.SPOT_DELETED) {
+				}  else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.SPOT_REMOVED) {
 
 					mxCell cell = graph.getVertexToCellMap().get(spot);
 					cellsToRemove .add(cell);
@@ -276,14 +276,6 @@ public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, Tr
 		} finally {
 			graph.getModel().endUpdate();
 		}
-	}
-
-	/**
-	 * Return an updated reference of the {@link Graph} that acts as a model for tracks. This graph will
-	 * have his edges and vertices updated by the manual interaction occurring in this view.
-	 */
-	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> getTrackModel() {
-		return trackGraph;
 	}
 
 	public void centerViewOn(mxCell cell) {
@@ -333,7 +325,7 @@ public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, Tr
 		if (spots.isEmpty())
 			return;
 
-		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, new ArrayList<Spot>(spots), trackGraph, settings);
+		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, new ArrayList<Spot>(spots), model.getTrackGraph(), settings);
 		grapher.setVisible(true);
 
 	}
@@ -401,23 +393,43 @@ public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, Tr
 		graph.addListener(mxEvent.CELLS_REMOVED, new mxIEventListener() {
 			@Override
 			public void invoke(Object sender, mxEventObject evt) {
+				
+				System.out.println("Source of event is "+sender.getClass().getSimpleName());// DEBUG
+				
+				// Separate spots from edges
 				Object[] objects = (Object[]) evt.getProperty("cells");
+				ArrayList<Spot> spotsToRemove = new ArrayList<Spot>();
+				ArrayList<Integer> fromFrames = new ArrayList<Integer>();
+				ArrayList<DefaultWeightedEdge> edgesToRemove = new ArrayList<DefaultWeightedEdge>();
 				for(Object obj : objects) {
 					mxCell cell = (mxCell) obj;
 					if (null != cell) {
 						if (cell.isVertex()) {
+							// Build list of removed spots 
 							Spot spot = graph.getCellToVertexMap().get(cell);
-							lGraph.removeVertex(spot);
-							trackGraph.removeVertex(spot);
-							fireVertexChangeEvent(new GraphVertexChangeEvent<Spot>(graph, GraphVertexChangeEvent.VERTEX_REMOVED, spot));
+							int frame = model.getSpots().getFrame(spot);
+							spotsToRemove.add(spot);
+							fromFrames.add(frame);
+							// Clean maps 
+							graph.getVertexToCellMap().remove(spot);
+							graph.getCellToVertexMap().remove(cell);
 						} else if (cell.isEdge()) {
+							// Build list of removed edges 
 							DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(cell);
-							lGraph.removeEdge(edge);
-							trackGraph.removeEdge(edge);
-							fireEdgeChangeEvent(new GraphEdgeChangeEvent<Spot, DefaultWeightedEdge>(graph, GraphEdgeChangeEvent.EDGE_REMOVED, edge));
+							edgesToRemove.add(edge);
+							// Clean maps
+							graph.getEdgeToCellMap().remove(edge);
+							graph.getCellToEdgeMap().remove(cell);
 						}
 					}
 				}
+				
+				// Clean listenable graph
+				lGraph.removeAllVertices(spotsToRemove);
+				lGraph.removeAllEdges(edgesToRemove);
+				
+				// Clean model
+				model.removeSpotFrom(spotsToRemove, fromFrames, true);
 			}
 		});
 
@@ -488,24 +500,6 @@ public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, Tr
 	/*
 	 * PRIVATE METHODS
 	 */
-
-	private void fireEdgeChangeEvent(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> event) {
-		//		for(GraphListener<Spot, DefaultWeightedEdge> listener : graphListeners) {
-		//			if (event.getType() == GraphEdgeChangeEvent.EDGE_ADDED)
-		//				listener.edgeAdded(event);
-		//			else if (event.getType() == GraphEdgeChangeEvent.EDGE_REMOVED)
-		//				listener.edgeRemoved(event);
-		//		}
-	}
-
-	private void fireVertexChangeEvent(GraphVertexChangeEvent<Spot> event) {
-		//		for(GraphListener<Spot, DefaultWeightedEdge> listener : graphListeners) {
-		//			if (event.getType() == GraphVertexChangeEvent.VERTEX_ADDED)
-		//				listener.vertexAdded(event);
-		//			else if (event.getType() == GraphVertexChangeEvent.VERTEX_REMOVED)
-		//				listener.vertexRemoved(event);
-		//		}
-	}
 
 	/**
 	 * Called when the user makes a selection change in the graph. Used to forward this event 
@@ -583,6 +577,32 @@ public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, Tr
 		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, infoPane, graphComponent);
 		splitPane.setDividerLocation(170);
 		getContentPane().add(splitPane, BorderLayout.CENTER);
+	}
+
+	/**
+	 * Return the {@link JGraphXAdapter} that serves as a model for the graph displayed in this frame.
+	 */
+	public JGraphXAdapter<Spot, DefaultWeightedEdge> getGraph() {
+		return graph;
+	}
+	
+	/**
+	 * Return the JGraphT listenable graph that bridges the track model and the JGraphX display.
+	 * @return
+	 */
+	public ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge> getGraphT() {
+		return lGraph;
+	}
+	
+	public mxTrackGraphComponent getGraphComponent() {
+		return graphComponent;
+	}
+	
+	/**
+	 * Return the graph layout in charge of arranging the cells on the graph.
+	 */
+	public mxTrackGraphLayout getGraphLayout() {
+		return graphLayout;	
 	}
 
 }

@@ -11,11 +11,11 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.util.ArrayList;
 import java.util.HashMap;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.tool.AbstractTool;
 
 
@@ -42,7 +42,6 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		+ "C641L0e1eCa72D2eCb73D3eCc94D4e";
 	
 
-	
 	private static SpotEditTool instance;
 	private HashMap<ImagePlus, Spot> editedSpots = new HashMap<ImagePlus, Spot>();
 	private HashMap<ImagePlus, HyperStackDisplayer> displayers = new HashMap<ImagePlus, HyperStackDisplayer>();
@@ -155,6 +154,9 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			// Empty current selection
 			displayer.spotSelectionChanged(null, true);
 			
+			// Get underlying model
+			TrackMateModel model = displayer.getModel();
+			
 			if (null == editedSpot) {
 				// No spot is currently edited, we pick one to edit
 				float radius;
@@ -182,13 +184,13 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				editedSpot.putFeature(Feature.POSITION_T, frame * displayer.settings.dt);
 				if (initFrame == null) {
 					// Means that the spot was created 
-					fireSpotCollectionEdit(editedSpot, TMModelEditEvent.SPOT_ADDED, null, frame);
+					model.addSpotTo(editedSpot, frame, true);
 				} else if (initFrame != frame) {
 					// Move it to the new frame
-					fireSpotCollectionEdit(editedSpot, TMModelEditEvent.SPOT_FRAME_CHANGED, initFrame, frame);
+					model.moveSpotsFrom(editedSpot, initFrame, frame, true);
 				} else {
 					// The spots pre-existed and was not moved across frames
-					fireSpotCollectionEdit(editedSpot, TMModelEditEvent.SPOT_MODIFIED, null, null);
+					model.updateFeatures(editedSpot, true);
 				}
 
 				// Forget edited spot
@@ -285,7 +287,8 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		
 		if (e.getKeyCode() == KeyEvent.VK_DELETE) {
 			Integer initFrame = displayer.getModel().getFilteredSpots().getFrame(editedSpot);
-			fireSpotCollectionEdit(editedSpot, TMModelEditEvent.SPOT_DELETED, initFrame, null);
+			TrackMateModel model = displayer.getModel();
+			model.removeSpotFrom(editedSpot, initFrame, true);
 			editedSpot = null;
 			displayer.spotOverlay.setEditedSpot(null);
 			editedSpots.put(imp, null);
@@ -301,22 +304,6 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	/*
 	 * PRIVATE METHODS
 	 */
-	
-	private void fireSpotCollectionEdit(Spot spot, int flag, Integer fromFrame, Integer toFrame) {
-		ArrayList<Spot> spots = new ArrayList<Spot>(1);
-		spots.add(spot);
-		ArrayList<Integer> flags = new ArrayList<Integer>(1);
-		flags.add(flag);
-		ArrayList<Integer> fromFrames = new ArrayList<Integer>(1);
-		fromFrames.add(fromFrame);
-		ArrayList<Integer> toFrames = new ArrayList<Integer>(1);
-		toFrames.add(toFrame);
-		
-		TMModelEditEvent event = new TMModelEditEvent(this, spots, flags, fromFrames, toFrames);
-		for (TMModelEditListener listener : spotCollectionEditListeners) {
-			listener.modelChanged(event);
-		}
-	}
 	
 	private void updateStatusBar(final Spot spot, final String units) {
 		if (null == spot)
