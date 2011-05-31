@@ -38,9 +38,9 @@
 ; multithreaded way, with the "multithreader" macro.
 ;
 ; See http://clojure.org for general documentation on Clojure
-; See http://pacific.mpi-cbg.de/wiki/index.php/Clojure_Scripting for help on
+; See http://fiji.sc/wiki/index.php/Clojure_Scripting for help on
 ; using Clojure with ImageJ
-; See http://pacific.mpi-cbg.de/wiki/index.php/Scripting_Help for how to use fiji's built-in scripting languages and how to create scripts for ImageJ.
+; See http://fiji.sc/wiki/index.php/Scripting_Help for how to use fiji's built-in scripting languages and how to create scripts for ImageJ.
 ;
 ; As a final note: Clojure runs native. There is no such thing as a clojure
 ; interpreter: all clojure code compiles to java byte code, which runs native

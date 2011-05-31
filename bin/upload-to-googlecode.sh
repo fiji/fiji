@@ -1,6 +1,6 @@
 #!/bin/sh
 
-URL=http://pacific.mpi-cbg.de
+URL=http://fiji.sc
 
 DOWNLOADS=$(curl $URL/wiki/index.php/Downloads |
 	sed -n 's|^.*a href="'$URL'/downloads/\([^/]*\).*$|\1|p' |

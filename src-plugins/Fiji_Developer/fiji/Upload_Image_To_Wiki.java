@@ -30,7 +30,7 @@ import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
 
 public class Upload_Image_To_Wiki implements PlugInFilter {
-	String url = "http://pacific.mpi-cbg.de/wiki/index.php";
+	String url = "http://fiji.sc/wiki/index.php";
 	int jpegQuality = 75;
 	String title;
 
