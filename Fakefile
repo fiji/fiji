@@ -120,24 +120,6 @@ SUBMODULE_TARGETS=\
 	jars/javassist.jar \
 	jars/jsch-0.1.44.jar \
 	jars/imglib-scripting.jar \
-	jars/ij-core-plugins.jar \
-	jars/ij-core-tools.jar \
-	jars/ij-core.jar \
-	jars/ij-data.jar \
-	jars/ij-display.jar \
-	jars/ij-event.jar \
-	jars/ij-legacy.jar \
-	jars/ij-module.jar \
-	jars/ij-object.jar \
-	jars/ij-platform.jar \
-	jars/ij-plugin.jar \
-	jars/ij-tool.jar \
-	jars/ij-ui.jar \
-	jars/ij-awt-common.jar \
-	jars/ij-imagej.jar \
-	jars/ij-platform-macosx.jar \
-	jars/ij-plugin-swing.jar \
-	jars/ij-ui-swing.jar \
 
 PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \

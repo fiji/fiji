@@ -6,7 +6,7 @@ import ij.plugin.filter.*;
 import ij.plugin.*;
 
 // AutoLocalThreshold segmentation 
-// Following the guidelines at http://pacific.mpi-cbg.de/wiki/index.php/PlugIn_Design_Guidelines
+// Following the guidelines at http://fiji.sc/wiki/index.php/PlugIn_Design_Guidelines
 // ImageJ plugin by G. Landini at bham. ac. uk
 // 1.0  15/Apr/2009
 //1.1  01/Jun/2009

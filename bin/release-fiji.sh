@@ -31,19 +31,19 @@ HEAD=$(git rev-parse ${HEAD:-HEAD})
 TARGET_DIRECTORY=/var/www/downloads/$RELEASE
 NIGHTLY_BUILD=fiji/nightly-build
 TMP_HEAD=refs/heads/tmp
-HOST=pacific.mpi-cbg.de
+HOST=fiji.sc
 COMMIT_MESSAGE="Precompile Fiji and Fake for $RELEASE"
 
 clone_nightly_build () {
 	(cd $HOME &&
 	 test -d $NIGHTLY_BUILD ||
-	 git clone git://pacific.mpi-cbg.de/fiji.git $NIGHTLY_BUILD)
+	 git clone git://fiji.sc/fiji.git $NIGHTLY_BUILD)
 }
 
 make_dmg () {
 	if ! git push macosx10.5:$NIGHTLY_BUILD +$HEAD:$TMP_HEAD
 	then
-		ssh macosx10.5 "git clone git://pacific.mpi-cbg.de/fiji.git $NIGHTLY_BUILD" &&
+		ssh macosx10.5 "git clone git://fiji.sc/fiji.git $NIGHTLY_BUILD" &&
 		git push macosx10.5:$NIGHTLY_BUILD +$HEAD:$TMP_HEAD
 	fi &&
 	./Build.sh app-macosx &&
@@ -199,7 +199,7 @@ cat << EOF &&
 
 All files have been built and uploaded to
 
-	http://pacific.mpi-cbg.de/downloads/$RELEASE/
+	http://fiji.sc/downloads/$RELEASE/
 
 Please test, and if anything is wrong, hit Ctrl-C.
 If everything is okay, hit Enter to tag and upload to the Updater.

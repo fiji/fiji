@@ -2015,7 +2015,7 @@ public class Weka_Segmentation implements PlugIn
 		gd.addCheckbox("Homogenize classes", wekaSegmentation.doHomogenizeClasses());
 		gd.addButton("Save feature stack", new SaveFeatureStackButtonListener("Select location to save feature stack", wekaSegmentation.getFeatureStackArray()));
 		gd.addSlider("Result overlay opacity", 0, 100, overlayOpacity);
-		gd.addHelp("http://pacific.mpi-cbg.de/wiki/Trainable_Segmentation_Plugin");
+		gd.addHelp("http://fiji.sc/wiki/Trainable_Segmentation_Plugin");
 
 		gd.showDialog();
 

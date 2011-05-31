@@ -14,7 +14,7 @@ package trainableSegmentation;
  * - delete annotations with a shortkey
  * - change training image
  * - do probability output (accessible?) and define threshold
- * - put thread solution to wiki http://pacific.mpi-cbg.de/wiki/index.php/Developing_Fiji#Writing_plugins
+ * - put thread solution to wiki http://fiji.sc/wiki/index.php/Developing_Fiji#Writing_plugins
  * 
  * - give more feedback when classifier is trained or applied
  * 
@@ -2038,7 +2038,7 @@ public class Trainable_Segmentation implements PlugIn
 		gd.addMessage("Advanced options:");
 		gd.addButton("Save feature stack", new ButtonListener("Select location to save feature stack", featureStack));
 		gd.addSlider("Result overlay opacity", 0, 100, overlayOpacity);
-		gd.addHelp("http://pacific.mpi-cbg.de/wiki/Trainable_Segmentation_Plugin");
+		gd.addHelp("http://fiji.sc/wiki/Trainable_Segmentation_Plugin");
 		
 		gd.showDialog();
 		

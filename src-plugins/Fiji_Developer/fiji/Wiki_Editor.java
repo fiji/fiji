@@ -98,7 +98,7 @@ import javax.swing.text.html.HTMLEditorKit;
 public class Wiki_Editor implements PlugIn, ActionListener {
 	protected String name;
 
-	protected static String URL = "http://pacific.mpi-cbg.de/wiki/";
+	protected static String URL = "http://fiji.sc/wiki/";
 
 	protected enum Mode { TUTORIAL_MAKER, NEWS, SCREENSHOT };
 	protected Mode mode;
