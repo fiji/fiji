@@ -49,7 +49,7 @@ get_url () {
 		imageja.git) project=ImageJA.git;;
 		esac
 
-		echo "http://pacific.mpi-cbg.de/cgi-bin/gitweb.cgi?p=$project"
+		echo "http://fiji.sc/cgi-bin/gitweb.cgi?p=$project"
 		;;
 	esac
 }

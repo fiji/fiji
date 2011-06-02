@@ -106,7 +106,7 @@ then
 	fi &&
 	if test ! -d odcctools
 	then
-		git clone git://pacific.mpi-cbg.de/iphone-dev odcctools &&
+		git clone git://fiji.sc/iphone-dev odcctools &&
 		(cd odcctools && git checkout -t origin/fiji)
 	fi &&
 	mkdir -p build-odcctools &&

@@ -10,7 +10,7 @@ cd 3rdparty &&
 echo CMake &&
 if test ! -d cmake
 then
-	git clone contrib@pacific.mpi-cbg.de:/srv/git/cmake
+	git clone contrib@fiji.sc:/srv/git/cmake
 fi &&
 if test ! -x cmake/bin/cmake
 then
@@ -22,7 +22,7 @@ fi &&
 echo ITK &&
 if test ! -d Insight
 then
-	git clone contrib@pacific.mpi-cbg.de:/srv/git/Insight
+	git clone contrib@fiji.sc:/srv/git/Insight
 fi &&
 CMAKE_COMMAND="../cmake/bin/cmake -D BUILD_TESTING=OFF -D BUILD_EXAMPLES=OFF" &&
 if test ! -d ITK-build

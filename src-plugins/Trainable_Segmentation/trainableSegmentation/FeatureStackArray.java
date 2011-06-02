@@ -120,6 +120,9 @@ public class FeatureStackArray
 	 */
 	public boolean updateFeaturesMT(boolean[] update)
 	{
+		if (Thread.currentThread().isInterrupted() )
+			return false;
+		
 		final int numProcessors = Runtime.getRuntime().availableProcessors();
 		final ExecutorService exe = Executors.newFixedThreadPool( numProcessors );
 		

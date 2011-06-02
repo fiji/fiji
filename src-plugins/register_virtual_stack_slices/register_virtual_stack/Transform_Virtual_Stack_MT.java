@@ -32,7 +32,7 @@ import ij.plugin.PlugIn;
  * <b>Requires</b>: 
  * <ul>
  * 		<li>Source folder: a directory with images, of any size and type (8, 16, 32-bit gray-scale or RGB color)</li>
- * 		<li>Transform folder: a directory with the transform files (from a <a target="_blank" href="http://pacific.mpi-cbg.de/wiki/Register_Virtual_Stack_Slices">Register_Virtual_Stack_Slices</a> execution). </li>
+ * 		<li>Transform folder: a directory with the transform files (from a <a target="_blank" href="http://fiji.sc/wiki/Register_Virtual_Stack_Slices">Register_Virtual_Stack_Slices</a> execution). </li>
  * </ul>
  * <p>
  * <b>Performs</b>: transformation of the sequence of images by applying the transform files.
@@ -41,7 +41,7 @@ import ij.plugin.PlugIn;
  * <p>
  * For a detailed documentation, please visit the plugin website at:
  * <p>
- * <A target="_blank" href="http://pacific.mpi-cbg.de/wiki/Transform_Virtual_Stack_Slices">http://pacific.mpi-cbg.de/wiki/Transform_Virtual_Stack_Slices</A>
+ * <A target="_blank" href="http://fiji.sc/wiki/Transform_Virtual_Stack_Slices">http://fiji.sc/wiki/Transform_Virtual_Stack_Slices</A>
  * 
  * @version 11/30/2009
  * @author Ignacio Arganda-Carreras (ignacio.arganda@gmail.com), Stephan Saalfeld and Albert Cardona

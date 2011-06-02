@@ -174,7 +174,7 @@ pseudo_submodule_update () {
 
 echo "Making sure that ffmpeg and libswscale are at correct revision" &&
 pseudo_submodule_update ffmpeg \
-	contrib@pacific.mpi-cbg.de:/srv/git/ffmpeg.git \
+	contrib@fiji.sc:/srv/git/ffmpeg.git \
 	6c3d021891a942403eb644eae0e6378a0dcf8b3c &&
 
 # Build FFMPEG
