@@ -27,6 +27,7 @@ then
 	    modules/commons-math \
 	    modules/ij-plugins \
 	    modules/imglib \
+	    modules/imagej2 \
 	    modules/jython \
 	    modules/mpicbg \
 	    modules/tcljava \
