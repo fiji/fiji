@@ -110,7 +110,7 @@ fi
     git merge --squash $NEW_REVISION &&
     git commit -m "debian: Changes produced by the weekly build" &&
     git fetch origin master &&
-    git rebase origin/master &&
+    git rebase FETCH_HEAD &&
     git config remote.origin.url longair@fiji.sc:/srv/git/fiji.git &&
     git push origin master
 )
