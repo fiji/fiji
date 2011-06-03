@@ -692,6 +692,8 @@ if options.clean:
                 continue
             if re.search("(^\s*jars|precompiled)/clojure.jar",line):
                 continue
+            if re.search("(^\s*jars|precompiled)/javassist.jar",line):
+                continue
             if re.search("(^\s*jars|precompiled)/jsch-0.1.44.jar",line):
                 continue
             if re.search("(^\s*jars|precompiled)/junit-4.5.jar",line):
