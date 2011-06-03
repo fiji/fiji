@@ -90,7 +90,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 	protected Image3DUniverse univ;
 	protected Content imageContent;
 
-	protected boolean unsavedPaths = false;
+	volatile protected boolean unsavedPaths = false;
 
 	public boolean pathsUnsaved() {
 		return unsavedPaths;
@@ -261,8 +261,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	/* If we're timing out the searches (probably not any longer...) */
 
-	protected boolean setupTimeout = false;
-	protected float   setupTimeoutValue = 0.0f;
+	volatile protected boolean setupTimeout = false;
+	volatile protected float   setupTimeoutValue = 0.0f;
 
 	/* For the original file info - needed for loading the
 	   corresponding labels file and checking if a "tubes.tif"
@@ -389,7 +389,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	}
 
-	boolean loading = false;
+	volatile boolean loading = false;
 
 	synchronized public void loadTracings( ) {
 
@@ -564,7 +564,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 		}
 	}
 
-	boolean lastStartPointSet = false;
+	volatile boolean lastStartPointSet = false;
 
 	int last_start_point_x;
 	int last_start_point_y;
@@ -642,7 +642,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 	   may be redundant - check that.
 	*/
 
-	boolean pathUnfinished = false;
+	volatile boolean pathUnfinished = false;
 
 	public void setPathUnfinished( boolean unfinished ) {
 
@@ -1073,7 +1073,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	protected NeuriteTracerResultsDialog resultsDialog;
 
-	protected boolean cancelled = false;
+	volatile protected boolean cancelled = false;
 
 	protected TextWindow helpTextWindow;
 
@@ -1081,8 +1081,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	protected ArchiveClient archiveClient;
 
-	protected float stackMax = Float.MIN_VALUE;
-	protected float stackMin = Float.MAX_VALUE;
+	volatile protected float stackMax = Float.MIN_VALUE;
+	volatile protected float stackMin = Float.MAX_VALUE;
 
 
 	public int guessResamplingFactor() {
@@ -1210,12 +1210,12 @@ public class SimpleNeuriteTracer extends ThreePanes
 		return Math.min(Math.abs(x_spacing),Math.min(Math.abs(y_spacing),Math.abs(z_spacing)));
 	}
 
-	boolean hessianEnabled = false;
+	volatile boolean hessianEnabled = false;
 	ComputeCurvatures hessian = null;
 	/* This variable just stores the sigma which the current
 	   'hessian' ComputeCurvatures was / is being calculated
 	   (or -1 if 'hessian' is null) ... */
-	double hessianSigma = -1;
+	volatile double hessianSigma = -1;
 
 	public void startHessian() {
 		if( hessian == null ) {
@@ -1359,7 +1359,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 		// univ.resetView();
 	}
 
-	private boolean showOnlySelectedPaths;
+	volatile private boolean showOnlySelectedPaths;
 
 	public void setShowOnlySelectedPaths(boolean showOnlySelectedPaths) {
 		this.showOnlySelectedPaths = showOnlySelectedPaths;
