@@ -46,9 +46,12 @@ then
   VERSION=$( cd fiji && dpkg-parsechangelog | egrep '^Version' | sed 's/^Version: //' )
   OLD_D=$(readlink -n fiji)
   D=fiji-$VERSION
-  mv $OLD_D $D
-  rm fiji
-  ln -s $D fiji
+  if [ "$D" != "$OLD_D" ]
+  then
+    mv $OLD_D $D
+    rm fiji
+    ln -s $D fiji
+  fi
 
 else
 
