@@ -171,6 +171,7 @@ public class MaterialList extends ScrollPane implements ActionListener, ItemList
 	}
 
 	public void renameMaterial(String newName) {
+		newName = newName.replace(' ', '_');
 		params.editMaterial(currentMaterialID(), newName, -1, -1, -1);
 		params.setParameters(labels);
 		list.repaint();
@@ -182,7 +183,12 @@ public class MaterialList extends ScrollPane implements ActionListener, ItemList
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
-		renameMaterial(gd.getNextString());
+		String newName = gd.getNextString();
+		if (newName.indexOf(' ') >= 0) {
+			newName = newName.replace(' ', '_');
+			IJ.showMessage("Names cannot contain spaces; using '" + newName + "' instead!");
+		}
+		renameMaterial(newName);
 	}
 
 	public void setColor(int r, int g, int b) {
