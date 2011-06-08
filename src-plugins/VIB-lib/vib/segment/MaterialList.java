@@ -99,13 +99,13 @@ public class MaterialList extends ScrollPane implements ActionListener, ItemList
 
 	public void createPopup() {
 		popup = new PopupMenu("");
-		add = new MenuItem("Add Material");
+		add = new MenuItem("Add Label");
 		popup.add(add);
-		remove = new MenuItem("Remove Material");
+		remove = new MenuItem("Remove Label");
 		// FIXME: there's no point in adding this option since
 		// it just creates a RuntimeException at the moment.
 		// popup.add(remove);
-		rename = new MenuItem("Rename Material");
+		rename = new MenuItem("Rename Label");
 		popup.add(rename);
 		color = new MenuItem("Change Color");
 		popup.add(color);
@@ -148,7 +148,7 @@ public class MaterialList extends ScrollPane implements ActionListener, ItemList
 	public void addMaterial() {
 		int num = getItemCount();
 		num++;
-		params.addMaterial("Material" + num, 1,0,0); // TODO change color
+		params.addMaterial("Label" + num, 1,0,0); // TODO change color
 		params.setParameters(labels);
 		boolean[] newlocked = new boolean[num];
 		System.arraycopy(locked, 0, newlocked, 0, locked.length);
@@ -161,7 +161,7 @@ public class MaterialList extends ScrollPane implements ActionListener, ItemList
 	public void delMaterial() {
 		int selected = getSelectedIndex();
 		if (selected < 1) {
-			IJ.error("Cannot delete first material!");
+			IJ.error("Cannot delete first label!");
 			return;
 		}
 		throw new RuntimeException("delete not yet implemented");
