@@ -134,6 +134,8 @@ public class MaterialList extends ScrollPane implements ActionListener, ItemList
 			list.invalidate();
 			list.repaint();
 		}
+		if (locked.length > 1)
+			select(1);
 	}
 
 	public void setMaterials(String materials) {
