@@ -1,0 +1,41 @@
+Conditions of use
+~~~~~~~~~~~~~~~~~
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation (http://www.gnu.org/licenses/gpl.txt).
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+We just expect you to include a citation or acknowledgment whenever
+you present or publish results that are based on it. Enjoy it!
+
+Acknowledgments
+~~~~~~~~~~~~~~~
+
+bUnwarpJ has been developed during several years already and many
+people need to be acknowledged for:
+
+It started as an extension of UnwarpJ from Carlos O. S. Sorzano and
+thanks to him and Jan Kybic at the Center for Machine Perception in
+Prague, bUnwarpJ was born in the summer 2005 and published online in
+2006.
+
+Many of the plugin updates and improvements would have never been
+possible without the hackathons that took place in Janelia Farm
+Research Campus (Virginia, summer 2008) and the Institute of
+Neuroinformatics (Zürich, winter 2008).
+
+Albert Cardona organized the hackathons and is responsible for the
+code parallelization and javascripting support.
+
+Stephan Saalfeld proposed and helped to make the SIFT/MOPS support
+possible.
+
+Marta Rivera-Alba helped with the macro support and code debugging.
+
+Johannes Schindelin is responsible for the Fiji integration and he is
+simply there whenever a Java problem comes up!
