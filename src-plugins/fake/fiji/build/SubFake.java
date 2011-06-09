@@ -28,17 +28,22 @@ public class SubFake extends Rule {
 				+ " does not exist!");
 	}
 
+	@Override
 	boolean checkUpToDate() {
 		if (!upToDate(configPath))
 			return false;
 		File target = new File(this.target);
-		for (String directory : prerequisites)
+		for (String directory : prerequisites) try {
 			if (!checkUpToDate(directory, target))
 				return false;
+		} catch (FakeException e) {
+			e.printStackTrace();
+			return false;
+		}
 		return true;
 	}
 
-	boolean checkUpToDate(String directory, File target) {
+	boolean checkUpToDate(String directory, File target) throws FakeException {
 		if (!target.exists())
 			return false;
 
@@ -51,8 +56,28 @@ public class SubFake extends Rule {
 				return true;
 			File source = new File(parser.cwd, precompiled + "/" + jarName);
 			return upToDate(source, target);
-		} else if (!upToDateRecursive(dir, target))
-			return false;
+		}
+		else {
+			if (Util.isDirEmpty(getLastPrerequisite())) {
+				String precompiled = getVar("PRECOMPILEDDIRECTORY");
+				if (precompiled == null)
+					return false;
+				File source = new File(parser.cwd, precompiled + "/" + jarName);
+				return upToDate(source, target);
+			}
+
+			File file = getFakefile();
+			if (file != null) {
+				Parser parser = this.parser.fake.parseFakefile(new File(this.parser.cwd, getLastPrerequisite()), file, getVarBool("VERBOSE", directory), getVarPath("TOOLSPATH", directory), getVarPath("CLASSPATH", directory), getBuildDir());
+				Rule all = parser.parseRules(null);
+				Rule rule = parser.getRule(jarName);
+				if (rule == null)
+					rule = all;
+				return rule.checkUpToDate();
+			}
+			if (!upToDateRecursive(dir, target, true))
+				return false;
+		}
 		return true;
 	}
 

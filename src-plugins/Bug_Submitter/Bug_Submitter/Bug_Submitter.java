@@ -133,7 +133,7 @@ public class Bug_Submitter implements PlugIn {
 		return new String(newChars);
 	}
 
-	final String bugzillaBaseURI = "http://pacific.mpi-cbg.de/cgi-bin/bugzilla/";
+	final String bugzillaBaseURI = "http://fiji.sc/cgi-bin/bugzilla/";
 
 	static final int SUCCESS = 1;
 	static final int LOGIN_FAILURE = 2;

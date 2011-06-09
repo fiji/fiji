@@ -171,7 +171,7 @@ public class DataCache {
   
   /**
    * Makes a copy of a DataCache. Most array fields are shallow copied, with the
-   * exception of in inBag and whatGoesWhere arrays, which are created anew.
+   * exception of inBag and whatGoesWhere arrays, which are created anew.
    * 
    * @param origData
    */
@@ -241,6 +241,87 @@ public class DataCache {
 
   }
 
+  /**
+   * Creates a new dataset of the same size using random sampling
+   * with replacement according to the given weight vector. The
+   * weights of the instances in the new dataset are set to one, 
+   * but they are increased by 1 each time they are repeated.
+   * The length of the weight vector has to be the same as the
+   * number of instances in the dataset, and all weights have to
+   * be positive.
+   * 
+   * This resampling method takes the weights into account the same 
+   * way as it is done by the standard Bagging method in Weka, but 
+   * saves memory by not duplicating the repeated samples. 
+   * 
+   * @author Ignacio Arganda-Carreras (iarganda@mit.edu)
+   * @param random a random number generator
+   * @return a re-sampled version of the data (same size but with
+   * repetition)
+   */
+  public final DataCache resampleWithWeights( Random random ) 
+  {	  
+	  DataCache result =
+		  new DataCache(this); // makes shallow copy of vals matrix
+
+	  double[] newWeights = new double[ numInstances ]; // all 0.0 by default
+	  
+	  double[] weights = new double[ numInstances ];
+	  
+	  for (int i = 0; i < weights.length; i++) 
+	  {
+		  weights[i] = this.instWeights[i];
+	  }
+	  	  
+	  double[] probabilities = new double[ numInstances ];
+	  
+	  double sumProbs = 0;
+	  double sumOfWeights = Utils.sum(weights);
+	  
+	  for (int i = 0; i < numInstances; i++) 
+	  {
+		  sumProbs += random.nextDouble();
+		  probabilities[i] = sumProbs;
+	  }
+	  
+	  Utils.normalize(probabilities, sumProbs / sumOfWeights);
+
+	  // Make sure that rounding errors don't mess things up
+	  probabilities[numInstances - 1] = sumOfWeights;
+	  int k = 0; 
+	  int l = 0;
+	  sumProbs = 0;
+	  while ((k < numInstances && (l < numInstances))) 
+	  {
+		  if (weights[l] < 0) 
+		  {
+			  throw new IllegalArgumentException("Weights have to be positive.");
+		  }
+		  sumProbs += weights[l];
+		  
+		  while ((k < numInstances) &&
+				  (probabilities[k] <= sumProbs)) 
+		  { 
+			  // Increase by 1 the weight of the corresponding instance
+			  newWeights[l] ++;
+			  if ( !result.inBag[l] ) {
+				  result.numInBag++;
+				  result.inBag[l] = true;
+			  }			  
+			  k++;
+		  }
+		  l++;
+	  }
+	  
+	  
+	  result.instWeights = newWeights;
+
+	  // we also need to fill sortedIndices by peeking into the inBag array, but
+	  // this can be postponed until the tree training begins
+	  // we will use the "createInBagSortedIndices()" for this
+	  return result;
+  }
+  
   
 
   /** Invoked only when tree is trained. */

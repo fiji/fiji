@@ -1,0 +1,12 @@
+// Action Bar description file : NAME_HERE
+run("Action Bar","/plugins/ActionBar/color_and_merge.txt");
+exit();
+<line>
+<button>
+label=<font color=red>red</font>
+icon=noicon
+arg=<macro>
+print("hello");
+</macro>
+
+</line>

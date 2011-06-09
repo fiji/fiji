@@ -760,6 +760,8 @@ public class FileFunctions {
 				while (offset - newLine > width) {
 					int remove = 0;
 					int space = text.lastIndexOf(' ', newLine + width);
+					if (space < newLine)
+						break;
 					if (space > 0) {
 						int first = space;
 						while (first > newLine + 1 && text.charAt(first - 1) == ' ')
@@ -887,7 +889,7 @@ public class FileFunctions {
 				project += "/.git";
 			if (project.equals("imageja.git"))
 				project = "ImageJA.git";
-			url = "http://pacific.mpi-cbg.de/cgi-bin/gitweb.cgi?p=" + project;
+			url = "http://fiji.sc/cgi-bin/gitweb.cgi?p=" + project;
 		}
 		String head = git(gitDirectory, "rev-parse", "--symbolic-full-name", "HEAD");
 		String path = git(null /* ls-files does not work with --git-dir */,

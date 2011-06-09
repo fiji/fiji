@@ -592,49 +592,32 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 		public JFreeChart createGraph() {
 
-			PrintWriter pw = null;
-			boolean debug = true;
-
 			XYSeriesCollection data = null;
 
 			double minX = Double.MAX_VALUE;
 			double maxX = Double.MIN_VALUE;
 
-			try {
-				if (debug)
-					pw = new PrintWriter(new  FileWriter("/tmp/last-graph"));
-
-				final XYSeries series = new XYSeries("Intersections");
-				for( int i = 0; i < graphPoints; ++i ) {
-					double x = x_graph_points[i];
-					double y = y_graph_points[i];
-					if( Double.isInfinite(y) || Double.isNaN(y) )
+			final XYSeries series = new XYSeries("Intersections");
+			for( int i = 0; i < graphPoints; ++i ) {
+				double x = x_graph_points[i];
+				double y = y_graph_points[i];
+				if( Double.isInfinite(y) || Double.isNaN(y) )
+					continue;
+				if( axes == AXES_SEMI_LOG || axes == AXES_LOG_LOG ) {
+					if( y <= 0 )
 						continue;
-					if( axes == AXES_SEMI_LOG || axes == AXES_LOG_LOG ) {
-						if( y <= 0 )
-							continue;
-					}
-					if( axes == AXES_LOG_LOG ) {
-						if( x <= 0 )
-							continue;
-					}
-					if( x < minX )
-						minX = x;
-					if( x > maxX )
-						maxX = x;
-					series.add(x,y);
-					if (debug)
-						pw.print(x_graph_points[i]+"\t"+y+"\n");
 				}
-				data = new XYSeriesCollection(series);
-
-				if (debug)
-					pw.close();
-
-			} catch( IOException e ) {
-				IJ.error("Failed to write out the graph points");
-				return null;
+				if( axes == AXES_LOG_LOG ) {
+					if( x <= 0 )
+						continue;
+				}
+				if( x < minX )
+					minX = x;
+				if( x > maxX )
+					maxX = x;
+				series.add(x,y);
 			}
+			data = new XYSeriesCollection(series);
 
 			ValueAxis xAxis = null;
 			ValueAxis yAxis = null;

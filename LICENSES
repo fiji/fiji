@@ -34,7 +34,7 @@ Name					File					Author(s)						Contact								License
 * Differentials				Differentials_.jar			Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/differentials/			BIG (see below)
 * Extended Depth of Focus		Extended_Depth_Field.jar		Alex Prudencio, Daniel Sage et al			http://bigwww.epfl.ch/demo/edf/					BIG (see below)
 * FeatureJ	 			FeatureJ_.jar	 			Erik Meijering	 					http://www.imagescience.org/meijering/software/featurej/	imagescience (see below)
-* Fiji_Plugins.jar 			Fiji_Plugins.jar 			Various authors 					http://pacific.mpi-cbg.de/contributors 				PD,GPL
+* Fiji_Plugins.jar 			Fiji_Plugins.jar 			Various authors 					http://fiji.sc/Contributors 				PD,GPL
 * Fiji as a framework																							GPL
 * Graph Cut				Graph_Cut.jar				Jan Funke						jan.funke@inf.tu-dresden.de					GPL 2
 * ij-ImageIO 				ij-ImageIO_.jar				Jarek Sacha 						jarek@ieee.org 							LGPL
@@ -53,10 +53,13 @@ Name					File					Author(s)						Contact								License
 * JPedal PDF library 			jpedalSTD.jar 				http://www.jpedal.org/ 					http://www.jpedal.org/ 						GPL/commercial
 * JRuby Interpreter 			JRuby_Interpreter.jar			Mark Longair						Mark.Longair@ed.ac.uk						GPL
 * JRuby 				jruby.jar				Thomas E. Enebo						http://jruby.codehaus.org/					CPL/GPL/LGPL
+* JSch					jsch-0.1.44.jar				JCraft							http://www.jcraft.com/jsch/					BSD
 * Jython 				jython.jar				http://www.jython.org/Project/contributors.html 	http://www.jython.org 						PSF 2/JSF 2.1/JPSL
 * Jython Interpreter 			Jython_Interpreter.jar			Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * jzlib 				jzlib-1.0.7.jar 			ymnk 							jzlib@jcraft.com 						BSD-like http://www.jcraft.com/jzlib/LICENSE.txt
+* Kalman Stack Filter			contained in Stack_Manipulation.jar	Christopher Philip Mauer				-								BSD-like
 * Kuwahara Filter			Kuwahara_Filter.jar			Wayne Rasband						http://imagej.nih.gov/ij/plugins/kuwahara.html			PD
+* Multi Kymograph			Multi_Kymograph.jar			Jens Rietdorf & Arne Seitz				http://www.embl.de/eamnet/html/body_kymograph.html		BSD
 * Linear Kuwahara			Linear_Kuwahara.jar			Christian Tischer													GPL
 * LOCI 					loci_tools.jar				Melissa Linkert, Curtis Rueden et al. 			ctrueden@wisc.edu 						GPL		
 * Macro Interpreter 			CLI_.jar				Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
@@ -122,6 +125,15 @@ imagescience (Erik Meijering; http://www.imagescience.org/meijering/software/):
 
 	Erik
 
+Multi Kymograph:
+
+	Date: Thu, 31 Mar 2011 09:10:32 +0000
+	From: Seitz Arne <arne.seitz@epfl.ch>
+
+	as the plugin is rather simple I think BSD is then the license of
+	choice. Thanks for your input.
+
+	Cheers Arne
 
 Unresolved (TODO):
 * Example/ scripts folder

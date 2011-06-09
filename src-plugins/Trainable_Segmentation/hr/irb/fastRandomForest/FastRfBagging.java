@@ -156,7 +156,7 @@ class FastRfBagging extends RandomizableIteratedSingleClassifierEnhancer
 
         // create the in-bag dataset (and be sure to remember what's in bag)
         // for computing the out-of-bag error later
-        DataCache bagData = myData.resample(bagSize, random);
+        DataCache bagData = myData.resampleWithWeights( random );
         bagData.reusableRandomGenerator = bagData.getRandomNumberGenerator(
                 random.nextInt());
         inBag[treeIdx] = bagData.inBag;
