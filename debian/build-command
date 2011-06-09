@@ -36,11 +36,12 @@ mkdir -p "$FIJI_DIRECTORY"/build &&
     "CLASSPATH(jars/imglib-scripting.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jcommon.jar:/usr/share/java/jfreechart.jar:/usr/share/java/vecmath.jar:jars/ij.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jars:jars/imglib.jar:jars/mpicbg.jar:plugins/loci_tools.jar" \
     "CLASSPATH(jars/imglib2-scripting.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jcommon.jar:/usr/share/java/jfreechart.jar:/usr/share/java/vecmath.jar:jars/ij.jar:jars/imglib2-algorithms.jar:jars/imglib2-ij.jar:jars/imglib2-io.jars:jars/imglib2.jar:jars/mpicbg.jar:plugins/loci_tools.jar" \
     "CLASSPATH(jars/jep.jar)=/usr/share/java/jama.jar:/usr/share/java/junit4.jar:jars/ij.jar" \
-    "CLASSPATH(jars/jython.jar)=/usr/share/java/junit4.jar:jars/jna.jar" \
+    "CLASSPATH(jars/jython.jar)=/usr/share/java/jna.jar:/usr/share/java/junit4.jar" \
     "CLASSPATH(jars/test-fiji.jar)=/usr/share/java/junit4.jar" \
     "CLASSPATH(plugins/3D_Blob_Segmentation.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/vecmath.jar:jars/VIB-lib.jar:jars/ij.jar:jars/imglib.jar:plugins/3D_Viewer.jar:plugins/level_sets.jar" \
     "CLASSPATH(plugins/3D_Viewer.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jama.jar:/usr/share/java/vecmath.jar:jars/VIB-lib.jar:jars/ij.jar:jars/imglib.jar" \
     "CLASSPATH(plugins/BeanShell_Interpreter.jar)=/usr/share/java/bsh.jar:jars/fiji-scripting.jar:jars/ij.jar" \
+    "CLASSPATH(plugins/CPU_Meter.jar)=/usr/share/java/jna.jar:jars/ij.jar" \
     "CLASSPATH(plugins/Clojure_Interpreter.jar)=/usr/share/java/clojure.jar:jars/fiji-scripting.jar:jars/ij.jar" \
     "CLASSPATH(plugins/Colocalisation_Analysis.jar)=/usr/share/java/itext1.jar:/usr/share/java/junit4.jar:jars/ij.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib.jar" \
     "CLASSPATH(plugins/Directionality_.jar)=/usr/share/java/jcommon.jar:/usr/share/java/jfreechart.jar:jars/ij.jar" \
