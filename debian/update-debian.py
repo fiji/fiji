@@ -192,8 +192,8 @@ package_name_to_file_matchers = {
 # version of another package - this is almost always because a file
 # has been moved from one package to another.
 conflicts_and_replaces = {
-    'fiji-3d-viewer' : ( 'fiji-plugins (< 20100821202529)', ),
-    'fiji-imglib' : ( 'fiji-plugins (< 20110609134244)', )
+    'fiji-3d-viewer' : ( 'fiji-plugins (<= 20100821202528)', ),
+    'fiji-imglib' : ( 'fiji-plugins (<= 20110609134243)', )
 }
 
 # A dictionary whose keys are regular expressions that match files in
