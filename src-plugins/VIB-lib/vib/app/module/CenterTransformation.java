@@ -51,6 +51,8 @@ public class CenterTransformation extends Module {
 		}
 		if (centers.size() == 0)
 			return;
+		if (centers.size() < 3) // TODO: check for this already after the segmentation
+			throw new RuntimeException("Need at least 3 labels shared with the template!");
 		Point3d[] c1 = new Point3d[centers.size()];
 		Point3d[] c2 = new Point3d[centers.size()];
 		for (int i = 0; i < c1.length; i++) {
