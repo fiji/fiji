@@ -24,8 +24,8 @@ if test ! -d Insight
 then
 	git clone contrib@pacific.mpi-cbg.de:/srv/git/Insight
 fi &&
-CMAKE_COMMAND="../cmake/bin/cmake -D BUILD_TESTING=OFF -D BUILD_EXAMPLES=OFF -D ITK_BUILD_ALL_MODULES=ON" &&
-if test ! -f ITK-build/bin/libITKAlgorithms.so
+CMAKE_COMMAND="../cmake/bin/cmake -D BUILD_TESTING=OFF -D BUILD_EXAMPLES=OFF -D ITK_BUILD_ALL_MODULES=ON -D BUILD_SHARED_LIBS=ON" &&
+if test ! -f ITK-build/lib/libITK-Common-4.0.so
 then
 	mkdir -p ITK-build &&
 	(cd ITK-build &&
@@ -38,7 +38,7 @@ then
 	git clone contrib@pacific.mpi-cbg.de:/srv/git/SimpleITK
 fi &&
 CMAKE_COMMAND_SIMPLEITK="../cmake/bin/cmake $(cat SimpleITK/Wrapping/CMakeLists.txt  | tr -c 'A-Z_' '\n' | grep ^WRAP | sort | uniq | sed 's/.*/-D &=OFF/')" &&
-if test ! -f SimpleITK-build/TODO
+if test ! -f SimpleITK-build/bin/libSimpleITKBasicFilters.a
 then
 	mkdir -p SimpleITK-build &&
 	(cd SimpleITK-build &&
@@ -63,7 +63,7 @@ do
 	esac &&
 	echo "ITK ($target)" &&
 	TRYRUN=TryRunResults-$target.cmake &&
-	if test ! -e ITK-build-$target/bin/libITKAlgorithms.$SO
+	if test ! -e ITK-build-$target/lib/libITK-Common-4.0.$SO
 	then
 		if test ! -f $TRYRUN
 		then
@@ -199,7 +199,7 @@ EOF
 		})
 	fi &&
 	echo "SimpleITK ($target)" &&
-	if test ! -f SimpleITK-build-$target/TODO
+	if test ! -f SimpleITK-build-$target/bin/libSimpleITKBasicFilters.a
 	then
 		mkdir -p SimpleITK-build-$target &&
 		(cd SimpleITK-build-$target &&
