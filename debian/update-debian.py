@@ -114,7 +114,11 @@ package_name_to_file_matchers = {
           "jars/jai_core.jar" ],
 
     "fiji-imglib" :
-        [ "jars/imglib.jar" ],
+        [ "jars/imglib.jar",
+          "jars/imglib-scripting.jar",
+          "jars/imglib-algorithms.jar",
+          "jars/imglib-ij.jar",
+          "jars/imglib-io.jar" ],
 
     "fiji-vib" :
         [ "plugins/VIB_.jar",
@@ -188,7 +192,8 @@ package_name_to_file_matchers = {
 # version of another package - this is almost always because a file
 # has been moved from one package to another.
 conflicts_and_replaces = {
-    'fiji-3d-viewer' : ( 'fiji-plugins (< 20100821202529)', )
+    'fiji-3d-viewer' : ( 'fiji-plugins (< 20100821202529)', ),
+    'fiji-imglib' : ( 'fiji-plugins (< 20110609134244)', )
 }
 
 # A dictionary whose keys are regular expressions that match files in
