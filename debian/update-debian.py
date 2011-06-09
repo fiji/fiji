@@ -220,6 +220,7 @@ map_to_external_dependencies = {
     'jars/postgresql.*\.jar' : ( 'libpg-java', ),
     'jars/ant.*\.jar' : ( 'ant', 'ant-optional', ),
     'jars/javassist.*\.jar' : ( 'libjavassist-java', ),
+    'jars/commons-math\.jar' : ( 'libcommons-math-java', )
 }
 
 # A dictionary that maps a file in the Fiji build tree to tuples of
@@ -239,6 +240,7 @@ replacement_files =  {
     'jars/jzlib-1.0.7.jar' : ( '/usr/share/java/jzlib.jar', ),
     'jars/postgresql-8.2-506.jdbc3.jar' : ( '/usr/share/java/postgresql.jar', ),
     'jars/javassist.jar' : ( '/usr/share/java/javassist.jar', ),
+    'jars/commons-math.jar' : ( '/usr/share/java/commons-math.jar', ),
     '$TOOLS_JAR' : ('/usr/lib/jvm/java-6-openjdk/lib/tools.jar', ),
     '$JAVA3D_JARS' : ('/usr/share/java/j3dcore.jar', '/usr/share/java/vecmath.jar', '/usr/share/java/j3dutils.jar', )
 }
@@ -698,6 +700,8 @@ if options.clean:
             if re.search("(^\s*jars|precompiled)/clojure.jar",line):
                 continue
             if re.search("(^\s*jars|precompiled)/javassist.jar",line):
+                continue
+            if re.search("(^\s*jars|precompiled)/commons-math.jar",line):
                 continue
             if re.search("(^\s*jars|precompiled)/jsch-0.1.44.jar",line):
                 continue

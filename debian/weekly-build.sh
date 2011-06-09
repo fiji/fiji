@@ -24,7 +24,6 @@ then
 	    modules/RSyntaxTextArea \
 	    modules/TrakEM2 \
 	    modules/bio-formats \
-	    modules/commons-math \
 	    modules/ij-plugins \
 	    modules/imglib \
 	    modules/imagej2 \

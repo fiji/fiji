@@ -27,3 +27,4 @@ build-essential
 python2.6-minimal
 python-lxml
 zip
+libcommons-math-java
