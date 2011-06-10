@@ -17,7 +17,6 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import fiji.plugin.trackmate.visualization.TMSelectionManager;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView.ViewType;
 
@@ -67,42 +66,6 @@ public class TrackVisualizerTestDrive {
 		// Display Track scheme
 		final TrackSchemeFrame frame = new TrackSchemeFrame(model);
 		frame.setVisible(true);
-		
-		// Listeners
-		TMSelectionManager selectionManager = new TMSelectionManager();
-		
-		selectionManager.registerDisplayer(displayer);
-		selectionManager.registerDisplayer(frame);
-		
-		displayer.addTMSelectionChangeListener(selectionManager);
-		frame.addTMSelectionChangeListener(selectionManager);
-
-//		frame.addGraphListener(new GraphListener<Spot, DefaultWeightedEdge>() {
-//
-//			@Override
-//			public void vertexRemoved(GraphVertexChangeEvent<Spot> e) {
-//				System.out.println("Removed a spot");
-//			}
-//			
-//			@Override
-//			public void vertexAdded(GraphVertexChangeEvent<Spot> e) {
-//				System.out.println("Added a spot");
-//			}
-//			
-//			@Override
-//			public void edgeRemoved(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
-//				displayer.setTrackGraph(frame.getTrackModel());
-//				displayer.refresh();
-//			}
-//			
-//			@Override
-//			public void edgeAdded(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
-//				displayer.setTrackGraph(frame.getTrackModel());
-//				displayer.refresh();
-//			}
-//		});
-//		
-		
 		
 	}
 }

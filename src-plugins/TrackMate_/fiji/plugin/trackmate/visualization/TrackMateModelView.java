@@ -7,6 +7,7 @@ import ij3d.Image3DUniverse;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +25,11 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 import fiji.plugin.trackmate.TrackMateModelChangeListener;
+import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
+import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
+import fiji.plugin.trackmate.TrackMateSelectionDisplayer;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
@@ -39,7 +44,7 @@ import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
  * <p>
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Jan 2011
  */
-public abstract class TrackMateModelView implements TMSelectionDisplayer, TrackMateModelViewI, TrackMateModelChangeListener {
+public abstract class TrackMateModelView implements TrackMateSelectionChangeListener, TrackMateSelectionDisplayer, TrackMateModelViewI, TrackMateModelChangeListener {
 	
 	/*
 	 * FIELDS
@@ -85,12 +90,8 @@ public abstract class TrackMateModelView implements TMSelectionDisplayer, TrackM
 	protected int trackDisplayDepth = DEFAULT_TRACK_DISPLAY_DEPTH;
 	
 	/** The list of listener to warn for spot selection change. */
-	protected ArrayList<TMSelectionChangeListener> selectionChangeListeners = new ArrayList<TMSelectionChangeListener>();
+	protected ArrayList<TrackMateSelectionChangeListener> selectionChangeListeners = new ArrayList<TrackMateSelectionChangeListener>();
 	
-	/** We need to maintain our own selection. */
-	private ArrayList<Spot> spotSelection = new ArrayList<Spot>();
-
-
 
 	/*
 	 * PUBLIC METHODS
@@ -103,36 +104,41 @@ public abstract class TrackMateModelView implements TMSelectionDisplayer, TrackM
 	
 	@Override
 	public void setModel(TrackMateModel model) {
-		if (null != this.model)
+		if (null != this.model) {
 			this.model.removeTrackMateModelChangeListener(this);
+			this.model.removeTrackMateSelectionChangeListener(this);
+		}
 		this.model = model;
 		this.model.addTrackMateModelChangeListener(this);
+		this.model.addTrackMateSelectionChangeListener(this);
 	}
 	
-	public void modelChanged(fiji.plugin.trackmate.TrackMateModelChangeEvent event) {
+	public void modelChanged(TrackMateModelChangeEvent event) {
 		refresh();
 	};
-
 	
 	/*
 	 * TMSelectionChangeListener
 	 */
 	
-	/**
-	 * Add a listener to this displayer that will be notified when the spot selection changes.
-	 */
-	public void addTMSelectionChangeListener(TMSelectionChangeListener listener) {
-		selectionChangeListeners.add(listener);
-	}
-	
-	/**
-	 * Remove a listener from the list of the spot selection change listeners list. 
-	 * @param listener  the listener to remove
-	 * @return  true if the listener was found in the list maintained by 
-	 * this displayer and successfully removed.
-	 */
-	public boolean removeTMSelectionChangeListener(TMSelectionChangeListener listener) {
-		return selectionChangeListeners.remove(listener);
+	@Override
+	public void selectionChanged(TrackMateSelectionChangeEvent event) {
+		// Spots
+		Map<Spot, Boolean> spotMap = event.getSpots();
+		Collection<Spot> spots = new ArrayList<Spot>();
+		if (null != spotMap) 
+			for (Spot spot : spotMap.keySet())
+				if (spotMap.get(spot))
+					spots.add(spot);
+		highlightSpots(spots);
+		// Edges
+		Map<DefaultWeightedEdge, Boolean> edgeMap = event.getEdges();
+		Collection<DefaultWeightedEdge> edges = new ArrayList<DefaultWeightedEdge>();
+		if (null != edgeMap) 
+			for (DefaultWeightedEdge edge : edgeMap.keySet())
+				if (edgeMap.get(edge))
+					edges.add(edge);
+		highlightEdges(edges);
 	}
 	
 	/*
@@ -237,68 +243,6 @@ public abstract class TrackMateModelView implements TMSelectionDisplayer, TrackM
 	 */
 	public abstract void clear();
 	
-	/*
-	 * PROTECTED METHODS
-	 */
-
-	/**
-	 * Sub-classers must use this method when the user makes a change in the current selection.
-	 * This method will pack and forward changes to registered {@link TMSelectionChangeListener}s.
-	 * @param  target  the {@link Spot} to add to / remove from / replace with selection
-	 * @param  replace  a boolean flag specifying if the change relate a a modification of the current selection
-	 * (<code>false</code>) or if current selection should be erased and replaced by target (<code>true</code>). 
-	 */
-	protected void spotSelectionChanged(Spot target, boolean replace) {
-		HashMap<Spot, Boolean> spotSelectionChange = new HashMap<Spot, Boolean>();
-
-		if (!replace) {
-
-			if (!spotSelection.contains(target)) {
-				// Not in the selection, add target to current selection
-				spotSelection.add(target);
-				spotSelectionChange.put(target, true);
-
-			} else  {
-				// Remove target from selection if it was in
-				if (!spotSelection.remove(target))
-					return;
-				spotSelectionChange.put(target, false);
-			}
-
-		} else {
-
-			if (null == target) {
-				// A null target means that we must empty the current selection
-				for (Spot spot : spotSelection) 
-					spotSelectionChange.put(spot, false);
-				spotSelection.clear();
-
-			} else {
-
-				// Forget previous selection, and set selection to be target
-				spotSelection.remove(target); // If target was in selection, so we just have to remove all other
-				spotSelectionChange.put(target, true);
-				for (Spot spot : spotSelection) 
-					spotSelectionChange.put(spot, false);
-
-				spotSelection.clear();
-				spotSelection.add(target);
-			}
-		}
-		highlightSpots(spotSelection);
-		TMSelectionChangeEvent event = new TMSelectionChangeEvent(this, spotSelectionChange, null);
-		fireTMSelectionChange(event);
-	}
-	
-	
-	/**
-	 * Simply forward the spot selection event to the listeners of this class.
-	 */
-	protected void fireTMSelectionChange(TMSelectionChangeEvent event) {
-		for (TMSelectionChangeListener listener : selectionChangeListeners)
-			listener.selectionChanged(event);
-	}
-
 	/*
 	 * ENUMS
 	 */

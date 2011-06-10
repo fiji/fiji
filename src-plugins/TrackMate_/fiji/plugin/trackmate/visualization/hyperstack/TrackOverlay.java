@@ -10,6 +10,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -34,7 +35,7 @@ public class TrackOverlay implements Overlay {
 	private TrackMateModelView.TrackDisplayMode trackDisplayMode = TrackDisplayMode.ALL_WHOLE_TRACKS;
 	private boolean trackVisible = true;
 	private int trackDisplayDepth = 10;
-	private Set<DefaultWeightedEdge> highlight = new HashSet<DefaultWeightedEdge>();
+	private Collection<DefaultWeightedEdge> highlight = new HashSet<DefaultWeightedEdge>();
 	private Composite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
 
 	/*
@@ -78,7 +79,7 @@ public class TrackOverlay implements Overlay {
 		this.trackVisible = trackVisible;
 	}
 	
-	public void setHighlight(Set<DefaultWeightedEdge> edges) {
+	public void setHighlight(Collection<DefaultWeightedEdge> edges) {
 		this.highlight = edges;
 	}
 

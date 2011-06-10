@@ -7,7 +7,6 @@ import org.jdom.JDOMException;
 
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import fiji.plugin.trackmate.visualization.TMSelectionManager;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView.TrackDisplayMode;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
@@ -15,7 +14,8 @@ import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 public class HyperStackDisplayerTestDrive {
 
-	private static final File file = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
+	private static final File file = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
+//	private static final File file = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
 
 	public static void main(String[] args) throws JDOMException, IOException {
 		
@@ -39,13 +39,6 @@ public class HyperStackDisplayerTestDrive {
 		
 		final TrackSchemeFrame trackScheme = new TrackSchemeFrame(model);
 		trackScheme.setVisible(true);
-		
-		TMSelectionManager selectionManager = new TMSelectionManager();
-		selectionManager.registerDisplayer(displayer);
-		selectionManager.registerDisplayer(trackScheme);
-		
-		displayer.addTMSelectionChangeListener(selectionManager);
-		trackScheme.addTMSelectionChangeListener(selectionManager);
 		
 	}
 	

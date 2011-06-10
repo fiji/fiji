@@ -100,7 +100,7 @@ public class SpotDisplayer3D extends TrackMateModelView {
 	}
 
 	@Override
-	public void highlightEdges(Set<DefaultWeightedEdge> edges) {
+	public void highlightEdges(Collection<DefaultWeightedEdge> edges) {
 		// Restore previous display settings for previously highlighted edges
 		if (null != previousEdgeHighlight)
 			for(DefaultWeightedEdge edge : previousEdgeHighlight.keySet())

@@ -122,8 +122,9 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			return;
 
 		final Spot clickLocation = displayer.getCLickLocation(e);
-		final int frame = displayer.imp.getFrame() - 1;		
-		Spot target = displayer.getModel().getFilteredSpots().getClosestSpot(clickLocation, frame);
+		final int frame = displayer.imp.getFrame() - 1;
+		final TrackMateModel model = displayer.getModel();
+		Spot target = model.getFilteredSpots().getClosestSpot(clickLocation, frame);
 		Spot editedSpot = editedSpots.get(imp);
 		updateStatusBar(target, imp.getCalibration().getUnits());
 
@@ -137,12 +138,16 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			if (null != editedSpot || target == null)
 				return;
 			final int addToSelectionMask = MouseEvent.SHIFT_DOWN_MASK;
-			final boolean replace;
-			if ((e.getModifiersEx() & addToSelectionMask) == addToSelectionMask) 
-				replace = false;
-			else 
-				replace = true;
-			displayer.spotSelectionChanged(target, replace);
+			if ((e.getModifiersEx() & addToSelectionMask) == addToSelectionMask) { 
+				if (model.getSpotSelection().contains(target)) {
+					model.removeSpotFromSelection(target);
+				} else {
+					model.addSpotToSelection(target);
+				}
+			} else {
+				model.clearSpotSelection();
+				model.addSpotToSelection(target);
+			}
 			break;
 		}
 		
@@ -152,11 +157,8 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				System.out.println("[SpotEditTool] Got "+editedSpot+" as editing spot for this imp.");
 			
 			// Empty current selection
-			displayer.spotSelectionChanged(null, true);
-			
-			// Get underlying model
-			TrackMateModel model = displayer.getModel();
-			
+			model.clearSelection();
+						
 			if (null == editedSpot) {
 				// No spot is currently edited, we pick one to edit
 				float radius;

@@ -10,7 +10,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
@@ -22,7 +21,6 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
-import fiji.plugin.trackmate.visualization.TMSelectionChangeEvent;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.util.gui.OverlayedImageCanvas;
 
@@ -85,19 +83,7 @@ public class HyperStackDisplayer extends TrackMateModelView  {
 		if (redoOverlay)
 			setTrackGraph(model.getTrackGraph());
 	}
-	
-	@Override
-	protected void spotSelectionChanged(Spot target, boolean replace) {
-		super.spotSelectionChanged(target, replace);
-	}
-
-	@Override
-	protected void fireTMSelectionChange(TMSelectionChangeEvent event) {
-		// Forward to listeners, substituting ourselves as source of the event
-		TMSelectionChangeEvent newEvent = new TMSelectionChangeEvent(this, event.getSpots(), event.getEdges());
-		super.fireTMSelectionChange(newEvent);
-	}
-	
+		
 	@Override
 	public void setDisplayTrackMode(TrackDisplayMode mode, int displayDepth) {
 		super.setDisplayTrackMode(mode, displayDepth);
@@ -106,7 +92,7 @@ public class HyperStackDisplayer extends TrackMateModelView  {
 	}
 	
 	@Override
-	public void highlightEdges(Set<DefaultWeightedEdge> edges) {
+	public void highlightEdges(Collection<DefaultWeightedEdge> edges) {
 		trackOverlay.setHighlight(edges);
 	}
 		
@@ -222,6 +208,7 @@ public class HyperStackDisplayer extends TrackMateModelView  {
 	public void clear() {
 		canvas.clearOverlay();
 	}	
+
 	
 	/*
 	 * PRIVATE METHODS
@@ -248,6 +235,7 @@ public class HyperStackDisplayer extends TrackMateModelView  {
 		spotOverlay.setTarget(spotsToShow);
 		spotOverlay.setTargetColor(spotColor);
 	}
+
 
 
 }

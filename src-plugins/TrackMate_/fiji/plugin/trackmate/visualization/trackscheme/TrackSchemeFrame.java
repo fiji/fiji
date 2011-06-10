@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import javax.swing.ImageIcon;
@@ -37,16 +38,16 @@ import com.mxgraph.view.mxPerimeter;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
+import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
+import fiji.plugin.trackmate.TrackMateSelectionDisplayer;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 import fiji.plugin.trackmate.TrackMateModelChangeListener;
-import fiji.plugin.trackmate.visualization.TMSelectionChangeEvent;
-import fiji.plugin.trackmate.visualization.TMSelectionChangeListener;
-import fiji.plugin.trackmate.visualization.TMSelectionDisplayer;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelViewI;
 
-public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, TrackMateModelViewI, TrackMateModelChangeListener {
+public class TrackSchemeFrame extends JFrame implements TrackMateSelectionChangeListener, TrackMateSelectionDisplayer, TrackMateModelViewI, TrackMateModelChangeListener {
 
 	/*
 	 * CONSTANTS
@@ -86,11 +87,9 @@ public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, Tr
 	/** Is linking allowed by default? Can be changed in the toolbar. */
 	boolean defaultLinkingEnabled = false;
 	/** A flag used to prevent double event firing when setting the selection programmatically. */
-	private boolean doFireTMSelectionChangeEvent = true;
-	
-	private ArrayList<TMSelectionChangeListener> selectionChangeListeners = new ArrayList<TMSelectionChangeListener>();
+	private boolean doFireSelectionChangeEvent = true;
+	/** The model this instance is a view of (Yoda I speak like). */
 	private TrackMateModel model;
-
 
 	private static final HashMap<String, Object> BASIC_VERTEX_STYLE = new HashMap<String, Object>();
 	private static final HashMap<String, Object> BASIC_EDGE_STYLE = new HashMap<String, Object>();
@@ -119,7 +118,7 @@ public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, Tr
 	 * CONSTRUCTORS
 	 */
 
-	public TrackSchemeFrame(TrackMateModel model) {
+	public TrackSchemeFrame(TrackMateModel model)  {
 		setModel(model);
 		init();
 		setSize(DEFAULT_SIZE);
@@ -136,10 +135,13 @@ public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, Tr
 
 	@Override
 	public void setModel(TrackMateModel model) {
-		if (null != this.model)
+		if (null != this.model) {
 			this.model.removeTrackMateModelChangeListener(this);
+			this.model.removeTrackMateSelectionChangeListener(this);
+		}
 		this.model = model;
 		this.model.addTrackMateModelChangeListener(this);
+		this.model.addTrackMateSelectionChangeListener(this);
 		this.lGraph = new ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge>(model.getTrackGraph());
 		this.graph = createGraph();
 		this.settings = model.getSettings();
@@ -154,18 +156,30 @@ public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, Tr
 	 * Selection management
 	 */
 
-	public void addTMSelectionChangeListener(TMSelectionChangeListener listener) {
-		selectionChangeListeners.add(listener);
-	}
-
-	public boolean removeTMSelectionChangeListener(TMSelectionChangeListener listener) {
-		return selectionChangeListeners.remove(listener);
+	@Override
+	public void selectionChanged(TrackMateSelectionChangeEvent event) {
+		// Spots
+		Map<Spot, Boolean> spotMap = event.getSpots();
+		Collection<Spot> spots = new ArrayList<Spot>();
+		if (null != spotMap) 
+			for (Spot spot : spotMap.keySet())
+				if (spotMap.get(spot))
+					spots.add(spot);
+		highlightSpots(spots);
+		// Edges
+		Map<DefaultWeightedEdge, Boolean> edgeMap = event.getEdges();
+		Collection<DefaultWeightedEdge> edges = new ArrayList<DefaultWeightedEdge>();
+		if (null != edgeMap) 
+			for (DefaultWeightedEdge edge : edgeMap.keySet())
+				if (edgeMap.get(edge))
+					edges.add(edge);
+		highlightEdges(edges);
 	}
 
 
 	@Override
 	public void highlightSpots(Collection<Spot> spots) {
-		doFireTMSelectionChangeEvent  = false;
+		doFireSelectionChangeEvent  = false;
 		mxGraphSelectionModel model = graph.getSelectionModel();
 		// Remove old spots
 		Object[] objects = model.getCells();
@@ -180,12 +194,12 @@ public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, Tr
 		for (int i = 0; i < newSpots.length; i++) 
 			newSpots[i] = graph.getVertexToCellMap().get(it.next());
 		model.addCells(newSpots);
-		doFireTMSelectionChangeEvent  = true;
+		doFireSelectionChangeEvent  = true;
 	}
 
 	@Override
-	public void highlightEdges(Set<DefaultWeightedEdge> edges) {
-		doFireTMSelectionChangeEvent  = false;
+	public void highlightEdges(Collection<DefaultWeightedEdge> edges) {
+		doFireSelectionChangeEvent  = false;
 		mxGraphSelectionModel model = graph.getSelectionModel();
 		// Remove old edges
 		Object[] objects = model.getCells();
@@ -200,7 +214,7 @@ public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, Tr
 		for (int i = 0; i < newEdges.length; i++) 
 			newEdges[i] = graph.getEdgeToCellMap().get(it.next());
 		model.addCells(newEdges);
-		doFireTMSelectionChangeEvent  = true;
+		doFireSelectionChangeEvent  = true;
 	}
 
 	@Override
@@ -442,11 +456,12 @@ public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, Tr
 				mxEvent.CHANGE, new mxIEventListener(){
 					@SuppressWarnings("unchecked")
 					public void invoke(Object sender, mxEventObject evt) {
+						if (!doFireSelectionChangeEvent)
+							return;
 						mxGraphSelectionModel model = (mxGraphSelectionModel) sender;
 						Collection<Object> added = (Collection<Object>) evt.getProperty("added");
 						Collection<Object> removed = (Collection<Object>) evt.getProperty("removed");
-						if (doFireTMSelectionChangeEvent)
-							userChangedSelection(model, added, removed);
+						userChangedSelection(model, added, removed);
 					}
 				});
 
@@ -507,37 +522,37 @@ public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, Tr
 
 	/**
 	 * Called when the user makes a selection change in the graph. Used to forward this event 
-	 * to the {@link InfoPane} and to other {@link TMSelectionChangeListener}s.
+	 * to the {@link InfoPane} and to other {@link TrackMateSelectionChangeListener}s.
 	 * @param model the selection model 
 	 * @param added  the cells  <b>removed</b> from selection (careful, inverted)
 	 * @param removed  the cells <b>added</b> to selection (careful, inverted)
 	 */
-	private void userChangedSelection(mxGraphSelectionModel model, Collection<Object> added, Collection<Object> removed) { // Seems to be inverted
-		// Forward to info pane
-		spotSelection.clear();
-		Object[] objects = model.getCells();
-		for(Object obj : objects) {
-			mxCell cell = (mxCell) obj;
-			if (cell.isVertex())
-				spotSelection.add(graph.getCellToVertexMap().get(cell));
-		}
-		infoPane.highlightSpots(spotSelection);
+	private void userChangedSelection(mxGraphSelectionModel mxGSmodel, Collection<Object> added, Collection<Object> removed) { // Seems to be inverted
+//		// Forward to info pane
+//		spotSelection.clear();
+//		Object[] objects = mxGSmodel.getCells();
+//		for(Object obj : objects) {
+//			mxCell cell = (mxCell) obj;
+//			if (cell.isVertex())
+//				spotSelection.add(graph.getCellToVertexMap().get(cell));
+//		}
+//		infoPane.highlightSpots(spotSelection);
 
 		// Forward to other listeners
-		HashMap<Spot, Boolean> spots = new HashMap<Spot, Boolean>();
-		HashMap<DefaultWeightedEdge, Boolean> edges = new HashMap<DefaultWeightedEdge, Boolean>();
-
+		Collection<Spot> spotsToAdd = new ArrayList<Spot>();
+		Collection<Spot> spotsToRemove = new ArrayList<Spot>();
+		Collection<DefaultWeightedEdge> edgesToAdd = new ArrayList<DefaultWeightedEdge>();
+		Collection<DefaultWeightedEdge> edgesToRemove = new ArrayList<DefaultWeightedEdge>();
 
 		if (null != removed) {
-			spots = new HashMap<Spot, Boolean>();
 			for(Object obj : removed) {
 				mxCell cell = (mxCell) obj;
 				if (cell.isVertex()) {
 					Spot spot = graph.getCellToVertexMap().get(cell);
-					spots.put(spot, true);
+					spotsToRemove.add(spot);
 				} else {
 					DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(cell);
-					edges.put(edge, true);
+					edgesToRemove.add(edge);
 				}
 			}
 		}
@@ -547,18 +562,18 @@ public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, Tr
 				mxCell cell = (mxCell) obj;
 				if (cell.isVertex()) {
 					Spot spot = graph.getCellToVertexMap().get(cell);
-					spots.put(spot, false);
+					spotsToAdd.add(spot);
 				} else {
 					DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(cell);
-					edges.put(edge, false);
+					edgesToAdd.add(edge);
 				}
 			}
 		}
-
-		TMSelectionChangeEvent event = new TMSelectionChangeEvent(this, spots, edges);
-		for(TMSelectionChangeListener listener : selectionChangeListeners) {
-			listener.selectionChanged(event);
-		}
+		
+		model.addEdgeToSelection(edgesToAdd);
+		model.addSpotToSelection(spotsToAdd);
+		model.removeEdgeFromSelection(edgesToRemove);
+		model.removeSpotFromSelection(spotsToRemove);		
 	}
 
 	private void init() {

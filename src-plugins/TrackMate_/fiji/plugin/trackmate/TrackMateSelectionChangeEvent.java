@@ -1,18 +1,17 @@
-package fiji.plugin.trackmate.visualization;
+package fiji.plugin.trackmate;
 
 import java.util.EventObject;
 import java.util.Map;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
-import fiji.plugin.trackmate.Spot;
 
 /**
  * An event that characterizes a change in the current selection. 
  * {@link Spot} selection and {@link DefaultWeightedEdge} selection are dealt with separately, 
  * to keep the use of this class general.
  */
-public class TMSelectionChangeEvent extends EventObject {
+public class TrackMateSelectionChangeEvent extends EventObject {
 
 	private static final long serialVersionUID = -8920831578922412606L;
 
@@ -35,7 +34,7 @@ public class TMSelectionChangeEvent extends EventObject {
 	 * <code>null</code>s are accepted for the two maps, to specify that no changes happened for the 
 	 * corresponding type.
 	 */
-	public TMSelectionChangeEvent(Object source, Map<Spot, Boolean> spots, Map<DefaultWeightedEdge, Boolean> edges) {
+	public TrackMateSelectionChangeEvent(Object source, Map<Spot, Boolean> spots, Map<DefaultWeightedEdge, Boolean> edges) {
 		super(source);
 		this.spots = spots;
 		this.edges = edges;

@@ -8,7 +8,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.Set;
 
 import javax.swing.AbstractListModel;
 import javax.swing.JLabel;
@@ -27,9 +26,9 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.visualization.TMSelectionDisplayer;
+import fiji.plugin.trackmate.TrackMateSelectionDisplayer;
 
-class InfoPane extends JPanel implements TMSelectionDisplayer {
+class InfoPane extends JPanel implements TrackMateSelectionDisplayer {
 
 	private static final long serialVersionUID = 5889316637017869042L;
 
@@ -74,7 +73,7 @@ class InfoPane extends JPanel implements TMSelectionDisplayer {
 	 * Ignored.
 	 */
 	@Override
-	public void highlightEdges(Set<DefaultWeightedEdge> edges) {}
+	public void highlightEdges(Collection<DefaultWeightedEdge> edges) {}
 
 	/**
 	 * Ignored.

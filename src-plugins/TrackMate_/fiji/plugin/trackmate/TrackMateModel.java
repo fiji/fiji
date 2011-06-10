@@ -5,9 +5,13 @@ import ij.gui.Roi;
 
 import java.awt.Polygon;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
@@ -33,20 +37,27 @@ public class TrackMateModel {
 	protected SpotCollection filteredSpots;
 	/** The tracks as a graph. */
 	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph;
-
+	/** The spot current selection. */
+	protected Set<Spot> spotSelection = new HashSet<Spot>();
+	/** The edge current selection. */
+	protected Set<DefaultWeightedEdge> edgeSelection = new HashSet<DefaultWeightedEdge>();
+	/** The logger to append processes messages */
 	protected Logger logger = Logger.DEFAULT_LOGGER;
+	/** The settings that determine processes actions */
 	protected Settings settings;
+	/** The feature filter list that is used to generate {@link #filteredSpots} from {@link #spots}. */
 	protected List<FeatureFilter> featureFilters = new ArrayList<FeatureFilter>();
-	@SuppressWarnings("rawtypes")
-	protected SpotSegmenter<? extends RealType> segmenter;	
+	/** The initial quality filter value that is used to clip spots of low quality from {@link #spots}. */
 	protected Float initialFilterValue;
-	private List<TrackMateModelChangeListener> modelChangeListeners = new ArrayList<TrackMateModelChangeListener>();
-
-
+	/** The list of listeners listening to model content change, that is, changes in 
+	 * {@link #spots}, {@link #filteredSpots} and {@link #trackGraph}. */
+	protected List<TrackMateModelChangeListener> modelChangeListeners = new ArrayList<TrackMateModelChangeListener>();
+	/** The list of listener listening to change in selection.  */
+	protected List<TrackMateSelectionChangeListener> selectionChangeListeners = new ArrayList<TrackMateSelectionChangeListener>();
+	
 	/*
-	 * DEAL WITH CHANGE LISTENER
+	 * DEAL WITH MODEL CHANGE LISTENER
 	 */
-
 
 	public void addTrackMateModelChangeListener(TrackMateModelChangeListener listener) {
 		modelChangeListeners.add(listener);
@@ -58,6 +69,22 @@ public class TrackMateModel {
 
 	public List<TrackMateModelChangeListener> getTrackMateModelChangeListener(TrackMateModelChangeListener listener) {
 		return modelChangeListeners;
+	}
+	
+	/*
+	 * DEAL WITH SELECTION CHANGE LISTENER
+	 */
+	
+	public void addTrackMateSelectionChangeListener(TrackMateSelectionChangeListener listener) {
+		selectionChangeListeners.add(listener);
+	}
+	
+	public boolean removeTrackMateSelectionChangeListener(TrackMateSelectionChangeListener listener) {
+		return selectionChangeListeners.remove(listener);
+	}
+	
+	public List<TrackMateSelectionChangeListener> getTrackMateSelectionChangeListener() {
+		return selectionChangeListeners;
 	}
 
 	/*
@@ -109,7 +136,8 @@ public class TrackMateModel {
 		/* 0 -- Initialize local variables */
 		final float[] calibration = new float[] {(float) imp.getCalibration().pixelWidth, (float) imp.getCalibration().pixelHeight, (float) imp.getCalibration().pixelDepth};
 
-		segmenter = settings.getSpotSegmenter();
+		@SuppressWarnings("rawtypes")
+		SpotSegmenter<? extends RealType> segmenter = settings.getSpotSegmenter();
 		segmenter.setCalibration(calibration);
 
 		spots = new SpotCollection();
@@ -456,6 +484,147 @@ public class TrackMateModel {
 	 */
 	public EnumMap<Feature, double[]> getFeatureValues() {
 		return TMUtils.getFeatureValues(spots.values());
+	}
+
+	/*
+	 * SELECTION METHODSs
+	 */
+	
+	public void clearSelection() {
+		// Prepare event
+		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(spotSelection.size());
+		for(Spot spot : spotSelection) 
+			spotMap.put(spot, false);
+		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(edgeSelection.size());
+		for(DefaultWeightedEdge edge : edgeSelection) 
+			edgeMap.put(edge, false);
+		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, edgeMap);
+		// Clear fields
+		clearSpotSelection();
+		clearEdgeSelection();
+		// Fire event
+		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+			listener.selectionChanged(event);
+	}
+	
+	public void clearSpotSelection() {
+		// Prepare event
+		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(spotSelection.size());
+		for(Spot spot : spotSelection) 
+			spotMap.put(spot, false);
+		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
+		// Clear field
+		spotSelection.clear();
+		// Fire event
+		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+			listener.selectionChanged(event);
+	}
+	
+	public void clearEdgeSelection() {
+		// Prepare event
+		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(edgeSelection.size());
+		for(DefaultWeightedEdge edge : edgeSelection) 
+			edgeMap.put(edge, false);
+		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, null, edgeMap);
+		// Clear field
+		edgeSelection.clear();
+		// Fire event
+		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+			listener.selectionChanged(event);
+	}
+
+	public void addSpotToSelection(final Spot spot) {
+		if (!spotSelection.add(spot))
+			return; // Do nothing if already present in selection
+		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(1); 
+		spotMap.put(spot, true);
+		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
+		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+			listener.selectionChanged(event);
+	}
+	
+	public void removeSpotFromSelection(final Spot spot) {
+		if (!spotSelection.add(spot))
+			return; // Do nothing if already present in selection
+		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(1); 
+		spotMap.put(spot, false);
+		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
+		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+			listener.selectionChanged(event);
+	}
+	
+	public void addSpotToSelection(final Collection<Spot> spots) {
+		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(spots.size()); 
+		for (Spot spot : spots) {
+			if (spotSelection.add(spot))
+				spotMap.put(spot, true);
+		}
+		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
+		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+			listener.selectionChanged(event);
+	}
+	
+	public void removeSpotFromSelection(final Collection<Spot> spots) {
+		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(spots.size()); 
+		for (Spot spot : spots) {
+			if (spotSelection.remove(spot))
+				spotMap.put(spot, false);
+		}
+		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
+		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+			listener.selectionChanged(event);
+	}
+
+	public void addEdgeToSelection(final DefaultWeightedEdge edge) {
+		if (!edgeSelection.add(edge))
+			return; // Do nothing if already present in selection
+		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(1); 
+		edgeMap.put(edge, true);
+		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, null, edgeMap);
+		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+			listener.selectionChanged(event);
+		
+	}
+	
+	public void removeEdgeFromSelection(final DefaultWeightedEdge edge) {
+		if (!edgeSelection.remove(edge))
+			return; // Do nothing if already present in selection
+		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(1); 
+		edgeMap.put(edge, false);
+		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, null, edgeMap);
+		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+			listener.selectionChanged(event);
+		
+	}
+	
+	public void addEdgeToSelection(final Collection<DefaultWeightedEdge> edges) {
+		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(edges.size());
+		for (DefaultWeightedEdge edge : edges) {
+			if (edgeSelection.add(edge)) 
+				edgeMap.put(edge, true);
+		}
+		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, null, edgeMap);
+		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+			listener.selectionChanged(event);
+	}
+	
+	public void removeEdgeFromSelection(final Collection<DefaultWeightedEdge> edges) {
+		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(edges.size());
+		for (DefaultWeightedEdge edge : edges) {
+			if (edgeSelection.remove(edge)) 
+				edgeMap.put(edge, false);
+		}
+		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, null, edgeMap);
+		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+			listener.selectionChanged(event);
+	}
+	
+	public Set<Spot> getSpotSelection() {
+		return spotSelection;
+	}
+	
+	public Set<DefaultWeightedEdge> getEdgeSelection() {
+		return edgeSelection;
 	}
 
 	/*

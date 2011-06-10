@@ -19,8 +19,6 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.TrackMateFrame.PanelCard;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
-import fiji.plugin.trackmate.visualization.TMSelectionDisplayer;
-import fiji.plugin.trackmate.visualization.TMSelectionManager;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView.TrackDisplayMode;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
@@ -53,14 +51,7 @@ public class TrackMateFrameController implements ActionListener {
 	 */
 	boolean actionFlag = true;
 	
-	/**
-	 * The selection manager that will be in charge of ensuring that selection is shared across the 
-	 * possible multiple {@link TMSelectionDisplayer}s that are launched by this controller. 
-	 */
-	private TMSelectionManager selectionManager = new TMSelectionManager();
-	
-	
-	
+		
 	/*
 	 * CONSTRUCTOR
 	 */
@@ -235,8 +226,6 @@ public class TrackMateFrameController implements ActionListener {
 		case TUNE_THRESHOLDS:
 			execLinkDisplayerToThresholdGUI();
 			break;
-		case TUNE_DISPLAY:
-			selectionManager.registerDisplayer(getModelView());
 		}
 	}
 	
