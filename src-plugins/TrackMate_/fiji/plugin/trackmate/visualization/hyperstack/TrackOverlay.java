@@ -130,7 +130,7 @@ public class TrackOverlay implements Overlay {
 			target = graph.getEdgeTarget(edge);
 			Integer iFrame = spots.getFrame(source);
 			if (null != iFrame)
-				drawEdge(g2d, source, target, iFrame, currentFrame, xcorner, ycorner, mag, trackDisplayMode);
+				drawEdge(g2d, source, target, iFrame, currentFrame, xcorner, ycorner, mag, TrackDisplayMode.ALL_WHOLE_TRACKS);
 		}
 		
 		// Restore graphic device original settings
@@ -172,6 +172,7 @@ public class TrackOverlay implements Overlay {
 		switch (localTrackDisplayMode) {
 
 		case ALL_WHOLE_TRACKS:
+			g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1));
 			g2d.drawLine(x0, y0, x1, y1);
 			break;
 
