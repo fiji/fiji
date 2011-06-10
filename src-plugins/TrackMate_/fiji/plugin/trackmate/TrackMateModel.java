@@ -611,7 +611,7 @@ public class TrackMateModel {
 		
 		if (doNotify) {
 			List<Integer> spotFlags = new ArrayList<Integer>(spotsToRemove.size());
-			for (int i = 0; i < spotFlags.size(); i++)
+			for (int i = 0; i < spotsToRemove.size(); i++)
 				spotFlags.add(TrackMateModelChangeEvent.SPOT_REMOVED);
 			TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, spotsToRemove, spotFlags, fromFrame, null);
 			for (TrackMateModelChangeListener listener : modelChangeListeners)

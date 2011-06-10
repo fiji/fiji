@@ -394,7 +394,7 @@ public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, Tr
 			@Override
 			public void invoke(Object sender, mxEventObject evt) {
 				
-				System.out.println("Source of event is "+sender.getClass().getSimpleName());// DEBUG
+				System.out.println("Source of event is "+sender.getClass());// DEBUG
 				
 				// Separate spots from edges
 				Object[] objects = (Object[]) evt.getProperty("cells");
@@ -407,7 +407,11 @@ public class TrackSchemeFrame extends JFrame implements TMSelectionDisplayer, Tr
 						if (cell.isVertex()) {
 							// Build list of removed spots 
 							Spot spot = graph.getCellToVertexMap().get(cell);
-							int frame = model.getSpots().getFrame(spot);
+							Integer frame = model.getSpots().getFrame(spot);
+							if (frame == null) {
+								// Already removed; second call to event, have to skip it
+								return;
+							}
 							spotsToRemove.add(spot);
 							fromFrames.add(frame);
 							// Clean maps 

@@ -119,7 +119,7 @@ public class TrackOverlay implements Overlay {
 			// Color
 			g2d.setColor(edgeColors.get(source));
 			// Draw
-			drawEdge(g2d, source, target, frame, currentFrame, xcorner, ycorner, mag);
+			drawEdge(g2d, source, target, frame, currentFrame, xcorner, ycorner, mag, trackDisplayMode);
 		}
 
 		// Deal with highlighted edges
@@ -128,8 +128,9 @@ public class TrackOverlay implements Overlay {
 		for (DefaultWeightedEdge edge : highlight) {
 			source = graph.getEdgeSource(edge);
 			target = graph.getEdgeTarget(edge);
-			frame = spots.getFrame(source);
-			drawEdge(g2d, source, target, frame, currentFrame, xcorner, ycorner, mag);
+			Integer iFrame = spots.getFrame(source);
+			if (null != iFrame)
+				drawEdge(g2d, source, target, iFrame, currentFrame, xcorner, ycorner, mag, trackDisplayMode);
 		}
 		
 		// Restore graphic device original settings
@@ -145,7 +146,7 @@ public class TrackOverlay implements Overlay {
 	 */
 	
 	private final void drawEdge(final Graphics2D g2d, final Spot source, final Spot target, final int frame, final int currentFrame,
-			final int xcorner, final int ycorner, final float magnification) {
+			final int xcorner, final int ycorner, final float magnification, final TrackDisplayMode localTrackDisplayMode) {
 		// Find x & y in physical coordinates
 		final float x0i = source.getFeature(Feature.POSITION_X);
 		final float y0i = source.getFeature(Feature.POSITION_Y);
@@ -168,7 +169,7 @@ public class TrackOverlay implements Overlay {
 		final int y1 = Math.round(y1s);
  
 		// Track display mode
-		switch (trackDisplayMode ) {
+		switch (localTrackDisplayMode) {
 
 		case ALL_WHOLE_TRACKS:
 			g2d.drawLine(x0, y0, x1, y1);
