@@ -491,6 +491,8 @@ public class TrackMateModel {
 	 */
 	
 	public void clearSelection() {
+		if (DEBUG)
+			System.out.println("[TrackMateModel] Clearing selection");
 		// Prepare event
 		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(spotSelection.size());
 		for(Spot spot : spotSelection) 
@@ -508,6 +510,8 @@ public class TrackMateModel {
 	}
 	
 	public void clearSpotSelection() {
+		if (DEBUG)
+			System.out.println("[TrackMateModel] Clearing spot selection");
 		// Prepare event
 		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(spotSelection.size());
 		for(Spot spot : spotSelection) 
@@ -521,6 +525,8 @@ public class TrackMateModel {
 	}
 	
 	public void clearEdgeSelection() {
+		if (DEBUG)
+			System.out.println("[TrackMateModel] Clearing edge selection");
 		// Prepare event
 		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(edgeSelection.size());
 		for(DefaultWeightedEdge edge : edgeSelection) 
@@ -536,6 +542,8 @@ public class TrackMateModel {
 	public void addSpotToSelection(final Spot spot) {
 		if (!spotSelection.add(spot))
 			return; // Do nothing if already present in selection
+		if (DEBUG)
+			System.out.println("[TrackMateModel] Adding spot "+spot+" to selection");
 		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(1); 
 		spotMap.put(spot, true);
 		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
@@ -544,8 +552,10 @@ public class TrackMateModel {
 	}
 	
 	public void removeSpotFromSelection(final Spot spot) {
-		if (!spotSelection.add(spot))
-			return; // Do nothing if already present in selection
+		if (!spotSelection.remove(spot))
+			return; // Do nothing was not already present in selection
+		if (DEBUG)
+			System.out.println("[TrackMateModel] Removing spot "+spot+" from selection");
 		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(1); 
 		spotMap.put(spot, false);
 		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
@@ -556,8 +566,11 @@ public class TrackMateModel {
 	public void addSpotToSelection(final Collection<Spot> spots) {
 		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(spots.size()); 
 		for (Spot spot : spots) {
-			if (spotSelection.add(spot))
+			if (spotSelection.add(spot)) {
 				spotMap.put(spot, true);
+				if (DEBUG)
+					System.out.println("[TrackMateModel] Adding spot "+spot+" to selection");
+			}
 		}
 		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
 		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
@@ -567,8 +580,11 @@ public class TrackMateModel {
 	public void removeSpotFromSelection(final Collection<Spot> spots) {
 		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(spots.size()); 
 		for (Spot spot : spots) {
-			if (spotSelection.remove(spot))
+			if (spotSelection.remove(spot)) {
 				spotMap.put(spot, false);
+				if (DEBUG)
+					System.out.println("[TrackMateModel] Removing spot "+spot+" from selection");
+			}
 		}
 		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
 		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
@@ -578,6 +594,8 @@ public class TrackMateModel {
 	public void addEdgeToSelection(final DefaultWeightedEdge edge) {
 		if (!edgeSelection.add(edge))
 			return; // Do nothing if already present in selection
+		if (DEBUG)
+			System.out.println("[TrackMateModel] Adding edge "+edge+" to selection");
 		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(1); 
 		edgeMap.put(edge, true);
 		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, null, edgeMap);
@@ -589,6 +607,8 @@ public class TrackMateModel {
 	public void removeEdgeFromSelection(final DefaultWeightedEdge edge) {
 		if (!edgeSelection.remove(edge))
 			return; // Do nothing if already present in selection
+		if (DEBUG)
+			System.out.println("[TrackMateModel] Removing edge "+edge+" from selection");
 		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(1); 
 		edgeMap.put(edge, false);
 		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, null, edgeMap);
@@ -600,8 +620,11 @@ public class TrackMateModel {
 	public void addEdgeToSelection(final Collection<DefaultWeightedEdge> edges) {
 		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(edges.size());
 		for (DefaultWeightedEdge edge : edges) {
-			if (edgeSelection.add(edge)) 
+			if (edgeSelection.add(edge)) {
 				edgeMap.put(edge, true);
+				if (DEBUG)
+					System.out.println("[TrackMateModel] Adding edge "+edge+" to selection");
+			}
 		}
 		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, null, edgeMap);
 		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
@@ -611,8 +634,11 @@ public class TrackMateModel {
 	public void removeEdgeFromSelection(final Collection<DefaultWeightedEdge> edges) {
 		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(edges.size());
 		for (DefaultWeightedEdge edge : edges) {
-			if (edgeSelection.remove(edge)) 
+			if (edgeSelection.remove(edge)) {
 				edgeMap.put(edge, false);
+				if (DEBUG)
+					System.out.println("[TrackMateModel] Removing edge "+edge+" from selection");
+			}
 		}
 		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, null, edgeMap);
 		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)

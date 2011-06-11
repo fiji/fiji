@@ -7,7 +7,6 @@ import ij3d.Image3DUniverse;
 
 import java.awt.Color;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -123,22 +122,8 @@ public abstract class TrackMateModelView implements TrackMateSelectionChangeList
 	
 	@Override
 	public void selectionChanged(TrackMateSelectionChangeEvent event) {
-		// Spots
-		Map<Spot, Boolean> spotMap = event.getSpots();
-		Collection<Spot> spots = new ArrayList<Spot>();
-		if (null != spotMap) 
-			for (Spot spot : spotMap.keySet())
-				if (spotMap.get(spot))
-					spots.add(spot);
-		highlightSpots(spots);
-		// Edges
-		Map<DefaultWeightedEdge, Boolean> edgeMap = event.getEdges();
-		Collection<DefaultWeightedEdge> edges = new ArrayList<DefaultWeightedEdge>();
-		if (null != edgeMap) 
-			for (DefaultWeightedEdge edge : edgeMap.keySet())
-				if (edgeMap.get(edge))
-					edges.add(edge);
-		highlightEdges(edges);
+		highlightSpots(model.getSpotSelection());
+		highlightEdges(model.getEdgeSelection());
 	}
 	
 	/*

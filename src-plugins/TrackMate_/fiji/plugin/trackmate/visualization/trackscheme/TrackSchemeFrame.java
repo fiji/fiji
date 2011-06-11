@@ -11,7 +11,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 
 import javax.swing.ImageIcon;
@@ -38,12 +37,12 @@ import com.mxgraph.view.mxPerimeter;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
-import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
-import fiji.plugin.trackmate.TrackMateSelectionDisplayer;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 import fiji.plugin.trackmate.TrackMateModelChangeListener;
+import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
+import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
+import fiji.plugin.trackmate.TrackMateSelectionDisplayer;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelViewI;
 
@@ -76,8 +75,6 @@ public class TrackSchemeFrame extends JFrame implements TrackMateSelectionChange
 	private Settings settings;
 	private JGraphXAdapter<Spot, DefaultWeightedEdge> graph;
 
-	/** The spots currently selected. */
-	private HashSet<Spot> spotSelection = new HashSet<Spot>();
 	/** The side pane in which spot selection info will be displayed.	 */
 	private InfoPane infoPane;
 	/** The graph component in charge of painting the graph. */
@@ -158,22 +155,8 @@ public class TrackSchemeFrame extends JFrame implements TrackMateSelectionChange
 
 	@Override
 	public void selectionChanged(TrackMateSelectionChangeEvent event) {
-		// Spots
-		Map<Spot, Boolean> spotMap = event.getSpots();
-		Collection<Spot> spots = new ArrayList<Spot>();
-		if (null != spotMap) 
-			for (Spot spot : spotMap.keySet())
-				if (spotMap.get(spot))
-					spots.add(spot);
-		highlightSpots(spots);
-		// Edges
-		Map<DefaultWeightedEdge, Boolean> edgeMap = event.getEdges();
-		Collection<DefaultWeightedEdge> edges = new ArrayList<DefaultWeightedEdge>();
-		if (null != edgeMap) 
-			for (DefaultWeightedEdge edge : edgeMap.keySet())
-				if (edgeMap.get(edge))
-					edges.add(edge);
-		highlightEdges(edges);
+		highlightEdges(model.getEdgeSelection());
+		highlightSpots(model.getSpotSelection());
 	}
 
 

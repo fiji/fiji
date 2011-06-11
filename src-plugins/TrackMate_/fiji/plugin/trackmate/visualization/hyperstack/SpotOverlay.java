@@ -13,6 +13,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -27,12 +28,13 @@ public class SpotOverlay implements Overlay {
 
 	private static final Font LABEL_FONT = new Font("Arial", Font.BOLD, 12);
 
+	private static final boolean DEBUG = true;
+
 	/** The spot collection this annotation should draw. */
 	protected SpotCollection target;
 	/** The color mapping of the target collection. */
 	protected Map<Spot, Color> targetColor;
 	protected Spot editingSpot;
-	protected Collection<Spot> spotSelection;
 	protected boolean spotVisible = true;
 	private ImagePlus imp;
 	private float[] calibration;
@@ -41,6 +43,8 @@ public class SpotOverlay implements Overlay {
 	private boolean spotNameVisible;
 
 	private FontMetrics fm;
+
+	private Collection<Spot> spotSelection = new ArrayList<Spot>();
 
 	/*
 	 * CONSTRUCTOR
@@ -66,10 +70,6 @@ public class SpotOverlay implements Overlay {
 
 	public void setEditedSpot(Spot spot) {
 		this.editingSpot = spot;
-	}
-
-	public void setSpotSelection(Collection<Spot> spots) {
-		this.spotSelection = spots;
 	}
 
 	public void setTarget(SpotCollection target) {
@@ -114,7 +114,7 @@ public class SpotOverlay implements Overlay {
 		if (null != spots) { 
 			for (Spot spot : spots) {
 
-				if (editingSpot == spot || (spotSelection != null && spotSelection.contains(spot)))
+				if (editingSpot == spot || (spotSelection  != null && spotSelection.contains(spot)))
 					continue;
 
 				color = targetColor.get(spot);
@@ -133,6 +133,8 @@ public class SpotOverlay implements Overlay {
 			Integer sFrame;
 			for(Spot spot : spotSelection) {
 				sFrame = target.getFrame(spot);
+				if (DEBUG)
+					System.out.println("[SpotOverlay] For spot "+spot+" in selection, found frame "+sFrame);
 				if (null == sFrame || sFrame != frame)
 					continue;
 				drawSpot(g2d, spot, zslice, xcorner, ycorner, mag);
@@ -196,6 +198,10 @@ public class SpotOverlay implements Overlay {
 	@Override
 	public void setComposite(Composite composite) {
 		this.composite = composite;
+	}
+
+	public void setSpotSelection(Collection<Spot> spots) {
+		this.spotSelection = spots;
 	}
 
 
