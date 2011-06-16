@@ -6,6 +6,8 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -133,6 +135,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateSelectionChange
 
 	@Override
 	public void setModel(TrackMateModel model) {
+		// Model listeners
 		if (null != this.model) {
 			this.model.removeTrackMateModelChangeListener(this);
 			this.model.removeTrackMateSelectionChangeListener(this);
@@ -140,6 +143,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateSelectionChange
 		this.model = model;
 		this.model.addTrackMateModelChangeListener(this);
 		this.model.addTrackMateSelectionChangeListener(this);
+		// Graph to mirror model
 		this.lGraph = new ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge>(model.getTrackGraph());
 		this.graph = createGraph();
 		this.settings = model.getSettings();
@@ -168,7 +172,6 @@ public class TrackSchemeFrame extends JFrame implements TrackMateSelectionChange
 			}
 		}
 	}
-
 
 	@Override
 	public void highlightSpots(Collection<Spot> spots) {
@@ -299,8 +302,8 @@ public class TrackSchemeFrame extends JFrame implements TrackMateSelectionChange
 	}
 
 	public void plotSelectionData() {
-		Feature xFeature = infoPane.featureSelectionPanel.getXKey();
-		Set<Feature> yFeatures = infoPane.featureSelectionPanel.getYKeys();
+		Feature xFeature = infoPane.getFeatureSelectionPanel().getXKey();
+		Set<Feature> yFeatures = infoPane.getFeatureSelectionPanel().getYKeys();
 		if (yFeatures.isEmpty())
 			return;
 
@@ -574,11 +577,35 @@ public class TrackSchemeFrame extends JFrame implements TrackMateSelectionChange
 		doTrackLayout();
 
 		// Add the info pane
-		infoPane = new InfoPane();
-
+		infoPane = new InfoPane(model);
 		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, infoPane, graphComponent);
 		splitPane.setDividerLocation(170);
 		getContentPane().add(splitPane, BorderLayout.CENTER);
+		
+		// Add a listener to ensure we remove this frame from the listener list of the model when it closes
+		addWindowListener(new  WindowListener() {
+			@Override
+			public void windowClosed(WindowEvent e) {
+				model.removeTrackMateSelectionChangeListener(TrackSchemeFrame.this);				
+				model.removeTrackMateModelChangeListener(TrackSchemeFrame.this);				
+			}
+			
+			@Override
+			public void windowOpened(WindowEvent e) {}
+			@Override
+			public void windowIconified(WindowEvent e) {}
+			@Override
+			public void windowDeiconified(WindowEvent e) {}
+			@Override
+			public void windowDeactivated(WindowEvent e) {}
+			@Override
+			public void windowClosing(WindowEvent e) {}
+			@Override
+			public void windowActivated(WindowEvent e) {}
+		});
+			
+			
+
 	}
 
 	/**

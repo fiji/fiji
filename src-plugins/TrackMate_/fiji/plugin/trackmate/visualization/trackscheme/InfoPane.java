@@ -18,6 +18,8 @@ import javax.swing.JTable;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -26,9 +28,12 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
+import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
 import fiji.plugin.trackmate.TrackMateSelectionDisplayer;
 
-class InfoPane extends JPanel implements TrackMateSelectionDisplayer {
+class InfoPane extends JPanel implements TrackMateSelectionDisplayer, TrackMateSelectionChangeListener {
 
 	private static final long serialVersionUID = 5889316637017869042L;
 
@@ -54,14 +59,28 @@ class InfoPane extends JPanel implements TrackMateSelectionDisplayer {
 
 	private JTable table;
 	private JScrollPane scrollTable;
-	FeaturePlotSelectionPanel<Feature> featureSelectionPanel;
+	private FeaturePlotSelectionPanel<Feature> featureSelectionPanel;
 	private boolean doHighlightSelection = true;
+	private TrackMateModel model;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public InfoPane() {
+	public InfoPane(final TrackMateModel model) {
+		this.model = model;
+		// Add a listener to ensure we remove this panel from the listener list of the model
+		addAncestorListener(new AncestorListener() {			
+			@Override
+			public void ancestorRemoved(AncestorEvent event) {
+				model.removeTrackMateSelectionChangeListener(InfoPane.this);
+			}
+			@Override
+			public void ancestorMoved(AncestorEvent event) {}
+			@Override
+			public void ancestorAdded(AncestorEvent event) {}
+		});
+		model.addTrackMateSelectionChangeListener(this);
 		init();
 	}
 
@@ -69,6 +88,11 @@ class InfoPane extends JPanel implements TrackMateSelectionDisplayer {
 	 * PUBLIC METHODS
 	 */
 
+	@Override
+	public void selectionChanged(TrackMateSelectionChangeEvent event) {
+		highlightSpots(model.getSpotSelection());
+	}
+	
 	/**
 	 * Ignored.
 	 */
@@ -184,6 +208,10 @@ class InfoPane extends JPanel implements TrackMateSelectionDisplayer {
 		setLayout(new BorderLayout());
 		add(scrollTable, BorderLayout.CENTER);
 		add(featureSelectionPanel, BorderLayout.SOUTH);
+	}
+
+	public FeaturePlotSelectionPanel<Feature> getFeatureSelectionPanel() {
+		return featureSelectionPanel;
 	}
 
 }
