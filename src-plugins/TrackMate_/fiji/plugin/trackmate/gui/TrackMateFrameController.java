@@ -226,6 +226,10 @@ public class TrackMateFrameController implements ActionListener {
 		case TUNE_THRESHOLDS:
 			execLinkDisplayerToThresholdGUI();
 			break;
+			
+		case TUNE_DISPLAY:
+			DisplayerPanel displayerPanel = (DisplayerPanel) view.getPanelFor(PanelCard.DISPLAYER_PANEL_KEY);
+			displayerPanel.register(displayer);
 		}
 	}
 	
@@ -500,14 +504,14 @@ public class TrackMateFrameController implements ActionListener {
 		new Thread("TrackMate rendering thread") {
 			public void run() {
 				// Instantiate displayer
-				if (null != getModelView()) {
-					getModelView().clear();
+				if (null != displayer) {
+					displayer.clear();
 				}
-				setModelView(TrackMateModelView.instantiateView(view.displayerChooserPanel.getChoice(), model));
-				getModelView().setSpots(model.getSpots());
+				displayer = TrackMateModelView.instantiateView(view.displayerChooserPanel.getChoice(), model);
+				displayer.setSpots(model.getSpots());
 				// Forward the model to the displayer (not done if we skip automatic segmentation steps)
 				if (model.getSettings().segmenterType == SegmenterType.MANUAL_SEGMENTER) 
-					getModelView().setSpotsToShow(model.getFilteredSpots());
+					displayer.setSpotsToShow(model.getFilteredSpots());
 				
 				// Re-enable the GUI
 				logger.log("Rendering done.\n", Logger.BLUE_COLOR);
