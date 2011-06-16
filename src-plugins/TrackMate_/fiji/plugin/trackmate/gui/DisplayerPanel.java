@@ -11,8 +11,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.HashSet;
+import java.util.List;
 
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
@@ -30,11 +31,11 @@ import javax.swing.border.LineBorder;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.util.TMUtils;
+import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
-import fiji.plugin.trackmate.visualization.TrackMateModelView.TrackDisplayMode;
 
 /**
- * A configuration panel used to tune the aspect of spots and tracks in multiple {@link TrackMateModelView}.
+ * A configuration panel used to tune the aspect of spots and tracks in multiple {@link AbstractTrackMateModelView}.
  * This GUI takes the role of a controller.
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr>   -  2010 - 2011
  */
@@ -52,6 +53,7 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 	}
 	
 	public ActionEvent TRACK_DISPLAY_MODE_CHANGED 	= new ActionEvent(this, 0, "TrackDisplayModeChanged");
+	public ActionEvent TRACK_DISPLAY_DEPTH_CHANGED 	= new ActionEvent(this, 6, "TrackDisplayDepthChanged");
 	public ActionEvent TRACK_VISIBILITY_CHANGED 	= new ActionEvent(this, 1, "TrackVisibilityChanged");
 	public ActionEvent SPOT_COLOR_MODE_CHANGED; // instantiate later, from color gui panel
 	public ActionEvent SPOT_VISIBILITY_CHANGED 		= new ActionEvent(this, 2, "SpotVisibilityChanged");
@@ -76,11 +78,9 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 	private JCheckBox jCheckBoxDisplayNames;
 
 	/**
-	 * The set of {@link TrackMateModelView} views controlled by this controller.
-	 * It is a set, so that we work around trying to link multiple times with the 
-	 * same displayer.
+	 * The set of {@link AbstractTrackMateModelView} views controlled by this controller.
 	 */
-	private HashSet<TrackMateModelView> spotDisplayers = new HashSet<TrackMateModelView>();
+	private List<TrackMateModelView> views = new ArrayList<TrackMateModelView>();
 		
 	public DisplayerPanel(TrackMateModel model) {
 		super();
@@ -95,18 +95,18 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 	 */
 	
 	/**
-	 * Add the given {@link TrackMateModelView} to the list managed by this controller.
+	 * Add the given {@link AbstractTrackMateModelView} to the list managed by this controller.
 	 */
-	public void register(final TrackMateModelView spotDisplayer) {
-		this.spotDisplayers.add(spotDisplayer);
+	public void register(final TrackMateModelView view) {
+		this.views.add(view);
 	}
 	
 	public double getSpotDisplayRadiusRatio() {
 		return jTextFieldSpotRadius.getValue();
 	}
 	
-	public TrackDisplayMode getTrackDisplayMode() {
-		return TrackDisplayMode.values()[jComboBoxDisplayMode.getSelectedIndex()];
+	public int getTrackDisplayMode() {
+		return jComboBoxDisplayMode.getSelectedIndex();
 	}
 	
 	public int getTrackDisplayDepth() {
@@ -194,15 +194,12 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 					jLabelTrackDisplayMode.setPreferredSize(new java.awt.Dimension(261, 14));
 				}
 				{
-					TrackDisplayMode[] modes = TrackMateModelView.TrackDisplayMode.values();
-					String[] keyNames = new String[modes.length];
-					for (int i = 0; i < keyNames.length; i++)
-						keyNames[i] = modes[i].toString();
+					String[] keyNames = TrackMateModelView.TRACK_DISPLAY_MODE_DESCRIPTION;
 					ComboBoxModel jComboBoxDisplayModeModel = new DefaultComboBoxModel(keyNames);
 					jComboBoxDisplayMode = new JComboBox();
 					jPanelTrackOptions.add(jComboBoxDisplayMode);
 					jComboBoxDisplayMode.setModel(jComboBoxDisplayModeModel);
-					jComboBoxDisplayMode.setSelectedIndex(TrackMateModelView.DEFAULT_TRACK_DISPLAY_MODE.ordinal());
+					jComboBoxDisplayMode.setSelectedIndex(0);
 					jComboBoxDisplayMode.setFont(SMALL_FONT);
 					jComboBoxDisplayMode.setPreferredSize(new java.awt.Dimension(265, 27));
 					jComboBoxDisplayMode.addActionListener(trackDisplayModeListener);
@@ -229,7 +226,7 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 					jPanelTrackOptions.add(jTextFieldFrameDepth);
 					jTextFieldFrameDepth.setText("10");
 					jTextFieldFrameDepth.setFont(SMALL_FONT);
-					jTextFieldFrameDepth.setText(""+TrackMateModelView.DEFAULT_TRACK_DISPLAY_DEPTH);
+					jTextFieldFrameDepth.setText(""+AbstractTrackMateModelView.DEFAULT_TRACK_DISPLAY_DEPTH);
 					jTextFieldFrameDepth.setPreferredSize(new java.awt.Dimension(34, 20));
 					jTextFieldFrameDepth.addActionListener(trackDisplayModeListener);
 				}
@@ -361,30 +358,35 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 	@Override
 	public void actionPerformed(final ActionEvent event) {
 		if (event == SPOT_COLOR_MODE_CHANGED) {
-			for(TrackMateModelView spotDisplayer : spotDisplayers)
-				spotDisplayer.setColorByFeature(getColorSpotByFeature());
+			for(TrackMateModelView view : views)
+				view.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLOR_FEATURE, getColorSpotByFeature());
 
 		} else if (event == SPOT_VISIBILITY_CHANGED) {
-			for(TrackMateModelView spotDisplayer : spotDisplayers)
-				spotDisplayer.setSpotVisible(isDisplaySpotSelected());
+			for(TrackMateModelView view : views)
+				view.setDisplaySettings(TrackMateModelView.KEY_SPOTS_VISIBLE, isDisplaySpotSelected());
 
 		} else if (event == TRACK_DISPLAY_MODE_CHANGED) {
-			for(TrackMateModelView spotDisplayer : spotDisplayers)
-				spotDisplayer.setDisplayTrackMode(getTrackDisplayMode(), getTrackDisplayDepth());
-
+			for(TrackMateModelView view : views) 
+				view.setDisplaySettings(TrackMateModelView.KEY_TRACK_DISPLAY_MODE, getTrackDisplayMode());
+		
+		} else if (event == TRACK_DISPLAY_DEPTH_CHANGED) {
+			for(TrackMateModelView view : views) 	
+				view.setDisplaySettings(TrackMateModelView.KEY_TRACK_DISPLAY_DEPTH, getTrackDisplayDepth());
+			
 		} else if (event == TRACK_VISIBILITY_CHANGED) {
-			for(TrackMateModelView spotDisplayer : spotDisplayers)
-				spotDisplayer.setTrackVisible(isDisplayTrackSelected());
+			for(TrackMateModelView view : views)
+				view.setDisplaySettings(TrackMateModelView.KEY_DISPLAY_TRACKS, isDisplayTrackSelected());
 
 		} else if (event == SPOT_DISPLAY_RADIUS_CHANGED) {
-			for(TrackMateModelView spotDisplayer : spotDisplayers)
-				spotDisplayer.setRadiusDisplayRatio((float) getSpotDisplayRadiusRatio());
+			for(TrackMateModelView view : views)
+				view.setDisplaySettings(TrackMateModelView.KEY_SPOT_RADIUS_RATIO, getSpotDisplayRadiusRatio());
 
 		} else if (event == SPOT_DISPLAY_LABEL_CHANGED) {
-			for(TrackMateModelView spotDisplayer : spotDisplayers)
-				spotDisplayer.setSpotNameVisible(isDisplaySpotNameSelected());
-		} // Other events (TrackScheme) will be dealt with by another class 		
+			for(TrackMateModelView view : views)
+				view.setDisplaySettings(TrackMateModelView.KEY_DISPLAY_SPOT_NAMES, isDisplaySpotNameSelected());
+		} 
 	}
+	
 	/*
 	 * MAIN METHOD
 	 */

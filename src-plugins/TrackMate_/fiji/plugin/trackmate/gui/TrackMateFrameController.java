@@ -19,8 +19,8 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.TrackMateFrame.PanelCard;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
+import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
-import fiji.plugin.trackmate.visualization.TrackMateModelView.TrackDisplayMode;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 public class TrackMateFrameController implements ActionListener {
@@ -507,7 +507,7 @@ public class TrackMateFrameController implements ActionListener {
 				if (null != displayer) {
 					displayer.clear();
 				}
-				displayer = TrackMateModelView.instantiateView(view.displayerChooserPanel.getChoice(), model);
+				displayer = AbstractTrackMateModelView.instantiateView(view.displayerChooserPanel.getChoice(), model);
 //				displayer.setSpots(model.getSpots());
 				// Forward the model to the displayer (not done if we skip automatic segmentation steps)
 //				if (model.getSettings().segmenterType == SegmenterType.MANUAL_SEGMENTER) 
@@ -532,8 +532,8 @@ public class TrackMateFrameController implements ActionListener {
 				view.thresholdGuiPanel.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent event) {
-						getModelView().setColorByFeature(view.thresholdGuiPanel.getColorByFeature());
-						getModelView().refresh();
+						displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLOR_FEATURE, view.thresholdGuiPanel.getColorByFeature());
+						displayer.refresh();
 					}
 				});
 				
@@ -543,7 +543,6 @@ public class TrackMateFrameController implements ActionListener {
 						// We set the thresholds field of the model but do not touch its selected spot field yet.
 						model.setFeatureFilters(view.thresholdGuiPanel.getFeatureThresholds());
 						model.execFiltering();
-//						displayer.setSpotsToShow(model.getSpots().threshold(model.getFeatureFilters()));
 						displayer.refresh();
 					}
 				});
@@ -600,8 +599,6 @@ public class TrackMateFrameController implements ActionListener {
 			public void run() {
 				long start = System.currentTimeMillis();
 				model.execTracking();
-//				displayer.setTrackGraph(model.getTrackGraph());
-				displayer.setDisplayTrackMode(TrackDisplayMode.ALL_WHOLE_TRACKS, 20);
 				// Re-enable the GUI
 				switchNextButton(true);
 				long end = System.currentTimeMillis();

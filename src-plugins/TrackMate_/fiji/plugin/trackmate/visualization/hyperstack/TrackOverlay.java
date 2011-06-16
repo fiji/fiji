@@ -13,85 +13,77 @@ import java.awt.geom.AffineTransform;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.jfree.chart.renderer.InterpolatePaintScale;
+import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
-import fiji.plugin.trackmate.visualization.TrackMateModelView.TrackDisplayMode;
 import fiji.util.gui.OverlayedImageCanvas.Overlay;
 
 public class TrackOverlay implements Overlay {
-	private SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph;
-	private SpotCollection spots;
 	private float[] calibration;
 	private ImagePlus imp;
 	private HashMap<Spot, Color> edgeColors;
-	private TrackMateModelView.TrackDisplayMode trackDisplayMode = TrackDisplayMode.ALL_WHOLE_TRACKS;
-	private boolean trackVisible = true;
-	private int trackDisplayDepth = 10;
 	private Collection<DefaultWeightedEdge> highlight = new HashSet<DefaultWeightedEdge>();
 	private Composite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
+	private Map<String, Object> displaySettings;
+	private TrackMateModel model;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 	
-	public TrackOverlay(final ImagePlus imp, final float[] calibration) {
-		this.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
-		this.calibration = calibration;
+	public TrackOverlay(final TrackMateModel model, final ImagePlus imp, final Map<String, Object> displaySettings) {
+		this.model = model;
+		this.calibration = model.getSettings().getCalibration();
 		this.imp = imp;
+		this.displaySettings = displaySettings;
+		this.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
+		computeTrackColors();
 	}
 	
 	/*
 	 * PUBLIC METHODS
 	 */
 
-	public void setTrackColor(final Map<Set<Spot>, Color> colors) {
-		edgeColors = new HashMap<Spot, Color>(spots.getNSpots());
+	public void computeTrackColors() {
+		InterpolatePaintScale colorMap = (InterpolatePaintScale) displaySettings.get(TrackMateModelView.KEY_COLORMAP);
+		List<Set<Spot>> tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(model.getTrackGraph()).connectedSets();
+		HashMap<Set<Spot>, Color> trackColors = new HashMap<Set<Spot>, Color>(tracks.size());
+		int counter = 0;
+		int ntracks = tracks.size();
+		for(Set<Spot> track : tracks) {
+			trackColors.put(track, colorMap.getPaint((float) counter / (ntracks-1)));
+			counter++;
+		}
+		edgeColors = new HashMap<Spot, Color>(model.getFilteredSpots().getNSpots());
 		Color color;
-		for(Set<Spot> track : colors.keySet()) {
-			color = colors.get(track);
+		for(Set<Spot> track : trackColors.keySet()) {
+			color = trackColors.get(track);
 			for(Spot spot : track)
 				edgeColors.put(spot, color);
 		}
+
 	}
-	
-	/**
-	 * Set the tracks that should be plotted by this class.
-	 * <p>
-	 * We require the corresponding {@link SpotCollection} to be set in the same time: the {@link SimpleWeightedGraph}
-	 * contains the information about the edges of the track, but does not contain any information about
-	 * what frame each edge belong to. This information is retrieved from the given {@link SpotCollection}, which
-	 * must be made with the same {@link Spot} objects that of the vertices of the graph.
-	 */
-	public void setTrackGraph(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph, final SpotCollection spots) {
-		this.graph = graph;
-		this.spots = spots;
-	}
-	
-	public void setTrackVisible(boolean trackVisible) {
-		this.trackVisible = trackVisible;
-	}
-	
+			
 	public void setHighlight(Collection<DefaultWeightedEdge> edges) {
 		this.highlight = edges;
 	}
 
-	
-	public void setDisplayTrackMode(TrackDisplayMode mode, int displayDepth) {
-		this.trackDisplayMode = mode;
-		this.trackDisplayDepth = displayDepth;
-	}
-
 	@Override
 	public void paint(final Graphics g, final int xcorner, final int ycorner, final double magnification) {
-		if (!trackVisible || graph == null)
+		boolean tracksVisible = (Boolean) displaySettings.get(TrackMateModelView.KEY_TRACKS_VISIBLE);
+		final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = model.getTrackGraph();
+		if (!tracksVisible  || graph == null)
 			return;
 		
 		final Graphics2D g2d = (Graphics2D)g;
@@ -104,11 +96,13 @@ public class TrackOverlay implements Overlay {
 		g2d.setComposite(composite);
 		final float mag = (float) magnification;
 		final int currentFrame = imp.getFrame() - 1;
+		final int trackDisplayMode = (Integer) displaySettings.get(TrackMateModelView.KEY_TRACK_DISPLAY_MODE);
 		Spot source, target;
 		int frame;
 
 		g2d.setStroke(new BasicStroke(2.0f,  BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		Set<DefaultWeightedEdge> edges = graph.edgeSet();
+		final SpotCollection spots = model.getFilteredSpots();
 		for (DefaultWeightedEdge edge : edges) {
 			if (highlight.contains(edge))
 				continue;
@@ -125,13 +119,13 @@ public class TrackOverlay implements Overlay {
 
 		// Deal with highlighted edges
 		g2d.setStroke(new BasicStroke(4.0f,  BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-		g2d.setColor(TrackMateModelView.HIGHLIGHT_COLOR);
+		g2d.setColor(TrackMateModelView.DEFAULT_HIGHLIGHT_COLOR);
 		for (DefaultWeightedEdge edge : highlight) {
 			source = graph.getEdgeSource(edge);
 			target = graph.getEdgeTarget(edge);
 			Integer iFrame = spots.getFrame(source);
 			if (null != iFrame)
-				drawEdge(g2d, source, target, iFrame, currentFrame, xcorner, ycorner, mag, TrackDisplayMode.ALL_WHOLE_TRACKS);
+				drawEdge(g2d, source, target, iFrame, currentFrame, xcorner, ycorner, mag, TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE);
 		}
 		
 		// Restore graphic device original settings
@@ -147,7 +141,7 @@ public class TrackOverlay implements Overlay {
 	 */
 	
 	private final void drawEdge(final Graphics2D g2d, final Spot source, final Spot target, final int frame, final int currentFrame,
-			final int xcorner, final int ycorner, final float magnification, final TrackDisplayMode localTrackDisplayMode) {
+			final int xcorner, final int ycorner, final float magnification, final int localTrackDisplayMode) {
 		// Find x & y in physical coordinates
 		final float x0i = source.getFeature(Feature.POSITION_X);
 		final float y0i = source.getFeature(Feature.POSITION_Y);
@@ -169,15 +163,16 @@ public class TrackOverlay implements Overlay {
 		final int x1 = Math.round(x1s);
 		final int y1 = Math.round(y1s);
  
-		// Track display mode
+		// Track display mode.
+		final int trackDisplayDepth = (Integer) displaySettings.get(TrackMateModelView.KEY_TRACK_DISPLAY_DEPTH);
 		switch (localTrackDisplayMode) {
 
-		case ALL_WHOLE_TRACKS:
+		case TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE:
 			g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1));
 			g2d.drawLine(x0, y0, x1, y1);
 			break;
 
-		case LOCAL_WHOLE_TRACKS: {
+		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL: {
 			final int frameDist = Math.abs(frame - currentFrame); 
 			if (frameDist > trackDisplayDepth)
 				return;
@@ -186,7 +181,7 @@ public class TrackOverlay implements Overlay {
 			break;
 		}		
 
-		case LOCAL_FORWARD_TRACKS: {
+		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_BACKWARD: {
 			final int frameDist = frame - currentFrame; 
 			if (frameDist < 0 || frameDist > trackDisplayDepth)
 				return;
@@ -195,7 +190,7 @@ public class TrackOverlay implements Overlay {
 			break;
 		}
 
-		case LOCAL_BACKWARD_TRACKS: {
+		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_FORWARD: {
 			final int frameDist = currentFrame - frame; 
 			if (frameDist <= 0 || frameDist > trackDisplayDepth)
 				return;

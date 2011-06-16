@@ -23,7 +23,7 @@ import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.visualization.TrackMateModelView.TrackDisplayMode;
+import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView.TrackDisplayMode;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotGroupNode;
 import fiji.plugin.trackmate.visualization.threedviewer.TrackDisplayNode;
 

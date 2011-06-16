@@ -7,7 +7,7 @@ import org.jdom.JDOMException;
 
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
 public class TmXmlReaderTestDrive {
@@ -36,7 +36,7 @@ public class TmXmlReaderTestDrive {
 		System.out.println(model.getSettings().trackerSettings);
 		
 		// Instantiate displayer
-		TrackMateModelView displayer = new HyperStackDisplayer(model);
+		AbstractTrackMateModelView displayer = new HyperStackDisplayer(model);
 		displayer.render();
 //		displayer.setSpots(model.getSpots());
 //		displayer.setSpotsToShow(model.getFilteredSpots());

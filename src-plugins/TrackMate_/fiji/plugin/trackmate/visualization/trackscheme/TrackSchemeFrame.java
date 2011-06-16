@@ -45,11 +45,11 @@ import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 import fiji.plugin.trackmate.TrackMateModelChangeListener;
 import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
 import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
-import fiji.plugin.trackmate.TrackMateSelectionDisplayer;
+import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
-import fiji.plugin.trackmate.visualization.TrackMateModelViewI;
+import fiji.plugin.trackmate.visualization.TrackMateSelectionView;
 
-public class TrackSchemeFrame extends JFrame implements TrackMateSelectionChangeListener, TrackMateSelectionDisplayer, TrackMateModelViewI, TrackMateModelChangeListener {
+public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeListener, TrackMateSelectionChangeListener, TrackMateModelView, TrackMateSelectionView {
 
 	/*
 	 * CONSTANTS
@@ -73,7 +73,6 @@ public class TrackSchemeFrame extends JFrame implements TrackMateSelectionChange
 	 * FIELDS
 	 */
 
-//	SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph;
 	private ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge> lGraph;
 	private Settings settings;
 	private JGraphXAdapter<Spot, DefaultWeightedEdge> graph;
@@ -90,7 +89,10 @@ public class TrackSchemeFrame extends JFrame implements TrackMateSelectionChange
 	private boolean doFireSelectionChangeEvent = true;
 	/** The model this instance is a view of (Yoda I speak like). */
 	private TrackMateModel model;
+	private Map<String, Object> displaySettings = new HashMap<String, Object>();
 
+	
+	
 	private static final HashMap<String, Object> BASIC_VERTEX_STYLE = new HashMap<String, Object>();
 	private static final HashMap<String, Object> BASIC_EDGE_STYLE = new HashMap<String, Object>();
 	static {
@@ -120,6 +122,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateSelectionChange
 
 	public TrackSchemeFrame(TrackMateModel model)  {
 		setModel(model);
+		initDisplaySettings();
 		init();
 		setSize(DEFAULT_SIZE);
 	}
@@ -220,7 +223,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateSelectionChange
 
 	/**
 	 * Used to catch spot creation events that occurred elsewhere, for instance by manual editing in 
-	 * the {@link TrackMateModelView}. 
+	 * the {@link AbstractTrackMateModelView}. 
 	 * <p>
 	 * We have to deal with the graph modification ourselves here, because the {@link TrackMateModel} model
 	 * holds a non-listenable JGraphT instance. A modification made to the model would not be reflected
@@ -344,6 +347,17 @@ public class TrackSchemeFrame extends JFrame implements TrackMateSelectionChange
 	 * PROTECTED METHODS
 	 */
 
+	protected void initDisplaySettings() {
+		displaySettings.put(KEY_SPOTS_VISIBLE, true);
+		displaySettings.put(KEY_DISPLAY_SPOT_NAMES, false);
+		displaySettings.put(KEY_SPOT_COLOR_FEATURE, null);
+		displaySettings.put(KEY_SPOT_RADIUS_RATIO, 1.0f);
+		displaySettings.put(KEY_DISPLAY_TRACKS, true);
+		displaySettings.put(KEY_TRACK_DISPLAY_MODE, DEFAULT_TRACK_DISPLAY_MODE);
+		displaySettings.put(KEY_TRACK_DISPLAY_DEPTH, DEFAULT_TRACK_DISPLAY_DEPTH);
+		displaySettings.put(KEY_COLORMAP, DEFAULT_COLOR_MAP);
+	}
+	
 	/**
 	 * Used to instantiate and configure the {@link JGraphXAdapter} that will be used for display.
 	 * Hook for subclassers.
@@ -632,6 +646,21 @@ public class TrackSchemeFrame extends JFrame implements TrackMateSelectionChange
 	 */
 	public mxTrackGraphLayout getGraphLayout() {
 		return graphLayout;	
+	}
+
+	@Override
+	public Map<String, Object> getDisplaySettings() {
+		return displaySettings;
+	}
+
+	@Override
+	public void setDisplaySettings(String key, Object value) {
+		displaySettings.put(key, value);
+	}
+
+	@Override
+	public Object getDisplaySettings(String key) {
+		return displaySettings.get(key);
 	}
 
 }

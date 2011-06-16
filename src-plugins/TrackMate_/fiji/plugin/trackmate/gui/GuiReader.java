@@ -30,8 +30,8 @@ import fiji.plugin.trackmate.gui.TrackMateFrameController.GuiState;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
-import fiji.plugin.trackmate.visualization.TrackMateModelView;
-import fiji.plugin.trackmate.visualization.TrackMateModelView.ViewType;
+import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
+import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView.ViewType;
 
 /**
  * This class is in charge of reading a whole TrackMate file, and return a  
@@ -231,7 +231,7 @@ public class GuiReader {
 					view.setModel(model);
 					controller.setState(GuiState.CALCULATE_FEATURES);
 					controller.actionFlag = true;
-					controller.setModelView(TrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));	
+					controller.setModelView(AbstractTrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));	
 					if (!imp.isVisible())
 						imp.show();
 				}
@@ -260,7 +260,7 @@ public class GuiReader {
 					view.setModel(model);
 					controller.setState(GuiState.CALCULATE_FEATURES);
 					controller.actionFlag = true;
-					controller.setModelView(TrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
+					controller.setModelView(AbstractTrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
 //					controller.getModelView().setSpots(model.getSpots());
 					if (!imp.isVisible())
 						imp.show();
@@ -292,7 +292,7 @@ public class GuiReader {
 					view.setModel(model);
 					// Stop at tune tracker panel
 					controller.setState(GuiState.TUNE_TRACKER);
-					controller.setModelView(TrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
+					controller.setModelView(AbstractTrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
 //					controller.getModelView().setSpots(model.getSpots());
 //					controller.getModelView().setSpotsToShow(model.getFilteredSpots());
 					if (!imp.isVisible())
@@ -322,7 +322,7 @@ public class GuiReader {
 					view.setModel(model);
 					// Stop at tune tracker panel
 					controller.setState(GuiState.TUNE_TRACKER);
-					controller.setModelView(TrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
+					controller.setModelView(AbstractTrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
 //					controller.getModelView().setSpots(model.getSpots());
 //					controller.getModelView().setSpotsToShow(model.getFilteredSpots());
 					if (!imp.isVisible())
@@ -339,7 +339,7 @@ public class GuiReader {
 		view.setModel(model);
 		controller.actionFlag = true; // force redraw and relinking
 		controller.setState(GuiState.TRACKING);
-		controller.setModelView(TrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
+		controller.setModelView(AbstractTrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
 //		controller.getModelView().setSpots(model.getSpots());
 //		controller.getModelView().setSpotsToShow(model.getFilteredSpots());
 //		controller.getModelView().setTrackGraph(model.getTrackGraph());

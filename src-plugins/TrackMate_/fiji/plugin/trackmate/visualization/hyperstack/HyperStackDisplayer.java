@@ -5,41 +5,32 @@ import ij.ImagePlus;
 import ij.gui.NewImage;
 import ij.gui.StackWindow;
 
-import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
+import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.util.gui.OverlayedImageCanvas;
 
-public class HyperStackDisplayer extends TrackMateModelView  {
+public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 
 	ImagePlus imp;
 	OverlayedImageCanvas canvas;
 	float[] calibration;
-	private Feature currentFeature;
-	private float featureMaxValue;
-	private float featureMinValue;
 	Settings settings;
 	private StackWindow window;
 	SpotOverlay spotOverlay;
 	private TrackOverlay trackOverlay;
 	
-	/** A mapping of the spots versus the color they must be drawn in. */
-	private Map<Spot, Color> spotColor = new HashMap<Spot, Color>();
 	private SpotEditTool editTool;
 	
 	/*
@@ -98,14 +89,7 @@ public class HyperStackDisplayer extends TrackMateModelView  {
 		if (redoOverlay)
 			refresh();
 	}
-		
-	@Override
-	public void setDisplayTrackMode(TrackDisplayMode mode, int displayDepth) {
-		super.setDisplayTrackMode(mode, displayDepth);
-		trackOverlay.setDisplayTrackMode(mode, displayDepth);
-		imp.updateAndDraw();
-	}
-	
+			
 	@Override
 	public void highlightEdges(Collection<DefaultWeightedEdge> edges) {
 		trackOverlay.setHighlight(edges);
@@ -134,25 +118,6 @@ public class HyperStackDisplayer extends TrackMateModelView  {
 	}
 	
 	@Override
-	public void setTrackVisible(boolean trackVisible) {
-		trackOverlay.setTrackVisible(trackVisible);
-		imp.updateAndDraw();
-	}
-	
-	@Override
-	public void setSpotVisible(boolean spotVisible) {
-		spotOverlay.setSpotVisible(spotVisible);
-		imp.updateAndDraw();
-	}
-	
-
-	@Override
-	public void setSpotNameVisible(boolean spotNameVisible) {
-		spotOverlay.setSpotNameVisible(spotNameVisible);
-		imp.updateAndDraw();
-	}
-	
-	@Override
 	public void render() {
 		if (null == imp) {
 			this.imp = NewImage.createByteImage("Empty", settings.width, settings.height, settings.nframes*settings.nslices, NewImage.FILL_BLACK);
@@ -162,69 +127,23 @@ public class HyperStackDisplayer extends TrackMateModelView  {
 		canvas = new OverlayedImageCanvas(imp);
 		window = new StackWindow(imp, canvas);
 		window.show();
-		spotOverlay = new SpotOverlay(imp, calibration);
-		prepareSpotOverlay();
 		//
-		prepareTrackColors();
-		trackOverlay = new TrackOverlay(imp, calibration);
-		trackOverlay.setTrackGraph(model.getTrackGraph(), model.getFilteredSpots());
-		trackOverlay.setTrackColor(trackColors);
+		spotOverlay = new SpotOverlay(model, imp, displaySettings);
+		//
+		trackOverlay = new TrackOverlay(model, imp, displaySettings);
 		//
 		canvas.addOverlay(spotOverlay);
 		canvas.addOverlay(trackOverlay);
 		imp.updateAndDraw();
 		registerEditTool();
 	}
-	
-	@Override
-	public void setRadiusDisplayRatio(float ratio) {
-		super.setRadiusDisplayRatio(ratio);
-		spotOverlay.setRadiusRatio(ratio);
-		refresh();
-	}
-	
-	@Override
-	public void setColorByFeature(Feature feature) {
-		currentFeature = feature;
-		// Get min & max
-		float min = Float.POSITIVE_INFINITY;
-		float max = Float.NEGATIVE_INFINITY;
-		Float val;
-		for (int key : model.getSpots().keySet()) {
-			for (Spot spot : model.getSpots().get(key)) {
-				val = spot.getFeature(feature);
-				if (null == val)
-					continue;
-				if (val > max) max = val;
-				if (val < min) min = val;
-			}
-		}
-		featureMinValue = min;
-		featureMaxValue = max;
-		prepareSpotOverlay();
-		refresh();
-	}
 		
+	
 	@Override
 	public void refresh() {
 		imp.updateAndDraw();
 	}
-		
-//	@Override
-//	public void setTrackGraph(SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph) {
-//		super.setTrackGraph(trackGraph);
-//		trackOverlay.setTrackGraph(trackGraph, spotsToShow);
-//		trackOverlay.setTrackColor(trackColors);
-//		imp.updateAndDraw();
-//		
-//	}
-	
-//	@Override
-//	public void setSpotsToShow(SpotCollection spotsToShow) {
-//		super.setSpotsToShow(spotsToShow);
-//		prepareSpotOverlay();
-//	}
-	
+			
 	@Override
 	public void clear() {
 		canvas.clearOverlay();
@@ -242,21 +161,12 @@ public class HyperStackDisplayer extends TrackMateModelView  {
 		editTool.register(imp, this);
 	}
 		
-	private void prepareSpotOverlay() {
-		if (null == model.getFilteredSpots())
-			return;
-		Float val;
-		for(Spot spot : model.getFilteredSpots()) {
-			val = spot.getFeature(currentFeature);
-			if (null == currentFeature || null == val)
-				spotColor.put(spot, color);
-			else
-				spotColor.put(spot, colorMap.getPaint((val-featureMinValue)/(featureMaxValue-featureMinValue)) );
+	@Override
+	public void setDisplaySettings(String key, Object value) {
+		super.setDisplaySettings(key, value);
+		// If we modified the feature coloring, then we recompute NOW the colors.
+		if (key == TrackMateModelView.KEY_SPOT_COLOR_FEATURE) {
+			spotOverlay.computeSpotColors();
 		}
-		spotOverlay.setTarget(model.getFilteredSpots());
-		spotOverlay.setTargetColor(spotColor);
 	}
-
-
-
 }

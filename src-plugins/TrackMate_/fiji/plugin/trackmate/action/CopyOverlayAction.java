@@ -11,6 +11,7 @@ import javax.swing.JFrame;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 import fiji.plugin.trackmate.gui.ImagePlusChooser;
+import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class CopyOverlayAction extends AbstractTMAction {
@@ -38,16 +39,14 @@ public class CopyOverlayAction extends AbstractTMAction {
 							TrackMateModelView newDisplayer;
 							String title;
 							if (null == dest) {
-								newDisplayer = TrackMateModelView.instantiateView(TrackMateModelView.ViewType.THREEDVIEWER_DISPLAYER, model);
+								newDisplayer = AbstractTrackMateModelView.instantiateView(AbstractTrackMateModelView.ViewType.THREEDVIEWER_DISPLAYER, model);
 								title = "3D viewer overlay";
 							} else {
 								model.getSettings().imp = dest; // TODO TODO DANGER DANGER
-								newDisplayer = TrackMateModelView.instantiateView(TrackMateModelView.ViewType.HYPERSTACK_DISPLAYER, model);
+								newDisplayer = AbstractTrackMateModelView.instantiateView(AbstractTrackMateModelView.ViewType.HYPERSTACK_DISPLAYER, model);
 								title = dest.getShortTitle() + " ctrl";
 							}
-//							newDisplayer.setSpots(model.getSpots());
-//							newDisplayer.setSpotsToShow(model.getFilteredSpots());
-//							newDisplayer.setTrackGraph(model.getTrackGraph());
+							newDisplayer.render();
 							
 							final DisplayerPanel newDisplayerPanel = new DisplayerPanel(model);
 							JFrame newFrame = new JFrame(); 

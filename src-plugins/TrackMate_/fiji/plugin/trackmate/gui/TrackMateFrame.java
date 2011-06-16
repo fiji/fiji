@@ -18,8 +18,8 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
 import fiji.plugin.trackmate.tracking.TrackerType;
-import fiji.plugin.trackmate.visualization.TrackMateModelView;
-import fiji.plugin.trackmate.visualization.TrackMateModelView.ViewType;
+import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
+import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView.ViewType;
 
 /**
  * A view for the TrackMate_ plugin, strongly inspired from the spots segmentation GUI of the Imaris® software 
@@ -178,7 +178,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		case DISPLAYER_CHOICE_KEY:
 			if (null != displayerChooserPanel)
 				jPanelMain.remove(displayerChooserPanel);
-			displayerChooserPanel = new EnumChooserPanel<TrackMateModelView.ViewType>(TrackMateModelView.ViewType.HYPERSTACK_DISPLAYER, "displayer");
+			displayerChooserPanel = new EnumChooserPanel<AbstractTrackMateModelView.ViewType>(AbstractTrackMateModelView.ViewType.HYPERSTACK_DISPLAYER, "displayer");
 			panel = displayerChooserPanel;
 			break;
 

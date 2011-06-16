@@ -26,9 +26,9 @@ import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 
-public class SpotDisplayer3D extends TrackMateModelView {
+public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	
 	public static final int DEFAULT_RESAMPLING_FACTOR = 4;
 	public static final int DEFAULT_THRESHOLD = 50;
