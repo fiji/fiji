@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import javax.swing.ImageIcon;
@@ -157,6 +158,15 @@ public class TrackSchemeFrame extends JFrame implements TrackMateSelectionChange
 	public void selectionChanged(TrackMateSelectionChangeEvent event) {
 		highlightEdges(model.getEdgeSelection());
 		highlightSpots(model.getSpotSelection());
+		// Center on selection if we added one spot exactly
+		Map<Spot, Boolean> spotsAdded = event.getSpots();
+		if (spotsAdded != null && spotsAdded.size() == 1) {
+			boolean added = spotsAdded.values().iterator().next();
+			if (added) {
+				Spot spot = spotsAdded.keySet().iterator().next();
+				centerViewOn(spot);
+			}
+		}
 	}
 
 
@@ -511,24 +521,14 @@ public class TrackSchemeFrame extends JFrame implements TrackMateSelectionChange
 	 * @param removed  the cells <b>added</b> to selection (careful, inverted)
 	 */
 	private void userChangedSelection(mxGraphSelectionModel mxGSmodel, Collection<Object> added, Collection<Object> removed) { // Seems to be inverted
-//		// Forward to info pane
-//		spotSelection.clear();
-//		Object[] objects = mxGSmodel.getCells();
-//		for(Object obj : objects) {
-//			mxCell cell = (mxCell) obj;
-//			if (cell.isVertex())
-//				spotSelection.add(graph.getCellToVertexMap().get(cell));
-//		}
-//		infoPane.highlightSpots(spotSelection);
-
 		// Forward to other listeners
 		Collection<Spot> spotsToAdd = new ArrayList<Spot>();
 		Collection<Spot> spotsToRemove = new ArrayList<Spot>();
 		Collection<DefaultWeightedEdge> edgesToAdd = new ArrayList<DefaultWeightedEdge>();
 		Collection<DefaultWeightedEdge> edgesToRemove = new ArrayList<DefaultWeightedEdge>();
 
-		if (null != removed) {
-			for(Object obj : removed) {
+		if (null != added) {
+			for(Object obj : added) {
 				mxCell cell = (mxCell) obj;
 				if (cell.isVertex()) {
 					Spot spot = graph.getCellToVertexMap().get(cell);
@@ -540,8 +540,8 @@ public class TrackSchemeFrame extends JFrame implements TrackMateSelectionChange
 			}
 		}
 
-		if (null != added) {
-			for(Object obj : added) {
+		if (null != removed) {
+			for(Object obj : removed) {
 				mxCell cell = (mxCell) obj;
 				if (cell.isVertex()) {
 					Spot spot = graph.getCellToVertexMap().get(cell);

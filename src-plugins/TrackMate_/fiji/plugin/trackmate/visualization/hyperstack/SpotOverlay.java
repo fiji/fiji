@@ -28,7 +28,7 @@ public class SpotOverlay implements Overlay {
 
 	private static final Font LABEL_FONT = new Font("Arial", Font.BOLD, 12);
 
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 
 	/** The spot collection this annotation should draw. */
 	protected SpotCollection target;

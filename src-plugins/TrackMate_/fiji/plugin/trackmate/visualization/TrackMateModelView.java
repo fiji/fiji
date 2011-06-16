@@ -124,6 +124,15 @@ public abstract class TrackMateModelView implements TrackMateSelectionChangeList
 	public void selectionChanged(TrackMateSelectionChangeEvent event) {
 		highlightSpots(model.getSpotSelection());
 		highlightEdges(model.getEdgeSelection());
+		// Center on selection if we added one spot exactly
+		Map<Spot, Boolean> spotsAdded = event.getSpots();
+		if (spotsAdded != null && spotsAdded.size() == 1) {
+			boolean added = spotsAdded.values().iterator().next();
+			if (added) {
+				Spot spot = spotsAdded.keySet().iterator().next();
+				centerViewOn(spot);
+			}
+		}
 	}
 	
 	/*

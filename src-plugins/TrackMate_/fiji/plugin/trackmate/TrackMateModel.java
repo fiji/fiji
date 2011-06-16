@@ -30,7 +30,8 @@ import fiji.plugin.trackmate.util.TMUtils;
  */
 public class TrackMateModel {		
 
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
+	
 	/** Contain the segmentation result, un-filtered.*/
 	protected SpotCollection spots;
 	/** Contain the spots retained for tracking, after filtering by features. */
