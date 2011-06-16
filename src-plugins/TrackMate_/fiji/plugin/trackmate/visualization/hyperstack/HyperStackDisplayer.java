@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate.visualization.hyperstack;
 
+import ij.ImageListener;
 import ij.ImagePlus;
 import ij.gui.NewImage;
 import ij.gui.StackWindow;
@@ -50,6 +51,20 @@ public class HyperStackDisplayer extends TrackMateModelView  {
 		this.settings = model.getSettings();
 		this.imp = settings.imp;
 		this.calibration = settings.getCalibration();
+		// Add a listener to unregister this instance from model listener list
+		ImagePlus.addImageListener(new ImageListener() {
+			@Override
+			public void imageUpdated(ImagePlus imp) {}
+			@Override
+			public void imageOpened(ImagePlus imp) {}
+			@Override
+			public void imageClosed(ImagePlus source ) {
+				if (imp != source)
+					return;
+				model.removeTrackMateModelChangeListener(HyperStackDisplayer.this);
+				model.removeTrackMateSelectionChangeListener(HyperStackDisplayer.this);
+			}
+		});
 	}
 	
 	/*
@@ -81,7 +96,7 @@ public class HyperStackDisplayer extends TrackMateModelView  {
 			}
 		}
 		if (redoOverlay)
-			setTrackGraph(model.getTrackGraph());
+			refresh();
 	}
 		
 	@Override
@@ -105,8 +120,8 @@ public class HyperStackDisplayer extends TrackMateModelView  {
 	@Override
 	public void centerViewOn(Spot spot) {
 		int frame = - 1;
-		for(int i : spotsToShow.keySet()) {
-			List<Spot> spotThisFrame = spotsToShow.get(i);
+		for(int i : model.getFilteredSpots().keySet()) {
+			List<Spot> spotThisFrame = model.getFilteredSpots().get(i);
 			if (spotThisFrame.contains(spot)) {
 				frame = i;
 				break;
@@ -148,7 +163,13 @@ public class HyperStackDisplayer extends TrackMateModelView  {
 		window = new StackWindow(imp, canvas);
 		window.show();
 		spotOverlay = new SpotOverlay(imp, calibration);
+		prepareSpotOverlay();
+		//
+		prepareTrackColors();
 		trackOverlay = new TrackOverlay(imp, calibration);
+		trackOverlay.setTrackGraph(model.getTrackGraph(), model.getFilteredSpots());
+		trackOverlay.setTrackColor(trackColors);
+		//
 		canvas.addOverlay(spotOverlay);
 		canvas.addOverlay(trackOverlay);
 		imp.updateAndDraw();
@@ -169,8 +190,8 @@ public class HyperStackDisplayer extends TrackMateModelView  {
 		float min = Float.POSITIVE_INFINITY;
 		float max = Float.NEGATIVE_INFINITY;
 		Float val;
-		for (int key : spots.keySet()) {
-			for (Spot spot : spots.get(key)) {
+		for (int key : model.getSpots().keySet()) {
+			for (Spot spot : model.getSpots().get(key)) {
 				val = spot.getFeature(feature);
 				if (null == val)
 					continue;
@@ -189,20 +210,20 @@ public class HyperStackDisplayer extends TrackMateModelView  {
 		imp.updateAndDraw();
 	}
 		
-	@Override
-	public void setTrackGraph(SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph) {
-		super.setTrackGraph(trackGraph);
-		trackOverlay.setTrackGraph(trackGraph, spotsToShow);
-		trackOverlay.setTrackColor(trackColors);
-		imp.updateAndDraw();
-		
-	}
+//	@Override
+//	public void setTrackGraph(SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph) {
+//		super.setTrackGraph(trackGraph);
+//		trackOverlay.setTrackGraph(trackGraph, spotsToShow);
+//		trackOverlay.setTrackColor(trackColors);
+//		imp.updateAndDraw();
+//		
+//	}
 	
-	@Override
-	public void setSpotsToShow(SpotCollection spotsToShow) {
-		super.setSpotsToShow(spotsToShow);
-		prepareSpotOverlay();
-	}
+//	@Override
+//	public void setSpotsToShow(SpotCollection spotsToShow) {
+//		super.setSpotsToShow(spotsToShow);
+//		prepareSpotOverlay();
+//	}
 	
 	@Override
 	public void clear() {
@@ -222,17 +243,17 @@ public class HyperStackDisplayer extends TrackMateModelView  {
 	}
 		
 	private void prepareSpotOverlay() {
-		if (null == spotsToShow)
+		if (null == model.getFilteredSpots())
 			return;
 		Float val;
-		for(Spot spot : spotsToShow) {
+		for(Spot spot : model.getFilteredSpots()) {
 			val = spot.getFeature(currentFeature);
 			if (null == currentFeature || null == val)
 				spotColor.put(spot, color);
 			else
 				spotColor.put(spot, colorMap.getPaint((val-featureMinValue)/(featureMaxValue-featureMinValue)) );
 		}
-		spotOverlay.setTarget(spotsToShow);
+		spotOverlay.setTarget(model.getFilteredSpots());
 		spotOverlay.setTargetColor(spotColor);
 	}
 

@@ -31,9 +31,9 @@ public class HyperStackDisplayerTestDrive {
 			model.computeFeatures();
 				
 		final TrackMateModelView displayer = TrackMateModelView.instantiateView(TrackMateModelView.ViewType.HYPERSTACK_DISPLAYER, model);
-		displayer.setSpots(model.getSpots());
-		displayer.setSpotsToShow(model.getFilteredSpots());
-		displayer.setTrackGraph(model.getTrackGraph());
+//		displayer.setSpots(model.getSpots());
+//		displayer.setSpotsToShow(model.getFilteredSpots());
+//		displayer.setTrackGraph(model.getTrackGraph());
 		displayer.setDisplayTrackMode(TrackDisplayMode.LOCAL_WHOLE_TRACKS, 5);
 		displayer.setSpotNameVisible(true);
 		

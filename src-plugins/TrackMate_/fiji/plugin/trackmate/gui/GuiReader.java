@@ -261,7 +261,7 @@ public class GuiReader {
 					controller.setState(GuiState.CALCULATE_FEATURES);
 					controller.actionFlag = true;
 					controller.setModelView(TrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
-					controller.getModelView().setSpots(model.getSpots());
+//					controller.getModelView().setSpots(model.getSpots());
 					if (!imp.isVisible())
 						imp.show();
 				}
@@ -293,8 +293,8 @@ public class GuiReader {
 					// Stop at tune tracker panel
 					controller.setState(GuiState.TUNE_TRACKER);
 					controller.setModelView(TrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
-					controller.getModelView().setSpots(model.getSpots());
-					controller.getModelView().setSpotsToShow(model.getFilteredSpots());
+//					controller.getModelView().setSpots(model.getSpots());
+//					controller.getModelView().setSpotsToShow(model.getFilteredSpots());
 					if (!imp.isVisible())
 						imp.show();
 				}
@@ -323,8 +323,8 @@ public class GuiReader {
 					// Stop at tune tracker panel
 					controller.setState(GuiState.TUNE_TRACKER);
 					controller.setModelView(TrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
-					controller.getModelView().setSpots(model.getSpots());
-					controller.getModelView().setSpotsToShow(model.getFilteredSpots());
+//					controller.getModelView().setSpots(model.getSpots());
+//					controller.getModelView().setSpotsToShow(model.getFilteredSpots());
 					if (!imp.isVisible())
 						imp.show();
 				}
@@ -340,9 +340,9 @@ public class GuiReader {
 		controller.actionFlag = true; // force redraw and relinking
 		controller.setState(GuiState.TRACKING);
 		controller.setModelView(TrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
-		controller.getModelView().setSpots(model.getSpots());
-		controller.getModelView().setSpotsToShow(model.getFilteredSpots());
-		controller.getModelView().setTrackGraph(model.getTrackGraph());
+//		controller.getModelView().setSpots(model.getSpots());
+//		controller.getModelView().setSpotsToShow(model.getFilteredSpots());
+//		controller.getModelView().setTrackGraph(model.getTrackGraph());
 		if (!imp.isVisible())
 			imp.show();
 		logger.log("Loading data finished.\n");

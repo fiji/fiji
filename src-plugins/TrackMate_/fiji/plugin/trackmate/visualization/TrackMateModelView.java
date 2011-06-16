@@ -73,15 +73,15 @@ public abstract class TrackMateModelView implements TrackMateSelectionChangeList
 	
 	/** The track collections emanating from tracking. They are represented as a graph of Spot,
 	 * which must be the same objects as for {@link #spots}. */
-	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph;
+//	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph;
 	/** The individual tracks contained in the {@link #trackGraph}. */ 
-	protected List<Set<Spot>> tracks;
+//	protected List<Set<Spot>> tracks;
 	/** The track colors. */
 	protected Map<Set<Spot>, Color> trackColors;
 	/** The Spot lists emanating from segmentation, indexed by the frame index as Integer. */
-	protected SpotCollection spots = new SpotCollection();
+//	protected SpotCollection spots = new SpotCollection();
 	/** The subset of Spots retained from {@link #spots} for displaying. */
-	protected SpotCollection spotsToShow = new SpotCollection();
+//	protected SpotCollection spotsToShow = new SpotCollection();
 
 	/** The display track mode. */
 	protected TrackDisplayMode trackDisplayMode = DEFAULT_TRACK_DISPLAY_MODE;
@@ -115,6 +115,18 @@ public abstract class TrackMateModelView implements TrackMateSelectionChangeList
 	public void modelChanged(TrackMateModelChangeEvent event) {
 		refresh();
 	};
+	
+	protected void prepareTrackColors() {
+		List<Set<Spot>> tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(model.getTrackGraph()).connectedSets();
+		this.trackColors = new HashMap<Set<Spot>, Color>(tracks.size());
+		int counter = 0;
+		int ntracks = tracks.size();
+		for(Set<Spot> track : tracks) {
+			trackColors.put(track, colorMap.getPaint((float) counter / (ntracks-1)));
+			counter++;
+		}
+
+	}
 	
 	/*
 	 * TMSelectionChangeListener
@@ -151,17 +163,17 @@ public abstract class TrackMateModelView implements TrackMateSelectionChangeList
 	/**
 	 * Set the track to be displayed in this displayer.
 	 */
-	public void setTrackGraph(SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph) {
-		this.trackGraph = trackGraph;
-		this.tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(trackGraph).connectedSets();
-		this.trackColors = new HashMap<Set<Spot>, Color>(tracks.size());
-		int counter = 0;
-		int ntracks = tracks.size();
-		for(Set<Spot> track : tracks) {
-			trackColors.put(track, colorMap.getPaint((float) counter / (ntracks-1)));
-			counter++;
-		}
-	}
+//	public void setTrackGraph(SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph) {
+//		this.trackGraph = trackGraph;
+//		this.tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(trackGraph).connectedSets();
+//		this.trackColors = new HashMap<Set<Spot>, Color>(tracks.size());
+//		int counter = 0;
+//		int ntracks = tracks.size();
+//		for(Set<Spot> track : tracks) {
+//			trackColors.put(track, colorMap.getPaint((float) counter / (ntracks-1)));
+//			counter++;
+//		}
+//	}
 	
 	/*
 	 * spot collections
@@ -173,18 +185,18 @@ public abstract class TrackMateModelView implements TrackMateSelectionChangeList
 	 * using {@link #setSpotsToShow(TreeMap)}, and must be a subset from the field passed to this method.
 	 * @see #setSpotsToShow(TreeMap)  
 	 */
-	public void setSpots(SpotCollection spots) {
-		this.spots = spots;
-	}
+//	public void setSpots(SpotCollection spots) {
+//		this.spots = spots;
+//	}
 	
 	/**
 	 * Set what spots are to be displayed in this displayer. The list of spot given here must be a subset
 	 * of the list passed to the {@link #setSpots(TreeMap)} method.
 	 * @see #setSpots(TreeMap) 
 	 */
-	public void setSpotsToShow(SpotCollection spotsToShow) {
-		this.spotsToShow = spotsToShow;
-	}
+//	public void setSpotsToShow(SpotCollection spotsToShow) {
+//		this.spotsToShow = spotsToShow;
+//	}
 
 	/**
 	 * Set up the ratio used to determine the actual display radius of spots. The spots on the image
@@ -199,8 +211,7 @@ public abstract class TrackMateModelView implements TrackMateSelectionChangeList
 	 */
 	
 	/**
-	 * Prepare this displayer and render it according to its concrete implementation. Must be called before
-	 * adding spots or tracks for displaying. 
+	 * Prepare this displayer and render it according to its concrete implementation. 
 	 */
 	public abstract void render();
 	
@@ -336,7 +347,7 @@ public abstract class TrackMateModelView implements TrackMateSelectionChangeList
 						new boolean[] {true, true, true});
 				universe.addContentLater(imageContent);	
 			}
-			disp = new SpotDisplayer3D(universe);
+			disp = new SpotDisplayer3D(universe, model);
 			disp.render();
 			break;
 

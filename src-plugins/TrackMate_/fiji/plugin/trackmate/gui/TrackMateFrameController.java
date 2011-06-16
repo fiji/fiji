@@ -508,10 +508,10 @@ public class TrackMateFrameController implements ActionListener {
 					displayer.clear();
 				}
 				displayer = TrackMateModelView.instantiateView(view.displayerChooserPanel.getChoice(), model);
-				displayer.setSpots(model.getSpots());
+//				displayer.setSpots(model.getSpots());
 				// Forward the model to the displayer (not done if we skip automatic segmentation steps)
-				if (model.getSettings().segmenterType == SegmenterType.MANUAL_SEGMENTER) 
-					displayer.setSpotsToShow(model.getFilteredSpots());
+//				if (model.getSettings().segmenterType == SegmenterType.MANUAL_SEGMENTER) 
+//					displayer.setSpotsToShow(model.getFilteredSpots());
 				
 				// Re-enable the GUI
 				logger.log("Rendering done.\n", Logger.BLUE_COLOR);
@@ -542,8 +542,9 @@ public class TrackMateFrameController implements ActionListener {
 					public void stateChanged(ChangeEvent event) {
 						// We set the thresholds field of the model but do not touch its selected spot field yet.
 						model.setFeatureFilters(view.thresholdGuiPanel.getFeatureThresholds());
-						getModelView().setSpotsToShow(model.getSpots().threshold(model.getFeatureFilters()));
-						getModelView().refresh();
+						model.execFiltering();
+//						displayer.setSpotsToShow(model.getSpots().threshold(model.getFeatureFilters()));
+						displayer.refresh();
 					}
 				});
 				
@@ -561,7 +562,7 @@ public class TrackMateFrameController implements ActionListener {
 		List<FeatureFilter> featureThresholds = view.thresholdGuiPanel.getFeatureThresholds();
 		model.setFeatureFilters(featureThresholds);
 		model.execFiltering();
-		getModelView().setSpotsToShow(model.getFilteredSpots());
+//		displayer.setSpotsToShow(model.getFilteredSpots());
 		
 		int ntotal = 0;
 		for(Collection<Spot> spots : model.getSpots().values())
@@ -599,8 +600,8 @@ public class TrackMateFrameController implements ActionListener {
 			public void run() {
 				long start = System.currentTimeMillis();
 				model.execTracking();
-				getModelView().setTrackGraph(model.getTrackGraph());
-				getModelView().setDisplayTrackMode(TrackDisplayMode.ALL_WHOLE_TRACKS, 20);
+//				displayer.setTrackGraph(model.getTrackGraph());
+				displayer.setDisplayTrackMode(TrackDisplayMode.ALL_WHOLE_TRACKS, 20);
 				// Re-enable the GUI
 				switchNextButton(true);
 				long end = System.currentTimeMillis();

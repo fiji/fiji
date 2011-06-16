@@ -3,6 +3,7 @@ package fiji.plugin.trackmate.visualization.threedviewer;
 import ij3d.Content;
 import ij3d.ContentInstant;
 import ij3d.Image3DUniverse;
+import ij3d.UniverseListener;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -13,15 +14,18 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 
+import javax.media.j3d.View;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point4f;
 
+import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class SpotDisplayer3D extends TrackMateModelView {
@@ -44,8 +48,33 @@ public class SpotDisplayer3D extends TrackMateModelView {
 	private HashMap<Spot, Integer> previousFrameHighlight;
 	private HashMap<DefaultWeightedEdge, Color> previousEdgeHighlight;
 	
-	public SpotDisplayer3D(Image3DUniverse universe) {
+	public SpotDisplayer3D(Image3DUniverse universe, TrackMateModel model) {
 		this.universe = universe;
+		setModel(model);
+		// Add a listener to unregister this instance from the model listener list when closing
+		universe.addUniverseListener(new UniverseListener() {			
+			@Override
+			public void universeClosed() {
+				SpotDisplayer3D.this.model.removeTrackMateModelChangeListener(SpotDisplayer3D.this);
+				SpotDisplayer3D.this.model.removeTrackMateSelectionChangeListener(SpotDisplayer3D.this);
+			}
+			@Override
+			public void transformationUpdated(View view) {}
+			@Override
+			public void transformationStarted(View view) {}
+			@Override
+			public void transformationFinished(View view) {}
+			@Override
+			public void contentSelected(Content c) {}
+			@Override
+			public void contentRemoved(Content c) {}
+			@Override
+			public void contentChanged(Content c) {}
+			@Override
+			public void contentAdded(Content c) {}
+			@Override
+			public void canvasResized() {}
+		});
 	}
 	
 	/*
@@ -68,7 +97,7 @@ public class SpotDisplayer3D extends TrackMateModelView {
 		previousColorHighlight = new HashMap<Spot, Color3f>(spots.size());
 		previousFrameHighlight = new HashMap<Spot, Integer>(spots.size());
 		
-		SpotCollection sc = spotsToShow.subset(spots);
+		SpotCollection sc = model.getFilteredSpots().subset(spots);
 		List<Spot> st;
 		for(int frame : sc.keySet()) {
 			st = sc.get(frame);
@@ -87,8 +116,8 @@ public class SpotDisplayer3D extends TrackMateModelView {
 	@Override
 	public void centerViewOn(Spot spot) {
 		int frame = - 1;
-		for(int i : spotsToShow.keySet()) {
-			List<Spot> spotThisFrame = spotsToShow.get(i);
+		for(int i : model.getFilteredSpots().keySet()) {
+			List<Spot> spotThisFrame = model.getFilteredSpots().get(i);
 			if (spotThisFrame.contains(spot)) {
 				frame = i;
 				break;
@@ -132,7 +161,7 @@ public class SpotDisplayer3D extends TrackMateModelView {
 		List<Spot> spotsThisFrame; 
 		SpotGroupNode<Spot> spotGroup;
 		for(int key : blobs.keySet()) {
-			spotsThisFrame = spots.get(key);
+			spotsThisFrame = model.getSpots().get(key);
 			spotGroup = blobs.get(key);
 			for(Spot spot : spotsThisFrame)
 				spotGroup.setRadius(spot, radiusRatio*spot.getFeature(Feature.RADIUS));
@@ -148,42 +177,42 @@ public class SpotDisplayer3D extends TrackMateModelView {
 	}
 	
 	public void refresh() { 
-		for(int key : spotsToShow.keySet())
-			blobs.get(key).setVisible(spotsToShow.get(key)); // NPE if a spot from #spotsToShow does not belong to #spots 
+		for(int key : model.getFilteredSpots().keySet())
+			blobs.get(key).setVisible(model.getFilteredSpots().get(key)); // NPE if a spot from #spotsToShow does not belong to #spots 
 	}
 	
-	@Override
-	public void setTrackGraph(SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph) {
-		super.setTrackGraph(trackGraph);
-		if (universe.contains(TRACK_CONTENT_NAME)) {
-			universe.removeContent(TRACK_CONTENT_NAME);
-			universe.removeTimelapseListener(trackNode);
-		}
-		trackContent = makeTrackContent();
-		universe.addTimelapseListener(trackNode);
-		try {
-			trackContent = universe.addContentLater(trackContent).get();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} catch (ExecutionException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	@Override
-	public void setSpots(SpotCollection spots) {
-		super.setSpots(spots);
-		if (universe.contains(SPOT_CONTENT_NAME))
-			universe.removeContent(SPOT_CONTENT_NAME);
-		spotContent = makeSpotContent();
-		try {
-			spotContent = universe.addContentLater(spotContent).get();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} catch (ExecutionException e) {
-			e.printStackTrace();
-		}
-	};
+//	@Override
+//	public void setTrackGraph(SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph) {
+//		super.setTrackGraph(trackGraph);
+//		if (universe.contains(TRACK_CONTENT_NAME)) {
+//			universe.removeContent(TRACK_CONTENT_NAME);
+//			universe.removeTimelapseListener(trackNode);
+//		}
+//		trackContent = makeTrackContent();
+//		universe.addTimelapseListener(trackNode);
+//		try {
+//			trackContent = universe.addContentLater(trackContent).get();
+//		} catch (InterruptedException e) {
+//			e.printStackTrace();
+//		} catch (ExecutionException e) {
+//			e.printStackTrace();
+//		}
+//	}
+//	
+//	@Override
+//	public void setSpots(SpotCollection spots) {
+//		super.setSpots(spots);
+//		if (universe.contains(SPOT_CONTENT_NAME))
+//			universe.removeContent(SPOT_CONTENT_NAME);
+//		spotContent = makeSpotContent();
+//		try {
+//			spotContent = universe.addContentLater(spotContent).get();
+//		} catch (InterruptedException e) {
+//			e.printStackTrace();
+//		} catch (ExecutionException e) {
+//			e.printStackTrace();
+//		}
+//	};
 	
 
 	@Override
@@ -202,8 +231,8 @@ public class SpotDisplayer3D extends TrackMateModelView {
 			float min = Float.POSITIVE_INFINITY;
 			float max = Float.NEGATIVE_INFINITY;
 			Float val;
-			for (int key : spots.keySet()) {
-				for (Spot spot : spots.get(key)) {
+			for (int key : model.getSpots().keySet()) {
+				for (Spot spot : model.getSpots().get(key)) {
 					val = spot.getFeature(feature);
 					if (null == val)
 						continue;
@@ -215,7 +244,7 @@ public class SpotDisplayer3D extends TrackMateModelView {
 			List<Spot> spotThisFrame;
 			SpotGroupNode<Spot> spotGroup;
 			for (int key : blobs.keySet()) {
-				spotThisFrame = spots.get(key);
+				spotThisFrame = model.getSpots().get(key);
 				spotGroup = blobs.get(key);
 				for ( Spot spot : spotThisFrame) {
 					val = spot.getFeature(feature);
@@ -243,14 +272,15 @@ public class SpotDisplayer3D extends TrackMateModelView {
 		HashMap<Set<Spot>, Color> colors = new HashMap<Set<Spot>, Color>();
 		float value;
 		int index = 0;
-		for(Set<Spot> track : tracks) {
+		List<Set<Spot>> tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(model.getTrackGraph()).connectedSets();
+		for(Set<Spot> track : tracks ) {
 			value = (float) index / tracks.size();
 			colors.put(track, colorMap.getPaint(value));
 			index++;
 		}
 		
 		// Prepare tracks instant
-		trackNode = new TrackDisplayNode(trackGraph, spots, tracks, colors);
+		trackNode = new TrackDisplayNode(model.getTrackGraph(), model.getFilteredSpots(), tracks, colors);
 		
 		// Pass tracks instant to all instants
 		TreeMap<Integer, ContentInstant> instants = new TreeMap<Integer,ContentInstant>();
@@ -272,8 +302,8 @@ public class SpotDisplayer3D extends TrackMateModelView {
 		ContentInstant contentThisFrame;
 		TreeMap<Integer, ContentInstant> contentAllFrames = new TreeMap<Integer, ContentInstant>();
 		
-		for(Integer i : spots.keySet()) {
-			spotsThisFrame = spots.get(i);
+		for(Integer i : model.getSpots().keySet()) {
+			spotsThisFrame = model.getSpots().get(i);
 			HashMap<Spot, Point4f> centers = new HashMap<Spot, Point4f>(spotsThisFrame.size());
 			float[] pos;
 			float radius;

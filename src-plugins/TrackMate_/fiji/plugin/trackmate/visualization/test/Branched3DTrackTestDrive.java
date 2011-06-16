@@ -25,19 +25,19 @@ public class Branched3DTrackTestDrive {
 		reader.parse();
 		
 		// Load objects 
-		SpotCollection allSpots 		= reader.getAllSpots();
-		SpotCollection selectedSpots 	= reader.getFilteredSpots(allSpots);
-		SimpleWeightedGraph<Spot, DefaultWeightedEdge> tracks = reader.getTracks(selectedSpots);
+//		SpotCollection allSpots 		= reader.getAllSpots();
+//		SpotCollection selectedSpots 	= reader.getFilteredSpots(allSpots);
+//		SimpleWeightedGraph<Spot, DefaultWeightedEdge> tracks = reader.getTracks(selectedSpots);
 		
 		// Launch ImageJ
 		ij.ImageJ.main(args);
 		
 		// Render them
 		final Image3DUniverse universe = new Image3DUniverse();
-		final SpotDisplayer3D displayer = new SpotDisplayer3D(universe);
-		displayer.setSpots(selectedSpots);
+		final SpotDisplayer3D displayer = new SpotDisplayer3D(universe, reader.getModel());
+//		displayer.setSpots(selectedSpots);
 		displayer.render();
 		universe.show();
-		displayer.setTrackGraph(tracks);
+//		displayer.setTrackGraph(tracks);
 	}
 }

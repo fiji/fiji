@@ -58,9 +58,9 @@ public class TrackVisualizerTestDrive {
 		TrackMateModel model = reader.getModel();
 //		final SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
 		final TrackMateModelView displayer = TrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model);
-		displayer.setSpots(allSpots);
-		displayer.setSpotsToShow(selectedSpots);
-		displayer.setTrackGraph(tracks);
+//		displayer.setSpots(allSpots);
+//		displayer.setSpotsToShow(selectedSpots);
+//		displayer.setTrackGraph(tracks);
 		displayer.refresh();
 		
 		// Display Track scheme

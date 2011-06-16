@@ -119,9 +119,9 @@ public class LAPTrackerTestDrive {
 		
 		TrackMateModelView sd2d = new HyperStackDisplayer(model);
 		sd2d.render();
-		sd2d.setSpots(model.getSpots());
-		sd2d.setSpotsToShow(model.getFilteredSpots());
-		sd2d.setTrackGraph(graph);
+//		sd2d.setSpots(model.getSpots());
+//		sd2d.setSpotsToShow(model.getFilteredSpots());
+//		sd2d.setTrackGraph(graph);
 		sd2d.setDisplayTrackMode(TrackMateModelView.TrackDisplayMode.ALL_WHOLE_TRACKS, 1);
 	}
 

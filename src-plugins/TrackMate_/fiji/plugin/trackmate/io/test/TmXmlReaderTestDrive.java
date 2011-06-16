@@ -38,10 +38,10 @@ public class TmXmlReaderTestDrive {
 		// Instantiate displayer
 		TrackMateModelView displayer = new HyperStackDisplayer(model);
 		displayer.render();
-		displayer.setSpots(model.getSpots());
-		displayer.setSpotsToShow(model.getFilteredSpots());
+//		displayer.setSpots(model.getSpots());
+//		displayer.setSpotsToShow(model.getFilteredSpots());
 		displayer.refresh();
-		displayer.setTrackGraph(model.getTrackGraph());
+//		displayer.setTrackGraph(model.getTrackGraph());
 		
 		
 	}

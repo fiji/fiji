@@ -45,9 +45,9 @@ public class CopyOverlayAction extends AbstractTMAction {
 								newDisplayer = TrackMateModelView.instantiateView(TrackMateModelView.ViewType.HYPERSTACK_DISPLAYER, model);
 								title = dest.getShortTitle() + " ctrl";
 							}
-							newDisplayer.setSpots(model.getSpots());
-							newDisplayer.setSpotsToShow(model.getFilteredSpots());
-							newDisplayer.setTrackGraph(model.getTrackGraph());
+//							newDisplayer.setSpots(model.getSpots());
+//							newDisplayer.setSpotsToShow(model.getFilteredSpots());
+//							newDisplayer.setTrackGraph(model.getTrackGraph());
 							
 							final DisplayerPanel newDisplayerPanel = new DisplayerPanel(model);
 							JFrame newFrame = new JFrame(); 
