@@ -33,6 +33,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	public static final int DEFAULT_RESAMPLING_FACTOR = 4;
 	public static final int DEFAULT_THRESHOLD = 50;
 
+	private static final boolean DEBUG = true;
 	private static final String TRACK_CONTENT_NAME = "Tracks";
 	private static final String SPOT_CONTENT_NAME = "Spots";
 	
@@ -181,12 +182,20 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	@Override
 	public void refresh() {
 		trackNode.refresh();
-		
-		
 	}
 	
 	@Override
-	public void render()  {}
+	public void render()  {	
+		if (DEBUG)
+			System.out.println("[SpotDisplayer3D] Call to render().");
+		updateRadiuses();
+		updateColors();
+		spotContent.setVisible((Boolean) displaySettings.get(KEY_SPOTS_VISIBLE));
+		trackContent.setVisible((Boolean) displaySettings.get(KEY_TRACKS_VISIBLE));
+		trackNode.setTrackDisplayMode((Integer) displaySettings.get(KEY_TRACK_DISPLAY_MODE));
+		trackNode.setTrackDisplayDepth((Integer) displaySettings.get(KEY_TRACK_DISPLAY_DEPTH));
+		trackNode.refresh();
+	}
 
 	@Override
 	public void setDisplaySettings(final String key, final Object value) {

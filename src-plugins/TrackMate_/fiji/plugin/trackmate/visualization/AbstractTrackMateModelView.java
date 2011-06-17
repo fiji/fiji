@@ -56,10 +56,7 @@ public abstract class AbstractTrackMateModelView implements TrackMateSelectionCh
 	protected AbstractTrackMateModelView() {
 		initDisplaySettings();
 	}
-
 	
-
-
 	/*
 	 * PUBLIC METHODS
 	 */
@@ -113,8 +110,6 @@ public abstract class AbstractTrackMateModelView implements TrackMateSelectionCh
 		displaySettings.put(KEY_COLORMAP, DEFAULT_COLOR_MAP);
 	}
 	
-	
-
 	/*
 	 * TMSelectionChangeListener
 	 */

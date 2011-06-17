@@ -20,6 +20,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.EnumMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import javax.swing.ComboBoxModel;
@@ -109,9 +110,26 @@ public class DisplayerPanel extends ActionListenablePanel {
 				view.refresh();
 			}
 		}
-		
 	}
 
+	/**
+	 * Update the values of the given map to reflect the user settings made in this panel.
+	 */
+	public void updateDisplaySettings(final Map<String, Object> displaySettings) {
+		displaySettings.put(KEY_TRACK_DISPLAY_MODE, jComboBoxDisplayMode.getSelectedIndex());
+		displaySettings.put(KEY_TRACKS_VISIBLE, jCheckBoxDisplayTracks.isSelected());
+		displaySettings.put(KEY_DISPLAY_SPOT_NAMES, jCheckBoxDisplayNames.isSelected());
+		displaySettings.put(KEY_SPOT_COLOR_FEATURE, jPanelSpotColor.setColorByFeature);
+		displaySettings.put(KEY_SPOT_RADIUS_RATIO, (float) jTextFieldSpotRadius.getValue());
+		displaySettings.put(KEY_SPOTS_VISIBLE, jCheckBoxDisplaySpots.isSelected());
+		int depth;
+		if (jCheckBoxLimitDepth.isSelected())
+			depth = Integer.parseInt(jTextFieldFrameDepth.getText());
+		else
+			depth = Integer.MAX_VALUE;
+		displaySettings.put(KEY_TRACK_DISPLAY_DEPTH, depth);
+	}
+	
 	/*
 	 * PRIVATE METHODS
 	 */

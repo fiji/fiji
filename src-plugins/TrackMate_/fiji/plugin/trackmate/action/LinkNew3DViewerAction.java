@@ -24,12 +24,13 @@ public class LinkNew3DViewerAction extends AbstractTMAction {
 				
 				final Image3DUniverse universe = new Image3DUniverse();
 				universe.show();
-			
 				SpotDisplayer3D newDisplayer = new SpotDisplayer3D(universe, model);
-				newDisplayer.render();
 				DisplayerPanel displayerPanel = (DisplayerPanel) view.getPanelFor(TrackMateFrame.PanelCard.ACTION_PANEL_KEY);
-				if (null != displayerPanel)
+				if (null != displayerPanel) {
 					displayerPanel.register(newDisplayer);
+					displayerPanel.updateDisplaySettings(newDisplayer.getDisplaySettings());
+				}
+				newDisplayer.render();
 			}
 		}.start();
 	}
@@ -38,7 +39,7 @@ public class LinkNew3DViewerAction extends AbstractTMAction {
 	public String getInfoText() {
 		return "<html>" +
 		"This action opens a new 3D viewer, containing only the overlay (spot and tracks), <br> " +
-		"properly linked to the current controler." +
+		"properly linked to the current controller." +
 		"<p>" +
 		"Useful to have synchronized 2D vs 3D views." +
 		"</html>" ;

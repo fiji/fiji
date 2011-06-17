@@ -165,15 +165,15 @@ public interface TrackMateModelView {
 	 * INTERFACE METHODS
 	 */
 
-
 	/**
-	 * Prepare this displayer and render it according to its concrete implementation. 
+	 * Initialize this displayer and render it according to its concrete implementation and current
+	 * display settings. 
 	 */
 	public void render();
 
 	/**
-	 * Refresh the displayer display with current content. If the underlying model was modified,
-	 * calling this method should be enough to update the display with  changes.
+	 * Refresh the displayer display with current model. If the underlying model was modified,
+	 * calling this method should be enough to update the display with changes.
 	 */
 	public void refresh();
 
