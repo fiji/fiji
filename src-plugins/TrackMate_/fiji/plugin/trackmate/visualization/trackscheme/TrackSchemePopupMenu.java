@@ -25,11 +25,11 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 	private static final long serialVersionUID = -5168784267411318961L;
 	private Object cell;
 	private TrackSchemeFrame frame;
-	private Point point;
+//	private Point point;
 
 	public TrackSchemePopupMenu(final TrackSchemeFrame frame, final Point point, final Object cell) {
 		this.frame = frame;
-		this.point = point;
+//		this.point = point;
 		this.cell = cell;
 		init();
 	}
