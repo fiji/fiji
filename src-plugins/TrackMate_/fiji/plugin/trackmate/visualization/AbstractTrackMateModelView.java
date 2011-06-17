@@ -15,7 +15,6 @@ import fiji.plugin.trackmate.InfoTextable;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 import fiji.plugin.trackmate.TrackMateModelChangeListener;
 import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
 import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
@@ -96,11 +95,6 @@ public abstract class AbstractTrackMateModelView implements TrackMateSelectionCh
 	public Map<String, Object> getDisplaySettings() {
 		return displaySettings;
 	}
-
-	@Override
-	public void modelChanged(TrackMateModelChangeEvent event) {
-		refresh();
-	};
 
 	/*
 	 * PROTECTED METHODS

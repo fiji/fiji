@@ -29,6 +29,7 @@ public class TrackMateFrameController implements ActionListener {
 	 * FIELDS
 	 */
 	
+	private static final boolean DEBUG = false;
 	/** This GUI current state. */
 	private GuiState state;
 	private Logger logger;
@@ -79,7 +80,8 @@ public class TrackMateFrameController implements ActionListener {
 	
 	@Override
 	public void actionPerformed(ActionEvent event) {
-		
+		if (DEBUG)
+			System.out.println("[TrackMateFrameController] Caught event "+event);
 		DisplayerPanel displayerPanel = (DisplayerPanel) view.getPanelFor(PanelCard.DISPLAYER_PANEL_KEY);
 
 		if (event == view.NEXT_BUTTON_PRESSED && actionFlag) {
@@ -256,8 +258,8 @@ public class TrackMateFrameController implements ActionListener {
 		case TUNE_SEGMENTER:
 			// If we choose to skip segmentation, initialize the model spot content and skip directly to state where we will be asked for a displayer.
 			if (model.getSettings().segmenterType == SegmenterType.MANUAL_SEGMENTER) {
-				model.setSpots(new SpotCollection());
-				model.setFilteredSpots(new SpotCollection());
+				model.setSpots(new SpotCollection(), false);
+				model.setFilteredSpots(new SpotCollection(), false);
 				state = GuiState.CHOOSE_DISPLAYER.previousState();
 			}
 			break;

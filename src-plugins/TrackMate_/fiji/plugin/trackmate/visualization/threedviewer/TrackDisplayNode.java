@@ -38,10 +38,10 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	/** Hold the color and transparency of all spots for a given track. */
 	protected Map<Set<Spot>, Color> colors;
 
-	private int displayDepth;
-	private int displayMode;
+	private int displayDepth = TrackMateModelView.DEFAULT_TRACK_DISPLAY_DEPTH;
+	private int displayMode = TrackMateModelView.DEFAULT_TRACK_DISPLAY_MODE;
 
-	private int currentTimePoint;
+	private int currentTimePoint = 0;
 
 	/** Dictionary referencing the line vertices indexed by frame. */
 	protected HashMap<Integer, ArrayList<Integer>> frameIndex = new HashMap<Integer, ArrayList<Integer>>();
@@ -76,10 +76,8 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	 * PUBLIC METHODS
 	 */
 
-	public void setDisplayTrackMode(int mode, int displayDepth) {
+	public void setTrackDisplayMode(int mode) {
 		this.displayMode = mode;
-		this.displayDepth = displayDepth;
-		
 		if (displayMode == TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE) {
 			Color4f color = new Color4f();
 			for (int i = 0; i < line.getVertexCount(); i++) {
@@ -88,11 +86,13 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 				line.setColor(i, color);
 			}
 		}
-		
-		refresh();
 	}
 
-	private void refresh() {
+	public void setTrackDisplayDepth(int displayDepth) {
+		this.displayDepth = displayDepth;
+	}
+
+	void refresh() {
 		// Holder for passing values 
 		Color4f color = new Color4f();
 		switch(displayMode) {
@@ -110,7 +110,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 					tp = 0f;
 				else 
 					tp = 1f - (float) frameDist / displayDepth;
-				
+
 				for (Integer index : frameIndex.get(frame)) {
 					line.getColor(index, color);
 					color.w = tp;
@@ -252,7 +252,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 			line.setCoordinate(index, target.getPosition(coordinates));
 			line.setColor(index, color);
 			index++;
-			
+
 			// Keep refs
 			edgeIndex.put(edge, index-2);
 			frameIndex.get(spots.getFrame(source)).add(index-2);			

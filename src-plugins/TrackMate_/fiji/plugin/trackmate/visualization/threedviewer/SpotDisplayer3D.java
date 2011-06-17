@@ -25,6 +25,7 @@ import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 
 public class SpotDisplayer3D extends AbstractTrackMateModelView {
@@ -72,8 +73,6 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	public SpotDisplayer3D(Image3DUniverse universe, TrackMateModel model) {
 		this.universe = universe;
 		setModel(model);
-		spotContent = makeSpotContent();
-		trackContent = makeTrackContent();
 		// Add a listener to unregister this instance from the model listener list when closing
 		universe.addUniverseListener(unregisterListener);
 	}
@@ -82,6 +81,41 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	 * OVERRIDDEN METHODS
 	 */
 
+	@Override
+	public void setModel(TrackMateModel model) {
+		super.setModel(model);
+		if (model.getSpots() != null) {
+			spotContent = makeSpotContent();
+			universe.removeContent(SPOT_CONTENT_NAME);
+			universe.addContent(spotContent);
+		}
+		if (model.getTrackGraph() != null) {
+			trackContent = makeTrackContent();
+			universe.removeContent(TRACK_CONTENT_NAME);
+			universe.addContent(trackContent);
+		}
+	}
+	
+	@Override
+	public void modelChanged(TrackMateModelChangeEvent event) {
+		switch (event.getEventID()) {
+		case TrackMateModelChangeEvent.SPOTS_COMPUTED: 
+			spotContent = makeSpotContent();
+			universe.removeContent(SPOT_CONTENT_NAME);
+			universe.addContent(spotContent);
+			break;
+		case TrackMateModelChangeEvent.SPOTS_FILTERED:
+			for(int key : model.getFilteredSpots().keySet())
+				blobs.get(key).setVisible(model.getFilteredSpots().get(key));
+			break;
+		case TrackMateModelChangeEvent.TRACKS_COMPUTED: 
+			trackContent = makeTrackContent();
+			universe.removeContent(TRACK_CONTENT_NAME);
+			universe.addContent(trackContent);
+			break;
+		
+		}
+	}
 	
 	@Override
 	public void highlightSpots(Collection<Spot> spots) {
@@ -145,16 +179,14 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	
 	
 	@Override
-	public void refresh() { 
-//		for(int key : model.getFilteredSpots().keySet())
-//			blobs.get(key).setVisible(model.getFilteredSpots().get(key)); // NPE if a spot from #spotsToShow does not belong to #spots 
+	public void refresh() {
+		trackNode.refresh();
+		
+		
 	}
 	
 	@Override
-	public void render()  {
-		universe.addContent(spotContent);
-		universe.addContent(trackContent);
-	}
+	public void render()  {}
 
 	@Override
 	public void setDisplaySettings(final String key, final Object value) {
@@ -164,6 +196,16 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			updateRadiuses();
 		} else if (key == KEY_SPOT_COLOR_FEATURE) {
 			updateColors();
+		} else if (key == KEY_DISPLAY_SPOT_NAMES) {
+			// TODO
+		} else if (key == KEY_SPOTS_VISIBLE) {
+			spotContent.setVisible((Boolean) value);
+		} else if (key == KEY_TRACKS_VISIBLE) { 
+			trackContent.setVisible((Boolean) value);
+		} else if (key == KEY_TRACK_DISPLAY_MODE) {
+			trackNode.setTrackDisplayMode((Integer) value);
+		} else if (key == KEY_TRACK_DISPLAY_DEPTH) {
+			trackNode.setTrackDisplayDepth((Integer) value);
 		}
 	}
 	
@@ -192,6 +234,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		
 		// Prepare tracks instant
 		trackNode = new TrackDisplayNode(model.getTrackGraph(), model.getFilteredSpots(), tracks, colors);
+		universe.addTimelapseListener(trackNode);
 		
 		// Pass tracks instant to all instants
 		TreeMap<Integer, ContentInstant> instants = new TreeMap<Integer,ContentInstant>();

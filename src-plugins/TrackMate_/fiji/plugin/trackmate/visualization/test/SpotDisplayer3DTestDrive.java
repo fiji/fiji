@@ -114,10 +114,9 @@ public class SpotDisplayer3DTestDrive {
 		final SpotCollection allSpots = new SpotCollection();
 		allSpots.put(0, spots);
 		final TrackMateModel model = new TrackMateModel();
-		model.setSpots(allSpots);
+		model.setSpots(allSpots, false);
 		final SpotDisplayer3D displayer = new SpotDisplayer3D(universe, model);
 		displayer.render();
-//		displayer.setSpots(allSpots);
 		
 		// Launch threshold GUI
 		final ThresholdGuiPanel gui = new ThresholdGuiPanel(TMUtils.getFeatureValues(allSpots.values()));
@@ -126,10 +125,8 @@ public class SpotDisplayer3DTestDrive {
 		gui.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
-//				displayer.setSpotsToShow(allSpots.threshold(gui.getFeatureThresholds()));
 				model.setFeatureFilters(gui.getFeatureThresholds());
 				model.execFiltering();
-				displayer.refresh();
 			}
 		});
 		gui.addActionListener(new ActionListener() {

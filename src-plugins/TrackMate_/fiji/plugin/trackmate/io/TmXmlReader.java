@@ -87,11 +87,11 @@ public class TmXmlReader implements TmXmlKeys {
 		// Spots
 		SpotCollection allSpots = getAllSpots();
 		SpotCollection filteredSpots = getFilteredSpots(allSpots);
-		model.setSpots(allSpots);
-		model.setFilteredSpots(filteredSpots);
+		model.setSpots(allSpots, false);
+		model.setFilteredSpots(filteredSpots, false);
 		// Tracks
 		SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph = getTracks(filteredSpots);
-		model.setTrackGraph(trackGraph);
+		model.setTrackGraph(trackGraph, false);
 		
 		return model;
 	}

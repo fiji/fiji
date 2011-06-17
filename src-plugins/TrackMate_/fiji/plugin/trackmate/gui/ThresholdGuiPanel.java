@@ -327,7 +327,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 		System.in.read();
 		SpotCollection allSpots = new SpotCollection();
 		allSpots.put(0, spots);
-		trackmate.setSpots(allSpots);
+		trackmate.setSpots(allSpots, false);
 		
 		ThresholdGuiPanel gui = new ThresholdGuiPanel(trackmate.getFeatureValues());
 		JFrame frame = new JFrame();

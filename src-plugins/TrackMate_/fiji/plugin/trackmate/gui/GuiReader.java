@@ -183,7 +183,7 @@ public class GuiReader {
 			}
 			
 			// We have a spot field, update the model.
-			model.setSpots(spots);
+			model.setSpots(spots, false);
 			logger.log("  Reading spots done.\n");
 		}
 		
@@ -269,7 +269,7 @@ public class GuiReader {
 				return model;
 			}
 
-			model.setFilteredSpots(selectedSpots);
+			model.setFilteredSpots(selectedSpots, false);
 			logger.log("  Reading spot selection done.\n");
 		}
 		
@@ -333,7 +333,7 @@ public class GuiReader {
 			}
 			
 			logger.log("  Reading tracks done.\n");
-			model.setTrackGraph(trackGraph);
+			model.setTrackGraph(trackGraph, false);
 		}
 		
 		view.setModel(model);

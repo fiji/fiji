@@ -100,7 +100,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	 * Return a subset of this collection, containing only the spots with the 
 	 * feature satisfying the threshold given. 
 	 */
-	public final SpotCollection threshold(final FeatureFilter featureThreshold) {
+	public final SpotCollection filter(final FeatureFilter featurefilter) {
 		SpotCollection selectedSpots = new SpotCollection();
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
@@ -112,12 +112,12 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 			spotToKeep = new ArrayList<Spot>(spotThisFrame);
 			spotToRemove = new ArrayList<Spot>(spotThisFrame.size());
 
-			tval = featureThreshold.value;
+			tval = featurefilter.value;
 			if (null != tval) {
 
-				if (featureThreshold.isAbove) {
+				if (featurefilter.isAbove) {
 					for (Spot spot : spotToKeep) {
-						val = spot.getFeature(featureThreshold.feature);
+						val = spot.getFeature(featurefilter.feature);
 						if (null == val)
 							continue;
 						if ( val < tval)
@@ -126,7 +126,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 
 				} else {
 					for (Spot spot : spotToKeep) {
-						val = spot.getFeature(featureThreshold.feature);
+						val = spot.getFeature(featurefilter.feature);
 						if (null == val)
 							continue;
 						if ( val > tval)
@@ -146,7 +146,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	 * Return a subset of this collection, containing only the spots with the 
 	 * feature satisfying all the thresholds given. 
 	 */
-	public final SpotCollection threshold(final Collection<FeatureFilter> thresholds) {
+	public final SpotCollection filter(final Collection<FeatureFilter> filters) {
 		SpotCollection selectedSpots = new SpotCollection();
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
@@ -158,7 +158,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 			spotToKeep = new ArrayList<Spot>(spotThisFrame);
 			spotToRemove = new ArrayList<Spot>(spotThisFrame.size());
 
-			for (FeatureFilter threshold : thresholds) {
+			for (FeatureFilter threshold : filters) {
 
 				tval = threshold.value;
 				if (null == tval)

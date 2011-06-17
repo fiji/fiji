@@ -116,7 +116,8 @@ public class TrackDisplayNodeTestDrive {
 		Content trackContent = new Content("Tracks", trackInstants);
 		trackContent.setShowAllTimepoints(true);
 		universe.addContentLater(trackContent);
-		tdn.setDisplayTrackMode(TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL, 10);
+		tdn.setTrackDisplayMode(TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL);
+		tdn.setTrackDisplayDepth(10);
 		universe.addTimelapseListener(tdn);
 		
 	}

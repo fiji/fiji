@@ -244,7 +244,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 
 			for (Spot spot : event.getSpots() ) {
 
-				if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.SPOT_ADDED) {
+				if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_ADDED) {
 
 					// Instantiate JGraphX cell
 					cellAdded = new mxCell(spot.toString());
@@ -267,7 +267,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 					graph.getCellToVertexMap().put(cellAdded, spot);
 					targetColumn++;
 
-				} else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.SPOT_MODIFIED) {
+				} else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_MODIFIED) {
 
 					mxCell cell = graph.getVertexToCellMap().get(spot);
 					String style = cell.getStyle();
@@ -276,7 +276,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 					int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Feature.RADIUS) / settings.dx));
 					graph.getModel().getGeometry(cell).setHeight(height);
 
-				}  else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.SPOT_REMOVED) {
+				}  else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_REMOVED) {
 
 					mxCell cell = graph.getVertexToCellMap().get(spot);
 					cellsToRemove .add(cell);

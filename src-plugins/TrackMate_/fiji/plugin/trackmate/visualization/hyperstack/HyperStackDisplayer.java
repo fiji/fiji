@@ -23,6 +23,7 @@ import fiji.util.gui.OverlayedImageCanvas;
 
 public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 
+	private static final boolean DEBUG = false;
 	ImagePlus imp;
 	OverlayedImageCanvas canvas;
 	float[] calibration;
@@ -42,20 +43,6 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 		this.settings = model.getSettings();
 		this.imp = settings.imp;
 		this.calibration = settings.getCalibration();
-		// Add a listener to unregister this instance from model listener list
-		ImagePlus.addImageListener(new ImageListener() {
-			@Override
-			public void imageUpdated(ImagePlus imp) {}
-			@Override
-			public void imageOpened(ImagePlus imp) {}
-			@Override
-			public void imageClosed(ImagePlus source ) {
-				if (imp != source)
-					return;
-				model.removeTrackMateModelChangeListener(HyperStackDisplayer.this);
-				model.removeTrackMateSelectionChangeListener(HyperStackDisplayer.this);
-			}
-		});
 	}
 	
 	/*
@@ -77,15 +64,33 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	
 	@Override
 	public void modelChanged(TrackMateModelChangeEvent event) {
-		// The only events type that will not be automatically taken into account here is
-		// the ones that modifies the track numbers.
+		if (DEBUG)
+			System.out.println("[HyperStackDisplayer] Received model changed event ID: "+event.getEventID());
 		boolean redoOverlay = false;
-		for (Spot spot : event.getSpots()) {
-			if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.SPOT_REMOVED) {
-				redoOverlay = true;
-				break;
+		
+		switch (event.getEventID()) {
+
+		case TrackMateModelChangeEvent.SPOTS_MODIFIED:
+			for (Spot spot : event.getSpots()) {
+				if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_REMOVED) {
+					trackOverlay.computeTrackColors();
+					redoOverlay = true;
+					break;
+				}
 			}
+			break;
+			
+		case TrackMateModelChangeEvent.SPOTS_COMPUTED:
+			spotOverlay.computeSpotColors();
+			redoOverlay = true;
+			break;
+
+		case TrackMateModelChangeEvent.TRACKS_COMPUTED:
+			trackOverlay.computeTrackColors();
+			redoOverlay = true;
+			break;
 		}
+		
 		if (redoOverlay)
 			refresh();
 	}
@@ -136,6 +141,21 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 		canvas.addOverlay(trackOverlay);
 		imp.updateAndDraw();
 		registerEditTool();
+//		 Add a listener to unregister this instance from model listener list
+		ImagePlus.addImageListener(new ImageListener() {
+			@Override
+			public void imageUpdated(ImagePlus imp) {}
+			@Override
+			public void imageOpened(ImagePlus imp) {}
+			@Override
+			public void imageClosed(ImagePlus source ) {
+				if (imp != source)
+					return;
+				model.removeTrackMateModelChangeListener(HyperStackDisplayer.this);
+				model.removeTrackMateSelectionChangeListener(HyperStackDisplayer.this);
+				editTool.imageClosed(imp);
+			}
+		});
 	}
 		
 	

@@ -2,6 +2,13 @@ package fiji.plugin.trackmate.gui;
 
 import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_DISPLAY_SPOT_NAMES;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOTS_VISIBLE;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOT_COLOR_FEATURE;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOT_RADIUS_RATIO;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACKS_VISIBLE;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACK_DISPLAY_DEPTH;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACK_DISPLAY_MODE;
 import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.TRACK_SCHEME_ICON;
 
 import java.awt.Component;
@@ -11,9 +18,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
@@ -39,7 +46,7 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
  * This GUI takes the role of a controller.
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr>   -  2010 - 2011
  */
-public class DisplayerPanel extends ActionListenablePanel implements ActionListener {
+public class DisplayerPanel extends ActionListenablePanel {
 
 	private static final long serialVersionUID = 1L;
 
@@ -51,15 +58,8 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 			e.printStackTrace();
 		}
 	}
-	
-	public ActionEvent TRACK_DISPLAY_MODE_CHANGED 	= new ActionEvent(this, 0, "TrackDisplayModeChanged");
-	public ActionEvent TRACK_DISPLAY_DEPTH_CHANGED 	= new ActionEvent(this, 6, "TrackDisplayDepthChanged");
-	public ActionEvent TRACK_VISIBILITY_CHANGED 	= new ActionEvent(this, 1, "TrackVisibilityChanged");
-	public ActionEvent SPOT_COLOR_MODE_CHANGED; // instantiate later, from color gui panel
-	public ActionEvent SPOT_VISIBILITY_CHANGED 		= new ActionEvent(this, 2, "SpotVisibilityChanged");
-	public ActionEvent TRACK_SCHEME_BUTTON_PRESSED 	= new ActionEvent(this, 3, "TrackSchemeButtonPushed");
-	public ActionEvent SPOT_DISPLAY_RADIUS_CHANGED 	= new ActionEvent(this, 4, "SpotDisplayRadiusChanged");
-	public ActionEvent SPOT_DISPLAY_LABEL_CHANGED 	= new ActionEvent(this, 5, "SpotDisplayLabelChanged");
+
+	public ActionEvent TRACK_SCHEME_BUTTON_PRESSED 	= new ActionEvent(this, 0, "TrackSchemeButtonPushed");
 
 	private JLabel jLabelTrackDisplayMode;
 	private JComboBox jComboBoxDisplayMode;
@@ -78,99 +78,49 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 	private JCheckBox jCheckBoxDisplayNames;
 
 	/**
-	 * The set of {@link AbstractTrackMateModelView} views controlled by this controller.
+	 * The set of {@link TrackMateModelView} views controlled by this controller.
 	 */
-	private List<TrackMateModelView> views = new ArrayList<TrackMateModelView>();
-		
+	private Set<TrackMateModelView> views = new HashSet<TrackMateModelView>();
+
 	public DisplayerPanel(TrackMateModel model) {
 		super();
 		setModel(model);
 		initGUI();
-		addActionListener(this);
 	}
-	
+
 
 	/*
 	 * PUBLIC METHODS
 	 */
-	
+
 	/**
-	 * Add the given {@link AbstractTrackMateModelView} to the list managed by this controller.
+	 * Add the given {@link TrackMateModelView} to the list managed by this controller.
 	 */
 	public void register(final TrackMateModelView view) {
 		this.views.add(view);
 	}
 	
-	public double getSpotDisplayRadiusRatio() {
-		return jTextFieldSpotRadius.getValue();
-	}
-	
-	public int getTrackDisplayMode() {
-		return jComboBoxDisplayMode.getSelectedIndex();
-	}
-	
-	public int getTrackDisplayDepth() {
-		if (jCheckBoxLimitDepth.isSelected())
-			return Integer.parseInt(jTextFieldFrameDepth.getText());
-		else
-			return Integer.MAX_VALUE;
-	}
-	
-	public boolean isDisplayTrackSelected() {
-		return jCheckBoxDisplayTracks.isSelected();
-	}
-	
-	public boolean isDisplaySpotSelected() {
-		return jCheckBoxDisplaySpots.isSelected();
-	}
-	
-	public Feature getColorSpotByFeature() {
-		return jPanelSpotColor.setColorByFeature;
+	@Override
+	protected void fireAction(ActionEvent event) {
+		// Intercept event coming from the JPanelSpotColorGUI, and translate it for views
+		if (event == jPanelSpotColor.COLOR_FEATURE_CHANGED) {
+			for (TrackMateModelView view : views) {
+				view.setDisplaySettings(KEY_SPOT_COLOR_FEATURE, jPanelSpotColor.setColorByFeature);
+				view.refresh();
+			}
+		}
+		
 	}
 
-	public boolean isDisplaySpotNameSelected() {
-		return jCheckBoxDisplayNames.isSelected();
-	}
-	
 	/*
 	 * PRIVATE METHODS
 	 */
-	
+
 	private void setModel(TrackMateModel model) {
 		this.featureValues = TMUtils.getFeatureValues(model.getFilteredSpots().values());
 	}
-	
-	private void displayTrackFlagChanged(boolean display) {
-		jPanelTrackOptions.setEnabled(display);
-		fireAction(TRACK_VISIBILITY_CHANGED);
-	}
-	
-	private void spotColorModeChanged() {
-		fireAction(SPOT_COLOR_MODE_CHANGED);
-	}
-	private void displaySpotFlagChanged(boolean display) {
-		jPanelSpotOptions.setEnabled(display);
-		fireAction(SPOT_VISIBILITY_CHANGED);
-	}
-	
-	private void trackDisplayModeChanged(ActionEvent e) {
-		fireAction(TRACK_DISPLAY_MODE_CHANGED);
-	}
 
-	private void trackDisplayDepthChanged(ActionEvent e) {
-		fireAction(TRACK_DISPLAY_DEPTH_CHANGED);
-	}
-
-	
 	private void initGUI() {
-		final ActionListener trackDisplayDepthListener = new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				trackDisplayDepthChanged(e);
-			}
-		};
-		
-		
 		try {
 			this.setPreferredSize(new java.awt.Dimension(268, 469));
 			this.setSize(300, 500);
@@ -209,7 +159,10 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 					jComboBoxDisplayMode.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
-							trackDisplayModeChanged(e);
+							for(TrackMateModelView view : views) {
+								view.setDisplaySettings(KEY_TRACK_DISPLAY_MODE, jComboBoxDisplayMode.getSelectedIndex());
+								view.refresh();
+							}
 						}
 					});
 				}
@@ -221,7 +174,20 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 					jCheckBoxLimitDepth.setFont(FONT);
 					jCheckBoxLimitDepth.setSelected(true);
 					jCheckBoxLimitDepth.setPreferredSize(new java.awt.Dimension(259, 23));
-					jCheckBoxLimitDepth.addActionListener(trackDisplayDepthListener);
+					jCheckBoxLimitDepth.addActionListener(new ActionListener() {
+						@Override
+						public void actionPerformed(ActionEvent e) {
+							int depth;
+							if (jCheckBoxLimitDepth.isSelected())
+								depth = Integer.parseInt(jTextFieldFrameDepth.getText());
+							else
+								depth = Integer.MAX_VALUE;
+							for(TrackMateModelView view : views) {
+								view.setDisplaySettings(KEY_TRACK_DISPLAY_DEPTH, depth);
+								view.refresh();
+							}
+						}
+					});
 				}
 				{
 					jLabelFrameDepth = new JLabel();
@@ -237,7 +203,16 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 					jTextFieldFrameDepth.setFont(SMALL_FONT);
 					jTextFieldFrameDepth.setText(""+TrackMateModelView.DEFAULT_TRACK_DISPLAY_DEPTH);
 					jTextFieldFrameDepth.setPreferredSize(new java.awt.Dimension(34, 20));
-					jTextFieldFrameDepth.addActionListener(trackDisplayDepthListener);
+					jTextFieldFrameDepth.addActionListener(new ActionListener() {
+						@Override
+						public void actionPerformed(ActionEvent e) {
+							int depth = Integer.parseInt(jTextFieldFrameDepth.getText());
+							for(TrackMateModelView view : views) {
+								view.setDisplaySettings(KEY_TRACK_DISPLAY_DEPTH, depth);
+								view.refresh();
+							}
+						}
+					});
 				}
 			}
 			{
@@ -250,7 +225,12 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 				jCheckBoxDisplayTracks.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						displayTrackFlagChanged(jCheckBoxDisplayTracks.isSelected());
+						boolean isSelected = jCheckBoxDisplayTracks.isSelected();
+						jPanelTrackOptions.setEnabled(isSelected);
+						for(TrackMateModelView view : views) {
+							view.setDisplaySettings(KEY_TRACKS_VISIBLE, isSelected);
+							view.refresh();
+						}
 					}
 				});
 			}
@@ -264,7 +244,12 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 				jCheckBoxDisplaySpots.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						displaySpotFlagChanged(jCheckBoxDisplaySpots.isSelected());
+						boolean isSelected = jCheckBoxDisplaySpots.isSelected();
+						jPanelSpotOptions.setEnabled(isSelected);
+						for(TrackMateModelView view : views) {
+							view.setDisplaySettings(KEY_SPOTS_VISIBLE, isSelected);
+							view.refresh();
+						}
 					}
 				});
 			}
@@ -286,11 +271,13 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 					jPanelSpotColor = new JPanelSpotColorGUI(this);
 					jPanelSpotColor.featureValues = featureValues;
 					jPanelSpotOptions.add(jPanelSpotColor);
-					SPOT_COLOR_MODE_CHANGED  = jPanelSpotColor.COLOR_FEATURE_CHANGED;
 					jPanelSpotColor.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
-							spotColorModeChanged();
+							for(TrackMateModelView view : views) {
+								view.setDisplaySettings(KEY_SPOT_COLOR_FEATURE, jPanelSpotColor.setColorByFeature);
+								view.refresh();
+							}							
 						}
 					});
 				}
@@ -299,7 +286,7 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 					jLabelSpotRadius.setText("  Spot display radius ratio:");
 					jLabelSpotRadius.setFont(SMALL_FONT);
 					jPanelSpotOptions.add(jLabelSpotRadius);
-					
+
 					jTextFieldSpotRadius = new JNumericTextField("1");
 					jTextFieldSpotRadius.setPreferredSize(new java.awt.Dimension(34, 20));
 					jTextFieldSpotRadius.setFont(SMALL_FONT);
@@ -307,16 +294,22 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 					jTextFieldSpotRadius.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
-							fireAction(SPOT_DISPLAY_RADIUS_CHANGED);
+							for(TrackMateModelView view : views) {
+								view.setDisplaySettings(KEY_SPOT_RADIUS_RATIO, (float) jTextFieldSpotRadius.getValue());
+								view.refresh();
+							}
 						}
 					});
 					jTextFieldSpotRadius.addFocusListener(new FocusListener() {
 						@Override
 						public void focusLost(FocusEvent e) {
-							fireAction(SPOT_DISPLAY_RADIUS_CHANGED);							
+							for(TrackMateModelView view : views) {
+								view.setDisplaySettings(KEY_SPOT_RADIUS_RATIO, (float) jTextFieldSpotRadius.getValue());
+								view.refresh();
+							}							
 						}
 						@Override
-						public void focusGained(FocusEvent e) {	}
+						public void focusGained(FocusEvent e) {}
 					});
 				}
 				{
@@ -328,7 +321,10 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 					jCheckBoxDisplayNames.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
-							fireAction(SPOT_DISPLAY_LABEL_CHANGED);
+							for(TrackMateModelView view : views) {
+								view.setDisplaySettings(KEY_DISPLAY_SPOT_NAMES, jCheckBoxDisplayNames.isSelected());
+								view.refresh();
+							}
 						}
 					});
 				}
@@ -360,46 +356,10 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 		}
 	}
 
-
-	/**
-	 * Fired when the user change a setting displayed on this GUI. 
-	 */
-	@Override
-	public void actionPerformed(final ActionEvent event) {
-		if (event == SPOT_COLOR_MODE_CHANGED) {
-			for(TrackMateModelView view : views)
-				view.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLOR_FEATURE, getColorSpotByFeature());
-
-		} else if (event == SPOT_VISIBILITY_CHANGED) {
-			for(TrackMateModelView view : views)
-				view.setDisplaySettings(TrackMateModelView.KEY_SPOTS_VISIBLE, isDisplaySpotSelected());
-
-		} else if (event == TRACK_DISPLAY_MODE_CHANGED) {
-			for(TrackMateModelView view : views) 
-				view.setDisplaySettings(TrackMateModelView.KEY_TRACK_DISPLAY_MODE, getTrackDisplayMode());
-		
-		} else if (event == TRACK_DISPLAY_DEPTH_CHANGED) {
-			for(TrackMateModelView view : views) 	
-				view.setDisplaySettings(TrackMateModelView.KEY_TRACK_DISPLAY_DEPTH, getTrackDisplayDepth());
-			
-		} else if (event == TRACK_VISIBILITY_CHANGED) {
-			for(TrackMateModelView view : views)
-				view.setDisplaySettings(TrackMateModelView.KEY_TRACKS_VISIBLE, isDisplayTrackSelected());
-
-		} else if (event == SPOT_DISPLAY_RADIUS_CHANGED) {
-			for(TrackMateModelView view : views)
-				view.setDisplaySettings(TrackMateModelView.KEY_SPOT_RADIUS_RATIO, getSpotDisplayRadiusRatio());
-
-		} else if (event == SPOT_DISPLAY_LABEL_CHANGED) {
-			for(TrackMateModelView view : views)
-				view.setDisplaySettings(TrackMateModelView.KEY_DISPLAY_SPOT_NAMES, isDisplaySpotNameSelected());
-		} 
-	}
-	
 	/*
 	 * MAIN METHOD
 	 */
-	
+
 	public static void main(String[] args) {
 		JFrame frame = new JFrame();
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -410,7 +370,6 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 		displayerPanel_IL.setPreferredSize(new java.awt.Dimension(300, 469));
 	}
 
-	
 
 
 }

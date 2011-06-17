@@ -27,7 +27,7 @@ import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView.ViewType;
  * 
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - September 2010 - January 2011
  */
-public class TrackMateFrame extends javax.swing.JFrame {
+public class TrackMateFrame extends javax.swing.JFrame implements ActionListener {
 
 	/*
 	 * DEFAULT VISIBILITY & PUBLIC CONSTANTS
@@ -203,8 +203,10 @@ public class TrackMateFrame extends javax.swing.JFrame {
 			break;
 
 		case DISPLAYER_PANEL_KEY:
-			if (null == displayerPanel) 
+			if (null == displayerPanel) {
 				displayerPanel = new DisplayerPanel(model);
+				displayerPanel.addActionListener(this);
+			}
 			panel = displayerPanel;
 			break;
 
@@ -377,5 +379,13 @@ public class TrackMateFrame extends javax.swing.JFrame {
 			return null;
 		}
 
+	}
+
+	/** 
+	 * Simply forward the caught event to listeners of this main frame.
+	 */
+	@Override
+	public void actionPerformed(final ActionEvent event) {
+		fireAction(event);
 	}	
 }
