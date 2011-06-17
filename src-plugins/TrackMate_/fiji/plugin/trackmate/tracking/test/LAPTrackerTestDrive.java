@@ -21,7 +21,7 @@ import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.tracking.TrackerType;
-import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
 public class LAPTrackerTestDrive {
@@ -117,12 +117,9 @@ public class LAPTrackerTestDrive {
 		// Load Image
 		ij.ImageJ.main(args);
 		
-		AbstractTrackMateModelView sd2d = new HyperStackDisplayer(model);
+		TrackMateModelView sd2d = new HyperStackDisplayer(model);
 		sd2d.render();
-//		sd2d.setSpots(model.getSpots());
-//		sd2d.setSpotsToShow(model.getFilteredSpots());
-//		sd2d.setTrackGraph(graph);
-		sd2d.setDisplayTrackMode(AbstractTrackMateModelView.TrackDisplayMode.ALL_WHOLE_TRACKS, 1);
+		sd2d.setDisplaySettings(TrackMateModelView.KEY_TRACK_DISPLAY_MODE, TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE);
 	}
 
 }

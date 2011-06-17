@@ -167,8 +167,8 @@ public class SpotOverlay implements Overlay {
 				if (val < min) min = val;
 			}
 		}
-		targetColor = new HashMap<Spot, Color>( model.getFilteredSpots().getNSpots());
-		for(Spot spot : model.getFilteredSpots()) {
+		targetColor = new HashMap<Spot, Color>( model.getSpots().getNSpots());
+		for(Spot spot : model.getSpots()) {
 			val = spot.getFeature(feature);
 			InterpolatePaintScale  colorMap = (InterpolatePaintScale) displaySettings.get(TrackMateModelView.KEY_COLORMAP);
 			if (null == feature || null == val)

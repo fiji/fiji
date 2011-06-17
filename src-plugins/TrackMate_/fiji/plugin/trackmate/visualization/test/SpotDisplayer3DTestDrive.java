@@ -8,6 +8,7 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.FeatureFacade;
 import fiji.plugin.trackmate.gui.ThresholdGuiPanel;
 import fiji.plugin.trackmate.util.TMUtils;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 import ij.ImagePlus;
 import ij.process.StackConverter;
@@ -135,8 +136,8 @@ public class SpotDisplayer3DTestDrive {
 			public void actionPerformed(ActionEvent e) {
 				if (e == gui.COLOR_FEATURE_CHANGED) {
 					Feature feature = gui.getColorByFeature();
-					displayer.setColorByFeature(feature);
-					displayer.setRadiusDisplayRatio(RAN.nextFloat());
+					displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLOR_FEATURE, feature);
+					displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_RADIUS_RATIO, RAN.nextFloat());
 					displayer.refresh();
 				}
 			}

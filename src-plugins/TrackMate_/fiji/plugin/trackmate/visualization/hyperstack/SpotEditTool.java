@@ -198,7 +198,6 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				// Forget edited spot
 				editedSpot = null;
 			}
-			displayer.spotOverlay.setEditedSpot(editedSpot);
 			break;
 		}
 		}
@@ -292,7 +291,6 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			TrackMateModel model = displayer.getModel();
 			model.removeSpotFrom(editedSpot, initFrame, true);
 			editedSpot = null;
-			displayer.spotOverlay.setEditedSpot(null);
 			editedSpots.put(imp, null);
 			imp.updateAndDraw();
 			e.consume();

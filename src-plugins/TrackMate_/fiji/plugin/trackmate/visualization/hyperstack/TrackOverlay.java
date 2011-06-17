@@ -56,6 +56,8 @@ public class TrackOverlay implements Overlay {
 	 */
 
 	public void computeTrackColors() {
+		if (null == model.getTrackGraph())
+			return;
 		InterpolatePaintScale colorMap = (InterpolatePaintScale) displaySettings.get(TrackMateModelView.KEY_COLORMAP);
 		List<Set<Spot>> tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(model.getTrackGraph()).connectedSets();
 		HashMap<Set<Spot>, Color> trackColors = new HashMap<Set<Spot>, Color>(tracks.size());

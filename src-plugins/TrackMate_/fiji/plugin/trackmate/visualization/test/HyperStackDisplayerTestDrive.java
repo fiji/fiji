@@ -8,7 +8,7 @@ import org.jdom.JDOMException;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
-import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView.TrackDisplayMode;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 
@@ -30,12 +30,9 @@ public class HyperStackDisplayerTestDrive {
 		if (null != model.getSettings().imp)
 			model.computeFeatures();
 				
-		final AbstractTrackMateModelView displayer = AbstractTrackMateModelView.instantiateView(AbstractTrackMateModelView.ViewType.HYPERSTACK_DISPLAYER, model);
-//		displayer.setSpots(model.getSpots());
-//		displayer.setSpotsToShow(model.getFilteredSpots());
-//		displayer.setTrackGraph(model.getTrackGraph());
-		displayer.setDisplayTrackMode(TrackDisplayMode.LOCAL_WHOLE_TRACKS, 5);
-		displayer.setSpotNameVisible(true);
+		final TrackMateModelView displayer = AbstractTrackMateModelView.instantiateView(AbstractTrackMateModelView.ViewType.HYPERSTACK_DISPLAYER, model);
+		displayer.setDisplaySettings(TrackMateModelView.KEY_TRACK_DISPLAY_MODE, TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL);
+		displayer.setDisplaySettings(TrackMateModelView.KEY_DISPLAY_SPOT_NAMES, true);
 		
 		final TrackSchemeFrame trackScheme = new TrackSchemeFrame(model);
 		trackScheme.setVisible(true);

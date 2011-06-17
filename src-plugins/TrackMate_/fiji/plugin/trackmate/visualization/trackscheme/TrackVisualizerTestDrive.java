@@ -19,6 +19,7 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView.ViewType;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class TrackVisualizerTestDrive {
 
@@ -57,10 +58,7 @@ public class TrackVisualizerTestDrive {
 		// Instantiate displayer
 		TrackMateModel model = reader.getModel();
 //		final SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
-		final AbstractTrackMateModelView displayer = AbstractTrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model);
-//		displayer.setSpots(allSpots);
-//		displayer.setSpotsToShow(selectedSpots);
-//		displayer.setTrackGraph(tracks);
+		final TrackMateModelView displayer = AbstractTrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model);
 		displayer.refresh();
 		
 		// Display Track scheme

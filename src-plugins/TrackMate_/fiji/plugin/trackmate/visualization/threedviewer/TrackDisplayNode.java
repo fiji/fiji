@@ -3,7 +3,7 @@ package fiji.plugin.trackmate.visualization.threedviewer;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView.TrackDisplayMode;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import ij3d.ContentNode;
 import ij3d.TimelapseListener;
 
@@ -38,10 +38,8 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	/** Hold the color and transparency of all spots for a given track. */
 	protected Map<Set<Spot>, Color> colors;
 
-
-	private TrackDisplayMode displayMode = TrackDisplayMode.ALL_WHOLE_TRACKS;
-
 	private int displayDepth;
+	private int displayMode;
 
 	private int currentTimePoint;
 
@@ -49,7 +47,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	protected HashMap<Integer, ArrayList<Integer>> frameIndex = new HashMap<Integer, ArrayList<Integer>>();
 	/** Dictionary referencing the line vertices corresponding to each edge. */
 	protected HashMap<DefaultWeightedEdge, Integer> edgeIndex = new HashMap<DefaultWeightedEdge, Integer>();
-	/** Primitive containing all lines reprenseting track edges. */
+	/** Primitive containing all lines representing track edges. */
 	private LineArray line;
 
 
@@ -78,11 +76,11 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	 * PUBLIC METHODS
 	 */
 
-	public void setDisplayTrackMode(TrackDisplayMode mode, int displayDepth) {
+	public void setDisplayTrackMode(int mode, int displayDepth) {
 		this.displayMode = mode;
 		this.displayDepth = displayDepth;
 		
-		if (displayMode == TrackDisplayMode.ALL_WHOLE_TRACKS) {
+		if (displayMode == TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE) {
 			Color4f color = new Color4f();
 			for (int i = 0; i < line.getVertexCount(); i++) {
 				line.getColor(i, color);
@@ -97,13 +95,13 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	private void refresh() {
 		// Holder for passing values 
 		Color4f color = new Color4f();
-
 		switch(displayMode) {
-		case ALL_WHOLE_TRACKS: {
+
+		case TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE: {
 			break;
 		}
 
-		case LOCAL_WHOLE_TRACKS: {
+		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL: {
 			float tp;
 			int frameDist;
 			for(int frame : frameIndex.keySet()) {
@@ -122,7 +120,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 			}
 			break;
 		}
-		case LOCAL_FORWARD_TRACKS: {
+		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_BACKWARD: {
 			float tp;
 			int frameDist;
 			for(int frame : frameIndex.keySet()) {
@@ -141,7 +139,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 			}
 			break;
 		}
-		case LOCAL_BACKWARD_TRACKS: {
+		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_FORWARD: {
 			float tp;
 			int frameDist;
 			for(int frame : frameIndex.keySet()) {

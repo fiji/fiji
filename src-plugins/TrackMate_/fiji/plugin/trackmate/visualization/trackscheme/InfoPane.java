@@ -31,9 +31,9 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
 import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
-import fiji.plugin.trackmate.TrackMateSelectionDisplayer;
+import fiji.plugin.trackmate.visualization.TrackMateSelectionView;
 
-class InfoPane extends JPanel implements TrackMateSelectionDisplayer, TrackMateSelectionChangeListener {
+class InfoPane extends JPanel implements TrackMateSelectionView, TrackMateSelectionChangeListener {
 
 	private static final long serialVersionUID = 5889316637017869042L;
 

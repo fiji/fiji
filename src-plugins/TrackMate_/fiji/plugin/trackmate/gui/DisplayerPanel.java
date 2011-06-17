@@ -153,16 +153,20 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 		fireAction(SPOT_VISIBILITY_CHANGED);
 	}
 	
-	
 	private void trackDisplayModeChanged(ActionEvent e) {
 		fireAction(TRACK_DISPLAY_MODE_CHANGED);
 	}
+
+	private void trackDisplayDepthChanged(ActionEvent e) {
+		fireAction(TRACK_DISPLAY_DEPTH_CHANGED);
+	}
+
 	
 	private void initGUI() {
-		final ActionListener trackDisplayModeListener = new ActionListener() {
+		final ActionListener trackDisplayDepthListener = new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				trackDisplayModeChanged(e);
+				trackDisplayDepthChanged(e);
 			}
 		};
 		
@@ -202,7 +206,12 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 					jComboBoxDisplayMode.setSelectedIndex(0);
 					jComboBoxDisplayMode.setFont(SMALL_FONT);
 					jComboBoxDisplayMode.setPreferredSize(new java.awt.Dimension(265, 27));
-					jComboBoxDisplayMode.addActionListener(trackDisplayModeListener);
+					jComboBoxDisplayMode.addActionListener(new ActionListener() {
+						@Override
+						public void actionPerformed(ActionEvent e) {
+							trackDisplayModeChanged(e);
+						}
+					});
 				}
 				{
 					jCheckBoxLimitDepth = new JCheckBox();
@@ -212,7 +221,7 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 					jCheckBoxLimitDepth.setFont(FONT);
 					jCheckBoxLimitDepth.setSelected(true);
 					jCheckBoxLimitDepth.setPreferredSize(new java.awt.Dimension(259, 23));
-					jCheckBoxLimitDepth.addActionListener(trackDisplayModeListener);
+					jCheckBoxLimitDepth.addActionListener(trackDisplayDepthListener);
 				}
 				{
 					jLabelFrameDepth = new JLabel();
@@ -226,9 +235,9 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 					jPanelTrackOptions.add(jTextFieldFrameDepth);
 					jTextFieldFrameDepth.setText("10");
 					jTextFieldFrameDepth.setFont(SMALL_FONT);
-					jTextFieldFrameDepth.setText(""+AbstractTrackMateModelView.DEFAULT_TRACK_DISPLAY_DEPTH);
+					jTextFieldFrameDepth.setText(""+TrackMateModelView.DEFAULT_TRACK_DISPLAY_DEPTH);
 					jTextFieldFrameDepth.setPreferredSize(new java.awt.Dimension(34, 20));
-					jTextFieldFrameDepth.addActionListener(trackDisplayModeListener);
+					jTextFieldFrameDepth.addActionListener(trackDisplayDepthListener);
 				}
 			}
 			{
@@ -375,7 +384,7 @@ public class DisplayerPanel extends ActionListenablePanel implements ActionListe
 			
 		} else if (event == TRACK_VISIBILITY_CHANGED) {
 			for(TrackMateModelView view : views)
-				view.setDisplaySettings(TrackMateModelView.KEY_DISPLAY_TRACKS, isDisplayTrackSelected());
+				view.setDisplaySettings(TrackMateModelView.KEY_TRACKS_VISIBLE, isDisplayTrackSelected());
 
 		} else if (event == SPOT_DISPLAY_RADIUS_CHANGED) {
 			for(TrackMateModelView view : views)

@@ -12,15 +12,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.ExecutionException;
 
 import javax.media.j3d.View;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point4f;
 
+import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
@@ -33,7 +32,6 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	public static final int DEFAULT_RESAMPLING_FACTOR = 4;
 	public static final int DEFAULT_THRESHOLD = 50;
 
-	private static final Color3f HIGHLIGHT_COLOR3F = new Color3f(HIGHLIGHT_COLOR);
 	private static final String TRACK_CONTENT_NAME = "Tracks";
 	private static final String SPOT_CONTENT_NAME = "Spots";
 	
@@ -47,45 +45,43 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	private HashMap<Spot, Color3f> previousColorHighlight;
 	private HashMap<Spot, Integer> previousFrameHighlight;
 	private HashMap<DefaultWeightedEdge, Color> previousEdgeHighlight;
+	private UniverseListener unregisterListener = new UniverseListener() {			
+		@Override
+		public void universeClosed() {
+			SpotDisplayer3D.this.model.removeTrackMateModelChangeListener(SpotDisplayer3D.this);
+			SpotDisplayer3D.this.model.removeTrackMateSelectionChangeListener(SpotDisplayer3D.this);
+		}
+		@Override
+		public void transformationUpdated(View view) {}
+		@Override
+		public void transformationStarted(View view) {}
+		@Override
+		public void transformationFinished(View view) {}
+		@Override
+		public void contentSelected(Content c) {}
+		@Override
+		public void contentRemoved(Content c) {}
+		@Override
+		public void contentChanged(Content c) {}
+		@Override
+		public void contentAdded(Content c) {}
+		@Override
+		public void canvasResized() {}
+	};
 	
 	public SpotDisplayer3D(Image3DUniverse universe, TrackMateModel model) {
 		this.universe = universe;
 		setModel(model);
+		spotContent = makeSpotContent();
+		trackContent = makeTrackContent();
 		// Add a listener to unregister this instance from the model listener list when closing
-		universe.addUniverseListener(new UniverseListener() {			
-			@Override
-			public void universeClosed() {
-				SpotDisplayer3D.this.model.removeTrackMateModelChangeListener(SpotDisplayer3D.this);
-				SpotDisplayer3D.this.model.removeTrackMateSelectionChangeListener(SpotDisplayer3D.this);
-			}
-			@Override
-			public void transformationUpdated(View view) {}
-			@Override
-			public void transformationStarted(View view) {}
-			@Override
-			public void transformationFinished(View view) {}
-			@Override
-			public void contentSelected(Content c) {}
-			@Override
-			public void contentRemoved(Content c) {}
-			@Override
-			public void contentChanged(Content c) {}
-			@Override
-			public void contentAdded(Content c) {}
-			@Override
-			public void canvasResized() {}
-		});
+		universe.addUniverseListener(unregisterListener);
 	}
 	
 	/*
 	 * OVERRIDDEN METHODS
 	 */
 
-
-	@Override
-	public void setSpotNameVisible(boolean spotNameVisible) {
-		// TODO 
-	}
 	
 	@Override
 	public void highlightSpots(Collection<Spot> spots) {
@@ -98,6 +94,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		previousFrameHighlight = new HashMap<Spot, Integer>(spots.size());
 		
 		SpotCollection sc = model.getFilteredSpots().subset(spots);
+		Color3f highlightColor = new Color3f((Color) displaySettings.get(KEY_HIGHLIGHT_COLOR));
 		List<Spot> st;
 		for(int frame : sc.keySet()) {
 			st = sc.get(frame);
@@ -108,7 +105,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 				previousFrameHighlight.put(spot, frame);
 
 				// Update target spot display
-				blobs.get(frame).setColor(spot,HIGHLIGHT_COLOR3F);
+				blobs.get(frame).setColor(spot, highlightColor);
 			}
 		}
 	}
@@ -141,122 +138,35 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			previousEdgeHighlight.put(edge, trackNode.getColor(edge));
 		
 		// Change edge color
+		Color highlightColor = (Color) displaySettings.get(KEY_HIGHLIGHT_COLOR);
 		for(DefaultWeightedEdge edge :edges)
-			trackNode.setColor(edge, HIGHLIGHT_COLOR);
+			trackNode.setColor(edge, highlightColor);
 	}
+	
 	
 	@Override
-	public void setTrackVisible(boolean displayTrackSelected) {
-		trackContent.setVisible(displayTrackSelected);
-	}
-	
-	@Override
-	public void setSpotVisible(boolean displaySpotSelected) {
-		spotContent.setVisible(displaySpotSelected);
-	}
-	
-	@Override
-	public void setRadiusDisplayRatio(float ratio) {
-		super.setRadiusDisplayRatio(ratio);
-		List<Spot> spotsThisFrame; 
-		SpotGroupNode<Spot> spotGroup;
-		for(int key : blobs.keySet()) {
-			spotsThisFrame = model.getSpots().get(key);
-			spotGroup = blobs.get(key);
-			for(Spot spot : spotsThisFrame)
-				spotGroup.setRadius(spot, radiusRatio*spot.getFeature(Feature.RADIUS));
-		}
-	}
-	
-	@Override
-	public void setDisplayTrackMode(TrackDisplayMode mode, int displayDepth) {
-		super.setDisplayTrackMode(mode, displayDepth);
-		if (null == trackContent) 
-			return;
-		trackNode.setDisplayTrackMode(mode, displayDepth);	
-	}
-	
 	public void refresh() { 
-		for(int key : model.getFilteredSpots().keySet())
-			blobs.get(key).setVisible(model.getFilteredSpots().get(key)); // NPE if a spot from #spotsToShow does not belong to #spots 
+//		for(int key : model.getFilteredSpots().keySet())
+//			blobs.get(key).setVisible(model.getFilteredSpots().get(key)); // NPE if a spot from #spotsToShow does not belong to #spots 
 	}
 	
-//	@Override
-//	public void setTrackGraph(SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph) {
-//		super.setTrackGraph(trackGraph);
-//		if (universe.contains(TRACK_CONTENT_NAME)) {
-//			universe.removeContent(TRACK_CONTENT_NAME);
-//			universe.removeTimelapseListener(trackNode);
-//		}
-//		trackContent = makeTrackContent();
-//		universe.addTimelapseListener(trackNode);
-//		try {
-//			trackContent = universe.addContentLater(trackContent).get();
-//		} catch (InterruptedException e) {
-//			e.printStackTrace();
-//		} catch (ExecutionException e) {
-//			e.printStackTrace();
-//		}
-//	}
-//	
-//	@Override
-//	public void setSpots(SpotCollection spots) {
-//		super.setSpots(spots);
-//		if (universe.contains(SPOT_CONTENT_NAME))
-//			universe.removeContent(SPOT_CONTENT_NAME);
-//		spotContent = makeSpotContent();
-//		try {
-//			spotContent = universe.addContentLater(spotContent).get();
-//		} catch (InterruptedException e) {
-//			e.printStackTrace();
-//		} catch (ExecutionException e) {
-//			e.printStackTrace();
-//		}
-//	};
-	
-
 	@Override
 	public void render()  {
-		// do nothing, since this implementation is given a universe which must
-		// be correctly instantiated with the image content.
-	}
-	
-	@Override
-	public void setColorByFeature(final Feature feature) {
-		if (null == feature) {
-			for(int key : blobs.keySet())
-				blobs.get(key).setColor(new Color3f(color));
-		} else {
-			// Get min & max
-			float min = Float.POSITIVE_INFINITY;
-			float max = Float.NEGATIVE_INFINITY;
-			Float val;
-			for (int key : model.getSpots().keySet()) {
-				for (Spot spot : model.getSpots().get(key)) {
-					val = spot.getFeature(feature);
-					if (null == val)
-						continue;
-					if (val > max) max = val;
-					if (val < min) min = val;
-				}
-			}
-			// Color using LUT
-			List<Spot> spotThisFrame;
-			SpotGroupNode<Spot> spotGroup;
-			for (int key : blobs.keySet()) {
-				spotThisFrame = model.getSpots().get(key);
-				spotGroup = blobs.get(key);
-				for ( Spot spot : spotThisFrame) {
-					val = spot.getFeature(feature);
-					if (null == val) 
-						spotGroup.setColor(spot, new Color3f(color));
-					else
-						spotGroup.setColor(spot, new Color3f(colorMap.getPaint((val-min)/(max-min))));
-				}
-			}
-		}
+		universe.addContent(spotContent);
+		universe.addContent(trackContent);
 	}
 
+	@Override
+	public void setDisplaySettings(final String key, final Object value) {
+		super.setDisplaySettings(key, value);
+		// Treat change of radius
+		if (key == KEY_SPOT_RADIUS_RATIO) {
+			updateRadiuses();
+		} else if (key == KEY_SPOT_COLOR_FEATURE) {
+			updateColors();
+		}
+	}
+	
 	@Override
 	public void clear() {
 		universe.removeContent(SPOT_CONTENT_NAME);
@@ -273,6 +183,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		float value;
 		int index = 0;
 		List<Set<Spot>> tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(model.getTrackGraph()).connectedSets();
+		final InterpolatePaintScale colorMap = (InterpolatePaintScale) displaySettings.get(KEY_COLORMAP);
 		for(Set<Spot> track : tracks ) {
 			value = (float) index / tracks.size();
 			colors.put(track, colorMap.getPaint(value));
@@ -301,6 +212,8 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		SpotGroupNode<Spot> blobGroup;
 		ContentInstant contentThisFrame;
 		TreeMap<Integer, ContentInstant> contentAllFrames = new TreeMap<Integer, ContentInstant>();
+		final float radiusRatio = (Float) displaySettings.get(KEY_SPOT_RADIUS_RATIO);
+		final Color color = (Color) displaySettings.get(KEY_COLOR);
 		
 		for(Integer i : model.getSpots().keySet()) {
 			spotsThisFrame = model.getSpots().get(i);
@@ -327,4 +240,54 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	}
 
 
+	private void updateRadiuses() {
+		final float radiusRatio = (Float) displaySettings.get(KEY_SPOT_RADIUS_RATIO);
+		List<Spot> spotsThisFrame; 
+		SpotGroupNode<Spot> spotGroup;
+		for(int key : blobs.keySet()) {
+			spotsThisFrame = model.getSpots().get(key);
+			spotGroup = blobs.get(key);
+			for(Spot spot : spotsThisFrame)
+				spotGroup.setRadius(spot, radiusRatio*spot.getFeature(Feature.RADIUS));
+		}
+	}
+
+	private void updateColors() {
+		final Color color = (Color) displaySettings.get(KEY_COLOR);
+		final Feature feature = (Feature) displaySettings.get(KEY_SPOT_COLOR_FEATURE);
+		
+		if (null == feature) {
+			for(int key : blobs.keySet())
+				blobs.get(key).setColor(new Color3f(color));
+		} else {
+			// Get min & max
+			float min = Float.POSITIVE_INFINITY;
+			float max = Float.NEGATIVE_INFINITY;
+			Float val;
+			for (int key : model.getSpots().keySet()) {
+				for (Spot spot : model.getSpots().get(key)) {
+					val = spot.getFeature(feature);
+					if (null == val)
+						continue;
+					if (val > max) max = val;
+					if (val < min) min = val;
+				}
+			}
+			// Color using LUT
+			List<Spot> spotThisFrame;
+			SpotGroupNode<Spot> spotGroup;
+			final InterpolatePaintScale colorMap = (InterpolatePaintScale) displaySettings.get(KEY_COLORMAP);
+			for (int key : blobs.keySet()) {
+				spotThisFrame = model.getSpots().get(key);
+				spotGroup = blobs.get(key);
+				for ( Spot spot : spotThisFrame) {
+					val = spot.getFeature(feature);
+					if (null == val) 
+						spotGroup.setColor(spot, new Color3f(color));
+					else
+						spotGroup.setColor(spot, new Color3f(colorMap.getPaint((val-min)/(max-min))));
+				}
+			}
+		}
+	}
 }

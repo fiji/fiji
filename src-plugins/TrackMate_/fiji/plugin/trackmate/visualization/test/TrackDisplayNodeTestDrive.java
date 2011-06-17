@@ -23,7 +23,7 @@ import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView.TrackDisplayMode;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotGroupNode;
 import fiji.plugin.trackmate.visualization.threedviewer.TrackDisplayNode;
 
@@ -116,7 +116,7 @@ public class TrackDisplayNodeTestDrive {
 		Content trackContent = new Content("Tracks", trackInstants);
 		trackContent.setShowAllTimepoints(true);
 		universe.addContentLater(trackContent);
-		tdn.setDisplayTrackMode(TrackDisplayMode.LOCAL_WHOLE_TRACKS, 10);
+		tdn.setDisplayTrackMode(TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL, 10);
 		universe.addTimelapseListener(tdn);
 		
 	}

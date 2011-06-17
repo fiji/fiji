@@ -22,6 +22,16 @@ public interface TrackMateModelView {
 	 */
 
 	/**
+	 * Defines the key for the main color. Accepted values are color.
+	 */
+	public static final String KEY_COLOR = "Color";
+
+	/**
+	 * Defines the key for the highlight color, used to paint selection. Accepted values are color.
+	 */
+	public static final String KEY_HIGHLIGHT_COLOR = "HighlightColor";
+	
+	/**
 	 * Defines the key for the track display mode. Possible values are
 	 * {@link #TRACK_DISPLAY_MODE_WHOLE}, {@link #TRACK_DISPLAY_MODE_LOCAL},
 	 * {@link #TRACK_DISPLAY_MODE_LOCAL_BACKWARD}, {@value #TRACK_DISPLAY_MODE_LOCAL_FORWARD}.

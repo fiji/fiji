@@ -107,6 +107,8 @@ public abstract class AbstractTrackMateModelView implements TrackMateSelectionCh
 	 */
 
 	protected void initDisplaySettings() {
+		displaySettings.put(KEY_COLOR, DEFAULT_COLOR);
+		displaySettings.put(KEY_HIGHLIGHT_COLOR, DEFAULT_HIGHLIGHT_COLOR);
 		displaySettings.put(KEY_SPOTS_VISIBLE, true);
 		displaySettings.put(KEY_DISPLAY_SPOT_NAMES, false);
 		displaySettings.put(KEY_SPOT_COLOR_FEATURE, null);
