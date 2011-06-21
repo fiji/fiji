@@ -203,8 +203,6 @@ public final class Utils {
     public static Element findElementByAttributeRegex(final NodeList list,
                                                       final String name, final String regex)
     {
-        System.out.println("Regex: " + regex + ", Name: " + name);
-
         for (int i = 0; i < list.getLength(); ++i)
         {
             if (list.item(i).getNodeType() == Node.ELEMENT_NODE)
@@ -213,20 +211,14 @@ public final class Utils {
 
                 if (e.hasAttribute(name))
                 {
-                    System.out.print("Attribute " + name + " has value " + e.getAttribute(name));
                     if(e.getAttribute(name).matches(regex))
                     {
-                        System.out.println(", matches " + regex);
                         return e;
-                    }
-                    else
-                    {
-                        System.out.println(", doesn't match " + regex);
                     }
                 }
             }
         }
-        System.out.println("No match found\n\n");
+
         return null;
     }
 
