@@ -203,19 +203,30 @@ public final class Utils {
     public static Element findElementByAttributeRegex(final NodeList list,
                                                       final String name, final String regex)
     {
+        System.out.println("Regex: " + regex + ", Name: " + name);
+
         for (int i = 0; i < list.getLength(); ++i)
         {
             if (list.item(i).getNodeType() == Node.ELEMENT_NODE)
             {
                 final Element e = (Element) list.item(i);
 
-                if (e.hasAttribute(name) &&
-                        e.getAttribute(name).matches(regex))
+                if (e.hasAttribute(name))
                 {
-                    return e;
+                    System.out.print("Attribute " + name + " has value " + e.getAttribute(name));
+                    if(e.getAttribute(name).matches(regex))
+                    {
+                        System.out.println(", matches " + regex);
+                        return e;
+                    }
+                    else
+                    {
+                        System.out.println(", doesn't match " + regex);
+                    }
                 }
             }
         }
+        System.out.println("No match found\n\n");
         return null;
     }
 
@@ -291,18 +302,28 @@ public final class Utils {
                 ((Element)image.getParentNode()).getElementsByTagName("Contour");
         Element imageDomainContour =
                 Utils.findElementByAttributeRegex(imageContourList, "name", "^domain.*");
-        String pointsString = imageDomainContour.getAttribute("points");
-        double[] points = Utils.createNodeValueVector(pointsString);
-        Utils.nodeValueToVector(pointsString, points);
+        String pointsString;
+        double[] points;
 
         if (null == wh)
         {
             wh = new double[2];
         }
 
-        wh[0] = points[2] + 1;
-        wh[1] = points[5] + 1;
+        if (null != imageDomainContour)
+        {
+            pointsString = imageDomainContour.getAttribute("points");
+            points = Utils.createNodeValueVector(pointsString);
+            Utils.nodeValueToVector(pointsString, points);
 
+            wh[0] = points[2] + 1;
+            wh[1] = points[5] + 1;
+        }
+        else
+        {
+            wh[0] = Double.NaN;
+            wh[1] = Double.NaN;
+        }
         return wh;
     }
 
@@ -338,13 +359,11 @@ public final class Utils {
 
     public static void appendOpenPathXML(final StringBuilder sb, final double[] pts)
     {
-        sb.append("M ").append(Math.round(pts[0]))
-                .append(" ").append(Math.round(pts[1])).append(" ");
+        sb.append("M ").append(pts[0]).append(" ").append(pts[1]).append(" ");
 
         for (int i = 2; i < pts.length ; i+=2)
         {
-            sb.append("L ").append(Math.round(pts[i]))
-                    .append(" ").append(Math.round(pts[i + 1])).append(" ");
+            sb.append("L ").append(pts[i]).append(" ").append(pts[i + 1]).append(" ");
         }
     }
 
