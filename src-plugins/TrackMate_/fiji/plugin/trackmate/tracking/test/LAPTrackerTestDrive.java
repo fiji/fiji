@@ -4,16 +4,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
-import java.util.SortedSet;
-
-import mpicbg.imglib.util.Util;
 
 import org.jdom.JDOMException;
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
-import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
@@ -58,9 +54,12 @@ public class LAPTrackerTestDrive {
 		settings.allowGapClosing = false; //true;
 		settings.gapClosingDistanceCutoff = 100;
 		settings.gapClosingTimeCutoff = 10;
-		settings.allowMerging = false;
+		settings.allowMerging = true;
+		settings.mergingDistanceCutoff = 10;
+		settings.mergingTimeCutoff = 2;
+		settings.mergingFeatureCutoffs.clear();
 		settings.allowSplitting = true;
-		settings.splittingDistanceCutoff = 5;
+		settings.splittingDistanceCutoff = 10;
 		settings.splittingTimeCutoff = 2;
 		settings.splittingFeatureCutoffs.clear();
 		System.out.println("Tracker settings:");
@@ -68,24 +67,18 @@ public class LAPTrackerTestDrive {
 		model.getSettings().trackerSettings = settings;
 		
 		// 2 - Track the test spots
+		long start = System.currentTimeMillis();
 		LAPTracker lap;
-		lap = new LAPTracker(model.getFilteredSpots(), model.getSettings().trackerSettings);
+		lap = new LAPTracker(model.getFilteredSpots(), settings); //model.getSettings().trackerSettings);
 		lap.setLogger(Logger.DEFAULT_LOGGER);
 		if (!lap.checkInput())
 			System.err.println("Error checking input: "+lap.getErrorMessage());
 		if (!lap.process())
 			System.err.println("Error in process: "+lap.getErrorMessage());
+		long end = System.currentTimeMillis();
+		model.setTrackGraph(lap.getTrackGraph(), false);
 		
-		// Print out track segments
-		List<SortedSet<Spot>> trackSegments = lap.getTrackSegments();
-		System.out.println("Found "+trackSegments.size()+" track segments:");
-		for (SortedSet<Spot> trackSegment : trackSegments) {
-			System.out.println("\n-*-*-*-*-* New Segment *-*-*-*-*-");
-			for (Spot spot : trackSegment)
-				System.out.println(Util.printCoordinates(spot.getPosition(null)) + ", Frame [" + spot.getFeature(Feature.POSITION_T) + "]");	
-		}
-
-
+	
 		// 3 - Print out results for testing		
 		System.out.println();
 		System.out.println();
@@ -93,17 +86,18 @@ public class LAPTrackerTestDrive {
 		SimpleWeightedGraph<Spot,DefaultWeightedEdge> graph = lap.getTrackGraph();
 		ConnectivityInspector<Spot, DefaultWeightedEdge> inspector = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph);
 		List<Set<Spot>> tracks = inspector.connectedSets();
-		System.out.println("Found " + tracks.size() + " final tracks:");
+		System.out.println("Found " + tracks.size() + " final tracks.");
+		System.out.println("Whole tracking done in "+(end-start)+" ms.");
 		System.out.println();
-		int counter = 0;
-		for(Set<Spot> track : tracks) {
-			System.out.println("Track "+counter);
-			System.out.print("Spots in frames: \n");
-			for(Spot spot : track)
-				System.out.println(Util.printCoordinates(spot.getPosition(null)) + ", Frame [" + spot.getFeature(Feature.POSITION_T) + "]");
-			System.out.println();
-			counter++;
-		}
+//		int counter = 0;
+//		for(Set<Spot> track : tracks) {
+//			System.out.println("Track "+counter);
+//			System.out.print("Spots in frames: \n");
+//			for(Spot spot : track)
+//				System.out.println(Util.printCoordinates(spot.getPosition(null)) + ", Frame [" + spot.getFeature(Feature.POSITION_T) + "]");
+//			System.out.println();
+//			counter++;
+//		}
 		
 		// 4 - Detailed info
 //		System.out.println("Segment costs:");

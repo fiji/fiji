@@ -5,22 +5,15 @@ GUI
 Segmenting
 - Implement the C.elegans algo from Santella et al 2010
 
-Tracking
-- Put back Nick's tracking optimization, based on pruning rows and columns in the cost matrix.
-
 Track scheme
 - Add the ability to show / hide tracks
 - Add the ability to name tracks
 - Fix the NPE when plotting features and a parent cell is in the selection
-- Offer an option to toggle branch grouping on/off.
 
 Export/Import
-- Make a better loading logic and GUI interaction.
 - Offer to select displayer at load.
 - Save the spot images in the xml file.
 
 Making it available.
-- Tune Fiji integration.
 - Write wiki doc.
 - Publish an application note. 
-- Offer a entry point for the plugin starting with loading a data file.
