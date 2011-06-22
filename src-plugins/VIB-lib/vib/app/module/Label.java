@@ -1,5 +1,7 @@
 package vib.app.module;
 
+import amira.AmiraParameters;
+
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.image.IndexColorModel;
@@ -33,6 +35,7 @@ public class Label extends Module {
 			public void actionPerformed(ActionEvent e) {
 				if(e.getActionCommand().equals("Ok")) {
 					synchronized (this) {
+						// TODO: check number of labels common with the template, and refuse to go on if <3
 						notifyAll();
 					}
 				}
@@ -42,6 +45,14 @@ public class Label extends Module {
 		
 		CustomStackWindow csw = new CustomStackWindow(image);
 		csw.setLabels(labels);
+		if (labels == null) {
+			labels = csw.getLabels();
+			if (index >= 0) {
+				ImagePlus templateLabels = state.getTemplateLabels();
+				new AmiraParameters(templateLabels).setParameters(labels);
+				csw.setLabels(labels);
+			}
+		}
 		csw.addActionListener(a);
 		synchronized (a) {
 			try {
@@ -50,7 +61,6 @@ public class Label extends Module {
 				e.printStackTrace();
 			}
 		}
-		labels = csw.getLabels();
 		image.close();
 		csw.cleanUp();
 		if(!state.save(labels, labelPath))

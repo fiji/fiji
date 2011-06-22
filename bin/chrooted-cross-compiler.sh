@@ -40,7 +40,7 @@ dchroot "sudo apt-get install -q -y --force-yes gcc libcurl3-openssl-dev make \
 	git checkout -b fiji origin/fiji
 	git pull
  else
-	git clone git://pacific.mpi-cbg.de/IMCROSS/.git
+	git clone git://fiji.sc/IMCROSS/.git
 	cd IMCROSS
 	git checkout -b fiji origin/fiji
  fi)

@@ -3096,6 +3096,12 @@ public class WekaSegmentation {
 	 */
 	public boolean trainClassifier()
 	{
+		if (Thread.currentThread().isInterrupted() )
+		{
+			IJ.log("Classifier training was interrupted.");
+			return false;
+		}
+		
 		// At least two lists of different classes of examples need to be non empty
 		int nonEmpty = 0;
 		for(int i = 0; i < numOfClasses; i++)
@@ -3134,7 +3140,7 @@ public class WekaSegmentation {
 			IJ.log("Feature stack array is now updated.");
 		}
 
-		IJ.showStatus("Training classifier...");
+		IJ.showStatus("Creating training instances...");
 		Instances data = null;
 		if (nonEmpty < 1)
 			IJ.log("Training from loaded data only...");
@@ -3183,12 +3189,20 @@ public class WekaSegmentation {
 		IJ.log("Training classifier...");
 
 		if (Thread.currentThread().isInterrupted() )
+		{
+			IJ.log("Classifier training was interrupted.");
 			return false;
+		}
 		
 		// Train the classifier on the current data
 		final long start = System.currentTimeMillis();
 		try{
 			classifier.buildClassifier(data);
+		}
+		catch (InterruptedException ie)
+		{
+			IJ.log("Classifier construction was interrupted.");
+			return false;
 		}
 		catch(Exception e){
 			IJ.showMessage(e.getMessage());
@@ -3201,9 +3215,6 @@ public class WekaSegmentation {
 
 		final long end = System.currentTimeMillis();
 
-		if (Thread.currentThread().isInterrupted() )
-			return false;
-		
 		IJ.log("Finished training in "+(end-start)+"ms");
 		return true;
 	}
@@ -3568,8 +3579,8 @@ public class WekaSegmentation {
 		{
 			try {
 				results[i] = fu[i].get();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			} catch (InterruptedException e) {				
+				//e.printStackTrace();
 				return null;
 			} catch (ExecutionException e) {
 				e.printStackTrace();
@@ -3648,7 +3659,12 @@ public class WekaSegmentation {
 				{
 					try{
 
-						if (0 == i % 4000) counter.addAndGet(4000);
+						if (0 == i % 4000)
+						{
+							if (Thread.currentThread().isInterrupted()) 
+								return null;
+							counter.addAndGet(4000);
+						}
 
 						if (probabilityMaps)
 						{
@@ -3857,7 +3873,7 @@ public class WekaSegmentation {
 	}
 
 	/**
-	 * Shut down the executor service
+	 * Shut down the executor service for training and feature creation
 	 */
 	public void shutDownNow()
 	{

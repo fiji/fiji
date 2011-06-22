@@ -4,7 +4,7 @@ package distance;
 
 public class Correlation implements PixelPairs {
 
-	private float sumX, sumY, sumXY,
+	private double sumX, sumY, sumXY,
 		sumXSquared, sumYSquared;
 	private long count;
 	private static boolean verbose = !true;
@@ -30,15 +30,14 @@ public class Correlation implements PixelPairs {
 
 		float result = 0;
 
-		float n2 = count * count;
-		float numerator = (sumXY/count) - (sumX * sumY) / n2;
-		float varX = (sumXSquared / count) - (sumX * sumX) / n2;
-		float varY = (sumYSquared / count) - (sumY * sumY) / n2;
-		float denominator = (float) (
-			Math.sqrt(varX) * Math.sqrt(varY) );
+		double n2 = count * count;
+		double numerator = (sumXY/count) - (sumX * sumY) / n2;
+		double varX = (sumXSquared / count) - (sumX * sumX) / n2;
+		double varY = (sumYSquared / count) - (sumY * sumY) / n2;
+		double denominator = Math.sqrt(varX) * Math.sqrt(varY);
 
 		if( denominator > 0.00000001 ) {
-			result = numerator / denominator;
+			result = (float)(numerator / denominator);
 		}
 		
 		return result;

@@ -410,7 +410,7 @@ for (String arg : bsh.args) {
 	}
 	else {
 		setAccessibility(true);
-		path = rule.prerequisiteString;
+		path = rule == null ? arg : rule.prerequisiteString;
 		starstar = path.indexOf("**");
 		if (starstar >= 0)
 			path = path.substring(0, starstar);

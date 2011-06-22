@@ -6,7 +6,7 @@ files.
 All the source code with complete authorship information can be found
 in the Fiji git repository:
 
-   http://pacific.mpi-cbg.de/wiki/index.php/Downloading_and_Building_Fiji_From_Source
+   http://fiji.sc/wiki/index.php/Downloading_and_Building_Fiji_From_Source
 
 The scripts for Debian packaging are copyright (C) 2008-2011,
 Mark Longair <mhl@pobox.com> and are licensed under the GPL, see

@@ -29,7 +29,7 @@ import java.io.OutputStream;
 
 public class Fiji_Uploader implements PlugIn {
 	final String user = "uploads";
-	final String host = "pacific.mpi-cbg.de";
+	final String host = "fiji.sc";
 	final int hostKeyType = HostKey.SSHRSA;
 	final String hostKey =
 		" 00 00 00 07 73 73 68 2d 72 73 61 00 00 00 01 23" +

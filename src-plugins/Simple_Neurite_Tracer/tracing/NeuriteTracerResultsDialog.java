@@ -1227,7 +1227,7 @@ public class NeuriteTracerResultsDialog
 
 		} else if( source == shollAnalysiHelpMenuItem ) {
 
-			IJ.runPlugIn("ij.plugin.BrowserLauncher", "http://pacific.mpi-cbg.de/wiki/index.php/Simple_Neurite_Tracer:_Sholl_analysis");
+			IJ.runPlugIn("ij.plugin.BrowserLauncher", "http://fiji.sc/wiki/index.php/Simple_Neurite_Tracer:_Sholl_analysis");
 
 		} else if( source == cancelSearch ) {
 

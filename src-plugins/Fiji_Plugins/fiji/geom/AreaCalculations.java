@@ -4,7 +4,7 @@ package fiji.geom;
  * This class provides methods to calculate circumference, area and center
  * of gravity of polygons.
  *
- * It is part of Fiji (http://pacific.mpi-cbg.de/), and is licensed under
+ * It is part of Fiji (http://fiji.sc/), and is licensed under
  * the GPLv2.  If you do not know what the GPLv2 is, you have no license
  * to use it at all.
  */

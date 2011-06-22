@@ -17,7 +17,7 @@ import posixpath
 # regular expression to find a maintainer
 MAINTAINER_TAG = 'Maintainer'
 # URL to the wiki
-WIKI_URL = 'http://pacific.mpi-cbg.de'
+WIKI_URL = 'http://fiji.sc'
 # URL to the plugin list
 PLUGIN_LIST_URL = WIKI_URL + '/wiki/index.php/Template:PluginList';
 
@@ -257,7 +257,7 @@ def createMaintainerPage():
                 + 'the list of plugins and packages maintained by a maintainer, as ' \
                 + 'stated in the wiki. It is automatically generated from a python ' \
                 + 'script in the Fiji development repository, that can be seen ' \
-                + '[http:////pacific.mpi-cbg.de/cgi-bin/gitweb.cgi?p=fiji.git;a=blob;f=scripts/plugin-documentation-list.py;hb=HEAD here]' \
+                + '[http:////fiji.sc/cgi-bin/gitweb.cgi?p=fiji.git;a=blob;f=scripts/plugin-documentation-list.py;hb=HEAD here]' \
                 + '.\n\nSyntax is the ' \
                 + 'following:' + 2*'\n' \
                 + '<pre>\n' \

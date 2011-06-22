@@ -36,7 +36,7 @@ import ij.plugin.PlugIn;
  */
 public class Stitch_Image_Grid_Sequence implements PlugIn
 {
-	private String myURL = "http://pacific.mpi-cbg.de/Stitching_2D/3D";
+	private String myURL = "http://fiji.sc/Stitching_2D/3D";
 
 	public static int gridSizeXStatic = 3, gridSizeYStatic = 3, gridSizeZStatic = 3;
 

@@ -72,7 +72,7 @@ public class ClassNameFunctions {
 				fullName.startsWith("javax."))
 			urlPrefix = "http://java.sun.com/j2se/1.5.0/docs/api/";
 		else
-			urlPrefix = "http://pacific.mpi-cbg.de/javadoc/";
+			urlPrefix = "http://fiji.sc/javadoc/";
 		new BrowserLauncher().run(urlPrefix
 				+ (withFrames ? "index.html?" : "")
 				+ fullName.replace('.', '/') + ".html");

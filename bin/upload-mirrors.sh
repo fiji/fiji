@@ -1,6 +1,6 @@
 #!/bin/sh
 
-URL=http://pacific.mpi-cbg.de
+URL=http://fiji.sc
 MIRROR=http://valelab.ucsf.edu/~schindelin
 HOST=stuurman
 DIR=public_html

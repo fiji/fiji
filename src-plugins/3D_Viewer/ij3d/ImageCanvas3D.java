@@ -26,8 +26,6 @@ import ij.gui.ImageCanvas;
 import ij.ImagePlus;
 import ij.gui.Roi;
 
-import ij3d.behaviors.Behavior2ListenerProxy;
-
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 
@@ -71,11 +69,15 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 			}
 		};
 		roiImageCanvas.removeKeyListener(ij.IJ.getInstance());
+		roiImageCanvas.removeMouseListener(roiImageCanvas);
+		roiImageCanvas.removeMouseMotionListener(roiImageCanvas);
 		roiImageCanvas.disablePopupMenu(true);
 
 		background = new Background(
 			new Color3f(UniverseSettings.defaultBackground));
 		background.setCapability(Background.ALLOW_COLOR_WRITE);
+
+		addListeners();
 	}
 
 	public Background getBG() { //can't use getBackground()
@@ -87,16 +89,16 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 		render();
 	}
 
-	void addListeners(DefaultUniverse universe) {
-		MouseMotionListener mouseMotionListener = new MouseMotionAdapter() {
+	void addListeners() {
+		addMouseMotionListener(new MouseMotionAdapter() {
 			public void mouseDragged(MouseEvent e) {
 				if(ui.isRoiTool())
 					exec.submit(new Runnable() { public void run() {
 						postRender();
 					}});
 			}
-		};
-		MouseListener mouseListener = new MouseAdapter() {
+		});
+		addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 				if(ui.isRoiTool())
 					exec.submit(new Runnable() { public void run() {
@@ -113,8 +115,7 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 				if(!ui.isRoiTool())
 					roiImagePlus.killRoi();
 			}
-		};
-		universe.addInteractiveBehavior(new Behavior2ListenerProxy(universe, null, mouseListener, mouseMotionListener, null));
+		});
 		addComponentListener(new ComponentAdapter() {
 			public void componentResized(ComponentEvent e) {
 				exec.submit(new Runnable() { public void run() {
@@ -126,6 +127,10 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 				}});
 			}
 		});
+	}
+
+	public ImageCanvas getRoiCanvas() {
+		return roiImageCanvas;
 	}
 
 	public Roi getRoi() {

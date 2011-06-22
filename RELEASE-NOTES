@@ -9,7 +9,7 @@ and convenient infrastructure around ImageJ such as: automatic updates,
 extensive documentation, a powerful yet small Script Editor, reusable
 components for users and developers, bug tracking, etc.
 
-For details and downloads, see: http://pacific.mpi-cbg.de/.
+For details and downloads, see: http://fiji.sc/.
 
 Note: if you already have a Fiji installation, you can use the Fiji
 Updater to upgrade; no need to download and install from scratch. Just
@@ -450,7 +450,7 @@ the web browser (this helps collaboration via IRC, for example).
 
 The submodules have been moved into the modules/ directory.
 
-You can use the short-cut URL http://pacific.mpi-cbg.de/<filename> for
+You can use the short-cut URL http://fiji.sc/<filename> for
 source files in Fiji's Git-managed repositories.
 
 Added IntegralImages as library components to the mpicbg submodule for

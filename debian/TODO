@@ -4,54 +4,37 @@ Should there be a dependency on python-2.5-minimal?  Yes - it's
   required to build fiji-jython, where if /usr/lib/python2.5 doesn't
   exist, it downloads an archive to include in the jar.  However,
   python2.5 has been removed from Ubuntu, so I automatic
-  build-dependency resolution on Lucide won't work...
+  build-dependency resolution on Lucid won't work...
 
-Could we use the packaged commons-math?
-  http://packages.debian.org/squeeze/libcommons-math-java
-  http://packages.ubuntu.com/lucid/libcommons-math-java
+  Currently the build process is downloading the source to build -
+  this probably breaks policy somehow.
 
 jna.jar is packaged in libjna-java - should use that
 
 The man page for fiji should be in fiji-base, not fiji.
-
-Need all the fiji-*.copyright files - needs more detail than in
-   LICENSES, with the source of the information and a link
-   to the full license in /usr/share/common-licenses/ where possible.
 
 Problematic packages for copyright in that they have many authors
 include:
    - fiji-examples
    - fiji-plugins
 
+fiji-plugins is still plugin soup - more packages need to be separated
+   out from there over time
+
 Allow a per-user plugins directory as well as the system-wide one.
 
 bio-formats includes lots of jars in the source archive - there's a
    dependency tangle to be sorted out there
-
-fiji-plugins is still plugin soup - more packages need to be separated
-   out from there over time
 
 debian/update-debian.py has a lot of hard-coded data, which should be
    tidied up and extracted out.  (Some doesn't need to be hard-coded
    at all.)  In general, that's now very hacky - especially the
    cleaning steps and rewriting of the Fakefile.)
 
+The exactly required submodules are currently documented in
+   debian/weekly-build.sh - this should be in a separate configuration
+   file.
+
 bio-formats, AutoComplete and RSyntaxTextArea can usefully be non-Fiji jars,
    i.e. just a jar in /usr/share/java/
 
-Need to document and enforce the right submodules being present.  At
-   the moment I think the required minimum is:
-
-       AutoComplete
-       ImageJA
-       RSyntaxTextArea
-       Retrotranslator
-       TrakEM2
-       bio-formats
-       commons-math
-       ij-plugins
-       jython
-       imglib
-       live-helper
-       mpicbg
-       tcljava

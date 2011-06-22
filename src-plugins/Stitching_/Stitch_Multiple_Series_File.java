@@ -228,21 +228,21 @@ public class Stitch_Multiple_Series_File implements PlugIn
 					final String dimOrder = r.getDimensionOrder().toUpperCase();
 					
 					final int posX = dimOrder.indexOf( 'X' );
-					cal = retrieve.getPixelsPhysicalSizeX( 0 );
+					cal = retrieve.getPixelsPhysicalSizeX( 0 ).getValue();
 					if ( posX >= 0 && cal != null && cal.floatValue() != 0 )
 						calX = cal.floatValue(); 
 	
 					// IJ.log( "calibrationX:  " + calX );
 	
 					final int posY = dimOrder.indexOf( 'Y' );
-					cal = retrieve.getPixelsPhysicalSizeY( 0 );
+					cal = retrieve.getPixelsPhysicalSizeY( 0 ).getValue();
 					if ( posY >= 0 && cal != null && cal.floatValue() != 0 )
 						calY = cal.floatValue();
 	
 					// IJ.log( "calibrationY:  " + calY );
 	
 					final int posZ = dimOrder.indexOf( 'Z' );
-					cal = retrieve.getPixelsPhysicalSizeZ( 0 );
+					cal = retrieve.getPixelsPhysicalSizeZ( 0 ).getValue();
 					if ( posZ >= 0 && cal != null && cal.floatValue() != 0 )
 						calZ = cal.floatValue();
 				

@@ -33,7 +33,7 @@ if test ! -f "$SYSROOT"/$TARGET/include/winnt.h
 then
 	if test ! -d mingw-w64
 	then
-		git clone git://pacific.mpi-cbg.de/mingw-w64
+		git clone git://fiji.sc/mingw-w64
 	fi &&
 	(mkdir -p build-headers &&
 	 cd build-headers &&

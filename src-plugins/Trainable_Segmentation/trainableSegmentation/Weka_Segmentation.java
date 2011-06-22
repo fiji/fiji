@@ -223,6 +223,11 @@ public class Weka_Segmentation implements PlugIn
 	public static final String SAVE_FEATURE_STACK = "saveFeatureStack";
 	public static final String CHANGE_CLASS_NAME = "changeClassName";
 	
+	/** boolean flag set to true while training */
+	boolean trainingFlag = false;
+	/** boolean flat set to true when training is complete */
+	boolean trainingComplete = false;
+	
 	/**
 	 * Basic constructor for graphical user interface use
 	 */
@@ -290,6 +295,7 @@ public class Weka_Segmentation implements PlugIn
 
 		saveDataButton = new JButton ("Save data");
 		saveDataButton.setToolTipText("Save current segmentation into an ARFF file");
+		saveDataButton.setEnabled(false);
 
 		addClassButton = new JButton ("Create new class");
 		addClassButton.setToolTipText("Add one more label to mark different areas");
@@ -312,45 +318,30 @@ public class Weka_Segmentation implements PlugIn
 		showColorOverlay = false;
 	}
 
+	/** Thread that runs the training. We store it to be able to
+	 * to interrupt it from the GUI */
+	private Thread trainingTask = null;
+		
 	/**
-	 * Listeners
+	 * Button listener
 	 */
 	private ActionListener listener = new ActionListener() {
+
+		
+	
 		public void actionPerformed(final ActionEvent e) {
 
+			final String command = e.getActionCommand();
+			
 			// listen to the buttons on separate threads not to block
 			// the event dispatch thread
 			exec.submit(new Runnable() {
+												
 				public void run()
 				{
 					if(e.getSource() == trainButton)
 					{
-						// Disable buttons until the training has finished
-						win.setButtonsEnabled(false);
-
-						try{
-							// Macro recording
-							String[] arg = new String[] {};
-							record(TRAIN_CLASSIFIER, arg);
-							
-							if( wekaSegmentation.trainClassifier() )
-							{
-								if( Thread.currentThread().isInterrupted() )
-								{
-									IJ.log("Training was interrupted by the user.");
-									return;
-								}
-								wekaSegmentation.applyClassifier(false);
-								classifiedImage = wekaSegmentation.getClassifiedImage();
-								if(showColorOverlay)
-									win.toggleOverlay();
-								win.toggleOverlay();
-							}
-						}catch(Exception e){
-							e.printStackTrace();
-						}finally{
-							win.updateButtonsEnabling();
-						}
+						runStopTraining(command);						
 					}
 					else if(e.getSource() == overlayButton){
 						// Macro recording
@@ -420,9 +411,12 @@ public class Weka_Segmentation implements PlugIn
 								break;
 							}
 						}
+						win.updateButtonsEnabling();
 					}
 
 				}
+
+				
 			});
 		}
 	};
@@ -839,6 +833,8 @@ public class Weka_Segmentation implements PlugIn
 					//IJ.log("closing window");
 					// cleanup								
 					// Stop any thread from the segmentator
+					if(null != trainingTask)
+						trainingTask.interrupt();
 					wekaSegmentation.shutDownNow();
 					exec.shutdownNow();	
 					
@@ -1042,46 +1038,56 @@ public class Weka_Segmentation implements PlugIn
 		 */
 		protected void updateButtonsEnabling()
 		{
-			final boolean classifierExists =  null != wekaSegmentation.getClassifier();
-
-			trainButton.setEnabled(classifierExists);
-			applyButton.setEnabled(classifierExists);
-
-			final boolean resultExists = null != classifiedImage &&
-										 null != classifiedImage.getProcessor();
-
-			saveClassifierButton.setEnabled(classifierExists);
-			overlayButton.setEnabled(resultExists);
-			resultButton.setEnabled(resultExists);
-			plotButton.setEnabled(resultExists);
-
-			probabilityButton.setEnabled(classifierExists);
-
-			//newImageButton.setEnabled(true);
-			loadClassifierButton.setEnabled(true);
-			loadDataButton.setEnabled(true);
-
-			addClassButton.setEnabled(wekaSegmentation.getNumOfClasses() < WekaSegmentation.MAX_NUM_CLASSES);
-			settingsButton.setEnabled(true);
-			wekaButton.setEnabled(true);
-
-			boolean examplesEmpty = true;
-			for(int i = 0; i < wekaSegmentation.getNumOfClasses(); i ++)
-				if(exampleList[i].getItemCount() > 0)
-				{
-					examplesEmpty = false;
-					break;
-				}
-			boolean loadedTrainingData = null != wekaSegmentation.getLoadedTrainingData();
-
-			saveDataButton.setEnabled(!examplesEmpty || loadedTrainingData);
-
-			for(int i = 0 ; i < wekaSegmentation.getNumOfClasses(); i++)
+			// While training, set disable all buttons except the train buttons, 
+			// which will be used to stop the training by the user. 
+			if( trainingFlag == true )
 			{
-				exampleList[i].setEnabled(true);
-				addExampleButton[i].setEnabled(true);
+				setButtonsEnabled( false );
+				trainButton.setEnabled( true );	
 			}
-			setSliceSelectorEnabled(true);
+			else // If the training is not going on
+			{
+				final boolean classifierExists =  null != wekaSegmentation.getClassifier();
+
+				trainButton.setEnabled( classifierExists );
+				applyButton.setEnabled( trainingComplete );
+
+				final boolean resultExists = null != classifiedImage &&
+											 null != classifiedImage.getProcessor();
+
+				saveClassifierButton.setEnabled( trainingComplete );
+				overlayButton.setEnabled(resultExists);
+				resultButton.setEnabled(resultExists);
+				plotButton.setEnabled(resultExists);
+				
+				probabilityButton.setEnabled( trainingComplete );
+
+				//newImageButton.setEnabled(true);
+				loadClassifierButton.setEnabled(true);
+				loadDataButton.setEnabled(true);
+
+				addClassButton.setEnabled(wekaSegmentation.getNumOfClasses() < WekaSegmentation.MAX_NUM_CLASSES);
+				settingsButton.setEnabled(true);
+				wekaButton.setEnabled(true);
+
+				boolean examplesEmpty = true;
+				for(int i = 0; i < wekaSegmentation.getNumOfClasses(); i ++)
+					if(exampleList[i].getItemCount() > 0)
+					{
+						examplesEmpty = false;
+						break;
+					}
+				boolean loadedTrainingData = null != wekaSegmentation.getLoadedTrainingData();
+
+				saveDataButton.setEnabled(!examplesEmpty || loadedTrainingData);
+
+				for(int i = 0 ; i < wekaSegmentation.getNumOfClasses(); i++)
+				{
+					exampleList[i].setEnabled(true);
+					addExampleButton[i].setEnabled(true);
+				}
+				setSliceSelectorEnabled(true);
+			}
 		}
 
 		/**
@@ -1300,6 +1306,109 @@ public class Weka_Segmentation implements PlugIn
 		win.updateExampleLists();
 	}
 
+	/**
+	 * Run/stop the classifier training
+	 * 
+	 * @param command current text of the training button ("Train classifier" or "STOP")
+	 */
+	void runStopTraining(final String command) 
+	{
+		// If the training is not going on, we start it
+		if (command.equals("Train classifier")) 
+		{				
+			trainingFlag = true;
+			trainButton.setText("STOP");
+			final Thread oldTask = trainingTask;
+			// Disable rest of buttons until the training has finished
+			win.updateButtonsEnabling();
+
+			// Set train button text to STOP
+			trainButton.setText("STOP");							
+
+			// Thread to run the training
+			Thread newTask = new Thread() {								 
+				
+				public void run()
+				{
+					// Wait for the old task to finish
+					if (null != oldTask) 
+					{
+						try { 
+							IJ.log("Waiting for old task to finish...");
+							oldTask.join(); 
+						} 
+						catch (InterruptedException ie)	{ /*IJ.log("interrupted");*/ }
+					}
+				       
+					try{
+						// Macro recording
+						String[] arg = new String[] {};
+						record(TRAIN_CLASSIFIER, arg);
+
+						if( wekaSegmentation.trainClassifier() )
+						{
+							if( this.isInterrupted() )
+							{
+								//IJ.log("Training was interrupted by the user.");
+								wekaSegmentation.shutDownNow();
+								trainingComplete = false;
+								return;
+							}
+							wekaSegmentation.applyClassifier(false);
+							classifiedImage = wekaSegmentation.getClassifiedImage();
+							if(showColorOverlay)
+								win.toggleOverlay();
+							win.toggleOverlay();
+							trainingComplete = true;
+						}
+						else
+						{
+							IJ.log("The traning did not finish.");
+							trainingComplete = false;
+						}
+						
+					}
+					catch(Exception e)
+					{
+						e.printStackTrace();
+					}
+					finally
+					{
+						trainingFlag = false;						
+						trainButton.setText("Train classifier");
+						win.updateButtonsEnabling();										
+						trainingTask = null;
+					}
+				}
+				
+			};
+			
+			//IJ.log("*** Set task to new TASK (" + newTask + ") ***");
+			trainingTask = newTask;
+			newTask.start();							
+		}
+		else if (command.equals("STOP")) 							  
+		{
+			try{
+				trainingFlag = false;
+				trainingComplete = false;
+				IJ.log("Training was stopped by the user!");
+				win.setButtonsEnabled( false );
+				trainButton.setText("Train classifier");
+				
+				if(null != trainingTask)
+					trainingTask.interrupt();
+				else
+					IJ.log("Error: interrupting training failed becaused the thread is null!");
+				
+				wekaSegmentation.shutDownNow();
+				win.updateButtonsEnabling();
+			}catch(Exception ex){
+				ex.printStackTrace();
+			}
+		}
+	}
+	
 	/**
 	 * Display the whole image after classification
 	 */
@@ -1586,6 +1695,7 @@ public class Weka_Segmentation implements PlugIn
 		// update GUI
 		win.updateAddClassButtons();
 
+		trainingComplete = true;
 		IJ.log("Loaded " + od.getDirectory() + od.getFileName());
 	}
 
@@ -1905,7 +2015,7 @@ public class Weka_Segmentation implements PlugIn
 		gd.addCheckbox("Homogenize classes", wekaSegmentation.doHomogenizeClasses());
 		gd.addButton("Save feature stack", new SaveFeatureStackButtonListener("Select location to save feature stack", wekaSegmentation.getFeatureStackArray()));
 		gd.addSlider("Result overlay opacity", 0, 100, overlayOpacity);
-		gd.addHelp("http://pacific.mpi-cbg.de/wiki/Trainable_Segmentation_Plugin");
+		gd.addHelp("http://fiji.sc/wiki/Trainable_Segmentation_Plugin");
 
 		gd.showDialog();
 
@@ -2100,12 +2210,19 @@ public class Weka_Segmentation implements PlugIn
 	{
 		AbstractClassifier classifier;
 
-
+		/**
+		 * Build the button listener for selecting the classifier
+		 * @param classifier current classifier object
+		 */
 		public ClassifierSettingsButtonListener(AbstractClassifier classifier)
 		{
 			this.classifier = classifier;
 		}
 
+		/**
+		 * Control the action when clicking on the classifier settings box.
+		 * It displays the Weka dialog for selecting a classifier.
+		 */
 		public void actionPerformed(ActionEvent e)
 		{
 			try {
@@ -2163,14 +2280,7 @@ public class Weka_Segmentation implements PlugIn
 		 * Method to run when pressing the save feature stack button
 		 */
 		public void actionPerformed(ActionEvent e)
-		{
-			if(featureStackArray.isEmpty())
-			{
-				//IJ.error("Error", "The feature stack has not been initialized yet, please train first.");
-				//return;
-				featureStackArray.updateFeaturesMT();
-			}
-
+		{			
 			SaveDialog sd = new SaveDialog(title, "feature-stack", ".tif");
 			final String dir = sd.getDirectory();
 			final String fileWithExt = sd.getFileName();
@@ -2178,6 +2288,13 @@ public class Weka_Segmentation implements PlugIn
 			if(null == dir || null == fileWithExt)
 				return;
 
+			if(featureStackArray.isEmpty())
+			{
+				IJ.showStatus("Creating feature stack...");
+				IJ.log("Creating feature stack...");
+				featureStackArray.updateFeaturesMT();
+			}
+			
 			for(int i=0; i<featureStackArray.getSize(); i++)
 			{
 				final String fileName = dir + fileWithExt.substring(0, fileWithExt.length()-4) 

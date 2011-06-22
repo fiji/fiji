@@ -120,6 +120,9 @@ public class FeatureStackArray
 	 */
 	public boolean updateFeaturesMT(boolean[] update)
 	{
+		if (Thread.currentThread().isInterrupted() )
+			return false;
+		
 		final int numProcessors = Runtime.getRuntime().availableProcessors();
 		final ExecutorService exe = Executors.newFixedThreadPool( numProcessors );
 		
@@ -191,6 +194,8 @@ public class FeatureStackArray
 		
 		final ArrayList< Future<Boolean> > futures = new ArrayList< Future<Boolean> >();
 		
+		IJ.showStatus("Updating features...");
+		
 		try{
 			for(int i=0; i<featureStackArray.length; i++)
 			{
@@ -218,9 +223,14 @@ public class FeatureStackArray
 			}
 			
 			// Wait for the jobs to be done
+			int currentIndex = 0;
+			final int finalIndex = featureStackArray.length;
 			for(Future<Boolean> f : futures)
 			{
 				final boolean result = f.get();
+				currentIndex++;
+				IJ.showStatus("Updating features...");
+				IJ.showProgress(currentIndex, finalIndex);
 				if(false == result)
 					return false;
 			}			

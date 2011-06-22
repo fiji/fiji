@@ -53,7 +53,7 @@ public class Script_Editor implements PlugIn {
 	}
 
 	final private static String gitwebURL =
-		"http://pacific.mpi-cbg.de/cgi-bin/gitweb.cgi?p=java/";
+		"http://fiji.sc/cgi-bin/gitweb.cgi?p=java/";
 
 	public static String getPlatform() {
 		boolean is64bit =

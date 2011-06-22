@@ -36,9 +36,9 @@ import javax.swing.SwingUtilities;
 import javax.xml.parsers.ParserConfigurationException;
 
 public class Updater implements PlugIn {
-	public static String MAIN_URL = "http://pacific.mpi-cbg.de/update/";
+	public static String MAIN_URL = "http://fiji.sc/update/";
 	public static String UPDATE_DIRECTORY = "/var/www/update/";
-	public static String SSH_HOST = "pacific.mpi-cbg.de";
+	public static String SSH_HOST = "fiji.sc";
 
 	public static final String XML_COMPRESSED = "db.xml.gz";
 

@@ -419,7 +419,7 @@ public class Panorama_View implements PlugIn, KeyListener, MouseWheelListener, M
 		gd.addMessage( "Miscellaneous" );
 		gd.addCheckbox( "show cube-faces", showCubefaces );
 		
-//		gd.addHelp( "http://pacific.mpi-cbg.de/wiki/index.php/Enhance_Local_Contrast_(CLAHE)" );
+//		gd.addHelp( "http://fiji.sc/wiki/index.php/Enhance_Local_Contrast_(CLAHE)" );
 		
 		gd.showDialog();
 		
