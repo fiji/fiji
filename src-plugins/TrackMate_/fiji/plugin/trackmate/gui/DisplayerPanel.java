@@ -109,6 +109,8 @@ public class DisplayerPanel extends ActionListenablePanel {
 				view.setDisplaySettings(KEY_SPOT_COLOR_FEATURE, jPanelSpotColor.setColorByFeature);
 				view.refresh();
 			}
+		} else {
+			super.fireAction(event);
 		}
 	}
 
