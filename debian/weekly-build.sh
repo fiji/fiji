@@ -27,6 +27,7 @@ then
 	    modules/commons-math \
 	    modules/ij-plugins \
 	    modules/imglib \
+	    modules/imagej2 \
 	    modules/jython \
 	    modules/mpicbg \
 	    modules/tcljava \
@@ -45,9 +46,12 @@ then
   VERSION=$( cd fiji && dpkg-parsechangelog | egrep '^Version' | sed 's/^Version: //' )
   OLD_D=$(readlink -n fiji)
   D=fiji-$VERSION
-  mv $OLD_D $D
-  rm fiji
-  ln -s $D fiji
+  if [ "$D" != "$OLD_D" ]
+  then
+    mv $OLD_D $D
+    rm fiji
+    ln -s $D fiji
+  fi
 
 else
 
@@ -106,7 +110,7 @@ fi
     git merge --squash $NEW_REVISION &&
     git commit -m "debian: Changes produced by the weekly build" &&
     git fetch origin master &&
-    git rebase origin/master &&
+    git rebase FETCH_HEAD &&
     git config remote.origin.url longair@fiji.sc:/srv/git/fiji.git &&
     git push origin master
 )

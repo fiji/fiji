@@ -268,7 +268,7 @@ public class Sidebar extends Panel implements CustomCanvas.CanvasListener, ItemL
 		
 		constr.gridwidth = GridBagConstraints.REMAINDER;
 		constr.fill = GridBagConstraints.NONE;
-		check3d = new Checkbox("3d", false);
+		check3d = new Checkbox("3d", true);
 		add(check3d, constr);
 		constr.fill = GridBagConstraints.BOTH;
 	}

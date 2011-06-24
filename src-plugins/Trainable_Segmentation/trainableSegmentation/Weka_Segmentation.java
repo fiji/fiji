@@ -2210,12 +2210,19 @@ public class Weka_Segmentation implements PlugIn
 	{
 		AbstractClassifier classifier;
 
-
+		/**
+		 * Build the button listener for selecting the classifier
+		 * @param classifier current classifier object
+		 */
 		public ClassifierSettingsButtonListener(AbstractClassifier classifier)
 		{
 			this.classifier = classifier;
 		}
 
+		/**
+		 * Control the action when clicking on the classifier settings box.
+		 * It displays the Weka dialog for selecting a classifier.
+		 */
 		public void actionPerformed(ActionEvent e)
 		{
 			try {
@@ -2273,14 +2280,7 @@ public class Weka_Segmentation implements PlugIn
 		 * Method to run when pressing the save feature stack button
 		 */
 		public void actionPerformed(ActionEvent e)
-		{
-			if(featureStackArray.isEmpty())
-			{
-				//IJ.error("Error", "The feature stack has not been initialized yet, please train first.");
-				//return;
-				featureStackArray.updateFeaturesMT();
-			}
-
+		{			
 			SaveDialog sd = new SaveDialog(title, "feature-stack", ".tif");
 			final String dir = sd.getDirectory();
 			final String fileWithExt = sd.getFileName();
@@ -2288,6 +2288,13 @@ public class Weka_Segmentation implements PlugIn
 			if(null == dir || null == fileWithExt)
 				return;
 
+			if(featureStackArray.isEmpty())
+			{
+				IJ.showStatus("Creating feature stack...");
+				IJ.log("Creating feature stack...");
+				featureStackArray.updateFeaturesMT();
+			}
+			
 			for(int i=0; i<featureStackArray.getSize(); i++)
 			{
 				final String fileName = dir + fileWithExt.substring(0, fileWithExt.length()-4) 

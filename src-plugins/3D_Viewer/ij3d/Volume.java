@@ -482,10 +482,11 @@ public class Volume {
 			return image.get(x, y, z);
 		}
 
-		private int[] color = new int[3];
-		public final int loadWithLUT(int x, int y, int z) {
+		protected int[] color = new int[3];
+		public int loadWithLUT(int x, int y, int z) {
 			image.get(x, y, z, color);
 			int sum = 0, av = 0, v = 0;
+			
 			if(channels[0]) { int r = rLUT[color[0]]; sum++; av += color[0]; v += (r << 16); }
 			if(channels[1]) { int g = gLUT[color[1]]; sum++; av += color[1]; v += (g << 8); }
 			if(channels[2]) { int b = bLUT[color[2]]; sum++; av += color[2]; v += b; }
@@ -503,6 +504,34 @@ public class Volume {
 					y >= 0 && y < yDim && z > 0 && z < zDim) {
 				this.setNoCheck(x, y, z, v);
 			}
+		}
+	}
+	
+	protected class IntLoader2 extends IntLoader {
+		
+		protected IntLoader2(Img imp) {
+			super(imp);
+		}
+		
+		@Override
+		public final int loadWithLUT(int x, int y, int z) {
+			image.get(x, y, z, color);
+			
+			int sum = 0, av = 0, r = 0, g = 0, b = 0;
+			if(channels[0]) { r = rLUT[color[0]]; sum++; av += color[0]; }
+			if(channels[1]) { g = gLUT[color[1]]; sum++; av += color[1]; }
+			if(channels[2]) { b = bLUT[color[2]]; sum++; av += color[2]; }
+
+			av /= sum;
+			
+			final int maxC = Math.max(r, Math.max(g, b));
+			final float scale = maxC == 0 ? 0 : 255.0f / maxC;
+			
+			r = Math.min(255, Math.round(scale * r));
+			g = Math.min(255, Math.round(scale * g));
+			b = Math.min(255, Math.round(scale * b));
+			
+			return (aLUT[av] << 24) | (r << 16) | (g << 8) | b;
 		}
 	}
 
