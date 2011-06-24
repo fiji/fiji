@@ -397,12 +397,12 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 		final int N_ITEMS = 100;
 		final Random ran = new Random();
 		double mean;
-		fiji.plugin.trackmate.Feature[] features = new fiji.plugin.trackmate.Feature[] { 
-				fiji.plugin.trackmate.Feature.CONTRAST, 
-				fiji.plugin.trackmate.Feature.ELLIPSOIDFIT_AXISPHI_A, 
-				fiji.plugin.trackmate.Feature.MEAN_INTENSITY };
-		EnumMap<fiji.plugin.trackmate.Feature, double[]> fv = new EnumMap<fiji.plugin.trackmate.Feature, double[]>(fiji.plugin.trackmate.Feature.class);
-		for (fiji.plugin.trackmate.Feature feature : features) {
+		fiji.plugin.trackmate.SpotFeature[] features = new fiji.plugin.trackmate.SpotFeature[] { 
+				fiji.plugin.trackmate.SpotFeature.CONTRAST, 
+				fiji.plugin.trackmate.SpotFeature.ELLIPSOIDFIT_AXISPHI_A, 
+				fiji.plugin.trackmate.SpotFeature.MEAN_INTENSITY };
+		EnumMap<fiji.plugin.trackmate.SpotFeature, double[]> fv = new EnumMap<fiji.plugin.trackmate.SpotFeature, double[]>(fiji.plugin.trackmate.SpotFeature.class);
+		for (fiji.plugin.trackmate.SpotFeature feature : features) {
 			double[] val = new double[N_ITEMS];
 			mean = ran.nextDouble() * 10;
 			for (int j = 0; j < val.length; j++) 
@@ -411,7 +411,7 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 		}
 		
 		// Create GUI
-		ThresholdPanel<fiji.plugin.trackmate.Feature> tp = new ThresholdPanel<fiji.plugin.trackmate.Feature>(fv);
+		ThresholdPanel<fiji.plugin.trackmate.SpotFeature> tp = new ThresholdPanel<fiji.plugin.trackmate.SpotFeature>(fv);
 		tp.resetAxes();
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(tp);

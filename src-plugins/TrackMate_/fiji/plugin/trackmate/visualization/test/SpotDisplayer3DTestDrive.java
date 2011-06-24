@@ -1,11 +1,11 @@
 package fiji.plugin.trackmate.visualization.test;
 
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.features.FeatureFacade;
+import fiji.plugin.trackmate.features.spot.SpotFeatureFacade;
 import fiji.plugin.trackmate.gui.ThresholdGuiPanel;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -96,13 +96,13 @@ public class SpotDisplayer3DTestDrive {
 		SpotImp spot;
 		for (int i = 0; i < N_BLOBS; i++)  {
 			spot = new SpotImp(centers.get(i), "Spot "+i);
-			spot.putFeature(Feature.POSITION_T, 0);
-			spot.putFeature(Feature.RADIUS, RADIUS);
+			spot.putFeature(SpotFeature.POSITION_T, 0);
+			spot.putFeature(SpotFeature.RADIUS, RADIUS);
 			spots.add(spot);
 		}
 		
 		System.out.println("Grabbing features...");
-		new FeatureFacade<UnsignedByteType>(img, CALIBRATION).processFeature(Feature.MEAN_INTENSITY, spots);
+		new SpotFeatureFacade<UnsignedByteType>(img, CALIBRATION).processFeature(SpotFeature.MEAN_INTENSITY, spots);
 		for (Spot s : spots) 
 			System.out.println(s);
 
@@ -125,14 +125,14 @@ public class SpotDisplayer3DTestDrive {
 		gui.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				model.setFeatureFilters(gui.getFeatureThresholds());
-				model.execFiltering();
+				model.setSpotFilters(gui.getFeatureThresholds());
+				model.execSpotFiltering();
 			}
 		});
 		gui.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (e == gui.COLOR_FEATURE_CHANGED) {
-					Feature feature = gui.getColorByFeature();
+					SpotFeature feature = gui.getColorByFeature();
 					displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLOR_FEATURE, feature);
 					displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_RADIUS_RATIO, RAN.nextFloat());
 					displayer.refresh();
@@ -148,7 +148,7 @@ public class SpotDisplayer3DTestDrive {
 		frame.setVisible(true);
 
 		// Add a panel
-		gui.addThresholdPanel(Feature.MEAN_INTENSITY);		
+		gui.addThresholdPanel(SpotFeature.MEAN_INTENSITY);		
 		
 	}
 	

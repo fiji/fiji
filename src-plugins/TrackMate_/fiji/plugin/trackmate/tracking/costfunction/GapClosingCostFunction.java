@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.SortedSet;
 
 import Jama.Matrix;
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
@@ -35,7 +35,7 @@ public class GapClosingCostFunction {
 	/** The value to use to block an assignment in the cost matrix. */
 	protected double blocked;
 	/** Thresholds for the feature ratios. */
-	protected Map<Feature, Double> featureCutoffs;
+	protected Map<SpotFeature, Double> featureCutoffs;
 	
 	public GapClosingCostFunction(TrackerSettings settings) {
 		this.timeCutoff 		= settings.gapClosingTimeCutoff;
@@ -73,8 +73,8 @@ public class GapClosingCostFunction {
 				seg2 = trackSegments.get(j);
 				end = seg1.last();				// get last Spot of seg1
 				start = seg2.first();			// get first Spot of seg2
-				tend = end.getFeature(Feature.POSITION_T); // we want at least tstart > tend
-				tstart = start.getFeature(Feature.POSITION_T);
+				tend = end.getFeature(SpotFeature.POSITION_T); // we want at least tstart > tend
+				tstart = start.getFeature(SpotFeature.POSITION_T);
 				
 				// Frame cutoff
 				if (tstart - tend > timeCutoff || tend >= tstart) {
@@ -93,7 +93,7 @@ public class GapClosingCostFunction {
 				s = d2;
 
 				// Update cost with feature costs
-				for (Feature feature : featureCutoffs.keySet()) {
+				for (SpotFeature feature : featureCutoffs.keySet()) {
 
 					// Larger than 0, equals 0 is the 2 intensities are the same
 					iRatio = start.normalizeDiffTo(end, feature);

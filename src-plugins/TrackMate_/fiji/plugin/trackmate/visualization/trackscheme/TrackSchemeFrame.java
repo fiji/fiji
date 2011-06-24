@@ -37,7 +37,7 @@ import com.mxgraph.util.mxUtils;
 import com.mxgraph.view.mxGraphSelectionModel;
 import com.mxgraph.view.mxPerimeter;
 
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
@@ -95,6 +95,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	
 	private static final HashMap<String, Object> BASIC_VERTEX_STYLE = new HashMap<String, Object>();
 	private static final HashMap<String, Object> BASIC_EDGE_STYLE = new HashMap<String, Object>();
+	private static final boolean DEBUG = false;
 	static {
 
 		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_FILLCOLOR, "white");
@@ -251,10 +252,10 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 					cellAdded.setId(null);
 					cellAdded.setVertex(true);
 					// Position it
-					float instant = spot.getFeature(Feature.POSITION_T);
+					float instant = spot.getFeature(SpotFeature.POSITION_T);
 					double x = (targetColumn-2) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
 					double y = (0.5 + graphComponent.getRowForInstant().get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2; 
-					int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Feature.RADIUS) / settings.dx));
+					int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(SpotFeature.RADIUS) / settings.dx));
 					height = Math.max(height, 12);
 					mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
 					cellAdded.setGeometry(geometry);
@@ -273,7 +274,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 					String style = cell.getStyle();
 					style = mxUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64,"+spot.getImageString());
 					graph.getModel().setStyle(cell, style);
-					int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Feature.RADIUS) / settings.dx));
+					int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(SpotFeature.RADIUS) / settings.dx));
 					graph.getModel().getGeometry(cell).setHeight(height);
 
 				}  else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_REMOVED) {
@@ -305,8 +306,13 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	}
 
 	public void plotSelectionData() {
-		Feature xFeature = infoPane.getFeatureSelectionPanel().getXKey();
-		Set<Feature> yFeatures = infoPane.getFeatureSelectionPanel().getYKeys();
+		SpotFeature xFeature = infoPane.getFeatureSelectionPanel().getXKey();
+		Set<SpotFeature> yFeatures = infoPane.getFeatureSelectionPanel().getYKeys();
+		
+		if (DEBUG) {
+			System.out.println("[TrackSchemeFrame] plotSelectionData(): X is "+xFeature+" and Ys are "+yFeatures);
+		}
+		
 		if (yFeatures.isEmpty())
 			return;
 

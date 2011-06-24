@@ -1,21 +1,21 @@
-package fiji.plugin.trackmate.features;
+package fiji.plugin.trackmate.features.spot;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 
 /**
- * This class aims at being a facade to simplify the calculation of blob
+ * This class aims at being a facade to simplify the calculation of spot
  * feature. Instantiating it in another class should be sufficient to compute
  * all currently implemented feature, without having to deal with the numerous
  * feature analyzers this would require.
  * @author Jean-Yves Tinevez (tinevez@pasteur.fr) Aug 27, 2010
  */
-public class FeatureFacade <T extends RealType<T>> {
+public class SpotFeatureFacade <T extends RealType<T>> {
 	
 	/*
 	 * CONSTRUCTORS
@@ -34,16 +34,16 @@ public class FeatureFacade <T extends RealType<T>> {
 	/** The best radius feature estimator. */ 
 	private RadiusEstimator<T> radiusEstimator;
 	/** Hold all the feature analyzers this facade deals with. */
-	private ArrayList<FeatureAnalyzer> featureAnalyzers;
+	private ArrayList<SpotFeatureAnalyzer> featureAnalyzers;
 	private SpotIconGrabber<T> imageGrabber;
 
-	public FeatureFacade(Image<T> rawImage, float[] calibration) {
+	public SpotFeatureFacade(Image<T> rawImage, float[] calibration) {
 		this.rawImage = rawImage;
 		this.calibration = calibration;
 		initFeatureAnalyzer();
 	}
 	
-	public FeatureFacade(Image<T> rawImage) {
+	public SpotFeatureFacade(Image<T> rawImage) {
 		this(rawImage, rawImage.getCalibration());
 	}
 	
@@ -52,9 +52,9 @@ public class FeatureFacade <T extends RealType<T>> {
 	 */
 	
 	/**
-	 * Return a {@link FeatureAnalyzer} that can compute the given feature.
+	 * Return a {@link SpotFeatureAnalyzer} that can compute the given feature.
 	 */
-	public FeatureAnalyzer getAnalyzerForFeature(Feature feature) {
+	public SpotFeatureAnalyzer getAnalyzerForFeature(SpotFeature feature) {
 		switch (feature) {
 		case CONTRAST:
 			return contrast;
@@ -88,7 +88,7 @@ public class FeatureFacade <T extends RealType<T>> {
 	 * Compute all features for all the spots given.
 	 */
 	public void processAllFeatures(Collection<Spot> spots) {
-		for (FeatureAnalyzer analyzer : featureAnalyzers) 
+		for (SpotFeatureAnalyzer analyzer : featureAnalyzers) 
 			analyzer.process(spots);
 	}
 	
@@ -96,31 +96,31 @@ public class FeatureFacade <T extends RealType<T>> {
 	 * Compute all features for the spot given.
 	 */
 	public void processAllFeatures(Spot spot) {
-		for (FeatureAnalyzer analyzer : featureAnalyzers) 
+		for (SpotFeatureAnalyzer analyzer : featureAnalyzers) 
 			analyzer.process(spot);
 	}
 	
 	/**
 	 * Compute the given feature for all the spots given. 
 	 * <p>
-	 * Because a {@link FeatureAnalyzer}
+	 * Because a {@link SpotFeatureAnalyzer}
 	 * can process multiple features in a row, multiple features might be added
 	 * to the spots. However, it is ensured that the required feature will be 
 	 * processed by this method call.
 	 */
-	public void processFeature(Feature feature, Collection<? extends Spot> spots) {
+	public void processFeature(SpotFeature feature, Collection<? extends Spot> spots) {
 		getAnalyzerForFeature(feature).process(spots);
 	}
 	
 	/**
 	 * Compute the given feature for the spot given. 
 	 * <p>
-	 * Because a {@link FeatureAnalyzer}
+	 * Because a {@link SpotFeatureAnalyzer}
 	 * can process multiple features in a row, multiple features might be added
 	 * to the spots. However, it is ensured that the required feature will be 
 	 * processed by this method call.
 	 */
-	public void processFeatures(Feature feature, Spot spot) {
+	public void processFeatures(SpotFeature feature, Spot spot) {
 		getAnalyzerForFeature(feature).process(spot);
 	}
 	
@@ -140,7 +140,7 @@ public class FeatureFacade <T extends RealType<T>> {
 		this.radiusEstimator = new RadiusEstimator<T>(rawImage, nDiameters , calibration);
 		this.imageGrabber = new SpotIconGrabber<T>(rawImage, calibration);
 		
-		featureAnalyzers = new ArrayList<FeatureAnalyzer>();
+		featureAnalyzers = new ArrayList<SpotFeatureAnalyzer>();
 		featureAnalyzers.add(descriptiveStatistics);
 		featureAnalyzers.add(contrast);
 		featureAnalyzers.add(morphology);

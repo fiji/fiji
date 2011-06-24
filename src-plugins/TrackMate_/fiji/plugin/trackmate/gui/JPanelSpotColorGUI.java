@@ -22,7 +22,7 @@ import javax.swing.JPanel;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
 
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 
 
 public class JPanelSpotColorGUI extends ActionListenablePanel {
@@ -51,8 +51,8 @@ public class JPanelSpotColorGUI extends ActionListenablePanel {
 	 * DEFAULT VISIBILITY
 	 */
 	
-	EnumMap<Feature, double[]> featureValues = new EnumMap<Feature, double[]>(Feature.class);
-	Feature setColorByFeature;
+	EnumMap<SpotFeature, double[]> featureValues = new EnumMap<SpotFeature, double[]>(SpotFeature.class);
+	SpotFeature setColorByFeature;
 
 
 	private ActionListenablePanel caller;
@@ -96,7 +96,7 @@ public class JPanelSpotColorGUI extends ActionListenablePanel {
 		if (selection == 0) 
 			setColorByFeature = null;
 		else
-			setColorByFeature = Feature.values()[selection-1];
+			setColorByFeature = SpotFeature.values()[selection-1];
 		caller.fireAction(COLOR_FEATURE_CHANGED);
 	}
 	
@@ -160,7 +160,7 @@ public class JPanelSpotColorGUI extends ActionListenablePanel {
 				jLabelSetColorBy.setFont(SMALL_FONT);
 			}
 			{
-				Feature[] allFeatures = Feature.values();
+				SpotFeature[] allFeatures = SpotFeature.values();
 				featureStringList = new String[allFeatures.length+1];
 				featureStringList[0] = "Default";
 				for (int i = 0; i < allFeatures.length; i++) 

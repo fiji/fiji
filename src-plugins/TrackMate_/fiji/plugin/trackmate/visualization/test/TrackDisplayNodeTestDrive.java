@@ -19,7 +19,7 @@ import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
@@ -56,8 +56,8 @@ public class TrackDisplayNodeTestDrive {
 			z = (float) i / N_BLOBS * DEPTH;
 			coords = new float[] { x, y, z };
 			spot = new SpotImp(coords);
-			spot.putFeature(Feature.POSITION_T, i);
-			spot.putFeature(Feature.RADIUS, r);
+			spot.putFeature(SpotFeature.POSITION_T, i);
+			spot.putFeature(SpotFeature.RADIUS, r);
 			
 			spots[i] = spot;
 			

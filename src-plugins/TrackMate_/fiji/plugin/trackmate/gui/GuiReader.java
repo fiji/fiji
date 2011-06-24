@@ -19,7 +19,7 @@ import org.jdom.JDOMException;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
-import fiji.plugin.trackmate.FeatureFilter;
+import fiji.plugin.trackmate.SpotFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
@@ -189,7 +189,7 @@ public class GuiReader {
 		
 		
 		{ // Try to read the initial threshold
-			FeatureFilter initialThreshold = null;
+			SpotFilter initialThreshold = null;
 			try {
 				initialThreshold = reader.getInitialFilter();
 			} catch (DataConversionException e) {
@@ -211,12 +211,12 @@ public class GuiReader {
 			}
 
 			// Store it in model
-			model.setInitialFilterValue(initialThreshold.value);
+			model.setInitialSpotFilterValue(initialThreshold.value);
 			logger.log("  Reading initial threshold done.\n");
 		}		
 		
 		{ // Try to read feature thresholds
-			List<FeatureFilter> featureThresholds = null;
+			List<SpotFilter> featureThresholds = null;
 			try {
 				featureThresholds = reader.getFeatureFilters();
 			} catch (DataConversionException e) {
@@ -240,7 +240,7 @@ public class GuiReader {
 			}
 
 			// Store thresholds in model
-			model.setFeatureFilters(featureThresholds);
+			model.setSpotFilters(featureThresholds);
 			logger.log("  Reading feature thresholds done.\n");
 		}
 

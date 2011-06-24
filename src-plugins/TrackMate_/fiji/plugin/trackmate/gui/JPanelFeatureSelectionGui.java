@@ -19,7 +19,7 @@ import javax.swing.WindowConstants;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 
 public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 
@@ -42,8 +42,8 @@ public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 	 * PUBLIC METHODS
 	 */
 	
-	public Map<Feature, Double>	 getFeatureRatios() {
-		Map<Feature, Double> ratios = new HashMap<Feature, Double>(featurePanels.size());
+	public Map<SpotFeature, Double>	 getFeatureRatios() {
+		Map<SpotFeature, Double> ratios = new HashMap<SpotFeature, Double>(featurePanels.size());
 		for (JPanelFeatureRatioThreshold panel : featurePanels) 
 			ratios.put(panel.getSelectedFeature(), panel.getRatioThreshold());
 		return ratios;

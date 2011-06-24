@@ -3,7 +3,7 @@ package fiji.plugin.trackmate.segmentation;
 import java.util.ArrayList;
 import java.util.List;
 
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import mpicbg.imglib.algorithm.roi.MedianFilter;
@@ -120,7 +120,7 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 		float dy = (settings.ystart-1)*calibration[1];
 		float dz = (settings.zstart-1)*calibration[2];
 		float[] dval = new float[] {dx, dy, dz};
-		Feature[] features = new Feature[] {Feature.POSITION_X, Feature.POSITION_Y, Feature.POSITION_Z}; 
+		SpotFeature[] features = new SpotFeature[] {SpotFeature.POSITION_X, SpotFeature.POSITION_Y, SpotFeature.POSITION_Z}; 
 		Float val;
 		for(Spot spot : spots) {
 			newSpot = spot.clone();

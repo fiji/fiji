@@ -11,7 +11,7 @@ import java.util.TreeSet;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
 
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.tracking.costmatrix.LinkingCostMatrixCreator;
@@ -504,7 +504,7 @@ public class LAPTracker extends AbstractSpotTracker {
 	 * result of step 1
 	 * <p> 
 	 * We have recorded the tracks as edges in the track graph, we now turn them
-	 * into multiple explicit sets of Spots, sorted by their {@link Feature#POSITION_T}.
+	 * into multiple explicit sets of Spots, sorted by their {@link SpotFeature#POSITION_T}.
 	 */
 	private void compileTrackSegments() {
 

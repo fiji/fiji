@@ -10,18 +10,18 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 
 public class JPanelFeatureRatioThreshold extends javax.swing.JPanel {
 
 	private static final long serialVersionUID = 3848390144561204540L;
 	private JComboBox jComboBoxFeature;
 	private JNumericTextField jTextFieldFeatureRatio;
-	private final Feature[] features;
+	private final SpotFeature[] features;
 
 	public JPanelFeatureRatioThreshold() {
 		super();
-		features = Feature.values();
+		features = SpotFeature.values();
 		initGUI();
 	}
 	
@@ -29,7 +29,7 @@ public class JPanelFeatureRatioThreshold extends javax.swing.JPanel {
 	 * PUBLIC METHODS
 	 */
 	
-	public Feature getSelectedFeature() {
+	public SpotFeature getSelectedFeature() {
 		return features[jComboBoxFeature.getSelectedIndex()];
 	}
 	

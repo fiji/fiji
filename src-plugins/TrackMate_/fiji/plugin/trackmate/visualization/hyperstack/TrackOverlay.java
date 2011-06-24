@@ -22,7 +22,7 @@ import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
@@ -145,10 +145,10 @@ public class TrackOverlay implements Overlay {
 	private final void drawEdge(final Graphics2D g2d, final Spot source, final Spot target, final int frame, final int currentFrame,
 			final int xcorner, final int ycorner, final float magnification, final int localTrackDisplayMode) {
 		// Find x & y in physical coordinates
-		final float x0i = source.getFeature(Feature.POSITION_X);
-		final float y0i = source.getFeature(Feature.POSITION_Y);
-		final float x1i = target.getFeature(Feature.POSITION_X);
-		final float y1i = target.getFeature(Feature.POSITION_Y);
+		final float x0i = source.getFeature(SpotFeature.POSITION_X);
+		final float y0i = source.getFeature(SpotFeature.POSITION_Y);
+		final float x1i = target.getFeature(SpotFeature.POSITION_X);
+		final float y1i = target.getFeature(SpotFeature.POSITION_Y);
 		// In pixel units
 		final float x0p = x0i / calibration[0];
 		final float y0p = y0i / calibration[1];

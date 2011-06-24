@@ -13,7 +13,7 @@ import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 
@@ -111,7 +111,7 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 					coords[i] = dogpeak.getPosition(i) * calibration[i];
 			}
 			Spot spot = new SpotImp(coords);
-			spot.putFeature(Feature.QUALITY, -dogpeak.getValue().get());
+			spot.putFeature(SpotFeature.QUALITY, -dogpeak.getValue().get());
 			spots.add(spot);
 		}
 		return true;

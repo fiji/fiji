@@ -31,8 +31,8 @@ import org.jfree.data.xy.XYSeriesCollection;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
-import fiji.plugin.trackmate.Feature;
-import fiji.plugin.trackmate.Feature.Dimension;
+import fiji.plugin.trackmate.SpotFeature;
+import fiji.plugin.trackmate.SpotFeature.Dimension;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
@@ -42,8 +42,8 @@ public class SpotFeatureGrapher extends JFrame {
 	private static final long serialVersionUID = 5983064022212100254L;
 	private static final Shape DEFAULT_SHAPE = new Ellipse2D.Double(-3, -3, 6, 6);
 	private InterpolatePaintScale paints = InterpolatePaintScale.Jet; 
-	private Feature xFeature;
-	private Set<Feature> yFeatures;
+	private SpotFeature xFeature;
+	private Set<SpotFeature> yFeatures;
 	private List<Spot> spots;
 	private Graph<Spot, DefaultWeightedEdge> graph;
 	private Settings settings;
@@ -52,7 +52,7 @@ public class SpotFeatureGrapher extends JFrame {
 	 * CONSTRUCTOR
 	 */
 
-	public SpotFeatureGrapher(final Feature xFeature, final Set<Feature> yFeatures, final List<Spot> spots, final Graph<Spot, DefaultWeightedEdge> graph, final Settings settings) {
+	public SpotFeatureGrapher(final SpotFeature xFeature, final Set<SpotFeature> yFeatures, final List<Spot> spots, final Graph<Spot, DefaultWeightedEdge> graph, final Settings settings) {
 		this.xFeature = xFeature;
 		this.yFeatures = yFeatures;
 		this.spots = spots;
@@ -74,9 +74,9 @@ public class SpotFeatureGrapher extends JFrame {
 		String xAxisLabel = xFeature.shortName() + " (" + TMUtils.getUnitsFor(xFeature.getDimension(), settings)+")";
 		
 		// Find how many different dimensions
-		HashSet<Feature.Dimension> dimensions = new HashSet<Feature.Dimension>();
+		HashSet<SpotFeature.Dimension> dimensions = new HashSet<SpotFeature.Dimension>();
 		{
-			for (Feature yFeature : yFeatures) 
+			for (SpotFeature yFeature : yFeatures) 
 				dimensions.add(yFeature.getDimension());
 		}
 		
@@ -88,8 +88,8 @@ public class SpotFeatureGrapher extends JFrame {
 			String yAxisLabel = TMUtils.getUnitsFor(dimension, settings);
 			
 			// Collect suitable feature for this dimension
-			ArrayList<Feature> featuresThisDimension = new ArrayList<Feature>();
-			for (Feature yFeature : yFeatures)
+			ArrayList<SpotFeature> featuresThisDimension = new ArrayList<SpotFeature>();
+			for (SpotFeature yFeature : yFeatures)
 				if (yFeature.getDimension().equals(dimension))
 					featuresThisDimension.add(yFeature);
 			
@@ -97,7 +97,7 @@ public class SpotFeatureGrapher extends JFrame {
 			// Title
 			String title = "";
 			{
-				Iterator<Feature> it = featuresThisDimension.iterator();
+				Iterator<SpotFeature> it = featuresThisDimension.iterator();
 				title = "Plot of "+it.next().shortName();
 				while(it.hasNext())
 					title += ", "+it.next().shortName();
@@ -107,7 +107,7 @@ public class SpotFeatureGrapher extends JFrame {
 			// Data-set for points (easy)
 			XYSeriesCollection pointDataset = new XYSeriesCollection();
 			{
-				for(Feature feature : featuresThisDimension) {
+				for(SpotFeature feature : featuresThisDimension) {
 					XYSeries series = new XYSeries(feature.shortName());
 					for(Spot spot : spots)
 						series.add(spot.getFeature(xFeature), spot.getFeature(feature));
@@ -144,7 +144,7 @@ public class SpotFeatureGrapher extends JFrame {
 				double x0, x1, y0, y1;
 				XYEdgeSeries edgeSeries;
 				Spot source, target;
-				for(Feature yFeature : featuresThisDimension) {
+				for(SpotFeature yFeature : featuresThisDimension) {
 					edgeSeries = new XYEdgeSeries(yFeature.shortName());
 					for(Spot[]	edge : edges) {
 						source = edge[0];

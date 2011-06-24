@@ -13,7 +13,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.HashMap;
 
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.tool.AbstractTool;
@@ -162,14 +162,14 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			if (null == editedSpot) {
 				// No spot is currently edited, we pick one to edit
 				float radius;
-				if (null != target && null != target.getFeature(Feature.RADIUS))
-					radius = target.getFeature(Feature.RADIUS);
+				if (null != target && null != target.getFeature(SpotFeature.RADIUS))
+					radius = target.getFeature(SpotFeature.RADIUS);
 				else 
 					radius = displayer.settings.segmenterSettings.expectedRadius;
 				if (null == target || target.squareDistanceTo(clickLocation) > radius*radius) {
 					// Create a new spot if not inside one
 					target = clickLocation;
-					target.putFeature(Feature.RADIUS, radius);
+					target.putFeature(SpotFeature.RADIUS, radius);
 				}
 				editedSpot = target;
 				
@@ -178,12 +178,12 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				// A hack: we update the current z and t of the edited spot to the current one, 
 				// because it is not updated otherwise: there is no way to listen to slice change
 				final float zslice = (displayer.imp.getSlice()-1) * displayer.calibration[2];
-				editedSpot.putFeature(Feature.POSITION_Z, zslice);
+				editedSpot.putFeature(SpotFeature.POSITION_Z, zslice);
 				Integer initFrame = displayer.getModel().getFilteredSpots().getFrame(editedSpot);
 				// Move it in Z
 				final float z = (displayer.imp.getSlice()-1) * displayer.calibration[2];
-				editedSpot.putFeature(Feature.POSITION_Z, z);
-				editedSpot.putFeature(Feature.POSITION_T, frame * displayer.settings.dt);
+				editedSpot.putFeature(SpotFeature.POSITION_Z, z);
+				editedSpot.putFeature(SpotFeature.POSITION_T, frame * displayer.settings.dt);
 				if (initFrame == null) {
 					// Means that the spot was created 
 					model.addSpotTo(editedSpot, frame, true);
@@ -234,9 +234,9 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		final float x = (float) (ix * displayer.calibration[0]);
 		final float y = (float) (iy * displayer.calibration[1]);
 		final float z = (displayer.imp.getSlice()-1) * displayer.calibration[2];
-		editedSpot.putFeature(Feature.POSITION_X, x);
-		editedSpot.putFeature(Feature.POSITION_Y, y);
-		editedSpot.putFeature(Feature.POSITION_Z, z);
+		editedSpot.putFeature(SpotFeature.POSITION_X, x);
+		editedSpot.putFeature(SpotFeature.POSITION_Y, y);
+		editedSpot.putFeature(SpotFeature.POSITION_Z, z);
 		displayer.imp.updateAndDraw();
 		updateStatusBar(editedSpot, imp.getCalibration().getUnits());	
 	}
@@ -258,12 +258,12 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		Spot editedSpot = editedSpots.get(imp);
 		if (null == editedSpot || !e.isAltDown())
 			return;
-		float radius = editedSpot.getFeature(Feature.RADIUS);
+		float radius = editedSpot.getFeature(SpotFeature.RADIUS);
 		if (e.isShiftDown()) 
 			radius += e.getWheelRotation() * displayer.calibration[0] * COARSE_STEP;
 		else 
 			radius += e.getWheelRotation() * displayer.calibration[0] * FINE_STEP;
- 		editedSpot.putFeature(Feature.RADIUS, radius);
+ 		editedSpot.putFeature(SpotFeature.RADIUS, radius);
 		displayer.imp.updateAndDraw();
 		e.consume();
 		updateStatusBar(editedSpot, imp.getCalibration().getUnits());
@@ -311,12 +311,12 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		String statusString = "";
 		if (null == spot.getName() || spot.getName().equals("")) { 
 			statusString = String.format("Spot ID%d, x = %.1f, y = %.1f, z = %.1f, r = %.1f %s", 
-					spot.ID(), spot.getFeature(Feature.POSITION_X), spot.getFeature(Feature.POSITION_Y), 
-					spot.getFeature(Feature.POSITION_Z), spot.getFeature(Feature.RADIUS), units );
+					spot.ID(), spot.getFeature(SpotFeature.POSITION_X), spot.getFeature(SpotFeature.POSITION_Y), 
+					spot.getFeature(SpotFeature.POSITION_Z), spot.getFeature(SpotFeature.RADIUS), units );
 		} else {
 			statusString = String.format("Spot %s, x = %.1f, y = %.1f, z = %.1f %s", 
-					spot.getName(), spot.getFeature(Feature.POSITION_X), spot.getFeature(Feature.POSITION_Y), 
-					spot.getFeature(Feature.POSITION_Z), spot.getFeature(Feature.RADIUS), units );
+					spot.getName(), spot.getFeature(SpotFeature.POSITION_X), spot.getFeature(SpotFeature.POSITION_Y), 
+					spot.getFeature(SpotFeature.POSITION_Z), spot.getFeature(SpotFeature.RADIUS), units );
 		}
 		IJ.showStatus(statusString);
 	}

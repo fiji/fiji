@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.features;
+package fiji.plugin.trackmate.features.spot;
 
 import mpicbg.imglib.cursor.special.DiscCursor;
 import mpicbg.imglib.cursor.special.DomainCursor;
@@ -6,10 +6,10 @@ import mpicbg.imglib.cursor.special.SphereCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.util.Util;
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 
-public class BlobDescriptiveStatistics <T extends RealType<T>> extends IndependentFeatureAnalyzer {
+public class BlobDescriptiveStatistics <T extends RealType<T>> extends IndependentSpotFeatureAnalyzer {
 
 	/*
 	 * FIELDS
@@ -33,8 +33,8 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 	 */
 	
 	@Override
-	public Feature getFeature() {
-		return Feature.MEAN_INTENSITY;
+	public SpotFeature getFeature() {
+		return SpotFeature.MEAN_INTENSITY;
 	}
 
 	/**
@@ -45,7 +45,7 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 	public void process(Spot spot) {
 		final DomainCursor<T> cursor;
 		final float[] coords;
-		final float radius = spot.getFeature(Feature.RADIUS);
+		final float radius = spot.getFeature(SpotFeature.RADIUS);
 		if (img.getNumDimensions() == 3) {
 			cursor = new SphereCursor<T>(img, new float[3], radius, calibration);
 			coords = new float[3];
@@ -107,14 +107,14 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 		float kurtosis = (n*M4) / (M2*M2) - 3;
 		float skewness = (float) ( Math.sqrt(n) * M3 / Math.pow(M2, 3/2.0) );
 		
-		spot.putFeature(Feature.MEDIAN_INTENSITY, median);
-		spot.putFeature(Feature.MIN_INTENSITY, min);
-		spot.putFeature(Feature.MAX_INTENSITY, max);
-		spot.putFeature(Feature.MEAN_INTENSITY, mean);
-		spot.putFeature(Feature.VARIANCE, variance);
-		spot.putFeature(Feature.STANDARD_DEVIATION, (float) Math.sqrt(variance));
-		spot.putFeature(Feature.TOTAL_INTENSITY, sum);
-		spot.putFeature(Feature.KURTOSIS, kurtosis);
-		spot.putFeature(Feature.SKEWNESS, skewness);
+		spot.putFeature(SpotFeature.MEDIAN_INTENSITY, median);
+		spot.putFeature(SpotFeature.MIN_INTENSITY, min);
+		spot.putFeature(SpotFeature.MAX_INTENSITY, max);
+		spot.putFeature(SpotFeature.MEAN_INTENSITY, mean);
+		spot.putFeature(SpotFeature.VARIANCE, variance);
+		spot.putFeature(SpotFeature.STANDARD_DEVIATION, (float) Math.sqrt(variance));
+		spot.putFeature(SpotFeature.TOTAL_INTENSITY, sum);
+		spot.putFeature(SpotFeature.KURTOSIS, kurtosis);
+		spot.putFeature(SpotFeature.SKEWNESS, skewness);
 	}
 }

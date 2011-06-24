@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.SortedSet;
 
 import Jama.Matrix;
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
@@ -43,7 +43,7 @@ public class MergingCostFunction {
 	/** The value used to block an assignment in the cost matrix. */
 	protected double blocked;
 	/** Thresholds for the feature ratios. */
-	protected Map<Feature, Double> featureCutoffs;
+	protected Map<SpotFeature, Double> featureCutoffs;
 	
 	public MergingCostFunction(TrackerSettings settings) {
 		this.maxDist 			= settings.mergingDistanceCutoff;
@@ -71,8 +71,8 @@ public class MergingCostFunction {
 				middle = middlePoints.get(j);
 				
 				// Frame threshold - middle Spot must be one frame ahead of the end Spot
-				tend = end.getFeature(Feature.POSITION_T);
-				tmiddle = middle.getFeature(Feature.POSITION_T);
+				tend = end.getFeature(SpotFeature.POSITION_T);
+				tmiddle = middle.getFeature(SpotFeature.POSITION_T);
 				if (tmiddle - tend > timeCutoff || tmiddle - tend <= 0) {
 					m.set(i, j, blocked);
 					continue;
@@ -89,7 +89,7 @@ public class MergingCostFunction {
 				s = d2;
 
 				// Update cost with feature costs
-				for (Feature feature : featureCutoffs.keySet()) {
+				for (SpotFeature feature : featureCutoffs.keySet()) {
 
 					// Larger than 0, equals 0 is the 2 intensities are the same
 					iRatio = middle.normalizeDiffTo(end, feature);

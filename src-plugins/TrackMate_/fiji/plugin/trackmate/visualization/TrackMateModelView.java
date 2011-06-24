@@ -5,7 +5,7 @@ import java.util.Map;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
 
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 
 public interface TrackMateModelView {
@@ -72,7 +72,7 @@ public interface TrackMateModelView {
 
 	/**
 	 * Defines the key for the feature that determines the spot color. Values can
-	 * be any {@link Feature} or <code>null</code>. In the later case, the default
+	 * be any {@link SpotFeature} or <code>null</code>. In the later case, the default
 	 * color #DEFAULT_COLOR is used for all spots. Otherwise, each spot color 
 	 * is set according to the selected feature value.
 	 */

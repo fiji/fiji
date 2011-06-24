@@ -7,7 +7,7 @@ import java.util.SortedSet;
 import mpicbg.imglib.util.Util;
 
 import Jama.Matrix;
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
@@ -45,7 +45,7 @@ public class SplittingCostFunction {
 	/** The value used to block an assignment in the cost matrix. */
 	protected double blocked;
 	/** Thresholds for the feature ratios. */
-	protected Map<Feature, Double> featureCutoffs;
+	protected Map<SpotFeature, Double> featureCutoffs;
 
 	private boolean allowSplitting;
 	
@@ -86,7 +86,7 @@ public class SplittingCostFunction {
 			middle = middlePoints.get(i);
 			if (DEBUG)
 				System.out.println(String.format("Current middle spot: x=%.1f, y=%.1f, t=%.1f", 
-						middle.getPosition(null)[0], middle.getPosition(null)[1], middle.getFeature(Feature.POSITION_T)));
+						middle.getPosition(null)[0], middle.getPosition(null)[1], middle.getFeature(SpotFeature.POSITION_T)));
 
 			for (int j = 0; j < trackSegments.size(); j++) {
 				skip = false;
@@ -97,7 +97,7 @@ public class SplittingCostFunction {
 					System.out.println("Segment "+j);
 				for(Spot spot : track) {
 					if (DEBUG)
-						System.out.println(Util.printCoordinates(spot.getPosition(null)) + ", Frame [" + spot.getFeature(Feature.POSITION_T) + "]");
+						System.out.println(Util.printCoordinates(spot.getPosition(null)) + ", Frame [" + spot.getFeature(SpotFeature.POSITION_T) + "]");
 					if (spot == middle) {
 						// Can't split by attaching to the track segment you belong to
 						if (DEBUG)
@@ -110,8 +110,8 @@ public class SplittingCostFunction {
 					continue;
 				
 				// Frame threshold - middle Spot must be one frame behind of the start Spot
-				tstart = start.getFeature(Feature.POSITION_T);
-				tmiddle = middle.getFeature(Feature.POSITION_T);
+				tstart = start.getFeature(SpotFeature.POSITION_T);
+				tmiddle = middle.getFeature(SpotFeature.POSITION_T);
 				if ( (tstart - tmiddle > timeCutoff) || (tstart - tmiddle <= 0) ) {
 					m.set(i, j, blocked);
 					continue;
@@ -128,7 +128,7 @@ public class SplittingCostFunction {
 				s = d2;
 
 				// Update cost with feature costs
-				for (Feature feature : featureCutoffs.keySet()) {
+				for (SpotFeature feature : featureCutoffs.keySet()) {
 
 					// Larger than 0, equals 0 is the 2 intensities are the same
 					iRatio = start.normalizeDiffTo(middle, feature);

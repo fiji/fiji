@@ -10,7 +10,7 @@ import org.jgrapht.UndirectedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
 
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 
@@ -133,14 +133,14 @@ public class TrackSplitter {
 		if (nConnections == 0) 
 			return LONE_VERTEX;
 		
-		float t0 = spot.getFeature(Feature.POSITION_T);
+		float t0 = spot.getFeature(SpotFeature.POSITION_T);
 
 		if (nConnections == 1) {
 			DefaultWeightedEdge edge = edges.iterator().next();
 			Spot other = graph.getEdgeSource(edge);
 			if (other == spot)
 				other = graph.getEdgeTarget(edge);
-			float t1 = other.getFeature(Feature.POSITION_T);
+			float t1 = other.getFeature(SpotFeature.POSITION_T);
 			if (t1 > t0)
 				return BRANCH_START;
 			else
@@ -153,12 +153,12 @@ public class TrackSplitter {
 			Spot other1 = graph.getEdgeSource(edge1);
 			if (other1 == spot)
 				other1 = graph.getEdgeTarget(edge1);
-			float t1 = other1.getFeature(Feature.POSITION_T);
+			float t1 = other1.getFeature(SpotFeature.POSITION_T);
 			DefaultWeightedEdge edge2 = it.next();
 			Spot other2 = graph.getEdgeSource(edge2);
 			if (other2 == spot)
 				other2 = graph.getEdgeTarget(edge2);
-			float t2 = other2.getFeature(Feature.POSITION_T);
+			float t2 = other2.getFeature(SpotFeature.POSITION_T);
 			if ( (t2>t0 && t0>t1) || (t2<t0 && t0<t1) )
 				return BRIDGE;
 			else if (t0 > t1 && t0 >t2)
@@ -173,7 +173,7 @@ public class TrackSplitter {
 			Spot other = graph.getEdgeSource(edge);
 			if (other == spot)
 				other = graph.getEdgeTarget(edge);
-			float t = other.getFeature(Feature.POSITION_T);
+			float t = other.getFeature(SpotFeature.POSITION_T);
 			if (t > t0)
 				after++;
 			if (t < t0) 

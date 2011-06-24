@@ -1,7 +1,11 @@
 package fiji.plugin.trackmate;
 
-
-public enum Feature {
+/**
+ * Enumerate the supported feature for spots.
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2010-2011
+ *
+ */
+public enum SpotFeature {
 	QUALITY,
 	CONTRAST,
 	ESTIMATED_DIAMETER,

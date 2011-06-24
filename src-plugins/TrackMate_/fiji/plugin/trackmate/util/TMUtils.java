@@ -18,9 +18,9 @@ import java.util.TreeMap;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImagePlusAdapter;
 import mpicbg.imglib.type.numeric.RealType;
-import fiji.plugin.trackmate.Feature;
-import fiji.plugin.trackmate.Feature.Dimension;
-import fiji.plugin.trackmate.FeatureFilter;
+import fiji.plugin.trackmate.SpotFeature;
+import fiji.plugin.trackmate.SpotFeature.Dimension;
+import fiji.plugin.trackmate.SpotFilter;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
@@ -70,7 +70,7 @@ public class TMUtils {
 	 * Given a list of spots, only spots with the feature satisfying the threshold given
 	 * in argument are returned. 
 	 */
-	public static TreeMap<Integer, List<Spot>> thresholdSpots(final TreeMap<Integer, List<Spot>> spots, final FeatureFilter featureThreshold) {
+	public static TreeMap<Integer, List<Spot>> thresholdSpots(final TreeMap<Integer, List<Spot>> spots, final SpotFilter featureThreshold) {
 		TreeMap<Integer, List<Spot>> selectedSpots = new TreeMap<Integer, List<Spot>>();
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
@@ -118,7 +118,7 @@ public class TMUtils {
 	 * Given a list of spots, only spots with the feature satisfying <b>all</b> of the thresholds given
 	 * in argument are returned. 
 	 */
-	public static TreeMap<Integer, List<Spot>> thresholdSpots(final TreeMap<Integer, List<Spot>> spots, final List<FeatureFilter> featureThresholds) {
+	public static TreeMap<Integer, List<Spot>> thresholdSpots(final TreeMap<Integer, List<Spot>> spots, final List<SpotFilter> featureThresholds) {
 		TreeMap<Integer, List<Spot>> selectedSpots = new TreeMap<Integer, List<Spot>>();
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
@@ -130,7 +130,7 @@ public class TMUtils {
 			spotToKeep = new ArrayList<Spot>(spotThisFrame);
 			spotToRemove = new ArrayList<Spot>(spotThisFrame.size());
 
-			for (FeatureFilter threshold : featureThresholds) {
+			for (SpotFilter threshold : featureThresholds) {
 
 				tval = threshold.value;
 				if (null == tval)
@@ -225,7 +225,7 @@ public class TMUtils {
 	/**
 	 * Return the feature values of this Spot collection as a new double array.
 	 */
-	public static final double[] getFeature(final Collection<SpotImp> spots, final Feature feature) {
+	public static final double[] getFeature(final Collection<SpotImp> spots, final SpotFeature feature) {
 		final double[] values = new double[spots.size()];
 		int index = 0;
 		for(SpotImp spot : spots) {
@@ -236,12 +236,12 @@ public class TMUtils {
 	}
 	
 	/**
-	 * Return a map of {@link Feature} values for the spot collection given.
+	 * Return a map of {@link SpotFeature} values for the spot collection given.
 	 * Each feature maps a double array, with 1 element per {@link Spot}, all pooled
 	 * together.
 	 */
-	public static EnumMap<Feature, double[]> getFeatureValues(Collection<? extends Collection<Spot>> spots) {
-		 EnumMap<Feature, double[]> featureValues = new  EnumMap<Feature, double[]>(Feature.class);
+	public static EnumMap<SpotFeature, double[]> getFeatureValues(Collection<? extends Collection<Spot>> spots) {
+		 EnumMap<SpotFeature, double[]> featureValues = new  EnumMap<SpotFeature, double[]>(SpotFeature.class);
 		if (null == spots || spots.isEmpty())
 			return featureValues;
 		int index;
@@ -252,7 +252,7 @@ public class TMUtils {
 		for(Collection<? extends Spot> collection : spots)
 			spotNumber += collection.size();
 		
-		for(Feature feature : Feature.values()) {
+		for(SpotFeature feature : SpotFeature.values()) {
 			// Make a double array to comply to JFreeChart histograms
 			double[] values = new double[spotNumber];
 			index = 0;
@@ -408,12 +408,12 @@ public class TMUtils {
 	public static final double euclideanDistanceSquared(Spot i, Spot j) {
 		final Float xi, xj, yi, yj, zi, zj;
 		double eucD = 0;
-		xi = i.getFeature(Feature.POSITION_X);
-		xj = j.getFeature(Feature.POSITION_X);
-		yi = i.getFeature(Feature.POSITION_Y);
-		yj = j.getFeature(Feature.POSITION_Y);
-		zi = i.getFeature(Feature.POSITION_Z);
-		zj = j.getFeature(Feature.POSITION_Z);
+		xi = i.getFeature(SpotFeature.POSITION_X);
+		xj = j.getFeature(SpotFeature.POSITION_X);
+		yi = i.getFeature(SpotFeature.POSITION_Y);
+		yj = j.getFeature(SpotFeature.POSITION_Y);
+		zi = i.getFeature(SpotFeature.POSITION_Z);
+		zj = j.getFeature(SpotFeature.POSITION_Z);
 
 		if (xj != null && xi != null)
 			eucD += (xj-xi)*(xj-xi);

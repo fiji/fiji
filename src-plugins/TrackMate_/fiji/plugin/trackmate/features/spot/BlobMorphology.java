@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.features;
+package fiji.plugin.trackmate.features.spot;
 
 import java.util.Arrays;
 
@@ -13,11 +13,11 @@ import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import Jama.EigenvalueDecomposition;
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.SpotImp;
 
 /**
- * This {@link FeatureAnalyzer} computes morphology features for the given spots. 
+ * This {@link SpotFeatureAnalyzer} computes morphology features for the given spots. 
  * <p>
  * It estimates shape parameters by computing the most resembling ellipsoid from the pixels
  * contained within the spot radius. From this ellipsoid, it determines what are its semi-axes lengths,
@@ -35,7 +35,7 @@ import fiji.plugin.trackmate.SpotImp;
  * In the 2D case, ELLIPSOIDFIT_SEMIAXISLENGTH_A and ELLIPSOIDFIT_AXISPHI_A are always 0, the THETA angles are 0, and  
  * ELLIPSOIDFIT_AXISPHI_B and ELLIPSOIDFIT_AXISPHI_C differ by π/2.
  * <p>
- * From the semi-axis length, a morphology index is computed, echoed in the {@link Feature#MORPHOLOGY} feature.
+ * From the semi-axis length, a morphology index is computed, echoed in the {@link SpotFeature#MORPHOLOGY} feature.
  * Spots are classified according to the shape of their most-resembling ellipsoid. We look for equality between
  * semi-axes, with a certain tolerance, which value is {@link #SIGNIFICANCE_FACTOR}. 
  * <p>
@@ -57,17 +57,17 @@ import fiji.plugin.trackmate.SpotImp;
  *
  * @param <T>  the type of the input {@link Image}
  */
-public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAnalyzer {
+public class BlobMorphology <T extends RealType<T>> extends IndependentSpotFeatureAnalyzer {
 
 	/*
 	 * Fields
 	 */
 	
-	private final static Feature[] featurelist_sa 	= {Feature.ELLIPSOIDFIT_SEMIAXISLENGTH_C, 	Feature.ELLIPSOIDFIT_SEMIAXISLENGTH_B, 	Feature.ELLIPSOIDFIT_SEMIAXISLENGTH_A};
-	private final static Feature[] featurelist_phi 	= {Feature.ELLIPSOIDFIT_AXISPHI_C, 			Feature.ELLIPSOIDFIT_AXISPHI_B, 		Feature.ELLIPSOIDFIT_AXISPHI_A };
-	private final static Feature[] featurelist_theta = {Feature.ELLIPSOIDFIT_AXISTHETA_C, 		Feature.ELLIPSOIDFIT_AXISTHETA_B, 		Feature.ELLIPSOIDFIT_AXISTHETA_A}; 
+	private final static SpotFeature[] featurelist_sa 	= {SpotFeature.ELLIPSOIDFIT_SEMIAXISLENGTH_C, 	SpotFeature.ELLIPSOIDFIT_SEMIAXISLENGTH_B, 	SpotFeature.ELLIPSOIDFIT_SEMIAXISLENGTH_A};
+	private final static SpotFeature[] featurelist_phi 	= {SpotFeature.ELLIPSOIDFIT_AXISPHI_C, 			SpotFeature.ELLIPSOIDFIT_AXISPHI_B, 		SpotFeature.ELLIPSOIDFIT_AXISPHI_A };
+	private final static SpotFeature[] featurelist_theta = {SpotFeature.ELLIPSOIDFIT_AXISTHETA_C, 		SpotFeature.ELLIPSOIDFIT_AXISTHETA_B, 		SpotFeature.ELLIPSOIDFIT_AXISTHETA_A}; 
 	/** The Feature characteristics this class computes. */
-	private static final Feature FEATURE = Feature.MORPHOLOGY;
+	private static final SpotFeature FEATURE = SpotFeature.MORPHOLOGY;
 	
 	/** Spherical shape, that is roughly a = b = c. */
 	public static final int SPHERE = 0;
@@ -111,14 +111,14 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	
 	
 	@Override
-	public Feature getFeature() {
+	public SpotFeature getFeature() {
 		return FEATURE;
 	}
 	
 	
 	@Override
 	public void process(final Spot spot) {
-		final float radius = spot.getFeature(Feature.RADIUS);
+		final float radius = spot.getFeature(SpotFeature.RADIUS);
 		for (int i = 0; i < coords.length; i++) 
 			coords[i] = spot.getFeature(Spot.POSITION_FEATURES[i]);
 
@@ -207,7 +207,7 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 			}
 
 			// Store the Spot morphology (needs to be outside the above loop)
-			spot.putFeature(Feature.MORPHOLOGY, estimateMorphology(semiaxes_ordered));
+			spot.putFeature(SpotFeature.MORPHOLOGY, estimateMorphology(semiaxes_ordered));
 			
 		} else if (img.getNumDimensions() == 2) {
 			
@@ -285,7 +285,7 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 			spot.putFeature(featurelist_theta[2], 0);
 
 			// Store the Spot morphology (needs to be outside the above loop)
-			spot.putFeature(Feature.MORPHOLOGY, estimateMorphology(semiaxes_ordered));
+			spot.putFeature(SpotFeature.MORPHOLOGY, estimateMorphology(semiaxes_ordered));
 			
 		}
 	}
@@ -387,7 +387,7 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 		start = System.currentTimeMillis();
 		BlobMorphology<UnsignedByteType> bm = new BlobMorphology<UnsignedByteType>(img, calibration);
 		SpotImp spot = new SpotImp(center);
-		spot.putFeature(Feature.RADIUS, max_radius);
+		spot.putFeature(SpotFeature.RADIUS, max_radius);
 		bm.process(spot);
 		end = System.currentTimeMillis();
 		System.out.println("Blob morphology analyzed in " + (end-start) + " ms.");

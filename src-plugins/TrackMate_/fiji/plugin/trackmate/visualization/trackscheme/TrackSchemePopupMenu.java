@@ -17,7 +17,7 @@ import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxEventSource.mxIEventListener;
 
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 
 public class TrackSchemePopupMenu extends JPopupMenu {
@@ -105,7 +105,7 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 					TreeMap<Float, Spot> spotsInTime = new TreeMap<Float, Spot>();
 					for (mxCell cell : vertices) {
 						Spot spot = frame.getGraph().getCellToVertexMap().get(cell);
-						spotsInTime.put(spot.getFeature(Feature.POSITION_T), spot);
+						spotsInTime.put(spot.getFeature(SpotFeature.POSITION_T), spot);
 					}
 					// Then link them in this order
 					try {

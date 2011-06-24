@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.features;
+package fiji.plugin.trackmate.features.spot;
 
 import mpicbg.imglib.cursor.special.DiscCursor;
 import mpicbg.imglib.cursor.special.DomainCursor;
@@ -6,11 +6,11 @@ import mpicbg.imglib.cursor.special.SphereCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 
-public class BlobContrast <T extends RealType<T>> extends IndependentFeatureAnalyzer {
+public class BlobContrast <T extends RealType<T>> extends IndependentSpotFeatureAnalyzer {
 
-	private static final Feature FEATURE = Feature.CONTRAST;
+	private static final SpotFeature FEATURE = SpotFeature.CONTRAST;
 	protected static final float RAD_PERCENTAGE = .2f;  
 	protected Image<T> img;
 	protected float[] calibration;
@@ -25,7 +25,7 @@ public class BlobContrast <T extends RealType<T>> extends IndependentFeatureAnal
 	}
 	
 	@Override
-	public Feature getFeature() {
+	public SpotFeature getFeature() {
 		return FEATURE;
 	}
 
@@ -42,7 +42,7 @@ public class BlobContrast <T extends RealType<T>> extends IndependentFeatureAnal
 	 * @return
 	 */
 	protected float getContrast(final Spot spot) {
-		final float radius = spot.getFeature(Feature.RADIUS);
+		final float radius = spot.getFeature(SpotFeature.RADIUS);
 		final DomainCursor<T> cursor;
 		if (img.getNumDimensions() == 3) 
 			cursor = new SphereCursor<T>(img, spot.getPosition(coords), radius * (1+RAD_PERCENTAGE), calibration);

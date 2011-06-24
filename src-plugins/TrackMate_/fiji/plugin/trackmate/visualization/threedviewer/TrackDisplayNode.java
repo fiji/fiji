@@ -1,6 +1,6 @@
 package fiji.plugin.trackmate.visualization.threedviewer;
 
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -287,9 +287,9 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	public void getCenter(Tuple3d center) {
 		double x = 0, y = 0, z = 0;
 		for (Spot spot : graph.vertexSet()) {
-			x += spot.getFeature(Feature.POSITION_X);
-			y += spot.getFeature(Feature.POSITION_Y);
-			z += spot.getFeature(Feature.POSITION_Z);
+			x += spot.getFeature(SpotFeature.POSITION_X);
+			y += spot.getFeature(SpotFeature.POSITION_Y);
+			z += spot.getFeature(SpotFeature.POSITION_Z);
 		}
 		int nspot = graph.vertexSet().size();
 		x /= nspot;
@@ -304,13 +304,13 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		double zmax = Double.NEGATIVE_INFINITY;
 		float radius;
 		for (Spot spot : graph.vertexSet()) {
-			radius = spot.getFeature(Feature.RADIUS);
-			if (xmax < spot.getFeature(Feature.POSITION_X) + radius)
-				xmax = spot.getFeature(Feature.POSITION_X) + radius;
-			if (ymax < spot.getFeature(Feature.POSITION_Y) + radius)
-				ymax = spot.getFeature(Feature.POSITION_Y) + radius;
-			if (zmax < spot.getFeature(Feature.POSITION_Z) + radius)
-				zmax = spot.getFeature(Feature.POSITION_Z) + radius;
+			radius = spot.getFeature(SpotFeature.RADIUS);
+			if (xmax < spot.getFeature(SpotFeature.POSITION_X) + radius)
+				xmax = spot.getFeature(SpotFeature.POSITION_X) + radius;
+			if (ymax < spot.getFeature(SpotFeature.POSITION_Y) + radius)
+				ymax = spot.getFeature(SpotFeature.POSITION_Y) + radius;
+			if (zmax < spot.getFeature(SpotFeature.POSITION_Z) + radius)
+				zmax = spot.getFeature(SpotFeature.POSITION_Z) + radius;
 		}
 		max.x = xmax;
 		max.y = ymax;
@@ -325,13 +325,13 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		double zmin = Double.POSITIVE_INFINITY;
 		float radius;
 		for (Spot spot : graph.vertexSet()) {
-			radius = spot.getFeature(Feature.RADIUS);
-			if (xmin > spot.getFeature(Feature.POSITION_X) - radius)
-				xmin = spot.getFeature(Feature.POSITION_X) - radius;
-			if (ymin > spot.getFeature(Feature.POSITION_Y) - radius)
-				ymin = spot.getFeature(Feature.POSITION_Y) - radius;
-			if (zmin > spot.getFeature(Feature.POSITION_Z) - radius)
-				zmin = spot.getFeature(Feature.POSITION_Z) - radius;
+			radius = spot.getFeature(SpotFeature.RADIUS);
+			if (xmin > spot.getFeature(SpotFeature.POSITION_X) - radius)
+				xmin = spot.getFeature(SpotFeature.POSITION_X) - radius;
+			if (ymin > spot.getFeature(SpotFeature.POSITION_Y) - radius)
+				ymin = spot.getFeature(SpotFeature.POSITION_Y) - radius;
+			if (zmin > spot.getFeature(SpotFeature.POSITION_Z) - radius)
+				zmin = spot.getFeature(SpotFeature.POSITION_Z) - radius;
 		}
 		min.x = xmin;
 		min.y = ymin;

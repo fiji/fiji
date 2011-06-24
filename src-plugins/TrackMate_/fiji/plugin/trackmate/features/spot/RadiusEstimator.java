@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.features;
+package fiji.plugin.trackmate.features.spot;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.special.DiscCursor;
@@ -9,10 +9,10 @@ import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.SpotImp;
 
-public class RadiusEstimator <T extends RealType<T>> extends IndependentFeatureAnalyzer {
+public class RadiusEstimator <T extends RealType<T>> extends IndependentSpotFeatureAnalyzer {
 
 	private static final float MIN_DIAMETER_RATIO = 0.4f;
 	private static final float MAX_DIAMETER_RATIO = 2;
@@ -44,10 +44,10 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentFeatureA
 		this.coords = new float[img.getNumDimensions()];
 	}
 
-	private static final Feature FEATURE = Feature.ESTIMATED_DIAMETER;
+	private static final SpotFeature FEATURE = SpotFeature.ESTIMATED_DIAMETER;
 	
 	@Override
-	public Feature getFeature() {
+	public SpotFeature getFeature() {
 		return FEATURE;
 	}
 
@@ -57,7 +57,7 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentFeatureA
 			coords[i] = spot.getFeature(Spot.POSITION_FEATURES[i]);
 
 		// Get diameter array and radius squared
-		final float radius = spot.getFeature(Feature.RADIUS);
+		final float radius = spot.getFeature(SpotFeature.RADIUS);
 		final float[] diameters = prepareDiameters(radius*2, nDiameters);
 		final float[] r2 = new float[nDiameters];
 		for (int i = 0; i < r2.length; i++) 
@@ -158,7 +158,7 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentFeatureA
 		SphereCursor<UnsignedByteType> cursor;
 		int index = 0;
 		for (SpotImp s : spots) {
-			s.putFeature(Feature.RADIUS, radiuses[index]);
+			s.putFeature(SpotFeature.RADIUS, radiuses[index]);
 			cursor = new SphereCursor<UnsignedByteType>(
 					testImage,
 					s.getPosition(null),

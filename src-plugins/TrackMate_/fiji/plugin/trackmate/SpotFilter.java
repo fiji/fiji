@@ -5,13 +5,13 @@ package fiji.plugin.trackmate;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Sep 23, 2010
  *
  */
-public class FeatureFilter {
-	public Feature feature;
+public class SpotFilter {
+	public SpotFeature feature;
 	public Float value;
 	public boolean isAbove;
 	
 	
-	public FeatureFilter(Feature feature, Float value, boolean isAbove) {
+	public SpotFilter(SpotFeature feature, Float value, boolean isAbove) {
 		this.feature = feature;
 		this.value = value;
 		this.isAbove = isAbove;

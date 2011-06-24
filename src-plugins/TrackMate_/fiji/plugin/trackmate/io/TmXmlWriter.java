@@ -19,8 +19,8 @@ import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
-import fiji.plugin.trackmate.Feature;
-import fiji.plugin.trackmate.FeatureFilter;
+import fiji.plugin.trackmate.SpotFeature;
+import fiji.plugin.trackmate.SpotFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
@@ -89,11 +89,11 @@ public class TmXmlWriter implements TmXmlKeys {
 	 * it has to be provided here.
 	 */
 	public void appendInitialThreshold() {
-		echoInitialThreshold(model.getInitialFilterValue());
+		echoInitialThreshold(model.getInitialSpotFilterValue());
 	}
 
 	/**
-	 * Append the list of {@link FeatureFilter} to the {@link Document}.
+	 * Append the list of {@link SpotFilter} to the {@link Document}.
 	 */
 	public void appendFeatureThresholds() {
 		echoThresholds();
@@ -183,7 +183,7 @@ public class TmXmlWriter implements TmXmlKeys {
 		linkingElement.addContent(
 				new Element(TRACKER_SETTINGS_DISTANCE_CUTOFF_ELEMENT)
 				.setAttribute(TRACKER_SETTINGS_DISTANCE_CUTOFF_ATTNAME, ""+settings.linkingDistanceCutOff));
-		for(Feature feature : settings.linkingFeatureCutoffs.keySet())
+		for(SpotFeature feature : settings.linkingFeatureCutoffs.keySet())
 			linkingElement.addContent(
 					new Element(TRACKER_SETTINGS_FEATURE_ELEMENT)
 					.setAttribute(feature.name(), ""+settings.linkingFeatureCutoffs.get(feature)) );
@@ -197,7 +197,7 @@ public class TmXmlWriter implements TmXmlKeys {
 		gapClosingElement.addContent(
 				new Element(TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT)
 				.setAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME, ""+settings.gapClosingTimeCutoff));
-		for(Feature feature : settings.gapClosingFeatureCutoffs.keySet())
+		for(SpotFeature feature : settings.gapClosingFeatureCutoffs.keySet())
 			gapClosingElement.addContent(
 					new Element(TRACKER_SETTINGS_FEATURE_ELEMENT)
 					.setAttribute(feature.name(), ""+settings.gapClosingFeatureCutoffs.get(feature)) );
@@ -211,7 +211,7 @@ public class TmXmlWriter implements TmXmlKeys {
 		splittingElement.addContent(
 				new Element(TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT)
 				.setAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME, ""+settings.splittingTimeCutoff));
-		for(Feature feature : settings.splittingFeatureCutoffs.keySet())
+		for(SpotFeature feature : settings.splittingFeatureCutoffs.keySet())
 			splittingElement.addContent(
 					new Element(TRACKER_SETTINGS_FEATURE_ELEMENT)
 					.setAttribute(feature.name(), ""+settings.splittingFeatureCutoffs.get(feature)) );
@@ -225,7 +225,7 @@ public class TmXmlWriter implements TmXmlKeys {
 		mergingElement.addContent(
 				new Element(TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT)
 				.setAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME, ""+settings.mergingTimeCutoff));
-		for(Feature feature : settings.mergingFeatureCutoffs.keySet())
+		for(SpotFeature feature : settings.mergingFeatureCutoffs.keySet())
 			mergingElement.addContent(
 					new Element(TRACKER_SETTINGS_FEATURE_ELEMENT)
 					.setAttribute(feature.name(), ""+settings.mergingFeatureCutoffs.get(feature)) );
@@ -331,7 +331,7 @@ public class TmXmlWriter implements TmXmlKeys {
 	
 	private void echoInitialThreshold(final Float qualityThreshold) {
 		Element itElement = new Element(INITIAL_THRESHOLD_ELEMENT_KEY);
-		itElement.setAttribute(THRESHOLD_FEATURE_ATTRIBUTE_NAME, Feature.QUALITY.name());
+		itElement.setAttribute(THRESHOLD_FEATURE_ATTRIBUTE_NAME, SpotFeature.QUALITY.name());
 		itElement.setAttribute(THRESHOLD_VALUE_ATTRIBUTE_NAME, ""+qualityThreshold);
 		itElement.setAttribute(THRESHOLD_ABOVE_ATTRIBUTE_NAME, ""+true);
 		root.addContent(itElement);
@@ -340,10 +340,10 @@ public class TmXmlWriter implements TmXmlKeys {
 	}
 	
 	private void echoThresholds() {
-		List<FeatureFilter> featureThresholds = model.getFeatureFilters();
+		List<SpotFilter> featureThresholds = model.getSpotFilters();
 		
 		Element allTresholdElement = new Element(THRESHOLD_COLLECTION_ELEMENT_KEY);
-		for (FeatureFilter threshold : featureThresholds) {
+		for (SpotFilter threshold : featureThresholds) {
 			Element thresholdElement = new Element(THRESHOLD_ELEMENT_KEY);
 			thresholdElement.setAttribute(THRESHOLD_FEATURE_ATTRIBUTE_NAME, threshold.feature.name());
 			thresholdElement.setAttribute(THRESHOLD_VALUE_ATTRIBUTE_NAME, threshold.value.toString());
@@ -392,7 +392,7 @@ public class TmXmlWriter implements TmXmlKeys {
 		attributes.add(nameAttribute);
 		Float val;
 		Attribute featureAttribute;
-		for (Feature feature : Feature.values()) {
+		for (SpotFeature feature : SpotFeature.values()) {
 			val = spot.getFeature(feature);
 			if (null == val)
 				continue;

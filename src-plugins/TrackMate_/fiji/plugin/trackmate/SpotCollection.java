@@ -98,9 +98,9 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	
 	/**
 	 * Return a subset of this collection, containing only the spots with the 
-	 * feature satisfying the threshold given. 
+	 * feature satisfying the filter given. 
 	 */
-	public final SpotCollection filter(final FeatureFilter featurefilter) {
+	public final SpotCollection filter(final SpotFilter featurefilter) {
 		SpotCollection selectedSpots = new SpotCollection();
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
@@ -144,9 +144,9 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	
 	/**
 	 * Return a subset of this collection, containing only the spots with the 
-	 * feature satisfying all the thresholds given. 
+	 * feature satisfying all the filters given. 
 	 */
-	public final SpotCollection filter(final Collection<FeatureFilter> filters) {
+	public final SpotCollection filter(final Collection<SpotFilter> filters) {
 		SpotCollection selectedSpots = new SpotCollection();
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
@@ -158,16 +158,16 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 			spotToKeep = new ArrayList<Spot>(spotThisFrame);
 			spotToRemove = new ArrayList<Spot>(spotThisFrame.size());
 
-			for (FeatureFilter threshold : filters) {
+			for (SpotFilter filter : filters) {
 
-				tval = threshold.value;
+				tval = filter.value;
 				if (null == tval)
 					continue;
 				spotToRemove.clear();
 
-				if (threshold.isAbove) {
+				if (filter.isAbove) {
 					for (Spot spot : spotToKeep) {
-						val = spot.getFeature(threshold.feature);
+						val = spot.getFeature(filter.feature);
 						if (null == val)
 							continue;
 						if ( val < tval)
@@ -176,7 +176,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 
 				} else {
 					for (Spot spot : spotToKeep) {
-						val = spot.getFeature(threshold.feature);
+						val = spot.getFeature(filter.feature);
 						if (null == val)
 							continue;
 						if ( val > tval)

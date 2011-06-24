@@ -1,11 +1,11 @@
-package fiji.plugin.trackmate.features;
+package fiji.plugin.trackmate.features.spot;
 
 import java.util.Collection;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 
-public interface FeatureAnalyzer {
+public interface SpotFeatureAnalyzer {
 	
 	/**
 	 * Score a collection of spots.
@@ -23,6 +23,6 @@ public interface FeatureAnalyzer {
 	 * Return the enum Feature for this feature.
 	 * @return
 	 */
-	public Feature getFeature();	
+	public SpotFeature getFeature();	
 	
 }

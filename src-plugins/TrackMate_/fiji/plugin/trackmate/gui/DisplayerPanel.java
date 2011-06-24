@@ -36,7 +36,7 @@ import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
 
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
@@ -73,7 +73,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 	private JTextField jTextFieldFrameDepth;
 	private JLabel jLabelFrameDepth;
 	private JPanelSpotColorGUI jPanelSpotColor;
-	private EnumMap<Feature, double[]> featureValues;
+	private EnumMap<SpotFeature, double[]> featureValues;
 	private JButton jButtonShowTrackScheme;
 	private JNumericTextField jTextFieldSpotRadius;
 	private JCheckBox jCheckBoxDisplayNames;

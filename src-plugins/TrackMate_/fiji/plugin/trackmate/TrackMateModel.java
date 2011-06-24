@@ -16,11 +16,12 @@ import java.util.Set;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
 
+import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
-import fiji.plugin.trackmate.features.FeatureAnalyzer;
-import fiji.plugin.trackmate.features.FeatureFacade;
+import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzer;
+import fiji.plugin.trackmate.features.spot.SpotFeatureFacade;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.util.TMUtils;
@@ -36,20 +37,28 @@ public class TrackMateModel {
 	protected SpotCollection spots;
 	/** Contain the spots retained for tracking, after filtering by features. */
 	protected SpotCollection filteredSpots;
+	/** The feature filter list that is used to generate {@link #filteredSpots} from {@link #spots}. */
+	protected List<SpotFilter> spotFilters = new ArrayList<SpotFilter>();
+	/** The initial quality filter value that is used to clip spots of low quality from {@link #spots}. */
+	protected Float initialSpotFilterValue;
+	
 	/** The tracks as a graph. */
 	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph;
+	/** The filtered tracks, resulting from track filtering. It is a subset of the tracks extracted from {@link #trackGraph}. */
+	protected List<Set<Spot>> filteredTracks;
+	
 	/** The spot current selection. */
 	protected Set<Spot> spotSelection = new HashSet<Spot>();
 	/** The edge current selection. */
 	protected Set<DefaultWeightedEdge> edgeSelection = new HashSet<DefaultWeightedEdge>();
+	
 	/** The logger to append processes messages */
 	protected Logger logger = Logger.DEFAULT_LOGGER;
+	
 	/** The settings that determine processes actions */
 	protected Settings settings;
-	/** The feature filter list that is used to generate {@link #filteredSpots} from {@link #spots}. */
-	protected List<FeatureFilter> featureFilters = new ArrayList<FeatureFilter>();
-	/** The initial quality filter value that is used to clip spots of low quality from {@link #spots}. */
-	protected Float initialFilterValue;
+	
+	
 	/** The list of listeners listening to model content change, that is, changes in 
 	 * {@link #spots}, {@link #filteredSpots} and {@link #trackGraph}. */
 	protected List<TrackMateModelChangeListener> modelChangeListeners = new ArrayList<TrackMateModelChangeListener>();
@@ -167,7 +176,7 @@ public class TrackMateModel {
 				if (null != polygon) {
 					prunedSpots = new ArrayList<Spot>();
 					for (Spot spot : spotsThisFrame) {
-						if (polygon.contains(spot.getFeature(Feature.POSITION_X)/calibration[0], spot.getFeature(Feature.POSITION_Y)/calibration[1])) 
+						if (polygon.contains(spot.getFeature(SpotFeature.POSITION_X)/calibration[0], spot.getFeature(SpotFeature.POSITION_Y)/calibration[1])) 
 							prunedSpots.add(spot);
 					}
 				} else {
@@ -175,8 +184,8 @@ public class TrackMateModel {
 				}
 				// Add segmentation feature other than position
 				for (Spot spot : prunedSpots) {
-					spot.putFeature(Feature.POSITION_T, i * settings.dt);
-					spot.putFeature(Feature.RADIUS, settings.segmenterSettings.expectedRadius);
+					spot.putFeature(SpotFeature.POSITION_T, i * settings.dt);
+					spot.putFeature(SpotFeature.RADIUS, settings.segmenterSettings.expectedRadius);
 				}
 				spots.put(i, prunedSpots);
 				spotFound += prunedSpots.size();
@@ -193,17 +202,17 @@ public class TrackMateModel {
 	}
 
 	/**
-	 * Execute the initial filtering part.
+	 * Execute the initial spot filtering part.
 	 *<p>
 	 * Because of the presence of noise, it is possible that some of the regional maxima found in the segmenting step have
 	 * identified noise, rather than objects of interest. This can generates a very high number of spots, which is
 	 * inconvenient to deal with when it comes to  computing their features, or displaying them.
 	 * <p>
-	 * Any {@link SpotSegmenter} is expected to at least compute the {@link Feature#QUALITY} value for each spot
+	 * Any {@link SpotSegmenter} is expected to at least compute the {@link SpotFeature#QUALITY} value for each spot
 	 * it creates, so it is possible to set up an initial filtering on this Feature, prior to any other operation. 
 	 * <p>
 	 * This method simply takes all the segmented spots, and discard those whose quality value is below the threshold set 
-	 * by {@link #setInitialFilter(Float)}. The spot field is overwritten, and discarded spots can't be recalled.
+	 * by {@link #setInitialSpotFilter(Float)}. The spot field is overwritten, and discarded spots can't be recalled.
 	 * <p>
 	 * The {@link TrackMateModelChangeListener}s of this model will be notified with a {@link TrackMateModelChangeEvent#SPOTS_COMPUTED}
 	 * event.
@@ -211,24 +220,24 @@ public class TrackMateModel {
 	 * @see #getSpots()
 	 * @see #setInitialFilter(Float)
 	 */
-	public void execInitialFiltering() {
-		FeatureFilter featureFilter = new FeatureFilter(Feature.QUALITY, initialFilterValue, true);
+	public void execInitialSpotFiltering() {
+		SpotFilter featureFilter = new SpotFilter(SpotFeature.QUALITY, initialSpotFilterValue, true);
 		setSpots(spots.filter(featureFilter), true);
 	}
 
 	/**
 	 * Calculate given features for the given spots, according to the {@link Settings} set in this model.
 	 * <p>
-	 * Features are calculated for each spot, using their location, and the raw image. See the {@link FeatureFacade} class
-	 * for details. Since a {@link FeatureAnalyzer} can compute more than a {@link Feature} at once, spots might
+	 * Features are calculated for each spot, using their location, and the raw image. See the {@link SpotFeatureFacade} class
+	 * for details. Since a {@link SpotFeatureAnalyzer} can compute more than a {@link SpotFeature} at once, spots might
 	 * received more data than required.
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public void computeFeatures(final SpotCollection toCompute, final List<Feature> features) {
+	public void computeSpotFeatures(final SpotCollection toCompute, final List<SpotFeature> features) {
 
 		int numFrames = settings.tend - settings.tstart + 1;
 		List<Spot> spotsThisFrame;
-		FeatureFacade<?> featureCalculator;
+		SpotFeatureFacade<?> featureCalculator;
 		final float[] calibration = new float[] { settings.dx, settings.dy, settings.dz };
 
 		for (int i = settings.tstart-1; i < settings.tend; i++) {
@@ -248,14 +257,14 @@ public class TrackMateModel {
 			Image<? extends RealType> img = TMUtils.getSingleFrameAsImage(settings.imp, i, uncroppedSettings); 
 
 			/* 1.5 Determine what analyzers are needed */
-			featureCalculator = new FeatureFacade(img, calibration);
-			HashSet<FeatureAnalyzer> analyzers = new HashSet<FeatureAnalyzer>();
-			for (Feature feature : features)
+			featureCalculator = new SpotFeatureFacade(img, calibration);
+			HashSet<SpotFeatureAnalyzer> analyzers = new HashSet<SpotFeatureAnalyzer>();
+			for (SpotFeature feature : features)
 				analyzers.add(featureCalculator.getAnalyzerForFeature(feature));
 
 			/* 2 - Compute features. */
 			spotsThisFrame = toCompute.get(i);
-			for (FeatureAnalyzer analyzer : analyzers)
+			for (SpotFeatureAnalyzer analyzer : analyzers)
 				analyzer.process(spotsThisFrame);
 
 		} // Finished looping over frames
@@ -268,45 +277,45 @@ public class TrackMateModel {
 	 * Calculate given features for the all segmented spots of this model, 
 	 * according to the {@link Settings} set in this model.
 	 * <p>
-	 * Features are calculated for each spot, using their location, and the raw image. See the {@link FeatureFacade} class
-	 * for details. Since a {@link FeatureAnalyzer} can compute more than a {@link Feature} at once, spots might
+	 * Features are calculated for each spot, using their location, and the raw image. See the {@link SpotFeatureFacade} class
+	 * for details. Since a {@link SpotFeatureAnalyzer} can compute more than a {@link SpotFeature} at once, spots might
 	 * received more data than required.
 	 */
-	public void computeFeatures(final List<Feature> features) {
-		computeFeatures(spots, features);
+	public void computeSpotFeatures(final List<SpotFeature> features) {
+		computeSpotFeatures(spots, features);
 	}
 
 	/**
 	 * Calculate given featuresfor the all filtered spots of this model, 
 	 * according to the {@link Settings} set in this model.
 	 */
-	public void computeFeatures(final Feature feature) {
-		ArrayList<Feature> features = new ArrayList<Feature>(1);
+	public void computeSpotFeatures(final SpotFeature feature) {
+		ArrayList<SpotFeature> features = new ArrayList<SpotFeature>(1);
 		features.add(feature);
-		computeFeatures(features);
+		computeSpotFeatures(features);
 	}
 
 	/**
 	 * Calculate all features for all segmented spots.
 	 * <p>
-	 * Features are calculated for each spot, using their location, and the raw image. See the {@link FeatureFacade} class
+	 * Features are calculated for each spot, using their location, and the raw image. See the {@link SpotFeatureFacade} class
 	 * for details. 
 	 */
-	public void computeFeatures() {
-		computeFeatures(spots);
+	public void computeSpotFeatures() {
+		computeSpotFeatures(spots);
 	}
 	
 	/**
 	 * Calculate all features for all segmented spots.
 	 * <p>
-	 * Features are calculated for each spot, using their location, and the raw image. See the {@link FeatureFacade} class
+	 * Features are calculated for each spot, using their location, and the raw image. See the {@link SpotFeatureFacade} class
 	 * for details. 
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public void computeFeatures(final SpotCollection toCompute) {
+	public void computeSpotFeatures(final SpotCollection toCompute) {
 		int numFrames = toCompute.keySet().size();
 		List<Spot> spotsThisFrame;
-		FeatureFacade<?> featureCalculator;
+		SpotFeatureFacade<?> featureCalculator;
 		final float[] calibration = settings.getCalibration();
 
 		for (int i : toCompute.keySet()) {
@@ -326,7 +335,7 @@ public class TrackMateModel {
 			Image<? extends RealType> img = TMUtils.getSingleFrameAsImage(settings.imp, i, uncroppedSettings); 
 
 			/* 1.5 Determine what analyzers are needed */
-			featureCalculator = new FeatureFacade(img, calibration);
+			featureCalculator = new SpotFeatureFacade(img, calibration);
 			spotsThisFrame = toCompute.get(i);
 			featureCalculator.processAllFeatures(spotsThisFrame);
 
@@ -345,15 +354,15 @@ public class TrackMateModel {
 	 * step should allow to rule them out.
 	 * <p>
 	 * This method simply takes all the segmented spots, and store in the field {@link #filteredSpots}
-	 * the spots whose features satisfy all of the filters entered with the method {@link #addFilter(FeatureFilter)}.
+	 * the spots whose features satisfy all of the filters entered with the method {@link #addFilter(SpotFilter)}.
 	 * <p>
 	 * The {@link TrackMateModelChangeListener}s of this model will be notified with a {@link TrackMateModelChangeEvent#SPOTS_FILTERED}
 	 * event.
 	 * 
 	 * @see #getFilteredSpots()
 	 */
-	public void execFiltering() {
-		setFilteredSpots(spots.filter(featureFilters), true);
+	public void execSpotFiltering() {
+		setFilteredSpots(spots.filter(spotFilters), true);
 	}
 
 
@@ -361,11 +370,26 @@ public class TrackMateModel {
 	 * GETTERS / SETTERS
 	 */
 
-
+	/**
+	 * Return the graph of the links between spots that build the tracks of this model. 
+	 * This graph contains all tracks, unfiltered.
+	 */
 	public SimpleWeightedGraph<Spot,DefaultWeightedEdge> getTrackGraph() {
 		return trackGraph;
 	}
-
+	
+	/**
+	 * Return the list of tracks (each track is modeled as a set of {@link Spot}) extracted from 
+	 * the graph of links. These tracks are un-filtered.
+	 */
+	public List<Set<Spot>> getTracks() {
+		return new ConnectivityInspector<Spot, DefaultWeightedEdge>(trackGraph).connectedSets();
+	}
+	
+	public List<Set<Spot>> getFilteredTracks() {
+		return filteredTracks;
+	}
+	
 	/**
 	 * Return the spots generated by the segmentation part of this plugin. The collection are un-filtered and contain
 	 * all spots. They are returned as a {@link SpotCollection}.
@@ -375,11 +399,11 @@ public class TrackMateModel {
 	}
 
 	/**
-	 * Return the spots filtered by feature threshold. 
+	 * Return the spots filtered by feature filters. 
 	 * These spots will be used for subsequent tracking and display.
 	 * <p>
 	 * Feature thresholds can be set / added / cleared by 
-	 * {@link #setFeatureThresholds(List)}, {@link #addThreshold(FeatureThreshold)} and {@link #clearTresholds()}.
+	 * {@link #setSpotFilters(List)}, {@link #addSpotFilter(SpotFilter)} and {@link #clearSpotFilters()}.
 	 */
 	public SpotCollection getFilteredSpots() {
 		return filteredSpots;
@@ -400,7 +424,7 @@ public class TrackMateModel {
 	}
 
 	/**
-	 * Overwrite the {@link #filteredSpots} field, resulting normally from the {@link #execFiltering()} process.
+	 * Overwrite the {@link #filteredSpots} field, resulting normally from the {@link #execSpotFiltering()} process.
 	 * @param doNotify  if true, will file a {@link TrackMateModelChangeEvent#SPOTS_FILTERED} event.
 	 */
 	public void setFilteredSpots(SpotCollection filteredSpots, boolean doNotify) {
@@ -432,34 +456,34 @@ public class TrackMateModel {
 	 */
 
 	/**
-	 * Add a threshold to the list of filters to deal with when executing {@link #execFiltering(List, ArrayList, ArrayList, ArrayList)}.
+	 * Add a filter to the list of spot filters to deal with when executing {@link #execFiltering()}.
 	 */
-	public void addFeatureFilter(final FeatureFilter filter) { featureFilters.add(filter); }
+	public void addSpotFilter(final SpotFilter filter) { spotFilters.add(filter); }
 
 
-	public void removeFeatureFilter(final FeatureFilter filter) { featureFilters.remove(filter); }
+	public void removeSpotFilter(final SpotFilter filter) { spotFilters.remove(filter); }
 
 	/**
-	 * Remove all thresholds stored in this model.
+	 * Remove all spot filters stored in this model.
 	 */
-	public void clearFeatureFilters() { featureFilters.clear(); }
+	public void clearSpotFilters() { spotFilters.clear(); }
 
-	public List<FeatureFilter> getFeatureFilters() { return featureFilters; }
+	public List<SpotFilter> getSpotFilters() { return spotFilters; }
 
-	public void setFeatureFilters(List<FeatureFilter> featureFilters) { this.featureFilters = featureFilters; }
+	public void setSpotFilters(List<SpotFilter> spotFilters) { this.spotFilters = spotFilters; }
 
 	/**
-	 * Return the initial filter value on {@link Feature#QUALITY} stored in this model.
+	 * Return the initial filter value on {@link SpotFeature#QUALITY} stored in this model.
 	 */
-	public Float getInitialFilterValue() {
-		return initialFilterValue;
+	public Float getInitialSpotFilterValue() {
+		return initialSpotFilterValue;
 	}
 
 	/**
-	 * Set the initial filter value on {@link Feature#QUALITY} stored in this model.
+	 * Set the initial filter value on {@link SpotFeature#QUALITY} stored in this model.
 	 */
-	public void setInitialFilterValue(Float initialFilterValue) {
-		this.initialFilterValue = initialFilterValue;
+	public void setInitialSpotFilterValue(Float initialSpotFilterValue) {
+		this.initialSpotFilterValue = initialSpotFilterValue;
 	}
 
 	/*
@@ -509,11 +533,11 @@ public class TrackMateModel {
 	 */
 
 	/**
-	 * Return a map of {@link Feature} values for the spot collection held by this instance.
+	 * Return a map of {@link SpotFeature} values for the spot collection held by this instance.
 	 * Each feature maps a double array, with 1 element per {@link Spot}, all pooled
 	 * together.
 	 */
-	public EnumMap<Feature, double[]> getFeatureValues() {
+	public EnumMap<SpotFeature, double[]> getFeatureValues() {
 		return TMUtils.getFeatureValues(spots.values());
 	}
 
@@ -910,7 +934,7 @@ public class TrackMateModel {
 
 		// Find common frames
 		SpotCollection toCompute = filteredSpots.subset(spotsToUpdate);
-		computeFeatures(toCompute);
+		computeSpotFeatures(toCompute);
 
 
 		if (doNotify) {
@@ -940,7 +964,7 @@ public class TrackMateModel {
 		toCompute.add(spotToUpdate, frame);
 
 		// Calculate features
-		computeFeatures(toCompute);
+		computeSpotFeatures(toCompute);
 		
 		if (doNotify) {
 			List<Integer> spotFlags = new ArrayList<Integer>(1);

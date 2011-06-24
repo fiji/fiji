@@ -10,7 +10,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import fiji.plugin.trackmate.FeatureFilter;
+import fiji.plugin.trackmate.SpotFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
@@ -468,14 +468,14 @@ public class TrackMateFrameController implements ActionListener {
 	 * the {@link Spot} collection of the {@link TrackMateModel} with the result.
 	 */
 	private void execInitialThresholding() {
-		FeatureFilter initialThreshold = view.initThresholdingPanel.getFeatureThreshold();
+		SpotFilter initialThreshold = view.initThresholdingPanel.getFeatureThreshold();
 		String str = "Initial thresholding with a quality threshold above "+ String.format("%.1f", initialThreshold.value) + " ...\n";
 		logger.log(str,Logger.BLUE_COLOR);
 		int ntotal = 0;
 		for (Collection<Spot> spots : model.getSpots().values())
 			ntotal += spots.size();
-		model.setInitialFilterValue(initialThreshold.value);
-		model.execInitialFiltering();
+		model.setInitialSpotFilterValue(initialThreshold.value);
+		model.execInitialSpotFiltering();
 		int nselected = 0;
 		for (Collection<Spot> spots : model.getSpots().values())
 			nselected += spots.size();
@@ -490,7 +490,7 @@ public class TrackMateFrameController implements ActionListener {
 		switchNextButton(false);
 		logger.log("Calculating features...\n",Logger.BLUE_COLOR);
 		// Calculate features
-		model.computeFeatures();		
+		model.computeSpotFeatures();		
 		logger.log("Calculating features done.\n", Logger.BLUE_COLOR);
 		switchNextButton(true);
 	}
@@ -543,8 +543,8 @@ public class TrackMateFrameController implements ActionListener {
 					@Override
 					public void stateChanged(ChangeEvent event) {
 						// We set the thresholds field of the model but do not touch its selected spot field yet.
-						model.setFeatureFilters(view.thresholdGuiPanel.getFeatureThresholds());
-						model.execFiltering();
+						model.setSpotFilters(view.thresholdGuiPanel.getFeatureThresholds());
+						model.execSpotFiltering();
 						displayer.refresh();
 					}
 				});
@@ -560,9 +560,9 @@ public class TrackMateFrameController implements ActionListener {
 	 */
 	private void execThresholding() {
 		logger.log("Performing feature threholding on the following features:\n", Logger.BLUE_COLOR);
-		List<FeatureFilter> featureThresholds = view.thresholdGuiPanel.getFeatureThresholds();
-		model.setFeatureFilters(featureThresholds);
-		model.execFiltering();
+		List<SpotFilter> featureThresholds = view.thresholdGuiPanel.getFeatureThresholds();
+		model.setSpotFilters(featureThresholds);
+		model.execSpotFiltering();
 //		displayer.setSpotsToShow(model.getFilteredSpots());
 		
 		int ntotal = 0;
@@ -571,7 +571,7 @@ public class TrackMateFrameController implements ActionListener {
 		if (featureThresholds == null || featureThresholds.isEmpty()) {
 			logger.log("No feature threshold set, kept the " + ntotal + " spots.\n");
 		} else {
-			for (FeatureFilter ft : featureThresholds) {
+			for (SpotFilter ft : featureThresholds) {
 				String str = "  - on "+ft.feature.name();
 				if (ft.isAbove) 
 					str += " above ";

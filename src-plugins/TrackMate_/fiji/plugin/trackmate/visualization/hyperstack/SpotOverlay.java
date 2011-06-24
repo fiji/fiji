@@ -21,7 +21,7 @@ import java.util.Map;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
 
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
@@ -130,9 +130,9 @@ public class SpotOverlay implements Overlay {
 		if (null != editingSpot) {
 			g2d.setColor(TrackMateModelView.DEFAULT_HIGHLIGHT_COLOR);
 			g2d.setStroke(new BasicStroke(1.0f,	BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[] {5f, 5f} , 0));
-			final float x = editingSpot.getFeature(Feature.POSITION_X);
-			final float y = editingSpot.getFeature(Feature.POSITION_Y);
-			final float radius = editingSpot.getFeature(Feature.RADIUS) / calibration[0] * mag;
+			final float x = editingSpot.getFeature(SpotFeature.POSITION_X);
+			final float y = editingSpot.getFeature(SpotFeature.POSITION_Y);
+			final float radius = editingSpot.getFeature(SpotFeature.RADIUS) / calibration[0] * mag;
 			// In pixel units
 			final float xp = x / calibration[0];
 			final float yp = y / calibration[1];
@@ -153,7 +153,7 @@ public class SpotOverlay implements Overlay {
 	}
 	
 	public void computeSpotColors() {
-		final Feature feature = (Feature) displaySettings.get(TrackMateModelView.KEY_SPOT_COLOR_FEATURE);
+		final SpotFeature feature = (SpotFeature) displaySettings.get(TrackMateModelView.KEY_SPOT_COLOR_FEATURE);
 		// Get min & max
 		float min = Float.POSITIVE_INFINITY;
 		float max = Float.NEGATIVE_INFINITY;
@@ -188,12 +188,12 @@ public class SpotOverlay implements Overlay {
 	}
 
 	private final void drawSpot(final Graphics2D g2d, final Spot spot, final float zslice, final int xcorner, final int ycorner, final float magnification) {
-		final float x = spot.getFeature(Feature.POSITION_X);
-		final float y = spot.getFeature(Feature.POSITION_Y);
-		final float z = spot.getFeature(Feature.POSITION_Z);
+		final float x = spot.getFeature(SpotFeature.POSITION_X);
+		final float y = spot.getFeature(SpotFeature.POSITION_Y);
+		final float z = spot.getFeature(SpotFeature.POSITION_Z);
 		final float dz2 = (z - zslice) * (z - zslice);
 		float radiusRatio = (Float) displaySettings.get(TrackMateModelView.KEY_SPOT_RADIUS_RATIO);
-		final float radius = spot.getFeature(Feature.RADIUS)*radiusRatio;
+		final float radius = spot.getFeature(SpotFeature.RADIUS)*radiusRatio;
 		// In pixel units
 		final float xp = x / calibration[0];
 		final float yp = y / calibration[1];

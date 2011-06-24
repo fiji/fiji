@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.features;
+package fiji.plugin.trackmate.features.spot;
 
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
@@ -16,7 +16,7 @@ import mpicbg.imglib.type.numeric.RealType;
 
 import com.mxgraph.util.mxBase64;
 
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 
 /**
@@ -24,7 +24,7 @@ import fiji.plugin.trackmate.Spot;
  * its coordinates and an {@link ImagePlus} that contain the pixel data.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Dec 2010
  */
-public class SpotIconGrabber <T extends RealType<T>> extends IndependentFeatureAnalyzer {
+public class SpotIconGrabber <T extends RealType<T>> extends IndependentSpotFeatureAnalyzer {
 
 	private float[] calibration;
 	private Image<T> img;
@@ -37,9 +37,9 @@ public class SpotIconGrabber <T extends RealType<T>> extends IndependentFeatureA
 	@Override
 	public void process(Spot spot) {
 		// Get crop coordinates
-		final float radius = spot.getFeature(Feature.RADIUS); // physical units, REQUIRED!
-		int x = Math.round((spot.getFeature(Feature.POSITION_X) - radius) / calibration[0]); 
-		int y = Math.round((spot.getFeature(Feature.POSITION_Y) - radius) / calibration[1]);
+		final float radius = spot.getFeature(SpotFeature.RADIUS); // physical units, REQUIRED!
+		int x = Math.round((spot.getFeature(SpotFeature.POSITION_X) - radius) / calibration[0]); 
+		int y = Math.round((spot.getFeature(SpotFeature.POSITION_Y) - radius) / calibration[1]);
 		int width = Math.round(2 * radius / calibration[0]);
 		int height = Math.round(2 * radius / calibration[1]);
 		
@@ -49,7 +49,7 @@ public class SpotIconGrabber <T extends RealType<T>> extends IndependentFeatureA
 		LocalizableByDimCursor<T> targetCursor = crop.createLocalizableByDimCursor();
 		if (img.getNumDimensions() > 2) {
 			int slice = 0;
-			slice = Math.round(spot.getFeature(Feature.POSITION_Z) / calibration[2]);
+			slice = Math.round(spot.getFeature(SpotFeature.POSITION_Z) / calibration[2]);
 			sourceCursor.setPosition(slice, 2);
 		}
 		
@@ -87,7 +87,7 @@ public class SpotIconGrabber <T extends RealType<T>> extends IndependentFeatureA
 	}
 
 	@Override
-	public Feature getFeature() {
+	public SpotFeature getFeature() {
 		return null;
 	}
 }

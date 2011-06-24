@@ -11,7 +11,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.features.SpotIconGrabber;
+import fiji.plugin.trackmate.features.spot.SpotIconGrabber;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 import fiji.plugin.trackmate.util.TMUtils;
 

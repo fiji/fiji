@@ -38,7 +38,7 @@ public class SpotImp implements Spot {
 	public static int IDcounter = 0;
 	
 	/** Store the individual features, and their values. */
-	private EnumMap<Feature, Float> features = new EnumMap<Feature, Float>(Feature.class);
+	private EnumMap<SpotFeature, Float> features = new EnumMap<SpotFeature, Float>(SpotFeature.class);
 	/** A user-supplied name for this spot. */
 	private String name;
 	/** This spot ID */
@@ -99,7 +99,7 @@ public class SpotImp implements Spot {
 		SpotImp newSpot = new SpotImp();
 		// Deal with features
 		Float val;
-		for(Feature key : features.keySet()) {
+		for(SpotFeature key : features.keySet()) {
 			val = features.get(key);
 			if (null != val)
 				val = new Float(val);
@@ -158,7 +158,7 @@ public class SpotImp implements Spot {
 			s.append("Spot: "+name+"\n");
 		
 		// Frame
-		s.append("Frame: "+getFeature(Feature.POSITION_T)+'\n');
+		s.append("Frame: "+getFeature(SpotFeature.POSITION_T)+'\n');
 
 		// Coordinates
 		float[] coordinates = getPosition(null);
@@ -173,7 +173,7 @@ public class SpotImp implements Spot {
 		else {
 			s.append("Feature list:\n");
 			float val;
-			for (Feature key : features.keySet()) {
+			for (SpotFeature key : features.keySet()) {
 				s.append("\t"+key.toString()+": ");
 				val = features.get(key);
 				if (val >= 1e4)
@@ -201,27 +201,27 @@ public class SpotImp implements Spot {
 	
 	
 	@Override
-	public EnumMap<Feature, Float> getFeatures() {
+	public EnumMap<SpotFeature, Float> getFeatures() {
 		return features;
 	}
 	
 	@Override
-	public final Float getFeature(final Feature feature) {
+	public final Float getFeature(final SpotFeature feature) {
 		return features.get(feature);
 	}
 	
 	@Override
-	public final void putFeature(final Feature feature, final float value) {
+	public final void putFeature(final SpotFeature feature, final float value) {
 		features.put(feature, value);
 	}
 
 	@Override
-	public Float diffTo(Spot s, Feature feature) {
+	public Float diffTo(Spot s, SpotFeature feature) {
 		return getFeature(feature) - s.getFeature(feature);
 	}
 	
 	@Override
-	public Float normalizeDiffTo(Spot s, Feature feature) {
+	public Float normalizeDiffTo(Spot s, SpotFeature feature) {
 		final Float a = getFeature(feature);
 		final Float b = s.getFeature(feature);
 		return Math.abs(a-b)/((a+b)/2);
@@ -232,7 +232,7 @@ public class SpotImp implements Spot {
 		Float sumSquared = 0f;
 		Float thisVal, otherVal;
 		
-		for (Feature f : POSITION_FEATURES) {
+		for (SpotFeature f : POSITION_FEATURES) {
 			thisVal = getFeature(f);
 			otherVal = s.getFeature(f);
 			sumSquared += ( otherVal - thisVal ) * ( otherVal - thisVal ); 

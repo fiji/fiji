@@ -26,7 +26,7 @@ import javax.swing.table.JTableHeader;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
@@ -59,7 +59,7 @@ class InfoPane extends JPanel implements TrackMateSelectionView, TrackMateSelect
 
 	private JTable table;
 	private JScrollPane scrollTable;
-	private FeaturePlotSelectionPanel<Feature> featureSelectionPanel;
+	private FeaturePlotSelectionPanel<SpotFeature> featureSelectionPanel;
 	private boolean doHighlightSelection = true;
 	private TrackMateModel model;
 
@@ -126,9 +126,9 @@ class InfoPane extends JPanel implements TrackMateSelectionView, TrackMateSelect
 		for (Spot spot : spots) {
 			if (null == spot)
 				continue;
-			Object[] columnData = new Object[Feature.values().length];
+			Object[] columnData = new Object[SpotFeature.values().length];
 			for (int i = 0; i < columnData.length; i++) 
-				columnData[i] = String.format("%.1f", spot.getFeature(Feature.values()[i]));
+				columnData[i] = String.format("%.1f", spot.getFeature(SpotFeature.values()[i]));
 			dm.addColumn(spot.toString(), columnData);
 		}
 		table.setModel(dm);
@@ -166,10 +166,10 @@ class InfoPane extends JPanel implements TrackMateSelectionView, TrackMateSelect
 
 		@SuppressWarnings("serial")
 		AbstractListModel lm = new AbstractListModel() {
-			String headers[] = new String[Feature.values().length];
+			String headers[] = new String[SpotFeature.values().length];
 			{
 				for(int i=0; i<headers.length; i++)
-					headers[i] = Feature.values()[i].shortName();			    	  
+					headers[i] = SpotFeature.values()[i].shortName();			    	  
 			}
 
 			public int getSize() {
@@ -203,14 +203,14 @@ class InfoPane extends JPanel implements TrackMateSelectionView, TrackMateSelect
 		scrollTable.getViewport().setOpaque(false);
 		scrollTable.setVisible(false); // for now
 
-		featureSelectionPanel = new FeaturePlotSelectionPanel<Feature>(Feature.POSITION_T);
+		featureSelectionPanel = new FeaturePlotSelectionPanel<SpotFeature>(SpotFeature.POSITION_T);
 
 		setLayout(new BorderLayout());
 		add(scrollTable, BorderLayout.CENTER);
 		add(featureSelectionPanel, BorderLayout.SOUTH);
 	}
 
-	public FeaturePlotSelectionPanel<Feature> getFeatureSelectionPanel() {
+	public FeaturePlotSelectionPanel<SpotFeature> getFeatureSelectionPanel() {
 		return featureSelectionPanel;
 	}
 

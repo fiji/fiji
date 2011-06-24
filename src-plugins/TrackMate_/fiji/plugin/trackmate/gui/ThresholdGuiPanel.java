@@ -27,8 +27,8 @@ import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import fiji.plugin.trackmate.Feature;
-import fiji.plugin.trackmate.FeatureFilter;
+import fiji.plugin.trackmate.SpotFeature;
+import fiji.plugin.trackmate.SpotFilter;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
@@ -58,12 +58,12 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	private JButton jButtonAddThreshold;
 	private JPanel jPanelButtons;
 
-	private Stack<ThresholdPanel<Feature>> thresholdPanels = new Stack<ThresholdPanel<Feature>>();
+	private Stack<ThresholdPanel<SpotFeature>> thresholdPanels = new Stack<ThresholdPanel<SpotFeature>>();
 	private Stack<Component> struts = new Stack<Component>();
-	private EnumMap<Feature, double[]> featureValues = new EnumMap<Feature, double[]>(Feature.class);
+	private EnumMap<SpotFeature, double[]> featureValues = new EnumMap<SpotFeature, double[]>(SpotFeature.class);
 	private int newFeatureIndex;
 	
-	private List<FeatureFilter> featureThresholds = new ArrayList<FeatureFilter>();
+	private List<SpotFilter> featureThresholds = new ArrayList<SpotFilter>();
 	private ArrayList<ChangeListener> changeListeners = new ArrayList<ChangeListener>();
 	
 	
@@ -80,7 +80,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	 * CONSTRUCTORS
 	 */
 
-	public ThresholdGuiPanel(EnumMap<Feature, double[]> featureValues, List<FeatureFilter> featureThresholds) {
+	public ThresholdGuiPanel(EnumMap<SpotFeature, double[]> featureValues, List<SpotFilter> featureThresholds) {
 		super();
 		this.featureValues = featureValues;
 		initGUI();
@@ -88,7 +88,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 			
 			if (null != featureThresholds) {
 				
-				for (FeatureFilter ft : featureThresholds)
+				for (SpotFilter ft : featureThresholds)
 					addThresholdPanel(ft);
 				if (featureThresholds.isEmpty())
 					newFeatureIndex = 0;
@@ -99,7 +99,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 		}
 	}
 	
-	public ThresholdGuiPanel(EnumMap<Feature, double[]> featureValues) {
+	public ThresholdGuiPanel(EnumMap<SpotFeature, double[]> featureValues) {
 		this(featureValues, null);
 	}
 	
@@ -116,9 +116,9 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	 */
 	@Override
 	public void stateChanged(ChangeEvent e) {
-		featureThresholds = new ArrayList<FeatureFilter>(thresholdPanels.size());
-		for (ThresholdPanel<Feature> tp : thresholdPanels) {
-			featureThresholds.add(new FeatureFilter(tp.getKey(), new Float(tp.getThreshold()), tp.isAboveThreshold()));
+		featureThresholds = new ArrayList<SpotFilter>(thresholdPanels.size());
+		for (ThresholdPanel<SpotFeature> tp : thresholdPanels) {
+			featureThresholds.add(new SpotFilter(tp.getKey(), new Float(tp.getThreshold()), tp.isAboveThreshold()));
 		}
 		fireThresholdChanged(e);
 	}
@@ -126,7 +126,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	/**
 	 * Return the thresholds currently set by this GUI.
 	 */
-	public List<FeatureFilter> getFeatureThresholds() {
+	public List<SpotFilter> getFeatureThresholds() {
 		return featureThresholds;
 	}
 	
@@ -135,7 +135,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	 * Return the feature selected in the "Set color by feature" comb-box. 
 	 * Return <code>null</code> if the item "Default" is selected.
 	 */
-	public Feature getColorByFeature() {
+	public SpotFeature getColorByFeature() {
 		return jPanelSpotColorGUI.setColorByFeature;
 	}
 	
@@ -171,18 +171,18 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	}
 	
 	public void addThresholdPanel() {
-		addThresholdPanel(Feature.values()[newFeatureIndex]);		
+		addThresholdPanel(SpotFeature.values()[newFeatureIndex]);		
 	}
 	
-	public void addThresholdPanel(FeatureFilter threshold) {
+	public void addThresholdPanel(SpotFilter threshold) {
 		if (null == threshold)
 			return;
-		ThresholdPanel<Feature> tp = new ThresholdPanel<Feature>(featureValues, threshold.feature);
+		ThresholdPanel<SpotFeature> tp = new ThresholdPanel<SpotFeature>(featureValues, threshold.feature);
 		tp.setThreshold(threshold.value);
 		tp.setAboveThreshold(threshold.isAbove);		
 		tp.addChangeListener(this);
 		newFeatureIndex++;
-		if (newFeatureIndex >= Feature.values().length) 
+		if (newFeatureIndex >= SpotFeature.values().length) 
 			newFeatureIndex = 0;
 		Component strut = Box.createVerticalStrut(5);
 		struts.push(strut);
@@ -194,13 +194,13 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	}
 		
 	
-	public void addThresholdPanel(Feature feature) {
+	public void addThresholdPanel(SpotFeature feature) {
 		if (null == featureValues)
 			return;
-		ThresholdPanel<Feature> tp = new ThresholdPanel<Feature>(featureValues, feature);
+		ThresholdPanel<SpotFeature> tp = new ThresholdPanel<SpotFeature>(featureValues, feature);
 		tp.addChangeListener(this);
 		newFeatureIndex++;
-		if (newFeatureIndex >= Feature.values().length) 
+		if (newFeatureIndex >= SpotFeature.values().length) 
 			newFeatureIndex = 0;
 		Component strut = Box.createVerticalStrut(5);
 		struts.push(strut);
@@ -213,7 +213,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	
 	private void removeThresholdPanel() {
 		try {
-			ThresholdPanel<Feature> tp = thresholdPanels.pop();
+			ThresholdPanel<SpotFeature> tp = thresholdPanels.pop();
 			tp.removeChangeListener(this);
 			Component strut = struts.pop();
 			jPanelAllThresholds.remove(strut);
@@ -316,7 +316,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 		Spot spot;
 		for (int i = 0; i < NSPOT; i++) {
 			spot = new SpotImp(new float[] {0, 0, 0});
-			for (Feature feature : Feature.values())
+			for (SpotFeature feature : SpotFeature.values())
 				spot.putFeature(feature, (float) (rn.nextGaussian()+5));
 			spots.add(spot);
 		}

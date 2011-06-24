@@ -15,7 +15,7 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 
@@ -154,7 +154,7 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 		TreeMap<Float, Spot> spotQuality = new TreeMap<Float, Spot>();
 		spots = convertToSpots(centeredExtrema, calibration, downsampleFactors);
 		for (int i = 0; i < spots.size(); i++) {
-			spots.get(i).putFeature(Feature.QUALITY, extremaValues.get(i));
+			spots.get(i).putFeature(SpotFeature.QUALITY, extremaValues.get(i));
 			spotQuality.put(extremaValues.get(i), spots.get(i));
 		}
 		
