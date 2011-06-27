@@ -17,10 +17,6 @@ import fiji.plugin.trackmate.Spot;
  */
 public class SpotFeatureFacade <T extends RealType<T>> {
 	
-	/*
-	 * CONSTRUCTORS
-	 */
-	
 	private Image<T> rawImage;
 	private float[] calibration;
 	/** The number of radiuses to use in the {@link RadiusEstimator} feature analyzer. */
@@ -36,15 +32,15 @@ public class SpotFeatureFacade <T extends RealType<T>> {
 	/** Hold all the feature analyzers this facade deals with. */
 	private ArrayList<SpotFeatureAnalyzer> featureAnalyzers;
 	private SpotIconGrabber<T> imageGrabber;
+	
+	/*
+	 * CONSTRUCTORS
+	 */
 
 	public SpotFeatureFacade(Image<T> rawImage, float[] calibration) {
 		this.rawImage = rawImage;
 		this.calibration = calibration;
 		initFeatureAnalyzer();
-	}
-	
-	public SpotFeatureFacade(Image<T> rawImage) {
-		this(rawImage, rawImage.getCalibration());
 	}
 	
 	/*
