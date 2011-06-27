@@ -2,6 +2,7 @@ package fiji.plugin.trackmate;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -16,6 +17,13 @@ public class TrackCollection implements Iterable<Set<DefaultWeightedEdge>>, List
 
 	private SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph;
 	private List<Set<DefaultWeightedEdge>> trackEdges;
+	private List<Set<Spot>> trackSpots;
+	/**
+	 * Feature storage. We use a List of Map as a 2D Map. The list maps each track to its feature map.
+	 * We use the same index that for {@link #trackEdges} and {@link #trackSpots}.
+	 * The feature map maps each {@link TrackFeature} to its float value for the selected track. 
+	 */
+	private List<EnumMap<TrackFeature, Float>> features;
 
 	/*
 	 * CONSTRUCTOR
@@ -26,8 +34,9 @@ public class TrackCollection implements Iterable<Set<DefaultWeightedEdge>>, List
 	 */
 	public TrackCollection(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph) {
 		this.graph = graph;
-		List<Set<Spot>> trackSpots = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets();
+		this.trackSpots = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets();
 		this.trackEdges = new ArrayList<Set<DefaultWeightedEdge>>(trackSpots.size());
+		initFeatureMap();
 		
 		for(Set<Spot> spotTrack : trackSpots) {
 			Set<DefaultWeightedEdge> spotEdge = new HashSet<DefaultWeightedEdge>();
@@ -44,11 +53,43 @@ public class TrackCollection implements Iterable<Set<DefaultWeightedEdge>>, List
 	public TrackCollection(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph, List<Set<DefaultWeightedEdge>> tracks) {
 		this.graph = graph;
 		this.trackEdges = tracks;
+		initFeatureMap();
 	}
+	
+	
+	/*
+	 * FEATURES
+	 */
+	
+	public void putFeature(final int trackIndex, final TrackFeature feature, final Float value) {
+		features.get(trackIndex).put(feature, value);
+	}
+	
+	/*
+	 * GETTERS / SETTERS
+	 */
+	
+	public Set<Spot> getTrackSpot(int index) {
+		return trackSpots.get(index);
+	}
+	
+	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> getGraph() {
+		return graph;
+	}
+	
 	
 	/*
 	 * UTILITY METHODS
 	 */
+	
+	/**
+	 * Return an iterator that iterates over the tracks as a set of spots. This class privileges tracks
+	 * seen as a set of {@link DefaultWeightedEdge}s; this method is here to also have it as a collection
+	 * of spots.
+	 */
+	public Iterator<Set<Spot>> spotIterator() {
+		return trackSpots.iterator();
+	}
 	
 	/**
 	 * Return an array of exactly 2 spots which are the 2 vertices of the given edge.
@@ -70,6 +111,22 @@ public class TrackCollection implements Iterable<Set<DefaultWeightedEdge>>, List
 		}
 		return spots;
 	}
+	
+	/*
+	 * PRIVATE METHODS
+	 */
+	
+	/**
+	 * Instantiate an empty feature 2D map.
+	 */
+	private void initFeatureMap() {
+		this.features = new ArrayList<EnumMap<TrackFeature,Float>>(trackEdges.size());
+		for (int i = 0; i < trackEdges.size(); i++) {
+			EnumMap<TrackFeature, Float> featureMap = new EnumMap<TrackFeature, Float>(TrackFeature.class);
+			features.add(featureMap);
+		}
+	}
+	
 	
 	/*
 	 * ITERABLE
@@ -193,5 +250,6 @@ public class TrackCollection implements Iterable<Set<DefaultWeightedEdge>>, List
 	public List<Set<DefaultWeightedEdge>> subList(int fromIndex, int toIndex) {
 		return trackEdges.subList(fromIndex, toIndex);
 	}
+
 
 }

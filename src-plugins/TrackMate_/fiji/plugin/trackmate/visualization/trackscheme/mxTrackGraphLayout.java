@@ -31,7 +31,7 @@ import com.mxgraph.util.mxUtils;
 import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.tracking.TrackSplitter;
+import fiji.plugin.trackmate.util.TrackSplitter;
 
 /**
  * This {@link mxGraphLayout} arranges cells on a graph in lanes corresponding to tracks. 

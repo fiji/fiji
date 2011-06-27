@@ -33,59 +33,7 @@ public enum SpotFeature {
 	ELLIPSOIDFIT_AXISTHETA_A,
 	ELLIPSOIDFIT_AXISTHETA_B,
 	ELLIPSOIDFIT_AXISTHETA_C	;
-	
-	public enum Dimension {
-		NONE,
-		QUALITY,
-		INTENSITY,
-		INTENSITY_SQUARED,
-		POSITION,
-		SIZE,   // we separate size and dimension so that x,y,z are plotted on a different graph from spot sizes
-		TIME,
-		ANGLE;
-	}
-	
-	public Dimension getDimension() {
-		switch(this) {
-		case POSITION_X:
-		case POSITION_Y:
-		case POSITION_Z:
-			return  Dimension.POSITION;
-		case QUALITY:
-			return Dimension.QUALITY;
-		case MORPHOLOGY:
-		case CONTRAST:
-		case KURTOSIS:
-		case SKEWNESS:
-		default:
-			return Dimension.NONE;
-		case MEAN_INTENSITY:
-		case MEDIAN_INTENSITY:
-		case MIN_INTENSITY:
-		case MAX_INTENSITY:
-		case TOTAL_INTENSITY:
-		case STANDARD_DEVIATION:
-			return Dimension.INTENSITY;
-		case VARIANCE:
-			return Dimension.INTENSITY_SQUARED;
-		case ELLIPSOIDFIT_AXISPHI_A:
-		case ELLIPSOIDFIT_AXISPHI_B:
-		case ELLIPSOIDFIT_AXISPHI_C:
-		case ELLIPSOIDFIT_AXISTHETA_A:
-		case ELLIPSOIDFIT_AXISTHETA_B:
-		case ELLIPSOIDFIT_AXISTHETA_C:
-			return Dimension.ANGLE;
-		case ELLIPSOIDFIT_SEMIAXISLENGTH_A:
-		case ELLIPSOIDFIT_SEMIAXISLENGTH_B:
-		case ELLIPSOIDFIT_SEMIAXISLENGTH_C:
-		case ESTIMATED_DIAMETER:
-		case RADIUS:
-			return Dimension.SIZE;
-		case POSITION_T:
-			return Dimension.TIME;		
-		}
-	}
-	
+
 	public String toString() {
 		switch(this) {
 		case POSITION_X:
@@ -205,6 +153,47 @@ public enum SpotFeature {
 			return "Var.";
 		default:
 			return null;
+		}
+	}
+	
+	public Dimension getDimension() {
+		switch (this) {
+		case POSITION_X:
+		case POSITION_Y:
+		case POSITION_Z:
+			return  Dimension.POSITION;
+		case QUALITY:
+			return Dimension.QUALITY;
+		case MORPHOLOGY:
+		case CONTRAST:
+		case KURTOSIS:
+		case SKEWNESS:
+		default:
+			return Dimension.NONE;
+		case MEAN_INTENSITY:
+		case MEDIAN_INTENSITY:
+		case MIN_INTENSITY:
+		case MAX_INTENSITY:
+		case TOTAL_INTENSITY:
+		case STANDARD_DEVIATION:
+			return Dimension.INTENSITY;
+		case VARIANCE:
+			return Dimension.INTENSITY_SQUARED;
+		case ELLIPSOIDFIT_AXISPHI_A:
+		case ELLIPSOIDFIT_AXISPHI_B:
+		case ELLIPSOIDFIT_AXISPHI_C:
+		case ELLIPSOIDFIT_AXISTHETA_A:
+		case ELLIPSOIDFIT_AXISTHETA_B:
+		case ELLIPSOIDFIT_AXISTHETA_C:
+			return Dimension.ANGLE;
+		case ELLIPSOIDFIT_SEMIAXISLENGTH_A:
+		case ELLIPSOIDFIT_SEMIAXISLENGTH_B:
+		case ELLIPSOIDFIT_SEMIAXISLENGTH_C:
+		case ESTIMATED_DIAMETER:
+		case RADIUS:
+			return Dimension.SIZE;
+		case POSITION_T:
+			return Dimension.TIME;		
 		}
 	}
 

@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.tracking;
+package fiji.plugin.trackmate.util;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -27,11 +27,11 @@ public class TrackSplitter {
 	public static final int MERGING_POINT 		= 64;
 	public static final int COMPLEX_POINT		= 128;
 	public static final int NOT_IN_GRAPH		= 256; 
-	
-	public static final int MERGING_EVENT		= MERGING_POINT + MERGING_END;
-	public static final int SPLITTING_EVENT		= SPLITTING_POINT + SPLITTING_START;
-	public static final int TERMINATION_EVENT	= BRANCH_END + BRANCH_START;
-	public static final int BRANCHING_EVENT 	= BRANCH_START + SPLITTING_EVENT;
+//	
+//	public static final int MERGING_EVENT		= MERGING_POINT + MERGING_END;
+//	public static final int SPLITTING_EVENT		= SPLITTING_POINT + SPLITTING_START;
+//	public static final int TERMINATION_EVENT	= BRANCH_END + BRANCH_START;
+//	public static final int BRANCHING_EVENT 	= BRANCH_START + SPLITTING_EVENT;
 	
 	
 	private UndirectedGraph<Spot, DefaultWeightedEdge> graph; 

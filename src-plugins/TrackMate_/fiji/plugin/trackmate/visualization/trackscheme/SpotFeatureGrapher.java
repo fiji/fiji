@@ -31,8 +31,8 @@ import org.jfree.data.xy.XYSeriesCollection;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
+import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.SpotFeature;
-import fiji.plugin.trackmate.SpotFeature.Dimension;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
@@ -74,7 +74,7 @@ public class SpotFeatureGrapher extends JFrame {
 		String xAxisLabel = xFeature.shortName() + " (" + TMUtils.getUnitsFor(xFeature.getDimension(), settings)+")";
 		
 		// Find how many different dimensions
-		HashSet<SpotFeature.Dimension> dimensions = new HashSet<SpotFeature.Dimension>();
+		HashSet<Dimension> dimensions = new HashSet<Dimension>();
 		{
 			for (SpotFeature yFeature : yFeatures) 
 				dimensions.add(yFeature.getDimension());
