@@ -1021,6 +1021,51 @@ static struct string *get_parent_directory(const char *path)
 	return string_initf("%.*s", (int)(slash - path), path);
 }
 
+/* Splash screen */
+
+static void (*SplashClose)(void);
+
+struct string *get_splashscreen_lib_path(void)
+{
+#if defined(WIN32)
+	return string_initf("%s/bin/splashscreen.dll", get_jre_home());
+#elif defined(__linux__)
+	return string_initf("%s/lib/%s/libsplashscreen.so", get_jre_home(), sizeof(void *) == 8 ? "amd64" : "i386");
+#else
+	return NULL;
+#endif
+}
+
+static void show_splash(void)
+{
+	const char *image_path = fiji_path("images/icon.png");
+	struct string *lib_path = get_splashscreen_lib_path();
+	void *splashscreen;
+	int (*SplashInit)(void);
+	int (*SplashLoadFile)(const char *path);
+	int (*SplashSetFileJarName)(const char *file_path, const char *jar_path);
+
+	if (!lib_path)
+		return;
+	splashscreen = dlopen(lib_path->buffer, RTLD_LAZY);
+	if (!splashscreen) {
+		string_release(lib_path);
+		return;
+	}
+	SplashInit = dlsym(splashscreen, "SplashInit");
+	SplashLoadFile = dlsym(splashscreen, "SplashLoadFile");
+	SplashSetFileJarName = dlsym(splashscreen, "SplashSetFileJarName");
+	SplashClose = dlsym(splashscreen, "SplashClose");
+	if (!SplashInit || !SplashLoadFile || !SplashSetFileJarName || !SplashClose)
+		return;
+
+	SplashInit();
+	SplashLoadFile(image_path);
+	SplashSetFileJarName(image_path, fiji_path("jars/Fiji.jar"));
+
+	string_release(lib_path);
+}
+
 /*
  * On Linux, JDK5 does not find the library path with libmlib_image.so,
  * so we have to add that explicitely to the LD_LIBRARY_PATH.
@@ -2599,6 +2644,8 @@ static int start_ij(void)
 		args = prepare_ij_options(env, &options.ij_options);
 		(*env)->CallStaticVoidMethodA(env, instance,
 				method, (jvalue *)&args);
+		if (SplashClose)
+			SplashClose();
 		if ((*vm)->DetachCurrentThread(vm))
 			error("Could not detach current thread");
 		/* This does not return until ImageJ exits */
@@ -2641,6 +2688,8 @@ static int start_ij(void)
 			string_setf(buffer, "%s/bin/%s", java_home_env, get_java_command());
 		}
 		options.java_options.list[0] = buffer->buffer;
+		if (SplashClose)
+			SplashClose();
 #ifndef WIN32
 		if (execvp(buffer->buffer, options.java_options.list))
 			error("Could not launch system-wide Java (%s)", strerror(errno));
@@ -3294,5 +3343,6 @@ int main(int argc, char **argv, char **e)
 	memcpy(main_argv_backup, main_argv, size);
 	main_argc_backup = argc;
 
+	show_splash();
 	return start_ij();
 }
