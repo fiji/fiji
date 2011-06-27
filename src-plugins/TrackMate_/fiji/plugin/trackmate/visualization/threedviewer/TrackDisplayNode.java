@@ -1,8 +1,9 @@
 package fiji.plugin.trackmate.visualization.threedviewer;
 
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.SpotFeature;
+import fiji.plugin.trackmate.TrackCollection;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import ij3d.ContentNode;
 import ij3d.TimelapseListener;
@@ -25,16 +26,15 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Tuple3d;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
 
 public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 
-	/** The graph containing the connectivity. */
-	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph;
+	/** The collection containing the connectivity. */
+	protected TrackCollection tracks;
 	/** The spots indexed by frame. */
 	protected SpotCollection spots;
 	/** The list of tracks. */
-	protected List<Set<Spot>> tracks;
+	protected List<Set<Spot>> trackSpots;
 	/** Hold the color and transparency of all spots for a given track. */
 	protected Map<Set<Spot>, Color> colors;
 
@@ -57,13 +57,13 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	 */
 
 	public TrackDisplayNode(
-			SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph, 
+			TrackCollection tracks, 
 			SpotCollection spots, 
-			List<Set<Spot>> tracks, 
+			List<Set<Spot>> trackSpots, 
 			Map<Set<Spot>, Color> colors) {
-		this.graph = graph;
-		this.spots = spots;
 		this.tracks = tracks;
+		this.spots = spots;
+		this.trackSpots = trackSpots;
 		this.colors = colors;
 
 		for(int frame : spots.keySet())
@@ -169,7 +169,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	public void setColor(final Set<Spot> track, final Color color) {
 		Set<DefaultWeightedEdge> edges;
 		for(Spot spot : track) {
-			edges = graph.edgesOf(spot);
+			edges = tracks.edgesOf(spot);
 			for(DefaultWeightedEdge edge : edges)
 				setColor(edge, color);
 		}
@@ -218,7 +218,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	private void makeMeshes() {
 
 		// All edges
-		Set<DefaultWeightedEdge> allEdges = graph.edgeSet();
+		Set<DefaultWeightedEdge> allEdges = tracks.edgeSet();
 
 		// Holder for coordinates (array ref will not be used, just its elements)
 		float[] coordinates = new float[3];
@@ -230,11 +230,11 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		int index = 0;
 		for(DefaultWeightedEdge edge : allEdges) {
 			// Find source and target
-			Spot target = graph.getEdgeTarget(edge);
-			Spot source = graph.getEdgeSource(edge);
+			Spot target = tracks.getEdgeTarget(edge);
+			Spot source = tracks.getEdgeSource(edge);
 			// Find track it belongs to
 			Set<Spot> parentTrack = null;
-			for (Set<Spot> track : tracks) 
+			for (Set<Spot> track : trackSpots) 
 				if (track.contains(source)) {
 					parentTrack = track;
 					break;
@@ -286,12 +286,12 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	@Override
 	public void getCenter(Tuple3d center) {
 		double x = 0, y = 0, z = 0;
-		for (Spot spot : graph.vertexSet()) {
+		for (Spot spot : tracks.vertexSet()) {
 			x += spot.getFeature(SpotFeature.POSITION_X);
 			y += spot.getFeature(SpotFeature.POSITION_Y);
 			z += spot.getFeature(SpotFeature.POSITION_Z);
 		}
-		int nspot = graph.vertexSet().size();
+		int nspot = tracks.vertexSet().size();
 		x /= nspot;
 		y /= nspot;
 		z /= nspot;
@@ -303,7 +303,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		double ymax = Double.NEGATIVE_INFINITY;
 		double zmax = Double.NEGATIVE_INFINITY;
 		float radius;
-		for (Spot spot : graph.vertexSet()) {
+		for (Spot spot : tracks.vertexSet()) {
 			radius = spot.getFeature(SpotFeature.RADIUS);
 			if (xmax < spot.getFeature(SpotFeature.POSITION_X) + radius)
 				xmax = spot.getFeature(SpotFeature.POSITION_X) + radius;
@@ -324,7 +324,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		double ymin = Double.POSITIVE_INFINITY;
 		double zmin = Double.POSITIVE_INFINITY;
 		float radius;
-		for (Spot spot : graph.vertexSet()) {
+		for (Spot spot : tracks.vertexSet()) {
 			radius = spot.getFeature(SpotFeature.RADIUS);
 			if (xmin > spot.getFeature(SpotFeature.POSITION_X) - radius)
 				xmin = spot.getFeature(SpotFeature.POSITION_X) - radius;

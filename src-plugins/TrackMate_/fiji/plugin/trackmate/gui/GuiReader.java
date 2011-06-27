@@ -16,14 +16,12 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.jdom.DataConversionException;
 import org.jdom.JDOMException;
-import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
 
-import fiji.plugin.trackmate.SpotFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.SpotFilter;
+import fiji.plugin.trackmate.TrackCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.TrackMateFrameController.GuiState;
@@ -310,7 +308,7 @@ public class GuiReader {
 		
 
 		{ // Try reading the tracks 
-			SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph = null; 
+			TrackCollection trackGraph = null; 
 			try {
 				trackGraph = reader.getTracks(model.getFilteredSpots());
 			} catch (DataConversionException e) {
@@ -333,7 +331,7 @@ public class GuiReader {
 			}
 			
 			logger.log("  Reading tracks done.\n");
-			model.setTrackGraph(trackGraph, false);
+			model.setTracks(trackGraph, false);
 		}
 		
 		view.setModel(model);

@@ -91,8 +91,7 @@ public class TmXmlReader implements TmXmlKeys {
 		model.setSpots(allSpots, false);
 		model.setFilteredSpots(filteredSpots, false);
 		// Tracks
-		SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph = getTracks(filteredSpots);
-		TrackCollection tracks = new TrackCollection(trackGraph);
+		TrackCollection tracks = getTracks(filteredSpots);
 		model.setTracks(tracks, false);
 		
 		return model;
@@ -328,7 +327,7 @@ public class TmXmlReader implements TmXmlKeys {
 	 * @throws DataConversionException  if the attribute values are not formatted properly in the file.
 	 */
 	@SuppressWarnings("unchecked")
-	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> getTracks(SpotCollection filteredSpots) throws DataConversionException {
+	public TrackCollection getTracks(SpotCollection filteredSpots) throws DataConversionException {
 		
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
 		if (null == allTracksElement)
@@ -384,7 +383,7 @@ public class TmXmlReader implements TmXmlKeys {
 			}
 		}
 		
-		return trackGraph;
+		return new TrackCollection(trackGraph);
 	}
 	
 	public ImagePlus getImage()  {

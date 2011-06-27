@@ -18,12 +18,12 @@ import javax.vecmath.Color3f;
 import javax.vecmath.Point4f;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
-import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.SpotFeature;
+import fiji.plugin.trackmate.TrackCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
@@ -90,7 +90,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			universe.removeContent(SPOT_CONTENT_NAME);
 			universe.addContent(spotContent);
 		}
-		if (model.getTrackGraph() != null) {
+		if (model.getTracks() != null) {
 			trackContent = makeTrackContent();
 			universe.removeContent(TRACK_CONTENT_NAME);
 			universe.addContent(trackContent);
@@ -233,16 +233,17 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		HashMap<Set<Spot>, Color> colors = new HashMap<Set<Spot>, Color>();
 		float value;
 		int index = 0;
-		List<Set<Spot>> tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(model.getTrackGraph()).connectedSets();
+		TrackCollection tracks = model.getTracks();
+		List<Set<Spot>> trackSpots = tracks.getTrackSpots();
 		final InterpolatePaintScale colorMap = (InterpolatePaintScale) displaySettings.get(KEY_COLORMAP);
-		for(Set<Spot> track : tracks ) {
+		for(Set<Spot> track : trackSpots ) {
 			value = (float) index / tracks.size();
 			colors.put(track, colorMap.getPaint(value));
 			index++;
 		}
 		
 		// Prepare tracks instant
-		trackNode = new TrackDisplayNode(model.getTrackGraph(), model.getFilteredSpots(), tracks, colors);
+		trackNode = new TrackDisplayNode(tracks, model.getFilteredSpots(), trackSpots, colors);
 		universe.addTimelapseListener(trackNode);
 		
 		// Pass tracks instant to all instants

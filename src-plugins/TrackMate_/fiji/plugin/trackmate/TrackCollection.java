@@ -126,6 +126,15 @@ public class TrackCollection {
 	public Set<DefaultWeightedEdge> edgesOf(final Spot spot) {
 		return graph.edgesOf(spot); 
 	}
+	
+	public Set<DefaultWeightedEdge> edgeSet() {
+		return graph.edgeSet();
+	}
+	
+	public Set<Spot> vertexSet() {
+		return graph.vertexSet();
+	}
+
 
 	public DepthFirstIterator<Spot, DefaultWeightedEdge> getDepthFirstIterator(Spot start) {
 		return new DepthFirstIterator<Spot, DefaultWeightedEdge>(graph, start);
@@ -258,6 +267,8 @@ public class TrackCollection {
 			features.add(featureMap);
 		}
 	}
+
+
 
 
 	
