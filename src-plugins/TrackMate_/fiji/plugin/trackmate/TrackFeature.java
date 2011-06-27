@@ -5,14 +5,14 @@ public enum TrackFeature {
 	NUMBER_SPOTS,
 	NUMBER_MERGES,
 	NUMBER_SPLITS,
-	NUMBER_GAPS;
+	NUMBER_COMPLEX;
 	
 	
 	@Override
 	public String toString() {
 		switch (this) {
-		case NUMBER_GAPS:
-			return "Number of gaps";
+		case NUMBER_COMPLEX:
+			return "Complex points";
 		case NUMBER_MERGES:
 			return "Number of merge events";
 		case NUMBER_SPLITS:
@@ -28,8 +28,8 @@ public enum TrackFeature {
 	
 	public String shortName() {
 		switch (this) {
-		case NUMBER_GAPS:
-			return "Gaps";
+		case NUMBER_COMPLEX:
+			return "Complex";
 		case NUMBER_MERGES:
 			return "Merges";
 		case NUMBER_SPLITS:

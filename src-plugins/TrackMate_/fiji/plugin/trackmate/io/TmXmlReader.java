@@ -28,6 +28,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.TrackCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
@@ -91,7 +92,8 @@ public class TmXmlReader implements TmXmlKeys {
 		model.setFilteredSpots(filteredSpots, false);
 		// Tracks
 		SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph = getTracks(filteredSpots);
-		model.setTrackGraph(trackGraph, false);
+		TrackCollection tracks = new TrackCollection(trackGraph);
+		model.setTracks(tracks, false);
 		
 		return model;
 	}

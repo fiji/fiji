@@ -6,7 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -15,16 +14,15 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
-import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
 
-import fiji.plugin.trackmate.SpotFeature;
-import fiji.plugin.trackmate.SpotFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.SpotFeature;
+import fiji.plugin.trackmate.SpotFilter;
+import fiji.plugin.trackmate.TrackCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
@@ -32,11 +30,11 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.tracking.TrackerType;
 
 public class TmXmlWriter implements TmXmlKeys {
-	
+
 	/*
 	 * FIELD
 	 */
-	
+
 	private TrackMateModel model;
 	private Element root;
 	private Logger logger;
@@ -44,7 +42,7 @@ public class TmXmlWriter implements TmXmlKeys {
 	/*
 	 * CONSTRUCTORS
 	 */
-	
+
 	public TmXmlWriter(TrackMateModel model) {
 		this(model, null);
 	}
@@ -59,7 +57,7 @@ public class TmXmlWriter implements TmXmlKeys {
 	/*
 	 * PUBLIC METHODS
 	 */
-	
+
 
 	/**
 	 * Append the image info to the root {@link Document}.
@@ -68,7 +66,7 @@ public class TmXmlWriter implements TmXmlKeys {
 		echoBaseSettings();
 		echoImageInfo();		
 	}
-	
+
 	/**
 	 * Append the {@link SegmenterSettings} to the {@link Document}.
 	 */
@@ -82,7 +80,7 @@ public class TmXmlWriter implements TmXmlKeys {
 	public void appendTrackerSettings() {
 		echoTrackerSettings();
 	}
-	
+
 	/**
 	 * Append the initial threshold on quality to the {@link Document}. Because 
 	 * this initial threshold is not stored in the {@link TrackMateModel},
@@ -98,28 +96,28 @@ public class TmXmlWriter implements TmXmlKeys {
 	public void appendFeatureThresholds() {
 		echoThresholds();
 	}
-	
+
 	/**
 	 * Append the spot list to the  {@link Document}.
 	 */
 	public void appendSpots() {
 		echoAllSpots();
 	}
-	
+
 	/**
 	 * Append the spot selection to the  {@link Document}.	
 	 */
 	public void appendSpotSelection() {
 		echoSpotSelection();
 	}
-	
+
 	/**
 	 * Append the tracks to the  {@link Document}.
 	 */
 	public void appendTracks() {
 		echoTracks();
 	}
-	
+
 	/**
 	 * Write the document to the given file.
 	 */
@@ -129,11 +127,11 @@ public class TmXmlWriter implements TmXmlKeys {
 		XMLOutputter outputter = new XMLOutputter(Format.getPrettyFormat());
 		outputter.output(document, new FileOutputStream(file));
 	}
-	
+
 	/*
 	 * PRIVATE METHODS
 	 */
-	
+
 	private void echoBaseSettings() {
 		Settings settings = model.getSettings();
 		Element settingsElement = new Element(SETTINGS_ELEMENT_KEY);
@@ -149,7 +147,7 @@ public class TmXmlWriter implements TmXmlKeys {
 		logger.log("  Appending base settings.\n");
 		return;
 	}
-	
+
 	private void echoSegmenterSettings() {
 		SegmenterSettings segSettings = model.getSettings().segmenterSettings;
 		SegmenterType type = segSettings.segmenterType;
@@ -165,7 +163,7 @@ public class TmXmlWriter implements TmXmlKeys {
 		logger.log("  Appending segmenter settings.\n");
 		return;
 	}
-	
+
 	private void echoTrackerSettings() {
 		TrackerSettings settings = model.getSettings().trackerSettings;
 		TrackerType type = settings.trackerType;
@@ -235,51 +233,38 @@ public class TmXmlWriter implements TmXmlKeys {
 		logger.log("  Appending tracker settings.\n");
 		return;
 	}
-	
+
 	private void echoTracks() {
-		SimpleWeightedGraph<Spot, DefaultWeightedEdge> trackGraph = model.getTrackGraph();
-		if (null == trackGraph)
+		TrackCollection tracks = model.getTracks();
+		if (null == tracks)
 			return;
-		
-		List<Set<Spot>> tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(trackGraph).connectedSets();
+
 		Element allTracksElement = new Element(TRACK_COLLECTION_ELEMENT_KEY);
-		Element trackElement;
-		Element edgeElement;
-		HashMap<Set<Spot>, Element> trackElements = new HashMap<Set<Spot>, Element>(tracks.size());
-		for(Set<Spot> track : tracks) {
-			trackElement = new Element(TRACK_ELEMENT_KEY);
-			trackElements.put(track, trackElement);
+
+		List<Set<DefaultWeightedEdge>> trackEdges = tracks.getTrackEdges();
+		for(Set<DefaultWeightedEdge> track : trackEdges) {
+			Element trackElement = new Element(TRACK_ELEMENT_KEY);
+
+			for (DefaultWeightedEdge edge : track) {
+
+				Spot source = tracks.getEdgeSource(edge);
+				Spot target = tracks.getEdgeTarget(edge);
+				double weight = tracks.getEdgeWeight(edge);
+				
+				Element edgeElement = new Element(TRACK_EDGE_ELEMENT_KEY);
+				edgeElement.setAttribute(TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, ""+source.ID());
+				edgeElement.setAttribute(TRACK_EDGE_TARGET_ATTRIBUTE_NAME, ""+target.ID());
+				edgeElement.setAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME, ""+weight);
+				
+				trackElement.addContent(edgeElement);
+			}
 			allTracksElement.addContent(trackElement);
 		}
-		
-		Set<DefaultWeightedEdge> edges = trackGraph.edgeSet();
-		Spot source, target;
-		double weight;
-		Set<Spot> track = null;
-		
-		for (DefaultWeightedEdge edge : edges) {
-			
-			source = trackGraph.getEdgeSource(edge);
-			target = trackGraph.getEdgeTarget(edge);
-			weight = trackGraph.getEdgeWeight(edge);
-			for (Set<Spot> t : tracks)
-				if (t.contains(source)) {
-					track = t;
-					break;
-				}
-				
-			edgeElement = new Element(TRACK_EDGE_ELEMENT_KEY);
-			edgeElement.setAttribute(TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, ""+source.ID());
-			edgeElement.setAttribute(TRACK_EDGE_TARGET_ATTRIBUTE_NAME, ""+target.ID());
-			edgeElement.setAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME, ""+weight);
-			trackElements.get(track).addContent(edgeElement);
-		}
-
 		root.addContent(allTracksElement);
 		logger.log("  Appending tracks.\n");
 		return;
 	}
-	
+
 	private void echoImageInfo() {
 		Settings settings = model.getSettings();
 		if (null == settings || null == settings.imp)
@@ -301,23 +286,23 @@ public class TmXmlWriter implements TmXmlKeys {
 		logger.log("  Appending image information.\n");
 		return;
 	}
-	
+
 	private void echoAllSpots() {		
 		SpotCollection allSpots = model.getSpots();
 		if (null == allSpots)
 			return;
 		List<Spot> spots;
-		
+
 		Element spotElement;
 		Element frameSpotsElement;
 		Element spotCollection = new Element(SPOT_COLLECTION_ELEMENT_KEY);
-		
+
 		for(int frame : allSpots.keySet()) {
-			
+
 			frameSpotsElement = new Element(SPOT_FRAME_COLLECTION_ELEMENT_KEY);
 			frameSpotsElement.setAttribute(FRAME_ATTRIBUTE_NAME, ""+frame);
 			spots = allSpots.get(frame);
-			
+
 			for (Spot spot : spots) {
 				spotElement = marshalSpot(spot);
 				frameSpotsElement.addContent(spotElement);
@@ -328,7 +313,7 @@ public class TmXmlWriter implements TmXmlKeys {
 		logger.log("  Appending spots.\n");
 		return;
 	}
-	
+
 	private void echoInitialThreshold(final Float qualityThreshold) {
 		Element itElement = new Element(INITIAL_THRESHOLD_ELEMENT_KEY);
 		itElement.setAttribute(THRESHOLD_FEATURE_ATTRIBUTE_NAME, SpotFeature.QUALITY.name());
@@ -338,10 +323,10 @@ public class TmXmlWriter implements TmXmlKeys {
 		logger.log("  Appending initial threshold.\n");
 		return;
 	}
-	
+
 	private void echoThresholds() {
 		List<SpotFilter> featureThresholds = model.getSpotFilters();
-		
+
 		Element allTresholdElement = new Element(THRESHOLD_COLLECTION_ELEMENT_KEY);
 		for (SpotFilter threshold : featureThresholds) {
 			Element thresholdElement = new Element(THRESHOLD_ELEMENT_KEY);
@@ -353,24 +338,24 @@ public class TmXmlWriter implements TmXmlKeys {
 		root.addContent(allTresholdElement);
 		logger.log("  Appending feature thresholds.\n");
 		return;
-		
+
 	}
-	
+
 	private void echoSpotSelection() {
 		SpotCollection selectedSpots =  model.getFilteredSpots();
 		if (null == selectedSpots)
 			return;
 		List<Spot> spots;
-		
+
 		Element spotIDElement, frameSpotsElement;
 		Element spotCollection = new Element(SELECTED_SPOT_ELEMENT_KEY);
-		
+
 		for(int frame : selectedSpots.keySet()) {
-			
+
 			frameSpotsElement = new Element(SELECTED_SPOT_COLLECTION_ELEMENT_KEY);
 			frameSpotsElement.setAttribute(FRAME_ATTRIBUTE_NAME, ""+frame);
 			spots = selectedSpots.get(frame);
-			
+
 			for(Spot spot : spots) {
 				spotIDElement = new Element(SPOT_ID_ELEMENT_KEY);
 				spotIDElement.setAttribute(SPOT_ID_ATTRIBUTE_NAME, ""+spot.ID());
@@ -383,7 +368,7 @@ public class TmXmlWriter implements TmXmlKeys {
 		logger.log("  Appending spot selection.\n");
 		return;
 	}
-	
+
 	private static final Element marshalSpot(final Spot spot) {
 		Collection<Attribute> attributes = new ArrayList<Attribute>();
 		Attribute IDattribute = new Attribute(SPOT_ID_ATTRIBUTE_NAME, ""+spot.ID());
@@ -399,7 +384,7 @@ public class TmXmlWriter implements TmXmlKeys {
 			featureAttribute = new Attribute(feature.name(), val.toString());
 			attributes.add(featureAttribute);
 		}
-		
+
 		Element spotElement = new Element(SPOT_ELEMENT_KEY);
 		spotElement.setAttributes(attributes);
 		return spotElement;

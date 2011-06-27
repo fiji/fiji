@@ -1,13 +1,12 @@
 package fiji.plugin.trackmate.features.track;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackCollection;
 
 public class TrackFeatureFacade {
 
-	private Settings settings;
 	private List<TrackFeatureAnalyzer> analyzers;
 	private TrackDurationAnalyzer durationAnalyzer;
 	private TrackBranchingAnalyzer branchingAnalyzer;
@@ -16,8 +15,7 @@ public class TrackFeatureFacade {
 	 * CONSTRUCTOR
 	 */
 	
-	public TrackFeatureFacade(final Settings settings) {
-		this.settings = settings;
+	public TrackFeatureFacade() {
 		initFeatureAnalyzers();
 	}
 	
@@ -35,7 +33,8 @@ public class TrackFeatureFacade {
 	 */
 
 	private void initFeatureAnalyzers() {
-		this.branchingAnalyzer = new TrackBranchingAnalyzer(settings.dt);
+		this.analyzers = new ArrayList<TrackFeatureAnalyzer>(2);
+		this.branchingAnalyzer = new TrackBranchingAnalyzer();
 		this.durationAnalyzer = new TrackDurationAnalyzer();
 		
 		analyzers.add(branchingAnalyzer);

@@ -2,16 +2,11 @@ package fiji.plugin.trackmate.tracking.test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.Set;
 
 import org.jdom.JDOMException;
-import org.jgrapht.alg.ConnectivityInspector;
-import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TrackCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.LAPTracker;
@@ -76,36 +71,28 @@ public class LAPTrackerTestDrive {
 		if (!lap.process())
 			System.err.println("Error in process: "+lap.getErrorMessage());
 		long end = System.currentTimeMillis();
-		model.setTrackGraph(lap.getTrackGraph(), false);
+		model.setTracks(lap.getTracks(), false);
 		
 	
 		// 3 - Print out results for testing		
 		System.out.println();
 		System.out.println();
 		System.out.println();
-		SimpleWeightedGraph<Spot,DefaultWeightedEdge> graph = lap.getTrackGraph();
-		ConnectivityInspector<Spot, DefaultWeightedEdge> inspector = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph);
-		List<Set<Spot>> tracks = inspector.connectedSets();
+		TrackCollection tracks = lap.getTracks();
 		System.out.println("Found " + tracks.size() + " final tracks.");
 		System.out.println("Whole tracking done in "+(end-start)+" ms.");
 		System.out.println();
-//		int counter = 0;
-//		for(Set<Spot> track : tracks) {
-//			System.out.println("Track "+counter);
-//			System.out.print("Spots in frames: \n");
-//			for(Spot spot : track)
-//				System.out.println(Util.printCoordinates(spot.getPosition(null)) + ", Frame [" + spot.getFeature(Feature.POSITION_T) + "]");
-//			System.out.println();
-//			counter++;
-//		}
-		
+
+
 		// 4 - Detailed info
 //		System.out.println("Segment costs:");
 //		LAPUtils.echoMatrix(lap.getSegmentCosts());
 		
-//		System.out.println();
-//		System.out.println("Fragment costs for 1st frame:");
-//		LAPUtils.echoMatrix(lap.getLinkingCosts().get(0));
+		System.out.println("Track features: ");
+		for (int i = 0; i < tracks.size(); i++) {
+			System.out.println(tracks.toString(i));
+		}
+		
 		
 		// 5 - Display tracks
 		// Load Image

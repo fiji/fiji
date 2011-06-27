@@ -14,7 +14,7 @@ public class TrackDurationAnalyzer implements TrackFeatureAnalyzer{
 	public void process(TrackCollection tracks) {
 		// I love brute force.
 		for(int index=0; index<tracks.size(); index++) {
-			Set<Spot> track = tracks.getTrackSpot(index);
+			Set<Spot> track = tracks.getTrackSpots(index);
 			float minT = Float.POSITIVE_INFINITY;
 			float maxT = Float.NEGATIVE_INFINITY;
 			float t;

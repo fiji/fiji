@@ -1,20 +1,28 @@
 package fiji.plugin.trackmate;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Set;
 
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
+import org.jgrapht.traverse.DepthFirstIterator;
 
-public class TrackCollection implements Iterable<Set<DefaultWeightedEdge>>, List<Set<DefaultWeightedEdge>> {
+import fiji.plugin.trackmate.features.track.TrackFeatureFacade;
 
+public class TrackCollection {
+
+	public static final boolean DEBUG = true;
+	
+	/**
+	 * The mother graph, from which all subsequent fields are calculated. 
+	 * This graph is not made accessible to the outside world. Editing it
+	 * must be trough the 
+	 */
 	private SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph;
 	private List<Set<DefaultWeightedEdge>> trackEdges;
 	private List<Set<Spot>> trackSpots;
@@ -24,38 +32,104 @@ public class TrackCollection implements Iterable<Set<DefaultWeightedEdge>>, List
 	 * The feature map maps each {@link TrackFeature} to its float value for the selected track. 
 	 */
 	private List<EnumMap<TrackFeature, Float>> features;
+	/**
+	 * Counter for the depth of nested transactions. Each call to beginUpdate
+	 * increments this counter and each call to endUpdate decrements it. When
+	 * the counter reaches 0, the transaction is closed and the respective
+	 * events are fired. Initial value is 0.
+	 */
+	private int updateLevel = 0;
+
+	private TrackFeatureFacade featureFacade;
+
 
 	/*
-	 * CONSTRUCTOR
+	 * CONSTRUCTORS
 	 */
+	
+	/**
+	 * Construct an empty {@link TrackCollection}
+	 */
+	public TrackCollection() {
+		this.graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		this.featureFacade = new TrackFeatureFacade();
+	}
 	
 	/**
 	 * Construct a {@link TrackCollection} that contains all the tracks of the given graph.
 	 */
 	public TrackCollection(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph) {
 		this.graph = graph;
-		this.trackSpots = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets();
-		this.trackEdges = new ArrayList<Set<DefaultWeightedEdge>>(trackSpots.size());
-		initFeatureMap();
-		
-		for(Set<Spot> spotTrack : trackSpots) {
-			Set<DefaultWeightedEdge> spotEdge = new HashSet<DefaultWeightedEdge>();
-			for(Spot spot : spotTrack)
-				spotEdge.addAll(graph.edgesOf(spot));
-			trackEdges.add(spotEdge);
+		this.featureFacade = new TrackFeatureFacade();
+		refresh();
+	}
+	
+	
+	/*
+	 * GRAPH MODIFICATION
+	 */
+	
+	public void beginUpdate()	{
+		updateLevel++;
+		if (DEBUG)
+			System.out.println("[TrackCollection] #beginUpdate: increasing update level to "+updateLevel+".");
+	}
+	
+	public void endUpdate()	{
+		updateLevel--;
+		if (DEBUG)
+			System.out.println("[TrackCollection] #endUpdate: decreasing update level to "+updateLevel+".");
+		if (updateLevel == 0) {
+			if (DEBUG)
+				System.out.println("[TrackCollection] #endUpdate: update level is 0, calling refresh.");
+			refresh();
 		}
 	}
 	
-	/**
-	 * Construct a {@link TrackCollection} that contains only the given track. Each track <b>must</b> belong
-	 * to the given graph, otherwise NPEs will be fired when trying to iterate over them or retrieving spots.
-	 */
-	public TrackCollection(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph, List<Set<DefaultWeightedEdge>> tracks) {
-		this.graph = graph;
-		this.trackEdges = tracks;
-		initFeatureMap();
+	public void addVertex(final Spot spot) {
+		graph.addVertex(spot);
 	}
 	
+	public boolean removeVertex(final Spot spot) {
+		return graph.removeVertex(spot);
+	}
+	
+	public void addEdge(final Spot source, final Spot target, final double weight) {
+		DefaultWeightedEdge edge = graph.addEdge(source, target);
+		graph.setEdgeWeight(edge, weight);
+	}
+	
+	public DefaultWeightedEdge removeEdge(final Spot source, final Spot target) {
+		return graph.removeEdge(source, target);
+	}
+	
+	public Spot getEdgeSource(final DefaultWeightedEdge edge) {
+		return graph.getEdgeSource(edge);
+	}
+
+	public Spot getEdgeTarget(final DefaultWeightedEdge edge) {
+		return graph.getEdgeTarget(edge);
+	}
+	
+	public double getEdgeWeight(final DefaultWeightedEdge edge) {
+		return graph.getEdgeWeight(edge);
+	}
+	
+	public boolean containsVertex(final Spot spot) {
+		return graph.containsVertex(spot);
+	}
+	
+	public boolean containsEdge(final Spot source, final Spot target) {
+		return graph.containsEdge(source, target);
+	}
+	
+	public Set<DefaultWeightedEdge> edgesOf(final Spot spot) {
+		return graph.edgesOf(spot); 
+	}
+
+	public DepthFirstIterator<Spot, DefaultWeightedEdge> getDepthFirstIterator(Spot start) {
+		return new DepthFirstIterator<Spot, DefaultWeightedEdge>(graph, start);
+	}
 	
 	/*
 	 * FEATURES
@@ -65,31 +139,57 @@ public class TrackCollection implements Iterable<Set<DefaultWeightedEdge>>, List
 		features.get(trackIndex).put(feature, value);
 	}
 	
+	public void computeFeatures() {
+		featureFacade.processAllFeatures(this);
+	}
+	
 	/*
-	 * GETTERS / SETTERS
+	 * GETTERS
 	 */
 	
-	public Set<Spot> getTrackSpot(int index) {
+	public Set<Spot> getTrackSpots(int index) {
 		return trackSpots.get(index);
 	}
-	
-	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> getGraph() {
-		return graph;
+
+	public Set<DefaultWeightedEdge> getTrackEdges(int index) {
+		return trackEdges.get(index);
 	}
 	
+	public List<Set<Spot>> getTrackSpots() {
+		return trackSpots;
+	}
 	
+	public List<Set<DefaultWeightedEdge>> getTrackEdges() {
+		return trackEdges;
+	}
+
+
 	/*
-	 * UTILITY METHODS
+	 * TRACK CONTENT METHODS
 	 */
 	
+	public int size() {
+		return trackSpots.size();
+	}
+	
 	/**
-	 * Return an iterator that iterates over the tracks as a set of spots. This class privileges tracks
-	 * seen as a set of {@link DefaultWeightedEdge}s; this method is here to also have it as a collection
-	 * of spots.
+	 * Return an iterator that iterates over the tracks as a set of spots. 
 	 */
 	public Iterator<Set<Spot>> spotIterator() {
 		return trackSpots.iterator();
 	}
+
+	/**
+	 * Return an iterator that iterates over the tracks as a set of edges. 
+	 */
+	public Iterator<Set<DefaultWeightedEdge>> edgeIterator() {
+		return trackEdges.iterator();
+	}
+
+	
+	/*
+	 * UTILITIES
+	 */
 	
 	/**
 	 * Return an array of exactly 2 spots which are the 2 vertices of the given edge.
@@ -112,9 +212,41 @@ public class TrackCollection implements Iterable<Set<DefaultWeightedEdge>>, List
 		return spots;
 	}
 	
+	public String toString(int i) {
+		String str = "Track "+i+": ";
+		for (TrackFeature feature : TrackFeature.values())
+			str += feature.shortName() + " = " + features.get(i).get(feature) +", ";			
+		return str;
+	}
+
+	
 	/*
 	 * PRIVATE METHODS
 	 */
+	
+	/**
+	 * Regenerate fields derived from the mother graph.
+	 */
+	private void refresh() {
+		if (DEBUG)
+			System.out.println("[TrackCollection] #refresh(): building individual tracks.");
+		this.trackSpots = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets();
+		this.trackEdges = new ArrayList<Set<DefaultWeightedEdge>>(trackSpots.size());
+		initFeatureMap();
+		
+		for(Set<Spot> spotTrack : trackSpots) {
+			Set<DefaultWeightedEdge> spotEdge = new HashSet<DefaultWeightedEdge>();
+			for(Spot spot : spotTrack)
+				spotEdge.addAll(graph.edgesOf(spot));
+			trackEdges.add(spotEdge);
+		}
+
+		if (DEBUG)
+			System.out.println("[TrackCollection] #refresh(): re-calculating features.");
+		initFeatureMap();
+		featureFacade.processAllFeatures(this);
+	
+	}
 	
 	/**
 	 * Instantiate an empty feature 2D map.
@@ -126,130 +258,7 @@ public class TrackCollection implements Iterable<Set<DefaultWeightedEdge>>, List
 			features.add(featureMap);
 		}
 	}
+
+
 	
-	
-	/*
-	 * ITERABLE
-	 */
-	
-	@Override
-	public Iterator<Set<DefaultWeightedEdge>> iterator() {
-		return trackEdges.iterator();
-	}
-	
-	/*
-	 * LIST
-	 */
-
-	@Override
-	public int size() {
-		return trackEdges.size();
-	}
-
-	@Override
-	public boolean isEmpty() {
-		return (trackEdges == null) || trackEdges.isEmpty();
-	}
-
-	@Override
-	public boolean contains(Object o) {
-		return trackEdges.contains(o);
-	}
-
-	@Override
-	public Object[] toArray() {
-		return trackEdges.toArray();
-	}
-
-	@Override
-	public <T> T[] toArray(T[] a) {
-		return trackEdges.toArray(a);
-	}
-
-	@Override
-	public boolean add(Set<DefaultWeightedEdge> e) {
-		return trackEdges.add(e);
-	}
-
-	@Override
-	public boolean remove(Object o) {
-		return trackEdges.remove(o);
-	}
-
-	@Override
-	public boolean containsAll(Collection<?> c) {
-		return trackEdges.containsAll(c);
-	}
-
-	@Override
-	public boolean addAll(Collection<? extends Set<DefaultWeightedEdge>> c) {
-		return trackEdges.addAll(c);
-	}
-
-	@Override
-	public boolean addAll(int index, Collection<? extends Set<DefaultWeightedEdge>> c) {
-		return trackEdges.addAll(index, c);
-	}
-
-	@Override
-	public boolean removeAll(Collection<?> c) {
-		return trackEdges.removeAll(c);
-	}
-
-	@Override
-	public boolean retainAll(Collection<?> c) {
-		return trackEdges.retainAll(c);
-	}
-
-	@Override
-	public void clear() {
-		trackEdges.clear();
-	}
-
-	@Override
-	public Set<DefaultWeightedEdge> get(int index) {
-		return trackEdges.get(index);
-	}
-
-	@Override
-	public Set<DefaultWeightedEdge> set(int index, Set<DefaultWeightedEdge> element) {
-		return trackEdges.set(index, element);
-	}
-
-	@Override
-	public void add(int index, Set<DefaultWeightedEdge> element) {
-		trackEdges.add(index, element);
-	}
-
-	@Override
-	public Set<DefaultWeightedEdge> remove(int index) {
-		return trackEdges.remove(index);
-	}
-
-	@Override
-	public int indexOf(Object o) {
-		return trackEdges.indexOf(o);
-	}
-
-	@Override
-	public int lastIndexOf(Object o) {
-		return trackEdges.lastIndexOf(o);
-	}
-
-	@Override
-	public ListIterator<Set<DefaultWeightedEdge>> listIterator() {
-		return trackEdges.listIterator();
-	}
-
-	@Override
-	public ListIterator<Set<DefaultWeightedEdge>> listIterator(int index) {
-		return trackEdges.listIterator(index);
-	}
-
-	@Override
-	public List<Set<DefaultWeightedEdge>> subList(int fromIndex, int toIndex) {
-		return trackEdges.subList(fromIndex, toIndex);
-	}
-
-
 }

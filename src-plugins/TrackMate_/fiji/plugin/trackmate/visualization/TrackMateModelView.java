@@ -98,7 +98,8 @@ public interface TrackMateModelView {
 
 	/**
 	 * Track display mode where the only part of the tracks close to the current
-	 * time-point are drawn backward and forward. How much can be seen is 
+	 * time-point are drawn backward and forward. Edges away from current time point
+	 * are faded in the background. How much can be seen is 
 	 * defined by the value of {@link #KEY_TRACK_DISPLAY_DEPTH}.
 	 */
 	public static final int TRACK_DISPLAY_MODE_LOCAL = 1;
@@ -116,6 +117,24 @@ public interface TrackMateModelView {
 	 * defined by the value of {@link #KEY_TRACK_DISPLAY_DEPTH}.
 	 */
 	public static final int TRACK_DISPLAY_MODE_LOCAL_FORWARD = 3;
+
+	/**
+	 * Track display mode similar to {@link #TRACK_DISPLAY_MODE_LOCAL}, except
+	 * that for the sake of speed, edges are not faded.
+	 */
+	public static final int TRACK_DISPLAY_MODE_LOCAL_QUICK = 4;
+
+	/**
+	 * Track display mode similar to {@link #TRACK_DISPLAY_MODE_LOCAL_FORWARD}, except
+	 * that for the sake of speed, edges are not faded.
+	 */
+	public static final int TRACK_DISPLAY_MODE_LOCAL_FORWARD_QUICK = 5;
+
+	/**
+	 * Track display mode similar to {@link #TRACK_DISPLAY_MODE_LOCAL_BACKWARD}, except
+	 * that for the sake of speed, edges are not faded.
+	 */
+	public static final int TRACK_DISPLAY_MODE_LOCAL_BACKWARD_QUICK = 6;
 
 
 	/*
