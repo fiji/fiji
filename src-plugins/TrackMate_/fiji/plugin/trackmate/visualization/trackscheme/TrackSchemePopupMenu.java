@@ -10,8 +10,6 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JPopupMenu;
 
-import org.jgrapht.graph.DefaultWeightedEdge;
-
 import com.mxgraph.model.mxCell;
 import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
@@ -19,6 +17,7 @@ import com.mxgraph.util.mxEventSource.mxIEventListener;
 
 import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TrackCollection;
 
 public class TrackSchemePopupMenu extends JPopupMenu {
 
@@ -108,6 +107,8 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 						spotsInTime.put(spot.getFeature(SpotFeature.POSITION_T), spot);
 					}
 					// Then link them in this order
+					final TrackCollection tracks = frame.getModel().getTracks();
+					tracks.beginUpdate();
 					try {
 						frame.getGraph().getModel().beginUpdate();
 						Iterator<Float> it = spotsInTime.keySet().iterator();
@@ -119,17 +120,17 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 							currentTime = it.next();
 							currentSpot = spotsInTime.get(currentTime);
 							// Link if not linked already
-							if (frame.getModel().getTrackGraph().containsEdge(previousSpot, currentSpot))
+							if (tracks.containsEdge(previousSpot, currentSpot))
 								continue;
 							// This will update the mxGraph view
-							DefaultWeightedEdge edge = frame.getGraphT().addEdge(previousSpot, currentSpot);
-							frame.getGraphT().setEdgeWeight(edge, -1); // Default Weight
+							tracks.addEdge(previousSpot, currentSpot, -1);
 							// Update the MODEL graph as well
-							frame.getModel().getTrackGraph().addEdge(previousSpot, currentSpot, edge);
+//							frame.getGraph().addEdge(edge, parent, source, target, index)
 							previousSpot = currentSpot;
 						}
 					} finally {
 						frame.getGraph().getModel().endUpdate();
+						tracks.endUpdate();
 					}
 				}
 			};

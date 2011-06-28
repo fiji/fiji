@@ -16,8 +16,6 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
-import org.jgrapht.UndirectedGraph;
-import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
 
@@ -28,9 +26,10 @@ import com.mxgraph.util.mxConstants;
 import com.mxgraph.util.mxRectangle;
 import com.mxgraph.util.mxUtils;
 
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.TrackCollection;
 import fiji.plugin.trackmate.util.TrackSplitter;
 
 /**
@@ -50,7 +49,6 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
 	private Color[] trackColorArray;
 	private TreeMap<Float, Integer> rows;
-	private UndirectedGraph<Spot, DefaultWeightedEdge> jGraphT;
 	/**
 	 * The spatial calibration in X. We need it to compute cell's height from spot radiuses.
 	 */
@@ -67,14 +65,16 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 	 * We need this to be able to purge them from the graph when we redo a layout.	 */
 	private ArrayList<mxCell> branchCells = new ArrayList<mxCell>();
 
+	private TrackCollection tracks;
+
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public mxTrackGraphLayout(UndirectedGraph<Spot, DefaultWeightedEdge> jGraphT, JGraphXAdapter<Spot, DefaultWeightedEdge> graph, float dx) {
+	public mxTrackGraphLayout(final TrackCollection tracks, final JGraphXAdapter<Spot, DefaultWeightedEdge> graph, float dx) {
 		super(graph);
 		this.graph = graph;
-		this.jGraphT = jGraphT;
+		this.tracks = tracks;
 		this.dx = dx;
 	}
 
@@ -82,7 +82,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 	public void execute(Object parent) {
 		
 		// Compute tracks
-		List<Set<Spot>> tracks = new ConnectivityInspector<Spot, DefaultWeightedEdge>(jGraphT).connectedSets();
+		List<Set<Spot>> trackSpots = tracks.getTrackSpots();
 
 		graph.getModel().beginUpdate();
 		try {
@@ -91,14 +91,14 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 			HashMap<Set<Spot>, Color> trackColors = new HashMap<Set<Spot>, Color>(tracks.size());
 			int counter = 0;
 			int ntracks = tracks.size();
-			for(Set<Spot> track : tracks) {
+			for(Set<Spot> track : trackSpots) {
 				trackColors.put(track, colorMap.getPaint((float) counter / (ntracks-1)));
 				counter++;
 			}
 
 			// Collect unique instants
 			SortedSet<Float> instants = new TreeSet<Float>();
-			for (Spot s : jGraphT.vertexSet())
+			for (Spot s : tracks.vertexSet())
 				instants.add(s.getFeature(SpotFeature.POSITION_T));
 
 			TreeMap<Float, Integer> columns = new TreeMap<Float, Integer>();
@@ -129,7 +129,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 			// To keep a reference of branch cells, if any
 			ArrayList<mxCell> newBranchCells = new ArrayList<mxCell>();
 						
-			for (Set<Spot> track : tracks) {
+			for (Set<Spot> track : trackSpots) {
 				
 				// Init track variables
 				trackIndex++;
@@ -145,7 +145,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 				Spot first = sortedTrack.first();
 								
 				// Loop over track child
-				DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = new DepthFirstIterator<Spot, DefaultWeightedEdge>(jGraphT, first);
+				DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = tracks.getDepthFirstIterator(first);
 				while(iterator.hasNext()) {
 					
 					Spot spot = iterator.next();
@@ -162,7 +162,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					int freeColumn = columns.get(instant) + 1;
 
 					// If we have no direct edge with the previous spot, we add 1 to the current column
-					if (previousSpot != null && !jGraphT.containsEdge(spot, previousSpot)) {
+					if (previousSpot != null && !tracks.containsEdge(spot, previousSpot)) {
 						currentColumn = currentColumn + 1;
 					}
 					previousSpot = spot;
@@ -198,7 +198,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 						graph.getModel().add(currentParent, edgeCell, 0);
 						
 						DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(edgeCell);
-						edgeCell.setValue(String.format("%.1f", jGraphT.getEdgeWeight(edge)));
+						edgeCell.setValue(String.format("%.1f", tracks.getEdgeWeight(edge)));
 						String edgeStyle = edgeCell.getStyle();
 						edgeStyle = mxUtils.setStyle(edgeStyle, mxConstants.STYLE_STROKECOLOR, trackColorStr);
 						graph.getModel().setStyle(edgeCell, edgeStyle);
@@ -219,7 +219,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 				if (doBranchGrouping ) {
 					
 					
-					ArrayList<ArrayList<Spot>> branches = new TrackSplitter(jGraphT).splitTrackInBranches(track);
+					ArrayList<ArrayList<Spot>> branches = new TrackSplitter(tracks).splitTrackInBranches(track);
 
 					int partIndex = 1;
 					

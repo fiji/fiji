@@ -31,6 +31,7 @@ import com.mxgraph.view.mxGraph;
 
 import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TrackCollection;
 
 public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventListener {
 	
@@ -53,7 +54,7 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		setZoomFactor(2.0);
 
 		instants = new TreeSet<Float>();
-		for (Spot s : frame.getModel().getTrackGraph().vertexSet())
+		for (Spot s : frame.getModel().getTracks().vertexSet())
 			instants.add(s.getFeature(SpotFeature.POSITION_T));
 		
 		connectionHandler.addListener(mxEvent.CONNECT, this);
@@ -333,26 +334,29 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		mxCell cell = (mxCell) obj;
 		DefaultWeightedEdge edge;
 		if (cell.isEdge()) {
-			frame.getGraph().getModel().beginUpdate();
+			final JGraphXAdapter<Spot, DefaultWeightedEdge> graph = frame.getGraph();
+			final TrackCollection tracks = frame.getModel().getTracks();
+			graph.getModel().beginUpdate();
+			tracks.beginUpdate();
 			try {
 				Spot source = frame.getGraph().getCellToVertexMap().get(cell.getSource());
 				Spot target = frame.getGraph().getCellToVertexMap().get(cell.getTarget());
 				// We add a new jGraphT edge to the underlying model
-				edge = frame.getGraphT().addEdge(source, target);
-				frame.getGraphT().setEdgeWeight(edge, -1);
+				edge = tracks.addEdge(source, target, -1);
 				// Then, remove the old JGraphX edge.
 				frame.getGraph().removeCells(new Object[] { cell });
 				evt.consume();
 			} finally {
-				frame.getGraph().getModel().endUpdate();
+				graph.getModel().endUpdate();
+				tracks.endUpdate();
 			}
 			// Then we do the update, and get the new JGraphX edge (through the map in the adapter) and change its value and style. Easy.
-			frame.getGraph().getModel().beginUpdate();
+			graph.getModel().beginUpdate();
 			try {
-				mxCell newEdgeCell = frame.getGraph().getEdgeToCellMap().get(edge);
+				mxCell newEdgeCell = graph.getEdgeToCellMap().get(edge);
 				newEdgeCell.setValue("New");
 			} finally {
-				frame.getGraph().getModel().endUpdate();
+				graph.getModel().endUpdate();
 			}
 		}
 	}

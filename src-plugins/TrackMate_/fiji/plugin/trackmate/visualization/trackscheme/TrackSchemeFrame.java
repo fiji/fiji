@@ -40,6 +40,7 @@ import com.mxgraph.view.mxPerimeter;
 import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TrackCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 import fiji.plugin.trackmate.TrackMateModelChangeListener;
@@ -73,7 +74,6 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	 * FIELDS
 	 */
 
-	private ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge> lGraph;
 	private Settings settings;
 	private JGraphXAdapter<Spot, DefaultWeightedEdge> graph;
 
@@ -148,7 +148,6 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		this.model.addTrackMateModelChangeListener(this);
 		this.model.addTrackMateSelectionChangeListener(this);
 		// Graph to mirror model
-		this.lGraph = new ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge>(model.getTrackGraph());
 		this.graph = createGraph();
 		this.settings = model.getSettings();
 		this.graphLayout = new mxTrackGraphLayout(lGraph, graph, settings.dx);
@@ -344,7 +343,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		if (spots.isEmpty())
 			return;
 
-		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, new ArrayList<Spot>(spots), model.getTrackGraph(), settings);
+		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, new ArrayList<Spot>(spots), model.getTracks(), settings);
 		grapher.setVisible(true);
 
 	}
@@ -424,7 +423,8 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 			@Override
 			public void invoke(Object sender, mxEventObject evt) {
 				
-				System.out.println("Source of event is "+sender.getClass());// DEBUG
+				if (DEBUG)
+					System.out.println("[TrackSchemeFrame] cells removed - Source of event is "+sender.getClass());
 				
 				// Separate spots from edges
 				Object[] objects = (Object[]) evt.getProperty("cells");
@@ -458,10 +458,20 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 					}
 				}
 				
-				// Clean listenable graph
-				lGraph.removeAllVertices(spotsToRemove);
-				lGraph.removeAllEdges(edgesToRemove);
-				
+				// Clean track collection
+				final TrackCollection tracks = model.getTracks();
+				tracks.beginUpdate();
+				try {
+
+					for (Spot spot : spotsToRemove) 
+						tracks.removeVertex(spot);
+					for (DefaultWeightedEdge edge : edgesToRemove)
+						tracks.removeEdge(edge);
+					
+				} finally {
+					tracks.endUpdate();
+				}
+
 				// Clean model
 				model.removeSpotFrom(spotsToRemove, fromFrames, true);
 			}
@@ -633,14 +643,6 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	 */
 	public JGraphXAdapter<Spot, DefaultWeightedEdge> getGraph() {
 		return graph;
-	}
-	
-	/**
-	 * Return the JGraphT listenable graph that bridges the track model and the JGraphX display.
-	 * @return
-	 */
-	public ListenableUndirectedWeightedGraph<Spot, DefaultWeightedEdge> getGraphT() {
-		return lGraph;
 	}
 	
 	public mxTrackGraphComponent getGraphComponent() {

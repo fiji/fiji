@@ -42,7 +42,14 @@ public class TrackCollection {
 
 	private TrackFeatureFacade featureFacade;
 
+	private List<TrackMateModelChangeListener> listeners = new ArrayList<TrackMateModelChangeListener>();
 
+	private List<Spot> spotsAdded = new ArrayList<Spot>();
+	private List<Spot> spotsRemoved = new ArrayList<Spot>();
+	private List<DefaultWeightedEdge> edgesAdded = new ArrayList<DefaultWeightedEdge>();
+	private List<DefaultWeightedEdge> edgesRemoved = new ArrayList<DefaultWeightedEdge>();
+	
+	
 	/*
 	 * CONSTRUCTORS
 	 */
@@ -64,6 +71,17 @@ public class TrackCollection {
 		refresh();
 	}
 	
+	/*
+	 * LISTENERS
+	 */
+	
+	public void addGraphListener(final TrackMateModelChangeListener listener) {
+		listeners.add(listener);
+	}
+
+	public boolean removeGraphListener(final TrackMateModelChangeListener listener) {
+		return listeners.remove(listener);
+	}
 	
 	/*
 	 * GRAPH MODIFICATION
@@ -86,22 +104,37 @@ public class TrackCollection {
 		}
 	}
 	
+	// Adding / Removing
+	
 	public void addVertex(final Spot spot) {
 		graph.addVertex(spot);
+		spotsAdded.add(spot);
 	}
 	
 	public boolean removeVertex(final Spot spot) {
+		spotsRemoved.add(spot);
 		return graph.removeVertex(spot);
 	}
 	
-	public void addEdge(final Spot source, final Spot target, final double weight) {
+	public DefaultWeightedEdge addEdge(final Spot source, final Spot target, final double weight) {
 		DefaultWeightedEdge edge = graph.addEdge(source, target);
 		graph.setEdgeWeight(edge, weight);
+		edgesAdded.add(edge);
+		return edge;
 	}
 	
 	public DefaultWeightedEdge removeEdge(final Spot source, final Spot target) {
-		return graph.removeEdge(source, target);
+		DefaultWeightedEdge edge = graph.removeEdge(source, target);
+		edgesRemoved.add(edge);
+		return edge;
 	}
+
+	public boolean removeEdge(final DefaultWeightedEdge edge) {
+		edgesRemoved.add(edge);
+		return graph.removeEdge(edge);
+	}
+	
+	// Questing graph 
 	
 	public Spot getEdgeSource(final DefaultWeightedEdge edge) {
 		return graph.getEdgeSource(edge);
@@ -255,6 +288,53 @@ public class TrackCollection {
 		initFeatureMap();
 		featureFacade.processAllFeatures(this);
 	
+		if (DEBUG)
+			System.out.println("[TrackCollection] #refresh(): firing events.");
+		// TWO events are fired: one for the spots, one for the edges
+		// Spots added & removed
+		if (!spotsAdded.isEmpty() && !spotsRemoved.isEmpty()) {
+			final List<Integer> spotFlags = new ArrayList<Integer>(spotsAdded.size() + spotsRemoved.size());
+			for (int i = 0; i < spotsAdded.size(); i++) 
+				spotFlags.add(TrackMateModelChangeEvent.FLAG_SPOT_ADDED);
+			for (int i = 0; i < spotsRemoved.size(); i++) 
+				spotFlags.add(TrackMateModelChangeEvent.FLAG_SPOT_REMOVED);
+			final List<Spot> spots = new ArrayList<Spot>(spotsAdded.size() + spotsRemoved.size());
+			spots.addAll(spotsAdded);
+			spots.addAll(spotsRemoved);
+			
+			final TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.SPOTS_MODIFIED);
+			event.setSpots(spots);
+			event.setSpotFlag(spotFlags);
+			for (final TrackMateModelChangeListener listener : listeners)
+				listener.modelChanged(event);
+			
+			spotsAdded.clear();
+			spotsRemoved.clear();
+		}
+
+		// Edges added & removed
+		if (!edgesAdded.isEmpty() && !edgesRemoved.isEmpty()) {
+			final List<Integer> edgeFlags = new ArrayList<Integer>(edgesAdded.size() + edgesRemoved.size());
+			for (int i = 0; i < edgesAdded.size(); i++) 
+				edgeFlags.add(TrackMateModelChangeEvent.FLAG_EDGE_ADDED);
+			for (int i = 0; i < edgesRemoved.size(); i++) 
+				edgeFlags.add(TrackMateModelChangeEvent.FLAG_EDGE_REMOVED);
+			final List<DefaultWeightedEdge> edges = new ArrayList<DefaultWeightedEdge>(edgesAdded.size() + edgesRemoved.size());
+			edges.addAll(edgesAdded);
+			edges.addAll(edgesRemoved);
+			
+			final TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_MODIFIED);
+			event.setEdges(edges);
+			event.setEdgeFlag(edgeFlags);
+			for (final TrackMateModelChangeListener listener : listeners)
+				listener.modelChanged(event);
+
+			edgesAdded.clear();
+			edgesRemoved.clear();
+		}
+		
+		
+		
 	}
 	
 	/**
@@ -267,6 +347,7 @@ public class TrackCollection {
 			features.add(featureMap);
 		}
 	}
+
 
 
 
