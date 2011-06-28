@@ -1717,11 +1717,20 @@ static char *quote_win32(char *option)
 }
 #endif
 
+static const char *get_java_command(void)
+{
+#ifdef WIN32
+	if (!console_opened)
+		return "javaw";
+#endif
+	return "java";
+}
+
 static void show_commandline(struct options *options)
 {
 	int j;
 
-	printf("java");
+	printf("%s", get_java_command());
 	for (j = 0; j < options->java_options.nr; j++) {
 		struct string *quoted = quote_if_necessary(options->java_options.list[j]);
 		printf(" %s", quoted->buffer);
@@ -2623,13 +2632,13 @@ static int start_ij(void)
 		add_option_copy(&options, main_class, 0);
 		append_string_array(&options.java_options, &options.ij_options);
 		append_string(&options.java_options, NULL);
-		prepend_string(&options.java_options, "java");
+		prepend_string(&options.java_options, strdup(get_java_command()));
 
-		string_set(buffer, "java");
+		string_set(buffer, get_java_command());
 		java_home_env = getenv("JAVA_HOME");
 		if (java_home_env && strlen(java_home_env) > 0) {
 			error("Found that JAVA_HOME was: '%s'", java_home_env);
-			string_setf(buffer, "%s/bin/java", java_home_env);
+			string_setf(buffer, "%s/bin/%s", java_home_env, get_java_command());
 		}
 		options.java_options.list[0] = buffer->buffer;
 #ifndef WIN32
