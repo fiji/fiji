@@ -29,7 +29,7 @@ import fiji.plugin.trackmate.util.TMUtils;
  */
 public class TrackMateModel {		
 
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 
 	/** Contain the segmentation result, un-filtered.*/
 	protected SpotCollection spots;
@@ -441,10 +441,10 @@ public class TrackMateModel {
 	 */
 	public void setTracks(final TrackCollection tracks, final boolean doNotify) {
 		if (this.tracks != null) 
-			this.tracks.removeGraphListener(trackListener);
+			this.tracks.removeTrackMateModelChangeListener(trackListener);
 		this.tracks = tracks;
 		this.trackListener = new TrackListener();
-		this.tracks.addGraphListener(trackListener);
+		this.tracks.addTrackMateModelChangeListener(trackListener);
 		if (doNotify) {
 			final TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_COMPUTED);
 			for (TrackMateModelChangeListener listener : modelChangeListeners)
