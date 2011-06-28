@@ -344,20 +344,22 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 				// We add a new jGraphT edge to the underlying model
 				edge = model.addEdge(source, target, -1);
 				// Then, remove the old JGraphX edge.
-				frame.getGraph().removeCells(new Object[] { cell }); 
+//				frame.getGraph().removeCells(new Object[] { cell }); 
 				evt.consume();
 			} finally {
 				graph.getModel().endUpdate();
 				model.endUpdate();
+				model.clearEdgeSelection();
 			}
+			
 			// Then we do the update, and get the new JGraphX edge (through the map in the adapter) and change its value and style. Easy.
-			graph.getModel().beginUpdate();
-			try {
-				mxCell newEdgeCell = graph.getEdgeToCellMap().get(edge);
-				newEdgeCell.setValue("New");
-			} finally {
-				graph.getModel().endUpdate();
-			}
+//			graph.getModel().beginUpdate();
+//			try {
+//				mxCell newEdgeCell = graph.getEdgeToCellMap().get(edge);
+//				newEdgeCell.setValue("New");
+//			} finally {
+//				graph.getModel().endUpdate();
+//			}
 		}
 	}
 

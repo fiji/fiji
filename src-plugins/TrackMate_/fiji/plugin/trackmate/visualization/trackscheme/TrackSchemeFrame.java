@@ -54,6 +54,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	 * CONSTANTS
 	 */
 	private static final boolean DEBUG = true;
+	private static final boolean DEBUG_SELECTION = false;
 	static final int Y_COLUMN_SIZE = 96;
 	static final int X_COLUMN_SIZE = 160;
 
@@ -161,7 +162,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 
 	@Override
 	public void selectionChanged(TrackMateSelectionChangeEvent event) {
-		if (DEBUG) 
+		if (DEBUG_SELECTION) 
 			System.out.println("[TrackSchemeFrame] selectionChanged: received event from "+event.getSource()+". Fire flag is "+doFireSelectionChangeEvent);
 		if (!doFireSelectionChangeEvent)
 			return;
@@ -241,51 +242,50 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 			for (int i = 0; i < graphComponent.getColumnWidths().length; i++)
 				targetColumn += graphComponent.getColumnWidths()[i];
 
+			if (event.getSpots() != null) {
+				for (Spot spot : event.getSpots() ) {
 
-			for (Spot spot : event.getSpots() ) {
+					if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_ADDED) {
 
-				if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_ADDED) {
+						// Instantiate JGraphX cell
+						cellAdded = new mxCell(spot.toString());
+						cellAdded.setId(null);
+						cellAdded.setVertex(true);
+						// Position it
+						float instant = spot.getFeature(SpotFeature.POSITION_T);
+						double x = (targetColumn-2) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
+						double y = (0.5 + graphComponent.getRowForInstant().get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2; 
+						int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(SpotFeature.RADIUS) / settings.dx));
+						height = Math.max(height, 12);
+						mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
+						cellAdded.setGeometry(geometry);
+						// Set its style
+						graph.getModel().setStyle(cellAdded, mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+spot.getImageString());
+						// Finally add it to the mxGraph
+						graph.addCell(cellAdded, graph.getDefaultParent());
+						// Echo the new cell to the maps
+						graph.getVertexToCellMap().put(spot, cellAdded);
+						graph.getCellToVertexMap().put(cellAdded, spot);
+						targetColumn++;
 
-					// Instantiate JGraphX cell
-					cellAdded = new mxCell(spot.toString());
-					cellAdded.setId(null);
-					cellAdded.setVertex(true);
-					// Position it
-					float instant = spot.getFeature(SpotFeature.POSITION_T);
-					double x = (targetColumn-2) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
-					double y = (0.5 + graphComponent.getRowForInstant().get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2; 
-					int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(SpotFeature.RADIUS) / settings.dx));
-					height = Math.max(height, 12);
-					mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
-					cellAdded.setGeometry(geometry);
-					// Set its style
-					graph.getModel().setStyle(cellAdded, mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+spot.getImageString());
-					// Finally add it to the mxGraph
-					graph.addCell(cellAdded, graph.getDefaultParent());
-					// Echo the new cell to the maps
-					graph.getVertexToCellMap().put(spot, cellAdded);
-					graph.getCellToVertexMap().put(cellAdded, spot);
-					targetColumn++;
+					} else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_MODIFIED) {
 
-				} else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_MODIFIED) {
+						mxCell cell = graph.getVertexToCellMap().get(spot);
+						String style = cell.getStyle();
+						style = mxUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64,"+spot.getImageString());
+						graph.getModel().setStyle(cell, style);
+						int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(SpotFeature.RADIUS) / settings.dx));
+						graph.getModel().getGeometry(cell).setHeight(height);
 
-					mxCell cell = graph.getVertexToCellMap().get(spot);
-					String style = cell.getStyle();
-					style = mxUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64,"+spot.getImageString());
-					graph.getModel().setStyle(cell, style);
-					int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(SpotFeature.RADIUS) / settings.dx));
-					graph.getModel().getGeometry(cell).setHeight(height);
+					}  else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_REMOVED) {
 
-				}  else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_REMOVED) {
+						mxCell cell = graph.getVertexToCellMap().get(spot);
+						cellsToRemove .add(cell);
+					}
 
-					mxCell cell = graph.getVertexToCellMap().get(spot);
-					cellsToRemove .add(cell);
 				}
-
+				graph.removeCells(cellsToRemove.toArray(), true);
 			}
-
-			graph.removeCells(cellsToRemove.toArray(), true);
-
 		} finally {
 			graph.getModel().endUpdate();
 		}
@@ -419,70 +419,66 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		// Set up listeners
 
 		// Cells removed from JGraphX
-//		graph.addListener(mxEvent.CELLS_REMOVED, new mxIEventListener() {
-//			@Override
-//			public void invoke(Object sender, mxEventObject evt) {
-//				
-//				if (DEBUG)
-//					System.out.println("[TrackSchemeFrame] cells removed - Source of event is "+sender.getClass());
-//				
-//				// Separate spots from edges
-//				Object[] objects = (Object[]) evt.getProperty("cells");
-//				ArrayList<Spot> spotsToRemove = new ArrayList<Spot>();
-//				ArrayList<Integer> fromFrames = new ArrayList<Integer>();
-//				ArrayList<DefaultWeightedEdge> edgesToRemove = new ArrayList<DefaultWeightedEdge>();
-//				for(Object obj : objects) {
-//					mxCell cell = (mxCell) obj;
-//					if (null != cell) {
-//						if (cell.isVertex()) {
-//							// Build list of removed spots 
-//							Spot spot = graph.getCellToVertexMap().get(cell);
-//							Integer frame = model.getSpots().getFrame(spot);
-//							if (frame == null) {
-//								// Already removed; second call to event, have to skip it
-//								return;
-//							}
-//							spotsToRemove.add(spot);
-//							fromFrames.add(frame);
-//							// Clean maps 
-//							graph.getVertexToCellMap().remove(spot);
-//							graph.getCellToVertexMap().remove(cell);
-//						} else if (cell.isEdge()) {
-//							// Build list of removed edges 
-//							DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(cell);
-//							edgesToRemove.add(edge);
-//							// Clean maps
-//							graph.getEdgeToCellMap().remove(edge);
-//							graph.getCellToEdgeMap().remove(cell);
-//						}
-//					}
-//				}
-//				
-//				// Clean track collection
-//				final TrackCollection tracks = model.getTracks();
-//				tracks.beginUpdate();
-//				try {
-//
-//					for (Spot spot : spotsToRemove) 
-//						tracks.removeVertex(spot);
-//					for (DefaultWeightedEdge edge : edgesToRemove)
-//						tracks.removeEdge(edge);
-//					
-//				} finally {
-//					tracks.endUpdate();
-//				}
-//
-//				// Clean model
-//				model.removeSpotFrom(spotsToRemove, fromFrames, true);
-//			}
-//		});
+		graph.addListener(mxEvent.CELLS_REMOVED, new mxIEventListener() {
+			@Override
+			public void invoke(Object sender, mxEventObject evt) {
+				
+				if (DEBUG)
+					System.out.println("[TrackSchemeFrame] cells removed - Source of event is "+sender.getClass());
+				
+				// Separate spots from edges
+				Object[] objects = (Object[]) evt.getProperty("cells");
+				ArrayList<Spot> spotsToRemove = new ArrayList<Spot>();
+				ArrayList<Integer> fromFrames = new ArrayList<Integer>();
+				ArrayList<DefaultWeightedEdge> edgesToRemove = new ArrayList<DefaultWeightedEdge>();
+				for(Object obj : objects) {
+					mxCell cell = (mxCell) obj;
+					if (null != cell) {
+						if (cell.isVertex()) {
+							// Build list of removed spots 
+							Spot spot = graph.getCellToVertexMap().get(cell);
+							Integer frame = model.getSpots().getFrame(spot);
+							if (frame == null) {
+								// Already removed; second call to event, have to skip it
+								return;
+							}
+							spotsToRemove.add(spot);
+							fromFrames.add(frame);
+							// Clean maps 
+							graph.getVertexToCellMap().remove(spot);
+							graph.getCellToVertexMap().remove(cell);
+						} else if (cell.isEdge()) {
+							// Build list of removed edges 
+							DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(cell);
+							edgesToRemove.add(edge);
+							// Clean maps
+							graph.getEdgeToCellMap().remove(edge);
+							graph.getCellToEdgeMap().remove(cell);
+						}
+					}
+				}
+				
+				// Clean model
+				model.beginUpdate();
+				try {
+					model.clearSelection();
+					for (Spot spot : spotsToRemove) 
+						model.removeSpotFrom(spot, null, false);
+					for (DefaultWeightedEdge edge : edgesToRemove)
+						model.removeEdge(edge);
+					
+				} finally {
+					model.endUpdate();
+				}
+			}
+		});
 
 		// Cell selection change
 		graph.getSelectionModel().addListener(
 				mxEvent.CHANGE, new mxIEventListener(){
 					@SuppressWarnings("unchecked")
 					public void invoke(Object sender, mxEventObject evt) {
-						if (DEBUG)
+						if (DEBUG_SELECTION)
 							System.out.println("[TrackSchemeFrame] selection changed by "+sender+". Fire event flag is "+doFireSelectionChangeEvent);
 						if (!doFireSelectionChangeEvent || sender != graph.getSelectionModel())
 							return;
@@ -588,7 +584,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 				}
 			}
 		}
-		if (DEBUG)
+		if (DEBUG_SELECTION)
 			System.out.println("[TrackMateModel] userChangeSelection: sending selection change to model.");
 		doFireSelectionChangeEvent = false;
 		model.addEdgeToSelection(edgesToAdd);

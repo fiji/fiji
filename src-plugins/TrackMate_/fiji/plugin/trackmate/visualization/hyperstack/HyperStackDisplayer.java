@@ -23,7 +23,7 @@ import fiji.util.gui.OverlayedImageCanvas;
 
 public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	ImagePlus imp;
 	OverlayedImageCanvas canvas;
 	float[] calibration;
@@ -79,12 +79,13 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 				}
 			}
 			break;
-			
+
 		case TrackMateModelChangeEvent.SPOTS_COMPUTED:
 			spotOverlay.computeSpotColors();
 			redoOverlay = true;
 			break;
 
+		case TrackMateModelChangeEvent.TRACKS_MODIFIED:
 		case TrackMateModelChangeEvent.TRACKS_COMPUTED:
 			trackOverlay.computeTrackColors();
 			redoOverlay = true;

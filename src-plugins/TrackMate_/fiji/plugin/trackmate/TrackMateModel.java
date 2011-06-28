@@ -74,6 +74,9 @@ public class TrackMateModel {
 	 * The feature map maps each {@link TrackFeature} to its float value for the selected track. 
 	 */
 	protected List<EnumMap<TrackFeature, Float>> trackFeatures;
+
+	// TRANSACTION MODEL
+
 	/**
 	 * Counter for the depth of nested transactions. Each call to beginUpdate
 	 * increments this counter and each call to endUpdate decrements it. When
@@ -81,6 +84,11 @@ public class TrackMateModel {
 	 * events are fired. Initial value is 0.
 	 */
 	private int updateLevel = 0;
+
+	private List<Spot> spotsAdded = new ArrayList<Spot>();
+	private List<Spot> spotsRemoved = new ArrayList<Spot>();
+	private List<DefaultWeightedEdge> edgesAdded = new ArrayList<DefaultWeightedEdge>();
+	private List<DefaultWeightedEdge> edgesRemoved = new ArrayList<DefaultWeightedEdge>();
 
 	// SELECTION
 
@@ -419,16 +427,50 @@ public class TrackMateModel {
 
 	public DefaultWeightedEdge addEdge(final Spot source, final Spot target, final double weight) {
 		DefaultWeightedEdge edge = graph.addEdge(source, target);
+		List<DefaultWeightedEdge> edgeToRemove = new ArrayList<DefaultWeightedEdge>(1);
+		List<Integer> edgeFlags = new ArrayList<Integer>(1);
+		edgeToRemove.add(edge);
+		edgeFlags.add(TrackMateModelChangeEvent.FLAG_EDGE_REMOVED);
+
+		TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_MODIFIED);
+		event.setEdgeFlag(edgeFlags);
+		event.setEdges(edgeToRemove);
+		for (TrackMateModelChangeListener listener : modelChangeListeners)
+			listener.modelChanged(event);
+
 		graph.setEdgeWeight(edge, weight);
 		return edge;
 	}
 
 	public DefaultWeightedEdge removeEdge(final Spot source, final Spot target) {
 		DefaultWeightedEdge edge = graph.removeEdge(source, target);
+
+		List<DefaultWeightedEdge> edgeToRemove = new ArrayList<DefaultWeightedEdge>(1);
+		List<Integer> edgeFlags = new ArrayList<Integer>(1);
+		edgeToRemove.add(edge);
+		edgeFlags.add(TrackMateModelChangeEvent.FLAG_EDGE_REMOVED);
+
+		TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_MODIFIED);
+		event.setEdgeFlag(edgeFlags);
+		event.setEdges(edgeToRemove);
+		for (TrackMateModelChangeListener listener : modelChangeListeners)
+			listener.modelChanged(event);
+
 		return edge;
 	}
 
 	public boolean removeEdge(final DefaultWeightedEdge edge) {
+		List<DefaultWeightedEdge> edgeToRemove = new ArrayList<DefaultWeightedEdge>(1);
+		List<Integer> edgeFlags = new ArrayList<Integer>(1);
+		edgeToRemove.add(edge);
+		edgeFlags.add(TrackMateModelChangeEvent.FLAG_EDGE_REMOVED);
+
+		TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_MODIFIED);
+		event.setEdgeFlag(edgeFlags);
+		event.setEdges(edgeToRemove);
+		for (TrackMateModelChangeListener listener : modelChangeListeners)
+			listener.modelChanged(event);
+
 		return graph.removeEdge(edge);
 	}
 
@@ -476,9 +518,9 @@ public class TrackMateModel {
 		return str;
 	}
 
-	
+
 	// Track features
-	
+
 	public void putTrackFeature(final int trackIndex, final TrackFeature feature, final Float value) {
 		trackFeatures.get(trackIndex).put(feature, value);
 	}
@@ -499,8 +541,8 @@ public class TrackMateModel {
 			System.out.println("[TrackMateModel] #endUpdate: decreasing update level to "+updateLevel+".");
 		if (updateLevel == 0) {
 			if (DEBUG)
-				System.out.println("[TrackMateModel] #endUpdate: update level is 0, calling refreshTracks.");
-			refreshTracks();
+				System.out.println("[TrackMateModel] #endUpdate: update level is 0, calling flushUpdate().");
+			flushUpdate();
 		}
 	}
 
@@ -571,7 +613,7 @@ public class TrackMateModel {
 		}
 	}
 
-	
+
 	public void clearTracks() {
 		this.graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		for(Spot spot : filteredSpots.getAllSpots())
@@ -846,7 +888,7 @@ public class TrackMateModel {
 	 * @param toFrame  the destination frame of each spot
 	 * @param doNotify  if false, {@link TrackMateModelChangeListener}s will not be notified of this change
 	 */
-	public void moveSpotsFrom(List<Spot> spotsToMove, List<Integer> fromFrame, List<Integer> toFrame, boolean doNotify) {
+	public void moveSpotsFrom(List<Spot> spotsToMove, List<Integer> fromFrame, List<Integer> toFrame) {
 		if (null != spots) 
 			for (int i = 0; i < spotsToMove.size(); i++) {
 				spots.add(spotsToMove.get(i), toFrame.get(i));
@@ -859,21 +901,22 @@ public class TrackMateModel {
 				filteredSpots.add(spotsToMove.get(i), toFrame.get(i));
 				filteredSpots.remove(spotsToMove.get(i), fromFrame.get(i));
 			}
-		updateFeatures(spotsToMove, false);
+		updateFeatures(spotsToMove);
 
-		if (doNotify) {
-			List<Integer> spotFlags = new ArrayList<Integer>(spotsToMove.size());
-			TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.SPOTS_MODIFIED);
-			for (int i = 0; i < spotFlags.size(); i++)
-				spotFlags.add(TrackMateModelChangeEvent.FLAG_SPOT_FRAME_CHANGED);
-
-			event.setSpots(spotsToMove);
-			event.setSpotFlag(spotFlags);
-			event.setFromFrame(fromFrame);
-			event.setToFrame(toFrame);
-			for (TrackMateModelChangeListener listener : modelChangeListeners)
-				listener.modelChanged(event);
-		}
+		// TODO
+//		if (doNotify) {
+//			List<Integer> spotFlags = new ArrayList<Integer>(spotsToMove.size());
+//			TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.SPOTS_MODIFIED);
+//			for (int i = 0; i < spotFlags.size(); i++)
+//				spotFlags.add(TrackMateModelChangeEvent.FLAG_SPOT_FRAME_CHANGED);
+//
+//			event.setSpots(spotsToMove);
+//			event.setSpotFlag(spotFlags);
+//			event.setFromFrame(fromFrame);
+//			event.setToFrame(toFrame);
+//			for (TrackMateModelChangeListener listener : modelChangeListeners)
+//				listener.modelChanged(event);
+//		}
 	}
 
 	/**
@@ -883,7 +926,7 @@ public class TrackMateModel {
 	 * @param toFrame  the destination frame
 	 * @param doNotify  if false, {@link TrackMateModelChangeListener}s will not be notified of this change
 	 */
-	public void moveSpotsFrom(Spot spotToMove, Integer fromFrame, Integer toFrame, boolean doNotify) {
+	public void moveSpotsFrom(Spot spotToMove, Integer fromFrame, Integer toFrame) {
 		if (null != spots) {
 			spots.add(spotToMove, toFrame);
 			spots.remove(spotToMove, fromFrame);
@@ -894,46 +937,173 @@ public class TrackMateModel {
 			filteredSpots.add(spotToMove, toFrame);
 			filteredSpots.remove(spotToMove, fromFrame);
 		}
-		updateFeatures(spotToMove, false);
 
-		if (doNotify) {
-			List<Integer> spotFlags = new ArrayList<Integer>(1);
-			List<Integer> toFrames = new ArrayList<Integer>(1);
-			List<Integer> fromFrames = new ArrayList<Integer>(1);
-			List<Spot> spotsToMove = new ArrayList<Spot>(1);
-			spotsToMove .add(spotToMove);
-			spotFlags.add(TrackMateModelChangeEvent.FLAG_SPOT_FRAME_CHANGED);
-			toFrames.add(toFrame);
-			fromFrames.add(fromFrame);
 
-			TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.SPOTS_MODIFIED);
-			event.setSpots(spotsToMove);
-			event.setSpotFlag(spotFlags);
-			event.setFromFrame(fromFrames);
-			event.setToFrame(toFrames);
-			for (TrackMateModelChangeListener listener : modelChangeListeners)
-				listener.modelChanged(event);
-		}
+		// TODO TRANSACTION
+		updateFeatures(spotToMove);
+		
 	}
 
 
 	/**
 	 * Add spots to the collections managed by this model, then update heir features.
-	 * @param doNotify  if false, listeners of this class will not be notified of this change. 
+	 * @param toFrame  can't be <code>null</code>, otherwise nothing is done.
 	 */
-	public void addSpotTo(List<Spot> spotsToAdd, List<Integer> toFrame, boolean doNotify) {
+	public void addSpotTo(List<Spot> spotsToAdd, List<Integer> toFrame) {
 		if (null != spots) 
 			for (int i = 0; i < spotsToAdd.size(); i++) {
-				spots.add(spotsToAdd.get(i), toFrame.get(i));
-				if (DEBUG)
-					System.out.println("[TrackMateModel] Adding spot "+spotsToAdd.get(i)+" to frame "+ toFrame.get(i));
+				if (spots.add(spotsToAdd.get(i), toFrame.get(i))) {
+					spotsAdded.add(spotsToAdd.get(i)); // Transaction
+					if (DEBUG)
+						System.out.println("[TrackMateModel] Adding spot "+spotsToAdd.get(i)+" to frame "+ toFrame.get(i));
+				}
 			}
 
 		if (null != filteredSpots) 
 			for (int i = 0; i < spotsToAdd.size(); i++) 
 				filteredSpots.add(spotsToAdd.get(i), toFrame.get(i));
 
-		updateFeatures(spotsToAdd, false);
+		for (Spot spot : spotsToAdd)
+			graph.addVertex(spot);
+
+	}
+
+	/**
+	 * Add a single spot to the collections managed by this model, then update its features.
+	 */
+	public void addSpotTo(Spot spotToAdd, Integer toFrame) {
+		if (null != spots)  {
+			if (spots.add(spotToAdd, toFrame)) {
+				spotsAdded.add(spotToAdd); // TRANSACTION
+				if (DEBUG)
+					System.out.println("[TrackMateModel] Adding spot "+spotToAdd+" to frame "+ toFrame);
+			}
+		}
+
+		if (null != filteredSpots) 
+			filteredSpots.add(spotToAdd, toFrame);
+
+		graph.addVertex(spotToAdd);
+
+	}
+
+	/**
+	 * Remove given spots from the collections managed by this model.
+	 */
+	public void removeSpotFrom(List<Spot> spotsToRemove, List<Integer> fromFrame) {
+		if (null != spots) 
+			for (int i = 0; i < spotsToRemove.size(); i++) {
+				if (spots.remove(spotsToRemove.get(i), fromFrame.get(i))) {
+					spotsRemoved.add(spotsToRemove.get(i)); // TRANSACTION
+					if (DEBUG)
+						System.out.println("[TrackMateModel] Removing spot "+spotsToRemove.get(i)+" from frame "+ fromFrame.get(i));
+				}
+			}
+
+		if (null != filteredSpots) 
+			for (int i = 0; i < spotsToRemove.size(); i++) 
+				filteredSpots.remove(spotsToRemove.get(i), fromFrame.get(i));
+
+		graph.removeAllVertices(spotsToRemove);
+
+	}
+
+	/**
+	 * Remove a single spot from the collections managed by this model.
+	 * @param fromFrame  the frame the spot is in, if it is known. If <code>null</code> is given,
+	 * then the adequate frame is retrieved from this model's collections.
+	 */
+	public void removeSpotFrom(final Spot spotToRemove, Integer fromFrame) {
+		if (fromFrame == null)
+			fromFrame = spots.getFrame(spotToRemove);
+		if (null != spots) {
+			if (spots.remove(spotToRemove, fromFrame)) {
+				spotsRemoved.add(spotToRemove); // TRANSACTION
+				if (DEBUG)
+					System.out.println("[TrackMateModel] Removing spot "+spotToRemove+" from frame "+ fromFrame);
+			}
+		}
+
+		if (null != filteredSpots) 
+			filteredSpots.remove(spotToRemove, fromFrame);
+
+		graph.removeVertex(spotToRemove);
+
+	}
+
+	public void updateFeatures(List<Spot> spotsToUpdate) {
+		if (DEBUG)
+			System.out.println("[TrackMateModel] Updating the features of spot "+spotsToUpdate.size());
+		if (null == spots)
+			return;
+
+		// Find common frames
+		SpotCollection toCompute = filteredSpots.subset(spotsToUpdate);
+		computeSpotFeatures(toCompute);
+
+//TODO
+//		if (doNotify) {
+//			List<Integer> spotFlags = new ArrayList<Integer>(spotsToUpdate.size());
+//			for (int i = 0; i < spotFlags.size(); i++)
+//				spotFlags.add(TrackMateModelChangeEvent.FLAG_SPOT_MODIFIED);
+//
+//			TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.SPOTS_MODIFIED);
+//			event.setSpots(spotsToUpdate);
+//			event.setSpotFlag(spotFlags);
+//			event.setFromFrame(null);
+//			event.setToFrame(null);
+//			for (TrackMateModelChangeListener listener : modelChangeListeners)
+//				listener.modelChanged(event);
+//		}
+	}
+
+	public void updateFeatures(Spot spotToUpdate) {
+		if (DEBUG)
+			System.out.println("[TrackMateModel] Updating the features of spot "+spotToUpdate);
+		if (null == spots)
+			return;
+
+		// Find frame
+		SpotCollection toCompute = new SpotCollection();
+		int frame = spots.getFrame(spotToUpdate);
+		toCompute.add(spotToUpdate, frame);
+
+		// Calculate features
+		computeSpotFeatures(toCompute);
+
+		// TODO
+//		if (doNotify) {
+//			List<Integer> spotFlags = new ArrayList<Integer>(1);
+//			List<Spot> spotsToUpdate = new ArrayList<Spot>(1);
+//			spotsToUpdate.add(spotToUpdate);
+//			spotFlags.add(TrackMateModelChangeEvent.FLAG_SPOT_MODIFIED);
+//
+//			TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.SPOTS_MODIFIED);
+//			event.setSpots(spotsToUpdate);
+//			event.setSpotFlag(spotFlags);
+//			event.setFromFrame(null);
+//			event.setToFrame(null);
+//			for (TrackMateModelChangeListener listener : modelChangeListeners)
+//				listener.modelChanged(event);
+//		}
+	}
+
+
+	/*
+	 * PRIVATE METHODS
+	 */
+
+	/**
+	 * Fire events.
+	 * Regenerate fields derived from the mother graph.
+	 */
+	private void flushUpdate() {
+
+		if (!spotsAdded.isEmpty())
+			updateFeatures(spotsAdded);
+		
+		// Spot added
+		/*
 
 		if (doNotify) {
 			List<Integer> spotFlags = new ArrayList<Integer>(spotsToAdd.size());
@@ -948,60 +1118,11 @@ public class TrackMateModel {
 			for (TrackMateModelChangeListener listener : modelChangeListeners)
 				listener.modelChanged(event);
 		}
-	}
+		 */
 
-	/**
-	 * Add a single spot to the collections managed by this model, then update its features.
-	 * @param doNotify  if false, listeners of this class will not be notified of this change. 
-	 */
-	public void addSpotTo(Spot spotToAdd, Integer toFrame, boolean doNotify) {
-		if (null != spots)  {
-			spots.add(spotToAdd, toFrame);
-			if (DEBUG)
-				System.out.println("[TrackMateModel] Adding spot "+spotToAdd+" to frame "+ toFrame);
-		}
-
-		if (null != filteredSpots) 
-			filteredSpots.add(spotToAdd, toFrame);
-
-		updateFeatures(spotToAdd, false);
-
-		if (doNotify) {
-			List<Spot> spotsToAdd = new ArrayList<Spot>(1);
-			List<Integer> spotFlags = new ArrayList<Integer>(1);
-			List<Integer> toFrames = new ArrayList<Integer>(1);
-			spotFlags.add(TrackMateModelChangeEvent.FLAG_SPOT_ADDED);
-			spotsToAdd.add(spotToAdd);
-			toFrames.add(toFrame);
-
-			TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.SPOTS_MODIFIED);
-			event.setSpots(spotsToAdd);
-			event.setSpotFlag(spotFlags);
-			event.setFromFrame(null);
-			event.setToFrame(toFrames);
-			for (TrackMateModelChangeListener listener : modelChangeListeners)
-				listener.modelChanged(event);
-		}
-	}
-
-
-	/**
-	 * Remove given spots from the collections managed by this model.
-	 * @param doNotify  if false, listeners of this class will not be notified of this change. 
-	 */
-	public void removeSpotFrom(List<Spot> spotsToRemove, List<Integer> fromFrame, boolean doNotify) {
-		if (null != spots) 
-			for (int i = 0; i < spotsToRemove.size(); i++) {
-				spots.remove(spotsToRemove.get(i), fromFrame.get(i));
-				if (DEBUG)
-					System.out.println("[TrackMateModel] Removing spot "+spotsToRemove.get(i)+" from frame "+ fromFrame.get(i));
-			}
-
-		if (null != filteredSpots) 
-			for (int i = 0; i < spotsToRemove.size(); i++) 
-				filteredSpots.remove(spotsToRemove.get(i), fromFrame.get(i));
-
-		if (doNotify) {
+		// Spots removed
+		/*
+		 if (doNotify) {
 			List<Integer> spotFlags = new ArrayList<Integer>(spotsToRemove.size());
 			for (int i = 0; i < spotsToRemove.size(); i++)
 				spotFlags.add(TrackMateModelChangeEvent.FLAG_SPOT_REMOVED);
@@ -1014,105 +1135,8 @@ public class TrackMateModel {
 			for (TrackMateModelChangeListener listener : modelChangeListeners)
 				listener.modelChanged(event);
 		}
-	}
+		 */
 
-	/**
-	 * Remove a single spot from the collections managed by this model.
-	 * @param doNotify  if false, listeners of this class will not be notified of this change. 
-	 */
-	public void removeSpotFrom(Spot spotToRemove, Integer fromFrame, boolean doNotify) {
-		if (null != spots) {
-			spots.remove(spotToRemove, fromFrame);
-			if (DEBUG)
-				System.out.println("[TrackMateModel] Removing spot "+spotToRemove+" from frame "+ fromFrame);
-		}
-
-		if (null != filteredSpots) 
-			filteredSpots.remove(spotToRemove, fromFrame);
-
-		if (doNotify) {
-			List<Spot> spotsToRemove = new ArrayList<Spot>(1);
-			List<Integer> spotFlags = new ArrayList<Integer>(1);
-			List<Integer> fromFrames = new ArrayList<Integer>(1);
-			spotFlags.add(TrackMateModelChangeEvent.FLAG_SPOT_REMOVED);
-			spotsToRemove.add(spotToRemove);
-			fromFrames.add(fromFrame);
-
-			TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.SPOTS_MODIFIED);
-			event.setSpots(spotsToRemove);
-			event.setSpotFlag(spotFlags);
-			event.setFromFrame(fromFrames);
-			event.setToFrame(null);
-			for (TrackMateModelChangeListener listener : modelChangeListeners)
-				listener.modelChanged(event);
-		}
-	}
-
-	public void updateFeatures(List<Spot> spotsToUpdate, boolean doNotify) {
-		if (DEBUG)
-			System.out.println("[TrackMateModel] Updating the features of spot "+spotsToUpdate.size());
-		if (null == spots)
-			return;
-
-		// Find common frames
-		SpotCollection toCompute = filteredSpots.subset(spotsToUpdate);
-		computeSpotFeatures(toCompute);
-
-
-		if (doNotify) {
-			List<Integer> spotFlags = new ArrayList<Integer>(spotsToUpdate.size());
-			for (int i = 0; i < spotFlags.size(); i++)
-				spotFlags.add(TrackMateModelChangeEvent.FLAG_SPOT_MODIFIED);
-
-			TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.SPOTS_MODIFIED);
-			event.setSpots(spotsToUpdate);
-			event.setSpotFlag(spotFlags);
-			event.setFromFrame(null);
-			event.setToFrame(null);
-			for (TrackMateModelChangeListener listener : modelChangeListeners)
-				listener.modelChanged(event);
-		}
-	}
-
-	public void updateFeatures(Spot spotToUpdate, boolean doNotify) {
-		if (DEBUG)
-			System.out.println("[TrackMateModel] Updating the features of spot "+spotToUpdate);
-		if (null == spots)
-			return;
-
-		// Find frame
-		SpotCollection toCompute = new SpotCollection();
-		int frame = spots.getFrame(spotToUpdate);
-		toCompute.add(spotToUpdate, frame);
-
-		// Calculate features
-		computeSpotFeatures(toCompute);
-
-		if (doNotify) {
-			List<Integer> spotFlags = new ArrayList<Integer>(1);
-			List<Spot> spotsToUpdate = new ArrayList<Spot>(1);
-			spotsToUpdate.add(spotToUpdate);
-			spotFlags.add(TrackMateModelChangeEvent.FLAG_SPOT_MODIFIED);
-
-			TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.SPOTS_MODIFIED);
-			event.setSpots(spotsToUpdate);
-			event.setSpotFlag(spotFlags);
-			event.setFromFrame(null);
-			event.setToFrame(null);
-			for (TrackMateModelChangeListener listener : modelChangeListeners)
-				listener.modelChanged(event);
-		}
-	}
-
-
-	/*
-	 * PRIVATE METHODS
-	 */
-
-	/**
-	 * Regenerate fields derived from the mother graph.
-	 */
-	private void refreshTracks() {
 		if (DEBUG)
 			System.out.println("[TrackCollection] #refresh(): building individual tracks.");
 		this.trackSpots = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets();
@@ -1127,7 +1151,7 @@ public class TrackMateModel {
 		}
 
 		if (DEBUG)
-			System.out.println("[TrackCollection] #refresh(): re-calculating features.");
+			System.out.println("[TrackCollection] #refresh(): re-calculating track features.");
 		initFeatureMap();
 		trackFeatureFacade.processAllFeatures(this);
 
