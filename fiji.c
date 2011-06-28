@@ -2541,6 +2541,9 @@ static int start_ij(void)
 	if (retrotranslator && build_classpath(class_path, fiji_path("retro"), 0))
 		return 1;
 
+	if (is_default_main_class(main_class))
+		show_splash();
+
 	/* Handle update/ */
 	update_all_files();
 
@@ -3395,6 +3398,5 @@ int main(int argc, char **argv, char **e)
 	memcpy(main_argv_backup, main_argv, size);
 	main_argc_backup = argc;
 
-	show_splash();
 	return start_ij();
 }
