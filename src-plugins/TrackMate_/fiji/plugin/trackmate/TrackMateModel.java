@@ -16,10 +16,14 @@ import java.util.Set;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
 
+import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
+import org.jgrapht.graph.SimpleWeightedGraph;
+import org.jgrapht.traverse.DepthFirstIterator;
 
 import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotFeatureFacade;
+import fiji.plugin.trackmate.features.track.TrackFeatureFacade;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.util.TMUtils;
@@ -29,7 +33,17 @@ import fiji.plugin.trackmate.util.TMUtils;
  */
 public class TrackMateModel {		
 
-	private static final boolean DEBUG = true;
+	/*
+	 * CONSTANTS
+	 */
+
+	private static final boolean DEBUG = false;
+
+	/*
+	 * FIELDS
+	 */
+
+	// SPOTS
 
 	/** Contain the segmentation result, un-filtered.*/
 	protected SpotCollection spots;
@@ -40,19 +54,50 @@ public class TrackMateModel {
 	/** The initial quality filter value that is used to clip spots of low quality from {@link #spots}. */
 	protected Float initialSpotFilterValue;
 
-	/** The tracks as a track collection. */
-	protected TrackCollection tracks;
+	// TRACKS
+
+	/**
+	 * The mother graph, from which all subsequent fields are calculated. 
+	 * This graph is not made accessible to the outside world. Editing it
+	 * must be trough the 
+	 */
+	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+	/** The edges contained in the list of tracks. */
+	protected List<Set<DefaultWeightedEdge>> trackEdges;
+	/** The spots contained in the list of spots. */
+	protected List<Set<Spot>> trackSpots;
+	/** The feature facade that will be used to compute track features. */
+	private TrackFeatureFacade trackFeatureFacade = new TrackFeatureFacade();
+	/**
+	 * Feature storage. We use a List of Map as a 2D Map. The list maps each track to its feature map.
+	 * We use the same index that for {@link #trackEdges} and {@link #trackSpots}.
+	 * The feature map maps each {@link TrackFeature} to its float value for the selected track. 
+	 */
+	protected List<EnumMap<TrackFeature, Float>> trackFeatures;
+	/**
+	 * Counter for the depth of nested transactions. Each call to beginUpdate
+	 * increments this counter and each call to endUpdate decrements it. When
+	 * the counter reaches 0, the transaction is closed and the respective
+	 * events are fired. Initial value is 0.
+	 */
+	private int updateLevel = 0;
+
+	// SELECTION
 
 	/** The spot current selection. */
 	protected Set<Spot> spotSelection = new HashSet<Spot>();
 	/** The edge current selection. */
 	protected Set<DefaultWeightedEdge> edgeSelection = new HashSet<DefaultWeightedEdge>();
 
+	// OTHERS
+
 	/** The logger to append processes messages */
 	protected Logger logger = Logger.DEFAULT_LOGGER;
 
 	/** The settings that determine processes actions */
 	protected Settings settings;
+
+	// LISTENERS
 
 
 	/** The list of listeners listening to model content change, that is, changes in 
@@ -61,11 +106,6 @@ public class TrackMateModel {
 	/** The list of listener listening to change in selection.  */
 	protected List<TrackMateSelectionChangeListener> selectionChangeListeners = new ArrayList<TrackMateSelectionChangeListener>();
 
-	/**
-	 * A private listener that listens to modifications made in the {@link TrackCollection} {@link #tracks},
-	 * and forward them to the listener of this model.
-	 */
-	private TrackListener trackListener;
 
 	/*
 	 * DEAL WITH MODEL CHANGE LISTENER
@@ -114,10 +154,10 @@ public class TrackMateModel {
 	 * @see #getTrackGraph()
 	 */ 
 	public void execTracking() {
-		SpotTracker tracker = settings.getSpotTracker(filteredSpots);
+		SpotTracker tracker = settings.getSpotTracker(this);
 		tracker.setLogger(logger);
 		if (tracker.checkInput() && tracker.process())
-			setTracks(tracker.getTracks(), true);
+			logger.log("Tracking done."); //TODO
 		else
 			logger.error("Problem occured in tracking:\n"+tracker.getErrorMessage()+'\n');
 	}
@@ -367,26 +407,120 @@ public class TrackMateModel {
 		setFilteredSpots(spots.filter(spotFilters), true);
 	}
 
-	public void computeTrackFeatures(final TrackCollection trackCollection) {
-		//TODO
+
+	/*
+	 * DEAL WITH TRACK GRAPH 
+	 */
+
+
+	// Modify graph
+
+	public DefaultWeightedEdge addEdge(final Spot source, final Spot target, final double weight) {
+		DefaultWeightedEdge edge = graph.addEdge(source, target);
+		graph.setEdgeWeight(edge, weight);
+		return edge;
 	}
 
-	public void computeTrackFeatures() {
-		computeTrackFeatures(tracks);
+	public DefaultWeightedEdge removeEdge(final Spot source, final Spot target) {
+		DefaultWeightedEdge edge = graph.removeEdge(source, target);
+		return edge;
 	}
 
+	public boolean removeEdge(final DefaultWeightedEdge edge) {
+		return graph.removeEdge(edge);
+	}
+
+	// Questing graph 
+
+	public int getNTracks() {
+		if (trackSpots == null)
+			return 0;
+		else
+			return trackSpots.size();
+	}
+
+	public Spot getEdgeSource(final DefaultWeightedEdge edge) {
+		return graph.getEdgeSource(edge);
+	}
+
+	public Spot getEdgeTarget(final DefaultWeightedEdge edge) {
+		return graph.getEdgeTarget(edge);
+	}
+
+	public double getEdgeWeight(final DefaultWeightedEdge edge) {
+		return graph.getEdgeWeight(edge);
+	}
+
+	public boolean containsEdge(final Spot source, final Spot target) {
+		return graph.containsEdge(source, target);
+	}
+
+	public Set<DefaultWeightedEdge> edgesOf(final Spot spot) {
+		return graph.edgesOf(spot); 
+	}
+
+	public Set<DefaultWeightedEdge> edgeSet() {
+		return graph.edgeSet();
+	}
+
+	public DepthFirstIterator<Spot, DefaultWeightedEdge> getDepthFirstIterator(Spot start) {
+		return new DepthFirstIterator<Spot, DefaultWeightedEdge>(graph, start);
+	}
+
+	public String trackToString(int i) {
+		String str = "Track "+i+": ";
+		for (TrackFeature feature : TrackFeature.values())
+			str += feature.shortName() + " = " + trackFeatures.get(i).get(feature) +", ";			
+		return str;
+	}
+
+	
+	// Track features
+	
+	public void putTrackFeature(final int trackIndex, final TrackFeature feature, final Float value) {
+		trackFeatures.get(trackIndex).put(feature, value);
+	}
+
+	/*
+	 * GRAPH MODIFICATION
+	 */
+
+	public void beginUpdate()	{
+		updateLevel++;
+		if (DEBUG)
+			System.out.println("[TrackMateModel] #beginUpdate: increasing update level to "+updateLevel+".");
+	}
+
+	public void endUpdate()	{
+		updateLevel--;
+		if (DEBUG)
+			System.out.println("[TrackMateModel] #endUpdate: decreasing update level to "+updateLevel+".");
+		if (updateLevel == 0) {
+			if (DEBUG)
+				System.out.println("[TrackMateModel] #endUpdate: update level is 0, calling refreshTracks.");
+			refreshTracks();
+		}
+	}
 
 
 	/*
 	 * GETTERS / SETTERS
 	 */
 
-	/**
-	 * Return the tracks of this model. 
-	 * This collection contains all tracks, un-filtered.
-	 */
-	public TrackCollection getTracks() {
-		return tracks;
+	public Set<Spot> getTrackSpots(int index) {
+		return trackSpots.get(index);
+	}
+
+	public Set<DefaultWeightedEdge> getTrackEdges(int index) {
+		return trackEdges.get(index);
+	}
+
+	public List<Set<Spot>> getTrackSpots() {
+		return trackSpots;
+	}
+
+	public List<Set<DefaultWeightedEdge>> getTrackEdges() {
+		return trackEdges;
 	}
 
 	/**
@@ -435,24 +569,12 @@ public class TrackMateModel {
 		}
 	}
 
-	/**
-	 * Overwrite the {@link #tracks} field, resulting from the tracking step.
-	 * @param doNotify  if true, will file a {@link TrackMateModelChangeEvent#TRACKS_COMPUTED} event.
-	 */
-	public void setTracks(final TrackCollection tracks, final boolean doNotify) {
-		if (this.tracks != null) 
-			this.tracks.removeTrackMateModelChangeListener(trackListener);
-		this.tracks = tracks;
-		this.trackListener = new TrackListener();
-		this.tracks.addTrackMateModelChangeListener(trackListener);
-		if (doNotify) {
-			final TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_COMPUTED);
-			for (TrackMateModelChangeListener listener : modelChangeListeners)
-				listener.modelChanged(event);
-		}
+	
+	public void clearTracks() {
+		this.graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		for(Spot spot : filteredSpots.getAllSpots())
+			graph.addVertex(spot);
 	}
-
-
 
 	/*
 	 * FEATURE FILTERS
@@ -736,7 +858,6 @@ public class TrackMateModel {
 				filteredSpots.remove(spotsToMove.get(i), fromFrame.get(i));
 			}
 		updateFeatures(spotsToMove, false);
-		tracks.computeFeatures();
 
 		if (doNotify) {
 			List<Integer> spotFlags = new ArrayList<Integer>(spotsToMove.size());
@@ -772,7 +893,6 @@ public class TrackMateModel {
 			filteredSpots.remove(spotToMove, fromFrame);
 		}
 		updateFeatures(spotToMove, false);
-		tracks.computeFeatures();
 
 		if (doNotify) {
 			List<Integer> spotFlags = new ArrayList<Integer>(1);
@@ -811,16 +931,6 @@ public class TrackMateModel {
 			for (int i = 0; i < spotsToAdd.size(); i++) 
 				filteredSpots.add(spotsToAdd.get(i), toFrame.get(i));
 
-		if (null != tracks) {
-			tracks.beginUpdate();
-			try {
-				for (Spot spot : spotsToAdd) 
-					tracks.addVertex(spot);
-			} finally {
-				tracks.endUpdate();
-			}
-		}
-		
 		updateFeatures(spotsToAdd, false);
 
 		if (doNotify) {
@@ -848,19 +958,10 @@ public class TrackMateModel {
 			if (DEBUG)
 				System.out.println("[TrackMateModel] Adding spot "+spotToAdd+" to frame "+ toFrame);
 		}
-		
+
 		if (null != filteredSpots) 
 			filteredSpots.add(spotToAdd, toFrame);
 
-		if (null != tracks) {
-			tracks.beginUpdate();
-			try {
-				tracks.addVertex(spotToAdd);
-			} finally {
-				tracks.endUpdate();
-			}
-		}
-		
 		updateFeatures(spotToAdd, false);
 
 		if (doNotify) {
@@ -893,20 +994,10 @@ public class TrackMateModel {
 				if (DEBUG)
 					System.out.println("[TrackMateModel] Removing spot "+spotsToRemove.get(i)+" from frame "+ fromFrame.get(i));
 			}
-		
+
 		if (null != filteredSpots) 
 			for (int i = 0; i < spotsToRemove.size(); i++) 
 				filteredSpots.remove(spotsToRemove.get(i), fromFrame.get(i));
-		
-		if (null != tracks) {
-			tracks.beginUpdate();
-			try {
-				for (Spot spot : spotsToRemove) 
-					tracks.removeVertex(spot);
-			} finally {
-				tracks.endUpdate();
-			}
-		}
 
 		if (doNotify) {
 			List<Integer> spotFlags = new ArrayList<Integer>(spotsToRemove.size());
@@ -933,18 +1024,9 @@ public class TrackMateModel {
 			if (DEBUG)
 				System.out.println("[TrackMateModel] Removing spot "+spotToRemove+" from frame "+ fromFrame);
 		}
-		
+
 		if (null != filteredSpots) 
 			filteredSpots.remove(spotToRemove, fromFrame);
-		
-		if (null != tracks) {
-			tracks.beginUpdate();
-			try {
-				tracks.removeVertex(spotToRemove);
-			} finally {
-				tracks.endUpdate();
-			}
-		}
 
 		if (doNotify) {
 			List<Spot> spotsToRemove = new ArrayList<Spot>(1);
@@ -1020,24 +1102,46 @@ public class TrackMateModel {
 		}
 	}
 
-	
-	/*
-	 * INNER CLASS
-	 */
-	
-	private class TrackListener implements TrackMateModelChangeListener {
 
-		/**
-		 * Simply forward events coming from the {@link TrackCollection} to the 
-		 * listeners of this {@link TrackMateModel}.
-		 */
-		@Override
-		public void modelChanged(final TrackMateModelChangeEvent event) {
-			for (TrackMateModelChangeListener listener : modelChangeListeners)
-				listener.modelChanged(event);
+	/*
+	 * PRIVATE METHODS
+	 */
+
+	/**
+	 * Regenerate fields derived from the mother graph.
+	 */
+	private void refreshTracks() {
+		if (DEBUG)
+			System.out.println("[TrackCollection] #refresh(): building individual tracks.");
+		this.trackSpots = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets();
+		this.trackEdges = new ArrayList<Set<DefaultWeightedEdge>>(trackSpots.size());
+		initFeatureMap();
+
+		for(Set<Spot> spotTrack : trackSpots) {
+			Set<DefaultWeightedEdge> spotEdge = new HashSet<DefaultWeightedEdge>();
+			for(Spot spot : spotTrack)
+				spotEdge.addAll(graph.edgesOf(spot));
+			trackEdges.add(spotEdge);
 		}
-		
+
+		if (DEBUG)
+			System.out.println("[TrackCollection] #refresh(): re-calculating features.");
+		initFeatureMap();
+		trackFeatureFacade.processAllFeatures(this);
+
 	}
+
+	/**
+	 * Instantiate an empty feature 2D map.
+	 */
+	private void initFeatureMap() {
+		this.trackFeatures = new ArrayList<EnumMap<TrackFeature,Float>>(trackEdges.size());
+		for (int i = 0; i < trackEdges.size(); i++) {
+			EnumMap<TrackFeature, Float> featureMap = new EnumMap<TrackFeature, Float>(TrackFeature.class);
+			trackFeatures.add(featureMap);
+		}
+	}
+
 
 
 }

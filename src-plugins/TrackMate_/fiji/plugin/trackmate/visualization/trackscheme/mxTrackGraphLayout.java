@@ -7,7 +7,6 @@ import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.Y
 
 import java.awt.Color;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -29,7 +28,7 @@ import com.mxgraph.util.mxUtils;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.TrackCollection;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.util.TrackSplitter;
 
 /**
@@ -44,7 +43,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 
 	private static final int SWIMLANE_HEADER_SIZE = 30;
 	
-	private JGraphXAdapter<Spot, DefaultWeightedEdge> graph;
+	private JGraphXAdapter graph;
 	private int[] columnWidths;
 	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
 	private Color[] trackColorArray;
@@ -65,40 +64,34 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 	 * We need this to be able to purge them from the graph when we redo a layout.	 */
 	private ArrayList<mxCell> branchCells = new ArrayList<mxCell>();
 
-	private TrackCollection tracks;
+	private TrackMateModel model;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public mxTrackGraphLayout(final TrackCollection tracks, final JGraphXAdapter<Spot, DefaultWeightedEdge> graph, float dx) {
+	public mxTrackGraphLayout(final TrackMateModel model, final JGraphXAdapter graph, float dx) {
 		super(graph);
 		this.graph = graph;
-		this.tracks = tracks;
+		this.model = model;
 		this.dx = dx;
 	}
 
 	@Override
 	public void execute(Object parent) {
 		
-		// Compute tracks
-		List<Set<Spot>> trackSpots = tracks.getTrackSpots();
-
 		graph.getModel().beginUpdate();
 		try {
 
 			// Generate colors
-			HashMap<Set<Spot>, Color> trackColors = new HashMap<Set<Spot>, Color>(tracks.size());
-			int counter = 0;
-			int ntracks = tracks.size();
-			for(Set<Spot> track : trackSpots) {
-				trackColors.put(track, colorMap.getPaint((float) counter / (ntracks-1)));
-				counter++;
-			}
+			int ntracks = model.getNTracks();
+			List<Color> trackColors = new ArrayList<Color>(ntracks);
+			for (int i = 0; i < ntracks; i++) 				
+				trackColors.add(colorMap.getPaint((float) i / (ntracks-1)));
 
 			// Collect unique instants
 			SortedSet<Float> instants = new TreeSet<Float>();
-			for (Spot s : tracks.vertexSet())
+			for (Spot s : model.getFilteredSpots())
 				instants.add(s.getFeature(SpotFeature.POSITION_T));
 
 			TreeMap<Float, Integer> columns = new TreeMap<Float, Integer>();
@@ -119,9 +112,9 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 			int columnIndex = 0;
 			int trackIndex = 0;
 			
-			columnWidths = new int[tracks.size()];
-			trackColorArray = new Color[tracks.size()];
-			Color trackColor = null;
+			columnWidths = new int[ntracks];
+			trackColorArray = new Color[ntracks];
+			
 			String trackColorStr = null;
 			Object currentParent = graph.getDefaultParent();
 			mxGeometry geometry = null;
@@ -129,23 +122,25 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 			// To keep a reference of branch cells, if any
 			ArrayList<mxCell> newBranchCells = new ArrayList<mxCell>();
 						
-			for (Set<Spot> track : trackSpots) {
+			for (int i = 0; i < ntracks; i++) {
 				
 				// Init track variables
-				trackIndex++;
 				Spot previousSpot = null;
 				
 				// Get track color
-				trackColor = trackColors.get(track);
+				final Color trackColor = trackColors.get(i);
 				trackColorStr =  Integer.toHexString(trackColor.getRGB()).substring(2);
 
+				// Get Tracks
+				final Set<Spot> track = model.getTrackSpots(i);
+				
 				// Sort by ascending order
 				SortedSet<Spot> sortedTrack = new TreeSet<Spot>(SpotImp.frameComparator);
 				sortedTrack.addAll(track);
 				Spot first = sortedTrack.first();
 								
 				// Loop over track child
-				DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = tracks.getDepthFirstIterator(first);
+				DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = model.getDepthFirstIterator(first);
 				while(iterator.hasNext()) {
 					
 					Spot spot = iterator.next();
@@ -162,7 +157,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					int freeColumn = columns.get(instant) + 1;
 
 					// If we have no direct edge with the previous spot, we add 1 to the current column
-					if (previousSpot != null && !tracks.containsEdge(spot, previousSpot)) {
+					if (previousSpot != null && !model.containsEdge(spot, previousSpot)) {
 						currentColumn = currentColumn + 1;
 					}
 					previousSpot = spot;
@@ -198,7 +193,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 						graph.getModel().add(currentParent, edgeCell, 0);
 						
 						DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(edgeCell);
-						edgeCell.setValue(String.format("%.1f", tracks.getEdgeWeight(edge)));
+						edgeCell.setValue(String.format("%.1f", model.getEdgeWeight(edge)));
 						String edgeStyle = edgeCell.getStyle();
 						edgeStyle = mxUtils.setStyle(edgeStyle, mxConstants.STYLE_STROKECOLOR, trackColorStr);
 						graph.getModel().setStyle(edgeCell, edgeStyle);
@@ -219,7 +214,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 				if (doBranchGrouping ) {
 					
 					
-					ArrayList<ArrayList<Spot>> branches = new TrackSplitter(tracks).splitTrackInBranches(track);
+					ArrayList<ArrayList<Spot>> branches = new TrackSplitter(model).splitTrackInBranches(track);
 
 					int partIndex = 1;
 					

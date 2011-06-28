@@ -29,9 +29,9 @@ import com.mxgraph.util.mxPoint;
 import com.mxgraph.view.mxCellState;
 import com.mxgraph.view.mxGraph;
 
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackCollection;
+import fiji.plugin.trackmate.SpotFeature;
+import fiji.plugin.trackmate.TrackMateModel;
 
 public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventListener {
 	
@@ -54,7 +54,7 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		setZoomFactor(2.0);
 
 		instants = new TreeSet<Float>();
-		for (Spot s : frame.getModel().getTracks().vertexSet())
+		for (Spot s : frame.getModel().getFilteredSpots())
 			instants.add(s.getFeature(SpotFeature.POSITION_T));
 		
 		connectionHandler.addListener(mxEvent.CONNECT, this);
@@ -325,7 +325,7 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 
 	/** 
 	 * This listener method will be invoked when a new edge has been created interactively
-	 * in the graph component. 
+	 * in the graph component. It is used then to update the underlying {@link TrackMateModel}.
 	 */
 	@Override
 	public void invoke(Object sender, mxEventObject evt) {
@@ -334,21 +334,21 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		mxCell cell = (mxCell) obj;
 		DefaultWeightedEdge edge;
 		if (cell.isEdge()) {
-			final JGraphXAdapter<Spot, DefaultWeightedEdge> graph = frame.getGraph();
-			final TrackCollection tracks = frame.getModel().getTracks();
+			final JGraphXAdapter graph = frame.getGraph();
+			final TrackMateModel model = frame.getModel();
 			graph.getModel().beginUpdate();
-			tracks.beginUpdate();
+			model.beginUpdate();
 			try {
 				Spot source = frame.getGraph().getCellToVertexMap().get(cell.getSource());
 				Spot target = frame.getGraph().getCellToVertexMap().get(cell.getTarget());
 				// We add a new jGraphT edge to the underlying model
-				edge = tracks.addEdge(source, target, -1);
+				edge = model.addEdge(source, target, -1);
 				// Then, remove the old JGraphX edge.
-				frame.getGraph().removeCells(new Object[] { cell });
+				frame.getGraph().removeCells(new Object[] { cell }); 
 				evt.consume();
 			} finally {
 				graph.getModel().endUpdate();
-				tracks.endUpdate();
+				model.endUpdate();
 			}
 			// Then we do the update, and get the new JGraphX edge (through the map in the adapter) and change its value and style. Easy.
 			graph.getModel().beginUpdate();

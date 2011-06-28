@@ -12,7 +12,7 @@ import com.mxgraph.model.mxGeometry;
 import com.mxgraph.view.mxGraph;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackCollection;
+import fiji.plugin.trackmate.TrackMateModel;
 
 public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, DefaultWeightedEdge> {
 
@@ -20,17 +20,17 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 	private HashMap<DefaultWeightedEdge, mxCell> 	edgeToCellMap 		= new HashMap<DefaultWeightedEdge, mxCell>();
 	private HashMap<mxCell, Spot>					cellToVertexMap		= new HashMap<mxCell, Spot>();
 	private HashMap<mxCell, DefaultWeightedEdge>	cellToEdgeMap		= new HashMap<mxCell, DefaultWeightedEdge>();
-	private TrackCollection tracks;
+	private TrackMateModel tmm;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public JGraphXAdapter(final TrackCollection tracks) {
+	public JGraphXAdapter(final TrackMateModel tmm) {
 		super();
-		this.tracks = tracks;
-		tracks.addGraphListener(this);
-		insertTrackCollection(tracks);
+		this.tmm = tmm;
+//		tmm.addTrackMateModelChangeListener(this); // FIXME
+		insertTrackCollection(tmm);
 	}
 
 	/*
@@ -54,8 +54,8 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 	public void addJGraphTEdge(DefaultWeightedEdge edge) {
 		getModel().beginUpdate();
 		try {
-			Spot source = tracks.getEdgeSource(edge);
-			Spot target = tracks.getEdgeTarget(edge);				
+			Spot source = tmm.getEdgeSource(edge);
+			Spot target = tmm.getEdgeTarget(edge);				
 			mxCell cell = new mxCell(edge);
 			cell.setEdge(true);
 			cell.setId(null);
@@ -118,15 +118,15 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 	 */
 
 
-	private void insertTrackCollection(final TrackCollection tracks) {		
-		getModel().beginUpdate();
+	private void insertTrackCollection(final TrackMateModel tmm) {		
+		model.beginUpdate();
 		try {
-			for (Spot vertex : tracks.vertexSet())
+			for (Spot vertex : tmm.getFilteredSpots())
 				addJGraphTVertex(vertex);
-			for (DefaultWeightedEdge edge : tracks.edgeSet())
+			for (DefaultWeightedEdge edge : tmm.edgeSet())
 				addJGraphTEdge(edge);
 		} finally {
-			getModel().endUpdate();
+			model.endUpdate();
 		}
 
 

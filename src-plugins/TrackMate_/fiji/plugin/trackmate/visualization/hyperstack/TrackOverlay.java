@@ -22,7 +22,6 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotFeature;
-import fiji.plugin.trackmate.TrackCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.util.gui.OverlayedImageCanvas.Overlay;
@@ -55,12 +54,11 @@ public class TrackOverlay implements Overlay {
 	 * Provide default coloring.
 	 */
 	public void computeTrackColors() {
-		if (null == model.getTracks())
+		int ntracks = model.getNTracks();
+		if (ntracks == 0)
 			return;
-		final TrackCollection tracks = model.getTracks();
 		InterpolatePaintScale colorMap = (InterpolatePaintScale) displaySettings.get(TrackMateModelView.KEY_COLORMAP);
-		edgeColors = new ArrayList<Color>(tracks.size());
-		int ntracks = tracks.size();
+		edgeColors = new ArrayList<Color>(ntracks);
 		for(int i = 0; i < ntracks; i++)
 			edgeColors.add(colorMap.getPaint((float) i / (ntracks-1)));
 	}
@@ -72,8 +70,7 @@ public class TrackOverlay implements Overlay {
 	@Override
 	public final void paint(final Graphics g, final int xcorner, final int ycorner, final double magnification) {
 		boolean tracksVisible = (Boolean) displaySettings.get(TrackMateModelView.KEY_TRACKS_VISIBLE);
-		final TrackCollection tracks = model.getTracks();
-		if (!tracksVisible  || tracks == null)
+		if (!tracksVisible  || model.getNTracks() == 0)
 			return;
 
 		final Graphics2D g2d = (Graphics2D)g;
@@ -90,8 +87,8 @@ public class TrackOverlay implements Overlay {
 		g2d.setStroke(new BasicStroke(4.0f,  BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		g2d.setColor(TrackMateModelView.DEFAULT_HIGHLIGHT_COLOR);
 		for (DefaultWeightedEdge edge : highlight) {
-			source = tracks.getEdgeSource(edge);
-			target = tracks.getEdgeTarget(edge);
+			source = model.getEdgeSource(edge);
+			target = model.getEdgeTarget(edge);
 			drawEdge(g2d, source, target, xcorner, ycorner, mag);
 		}
 
@@ -99,7 +96,7 @@ public class TrackOverlay implements Overlay {
 		final int currentFrame = imp.getFrame() - 1;
 		final int trackDisplayMode = (Integer) displaySettings.get(TrackMateModelView.KEY_TRACK_DISPLAY_MODE);
 		final int trackDisplayDepth = (Integer) displaySettings.get(TrackMateModelView.KEY_TRACK_DISPLAY_DEPTH);
-		final List<Set<DefaultWeightedEdge>> allTrackEdges = tracks.getTrackEdges(); 
+		final List<Set<DefaultWeightedEdge>> allTrackEdges = model.getTrackEdges(); 
 
 
 		g2d.setStroke(new BasicStroke(2.0f,  BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
@@ -132,7 +129,7 @@ public class TrackOverlay implements Overlay {
 		switch (trackDisplayMode) {
 
 		case TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE: {
-			for (int i = 0; i < tracks.size(); i++) {
+			for (int i = 0; i < model.getNTracks(); i++) {
 				g2d.setColor(edgeColors.get(i));
 				final Set<DefaultWeightedEdge> trackEdges = allTrackEdges.get(i);
 
@@ -140,8 +137,8 @@ public class TrackOverlay implements Overlay {
 					if (highlight.contains(edge))
 						continue;
 
-					source = tracks.getEdgeSource(edge);
-					target = tracks.getEdgeTarget(edge);
+					source = model.getEdgeSource(edge);
+					target = model.getEdgeTarget(edge);
 					drawEdge(g2d, source, target, xcorner, ycorner, mag);
 				}
 			}
@@ -152,7 +149,7 @@ public class TrackOverlay implements Overlay {
 		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_FORWARD_QUICK: 
 		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_BACKWARD_QUICK: {
 
-			for (int i = 0; i < tracks.size(); i++) {
+			for (int i = 0; i < model.getNTracks(); i++) {
 				g2d.setColor(edgeColors.get(i));
 				final Set<DefaultWeightedEdge> trackEdges = allTrackEdges.get(i);
 
@@ -160,12 +157,12 @@ public class TrackOverlay implements Overlay {
 					if (highlight.contains(edge))
 						continue;
 
-					source = tracks.getEdgeSource(edge);
+					source = model.getEdgeSource(edge);
 					sourceFrame = source.getFeature(SpotFeature.POSITION_T) / dt;
 					if (sourceFrame < minT || sourceFrame >= maxT)
 						continue;
 
-					target = tracks.getEdgeTarget(edge);
+					target = model.getEdgeTarget(edge);
 					drawEdge(g2d, source, target, xcorner, ycorner, mag);
 				}
 			}
@@ -176,7 +173,7 @@ public class TrackOverlay implements Overlay {
 		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_FORWARD:
 		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_BACKWARD: {
 
-			for (int i = 0; i < tracks.size(); i++) {
+			for (int i = 0; i < model.getNTracks(); i++) {
 				g2d.setColor(edgeColors.get(i));
 				final Set<DefaultWeightedEdge> trackEdges = allTrackEdges.get(i);
 
@@ -184,13 +181,13 @@ public class TrackOverlay implements Overlay {
 					if (highlight.contains(edge))
 						continue;
 
-					source = tracks.getEdgeSource(edge);
+					source = model.getEdgeSource(edge);
 					sourceFrame = source.getFeature(SpotFeature.POSITION_T) / dt;
 					if (sourceFrame < minT || sourceFrame >= maxT)
 						continue;
 
 					transparency = 1 - Math.abs(sourceFrame-currentFrame) / trackDisplayDepth;
-					target = tracks.getEdgeTarget(edge);
+					target = model.getEdgeTarget(edge);
 					drawEdge(g2d, source, target, xcorner, ycorner, mag, transparency);
 				}
 			}

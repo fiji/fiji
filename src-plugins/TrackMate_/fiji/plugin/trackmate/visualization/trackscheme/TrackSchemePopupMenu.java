@@ -15,9 +15,9 @@ import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxEventSource.mxIEventListener;
 
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackCollection;
+import fiji.plugin.trackmate.SpotFeature;
+import fiji.plugin.trackmate.TrackMateModel;
 
 public class TrackSchemePopupMenu extends JPopupMenu {
 
@@ -107,8 +107,8 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 						spotsInTime.put(spot.getFeature(SpotFeature.POSITION_T), spot);
 					}
 					// Then link them in this order
-					final TrackCollection tracks = frame.getModel().getTracks();
-					tracks.beginUpdate();
+					final TrackMateModel model = frame.getModel();
+					model.beginUpdate();
 					try {
 						frame.getGraph().getModel().beginUpdate();
 						Iterator<Float> it = spotsInTime.keySet().iterator();
@@ -120,17 +120,17 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 							currentTime = it.next();
 							currentSpot = spotsInTime.get(currentTime);
 							// Link if not linked already
-							if (tracks.containsEdge(previousSpot, currentSpot))
+							if (model.containsEdge(previousSpot, currentSpot))
 								continue;
 							// This will update the mxGraph view
-							tracks.addEdge(previousSpot, currentSpot, -1);
+							model.addEdge(previousSpot, currentSpot, -1);
 							// Update the MODEL graph as well
 //							frame.getGraph().addEdge(edge, parent, source, target, index)
 							previousSpot = currentSpot;
 						}
 					} finally {
 						frame.getGraph().getModel().endUpdate();
-						tracks.endUpdate();
+						model.endUpdate();
 					}
 				}
 			};

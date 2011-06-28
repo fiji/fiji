@@ -28,14 +28,13 @@ import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-import org.jgrapht.Graph;
-import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Dimension;
-import fiji.plugin.trackmate.SpotFeature;
-import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotFeature;
+import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.util.TMUtils;
 
 public class SpotFeatureGrapher extends JFrame {
 
@@ -45,21 +44,18 @@ public class SpotFeatureGrapher extends JFrame {
 	private SpotFeature xFeature;
 	private Set<SpotFeature> yFeatures;
 	private List<Spot> spots;
-	private Graph<Spot, DefaultWeightedEdge> graph;
-	private Settings settings;
+	private TrackMateModel model;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public SpotFeatureGrapher(final SpotFeature xFeature, final Set<SpotFeature> yFeatures, final List<Spot> spots, final Graph<Spot, DefaultWeightedEdge> graph, final Settings settings) {
+	public SpotFeatureGrapher(final SpotFeature xFeature, final Set<SpotFeature> yFeatures, final List<Spot> spots, final TrackMateModel model) {
 		this.xFeature = xFeature;
 		this.yFeatures = yFeatures;
 		this.spots = spots;
-		this.graph = graph;
-		this.settings = settings;
+		this.model = model;
 		initGUI();
-		
 	}
 	
 	
@@ -70,6 +66,8 @@ public class SpotFeatureGrapher extends JFrame {
 	
 	private void initGUI() {
 				
+		final Settings settings = model.getSettings();
+		
 		// X label
 		String xAxisLabel = xFeature.shortName() + " (" + TMUtils.getUnitsFor(xFeature.getDimension(), settings)+")";
 		
@@ -128,7 +126,7 @@ public class SpotFeatureGrapher extends JFrame {
 					for (int j = i+1; j < nspots; j++) {
 						target = spots.get(j);
 
-						if (graph.containsEdge(source, target)) 
+						if (model.containsEdge(source, target)) 
 							edges.add(new Spot[] {source, target});
 
 					}

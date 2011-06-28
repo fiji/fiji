@@ -4,17 +4,10 @@ import ij.ImagePlus;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.Set;
 
 import org.jdom.JDOMException;
-import org.jgrapht.alg.ConnectivityInspector;
-import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
@@ -34,15 +27,12 @@ public class TrackVisualizerTestDrive {
 		reader.parse();
 		
 		// Load objects 
-		SpotCollection allSpots 		= reader.getAllSpots();
-		SpotCollection selectedSpots 	= reader.getFilteredSpots(allSpots);
-		final SimpleWeightedGraph<Spot, DefaultWeightedEdge> tracks = reader.getTracks(selectedSpots);
+		TrackMateModel model = reader.getModel();
 		
-		List<Set<Spot>> trackList = new ConnectivityInspector<Spot, DefaultWeightedEdge>(tracks).connectedSets();
-		System.out.println("Found "+trackList.size()+" tracks.");// DEBUG
-		for(Set<Spot> track : trackList) {
-			System.out.println(" - "+track.size()+" spots in track.");// DEBUG
-		}
+		System.out.println("Found "+model.getNTracks()+" tracks.");
+		for(int i=0; i<model.getNTracks(); i++) 
+			System.out.println(" - "+model.trackToString(i));
+		
 			
 		ImagePlus imp = reader.getImage();
 		Settings settings = reader.getSettings();
@@ -56,8 +46,6 @@ public class TrackVisualizerTestDrive {
 		}
 		
 		// Instantiate displayer
-		TrackMateModel model = reader.getModel();
-//		final SpotDisplayer displayer = SpotDisplayer.instantiateDisplayer(DisplayerType.THREEDVIEWER_DISPLAYER, model);
 		final TrackMateModelView displayer = AbstractTrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model);
 		displayer.refresh();
 		

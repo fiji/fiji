@@ -12,7 +12,7 @@ import org.jgrapht.traverse.DepthFirstIterator;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.TrackCollection;
+import fiji.plugin.trackmate.TrackMateModel;
 
 public class TrackSplitter {
 
@@ -25,12 +25,12 @@ public class TrackSplitter {
 	public static final int SPLITTING_POINT		= 32;
 	public static final int MERGING_POINT 		= 64;
 	public static final int COMPLEX_POINT		= 128;
-	public static final int NOT_IN_GRAPH		= 256; 
+	public static final int NOT_IN_GRAPH		= 256;
 	
-	private TrackCollection tracks; 
+	private TrackMateModel model; 
 	
-	public TrackSplitter(TrackCollection tracks) {
-		this.tracks = tracks;
+	public TrackSplitter(final TrackMateModel model) {
+		this.model = model;
 	}
 	
 	
@@ -44,19 +44,19 @@ public class TrackSplitter {
 		ArrayList<ArrayList<Spot>> branches = new ArrayList<ArrayList<Spot>>();
 		ArrayList<Spot> currentParent = null;
 		
-		DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = tracks.getDepthFirstIterator(first);
+		DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = model.getDepthFirstIterator(first);
 		Spot previousSpot = null;
 		while (iterator.hasNext()) {
 			Spot spot = iterator.next();
 			
-			int type = getVertexType(tracks, spot);
+			int type = getVertexType(model, spot);
 			
 			if (type == BRANCH_START) {
 				// This can be a real branch start, unless we are iterating backward in time. 
 				// Then this event should be a branch stop. We discriminate between the 2 using
 				//	the previous spot: if it is connected to this one, then we are moving backward
 				// and it is a branch stop.
-				if (tracks.containsEdge(spot, previousSpot)) {
+				if (model.containsEdge(spot, previousSpot)) {
 					// branch stop
 					currentParent.add(spot);
 					branches.add(currentParent);
@@ -75,7 +75,7 @@ public class TrackSplitter {
 			
 			} else if (type == BRANCH_END) {
 				// See BRANCH_START comment
-				if (tracks.containsEdge(spot, previousSpot)) {
+				if (model.containsEdge(spot, previousSpot)) {
 					currentParent.add(spot);
 					branches.add(currentParent); // Finish this one
 					currentParent = new ArrayList<Spot>(); // Create a new branch for the next spot
@@ -86,7 +86,7 @@ public class TrackSplitter {
 					currentParent.add(spot);
 				}
 				
-			} else if (!tracks.containsEdge(spot, previousSpot)) {
+			} else if (!model.containsEdge(spot, previousSpot)) {
 				branches.add(currentParent);
 				currentParent = new ArrayList<Spot>(); // make a new branch
 				currentParent.add(spot);
@@ -111,11 +111,11 @@ public class TrackSplitter {
 		return prunedBranches;
 	}
 	
-	public static final int getVertexType(TrackCollection tracks, Spot spot) {
-		if (!tracks.containsVertex(spot))
+	public static final int getVertexType(final TrackMateModel model, final Spot spot) {
+		if (!model.getFilteredSpots().getAllSpots().contains(spot))
 			return NOT_IN_GRAPH;
 		
-		Set<DefaultWeightedEdge> edges = tracks.edgesOf(spot);
+		Set<DefaultWeightedEdge> edges = model.edgesOf(spot);
 		int nConnections = edges.size();
 		
 		if (nConnections == 0) 
@@ -125,9 +125,9 @@ public class TrackSplitter {
 
 		if (nConnections == 1) {
 			DefaultWeightedEdge edge = edges.iterator().next();
-			Spot other = tracks.getEdgeSource(edge);
+			Spot other = model.getEdgeSource(edge);
 			if (other == spot)
-				other = tracks.getEdgeTarget(edge);
+				other = model.getEdgeTarget(edge);
 			float t1 = other.getFeature(SpotFeature.POSITION_T);
 			if (t1 > t0)
 				return BRANCH_START;
@@ -138,14 +138,14 @@ public class TrackSplitter {
 		if (nConnections == 2) {
 			Iterator<DefaultWeightedEdge> it = edges.iterator();
 			DefaultWeightedEdge edge1 = it.next();
-			Spot other1 = tracks.getEdgeSource(edge1);
+			Spot other1 = model.getEdgeSource(edge1);
 			if (other1 == spot)
-				other1 = tracks.getEdgeTarget(edge1);
+				other1 = model.getEdgeTarget(edge1);
 			float t1 = other1.getFeature(SpotFeature.POSITION_T);
 			DefaultWeightedEdge edge2 = it.next();
-			Spot other2 = tracks.getEdgeSource(edge2);
+			Spot other2 = model.getEdgeSource(edge2);
 			if (other2 == spot)
-				other2 = tracks.getEdgeTarget(edge2);
+				other2 = model.getEdgeTarget(edge2);
 			float t2 = other2.getFeature(SpotFeature.POSITION_T);
 			if ( (t2>t0 && t0>t1) || (t2<t0 && t0<t1) )
 				return BRIDGE;
@@ -158,9 +158,9 @@ public class TrackSplitter {
 		int before = 0;
 		int after = 0;
 		for(DefaultWeightedEdge edge : edges) {
-			Spot other = tracks.getEdgeSource(edge);
+			Spot other = model.getEdgeSource(edge);
 			if (other == spot)
-				other = tracks.getEdgeTarget(edge);
+				other = model.getEdgeTarget(edge);
 			float t = other.getFeature(SpotFeature.POSITION_T);
 			if (t > t0)
 				after++;

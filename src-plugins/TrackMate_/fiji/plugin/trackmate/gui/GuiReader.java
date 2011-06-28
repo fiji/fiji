@@ -21,7 +21,6 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotFilter;
-import fiji.plugin.trackmate.TrackCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.TrackMateFrameController.GuiState;
@@ -308,21 +307,18 @@ public class GuiReader {
 		
 
 		{ // Try reading the tracks 
-			TrackCollection trackGraph = null; 
 			try {
-				trackGraph = reader.getTracks(model.getFilteredSpots());
+				reader.loadTracks(model);
 			} catch (DataConversionException e) {
 				logger.error("Problem reading the track field of "+file.getName()
 						+". Error message is\n"+e.getLocalizedMessage()+'\n');
 			}
-			if (null == trackGraph) {
+			if (model.getNTracks() == 0) {
 				if (null != controller) {
 					view.setModel(model);
 					// Stop at tune tracker panel
 					controller.setState(GuiState.TUNE_TRACKER);
 					controller.setModelView(AbstractTrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
-//					controller.getModelView().setSpots(model.getSpots());
-//					controller.getModelView().setSpotsToShow(model.getFilteredSpots());
 					if (!imp.isVisible())
 						imp.show();
 				}
@@ -331,16 +327,12 @@ public class GuiReader {
 			}
 			
 			logger.log("  Reading tracks done.\n");
-			model.setTracks(trackGraph, false);
 		}
 		
 		view.setModel(model);
 		controller.actionFlag = true; // force redraw and relinking
 		controller.setState(GuiState.TRACKING);
 		controller.setModelView(AbstractTrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
-//		controller.getModelView().setSpots(model.getSpots());
-//		controller.getModelView().setSpotsToShow(model.getFilteredSpots());
-//		controller.getModelView().setTrackGraph(model.getTrackGraph());
 		if (!imp.isVisible())
 			imp.show();
 		logger.log("Loading data finished.\n");

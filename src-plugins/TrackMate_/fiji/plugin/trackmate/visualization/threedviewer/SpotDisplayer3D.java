@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 import java.util.TreeMap;
 
 import javax.media.j3d.View;
@@ -23,7 +22,6 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotFeature;
-import fiji.plugin.trackmate.TrackCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
@@ -90,7 +88,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			universe.removeContent(SPOT_CONTENT_NAME);
 			universe.addContent(spotContent);
 		}
-		if (model.getTracks() != null) {
+		if (model.getNTracks() > 0) {
 			trackContent = makeTrackContent();
 			universe.removeContent(TRACK_CONTENT_NAME);
 			universe.addContent(trackContent);
@@ -191,10 +189,12 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		updateRadiuses();
 		updateColors();
 		spotContent.setVisible((Boolean) displaySettings.get(KEY_SPOTS_VISIBLE));
-		trackContent.setVisible((Boolean) displaySettings.get(KEY_TRACKS_VISIBLE));
-		trackNode.setTrackDisplayMode((Integer) displaySettings.get(KEY_TRACK_DISPLAY_MODE));
-		trackNode.setTrackDisplayDepth((Integer) displaySettings.get(KEY_TRACK_DISPLAY_DEPTH));
-		trackNode.refresh();
+		if (null != trackContent) {
+			trackContent.setVisible((Boolean) displaySettings.get(KEY_TRACKS_VISIBLE));
+			trackNode.setTrackDisplayMode((Integer) displaySettings.get(KEY_TRACK_DISPLAY_MODE));
+			trackNode.setTrackDisplayDepth((Integer) displaySettings.get(KEY_TRACK_DISPLAY_DEPTH));
+			trackNode.refresh();
+		}
 	}
 
 	@Override
@@ -229,21 +229,16 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	 */
 	
 	private Content makeTrackContent() {
+
 		// Prepare track color
-		HashMap<Set<Spot>, Color> colors = new HashMap<Set<Spot>, Color>();
-		float value;
-		int index = 0;
-		TrackCollection tracks = model.getTracks();
-		List<Set<Spot>> trackSpots = tracks.getTrackSpots();
+		int ntracks = model.getNTracks();
+		List<Color> colors = new ArrayList<Color>(ntracks);
 		final InterpolatePaintScale colorMap = (InterpolatePaintScale) displaySettings.get(KEY_COLORMAP);
-		for(Set<Spot> track : trackSpots ) {
-			value = (float) index / tracks.size();
-			colors.put(track, colorMap.getPaint(value));
-			index++;
-		}
+		for (int i = 0; i < ntracks; i++) 
+			colors.add(colorMap.getPaint((float) i / (ntracks-1)));
 		
 		// Prepare tracks instant
-		trackNode = new TrackDisplayNode(tracks, model.getFilteredSpots(), trackSpots, colors);
+		trackNode = new TrackDisplayNode(model, colors);
 		universe.addTimelapseListener(trackNode);
 		
 		// Pass tracks instant to all instants

@@ -148,7 +148,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		// Graph to mirror model
 		this.graph = createGraph();
 		this.settings = model.getSettings();
-		this.graphLayout = new mxTrackGraphLayout(model.getTracks(), graph, settings.dx);
+		this.graphLayout = new mxTrackGraphLayout(model, graph, settings.dx);
 		String title = "Track scheme";
 		if (null != settings.imp)
 			title += settings.imp.getShortTitle();
@@ -343,7 +343,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		if (spots.isEmpty())
 			return;
 
-		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, new ArrayList<Spot>(spots), model.getTracks(), settings);
+		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, new ArrayList<Spot>(spots), model);
 		grapher.setVisible(true);
 
 	}
@@ -368,7 +368,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	 * Hook for subclassers.
 	 */
 	protected JGraphXAdapter createGraph() {
-		final JGraphXAdapter graph = new JGraphXAdapter(model.getTracks()) {
+		final JGraphXAdapter graph = new JGraphXAdapter(model) {
 
 			/**
 			 * Overridden method so that when a label is changed, we change the target spot's name.

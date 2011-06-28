@@ -3,7 +3,7 @@ package fiji.plugin.trackmate.features.track;
 import java.util.ArrayList;
 import java.util.List;
 
-import fiji.plugin.trackmate.TrackCollection;
+import fiji.plugin.trackmate.TrackMateModel;
 
 public class TrackFeatureFacade {
 
@@ -23,9 +23,9 @@ public class TrackFeatureFacade {
 	 * PUBLIC METHODS
 	 */
 	
-	public void processAllFeatures(TrackCollection tracks) {
+	public void processAllFeatures(TrackMateModel model) {
 		for (TrackFeatureAnalyzer analyzer : analyzers)
-			analyzer.process(tracks);
+			analyzer.process(model);
 	}
 	
 	/*

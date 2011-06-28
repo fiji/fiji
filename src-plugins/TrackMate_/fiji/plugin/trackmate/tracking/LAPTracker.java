@@ -11,9 +11,11 @@ import java.util.TreeSet;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
 
+import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.tracking.costmatrix.LinkingCostMatrixCreator;
 import fiji.plugin.trackmate.tracking.costmatrix.TrackSegmentCostMatrixCreator;
 import fiji.plugin.trackmate.tracking.hungarian.AssignmentAlgorithm;
@@ -105,7 +107,17 @@ import fiji.plugin.trackmate.tracking.hungarian.HungarianAlgorithm;
  * 
  * @author Nicholas Perry
  */
-public class LAPTracker extends AbstractSpotTracker {
+public class LAPTracker implements SpotTracker {
+
+	private final static String BASE_ERROR_MESSAGE = "LAPTracker: ";
+	private static final boolean DEBUG = false;
+
+	/** Logger used to echo progress on tracking. */
+	protected Logger logger = Logger.DEFAULT_LOGGER;
+	/** Stores a message describing an error incurred during use of the class. */
+	protected String errorMessage = BASE_ERROR_MESSAGE;
+	/** Stores whether the user has run checkInput() or not. */
+	protected boolean inputChecked = false;
 
 	/** The cost matrix for linking individual objects (step 1), indexed by the first frame index. */
 	protected TreeMap<Integer, double[][]> linkingCosts = null;
@@ -113,8 +125,6 @@ public class LAPTracker extends AbstractSpotTracker {
 	protected double[][] segmentCosts = null;
 	/** Stores the objects to track as a list of Spots per frame.  */
 
-	/** Stores whether the user has run checkInput() or not. */
-	protected boolean inputChecked = false;
 	/** Stores whether the default cost matrices from the paper should be used,
 	 * or if the user will supply their own. */
 	protected boolean defaultCosts = true;
@@ -145,12 +155,8 @@ public class LAPTracker extends AbstractSpotTracker {
 	/** The assignment problem solver that will be used by this tracker. 
 	 * @see #createAssignmentProblemSolver()	 */
 	protected AssignmentAlgorithm solver = null;
-
-
-	private final static String BASE_ERROR_MESSAGE = "LAPTracker: ";
-	private static final boolean DEBUG = false;
-
-
+	/** The model this tracker will operate on. */
+	protected TrackMateModel model;
 
 	/*
 	 * CONSTRUCTORS
@@ -163,22 +169,9 @@ public class LAPTracker extends AbstractSpotTracker {
 	 * @param linkingCosts The cost matrix for step 1, linking objects, specified for every frame.
 	 * @param settings The settings to use for this tracker.
 	 */
-	public LAPTracker (SpotCollection spots, TrackerSettings settings) {
-		super(settings);
-		this.spots = spots;
+	public LAPTracker(TrackMateModel model) {
+		this.model = model;
 		this.solver  = createAssignmentProblemSolver();
-		// Add all spots to the graph.
-		// We add spots without using the update level mechanism, for we do not need 
-		// to recompute track elements from a disconnected and potentially large collection
-		// of spot.
-		for(int frame : spots.keySet())
-			for(Spot spot : spots.get(frame))
-				tracks.addVertex(spot);
-	}
-
-
-	public LAPTracker (SpotCollection spots) {
-		this(spots, new TrackerSettings());
 	}
 
 	/*	
@@ -256,30 +249,30 @@ public class LAPTracker extends AbstractSpotTracker {
 	@Override
 	public boolean checkInput() {
 		// Check that the objects list itself isn't null
-		if (null == spots) {
-			errorMessage = BASE_ERROR_MESSAGE + "The spot list is null.";
+		if (null == model.getFilteredSpots()) {
+			errorMessage = BASE_ERROR_MESSAGE + "The filtered spot collection is null.";
 			return false;
 		}
 
 		// Check that the objects list contains inner collections.
-		if (spots.isEmpty()) {
-			errorMessage = BASE_ERROR_MESSAGE + "The spot list is empty.";
+		if (model.getFilteredSpots().isEmpty()) {
+			errorMessage = BASE_ERROR_MESSAGE + "The filtered spot collection is empty.";
 			return false;
 		}
 
 		// Check that at least one inner collection contains an object.
 		boolean empty = true;
-		for (int frame : spots.keySet()) {
-			if (!spots.get(frame).isEmpty()) {
+		for (int frame : model.getFilteredSpots().keySet()) {
+			if (!model.getFilteredSpots().get(frame).isEmpty()) {
 				empty = false;
 				break;
 			}
 		}
 		if (empty) {
-			errorMessage = BASE_ERROR_MESSAGE + "The spot list is empty.";
+			errorMessage = BASE_ERROR_MESSAGE + "The filtered spot collection is empty.";
 			return false;
 		}
-
+		
 		inputChecked = true;
 		return true;
 	}
@@ -304,9 +297,13 @@ public class LAPTracker extends AbstractSpotTracker {
 			return false;
 		}
 
-		tracks.beginUpdate();
+		
+		model.beginUpdate();
 
 		try {
+			// Step 0 - Clean current graph connections
+			model.clearTracks();
+			
 			// Step 1 - Link objects into track segments
 
 			// Create cost matrices
@@ -335,11 +332,11 @@ public class LAPTracker extends AbstractSpotTracker {
 			if (!linkTrackSegmentsToFinalTracks()) return false;
 			tend = System.currentTimeMillis();
 			logger.log(String.format("  Track segment LAP solved in %.1f s.\n", (tend-tstart)/1e3f));
-		
+
 		} finally {
-			tracks.endUpdate();
+			model.endUpdate();
 		}
-		
+
 		return true;
 	}
 
@@ -357,7 +354,8 @@ public class LAPTracker extends AbstractSpotTracker {
 		double[][] costMatrix = null;
 
 		// Iterate properly over frame pair in order, not necessarily separated by 1.
-		Iterator<Integer> frameIterator = spots.keySet().iterator(); 		
+		final SpotCollection spots = model.getFilteredSpots();
+		final Iterator<Integer> frameIterator = spots.keySet().iterator(); 		
 		int frame0 = frameIterator.next();
 		int frame1;
 		while(frameIterator.hasNext()) { // ascending order
@@ -366,7 +364,7 @@ public class LAPTracker extends AbstractSpotTracker {
 			t0 = spots.get(frame0);
 			t1 = spots.get(frame1);
 
-			objCosts = new LinkingCostMatrixCreator(t0, t1, settings);
+			objCosts = new LinkingCostMatrixCreator(t0, t1, model.getSettings().trackerSettings);
 			if (!objCosts.checkInput() || !objCosts.process()) {
 				errorMessage = objCosts.getErrorMessage();
 				return false;
@@ -386,7 +384,7 @@ public class LAPTracker extends AbstractSpotTracker {
 	 * @return True if executes successfully, false otherwise.
 	 */
 	private boolean createTrackSegmentCostMatrix() {
-		TrackSegmentCostMatrixCreator segCosts = new TrackSegmentCostMatrixCreator(trackSegments, settings);
+		TrackSegmentCostMatrixCreator segCosts = new TrackSegmentCostMatrixCreator(trackSegments, model.getSettings().trackerSettings);
 		if (!segCosts.checkInput() || !segCosts.process()) {
 			errorMessage = BASE_ERROR_MESSAGE + segCosts.getErrorMessage();
 			return false;
@@ -443,7 +441,7 @@ public class LAPTracker extends AbstractSpotTracker {
 		int[][] finalTrackSolutions = solveLAPForFinalTracks();
 
 		if (DEBUG) {
-			LAPUtils.displayCostMatrix(segmentCosts, trackSegments.size(), splittingMiddlePoints.size(), settings.blockingValue, finalTrackSolutions);
+			LAPUtils.displayCostMatrix(segmentCosts, trackSegments.size(), splittingMiddlePoints.size(), model.getSettings().trackerSettings.blockingValue, finalTrackSolutions);
 		}
 
 		// Compile LAP solutions into final tracks
@@ -461,39 +459,46 @@ public class LAPTracker extends AbstractSpotTracker {
 	 */
 	public void solveLAPForTrackSegments() {
 		// Iterate properly over frame pair in order, not necessarily separated by 1.
-		Iterator<Integer> frameIterator = spots.keySet().iterator(); 
+		final SpotCollection spots = model.getFilteredSpots();
+		final Iterator<Integer> frameIterator = spots.keySet().iterator(); 
 		int frame0 = frameIterator.next();
 		int frame1;
 		double weight;
-		while(frameIterator.hasNext()) { // ascending order
 
-			double[][] costMatrix = linkingCosts.get(frame0);
-			AssignmentProblem problem = new AssignmentProblem(costMatrix);
-			int[][] solutions = problem.solve(solver);			
-			frame1 = frameIterator.next();			
+		model.beginUpdate();
+		try {
+			while(frameIterator.hasNext()) { // ascending order
 
-			// Extend track segments using solutions: we update the graph edges
-			List<Spot> t0 = spots.get(frame0);
-			List<Spot> t1 = spots.get(frame1);
-			for (int i = 0; i < solutions.length; i++) {
-				if (solutions[i].length == 0)
-					continue;
-				int i0 = solutions[i][0];
-				int i1 = solutions[i][1];
+				double[][] costMatrix = linkingCosts.get(frame0);
+				AssignmentProblem problem = new AssignmentProblem(costMatrix);
+				int[][] solutions = problem.solve(solver);			
+				frame1 = frameIterator.next();			
 
-				if (i0 < t0.size() && i1 < t1.size() ) {
-					// Solution belong to the upper-left quadrant: we can connect the spots
-					Spot s0 = t0.get(i0);
-					Spot s1 = t1.get(i1);
-					// We set the edge weight to be the linking cost, for future reference. 
-					// This is NOT used in further tracking steps
-					weight = costMatrix[i0][i1]; 
-					tracks.addEdge(s0, s1, weight);
-				} // otherwise we do not create any connection
+				// Extend track segments using solutions: we update the graph edges
+				List<Spot> t0 = spots.get(frame0);
+				List<Spot> t1 = spots.get(frame1);
+				for (int i = 0; i < solutions.length; i++) {
+					if (solutions[i].length == 0)
+						continue;
+					int i0 = solutions[i][0];
+					int i1 = solutions[i][1];
+
+					if (i0 < t0.size() && i1 < t1.size() ) {
+						// Solution belong to the upper-left quadrant: we can connect the spots
+						Spot s0 = t0.get(i0);
+						Spot s1 = t1.get(i1);
+						// We set the edge weight to be the linking cost, for future reference. 
+						// This is NOT used in further tracking steps
+						weight = costMatrix[i0][i1]; 
+						model.addEdge(s0, s1, weight);
+					} // otherwise we do not create any connection
+				}
+
+				// Next frame pair
+				frame0 = frame1;
 			}
-
-			// Next frame pair
-			frame0 = frame1;
+		} finally {
+			model.endUpdate();
 		}
 	}
 
@@ -523,6 +528,7 @@ public class LAPTracker extends AbstractSpotTracker {
 	private void compileTrackSegments() {
 
 		trackSegments = new ArrayList<SortedSet<Spot>>();
+		final SpotCollection spots = model.getFilteredSpots();
 
 		Collection<Spot> spotPool = new ArrayList<Spot>();
 		for(int frame : spots.keySet())
@@ -534,7 +540,7 @@ public class LAPTracker extends AbstractSpotTracker {
 
 		while (!spotPool.isEmpty()) {
 			source = spotPool.iterator().next();
-			graphIterator = tracks.getDepthFirstIterator(source); // restricted to connected components
+			graphIterator = model.getDepthFirstIterator(source); // restricted to connected components
 			trackSegment = new TreeSet<Spot>(Spot.frameComparator);
 
 			while(graphIterator.hasNext()) {
@@ -570,86 +576,101 @@ public class LAPTracker extends AbstractSpotTracker {
 			System.out.println("Compiling final tracks with "+numTrackSegments+" segments, "
 					+numMergingMiddlePoints+" merging spot candidates, "+numSplittingMiddlePoints+" splitting spot condidates.");
 		}
-		for (int[] solution : finalTrackSolutions) {
-			int i = solution[0];
-			int j = solution[1];
 
-			if (i < numTrackSegments) {
+		model.beginUpdate();
+		try {
 
-				// Case 1: Gap closing
-				if (j < numTrackSegments) {
-					SortedSet<Spot> segmentEnd = trackSegments.get(i);
-					SortedSet<Spot> segmentStart = trackSegments.get(j);
-					Spot end = segmentEnd.last();
-					Spot start = segmentStart.first();
-					weight = segmentCosts[i][j];
-					tracks.addEdge(end, start, weight);
+			for (int[] solution : finalTrackSolutions) {
+				int i = solution[0];
+				int j = solution[1];
 
-					if(DEBUG) 
-						System.out.println("Gap closing from segment "+i+" to segment "+j+".");
+				if (i < numTrackSegments) {
 
-				} else if (j < (numTrackSegments + numMergingMiddlePoints)) {
+					// Case 1: Gap closing
+					if (j < numTrackSegments) {
+						SortedSet<Spot> segmentEnd = trackSegments.get(i);
+						SortedSet<Spot> segmentStart = trackSegments.get(j);
+						Spot end = segmentEnd.last();
+						Spot start = segmentStart.first();
+						weight = segmentCosts[i][j];
+						model.addEdge(end, start, weight);
 
-					// Case 2: Merging
-					SortedSet<Spot> segmentEnd = trackSegments.get(i);
-					Spot end =  segmentEnd.last();
-					Spot middle = mergingMiddlePoints.get(j - numTrackSegments);
-					weight = segmentCosts[i][j];
-					tracks.addEdge(end, middle, weight);
+						if(DEBUG) 
+							System.out.println("Gap closing from segment "+i+" to segment "+j+".");
 
-					if(DEBUG) {
-						SortedSet<Spot> track = null;
-						int indexTrack = 0;
-						int indexSpot = 0;
-						for(SortedSet<Spot> t : trackSegments)
-							if (t.contains(middle)) {
-								track = t;
-								for(Spot spot : track) {
-									if (spot == middle)
-										break;
-									else
-										indexSpot++;
-								}
-								break;
-							} else
-								indexTrack++;
-						System.out.println("Merging from segment "+i+" end to spot "+indexSpot+" in segment "+indexTrack+".");
+					} else if (j < (numTrackSegments + numMergingMiddlePoints)) {
+
+						// Case 2: Merging
+						SortedSet<Spot> segmentEnd = trackSegments.get(i);
+						Spot end =  segmentEnd.last();
+						Spot middle = mergingMiddlePoints.get(j - numTrackSegments);
+						weight = segmentCosts[i][j];
+						model.addEdge(end, middle, weight);
+
+						if(DEBUG) {
+							SortedSet<Spot> track = null;
+							int indexTrack = 0;
+							int indexSpot = 0;
+							for(SortedSet<Spot> t : trackSegments)
+								if (t.contains(middle)) {
+									track = t;
+									for(Spot spot : track) {
+										if (spot == middle)
+											break;
+										else
+											indexSpot++;
+									}
+									break;
+								} else
+									indexTrack++;
+							System.out.println("Merging from segment "+i+" end to spot "+indexSpot+" in segment "+indexTrack+".");
+						}
+
 					}
+				} else if (i < (numTrackSegments + numSplittingMiddlePoints)) {
 
-				}
-			} else if (i < (numTrackSegments + numSplittingMiddlePoints)) {
-
-				// Case 3: Splitting
-				if (j < numTrackSegments) {
-					SortedSet<Spot> segmentStart = trackSegments.get(j);
-					Spot start = segmentStart.first();
-					Spot mother = splittingMiddlePoints.get(i - numTrackSegments);
-					Spot target = mother;
-					weight = segmentCosts[i][j];
-					tracks.addEdge(start, target, weight);
+					// Case 3: Splitting
+					if (j < numTrackSegments) {
+						SortedSet<Spot> segmentStart = trackSegments.get(j);
+						Spot start = segmentStart.first();
+						Spot mother = splittingMiddlePoints.get(i - numTrackSegments);
+						Spot target = mother;
+						weight = segmentCosts[i][j];
+						model.addEdge(start, target, weight);
 
 
-					if(DEBUG) {
-						SortedSet<Spot> track = null;
-						int indexTrack = 0;
-						int indexSpot = 0;
-						for(SortedSet<Spot> t : trackSegments)
-							if (t.contains(mother)) {
-								track = t;
-								for(Spot spot : track) {
-									if (spot == mother)
-										break;
-									else
-										indexSpot++;
-								}
-								break;
-							} else
-								indexTrack++;
-						System.out.println("Splitting from spot "+indexSpot+" in segment "+indexTrack+" to segment"+j+".");
+						if(DEBUG) {
+							SortedSet<Spot> track = null;
+							int indexTrack = 0;
+							int indexSpot = 0;
+							for(SortedSet<Spot> t : trackSegments)
+								if (t.contains(mother)) {
+									track = t;
+									for(Spot spot : track) {
+										if (spot == mother)
+											break;
+										else
+											indexSpot++;
+									}
+									break;
+								} else
+									indexTrack++;
+							System.out.println("Splitting from spot "+indexSpot+" in segment "+indexTrack+" to segment"+j+".");
+						}
 					}
 				}
 			}
+		} finally {
+			model.endUpdate();
 		}
+	}
+
+
+
+
+	@Override
+	public void setLogger(Logger logger) {
+		this.logger = logger;
 	}
 }
 

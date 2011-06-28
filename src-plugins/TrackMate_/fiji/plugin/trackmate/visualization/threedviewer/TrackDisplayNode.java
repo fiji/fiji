@@ -1,9 +1,8 @@
 package fiji.plugin.trackmate.visualization.threedviewer;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotFeature;
-import fiji.plugin.trackmate.TrackCollection;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import ij3d.ContentNode;
 import ij3d.TimelapseListener;
@@ -12,7 +11,6 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.media.j3d.Appearance;
@@ -29,14 +27,10 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 
-	/** The collection containing the connectivity. */
-	protected TrackCollection tracks;
-	/** The spots indexed by frame. */
-	protected SpotCollection spots;
-	/** The list of tracks. */
-	protected List<Set<Spot>> trackSpots;
+	/** The model, needed to retrieve connectivity. */
+	private TrackMateModel model;
 	/** Hold the color and transparency of all spots for a given track. */
-	protected Map<Set<Spot>, Color> colors;
+	protected List<Color> colors;
 
 	private int displayDepth = TrackMateModelView.DEFAULT_TRACK_DISPLAY_DEPTH;
 	private int displayMode = TrackMateModelView.DEFAULT_TRACK_DISPLAY_MODE;
@@ -56,17 +50,11 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	 * CONSTRUCTOR
 	 */
 
-	public TrackDisplayNode(
-			TrackCollection tracks, 
-			SpotCollection spots, 
-			List<Set<Spot>> trackSpots, 
-			Map<Set<Spot>, Color> colors) {
-		this.tracks = tracks;
-		this.spots = spots;
-		this.trackSpots = trackSpots;
+	public TrackDisplayNode(TrackMateModel model, List<Color> colors) {
+		this.model = model;
 		this.colors = colors;
 
-		for(int frame : spots.keySet())
+		for(int frame : model.getFilteredSpots().keySet())
 			frameIndex.put(frame, new ArrayList<Integer>());
 
 		makeMeshes();
@@ -169,7 +157,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	public void setColor(final Set<Spot> track, final Color color) {
 		Set<DefaultWeightedEdge> edges;
 		for(Spot spot : track) {
-			edges = tracks.edgesOf(spot);
+			edges = model.edgesOf(spot);
 			for(DefaultWeightedEdge edge : edges)
 				setColor(edge, color);
 		}
@@ -218,44 +206,40 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	private void makeMeshes() {
 
 		// All edges
-		Set<DefaultWeightedEdge> allEdges = tracks.edgeSet();
+		List<Set<DefaultWeightedEdge>> trackEdges = model.getTrackEdges();
 
 		// Holder for coordinates (array ref will not be used, just its elements)
 		float[] coordinates = new float[3];
 
 		// One big object to display all edges
-		line = new LineArray(2 * allEdges.size(), LineArray.COORDINATES | LineArray.COLOR_4);
+		line = new LineArray(2 * model.edgeSet().size(), LineArray.COORDINATES | LineArray.COLOR_4);
 		line.setCapability(LineArray.ALLOW_COLOR_WRITE);
 
 		int index = 0;
-		for(DefaultWeightedEdge edge : allEdges) {
-			// Find source and target
-			Spot target = tracks.getEdgeTarget(edge);
-			Spot source = tracks.getEdgeSource(edge);
-			// Find track it belongs to
-			Set<Spot> parentTrack = null;
-			for (Set<Spot> track : trackSpots) 
-				if (track.contains(source)) {
-					parentTrack = track;
-					break;
-				}
-
+		for (int i = 0; i < trackEdges.size(); i++) {
 			// Color
-			Color trackColor = colors.get(parentTrack);
-			Color4f color = new Color4f(trackColor);
+			final Color trackColor = colors.get(i);
+			final Color4f color = new Color4f(trackColor);
 			color.w = 1f; // opaque edge for now
 
-			// Add coords and colors of each vertex
-			line.setCoordinate(index, source.getPosition(coordinates));
-			line.setColor(index, color);
-			index++;
-			line.setCoordinate(index, target.getPosition(coordinates));
-			line.setColor(index, color);
-			index++;
+			// Iterate over track edge
+			for (DefaultWeightedEdge edge : trackEdges.get(i)) {
+				// Find source and target
+				Spot target = model.getEdgeTarget(edge);
+				Spot source = model.getEdgeSource(edge);
 
-			// Keep refs
-			edgeIndex.put(edge, index-2);
-			frameIndex.get(spots.getFrame(source)).add(index-2);			
+				// Add coords and colors of each vertex
+				line.setCoordinate(index, source.getPosition(coordinates));
+				line.setColor(index, color);
+				index++;
+				line.setCoordinate(index, target.getPosition(coordinates));
+				line.setColor(index, color);
+				index++;
+
+				// Keep refs
+				edgeIndex.put(edge, index-2);
+				frameIndex.get(model.getFilteredSpots().getFrame(source)).add(index-2);
+			}
 		}
 
 		Appearance appearance = new Appearance();
@@ -286,12 +270,12 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	@Override
 	public void getCenter(Tuple3d center) {
 		double x = 0, y = 0, z = 0;
-		for (Spot spot : tracks.vertexSet()) {
+		for (Spot spot : model.getFilteredSpots()) {
 			x += spot.getFeature(SpotFeature.POSITION_X);
 			y += spot.getFeature(SpotFeature.POSITION_Y);
 			z += spot.getFeature(SpotFeature.POSITION_Z);
 		}
-		int nspot = tracks.vertexSet().size();
+		int nspot = model.getFilteredSpots().getNSpots();
 		x /= nspot;
 		y /= nspot;
 		z /= nspot;
@@ -303,7 +287,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		double ymax = Double.NEGATIVE_INFINITY;
 		double zmax = Double.NEGATIVE_INFINITY;
 		float radius;
-		for (Spot spot : tracks.vertexSet()) {
+		for (Spot spot : model.getFilteredSpots()) {
 			radius = spot.getFeature(SpotFeature.RADIUS);
 			if (xmax < spot.getFeature(SpotFeature.POSITION_X) + radius)
 				xmax = spot.getFeature(SpotFeature.POSITION_X) + radius;
@@ -324,7 +308,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		double ymin = Double.POSITIVE_INFINITY;
 		double zmin = Double.POSITIVE_INFINITY;
 		float radius;
-		for (Spot spot : tracks.vertexSet()) {
+		for (Spot spot : model.getFilteredSpots()) {
 			radius = spot.getFeature(SpotFeature.RADIUS);
 			if (xmin > spot.getFeature(SpotFeature.POSITION_X) - radius)
 				xmin = spot.getFeature(SpotFeature.POSITION_X) - radius;

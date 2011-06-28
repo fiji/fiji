@@ -5,16 +5,16 @@ import java.util.Set;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotFeature;
-import fiji.plugin.trackmate.TrackCollection;
 import fiji.plugin.trackmate.TrackFeature;
+import fiji.plugin.trackmate.TrackMateModel;
 
 public class TrackDurationAnalyzer implements TrackFeatureAnalyzer{
 	
 	@Override
-	public void process(TrackCollection tracks) {
+	public void process(final TrackMateModel model) {
 		// I love brute force.
-		for(int index=0; index<tracks.size(); index++) {
-			Set<Spot> track = tracks.getTrackSpots(index);
+		for(int index=0; index<model.getNTracks(); index++) {
+			Set<Spot> track = model.getTrackSpots(index);
 			float minT = Float.POSITIVE_INFINITY;
 			float maxT = Float.NEGATIVE_INFINITY;
 			float t;
@@ -25,7 +25,7 @@ public class TrackDurationAnalyzer implements TrackFeatureAnalyzer{
 				if (t > maxT)
 					maxT = t;
 			}
-			tracks.putFeature(index, TrackFeature.TRACK_DURATION, (maxT-minT));
+			model.putTrackFeature(index, TrackFeature.TRACK_DURATION, (maxT-minT));
 		}
 	}
 

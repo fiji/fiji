@@ -74,16 +74,16 @@ public class Settings {
 	}
 	
 	/**
-	 * Return a new {@link SpotTracker} as selected in this settings object. 
+	 * Return a new {@link SpotTracker} as selected in this settings object, initialized for the given model.
 	 */
-	public SpotTracker getSpotTracker(SpotCollection spots) {
+	public SpotTracker getSpotTracker(TrackMateModel model) {
 		switch(trackerType) {
 		case LAP_TRACKER:
 		case SIMPLE_LAP_TRACKER:
-			return new LAPTracker(spots, trackerSettings);
+			return new LAPTracker(model);
 		case FAST_LAPT:
 		case SIMPLE_FAST_LAPT:
-			return new FastLAPTracker(spots, trackerSettings);
+			return new FastLAPTracker(model);
 		}
 		return null;
 	}

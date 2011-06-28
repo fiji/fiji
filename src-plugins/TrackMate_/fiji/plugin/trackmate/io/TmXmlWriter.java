@@ -22,7 +22,6 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.SpotFilter;
-import fiji.plugin.trackmate.TrackCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
@@ -235,21 +234,20 @@ public class TmXmlWriter implements TmXmlKeys {
 	}
 
 	private void echoTracks() {
-		TrackCollection tracks = model.getTracks();
-		if (null == tracks)
+		if (model.getNTracks() == 0)
 			return;
 
 		Element allTracksElement = new Element(TRACK_COLLECTION_ELEMENT_KEY);
 
-		List<Set<DefaultWeightedEdge>> trackEdges = tracks.getTrackEdges();
+		List<Set<DefaultWeightedEdge>> trackEdges = model.getTrackEdges();
 		for(Set<DefaultWeightedEdge> track : trackEdges) {
 			Element trackElement = new Element(TRACK_ELEMENT_KEY);
 
 			for (DefaultWeightedEdge edge : track) {
 
-				Spot source = tracks.getEdgeSource(edge);
-				Spot target = tracks.getEdgeTarget(edge);
-				double weight = tracks.getEdgeWeight(edge);
+				Spot source = model.getEdgeSource(edge);
+				Spot target = model.getEdgeTarget(edge);
+				double weight = model.getEdgeWeight(edge);
 				
 				Element edgeElement = new Element(TRACK_EDGE_ELEMENT_KEY);
 				edgeElement.setAttribute(TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, ""+source.ID());

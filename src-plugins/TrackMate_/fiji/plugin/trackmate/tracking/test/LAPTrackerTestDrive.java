@@ -6,7 +6,6 @@ import java.io.IOException;
 import org.jdom.JDOMException;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.TrackCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.LAPTracker;
@@ -41,6 +40,12 @@ public class LAPTrackerTestDrive {
 			e.printStackTrace();
 		}
 		
+		System.out.println("All spots: "+ model.getSpots());
+		System.out.println("Filtered spots: "+ model.getFilteredSpots());
+		System.out.println("Found "+model.getNTracks()+" tracks in the file:");
+		for(int i=0; i<model.getNTracks(); i++)
+			System.out.println('\t'+model.trackToString(i));
+		System.out.println();
 		
 		// 1.5 - Set the tracking settings
 		TrackerSettings settings = new TrackerSettings();
@@ -64,22 +69,19 @@ public class LAPTrackerTestDrive {
 		// 2 - Track the test spots
 		long start = System.currentTimeMillis();
 		LAPTracker lap;
-		lap = new LAPTracker(model.getFilteredSpots(), settings); //model.getSettings().trackerSettings);
+		lap = new LAPTracker(model); //model.getSettings().trackerSettings);
 		lap.setLogger(Logger.DEFAULT_LOGGER);
 		if (!lap.checkInput())
 			System.err.println("Error checking input: "+lap.getErrorMessage());
 		if (!lap.process())
 			System.err.println("Error in process: "+lap.getErrorMessage());
 		long end = System.currentTimeMillis();
-		model.setTracks(lap.getTracks(), false);
-		
 	
 		// 3 - Print out results for testing		
 		System.out.println();
 		System.out.println();
 		System.out.println();
-		TrackCollection tracks = lap.getTracks();
-		System.out.println("Found " + tracks.size() + " final tracks.");
+		System.out.println("Found " + model.getNTracks() + " final tracks.");
 		System.out.println("Whole tracking done in "+(end-start)+" ms.");
 		System.out.println();
 
@@ -89,8 +91,8 @@ public class LAPTrackerTestDrive {
 //		LAPUtils.echoMatrix(lap.getSegmentCosts());
 		
 		System.out.println("Track features: ");
-		for (int i = 0; i < tracks.size(); i++) {
-			System.out.println(tracks.toString(i));
+		for (int i = 0; i < model.getNTracks(); i++) {
+			System.out.println(model.trackToString(i));
 		}
 		
 		
