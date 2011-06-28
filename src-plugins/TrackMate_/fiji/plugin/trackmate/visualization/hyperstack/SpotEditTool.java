@@ -21,7 +21,7 @@ import fiji.tool.AbstractTool;
 
 public class SpotEditTool extends AbstractTool implements MouseMotionListener, MouseListener, MouseWheelListener, KeyListener {
 	
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	private static final float COARSE_STEP = 2;
 	private static final float FINE_STEP = 0.2f;
 	private static final String TOOL_NAME = "Spot edit tool";
@@ -153,8 +153,6 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		
 		case 2: {
 			// Edit spot
-			if (DEBUG)
-				System.out.println("[SpotEditTool] Got "+editedSpot+" as editing spot for this imp.");
 			
 			// Empty current selection
 			model.clearSelection();
@@ -172,9 +170,16 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 					target.putFeature(SpotFeature.RADIUS, radius);
 				}
 				editedSpot = target;
+				displayer.spotOverlay.editingSpot = editedSpot;
+				// Edit spot
+				if (DEBUG)
+					System.out.println("[SpotEditTool] mouseClicked: Set "+editedSpot+" as editing spot for this imp.");
 				
 			} else {
 				// We leave editing mode
+				if (DEBUG)
+					System.out.println("[SpotEditTool] mouseClicked: Got "+editedSpot+" as editing spot for this imp, leaving editing mode.");
+				
 				// A hack: we update the current z and t of the edited spot to the current one, 
 				// because it is not updated otherwise: there is no way to listen to slice change
 				final float zslice = (displayer.imp.getSlice()-1) * displayer.calibration[2];
@@ -197,6 +202,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 
 				// Forget edited spot
 				editedSpot = null;
+				displayer.spotOverlay.editingSpot = null;
 			}
 			break;
 		}
