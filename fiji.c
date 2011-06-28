@@ -1021,6 +1021,8 @@ static struct string *get_parent_directory(const char *path)
 	return string_initf("%.*s", (int)(slash - path), path);
 }
 
+static int find_file(struct string *search_root, int max_depth, const char *file, struct string *result);
+
 /* Splash screen */
 
 static void (*SplashClose)(void);
@@ -1031,6 +1033,15 @@ struct string *get_splashscreen_lib_path(void)
 	return string_initf("%s/bin/splashscreen.dll", get_jre_home());
 #elif defined(__linux__)
 	return string_initf("%s/lib/%s/libsplashscreen.so", get_jre_home(), sizeof(void *) == 8 ? "amd64" : "i386");
+#elif defined(MACOSX)
+	struct string *search_root = string_initf("/System/Library/Java/JavaVirtualMachines");
+	struct string *result = string_init(32);
+	if (!find_file(search_root, 4, "libsplashscreen.jnilib", result)) {
+		string_release(result);
+		result = NULL;
+	}
+	string_release(search_root);
+	return result;
 #else
 	return NULL;
 #endif
@@ -1383,6 +1394,47 @@ static int mkdir_p(const char *path)
 	result = mkdir_recursively(buffer);
 	string_release(buffer);
 	return result;
+}
+
+__attribute__((unused))
+static int find_file(struct string *search_root, int max_depth, const char *file, struct string *result)
+{
+	int len = search_root->length;
+	DIR *directory;
+	struct dirent *entry;
+
+	string_add_char(search_root, '/');
+
+	string_append(search_root, file);
+	if (file_exists(search_root->buffer)) {
+		string_set(result, search_root->buffer);
+		string_set_length(search_root, len);
+		return 1;
+	}
+
+	if (max_depth <= 0)
+		return 0;
+
+	string_set_length(search_root, len);
+	directory = opendir(search_root->buffer);
+	if (!directory)
+		return 0;
+	string_add_char(search_root, '/');
+	while (NULL != (entry = readdir(directory))) {
+		if (entry->d_name[0] == '.')
+			continue;
+		string_append(search_root, entry->d_name);
+		if (dir_exists(search_root->buffer))
+			if (find_file(search_root, max_depth - 1, file, result)) {
+				string_set_length(search_root, len);
+				closedir(directory);
+				return 1;
+			}
+		string_set_length(search_root, len + 1);
+	}
+	closedir(directory);
+	string_set_length(search_root, len);
+	return 0;
 }
 
 static void detect_library_path(struct string *library_path, struct string *directory)
