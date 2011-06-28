@@ -156,9 +156,11 @@ public class TrackMateModel {
 	public void execTracking() {
 		SpotTracker tracker = settings.getSpotTracker(this);
 		tracker.setLogger(logger);
-		if (tracker.checkInput() && tracker.process())
-			logger.log("Tracking done."); //TODO
-		else
+		if (tracker.checkInput() && tracker.process()) {
+			final TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_COMPUTED);
+			for (TrackMateModelChangeListener listener : modelChangeListeners)
+				listener.modelChanged(event);
+		} else
 			logger.error("Problem occured in tracking:\n"+tracker.getErrorMessage()+'\n');
 	}
 
