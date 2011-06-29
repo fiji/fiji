@@ -26,8 +26,12 @@ fi
 ../../fiji --ant -Dpython.lib="$PYTHON_LIB" -f jython/build.xml jar-complete copy-lib >&2 ||
 die "Could not run ant"
 
-cd jython/dist &&
-(zip -d jython.jar com/sun/jna/\* || true) &&
-cp jython.jar ../../ &&
-zip -9r ../../jython.jar Lib ||
+rm -rf unpacked &&
+mkdir unpacked && (
+	cd unpacked &&
+	$(../../../fiji --print-java-home)/../bin/jar xf ../jython/dist/jython.jar &&
+	rm -rf com/sun/jna &&
+	cp -R ../jython/dist/Lib ./ &&
+	$(../../../fiji --print-java-home)/../bin/jar cf ../jython.jar *
+) ||
 die "Could not add Lib/ to jython.jar"
