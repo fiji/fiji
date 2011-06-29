@@ -10,6 +10,8 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JPopupMenu;
 
+import org.jgrapht.graph.DefaultWeightedEdge;
+
 import com.mxgraph.model.mxCell;
 import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
@@ -96,7 +98,7 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 
 			// Link
 
-			Action linkAction = new AbstractAction("Link spots") {
+			Action linkAction = new AbstractAction("Link " + vertices.size() +" spots") {
 
 				@Override
 				public void actionPerformed(ActionEvent e) {
@@ -123,9 +125,9 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 							if (model.containsEdge(previousSpot, currentSpot))
 								continue;
 							// This will update the mxGraph view
-							model.addEdge(previousSpot, currentSpot, -1);
-							// Update the MODEL graph as well
-//							frame.getGraph().addEdge(edge, parent, source, target, index)
+							DefaultWeightedEdge edge = model.addEdge(previousSpot, currentSpot, -1);
+							mxCell cell = frame.getGraph().addJGraphTEdge(edge);
+							cell.setValue("New");
 							previousSpot = currentSpot;
 						}
 					} finally {

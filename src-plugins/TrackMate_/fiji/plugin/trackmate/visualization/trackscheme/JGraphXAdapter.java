@@ -29,7 +29,6 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 	public JGraphXAdapter(final TrackMateModel tmm) {
 		super();
 		this.tmm = tmm;
-//		tmm.addTrackMateModelChangeListener(this); // FIXME
 		insertTrackCollection(tmm);
 	}
 
@@ -37,10 +36,11 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 	 * METHODS
 	 */
 
-	public void addJGraphTVertex(Spot vertex) {
+	public mxCell addJGraphTVertex(Spot vertex) {
+		mxCell cell = null;
 		getModel().beginUpdate();
 		try {
-			mxCell cell = new mxCell(vertex);
+			cell = new mxCell(vertex);
 			cell.setVertex(true);
 			cell.setId(null);
 			addCell(cell, defaultParent);
@@ -49,14 +49,16 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 		} finally {
 			getModel().endUpdate();
 		}
+		return cell;
 	}
 
-	public void addJGraphTEdge(DefaultWeightedEdge edge) {
+	public mxCell addJGraphTEdge(DefaultWeightedEdge edge) {
+		mxCell cell = null;
 		getModel().beginUpdate();
 		try {
 			Spot source = tmm.getEdgeSource(edge);
 			Spot target = tmm.getEdgeTarget(edge);				
-			mxCell cell = new mxCell(edge);
+			cell = new mxCell(edge);
 			cell.setEdge(true);
 			cell.setId(null);
 			cell.setGeometry(new mxGeometry());
@@ -67,6 +69,7 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 		} finally {
 			getModel().endUpdate();
 		}
+		return cell;
 	}
 
 	public HashMap<Spot, mxCell> getVertexToCellMap() {

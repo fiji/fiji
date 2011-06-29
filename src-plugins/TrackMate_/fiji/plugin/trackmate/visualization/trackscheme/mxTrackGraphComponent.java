@@ -34,12 +34,12 @@ import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 
 public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventListener {
-	
+
 	private static final long serialVersionUID = -281620557095353617L;
 	private static final Color BACKGROUND_COLOR_1 	= Color.GRAY;
 	private static final Color BACKGROUND_COLOR_2 	= Color.LIGHT_GRAY;
 	private static final Color LINE_COLOR 			= Color.BLACK;
-	
+
 	private TreeSet<Float> instants;
 	private TreeMap<Float, Integer> rows;
 	private int[] columnWidths = null;
@@ -56,24 +56,24 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		instants = new TreeSet<Float>();
 		for (Spot s : frame.getModel().getFilteredSpots())
 			instants.add(s.getFeature(SpotFeature.POSITION_T));
-		
+
 		connectionHandler.addListener(mxEvent.CONNECT, this);
-		
+
 		mxGraphics2DCanvas.putShape(mxScaledLabelShape.SHAPE_NAME, new mxScaledLabelShape());
-		
+
 		setSwimlaneSelectionEnabled(true);
-		
+
 	}
-	
+
 	/*
 	 * METHODS
 	 */
-	
+
 	@Override
 	public boolean isToggleEvent(MouseEvent event) {
 		return event.isShiftDown();
 	}
-	
+
 	/**
 	 * Overridden to customize the look of the editor. We want to hide the image in the
 	 * background.
@@ -90,8 +90,8 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		editor.setShiftEnterSubmitsText(true);
 		return editor;
 	}
-	
-	
+
+
 	/**
 	 * Custom {@link mxGraphHandler} so as to avoid clearing the selection when right-clicking elsewhere than
 	 * on a cell, which is reserved for aimed at displaying a popup menu.
@@ -99,7 +99,7 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 	@Override
 	protected mxGraphHandler createGraphHandler() {
 		return new mxGraphHandler(this) {
-			
+
 			public void mousePressed(MouseEvent e)	{
 				if (graphComponent.isEnabled() && isEnabled() && !e.isConsumed() && !graphComponent.isForceMarqueeEvent(e)) {
 					cell = graphComponent.getCellAt(e.getX(), e.getY(), false);
@@ -120,8 +120,8 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 					}
 				}
 			}
-			
-			
+
+
 			public void mouseReleased(MouseEvent e) {
 				if (graphComponent.isEnabled() && isEnabled() && !e.isConsumed()) {
 					mxGraph graph = graphComponent.getGraph();
@@ -242,7 +242,7 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 			}
 		};
 	}
-	
+
 	/**
 	 * Override this so as to paint the background with colored rows and columns. 
 	 */
@@ -250,7 +250,7 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 	public void paintBackground(Graphics g) {
 		Graphics2D g2d = (Graphics2D) g;
 		Rectangle paintBounds = g.getClipBounds();
-		
+
 		int width = getViewport().getView().getSize().width;
 		int height = getViewport().getView().getSize().height;
 		float scale = (float) graph.getView().getScale();
@@ -279,7 +279,7 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		int x = xcs / 4;
 		y = 3 * ycs / 2;
 		g.setFont(FONT.deriveFont(12*scale).deriveFont(Font.BOLD));
-		
+
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		for(Float instant : instants) {
 			if (xcs > paintBounds.x && y > paintBounds.y - ycs && y < paintBounds.y + paintBounds.height) {
@@ -302,11 +302,11 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 			}
 		}
 	}
-	
+
 	public void setRowForInstant(TreeMap<Float, Integer> rowForInstant) {
 		rows = rowForInstant;
 	}
-	
+
 	public TreeMap<Float, Integer> getRowForInstant() {
 		return rows;
 	}
@@ -334,6 +334,7 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		mxCell cell = (mxCell) obj;
 		DefaultWeightedEdge edge;
 		if (cell.isEdge()) {
+			cell.setValue("New");
 			final JGraphXAdapter graph = frame.getGraph();
 			final TrackMateModel model = frame.getModel();
 			graph.getModel().beginUpdate();
@@ -345,23 +346,12 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 				edge = model.addEdge(source, target, -1);
 				frame.getGraph().getEdgeToCellMap().put(edge, cell);
 				frame.getGraph().getCellToEdgeMap().put(cell, edge);
-				// Then, remove the old JGraphX edge.
-//				frame.getGraph().removeCells(new Object[] { cell }); 
 				evt.consume();
 			} finally {
 				graph.getModel().endUpdate();
 				model.endUpdate();
 				model.clearEdgeSelection();
 			}
-			
-			// Then we do the update, and get the new JGraphX edge (through the map in the adapter) and change its value and style. Easy.
-//			graph.getModel().beginUpdate();
-//			try {
-//				mxCell newEdgeCell = graph.getEdgeToCellMap().get(edge);
-//				newEdgeCell.setValue("New");
-//			} finally {
-//				graph.getModel().endUpdate();
-//			}
 		}
 	}
 
