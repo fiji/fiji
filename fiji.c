@@ -1025,6 +1025,7 @@ static int find_file(struct string *search_root, int max_depth, const char *file
 
 /* Splash screen */
 
+static int no_splash;
 static void (*SplashClose)(void);
 
 struct string *get_splashscreen_lib_path(void)
@@ -1056,7 +1057,7 @@ static void show_splash(void)
 	int (*SplashLoadFile)(const char *path);
 	int (*SplashSetFileJarName)(const char *file_path, const char *jar_path);
 
-	if (!lib_path)
+	if (no_splash || !lib_path)
 		return;
 	splashscreen = dlopen(lib_path->buffer, RTLD_LAZY);
 	if (!splashscreen) {
@@ -1997,6 +1998,8 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\tuse the G1 garbage collector\n"
 		"--debug-gc\n"
 		"\tshow debug info about the garbage collector on stderr\n"
+		"--no-splash\n"
+		"\tsuppress showing a splash screen upon startup\n"
 		"\n"
 		"Options for ImageJ:\n"
 		"--allow-multiple\n"
@@ -2438,6 +2441,8 @@ static int start_ij(void)
 			advanced_gc = 2;
 		else if (!strcmp("--debug-gc", main_argv[i]))
 			debug_gc = 1;
+		else if (!strcmp("--no-splash", main_argv[i]))
+			no_splash = 1;
 		else if (!strcmp("--help", main_argv[i]) ||
 				!strcmp("-h", main_argv[i]))
 			usage();
