@@ -235,8 +235,12 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	@Override
 	public void modelChanged(final TrackMateModelChangeEvent event) {
 
+		// Only catch model changes
+		if (event.getEventID() != TrackMateModelChangeEvent.MODEL_MODIFIED)
+			return;
+		
+		graph.getModel().beginUpdate();
 		try {
-			graph.getModel().beginUpdate();
 			mxCell cellAdded = null;
 			ArrayList<mxCell> cellsToRemove = new ArrayList<mxCell>();
 
@@ -273,6 +277,8 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 					} else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_MODIFIED) {
 
 						mxCell cell = graph.getVertexToCellMap().get(spot);
+						if (DEBUG)
+							System.out.println("[TrackSchemeFrame] modelChanged: updating cell for spot "+spot);
 						String style = cell.getStyle();
 						style = mxUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64,"+spot.getImageString());
 						graph.getModel().setStyle(cell, style);

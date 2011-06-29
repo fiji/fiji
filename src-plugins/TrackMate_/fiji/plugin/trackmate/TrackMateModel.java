@@ -89,6 +89,7 @@ public class TrackMateModel {
 	private List<Spot> spotsAdded = new ArrayList<Spot>();
 	private List<Spot> spotsRemoved = new ArrayList<Spot>();
 	private List<Spot> spotsMoved = new ArrayList<Spot>();
+	private List<Spot> spotsUpdated = new ArrayList<Spot>();
 	private List<DefaultWeightedEdge> edgesAdded = new ArrayList<DefaultWeightedEdge>();
 	private List<DefaultWeightedEdge> edgesRemoved = new ArrayList<DefaultWeightedEdge>();
 
@@ -115,7 +116,7 @@ public class TrackMateModel {
 	protected List<TrackMateModelChangeListener> modelChangeListeners = new ArrayList<TrackMateModelChangeListener>();
 	/** The list of listener listening to change in selection.  */
 	protected List<TrackMateSelectionChangeListener> selectionChangeListeners = new ArrayList<TrackMateSelectionChangeListener>();
-
+	
 
 
 	/*
@@ -929,6 +930,9 @@ public class TrackMateModel {
 	 * MODIFY SPOT FEATURES
 	 */
 
+	/**
+	 * Do the actual feature update for given spots.
+	 */
 	private void updateFeatures(final List<Spot> spotsToUpdate) {
 		if (DEBUG)
 			System.out.println("[TrackMateModel] Updating the features of "+spotsToUpdate.size()+" spots.");
@@ -940,15 +944,8 @@ public class TrackMateModel {
 		computeSpotFeatures(toCompute);
 	}
 	
-	
-	
 	public void updateFeatures(final Spot spotToUpdate) {
-		if (DEBUG)
-			System.out.println("[TrackMateModel] Updating the features of spot "+spotToUpdate);
-		SpotCollection toCompute = new SpotCollection();
-		toCompute.add(spotToUpdate, spots.getFrame(spotToUpdate));
-		computeSpotFeatures(toCompute);
-
+		spotsUpdated.add(spotToUpdate); // Enlist for feature update when transaction is marked as finished
 	}
 
 
@@ -989,9 +986,12 @@ public class TrackMateModel {
 		}
 
 		// Deal with new or moved spots: we need to update their features.
-		int nSpotsToUpdate = spotsAdded.size() + spotsMoved.size();
+		int nSpotsToUpdate = spotsAdded.size() + spotsMoved.size() + spotsUpdated.size();
 		if (nSpotsToUpdate > 0) {
 			ArrayList<Spot> spotsToUpdate = new ArrayList<Spot>(nSpotsToUpdate);
+			spotsToUpdate.addAll(spotsAdded);
+			spotsToUpdate.addAll(spotsMoved);
+			spotsToUpdate.addAll(spotsUpdated);
 			updateFeatures(spotsToUpdate);
 		}
 
@@ -1005,6 +1005,7 @@ public class TrackMateModel {
 			spotsToSignal.addAll(spotsAdded);
 			spotsToSignal.addAll(spotsRemoved);
 			spotsToSignal.addAll(spotsMoved);
+			spotsToSignal.addAll(spotsUpdated);
 			ArrayList<Integer> spotsFlag = new ArrayList<Integer>(nSpotsToSignal);
 			for (int i = 0; i < spotsAdded.size(); i++) 
 				spotsFlag.add(TrackMateModelChangeEvent.FLAG_SPOT_ADDED);
@@ -1012,6 +1013,8 @@ public class TrackMateModel {
 				spotsFlag.add(TrackMateModelChangeEvent.FLAG_SPOT_REMOVED);
 			for (int i = 0; i < spotsMoved.size(); i++) 
 				spotsFlag.add(TrackMateModelChangeEvent.FLAG_SPOT_FRAME_CHANGED);
+			for (int i = 0; i < spotsUpdated.size(); i++) 
+				spotsFlag.add(TrackMateModelChangeEvent.FLAG_SPOT_MODIFIED);
 
 			event.setSpots(spotsToSignal);
 			event.setSpotFlags(spotsFlag);
