@@ -1048,9 +1048,16 @@ struct string *get_splashscreen_lib_path(void)
 #endif
 }
 
+/* So far, only Windows and MacOSX support splash with alpha, Linux does not */
+#if defined(WIN32) || defined(MACOSX)
+#define SPLASH_PATH "images/icon.png"
+#else
+#define SPLASH_PATH "images/icon-flat.png"
+#endif
+
 static void show_splash(void)
 {
-	const char *image_path = fiji_path("images/icon.png");
+	const char *image_path = fiji_path(SPLASH_PATH);
 	struct string *lib_path = get_splashscreen_lib_path();
 	void *splashscreen;
 	int (*SplashInit)(void);
