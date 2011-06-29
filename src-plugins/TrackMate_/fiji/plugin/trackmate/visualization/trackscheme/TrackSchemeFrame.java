@@ -86,6 +86,8 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	boolean defaultLinkingEnabled = false;
 	/** A flag used to prevent double event firing when setting the selection programmatically. */
 	private boolean doFireSelectionChangeEvent = true;
+	/** A flag used to prevent double event firing when setting the selection programmatically. */
+	private boolean doFireModelChangeEvent = true;
 	/** The model this instance is a view of (Yoda I speak like). */
 	private TrackMateModel model;
 	private Map<String, Object> displaySettings = new HashMap<String, Object>();
@@ -424,7 +426,10 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 			public void invoke(Object sender, mxEventObject evt) {
 				
 				if (DEBUG)
-					System.out.println("[TrackSchemeFrame] cells removed - Source of event is "+sender.getClass());
+					System.out.println("[TrackSchemeFrame] cells removed - Source of event is "+sender.getClass()+". Fire flag is "+doFireModelChangeEvent);
+				
+				if (!doFireModelChangeEvent)
+					return;
 				
 				// Separate spots from edges
 				Object[] objects = (Object[]) evt.getProperty("cells");
@@ -440,7 +445,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 							Integer frame = model.getSpots().getFrame(spot);
 							if (frame == null) {
 								// Already removed; second call to event, have to skip it
-								return;
+								continue;
 							}
 							spotsToRemove.add(spot);
 							fromFrames.add(frame);
@@ -450,6 +455,8 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 						} else if (cell.isEdge()) {
 							// Build list of removed edges 
 							DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(cell);
+							if (null ==edge)
+								continue;
 							edgesToRemove.add(edge);
 							// Clean maps
 							graph.getEdgeToCellMap().remove(edge);
@@ -458,18 +465,22 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 					}
 				}
 				
+				evt.consume();
+				
 				// Clean model
+				doFireModelChangeEvent = false;
 				model.beginUpdate();
 				try {
 					model.clearSelection();
 					for (Spot spot : spotsToRemove) 
-						model.removeSpotFrom(spot, null, false);
+						model.removeSpotFrom(spot, null);
 					for (DefaultWeightedEdge edge : edgesToRemove)
 						model.removeEdge(edge);
 					
 				} finally {
 					model.endUpdate();
 				}
+				doFireModelChangeEvent = true;
 			}
 		});
 

@@ -31,24 +31,24 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	private StackWindow window;
 	SpotOverlay spotOverlay;
 	private TrackOverlay trackOverlay;
-	
+
 	private SpotEditTool editTool;
-	
+
 	/*
 	 * CONSTRUCTORS
 	 */
-	
+
 	public HyperStackDisplayer(final TrackMateModel model) {
 		setModel(model);
 		this.settings = model.getSettings();
 		this.imp = settings.imp;
 		this.calibration = settings.getCalibration();
 	}
-	
+
 	/*
 	 * DEFAULT METHODS
 	 */
-	
+
 	final Spot getCLickLocation(final MouseEvent e) {
 		final double ix = canvas.offScreenXD(e.getX());
 		final double iy =  canvas.offScreenYD(e.getY());
@@ -61,21 +61,31 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	/*
 	 * PUBLIC METHODS
 	 */
-	
+
 	@Override
 	public void modelChanged(TrackMateModelChangeEvent event) {
 		if (DEBUG)
 			System.out.println("[HyperStackDisplayer] Received model changed event ID: "+event.getEventID());
 		boolean redoOverlay = false;
-		
+
 		switch (event.getEventID()) {
 
-		case TrackMateModelChangeEvent.SPOTS_MODIFIED:
-			for (Spot spot : event.getSpots()) {
-				if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_REMOVED) {
-					trackOverlay.computeTrackColors();
-					redoOverlay = true;
-					break;
+		case TrackMateModelChangeEvent.MODEL_MODIFIED:
+			// Rebuild track overlay only if edges were added or removed, or if at least one spot was removed. 
+			final List<DefaultWeightedEdge> edges = event.getEdges();
+			if (edges != null & edges.size() > 0) {
+				trackOverlay.computeTrackColors();
+				redoOverlay = true;				
+			} else {
+				final List<Spot> spots = event.getSpots();
+				if ( spots != null && spots.size() > 0) {
+					for (Spot spot : event.getSpots()) {
+						if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_REMOVED) {
+							trackOverlay.computeTrackColors();
+							redoOverlay = true;
+							break;
+						}
+					}
 				}
 			}
 			break;
@@ -85,22 +95,21 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 			redoOverlay = true;
 			break;
 
-		case TrackMateModelChangeEvent.TRACKS_MODIFIED:
 		case TrackMateModelChangeEvent.TRACKS_COMPUTED:
 			trackOverlay.computeTrackColors();
 			redoOverlay = true;
 			break;
 		}
-		
+
 		if (redoOverlay)
 			refresh();
 	}
-			
+
 	@Override
 	public void highlightEdges(Collection<DefaultWeightedEdge> edges) {
 		trackOverlay.setHighlight(edges);
 	}
-		
+
 	@Override
 	public void highlightSpots(Collection<Spot> spots) {
 		spotOverlay.setSpotSelection(spots);
@@ -122,7 +131,7 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 		int z = Math.round(spot.getFeature(SpotFeature.POSITION_Z) / calibration[2] ) + 1;
 		imp.setPosition(1, z, frame+1);
 	}
-	
+
 	@Override
 	public void render() {
 		if (null == imp) {
@@ -142,7 +151,7 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 		canvas.addOverlay(trackOverlay);
 		imp.updateAndDraw();
 		registerEditTool();
-//		 Add a listener to unregister this instance from model listener list
+		//		 Add a listener to unregister this instance from model listener list
 		ImagePlus.addImageListener(new ImageListener() {
 			@Override
 			public void imageUpdated(ImagePlus imp) {}
@@ -158,30 +167,30 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 			}
 		});
 	}
-		
-	
+
+
 	@Override
 	public void refresh() {
 		imp.updateAndDraw();
 	}
-			
+
 	@Override
 	public void clear() {
 		canvas.clearOverlay();
 	}	
 
-	
+
 	/*
 	 * PRIVATE METHODS
 	 */
-	
+
 	private void registerEditTool() {
 		editTool = SpotEditTool.getInstance();
 		if (!SpotEditTool.isLaunched())
 			editTool.run("");
 		editTool.register(imp, this);
 	}
-		
+
 	@Override
 	public void setDisplaySettings(String key, Object value) {
 		super.setDisplaySettings(key, value);

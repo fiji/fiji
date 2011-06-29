@@ -343,6 +343,8 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 				Spot target = frame.getGraph().getCellToVertexMap().get(cell.getTarget());
 				// We add a new jGraphT edge to the underlying model
 				edge = model.addEdge(source, target, -1);
+				frame.getGraph().getEdgeToCellMap().put(edge, cell);
+				frame.getGraph().getCellToEdgeMap().put(cell, edge);
 				// Then, remove the old JGraphX edge.
 //				frame.getGraph().removeCells(new Object[] { cell }); 
 				evt.consume();

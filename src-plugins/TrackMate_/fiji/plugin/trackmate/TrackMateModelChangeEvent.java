@@ -43,16 +43,7 @@ public class TrackMateModelChangeEvent extends EventObject {
 	 * Content of the modification can be accessed by {@link #getSpots()},
 	 * {@link #getSpotFlag()}, {@link #getFromFrame()} and {@link #getToFrame()}.
 	 */
-	public static final int 	SPOTS_MODIFIED = 7;
-	/** 
-	 * Event type indicating that the tracks of the model were modified,
-	 * by adding or removing some edges.
-	 * Content of the modification can be accessed by {@link #getEdges()},
-	 * {@link #getEdgeFlag()}.
-	 */
-	public static final int 	TRACKS_MODIFIED = 8;
-
-
+	public static final int 	MODEL_MODIFIED = 7;
 
 	private List<Spot> spots;
 	private List<DefaultWeightedEdge> edges;
@@ -88,7 +79,7 @@ public class TrackMateModelChangeEvent extends EventObject {
 	 * @param edgeFlags  a list of integers stating what happened to the edge of the
 	 * same index in the {@link #getEdges()} list. See {@link #FLAG_EDGE_ADDED}, {@link #FLAG_EDGE_REMOVED}.
 	 */
-	public void setEdgeFlag(List<Integer> edgeFlags) {
+	public void setEdgeFlags(List<Integer> edgeFlags) {
 		this.edgeFlags = edgeFlags;
 	}
 
@@ -97,7 +88,7 @@ public class TrackMateModelChangeEvent extends EventObject {
 	 * same index in the {@link #getSpots()} list. See {@link #FLAG_SPOT_ADDED}, {@link #FLAG_SPOT_REMOVED},
 	 * {@link #FLAG_SPOT_MODIFIED} and {@link #FLAG_SPOT_FRAME_CHANGED}.
 	 */
-	public void setSpotFlag(List<Integer> spotFlags) {
+	public void setSpotFlags(List<Integer> spotFlags) {
 		this.spotFlags = spotFlags;
 	}
 

@@ -21,7 +21,8 @@ import fiji.tool.AbstractTool;
 
 public class SpotEditTool extends AbstractTool implements MouseMotionListener, MouseListener, MouseWheelListener, KeyListener {
 	
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
+	
 	private static final float COARSE_STEP = 2;
 	private static final float FINE_STEP = 0.2f;
 	private static final String TOOL_NAME = "Spot edit tool";
@@ -191,13 +192,13 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				editedSpot.putFeature(SpotFeature.POSITION_T, frame * displayer.settings.dt);
 				if (initFrame == null) {
 					// Means that the spot was created 
-					model.addSpotTo(editedSpot, frame, true);
+					model.addSpotTo(editedSpot, frame);
 				} else if (initFrame != frame) {
 					// Move it to the new frame
-					model.moveSpotsFrom(editedSpot, initFrame, frame, true);
+					model.moveSpotFrom(editedSpot, initFrame, frame);
 				} else {
 					// The spots pre-existed and was not moved across frames
-					model.updateFeatures(editedSpot, true);
+					model.updateFeatures(editedSpot);
 				}
 
 				// Forget edited spot
@@ -295,7 +296,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		if (e.getKeyCode() == KeyEvent.VK_DELETE) {
 			Integer initFrame = displayer.getModel().getFilteredSpots().getFrame(editedSpot);
 			TrackMateModel model = displayer.getModel();
-			model.removeSpotFrom(editedSpot, initFrame, true);
+			model.removeSpotFrom(editedSpot, initFrame);
 			editedSpot = null;
 			editedSpots.put(imp, null);
 			imp.updateAndDraw();
