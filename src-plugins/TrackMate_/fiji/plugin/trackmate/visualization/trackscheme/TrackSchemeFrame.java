@@ -53,7 +53,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	/*
 	 * CONSTANTS
 	 */
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 	private static final boolean DEBUG_SELECTION = false;
 	static final int Y_COLUMN_SIZE = 96;
 	static final int X_COLUMN_SIZE = 160;

@@ -42,6 +42,7 @@ import fiji.plugin.trackmate.util.TrackSplitter;
 public class mxTrackGraphLayout extends mxGraphLayout {
 
 	private static final int SWIMLANE_HEADER_SIZE = 30;
+	private static final boolean DEBUG = true;
 	
 	private JGraphXAdapter graph;
 	private int[] columnWidths;
@@ -197,6 +198,9 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 						String edgeStyle = edgeCell.getStyle();
 						edgeStyle = mxUtils.setStyle(edgeStyle, mxConstants.STYLE_STROKECOLOR, trackColorStr);
 						graph.getModel().setStyle(edgeCell, edgeStyle);
+						if (DEBUG)
+							System.out.println("[mxTrackGraphLayout] execute: style for edge "+edge+" is "+edgeStyle);
+						
 					}
 					
 				}

@@ -60,6 +60,8 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		connectionHandler.addListener(mxEvent.CONNECT, this);
 
 		mxGraphics2DCanvas.putShape(mxScaledLabelShape.SHAPE_NAME, new mxScaledLabelShape());
+		// Replace default painter for edge label so that we can draw labels parallel to edges
+		mxGraphics2DCanvas.putTextShape(mxGraphics2DCanvas.TEXT_SHAPE_DEFAULT, new mxSideTextShape());
 
 		setSwimlaneSelectionEnabled(true);
 

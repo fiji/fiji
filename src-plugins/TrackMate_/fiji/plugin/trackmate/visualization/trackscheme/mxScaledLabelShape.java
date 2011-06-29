@@ -12,7 +12,7 @@ import com.mxgraph.view.mxCellState;
  * and a label on the right.
  *<p>
  * We re-used the JGraphX classes as far as we could, which turned to necessitate
- * only to recaculate the image bounds to have then scaling with the cell size.
+ * only to recalculate the image bounds to have then scaling with the cell size.
  *   
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Mar 15, 2011
  */
