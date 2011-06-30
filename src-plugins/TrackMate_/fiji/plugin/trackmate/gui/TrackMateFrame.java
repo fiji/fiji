@@ -15,6 +15,7 @@ import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
 import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
 import fiji.plugin.trackmate.tracking.TrackerType;
@@ -69,7 +70,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 	SegmenterSettingsPanel segmenterSettingsPanel;
 	InitThresholdPanel initThresholdingPanel;
 	EnumChooserPanel<ViewType> displayerChooserPanel;
-	ThresholdGuiPanel thresholdGuiPanel;
+	ThresholdGuiPanel<SpotFeature> thresholdGuiPanel;
 	TrackerSettingsPanel trackerSettingsPanel;
 	DisplayerPanel displayerPanel;
 	EnumChooserPanel<SegmenterType> segmenterChoicePanel;
@@ -185,7 +186,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 		case THRESHOLD_GUI_KEY:
 			if (null != thresholdGuiPanel) 
 				jPanelMain.remove(thresholdGuiPanel);
-			thresholdGuiPanel = new ThresholdGuiPanel(model.getFeatureValues(), model.getSpotFilters());
+			thresholdGuiPanel = new ThresholdGuiPanel<SpotFeature>(model.getFeatureValues(), model.getSpotFilters());
 			panel = thresholdGuiPanel;
 			break;
 

@@ -19,10 +19,10 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImagePlusAdapter;
 import mpicbg.imglib.type.numeric.RealType;
 import fiji.plugin.trackmate.Dimension;
-import fiji.plugin.trackmate.SpotFeature;
-import fiji.plugin.trackmate.SpotFilter;
+import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMate_;
 
@@ -70,7 +70,7 @@ public class TMUtils {
 	 * Given a list of spots, only spots with the feature satisfying the threshold given
 	 * in argument are returned. 
 	 */
-	public static TreeMap<Integer, List<Spot>> thresholdSpots(final TreeMap<Integer, List<Spot>> spots, final SpotFilter featureThreshold) {
+	public static TreeMap<Integer, List<Spot>> thresholdSpots(final TreeMap<Integer, List<Spot>> spots, final FeatureFilter<SpotFeature> featureThreshold) {
 		TreeMap<Integer, List<Spot>> selectedSpots = new TreeMap<Integer, List<Spot>>();
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
@@ -118,7 +118,7 @@ public class TMUtils {
 	 * Given a list of spots, only spots with the feature satisfying <b>all</b> of the thresholds given
 	 * in argument are returned. 
 	 */
-	public static TreeMap<Integer, List<Spot>> thresholdSpots(final TreeMap<Integer, List<Spot>> spots, final List<SpotFilter> featureThresholds) {
+	public static TreeMap<Integer, List<Spot>> thresholdSpots(final TreeMap<Integer, List<Spot>> spots, final List<FeatureFilter<SpotFeature>> featureThresholds) {
 		TreeMap<Integer, List<Spot>> selectedSpots = new TreeMap<Integer, List<Spot>>();
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
@@ -130,7 +130,7 @@ public class TMUtils {
 			spotToKeep = new ArrayList<Spot>(spotThisFrame);
 			spotToRemove = new ArrayList<Spot>(spotThisFrame.size());
 
-			for (SpotFilter threshold : featureThresholds) {
+			for (FeatureFilter<SpotFeature> threshold : featureThresholds) {
 
 				tval = threshold.value;
 				if (null == tval)

@@ -1,15 +1,17 @@
 package fiji.plugin.trackmate;
 
 /**
- * A helper class to store track feature filters. It is just made of 3 public fields.
+ * A helper class to store a feature filter. It is just made of 3 public fields.
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Sep 23, 2010
+ *
  */
-public class TrackFilter {
-	public TrackFeature feature;
+public class FeatureFilter<K extends Enum<K>> {
+	public K feature;
 	public Float value;
 	public boolean isAbove;
 	
 	
-	public TrackFilter(TrackFeature feature, Float value, boolean isAbove) {
+	public FeatureFilter(K feature, Float value, boolean isAbove) {
 		this.feature = feature;
 		this.value = value;
 		this.isAbove = isAbove;

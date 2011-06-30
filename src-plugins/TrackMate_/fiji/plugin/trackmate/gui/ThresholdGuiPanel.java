@@ -27,17 +27,17 @@ import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import fiji.plugin.trackmate.SpotFeature;
-import fiji.plugin.trackmate.SpotFilter;
+import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMate_;
 
 /**
  *
  */
-public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeListener {
+public class ThresholdGuiPanel<K extends Enum<K>> extends ActionListenablePanel implements ChangeListener {
 
 	private static final long serialVersionUID = 1307749013344373051L;
 	private final ChangeEvent CHANGE_EVENT = new ChangeEvent(this);
@@ -50,7 +50,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 
 
 	private JPanel jPanelBottom;
-	private JPanelSpotColorGUI jPanelSpotColorGUI;
+	private JPanelSpotColorGUI<K> jPanelSpotColorGUI;
 
 	private JScrollPane jScrollPaneThresholds;
 	private JButton jButtonRemoveThreshold;
@@ -58,13 +58,14 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	private JButton jButtonAddThreshold;
 	private JPanel jPanelButtons;
 
-	private Stack<ThresholdPanel<SpotFeature>> thresholdPanels = new Stack<ThresholdPanel<SpotFeature>>();
+	private Stack<ThresholdPanel<K>> thresholdPanels = new Stack<ThresholdPanel<K>>();
 	private Stack<Component> struts = new Stack<Component>();
-	private EnumMap<SpotFeature, double[]> featureValues = new EnumMap<SpotFeature, double[]>(SpotFeature.class);
+	private EnumMap<K, double[]> featureValues;
 	private int newFeatureIndex;
 	
-	private List<SpotFilter> featureThresholds = new ArrayList<SpotFilter>();
+	private List<FeatureFilter<K>> featureThresholds = new ArrayList<FeatureFilter<K>>();
 	private ArrayList<ChangeListener> changeListeners = new ArrayList<ChangeListener>();
+	private K[] values;
 	
 	
 	{
@@ -80,15 +81,17 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	 * CONSTRUCTORS
 	 */
 
-	public ThresholdGuiPanel(EnumMap<SpotFeature, double[]> featureValues, List<SpotFilter> featureThresholds) {
+	public ThresholdGuiPanel(EnumMap<K, double[]> featureValues, List<FeatureFilter<K>> featureThresholds) {
 		super();
 		this.featureValues = featureValues;
 		initGUI();
+		K aFeature = featureThresholds.get(featureThresholds.size()-1).feature;
+		values = aFeature.getDeclaringClass().getEnumConstants();
 		if (null != featureValues) {
 			
 			if (null != featureThresholds) {
 				
-				for (SpotFilter ft : featureThresholds)
+				for (FeatureFilter<K> ft : featureThresholds)
 					addThresholdPanel(ft);
 				if (featureThresholds.isEmpty())
 					newFeatureIndex = 0;
@@ -99,7 +102,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 		}
 	}
 	
-	public ThresholdGuiPanel(EnumMap<SpotFeature, double[]> featureValues) {
+	public ThresholdGuiPanel(EnumMap<K, double[]> featureValues) {
 		this(featureValues, null);
 	}
 	
@@ -116,9 +119,9 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	 */
 	@Override
 	public void stateChanged(ChangeEvent e) {
-		featureThresholds = new ArrayList<SpotFilter>(thresholdPanels.size());
-		for (ThresholdPanel<SpotFeature> tp : thresholdPanels) {
-			featureThresholds.add(new SpotFilter(tp.getKey(), new Float(tp.getThreshold()), tp.isAboveThreshold()));
+		featureThresholds = new ArrayList<FeatureFilter<K>>(thresholdPanels.size());
+		for (ThresholdPanel<K> tp : thresholdPanels) {
+			featureThresholds.add(new FeatureFilter<K>(tp.getKey(), new Float(tp.getThreshold()), tp.isAboveThreshold()));
 		}
 		fireThresholdChanged(e);
 	}
@@ -126,7 +129,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	/**
 	 * Return the thresholds currently set by this GUI.
 	 */
-	public List<SpotFilter> getFeatureThresholds() {
+	public List<FeatureFilter<K>> getFeatureThresholds() {
 		return featureThresholds;
 	}
 	
@@ -135,7 +138,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	 * Return the feature selected in the "Set color by feature" comb-box. 
 	 * Return <code>null</code> if the item "Default" is selected.
 	 */
-	public SpotFeature getColorByFeature() {
+	public K getColorByFeature() {
 		return jPanelSpotColorGUI.setColorByFeature;
 	}
 	
@@ -171,13 +174,13 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	}
 	
 	public void addThresholdPanel() {
-		addThresholdPanel(SpotFeature.values()[newFeatureIndex]);		
+		addThresholdPanel(values[newFeatureIndex]);		
 	}
 	
-	public void addThresholdPanel(SpotFilter threshold) {
+	public void addThresholdPanel(FeatureFilter<K> threshold) {
 		if (null == threshold)
 			return;
-		ThresholdPanel<SpotFeature> tp = new ThresholdPanel<SpotFeature>(featureValues, threshold.feature);
+		ThresholdPanel<K> tp = new ThresholdPanel<K>(featureValues, threshold.feature);
 		tp.setThreshold(threshold.value);
 		tp.setAboveThreshold(threshold.isAbove);		
 		tp.addChangeListener(this);
@@ -194,10 +197,10 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	}
 		
 	
-	public void addThresholdPanel(SpotFeature feature) {
+	public void addThresholdPanel(K feature) {
 		if (null == featureValues)
 			return;
-		ThresholdPanel<SpotFeature> tp = new ThresholdPanel<SpotFeature>(featureValues, feature);
+		ThresholdPanel<K> tp = new ThresholdPanel<K>(featureValues, feature);
 		tp.addChangeListener(this);
 		newFeatureIndex++;
 		if (newFeatureIndex >= SpotFeature.values().length) 
@@ -213,7 +216,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	
 	private void removeThresholdPanel() {
 		try {
-			ThresholdPanel<SpotFeature> tp = thresholdPanels.pop();
+			ThresholdPanel<K> tp = thresholdPanels.pop();
 			tp.removeChangeListener(this);
 			Component strut = struts.pop();
 			jPanelAllThresholds.remove(strut);
@@ -288,7 +291,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 					}
 				}
 				{
-					jPanelSpotColorGUI = new JPanelSpotColorGUI(this);
+					jPanelSpotColorGUI = new JPanelSpotColorGUI<K>(this);
 					COLOR_FEATURE_CHANGED = jPanelSpotColorGUI.COLOR_FEATURE_CHANGED;
 					jPanelSpotColorGUI.featureValues = featureValues;
 					jPanelBottom.add(jPanelSpotColorGUI, BorderLayout.CENTER);
@@ -329,7 +332,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 		allSpots.put(0, spots);
 		trackmate.setSpots(allSpots, false);
 		
-		ThresholdGuiPanel gui = new ThresholdGuiPanel(trackmate.getFeatureValues());
+		ThresholdGuiPanel<SpotFeature> gui = new ThresholdGuiPanel<SpotFeature>(trackmate.getFeatureValues());
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(gui);
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);

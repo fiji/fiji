@@ -17,11 +17,11 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 
+import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotFeature;
-import fiji.plugin.trackmate.SpotFilter;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
@@ -75,8 +75,8 @@ public class TmXmlReader implements TmXmlKeys {
 		settings.imp = getImage();
 		model.setSettings(settings);
 		// Filters
-		List<SpotFilter> filters = getFeatureFilters();
-		SpotFilter initialFilter = getInitialFilter();
+		List<FeatureFilter<SpotFeature>> filters = getFeatureFilters();
+		FeatureFilter<SpotFeature> initialFilter = getInitialFilter();
 		model.setInitialSpotFilterValue(initialFilter.value);
 		model.setSpotFilters(filters);
 		// Spots
@@ -95,14 +95,14 @@ public class TmXmlReader implements TmXmlKeys {
 	 * Return the initial threshold on quality stored in this file.
 	 * Return <code>null</code> if the initial threshold data cannot be found in the file.
 	 */
-	public SpotFilter getInitialFilter() throws DataConversionException {
+	public FeatureFilter<SpotFeature> getInitialFilter() throws DataConversionException {
 		Element itEl = root.getChild(INITIAL_THRESHOLD_ELEMENT_KEY);
 		if (null == itEl)
 			return null;
 		SpotFeature feature = SpotFeature.valueOf(itEl.getAttributeValue(THRESHOLD_FEATURE_ATTRIBUTE_NAME));
 		Float value 	= itEl.getAttribute(THRESHOLD_VALUE_ATTRIBUTE_NAME).getFloatValue();
 		boolean isAbove	= itEl.getAttribute(THRESHOLD_ABOVE_ATTRIBUTE_NAME).getBooleanValue();
-		SpotFilter ft = new SpotFilter(feature, value, isAbove);
+		FeatureFilter<SpotFeature> ft = new FeatureFilter<SpotFeature>(feature, value, isAbove);
 		return ft;
 	}
 
@@ -112,8 +112,8 @@ public class TmXmlReader implements TmXmlKeys {
 	 * Return <code>null</code> if the feature filters data cannot be found in the file.
 	 */
 	@SuppressWarnings("unchecked")
-	public List<SpotFilter> getFeatureFilters() throws DataConversionException {
-		List<SpotFilter> featureThresholds = new ArrayList<SpotFilter>();
+	public List<FeatureFilter<SpotFeature>> getFeatureFilters() throws DataConversionException {
+		List<FeatureFilter<SpotFeature>> featureThresholds = new ArrayList<FeatureFilter<SpotFeature>>();
 		Element ftCollectionEl = root.getChild(THRESHOLD_COLLECTION_ELEMENT_KEY);
 		if (null == ftCollectionEl)
 			return null;
@@ -122,7 +122,7 @@ public class TmXmlReader implements TmXmlKeys {
 			SpotFeature feature = SpotFeature.valueOf(ftEl.getAttributeValue(THRESHOLD_FEATURE_ATTRIBUTE_NAME));
 			Float value 	= ftEl.getAttribute(THRESHOLD_VALUE_ATTRIBUTE_NAME).getFloatValue();
 			boolean isAbove	= ftEl.getAttribute(THRESHOLD_ABOVE_ATTRIBUTE_NAME).getBooleanValue();
-			SpotFilter ft = new SpotFilter(feature, value, isAbove);
+			FeatureFilter<SpotFeature> ft = new FeatureFilter<SpotFeature>(feature, value, isAbove);
 			featureThresholds.add(ft);
 		}
 		return featureThresholds;

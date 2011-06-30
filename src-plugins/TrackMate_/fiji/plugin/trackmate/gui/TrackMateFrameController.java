@@ -10,7 +10,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import fiji.plugin.trackmate.SpotFilter;
+import fiji.plugin.trackmate.FeatureFilter;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
@@ -468,7 +469,7 @@ public class TrackMateFrameController implements ActionListener {
 	 * the {@link Spot} collection of the {@link TrackMateModel} with the result.
 	 */
 	private void execInitialThresholding() {
-		SpotFilter initialThreshold = view.initThresholdingPanel.getFeatureThreshold();
+		FeatureFilter<SpotFeature> initialThreshold = view.initThresholdingPanel.getFeatureThreshold();
 		String str = "Initial thresholding with a quality threshold above "+ String.format("%.1f", initialThreshold.value) + " ...\n";
 		logger.log(str,Logger.BLUE_COLOR);
 		int ntotal = 0;
@@ -560,7 +561,7 @@ public class TrackMateFrameController implements ActionListener {
 	 */
 	private void execThresholding() {
 		logger.log("Performing feature threholding on the following features:\n", Logger.BLUE_COLOR);
-		List<SpotFilter> featureThresholds = view.thresholdGuiPanel.getFeatureThresholds();
+		List<FeatureFilter<SpotFeature>> featureThresholds = view.thresholdGuiPanel.getFeatureThresholds();
 		model.setSpotFilters(featureThresholds);
 		model.execSpotFiltering();
 //		displayer.setSpotsToShow(model.getFilteredSpots());
@@ -571,7 +572,7 @@ public class TrackMateFrameController implements ActionListener {
 		if (featureThresholds == null || featureThresholds.isEmpty()) {
 			logger.log("No feature threshold set, kept the " + ntotal + " spots.\n");
 		} else {
-			for (SpotFilter ft : featureThresholds) {
+			for (FeatureFilter<SpotFeature> ft : featureThresholds) {
 				String str = "  - on "+ft.feature.name();
 				if (ft.isAbove) 
 					str += " above ";

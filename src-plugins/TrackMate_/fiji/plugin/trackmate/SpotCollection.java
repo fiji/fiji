@@ -107,7 +107,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	 * Return a subset of this collection, containing only the spots with the 
 	 * feature satisfying the filter given. 
 	 */
-	public final SpotCollection filter(final SpotFilter featurefilter) {
+	public final SpotCollection filter(final FeatureFilter<SpotFeature> featurefilter) {
 		SpotCollection selectedSpots = new SpotCollection();
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
@@ -153,7 +153,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	 * Return a subset of this collection, containing only the spots with the 
 	 * feature satisfying all the filters given. 
 	 */
-	public final SpotCollection filter(final Collection<SpotFilter> filters) {
+	public final SpotCollection filter(final Collection<FeatureFilter<SpotFeature>> filters) {
 		SpotCollection selectedSpots = new SpotCollection();
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
@@ -165,7 +165,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 			spotToKeep = new ArrayList<Spot>(spotThisFrame);
 			spotToRemove = new ArrayList<Spot>(spotThisFrame.size());
 
-			for (SpotFilter filter : filters) {
+			for (FeatureFilter<SpotFeature> filter : filters) {
 
 				tval = filter.value;
 				if (null == tval)

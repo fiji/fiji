@@ -15,8 +15,8 @@ import javax.swing.event.ChangeListener;
 
 import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT; 
 
+import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.SpotFeature;
-import fiji.plugin.trackmate.SpotFilter;
 
 /**
 * This code was edited or generated using CloudGarden's Jigloo
@@ -66,8 +66,8 @@ public class InitThresholdPanel extends ActionListenablePanel {
 	/**
 	 * Return the feature threshold on quality set by this panel. 
 	 */
-	public SpotFilter getFeatureThreshold() {
-		return new SpotFilter(jPanelThreshold.getKey(), new Float(jPanelThreshold.getThreshold()), jPanelThreshold.isAboveThreshold());
+	public FeatureFilter<SpotFeature> getFeatureThreshold() {
+		return new FeatureFilter<SpotFeature>(jPanelThreshold.getKey(), new Float(jPanelThreshold.getThreshold()), jPanelThreshold.isAboveThreshold());
 	}
 	
 	/*

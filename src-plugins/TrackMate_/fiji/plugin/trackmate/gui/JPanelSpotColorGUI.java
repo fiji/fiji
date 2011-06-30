@@ -25,7 +25,7 @@ import org.jfree.chart.renderer.InterpolatePaintScale;
 import fiji.plugin.trackmate.SpotFeature;
 
 
-public class JPanelSpotColorGUI extends ActionListenablePanel {
+public class JPanelSpotColorGUI<K extends Enum<K>> extends ActionListenablePanel {
 
 	/*
 	 * FIELDS
@@ -51,8 +51,8 @@ public class JPanelSpotColorGUI extends ActionListenablePanel {
 	 * DEFAULT VISIBILITY
 	 */
 	
-	EnumMap<SpotFeature, double[]> featureValues = new EnumMap<SpotFeature, double[]>(SpotFeature.class);
-	SpotFeature setColorByFeature;
+	EnumMap<K, double[]> featureValues;
+	K setColorByFeature;
 
 
 	private ActionListenablePanel caller;
@@ -96,7 +96,7 @@ public class JPanelSpotColorGUI extends ActionListenablePanel {
 		if (selection == 0) 
 			setColorByFeature = null;
 		else
-			setColorByFeature = SpotFeature.values()[selection-1];
+			setColorByFeature = setColorByFeature.getDeclaringClass().getEnumConstants()[selection-1];
 		caller.fireAction(COLOR_FEATURE_CHANGED);
 	}
 	

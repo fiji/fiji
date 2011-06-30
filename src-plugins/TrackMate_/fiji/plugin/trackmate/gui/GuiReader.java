@@ -17,10 +17,11 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.jdom.DataConversionException;
 import org.jdom.JDOMException;
 
+import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.SpotFilter;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.TrackMateFrameController.GuiState;
@@ -186,7 +187,7 @@ public class GuiReader {
 		
 		
 		{ // Try to read the initial threshold
-			SpotFilter initialThreshold = null;
+			FeatureFilter<SpotFeature> initialThreshold = null;
 			try {
 				initialThreshold = reader.getInitialFilter();
 			} catch (DataConversionException e) {
@@ -213,7 +214,7 @@ public class GuiReader {
 		}		
 		
 		{ // Try to read feature thresholds
-			List<SpotFilter> featureThresholds = null;
+			List<FeatureFilter<SpotFeature>> featureThresholds = null;
 			try {
 				featureThresholds = reader.getFeatureFilters();
 			} catch (DataConversionException e) {

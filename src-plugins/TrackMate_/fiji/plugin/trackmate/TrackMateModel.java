@@ -51,7 +51,7 @@ public class TrackMateModel {
 	/** Contain the spots retained for tracking, after filtering by features. */
 	protected SpotCollection filteredSpots;
 	/** The feature filter list that is used to generate {@link #filteredSpots} from {@link #spots}. */
-	protected List<SpotFilter> spotFilters = new ArrayList<SpotFilter>();
+	protected List<FeatureFilter<SpotFeature>> spotFilters = new ArrayList<FeatureFilter<SpotFeature>>();
 	/** The initial quality filter value that is used to clip spots of low quality from {@link #spots}. */
 	protected Float initialSpotFilterValue;
 
@@ -76,7 +76,7 @@ public class TrackMateModel {
 	 */
 	protected List<EnumMap<TrackFeature, Float>> trackFeatures;
 	/** The track filter list that is used to prune track and spots. */
-	protected List<TrackFilter> trackFilters = new ArrayList<TrackFilter>();
+	protected List<FeatureFilter<TrackFeature>> trackFilters = new ArrayList<FeatureFilter<TrackFeature>>();
 
 
 	// TRANSACTION MODEL
@@ -280,7 +280,7 @@ public class TrackMateModel {
 	 * @see #setInitialFilter(Float)
 	 */
 	public void execInitialSpotFiltering() {
-		SpotFilter featureFilter = new SpotFilter(SpotFeature.QUALITY, initialSpotFilterValue, true);
+		FeatureFilter<SpotFeature> featureFilter = new FeatureFilter<SpotFeature>(SpotFeature.QUALITY, initialSpotFilterValue, true);
 		setSpots(spots.filter(featureFilter), true);
 	}
 
@@ -428,7 +428,7 @@ public class TrackMateModel {
 		// Get the indices of the tracks to remove
 		Float tval, val;
 		Set<Integer> trackToRemove = new HashSet<Integer>();
-		for (TrackFilter filter : trackFilters) {
+		for (FeatureFilter<TrackFeature> filter : trackFilters) {
 
 			tval = filter.value;
 			if (null == tval)
@@ -621,16 +621,16 @@ public class TrackMateModel {
 	 */
 
 	/** Add a filter to the list of spot filters to deal with when executing {@link #execFiltering()}. */
-	public void addSpotFilter(final SpotFilter filter) { spotFilters.add(filter); }
+	public void addSpotFilter(final FeatureFilter<SpotFeature> filter) { spotFilters.add(filter); }
 
-	public void removeSpotFilter(final SpotFilter filter) { spotFilters.remove(filter); }
+	public void removeSpotFilter(final FeatureFilter<SpotFeature> filter) { spotFilters.remove(filter); }
 
 	/** Remove all spot filters stored in this model.  */
 	public void clearSpotFilters() { spotFilters.clear(); }
 
-	public List<SpotFilter> getSpotFilters() { return spotFilters; }
+	public List<FeatureFilter<SpotFeature>> getSpotFilters() { return spotFilters; }
 
-	public void setSpotFilters(List<SpotFilter> spotFilters) { this.spotFilters = spotFilters; }
+	public void setSpotFilters(List<FeatureFilter<SpotFeature>> spotFilters) { this.spotFilters = spotFilters; }
 
 	/** Return the initial filter value on {@link SpotFeature#QUALITY} stored in this model. */
 	public Float getInitialSpotFilterValue() { return initialSpotFilterValue;	}
@@ -639,16 +639,16 @@ public class TrackMateModel {
 	public void setInitialSpotFilterValue(Float initialSpotFilterValue) { this.initialSpotFilterValue = initialSpotFilterValue; }
 
 	/** Add a filter to the list of track filters. */
-	public void addTrackFilter(final TrackFilter filter) { trackFilters.add(filter); }
+	public void addTrackFilter(final FeatureFilter<TrackFeature> filter) { trackFilters.add(filter); }
 
-	public void removeTrackFilter(final TrackFilter filter) { trackFilters.remove(filter); }
+	public void removeTrackFilter(final FeatureFilter<TrackFeature> filter) { trackFilters.remove(filter); }
 
 	/** Remove all track filters stored in this model. */
 	public void clearTrackFilters() { trackFilters.clear(); }
 
-	public List<TrackFilter> getTrackFilters() { return trackFilters; }
+	public List<FeatureFilter<TrackFeature>> getTrackFilters() { return trackFilters; }
 
-	public void setTrackFilters(List<TrackFilter> trackFilters) { this.trackFilters = trackFilters; }
+	public void setTrackFilters(List<FeatureFilter<TrackFeature>> trackFilters) { this.trackFilters = trackFilters; }
 
 	/*
 	 * LOGGER

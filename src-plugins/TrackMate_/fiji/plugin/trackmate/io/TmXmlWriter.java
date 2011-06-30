@@ -16,12 +16,12 @@ import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
+import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotFeature;
-import fiji.plugin.trackmate.SpotFilter;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
@@ -323,10 +323,10 @@ public class TmXmlWriter implements TmXmlKeys {
 	}
 
 	private void echoThresholds() {
-		List<SpotFilter> featureThresholds = model.getSpotFilters();
+		List<FeatureFilter<SpotFeature>> featureThresholds = model.getSpotFilters();
 
 		Element allTresholdElement = new Element(THRESHOLD_COLLECTION_ELEMENT_KEY);
-		for (SpotFilter threshold : featureThresholds) {
+		for (FeatureFilter<SpotFeature> threshold : featureThresholds) {
 			Element thresholdElement = new Element(THRESHOLD_ELEMENT_KEY);
 			thresholdElement.setAttribute(THRESHOLD_FEATURE_ATTRIBUTE_NAME, threshold.feature.name());
 			thresholdElement.setAttribute(THRESHOLD_VALUE_ATTRIBUTE_NAME, threshold.value.toString());

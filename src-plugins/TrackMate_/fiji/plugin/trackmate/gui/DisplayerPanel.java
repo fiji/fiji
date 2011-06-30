@@ -72,7 +72,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 	private JCheckBox jCheckBoxLimitDepth;
 	private JTextField jTextFieldFrameDepth;
 	private JLabel jLabelFrameDepth;
-	private JPanelSpotColorGUI jPanelSpotColor;
+	private JPanelSpotColorGUI<SpotFeature> jPanelSpotColor;
 	private EnumMap<SpotFeature, double[]> featureValues;
 	private JButton jButtonShowTrackScheme;
 	private JNumericTextField jTextFieldSpotRadius;
@@ -288,7 +288,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 				jPanelSpotOptions.setBounds(10, 63, 280, 110);
 				jPanelSpotOptions.setBorder(new LineBorder(new java.awt.Color(192,192,192), 1, true));
 				{
-					jPanelSpotColor = new JPanelSpotColorGUI(this);
+					jPanelSpotColor = new JPanelSpotColorGUI<SpotFeature>(this);
 					jPanelSpotColor.featureValues = featureValues;
 					jPanelSpotOptions.add(jPanelSpotColor);
 					jPanelSpotColor.addActionListener(new ActionListener() {
