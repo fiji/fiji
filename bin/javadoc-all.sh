@@ -13,6 +13,7 @@ grep -ve ij-plugins/Sun_JAI_Sample_IO_Source_Code \
 	-e bio-formats/components/visbio/src/loci/visbio/overlays/OverlayTransform.java \
 	-e bio-formats/components/slim-plotter/ \
 	-e bio-formats/components/visbio/ \
+	-e modules/imagej2/envisaje/ \
 	-e modules/swig/ \
 	-e modules/micromanager1.4/Mac |
 ./fiji --javadoc --jarpath bio-formats/jar \
