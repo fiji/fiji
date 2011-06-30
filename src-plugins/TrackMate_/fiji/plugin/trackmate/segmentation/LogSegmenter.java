@@ -300,7 +300,6 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 			for (int i = 0; i < calibration.length; i++) 
 				calibrated[i] = coord[i] * calibration[i] * downsampleFactors[i];
 			SpotImp spot = new SpotImp(calibrated);
-			spot.setName("Spot "+index);
 			index++;
 			spots.add(spot);
 		}

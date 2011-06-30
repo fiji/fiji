@@ -75,6 +75,9 @@ public class TrackMateModel {
 	 * The feature map maps each {@link TrackFeature} to its float value for the selected track. 
 	 */
 	protected List<EnumMap<TrackFeature, Float>> trackFeatures;
+	/** The track filter list that is used to prune track and spots. */
+	protected List<TrackFilter> trackFilters = new ArrayList<TrackFilter>();
+
 
 	// TRANSACTION MODEL
 
@@ -116,7 +119,7 @@ public class TrackMateModel {
 	protected List<TrackMateModelChangeListener> modelChangeListeners = new ArrayList<TrackMateModelChangeListener>();
 	/** The list of listener listening to change in selection.  */
 	protected List<TrackMateSelectionChangeListener> selectionChangeListeners = new ArrayList<TrackMateSelectionChangeListener>();
-	
+
 
 
 	/*
@@ -403,7 +406,7 @@ public class TrackMateModel {
 
 
 	/**
-	 * Execute the feature filtering part.
+	 * Execute the spot feature filtering part.
 	 *<p>
 	 * Because of the presence of noise, it is possible that some of the regional maxima found in the segmenting step have
 	 * identified noise, rather than objects of interest. A filtering operation based on the calculated features in this
@@ -419,6 +422,47 @@ public class TrackMateModel {
 	 */
 	public void execSpotFiltering() {
 		setFilteredSpots(spots.filter(spotFilters), true);
+	}
+
+	public void execTrackFiltering() {
+		// Get the indices of the tracks to remove
+		Float tval, val;
+		Set<Integer> trackToRemove = new HashSet<Integer>();
+		for (TrackFilter filter : trackFilters) {
+
+			tval = filter.value;
+			if (null == tval)
+				continue;
+			trackToRemove.clear();
+
+			if (filter.isAbove) {
+				for (int i=0; i<getNTracks(); i++) {
+					val = trackFeatures.get(i).get(filter.feature);
+					if (null == val)
+						continue;
+					if ( val < tval)
+						trackToRemove.add(i);
+				}
+
+			} else {
+				for (int i=0; i<getNTracks(); i++) {
+					val = trackFeatures.get(i).get(filter.feature);
+					if (null == val)
+						continue;
+					if ( val > tval)
+						trackToRemove.add(i);
+				}
+			}
+		}
+
+		// Remove these tracks from model, that is: 
+		//  - remove all their edges from the graph;
+		//  - remove all their spots from the graph BUT NOT from the filtered spots: they are still 
+		// available for subsequent new tracking process.
+		for (int i : trackToRemove) {
+			graph.removeAllEdges(trackEdges.get(i));
+			graph.removeAllVertices(trackSpots.get(i));
+		}
 	}
 
 
@@ -576,36 +620,35 @@ public class TrackMateModel {
 	 * FEATURE FILTERS
 	 */
 
-	/**
-	 * Add a filter to the list of spot filters to deal with when executing {@link #execFiltering()}.
-	 */
+	/** Add a filter to the list of spot filters to deal with when executing {@link #execFiltering()}. */
 	public void addSpotFilter(final SpotFilter filter) { spotFilters.add(filter); }
-
 
 	public void removeSpotFilter(final SpotFilter filter) { spotFilters.remove(filter); }
 
-	/**
-	 * Remove all spot filters stored in this model.
-	 */
+	/** Remove all spot filters stored in this model.  */
 	public void clearSpotFilters() { spotFilters.clear(); }
 
 	public List<SpotFilter> getSpotFilters() { return spotFilters; }
 
 	public void setSpotFilters(List<SpotFilter> spotFilters) { this.spotFilters = spotFilters; }
 
-	/**
-	 * Return the initial filter value on {@link SpotFeature#QUALITY} stored in this model.
-	 */
-	public Float getInitialSpotFilterValue() {
-		return initialSpotFilterValue;
-	}
+	/** Return the initial filter value on {@link SpotFeature#QUALITY} stored in this model. */
+	public Float getInitialSpotFilterValue() { return initialSpotFilterValue;	}
 
-	/**
-	 * Set the initial filter value on {@link SpotFeature#QUALITY} stored in this model.
-	 */
-	public void setInitialSpotFilterValue(Float initialSpotFilterValue) {
-		this.initialSpotFilterValue = initialSpotFilterValue;
-	}
+	/** Set the initial filter value on {@link SpotFeature#QUALITY} stored in this model.	 */
+	public void setInitialSpotFilterValue(Float initialSpotFilterValue) { this.initialSpotFilterValue = initialSpotFilterValue; }
+
+	/** Add a filter to the list of track filters. */
+	public void addTrackFilter(final TrackFilter filter) { trackFilters.add(filter); }
+
+	public void removeTrackFilter(final TrackFilter filter) { trackFilters.remove(filter); }
+
+	/** Remove all track filters stored in this model. */
+	public void clearTrackFilters() { trackFilters.clear(); }
+
+	public List<TrackFilter> getTrackFilters() { return trackFilters; }
+
+	public void setTrackFilters(List<TrackFilter> trackFilters) { this.trackFilters = trackFilters; }
 
 	/*
 	 * LOGGER
@@ -896,7 +939,7 @@ public class TrackMateModel {
 
 		graph.removeVertex(spotToRemove);
 	}
-	
+
 
 
 	// Modify graph
@@ -925,7 +968,7 @@ public class TrackMateModel {
 		return graph.removeEdge(edge);
 	}
 
-	
+
 	/*
 	 * MODIFY SPOT FEATURES
 	 */
@@ -943,7 +986,7 @@ public class TrackMateModel {
 		SpotCollection toCompute = filteredSpots.subset(spotsToUpdate);
 		computeSpotFeatures(toCompute);
 	}
-	
+
 	public void updateFeatures(final Spot spotToUpdate) {
 		spotsUpdated.add(spotToUpdate); // Enlist for feature update when transaction is marked as finished
 	}
@@ -961,7 +1004,7 @@ public class TrackMateModel {
 
 		if (DEBUG)
 			System.out.println("[TrackMateModel] #flushUpdate().");
-		
+
 
 		// We recompute tracks only if some edges have been added or removed, and 
 		// if some spots have been removed (equivalent to remove edges). We do NOT
@@ -1046,6 +1089,7 @@ public class TrackMateModel {
 			spotsAdded.clear();
 			spotsRemoved.clear();
 			spotsMoved.clear();
+			spotsUpdated.clear();
 			edgesAdded.clear();
 			edgesRemoved.clear();
 		}

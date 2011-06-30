@@ -27,7 +27,6 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.util.gui.OverlayedImageCanvas.Overlay;
 
 public class TrackOverlay implements Overlay {
-	private static final boolean DEBUG = true;
 	private float[] calibration;
 	private ImagePlus imp;
 	private List<Color> edgeColors;
@@ -88,8 +87,6 @@ public class TrackOverlay implements Overlay {
 		g2d.setStroke(new BasicStroke(4.0f,  BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		g2d.setColor(TrackMateModelView.DEFAULT_HIGHLIGHT_COLOR);
 		for (DefaultWeightedEdge edge : highlight) {
-			if (DEBUG)
-				System.out.println("[TrackOverlay] paint: highlighting edge "+edge);
 			source = model.getEdgeSource(edge);
 			target = model.getEdgeTarget(edge);
 			drawEdge(g2d, source, target, xcorner, ycorner, mag);

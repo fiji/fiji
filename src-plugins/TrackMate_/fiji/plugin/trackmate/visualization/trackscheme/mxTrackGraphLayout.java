@@ -42,7 +42,7 @@ import fiji.plugin.trackmate.util.TrackSplitter;
 public class mxTrackGraphLayout extends mxGraphLayout {
 
 	private static final int SWIMLANE_HEADER_SIZE = 30;
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 	
 	private JGraphXAdapter graph;
 	private int[] columnWidths;

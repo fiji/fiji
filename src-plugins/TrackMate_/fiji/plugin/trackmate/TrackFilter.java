@@ -1,17 +1,15 @@
 package fiji.plugin.trackmate;
 
 /**
- * A helper class to store spot feature filters. It is just made of 3 public fields.
- * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Sep 23, 2010
- *
+ * A helper class to store track feature filters. It is just made of 3 public fields.
  */
-public class SpotFilter {
-	public SpotFeature feature;
+public class TrackFilter {
+	public TrackFeature feature;
 	public Float value;
 	public boolean isAbove;
 	
 	
-	public SpotFilter(SpotFeature feature, Float value, boolean isAbove) {
+	public TrackFilter(TrackFeature feature, Float value, boolean isAbove) {
 		this.feature = feature;
 		this.value = value;
 		this.isAbove = isAbove;
