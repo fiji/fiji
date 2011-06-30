@@ -150,10 +150,10 @@ public class StartDialogPanel extends ActionListenablePanel {
 	 */
 	private void echoSettings(Settings settings) {
 		jLabelImageName.setText(settings.imp.getTitle());
-		jTextFieldPixelWidth.setText(String.format("%.1f", settings.dx));
-		jTextFieldPixelHeight.setText(String.format("%.1f", settings.dy));
-		jTextFieldVoxelDepth.setText(String.format("%.1f", settings.dz));
-		jTextFieldTimeInterval.setText(String.format("%.1f", settings.dt));
+		jTextFieldPixelWidth.setText(""+settings.dx);
+		jTextFieldPixelHeight.setText(""+settings.dy);
+		jTextFieldVoxelDepth.setText(""+settings.dz);
+		jTextFieldTimeInterval.setText(""+settings.dt);
 		jLabelUnits1.setText(settings.spaceUnits);
 		jLabelUnits2.setText(settings.spaceUnits);
 		jLabelUnits3.setText(settings.spaceUnits);
@@ -190,10 +190,10 @@ public class StartDialogPanel extends ActionListenablePanel {
 			return;
 		}
 		jLabelImageName.setText(imp.getTitle());
-		jTextFieldPixelWidth.setText(String.format("%.1f", imp.getCalibration().pixelWidth));
-		jTextFieldPixelHeight.setText(String.format("%.1f", imp.getCalibration().pixelHeight));
-		jTextFieldVoxelDepth.setText(String.format("%.1f", imp.getCalibration().pixelDepth));
-		jTextFieldTimeInterval.setText(String.format("%.1f", imp.getCalibration().frameInterval));
+		jTextFieldPixelWidth.setText(""+imp.getCalibration().pixelWidth);
+		jTextFieldPixelHeight.setText(""+imp.getCalibration().pixelHeight);
+		jTextFieldVoxelDepth.setText(""+imp.getCalibration().pixelDepth);
+		jTextFieldTimeInterval.setText(""+imp.getCalibration().frameInterval);
 		jLabelUnits1.setText(imp.getCalibration().getXUnit());
 		jLabelUnits2.setText(imp.getCalibration().getYUnit());
 		jLabelUnits3.setText(imp.getCalibration().getZUnit());
