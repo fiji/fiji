@@ -24,12 +24,25 @@ if test ! -d Insight
 then
 	git clone contrib@fiji.sc:/srv/git/Insight
 fi &&
-CMAKE_COMMAND="../cmake/bin/cmake -D BUILD_TESTING=OFF -D BUILD_EXAMPLES=OFF" &&
-if test ! -d ITK-build
+CMAKE_COMMAND="../cmake/bin/cmake -D BUILD_TESTING=OFF -D BUILD_EXAMPLES=OFF -D ITK_BUILD_ALL_MODULES=ON -D BUILD_SHARED_LIBS=ON" &&
+if test ! -f ITK-build/lib/libITK-Common-4.0.so
 then
-	mkdir ITK-build &&
+	mkdir -p ITK-build &&
 	(cd ITK-build &&
 	 eval $CMAKE_COMMAND ../Insight &&
+	 make $PARALLEL)
+fi &&
+echo SimpleITK &&
+if test ! -d SimpleITK
+then
+	git clone contrib@pacific.mpi-cbg.de:/srv/git/SimpleITK
+fi &&
+CMAKE_COMMAND_SIMPLEITK="../cmake/bin/cmake $(cat SimpleITK/Wrapping/CMakeLists.txt  | tr -c 'A-Z_' '\n' | grep ^WRAP | sort | uniq | sed 's/.*/-D &=OFF/')" &&
+if test ! -f SimpleITK-build/bin/libSimpleITKBasicFilters.a
+then
+	mkdir -p SimpleITK-build &&
+	(cd SimpleITK-build &&
+	 eval $CMAKE_COMMAND_SIMPLEITK -DITK_DIR=$FIJI_ROOT/3rdparty/ITK-build ../SimpleITK &&
 	 make $PARALLEL)
 fi &&
 for target in macosx32 macosx64
@@ -48,8 +61,9 @@ do
 		SYSPREFIX="$SYSROOT/bin/x86_64-apple-darwin8"
 		;;
 	esac &&
+	echo "ITK ($target)" &&
 	TRYRUN=TryRunResults-$target.cmake &&
-	if test ! -e ITK-build-$target/bin/libITKAlgorithms.$SO
+	if test ! -e ITK-build-$target/lib/libITK-Common-4.0.$SO
 	then
 		if test ! -f $TRYRUN
 		then
@@ -183,5 +197,13 @@ EOF
 				-C ../$TRYRUN ../Insight/ &&
 			make $PARALLEL
 		})
+	fi &&
+	echo "SimpleITK ($target)" &&
+	if test ! -f SimpleITK-build-$target/bin/libSimpleITKBasicFilters.a
+	then
+		mkdir -p SimpleITK-build-$target &&
+		(cd SimpleITK-build-$target &&
+		 eval $CMAKE_COMMAND_SIMPLEITK -DITK_DIR=$FIJI_ROOT/3rdparty/ITK-build-$target ../SimpleITK &&
+		 make $PARALLEL)
 	fi || exit 1
 done
