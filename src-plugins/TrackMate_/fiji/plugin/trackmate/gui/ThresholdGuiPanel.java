@@ -66,27 +66,21 @@ public class ThresholdGuiPanel<K extends Enum<K>> extends ActionListenablePanel 
 	private List<FeatureFilter<K>> featureThresholds = new ArrayList<FeatureFilter<K>>();
 	private ArrayList<ChangeListener> changeListeners = new ArrayList<ChangeListener>();
 	private K[] values;
-	
-	
-	{
-		//Set Look & Feel
-		try {
-			javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
+	private K featureType;
 	
 	/*
 	 * CONSTRUCTORS
 	 */
 
-	public ThresholdGuiPanel(EnumMap<K, double[]> featureValues, List<FeatureFilter<K>> featureThresholds) {
+	/**
+	 * @param featureType  used to instantiate the class with the correct parameter.
+	 */
+	public ThresholdGuiPanel(final K featureType, EnumMap<K, double[]> featureValues, List<FeatureFilter<K>> featureThresholds) {
 		super();
 		this.featureValues = featureValues;
+		this.featureType = featureType;
 		initGUI();
-		K aFeature = featureThresholds.get(featureThresholds.size()-1).feature;
-		values = aFeature.getDeclaringClass().getEnumConstants();
+		values = featureType.getDeclaringClass().getEnumConstants();
 		if (null != featureValues) {
 			
 			if (null != featureThresholds) {
@@ -102,12 +96,12 @@ public class ThresholdGuiPanel<K extends Enum<K>> extends ActionListenablePanel 
 		}
 	}
 	
-	public ThresholdGuiPanel(EnumMap<K, double[]> featureValues) {
-		this(featureValues, null);
+	public ThresholdGuiPanel(final K featureType, EnumMap<K, double[]> featureValues) {
+		this(featureType, featureValues, null);
 	}
 	
-	public ThresholdGuiPanel() {
-		this(null);
+	public ThresholdGuiPanel(final K featureType) {
+		this(featureType, null);
 	}
 
 	/*
@@ -291,7 +285,7 @@ public class ThresholdGuiPanel<K extends Enum<K>> extends ActionListenablePanel 
 					}
 				}
 				{
-					jPanelSpotColorGUI = new JPanelSpotColorGUI<K>(this);
+					jPanelSpotColorGUI = new JPanelSpotColorGUI<K>(featureType, this);
 					COLOR_FEATURE_CHANGED = jPanelSpotColorGUI.COLOR_FEATURE_CHANGED;
 					jPanelSpotColorGUI.featureValues = featureValues;
 					jPanelBottom.add(jPanelSpotColorGUI, BorderLayout.CENTER);
@@ -332,7 +326,7 @@ public class ThresholdGuiPanel<K extends Enum<K>> extends ActionListenablePanel 
 		allSpots.put(0, spots);
 		trackmate.setSpots(allSpots, false);
 		
-		ThresholdGuiPanel<SpotFeature> gui = new ThresholdGuiPanel<SpotFeature>(trackmate.getFeatureValues());
+		ThresholdGuiPanel<SpotFeature> gui = new ThresholdGuiPanel<SpotFeature>(SpotFeature.QUALITY, trackmate.getFeatureValues());
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(gui);
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);

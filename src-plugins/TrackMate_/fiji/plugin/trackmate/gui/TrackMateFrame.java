@@ -186,7 +186,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 		case THRESHOLD_GUI_KEY:
 			if (null != thresholdGuiPanel) 
 				jPanelMain.remove(thresholdGuiPanel);
-			thresholdGuiPanel = new ThresholdGuiPanel<SpotFeature>(model.getFeatureValues(), model.getSpotFilters());
+			thresholdGuiPanel = new ThresholdGuiPanel<SpotFeature>(SpotFeature.QUALITY, model.getFeatureValues(), model.getSpotFilters());
 			panel = thresholdGuiPanel;
 			break;
 

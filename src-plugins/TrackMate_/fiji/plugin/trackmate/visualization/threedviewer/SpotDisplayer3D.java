@@ -179,7 +179,8 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	
 	@Override
 	public void refresh() {
-		trackNode.refresh();
+		if (null != trackNode)
+			trackNode.refresh();
 	}
 	
 	@Override

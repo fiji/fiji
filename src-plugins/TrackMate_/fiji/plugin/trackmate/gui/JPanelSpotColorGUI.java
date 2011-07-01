@@ -53,6 +53,7 @@ public class JPanelSpotColorGUI<K extends Enum<K>> extends ActionListenablePanel
 	
 	EnumMap<K, double[]> featureValues;
 	K setColorByFeature;
+	private K[] values;
 
 
 	private ActionListenablePanel caller;
@@ -61,8 +62,9 @@ public class JPanelSpotColorGUI<K extends Enum<K>> extends ActionListenablePanel
 	 * CONSTRUCTOR
 	 */
 	
-	public JPanelSpotColorGUI(ActionListenablePanel caller) {
+	public JPanelSpotColorGUI(final K featureType, final ActionListenablePanel caller) {
 		super();
+		this.values = featureType.getDeclaringClass().getEnumConstants();
 		this.caller = caller;
 		initGUI();
 		
@@ -96,7 +98,7 @@ public class JPanelSpotColorGUI<K extends Enum<K>> extends ActionListenablePanel
 		if (selection == 0) 
 			setColorByFeature = null;
 		else
-			setColorByFeature = setColorByFeature.getDeclaringClass().getEnumConstants()[selection-1];
+			setColorByFeature = values[selection-1];
 		caller.fireAction(COLOR_FEATURE_CHANGED);
 	}
 	
