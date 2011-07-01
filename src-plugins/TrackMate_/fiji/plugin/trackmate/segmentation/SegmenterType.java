@@ -63,16 +63,17 @@ public enum SegmenterType implements InfoTextable {
 			return "<html>" +
 			"This segmenter is basically identical to the LoG segmenter, except <br>" +
 			"that images are downsampled before filtering, giving it a small <br>" +
-			"kick in speed, particularly for large spot sizes. " +
+			"kick in speed, particularly for large spot sizes. It is the fastest for <br>" +
+			"large spot sizes (> ~20 pixels) " +
 			"</html>";
 		case DOG_SEGMENTER:
 			return "<html>" +
 			"This segmenter is based on an approximation of the LoG operator <br> " +
 			"by differences of gaussian (DoG). Computations are made in direct space. <br>" +
-			"It is the quickest for small spot sizes. " +
+			"It is the quickest for small spot sizes (< ~5 pixels). " +
 			"<p> " +
 			"Spots found too close are suppressed. This segmenter can do sub-pixel <br>" +
-			"localization of spots. This segmenter is based on the scale-space framework <br>" +
+			"localization of spots. It is based on the scale-space framework <br>" +
 			"made by Stephan Preibisch for ImgLib. " +
 			"</html>";
 		case MANUAL_SEGMENTER:

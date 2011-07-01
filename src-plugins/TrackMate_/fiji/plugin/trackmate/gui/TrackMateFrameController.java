@@ -29,7 +29,7 @@ public class TrackMateFrameController implements ActionListener {
 	/*
 	 * FIELDS
 	 */
-	
+
 	private static final boolean DEBUG = false;
 	/** This GUI current state. */
 	private GuiState state;
@@ -39,12 +39,12 @@ public class TrackMateFrameController implements ActionListener {
 	 */
 	private TrackMateModelView displayer;
 	private File file;
-	
+
 	/** The model describing the data. */
 	private TrackMateModel model;
 	/** The GUI controlled by this controller.  */
 	private TrackMateFrame view;
-		
+
 	/**
 	 * Is used to determine how to react to a 'next' button push. If it is set to true, then we are
 	 * normally processing through the GUI, and pressing 'next' should update the GUI and process the
@@ -52,17 +52,17 @@ public class TrackMateFrameController implements ActionListener {
 	 * re-generate the data.
 	 */
 	boolean actionFlag = true;
-	
-		
+
+
 	/*
 	 * CONSTRUCTOR
 	 */
-	
+
 	public TrackMateFrameController(final TrackMateModel model) {
 		this.model = model;
 		this.view = new TrackMateFrame(model);
 		this.logger = view.getLogger();
-				
+
 		// Set up GUI and communications
 		model.setLogger(logger);
 		if (null != model.getSettings().imp)
@@ -74,11 +74,11 @@ public class TrackMateFrameController implements ActionListener {
 		state = GuiState.START;
 		updateGUI();
 	}
-	
+
 	/*
 	 * ACTION LISTENER
 	 */
-	
+
 	@Override
 	public void actionPerformed(ActionEvent event) {
 		if (DEBUG)
@@ -86,40 +86,43 @@ public class TrackMateFrameController implements ActionListener {
 		DisplayerPanel displayerPanel = (DisplayerPanel) view.getPanelFor(PanelCard.DISPLAYER_PANEL_KEY);
 
 		if (event == view.NEXT_BUTTON_PRESSED && actionFlag) {
-			
+
 			performPreGUITask();
 			state = state.nextState();
-			updateGUI();
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() { updateGUI(); }
+			});
 			performPostGUITask();
 
 		} else if (event == view.PREVIOUS_BUTTON_PRESSED && actionFlag) {
-			
+
 			state = state.previousState();
 			updateGUI();
-			
+
 		} else if (event == view.LOAD_BUTTON_PRESSED && actionFlag) {
-			
+
 			load();
-			
+
 		} else if (event == view.SAVE_BUTTON_PRESSED && actionFlag) {
-			
+
 			save();
-			
+
 		} else if ((event == view.NEXT_BUTTON_PRESSED || 
 				event == view.PREVIOUS_BUTTON_PRESSED || 
 				event == view.LOAD_BUTTON_PRESSED ||
 				event == view.SAVE_BUTTON_PRESSED) && !actionFlag ) {
-		
+
 			actionFlag = true;
 			updateGUI();
 
 		} else if (event == displayerPanel.TRACK_SCHEME_BUTTON_PRESSED) {
-			
+
 			// Display Track scheme
 			final TrackSchemeFrame trackScheme = new TrackSchemeFrame(model);
 			trackScheme.setVisible(true);
 
-			
+
 		}
 
 	}
@@ -135,11 +138,11 @@ public class TrackMateFrameController implements ActionListener {
 	public TrackMateModel getModel() {
 		return model;
 	}
-	
+
 	public void setState(final GuiState state) {
 		this.state = state;
 	}
-	
+
 	public GuiState getState() {
 		return state;
 	}
@@ -148,11 +151,11 @@ public class TrackMateFrameController implements ActionListener {
 		return view;
 	}
 
-	
+
 	/*
 	 * GUI STATE PRIVATE METHODS
 	 */
-	
+
 	/**
 	 * Update the view given in argument in acquaintance with the current state.
 	 */
@@ -168,43 +171,43 @@ public class TrackMateFrameController implements ActionListener {
 		case TRACKING:
 			key = PanelCard.LOG_PANEL_KEY;
 			break;
-		
+
 		case START:
 			key = PanelCard.START_DIALOG_KEY;
 			break;
-			
+
 		case CHOOSE_SEGMENTER:
 			key = PanelCard.SEGMENTER_CHOICE_KEY;
 			break;
-		
+
 		case TUNE_SEGMENTER:
 			key = PanelCard.TUNE_SEGMENTER_KEY;
 			break;
-		
+
 		case INITIAL_THRESHOLDING:
 			key = PanelCard.INITIAL_THRESHOLDING_KEY;
 			break;
-			
+
 		case CHOOSE_DISPLAYER:
 			key = PanelCard.DISPLAYER_CHOICE_KEY;
 			break;
-		
+
 		case TUNE_THRESHOLDS:
 			key = PanelCard.THRESHOLD_GUI_KEY;
 			break;
-			
+
 		case CHOOSE_TRACKER:
 			key = PanelCard.TRACKER_CHOICE_KEY;
 			break;
-		
+
 		case TUNE_TRACKER:
 			key = PanelCard.TUNE_TRACKER_KEY;
 			break;
-		
+
 		case TUNE_DISPLAY:
 			key = PanelCard.DISPLAYER_PANEL_KEY;
 			break;
-			
+
 		case ACTIONS:
 			key = PanelCard.ACTION_PANEL_KEY;
 		}
@@ -229,13 +232,13 @@ public class TrackMateFrameController implements ActionListener {
 		case TUNE_THRESHOLDS:
 			execLinkDisplayerToThresholdGUI();
 			break;
-			
+
 		case TUNE_DISPLAY:
 			DisplayerPanel displayerPanel = (DisplayerPanel) view.getPanelFor(PanelCard.DISPLAYER_PANEL_KEY);
 			displayerPanel.register(displayer);
 		}
 	}
-	
+
 	private void performPreGUITask() {
 		switch(state) {
 		case CHOOSE_SEGMENTER:
@@ -246,7 +249,7 @@ public class TrackMateFrameController implements ActionListener {
 			break;
 		}
 	}
-	
+
 	/**
 	 * Action taken after the GUI has been displayed. 
 	 */
@@ -294,7 +297,7 @@ public class TrackMateFrameController implements ActionListener {
 			return;
 		default:
 			return;
-	
+
 		}
 	}
 
@@ -302,11 +305,11 @@ public class TrackMateFrameController implements ActionListener {
 	/*
 	 * PRIVATE METHODS
 	 */
-		
+
 
 	private void load() {
 		try {
-			
+
 			actionFlag = false;
 			SwingUtilities.invokeLater(new Runnable() {			
 				@Override
@@ -348,9 +351,9 @@ public class TrackMateFrameController implements ActionListener {
 			}
 			file = tmpFile;
 			model = reader.loadFile(file);
-						
+
 		} finally {
-			
+
 			SwingUtilities.invokeLater(new Runnable() {			
 				@Override
 				public void run() {
@@ -419,11 +422,11 @@ public class TrackMateFrameController implements ActionListener {
 
 		}
 	}
-	
+
 	private void execGetStartSettings() {
 		model.setSettings(view.startDialogPanel.getSettings());
 	}
-	
+
 	private void execGetSegmenterChoice() {
 		Settings settings = model.getSettings();
 		settings.segmenterType = view.segmenterChoicePanel.getChoice();
@@ -435,7 +438,7 @@ public class TrackMateFrameController implements ActionListener {
 		settings.trackerType = view.trackerChoicePanel.getChoice();
 		model.setSettings(settings);
 	}
-	
+
 	/**
 	 * Switch to the log panel, and execute the segmentation step, which will be delegated to 
 	 * the {@link TrackMate_} glue class in a new Thread.
@@ -463,7 +466,7 @@ public class TrackMateFrameController implements ActionListener {
 			}
 		}.start();
 	}
-	
+
 	/**
 	 * Apply the quality threshold set by the {@link TrackMateFrame#initThresholdingPanel}, and <b>overwrite</b> 
 	 * the {@link Spot} collection of the {@link TrackMateModel} with the result.
@@ -482,8 +485,8 @@ public class TrackMateFrameController implements ActionListener {
 			nselected += spots.size();
 		logger.log(String.format("Retained %d spots out of %d.\n", nselected, ntotal));
 	}
-	
-	
+
+
 	/**
 	 * Compute all features on all spots retained after initial thresholding.
 	 */
@@ -491,11 +494,18 @@ public class TrackMateFrameController implements ActionListener {
 		switchNextButton(false);
 		logger.log("Calculating features...\n",Logger.BLUE_COLOR);
 		// Calculate features
-		model.computeSpotFeatures();		
-		logger.log("Calculating features done.\n", Logger.BLUE_COLOR);
-		switchNextButton(true);
+		new Thread("TrackMate feature calculation thread") {
+			public void run() {
+				try {
+					model.computeSpotFeatures();		
+					logger.log("Calculating features done.\n", Logger.BLUE_COLOR);
+				} finally {
+					switchNextButton(true);
+				}
+			}
+		}.start();
 	}
-	
+
 	/**
 	 * Render spots in another thread, then switch to the thresholding panel. 
 	 */
@@ -507,22 +517,21 @@ public class TrackMateFrameController implements ActionListener {
 		new Thread("TrackMate rendering thread") {
 			public void run() {
 				// Instantiate displayer
-				if (null != displayer) {
-					displayer.clear();
+				try {
+					if (null != displayer) {
+						displayer.clear();
+					}
+					displayer = AbstractTrackMateModelView.instantiateView(view.displayerChooserPanel.getChoice(), model);
+
+					// Re-enable the GUI
+					logger.log("Rendering done.\n", Logger.BLUE_COLOR);
+				} finally {
+					switchNextButton(true);
 				}
-				displayer = AbstractTrackMateModelView.instantiateView(view.displayerChooserPanel.getChoice(), model);
-//				displayer.setSpots(model.getSpots());
-				// Forward the model to the displayer (not done if we skip automatic segmentation steps)
-//				if (model.getSettings().segmenterType == SegmenterType.MANUAL_SEGMENTER) 
-//					displayer.setSpotsToShow(model.getFilteredSpots());
-				
-				// Re-enable the GUI
-				logger.log("Rendering done.\n", Logger.BLUE_COLOR);
-				switchNextButton(true);
 			}
 		}.start();
 	}
-		
+
 	/**
 	 * Link the displayer frame to the threshold gui displayed in the view, so that 
 	 * displayed spots are updated live when the user changes something in the view.
@@ -539,7 +548,7 @@ public class TrackMateFrameController implements ActionListener {
 						displayer.refresh();
 					}
 				});
-				
+
 				view.thresholdGuiPanel.addChangeListener(new ChangeListener() {
 					@Override
 					public void stateChanged(ChangeEvent event) {
@@ -549,12 +558,12 @@ public class TrackMateFrameController implements ActionListener {
 						displayer.refresh();
 					}
 				});
-				
+
 				view.thresholdGuiPanel.stateChanged(null); // force redraw
 			}
 		});
 	}
-	
+
 	/**
 	 * Retrieve the thresholds list set in the threshold GUI, forward it to the model, and 
 	 * perform the threshold in the model.
@@ -564,8 +573,7 @@ public class TrackMateFrameController implements ActionListener {
 		List<FeatureFilter<SpotFeature>> featureThresholds = view.thresholdGuiPanel.getFeatureThresholds();
 		model.setSpotFilters(featureThresholds);
 		model.execSpotFiltering();
-//		displayer.setSpotsToShow(model.getFilteredSpots());
-		
+
 		int ntotal = 0;
 		for(Collection<Spot> spots : model.getSpots().values())
 			ntotal += spots.size();
@@ -588,7 +596,7 @@ public class TrackMateFrameController implements ActionListener {
 			logger.log("Kept "+nselected+" spots out of " + ntotal + ".\n");
 		}		
 	}
-	
+
 	/**
 	 * Switch to the log panel, and execute the tracking part in another thread.
 	 */
@@ -600,16 +608,19 @@ public class TrackMateFrameController implements ActionListener {
 		logger.log(model.getSettings().trackerSettings.toString());
 		new Thread("TrackMate tracking thread") {					
 			public void run() {
-				long start = System.currentTimeMillis();
-				model.execTracking();
-				// Re-enable the GUI
-				switchNextButton(true);
-				long end = System.currentTimeMillis();
-				logger.log(String.format("Tracking done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
+				try {
+					long start = System.currentTimeMillis();
+					model.execTracking();
+					// Re-enable the GUI
+					long end = System.currentTimeMillis();
+					logger.log(String.format("Tracking done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
+				} finally {
+					switchNextButton(true);
+				}
 			}
 		}.start();
 	}
-	
+
 	private void switchNextButton(final boolean state) {
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
@@ -618,12 +629,12 @@ public class TrackMateFrameController implements ActionListener {
 			}
 		});
 	}
-	
+
 
 	/*
 	 * ENUMS
 	 */
-	
+
 
 	public void setModelView(TrackMateModelView displayer) {
 		this.displayer = displayer;
@@ -652,7 +663,7 @@ public class TrackMateFrameController implements ActionListener {
 		TRACKING,
 		TUNE_DISPLAY,
 		ACTIONS;
-		
+
 		/**
 		 * Provide the next state the view should be into when pushing the 'next' button.
 		 */
@@ -688,7 +699,7 @@ public class TrackMateFrameController implements ActionListener {
 			}
 			return null;
 		}
-		
+
 
 		/**
 		 * Provide the previous state the view should be into when pushing the 'previous' button.
@@ -728,5 +739,5 @@ public class TrackMateFrameController implements ActionListener {
 	}
 
 
-	
+
 }

@@ -35,8 +35,8 @@ public class SegmenterSettings {
 	@Override
 	public String toString() {
 		String 	str = "Segmenter: "+ segmenterType.toString()+'\n';
-		str += String.format("  Expected radius: %.1f %s\n", expectedRadius, spaceUnits);
-		str += String.format("  Threshold: %.1f\n", threshold);
+		str += String.format("  Expected radius: %f %s\n", expectedRadius, spaceUnits);
+		str += String.format("  Threshold: %f\n", threshold);
 		str += "  Median filter: "+useMedianFilter+'\n';
 		return str;
 	}

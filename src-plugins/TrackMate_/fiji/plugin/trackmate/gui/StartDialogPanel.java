@@ -190,10 +190,10 @@ public class StartDialogPanel extends ActionListenablePanel {
 			return;
 		}
 		jLabelImageName.setText(imp.getTitle());
-		jTextFieldPixelWidth.setText(""+imp.getCalibration().pixelWidth);
-		jTextFieldPixelHeight.setText(""+imp.getCalibration().pixelHeight);
-		jTextFieldVoxelDepth.setText(""+imp.getCalibration().pixelDepth);
-		jTextFieldTimeInterval.setText(""+imp.getCalibration().frameInterval);
+		jTextFieldPixelWidth.setText(String.format("%g", imp.getCalibration().pixelWidth));
+		jTextFieldPixelHeight.setText(String.format("%g", imp.getCalibration().pixelHeight));
+		jTextFieldVoxelDepth.setText(String.format("%g", imp.getCalibration().pixelDepth));
+		jTextFieldTimeInterval.setText(String.format("%g", imp.getCalibration().frameInterval));
 		jLabelUnits1.setText(imp.getCalibration().getXUnit());
 		jLabelUnits2.setText(imp.getCalibration().getYUnit());
 		jLabelUnits3.setText(imp.getCalibration().getZUnit());

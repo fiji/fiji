@@ -105,10 +105,10 @@ public class Settings {
 		} else {
 			str = "For image: "+imp.getShortTitle()+'\n';			
 		}
-		str += String.format("  X = %4d - %4d, dx = %.1f %s\n", xstart, xend, dx, spaceUnits);
-		str += String.format("  Y = %4d - %4d, dy = %.1f %s\n", ystart, yend, dy, spaceUnits);
-		str += String.format("  Z = %4d - %4d, dz = %.1f %s\n", zstart, zend, dz, spaceUnits);
-		str += String.format("  T = %4d - %4d, dt = %.1f %s\n", tstart, tend, dt, timeUnits);
+		str += String.format("  X = %4d - %4d, dx = %g %s\n", xstart, xend, dx, spaceUnits);
+		str += String.format("  Y = %4d - %4d, dy = %g %s\n", ystart, yend, dy, spaceUnits);
+		str += String.format("  Z = %4d - %4d, dz = %g %s\n", zstart, zend, dz, spaceUnits);
+		str += String.format("  T = %4d - %4d, dt = %g %s\n", tstart, tend, dt, timeUnits);
 		return str;
 	}
 
