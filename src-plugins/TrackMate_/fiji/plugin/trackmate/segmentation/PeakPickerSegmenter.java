@@ -93,6 +93,7 @@ public class PeakPickerSegmenter<T extends RealType<T>> extends AbstractSpotSegm
 			Spot spot = new SpotImp(coords);
 			cursor.setPosition(peak);
 			spot.putFeature(SpotFeature.QUALITY, cursor.getType().getRealFloat());
+			spot.putFeature(SpotFeature.RADIUS, settings.expectedRadius);
 			spots.add(spot);
 		}
 		

@@ -18,6 +18,7 @@ import mpicbg.imglib.type.numeric.real.FloatType;
 import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.util.TMUtils;
 
 public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter<T> {
 	
@@ -155,25 +156,12 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 		spots = convertToSpots(centeredExtrema, calibration, downsampleFactors);
 		for (int i = 0; i < spots.size(); i++) {
 			spots.get(i).putFeature(SpotFeature.QUALITY, extremaValues.get(i));
+			spots.get(i).putFeature(SpotFeature.RADIUS, settings.expectedRadius);
 			spotQuality.put(extremaValues.get(i), spots.get(i));
 		}
 		
 		// Prune spots too close to each other
-		ArrayList<Spot> toRemove = new ArrayList<Spot>();
-		for (Float qual1 : spotQuality.descendingKeySet()) { // Iterate through spot sorted by descending quality
-			
-			Spot spot1 = spotQuality.get(qual1);
-			if (toRemove.contains(spot1))
-				continue;
-			
-			for (Spot spot2 : spotQuality.headMap(qual1).values()) { // Iterate through spots with lower quality
-
-				if (spot1.squareDistanceTo(spot2) < radius*radius) // If they are too close, flag the one with the lowest quality for removal.
-					toRemove.add(spot2);
-				
-			}
-		}
-		spots.removeAll(toRemove);
+		spots = TMUtils.suppressSpots(spots, SpotFeature.QUALITY);
 		
 		return true;
 	}

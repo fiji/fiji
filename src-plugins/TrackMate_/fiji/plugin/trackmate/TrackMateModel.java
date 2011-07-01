@@ -244,7 +244,6 @@ public class TrackMateModel {
 				// Add segmentation feature other than position
 				for (Spot spot : prunedSpots) {
 					spot.putFeature(SpotFeature.POSITION_T, i * settings.dt);
-					spot.putFeature(SpotFeature.RADIUS, settings.segmenterSettings.expectedRadius);
 				}
 				spots.put(i, prunedSpots);
 				spotFound += prunedSpots.size();

@@ -57,27 +57,27 @@ public enum SegmenterType implements InfoTextable {
 			"to the image, with a sigma suited to the blob estimated size.<br>" +
 			"Calculations are made in the Fourier space. The maxima in the <br>" +
 			"filtered image are searched for, and maxima too close from each <br>" +
-			"other are suppressed." +
+			"other are suppressed. " +
 			"</html>";
 		case LOG_SEGMENTER:
 			return "<html>" +
 			"This segmenter is basically identical to the LoG segmenter, except <br>" +
 			"that images are downsampled before filtering, giving it a small <br>" +
-			"kick in speed, particularly for large spot sizes." +
+			"kick in speed, particularly for large spot sizes. " +
 			"</html>";
 		case DOG_SEGMENTER:
 			return "<html>" +
-			"This segmenter is based on an approximation of the LoG operator <br>" +
+			"This segmenter is based on an approximation of the LoG operator <br> " +
 			"by differences of gaussian (DoG). Computations are made in direct space. <br>" +
 			"It is the quickest for small spot sizes. " +
 			"<p> " +
-			"This segmenter can do sub-pixel localization of spots. This segmenter is <br> " +
-			"based on the scale-space framework made by Stephan Preibisch <br>" +
-			"for ImgLib." +
+			"Spots found too close are suppressed. This segmenter can do sub-pixel <br>" +
+			"localization of spots. This segmenter is based on the scale-space framework <br>" +
+			"made by Stephan Preibisch for ImgLib. " +
 			"</html>";
 		case MANUAL_SEGMENTER:
 			return "<html>" +
-			"Selecting this will skip the automatic segmentation phase, and jump directly " +
+			"Selecting this will skip the automatic segmentation phase, and jump directly <br>" +
 			"to manual segmentation. A default spot size will be asked for. " +
 			"</html>";
 		}

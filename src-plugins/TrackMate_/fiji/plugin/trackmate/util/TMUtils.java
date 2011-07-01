@@ -11,6 +11,8 @@ import ij.process.StackConverter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.TreeMap;
@@ -31,7 +33,59 @@ import fiji.plugin.trackmate.TrackMate_;
  */
 public class TMUtils {
 	
-
+	/**
+	 * Create a new list of spots, made from the given list by excluding overlapping spots.
+	 * <p>
+	 * Overlapping is checked by ensuring that the two compared spots are no closer than the sum
+	 * of their respective radius. If two spots are overlapping, only the one that has the highest
+	 * value of the {@link SpotFeature}  given in argument is retained, and the other one is discarded.
+	 * 
+	 * @param spots  the list of spot to suppress. It will be sorted by descending feature value by this call.
+	 * @param feature  the feature to consider when choosing what spot to retain in an overlapping couple. 
+	 * @return a new pruned list of non-overlapping spots. Incidentally, this list will be sorted by descending feature value.
+	 */
+	public static final List<Spot> suppressSpots(List<Spot> spots, final SpotFeature feature) {
+		Collections.sort(spots, createDescendingComparatorFor(feature));
+		final List<Spot> acceptedSpots = new ArrayList<Spot>(spots.size());
+		boolean ok;
+		float r2;
+		for (final Spot spot : spots) {
+			ok = true;
+			for (final Spot target : acceptedSpots) {
+				r2 = (spot.getFeature(SpotFeature.RADIUS) + target.getFeature(SpotFeature.RADIUS)) * (spot.getFeature(SpotFeature.RADIUS) + target.getFeature(SpotFeature.RADIUS));
+				if (spot.squareDistanceTo(target) < r2 ) {
+					ok = false;
+					break;
+				}
+			}
+			if (ok)
+				acceptedSpots.add(spot);
+		}
+		return acceptedSpots;
+	}
+	
+	
+	public static final Comparator<Spot> createAscendingComparatorFor(final SpotFeature feature) {
+		return new Comparator<Spot>() {
+			@Override
+			public int compare(Spot o1, Spot o2) {
+				return o1.getFeature(feature).compareTo(o2.getFeature(feature));
+			}
+		};
+	}
+	
+	public static final Comparator<Spot> createDescendingComparatorFor(final SpotFeature feature) {
+		return new Comparator<Spot>() {
+			@Override
+			public int compare(Spot o1, Spot o2) {
+				return o2.getFeature(feature).compareTo(o1.getFeature(feature));
+			}
+		};
+	}
+	
+	
+	
+	
 	
 	
 	/**

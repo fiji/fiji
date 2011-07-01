@@ -7,6 +7,7 @@ import mpicbg.imglib.algorithm.gauss.DifferenceOfGaussianRealNI;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussian;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.algorithm.scalespace.SubpixelLocalization;
+import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
@@ -16,6 +17,7 @@ import mpicbg.imglib.type.numeric.real.FloatType;
 import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.util.TMUtils;
 
 public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T> {
 
@@ -63,7 +65,7 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 		float sigma1, sigma2, minPeakValue;
 		sigma1 = (float) (2 / (1+Math.sqrt(2)) *  radius); // / Math.sqrt(img.getNumDimensions())); // in physical unit
 		sigma2 = (float) (Math.sqrt(2) * sigma1);
-		minPeakValue = settings.threshold;
+		minPeakValue = 0; // settings.threshold;
 		
 		final DifferenceOfGaussianRealNI<T, FloatType> dog = new DifferenceOfGaussianRealNI<T, FloatType>(intermediateImage, imageFactory, oobs2, sigma1, sigma2, minPeakValue, 1.0, calibration);
 		
@@ -79,15 +81,20 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 				
 		// Get all peaks
 		List<DifferenceOfGaussianPeak<FloatType>> list = dog.getPeaks();
+		LocalizableByDimCursor<T> cursor = img.createLocalizableByDimCursor();
 		
 		// Prune non-relevant peaks
 		List<DifferenceOfGaussianPeak<FloatType>> pruned_list = new ArrayList<DifferenceOfGaussianPeak<FloatType>>();
 		for(DifferenceOfGaussianPeak<FloatType> dogpeak : list) {
-			if (dogpeak.getPeakType() != DifferenceOfGaussian.SpecialPoint.MAX)
+			if ( (dogpeak.getPeakType() != DifferenceOfGaussian.SpecialPoint.MAX))
 				continue;
+			cursor.setPosition(dogpeak);
+			if (cursor.getType().getRealFloat() < settings.threshold)
+				continue;
+			
 			pruned_list.add(dogpeak);
 		}
-
+		
 		// Deal with sub-pixel localization if required
 		if (doSubPixelLocalization) {
 			Image<FloatType> laplacian = dog.getDoGImage();
@@ -112,8 +119,13 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 			}
 			Spot spot = new SpotImp(coords);
 			spot.putFeature(SpotFeature.QUALITY, -dogpeak.getValue().get());
+			spot.putFeature(SpotFeature.RADIUS, settings.expectedRadius);
 			spots.add(spot);
 		}
+		
+		// Pruned overlapping spots
+		spots = TMUtils.suppressSpots(spots, SpotFeature.QUALITY);
+		
 		return true;
 	}
 }
