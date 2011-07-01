@@ -1067,15 +1067,17 @@ public class FeatureStack
 				
 				final ImageStack is = new ImageStack(width, height);
 				// Apply kernels
-				FourierConvolution<FloatType, FloatType> fourierConvolution = null;
-				Image<FloatType> image2 = ImagePlusAdapter.wrap(originalImage);
+				//FourierConvolution<FloatType, FloatType> fourierConvolution = null;
+				//Image<FloatType> image2 = ImagePlusAdapter.wrap(originalImage);
 				for (int i=0; i<nAngles; i++)
 				{
 					Image<FloatType> kernel = ImagePlusAdapter.wrap( new ImagePlus("", kernels.getProcessor(i+1)) );
-
+					Image<FloatType> image2 = ImagePlusAdapter.wrap(originalImage);
+					
 					// compute Fourier convolution
-					if (fourierConvolution == null || !fourierConvolution.replaceKernel( kernel ) )
-						fourierConvolution = new FourierConvolution<FloatType, FloatType>( image2, kernel );
+					FourierConvolution<FloatType, FloatType> fourierConvolution = new FourierConvolution<FloatType, FloatType>( image2, kernel );
+					//if (fourierConvolution == null || !fourierConvolution.replaceKernel( kernel ) )
+					//	fourierConvolution = new FourierConvolution<FloatType, FloatType>( image2, kernel );
 					
 					if ( !fourierConvolution.checkInput() || !fourierConvolution.process() )
 					{
