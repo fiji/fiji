@@ -225,9 +225,7 @@ public class Weka_Segmentation implements PlugIn
 	
 	/** boolean flag set to true while training */
 	boolean trainingFlag = false;
-	/** boolean flat set to true when training is complete */
-	boolean trainingComplete = false;
-	
+		
 	/**
 	 * Basic constructor for graphical user interface use
 	 */
@@ -524,6 +522,9 @@ public class Weka_Segmentation implements PlugIn
 		JPanel optionsJPanel = new JPanel();
 
 		Panel all = new Panel();
+		
+		/** boolean flag set to true when training is complete */
+		boolean trainingComplete = false;
 
 		/**
 		 * Construct the plugin window
@@ -1050,17 +1051,17 @@ public class Weka_Segmentation implements PlugIn
 				final boolean classifierExists =  null != wekaSegmentation.getClassifier();
 
 				trainButton.setEnabled( classifierExists );
-				applyButton.setEnabled( trainingComplete );
+				applyButton.setEnabled( win.trainingComplete );
 
 				final boolean resultExists = null != classifiedImage &&
 											 null != classifiedImage.getProcessor();
 
-				saveClassifierButton.setEnabled( trainingComplete );
+				saveClassifierButton.setEnabled( win.trainingComplete );
 				overlayButton.setEnabled(resultExists);
 				resultButton.setEnabled(resultExists);
 				plotButton.setEnabled(resultExists);
 				
-				probabilityButton.setEnabled( trainingComplete );
+				probabilityButton.setEnabled( win.trainingComplete );
 
 				//newImageButton.setEnabled(true);
 				loadClassifierButton.setEnabled(true);
@@ -1129,6 +1130,16 @@ public class Weka_Segmentation implements PlugIn
 
 			win.updateButtonsEnabling();
 			repaintWindow();
+		}
+
+		/**
+		 * Set the flag to inform the the training has finished or not
+		 * 
+		 * @param b tranining complete flag
+		 */
+		void setTrainingComplete(boolean b)
+		{
+			this.trainingComplete = b;
 		}
 		
 	}// end class CustomWindow
@@ -1351,7 +1362,7 @@ public class Weka_Segmentation implements PlugIn
 							{
 								//IJ.log("Training was interrupted by the user.");
 								wekaSegmentation.shutDownNow();
-								trainingComplete = false;
+								win.trainingComplete = false;
 								return;
 							}
 							wekaSegmentation.applyClassifier(false);
@@ -1359,12 +1370,12 @@ public class Weka_Segmentation implements PlugIn
 							if(showColorOverlay)
 								win.toggleOverlay();
 							win.toggleOverlay();
-							trainingComplete = true;
+							win.trainingComplete = true;
 						}
 						else
 						{
 							IJ.log("The traning did not finish.");
-							trainingComplete = false;
+							win.trainingComplete = false;
 						}
 						
 					}
@@ -1391,7 +1402,7 @@ public class Weka_Segmentation implements PlugIn
 		{
 			try{
 				trainingFlag = false;
-				trainingComplete = false;
+				win.trainingComplete = false;
 				IJ.log("Training was stopped by the user!");
 				win.setButtonsEnabled( false );
 				trainButton.setText("Train classifier");
@@ -1695,7 +1706,7 @@ public class Weka_Segmentation implements PlugIn
 		// update GUI
 		win.updateAddClassButtons();
 
-		trainingComplete = true;
+		win.trainingComplete = true;
 		IJ.log("Loaded " + od.getDirectory() + od.getFileName());
 	}
 
@@ -2386,8 +2397,11 @@ public class Weka_Segmentation implements PlugIn
 		// Disable buttons until the training has finished
 		win.setButtonsEnabled(false);
 
+		win.setTrainingComplete(false);
+		
 		if( wekaSegmentation.trainClassifier() )
 		{
+			win.setTrainingComplete(true);
 			wekaSegmentation.applyClassifier(false);
 			win.setClassfiedImage( wekaSegmentation.getClassifiedImage() );
 			if(win.isToogleEnabled())
