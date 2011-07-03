@@ -125,7 +125,7 @@ public class SpotDisplayer3DTestDrive {
 		gui.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				model.setSpotFilters(gui.getFeatureThresholds());
+				model.setSpotFilters(gui.getFeatureFilters());
 				model.execSpotFiltering();
 			}
 		});

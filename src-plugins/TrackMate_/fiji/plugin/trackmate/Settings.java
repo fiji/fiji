@@ -80,10 +80,10 @@ public class Settings {
 		switch(trackerType) {
 		case LAP_TRACKER:
 		case SIMPLE_LAP_TRACKER:
-			return new LAPTracker(model);
+			return new LAPTracker(model.getFilteredSpots(), model.getSettings().trackerSettings);
 		case FAST_LAPT:
 		case SIMPLE_FAST_LAPT:
-			return new FastLAPTracker(model);
+			return new FastLAPTracker(model.getFilteredSpots(), model.getSettings().trackerSettings);
 		}
 		return null;
 	}

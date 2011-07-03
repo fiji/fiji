@@ -16,8 +16,9 @@ import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
 public class LAPTrackerTestDrive {
 	
-	private static final File SPLITTING_CASE_3 = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
-	
+//	private static final File SPLITTING_CASE_3 = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
+	private static final File SPLITTING_CASE_3 = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
+
 	/*
 	 * MAIN METHOD
 	 */
@@ -69,14 +70,15 @@ public class LAPTrackerTestDrive {
 		// 2 - Track the test spots
 		long start = System.currentTimeMillis();
 		LAPTracker lap;
-		lap = new LAPTracker(model); //model.getSettings().trackerSettings);
+		lap = new LAPTracker(model.getFilteredSpots(), model.getSettings().trackerSettings); //model.getSettings().trackerSettings);
 		lap.setLogger(Logger.DEFAULT_LOGGER);
 		if (!lap.checkInput())
 			System.err.println("Error checking input: "+lap.getErrorMessage());
 		if (!lap.process())
 			System.err.println("Error in process: "+lap.getErrorMessage());
 		long end = System.currentTimeMillis();
-	
+		model.setGraph(lap.getResult());
+		
 		// 3 - Print out results for testing		
 		System.out.println();
 		System.out.println();

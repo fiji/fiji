@@ -40,7 +40,7 @@ public class InitThresholdPanel extends ActionListenablePanel {
 	private static final String SELECTED_SPOT_STRING = "Selected spots: %d out of %d";
 	
 	private EnumMap<SpotFeature, double[]> features;
-	private ThresholdPanel<SpotFeature> jPanelThreshold;
+	private FilterPanel<SpotFeature> jPanelThreshold;
 	private JPanel jPanelFields;
 	private JLabel jLabelInitialThreshold;
 	private JLabel jLabelExplanation;
@@ -100,7 +100,7 @@ public class InitThresholdPanel extends ActionListenablePanel {
 			this.setPreferredSize(new java.awt.Dimension(300, 500));
 			{
 					
-				jPanelThreshold = new ThresholdPanel<SpotFeature>(features, SpotFeature.QUALITY);
+				jPanelThreshold = new FilterPanel<SpotFeature>(features, SpotFeature.QUALITY);
 				if (null != initialThreshold)
 					jPanelThreshold.setThreshold(initialThreshold);
 				jPanelThreshold.jComboBoxFeature.setEnabled(false);

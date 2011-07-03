@@ -57,12 +57,12 @@ public class FilterGuiPanel<K extends Enum<K>> extends ActionListenablePanel imp
 	private JButton jButtonAddThreshold;
 	private JLabel jLabelInfo;
 
-	private Stack<ThresholdPanel<K>> thresholdPanels = new Stack<ThresholdPanel<K>>();
+	private Stack<FilterPanel<K>> thresholdPanels = new Stack<FilterPanel<K>>();
 	private Stack<Component> struts = new Stack<Component>();
 	private EnumMap<K, double[]> featureValues;
 	private int newFeatureIndex;
 
-	private List<FeatureFilter<K>> featureThresholds = new ArrayList<FeatureFilter<K>>();
+	private List<FeatureFilter<K>> featureFilters = new ArrayList<FeatureFilter<K>>();
 	private ArrayList<ChangeListener> changeListeners = new ArrayList<ChangeListener>();
 	private K[] values;
 	private K featureType;
@@ -109,13 +109,13 @@ public class FilterGuiPanel<K extends Enum<K>> extends ActionListenablePanel imp
 	 */
 
 	/**
-	 * Called when one of the {@link ThresholdPanel} is changed by the user.
+	 * Called when one of the {@link FilterPanel} is changed by the user.
 	 */
 	@Override
 	public void stateChanged(ChangeEvent e) {
-		featureThresholds = new ArrayList<FeatureFilter<K>>(thresholdPanels.size());
-		for (ThresholdPanel<K> tp : thresholdPanels) {
-			featureThresholds.add(new FeatureFilter<K>(tp.getKey(), new Float(tp.getThreshold()), tp.isAboveThreshold()));
+		featureFilters = new ArrayList<FeatureFilter<K>>(thresholdPanels.size());
+		for (FilterPanel<K> tp : thresholdPanels) {
+			featureFilters.add(new FeatureFilter<K>(tp.getKey(), new Float(tp.getThreshold()), tp.isAboveThreshold()));
 		}
 		fireThresholdChanged(e);
 		updateInfoText();
@@ -124,8 +124,8 @@ public class FilterGuiPanel<K extends Enum<K>> extends ActionListenablePanel imp
 	/**
 	 * Return the thresholds currently set by this GUI.
 	 */
-	public List<FeatureFilter<K>> getFeatureThresholds() {
-		return featureThresholds;
+	public List<FeatureFilter<K>> getFeatureFilters() {
+		return featureFilters;
 	}
 
 
@@ -175,7 +175,7 @@ public class FilterGuiPanel<K extends Enum<K>> extends ActionListenablePanel imp
 	public void addThresholdPanel(FeatureFilter<K> threshold) {
 		if (null == threshold)
 			return;
-		ThresholdPanel<K> tp = new ThresholdPanel<K>(featureValues, threshold.feature);
+		FilterPanel<K> tp = new FilterPanel<K>(featureValues, threshold.feature);
 		tp.setThreshold(threshold.value);
 		tp.setAboveThreshold(threshold.isAbove);		
 		tp.addChangeListener(this);
@@ -195,7 +195,7 @@ public class FilterGuiPanel<K extends Enum<K>> extends ActionListenablePanel imp
 	public void addThresholdPanel(K feature) {
 		if (null == featureValues)
 			return;
-		ThresholdPanel<K> tp = new ThresholdPanel<K>(featureValues, feature);
+		FilterPanel<K> tp = new FilterPanel<K>(featureValues, feature);
 		tp.addChangeListener(this);
 		newFeatureIndex++;
 		if (newFeatureIndex >= SpotFeature.values().length) 
@@ -211,7 +211,7 @@ public class FilterGuiPanel<K extends Enum<K>> extends ActionListenablePanel imp
 
 	private void removeThresholdPanel() {
 		try {
-			ThresholdPanel<K> tp = thresholdPanels.pop();
+			FilterPanel<K> tp = thresholdPanels.pop();
 			tp.removeChangeListener(this);
 			Component strut = struts.pop();
 			jPanelAllThresholds.remove(strut);
@@ -225,14 +225,14 @@ public class FilterGuiPanel<K extends Enum<K>> extends ActionListenablePanel imp
 	private void updateInfoText() {
 		String info = "";
 		int nobjects = featureValues.values().iterator().next().length;
-		if (featureThresholds == null || featureThresholds.isEmpty()) {
+		if (featureFilters == null || featureFilters.isEmpty()) {
 			info = "Keep all "+nobjects+" objects.";
 		} else {
 			int nselected = 0;
 			double val;
 			for (int i = 0; i < nobjects; i++) {
 				boolean ok = true;
-				for (FeatureFilter<K> filter : featureThresholds) {
+				for (FeatureFilter<K> filter : featureFilters) {
 					val = featureValues.get(filter.feature)[i];
 					if (filter.isAbove) {
 						if (val < filter.value) {

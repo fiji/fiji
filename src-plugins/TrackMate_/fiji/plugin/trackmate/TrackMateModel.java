@@ -63,7 +63,7 @@ public class TrackMateModel {
 	 * must be trough the model methods {@link #addEdge(Spot, Spot, double)},
 	 * {@link #removeEdge(DefaultWeightedEdge)}, {@link #removeEdge(Spot, Spot)}.
 	 */
-	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = null;
 	/** The edges contained in the list of tracks. */
 	protected List<Set<DefaultWeightedEdge>> trackEdges;
 	/** The spots contained in the list of spots. */
@@ -82,7 +82,7 @@ public class TrackMateModel {
 	 * The filtered graph, made from the mother graph {@link #graph} by filtering its track
 	 * using track {@link FeatureFilter}.
 	 */
-	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> filteredGraph =  new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> filteredGraph =  null;
 
 	// TRANSACTION MODEL
 
@@ -177,9 +177,7 @@ public class TrackMateModel {
 		SpotTracker tracker = settings.getSpotTracker(this);
 		tracker.setLogger(logger);
 		if (tracker.checkInput() && tracker.process()) {
-			final TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_COMPUTED);
-			for (TrackMateModelChangeListener listener : modelChangeListeners)
-				listener.modelChanged(event);
+			setGraph(tracker.getResult());
 		} else
 			logger.error("Problem occured in tracking:\n"+tracker.getErrorMessage()+'\n');
 	}
@@ -473,6 +471,11 @@ public class TrackMateModel {
 
 		// Finally, we recompute track lists
 		computeTracksFromGraph();
+
+		// And we warn people about it
+		TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_FILTERED);
+		for (final TrackMateModelChangeListener listener : modelChangeListeners)
+			listener.modelChanged(event);
 	}
 
 
@@ -640,7 +643,7 @@ public class TrackMateModel {
 
 	/**
 	 * Overwrite the {@link #filteredSpots} field, resulting normally from the {@link #execSpotFiltering()} process.
-	 * @param doNotify  if true, will file a {@link TrackMateModelChangeEvent#SPOTS_FILTERED} event.
+	 * @param doNotify  if true, will fire a {@link TrackMateModelChangeEvent#SPOTS_FILTERED} event.
 	 */
 	public void setFilteredSpots(final SpotCollection filteredSpots, boolean doNotify) {
 		this.filteredSpots = filteredSpots;
@@ -652,10 +655,23 @@ public class TrackMateModel {
 	}
 
 
+	/**
+	 * Set the graph resulting from the tracking process, and
+	 * fire a {@link TrackMateModelChangeEvent#TRACKS_COMPUTED} event.
+	 */
+	@SuppressWarnings("unchecked")
+	public void setGraph(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph) {
+		this.graph = graph;
+		this.filteredGraph = (SimpleWeightedGraph<Spot, DefaultWeightedEdge>) graph.clone();
+		computeTracksFromGraph();
+		final TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_COMPUTED);
+		for (TrackMateModelChangeListener listener : modelChangeListeners)
+			listener.modelChanged(event);
+	}
+
 	public void clearTracks() {
 		this.graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
-		for(Spot spot : filteredSpots.getAllSpots())
-			graph.addVertex(spot);
+		
 	}
 
 	/*
@@ -993,10 +1009,12 @@ public class TrackMateModel {
 		DefaultWeightedEdge edge = graph.addEdge(source, target);
 		graph.setEdgeWeight(edge, weight);
 		// Filtered graph
-		boolean added = filteredGraph.addEdge(source, target, edge);
-		if (!added)
-			System.out.println("Problem adding edge "+edge+" to the filtered graph!"); // DEBUG
-		filteredGraph.setEdgeWeight(edge, weight);
+		if (filteredGraph != null) 	{
+			boolean added = filteredGraph.addEdge(source, target, edge);
+			if (!added)
+				System.out.println("Problem adding edge "+edge+" to the filtered graph!"); // DEBUG
+			filteredGraph.setEdgeWeight(edge, weight);
+		}
 		// Transaction
 		edgesAdded.add(edge);
 		if (DEBUG)
@@ -1010,7 +1028,9 @@ public class TrackMateModel {
 		if (null == edge)
 			System.out.println("Problem removing edge "+ edge);
 		// Filtered graph
-		filteredGraph.removeEdge(edge);
+		if (filteredGraph != null) 	{
+			filteredGraph.removeEdge(edge);
+		}
 		// Transaction
 		edgesRemoved.add(edge); // TRANSACTION
 		if (DEBUG)
@@ -1024,7 +1044,9 @@ public class TrackMateModel {
 		if (!removed)
 			System.out.println("Problem removing edge "+edge);
 		// Filtered graph
-		filteredGraph.removeEdge(edge);
+		if (filteredGraph != null) 	{
+			filteredGraph.removeEdge(edge);
+		}
 		// Transaction
 		edgesRemoved.add(edge);
 		if (DEBUG)
@@ -1068,7 +1090,6 @@ public class TrackMateModel {
 
 		if (DEBUG)
 			System.out.println("[TrackMateModel] #flushUpdate().");
-
 
 		// We recompute tracks only if some edges have been added or removed, and 
 		// if some spots have been removed (equivalent to remove edges). We do NOT
@@ -1178,6 +1199,7 @@ public class TrackMateModel {
 			trackFeatures.add(featureMap);
 		}
 	}
+
 
 
 

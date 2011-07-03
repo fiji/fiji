@@ -16,6 +16,8 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
+import org.jgrapht.graph.DefaultWeightedEdge;
+import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Settings;
@@ -85,7 +87,7 @@ public class TmXmlReader implements TmXmlKeys {
 		model.setSpots(allSpots, false);
 		model.setFilteredSpots(filteredSpots, false);
 		// Tracks
-		loadTracks(model);
+		model.setGraph(readTracks(filteredSpots));
 
 		return model;
 	}
@@ -312,20 +314,21 @@ public class TmXmlReader implements TmXmlKeys {
 	}
 
 	/**
-	 * Update the given model with the graph mapping spot linking as tracks. The graph vertices are made of the selected spot
+	 * Load the graph mapping spot linking as tracks. The graph vertices are made of the selected spot
 	 * list given in argument. Edges are formed from the file data.
 	 * @param selectedSpots  the spot selection from which tracks area made 
 	 * @throws DataConversionException  if the attribute values are not formatted properly in the file.
 	 */
 	@SuppressWarnings("unchecked")
-	public void loadTracks(final TrackMateModel model) throws DataConversionException {
+	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> readTracks(final SpotCollection spots) throws DataConversionException {
 
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
 		if (null == allTracksElement)
-			return;
+			return null;
 
-		final SpotCollection filteredSpots = model.getFilteredSpots();
-		final List<Spot> spots = filteredSpots.getAllSpots();
+		final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		for (Spot spot : spots)
+			graph.addVertex(spot);
 
 		// Load tracks
 		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
@@ -335,43 +338,39 @@ public class TmXmlReader implements TmXmlKeys {
 		double weight = 0;
 		boolean sourceFound, targetFound;
 
-		model.beginUpdate();
-		try {
-			model.clearTracks();
-			for (Element trackElement : trackElements) {
-				edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
-				for (Element edgeElement : edgeElements) {
-					// Get source and target ID for this edge
-					sourceID = edgeElement.getAttribute(TRACK_EDGE_SOURCE_ATTRIBUTE_NAME).getIntValue();
-					targetID = edgeElement.getAttribute(TRACK_EDGE_TARGET_ATTRIBUTE_NAME).getIntValue();
-					if (null != edgeElement.getAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME))
-						weight   	= edgeElement.getAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME).getDoubleValue();
-					else 
-						weight  	= 0;
-					// Retrieve corresponding spots from their ID
-					targetFound = false;
-					sourceFound = false;
-					targetSpot = null;
-					sourceSpot = null;
-					for (Spot spot : spots) {
-						if (!sourceFound  && spot.ID() == sourceID) {
-							sourceSpot = spot;
-							sourceFound = true;
-						}
-						if (!targetFound  && spot.ID() == targetID) {
-							targetSpot = spot;
-							targetFound = true;
-						}
-						if (targetFound && sourceFound) {
-							model.addEdge(sourceSpot, targetSpot, weight);
-							break;
-						}
+		for (Element trackElement : trackElements) {
+			edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
+			for (Element edgeElement : edgeElements) {
+				// Get source and target ID for this edge
+				sourceID = edgeElement.getAttribute(TRACK_EDGE_SOURCE_ATTRIBUTE_NAME).getIntValue();
+				targetID = edgeElement.getAttribute(TRACK_EDGE_TARGET_ATTRIBUTE_NAME).getIntValue();
+				if (null != edgeElement.getAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME))
+					weight   	= edgeElement.getAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME).getDoubleValue();
+				else 
+					weight  	= 0;
+				// Retrieve corresponding spots from their ID
+				targetFound = false;
+				sourceFound = false;
+				targetSpot = null;
+				sourceSpot = null;
+				for (Spot spot : spots) {
+					if (!sourceFound  && spot.ID() == sourceID) {
+						sourceSpot = spot;
+						sourceFound = true;
+					}
+					if (!targetFound  && spot.ID() == targetID) {
+						targetSpot = spot;
+						targetFound = true;
+					}
+					if (targetFound && sourceFound) {
+						DefaultWeightedEdge edge = graph.addEdge(sourceSpot, targetSpot);
+						graph.setEdgeWeight(edge, weight);
+						break;
 					}
 				}
 			}
-		} finally {
-			model.endUpdate();
 		}
+		return graph;
 	}
 
 	public ImagePlus getImage()  {

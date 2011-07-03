@@ -309,7 +309,7 @@ public class GuiReader {
 
 		{ // Try reading the tracks 
 			try {
-				reader.loadTracks(model);
+				model.setGraph(reader.readTracks(model.getFilteredSpots()));
 			} catch (DataConversionException e) {
 				logger.error("Problem reading the track field of "+file.getName()
 						+". Error message is\n"+e.getLocalizedMessage()+'\n');

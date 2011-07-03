@@ -46,7 +46,7 @@ import fiji.plugin.trackmate.util.TMUtils;
 /**
  * 
  */
-public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
+public class FilterPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 	
 	static final Font FONT = new Font("Arial", Font.PLAIN, 11);
 	static final Font SMALL_FONT = FONT.deriveFont(10f);
@@ -72,20 +72,11 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 	
 	private ArrayList<ChangeListener> listeners = new ArrayList<ChangeListener>();
 	
-	{
-		//Set Look & Feel
-		try {
-			javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
 	/*
 	 * CONSTRUCTOR
 	 */
 	
-	public ThresholdPanel(EnumMap<K, double[]> valuesMap, K selectedKey) {
+	public FilterPanel(EnumMap<K, double[]> valuesMap, K selectedKey) {
 		super();
 		this.valuesMap = valuesMap;		
 		this.allKeys = selectedKey.getDeclaringClass().getEnumConstants(); // get all enum values
@@ -94,7 +85,7 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 
 	}
 	
-	public ThresholdPanel(EnumMap<K, double[]> valuesMap) {
+	public FilterPanel(EnumMap<K, double[]> valuesMap) {
 		this(valuesMap, valuesMap.keySet().iterator().next());
 	}
 	
@@ -411,7 +402,7 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 		}
 		
 		// Create GUI
-		ThresholdPanel<fiji.plugin.trackmate.SpotFeature> tp = new ThresholdPanel<fiji.plugin.trackmate.SpotFeature>(fv);
+		FilterPanel<fiji.plugin.trackmate.SpotFeature> tp = new FilterPanel<fiji.plugin.trackmate.SpotFeature>(fv);
 		tp.resetAxes();
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(tp);

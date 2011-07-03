@@ -76,8 +76,8 @@ public class GuiSaver {
 			writer.appendInitialThreshold();
 			writer.appendSpots();
 			break;
-		case TUNE_THRESHOLDS:
-		case THRESHOLD_BLOBS:
+		case TUNE_SPOT_FILTERS:
+		case FILTER_SPOTS:
 			writer.appendBasicSettings();
 			writer.appendSegmenterSettings();
 			writer.appendInitialThreshold();

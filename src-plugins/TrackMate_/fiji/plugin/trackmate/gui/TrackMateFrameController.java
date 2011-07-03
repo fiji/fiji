@@ -16,6 +16,7 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.TrackMateFrame.PanelCard;
@@ -167,8 +168,9 @@ public class TrackMateFrameController implements ActionListener {
 		default:
 		case SEGMENTING:
 		case CALCULATE_FEATURES:
-		case THRESHOLD_BLOBS:
+		case FILTER_SPOTS:
 		case TRACKING:
+		case FILTER_TRACKS:
 			key = PanelCard.LOG_PANEL_KEY;
 			break;
 
@@ -192,7 +194,7 @@ public class TrackMateFrameController implements ActionListener {
 			key = PanelCard.DISPLAYER_CHOICE_KEY;
 			break;
 
-		case TUNE_THRESHOLDS:
+		case TUNE_SPOT_FILTERS:
 			key = PanelCard.SPOT_FILTER_GUI_KEY;
 			break;
 
@@ -204,6 +206,10 @@ public class TrackMateFrameController implements ActionListener {
 			key = PanelCard.TUNE_TRACKER_KEY;
 			break;
 
+		case TUNE_TRACK_FILTERS:
+			key = PanelCard.TRACK_FILTER_GUI_KEY;
+			break;
+			
 		case TUNE_DISPLAY:
 			key = PanelCard.DISPLAYER_PANEL_KEY;
 			break;
@@ -229,8 +235,8 @@ public class TrackMateFrameController implements ActionListener {
 		// Extra actions
 		switch(state) {
 
-		case TUNE_THRESHOLDS:
-			execLinkDisplayerToThresholdGUI();
+		case TUNE_SPOT_FILTERS:
+			execLinkDisplayerToSpotFilterGUI();
 			break;
 
 		case TUNE_DISPLAY:
@@ -289,8 +295,11 @@ public class TrackMateFrameController implements ActionListener {
 			execLaunchdisplayer();
 			return;
 		}
-		case THRESHOLD_BLOBS:
-			execThresholding();
+		case FILTER_SPOTS:
+			execSpotFiltering();
+			return;
+		case FILTER_TRACKS:
+			execTrackFiltering();
 			return;
 		case TRACKING:
 			execTrackingStep();
@@ -536,7 +545,7 @@ public class TrackMateFrameController implements ActionListener {
 	 * Link the displayer frame to the threshold gui displayed in the view, so that 
 	 * displayed spots are updated live when the user changes something in the view.
 	 */
-	private void execLinkDisplayerToThresholdGUI() {
+	private void execLinkDisplayerToSpotFilterGUI() {
 		SwingUtilities.invokeLater(new Runnable() {			
 			@Override
 			public void run() {
@@ -553,7 +562,7 @@ public class TrackMateFrameController implements ActionListener {
 					@Override
 					public void stateChanged(ChangeEvent event) {
 						// We set the thresholds field of the model but do not touch its selected spot field yet.
-						model.setSpotFilters(view.spotFilterGuiPanel.getFeatureThresholds());
+						model.setSpotFilters(view.spotFilterGuiPanel.getFeatureFilters());
 						model.execSpotFiltering();
 						displayer.refresh();
 					}
@@ -565,22 +574,22 @@ public class TrackMateFrameController implements ActionListener {
 	}
 
 	/**
-	 * Retrieve the thresholds list set in the threshold GUI, forward it to the model, and 
-	 * perform the threshold in the model.
+	 * Retrieve the spot feature filter list set in the filter GUI, forward it to the model, and 
+	 * perform the spot filtering in the model.
 	 */
-	private void execThresholding() {
-		logger.log("Performing feature threholding on the following features:\n", Logger.BLUE_COLOR);
-		List<FeatureFilter<SpotFeature>> featureThresholds = view.spotFilterGuiPanel.getFeatureThresholds();
-		model.setSpotFilters(featureThresholds);
+	private void execSpotFiltering() {
+		logger.log("Performing spot filtering on the following features:\n", Logger.BLUE_COLOR);
+		List<FeatureFilter<SpotFeature>> featureFilters = view.spotFilterGuiPanel.getFeatureFilters();
+		model.setSpotFilters(featureFilters);
 		model.execSpotFiltering();
 
 		int ntotal = 0;
 		for(Collection<Spot> spots : model.getSpots().values())
 			ntotal += spots.size();
-		if (featureThresholds == null || featureThresholds.isEmpty()) {
+		if (featureFilters == null || featureFilters.isEmpty()) {
 			logger.log("No feature threshold set, kept the " + ntotal + " spots.\n");
 		} else {
-			for (FeatureFilter<SpotFeature> ft : featureThresholds) {
+			for (FeatureFilter<SpotFeature> ft : featureFilters) {
 				String str = "  - on "+ft.feature.name();
 				if (ft.isAbove) 
 					str += " above ";
@@ -594,6 +603,33 @@ public class TrackMateFrameController implements ActionListener {
 			for(Collection<Spot> spots : model.getFilteredSpots().values())
 				nselected += spots.size();
 			logger.log("Kept "+nselected+" spots out of " + ntotal + ".\n");
+		}		
+	}
+	
+	/**
+	 * Retrieve the track feature filter list set in the threshold GUI, forward it to the model, and 
+	 * perform the track filtering in the model.
+	 */
+	private void execTrackFiltering() {
+		logger.log("Performing track filtering on the following features:\n", Logger.BLUE_COLOR);
+		List<FeatureFilter<TrackFeature>> featureFilters = view.trackFilterGuiPanel.getFeatureFilters();
+		model.setTrackFilters(featureFilters);
+		model.execTrackFiltering();
+
+		if (featureFilters == null || featureFilters.isEmpty()) {
+			logger.log("No feature threshold set, kept the " + model.getNTracks() + " spots.\n");
+		} else {
+			for (FeatureFilter<TrackFeature> ft : featureFilters) {
+				String str = "  - on "+ft.feature.name();
+				if (ft.isAbove) 
+					str += " above ";
+				else
+					str += " below ";
+				str += String.format("%.1f", ft.value);
+				str += '\n';
+				logger.log(str);
+			}
+			logger.log("Kept "+model.getNTracks()+" tracks.\n");
 		}		
 	}
 
@@ -656,11 +692,13 @@ public class TrackMateFrameController implements ActionListener {
 		INITIAL_THRESHOLDING,
 		CHOOSE_DISPLAYER,
 		CALCULATE_FEATURES,
-		TUNE_THRESHOLDS,
-		THRESHOLD_BLOBS,
+		TUNE_SPOT_FILTERS,
+		FILTER_SPOTS,
 		CHOOSE_TRACKER,
 		TUNE_TRACKER,
 		TRACKING,
+		TUNE_TRACK_FILTERS,
+		FILTER_TRACKS, 
 		TUNE_DISPLAY,
 		ACTIONS;
 
@@ -682,16 +720,20 @@ public class TrackMateFrameController implements ActionListener {
 			case CHOOSE_DISPLAYER:
 				return CALCULATE_FEATURES;
 			case CALCULATE_FEATURES:
-				return TUNE_THRESHOLDS;
-			case TUNE_THRESHOLDS:
-				return THRESHOLD_BLOBS;
-			case THRESHOLD_BLOBS:
+				return TUNE_SPOT_FILTERS;
+			case TUNE_SPOT_FILTERS:
+				return FILTER_SPOTS;
+			case FILTER_SPOTS:
 				return CHOOSE_TRACKER;
 			case CHOOSE_TRACKER:					
 				return TUNE_TRACKER;
 			case TUNE_TRACKER:
 				return TRACKING;
 			case TRACKING:
+				return TUNE_TRACK_FILTERS;
+			case TUNE_TRACK_FILTERS:
+				return FILTER_TRACKS;
+			case FILTER_TRACKS:
 				return TUNE_DISPLAY;
 			case TUNE_DISPLAY:
 			case ACTIONS:
@@ -719,18 +761,22 @@ public class TrackMateFrameController implements ActionListener {
 				return INITIAL_THRESHOLDING;
 			case CALCULATE_FEATURES:
 				return CHOOSE_DISPLAYER;
-			case TUNE_THRESHOLDS:
+			case TUNE_SPOT_FILTERS:
 				return CALCULATE_FEATURES;
-			case THRESHOLD_BLOBS:
-				return TUNE_THRESHOLDS;
+			case FILTER_SPOTS:
+				return TUNE_SPOT_FILTERS;
 			case TUNE_TRACKER:
 				return CHOOSE_TRACKER;
 			case CHOOSE_TRACKER:
-				return THRESHOLD_BLOBS;
+				return FILTER_SPOTS;
 			case TRACKING:
 				return TUNE_TRACKER;
-			case TUNE_DISPLAY:
+			case TUNE_TRACK_FILTERS:
 				return TRACKING;
+			case FILTER_TRACKS:
+				return TUNE_TRACK_FILTERS;
+			case TUNE_DISPLAY:
+				return FILTER_TRACKS;
 			case ACTIONS:
 				return TUNE_DISPLAY;
 			}
