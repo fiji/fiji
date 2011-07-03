@@ -38,7 +38,7 @@ import fiji.plugin.trackmate.TrackMate_;
 /**
  *
  */
-public class ThresholdGuiPanel<K extends Enum<K>> extends ActionListenablePanel implements ChangeListener {
+public class FilterGuiPanel<K extends Enum<K>> extends ActionListenablePanel implements ChangeListener {
 
 	private static final long serialVersionUID = 1307749013344373051L;
 	private final ChangeEvent CHANGE_EVENT = new ChangeEvent(this);
@@ -74,7 +74,7 @@ public class ThresholdGuiPanel<K extends Enum<K>> extends ActionListenablePanel 
 	/**
 	 * @param featureType  used to instantiate the class with the correct parameter.
 	 */
-	public ThresholdGuiPanel(final K featureType, EnumMap<K, double[]> featureValues, List<FeatureFilter<K>> featureThresholds) {
+	public FilterGuiPanel(final K featureType, EnumMap<K, double[]> featureValues, List<FeatureFilter<K>> featureThresholds) {
 		super();
 		this.featureValues = featureValues;
 		this.featureType = featureType;
@@ -96,11 +96,11 @@ public class ThresholdGuiPanel<K extends Enum<K>> extends ActionListenablePanel 
 		updateInfoText();
 	}
 
-	public ThresholdGuiPanel(final K featureType, EnumMap<K, double[]> featureValues) {
+	public FilterGuiPanel(final K featureType, EnumMap<K, double[]> featureValues) {
 		this(featureType, featureValues, null);
 	}
 
-	public ThresholdGuiPanel(final K featureType) {
+	public FilterGuiPanel(final K featureType) {
 		this(featureType, null);
 	}
 
@@ -368,7 +368,7 @@ public class ThresholdGuiPanel<K extends Enum<K>> extends ActionListenablePanel 
 		allSpots.put(0, spots);
 		trackmate.setSpots(allSpots, false);
 
-		ThresholdGuiPanel<SpotFeature> gui = new ThresholdGuiPanel<SpotFeature>(SpotFeature.QUALITY, trackmate.getFeatureValues());
+		FilterGuiPanel<SpotFeature> gui = new FilterGuiPanel<SpotFeature>(SpotFeature.QUALITY, trackmate.getSpotFeatureValues());
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(gui);
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);

@@ -137,7 +137,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 	 */
 
 	private void setModel(TrackMateModel model) {
-		this.featureValues = TMUtils.getFeatureValues(model.getFilteredSpots().values());
+		this.featureValues = TMUtils.getSpotFeatureValues(model.getFilteredSpots().values());
 	}
 
 	private void initGUI() {

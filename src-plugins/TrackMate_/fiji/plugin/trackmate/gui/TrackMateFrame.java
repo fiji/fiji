@@ -16,6 +16,7 @@ import javax.swing.WindowConstants;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.SpotFeature;
+import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
 import fiji.plugin.trackmate.tracking.TrackerType;
@@ -70,7 +71,8 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 	SegmenterSettingsPanel segmenterSettingsPanel;
 	InitThresholdPanel initThresholdingPanel;
 	EnumChooserPanel<ViewType> displayerChooserPanel;
-	ThresholdGuiPanel<SpotFeature> thresholdGuiPanel;
+	FilterGuiPanel<SpotFeature> spotFilterGuiPanel;
+	FilterGuiPanel<TrackFeature> trackFilterGuiPanel;
 	TrackerSettingsPanel trackerSettingsPanel;
 	DisplayerPanel displayerPanel;
 	EnumChooserPanel<SegmenterType> segmenterChoicePanel;
@@ -100,22 +102,13 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 		TUNE_SEGMENTER_KEY,
 		INITIAL_THRESHOLDING_KEY,
 		DISPLAYER_CHOICE_KEY,
-		THRESHOLD_GUI_KEY,
+		SPOT_FILTER_GUI_KEY,
 		TRACKER_CHOICE_KEY,
 		TUNE_TRACKER_KEY,
 		LOG_PANEL_KEY,
+		TRACK_FILTER_GUI_KEY,
 		DISPLAYER_PANEL_KEY, 
 		ACTION_PANEL_KEY;
-	}
-
-
-	{
-		//Set Look & Feel
-		try {
-			javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
 	}
 
 	/*
@@ -172,7 +165,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 		case INITIAL_THRESHOLDING_KEY:
 			if (null != initThresholdingPanel)
 				jPanelMain.remove(initThresholdingPanel);
-			initThresholdingPanel = new InitThresholdPanel(model.getFeatureValues(), model.getInitialSpotFilterValue());
+			initThresholdingPanel = new InitThresholdPanel(model.getSpotFeatureValues(), model.getInitialSpotFilterValue());
 			panel = initThresholdingPanel;
 			break;
 
@@ -183,11 +176,11 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 			panel = displayerChooserPanel;
 			break;
 
-		case THRESHOLD_GUI_KEY:
-			if (null != thresholdGuiPanel) 
-				jPanelMain.remove(thresholdGuiPanel);
-			thresholdGuiPanel = new ThresholdGuiPanel<SpotFeature>(SpotFeature.QUALITY, model.getFeatureValues(), model.getSpotFilters());
-			panel = thresholdGuiPanel;
+		case SPOT_FILTER_GUI_KEY:
+			if (null != spotFilterGuiPanel) 
+				jPanelMain.remove(spotFilterGuiPanel);
+			spotFilterGuiPanel = new FilterGuiPanel<SpotFeature>(SpotFeature.QUALITY, model.getSpotFeatureValues(), model.getSpotFilters());
+			panel = spotFilterGuiPanel;
 			break;
 
 		case TRACKER_CHOICE_KEY:
@@ -201,6 +194,13 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 				jPanelMain.remove(trackerSettingsPanel);
 			trackerSettingsPanel = TrackerSettingsPanel.createPanel(model.getSettings());
 			panel = trackerSettingsPanel;
+			break;
+			
+		case TRACK_FILTER_GUI_KEY:
+			if (null != trackFilterGuiPanel) 
+				jPanelMain.remove(trackFilterGuiPanel);
+			trackFilterGuiPanel = new FilterGuiPanel<TrackFeature>(TrackFeature.TRACK_DURATION, model.getTrackFeatureValues(), model.getTrackFilters());
+			panel = trackFilterGuiPanel;
 			break;
 
 		case DISPLAYER_PANEL_KEY:
@@ -368,8 +368,8 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 			return segmenterChoicePanel;
 		case START_DIALOG_KEY:
 			return startDialogPanel;
-		case THRESHOLD_GUI_KEY:
-			return thresholdGuiPanel;
+		case SPOT_FILTER_GUI_KEY:
+			return spotFilterGuiPanel;
 		case TRACKER_CHOICE_KEY:
 			return trackerChoicePanel;
 		case TUNE_SEGMENTER_KEY:

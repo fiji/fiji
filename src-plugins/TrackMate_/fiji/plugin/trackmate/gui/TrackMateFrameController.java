@@ -193,7 +193,7 @@ public class TrackMateFrameController implements ActionListener {
 			break;
 
 		case TUNE_THRESHOLDS:
-			key = PanelCard.THRESHOLD_GUI_KEY;
+			key = PanelCard.SPOT_FILTER_GUI_KEY;
 			break;
 
 		case CHOOSE_TRACKER:
@@ -541,25 +541,25 @@ public class TrackMateFrameController implements ActionListener {
 			@Override
 			public void run() {
 
-				view.thresholdGuiPanel.addActionListener(new ActionListener() {
+				view.spotFilterGuiPanel.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent event) {
-						displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLOR_FEATURE, view.thresholdGuiPanel.getColorByFeature());
+						displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLOR_FEATURE, view.spotFilterGuiPanel.getColorByFeature());
 						displayer.refresh();
 					}
 				});
 
-				view.thresholdGuiPanel.addChangeListener(new ChangeListener() {
+				view.spotFilterGuiPanel.addChangeListener(new ChangeListener() {
 					@Override
 					public void stateChanged(ChangeEvent event) {
 						// We set the thresholds field of the model but do not touch its selected spot field yet.
-						model.setSpotFilters(view.thresholdGuiPanel.getFeatureThresholds());
+						model.setSpotFilters(view.spotFilterGuiPanel.getFeatureThresholds());
 						model.execSpotFiltering();
 						displayer.refresh();
 					}
 				});
 
-				view.thresholdGuiPanel.stateChanged(null); // force redraw
+				view.spotFilterGuiPanel.stateChanged(null); // force redraw
 			}
 		});
 	}
@@ -570,7 +570,7 @@ public class TrackMateFrameController implements ActionListener {
 	 */
 	private void execThresholding() {
 		logger.log("Performing feature threholding on the following features:\n", Logger.BLUE_COLOR);
-		List<FeatureFilter<SpotFeature>> featureThresholds = view.thresholdGuiPanel.getFeatureThresholds();
+		List<FeatureFilter<SpotFeature>> featureThresholds = view.spotFilterGuiPanel.getFeatureThresholds();
 		model.setSpotFilters(featureThresholds);
 		model.execSpotFiltering();
 

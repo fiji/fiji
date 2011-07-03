@@ -20,7 +20,7 @@ public class TrackMateModelChangeEvent extends EventObject {
 	/** Indicate that an edge was added to the model. */
 	public static final int 	FLAG_EDGE_ADDED = 4;
 	/** Indicate that an edge was removed from the model. */
-	public static final int 	FLAG_EDGE_REMOVED = 5;;
+	public static final int 	FLAG_EDGE_REMOVED = 5;
 
 	/** 
 	 * Event type indicating that the spots of the model were computed, and 
@@ -38,12 +38,18 @@ public class TrackMateModelChangeEvent extends EventObject {
 	 */
 	public static final int 	TRACKS_COMPUTED = 6;
 	/** 
-	 * Event type indicating that the spots of the model were modified,
-	 * by adding, removing or changing the feature of some of them.
-	 * Content of the modification can be accessed by {@link #getSpots()},
-	 * {@link #getSpotFlag()}, {@link #getFromFrame()} and {@link #getToFrame()}.
+	 * Event type indicating that the tracks of the model were filtered.
 	 */
-	public static final int 	MODEL_MODIFIED = 7;
+	public static final int 	TRACKS_FILTERED = 7;
+	/** 
+	 * Event type indicating that model was modified,
+	 * by adding, removing or changing the feature of some spots, and/or
+	 * adding or removing edges in the tracks.
+	 * Content of the modification can be accessed by {@link #getSpots()},
+	 * {@link #getSpotFlag()}, {@link #getFromFrame()} and {@link #getToFrame()}, 
+	 * and for the tracks: {@link #getEdges()} and {@link #getEdgeFlags()}.
+	 */
+	public static final int 	MODEL_MODIFIED = 8;
 
 	private List<Spot> spots;
 	private List<DefaultWeightedEdge> edges;

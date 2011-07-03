@@ -32,7 +32,7 @@ import fiji.plugin.trackmate.TrackMate_;
  * List of static utilities for the {@link TrackMate_} plugin
  */
 public class TMUtils {
-	
+
 	/**
 	 * Create a new list of spots, made from the given list by excluding overlapping spots.
 	 * <p>
@@ -63,8 +63,8 @@ public class TMUtils {
 		}
 		return acceptedSpots;
 	}
-	
-	
+
+
 	public static final Comparator<Spot> createAscendingComparatorFor(final SpotFeature feature) {
 		return new Comparator<Spot>() {
 			@Override
@@ -73,7 +73,7 @@ public class TMUtils {
 			}
 		};
 	}
-	
+
 	public static final Comparator<Spot> createDescendingComparatorFor(final SpotFeature feature) {
 		return new Comparator<Spot>() {
 			@Override
@@ -82,12 +82,12 @@ public class TMUtils {
 			}
 		};
 	}
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
 	/**
 	 * Return a 3D stack or a 2D slice as an {@link Image} corresponding to the frame number <code>iFrame</code>
 	 * in the given 4D or 3D {@link ImagePlus}.
@@ -100,7 +100,7 @@ public class TMUtils {
 		ImageStack stack = imp.getImageStack();
 		ImageStack frame = new ImageStack(settings.xend-settings.xstart, settings.yend-settings.ystart, stack.getColorModel());
 		int numSlices = imp.getNSlices();
-		
+
 		// ...create the slice by combining the ImageProcessors, one for each Z in the stack.
 		ImageProcessor ip, croppedIp;
 		Roi cropRoi = new Roi(settings.xstart-1, settings.ystart-1, settings.xend-settings.xstart, settings.yend-settings.ystart);
@@ -110,7 +110,7 @@ public class TMUtils {
 			croppedIp = ip.crop();
 			frame.addSlice(Integer.toString(j + (iFrame * numSlices)), croppedIp);
 		}
-		
+
 		ImagePlus ipSingleFrame = new ImagePlus(imp.getShortTitle()+"-Frame_" + Integer.toString(iFrame + 1), frame);
 		@SuppressWarnings("unchecked")
 		Image<? extends RealType> img =  ImagePlusAdapter.wrap(ipSingleFrame);
@@ -158,14 +158,14 @@ public class TMUtils {
 					}
 				}
 				spotToKeep.removeAll(spotToRemove); // no need to treat them multiple times
-				
+
 			}
-			
+
 			selectedSpots.put(timepoint, spotToKeep);
 		}
 		return selectedSpots;
 	}
-	
+
 	/**
 	 * Convenience static method that executes the thresholding part.
 	 * <p>
@@ -177,9 +177,9 @@ public class TMUtils {
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
 		Float val, tval;	
-		
+
 		for (int timepoint : spots.keySet()) {
-			
+
 			spotThisFrame = spots.get(timepoint);
 			spotToKeep = new ArrayList<Spot>(spotThisFrame);
 			spotToRemove = new ArrayList<Spot>(spotThisFrame.size());
@@ -215,51 +215,51 @@ public class TMUtils {
 		}
 		return selectedSpots;
 	}
-	
-	
-	
+
+
+
 	/*
 	 * PRIVATE METHODS
 	 */
 
-	
+
 	/**
-     * Returns an estimate of the <code>p</code>th percentile of the values
-     * in the <code>values</code> array. Taken from commons-math.
+	 * Returns an estimate of the <code>p</code>th percentile of the values
+	 * in the <code>values</code> array. Taken from commons-math.
 	 */
 	public static final double getPercentile(final double[] values, final double p) {
 
 		final int size = values.length;
 		if ((p > 1) || (p <= 0)) {
-            throw new IllegalArgumentException("invalid quantile value: " + p);
-        }
-        if (size == 0) {
-            return Double.NaN;
-        }
-        if (size == 1) {
-            return values[0]; // always return single value for n = 1
-        }
-        double n = (double) size;
-        double pos = p * (n + 1);
-        double fpos = Math.floor(pos);
-        int intPos = (int) fpos;
-        double dif = pos - fpos;
-        double[] sorted = new double[size];
-        System.arraycopy(values, 0, sorted, 0, size);
-        Arrays.sort(sorted);
+			throw new IllegalArgumentException("invalid quantile value: " + p);
+		}
+		if (size == 0) {
+			return Double.NaN;
+		}
+		if (size == 1) {
+			return values[0]; // always return single value for n = 1
+		}
+		double n = (double) size;
+		double pos = p * (n + 1);
+		double fpos = Math.floor(pos);
+		int intPos = (int) fpos;
+		double dif = pos - fpos;
+		double[] sorted = new double[size];
+		System.arraycopy(values, 0, sorted, 0, size);
+		Arrays.sort(sorted);
 
-        if (pos < 1) {
-            return sorted[0];
-        }
-        if (pos >= n) {
-            return sorted[size - 1];
-        }
-        double lower = sorted[intPos - 1];
-        double upper = sorted[intPos];
-        return lower + dif * (upper - lower);
+		if (pos < 1) {
+			return sorted[0];
+		}
+		if (pos >= n) {
+			return sorted[size - 1];
+		}
+		double lower = sorted[intPos - 1];
+		double upper = sorted[intPos];
+		return lower + dif * (upper - lower);
 	}
-	
-	
+
+
 	/** 
 	 * Returns <code>[range, min, max]</code> of the given double array.
 	 * @return A double[] of length 3, where index 0 is the range, index 1 is the min, and index 2 is the max.
@@ -288,14 +288,14 @@ public class TMUtils {
 		}
 		return values;
 	}
-	
+
 	/**
 	 * Return a map of {@link SpotFeature} values for the spot collection given.
 	 * Each feature maps a double array, with 1 element per {@link Spot}, all pooled
 	 * together.
 	 */
-	public static EnumMap<SpotFeature, double[]> getFeatureValues(Collection<? extends Collection<Spot>> spots) {
-		 EnumMap<SpotFeature, double[]> featureValues = new  EnumMap<SpotFeature, double[]>(SpotFeature.class);
+	public static EnumMap<SpotFeature, double[]> getSpotFeatureValues(Collection<? extends Collection<Spot>> spots) {
+		EnumMap<SpotFeature, double[]> featureValues = new  EnumMap<SpotFeature, double[]>(SpotFeature.class);
 		if (null == spots || spots.isEmpty())
 			return featureValues;
 		int index;
@@ -305,7 +305,7 @@ public class TMUtils {
 		int spotNumber = 0;
 		for(Collection<? extends Spot> collection : spots)
 			spotNumber += collection.size();
-		
+
 		for(SpotFeature feature : SpotFeature.values()) {
 			// Make a double array to comply to JFreeChart histograms
 			double[] values = new double[spotNumber];
@@ -329,7 +329,7 @@ public class TMUtils {
 	}
 
 
-	
+
 	/**
 	 * Return the optimal bin number for a histogram of the data given in array, using the 
 	 * Freedman and Diaconis rule (bin_space = 2*IQR/n^(1/3)).
@@ -350,7 +350,7 @@ public class TMUtils {
 			nBin = minBinNumber;
 		return  nBin;
 	}
-	
+
 	/**
 	 * Return the optimal bin number for a histogram of the data given in array, using the 
 	 * Freedman and Diaconis rule (bin_space = 2*IQR/n^(1/3)).
@@ -359,7 +359,7 @@ public class TMUtils {
 	public static final int getNBins(final double[] values){
 		return getNBins(values, 8, 256);
 	}
-	
+
 
 	/**
 	 * Create a histogram from the data given.
@@ -377,7 +377,7 @@ public class TMUtils {
 			}
 		return hist;
 	}
-	
+
 	/**
 	 * Create a histogram from the data given, with a default number of bins given by {@link #getNBins(double[])}.
 	 * @param data
@@ -386,14 +386,14 @@ public class TMUtils {
 	public static final int[] histogram(final double data[]) {
 		return histogram(data, getNBins(data));
 	}
-	
+
 	/**
 	 * Return a threshold for the given data, using an Otsu histogram thresholding method.
 	 */
 	public static final double otsuThreshold(double[] data) {
 		return otsuThreshold(data, getNBins(data));
 	}
-	
+
 	/**
 	 * Return a threshold for the given data, using an Otsu histogram thresholding method with a given bin number.
 	 */
@@ -404,7 +404,7 @@ public class TMUtils {
 		double binWidth = range[0] / nBins;
 		return 	range[1] + binWidth * thresholdIndex;
 	}
-	
+
 	/**
 	 * Given a histogram array <code>hist</code>, built with an initial amount of <code>nPoints</code>
 	 * data item, this method return the bin index that thresholds the histogram in 2 classes. 
@@ -451,7 +451,7 @@ public class TMUtils {
 		}
 		return threshold;
 	}
-	
+
 	/**
 	 * Computes the square Euclidean distance between two Featurable.
 	 * @param i Spot i.
@@ -478,7 +478,7 @@ public class TMUtils {
 		return eucD;
 	}
 
-	
+
 	/**
 	 * Ensure an 8-bit gray image is sent to the 3D viewer.
 	 */
@@ -486,14 +486,14 @@ public class TMUtils {
 		final ImagePlus origImp = settings.imp;
 		origImp.killRoi();
 		final ImagePlus imp;
-		
+
 		if (origImp.getType() == ImagePlus.GRAY8)
 			imp = origImp;
 		else {
 			imp = new Duplicator().run(origImp);
 			new StackConverter(imp).convertToGray8();
 		}
-		
+
 		int nChannels = imp.getNChannels();
 		int nSlices = settings.nslices;
 		int nFrames = settings.nframes;
@@ -502,9 +502,9 @@ public class TMUtils {
 
 		ImageStack oldStack = imp.getStack();
 		String oldTitle = imp.getTitle();
-		
+
 		for(int i = 0; i < nFrames; i++) {
-			
+
 			ImageStack newStack = new ImageStack(w, h);
 			for(int j = 0; j < nSlices; j++) {
 				int index = imp.getStackIndex(1, j+1, i+settings.tstart+1);
@@ -519,11 +519,11 @@ public class TMUtils {
 			}
 			ret[i] = new ImagePlus(oldTitle	+ " (frame " + i + ")", newStack);
 			ret[i].setCalibration(imp.getCalibration().copy());
-			
+
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * Return a String unit for the given dimension. When suitable, the unit is taken from the settings
 	 * field, which contains the spatial and time units. Otherwise, default units are used.
@@ -556,6 +556,6 @@ public class TMUtils {
 		}
 		return units;
 	}
-	
+
 
 }
