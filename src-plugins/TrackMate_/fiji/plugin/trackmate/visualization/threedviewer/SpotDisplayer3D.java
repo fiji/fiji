@@ -88,7 +88,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			universe.removeContent(SPOT_CONTENT_NAME);
 			universe.addContent(spotContent);
 		}
-		if (model.getNTracks() > 0) {
+		if (model.getNFilteredTracks() > 0) {
 			trackContent = makeTrackContent();
 			universe.removeContent(TRACK_CONTENT_NAME);
 			universe.addContent(trackContent);
@@ -232,7 +232,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	private Content makeTrackContent() {
 
 		// Prepare track color
-		int ntracks = model.getNTracks();
+		int ntracks = model.getNFilteredTracks();
 		List<Color> colors = new ArrayList<Color>(ntracks);
 		final InterpolatePaintScale colorMap = (InterpolatePaintScale) displaySettings.get(KEY_COLORMAP);
 		for (int i = 0; i < ntracks; i++) 

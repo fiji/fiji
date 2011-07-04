@@ -16,7 +16,6 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class TrackVisualizerTestDrive {
 
-	private static final long serialVersionUID = 1L;
 	private static final File file = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
 	
 	public static void main(String[] args) throws JDOMException, IOException {
@@ -29,8 +28,8 @@ public class TrackVisualizerTestDrive {
 		// Load objects 
 		TrackMateModel model = reader.getModel();
 		
-		System.out.println("Found "+model.getNTracks()+" tracks.");
-		for(int i=0; i<model.getNTracks(); i++) 
+		System.out.println("Found "+model.getNFilteredTracks()+" tracks.");
+		for(int i=0; i<model.getNFilteredTracks(); i++) 
 			System.out.println(" - "+model.trackToString(i));
 		
 			

@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate.features.track;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import fiji.plugin.trackmate.Spot;
@@ -12,8 +13,9 @@ public class TrackBranchingAnalyzer implements TrackFeatureAnalyzer {
 
 	@Override
 	public void process(final TrackMateModel model) {
+		final List<Set<Spot>> allTracks = model.getTrackSpots();
 		for (int i = 0; i < model.getNTracks(); i++) {
-			final Set<Spot> track = model.getTrackSpots(i);
+			final Set<Spot> track = allTracks.get(i);
 			int nmerges = 0;
 			int nsplits = 0;
 			int ncomplex = 0;

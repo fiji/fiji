@@ -206,7 +206,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	private void makeMeshes() {
 
 		// All edges
-		List<Set<DefaultWeightedEdge>> trackEdges = model.getTrackEdges();
+		List<Set<DefaultWeightedEdge>> trackEdges = model.getFilteredTrackEdges();
 
 		// Holder for coordinates (array ref will not be used, just its elements)
 		float[] coordinates = new float[3];

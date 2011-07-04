@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate.features.track;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import fiji.plugin.trackmate.Spot;
@@ -13,8 +14,9 @@ public class TrackDurationAnalyzer implements TrackFeatureAnalyzer{
 	@Override
 	public void process(final TrackMateModel model) {
 		// I love brute force.
+		final List<Set<Spot>> allTracks = model.getTrackSpots();
 		for(int index=0; index<model.getNTracks(); index++) {
-			Set<Spot> track = model.getTrackSpots(index);
+			Set<Spot> track = allTracks.get(index);
 			float minT = Float.POSITIVE_INFINITY;
 			float maxT = Float.NEGATIVE_INFINITY;
 			float t;

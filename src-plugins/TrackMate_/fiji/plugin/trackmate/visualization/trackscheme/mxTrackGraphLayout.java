@@ -85,7 +85,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 		try {
 
 			// Generate colors
-			int ntracks = model.getNTracks();
+			int ntracks = model.getNFilteredTracks();
 			List<Color> trackColors = new ArrayList<Color>(ntracks);
 			for (int i = 0; i < ntracks; i++) 				
 				trackColors.add(colorMap.getPaint((float) i / (ntracks-1)));
@@ -133,7 +133,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 				trackColorStr =  Integer.toHexString(trackColor.getRGB()).substring(2);
 
 				// Get Tracks
-				final Set<Spot> track = model.getTrackSpots(i);
+				final Set<Spot> track = model.getFilteredTrackSpots(i);
 				
 				// Sort by ascending order
 				SortedSet<Spot> sortedTrack = new TreeSet<Spot>(SpotImp.frameComparator);

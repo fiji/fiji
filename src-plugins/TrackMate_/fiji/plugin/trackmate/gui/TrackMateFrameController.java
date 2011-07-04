@@ -209,7 +209,7 @@ public class TrackMateFrameController implements ActionListener {
 		case TUNE_TRACK_FILTERS:
 			key = PanelCard.TRACK_FILTER_GUI_KEY;
 			break;
-			
+
 		case TUNE_DISPLAY:
 			key = PanelCard.DISPLAYER_PANEL_KEY;
 			break;
@@ -237,6 +237,10 @@ public class TrackMateFrameController implements ActionListener {
 
 		case TUNE_SPOT_FILTERS:
 			execLinkDisplayerToSpotFilterGUI();
+			break;
+
+		case TUNE_TRACK_FILTERS:
+			execLinkDisplayerToTrackFilterGUI();
 			break;
 
 		case TUNE_DISPLAY:
@@ -487,12 +491,12 @@ public class TrackMateFrameController implements ActionListener {
 		int ntotal = 0;
 		for (Collection<Spot> spots : model.getSpots().values())
 			ntotal += spots.size();
-		model.setInitialSpotFilterValue(initialThreshold.value);
-		model.execInitialSpotFiltering();
-		int nselected = 0;
-		for (Collection<Spot> spots : model.getSpots().values())
-			nselected += spots.size();
-		logger.log(String.format("Retained %d spots out of %d.\n", nselected, ntotal));
+				model.setInitialSpotFilterValue(initialThreshold.value);
+				model.execInitialSpotFiltering();
+				int nselected = 0;
+				for (Collection<Spot> spots : model.getSpots().values())
+					nselected += spots.size();
+						logger.log(String.format("Retained %d spots out of %d.\n", nselected, ntotal));
 	}
 
 
@@ -573,6 +577,23 @@ public class TrackMateFrameController implements ActionListener {
 		});
 	}
 
+	private void execLinkDisplayerToTrackFilterGUI() {
+		SwingUtilities.invokeLater(new Runnable() {			
+			@Override
+			public void run() {
+
+				view.trackFilterGuiPanel.addChangeListener(new ChangeListener() {
+					@Override
+					public void stateChanged(ChangeEvent event) {
+						// We set the thresholds field of the model but do not touch its selected spot field yet.
+						model.setTrackFilters(view.trackFilterGuiPanel.getFeatureFilters());
+						model.execTrackFiltering();
+					}
+				});
+			}
+		});
+	}
+
 	/**
 	 * Retrieve the spot feature filter list set in the filter GUI, forward it to the model, and 
 	 * perform the spot filtering in the model.
@@ -586,51 +607,57 @@ public class TrackMateFrameController implements ActionListener {
 		int ntotal = 0;
 		for(Collection<Spot> spots : model.getSpots().values())
 			ntotal += spots.size();
-		if (featureFilters == null || featureFilters.isEmpty()) {
-			logger.log("No feature threshold set, kept the " + ntotal + " spots.\n");
-		} else {
-			for (FeatureFilter<SpotFeature> ft : featureFilters) {
-				String str = "  - on "+ft.feature.name();
-				if (ft.isAbove) 
-					str += " above ";
-				else
-					str += " below ";
-				str += String.format("%.1f", ft.value);
-				str += '\n';
-				logger.log(str);
-			}
-			int nselected = 0;
-			for(Collection<Spot> spots : model.getFilteredSpots().values())
-				nselected += spots.size();
-			logger.log("Kept "+nselected+" spots out of " + ntotal + ".\n");
-		}		
+				if (featureFilters == null || featureFilters.isEmpty()) {
+					logger.log("No feature threshold set, kept the " + ntotal + " spots.\n");
+				} else {
+					for (FeatureFilter<SpotFeature> ft : featureFilters) {
+						String str = "  - on "+ft.feature.name();
+						if (ft.isAbove) 
+							str += " above ";
+						else
+							str += " below ";
+						str += String.format("%.1f", ft.value);
+						str += '\n';
+						logger.log(str);
+					}
+					int nselected = 0;
+					for(Collection<Spot> spots : model.getFilteredSpots().values())
+						nselected += spots.size();
+							logger.log("Kept "+nselected+" spots out of " + ntotal + ".\n");
+				}		
 	}
-	
+
 	/**
 	 * Retrieve the track feature filter list set in the threshold GUI, forward it to the model, and 
 	 * perform the track filtering in the model.
 	 */
 	private void execTrackFiltering() {
-		logger.log("Performing track filtering on the following features:\n", Logger.BLUE_COLOR);
-		List<FeatureFilter<TrackFeature>> featureFilters = view.trackFilterGuiPanel.getFeatureFilters();
-		model.setTrackFilters(featureFilters);
-		model.execTrackFiltering();
+		new Thread("TrackMate track filtering thread") {
+			public void run() {
+				logger.log("Performing track filtering on the following features:\n", Logger.BLUE_COLOR);
+				List<FeatureFilter<TrackFeature>> featureFilters = view.trackFilterGuiPanel.getFeatureFilters();
+				model.setTrackFilters(featureFilters);
+				model.execTrackFiltering();
 
-		if (featureFilters == null || featureFilters.isEmpty()) {
-			logger.log("No feature threshold set, kept the " + model.getNTracks() + " spots.\n");
-		} else {
-			for (FeatureFilter<TrackFeature> ft : featureFilters) {
-				String str = "  - on "+ft.feature.name();
-				if (ft.isAbove) 
-					str += " above ";
-				else
-					str += " below ";
-				str += String.format("%.1f", ft.value);
-				str += '\n';
-				logger.log(str);
-			}
-			logger.log("Kept "+model.getNTracks()+" tracks.\n");
-		}		
+				if (featureFilters == null || featureFilters.isEmpty()) {
+					logger.log("No feature threshold set, kept the " + model.getNTracks() + " tracks.\n");
+				} else {
+					for (FeatureFilter<TrackFeature> ft : featureFilters) {
+						String str = "  - on "+ft.feature.name();
+						if (ft.isAbove) 
+							str += " above ";
+						else
+							str += " below ";
+						str += String.format("%.1f", ft.value);
+						str += '\n';
+						logger.log(str);
+					}
+					logger.log("Kept "+model.getNFilteredTracks()+" tracks.\n");
+				}		
+
+			};
+		}.start();
+
 	}
 
 	/**
