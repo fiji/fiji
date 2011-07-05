@@ -370,7 +370,10 @@ public class SpotGroupNode<K> extends ContentNode {
 		}
 		x /= centers.size();
 		y /= centers.size();
-		z /= centers.size();		
+		z /= centers.size();
+		center.x = x;
+		center.y = y;
+		center.z = z;
 	}
 
 

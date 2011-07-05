@@ -79,10 +79,10 @@ public class TrackMateModel {
 	/** The track filter list that is used to prune track and spots. */
 	protected List<FeatureFilter<TrackFeature>> trackFilters = new ArrayList<FeatureFilter<TrackFeature>>();
 	/** 
-	 * The filtered graph, made from the mother graph {@link #graph} by filtering its track
-	 * using track {@link FeatureFilter}.
+	 * The filtered track indices. Is a set made of the indices of tracks (in {@link #trackEdges} and
+	 * {@link #trackSpots}) that are retained after filtering.
 	 */
-	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> filteredGraph =  null;
+	protected Set<Integer> filteredTrackIndices;
 
 	// TRANSACTION MODEL
 
@@ -426,53 +426,29 @@ public class TrackMateModel {
 		setFilteredSpots(spots.filter(spotFilters), true);
 	}
 
-	@SuppressWarnings("unchecked")
 	public void execTrackFiltering() {
-		// Get the indices of the tracks to remove
-		Float tval, val;
-		Set<Integer> trackToRemove = new HashSet<Integer>();
-		for (FeatureFilter<TrackFeature> filter : trackFilters) {
+		filteredTrackIndices = new HashSet<Integer>(); // will work, for the has of Integer is its int
 
-			tval = filter.value;
-			if (null == tval)
-				continue;
-			trackToRemove.clear();
-
-			if (filter.isAbove) {
-				for (int i=0; i<getNTracks(); i++) {
-					val = trackFeatures.get(i).get(filter.feature);
-					if (null == val)
-						continue;
-					if ( val < tval)
-						trackToRemove.add(i);
-				}
-
-			} else {
-				for (int i=0; i<getNTracks(); i++) {
-					val = trackFeatures.get(i).get(filter.feature);
-					if (null == val)
-						continue;
-					if ( val > tval)
-						trackToRemove.add(i);
+		for (int trackIndex = 0; trackIndex < getNTracks(); trackIndex++) {
+			boolean trackIsOk = true;
+			for(FeatureFilter<TrackFeature> filter : trackFilters) {
+				Float tval = filter.value;
+				Float val = trackFeatures.get(trackIndex).get(filter.feature);
+				if (filter.isAbove) {
+					if (val < tval) {
+						trackIsOk = false;
+						break;
+					}
+				} else {
+					if (val > tval) {
+						trackIsOk = false;
+						break;
+					}
 				}
 			}
+			if (trackIsOk)
+				filteredTrackIndices.add(trackIndex);
 		}
-
-		// Remove these tracks from model, that is: 
-		//  - clone the mother graph to the filtered graph
-		//  - remove all their edges from the filtered graph;
-		//  - remove all their spots from the filtered graph BUT NOT from the filtered spots: they are still 
-		// available for subsequent new tracking process.
-		filteredGraph = (SimpleWeightedGraph<Spot, DefaultWeightedEdge>) graph.clone();
-		final List<Set<DefaultWeightedEdge>> allTrackEdges = getTrackEdges();
-		final List<Set<Spot>> allTrackSpots = getTrackSpots();
-		for (int i : trackToRemove) {
-			filteredGraph.removeAllEdges(allTrackEdges.get(i));
-			filteredGraph.removeAllVertices(allTrackSpots.get(i));
-		}
-
-		// Finally, we recompute track lists
-		computeTracksFromGraph();
 
 		// And we warn people about it
 		TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_FILTERED);
@@ -491,6 +467,16 @@ public class TrackMateModel {
 	 * Return the number of filtered tracks in the model.
 	 */
 	public int getNFilteredTracks() {
+		if (filteredTrackIndices == null)
+			return 0;
+		else
+			return filteredTrackIndices.size();
+	}
+
+	/**
+	 * Return the number of <b>un-filtered</b> tracks in the model.
+	 */
+	public int getNTracks() {
 		if (trackSpots == null)
 			return 0;
 		else
@@ -498,18 +484,13 @@ public class TrackMateModel {
 	}
 
 	/**
-	 * Return the number of <b>un-filtered</b> tracks in the model.
+	 * Return the indices of the tracks that result from track feature filtering.
+	 * @see #execTrackFiltering()  
 	 */
-	public int getNTracks() {
-		final List<Set<Spot>> allTrackSpots = getTrackSpots();
-		if (allTrackSpots == null)
-			return 0;
-		else
-			return allTrackSpots.size();
+	public Set<Integer> getFilteredTrackIndices() {
+		return filteredTrackIndices;
 	}
-
-
-
+	
 	public Spot getEdgeSource(final DefaultWeightedEdge edge) {
 		return graph.getEdgeSource(edge);
 	}
@@ -607,44 +588,26 @@ public class TrackMateModel {
 	 * GETTERS / SETTERS
 	 */
 
-	public Set<Spot> getFilteredTrackSpots(int index) {
+	public Set<Spot> getTrackSpots(int index) {
 		return trackSpots.get(index);
 	}
 
-	public Set<DefaultWeightedEdge> getFilteredTrackEdges(int index) {
+	public Set<DefaultWeightedEdge> getTrackEdges(int index) {
 		return trackEdges.get(index);
 	}
-
-	public List<Set<Spot>> getFilteredTrackSpots() {
-		return trackSpots;
-	}
-
-	public List<Set<DefaultWeightedEdge>> getFilteredTrackEdges() {
-		return trackEdges;
-	}
-
+	
 	/**
-	 * Return the <b>un-filtered</b> list of tracks as a list of edges.
+	 * Return the <b>un-filtered</b> list of tracks as a list of spots.
 	 */
 	public List<Set<Spot>> getTrackSpots() {
-		return new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets();
+		return trackSpots;
 	}
 
 	/**
 	 * Return the <b>un-filtered</b> list of tracks as a list of edges.
 	 */
 	public List<Set<DefaultWeightedEdge>> getTrackEdges() {
-		final List<Set<Spot>> allTrackSpots = getTrackSpots();
-		final ArrayList<Set<DefaultWeightedEdge>> allTrackEdges = new ArrayList<Set<DefaultWeightedEdge>>(allTrackSpots.size());
-
-		for(Set<Spot> spotTrack : allTrackSpots) {
-			Set<DefaultWeightedEdge> spotEdge = new HashSet<DefaultWeightedEdge>();
-			for(Spot spot : spotTrack) {
-				spotEdge.addAll(graph.edgesOf(spot));
-			}
-			allTrackEdges.add(spotEdge);
-		}
-		return allTrackEdges;
+		return trackEdges;
 	}
 
 	/**
@@ -698,12 +661,15 @@ public class TrackMateModel {
 	 * Set the graph resulting from the tracking process, and
 	 * fire a {@link TrackMateModelChangeEvent#TRACKS_COMPUTED} event.
 	 */
-	@SuppressWarnings("unchecked")
 	public void setGraph(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph) {
 		this.graph = graph;
-		this.filteredGraph = (SimpleWeightedGraph<Spot, DefaultWeightedEdge>) graph.clone();
 		computeTracksFromGraph();
 		computeTrackFeatures();
+		//
+		filteredTrackIndices = new HashSet<Integer>(getNTracks());
+		for (int i = 0; i < getNTracks(); i++) 
+			filteredTrackIndices.add(i);
+		//
 		final TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_COMPUTED);
 		for (TrackMateModelChangeListener listener : modelChangeListeners)
 			listener.modelChanged(event);
@@ -711,7 +677,8 @@ public class TrackMateModel {
 
 	public void clearTracks() {
 		this.graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
-
+		this.trackEdges = null;
+		this.trackSpots = null;
 	}
 
 	/*
@@ -1013,7 +980,6 @@ public class TrackMateModel {
 			filteredSpots.add(spotToAdd, toFrame);
 
 		graph.addVertex(spotToAdd);
-		filteredGraph.addVertex(spotToAdd);
 
 	}
 
@@ -1037,7 +1003,6 @@ public class TrackMateModel {
 			filteredSpots.remove(spotToRemove, fromFrame);
 
 		graph.removeVertex(spotToRemove);
-		filteredGraph.removeVertex(spotToRemove);
 	}
 
 
@@ -1048,13 +1013,6 @@ public class TrackMateModel {
 		// Mother graph
 		DefaultWeightedEdge edge = graph.addEdge(source, target);
 		graph.setEdgeWeight(edge, weight);
-		// Filtered graph
-		if (filteredGraph != null) 	{
-			boolean added = filteredGraph.addEdge(source, target, edge);
-			if (!added)
-				System.out.println("Problem adding edge "+edge+" to the filtered graph!"); // DEBUG
-			filteredGraph.setEdgeWeight(edge, weight);
-		}
 		// Transaction
 		edgesAdded.add(edge);
 		if (DEBUG)
@@ -1067,10 +1025,6 @@ public class TrackMateModel {
 		DefaultWeightedEdge edge = graph.removeEdge(source, target);
 		if (null == edge)
 			System.out.println("Problem removing edge "+ edge);
-		// Filtered graph
-		if (filteredGraph != null) 	{
-			filteredGraph.removeEdge(edge);
-		}
 		// Transaction
 		edgesRemoved.add(edge); // TRANSACTION
 		if (DEBUG)
@@ -1083,10 +1037,6 @@ public class TrackMateModel {
 		boolean removed = graph.removeEdge(edge);
 		if (!removed)
 			System.out.println("Problem removing edge "+edge);
-		// Filtered graph
-		if (filteredGraph != null) 	{
-			filteredGraph.removeEdge(edge);
-		}
 		// Transaction
 		edgesRemoved.add(edge);
 		if (DEBUG)
@@ -1209,25 +1159,24 @@ public class TrackMateModel {
 
 	/**
 	 * Compute the two track lists {@link #trackSpots} and {@link #trackSpots} 
-	 * from the {@link #filteredGraph}. It is important to have this method called
-	 * at the right time, for the two track lists are the only objects reflecting the 
+	 * from the {@link #graph}. These two track lists are the only objects reflecting the 
 	 * tracks visible from outside the model.
 	 */
 	private void computeTracksFromGraph() {
 		if (DEBUG)
 			System.out.println("[TrackMateModel] #computeTracksFromGraph()");
-		this.trackSpots = new ConnectivityInspector<Spot, DefaultWeightedEdge>(filteredGraph).connectedSets();
+		this.trackSpots = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets();
 		this.trackEdges = new ArrayList<Set<DefaultWeightedEdge>>(trackSpots.size());
 
 		for(Set<Spot> spotTrack : trackSpots) {
 			Set<DefaultWeightedEdge> spotEdge = new HashSet<DefaultWeightedEdge>();
 			for(Spot spot : spotTrack) {
-				spotEdge.addAll(filteredGraph.edgesOf(spot));
+				spotEdge.addAll(graph.edgesOf(spot));
 			}
 			trackEdges.add(spotEdge);
 		}
 	}
-	
+
 	private void computeTrackFeatures() {
 		initFeatureMap();
 		trackFeatureFacade.processAllFeatures(this);

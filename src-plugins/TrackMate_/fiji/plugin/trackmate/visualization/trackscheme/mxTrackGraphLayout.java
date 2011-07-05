@@ -7,8 +7,8 @@ import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.Y
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -86,9 +86,11 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 
 			// Generate colors
 			int ntracks = model.getNFilteredTracks();
-			List<Color> trackColors = new ArrayList<Color>(ntracks);
-			for (int i = 0; i < ntracks; i++) 				
-				trackColors.add(colorMap.getPaint((float) i / (ntracks-1)));
+			HashMap<Integer, Color> trackColors = new HashMap<Integer, Color>(ntracks);
+			int colorIndex = 0;
+			for (int i : model.getFilteredTrackIndices()) { 				
+				trackColors.put(i, colorMap.getPaint((float) colorIndex / (ntracks-1)));
+			}
 
 			// Collect unique instants
 			SortedSet<Float> instants = new TreeSet<Float>();
@@ -123,7 +125,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 			// To keep a reference of branch cells, if any
 			ArrayList<mxCell> newBranchCells = new ArrayList<mxCell>();
 						
-			for (int i = 0; i < ntracks; i++) {
+			for (int i : model.getFilteredTrackIndices()) {
 				
 				// Init track variables
 				Spot previousSpot = null;
@@ -133,7 +135,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 				trackColorStr =  Integer.toHexString(trackColor.getRGB()).substring(2);
 
 				// Get Tracks
-				final Set<Spot> track = model.getFilteredTrackSpots(i);
+				final Set<Spot> track = model.getTrackSpots(i);
 				
 				// Sort by ascending order
 				SortedSet<Spot> sortedTrack = new TreeSet<Spot>(SpotImp.frameComparator);
