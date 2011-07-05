@@ -1540,7 +1540,10 @@ public class Weka_Segmentation implements PlugIn
 		String storeDir = "";
 
 		// create a file chooser for the image files
-		JFileChooser fileChooser = new JFileChooser(".");
+		String dir = OpenDialog.getLastDirectory();
+		if (null == dir)
+			dir = new String(".");
+		JFileChooser fileChooser = new JFileChooser( dir );
 		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		fileChooser.setMultiSelectionEnabled(true);
 
