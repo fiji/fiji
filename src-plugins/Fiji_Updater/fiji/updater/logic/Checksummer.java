@@ -231,6 +231,7 @@ public class Checksummer extends Progressable {
 		{ "scripts" }, { ".py", ".rb", ".clj", ".js", ".bsh", ".m" },
 		{ "macros" }, { ".txt", ".ijm" },
 		{ "luts" }, { ".lut" },
+		{ "images" }, { ".png" },
 		{ "lib" }, { "" },
 		{ "mm" }, { "" },
 		{ "mmautofocus" }, { "" },

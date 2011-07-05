@@ -774,7 +774,7 @@ public class Fake {
 		JarEntry entry;
 		while ((entry = in.getNextJarEntry()) != null) {
 			String name = entry.getName();
-			if (name.startsWith("META-INF/")) {
+			if (name.equals("META-INF/MANIFEST.MF")) {
 				in.closeEntry();
 				continue;
 			}

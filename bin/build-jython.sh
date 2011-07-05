@@ -11,15 +11,27 @@ then
 	PYTHON_LIB="$(pwd)/python-d5876b1"
 	if test ! -d "$PYTHON_LIB"
 	then
-		curl "http://pacific.mpi-cbg.de/cgi-bin/gitweb.cgi?p=python/.git;a=snapshot;h=d5876b11b8c086b51b73ec5f32a309b425be906a;sf=tgz" | tar xzvf -
-	fi
+		curl --help > /dev/null 2>&1
+		if test $? = 127
+		then
+			curl () {
+				wget -O /dev/stdout "$1"
+			}
+		fi
+		curl "http://fiji.sc/cgi-bin/gitweb.cgi?p=python/.git;a=snapshot;h=d5876b11b8c086b51b73ec5f32a309b425be906a;sf=tgz" | tar xzvf -
+	fi ||
+	die "Could not fetch the Python library files"
 fi
 
 ../../fiji --ant -Dpython.lib="$PYTHON_LIB" -f jython/build.xml jar-complete copy-lib >&2 ||
 die "Could not run ant"
 
-cd jython/dist &&
-(zip -d jython.jar com/sun/jna/\* || true) &&
-cp jython.jar ../../ &&
-zip -9r ../../jython.jar Lib ||
+rm -rf unpacked &&
+mkdir unpacked && (
+	cd unpacked &&
+	$(../../../fiji --print-java-home)/../bin/jar xf ../jython/dist/jython.jar &&
+	rm -rf com/sun/jna &&
+	cp -R ../jython/dist/Lib ./ &&
+	$(../../../fiji --print-java-home)/../bin/jar cf ../jython.jar *
+) ||
 die "Could not add Lib/ to jython.jar"

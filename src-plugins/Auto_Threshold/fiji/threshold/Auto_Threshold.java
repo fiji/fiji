@@ -5,7 +5,7 @@ import ij.gui.*;
 import ij.plugin.*;
 
 // Autothreshold segmentation 
-// Following the guidelines at http://pacific.mpi-cbg.de/wiki/index.php/PlugIn_Design_Guidelines
+// Following the guidelines at http://fiji.sc/wiki/index.php/PlugIn_Design_Guidelines
 // ImageJ plugin by G. Landini at bham. ac. uk
 // 1.0  never released
 // 1.1  2009/Apr/08 Undo single images, fixed the stack returning to slice 1

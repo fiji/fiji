@@ -106,7 +106,7 @@ then
 	fi &&
 	if test ! -d odcctools
 	then
-		git clone git://pacific.mpi-cbg.de/iphone-dev odcctools &&
+		git clone git://fiji.sc/iphone-dev odcctools &&
 		(cd odcctools && git checkout -t origin/fiji)
 	fi &&
 	mkdir -p build-odcctools &&
@@ -293,10 +293,13 @@ then
 	make &&
 	make $PARALLEL install)
 fi &&
-if test ! -e "$SYSROOT/x86_64-apple-darwin8/include"
-then
-	ln -s ../usr/include "$SYSROOT"/x86_64-apple-darwin8/
-fi &&
+for arch in i686 x86_64 powerpc
+do
+	if test ! -e "$SYSROOT/$arch-apple-darwin8/include"
+	then
+		ln -s ../usr/include "$SYSROOT"/$arch-apple-darwin8/
+	fi
+done &&
 for d in Library System
 do
 	if test ! -h "$SYSROOT"/$d
