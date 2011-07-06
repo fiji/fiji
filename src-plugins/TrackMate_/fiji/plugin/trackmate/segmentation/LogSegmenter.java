@@ -281,14 +281,12 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 	private static List<Spot> convertToSpots(List< float[] > coords, float[] calibration, float[] downsampleFactors) {
 		ArrayList<Spot> spots = new ArrayList<Spot>();
 		Iterator< float[] > itr = coords.iterator();
-		int index = 0;
 		while (itr.hasNext()) {
 			float[] coord = itr.next();
 			float[] calibrated = new float[3];
 			for (int i = 0; i < calibration.length; i++) 
 				calibrated[i] = coord[i] * calibration[i] * downsampleFactors[i];
 			SpotImp spot = new SpotImp(calibrated);
-			index++;
 			spots.add(spot);
 		}
 		return spots;
