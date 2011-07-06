@@ -37,7 +37,7 @@ public class TrackMateModel {
 	 * CONSTANTS
 	 */
 
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	private static final boolean DEBUG_SELECTION = false;
 
 	/*
@@ -1088,6 +1088,7 @@ public class TrackMateModel {
 		int nEdgesToSignal = edgesAdded.size() + edgesRemoved.size();
 		if (nEdgesToSignal + spotsRemoved.size() > 0) {
 			computeTracksFromGraph();
+			computeTrackFeatures();
 		}
 
 		// Deal with new or moved spots: we need to update their features.
@@ -1161,10 +1162,19 @@ public class TrackMateModel {
 	 * Compute the two track lists {@link #trackSpots} and {@link #trackSpots} 
 	 * from the {@link #graph}. These two track lists are the only objects reflecting the 
 	 * tracks visible from outside the model.
+	 * <p>
+	 * The guts of this method are a bit convoluted: we must make sure that tracks that were visible
+	 * previous to the changes that called for this method are still visible after, event if 
+	 * some tracks are merge, deleted or split.
 	 */
 	private void computeTracksFromGraph() {
 		if (DEBUG)
 			System.out.println("[TrackMateModel] #computeTracksFromGraph()");
+		
+		// Retain old values
+		final List<Set<Spot>> oldTrackSpots = trackSpots;
+		
+		// Build new track lists
 		this.trackSpots = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets();
 		this.trackEdges = new ArrayList<Set<DefaultWeightedEdge>>(trackSpots.size());
 
@@ -1175,6 +1185,48 @@ public class TrackMateModel {
 			}
 			trackEdges.add(spotEdge);
 		}
+		
+		// Try to infer correct visibility 
+		if (filteredTrackIndices == null || filteredTrackIndices.isEmpty())
+			return;
+		
+		if (DEBUG) {
+			System.out.println("[TrackMateModel] computeTrackFromGraph: old track visibility is "+filteredTrackIndices);
+		}
+		final int ntracks = trackSpots.size();
+		final int noldtracks = oldTrackSpots.size();
+		final Set<Integer> oldTrackVisibility = filteredTrackIndices;
+		filteredTrackIndices = new HashSet<Integer>(noldtracks); // Approx 
+		// How to know if a new track should be visible or not?
+		// We can say this: the new track should be visible if it has at least one spot
+		// that can be found in a visible old track.
+		for (int trackIndex = 0; trackIndex < ntracks; trackIndex++) {
+			
+			boolean shouldBeVisible = false;
+			for(final Spot spot : trackSpots.get(trackIndex)) {
+				
+				for (int oldTrackIndex : oldTrackVisibility) { // we iterate over only old VISIBLE tracks
+					if (oldTrackSpots.get(oldTrackIndex).contains(spot)) {
+						shouldBeVisible = true;
+						break;
+					}
+				}
+				if (shouldBeVisible) {
+					break;
+				}
+			}
+			
+			if (shouldBeVisible) {
+				filteredTrackIndices.add(trackIndex);
+			}
+			
+		}
+		
+		if (DEBUG) {
+			System.out.println("[TrackMateModel] computeTrackFromGraph: new track visibility is "+filteredTrackIndices);
+		}
+
+		
 	}
 
 	private void computeTrackFeatures() {
