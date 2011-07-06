@@ -59,6 +59,30 @@ public class MeshMaker {
 		return list;
 	}
 
+	static public List<Point3f> createQuadSphere(final double x, final double y, final double z,
+			                final double r, final int meridians, final int parallels) {
+		final double[][][] globe = generateGlobe(meridians, parallels);
+		// Scale by radius 'r', and translate to x,y,z
+		for (int j=0; j<globe.length; j++) {
+			for (int k=0; k<globe[0].length; k++) {
+				globe[j][k][0] = globe[j][k][0] * r + x;
+				globe[j][k][1] = globe[j][k][1] * r + y;
+				globe[j][k][2] = globe[j][k][2] * r + z;
+			}
+		}
+		// create triangular faces and add them to the list
+		final ArrayList<Point3f> list = new ArrayList<Point3f>();
+		for (int j=0; j<globe.length-1; j++) { // the parallels
+			for (int k=0; k<globe[0].length -1; k++) { // meridian points
+				list.add(new Point3f((float)globe[j]  [k][0], (float)globe[j]  [k][1], (float)globe[j]  [k][2]));
+				list.add(new Point3f((float)globe[j+1][k][0], (float)globe[j+1][k][1], (float)globe[j+1][k][2]));
+				list.add(new Point3f((float)globe[j+1][k+1][0], (float)globe[j+1][k+1][1], (float)globe[j+1][k+1][2]));
+				list.add(new Point3f((float)globe[j]  [k+1][0], (float)globe[j]  [k+1][1], (float)globe[j]  [k+1][2]));
+			}
+		}
+		return list;
+	}
+
 	/** Generate a globe of radius 1.0 that can be used for any Ball. First dimension is Z, then comes a double array x,y. Minimal accepted meridians and parallels is 3.*/
 	static public double[][][] generateGlobe(int meridians, int parallels) {
 		if (meridians < 3) meridians = 3;
