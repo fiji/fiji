@@ -77,6 +77,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 	private JMenuItem fitViewToContent;
 	private JMenuItem regist;
 	private JCheckBoxMenuItem shaded;
+	private JCheckBoxMenuItem saturated;
 	private JMenuItem colorSurface;
 	private JMenuItem pl_load;
 	private JMenuItem pl_save;
@@ -503,6 +504,11 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		shaded.addItemListener(this);
 		attributes.add(shaded);
 
+		saturated = new JCheckBoxMenuItem("Saturated volume rendering");
+		saturated.setState(false);
+		saturated.addItemListener(this);
+		attributes.add(saturated);
+
 		colorSurface = new JMenuItem("Surface color");
 		colorSurface.addActionListener(this);
 		attributes.add(colorSurface);
@@ -703,6 +709,8 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 			executer.setLocked(c, lock.getState());
 		else if(src == shaded)
 			executer.setShaded(c, shaded.getState());
+		else if(src == saturated)
+			executer.setSaturatedVolumeRendering(c, saturated.getState());
 		else if (src == pl_show)
 			executer.showPointList(c, pl_show.getState());
 		else if (src == sync)
@@ -800,6 +808,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		threshold.setEnabled(c != null);
 		channels.setEnabled(c != null);
 		shaded.setEnabled(c != null);
+		saturated.setEnabled(c != null);
 
 		show.setEnabled(c != null);
 		coordinateSystem.setEnabled(c != null);
@@ -837,6 +846,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		fill.setEnabled(t == Content.VOLUME);
 		shaded.setEnabled(t == Content.SURFACE_PLOT2D ||
 			t == Content.SURFACE || t == Content.CUSTOM);
+		saturated.setEnabled(t == Content.VOLUME);
 		colorSurface.setEnabled(t == Content.SURFACE || t == Content.CUSTOM);
 		smoothMesh.setEnabled(t == Content.SURFACE || t == Content.CUSTOM);
 
@@ -845,6 +855,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		show.setState(c.isVisible());
 		pl_show.setState(c.isPLVisible());
 		shaded.setState(c.isShaded());
+		saturated.setState(c.isSaturatedVolumeRendering());
 
 		ImagePlus i = c.getImage();
 		displayAsVolume.setEnabled(t != Content.VOLUME && i != null);

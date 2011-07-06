@@ -938,6 +938,31 @@ public class Executer {
 		gd.showDialog();
 	}
 
+	public void setSaturatedVolumeRendering(Content c, boolean b) {
+		if(!checkSel(c))
+			return;
+		int t = c.getType();
+		if(t != Content.VOLUME)
+			return;
+
+		if(c.getNumberOfInstants() == 1) {
+			c.setSaturatedVolumeRendering(b);
+			return;
+		}
+
+		ContentInstant ci = c.getCurrent();
+		GenericDialog gd = new GenericDialog("Saturated volume rendering");
+		gd.addCheckbox("Apply to all timepoints", true);
+		gd.showDialog();
+		if(gd.wasCanceled())
+			return;
+
+		if(gd.getNextBoolean())
+			c.setSaturatedVolumeRendering(b);
+		else
+			ci.setSaturatedVolumeRendering(b);
+	}
+
 	public void setShaded(Content c, boolean b) {
 		if(!checkSel(c))
 			return;

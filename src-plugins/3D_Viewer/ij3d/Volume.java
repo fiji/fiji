@@ -62,6 +62,9 @@ public class Volume {
 	/** Flag indicating that the channels should be averaged */
 	protected boolean average = false;
 
+	/** Flag indicating that channels should be saturated */
+	protected boolean saturatedVolumeRendering = false;
+
 	/** Channels in RGB images which should be loaded */
 	protected boolean[] channels = new boolean[] {true, true, true};
 
@@ -224,6 +227,28 @@ public class Volume {
 	}
 
 	/**
+	 * If true, saturate the channels of RGB images; the RGB values
+	 * of each pixels are scaled so that at least one of the values is
+	 * 255, the alpha value is the average of the original RGB values.
+	 * @return true if the value for 'saturatedVolumeRendering' has changed
+	 */
+	public boolean setSaturatedVolumeRendering(boolean b) {
+		if(this.saturatedVolumeRendering != b) {
+			this.saturatedVolumeRendering = b;
+			initLoader();
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Returns whether if saturatedVolumeRendering is set to true.
+	 */
+	public boolean isSaturatedVolumeRendering() {
+		return saturatedVolumeRendering;
+	}
+
+	/**
 	 * Copies the current color table into the given array.
 	 */
 	public void getRedLUT(int[] lut) {
@@ -269,7 +294,7 @@ public class Volume {
 
 	/**
 	 * Set the lookup tables for this volume. Returns
-	 * true if the data type of the textures has changed.
+	 * true if the data type of the textures have changed.
 	 */
 	public boolean setLUTs(int[] r, int[] g, int[] b, int[] a) {
 		this.rLUT = r;
@@ -292,7 +317,7 @@ public class Volume {
 			throw new RuntimeException("No image. Maybe it is swapped?");
 
 		if(dataType == INT_DATA) {
-			loader = new IntLoader(image);
+			loader = saturatedVolumeRendering ? new SaturatedIntLoader(image) : new IntLoader(image);
 			return;
 		}
 
@@ -507,9 +532,9 @@ public class Volume {
 		}
 	}
 	
-	protected class IntLoader2 extends IntLoader {
+	protected class SaturatedIntLoader extends IntLoader {
 		
-		protected IntLoader2(Img imp) {
+		protected SaturatedIntLoader(Img imp) {
 			super(imp);
 		}
 		
