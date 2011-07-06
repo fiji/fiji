@@ -11,11 +11,11 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import fiji.plugin.trackmate.FeatureFilter;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
@@ -64,12 +64,7 @@ public class TrackMateFrameController implements ActionListener {
 		this.view = new TrackMateFrame(model);
 		this.logger = view.getLogger();
 
-		// Set up GUI and communications
 		model.setLogger(logger);
-		if (null != model.getSettings().imp)
-			view.setLocationRelativeTo(model.getSettings().imp.getWindow());
-		else
-			view.setLocationRelativeTo(null);
 		view.setVisible(true);
 		view.addActionListener(this);
 		state = GuiState.START;

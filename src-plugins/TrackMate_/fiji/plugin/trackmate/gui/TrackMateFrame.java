@@ -1,9 +1,15 @@
 package fiji.plugin.trackmate.gui;
 
+import ij.gui.ImageWindow;
+
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Dimension;
+import java.awt.DisplayMode;
 import java.awt.Font;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -118,6 +124,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 	public TrackMateFrame(TrackMateModel model) {
 		this.model = model;
 		initGUI();
+		positionWindow();
 
 	}
 
@@ -195,7 +202,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 			trackerSettingsPanel = TrackerSettingsPanel.createPanel(model.getSettings());
 			panel = trackerSettingsPanel;
 			break;
-			
+
 		case TRACK_FILTER_GUI_KEY:
 			if (null != trackFilterGuiPanel) 
 				jPanelMain.remove(trackFilterGuiPanel);
@@ -249,6 +256,40 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 	/*
 	 * PRIVATE METHODS
 	 */
+
+	/**
+	 * Try to position the GUI cleverly...
+	 */
+	private void positionWindow() {
+		if (null != model.getSettings().imp && model.getSettings().imp.getWindow() != null) {
+			
+			// Get total size of all screens
+			GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+			GraphicsDevice[] gs = ge.getScreenDevices();
+			int screenWidth = 0;
+			for (int i=0; i<gs.length; i++) {
+			    DisplayMode dm = gs[i].getDisplayMode();
+			    screenWidth += dm.getWidth();
+			}
+			
+			ImageWindow window = model.getSettings().imp.getWindow();
+			Point windowLoc = window.getLocation();
+			Dimension windowSize = window.getSize();
+			Dimension guiSize = this.getSize();
+			if (guiSize.width > windowLoc.x) {
+				if (guiSize.width > screenWidth - (windowLoc.x + windowSize.width)) {
+					setLocationRelativeTo(null); // give up
+				} else {
+					setLocation(windowLoc.x+windowSize.width, windowLoc.y); // put it to the right
+				}
+			} else {
+				setLocation(windowLoc.x-guiSize.width, windowLoc.y); // put it to the left
+			}
+			
+		} else {
+			setLocationRelativeTo(null);
+		}
+	}
 
 	/**
 	 * Forward the given {@link ActionEvent} to the listeners of this GUI.
