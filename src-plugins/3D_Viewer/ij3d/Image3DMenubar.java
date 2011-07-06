@@ -60,6 +60,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 	private JMenuItem exportDXF;
 	private JMenuItem exportAsciiSTL;
 	private JMenuItem exportBinarySTL;
+	private JMenuItem exportU3D;
 	private JMenuItem smoothMesh;
 	private JMenuItem smoothDialog;
 	private JMenuItem scalebar;
@@ -204,6 +205,10 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		exportBinarySTL = new JMenuItem("STL (binary)");
 		exportBinarySTL.addActionListener(this);
 		subMenu.add(exportBinarySTL);
+
+		exportU3D = new JMenuItem("U3D");
+		exportU3D.addActionListener(this);
+		subMenu.add(exportU3D);
 
 		file.addSeparator();
 
@@ -661,6 +666,8 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 			executer.saveAsDXF();
 		else if (src == exportObj)
 			executer.saveAsWaveFront();
+		else if (src == exportU3D)
+			executer.saveAsU3D();
 		else if (src == exportAsciiSTL)
 			executer.saveAsAsciiSTL();
 		else if (src == exportBinarySTL)

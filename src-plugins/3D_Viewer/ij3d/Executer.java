@@ -42,6 +42,8 @@ import isosurface.MeshExporter;
 import isosurface.MeshEditor;
 import isosurface.SmoothControl;
 
+import customnode.u3d.U3DExporter;
+
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
@@ -276,6 +278,26 @@ public class Executer {
 
 	public void saveAsBinarySTL(){
 		MeshExporter.saveAsSTL(univ.getContents(), MeshExporter.BINARY);
+	}
+
+	public void saveAsU3D(){
+		SaveDialog sd = new SaveDialog(
+			"Save meshes as u3d...", "", ".u3d");
+		String dir = sd.getDirectory();
+		String name = sd.getFileName();
+		if(dir == null || name == null)
+			return;
+		try {
+			U3DExporter.export(univ, dir + name);
+			String tex = U3DExporter.getTexStub(univ, dir + name);
+			IJ.log("% Here are a few latex example lines");
+			IJ.log("% You can compile them for example via");
+			IJ.log("% pdflatex yourfilename.tex");
+			IJ.log("");
+			IJ.log(tex);
+		} catch(Exception e) {
+			IJ.error(e.getMessage());
+		}
 	}
 
 	public void loadView() {
