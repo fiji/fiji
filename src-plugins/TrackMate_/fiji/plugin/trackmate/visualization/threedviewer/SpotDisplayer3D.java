@@ -31,7 +31,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	public static final int DEFAULT_RESAMPLING_FACTOR = 4;
 	public static final int DEFAULT_THRESHOLD = 50;
 
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 	private static final String TRACK_CONTENT_NAME = "Tracks";
 	private static final String SPOT_CONTENT_NAME = "Spots";
 	
@@ -97,6 +97,9 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	
 	@Override
 	public void modelChanged(TrackMateModelChangeEvent event) {
+		if (DEBUG) {
+			System.out.println("[SpotDisplayer3D: modelChanged() called with event ID: "+event.getEventID());
+		}
 		switch (event.getEventID()) {
 		case TrackMateModelChangeEvent.SPOTS_COMPUTED: 
 			spotContent = makeSpotContent();
@@ -112,6 +115,9 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			universe.removeContent(TRACK_CONTENT_NAME);
 			universe.addContent(trackContent);
 			break;
+		case TrackMateModelChangeEvent.TRACKS_FILTERED:
+			 trackNode.setTrackVisible(model.getFilteredTrackIndices());
+			 break;
 		
 		}
 	}
