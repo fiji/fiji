@@ -48,6 +48,7 @@ import javax.vecmath.Vector3f;
 import javax.vecmath.Matrix4d;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.Background;
+import javax.media.j3d.PointLight;
 
 import customnode.CustomMesh;
 import customnode.CustomMeshNode;
@@ -1381,6 +1382,25 @@ public class Executer {
 
 	public void viewPreferences() {
 		UniverseSettings.initFromDialog(univ);
+	}
+
+	public void adjustLight() {
+		final PointLight l = univ.getLight();
+		final Point3f pos = new Point3f();
+		final Color3f col = new Color3f();
+		l.getPosition(pos);
+		l.getColor(col);
+
+		final ColorListener colorListener = new ColorListener() {
+			public void colorChanged(Color3f color) {
+				l.setColor(color);
+			}
+
+			public void ok(final GenericDialog gd) {
+				// TODO macro record
+			}
+		};
+		showColorDialog("Adjust light", col, colorListener, false, false);
 	}
 
 	public void sync(boolean b) {

@@ -48,6 +48,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 	private JMenuItem startAnimation;
 	private JMenuItem stopAnimation;
 	private JMenuItem animationOptions;
+	private JMenuItem light;
 	private JMenuItem viewPreferences;
 	private JMenuItem close;
 	private JMenuItem setTransform;
@@ -393,6 +394,10 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		viewPreferences.addActionListener(this);
 		view.add(viewPreferences);
 
+		light = new JMenuItem("Adjust light");
+		light.addActionListener(this);
+		view.add(light);
+
 		bgColor = new JMenuItem("Change background color");
 		bgColor.addActionListener(this);
 		view.add(bgColor);
@@ -660,6 +665,8 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 			executer.smoothAllMeshes();
 		else if (src == smoothDialog)
 			executer.smoothControl();
+		else if (src == light)
+			executer.adjustLight();
 		else if (src == viewPreferences)
 			executer.viewPreferences();
 		else if(src == j3dproperties)
