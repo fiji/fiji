@@ -35,6 +35,28 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 	/*
 	 * METHODS
 	 */
+	
+	/**
+	 * Overridden method so that when a label is changed, we change the target spot's name.
+	 */
+	@Override
+	public void cellLabelChanged(Object cell, Object value, boolean autoSize) {
+		model.beginUpdate();
+		try {
+			Spot spot = getCellToVertexMap().get(cell);
+			if (null == spot)
+				return;
+			String str = (String) value;
+			spot.setName(str);
+			getModel().setValue(cell, str);
+
+			if (autoSize) {
+				cellSizeUpdated(cell, false);
+			}
+		} finally {
+			model.endUpdate();
+		}
+	}
 
 	public mxCell addJGraphTVertex(Spot vertex) {
 		mxCell cell = null;
@@ -115,12 +137,15 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 		removeCells(new Object[] { cell } );
 	}
 
-
 	/*
 	 * PRIVATE METHODS
 	 */
 
-
+	/**
+	 * Only insert spot and edges belonging to visible tracks. 
+	 * Any other spot or edges will be ignored by the whole trackscheme
+	 * framework, and if they are needed, they will have to be imported "by hand".
+	 */
 	private void insertTrackCollection(final TrackMateModel tmm) {		
 		model.beginUpdate();
 		try {
@@ -135,8 +160,5 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 		} finally {
 			model.endUpdate();
 		}
-
-
-
 	}
 }

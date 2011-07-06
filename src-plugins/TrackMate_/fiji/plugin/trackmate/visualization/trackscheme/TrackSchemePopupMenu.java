@@ -89,6 +89,7 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 									cell.setValue(firstCell.getValue());
 									frame.getGraph().getCellToVertexMap().get(cell).setName(firstCell.getValue().toString());
 								}
+								frame.getGraphComponent().refresh();
 								frame.getGraphComponent().removeListener(this);
 							}
 						});
@@ -102,12 +103,14 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 
 				@Override
 				public void actionPerformed(ActionEvent e) {
+					
 					// Sort spots by time
 					TreeMap<Float, Spot> spotsInTime = new TreeMap<Float, Spot>();
 					for (mxCell cell : vertices) {
 						Spot spot = frame.getGraph().getCellToVertexMap().get(cell);
 						spotsInTime.put(spot.getFeature(SpotFeature.POSITION_T), spot);
 					}
+					
 					// Then link them in this order
 					final TrackMateModel model = frame.getModel();
 					model.beginUpdate();

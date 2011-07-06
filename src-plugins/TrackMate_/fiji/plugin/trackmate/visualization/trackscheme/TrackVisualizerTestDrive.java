@@ -7,7 +7,9 @@ import java.io.IOException;
 
 import org.jdom.JDOMException;
 
+import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Settings;
+import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
@@ -28,10 +30,14 @@ public class TrackVisualizerTestDrive {
 		// Load objects 
 		TrackMateModel model = reader.getModel();
 		
-		System.out.println("Found "+model.getNFilteredTracks()+" tracks.");
+		System.out.println("Found "+model.getNTracks()+" tracks.");
 		for(int i=0; i<model.getNFilteredTracks(); i++) 
 			System.out.println(" - "+model.trackToString(i));
 		
+		FeatureFilter<TrackFeature> filter = new FeatureFilter<TrackFeature>(TrackFeature.NUMBER_SPOTS, 50f, true);
+		model.addTrackFilter(filter);
+		model.execTrackFiltering();
+		System.out.println("After filtering, retaining "+model.getNFilteredTracks()+" tracks.");
 			
 		ImagePlus imp = reader.getImage();
 		Settings settings = reader.getSettings();
