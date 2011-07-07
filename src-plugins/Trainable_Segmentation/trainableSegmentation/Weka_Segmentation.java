@@ -2738,44 +2738,6 @@ public class Weka_Segmentation implements PlugIn
 		}
 	}
 
-	/**
-	 * Set the enabled features for the current segmentation
-	 * 
-	 * @param features string names with the enabled features names plus "=true" or "=false"
-	 */
-	public static void setFeatures(String ...features)
-	{
-		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
-		if( iw instanceof CustomWindow )
-		{
-			final CustomWindow win = (CustomWindow) iw;
-			final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
-
-			if( features.length != FeatureStack.availableFeatures.length)
-			{
-				IJ.error("Error: the number of features do not match. Expected " 
-						+ FeatureStack.availableFeatures.length + ", found " + features.length +" .");
-				return;
-			}
-
-			boolean[] enabledFeatures = new boolean[ features.length ];
-			boolean forceUpdate = false;
-			for(int i=0; i<enabledFeatures.length; i++)
-			{
-				if(features[i].contains("true"))
-					enabledFeatures[i] = true;
-				if( enabledFeatures[i] != wekaSegmentation.getEnabledFeatures()[i])
-					forceUpdate = true;
-			}
-			wekaSegmentation.setEnabledFeatures(enabledFeatures);
-
-			if(forceUpdate)
-			{
-				// Force features to be updated
-				wekaSegmentation.setFeaturesDirty();
-			}
-		}
-	}
 
 	/**
 	 * Set membrane thickness for current feature stack
