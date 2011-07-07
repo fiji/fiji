@@ -2367,8 +2367,8 @@ public class Weka_Segmentation implements PlugIn
 	/**
 	 * Add the current ROI to a specific class and slice. 
 	 * 
-	 * @param classNum class index
-	 * @param nSlice slice number
+	 * @param classNum string representing the class index
+	 * @param nSlice string representing the slice number
 	 */
 	public static void addTrace(
 			String classNum,
@@ -2391,9 +2391,9 @@ public class Weka_Segmentation implements PlugIn
 	/**
 	 * Delete a specific ROI from the list of a specific class and slice
 	 * 
-	 * @param classNum class index
-	 * @param nSlice slice number
-	 * @param index the index of the trace to remove
+	 * @param classNum string representing the class index
+	 * @param nSlice string representing the slice number
+	 * @param index string representing the index of the trace to remove
 	 */
 	public static void deleteTrace(
 			String classNum,
@@ -2443,7 +2443,7 @@ public class Weka_Segmentation implements PlugIn
 	}
 
 	/**
-	 * Get the current result
+	 * Get the current result (labeled image)
 	 */
 	public static void getResult()
 	{
@@ -2501,7 +2501,7 @@ public class Weka_Segmentation implements PlugIn
 	}
 
 	/**
-	 * Plot the current result
+	 * Plot the current result (threshold curves)
 	 */
 	public static void plotResultGraphs()
 	{
@@ -2538,9 +2538,9 @@ public class Weka_Segmentation implements PlugIn
 	 * 
 	 * @param dir input image directory path
 	 * @param fileName input image name
-	 * @param showResultsFlag boolean flag to display results
-	 * @param storeResultsFlag boolean flag to store result in a directory
-	 * @param probabilityMapsFlag boolean flag to calculate probabilities instead of a binary result
+	 * @param showResultsFlag string containing the boolean flag to display results
+	 * @param storeResultsFlag string containing the boolean flag to store result in a directory
+	 * @param probabilityMapsFlag string containing the boolean flag to calculate probabilities instead of a binary result
 	 * @param storeDir directory to store the results
 	 */
 	public static void applyClassifier(
