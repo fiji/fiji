@@ -12,7 +12,9 @@ public enum ActionType implements InfoTextable {
 	SET_RADIUS_TO_ESTIMATED (new RadiusToEstimatedAction()),
 	RESET_RADIUS_TO_EXPECTED (new ResetRadiusAction()),
 	RECOMPUTE_ALL_FEATURES 	(new RecalculateFeatureAction()),
-	GRAB_SPOT_IMAGES		(new GrabSpotImageAction());
+	GRAB_SPOT_IMAGES		(new GrabSpotImageAction()),
+	CAPTURE_OVERLAY			(new CaptureOverlayAction()),
+	PLOT_NSPOTS				(new PlotNSpotsVsTimeAction());
 	
 	private TrackMateAction action;
 
