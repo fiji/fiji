@@ -42,12 +42,15 @@ import isosurface.MeshExporter;
 import isosurface.MeshEditor;
 import isosurface.SmoothControl;
 
+import customnode.u3d.U3DExporter;
+
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 import javax.vecmath.Matrix4d;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.Background;
+import javax.media.j3d.PointLight;
 
 import customnode.CustomMesh;
 import customnode.CustomMeshNode;
@@ -275,6 +278,26 @@ public class Executer {
 
 	public void saveAsBinarySTL(){
 		MeshExporter.saveAsSTL(univ.getContents(), MeshExporter.BINARY);
+	}
+
+	public void saveAsU3D(){
+		SaveDialog sd = new SaveDialog(
+			"Save meshes as u3d...", "", ".u3d");
+		String dir = sd.getDirectory();
+		String name = sd.getFileName();
+		if(dir == null || name == null)
+			return;
+		try {
+			U3DExporter.export(univ, dir + name);
+			String tex = U3DExporter.getTexStub(univ, dir + name);
+			IJ.log("% Here are a few latex example lines");
+			IJ.log("% You can compile them for example via");
+			IJ.log("% pdflatex yourfilename.tex");
+			IJ.log("");
+			IJ.log(tex);
+		} catch(Exception e) {
+			IJ.error(e.getMessage());
+		}
 	}
 
 	public void loadView() {
@@ -937,6 +960,31 @@ public class Executer {
 		gd.showDialog();
 	}
 
+	public void setSaturatedVolumeRendering(Content c, boolean b) {
+		if(!checkSel(c))
+			return;
+		int t = c.getType();
+		if(t != Content.VOLUME)
+			return;
+
+		if(c.getNumberOfInstants() == 1) {
+			c.setSaturatedVolumeRendering(b);
+			return;
+		}
+
+		ContentInstant ci = c.getCurrent();
+		GenericDialog gd = new GenericDialog("Saturated volume rendering");
+		gd.addCheckbox("Apply to all timepoints", true);
+		gd.showDialog();
+		if(gd.wasCanceled())
+			return;
+
+		if(gd.getNextBoolean())
+			c.setSaturatedVolumeRendering(b);
+		else
+			ci.setSaturatedVolumeRendering(b);
+	}
+
 	public void setShaded(Content c, boolean b) {
 		if(!checkSel(c))
 			return;
@@ -1381,6 +1429,25 @@ public class Executer {
 
 	public void viewPreferences() {
 		UniverseSettings.initFromDialog(univ);
+	}
+
+	public void adjustLight() {
+		final PointLight l = univ.getLight();
+		final Point3f pos = new Point3f();
+		final Color3f col = new Color3f();
+		l.getPosition(pos);
+		l.getColor(col);
+
+		final ColorListener colorListener = new ColorListener() {
+			public void colorChanged(Color3f color) {
+				l.setColor(color);
+			}
+
+			public void ok(final GenericDialog gd) {
+				// TODO macro record
+			}
+		};
+		showColorDialog("Adjust light", col, colorListener, false, false);
 	}
 
 	public void sync(boolean b) {
