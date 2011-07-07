@@ -1,17 +1,29 @@
 GUI
 - Have a manual spot editing tool in the 3D viewer displayer.
+- Display spot names in the 3D displayer.
+
+Design:
+- De-enumify TrackMate to implement Johannes idea.
+
+Bugs:
+- Fix SpotEditTool not recognizing a second instance of TrackMate.
 
 Segmenting
-- Implement the C.elegans algo from Santella et al 2010
+- Implement the C.elegans algo from Santella et al 2010.
+- Implement an algoirthm to segment cell imaged in phase-contrast.
 
 Track scheme
-- Add the ability to show / hide tracks
-- Add the ability to name tracks
-- Fix the NPE when plotting features and a parent cell is in the selection
+- Add the ability to name tracks.
+- Fix the NPE when plotting features and a parent cell is in the selection.
+- Add a side table to display track features.
+- Allow to export side tables content to csv or xls.
 
 Export/Import
 - Offer to select displayer at load.
 - Save the spot images in the xml file.
+- Save / load track features.
+- Make a MATLAB function to import xml files as MATLAB variables.
+
 
 Making it available.
 - Write wiki doc.
