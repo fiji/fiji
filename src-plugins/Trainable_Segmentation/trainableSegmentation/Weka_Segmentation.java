@@ -124,16 +124,7 @@ public class Weka_Segmentation implements PlugIn
 {
 	/** reference to the segmentation backend */
 	final WekaSegmentation wekaSegmentation;
-
-	/** 50% alpha composite */
-	final Composite transparency050 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.50f );
-	/** 25% alpha composite */
-	final Composite transparency025 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f );
-	/** opacity (in %) of the result overlay image */
-	int overlayOpacity = 33;
-	/** alpha composite for the result overlay image */
-	Composite overlayAlpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, overlayOpacity / 100f);
-
+	
 	/** image to display on the GUI */
 	private ImagePlus displayImage;
 	/** image to be used in the training */
@@ -182,9 +173,7 @@ public class Weka_Segmentation implements PlugIn
 
 	/** array of roi list overlays to paint the transparent rois of each class */
 	RoiListOverlay [] roiOverlay;
-	/** current segmentation result overlay */
-	ImageOverlay resultOverlay;
-
+	
 	/** available colors for available classes */
 	final Color[] colors = new Color[]{Color.red, Color.green, Color.blue,
 			Color.cyan, Color.magenta};
@@ -245,7 +234,8 @@ public class Weka_Segmentation implements PlugIn
 	public static final String SAVE_FEATURE_STACK = "saveFeatureStack";
 	/** name of the macro method to change a class name */
 	public static final String CHANGE_CLASS_NAME = "changeClassName";
-	
+	/** name of the macro method to set the overlay opacity */
+	public static final String SET_OPACITY = "setOpacity";
 	/** boolean flag set to true while training */
 	boolean trainingFlag = false;
 		
@@ -276,8 +266,7 @@ public class Weka_Segmentation implements PlugIn
 		addExampleButton = new JButton[WekaSegmentation.MAX_NUM_CLASSES];
 
 		roiOverlay = new RoiListOverlay[WekaSegmentation.MAX_NUM_CLASSES];
-		resultOverlay = new ImageOverlay();
-
+		
 		trainButton = new JButton("Train classifier");
 		trainButton.setToolTipText("Start training the classifier");
 
@@ -546,6 +535,17 @@ public class Weka_Segmentation implements PlugIn
 
 		Panel all = new Panel();
 		
+		/** 50% alpha composite */
+		final Composite transparency050 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.50f );
+		/** 25% alpha composite */
+		final Composite transparency025 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f );
+		/** opacity (in %) of the result overlay image */
+		int overlayOpacity = 33;
+		/** alpha composite for the result overlay image */
+		Composite overlayAlpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, overlayOpacity / 100f);
+		/** current segmentation result overlay */
+		ImageOverlay resultOverlay;
+		
 		/** boolean flag set to true when training is complete */
 		boolean trainingComplete = false;
 
@@ -569,6 +569,7 @@ public class Weka_Segmentation implements PlugIn
 			}
 
 			// add result overlay
+			resultOverlay = new ImageOverlay();
 			resultOverlay.setComposite( overlayAlpha );
 			((OverlayedImageCanvas)ic).addOverlay(resultOverlay);
 
@@ -1270,7 +1271,7 @@ public class Weka_Segmentation implements PlugIn
 		overlay = overlay.convertToByte(false);
 		overlay.setColorModel(overlayLUT);
 
-		resultOverlay.setImage(overlay);
+		win.resultOverlay.setImage(overlay);
 	}
 	
 	/**
@@ -1872,7 +1873,7 @@ public class Weka_Segmentation implements PlugIn
 		displayImage.setProcessor("Advanced Weka Segmentation", trainingImage.getProcessor().duplicate());
 
 		// Remove current classification result image
-		resultOverlay.setImage(null);
+		win.resultOverlay.setImage(null);
 
 		win.toggleOverlay();
 
@@ -2051,7 +2052,7 @@ public class Weka_Segmentation implements PlugIn
 		gd.addMessage("Advanced options:");
 		gd.addCheckbox("Homogenize classes", wekaSegmentation.doHomogenizeClasses());
 		gd.addButton("Save feature stack", new SaveFeatureStackButtonListener("Select location to save feature stack", wekaSegmentation.getFeatureStackArray()));
-		gd.addSlider("Result overlay opacity", 0, 100, overlayOpacity);
+		gd.addSlider("Result overlay opacity", 0, 100, win.overlayOpacity);
 		gd.addHelp("http://fiji.sc/wiki/Trainable_Segmentation_Plugin");
 
 		gd.showDialog();
@@ -2177,18 +2178,24 @@ public class Weka_Segmentation implements PlugIn
 
 		// Update flag to homogenize number of class instances		
 		final boolean homogenizeClasses = gd.getNextBoolean();
-		wekaSegmentation.setDoHomogenizeClasses( homogenizeClasses );
-		// Macro recording
-		record(SET_HOMOGENIZATION, new String[] { Boolean.toString( homogenizeClasses )});
-
+		if( wekaSegmentation.doHomogenizeClasses() != homogenizeClasses )
+		{
+			wekaSegmentation.setDoHomogenizeClasses( homogenizeClasses );
+			// Macro recording
+			record(SET_HOMOGENIZATION, new String[] { Boolean.toString( homogenizeClasses )});
+		}
+		
 		// Update result overlay alpha
 		final int newOpacity = (int) gd.getNextNumber();
-		if( newOpacity != overlayOpacity )
+		if( newOpacity != win.overlayOpacity )
 		{
-			overlayOpacity = newOpacity;
-			overlayAlpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, overlayOpacity / 100f);
-			resultOverlay.setComposite(overlayAlpha);
+			win.overlayOpacity = newOpacity;
+			win.overlayAlpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, win.overlayOpacity / 100f);
+			win.resultOverlay.setComposite(win.overlayAlpha);
 
+			// Macro recording
+			record(SET_OPACITY, new String[] { Float.toString( win.overlayOpacity )});
+			
 			if( showColorOverlay )
 				displayImage.updateAndDraw();
 		}
@@ -2972,6 +2979,22 @@ public class Weka_Segmentation implements PlugIn
 			}
 		}
 	}	
+	
+	/**
+	 * Set overlay opacity
+	 * @param newOpacity string containing the new opacity value (integer 0-100)
+	 */
+	public static void setOpacity( String newOpacity )
+	{
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
+		{
+			final CustomWindow win = (CustomWindow) iw;
+			win.overlayOpacity = Integer.parseInt(newOpacity);
+			AlphaComposite alpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER,  win.overlayOpacity  / 100f);			
+			win.resultOverlay.setComposite(alpha);
+		}
+	}
 	
 }// end of Weka_Segmentation class
 
