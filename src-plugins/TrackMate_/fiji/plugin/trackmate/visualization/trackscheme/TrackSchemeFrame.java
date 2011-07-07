@@ -171,13 +171,13 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		doFireSelectionChangeEvent = false;
 		highlightEdges(model.getEdgeSelection());
 		highlightSpots(model.getSpotSelection());
-		
+
 		// TODO ADD HERE SOME CODE TO HANDLE SPOTS THAT ARE INVISIBLE TO TRACKSCHEME
 		// NAMELY WHEN LINKING 2 SPOTS THAT ARE NOT PART OF VISIBLE TRACKS
 		// CREATE NEW MXCELLS ON THE FLY, MAKE THEM INVISIBLE, PUT THEM IN A 
 		// KIND OF A BUFFER THAT YOU CAN FLUSH THESE INVISIBLE SPOTS EXIT SELECTION.
 		// THEN THE USER WILL BE ABLE TO LINK THEM / DELETE THEM / WHATSOEVER
-		
+
 		// Center on selection if we added one spot exactly
 		Map<Spot, Boolean> spotsAdded = event.getSpots();
 		if (spotsAdded != null && spotsAdded.size() == 1) {
@@ -273,6 +273,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 						style = mxUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64,"+spot.getImageString());
 						graph.getModel().setStyle(cell, style);
 						int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(SpotFeature.RADIUS) / settings.dx));
+						height = Math.max(height, DEFAULT_CELL_HEIGHT/3);
 						graph.getModel().getGeometry(cell).setHeight(height);
 
 					}  else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_REMOVED) {
@@ -397,6 +398,17 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		graph.setDropEnabled(false);
 		graph.getStylesheet().setDefaultEdgeStyle(BASIC_EDGE_STYLE);
 		graph.getStylesheet().setDefaultVertexStyle(BASIC_VERTEX_STYLE);
+
+		// Set spot image to cell style
+		try {
+			graph.getModel().beginUpdate();
+			for(mxCell cell : graph.getCellToVertexMap().keySet()) {
+				Spot spot = graph.getCellToVertexMap().get(cell);
+				graph.getModel().setStyle(cell, mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+spot.getImageString());
+			}
+		} finally {
+			graph.getModel().endUpdate();
+		}
 
 		// Cells removed from JGraphX
 		graph.addListener(mxEvent.CELLS_REMOVED, new CellRemovalListener());
@@ -613,7 +625,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	// INNER CLASSES
 
 	private class CellRemovalListener implements mxIEventListener {
-		
+
 		public void invoke(Object sender, mxEventObject evt) {
 
 			if (DEBUG)
@@ -682,7 +694,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	}
 
 	private class SelectionChangeListener implements mxIEventListener {
-		
+
 		@SuppressWarnings("unchecked")
 		public void invoke(Object sender, mxEventObject evt) {
 			if (DEBUG_SELECTION)

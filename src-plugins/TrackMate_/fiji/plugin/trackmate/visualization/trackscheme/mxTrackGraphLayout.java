@@ -86,10 +86,11 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 
 			// Generate colors
 			int ntracks = model.getNFilteredTracks();
-			HashMap<Integer, Color> trackColors = new HashMap<Integer, Color>(ntracks);
+			HashMap<Integer, Color> trackColors = new HashMap<Integer, Color>(ntracks, 1);
 			int colorIndex = 0;
 			for (int i : model.getFilteredTrackIndices()) { 				
 				trackColors.put(i, colorMap.getPaint((float) colorIndex / (ntracks-1)));
+				colorIndex++;
 			}
 
 			// Collect unique instants
@@ -185,7 +186,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 
 					// Cell size
 					int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(SpotFeature.RADIUS) / dx));
-					height = Math.max(height, 12);
+					height = Math.max(height, DEFAULT_CELL_HEIGHT/3);
 					geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
 
 					// Add it to its root cell holder
