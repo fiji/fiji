@@ -2194,7 +2194,7 @@ public class Weka_Segmentation implements PlugIn
 			win.resultOverlay.setComposite(win.overlayAlpha);
 
 			// Macro recording
-			record(SET_OPACITY, new String[] { Float.toString( win.overlayOpacity )});
+			record(SET_OPACITY, new String[] { Integer.toString( win.overlayOpacity )});
 			
 			if( showColorOverlay )
 				displayImage.updateAndDraw();
