@@ -57,7 +57,6 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 
 		// For variance, kurtosis and skewness 
 		float sum = 0;
-		float sum_sqr = 0;
 		
 		float mean = 0;
 	    float M2 = 0;
@@ -83,7 +82,6 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 			pixel_values[n] = val;
 			// For variance and mean
 			sum += val;
-			sum_sqr += val*val;
 			
 			// For kurtosis
 			n1 = n;

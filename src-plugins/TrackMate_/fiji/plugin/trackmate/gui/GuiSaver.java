@@ -73,24 +73,24 @@ public class GuiSaver {
 		case CALCULATE_FEATURES:
 			writer.appendBasicSettings();
 			writer.appendSegmenterSettings();
-			writer.appendInitialThreshold();
+			writer.appendInitialSpotFilter();
 			writer.appendSpots();
 			break;
 		case TUNE_SPOT_FILTERS:
 		case FILTER_SPOTS:
 			writer.appendBasicSettings();
 			writer.appendSegmenterSettings();
-			writer.appendInitialThreshold();
-			writer.appendFeatureThresholds();
+			writer.appendInitialSpotFilter();
+			writer.appendSpotFilters();
 			writer.appendSpots();
 			break;
 		case TUNE_TRACKER:
 			writer.appendBasicSettings();
 			writer.appendSegmenterSettings();
 			writer.appendTrackerSettings();
-			writer.appendInitialThreshold();
-			writer.appendFeatureThresholds();
-			writer.appendSpotSelection();
+			writer.appendInitialSpotFilter();
+			writer.appendSpotFilters();
+			writer.appendFilteredSpots();
 			writer.appendSpots();
 			break;
 		case TRACKING:
@@ -98,9 +98,9 @@ public class GuiSaver {
 			writer.appendBasicSettings();
 			writer.appendSegmenterSettings();
 			writer.appendTrackerSettings();
-			writer.appendInitialThreshold();
-			writer.appendFeatureThresholds();
-			writer.appendSpotSelection();
+			writer.appendInitialSpotFilter();
+			writer.appendSpotFilters();
+			writer.appendFilteredSpots();
 			writer.appendTracks();
 			writer.appendSpots();
 			break;

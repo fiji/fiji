@@ -22,6 +22,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotFeature;
+import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
@@ -81,32 +82,37 @@ public class TmXmlWriter implements TmXmlKeys {
 	}
 
 	/**
-	 * Append the initial threshold on quality to the {@link Document}. Because 
-	 * this initial threshold is not stored in the {@link TrackMateModel},
-	 * it has to be provided here.
+	 * Append the initial threshold on quality to the {@link Document}.
 	 */
-	public void appendInitialThreshold() {
-		echoInitialThreshold(model.getInitialSpotFilterValue());
+	public void appendInitialSpotFilter() {
+		echoInitialSpotFilter(model.getInitialSpotFilterValue());
 	}
 
 	/**
-	 * Append the list of {@link SpotFilter} to the {@link Document}.
+	 * Append the list of spot {@link FeatureFilter} to the {@link Document}.
 	 */
-	public void appendFeatureThresholds() {
-		echoThresholds();
+	public void appendSpotFilters() {
+		echoSpotFilters();
 	}
 
 	/**
-	 * Append the spot list to the  {@link Document}.
+	 * Append the list of track {@link FeatureFilter} to the {@link Document}.
+	 */
+	public void appendTrackFilters() {
+		echoTrackFilters();
+	}
+
+	/**
+	 * Append the spot collection to the  {@link Document}.
 	 */
 	public void appendSpots() {
 		echoAllSpots();
 	}
 
 	/**
-	 * Append the spot selection to the  {@link Document}.	
+	 * Append the filtered spot collection to the  {@link Document}.	
 	 */
-	public void appendSpotSelection() {
+	public void appendFilteredSpots() {
 		echoSpotSelection();
 	}
 
@@ -117,6 +123,14 @@ public class TmXmlWriter implements TmXmlKeys {
 		echoTracks();
 	}
 
+	/**
+	 * Append the filtered tracks to the  {@link Document}.
+	 */
+	public void appendFilteredTracks() {
+		echoFilteredTracks();
+	}
+
+	
 	/**
 	 * Write the document to the given file.
 	 */
@@ -240,9 +254,22 @@ public class TmXmlWriter implements TmXmlKeys {
 		Element allTracksElement = new Element(TRACK_COLLECTION_ELEMENT_KEY);
 
 		List<Set<DefaultWeightedEdge>> trackEdges = model.getTrackEdges();
-		for(Set<DefaultWeightedEdge> track : trackEdges) {
+		
+		for (int trackIndex = 0; trackIndex < trackEdges.size(); trackIndex++) {
+			Set<DefaultWeightedEdge> track = trackEdges.get(trackIndex);
+		
 			Element trackElement = new Element(TRACK_ELEMENT_KEY);
+			// Echo attributes and features
+			trackElement.setAttribute(TRACK_ID_ATTRIBUTE_NAME, ""+trackIndex);
+			for(TrackFeature feature : TrackFeature.values()) {
+				Float val = model.getTrackFeature(trackIndex, feature);
+				if (null == val) {
+					continue;
+				}
+				trackElement.setAttribute(feature.name(), val.toString());
+			}
 
+			// Echo edges
 			for (DefaultWeightedEdge edge : track) {
 
 				Spot source = model.getEdgeSource(edge);
@@ -261,6 +288,22 @@ public class TmXmlWriter implements TmXmlKeys {
 		root.addContent(allTracksElement);
 		logger.log("  Appending tracks.\n");
 		return;
+	}
+	
+	private void echoFilteredTracks() {
+		if (model.getFilteredTrackIndices() == null) {
+			return;
+		}
+		
+		Element filteredTracksElement = new Element(FILTERED_TRACK_ELEMENT_KEY);
+		Set<Integer> indices = model.getFilteredTrackIndices();
+		for(int trackIndex : indices) {
+			Element trackIDElement = new Element(TRACK_ID_ELEMENT_KEY);
+			trackIDElement.setAttribute(TRACK_ID_ATTRIBUTE_NAME, ""+trackIndex);
+			filteredTracksElement.addContent(trackIDElement);
+		}
+		root.addContent(filteredTracksElement);
+		logger.log("  Appending filtered tracks.\n");
 	}
 
 	private void echoImageInfo() {
@@ -312,31 +355,46 @@ public class TmXmlWriter implements TmXmlKeys {
 		return;
 	}
 
-	private void echoInitialThreshold(final Float qualityThreshold) {
-		Element itElement = new Element(INITIAL_THRESHOLD_ELEMENT_KEY);
-		itElement.setAttribute(THRESHOLD_FEATURE_ATTRIBUTE_NAME, SpotFeature.QUALITY.name());
-		itElement.setAttribute(THRESHOLD_VALUE_ATTRIBUTE_NAME, ""+qualityThreshold);
-		itElement.setAttribute(THRESHOLD_ABOVE_ATTRIBUTE_NAME, ""+true);
+	private void echoInitialSpotFilter(final Float qualityThreshold) {
+		Element itElement = new Element(INITIAL_SPOT_FILTER_ELEMENT_KEY);
+		itElement.setAttribute(FILTER_FEATURE_ATTRIBUTE_NAME, SpotFeature.QUALITY.name());
+		itElement.setAttribute(FILTER_VALUE_ATTRIBUTE_NAME, ""+qualityThreshold);
+		itElement.setAttribute(FILTER_ABOVE_ATTRIBUTE_NAME, ""+true);
 		root.addContent(itElement);
-		logger.log("  Appending initial threshold.\n");
+		logger.log("  Appending initial spot filter.\n");
 		return;
 	}
 
-	private void echoThresholds() {
+	private void echoSpotFilters() {
 		List<FeatureFilter<SpotFeature>> featureThresholds = model.getSpotFilters();
 
-		Element allTresholdElement = new Element(THRESHOLD_COLLECTION_ELEMENT_KEY);
+		Element allTresholdElement = new Element(SPOT_FILTER_COLLECTION_ELEMENT_KEY);
 		for (FeatureFilter<SpotFeature> threshold : featureThresholds) {
-			Element thresholdElement = new Element(THRESHOLD_ELEMENT_KEY);
-			thresholdElement.setAttribute(THRESHOLD_FEATURE_ATTRIBUTE_NAME, threshold.feature.name());
-			thresholdElement.setAttribute(THRESHOLD_VALUE_ATTRIBUTE_NAME, threshold.value.toString());
-			thresholdElement.setAttribute(THRESHOLD_ABOVE_ATTRIBUTE_NAME, ""+threshold.isAbove);
+			Element thresholdElement = new Element(FILTER_ELEMENT_KEY);
+			thresholdElement.setAttribute(FILTER_FEATURE_ATTRIBUTE_NAME, threshold.feature.name());
+			thresholdElement.setAttribute(FILTER_VALUE_ATTRIBUTE_NAME, threshold.value.toString());
+			thresholdElement.setAttribute(FILTER_ABOVE_ATTRIBUTE_NAME, ""+threshold.isAbove);
 			allTresholdElement.addContent(thresholdElement);
 		}
 		root.addContent(allTresholdElement);
-		logger.log("  Appending feature thresholds.\n");
+		logger.log("  Appending spot feature filters.\n");
 		return;
+	}
+	
+	private void echoTrackFilters() {
+		List<FeatureFilter<TrackFeature>> featureThresholds = model.getTrackFilters();
 
+		Element allTresholdElement = new Element(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
+		for (FeatureFilter<TrackFeature> threshold : featureThresholds) {
+			Element thresholdElement = new Element(FILTER_ELEMENT_KEY);
+			thresholdElement.setAttribute(FILTER_FEATURE_ATTRIBUTE_NAME, threshold.feature.name());
+			thresholdElement.setAttribute(FILTER_VALUE_ATTRIBUTE_NAME, threshold.value.toString());
+			thresholdElement.setAttribute(FILTER_ABOVE_ATTRIBUTE_NAME, ""+threshold.isAbove);
+			allTresholdElement.addContent(thresholdElement);
+		}
+		root.addContent(allTresholdElement);
+		logger.log("  Appending track feature filters.\n");
+		return;
 	}
 
 	private void echoSpotSelection() {
@@ -346,11 +404,11 @@ public class TmXmlWriter implements TmXmlKeys {
 		List<Spot> spots;
 
 		Element spotIDElement, frameSpotsElement;
-		Element spotCollection = new Element(SELECTED_SPOT_ELEMENT_KEY);
+		Element spotCollection = new Element(FILTERED_SPOT_ELEMENT_KEY);
 
 		for(int frame : selectedSpots.keySet()) {
 
-			frameSpotsElement = new Element(SELECTED_SPOT_COLLECTION_ELEMENT_KEY);
+			frameSpotsElement = new Element(FILTERED_SPOT_COLLECTION_ELEMENT_KEY);
 			frameSpotsElement.setAttribute(FRAME_ATTRIBUTE_NAME, ""+frame);
 			spots = selectedSpots.get(frame);
 

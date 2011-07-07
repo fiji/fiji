@@ -216,7 +216,7 @@ public class GuiReader {
 		{ // Try to read feature thresholds
 			List<FeatureFilter<SpotFeature>> featureThresholds = null;
 			try {
-				featureThresholds = reader.getFeatureFilters();
+				featureThresholds = reader.getSpotFeatureFilters();
 			} catch (DataConversionException e) {
 				logger.error("Problem reading the feature threholds field of "+file.getName()
 						+". Error message is\n"+e.getLocalizedMessage()+'\n');

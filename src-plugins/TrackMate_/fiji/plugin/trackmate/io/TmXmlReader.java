@@ -7,8 +7,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
@@ -25,6 +27,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
@@ -76,11 +79,11 @@ public class TmXmlReader implements TmXmlKeys {
 		settings.trackerSettings = getTrackerSettings();
 		settings.imp = getImage();
 		model.setSettings(settings);
-		// Filters
-		List<FeatureFilter<SpotFeature>> filters = getFeatureFilters();
+		// Spot Filters
+		List<FeatureFilter<SpotFeature>> spotFilters = getSpotFeatureFilters();
 		FeatureFilter<SpotFeature> initialFilter = getInitialFilter();
 		model.setInitialSpotFilterValue(initialFilter.value);
-		model.setSpotFilters(filters);
+		model.setSpotFilters(spotFilters);
 		// Spots
 		SpotCollection allSpots = getAllSpots();
 		SpotCollection filteredSpots = getFilteredSpots(allSpots);
@@ -88,7 +91,13 @@ public class TmXmlReader implements TmXmlKeys {
 		model.setFilteredSpots(filteredSpots, false);
 		// Tracks
 		model.setGraph(readTracks(filteredSpots));
-
+		// Track Filters
+		List<FeatureFilter<TrackFeature>> trackFilters = getTrackFeatureFilters();
+		model.setTrackFilters(trackFilters);
+		// Filtered tracks
+		Set<Integer> filteredTrackIndices = getFilteredTracks();
+		model.setFilteredTrackIndices(filteredTrackIndices, false);
+		// Return
 		return model;
 	}
 
@@ -98,33 +107,54 @@ public class TmXmlReader implements TmXmlKeys {
 	 * Return <code>null</code> if the initial threshold data cannot be found in the file.
 	 */
 	public FeatureFilter<SpotFeature> getInitialFilter() throws DataConversionException {
-		Element itEl = root.getChild(INITIAL_THRESHOLD_ELEMENT_KEY);
+		Element itEl = root.getChild(INITIAL_SPOT_FILTER_ELEMENT_KEY);
 		if (null == itEl)
 			return null;
-		SpotFeature feature = SpotFeature.valueOf(itEl.getAttributeValue(THRESHOLD_FEATURE_ATTRIBUTE_NAME));
-		Float value 	= itEl.getAttribute(THRESHOLD_VALUE_ATTRIBUTE_NAME).getFloatValue();
-		boolean isAbove	= itEl.getAttribute(THRESHOLD_ABOVE_ATTRIBUTE_NAME).getBooleanValue();
+		SpotFeature feature = SpotFeature.valueOf(itEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME));
+		Float value 	= itEl.getAttribute(FILTER_VALUE_ATTRIBUTE_NAME).getFloatValue();
+		boolean isAbove	= itEl.getAttribute(FILTER_ABOVE_ATTRIBUTE_NAME).getBooleanValue();
 		FeatureFilter<SpotFeature> ft = new FeatureFilter<SpotFeature>(feature, value, isAbove);
 		return ft;
 	}
 
 
 	/**
-	 * Return the list of {@link SpotFilter} stored in this file.
-	 * Return <code>null</code> if the feature filters data cannot be found in the file.
+	 * Return the list of {@link FeatureFilter} for spots stored in this file.
+	 * Return <code>null</code> if the spot feature filters data cannot be found in the file.
 	 */
 	@SuppressWarnings("unchecked")
-	public List<FeatureFilter<SpotFeature>> getFeatureFilters() throws DataConversionException {
+	public List<FeatureFilter<SpotFeature>> getSpotFeatureFilters() throws DataConversionException {
 		List<FeatureFilter<SpotFeature>> featureThresholds = new ArrayList<FeatureFilter<SpotFeature>>();
-		Element ftCollectionEl = root.getChild(THRESHOLD_COLLECTION_ELEMENT_KEY);
+		Element ftCollectionEl = root.getChild(SPOT_FILTER_COLLECTION_ELEMENT_KEY);
 		if (null == ftCollectionEl)
 			return null;
-		List<Element> ftEls = ftCollectionEl.getChildren(THRESHOLD_ELEMENT_KEY);
+		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
 		for (Element ftEl : ftEls) {
-			SpotFeature feature = SpotFeature.valueOf(ftEl.getAttributeValue(THRESHOLD_FEATURE_ATTRIBUTE_NAME));
-			Float value 	= ftEl.getAttribute(THRESHOLD_VALUE_ATTRIBUTE_NAME).getFloatValue();
-			boolean isAbove	= ftEl.getAttribute(THRESHOLD_ABOVE_ATTRIBUTE_NAME).getBooleanValue();
+			SpotFeature feature = SpotFeature.valueOf(ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME));
+			Float value 	= ftEl.getAttribute(FILTER_VALUE_ATTRIBUTE_NAME).getFloatValue();
+			boolean isAbove	= ftEl.getAttribute(FILTER_ABOVE_ATTRIBUTE_NAME).getBooleanValue();
 			FeatureFilter<SpotFeature> ft = new FeatureFilter<SpotFeature>(feature, value, isAbove);
+			featureThresholds.add(ft);
+		}
+		return featureThresholds;
+	}
+
+	/**
+	 * Return the list of {@link FeatureFilter} for tracks stored in this file.
+	 * Return <code>null</code> if the track feature filters data cannot be found in the file.
+	 */
+	@SuppressWarnings("unchecked")
+	public List<FeatureFilter<TrackFeature>> getTrackFeatureFilters() throws DataConversionException {
+		List<FeatureFilter<TrackFeature>> featureThresholds = new ArrayList<FeatureFilter<TrackFeature>>();
+		Element ftCollectionEl = root.getChild(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
+		if (null == ftCollectionEl)
+			return null;
+		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
+		for (Element ftEl : ftEls) {
+			TrackFeature feature = TrackFeature.valueOf(ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME));
+			Float value 	= ftEl.getAttribute(FILTER_VALUE_ATTRIBUTE_NAME).getFloatValue();
+			boolean isAbove	= ftEl.getAttribute(FILTER_ABOVE_ATTRIBUTE_NAME).getBooleanValue();
+			FeatureFilter<TrackFeature> ft = new FeatureFilter<TrackFeature>(feature, value, isAbove);
 			featureThresholds.add(ft);
 		}
 		return featureThresholds;
@@ -275,7 +305,7 @@ public class TmXmlReader implements TmXmlKeys {
 	 */
 	@SuppressWarnings("unchecked")
 	public SpotCollection getFilteredSpots(SpotCollection allSpots) throws DataConversionException {
-		Element selectedSpotCollection = root.getChild(SELECTED_SPOT_ELEMENT_KEY);
+		Element selectedSpotCollection = root.getChild(FILTERED_SPOT_ELEMENT_KEY);
 		if (null == selectedSpotCollection)
 			return null;
 
@@ -285,7 +315,7 @@ public class TmXmlReader implements TmXmlKeys {
 		List<Element> spotContent;
 		List<Spot> spotsThisFrame;
 		SpotCollection spotSelection = new SpotCollection();
-		List<Element> frameContent = selectedSpotCollection.getChildren(SELECTED_SPOT_COLLECTION_ELEMENT_KEY);
+		List<Element> frameContent = selectedSpotCollection.getChildren(FILTERED_SPOT_COLLECTION_ELEMENT_KEY);
 
 		for (Element currentFrameContent : frameContent) {
 			currentFrame = currentFrameContent.getAttribute(FRAME_ATTRIBUTE_NAME).getIntValue();
@@ -371,6 +401,28 @@ public class TmXmlReader implements TmXmlKeys {
 			}
 		}
 		return graph;
+	}
+	
+	/**
+	 * Read and return the list of track indices that define the filtered track collection.
+	 * @throws DataConversionException 
+	 */
+	public Set<Integer> getFilteredTracks() throws DataConversionException {
+		Element filteredTracksElement = root.getChild(FILTERED_TRACK_ELEMENT_KEY);
+		if (null == filteredTracksElement)
+			return null;
+
+		// Work because the track splitting from the graph is deterministic
+		@SuppressWarnings("unchecked")
+		List<Element> elements = filteredTracksElement.getChildren(TRACK_ID_ELEMENT_KEY);
+		HashSet<Integer> filteredTrackIndices = new HashSet<Integer>(elements.size());
+		for (Element indexElement : elements) {
+			Integer trackID = indexElement.getAttribute(TRACK_ID_ATTRIBUTE_NAME).getIntValue();
+			if (null != trackID) {
+				filteredTrackIndices.add(trackID);
+			}
+		}
+		return filteredTrackIndices;
 	}
 
 	public ImagePlus getImage()  {

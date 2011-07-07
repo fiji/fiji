@@ -98,27 +98,28 @@ public interface TmXmlKeys {
 	public static final String SPOT_ELEMENT_KEY 					= "Spot"; 
 
 	/*
-	 * INITIAL THRESHOLD element
+	 * INITIAL SPOT FILTER element
 	 */
 	
-	public static final String INITIAL_THRESHOLD_ELEMENT_KEY			= "InitialThreshold";
+	public static final String INITIAL_SPOT_FILTER_ELEMENT_KEY		= "InitialSpotFilter";
 	
 	/*
-	 * THRESHOLDS element
+	 * FILTERS element for SPOTS and TRACKS
 	 */
 	
-	public static final String THRESHOLD_COLLECTION_ELEMENT_KEY		= "AllThresholds";
-	public static final String THRESHOLD_ELEMENT_KEY				= "Threshold";
-	public static final String THRESHOLD_FEATURE_ATTRIBUTE_NAME 	= "feature";
-	public static final String THRESHOLD_VALUE_ATTRIBUTE_NAME 		= "value";
-	public static final String THRESHOLD_ABOVE_ATTRIBUTE_NAME 		= "isabove";
+	public static final String SPOT_FILTER_COLLECTION_ELEMENT_KEY		= "SpotFilterCollection";
+	public static final String TRACK_FILTER_COLLECTION_ELEMENT_KEY		= "TrackFilterCollection";
+	public static final String FILTER_ELEMENT_KEY						= "Filter";
+	public static final String FILTER_FEATURE_ATTRIBUTE_NAME 			= "feature";
+	public static final String FILTER_VALUE_ATTRIBUTE_NAME 				= "value";
+	public static final String FILTER_ABOVE_ATTRIBUTE_NAME 				= "isabove";
 	
 	/*
-	 * SPOT SELECTION elements
+	 * SPOT FILTERED elements
 	 */
 	
-	public static final String SELECTED_SPOT_ELEMENT_KEY 				= "SelectedSpots";
-	public static final String SELECTED_SPOT_COLLECTION_ELEMENT_KEY 	= "SelectedSpotsInFrame";
+	public static final String FILTERED_SPOT_ELEMENT_KEY 				= "FilteredSpots";
+	public static final String FILTERED_SPOT_COLLECTION_ELEMENT_KEY 	= "FilteredSpotsInFrame";
 	public static final String SPOT_ID_ELEMENT_KEY 						= "SpotID";
 
 	/*
@@ -127,11 +128,19 @@ public interface TmXmlKeys {
 	
 	public static final String TRACK_COLLECTION_ELEMENT_KEY			= "AllTracks";
 	public static final String TRACK_ELEMENT_KEY 					= "Track";
+	public static final String TRACK_ID_ATTRIBUTE_NAME 				= "trackID";
+
 	public static final String TRACK_EDGE_ELEMENT_KEY				= "Edge";
 	public static final String TRACK_EDGE_SOURCE_ATTRIBUTE_NAME	 	= "sourceID";
 	public static final String TRACK_EDGE_TARGET_ATTRIBUTE_NAME	 	= "targetID";
 	public static final String TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME	 	= "weight";
+
 	
+	/*
+	 * TRACK FILTERED elements
+	 */
 	
+	public static final String FILTERED_TRACK_ELEMENT_KEY 				= "FilteredTracks";
+	public static final String TRACK_ID_ELEMENT_KEY 					= "TrackID";
 	
 }

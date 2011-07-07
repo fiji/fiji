@@ -37,7 +37,7 @@ public class TrackMateModel {
 	 * CONSTANTS
 	 */
 
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 	private static final boolean DEBUG_SELECTION = false;
 
 	/*
@@ -655,7 +655,19 @@ public class TrackMateModel {
 				listener.modelChanged(event);
 		}
 	}
-
+	
+	/**
+	 * Overwrite the {@link #filteredTrackIndices} field, resulting normally from the {@link #execTrackFiltering()} process.
+	 * @param doNotify  if true, will fire a {@link TrackMateModelChangeEvent#TRACKS_FILTERED} event.
+	 */
+	public void setFilteredTrackIndices(Set<Integer> filteredTrackIndices, boolean doNotify) {
+		this.filteredTrackIndices = filteredTrackIndices;
+		if (doNotify) {
+			final TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_FILTERED);
+			for (TrackMateModelChangeListener listener : modelChangeListeners)
+				listener.modelChanged(event);
+		}
+	}
 
 	/**
 	 * Set the graph resulting from the tracking process, and
@@ -1244,8 +1256,6 @@ public class TrackMateModel {
 			trackFeatures.add(featureMap);
 		}
 	}
-
-
 
 
 }
