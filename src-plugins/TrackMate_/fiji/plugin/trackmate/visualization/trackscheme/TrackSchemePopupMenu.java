@@ -1,6 +1,5 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
-import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -24,21 +23,25 @@ import fiji.plugin.trackmate.TrackMateModel;
 public class TrackSchemePopupMenu extends JPopupMenu {
 
 	private static final long serialVersionUID = -5168784267411318961L;
+	private static final boolean DEBUG = true; 
 	private Object cell;
 	private TrackSchemeFrame frame;
-//	private Point point;
+	//	private Point point;
+	private TrackMateModel model;
+	private JGraphXAdapter graph;
 
-	public TrackSchemePopupMenu(final TrackSchemeFrame frame, final Point point, final Object cell) {
+	public TrackSchemePopupMenu(final TrackSchemeFrame frame, final Object cell, final TrackMateModel model, final JGraphXAdapter graph) {
 		this.frame = frame;
-//		this.point = point;
 		this.cell = cell;
+		this.model = model;
+		this.graph = graph;
 		init();
 	}
-	
-	
+
+
 	@SuppressWarnings("serial")
 	private void init() {
-		
+
 		// Build selection categories
 		final Object[] selection = frame.getGraph().getSelectionCells();
 		final ArrayList<mxCell> vertices = new ArrayList<mxCell>();
@@ -50,7 +53,7 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 			else if (cell.isEdge()) 
 				edges.add(cell);
 		}
-		
+
 		if (cell != null) {
 			// Edit
 			add(new AbstractAction("Edit spot name") {
@@ -58,7 +61,7 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 					frame.getGraphComponent().startEditingAtCell(cell);
 				}
 			});
-			
+
 			// Fold
 			add(new AbstractAction("Fold/Unfold branch") {
 				public void actionPerformed(ActionEvent e) {
@@ -72,17 +75,17 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 			});
 
 		} else { 
-			
+
 			if (vertices.size() > 1) {
 
 				// Multi edit
 				add(new AbstractAction("Edit " + vertices.size() +" spot names") {
-					
+
 					public void actionPerformed(ActionEvent e) {
 						final mxCell firstCell = vertices.remove(0);
 						frame.getGraphComponent().startEditingAtCell(firstCell, e);
 						frame.getGraphComponent().addListener(mxEvent.LABEL_CHANGED, new mxIEventListener() {
-							
+
 							@Override
 							public void invoke(Object sender, mxEventObject evt) {
 								for (mxCell cell : vertices) {
@@ -99,47 +102,66 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 
 			// Link
 
-			Action linkAction = new AbstractAction("Link " + vertices.size() +" spots") {
+			Action linkAction = new AbstractAction("Link " + model.getSpotSelection().size() +" spots") {
 
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					
+
 					// Sort spots by time
 					TreeMap<Float, Spot> spotsInTime = new TreeMap<Float, Spot>();
-					for (mxCell cell : vertices) {
-						Spot spot = frame.getGraph().getCellToVertexMap().get(cell);
+					for (Spot spot : model.getSpotSelection()) {
 						spotsInTime.put(spot.getFeature(SpotFeature.POSITION_T), spot);
 					}
-					
+
+					// Find adequate column
+					int targetColumn = 0;
+					for (int i = 0; i < frame.getGraphComponent().getColumnWidths().length; i++) {
+						targetColumn += frame.getGraphComponent().getColumnWidths()[i];
+					}
+
 					// Then link them in this order
-					final TrackMateModel model = frame.getModel();
 					model.beginUpdate();
 					try {
-						frame.getGraph().getModel().beginUpdate();
+						graph.getModel().beginUpdate();
 						Iterator<Float> it = spotsInTime.keySet().iterator();
 						Float previousTime = it.next();
 						Spot previousSpot = spotsInTime.get(previousTime);
-						Float currentTime;
-						Spot currentSpot;
 						while(it.hasNext()) {
-							currentTime = it.next();
-							currentSpot = spotsInTime.get(currentTime);
+							Float currentTime = it.next();
+							Spot currentSpot = spotsInTime.get(currentTime);
 							// Link if not linked already
 							if (model.containsEdge(previousSpot, currentSpot))
 								continue;
+							// Check that the cells matching the 2 spots exist in the graph
+							mxCell currentCell = graph.getVertexToCellMap().get(currentSpot);
+							if (null == currentCell) {
+								currentCell = frame.insertSpotInGraph(currentSpot, targetColumn);
+								if (DEBUG) {
+									System.out.println("[TrackSchemePopupMenu] linkSpots: creating cell "+currentCell+" for spot "+currentSpot);
+								}
+							}
+							mxCell previousCell = graph.getVertexToCellMap().get(previousSpot);
+							if (null == previousCell) {
+								previousCell = frame.insertSpotInGraph(previousSpot, targetColumn);
+								if (DEBUG) {
+									System.out.println("[TrackSchemePopupMenu] linkSpots: creating cell "+previousCell+" for spot "+previousSpot);
+								}
+							}
 							// This will update the mxGraph view
 							DefaultWeightedEdge edge = model.addEdge(previousSpot, currentSpot, -1);
-							mxCell cell = frame.getGraph().addJGraphTEdge(edge);
+							mxCell cell = graph.addJGraphTEdge(edge);
 							cell.setValue("New");
 							previousSpot = currentSpot;
 						}
 					} finally {
-						frame.getGraph().getModel().endUpdate();
+						graph.getModel().endUpdate();
 						model.endUpdate();
 					}
 				}
 			};
-			add(linkAction);
+			if (model.getSpotSelection().size() > 1) {
+				add(linkAction);
+			}
 		}
 
 		// Remove
@@ -147,8 +169,8 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 			Action removeAction = new AbstractAction("Remove spots and links") {
 				public void actionPerformed(ActionEvent e) {
 					try {
-					frame.getGraph().getModel().beginUpdate();
-					frame.getGraph().removeCells(selection);
+						frame.getGraph().getModel().beginUpdate();
+						frame.getGraph().removeCells(selection);
 					} finally {
 						frame.getGraph().getModel().endUpdate();
 					}
@@ -156,10 +178,10 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 			};
 			add(removeAction);
 		}
-		
+
 		// Fold
-		
+
 
 	}
-	
+
 }

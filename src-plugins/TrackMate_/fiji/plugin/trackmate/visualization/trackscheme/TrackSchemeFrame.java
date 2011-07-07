@@ -250,7 +250,6 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 
 		graph.getModel().beginUpdate();
 		try {
-			mxCell cellAdded = null;
 			ArrayList<mxCell> cellsToRemove = new ArrayList<mxCell>();
 
 			int targetColumn = 0;
@@ -262,25 +261,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 
 					if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_ADDED) {
 
-						// Instantiate JGraphX cell
-						cellAdded = new mxCell(spot.toString());
-						cellAdded.setId(null);
-						cellAdded.setVertex(true);
-						// Position it
-						float instant = spot.getFeature(SpotFeature.POSITION_T);
-						double x = (targetColumn-2) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
-						double y = (0.5 + graphComponent.getRowForInstant().get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2; 
-						int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(SpotFeature.RADIUS) / settings.dx));
-						height = Math.max(height, 12);
-						mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
-						cellAdded.setGeometry(geometry);
-						// Set its style
-						graph.getModel().setStyle(cellAdded, mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+spot.getImageString());
-						// Finally add it to the mxGraph
-						graph.addCell(cellAdded, graph.getDefaultParent());
-						// Echo the new cell to the maps
-						graph.getVertexToCellMap().put(spot, cellAdded);
-						graph.getCellToVertexMap().put(cellAdded, spot);
+						insertSpotInGraph(spot, targetColumn);
 						targetColumn++;
 
 					} else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_MODIFIED) {
@@ -306,6 +287,26 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		} finally {
 			graph.getModel().endUpdate();
 		}
+	}
+
+	/**
+	 * Insert a spot in the {@link TrackSchemeFrame}, by creating a {@link mxCell} in the 
+	 * graph model of this frame and position it according to its feature.
+	 */
+	mxCell insertSpotInGraph(Spot spot, int targetColumn) {
+		// Instantiate JGraphX cell
+		mxCell cellAdded = graph.addJGraphTVertex(spot);
+		// Position it
+		float instant = spot.getFeature(SpotFeature.POSITION_T);
+		double x = (targetColumn-1) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
+		double y = (0.5 + graphComponent.getRowForInstant().get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2; 
+		int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(SpotFeature.RADIUS) / settings.dx));
+		height = Math.max(height, 12);
+		mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
+		cellAdded.setGeometry(geometry);
+		// Set its style
+		graph.getModel().setStyle(cellAdded, mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+spot.getImageString());
+		return cellAdded;
 	}
 
 	public void centerViewOn(mxCell cell) {
@@ -397,18 +398,6 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		graph.getStylesheet().setDefaultEdgeStyle(BASIC_EDGE_STYLE);
 		graph.getStylesheet().setDefaultVertexStyle(BASIC_VERTEX_STYLE);
 
-
-		// Set spot image to cell style
-		try {
-			graph.getModel().beginUpdate();
-			for(mxCell cell : graph.getCellToVertexMap().keySet()) {
-				Spot spot = graph.getCellToVertexMap().get(cell);
-				graph.getModel().setStyle(cell, mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+spot.getImageString());
-			}
-		} finally {
-			graph.getModel().endUpdate();
-		}
-
 		// Cells removed from JGraphX
 		graph.addListener(mxEvent.CELLS_REMOVED, new CellRemovalListener());
 
@@ -438,12 +427,12 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 			@Override
 			public void mousePressed(MouseEvent e) {
 				if (e.isPopupTrigger()) 
-					displayPopupMenu(e.getPoint(), gc.getCellAt(e.getX(), e.getY(), false));
+					displayPopupMenu(gc.getCellAt(e.getX(), e.getY(), false), e.getPoint());
 			}
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				if (e.isPopupTrigger()) 
-					displayPopupMenu(e.getPoint(), gc.getCellAt(e.getX(), e.getY(), false));
+					displayPopupMenu(gc.getCellAt(e.getX(), e.getY(), false), e.getPoint());
 			}
 		});
 
@@ -460,8 +449,8 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	/**
 	 *  PopupMenu
 	 */
-	protected void displayPopupMenu(final Point point, final Object cell) {
-		TrackSchemePopupMenu menu = new TrackSchemePopupMenu(TrackSchemeFrame.this, point, cell);
+	protected void displayPopupMenu(final Object cell, final Point point) {
+		TrackSchemePopupMenu menu = new TrackSchemePopupMenu(this, cell,  model, graph);
 		menu.show(graphComponent.getViewport().getView(), (int) point.getX(), (int) point.getY());
 	}
 
