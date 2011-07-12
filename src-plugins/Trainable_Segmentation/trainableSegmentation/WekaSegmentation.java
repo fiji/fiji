@@ -459,9 +459,10 @@ public class WekaSegmentation {
 		if(featuresChanged)
 		{
 			//this.setButtonsEnabled(false);
-			this.featureStackArray.setEnabledFeatures(usedFeatures);
+			this.setEnabledFeatures( usedFeatures );
 			// Force features to be updated
 			updateFeatures = true;
+			
 		}
 
 		if (false == adjustSegmentationStateToData(loadedTrainingData) )
@@ -2872,7 +2873,7 @@ public class WekaSegmentation {
 
 	/**
 	 * Create training instances out of the user markings
-	 * @return set of instances
+	 * @return set of instances (feature vectors in Weka format)
 	 */
 	public Instances createTrainingInstances()
 	{
