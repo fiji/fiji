@@ -19,7 +19,7 @@ import java.awt.Rectangle;
 import java.util.Arrays;
 
 public class Select_Bounding_Box implements PlugInFilter {
-	enum Mode { SELECTION, AUTOCROP, AUTOAUTOCROP };
+	enum Mode { SELECTION, AUTOCROP, AUTOAUTOCROP, AUTOSELECTION };
 	Mode mode = Mode.SELECTION;
 
 	ImagePlus image;
@@ -30,12 +30,14 @@ public class Select_Bounding_Box implements PlugInFilter {
 			mode = Mode.AUTOCROP;
 		else if ("autoautocrop".equals(arg))
 			mode = Mode.AUTOAUTOCROP;
+		else if ("autoselect".equals(arg))
+			mode = Mode.AUTOSELECTION;
 		return DOES_ALL | DOES_STACKS | SUPPORTS_MASKING | NO_CHANGES;
 	}
 
 	public void run(ImageProcessor ip) {
 		double background;
-		if (mode == Mode.AUTOAUTOCROP)
+		if (mode == Mode.AUTOAUTOCROP || mode == Mode.AUTOSELECTION)
 			background = guessBackground(ip);
 		else if (ip instanceof ColorProcessor) {
 			Color color = Toolbar.getBackgroundColor();
@@ -53,6 +55,7 @@ public class Select_Bounding_Box implements PlugInFilter {
 		Rectangle rect = getBoundingBox(ip, ip.getRoi(), background);
 		switch (mode) {
 			case SELECTION:
+			case AUTOSELECTION:
 				image.setRoi(rect);
 				break;
 			case AUTOCROP: case AUTOAUTOCROP:
@@ -68,22 +71,28 @@ public class Select_Bounding_Box implements PlugInFilter {
 					ip.getWidth(), ip.getHeight());
 
 		// get the border's values
-		double[] values =
-			new double[(rect.width + rect.height - 2) * 2];
-		for (int i = 0; i < rect.width; i++) {
-			values[i] = ip.getf(rect.x + i, rect.y + 0);
-			values[i + rect.width] =
-				ip.getf(rect.x + i, rect.y + rect.height - 1);
+		float[] values = new float[(rect.width + rect.height - 2) * 2];
+		if (ip instanceof ColorProcessor) {
+			ColorProcessor cp = (ColorProcessor)ip;
+			for (int i = 0; i < rect.width; i++) {
+				values[i] = cp.get(rect.x + i, rect.y + 0) & 0xffffff;
+				values[i + rect.width] = cp.get(rect.x + i, rect.y + rect.height - 1) & 0xffffff;
+			}
+			for (int i = 1; i < rect.height - 1; i++) {
+				values[i + 2 * rect.width - 1] = cp.get(rect.x + 0, rect.y + i) & 0xffffff;
+				values[i + 2 * rect.width - 1 + rect.height - 2] = cp.get(rect.x + rect.width - 1, rect.y + i) & 0xffffff;
+			}
 		}
-		for (int i = 1; i < rect.height - 1; i++) {
-			values[i + 2 * rect.width - 1] =
-				ip.getf(rect.x + 0, rect.y + i);
-			values[i + 2 * rect.width - 1 + rect.height - 2] =
-				ip.getf(rect.x + rect.width - 1, rect.y + i);
+		else {
+			for (int i = 0; i < rect.width; i++) {
+				values[i] = ip.getf(rect.x + i, rect.y + 0);
+				values[i + rect.width] = ip.getf(rect.x + i, rect.y + rect.height - 1);
+			}
+			for (int i = 1; i < rect.height - 1; i++) {
+				values[i + 2 * rect.width - 1] = ip.getf(rect.x + 0, rect.y + i);
+				values[i + 2 * rect.width - 1 + rect.height - 2] = ip.getf(rect.x + rect.width - 1, rect.y + i);
+			}
 		}
-		if (ip instanceof ColorProcessor)
-			for (int i = 0; i < values.length; i++)
-				values[i] = ((int)values[i]) & 0xffffff;
 
 		// return the most frequent value
 		Arrays.sort(values);

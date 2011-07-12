@@ -43,7 +43,7 @@ import ij.process.ShortProcessor;
  * 2D/3D skeleton images.
  * <p>
  * For more detailed information, visit the AnalyzeSkeleton home page:
- * <A target="_blank" href="http://pacific.mpi-cbg.de/wiki/index.php/AnalyzeSkeleton">http://pacific.mpi-cbg.de/wiki/index.php/AnalyzeSkeleton</A>
+ * <A target="_blank" href="http://fiji.sc/wiki/index.php/AnalyzeSkeleton">http://fiji.sc/wiki/index.php/AnalyzeSkeleton</A>
  *
  *
  * @version 09/03/2010
@@ -1305,8 +1305,33 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			// If length is 0, it means the tree is formed by only one voxel.
 			if(length == 0)
 			{
-				if(debug)
-					IJ.log("set initial point to final point");
+				// If there is an adjacent visited junction, count it
+				// as a single voxel branch
+				final Point aux = getVisitedJunctionNeighbor(endPointCoord, v1);				
+				if(null != aux)
+				{
+					this.auxFinalVertex = findPointVertex(this.junctionVertex[iTree], aux);
+					length += calculateDistance(endPointCoord, aux);
+					
+					// Add the length to the first point of the vertex (to prevent later from having
+					// euclidean distances larger than the actual distance)
+					length += calculateDistance(auxFinalVertex.getPoints().get(0), endPointCoord);
+					// Add branch to graph			
+					if(debug)
+						IJ.log( "adding branch from " + v1.getPoints().get(0) + " to " + this.auxFinalVertex.getPoints().get(0) );
+					this.graph[iTree].addVertex(this.auxFinalVertex);
+					this.graph[iTree].addEdge(new Edge(v1, this.auxFinalVertex, this.slabList, length));
+					// increase number of branches
+					this.numberOfBranches[iTree]++;
+					
+					if(debug)
+						IJ.log("increased number of branches, length = " + length);
+					
+					branchLength += length;	
+				}
+				else
+					if(debug)
+						IJ.log("set initial point to final point");
 				continue;
 			}
 			
@@ -1327,6 +1352,10 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 					this.auxPoint = aux;
 				}
 				length += calculateDistance(this.auxPoint, aux);
+								
+				// Add the length to the first point of the vertex (to prevent later from having
+				// euclidean distances larger than the actual distance)
+				length += calculateDistance(auxFinalVertex.getPoints().get(0), auxPoint);
 			}
 			
 			// Add branch to graph			
@@ -1379,6 +1408,9 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 					// Do not count adjacent junctions
 					if( !isJunction(nextPoint))
 					{
+						if (debug)
+							IJ.log("visiting " + nextPoint);
+						
 						// Create graph edge
 						this.slabList = new ArrayList<Point>();
 						this.slabList.add(nextPoint);
@@ -1438,11 +1470,15 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 								this.maximumBranchLength[iTree] = length;
 							}
 
-							// Create graph branch
+							// Add the distance between the main vertex of the junction 
+							// and the initial junction vertex of the branch (this prevents from
+							// having branches in the graph larger than the calculated branch length)
+							length += calculateDistance(initialVertex.getPoints().get(0), junctionCoord);
 							
+							// Create graph branch							
 							// Add branch to graph
 							if(debug)
-								IJ.log("adding branch from " + initialVertex.getPoints().get(0) + " to " + this.auxFinalVertex.getPoints().get(0));
+								IJ.log("adding branch from " + initialVertex.getPoints().get(0) + " to " + this.auxFinalVertex.getPoints().get(0));							
 							this.graph[iTree].addEdge(new Edge(initialVertex, this.auxFinalVertex, this.slabList, length));												
 						}
 					}

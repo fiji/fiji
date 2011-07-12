@@ -14,7 +14,6 @@ import java.io.PrintStream;
 import bsh.Interpreter;
 import ij.IJ;
 
-
 public class Refresh_BSH_Scripts extends RefreshScripts {
 
 	public void run(String arg) {

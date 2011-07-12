@@ -807,6 +807,29 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	 * <li>threshold: the default threshold, as returned by
 	 *                Content.getDefaultTreshold()
 	 * <li>channels: all color channels r, g, b
+	 * </ul>
+	 *
+	 * @param image the image to display
+	 * @param type the type which determines how the image is displayed.
+	 * @return The Content which is added, null if any error occurred.
+	 */
+	public Content addContent(ImagePlus image, int type, int res) {
+		int thr = Content.getDefaultThreshold(image, type);
+		return addContent(image, null, image.getTitle(), thr,
+			new boolean[] {true, true, true}, res, type);
+	}
+
+	/**
+	 * Add the specified image as a new Content to the universe. The specified
+	 * type is one of the constants defined in Content, e.g. VOLUME, SURFACE
+	 * etc. For meaning about color, threshold, channels, ... see the
+	 * documentation for Content.
+	 * Default parameters are used for its attributes:
+	 * <ul><li>color: null
+	 * <li>name: title of the image
+	 * <li>threshold: the default threshold, as returned by
+	 *                Content.getDefaultTreshold()
+	 * <li>channels: all color channels r, g, b
 	 * <li>resampling factor: the default resampling factor, as returned
 	 *                by Content.getDefaultResamplingFactor() </li>
 	 * </ul>
@@ -839,6 +862,23 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	 */
 	public Content addVoltex(ImagePlus image) {
 		return addContent(image, Content.VOLUME);
+	}
+
+	/**
+	 * Add a new image as a content, displaying it as a volume rendering.
+	 * Default parameters are used for its attributes:
+	 * <ul><li>color: null
+	 * <li>name: title of the image
+	 * <li>threshold: the default threshold, as returned by
+	 *                Content.getDefaultTreshold()
+	 * <li>channels: all color channels r, g, b
+	 * </ul>
+	 *
+	 * @param image the image to display
+	 * @return the Content which was added, null if any error occurred.
+	 */
+	public Content addVoltex(ImagePlus image, int res) {
+		return addContent(image, Content.VOLUME, res);
 	}
 
 	/**
@@ -882,6 +922,23 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 
 	/**
 	 * Add a new image as a content, displaying it as orthoslices.
+	 * Default parameters are used for its attributes:
+	 * <ul><li>color: null
+	 * <li>name: title of the image
+	 * <li>threshold: the default threshold, as returned by
+	 *                Content.getDefaultTreshold()
+	 * <li>channels: all color channels r, g, b
+	 * </ul>
+	 *
+	 * @param image the image to display
+	 * @return the Content which was added, null if any error occurred.
+	 */
+	public Content addOrthoslice(ImagePlus image, int res) {
+		return addContent(image, Content.ORTHO, res);
+	}
+
+	/**
+	 * Add a new image as a content, displaying it as orthoslices.
 	 * For the meaning of color, threshold, channels, resampling factor etc
 	 * see the documentation of Content.
 	 *
@@ -921,6 +978,23 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 
 	/**
 	 * Add a new image as a content, displaying it as a 2D surface plot.
+	 * Default parameters are used for its attributes:
+	 * <ul><li>color: null
+	 * <li>name: title of the image
+	 * <li>threshold: the default threshold, as returned by
+	 *                Content.getDefaultTreshold()
+	 * <li>channels: all color channels r, g, b
+	 * </ul>
+	 *
+	 * @param image the image to display
+	 * @return the Content which was added, null if any error occurred.
+	 */
+	public Content addSurfacePlot(ImagePlus image, int res) {
+		return addContent(image, Content.SURFACE_PLOT2D, res);
+	}
+
+	/**
+	 * Add a new image as a content, displaying it as a 2D surface plot.
 	 * For the meaning of color, threshold, channels, resampling factor etc
 	 * see the documentation of Content.
 	 *
@@ -956,6 +1030,23 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	 */
 	public Content addMesh(ImagePlus img) {
 		return addContent(img, Content.SURFACE);
+	}
+
+	/**
+	 * Add a new image as a content, displaying it as an isosurface.
+	 * Default parameters are used for its attributes:
+	 * <ul><li>color: null
+	 * <li>name: title of the image
+	 * <li>threshold: the default threshold, as returned by
+	 *                Content.getDefaultTreshold()
+	 * <li>channels: all color channels r, g, b
+	 * </ul>
+	 *
+	 * @param image the image to display
+	 * @return the Content which was added, null if any error occurred.
+	 */
+	public Content addMesh(ImagePlus img, int res) {
+		return addContent(img, Content.SURFACE, res);
 	}
 
 	/**

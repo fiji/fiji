@@ -14,7 +14,7 @@ build_ij () {
 	cp ij.jar ../ij-versions/$version/
 }
 
-cd "$(dirname "$0")"/../ImageJA &&
+cd "$(dirname "$0")"/../modules/ImageJA &&
 git checkout origin/imagej^0 &&
 cat > Fakefile << \EOF &&
 javaVersion=1.5

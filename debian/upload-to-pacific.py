@@ -42,13 +42,13 @@ def ssh( command, master=False, control_command=None ):
         options += [ "-N", "-f", "-o", "ControlMaster=yes" ]
     if control_command:
         options += [ "-O", control_command ]
-    full_command = ["ssh"]+options+["longair@pacific.mpi-cbg.de"]
+    full_command = ["ssh"]+options+["longair@fiji.sc"]
     if command:
         full_command.append(command)
     return 0 == call(full_command)
 
 def scp( src_paths, dst_path ):
-    return 0 == call(["scp","-i",ssh_identity_file,"-o","ControlPath="+ssh_control_file]+src_paths+["longair@pacific.mpi-cbg.de:"+shellquote(dst_path)])
+    return 0 == call(["scp","-i",ssh_identity_file,"-o","ControlPath="+ssh_control_file]+src_paths+["longair@fiji.sc:"+shellquote(dst_path)])
 
 # Just set up the control master:
 ssh( None, master=True )

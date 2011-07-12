@@ -38,7 +38,7 @@ MINGW*|CYGWIN*)
 esac
 
 test -z "$JAVA_HOME" &&
-JAVA_HOME="$("$CWD"/precompiled/fiji-"$platform" --print-java-home)"
+JAVA_HOME="$("$CWD"/precompiled/fiji-"$platform" --print-java-home 2> /dev/null)"
 
 if test ! -d "$JAVA_HOME"
 then

@@ -7,7 +7,9 @@ import javax.media.j3d.Background;
 import javax.vecmath.Color3f;
 
 import java.awt.event.MouseAdapter;
+import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionAdapter;
+import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -67,6 +69,8 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 			}
 		};
 		roiImageCanvas.removeKeyListener(ij.IJ.getInstance());
+		roiImageCanvas.removeMouseListener(roiImageCanvas);
+		roiImageCanvas.removeMouseMotionListener(roiImageCanvas);
 		roiImageCanvas.disablePopupMenu(true);
 
 		background = new Background(
@@ -74,8 +78,6 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 		background.setCapability(Background.ALLOW_COLOR_WRITE);
 
 		addListeners();
-		addMouseListener(roiImageCanvas);
-		addMouseMotionListener(roiImageCanvas);
 	}
 
 	public Background getBG() { //can't use getBackground()
@@ -87,7 +89,7 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 		render();
 	}
 
-	private void addListeners() {
+	void addListeners() {
 		addMouseMotionListener(new MouseMotionAdapter() {
 			public void mouseDragged(MouseEvent e) {
 				if(ui.isRoiTool())
@@ -125,6 +127,10 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 				}});
 			}
 		});
+	}
+
+	public ImageCanvas getRoiCanvas() {
+		return roiImageCanvas;
 	}
 
 	public Roi getRoi() {

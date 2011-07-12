@@ -1,19 +1,33 @@
 package amira;
 
-import ij.*;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.Macro;
+import ij.Menus;
+import ij.WindowManager;
+
 import ij.gui.GenericDialog;
+
 import ij.macro.Interpreter;
+
 import ij.measure.Calibration;
-import java.util.regex.*;
-import java.util.Properties;
-import java.util.Hashtable;
-import java.util.Vector;
-import java.util.Enumeration;
-import java.util.StringTokenizer;
-import java.awt.image.*;
+
+import java.awt.Frame;
 import java.awt.Menu;
 import java.awt.MenuBar;
-import java.awt.Frame;
+
+import java.awt.image.ColorModel;
+import java.awt.image.IndexColorModel;
+
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Properties;
+import java.util.StringTokenizer;
+import java.util.Vector;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /*
  * This class parses and writes the Parameters in Amira Files

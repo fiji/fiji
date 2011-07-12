@@ -133,35 +133,36 @@ public class Checksummer extends Progressable {
 		if (new File(realPath).exists()) try {
 			timestamp = Util.getTimestamp(realPath);
 			checksum = getDigest(path, realPath, timestamp);
+
+			PluginObject plugin = plugins.getPlugin(path);
+			if (plugin == null) {
+				if (checksum == null)
+					throw new RuntimeException("Tried to remove "
+						+ path + ", which is not known to Fiji");
+				if (fijiRoot == null) {
+					plugin = new PluginObject(null, path, checksum,
+							timestamp, Status.NOT_FIJI);
+					tryToGuessPlatform(plugin);
+				}
+				else {
+					plugin = new PluginObject(null, path, null, 0,
+							Status.OBSOLETE);
+					plugin.addPreviousVersion(checksum, timestamp);
+					// for re-upload
+					plugin.newChecksum = checksum;
+					plugin.newTimestamp = timestamp;
+				}
+				plugins.add(plugin);
+			}
+			else if (checksum != null) {
+				plugin.setLocalVersion(checksum, timestamp);
+				if (plugin.getStatus() == Status.OBSOLETE_UNINSTALLED)
+					plugin.setStatus(Status.OBSOLETE);
+			}
 		} catch (ZipException e) {
 			System.err.println("Problem digesting " + realPath);
 		} catch (Exception e) { e.printStackTrace(); }
 
-		PluginObject plugin = plugins.getPlugin(path);
-		if (plugin == null) {
-			if (checksum == null)
-				throw new RuntimeException("Tried to remove "
-					+ path + ", which is not known to Fiji");
-			if (fijiRoot == null) {
-				plugin = new PluginObject(null, path, checksum,
-						timestamp, Status.NOT_FIJI);
-				tryToGuessPlatform(plugin);
-			}
-			else {
-				plugin = new PluginObject(null, path, null, 0,
-						Status.OBSOLETE);
-				plugin.addPreviousVersion(checksum, timestamp);
-				// for re-upload
-				plugin.newChecksum = checksum;
-				plugin.newTimestamp = timestamp;
-			}
-			plugins.add(plugin);
-		}
-		else if (checksum != null) {
-			plugin.setLocalVersion(checksum, timestamp);
-			if (plugin.getStatus() == Status.OBSOLETE_UNINSTALLED)
-				plugin.setStatus(Status.OBSOLETE);
-		}
 		counter += (int)Util.getFilesize(realPath);
 		itemDone(path);
 		setCount(counter, total);
@@ -230,6 +231,7 @@ public class Checksummer extends Progressable {
 		{ "scripts" }, { ".py", ".rb", ".clj", ".js", ".bsh", ".m" },
 		{ "macros" }, { ".txt", ".ijm" },
 		{ "luts" }, { ".lut" },
+		{ "images" }, { ".png" },
 		{ "lib" }, { "" },
 		{ "mm" }, { "" },
 		{ "mmautofocus" }, { "" },

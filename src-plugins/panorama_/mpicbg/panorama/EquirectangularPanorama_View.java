@@ -281,7 +281,7 @@ public class EquirectangularPanorama_View implements PlugIn, KeyListener, MouseW
 		gd.addNumericField( "width : ", width, 0 );
 		gd.addNumericField( "height : ", height, 0 );
 		
-//		gd.addHelp( "http://pacific.mpi-cbg.de/wiki/index.php/Enhance_Local_Contrast_(CLAHE)" );
+//		gd.addHelp( "http://fiji.sc/wiki/index.php/Enhance_Local_Contrast_(CLAHE)" );
 		
 		gd.showDialog();
 		

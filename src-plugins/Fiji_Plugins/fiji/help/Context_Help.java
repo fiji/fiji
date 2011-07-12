@@ -8,7 +8,7 @@ import ij.plugin.BrowserLauncher;
 
 public class Context_Help extends MenuItemDiverter {
         public final static String url =
-                "http://pacific.mpi-cbg.de/wiki/index.php/";
+                "http://fiji.sc/wiki/index.php/";
 
 	protected String getTitle() {
 		return "Context Help";

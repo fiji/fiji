@@ -14,7 +14,7 @@ package trainableSegmentation;
  * - delete annotations with a shortkey
  * - change training image
  * - do probability output (accessible?) and define threshold
- * - put thread solution to wiki http://pacific.mpi-cbg.de/wiki/index.php/Developing_Fiji#Writing_plugins
+ * - put thread solution to wiki http://fiji.sc/wiki/index.php/Developing_Fiji#Writing_plugins
  * 
  * - give more feedback when classifier is trained or applied
  * 
@@ -100,11 +100,13 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.File;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JFileChooser;
 import javax.swing.SwingUtilities;
 
 import weka.classifiers.AbstractClassifier;
@@ -160,6 +162,8 @@ public class Trainable_Segmentation implements PlugIn
 	JButton resultButton;
 	/** apply classifier button */
 	JButton applyButton;
+	/** create probability image button */
+	JButton probimgButton;
 	/** load data button */
 	JButton loadDataButton;
 	/** save data button */
@@ -246,6 +250,10 @@ public class Trainable_Segmentation implements PlugIn
 		applyButton.setToolTipText("Load data and apply current classifier");
 		applyButton.setEnabled(false);
 		
+		probimgButton = new JButton ("Create probability image");
+		probimgButton.setToolTipText("Instead of creating a segmentation, create a multi-channel image containing the probabilities for each class");
+		probimgButton.setEnabled(false);
+
 		loadDataButton = new JButton ("Load data");
 		loadDataButton.setToolTipText("Load previous segmentation from an ARFF file");
 		
@@ -305,6 +313,9 @@ public class Trainable_Segmentation implements PlugIn
 					}
 					else if(e.getSource() == applyButton){
 						applyClassifierToTestData();
+					}
+					else if(e.getSource() == probimgButton){
+						createProbImgFromTestData();
 					}
 					else if(e.getSource() == loadDataButton){
 						loadTrainingData();
@@ -497,6 +508,7 @@ public class Trainable_Segmentation implements PlugIn
 			overlayButton.addActionListener(listener);
 			resultButton.addActionListener(listener);
 			applyButton.addActionListener(listener);
+			probimgButton.addActionListener(listener);
 			loadDataButton.addActionListener(listener);
 			saveDataButton.addActionListener(listener);
 			addClassButton.addActionListener(listener);
@@ -537,6 +549,8 @@ public class Trainable_Segmentation implements PlugIn
 			optionsJPanel.setLayout(optionsLayout);
 			
 			optionsJPanel.add(applyButton, optionsConstraints);
+			optionsConstraints.gridy++;
+			optionsJPanel.add(probimgButton, optionsConstraints);
 			optionsConstraints.gridy++;
 			optionsJPanel.add(loadDataButton, optionsConstraints);
 			optionsConstraints.gridy++;
@@ -617,6 +631,7 @@ public class Trainable_Segmentation implements PlugIn
 					overlayButton.removeActionListener(listener);
 					resultButton.removeActionListener(listener);
 					applyButton.removeActionListener(listener);
+					probimgButton.removeActionListener(listener);
 					loadDataButton.removeActionListener(listener);
 					saveDataButton.removeActionListener(listener);
 					addClassButton.removeActionListener(listener);
@@ -754,6 +769,7 @@ public class Trainable_Segmentation implements PlugIn
 			overlayButton.setEnabled(s);
 			resultButton.setEnabled(s);
 			applyButton.setEnabled(s);
+			probimgButton.setEnabled(s);
 			loadDataButton.setEnabled(s);
 			saveDataButton.setEnabled(s);
 			addClassButton.setEnabled(s);
@@ -858,7 +874,7 @@ public class Trainable_Segmentation implements PlugIn
 		
 		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 		for (int i=1; i<=featureStack.getSize(); i++){
-			String attString = featureStack.getSliceLabel(i) + " numeric";
+			String attString = featureStack.getSliceLabel(i);
 			attributes.add(new Attribute(attString));
 		}
 		
@@ -944,7 +960,7 @@ public class Trainable_Segmentation implements PlugIn
 									trainingData.add(new DenseInstance(1.0, values));
 									// increase number of instances for this class
 									nl ++;
-								}						
+								}																
 								x += dy;
 								y += dx;
 							} while (--n2>0);
@@ -1005,7 +1021,7 @@ public class Trainable_Segmentation implements PlugIn
 		if(featureStack.isEmpty())
 		{
 			IJ.showStatus("Creating feature stack...");
-			featureStack.addDefaultFeatures();
+			featureStack.updateFeaturesMT();
 		}
 		
 
@@ -1064,7 +1080,7 @@ public class Trainable_Segmentation implements PlugIn
 
 		IJ.log("Classifying whole image...");
 
-		classifiedImage = applyClassifier(wholeImageData, trainingImage.getWidth(), trainingImage.getHeight());
+		classifiedImage = applyClassifier(wholeImageData, trainingImage.getWidth(), trainingImage.getHeight(), Runtime.getRuntime().availableProcessors());
 
 		IJ.log("Finished segmentation of whole image.");
 		
@@ -1073,6 +1089,7 @@ public class Trainable_Segmentation implements PlugIn
 			overlayButton.setEnabled(true);
 			resultButton.setEnabled(true);
 			applyButton.setEnabled(true);
+			probimgButton.setEnabled(true);
 			showColorOverlay = false;
 			toggleOverlay();
 			setButtonsEnabled(true);
@@ -1115,28 +1132,32 @@ public class Trainable_Segmentation implements PlugIn
 	 * @param data set of instances
 	 * @param w image width
 	 * @param h image height
+	 * @param numThreads number of threads to create
+	 * @param prob create a multi-channel probability image
 	 * @return result image
 	 */
-	public ImagePlus applyClassifier(final Instances data, int w, int h)
+	public ImagePlus applyClassifier(final Instances data,
+	                                 final int w, final int h,
+	                                 final int numThreads)
 	{
+		IJ.log("Applying classifier in " + numThreads + " threads...");
 		IJ.showStatus("Classifying image...");
 						
 		final long start = System.currentTimeMillis();
 
-		final int numOfProcessors = Runtime.getRuntime().availableProcessors();
-		final ExecutorService exe = Executors.newFixedThreadPool(numOfProcessors);
-		final double[][] results = new double[numOfProcessors][];
-		final Instances[] partialData = new Instances[numOfProcessors];
-		final int partialSize = data.numInstances() / numOfProcessors;
-		Future<double[]> fu[] = new Future[numOfProcessors];
+		final ExecutorService exe = Executors.newFixedThreadPool(numThreads);
+		final double[][] results = new double[numThreads][];
+		final Instances[] partialData = new Instances[numThreads];
+		final int partialSize = data.numInstances() / numThreads;
+		Future<double[]> fu[] = new Future[numThreads];
 		
 		final AtomicInteger counter = new AtomicInteger();
 		
 		//IJ.log("Dividing dataset into subsets for parallel execution...");
 		
-		for(int i = 0; i<numOfProcessors; i++)
+		for(int i = 0; i<numThreads; i++)
 		{
-			if(i == numOfProcessors-1)
+			if(i == numThreads-1)
 				partialData[i] = new Instances(data, i*partialSize, data.numInstances()-i*partialSize);
 			else
 				partialData[i] = new Instances(data, i*partialSize, partialSize);
@@ -1154,7 +1175,7 @@ public class Trainable_Segmentation implements PlugIn
 		//IJ.log("Waiting for jobs...");
 		
 		// Join threads
-		for(int i = 0; i<numOfProcessors; i++)
+		for(int i = 0; i<numThreads; i++)
 		{
 			try {
 				results[i] = fu[i].get();
@@ -1179,7 +1200,7 @@ public class Trainable_Segmentation implements PlugIn
 		
 		// Create final array
 		double[] classificationResult = new double[data.numInstances()];
-		for(int i = 0; i<numOfProcessors; i++)
+		for(int i = 0; i<numThreads; i++)
 			System.arraycopy(results[i], 0, classificationResult, i*partialSize, results[i].length);
 			
 		
@@ -1192,6 +1213,99 @@ public class Trainable_Segmentation implements PlugIn
 		classifiedImageProcessor.convertToByte(true);
 		ImagePlus classImg = new ImagePlus("Classification result", classifiedImageProcessor);
 		return classImg;
+	}
+	
+	/**
+	 * Apply current classifier to set of instances to get a probability
+	 * distribution.
+	 *
+	 * @param data set of instances
+	 * @param w image width
+	 * @param h image height
+	 * @param numThreads number of threads to be used
+	 * @return result image
+	 */
+	public ImagePlus[] getClassifierDistribution(final Instances data,
+	                                             int w, int h,
+	                                             final int numThreads)
+	{
+		IJ.log("Calculating probability distribution in " + numThreads + " threads...");
+
+		final long start = System.currentTimeMillis();
+
+		final ExecutorService exe = Executors.newFixedThreadPool(numThreads);
+		final double[][][] results = new double[numThreads][][];
+		final Instances[] partialData = new Instances[numThreads];
+		final int partialSize = data.numInstances() / numThreads;
+		Future<double[][]> fu[] = new Future[numThreads];
+		
+		final AtomicInteger counter = new AtomicInteger();
+		
+		//IJ.log("Dividing dataset into subsets for parallel execution...");
+		
+		for(int i = 0; i<numThreads; i++)
+		{
+			if(i == numThreads-1)
+				partialData[i] = new Instances(data, i*partialSize, data.numInstances()-i*partialSize);
+			else
+				partialData[i] = new Instances(data, i*partialSize, partialSize);
+			
+			fu[i] = exe.submit(probFromInstances(partialData[i], classifier, counter));
+		}
+		
+		ScheduledExecutorService monitor = Executors.newScheduledThreadPool(1);
+		ScheduledFuture task = monitor.scheduleWithFixedDelay(new Runnable() {
+			public void run() {
+				IJ.showProgress(counter.get(), data.numInstances());
+			}
+		}, 0, 1, TimeUnit.SECONDS);
+		
+		//IJ.log("Waiting for jobs...");
+		
+		// Join threads
+		for(int i = 0; i<numThreads; i++)
+		{
+			try {
+				results[i] = fu[i].get();
+			} catch (InterruptedException e) {
+				IJ.log("Interruption exception");
+				e.printStackTrace();
+				return null;
+			} catch (ExecutionException e) {
+				IJ.log("Execution exception");
+				e.printStackTrace();
+				return null;
+			} finally {
+				exe.shutdown();
+				task.cancel(true);
+				monitor.shutdownNow();
+				IJ.showProgress(1);
+			}
+		}
+		
+		
+		exe.shutdown();
+		
+		// Create final array
+		double[][] probDistribution = new double[numOfClasses][data.numInstances()];
+		for (int c = 0; c < numOfClasses; c++)
+			for (int i = 0; i < numThreads; i++)
+				System.arraycopy(results[i][c], 0, probDistribution[c], i*partialSize, results[i][c].length);
+			
+		
+		IJ.showProgress(1.0);
+		final long end = System.currentTimeMillis();
+		IJ.log("Probability distribution for whole image data took: " + (end-start) + "ms");
+
+		IJ.showStatus("Displaying result...");
+
+		ImagePlus[] classImgs = new ImagePlus[numOfClasses];
+		for(int c = 0; c<numOfClasses; c++) {
+			final ImageProcessor classifiedImageProcessor = new FloatProcessor(w, h, probDistribution[c]);
+			classifiedImageProcessor.convertToByte(true);
+			classImgs[c] = new ImagePlus("Classification result", classifiedImageProcessor);
+		}
+		return classImgs;
 	}
 	
 	/**
@@ -1226,7 +1340,41 @@ public class Trainable_Segmentation implements PlugIn
 		
 	}
 	
-
+	/**
+	 * Get probability distribution for classified instance concurrently
+	 * @param data classified set of instances
+	 * @param classifier current classifier
+	 * @return classification result
+	 */
+	private static Callable<double[][]> probFromInstances(
+			final Instances data, 
+			final AbstractClassifier classifier,
+			final AtomicInteger counter)
+	{
+		return new Callable<double[][]>(){
+			public double[][] call(){
+				final int numInstances = data.numInstances();
+				final int numOfClasses = data.numClasses();
+				final double[][] probabilityDistribution = new double[numOfClasses][numInstances];
+				for (int i=0; i<numInstances; i++)
+				{
+					try{
+						if (0 == i % 4000) counter.addAndGet(4000);
+						double[] probs = classifier.distributionForInstance(data.instance(i));
+						for (int c = 0; c < numOfClasses; c++)
+							probabilityDistribution[c][i] = probs[c];
+					}catch(Exception e){
+						IJ.showMessage("Could not apply Classifier!");
+						e.printStackTrace();
+						return null;
+					}
+				}
+				return probabilityDistribution;
+			}
+		};
+		
+	}
+	
 	/**
 	 * Toggle between overlay and original image with markings
 	 */
@@ -1322,15 +1470,215 @@ public class Trainable_Segmentation implements PlugIn
 	 */
 	public void applyClassifierToTestData()
 	{
-		ImagePlus testImage = IJ.openImage();
-		if (null == testImage) return; // user canceled open dialog
+		// array of files to process
+		File[] imageFiles;
+
+		// create a file chooser for the image files
+		JFileChooser fileChooser = new JFileChooser("/home/jan/workspace/mpi/yolk/data/downsampled/2010-04-02 histon");
+		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		fileChooser.setMultiSelectionEnabled(true);
+
+		// get selected files or abort if no file has been selected
+		int returnVal = fileChooser.showOpenDialog(null);
+		if(returnVal == JFileChooser.APPROVE_OPTION) {
+			imageFiles = fileChooser.getSelectedFiles();
+		} else {
+			return;
+		}
+
+		boolean showResults = true;
+		boolean storeResults = false;
+
+		if (imageFiles.length >= 3) {
+
+			int decision = JOptionPane.showConfirmDialog(null, "You decided to process three or more image files. Do you want the results to be stored on the disk instead of opening them in Fiji?", "Save results?", JOptionPane.YES_NO_OPTION);
+
+			if (decision == JOptionPane.YES_OPTION) {
+				showResults  = false;
+				storeResults = true;
+			}
+		}
+
+		final int numProcessors = Runtime.getRuntime().availableProcessors();
+
+		IJ.log("Processing " + imageFiles.length + " image files in " + numProcessors + " threads....");
 
 		setButtonsEnabled(false);
 
-		applyClassifierToTestImage(testImage).show();
-		testImage.show();
+		Thread[] threads = new Thread[numProcessors];
+
+		class ImageProcessingThread extends Thread {
+
+			final int     numThread;
+			final int     numProcessors;
+			final int     numFurtherThreads;
+			final File[]  imageFiles;
+			final boolean storeResults;
+			final boolean showResults;
+
+			public ImageProcessingThread(int numThread, int numProcessors, int numFurtherThreads,
+			                             File[] imageFiles,
+			                             boolean storeResults, boolean showResults) {
+				this.numThread         = numThread;
+				this.numProcessors     = numProcessors;
+				this.numFurtherThreads = numFurtherThreads;
+				this.imageFiles        = imageFiles;
+				this.storeResults      = storeResults;
+				this.showResults       = showResults;
+			}
+
+			public void run() {
+
+				for (int i = numThread; i < imageFiles.length; i += numProcessors) {
+
+					File file = imageFiles[i];
+
+					ImagePlus testImage = IJ.openImage(file.getPath());
+
+					IJ.log("Processing image " + file.getName() + " in thread " + numThread);
+
+					ImagePlus segmentation = applyClassifierToTestImage(testImage, numFurtherThreads);
+
+					if (showResults) {
+						segmentation.show();
+						testImage.show();
+					}
+
+					if (storeResults) {
+						IJ.save(segmentation, file.getPath() + "seg.tif");
+						segmentation.close();
+						testImage.close();
+					}
+				}
+			}
+		}
+
+		final int numFurtherThreads = Math.max(1, (numProcessors - imageFiles.length)/imageFiles.length + 1);
+
+		// start threads
+		for (int i = 0; i < numProcessors; i++) {
+
+			threads[i] = new ImageProcessingThread(i, numProcessors, numFurtherThreads, imageFiles, storeResults, showResults);
+			threads[i].start();
+		}
+
+		// join all threads
+		for (Thread thread : threads) {
+			try {
+				thread.join();
+			} catch (InterruptedException e) {}
+		}
 		
 		setButtonsEnabled(true);
+	}
+
+	/**
+	 * Apply classifier to a set of images and create a multi-channel
+	 * probability distribution image.
+	 */
+	public void createProbImgFromTestData() {
+
+		// array of files to process
+		File[] imageFiles;
+
+		// create a file chooser for the image files
+		JFileChooser fileChooser = new JFileChooser("/home/jan/workspace/mpi/yolk/data/downsampled/2010-04-02 histon");
+		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		fileChooser.setMultiSelectionEnabled(true);
+
+		// get selected files or abort if no file has been selected
+		int returnVal = fileChooser.showOpenDialog(null);
+		if(returnVal == JFileChooser.APPROVE_OPTION) {
+			imageFiles = fileChooser.getSelectedFiles();
+		} else {
+			return;
+		}
+
+		boolean showResults = true;
+		boolean storeResults = false;
+
+		if (imageFiles.length >= 3) {
+
+			int decision = JOptionPane.showConfirmDialog(null, "You decided to process three or more image files. Do you want the results to be stored on the disk instead of opening them in Fiji?", "Save results?", JOptionPane.YES_NO_OPTION);
+
+			if (decision == JOptionPane.YES_OPTION) {
+				showResults  = false;
+				storeResults = true;
+			}
+		}
+
+		final int numProcessors = Runtime.getRuntime().availableProcessors();
+
+		IJ.log("Processing " + imageFiles.length + " image files in " + numProcessors + " threads....");
+
+		setButtonsEnabled(false);
+
+		Thread[] threads = new Thread[numProcessors];
+
+		class ImageProcessingThread extends Thread {
+
+			final int     numThread;
+			final int     numProcessors;
+			final int     numFurtherThreads;
+			final File[]  imageFiles;
+			final boolean storeResults;
+			final boolean showResults;
+
+			public ImageProcessingThread(int numThread, int numProcessors, int numFurtherThreads,
+			                             File[] imageFiles,
+			                             boolean storeResults, boolean showResults) {
+				this.numThread         = numThread;
+				this.numProcessors     = numProcessors;
+				this.numFurtherThreads = numFurtherThreads;
+				this.imageFiles        = imageFiles;
+				this.storeResults      = storeResults;
+				this.showResults       = showResults;
+			}
+
+			public void run() {
+
+				for (int i = numThread; i < imageFiles.length; i += numProcessors) {
+
+					File file = imageFiles[i];
+
+					ImagePlus testImage = IJ.openImage(file.getPath());
+
+					IJ.log("Processing image " + file.getName() + " in thread " + numThread);
+
+					ImagePlus probImage = createProbImgFromTestData(testImage, numFurtherThreads);
+
+					if (showResults) {
+						probImage.show();
+						testImage.show();
+					}
+
+					if (storeResults) {
+						IJ.save(probImage, file.getPath() + "prob.tif");
+						probImage.close();
+						testImage.close();
+					}
+				}
+			}
+		}
+
+		final int numFurtherThreads = Math.max(1, (numProcessors - imageFiles.length)/imageFiles.length + 1);
+
+		// start threads
+		for (int i = 0; i < numProcessors; i++) {
+
+			threads[i] = new ImageProcessingThread(i, numProcessors, numFurtherThreads, imageFiles, storeResults, showResults);
+			threads[i].start();
+		}
+
+		// join all threads
+		for (Thread thread : threads) {
+			try {
+				thread.join();
+			} catch (InterruptedException e) {}
+		}
+		
+		setButtonsEnabled(true);
+
 	}
 
 	/**
@@ -1339,8 +1687,9 @@ public class Trainable_Segmentation implements PlugIn
 	 * @param testImage test image (2D single image or stack)
 	 * @return result image (classification)
 	 */
-	public ImagePlus applyClassifierToTestImage(ImagePlus testImage)
+	public ImagePlus applyClassifierToTestImage(final ImagePlus testImage, final int numThreads)
 	{		
+		IJ.log("Processing slices of " + testImage.getTitle() + " in " + numThreads + " threads...");
 		// Set proper class names (skip empty list ones)
 		ArrayList<String> classNames = new ArrayList<String>();
 		if( null == loadedClassNames )
@@ -1352,29 +1701,190 @@ public class Trainable_Segmentation implements PlugIn
 		else
 			classNames = loadedClassNames;
 		
-		final ImageStack classified = new ImageStack(testImage.getWidth(), testImage.getHeight());
+		final ImagePlus[] classifiedSlices = new ImagePlus[testImage.getStackSize()];
 		
-		for(int i=1; i<=testImage.getStackSize(); i++)
-		{
-			final ImagePlus testSlice = new ImagePlus(testImage.getImageStack().getSliceLabel(i), testImage.getImageStack().getProcessor(i).convertToByte(true));
-			// Create feature stack for test image
-			IJ.showStatus("Creating features for test image...");
-			IJ.log("Creating features for test image " + i +  "...");
-			final FeatureStack testImageFeatures = new FeatureStack(testSlice);
-			// Use the same features as the current classifier
-			testImageFeatures.setEnableFeatures(featureStack.getEnableFeatures());
-			testImageFeatures.updateFeatures();
+		class ApplyClassifierThread extends Thread {
 
-			final Instances testData = testImageFeatures.createInstances(classNames);
-			testData.setClassIndex(testData.numAttributes() - 1);
+			final int startSlice;
+			final int numSlices;
+			final int numFurtherThreads;
+			final ArrayList<String> classNames;
 
-			final ImagePlus testClassImage = applyClassifier(testData, testSlice.getWidth(), testSlice.getHeight());
-			testClassImage.setTitle("classified_" + testSlice.getTitle());
-			testClassImage.setProcessor(testClassImage.getProcessor().convertToByte(true).duplicate());
-			classified.addSlice(testClassImage.getTitle(), testClassImage.getProcessor());
+			public ApplyClassifierThread(int startSlice, int numSlices, int numFurtherThreads, ArrayList<String> classNames) {
+
+				this.startSlice        = startSlice;
+				this.numSlices         = numSlices;
+				this.numFurtherThreads = numFurtherThreads;
+				this.classNames        = classNames;
+			}
+
+			public void run() {
+
+				for (int i = startSlice; i < startSlice + numSlices; i++)
+				{
+					final ImagePlus testSlice = new ImagePlus(testImage.getImageStack().getSliceLabel(i), testImage.getImageStack().getProcessor(i).convertToByte(true));
+					// Create feature stack for test image
+					IJ.showStatus("Creating features...");
+					IJ.log("Creating features for slice " + i +  "...");
+					final FeatureStack testImageFeatures = new FeatureStack(testSlice);
+					// Use the same features as the current classifier
+					testImageFeatures.setEnabledFeatures(featureStack.getEnabledFeatures());
+					testImageFeatures.updateFeaturesMT();
+
+					final Instances testData = testImageFeatures.createInstances(classNames);
+					testData.setClassIndex(testData.numAttributes() - 1);
+
+					final ImagePlus testClassImage = applyClassifier(testData, testSlice.getWidth(), testSlice.getHeight(), numFurtherThreads);
+					testClassImage.setTitle("classified_" + testSlice.getTitle());
+					testClassImage.setProcessor(testClassImage.getProcessor().convertToByte(true).duplicate());
+					classifiedSlices[i-1] = testClassImage;
+				}
+			}
+
 		}
+
+		final int numFurtherThreads = Math.max(1, (numThreads - testImage.getStackSize())/testImage.getStackSize() + 1);
+		final ApplyClassifierThread[] threads = new ApplyClassifierThread[numThreads];
+
+		int numSlices  = testImage.getStackSize()/numThreads;
+		for (int i = 0; i < numThreads; i++) {
+
+			int startSlice = i*numSlices + 1;
+			// last thread takes all the remaining slices
+			if (i == numThreads - 1)
+				numSlices = testImage.getStackSize() - (numThreads - 1)*(testImage.getStackSize()/numThreads);
+
+			IJ.log("Starting thread " + i + " processing " + numSlices + " slices, starting with " + startSlice);
+			threads[i] = new ApplyClassifierThread(startSlice, numSlices, numFurtherThreads, classNames);
+
+			threads[i].start();
+		}
+
+		// create classified image
+		final ImageStack classified = new ImageStack(testImage.getWidth(), testImage.getHeight());
+
+		// join threads
+		for(Thread thread : threads)
+			try {
+				thread.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+		// assamble classified image
+		for (int i = 0; i < testImage.getStackSize(); i++)
+			classified.addSlice(classifiedSlices[i].getTitle(), classifiedSlices[i].getProcessor());
 		
 		return new ImagePlus("Classification result", classified);
+	}
+
+	/**
+	 * Create multi-channel probability distribution image from image
+	 * 
+	 * @param testImage test image (2D single image or stack)
+	 * @param numThreads number of threads to be used
+	 * @return result image (probability distribution)
+	 */
+	public ImagePlus createProbImgFromTestData(final ImagePlus testImage, final int numThreads)
+	{		
+		IJ.log("Processing slices of " + testImage.getTitle() + " in " + numThreads + " threads...");
+		// Set proper class names (skip empty list ones)
+		ArrayList<String> classNames = new ArrayList<String>();
+		if( null == loadedClassNames )
+		{
+			for(int i = 0; i < numOfClasses; i++)
+				if(examples[i].size() > 0)
+					classNames.add(classLabels[i]);
+		}
+		else
+			classNames = loadedClassNames;
+
+
+		final int numFurtherThreads = Math.max(1, (numThreads - testImage.getStackSize())/testImage.getStackSize() + 1);
+
+		final ImagePlus[] probSlices = new ImagePlus[testImage.getStackSize()*numOfClasses];
+		
+		class ProbImageThread extends Thread {
+
+			final int startSlice;
+			final int numSlices;
+			final int numFurtherThreads;
+			final ArrayList<String> classNames;
+
+			public ProbImageThread(int startSlice, int numSlices, int numFurtherThreads, ArrayList<String> classNames) {
+
+				this.startSlice        = startSlice;
+				this.numSlices         = numSlices;
+				this.numFurtherThreads = numFurtherThreads;
+				this.classNames        = classNames;
+			}
+
+			public void run() {
+
+				for (int i = startSlice; i < startSlice + numSlices; i++)
+				{
+					final ImagePlus testSlice = new ImagePlus(testImage.getImageStack().getSliceLabel(i),
+					                                          testImage.getImageStack().getProcessor(i).convertToByte(true));
+					// Create feature stack for test image
+					IJ.showStatus("Creating features for test image...");
+					IJ.log("Creating features for test image " + i +  "...");
+					final FeatureStack testImageFeatures = new FeatureStack(testSlice);
+					// Use the same features as the current classifier
+					testImageFeatures.setEnabledFeatures(featureStack.getEnabledFeatures());
+					testImageFeatures.updateFeatures();
+	
+					final Instances testData = testImageFeatures.createInstances(classNames);
+					testData.setClassIndex(testData.numAttributes() - 1);
+	
+					final ImagePlus[] testClassImages = getClassifierDistribution(testData,
+					                                                              testSlice.getWidth(), testSlice.getHeight(),
+					                                                              numFurtherThreads);
+	
+					for (int c = 0; c < numOfClasses; c++)
+						probSlices[(i-1)*numOfClasses + c] = testClassImages[c];
+				}
+			}
+
+		}
+
+		final ProbImageThread[] threads = new ProbImageThread[numThreads];
+
+		int numSlices  = testImage.getStackSize()/numThreads;
+		for (int i = 0; i < numThreads; i++) {
+
+			int startSlice = i*numSlices + 1;
+			// last thread takes all the remaining slices
+			if (i == numThreads - 1)
+				numSlices = testImage.getStackSize() - (numThreads - 1)*(testImage.getStackSize()/numThreads);
+
+			IJ.log("Starting thread " + i + " processing " + numSlices + " slices, starting with " + startSlice);
+			threads[i] = new ProbImageThread(startSlice, numSlices, numFurtherThreads, classNames);
+
+			threads[i].start();
+		}
+
+		// create probability image
+		final ImageStack probStack = new ImageStack(testImage.getWidth(), testImage.getHeight());
+
+		// join all threads
+		for (Thread thread : threads) {
+			try {
+				thread.join();
+			} catch (InterruptedException e) {}
+		}
+
+		// assamble probability image
+		for (int i = 0; i < testImage.getStackSize()*numOfClasses; i++)
+			probStack.addSlice(probSlices[i].getTitle(), probSlices[i].getProcessor().convertToByte(true).duplicate());
+
+
+		ImagePlus probImage = new ImagePlus("Class probability image", probStack);
+		probImage.setDimensions(numOfClasses,
+		                        testImage.getNSlices(),
+		                        testImage.getNFrames());
+		probImage.setOpenAsHyperStack(true);
+
+		return probImage;
 	}
 
 	/**
@@ -1409,7 +1919,7 @@ public class Trainable_Segmentation implements PlugIn
 		if(featureStack.getSize() < 2)
 		{
 			setButtonsEnabled(false);
-			featureStack.updateFeatures();
+			featureStack.updateFeaturesMT();
 			setButtonsEnabled(true);
 		}
 
@@ -1501,7 +2011,7 @@ public class Trainable_Segmentation implements PlugIn
 	{
 		GenericDialogPlus gd = new GenericDialogPlus("Segmentation settings");
 		
-		final boolean[] oldEnableFeatures = this.featureStack.getEnableFeatures();
+		final boolean[] oldEnableFeatures = this.featureStack.getEnabledFeatures();
 		
 		gd.addMessage("Training features:");
 		final int rows = (int)Math.round(FeatureStack.availableFeatures.length/2.0);
@@ -1516,8 +2026,6 @@ public class Trainable_Segmentation implements PlugIn
 		}
 		
 		gd.addMessage("General options:");
-		//FIXME normalization
-		//gd.addCheckbox("Normalize data", this.featureStack.isNormalized());
 		
 		gd.addMessage("Fast Random Forest settings:");
 		gd.addNumericField("Number of trees:", numOfTrees, 0);
@@ -1530,7 +2038,7 @@ public class Trainable_Segmentation implements PlugIn
 		gd.addMessage("Advanced options:");
 		gd.addButton("Save feature stack", new ButtonListener("Select location to save feature stack", featureStack));
 		gd.addSlider("Result overlay opacity", 0, 100, overlayOpacity);
-		gd.addHelp("http://pacific.mpi-cbg.de/wiki/Trainable_Segmentation_Plugin");
+		gd.addHelp("http://fiji.sc/wiki/Trainable_Segmentation_Plugin");
 		
 		gd.showDialog();
 		
@@ -1550,10 +2058,6 @@ public class Trainable_Segmentation implements PlugIn
 			if (newEnableFeatures[i] != oldEnableFeatures[i])
 				featuresChanged = true;
 		}
-		//FIXME normalization
-		// Normalization
-		//final boolean normalize = gd.getNextBoolean();
-		final boolean normalize = false;
 		
 		// Read fast random forest parameters and check if changed
 		final int newNumTrees = (int) gd.getNextNumber();
@@ -1606,12 +2110,11 @@ public class Trainable_Segmentation implements PlugIn
 			updateClassifier(newNumTrees, newRandomFeatures);
 		
 		// Update feature stack if necessary
-		if(featuresChanged || normalize != this.featureStack.isNormalized())
+		if(featuresChanged)
 		{
 			this.setButtonsEnabled(false);
-			this.featureStack.setNormalize(normalize);
-			this.featureStack.setEnableFeatures(newEnableFeatures);
-			this.featureStack.updateFeatures();
+			this.featureStack.setEnabledFeatures(newEnableFeatures);
+			this.featureStack.updateFeaturesMT();
 			this.setButtonsEnabled(true);
 			// Force whole data to be updated
 			updateWholeData = true;
@@ -1777,7 +2280,7 @@ public class Trainable_Segmentation implements PlugIn
 		IJ.log("Loaded data: " + loadedTrainingData.numInstances() + " instances, " + loadedTrainingData.numAttributes() + " attributes.");
 		
 		boolean featuresChanged = false;
-		final boolean[] oldEnableFeatures = this.featureStack.getEnableFeatures();
+		final boolean[] oldEnableFeatures = this.featureStack.getEnabledFeatures();
 		// Read checked features and check if any of them chasetButtonsEnablednged
 		for(int i = 0; i < numFeatures; i++)
 		{
@@ -1788,8 +2291,8 @@ public class Trainable_Segmentation implements PlugIn
 		if(featuresChanged)
 		{
 			this.setButtonsEnabled(false);
-			this.featureStack.setEnableFeatures(usedFeatures);
-			this.featureStack.updateFeatures();
+			this.featureStack.setEnabledFeatures(usedFeatures);
+			this.featureStack.updateFeaturesMT();
 			this.setButtonsEnabled(true);
 			// Force whole data to be updated
 			updateWholeData = true;

@@ -2,7 +2,7 @@
 
 # <property
 #    name="jnlp"
-#    value="http://pacific.mpi-cbg.de/webstart/fiji/plugins/VIB_.jar"/>
+#    value="http://fiji.sc/webstart/fiji/plugins/VIB_.jar"/>
 
 mode=current
 RELATIVE_PATH="webstart/fiji"
@@ -16,7 +16,7 @@ case "$1" in
 esac
 
 FIJIPATH="/var/www/$RELATIVE_PATH"
-CODEBASE="http://pacific.mpi-cbg.de/$RELATIVE_PATH"
+CODEBASE="http://fiji.sc/$RELATIVE_PATH"
 EXCLUDES="plugins/Fiji_Updater.jar"
 
 plugins=
@@ -44,7 +44,7 @@ for jar in $(case "$mode" in
 		find plugins jars -name \*.jar
 		;;
 	updater)
-		./fiji --jar plugins/Fiji_Updater.jar --list-current |
+		./fiji --update list-current |
 		grep -e '^plugins/' -e '^jars/' |
 		sed -n -e 's|^|/var/www/update/|' -e '/\.jar-/p'
 		;;
@@ -85,14 +85,14 @@ zip -9r configs.jar plugins.config class.map
 files="$files configs.jar"
 plugins="$plugins $CODEBASE/configs.jar"
 
-test -e ImageJA/.git/jarsignerrc && (
-	cd ImageJA &&
+test -e modules/ImageJA/.git/jarsignerrc && (
+	cd modules/ImageJA &&
 	for jar in $files
 	do
 		set_target $jar &&
 		if test $jar = ${jar#/}
 		then
-			jar=../$jar
+			jar=../../$jar
 		fi &&
 		if test -f $FIJIPATH/$target &&
 			test ! $jar -nt $FIJIPATH/$target
@@ -125,9 +125,9 @@ cat > $outpath << EOF
     <information>
 	<title>Fiji via Web Start</title>
 	<vendor>Fiji development team</vendor>
-	<homepage href="http://pacific.mpi-cbg.de/wiki/index.php/Main_Page"/>
+	<homepage href="http://fiji.sc/wiki/index.php/Main_Page"/>
 	<description>ImageJ based image processing platform</description>
-	<icon href="http://pacific.mpi-cbg.de/fiji.png"/>
+	<icon href="http://fiji.sc/fiji.png"/>
 	<offline-allowed/>
       </information>
 

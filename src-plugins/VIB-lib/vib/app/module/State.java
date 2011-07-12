@@ -86,7 +86,7 @@ public class State {
 		int dot = fileName.lastIndexOf('.');
 		if (dot >= 0)
 			fileName = fileName.substring(0, dot);
-		return fileName;
+		return fileName.replace(' ', '_');
 	}
 
 	public String getChannelName(int channel) {

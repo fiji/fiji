@@ -62,6 +62,9 @@ public class Volume {
 	/** Flag indicating that the channels should be averaged */
 	protected boolean average = false;
 
+	/** Flag indicating that channels should be saturated */
+	protected boolean saturatedVolumeRendering = false;
+
 	/** Channels in RGB images which should be loaded */
 	protected boolean[] channels = new boolean[] {true, true, true};
 
@@ -224,6 +227,28 @@ public class Volume {
 	}
 
 	/**
+	 * If true, saturate the channels of RGB images; the RGB values
+	 * of each pixels are scaled so that at least one of the values is
+	 * 255, the alpha value is the average of the original RGB values.
+	 * @return true if the value for 'saturatedVolumeRendering' has changed
+	 */
+	public boolean setSaturatedVolumeRendering(boolean b) {
+		if(this.saturatedVolumeRendering != b) {
+			this.saturatedVolumeRendering = b;
+			initLoader();
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Returns whether if saturatedVolumeRendering is set to true.
+	 */
+	public boolean isSaturatedVolumeRendering() {
+		return saturatedVolumeRendering;
+	}
+
+	/**
 	 * Copies the current color table into the given array.
 	 */
 	public void getRedLUT(int[] lut) {
@@ -269,7 +294,7 @@ public class Volume {
 
 	/**
 	 * Set the lookup tables for this volume. Returns
-	 * true if the data type of the textures has changed.
+	 * true if the data type of the textures have changed.
 	 */
 	public boolean setLUTs(int[] r, int[] g, int[] b, int[] a) {
 		this.rLUT = r;
@@ -292,7 +317,7 @@ public class Volume {
 			throw new RuntimeException("No image. Maybe it is swapped?");
 
 		if(dataType == INT_DATA) {
-			loader = new IntLoader(image);
+			loader = saturatedVolumeRendering ? new SaturatedIntLoader(image) : new IntLoader(image);
 			return;
 		}
 
@@ -482,10 +507,11 @@ public class Volume {
 			return image.get(x, y, z);
 		}
 
-		private int[] color = new int[3];
-		public final int loadWithLUT(int x, int y, int z) {
+		protected int[] color = new int[3];
+		public int loadWithLUT(int x, int y, int z) {
 			image.get(x, y, z, color);
 			int sum = 0, av = 0, v = 0;
+			
 			if(channels[0]) { int r = rLUT[color[0]]; sum++; av += color[0]; v += (r << 16); }
 			if(channels[1]) { int g = gLUT[color[1]]; sum++; av += color[1]; v += (g << 8); }
 			if(channels[2]) { int b = bLUT[color[2]]; sum++; av += color[2]; v += b; }
@@ -503,6 +529,34 @@ public class Volume {
 					y >= 0 && y < yDim && z > 0 && z < zDim) {
 				this.setNoCheck(x, y, z, v);
 			}
+		}
+	}
+	
+	protected class SaturatedIntLoader extends IntLoader {
+		
+		protected SaturatedIntLoader(Img imp) {
+			super(imp);
+		}
+		
+		@Override
+		public final int loadWithLUT(int x, int y, int z) {
+			image.get(x, y, z, color);
+			
+			int sum = 0, av = 0, r = 0, g = 0, b = 0;
+			if(channels[0]) { r = rLUT[color[0]]; sum++; av += color[0]; }
+			if(channels[1]) { g = gLUT[color[1]]; sum++; av += color[1]; }
+			if(channels[2]) { b = bLUT[color[2]]; sum++; av += color[2]; }
+
+			av /= sum;
+			
+			final int maxC = Math.max(r, Math.max(g, b));
+			final float scale = maxC == 0 ? 0 : 255.0f / maxC;
+			
+			r = Math.min(255, Math.round(scale * r));
+			g = Math.min(255, Math.round(scale * g));
+			b = Math.min(255, Math.round(scale * b));
+			
+			return (aLUT[av] << 24) | (r << 16) | (g << 8) | b;
 		}
 	}
 

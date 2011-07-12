@@ -1,0 +1,234 @@
+// Action Bar description file :codeBar
+// this bar carries macro snippets to help write macros and learn macro language !
+// author : jerome.mutterer@ibmp.fr
+run("Action Bar","/plugins/ActionBar/codeBar_.txt");
+exit();
+
+<startupAction>
+rec=get("codebar.rec",0);
+if (rec==true) run("Record...");
+autonew=get("codebar.autonew",0);
+if (autonew==true) new();
+</startupAction>
+
+<line>
+<button>
+label=New
+icon=noicon
+arg=<macro>
+new();
+</macro>
+
+<button>
+label=Rec
+icon=noicon
+arg=<macro>
+run("Record...");
+</macro>
+
+<button>
+label=...
+icon=noicon
+arg=<macro>
+autonew=get("codebar.autonew",0);
+rec=get("codebar.rec",0);
+headers=get("codebar.headers",0);
+Dialog.create('codeBar Options');
+  Dialog.addCheckbox('start with a blank macro',autonew);
+  Dialog.addCheckbox('start Recorder with codeBar',rec);
+  Dialog.addCheckbox('add header to new macros',headers);
+  Dialog.addMessage('Made with Action Bar\njerome.mutterer@ibmp.fr');
+Dialog.show();
+c1=Dialog.getCheckbox();
+c2=Dialog.getCheckbox();
+c3=Dialog.getCheckbox();
+set ("codebar.autonew",c1);
+set ("codebar.rec",c2);
+set ("codebar.headers",c3);
+</macro>
+
+</line>
+
+<line>
+<button>
+label=macro
+icon=noicon
+arg=<macro>
+p("macro 'myMacro' {\n}");
+</macro>
+
+<button>
+label=tool
+icon=noicon
+arg=<macro>
+p("macro 'myTool Tool - C000R4488D88' {\n}");
+</macro>
+
+<button>
+label=f(x)
+icon=noicon
+arg=<macro>
+p("function myFunction(args) {\n  print (args);\n  return true;\n}");
+</macro>
+</line>
+
+<line>
+<button>
+label=for
+icon=noicon
+arg=<macro>
+p("for (i=0;i<10;i++) {\nprint (i);\n}");
+</macro>
+
+<button>
+label=do
+icon=noicon
+arg=<macro>
+p("do {\n\n} while (condition);");
+</macro>
+
+<button>
+label=while
+icon=noicon
+arg=<macro>
+p("condition = true; \nwhile (condition) {\n//action\n}");
+</macro>
+</line>
+
+<line>
+<button>
+label=( )
+icon=noicon
+arg=<macro>
+p("( )");
+</macro>
+
+<button>
+label=[ ]
+icon=noicon
+arg=<macro>
+p("[ ]");
+</macro>
+
+<button>
+label={ }
+icon=noicon
+arg=<macro>
+p("{ }");
+</macro>
+</line>
+
+<line>
+<button>
+label=Build Dialog
+icon=noicon
+arg=<macro>
+Dialog.create('Dialog assistant...');
+Dialog.addString('Title', 'title', 20);
+Dialog.addCheckbox('Include default fields', true);
+Dialog.addCheckbox('Include default getters', true);
+Dialog.show();
+t=Dialog.getString();
+fields=Dialog.getCheckbox();
+getters=Dialog.getCheckbox();
+call("Action_Bar.pasteIntoEditor","Dialog.create('"+t+"');\n");
+if (fields==true) call("Action_Bar.pasteIntoEditor","  Dialog.addMessage('message');\n  Dialog.addString('string','default');\n  Dialog.addNumber('number',10);\n  Dialog.addCheckbox('checkbox',true);\n  Dialog.addChoice('choice',newArray('one','two','three'));\n");
+call("Action_Bar.pasteIntoEditor","Dialog.show();\n");
+if (getters==true) call("Action_bar.pasteIntoEditor","s=Dialog.getString();\nn=Dialog.getNumber();\nc=Dialog.getCheckbox();\nchoice=Dialog.getChoice();\n");
+</macro>
+</line>
+
+<line>
+<button>
+label=loop files
+icon=noicon
+arg=<macro>
+p("dir = getDirectory('Choose Directory ');");
+p("list = getFileList(dir);");
+p("for (i=0; i<list.length; i++) {");
+p("    showProgress(i+1, list.length);");
+p("    open(dir+list[i]);");
+p("    // do something here;");
+p("    close();");
+p("}");
+</macro>
+
+<button>
+label=loop slices
+icon=noicon
+arg=<macro>
+p("for(i=1; i<=nSlices; i++) {");
+p("    setSlice(i);");
+p("     // do something here;");
+p("}");
+</macro>
+</line>
+
+<line>
+<button>
+label=loop ROIs
+icon=noicon
+arg=<macro>
+p("n = roiManager('count');");
+p("for (i=0; i<n; i++) {");
+p("   roiManager('select', i);");
+p("   // process roi here");
+p("}");
+</macro>
+
+<button>
+label=loop Results
+icon=noicon
+arg=<macro>
+p("for(i=0; i<nResults; i++) {");
+p("    v=getResult('Area',i);");
+p("    setResult('myColumn',i,v);");
+p("}");
+p("updateResults();");
+</macro>
+</line>
+
+<line>
+<button>
+label=close one
+icon=noicon
+arg=<macro>
+p("t='Log'; if (isOpen(t)) {selectWidow(t); run('Close');}");
+</macro>
+
+<button>
+label=close all
+icon=noicon
+arg=<macro>
+p("while (nImages>0) close();");
+</macro>
+</line>
+
+<line>
+<button>
+label=Function Finder
+icon=noicon
+arg=<macro>
+call("Action_Bar.callFunctionFinder");
+</macro>
+</line>
+
+
+<codeLibrary>
+function p(s) { call("Action_Bar.pasteIntoEditor", s + "\n"); }
+function get(s,d) { return call("ij.Prefs.get",s,d); }
+function set(s,v) { return call("ij.Prefs.set",s,v); }
+function new() {
+run("Macro");
+wait(200);
+headers=get("codebar.headers",0);
+if (headers==true) {
+getDateAndTime(year, month, dayOfWeek, dayOfMonth, hour, minute, second, msec);
+ts= ""+year+"/"+month+1+"/"+dayOfMonth;
+p("// author : "+call("java.lang.System.getProperty", "user.name"));
+p("// date : "+ts);
+p("// description : ");}
+}
+</codeLibrary>
+
+// end of file
