@@ -14,7 +14,6 @@ import ij.measure.ResultsTable;
 import ij.plugin.Duplicator;
 import ij.plugin.PlugIn;
 import ij.plugin.filter.Convolver;
-import ij.plugin.filter.Duplicater;
 import ij.plugin.filter.GaussianBlur;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
@@ -26,7 +25,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Point;
-import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
@@ -537,6 +535,8 @@ public class Directionality_ implements PlugIn {
 			for (int j = 0; j < names.length; j++) {
 				dir = histograms.get(j);
 				table.addValue(names[j], dir[i]);
+				double val = CurveFitter.f(CurveFitter.GAUSSIAN, params_from_fit.get(j), bins[i]);
+				table.addValue(names[j]+"-fit", val);
 			}
 			index++;
 		}
@@ -546,6 +546,8 @@ public class Directionality_ implements PlugIn {
 			for (int j = 0; j < names.length; j++) {
 				dir = histograms.get(j);
 				table.addValue(names[j], dir[i]);
+				double val = CurveFitter.f(CurveFitter.GAUSSIAN, params_from_fit.get(j), bins[i]);
+				table.addValue(names[j]+"-fit", val);
 			}
 			index++;
 		}
@@ -1780,8 +1782,8 @@ public class Directionality_ implements PlugIn {
 		da.setBinNumber(60);
 		da.setBinStart(-90);
 
-		da.setBuildOrientationMapFlag(true);
-		da.setDebugFlag(true);
+		da.setBuildOrientationMapFlag(false);
+		da.setDebugFlag(false);
 		
 		
 		method = AnalysisMethod.FOURIER_COMPONENTS;
@@ -1791,7 +1793,7 @@ public class Directionality_ implements PlugIn {
 		center = fit_results.get(0)[2];
 		System.out.println("With method: "+method);
 		System.out.println(String.format("Found maxima at %.1f, expected it at 30º.\n", center, 30));
-		new ImagePlus("Orientation map for "+imp.getShortTitle(),da.getOrientationMap()).show();
+//		new ImagePlus("Orientation map for "+imp.getShortTitle(),da.getOrientationMap()).show();
 		
 		/*
 		method = AnalysisMethod.LOCAL_GRADIENT_ORIENTATION;
@@ -1804,9 +1806,12 @@ public class Directionality_ implements PlugIn {
 		new ImagePlus("Orientation map for "+imp.getShortTitle(),da.getOrientationMap()).show();
 		 */
 		
-		ImagePlus cw = generateColorWheel();
-		cw.show();
-		addColorMouseListener(cw.getCanvas());
+//		ImagePlus cw = generateColorWheel();
+//		cw.show();
+//		addColorMouseListener(cw.getCanvas());
+		
+		da.plotResults().setVisible(true);
+		da.displayResultsTable().show("Table");
 
 	}
 	
