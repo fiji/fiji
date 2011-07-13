@@ -289,6 +289,7 @@ public class Main {
 			+ "\tlist-updateable [<files>]\n"
 			+ "\tlist-current [<files>]\n"
 			+ "\tupdate [<files>]\n"
+			+ "\tupload [<files>]\n"
 			+ "\tupdate-java");
 	}
 

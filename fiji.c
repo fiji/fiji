@@ -1021,6 +1021,70 @@ static struct string *get_parent_directory(const char *path)
 	return string_initf("%.*s", (int)(slash - path), path);
 }
 
+static int find_file(struct string *search_root, int max_depth, const char *file, struct string *result);
+
+/* Splash screen */
+
+static int no_splash;
+static void (*SplashClose)(void);
+
+struct string *get_splashscreen_lib_path(void)
+{
+#if defined(WIN32)
+	return string_initf("%s/bin/splashscreen.dll", get_jre_home());
+#elif defined(__linux__)
+	return string_initf("%s/lib/%s/libsplashscreen.so", get_jre_home(), sizeof(void *) == 8 ? "amd64" : "i386");
+#elif defined(MACOSX)
+	struct string *search_root = string_initf("/System/Library/Java/JavaVirtualMachines");
+	struct string *result = string_init(32);
+	if (!find_file(search_root, 4, "libsplashscreen.jnilib", result)) {
+		string_release(result);
+		result = NULL;
+	}
+	string_release(search_root);
+	return result;
+#else
+	return NULL;
+#endif
+}
+
+/* So far, only Windows and MacOSX support splash with alpha, Linux does not */
+#if defined(WIN32) || defined(MACOSX)
+#define SPLASH_PATH "images/icon.png"
+#else
+#define SPLASH_PATH "images/icon-flat.png"
+#endif
+
+static void show_splash(void)
+{
+	const char *image_path = fiji_path(SPLASH_PATH);
+	struct string *lib_path = get_splashscreen_lib_path();
+	void *splashscreen;
+	int (*SplashInit)(void);
+	int (*SplashLoadFile)(const char *path);
+	int (*SplashSetFileJarName)(const char *file_path, const char *jar_path);
+
+	if (no_splash || !lib_path)
+		return;
+	splashscreen = dlopen(lib_path->buffer, RTLD_LAZY);
+	if (!splashscreen) {
+		string_release(lib_path);
+		return;
+	}
+	SplashInit = dlsym(splashscreen, "SplashInit");
+	SplashLoadFile = dlsym(splashscreen, "SplashLoadFile");
+	SplashSetFileJarName = dlsym(splashscreen, "SplashSetFileJarName");
+	SplashClose = dlsym(splashscreen, "SplashClose");
+	if (!SplashInit || !SplashLoadFile || !SplashSetFileJarName || !SplashClose)
+		return;
+
+	SplashInit();
+	SplashLoadFile(image_path);
+	SplashSetFileJarName(image_path, fiji_path("jars/Fiji.jar"));
+
+	string_release(lib_path);
+}
+
 /*
  * On Linux, JDK5 does not find the library path with libmlib_image.so,
  * so we have to add that explicitely to the LD_LIBRARY_PATH.
@@ -1338,6 +1402,47 @@ static int mkdir_p(const char *path)
 	result = mkdir_recursively(buffer);
 	string_release(buffer);
 	return result;
+}
+
+__attribute__((unused))
+static int find_file(struct string *search_root, int max_depth, const char *file, struct string *result)
+{
+	int len = search_root->length;
+	DIR *directory;
+	struct dirent *entry;
+
+	string_add_char(search_root, '/');
+
+	string_append(search_root, file);
+	if (file_exists(search_root->buffer)) {
+		string_set(result, search_root->buffer);
+		string_set_length(search_root, len);
+		return 1;
+	}
+
+	if (max_depth <= 0)
+		return 0;
+
+	string_set_length(search_root, len);
+	directory = opendir(search_root->buffer);
+	if (!directory)
+		return 0;
+	string_add_char(search_root, '/');
+	while (NULL != (entry = readdir(directory))) {
+		if (entry->d_name[0] == '.')
+			continue;
+		string_append(search_root, entry->d_name);
+		if (dir_exists(search_root->buffer))
+			if (find_file(search_root, max_depth - 1, file, result)) {
+				string_set_length(search_root, len);
+				closedir(directory);
+				return 1;
+			}
+		string_set_length(search_root, len + 1);
+	}
+	closedir(directory);
+	string_set_length(search_root, len);
+	return 0;
 }
 
 static void detect_library_path(struct string *library_path, struct string *directory)
@@ -1717,11 +1822,20 @@ static char *quote_win32(char *option)
 }
 #endif
 
+static const char *get_java_command(void)
+{
+#ifdef WIN32
+	if (!console_opened)
+		return "javaw";
+#endif
+	return "java";
+}
+
 static void show_commandline(struct options *options)
 {
 	int j;
 
-	printf("java");
+	printf("%s", get_java_command());
 	for (j = 0; j < options->java_options.nr; j++) {
 		struct string *quoted = quote_if_necessary(options->java_options.list[j]);
 		printf(" %s", quoted->buffer);
@@ -1891,6 +2005,8 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\tuse the G1 garbage collector\n"
 		"--debug-gc\n"
 		"\tshow debug info about the garbage collector on stderr\n"
+		"--no-splash\n"
+		"\tsuppress showing a splash screen upon startup\n"
 		"\n"
 		"Options for ImageJ:\n"
 		"--allow-multiple\n"
@@ -2332,6 +2448,8 @@ static int start_ij(void)
 			advanced_gc = 2;
 		else if (!strcmp("--debug-gc", main_argv[i]))
 			debug_gc = 1;
+		else if (!strcmp("--no-splash", main_argv[i]))
+			no_splash = 1;
 		else if (!strcmp("--help", main_argv[i]) ||
 				!strcmp("-h", main_argv[i]))
 			usage();
@@ -2434,6 +2552,9 @@ static int start_ij(void)
 
 	if (retrotranslator && build_classpath(class_path, fiji_path("retro"), 0))
 		return 1;
+
+	if (!headless && is_default_main_class(main_class))
+		show_splash();
 
 	/* Handle update/ */
 	update_all_files();
@@ -2590,6 +2711,8 @@ static int start_ij(void)
 		args = prepare_ij_options(env, &options.ij_options);
 		(*env)->CallStaticVoidMethodA(env, instance,
 				method, (jvalue *)&args);
+		if (SplashClose)
+			SplashClose();
 		if ((*vm)->DetachCurrentThread(vm))
 			error("Could not detach current thread");
 		/* This does not return until ImageJ exits */
@@ -2623,15 +2746,17 @@ static int start_ij(void)
 		add_option_copy(&options, main_class, 0);
 		append_string_array(&options.java_options, &options.ij_options);
 		append_string(&options.java_options, NULL);
-		prepend_string(&options.java_options, "java");
+		prepend_string(&options.java_options, strdup(get_java_command()));
 
-		string_set(buffer, "java");
+		string_set(buffer, get_java_command());
 		java_home_env = getenv("JAVA_HOME");
 		if (java_home_env && strlen(java_home_env) > 0) {
 			error("Found that JAVA_HOME was: '%s'", java_home_env);
-			string_setf(buffer, "%s/bin/java", java_home_env);
+			string_setf(buffer, "%s/bin/%s", java_home_env, get_java_command());
 		}
 		options.java_options.list[0] = buffer->buffer;
+		if (SplashClose)
+			SplashClose();
 #ifndef WIN32
 		if (execvp(buffer->buffer, options.java_options.list))
 			error("Could not launch system-wide Java (%s)", strerror(errno));

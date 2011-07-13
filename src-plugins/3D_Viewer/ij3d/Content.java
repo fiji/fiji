@@ -500,6 +500,11 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 			c.setShaded(b);
 	}
 
+	public void setSaturatedVolumeRendering(boolean b) {
+		for(ContentInstant c : contents.values())
+			c.setSaturatedVolumeRendering(b);
+	}
+
 	public void applySurfaceColors(ImagePlus img) {
 		for(ContentInstant c : contents.values())
 			c.applySurfaceColors(img);
@@ -639,6 +644,10 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 
 	public boolean isShaded() {
 		return getCurrent().isShaded();
+	}
+
+	public boolean isSaturatedVolumeRendering() {
+		return getCurrent().isSaturatedVolumeRendering();
 	}
 
 	public int getThreshold() {

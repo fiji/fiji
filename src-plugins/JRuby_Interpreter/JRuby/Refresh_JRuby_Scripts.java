@@ -34,6 +34,7 @@ public class Refresh_JRuby_Scripts extends RefreshScripts {
 	/** Will consume and close the stream. */
 	public void runScript(InputStream istream, String filename) {
 		System.out.println("Starting JRuby in runScript()...");
+		Thread.currentThread().setContextClassLoader(IJ.getClassLoader());
 		Ruby rubyRuntime = Ruby.newInstance(System.in, new PrintStream(super.out), new PrintStream(super.err));
 		System.out.println("Done.");
 		rubyRuntime.evalScriptlet(JRuby_Interpreter.getStartupScript());

@@ -12,7 +12,7 @@ import java.awt.Rectangle;
 
 public class RoiStatistics {
 	protected int count;
-	protected float cumulative;
+	protected float cumulative, cumulativeX, cumulativeY;
 	protected final Accumulator accumulator;
 
 	public RoiStatistics(Roi roi) {
@@ -56,8 +56,12 @@ public class RoiStatistics {
 		public final void accumulate(final Accessor accessor) {
 			cumulative = 0;
 			for (int y = y0; y < y1; y++)
-				for (int x = x0; x < x1; x++)
-					cumulative += accessor.getf(x, y);
+				for (int x = x0; x < x1; x++) {
+					float value = accessor.getf(x, y);
+					cumulative += value;
+					cumulativeX += x * value;
+					cumulativeY += y * value;
+				}
 		}
 	}
 
@@ -82,7 +86,10 @@ public class RoiStatistics {
 			for (int j = Math.max(0, -y); j < height; j++)
 				for (int i = Math.max(0, -x); i < width; i++)
 					if (pixels[i + width * j] != 0) {
-						cumulative += accessor.getf(x + i, y + j);
+						float value = accessor.getf(x + i, y + j);
+						cumulative += value;
+						cumulativeX += (x + i) * value;
+						cumulativeY += (y + j) * value;
 						count++;
 					}
 		}
@@ -194,6 +201,14 @@ public class RoiStatistics {
 
 	public float getAverage() {
 		return count == 0 ? 0 : cumulative / count;
+	}
+
+	public float getCentroidX() {
+		return cumulative == 0 ? 0 : cumulativeX / cumulative;
+	}
+
+	public float getCentroidY() {
+		return cumulative == 0 ? 0 : cumulativeY / cumulative;
 	}
 
 	public float getAverage(ImageProcessor ip) {

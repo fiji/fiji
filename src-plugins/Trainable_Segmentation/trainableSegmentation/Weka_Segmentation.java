@@ -22,6 +22,7 @@ import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.process.StackConverter;
+import ij.gui.ImageWindow;
 import ij.gui.Roi;
 import ij.gui.StackWindow;
 import ij.io.OpenDialog;
@@ -123,16 +124,7 @@ public class Weka_Segmentation implements PlugIn
 {
 	/** reference to the segmentation backend */
 	final WekaSegmentation wekaSegmentation;
-
-	/** 50% alpha composite */
-	final Composite transparency050 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.50f );
-	/** 25% alpha composite */
-	final Composite transparency025 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f );
-	/** opacity (in %) of the result overlay image */
-	int overlayOpacity = 33;
-	/** alpha composite for the result overlay image */
-	Composite overlayAlpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, overlayOpacity / 100f);
-
+	
 	/** image to display on the GUI */
 	private ImagePlus displayImage;
 	/** image to be used in the training */
@@ -181,9 +173,7 @@ public class Weka_Segmentation implements PlugIn
 
 	/** array of roi list overlays to paint the transparent rois of each class */
 	RoiListOverlay [] roiOverlay;
-	/** current segmentation result overlay */
-	ImageOverlay resultOverlay;
-
+	
 	/** available colors for available classes */
 	final Color[] colors = new Color[]{Color.red, Color.green, Color.blue,
 			Color.cyan, Color.magenta};
@@ -198,36 +188,57 @@ public class Weka_Segmentation implements PlugIn
 	
 	// Macro recording constants (corresponding to  
 	// static method names to be called)
+	/** name of the macro method to add the current trace to a class */
 	public static final String ADD_TRACE = "addTrace";
+	/** name of the macro method to delete the current trace */
 	public static final String DELETE_TRACE = "deleteTrace";
+	/** name of the macro method to train the current classifier */
 	public static final String TRAIN_CLASSIFIER = "trainClassifier";
+	/** name of the macro method to toggle the overlay image */
 	public static final String TOGGLE_OVERLAY = "toggleOverlay";
+	/** name of the macro method to get the binary result */
 	public static final String GET_RESULT = "getResult";
+	/** name of the macro method to get the probability maps */
 	public static final String GET_PROBABILITY = "getProbability";
+	/** name of the macro method to plot the threshold curves */
 	public static final String PLOT_RESULT = "plotResultGraphs";
+	/** name of the macro method to apply the current classifier to an image or stack */
 	public static final String APPLY_CLASSIFIER = "applyClassifier";
+	/** name of the macro method to load a classifier from file */
 	public static final String LOAD_CLASSIFIER = "loadClassifier";
+	/** name of the macro method to save the current classifier into a file */
 	public static final String SAVE_CLASSIFIER = "saveClassifier";
+	/** name of the macro method to load data from an ARFF file */
 	public static final String LOAD_DATA = "loadData";
+	/** name of the macro method to save the current data into an ARFF file */
 	public static final String SAVE_DATA = "saveData";
+	/** name of the macro method to create a new class */
 	public static final String CREATE_CLASS = "createNewClass";
+	/** name of the macro method to launch the Weka Chooser */
 	public static final String LAUNCH_WEKA = "launchWeka";
+	/** name of the macro method to enable/disbale a feature */
 	public static final String SET_FEATURE = "setFeature";
-	public static final String SET_FEATURES = "setFeatures";
+	/** name of the macro method to set the membrane thickness */
 	public static final String SET_MEMBRANE_THICKNESS = "setMembraneThickness";
+	/** name of the macro method to set the membrane patch size */
 	public static final String SET_MEMBRANE_PATCH = "setMembranePatchSize";
+	/** name of the macro method to set the minimum kernel radius */
 	public static final String SET_MINIMUM_SIGMA = "setMinimumSigma";
+	/** name of the macro method to set the maximum kernel radius */
 	public static final String SET_MAXIMUM_SIGMA = "setMaximumSigma";
+	/** name of the macro method to enable/disble the class homogenization */
 	public static final String SET_HOMOGENIZATION = "setClassHomogenization";
+	/** name of the macro method to set a new classifier */
 	public static final String SET_CLASSIFIER = "setClassifier";
+	/** name of the macro method to save the feature stack into a file or files */
 	public static final String SAVE_FEATURE_STACK = "saveFeatureStack";
+	/** name of the macro method to change a class name */
 	public static final String CHANGE_CLASS_NAME = "changeClassName";
-	
+	/** name of the macro method to set the overlay opacity */
+	public static final String SET_OPACITY = "setOpacity";
 	/** boolean flag set to true while training */
 	boolean trainingFlag = false;
-	/** boolean flat set to true when training is complete */
-	boolean trainingComplete = false;
-	
+		
 	/**
 	 * Basic constructor for graphical user interface use
 	 */
@@ -255,8 +266,7 @@ public class Weka_Segmentation implements PlugIn
 		addExampleButton = new JButton[WekaSegmentation.MAX_NUM_CLASSES];
 
 		roiOverlay = new RoiListOverlay[WekaSegmentation.MAX_NUM_CLASSES];
-		resultOverlay = new ImageOverlay();
-
+		
 		trainButton = new JButton("Train classifier");
 		trainButton.setToolTipText("Start training the classifier");
 
@@ -524,6 +534,20 @@ public class Weka_Segmentation implements PlugIn
 		JPanel optionsJPanel = new JPanel();
 
 		Panel all = new Panel();
+		
+		/** 50% alpha composite */
+		final Composite transparency050 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.50f );
+		/** 25% alpha composite */
+		final Composite transparency025 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f );
+		/** opacity (in %) of the result overlay image */
+		int overlayOpacity = 33;
+		/** alpha composite for the result overlay image */
+		Composite overlayAlpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, overlayOpacity / 100f);
+		/** current segmentation result overlay */
+		ImageOverlay resultOverlay;
+		
+		/** boolean flag set to true when training is complete */
+		boolean trainingComplete = false;
 
 		/**
 		 * Construct the plugin window
@@ -545,6 +569,7 @@ public class Weka_Segmentation implements PlugIn
 			}
 
 			// add result overlay
+			resultOverlay = new ImageOverlay();
 			resultOverlay.setComposite( overlayAlpha );
 			((OverlayedImageCanvas)ic).addOverlay(resultOverlay);
 
@@ -1050,17 +1075,17 @@ public class Weka_Segmentation implements PlugIn
 				final boolean classifierExists =  null != wekaSegmentation.getClassifier();
 
 				trainButton.setEnabled( classifierExists );
-				applyButton.setEnabled( trainingComplete );
+				applyButton.setEnabled( win.trainingComplete );
 
 				final boolean resultExists = null != classifiedImage &&
 											 null != classifiedImage.getProcessor();
 
-				saveClassifierButton.setEnabled( trainingComplete );
+				saveClassifierButton.setEnabled( win.trainingComplete );
 				overlayButton.setEnabled(resultExists);
 				resultButton.setEnabled(resultExists);
 				plotButton.setEnabled(resultExists);
 				
-				probabilityButton.setEnabled( trainingComplete );
+				probabilityButton.setEnabled( win.trainingComplete );
 
 				//newImageButton.setEnabled(true);
 				loadClassifierButton.setEnabled(true);
@@ -1129,6 +1154,16 @@ public class Weka_Segmentation implements PlugIn
 
 			win.updateButtonsEnabling();
 			repaintWindow();
+		}
+
+		/**
+		 * Set the flag to inform the the training has finished or not
+		 * 
+		 * @param b tranining complete flag
+		 */
+		void setTrainingComplete(boolean b)
+		{
+			this.trainingComplete = b;
 		}
 		
 	}// end class CustomWindow
@@ -1236,7 +1271,7 @@ public class Weka_Segmentation implements PlugIn
 		overlay = overlay.convertToByte(false);
 		overlay.setColorModel(overlayLUT);
 
-		resultOverlay.setImage(overlay);
+		win.resultOverlay.setImage(overlay);
 	}
 	
 	/**
@@ -1351,7 +1386,7 @@ public class Weka_Segmentation implements PlugIn
 							{
 								//IJ.log("Training was interrupted by the user.");
 								wekaSegmentation.shutDownNow();
-								trainingComplete = false;
+								win.trainingComplete = false;
 								return;
 							}
 							wekaSegmentation.applyClassifier(false);
@@ -1359,12 +1394,12 @@ public class Weka_Segmentation implements PlugIn
 							if(showColorOverlay)
 								win.toggleOverlay();
 							win.toggleOverlay();
-							trainingComplete = true;
+							win.trainingComplete = true;
 						}
 						else
 						{
 							IJ.log("The traning did not finish.");
-							trainingComplete = false;
+							win.trainingComplete = false;
 						}
 						
 					}
@@ -1391,7 +1426,7 @@ public class Weka_Segmentation implements PlugIn
 		{
 			try{
 				trainingFlag = false;
-				trainingComplete = false;
+				win.trainingComplete = false;
 				IJ.log("Training was stopped by the user!");
 				win.setButtonsEnabled( false );
 				trainButton.setText("Train classifier");
@@ -1528,7 +1563,10 @@ public class Weka_Segmentation implements PlugIn
 		String storeDir = "";
 
 		// create a file chooser for the image files
-		JFileChooser fileChooser = new JFileChooser(".");
+		String dir = OpenDialog.getLastDirectory();
+		if (null == dir)
+			dir = new String(".");
+		JFileChooser fileChooser = new JFileChooser( dir );
 		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		fileChooser.setMultiSelectionEnabled(true);
 
@@ -1695,7 +1733,7 @@ public class Weka_Segmentation implements PlugIn
 		// update GUI
 		win.updateAddClassButtons();
 
-		trainingComplete = true;
+		win.trainingComplete = true;
 		IJ.log("Loaded " + od.getDirectory() + od.getFileName());
 	}
 
@@ -1835,7 +1873,7 @@ public class Weka_Segmentation implements PlugIn
 		displayImage.setProcessor("Advanced Weka Segmentation", trainingImage.getProcessor().duplicate());
 
 		// Remove current classification result image
-		resultOverlay.setImage(null);
+		win.resultOverlay.setImage(null);
 
 		win.toggleOverlay();
 
@@ -2014,7 +2052,7 @@ public class Weka_Segmentation implements PlugIn
 		gd.addMessage("Advanced options:");
 		gd.addCheckbox("Homogenize classes", wekaSegmentation.doHomogenizeClasses());
 		gd.addButton("Save feature stack", new SaveFeatureStackButtonListener("Select location to save feature stack", wekaSegmentation.getFeatureStackArray()));
-		gd.addSlider("Result overlay opacity", 0, 100, overlayOpacity);
+		gd.addSlider("Result overlay opacity", 0, 100, win.overlayOpacity);
 		gd.addHelp("http://fiji.sc/wiki/Trainable_Segmentation_Plugin");
 
 		gd.showDialog();
@@ -2042,13 +2080,6 @@ public class Weka_Segmentation implements PlugIn
 		if(featuresChanged)
 		{
 			wekaSegmentation.setEnabledFeatures(newEnableFeatures);
-			// Macro recording
-			//String[] args = new String[ newEnableFeatures.length ];
-			//for(int i=0; i<newEnableFeatures.length; i++)
-			//{
-			//	args[i] = FeatureStack.availableFeatures[ i ] + "=" + newEnableFeatures[ i ];
-			//}
-			//record(SET_FEATURES, args);
 		}		
 
 		// Membrane thickness
@@ -2147,18 +2178,24 @@ public class Weka_Segmentation implements PlugIn
 
 		// Update flag to homogenize number of class instances		
 		final boolean homogenizeClasses = gd.getNextBoolean();
-		wekaSegmentation.setDoHomogenizeClasses( homogenizeClasses );
-		// Macro recording
-		record(SET_HOMOGENIZATION, new String[] { Boolean.toString( homogenizeClasses )});
-
+		if( wekaSegmentation.doHomogenizeClasses() != homogenizeClasses )
+		{
+			wekaSegmentation.setDoHomogenizeClasses( homogenizeClasses );
+			// Macro recording
+			record(SET_HOMOGENIZATION, new String[] { Boolean.toString( homogenizeClasses )});
+		}
+		
 		// Update result overlay alpha
 		final int newOpacity = (int) gd.getNextNumber();
-		if( newOpacity != overlayOpacity )
+		if( newOpacity != win.overlayOpacity )
 		{
-			overlayOpacity = newOpacity;
-			overlayAlpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, overlayOpacity / 100f);
-			resultOverlay.setComposite(overlayAlpha);
+			win.overlayOpacity = newOpacity;
+			win.overlayAlpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, win.overlayOpacity / 100f);
+			win.resultOverlay.setComposite(win.overlayAlpha);
 
+			// Macro recording
+			record(SET_OPACITY, new String[] { Integer.toString( win.overlayOpacity )});
+			
 			if( showColorOverlay )
 				displayImage.updateAndDraw();
 		}
@@ -2337,43 +2374,51 @@ public class Weka_Segmentation implements PlugIn
 	/**
 	 * Add the current ROI to a specific class and slice. 
 	 * 
-	 * @param classNum class index
-	 * @param nSlice slice number
+	 * @param classNum string representing the class index
+	 * @param nSlice string representing the slice number
 	 */
 	public static void addTrace(
 			String classNum,
 			String nSlice)
 	{
-		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
-		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
-		final Roi roi = win.getDisplayImage().getRoi();
-		wekaSegmentation.addExample(Integer.parseInt(classNum), 
-				roi, Integer.parseInt(nSlice));
-		win.getDisplayImage().killRoi();
-		win.drawExamples();
-		win.updateExampleLists();
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
+		{
+			final CustomWindow win = (CustomWindow) iw;
+			final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+			final Roi roi = win.getDisplayImage().getRoi();
+			wekaSegmentation.addExample(Integer.parseInt(classNum), 
+					roi, Integer.parseInt(nSlice));
+			win.getDisplayImage().killRoi();
+			win.drawExamples();
+			win.updateExampleLists();
+		}
 	}
 
 	/**
 	 * Delete a specific ROI from the list of a specific class and slice
 	 * 
-	 * @param classNum class index
-	 * @param nSlice slice number
-	 * @param index the index of the trace to remove
+	 * @param classNum string representing the class index
+	 * @param nSlice string representing the slice number
+	 * @param index string representing the index of the trace to remove
 	 */
 	public static void deleteTrace(
 			String classNum,
 			String nSlice,
 			String index)
 	{
-		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
-		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
-		wekaSegmentation.deleteExample(Integer.parseInt(classNum),
-				Integer.parseInt(nSlice),
-				Integer.parseInt(index) );
-		win.getDisplayImage().killRoi();
-		win.drawExamples();
-		win.updateExampleLists();
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
+		{
+			final CustomWindow win = (CustomWindow) iw;
+			final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+			wekaSegmentation.deleteExample(Integer.parseInt(classNum),
+					Integer.parseInt(nSlice),
+					Integer.parseInt(index) );
+			win.getDisplayImage().killRoi();
+			win.drawExamples();
+			win.updateExampleLists();
+		}
 	}
 
 	/**
@@ -2381,43 +2426,54 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public static void trainClassifier()
 	{
-		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
-		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
-		// Disable buttons until the training has finished
-		win.setButtonsEnabled(false);
-
-		if( wekaSegmentation.trainClassifier() )
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
 		{
-			wekaSegmentation.applyClassifier(false);
-			win.setClassfiedImage( wekaSegmentation.getClassifiedImage() );
-			if(win.isToogleEnabled())
+			final CustomWindow win = (CustomWindow) iw;
+			final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+			// Disable buttons until the training has finished
+			win.setButtonsEnabled(false);
+
+			win.setTrainingComplete(false);
+
+			if( wekaSegmentation.trainClassifier() )
+			{
+				win.setTrainingComplete(true);
+				wekaSegmentation.applyClassifier(false);
+				win.setClassfiedImage( wekaSegmentation.getClassifiedImage() );
+				if(win.isToogleEnabled())
+					win.toggleOverlay();
 				win.toggleOverlay();
-			win.toggleOverlay();
+			}
+			win.updateButtonsEnabling();		
 		}
-		win.updateButtonsEnabling();		
 	}
 
 	/**
-	 * Get the current result
+	 * Get the current result (labeled image)
 	 */
 	public static void getResult()
 	{
-		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
-		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
-		
-		final ImagePlus classifiedImage =  wekaSegmentation.getClassifiedImage();
-		if(null == classifiedImage)
-			return;
-		final ImagePlus resultImage = classifiedImage.duplicate();
-		
-		resultImage.setTitle("Classified image");
-		
-		if(resultImage.getImageStackSize() > 1)
-			(new StackConverter(resultImage)).convertToGray8();
-		else
-			(new ImageConverter(resultImage)).convertToGray8();
-		
-		resultImage.show();
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
+		{
+			final CustomWindow win = (CustomWindow) iw;
+			final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+
+			final ImagePlus classifiedImage =  wekaSegmentation.getClassifiedImage();
+			if(null == classifiedImage)
+				return;
+			final ImagePlus resultImage = classifiedImage.duplicate();
+
+			resultImage.setTitle("Classified image");
+
+			if(resultImage.getImageStackSize() > 1)
+				(new StackConverter(resultImage)).convertToGray8();
+			else
+				(new ImageConverter(resultImage)).convertToGray8();
+
+			resultImage.show();
+		}
 	}
 
 	
@@ -2426,54 +2482,62 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public static void getProbability()
 	{
-		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
-		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
-		
-		IJ.showStatus("Calculating probability maps...");
-		IJ.log("Calculating probability maps...");
-		win.setButtonsEnabled(false);
-		wekaSegmentation.applyClassifier(true);
-		final ImagePlus probImage = wekaSegmentation.getClassifiedImage();
-		if(null != probImage)
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
 		{
-			probImage.show();
-			IJ.run(probImage, "Stack to Hyperstack...", 
-					"order=xyczt(default) channels=" + wekaSegmentation.getNumOfClasses() + 
-					" slices=" + win.getDisplayImage().getImageStackSize() + 
-					" frames=1 display=Grayscale");
+			final CustomWindow win = (CustomWindow) iw;
+			final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+
+			IJ.showStatus("Calculating probability maps...");
+			IJ.log("Calculating probability maps...");
+			win.setButtonsEnabled(false);
+			wekaSegmentation.applyClassifier(true);
+			final ImagePlus probImage = wekaSegmentation.getClassifiedImage();
+			if(null != probImage)
+			{
+				probImage.show();
+				IJ.run(probImage, "Stack to Hyperstack...", 
+						"order=xyczt(default) channels=" + wekaSegmentation.getNumOfClasses() + 
+						" slices=" + win.getDisplayImage().getImageStackSize() + 
+				" frames=1 display=Grayscale");
+			}
+			win.updateButtonsEnabling();
+			IJ.showStatus("Done.");
+			IJ.log("Done");
 		}
-		win.updateButtonsEnabling();
-		IJ.showStatus("Done.");
-		IJ.log("Done");
 	}
 
 	/**
-	 * Plot the current result
+	 * Plot the current result (threshold curves)
 	 */
 	public static void plotResultGraphs()
 	{
-		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
-		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
-		
-		IJ.showStatus("Evaluating current data...");
-		IJ.log("Evaluating current data...");
-		win.setButtonsEnabled(false);
-		final Instances data;
-		if (wekaSegmentation.getTraceTrainingData() != null)
-			data = wekaSegmentation.getTraceTrainingData();
-		else
-			data = wekaSegmentation.getLoadedTrainingData();
-		
-		if(null == data)
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
 		{
-			IJ.error("Error in plot result", "No data available yet to display results");
-			return;
+			final CustomWindow win = (CustomWindow) iw;
+			final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+
+			IJ.showStatus("Evaluating current data...");
+			IJ.log("Evaluating current data...");
+			win.setButtonsEnabled(false);
+			final Instances data;
+			if (wekaSegmentation.getTraceTrainingData() != null)
+				data = wekaSegmentation.getTraceTrainingData();
+			else
+				data = wekaSegmentation.getLoadedTrainingData();
+
+			if(null == data)
+			{
+				IJ.error("Error in plot result", "No data available yet to display results");
+				return;
+			}
+
+			displayGraphs(data, wekaSegmentation.getClassifier());
+			win.updateButtonsEnabling();
+			IJ.showStatus("Done.");
+			IJ.log("Done");
 		}
-		
-		displayGraphs(data, wekaSegmentation.getClassifier());
-		win.updateButtonsEnabling();
-		IJ.showStatus("Done.");
-		IJ.log("Done");
 	}
 
 	/**
@@ -2481,9 +2545,9 @@ public class Weka_Segmentation implements PlugIn
 	 * 
 	 * @param dir input image directory path
 	 * @param fileName input image name
-	 * @param showResultsFlag boolean flag to display results
-	 * @param storeResultsFlag boolean flag to store result in a directory
-	 * @param probabilityMapsFlag boolean flag to calculate probabilities instead of a binary result
+	 * @param showResultsFlag string containing the boolean flag to display results
+	 * @param storeResultsFlag string containing the boolean flag to store result in a directory
+	 * @param probabilityMapsFlag string containing the boolean flag to calculate probabilities instead of a binary result
 	 * @param storeDir directory to store the results
 	 */
 	public static void applyClassifier(
@@ -2494,37 +2558,41 @@ public class Weka_Segmentation implements PlugIn
 			String probabilityMapsFlag,
 			String storeDir)
 	{
-		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
-		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
-		ImagePlus testImage = IJ.openImage( dir +"/"+ fileName );
-
-		if(null == testImage)
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
 		{
-			IJ.log("Error: " + dir +"/"+ fileName + " could not be opened");
-			return;
-		}
-		
-		boolean probabilityMaps = probabilityMapsFlag.contains("true");
-		boolean storeResults = storeResultsFlag.contains("true");
-		boolean showResults = showResultsFlag.contains("true");
-		
-		IJ.log("Processing image " + dir + "/" + fileName );
+			final CustomWindow win = (CustomWindow) iw;
+			final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+			ImagePlus testImage = IJ.openImage( dir +"/"+ fileName );
 
-		ImagePlus segmentation = wekaSegmentation.applyClassifier(testImage, 0, probabilityMaps);
+			if(null == testImage)
+			{
+				IJ.log("Error: " + dir +"/"+ fileName + " could not be opened");
+				return;
+			}
 
-		if (showResults) 
-		{
-			segmentation.show();
-			testImage.show();
-		}
+			boolean probabilityMaps = probabilityMapsFlag.contains("true");
+			boolean storeResults = storeResultsFlag.contains("true");
+			boolean showResults = showResultsFlag.contains("true");
 
-		if (storeResults) 
-		{
-			String filename = storeDir + File.separator + fileName;
-			IJ.log("Saving results to " + filename);
-			IJ.save(segmentation, filename);
-			segmentation.close();
-			testImage.close();
+			IJ.log("Processing image " + dir + "/" + fileName );
+
+			ImagePlus segmentation = wekaSegmentation.applyClassifier(testImage, 0, probabilityMaps);
+
+			if (showResults) 
+			{
+				segmentation.show();
+				testImage.show();
+			}
+
+			if (storeResults) 
+			{
+				String filename = storeDir + File.separator + fileName;
+				IJ.log("Saving results to " + filename);
+				IJ.save(segmentation, filename);
+				segmentation.close();
+				testImage.close();
+			}
 		}
 	}
 
@@ -2533,8 +2601,12 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public static void toggleOverlay()
 	{
-		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
-		win.toggleOverlay();
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
+		{
+			final CustomWindow win = (CustomWindow) iw;
+			win.toggleOverlay();
+		}
 	}
 
 	/**
@@ -2544,37 +2616,41 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public static void loadClassifier(String newClassifierPathName)
 	{
-		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
-		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
-		
-		IJ.log("Loading Weka classifier from " + newClassifierPathName + "...");
-
-		win.setButtonsEnabled(false);
-
-		final AbstractClassifier oldClassifier = wekaSegmentation.getClassifier();
-
-		// Try to load Weka model (classifier and train header)
-		if( false == wekaSegmentation.loadClassifier(newClassifierPathName) )
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
 		{
-			IJ.error("Error when loading Weka classifier from file");
-			win.updateButtonsEnabling();
-			return;
+			final CustomWindow win = (CustomWindow) iw;
+			final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+
+			IJ.log("Loading Weka classifier from " + newClassifierPathName + "...");
+
+			win.setButtonsEnabled(false);
+
+			final AbstractClassifier oldClassifier = wekaSegmentation.getClassifier();
+
+			// Try to load Weka model (classifier and train header)
+			if( false == wekaSegmentation.loadClassifier(newClassifierPathName) )
+			{
+				IJ.error("Error when loading Weka classifier from file");
+				win.updateButtonsEnabling();
+				return;
+			}
+
+			IJ.log("Read header from " + newClassifierPathName + " (number of attributes = " + wekaSegmentation.getTrainHeader().numAttributes() + ")");
+
+			if(wekaSegmentation.getTrainHeader().numAttributes() < 1)
+			{
+				IJ.error("Error", "No attributes were found on the model header");
+				wekaSegmentation.setClassifier(oldClassifier);
+				win.updateButtonsEnabling();
+				return;
+			}
+
+			// update GUI
+			win.updateAddClassButtons();
+
+			IJ.log("Loaded " + newClassifierPathName);
 		}
-
-		IJ.log("Read header from " + newClassifierPathName + " (number of attributes = " + wekaSegmentation.getTrainHeader().numAttributes() + ")");
-
-		if(wekaSegmentation.getTrainHeader().numAttributes() < 1)
-		{
-			IJ.error("Error", "No attributes were found on the model header");
-			wekaSegmentation.setClassifier(oldClassifier);
-			win.updateButtonsEnabling();
-			return;
-		}
-
-		// update GUI
-		win.updateAddClassButtons();
-
-		IJ.log("Loaded " + newClassifierPathName);
 	}
 	
 	/**
@@ -2584,12 +2660,16 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public static void saveClassifier( String classifierPathName )
 	{
-		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
-		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
-		if( false == wekaSegmentation.saveClassifier( classifierPathName ) )
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
 		{
-			IJ.error("Error while writing classifier into a file");
-			return;
+			final CustomWindow win = (CustomWindow) iw;
+			final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+			if( false == wekaSegmentation.saveClassifier( classifierPathName ) )
+			{
+				IJ.error("Error while writing classifier into a file");
+				return;
+			}
 		}
 	}
 
@@ -2600,13 +2680,17 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public static void loadData(String arffFilePathName )
 	{
-		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
-		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
-		
-		win.setButtonsEnabled(false);
-		IJ.log("Loading data from " + arffFilePathName + "...");
-		wekaSegmentation.loadTrainingData( arffFilePathName );
-		win.updateButtonsEnabling();
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
+		{
+			final CustomWindow win = (CustomWindow) iw;
+			final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+
+			win.setButtonsEnabled(false);
+			IJ.log("Loading data from " + arffFilePathName + "...");
+			wekaSegmentation.loadTrainingData( arffFilePathName );
+			win.updateButtonsEnabling();
+		}
 	}
 	
 	/**
@@ -2616,11 +2700,15 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public static void saveData(String arffFilePathName)
 	{
-		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
-		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
-		
-		if(false == wekaSegmentation.saveData( arffFilePathName ))
-			IJ.showMessage("There is no data to save");
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
+		{
+			final CustomWindow win = (CustomWindow) iw;
+			final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+
+			if(false == wekaSegmentation.saveData( arffFilePathName ))
+				IJ.showMessage("There is no data to save");
+		}
 	}
 
 	/**
@@ -2630,63 +2718,33 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public static void createNewClass( String inputName )
 	{
-		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
-		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
-		
-		if (null == inputName || 0 == inputName.length()) 
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
 		{
-			IJ.error("Invalid name for class");
-			return;
-		}
-		inputName = inputName.trim();
+			final CustomWindow win = (CustomWindow) iw;
+			final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
 
-		if (0 == inputName.toLowerCase().indexOf("add to "))
-			inputName = inputName.substring(7);
+			if (null == inputName || 0 == inputName.length()) 
+			{
+				IJ.error("Invalid name for class");
+				return;
+			}
+			inputName = inputName.trim();
 
-		// Add new name to the list of labels
-		wekaSegmentation.setClassLabel(wekaSegmentation.getNumOfClasses(), inputName);
-		wekaSegmentation.addClass();
+			if (0 == inputName.toLowerCase().indexOf("add to "))
+				inputName = inputName.substring(7);
 
-		// Add new class label and list
-		win.addClass();
-		
-		win.updateAddClassButtons();
-	}
+			// Add new name to the list of labels
+			wekaSegmentation.setClassLabel(wekaSegmentation.getNumOfClasses(), inputName);
+			wekaSegmentation.addClass();
 
-	/**
-	 * Set the enabled features for the current segmentation
-	 * 
-	 * @param features string names with the enabled features names plus "=true" or "=false"
-	 */
-	public static void setFeatures(String ...features)
-	{
-		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
-		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+			// Add new class label and list
+			win.addClass();
 
-		if( features.length != FeatureStack.availableFeatures.length)
-		{
-			IJ.error("Error: the number of features do not match. Expected " 
-					+ FeatureStack.availableFeatures.length + ", found " + features.length +" .");
-			return;
-		}
-		
-		boolean[] enabledFeatures = new boolean[ features.length ];
-		boolean forceUpdate = false;
-		for(int i=0; i<enabledFeatures.length; i++)
-		{
-			if(features[i].contains("true"))
-				enabledFeatures[i] = true;
-			if( enabledFeatures[i] != wekaSegmentation.getEnabledFeatures()[i])
-				forceUpdate = true;
-		}
-		wekaSegmentation.setEnabledFeatures(enabledFeatures);
-		
-		if(forceUpdate)
-		{
-			// Force features to be updated
-			wekaSegmentation.setFeaturesDirty();
+			win.updateAddClassButtons();
 		}
 	}
+
 
 	/**
 	 * Set membrane thickness for current feature stack
@@ -2695,13 +2753,17 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public static void setMembraneThickness(String newThicknessStr)
 	{
-		final int newThickness = Integer.parseInt(newThicknessStr);
-		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
-		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
-		
-		if( newThickness != wekaSegmentation.getMembraneThickness() )
-			wekaSegmentation.setFeaturesDirty();
-		wekaSegmentation.setMembraneThickness(newThickness);
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
+		{
+			final CustomWindow win = (CustomWindow) iw;
+			final int newThickness = Integer.parseInt(newThicknessStr);		
+			final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+
+			if( newThickness != wekaSegmentation.getMembraneThickness() )
+				wekaSegmentation.setFeaturesDirty();
+			wekaSegmentation.setMembraneThickness(newThickness);
+		}
 	}
 	
 	/**
@@ -2711,13 +2773,17 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public static void setMembranePatchSize(String newPatchSizeStr)
 	{
-		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
-		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
-		
-		int newPatchSize = Integer.parseInt(newPatchSizeStr);
-		if( newPatchSize  != wekaSegmentation.getMembranePatchSize() )
-			wekaSegmentation.setFeaturesDirty();
-		wekaSegmentation.setMembranePatchSize( newPatchSize );
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
+		{
+			final CustomWindow win = (CustomWindow) iw;
+			final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+
+			int newPatchSize = Integer.parseInt(newPatchSizeStr);
+			if( newPatchSize  != wekaSegmentation.getMembranePatchSize() )
+				wekaSegmentation.setFeaturesDirty();
+			wekaSegmentation.setMembranePatchSize( newPatchSize );
+		}
 	}
 	
 	/**
@@ -2727,20 +2793,24 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public static void setMinimumSigma(String newMinSigmaStr)
 	{
-		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
-		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
-		
-		float newMinSigma = Float.parseFloat(newMinSigmaStr);
-		if(newMinSigma  != wekaSegmentation.getMinimumSigma() && newMinSigma > 0)
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
 		{
-			wekaSegmentation.setFeaturesDirty();
-			wekaSegmentation.setMinimumSigma(newMinSigma);
-		}
-		if(wekaSegmentation.getMinimumSigma() >= wekaSegmentation.getMaximumSigma())
-		{
-			IJ.error("Error in the field of view parameters: they will be reset to default values");
-			wekaSegmentation.setMinimumSigma(0f);
-			wekaSegmentation.setMaximumSigma(16f);
+			final CustomWindow win = (CustomWindow) iw;
+			final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+
+			float newMinSigma = Float.parseFloat(newMinSigmaStr);
+			if(newMinSigma  != wekaSegmentation.getMinimumSigma() && newMinSigma > 0)
+			{
+				wekaSegmentation.setFeaturesDirty();
+				wekaSegmentation.setMinimumSigma(newMinSigma);
+			}
+			if(wekaSegmentation.getMinimumSigma() >= wekaSegmentation.getMaximumSigma())
+			{
+				IJ.error("Error in the field of view parameters: they will be reset to default values");
+				wekaSegmentation.setMinimumSigma(0f);
+				wekaSegmentation.setMaximumSigma(16f);
+			}
 		}
 	}
 	
@@ -2751,19 +2821,23 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public static void setMaximumSigma(String newMaxSigmaStr)
 	{
-		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
-		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
-		float newMaxSigma = Float.parseFloat(newMaxSigmaStr);
-		if(newMaxSigma  != wekaSegmentation.getMaximumSigma() && newMaxSigma > wekaSegmentation.getMinimumSigma())
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
 		{
-			wekaSegmentation.setFeaturesDirty();
-			wekaSegmentation.setMaximumSigma(newMaxSigma);
-		}
-		if(wekaSegmentation.getMinimumSigma() >= wekaSegmentation.getMaximumSigma())
-		{
-			IJ.error("Error in the field of view parameters: they will be reset to default values");
-			wekaSegmentation.setMinimumSigma(0f);
-			wekaSegmentation.setMaximumSigma(16f);
+			final CustomWindow win = (CustomWindow) iw;
+			final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+			float newMaxSigma = Float.parseFloat(newMaxSigmaStr);
+			if(newMaxSigma  != wekaSegmentation.getMaximumSigma() && newMaxSigma > wekaSegmentation.getMinimumSigma())
+			{
+				wekaSegmentation.setFeaturesDirty();
+				wekaSegmentation.setMaximumSigma(newMaxSigma);
+			}
+			if(wekaSegmentation.getMinimumSigma() >= wekaSegmentation.getMaximumSigma())
+			{
+				IJ.error("Error in the field of view parameters: they will be reset to default values");
+				wekaSegmentation.setMinimumSigma(0f);
+				wekaSegmentation.setMaximumSigma(16f);
+			}
 		}
 	}
 
@@ -2773,13 +2847,17 @@ public class Weka_Segmentation implements PlugIn
 	 * @param flagStr true/false if you want to balance the number of samples per class before training
 	 */
 	public static void setClassHomogenization(String flagStr)
-	{
-		boolean flag = Boolean.parseBoolean(flagStr);
-		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
-		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
-		wekaSegmentation.setHomogenizeClasses(flag);
+	{		
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
+		{
+			final CustomWindow win = (CustomWindow) iw;
+			boolean flag = Boolean.parseBoolean(flagStr);
+			final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+			wekaSegmentation.setHomogenizeClasses(flag);
+		}
 	}
-
+	
 	/**
 	 * Set classifier for current segmentation
 	 * 
@@ -2788,17 +2866,20 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public static void setClassifier(String classifierName, String options)
 	{
-		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
-		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
-				
-		try {
-			AbstractClassifier cls = (AbstractClassifier)( Class.forName(classifierName).newInstance() );
-			cls.setOptions( options.split(" "));
-			wekaSegmentation.setClassifier(cls);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
+		{
+			final CustomWindow win = (CustomWindow) iw;
+			final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
 
+			try {
+				AbstractClassifier cls = (AbstractClassifier)( Class.forName(classifierName).newInstance() );
+				cls.setOptions( options.split(" "));
+				wekaSegmentation.setClassifier(cls);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	/**
@@ -2809,28 +2890,32 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public static void saveFeatureStack(String dir, String fileWithExt)
 	{
-		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
-		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
-		final FeatureStackArray featureStackArray = wekaSegmentation.getFeatureStackArray();
-		if(featureStackArray.isEmpty())
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
 		{
-			featureStackArray.updateFeaturesMT();
-		}
-		
-		if(null == dir || null == fileWithExt)
-			return;
-
-		for(int i=0; i<featureStackArray.getSize(); i++)
-		{
-			final String fileName = dir + fileWithExt.substring(0, fileWithExt.length()-4) 
-									+ String.format("%04d", (i+1)) + ".tif";
-			if(false == featureStackArray.get(i).saveStackAsTiff(fileName))
+			final CustomWindow win = (CustomWindow) iw;
+			final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+			final FeatureStackArray featureStackArray = wekaSegmentation.getFeatureStackArray();
+			if(featureStackArray.isEmpty())
 			{
-				IJ.error("Error", "Feature stack could not be saved");
-				return;
+				featureStackArray.updateFeaturesMT();
 			}
 
-			IJ.log("Saved feature stack for slice " + (i+1) + " as " + fileName);
+			if(null == dir || null == fileWithExt)
+				return;
+
+			for(int i=0; i<featureStackArray.getSize(); i++)
+			{
+				final String fileName = dir + fileWithExt.substring(0, fileWithExt.length()-4) 
+				+ String.format("%04d", (i+1)) + ".tif";
+				if(false == featureStackArray.get(i).saveStackAsTiff(fileName))
+				{
+					IJ.error("Error", "Feature stack could not be saved");
+					return;
+				}
+
+				IJ.log("Saved feature stack for slice " + (i+1) + " as " + fileName);
+			}
 		}
 	}
 	
@@ -2842,13 +2927,17 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public static void changeClassName(String classIndex, String className)
 	{
-		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
-		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
-		
-		int classNum = Integer.parseInt(classIndex);
-		wekaSegmentation.setClassLabel(classNum, className);
-		win.updateAddClassButtons();
-		win.pack();
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
+		{
+			final CustomWindow win = (CustomWindow) iw;
+			final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+
+			int classNum = Integer.parseInt(classIndex);
+			wekaSegmentation.setClassLabel(classNum, className);
+			win.updateAddClassButtons();
+			win.pack();
+		}
 	}
 	
 	/**
@@ -2858,35 +2947,54 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public static void setFeature(String feature)
 	{
-		final CustomWindow win = (CustomWindow) (WindowManager.getCurrentImage().getWindow());
-		final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
-
-		int index = feature.indexOf("=");
-		String featureName = feature.substring(0, index);
-		boolean featureValue = feature.contains("true");
-		
-		boolean[] enabledFeatures = wekaSegmentation.getEnabledFeatures();
-		boolean forceUpdate = false;
-		for(int i=0; i<enabledFeatures.length; i++)
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
 		{
-			if(FeatureStack.availableFeatures[i].contains( featureName ))
-			{	
-				if(featureValue != enabledFeatures[i])
-				{
-					enabledFeatures[i] = featureValue;
-					forceUpdate = true;
+			final CustomWindow win = (CustomWindow) iw;
+			final WekaSegmentation wekaSegmentation = win.getWekaSegmentation();
+
+			int index = feature.indexOf("=");
+			String featureName = feature.substring(0, index);
+			boolean featureValue = feature.contains("true");
+
+			boolean[] enabledFeatures = wekaSegmentation.getEnabledFeatures();
+			boolean forceUpdate = false;
+			for(int i=0; i<enabledFeatures.length; i++)
+			{
+				if(FeatureStack.availableFeatures[i].contains( featureName ))
+				{	
+					if(featureValue != enabledFeatures[i])
+					{
+						enabledFeatures[i] = featureValue;
+						forceUpdate = true;
+					}
 				}
 			}
+			wekaSegmentation.setEnabledFeatures(enabledFeatures);
+
+			if(forceUpdate)
+			{
+				// Force features to be updated
+				wekaSegmentation.setFeaturesDirty();
+			}
 		}
-		wekaSegmentation.setEnabledFeatures(enabledFeatures);
-		
-		if(forceUpdate)
+	}	
+	
+	/**
+	 * Set overlay opacity
+	 * @param newOpacity string containing the new opacity value (integer 0-100)
+	 */
+	public static void setOpacity( String newOpacity )
+	{
+		final ImageWindow iw = WindowManager.getCurrentImage().getWindow();
+		if( iw instanceof CustomWindow )
 		{
-			// Force features to be updated
-			wekaSegmentation.setFeaturesDirty();
+			final CustomWindow win = (CustomWindow) iw;
+			win.overlayOpacity = Integer.parseInt(newOpacity);
+			AlphaComposite alpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER,  win.overlayOpacity  / 100f);			
+			win.resultOverlay.setComposite(alpha);
 		}
 	}
-	
 	
 }// end of Weka_Segmentation class
 

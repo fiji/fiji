@@ -181,6 +181,16 @@ public class VoltexVolume extends Volume {
 	}
 
 	@Override
+	public boolean setSaturatedVolumeRendering(boolean b) {
+		if(super.setSaturatedVolumeRendering(b) && dataType == INT_DATA) {
+			((VoltexIntLoader)voltexLoader).setLoader((IntLoader)loader);
+			updateData();
+			return true;
+		}
+		return false;
+	}
+
+	@Override
 	public boolean setAverage(boolean average) {
 		if(super.setAverage(average)) {
 			initVoltexLoader();
@@ -487,6 +497,10 @@ public class VoltexVolume extends Volume {
 			xy = new byte[zDim][4 * xTexSize * yTexSize];
 			xz = new byte[yDim][4 * xTexSize * zTexSize];
 			yz = new byte[xDim][4 * yTexSize * zTexSize];
+		}
+
+		public void setLoader(IntLoader l) {
+			this.l = l;
 		}
 
 		public int load(int x, int y, int z) {

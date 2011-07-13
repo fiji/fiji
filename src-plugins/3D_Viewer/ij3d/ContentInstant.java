@@ -522,6 +522,24 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 		return shaded;
 	}
 
+	public void setSaturatedVolumeRendering(boolean b) {
+		if(contentNode != null && type == VOLUME) {
+			((VoltexGroup)contentNode)
+				.getRenderer()
+				.getVolume()
+				.setSaturatedVolumeRendering(b);
+		}
+	}
+
+	public boolean isSaturatedVolumeRendering() {
+		return contentNode != null &&
+			type == VOLUME &&
+			((VoltexGroup)contentNode)
+				.getRenderer()
+				.getVolume()
+				.isSaturatedVolumeRendering();
+	}
+
 	public void applySurfaceColors(ImagePlus imp) {
 		if(contentNode == null)
 			return;

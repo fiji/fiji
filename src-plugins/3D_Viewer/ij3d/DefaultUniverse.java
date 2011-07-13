@@ -168,6 +168,8 @@ public abstract class DefaultUniverse extends SimpleUniverse
 	 */
 	protected final WaitForNextFrameBehavior frameBehavior;
 
+	protected final PointLight light;
+
 	/**
 	 * UIAdapter to handle calls to the ImageJ main window.
 	 */
@@ -248,12 +250,17 @@ public abstract class DefaultUniverse extends SimpleUniverse
 
 		DirectionalLight lightD1 = new DirectionalLight();
 		lightD1.setInfluencingBounds(bounds);
+		lightD1.setEnable(false);
 		lightBG.addChild(lightD1);
 
-		PointLight lightS = new PointLight();
-		lightS.setPosition(-2, 0, -3);
-		lightS.setInfluencingBounds(bounds);
-		lightBG.addChild(lightS);
+		light = new PointLight();
+		light.setCapability(PointLight.ALLOW_POSITION_READ);
+		light.setCapability(PointLight.ALLOW_POSITION_WRITE);
+		light.setCapability(PointLight.ALLOW_COLOR_READ);
+		light.setCapability(PointLight.ALLOW_COLOR_WRITE);
+		light.setPosition(-2, 0, -3);
+		light.setInfluencingBounds(bounds);
+		lightBG.addChild(light);
 
 		getZoomTG().addChild(lightBG);
 
@@ -441,6 +448,13 @@ public abstract class DefaultUniverse extends SimpleUniverse
 
 		waitForNextFrame();
 		fireTransformationUpdated();
+	}
+
+	/**
+	 * Returns the point light source of this universe.
+	 */
+	public PointLight getLight() {
+		return light;
 	}
 
 	/**
