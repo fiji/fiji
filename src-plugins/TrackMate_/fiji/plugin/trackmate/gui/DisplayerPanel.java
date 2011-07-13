@@ -201,7 +201,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 							if (jCheckBoxLimitDepth.isSelected())
 								depth = Integer.parseInt(jTextFieldFrameDepth.getText());
 							else
-								depth = Integer.MAX_VALUE;
+								depth = (int) 1e9;
 							for(TrackMateModelView view : views) {
 								view.setDisplaySettings(KEY_TRACK_DISPLAY_DEPTH, depth);
 								view.refresh();
@@ -219,7 +219,6 @@ public class DisplayerPanel extends ActionListenablePanel {
 				{
 					jTextFieldFrameDepth = new JTextField();
 					jPanelTrackOptions.add(jTextFieldFrameDepth);
-					jTextFieldFrameDepth.setText("10");
 					jTextFieldFrameDepth.setFont(SMALL_FONT);
 					jTextFieldFrameDepth.setText(""+TrackMateModelView.DEFAULT_TRACK_DISPLAY_DEPTH);
 					jTextFieldFrameDepth.setPreferredSize(new java.awt.Dimension(34, 20));

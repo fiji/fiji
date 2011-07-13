@@ -89,7 +89,6 @@ public interface TrackMateModelView {
 	 * VALUES
 	 */
 
-
 	/**
 	 * Track display mode where the whole tracks are drawn, ignoring
 	 * the value of {@link #KEY_TRACK_DISPLAY_DEPTH}.
@@ -125,17 +124,16 @@ public interface TrackMateModelView {
 	public static final int TRACK_DISPLAY_MODE_LOCAL_QUICK = 4;
 
 	/**
-	 * Track display mode similar to {@link #TRACK_DISPLAY_MODE_LOCAL_FORWARD}, except
-	 * that for the sake of speed, edges are not faded.
-	 */
-	public static final int TRACK_DISPLAY_MODE_LOCAL_FORWARD_QUICK = 5;
-
-	/**
 	 * Track display mode similar to {@link #TRACK_DISPLAY_MODE_LOCAL_BACKWARD}, except
 	 * that for the sake of speed, edges are not faded.
 	 */
-	public static final int TRACK_DISPLAY_MODE_LOCAL_BACKWARD_QUICK = 6;
+	public static final int TRACK_DISPLAY_MODE_LOCAL_BACKWARD_QUICK = 5;
 
+	/**
+	 * Track display mode similar to {@link #TRACK_DISPLAY_MODE_LOCAL_FORWARD}, except
+	 * that for the sake of speed, edges are not faded.
+	 */
+	public static final int TRACK_DISPLAY_MODE_LOCAL_FORWARD_QUICK = 6;
 
 	/*
 	 * DESCRIPTIONS
@@ -147,8 +145,11 @@ public interface TrackMateModelView {
 	public static final String[] TRACK_DISPLAY_MODE_DESCRIPTION = new String[] {
 		"Show all entire tracks",
 		"Show local tracks",
-		"Show local tracks, only backward",
-		"Show local tracks, only forward"
+		"Show local tracks, backward",
+		"Show local tracks, forward",
+		"Local tracks (fast)",
+		"Local tracks, backward (fast)",
+		"Local tracks, forward (fast)"
 	};
 	
 	/*

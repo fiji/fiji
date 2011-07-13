@@ -116,6 +116,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			universe.addContent(trackContent);
 			break;
 		case TrackMateModelChangeEvent.TRACKS_FILTERED:
+			trackNode.computeTrackColors();
 			 trackNode.setTrackVisible(model.getFilteredTrackIndices());
 			 break;
 		
@@ -236,16 +237,8 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	 */
 	
 	private Content makeTrackContent() {
-
-		// Prepare track color
-		int ntracks = model.getNFilteredTracks();
-		List<Color> colors = new ArrayList<Color>(ntracks);
-		final InterpolatePaintScale colorMap = (InterpolatePaintScale) displaySettings.get(KEY_COLORMAP);
-		for (int i = 0; i < ntracks; i++) 
-			colors.add(colorMap.getPaint((float) i / (ntracks-1)));
-		
 		// Prepare tracks instant
-		trackNode = new TrackDisplayNode(model, colors);
+		trackNode = new TrackDisplayNode(model, displaySettings);
 		universe.addTimelapseListener(trackNode);
 		
 		// Pass tracks instant to all instants

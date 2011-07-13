@@ -8,6 +8,7 @@ import java.awt.Color;
 import java.awt.Composite;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
 import java.util.Collection;
@@ -152,6 +153,8 @@ public class TrackOverlay implements Overlay {
 		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_FORWARD_QUICK: 
 		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_BACKWARD_QUICK: {
 
+			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+			
 			for (int i : filteredTrackIndices) {
 				g2d.setColor(edgeColors.get(i));
 				final Set<DefaultWeightedEdge> track= trackEdges.get(i);
@@ -175,6 +178,8 @@ public class TrackOverlay implements Overlay {
 		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL:
 		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_FORWARD:
 		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_BACKWARD: {
+
+			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 			for (int i : filteredTrackIndices) {
 				g2d.setColor(edgeColors.get(i));

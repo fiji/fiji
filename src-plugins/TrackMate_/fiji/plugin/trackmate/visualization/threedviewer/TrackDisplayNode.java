@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.media.j3d.Appearance;
@@ -25,14 +26,18 @@ import javax.vecmath.Color4f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Tuple3d;
 
+import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 
 	/** The model, needed to retrieve connectivity. */
-	private TrackMateModel model;
+	protected TrackMateModel model;
+
+	protected Map<String, Object> displaySettings;
+
 	/** Hold the color and transparency of all spots for a given track. */
-	protected List<Color> colors;
+	protected HashMap<Integer,Color> colors;
 
 	private int displayDepth = TrackMateModelView.DEFAULT_TRACK_DISPLAY_DEPTH;
 	private int displayMode = TrackMateModelView.DEFAULT_TRACK_DISPLAY_MODE;
@@ -73,9 +78,9 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	 * CONSTRUCTOR
 	 */
 
-	public TrackDisplayNode(TrackMateModel model, List<Color> colors) {
+	public TrackDisplayNode(TrackMateModel model, final Map<String, Object> displaySettings) {
 		this.model = model;
-		this.colors = colors;
+		this.displaySettings = displaySettings;
 
 		this.trackSwitch = new Switch(Switch.CHILD_MASK);
 		trackSwitch.setCapability(Switch.ALLOW_SWITCH_WRITE);
@@ -83,15 +88,16 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		trackSwitch.setCapability(Switch.ALLOW_CHILDREN_EXTEND);
 		this.switchMask = new BitSet();
 
+		computeTrackColors();
 		makeMeshes();
 	}
 
 	/*
 	 * PUBLIC METHODS
 	 */
-	
+
 	/**
-	 * Set the visiblity of the tracks which indices are given to true, and of 
+	 * Set the visibility of the tracks which indices are given to true, and of 
 	 * all other tracks to false. 
 	 */
 	public void setTrackVisible(Iterable<Integer> trackIndices) {
@@ -100,8 +106,35 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 			switchMask.set(trackIndex, true);
 		}
 		trackSwitch.setChildMask(switchMask);
+		// Set color to tracks
+		for (int i : colors.keySet()) {
+			setColor(model.getTrackSpots(i), colors.get(i));
+		}
 	}
 
+	public void computeTrackColors() {
+		int ntracks = model.getNFilteredTracks();
+		final InterpolatePaintScale colorMap = (InterpolatePaintScale) displaySettings.get(TrackMateModelView.KEY_COLORMAP);
+		colors = new HashMap<Integer, Color>(ntracks);
+		if (ntracks == 0) {
+			// Not filtered yet
+			ntracks = model.getNTracks();
+			for(int i = 0; i < ntracks; i++) {
+				colors.put(i, colorMap.getPaint((float) i / (ntracks-1)));
+			}
+		} else {
+			Color defaultColor = (Color) displaySettings.get(TrackMateModelView.KEY_COLOR);
+			for(int i = 0; i < model.getNTracks(); i++) {
+				colors.put(i, defaultColor);
+			}
+			int index = 0;
+			for(int i : model.getFilteredTrackIndices()) {
+				colors.put(i, colorMap.getPaint((float) index / (ntracks-1)));
+				index ++;
+			}	
+		}
+
+	}
 
 	public void setTrackDisplayMode(int mode) {
 		this.displayMode = mode;
@@ -154,6 +187,31 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 			}
 			break;
 		}
+		
+		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_QUICK: {
+			float tp;
+			int frameDist;
+			final int ntracks = model.getNTracks();
+			for (int frame : frameIndices.keySet()) {
+				frameDist = Math.abs(frame - currentTimePoint); 
+				if (frameDist > displayDepth)
+					tp = 0f;
+				else 
+					tp = 1f;
+
+				for (int trackIndex = 0; trackIndex < ntracks; trackIndex++) {
+					final LineArray line = lines.get(trackIndex);
+					for (Integer index : frameIndices.get(frame).get(trackIndex)) {
+						line.getColor(index, color);
+						color.w = tp;
+						line.setColor(index, color);
+						line.setColor(index+1, color);
+					}
+				}
+			}
+			break;
+		}
+		
 		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_BACKWARD: {
 			float tp;
 			int frameDist;
@@ -177,6 +235,31 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 			}
 			break;
 		}
+		
+		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_BACKWARD_QUICK: {
+			float tp;
+			int frameDist;
+			final int ntracks = model.getNTracks();
+			for (int frame : frameIndices.keySet()) {
+				frameDist = currentTimePoint - frame; 
+				if (frameDist <= 0 || frameDist > displayDepth)
+					tp = 0f;
+				else 
+					tp = 1f;
+
+				for (int trackIndex = 0; trackIndex < ntracks; trackIndex++) {
+					final LineArray line = lines.get(trackIndex);
+					for (Integer index : frameIndices.get(frame).get(trackIndex)) {
+						line.getColor(index, color);
+						color.w = tp;
+						line.setColor(index, color);
+						line.setColor(index+1, color);
+					}
+				}
+			}
+			break;
+		}
+		
 		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_FORWARD: {
 			float tp;
 			int frameDist;
@@ -187,6 +270,30 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 					tp = 0f;
 				else 
 					tp = 1f - (float) frameDist / displayDepth;
+
+				for (int trackIndex = 0; trackIndex < ntracks; trackIndex++) {
+					final LineArray line = lines.get(trackIndex);
+					for (Integer index : frameIndices.get(frame).get(trackIndex)) {
+						line.getColor(index, color);
+						color.w = tp;
+						line.setColor(index, color);
+						line.setColor(index+1, color);
+					}
+				}
+			}
+			break;
+		}
+		
+		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_FORWARD_QUICK: {
+			float tp;
+			int frameDist;
+			final int ntracks = model.getNTracks();
+			for (int frame : frameIndices.keySet()) {
+				frameDist = frame - currentTimePoint; 
+				if (frameDist < 0 || frameDist > displayDepth)
+					tp = 0f;
+				else 
+					tp = 1f;
 
 				for (int trackIndex = 0; trackIndex < ntracks; trackIndex++) {
 					final LineArray line = lines.get(trackIndex);
@@ -284,7 +391,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 
 	private void makeMeshes() {
 
-		// All edges
+		// All edges of ALL tracks
 		List<Set<DefaultWeightedEdge>> trackEdges = model.getTrackEdges();
 		final int ntracks = trackEdges.size();
 
@@ -473,6 +580,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	/** Ignored for {@link TrackDisplayNode} */
 	@Override
 	public void clearDisplayedData() {}
+
 
 
 }
