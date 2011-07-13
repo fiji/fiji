@@ -96,7 +96,9 @@ public class TmXmlReader implements TmXmlKeys {
 		model.setTrackFilters(trackFilters);
 		// Filtered tracks
 		Set<Integer> filteredTrackIndices = getFilteredTracks();
-		model.setFilteredTrackIndices(filteredTrackIndices, false);
+		if (null != filteredTrackIndices) {
+			model.setFilteredTrackIndices(filteredTrackIndices, false);
+		}
 		// Return
 		return model;
 	}
@@ -360,49 +362,49 @@ public class TmXmlReader implements TmXmlKeys {
 		for (Spot spot : spots)
 			graph.addVertex(spot);
 
-		// Load tracks
-		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
-		List<Element> edgeElements;
-		int sourceID, targetID;
-		Spot sourceSpot, targetSpot;
-		double weight = 0;
-		boolean sourceFound, targetFound;
+				// Load tracks
+				List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
+				List<Element> edgeElements;
+				int sourceID, targetID;
+				Spot sourceSpot, targetSpot;
+				double weight = 0;
+				boolean sourceFound, targetFound;
 
-		for (Element trackElement : trackElements) {
-			edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
-			for (Element edgeElement : edgeElements) {
-				// Get source and target ID for this edge
-				sourceID = edgeElement.getAttribute(TRACK_EDGE_SOURCE_ATTRIBUTE_NAME).getIntValue();
-				targetID = edgeElement.getAttribute(TRACK_EDGE_TARGET_ATTRIBUTE_NAME).getIntValue();
-				if (null != edgeElement.getAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME))
-					weight   	= edgeElement.getAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME).getDoubleValue();
-				else 
-					weight  	= 0;
-				// Retrieve corresponding spots from their ID
-				targetFound = false;
-				sourceFound = false;
-				targetSpot = null;
-				sourceSpot = null;
-				for (Spot spot : spots) {
-					if (!sourceFound  && spot.ID() == sourceID) {
-						sourceSpot = spot;
-						sourceFound = true;
-					}
-					if (!targetFound  && spot.ID() == targetID) {
-						targetSpot = spot;
-						targetFound = true;
-					}
-					if (targetFound && sourceFound) {
-						DefaultWeightedEdge edge = graph.addEdge(sourceSpot, targetSpot);
-						graph.setEdgeWeight(edge, weight);
-						break;
+				for (Element trackElement : trackElements) {
+					edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
+					for (Element edgeElement : edgeElements) {
+						// Get source and target ID for this edge
+						sourceID = edgeElement.getAttribute(TRACK_EDGE_SOURCE_ATTRIBUTE_NAME).getIntValue();
+						targetID = edgeElement.getAttribute(TRACK_EDGE_TARGET_ATTRIBUTE_NAME).getIntValue();
+						if (null != edgeElement.getAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME))
+							weight   	= edgeElement.getAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME).getDoubleValue();
+						else 
+							weight  	= 0;
+						// Retrieve corresponding spots from their ID
+						targetFound = false;
+						sourceFound = false;
+						targetSpot = null;
+						sourceSpot = null;
+						for (Spot spot : spots) {
+							if (!sourceFound  && spot.ID() == sourceID) {
+								sourceSpot = spot;
+								sourceFound = true;
+							}
+							if (!targetFound  && spot.ID() == targetID) {
+								targetSpot = spot;
+								targetFound = true;
+							}
+							if (targetFound && sourceFound) {
+								DefaultWeightedEdge edge = graph.addEdge(sourceSpot, targetSpot);
+								graph.setEdgeWeight(edge, weight);
+								break;
+							}
+						}
 					}
 				}
-			}
-		}
-		return graph;
+				return graph;
 	}
-	
+
 	/**
 	 * Read and return the list of track indices that define the filtered track collection.
 	 * @throws DataConversionException 
@@ -450,12 +452,12 @@ public class TmXmlReader implements TmXmlKeys {
 
 	private static final double readDistanceCutoffAttribute(Element element) throws DataConversionException {
 		return element.getChild(TRACKER_SETTINGS_DISTANCE_CUTOFF_ELEMENT)
-		.getAttribute(TRACKER_SETTINGS_DISTANCE_CUTOFF_ATTNAME).getDoubleValue();
+				.getAttribute(TRACKER_SETTINGS_DISTANCE_CUTOFF_ATTNAME).getDoubleValue();
 	}
 
 	private static final double readTimeCutoffAttribute(Element element) throws DataConversionException {
 		return element.getChild(TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT)
-		.getAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME).getDoubleValue();
+				.getAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME).getDoubleValue();
 	}
 
 	/**

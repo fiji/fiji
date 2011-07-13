@@ -191,7 +191,7 @@ public class GuiReader {
 			try {
 				initialThreshold = reader.getInitialFilter();
 			} catch (DataConversionException e) {
-				logger.error("Problem reading the initial threshold field of "+file.getName()
+				logger.error("Problem reading the initial spot filter field of "+file.getName()
 						+". Error message is\n"+e.getLocalizedMessage()+'\n');
 			}
 
@@ -210,7 +210,7 @@ public class GuiReader {
 
 			// Store it in model
 			model.setInitialSpotFilterValue(initialThreshold.value);
-			logger.log("  Reading initial threshold done.\n");
+			logger.log("  Reading initial spot filter done.\n");
 		}		
 		
 		{ // Try to read feature thresholds
@@ -218,7 +218,7 @@ public class GuiReader {
 			try {
 				featureThresholds = reader.getSpotFeatureFilters();
 			} catch (DataConversionException e) {
-				logger.error("Problem reading the feature threholds field of "+file.getName()
+				logger.error("Problem reading the spot filters field of "+file.getName()
 						+". Error message is\n"+e.getLocalizedMessage()+'\n');
 			}
 
@@ -239,7 +239,7 @@ public class GuiReader {
 
 			// Store thresholds in model
 			model.setSpotFilters(featureThresholds);
-			logger.log("  Reading feature thresholds done.\n");
+			logger.log("  Reading spot filters done.\n");
 		}
 
 
@@ -248,7 +248,8 @@ public class GuiReader {
 			try {
 				selectedSpots = reader.getFilteredSpots(model.getSpots());
 			} catch (DataConversionException e) {
-				logger.error("Problem reading the spot selection field of "+file.getName()+". Error message is\n"+e.getLocalizedMessage()+'\n');
+				logger.error("Problem reading the filtered spots field of "+file.getName()+
+						". Error message is\n"+e.getLocalizedMessage()+'\n');
 			}
 
 			// No spot selection, so we display the feature threshold GUI, with the loaded feature threshold
@@ -291,8 +292,6 @@ public class GuiReader {
 					// Stop at tune tracker panel
 					controller.setState(GuiState.TUNE_TRACKER);
 					controller.setModelView(AbstractTrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
-//					controller.getModelView().setSpots(model.getSpots());
-//					controller.getModelView().setSpotsToShow(model.getFilteredSpots());
 					if (!imp.isVisible())
 						imp.show();
 				}
@@ -330,9 +329,51 @@ public class GuiReader {
 			logger.log("  Reading tracks done.\n");
 		}
 		
+		{ // Try reading track filters
+			try {
+				model.setTrackFilters(reader.getTrackFeatureFilters());
+			} catch (DataConversionException e) {
+				logger.error("Problem reading the track filters field of "+file.getName()
+						+". Error message is\n"+e.getLocalizedMessage()+'\n');
+			}
+			if (model.getTrackFilters() == null) {
+				if (null != controller) {
+					view.setModel(model);
+					// Stop at tune track filter panel
+					controller.setState(GuiState.TUNE_TRACK_FILTERS);
+					if (!imp.isVisible())
+						imp.show();
+				}
+				logger.log("Loading data finished.\n");
+				return model;
+			}
+			logger.log("  Reading track filters done.\n");
+		}
+
+		{ // Try reading track selection
+			try {
+				model.setFilteredTrackIndices(reader.getFilteredTracks(), false);
+			} catch (DataConversionException e) {
+				logger.error("Problem reading the filtered tracks field of "+file.getName()
+						+". Error message is\n"+e.getLocalizedMessage()+'\n');
+			}
+			if (model.getFilteredTrackIndices() == null) {
+				if (null != controller) {
+					view.setModel(model);
+					// Stop at tune track filter panel
+					controller.setState(GuiState.TUNE_TRACK_FILTERS);
+					if (!imp.isVisible())
+						imp.show();
+				}
+				logger.log("Loading data finished.\n");
+				return model;
+			}
+			logger.log("  Reading track selection done.\n");
+		}
+		
 		view.setModel(model);
-		controller.actionFlag = true; // force redraw and relinking
-		controller.setState(GuiState.TRACKING);
+		controller.actionFlag = false;
+		controller.setState(GuiState.TUNE_DISPLAY);
 		controller.setModelView(AbstractTrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
 		if (!imp.isVisible())
 			imp.show();

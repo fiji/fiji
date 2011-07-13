@@ -94,6 +94,27 @@ public class GuiSaver {
 			writer.appendSpots();
 			break;
 		case TRACKING:
+			writer.appendBasicSettings();
+			writer.appendSegmenterSettings();
+			writer.appendTrackerSettings();
+			writer.appendInitialSpotFilter();
+			writer.appendSpotFilters();
+			writer.appendFilteredSpots();
+			writer.appendTracks();
+			writer.appendSpots();
+			break;
+		case TUNE_TRACK_FILTERS:
+		case FILTER_TRACKS:
+			writer.appendBasicSettings();
+			writer.appendSegmenterSettings();
+			writer.appendTrackerSettings();
+			writer.appendInitialSpotFilter();
+			writer.appendSpotFilters();
+			writer.appendFilteredSpots();
+			writer.appendTracks();
+			writer.appendTrackFilters();
+			writer.appendSpots();
+			break;
 		case TUNE_DISPLAY:
 			writer.appendBasicSettings();
 			writer.appendSegmenterSettings();
@@ -102,6 +123,8 @@ public class GuiSaver {
 			writer.appendSpotFilters();
 			writer.appendFilteredSpots();
 			writer.appendTracks();
+			writer.appendTrackFilters();
+			writer.appendFilteredTracks();
 			writer.appendSpots();
 			break;
 		}
