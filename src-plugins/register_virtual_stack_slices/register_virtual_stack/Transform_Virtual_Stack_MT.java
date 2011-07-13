@@ -117,7 +117,7 @@ public class Transform_Virtual_Stack_MT implements PlugIn
 	 * @param transf_dir folder with transform files.
 	 * @return true for correct execution, false otherwise.
 	 */
-	public boolean exec(
+	public static boolean exec(
 			final String source_dir, 
 			final String target_dir, 
 			final String transf_dir) 
@@ -186,7 +186,7 @@ public class Transform_Virtual_Stack_MT implements PlugIn
 	 * @param filename complete file name (including path)
 	 * @return true if the coordinate transform was properly read, false otherwise.
 	 */
-	public CoordinateTransform readCoordinateTransform(String filename) 
+	public static CoordinateTransform readCoordinateTransform(String filename) 
 	{
 		final CoordinateTransformList<CoordinateTransform> ctl = new CoordinateTransformList<CoordinateTransform>();
 		try 
