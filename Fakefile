@@ -313,11 +313,12 @@ jars/ij-platform.jar <- modules/imagej2/
 jars/ij-plugin.jar <- modules/imagej2/
 jars/ij-tool.jar <- modules/imagej2/
 jars/ij-ui.jar <- modules/imagej2/
-jars/ij-awt-common.jar <- modules/imagej2/
 jars/ij-imagej.jar <- modules/imagej2/
 jars/ij-platform-macosx.jar <- modules/imagej2/
 jars/ij-plugin-swing.jar <- modules/imagej2/
+jars/ij-ui-common-awt.jar <- modules/imagej2/
 jars/ij-ui-swing.jar <- modules/imagej2/
+jars/ij-util-awt.jar <- modules/imagej2/
 
 # From source
 libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama-1.0.2.jar \
