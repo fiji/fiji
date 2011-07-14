@@ -444,9 +444,7 @@ public class WekaSegmentation {
 			loadedTrainingData = null;
 			return false;
 		}
-
-		IJ.log("Loaded data: " + loadedTrainingData.numInstances() + " instances");
-
+		
 		boolean featuresChanged = false;
 		final boolean[] oldEnableFeatures = this.featureStackArray.getEnabledFeatures();
 		// Read checked features and check if any of them chasetButtonsEnablednged
@@ -468,7 +466,7 @@ public class WekaSegmentation {
 		if (false == adjustSegmentationStateToData(loadedTrainingData) )
 			loadedTrainingData = null;
 		else
-			IJ.log("Loaded data: " + loadedTrainingData.numInstances() + " instances");
+			IJ.log("Loaded data: " + loadedTrainingData.numInstances() + " instances (" + loadedTrainingData.numAttributes() + " attributes)");
 
 		return true;
 	}
@@ -3496,7 +3494,7 @@ public class WekaSegmentation {
 			}
 			
 			IJ.log("Total dataset: "+ wholeImageData.numInstances() + 
-					" instances, " + wholeImageData.numAttributes() + " attributes).");
+					" instances, " + wholeImageData.numAttributes() + " attributes.");
 			long end = System.currentTimeMillis();
 			IJ.log("Creating whole image data took: " + (end-start) + "ms");
 		
