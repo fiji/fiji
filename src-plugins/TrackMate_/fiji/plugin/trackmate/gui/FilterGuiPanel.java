@@ -7,49 +7,37 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EmptyStackException;
 import java.util.EnumMap;
 import java.util.List;
-import java.util.Random;
 import java.util.Stack;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import fiji.plugin.trackmate.FeatureFilter;
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.SpotFeature;
-import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.TrackMate_;
 
-/**
- *
- */
 public class FilterGuiPanel<K extends Enum<K>> extends ActionListenablePanel implements ChangeListener {
 
 	private static final long serialVersionUID = 1307749013344373051L;
 	private final ChangeEvent CHANGE_EVENT = new ChangeEvent(this);
-	/** Will be set to the value of the {@link JPanelSpotColorGUI}. */
+	/** Will be set to the value of the {@link JPanelColorByFeatureGUI}. */
 	public ActionEvent COLOR_FEATURE_CHANGED = null;
 
 	private static final String ADD_ICON = "images/add.png";
 	private static final String REMOVE_ICON = "images/delete.png";
 
 	private JPanel jPanelBottom;
-	private JPanelSpotColorGUI<K> jPanelSpotColorGUI;
+	private JPanelColorByFeatureGUI<K> jPanelColorByFeatureGUI;
 	private JScrollPane jScrollPaneThresholds;
 	private JPanel jPanelAllThresholds;
 	private JPanel jPanelButtons;
@@ -134,7 +122,7 @@ public class FilterGuiPanel<K extends Enum<K>> extends ActionListenablePanel imp
 	 * Return <code>null</code> if the item "Default" is selected.
 	 */
 	public K getColorByFeature() {
-		return jPanelSpotColorGUI.setColorByFeature;
+		return jPanelColorByFeatureGUI.setColorByFeature;
 	}
 
 	/**
@@ -180,7 +168,7 @@ public class FilterGuiPanel<K extends Enum<K>> extends ActionListenablePanel imp
 		tp.setAboveThreshold(threshold.isAbove);		
 		tp.addChangeListener(this);
 		newFeatureIndex++;
-		if (newFeatureIndex >= SpotFeature.values().length) 
+		if (newFeatureIndex >= values.length) 
 			newFeatureIndex = 0;
 		Component strut = Box.createVerticalStrut(5);
 		struts.push(strut);
@@ -198,7 +186,7 @@ public class FilterGuiPanel<K extends Enum<K>> extends ActionListenablePanel imp
 		FilterPanel<K> tp = new FilterPanel<K>(featureValues, feature);
 		tp.addChangeListener(this);
 		newFeatureIndex++;
-		if (newFeatureIndex >= SpotFeature.values().length) 
+		if (newFeatureIndex >= values.length) 
 			newFeatureIndex = 0;
 		Component strut = Box.createVerticalStrut(5);
 		struts.push(strut);
@@ -327,54 +315,14 @@ public class FilterGuiPanel<K extends Enum<K>> extends ActionListenablePanel imp
 					}
 				}
 				{
-					jPanelSpotColorGUI = new JPanelSpotColorGUI<K>(featureType, this);
-					COLOR_FEATURE_CHANGED = jPanelSpotColorGUI.COLOR_FEATURE_CHANGED;
-					jPanelSpotColorGUI.featureValues = featureValues;
-					jPanelBottom.add(jPanelSpotColorGUI, BorderLayout.CENTER);
+					jPanelColorByFeatureGUI = new JPanelColorByFeatureGUI<K>(featureType, this);
+					COLOR_FEATURE_CHANGED = jPanelColorByFeatureGUI.COLOR_FEATURE_CHANGED;
+					jPanelColorByFeatureGUI.featureValues = featureValues;
+					jPanelBottom.add(jPanelColorByFeatureGUI, BorderLayout.CENTER);
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-
-	/*
-	 * MAIN METHOD
-	 */
-
-	/**
-	 * Auto-generated main method to display this 
-	 * JPanel inside a new JFrame.
-	 * @throws IOException 
-	 */
-	public static void main(String[] args) throws IOException {
-		// Generate fake Spot data
-		final int NSPOT = 100;
-		final Random rn = new Random();
-		ArrayList<Spot> spots = new ArrayList<Spot>(NSPOT);
-		Spot spot;
-		for (int i = 0; i < NSPOT; i++) {
-			spot = new SpotImp(new float[] {0, 0, 0});
-			for (SpotFeature feature : SpotFeature.values())
-				spot.putFeature(feature, (float) (rn.nextGaussian()+5));
-			spots.add(spot);
-		}
-
-		// Generate GUI
-		TrackMate_ trackmate = new TrackMate_();
-		System.out.println("Type <Enter> to ad spots to this");
-		System.in.read();
-		SpotCollection allSpots = new SpotCollection();
-		allSpots.put(0, spots);
-		trackmate.setSpots(allSpots, false);
-
-		FilterGuiPanel<SpotFeature> gui = new FilterGuiPanel<SpotFeature>(SpotFeature.QUALITY, trackmate.getSpotFeatureValues());
-		JFrame frame = new JFrame();
-		frame.getContentPane().add(gui);
-		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-		frame.pack();
-		frame.setVisible(true);
-
-
 	}
 }

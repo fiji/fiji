@@ -22,10 +22,7 @@ import javax.swing.JPanel;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
 
-import fiji.plugin.trackmate.SpotFeature;
-
-
-public class JPanelSpotColorGUI<K extends Enum<K>> extends ActionListenablePanel {
+public class JPanelColorByFeatureGUI<K extends Enum<K>> extends ActionListenablePanel {
 
 	/*
 	 * FIELDS
@@ -62,7 +59,7 @@ public class JPanelSpotColorGUI<K extends Enum<K>> extends ActionListenablePanel
 	 * CONSTRUCTOR
 	 */
 	
-	public JPanelSpotColorGUI(final K featureType, final ActionListenablePanel caller) {
+	public JPanelColorByFeatureGUI(final K featureType, final ActionListenablePanel caller) {
 		super();
 		this.values = featureType.getDeclaringClass().getEnumConstants();
 		this.caller = caller;
@@ -82,7 +79,6 @@ public class JPanelSpotColorGUI<K extends Enum<K>> extends ActionListenablePanel
 		jLabelSetColorBy.setEnabled(enabled);
 		jComboBoxSetColorBy.setEnabled(enabled);
 		canvasColor.setEnabled(enabled);
-
 	}
 	
 	
@@ -162,11 +158,10 @@ public class JPanelSpotColorGUI<K extends Enum<K>> extends ActionListenablePanel
 				jLabelSetColorBy.setFont(SMALL_FONT);
 			}
 			{
-				SpotFeature[] allFeatures = SpotFeature.values();
-				featureStringList = new String[allFeatures.length+1];
+				featureStringList = new String[values.length+1];
 				featureStringList[0] = "Default";
-				for (int i = 0; i < allFeatures.length; i++) 
-					featureStringList[i+1] = allFeatures[i].toString();
+				for (int i = 0; i < values.length; i++) 
+					featureStringList[i+1] = values[i].toString();
 				ComboBoxModel jComboBoxSetColorByModel = new DefaultComboBoxModel(featureStringList);
 				jComboBoxSetColorBy = new JComboBox();
 				jPanelByFeature.add(Box.createHorizontalStrut(5));

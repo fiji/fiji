@@ -19,26 +19,17 @@ import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.SpotFeature;
 
 /**
-* This code was edited or generated using CloudGarden's Jigloo
-* SWT/Swing GUI Builder, which is free for non-commercial
-* use. If Jigloo is being used commercially (ie, by a corporation,
-* company or business for any purpose whatever) then you
-* should purchase a license for each developer using Jigloo.
-* Please visit www.cloudgarden.com for details.
-* Use of Jigloo implies acceptance of these licensing terms.
-* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
-* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
-* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
-*/
-public class InitThresholdPanel extends ActionListenablePanel {
-	
+ * 
+ */
+public class InitFilterPanel extends ActionListenablePanel {
+
 	private static final long serialVersionUID = -5067695740285574761L;
 	private static final String EXPLANATION_TEXT = "<html><p align=\"justify\">" +
 			"Set here a threshold on the quality feature to restrict the number of spots " +
 			"before calculating other features and rendering. " +
 			"</html>";
 	private static final String SELECTED_SPOT_STRING = "Selected spots: %d out of %d";
-	
+
 	private EnumMap<SpotFeature, double[]> features;
 	private FilterPanel<SpotFeature> jPanelThreshold;
 	private JPanel jPanelFields;
@@ -47,15 +38,15 @@ public class InitThresholdPanel extends ActionListenablePanel {
 	private JLabel jLabelSelectedSpots;
 	private JPanel jPanelText;
 
-	public InitThresholdPanel(EnumMap<SpotFeature, double[]> featureValues) {
+	public InitFilterPanel(EnumMap<SpotFeature, double[]> featureValues) {
 		this(featureValues, null);
 	}
-	
-	
-	public InitThresholdPanel(EnumMap<SpotFeature, double[]> featureValues,	Float initialThreshold) {
+
+
+	public InitFilterPanel(EnumMap<SpotFeature, double[]> featureValues, Float initialFilterValue) {
 		super();
 		this.features = featureValues;
-		initGUI(initialThreshold);
+		initGUI(initialFilterValue);
 		thresholdChanged();
 	}
 
@@ -69,11 +60,11 @@ public class InitThresholdPanel extends ActionListenablePanel {
 	public FeatureFilter<SpotFeature> getFeatureThreshold() {
 		return new FeatureFilter<SpotFeature>(jPanelThreshold.getKey(), new Float(jPanelThreshold.getThreshold()), jPanelThreshold.isAboveThreshold());
 	}
-	
+
 	/*
 	 * PRIVATE METHODS
 	 */
-	
+
 	private void thresholdChanged() {
 		double threshold  = jPanelThreshold.getThreshold();
 		boolean isAbove = jPanelThreshold.isAboveThreshold();
@@ -91,15 +82,15 @@ public class InitThresholdPanel extends ActionListenablePanel {
 		}
 		jLabelSelectedSpots.setText(String.format(SELECTED_SPOT_STRING, nselected, nspots));
 	}
-	
-	
+
+
 	private void initGUI(Float initialThreshold) { 
 		try {
 			BorderLayout thisLayout = new BorderLayout();
 			this.setLayout(thisLayout);
 			this.setPreferredSize(new java.awt.Dimension(300, 500));
 			{
-					
+
 				jPanelThreshold = new FilterPanel<SpotFeature>(features, SpotFeature.QUALITY);
 				if (null != initialThreshold)
 					jPanelThreshold.setThreshold(initialThreshold);
@@ -151,17 +142,17 @@ public class InitThresholdPanel extends ActionListenablePanel {
 			e.printStackTrace();
 		}
 	}
-	
-	
+
+
 	/*
 	 * MAIN METHOD
 	 */
-	
-	
+
+
 	/**
-	* Auto-generated main method to display this 
-	* JPanel inside a new JFrame.
-	*/
+	 * Auto-generated main method to display this 
+	 * JPanel inside a new JFrame.
+	 */
 	public static void main(String[] args) {
 		// Prepare fake data
 		final int N_ITEMS = 100;
@@ -179,9 +170,9 @@ public class InitThresholdPanel extends ActionListenablePanel {
 				val[j] = ran.nextGaussian() + 5 + mean;
 			fv.put(feature, val);
 		}
-		
+
 		JFrame frame = new JFrame();
-		frame.getContentPane().add(new InitThresholdPanel(fv));
+		frame.getContentPane().add(new InitFilterPanel(fv));
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();
 		frame.setVisible(true);

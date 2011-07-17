@@ -577,6 +577,14 @@ public class TrackMateFrameController implements ActionListener {
 			@Override
 			public void run() {
 
+				view.trackFilterGuiPanel.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent event) {
+						displayer.setDisplaySettings(TrackMateModelView.KEY_TRACK_COLOR_FEATURE, view.trackFilterGuiPanel.getColorByFeature());
+						displayer.refresh();
+					}
+				});
+				
 				view.trackFilterGuiPanel.addChangeListener(new ChangeListener() {
 					@Override
 					public void stateChanged(ChangeEvent event) {
@@ -647,7 +655,7 @@ public class TrackMateFrameController implements ActionListener {
 						str += '\n';
 						logger.log(str);
 					}
-					logger.log("Kept "+model.getNFilteredTracks()+" tracks.\n");
+					logger.log("Kept "+model.getNFilteredTracks()+" tracks out of "+model.getNTracks()+".\n");
 				}		
 
 			};

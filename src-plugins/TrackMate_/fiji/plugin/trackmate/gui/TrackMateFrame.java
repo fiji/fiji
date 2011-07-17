@@ -75,7 +75,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 
 	StartDialogPanel startDialogPanel;
 	SegmenterSettingsPanel segmenterSettingsPanel;
-	InitThresholdPanel initThresholdingPanel;
+	InitFilterPanel initThresholdingPanel;
 	EnumChooserPanel<ViewType> displayerChooserPanel;
 	FilterGuiPanel<SpotFeature> spotFilterGuiPanel;
 	FilterGuiPanel<TrackFeature> trackFilterGuiPanel;
@@ -172,7 +172,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 		case INITIAL_THRESHOLDING_KEY:
 			if (null != initThresholdingPanel)
 				jPanelMain.remove(initThresholdingPanel);
-			initThresholdingPanel = new InitThresholdPanel(model.getSpotFeatureValues(), model.getInitialSpotFilterValue());
+			initThresholdingPanel = new InitFilterPanel(model.getSpotFeatureValues(), model.getInitialSpotFilterValue());
 			panel = initThresholdingPanel;
 			break;
 
