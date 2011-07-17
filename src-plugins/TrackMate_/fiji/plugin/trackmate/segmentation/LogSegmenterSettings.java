@@ -10,7 +10,7 @@ public class LogSegmenterSettings extends SegmenterSettings {
 	@Override
 	public String toString() {
 		String str = super.toString();
-		str += "  Allow edge maxima: "+allowEdgeMaxima;
+		str += "  Allow edge maxima: "+allowEdgeMaxima+'\n';
 		return str;
 	}
 	
