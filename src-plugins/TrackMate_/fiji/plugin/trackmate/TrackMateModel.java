@@ -427,7 +427,7 @@ public class TrackMateModel {
 	}
 
 	public void execTrackFiltering() {
-		filteredTrackIndices = new HashSet<Integer>(); // will work, for the has of Integer is its int
+		filteredTrackIndices = new HashSet<Integer>(); // will work, for the hash of Integer is its int
 
 		for (int trackIndex = 0; trackIndex < getNTracks(); trackIndex++) {
 			boolean trackIsOk = true;

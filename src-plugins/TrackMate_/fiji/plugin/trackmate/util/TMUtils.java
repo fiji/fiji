@@ -544,7 +544,7 @@ public class TMUtils {
 			units = "";
 			break;
 		case POSITION:
-		case SIZE:
+		case LENGTH:
 			units = settings.spaceUnits;
 			break;
 		case QUALITY:

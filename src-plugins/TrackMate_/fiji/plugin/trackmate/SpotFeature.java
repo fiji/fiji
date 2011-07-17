@@ -191,7 +191,7 @@ public enum SpotFeature {
 		case ELLIPSOIDFIT_SEMIAXISLENGTH_C:
 		case ESTIMATED_DIAMETER:
 		case RADIUS:
-			return Dimension.SIZE;
+			return Dimension.LENGTH;
 		case POSITION_T:
 			return Dimension.TIME;		
 		}

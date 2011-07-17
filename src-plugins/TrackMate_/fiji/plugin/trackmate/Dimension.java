@@ -6,7 +6,8 @@ public enum Dimension {
 	INTENSITY,
 	INTENSITY_SQUARED,
 	POSITION,
-	SIZE,   // we separate size and dimension so that x,y,z are plotted on a different graph from spot sizes
+	VELOCITY,
+	LENGTH,   // we separate length and position so that x,y,z are plotted on a different graph from spot sizes
 	TIME,
 	ANGLE;
 

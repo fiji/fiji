@@ -10,6 +10,7 @@ public class TrackFeatureFacade {
 	private List<TrackFeatureAnalyzer> analyzers;
 	private TrackDurationAnalyzer durationAnalyzer;
 	private TrackBranchingAnalyzer branchingAnalyzer;
+	private TrackSpeedStatisticsAnalyzer speedAnalyzer;
 	
 	/*
 	 * CONSTRUCTOR
@@ -36,9 +37,11 @@ public class TrackFeatureFacade {
 		this.analyzers = new ArrayList<TrackFeatureAnalyzer>(2);
 		this.branchingAnalyzer = new TrackBranchingAnalyzer();
 		this.durationAnalyzer = new TrackDurationAnalyzer();
+		this.speedAnalyzer = new TrackSpeedStatisticsAnalyzer();
 		
 		analyzers.add(branchingAnalyzer);
 		analyzers.add(durationAnalyzer);
+		analyzers.add(speedAnalyzer);
 	}
 
 

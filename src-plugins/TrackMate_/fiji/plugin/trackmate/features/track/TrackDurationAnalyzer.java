@@ -20,21 +20,33 @@ public class TrackDurationAnalyzer implements TrackFeatureAnalyzer{
 			float minT = Float.POSITIVE_INFINITY;
 			float maxT = Float.NEGATIVE_INFINITY;
 			float t;
+			Spot startSpot = null;
+			Spot endSpot = null;
 			for (Spot spot : track) {
 				t = spot.getFeature(SpotFeature.POSITION_T);
-				if (t < minT)
+				if (t < minT) {
 					minT = t;
-				if (t > maxT)
+					startSpot = spot;
+				}
+				if (t > maxT) {
 					maxT = t;
+					endSpot = spot;
+				}
 			}
 			model.putTrackFeature(index, TrackFeature.TRACK_DURATION, (maxT-minT));
+			model.putTrackFeature(index, TrackFeature.TRACK_START, minT);
+			model.putTrackFeature(index, TrackFeature.TRACK_STOP, maxT);
+			model.putTrackFeature(index, TrackFeature.TRACK_DISPLACEMENT, (float) Math.sqrt(startSpot.squareDistanceTo(endSpot)));
 		}
 	}
 
 	@Override
 	public Set<TrackFeature> getFeatures() {
-		Set<TrackFeature> features = new HashSet<TrackFeature>(1);
+		Set<TrackFeature> features = new HashSet<TrackFeature>(4);
 		features.add(TrackFeature.TRACK_DURATION);
+		features.add(TrackFeature.TRACK_START);
+		features.add(TrackFeature.TRACK_STOP);
+		features.add(TrackFeature.TRACK_DISPLACEMENT);
 		return features;
 	}
 
