@@ -20,6 +20,8 @@ public interface TmXmlKeys {
 	 */
 
 	public static final String ROOT_ELEMENT_KEY 					= "TrackMate";
+	public static final String PLUGIN_VERSION_ATTRIBUTE_NAME		= "version";
+	
 	
 	/*
 	 * SETTINGS elements

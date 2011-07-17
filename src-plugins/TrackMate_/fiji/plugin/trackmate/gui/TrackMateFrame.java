@@ -186,7 +186,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 		case SPOT_FILTER_GUI_KEY:
 			if (null != spotFilterGuiPanel) 
 				jPanelMain.remove(spotFilterGuiPanel);
-			spotFilterGuiPanel = new FilterGuiPanel<SpotFeature>(SpotFeature.QUALITY, model.getSpotFeatureValues(), model.getSpotFilters());
+			spotFilterGuiPanel = new FilterGuiPanel<SpotFeature>(SpotFeature.QUALITY, "spots", model.getSpotFeatureValues(), model.getSpotFilters());
 			panel = spotFilterGuiPanel;
 			break;
 
@@ -206,7 +206,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 		case TRACK_FILTER_GUI_KEY:
 			if (null != trackFilterGuiPanel) 
 				jPanelMain.remove(trackFilterGuiPanel);
-			trackFilterGuiPanel = new FilterGuiPanel<TrackFeature>(TrackFeature.TRACK_DURATION, model.getTrackFeatureValues(), model.getTrackFilters());
+			trackFilterGuiPanel = new FilterGuiPanel<TrackFeature>(TrackFeature.TRACK_DURATION, "tracks", model.getTrackFeatureValues(), model.getTrackFilters());
 			panel = trackFilterGuiPanel;
 			break;
 
@@ -353,7 +353,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 					jButtonLoad.setText("Load");
 					jButtonLoad.setIcon(LOAD_ICON);
 					jButtonLoad.setFont(FONT);
-					jButtonLoad.setBounds(0, 2, 76, 25);
+					jButtonLoad.setBounds(2, 2, 78, 25);
 					jButtonLoad.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
 							fireAction(LOAD_BUTTON_PRESSED);
@@ -366,7 +366,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 					jButtonSave.setText("Save");
 					jButtonSave.setIcon(SAVE_ICON);
 					jButtonSave.setFont(FONT);
-					jButtonSave.setBounds(75, 2, 78, 25);
+					jButtonSave.setBounds(79, 2, 78, 25);
 					jButtonSave.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
 							fireAction(SAVE_BUTTON_PRESSED);
@@ -429,5 +429,5 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 	@Override
 	public void actionPerformed(final ActionEvent event) {
 		fireAction(event);
-	}	
+	}
 }

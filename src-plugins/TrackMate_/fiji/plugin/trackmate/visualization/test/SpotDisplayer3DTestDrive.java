@@ -119,7 +119,7 @@ public class SpotDisplayer3DTestDrive {
 		displayer.render();
 		
 		// Launch threshold GUI
-		final FilterGuiPanel<SpotFeature> gui = new FilterGuiPanel<SpotFeature>(SpotFeature.QUALITY, TMUtils.getSpotFeatureValues(allSpots.values()));
+		final FilterGuiPanel<SpotFeature> gui = new FilterGuiPanel<SpotFeature>(SpotFeature.QUALITY, "spots", TMUtils.getSpotFeatureValues(allSpots.values()));
 
 		// Set listeners
 		gui.addChangeListener(new ChangeListener() {

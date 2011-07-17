@@ -1,10 +1,12 @@
 package fiji.plugin.trackmate.gui;
 
+import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -21,6 +23,7 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -54,6 +57,7 @@ public class FilterGuiPanel<K extends Enum<K>> extends ActionListenablePanel imp
 	private ArrayList<ChangeListener> changeListeners = new ArrayList<ChangeListener>();
 	private K[] values;
 	private K featureType;
+	private String objectDescription;
 
 	/*
 	 * CONSTRUCTORS
@@ -62,10 +66,11 @@ public class FilterGuiPanel<K extends Enum<K>> extends ActionListenablePanel imp
 	/**
 	 * @param featureType  used to instantiate the class with the correct parameter.
 	 */
-	public FilterGuiPanel(final K featureType, EnumMap<K, double[]> featureValues, List<FeatureFilter<K>> featureThresholds) {
+	public FilterGuiPanel(final K featureType, final String objectDescription, EnumMap<K, double[]> featureValues, List<FeatureFilter<K>> featureThresholds) {
 		super();
 		this.featureValues = featureValues;
 		this.featureType = featureType;
+		this.objectDescription = objectDescription;
 		initGUI();
 		values = featureType.getDeclaringClass().getEnumConstants();
 		if (null != featureValues) {
@@ -74,22 +79,22 @@ public class FilterGuiPanel<K extends Enum<K>> extends ActionListenablePanel imp
 
 				for (FeatureFilter<K> ft : featureThresholds)
 					addThresholdPanel(ft);
-				if (featureThresholds.isEmpty())
-					newFeatureIndex = 0;
-				else
-					newFeatureIndex = featureThresholds.get(featureThresholds.size()-1).feature.ordinal();
+						if (featureThresholds.isEmpty())
+							newFeatureIndex = 0;
+						else
+							newFeatureIndex = featureThresholds.get(featureThresholds.size()-1).feature.ordinal();
 
 			}
 		}
 		updateInfoText();
 	}
 
-	public FilterGuiPanel(final K featureType, EnumMap<K, double[]> featureValues) {
-		this(featureType, featureValues, null);
+	public FilterGuiPanel(final K featureType, final String objectDescription, EnumMap<K, double[]> featureValues) {
+		this(featureType, objectDescription, featureValues, null);
 	}
 
-	public FilterGuiPanel(final K featureType) {
-		this(featureType, null);
+	public FilterGuiPanel(final K featureType, final String objectDescription) {
+		this(featureType, objectDescription, null);
 	}
 
 	/*
@@ -214,7 +219,7 @@ public class FilterGuiPanel<K extends Enum<K>> extends ActionListenablePanel imp
 		String info = "";
 		int nobjects = featureValues.values().iterator().next().length;
 		if (featureFilters == null || featureFilters.isEmpty()) {
-			info = "Keep all "+nobjects+" objects.";
+			info = "Keep all "+nobjects+" "+objectDescription+".";
 		} else {
 			int nselected = 0;
 			double val;
@@ -237,7 +242,7 @@ public class FilterGuiPanel<K extends Enum<K>> extends ActionListenablePanel imp
 				if (ok)
 					nselected++;
 			}
-			info = "Keep "+nselected+" objects out of  "+nobjects+".";
+			info = "Keep "+nselected+" "+objectDescription+" out of  "+nobjects+".";
 		}
 		jLabelInfo.setText(info);
 
@@ -249,6 +254,15 @@ public class FilterGuiPanel<K extends Enum<K>> extends ActionListenablePanel imp
 			BorderLayout thisLayout = new BorderLayout();
 			this.setLayout(thisLayout);
 			setPreferredSize(new Dimension(270, 500));
+			{
+				JLabel jTopLabel = new JLabel();
+				jTopLabel.setFont(FONT);
+				jTopLabel.setFont(FONT.deriveFont(Font.BOLD));
+				jTopLabel.setHorizontalAlignment(SwingConstants.CENTER);
+				jTopLabel.setText("Set filters on "+objectDescription);
+				this.add(jTopLabel, BorderLayout.NORTH);
+				
+			}
 			{
 				jScrollPaneThresholds = new JScrollPane();
 				this.add(jScrollPaneThresholds, BorderLayout.CENTER);

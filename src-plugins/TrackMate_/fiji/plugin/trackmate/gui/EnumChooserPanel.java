@@ -28,15 +28,6 @@ public class EnumChooserPanel <K extends Enum<K> & InfoTextable> extends ActionL
 	protected K[] types;
 	protected JLabel jLabelHelpText;
 	protected String typeName;
-
-	{
-		//Set Look & Feel
-		try {
-			javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
 	
 	/*
 	 * CONSTRUCTOR

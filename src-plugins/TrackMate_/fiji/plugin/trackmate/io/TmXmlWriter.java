@@ -50,6 +50,7 @@ public class TmXmlWriter implements TmXmlKeys {
 	public TmXmlWriter(TrackMateModel model, Logger logger) {
 		this.model = model;
 		this.root = new Element(ROOT_ELEMENT_KEY);
+		root.setAttribute(PLUGIN_VERSION_ATTRIBUTE_NAME, fiji.plugin.trackmate.TrackMate_.PLUGIN_NAME_VERSION);
 		if (null == logger) 
 			logger = Logger.VOID_LOGGER;
 		this.logger = logger;
