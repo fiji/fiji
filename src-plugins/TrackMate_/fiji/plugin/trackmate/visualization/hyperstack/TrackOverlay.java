@@ -23,6 +23,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotFeature;
+import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.util.gui.OverlayedImageCanvas.Overlay;
@@ -60,10 +61,29 @@ public class TrackOverlay implements Overlay {
 			return;
 		InterpolatePaintScale colorMap = (InterpolatePaintScale) displaySettings.get(TrackMateModelView.KEY_COLORMAP);
 		edgeColors = new HashMap<Integer, Color>(ntracks);
-		int index = 0;
-		for(int i : model.getFilteredTrackIndices()) {
-			edgeColors.put(i, colorMap.getPaint((float) index / (ntracks-1)));
-			index ++;
+
+		final TrackFeature feature = (TrackFeature) displaySettings.get(TrackMateModelView.KEY_TRACK_COLOR_FEATURE);
+		if (feature != null) {
+
+			// Get min & max
+			double min = Float.POSITIVE_INFINITY;
+			double max = Float.NEGATIVE_INFINITY;
+			for (double val : model.getTrackFeatureValues().get(feature)) {
+				if (val > max) max = val;
+				if (val < min) min = val;
+			}
+
+			for(int i : model.getFilteredTrackIndices()) {
+				double val = model.getTrackFeature(i, feature);
+				edgeColors.put(i, colorMap.getPaint((float) (val-min) / (max-min)));
+			}
+
+		} else {
+			int index = 0;
+			for(int i : model.getFilteredTrackIndices()) {
+				edgeColors.put(i, colorMap.getPaint((float) index / (ntracks-1)));
+				index ++;
+			}
 		}
 	}
 
@@ -154,7 +174,7 @@ public class TrackOverlay implements Overlay {
 		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_BACKWARD_QUICK: {
 
 			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-			
+
 			for (int i : filteredTrackIndices) {
 				g2d.setColor(edgeColors.get(i));
 				final Set<DefaultWeightedEdge> track= trackEdges.get(i);

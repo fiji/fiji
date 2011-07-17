@@ -199,5 +199,8 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 		if (key == TrackMateModelView.KEY_SPOT_COLOR_FEATURE) {
 			spotOverlay.computeSpotColors();
 		}
+		if (key == TrackMateModelView.KEY_TRACK_COLOR_FEATURE) {
+			trackOverlay.computeTrackColors();
+		}
 	}
 }

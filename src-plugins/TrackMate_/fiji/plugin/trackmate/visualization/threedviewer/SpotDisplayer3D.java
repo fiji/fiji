@@ -22,19 +22,21 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotFeature;
+import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class SpotDisplayer3D extends AbstractTrackMateModelView {
-	
+
 	public static final int DEFAULT_RESAMPLING_FACTOR = 4;
 	public static final int DEFAULT_THRESHOLD = 50;
 
 	private static final boolean DEBUG = false;
 	private static final String TRACK_CONTENT_NAME = "Tracks";
 	private static final String SPOT_CONTENT_NAME = "Spots";
-	
+
 	private TreeMap<Integer, SpotGroupNode<Spot>> blobs;	
 	private TrackDisplayNode trackNode;
 	private Content spotContent;
@@ -68,14 +70,14 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		@Override
 		public void canvasResized() {}
 	};
-	
+
 	public SpotDisplayer3D(Image3DUniverse universe, TrackMateModel model) {
 		this.universe = universe;
 		setModel(model);
 		// Add a listener to unregister this instance from the model listener list when closing
 		universe.addUniverseListener(unregisterListener);
 	}
-	
+
 	/*
 	 * OVERRIDDEN METHODS
 	 */
@@ -94,7 +96,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			universe.addContent(trackContent);
 		}
 	}
-	
+
 	@Override
 	public void modelChanged(TrackMateModelChangeEvent event) {
 		if (DEBUG) {
@@ -109,7 +111,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		case TrackMateModelChangeEvent.SPOTS_FILTERED:
 			for(int key : model.getFilteredSpots().keySet())
 				blobs.get(key).setVisible(model.getFilteredSpots().get(key));
-			break;
+					break;
 		case TrackMateModelChangeEvent.TRACKS_COMPUTED: 
 			trackContent = makeTrackContent();
 			universe.removeContent(TRACK_CONTENT_NAME);
@@ -117,39 +119,39 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			break;
 		case TrackMateModelChangeEvent.TRACKS_FILTERED:
 			trackNode.computeTrackColors();
-			 trackNode.setTrackVisible(model.getFilteredTrackIndices());
-			 break;
-		
+			trackNode.setTrackVisible(model.getFilteredTrackIndices());
+			break;
+
 		}
 	}
-	
+
 	@Override
 	public void highlightSpots(Collection<Spot> spots) {
 		// Restore previous display settings for previously highlighted spot
 		if (null != previousSpotHighlight)
 			for (Spot spot : previousSpotHighlight)
 				blobs.get(previousFrameHighlight.get(spot)).setColor(spot, previousColorHighlight.get(spot));
-		previousSpotHighlight = new ArrayList<Spot>(spots.size());
-		previousColorHighlight = new HashMap<Spot, Color3f>(spots.size());
-		previousFrameHighlight = new HashMap<Spot, Integer>(spots.size());
-		
-		SpotCollection sc = model.getFilteredSpots().subset(spots);
-		Color3f highlightColor = new Color3f((Color) displaySettings.get(KEY_HIGHLIGHT_COLOR));
-		List<Spot> st;
-		for(int frame : sc.keySet()) {
-			st = sc.get(frame);
-			for(Spot spot : st) {
-				// Store current settings
-				previousSpotHighlight.add(spot);
-				previousColorHighlight.put(spot, blobs.get(frame).getColor3f(spot));
-				previousFrameHighlight.put(spot, frame);
+					previousSpotHighlight = new ArrayList<Spot>(spots.size());
+					previousColorHighlight = new HashMap<Spot, Color3f>(spots.size());
+					previousFrameHighlight = new HashMap<Spot, Integer>(spots.size());
 
-				// Update target spot display
-				blobs.get(frame).setColor(spot, highlightColor);
-			}
-		}
+					SpotCollection sc = model.getFilteredSpots().subset(spots);
+					Color3f highlightColor = new Color3f((Color) displaySettings.get(KEY_HIGHLIGHT_COLOR));
+					List<Spot> st;
+					for(int frame : sc.keySet()) {
+						st = sc.get(frame);
+						for(Spot spot : st) {
+							// Store current settings
+							previousSpotHighlight.add(spot);
+							previousColorHighlight.put(spot, blobs.get(frame).getColor3f(spot));
+							previousFrameHighlight.put(spot, frame);
+
+							// Update target spot display
+							blobs.get(frame).setColor(spot, highlightColor);
+						}
+					}
 	}
-	
+
 	@Override
 	public void centerViewOn(Spot spot) {
 		int frame = - 1;
@@ -170,32 +172,32 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		// Restore previous display settings for previously highlighted edges
 		if (null != previousEdgeHighlight)
 			for(DefaultWeightedEdge edge : previousEdgeHighlight.keySet())
-					trackNode.setColor(edge, previousEdgeHighlight.get(edge));
-		
-		// Store current color settings
-		previousEdgeHighlight = new HashMap<DefaultWeightedEdge, Color>();
-		for(DefaultWeightedEdge edge :edges)
-			previousEdgeHighlight.put(edge, trackNode.getColor(edge));
-		
-		// Change edge color
-		Color highlightColor = (Color) displaySettings.get(KEY_HIGHLIGHT_COLOR);
-		for(DefaultWeightedEdge edge :edges)
-			trackNode.setColor(edge, highlightColor);
+				trackNode.setColor(edge, previousEdgeHighlight.get(edge));
+
+					// Store current color settings
+					previousEdgeHighlight = new HashMap<DefaultWeightedEdge, Color>();
+					for(DefaultWeightedEdge edge :edges)
+						previousEdgeHighlight.put(edge, trackNode.getColor(edge));
+
+							// Change edge color
+							Color highlightColor = (Color) displaySettings.get(KEY_HIGHLIGHT_COLOR);
+							for(DefaultWeightedEdge edge :edges)
+								trackNode.setColor(edge, highlightColor);
 	}
-	
-	
+
+
 	@Override
 	public void refresh() {
 		if (null != trackNode)
 			trackNode.refresh();
 	}
-	
+
 	@Override
 	public void render()  {	
 		if (DEBUG)
 			System.out.println("[SpotDisplayer3D] Call to render().");
 		updateRadiuses();
-		updateColors();
+		updateSpotColors();
 		spotContent.setVisible((Boolean) displaySettings.get(KEY_SPOTS_VISIBLE));
 		if (null != trackContent) {
 			trackContent.setVisible((Boolean) displaySettings.get(KEY_TRACKS_VISIBLE));
@@ -212,7 +214,9 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		if (key == KEY_SPOT_RADIUS_RATIO) {
 			updateRadiuses();
 		} else if (key == KEY_SPOT_COLOR_FEATURE) {
-			updateColors();
+			updateSpotColors();
+		} else if (key == KEY_TRACK_COLOR_FEATURE) {
+			updateTrackColors();
 		} else if (key == KEY_DISPLAY_SPOT_NAMES) {
 			// TODO
 		} else if (key == KEY_SPOTS_VISIBLE) {
@@ -225,22 +229,22 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			trackNode.setTrackDisplayDepth((Integer) value);
 		}
 	}
-	
+
 	@Override
 	public void clear() {
 		universe.removeContent(SPOT_CONTENT_NAME);
 		universe.removeContent(TRACK_CONTENT_NAME);
 	}
-	
+
 	/*
 	 * PRIVATE METHODS
 	 */
-	
+
 	private Content makeTrackContent() {
 		// Prepare tracks instant
 		trackNode = new TrackDisplayNode(model, displaySettings);
 		universe.addTimelapseListener(trackNode);
-		
+
 		// Pass tracks instant to all instants
 		TreeMap<Integer, ContentInstant> instants = new TreeMap<Integer,ContentInstant>();
 		ContentInstant trackCI = new ContentInstant("Tracks_all_frames");
@@ -252,9 +256,9 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		return tc;
 	}
 
-	
+
 	private Content makeSpotContent() {
-		
+
 		blobs = new TreeMap<Integer, SpotGroupNode<Spot>>();
 		List<Spot> spotsThisFrame; 
 		SpotGroupNode<Spot> blobGroup;
@@ -262,7 +266,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		TreeMap<Integer, ContentInstant> contentAllFrames = new TreeMap<Integer, ContentInstant>();
 		final float radiusRatio = (Float) displaySettings.get(KEY_SPOT_RADIUS_RATIO);
 		final Color color = (Color) displaySettings.get(KEY_COLOR);
-		
+
 		for(Integer i : model.getSpots().keySet()) {
 			spotsThisFrame = model.getSpots().get(i);
 			HashMap<Spot, Point4f> centers = new HashMap<Spot, Point4f>(spotsThisFrame.size());
@@ -278,7 +282,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			blobGroup = new SpotGroupNode<Spot>(centers, new Color3f(color));
 			contentThisFrame = new ContentInstant("Spots_frame_"+i);
 			contentThisFrame.display(blobGroup);
-			
+
 			contentAllFrames.put(i, contentThisFrame);
 			blobs.put(i, blobGroup);
 		}
@@ -300,10 +304,10 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		}
 	}
 
-	private void updateColors() {
+	private void updateSpotColors() {
 		final Color color = (Color) displaySettings.get(KEY_COLOR);
 		final SpotFeature feature = (SpotFeature) displaySettings.get(KEY_SPOT_COLOR_FEATURE);
-		
+
 		if (null == feature) {
 			for(int key : blobs.keySet())
 				blobs.get(key).setColor(new Color3f(color));
@@ -336,6 +340,31 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 						spotGroup.setColor(spot, new Color3f(colorMap.getPaint((val-min)/(max-min))));
 				}
 			}
+		}
+	}
+
+	private void updateTrackColors() {
+		final TrackFeature feature = (TrackFeature) displaySettings.get(KEY_TRACK_COLOR_FEATURE);
+
+		if (null == feature) {
+			trackNode.computeTrackColors();
+
+		} else {
+			InterpolatePaintScale colorMap = (InterpolatePaintScale) displaySettings.get(TrackMateModelView.KEY_COLORMAP);
+			// Get min & max
+			double min = Float.POSITIVE_INFINITY;
+			double max = Float.NEGATIVE_INFINITY;
+			for (double val : model.getTrackFeatureValues().get(feature)) {
+				if (val > max) max = val;
+				if (val < min) min = val;
+			}
+
+			for(int i : model.getFilteredTrackIndices()) {
+				double val = model.getTrackFeature(i, feature);
+				Color color =  colorMap.getPaint((float) (val-min) / (max-min));
+				trackNode.setColor(model.getTrackSpots(i), color);
+			}
+
 		}
 	}
 }

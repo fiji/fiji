@@ -79,6 +79,14 @@ public interface TrackMateModelView {
 	public static final String KEY_SPOT_COLOR_FEATURE = "SpotColorFeature";
 
 	/**
+	 * Defines the key for the feature that determines the track color. Values can
+	 * be any {@link TrackFeature} or <code>null</code>. In the later case, the default
+	 * color #DEFAULT_COLOR is used for all spots. Otherwise, each track color 
+	 * is set according to the selected feature value.
+	 */
+	public static final String KEY_TRACK_COLOR_FEATURE = "TrackColorFeature";
+
+	/**
 	 * Defines the key for the color map to use for painting overlay. Acceptable
 	 * values are {@link InterpolatePaintScale}s, the default is {@link InterpolatePaintScale#Jet}.
 	 */
