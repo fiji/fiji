@@ -102,7 +102,10 @@ public class MappingFusionParalell extends SPIMImageFusion
 	                	
 						for (int view = 0; view < numViews; view++)
 							if ( view % numThreads == myNumber)
+							{
 								isoW[i][view] = isolatedWeightenerFactories.get(i).createInstance( views.get(view) );
+								System.out.println( "isoW[i][view]: " + isoW[i][view] );
+							}
 	                }
 	            });
 			
@@ -119,6 +122,18 @@ public class MappingFusionParalell extends SPIMImageFusion
 		for ( int i = 0; i < numViews; ++i )
 		{
 			useView[ i ] = Math.max( views.get( i ).getViewErrorStatistics().getNumConnectedViews(), views.get( i ).getTile().getConnectedTiles().size() ) > 0 || views.get( i ).getViewStructure().getNumViews() == 1;
+			
+			// if a corresponding view that was used for registration is valid, this one is too
+			if ( views.get( i ).getUseForRegistration() == false )
+			{
+				final int angle = views.get( i ).getAcqusitionAngle();
+				final int timepoint = views.get( i ).getViewStructure().getTimePoint();
+				
+				for ( final ViewDataBeads view2 : viewStructure.getViews() )
+					if ( view2.getAcqusitionAngle() == angle && timepoint == view2.getViewStructure().getTimePoint() && view2.getUseForRegistration() == true )
+						useView[ i ] = true;
+			}
+			
 			models[ i ] = (AbstractAffineModel3D<?>)views.get( i ).getTile().getModel(); 
 		}
 		

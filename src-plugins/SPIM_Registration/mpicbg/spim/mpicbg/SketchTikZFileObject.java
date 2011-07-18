@@ -120,6 +120,42 @@ public class SketchTikZFileObject
 		}
 		
 		return new SketchTikZFileObject( in, out );
-	}	
+	}
+	
+	public void putTextEntry( final float x, final float y, final String text )
+	{
+		// % some text if wanted
+		// def y (10,-1.5,0)
+	  	// special|\path #1 node[left=5pt, color=black] {$\textbf{Iteration 15 (82.54 px)}$};|(y)
+
+		boolean reachedInsertPosition = false;
+		
+		try
+		{
+			// copy the rest
+			while ( in.ready() && !reachedInsertPosition )
+			{
+				String line = in.readLine();
+				
+				if ( line.contains("%<--Text for Java-->"))
+				{
+					reachedInsertPosition = true;
+					
+					out.println( "def y (" + x + "," + y + ",0)" );
+					out.println( "special|\\path #1 node[left=5pt, color=black] {$\\textbf{" + text + "}$};|(y)" );
+				}
+				else
+				{
+					out.println( line );
+				}
+			}
+		}
+		catch ( IOException e )
+		{
+			System.err.println(" Error: " + e );
+			return;
+		}
+		
+	}
 }
 

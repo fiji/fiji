@@ -50,9 +50,16 @@ public class FusionControl
 				
 		for ( int channelIndex = 0; channelIndex < viewStructure.getNumChannels(); ++channelIndex )
 		{
-			fusion.fuseSPIMImages( channelIndex );
-		
 			final int channelID = viewStructure.getChannelNum( channelIndex );
+			
+			boolean contains = false;
+			for ( final int cF : conf.channelsFuse )
+				if ( cF == channelID )
+					contains = true;
+			if ( !contains )
+				continue;
+			
+			fusion.fuseSPIMImages( channelIndex );		
 			
 			if (conf.showOutputImage)
 			{

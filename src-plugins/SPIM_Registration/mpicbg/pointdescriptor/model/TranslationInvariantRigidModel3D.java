@@ -5,10 +5,11 @@ import java.util.Collection;
 import javax.vecmath.Matrix3f;
 import javax.vecmath.Matrix4f;
 
-import math3d.JacobiFloat;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.PointMatch;
+import Jama.EigenvalueDecomposition;
+import Jama.Matrix;
 
 /**
  * 3d-rigid transformation models to be applied to points in 3d-space.
@@ -31,7 +32,7 @@ public class TranslationInvariantRigidModel3D extends TranslationInvariantModel<
 		m10 = 0.0f, m11 = 1.0f, m12 = 0.0f, 
 		m20 = 0.0f, m21 = 0.0f, m22 = 1.0f;
 
-	final protected float[][] N = new float[4][4];
+	final protected double[][] N = new double[4][4];
 	
 	public void getMatrix4f( final Matrix4f matrix )
 	{
@@ -120,6 +121,7 @@ public class TranslationInvariantRigidModel3D extends TranslationInvariantModel<
 		N[3][3] = -Sxx - Syy + Szz;
 
 		// calculate eigenvector with maximal eigenvalue
+		/*
 		final JacobiFloat jacobi = new JacobiFloat(N);
 		final float[][] eigenvectors = jacobi.getEigenVectors();
 		final float[] eigenvalues = jacobi.getEigenValues();
@@ -130,7 +132,24 @@ public class TranslationInvariantRigidModel3D extends TranslationInvariantModel<
 
 		final float[] q = eigenvectors[index];
 		final float q0 = q[0], qx = q[1], qy = q[2], qz = q[3];
+		*/
+		// calculate eigenvector with maximal eigenvalue
 
+		final EigenvalueDecomposition evd = new EigenvalueDecomposition( new Matrix( N ) );
+		
+		final double[] eigenvalues = evd.getRealEigenvalues();
+		final Matrix eigenVectors = evd.getV();
+
+		int index = 0;
+		for (int i = 1; i < 4; i++)
+			if (eigenvalues[i] > eigenvalues[index])
+				index = i;
+
+		final float q0 = (float)eigenVectors.get( 0, index ); 
+		final float qx = (float)eigenVectors.get( 1, index );
+		final float qy = (float)eigenVectors.get( 2, index );
+		final float qz = (float)eigenVectors.get( 3, index );
+		
 		// computational result
 		
 		// rotational part

@@ -3,6 +3,7 @@ package mpicbg.spim.registration.bead;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3i;
@@ -15,6 +16,8 @@ import mpicbg.imglib.cursor.LocalizableByDimCursor3D;
 import mpicbg.imglib.cursor.special.HyperSphereIterator;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.integer.IntType;
 import mpicbg.imglib.type.numeric.real.FloatType;
@@ -47,7 +50,75 @@ public class BeadSegmentation
 				
 		//
 		// Extract the beads
-		// 			
+		// 		
+		final int numThreads;
+
+		if ( conf.multiThreadedOpening )
+		{
+			numThreads = views.size();
+			
+			for ( final ViewDataBeads view : views )
+				view.getImage();
+		}
+		else
+			numThreads = 1;
+		
+		final AtomicInteger ai = new AtomicInteger(0);					
+        Thread[] threads = SimpleMultiThreading.newThreads( numThreads );
+
+		for (int ithread = 0; ithread < threads.length; ++ithread)
+            threads[ithread] = new Thread(new Runnable()
+            {
+                public void run()
+                {
+                    final int myNumber = ai.getAndIncrement();
+
+                    final ViewDataBeads view = views.get( myNumber );
+                    
+                    if ( view.getUseForRegistration() )
+                    {	                    
+	        			if (conf.useScaleSpace)					
+	        			{
+	        	    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+	        	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Scale Space Bead Extraction for " + view.getName() );
+	        				
+	        	    		view.setBeadStructure( extractBeadsLaPlaceImgLib( view, conf ) );
+	        	    		
+	        				//view.setBeadStructure( extractBeadsLaPlace( view, conf ) );
+	        				
+	        				//Image<FloatType> img = getFoundBeads( view );				
+	        				//img.setName( "imglib" );
+	        				//img.getDisplay().setMinMax();
+	        				//ImageJFunctions.copyToImagePlus( img ).show();				
+	        				//SimpleMultiThreading.threadHaltUnClean();
+	        	    		
+	        				view.closeImage();
+	        			}
+	        			else
+	        			{
+	        	    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+	        	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Threshold Bead Extraction");					
+	        				
+	        				view.setBeadStructure( extractBeadsThresholdSegmentation( view, threshold, conf.minSize, conf.maxSize, conf.minBlackBorder) );
+	        				
+	        				view.closeImage();				
+	        			}
+	        				
+	        			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+	        				IOFunctions.println( "Found peaks (possible beads): " + view.getBeadStructure().getBeadList().size() );
+	        			
+	        			//
+	        			// Store segmentation in a file
+	        			//
+	        			if ( conf.writeSegmentation )
+	        				IOFunctions.writeSegmentation( view, conf.registrationFiledirectory );
+                    }
+                }
+            });
+		
+		SimpleMultiThreading.startAndJoin( threads );
+		
+		/*
 		for ( final ViewDataBeads view : views )
 		{
 			if (conf.useScaleSpace)					
@@ -59,13 +130,12 @@ public class BeadSegmentation
 	    		
 				//view.setBeadStructure( extractBeadsLaPlace( view, conf ) );
 				
-				/*
-				img = getFoundBeads( view );				
-				img.setName( "imglib" );
-				img.getDisplay().setMinMax();
-				ImageJFunctions.copyToImagePlus( img ).show();				
-				SimpleMultiThreading.threadHaltUnClean();
-				*/
+				//Image<FloatType> img = getFoundBeads( view );				
+				//img.setName( "imglib" );
+				//img.getDisplay().setMinMax();
+				//ImageJFunctions.copyToImagePlus( img ).show();				
+				//SimpleMultiThreading.threadHaltUnClean();
+	    		
 				view.closeImage();
 			}
 			else
@@ -87,6 +157,7 @@ public class BeadSegmentation
 			if ( conf.writeSegmentation )
 				IOFunctions.writeSegmentation( view, conf.registrationFiledirectory );										
 		}
+		*/
 	}
 		
 	public Image<FloatType> getFoundBeads( final ViewDataBeads view )
