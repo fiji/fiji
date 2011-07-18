@@ -452,7 +452,7 @@ public class TileConfigurationSPIM
 					//if ( frame < 10 || frame == 525 )
 					{
 						SketchTikZFileObject files = SketchTikZFileObject.initOutputFile( "src/templates/fish-movie.sk", "src/templates/movie_fish/fish_" + frame + ".sk" );
-						for ( TileSPIM<?> tile : tiles )
+						for ( TileSPIM tile : tiles )
 						{
 							final AffineModel3D m = new AffineModel3D();
 							m.set( (AffineModel3D)tile.getModel() );
