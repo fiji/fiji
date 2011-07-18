@@ -300,7 +300,18 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		// Position it
 		float instant = spot.getFeature(SpotFeature.POSITION_T);
 		double x = (targetColumn-1) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
-		double y = (0.5 + graphComponent.getRowForInstant().get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2; 
+		Integer row = graphComponent.getRowForInstant().get(instant);
+		if (null == row) {
+			// The spot added is set to a time that is not present yet in the tracks scheme
+			// So we had it to the last row, plus one.
+			row = 0;
+			for(Integer eRow : graphComponent.getRowForInstant().values()) {
+				if (eRow > row) 
+					row = eRow;
+			}
+			row = row + 1;
+		}
+		double y = (0.5 + row) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2; 
 		int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(SpotFeature.RADIUS) / settings.dx));
 		height = Math.max(height, 12);
 		mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
