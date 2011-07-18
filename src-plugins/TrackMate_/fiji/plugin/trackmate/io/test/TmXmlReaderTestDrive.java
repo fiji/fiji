@@ -12,8 +12,9 @@ import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
 public class TmXmlReaderTestDrive {
 
-	private static final File file = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
-	
+//	private static final File file = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
+	private static final File file = new File("/Users/tinevez/Projects/ELaplantine/2011-06-29/Dish4_avg-cell1.xml");
+		
 	public static void main(String args[]) {
 		
 		ij.ImageJ.main(args);
@@ -34,15 +35,16 @@ public class TmXmlReaderTestDrive {
 		System.out.println(model.getSettings());
 		System.out.println(model.getSettings().segmenterSettings);
 		System.out.println(model.getSettings().trackerSettings);
-		
+		System.out.println();
+		System.out.println("Found "+model.getSpots().getNSpots()+" spots in total.");
+		System.out.println("Found "+model.getFilteredSpots().getNSpots()+" filtered spots.");
+		System.out.println("Found "+model.getNTracks()+" tracks in total.");
+		System.out.println("Found "+model.getNFilteredTracks()+" filtered tracks.");
+
 		// Instantiate displayer
 		AbstractTrackMateModelView displayer = new HyperStackDisplayer(model);
 		displayer.render();
-//		displayer.setSpots(model.getSpots());
-//		displayer.setSpotsToShow(model.getFilteredSpots());
 		displayer.refresh();
-//		displayer.setTrackGraph(model.getTrackGraph());
-		
 		
 	}
 	
