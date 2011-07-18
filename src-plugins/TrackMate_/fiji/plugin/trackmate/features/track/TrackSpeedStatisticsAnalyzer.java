@@ -21,6 +21,9 @@ public class TrackSpeedStatisticsAnalyzer implements TrackFeatureAnalyzer {
 			
 			Set<DefaultWeightedEdge> track = model.getTrackEdges(index);
 			
+			if (track.size() == 0)
+				continue;
+			
 			double sum = 0;
 			double mean = 0;
 			double M2 = 0;
