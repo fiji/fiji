@@ -105,7 +105,17 @@ public class SchindelinHungarianAlgorithm implements AssignmentAlgorithm {
 	public int[][] computeAssignments(double[][] costMatrix) {
 		weight = costMatrix;
 		M = weight.length;
+		if (M == 0) {
+			// no spot
+			return new int[][] { {  } };
+		}
 		N = weight[0].length;
+		
+		if (M <= 1 && N <= 1) {
+			// no spot
+			return new int[][] { {  } };
+		}
+		
 		initialize();
 		calculate();
 
