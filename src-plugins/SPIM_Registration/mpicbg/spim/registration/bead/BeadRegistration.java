@@ -535,7 +535,7 @@ public class BeadRegistration
 					Transform3D t = TransformUtils.getTransform3D1( (AbstractAffineModel3D<?>)view.getTile().getModel() );
 					Vector3d s = new Vector3d();
 					t.getScale( s );
-					System.out.println( "Scaling: " + s );
+					IOFunctions.println( "Scaling: " + s );
 					
 					// TODO: Rigidmodel
 					/*
@@ -611,7 +611,7 @@ public class BeadRegistration
 			}
 			else
 			{
-				System.out.println( "Cannot concatenate Axial Scaling, unknown model!" );
+				IOFunctions.println( "Cannot concatenate Axial Scaling, unknown model!" );
 			}
 		}		
 	}

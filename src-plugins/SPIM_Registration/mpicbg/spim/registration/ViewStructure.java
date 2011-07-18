@@ -350,17 +350,19 @@ public class ViewStructure
 						contains = true;				
 				view.setUseForFusion( contains );
 
-				for ( final int[] mirror : conf.channelsMirror )
+				if ( conf.channelsMirror != null )				
 				{
-					if ( conf.channels[ c ] == mirror[ 0 ] )
+					for ( final int[] mirror : conf.channelsMirror )
 					{
-						if ( mirror[ 1 ] == 0 )
-							view.setMirrorHorizontally( true );
-						if ( mirror[ 1 ] == 1 )
-							view.setMirrorVertically( true );
+						if ( conf.channels[ c ] == mirror[ 0 ] )
+						{
+							if ( mirror[ 1 ] == 0 )
+								view.setMirrorHorizontally( true );
+							if ( mirror[ 1 ] == 1 )
+								view.setMirrorVertically( true );
+						}
 					}
 				}
-				
 				views.add( view );
 			}
 			

@@ -303,10 +303,11 @@ public class Reconstruction
 		//model.set( 0.78610414f, 0.38340846f, 0.4848098f, 0.0f, -0.43837133f, 0.89879465f, 0.0f, 0.0f, -0.43574473f, -0.2125268f, 0.87462026f, 0.0f );
 		
 		// 6 angle Jans SPIM
+		/*
 		model.set(-0.39859658f, -0.88088614f, 0.25526524f, 0f,
 					 0.909124f, -0.41619343f, -0.01663096f, 0f,
 					 0.120889686f, 0.2254387f, 0.96672803f, 0);
-		
+		*/
 		for ( final ViewDataBeads view : viewStructure.getViews() )
 		{
 			final AffineModel3D viewModel = (AffineModel3D)view.getTile().getModel();
