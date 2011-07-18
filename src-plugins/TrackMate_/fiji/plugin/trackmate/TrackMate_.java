@@ -18,7 +18,7 @@ import ij.plugin.PlugIn;
 public class TrackMate_ extends TrackMateModel implements PlugIn {
 	
 	public static final String PLUGIN_NAME_STR = "Track Mate";
-	public static final String PLUGIN_NAME_VERSION = ".beta_2011-07-17";
+	public static final String PLUGIN_NAME_VERSION = ".beta_2011-07-18";
 	
 	/*
 	 * CONSTRUCTORS
