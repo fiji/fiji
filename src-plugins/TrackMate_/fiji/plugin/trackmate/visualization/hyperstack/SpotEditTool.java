@@ -329,7 +329,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 					spot.ID(), spot.getFeature(SpotFeature.POSITION_X), spot.getFeature(SpotFeature.POSITION_Y), 
 					spot.getFeature(SpotFeature.POSITION_Z), spot.getFeature(SpotFeature.RADIUS), units );
 		} else {
-			statusString = String.format("Spot %s, x = %.1f, y = %.1f, z = %.1f %s", 
+			statusString = String.format("Spot %s, x = %.1f, y = %.1f, z = %.1f, r = %.1f %s", 
 					spot.getName(), spot.getFeature(SpotFeature.POSITION_X), spot.getFeature(SpotFeature.POSITION_Y), 
 					spot.getFeature(SpotFeature.POSITION_Z), spot.getFeature(SpotFeature.RADIUS), units );
 		}
