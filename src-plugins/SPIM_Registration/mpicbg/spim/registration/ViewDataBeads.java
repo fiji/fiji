@@ -10,7 +10,7 @@ import javax.media.j3d.Transform3D;
 import javax.vecmath.Matrix4f;
 
 import mpicbg.imglib.algorithm.gauss.DownSample;
-import mpicbg.imglib.algorithm.mirror.MirrorImage;
+//import mpicbg.imglib.algorithm.mirror.MirrorImage;
 import mpicbg.imglib.container.ContainerFactory;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
@@ -265,8 +265,8 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	protected boolean mirrorVertically = false, mirrorHorizontally = false;
 	public void setMirrorHorizontally( final boolean state ) { mirrorHorizontally = state; }
 	public void setMirrorVertically( final boolean state ) { mirrorVertically = state; }
-	public boolean getMirrorHorizontally() { return mirrorHorizontally; }
-	public boolean getMirrorVertically() { return mirrorVertically; }
+	public boolean getMirrorHorizontally() { return false; }
+	public boolean getMirrorVertically() { return false; }
 	
 	/**
 	 * The link to the input image of this view
@@ -292,6 +292,7 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 				return null;
 			}
 			
+			/*
 			if ( getMirrorHorizontally() )
 			{
 				IOFunctions.println( "Mirroring horizontally: " + this ); 
@@ -305,6 +306,7 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 				final MirrorImage<FloatType> mirror = new MirrorImage<FloatType>( image, 1 );
 				mirror.process();				
 			}
+			*/
 			
 			image.setName( getName() );
 						
