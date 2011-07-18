@@ -16,10 +16,13 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.jdom.DataConversionException;
 import org.jdom.JDOMException;
+import org.jgrapht.graph.DefaultWeightedEdge;
+import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
+import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackMateModel;
@@ -306,14 +309,15 @@ public class GuiReader {
 		}
 		
 
-		{ // Try reading the tracks 
+		{ // Try reading the tracks
+			SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = null;
 			try {
-				model.setGraph(reader.readTracks(model.getFilteredSpots()));
+				graph = reader.readTracks(model.getFilteredSpots());
 			} catch (DataConversionException e) {
 				logger.error("Problem reading the track field of "+file.getName()
 						+". Error message is\n"+e.getLocalizedMessage()+'\n');
 			}
-			if (model.getNTracks() == 0) {
+			if (graph == null) {
 				if (null != controller) {
 					view.setModel(model);
 					// Stop at tune tracker panel
@@ -325,7 +329,7 @@ public class GuiReader {
 				logger.log("Loading data finished.\n");
 				return model;
 			}
-			
+			model.setGraph(graph);
 			logger.log("  Reading tracks done.\n");
 		}
 		
