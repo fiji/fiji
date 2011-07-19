@@ -198,7 +198,15 @@ public class Stitch_Many_Images implements PlugIn
 		boolean previewOnly = gd.getNextBoolean();
 		previewOnlyStatic = previewOnly;	
 		
-		IJ.log( "Fusion alpha = " + alpha );
+		runStitching();
+	}
+
+	/**
+	 * Calls the Stitching with the parameters provided
+	 */
+	protected void runStitching()
+	{
+		
 	}
 	
 	/**
