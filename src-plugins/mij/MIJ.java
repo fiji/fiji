@@ -1,3 +1,46 @@
+//=====================================================================================
+// File :       MIJ.java
+// Project:     MIJ: Matlab to ImageJ interface
+// URL:			http://bigwww.epfl.ch/sage/soft/mij/
+//
+//
+// Changes in version 1.3.6 (Daniel Sage, 21 December 2010)
+// - Updated the documentation and the web page
+//
+// Changes in version 1.3.5 (Carlos Ortiz, 19 December 2010)
+// - Added the functionality to specify both plugins and macro folder by passing a 
+//   command-line argument to the ImageJ constructor.
+// - Updated the use of deprecated getValue functions from the results table to use 
+//   getValueAsDouble
+// - Cleaned up the jar file and included a manifest file
+// - Increased the vebosity of the verbose mode
+// - To make ImageJ be able to compile and run plugins, added ImageJ/jre/lib/ext 
+//   to the java path during the start function. This folder should contain either 
+//   javac.jar or tools.jar as provided by ImageJ.
+// - To increase the memory available to ImageJ, go to File/Preferences/JavaHeapSize 
+//   and increase it. This works for R2010a but it's a new feature. 
+//   With older matlabs, google for a way to set java.lang.Runtime.getRuntime.maxMemory 
+//   by creating a java.opts file in your startup directory to set this value with 
+//   a JVM flag.
+// - Made MIJ.start and MIJ.exit work such that you can open and close MIJ and REOPEN it
+//   without null exceptions by removing the use of instanceof (imagej remains an 
+//   instance of ImageJ after the first pass even though the quit() function is called).
+//   Instead, we use a boolean that gets set to true/false for each start/stop instance.
+//   The only thing that doesn't work still is that when opening the second instance, 
+//   the pluginsfolder commandline argument does not get passed correctly.
+//  - For niceness, added ij.jar and mij.jar to
+//    /usr/local/Mathworks/R2010a/toolbox/local/classpath.txt, this way, they are 
+//   loaded with matlab.  Also, I could not get some plugins working without doing 
+//   this. If you want to make changes that do not affect anyone else, copy 
+//   classpath.txt to your own startup directory and edit the file there. 
+//   When MATLAB starts up, it looks for classpath.txt first in your startup 
+//   directory, and then in the default location. It uses the first file it finds.
+//
+// Changes in version 1.3.4 (Daniel Sage, 10 December 2010)
+// - Added a createImage method with the possibility to show or show the image
+//
+//=====================================================================================
+
 import java.awt.Rectangle;
 import java.awt.Polygon;
 import java.util.StringTokenizer;
@@ -20,42 +63,49 @@ import ij.process.ShortProcessor;
 import ij.plugin.filter.Analyzer;
 
 /**
- *  Matlab to ImageJ interface.
+ * Matlab to ImageJ interface.
  *
- * @version 1.3.2	(27 September 2009).
- 
- * @author Daniel Sage, Biomedical Imageing Group (BIG), Ecole Polytechnique Federale de Lausanne (EPFL), Switzerland.
- * @author Dimiter Prodanov, Catholic University of Louvain, Belgium, http://www.neuromorf.com.
+ * @version 1.3.6 (21 December 2010).
+ *
+ * @author <ul type="square">
+ *	<li>Daniel Sage, Biomedical Imaging Group (BIG), Ecole Polytechnique Federale de Lausanne (EPFL), Switzerland.</li>
+ *  <li>Dimiter Prodanov, Catholic University of Louvain, Belgium.</li>
+ *  <li>Carlos Ortiz, North Carolina State University, USA.</li>
+ *  </ul>
  * 
+ *
+ * @see
  * <p>
  * <b>More information:</b> <a href="http://bigwww.epfl.ch/sage/soft/mij/">http://bigwww.epfl.ch/sage/soft/mij/</a>
  * </p>
- *
- * <p>
  * <b>Important note for the installation:</b><br>
- * This class was tested with the Matlab 7.9.0 (R2009b) on Windows XP. 
- * To use this class, the java classpath of Matlab should be included ij.jar (ImageJ) and mij.jar (MIJ) by:<br>
- * javaaddpath 'C:\Program Files\MATLAB\R2009b\java\ij.jar'<br>
- * javaaddpath 'C:\Program Files\MATLAB\R2009b\java\mij.jar'<br>
+ * <p>To use this class, copy mij.jar to your ImageJ folder and tell matlab where the files are by:<br>
+ * javaaddpath '<IJpath>\ij.jar'<br>
+ * javaaddpath '<IJpath>\mij.jar'<br>
  * </p>
+ * <p>
+ * <b>This class was tested:</b>
+ * <ul type="square">
+ * <li>Matlab 7.10.0 (R2010a) on Ubuntu.</li>
+ * <li>Matlab 7.11.0 (R2010b) on Mac OX 10.6.5.</li>
+ * </ul>
  * <p>
  * <b>Conditions of use:</b><br>
  * You'll be free to use this software for research purposes, but you
  * should not redistribute it without our consent. In addition, we 
  * expect you to include a citation or acknowledgement whenever 
  * you present or publish results that are based on it.
- * </o>
- * 
- *
+ * </p>
  */
 
 public class MIJ {
 
-    public  static ImageJ imagej;
-    private static final  String version = "1.3.3";
+    public static ImageJ imagej;
+    private static final  String version = "1.3.6";
     private static final int CAL	=	1;
     private static final int NOCAL	=	0;
     private static boolean verbose = true;
+    private static boolean instance = false;
     
     /**
      * Class constructor.
@@ -106,47 +156,81 @@ public class MIJ {
      * Starts new instance of ImageJ from Matlab.
      */
     public static void start() {
-    	verbose = true;
-    	launch();
+    	start(true);
     }
     
     /**
      * Starts new instance of ImageJ from Matlab with or without verbose mode.
      *
-     * @param v	indicate the verbose mode
+     * @param v indicate the verbose mode
      */
     public static void start(boolean v) {
     	verbose = v;
-    	launch();
+    	launch(null);
     }
-    
-    /**
-     * Starts new instance of ImageJ specifying the plugins directory.
+ 
+	/**
+     * Starts new instance of ImageJ specifying the plugins directory and macros directory.  
      *
-     * @param string	Location of the plugins
+     * @param IJpath	String that points to the folder containing ij.jar and plugins and macros folder
+     * @param verbose	indicate the verbose mode
      */
-	public static void start(String string) {
-		System.setProperty("plugins.dir", string);
+	public static void start(String IJpath) {
+		System.setProperty("plugins.dir", IJpath);
 		verbose = true;
-		launch();
+		setupExt(IJpath);
+		launch(null);
     }
-    
+     
     /**
-     * Starts new instance of ImageJ specifying the plugins directory.
+     * Starts new instance of ImageJ specifying the plugins directory and macros directory.  
+	 * For this to work correctly, DO NOT end homeDir with plugins and DO NOT 
+	 * leave homeDir null. See setupPluginsAndMacrosPaths() in Menus.java and 
+	 * note that Menus.updateImageJMenus() is the only public function that has 
+	 * access to setupPluginsAndMacrosPaths().
      *
-     * @param string	Location of the plugins
-     * @param v	indicate the verbose mode
+     * @param homeDir	Location of the user's homeDir E.g. /home/user (ImageJ preferences will be saved here. 
+	 *                  It also means that if you already have preferences, opening ImageJ via matlab will use those preferences)
+     * @param IJpath	String that points to the folder containing ij.jar and plugins and macros folder
+     * @param verbose	indicate the verbose mode
      */
-	public static void start(String string, boolean v) {
-		System.setProperty("plugins.dir", string);
+	public static void start(String homeDir, String IJpath, boolean v) {
+		System.setProperty("plugins.dir", IJpath);
+		System.setProperty("user.dir", homeDir);
+		System.setProperty("user.home", homeDir);
 		verbose = v;
-		launch();
+		setupExt(IJpath);
+		launch(null);
     }
 
-    /**
-     * Starts new instance of ImageJ from Matlab.
+	/**
+	* Setup the IJPath.
+	* 
+	* @param IJpath String that points to the folder containing ij.jar and plugins and macros folder 
+	*/
+	public static void setupExt(String IJpath) {
+		if(System.getProperty("java.imagej")==null) { //these need to be added for compile to work
+			System.setProperty("java.ext.dirs", System.getProperty("java.ext.dirs")+":"+IJpath+"/jre/lib/ext");
+			System.setProperty("java.imagej","set");
+		}
+	}
+
+   /**
+     * Starts new instance of ImageJ specifying the command-line options .
+     *
+     * @param args	String of the same format as ImageJ commandline e.g. "-debug -ijpath /opt/ImageJ/plugins"
+     * @param IJpath	String that points to the folder containing ij.jar and plugins and macros folder
      */
-    private static void launch() {
+	public static void start(String args, String IJpath) {
+		setupExt(IJpath);
+		verbose = true;
+		launch(args.split("\\s"));
+	}
+
+    /**
+     * Starts new instance of ImageJ from Matlab using command-line arguments
+     */
+    private static void launch(String myargs[]) {
     	if (verbose) {
 			System.out.println("--------------------------------------------------------------");
 			System.out.println("MIJ " + version + ": Matlab to ImageJ Interface");
@@ -168,13 +252,32 @@ public class MIJ {
 			}
 			return;
         }
+
+		/////////////////////////////////
+		///////These are the important lines
+		////////////////////////////////////
         imagej = new ImageJ();
+		if( myargs!=null) {
+			if (verbose) {
+				System.out.println("ImageJ> Arguments:");
+				for(int i =0; i < myargs.length ; i++)
+					System.out.println(myargs[i]);
+			}
+			imagej.main(myargs);
+		}
+		///////////////////////////////////
+
         if (imagej instanceof ImageJ) {
 			if (verbose) {
 				System.out.println("ImageJ> Version:" + IJ.getVersion());
 				System.out.println("ImageJ> Memory:" + IJ.freeMemory() );
-				System.out.println("ImageJ> Directory plugins: "+ (IJ.getDirectory("plugins")==null?"Not specified":IJ.getDirectory("plugins")));
+				System.out.println("ImageJ> Directory plugins: " + (IJ.getDirectory("plugins")==null?"Not specified":IJ.getDirectory("plugins")));
 				System.out.println("ImageJ> Directory macros: " + (IJ.getDirectory("macros")==null?"Not specified":IJ.getDirectory("macros")));
+				System.out.println("ImageJ> Directory luts: " + (IJ.getDirectory("luts")==null?"Not specified":IJ.getDirectory("luts")));
+				System.out.println("ImageJ> Directory image: " + (IJ.getDirectory("image")==null?"Not specified":IJ.getDirectory("image")));
+				System.out.println("ImageJ> Directory imagej: " + (IJ.getDirectory("imagej")==null?"Not specified":IJ.getDirectory("imagej")));
+				System.out.println("ImageJ> Directory startup: " + (IJ.getDirectory("startup")==null?"Not specified":IJ.getDirectory("startup")));
+				System.out.println("ImageJ> Directory home: " + (IJ.getDirectory("home")==null?"Not specified":IJ.getDirectory("home")));
 				System.out.println("--------------------------------------------------------------");
 				System.out.println("Status> ImageJ is running.");
 				System.out.println("--------------------------------------------------------------");
@@ -187,8 +290,7 @@ public class MIJ {
 			System.out.println("--------------------------------------------------------------");
 		}
     }
-    
-    
+
     /**
      * Starts new instance of ImageJ.
      *
@@ -196,21 +298,24 @@ public class MIJ {
      */
     public static void main(String [] args) {
     	try {
-			MIJ.start(args[0]);
-		} catch (ArrayIndexOutOfBoundsException e) {	
+			MIJ.start(args[0],args[1]);
+		} 
+		catch (ArrayIndexOutOfBoundsException e) {	
 			IJ.log(MIJ.help());
 		}
     }
     
     /**
-     * Exits ImageJ.
+     * Exits ImageJ.imagej instanceimagej instance
      */
     public static void exit() {
-        //System.exit(0);
-        //this.imagej.quit();
-        IJ.getInstance().quit();
+		IJ.getInstance().quit();
+		imagej = null;
+ 		if (verbose && !(imagej instanceof ImageJ)) {
+			System.out.println("ImageJ instance ended cleanly");
+		}
     }
-    
+	
     /**
      * Gives the list of the open images in the ImageJ instance.
      *
@@ -406,7 +511,6 @@ public class MIJ {
         }
         return strings;
     }
-
     
     /**
      * Returns the instance of the ResultsTable.
@@ -424,10 +528,10 @@ public class MIJ {
             }
         }
         int counter=rt.getCounter();
-        float [][] results=new float[counter][col];
+        double [][] results=new double[counter][col];
         for( int i=0;i<col;i++) {
             for( int j=0;j<counter;j++) {
-                results[j][i]=rt.getValue(index[i],j);
+                results[j][i]=rt.getValueAsDouble(index[i],j);
             }
         }
         return results;
@@ -443,12 +547,11 @@ public class MIJ {
         ResultsTable rt=Analyzer.getResultsTable();
         int col= rt.getColumnIndex(heading);
         int counter=rt.getCounter();
-        float []results=new float[counter];
+        double []results=new double[counter];
         
-        results=rt.getColumn(col);
+        results=rt.getColumnAsDoubles(col);
         return results;
     }
-    
     
     /**
      * Set a specifying column into the current instance ResultsTable.
@@ -491,7 +594,6 @@ public class MIJ {
             case ImagePlus.COLOR_256: {
                 ;
             }
-            
             case ImagePlus.GRAY8: {
                 short[][][] is = new short[height][width][stackSize];
                 for (int sz = 0; sz < stackSize; sz++) {
@@ -612,7 +714,7 @@ public class MIJ {
      * @param object	Matlab variable
      */
     public static void createImage(Object object) {
-        createImage("Import from Matlab", object);
+        createImage("Import from Matlab", object, true);
     }
     
     /**
@@ -623,25 +725,10 @@ public class MIJ {
 	 * The recognize type are byte, short, int, float and double. The dimensionality of
 	 * the 2 (image) or 3 (stack of images)
      *
-     * @param title		title of the new image	
-     * @param object	Matlab variable
-     */
-    public static void createImage(String title, Object object) {
-        createImage(title, object, true);
-    }
-
-    /**
-     * Create a new image in ImageJ from a Matlab variable with a specified title.
-	 *
-	 * This method tries to create an image (ImagePlus of ImageJ) from a Matlab's variable
-	 * which should be an 2D or 3D array
-	 * The recognize type are byte, short, int, float and double. The dimensionality of
-	 * the 2 (image) or 3 (stack of images)
-     *
-     * @param title		title of the new image
-     * @param object	Matlab variable
-     * @param showImage	whether to display the newly created image or not
-     * @return the resulting ImagePlus instance
+     * @param title			title of the new image	
+     * @param object		Matlab variable
+     * @param showImage     Whether to display the newly created image or not
+	 * @return the resulting ImagePlus instance
      */
     public static ImagePlus createImage(String title, Object object, boolean showImage) {
         ImagePlus imp = null;
@@ -886,12 +973,12 @@ public class MIJ {
 			System.out.println("MIJ Error message: Unknow type of images or volumes.");
 			return null;
 		}
-
+		
         if (showImage) {
-            imp.show();
-            imp.updateAndDraw();
-        }
-        return imp;
+			imp.show();
+			imp.updateAndDraw();
+		}
+		return imp;
     }
     
     /**
