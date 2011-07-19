@@ -42,7 +42,7 @@ import fiji.expressionparser.ImgLibParser;
  * <ul>
  * 	<li> {@link #setExpression(String)} to pass the expression to parse
  * 	<li> {@link #setImageMap(Map)} to pass the couples (variable name, image) to the parser
- * 	<li> {@link #exec()} to compute the resulting image
+ * 	<li> {@link #process()} to compute the resulting image
  * 	<li> {@link #getResult()} to retrieve the resulting image
  * </ul>
  * 
@@ -218,14 +218,14 @@ public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, O
 
 	/**
 	 * Return the result of the last evaluation of the expression over the images given.
-	 * Is <code>null</code> if {@link #exec()} was not called before.
+	 * Is <code>null</code> if {@link #process()} was not called before.
 	 */
 	public Image<T> getResult()  {
 		return this.result;
 	}
 	
 	/**
-	 * If an error occurred during the call of {@link #exec()}, an error message can be read here. 
+	 * If an error occurred during the call of {@link #process()}, an error message can be read here. 
 	 */
 	public String getErrorMessage() {
 		return this.error_message;
