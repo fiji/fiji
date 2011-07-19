@@ -135,7 +135,12 @@ public class Bead_Registration implements PlugIn
 			if ( defaultBeadBrightness == 4 )
 				values = getAdvancedDoGParameters( new int[ 1 ] )[ 0 ];
 			else
-				values = getInteractiveDoGParameters( "Select view to analyze" );
+			{
+				values = new double[ 2 ];
+				values[ 0 ] = conf.initialSigma;
+				values[ 1 ] = conf.minPeakValue;
+				getInteractiveDoGParameters( "Select view to analyze", values );
+			}
 			
 			// cancelled
 			if ( values == null )
@@ -214,14 +219,24 @@ public class Bead_Registration implements PlugIn
 		return dogParameters.clone();
 	}
 	
-	public static double[] getInteractiveDoGParameters( final String text )
+	/**
+	 * Can be called with values[ 3 ], i.e. [initialsigma, sigma2, threshold] or
+	 * values[ 2 ], i.e. [initialsigma, threshold]
+	 * 
+	 * The results are stored in the same array.
+	 * If called with values[ 2 ], sigma2 changing will be disabled
+	 * 
+	 * @param text - the text which is shown when asking for the file
+	 * @param values - the intial values and also contains the result
+	 */
+	public static void getInteractiveDoGParameters( final String text, final double values[] )
 	{
 		final GenericDialogPlus gd = new GenericDialogPlus( text );		
 		gd.addFileField( "", spimDataDirectoryStatic, 50 );		
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
-			return null;
+			return;
 		
 		final String file = gd.getNextString();
 		
@@ -231,7 +246,7 @@ public class Bead_Registration implements PlugIn
 		if ( img == null )
 		{
 			IOFunctions.println( "File not found: " + file );
-			return null;
+			return;
 		}
 		
 		img.getDisplay().setMinMax();
@@ -243,9 +258,19 @@ public class Bead_Registration implements PlugIn
 		imp.setRoi( 0, 0, imp.getWidth()/3, imp.getHeight()/3 );		
 		
 		final InteractiveDoG idog = new InteractiveDoG();
-		idog.setSigma2isAdjustable( false );
-		idog.setThreshold( 0.008f );
-		idog.setInitialSigma( 1.8f );
+		
+		if ( values.length == 2 )
+		{
+			idog.setSigma2isAdjustable( false );
+			idog.setInitialSigma( (float)values[ 0 ] );
+			idog.setThreshold( (float)values[ 1 ] );
+		}
+		else
+		{
+			idog.setInitialSigma( (float)values[ 0 ] );
+			idog.setThreshold( (float)values[ 2 ] );			
+		}
+		
 		idog.run( null );
 		
 		while ( !idog.isFinished() )
@@ -253,7 +278,17 @@ public class Bead_Registration implements PlugIn
 		
 		imp.close();
 		
-		return new double[]{ idog.getInitialSigma(), idog.getThreshold() };
+		if ( values.length == 2)
+		{
+			values[ 0 ] = idog.getInitialSigma();
+			values[ 1 ] = idog.getThreshold();
+		}
+		else
+		{
+			values[ 0 ] = idog.getInitialSigma();
+			values[ 1 ] = idog.getSigma2();						
+			values[ 2 ] = idog.getThreshold();			
+		}
 	}
 
 	public static final void addHyperLinkListener(final MultiLineLabel text, final String myURL)

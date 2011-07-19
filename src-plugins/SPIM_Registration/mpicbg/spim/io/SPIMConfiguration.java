@@ -98,7 +98,7 @@ public class SPIMConfiguration
     public boolean useCenterOfMass = false;
 	
 	// ScaleSpace Segmentation
-	public float minPeakValue = 0.01f;
+	public float minPeakValue = 0.008f;
 	public float minInitialPeakValue = minPeakValue/10;
 	public float identityRadius = 3f;
 	public float maximaTolerance = 0.01f;
