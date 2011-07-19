@@ -3,6 +3,11 @@
 // Project:     MIJ: Matlab to ImageJ interface
 // URL:			http://bigwww.epfl.ch/sage/soft/mij/
 //
+// Fiji version (Jean-Yves Tinevez, July 2011)
+// - Removed some Eclipse minor warnings
+// - The createColor methods bahve like createImage: they have a boolean flag to
+// specify whether we display the image or not, and they return the ImagePlus they
+// created.
 //
 // Changes in version 1.3.6 (Daniel Sage, 21 December 2010)
 // - Updated the documentation and the web page
@@ -101,11 +106,10 @@ import ij.plugin.filter.Analyzer;
 public class MIJ {
 
     public static ImageJ imagej;
-    private static final  String version = "1.3.6";
+    private static final  String version = "1.3.6-fiji";
     private static final int CAL	=	1;
     private static final int NOCAL	=	0;
     private static boolean verbose = true;
-    private static boolean instance = false;
     
     /**
      * Class constructor.
@@ -263,7 +267,7 @@ public class MIJ {
 				for(int i =0; i < myargs.length ; i++)
 					System.out.println(myargs[i]);
 			}
-			imagej.main(myargs);
+			ImageJ.main(myargs);
 		}
 		///////////////////////////////////
 
@@ -989,8 +993,8 @@ public class MIJ {
      *
      * @param is	Matlab variable	
      */
-    public static void createColor(byte[][][] is) {
-        createColor("Imported from Matlab", is);
+    public static ImagePlus createColor(final byte[][][] is, boolean showImage) {
+        return createColor("Imported from Matlab", is, showImage);
     }
     
     /**
@@ -999,7 +1003,7 @@ public class MIJ {
      * @param title	title of the new image
      * @param is	Matlab variable
      */
-    public static void createColor(String title, byte[][][] is) {
+    public static ImagePlus createColor(String title, final byte[][][] is, boolean showImage) {
         int height = is.length;
         int width = is[0].length;
         int stackSize = is[0][0].length;
@@ -1007,7 +1011,6 @@ public class MIJ {
         byte[] R_pixels = new byte[width * height];
         byte[] G_pixels = new byte[width * height];
         byte[] B_pixels = new byte[width * height];
-        boolean bool = false;
         if (stackSize >= 3) {
             for (int h = 0; h < height; h++) {
                 int index = h * width;
@@ -1045,7 +1048,11 @@ public class MIJ {
             }
         }
         colorprocessor.setRGB(R_pixels, G_pixels, B_pixels);
-        new ImagePlus(title, colorprocessor).show();
+        ImagePlus imp = new ImagePlus(title, colorprocessor);
+        if (showImage) {
+        	imp.show();
+        }
+        return imp;
     }
     
     /**
@@ -1053,8 +1060,8 @@ public class MIJ {
      *
      * @param is	Matlab variable
      */
-    public static void createColor(byte[][][][] is) {
-        createColor("Import from Matlab", is);
+    public static ImagePlus createColor(byte[][][][] is, boolean showImage) {
+        return createColor("Import from Matlab", is, showImage);
     }
     
     /**
@@ -1063,7 +1070,7 @@ public class MIJ {
      * @param title	title of the new image
      * @param is	Matlab variable
      */
-    public static void createColor(String title, byte[][][][] is) {
+    public static ImagePlus createColor(String title, byte[][][][] is, boolean showImage) {
         int height = is.length;
         int width = is[0].length;
         int stackSize = is[0][0].length;
@@ -1073,7 +1080,6 @@ public class MIJ {
         byte[] red = new byte[width * height];
         byte[] green = new byte[width * height];
         byte[] blue = new byte[width * height];
-        boolean bool = false;
         if (dim >= 3) {
             for (int k = 0; k < stackSize; k++) {
                 for (int j = 0; j < height; j++) {
@@ -1122,7 +1128,11 @@ public class MIJ {
                 imagestack.addSlice("", colorprocessor);
             }
         }
-        new ImagePlus(title, imagestack).show();
+        ImagePlus imp = new ImagePlus(title, imagestack);
+        if (showImage) {
+        	imp.show();
+        }
+        return imp;
     }
     
     /**
