@@ -107,9 +107,8 @@ public class MappingFusionParalell extends SPIMImageFusion
 						for (int view = 0; view < numViews; view++)
 							if ( view % numThreads == myNumber)
 							{
-								isoW[i][view] = isolatedWeightenerFactories.get(i).createInstance( views.get(view) );
 								IOFunctions.println( "Computing " + isolatedWeightenerFactories.get( i ).getDescriptiveName() + " for " + views.get( view ) );
-								//System.out.println( "isoW[i][view]: " + isoW[i][view] );
+								isoW[i][view] = isolatedWeightenerFactories.get(i).createInstance( views.get(view) );
 							}
 	                }
 	            });

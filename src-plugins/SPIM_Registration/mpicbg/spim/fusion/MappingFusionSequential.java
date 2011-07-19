@@ -200,8 +200,8 @@ public class MappingFusionSequential extends SPIMImageFusion
 							for (int view = viewIndexStart; view < viewIndexEnd; view++)
 								if ( view % numThreads == myNumber)
 								{
-									isoW[i][view] = isolatedWeightenerFactories.get(i).createInstance( views.get( view ) );
 									IOFunctions.println( "Computing " + isolatedWeightenerFactories.get( i ).getDescriptiveName() + " for " + views.get( view ) );
+									isoW[i][view] = isolatedWeightenerFactories.get(i).createInstance( views.get( view ) );									
 								}
 		                }
 		            });
