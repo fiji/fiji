@@ -88,10 +88,12 @@ public class MappingFusionParalell extends SPIMImageFusion
         final int numThreads = threads.length;
 
         // compute them all in paralell ( computation done while opening )
-		final IsolatedPixelWeightener<?>[][] isoW = new IsolatedPixelWeightener<?>[ isolatedWeightenerFactories.size() ][ numViews ];
-		for (int j = 0; j < isoW.length; j++)		
+		IsolatedPixelWeightener<?>[][] isoWinit = new IsolatedPixelWeightener<?>[ isolatedWeightenerFactories.size() ][ numViews ];
+		for (int j = 0; j < isoWinit.length; j++)		
 		{
 			final int i = j;
+			
+			final IsolatedPixelWeightener<?>[][] isoW = isoWinit;
 			
 			for (int ithread = 0; ithread < threads.length; ++ithread)
 	            threads[ithread] = new Thread(new Runnable()
@@ -111,6 +113,25 @@ public class MappingFusionParalell extends SPIMImageFusion
 			
 			SimpleMultiThreading.startAndJoin( threads );
 		}
+		
+		// test if the isolated weighteners were successfull...		
+		try
+		{
+			for ( IsolatedPixelWeightener[] iso : isoWinit )
+				for ( IsolatedPixelWeightener i : iso )
+					if ( i == null )
+					{
+						IOFunctions.println( "Not enough memory for running the content-based fusion, running without it" );
+						isoWinit = new IsolatedPixelWeightener[ 0 ][ 0 ];
+					} 
+		}
+		catch (Exception e)
+		{				
+			IOFunctions.println( "Not enough memory for running the content-based fusion, running without it" );
+			isoWinit = new IsolatedPixelWeightener[ 0 ][ 0 ];
+		}
+		
+		final IsolatedPixelWeightener<?>[][] isoW = isoWinit;
 		
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Computing output image (Channel " + channelIndex +  ").");
@@ -199,8 +220,6 @@ public class MappingFusionParalell extends SPIMImageFusion
 		    				
 		        			if (it.getPosition(2) % numThreads == myNumber)
 		        			{
-		        				int countUse = 0;
-		        				
 		        				// get the coordinates if cropped
 		        				final int x = it.getPosition(0) + cropOffsetX;
 		        				final int y = it.getPosition(1) + cropOffsetY;
@@ -248,9 +267,7 @@ public class MappingFusionParalell extends SPIMImageFusion
 										for (final CombinedPixelWeightener<?> w : combW)
 											w.updateWeights(locf, use);
 		
-									countUse++;
-		
-		    						float sumWeights = 0;
+									float sumWeights = 0;
 		    						float value = 0;
 		
 		    						for (int view = 0; view < numViews; ++view)
@@ -321,10 +338,17 @@ public class MappingFusionParalell extends SPIMImageFusion
 			
 		// close weighteners		
 		// close isolated pixel weighteners
-		for (int i = 0; i < isoW.length; i++)
-			for (int view = 0; view < numViews; view++)
-				isoW[i][view].close();
-				
+		try
+		{
+			for (int i = 0; i < isoW.length; i++)
+				for (int view = 0; view < numViews; view++)
+					isoW[i][view].close();
+		}
+		catch (Exception e )
+		{
+			// this will fail if there was not enough memory...
+		}
+		
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Done computing output image (Channel " + channelIndex +  ").");
 	}

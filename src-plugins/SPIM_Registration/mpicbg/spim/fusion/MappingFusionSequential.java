@@ -183,10 +183,12 @@ public class MappingFusionSequential extends SPIMImageFusion
 	        final int numThreads = threads.length;
 
 	        // compute them all in paralell ( computation done while opening )
-			final IsolatedPixelWeightener<?>[][] isoW = new IsolatedPixelWeightener<?>[ isolatedWeightenerFactories.size() ][ numViews ];
-			for (int j = 0; j < isoW.length; j++)		
+			IsolatedPixelWeightener<?>[][] isoWinit = new IsolatedPixelWeightener<?>[ isolatedWeightenerFactories.size() ][ numViews ];
+			for (int j = 0; j < isoWinit.length; j++)		
 			{
 				final int i = j;
+				
+				final IsolatedPixelWeightener<?>[][] isoW = isoWinit;
 				
 				for (int ithread = 0; ithread < threads.length; ++ithread)
 		            threads[ithread] = new Thread(new Runnable()
@@ -203,6 +205,25 @@ public class MappingFusionSequential extends SPIMImageFusion
 				
 				SimpleMultiThreading.startAndJoin( threads );
 			}
+
+			// test if the isolated weighteners were successfull...		
+			try
+			{
+				for ( IsolatedPixelWeightener[] iso : isoWinit )
+					for ( IsolatedPixelWeightener i : iso )
+						if ( i == null )
+						{
+							IOFunctions.println( "Not enough memory for running the content-based fusion, running without it" );
+							isoWinit = new IsolatedPixelWeightener[ 0 ][ 0 ];
+						} 
+			}
+			catch (Exception e)
+			{				
+				IOFunctions.println( "Not enough memory for running the content-based fusion, running without it" );
+				isoWinit = new IsolatedPixelWeightener[ 0 ][ 0 ];
+			}
+			
+			final IsolatedPixelWeightener<?>[][] isoW = isoWinit;
 			
 			ai.set( 0 );					
 	        threads = SimpleMultiThreading.newThreads( numThreads );
@@ -385,9 +406,16 @@ public class MappingFusionSequential extends SPIMImageFusion
 				views.get( view ).closeImage();
 			
 			// unload isolated weightener
-			for (int i = 0; i < isoW.length; i++)
-				for ( int view = viewIndexStart; view < viewIndexEnd; ++view )
-					isoW[ i ][ view ].close();
+			try
+			{
+				for (int i = 0; i < isoW.length; i++)
+					for ( int view = viewIndexStart; view < viewIndexEnd; ++view )
+						isoW[ i ][ view ].close();
+			}
+			catch (Exception e )
+			{
+				// this will fail if there was not enough memory...
+			}
 			
 		}// input images
 				
