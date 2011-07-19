@@ -133,7 +133,7 @@ public class Bead_Registration implements PlugIn
 			final double[] values;
 			
 			if ( defaultBeadBrightness == 4 )
-				values = getAdvancedDoGParameters();
+				values = getAdvancedDoGParameters( new int[ 1 ] )[ 0 ];
 			else
 				values = getInteractiveDoGParameters( "Select view to analyze" );
 			
@@ -153,9 +153,65 @@ public class Bead_Registration implements PlugIn
 		
 	}
 	
-	public static double[] getAdvancedDoGParameters()
+	static double[][] dogParameters = null;
+	
+	public static double[][] getAdvancedDoGParameters( final int[] channelIndices )
 	{
-		return null;
+		if ( channelIndices == null || channelIndices.length == 0 )
+			return null;
+		
+		if ( dogParameters == null || dogParameters.length != channelIndices.length )
+		{
+			dogParameters = new double[ channelIndices.length ][ 2 ];
+			
+			for ( final double dog[] : dogParameters )
+			{
+				dog[ 0 ] = 1.8;
+				dog[ 1 ] = 0.008;
+			}
+		}
+
+		final GenericDialog gd = new GenericDialog( "Select Difference-of-Gaussian Parameters" );
+		
+		if ( channelIndices.length == 1 )
+		{
+			// single channel
+			gd.addNumericField( "Initial_sigma", dogParameters[ 0 ][ 0 ], 4 );
+			gd.addNumericField( "Threshold", dogParameters[ 0 ][ 1 ], 4 );
+		}
+		else
+		{
+			// multi channel
+			for ( int i = 0; i < channelIndices.length; ++i )
+			{
+				final int channel = channelIndices[ i ];
+				
+				gd.addNumericField( "Channel_" + channel + "_Initial_sigma", dogParameters[ i ][ 0 ], 4 );
+				gd.addNumericField( "Channel_" + channel + "_Threshold", dogParameters[ i ][ 1 ], 4 );				
+			}
+		}
+		
+		gd.showDialog();
+		
+		if ( gd.wasCanceled() )
+			return null;
+		
+		if ( channelIndices.length == 1 )
+		{
+			dogParameters[ 0 ][ 0 ] = gd.getNextNumber();
+			dogParameters[ 0 ][ 1 ] = gd.getNextNumber();
+		}
+		else
+		{
+			// multi channel
+			for ( int i = 0; i < channelIndices.length; ++i )
+			{
+				dogParameters[ i ][ 0 ] = gd.getNextNumber();
+				dogParameters[ i ][ 1 ] = gd.getNextNumber();
+			}			
+		}
+		
+		return dogParameters.clone();
 	}
 	
 	public static double[] getInteractiveDoGParameters( final String text )
@@ -194,6 +250,8 @@ public class Bead_Registration implements PlugIn
 		
 		while ( !idog.isFinished() )
 			SimpleMultiThreading.threadWait( 100 );
+		
+		imp.close();
 		
 		return new double[]{ idog.getInitialSigma(), idog.getThreshold() };
 	}
