@@ -6,6 +6,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.vecmath.Point3f;
 
+import com.sun.net.httpserver.Authenticator.Success;
+
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
@@ -106,6 +108,7 @@ public class MappingFusionParalell extends SPIMImageFusion
 							if ( view % numThreads == myNumber)
 							{
 								isoW[i][view] = isolatedWeightenerFactories.get(i).createInstance( views.get(view) );
+								IOFunctions.println( "Computing " + isolatedWeightenerFactories.get( i ).getDescriptiveName() + " for " + views.get( view ) );
 								//System.out.println( "isoW[i][view]: " + isoW[i][view] );
 							}
 	                }
@@ -117,13 +120,17 @@ public class MappingFusionParalell extends SPIMImageFusion
 		// test if the isolated weighteners were successfull...		
 		try
 		{
+			boolean successful = true;
 			for ( IsolatedPixelWeightener[] iso : isoWinit )
 				for ( IsolatedPixelWeightener i : iso )
 					if ( i == null )
-					{
-						IOFunctions.println( "Not enough memory for running the content-based fusion, running without it" );
-						isoWinit = new IsolatedPixelWeightener[ 0 ][ 0 ];
-					} 
+						successful = false;
+						
+			if ( !successful )
+			{
+				IOFunctions.println( "Not enough memory for running the content-based fusion, running without it" );
+				isoWinit = new IsolatedPixelWeightener[ 0 ][ 0 ];
+			}
 		}
 		catch (Exception e)
 		{				

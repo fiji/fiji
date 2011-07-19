@@ -199,7 +199,10 @@ public class MappingFusionSequential extends SPIMImageFusion
 		                	
 							for (int view = viewIndexStart; view < viewIndexEnd; view++)
 								if ( view % numThreads == myNumber)
+								{
 									isoW[i][view] = isolatedWeightenerFactories.get(i).createInstance( views.get( view ) );
+									IOFunctions.println( "Computing " + isolatedWeightenerFactories.get( i ).getDescriptiveName() + " for " + views.get( view ) );
+								}
 		                }
 		            });
 				
@@ -209,13 +212,18 @@ public class MappingFusionSequential extends SPIMImageFusion
 			// test if the isolated weighteners were successfull...		
 			try
 			{
+				boolean successful = true;
+				
 				for ( IsolatedPixelWeightener[] iso : isoWinit )
 					for ( IsolatedPixelWeightener i : iso )
 						if ( i == null )
-						{
-							IOFunctions.println( "Not enough memory for running the content-based fusion, running without it" );
-							isoWinit = new IsolatedPixelWeightener[ 0 ][ 0 ];
-						} 
+							successful = false;
+				
+				if ( !successful )
+				{
+					IOFunctions.println( "Not enough memory for running the content-based fusion, running without it" );
+					isoWinit = new IsolatedPixelWeightener[ 0 ][ 0 ];
+				}				
 			}
 			catch (Exception e)
 			{				
