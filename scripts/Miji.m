@@ -19,7 +19,7 @@ function Miji(open_imagej)
     if open_imagej
       cd ..;
       fprintf('\n\nUse MIJ.exit to end the session\n\n');
-      MIJ.start(pwd);
+      MIJ.start(fiji_directory);
     end
 end
 
