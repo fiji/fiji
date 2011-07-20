@@ -60,6 +60,7 @@ public class TrackOverlay implements Overlay {
 		if (ntracks == 0)
 			return;
 		InterpolatePaintScale colorMap = (InterpolatePaintScale) displaySettings.get(TrackMateModelView.KEY_COLORMAP);
+		Color defaultColor = (Color) displaySettings.get(TrackMateModelView.KEY_COLOR);
 		edgeColors = new HashMap<Integer, Color>(ntracks);
 
 		final TrackFeature feature = (TrackFeature) displaySettings.get(TrackMateModelView.KEY_TRACK_COLOR_FEATURE);
@@ -74,8 +75,12 @@ public class TrackOverlay implements Overlay {
 			}
 
 			for(int i : model.getFilteredTrackIndices()) {
-				double val = model.getTrackFeature(i, feature);
-				edgeColors.put(i, colorMap.getPaint((float) (val-min) / (max-min)));
+				Float val = model.getTrackFeature(i, feature);
+				if (null == val) {
+					edgeColors.put(i, defaultColor); // if feature is not calculated
+				} else {
+					edgeColors.put(i, colorMap.getPaint((float) (val-min) / (max-min)));
+				}
 			}
 
 		} else {

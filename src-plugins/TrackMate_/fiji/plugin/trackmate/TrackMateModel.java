@@ -434,6 +434,9 @@ public class TrackMateModel {
 			for(FeatureFilter<TrackFeature> filter : trackFilters) {
 				Float tval = filter.value;
 				Float val = trackFeatures.get(trackIndex).get(filter.feature);
+				if (null == val)
+					continue;
+				
 				if (filter.isAbove) {
 					if (val < tval) {
 						trackIsOk = false;

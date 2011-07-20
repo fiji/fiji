@@ -345,6 +345,7 @@ public class GuiReader {
 					view.setModel(model);
 					// Stop at tune track filter panel
 					controller.setState(GuiState.TUNE_TRACK_FILTERS);
+					controller.setModelView(AbstractTrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
 					if (!imp.isVisible())
 						imp.show();
 				}
@@ -366,6 +367,7 @@ public class GuiReader {
 					view.setModel(model);
 					// Stop at tune track filter panel
 					controller.setState(GuiState.TUNE_TRACK_FILTERS);
+					controller.setModelView(AbstractTrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
 					if (!imp.isVisible())
 						imp.show();
 				}
