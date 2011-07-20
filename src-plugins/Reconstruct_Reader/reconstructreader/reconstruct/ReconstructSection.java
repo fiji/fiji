@@ -48,14 +48,15 @@ public class ReconstructSection {
     public void appendXML(StringBuilder sb)
     {
         String thickness = doc.getDocumentElement().getAttribute("thickness");
+        double mag = translator.getMag();
         int index = Integer.valueOf(doc.getDocumentElement().getAttribute("index"));
-        float thicknessFloat = Float.valueOf(thickness);
+        double aniso = Double.valueOf(thickness) / mag;
         NodeList imageList = doc.getElementsByTagName("Image");
 
         sb.append("<t2_layer oid=\"")
                 .append(oid).append("\"\n" +
                 "thickness=\"").append(thickness).append("\"\n" +
-                "z=\"").append(thicknessFloat * (float)index).append("\"\n" +
+                "z=\"").append(aniso * (double)index).append("\"\n" +
                 "title=\"\"\n" +
                 ">\n");
 
