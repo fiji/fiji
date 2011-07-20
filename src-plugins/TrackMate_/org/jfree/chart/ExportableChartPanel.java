@@ -1,18 +1,26 @@
 package org.jfree.chart;
 
+import fiji.plugin.trackmate.visualization.trackscheme.XYEdgeSeriesCollection;
 import ij.IJ;
+import ij.measure.ResultsTable;
 
 import java.awt.Container;
 import java.awt.FileDialog;
 import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 
 import javax.swing.JFileChooser;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 
 import org.apache.batik.transcoder.TranscoderException;
+import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.util.ChartExporter;
+import org.jfree.data.xy.XYDataset;
 import org.jfree.ui.ExtensionFileFilter;
 
 public class ExportableChartPanel extends ChartPanel {
@@ -59,14 +67,79 @@ public class ExportableChartPanel extends ChartPanel {
 	 * METHODS
 	 */
 
-	 /**
-	  * Opens a file chooser and gives the user an opportunity to save the chart
-	  * in PNG, PDF or SVG format.
-	  *
-	  * @throws IOException if there is an I/O error.
-	  */
+	@Override
+	protected JPopupMenu createPopupMenu(boolean properties, boolean copy, boolean save, boolean print, boolean zoom) {
+		JPopupMenu menu = super.createPopupMenu(properties, copy, save, print, zoom);
+
+		menu.addSeparator();
+
+		JMenuItem exportTableItem = new JMenuItem("Display data tables");
+		exportTableItem.setActionCommand("TABLES");
+		exportTableItem.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				createDataTable();
+			}
+		});
+		menu.add(exportTableItem);
+
+		return menu;
+	}
+
+
+	public void createDataTable() {
+		XYPlot plot = null;
+		try {
+			plot = getChart().getXYPlot();
+		} catch (ClassCastException e) {
+			return;
+		}
+
+		String xColumnName = plot.getDomainAxis().getLabel();
+
+		ResultsTable table = new ResultsTable(); // In OUR case this will work: there is one common X axis
+
+		int nPoints = plot.getDataset(0).getItemCount(0);
+		for (int k = 0; k < nPoints; k++) {
+			table.incrementCounter();
+
+
+			double xVal =  plot.getDataset(0).getXValue(0, k);
+			table.addValue(xColumnName, xVal);
+
+			int nSets = plot.getDatasetCount();
+			for (int i = 0; i < nSets; i++) {
+
+				XYDataset dataset = plot.getDataset(i);
+				if (dataset instanceof XYEdgeSeriesCollection)
+					continue;
+
+				int nSeries = dataset.getSeriesCount();
+				for (int j = 0; j < nSeries; j++) {
+
+					@SuppressWarnings("rawtypes")
+					Comparable seriesKey = dataset.getSeriesKey(j);
+					String yColumnName = seriesKey.toString() + "("+plot.getRangeAxis().getLabel()+")";
+					double yVal = dataset.getYValue(j, k);
+					table.addValue(yColumnName, yVal);
+				}
+
+			}
+		}
+		table.show(getChart().getTitle().getText());
+	}
+
+
+
+	/**
+	 * Opens a file chooser and gives the user an opportunity to save the chart
+	 * in PNG, PDF or SVG format.
+	 *
+	 * @throws IOException if there is an I/O error.
+	 */
 	public void doSaveAs() throws IOException {
-		
+
 		File file = null;
 
 		if(IJ.isMacintosh()) {
@@ -76,7 +149,7 @@ public class ExportableChartPanel extends ChartPanel {
 				dialogParent = dialogParent.getParent();
 			}
 			Frame frame = (Frame) dialogParent;
-			
+
 			FileDialog dialog =	new FileDialog(frame, "Export chart to PNG, PDF or SVG", FileDialog.SAVE);
 			String defaultDir = null;
 			if (getDefaultDirectoryForSaveAs() != null) {
@@ -92,12 +165,12 @@ public class ExportableChartPanel extends ChartPanel {
 			dialog.setFilenameFilter(filter);
 			dialog.setVisible(true);
 			String selectedFile = dialog.getFile();
-			
+
 			if (null == selectedFile)
 				return;
-			
+
 			file = new File(dialog.getDirectory(), selectedFile);
-			
+
 		} else {
 
 			JFileChooser fileChooser = new JFileChooser();
@@ -113,21 +186,21 @@ public class ExportableChartPanel extends ChartPanel {
 			int option = fileChooser.showSaveDialog(this);
 			if (option == JFileChooser.APPROVE_OPTION) {
 				file =  fileChooser.getSelectedFile();
-				
+
 			} else {
 				return;
 			}
 		}
 		if (file.getPath().endsWith(".png")) {
 			ChartUtilities.saveChartAsPNG(file, getChart(), getWidth(), getHeight());
-			
+
 		} else if (file.getPath().endsWith(".pdf")) {
 			try {
 				ChartExporter.exportChartAsPDF(getChart(), getBounds(), file);
 			} catch (TranscoderException e) {
 				e.printStackTrace();
 			}
-			
+
 		} else if (file.getPath().endsWith(".svg")) {
 			ChartExporter.exportChartAsSVG(getChart(), getBounds(), file);
 		}
