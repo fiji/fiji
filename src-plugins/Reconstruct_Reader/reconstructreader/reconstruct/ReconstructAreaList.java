@@ -1,6 +1,7 @@
 package reconstructreader.reconstruct;
 
 import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 import reconstructreader.Utils;
 
 import java.util.ArrayList;
@@ -88,6 +89,9 @@ public class ReconstructAreaList implements ContourSet {
         {
             int index = sec.getIndex();
             int layerOID = sec.getOID();
+            NodeList imageList = sec.getDocument().getElementsByTagName("Image");
+            double wh[] = Utils.getReconstructImageWH(imageList.item(0));
+            double h = Double.isNaN(wh[1]) ? translator.getStackHeight() : wh[1];
 
             Utils.selectElementsByIndex(contourList, indexList, selectionList, index);
 
@@ -95,7 +99,7 @@ public class ReconstructAreaList implements ContourSet {
 
             for (Element contour : selectionList)
             {
-                double[] pts = Utils.getTransformedPoints(contour, translator.getStackHeight());
+                double[] pts = Utils.getTransformedPoints(contour, h);
                 sb.append("<t2_path d=\"");
                 Utils.appendClosedPathXML(sb, pts);
                 sb.append("\" />\n");

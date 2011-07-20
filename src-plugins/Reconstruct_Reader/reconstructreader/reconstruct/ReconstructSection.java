@@ -76,25 +76,29 @@ public class ReconstructSection {
     protected void appendPatch(final StringBuilder sb,final Element image)
     {
         Element rTransform = (Element)image.getParentNode();
-
-        AffineTransform trans = Utils.reconstructTransform(rTransform,
-                Double.valueOf(image.getAttribute("mag")), translator.getStackHeight());
-        String src = image.getAttribute("src");
-        String transString = Utils.transformToString(trans);
         double[] wh = Utils.getReconstructImageWH(image);
+        double h = Double.isNaN(wh[1]) ? translator.getStackHeight() : wh[1];
+        double w = Double.isNaN(wh[0]) ? translator.getStackWidth() : wh[0];
+        AffineTransform trans;
+        String src = image.getAttribute("src");
+        String transString;
+
+        trans = Utils.reconstructTransform(rTransform,
+                Double.valueOf(image.getAttribute("mag")), h);
+        transString = Utils.transformToString(trans);
 
         sb.append("<t2_patch\n" +
                 "oid=\"").append(translator.nextOID()).append("\"\n" +
-                "width=\"").append(wh[0]).append("\"\n" +
-                "height=\"").append(wh[1]).append("\"\n" +
+                "width=\"").append(w).append("\"\n" +
+                "height=\"").append(h).append("\"\n" +
                 "transform=\"").append(transString).append("\"\n" +
                 "title=\"").append(src).append("\"\n" +
                 "links=\"\"\n" +
                 "type=\"0\"\n" +
                 "file_path=\"").append(src).append("\"\n" +
                 "style=\"fill-opacity:1.0;stroke:#ffff00;\"\n" +
-                "o_width=\"").append((int)wh[0]).append("\"\n" +
-                "o_height=\"").append((int)wh[1]).append("\"\n" +
+                "o_width=\"").append((int)w).append("\"\n" +
+                "o_height=\"").append((int)h).append("\"\n" +
                 "min=\"0.0\"\n" +
                 "max=\"255.0\"\n" +
                 ">\n" +
