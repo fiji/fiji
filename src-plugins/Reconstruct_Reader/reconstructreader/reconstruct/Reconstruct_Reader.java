@@ -39,8 +39,10 @@ public class Reconstruct_Reader implements PlugIn
             projectFileName = translator.writeTrakEM2();
             if (projectFileName != null)
             {
+                Project t2p;
                 IJ.log("Opening project " + projectFileName);
-                Project.openFSProject(projectFileName);
+                t2p = Project.openFSProject(projectFileName);
+                t2p.getRootLayerSet().setMinimumDimensions();
             }
         }
         else
