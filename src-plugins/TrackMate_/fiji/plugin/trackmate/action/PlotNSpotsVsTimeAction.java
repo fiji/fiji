@@ -7,7 +7,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
 import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
+import org.jfree.chart.ExportableChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
@@ -58,7 +58,7 @@ public class PlotNSpotsVsTimeAction extends AbstractTMAction {
 		plot.getDomainAxis().setLabelFont(FONT);
 		plot.getDomainAxis().setTickLabelFont(SMALL_FONT);
 		
-		ChartPanel panel = new ChartPanel(chart);
+		ExportableChartPanel panel = new ExportableChartPanel(chart);
 		
 		JFrame frame = new JFrame(title);
 		frame.setSize(500, 270);

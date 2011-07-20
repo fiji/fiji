@@ -20,7 +20,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
 import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
+import org.jfree.chart.ExportableChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
@@ -79,7 +79,7 @@ public class SpotFeatureGrapher extends JFrame {
 		}
 		
 		// Generate one panel per different dimension
-		ArrayList<ChartPanel> chartPanels = new ArrayList<ChartPanel>(dimensions.size());
+		ArrayList<ExportableChartPanel> chartPanels = new ArrayList<ExportableChartPanel>(dimensions.size());
 		for (Dimension dimension : dimensions) {
 			
 			// Y label
@@ -185,7 +185,7 @@ public class SpotFeatureGrapher extends JFrame {
 			}
 
 			// The panel
-			ChartPanel chartPanel = new ChartPanel(chart);
+			ExportableChartPanel chartPanel = new ExportableChartPanel(chart);
 			chartPanel.setPreferredSize(new java.awt.Dimension(500, 270));
 			chartPanels.add(chartPanel);
 		}
@@ -194,7 +194,7 @@ public class SpotFeatureGrapher extends JFrame {
 		JPanel panel = new JPanel();
 		BoxLayout panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
 		panel.setLayout(panelLayout);
-		for(ChartPanel chartPanel : chartPanels)  {
+		for(ExportableChartPanel chartPanel : chartPanels)  {
 			panel.add(chartPanel);
 			panel.add(Box.createVerticalStrut(5));
 		}
