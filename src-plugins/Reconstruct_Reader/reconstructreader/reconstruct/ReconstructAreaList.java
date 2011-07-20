@@ -71,17 +71,20 @@ public class ReconstructAreaList implements ContourSet {
     {
         final ArrayList<Element> selectionList = new ArrayList<Element>();
         String fillColorHex = Utils.hexColor(contourList.get(0).getAttribute("fill"));
+        String strokeColorHex = Utils.hexColor(contourList.get(0).getAttribute("border"));
+        boolean visible = contourList.get(0).getAttribute("hidden").equals("false");
 
         sb.append("<t2_area_list\n" +
                 "oid=\"").append(oid).append("\"\n" +
                 "width=\"").append(translator.getStackWidth()).append("\"\n" +
                 "height=\"").append(translator.getStackHeight()).append("\"\n" +
                 "transform=\"matrix(1.0,0.0,0.0,1.0,0,0)\"\n" +
+                "visible=\"").append(visible).append("\"\n" +
                 "title=\"area_list\"\n" +
                 "links=\"\"\n" +
                 "layer_set_id=\"0\"\n" +
                 "fill_paint=\"true\"\n" +
-                "style=\"stroke:none;fill-opacity:0.4;fill:#")
+                "style=\"stroke:#").append(strokeColorHex).append(";fill-opacity:0.4;fill:#")
                 .append(fillColorHex).append(";\"\n" +
                 ">\n");
 
