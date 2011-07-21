@@ -53,6 +53,10 @@ public class CommonFunctions
 	public static String[] methodListCollection = {"Average", "Linear Blending", "Max. Intensity", "Min. Intensity", "None"};	
 	public static String[] rgbTypes = {"rgb", "rbg", "grb", "gbr", "brg", "bgr"}; 
 	public static String[] colorList = { "Red", "Green", "Blue", "Red and Green", "Red and Blue", "Green and Blue", "Red, Green and Blue" };
+
+	public static String[] fusionMethodList = { "Average", "Linear Blending", "Max. Intensity", "Min. Intensity", "Combine into composite image (preserve all channels)", "Do not fuse images" };	
+	public static String[] channelSelect = { "Use all channels for registration", "Select individual channels for registration" };
+	public static String[] timeSelect = { "Register images for each time-point individually", "Register images for each time-point and adjacently over time", "Register all images over all time-points globally (expensive!)" };
 	
 	public static ImagePlus loadImage(String directory, String file, int seriesNumber) { return loadImage(directory, file, seriesNumber, "rgb"); }
 	public static ImagePlus loadImage(String directory, String file, int seriesNumber, String rgb)
@@ -317,11 +321,11 @@ public class CommonFunctions
 		return ((((b[i] & 0xff) << 8)) + (b[i+1] & 0xff));
 	}
 	
-	public static float getPixelValueRGB(int rgb, int rgbType)
+	public static float getPixelValueRGB( final int rgb, final int rgbType )
 	{
-		int r = (rgb & 0xff0000) >> 16;
-		int g = (rgb & 0xff00) >> 8;
-		int b = rgb & 0xff;
+		final int r = (rgb & 0xff0000) >> 16;
+		final int g = (rgb & 0xff00) >> 8;
+		final int b = rgb & 0xff;
 
 		// colorList = {"Red", "Green", "Blue", "Red and Green", "Red and Blue", "Green and Blue", "Red, Green and Blue"};
 
