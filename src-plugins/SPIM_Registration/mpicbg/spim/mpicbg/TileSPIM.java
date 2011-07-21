@@ -5,7 +5,7 @@ import mpicbg.models.Model;
 import mpicbg.models.PointMatch;
 import mpicbg.models.Tile;
 import mpicbg.spim.registration.ViewDataBeads;
-import mpicbg.spim.registration.detection.Detection;
+import mpicbg.spim.registration.detection.AbstractDetection;
 
 public class TileSPIM< M extends AbstractAffineModel3D<M> > extends Tile<M> 
 {
@@ -39,8 +39,8 @@ public class TileSPIM< M extends AbstractAffineModel3D<M> > extends Tile<M>
 			for ( final PointMatch match : matches )
 			{
 				final double dl = match.getDistance();
-				((Detection<?>)match.getP1()).setDistance( (float)dl );
-				((Detection<?>)match.getP2()).setDistance( (float)dl );				
+				((AbstractDetection<?>)match.getP1()).setDistance( (float)dl );
+				((AbstractDetection<?>)match.getP2()).setDistance( (float)dl );				
 			}
 		}
 

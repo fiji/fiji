@@ -7,6 +7,7 @@ import mpicbg.imglib.util.Util;
 import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.CoordinateTransform;
+import mpicbg.models.RigidModel3D;
 
 public class TransformUtils
 {
@@ -91,6 +92,33 @@ public class TransformUtils
 
 		return matrix;
 	}
+
+	public static Matrix4f getMatrix4f( final RigidModel3D model )
+	{
+		final Matrix4f matrix = new Matrix4f();
+
+		final float[] m = new float[ 12 ];
+		model.getMatrix( m );
+
+		matrix.m00 = m[ 0 ];
+		matrix.m01 = m[ 1 ];
+		matrix.m02 = m[ 2 ];
+		matrix.m03 = m[ 3 ];
+		matrix.m10 = m[ 4 ];
+		matrix.m11 = m[ 5 ];
+		matrix.m12 = m[ 6 ];
+		matrix.m13 = m[ 7 ];
+		matrix.m20 = m[ 8 ];
+		matrix.m21 = m[ 9 ];
+		matrix.m22 = m[ 10 ];
+		matrix.m23 = m[ 11 ];
+		matrix.m30 = 0;
+		matrix.m31 = 0;
+		matrix.m32 = 0;
+		matrix.m33 = 0;
+
+		return matrix;
+	}
 	
 	public static Transform3D getTransform3D1( final AbstractAffineModel3D<?> model )
 	{
@@ -135,5 +163,15 @@ public class TransformUtils
 		return model;
 	}
 
+	public static RigidModel3D getRigidModel3D( Transform3D transform )
+	{
+		final float[] m = new float[16];
+		transform.get( m );
+
+		RigidModel3D model = new RigidModel3D();
+		model.set( m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8], m[9], m[10], m[11] );
+
+		return model;
+	}
 
 }

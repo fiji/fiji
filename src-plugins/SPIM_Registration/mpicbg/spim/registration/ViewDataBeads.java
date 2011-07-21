@@ -10,6 +10,7 @@ import javax.media.j3d.Transform3D;
 import javax.vecmath.Matrix4f;
 
 import mpicbg.imglib.algorithm.gauss.DownSample;
+//import mpicbg.imglib.algorithm.mirror.MirrorImage;
 import mpicbg.imglib.container.ContainerFactory;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
@@ -101,10 +102,16 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	 * the channel
 	 */
 	protected int channel = 0, channelIndex = 0;
+	protected boolean useForRegistration = true;
+	protected boolean useForFusion = true;
 	public int getChannel() { return channel; }
 	public void setChannel( final int channel ){ this.channel = channel; }
 	public int getChannelIndex() { return channelIndex; }
 	public void setChannelIndex( final int channelIndex ){ this.channelIndex = channelIndex; }
+	public boolean getUseForRegistration() { return useForRegistration; }
+	public void setUseForRegistration( final boolean useForRegistration ) { this.useForRegistration = useForRegistration; }
+	public boolean getUseForFusion() { return useForFusion; }
+	public void setUseForFusion( final boolean useForFusion ) { this.useForFusion = useForFusion; }
 	
 	/**
 	 * the acquisition angle
@@ -169,7 +176,7 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	/**
 	 * The z-stretching of the input stack
 	 */
-	private double zStretching = 1;
+	protected double zStretching = 1;
 	public double getZStretching() { return zStretching; }
 	public void setZStretching( final double zStretching ) { this.zStretching = zStretching; }
 
@@ -224,8 +231,8 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	/**
 	 * The currently downsampled image cached 
 	 */
-	private Image<FloatType> downSampledImage = null;
-	private int currentDownSamplingFactor = -1;
+	protected Image<FloatType> downSampledImage = null;
+	protected int currentDownSamplingFactor = -1;
 
 	public Image<FloatType> getDownSampledImage( final int downSamplingFactor )
 	{
@@ -254,31 +261,60 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 		
 		return downSampledImage;
 	}
-
+	
+	protected boolean mirrorVertically = false, mirrorHorizontally = false;
+	public void setMirrorHorizontally( final boolean state ) { mirrorHorizontally = state; }
+	public void setMirrorVertically( final boolean state ) { mirrorVertically = state; }
+	public boolean getMirrorHorizontally() { return false; }
+	public boolean getMirrorVertically() { return false; }
+	
 	/**
 	 * The link to the input image of this view
 	 * @return the link or null unable to open
 	 */
 	public Image<FloatType> getImage( final ContainerFactory imageFactory ) 
 	{
-		if ( image == null)
+		if ( image == null )
 		{
-			//TODO: remove that crap later
-			if ( getName().contains( "Angle72" ) )
-				image = LOCI.openLOCIFloatType( "", getFileName(), imageFactory, 0, 162 );
-			else
-				image = LOCI.openLOCIFloatType( getFileName(), imageFactory );
+			String s = getFileName();
+			
+			//TODO: REMOVE!!!!!!
+			//if ( s.contains("red-h2amcherry-nuclei") )
+			//	s = s.replace( "red-h2amcherry-nuclei", "green-rasgfp-membranes" ) + ".tif";
+			
+			//System.out.println( s );
+			
+			image = LOCI.openLOCIFloatType( s, imageFactory );
 			
 			if ( image == null )
 			{
-				IJ.error( "Cannot find file: " + getFileName() );
+				IJ.error( "Cannot find file: " + s );
 				return null;
 			}
+			
+			/*
+			if ( getMirrorHorizontally() )
+			{
+				IOFunctions.println( "Mirroring horizontally: " + this ); 
+				final MirrorImage<FloatType> mirror = new MirrorImage<FloatType>( image, 0 );
+				mirror.process();
+			}
+			
+			if ( getMirrorVertically() )
+			{
+				IOFunctions.println( "Mirroring vertically: " + this ); 
+				final MirrorImage<FloatType> mirror = new MirrorImage<FloatType>( image, 1 );
+				mirror.process();				
+			}
+			*/
 			
 			image.setName( getName() );
 						
 			maxValue = normalizeImage( image );
 			setImageSize( image.getDimensions() );
+			
+			// now write dims for further use
+			IOFunctions.writeDim( this, getViewStructure().getSPIMConfiguration().registrationFiledirectory );			
 		}
 		
 		return image;

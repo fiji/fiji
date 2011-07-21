@@ -231,7 +231,7 @@ public class Stitch_Image_Directory implements PlugIn
     		out.close();
     	
     	Stitch_Image_Collection smc = new Stitch_Image_Collection();
-    	smc.work(gridLayout, false, true, fileName);
+    	smc.work(gridLayout, false, true, fileName,true);
 	}
 	
 	private static PrintWriter openFileWrite(String fileName)

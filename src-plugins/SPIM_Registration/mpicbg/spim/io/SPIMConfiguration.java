@@ -11,6 +11,7 @@ import mpicbg.imglib.interpolation.linear.LinearInterpolatorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.imglib.util.Util;
 import mpicbg.spim.registration.ViewStructure;
 
 public class SPIMConfiguration 
@@ -22,8 +23,13 @@ public class SPIMConfiguration
 	public int angles[];
 	//public String angleString;
 	public String inputFilePattern;//spim_TL{i}_Angle\d*\.lsm
-	public int[] channels;
+	public int[] channels, channelsRegister, channelsFuse;
+	public int[][] channelsMirror;
 	public String channelPattern;
+	public String channelsToRegister;
+	public String channelsToFuse;
+	public String mirrorChannels = "";
+	
 	public File file[][][];
 	public String inputdirectory;
 	public String outputdirectory;// = "";
@@ -31,6 +37,7 @@ public class SPIMConfiguration
 	public String debugLevel;
 	public int debugLevelInt = ViewStructure.DEBUG_MAIN;
 	public boolean showImageJWindow = false;
+	public boolean multiThreadedOpening = false;
 	
 	// time lapse
 	public boolean timeLapseRegistration = false;
@@ -91,7 +98,7 @@ public class SPIMConfiguration
     public boolean useCenterOfMass = false;
 	
 	// ScaleSpace Segmentation
-	public float minPeakValue = 0.01f;
+	public float minPeakValue = 0.008f;
 	public float minInitialPeakValue = minPeakValue/10;
 	public float identityRadius = 3f;
 	public float maximaTolerance = 0.01f;
@@ -244,7 +251,7 @@ public class SPIMConfiguration
 
     public void parseChannels() throws ConfigurationParserException
     {
-    	if ( channelPattern != null )
+    	if ( channelPattern != null && channelPattern.trim().length() > 0 )
     	{
 	    	final ArrayList<Integer> tmp = parseIntegerString( channelPattern );
 	    	channels = new int[ tmp.size() ];
@@ -252,10 +259,132 @@ public class SPIMConfiguration
 	    	for (int i = 0; i < tmp.size(); i++)
 	    		channels[i] = tmp.get(i);    
     	}
-    	
-    	// there is always channel 0
-    	if ( channels == null || channels.length == 0 )
+    	else
+    	{
+    		// there is always channel 0
     		channels = new int[ 1 ];
+    	}
+
+    	if ( channelsToRegister != null && channelsToRegister.trim().length() > 0 )
+    	{
+	    	final ArrayList<Integer> tmp = parseIntegerString( channelsToRegister );
+	    	channelsRegister = new int[ tmp.size() ];
+	    	
+	    	for (int i = 0; i < tmp.size(); i++)
+	    		channelsRegister[i] = tmp.get(i);    
+    	}
+    	else
+    	{
+    		// there is always channel 0
+    		channelsRegister = new int[ 1 ];
+    	}
+
+    	if ( channelsToFuse != null && channelsToFuse.trim().length() > 0 )
+    	{
+	    	final ArrayList<Integer> tmp = parseIntegerString( channelsToFuse );
+	    	channelsFuse = new int[ tmp.size() ];
+	    	
+	    	for (int i = 0; i < tmp.size(); i++)
+	    		channelsFuse[i] = tmp.get(i);    
+    	}
+    	else
+    	{
+    		// there is always channel 0
+    		channelsFuse = new int[ 1 ];
+    	}
+    	
+    	// test validity (channels for registration and fusion have to be a subclass of the channel pattern)
+    	for ( final int cR : channelsRegister )
+    	{
+    		boolean contains = false;
+    		
+    		for ( final int c : channels )
+    			if ( c == cR )
+    				contains = true;
+    		
+    		if ( !contains )
+    		{
+    			IOFunctions.println( "Channel " + cR + " that should be used for registration is not part of the channels " + 
+    					Util.printCoordinates( channels ) );
+    			System.exit( 0 );
+    		}
+    	}		
+
+    	for ( final int cF : channelsFuse )
+    	{
+    		boolean contains = false;
+    		
+    		for ( final int c : channels )
+    			if ( c == cF )
+    				contains = true;
+    		
+    		if ( !contains )
+    		{
+    			IOFunctions.println( "Channel " + cF + " that should be used for fusion is not part of the channels " + 
+    					Util.printCoordinates( channels ) );
+    			System.exit( 0 );
+    		}
+    	}
+    	
+    	// all channels in channels should be used for something
+    	for ( final int c : channels )
+    	{
+    		boolean contains = false;
+    		
+    		for ( final int cR : channelsRegister )
+    			if ( c == cR )
+    				contains = true;
+
+    		for ( final int cF : channelsFuse )
+    			if ( c == cF )
+    				contains = true;
+    		
+    		if ( !contains )
+    		{
+    			IOFunctions.println( "Channel " + c + " is not used for anything (not registration, not fusion); stopping. " );
+    			System.exit( 0 );    			
+    		}
+    	}
+    	
+    	// do we want to mirror some channels in advance??
+    	if ( mirrorChannels.trim().length() > 0 )
+    	{
+    		final String[] mirror = mirrorChannels.trim().split( "," );
+    		channelsMirror = new int[ mirror.length ][ 2 ];
+    		int i = 0;
+    		
+    		for ( String entry : mirror )
+    		{
+    			entry = entry.trim();
+    			
+    			try 
+    			{
+    				final int channel = Integer.parseInt( entry.substring( 0, entry.length() - 1 ) );
+    				final String direction = entry.substring( entry.length()-1, entry.length() ).toLowerCase();    			
+    				
+    				if ( direction.equalsIgnoreCase( "h" ) )
+    				{
+    					channelsMirror[ i ][ 0 ] = channel;
+    					channelsMirror[ i ][ 1 ] = 0;
+    				}
+    				else if ( direction.equalsIgnoreCase( "v" ) )
+    				{
+    					channelsMirror[ i ][ 0 ] = channel;
+    					channelsMirror[ i ][ 1 ] = 1;
+    				}
+    				else
+    				{
+    					throw new ConfigurationParserException( "Cannot parse channel mirroring information: " + entry + ": " + direction + " is unknown." );
+    				}
+    						
+    				i++;
+    			}
+    			catch ( Exception e )
+    			{
+    				throw new ConfigurationParserException( "Cannot parse channel mirroring information: " + mirrorChannels.trim() + ": " + e );
+    			}    			
+    		}
+    	}
     }
     
 	protected String[] getDirListing( final String directory, final String filePatternStart, final String filePatternEnd )

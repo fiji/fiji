@@ -98,11 +98,12 @@ public abstract class SPIMImageFusion
 		max.z = -Float.MAX_VALUE;
 				
 		for ( final ViewDataBeads view : views )
-		{
+		{			
 			if ( Math.max( view.getViewErrorStatistics().getNumConnectedViews(), view.getTile().getConnectedTiles().size() ) <= 0 && view.getViewStructure().getNumViews() > 1 )
 			{
-				if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
-					IOFunctions.printErr( "Cannot use view " + view + ", it is not connected to any other view!" );
+				if ( view.getUseForRegistration() == true )
+					if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
+						IOFunctions.printErr( "Cannot use view " + view + ", it is not connected to any other view!" );
 				continue;
 			}
 			else if ( view.getViewStructure().getNumViews() == 1 )
