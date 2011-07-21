@@ -404,6 +404,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		graph.setCellsCloneable(false);
 		graph.setCellsSelectable(true);
 		graph.setCellsDisconnectable(false);
+		graph.setCellsMovable(true);
 		graph.setGridEnabled(false);
 		graph.setLabelsVisible(true);
 		graph.setDropEnabled(false);
@@ -503,12 +504,29 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		if (null != added) {
 			for(Object obj : added) {
 				mxCell cell = (mxCell) obj;
-				if (cell.isVertex()) {
-					Spot spot = graph.getCellToVertexMap().get(cell);
-					spotsToRemove.add(spot);
+
+				if (cell.getChildCount() > 0) {
+
+					for (int i = 0; i < cell.getChildCount(); i++) {
+						mxICell child = cell.getChildAt(i);
+						if (child.isVertex()) {
+							Spot spot = graph.getCellToVertexMap().get(child);
+							spotsToRemove.add(spot);
+						} else {
+							DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(child);
+							edgesToRemove.add(edge);
+						}
+					}
+
 				} else {
-					DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(cell);
-					edgesToRemove.add(edge);
+
+					if (cell.isVertex()) {
+						Spot spot = graph.getCellToVertexMap().get(cell);
+						spotsToRemove.add(spot);
+					} else {
+						DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(cell);
+						edgesToRemove.add(edge);
+					}
 				}
 			}
 		}
@@ -516,12 +534,29 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		if (null != removed) {
 			for(Object obj : removed) {
 				mxCell cell = (mxCell) obj;
-				if (cell.isVertex()) {
-					Spot spot = graph.getCellToVertexMap().get(cell);
-					spotsToAdd.add(spot);
+
+				if (cell.getChildCount() > 0) {
+
+					for (int i = 0; i < cell.getChildCount(); i++) {
+						mxICell child = cell.getChildAt(i);
+						if (child.isVertex()) {
+							Spot spot = graph.getCellToVertexMap().get(child);
+							spotsToAdd.add(spot);
+						} else {
+							DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(child);
+							edgesToAdd.add(edge);
+						}
+					}
+
 				} else {
-					DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(cell);
-					edgesToAdd.add(edge);
+
+					if (cell.isVertex()) {
+						Spot spot = graph.getCellToVertexMap().get(cell);
+						spotsToAdd.add(spot);
+					} else {
+						DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(cell);
+						edgesToAdd.add(edge);
+					}
 				}
 			}
 		}

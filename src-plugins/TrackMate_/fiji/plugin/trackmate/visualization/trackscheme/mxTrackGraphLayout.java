@@ -160,7 +160,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 						cell = graph.addJGraphTVertex(spot);
 					}
 					cell.setValue(spot.getName());
-
+					
 					// Get default style					
 					String style = cell.getStyle();
 
