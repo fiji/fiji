@@ -229,7 +229,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-mpicbg (>= 20110519214639), fiji-bunwarpj (>= 20110423002840), libjava3d-java, fiji-imglib (>= 20110604132637), libjna-java, libjfreechart-java, fiji-weka (>= 20100609224141), fiji-trakem2 (>= 20110701000652), libjsch-java, fiji-base (>= 20110624154720), fiji-vib (>= 20110610151619), fiji-edu-mines-jtk (>= 20080801134354), fiji-imagej (>= 20110706151220), libvecmath-java, fiji-loci-tools (>= 20110610150148), fiji-3d-viewer (>= 20110706110037), libitext1-java, libjcommon-java, junit, fiji-scripting (>= 20110531182644), libjama-java
+Depends: fiji-mpicbg (>= 20110519214639), fiji-bunwarpj (>= 20110423002840), libjava3d-java, fiji-imglib (>= 20110604132637), libjna-java, libjfreechart-java, fiji-loci-tools (>= 20110610150148), fiji-vib (>= 20110610151619), fiji-trakem2 (>= 20110701000652), libjsch-java, fiji-base (>= 20110624154720), fiji-edu-mines-jtk (>= 20080801134354), fiji-imagej (>= 20110706151220), libvecmath-java, fiji-3d-viewer (>= 20110706110037), fiji-weka (>= 20100609224141), libitext1-java, libjcommon-java, junit, fiji-scripting (>= 20110531182644), libjama-java
 Description: components from Fiji, including: PIV analyser, listManagement, P [...]
  The descriptions below are extracted from the Fiji Updater database:
  .
@@ -561,7 +561,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: clojure, fiji-imglib (>= 20110604132637), fiji-rsyntaxtextarea (>= 20110223005940), libjcommon-java, fiji-vib (>= 20110203214538), libvecmath-java, fiji-base (>= 20110707141631), fiji-autocomplete (>= 20090524213156), libjava3d-java, bsh, fiji-imagej (>= 20110706151220), fiji-jython (>= 20100925003646), fiji-3d-viewer (>= 20110706110037), fiji-plugins (>= 20110707141631), libjfreechart-java, rhino, fiji-jruby (>= 20100925003646)
+Depends: clojure, fiji-imglib (>= 20110604132637), fiji-rsyntaxtextarea (>= 20110223005940), libjfreechart-java, fiji-vib (>= 20110203214538), libvecmath-java, fiji-base (>= 20110707141631), fiji-autocomplete (>= 20090524213156), libjava3d-java, bsh, fiji-imagej (>= 20110706151220), fiji-jython (>= 20100925003646), fiji-3d-viewer (>= 20110706110037), fiji-plugins (>= 20110707141631), libjcommon-java, rhino, fiji-jruby (>= 20100925003646)
 Description: components from Fiji, including: Script Editor, Javascript, JRub [...]
  The descriptions below are extracted from the Fiji Updater database:
  .
