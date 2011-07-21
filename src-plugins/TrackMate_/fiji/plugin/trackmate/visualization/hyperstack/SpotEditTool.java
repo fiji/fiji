@@ -13,8 +13,8 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.HashMap;
 
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.tool.AbstractTool;
 
@@ -27,25 +27,28 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	private static final float FINE_STEP = 0.2f;
 	private static final String TOOL_NAME = "Spot edit tool";
 	private static final String TOOL_ICON = "C444D01C777D11C999D21C000D31C777L4151C222D61"
-		+ "CcccD71C222D81C331D91Ceb5Da1Cd95Lb1c1Cda3Dd1Ca82De1C000Df1"
-		+ "CbbbD02C000D32CdddD42CcccD62C777D82C100D92Ca85Da2CfedLb2c2Cd94Dd2C641De2C111Df2"
-		+ "C000D33CdddD43C761D83C664D93C544Da3CfedLb3c3CdcaDd3C863De3C111Df3"
-		+ "C000D34CdddD44Cec3D74C776D84Cdc9D94C000Da4Cdb9Db4CfdaDc4C776Dd4Cc95De4C111Df4"
-		+ "C000D35CdddD45Cec3D65CffcD75C875D85Cfe7D95C542La5b5Cda7Dc5C653Dd5C111Df5"
-		+ "C000D36CdddD46Cec3D56CffcD66CffbD76C773D86Cfd4D96Ccb7Da6C000Db6C642Dc6CeeeDd6C111Df6"
-		+ "C000D37Cb92D47CffcD57CffbD67Cfe6D77C541D87Cff9D97Ceb6Da7C321Db7C555Dc7C111Df7"
-		+ "C999D28C000D38C665D48CeeaD58Cfe6D68Ca93D78C110D88C974D98Ce94Da8CaaaDb8CcccDc8CaaaDe8C000Df8"
-		+ "Cc92D29CfecD39CffbD49Cfe6D59Cfd4D69Cff9D79Ceb6D89Ce94D99"
-		+ "Ca62D0aCc92D1aCedbD2aCdb6D3aCfe6D4aCfd4D5aCff9D6aCeb6D7aCe94D8a"
-		+ "C972D0bCfedL1b2bCb83D3bCca3D4bCec7D5bCda5D6bCc83D7b"
-		+ "C972D0cCfedD1cCfb6D2cCfa4D3cCc61D4cCb61D5cCb73D6c"
-		+ "C641D0dCda6D1dCfdaD2dCfdbD3dCc95D4dCb73D5d"
-		+ "C641L0e1eCa72D2eCb73D3eCc94D4e";
+			+ "CcccD71C222D81C331D91Ceb5Da1Cd95Lb1c1Cda3Dd1Ca82De1C000Df1"
+			+ "CbbbD02C000D32CdddD42CcccD62C777D82C100D92Ca85Da2CfedLb2c2Cd94Dd2C641De2C111Df2"
+			+ "C000D33CdddD43C761D83C664D93C544Da3CfedLb3c3CdcaDd3C863De3C111Df3"
+			+ "C000D34CdddD44Cec3D74C776D84Cdc9D94C000Da4Cdb9Db4CfdaDc4C776Dd4Cc95De4C111Df4"
+			+ "C000D35CdddD45Cec3D65CffcD75C875D85Cfe7D95C542La5b5Cda7Dc5C653Dd5C111Df5"
+			+ "C000D36CdddD46Cec3D56CffcD66CffbD76C773D86Cfd4D96Ccb7Da6C000Db6C642Dc6CeeeDd6C111Df6"
+			+ "C000D37Cb92D47CffcD57CffbD67Cfe6D77C541D87Cff9D97Ceb6Da7C321Db7C555Dc7C111Df7"
+			+ "C999D28C000D38C665D48CeeaD58Cfe6D68Ca93D78C110D88C974D98Ce94Da8CaaaDb8CcccDc8CaaaDe8C000Df8"
+			+ "Cc92D29CfecD39CffbD49Cfe6D59Cfd4D69Cff9D79Ceb6D89Ce94D99"
+			+ "Ca62D0aCc92D1aCedbD2aCdb6D3aCfe6D4aCfd4D5aCff9D6aCeb6D7aCe94D8a"
+			+ "C972D0bCfedL1b2bCb83D3bCca3D4bCec7D5bCda5D6bCc83D7b"
+			+ "C972D0cCfedD1cCfb6D2cCfa4D3cCc61D4cCb61D5cCb73D6c"
+			+ "C641D0dCda6D1dCfdaD2dCfdbD3dCc95D4dCb73D5d"
+			+ "C641L0e1eCa72D2eCb73D3eCc94D4e";
 
 
 	private static SpotEditTool instance;
 	private HashMap<ImagePlus, Spot> editedSpots = new HashMap<ImagePlus, Spot>();
 	private HashMap<ImagePlus, HyperStackDisplayer> displayers = new HashMap<ImagePlus, HyperStackDisplayer>();
+	/** The radius of the previously edited spot. */
+	private Float previousRadius = null;
+
 
 	/*
 	 * CONSTRUCTOR
@@ -125,10 +128,8 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		final Spot clickLocation = displayer.getCLickLocation(e);
 		final int frame = displayer.imp.getFrame() - 1;
 		final TrackMateModel model = displayer.getModel();
-		Spot target = model.getFilteredSpots().getClosestSpot(clickLocation, frame);
+		Spot target = model.getFilteredSpots().getSpotAt(clickLocation, frame);
 		Spot editedSpot = editedSpots.get(imp);
-		updateStatusBar(target, imp.getCalibration().getUnits());
-
 
 		// Check desired behavior
 		switch (e.getClickCount()) {
@@ -138,6 +139,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			// only if we are not currently editing and if target is non null
 			if (null != editedSpot || target == null)
 				return;
+			updateStatusBar(target, imp.getCalibration().getUnits());
 			final int addToSelectionMask = MouseEvent.SHIFT_DOWN_MASK;
 			if ((e.getModifiersEx() & addToSelectionMask) == addToSelectionMask) { 
 				if (model.getSpotSelection().contains(target)) {
@@ -168,7 +170,10 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				if (null == target || target.squareDistanceTo(clickLocation) > radius*radius) {
 					// Create a new spot if not inside one
 					target = clickLocation;
-					target.putFeature(SpotFeature.RADIUS, radius);
+					if (null == previousRadius) {
+						previousRadius = radius;
+					}
+					target.putFeature(SpotFeature.RADIUS, previousRadius);
 				}
 				editedSpot = target;
 				displayer.spotOverlay.editingSpot = editedSpot;
@@ -208,7 +213,8 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				} finally {
 					model.endUpdate();
 				}
-				// Forget edited spot
+				// Forget edited spot, but remember its radius
+				previousRadius = editedSpot.getFeature(SpotFeature.RADIUS);
 				editedSpot = null;
 				displayer.spotOverlay.editingSpot = null;
 			}

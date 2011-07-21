@@ -24,7 +24,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	/*
 	 * CONSTRUCTORS
 	 */
-	
+
 	/**
 	 * Construct a new SpotCollection by wrapping the given {@link TreeMap} (and using its 
 	 * comparator, if any).
@@ -33,25 +33,25 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 		this.content = content;
 
 	}
-	
+
 	/**
 	 * Construct a new empty spot collection, with the natural order based comparator.
 	 */
 	public SpotCollection() {
 		this(new TreeMap<Integer, List<Spot>>());
 	}
-	
+
 	/*
 	 * METHODS
 	 */
-	
+
 	@Override
 	public String toString() {
 		String str = super.toString();
 		str += ": contains "+getNSpots()+" spots in "+keySet().size()+" different frames.";
 		return str;
 	}
-	
+
 	/**
 	 * Return a new SpotCollection that contains only the given spots, at the right frame, taken from this
 	 * spot collection. If one of the given spots is not found in this collection, it is not added to the
@@ -86,7 +86,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	}
 
 
-	
+
 	/**
 	 * Add the given spot to this collection, at the given frame. If the frame collection does not exist yet,
 	 * it is created. If <code>null</code> is passed for the frame, nothing is done and false is returned. 
@@ -102,7 +102,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 		}
 		return spots.add(spot);
 	}
-	
+
 	/**
 	 * Return a subset of this collection, containing only the spots with the 
 	 * feature satisfying the filter given. 
@@ -141,14 +141,14 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 					}
 				}
 				spotToKeep.removeAll(spotToRemove); // no need to treat them multiple times
-				
+
 			}
-			
+
 			selectedSpots.put(timepoint, spotToKeep);
 		}
 		return selectedSpots;
 	}
-	
+
 	/**
 	 * Return a subset of this collection, containing only the spots with the 
 	 * feature satisfying all the filters given. 
@@ -158,9 +158,9 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
 		Float val, tval;	
-		
+
 		for (int timepoint : content.keySet()) {
-			
+
 			spotThisFrame = content.get(timepoint);
 			spotToKeep = new ArrayList<Spot>(spotThisFrame);
 			spotToRemove = new ArrayList<Spot>(spotThisFrame.size());
@@ -196,7 +196,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 		}
 		return selectedSpots;
 	}
-	
+
 	/**
 	 * Return the closest {@link Spot} to the given location (encoded as a 
 	 * Spot), contained in the frame <code>frame</code>. If the frame has no spot,
@@ -218,7 +218,28 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 		}
 		return target;
 	}
-	
+
+	/**
+	 * Return the {@link Spot} at the given location (encoded as a Spot), contained 
+	 * in the frame <code>frame</code>. A spot is returned <b>only</b> if there exists a spot
+	 * such that the given location is within the spot radius. Otherwise <code>null</code> is
+	 * returned. 
+	 */
+	public final Spot getSpotAt(final Spot location, final int frame) {
+		final List<Spot> spots = content.get(frame);
+		if (null == spots)	
+			return null;
+		float d2;
+		for(Spot s : spots) {
+			d2 = s.squareDistanceTo(location);
+			if (d2 < s.getFeature(SpotFeature.RADIUS) * s.getFeature(SpotFeature.RADIUS)) {
+				return s;
+			}
+		}
+		return null;
+	}
+
+
 	/**
 	 * Return the <code>n</code> closest {@link Spot} to the given location (encoded as a 
 	 * Spot), contained in the frame <code>frame</code>. If the number of 
@@ -229,7 +250,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	public final List<Spot> getNClosestSpots(final Spot location, final int frame, int n) {
 		final List<Spot> spots = content.get(frame);
 		final TreeMap<Float, Spot> distanceToSpot = new TreeMap<Float, Spot>();
-		
+
 		float d2;
 		for(Spot s : spots) {
 			d2 = s.squareDistanceTo(location);
@@ -259,7 +280,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 		}
 		return frame;
 	}
-	
+
 	/**
 	 * Return the total number of spots in this collection, over all frames.
 	 */
@@ -267,9 +288,9 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 		int nspots = 0;
 		for(List<Spot> spots : content.values())
 			nspots += spots.size();
-		return nspots;
+				return nspots;
 	}
-	
+
 	/**
 	 * Return a new list made of all the spot in this collection.
 	 * <p>
@@ -281,13 +302,13 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 		List<Spot> allSpots = new ArrayList<Spot>(getNSpots()); 
 		for(List<Spot> spots : content.values())
 			allSpots.addAll(spots);
-		return allSpots;
+				return allSpots;
 	}
-	
+
 	/*
 	 * ITERABLE & co
 	 */
-	
+
 	/**
 	 * Return an iterator that iterates over all the spots contained in this collection.
 	 */
@@ -295,7 +316,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	public Iterator<Spot> iterator() {
 		return getAllSpots().iterator();
 	}
-	
+
 	/**
 	 * Return an iterator that iterates over the spots in the given frame.
 	 */
@@ -306,12 +327,12 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	/*
 	 * SORTEDMAP
 	 */
-	
+
 	@Override
 	public void clear() {
 		content.clear();
 	}
-	
+
 	@Override
 	public int size() {
 		return content.size();
