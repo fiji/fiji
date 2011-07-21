@@ -222,8 +222,9 @@ public class FeatureStack
 	}
 	
 	/**
+	 * Check the use of the neighbors as features
 	 * 
-	 * @return
+	 * @return true if the neighbors are being used
 	 */
 	public boolean useNeighborhood()
 	{
@@ -231,10 +232,10 @@ public class FeatureStack
 	}
 	
 	/**
-	 * 
-	 * @param useNeighbors
+	 * Set the use of the neighbors as features
+	 * @param useNeighbors flag to decide the use of neighbors
 	 */
-	public void setUseNeighbors( boolean useNeighbors)
+	public void setUseNeighbors( boolean useNeighbors )
 	{
 		this.useNeighbors = useNeighbors;
 	}
@@ -1011,7 +1012,13 @@ public class FeatureStack
 	
 	
 
-
+	/**
+	 * Apply a filter to the original image (to be submitted to an ExecutorService)
+	 * @param originalImage original image
+	 * @param filter filter kernel
+	 * @param title filter name
+	 * @return filtered image
+	 */
 	public Callable<ImagePlus> getFilter(
 			final ImagePlus originalImage,
 			final ImageProcessor filter,
@@ -2328,11 +2335,11 @@ public class FeatureStack
 	}
 	
 	/**
-	 * 
-	 * @param ip
-	 * @param x
-	 * @param y
-	 * @return
+	 * Get pixel value from an ImageProcessor with mirror boundary conditions
+	 * @param ip input image
+	 * @param x x- pixel coordinate
+	 * @param y y- pixel coordinate
+	 * @return pixel vale
 	 */
 	double getPixelMirrorConditions(ImageProcessor ip, int x, int y)
 	{
@@ -2347,5 +2354,16 @@ public class FeatureStack
 		
 		return ip.getPixelValue(x2, y2);
 	}
+
+	/**
+	 * Set an arbitrary stack as feature stack. Note: this method is not 
+	 * compatible with the plugin GUI use since the feature names will not match.
+	 * @param stack new stack of image features
+	 */
+	public void setStack(ImageStack stack)
+	{
+		this.wholeStack = stack;
+	}
+	
 	
 }
