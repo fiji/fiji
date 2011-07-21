@@ -60,21 +60,21 @@ public class Bead_Registration implements PlugIn
 			multiChannel();
 	}
 
-	public static String spimDataDirectoryStatic = "";
-	public static String timepointsStatic = "1";
-	public static String fileNamePatternStatic = "spim_TL{t}_Angle{a}.lsm";
-	public static String anglesStatic = "0-315:45";
+	public static String spimDataDirectory = "";
+	public static String timepoints = "1";
+	public static String fileNamePattern = "spim_TL{t}_Angle{a}.lsm";
+	public static String angles = "0-315:45";
 	
-	public static boolean loadSegmentationStatic = false;
-	public static String[] beadBrightnessList = { "Very weak", "Weak", "Comparable to Sample", "Strong", "Advanced ...", "Interactive ..." };	
+	public static boolean loadSegmentation = false;
+	public static String[] beadBrightness = { "Very weak", "Weak", "Comparable to Sample", "Strong", "Advanced ...", "Interactive ..." };	
 	public static int defaultBeadBrightness = 1;
-	public static boolean overrideResStatic = false;
-	public static double xyResStatic = 0.73;
-	public static double zResStatic = 2.00;
+	public static boolean overrideResolution = false;
+	public static double xyRes = 0.73;
+	public static double zRes = 2.00;
 
-	public static boolean loadRegistrationStatic = false;
-	public static boolean timeLapseRegistrationStatic = false;
-	final String timeLapseRegistration[] = new String[] { "manually", "automatically" };
+	public static boolean loadRegistration = false;
+	public static boolean timeLapseRegistration = false;
+	final String timeLapseRegistrationTypes[] = new String[] { "manually", "automatically" };
 	static int defaultTimeLapseRegistration = 0;
 	
 	
@@ -82,52 +82,52 @@ public class Bead_Registration implements PlugIn
 	{
 		final GenericDialogPlus gd = new GenericDialogPlus( "Single Channel Bead Registration" );
 		
-		gd.addDirectoryField( "SPIM_data_directory", spimDataDirectoryStatic );
-		gd.addStringField( "Timepoints_to_process", timepointsStatic );
-		gd.addStringField( "Pattern_of_SPIM files", fileNamePatternStatic, 25 );
-		gd.addStringField( "Angles to process", anglesStatic );
+		gd.addDirectoryField( "SPIM_data_directory", spimDataDirectory );
+		gd.addStringField( "Timepoints_to_process", timepoints );
+		gd.addStringField( "Pattern_of_SPIM files", fileNamePattern, 25 );
+		gd.addStringField( "Angles to process", angles );
 
 		gd.addMessage( "" );		
 		
-		gd.addCheckbox( "Re-use_segmented_beads", loadSegmentationStatic );
-		gd.addChoice( "Bead_brightness", beadBrightnessList, beadBrightnessList[ defaultBeadBrightness ] );
-		gd.addCheckbox( "Override_file_dimensions", overrideResStatic );
-		gd.addNumericField( "xy_resolution (um/px)", xyResStatic, 3 );
-		gd.addNumericField( "z_resolution (um/px)", zResStatic, 3 );
+		gd.addCheckbox( "Re-use_segmented_beads", loadSegmentation );
+		gd.addChoice( "Bead_brightness", beadBrightness, beadBrightness[ defaultBeadBrightness ] );
+		gd.addCheckbox( "Override_file_dimensions", overrideResolution );
+		gd.addNumericField( "xy_resolution (um/px)", xyRes, 3 );
+		gd.addNumericField( "z_resolution (um/px)", zRes, 3 );
 		
 		gd.addMessage( "" );		
 
-		gd.addCheckbox( "Re-use_per_timepoint_registration", loadRegistrationStatic );
+		gd.addCheckbox( "Re-use_per_timepoint_registration", loadRegistration );
 
 		gd.addMessage( "" );		
 
-		gd.addCheckbox( "Timelapse_registration", timeLapseRegistrationStatic );
-		gd.addChoice( "Select_reference timepoint", timeLapseRegistration, timeLapseRegistration[ defaultTimeLapseRegistration ] );
+		gd.addCheckbox( "Timelapse_registration", timeLapseRegistration );
+		gd.addChoice( "Select_reference timepoint", timeLapseRegistrationTypes, timeLapseRegistrationTypes[ defaultTimeLapseRegistration ] );
 
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
 			return;
 		
-		spimDataDirectoryStatic = gd.getNextString();
-		timepointsStatic = gd.getNextString();
-		fileNamePatternStatic = gd.getNextString();
-		anglesStatic = gd.getNextString();
+		spimDataDirectory = gd.getNextString();
+		timepoints = gd.getNextString();
+		fileNamePattern = gd.getNextString();
+		angles = gd.getNextString();
 		
-		loadSegmentationStatic = gd.getNextBoolean();
+		loadSegmentation = gd.getNextBoolean();
 		defaultBeadBrightness = gd.getNextChoiceIndex();
-		overrideResStatic = gd.getNextBoolean();
-		xyResStatic = gd.getNextNumber();
-		zResStatic = gd.getNextNumber();
+		overrideResolution = gd.getNextBoolean();
+		xyRes = gd.getNextNumber();
+		zRes = gd.getNextNumber();
 		
-		loadRegistrationStatic = gd.getNextBoolean();
+		loadRegistration = gd.getNextBoolean();
 		
-		timeLapseRegistrationStatic = gd.getNextBoolean();
+		timeLapseRegistration = gd.getNextBoolean();
 		defaultTimeLapseRegistration = gd.getNextChoiceIndex();
 		
 		SPIMConfiguration conf = new SPIMConfiguration();
 		
-		if ( !loadSegmentationStatic && ( defaultBeadBrightness == 4 || defaultBeadBrightness == 5 ) )
+		if ( !loadSegmentation && ( defaultBeadBrightness == 4 || defaultBeadBrightness == 5 ) )
 		{
 			// open advanced bead brightness detection
 			final double[] values;
@@ -232,7 +232,7 @@ public class Bead_Registration implements PlugIn
 	public static void getInteractiveDoGParameters( final String text, final double values[] )
 	{
 		final GenericDialogPlus gd = new GenericDialogPlus( text );		
-		gd.addFileField( "", spimDataDirectoryStatic, 50 );		
+		gd.addFileField( "", spimDataDirectory, 50 );		
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
