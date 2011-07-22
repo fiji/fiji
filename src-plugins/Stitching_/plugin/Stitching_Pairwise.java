@@ -211,8 +211,7 @@ public class Stitching_Pairwise implements PlugIn
 			
 			for ( int i = 0; i < numChannels2; ++i )
 				handleChannel2[ i ] = defaultHandleChannel2[ i ] = gd3.getNextBoolean();
-		}
-		
+		}		
 	}
 	
 	public static String testFusionCompatibility( final ImagePlus imp1, final ImagePlus imp2, final int fusionMethod ) 
