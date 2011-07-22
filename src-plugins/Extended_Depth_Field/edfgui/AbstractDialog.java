@@ -43,6 +43,7 @@ import javax.swing.Timer;
 
 import edf.LogSingleton;
 
+
 public abstract class AbstractDialog extends JFrame {
 
 	public final static int ONE_SECOND = 1000;
