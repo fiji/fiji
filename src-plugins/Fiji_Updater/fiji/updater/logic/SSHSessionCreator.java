@@ -1,9 +1,3 @@
-/*
- * Copyright (c) 2000-$today.year Jarek Sacha. All Rights Reserved.
- *
- * Author's e-mail: jarek at ieee.org
- *
- */
 package fiji.updater.logic;
 
 import com.jcraft.jsch.JSch;
