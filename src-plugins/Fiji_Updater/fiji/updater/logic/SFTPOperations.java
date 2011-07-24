@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Vector;
 import java.util.logging.Logger;
 
 
@@ -89,34 +88,16 @@ final class SFTPOperations {
      * @throws IOException in case of sftp error.
      */
     public boolean fileExists(final String path) throws IOException {
-        LOGGER.fine("fileExists(" + path + ")");
+        LOGGER.fine("fileExists2(" + path + ")");
 
-        final String filePath = removeTrailingSlash(path);
-        final String parent;
-        final String fileName;
-        if (filePath.contains("/")) {
-            final int index = filePath.lastIndexOf("/") + 1;
-            parent = filePath.substring(0, index);
-            fileName = filePath.substring(index);
-        } else {
-            parent = "";
-            fileName = path;
-        }
-
-        final Vector files;
+        // Traversing the path may hit directories without read access.
+        // Rather than listing content to see if directory exists just test the path directly (using nasty exception).
         try {
-            files = sftp.ls(parent);
-        } catch (SftpException ex) {
-            throw wrapException("Failed to list content of directory '" + parent + "'", ex);
+            sftp.stat(path);
+            return true;
+        } catch (final SftpException e) {
+            return false;
         }
-        for (int i = 0; i < files.size(); i++) {
-            final ChannelSftp.LsEntry e = (ChannelSftp.LsEntry) files.elementAt(i);
-            if (fileName.equals(e.getFilename())) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
 
