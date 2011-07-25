@@ -1,9 +1,9 @@
 %% MATLAB 3D viewer demo 1
 %
 % This example demonstrates how to use Miji to render a volume in 3D using
-% accelerated graphics, if your computer is adequately equiped. We use the
-% well known 'mri' data distributed with MATLAB, and render it in the
-% ImageJ 3D viewer. 
+% accelerated graphics, if your computer is adequately equiped (most
+% computers are, these days). We use the well known 'mri' data distributed
+% with MATLAB, and render it in the ImageJ 3D viewer.
 
 %% Make sure Java3D is installed
 % If not, try to install it
@@ -17,7 +17,7 @@ end
 load('mri.mat');
 
 %%
-% Make a simply 8-bit 3D image from it. There is a singleton dimension to
+% Make a simple 8-bit 3D image from it. There is a singleton dimension to
 % remove.
 I = squeeze(D);
 
@@ -52,7 +52,7 @@ J = cat(4, R,G,B);
 
 %%
 % A note here: MIJ expects the dimensions of a 3D color image to be the
-% following: [ x y z color ]; this is why we did this 'cat' operation just 
+% following: [ x y z color ]; this is why we did this 'cat' operation just
 % above. However, if you want to display the data in MATLAB's native
 % implay, they must be in the following order: [ x y color z ]. In the
 % latter case, 'permute' is your friend.
@@ -74,7 +74,7 @@ Miji(false)
 % The 3D viewer can only display ImagePlus. ImagePlus is the way ImageJ
 % represent images. We can't feed it directly MATLAB data. Fortunately,
 % that is where MIJ comes into handy. It has a function that can create an
-% ImagePlus from a Matlab object. 
+% ImagePlus from a Matlab object.
 % 1. The first argument is the name we will give to the image.
 % 2. The second argument is the Matlab data
 % 3. The last argument is a boolean. If true, the ImagePlus will be
@@ -92,7 +92,7 @@ imp = MIJ.createColor('MRI data', J, false);
 % that is, every voxel has a size of 1 in the X, Y and Z direction.
 % However, for the MRI data we are playing with, this is incorrect, as a
 % voxel is 2.5 times larger in the Z direction that in the X and Y
-% direction. 
+% direction.
 % If we do not correct that, the head we are trying to display will look
 % flat.
 % A way to tell this to the 3D viewer is to create a Calibration object and
@@ -104,7 +104,7 @@ calibration.pixelDepth = 2.5;
 imp.setCalibration(calibration);
 
 %% Display the data in ImageJ 3D viewer
-% Now for the display itself. 
+% Now for the display itself.
 %
 % We create an empty 3D viewer to start with. We do not show it yet.
 universe = ij3d.Image3DUniverse();
@@ -120,7 +120,6 @@ c = universe.addVoltex(imp);
 %%
 % Et voilà!
 %%
-% 
-% <<MRI-rendering.PNG>>
-% 
-
+%
+% <<MRI-rendering.png>>
+%
