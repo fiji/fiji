@@ -269,6 +269,13 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 						mxCell cell = graph.getVertexToCellMap().get(spot);
 						if (DEBUG)
 							System.out.println("[TrackSchemeFrame] modelChanged: updating cell for spot "+spot);
+						if (null == cell) {
+							// mxCell not present in graph. Most likely because the corresponding spot belonged
+							// to an invisible track, and a cell was not created for it when TrackScheme was
+							// launched. So we create one on the fly now.
+							cell = insertSpotInGraph(spot, targetColumn);
+						}
+						
 						String style = cell.getStyle();
 						style = mxUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64,"+spot.getImageString());
 						graph.getModel().setStyle(cell, style);

@@ -344,8 +344,18 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 			try {
 				Spot source = frame.getGraph().getCellToVertexMap().get(cell.getSource());
 				Spot target = frame.getGraph().getCellToVertexMap().get(cell.getTarget());
-				// We add a new jGraphT edge to the underlying model
-				edge = model.addEdge(source, target, -1);
+				// We add a new jGraphT edge to the underlying model, if it does not exist yet.
+				edge = model.getEdge(source, target); 
+				if (null == edge) {
+					edge = model.addEdge(source, target, -1);
+				} else {
+					// Ah. There was an existing edge in the model we were trying to re-add there, from the graph.
+					// We remove the graph edge we have added,
+					frame.getGraph().removeCells(new Object[] { cell } );
+					// And re-create a graph edge from the model edge.
+					cell = graph.addJGraphTEdge(edge);
+					cell.setValue(String.format("%.1f", model.getEdgeWeight(edge)));
+				}
 				frame.getGraph().getEdgeToCellMap().put(edge, cell);
 				frame.getGraph().getCellToEdgeMap().put(cell, edge);
 				evt.consume();

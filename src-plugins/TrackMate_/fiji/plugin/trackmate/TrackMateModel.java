@@ -509,6 +509,10 @@ public class TrackMateModel {
 	public boolean containsEdge(final Spot source, final Spot target) {
 		return graph.containsEdge(source, target);
 	}
+	
+	public DefaultWeightedEdge getEdge(final Spot source, final Spot target) {
+		return graph.getEdge(source, target);
+	}
 
 	public Set<DefaultWeightedEdge> edgesOf(final Spot spot) {
 		return graph.edgesOf(spot); 

@@ -147,10 +147,19 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 									System.out.println("[TrackSchemePopupMenu] linkSpots: creating cell "+previousCell+" for spot "+previousSpot);
 								}
 							}
-							// This will update the mxGraph view
-							DefaultWeightedEdge edge = model.addEdge(previousSpot, currentSpot, -1);
-							mxCell cell = graph.addJGraphTEdge(edge);
-							cell.setValue("New");
+							// This will update the mxGraph view.
+							// Check if the model does not have already a edge for these 2 spots (that is 
+							// the case if the 2 spot are in an invisible track, which track scheme does not
+							// know of).
+							DefaultWeightedEdge edge = model.getEdge(previousSpot, currentSpot); 
+							if (null == edge) {
+								edge = model.addEdge(previousSpot, currentSpot, -1);
+								mxCell cell = graph.addJGraphTEdge(edge);
+								cell.setValue("New");
+							} else {
+								mxCell cell = graph.addJGraphTEdge(edge);
+								cell.setValue(String.format("%.1f", model.getEdgeWeight(edge)));
+							}
 							previousSpot = currentSpot;
 						}
 					} finally {
