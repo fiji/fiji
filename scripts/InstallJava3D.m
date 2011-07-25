@@ -83,12 +83,12 @@ if isnan(attrib.UserWrite) || ~attrib.UserWrite
     
     javaJREFolder = char(java.lang.System.getProperty('java.home'));
     fprintf('\n');
-    fprintf('OK, so this is where you have to manually intervene.\n')
+    fprintf('OK, so this is where you have to intervene manually.\n')
     fprintf('You will have to ask or impersonate your computer''s administrator\n')
     fprintf('so that it gives you WRITE PERMISSION to the following folder:\n')
     fprintf('\t -> %s.\n', path)
     fprintf('\n');
-    fprintf('Once he or you did that, relaunch this helper script, saying\n');
+    fprintf('Once (s)he or you did that, relaunch this helper script, saying\n');
     fprintf('''Yes'' to any question you might be asked.\n');
     fprintf('\n');
     fprintf('After that, of course, you will still need to relaunch MATLAB.\n');
