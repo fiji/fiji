@@ -7,9 +7,6 @@ function InstallJava3D
     
     %% Process
     
-    % Clean command window
-    clc
-    
     % First, silently launch Miji, which will make Fiji libs accessible.
     Miji(false)
     
