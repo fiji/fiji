@@ -329,6 +329,8 @@ public class ViewStructure
 		}
 
 		int idNr = 0;
+		final int numChannels = conf.file[ timePointIndex ].length;
+		
 		for (int c = 0; c < conf.file[ timePointIndex ].length; c++)
 			for (int i = 0; i < conf.file[ timePointIndex ][ c ].length; i++)
 			{
@@ -337,19 +339,27 @@ public class ViewStructure
 				view.setAcqusitionAngle( conf.angles[ i ] );
 				view.setChannel( conf.channels[ c ] );
 				view.setChannelIndex( c );
+		
+				if ( numChannels == 1 )
+				{
+					view.setUseForFusion( true );
+					view.setUseForRegistration( true );
+				}
+				else
+				{
+					boolean contains = false;				
+					for ( final int cR : conf.channelsRegister )
+						if ( cR == view.getChannel() )
+							contains = true;				
+					view.setUseForRegistration( contains );
+					
+					contains = false;
+					for ( final int cF : conf.channelsFuse )
+						if ( cF == view.getChannel() )
+							contains = true;				
+					view.setUseForFusion( contains );
+				}
 				
-				boolean contains = false;				
-				for ( final int cR : conf.channelsRegister )
-					if ( cR == view.getChannel() )
-						contains = true;				
-				view.setUseForRegistration( contains );
-				
-				contains = false;
-				for ( final int cF : conf.channelsFuse )
-					if ( cF == view.getChannel() )
-						contains = true;				
-				view.setUseForFusion( contains );
-
 				if ( conf.channelsMirror != null )				
 				{
 					for ( final int[] mirror : conf.channelsMirror )
@@ -366,7 +376,6 @@ public class ViewStructure
 				views.add( view );
 			}
 			
-		final int numChannels = conf.file[ timePointIndex ].length;
 		final ViewStructure viewStructure = new ViewStructure( views, conf, id, conf.timepoints[ timePointIndex ], numChannels, debugLevel );		
 		
 		return viewStructure;
@@ -409,6 +418,8 @@ public class ViewStructure
 		}
 		
 		int idNr = 0;
+		final int numChannels = files.length;
+		
 		for (int c = 0; c < files.length; c++)
 			for (int i = 0; i < files[c].length; i++)
 			{
@@ -416,18 +427,27 @@ public class ViewStructure
 				view.setChannel( conf.channels[ c ] );
 				view.setChannelIndex( c );
 				
-				boolean contains = false;				
-				for ( final int cR : conf.channelsRegister )
-					if ( cR == view.getChannel() )
-						contains = true;				
-				view.setUseForRegistration( contains );
-
-				contains = false;
-				for ( final int cF : conf.channelsFuse )
-					if ( cF == view.getChannel() )
-						contains = true;				
-				view.setUseForFusion( contains );
-
+				
+				if ( numChannels == 1 )
+				{
+					view.setUseForFusion( true );
+					view.setUseForRegistration( true );
+				}
+				else
+				{
+					boolean contains = false;				
+					for ( final int cR : conf.channelsRegister )
+						if ( cR == view.getChannel() )
+							contains = true;				
+					view.setUseForRegistration( contains );
+	
+					contains = false;
+					for ( final int cF : conf.channelsFuse )
+						if ( cF == view.getChannel() )
+							contains = true;				
+					view.setUseForFusion( contains );
+				}
+				
 				for ( final int[] mirror : conf.channelsMirror )
 				{
 					if ( conf.channels[ c ] == mirror[ 0 ] )
@@ -442,7 +462,7 @@ public class ViewStructure
 				views.add( view );
 			}
 		
-		final int numChannels = files.length;
+		
 		final ViewStructure viewStructure = new ViewStructure( views, conf, id, timePoint, numChannels, debugLevel );		
 		
 		return viewStructure;
