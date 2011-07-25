@@ -88,7 +88,7 @@ public class MultiChannel_SPIM_Registration extends SPIMRegistrationAbstract
 		conf.timepointPattern = timepointsStatic;	
 		conf.anglePattern = anglesStatic;
 		conf.channelPattern = channelsStatic;
-		conf.channelsToFuse = conf.channelPattern;
+		conf.channelsToRegister = conf.channelPattern;
 		conf.channelsToFuse = conf.channelPattern;
 		conf.inputFilePattern = fileNamePatternStatic;
 		conf.inputdirectory = spimDataDirectoryStatic;
