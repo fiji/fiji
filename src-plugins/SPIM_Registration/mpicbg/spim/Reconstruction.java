@@ -197,6 +197,11 @@ public class Reconstruction
 			if ( viewStructure == null )
 				continue;
 			
+			for ( ViewDataBeads view : viewStructure.getViews() )
+			{
+				IOFunctions.println( view.getUseForRegistration() + " " + view.getUseForFusion() );
+			}
+			
 			//
 			// Segmentation
 			//
