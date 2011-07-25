@@ -214,7 +214,7 @@ public class Reconstruction
 			        if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
 			        	IOFunctions.println( "Cannot find files for " + viewStructure );
 			        
-					System.exit(0);
+					return;
 				}
 				
 				segSuccess = viewStructure.loadSegmentations();

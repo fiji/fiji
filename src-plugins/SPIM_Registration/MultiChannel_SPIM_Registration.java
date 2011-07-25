@@ -88,6 +88,8 @@ public class MultiChannel_SPIM_Registration extends SPIMRegistrationAbstract
 		conf.timepointPattern = timepointsStatic;	
 		conf.anglePattern = anglesStatic;
 		conf.channelPattern = channelsStatic;
+		conf.channelsToFuse = conf.channelPattern;
+		conf.channelsToFuse = conf.channelPattern;
 		conf.inputFilePattern = fileNamePatternStatic;
 		conf.inputdirectory = spimDataDirectoryStatic;
 		
@@ -185,7 +187,7 @@ public class MultiChannel_SPIM_Registration extends SPIMRegistrationAbstract
 				if (!dir.exists())
 				{
 					IOFunctions.printErr("(" + new Date(System.currentTimeMillis()) + "): Cannot create directory '" + conf.outputdirectory + "', quitting.");
-					System.exit(0);
+					return null;
 				}				
 			}
 		}
@@ -200,7 +202,7 @@ public class MultiChannel_SPIM_Registration extends SPIMRegistrationAbstract
 				if (!dir.exists())
 				{
 					IOFunctions.printErr("(" + new Date(System.currentTimeMillis()) + "): Cannot create directory '" + conf.registrationFiledirectory + "', quitting.");
-					System.exit(0);
+					return null;
 				}
 			}
 		}			
