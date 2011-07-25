@@ -10,6 +10,13 @@
 % viewer to create an iso-surface (one for each object), and to display it
 % in the 3D universe, with a random color.
 
+%% Make sure Java3D is installed
+% If not, try to install it
+
+if ~IsJava3DInstalled(true)
+    return
+end
+
 %% 
 % Let us define the size of our target image volume. Not too big to save
 % memory.

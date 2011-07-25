@@ -5,6 +5,13 @@
 % well known 'mri' data distributed with MATLAB, and render it in the
 % ImageJ 3D viewer. 
 
+%% Make sure Java3D is installed
+% If not, try to install it
+
+if ~IsJava3DInstalled(true)
+    return
+end
+
 %% Load and prepare data using MATLAB
 % Load an example of 3D data from standard Matlab
 load('mri.mat');
