@@ -55,11 +55,14 @@ if isJava3DInstalled
     fprintf('We need at least version 1.5, so let us update it.\b')
     fprintf('\n');
     
+else
+    
+    fprintf('Java3D is not installed.\n');
+    fprintf('Let us try to install it.\n');
+    fprintf('\n');
+    
 end
 
-fprintf('Java3D is not installed.\n');
-fprintf('Let us try to install it.\n');
-fprintf('\n');
 
 fprintf('Determining the target JVM ext folder...\n')
 path =  char(ij3d.Install_J3D.getFirstExtDir());
