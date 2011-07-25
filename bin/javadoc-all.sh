@@ -19,6 +19,7 @@ grep -ve ij-plugins/Sun_JAI_Sample_IO_Source_Code \
 	-e modules/micromanager1.4/Mac |
 ./fiji --javadoc --jarpath modules/bio-formats/jar \
 	--jarpath modules/jython/jython/extlibs \
+	--jarpath $HOME/.m2/repository/net/java/sezpoz/ \
 	-link http://download.java.net/media/java3d/javadoc/1.5.2/ \
 	-link http://java.sun.com/j2se/1.5.0/docs/api/ \
 	"$@" \
