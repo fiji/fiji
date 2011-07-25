@@ -16,12 +16,7 @@ function InstallJava3D
     % Second, test if we have Java3D installed already. We do this by
     % instantiating a Java3D class and checking if we raise an exception.
     fprintf('Testing if Java3D is already installed...\n');
-    isJava3DInstalled = true;
-    try
-        javax.media.j3d.Transform3D();
-    catch me %#ok<NASGU>
-        isJava3DInstalled = false;
-    end
+    isJava3DInstalled = IsJava3DInstalled();
     
     if isJava3DInstalled
         
