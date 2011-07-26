@@ -2,6 +2,7 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.image.Image;
@@ -9,6 +10,7 @@ import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.io.LOCI;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.spim.io.ConfigurationParserException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.segmentation.InteractiveDoG;
@@ -77,14 +79,13 @@ public class Bead_Registration implements PlugIn
 	final String timeLapseRegistrationTypes[] = new String[] { "manually", "automatically" };
 	static int defaultTimeLapseRegistration = 0;
 	
-	
 	public void singleChannel()
 	{
-		final GenericDialogPlus gd = new GenericDialogPlus( "Single Channel Bead Registration" );
+		final GenericDialogPlus gd = new GenericDialogPlus( "Single Channel Bead based Registration" );
 		
 		gd.addDirectoryField( "SPIM_data_directory", spimDataDirectory );
-		gd.addStringField( "Timepoints_to_process", timepoints );
 		gd.addStringField( "Pattern_of_SPIM files", fileNamePattern, 25 );
+		gd.addStringField( "Timepoints_to_process", timepoints );
 		gd.addStringField( "Angles to process", angles );
 
 		gd.addMessage( "" );		
@@ -110,8 +111,8 @@ public class Bead_Registration implements PlugIn
 			return;
 		
 		spimDataDirectory = gd.getNextString();
-		timepoints = gd.getNextString();
 		fileNamePattern = gd.getNextString();
+		timepoints = gd.getNextString();
 		angles = gd.getNextString();
 		
 		loadSegmentation = gd.getNextBoolean();
@@ -137,8 +138,12 @@ public class Bead_Registration implements PlugIn
 			else
 			{
 				values = new double[ 2 ];
-				values[ 0 ] = conf.initialSigma;
-				values[ 1 ] = conf.minPeakValue;
+				if ( conf.initialSigma != null )
+					values[ 0 ] = conf.initialSigma[ 0 ];
+
+				if ( conf.minPeakValue != null )
+					values[ 1 ] = conf.minPeakValue[ 0 ];
+
 				getInteractiveDoGParameters( "Select view to analyze", values );
 			}
 			
@@ -146,16 +151,113 @@ public class Bead_Registration implements PlugIn
 			if ( values == null )
 				return;
 			
-			conf.initialSigma = (float)values[ 0 ];
-			conf.minPeakValue = (float)values[ 1 ];
+			conf.initialSigma = new float[]{ (float)values[ 0 ] };
+			conf.minPeakValue = new float[]{ (float)values[ 1 ] };
 			
 			IOFunctions.println( "Selected initial sigma " + conf.initialSigma + ", threshold "+ conf.minPeakValue );
 		}
 	}
-	
+
+	public static String fileNamePatternMC = "spim_TL{t}_Channel{c}_Angle{a}.lsm";
+	public static String channelsBeadsMC = "0, 1";
+	public static int[] defaultBeadBrightnessMC = null;
+
 	public void multiChannel()
 	{
+		// The first main dialog
+		final GenericDialogPlus gd = new GenericDialogPlus( "Multi Channel Bead based Registration" );
+
+		gd.addDirectoryField( "SPIM_data_directory", spimDataDirectory );
+		gd.addStringField( "Pattern_of_SPIM files", fileNamePatternMC, 25 );
+		gd.addStringField( "Timepoints_to_process", timepoints );
+		gd.addStringField( "Channels_containing_beads", channelsBeadsMC );
+		gd.addStringField( "Angles to process", angles );
+
+		gd.addMessage( "" );
+
+		gd.addCheckbox( "Re-use_segmented_beads", loadSegmentation );
+		gd.addCheckbox( "Override_file_dimensions", overrideResolution );
+		gd.addNumericField( "xy_resolution (um/px)", xyRes, 3 );
+		gd.addNumericField( "z_resolution (um/px)", zRes, 3 );
+
+		gd.addMessage( "" );
+
+		gd.addCheckbox( "Re-use_per_timepoint_registration", loadRegistration );
+
+		gd.addMessage( "" );
+
+		gd.addCheckbox( "Timelapse_registration", timeLapseRegistration );
+		gd.addChoice( "Select_reference timepoint", timeLapseRegistrationTypes, timeLapseRegistrationTypes[ defaultTimeLapseRegistration ] );
+
+		gd.showDialog();
+
+		if ( gd.wasCanceled() )
+			return;
 		
+		spimDataDirectory = gd.getNextString();
+		fileNamePatternMC = gd.getNextString();
+		timepoints = gd.getNextString();
+		channelsBeadsMC = gd.getNextString();
+		angles = gd.getNextString();
+
+		loadSegmentation = gd.getNextBoolean();
+		overrideResolution = gd.getNextBoolean();
+		xyRes = gd.getNextNumber();
+		zRes = gd.getNextNumber();
+
+		loadRegistration = gd.getNextBoolean();
+
+		timeLapseRegistration = gd.getNextBoolean();
+		defaultTimeLapseRegistration = gd.getNextChoiceIndex();
+
+
+		// check if channels are more or less ok
+		int numChannels = 0;
+		ArrayList<Integer> channels;
+		try
+		{
+			channels = SPIMConfiguration.parseIntegerString( channelsBeadsMC );
+			numChannels = channels.size();
+		}
+		catch (ConfigurationParserException e)
+		{
+			IOFunctions.printErr( "Cannot understand/parse the channels: " + channelsBeadsMC );
+			return;
+		}
+
+		if ( numChannels < 1 )
+		{
+			IOFunctions.printErr( "There are no channels given: " + channelsBeadsMC );
+			return;
+		}
+
+		// if not segmentation and registration are loaded ask the parameters
+		// individually for each channel
+		if ( !loadSegmentation && !loadRegistration )
+		{
+			if ( defaultBeadBrightnessMC == null || defaultBeadBrightness != numChannels )
+			{
+				defaultBeadBrightnessMC = new int[ numChannels ];
+				for ( int c = 0; c < numChannels; ++c )
+					defaultBeadBrightnessMC[ c ] = 1;
+			}
+
+			final GenericDialogPlus gd2 = new GenericDialogPlus( "Bead Brightness for Multi Channel Registration" );
+
+			for ( int c = 0; c < numChannels; ++c )
+				gd2.addChoice( "Bead_brightness_channel_" + channels.get( c ), beadBrightness, beadBrightness[ defaultBeadBrightnessMC[ c ] ] );
+
+			gd2.showDialog();
+
+			if ( gd2.wasCanceled() )
+				return;
+
+			for ( int c = 0; c < numChannels; ++c )
+				defaultBeadBrightnessMC[ c ] = gd2.getNextChoiceIndex();
+
+		}
+
+
 	}
 	
 	static double[][] dogParameters = null;

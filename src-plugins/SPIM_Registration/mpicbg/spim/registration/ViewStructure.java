@@ -2,12 +2,10 @@ package mpicbg.spim.registration;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.io.LOCI;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import mpicbg.imglib.util.Util;
 import mpicbg.models.AffineModel3D;
 import mpicbg.spim.fusion.FusionControl;
 import mpicbg.spim.io.IOFunctions;
@@ -330,6 +328,7 @@ public class ViewStructure
 
 		int idNr = 0;
 		final int numChannels = conf.file[ timePointIndex ].length;
+		int channelRegister = 0;
 		
 		for (int c = 0; c < conf.file[ timePointIndex ].length; c++)
 			for (int i = 0; i < conf.file[ timePointIndex ][ c ].length; i++)
@@ -344,6 +343,8 @@ public class ViewStructure
 				{
 					view.setUseForFusion( true );
 					view.setUseForRegistration( true );
+					view.setInitialSigma( conf.initialSigma[ channelRegister ] );
+					view.setMinPeakValue( conf.minPeakValue[ channelRegister ] );
 				}
 				else
 				{
@@ -352,6 +353,13 @@ public class ViewStructure
 						if ( cR == view.getChannel() )
 							contains = true;				
 					view.setUseForRegistration( contains );
+
+					if ( contains )
+					{
+						view.setInitialSigma( conf.initialSigma[ channelRegister ] );
+						view.setMinPeakValue( conf.minPeakValue[ channelRegister ] );
+						channelRegister++;
+					}
 					
 					contains = false;
 					for ( final int cF : conf.channelsFuse )
@@ -419,6 +427,7 @@ public class ViewStructure
 		
 		int idNr = 0;
 		final int numChannels = files.length;
+		int channelRegister = 0;
 		
 		for (int c = 0; c < files.length; c++)
 			for (int i = 0; i < files[c].length; i++)
@@ -426,12 +435,13 @@ public class ViewStructure
 				ViewDataBeads view = new ViewDataBeads( idNr++, model.copy(), files[ c ][ i ].getPath(), conf.zStretching );
 				view.setChannel( conf.channels[ c ] );
 				view.setChannelIndex( c );
-				
-				
+
 				if ( numChannels == 1 )
 				{
 					view.setUseForFusion( true );
 					view.setUseForRegistration( true );
+					view.setInitialSigma( conf.initialSigma[ channelRegister ] );
+					view.setMinPeakValue( conf.minPeakValue[ channelRegister ] );
 				}
 				else
 				{
@@ -440,7 +450,14 @@ public class ViewStructure
 						if ( cR == view.getChannel() )
 							contains = true;				
 					view.setUseForRegistration( contains );
-	
+
+					if ( contains )
+					{
+						view.setInitialSigma( conf.initialSigma[ channelRegister ] );
+						view.setMinPeakValue( conf.minPeakValue[ channelRegister ] );
+						channelRegister++;
+					}
+
 					contains = false;
 					for ( final int cF : conf.channelsFuse )
 						if ( cF == view.getChannel() )
