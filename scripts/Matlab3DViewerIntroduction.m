@@ -101,10 +101,10 @@
 % |Matlab3DViewerDemo_2.m|, that are heavily annotated and published in
 % the same folder as this file.
 %
-% * |Matlab3DViewerDemo_1| shows how to load a 3D data set in MATLAB and
-% render it in 3D (volumetric rendering);
-% * |Matlab3DViewerDemo_2| shows how to create simple object volumes in
-% MATLAB and make a surface rendering of them.
+% * <Matlab3DViewerDemo_1.html Matlab3DViewerDemo_1> shows how to load a 3D
+% data set in MATLAB and render it in 3D (volumetric rendering);
+% * <Matlab3DViewerDemo_2.html Matlab3DViewerDemo_2> shows how to create
+% simple object volumes in MATLAB and make a surface rendering of them.
 %
 % *MIJ* is the low level Java class that contains static methods to
 % exchange data between MATLAB and ImageJ. You can find its documentation

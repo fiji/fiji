@@ -135,4 +135,7 @@ end
 %
 %
 % <<octahedrons-rendering.png>>
+%%
 %
+% _Jean-Yves Tinevez \<jeanyves.tinevez at gmail.com\> - July 2011_
+
