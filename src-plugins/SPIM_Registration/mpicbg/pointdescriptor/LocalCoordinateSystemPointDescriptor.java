@@ -11,7 +11,7 @@ import mpicbg.pointdescriptor.exception.NoSuitablePointsException;
 import mpicbg.pointdescriptor.fit.FitResult;
 import fiji.util.node.Leaf;
 
-public class LocalCoordinateSystemPointDescriptor < P extends Point > extends AbstractPointDescriptor< P, ModelPointDescriptor<P> > 
+public class LocalCoordinateSystemPointDescriptor < P extends Point > extends AbstractPointDescriptor< P, LocalCoordinateSystemPointDescriptor<P> > 
 		implements Leaf< LocalCoordinateSystemPointDescriptor<P> >
 {
 	final protected boolean normalize;
@@ -34,6 +34,7 @@ public class LocalCoordinateSystemPointDescriptor < P extends Point > extends Ab
 		buildLocalCoordinateSystem( descriptorPoints, normalize );
 	}
 
+	@Override
 	public double descriptorDistance( final LocalCoordinateSystemPointDescriptor< P > pointDescriptor ) 
 	{ 
 		float difference = 0;
@@ -47,7 +48,7 @@ public class LocalCoordinateSystemPointDescriptor < P extends Point > extends Ab
 		difference += ( cy - pointDescriptor.cy ) * ( cy - pointDescriptor.cy );  
 		difference += ( cz - pointDescriptor.cz ) * ( cz - pointDescriptor.cz );
 		
-		return difference / 3.0;	
+		return difference;// / 3.0;	
 	}
 	
 	/**

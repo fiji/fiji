@@ -3,6 +3,9 @@ package mpicbg.spim;
 import java.util.ArrayList;
 import java.util.Date;
 
+import javax.media.j3d.Transform3D;
+import javax.vecmath.Vector3d;
+
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.Point;
 import mpicbg.spim.io.ConfigurationParserException;
@@ -16,16 +19,23 @@ import mpicbg.spim.registration.ViewStructure;
 import mpicbg.spim.registration.bead.Bead;
 import mpicbg.spim.registration.bead.BeadIdentification;
 import mpicbg.spim.registration.bead.BeadRegistration;
+import mpicbg.util.TransformUtils;
 
 public class Reconstruction
 {
 	final protected SPIMConfiguration conf;
 	public SPIMConfiguration getSPIMConfiguration() { return conf; }
 	
+	ArrayList<RegistrationStatistics> stats;
+	public ArrayList<RegistrationStatistics> getRegistrationStatistics() { return stats; }
+
 	public Reconstruction( final SPIMConfiguration conf )
 	{
 		this.conf = conf; 
 		
+		if ( conf.collectRegistrationStatistics )
+			stats = new ArrayList<RegistrationStatistics>();
+
 		if ( conf.timeLapseRegistration )
 			processTimeLapse( conf );
 		else
@@ -124,7 +134,7 @@ public class Reconstruction
 			
 			template.loadDimensions();
 			template.loadSegmentations();
-			
+
 			// update the ids of the template timepoint so that there are no identical ids
 			int id = reference.getViews().get( 0 ).getID();
 			for ( ViewDataBeads view : reference.getViews() )
@@ -185,7 +195,7 @@ public class Reconstruction
 	
 	protected void processIndividualViewStructure( SPIMConfiguration conf )
 	{
-		for (int timePointIndex = 0; timePointIndex < conf.file.length; timePointIndex++)
+		for ( int timePointIndex = 0; timePointIndex < conf.file.length; timePointIndex++ )
 		{
 			final ViewStructure viewStructure = ViewStructure.initViewStructure( conf, timePointIndex, new AffineModel3D(), "ViewStructure Timepoint " + timePointIndex, conf.debugLevelInt );						
 			
@@ -208,9 +218,9 @@ public class Reconstruction
 				if ( !dimSuccess )
 				{
 			        if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
-			        	IOFunctions.println("Cannot find files for " + viewStructure );
+			        	IOFunctions.println( "Cannot find files for " + viewStructure );
 			        
-					System.exit(0);
+					return;
 				}
 				
 				segSuccess = viewStructure.loadSegmentations();
@@ -218,7 +228,7 @@ public class Reconstruction
 			
 			if ( !segSuccess )
 				viewStructure.getBeadSegmentation().segment();
-			
+
 			/*
 			Image<FloatType> img = viewStructure.getBeadSegmentation().getFoundBeads( viewStructure.getViews().get( 0) );
 			img.getDisplay().setMinMax();
@@ -284,26 +294,36 @@ public class Reconstruction
 			for ( ViewDataBeads view : viewStructure.getViews() )
 				view.closeImage();
 			
+			// collect some information if wanted
+			if ( conf.collectRegistrationStatistics )
+				stats.add( new RegistrationStatistics( viewStructure ) );
+
 			IOFunctions.println( "Finished processing." );
 		}
 	}
 	
 	protected void addExternalTransformation( final ViewStructure viewStructure )
 	{
-		/*
+		
 		final AffineModel3D model = new AffineModel3D();
 		// 5 angle
 		//model.set( 0.87249345f, -0.48363087f, -0.06975689f, 0.0f, 0.48480982f, 0.87462026f, 0.0f, 0.0f, 0.06101087f, -0.033818856f, 0.9975669f, 0.0f );
 		
 		// 6 angle red beads
-		model.set( 0.78610414f, 0.38340846f, 0.4848098f, 0.0f, -0.43837133f, 0.89879465f, 0.0f, 0.0f, -0.43574473f, -0.2125268f, 0.87462026f, 0.0f );
+		//model.set( 0.78610414f, 0.38340846f, 0.4848098f, 0.0f, -0.43837133f, 0.89879465f, 0.0f, 0.0f, -0.43574473f, -0.2125268f, 0.87462026f, 0.0f );
 		
+		// 6 angle Jans SPIM
+		/*
+		model.set(-0.39859658f, -0.88088614f, 0.25526524f, 0f,
+					 0.909124f, -0.41619343f, -0.01663096f, 0f,
+					 0.120889686f, 0.2254387f, 0.96672803f, 0);
+		*/
 		for ( final ViewDataBeads view : viewStructure.getViews() )
 		{
-			final AffineModel3D viewModel = view.getTile().getModel();
+			final AffineModel3D viewModel = (AffineModel3D)view.getTile().getModel();
 			viewModel.preConcatenate( model );
 		}
-		*/
+		
 	}
 	
     public static void main( String[] args )

@@ -13,7 +13,7 @@ public interface Matcher
 	/**
 	 * @return An {@link ArrayList} of corresponding set of {@link PointMatch}es which contain {@link LinkedPoint}s linking to the actual {@link Point} instance they are created from
 	 */
-	public < P extends Point, F extends AbstractPointDescriptor<P, F> > ArrayList<ArrayList<PointMatch>> createCandidates( AbstractPointDescriptor<P, F> pd1, AbstractPointDescriptor<P, F> pd2 );
+	public ArrayList<ArrayList<PointMatch>> createCandidates( AbstractPointDescriptor<?, ?> pd1, AbstractPointDescriptor<?, ?> pd2 );
 	
 	/**
 	 * Computes a normalization factor for the case that the different set of {@link PointMatch}es are not comparable 

@@ -77,9 +77,9 @@ public class ViewStructure
 	 */
 	protected FusionControl fusionControl;
 	
-	public ViewStructure( final ArrayList<ViewDataBeads> views, final SPIMConfiguration conf, final String id, final int timePointIndex, final int numChannels )
+	public ViewStructure( final ArrayList<ViewDataBeads> views, final SPIMConfiguration conf, final String id, final int timePoint, final int numChannels )
 	{
-		this( views, conf, id, timePointIndex, numChannels, ViewStructure.DEBUG_MAIN );
+		this( views, conf, id, timePoint, numChannels, ViewStructure.DEBUG_MAIN );
 	}
 	
 	public ViewStructure( final ArrayList<ViewDataBeads> views, final SPIMConfiguration conf, final String id, final int timePoint, final int numChannels, final int debugLevel )
@@ -196,14 +196,15 @@ public class ViewStructure
 	 */
 	public ViewDataBeads getViewFromID( final int viewID )
 	{
-		if ( views.get( viewID ).getID() == viewID )
-			return views.get( viewID );
+		if ( viewID < views.size() )
+			if ( views.get( viewID ).getID() == viewID )
+				return views.get( viewID );
 		
 		for ( final ViewDataBeads view : views )
 			if ( view.getID() == viewID )
 				return view;
 		
-		IOFunctions.println( "ViewStructure.getView( " + viewID + " ): View not part of this ViewStructure" );
+		//IOFunctions.println( "ViewStructure.getView( " + viewID + " ): View not part of this ViewStructure" );
 		return null;
 	}
 	
@@ -222,16 +223,19 @@ public class ViewStructure
 	{
 		for ( final ViewDataBeads view : getViews() )
 		{
-			boolean readSeg = IOFunctions.readSegmentation( view, conf.registrationFiledirectory, conf );
-						
-			if (!readSeg)
+			// only load those who are needed for registration
+			if ( view.getUseForRegistration() )
 			{
-				if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
-					IOFunctions.printErr("Cannot read segmentation for " + view );
-				
-				return false;
-			}		
-
+				boolean readSeg = IOFunctions.readSegmentation( view, conf.registrationFiledirectory, conf );
+							
+				if (!readSeg)
+				{
+					if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
+						IOFunctions.printErr("Cannot read segmentation for " + view );
+					
+					return false;
+				}		
+			}
 		}
 		
 		return true;
@@ -255,7 +259,7 @@ public class ViewStructure
 				if ( getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
 					IOFunctions.printErr( "Cannot read registration for view " + view + " in " + this );
 				success = false;
-			}			
+			}
 		}
 		
 		return success;		
@@ -321,8 +325,11 @@ public class ViewStructure
 			IOFunctions.println( "z-stretching = " + zStretching );
 			image.close();
 		}
-		
+
 		int idNr = 0;
+		final int numChannels = conf.file[ timePointIndex ].length;
+		int channelRegister = 0;
+		
 		for (int c = 0; c < conf.file[ timePointIndex ].length; c++)
 			for (int i = 0; i < conf.file[ timePointIndex ][ c ].length; i++)
 			{
@@ -331,10 +338,52 @@ public class ViewStructure
 				view.setAcqusitionAngle( conf.angles[ i ] );
 				view.setChannel( conf.channels[ c ] );
 				view.setChannelIndex( c );
+		
+				if ( numChannels == 1 )
+				{
+					view.setUseForFusion( true );
+					view.setUseForRegistration( true );
+					view.setInitialSigma( conf.initialSigma[ channelRegister ] );
+					view.setMinPeakValue( conf.minPeakValue[ channelRegister ] );
+				}
+				else
+				{
+					boolean contains = false;				
+					for ( final int cR : conf.channelsRegister )
+						if ( cR == view.getChannel() )
+							contains = true;				
+					view.setUseForRegistration( contains );
+
+					if ( contains )
+					{
+						view.setInitialSigma( conf.initialSigma[ channelRegister ] );
+						view.setMinPeakValue( conf.minPeakValue[ channelRegister ] );
+						channelRegister++;
+					}
+					
+					contains = false;
+					for ( final int cF : conf.channelsFuse )
+						if ( cF == view.getChannel() )
+							contains = true;				
+					view.setUseForFusion( contains );
+				}
+				
+				if ( conf.channelsMirror != null )				
+				{
+					for ( final int[] mirror : conf.channelsMirror )
+					{
+						if ( conf.channels[ c ] == mirror[ 0 ] )
+						{
+							if ( mirror[ 1 ] == 0 )
+								view.setMirrorHorizontally( true );
+							if ( mirror[ 1 ] == 1 )
+								view.setMirrorVertically( true );
+						}
+					}
+				}
 				views.add( view );
 			}
 			
-		final int numChannels = conf.file[ timePointIndex ].length;
 		final ViewStructure viewStructure = new ViewStructure( views, conf, id, conf.timepoints[ timePointIndex ], numChannels, debugLevel );		
 		
 		return viewStructure;
@@ -349,7 +398,7 @@ public class ViewStructure
 	 * @param model - the model to be used for registration
 	 * @param id - arbitrary id, will be printed with the toString method
 	 * @param debugLevel - the debug level of the program ViewStructure.DEBUG_ALL, ViewStructure.DEBUG_MAIN or ViewStructure.DEBUG_ERRORONLY
-	 * @return an instance of the ViewStructure, completely intialized
+	 * @return an instance of the ViewStructure, completely initialized
 	 */
 	public static ViewStructure initViewStructure( final SPIMConfiguration conf, final int timePoint, final File[][] files, final AffineModel3D model, final String id, final int debugLevel )
 	{
@@ -375,21 +424,64 @@ public class ViewStructure
 			IOFunctions.println( "z-stretching = " + zStretching );
 			image.close();
 		}
-
+		
 		int idNr = 0;
+		final int numChannels = files.length;
+		int channelRegister = 0;
+		
 		for (int c = 0; c < files.length; c++)
 			for (int i = 0; i < files[c].length; i++)
 			{
-				ViewDataBeads view = new ViewDataBeads( idNr, model.copy(), files[ c ][ i ].getPath(), conf.zStretching );
+				ViewDataBeads view = new ViewDataBeads( idNr++, model.copy(), files[ c ][ i ].getPath(), conf.zStretching );
 				view.setChannel( conf.channels[ c ] );
 				view.setChannelIndex( c );
+
+				if ( numChannels == 1 )
+				{
+					view.setUseForFusion( true );
+					view.setUseForRegistration( true );
+					view.setInitialSigma( conf.initialSigma[ channelRegister ] );
+					view.setMinPeakValue( conf.minPeakValue[ channelRegister ] );
+				}
+				else
+				{
+					boolean contains = false;				
+					for ( final int cR : conf.channelsRegister )
+						if ( cR == view.getChannel() )
+							contains = true;				
+					view.setUseForRegistration( contains );
+
+					if ( contains )
+					{
+						view.setInitialSigma( conf.initialSigma[ channelRegister ] );
+						view.setMinPeakValue( conf.minPeakValue[ channelRegister ] );
+						channelRegister++;
+					}
+
+					contains = false;
+					for ( final int cF : conf.channelsFuse )
+						if ( cF == view.getChannel() )
+							contains = true;				
+					view.setUseForFusion( contains );
+				}
+				
+				for ( final int[] mirror : conf.channelsMirror )
+				{
+					if ( conf.channels[ c ] == mirror[ 0 ] )
+					{
+						if ( mirror[ 1 ] == 0 )
+							view.setMirrorHorizontally( true );
+						if ( mirror[ 1 ] == 1 )
+							view.setMirrorVertically( true );
+					}
+				}
+				
 				views.add( view );
 			}
 		
-		final int numChannels = files.length;
+		
 		final ViewStructure viewStructure = new ViewStructure( views, conf, id, timePoint, numChannels, debugLevel );		
 		
 		return viewStructure;
 	}
-	
 }

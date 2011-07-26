@@ -2,7 +2,6 @@ package mpicbg.pointdescriptor.matcher;
 
 import java.util.ArrayList;
 
-import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
 import mpicbg.pointdescriptor.AbstractPointDescriptor;
 import mpicbg.pointdescriptor.fit.FitResult;
@@ -34,6 +33,7 @@ public class SubsetMatcher implements Matcher
 		this.numMatchings = this.numCombinations * this.numCombinations;
 	}
 	
+	public int[][] getNeighbors() { return neighbors; }
 	public int getSubsetSize() { return subsetSize; }
 	public int getNumNeighbors() { return numNeighbors; }
 	public int getNumCombinations() { return numCombinations; }
@@ -43,7 +43,7 @@ public class SubsetMatcher implements Matcher
 	public int getRequiredNumNeighbors() { return numNeighbors; }
 	
 	@Override
-	public < P extends Point, F extends AbstractPointDescriptor<P, F> > ArrayList<ArrayList<PointMatch>> createCandidates( final AbstractPointDescriptor<P, F> pd1, final AbstractPointDescriptor<P, F> pd2 )
+	public ArrayList<ArrayList<PointMatch>> createCandidates( final AbstractPointDescriptor<?, ?> pd1, final AbstractPointDescriptor<?, ?> pd2 )
 	{
 		final ArrayList<ArrayList<PointMatch>> matchesList = new ArrayList<ArrayList<PointMatch>>();		
 

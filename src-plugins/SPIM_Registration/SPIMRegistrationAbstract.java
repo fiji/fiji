@@ -44,6 +44,10 @@ public abstract class SPIMRegistrationAbstract implements PlugIn
 		}
 		
 		final Reconstruction spimReconstruction = execute();
+
+		if ( spimReconstruction == null )
+			return;
+
 		final SPIMConfiguration conf = spimReconstruction.getSPIMConfiguration();
 		
 		if ( !conf.registerOnly && !conf.timeLapseRegistration && conf.scale > 1 )

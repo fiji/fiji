@@ -176,7 +176,7 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 		"<td>Power</td><td>pow</td>" +
 		"</tr>"+
 		"<tr>" +
-		"<td>Square Root</td><td>sqr</td>" +
+		"<td>Square Root</td><td>sqrt</td>" +
 		"</tr>"+
 		"<tr>" +
 		"<td>Absolute Value</td><td>abs</td>" +
