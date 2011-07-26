@@ -2,14 +2,18 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
+import mpicbg.imglib.container.cell.CellContainerFactory;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.io.LOCI;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.spim.ChartTest;
 import mpicbg.spim.Reconstruction;
 import mpicbg.spim.io.ConfigurationParserException;
 import mpicbg.spim.io.IOFunctions;
@@ -64,6 +68,10 @@ public class Bead_Registration implements PlugIn
 		else
 			conf = multiChannel();
 
+		// get filenames and so on...
+		if ( !init( conf ) )
+			return;
+
 		// this is only registration
 		conf.registerOnly = true;
 
@@ -71,7 +79,12 @@ public class Bead_Registration implements PlugIn
 		if ( !loadRegistration )
 		{
 			conf.timeLapseRegistration = false;
+			conf.collectRegistrationStatistics = true;
+
 			final Reconstruction reconstruction = new Reconstruction( conf );
+
+			if ( reconstruction.getSPIMConfiguration().file.length > 1 && defaultTimeLapseRegistration == 0 )
+				ChartTest.plotData( reconstruction.getRegistrationStatistics() );
 		}
 
 		/*
@@ -87,10 +100,10 @@ public class Bead_Registration implements PlugIn
 
 	}
 
-	public static String spimDataDirectory = "";
-	public static String timepoints = "1";
+	public static String spimDataDirectory = "F:/Stephan/Drosophila/Live HisYFP/HIS-YFP-13.07.2008";
+	public static String timepoints = "18";
 	public static String fileNamePattern = "spim_TL{t}_Angle{a}.lsm";
-	public static String angles = "0-315:45";
+	public static String angles = "0-270:45";
 	
 	public static boolean loadSegmentation = false;
 	public static String[] beadBrightness = { "Very weak", "Weak", "Comparable to Sample", "Strong", "Advanced ...", "Interactive ..." };	
@@ -527,6 +540,73 @@ public class Bead_Registration implements PlugIn
 			values[ 1 ] = idog.getSigma2();						
 			values[ 2 ] = idog.getThreshold();			
 		}
+	}
+
+	protected boolean init( final SPIMConfiguration conf )
+	{
+		// check the directory string
+		conf.inputdirectory = conf.inputdirectory.replace('\\', '/');
+		conf.inputdirectory = conf.inputdirectory.replaceAll( "//", "/" );
+
+		conf.inputdirectory = conf.inputdirectory.trim();
+		if (conf.inputdirectory.length() > 0 && !conf.inputdirectory.endsWith("/"))
+			conf.inputdirectory = conf.inputdirectory + "/";
+
+		conf.outputdirectory = conf.inputdirectory + "output/";
+		conf.registrationFiledirectory = conf.inputdirectory + "registration/";
+
+		// variable specific verification
+		if (conf.numberOfThreads < 1)
+			conf.numberOfThreads = Runtime.getRuntime().availableProcessors();
+
+		if (conf.scaleSpaceNumberOfThreads < 1)
+			conf.scaleSpaceNumberOfThreads = Runtime.getRuntime().availableProcessors();
+
+		try
+		{
+			conf.getFileNames();
+		}
+		catch ( ConfigurationParserException e )
+		{
+			IJ.error( "Cannot parse input: " + e );
+			return false;
+		}
+
+		// set interpolator stuff
+		conf.interpolatorFactorOutput.setOutOfBoundsStrategyFactory( conf.strategyFactoryOutput );
+
+		// check if directories exist
+		File dir = new File(conf.outputdirectory, "");
+		if (!dir.exists())
+		{
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Creating directory '" + conf.outputdirectory + "'.");
+			boolean success = dir.mkdirs();
+			if (!success)
+			{
+				if (!dir.exists())
+				{
+					IOFunctions.printErr("(" + new Date(System.currentTimeMillis()) + "): Cannot create directory '" + conf.outputdirectory + "', quitting.");
+					System.exit(0);
+				}
+			}
+		}
+
+		dir = new File(conf.registrationFiledirectory, "");
+		if (!dir.exists())
+		{
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Creating directory '" + conf.registrationFiledirectory + "'.");
+			boolean success = dir.mkdirs();
+			if (!success)
+			{
+				if (!dir.exists())
+				{
+					IOFunctions.printErr("(" + new Date(System.currentTimeMillis()) + "): Cannot create directory '" + conf.registrationFiledirectory + "', quitting.");
+					System.exit(0);
+				}
+			}
+		}
+
+		return true;
 	}
 
 	public static final void addHyperLinkListener(final MultiLineLabel text, final String myURL)

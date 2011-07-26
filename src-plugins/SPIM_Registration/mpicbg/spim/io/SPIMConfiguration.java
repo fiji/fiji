@@ -40,6 +40,7 @@ public class SPIMConfiguration
 	public int debugLevelInt = ViewStructure.DEBUG_MAIN;
 	public boolean showImageJWindow = false;
 	public boolean multiThreadedOpening = false;
+	public boolean collectRegistrationStatistics = false;
 	
 	// time lapse
 	public boolean timeLapseRegistration = false;

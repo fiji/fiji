@@ -514,7 +514,9 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 			if ( getViewStructure().debugLevel <= ViewStructure.DEBUG_ERRORONLY )
 				IOFunctions.println("Cannot read dimensions for " + this + ", trying to open image to determine them.");
 			
-			getImage();
+			if ( getImage() == null )
+				return false;
+
 			closeImage();
 			
 			if ( getImageSize() != null )
