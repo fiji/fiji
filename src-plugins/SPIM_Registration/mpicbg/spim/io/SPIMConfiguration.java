@@ -9,6 +9,7 @@ import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.interpolation.InterpolatorFactory;
 import mpicbg.imglib.interpolation.linear.LinearInterpolatorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
+import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
@@ -60,7 +61,7 @@ public class SPIMConfiguration
 	public InterpolatorFactory<FloatType> interpolatorFactorOutput = new LinearInterpolatorFactory<FloatType>( strategyFactoryOutput );
 	
 	// outofbounds strategy factories
-	public OutOfBoundsStrategyFactory<FloatType> strategyFactoryGauss = new OutOfBoundsStrategyValueFactory<FloatType>();
+	public OutOfBoundsStrategyFactory<FloatType> strategyFactoryGauss = new OutOfBoundsStrategyMirrorFactory<FloatType>();
 		
 	// segmentation	
 	public boolean writeOutputImage = true;

@@ -123,7 +123,7 @@ public class MultiChannel_SPIM_Registration extends SPIMRegistrationAbstract
 		else if ( beadBrightness == 1 )
 			for ( int c = 0; c < numChannels; ++c )
 				conf.minPeakValue[ c ] = 0.008f;
-		else if ( beadBrightness == 1 )
+		else if ( beadBrightness == 2 )
 			for ( int c = 0; c < numChannels; ++c )
 				conf.minPeakValue[ c ] = 0.03f;
 		else

@@ -10,6 +10,7 @@ import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.io.LOCI;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.spim.Reconstruction;
 import mpicbg.spim.io.ConfigurationParserException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
@@ -56,10 +57,34 @@ public class Bead_Registration implements PlugIn
 		final int choice = gd.getNextChoiceIndex();
 		defaultBeadRegistration = choice;
 		
+		final SPIMConfiguration conf;
+
 		if ( choice == 0 )
-			singleChannel();
+			conf = singleChannel();
 		else
-			multiChannel();
+			conf = multiChannel();
+
+		// this is only registration
+		conf.registerOnly = true;
+
+		// if we do not load the registration we can start
+		if ( !loadRegistration )
+		{
+			conf.timeLapseRegistration = false;
+			final Reconstruction reconstruction = new Reconstruction( conf );
+		}
+
+		/*
+		// manage the timelapse registration
+		if ( loadRegistration && timeLapseRegistration )
+			conf.timeLapseRegistration = true;
+		else
+			conf.timeLapseRegistration = false;
+		*/
+		//conf.referenceTimePoint = referenceTimePointStatic;
+
+		// if ( defaulTimeLapseRegistration == 0 ) // manually
+
 	}
 
 	public static String spimDataDirectory = "";
@@ -79,9 +104,9 @@ public class Bead_Registration implements PlugIn
 	final String timeLapseRegistrationTypes[] = new String[] { "manually", "automatically" };
 	static int defaultTimeLapseRegistration = 0;
 	
-	public void singleChannel()
+	public SPIMConfiguration singleChannel()
 	{
-		final GenericDialogPlus gd = new GenericDialogPlus( "Single Channel Bead based Registration" );
+		final GenericDialogPlus gd = new GenericDialogPlus( "Single Channel Bead-based Registration" );
 		
 		gd.addDirectoryField( "SPIM_data_directory", spimDataDirectory );
 		gd.addStringField( "Pattern_of_SPIM files", fileNamePattern, 25 );
@@ -108,7 +133,7 @@ public class Bead_Registration implements PlugIn
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
-			return;
+			return null;
 		
 		spimDataDirectory = gd.getNextString();
 		fileNamePattern = gd.getNextString();
@@ -128,44 +153,75 @@ public class Bead_Registration implements PlugIn
 		
 		SPIMConfiguration conf = new SPIMConfiguration();
 		
-		if ( !loadSegmentation && ( defaultBeadBrightness == 4 || defaultBeadBrightness == 5 ) )
+		if ( conf.initialSigma == null || conf.initialSigma.length != 1 )
+			conf.initialSigma = new float[]{ 1.8f };
+
+		if ( conf.minPeakValue == null || conf.minPeakValue.length != 1 )
+			conf.minPeakValue = new float[]{ 0.01f };
+
+		if ( !loadSegmentation )
 		{
-			// open advanced bead brightness detection
-			final double[] values;
-			
-			if ( defaultBeadBrightness == 4 )
-				values = getAdvancedDoGParameters( new int[ 1 ] )[ 0 ];
+			if ( defaultBeadBrightness == 0 )
+				conf.minPeakValue[ 0 ] = 0.001f;
+			else if ( defaultBeadBrightness == 1 )
+				conf.minPeakValue[ 0 ] = 0.008f;
+			else if ( defaultBeadBrightness == 2 )
+				conf.minPeakValue[ 0 ] = 0.03f;
+			else if ( defaultBeadBrightness == 3 )
+				conf.minPeakValue[ 0 ] = 0.1f;
 			else
 			{
-				values = new double[ 2 ];
-				if ( conf.initialSigma != null )
-					values[ 0 ] = conf.initialSigma[ 0 ];
+				// open advanced bead brightness detection
+				final double[] values;
 
-				if ( conf.minPeakValue != null )
-					values[ 1 ] = conf.minPeakValue[ 0 ];
+				if ( defaultBeadBrightness == 4 )
+					values = getAdvancedDoGParameters( new int[ 1 ] )[ 0 ];
+				else
+				{
+					values = new double[]{ conf.initialSigma[ 0 ], conf.minPeakValue[ 0 ] };
+					getInteractiveDoGParameters( "Select view to analyze", values );
+				}
 
-				getInteractiveDoGParameters( "Select view to analyze", values );
+				// cancelled
+				if ( values == null )
+					return null;
+
+				conf.initialSigma[ 0 ] = (float)values[ 0 ];
+				conf.minPeakValue[ 0 ] = (float)values[ 1 ];
 			}
-			
-			// cancelled
-			if ( values == null )
-				return;
-			
-			conf.initialSigma = new float[]{ (float)values[ 0 ] };
-			conf.minPeakValue = new float[]{ (float)values[ 1 ] };
-			
-			IOFunctions.println( "Selected initial sigma " + conf.initialSigma + ", threshold "+ conf.minPeakValue );
 		}
+		conf.minInitialPeakValue = new float[]{ conf.minPeakValue[ 0 ]/4 };
+
+		conf.timepointPattern = timepoints;
+		conf.channelPattern = "";
+		conf.channelsToRegister = "";
+		conf.channelsToFuse = "";
+		conf.anglePattern = angles;
+		conf.inputFilePattern = fileNamePattern;
+		conf.inputdirectory = spimDataDirectory;
+
+		conf.overrideImageZStretching = overrideResolution;
+
+		if ( overrideResolution )
+			conf.zStretching = zRes / xyRes;
+
+		conf.readSegmentation = loadSegmentation;
+		conf.readRegistration = loadRegistration;
+
+		conf.registerOnly = true;
+		conf.timeLapseRegistration = timeLapseRegistration;
+
+		return conf;
 	}
 
 	public static String fileNamePatternMC = "spim_TL{t}_Channel{c}_Angle{a}.lsm";
 	public static String channelsBeadsMC = "0, 1";
 	public static int[] defaultBeadBrightnessMC = null;
 
-	public void multiChannel()
+	public SPIMConfiguration multiChannel()
 	{
 		// The first main dialog
-		final GenericDialogPlus gd = new GenericDialogPlus( "Multi Channel Bead based Registration" );
+		final GenericDialogPlus gd = new GenericDialogPlus( "Multi Channel Bead-based Registration" );
 
 		gd.addDirectoryField( "SPIM_data_directory", spimDataDirectory );
 		gd.addStringField( "Pattern_of_SPIM files", fileNamePatternMC, 25 );
@@ -192,7 +248,7 @@ public class Bead_Registration implements PlugIn
 		gd.showDialog();
 
 		if ( gd.wasCanceled() )
-			return;
+			return null;
 		
 		spimDataDirectory = gd.getNextString();
 		fileNamePatternMC = gd.getNextString();
@@ -222,13 +278,37 @@ public class Bead_Registration implements PlugIn
 		catch (ConfigurationParserException e)
 		{
 			IOFunctions.printErr( "Cannot understand/parse the channels: " + channelsBeadsMC );
-			return;
+			return null;
 		}
 
 		if ( numChannels < 1 )
 		{
 			IOFunctions.printErr( "There are no channels given: " + channelsBeadsMC );
-			return;
+			return null;
+		}
+
+		// create the configuration object
+		final SPIMConfiguration conf = new SPIMConfiguration();
+
+		if ( conf.initialSigma == null || conf.initialSigma.length != numChannels )
+		{
+			conf.initialSigma = new float[ numChannels ];
+			for ( int c = 0; c < numChannels; ++c )
+				conf.initialSigma[ c ] = 1.8f;
+		}
+
+		if ( conf.minPeakValue == null || conf.minPeakValue.length != numChannels )
+		{
+			conf.minPeakValue = new float[ numChannels ];
+			for ( int c = 0; c < numChannels; ++c )
+				conf.minPeakValue[ c ] = 0.01f;
+		}
+
+		if ( conf.minInitialPeakValue == null || conf.minInitialPeakValue.length != numChannels )
+		{
+			conf.minInitialPeakValue = new float[ numChannels ];
+			for ( int c = 0; c < numChannels; ++c )
+				conf.minInitialPeakValue[ c ] = conf.minPeakValue[ c ] / 4;
 		}
 
 		// if not segmentation and registration are loaded ask the parameters
@@ -250,14 +330,89 @@ public class Bead_Registration implements PlugIn
 			gd2.showDialog();
 
 			if ( gd2.wasCanceled() )
-				return;
+				return null;
+
+			int advanced = 0;
+			int interactive = 0;
 
 			for ( int c = 0; c < numChannels; ++c )
+			{
 				defaultBeadBrightnessMC[ c ] = gd2.getNextChoiceIndex();
 
+				if ( defaultBeadBrightnessMC[ c ] == 0 )
+					conf.minPeakValue[ c ] = 0.001f;
+				else if ( defaultBeadBrightnessMC[ c ] == 1 )
+					conf.minPeakValue[ c ] = 0.008f;
+				else if ( defaultBeadBrightnessMC[ c ] == 2 )
+					conf.minPeakValue[ c ] = 0.03f;
+				else if ( defaultBeadBrightnessMC[ c ] == 3 )
+					conf.minPeakValue[ c ] = 0.1f;
+				else if ( defaultBeadBrightnessMC[ c ] == 4 )
+					advanced++;
+				else
+					interactive++;
+			}
+
+			// get the interactive values for all channels
+			if ( interactive > 0 )
+				for ( int c = 0; c < numChannels; ++c )
+					if ( defaultBeadBrightnessMC[ c ] == 5 )
+					{
+						final double[] values = new double[] { conf.initialSigma[ c ], conf.minPeakValue[ c ] };
+
+						getInteractiveDoGParameters( "Select view to analyze for channel " + channels.get( c ), values );
+
+						conf.initialSigma[ c ] = (float)values[ 0 ];
+						conf.minPeakValue[ c ] = (float)values[ 1 ];
+					}
+
+			// get the advanced values for all channels
+			if ( advanced > 0 )
+			{
+				final int channelIndices[] = new int[ advanced ];
+				int count = 0;
+
+				// do all advanced parameters in one dialog
+				for ( int c = 0; c < numChannels; ++c )
+					if ( defaultBeadBrightnessMC[ c ] == 4 )
+						channelIndices[ count++ ] = channels.get( c );
+
+				final double[][] values = getAdvancedDoGParameters( channelIndices );
+
+				// write them to the configuration
+				count = 0;
+				for ( int c = 0; c < numChannels; ++c )
+					if ( defaultBeadBrightnessMC[ c ] == 4 )
+					{
+						conf.initialSigma[ c ] = (float)values[ count ][ 0 ];
+						conf.minPeakValue[ c ] = (float)values[ count++ ][ 1 ];
+					}
+			}
 		}
 
+		for ( int c = 0; c < numChannels; ++c )
+			conf.minInitialPeakValue[ c ] = conf.minPeakValue[ c ] / 4;
 
+		conf.timepointPattern = timepoints;
+		conf.anglePattern = angles;
+		conf.channelPattern = channelsBeadsMC;
+		conf.channelsToRegister = channelsBeadsMC;
+		conf.channelsToFuse = "";
+		conf.inputFilePattern = fileNamePattern;
+		conf.inputdirectory = spimDataDirectory;
+
+		conf.overrideImageZStretching = overrideResolution;
+
+		if ( overrideResolution )
+			conf.zStretching = zRes / xyRes;
+
+		conf.readSegmentation = loadSegmentation;
+		conf.readRegistration = loadRegistration;
+
+		conf.registerOnly = true;
+		conf.timeLapseRegistration = timeLapseRegistration;
+
+		return conf;
 	}
 	
 	static double[][] dogParameters = null;
@@ -280,22 +435,12 @@ public class Bead_Registration implements PlugIn
 
 		final GenericDialog gd = new GenericDialog( "Select Difference-of-Gaussian Parameters" );
 		
-		if ( channelIndices.length == 1 )
+		for ( int i = 0; i < channelIndices.length; ++i )
 		{
-			// single channel
-			gd.addNumericField( "Initial_sigma", dogParameters[ 0 ][ 0 ], 4 );
-			gd.addNumericField( "Threshold", dogParameters[ 0 ][ 1 ], 4 );
-		}
-		else
-		{
-			// multi channel
-			for ( int i = 0; i < channelIndices.length; ++i )
-			{
-				final int channel = channelIndices[ i ];
-				
-				gd.addNumericField( "Channel_" + channel + "_Initial_sigma", dogParameters[ i ][ 0 ], 4 );
-				gd.addNumericField( "Channel_" + channel + "_Threshold", dogParameters[ i ][ 1 ], 4 );				
-			}
+			final int channel = channelIndices[ i ];
+
+			gd.addNumericField( "Channel_" + channel + "_Initial_sigma", dogParameters[ i ][ 0 ], 4 );
+			gd.addNumericField( "Channel_" + channel + "_Threshold", dogParameters[ i ][ 1 ], 4 );
 		}
 		
 		gd.showDialog();
@@ -303,19 +448,10 @@ public class Bead_Registration implements PlugIn
 		if ( gd.wasCanceled() )
 			return null;
 		
-		if ( channelIndices.length == 1 )
+		for ( int i = 0; i < channelIndices.length; ++i )
 		{
-			dogParameters[ 0 ][ 0 ] = gd.getNextNumber();
-			dogParameters[ 0 ][ 1 ] = gd.getNextNumber();
-		}
-		else
-		{
-			// multi channel
-			for ( int i = 0; i < channelIndices.length; ++i )
-			{
-				dogParameters[ i ][ 0 ] = gd.getNextNumber();
-				dogParameters[ i ][ 1 ] = gd.getNextNumber();
-			}			
+			dogParameters[ i ][ 0 ] = gd.getNextNumber();
+			dogParameters[ i ][ 1 ] = gd.getNextNumber();
 		}
 		
 		return dogParameters.clone();
