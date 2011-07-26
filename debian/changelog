@@ -1,3 +1,10 @@
+fiji (20110726070017) unstable; urgency=low
+
+  * Based on fiji.git at 12bcf2aeea7b35bccfa1a78ed943a3004ffa2453
+    This is the automatic weekly build
+
+ -- Mark Longair <mhl@pobox.com>  Tue, 26 Jul 2011 05:00:17 +0000
+
 fiji (20110721120303) unstable; urgency=low
 
   * Based on fiji.git at 799a4937dde526a3fece2298c90a778bc38f2f99
