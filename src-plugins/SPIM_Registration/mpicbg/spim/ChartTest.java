@@ -1,17 +1,36 @@
 package mpicbg.spim;
 
+import ij.ImageJ;
 import ij.gui.GUI;
 
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.MenuElement;
 
+import mpicbg.imglib.util.Util;
 import mpicbg.models.AffineModel3D;
 import mpicbg.spim.io.ConfigurationParserException;
 import mpicbg.spim.io.ConfigurationParserGeneral;
@@ -30,11 +49,14 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.StandardXYItemRenderer;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.ui.RectangleAnchor;
+import org.jfree.ui.TextAnchor;
 
 
 public class ChartTest
@@ -42,6 +64,7 @@ public class ChartTest
 
 	public static void main( String args[] )
 	{
+		/*
 		SPIMConfiguration config = null;
 
 		try
@@ -95,14 +118,66 @@ public class ChartTest
 				ij.ImageJ.main( params );
 			}
 		}
-
+		*/
 		// load registrations, dims, ...
 
 		//ArrayList< TimepointData > data = loadData( config );
-		ArrayList< RegistrationStatistics > data = defaultData( config );
-		plotData( data );
-	}
+		ArrayList< RegistrationStatistics > data = defaultData();
 
+		//new ImageJ();
+		final ArrayList<JMenuItem> items = new ArrayList<JMenuItem>();
+		
+		items.add( new JMenuItem( new ChartPopupMenuOpenFile( "Open File", new File( "F:/Stephan/Drosophila/Live HisYFP/HIS-YFP-13.07.2008/spim_TL18_Angle0.tif" ) ) ) );
+		
+		plotData( data, getOptimalTimePoint( data ), true, items );
+	}
+	
+	
+	/**
+	 * Select a timepoint with minimal maxError and maximal minRatio
+	 * 
+	 * @param data - the timepoint data
+	 * @return - the index for the {@link ArrayList}
+	 */
+	public static int getOptimalTimePoint( final ArrayList< RegistrationStatistics > data )
+	{
+		// first sort the values together with links to the indices
+		final double[] maxErrors = new double[ data.size() ];
+		final double[] minRatioInv = new double[ data.size() ];
+		final int[] indicesMaxError = new int[ data.size() ];
+		final int[] indicesMinRatio = new int[ data.size() ];
+				
+		for ( int i = 0; i < data.size(); ++i )
+		{
+			maxErrors[ i ] = data.get( i ).maxError;
+			indicesMaxError[ i ] = i;
+			
+			// in this way they are sorted the same
+			minRatioInv[ i ] = 10 - data.get( i ).minRatio;
+			indicesMinRatio[ i ] = i;
+		}
+		
+		Util.quicksort( maxErrors, indicesMaxError, 0, data.size() - 1 );
+		Util.quicksort( minRatioInv, indicesMinRatio, 0, data.size() - 1 );
+		
+		// now for each of both sum up the rank in the array, the index with the lowest rank will be the suggestion
+		final double[] sumRank = new double[ data.size() ];
+		final int[] indicesSumRank = new int[ data.size() ];
+		
+		for ( int i = 0; i < data.size(); ++i )
+		{
+			sumRank[ indicesMaxError[ i ] ] += i; 
+			sumRank[ indicesMinRatio[ i ] ] += i;
+			indicesSumRank[ i ] = i;
+		}
+		
+		// now we sort the ranks and select the best
+		Util.quicksort( sumRank, indicesSumRank, 0, data.size() - 1 );
+
+		// the best timepoint is the one with the highest rank
+		return indicesSumRank[ 0 ];
+	}
+	
 	public static ArrayList< RegistrationStatistics > loadData( SPIMConfiguration conf )
 	{
 		ArrayList< RegistrationStatistics > data = new ArrayList< RegistrationStatistics >();
@@ -177,6 +252,16 @@ public class ChartTest
 
 	public static void plotData( ArrayList< RegistrationStatistics > data )
 	{
+		plotData( data, -1, false, null );
+	}
+
+	public static int plotData( ArrayList< RegistrationStatistics > data, int referenceTimePoint, boolean enableReferenceTimePoint )
+	{
+		return plotData( data, referenceTimePoint, enableReferenceTimePoint, null );
+	}
+
+	public static int plotData( ArrayList< RegistrationStatistics > data, int referenceTimePoint, boolean enableReferenceTimePoint, final List<JMenuItem> extraMenuItems )
+	{
         Color errorColorMin = new Color(240, 50, 50);
         Color errorColorAvg = new Color(255, 0, 0);
         Color errorColorMax = errorColorMin;
@@ -200,16 +285,14 @@ public class ChartTest
 		dataset.addSeries( seriesAvgError );
 		dataset.addSeries( seriesMaxError );
 
-
-
 		XYSeries seriesMinRatio = new XYSeries("minRatio");
 		XYSeries seriesAvgRatio = new XYSeries("avgRatio");
 		XYSeries seriesMaxRatio = new XYSeries("maxRatio");
 
 		for ( RegistrationStatistics tp : data ) {
-			seriesMinRatio.add( tp.timePoint, tp.minRatio );
-			seriesAvgRatio.add( tp.timePoint, tp.avgRatio );
-			seriesMaxRatio.add( tp.timePoint, tp.maxRatio );
+			seriesMinRatio.add( tp.timePoint, tp.minRatio*100 );
+			seriesAvgRatio.add( tp.timePoint, tp.avgRatio*100 );
+			seriesMaxRatio.add( tp.timePoint, tp.maxRatio*100 );
 		}
 
 		XYSeriesCollection dataset2 = new XYSeriesCollection();
@@ -220,19 +303,19 @@ public class ChartTest
 		JFreeChart chart = ChartFactory.createXYLineChart
 							( "Registration Quality",  // Title
 		                      "Timepoint",             // X-Axis label
-		                      "Error",                 // Y-Axis label
+		                      "Error [px]",                 // Y-Axis label
 		                      dataset,
 		                      PlotOrientation.VERTICAL,
 		                      true,                    // Show legend
-		                      true,
+		                      false,				   // show tooltips
 		                      false
 		                     );
         final XYPlot plot = chart.getXYPlot();
-        final NumberAxis axis2 = new NumberAxis( "Correspondence Ratio" );
+        final NumberAxis axis2 = new NumberAxis( "Correspondence Ratio  [%]" );
         plot.getRangeAxis( 0 ).setLabelPaint( errorColorAvg );
         axis2.setLabelPaint( ratioColorAvg );
         axis2.setLabelFont( plot.getRangeAxis( 0 ).getLabelFont() );
-        axis2.setRange( 0.0, 1.0 );
+        axis2.setRange( 0.0, 100 );
         plot.setRangeAxis( 1, axis2 );
         plot.setDataset( 1, dataset2);
         plot.mapDatasetToRangeAxis( 1, 1 );
@@ -252,25 +335,103 @@ public class ChartTest
         renderer2.setSeriesPaint( 2, ratioColorMax );
         renderer2.setSeriesStroke( 2, new BasicStroke ( 0.5f ) );
         renderer2.setPlotImages( true );
-        plot.setRenderer(1, renderer2);
+        plot.setRenderer( 1, renderer2 );
 
-		GraphFrame graphFrame = new GraphFrame( chart );
+        // Is it somehow possible to add a new tab to this Properties menu item?        
+		GraphFrame graphFrame = new GraphFrame( chart, referenceTimePoint, enableReferenceTimePoint, extraMenuItems );
+		graphFrame.setSize( 800, 400 );
 		graphFrame.setVisible(true);
+		
+		return graphFrame.getReferenceTimePoint();
 	}
 
 	public static class MouseListener implements ChartMouseListener
 	{
 		ChartPanel panel;
-
+		ValueMarker valueMarker;
+		boolean markerShown = false;
+		int referenceTimePoint;
+		final boolean enableReferenceTimePoint;
+		
 		MouseListener( ChartPanel panel )
 		{
+			this( panel, -1, false );
+		}
+
+		MouseListener( ChartPanel panel, final boolean enableReferenceTimePoint )
+		{
+			this( panel, -1, enableReferenceTimePoint );
+		}
+
+		MouseListener( ChartPanel panel, final int referenceTimePoint, final boolean enableReferenceTimePoint )
+		{
 			this.panel = panel;
+			this.referenceTimePoint = referenceTimePoint;
+			this.enableReferenceTimePoint = enableReferenceTimePoint;
+			
+			if ( enableReferenceTimePoint )
+			{
+				valueMarker = makeMarker( referenceTimePoint );
+				
+				if ( referenceTimePoint >= 0 )
+				{
+					((XYPlot)panel.getChart().getPlot()).addDomainMarker( valueMarker );
+					markerShown = true;
+				}
+			}
+		}
+				
+		public int getReferenceTimePoint() { return referenceTimePoint; }
+		
+		protected ValueMarker makeMarker( final int timePoint )
+		{
+			final ValueMarker valueMarker = new ValueMarker( timePoint );
+			valueMarker.setStroke( new BasicStroke ( 1.5f ) );
+			valueMarker.setPaint( new Color( 0.0f, 93f/255f, 9f/255f ) );
+			valueMarker.setLabel( " Reference\n Timepoint " + timePoint );
+			valueMarker.setLabelAnchor(RectangleAnchor.BOTTOM );
+			valueMarker.setLabelTextAnchor( TextAnchor.BOTTOM_LEFT );
+			
+			return valueMarker;
 		}
 
 		@Override
-		public void chartMouseClicked( ChartMouseEvent e )
+		public void chartMouseClicked( final ChartMouseEvent e )
 		{
-			System.out.println( "clicked " + e.getEntity() );
+			System.out.println( e.getTrigger().getButton() );
+			
+			// left mouse click
+			if ( e.getTrigger().getButton() == MouseEvent.BUTTON1 && enableReferenceTimePoint )
+			{
+				referenceTimePoint = getChartXLocation( e );
+				
+				valueMarker.setValue( referenceTimePoint );
+				valueMarker.setLabel( " Reference\n Timepoint " + referenceTimePoint );
+				
+				if ( !markerShown )
+				{
+					((XYPlot) e.getChart().getPlot()).addDomainMarker( valueMarker );
+					markerShown = true;
+				}
+			}
+			else if ( e.getTrigger().getButton() == MouseEvent.BUTTON3 )
+			{
+				// right mouse click
+				referenceTimePoint = getChartXLocation( e );
+				
+				// update item
+			}
+		}
+		
+		protected int getChartXLocation( final ChartMouseEvent e )
+		{
+			final Point2D p = panel.translateScreenToJava2D( e.getTrigger().getPoint() );
+			final Rectangle2D plotArea = panel.getScreenDataArea();
+			final XYPlot plot = (XYPlot) e.getChart().getPlot();
+			final double chartX = plot.getDomainAxis().java2DToValue( p.getX(), plotArea, plot.getDomainAxisEdge() );
+			//final double chartY = plot.getRangeAxis().java2DToValue( p.getY(), plotArea, plot.getRangeAxisEdge() );
+			
+			return (int)Math.round( chartX );			
 		}
 
 		@Override
@@ -281,41 +442,28 @@ public class ChartTest
 
 	public static class GraphFrame extends JFrame implements ActionListener
 	{
+		private static final long serialVersionUID = 1L;
+
 		JFreeChart chart = null;
 
 		ChartPanel chartPanel = null;
-
+		MouseListener mouseListener;
 		JPanel mainPanel;
+		
+		private int referenceTimePoint;
+		final boolean enableReferenceTimePoint;
 
-		public void updateWithNewChart( JFreeChart c )
-		{
-			updateWithNewChart( c, false );
-		}
-
-		synchronized public void updateWithNewChart( JFreeChart c, boolean setSize )
-		{
-			if ( chartPanel != null )
-				remove( chartPanel );
-			chartPanel = null;
-			this.chart = c;
-			chartPanel = new ChartPanel( c );
-			chartPanel.setMouseWheelEnabled( true );
-			if ( setSize )
-				chartPanel.setPreferredSize( new java.awt.Dimension( 800, 600 ) );
-			chartPanel.addChartMouseListener( new MouseListener( chartPanel ) );
-			chartPanel.setHorizontalAxisTrace( true );
-			mainPanel.add( chartPanel, BorderLayout.CENTER );
-			validate();
-		}
-
-		public GraphFrame( JFreeChart chart )
+		public GraphFrame( final JFreeChart chart, final int referenceTimePoint, final boolean enableReferenceTimePoint, final List<JMenuItem> extraMenuItems )
 		{
 			super();
+			
+			this.referenceTimePoint = referenceTimePoint;
+			this.enableReferenceTimePoint = enableReferenceTimePoint;
 
 			mainPanel = new JPanel();
 			mainPanel.setLayout( new BorderLayout() );
 
-			updateWithNewChart( chart, true );
+			updateWithNewChart( chart, true, extraMenuItems );
 
 			JPanel buttonsPanel = new JPanel();
 			mainPanel.add( buttonsPanel, BorderLayout.SOUTH );
@@ -325,18 +473,45 @@ public class ChartTest
 			setSize( new java.awt.Dimension( 500, 270 ) );
 			GUI.center( this );
 		}
+		
+		public int getReferenceTimePoint() { return mouseListener.getReferenceTimePoint(); }
 
+		synchronized public void updateWithNewChart( JFreeChart c, boolean setSize, final List<JMenuItem> extraMenuItems )
+		{
+			if ( chartPanel != null )
+				remove( chartPanel );
+			chartPanel = null;
+			this.chart = c;
+			chartPanel = new ChartPanel( c );
+			chartPanel.setMouseWheelEnabled( true );
+			if ( setSize )
+				chartPanel.setPreferredSize( new java.awt.Dimension( 800, 600 ) );
+			
+			mouseListener = new MouseListener( chartPanel, referenceTimePoint, enableReferenceTimePoint );
+			chartPanel.addChartMouseListener( mouseListener );
+			chartPanel.setHorizontalAxisTrace( true );
+			mainPanel.add( chartPanel, BorderLayout.CENTER );
+			
+			
+			// add extra items
+			final JPopupMenu menu = chartPanel.getPopupMenu();
+			
+			if ( extraMenuItems != null )
+				for ( final JMenuItem m : extraMenuItems )
+					menu.add( m );
+			
+			//menu.get
+			validate();
+		}
+		
+		@Override
 		public void actionPerformed( ActionEvent e )
 		{
 			Object source = e.getSource();
 		}
 	}
 
-
-
-
-
-	public static ArrayList< RegistrationStatistics > defaultData( SPIMConfiguration conf )
+	public static ArrayList< RegistrationStatistics > defaultData()
 	{
 		ArrayList< RegistrationStatistics > data = new ArrayList< RegistrationStatistics >();
 

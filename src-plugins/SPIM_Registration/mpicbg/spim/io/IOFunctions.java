@@ -186,7 +186,7 @@ public class IOFunctions
 				if ( view.getID() != viewID && !printedOnce )
 				{
 					if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
-						IOFunctions.printErr("ViewID messed up, should be " + viewID + "(file) but is " + view.getID() + "(view). We have to recompute the registration (WILL BE OVERWRITTEN).");
+						IOFunctions.println("ViewID messed up, should be " + viewID + "(file) but is " + view.getID() + "(view). We have to recompute the registration (WILL BE OVERWRITTEN).");
 					
 					printedOnce = true;
 				}
@@ -316,7 +316,7 @@ public class IOFunctions
 				if ( view.getID() != viewID && !printedOnce )
 				{
 					if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
-						IOFunctions.printErr("ViewID messed up, should be " + viewID + "(file) but is " + view.getID() + "(view). We have to recompute the registration (WILL BE OVERWRITTEN).");
+						IOFunctions.println("ViewID messed up, should be " + viewID + "(file) but is " + view.getID() + "(view). We have to recompute the registration (WILL BE OVERWRITTEN).");
 					
 					for ( final Nucleus nucleus : view.getNucleiStructure().getNucleiList() )
 					{
@@ -593,7 +593,7 @@ public class IOFunctions
 				if ( view.getID() != viewID && !printedOnce )
 				{
 					if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
-						IOFunctions.printErr("ViewID messed up, should be " + viewID + "(file) but is " + view.getID() + "(view). We have to recompute the registration (WILL BE OVERWRITTEN).");
+						IOFunctions.println("ViewID messed up, should be " + viewID + "(file) but is " + view.getID() + "(view). We have to recompute the registration (WILL BE OVERWRITTEN).");
 					
 					if ( conf != null)
 					{

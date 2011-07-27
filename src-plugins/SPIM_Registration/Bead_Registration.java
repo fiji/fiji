@@ -76,16 +76,17 @@ public class Bead_Registration implements PlugIn
 		conf.registerOnly = true;
 
 		// if we do not load the registration we can start
-		if ( !loadRegistration )
-		{
+		//if ( !loadRegistration )
+		//{
 			conf.timeLapseRegistration = false;
 			conf.collectRegistrationStatistics = true;
 
 			final Reconstruction reconstruction = new Reconstruction( conf );
+		//}
+		
+		if ( reconstruction.getSPIMConfiguration().file.length > 1 && defaultTimeLapseRegistration == 0 )
+			conf.referenceTimePoint = ChartTest.plotData( reconstruction.getRegistrationStatistics(), 0, true );
 
-			if ( reconstruction.getSPIMConfiguration().file.length > 1 && defaultTimeLapseRegistration == 0 )
-				ChartTest.plotData( reconstruction.getRegistrationStatistics() );
-		}
 
 		/*
 		// manage the timelapse registration
@@ -100,17 +101,17 @@ public class Bead_Registration implements PlugIn
 
 	}
 
-	public static String spimDataDirectory = "F:/Stephan/Drosophila/Live HisYFP/HIS-YFP-13.07.2008";
-	public static String timepoints = "18";
-	public static String fileNamePattern = "spim_TL{t}_Angle{a}.lsm";
-	public static String angles = "0-270:45";
+	public static String spimDataDirectory = "F:/Tobias";
+	public static String timepoints = "0-50";
+	public static String fileNamePattern = "spim_TL{t}_Ch1_Angle{a}";
+	public static String angles = "0-300:60";
 	
 	public static boolean loadSegmentation = false;
 	public static String[] beadBrightness = { "Very weak", "Weak", "Comparable to Sample", "Strong", "Advanced ...", "Interactive ..." };	
 	public static int defaultBeadBrightness = 1;
 	public static boolean overrideResolution = false;
-	public static double xyRes = 0.73;
-	public static double zRes = 2.00;
+	public static double xyRes = 1;
+	public static double zRes = 5.25;
 
 	public static boolean loadRegistration = false;
 	public static boolean timeLapseRegistration = false;
