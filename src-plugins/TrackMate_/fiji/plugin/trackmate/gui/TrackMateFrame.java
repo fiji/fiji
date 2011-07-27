@@ -133,7 +133,8 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 	 */
 
 	public void setModel(TrackMateModel model) {
-		this.model = model;		
+		this.model = model;
+		model.setLogger(getLogger());
 	}
 
 

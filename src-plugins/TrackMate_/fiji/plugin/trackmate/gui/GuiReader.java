@@ -263,7 +263,6 @@ public class GuiReader {
 					controller.setState(GuiState.CALCULATE_FEATURES);
 					controller.actionFlag = true;
 					controller.setModelView(AbstractTrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model));
-//					controller.getModelView().setSpots(model.getSpots());
 					if (!imp.isVisible())
 						imp.show();
 				}
