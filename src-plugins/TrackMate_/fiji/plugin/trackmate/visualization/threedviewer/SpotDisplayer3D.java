@@ -345,7 +345,6 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 
 	private void updateTrackColors() {
 		final TrackFeature feature = (TrackFeature) displaySettings.get(KEY_TRACK_COLOR_FEATURE);
-
 		if (null == feature) {
 			trackNode.computeTrackColors();
 

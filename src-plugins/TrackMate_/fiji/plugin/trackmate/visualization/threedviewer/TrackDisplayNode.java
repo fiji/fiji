@@ -142,6 +142,10 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 			Color4f color = new Color4f();
 			for (int trackIndex = 0; trackIndex < lines.size(); trackIndex++) {
 				LineArray line = lines.get(trackIndex);
+				if (null == line) {
+					continue;
+				}
+					
 				for (int i = 0; i < line.getVertexCount(); i++) {
 					line.getColor(i, color);
 					color.w = 1f;
@@ -177,6 +181,9 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 
 				for (int trackIndex = 0; trackIndex < ntracks; trackIndex++) {
 					final LineArray line = lines.get(trackIndex);
+					if (null == line) {
+						continue;
+					}
 					for (Integer index : frameIndices.get(frame).get(trackIndex)) {
 						line.getColor(index, color);
 						color.w = tp;
@@ -201,6 +208,9 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 
 				for (int trackIndex = 0; trackIndex < ntracks; trackIndex++) {
 					final LineArray line = lines.get(trackIndex);
+					if (null == line) {
+						continue;
+					}	
 					for (Integer index : frameIndices.get(frame).get(trackIndex)) {
 						line.getColor(index, color);
 						color.w = tp;
@@ -225,6 +235,9 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 
 				for (int trackIndex = 0; trackIndex < ntracks; trackIndex++) {
 					final LineArray line = lines.get(trackIndex);
+					if (null == line) {
+						continue;
+					}	
 					for (Integer index : frameIndices.get(frame).get(trackIndex)) {
 						line.getColor(index, color);
 						color.w = tp;
@@ -249,6 +262,9 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 
 				for (int trackIndex = 0; trackIndex < ntracks; trackIndex++) {
 					final LineArray line = lines.get(trackIndex);
+					if (null == line) {
+						continue;
+					}	
 					for (Integer index : frameIndices.get(frame).get(trackIndex)) {
 						line.getColor(index, color);
 						color.w = tp;
@@ -273,6 +289,9 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 
 				for (int trackIndex = 0; trackIndex < ntracks; trackIndex++) {
 					final LineArray line = lines.get(trackIndex);
+					if (null == line) {
+						continue;
+					}	
 					for (Integer index : frameIndices.get(frame).get(trackIndex)) {
 						line.getColor(index, color);
 						color.w = tp;
@@ -297,6 +316,9 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 
 				for (int trackIndex = 0; trackIndex < ntracks; trackIndex++) {
 					final LineArray line = lines.get(trackIndex);
+					if (null == line) {
+						continue;
+					}	
 					for (Integer index : frameIndices.get(frame).get(trackIndex)) {
 						line.getColor(index, color);
 						color.w = tp;
@@ -343,6 +365,9 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		Color4f color4 = new Color4f(); 
 		int index = edgeIndices.get(trackIndex).get(edge);
 		final LineArray line = lines.get(trackIndex);
+		if (null == line) {
+			return;
+		}	
 		line.getColor(index, color4);
 		float[] val = color.getRGBColorComponents(null);
 		color4.x = val[0];
@@ -370,7 +395,11 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		// Retrieve color from index
 		Color4f color = new Color4f();
 		int index = edgeIndices.get(trackIndex).get(edge);
-		lines.get(trackIndex).getColor(index, color);
+		LineArray line = lines.get(trackIndex);
+		if (null == line) {
+			return null;
+		}	
+		line.getColor(index, color);
 		return color.get();
 	}
 
@@ -424,6 +453,12 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		for (int trackIndex = 0; trackIndex < ntracks; trackIndex++) {
 			Set<DefaultWeightedEdge> track = trackEdges.get(trackIndex);
 
+			if (track.size() == 0) {
+				lines.add(null);
+				trackSwitch.addChild(new Shape3D(null, appearance));
+				continue;
+			}
+			
 			// One line object to display all edges of one track
 			LineArray line = new LineArray(2 * track.size(), LineArray.COORDINATES | LineArray.COLOR_4);
 			line.setCapability(LineArray.ALLOW_COLOR_WRITE);
