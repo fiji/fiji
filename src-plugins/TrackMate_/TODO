@@ -7,23 +7,29 @@ Design:
 
 Bugs:
 - Fix SpotEditTool not recognizing a second instance of TrackMate.
+- Check if a split event can be detected at first frame (and converse
+for merge events at last frame).
+
+Features:
+- Multi-thread the computation of features.
+- Implement edge features.
 
 Segmenting
+- Multi-thread calls to segmenter, one thread per time point
+(migh be akward, since a single call to a segmenter *might* be 
+multithreaded as well).
 - Implement the C.elegans algo from Santella et al 2010.
-- Implement an algoirthm to segment cell imaged in phase-contrast.
+- Implement an algorithm to segment cell imaged in phase-contrast.
 
 Track scheme
 - Add the ability to name tracks.
-- Fix the NPE when plotting features and a parent cell is in the selection.
 - Add a side table to display track features.
 - Allow to export side tables content to csv or xls.
 
 Export/Import
 - Offer to select displayer at load.
 - Save the spot images in the xml file.
-- Save / load track features.
 - Make a MATLAB function to import xml files as MATLAB variables.
-
 
 Making it available.
 - Write wiki doc.
