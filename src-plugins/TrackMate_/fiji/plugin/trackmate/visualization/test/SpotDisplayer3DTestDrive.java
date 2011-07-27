@@ -1,10 +1,10 @@
 package fiji.plugin.trackmate.visualization.test;
 
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.features.spot.SpotFeatureFacade;
 import fiji.plugin.trackmate.gui.FilterGuiPanel;
 import fiji.plugin.trackmate.util.TMUtils;
@@ -113,9 +113,9 @@ public class SpotDisplayer3DTestDrive {
 
 		final SpotCollection allSpots = new SpotCollection();
 		allSpots.put(0, spots);
-		final TrackMateModel model = new TrackMateModel();
-		model.setSpots(allSpots, false);
-		final SpotDisplayer3D displayer = new SpotDisplayer3D(universe, model);
+		final TrackMate_ plugin = new TrackMate_();
+		plugin.getModel().setSpots(allSpots, false);
+		final SpotDisplayer3D displayer = new SpotDisplayer3D(universe, plugin.getModel());
 		displayer.render();
 		
 		// Launch threshold GUI
@@ -125,8 +125,8 @@ public class SpotDisplayer3DTestDrive {
 		gui.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				model.setSpotFilters(gui.getFeatureFilters());
-				model.execSpotFiltering();
+				plugin.getModel().setSpotFilters(gui.getFeatureFilters());
+				plugin.execSpotFiltering();
 			}
 		});
 		gui.addActionListener(new ActionListener() {

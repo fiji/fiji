@@ -1,9 +1,5 @@
 package fiji.plugin.trackmate;
 
-import ij.ImagePlus;
-import ij.gui.Roi;
-
-import java.awt.Polygon;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
@@ -24,8 +20,6 @@ import org.jgrapht.traverse.DepthFirstIterator;
 import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotFeatureFacade;
 import fiji.plugin.trackmate.features.track.TrackFeatureFacade;
-import fiji.plugin.trackmate.segmentation.SpotSegmenter;
-import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.util.TMUtils;
 
 /**
@@ -114,7 +108,7 @@ public class TrackMateModel {
 	protected Logger logger = Logger.DEFAULT_LOGGER;
 
 	/** The settings that determine processes actions */
-	protected Settings settings;
+	protected Settings settings = new Settings();;
 
 	// LISTENERS
 
@@ -159,305 +153,7 @@ public class TrackMateModel {
 		return selectionChangeListeners;
 	}
 
-	/*
-	 * PROCESSES
-	 */
-
-	/**
-	 * Execute the tracking part.
-	 * <p>
-	 * This method links all the selected spots from the thresholding part using the selected tracking algorithm.
-	 * This tracking process will generate a graph (more precisely a {@link SimpleWeightedGraph}) made of the spot 
-	 * election for its vertices, and edges representing the links.
-	 * <p>
-	 * The {@link TrackMateModelChangeListener}s of this model will be notified when the successful process is over.
-	 * @see #getTrackGraph()
-	 */ 
-	public void execTracking() {
-		SpotTracker tracker = settings.getSpotTracker(this);
-		tracker.setLogger(logger);
-		if (tracker.checkInput() && tracker.process()) {
-			setGraph(tracker.getResult());
-		} else
-			logger.error("Problem occured in tracking:\n"+tracker.getErrorMessage()+'\n');
-	}
-
-	/** 
-	 * Execute the segmentation part.
-	 * <p>
-	 * This method looks for bright blobs: bright object of approximately spherical shape, whose expected 
-	 * diameter is given in argument. The method used for segmentation depends on the {@link SpotSegmenter} 
-	 * chosen, and set in {@link #settings};
-	 * <p>
-	 * This gives us a collection of spots, which at this stage simply wrap a physical center location.
-	 * These spots are stored in a {@link SpotCollection} field, {@link #spots}, but listeners of this model
-	 * are <b>not</b> notified when the process is over.  
-	 * 
-	 * @see #getSpots()
-	 */
-	@SuppressWarnings("unchecked")
-	public void execSegmentation() {
-		final ImagePlus imp = settings.imp;
-		if (null == imp) {
-			logger.error("No image to operate on.\n");
-			return;
-		}
-
-		Roi roi = imp.getRoi();
-		Polygon polygon = null;
-		if (roi != null)
-			polygon = roi.getPolygon();
-
-		int numFrames = settings.tend - settings.tstart + 1;
-
-		/* 0 -- Initialize local variables */
-		final float[] calibration = new float[] {(float) imp.getCalibration().pixelWidth, (float) imp.getCalibration().pixelHeight, (float) imp.getCalibration().pixelDepth};
-
-		@SuppressWarnings("rawtypes")
-		SpotSegmenter<? extends RealType> segmenter = settings.getSpotSegmenter();
-		segmenter.setCalibration(calibration);
-
-		spots = new SpotCollection();
-
-		// For each frame...
-		int spotFound = 0;
-		for (int i = settings.tstart-1; i < settings.tend; i++) {
-
-			/* 1 - Prepare stack for use with Imglib. */
-			@SuppressWarnings("rawtypes")
-			Image img = TMUtils.getSingleFrameAsImage(imp, i, settings); // will be cropped according to settings
-
-			/* 2 Segment it */
-			logger.setStatus("Frame "+(i+1)+": Segmenting...");
-			logger.setProgress((i-settings.tstart) / (float)numFrames );
-			segmenter.setImage(img);
-			if (segmenter.checkInput() && segmenter.process()) {
-				List<Spot> spotsThisFrame = segmenter.getResult(settings);
-				List<Spot> prunedSpots;
-				// Prune if outside of ROI
-				if (null != polygon) {
-					prunedSpots = new ArrayList<Spot>();
-					for (Spot spot : spotsThisFrame) {
-						if (polygon.contains(spot.getFeature(SpotFeature.POSITION_X)/calibration[0], spot.getFeature(SpotFeature.POSITION_Y)/calibration[1])) 
-							prunedSpots.add(spot);
-					}
-				} else {
-					prunedSpots = spotsThisFrame;
-				}
-				// Add segmentation feature other than position
-				for (Spot spot : prunedSpots) {
-					spot.putFeature(SpotFeature.POSITION_T, i * settings.dt);
-				}
-				spots.put(i, prunedSpots);
-				spotFound += prunedSpots.size();
-			} else {
-				logger.error(segmenter.getErrorMessage()+'\n');
-				return;
-			}
-
-		} // Finished looping over frames
-		logger.log("Found "+spotFound+" spots.\n");
-		logger.setProgress(1);
-		logger.setStatus("");
-		return;
-	}
-
-	/**
-	 * Execute the initial spot filtering part.
-	 *<p>
-	 * Because of the presence of noise, it is possible that some of the regional maxima found in the segmenting step have
-	 * identified noise, rather than objects of interest. This can generates a very high number of spots, which is
-	 * inconvenient to deal with when it comes to  computing their features, or displaying them.
-	 * <p>
-	 * Any {@link SpotSegmenter} is expected to at least compute the {@link SpotFeature#QUALITY} value for each spot
-	 * it creates, so it is possible to set up an initial filtering on this Feature, prior to any other operation. 
-	 * <p>
-	 * This method simply takes all the segmented spots, and discard those whose quality value is below the threshold set 
-	 * by {@link #setInitialSpotFilter(Float)}. The spot field is overwritten, and discarded spots can't be recalled.
-	 * <p>
-	 * The {@link TrackMateModelChangeListener}s of this model will be notified with a {@link TrackMateModelChangeEvent#SPOTS_COMPUTED}
-	 * event.
-	 * 
-	 * @see #getSpots()
-	 * @see #setInitialFilter(Float)
-	 */
-	public void execInitialSpotFiltering() {
-		FeatureFilter<SpotFeature> featureFilter = new FeatureFilter<SpotFeature>(SpotFeature.QUALITY, initialSpotFilterValue, true);
-		setSpots(spots.filter(featureFilter), true);
-	}
-
-	/**
-	 * Calculate given features for the given spots, according to the {@link Settings} set in this model.
-	 * <p>
-	 * Features are calculated for each spot, using their location, and the raw image. See the {@link SpotFeatureFacade} class
-	 * for details. Since a {@link SpotFeatureAnalyzer} can compute more than a {@link SpotFeature} at once, spots might
-	 * received more data than required.
-	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public void computeSpotFeatures(final SpotCollection toCompute, final List<SpotFeature> features) {
-
-		int numFrames = settings.tend - settings.tstart + 1;
-		List<Spot> spotsThisFrame;
-		SpotFeatureFacade<?> featureCalculator;
-		final float[] calibration = new float[] { settings.dx, settings.dy, settings.dz };
-
-		for (int i = settings.tstart-1; i < settings.tend; i++) {
-			logger.setProgress((2*(i-settings.tstart)) / (2f * numFrames + 1));
-			logger.setStatus("Frame "+(i+1)+": Calculating features...");
-
-			/* 1 - Prepare stack for use with Imglib.
-			 * This time, since the spot coordinates are with respect to the top-left corner of the image, 
-			 * we must not generate a cropped version of the image, but a full snapshot. 	 */
-			Settings uncroppedSettings = new Settings();
-			uncroppedSettings.xstart = 1;
-			uncroppedSettings.xend   = settings.imp.getWidth();
-			uncroppedSettings.ystart = 1;
-			uncroppedSettings.yend   = settings.imp.getHeight();
-			uncroppedSettings.zstart = 1;
-			uncroppedSettings.zend   = settings.imp.getNSlices();
-			Image<? extends RealType> img = TMUtils.getSingleFrameAsImage(settings.imp, i, uncroppedSettings); 
-
-			/* 1.5 Determine what analyzers are needed */
-			featureCalculator = new SpotFeatureFacade(img, calibration);
-			HashSet<SpotFeatureAnalyzer> analyzers = new HashSet<SpotFeatureAnalyzer>();
-			for (SpotFeature feature : features)
-				analyzers.add(featureCalculator.getAnalyzerForFeature(feature));
-
-					/* 2 - Compute features. */
-					spotsThisFrame = toCompute.get(i);
-					for (SpotFeatureAnalyzer analyzer : analyzers)
-						analyzer.process(spotsThisFrame);
-
-		} // Finished looping over frames
-		logger.setProgress(1);
-							logger.setStatus("");
-							return;
-	}
-
-	/**
-	 * Calculate given features for the all segmented spots of this model, 
-	 * according to the {@link Settings} set in this model.
-	 * <p>
-	 * Features are calculated for each spot, using their location, and the raw image. See the {@link SpotFeatureFacade} class
-	 * for details. Since a {@link SpotFeatureAnalyzer} can compute more than a {@link SpotFeature} at once, spots might
-	 * received more data than required.
-	 */
-	public void computeSpotFeatures(final List<SpotFeature> features) {
-		computeSpotFeatures(spots, features);
-	}
-
-	/**
-	 * Calculate given features for the all filtered spots of this model, 
-	 * according to the {@link Settings} set in this model.
-	 */
-	public void computeSpotFeatures(final SpotFeature feature) {
-		ArrayList<SpotFeature> features = new ArrayList<SpotFeature>(1);
-		features.add(feature);
-		computeSpotFeatures(features);
-	}
-
-	/**
-	 * Calculate all features for all segmented spots.
-	 * <p>
-	 * Features are calculated for each spot, using their location, and the raw image. See the {@link SpotFeatureFacade} class
-	 * for details. 
-	 */
-	public void computeSpotFeatures() {
-		computeSpotFeatures(spots);
-	}
-
-	/**
-	 * Calculate all features for the given spot collection.
-	 * <p>
-	 * Features are calculated for each spot, using their location, and the raw image. See the {@link SpotFeatureFacade} class
-	 * for details. 
-	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public void computeSpotFeatures(final SpotCollection toCompute) {
-		int numFrames = toCompute.keySet().size();
-		List<Spot> spotsThisFrame;
-		SpotFeatureFacade<?> featureCalculator;
-		final float[] calibration = settings.getCalibration();
-
-		for (int i : toCompute.keySet()) {
-			logger.setProgress((2*(i-settings.tstart)) / (2f * numFrames + 1));
-			logger.setStatus("Frame "+(i+1)+": Calculating features...");
-
-			/* 1 - Prepare stack for use with Imglib.
-			 * This time, since the spot coordinates are with respect to the top-left corner of the image, 
-			 * we must not generate a cropped version of the image, but a full snapshot. 	 */
-			Settings uncroppedSettings = new Settings();
-			uncroppedSettings.xstart = 1;
-			uncroppedSettings.xend   = settings.imp.getWidth();
-			uncroppedSettings.ystart = 1;
-			uncroppedSettings.yend   = settings.imp.getHeight();
-			uncroppedSettings.zstart = 1;
-			uncroppedSettings.zend   = settings.imp.getNSlices();
-			Image<? extends RealType> img = TMUtils.getSingleFrameAsImage(settings.imp, i, uncroppedSettings); 
-
-			/* 1.5 Determine what analyzers are needed */
-			featureCalculator = new SpotFeatureFacade(img, calibration);
-			spotsThisFrame = toCompute.get(i);
-			featureCalculator.processAllFeatures(spotsThisFrame);
-
-		} // Finished looping over frames
-		logger.setProgress(1);
-		logger.setStatus("");
-		return;
-	}
-
-
-	/**
-	 * Execute the spot feature filtering part.
-	 *<p>
-	 * Because of the presence of noise, it is possible that some of the regional maxima found in the segmenting step have
-	 * identified noise, rather than objects of interest. A filtering operation based on the calculated features in this
-	 * step should allow to rule them out.
-	 * <p>
-	 * This method simply takes all the segmented spots, and store in the field {@link #filteredSpots}
-	 * the spots whose features satisfy all of the filters entered with the method {@link #addFilter(SpotFilter)}.
-	 * <p>
-	 * The {@link TrackMateModelChangeListener}s of this model will be notified with a {@link TrackMateModelChangeEvent#SPOTS_FILTERED}
-	 * event.
-	 * 
-	 * @see #getFilteredSpots()
-	 */
-	public void execSpotFiltering() {
-		setFilteredSpots(spots.filter(spotFilters), true);
-	}
-
-	public void execTrackFiltering() {
-		filteredTrackIndices = new HashSet<Integer>(); // will work, for the hash of Integer is its int
-
-		for (int trackIndex = 0; trackIndex < getNTracks(); trackIndex++) {
-			boolean trackIsOk = true;
-			for(FeatureFilter<TrackFeature> filter : trackFilters) {
-				Float tval = filter.value;
-				Float val = trackFeatures.get(trackIndex).get(filter.feature);
-				if (null == val)
-					continue;
-				
-				if (filter.isAbove) {
-					if (val < tval) {
-						trackIsOk = false;
-						break;
-					}
-				} else {
-					if (val > tval) {
-						trackIsOk = false;
-						break;
-					}
-				}
-			}
-			if (trackIsOk)
-				filteredTrackIndices.add(trackIndex);
-		}
-
-		// And we warn people about it
-		TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_FILTERED);
-		for (final TrackMateModelChangeListener listener : modelChangeListeners)
-			listener.modelChanged(event);
-	}
+	
 
 
 	/*
@@ -1085,6 +781,119 @@ public class TrackMateModel {
 	public void updateFeatures(final Spot spotToUpdate) {
 		spotsUpdated.add(spotToUpdate); // Enlist for feature update when transaction is marked as finished
 	}
+
+
+	/**
+	 * Calculate given features for the all segmented spots of this model, 
+	 * according to the {@link Settings} set in this model.
+	 * <p>
+	 * Features are calculated for each spot, using their location, and the raw image. See the {@link SpotFeatureFacade} class
+	 * for details. Since a {@link SpotFeatureAnalyzer} can compute more than a {@link SpotFeature} at once, spots might
+	 * received more data than required.
+	 */
+	public void computeSpotFeatures(final List<SpotFeature> features) {
+		computeSpotFeatures(spots, features);
+	}
+
+	/**
+	 * Calculate given features for the all filtered spots of this model, 
+	 * according to the {@link Settings} set in this model.
+	 */
+	public void computeSpotFeatures(final SpotFeature feature) {
+		ArrayList<SpotFeature> features = new ArrayList<SpotFeature>(1);
+		features.add(feature);
+		computeSpotFeatures(features);
+	}
+
+
+	/**
+	 * Calculate given features for the given spots, according to the {@link Settings} set in this model.
+	 * <p>
+	 * Features are calculated for each spot, using their location, and the raw image. See the {@link SpotFeatureFacade} class
+	 * for details. Since a {@link SpotFeatureAnalyzer} can compute more than a {@link SpotFeature} at once, spots might
+	 * received more data than required.
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public void computeSpotFeatures(final SpotCollection toCompute, final List<SpotFeature> features) {
+
+		int numFrames = settings.tend - settings.tstart + 1;
+		List<Spot> spotsThisFrame;
+		SpotFeatureFacade<?> featureCalculator;
+		final float[] calibration = new float[] { settings.dx, settings.dy, settings.dz };
+
+		for (int i = settings.tstart-1; i < settings.tend; i++) {
+			logger.setProgress((2*(i-settings.tstart)) / (2f * numFrames + 1));
+			logger.setStatus("Frame "+(i+1)+": Calculating features...");
+
+			/* 1 - Prepare stack for use with Imglib.
+			 * This time, since the spot coordinates are with respect to the top-left corner of the image, 
+			 * we must not generate a cropped version of the image, but a full snapshot. 	 */
+			Settings uncroppedSettings = new Settings();
+			uncroppedSettings.xstart = 1;
+			uncroppedSettings.xend   = settings.imp.getWidth();
+			uncroppedSettings.ystart = 1;
+			uncroppedSettings.yend   = settings.imp.getHeight();
+			uncroppedSettings.zstart = 1;
+			uncroppedSettings.zend   = settings.imp.getNSlices();
+			Image<? extends RealType> img = TMUtils.getSingleFrameAsImage(settings.imp, i, uncroppedSettings); 
+
+			/* 1.5 Determine what analyzers are needed */
+			featureCalculator = new SpotFeatureFacade(img, calibration);
+			HashSet<SpotFeatureAnalyzer> analyzers = new HashSet<SpotFeatureAnalyzer>();
+			for (SpotFeature feature : features)
+				analyzers.add(featureCalculator.getAnalyzerForFeature(feature));
+
+					/* 2 - Compute features. */
+					spotsThisFrame = toCompute.get(i);
+					for (SpotFeatureAnalyzer analyzer : analyzers)
+						analyzer.process(spotsThisFrame);
+
+		} // Finished looping over frames
+		logger.setProgress(1);
+							logger.setStatus("");
+							return;
+	}
+
+	/**
+	 * Calculate all features for the given spot collection.
+	 * <p>
+	 * Features are calculated for each spot, using their location, and the raw image. See the {@link SpotFeatureFacade} class
+	 * for details. 
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public void computeSpotFeatures(final SpotCollection toCompute) {
+		int numFrames = toCompute.keySet().size();
+		List<Spot> spotsThisFrame;
+		SpotFeatureFacade<?> featureCalculator;
+		final float[] calibration = settings.getCalibration();
+
+		for (int i : toCompute.keySet()) {
+			logger.setProgress((2*(i-settings.tstart)) / (2f * numFrames + 1));
+			logger.setStatus("Frame "+(i+1)+": Calculating features...");
+
+			/* 1 - Prepare stack for use with Imglib.
+			 * This time, since the spot coordinates are with respect to the top-left corner of the image, 
+			 * we must not generate a cropped version of the image, but a full snapshot. 	 */
+			Settings uncroppedSettings = new Settings();
+			uncroppedSettings.xstart = 1;
+			uncroppedSettings.xend   = settings.imp.getWidth();
+			uncroppedSettings.ystart = 1;
+			uncroppedSettings.yend   = settings.imp.getHeight();
+			uncroppedSettings.zstart = 1;
+			uncroppedSettings.zend   = settings.imp.getNSlices();
+			Image<? extends RealType> img = TMUtils.getSingleFrameAsImage(settings.imp, i, uncroppedSettings); 
+
+			/* 1.5 Determine what analyzers are needed */
+			featureCalculator = new SpotFeatureFacade(img, calibration);
+			spotsThisFrame = toCompute.get(i);
+			featureCalculator.processAllFeatures(spotsThisFrame);
+
+		} // Finished looping over frames
+		logger.setProgress(1);
+		logger.setStatus("");
+		return;
+	}
+
 
 
 	/*

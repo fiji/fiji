@@ -82,7 +82,7 @@ public class GuiReader {
 		else
 			view = controller.getView();
 		
-		TrackMateModel model = new TrackMate_();
+		TrackMateModel model = new TrackMateModel();
 		logger.log("Opening file "+file.getName()+'\n');
 		TmXmlReader reader = new TmXmlReader(file);
 		try {
@@ -142,7 +142,7 @@ public class GuiReader {
 				settings.trackerType = settings.trackerSettings.trackerType;
 				model.setSettings(settings);
 				if (null != controller) {
-					controller.setModel(model);
+					controller.setPlugin(new TrackMate_(model));
 					view.setModel(model);
 					// Stop at start panel
 					controller.setState(GuiState.START);
@@ -173,7 +173,7 @@ public class GuiReader {
 			if (null == spots) {
 				// No spots, so we stop here, and switch to the segmenter panel
 				if (null != controller) {
-					controller.setModel(model);
+					controller.setPlugin(new TrackMate_(model));
 					controller.setState(GuiState.TUNE_SEGMENTER);
 					view.setModel(model);
 					if (!imp.isVisible())
@@ -201,7 +201,7 @@ public class GuiReader {
 			if (initialThreshold == null) {
 				// No initial threshold, so set it
 				if (null != controller) {
-					controller.setModel(model);
+					controller.setPlugin(new TrackMate_(model));
 					view.setModel(model);
 					controller.setState(GuiState.INITIAL_THRESHOLDING);
 					if (!imp.isVisible())

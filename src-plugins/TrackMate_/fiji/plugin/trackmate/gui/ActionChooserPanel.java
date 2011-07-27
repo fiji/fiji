@@ -17,7 +17,6 @@ import javax.swing.JList;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.action.ActionType;
 
 public class ActionChooserPanel extends EnumChooserPanel<ActionType> {
@@ -90,7 +89,7 @@ public class ActionChooserPanel extends EnumChooserPanel<ActionType> {
 	
 	public static void main(String[] args) {
 		JFrame frame = new JFrame();
-		frame.getContentPane().add(new ActionChooserPanel(new TrackMate_(), null));
+		frame.getContentPane().add(new ActionChooserPanel(new TrackMateModel(), null));
 		frame.setSize(300, 520);
 		frame.setVisible(true);
 	}

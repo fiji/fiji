@@ -42,7 +42,7 @@ public class TrackMateFrameController implements ActionListener {
 	private File file;
 
 	/** The model describing the data. */
-	private TrackMateModel model;
+	private TrackMate_ plugin;
 	/** The GUI controlled by this controller.  */
 	private TrackMateFrame view;
 
@@ -59,12 +59,12 @@ public class TrackMateFrameController implements ActionListener {
 	 * CONSTRUCTOR
 	 */
 
-	public TrackMateFrameController(final TrackMateModel model) {
-		this.model = model;
-		this.view = new TrackMateFrame(model);
+	public TrackMateFrameController(final TrackMate_ plugin) {
+		this.plugin = plugin;
+		this.view = new TrackMateFrame(plugin.getModel());
 		this.logger = view.getLogger();
 
-		model.setLogger(logger);
+		plugin.setLogger(logger);
 		view.setVisible(true);
 		view.addActionListener(this);
 		state = GuiState.START;
@@ -115,7 +115,7 @@ public class TrackMateFrameController implements ActionListener {
 		} else if (event == displayerPanel.TRACK_SCHEME_BUTTON_PRESSED) {
 
 			// Display Track scheme
-			final TrackSchemeFrame trackScheme = new TrackSchemeFrame(model);
+			final TrackSchemeFrame trackScheme = new TrackSchemeFrame(plugin.getModel());
 			trackScheme.setVisible(true);
 
 
@@ -127,12 +127,12 @@ public class TrackMateFrameController implements ActionListener {
 	 * GETTERS / SETTERS
 	 */
 
-	public void setModel(final TrackMateModel model) {
-		this.model = model;
+	public void setPlugin(final TrackMate_ plugin) {
+		this.plugin = plugin;
 	}
 
-	public TrackMateModel getModel() {
-		return model;
+	public TrackMate_ getPlugin() {
+		return plugin;
 	}
 
 	public void setState(final GuiState state) {
@@ -259,6 +259,7 @@ public class TrackMateFrameController implements ActionListener {
 	 * Action taken after the GUI has been displayed. 
 	 */
 	private void performPostGUITask() {
+		TrackMateModel model = plugin.getModel();
 		switch(state) {
 		case CHOOSE_SEGMENTER:
 			// Get the settings basic fields from the start dialog panel 
@@ -331,13 +332,13 @@ public class TrackMateFrameController implements ActionListener {
 			view.displayPanel(PanelCard.LOG_PANEL_KEY);
 
 			// New model to feed
-			TrackMateModel newModel = new TrackMate_();
+			TrackMateModel newModel = new TrackMateModel();
 			newModel.setLogger(logger);
 
 			if (null == file) {
 				File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 				try {
-					file = new File(folder.getPath() + File.separator + model.getSettings().imp.getShortTitle() +".xml");
+					file = new File(folder.getPath() + File.separator + plugin.getModel().getSettings().imp.getShortTitle() +".xml");
 				} catch (NullPointerException npe) {
 					file = new File(folder.getPath() + File.separator + "TrackMateData.xml");
 				}
@@ -358,7 +359,7 @@ public class TrackMateFrameController implements ActionListener {
 				return;
 			}
 			file = tmpFile;
-			model = reader.loadFile(file);
+			plugin = new TrackMate_(reader.loadFile(file));
 
 		} finally {
 
@@ -393,7 +394,7 @@ public class TrackMateFrameController implements ActionListener {
 			if (null == file ) {
 				File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 				try {
-					file = new File(folder.getPath() + File.separator + model.getSettings().imp.getShortTitle() +".xml");
+					file = new File(folder.getPath() + File.separator + plugin.getModel().getSettings().imp.getShortTitle() +".xml");
 				} catch (NullPointerException npe) {
 					file = new File(folder.getPath() + File.separator + "TrackMateData.xml");
 				}
@@ -432,19 +433,19 @@ public class TrackMateFrameController implements ActionListener {
 	}
 
 	private void execGetStartSettings() {
-		model.setSettings(view.startDialogPanel.getSettings());
+		plugin.getModel().setSettings(view.startDialogPanel.getSettings());
 	}
 
 	private void execGetSegmenterChoice() {
-		Settings settings = model.getSettings();
+		Settings settings = plugin.getModel().getSettings();
 		settings.segmenterType = view.segmenterChoicePanel.getChoice();
-		model.setSettings(settings);
+		plugin.getModel().setSettings(settings);
 	}
 
 	private void execGetTrackerChoice() {
-		Settings settings = model.getSettings();
+		Settings settings = plugin.getModel().getSettings();
 		settings.trackerType = view.trackerChoicePanel.getChoice();
-		model.setSettings(settings);
+		plugin.getModel().setSettings(settings);
 	}
 
 	/**
@@ -453,16 +454,17 @@ public class TrackMateFrameController implements ActionListener {
 	 */
 	private void execSegmentationStep() {
 		switchNextButton(false);
-		model.getSettings().segmenterSettings = view.segmenterSettingsPanel.getSettings();
+		final Settings settings = plugin.getModel().getSettings();
+		settings.segmenterSettings = view.segmenterSettingsPanel.getSettings();
 		logger.log("Starting segmentation...\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
-		logger.log(model.getSettings().toString());
-		logger.log(model.getSettings().segmenterSettings.toString());
+		logger.log(settings.toString());
+		logger.log(settings.segmenterSettings.toString());
 		new Thread("TrackMate segmentation thread") {					
 			public void run() {
 				long start = System.currentTimeMillis();
 				try {
-					model.execSegmentation();
+					plugin.execSegmentation();
 				} catch (Exception e) {
 					logger.error("An error occured:\n"+e+'\n');
 					e.printStackTrace(logger);
@@ -480,6 +482,7 @@ public class TrackMateFrameController implements ActionListener {
 	 * the {@link Spot} collection of the {@link TrackMateModel} with the result.
 	 */
 	private void execInitialThresholding() {
+		final TrackMateModel model = plugin.getModel();
 		FeatureFilter<SpotFeature> initialThreshold = view.initThresholdingPanel.getFeatureThreshold();
 		String str = "Initial thresholding with a quality threshold above "+ String.format("%.1f", initialThreshold.value) + " ...\n";
 		logger.log(str,Logger.BLUE_COLOR);
@@ -487,7 +490,7 @@ public class TrackMateFrameController implements ActionListener {
 		for (Collection<Spot> spots : model.getSpots().values())
 			ntotal += spots.size();
 				model.setInitialSpotFilterValue(initialThreshold.value);
-				model.execInitialSpotFiltering();
+				plugin.execInitialSpotFiltering();
 				int nselected = 0;
 				for (Collection<Spot> spots : model.getSpots().values())
 					nselected += spots.size();
@@ -505,8 +508,10 @@ public class TrackMateFrameController implements ActionListener {
 		new Thread("TrackMate feature calculation thread") {
 			public void run() {
 				try {
-					model.computeSpotFeatures();		
-					logger.log("Calculating features done.\n", Logger.BLUE_COLOR);
+					long start = System.currentTimeMillis();
+					plugin.computeSpotFeatures();		
+					long end  = System.currentTimeMillis();
+					logger.log(String.format("Calculating features done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
 				} finally {
 					switchNextButton(true);
 				}
@@ -527,7 +532,7 @@ public class TrackMateFrameController implements ActionListener {
 				if (null != displayer) {
 					displayer.clear();
 				}
-				displayer = AbstractTrackMateModelView.instantiateView(view.displayerChooserPanel.getChoice(), model);
+				displayer = AbstractTrackMateModelView.instantiateView(view.displayerChooserPanel.getChoice(), plugin.getModel());
 
 				// Re-enable the GUI
 				logger.log("Rendering done.\n", Logger.BLUE_COLOR);
@@ -556,8 +561,8 @@ public class TrackMateFrameController implements ActionListener {
 					@Override
 					public void stateChanged(ChangeEvent event) {
 						// We set the thresholds field of the model but do not touch its selected spot field yet.
-						model.setSpotFilters(view.spotFilterGuiPanel.getFeatureFilters());
-						model.execSpotFiltering();
+						plugin.getModel().setSpotFilters(view.spotFilterGuiPanel.getFeatureFilters());
+						plugin.execSpotFiltering();
 						displayer.refresh();
 					}
 				});
@@ -584,8 +589,8 @@ public class TrackMateFrameController implements ActionListener {
 					@Override
 					public void stateChanged(ChangeEvent event) {
 						// We set the thresholds field of the model but do not touch its selected spot field yet.
-						model.setTrackFilters(view.trackFilterGuiPanel.getFeatureFilters());
-						model.execTrackFiltering();
+						plugin.getModel().setTrackFilters(view.trackFilterGuiPanel.getFeatureFilters());
+						plugin.execTrackFiltering();
 					}
 				});
 			}
@@ -598,9 +603,10 @@ public class TrackMateFrameController implements ActionListener {
 	 */
 	private void execSpotFiltering() {
 		logger.log("Performing spot filtering on the following features:\n", Logger.BLUE_COLOR);
+		final TrackMateModel model = plugin.getModel();
 		List<FeatureFilter<SpotFeature>> featureFilters = view.spotFilterGuiPanel.getFeatureFilters();
 		model.setSpotFilters(featureFilters);
-		model.execSpotFiltering();
+		plugin.execSpotFiltering();
 
 		int ntotal = 0;
 		for(Collection<Spot> spots : model.getSpots().values())
@@ -634,8 +640,9 @@ public class TrackMateFrameController implements ActionListener {
 			public void run() {
 				logger.log("Performing track filtering on the following features:\n", Logger.BLUE_COLOR);
 				List<FeatureFilter<TrackFeature>> featureFilters = view.trackFilterGuiPanel.getFeatureFilters();
+				final TrackMateModel model = plugin.getModel();
 				model.setTrackFilters(featureFilters);
-				model.execTrackFiltering();
+				plugin.execTrackFiltering();
 
 				if (featureFilters == null || featureFilters.isEmpty()) {
 					logger.log("No feature threshold set, kept the " + model.getNTracks() + " tracks.\n");
@@ -663,6 +670,7 @@ public class TrackMateFrameController implements ActionListener {
 	 */
 	private void execTrackingStep() {
 		switchNextButton(false);
+		final TrackMateModel model = plugin.getModel();
 		model.getSettings().trackerSettings = view.trackerSettingsPanel.getSettings();
 		logger.log("Starting tracking...\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
@@ -671,7 +679,7 @@ public class TrackMateFrameController implements ActionListener {
 			public void run() {
 				try {
 					long start = System.currentTimeMillis();
-					model.execTracking();
+					plugin.execTracking();
 					// Re-enable the GUI
 					long end = System.currentTimeMillis();
 					logger.log(String.format("Tracking done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);

@@ -19,7 +19,7 @@ public class RecalculateFeatureAction extends AbstractTMAction {
 		logger.log("Recalculating all features.\n");
 		Logger oldLogger = model.getLogger();
 		model.setLogger(logger);
-		model.computeSpotFeatures();
+		model.computeSpotFeatures(model.getSpots());
 		model.setLogger(oldLogger);
 	}
 
@@ -27,13 +27,13 @@ public class RecalculateFeatureAction extends AbstractTMAction {
 	public String getInfoText() {
 		return "<html>" +
 			"Calling this action causes the model to recompute all the feautures <br>" +
-			"for all the spots retained for tracking." +
+			"for all the un-filtered spots." +
 			"</html>";
 	}
 	
 	@Override
 	public String toString() {
-		return "Recompute all features";
+		return "Recompute all spot features";
 	}
 
 }

@@ -11,6 +11,7 @@ import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView.ViewType;
@@ -28,7 +29,8 @@ public class TrackVisualizerTestDrive {
 		reader.parse();
 		
 		// Load objects 
-		TrackMateModel model = reader.getModel();
+		final TrackMateModel model = reader.getModel();
+		TrackMate_ plugin = new TrackMate_(model);
 		
 		System.out.println("Found "+model.getNTracks()+" tracks.");
 		for(int i=0; i<model.getNFilteredTracks(); i++) 
@@ -36,7 +38,7 @@ public class TrackVisualizerTestDrive {
 		
 		FeatureFilter<TrackFeature> filter = new FeatureFilter<TrackFeature>(TrackFeature.NUMBER_SPOTS, 50f, true);
 		model.addTrackFilter(filter);
-		model.execTrackFiltering();
+		plugin.execTrackFiltering();
 		System.out.println("After filtering, retaining "+model.getNFilteredTracks()+" tracks.");
 			
 		ImagePlus imp = reader.getImage();

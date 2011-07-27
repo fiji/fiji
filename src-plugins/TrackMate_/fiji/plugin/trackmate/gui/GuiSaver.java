@@ -51,7 +51,7 @@ public class GuiSaver {
 	
 	public void writeFile(File file) {
 		
-		TrackMateModel model = controller.getModel();
+		TrackMateModel model = controller.getPlugin().getModel();
 		GuiState state = controller.getState();
 		
 		TmXmlWriter writer = new TmXmlWriter(model, logger);
