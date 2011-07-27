@@ -520,22 +520,17 @@ public class TrackMateFrameController implements ActionListener {
 	private void execLaunchdisplayer() {
 		// Launch renderer
 		logger.log("Rendering results...\n",Logger.BLUE_COLOR);
-		switchNextButton(false);
 		// Thread for rendering
 		new Thread("TrackMate rendering thread") {
 			public void run() {
 				// Instantiate displayer
-				try {
-					if (null != displayer) {
-						displayer.clear();
-					}
-					displayer = AbstractTrackMateModelView.instantiateView(view.displayerChooserPanel.getChoice(), model);
-
-					// Re-enable the GUI
-					logger.log("Rendering done.\n", Logger.BLUE_COLOR);
-				} finally {
-					switchNextButton(true);
+				if (null != displayer) {
+					displayer.clear();
 				}
+				displayer = AbstractTrackMateModelView.instantiateView(view.displayerChooserPanel.getChoice(), model);
+
+				// Re-enable the GUI
+				logger.log("Rendering done.\n", Logger.BLUE_COLOR);
 			}
 		}.start();
 	}
@@ -584,7 +579,7 @@ public class TrackMateFrameController implements ActionListener {
 						displayer.refresh();
 					}
 				});
-				
+
 				view.trackFilterGuiPanel.addChangeListener(new ChangeListener() {
 					@Override
 					public void stateChanged(ChangeEvent event) {
