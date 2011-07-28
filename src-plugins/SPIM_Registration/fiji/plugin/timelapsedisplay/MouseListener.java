@@ -5,6 +5,9 @@ import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.jfree.chart.ChartMouseEvent;
 import org.jfree.chart.ChartMouseListener;
@@ -16,27 +19,32 @@ import org.jfree.ui.TextAnchor;
 
 public class MouseListener implements ChartMouseListener
 {
-	ChartPanel panel;
+	final ChartPanel panel;
 	ValueMarker valueMarker;
 	boolean markerShown = false;
 	int referenceTimePoint;
 	final boolean enableReferenceTimePoint;
+	final ArrayList< RegistrationStatistics > data;
 	
-	MouseListener( ChartPanel panel )
+	// update the location of the last right click and the filename to open
+	final ArrayList<FileOpenMenuEntry> updateList = new ArrayList<FileOpenMenuEntry>();
+	
+	MouseListener( final ChartPanel panel )
 	{
-		this( panel, -1, false );
+		this( panel, -1, false, null );
 	}
 
-	MouseListener( ChartPanel panel, final boolean enableReferenceTimePoint )
+	MouseListener( final ChartPanel panel, final boolean enableReferenceTimePoint )
 	{
-		this( panel, -1, enableReferenceTimePoint );
+		this( panel, -1, enableReferenceTimePoint, null );
 	}
 
-	MouseListener( ChartPanel panel, final int referenceTimePoint, final boolean enableReferenceTimePoint )
+	MouseListener( final ChartPanel panel, final int referenceTimePoint, final boolean enableReferenceTimePoint, final ArrayList< RegistrationStatistics > data )
 	{
 		this.panel = panel;
 		this.referenceTimePoint = referenceTimePoint;
 		this.enableReferenceTimePoint = enableReferenceTimePoint;
+		this.data = data;
 		
 		if ( enableReferenceTimePoint )
 		{
@@ -49,7 +57,12 @@ public class MouseListener implements ChartMouseListener
 			}
 		}
 	}
-			
+	
+	public void setFileOpenMenuEntryList( final List<FileOpenMenuEntry> updateList ) 
+	{ 
+		this.updateList.clear();
+		this.updateList.addAll( updateList ); 
+	} 
 	public int getReferenceTimePoint() { return referenceTimePoint; }
 	
 	protected ValueMarker makeMarker( final int timePoint )
@@ -67,8 +80,6 @@ public class MouseListener implements ChartMouseListener
 	@Override
 	public void chartMouseClicked( final ChartMouseEvent e )
 	{
-		System.out.println( e.getTrigger().getButton() );
-		
 		// left mouse click
 		if ( e.getTrigger().getButton() == MouseEvent.BUTTON1 && enableReferenceTimePoint )
 		{
@@ -85,10 +96,27 @@ public class MouseListener implements ChartMouseListener
 		}
 		else if ( e.getTrigger().getButton() == MouseEvent.BUTTON3 )
 		{
-			// right mouse click
-			referenceTimePoint = getChartXLocation( e );
-			
-			// update item
+			System.out.println( "3" );
+			if ( updateList.size() > 0 && data != null && data.size() > 0 )
+			{
+				// right mouse click
+				final int tp = getChartXLocation( e );
+				File file = null;
+				
+				
+				for ( final RegistrationStatistics stat : data )
+					if ( stat.timePoint == tp )
+					{
+						file = stat.worstView;
+						break;
+					}
+				
+				// update item
+				for ( final FileOpenMenuEntry m : updateList )
+				{
+					m.setXLocationRightClick( tp, file );
+				}
+			}
 		}
 	}
 	

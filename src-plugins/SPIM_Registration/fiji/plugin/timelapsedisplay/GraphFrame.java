@@ -5,6 +5,7 @@ import ij.gui.GUI;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JFrame;
@@ -28,7 +29,7 @@ public class GraphFrame extends JFrame implements ActionListener
 	private int referenceTimePoint;
 	final boolean enableReferenceTimePoint;
 
-	public GraphFrame( final JFreeChart chart, final int referenceTimePoint, final boolean enableReferenceTimePoint, final List<JMenuItem> extraMenuItems )
+	public GraphFrame( final JFreeChart chart, final int referenceTimePoint, final boolean enableReferenceTimePoint, final List<FileOpenMenuEntry> extraMenuItems, final ArrayList< RegistrationStatistics > data )
 	{
 		super();
 		
@@ -38,7 +39,7 @@ public class GraphFrame extends JFrame implements ActionListener
 		mainPanel = new JPanel();
 		mainPanel.setLayout( new BorderLayout() );
 
-		updateWithNewChart( chart, true, extraMenuItems );
+		updateWithNewChart( chart, true, extraMenuItems, data );
 
 		JPanel buttonsPanel = new JPanel();
 		mainPanel.add( buttonsPanel, BorderLayout.SOUTH );
@@ -51,7 +52,7 @@ public class GraphFrame extends JFrame implements ActionListener
 	
 	public int getReferenceTimePoint() { return mouseListener.getReferenceTimePoint(); }
 
-	synchronized public void updateWithNewChart( JFreeChart c, boolean setSize, final List<JMenuItem> extraMenuItems )
+	synchronized public void updateWithNewChart( JFreeChart c, boolean setSize, final List<FileOpenMenuEntry> extraMenuItems, final ArrayList< RegistrationStatistics > data )
 	{
 		if ( chartPanel != null )
 			remove( chartPanel );
@@ -62,7 +63,7 @@ public class GraphFrame extends JFrame implements ActionListener
 		if ( setSize )
 			chartPanel.setPreferredSize( new java.awt.Dimension( 800, 600 ) );
 		
-		mouseListener = new MouseListener( chartPanel, referenceTimePoint, enableReferenceTimePoint );
+		mouseListener = new MouseListener( chartPanel, referenceTimePoint, enableReferenceTimePoint, data );
 		chartPanel.addChartMouseListener( mouseListener );
 		chartPanel.setHorizontalAxisTrace( true );
 		mainPanel.add( chartPanel, BorderLayout.CENTER );
@@ -72,8 +73,12 @@ public class GraphFrame extends JFrame implements ActionListener
 		final JPopupMenu menu = chartPanel.getPopupMenu();
 		
 		if ( extraMenuItems != null )
-			for ( final JMenuItem m : extraMenuItems )
-				menu.add( m );
+			for ( final FileOpenMenuEntry m : extraMenuItems )
+				menu.add( new JMenuItem( m ) );
+		
+		// link it to the chartPanel and the coordinates of the 
+		// popup by using a mouse listener for the right click
+		mouseListener.setFileOpenMenuEntryList( extraMenuItems );
 		
 		//menu.get
 		validate();

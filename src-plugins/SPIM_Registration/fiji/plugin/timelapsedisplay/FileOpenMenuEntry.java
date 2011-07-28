@@ -18,36 +18,44 @@ import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.io.LOCI;
 import mpicbg.imglib.type.numeric.real.FloatType;
 
-public class ChartPopupMenuOpenFile extends AbstractAction 
+public class FileOpenMenuEntry extends AbstractAction 
 {
+	private static final long serialVersionUID = 1L;
 	final File completePath;
 	
-	public ChartPopupMenuOpenFile( final String title, final File completePath )
+	int xLocation = -1;
+	File worstView = null;
+	
+	public FileOpenMenuEntry( final String title, final File completePath )
 	{
 		super( title );
 		this.completePath = completePath;
+	}
+
+	/**
+	 * This method is called by the MouseListener when a right mouse click was detected
+	 * 
+	 * @param xLocation
+	 * @param file - the {@link File} defining the worst view
+	 */
+	public void setXLocationRightClick( final int xLocation, final File worstView ) 
+	{ 
+		this.xLocation = xLocation;
+		this.worstView = worstView;
+		
+		if ( worstView != null )
+			this.putValue( "name", worstView.getName() );
+
+		System.out.println( xLocation + " = " + worstView );
 	}
 	
 	@Override
 	public void actionPerformed( final ActionEvent e ) 
 	{
-		JMenuItem a = (JMenuItem)e.getSource();		
-		JPopupMenu b= (JPopupMenu)a.getParent();
-		
-		//ChartPanel panel = c.get
-
-		Point p = b.getLocation();
-		
-		
-		
-		System.out.println( b.getLocation() );
-		System.out.println( b.getBounds() );
-		
-		//final Opener o = new Opener();
-		//o.openImage( completePath.getAbsolutePath() ).show();
-		
 		//final Image<FloatType> image = LOCI.openLOCIFloatType( completePath.getAbsolutePath(), new ArrayContainerFactory() );
 		//ImageJFunctions.show( image );
+		
+		System.out.println( "open " + worstView );
 	}
 
 }

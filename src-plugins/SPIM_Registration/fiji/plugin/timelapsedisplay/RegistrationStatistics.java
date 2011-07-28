@@ -1,5 +1,6 @@
 package fiji.plugin.timelapsedisplay;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import mpicbg.spim.registration.ViewDataBeads;
@@ -17,7 +18,8 @@ public class RegistrationStatistics
 	double avgRatio = 0;
 
 	final int timePoint;
-
+	File worstView;
+	
 	/**
 	 * Call this class after a registration is performed and it will collect the
 	 * information it wants
@@ -29,6 +31,13 @@ public class RegistrationStatistics
 		this.timePoint = viewStructure.getTimePoint();
 
 		collect( viewStructure );
+	}
+
+	public RegistrationStatistics( final int timePoint, final double minError, final double avgError, final double maxError, final double minRatio, final double avgRatio, final double maxRatio,
+								   final File worstView )
+	{
+		this( timePoint, minError, avgError, maxError, minRatio, avgRatio, maxRatio );
+		this.worstView = worstView;		
 	}
 
 	public RegistrationStatistics( final int timePoint, final double minError, final double avgError, final double maxError, final double minRatio, final double avgRatio, final double maxRatio )
