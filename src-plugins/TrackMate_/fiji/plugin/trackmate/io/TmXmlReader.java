@@ -90,7 +90,9 @@ public class TmXmlReader implements TmXmlKeys {
 		model.setSpots(allSpots, false);
 		model.setFilteredSpots(filteredSpots, false);
 		// Tracks
-		model.setGraph(readTracks(filteredSpots));
+		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = readTracks(filteredSpots);
+		if (null != graph)
+			model.setGraph(graph);
 		// Track Filters
 		List<FeatureFilter<TrackFeature>> trackFilters = getTrackFeatureFilters();
 		model.setTrackFilters(trackFilters);
