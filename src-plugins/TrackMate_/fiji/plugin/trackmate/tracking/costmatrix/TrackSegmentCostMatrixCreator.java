@@ -180,6 +180,8 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 		
 		// Top left quadrant
 		Matrix topLeft = createTopLeftQuadrant();
+		logger.setStatus("Completing cost matrix...");
+		logger.setProgress(0.7f);
 		double cutoff = getCutoff(topLeft);
 		Matrix topRight = getAlternativeScores(topLeft.getRowDimension(), cutoff);
 		Matrix bottomLeft = getAlternativeScores(topLeft.getColumnDimension(), cutoff);
@@ -236,10 +238,13 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 		// Create sub-matrices of top left quadrant (gap closing, merging, splitting, and empty middle
 		
 		logger.setStatus("Computing gap-closing costs...");
+		logger.setProgress(0.55f);
 		Matrix gapClosingScores = getGapClosingCostSubMatrix();
 		logger.setStatus("Computing merging costs...");
+		logger.setProgress(0.6f);
 		Matrix mergingScores = getMergingScores();
 		logger.setStatus("Computing splitting costs...");
+		logger.setProgress(0.65f);
 		Matrix splittingScores = getSplittingScores();
 		Matrix middle = new Matrix(splittingMiddlePoints.size(), mergingMiddlePoints.size(), settings.blockingValue);
 		

@@ -343,12 +343,15 @@ public class LAPTracker implements SpotTracker {
 		tstart = System.currentTimeMillis();
 		if (!createTrackSegmentCostMatrix()) return false;
 		tend = System.currentTimeMillis();
+		logger.setProgress(0.75f);
 		logger.log(String.format("  Cost matrix for track segments created in %.1f s.\n", (tend-tstart)/1e3f));
 
 		// Solve LAP
 		tstart = System.currentTimeMillis();
 		if (!linkTrackSegmentsToFinalTracks()) return false;
 		tend = System.currentTimeMillis();
+		logger.setProgress(1);
+		logger.setStatus("");
 		logger.log(String.format("  Track segment LAP solved in %.1f s.\n", (tend-tstart)/1e3f));
 
 		return true;
@@ -575,7 +578,7 @@ public class LAPTracker implements SpotTracker {
 		}
 
 
-		logger.setStatus("Solving track segment...");
+		logger.setStatus("Solving for track segments...");
 		logger.setProgress(0.25f);
 		SimpleMultiThreading.startAndJoin(threads);
 		logger.setProgress(0.5f);
@@ -593,6 +596,7 @@ public class LAPTracker implements SpotTracker {
 	 */
 	public int[][] solveLAPForFinalTracks() {
 		// Solve the LAP using the Hungarian Algorithm
+		logger.setStatus("Solving for final tracks...");
 		AssignmentProblem problem = new AssignmentProblem(segmentCosts);
 		AssignmentAlgorithm solver = createAssignmentProblemSolver();
 		int[][] solutions = problem.solve(solver);
@@ -611,26 +615,26 @@ public class LAPTracker implements SpotTracker {
 
 		trackSegments = new ArrayList<SortedSet<Spot>>();
 		Collection<Spot> spotPool = new ArrayList<Spot>();
-		for(int frame : spots.keySet())
+		for(int frame : spots.keySet()) {
 			spotPool.addAll(spots.get(frame)); // frame info lost
+		}
+		Spot source, current;
+		DepthFirstIterator<Spot, DefaultWeightedEdge> graphIterator;
+		SortedSet<Spot> trackSegment = null;
 
-				Spot source, current;
-				DepthFirstIterator<Spot, DefaultWeightedEdge> graphIterator;
-				SortedSet<Spot> trackSegment = null;
+		while (!spotPool.isEmpty()) {
+			source = spotPool.iterator().next();
+			graphIterator = new DepthFirstIterator<Spot, DefaultWeightedEdge>(graph, source);
+			trackSegment = new TreeSet<Spot>(Spot.frameComparator);
 
-				while (!spotPool.isEmpty()) {
-					source = spotPool.iterator().next();
-					graphIterator = new DepthFirstIterator<Spot, DefaultWeightedEdge>(graph, source);
-					trackSegment = new TreeSet<Spot>(Spot.frameComparator);
+			while(graphIterator.hasNext()) {
+				current = graphIterator.next();
+				trackSegment.add(current);
+				spotPool.remove(current);
+			}
 
-					while(graphIterator.hasNext()) {
-						current = graphIterator.next();
-						trackSegment.add(current);
-						spotPool.remove(current);
-					}
-
-					trackSegments.add(trackSegment);
-				}
+			trackSegments.add(trackSegment);
+		}
 	}
 
 	/**
