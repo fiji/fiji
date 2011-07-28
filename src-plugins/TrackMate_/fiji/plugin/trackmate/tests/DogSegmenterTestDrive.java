@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.segmentation;
+package fiji.plugin.trackmate.tests;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -14,6 +14,9 @@ import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import mpicbg.imglib.util.Util;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.segmentation.DogSegmenter;
+import fiji.plugin.trackmate.segmentation.SegmenterSettings;
+import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 
 public class DogSegmenterTestDrive {
 

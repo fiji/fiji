@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.visualization.test;
+package fiji.plugin.trackmate.tests;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;

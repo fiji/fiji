@@ -1,5 +1,6 @@
-package fiji.plugin.trackmate;
+package fiji.plugin.trackmate.tests;
 
+import fiji.plugin.trackmate.TrackMate_;
 import ij.ImagePlus;
 import ij.process.StackConverter;
 import ij3d.Install_J3D;

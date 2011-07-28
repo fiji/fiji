@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.io.test;
+package fiji.plugin.trackmate.tests;
 
 import java.io.File;
 import java.io.IOException;
