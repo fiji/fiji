@@ -11,13 +11,9 @@ Bugs:
 for merge events at last frame).
 
 Features:
-- Multi-thread the computation of features.
 - Implement edge features.
 
 Segmenting
-- Multi-thread calls to segmenter, one thread per time point
-(migh be akward, since a single call to a segmenter *might* be 
-multithreaded as well).
 - Implement the C.elegans algo from Santella et al 2010.
 - Implement an algorithm to segment cell imaged in phase-contrast.
 
