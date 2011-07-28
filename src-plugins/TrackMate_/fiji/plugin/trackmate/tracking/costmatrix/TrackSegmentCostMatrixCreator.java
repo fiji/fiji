@@ -168,8 +168,6 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 		
 		// 2 - Get a list of the middle points that can participate in merging and splitting
 		middlePoints = getTrackSegmentMiddlePoints(trackSegments);
-//		splittingMiddlePoints = middlePoints ;  // DEBUG ? 
-//		mergingMiddlePoints = middlePoints; // DEBUG ? 
 		
 		// 3 - Create cost matrices by quadrant
 		

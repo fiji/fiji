@@ -430,7 +430,7 @@ public class LAPTracker implements SpotTracker {
 	 * Creates the cost matrix used to link track segments (step 2).
 	 * @return True if executes successfully, false otherwise.
 	 */
-	private boolean createTrackSegmentCostMatrix() {
+	public boolean createTrackSegmentCostMatrix() {
 		TrackSegmentCostMatrixCreator segCosts = new TrackSegmentCostMatrixCreator(trackSegments, settings);
 		if (!segCosts.checkInput() || !segCosts.process()) {
 			errorMessage = BASE_ERROR_MESSAGE + segCosts.getErrorMessage();

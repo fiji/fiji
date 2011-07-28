@@ -3,7 +3,6 @@ package fiji.plugin.trackmate.tests;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Set;
 
 import org.jdom.JDOMException;
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -16,13 +15,12 @@ import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
-import fiji.plugin.trackmate.tracking.TrackerType;
 
 public class MultiThread_TestDrive {
 
 	public static void main(String[] args) throws JDOMException, IOException {
 
-		int REPEAT = 10000;
+		int REPEAT = 100;
 
 		//		File file = new File("/Users/tinevez/Projects/DMontaras/20052011_8_20.xml");
 		File file = new File("/Users/tinevez/Desktop/Data/FakeTracks2.xml");
@@ -52,15 +50,11 @@ public class MultiThread_TestDrive {
 		long start = System.currentTimeMillis();
 		tracker.reset();
 		tracker.createLinkingCostMatrices();
+		tracker.linkObjectsToTrackSegments();
 
 		for (int i = 0; i < REPEAT; i++) {
-
-			ArrayList<DefaultWeightedEdge> edges = new ArrayList<DefaultWeightedEdge>(tracker.getResult().edgeSet());
-			tracker.getResult().removeAllEdges(edges);
-
-			tracker.solveLAPForTrackSegments();
-			//			plugin.computeSpotFeatures();
-			//			plugin.execTracking();
+			
+			tracker.createTrackSegmentCostMatrix();
 
 		}
 
