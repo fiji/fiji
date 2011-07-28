@@ -16,8 +16,8 @@ import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
 public class LAPTrackerTestDrive {
 	
-//	private static final File SPLITTING_CASE_3 = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
-	private static final File SPLITTING_CASE_3 = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
+	private static final File SPLITTING_CASE_3 = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
+//	private static final File SPLITTING_CASE_3 = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
 
 	/*
 	 * MAIN METHOD
@@ -52,8 +52,8 @@ public class LAPTrackerTestDrive {
 		TrackerSettings settings = new TrackerSettings();
 		settings.trackerType = TrackerType.LAP_TRACKER;
 		settings.linkingDistanceCutOff = 10;
-		settings.allowGapClosing = false; //true;
-		settings.gapClosingDistanceCutoff = 100;
+		settings.allowGapClosing = true;
+		settings.gapClosingDistanceCutoff = 15;
 		settings.gapClosingTimeCutoff = 10;
 		settings.allowMerging = true;
 		settings.mergingDistanceCutoff = 10;

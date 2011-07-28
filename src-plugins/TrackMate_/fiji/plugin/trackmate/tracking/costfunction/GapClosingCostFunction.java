@@ -132,7 +132,8 @@ public class GapClosingCostFunction {
 				}
 			};
 		}
-
+		
+		SimpleMultiThreading.startAndJoin(threads);
 		return m;
 	}
 }

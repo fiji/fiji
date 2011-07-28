@@ -2,10 +2,8 @@ package fiji.plugin.trackmate.tests;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 
 import org.jdom.JDOMException;
-import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;

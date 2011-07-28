@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.SortedSet;
 
 import Jama.Matrix;
+import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.tracking.LAPUtils;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
@@ -98,6 +99,8 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	protected List<Spot> mergingMiddlePoints;
 	/** The list of middle Spots which can participate in splitting events. */
 	protected List<Spot> splittingMiddlePoints;
+
+	private Logger logger = Logger.VOID_LOGGER;
 	
 	/*
 	 * CONSTRUCTOR
@@ -117,6 +120,10 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	/*
 	 * METHODS
 	 */
+	
+	public void setLogger(Logger logger) {
+		this.logger  = logger;
+	}
 	
 	@Override
 	public boolean checkInput() {
@@ -227,8 +234,12 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 */
 	private Matrix createTopLeftQuadrant() {
 		// Create sub-matrices of top left quadrant (gap closing, merging, splitting, and empty middle
+		
+		logger.setStatus("Computing gap-closing costs...");
 		Matrix gapClosingScores = getGapClosingCostSubMatrix();
+		logger.setStatus("Computing merging costs...");
 		Matrix mergingScores = getMergingScores();
+		logger.setStatus("Computing splitting costs...");
 		Matrix splittingScores = getSplittingScores();
 		Matrix middle = new Matrix(splittingMiddlePoints.size(), mergingMiddlePoints.size(), settings.blockingValue);
 		
