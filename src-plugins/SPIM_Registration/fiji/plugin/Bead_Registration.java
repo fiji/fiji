@@ -1,3 +1,4 @@
+package fiji.plugin;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.event.MouseAdapter;
@@ -6,6 +7,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 
+
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.container.cell.CellContainerFactory;
 import mpicbg.imglib.image.Image;
@@ -13,13 +15,13 @@ import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.io.LOCI;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import mpicbg.spim.ChartTest;
 import mpicbg.spim.Reconstruction;
 import mpicbg.spim.io.ConfigurationParserException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.segmentation.InteractiveDoG;
 
+import fiji.plugin.timelapsedisplay.TimeLapseDisplay;
 import fiji.util.gui.GenericDialogPlus;
 
 import ij.IJ;
@@ -85,7 +87,7 @@ public class Bead_Registration implements PlugIn
 		//}
 		
 		if ( reconstruction.getSPIMConfiguration().file.length > 1 && defaultTimeLapseRegistration == 0 )
-			conf.referenceTimePoint = ChartTest.plotData( reconstruction.getRegistrationStatistics(), 0, true );
+			conf.referenceTimePoint = TimeLapseDisplay.plotData( reconstruction.getRegistrationStatistics(), 0, true );
 
 
 		/*

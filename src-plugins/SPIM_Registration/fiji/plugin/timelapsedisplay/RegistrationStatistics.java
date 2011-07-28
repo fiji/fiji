@@ -1,4 +1,4 @@
-package mpicbg.spim;
+package fiji.plugin.timelapsedisplay;
 
 import java.util.ArrayList;
 

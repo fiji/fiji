@@ -1,4 +1,4 @@
-package mpicbg.spim;
+package fiji.plugin.timelapsedisplay;
 
 import ij.io.Opener;
 
@@ -17,7 +17,6 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.io.LOCI;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import mpicbg.spim.ChartTest.GraphFrame;
 
 public class ChartPopupMenuOpenFile extends AbstractAction 
 {

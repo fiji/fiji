@@ -1,4 +1,4 @@
-package mpicbg.spim;
+package fiji.plugin.timelapsedisplay;
 
 import ij.ImageJ;
 import ij.gui.GUI;
@@ -59,7 +59,7 @@ import org.jfree.ui.RectangleAnchor;
 import org.jfree.ui.TextAnchor;
 
 
-public class ChartTest
+public class TimeLapseDisplay
 {
 
 	public static void main( String args[] )
@@ -345,171 +345,7 @@ public class ChartTest
 		return graphFrame.getReferenceTimePoint();
 	}
 
-	public static class MouseListener implements ChartMouseListener
-	{
-		ChartPanel panel;
-		ValueMarker valueMarker;
-		boolean markerShown = false;
-		int referenceTimePoint;
-		final boolean enableReferenceTimePoint;
-		
-		MouseListener( ChartPanel panel )
-		{
-			this( panel, -1, false );
-		}
 
-		MouseListener( ChartPanel panel, final boolean enableReferenceTimePoint )
-		{
-			this( panel, -1, enableReferenceTimePoint );
-		}
-
-		MouseListener( ChartPanel panel, final int referenceTimePoint, final boolean enableReferenceTimePoint )
-		{
-			this.panel = panel;
-			this.referenceTimePoint = referenceTimePoint;
-			this.enableReferenceTimePoint = enableReferenceTimePoint;
-			
-			if ( enableReferenceTimePoint )
-			{
-				valueMarker = makeMarker( referenceTimePoint );
-				
-				if ( referenceTimePoint >= 0 )
-				{
-					((XYPlot)panel.getChart().getPlot()).addDomainMarker( valueMarker );
-					markerShown = true;
-				}
-			}
-		}
-				
-		public int getReferenceTimePoint() { return referenceTimePoint; }
-		
-		protected ValueMarker makeMarker( final int timePoint )
-		{
-			final ValueMarker valueMarker = new ValueMarker( timePoint );
-			valueMarker.setStroke( new BasicStroke ( 1.5f ) );
-			valueMarker.setPaint( new Color( 0.0f, 93f/255f, 9f/255f ) );
-			valueMarker.setLabel( " Reference\n Timepoint " + timePoint );
-			valueMarker.setLabelAnchor(RectangleAnchor.BOTTOM );
-			valueMarker.setLabelTextAnchor( TextAnchor.BOTTOM_LEFT );
-			
-			return valueMarker;
-		}
-
-		@Override
-		public void chartMouseClicked( final ChartMouseEvent e )
-		{
-			System.out.println( e.getTrigger().getButton() );
-			
-			// left mouse click
-			if ( e.getTrigger().getButton() == MouseEvent.BUTTON1 && enableReferenceTimePoint )
-			{
-				referenceTimePoint = getChartXLocation( e );
-				
-				valueMarker.setValue( referenceTimePoint );
-				valueMarker.setLabel( " Reference\n Timepoint " + referenceTimePoint );
-				
-				if ( !markerShown )
-				{
-					((XYPlot) e.getChart().getPlot()).addDomainMarker( valueMarker );
-					markerShown = true;
-				}
-			}
-			else if ( e.getTrigger().getButton() == MouseEvent.BUTTON3 )
-			{
-				// right mouse click
-				referenceTimePoint = getChartXLocation( e );
-				
-				// update item
-			}
-		}
-		
-		protected int getChartXLocation( final ChartMouseEvent e )
-		{
-			final Point2D p = panel.translateScreenToJava2D( e.getTrigger().getPoint() );
-			final Rectangle2D plotArea = panel.getScreenDataArea();
-			final XYPlot plot = (XYPlot) e.getChart().getPlot();
-			final double chartX = plot.getDomainAxis().java2DToValue( p.getX(), plotArea, plot.getDomainAxisEdge() );
-			//final double chartY = plot.getRangeAxis().java2DToValue( p.getY(), plotArea, plot.getRangeAxisEdge() );
-			
-			return (int)Math.round( chartX );			
-		}
-
-		@Override
-		public void chartMouseMoved( ChartMouseEvent e )
-		{
-		}
-	}
-
-	public static class GraphFrame extends JFrame implements ActionListener
-	{
-		private static final long serialVersionUID = 1L;
-
-		JFreeChart chart = null;
-
-		ChartPanel chartPanel = null;
-		MouseListener mouseListener;
-		JPanel mainPanel;
-		
-		private int referenceTimePoint;
-		final boolean enableReferenceTimePoint;
-
-		public GraphFrame( final JFreeChart chart, final int referenceTimePoint, final boolean enableReferenceTimePoint, final List<JMenuItem> extraMenuItems )
-		{
-			super();
-			
-			this.referenceTimePoint = referenceTimePoint;
-			this.enableReferenceTimePoint = enableReferenceTimePoint;
-
-			mainPanel = new JPanel();
-			mainPanel.setLayout( new BorderLayout() );
-
-			updateWithNewChart( chart, true, extraMenuItems );
-
-			JPanel buttonsPanel = new JPanel();
-			mainPanel.add( buttonsPanel, BorderLayout.SOUTH );
-
-			setContentPane( mainPanel );
-			validate();
-			setSize( new java.awt.Dimension( 500, 270 ) );
-			GUI.center( this );
-		}
-		
-		public int getReferenceTimePoint() { return mouseListener.getReferenceTimePoint(); }
-
-		synchronized public void updateWithNewChart( JFreeChart c, boolean setSize, final List<JMenuItem> extraMenuItems )
-		{
-			if ( chartPanel != null )
-				remove( chartPanel );
-			chartPanel = null;
-			this.chart = c;
-			chartPanel = new ChartPanel( c );
-			chartPanel.setMouseWheelEnabled( true );
-			if ( setSize )
-				chartPanel.setPreferredSize( new java.awt.Dimension( 800, 600 ) );
-			
-			mouseListener = new MouseListener( chartPanel, referenceTimePoint, enableReferenceTimePoint );
-			chartPanel.addChartMouseListener( mouseListener );
-			chartPanel.setHorizontalAxisTrace( true );
-			mainPanel.add( chartPanel, BorderLayout.CENTER );
-			
-			
-			// add extra items
-			final JPopupMenu menu = chartPanel.getPopupMenu();
-			
-			if ( extraMenuItems != null )
-				for ( final JMenuItem m : extraMenuItems )
-					menu.add( m );
-			
-			//menu.get
-			validate();
-		}
-		
-		@Override
-		public void actionPerformed( ActionEvent e )
-		{
-			Object source = e.getSource();
-		}
-	}
 
 	public static ArrayList< RegistrationStatistics > defaultData()
 	{
