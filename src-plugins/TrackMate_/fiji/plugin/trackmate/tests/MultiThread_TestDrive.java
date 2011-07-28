@@ -2,8 +2,11 @@ package fiji.plugin.trackmate.tests;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Set;
 
 import org.jdom.JDOMException;
+import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
@@ -20,13 +23,13 @@ public class MultiThread_TestDrive {
 	public static void main(String[] args) throws JDOMException, IOException {
 
 		int REPEAT = 10000;
-		
-//		File file = new File("/Users/tinevez/Projects/DMontaras/20052011_8_20.xml");
+
+		//		File file = new File("/Users/tinevez/Projects/DMontaras/20052011_8_20.xml");
 		File file = new File("/Users/tinevez/Desktop/Data/FakeTracks2.xml");
 		TmXmlReader reader = new TmXmlReader(file);
 		reader.parse();
 		TrackMateModel model = reader.getModel();
-		
+
 		model.getSettings().segmenterType = SegmenterType.LOG_SEGMENTER;
 		SegmenterSettings old = model.getSettings().segmenterSettings;
 		model.getSettings().segmenterSettings = model.getSettings().segmenterType.createSettings();
@@ -34,34 +37,39 @@ public class MultiThread_TestDrive {
 		model.getSettings().segmenterSettings.spaceUnits = old.spaceUnits;
 		model.getSettings().segmenterSettings.threshold = old.threshold;
 		model.getSettings().segmenterSettings.useMedianFilter = old.useMedianFilter;
-		
+
 		model.getSettings().trackerSettings = new TrackerSettings();
 
 		System.out.println(model.getSettings());
 		System.out.println(model.getSettings().segmenterSettings);
 		System.out.println(model.getSettings().trackerSettings);
-		
+
 		TrackMate_ plugin = new TrackMate_(model);
 		plugin.execSpotFiltering();
 		LAPTracker tracker = new LAPTracker(model.getFilteredSpots(), model.getSettings().trackerSettings);
 		tracker.setLogger(Logger.VOID_LOGGER);
-		
+
 		long start = System.currentTimeMillis();
-		
+		tracker.reset();
+		tracker.createLinkingCostMatrices();
+
 		for (int i = 0; i < REPEAT; i++) {
 
-			tracker.createLinkingCostMatrices();
-//			plugin.computeSpotFeatures();
-//			plugin.execTracking();
-		
+			ArrayList<DefaultWeightedEdge> edges = new ArrayList<DefaultWeightedEdge>(tracker.getResult().edgeSet());
+			tracker.getResult().removeAllEdges(edges);
+
+			tracker.solveLAPForTrackSegments();
+			//			plugin.computeSpotFeatures();
+			//			plugin.execTracking();
+
 		}
-		
+
 		long end  = System.currentTimeMillis();
 		model.getLogger().log(String.format("Computing done in %.1e s per repetition.\n", (end-start)/1e3f/REPEAT), Logger.BLUE_COLOR);
-		
-		
-		
-		
+
+
+
+
 	}
-	
+
 }

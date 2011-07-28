@@ -161,7 +161,7 @@ public class LAPTracker implements SpotTracker {
 	 * @see #createAssignmentProblemSolver()	 */
 	protected AssignmentAlgorithm solver = null;
 	/** The graph this tracker will use to link spots. */
-	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph;
 	/** The Spot collection that will be linked in the {@link #graph.} */
 	protected SpotCollection spots;
 	/** The settings object that configures this tracker. */
@@ -185,6 +185,7 @@ public class LAPTracker implements SpotTracker {
 		this.spots = spots;
 		this.settings = settings;
 		this.solver  = createAssignmentProblemSolver();
+		reset();
 	}
 
 	/*	
@@ -207,6 +208,16 @@ public class LAPTracker implements SpotTracker {
 	/*
 	 * METHODS
 	 */
+
+	/**
+	 * Reset any link created in the graph result in this tracker, effectively creating a new graph, 
+	 * containing the spots but no edge.
+	 */
+	public void reset() {
+		graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		for(Spot spot : spots) 
+			graph.addVertex(spot);
+	}
 
 	public SimpleWeightedGraph<Spot,DefaultWeightedEdge> getResult() {
 		return graph;
@@ -313,40 +324,38 @@ public class LAPTracker implements SpotTracker {
 			return false;
 		}
 
-		// Step 0 - Prepare graph
-		for(Spot spot : spots) 
-			graph.addVertex(spot);
+		reset();
 
-				// Step 1 - Link objects into track segments
+		// Step 1 - Link objects into track segments
 
-				// Create cost matrices
-				tstart = System.currentTimeMillis();
-				if (!createLinkingCostMatrices()) return false;
-				tend = System.currentTimeMillis();
-				logger.log(String.format("  Cost matrix for frame-to-frame linking created in %.1f s.\n", (tend-tstart)/1e3f));
+		// Create cost matrices
+		tstart = System.currentTimeMillis();
+		if (!createLinkingCostMatrices()) return false;
+		tend = System.currentTimeMillis();
+		logger.log(String.format("  Cost matrix for frame-to-frame linking created in %.1f s.\n", (tend-tstart)/1e3f));
 
-				// Solve LAP
-				tstart = System.currentTimeMillis();
-				if (!linkObjectsToTrackSegments()) return false;
-				tend = System.currentTimeMillis();
-				logger.log(String.format("  Frame to frame LAP solved in %.1f s.\n", (tend-tstart)/1e3f));
+		// Solve LAP
+		tstart = System.currentTimeMillis();
+		if (!linkObjectsToTrackSegments()) return false;
+		tend = System.currentTimeMillis();
+		logger.log(String.format("  Frame to frame LAP solved in %.1f s.\n", (tend-tstart)/1e3f));
 
 
-				// Step 2 - Link track segments into final tracks
+		// Step 2 - Link track segments into final tracks
 
-				// Create cost matrix
-				tstart = System.currentTimeMillis();
-				if (!createTrackSegmentCostMatrix()) return false;
-				tend = System.currentTimeMillis();
-				logger.log(String.format("  Cost matrix for track segments created in %.1f s.\n", (tend-tstart)/1e3f));
+		// Create cost matrix
+		tstart = System.currentTimeMillis();
+		if (!createTrackSegmentCostMatrix()) return false;
+		tend = System.currentTimeMillis();
+		logger.log(String.format("  Cost matrix for track segments created in %.1f s.\n", (tend-tstart)/1e3f));
 
-				// Solve LAP
-				tstart = System.currentTimeMillis();
-				if (!linkTrackSegmentsToFinalTracks()) return false;
-				tend = System.currentTimeMillis();
-				logger.log(String.format("  Track segment LAP solved in %.1f s.\n", (tend-tstart)/1e3f));
+		// Solve LAP
+		tstart = System.currentTimeMillis();
+		if (!linkTrackSegmentsToFinalTracks()) return false;
+		tend = System.currentTimeMillis();
+		logger.log(String.format("  Track segment LAP solved in %.1f s.\n", (tend-tstart)/1e3f));
 
-				return true;
+		return true;
 	}
 
 
@@ -358,7 +367,7 @@ public class LAPTracker implements SpotTracker {
 	 */
 	public boolean createLinkingCostMatrices() {
 		linkingCosts = Collections.synchronizedSortedMap(new TreeMap<Integer, double[][]>());
-	
+
 		// Prepare frame pairs in order, not necessarily separated by 1.
 		final ArrayList<int[]> framePairs = new ArrayList<int[]>(spots.keySet().size()-1);
 		final Iterator<Integer> frameIterator = spots.keySet().iterator(); 		
@@ -401,13 +410,13 @@ public class LAPTracker implements SpotTracker {
 						}
 						double[][] costMatrix = objCosts.getCostMatrix();
 						linkingCosts.put(frame0, costMatrix);
-						
+
 						logger.setProgress(0 + 0.25f * progress.incrementAndGet() / (float) framePairs.size());
 					}
 				}
 			};
 		}
-		
+
 		logger.setStatus("Creating linking cost matrices...");
 		logger.setProgress(0);
 		SimpleMultiThreading.startAndJoin(threads);
@@ -496,43 +505,83 @@ public class LAPTracker implements SpotTracker {
 	 * @see LAPTracker#createLinkingCostMatrices()
 	 */
 	public void solveLAPForTrackSegments() {
-		// Iterate properly over frame pair in order, not necessarily separated by 1.
-		final Iterator<Integer> frameIterator = spots.keySet().iterator(); 
+
+		// Prepare frame pairs in order, not necessarily separated by 1.
+		final ArrayList<int[]> framePairs = new ArrayList<int[]>(spots.keySet().size()-1);
+		final Iterator<Integer> frameIterator = spots.keySet().iterator(); 		
 		int frame0 = frameIterator.next();
 		int frame1;
-		double weight;
-
 		while(frameIterator.hasNext()) { // ascending order
-
-			double[][] costMatrix = linkingCosts.get(frame0);
-			AssignmentProblem problem = new AssignmentProblem(costMatrix);
-			int[][] solutions = problem.solve(solver);			
-			frame1 = frameIterator.next();			
-
-			// Extend track segments using solutions: we update the graph edges
-			List<Spot> t0 = spots.get(frame0);
-			List<Spot> t1 = spots.get(frame1);
-			for (int i = 0; i < solutions.length; i++) {
-				if (solutions[i].length == 0)
-					continue;
-				int i0 = solutions[i][0];
-				int i1 = solutions[i][1];
-
-				if (i0 < t0.size() && i1 < t1.size() ) {
-					// Solution belong to the upper-left quadrant: we can connect the spots
-					Spot s0 = t0.get(i0);
-					Spot s1 = t1.get(i1);
-					// We set the edge weight to be the linking cost, for future reference. 
-					// This is NOT used in further tracking steps
-					weight = costMatrix[i0][i1]; 
-					DefaultWeightedEdge edge = graph.addEdge(s0, s1);
-					graph.setEdgeWeight(edge, weight);
-				} // otherwise we do not create any connection
-			}
-
-			// Next frame pair
+			frame1 = frameIterator.next();
+			framePairs.add( new int[] {frame0, frame1} );
 			frame0 = frame1;
 		}
+
+
+		// Prepare threads
+		final Thread[] threads;
+		if (useMultithreading) {
+			threads = SimpleMultiThreading.newThreads();
+		} else {
+			threads = SimpleMultiThreading.newThreads(1);
+		}
+
+		// Prepare the thread array
+		final AtomicInteger ai = new AtomicInteger(0);
+		final AtomicInteger progress = new AtomicInteger(0);
+		for (int ithread = 0; ithread < threads.length; ithread++) {
+
+
+			threads[ithread] = new Thread("LAPTracker track segment linking thread "+(1+ithread)+"/"+threads.length) {  
+
+				public void run() {
+
+					for (int i = ai.getAndIncrement(); i < framePairs.size(); i = ai.getAndIncrement()) {
+
+						int frame0 = framePairs.get(i)[0];
+						int frame1 = framePairs.get(i)[1];
+
+						double[][] costMatrix = linkingCosts.get(frame0);
+						AssignmentProblem problem = new AssignmentProblem(costMatrix);
+						int[][] solutions = problem.solve(solver);			
+
+						// Extend track segments using solutions: we update the graph edges
+						List<Spot> t0 = spots.get(frame0);
+						List<Spot> t1 = spots.get(frame1);
+						for (int j = 0; j < solutions.length; j++) {
+							if (solutions[j].length == 0)
+								continue;
+							int i0 = solutions[j][0];
+							int i1 = solutions[j][1];
+
+							if (i0 < t0.size() && i1 < t1.size() ) {
+								// Solution belong to the upper-left quadrant: we can connect the spots
+								Spot s0 = t0.get(i0);
+								Spot s1 = t1.get(i1);
+								// We set the edge weight to be the linking cost, for future reference. 
+								// This is NOT used in further tracking steps
+								double weight = costMatrix[i0][i1];
+								synchronized (graph) { // To avoid concurrent access, sad bu true
+									DefaultWeightedEdge edge = graph.addEdge(s0, s1);
+									graph.setEdgeWeight(edge, weight);
+								}
+							} // otherwise we do not create any connection
+						}
+
+						logger.setProgress(0.25f + 0.25f * progress.incrementAndGet() / (float) framePairs.size());
+
+					}
+				}
+			};
+
+		}
+
+
+		logger.setStatus("Solving track segment...");
+		logger.setProgress(0.25f);
+		SimpleMultiThreading.startAndJoin(threads);
+		logger.setProgress(0.5f);
+		logger.setStatus("");
 
 	}
 
