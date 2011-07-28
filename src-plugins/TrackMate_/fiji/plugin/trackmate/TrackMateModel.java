@@ -871,7 +871,8 @@ public class TrackMateModel {
 		final int numFrames = frameSet.size();
 		final float[] calibration = settings.getCalibration();
 		final AtomicInteger ai = new AtomicInteger(0);
-		
+		final AtomicInteger progress = new AtomicInteger(0);
+
 		final Thread[] threads;
 		if (useMultithreading) {
 			threads = SimpleMultiThreading.newThreads();
@@ -893,7 +894,7 @@ public class TrackMateModel {
 		// Prepare the thread array
 		for (int ithread = 0; ithread < threads.length; ithread++) {
 
-			threads[ithread] = new Thread("TrackMate spot feature calculating thread "+ithread+"/"+threads.length) {  
+			threads[ithread] = new Thread("TrackMate spot feature calculating thread "+(1+ithread)+"/"+threads.length) {  
 
 				public void run() {
 
@@ -905,13 +906,14 @@ public class TrackMateModel {
 						List<Spot> spotsThisFrame = toCompute.get(frame);
 						featureCalculator.processAllFeatures(spotsThisFrame);
 
-						logger.setProgress((ai.get()+1) / numFrames);
+						logger.setProgress(progress.incrementAndGet() / (float)numFrames);
 					} // Finished looping over frames
 				}
 			};
 		}
 		logger.setStatus("Calculating features...");
-
+		logger.setProgress(0);
+		
 		SimpleMultiThreading.startAndJoin(threads);
 		
 		logger.setProgress(1);

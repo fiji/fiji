@@ -15,8 +15,10 @@ import java.awt.Polygon;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.RealType;
 
 import org.jgrapht.graph.SimpleWeightedGraph;
@@ -32,32 +34,32 @@ import org.jgrapht.graph.SimpleWeightedGraph;
  *
  */
 public class TrackMate_ implements PlugIn {
-	
+
 	public static final String PLUGIN_NAME_STR = "Track Mate";
 	public static final String PLUGIN_NAME_VERSION = ".beta_2011-07-18";
 	public static final boolean DEFAULT_USE_MULTITHREADING = true;
-	
+
 	private TrackMateModel model;
 	private boolean useMultithreading = DEFAULT_USE_MULTITHREADING;
-	
-	
-	
+
+
+
 	/*
 	 * CONSTRUCTORS
 	 */
-	
+
 	public TrackMate_() {
 		this(new TrackMateModel());
 	}
-	
+
 	public TrackMate_(TrackMateModel model) {
 		this.model = model;
 	}
-	
+
 	/*
 	 * RUN METHOD
 	 */
-	
+
 	/** 
 	 * Launch the GUI.
 	 */
@@ -65,15 +67,15 @@ public class TrackMate_ implements PlugIn {
 		model.getSettings().imp = WindowManager.getCurrentImage();
 		new TrackMateFrameController(this);
 	}
-	
+
 	/*
 	 * METHODS
 	 */
-	
+
 	public TrackMateModel getModel() {
 		return model;
 	}
-	
+
 	public void setLogger(Logger logger) {
 		model.setLogger(logger);
 	}
@@ -93,8 +95,8 @@ public class TrackMate_ implements PlugIn {
 	public void computeSpotFeatures() {
 		model.computeSpotFeatures(model.getSpots());
 	}
-	
-	
+
+
 	/**
 	 * Execute the tracking part.
 	 * <p>
@@ -130,68 +132,92 @@ public class TrackMate_ implements PlugIn {
 	@SuppressWarnings("unchecked")
 	public void execSegmentation() {
 		final Settings settings = model.getSettings();
+		final float[] calibration = settings.getCalibration();
 		final Logger logger = model.getLogger();
 		final ImagePlus imp = settings.imp;
 		if (null == imp) {
 			model.getLogger().error("No image to operate on.\n");
 			return;
 		}
-
+		final int numFrames = settings.tend - settings.tstart + 1;
 		Roi roi = imp.getRoi();
-		Polygon polygon = null;
+		final Polygon polygon;
 		if (roi != null)
 			polygon = roi.getPolygon();
+		else 
+			polygon = null;
+		final SpotCollection spots = new SpotCollection();
+		final AtomicInteger spotFound = new AtomicInteger(0);
+		final AtomicInteger progress = new AtomicInteger(0);
 
-		int numFrames = settings.tend - settings.tstart + 1;
+		final Thread[] threads;
+		if (useMultithreading) {
+			threads = SimpleMultiThreading.newThreads();
+		} else {
+			threads = SimpleMultiThreading.newThreads(1);
+		}
 
-		/* 0 -- Initialize local variables */
-		final float[] calibration = new float[] {(float) imp.getCalibration().pixelWidth, (float) imp.getCalibration().pixelHeight, (float) imp.getCalibration().pixelDepth};
 
-		@SuppressWarnings("rawtypes")
-		SpotSegmenter<? extends RealType> segmenter = settings.getSpotSegmenter();
-		segmenter.setCalibration(calibration);
+		// Prepare the thread array
+		final AtomicInteger ai = new AtomicInteger(settings.tstart-1);
+		for (int ithread = 0; ithread < threads.length; ithread++) {
 
-		SpotCollection spots = new SpotCollection();
+			threads[ithread] = new Thread("TrackMate spot feature calculating thread "+(1+ithread)+"/"+threads.length) {  
 
-		// For each frame...
-		int spotFound = 0;
-		for (int i = settings.tstart-1; i < settings.tend; i++) {
+				public void run() {
 
-			/* 1 - Prepare stack for use with Imglib. */
-			@SuppressWarnings("rawtypes")
-			Image img = TMUtils.getSingleFrameAsImage(imp, i, settings); // will be cropped according to settings
+					for (int i = ai.getAndIncrement(); i < settings.tend; i = ai.getAndIncrement()) {
 
-			/* 2 Segment it */
-			logger.setStatus("Frame "+(i+1)+": Segmenting...");
-			logger.setProgress((i-settings.tstart) / (float)numFrames );
-			segmenter.setImage(img);
-			if (segmenter.checkInput() && segmenter.process()) {
-				List<Spot> spotsThisFrame = segmenter.getResult(settings);
-				List<Spot> prunedSpots;
-				// Prune if outside of ROI
-				if (null != polygon) {
-					prunedSpots = new ArrayList<Spot>();
-					for (Spot spot : spotsThisFrame) {
-						if (polygon.contains(spot.getFeature(SpotFeature.POSITION_X)/calibration[0], spot.getFeature(SpotFeature.POSITION_Y)/calibration[1])) 
-							prunedSpots.add(spot);
-					}
-				} else {
-					prunedSpots = spotsThisFrame;
+						/* 0 -- Initialize local variables */
+
+						@SuppressWarnings("rawtypes")
+						SpotSegmenter<? extends RealType> segmenter = settings.getSpotSegmenter();
+						segmenter.setCalibration(calibration);
+
+						/* 1 - Prepare stack for use with Imglib. */
+						@SuppressWarnings("rawtypes")
+						Image img = TMUtils.getSingleFrameAsImage(imp, i, settings); // will be cropped according to settings
+
+						/* 2 Segment it */
+						segmenter.setImage(img);
+						if (segmenter.checkInput() && segmenter.process()) {
+							List<Spot> spotsThisFrame = segmenter.getResult(settings);
+							List<Spot> prunedSpots;
+							// Prune if outside of ROI
+							if (null != polygon) {
+								prunedSpots = new ArrayList<Spot>();
+								for (Spot spot : spotsThisFrame) {
+									if (polygon.contains(spot.getFeature(SpotFeature.POSITION_X)/calibration[0], spot.getFeature(SpotFeature.POSITION_Y)/calibration[1])) 
+										prunedSpots.add(spot);
+								}
+							} else {
+								prunedSpots = spotsThisFrame;
+							}
+							// Add segmentation feature other than position
+							for (Spot spot : prunedSpots) {
+								spot.putFeature(SpotFeature.POSITION_T, i * settings.dt);
+							}
+							spots.put(i, prunedSpots);
+							spotFound.addAndGet(prunedSpots.size());
+						} else {
+							logger.error(segmenter.getErrorMessage()+'\n');
+							return;
+						}
+
+						logger.setProgress(progress.incrementAndGet() / (float)numFrames );
+
+					} // Finished looping over frames
 				}
-				// Add segmentation feature other than position
-				for (Spot spot : prunedSpots) {
-					spot.putFeature(SpotFeature.POSITION_T, i * settings.dt);
-				}
-				spots.put(i, prunedSpots);
-				spotFound += prunedSpots.size();
-			} else {
-				logger.error(segmenter.getErrorMessage()+'\n');
-				return;
-			}
+			};
+		}
 
-		} // Finished looping over frames
+		logger.setStatus("Segmenting...");
+		logger.setProgress(0);
+
+		SimpleMultiThreading.startAndJoin(threads);
 		model.setSpots(spots, true);
-		logger.log("Found "+spotFound+" spots.\n");
+
+		logger.log("Found "+spotFound.get()+" spots.\n");
 		logger.setProgress(1);
 		logger.setStatus("");
 		return;
@@ -251,7 +277,7 @@ public class TrackMate_ implements PlugIn {
 				Float val = model.getTrackFeature(trackIndex, filter.feature);
 				if (null == val)
 					continue;
-				
+
 				if (filter.isAbove) {
 					if (val < tval) {
 						trackIsOk = false;
@@ -269,13 +295,13 @@ public class TrackMate_ implements PlugIn {
 		}
 		model.setFilteredTrackIndices(filteredTrackIndices, true);
 	}
-	
-	
-	
+
+
+
 	/*
 	 * MAIN METHOD
 	 */
-	
+
 	public static void main(String[] args) {
 		ij.ImageJ.main(args);
 		IJ.open("/Users/tinevez/Desktop/Data/FakeTracks.tif");
@@ -284,6 +310,6 @@ public class TrackMate_ implements PlugIn {
 	}
 
 
-	
-	
+
+
 }

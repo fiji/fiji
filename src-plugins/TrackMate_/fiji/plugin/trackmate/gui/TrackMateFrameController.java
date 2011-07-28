@@ -460,7 +460,7 @@ public class TrackMateFrameController implements ActionListener {
 		logger.log("with settings:\n");
 		logger.log(settings.toString());
 		logger.log(settings.segmenterSettings.toString());
-		new Thread("TrackMate segmentation thread") {					
+		new Thread("TrackMate segmentation mother thread") {					
 			public void run() {
 				long start = System.currentTimeMillis();
 				try {
