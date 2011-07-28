@@ -8,8 +8,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.RealType;
 
 import org.jgrapht.alg.ConnectivityInspector;
@@ -37,7 +39,9 @@ public class TrackMateModel {
 	/*
 	 * FIELDS
 	 */
+	private boolean useMultithreading = TrackMate_.DEFAULT_USE_MULTITHREADING;
 
+	
 	// SPOTS
 
 	/** Contain the segmentation result, un-filtered.*/
@@ -153,7 +157,7 @@ public class TrackMateModel {
 		return selectionChangeListeners;
 	}
 
-	
+
 
 
 	/*
@@ -189,7 +193,7 @@ public class TrackMateModel {
 	public Set<Integer> getFilteredTrackIndices() {
 		return filteredTrackIndices;
 	}
-	
+
 	public Spot getEdgeSource(final DefaultWeightedEdge edge) {
 		return graph.getEdgeSource(edge);
 	}
@@ -205,7 +209,7 @@ public class TrackMateModel {
 	public boolean containsEdge(final Spot source, final Spot target) {
 		return graph.containsEdge(source, target);
 	}
-	
+
 	public DefaultWeightedEdge getEdge(final Spot source, final Spot target) {
 		return graph.getEdge(source, target);
 	}
@@ -298,7 +302,7 @@ public class TrackMateModel {
 	public Set<DefaultWeightedEdge> getTrackEdges(int index) {
 		return trackEdges.get(index);
 	}
-	
+
 	/**
 	 * Return the <b>un-filtered</b> list of tracks as a list of spots.
 	 */
@@ -358,7 +362,7 @@ public class TrackMateModel {
 				listener.modelChanged(event);
 		}
 	}
-	
+
 	/**
 	 * Overwrite the {@link #filteredTrackIndices} field, resulting normally from the {@link #execTrackFiltering()} process.
 	 * @param doNotify  if true, will fire a {@link TrackMateModelChangeEvent#TRACKS_FILTERED} event.
@@ -862,33 +866,54 @@ public class TrackMateModel {
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void computeSpotFeatures(final SpotCollection toCompute) {
-		int numFrames = toCompute.keySet().size();
-		List<Spot> spotsThisFrame;
-		SpotFeatureFacade<?> featureCalculator;
+
+		final List<Integer> frameSet = new ArrayList(toCompute.keySet());
+		final int numFrames = frameSet.size();
 		final float[] calibration = settings.getCalibration();
+		final AtomicInteger ai = new AtomicInteger(0);
+		
+		final Thread[] threads;
+		if (useMultithreading) {
+			threads = SimpleMultiThreading.newThreads();
+		} else {
+			threads = SimpleMultiThreading.newThreads(1);
+		}
 
-		for (int i : toCompute.keySet()) {
-			logger.setProgress((2*(i-settings.tstart)) / (2f * numFrames + 1));
-			logger.setStatus("Frame "+(i+1)+": Calculating features...");
+		/* Prepare stack for use with Imglib.
+		 * This time, since the spot coordinates are with respect to the top-left corner of the image, 
+		 * we must not generate a cropped version of the image, but a full snapshot. 	 */
+		final Settings uncroppedSettings = new Settings();
+		uncroppedSettings.xstart = 1;
+		uncroppedSettings.xend   = settings.imp.getWidth();
+		uncroppedSettings.ystart = 1;
+		uncroppedSettings.yend   = settings.imp.getHeight();
+		uncroppedSettings.zstart = 1;
+		uncroppedSettings.zend   = settings.imp.getNSlices();
+		
+		// Prepare the thread array
+		for (int ithread = 0; ithread < threads.length; ithread++) {
 
-			/* 1 - Prepare stack for use with Imglib.
-			 * This time, since the spot coordinates are with respect to the top-left corner of the image, 
-			 * we must not generate a cropped version of the image, but a full snapshot. 	 */
-			Settings uncroppedSettings = new Settings();
-			uncroppedSettings.xstart = 1;
-			uncroppedSettings.xend   = settings.imp.getWidth();
-			uncroppedSettings.ystart = 1;
-			uncroppedSettings.yend   = settings.imp.getHeight();
-			uncroppedSettings.zstart = 1;
-			uncroppedSettings.zend   = settings.imp.getNSlices();
-			Image<? extends RealType> img = TMUtils.getSingleFrameAsImage(settings.imp, i, uncroppedSettings); 
+			threads[ithread] = new Thread("TrackMate spot feature calculating thread "+ithread+"/"+threads.length) {  
 
-			/* 1.5 Determine what analyzers are needed */
-			featureCalculator = new SpotFeatureFacade(img, calibration);
-			spotsThisFrame = toCompute.get(i);
-			featureCalculator.processAllFeatures(spotsThisFrame);
+				public void run() {
 
-		} // Finished looping over frames
+					for (int index = ai.getAndIncrement(); index < numFrames; index = ai.getAndIncrement()) {
+
+						int frame = frameSet.get(index);
+						Image<? extends RealType> img = TMUtils.getSingleFrameAsImage(settings.imp, frame, uncroppedSettings); 
+						SpotFeatureFacade featureCalculator = new SpotFeatureFacade(img, calibration);
+						List<Spot> spotsThisFrame = toCompute.get(frame);
+						featureCalculator.processAllFeatures(spotsThisFrame);
+
+						logger.setProgress((ai.get()+1) / numFrames);
+					} // Finished looping over frames
+				}
+			};
+		}
+		logger.setStatus("Calculating features...");
+
+		SimpleMultiThreading.startAndJoin(threads);
+		
 		logger.setProgress(1);
 		logger.setStatus("");
 		return;
@@ -998,10 +1023,10 @@ public class TrackMateModel {
 	private void computeTracksFromGraph() {
 		if (DEBUG)
 			System.out.println("[TrackMateModel] #computeTracksFromGraph()");
-		
+
 		// Retain old values
 		final List<Set<Spot>> oldTrackSpots = trackSpots;
-		
+
 		// Build new track lists
 		this.trackSpots = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets();
 		this.trackEdges = new ArrayList<Set<DefaultWeightedEdge>>(trackSpots.size());
@@ -1013,11 +1038,11 @@ public class TrackMateModel {
 			}
 			trackEdges.add(spotEdge);
 		}
-		
+
 		// Try to infer correct visibility 
 		if (filteredTrackIndices == null || filteredTrackIndices.isEmpty())
 			return;
-		
+
 		if (DEBUG) {
 			System.out.println("[TrackMateModel] computeTrackFromGraph: old track visibility is "+filteredTrackIndices);
 		}
@@ -1029,10 +1054,10 @@ public class TrackMateModel {
 		// We can say this: the new track should be visible if it has at least one spot
 		// that can be found in a visible old track.
 		for (int trackIndex = 0; trackIndex < ntracks; trackIndex++) {
-			
+
 			boolean shouldBeVisible = false;
 			for(final Spot spot : trackSpots.get(trackIndex)) {
-				
+
 				for (int oldTrackIndex : oldTrackVisibility) { // we iterate over only old VISIBLE tracks
 					if (oldTrackSpots.get(oldTrackIndex).contains(spot)) {
 						shouldBeVisible = true;
@@ -1043,18 +1068,18 @@ public class TrackMateModel {
 					break;
 				}
 			}
-			
+
 			if (shouldBeVisible) {
 				filteredTrackIndices.add(trackIndex);
 			}
-			
+
 		}
-		
+
 		if (DEBUG) {
 			System.out.println("[TrackMateModel] computeTrackFromGraph: new track visibility is "+filteredTrackIndices);
 		}
 
-		
+
 	}
 
 	private void computeTrackFeatures() {

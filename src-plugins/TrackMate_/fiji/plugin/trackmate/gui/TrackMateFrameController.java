@@ -505,7 +505,7 @@ public class TrackMateFrameController implements ActionListener {
 		switchNextButton(false);
 		logger.log("Calculating features...\n",Logger.BLUE_COLOR);
 		// Calculate features
-		new Thread("TrackMate feature calculation thread") {
+		new Thread("TrackMate spot feature calculating mother thread") {
 			public void run() {
 				try {
 					long start = System.currentTimeMillis();
