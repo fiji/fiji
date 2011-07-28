@@ -2,11 +2,16 @@ package fiji.plugin.trackmate.tracking;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
@@ -120,7 +125,7 @@ public class LAPTracker implements SpotTracker {
 	protected boolean inputChecked = false;
 
 	/** The cost matrix for linking individual objects (step 1), indexed by the first frame index. */
-	protected TreeMap<Integer, double[][]> linkingCosts = null;
+	protected SortedMap<Integer,double[][]> linkingCosts = null;
 	/** The cost matrix for linking individual track segments (step 2). */
 	protected double[][] segmentCosts = null;
 	/** Stores the objects to track as a list of Spots per frame.  */
@@ -161,6 +166,9 @@ public class LAPTracker implements SpotTracker {
 	protected SpotCollection spots;
 	/** The settings object that configures this tracker. */
 	protected TrackerSettings settings;
+	/** A flag stating if we should use multi--threading for some calculations. */
+	protected boolean useMultithreading = fiji.plugin.trackmate.TrackMate_.DEFAULT_USE_MULTITHREADING;
+
 
 	/*
 	 * CONSTRUCTORS
@@ -221,7 +229,7 @@ public class LAPTracker implements SpotTracker {
 	 * Get the cost matrices used for step 1, linking objects into track segments.
 	 * @return The cost matrices, with one <code>double[][]</code> in the ArrayList for each frame t, t+1 pair.
 	 */
-	public TreeMap<Integer, double[][]> getLinkingCosts() {
+	public SortedMap<Integer, double[][]> getLinkingCosts() {
 		return linkingCosts;
 	}
 
@@ -309,36 +317,36 @@ public class LAPTracker implements SpotTracker {
 		for(Spot spot : spots) 
 			graph.addVertex(spot);
 
-		// Step 1 - Link objects into track segments
+				// Step 1 - Link objects into track segments
 
-		// Create cost matrices
-		tstart = System.currentTimeMillis();
-		if (!createLinkingCostMatrices()) return false;
-		tend = System.currentTimeMillis();
-		logger.log(String.format("  Cost matrix for frame-to-frame linking created in %.1f s.\n", (tend-tstart)/1e3f));
+				// Create cost matrices
+				tstart = System.currentTimeMillis();
+				if (!createLinkingCostMatrices()) return false;
+				tend = System.currentTimeMillis();
+				logger.log(String.format("  Cost matrix for frame-to-frame linking created in %.1f s.\n", (tend-tstart)/1e3f));
 
-		// Solve LAP
-		tstart = System.currentTimeMillis();
-		if (!linkObjectsToTrackSegments()) return false;
-		tend = System.currentTimeMillis();
-		logger.log(String.format("  Frame to frame LAP solved in %.1f s.\n", (tend-tstart)/1e3f));
+				// Solve LAP
+				tstart = System.currentTimeMillis();
+				if (!linkObjectsToTrackSegments()) return false;
+				tend = System.currentTimeMillis();
+				logger.log(String.format("  Frame to frame LAP solved in %.1f s.\n", (tend-tstart)/1e3f));
 
 
-		// Step 2 - Link track segments into final tracks
+				// Step 2 - Link track segments into final tracks
 
-		// Create cost matrix
-		tstart = System.currentTimeMillis();
-		if (!createTrackSegmentCostMatrix()) return false;
-		tend = System.currentTimeMillis();
-		logger.log(String.format("  Cost matrix for track segments created in %.1f s.\n", (tend-tstart)/1e3f));
+				// Create cost matrix
+				tstart = System.currentTimeMillis();
+				if (!createTrackSegmentCostMatrix()) return false;
+				tend = System.currentTimeMillis();
+				logger.log(String.format("  Cost matrix for track segments created in %.1f s.\n", (tend-tstart)/1e3f));
 
-		// Solve LAP
-		tstart = System.currentTimeMillis();
-		if (!linkTrackSegmentsToFinalTracks()) return false;
-		tend = System.currentTimeMillis();
-		logger.log(String.format("  Track segment LAP solved in %.1f s.\n", (tend-tstart)/1e3f));
+				// Solve LAP
+				tstart = System.currentTimeMillis();
+				if (!linkTrackSegmentsToFinalTracks()) return false;
+				tend = System.currentTimeMillis();
+				logger.log(String.format("  Track segment LAP solved in %.1f s.\n", (tend-tstart)/1e3f));
 
-		return true;
+				return true;
 	}
 
 
@@ -348,35 +356,65 @@ public class LAPTracker implements SpotTracker {
 	 * matrices.
 	 * @return True if executes successfully, false otherwise.
 	 */
-	private boolean createLinkingCostMatrices() {
-		linkingCosts = new TreeMap<Integer, double[][]>();
-		List<Spot> t0, t1;
-		LinkingCostMatrixCreator objCosts;
-		double[][] costMatrix = null;
-
-		// Iterate properly over frame pair in order, not necessarily separated by 1.
+	public boolean createLinkingCostMatrices() {
+		linkingCosts = Collections.synchronizedSortedMap(new TreeMap<Integer, double[][]>());
+	
+		// Prepare frame pairs in order, not necessarily separated by 1.
+		final ArrayList<int[]> framePairs = new ArrayList<int[]>(spots.keySet().size()-1);
 		final Iterator<Integer> frameIterator = spots.keySet().iterator(); 		
 		int frame0 = frameIterator.next();
 		int frame1;
 		while(frameIterator.hasNext()) { // ascending order
-
 			frame1 = frameIterator.next();
-			t0 = spots.get(frame0);
-			t1 = spots.get(frame1);
-
-			objCosts = new LinkingCostMatrixCreator(t0, t1, settings);
-			if (!objCosts.checkInput() || !objCosts.process()) {
-				errorMessage = objCosts.getErrorMessage();
-				return false;
-			}
-			costMatrix = objCosts.getCostMatrix();
-			linkingCosts.put(frame0, costMatrix);
+			framePairs.add( new int[] {frame0, frame1} );
 			frame0 = frame1;
 		}
+
+		// Prepare threads
+		final Thread[] threads;
+		if (useMultithreading) {
+			threads = SimpleMultiThreading.newThreads();
+		} else {
+			threads = SimpleMultiThreading.newThreads(1);
+		}
+
+		// Prepare the thread array
+		final AtomicInteger ai = new AtomicInteger(0);
+		final AtomicInteger progress = new AtomicInteger(0);
+		for (int ithread = 0; ithread < threads.length; ithread++) {
+
+			threads[ithread] = new Thread("LAPTracker linking cost thread "+(1+ithread)+"/"+threads.length) {  
+
+				public void run() {
+
+					for (int i = ai.getAndIncrement(); i < framePairs.size(); i = ai.getAndIncrement()) {
+
+						int frame0 = framePairs.get(i)[0];
+						int frame1 = framePairs.get(i)[1];
+						List<Spot> t0 = spots.get(frame0);
+						List<Spot> t1 = spots.get(frame1);
+
+						LinkingCostMatrixCreator objCosts = new LinkingCostMatrixCreator(t0, t1, settings);
+						if (!objCosts.checkInput() || !objCosts.process()) {
+							errorMessage = objCosts.getErrorMessage();
+							return;
+						}
+						double[][] costMatrix = objCosts.getCostMatrix();
+						linkingCosts.put(frame0, costMatrix);
+						
+						logger.setProgress(0 + 0.25f * progress.incrementAndGet() / (float) framePairs.size());
+					}
+				}
+			};
+		}
+		
+		logger.setStatus("Creating linking cost matrices...");
+		logger.setProgress(0);
+		SimpleMultiThreading.startAndJoin(threads);
+		logger.setProgress(0.25f);
+		logger.setStatus("");
 		return true;
 	}
-
-
 
 
 	/**
@@ -528,23 +566,23 @@ public class LAPTracker implements SpotTracker {
 		for(int frame : spots.keySet())
 			spotPool.addAll(spots.get(frame)); // frame info lost
 
-		Spot source, current;
-		DepthFirstIterator<Spot, DefaultWeightedEdge> graphIterator;
-		SortedSet<Spot> trackSegment = null;
+				Spot source, current;
+				DepthFirstIterator<Spot, DefaultWeightedEdge> graphIterator;
+				SortedSet<Spot> trackSegment = null;
 
-		while (!spotPool.isEmpty()) {
-			source = spotPool.iterator().next();
-			graphIterator = new DepthFirstIterator<Spot, DefaultWeightedEdge>(graph, source);
-			trackSegment = new TreeSet<Spot>(Spot.frameComparator);
+				while (!spotPool.isEmpty()) {
+					source = spotPool.iterator().next();
+					graphIterator = new DepthFirstIterator<Spot, DefaultWeightedEdge>(graph, source);
+					trackSegment = new TreeSet<Spot>(Spot.frameComparator);
 
-			while(graphIterator.hasNext()) {
-				current = graphIterator.next();
-				trackSegment.add(current);
-				spotPool.remove(current);
-			}
+					while(graphIterator.hasNext()) {
+						current = graphIterator.next();
+						trackSegment.add(current);
+						spotPool.remove(current);
+					}
 
-			trackSegments.add(trackSegment);
-		}
+					trackSegments.add(trackSegment);
+				}
 	}
 
 	/**
