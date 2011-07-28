@@ -50,7 +50,6 @@ public class MergingCostFunction {
 	/** A flag stating if we should use multi--threading for some calculations. */
 	protected boolean useMultithreading = fiji.plugin.trackmate.TrackMate_.DEFAULT_USE_MULTITHREADING;
 
-
 	public MergingCostFunction(TrackerSettings settings) {
 		this.maxDist 			= settings.mergingDistanceCutoff;
 		this.timeCutoff 		= settings.mergingTimeCutoff;
