@@ -157,9 +157,6 @@ public class LAPTracker implements SpotTracker {
 	/** Each index corresponds to a Spot in middleSplittingPoints, and holds
 	 * the track segment index that the middle point belongs to. */
 	protected int[] splittingMiddlePointsSegmentIndices;
-	/** The assignment problem solver that will be used by this tracker. 
-	 * @see #createAssignmentProblemSolver()	 */
-	protected AssignmentAlgorithm solver = null;
 	/** The graph this tracker will use to link spots. */
 	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph;
 	/** The Spot collection that will be linked in the {@link #graph.} */
@@ -184,7 +181,6 @@ public class LAPTracker implements SpotTracker {
 	public LAPTracker(final SpotCollection spots, final TrackerSettings settings) {
 		this.spots = spots;
 		this.settings = settings;
-		this.solver  = createAssignmentProblemSolver();
 		reset();
 	}
 
@@ -534,6 +530,7 @@ public class LAPTracker implements SpotTracker {
 
 			threads[ithread] = new Thread("LAPTracker track segment linking thread "+(1+ithread)+"/"+threads.length) {  
 
+
 				public void run() {
 
 					for (int i = ai.getAndIncrement(); i < framePairs.size(); i = ai.getAndIncrement()) {
@@ -543,7 +540,8 @@ public class LAPTracker implements SpotTracker {
 
 						double[][] costMatrix = linkingCosts.get(frame0);
 						AssignmentProblem problem = new AssignmentProblem(costMatrix);
-						int[][] solutions = problem.solve(solver);			
+						AssignmentAlgorithm solver = createAssignmentProblemSolver();
+						int[][] solutions = problem.solve(solver);
 
 						// Extend track segments using solutions: we update the graph edges
 						List<Spot> t0 = spots.get(frame0);
@@ -596,6 +594,7 @@ public class LAPTracker implements SpotTracker {
 	public int[][] solveLAPForFinalTracks() {
 		// Solve the LAP using the Hungarian Algorithm
 		AssignmentProblem problem = new AssignmentProblem(segmentCosts);
+		AssignmentAlgorithm solver = createAssignmentProblemSolver();
 		int[][] solutions = problem.solve(solver);
 		return solutions;
 	}
