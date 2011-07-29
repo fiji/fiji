@@ -20,7 +20,7 @@ public abstract class TrackerSettingsPanel extends ActionListenablePanel {
 	 * selected in the settings object.
 	 */
 	public static TrackerSettingsPanel createPanel(Settings settings) {
-		TrackerType trackerType = settings.trackerType;
+		final TrackerType trackerType = settings.trackerType;
 		TrackerSettings trackerSettings = settings.trackerSettings;
 		if (null == trackerSettings) {
 			trackerSettings = trackerType.createSettings();

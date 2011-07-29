@@ -83,7 +83,7 @@ public class TrackMateFrameController implements ActionListener {
 
 		if (event == view.NEXT_BUTTON_PRESSED && actionFlag) {
 
-			performPreGUITask();
+			performLeaveStateTask();
 			state = state.nextState();
 			SwingUtilities.invokeLater(new Runnable() {
 				@Override
@@ -244,14 +244,37 @@ public class TrackMateFrameController implements ActionListener {
 		}
 	}
 
-	private void performPreGUITask() {
+	/**
+	 * Executed before state is moved to the next one, when the user just pressed the 'Next' button.
+	 */
+	private void performLeaveStateTask() {
 		switch(state) {
+
 		case CHOOSE_SEGMENTER:
 			execGetSegmenterChoice();
 			break;
+
+		case TUNE_SEGMENTER: {
+			Settings settings = plugin.getModel().getSettings();
+			settings.segmenterSettings = view.segmenterSettingsPanel.getSettings();
+			settings.segmenterSettings.segmenterType = settings.segmenterType;
+			settings.segmenterSettings.spaceUnits = settings.spaceUnits;
+			break;
+		}
+
 		case CHOOSE_TRACKER:
 			execGetTrackerChoice();
 			break;
+			
+		case TUNE_TRACKER: {
+			Settings settings = plugin.getModel().getSettings();
+			settings.trackerSettings = view.trackerSettingsPanel.getSettings();
+			settings.trackerSettings.trackerType = settings.trackerType;
+			settings.trackerSettings.spaceUnits = settings.spaceUnits;
+			settings.trackerSettings.timeUnits = settings.timeUnits;
+			break;
+		}
+
 		}
 	}
 
@@ -261,27 +284,36 @@ public class TrackMateFrameController implements ActionListener {
 	private void performPostGUITask() {
 		TrackMateModel model = plugin.getModel();
 		switch(state) {
+
 		case CHOOSE_SEGMENTER:
 			// Get the settings basic fields from the start dialog panel 
 			execGetStartSettings();
 			return;
-		case TUNE_SEGMENTER:
+
+		case TUNE_SEGMENTER: {
 			// If we choose to skip segmentation, initialize the model spot content and skip directly to state where we will be asked for a displayer.
-			if (model.getSettings().segmenterType == SegmenterType.MANUAL_SEGMENTER) {
+			Settings settings = model.getSettings();
+			if (settings.segmenterType == SegmenterType.MANUAL_SEGMENTER) {
 				model.setSpots(new SpotCollection(), false);
 				model.setFilteredSpots(new SpotCollection(), false);
+				settings.segmenterSettings.spaceUnits = settings.spaceUnits;
 				state = GuiState.CHOOSE_DISPLAYER.previousState();
 			}
-			break;
-		case SEGMENTING:
-			execSegmentationStep();
 			return;
+		}
+
+		case SEGMENTING: {
+			execSegmentationStep(); 
+			return;
+		}
+
 		case CHOOSE_DISPLAYER:
 			// Before we switch to the log display when calculating features, we *execute* the initial thresholding step,
 			// only if we did not skip segmentation.
 			if (model.getSettings().segmenterType != SegmenterType.MANUAL_SEGMENTER)
 				execInitialThresholding();
 			return;
+
 		case CALCULATE_FEATURES: {
 			// Compute the feature first, again, only if we did not skip segmentation.
 			if (model.getSettings().segmenterType != SegmenterType.MANUAL_SEGMENTER)
@@ -295,15 +327,19 @@ public class TrackMateFrameController implements ActionListener {
 			execLaunchdisplayer();
 			return;
 		}
+
 		case FILTER_SPOTS:
 			execSpotFiltering();
 			return;
+
 		case FILTER_TRACKS:
 			execTrackFiltering();
 			return;
+
 		case TRACKING:
 			execTrackingStep();
 			return;
+
 		default:
 			return;
 
@@ -439,13 +475,11 @@ public class TrackMateFrameController implements ActionListener {
 	private void execGetSegmenterChoice() {
 		Settings settings = plugin.getModel().getSettings();
 		settings.segmenterType = view.segmenterChoicePanel.getChoice();
-		plugin.getModel().setSettings(settings);
 	}
 
 	private void execGetTrackerChoice() {
 		Settings settings = plugin.getModel().getSettings();
 		settings.trackerType = view.trackerChoicePanel.getChoice();
-		plugin.getModel().setSettings(settings);
 	}
 
 	/**
@@ -455,7 +489,6 @@ public class TrackMateFrameController implements ActionListener {
 	private void execSegmentationStep() {
 		switchNextButton(false);
 		final Settings settings = plugin.getModel().getSettings();
-		settings.segmenterSettings = view.segmenterSettingsPanel.getSettings();
 		logger.log("Starting segmentation...\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
 		logger.log(settings.toString());
@@ -671,7 +704,6 @@ public class TrackMateFrameController implements ActionListener {
 	private void execTrackingStep() {
 		switchNextButton(false);
 		final TrackMateModel model = plugin.getModel();
-		model.getSettings().trackerSettings = view.trackerSettingsPanel.getSettings();
 		logger.log("Starting tracking...\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
 		logger.log(model.getSettings().trackerSettings.toString());
