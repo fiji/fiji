@@ -3435,8 +3435,9 @@ public class WekaSegmentation {
 	}
 
 	/**
+	 * Create the whole image data (instances) from the current image and feature stack.
 	 * 
-	 * @return
+	 * @return feature vectors (Weka instances) of the entire image
 	 */
 	public Instances updateWholeImageData() 
 	{
@@ -3483,10 +3484,10 @@ public class WekaSegmentation {
 				data[z-1].setClassIndex(data[z-1].numAttributes() - 1);
 			}						
 					
-			for(int n =0; n<data.length; n++)
+			for(int n=0; n<data.length; n++)
 			{
 				//IJ.log("Test dataset updated ("+ data[n].numInstances() + " instances, " + data[n].numAttributes() + " attributes).");
-
+				
 				if(null == wholeImageData)
 					wholeImageData = data[n];
 				else
@@ -3532,7 +3533,7 @@ public class WekaSegmentation {
 	 * auto-detection.
 	 * @return result image
 	 */
-	private ImagePlus applyClassifier(final Instances data, int w, int h, int numThreads, boolean probabilityMaps)
+	public ImagePlus applyClassifier(final Instances data, int w, int h, int numThreads, boolean probabilityMaps)
 	{
 		if (numThreads == 0)
 			numThreads = Runtime.getRuntime().availableProcessors();
@@ -3918,6 +3919,24 @@ public class WekaSegmentation {
 	{
 		featureStackArray.shutDownNow();
 		exe.shutdownNow();		
+	}
+
+	/**
+	 * Assign an arbitrary filter stack array
+	 * @param fsa new filter stack array
+	 */
+	public void setFeatureStackArray(FeatureStackArray fsa)
+	{
+		this.featureStackArray = fsa;
+	}
+
+	/**
+	 * Set the list of loaded class names
+	 * @param classNames new list of class names
+	 */
+	public void setLoadedClassNames(ArrayList<String> classNames)
+	{
+		this.loadedClassNames = classNames;
 	}
 	
 }
