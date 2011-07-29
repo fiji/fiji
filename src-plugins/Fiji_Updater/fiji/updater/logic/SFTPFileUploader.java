@@ -40,9 +40,13 @@ final public class SFTPFileUploader extends FileUploader {
     //Steps to accomplish entire upload task
     public synchronized void upload(final List<SourceFile> sources, final List<String> locks) throws IOException {
 
+        timestamp = remoteTimeStamp();
+        // 'timestamp' has to be set before calling setTitle("Uploading")
+        // setTitle("Uploading") has a side effect of adding timestamp to file names of 'sources'
+        // If timestamp is not set file names will end with '*-0'.
+        // See fiji.updater.logic.PluginUploader.VerifyTimestamp.setTitle(String)
         setTitle("Uploading");
 
-        timestamp = remoteTimeStamp();
 
         try {
             uploadFiles(sources);
