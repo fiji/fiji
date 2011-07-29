@@ -42,11 +42,17 @@ final class SFTPOperations {
 
 
     public void put(final InputStream in, final String dest) throws IOException {
+        put(in, dest, null);
+    }
+
+
+    public void put(final InputStream in, final String dest, final ProgressListener listener) throws IOException {
         LOGGER.fine("put(...,...," + dest + ")");
         mkParentDirs(dest);
 
+        final ProgressMonitor monitor = new ProgressMonitor(listener);
         try {
-            sftp.put(in, dest);
+            sftp.put(in, dest, monitor);
         } catch (final SftpException ex) {
             throw wrapException("Failed to upload file '" + dest + "'.", ex);
         }
@@ -157,4 +163,47 @@ final class SFTPOperations {
         return new IOException(m);
     }
 
+
+    /**
+     * Provides notification about count of uploaded bytes.
+     */
+    public interface ProgressListener {
+
+        /**
+         * Called with progress update.
+         *
+         * @param count number of bytes uploaded so far.
+         */
+        void progress(long count);
+    }
+
+
+    private class ProgressMonitor implements SftpProgressMonitor {
+
+        private long count = 0;
+        private final ProgressListener listener;
+
+
+        public ProgressMonitor(final ProgressListener listener) {
+            this.listener = listener;
+        }
+
+
+        public void init(final int op, final String src, final String dest, final long max) {
+            count = 0;
+        }
+
+
+        public boolean count(final long chunk) {
+            count += chunk;
+            if (listener != null) {
+                listener.progress(count);
+            }
+            return true;
+        }
+
+
+        public void end() {
+        }
+    }
 }

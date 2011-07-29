@@ -23,8 +23,6 @@ final public class SFTPFileUploader extends FileUploader {
 
     // TODO handle situation when *.lock file already exists on the server
     // TODO preserve modification times of uploaded files
-    // TODO Use SFTP progress monitor to have more detailed progress notifications (?)
-    // TODO Share ConfigInfo and getIdentity with SSHFileUploader (through a separate class SSHConfigInfo?)
 
     final SFTPOperations sftp;
 
@@ -77,7 +75,7 @@ final public class SFTPFileUploader extends FileUploader {
     private void uploadFiles(final List<SourceFile> sources) throws IOException {
         calculateTotalSize(sources);
 
-        int count = 0;
+        int sizeOfFilesUploadedSoFar = 0;
 
         for (final SourceFile source : sources) {
             final String target = source.getFilename();
@@ -90,19 +88,31 @@ final public class SFTPFileUploader extends FileUploader {
 
             // send contents of file
             final InputStream input = source.getInputStream();
+            final int currentFileSize = (int) source.getFilesize();
             final String dest = this.uploadDir + target;
             try {
                 log("Upload '" + source.getFilename() + "', size " + source.getFilesize());
-                sftp.put(input, dest);
+
+                // Setup progress monitoring for current file
+                final int uploadedBytesCount = sizeOfFilesUploadedSoFar;
+                final SFTPOperations.ProgressListener listener = new SFTPOperations.ProgressListener() {
+                    @Override
+                    public void progress(final long currentCount) {
+                        setItemCount((int) currentCount, currentFileSize);
+                        setCount(uploadedBytesCount + (int) currentCount, total);
+                    }
+                };
+
+                // Upload file
+                sftp.put(input, dest, listener);
             } finally {
                 input.close();
             }
 
             // Update progress notifications
-            final int fileSize = (int) source.getFilesize();
-            count += fileSize;
-            setItemCount(fileSize, fileSize);
-            setCount(count, total);
+            sizeOfFilesUploadedSoFar += currentFileSize;
+            setItemCount(currentFileSize, currentFileSize);
+            setCount(sizeOfFilesUploadedSoFar, total);
 
             itemDone(source);
         }
