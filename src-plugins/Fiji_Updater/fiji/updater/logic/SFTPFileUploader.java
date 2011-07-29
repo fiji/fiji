@@ -21,9 +21,6 @@ import java.util.List;
  */
 final public class SFTPFileUploader extends FileUploader {
 
-    // TODO handle situation when *.lock file already exists on the server
-    // TODO preserve modification times of uploaded files
-
     final SFTPOperations sftp;
 
 
