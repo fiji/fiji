@@ -13,17 +13,26 @@ import java.util.List;
 
 /**
  * Uploads files to an update server using only SFTP protocol.
- * In contrast to SSHFileUploader it does not execute any remote commands.
+ * In contrast to SSHFileUploader it does not execute any remote commands using SSH.
  * This important when setting up update site on Source Forge its restricted Shell
- * does not allow execution of any remote commands only copying of files.
+ * does not allow execution of any remote commands.
  *
  * @author Jarek Sacha
  */
 final public class SFTPFileUploader extends FileUploader {
 
-    final SFTPOperations sftp;
+    private final SFTPOperations sftp;
 
 
+    /**
+     * Create new instance of operations and initialize connection to remote site.
+     *
+     * @param username        username used for the connection.
+     * @param sshHost         remote host to connect to.
+     * @param uploadDirectory root directory on the remote server
+     * @param userInfo        authentication information.
+     * @throws JSchException if the connection fails.
+     */
     public SFTPFileUploader(final String username, final String sshHost, final String uploadDirectory,
                             final UserInfo userInfo) throws JSchException {
         super(uploadDirectory);
@@ -32,7 +41,6 @@ final public class SFTPFileUploader extends FileUploader {
     }
 
 
-    //Steps to accomplish entire upload task
     public synchronized void upload(final List<SourceFile> sources, final List<String> locks) throws IOException {
 
         timestamp = remoteTimeStamp();
@@ -119,7 +127,7 @@ final public class SFTPFileUploader extends FileUploader {
     }
 
 
-    public void disconnectSession() throws IOException {
+    void disconnectSession() throws IOException {
         sftp.disconnect();
     }
 

@@ -10,6 +10,8 @@ import java.util.Date;
 
 
 /**
+ * Wraps low level SFTP operations and isolates from implementation API.
+ *
  * @author Jarek Sacha
  * @since 4/21/11 2:15 PM
  */
@@ -19,6 +21,14 @@ final class SFTPOperations {
     final private ChannelSftp sftp;
 
 
+    /**
+     * Create new instance of operations and initialize connection to remote site.
+     *
+     * @param username username used for the connection.
+     * @param sshHost  remote host to connect to.
+     * @param userInfo authentication information.
+     * @throws JSchException if the connection fails.
+     */
     public SFTPOperations(final String username, final String sshHost, final UserInfo userInfo) throws JSchException {
 
         session = SSHSessionCreator.connect(username, sshHost, userInfo);
@@ -28,6 +38,11 @@ final class SFTPOperations {
     }
 
 
+    /**
+     * Disconnect session.
+     *
+     * @throws IOException last SFTP command failed.
+     */
     public void disconnect() throws IOException {
         int exitStatus = sftp.getExitStatus();
         sftp.disconnect();
@@ -38,11 +53,26 @@ final class SFTPOperations {
     }
 
 
+    /**
+     * Transfer data to remote server.
+     *
+     * @param in   input stream used fr transfer.
+     * @param dest name of the destination file to which the data will be saved to.
+     * @throws IOException if transfer fails.
+     */
     public void put(final InputStream in, final String dest) throws IOException {
         put(in, dest, null);
     }
 
 
+    /**
+     * Transfer data to remote server.
+     *
+     * @param in       input stream used fr transfer.
+     * @param dest     name of the destination file to which the data will be saved to.
+     * @param listener upload progress listener.
+     * @throws IOException if transfer fails.
+     */
     public void put(final InputStream in, final String dest, final ProgressListener listener) throws IOException {
         log("SFTPOperations.put(...,...," + dest + ")");
         mkParentDirs(dest);
@@ -56,6 +86,13 @@ final class SFTPOperations {
     }
 
 
+    /**
+     * Rename remote file.
+     *
+     * @param src  file to rename.
+     * @param dest new name.
+     * @throws IOException when operation fails.
+     */
     public void rename(final String src, final String dest) throws IOException {
 
         rm(dest);
@@ -71,6 +108,12 @@ final class SFTPOperations {
     }
 
 
+    /**
+     * Remove remote file or directory.
+     *
+     * @param path path to be deleted..
+     * @throws IOException when operation fails.
+     */
     public void rm(final String path) throws IOException {
 
         if (fileExists(path)) {
@@ -88,9 +131,8 @@ final class SFTPOperations {
      *
      * @param path path to test
      * @return {@code true} if the path exists
-     * @throws IOException in case of sftp error.
      */
-    public boolean fileExists(final String path) throws IOException {
+    public boolean fileExists(final String path) {
         log("SFTPOperations.fileExists2(" + path + ")");
 
         // Traversing the path may hit directories without read access.
@@ -116,13 +158,20 @@ final class SFTPOperations {
     }
 
 
-    public long timestamp(final String timestampFile) throws IOException {
+    /**
+     * Retrieve a timestamp of a remote file.
+     *
+     * @param file requested file.
+     * @return timestamp in a format "yyyyMMddHHmmss", for instance, 20110729132712
+     * @throws IOException in case of sftp error.
+     */
+    public long timestamp(final String file) throws IOException {
         final int mTime;
         try {
-            final SftpATTRS stats = sftp.stat(timestampFile);
+            final SftpATTRS stats = sftp.stat(file);
             mTime = stats.getMTime();
         } catch (final SftpException ex) {
-            throw new IOException("Failed to extract remote timestamp from file '" + timestampFile + "'.", ex);
+            throw new IOException("Failed to extract remote timestamp from file '" + file + "'.", ex);
         }
 
         final Date date = new Date(((long) mTime) * 1000);
@@ -132,7 +181,7 @@ final class SFTPOperations {
 
     private void mkParentDirs(final String root, final String path) throws IOException {
         if (path.contains("/")) {
-            final int index = path.indexOf("/");
+            final int index = path.indexOf('/');
             final String newRoot = root + path.substring(0, index + 1);
             final String newPath = path.substring(index + 1);
             if (!"/".equals(newRoot) && !fileExists(newRoot)) {
@@ -147,11 +196,11 @@ final class SFTPOperations {
     }
 
 
-    private static String removeTrailingSlash(final String path) {
-        return path.endsWith("/")
-                ? removeTrailingSlash(path.substring(0, path.length() - 1))
-                : path;
-    }
+//    private static String removeTrailingSlash(final String path) {
+//        return path.endsWith("/")
+//                ? removeTrailingSlash(path.substring(0, path.length() - 1))
+//                : path;
+//    }
 
 
     private IOException wrapException(final String message, final SftpException ex) {
@@ -182,7 +231,7 @@ final class SFTPOperations {
     }
 
 
-    private class ProgressMonitor implements SftpProgressMonitor {
+    private static class ProgressMonitor implements SftpProgressMonitor {
 
         private long count = 0;
         private final ProgressListener listener;
