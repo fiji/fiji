@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.logging.Logger;
 
 
 /**
@@ -15,8 +14,6 @@ import java.util.logging.Logger;
  * @since 4/21/11 2:15 PM
  */
 final class SFTPOperations {
-
-    private static final Logger LOGGER = Logger.getLogger(SFTPOperations.class.getName());
 
     final private Session session;
     final private ChannelSftp sftp;
@@ -47,7 +44,7 @@ final class SFTPOperations {
 
 
     public void put(final InputStream in, final String dest, final ProgressListener listener) throws IOException {
-        LOGGER.fine("put(...,...," + dest + ")");
+        log("SFTPOperations.put(...,...," + dest + ")");
         mkParentDirs(dest);
 
         final ProgressMonitor monitor = new ProgressMonitor(listener);
@@ -94,7 +91,7 @@ final class SFTPOperations {
      * @throws IOException in case of sftp error.
      */
     public boolean fileExists(final String path) throws IOException {
-        LOGGER.fine("fileExists2(" + path + ")");
+        log("SFTPOperations.fileExists2(" + path + ")");
 
         // Traversing the path may hit directories without read access.
         // Rather than listing content to see if directory exists just test the path directly (using nasty exception).
@@ -114,7 +111,7 @@ final class SFTPOperations {
      * @throws IOException in case of sftp error.
      */
     public void mkParentDirs(final String path) throws IOException {
-        LOGGER.fine("mkParentDirs(" + path + ")");
+        log("SFTPOperations.mkParentDirs(" + path + ")");
         mkParentDirs("", path);
     }
 
@@ -161,6 +158,13 @@ final class SFTPOperations {
         final String m = message + " SFTP error id=" + ex.id + ": " + ex.getMessage();
         IJ.log(m);
         return new IOException(m);
+    }
+
+
+    private static void log(final String message) {
+        if (IJ.debugMode) {
+            IJ.log(message);
+        }
     }
 
 

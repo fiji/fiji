@@ -146,9 +146,9 @@ final public class SFTPFileUploader extends FileUploader {
     }
 
 
-    private void log(final String message) {
-        IJ.log(message);
+    private static void log(final String message) {
+        if (IJ.debugMode) {
+            IJ.log(message);
+        }
     }
-
-
 }
