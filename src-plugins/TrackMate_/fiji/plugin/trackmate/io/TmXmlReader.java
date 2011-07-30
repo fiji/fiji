@@ -17,11 +17,13 @@ import org.jdom.DataConversionException;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
+import org.jdom.contrib.input.LineNumberElement;
+import org.jdom.contrib.input.LineNumberSAXBuilder;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.FeatureFilter;
+import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
@@ -40,6 +42,7 @@ public class TmXmlReader implements TmXmlKeys {
 	private Document document = null;
 	private File file;
 	private Element root;
+	private Logger logger;
 
 	/*
 	 * CONSTRUCTOR
@@ -48,8 +51,13 @@ public class TmXmlReader implements TmXmlKeys {
 	/**
 	 * Initialize this reader to read the file given in argument. No actual parsing is made at construction.
 	 */
-	public TmXmlReader(File file) {
+	public TmXmlReader(File file, Logger logger) {
 		this.file = file;
+		this.logger = logger;
+	}
+	
+	public TmXmlReader(File file) {
+		this(file, Logger.DEFAULT_LOGGER);
 	}
 
 	/*
@@ -61,7 +69,7 @@ public class TmXmlReader implements TmXmlKeys {
 	 * the other getter methods.
 	 */
 	public void parse() throws JDOMException,  IOException {
-		SAXBuilder sb = new SAXBuilder();
+		LineNumberSAXBuilder sb = new LineNumberSAXBuilder();
 		document = sb.build(file);
 		root = document.getRootElement();
 	}
@@ -397,6 +405,12 @@ public class TmXmlReader implements TmXmlKeys {
 								targetFound = true;
 							}
 							if (targetFound && sourceFound) {
+								if (sourceSpot.equals(targetSpot)) {
+									LineNumberElement lne = (LineNumberElement) edgeElement;
+									logger.error("Bad edge found for track "+trackElement.getAttributeValue(TRACK_ID_ATTRIBUTE_NAME)
+											+": loop edge at line "+lne.getStartLine()+". Skipping.");
+									break;
+								}
 								DefaultWeightedEdge edge = graph.addEdge(sourceSpot, targetSpot);
 								graph.setEdgeWeight(edge, weight);
 								break;
