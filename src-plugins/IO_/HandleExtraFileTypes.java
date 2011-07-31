@@ -1,6 +1,7 @@
 import ij.*;
 import ij.plugin.*;
 import java.io.*;
+import java.util.zip.GZIPInputStream;
 
 // Plugin to handle file types which are not implemented
 // directly in ImageJ through io.Opener
@@ -222,8 +223,27 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		}
 
 		// Albert Cardona: read TrakEM2 .xml files
-		if (name.endsWith(".xml")) {
-			if (-1 != new String(buf).toLowerCase().indexOf("trakem2")) {
+		if (name.endsWith(".xml") || name.endsWith(".xml.gz")) {
+			byte[] b = buf;
+			if (name.endsWith("z")) {
+				GZIPInputStream gz = null;
+				b = new byte[132];
+				try {
+					gz = new GZIPInputStream(new BufferedInputStream(new FileInputStream(path)));
+					gz.read(b, 0, 132);
+				} catch (Exception gze) {
+					gze.printStackTrace();
+					return null;
+				} finally {
+					try {
+						gz.close();
+					} catch (IOException gzioe) {
+						gzioe.printStackTrace();
+						return null;
+					}
+				}
+			}
+			if (-1 != new String(b).toLowerCase().indexOf("trakem2")) {
 				try {
 					// portable way, resists absence of TrakEM2_.jar in the classpath
 					final Class cla = Class.forName("ini.trakem2.Project");
