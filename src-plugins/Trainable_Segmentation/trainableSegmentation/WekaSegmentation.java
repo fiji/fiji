@@ -444,9 +444,7 @@ public class WekaSegmentation {
 			loadedTrainingData = null;
 			return false;
 		}
-
-		IJ.log("Loaded data: " + loadedTrainingData.numInstances() + " instances");
-
+		
 		boolean featuresChanged = false;
 		final boolean[] oldEnableFeatures = this.featureStackArray.getEnabledFeatures();
 		// Read checked features and check if any of them chasetButtonsEnablednged
@@ -459,15 +457,16 @@ public class WekaSegmentation {
 		if(featuresChanged)
 		{
 			//this.setButtonsEnabled(false);
-			this.featureStackArray.setEnabledFeatures(usedFeatures);
+			this.setEnabledFeatures( usedFeatures );
 			// Force features to be updated
 			updateFeatures = true;
+			
 		}
 
 		if (false == adjustSegmentationStateToData(loadedTrainingData) )
 			loadedTrainingData = null;
 		else
-			IJ.log("Loaded data: " + loadedTrainingData.numInstances() + " instances");
+			IJ.log("Loaded data: " + loadedTrainingData.numInstances() + " instances (" + loadedTrainingData.numAttributes() + " attributes)");
 
 		return true;
 	}
@@ -2862,7 +2861,7 @@ public class WekaSegmentation {
 		if(featuresChanged)
 		{
 			//this.setButtonsEnabled(false);
-			this.featureStackArray.setEnabledFeatures(usedFeatures);
+			this.featureStackArray.setEnabledFeatures( usedFeatures );
 			// Force features to be updated
 			updateFeatures = true;
 		}
@@ -2872,7 +2871,7 @@ public class WekaSegmentation {
 
 	/**
 	 * Create training instances out of the user markings
-	 * @return set of instances
+	 * @return set of instances (feature vectors in Weka format)
 	 */
 	public Instances createTrainingInstances()
 	{
@@ -3495,7 +3494,7 @@ public class WekaSegmentation {
 			}
 			
 			IJ.log("Total dataset: "+ wholeImageData.numInstances() + 
-					" instances, " + wholeImageData.numAttributes() + " attributes).");
+					" instances, " + wholeImageData.numAttributes() + " attributes.");
 			long end = System.currentTimeMillis();
 			IJ.log("Creating whole image data took: " + (end-start) + "ms");
 		
@@ -3714,12 +3713,21 @@ public class WekaSegmentation {
 		return true;
 	}
 
+	/**
+	 * Set expected membrane thickness (this will be the width of 
+	 * the center column of the membrane filter)
+	 * @param thickness expected membrane thickness (in pixels)
+	 */
 	public void setMembraneThickness(int thickness)
 	{
 		this.membraneThickness = thickness;
 		featureStackArray.setMembraneSize(thickness);
 	}
 
+	/**
+	 * Get current expected membrane thickness
+	 * @return expected membrane thickness
+	 */
 	public int getMembraneThickness()
 	{
 		return membraneThickness;
@@ -3749,6 +3757,10 @@ public class WekaSegmentation {
 		featureStackArray.setMaximumSigma(sigma);
 	}
 
+	/**
+	 * Get the maximum sigma/radius to use in the features
+	 * @return maximum sigma/radius to use in the features
+	 */
 	public float getMaximumSigma()
 	{
 		return maximumSigma;
@@ -3763,32 +3775,54 @@ public class WekaSegmentation {
 		minimumSigma = sigma;
 		featureStackArray.setMinimumSigma(sigma);
 	}
-
+	
+	/**
+	 * Get the minimum sigma (radius) to use in the features
+	 * @return minimum sigma (radius) to use in the features
+	 */
 	public float getMinimumSigma()
 	{
 		return minimumSigma;
 	}
 
+	/**
+	 * Get current number of trees (for random forest training)
+	 * @return number of trees
+	 */
 	public int getNumOfTrees()
 	{
 		return numOfTrees;
 	}
-
+	/**
+	 * Get number of random features (random forest training)
+	 * @return number of random feature per node of the random forest
+	 */
 	public int getNumRandomFeatures()
 	{
 		return randomFeatures;
 	}
-
+	/**
+	 * Get maximum depth of the random forest
+	 * @return maximum depth of the random forest
+	 */
 	public int getMaxDepth()
 	{
 		return maxDepth;
 	}
 
+	/**
+	 * Set the flag to balance the class distributions
+	 * @param homogenizeClasses boolean flag to enable/disable the class balance
+	 */
 	public void setDoHomogenizeClasses(boolean homogenizeClasses)
 	{
 		this.homogenizeClasses = homogenizeClasses;
 	}
 
+	/**
+	 * Get the boolean flag to enable/disable the class balance
+	 * @return flag to enable/disable the class balance
+	 */
 	public boolean doHomogenizeClasses()
 	{
 		return homogenizeClasses;
@@ -3866,6 +3900,11 @@ public class WekaSegmentation {
 		return this.enabledFeatures;
 	}
 	
+	/**
+	 * Merge two datasets of Weka instances in place
+	 * @param first first (and destination) dataset
+	 * @param second second dataset
+	 */
 	public void mergeDataInPlace(Instances first, Instances second)
 	{
 		for(int i=0; i<second.numInstances(); i++)

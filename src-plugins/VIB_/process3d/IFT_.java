@@ -1,23 +1,18 @@
 package process3d;
 
-import vib.Resample_;
 import vib.PointList;
 import vib.BenesNamedPoint;
 
-import java.util.Random;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ArrayList;
 
 import java.io.FileReader;
-import java.io.File;
 import java.io.BufferedReader;
 import java.io.PrintWriter;
 import java.io.FileWriter;
 
 import ij.IJ;
-import ij.measure.Calibration;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
@@ -29,8 +24,6 @@ import ij.text.TextWindow;
 
 import ij.gui.GenericDialog;
 import ij.WindowManager;
-
-import fiji.util.IntArray;
 
 public class IFT_ implements PlugInFilter {
 	

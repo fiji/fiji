@@ -707,6 +707,8 @@ if options.clean:
                 continue
             if re.search("(^\s*jars|precompiled)/batik.jar",line):
                 continue
+            if re.search("imagej2",line):
+                continue
         if re.search("^\s*missingPrecompiledFallBack",line):
             skip_next_line = True
             continue
@@ -732,7 +734,9 @@ if options.clean:
         with NamedTemporaryFile(delete=False) as tfp:
             with open(filename) as original:
                 for line in original:
-                    tfp.write(re.sub('fiji\s+--ant',"fiji --java-home '%s' --ant"%(java_home,),line))
+                    line = re.sub('../../fiji\s+',"../../fiji --java-home '%s' "%(java_home,),line)
+                    line = re.sub('/../bin/jar','/bin/jar',line)
+                    tfp.write(line)
         os.chmod(tfp.name, original_permissions)
         os.rename(tfp.name, original.name)
 

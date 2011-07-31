@@ -484,7 +484,7 @@ public class Stitching_2D implements PlugIn
 		imageInformationList.add(i2);
 		
 		final float[] max = Stitch_Image_Collection.getAndApplyMinMax(imageInformationList, dim);
-		return Stitch_Image_Collection.fuseImages(imageInformationList, max, name, fusionMethod, "rgb", dim, alpha);
+		return Stitch_Image_Collection.fuseImages(imageInformationList, max, name, fusionMethod, "rgb", dim, alpha, true );
 	}
 
 	/*private ImagePlus fuseImages(ImagePlus imp1, ImagePlus imp2, Point2D shift, String method, String name)

@@ -2060,6 +2060,51 @@ static void __attribute__((__noreturn__)) usage(void)
 		main_argv[0]);
 }
 
+static const char *parse_number(const char *string, unsigned int *result, int shift)
+{
+	char *endp;
+	long value = strtol(string, &endp, 10);
+
+	if (string == endp)
+		return NULL;
+
+	*result |= (int)(value << shift);
+	return endp;
+}
+
+static unsigned int guess_java_version(void)
+{
+	const char *java_home = get_jre_home();
+
+	while (java_home && *java_home) {
+		if (!prefixcmp(java_home, "jdk") || !prefixcmp(java_home, "jre")) {
+			unsigned int result = 0;
+			const char *p = java_home + 3;
+
+			p = parse_number(p, &result, 24);
+			if (p && *p == '.')
+				p = parse_number(p + 1, &result, 16);
+			if (p && *p == '.')
+				p = parse_number(p + 1, &result, 8);
+			if (p) {
+				if (*p == '_')
+					p = parse_number(p + 1, &result, 0);
+				return result;
+			}
+		}
+		java_home += strcspn(java_home, "\\/") + 1;
+	}
+	return 0;
+}
+
+static void jvm_workarounds(struct options *options)
+{
+	unsigned int java_version = guess_java_version();
+
+	if (java_version == 0x01070000 || java_version == 0x01070001)
+		add_option(options, "-XX:-UseLoopPredicate", 0);
+}
+
 /* the maximal size of the heap on 32-bit systems, in megabyte */
 #ifdef WIN32
 #define MAX_32BIT_HEAP 1638
@@ -2500,6 +2545,8 @@ static int start_ij(void)
 
 	if (is_ipv6_broken())
 		add_option(&options, "-Djava.net.preferIPv4Stack=true", 0);
+
+	jvm_workarounds(&options);
 
 	if (advanced_gc == 1) {
 		add_option(&options, "-Xincgc", 0);
