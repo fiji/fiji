@@ -6,7 +6,7 @@ import java.util.Collection;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.registration.ViewDataBeads;
 
-public abstract class DetectionView< S extends DetectionIdentification< S, T >, T extends DetectionView< S, T > > extends Detection< T > 
+public abstract class DetectionView< S extends DetectionIdentification< S, T >, T extends DetectionView< S, T > > extends AbstractDetection< T > 
 {
 	private static final long serialVersionUID = 1L;
 	
@@ -88,7 +88,6 @@ public abstract class DetectionView< S extends DetectionIdentification< S, T >, 
 		return contains;
 	}
 
-	@Override
 	public boolean equals( final DetectionView<?,?> otherDetection )
 	{
 		if ( this.getID() == otherDetection.getID() && this.getViewID() == otherDetection.getViewID() )

@@ -11,6 +11,7 @@ import ij.gui.NewImage;
 import ij.gui.Roi;
 import ij.measure.CurveFitter;
 import ij.measure.ResultsTable;
+import ij.plugin.Duplicator;
 import ij.plugin.PlugIn;
 import ij.plugin.filter.Convolver;
 import ij.plugin.filter.GaussianBlur;
@@ -24,7 +25,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Point;
-import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
@@ -336,7 +336,11 @@ public class Directionality_ implements PlugIn {
 		if (null == imp) {
 			IJ.error("Directionality", "No images are open.");
 			return;
-		}		
+		}
+		
+		Roi roi = imp.getRoi();
+		if (null != roi)
+			imp = new Duplicator().run(imp, 1, imp.getNSlices());
 
 		// Non-interactive mode?
 		if (null != arg && arg.length() > 0) {
@@ -384,16 +388,18 @@ public class Directionality_ implements PlugIn {
 		JFrame plot_frame = plotResults();
 		JFrame data_frame = displayFitAnalysis();
 		
-		int x = Math.max(0, imp.getWindow().getLocation().x - plot_frame.getSize().width);
-		int y = imp.getWindow().getLocation().y;
-		plot_frame.setLocation(x, y);
-		plot_frame.setVisible(true);
+//		int x = Math.max(0, imp.getWindow().getLocation().x - plot_frame.getSize().width);
+//		int y = imp.getWindow().getLocation().y;
+//		plot_frame.setLocation(x, y);
 		
-		y += plot_frame.getHeight();
-		if (y>Toolkit.getDefaultToolkit().getScreenSize().getHeight()) {
-			y = (int) (0.9 * Toolkit.getDefaultToolkit().getScreenSize().getHeight());
-		}
-		data_frame.setLocation(x, y);
+//		y += plot_frame.getHeight();
+//		if (y>Toolkit.getDefaultToolkit().getScreenSize().getHeight()) {
+//			y = (int) (0.9 * Toolkit.getDefaultToolkit().getScreenSize().getHeight());
+//		}
+//		data_frame.setLocation(x, y);
+		plot_frame.setLocationRelativeTo(imp.getWindow());
+		data_frame.setLocationRelativeTo(plot_frame);
+		plot_frame.setVisible(true);
 		data_frame.setVisible(true);
 		
 		if (display_table) {
@@ -529,6 +535,8 @@ public class Directionality_ implements PlugIn {
 			for (int j = 0; j < names.length; j++) {
 				dir = histograms.get(j);
 				table.addValue(names[j], dir[i]);
+				double val = CurveFitter.f(CurveFitter.GAUSSIAN, params_from_fit.get(j), bins[i]);
+				table.addValue(names[j]+"-fit", val);
 			}
 			index++;
 		}
@@ -538,6 +546,8 @@ public class Directionality_ implements PlugIn {
 			for (int j = 0; j < names.length; j++) {
 				dir = histograms.get(j);
 				table.addValue(names[j], dir[i]);
+				double val = CurveFitter.f(CurveFitter.GAUSSIAN, params_from_fit.get(j), bins[i]);
+				table.addValue(names[j]+"-fit", val);
 			}
 			index++;
 		}
@@ -1772,8 +1782,8 @@ public class Directionality_ implements PlugIn {
 		da.setBinNumber(60);
 		da.setBinStart(-90);
 
-		da.setBuildOrientationMapFlag(true);
-		da.setDebugFlag(true);
+		da.setBuildOrientationMapFlag(false);
+		da.setDebugFlag(false);
 		
 		
 		method = AnalysisMethod.FOURIER_COMPONENTS;
@@ -1783,7 +1793,7 @@ public class Directionality_ implements PlugIn {
 		center = fit_results.get(0)[2];
 		System.out.println("With method: "+method);
 		System.out.println(String.format("Found maxima at %.1f, expected it at 30º.\n", center, 30));
-		new ImagePlus("Orientation map for "+imp.getShortTitle(),da.getOrientationMap()).show();
+//		new ImagePlus("Orientation map for "+imp.getShortTitle(),da.getOrientationMap()).show();
 		
 		/*
 		method = AnalysisMethod.LOCAL_GRADIENT_ORIENTATION;
@@ -1796,9 +1806,12 @@ public class Directionality_ implements PlugIn {
 		new ImagePlus("Orientation map for "+imp.getShortTitle(),da.getOrientationMap()).show();
 		 */
 		
-		ImagePlus cw = generateColorWheel();
-		cw.show();
-		addColorMouseListener(cw.getCanvas());
+//		ImagePlus cw = generateColorWheel();
+//		cw.show();
+//		addColorMouseListener(cw.getCanvas());
+		
+		da.plotResults().setVisible(true);
+		da.displayResultsTable().show("Table");
 
 	}
 	

@@ -45,6 +45,7 @@ public class AboutDialog extends JDialog implements ActionListener{
 	private JEditorPane jAbout = null;
 	private JScrollPane jScrollPane = null;
 	private Frame owner;
+
 	/**
 	 * This is the default constructor
 	 */
@@ -123,7 +124,7 @@ public class AboutDialog extends JDialog implements ActionListener{
 			"<p class=\"orga\">Biomedical Imaging Group<br>" +
 			"Ecole Polytechnique Federale de Lausanne<br>" +
 			"Lausanne, Switzerland</p>" +
-			"<p class=\"desc\">21 December 2010<hr></p>"+
+			"<p class=\"desc\">11 July 2011<hr></p>"+
 			"<p class=\"help\"><b>Reference:</b> B. Forster, D. Van De Ville, J. Berent, D. Sage, M. Unser, " +
 			"Complex Wavelets for Extended Depth-of-Field: A New Method for the Fusion of Multichannel Microscopy Images, " +
 			"Microscopy Research and Technique, vol. 65, no. 1-2, pp. 33-42, September 2004.<br>" +

@@ -14,7 +14,7 @@ import mpicbg.models.AffineModel3D;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.Model;
 import mpicbg.models.NotEnoughDataPointsException;
-import mpicbg.pointdescriptor.model.RigidModel3D;
+import mpicbg.models.RigidModel3D;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
@@ -140,11 +140,13 @@ public class BeadRegistration
 		// for now all template views with each other
 		for ( int viewIndexA = 0; viewIndexA < template.getNumViews() - 1; viewIndexA++ )
     		for ( int viewIndexB = viewIndexA + 1; viewIndexB < template.getNumViews(); viewIndexB++ )
+    			if ( template.getViews().get( viewIndexA ).getUseForRegistration() && template.getViews().get( viewIndexB ).getUseForRegistration() )
     				comparePairs.add( new ViewDataBeads[]{ template.getViews().get( viewIndexA ), template.getViews().get( viewIndexB )} );
 		
 		// and all reference against all template views
 		for ( int viewIndexA = 0; viewIndexA < reference.getNumViews(); viewIndexA++ )
     		for ( int viewIndexB = 0; viewIndexB < template.getNumViews(); viewIndexB++ )
+    			if ( reference.getViews().get( viewIndexA ).getUseForRegistration() && reference.getViews().get( viewIndexB ).getUseForRegistration() )
     				comparePairs.add( new ViewDataBeads[]{ reference.getViews().get( viewIndexA ), template.getViews().get( viewIndexB )} );
 
 		final AtomicInteger ai = new AtomicInteger(0);					
@@ -238,7 +240,15 @@ public class BeadRegistration
         views.addAll( template.getViews() );
         
         // optimize the tiles but fix all the reference tiles
-		optimizeTiles( views, reference.getNumViews(), errorStatistics, debugLevel );	
+        
+        // get the number of tiles used for registration of the reference
+        int numTilesReference = 0;
+        
+        for ( final ViewDataBeads view : reference.getViews() )
+        	if ( view.getUseForRegistration() )
+        		numTilesReference++;
+        
+		optimizeTiles( views, numTilesReference, errorStatistics, debugLevel );	
 					
 		// unapply stretching
 		for ( final ViewDataBeads view : reference.getViews() )
@@ -305,6 +315,7 @@ public class BeadRegistration
 		// determine which view pairs to compare
 		for ( int viewIndexA = 0; viewIndexA < views.size() - 1; viewIndexA++ )
     		for ( int viewIndexB = viewIndexA + 1; viewIndexB < views.size(); viewIndexB++ )
+    			if ( views.get( viewIndexA ).getUseForRegistration() && views.get( viewIndexB ).getUseForRegistration() )
     				comparePairs.add( new int[]{viewIndexA, viewIndexB} );
 		
 		final AtomicInteger ai = new AtomicInteger(0);					
@@ -524,7 +535,7 @@ public class BeadRegistration
 					Transform3D t = TransformUtils.getTransform3D1( (AbstractAffineModel3D<?>)view.getTile().getModel() );
 					Vector3d s = new Vector3d();
 					t.getScale( s );
-					System.out.println( "Scaling: " + s );
+					IOFunctions.println( "Scaling: " + s );
 					
 					// TODO: Rigidmodel
 					/*
@@ -537,16 +548,38 @@ public class BeadRegistration
 			}
 			else
 			{
-				for ( final ViewDataBeads otherView : views )
-					view.getViewErrorStatistics().resetViewSpecificError( otherView );
+				if ( view.getUseForRegistration() )
+				{
+					for ( final ViewDataBeads otherView : views )
+						view.getViewErrorStatistics().resetViewSpecificError( otherView );
+					
+					view.getBeadStructure().clearAllRANSACCorrespondences();
 				
-				view.getBeadStructure().clearAllRANSACCorrespondences();
 				
-				if ( debugLevel <= ViewStructure.DEBUG_MAIN )
-					IOFunctions.println( view + ": is not connected to any other tile!" );
+					if ( debugLevel <= ViewStructure.DEBUG_MAIN )
+						IOFunctions.println( view + ": is not connected to any other tile!" );
+				}
 			}
-		}		
+		}
 		
+		// now update the registration in all channels where no registration was performed to the one in channelIndex 0
+		for ( final ViewDataBeads view : views )
+		{
+			if ( !view.getUseForRegistration() )
+			{
+				final int angle = view.getAcqusitionAngle();
+				final int timepoint = view.getViewStructure().getTimePoint();
+				
+				for ( final ViewDataBeads view2 : views )
+				{
+					if ( view2.getAcqusitionAngle() == angle && timepoint == view2.getViewStructure().getTimePoint() && view2.getUseForRegistration() == true )
+					{
+						view.getTile().getModel().set( view2.getTile().getModel() );
+						break;
+					}
+				}
+			}
+		}
 		return tc;
 	}
 
@@ -569,16 +602,16 @@ public class BeadRegistration
 			{
 				final RigidModel3D tmpModel = new RigidModel3D();				
 				final float z = (float)zStretching;
-				
-				final Transform3D t = new Transform3D();
-				t.setScale( new Vector3d( 1, 1, z ) );				
-				tmpModel.set( t );
-				
+
+				tmpModel.set( 1f, 0f, 0f, 0f, 
+							  0f, 1f, 0f, 0f,
+							  0f, 0f, z,  0f );
+
 				((RigidModel3D)model).concatenate( tmpModel );				
 			}
 			else
 			{
-				System.out.println( "Cannot concatenate Axial Scaling, unknown model!" );
+				IOFunctions.println( "Cannot concatenate Axial Scaling, unknown model!" );
 			}
 		}		
 	}

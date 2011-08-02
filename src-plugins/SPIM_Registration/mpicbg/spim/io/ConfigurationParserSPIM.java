@@ -36,7 +36,7 @@ public class ConfigurationParserSPIM
 	{
 		SPIMConfiguration conf = new SPIMConfiguration();
 
-		String knownDatatypes[] = { "int", "double", "String", "boolean", "float", "ContainerFactory", "InterpolatorFactory", "OutsideStrategyFactory" };
+		String knownDatatypes[] = { "int", "double", "String", "boolean", "float", "float[]", "ContainerFactory", "InterpolatorFactory", "OutsideStrategyFactory" };
 
 		// convert to unix-style
 		confFileName = confFileName.replace('\\', '/');
@@ -217,13 +217,27 @@ public class ConfigurationParserSPIM
 					{
 						fields[varFieldPos].setBoolean(conf, Boolean.parseBoolean(words[1]));
 					} 
+					else if ( cpo.getDataType().compareTo("float[]") == 0)
+					{
+						final String[] entries = words[1].split( "," );
+
+						if ( entries.length < 1 )
+							throw new ConfigurationParserException("Cannot parse array, should be 3, 4.3, 2, ... - but is '" + words[1] + "'");
+
+						final float[] values = new float[ entries.length ];
+
+						for ( int i = 0; i < entries.length; ++i )
+							values[ i ] = Float.parseFloat( entries[ i ] );
+
+						fields[varFieldPos].set( conf, values );
+					}
 					else if ( cpo.getDataType().compareTo("float") == 0)
 					{
 						if (words[1].toLowerCase().compareTo("nan") == 0)
 							fields[varFieldPos].setFloat(conf, Float.NaN);
 						else
 							fields[varFieldPos].setFloat(conf, Float.parseFloat(words[1]));
-					} 
+					}
 					else if ( cpo.getDataType().compareTo("double") == 0)
 					{
 						if (words[1].toLowerCase().compareTo("nan") == 0)
@@ -361,8 +375,7 @@ public class ConfigurationParserSPIM
 			{
 				if (!dir.exists())
 				{
-					IOFunctions.printErr("(" + new Date(System.currentTimeMillis()) + "): Cannot create directory '" + conf.outputdirectory + "', quitting.");
-					System.exit(0);
+					throw new ConfigurationParserException("(" + new Date(System.currentTimeMillis()) + "): Cannot create directory '" + conf.outputdirectory + "', quitting.");
 				}				
 			}
 		}
@@ -376,8 +389,7 @@ public class ConfigurationParserSPIM
 			{
 				if (!dir.exists())
 				{
-					IOFunctions.printErr("(" + new Date(System.currentTimeMillis()) + "): Cannot create directory '" + conf.registrationFiledirectory + "', quitting.");
-					System.exit(0);
+					throw new ConfigurationParserException("(" + new Date(System.currentTimeMillis()) + "): Cannot create directory '" + conf.registrationFiledirectory + "', quitting.");
 				}
 			}
 		}	

@@ -186,7 +186,7 @@ public class IOFunctions
 				if ( view.getID() != viewID && !printedOnce )
 				{
 					if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
-						IOFunctions.printErr("ViewID messed up, should be " + viewID + "(file) but is " + view.getID() + "(view). We have to recompute the registration (WILL BE OVERWRITTEN).");
+						IOFunctions.println("ViewID messed up, should be " + viewID + "(file) but is " + view.getID() + "(view). We have to recompute the registration (WILL BE OVERWRITTEN).");
 					
 					printedOnce = true;
 				}
@@ -316,7 +316,7 @@ public class IOFunctions
 				if ( view.getID() != viewID && !printedOnce )
 				{
 					if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
-						IOFunctions.printErr("ViewID messed up, should be " + viewID + "(file) but is " + view.getID() + "(view). We have to recompute the registration (WILL BE OVERWRITTEN).");
+						IOFunctions.println("ViewID messed up, should be " + viewID + "(file) but is " + view.getID() + "(view). We have to recompute the registration (WILL BE OVERWRITTEN).");
 					
 					for ( final Nucleus nucleus : view.getNucleiStructure().getNucleiList() )
 					{
@@ -360,23 +360,31 @@ public class IOFunctions
 						{
 							final int corrNucleusID = Integer.parseInt(entry.substring(0, entry.indexOf(':')));
 							final int corrViewID = Integer.parseInt(entry.substring(entry.indexOf(':')+1, entry.length()));
-							try
+							
+							final ViewDataBeads correspondingView = view.getViewStructure().getViewFromID(corrViewID);
+
+							// maybe one corresponding view is not loaded
+							// (before we computed 0,90,180,270 and now only 0,90 - stored correspondences with 180 and 270 should be ignored)
+							if ( correspondingView != null )
 							{
-								nucleus.getDescriptorCorrespondence().add( new NucleusIdentification( corrNucleusID, view.getViewStructure().getViewFromID(corrViewID) ));
-							}
-							catch(Exception e )
-							{
-								if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
-									IOFunctions.printErr("Could not add descriptor correspondence " + nucleusID + ": " + e);
-								
-								for ( final Nucleus n : view.getNucleiStructure().getNucleiList() )
+								try
 								{
-									n.getDescriptorCorrespondence().clear();
-									n.getRANSACCorrespondence().clear();
-									n.getICPCorrespondence().clear();
+									nucleus.getDescriptorCorrespondence().add( new NucleusIdentification( corrNucleusID, correspondingView ));
 								}
-								
-								return false;													
+								catch(Exception e )
+								{
+									if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
+										IOFunctions.printErr("Could not add descriptor correspondence " + nucleusID + ": " + e);
+									
+									for ( final Nucleus n : view.getNucleiStructure().getNucleiList() )
+									{
+										n.getDescriptorCorrespondence().clear();
+										n.getRANSACCorrespondence().clear();
+										n.getICPCorrespondence().clear();
+									}
+									
+									return false;													
+								}
 							}
 						}
 				}
@@ -391,25 +399,32 @@ public class IOFunctions
 						{
 							final int corrNucleusID = Integer.parseInt(entry.substring(0, entry.indexOf(':')));
 							final int corrViewID = Integer.parseInt(entry.substring(entry.indexOf(':')+1, entry.length()));
-							try
+
+							final ViewDataBeads correspondingView = view.getViewStructure().getViewFromID(corrViewID);
+
+							// maybe one corresponding view is not loaded
+							// (before we computed 0,90,180,270 and now only 0,90 - stored correspondences with 180 and 270 should be ignored)
+							if ( correspondingView != null )
 							{
-								nucleus.getRANSACCorrespondence().add( new NucleusIdentification( corrNucleusID, view.getViewStructure().getViewFromID(corrViewID) ) );
-							}
-							catch(Exception e )
-							{
-								if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
-									IOFunctions.printErr("Could not add ransac correspondence " + nucleusID + ": " + e);
-								
-								for ( final Nucleus n : view.getNucleiStructure().getNucleiList() )
+								try
 								{
-									n.getDescriptorCorrespondence().clear();
-									n.getRANSACCorrespondence().clear();
-									n.getICPCorrespondence().clear();
+									nucleus.getRANSACCorrespondence().add( new NucleusIdentification( corrNucleusID, correspondingView ) );
 								}
-								
-								return false;													
+								catch(Exception e )
+								{
+									if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
+										IOFunctions.printErr("Could not add ransac correspondence " + nucleusID + ": " + e);
+									
+									for ( final Nucleus n : view.getNucleiStructure().getNucleiList() )
+									{
+										n.getDescriptorCorrespondence().clear();
+										n.getRANSACCorrespondence().clear();
+										n.getICPCorrespondence().clear();
+									}
+									
+									return false;													
+								}
 							}
-								
 						}
 				}
 
@@ -425,25 +440,32 @@ public class IOFunctions
 							{
 								final int corrNucleusID = Integer.parseInt(entry.substring(0, entry.indexOf(':')));
 								final int corrViewID = Integer.parseInt(entry.substring(entry.indexOf(':')+1, entry.length()));
-								try
+								
+								final ViewDataBeads correspondingView = view.getViewStructure().getViewFromID(corrViewID);
+
+								// maybe one corresponding view is not loaded
+								// (before we computed 0,90,180,270 and now only 0,90 - stored correspondences with 180 and 270 should be ignored)
+								if ( correspondingView != null )
 								{
-									nucleus.getICPCorrespondence().add( new NucleusIdentification( corrNucleusID, view.getViewStructure().getViewFromID(corrViewID) ) );
-								}
-								catch(Exception e )
-								{
-									if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
-										IOFunctions.printErr("Could not add ICP correspondence " + nucleusID + ": " + e);
-									
-									for ( final Nucleus n : view.getNucleiStructure().getNucleiList() )
+									try
 									{
-										n.getDescriptorCorrespondence().clear();
-										n.getRANSACCorrespondence().clear();
-										n.getICPCorrespondence().clear();
+										nucleus.getICPCorrespondence().add( new NucleusIdentification( corrNucleusID, correspondingView ) );
 									}
-									
-									return false;													
-								}
-									
+									catch(Exception e )
+									{
+										if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
+											IOFunctions.printErr("Could not add ICP correspondence " + nucleusID + ": " + e);
+										
+										for ( final Nucleus n : view.getNucleiStructure().getNucleiList() )
+										{
+											n.getDescriptorCorrespondence().clear();
+											n.getRANSACCorrespondence().clear();
+											n.getICPCorrespondence().clear();
+										}
+										
+										return false;													
+									}
+								}	
 							}
 					}
 				}
@@ -469,7 +491,7 @@ public class IOFunctions
 		{
 			if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
 				IOFunctions.println("IOFunctions.readNucleiCorrespondences(): " + e + " in view " + view.getName() + " of " + view.getViewStructure() + " in line " + countLine );
-
+			e.printStackTrace();
 			for ( final Nucleus n : view.getNucleiStructure().getNucleiList() )
 			{
 				n.getDescriptorCorrespondence().clear();
@@ -571,7 +593,7 @@ public class IOFunctions
 				if ( view.getID() != viewID && !printedOnce )
 				{
 					if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
-						IOFunctions.printErr("ViewID messed up, should be " + viewID + "(file) but is " + view.getID() + "(view). We have to recompute the registration (WILL BE OVERWRITTEN).");
+						IOFunctions.println("ViewID messed up, should be " + viewID + "(file) but is " + view.getID() + "(view). We have to recompute the registration (WILL BE OVERWRITTEN).");
 					
 					if ( conf != null)
 					{
@@ -648,6 +670,25 @@ public class IOFunctions
 		}
 		
 		return readSeg;
+	}
+	
+	public static boolean writeDim( final ViewDataBeads view, final String directory )
+	{
+		try 
+		{
+			PrintWriter out = TextFileAccess.openFileWriteEx( directory + view.getName() + ".dim" );
+			out.println("image width: " + view.getImageSize()[0]);
+			out.println("image height: " + view.getImageSize()[1]);
+			out.println("image depth: " + view.getImageSize()[2]);				
+			out.close();
+		} 
+		catch (IOException e) 
+		{
+			IOFunctions.printErr( "Cannot write dim file for " + view + ": " + e );
+			return false;
+		}				
+		
+		return true;
 	}
 	
 	public static boolean readDim( final ViewDataBeads view, final String directory )

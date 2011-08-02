@@ -138,17 +138,17 @@ public class Stitch_Image_Collection implements PlugIn
 		boolean previewOnly = gd.getNextBoolean();
 		previewOnlyStatic = previewOnly;
 		
-		work(fileName, previewOnly, computeOverlap, fusionMethod, handleRGB);		
+		work(fileName, previewOnly, computeOverlap, fusionMethod, handleRGB, true);		
 	}
 	
-	public void work(String fileName, boolean createPreview, boolean computeOverlap, String fusionMethod, String handleRGB)
+	public ImagePlus work(String fileName, boolean createPreview, boolean computeOverlap, String fusionMethod, String handleRGB, boolean showImage)
 	{
 		// read the layout file
 		ArrayList<ImageInformation> imageInformationList = readLayoutFile(fileName);		
-		work(imageInformationList, createPreview, computeOverlap, fusionMethod, handleRGB, fileName);
+		return work(imageInformationList, createPreview, computeOverlap, fusionMethod, handleRGB, fileName, showImage);
 	}
 	
-	public ImagePlus work( GridLayout gridLayout, boolean createPreview, boolean computeOverlap, String fileName )
+	public ImagePlus work( GridLayout gridLayout, boolean createPreview, boolean computeOverlap, String fileName, boolean showImage )
 	{
 		this.alpha = gridLayout.alpha;
 		this.thresholdR = gridLayout.thresholdR;
@@ -157,11 +157,11 @@ public class Stitch_Image_Collection implements PlugIn
 		this.dim = gridLayout.dim;
 		this.rgbOrder = gridLayout.rgbOrder;
 		
-		return work(gridLayout.imageInformationList, createPreview, computeOverlap, gridLayout.fusionMethod, gridLayout.handleRGB, fileName);
+		return work(gridLayout.imageInformationList, createPreview, computeOverlap, gridLayout.fusionMethod, gridLayout.handleRGB, fileName, showImage);
 	}
 	
-	public ImagePlus work(ArrayList<ImageInformation> imageInformationList, boolean createPreview, boolean computeOverlap, String fusionMethod, String handleRGB, String fileName)
-	{		
+	public ImagePlus work(ArrayList<ImageInformation> imageInformationList, boolean createPreview, boolean computeOverlap, String fusionMethod, String handleRGB, String fileName, boolean showImage)
+	{	
 		IJ.log("(" + new Date(System.currentTimeMillis()) + "): Stitching the following files:");
 		for (ImageInformation iI : imageInformationList)
 			IJ.log("" + iI);	
@@ -213,9 +213,11 @@ public class Stitch_Image_Collection implements PlugIn
 			IJ.log("(" + new Date(System.currentTimeMillis()) + "): Size of bounding box for output image: " + max[0] + ", " + max[1]);
 		
 		// fuse the images
-		ImagePlus fused = fuseImages(newImageInformationList, max, "Stitched Image", fusionMethod, rgbOrder, dim, alpha);
-		fused.show();
+		ImagePlus fused = fuseImages(newImageInformationList, max, "Stitched Image", fusionMethod, rgbOrder, dim, alpha, showImage );
+		if ( showImage )
+			fused.show();
 		IJ.log("(" + new Date(System.currentTimeMillis()) + "): Finished Stitching.");
+
 		return fused;
 	}
 	
@@ -260,7 +262,7 @@ public class Stitch_Image_Collection implements PlugIn
 	}
 	
 	public static ImagePlus fuseImages(final ArrayList<ImageInformation> imageInformationList, final float[] max, final String name, final String fusionMethod, 
-									   final String rgbOrder, final int dim, final double alpha)
+									   final String rgbOrder, final int dim, final double alpha, final boolean showOutput )
 	{
 		final int type;
 
@@ -312,7 +314,9 @@ public class Stitch_Image_Collection implements PlugIn
 		Calibration cal = null;
 		
 		final ImageStack fusedStack = fusedImp.getStack();	
-		fusedImp.show();
+		
+		if ( showOutput )
+			fusedImp.show();
 
 		try
 		{
@@ -477,7 +481,8 @@ public class Stitch_Image_Collection implements PlugIn
 				if (type == MAX && imageType == ImagePlus.GRAY32)
 					fusedImp.getProcessor().setMinAndMax(minmax[0], minmax[1]);
 				
-				fusedImp.updateAndDraw();
+				if ( showOutput )
+					fusedImp.updateAndDraw();
 				count++;
 				
 				fusedImp.setTitle(name + " - " + (count/imageInformationList.size()) + "%");
@@ -650,7 +655,8 @@ public class Stitch_Image_Collection implements PlugIn
 	        				// only the first Thread redraws
 	        				if (myNumber == 0)
 	        				{		        				
-		        				fusedImp.setTitle(name + " " + line + " of " + imgW );		        				
+	        					if ( showOutput )
+	        						fusedImp.setTitle(name + " " + line + " of " + imgW );		        				
 		        			}
 	        				
 	        				if (pos[0] % 100 == 0)
@@ -658,7 +664,8 @@ public class Stitch_Image_Collection implements PlugIn
 		        				if (imageType == ImagePlus.GRAY32)
 		        					fusedImp.getProcessor().setMinAndMax(minmax[0], minmax[1]);
 	        					
-		        				fusedImp.updateAndDraw();
+		        				if ( showOutput )
+		        					fusedImp.updateAndDraw();
 	        				}
 	        			}
 	        			

@@ -7,8 +7,8 @@ import mpicbg.spim.registration.bead.Bead;
 
 /**
  * The DetectionIdentification object stores the link (via ID) to an Detection-object and not an actual instance, but a link to the ViewDataBeads object where it belongs to.
- * This is necessary for storing/loading {@link Detection}on-relationships to/from a text file. The {@link Detection}-objects of every {@link ViewDataBeads} have an {@link ArrayList} 
- * of {@link DetectionIdentification} objects telling which other {@link Detection}s are correspondence candidates or true correspondences.
+ * This is necessary for storing/loading {@link AbstractDetection}on-relationships to/from a text file. The {@link AbstractDetection}-objects of every {@link ViewDataBeads} have an {@link ArrayList} 
+ * of {@link DetectionIdentification} objects telling which other {@link AbstractDetection}s are correspondence candidates or true correspondences.
  *  
  * @author Stephan Preibisch
  *

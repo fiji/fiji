@@ -88,6 +88,8 @@ public class MultiChannel_SPIM_Registration extends SPIMRegistrationAbstract
 		conf.timepointPattern = timepointsStatic;	
 		conf.anglePattern = anglesStatic;
 		conf.channelPattern = channelsStatic;
+		conf.channelsToRegister = conf.channelPattern;
+		conf.channelsToFuse = conf.channelPattern;
 		conf.inputFilePattern = fileNamePatternStatic;
 		conf.inputdirectory = spimDataDirectoryStatic;
 		
@@ -101,16 +103,35 @@ public class MultiChannel_SPIM_Registration extends SPIMRegistrationAbstract
 		
 		conf.readSegmentation = loadSegmentationStatic;
 		
+		int numChannels;
+		try
+		{
+			numChannels = SPIMConfiguration.parseIntegerString( conf.channelPattern ).size();
+		}
+		catch (ConfigurationParserException e1)
+		{
+			IOFunctions.printErr( "Cannot parse channels: " + e1 );
+			return null;
+		}
+
+		conf.minPeakValue = new float[ numChannels ];
+		conf.minInitialPeakValue = new float[ numChannels ];
+
 		if ( beadBrightness == 0 )
-			conf.minPeakValue = 0.001f;
+			for ( int c = 0; c < numChannels; ++c )
+				conf.minPeakValue[ c ] = 0.001f;
 		else if ( beadBrightness == 1 )
-			conf.minPeakValue = 0.008f;
-		else if ( beadBrightness == 1 )
-			conf.minPeakValue = 0.03f;
+			for ( int c = 0; c < numChannels; ++c )
+				conf.minPeakValue[ c ] = 0.008f;
+		else if ( beadBrightness == 2 )
+			for ( int c = 0; c < numChannels; ++c )
+				conf.minPeakValue[ c ] = 0.03f;
 		else
-			conf.minPeakValue = 0.1f;
+			for ( int c = 0; c < numChannels; ++c )
+				conf.minPeakValue[ c ] = 0.1f;
 		
-		conf.minInitialPeakValue = conf.minPeakValue/4;
+		for ( int c = 0; c < numChannels; ++c )
+			conf.minInitialPeakValue[ c ] = conf.minPeakValue[ c ]/4;
 		
 		conf.readRegistration = loadRegistrationStatic;
 		conf.registerOnly = registrationOnlyStatic;
@@ -185,7 +206,7 @@ public class MultiChannel_SPIM_Registration extends SPIMRegistrationAbstract
 				if (!dir.exists())
 				{
 					IOFunctions.printErr("(" + new Date(System.currentTimeMillis()) + "): Cannot create directory '" + conf.outputdirectory + "', quitting.");
-					System.exit(0);
+					return null;
 				}				
 			}
 		}
@@ -200,7 +221,7 @@ public class MultiChannel_SPIM_Registration extends SPIMRegistrationAbstract
 				if (!dir.exists())
 				{
 					IOFunctions.printErr("(" + new Date(System.currentTimeMillis()) + "): Cannot create directory '" + conf.registrationFiledirectory + "', quitting.");
-					System.exit(0);
+					return null;
 				}
 			}
 		}			

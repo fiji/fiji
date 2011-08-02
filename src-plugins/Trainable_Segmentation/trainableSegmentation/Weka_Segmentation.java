@@ -1699,7 +1699,7 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public void loadClassifier()
 	{
-		OpenDialog od = new OpenDialog("Choose Weka classifier file","");
+		OpenDialog od = new OpenDialog( "Choose Weka classifier file", "" );
 		if (od.getFileName()==null)
 			return;
 		IJ.log("Loading Weka classifier from " + od.getDirectory() + od.getFileName() + "...");
@@ -1844,7 +1844,7 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public void loadNewImage()
 	{
-		OpenDialog od = new OpenDialog("Choose new image", "");
+		OpenDialog od = new OpenDialog("Choose new image", OpenDialog.getLastDirectory());
 		if (od.getFileName()==null)
 			return;
 
@@ -1890,7 +1890,7 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public void loadTrainingData()
 	{
-		OpenDialog od = new OpenDialog("Choose data file","", "data.arff");
+		OpenDialog od = new OpenDialog("Choose data file", OpenDialog.getLastDirectory(), "data.arff");
 		if (od.getFileName()==null)
 			return;
 		
@@ -2024,7 +2024,10 @@ public class Weka_Segmentation implements PlugIn
 		gd.addNumericField("Maximum sigma:", wekaSegmentation.getMaximumSigma(), 1);
 
 		if(wekaSegmentation.getLoadedTrainingData() != null)
-			((TextField) gd.getNumericFields().get(0)).setEnabled(false);
+		{
+			for(int i = 0; i < 4; i++)
+				((TextField) gd.getNumericFields().get( i )).setEnabled(false);
+		}
 
 		gd.addMessage("Classifier options:");
 

@@ -182,15 +182,15 @@ public class SPIM_Registration extends SPIMRegistrationAbstract
 		conf.readSegmentation = loadSegmentationStatic;
 		
 		if ( beadBrightness == 0 )
-			conf.minPeakValue = 0.001f;
+			conf.minPeakValue = new float[]{ 0.001f };
 		else if ( beadBrightness == 1 )
-			conf.minPeakValue = 0.008f;
-		else if ( beadBrightness == 1 )
-			conf.minPeakValue = 0.03f;
+			conf.minPeakValue = new float[]{ 0.008f };
+		else if ( beadBrightness == 2 )
+			conf.minPeakValue = new float[]{ 0.03f };
 		else
-			conf.minPeakValue = 0.1f;
+			conf.minPeakValue = new float[]{ 0.1f };
 		
-		conf.minInitialPeakValue = conf.minPeakValue/4;
+		conf.minInitialPeakValue = new float[]{ conf.minPeakValue[0]/4 };
 		
 		conf.readRegistration = loadRegistrationStatic;
 		conf.registerOnly = registrationOnlyStatic;

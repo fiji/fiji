@@ -76,7 +76,6 @@ public class ExtendedDepthOfField {
 		ImageStack stackConverted;
 		ImagePlus impConverted;
 		ImagePlus impBW = imp;
-
 		if (parameters.color) {
 
 			log.start("Color conversion...");

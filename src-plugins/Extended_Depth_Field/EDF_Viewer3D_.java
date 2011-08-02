@@ -45,7 +45,6 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 
 import surfacemap.SurfaceMap3D;
 
@@ -148,7 +147,7 @@ public class EDF_Viewer3D_ extends JDialog implements ActionListener {
 		constraint.anchor = GridBagConstraints.NORTHWEST;
 		constraint.insets = new Insets(space, space, space, space);
 		constraint.weightx = IJ.isMacintosh()?90:100;
-		constraint.fill = constraint.HORIZONTAL;
+		constraint.fill = GridBagConstraints.HORIZONTAL;
 		layout.setConstraints(comp, constraint);
 		pn.add(comp);
 	}
@@ -202,30 +201,6 @@ public class EDF_Viewer3D_ extends JDialog implements ActionListener {
 				this.bnHeightMap.setEnabled(false);
 		}
 	}
-
-	/**
-	 * Get an integer value from a TextField between minimal and maximal values.
-	 */
-	private int getIntegerValue(JTextField text, int mini, int defaut, int maxi) {
-		double d;
-		try {
-			d = (new Double(text.getText())).doubleValue();
-			if (d < mini)
-				text.setText( "" + mini);
-			if (d > maxi)
-				text.setText( "" + maxi);
-		}
-
-		catch (Exception e) {
-			if (e instanceof NumberFormatException)
-				text.setText( "" + defaut);
-		}
-		d = (new Double(text.getText())).doubleValue();
-
-		int i = (int) d;
-		return i;
-	}
-
 
 	/**
 	 * Set the list of images.

@@ -3,6 +3,7 @@ package mpicbg.spim.registration.bead;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3i;
@@ -15,6 +16,8 @@ import mpicbg.imglib.cursor.LocalizableByDimCursor3D;
 import mpicbg.imglib.cursor.special.HyperSphereIterator;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.integer.IntType;
 import mpicbg.imglib.type.numeric.real.FloatType;
@@ -29,6 +32,7 @@ import mpicbg.spim.registration.threshold.ConnectedComponent;
 
 public class BeadSegmentation
 {	
+	public static final boolean debugBeads = false;
 	public ViewStructure viewStructure;
 	
 	public BeadSegmentation( final ViewStructure viewStructure ) 
@@ -47,45 +51,103 @@ public class BeadSegmentation
 				
 		//
 		// Extract the beads
-		// 			
-		for ( final ViewDataBeads view : views )
+		// 		
+		if ( conf.multiThreadedOpening )
 		{
-			if (conf.useScaleSpace)					
-			{
-	    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Scale Space Bead Extraction for " + view.getName() );
-				
-	    		view.setBeadStructure( extractBeadsLaPlaceImgLib( view, conf ) );
-	    		
-				//view.setBeadStructure( extractBeadsLaPlace( view, conf ) );
-				
-				/*
-				img = getFoundBeads( view );				
-				img.setName( "imglib" );
-				img.getDisplay().setMinMax();
-				ImageJFunctions.copyToImagePlus( img ).show();				
-				SimpleMultiThreading.threadHaltUnClean();
-				*/
-				view.closeImage();
-			}
-			else
-			{
-	    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Threshold Bead Extraction");					
-				
-				view.setBeadStructure( extractBeadsThresholdSegmentation( view, threshold, conf.minSize, conf.maxSize, conf.minBlackBorder) );
-				
-				view.closeImage();				
-			}
-				
-			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-				IOFunctions.println( "Found peaks (possible beads): " + view.getBeadStructure().getBeadList().size() );
+			final int numThreads = views.size();
 			
-			//
-			// Store segmentation in a file
-			//
-			if ( conf.writeSegmentation )
-				IOFunctions.writeSegmentation( view, conf.registrationFiledirectory );										
+			for ( final ViewDataBeads view : views )
+				if ( view.getUseForRegistration() )
+					view.getImage();
+
+			final AtomicInteger ai = new AtomicInteger(0);					
+	        Thread[] threads = SimpleMultiThreading.newThreads( numThreads );
+
+			for (int ithread = 0; ithread < threads.length; ++ithread)
+	            threads[ithread] = new Thread(new Runnable()
+	            {
+	                public void run()
+	                {
+	                    final int myNumber = ai.getAndIncrement();
+
+	                    final ViewDataBeads view = views.get( myNumber );
+	                    
+	                    if ( view.getUseForRegistration() )
+	                    {	                    
+		        			if (conf.useScaleSpace)					
+		        			{
+		        	    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+		        	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Scale Space Bead Extraction for " + view.getName() );
+		        				
+		        	    		view.setBeadStructure( extractBeadsLaPlaceImgLib( view, conf ) );
+
+		        				view.closeImage();
+		        			}
+		        			else
+		        			{
+		        	    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+		        	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Threshold Bead Extraction");					
+		        				
+		        				view.setBeadStructure( extractBeadsThresholdSegmentation( view, threshold, conf.minSize, conf.maxSize, conf.minBlackBorder) );
+		        				
+		        				view.closeImage();				
+		        			}
+		        				
+		        			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+		        				IOFunctions.println( "Found peaks (possible beads): " + view.getBeadStructure().getBeadList().size() );
+		        			
+		        			//
+		        			// Store segmentation in a file
+		        			//
+		        			if ( conf.writeSegmentation )
+		        				IOFunctions.writeSegmentation( view, conf.registrationFiledirectory );
+	                    }
+	                }
+	            });
+			
+			SimpleMultiThreading.startAndJoin( threads );
+		}
+		else
+		{		
+			for ( final ViewDataBeads view : views )
+			{
+				if (conf.useScaleSpace)					
+				{
+		    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+		    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Scale Space Bead Extraction for " + view.getName() );
+					
+		    		view.setBeadStructure( extractBeadsLaPlaceImgLib( view, conf ) );
+		    		
+		    		if ( debugBeads )
+		    		{
+						Image<FloatType> img = getFoundBeads( view );				
+						img.setName( "imglib" );
+						img.getDisplay().setMinMax();
+						ImageJFunctions.copyToImagePlus( img ).show();				
+						SimpleMultiThreading.threadHaltUnClean();		    			
+		    		}
+		    		
+					view.closeImage();
+				}
+				else
+				{
+		    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+		    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Threshold Bead Extraction");					
+					
+					view.setBeadStructure( extractBeadsThresholdSegmentation( view, threshold, conf.minSize, conf.maxSize, conf.minBlackBorder) );
+					
+					view.closeImage();				
+				}
+					
+				if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+					IOFunctions.println( "Found peaks (possible beads): " + view.getBeadStructure().getBeadList().size() );
+				
+				//
+				// Store segmentation in a file
+				//
+				if ( conf.writeSegmentation )
+					IOFunctions.writeSegmentation( view, conf.registrationFiledirectory );										
+			}
 		}
 	}
 		
@@ -99,264 +161,46 @@ public class BeadSegmentation
 		
 		for ( Bead bead : view.getBeadStructure().getBeadList())
 		{
-			float[] pos = bead.getL();
+			final float[] pos = bead.getL();
 			
-			LocalizablePoint p = new LocalizablePoint( pos );
+			final LocalizablePoint p = new LocalizablePoint( pos );
 			
 			HyperSphereIterator<FloatType> it = new HyperSphereIterator<FloatType>( img, p, 1, new OutOfBoundsStrategyValueFactory<FloatType>() );
 			
 			for ( final FloatType f : it )
-				f.setOne();
-			
-			//cursor.setPosition((int)(pos[0] + 0.5), (int)(pos[1] + 0.5), (int)(pos[2] + 0.5));
-			//cursor.getType().setOne();
+				f.setOne();			
 		}
 		
 		cursor.close();
 
 		return img;
 	}
-	
-	/*
-	protected BeadStructure extractBeadsScaleSpace(final Float3D img, final SPIMConfiguration conf, final ViewDataBeads view)
-	{
-    	final RejectStatistics rsFinal = new RejectStatistics();
-        ArrayList<DoGMaximum> localMaximaFinal = new ArrayList<DoGMaximum>();
-    	
-    	final int width = img.getWidth();
-        final int height = img.getHeight();
-        final int depth = img.getDepth();
-        
-        // found local maxima
-       
-        // start with sigma = 1,6
-        // assume it to be 0,5 in the original image
-        // d(sigma) = sqrt(sigmaB^2 - sigmaA^2)
-        
-        final float imageSigma = conf.imageSigma;
-        final float initialSigma = conf.initialSigma;
-
-        final float k = ScaleSpace3D.computeK(conf.stepsPerOctave);
-        final float K_MIN1_INV = ScaleSpace3D.computeKWeight(k);
-        final int steps = conf.steps; 
-
-        //
-        // Compute the Sigmas for the gaussian folding
-        //
-        final float[] sigma = ScaleSpace3D.computeSigma(steps, k, initialSigma);
-        final float[] sigmaDiff = ScaleSpace3D.computeSigmaDiff(sigma, imageSigma);
-              
-        //
-        // Now initially fold with gaussian kernel to get to sigma = 1.6
-        //
-        final Float3D[] octaveSteps = new Float3D[2];
-        final Float3D[] laPlace = new Float3D[3];
-
-        octaveSteps[0] = ImageFilter.computeGaussianFast(img, sigmaDiff[0], conf.scaleSpaceNumberOfThreads, conf.strategyFactoryGauss);
-        octaveSteps[1] = ImageFilter.computeGaussianFast(img, sigmaDiff[1], conf.scaleSpaceNumberOfThreads, conf.strategyFactoryGauss);        
-        laPlace[0] = conf.scaleSpaceFactory.createInstanceNoException(1, 1, 1); 
-        laPlace[1] = ScaleSpace3D.subtractArrays(octaveSteps[1], octaveSteps[0], K_MIN1_INV);
-        
-        laPlace[1].convertToImagePlus("test1").show();
-        
-        octaveSteps[0].close();
-        octaveSteps[0] = octaveSteps[1];
-        octaveSteps[1] = ImageFilter.computeGaussianFast(img, sigmaDiff[2], conf.scaleSpaceNumberOfThreads, conf.strategyFactoryGauss);
-        laPlace[2] = ScaleSpace3D.subtractArrays(octaveSteps[1], octaveSteps[0], K_MIN1_INV);
-        
-        laPlace[2].convertToImagePlus("test2").show();
-
-        //
-        // Now compute the rest of the steps
-        //
-        for ( int step = 3; step <= steps; step++ )
-        {
-            IOFunctions.println(step + ": " + sigma[step]);
-
-        	// update and compute gauss
-        	octaveSteps[0].close();
-            octaveSteps[0] = null;
-            octaveSteps[0] = octaveSteps[1];
-            IOFunctions.println(step + ": Compute gauss " + new Date(System.currentTimeMillis()));
-            octaveSteps[1] = ImageFilter.computeGaussianFast(img, sigmaDiff[step], conf.scaleSpaceNumberOfThreads, conf.strategyFactoryGauss);
-            IOFunctions.println(step + ": Done Compute gauss" + new Date(System.currentTimeMillis()));
-                        
-            // Now compute and update LaPlace
-            laPlace[0].close();
-            laPlace[0] = null;
-            laPlace[0] = laPlace[1];
-            laPlace[1] = laPlace[2];
-            IOFunctions.println(step + ": Subtract arrays " + new Date(System.currentTimeMillis()));
-            laPlace[2] = ScaleSpace3D.subtractArrays(octaveSteps[1], octaveSteps[0], K_MIN1_INV);
-            IOFunctions.println(step + ": Done Subtract arrays" + new Date(System.currentTimeMillis()));
-
-            laPlace[2].convertToImagePlus("test3").show();
-
-            //
-            // Fit quadratic function and reject points which do not fit
-            // And also compute the principle curvatures which are
-            //
-            IOFunctions.println( new Date(System.currentTimeMillis()) + ": " + step + ": Analyze Maxima " + new Date(System.currentTimeMillis()));
-
-            final AtomicInteger ai = new AtomicInteger(0);					
-            Thread[] threads = MultiThreading.newThreads(conf.numberOfThreads);
-            final int numThreads = threads.length;
-            
-            final int stepLocal = step;
-            final RejectStatistics rsList[] = new RejectStatistics[ numThreads ];
-
-            @SuppressWarnings("unchecked")
-            final ArrayList<DoGMaximum> localMaximaList[] = new ArrayList[ numThreads ];
-
-
-			for (int ithread = 0; ithread < threads.length; ++ithread)
-	            threads[ithread] = new Thread(new Runnable()
-	            {
-	                public void run()
-	                {
-	                	final int myNumber = ai.getAndIncrement();
-	                	
-	                	rsList[ myNumber ] = new RejectStatistics();
-	                	localMaximaList[ myNumber ] = new ArrayList<DoGMaximum>();
-	                	
-	                	final RejectStatistics rs = rsList[ myNumber ];
-	                	final ArrayList<DoGMaximum> localMaxima = (ArrayList<DoGMaximum>) localMaximaList[ myNumber ];
-
-	                    FloatLocalizableIteratorByDim it0 = laPlace[0].createLocalizableIteratorByDim( new FloatOutOfBoundsStrategyValueFactory(0) );
-	                    FloatLocalizableIteratorByDim it1 = laPlace[1].createLocalizableIteratorByDim( new FloatOutOfBoundsStrategyValueFactory(0) );
-	                    FloatLocalizableIteratorByDim it2 = laPlace[2].createLocalizableIteratorByDim( new FloatOutOfBoundsStrategyValueFactory(0) );
-	                    
-	                    while (it1.hasNext())
-	                    {
-	                    	it0.next();
-	                    	it1.next();
-	                    	it2.next();
-	                    	
-	                    	final int x = it1.getX();
-	                    	final int y = it1.getY();
-	                    	final int z = it1.getZ();
-	                    	
-	                    	if ( z % numThreads == myNumber )
-	                    	{
-		                    	if (x > 0 && y > 0 && z > 0 && x < width - 1 && y < height - 1 && z < depth - 1)
-		                    	{
-		                    		if ( ScaleSpace3D.isSpecialPoint(it1, it0, it2, conf.minInitialPeakValue) )
-		                    		{
-		                            	ScaleSpace3D.analyzeMaximum(it0, conf.minPeakValue, width, height, depth, sigma[stepLocal - 2 - (1 - 0)], conf.identityRadius, conf.maximaTolerance, rs, localMaxima);
-		                            	ScaleSpace3D.analyzeMaximum(it1, conf.minPeakValue, width, height, depth, sigma[stepLocal - 2 - (1 - 1)], conf.identityRadius, conf.maximaTolerance, rs, localMaxima);
-		                            	ScaleSpace3D.analyzeMaximum(it2, conf.minPeakValue, width, height, depth, sigma[stepLocal - 2 - (1 - 2)], conf.identityRadius, conf.maximaTolerance, rs, localMaxima);            			            		
-		                    		}
-	
-		                    		if ( conf.detectSmallestStructures && ScaleSpace3D.isSpecialPoint(it0, it1, conf.minInitialPeakValue) )
-		                    		{
-		                            	ScaleSpace3D.analyzeMaximum(it0, conf.minPeakValue, width, height, depth, sigma[stepLocal - 2 - (1 - 0)], conf.identityRadius, conf.maximaTolerance, rs, localMaxima );
-		                            	ScaleSpace3D.analyzeMaximum(it1, conf.minPeakValue, width, height, depth, sigma[stepLocal - 2 - (1 - 1)], conf.identityRadius, conf.maximaTolerance, rs, localMaxima );            			
-		                    		}
-		                    	}
-	                    	}
-	                    }
-	                    
-	                    it0.close();
-	                    it1.close();
-	                    it2.close();
-	                }
-	            });
 			
-				MultiThreading.startAndJoin( threads );
-				
-				// summarize RejectStatistics and LocalMaxima
-				for (int ithread = 0; ithread < threads.length; ++ithread)
-				{
-					rsFinal.imaginaryEigenValues += rsList[ ithread ].imaginaryEigenValues;
-					rsFinal.noInverseOfHessianMatrix += rsList[ ithread ].noInverseOfHessianMatrix;
-					rsFinal.noStableMaxima += rsList[ ithread ].noStableMaxima;
-					rsFinal.notHighestValueInIdentityRadius += rsList[ ithread ].notHighestValueInIdentityRadius;
-					rsFinal.peakTooLow += rsList[ ithread ].peakTooLow;
-					rsFinal.tooHighEigenValueRatio += rsList[ ithread ].tooHighEigenValueRatio;
-					
-					IOFunctions.println( localMaximaList[ ithread ].size() );
-					
-					for ( DoGMaximum dogM : localMaximaList[ ithread ] )
-						localMaximaFinal.add( dogM );
-					
-					IOFunctions.println( localMaximaFinal.size() );
-				}
-				
-
-				// now we check that this maxima is unique in its identity radius.
-				// if there are maxima which are smaller they get removed
-
-	            IOFunctions.println( step + ": Check Maxima " + new Date(System.currentTimeMillis()));
-				
-				localMaximaFinal = ScaleSpace3D.checkMaximaXTree( localMaximaFinal, conf.identityRadius );
-            
-				IOFunctions.println(step + ": Finished Analyze Maxima " + new Date(System.currentTimeMillis()));
-        }
-        
-        // close the used image datastructures
-        for (int i = 0; i < octaveSteps.length; i++)
-        {
-        	octaveSteps[i].close();
-        	octaveSteps[i] = null;        	
-        }
-
-        for (int i = 0; i < laPlace.length; i++)
-        {
-        	laPlace[i].close();
-        	laPlace[i] = null;
-        }
-
-        IOFunctions.println("noStableMaxima: " + rsFinal.noStableMaxima);
-        IOFunctions.println("tooHighEigenValueRatio: " + rsFinal.tooHighEigenValueRatio);
-        IOFunctions.println("noInverseOfHessianMatrix: " + rsFinal.noInverseOfHessianMatrix); 
-        IOFunctions.println("peakTooLow: " + rsFinal.peakTooLow);
-        IOFunctions.println("imaginaryEigenValues: " + rsFinal.imaginaryEigenValues);
-        IOFunctions.println("\nfound peaks: " + localMaximaFinal.size());
-		
-        BeadStructure beads = new BeadStructure();
-        //ArrayList<ComponentProperties> beads = new ArrayList<ComponentProperties>();        
-        int id = 0;
-        
-        for (Iterator <DoGMaximum>i = localMaximaFinal.iterator(); i.hasNext(); )
-        {
-        	DoGMaximum maximum = i.next();
-        	Bead bead = new Bead( id, new Point3d(maximum.x + maximum.xd, maximum.y + maximum.yd, maximum.z + maximum.zd), view );
-        	beads.addBead( bead );
-        	id++;
-        	
-        	//ComponentProperties prop = new ComponentProperties();
-                
-        	//prop.center = new Point3d(maximum.x + maximum.xd, maximum.y + maximum.yd, maximum.z + maximum.zd);
-        	//prop.label = label++;        	
-        	//beads.add(prop);
-        }
-        
-		return beads;
-	}
-	*/
-		
 	protected BeadStructure extractBeadsLaPlaceImgLib( final ViewDataBeads view, final SPIMConfiguration conf )
 	{
 		// load the image
 		final Image<FloatType> img = view.getImage();
 
         float imageSigma = conf.imageSigma;
-        float initialSigma = conf.initialSigma;
+        float initialSigma = view.getInitialSigma();
 
         final float minPeakValue;
         final float minInitialPeakValue;
 
         // adjust for 12bit images
+        // we stop doing that for now...
         if ( view.getMaxValueUnnormed() > 256 )
         {
-        	minPeakValue = conf.minPeakValue/3;
-        	minInitialPeakValue = conf.minInitialPeakValue/3;
+		minPeakValue = view.getMinPeakValue();///3;
+		minInitialPeakValue = view.getMinInitialPeakValue();///3;
         }
         else
         {
-            minPeakValue = conf.minPeakValue;
-            minInitialPeakValue = conf.minInitialPeakValue;        	
+            minPeakValue = view.getMinPeakValue();
+            minInitialPeakValue = view.getMinInitialPeakValue();
         }        
+
+        IOFunctions.println( view.getName() + " sigma: " + initialSigma + " minPeakValue: " + minPeakValue );
 
         final float k = LaPlaceFunctions.computeK(conf.stepsPerOctave);
         final float K_MIN1_INV = LaPlaceFunctions.computeKWeight(k);

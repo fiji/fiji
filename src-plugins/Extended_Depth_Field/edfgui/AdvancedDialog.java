@@ -193,7 +193,7 @@ public class AdvancedDialog extends AbstractDialog
 		super();
 		this.isColor = isColor;
 
-		nScalesAndSize = new Tools().computeScaleAndPowerTwoSize(imageSize[0],imageSize[1]);
+		nScalesAndSize = Tools.computeScaleAndPowerTwoSize(imageSize[0],imageSize[1]);
 		nScales = nScalesAndSize[0];
 		parameters.maxScales = nScales;
 

@@ -30,7 +30,7 @@ import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.PointMatch;
 import mpicbg.spim.vib.FastMatrix;
 
-public class RigidModel3D extends AbstractAffineModel3D<RigidModel3D>
+public class RigidModelOld3D extends AbstractAffineModel3D<RigidModelOld3D>
 {
 	static final protected int MIN_SET_SIZE = 3;
 	
@@ -52,7 +52,7 @@ public class RigidModel3D extends AbstractAffineModel3D<RigidModel3D>
 	}
 	
 	@Override
-	public void set( final RigidModel3D m )
+	public void set( final RigidModelOld3D m )
 	{		
 		this.transform = new Transform3D(m.getTransform3D());
 		this.inverseTransform = new Transform3D(m.getInverseTransform3D());
@@ -166,9 +166,9 @@ public class RigidModel3D extends AbstractAffineModel3D<RigidModel3D>
 		inverseTransform.invert();
 	}
 
-	public RigidModel3D copy()
+	public RigidModelOld3D copy()
 	{
-		RigidModel3D tm = new RigidModel3D();
+		RigidModelOld3D tm = new RigidModelOld3D();
 		tm.transform = new Transform3D(transform);	
 		tm.inverseTransform = new Transform3D(inverseTransform);	
 		
@@ -177,9 +177,9 @@ public class RigidModel3D extends AbstractAffineModel3D<RigidModel3D>
 	}
 	
 	@Override
-	public RigidModel3D createInverse()
+	public RigidModelOld3D createInverse()
 	{
-		RigidModel3D model = this.copy();
+		RigidModelOld3D model = this.copy();
 		
 		model.transform.invert();
 		model.inverseTransform.invert();
@@ -188,7 +188,7 @@ public class RigidModel3D extends AbstractAffineModel3D<RigidModel3D>
 	}
 	
 	@Override
-	public void preConcatenate( final RigidModel3D model ) 
+	public void preConcatenate( final RigidModelOld3D model ) 
 	{
 		final Transform3D t = new Transform3D( model.getTransform3D() );
 		t.mul( this.transform );
@@ -199,7 +199,7 @@ public class RigidModel3D extends AbstractAffineModel3D<RigidModel3D>
 	}
 	
 	@Override
-	public void concatenate( final RigidModel3D model ) 
+	public void concatenate( final RigidModelOld3D model ) 
 	{
 		transform.mul( model.getTransform3D() );
 		inverseTransform.set( transform );

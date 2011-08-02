@@ -38,7 +38,6 @@ public class EdfRealWavelets extends EdfWaveletMaximumModulus {
 	private boolean doDenoising = false;
 	private double denoisingRate = 10;
 
-
 	/**
 	 *
 	 */
@@ -126,7 +125,6 @@ public class EdfRealWavelets extends EdfWaveletMaximumModulus {
 		if(this.sbConsistencyCheck || this.majConsistencyCheck) {
 			updateMergedCoeff(coeffStack, heightMap, res);
 		}
-
 
 		if(doDenoising){
 			Tools.waveletDenoising(res, denoisingRate);

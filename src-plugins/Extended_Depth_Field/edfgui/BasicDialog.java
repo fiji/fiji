@@ -49,6 +49,7 @@ import javax.swing.JSlider;
 
 import edf.Tools;
 
+
 public class BasicDialog extends AbstractDialog
 	implements ActionListener, ItemListener, WindowListener {
 
@@ -83,7 +84,7 @@ public class BasicDialog extends AbstractDialog
 		parameters.color = isColorStack;
 		parameters.showTopology = true;
 		this.applet = applet;
-		nScalesAndSize = new Tools().computeScaleAndPowerTwoSize(imageSize[0],imageSize[1]);
+		nScalesAndSize = Tools.computeScaleAndPowerTwoSize(imageSize[0],imageSize[1]);
 		nScales = nScalesAndSize[0];
 		parameters.maxScales = nScales;
 		addWindowListener(this);

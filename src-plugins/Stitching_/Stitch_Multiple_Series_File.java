@@ -146,7 +146,7 @@ public class Stitch_Multiple_Series_File implements PlugIn
 		gridLayout.dim = imageInformationList.get( 0 ).dim;
 		gridLayout.rgbOrder = rgbTypes[0];
 
-		new Stitch_Image_Collection().work( gridLayout, previewOnly, computeOverlap, fileName + ".txt" );
+		new Stitch_Image_Collection().work( gridLayout, previewOnly, computeOverlap, fileName + ".txt", true );
 	}
 
 	protected ArrayList<ImageInformation> parseMultiSeriesFile( final String filename, final double increaseOverlap, final boolean ignoreCalibration )

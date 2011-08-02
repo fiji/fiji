@@ -11,11 +11,12 @@ import javax.vecmath.Vector3f;
 import mpicbg.models.Model;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.PointMatch;
+import mpicbg.models.RigidModel3D;
 import mpicbg.models.Tile;
 import mpicbg.pointdescriptor.LinkedPoint;
-import mpicbg.pointdescriptor.model.RigidModel3D;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
+import mpicbg.util.TransformUtils;
 
 public class DetectionRegistration 
 {
@@ -239,7 +240,7 @@ public class DetectionRegistration
 		final NumberFormat nf = NumberFormat.getPercentInstance();
 		final float ratio = ((float)inliers.size() / (float)candidates.size());
 		
-		if ( modelFound && inliers.size() >= minNumCorrespondences )
+		if ( modelFound && inliers.size() >= minNumCorrespondences * 3 )
 		{			
 			for ( final PointMatch pointMatch : inliers )
 			{
@@ -269,7 +270,7 @@ public class DetectionRegistration
 	protected static Quat4f getQuaternion( final RigidModel3D model )
 	{
         final Matrix4f matrix = new Matrix4f();
-        model.getTransform3D().get( matrix );	        	        
+        TransformUtils.getTransform3D( model ).get( matrix );	        	        
         final Quat4f quaternion = new Quat4f();	        
         quaternion.set( matrix );
 
@@ -291,7 +292,7 @@ public class DetectionRegistration
 		return n;      		
 	}
 
-	public synchronized static <T extends Detection<T>> void addPointMatches( final ArrayList<PointMatchGeneric<T>> correspondences, final Tile<?> tileA, final Tile<?> tileB )
+	public synchronized static <T extends AbstractDetection<T>> void addPointMatches( final ArrayList<PointMatchGeneric<T>> correspondences, final Tile<?> tileA, final Tile<?> tileB )
 	{
 		final ArrayList<PointMatch> pm = new ArrayList<PointMatch>();
 		pm.addAll( correspondences );

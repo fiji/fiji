@@ -2,7 +2,6 @@ package mpicbg.pointdescriptor.matcher;
 
 import java.util.ArrayList;
 
-import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
 import mpicbg.pointdescriptor.AbstractPointDescriptor;
 import mpicbg.pointdescriptor.fit.FitResult;
@@ -17,7 +16,7 @@ public class SimpleMatcher implements Matcher
 	}
 	
 	@Override
-	public < P extends Point, F extends AbstractPointDescriptor<P, F> > ArrayList<ArrayList<PointMatch>> createCandidates( final AbstractPointDescriptor<P, F> pd1, final AbstractPointDescriptor<P, F> pd2 )
+	public ArrayList<ArrayList<PointMatch>> createCandidates( final AbstractPointDescriptor<?, ?> pd1, final AbstractPointDescriptor<?, ?> pd2 )
 	{
 		final ArrayList<PointMatch> matches = new ArrayList<PointMatch>( numNeighbors );		
 		
