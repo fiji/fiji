@@ -833,7 +833,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		else if (source == openHelpWithoutFrames)
 			openHelp(null, false);
 		else if (source == openMacroFunctions)
-			IJ.run("Macro Functions...");
+			new MacroFunctions().openHelp(getTextArea().getSelectedText());
 		else if (source == extractSourceJar)
 			extractSourceJar();
 		else if (source == openSourceForClass) {
