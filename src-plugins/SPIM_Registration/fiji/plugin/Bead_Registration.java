@@ -1,3 +1,4 @@
+package fiji.plugin;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.event.MouseAdapter;
@@ -6,6 +7,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 
+
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.container.cell.CellContainerFactory;
 import mpicbg.imglib.image.Image;
@@ -13,13 +15,13 @@ import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.io.LOCI;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import mpicbg.spim.ChartTest;
 import mpicbg.spim.Reconstruction;
 import mpicbg.spim.io.ConfigurationParserException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.segmentation.InteractiveDoG;
 
+import fiji.plugin.timelapsedisplay.TimeLapseDisplay;
 import fiji.util.gui.GenericDialogPlus;
 
 import ij.IJ;
@@ -76,16 +78,17 @@ public class Bead_Registration implements PlugIn
 		conf.registerOnly = true;
 
 		// if we do not load the registration we can start
-		if ( !loadRegistration )
-		{
+		//if ( !loadRegistration )
+		//{
 			conf.timeLapseRegistration = false;
 			conf.collectRegistrationStatistics = true;
 
 			final Reconstruction reconstruction = new Reconstruction( conf );
+		//}
+		
+		if ( reconstruction.getSPIMConfiguration().file.length > 1 && defaultTimeLapseRegistration == 0 )
+			conf.referenceTimePoint = TimeLapseDisplay.plotData( reconstruction.getRegistrationStatistics(), 0, true );
 
-			if ( reconstruction.getSPIMConfiguration().file.length > 1 && defaultTimeLapseRegistration == 0 )
-				ChartTest.plotData( reconstruction.getRegistrationStatistics() );
-		}
 
 		/*
 		// manage the timelapse registration
@@ -100,17 +103,17 @@ public class Bead_Registration implements PlugIn
 
 	}
 
-	public static String spimDataDirectory = "F:/Stephan/Drosophila/Live HisYFP/HIS-YFP-13.07.2008";
-	public static String timepoints = "18";
-	public static String fileNamePattern = "spim_TL{t}_Angle{a}.lsm";
-	public static String angles = "0-270:45";
+	public static String spimDataDirectory = "F:/Tobias";
+	public static String timepoints = "0-50";
+	public static String fileNamePattern = "spim_TL{t}_Ch1_Angle{a}";
+	public static String angles = "0-300:60";
 	
 	public static boolean loadSegmentation = false;
 	public static String[] beadBrightness = { "Very weak", "Weak", "Comparable to Sample", "Strong", "Advanced ...", "Interactive ..." };	
 	public static int defaultBeadBrightness = 1;
 	public static boolean overrideResolution = false;
-	public static double xyRes = 0.73;
-	public static double zRes = 2.00;
+	public static double xyRes = 1;
+	public static double zRes = 5.25;
 
 	public static boolean loadRegistration = false;
 	public static boolean timeLapseRegistration = false;

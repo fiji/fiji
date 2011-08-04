@@ -6,6 +6,9 @@ import java.util.Date;
 import javax.media.j3d.Transform3D;
 import javax.vecmath.Vector3d;
 
+import fiji.plugin.timelapsedisplay.RegistrationStatistics;
+
+
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.Point;
 import mpicbg.spim.io.ConfigurationParserException;
