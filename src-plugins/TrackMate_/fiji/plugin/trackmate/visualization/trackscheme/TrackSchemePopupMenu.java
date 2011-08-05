@@ -3,6 +3,8 @@ package fiji.plugin.trackmate.visualization.trackscheme;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.TreeMap;
 
 import javax.swing.AbstractAction;
@@ -54,6 +56,61 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 				edges.add(cell);
 		}
 
+		
+		// Select whole tracks
+		
+		add(new AbstractAction("Select whole track") {
+			public void actionPerformed(ActionEvent e) {
+				List<Set<Spot>> trackSpots = model.getTrackSpots();
+				List<Set<DefaultWeightedEdge>> trackEdges = model.getTrackEdges();
+				int ntracks = trackSpots.size();
+				for(int i=0; i<ntracks; i++) {
+					
+					Set<Spot> spots = trackSpots.get(i);
+					Set<DefaultWeightedEdge> dwes = trackEdges.get(i);
+					
+					// From spots
+					for(mxCell cell : vertices) {
+						Spot spot = graph.getCellToVertexMap().get(cell);
+						if (null == spot) {
+							if (DEBUG) {
+								System.out.println("[TrackSchemePopupMenu] select whole track: tried to retrieve cell "+cell+", unknown to spot map.");
+							}
+							continue;
+						}
+						if (spots.contains(spot)) {
+							model.addSpotToSelection(spots);
+							model.addEdgeToSelection(dwes);
+							vertices.remove(spot); // to speed up a bit
+							break;
+						}
+						
+					}
+					
+					// From spots
+					for(mxCell cell : edges) {
+						DefaultWeightedEdge dwe = graph.getCellToEdgeMap().get(cell);
+						if (null == dwe) {
+							if (DEBUG) {
+								System.out.println("[TrackSchemePopupMenu] select whole track: tried to retrieve cell "+cell+", unknown to edge map.");
+							}
+							continue;
+						}
+						if (edges.contains(dwe)) {
+							model.addSpotToSelection(spots);
+							model.addEdgeToSelection(dwes);
+							vertices.remove(dwe); // to speed up a bit
+							break;
+						}
+						
+					}
+					
+				}
+			}
+		});
+
+		
+		
 		if (cell != null) {
 			// Edit
 			add(new AbstractAction("Edit spot name") {
@@ -73,6 +130,7 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 					frame.getGraph().foldCells(!frame.getGraph().isCellCollapsed(parent), false, new Object[] { parent });
 				}
 			});
+			
 
 		} else { 
 
@@ -188,7 +246,7 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 			add(removeAction);
 		}
 
-		// Fold
+		
 
 
 	}
