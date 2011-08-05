@@ -64,6 +64,11 @@
 % So, if you have installed Fiji in |C:\Program Files\Fiji.app|, you just
 % have to add |C:\Program Files\Fiji.app\scripts| to the MATLAB path, and
 % that's all.
+% 
+% By the way, it is in this folder that you will find all the m-files of
+% this demo bundle. So you can launch the demos listed below simply by
+% typing their name in MATLAB command window; they will be found since they
+% are on the path.
 
 %% Installing the Java3D libraries
 %
@@ -127,6 +132,13 @@
 %
 % It's all open source, feel free to modify, distribute, comment or
 % whatever you feel like.
+%
+%% Version history
+%
+% * 26 Jul 2011: Initial release
+% * 4 Aug 2011: Fix a bug in write permission detection on Windows
+% platform, thanks to report by Peter Beemiller
+% 
 %
 %%
 %
