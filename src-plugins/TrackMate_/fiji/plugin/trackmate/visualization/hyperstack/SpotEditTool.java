@@ -11,7 +11,10 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.util.ArrayList;
 import java.util.HashMap;
+
+import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotFeature;
@@ -299,20 +302,42 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 
 	@Override
 	public void keyPressed(KeyEvent e) { 
-		final ImagePlus imp = getImagePlus(e);
-		final HyperStackDisplayer displayer = displayers.get(imp);
-		if (null == displayer)
-			return;
-		Spot editedSpot = editedSpots.get(imp);
-		if (null == editedSpot)
-			return;
-
 		if (e.getKeyCode() == KeyEvent.VK_DELETE) {
-			Integer initFrame = displayer.getModel().getFilteredSpots().getFrame(editedSpot);
+
+			final ImagePlus imp = getImagePlus(e);
+			final HyperStackDisplayer displayer = displayers.get(imp);
+			if (null == displayer)
+				return;
 			TrackMateModel model = displayer.getModel();
-			model.removeSpotFrom(editedSpot, initFrame);
-			editedSpot = null;
-			editedSpots.put(imp, null);
+
+			Spot editedSpot = editedSpots.get(imp);
+			if (null == editedSpot) {
+				ArrayList<Spot> spotSelection = new ArrayList<Spot>(model.getSpotSelection());
+				ArrayList<DefaultWeightedEdge> edgeSelection = new ArrayList<DefaultWeightedEdge>(model.getEdgeSelection());
+				model.beginUpdate();
+				try {
+					model.clearSelection();
+					for(DefaultWeightedEdge edge : edgeSelection) {
+						model.removeEdge(edge);
+					}
+					for(Spot spot : spotSelection) {
+						model.removeSpotFrom(spot, null);
+					}
+				} finally {
+					model.endUpdate();
+				}
+
+			} else {
+				Integer initFrame = displayer.getModel().getFilteredSpots().getFrame(editedSpot);
+				model.beginUpdate();
+				try {
+					model.removeSpotFrom(editedSpot, initFrame);
+				} finally {
+					model.endUpdate();
+				}
+				editedSpot = null;
+				editedSpots.put(imp, null);
+			}
 			imp.updateAndDraw();
 			e.consume();
 		}	
