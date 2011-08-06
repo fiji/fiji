@@ -21,6 +21,7 @@ import org.jgrapht.traverse.DepthFirstIterator;
 import com.mxgraph.layout.mxGraphLayout;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
+import com.mxgraph.model.mxICell;
 import com.mxgraph.util.mxConstants;
 import com.mxgraph.util.mxRectangle;
 import com.mxgraph.util.mxUtils;
@@ -152,7 +153,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					Spot spot = iterator.next();
 
 					// Get corresponding JGraphX cell, add it if it does not exist in the JGraphX yet
-					mxCell cell = graph.getVertexToCellMap().get(spot);
+					mxICell cell = graph.getCellFor(spot);
 					if (null == cell) {
 						if (DEBUG) {
 							System.out.println("[mxTrackGraphLayout] execute: creating cell for invisible spot "+spot);
@@ -202,7 +203,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 				for(Spot spot : track) {
 
 					for(final DefaultWeightedEdge edge : model.edgesOf(spot)) {
-						mxCell edgeCell = graph.getEdgeToCellMap().get(edge);
+						mxICell edgeCell = graph.getCellFor(edge);
 						if (null == edgeCell) {
 							if (DEBUG) {
 								System.out.println("[mxTrackGraphLayout] execute: creating cell for invisible edge "+edge);
@@ -250,7 +251,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 
 						for (Spot spot : branch) {
 
-							mxCell cell = graph.getVertexToCellMap().get(spot);
+							mxICell cell = graph.getCellFor(spot);
 
 							mxGeometry geom = graph.getModel().getGeometry(cell);
 							if (minX > geom.getX()) 
@@ -272,7 +273,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 						graph.getModel().setGeometry(branchParent, branchGeometry);
 
 						for (Spot spot : branch) {
-							mxCell cell = graph.getVertexToCellMap().get(spot);
+							mxICell cell = graph.getCellFor(spot);
 							graph.getModel().getGeometry(cell).translate(-branchGeometry.getX(), -branchGeometry.getY());
 						}
 

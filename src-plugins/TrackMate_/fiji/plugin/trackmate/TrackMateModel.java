@@ -187,6 +187,48 @@ public class TrackMateModel {
 	}
 
 	/**
+	 * Return the track index of the given edge. Return <code>null</code> if the edge 
+	 * is not in any track.
+	 */
+	public Integer getTrackIndexOf(final DefaultWeightedEdge edge) {
+		for (int i = 0; i < trackEdges.size(); i++) {
+			Set<DefaultWeightedEdge> edges = trackEdges.get(i);
+			if (edges.contains(edge)) {
+				return i;
+			}
+		}
+		return null;
+		
+	}
+
+	/**
+	 * Return the track index of the given edge. Return <code>null</code> if the edge 
+	 * is not in any track.
+	 */
+	public Integer getTrackIndexOf(final Spot spot) {
+		for (int i = 0; i < trackSpots.size(); i++) {
+			Set<Spot> edges = trackSpots.get(i);
+			if (edges.contains(spot)) {
+				return i;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Return true if the track with the given index is within the set of filtered tracks.
+	 */
+	public boolean isTrackVisible(final int index) {
+		if (filteredTrackIndices.contains(index)) { // work because based on hash
+			return true;
+		} else {
+			return false;
+		}
+		
+	}
+	
+	
+	/**
 	 * Return the indices of the tracks that result from track feature filtering.
 	 * @see #execTrackFiltering()  
 	 */

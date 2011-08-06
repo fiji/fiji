@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
 import java.util.HashMap;
+import java.util.Set;
 
 import org.jgrapht.event.GraphEdgeChangeEvent;
 import org.jgrapht.event.GraphListener;
@@ -9,6 +10,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
+import com.mxgraph.model.mxICell;
 import com.mxgraph.view.mxGraph;
 
 import fiji.plugin.trackmate.Spot;
@@ -17,9 +19,9 @@ import fiji.plugin.trackmate.TrackMateModel;
 public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, DefaultWeightedEdge> {
 
 	private HashMap<Spot, mxCell> 					vertexToCellMap 	= new HashMap<Spot, mxCell>();
-	private HashMap<DefaultWeightedEdge, mxCell> 	edgeToCellMap 		= new HashMap<DefaultWeightedEdge, mxCell>();
-	private HashMap<mxCell, Spot>					cellToVertexMap		= new HashMap<mxCell, Spot>();
-	private HashMap<mxCell, DefaultWeightedEdge>	cellToEdgeMap		= new HashMap<mxCell, DefaultWeightedEdge>();
+	private HashMap<DefaultWeightedEdge, mxICell> 	edgeToCellMap 		= new HashMap<DefaultWeightedEdge, mxICell>();
+	private HashMap<mxICell, Spot>					cellToVertexMap		= new HashMap<mxICell, Spot>();
+	private HashMap<mxICell, DefaultWeightedEdge>	cellToEdgeMap		= new HashMap<mxICell, DefaultWeightedEdge>();
 	private TrackMateModel tmm;
 
 	/*
@@ -43,7 +45,7 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 	public void cellLabelChanged(Object cell, Object value, boolean autoSize) {
 		model.beginUpdate();
 		try {
-			Spot spot = getCellToVertexMap().get(cell);
+			Spot spot = cellToVertexMap.get(cell);
 			if (null == spot)
 				return;
 			String str = (String) value;
@@ -94,21 +96,57 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 		return cell;
 	}
 
-	public HashMap<Spot, mxCell> getVertexToCellMap() {
-		return vertexToCellMap;
+//	public HashMap<Spot, mxCell> getVertexToCellMap() {
+//		return vertexToCellMap;
+//	}
+//
+//	public HashMap<DefaultWeightedEdge, mxCell> getEdgeToCellMap() {
+//		return edgeToCellMap;
+//	}
+//
+//	public HashMap<mxCell, DefaultWeightedEdge> getCellToEdgeMap() {
+//		return cellToEdgeMap;
+//	}
+//
+//	public HashMap<mxCell, Spot> getCellToVertexMap() {
+//		return cellToVertexMap;
+//	}
+	
+	public void mapEdgeToCell(DefaultWeightedEdge edge, mxICell cell) {
+		cellToEdgeMap.put(cell, edge);
+		edgeToCellMap.put(edge, cell);
+	}
+	
+	public Spot getSpotFor(mxICell cell) {
+		return cellToVertexMap.get(cell);
+	}
+	
+	public DefaultWeightedEdge getEdgeFor(mxICell cell) {
+		return cellToEdgeMap.get(cell);
+	}
+	
+	public mxICell getCellFor(Spot spot) {
+		return vertexToCellMap.get(spot);
+	}
+	
+	public mxICell getCellFor(DefaultWeightedEdge edge) {
+		return edgeToCellMap.get(edge);
+	}
+	
+	public Set<mxICell> getVertexCells() {
+		return cellToVertexMap.keySet();
+	}
+	
+	public void removeMapping(Spot spot) {
+		mxICell cell = vertexToCellMap.remove(spot);
+		cellToVertexMap.remove(cell);
+	}
+	
+	public void removeMapping(DefaultWeightedEdge edge) {
+		mxICell cell = edgeToCellMap.remove(edge);
+		cellToEdgeMap.remove(cell);
 	}
 
-	public HashMap<DefaultWeightedEdge, mxCell> getEdgeToCellMap() {
-		return edgeToCellMap;
-	}
-
-	public HashMap<mxCell, DefaultWeightedEdge> getCellToEdgeMap() {
-		return cellToEdgeMap;
-	}
-
-	public HashMap<mxCell, Spot> getCellToVertexMap() {
-		return cellToVertexMap;
-	}
 
 	/*
 	 * GRAPH LISTENER
@@ -133,7 +171,7 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 
 	@Override
 	public void edgeRemoved(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
-		mxCell cell = edgeToCellMap.remove(e.getEdge());
+		mxICell cell = edgeToCellMap.remove(e.getEdge());
 		removeCells(new Object[] { cell } );
 	}
 
@@ -161,4 +199,7 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 			model.endUpdate();
 		}
 	}
+
+
+
 }

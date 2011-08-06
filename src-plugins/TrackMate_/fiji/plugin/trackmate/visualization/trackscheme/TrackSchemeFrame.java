@@ -205,7 +205,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		Iterator<Spot> it = spots.iterator();
 		for (int i = 0; i < newSpots.length; i++) {
 			final Spot spot = it.next();
-			newSpots[i] = graph.getVertexToCellMap().get(spot);
+			newSpots[i] = graph.getCellFor(spot);
 		}
 		model.addCells(newSpots);
 	}
@@ -224,13 +224,13 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		Object[] newEdges = new Object[edges.size()];
 		Iterator<DefaultWeightedEdge> it = edges.iterator();
 		for (int i = 0; i < newEdges.length; i++) 
-			newEdges[i] = graph.getEdgeToCellMap().get(it.next());
+			newEdges[i] = graph.getCellFor(it.next());
 		model.addCells(newEdges);
 	}
 
 	@Override
 	public void centerViewOn(Spot spot) {
-		centerViewOn(graph.getVertexToCellMap().get(spot));
+		centerViewOn(graph.getCellFor(spot));
 	}
 
 	/**
@@ -250,7 +250,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 
 		graph.getModel().beginUpdate();
 		try {
-			ArrayList<mxCell> cellsToRemove = new ArrayList<mxCell>();
+			ArrayList<mxICell> cellsToRemove = new ArrayList<mxICell>();
 
 			int targetColumn = 0;
 			for (int i = 0; i < graphComponent.getColumnWidths().length; i++)
@@ -266,7 +266,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 
 					} else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_MODIFIED) {
 
-						mxCell cell = graph.getVertexToCellMap().get(spot);
+						mxICell cell = graph.getCellFor(spot);
 						if (DEBUG)
 							System.out.println("[TrackSchemeFrame] modelChanged: updating cell for spot "+spot);
 						if (null == cell) {
@@ -285,8 +285,8 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 
 					}  else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_REMOVED) {
 
-						mxCell cell = graph.getVertexToCellMap().get(spot);
-						cellsToRemove .add(cell);
+						mxICell cell = graph.getCellFor(spot);
+						cellsToRemove.add(cell);
 					}
 
 				}
@@ -327,8 +327,62 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		graph.getModel().setStyle(cellAdded, mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+spot.getImageString());
 		return cellAdded;
 	}
+	
+	/**
+	 * This method is called when the user has created manually an edge in the graph, by dragging
+	 * a link between two spot cells. It checks whether the matching edge in the model exists, 
+	 * and tune what should be done accordingly.
+	 * @param cell  the mxCell of the edge that has been manually created.
+	 */
+	void addEdgeManually(mxCell cell) {
 
-	public void centerViewOn(mxCell cell) {
+		DefaultWeightedEdge edge;
+		if (cell.isEdge()) {
+			cell.setValue("New");
+			graph.getModel().beginUpdate();
+			model.beginUpdate();
+			try {
+				Spot source = graph.getSpotFor(cell.getSource());
+				Spot target = graph.getSpotFor(cell.getTarget());
+				// We add a new jGraphT edge to the underlying model, if it does not exist yet.
+				edge = model.getEdge(source, target); 
+				if (null == edge) {
+					edge = model.addEdge(source, target, -1);
+				} else {
+					// Ah. There was an existing edge in the model we were trying to re-add there, from the graph.
+					// We remove the graph edge we have added,
+					if (DEBUG) {
+						System.out.println("[TrackSchemeFrame] addEdgeManually: edge pre-existed. Retrieve it.");
+					}
+					graph.removeCells(new Object[] { cell } );
+					// And re-create a graph edge from the model edge.
+					cell = graph.addJGraphTEdge(edge);
+					cell.setValue(String.format("%.1f", model.getEdgeWeight(edge)));
+					// We also need now to check if the edge belonged to a visible track. If not,
+					// we make it visible.
+					int index = model.getTrackIndexOf(edge);
+					if (model.isTrackVisible(index)) {
+						if (DEBUG) {
+							System.out.println("[TrackSchemeFrame] addEdgeManually: track was visible. Do nothing.");
+						}
+					} else {
+						if (DEBUG) {
+							System.out.println("[TrackSchemeFrame] addEdgeManually: track was invisible. Make it visible.");
+						}
+						model.getFilteredTrackIndices().add(index);
+					}
+				}
+				graph.mapEdgeToCell(edge, cell);
+				
+			} finally {
+				graph.getModel().endUpdate();
+				model.endUpdate();
+				model.clearEdgeSelection();
+			}
+		}
+	}
+
+	public void centerViewOn(mxICell cell) {
 		graphComponent.scrollCellToVisible(cell, true);
 	}
 
@@ -360,7 +414,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		for(Object obj : selectedCells) {
 			mxCell cell = (mxCell) obj;
 			if (cell.isVertex()) {
-				Spot spot = graph.getCellToVertexMap().get(cell);
+				Spot spot = graph.getSpotFor(cell);
 
 				if (spot == null) {
 					// We might have a parent cell, that holds many vertices in it
@@ -368,7 +422,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 					int n = cell.getChildCount();
 					for (int i = 0; i < n; i++) {
 						mxICell child = cell.getChildAt(i);
-						Spot childSpot = graph.getCellToVertexMap().get(child);
+						Spot childSpot = graph.getSpotFor(child);
 						if (null != childSpot)
 							spots.add(childSpot);
 					}
@@ -421,8 +475,8 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		// Set spot image to cell style
 		try {
 			graph.getModel().beginUpdate();
-			for(mxCell cell : graph.getCellToVertexMap().keySet()) {
-				Spot spot = graph.getCellToVertexMap().get(cell);
+			for(mxICell cell : graph.getVertexCells()) {
+				Spot spot = graph.getSpotFor(cell);
 				graph.getModel().setStyle(cell, mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+spot.getImageString());
 			}
 		} finally {
@@ -517,10 +571,10 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 					for (int i = 0; i < cell.getChildCount(); i++) {
 						mxICell child = cell.getChildAt(i);
 						if (child.isVertex()) {
-							Spot spot = graph.getCellToVertexMap().get(child);
+							Spot spot = graph.getSpotFor(child);
 							spotsToRemove.add(spot);
 						} else {
-							DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(child);
+							DefaultWeightedEdge edge = graph.getEdgeFor(child);
 							edgesToRemove.add(edge);
 						}
 					}
@@ -528,10 +582,10 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 				} else {
 
 					if (cell.isVertex()) {
-						Spot spot = graph.getCellToVertexMap().get(cell);
+						Spot spot = graph.getSpotFor(cell);
 						spotsToRemove.add(spot);
 					} else {
-						DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(cell);
+						DefaultWeightedEdge edge = graph.getEdgeFor(cell);
 						edgesToRemove.add(edge);
 					}
 				}
@@ -547,10 +601,10 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 					for (int i = 0; i < cell.getChildCount(); i++) {
 						mxICell child = cell.getChildAt(i);
 						if (child.isVertex()) {
-							Spot spot = graph.getCellToVertexMap().get(child);
+							Spot spot = graph.getSpotFor(child);
 							spotsToAdd.add(spot);
 						} else {
-							DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(child);
+							DefaultWeightedEdge edge = graph.getEdgeFor(child);
 							edgesToAdd.add(edge);
 						}
 					}
@@ -558,10 +612,10 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 				} else {
 
 					if (cell.isVertex()) {
-						Spot spot = graph.getCellToVertexMap().get(cell);
+						Spot spot = graph.getSpotFor(cell);
 						spotsToAdd.add(spot);
 					} else {
-						DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(cell);
+						DefaultWeightedEdge edge = graph.getEdgeFor(cell);
 						edgesToAdd.add(edge);
 					}
 				}
@@ -697,7 +751,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 				if (null != cell) {
 					if (cell.isVertex()) {
 						// Build list of removed spots 
-						Spot spot = graph.getCellToVertexMap().get(cell);
+						Spot spot = graph.getSpotFor(cell);
 						Integer frame = model.getSpots().getFrame(spot);
 						if (frame == null) {
 							// Already removed; second call to event, have to skip it
@@ -706,17 +760,15 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 						spotsToRemove.add(spot);
 						fromFrames.add(frame);
 						// Clean maps 
-						graph.getVertexToCellMap().remove(spot);
-						graph.getCellToVertexMap().remove(cell);
+						graph.removeMapping(spot);
 					} else if (cell.isEdge()) {
 						// Build list of removed edges 
-						DefaultWeightedEdge edge = graph.getCellToEdgeMap().get(cell);
+						DefaultWeightedEdge edge = graph.getEdgeFor(cell);
 						if (null ==edge)
 							continue;
 						edgesToRemove.add(edge);
 						// Clean maps
-						graph.getEdgeToCellMap().remove(edge);
-						graph.getCellToEdgeMap().remove(cell);
+						graph.removeMapping(edge);
 					}
 				}
 			}

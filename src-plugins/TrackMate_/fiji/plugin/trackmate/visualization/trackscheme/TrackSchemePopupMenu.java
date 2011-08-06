@@ -14,6 +14,7 @@ import javax.swing.JPopupMenu;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import com.mxgraph.model.mxCell;
+import com.mxgraph.model.mxICell;
 import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxEventSource.mxIEventListener;
@@ -71,7 +72,7 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 					
 					// From spots
 					for(mxCell cell : vertices) {
-						Spot spot = graph.getCellToVertexMap().get(cell);
+						Spot spot = graph.getSpotFor(cell);
 						if (null == spot) {
 							if (DEBUG) {
 								System.out.println("[TrackSchemePopupMenu] select whole track: tried to retrieve cell "+cell+", unknown to spot map.");
@@ -89,7 +90,7 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 					
 					// From spots
 					for(mxCell cell : edges) {
-						DefaultWeightedEdge dwe = graph.getCellToEdgeMap().get(cell);
+						DefaultWeightedEdge dwe = graph.getEdgeFor(cell);
 						if (null == dwe) {
 							if (DEBUG) {
 								System.out.println("[TrackSchemePopupMenu] select whole track: tried to retrieve cell "+cell+", unknown to edge map.");
@@ -148,7 +149,7 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 							public void invoke(Object sender, mxEventObject evt) {
 								for (mxCell cell : vertices) {
 									cell.setValue(firstCell.getValue());
-									frame.getGraph().getCellToVertexMap().get(cell).setName(firstCell.getValue().toString());
+									frame.getGraph().getSpotFor(cell).setName(firstCell.getValue().toString());
 								}
 								frame.getGraphComponent().refresh();
 								frame.getGraphComponent().removeListener(this);
@@ -191,14 +192,14 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 							if (model.containsEdge(previousSpot, currentSpot))
 								continue;
 							// Check that the cells matching the 2 spots exist in the graph
-							mxCell currentCell = graph.getVertexToCellMap().get(currentSpot);
+							mxICell currentCell = graph.getCellFor(currentSpot);
 							if (null == currentCell) {
 								currentCell = frame.insertSpotInGraph(currentSpot, targetColumn);
 								if (DEBUG) {
 									System.out.println("[TrackSchemePopupMenu] linkSpots: creating cell "+currentCell+" for spot "+currentSpot);
 								}
 							}
-							mxCell previousCell = graph.getVertexToCellMap().get(previousSpot);
+							mxICell previousCell = graph.getCellFor(previousSpot);
 							if (null == previousCell) {
 								previousCell = frame.insertSpotInGraph(previousSpot, targetColumn);
 								if (DEBUG) {

@@ -14,8 +14,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import org.jgrapht.graph.DefaultWeightedEdge;
-
 import com.mxgraph.canvas.mxGraphics2DCanvas;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.swing.mxGraphComponent;
@@ -334,37 +332,8 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		Map<String, Object> props = evt.getProperties();
 		Object obj = (Object) props.get("cell");
 		mxCell cell = (mxCell) obj;
-		DefaultWeightedEdge edge;
-		if (cell.isEdge()) {
-			cell.setValue("New");
-			final JGraphXAdapter graph = frame.getGraph();
-			final TrackMateModel model = frame.getModel();
-			graph.getModel().beginUpdate();
-			model.beginUpdate();
-			try {
-				Spot source = frame.getGraph().getCellToVertexMap().get(cell.getSource());
-				Spot target = frame.getGraph().getCellToVertexMap().get(cell.getTarget());
-				// We add a new jGraphT edge to the underlying model, if it does not exist yet.
-				edge = model.getEdge(source, target); 
-				if (null == edge) {
-					edge = model.addEdge(source, target, -1);
-				} else {
-					// Ah. There was an existing edge in the model we were trying to re-add there, from the graph.
-					// We remove the graph edge we have added,
-					frame.getGraph().removeCells(new Object[] { cell } );
-					// And re-create a graph edge from the model edge.
-					cell = graph.addJGraphTEdge(edge);
-					cell.setValue(String.format("%.1f", model.getEdgeWeight(edge)));
-				}
-				frame.getGraph().getEdgeToCellMap().put(edge, cell);
-				frame.getGraph().getCellToEdgeMap().put(cell, edge);
-				evt.consume();
-			} finally {
-				graph.getModel().endUpdate();
-				model.endUpdate();
-				model.clearEdgeSelection();
-			}
-		}
+		frame.addEdgeManually(cell);
+		evt.consume();
 	}
 
 }
