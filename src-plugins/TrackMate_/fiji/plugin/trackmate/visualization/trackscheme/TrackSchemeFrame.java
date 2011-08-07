@@ -275,7 +275,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 							// launched. So we create one on the fly now.
 							cell = insertSpotInGraph(spot, targetColumn);
 						}
-						
+
 						String style = cell.getStyle();
 						style = mxUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64,"+spot.getImageString());
 						graph.getModel().setStyle(cell, style);
@@ -297,90 +297,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		}
 	}
 
-	/**
-	 * Insert a spot in the {@link TrackSchemeFrame}, by creating a {@link mxCell} in the 
-	 * graph model of this frame and position it according to its feature.
-	 */
-	mxCell insertSpotInGraph(Spot spot, int targetColumn) {
-		// Instantiate JGraphX cell
-		mxCell cellAdded = graph.addJGraphTVertex(spot);
-		// Position it
-		float instant = spot.getFeature(SpotFeature.POSITION_T);
-		double x = (targetColumn-1) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
-		Integer row = graphComponent.getRowForInstant().get(instant);
-		if (null == row) {
-			// The spot added is set to a time that is not present yet in the tracks scheme
-			// So we had it to the last row, plus one.
-			row = 0;
-			for(Integer eRow : graphComponent.getRowForInstant().values()) {
-				if (eRow > row) 
-					row = eRow;
-			}
-			row = row + 1;
-		}
-		double y = (0.5 + row) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2; 
-		int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(SpotFeature.RADIUS) / settings.dx));
-		height = Math.max(height, 12);
-		mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
-		cellAdded.setGeometry(geometry);
-		// Set its style
-		graph.getModel().setStyle(cellAdded, mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+spot.getImageString());
-		return cellAdded;
-	}
-	
-	/**
-	 * This method is called when the user has created manually an edge in the graph, by dragging
-	 * a link between two spot cells. It checks whether the matching edge in the model exists, 
-	 * and tune what should be done accordingly.
-	 * @param cell  the mxCell of the edge that has been manually created.
-	 */
-	void addEdgeManually(mxCell cell) {
 
-		DefaultWeightedEdge edge;
-		if (cell.isEdge()) {
-			cell.setValue("New");
-			graph.getModel().beginUpdate();
-			model.beginUpdate();
-			try {
-				Spot source = graph.getSpotFor(cell.getSource());
-				Spot target = graph.getSpotFor(cell.getTarget());
-				// We add a new jGraphT edge to the underlying model, if it does not exist yet.
-				edge = model.getEdge(source, target); 
-				if (null == edge) {
-					edge = model.addEdge(source, target, -1);
-				} else {
-					// Ah. There was an existing edge in the model we were trying to re-add there, from the graph.
-					// We remove the graph edge we have added,
-					if (DEBUG) {
-						System.out.println("[TrackSchemeFrame] addEdgeManually: edge pre-existed. Retrieve it.");
-					}
-					graph.removeCells(new Object[] { cell } );
-					// And re-create a graph edge from the model edge.
-					cell = graph.addJGraphTEdge(edge);
-					cell.setValue(String.format("%.1f", model.getEdgeWeight(edge)));
-					// We also need now to check if the edge belonged to a visible track. If not,
-					// we make it visible.
-					int index = model.getTrackIndexOf(edge);
-					if (model.isTrackVisible(index)) {
-						if (DEBUG) {
-							System.out.println("[TrackSchemeFrame] addEdgeManually: track was visible. Do nothing.");
-						}
-					} else {
-						if (DEBUG) {
-							System.out.println("[TrackSchemeFrame] addEdgeManually: track was invisible. Make it visible.");
-						}
-						model.getFilteredTrackIndices().add(index);
-					}
-				}
-				graph.mapEdgeToCell(edge, cell);
-				
-			} finally {
-				graph.getModel().endUpdate();
-				model.endUpdate();
-				model.clearEdgeSelection();
-			}
-		}
-	}
 
 	public void centerViewOn(mxICell cell) {
 		graphComponent.scrollCellToVisible(cell, true);
@@ -438,6 +355,8 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		grapher.setVisible(true);
 
 	}
+
+
 
 	/*
 	 * PROTECTED METHODS
@@ -537,6 +456,133 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	protected void displayPopupMenu(final Object cell, final Point point) {
 		TrackSchemePopupMenu menu = new TrackSchemePopupMenu(this, cell,  model, graph);
 		menu.show(graphComponent.getViewport().getView(), (int) point.getX(), (int) point.getY());
+	}
+
+	/**
+	 * Insert a spot in the {@link TrackSchemeFrame}, by creating a {@link mxCell} in the 
+	 * graph model of this frame and position it according to its feature.
+	 */
+	protected mxICell insertSpotInGraph(Spot spot, int targetColumn) {
+		mxICell cellAdded = graph.getCellFor(spot);
+		if (cellAdded != null) {
+			// cell for spot already exist, do nothing and return orginal spot
+			return cellAdded;
+		}
+		// Instantiate JGraphX cell
+		cellAdded = graph.addJGraphTVertex(spot);
+		// Position it
+		float instant = spot.getFeature(SpotFeature.POSITION_T);
+		double x = (targetColumn-1) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
+		Integer row = graphComponent.getRowForInstant().get(instant);
+		if (null == row) {
+			// The spot added is set to a time that is not present yet in the tracks scheme
+			// So we had it to the last row, plus one.
+			row = 0;
+			for(Integer eRow : graphComponent.getRowForInstant().values()) {
+				if (eRow > row) 
+					row = eRow;
+			}
+			row = row + 1;
+		}
+		double y = (0.5 + row) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2; 
+		int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(SpotFeature.RADIUS) / settings.dx));
+		height = Math.max(height, 12);
+		mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
+		cellAdded.setGeometry(geometry);
+		// Set its style
+		graph.getModel().setStyle(cellAdded, mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+spot.getImageString());
+		return cellAdded;
+	}
+
+
+	protected void importTrack(int trackIndex) {
+		model.beginUpdate();
+		graph.getModel().beginUpdate();
+		try {
+			// Flag original track as visible
+			model.addTrackToVisibleList(trackIndex);
+			// Find adequate column
+			int targetColumn = getNextFreeColumn();
+			// Create cells for track
+			Set<Spot> trackSpots = model.getTrackSpots(trackIndex);
+			for (Spot trackSpot : trackSpots) {
+				insertSpotInGraph(trackSpot, targetColumn);
+			}
+			Set<DefaultWeightedEdge> trackEdges = model.getTrackEdges(trackIndex);
+			for (DefaultWeightedEdge trackEdge : trackEdges) {
+				graph.addJGraphTEdge(trackEdge);
+			}
+		} finally {
+			model.endUpdate();
+			graph.getModel().endUpdate();
+		}
+	}
+
+	/**
+	 * This method is called when the user has created manually an edge in the graph, by dragging
+	 * a link between two spot cells. It checks whether the matching edge in the model exists, 
+	 * and tune what should be done accordingly.
+	 * @param cell  the mxCell of the edge that has been manually created.
+	 */
+	protected void addEdgeManually(mxICell cell) {
+		if (cell.isEdge()) {
+			cell.setValue("New");
+			graph.getModel().beginUpdate();
+			model.beginUpdate();
+			try {
+				Spot source = graph.getSpotFor(((mxCell)cell).getSource());
+				Spot target = graph.getSpotFor(((mxCell) cell).getTarget());
+				// We add a new jGraphT edge to the underlying model, if it does not exist yet.
+				DefaultWeightedEdge edge = model.getEdge(source, target); 
+				if (null == edge) {
+					edge = model.addEdge(source, target, -1);
+				} else {
+					// Ah. There was an existing edge in the model we were trying to re-add there, from the graph.
+					// We remove the graph edge we have added,
+					if (DEBUG) {
+						System.out.println("[TrackSchemeFrame] addEdgeManually: edge pre-existed. Retrieve it.");
+					}
+					graph.removeCells(new Object[] { cell } );
+					// And re-create a graph edge from the model edge.
+					cell = graph.addJGraphTEdge(edge);
+					cell.setValue(String.format("%.1f", model.getEdgeWeight(edge)));
+					// We also need now to check if the edge belonged to a visible track. If not,
+					// we make it visible.
+					int index = model.getTrackIndexOf(edge); 
+					// This will work, because track indices will be reprocessed only after the model.endUpdate() 
+					// reaches 0. So now, it's like we are dealing wioth the track indices priori to modification.
+					if (model.isTrackVisible(index)) {
+						if (DEBUG) {
+							System.out.println("[TrackSchemeFrame] addEdgeManually: track was visible. Do nothing.");
+						}
+					} else {
+						if (DEBUG) {
+							System.out.println("[TrackSchemeFrame] addEdgeManually: track was invisible. Make it visible.");
+						}
+						importTrack(index);
+					}
+				}
+				graph.mapEdgeToCell(edge, cell);
+
+			} finally {
+				graph.getModel().endUpdate();
+				model.endUpdate();
+				model.clearEdgeSelection();
+			}
+		}
+	}
+
+	/**
+	 * Return the first free (no cell in lane) column index.
+	 */
+	protected int getNextFreeColumn() {
+		int columnIndex = 2;
+		int[] columnWidths = graphComponent.getColumnWidths();
+		for (int i = 0; i < columnWidths.length; i++) {
+			columnIndex += columnWidths[i] - 1;
+		}
+		columnIndex += 1;
+		return columnIndex;
 	}
 
 	// LISTENERS

@@ -173,24 +173,29 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 					}
 
 					// Find adequate column
-					int targetColumn = 0;
-					for (int i = 0; i < frame.getGraphComponent().getColumnWidths().length; i++) {
-						targetColumn += frame.getGraphComponent().getColumnWidths()[i];
-					}
+					int targetColumn = frame.getNextFreeColumn();
 
 					// Then link them in this order
 					model.beginUpdate();
+					graph.getModel().beginUpdate();
 					try {
-						graph.getModel().beginUpdate();
 						Iterator<Float> it = spotsInTime.keySet().iterator();
 						Float previousTime = it.next();
 						Spot previousSpot = spotsInTime.get(previousTime);
+						// If this spot belong to an invisible track, we make it visible
+						int index = model.getTrackIndexOf(previousSpot);
+						if (!model.isTrackVisible(index)) {
+							frame.importTrack(index);
+						}
+						
 						while(it.hasNext()) {
 							Float currentTime = it.next();
 							Spot currentSpot = spotsInTime.get(currentTime);
-							// Link if not linked already
-							if (model.containsEdge(previousSpot, currentSpot))
-								continue;
+							// If this spot belong to an invisible track, we make it visible
+							index = model.getTrackIndexOf(currentSpot);
+							if (!model.isTrackVisible(index)) {
+								frame.importTrack(index);
+							}
 							// Check that the cells matching the 2 spots exist in the graph
 							mxICell currentCell = graph.getCellFor(currentSpot);
 							if (null == currentCell) {
@@ -206,18 +211,24 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 									System.out.println("[TrackSchemePopupMenu] linkSpots: creating cell "+previousCell+" for spot "+previousSpot);
 								}
 							}
-							// This will update the mxGraph view.
 							// Check if the model does not have already a edge for these 2 spots (that is 
 							// the case if the 2 spot are in an invisible track, which track scheme does not
 							// know of).
 							DefaultWeightedEdge edge = model.getEdge(previousSpot, currentSpot); 
 							if (null == edge) {
+								// We create a new edge between 2 spots, and pair it with a new cell edge.
 								edge = model.addEdge(previousSpot, currentSpot, -1);
-								mxCell cell = graph.addJGraphTEdge(edge);
+								mxCell cell = (mxCell) graph.addJGraphTEdge(edge);
 								cell.setValue("New");
 							} else {
-								mxCell cell = graph.addJGraphTEdge(edge);
+								// We retrieve the edge, and pair it with a new cell edge.
+								mxCell cell = (mxCell) graph.addJGraphTEdge(edge);
 								cell.setValue(String.format("%.1f", model.getEdgeWeight(edge)));
+								// Also, if the existing edge belonged to an existing invisible track, we make it visible.
+								index = model.getTrackIndexOf(edge);
+								if (!model.isTrackVisible(index)) {
+									frame.importTrack(index);
+								}
 							}
 							previousSpot = currentSpot;
 						}

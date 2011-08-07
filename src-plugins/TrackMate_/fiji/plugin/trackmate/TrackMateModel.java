@@ -33,7 +33,7 @@ public class TrackMateModel {
 	 * CONSTANTS
 	 */
 
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	private static final boolean DEBUG_SELECTION = false;
 
 	/*
@@ -41,7 +41,7 @@ public class TrackMateModel {
 	 */
 	private boolean useMultithreading = TrackMate_.DEFAULT_USE_MULTITHREADING;
 
-	
+
 	// SPOTS
 
 	/** Contain the segmentation result, un-filtered.*/
@@ -98,6 +98,23 @@ public class TrackMateModel {
 	private List<Spot> spotsUpdated = new ArrayList<Spot>();
 	private List<DefaultWeightedEdge> edgesAdded = new ArrayList<DefaultWeightedEdge>();
 	private List<DefaultWeightedEdge> edgesRemoved = new ArrayList<DefaultWeightedEdge>();
+	/**
+	 * The event cache. During a transaction, some modifications might trigger the need to fire
+	 * a model change event. We want to fire these events only when the transaction closes
+	 * (when the updayeLevel reaches 0), so we store the event ID in this cache in the meantime.
+	 * The event cache contains only the int IDs of the events listed in {@link TrackMateModelChangeEvent}, 
+	 * namely
+	 * <ul>
+	 * 	<li> {@link TrackMateModelChangeEvent#SPOTS_COMPUTED}
+	 * 	<li> {@link TrackMateModelChangeEvent#SPOT_FILTERED}
+	 * 	<li> {@link TrackMateModelChangeEvent#TRACKS_COMPUTED}
+	 * 	<li> {@link TrackMateModelChangeEvent#TRACKS_FILTERED}
+	 * </ul>
+	 * The {@link TrackMateModelChangeEvent#MODEL_MODIFIED} cannot be cached this way, for it needs 
+	 * to be configured with modification spot and edge targets, so it uses a different system
+	 * (see {@link #flushUpdate()}).
+	 */
+	private HashSet<Integer> eventCache = new HashSet<Integer>();
 
 	// SELECTION
 
@@ -122,6 +139,7 @@ public class TrackMateModel {
 	protected List<TrackMateModelChangeListener> modelChangeListeners = new ArrayList<TrackMateModelChangeListener>();
 	/** The list of listener listening to change in selection.  */
 	protected List<TrackMateSelectionChangeListener> selectionChangeListeners = new ArrayList<TrackMateSelectionChangeListener>();
+
 
 
 
@@ -198,7 +216,7 @@ public class TrackMateModel {
 			}
 		}
 		return null;
-		
+
 	}
 
 	/**
@@ -224,10 +242,10 @@ public class TrackMateModel {
 		} else {
 			return false;
 		}
-		
+
 	}
-	
-	
+
+
 	/**
 	 * Return the indices of the tracks that result from track feature filtering.
 	 * @see #execTrackFiltering()  
@@ -805,6 +823,20 @@ public class TrackMateModel {
 		return removed;
 	}
 
+	/**
+	 * Set the track with the given index to visible, and fire a {@link TrackMateModelChangeEvent#TRACKS_FILTERED}
+	 * event at the end of the transaction.
+	 */
+	public void addTrackToVisibleList(int trackIndex) {
+		boolean added = filteredTrackIndices.add(trackIndex);
+		if (added) {
+			if (DEBUG) {
+				System.out.println("[TrackMateModel] addTrackToVisibleList: added track number "+trackIndex+" to visible list.");
+			}
+			eventCache.add(TrackMateModelChangeEvent.TRACKS_FILTERED);
+		}
+	}
+
 
 	/*
 	 * MODIFY SPOT FEATURES
@@ -932,7 +964,7 @@ public class TrackMateModel {
 		uncroppedSettings.yend   = settings.imp.getHeight();
 		uncroppedSettings.zstart = 1;
 		uncroppedSettings.zend   = settings.imp.getNSlices();
-		
+
 		// Prepare the thread array
 		for (int ithread = 0; ithread < threads.length; ithread++) {
 
@@ -955,9 +987,9 @@ public class TrackMateModel {
 		}
 		logger.setStatus("Calculating features...");
 		logger.setProgress(0);
-		
+
 		SimpleMultiThreading.startAndJoin(threads);
-		
+
 		logger.setProgress(1);
 		logger.setStatus("");
 		return;
@@ -975,8 +1007,11 @@ public class TrackMateModel {
 	 */
 	private void flushUpdate() {
 
-		if (DEBUG)
+
+		if (DEBUG) {
 			System.out.println("[TrackMateModel] #flushUpdate().");
+			System.out.println("[TrackMateModel] #flushUpdate(): Event cache is :"+eventCache);
+		}
 
 		// We recompute tracks only if some edges have been added or removed, and 
 		// if some spots have been removed (equivalent to remove edges). We do NOT
@@ -1040,11 +1075,25 @@ public class TrackMateModel {
 
 		try {
 			if (nEdgesToSignal + nSpotsToSignal > 0) {
-				if (DEBUG)
-					System.out.println("[TrackMateModel] #flushUpdate(): firing event.");
-				for (final TrackMateModelChangeListener listener : modelChangeListeners)
+				if (DEBUG) {
+					System.out.println("[TrackMateModel] #flushUpdate(): firing model modified event.");
+				}
+				for (final TrackMateModelChangeListener listener : modelChangeListeners) {
 					listener.modelChanged(event);
+				}
 			}
+
+			// Fire events stored in the event cache
+			for(int eventID : eventCache) {
+				if (DEBUG) {
+					System.out.println("[TrackMateModel] #flushUpdate(): firing event with ID "+eventID);
+				}
+				TrackMateModelChangeEvent cachedEvent = new TrackMateModelChangeEvent(this, eventID);
+				for (final TrackMateModelChangeListener listener : modelChangeListeners) {
+					listener.modelChanged(cachedEvent);
+				}
+			}
+			
 		} finally {
 			spotsAdded.clear();
 			spotsRemoved.clear();
@@ -1052,6 +1101,7 @@ public class TrackMateModel {
 			spotsUpdated.clear();
 			edgesAdded.clear();
 			edgesRemoved.clear();
+			eventCache.clear();
 		}
 	}
 
@@ -1141,6 +1191,7 @@ public class TrackMateModel {
 			trackFeatures.add(featureMap);
 		}
 	}
+
 
 
 }

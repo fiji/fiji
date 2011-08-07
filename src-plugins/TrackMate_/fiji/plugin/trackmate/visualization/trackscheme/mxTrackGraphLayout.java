@@ -160,7 +160,6 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 						}
 						cell = graph.addJGraphTVertex(spot);
 					}
-					cell.setValue(spot.getName());
 					
 					// Get default style					
 					String style = cell.getStyle();
@@ -212,8 +211,6 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 						}
 
 						graph.getModel().add(currentParent, edgeCell, 0);
-
-						edgeCell.setValue(String.format("%.1f", model.getEdgeWeight(edge)));
 						String edgeStyle = edgeCell.getStyle();
 						edgeStyle = mxUtils.setStyle(edgeStyle, mxConstants.STYLE_STROKECOLOR, trackColorStr);
 						graph.getModel().setStyle(edgeCell, edgeStyle);

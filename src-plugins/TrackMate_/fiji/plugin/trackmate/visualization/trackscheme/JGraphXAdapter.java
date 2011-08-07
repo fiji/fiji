@@ -61,12 +61,17 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 	}
 
 	public mxCell addJGraphTVertex(Spot vertex) {
+		if (vertexToCellMap.containsKey(vertex)) {
+			// cell for Spot already existed, skip creation and return original cell.
+			return vertexToCellMap.get(vertex);
+		}
 		mxCell cell = null;
 		getModel().beginUpdate();
 		try {
 			cell = new mxCell(vertex);
 			cell.setVertex(true);
 			cell.setId(null);
+			cell.setValue(vertex.getName());
 			addCell(cell, defaultParent);
 			vertexToCellMap.put(vertex, cell);
 			cellToVertexMap.put(cell, vertex);
@@ -76,7 +81,11 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 		return cell;
 	}
 
-	public mxCell addJGraphTEdge(DefaultWeightedEdge edge) {
+	public mxICell addJGraphTEdge(DefaultWeightedEdge edge) {
+		if (edgeToCellMap.containsKey(edge)) {
+			// cell for edge already existed, skip creation and return original cell.
+			return edgeToCellMap.get(edge);
+		}
 		mxCell cell = null;
 		getModel().beginUpdate();
 		try {
@@ -85,6 +94,7 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 			cell = new mxCell(edge);
 			cell.setEdge(true);
 			cell.setId(null);
+			cell.setValue(String.format("%.1f", tmm.getEdgeWeight(edge)));
 			cell.setGeometry(new mxGeometry());
 			cell.getGeometry().setRelative(true);
 			addEdge(cell, defaultParent, vertexToCellMap.get(source),  vertexToCellMap.get(target), null);
