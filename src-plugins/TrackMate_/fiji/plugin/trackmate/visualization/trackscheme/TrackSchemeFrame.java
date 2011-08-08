@@ -454,7 +454,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	 *  PopupMenu
 	 */
 	protected void displayPopupMenu(final Object cell, final Point point) {
-		TrackSchemePopupMenu menu = new TrackSchemePopupMenu(this, cell,  model, graph);
+		TrackSchemePopupMenu menu = new TrackSchemePopupMenu(this, cell,  model, graph, point);
 		menu.show(graphComponent.getViewport().getView(), (int) point.getX(), (int) point.getY());
 	}
 
