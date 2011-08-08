@@ -12,7 +12,7 @@ import java.awt.Rectangle;
 
 public class RoiStatistics {
 	protected int count;
-	protected float cumulative, cumulativeX, cumulativeY;
+	protected float cumulative, cumulativeX, cumulativeY, min, max;
 	protected final Accumulator accumulator;
 
 	public RoiStatistics(Roi roi) {
@@ -51,12 +51,18 @@ public class RoiStatistics {
 	protected void accumulate(final Accessor accessor) {
 		count = 0;
 		cumulative = cumulativeX = cumulativeY = 0;
+		min = Float.MAX_VALUE;
+		max = -Float.MAX_VALUE;
 		accumulator.iterate(accessor, new PixelHandler() {
 			public final void handle(int x, int y, float value) {
 				cumulative += value;
 				cumulativeX += x * value;
 				cumulativeY += y * value;
 				count++;
+				if (min > value)
+					min = value;
+				if (max < value)
+					max = value;
 			}
 		});
 	}
@@ -226,5 +232,13 @@ public class RoiStatistics {
 	public float getAverage(ImageProcessor ip) {
 		init(ip);
 		return getAverage();
+	}
+
+	public float getMin() {
+		return min;
+	}
+
+	public float getMax() {
+		return max;
 	}
 }
