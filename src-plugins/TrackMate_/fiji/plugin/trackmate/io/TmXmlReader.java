@@ -55,7 +55,7 @@ public class TmXmlReader implements TmXmlKeys {
 		this.file = file;
 		this.logger = logger;
 	}
-	
+
 	public TmXmlReader(File file) {
 		this(file, Logger.DEFAULT_LOGGER);
 	}
@@ -412,7 +412,14 @@ public class TmXmlReader implements TmXmlKeys {
 									break;
 								}
 								DefaultWeightedEdge edge = graph.addEdge(sourceSpot, targetSpot);
-								graph.setEdgeWeight(edge, weight);
+								if (edge == null) {
+									LineNumberElement lne = (LineNumberElement) edgeElement;
+									logger.error("Bad edge found for track "+trackElement.getAttributeValue(TRACK_ID_ATTRIBUTE_NAME)
+											+": duplicate edge at line "+lne.getStartLine()+". Skipping.");
+									break;
+								} else {
+									graph.setEdgeWeight(edge, weight);
+								}
 								break;
 							}
 						}
