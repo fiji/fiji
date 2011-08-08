@@ -55,6 +55,12 @@ public class TrackMate_ implements PlugIn {
 	public TrackMate_(TrackMateModel model) {
 		this.model = model;
 	}
+	
+	public TrackMate_(Settings settings) {
+		this();
+		model.setSettings(settings);
+	}
+
 
 	/*
 	 * RUN METHOD

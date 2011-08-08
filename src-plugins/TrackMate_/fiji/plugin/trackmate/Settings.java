@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate;
 
+import java.awt.Rectangle;
+
 import fiji.plugin.trackmate.segmentation.DogSegmenter;
 import fiji.plugin.trackmate.segmentation.LogSegmenter;
 import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
@@ -13,6 +15,7 @@ import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.tracking.TrackerType;
 import ij.ImagePlus;
+import ij.gui.Roi;
 import mpicbg.imglib.type.numeric.RealType;
 
 /**
@@ -53,6 +56,55 @@ public class Settings {
 	
 	public SegmenterSettings segmenterSettings = null;
 	public TrackerSettings trackerSettings = null;
+	
+	/*
+	 * CONSTRUCTORS
+	 */
+	
+	/**
+	 * Default empty constructor.
+	 */
+	public Settings() {	}
+	
+	/**
+	 * Create a new settings object, with some fields set according to the given imp.
+	 * @param imp
+	 */
+	public Settings(ImagePlus imp) {
+		// Source image
+		this.imp = imp;
+		// File info
+		this.imageFileName = imp.getFileInfo().fileName;
+		this.imageFolder = imp.getFileInfo().directory;
+		// Image size
+		this.width = imp.getWidth();
+		this.height = imp.getHeight();
+		this.nslices = imp.getNSlices();
+		this.nframes = imp.getNFrames();
+		this.dx = (float) imp.getCalibration().pixelWidth;
+		this.dy = (float) imp.getCalibration().pixelHeight;
+		this.dz = (float) imp.getCalibration().pixelDepth;
+		this.dt = (float) imp.getCalibration().frameInterval;
+		// Crop cube
+		this.zstart = 1;
+		this.zend = imp.getNSlices();
+		this.tstart = 1; 
+		this.tend = imp.getNFrames();
+		Roi roi = imp.getRoi();
+		if (roi == null) {
+			this.xstart = 1;
+			this.xend = 1 + width;
+			this.ystart = 1;
+			this.yend = 1 + height;
+		} else {
+			Rectangle boundingRect = roi.getBounds();
+			this.xstart = boundingRect.x+1; 
+			this.xend = boundingRect.width;
+			this.ystart = boundingRect.y+1;
+			this.yend = boundingRect.height+boundingRect.y+1;
+		}
+		// The rest is left to the user
+	}
 	
 	/*
 	 * METHODS
