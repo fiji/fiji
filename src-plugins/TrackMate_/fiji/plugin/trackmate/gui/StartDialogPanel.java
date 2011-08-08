@@ -193,11 +193,16 @@ public class StartDialogPanel extends ActionListenablePanel {
 		jTextFieldPixelWidth.setText(String.format("%g", imp.getCalibration().pixelWidth));
 		jTextFieldPixelHeight.setText(String.format("%g", imp.getCalibration().pixelHeight));
 		jTextFieldVoxelDepth.setText(String.format("%g", imp.getCalibration().pixelDepth));
-		jTextFieldTimeInterval.setText(String.format("%g", imp.getCalibration().frameInterval));
+		if (imp.getCalibration().frameInterval == 0) {
+			jTextFieldTimeInterval.setText("1");
+			jLabelUnits4.setText("frame");
+		} else {
+			jTextFieldTimeInterval.setText(String.format("%g", imp.getCalibration().frameInterval));
+			jLabelUnits4.setText(imp.getCalibration().getTimeUnit());
+		}
 		jLabelUnits1.setText(imp.getCalibration().getXUnit());
 		jLabelUnits2.setText(imp.getCalibration().getYUnit());
 		jLabelUnits3.setText(imp.getCalibration().getZUnit());
-		jLabelUnits4.setText(imp.getCalibration().getTimeUnit());
 		Roi roi = imp.getRoi();
 		if (null == roi)
 			roi = new Roi(0,0,imp.getWidth(),imp.getHeight());
