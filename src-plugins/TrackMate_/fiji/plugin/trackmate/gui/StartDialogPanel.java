@@ -27,18 +27,7 @@ import javax.swing.WindowConstants;
 
 public class StartDialogPanel extends ActionListenablePanel {
 
-	{
-		//Set Look & Feel
-		try {
-			javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-
-	private static final long serialVersionUID = -969185878762294241L;
-	
+	private static final long serialVersionUID = -5495612173611259921L;
 	private JLabel jLabelCheckCalibration;
 	private JNumericTextField jTextFieldPixelWidth;
 	private JNumericTextField jTextFieldZStart;
@@ -89,9 +78,9 @@ public class StartDialogPanel extends ActionListenablePanel {
 		this.settings = settings;
 		this.target = target;
 		initGUI();
-		if (null == settings.imp)
+		if (null == settings.imp) {
 			refresh();
-		else {
+		} else {
 			echoSettings(settings);
 			imp = settings.imp;
 			refresh();

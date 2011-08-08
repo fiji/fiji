@@ -377,7 +377,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 			}
 			pack();
 			this.setSize(300, 520);
-			// Only instantiate the logger panel, the reset will be done by the controller
+			// Only instantiate the logger panel, the rest will be done by the controller
 			{
 				logPanel = new LogPanel();
 				jPanelMain.add(logPanel, PanelCard.LOG_PANEL_KEY.name());

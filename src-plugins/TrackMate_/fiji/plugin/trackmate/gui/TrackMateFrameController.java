@@ -217,7 +217,6 @@ public class TrackMateFrameController implements ActionListener {
 		switch(state) {
 		case START:
 			view.jButtonPrevious.setEnabled(false);
-			view.jButtonNext.setEnabled(true);
 			break;
 		case ACTIONS:
 			view.jButtonPrevious.setEnabled(true);
