@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.EnumMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.imageio.ImageIO;
 
@@ -35,7 +36,8 @@ public class SpotImp implements Spot {
 		}
 	}
 	
-	public static int IDcounter = 0;
+//	public static int IDcounter = 0; 
+	public static AtomicInteger IDcounter = new AtomicInteger(0); 
 	
 	/** Store the individual features, and their values. */
 	private EnumMap<SpotFeature, Float> features = new EnumMap<SpotFeature, Float>(SpotFeature.class);
@@ -59,8 +61,7 @@ public class SpotImp implements Spot {
 	 * when calculating distances and so on.
 	 */
 	public SpotImp(float[] coordinates, String name) {
-		this.ID = IDcounter;
-		IDcounter++;
+		this.ID = IDcounter.getAndIncrement();
 		for (int i = 0; i < 3; i++)
 			putFeature(POSITION_FEATURES[i], coordinates[i]);
 		if (null == name)
@@ -80,8 +81,9 @@ public class SpotImp implements Spot {
 	 */
 	public SpotImp(int ID) {
 		this.ID = ID;
-		if (SpotImp.IDcounter <= ID)
-			SpotImp.IDcounter = ID+1;
+		if (SpotImp.IDcounter.get() < ID) {
+			SpotImp.IDcounter.set(ID+1);
+		}
 	}
 	
 	/**
