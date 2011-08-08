@@ -173,9 +173,9 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 
 		//Label text for plugin summaries
 		lblPluginSummary = new JLabel();
-		JPanel lblSummaryPanel = SwingTools.horizontalPanel();
-		lblSummaryPanel.add(lblPluginSummary);
-		lblSummaryPanel.add(Box.createHorizontalGlue());
+		JPanel summaryPanel = SwingTools.horizontalPanel();
+		summaryPanel.add(lblPluginSummary);
+		summaryPanel.add(Box.createHorizontalGlue());
 
 		//Create the plugin table and set up its scrollpane
 		table = new PluginTable(this);
@@ -197,10 +197,6 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		c.fill = GridBagConstraints.HORIZONTAL;
 		gb.setConstraints(box, c);
 		leftPanel.add(box);
-
-		c.gridy = 8;
-		gb.setConstraints(lblSummaryPanel, c);
-		leftPanel.add(lblSummaryPanel);
 
 		//======== End: LEFT PANEL ========
 
@@ -226,6 +222,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		//======== End: TOP PANEL (LEFT + RIGHT) ========
 
 		//======== Start: BOTTOM PANEL ========
+		JPanel bottomPanel2 = SwingTools.horizontalPanel();
 		JPanel bottomPanel = SwingTools.horizontalPanel();
 		bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 15, 15, 15));
 		bottomPanel.add(new PluginAction("Keep as-is", null));
@@ -254,10 +251,10 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 				new SitesDialog(UpdaterFrame.this, UpdaterFrame.this.plugins,
 					UpdaterFrame.this.plugins.hasUploadableSites()).setVisible(true);
 			}
-		}, bottomPanel);
+		}, bottomPanel2);
 
 		//includes button to upload to server if is a Developer using
-		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
+		bottomPanel2.add(Box.createRigidArea(new Dimension(15,0)));
 		upload = SwingTools.button("Upload to server",
 				"Upload selected plugins to server", new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -267,7 +264,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 					}
 				}.start();
 			}
-		}, bottomPanel);
+		}, bottomPanel2);
 		upload.setEnabled(false);
 		upload.setVisible(plugins.hasUploadableSites());
 
@@ -275,7 +272,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 			Class pluginChangesClass = Class.forName("fiji.scripting.ShowPluginChanges");
 			if (pluginChangesClass != null && new File(System.getProperty("fiji.dir"), ".git").isDirectory()) {
 				final PlugIn pluginChanges = (PlugIn)pluginChangesClass.newInstance();
-				bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
+				bottomPanel2.add(Box.createRigidArea(new Dimension(15,0)));
 				JButton showChanges = SwingTools.button("Show changes",
 						"Show the changes in Git since the last upload", new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
@@ -286,13 +283,15 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 							}
 						}.start();
 					}
-				}, bottomPanel);
+				}, bottomPanel2);
 			}
 		} catch (Exception e) { /* ignore */ }
 
+		bottomPanel2.add(Box.createHorizontalGlue());
+
 		// offer to update Java, but only on non-Macs
 		if (!IJ.isMacOSX() && new File(Util.fijiRoot, "java").canWrite()) {
-			bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
+			bottomPanel2.add(Box.createRigidArea(new Dimension(15,0)));
 			SwingTools.button("Update Java",
 					"Update the Java version used for Fiji", new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
@@ -302,7 +301,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 						}
 					}.start();
 				}
-			}, bottomPanel);
+			}, bottomPanel2);
 		}
 
 		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
@@ -326,7 +325,9 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		getContentPane().setLayout(new BoxLayout(getContentPane(),
 					BoxLayout.Y_AXIS));
 		getContentPane().add(topPanel);
+		getContentPane().add(summaryPanel);
 		getContentPane().add(bottomPanel);
+		getContentPane().add(bottomPanel2);
 
 		table.getModel().addTableModelListener(this);
 
@@ -609,13 +610,12 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		if (install > 0)
 			text += " install/update: " + install
 				+ (implicated > 0 ? "+" + implicated : "")
-				+ " download size: "
-				+ sizeToString(bytesToDownload);
+				+ " (" + sizeToString(bytesToDownload) + ")";
 		if (uninstall > 0)
 			text += " uninstall: " + uninstall;
 		if (plugins.hasUploadableSites())
-			text += ", upload: " + upload + ", upload size: "
-				+ sizeToString(bytesToUpload);
+			text += ", upload: " + upload + " ("
+				+ sizeToString(bytesToUpload) + ")";
 		lblPluginSummary.setText(text);
 
 	}
