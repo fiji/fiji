@@ -183,8 +183,8 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 						Float previousTime = it.next();
 						Spot previousSpot = spotsInTime.get(previousTime);
 						// If this spot belong to an invisible track, we make it visible
-						int index = model.getTrackIndexOf(previousSpot);
-						if (!model.isTrackVisible(index)) {
+						Integer index = model.getTrackIndexOf(previousSpot);
+						if (index != null && !model.isTrackVisible(index)) {
 							frame.importTrack(index);
 						}
 						
@@ -193,7 +193,7 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 							Spot currentSpot = spotsInTime.get(currentTime);
 							// If this spot belong to an invisible track, we make it visible
 							index = model.getTrackIndexOf(currentSpot);
-							if (!model.isTrackVisible(index)) {
+							if (index != null && !model.isTrackVisible(index)) {
 								frame.importTrack(index);
 							}
 							// Check that the cells matching the 2 spots exist in the graph
@@ -226,7 +226,7 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 								cell.setValue(String.format("%.1f", model.getEdgeWeight(edge)));
 								// Also, if the existing edge belonged to an existing invisible track, we make it visible.
 								index = model.getTrackIndexOf(edge);
-								if (!model.isTrackVisible(index)) {
+								if (index != null && !model.isTrackVisible(index)) {
 									frame.importTrack(index);
 								}
 							}
