@@ -138,8 +138,8 @@ public class GuiReader {
 				segmenterSettings = new SegmenterSettings();
 				settings.segmenterSettings = segmenterSettings;
 				settings.segmenterType = segmenterSettings.segmenterType;
-				settings.trackerSettings = new TrackerSettings();
-				settings.trackerType = settings.trackerSettings.trackerType;
+//				settings.trackerSettings = new TrackerSettings();
+//				settings.trackerType = settings.trackerSettings.trackerType;
 				model.setSettings(settings);
 				if (null != controller) {
 					controller.setPlugin(new TrackMate_(model));
@@ -155,8 +155,8 @@ public class GuiReader {
 
 			settings.segmenterSettings = segmenterSettings;
 			settings.segmenterType = segmenterSettings.segmenterType;
-			settings.trackerSettings = new TrackerSettings(); // put defaults for now
-			settings.trackerType = settings.trackerSettings.trackerType;
+//			settings.trackerSettings = new TrackerSettings(); // put defaults for now
+//			settings.trackerType = settings.trackerSettings.trackerType;
 			model.setSettings(settings);
 			logger.log("  Reading segmenter settings done.\n");
 		}
