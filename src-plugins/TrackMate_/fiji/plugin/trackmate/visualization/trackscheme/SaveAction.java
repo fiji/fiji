@@ -1,9 +1,12 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
 import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -17,14 +20,17 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.pdf.PdfContentByte;
+import com.itextpdf.text.pdf.PdfWriter;
 import com.mxgraph.canvas.mxICanvas;
 import com.mxgraph.canvas.mxSvgCanvas;
 import com.mxgraph.io.mxCodec;
 import com.mxgraph.io.mxGdCodec;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.util.mxCellRenderer;
-import com.mxgraph.util.mxUtils;
 import com.mxgraph.util.mxCellRenderer.CanvasFactory;
+import com.mxgraph.util.mxUtils;
 import com.mxgraph.util.png.mxPngEncodeParam;
 import com.mxgraph.util.png.mxPngImageEncoder;
 import com.mxgraph.view.mxGraph;
@@ -53,7 +59,7 @@ public class SaveAction extends AbstractAction {
 	public SaveAction(TrackSchemeFrame frame) {
 		putValue(Action.SMALL_ICON, ICON);
 		this.frame = frame;
-		
+
 	}
 
 	/**
@@ -115,11 +121,12 @@ public class SaveAction extends AbstractAction {
 		fc.addChoosableFileFilter(defaultFilter);
 
 		// Adds special vector graphics formats and HTML
-		fc.addChoosableFileFilter(new DefaultFileFilter(".mxe", "mxGraph Editor file (.mxe)"));
-		fc.addChoosableFileFilter(new DefaultFileFilter(".txt", "Graph Drawing file (.txt)"));
+		fc.addChoosableFileFilter(new DefaultFileFilter(".pdf", "PDF file (.pdf)"));
 		fc.addChoosableFileFilter(new DefaultFileFilter(".svg", "SVG file (.svg)"));
-		fc.addChoosableFileFilter(vmlFileFilter);
 		fc.addChoosableFileFilter(new DefaultFileFilter(".html", "HTML file (.html)"));
+		fc.addChoosableFileFilter(vmlFileFilter);
+		fc.addChoosableFileFilter(new DefaultFileFilter(".txt", "Graph Drawing file (.txt)"));
+		fc.addChoosableFileFilter(new DefaultFileFilter(".mxe", "mxGraph Editor file (.mxe)"));
 
 		// Adds a filter for each supported image format
 		Object[] imageFormats = ImageIO.getReaderFormatNames();
@@ -180,13 +187,13 @@ public class SaveAction extends AbstractAction {
 				});
 
 				mxUtils.writeFile(mxUtils.getXml(canvas.getDocument()), filename);
-			
+
 			} else if (selectedFilter == vmlFileFilter) {
 				mxUtils.writeFile(mxUtils.getXml(mxCellRenderer.createVmlDocument(graph, null, 1, null, null).getDocumentElement()), filename);
-			
+
 			} else if (ext.equalsIgnoreCase("html")) {
 				mxUtils.writeFile(mxUtils.getXml(mxCellRenderer.createHtmlDocument(graph, null, 1, null, null).getDocumentElement()), filename);
-			
+
 			} else if (ext.equalsIgnoreCase("mxe") || ext.equalsIgnoreCase("xml")) {
 				mxCodec codec = new mxCodec();
 				String xml = mxUtils.getXml(codec.encode(graph.getModel()));
@@ -195,7 +202,11 @@ public class SaveAction extends AbstractAction {
 			} else if (ext.equalsIgnoreCase("txt")) {
 				String content = mxGdCodec.encode(graph).getDocumentString();
 				mxUtils.writeFile(content, filename);
-			
+
+			} else if (ext.equalsIgnoreCase("pdf")) {
+				exportGraphToPdf(graph, filename);
+
+
 			} else {
 				Color bg = null;
 
@@ -216,10 +227,36 @@ public class SaveAction extends AbstractAction {
 					}
 				}
 			}
-		
+
 		} catch (Throwable ex) {
 			ex.printStackTrace();
 			JOptionPane.showMessageDialog(graphComponent, ex.toString(), "Error", JOptionPane.ERROR_MESSAGE);
+		}
+	}
+
+	private void exportGraphToPdf(mxGraph graph, String filename) {
+		Rectangle bounds = new Rectangle(frame.getGraphComponent().getViewport().getViewSize());
+		// step 1
+		com.itextpdf.text.Rectangle pageSize = new com.itextpdf.text.Rectangle(bounds.x, bounds.y, bounds.width, bounds.height);
+		com.itextpdf.text.Document document = new com.itextpdf.text.Document(pageSize);
+		// step 2
+		PdfWriter writer = null;
+		Graphics2D g2 = null;
+		try {
+			writer = PdfWriter.getInstance(document, new FileOutputStream(filename));
+			// step 3
+			document.open();
+			// step 4
+			PdfContentByte canvas = writer.getDirectContent();
+			g2 = canvas.createGraphics(pageSize.getWidth(), pageSize.getHeight());
+			frame.getGraphComponent().getViewport().paintComponents(g2);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (DocumentException e) {
+			e.printStackTrace();
+		} finally {
+			g2.dispose();
+			document.close();
 		}
 	}
 }
