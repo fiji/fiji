@@ -4,6 +4,7 @@ import com.jcraft.jsch.UserInfo;
 
 import fiji.updater.Updater;
 
+import fiji.updater.logic.Checksummer;
 import fiji.updater.logic.FileUploader;
 import fiji.updater.logic.Installer;
 import fiji.updater.logic.PluginCollection;
@@ -280,6 +281,32 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 							public void run() {
 								for (PluginObject plugin : table.getSelectedPlugins())
 									pluginChanges.run(plugin.filename);
+							}
+						}.start();
+					}
+				}, bottomPanel2);
+			}
+			Class rebuildClass = Class.forName("fiji.scripting.RunFijiBuild");
+			if (rebuildClass != null && new File(System.getProperty("fiji.dir"), ".git").isDirectory()) {
+				final PlugIn rebuild = (PlugIn)rebuildClass.newInstance();
+				bottomPanel2.add(Box.createRigidArea(new Dimension(15,0)));
+				JButton showChanges = SwingTools.button("Rebuild",
+						"Rebuild using Fiji Build", new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						new Thread() {
+							public void run() {
+								String list = "";
+								List<String> files = new ArrayList<String>();
+								for (PluginObject plugin : table.getSelectedPlugins()) {
+									list += ("".equals(list) ? "" : " ") + plugin.filename + "-rebuild";
+									files.add(plugin.filename);
+								}
+								if (!"".equals(list))
+									rebuild.run(list);
+								Checksummer checksummer = new Checksummer(plugins, getProgress("Checksumming rebuilt plugins"));
+								checksummer.updateFromLocal(files);
+								pluginsChanged();
+								updatePluginsTable();
 							}
 						}.start();
 					}
