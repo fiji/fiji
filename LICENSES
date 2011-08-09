@@ -5,7 +5,8 @@ This file lists the license under which each plugin or plugin bundle (a .jar fil
 Abbreviations:
 * GPL: General Public License (latest) as specified at http://www.gnu.org/licenses/gpl.txt
 * GPL 2: General Public License version 2
-* LGPL: Lesser General Public License as specified at ?
+* LGPL: Lesser General Public License as specified at http://www.gnu.org/licenses/lgpl.html
+* AGPL: Affero General Public License as specified at http://www.gnu.org/licenses/agpl.html
 * PD: Public Domain
 * CPL 1.0: Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
 * PSF 2: Python Software Foundation Version 2
@@ -42,7 +43,7 @@ Name					File					Author(s)						Contact								License
 * imagescience.jar 			imagescience.jar 			Erik Meijering 						meijering@imagescience.org 					imagescience (see below)
 * imageware.jar				imageware.jar				Daniel Sage et al					http://bigwww.epfl.ch/						BIG (see below)
 * Interactive 3D Surface Plot 		Interactive_3D_Surface_Plot.jar		Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
-* itext-1.3.jar 			itext-1.3.jar 				Bruno Lowagie, Paulo Soares 				http://www.lowagie.com/iText/ 					MPL/LGPL
+* iText					itextpdf-5.1.1.jar 			Bruno Lowagie, Paulo Soares 				http://itextpdf.com/terms-of-use/index.php 			AGPL
 * IO package 				IO_.jar 				A. Cardona, S. Saalfeld, J. Schindelin, G. Jefferis 	acardona@ini.phys.ethz.ch 					GPL/public domain
 * IPLab Reader 				IPLab_Reader.jar			Wayne Rasband 						wsr@nih.gov 							PD
 * Jacl 					jacl.jar 											http://sourceforge.net/projects/tcljava				BSD
