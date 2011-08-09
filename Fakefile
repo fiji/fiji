@@ -188,7 +188,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Simple_Neurite_Tracer.jar \
 	plugins/SPIM_Registration.jar \
 	plugins/QuickPALM_.jar \
-	plugins/TrackMate_.jar \
 	plugins/3D_Viewer.jar \
 	plugins/CPU_Meter.jar \
 	plugins/Graph_Cut.jar \
@@ -370,7 +369,6 @@ MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
 CLASSPATH(plugins/Stitching_.jar)=jars/ij.jar:plugins/loci_tools.jar:jars/fiji-lib.jar:jars/imglib.jar:jars/edu_mines_jtk.jar
 CLASSPATH(plugins/Fiji_Plugins.jar)=jars/ij.jar:jars/jsch-0.1.44.jar:jars/fiji-lib.jar:jars/VIB-lib.jar
 MAINCLASS(plugins/Fiji_Updater.jar)=fiji.updater.Main
-CLASSPATH(plugins/TrackMate_.jar)=jars/batik.jar:jars/ij.jar:plugins/3D_Viewer.jar:plugins/loci_tools.jar:jars/fiji-lib.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/imglib-io.jar:jars/imglib-algorithms.jar:jars/jdom.jar:jars/jdom-contrib.jar:jars/jgraphx.jar:jars/jgrapht-jdk1.6.jar:jars/jfreechart-1.0.13.jar:jars/jcommon-1.0.12.jar:jars/Jama-1.0.2.jar
 CLASSPATH(plugins/Fiji_Updater.jar)=jars/ij.jar:jars/jsch-0.1.44.jar
 CLASSPATH(plugins/IO_.jar)=jars/ij.jar:jars/batik.jar:jars/jpedalSTD.jar:jars/itextpdf-5.1.1.jar:jars/jzlib-1.0.7.jar
 CLASSPATH(plugins/Sync_Win.jar)=jars/ij.jar:plugins/Image_5D.jar
