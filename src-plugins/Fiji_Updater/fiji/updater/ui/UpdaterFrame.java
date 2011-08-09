@@ -51,7 +51,9 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -464,7 +466,9 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 
 	public void updatePluginsTable() {
 		Iterable<PluginObject> view = viewOptions.getView(table);
-		// TODO: maybe we want to remember what was selected?
+		Set<PluginObject> selected = new HashSet<PluginObject>();
+		for (PluginObject plugin : table.getSelectedPlugins())
+			selected.add(plugin);
 		table.clearSelection();
 
 		String search = txtSearch.getText().trim();
@@ -473,6 +477,9 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 
 		//Directly update the table for display
 		table.setPlugins(view);
+		for (int i = 0; i < table.getRowCount(); i++)
+			if (selected.contains(table.getPlugin(i)))
+				table.addRowSelectionInterval(i, i);
 	}
 
 	// TODO: once the editor is embedded, this can go
