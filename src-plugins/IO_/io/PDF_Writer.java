@@ -4,19 +4,22 @@
 // - Makes 'resize to fit' aware of the option to print the name/size of image so that 'save one image per page' is respected with large images
 package io;
 
-import java.awt.*;
 import java.io.FileOutputStream;
 import java.io.IOException;
+
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.Image;
+import com.itextpdf.text.PageSize;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.pdf.PdfContentByte;
+import com.itextpdf.text.pdf.PdfWriter;
 
 import ij.*;
 import ij.gui.GenericDialog;
 import ij.io.*;
 import ij.plugin.*;
-
-import com.lowagie.text.*;
-import com.lowagie.text.Image;
-import com.lowagie.text.pdf.PdfContentByte;
-import com.lowagie.text.pdf.PdfWriter;
 
 public class PDF_Writer implements PlugIn {
 
@@ -38,7 +41,7 @@ public class PDF_Writer implements PlugIn {
 		// Since ImageJ.VERSION is final, its value would normally be inserted
 		// into the code, so we need to get it dynamically via reflection.
 		try {
-			Class ImageJClass = Class.forName("ij.ImageJ");
+			Class<?> ImageJClass = Class.forName("ij.ImageJ");
 			String vers = (String) ImageJClass.getField("VERSION").get(null);
 			canUsePrefs = (vers.compareTo("1.32c") >= 0);
 		} catch (Exception ex) { }
@@ -71,11 +74,11 @@ public class PDF_Writer implements PlugIn {
 				PdfContentByte cb = writer.getDirectContent();
 				cb.setLineWidth(1f);
 				if (isLetter) {
-					cb.moveTo(PageSize.LETTER.left(50), vertPos);
-					cb.lineTo(PageSize.LETTER.right(50), vertPos);
+					cb.moveTo(PageSize.LETTER.getLeft(50), vertPos);
+					cb.lineTo(PageSize.LETTER.getRight(50), vertPos);
 				} else {
-					cb.moveTo(PageSize.A4.left(50), vertPos);
-					cb.lineTo(PageSize.A4.right(50), vertPos);
+					cb.moveTo(PageSize.A4.getLeft(50), vertPos);
+					cb.lineTo(PageSize.A4.getRight(50), vertPos);
 				}
 				cb.stroke();
 			}
@@ -83,14 +86,14 @@ public class PDF_Writer implements PlugIn {
 
 		if (showName) {
 			paragraph = new Paragraph(printName);
-			paragraph.setAlignment(paragraph.ALIGN_CENTER);
+			paragraph.setAlignment(Element.ALIGN_CENTER);
 			document.add(paragraph);
 			//spcNm = 40;
 		}
 
 		if (showSize) {
 			paragraph = new Paragraph(awtImage.getWidth(null)+" x "+ awtImage.getHeight(null));
-			paragraph.setAlignment(paragraph.ALIGN_CENTER);
+			paragraph.setAlignment(Element.ALIGN_CENTER);
 			document.add(paragraph);
 			//spcSz = 40;
 		}
@@ -104,11 +107,11 @@ public class PDF_Writer implements PlugIn {
 		//				if (scaleToFit && (awtImage.getWidth(null) > 520) || (awtImage.getHeight(null) > 720))
 		if (scaleToFit) {
 			if (isLetter)
-				image.scaleToFit(PageSize.LETTER.right(50+spcNm+spcSz), PageSize.LETTER.top(50+spcNm+spcSz));
+				image.scaleToFit(PageSize.LETTER.getRight(50+spcNm+spcSz), PageSize.LETTER.getTop(50+spcNm+spcSz));
 			else
-				image.scaleToFit(PageSize.A4.right(50+spcNm+spcSz), PageSize.A4.top(50+spcNm+spcSz));
+				image.scaleToFit(PageSize.A4.getRight(50+spcNm+spcSz), PageSize.A4.getTop(50+spcNm+spcSz));
 		}
-		image.setAlignment(image.ALIGN_CENTER);
+		image.setAlignment(Element.ALIGN_CENTER);
 		document.add(image);
 
 		isFirst = false;

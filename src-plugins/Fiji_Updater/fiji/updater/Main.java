@@ -92,6 +92,7 @@ public class Main {
 			filter = new FileFilter(files);
 		else
 			filter = plugins.and(new FileFilter(files), filter);
+		plugins.sort();
 		for (PluginObject plugin : plugins.filter(filter))
 			System.out.println(plugin.filename + "\t("
 				+ plugin.getStatus() + ")\t"

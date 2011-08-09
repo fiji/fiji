@@ -44,8 +44,9 @@ public abstract class ArrayBase<ArrayType>
 
 	/// Get next add position for appending, increasing size if needed.
 	protected int getAddIndex() {
+		int result = actualSize;
 		ensureCapacity(actualSize + 1);
-		return actualSize;
+		return result;
 	}
 
 	/// Make room to insert a value at a specified index.

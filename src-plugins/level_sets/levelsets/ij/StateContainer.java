@@ -373,7 +373,7 @@ public class StateContainer {
 							px_zero++;
 						}
 						else {
-							d_map.set(x + x_start, y + y_start, z, States.INSIDE);
+							d_map.set(x + x_start, y + y_start, z, inside);
 							px_inside++;
 						}
 					}

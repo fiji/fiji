@@ -6,7 +6,9 @@ import ij.plugin.PlugIn;
 
 public class ShowPluginChanges implements PlugIn {
 	public void run(String arg) {
-		String fijiDir = System.getProperty("fiji.dir") + "/";
+		String fijiDir = System.getProperty("fiji.dir");
+		if (!fijiDir.endsWith("/"))
+			fijiDir += "/";
 		if (arg == null || "".equals(arg)) {
 			OpenDialog dialog = new OpenDialog("Which Fiji component",
 				fijiDir + "plugins", "");
@@ -16,6 +18,6 @@ public class ShowPluginChanges implements PlugIn {
 		}
 		if (arg.startsWith(fijiDir))
 			arg = arg.substring(fijiDir.length());
-		new FileFunctions(null).showPluginChangesSinceUpload(arg);
+		new FileFunctions(null).showPluginChangesSinceUpload(fijiDir, arg);
 	}
 }

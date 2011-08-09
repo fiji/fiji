@@ -17,13 +17,22 @@ package BSH;
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. 
 */
+
+import bsh.EvalError;
+
 import ij.IJ;
 
 import bsh.Interpreter;
 
 import common.AbstractInterpreter;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.Reader;
+
 
 public class BSH_Interpreter extends AbstractInterpreter {
 
@@ -59,5 +68,26 @@ public class BSH_Interpreter extends AbstractInterpreter {
 
 	protected String getLineCommentMark() {
 		return "//";
+	}
+
+	public static String execute(String... args) throws Exception {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		execute(out, args);
+		return out.toString();
+	}
+
+	public static void execute(OutputStream out, String... args) throws Exception {
+		try {
+			PrintStream printStream = new PrintStream(out);
+			Interpreter interp = new Interpreter((Reader)null, printStream, printStream, false);
+			String path = args[0];
+			String[] bshArgs = new String[args.length - 1];
+			System.arraycopy(args, 1, bshArgs, 0, bshArgs.length);
+			interp.set("bsh.args", bshArgs);
+			interp.eval(new FileReader(path));
+		} catch (EvalError e) {
+			e.setMessage(e.toString());
+			throw e;
+		}
 	}
 }
