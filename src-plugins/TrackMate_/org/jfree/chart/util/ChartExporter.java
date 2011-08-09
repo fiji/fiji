@@ -3,12 +3,11 @@ package org.jfree.chart.util;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -17,10 +16,6 @@ import javax.swing.JFrame;
 
 import org.apache.batik.dom.GenericDOMImplementation;
 import org.apache.batik.svggen.SVGGraphics2D;
-import org.apache.batik.transcoder.TranscoderException;
-import org.apache.batik.transcoder.TranscoderInput;
-import org.apache.batik.transcoder.TranscoderOutput;
-import org.apache.fop.svg.PDFTranscoder;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.ExportableChartPanel;
@@ -28,8 +23,10 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.xy.DefaultXYDataset;
-import org.w3c.dom.DOMImplementation;
-import org.w3c.dom.Document;
+
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.pdf.PdfContentByte;
+import com.itextpdf.text.pdf.PdfWriter;
 
 /**
  * A collection of static utilities made to export {@link JFreeChart} charts 
@@ -49,8 +46,8 @@ public class ChartExporter {
 	 */
 	public static void exportChartAsSVG(JFreeChart chart, Rectangle bounds, File svgFile) throws IOException {
 		// Get a DOMImplementation and create an XML document
-		DOMImplementation domImpl =	GenericDOMImplementation.getDOMImplementation();
-		Document document = domImpl.createDocument(null, "svg", null);
+		org.w3c.dom.DOMImplementation domImpl =	GenericDOMImplementation.getDOMImplementation();
+		org.w3c.dom.Document document = domImpl.createDocument(null, "svg", null);
 
 		// Create an instance of the SVG Generator
 		SVGGraphics2D svgGenerator = new SVGGraphics2D(document);
@@ -77,33 +74,23 @@ public class ChartExporter {
 	 * @param bounds the dimensions of the viewport
 	 * @param pdfFile the output file.
 	 * @throws IOException if writing the pdfFile fails.
+	 * @throws DocumentException  
 	 */
-	public static void exportChartAsPDF(JFreeChart chart, Rectangle bounds, File pdfFile) throws IOException, TranscoderException {
-
-		File temp = File.createTempFile("TrackMateTemp", "svg");
-		exportChartAsSVG(chart, bounds, temp);
-
-		PDFTranscoder transcoder = new PDFTranscoder();
-
-		transcoder.addTranscodingHint(PDFTranscoder.KEY_WIDTH, new Float(bounds.width));
-		transcoder.addTranscodingHint(PDFTranscoder.KEY_HEIGHT, 	new Float(bounds.height));
-		transcoder.addTranscodingHint(PDFTranscoder.KEY_AOI, bounds);
-		transcoder.addTranscodingHint(PDFTranscoder.KEY_STROKE_TEXT, false);
-		
-		OutputStream stream = new FileOutputStream(pdfFile);
-		TranscoderOutput output = new TranscoderOutput(stream);
-
-		InputStream inputStream = new FileInputStream(temp);
-		TranscoderInput input = new TranscoderInput(inputStream);
-
-
-		transcoder.transcode(input, output);
-
-
-		stream.flush();
-		stream.close();
-
-		temp.delete();
+	public static void exportChartAsPDF(JFreeChart chart, Rectangle bounds, File pdfFile) throws IOException, DocumentException {
+		// step 1
+		com.itextpdf.text.Rectangle pageSize = new com.itextpdf.text.Rectangle(bounds.x, bounds.y, bounds.width, bounds.height);
+        com.itextpdf.text.Document document = new com.itextpdf.text.Document(pageSize);
+        // step 2
+        PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(pdfFile));
+        // step 3
+        document.open();
+        // step 4
+        PdfContentByte canvas = writer.getDirectContent();
+        Graphics2D g2 = canvas.createGraphics(pageSize.getWidth(), pageSize.getHeight());
+        chart.draw(g2, bounds);
+        g2.dispose();
+        // step 5
+        document.close();
 
 	}
 
@@ -153,7 +140,7 @@ public class ChartExporter {
 		return out;
 	}
 
-	public static void main(String[] args) throws IOException, TranscoderException {
+	public static void main(String[] args) throws IOException, DocumentException {
 		Object[] stuff = createDummyChart();
 		ChartPanel panel = (ChartPanel) stuff[1];
 		JFreeChart chart = (JFreeChart) stuff[0];

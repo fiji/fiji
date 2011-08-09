@@ -17,11 +17,12 @@ import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
-import org.apache.batik.transcoder.TranscoderException;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.util.ChartExporter;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.ui.ExtensionFileFilter;
+
+import com.itextpdf.text.DocumentException;
 
 public class ExportableChartPanel extends ChartPanel {
 
@@ -197,7 +198,7 @@ public class ExportableChartPanel extends ChartPanel {
 		} else if (file.getPath().endsWith(".pdf")) {
 			try {
 				ChartExporter.exportChartAsPDF(getChart(), getBounds(), file);
-			} catch (TranscoderException e) {
+			} catch (DocumentException e) {
 				e.printStackTrace();
 			}
 
