@@ -3,6 +3,7 @@ package ij3d;
 import ij3d.shapes.Scalebar;
 import ij.util.Java2;
 import ij.gui.GenericDialog;
+import ij.gui.YesNoCancelDialog;
 import ij.io.SaveDialog;
 import ij.io.DirectoryChooser;
 import ij.io.OpenDialog;
@@ -265,19 +266,53 @@ public class Executer {
 
 
 	public void saveAsDXF() {
-		MeshExporter.saveAsDXF(univ.getContents());
+		File dxf_file = promptForFile("Save as DXF", "untitled", ".dxf");
+		if(dxf_file == null)
+			return;
+		MeshExporter.saveAsDXF(univ.getContents(), dxf_file);
 	}
 
 	public void saveAsWaveFront() {
-		MeshExporter.saveAsWaveFront(univ.getContents());
+		File obj_file = promptForFile("Save WaveFront", "untitled", ".obj");
+		if(obj_file == null)
+			return;
+		MeshExporter.saveAsWaveFront(univ.getContents(), obj_file);
 	}
 
 	public void saveAsAsciiSTL(){
-		MeshExporter.saveAsSTL(univ.getContents(), MeshExporter.ASCII);
+		File stl_file = promptForFile("Save as STL (ASCII)", "untitled", ".stl");
+		if(stl_file == null)
+			return;
+		MeshExporter.saveAsSTL(univ.getContents(), stl_file, MeshExporter.ASCII);
 	}
 
 	public void saveAsBinarySTL(){
-		MeshExporter.saveAsSTL(univ.getContents(), MeshExporter.BINARY);
+		File stl_file = promptForFile("Save as STL (binary)", "untitled", ".stl");
+		if(stl_file == null)
+			return;
+		MeshExporter.saveAsSTL(univ.getContents(), stl_file, MeshExporter.BINARY);
+	}
+
+	public static File promptForFile(String title, String suggestion, String ending) {
+		SaveDialog sd = new SaveDialog(title, suggestion, ending);
+		String dir = sd.getDirectory();
+		if (null == dir)
+			return null;
+		String filename = sd.getFileName();
+		if (!filename.toLowerCase().endsWith(ending))
+			filename += ending;
+
+		File file = new File(dir, filename);
+		// check if file exists
+		if (!IJ.isMacOSX()) {
+			if(file.exists()) {
+				YesNoCancelDialog yn = new YesNoCancelDialog(IJ.getInstance(), "Overwrite?", "File  " + filename + " exists!\nOverwrite?");
+				if (!yn.yesPressed())
+					return null;
+			}
+		}
+
+		return file;
 	}
 
 	public void saveAsU3D(){
