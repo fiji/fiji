@@ -222,12 +222,12 @@ public class Executer {
 // 		univ.removeOctree();
 // 	}
 
-	public void importWaveFront() {
-		OpenDialog od = new OpenDialog("Select .obj file", OpenDialog.getDefaultDirectory(), null);
+	protected void importFile(String dialogTitle, String extension, String formatDescription) {
+		OpenDialog od = new OpenDialog(dialogTitle, OpenDialog.getDefaultDirectory(), null);
 		String filename = od.getFileName();
 		if (null == filename) return;
-		if (!filename.toLowerCase().endsWith(".obj")) {
-			IJ.showMessage("Must select a wavefront .obj file!");
+		if (!filename.toLowerCase().endsWith(extension)) {
+			IJ.showMessage("Must select a " + formatDescription + " file!");
 			return;
 		}
 		String path = new StringBuilder(od.getDirectory()).append(filename).toString();
@@ -241,29 +241,15 @@ public class Executer {
 		}
 		if (null == ob)
 			IJ.showMessage("Could not load the file:\n" + path);
+	}
+
+	public void importWaveFront() {
+		importFile("Select .obj file", ".obj", "wavefront .ob");
 	}
 
 	public void importSTL() {
-		OpenDialog od = new OpenDialog("Select .stl file", OpenDialog.getDefaultDirectory(), null);
-		String filename = od.getFileName();
-		if (null == filename) return;
-		if (!filename.toLowerCase().endsWith(".stl")) {
-			IJ.showMessage("Must select an STL file!");
-			return;
-		}
-		String path = new StringBuilder(od.getDirectory()).append(filename).toString();
-		IJ.log("path: " + path);
-		Object ob;
-		try {
-			ob = univ.addContentLater(path);
-		} catch (Exception e) {
-			e.printStackTrace();
-			ob = null;
-		}
-		if (null == ob)
-			IJ.showMessage("Could not load the file:\n" + path);
+		importFile("Select .stl file", ".stl", "STL");
 	}
-
 
 	public void saveAsDXF() {
 		File dxf_file = promptForFile("Save as DXF", "untitled", ".dxf");
