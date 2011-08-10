@@ -23,7 +23,8 @@ import voltex.VolumeRenderer;
 public class ImageJ3DViewer implements PlugIn {
 
 	public static void main(String[] args) {
-		  new ij.ImageJ();
+		  if (IJ.getInstance() == null)
+			new ij.ImageJ();
 		  IJ.runPlugIn("ij3d.ImageJ3DViewer", "");
 	}
 
