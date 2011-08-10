@@ -1398,6 +1398,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		if (!write(file))
 			return false;
 		setFileName(file);
+		openRecent.add(path);
 		return true;
 	}
 
