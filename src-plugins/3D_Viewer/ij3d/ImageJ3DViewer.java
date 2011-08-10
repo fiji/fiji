@@ -1,10 +1,17 @@
 package ij3d;
 
+import customnode.u3d.U3DExporter;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.plugin.PlugIn;
 import ij.WindowManager;
 import ij.gui.GUI;
+
+import isosurface.MeshExporter;
+
+import java.io.File;
+import java.io.IOException;
 
 import voltex.VoltexGroup;
 import orthoslice.OrthoGroup;
@@ -293,6 +300,35 @@ public class ImageJ3DViewer implements PlugIn {
 				m[i] = Float.parseFloat(s[i]);
 			}
 			univ.getSelected().setTransform(new Transform3D(m));
+		}
+	}
+
+	public static void importContent(String path) {
+		Image3DUniverse univ = getUniv();
+		if(univ != null) {
+			univ.addContentLater(path);
+		}
+	}
+
+	public static void exportContent(String format, String path) {
+		Image3DUniverse univ = getUniv();
+		if(univ != null && univ.getSelected() != null) {
+			format = format.toLowerCase();
+			if (format.equals("dxf"))
+				MeshExporter.saveAsDXF(univ.getContents(), new File(path));
+			else if (format.equals("wavefront"))
+				MeshExporter.saveAsWaveFront(univ.getContents(), new File(path));
+			else if (format.startsWith("stl")) {
+				if (format.indexOf("ascii") > 0)
+					MeshExporter.saveAsSTL(univ.getContents(), new File(path), MeshExporter.ASCII);
+				else
+					MeshExporter.saveAsSTL(univ.getContents(), new File(path), MeshExporter.BINARY);
+			}
+			else if (format.equals("u3d")) try {
+				U3DExporter.export(univ, path);
+			} catch (IOException e) {
+				IJ.handleException(e);
+			}
 		}
 	}
 

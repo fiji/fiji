@@ -97,6 +97,8 @@ public class Executer {
 	public static final String APPLY_TRANSFORM = "applyTransform";
 	public static final String SAVE_TRANSFORM = "saveTransform";
 	public static final String RESET_TRANSFORM = "resetTransform";
+	public static final String IMPORT = "importContent";
+	public static final String EXPORT = "exportContent";
 
 	// TODO
 	public static final String ADD = "add";
@@ -235,6 +237,7 @@ public class Executer {
 		Object ob;
 		try {
 			ob = univ.addContentLater(path);
+			record(IMPORT, path);
 		} catch (Exception e) {
 			e.printStackTrace();
 			ob = null;
@@ -256,6 +259,7 @@ public class Executer {
 		if(dxf_file == null)
 			return;
 		MeshExporter.saveAsDXF(univ.getContents(), dxf_file);
+		record(EXPORT, "DXF", dxf_file.getAbsolutePath());
 	}
 
 	public void saveAsWaveFront() {
@@ -263,6 +267,7 @@ public class Executer {
 		if(obj_file == null)
 			return;
 		MeshExporter.saveAsWaveFront(univ.getContents(), obj_file);
+		record(EXPORT, "WaveFront", obj_file.getAbsolutePath());
 	}
 
 	public void saveAsAsciiSTL(){
@@ -270,6 +275,7 @@ public class Executer {
 		if(stl_file == null)
 			return;
 		MeshExporter.saveAsSTL(univ.getContents(), stl_file, MeshExporter.ASCII);
+		record(EXPORT, "STL ASCII", stl_file.getAbsolutePath());
 	}
 
 	public void saveAsBinarySTL(){
@@ -277,6 +283,7 @@ public class Executer {
 		if(stl_file == null)
 			return;
 		MeshExporter.saveAsSTL(univ.getContents(), stl_file, MeshExporter.BINARY);
+		record(EXPORT, "STL Binary", stl_file.getAbsolutePath());
 	}
 
 	public static File promptForFile(String title, String suggestion, String ending) {
@@ -316,6 +323,7 @@ public class Executer {
 			IJ.log("% pdflatex yourfilename.tex");
 			IJ.log("");
 			IJ.log(tex);
+			record(EXPORT, "U3D", dir + name);
 		} catch(Exception e) {
 			IJ.error(e.getMessage());
 		}
