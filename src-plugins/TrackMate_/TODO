@@ -16,6 +16,7 @@ Design:
 - De-enumify TrackMate to implement Johannes idea.
 - Rename trackFiltered stuff to trackVisible stuff in the model.
 
+
 Bugs:
 - Fix SpotEditTool not recognizing a second instance of TrackMate.
 - Check if a split event can be detected at first frame (and converse
@@ -25,23 +26,29 @@ filtered spots.
 - Check if there is conflict between gap closing and track splitting, 
 using the TrackMateEgo image file (look at the C).
 - Check if TrackScheme still reports edge deletion problems.
-- Generating an empty image (when the original one could be found while
-loading) generates NPE in next steps.
 - When in the panel that allow selecting tracker, saving saves nothing.
+- The name of the tracker displayed in the tracker config panel turns not 
+to be the right one after moving back and forth in the GUI (again).
+- DEADLY: using feature threshold in linking seems to have NO EFFECT.
+
 
 Features:
 - Implement edge features. Maybe not.
+
 
 Segmenting:
 - Implement the C.elegans algo from Santella et al 2010.
 - Implement an algorithm to segment cell imaged in phase-contrast.
 
+
 Tracking:
 - Offer to completely skip the 2nd step in LAP resolution, and only perform
 the frame to frame linking. 
 
+
 Actions:
 - Set radius to estimate should refresh the displayer.
+
 
 Track scheme
 - Add the ability to name tracks.
@@ -50,10 +57,12 @@ Track scheme
 - Selection and graph modification should be done on a separate thread, because for
 large graphs, they are quite slow and block everything.
 
+
 Export/Import
 - Offer to select displayer at load.
 - Save the spot images in the xml file.
 - Make a MATLAB function to import xml files as MATLAB variables. In progress.
+
 
 Making it available.
 - Write wiki doc.
