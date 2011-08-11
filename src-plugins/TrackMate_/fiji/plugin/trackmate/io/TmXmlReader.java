@@ -461,8 +461,9 @@ public class TmXmlReader implements TmXmlKeys {
 		if (null == folder || folder.isEmpty())
 			folder = file.getParent(); // it is a relative path, then
 		File imageFile = new File(folder, filename);
-		if (!imageFile.exists() || !imageFile.canRead())
+		if (!imageFile.exists() || !imageFile.canRead()) {
 			return null;
+		}
 		return IJ.openImage(imageFile.getAbsolutePath());
 	}
 
