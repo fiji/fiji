@@ -1,11 +1,11 @@
 #!/bin/sh
 // 2>&1 | :; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji
 
-import com.lowagie.text.Document;
+import com.itextpdf.text.Document;
 
-import com.lowagie.text.pdf.PdfReader;
-import com.lowagie.text.pdf.PdfCopy;
-import com.lowagie.text.pdf.SimpleBookmark;
+import com.itextpdf.text.pdf.PdfReader;
+import com.itextpdf.text.pdf.PdfCopy;
+import com.itextpdf.text.pdf.SimpleBookmark;
 
 import java.io.FileOutputStream;
 

@@ -394,6 +394,21 @@ public class Volume {
 	}
 
 	/**
+	 * Load the color at the specified position
+	 * @param x
+	 * @param y
+	 * @param z
+	 * @return int-packed color
+	 */
+	public int loadWithLUT(int x, int y, int z) {
+		try {
+			return loader.loadWithLUT(x, y, z);
+		} catch(NullPointerException e) {
+			throw new RuntimeException("No image. Maybe it is swapped");
+		}
+	}
+
+	/**
 	 * Load the average value at the specified position
 	 * @param x
 	 * @param y

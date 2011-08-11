@@ -5,11 +5,12 @@ import java.util.Map;
 public class MeshLoader {
 
 	public static Map<String, CustomMesh> load(String file) {
-		if(file.endsWith(".obj"))
+		String downCased = file.toLowerCase();
+		if(downCased.endsWith(".obj"))
 			return loadWavefront(file);
-		if(file.endsWith(".dxf"))
+		if(downCased.endsWith(".dxf"))
 			return loadDXF(file);
-		if(file.endsWith(".stl"))
+		if(downCased.endsWith(".stl"))
 			return loadSTL(file);
 		return null;
 	}

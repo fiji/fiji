@@ -157,7 +157,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/ToAST_.jar \
 	plugins/MTrack2_.jar \
 	plugins/Time_Stamper.jar \
-        plugins/Series_Labeler.jar \
+  plugins/Series_Labeler.jar \
 	plugins/Statistical_Region_Merging.jar \
 	plugins/Refresh_Javas.jar \
 	plugins/Auto_Threshold.jar \
@@ -188,7 +188,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Simple_Neurite_Tracer.jar \
 	plugins/SPIM_Registration.jar \
 	plugins/QuickPALM_.jar \
-	plugins/TrackMate_.jar \
 	plugins/3D_Viewer.jar \
 	plugins/CPU_Meter.jar \
 	plugins/Graph_Cut.jar \
@@ -218,7 +217,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Kuwahara_Filter.jar \
 	plugins/Action_Bar.jar \
 	plugins/Multi_Kymograph.jar \
-	plugins/Reconstruct_Reader.jar
+	plugins/Reconstruct_Reader.jar \
+  plugins/TrackMate_.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
 

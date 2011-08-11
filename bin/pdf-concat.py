@@ -1,8 +1,8 @@
 #!/bin/sh
 ''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
 
-from com.lowagie.text import Document
-from com.lowagie.text.pdf import PdfReader, PdfCopy, SimpleBookmark
+from com.itextpdf.text import Document
+from com.itextpdf.text.pdf import PdfReader, PdfCopy, SimpleBookmark
 from java.io import FileOutputStream
 from java.util import ArrayList
 import sys

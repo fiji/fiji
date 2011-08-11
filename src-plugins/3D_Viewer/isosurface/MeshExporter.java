@@ -3,6 +3,7 @@ package isosurface;
 
 import ij3d.Content;
 import ij3d.ContentNode;
+import ij3d.Executer;
 import customnode.CustomQuadMesh;
 import customnode.CustomTriangleMesh;
 import customnode.WavefrontExporter;
@@ -12,7 +13,6 @@ import customnode.CustomMultiMesh;
 
 import ij.IJ;
 import ij.io.SaveDialog;
-import ij.gui.YesNoCancelDialog;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -57,8 +57,19 @@ public class MeshExporter {
 		return meshes;
 	}
 
-	/** Accepts a collection of MeshGroup objects. */
+	/**
+	 * @Deprecated
+	 */
 	static public void saveAsWaveFront(Collection contents_) {
+		File obj_file = Executer.promptForFile("Save WaveFront", "untitled", ".obj");
+		if(obj_file == null)
+			return;
+		saveAsWaveFront(contents_, obj_file);
+	}
+
+
+	/** Accepts a collection of MeshGroup objects. */
+	static public void saveAsWaveFront(Collection contents_, File obj_file) {
 		if (null == contents_ || 0 == contents_.size())
 			return;
 		Collection<Content> contents = filterMeshes(contents_);
@@ -66,35 +77,18 @@ public class MeshExporter {
 			IJ.log("No meshes to export!");
 			return;
 		}
-		SaveDialog sd = new SaveDialog(
-				"Save WaveFront", "untitled", ".obj");
-		String dir = sd.getDirectory();
-		if (null == dir)
-			return;
-		if (IJ.isWindows()) dir = dir.replace('\\', '/');
-		if (!dir.endsWith("/")) dir += "/";
-		String obj_filename = sd.getFileName();
-		if (!obj_filename.toLowerCase().endsWith(".obj"))
-			obj_filename += ".obj";
 
-		File obj_file = new File(dir + "/" + obj_filename);
-		// check if file exists
-		if (!IJ.isMacOSX() && obj_file.exists()) {
-			YesNoCancelDialog yn = new YesNoCancelDialog(
-				IJ.getInstance(),
-				"Overwrite?",
-				"File  "+obj_filename+" exists!\nOverwrite?");
-			if (!yn.yesPressed()) return;
-		}
-
+		String obj_filename = obj_file.getName();
 		String mtl_filename = obj_filename.substring(
 			0, obj_filename.lastIndexOf('.')) + ".mtl";
+
+		File mtl_file = new File(obj_file.getParentFile(), mtl_filename);
 
 		OutputStreamWriter dos_obj = null,
 				   dos_mtl = null;
 		try {
 			dos_obj = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(obj_file)), "8859_1"); // encoding in Latin 1 (for macosx not to mess around
-			dos_mtl = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(new File(dir + "/" + mtl_filename))), "8859_1"); // encoding in Latin 1 (for macosx not to mess around
+			dos_mtl = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(mtl_file)), "8859_1"); // encoding in Latin 1 (for macosx not to mess around
 			writeAsWaveFront(contents, mtl_filename, dos_obj, dos_mtl);
 			dos_obj.flush();
 			dos_obj.flush();
@@ -107,28 +101,22 @@ public class MeshExporter {
 		}
 	}
 
-	static public void saveAsDXF(Collection meshgroups) {
+	/**
+	 * @Deprecated
+	 */
+	static public void saveAsDXF(Collection contents_) {
+		File dxf_file = Executer.promptForFile("Save as DXF", "untitled", ".dxf");
+		if(dxf_file == null)
+			return;
+		saveAsDXF(contents_, dxf_file);
+	}
+
+	static public void saveAsDXF(Collection meshgroups, File dxf_file) {
 		if (null == meshgroups || 0 == meshgroups.size()) return;
 		meshgroups = filterMeshes(meshgroups);
 		if (0 == meshgroups.size()) {
 			IJ.log("No meshes to export!");
 			return;
-		}
-		SaveDialog sd = new SaveDialog("Save as DXF", "untitled", ".dxf");
-		String dir = sd.getDirectory();
-		if (null == dir) return;
-		if (IJ.isWindows()) dir = dir.replace('\\', '/');
-		if (!dir.endsWith("/")) dir += "/";
-		String dxf_filename = sd.getFileName();
-		if (!dxf_filename.toLowerCase().endsWith(".dxf")) dxf_filename += ".dxf";
-
-		File dxf_file = new File(dir + "/" + dxf_filename);
-		// check if file exists
-		if (!IJ.isMacOSX()) {
-			if (dxf_file.exists()) {
-				YesNoCancelDialog yn = new YesNoCancelDialog(IJ.getInstance(), "Overwrite?", "File  " + dxf_filename + " exists!\nOverwrite?");
-				if (!yn.yesPressed()) return;
-			}
 		}
 
 		OutputStreamWriter dos = null;
@@ -168,38 +156,25 @@ public class MeshExporter {
 		w.append("0\nENDSEC\n0\nEOF\n");         //TRAILER of the file
 	}
 
-	public static void saveAsSTL(Collection meshgroups, int filetype) {
+	/**
+	 * @Deprecated
+	 */
+	static public void saveAsSTL(Collection contents_, int filetype) {
+		String title = "Save as STL (" +
+			((filetype == ASCII) ? "ASCII" : "binary") + ")";
+		File stl_file = Executer.promptForFile(title, "untitled", ".stl");
+		if(stl_file == null)
+			return;
+		saveAsSTL(contents_, stl_file, filetype);
+	}
+
+	public static void saveAsSTL(Collection meshgroups, File stl_file, int filetype) {
 		if (null == meshgroups || 0 == meshgroups.size())
 			return;
 		meshgroups = filterMeshes(meshgroups);
 		if (0 == meshgroups.size()) {
 			IJ.log("No meshes to export!");
 			return;
-		}
-		SaveDialog sd = new SaveDialog("Save as STL ("
-				+ ((filetype == ASCII) ? "ASCII" : "binary") + ")",
-				"untitled", ".stl");
-		String dir = sd.getDirectory();
-		if (null == dir)
-			return;
-		if (IJ.isWindows())
-			dir = dir.replace('\\', '/');
-		if (!dir.endsWith("/"))
-			dir += "/";
-		String stl_filename = sd.getFileName();
-		if (!stl_filename.toLowerCase().endsWith(".stl"))
-			stl_filename += ".stl";
-
-		File stl_file = new File(dir + "/" + stl_filename);
-		// check if file exists
-		if (!IJ.isMacOSX()) {
-			if (stl_file.exists()) {
-				YesNoCancelDialog yn = new YesNoCancelDialog(IJ.getInstance(),
-						"Overwrite?", "File  " + stl_filename
-								+ " exists!\nOverwrite?");
-				if (!yn.yesPressed())
-					return;
-			}
 		}
 
 		OutputStreamWriter dos = null;
@@ -208,7 +183,7 @@ public class MeshExporter {
 			if (filetype == ASCII) {
 				dos = new OutputStreamWriter(new BufferedOutputStream(
 						new FileOutputStream(stl_file)), "8859_1");
-				writeAsciiSTL(meshgroups, dos, stl_filename);
+				writeAsciiSTL(meshgroups, dos, stl_file.getName());
 				dos.flush();
 			} else {
 				out = new DataOutputStream(new BufferedOutputStream(
