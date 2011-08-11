@@ -1,6 +1,6 @@
 package fiji.plugin.trackmate.gui;
 
-import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
+import static fiji.plugin.trackmate.gui.TrackMateFrame.BIG_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.TEXTFIELD_DIMENSION;
 import fiji.plugin.trackmate.Settings;
@@ -10,7 +10,6 @@ import ij.gui.NewImage;
 import ij.gui.Roi;
 
 import java.awt.Component;
-import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -21,7 +20,6 @@ import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
@@ -178,7 +176,7 @@ public class StartDialogPanel extends ActionListenablePanel {
 			}
 			return;
 		}
-		jLabelImageName.setText(imp.getTitle());
+		jLabelImageName.setText("Target: "+imp.getShortTitle());
 		jTextFieldPixelWidth.setText(String.format("%g", imp.getCalibration().pixelWidth));
 		jTextFieldPixelHeight.setText(String.format("%g", imp.getCalibration().pixelHeight));
 		jTextFieldVoxelDepth.setText(String.format("%g", imp.getCalibration().pixelDepth));
@@ -222,9 +220,8 @@ public class StartDialogPanel extends ActionListenablePanel {
 			{
 				jLabelImageName = new JLabel();
 				this.add(jLabelImageName, new GridBagConstraints(0, 0, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 10), 0, 0));
-				jLabelImageName.setText("Image name");
-				jLabelImageName.setFont(FONT.deriveFont(Font.BOLD));
-				jLabelImageName.setHorizontalAlignment(SwingConstants.CENTER);
+				jLabelImageName.setText("Select an image, and press refresh.");
+				jLabelImageName.setFont(BIG_FONT);
 			}
 			{
 				jLabelCheckCalibration = new JLabel();

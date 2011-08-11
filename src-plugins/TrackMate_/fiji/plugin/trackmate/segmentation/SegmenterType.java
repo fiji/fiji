@@ -64,7 +64,7 @@ public enum SegmenterType implements InfoTextable {
 			"This segmenter is basically identical to the LoG segmenter, except <br>" +
 			"that images are downsampled before filtering, giving it a small <br>" +
 			"kick in speed, particularly for large spot sizes. It is the fastest for <br>" +
-			"large spot sizes (> ~20 pixels) " +
+			"large spot sizes (>&nbsp;~20 pixels) " +
 			"</html>";
 		case DOG_SEGMENTER:
 			return "<html>" +

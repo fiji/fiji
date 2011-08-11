@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate.gui;
 
 import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
+import static fiji.plugin.trackmate.gui.TrackMateFrame.BIG_FONT;
 
 import java.awt.Font;
 import java.awt.event.ActionEvent;
@@ -11,7 +12,6 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
 import fiji.plugin.trackmate.InfoTextable;
@@ -60,10 +60,9 @@ public class EnumChooserPanel <K extends Enum<K> & InfoTextable> extends ActionL
 			{
 				jLabelHeader = new JLabel();
 				this.add(jLabelHeader);
-				jLabelHeader.setFont(FONT.deriveFont(Font.BOLD));
+				jLabelHeader.setFont(BIG_FONT);
 				jLabelHeader.setText("Select a "+typeName);
-				jLabelHeader.setBounds(6, 20, 270, 16);
-				jLabelHeader.setHorizontalAlignment(SwingConstants.CENTER);
+				jLabelHeader.setBounds(20, 20, 270, 16);
 			}
 			{
 				String[] names = new String[types.length];

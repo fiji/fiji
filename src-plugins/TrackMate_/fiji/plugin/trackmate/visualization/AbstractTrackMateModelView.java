@@ -157,12 +157,28 @@ public abstract class AbstractTrackMateModelView implements TrackMateSelectionCh
 			case HYPERSTACK_DISPLAYER:
 				return "<html>" +
 				"This displayer overlays the spots and tracks on the current<br>" +
-				"ImageJ hyperstack window." +
+				"ImageJ hyperstack window. <br>" +
+				"<p> " +
+				"This displayer allows manual editing of spots, thanks to the spot <br> " +
+				"edit tool that appear in ImageJ toolbar." +
+				"<p>" +
+				"Double-clicking in a spot toggles the editing mode: The spot can <br> " +
+				"be moved around in a XY plane by mouse dragging. To move it in Z <br>" +
+				"or in time, simply change the current plane and time-point by <br>" +
+				"using the hyperstack sliders. To change its radius, hold the " +
+				"<tt>alt</tt> key down and rotate the mouse-wheel. Holding the " +
+				"<tt>shift</tt> key on top changes it faster."+
 				"</html>";
 			case THREEDVIEWER_DISPLAYER:
 				return "<html>" +
-				"This invokes a new 3D viewer (over time) window, which receive a<br>" +
-				"8-bit copy of the image data. Spots and tracks are rendered in 3D." +
+				"This invokes a new 3D viewer (over time) window, which receive a<br> " +
+				"8-bit copy of the image data. Spots and tracks are rendered in 3D. " +
+				"<p>" +
+				"This displayer does not allow manual editing of spots. Use it only for <br>" +
+				"for very specific cases where you need to have a good 3D image to jusdge <br>" +
+				"the quality of segmentation and tracking. If you don't, use the hyperstack <br>" +
+				"displayer; you can generate a 3D viewer at the last step of tracking that will <br>" +
+				"be in sync with the hyperstack displayer. " +
 				"</html>"; 
 			}
 			return null;

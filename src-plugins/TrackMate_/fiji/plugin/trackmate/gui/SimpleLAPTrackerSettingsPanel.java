@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate.gui;
 
 import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
+import static fiji.plugin.trackmate.gui.TrackMateFrame.BIG_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.TEXTFIELD_DIMENSION;
 
 import java.awt.Font;
@@ -25,15 +26,6 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerSettingsPanel {
 	
 	private static final long serialVersionUID = 7869519363287710721L;
 
-	{
-		//Set Look & Feel
-		try {
-			javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
 	private JLabel jLabel1;
 	private JLabel jLabel2;
 	private JLabel jLabel4;
@@ -100,10 +92,10 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerSettingsPanel {
 			}
 			{
 				jLabelTrackerName = new JLabel();
-				this.add(jLabelTrackerName, new GridBagConstraints(0, 1, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+				this.add(jLabelTrackerName, new GridBagConstraints(0, 1, 3, 1, 0.0, 0.0, GridBagConstraints.LINE_START, GridBagConstraints.NONE, new Insets(10, 20, 0, 0), 0, 0));
 				jLabelTrackerName.setHorizontalTextPosition(SwingConstants.CENTER);
 				jLabelTrackerName.setHorizontalAlignment(SwingConstants.CENTER);
-				jLabelTrackerName.setFont(FONT.deriveFont(Font.BOLD));
+				jLabelTrackerName.setFont(BIG_FONT);
 				jLabelTrackerName.setText(settings.trackerType.toString());
 			}
 			{

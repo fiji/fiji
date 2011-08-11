@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate.gui;
 
 import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
+import static fiji.plugin.trackmate.gui.TrackMateFrame.BIG_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_DISPLAY_SPOT_NAMES;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOTS_VISIBLE;
@@ -13,7 +14,6 @@ import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.T
 
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -50,15 +50,6 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
 public class DisplayerPanel extends ActionListenablePanel {
 
 	private static final long serialVersionUID = 1L;
-
-	{
-		//Set Look & Feel
-		try {
-			javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
 
 	public ActionEvent TRACK_SCHEME_BUTTON_PRESSED 	= new ActionEvent(this, 0, "TrackSchemeButtonPushed");
 
@@ -351,9 +342,9 @@ public class DisplayerPanel extends ActionListenablePanel {
 			{
 				jLabelDisplayOptions = new JLabel();
 				jLabelDisplayOptions.setText("Display options");
-				jLabelDisplayOptions.setFont(FONT.deriveFont(Font.BOLD));
-				jLabelDisplayOptions.setBounds(10, 11, 280, 14);
-				jLabelDisplayOptions.setHorizontalAlignment(SwingConstants.CENTER);
+				jLabelDisplayOptions.setFont(BIG_FONT);
+				jLabelDisplayOptions.setBounds(20, 11, 280, 20);
+				jLabelDisplayOptions.setHorizontalAlignment(SwingConstants.LEFT);
 				this.add(jLabelDisplayOptions);
 			}
 			{

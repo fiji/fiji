@@ -1,12 +1,11 @@
 package fiji.plugin.trackmate.gui;
 
-import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
+import static fiji.plugin.trackmate.gui.TrackMateFrame.BIG_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -23,7 +22,6 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -256,12 +254,10 @@ public class FilterGuiPanel<K extends Enum<K>> extends ActionListenablePanel imp
 			setPreferredSize(new Dimension(270, 500));
 			{
 				JLabel jTopLabel = new JLabel();
-				jTopLabel.setFont(FONT);
-				jTopLabel.setFont(FONT.deriveFont(Font.BOLD));
-				jTopLabel.setHorizontalAlignment(SwingConstants.CENTER);
-				jTopLabel.setText("Set filters on "+objectDescription);
+				jTopLabel.setFont(BIG_FONT);
+				jTopLabel.setText("      Set filters on "+objectDescription);
+				jTopLabel.setPreferredSize(new Dimension(300, 40));
 				this.add(jTopLabel, BorderLayout.NORTH);
-				
 			}
 			{
 				jScrollPaneThresholds = new JScrollPane();

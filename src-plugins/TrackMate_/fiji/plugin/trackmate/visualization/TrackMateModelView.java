@@ -175,11 +175,9 @@ public interface TrackMateModelView {
 	public static final Color DEFAULT_HIGHLIGHT_COLOR = new Color(0, 1f, 0);
 
 	/**
-	 * The default track display mode. Here we picked the local quick one, so that if 
-	 * we receive a very heavy dataset, we have the cheapest display mode per default
-	 * before allowing the user to change it.
+	 * The default track display mode.
 	 */
-	public static final int DEFAULT_TRACK_DISPLAY_MODE = TRACK_DISPLAY_MODE_LOCAL_QUICK;
+	public static final int DEFAULT_TRACK_DISPLAY_MODE = TRACK_DISPLAY_MODE_WHOLE;
 	
 	/**
 	 * The default track display mode

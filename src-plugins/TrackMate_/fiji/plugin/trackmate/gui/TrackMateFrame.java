@@ -42,6 +42,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 	 */
 
 	public static final Font FONT = new Font("Arial", Font.PLAIN, 10);
+	public static final Font BIG_FONT = new Font("Arial", Font.PLAIN, 14);
 	public static final Font SMALL_FONT = FONT.deriveFont(8);
 	static final Dimension TEXTFIELD_DIMENSION = new Dimension(40,18);
 
@@ -329,7 +330,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 					jButtonNext.setText("Next");
 					jButtonNext.setIcon(NEXT_ICON);
 					jButtonNext.setFont(FONT);
-					jButtonNext.setBounds(216, 3, 76, 25);
+					jButtonNext.setBounds(216, 2, 76, 25);
 					jButtonNext.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
 							fireAction(NEXT_BUTTON_PRESSED);
@@ -341,7 +342,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 					jPanelButtons.add(jButtonPrevious);
 					jButtonPrevious.setIcon(PREVIOUS_ICON);
 					jButtonPrevious.setFont(FONT);
-					jButtonPrevious.setBounds(177, 3, 40, 25);
+					jButtonPrevious.setBounds(177, 2, 40, 25);
 					jButtonPrevious.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
 							fireAction(PREVIOUS_BUTTON_PRESSED);
@@ -354,7 +355,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 					jButtonLoad.setText("Load");
 					jButtonLoad.setIcon(LOAD_ICON);
 					jButtonLoad.setFont(FONT);
-					jButtonLoad.setBounds(2, 2, 78, 25);
+					jButtonLoad.setBounds(7, 2, 78, 25);
 					jButtonLoad.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
 							fireAction(LOAD_BUTTON_PRESSED);
@@ -367,7 +368,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 					jButtonSave.setText("Save");
 					jButtonSave.setIcon(SAVE_ICON);
 					jButtonSave.setFont(FONT);
-					jButtonSave.setBounds(79, 2, 78, 25);
+					jButtonSave.setBounds(86, 2, 78, 25);
 					jButtonSave.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
 							fireAction(SAVE_BUTTON_PRESSED);

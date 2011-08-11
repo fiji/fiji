@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate.gui;
 
+import static fiji.plugin.trackmate.gui.TrackMateFrame.BIG_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.TEXTFIELD_DIMENSION;
@@ -144,11 +145,11 @@ public class JPanelTrackerSettingsMain extends javax.swing.JPanel {
 			}
 			{
 				jLabelTrackerName = new JLabel();
-				this.add(jLabelTrackerName, new GridBagConstraints(0, 1, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+				this.add(jLabelTrackerName, new GridBagConstraints(0, 1, 3, 1, 0.0, 0.0, GridBagConstraints.LINE_START, GridBagConstraints.NONE, new Insets(10, 20, 0, 0), 0, 0));
 				jLabelTrackerName.setText(settings.trackerType.toString());
 				jLabelTrackerName.setHorizontalTextPosition(SwingConstants.CENTER);
 				jLabelTrackerName.setHorizontalAlignment(SwingConstants.CENTER);
-				jLabelTrackerName.setFont(FONT.deriveFont(Font.BOLD));
+				jLabelTrackerName.setFont(BIG_FONT);
 			}
 			{
 				jLabelTrackDescription = new JLabel();

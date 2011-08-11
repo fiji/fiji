@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate.gui;
 
+import static fiji.plugin.trackmate.gui.TrackMateFrame.BIG_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.TEXTFIELD_DIMENSION;
@@ -49,15 +50,6 @@ public class SegmenterSettingsPanel extends ActionListenablePanel {
 	private JTextField jTextFieldBlobDiameter;
 	/** The {@link SegmenterSettings} object set by this panel. */
 	protected SegmenterSettings settings;
-
-	{
-		//Set Look & Feel
-		try {
-			javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
 	
 	/*
 	 * CONSTRUCTOR
@@ -162,9 +154,9 @@ public class SegmenterSettingsPanel extends ActionListenablePanel {
 			}
 			{
 				jLabelSegmenterName = new JLabel();
-				this.add(jLabelSegmenterName, new GridBagConstraints(0, 1, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(10, 0, 0, 0), 0, 0));
+				this.add(jLabelSegmenterName, new GridBagConstraints(0, 1, 3, 1, 0.0, 0.0, GridBagConstraints.LINE_START, GridBagConstraints.NONE, new Insets(10, 20, 0, 0), 0, 0));
 				jLabelSegmenterName.setText(settings.segmenterType.toString());
-				jLabelSegmenterName.setFont(FONT.deriveFont(Font.BOLD));
+				jLabelSegmenterName.setFont(BIG_FONT);
 			}
 			{
 				jLabel2 = new JLabel();

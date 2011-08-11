@@ -14,6 +14,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT; 
+import static fiji.plugin.trackmate.gui.TrackMateFrame.BIG_FONT; 
 
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.SpotFeature;
@@ -26,7 +27,12 @@ public class InitFilterPanel extends ActionListenablePanel {
 	private static final long serialVersionUID = -5067695740285574761L;
 	private static final String EXPLANATION_TEXT = "<html><p align=\"justify\">" +
 			"Set here a threshold on the quality feature to restrict the number of spots " +
-			"before calculating other features and rendering. " +
+			"before calculating other features and rendering. This step can help save " +
+			"time in the case of a very large number of spots. " +
+			"<br/> " +
+			"Warning: the spot filtered here will be discarded: they will not be saved " +
+			"and cannot be retrieved by any other means than re-doing the segmentation " +
+			"step." +
 			"</html>";
 	private static final String SELECTED_SPOT_STRING = "Selected spots: %d out of %d";
 
@@ -108,7 +114,7 @@ public class InitFilterPanel extends ActionListenablePanel {
 			{
 				jPanelFields = new JPanel();
 				this.add(jPanelFields, BorderLayout.SOUTH);
-				jPanelFields.setPreferredSize(new java.awt.Dimension(300, 200));
+				jPanelFields.setPreferredSize(new java.awt.Dimension(300, 100));
 				jPanelFields.setLayout(null);
 				{
 					jLabelSelectedSpots = new JLabel();
@@ -121,20 +127,20 @@ public class InitFilterPanel extends ActionListenablePanel {
 			{
 				jPanelText = new JPanel();
 				this.add(jPanelText, BorderLayout.NORTH);
-				jPanelText.setPreferredSize(new Dimension(300, 100));
+				jPanelText.setPreferredSize(new Dimension(300, 200));
 				jPanelText.setLayout(null);
 				{
 					jLabelInitialThreshold = new JLabel();
 					jPanelText.add(jLabelInitialThreshold);
 					jLabelInitialThreshold.setText("Initial thresholding");
-					jLabelInitialThreshold.setFont(FONT.deriveFont(Font.BOLD));
+					jLabelInitialThreshold.setFont(BIG_FONT);
 					jLabelInitialThreshold.setBounds(12, 12, 276, 15);
 				}
 				{
 					jLabelExplanation = new JLabel();
 					jPanelText.add(jLabelExplanation);
 					jLabelExplanation.setText(EXPLANATION_TEXT);
-					jLabelExplanation.setBounds(12, 39, 276, 49);
+					jLabelExplanation.setBounds(12, 39, 276, 100);
 					jLabelExplanation.setFont(FONT.deriveFont(Font.ITALIC));
 				}
 			}
