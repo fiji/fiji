@@ -84,7 +84,7 @@ public class GuiReader {
 		
 		TrackMateModel model = new TrackMateModel();
 		logger.log("Opening file "+file.getName()+'\n');
-		TmXmlReader reader = new TmXmlReader(file, logger);
+		TmXmlReader reader = new TmXmlReader(file);
 		try {
 			reader.parse();
 		} catch (JDOMException e) {

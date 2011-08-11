@@ -25,6 +25,8 @@ filtered spots.
 - Check if there is conflict between gap closing and track splitting, 
 using the TrackMateEgo image file (look at the C).
 - Check if TrackScheme still reports edge deletion problems.
+- Generating an empty image (when the original one could be found while
+loading) generates NPE in next steps.
 - When in the panel that allow selecting tracker, saving saves nothing.
 
 Features:
