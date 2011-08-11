@@ -513,8 +513,12 @@ public class FileFunctions {
 				IJ.handleException(e);
 			}
 		}
-		else
+		else {
+			String prefix = IJ.isWindows() ? "file:/" : "file:";
+			if (url.startsWith(prefix))
+				url = url.substring(prefix.length());
 			listFilesRecursively(new File(url), "", result);
+		}
 		return result;
 	}
 
