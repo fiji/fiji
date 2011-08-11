@@ -10,8 +10,6 @@ GUI
 go in the separate configuration panel. This needs rewriting the spot features, so that
 we only walk with a list of them, not whith the whole enum values. That could foster the
 de-enumification noted below. 
-- Change default mode for display tracks to local-fast, so that heavy cases are handled
-smoothly after processing.
 
 
 Design:
