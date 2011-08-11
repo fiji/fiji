@@ -53,14 +53,23 @@ universe.show();
 %%
 % Feed it the previous ImagePlus, but render it as a surface plot, where
 % the intensity is encoded as height in a 3D space.
-color = javax.vecmath.Color3f(rand, rand, rand);
+color = javax.vecmath.Color3f(240 / 255, 120 / 255, 20 / 255);
 c = universe.addSurfacePlot(imp, ...
-        color, ...
-        'Peaks in 3D', ...
+        javax.vecmath.Color3f(), ...
+        'Matlab Peak in 3D', ...
         1, ...
         [true true true], ...
         1);
-    
+
+%%
+% Rotate it a little
+universe.resetView();
+c.setColor(color);
+c.setTransform([1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1]);
+universe.fireContentChanged(c);
+universe.centerSelected(c);
+universe.rotateUniverse(javax.vecmath.Vector3d(-1, -0.5, +0.2), +120 * pi / 180);
+
 %%
 % Et voilà! A beautiful monochrome MATLAB logo, rendered in an accelerated
 % 3D viewer. You can try the _Fullscreen_ option in the _View_ menu, to
