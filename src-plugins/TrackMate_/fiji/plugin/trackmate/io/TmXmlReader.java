@@ -107,7 +107,7 @@ public class TmXmlReader implements TmXmlKeys {
 		// Filtered tracks
 		Set<Integer> filteredTrackIndices = getFilteredTracks();
 		if (null != filteredTrackIndices) {
-			model.setFilteredTrackIndices(filteredTrackIndices, false);
+			model.setVisibleTrackIndices(filteredTrackIndices, false);
 		}
 		// Return
 		return model;

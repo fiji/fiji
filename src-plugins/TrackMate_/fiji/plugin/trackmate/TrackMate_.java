@@ -299,7 +299,7 @@ public class TrackMate_ implements PlugIn {
 			if (trackIsOk)
 				filteredTrackIndices.add(trackIndex);
 		}
-		model.setFilteredTrackIndices(filteredTrackIndices, true);
+		model.setVisibleTrackIndices(filteredTrackIndices, true);
 	}
 
 

@@ -356,7 +356,7 @@ public class GuiReader {
 
 		{ // Try reading track selection
 			try {
-				model.setFilteredTrackIndices(reader.getFilteredTracks(), false);
+				model.setVisibleTrackIndices(reader.getFilteredTracks(), false);
 			} catch (DataConversionException e) {
 				logger.error("Problem reading the filtered tracks field of "+file.getName()
 						+". Error message is\n"+e.getLocalizedMessage()+'\n');

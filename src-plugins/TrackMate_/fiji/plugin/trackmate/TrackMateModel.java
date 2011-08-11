@@ -23,6 +23,7 @@ import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotFeatureFacade;
 import fiji.plugin.trackmate.features.track.TrackFeatureFacade;
 import fiji.plugin.trackmate.util.TMUtils;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
  * <h1>The model for the data managed by TrackMate plugin.</h1>
@@ -76,7 +77,7 @@ import fiji.plugin.trackmate.util.TMUtils;
  * <h3>{@link #spotSelection}</h3>
  * 
  * The filtered spot, as a new {@link SpotCollection}. It is important that this
- * collection is made with the same object than for the {@link #spots} field.
+ * collection is made with the same spot objects than for the {@link #spots} field.
  * 
  * <h3>{@link #graph}</h3>
  * 
@@ -89,6 +90,36 @@ import fiji.plugin.trackmate.util.TMUtils;
  * using edge direction, but simply refer to the per-frame organization of the
  * {@link SpotCollection}.
  * 
+ * <h3>{@link #visibleTrackIndices}</h3>
+ * 
+ * This Set contains the index of the tracks that are set to be visible. We use this 
+ * to flag the tracks that should be retained after filtering the tracks by their
+ * features, for instance. Because the user can edit this manually, or because 
+ * the track visibility can changed when merging 2 track manually (for instance),
+ * we stress on the 'visibility' meaning of this field. 
+ * <p>
+ * The set contains the indices of the tracks that are visible, in the List
+ * of {@link #trackEdges} and {@link #trackSpots}, that are described below.
+ * These fields are generated automatically from the track {@link #graph}.
+ * For instance, if this set is made of [2, 4], that means the tracks with
+ * the indices 2 and 4 in the aforementioned lists are visible, the other not.
+ * Of course, {@link TrackMateModelView}s are expected to acknowledge this 
+ * content. 
+ * <p>
+ * This field can be modified publicly using the  {@link #setTrackVisible(Integer, boolean, boolean)}
+ * method, or totally overwritten using the {@link #setVisibleTrackIndices(Set, boolean)} method.
+ * However, some modifications can arise coming from manual editing of tracks. For instance
+ * removing an edge from the middle of a visible tracks generates two new tracks, and
+ * possibly shifts the indices of the other tracks. This is hopefully taken care of 
+ * the model internal work, and the following rules are implements:
+ * <ul>
+ * 	<li> TODO
+ * </ul>   
+ * 
+ * <h2>Dependent data</h2>
+ * 
+ * We list here the fields whose value depends on 
+ * 
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - 2010-2011
  * 
  */
@@ -98,7 +129,7 @@ public class TrackMateModel {
 	 * CONSTANTS
 	 */
 
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 	private static final boolean DEBUG_SELECTION = false;
 
 	/*
@@ -149,11 +180,12 @@ public class TrackMateModel {
 	/** The track filter list that is used to prune track and spots. */
 	protected List<FeatureFilter<TrackFeature>> trackFilters = new ArrayList<FeatureFilter<TrackFeature>>();
 	/**
-	 * The filtered track indices. Is a set made of the indices of tracks (in
+	 * The visible track indices. Is a set made of the indices of tracks (in
 	 * {@link #trackEdges} and {@link #trackSpots}) that are retained after
-	 * filtering.
+	 * filtering, and set visible. The user can manually add to or remove from
+	 * this list.
 	 */
-	protected Set<Integer> filteredTrackIndices;
+	protected Set<Integer> visibleTrackIndices;
 
 	// TRANSACTION MODEL
 
@@ -182,7 +214,7 @@ public class TrackMateModel {
 	 * <li> {@link TrackMateModelChangeEvent#SPOTS_COMPUTED}
 	 * <li> {@link TrackMateModelChangeEvent#SPOT_FILTERED}
 	 * <li> {@link TrackMateModelChangeEvent#TRACKS_COMPUTED}
-	 * <li> {@link TrackMateModelChangeEvent#TRACKS_FILTERED}
+	 * <li> {@link TrackMateModelChangeEvent#TRACKS_VISIBILITY_CHANGED}
 	 * </ul>
 	 * The {@link TrackMateModelChangeEvent#MODEL_MODIFIED} cannot be cached
 	 * this way, for it needs to be configured with modification spot and edge
@@ -257,10 +289,10 @@ public class TrackMateModel {
 	 * Return the number of filtered tracks in the model.
 	 */
 	public int getNFilteredTracks() {
-		if (filteredTrackIndices == null)
+		if (visibleTrackIndices == null)
 			return 0;
 		else
-			return filteredTrackIndices.size();
+			return visibleTrackIndices.size();
 	}
 
 	/**
@@ -307,7 +339,7 @@ public class TrackMateModel {
 	 * filtered tracks.
 	 */
 	public boolean isTrackVisible(final int index) {
-		if (filteredTrackIndices.contains(index)) { // work because based on hash
+		if (visibleTrackIndices.contains(index)) { // work because based on hash
 			return true;
 		} else {
 			return false;
@@ -322,7 +354,7 @@ public class TrackMateModel {
 	 * @see #execTrackFiltering()
 	 */
 	public Set<Integer> getFilteredTrackIndices() {
-		return filteredTrackIndices;
+		return visibleTrackIndices;
 	}
 
 	public Spot getEdgeSource(final DefaultWeightedEdge edge) {
@@ -488,9 +520,7 @@ public class TrackMateModel {
 	 * Overwrite the {@link #filteredSpots} field, resulting normally from the
 	 * {@link #execSpotFiltering()} process.
 	 * 
-	 * @param doNotify
-	 *            if true, will fire a
-	 *            {@link TrackMateModelChangeEvent#SPOTS_FILTERED} event.
+	 * @param doNotify  if true, will fire a {@link TrackMateModelChangeEvent#SPOTS_FILTERED} event.
 	 */
 	public void setFilteredSpots(final SpotCollection filteredSpots, boolean doNotify) {
 		this.filteredSpots = filteredSpots;
@@ -502,35 +532,66 @@ public class TrackMateModel {
 	}
 
 	/**
-	 * Overwrite the {@link #filteredTrackIndices} field, resulting normally
-	 * from the {@link #execTrackFiltering()} process.
+	 * Overwrite the {@link #visibleTrackIndices} field, resulting normally from the 
+	 * {@link #execTrackFiltering()} process.
 	 * 
-	 * @param doNotify
-	 *            if true, will fire a
-	 *            {@link TrackMateModelChangeEvent#TRACKS_FILTERED} event.
+	 * @param doNotify if true, will fire a {@link TrackMateModelChangeEvent#TRACKS_VISIBILITY_CHANGED} 
+	 * event.
 	 */
-	public void setFilteredTrackIndices(Set<Integer> filteredTrackIndices, boolean doNotify) {
-		this.filteredTrackIndices = filteredTrackIndices;
+	public void setVisibleTrackIndices(Set<Integer> visibleTrackIndices, boolean doNotify) {
+		this.visibleTrackIndices = visibleTrackIndices;
 		if (doNotify) {
-			final TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_FILTERED);
+			final TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_VISIBILITY_CHANGED);
 			for (TrackMateModelChangeListener listener : modelChangeListeners)
 				listener.modelChanged(event);
 		}
 	}
+	
+	/**
+	 * Change the visibility of a given track, whose index is given. 
+	 * 
+	 * @param trackIndex  the index of the track whose visibility is to change. If <code>null</code>,
+	 * nothing is done.
+	 * @param visible  if true, the track will be made visible, and invisible otherwise. If the track
+	 * was already visible, or respectively invisible, nothing is done.
+	 * @param doNotify  if true, and if some changes occurred, an event with the ID 
+	 * {@link TrackMateModelChangeEvent#TRACKS_VISIBILITY_CHANGED} will be fired.
+	 * @return  true if and only if the call to this method actually changed the current visible 
+	 * settings of tracks.
+	 */
+	public boolean setTrackVisible(Integer trackIndex, boolean visible, boolean doNotify) {
+		if (trackIndex == null)
+			return false;
+		
+		boolean modified = false;
+		if (visible) {
+			modified = visibleTrackIndices.add(trackIndex);
+		} else {
+			modified = visibleTrackIndices.remove(trackIndex);
+		}
+		
+		if (doNotify && modified) {
+			TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_VISIBILITY_CHANGED);
+			for (TrackMateModelChangeListener listener : modelChangeListeners) 
+				listener.modelChanged(event);
+		}
+		
+		return modified;
+	}
 
 	/**
 	 * Set the graph resulting from the tracking process, and fire a
-	 * {@link TrackMateModelChangeEvent#TRACKS_COMPUTED} event.
+	 * {@link TrackMateModelChangeEvent#TRACKS_COMPUTED} event. The {@link #visibleTrackIndices}
+	 * field is set to make all new tracks visible by default.
 	 */
-	public void setGraph(
-			final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph) {
+	public void setGraph(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph) {
 		this.graph = graph;
 		computeTracksFromGraph();
 		computeTrackFeatures();
 		//
-		filteredTrackIndices = new HashSet<Integer>(getNTracks());
+		visibleTrackIndices = new HashSet<Integer>(getNTracks());
 		for (int i = 0; i < getNTracks(); i++)
-			filteredTrackIndices.add(i);
+			visibleTrackIndices.add(i);
 		//
 		final TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_COMPUTED);
 		for (TrackMateModelChangeListener listener : modelChangeListeners)
@@ -950,17 +1011,17 @@ public class TrackMateModel {
 
 	/**
 	 * Set the track with the given index to visible, and fire a
-	 * {@link TrackMateModelChangeEvent#TRACKS_FILTERED} event at the end of the
+	 * {@link TrackMateModelChangeEvent#TRACKS_VISIBILITY_CHANGED} event at the end of the
 	 * transaction.
 	 */
 	public void addTrackToVisibleList(int trackIndex) {
-		boolean added = filteredTrackIndices.add(trackIndex);
+		boolean added = visibleTrackIndices.add(trackIndex);
 		if (added) {
 			if (DEBUG) {
 				System.out.println("[TrackMateModel] addTrackToVisibleList: added track number "
 								+ trackIndex + " to visible list.");
 			}
-			eventCache.add(TrackMateModelChangeEvent.TRACKS_FILTERED);
+			eventCache.add(TrackMateModelChangeEvent.TRACKS_VISIBILITY_CHANGED);
 		}
 	}
 
@@ -1274,17 +1335,17 @@ public class TrackMateModel {
 		}
 
 		// Try to infer correct visibility
-		if (filteredTrackIndices == null || filteredTrackIndices.isEmpty())
+		if (visibleTrackIndices == null || visibleTrackIndices.isEmpty())
 			return;
 
 		if (DEBUG) {
 			System.out.println("[TrackMateModel] computeTrackFromGraph: old track visibility is "
-							+ filteredTrackIndices);
+							+ visibleTrackIndices);
 		}
 		final int ntracks = trackSpots.size();
 		final int noldtracks = oldTrackSpots.size();
-		final Set<Integer> oldTrackVisibility = filteredTrackIndices;
-		filteredTrackIndices = new HashSet<Integer>(noldtracks); // Approx
+		final Set<Integer> oldTrackVisibility = visibleTrackIndices;
+		visibleTrackIndices = new HashSet<Integer>(noldtracks); // Approx
 		// How to know if a new track should be visible or not?
 		// We can say this: the new track should be visible if it has at least
 		// one spot
@@ -1306,14 +1367,14 @@ public class TrackMateModel {
 			}
 
 			if (shouldBeVisible) {
-				filteredTrackIndices.add(trackIndex);
+				visibleTrackIndices.add(trackIndex);
 			}
 
 		}
 
 		if (DEBUG) {
 			System.out.println("[TrackMateModel] computeTrackFromGraph: new track visibility is "
-							+ filteredTrackIndices);
+							+ visibleTrackIndices);
 		}
 
 	}

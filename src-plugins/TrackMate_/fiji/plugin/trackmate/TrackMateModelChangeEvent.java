@@ -38,9 +38,10 @@ public class TrackMateModelChangeEvent extends EventObject {
 	 */
 	public static final int 	TRACKS_COMPUTED = 6;
 	/** 
-	 * Event type indicating that the tracks of the model were filtered.
+	 * Event type indicating that the tracks of the model had their 
+	 * visibility changed.
 	 */
-	public static final int 	TRACKS_FILTERED = 7;
+	public static final int 	TRACKS_VISIBILITY_CHANGED = 7;
 	/** 
 	 * Event type indicating that model was modified,
 	 * by adding, removing or changing the feature of some spots, and/or

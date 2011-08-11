@@ -117,7 +117,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			universe.removeContent(TRACK_CONTENT_NAME);
 			universe.addContent(trackContent);
 			break;
-		case TrackMateModelChangeEvent.TRACKS_FILTERED:
+		case TrackMateModelChangeEvent.TRACKS_VISIBILITY_CHANGED:
 			trackNode.computeTrackColors();
 			trackNode.setTrackVisible(model.getFilteredTrackIndices());
 			break;
