@@ -150,7 +150,7 @@ public class PlugInExecutor {
 				ImagePlus image = WindowManager.getCurrentImage();
 				if (image != null && image.isLocked()) {
 					if (!IJ.showMessageWithCancel("Unlock image?", "The image '" + image.getTitle()
-							+ "'appears to be unlocked... Unlock?"))
+							+ "'appears to be locked... Unlock?"))
 						return;
 					image.unlock();
 				}
