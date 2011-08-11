@@ -64,7 +64,7 @@ public class SurfacePlotGroup extends ContentNode implements AdjustmentListener{
 		volume.setAverage(true);
 		volume.setChannels(c.getChannels());
 		surfacep = new SurfacePlot(volume, c.getColor(),
-				c.getTransparency(), c.getImage().getSlice());
+				c.getTransparency(), c.getImage().getSlice() - 1);
 
 		surfacep.calculateMinMaxCenterPoint(min, max, center);
 		addChild(surfacep);
