@@ -286,9 +286,9 @@ public final class SurfacePlot extends Shape3D {
 		Color3f colors[] = new Color3f[nIndices];
 		for(int i = 0; i < nIndices; i++) {
 			float y = ph * (i / volume.xDim);
-			float x = pw * (i % volume.yDim);
+			float x = pw * (i % volume.xDim);
 			float v = zFactor * volume.load(
-				i % volume.xDim, i / volume.yDim, g);
+				i % volume.xDim, i / volume.xDim, g);
 			coords[i] = new Point3f(x, y, v);
 			colors[i] = color != null
 					? color
