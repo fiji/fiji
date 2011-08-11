@@ -475,6 +475,8 @@ public class FileFunctions {
 	 * Get a list of files from a directory (recursively)
 	 */
 	public void listFilesRecursively(File directory, String prefix, List<String> result) {
+		if (!directory.exists())
+			return;
 		for (File file : directory.listFiles())
 			if (file.isDirectory())
 				listFilesRecursively(file, prefix + file.getName() + "/", result);
