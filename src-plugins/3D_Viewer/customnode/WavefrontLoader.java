@@ -57,7 +57,7 @@ public class WavefrontLoader {
 
 		while((line = in.readLine()) != null) {
 			if(line.startsWith("mtllib")) {
-				String mtlName = line.split(" ")[1].trim();
+				String mtlName = line.split("\\s+")[1].trim();
 				materials = readMaterials(f, mtlName);
 			} else if(line.startsWith("g ")) {
 				if(name != null) {
@@ -67,10 +67,10 @@ public class WavefrontLoader {
 					indices = new ArrayList<Point3f>();
 					material = null;
 				}
-				name = line.split(" ")[1].trim();
+				name = line.split("\\s+")[1].trim();
 			} else if(line.startsWith("usemtl ")) {
 				if(materials != null)
-					material = materials.get(line.split(" ")[1]);
+					material = materials.get(line.split("\\s+")[1]);
 			} else if(line.startsWith("v ")) {
 				readVertex();
 			} else if(line.startsWith("f ")) {
@@ -114,7 +114,7 @@ public class WavefrontLoader {
 	}
 
 	private void readFace() {
-		String[] sp = line.split(" ");
+		String[] sp = line.split("\\s+");
 		type = sp.length - 1;
 		for(int i = 1; i < sp.length; i++) {
 			int idx = -1;
@@ -135,7 +135,7 @@ public class WavefrontLoader {
 	}
 
 	private void readVertex() {
-		String[] sp = line.split(" ");
+		String[] sp = line.split("\\s+");
 		vertices.add(new Point3f(
 			Float.parseFloat(sp[1]),
 			Float.parseFloat(sp[2]),
@@ -175,13 +175,13 @@ public class WavefrontLoader {
 			if(line.startsWith("newmtl")) {
 				if(name != null && color != null)
 					materials.put(name, color);
-				String[] sp = line.split(" ");
+				String[] sp = line.split("\\s+");
 				name = sp[1].trim();
 				color = null;
 			}
 
 			if(line.startsWith("Kd")) {
-				String[] sp = line.split(" ");
+				String[] sp = line.split("\\s+");
 				color = new Color4f(
 					Float.parseFloat(sp[1]),
 					Float.parseFloat(sp[2]),
@@ -192,7 +192,7 @@ public class WavefrontLoader {
 			if(line.startsWith("d ")) {
 				if(color == null)
 					color = new Color4f(1, 1, 1, 1);
-				String[] sp = line.split(" ");
+				String[] sp = line.split("\\s+");
 				color.w = 1 - Float.parseFloat(sp[1]);
 			}
 		}

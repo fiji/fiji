@@ -1,5 +1,7 @@
 package fiji.scripting;
 
+import BSH.BSH_Interpreter;
+
 import fiji.SimpleExecuter;
 
 import fiji.build.Fake;
@@ -922,8 +924,9 @@ public class FileFunctions {
 		});
 	}
 
-	public void showPluginChangesSinceUpload(String plugin) {
-		showPluginChangesSinceUpload(plugin, 0);
+	public void showPluginChangesSinceUpload(String fijiDir, String plugin) {
+		this.fijiDir = fijiDir;
+		showPluginChangesSinceUpload(plugin, -1);
 	}
 
 	public void showPluginChangesSinceUpload(final String plugin, final int verboseLevel) {
@@ -938,15 +941,14 @@ public class FileFunctions {
 		addChangesActionLink(diff, "hexdump", plugin, 3);
 		diff.normal("\n");
 
+		final Cursor cursor = diff.getCursor();
+		diff.setCursor(new Cursor(Cursor.WAIT_CURSOR));
 		final Thread thread = new Thread() {
 			public void run() {
-				Cursor cursor = diff.getCursor();
-				diff.setCursor(new Cursor(Cursor.WAIT_CURSOR));
 				populateDiff(diff, plugin, verboseLevel);
 				diff.setCursor(cursor);
 			}
 		};
-		thread.start();
 		final JFrame frame = new JFrame("Changes since last upload " + plugin);
 		frame.getContentPane().add(diff);
 		frame.pack();
@@ -962,6 +964,23 @@ public class FileFunctions {
 			}
 		});
 		frame.setVisible(true);
+
+		if (verboseLevel < 0) {
+			// When run from Updater, call ready-for-upload
+			diff.normal("Checking whether " + plugin + " is ready to be uploaded... ");
+			try {
+				String ready = BSH_Interpreter.execute(fijiDir + "bin/ready-for-upload.bsh", fijiDir + plugin);
+				if ("".equals(ready))
+					diff.normal("Yes!\n");
+				else
+					diff.red("No!\n" + ready);
+			} catch (Exception e) {
+				IJ.handleException(e);
+				diff.red("Probably not (see Exception)\n");
+			}
+		}
+
+		thread.start();
 	}
 
 	protected void populateDiff(final DiffView diff, final String plugin, int verboseLevel) {
