@@ -61,7 +61,6 @@ public class SurfacePlotGroup extends ContentNode implements AdjustmentListener{
 		ImagePlus imp = res == 1 ? c.getImage() 
 			: NaiveResampler.resample(c.getImage(), res, res, 1);
 		Volume volume = new Volume(imp);
-		volume.setAverage(true);
 		volume.setChannels(c.getChannels());
 		surfacep = new SurfacePlot(volume, c.getColor(),
 				c.getTransparency(), c.getImage().getSlice() - 1);
