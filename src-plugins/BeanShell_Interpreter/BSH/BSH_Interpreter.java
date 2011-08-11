@@ -72,7 +72,14 @@ public class BSH_Interpreter extends AbstractInterpreter {
 
 	public static String execute(String... args) throws Exception {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		execute(out, args);
+		try {
+			execute(out, args);
+		} catch (Exception e) {
+			String output = out.toString();
+			if (!"".equals(output))
+				IJ.log("Got output before exception:\n" + output);
+			throw e;
+		}
 		return out.toString();
 	}
 
