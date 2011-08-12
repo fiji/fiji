@@ -109,6 +109,7 @@ public class TrackMateFrameController implements ActionListener {
 				event == view.SAVE_BUTTON_PRESSED) && !actionFlag ) {
 
 			actionFlag = true;
+			setMainButtonsFor(state);
 			updateGUI();
 
 		} else if (event == displayerPanel.TRACK_SCHEME_BUTTON_PRESSED) {
@@ -125,6 +126,7 @@ public class TrackMateFrameController implements ActionListener {
 	/*
 	 * GETTERS / SETTERS
 	 */
+
 
 	public void setPlugin(final TrackMate_ plugin) {
 		this.plugin = plugin;
@@ -263,7 +265,7 @@ public class TrackMateFrameController implements ActionListener {
 		case CHOOSE_TRACKER:
 			execGetTrackerChoice();
 			break;
-			
+
 		case TUNE_TRACKER: {
 			Settings settings = plugin.getModel().getSettings();
 			settings.trackerSettings = view.trackerSettingsPanel.getSettings();
@@ -347,20 +349,50 @@ public class TrackMateFrameController implements ActionListener {
 	 * PRIVATE METHODS
 	 */
 
+	/**
+	 * Set the text and the enable state of the 4 bottom buttons (load, save, next,
+	 * previous) according to the given state. If <code>null</code> is given,
+	 * all buttons are disabled.
+	 */
+	private void setMainButtonsFor(final GuiState state) {
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				view.jButtonNext.setText("Next");
+				if (null == state) {
+					view.jButtonLoad.setEnabled(false);
+					view.jButtonSave.setEnabled(false);
+					view.jButtonNext.setEnabled(false);
+					view.jButtonPrevious.setEnabled(false);
+					return;
+				}
+
+				switch (state)	{
+				default:
+					view.jButtonLoad.setEnabled(true);
+					view.jButtonSave.setEnabled(true);
+					view.jButtonNext.setEnabled(true);
+					view.jButtonPrevious.setEnabled(true);
+					break;
+				case LOAD_SAVE:
+					view.jButtonLoad.setEnabled(false);
+					view.jButtonSave.setEnabled(false);
+					view.jButtonNext.setEnabled(true);
+					view.jButtonPrevious.setEnabled(false);
+					view.jButtonNext.setText("Resume");
+					break;
+
+				}
+			}});
+
+	}
+
 
 	private void load() {
 		try {
 
 			actionFlag = false;
-			SwingUtilities.invokeLater(new Runnable() {			
-				@Override
-				public void run() {
-					view.jButtonLoad.setEnabled(false);
-					view.jButtonSave.setEnabled(false);
-					view.jButtonNext.setEnabled(false);
-					view.jButtonPrevious.setEnabled(false);
-				}
-			});
+			setMainButtonsFor(null);
 			view.displayPanel(PanelCard.LOG_PANEL_KEY);
 
 			// New model to feed
@@ -379,47 +411,21 @@ public class TrackMateFrameController implements ActionListener {
 			GuiReader reader = new GuiReader(this);
 			File tmpFile = reader.askForFile(file);
 			if (null == tmpFile) {
-				SwingUtilities.invokeLater(new Runnable() {			
-					@Override
-					public void run() {
-						view.jButtonLoad.setEnabled(true);
-						view.jButtonSave.setEnabled(true);
-						view.jButtonNext.setEnabled(true);
-						view.jButtonPrevious.setEnabled(true);
-					}
-				});
+				setMainButtonsFor(GuiState.LOAD_SAVE);
 				return;
 			}
 			file = tmpFile;
 			plugin = new TrackMate_(reader.loadFile(file));
 
 		} finally {
-
-			SwingUtilities.invokeLater(new Runnable() {			
-				@Override
-				public void run() {
-					view.jButtonLoad.setEnabled(true);
-					view.jButtonSave.setEnabled(true);
-					view.jButtonNext.setEnabled(true);
-					view.jButtonPrevious.setEnabled(true);
-				}
-			});
-
+			setMainButtonsFor(GuiState.LOAD_SAVE);
 		}
 	}
 
 	private void save() {
 		try {
 
-			SwingUtilities.invokeLater(new Runnable() {			
-				@Override
-				public void run() {
-					view.jButtonLoad.setEnabled(false);
-					view.jButtonSave.setEnabled(false);
-					view.jButtonNext.setEnabled(false);
-					view.jButtonPrevious.setEnabled(false);
-				}
-			});
+			setMainButtonsFor(null);
 			view.displayPanel(PanelCard.LOG_PANEL_KEY);
 
 			logger.log("Saving data...\n", Logger.BLUE_COLOR);
@@ -436,30 +442,16 @@ public class TrackMateFrameController implements ActionListener {
 			File tmpFile = saver.askForFile(file);
 			if (null == tmpFile) {
 				actionFlag = false;
-				SwingUtilities.invokeLater(new Runnable() {			
-					@Override
-					public void run() {
-						view.jButtonLoad.setEnabled(true);
-						view.jButtonSave.setEnabled(true);
-						view.jButtonNext.setEnabled(true);
-						view.jButtonPrevious.setEnabled(true);
-					}
-				});
+				setMainButtonsFor(GuiState.LOAD_SAVE);
 				return;
 			}
 			file = tmpFile;
 			saver.writeFile(file);
+			
 		}	finally {
+			
 			actionFlag = false;
-			SwingUtilities.invokeLater(new Runnable() {			
-				@Override
-				public void run() {
-					view.jButtonLoad.setEnabled(true);
-					view.jButtonSave.setEnabled(true);
-					view.jButtonNext.setEnabled(true);
-					view.jButtonPrevious.setEnabled(true);
-				}
-			});
+			setMainButtonsFor(GuiState.LOAD_SAVE);
 
 		}
 	}
@@ -761,7 +753,8 @@ public class TrackMateFrameController implements ActionListener {
 		TUNE_TRACK_FILTERS,
 		FILTER_TRACKS, 
 		TUNE_DISPLAY,
-		ACTIONS;
+		ACTIONS,
+		LOAD_SAVE; // unused in process, just a flag.
 
 		/**
 		 * Provide the next state the view should be into when pushing the 'next' button.
