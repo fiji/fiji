@@ -128,7 +128,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 				colors.put(i, defaultColor);
 			}
 			int index = 0;
-			for(int i : model.getFilteredTrackIndices()) {
+			for(int i : model.getVisibleTrackIndices()) {
 				colors.put(i, colorMap.getPaint((float) index / (ntracks-1)));
 				index ++;
 			}	

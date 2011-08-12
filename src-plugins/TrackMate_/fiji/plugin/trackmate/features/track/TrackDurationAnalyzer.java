@@ -10,7 +10,7 @@ import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 
 public class TrackDurationAnalyzer implements TrackFeatureAnalyzer{
-	
+
 	@Override
 	public void process(final TrackMateModel model) {
 		// I love brute force.
@@ -19,11 +19,15 @@ public class TrackDurationAnalyzer implements TrackFeatureAnalyzer{
 			Set<Spot> track = allTracks.get(index);
 			float minT = Float.POSITIVE_INFINITY;
 			float maxT = Float.NEGATIVE_INFINITY;
-			float t;
+			Float t;
+			boolean allNull = true;
 			Spot startSpot = null;
 			Spot endSpot = null;
 			for (Spot spot : track) {
 				t = spot.getFeature(SpotFeature.POSITION_T);
+				if (null == t)
+					continue;
+				allNull = false;
 				if (t < minT) {
 					minT = t;
 					startSpot = spot;
@@ -33,10 +37,12 @@ public class TrackDurationAnalyzer implements TrackFeatureAnalyzer{
 					endSpot = spot;
 				}
 			}
-			model.putTrackFeature(index, TrackFeature.TRACK_DURATION, (maxT-minT));
-			model.putTrackFeature(index, TrackFeature.TRACK_START, minT);
-			model.putTrackFeature(index, TrackFeature.TRACK_STOP, maxT);
-			model.putTrackFeature(index, TrackFeature.TRACK_DISPLACEMENT, (float) Math.sqrt(startSpot.squareDistanceTo(endSpot)));
+			if (!allNull) {
+				model.putTrackFeature(index, TrackFeature.TRACK_DURATION, (maxT-minT));
+				model.putTrackFeature(index, TrackFeature.TRACK_START, minT);
+				model.putTrackFeature(index, TrackFeature.TRACK_STOP, maxT);
+				model.putTrackFeature(index, TrackFeature.TRACK_DISPLACEMENT, (float) Math.sqrt(startSpot.squareDistanceTo(endSpot)));
+			}
 		}
 	}
 

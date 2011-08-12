@@ -165,5 +165,31 @@ public class TrackMateModelChangeEvent extends EventObject {
 	public void setSource(Object source) {
 		this.source = source;
 	}
+	
+	@Override
+	public String toString() {
+		String str = "[TrackModelChangeEvent]:\n";
+		str += " - source: "+source+"\n";
+		str += " - event type: ";
+		switch (eventID) {
+		case SPOTS_COMPUTED:
+			str += "Spots computed\n";
+			break;
+		case SPOTS_FILTERED:
+			str += "Spots filtered\n";
+			break;
+		case TRACKS_COMPUTED:
+			str += "Tracks computed\n";
+			break;
+		case TRACKS_VISIBILITY_CHANGED:
+			str += "Track visibility changed\n";
+			break;
+		case MODEL_MODIFIED:
+			str += "Model modified, with:\n";
+			str += "\t- spots modified: "+ (spots != null ? spots.size() : 0) +"\n"; 
+			str += "\t- edges modified: "+ (edges != null ? edges.size() : 0) +"\n"; 
+		}
+		return str;
+	}
 
 }

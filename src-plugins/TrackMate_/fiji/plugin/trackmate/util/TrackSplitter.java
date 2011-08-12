@@ -121,14 +121,16 @@ public class TrackSplitter {
 		if (nConnections == 0) 
 			return LONE_VERTEX;
 		
-		float t0 = spot.getFeature(SpotFeature.POSITION_T);
+//		float t0 = spot.getFeature(SpotFeature.POSITION_T);
+		int t0 = model.getSpots().getFrame(spot);
 
 		if (nConnections == 1) {
 			DefaultWeightedEdge edge = edges.iterator().next();
 			Spot other = model.getEdgeSource(edge);
 			if (other == spot)
 				other = model.getEdgeTarget(edge);
-			float t1 = other.getFeature(SpotFeature.POSITION_T);
+//			float t1 = other.getFeature(SpotFeature.POSITION_T);
+			int t1 = model.getSpots().getFrame(other);
 			if (t1 > t0)
 				return BRANCH_START;
 			else
@@ -141,12 +143,14 @@ public class TrackSplitter {
 			Spot other1 = model.getEdgeSource(edge1);
 			if (other1 == spot)
 				other1 = model.getEdgeTarget(edge1);
-			float t1 = other1.getFeature(SpotFeature.POSITION_T);
+//			float t1 = other1.getFeature(SpotFeature.POSITION_T);
+			int t1 = model.getSpots().getFrame(other1);
 			DefaultWeightedEdge edge2 = it.next();
 			Spot other2 = model.getEdgeSource(edge2);
 			if (other2 == spot)
 				other2 = model.getEdgeTarget(edge2);
-			float t2 = other2.getFeature(SpotFeature.POSITION_T);
+//			float t2 = other2.getFeature(SpotFeature.POSITION_T);
+			int t2 = model.getSpots().getFrame(other2);
 			if ( (t2>t0 && t0>t1) || (t2<t0 && t0<t1) )
 				return BRIDGE;
 			else if (t0 > t1 && t0 >t2)

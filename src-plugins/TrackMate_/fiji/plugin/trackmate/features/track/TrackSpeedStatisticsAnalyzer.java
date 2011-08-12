@@ -34,7 +34,7 @@ public class TrackSpeedStatisticsAnalyzer implements TrackFeatureAnalyzer {
 		    int n1;
 			
 		    // Others
-			double val;
+			Double val;
 			final double[] velocities = new double[track.size()];
 			int n = 0;
 			
@@ -43,7 +43,11 @@ public class TrackSpeedStatisticsAnalyzer implements TrackFeatureAnalyzer {
 				Spot target = model.getEdgeTarget(edge);
 				
 				// Edge velocity
-				val = Math.sqrt(source.squareDistanceTo(target)) / Math.abs(source.diffTo(target, SpotFeature.POSITION_T));
+				Float d2 = source.squareDistanceTo(target);
+				Float dt = source.diffTo(target, SpotFeature.POSITION_T);
+				if (d2 == null || dt == null)
+					continue;
+				val = Math.sqrt(d2) / Math.abs(dt);
 				
 				// For median, min and max
 				velocities[n] = val;

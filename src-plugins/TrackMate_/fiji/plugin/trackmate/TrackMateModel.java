@@ -15,7 +15,11 @@ import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.RealType;
 
 import org.jgrapht.alg.ConnectivityInspector;
+import org.jgrapht.event.GraphEdgeChangeEvent;
+import org.jgrapht.event.GraphListener;
+import org.jgrapht.event.GraphVertexChangeEvent;
 import org.jgrapht.graph.DefaultWeightedEdge;
+import org.jgrapht.graph.ListenableUndirectedGraph;
 import org.jgrapht.graph.SimpleWeightedGraph;
 import org.jgrapht.traverse.DepthFirstIterator;
 
@@ -140,9 +144,9 @@ public class TrackMateModel {
 	// SPOTS
 
 	/** Contain the segmentation result, un-filtered. */
-	protected SpotCollection spots;
+	protected SpotCollection spots = new SpotCollection();
 	/** Contain the spots retained for tracking, after filtering by features. */
-	protected SpotCollection filteredSpots;
+	protected SpotCollection filteredSpots = new SpotCollection();
 	/**
 	 * The feature filter list that is used to generate {@link #filteredSpots}
 	 * from {@link #spots}.
@@ -163,11 +167,13 @@ public class TrackMateModel {
 	 * {@link #removeEdge(DefaultWeightedEdge)}, {@link #removeEdge(Spot, Spot)}
 	 * .
 	 */
-	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = null;
+	protected ListenableUndirectedGraph<Spot, DefaultWeightedEdge> graph = new ListenableUndirectedGraph<Spot, DefaultWeightedEdge>(new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class));
+	
+	
 	/** The edges contained in the list of tracks. */
-	protected List<Set<DefaultWeightedEdge>> trackEdges;
+	protected List<Set<DefaultWeightedEdge>> trackEdges = new ArrayList<Set<DefaultWeightedEdge>>();
 	/** The spots contained in the list of spots. */
-	protected List<Set<Spot>> trackSpots;
+	protected List<Set<Spot>> trackSpots = new ArrayList<Set<Spot>>();
 	/** The feature facade that will be used to compute track features. */
 	private TrackFeatureFacade trackFeatureFacade = new TrackFeatureFacade();
 	/**
@@ -185,7 +191,8 @@ public class TrackMateModel {
 	 * filtering, and set visible. The user can manually add to or remove from
 	 * this list.
 	 */
-	protected Set<Integer> visibleTrackIndices;
+	protected Set<Integer> visibleTrackIndices = new HashSet<Integer>();
+	
 
 	// TRANSACTION MODEL
 
@@ -247,6 +254,29 @@ public class TrackMateModel {
 	/** The list of listener listening to change in selection. */
 	protected List<TrackMateSelectionChangeListener> selectionChangeListeners = new ArrayList<TrackMateSelectionChangeListener>();
 
+	
+	
+	
+	
+	
+	
+	
+	/*
+	 * CONSTRUCTOR
+	 */
+
+	public TrackMateModel() {
+		graph.addGraphListener(new MyGraphListener());
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	/*
 	 * DEAL WITH MODEL CHANGE LISTENER
 	 */
@@ -317,7 +347,6 @@ public class TrackMateModel {
 			}
 		}
 		return null;
-
 	}
 
 	/**
@@ -348,12 +377,11 @@ public class TrackMateModel {
 	}
 
 	/**
-	 * Return the indices of the tracks that result from track feature
-	 * filtering.
+	 * Return the indices of the tracks that are marked as visible.
 	 * 
 	 * @see #execTrackFiltering()
 	 */
-	public Set<Integer> getFilteredTrackIndices() {
+	public Set<Integer> getVisibleTrackIndices() {
 		return visibleTrackIndices;
 	}
 
@@ -393,7 +421,7 @@ public class TrackMateModel {
 		String str = "Track " + i + ": ";
 		for (TrackFeature feature : TrackFeature.values())
 			str += feature.shortName() + " = "	+ trackFeatures.get(i).get(feature) + ", ";
-		return str;
+				return str;
 	}
 
 	// Track features
@@ -546,7 +574,7 @@ public class TrackMateModel {
 				listener.modelChanged(event);
 		}
 	}
-	
+
 	/**
 	 * Change the visibility of a given track, whose index is given. 
 	 * 
@@ -562,20 +590,20 @@ public class TrackMateModel {
 	public boolean setTrackVisible(Integer trackIndex, boolean visible, boolean doNotify) {
 		if (trackIndex == null)
 			return false;
-		
+
 		boolean modified = false;
 		if (visible) {
 			modified = visibleTrackIndices.add(trackIndex);
 		} else {
 			modified = visibleTrackIndices.remove(trackIndex);
 		}
-		
+
 		if (doNotify && modified) {
 			TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_VISIBILITY_CHANGED);
 			for (TrackMateModelChangeListener listener : modelChangeListeners) 
 				listener.modelChanged(event);
 		}
-		
+
 		return modified;
 	}
 
@@ -583,9 +611,13 @@ public class TrackMateModel {
 	 * Set the graph resulting from the tracking process, and fire a
 	 * {@link TrackMateModelChangeEvent#TRACKS_COMPUTED} event. The {@link #visibleTrackIndices}
 	 * field is set to make all new tracks visible by default.
+	 * <p>
+	 * Calling this method <b>overwrites<b> the current graph.
 	 */
 	public void setGraph(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph) {
-		this.graph = graph;
+		this.graph = new ListenableUndirectedGraph<Spot, DefaultWeightedEdge>(graph);
+		this.graph.addGraphListener(new MyGraphListener());
+		//
 		computeTracksFromGraph();
 		computeTrackFeatures();
 		//
@@ -599,7 +631,9 @@ public class TrackMateModel {
 	}
 
 	public void clearTracks() {
-		this.graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		this.graph = new ListenableUndirectedGraph<Spot, DefaultWeightedEdge>(
+				new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class));
+		this.graph.addGraphListener(new MyGraphListener());
 		this.trackEdges = null;
 		this.trackSpots = null;
 	}
@@ -738,16 +772,16 @@ public class TrackMateModel {
 		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(spotSelection.size());
 		for (Spot spot : spotSelection)
 			spotMap.put(spot, false);
-		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(edgeSelection.size());
-		for (DefaultWeightedEdge edge : edgeSelection)
-			edgeMap.put(edge, false);
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, edgeMap);
-		// Clear fields
-		clearSpotSelection();
-		clearEdgeSelection();
-		// Fire event
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
-			listener.selectionChanged(event);
+				Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(edgeSelection.size());
+				for (DefaultWeightedEdge edge : edgeSelection)
+					edgeMap.put(edge, false);
+						TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, edgeMap);
+						// Clear fields
+						clearSpotSelection();
+						clearEdgeSelection();
+						// Fire event
+						for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+							listener.selectionChanged(event);
 	}
 
 	public void clearSpotSelection() {
@@ -757,12 +791,12 @@ public class TrackMateModel {
 		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(spotSelection.size());
 		for (Spot spot : spotSelection)
 			spotMap.put(spot, false);
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
-		// Clear field
-		spotSelection.clear();
-		// Fire event
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
-			listener.selectionChanged(event);
+				TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
+				// Clear field
+				spotSelection.clear();
+				// Fire event
+				for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+					listener.selectionChanged(event);
 	}
 
 	public void clearEdgeSelection() {
@@ -772,12 +806,12 @@ public class TrackMateModel {
 		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(edgeSelection.size());
 		for (DefaultWeightedEdge edge : edgeSelection)
 			edgeMap.put(edge, false);
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, null, edgeMap);
-		// Clear field
-		edgeSelection.clear();
-		// Fire event
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
-			listener.selectionChanged(event);
+				TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, null, edgeMap);
+				// Clear field
+				edgeSelection.clear();
+				// Fire event
+				for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+					listener.selectionChanged(event);
 	}
 
 	public void addSpotToSelection(final Spot spot) {
@@ -912,16 +946,13 @@ public class TrackMateModel {
 	 *            notified of this change
 	 */
 	public void moveSpotFrom(Spot spotToMove, Integer fromFrame, Integer toFrame) {
-		if (null != spots) {
-			spots.add(spotToMove, toFrame);
-			spots.remove(spotToMove, fromFrame);
-			if (DEBUG)
-				System.out.println("[TrackMateModel] Moving " + spotToMove + " from frame " + fromFrame + " to frame " + toFrame);
-		}
-		if (null != filteredSpots) {
-			filteredSpots.add(spotToMove, toFrame);
-			filteredSpots.remove(spotToMove, fromFrame);
-		}
+		spots.add(spotToMove, toFrame);
+		spots.remove(spotToMove, fromFrame);
+		if (DEBUG)
+			System.out.println("[TrackMateModel] Moving " + spotToMove + " from frame " + fromFrame + " to frame " + toFrame);
+
+		filteredSpots.add(spotToMove, toFrame);
+		filteredSpots.remove(spotToMove, fromFrame);
 
 		spotsMoved.add(spotToMove); // TRANSACTION
 
@@ -932,18 +963,13 @@ public class TrackMateModel {
 	 * its features.
 	 */
 	public void addSpotTo(Spot spotToAdd, Integer toFrame) {
-		if (null != spots) {
-			if (spots.add(spotToAdd, toFrame)) {
-				spotsAdded.add(spotToAdd); // TRANSACTION
-				if (DEBUG)
-					System.out.println("[TrackMateModel] Adding spot " + spotToAdd + " to frame " + toFrame);
-			}
+		if (spots.add(spotToAdd, toFrame)) {
+			spotsAdded.add(spotToAdd); // TRANSACTION
+			if (DEBUG)
+				System.out.println("[TrackMateModel] Adding spot " + spotToAdd + " to frame " + toFrame);
 		}
-
-		if (null != filteredSpots)
-			filteredSpots.add(spotToAdd, toFrame);
-		if (null != graph)
-			graph.addVertex(spotToAdd);
+		filteredSpots.add(spotToAdd, toFrame);
+		graph.addVertex(spotToAdd);
 
 	}
 
@@ -958,18 +984,13 @@ public class TrackMateModel {
 	public void removeSpotFrom(final Spot spotToRemove, Integer fromFrame) {
 		if (fromFrame == null)
 			fromFrame = spots.getFrame(spotToRemove);
-		if (null != spots) {
-			if (spots.remove(spotToRemove, fromFrame)) {
-				spotsRemoved.add(spotToRemove); // TRANSACTION
-				if (DEBUG)
-					System.out.println("[TrackMateModel] Removing spot " + spotToRemove + " from frame " + fromFrame);
-			}
+		if (spots.remove(spotToRemove, fromFrame)) {
+			spotsRemoved.add(spotToRemove); // TRANSACTION
+			if (DEBUG)
+				System.out.println("[TrackMateModel] Removing spot " + spotToRemove + " from frame " + fromFrame);
 		}
-
-		if (null != filteredSpots)
-			filteredSpots.remove(spotToRemove, fromFrame);
-		if (null != graph)
-			graph.removeVertex(spotToRemove);
+		filteredSpots.remove(spotToRemove, fromFrame);
+		graph.removeVertex(spotToRemove);
 	}
 
 	// Modify graph
@@ -978,8 +999,8 @@ public class TrackMateModel {
 		// Mother graph
 		DefaultWeightedEdge edge = graph.addEdge(source, target);
 		graph.setEdgeWeight(edge, weight);
-		// Transaction
-		edgesAdded.add(edge);
+//		// Transaction // DEALT WITH BY THE GRAPH LISTENER
+//		edgesAdded.add(edge);
 		if (DEBUG)
 			System.out.println("[TrackMateModel] Adding edge between " + source + " and " + target + " with weight " + weight);
 		return edge;
@@ -990,8 +1011,8 @@ public class TrackMateModel {
 		DefaultWeightedEdge edge = graph.removeEdge(source, target);
 		if (null == edge)
 			System.out.println("Problem removing edge " + edge);
-		// Transaction
-		edgesRemoved.add(edge); // TRANSACTION
+//		// Transaction// DEALT WITH BY THE GRAPH LISTENER
+//		edgesRemoved.add(edge); // TRANSACTION
 		if (DEBUG)
 			System.out.println("[TrackMateModel] Removing edge between " + source + " and " + target);
 		return edge;
@@ -1002,8 +1023,8 @@ public class TrackMateModel {
 		boolean removed = graph.removeEdge(edge);
 		if (!removed)
 			System.out.println("Problem removing edge " + edge);
-		// Transaction
-		edgesRemoved.add(edge);
+//		// Transaction// DEALT WITH BY THE GRAPH LISTENER
+//		edgesRemoved.add(edge);
 		if (DEBUG)
 			System.out.println("[TrackMateModel] Removing edge " + edge + " between " + graph.getEdgeSource(edge) + " and " + graph.getEdgeTarget(edge));
 		return removed;
@@ -1019,7 +1040,7 @@ public class TrackMateModel {
 		if (added) {
 			if (DEBUG) {
 				System.out.println("[TrackMateModel] addTrackToVisibleList: added track number "
-								+ trackIndex + " to visible list.");
+						+ trackIndex + " to visible list.");
 			}
 			eventCache.add(TrackMateModelChangeEvent.TRACKS_VISIBILITY_CHANGED);
 		}
@@ -1035,8 +1056,6 @@ public class TrackMateModel {
 	private void updateFeatures(final List<Spot> spotsToUpdate) {
 		if (DEBUG)
 			System.out.println("[TrackMateModel] Updating the features of " + spotsToUpdate.size() + " spots.");
-		if (null == spots)
-			return;
 
 		// Find common frames
 		SpotCollection toCompute = filteredSpots.subset(spotsToUpdate);
@@ -1112,15 +1131,15 @@ public class TrackMateModel {
 			for (SpotFeature feature : features)
 				analyzers.add(featureCalculator.getAnalyzerForFeature(feature));
 
-			/* 2 - Compute features. */
-			spotsThisFrame = toCompute.get(i);
-			for (SpotFeatureAnalyzer analyzer : analyzers)
-				analyzer.process(spotsThisFrame);
+					/* 2 - Compute features. */
+					spotsThisFrame = toCompute.get(i);
+					for (SpotFeatureAnalyzer analyzer : analyzers)
+						analyzer.process(spotsThisFrame);
 
 		} // Finished looping over frames
 		logger.setProgress(1);
-		logger.setStatus("");
-		return;
+							logger.setStatus("");
+							return;
 	}
 
 	/**
@@ -1131,6 +1150,10 @@ public class TrackMateModel {
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void computeSpotFeatures(final SpotCollection toCompute) {
+		
+		// Can't compute any spot feature without an image to compute on.
+		if (settings.imp == null)
+			return;
 
 		final List<Integer> frameSet = new ArrayList(toCompute.keySet());
 		final int numFrames = frameSet.size();
@@ -1204,13 +1227,11 @@ public class TrackMateModel {
 			System.out.println("[TrackMateModel] #flushUpdate(): Event cache is :" + eventCache);
 		}
 
-		// We recompute tracks only if some edges have been added or removed,
-		// and
-		// if some spots have been removed (equivalent to remove edges). We do
-		// NOT
-		// recompute tracks if spots have been added: they will not result in
-		// new
-		// tracks made of single spots.
+		/* We recompute tracks only if some edges have been added or removed,
+		 * and if some spots have been removed (equivalent to remove edges). We do
+		 * NOT recompute tracks if spots have been added: they will not result in
+		 * new tracks made of single spots.	 */
+		 
 		int nEdgesToSignal = edgesAdded.size() + edgesRemoved.size();
 		if (nEdgesToSignal + spotsRemoved.size() > 0) {
 			computeTracksFromGraph();
@@ -1281,7 +1302,7 @@ public class TrackMateModel {
 			for (int eventID : eventCache) {
 				if (DEBUG) {
 					System.out.println("[TrackMateModel] #flushUpdate(): firing event with ID "
-									+ eventID);
+							+ eventID);
 				}
 				TrackMateModelChangeEvent cachedEvent = new TrackMateModelChangeEvent(this, eventID);
 				for (final TrackMateModelChangeListener listener : modelChangeListeners) {
@@ -1309,18 +1330,15 @@ public class TrackMateModel {
 	 * tracks that were visible previous to the changes that called for this
 	 * method are still visible after, event if some tracks are merge, deleted
 	 * or split.
-	 * <p> 
-	 * If the graph is not yet present (ie, is <code>null</code>, we do nothing).
 	 */
 	private void computeTracksFromGraph() {
-		if (DEBUG)
+		if (DEBUG) {
 			System.out.println("[TrackMateModel] #computeTracksFromGraph()");
+			System.out.println("[TrackMateModel] #computeTracksFromGraph() - old tracks: "+trackSpots);
+		}
 
-		if (null == graph)
-			return;
-		
 		// Retain old values
-		final List<Set<Spot>> oldTrackSpots = trackSpots;
+		List<Set<Spot>> oldTrackSpots = trackSpots;
 
 		// Build new track lists
 		this.trackSpots = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets();
@@ -1333,14 +1351,29 @@ public class TrackMateModel {
 			}
 			trackEdges.add(spotEdge);
 		}
+		
+		if (DEBUG) {
+			System.out.println("[TrackMateModel] #computeTracksFromGraph() - new tracks: "+trackSpots);
+		}
+
+		
+		/* Deal with a special case: of there were no tracks at all before this call,
+		 * then oldTrackSpots is null. To avoid that, we set it to the new value. Also,
+		 * since the the visibility set is empty, we will not get any new track visible.
+		 * So we seed it with all track indices, letting it propagate to new tracks. 
+		 * So that manually added track will have a visibility to on.
+		 */
+		if (oldTrackSpots.isEmpty()) {
+			oldTrackSpots = trackSpots;
+			for (int i = 0; i < trackSpots.size(); i++) {
+				visibleTrackIndices.add(i);
+			}
+		}
 
 		// Try to infer correct visibility
-		if (visibleTrackIndices == null || visibleTrackIndices.isEmpty())
-			return;
-
 		if (DEBUG) {
-			System.out.println("[TrackMateModel] computeTrackFromGraph: old track visibility is "
-							+ visibleTrackIndices);
+			System.out.println("[TrackMateModel] #computeTrackFromGraph: old track visibility is "
+					+ visibleTrackIndices);
 		}
 		final int ntracks = trackSpots.size();
 		final int noldtracks = oldTrackSpots.size();
@@ -1373,8 +1406,8 @@ public class TrackMateModel {
 		}
 
 		if (DEBUG) {
-			System.out.println("[TrackMateModel] computeTrackFromGraph: new track visibility is "
-							+ visibleTrackIndices);
+			System.out.println("[TrackMateModel] #computeTrackFromGraph: new track visibility is "
+					+ visibleTrackIndices);
 		}
 
 	}
@@ -1395,4 +1428,57 @@ public class TrackMateModel {
 		}
 	}
 
+	
+	/**
+	 * This listener class is made to deal with complex changes in the track graph.
+	 * <p>
+	 * By complex change, we mean the changes occurring in the graph caused by 
+	 * another change that was initiated manually by the user. For instance, imagine
+	 * we have a simple track branch made of 5 spots that link linearly, like this:
+	 * <pre>
+	 * 	S1 - S2 - S3 - S4 - S5
+	 * </pre>
+	 * The user might want to remove the S3 spot, in the middle of the track. On top
+	 * of the track rearrangement, that is dealt with elsewhere in the model 
+	 * class, this spot removal also triggers 2 edges removal: the links S2-S3 and S3-S4
+	 * disappear. The only way for the {@link TrackMateModel} to be aware of that, 
+	 * and to forward these events to its listener, is to listen itself to the
+	 * {@link #graph} that store links. 
+	 * <p>
+	 * This is done through this class. This class is notified every time a change occur in 
+	 * the {@link #graph}:
+	 * <ul>
+	 * 	<li>It ignores events triggered by spots being added
+	 * or removed, because they can't be triggered automatically, and are dealt with 
+	 * in the {@link TrackMateModel#addSpotTo(Spot, Integer)} and 
+	 * {@link TrackMateModel#removeSpotFrom(Spot, Integer)} methods.
+	 * 	<li> It catches all events triggered by a link being added or removed in the graph,
+	 * whether they are triggered manually through a call to a model method such as 
+	 * {@link TrackMateModel#addEdge(Spot, Spot, double)}, or triggered by another call.
+	 * They are used to build the {@link TrackMateModel#edgesAdded} and {@link TrackMateModel#edgesRemoved}
+	 * fields, that will be used to notify listeners of the model.    
+	 * 
+	 * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Aug 12, 2011
+	 *
+	 */
+	private class MyGraphListener implements GraphListener<Spot, DefaultWeightedEdge> {
+
+		@Override
+		public void vertexAdded(GraphVertexChangeEvent<Spot> e) {}
+
+		@Override
+		public void vertexRemoved(GraphVertexChangeEvent<Spot> e) {}
+
+		@Override
+		public void edgeAdded(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
+			edgesAdded.add(e.getEdge());
+		}
+
+		@Override
+		public void edgeRemoved(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
+			edgesRemoved.add(e.getEdge());
+		}
+		
+	}
+	
 }

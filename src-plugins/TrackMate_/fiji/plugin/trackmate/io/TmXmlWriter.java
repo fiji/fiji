@@ -292,12 +292,12 @@ public class TmXmlWriter implements TmXmlKeys {
 	}
 	
 	private void echoFilteredTracks() {
-		if (model.getFilteredTrackIndices() == null) {
+		if (model.getVisibleTrackIndices() == null) {
 			return;
 		}
 		
 		Element filteredTracksElement = new Element(FILTERED_TRACK_ELEMENT_KEY);
-		Set<Integer> indices = model.getFilteredTrackIndices();
+		Set<Integer> indices = model.getVisibleTrackIndices();
 		for(int trackIndex : indices) {
 			Element trackIDElement = new Element(TRACK_ID_ELEMENT_KEY);
 			trackIDElement.setAttribute(TRACK_ID_ATTRIBUTE_NAME, ""+trackIndex);

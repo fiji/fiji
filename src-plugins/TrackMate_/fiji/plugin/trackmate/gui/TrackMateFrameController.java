@@ -14,7 +14,6 @@ import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
@@ -293,8 +292,6 @@ public class TrackMateFrameController implements ActionListener {
 			// If we choose to skip segmentation, initialize the model spot content and skip directly to state where we will be asked for a displayer.
 			Settings settings = model.getSettings();
 			if (settings.segmenterType == SegmenterType.MANUAL_SEGMENTER) {
-				model.setSpots(new SpotCollection(), false);
-				model.setFilteredSpots(new SpotCollection(), false);
 				settings.segmenterSettings.spaceUnits = settings.spaceUnits;
 				state = GuiState.CHOOSE_DISPLAYER.previousState();
 			}

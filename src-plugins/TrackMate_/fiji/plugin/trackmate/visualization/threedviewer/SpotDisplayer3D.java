@@ -119,7 +119,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			break;
 		case TrackMateModelChangeEvent.TRACKS_VISIBILITY_CHANGED:
 			trackNode.computeTrackColors();
-			trackNode.setTrackVisible(model.getFilteredTrackIndices());
+			trackNode.setTrackVisible(model.getVisibleTrackIndices());
 			break;
 
 		}
@@ -358,7 +358,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 				if (val < min) min = val;
 			}
 
-			for(int i : model.getFilteredTrackIndices()) {
+			for(int i : model.getVisibleTrackIndices()) {
 				double val = model.getTrackFeature(i, feature);
 				Color color =  colorMap.getPaint((float) (val-min) / (max-min));
 				trackNode.setColor(model.getTrackSpots(i), color);

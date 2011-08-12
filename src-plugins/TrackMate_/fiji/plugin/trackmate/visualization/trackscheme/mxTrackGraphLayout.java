@@ -89,7 +89,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 			int ntracks = model.getNFilteredTracks();
 			HashMap<Integer, Color> trackColors = new HashMap<Integer, Color>(ntracks, 1);
 			int colorIndex = 0;
-			for (int i : model.getFilteredTrackIndices()) { 				
+			for (int i : model.getVisibleTrackIndices()) { 				
 				trackColors.put(i, colorMap.getPaint((float) colorIndex / (ntracks-1)));
 				colorIndex++;
 			}
@@ -129,7 +129,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 			// To keep a reference of branch cells, if any
 			ArrayList<mxCell> newBranchCells = new ArrayList<mxCell>();
 
-			for (int i : model.getFilteredTrackIndices()) {
+			for (int i : model.getVisibleTrackIndices()) {
 
 				// Init track variables
 				Spot previousSpot = null;

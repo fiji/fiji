@@ -219,7 +219,11 @@ public class SpotImp implements Spot {
 
 	@Override
 	public Float diffTo(Spot s, SpotFeature feature) {
-		return getFeature(feature) - s.getFeature(feature);
+		Float f1 = getFeature(feature);
+		Float f2 = s.getFeature(feature);
+		if (f1 == null || f2 == null)
+			return null;
+		return f1 - f2;
 	}
 	
 	@Override

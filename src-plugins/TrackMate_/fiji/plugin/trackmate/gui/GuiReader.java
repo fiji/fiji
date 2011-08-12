@@ -361,7 +361,7 @@ public class GuiReader {
 				logger.error("Problem reading the filtered tracks field of "+file.getName()
 						+". Error message is\n"+e.getLocalizedMessage()+'\n');
 			}
-			if (model.getFilteredTrackIndices() == null) {
+			if (model.getVisibleTrackIndices() == null) {
 				if (null != controller) {
 					view.setModel(model);
 					// Stop at tune track filter panel
