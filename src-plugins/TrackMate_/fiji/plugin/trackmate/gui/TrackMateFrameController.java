@@ -52,6 +52,8 @@ public class TrackMateFrameController implements ActionListener {
 	 * re-generate the data.
 	 */
 	boolean actionFlag = true;
+	private boolean renderingDone;
+	private boolean calculateFeaturesDone;
 
 
 	/*
@@ -447,9 +449,9 @@ public class TrackMateFrameController implements ActionListener {
 			}
 			file = tmpFile;
 			saver.writeFile(file);
-			
+
 		}	finally {
-			
+
 			actionFlag = false;
 			setMainButtonsFor(GuiState.LOAD_SAVE);
 
@@ -525,6 +527,7 @@ public class TrackMateFrameController implements ActionListener {
 	private void execCalculateFeatures() {
 		switchNextButton(false);
 		logger.log("Calculating features...\n",Logger.BLUE_COLOR);
+		calculateFeaturesDone = false;
 		// Calculate features
 		new Thread("TrackMate spot feature calculating mother thread") {
 			public void run() {
@@ -534,7 +537,10 @@ public class TrackMateFrameController implements ActionListener {
 					long end  = System.currentTimeMillis();
 					logger.log(String.format("Calculating features done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
 				} finally {
-					switchNextButton(true);
+					calculateFeaturesDone = true;
+					if (renderingDone) {
+						switchNextButton(true);
+					}
 				}
 			}
 		}.start();
@@ -546,17 +552,25 @@ public class TrackMateFrameController implements ActionListener {
 	private void execLaunchdisplayer() {
 		// Launch renderer
 		logger.log("Rendering results...\n",Logger.BLUE_COLOR);
+		renderingDone = false;
 		// Thread for rendering
 		new Thread("TrackMate rendering thread") {
+
 			public void run() {
 				// Instantiate displayer
 				if (null != displayer) {
 					displayer.clear();
 				}
-				displayer = AbstractTrackMateModelView.instantiateView(view.displayerChooserPanel.getChoice(), plugin.getModel());
-
-				// Re-enable the GUI
-				logger.log("Rendering done.\n", Logger.BLUE_COLOR);
+				try {
+					displayer = AbstractTrackMateModelView.instantiateView(view.displayerChooserPanel.getChoice(), plugin.getModel());
+				} finally {
+					// Re-enable the GUI
+					renderingDone = true;
+					logger.log("Rendering done.\n", Logger.BLUE_COLOR);
+					if (calculateFeaturesDone) {
+						switchNextButton(true);
+					}
+				}
 			}
 		}.start();
 	}

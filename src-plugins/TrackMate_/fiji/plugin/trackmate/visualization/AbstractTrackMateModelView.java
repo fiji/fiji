@@ -173,6 +173,8 @@ public abstract class AbstractTrackMateModelView implements TrackMateSelectionCh
 				return "<html>" +
 				"This invokes a new 3D viewer (over time) window, which receive a<br> " +
 				"8-bit copy of the image data. Spots and tracks are rendered in 3D. " +
+				"All the spots 3D shapes are calculated during the rendering step, which" +
+				"can take long." +
 				"<p>" +
 				"This displayer does not allow manual editing of spots. Use it only for <br>" +
 				"for very specific cases where you need to have a good 3D image to jusdge <br>" +

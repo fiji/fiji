@@ -283,8 +283,16 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			contentThisFrame = new ContentInstant("Spots_frame_"+i);
 			contentThisFrame.display(blobGroup);
 
+			// Set visibility:
+			List<Spot> visibleSpots = model.getFilteredSpots().get(i);
+			if (visibleSpots != null) {
+				blobGroup.setVisible(visibleSpots);
+			}
+
 			contentAllFrames.put(i, contentThisFrame);
 			blobs.put(i, blobGroup);
+			
+			
 		}
 		Content blobContent = new Content(SPOT_CONTENT_NAME, contentAllFrames);
 		blobContent.showCoordinateSystem(false);
