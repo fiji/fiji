@@ -218,7 +218,9 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		} else if (key == KEY_TRACK_COLOR_FEATURE) {
 			updateTrackColors();
 		} else if (key == KEY_DISPLAY_SPOT_NAMES) {
-			// TODO
+			for(int frame : blobs.keySet()) {
+				blobs.get(frame).setShowLabels((Boolean) value);
+			}
 		} else if (key == KEY_SPOTS_VISIBLE) {
 			spotContent.setVisible((Boolean) value);
 		} else if (key == KEY_TRACKS_VISIBLE) { 

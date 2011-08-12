@@ -1,6 +1,5 @@
 GUI
 - Have a manual spot editing tool in the 3D viewer displayer.
-- Display spot names in the 3D displayer.
 - Have a separate configuration panel that allows for instance 
 		- specifying if we want to save the spot snapshot in the xml file;
 		- if we want to store data as a zipped xml file
@@ -12,7 +11,6 @@ de-enumification noted below.
 
 Design:
 - De-enumify TrackMate to implement Johannes idea.
-- Rename trackFiltered stuff to trackVisible stuff in the model.
 
 
 Bugs:

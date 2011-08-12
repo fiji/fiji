@@ -98,6 +98,7 @@ public class SpotDisplayer3DTestDrive {
 			spot = new SpotImp(centers.get(i), "Spot "+i);
 			spot.putFeature(SpotFeature.POSITION_T, 0);
 			spot.putFeature(SpotFeature.RADIUS, RADIUS);
+			spot.putFeature(SpotFeature.QUALITY, RADIUS);
 			spots.add(spot);
 		}
 		

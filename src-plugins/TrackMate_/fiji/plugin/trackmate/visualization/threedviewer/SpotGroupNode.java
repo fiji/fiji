@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.visualization.threedviewer;
 
+import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import ij3d.ContentNode;
 
 import java.util.ArrayList;
@@ -8,13 +10,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.media.j3d.Appearance;
+import javax.media.j3d.ColoringAttributes;
+import javax.media.j3d.Font3D;
+import javax.media.j3d.LineAttributes;
+import javax.media.j3d.OrientedShape3D;
 import javax.media.j3d.Switch;
+import javax.media.j3d.Text3D;
+import javax.media.j3d.Transform3D;
+import javax.media.j3d.TransformGroup;
 import javax.media.j3d.View;
 import javax.vecmath.Color3f;
 import javax.vecmath.Color4f;
 import javax.vecmath.Point3f;
 import javax.vecmath.Point4f;
 import javax.vecmath.Tuple3d;
+import javax.vecmath.Vector3f;
 
 import customnode.CustomTriangleMesh;
 import customnode.MeshMaker;
@@ -38,9 +49,13 @@ public class SpotGroupNode<K> extends ContentNode {
 	protected HashMap<K, CustomTriangleMesh> meshes;
 
 	/**
-	 * Switch used for display. Is the only child of this {@link ContentNode}.
+	 * Switch used for spot display. 
 	 */
 	protected Switch spotSwitch;
+	/**
+	 * Switch used for spot names display.
+	 */
+	protected  Switch textSwitch;
 	/**
 	 * Boolean set that controls the visibility of each spot.
 	 */
@@ -55,6 +70,14 @@ public class SpotGroupNode<K> extends ContentNode {
 	 * generate all spheres in this group.
 	 */
 	private float[][][] globe;
+	/**
+	 * If true, the text label will be displayed next to the balls.
+	 */
+	private boolean showLabels = false;
+	/**
+	 * The font size
+	 */
+	private float fontsize = 3;
 
 
 	/**
@@ -72,10 +95,17 @@ public class SpotGroupNode<K> extends ContentNode {
 	public SpotGroupNode(final Map<K, Point4f>  centers, final Map<K, Color4f> colors) {
 		this.centers = new HashMap<K, Point4f>(centers);
 		this.colors = new HashMap<K, Color4f>(colors);
+		//
 		this.spotSwitch = new Switch(Switch.CHILD_MASK);
 		spotSwitch.setCapability(Switch.ALLOW_SWITCH_WRITE);
 		spotSwitch.setCapability(Switch.ALLOW_CHILDREN_WRITE);
 		spotSwitch.setCapability(Switch.ALLOW_CHILDREN_EXTEND);
+		//
+		this.textSwitch = new Switch(Switch.CHILD_MASK);
+		textSwitch.setCapability(Switch.ALLOW_SWITCH_WRITE);
+		textSwitch.setCapability(Switch.ALLOW_CHILDREN_WRITE);
+		textSwitch.setCapability(Switch.ALLOW_CHILDREN_EXTEND);
+		//		
 		this.switchMask = new BitSet();
 		makeMeshes();
 	}
@@ -101,6 +131,12 @@ public class SpotGroupNode<K> extends ContentNode {
 		spotSwitch.setCapability(Switch.ALLOW_SWITCH_WRITE);
 		spotSwitch.setCapability(Switch.ALLOW_CHILDREN_WRITE);
 		spotSwitch.setCapability(Switch.ALLOW_CHILDREN_EXTEND);
+		//
+		this.textSwitch = new Switch(Switch.CHILD_MASK);
+		textSwitch.setCapability(Switch.ALLOW_SWITCH_WRITE);
+		textSwitch.setCapability(Switch.ALLOW_CHILDREN_WRITE);
+		textSwitch.setCapability(Switch.ALLOW_CHILDREN_EXTEND);
+		//	
 		this.switchMask = new BitSet();
 		makeMeshes();
 	}
@@ -124,11 +160,21 @@ public class SpotGroupNode<K> extends ContentNode {
 		meshes = new HashMap<K, CustomTriangleMesh>(centers.size());
 		indices = new HashMap<K, Integer>(centers.size());
 		spotSwitch.removeAllChildren();
+		textSwitch.removeAllChildren();
 		int index = 0;
+
+		Font3D font3D = new Font3D(SMALL_FONT.deriveFont(fontsize), null);
+		Appearance textAp = new Appearance();
+		LineAttributes lineAttributes = new LineAttributes(1, 1, true);
+		textAp.setLineAttributes(lineAttributes);
+		Color3f color3 = new Color3f(TrackMateModelView.DEFAULT_COLOR);
+		textAp.setColoringAttributes(new ColoringAttributes(color3, ColoringAttributes.FASTEST));
+		
 		for (K key : centers.keySet()) {
 			center = centers.get(key);
 			color = colors.get(key);
-			// Create mesh
+			
+			// Create mesh for the ball
 			points = createSphere(center.x, center.y, center.z, center.w);
 			node = new CustomTriangleMesh(points, new Color3f(color.x, color.y, color.z), color.w);
 			// Add it to the switch. We keep an index of the position it is added to for later retrieval by key
@@ -136,12 +182,38 @@ public class SpotGroupNode<K> extends ContentNode {
 			spotSwitch.addChild(node); // at index
 			indices.put(key, index); // store index for key
 			index++;
+			
+			// Deal with the text
+			Transform3D translation = new Transform3D();
+			translation.rotX(Math.PI);
+			translation.setTranslation(new Vector3f(center.x + 1.5f*center.w, center.y, center.z));
+			TransformGroup tg = new TransformGroup(translation);
+			
+			OrientedShape3D textShape = new OrientedShape3D();
+			textShape.setAlignmentMode(OrientedShape3D.ROTATE_NONE);
+			
+			Text3D textGeom = new Text3D(font3D, key.toString());
+				
+			textGeom.setAlignment(Text3D.ALIGN_FIRST);
+			textShape.addGeometry(textGeom);
+			textShape.setAppearance(textAp);
+			
+			tg.addChild(textShape);
+			textSwitch.addChild(tg);
+
+			
 		}
 		switchMask = new BitSet(centers.size());
 		switchMask.set(0, centers.size(), true);
 		spotSwitch.setChildMask(switchMask);
+		if (showLabels) {
+			textSwitch.setChildMask(switchMask);
+		} else {
+			textSwitch.setChildMask(new BitSet(centers.size()));
+		}
 		removeAllChildren();
 		addChild(spotSwitch);
+		addChild(textSwitch);
 	}
 	
 	/**
@@ -225,7 +297,15 @@ public class SpotGroupNode<K> extends ContentNode {
 		spotSwitch.setChildMask(switchMask);
 	}
 
-	
+	public void setShowLabels(boolean showLabels) {
+		this.showLabels = showLabels;
+		if (showLabels) {
+			textSwitch.setChildMask(switchMask);
+		} else {
+			textSwitch.setChildMask(new BitSet(centers.size()));
+		}
+	}
+
 	/**
 	 * Set the visibility of all spots.
 	 */
