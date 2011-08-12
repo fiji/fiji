@@ -1124,7 +1124,7 @@ public class WekaSegmentation {
 		IJ.log("Updating image...");
 
 		// Set new image as training image
-		trainingImage = new ImagePlus("Advanced Weka Segmentation", newImage.getProcessor().duplicate());
+		trainingImage = new ImagePlus("Advanced Weka Segmentation", newImage.getImageStack());
 		
 		// Initialize feature stack array (no features yet)
 		featureStackArray = new FeatureStackArray(trainingImage.getImageStackSize(),
@@ -1766,7 +1766,7 @@ public class WekaSegmentation {
 
 		for(int z=1; z <= depth; z++)
 		{
-			final ImagePlus testSlice = new ImagePlus(image.getImageStack().getSliceLabel(z), image.getImageStack().getProcessor(z).convertToByte(true));
+			final ImagePlus testSlice = new ImagePlus(image.getImageStack().getSliceLabel(z), image.getImageStack().getProcessor(z));
 			// Create feature stack for test image
 			IJ.showStatus("Creating features for test image (slice "+z+")...");
 			if(verbose)
@@ -1826,6 +1826,71 @@ public class WekaSegmentation {
 	}
 
 	/**
+	 * Get the confusion matrix for an input image and its expected labels
+	 *
+	 * @param image input image
+	 * @param expectedLabels binary labels
+	 * @param whiteClassIndex index of the white class
+	 * @param blackClassIndex index of the black class
+	 * @return confusion matrix
+	 */
+	public int[][] getTestConfusionMatrix(
+			ImagePlus image,
+			ImagePlus expectedLabels,
+			int whiteClassIndex,
+			int blackClassIndex)
+	{
+	
+		// Set proper class names (skip empty list ones)
+		ArrayList<String> classNames = new ArrayList<String>();
+		if( null == loadedClassNames )
+		{
+			for(int i = 0; i < numOfClasses; i++)
+				if(examples[0].get(i).size() > 0)
+					classNames.add(classLabels[i]);
+		}
+		else
+			classNames = loadedClassNames;
+
+
+		// Apply current classifier
+		ImagePlus resultLabels = applyClassifier(image, 0, false);
+		
+		//resultLabels.show();
+		
+		int[][] confusionMatrix = new int[2][2];
+		
+		// Compare labels
+		final int height = image.getHeight();
+		final int width = image.getWidth();
+		final int depth = image.getStackSize();
+		
+
+		for(int z=1; z <= depth; z++)
+			for(int y=0; y<height; y++)
+				for(int x=0; x<width; x++)
+				{
+					if( expectedLabels.getImageStack().getProcessor(z).get(x, y) == 255 )
+					{
+						if( resultLabels.getImageStack().getProcessor(z).get(x, y) == 255 )
+							confusionMatrix[whiteClassIndex][whiteClassIndex] ++; 							                                 
+						else
+							confusionMatrix[whiteClassIndex][blackClassIndex] ++; 
+					}
+					else
+					{
+						if( resultLabels.getImageStack().getProcessor(z).get(x, y) == 0 )
+							confusionMatrix[blackClassIndex][blackClassIndex] ++; 							                                 
+						else
+							confusionMatrix[blackClassIndex][whiteClassIndex] ++;
+					}
+				}
+		
+		return confusionMatrix;
+	}
+	
+	
+	/**
 	 * Get test error of current classifier on a specific image and its binary labels
 	 *
 	 * @param image input image
@@ -1870,7 +1935,7 @@ public class WekaSegmentation {
 
 		for(int z=1; z <= depth; z++)
 		{
-			final ImagePlus testSlice = new ImagePlus(image.getImageStack().getSliceLabel(z), image.getImageStack().getProcessor(z).convertToByte(true));
+			final ImagePlus testSlice = new ImagePlus(image.getImageStack().getSliceLabel(z), image.getImageStack().getProcessor(z));
 			// Create feature stack for test image
 			IJ.showStatus("Creating features for test image...");
 			if(verbose)
@@ -3490,7 +3555,7 @@ public class WekaSegmentation {
 
 				for (int i = startSlice; i < startSlice + numSlices; i++)
 				{
-					final ImagePlus slice = new ImagePlus(imp.getImageStack().getSliceLabel(i), imp.getImageStack().getProcessor(i).convertToByte(true));
+					final ImagePlus slice = new ImagePlus(imp.getImageStack().getSliceLabel(i), imp.getImageStack().getProcessor(i));
 					// Create feature stack for slice
 					IJ.showStatus("Creating features...");
 					IJ.log("Creating features for slice " + i +  "...");
