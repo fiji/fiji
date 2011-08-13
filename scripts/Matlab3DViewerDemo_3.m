@@ -19,7 +19,7 @@ if ~IsJava3DInstalled(true)
 end
 
 %% Generate elevation data in MATLAB
-% This is the well known *peaks* dataset, that serves as a generator for
+% This is the well known *membrane* dataset, that serves as a generator for
 % the MATLAB logo.
 
 %%
@@ -62,7 +62,8 @@ c = universe.addSurfacePlot(imp, ...
         1);
 
 %%
-% Rotate it a little
+% Rotate it a little, so that it shows the same orientation that of the
+% actual MATLAB logo.
 universe.resetView();
 c.setColor(color);
 c.setTransform([1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1]);
@@ -76,10 +77,20 @@ universe.rotateUniverse(javax.vecmath.Vector3d(-1, -0.5, +0.2), +120 * pi / 180)
 % maximize your experience.
 %
 %%
+% Note that it is monochrome: the MATLAB logo (type |logo| in the command
+% window) has two colors: the close side is yellow-orange-ish and the back
+% face is blueish. If you look at the |logo.m| code, you will see that
+% MATLAB guys generated these colors using 2 different light source of 2
+% different colors, which you cannot do in the 3D viewer.
+%%
 % 
 % <<MatlabLogoInFiji.png>>
 %
 %%
 %
-% _Jean-Yves Tinevez \<jeanyves.tinevez at gmail.com\> - August 2011_
+% _Jean-Yves Tinevez \<jeanyves.tinevez at gmail.com\>_
+%
+% _Johannes Schindelin \<johannes.schindelin@gmx.de\>_
+%
+% _- August 2011_
  
