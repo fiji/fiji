@@ -36,6 +36,8 @@ import fiji.updater.util.ByteCodeAnalyzer;
 import fiji.updater.util.Compressor;
 import fiji.updater.util.DependencyAnalyzer;
 
+import ij.IJ;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -48,8 +50,20 @@ fijiDir = System.getProperty("fiji.dir");
 if (!fijiDir.endsWith(File.separator))
 	fijiDir += File.separator;
 
+normalizeWinPath(path) {
+	return new File(path).getCanonicalPath().replace('\\', '/');
+}
+
+if (IJ.isWindows()) {
+	fijiDir = normalizeWinPath(fijiDir) + "/";
+	for (i = 0; i < bsh.args.length; i++)
+		bsh.args[i] = normalizeWinPath(bsh.args[i]);
+}
+
 Rule getRule(String path) {
 	path = new File(path).getAbsolutePath();
+	if (IJ.isWindows())
+		path = normalizeWinPath(path);
 	if (!path.startsWith(fijiDir)) {
 		print("Warning: Not in $FIJI_ROOT: " + path);
 		return null;
@@ -145,6 +159,8 @@ boolean checkDirtyFiles(File directory, String fileName, String path) {
 
 boolean checkDirtyFiles(String path) {
 	fullPath = new File(path).getAbsolutePath();
+	if (IJ.isWindows())
+		fullPath = normalizeWinPath(fullPath);
 
 	// check for uncommitted files
 	sourcePath = getSourcePathForTarget(fullPath, true);
@@ -177,6 +193,8 @@ long getMTime(String path) {
 
 boolean checkTimestamps(String path) {
 	fullPath = new File(path).getAbsolutePath();
+	if (IJ.isWindows())
+		fullPath = normalizeWinPath(fullPath);
 	sourcePath = getSourcePathForTarget(fullPath, true);
 	if (sourcePath == null)
 		return true; // ignore
@@ -242,6 +260,8 @@ boolean checkPushed(String directory, String subdirectory, String path) {
 
 boolean checkPushed(String path) {
 	fullPath = new File(path).getAbsolutePath();
+	if (IJ.isWindows())
+		fullPath = normalizeWinPath(fullPath);
 	submodulePath = getSourcePathForTarget(fullPath, false);
 	if (fullPath.startsWith(fijiDir) && !checkPushed(fijiDir, submodulePath, path))
 		return false;

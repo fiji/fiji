@@ -475,6 +475,8 @@ public class FileFunctions {
 	 * Get a list of files from a directory (recursively)
 	 */
 	public void listFilesRecursively(File directory, String prefix, List<String> result) {
+		if (!directory.exists())
+			return;
 		for (File file : directory.listFiles())
 			if (file.isDirectory())
 				listFilesRecursively(file, prefix + file.getName() + "/", result);
@@ -511,8 +513,12 @@ public class FileFunctions {
 				IJ.handleException(e);
 			}
 		}
-		else
+		else {
+			String prefix = IJ.isWindows() ? "file:/" : "file:";
+			if (url.startsWith(prefix))
+				url = url.substring(prefix.length());
 			listFilesRecursively(new File(url), "", result);
+		}
 		return result;
 	}
 
