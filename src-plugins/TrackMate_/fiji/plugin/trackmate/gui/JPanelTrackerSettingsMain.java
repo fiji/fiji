@@ -93,22 +93,22 @@ public class JPanelTrackerSettingsMain extends javax.swing.JPanel {
 	 */
 	public TrackerSettings getSettings() {
 		settings.linkingDistanceCutOff = Double.parseDouble(jTextFieldLinkingMaxDistance.getText());
-		settings.linkingFeatureCutoffs = jPanelLinkingFeatures.getFeatureRatios();
+		settings.linkingFeaturePenalties = jPanelLinkingFeatures.getFeatureRatios();
 		
 		settings.allowGapClosing 			= jCheckBoxAllowGapClosing.isSelected();
 		settings.gapClosingDistanceCutoff	= Double.parseDouble(jTextFieldGapClosingMaxDistance.getText());
 		settings.gapClosingTimeCutoff		= Double.parseDouble(jTextFieldGapClosingMaxFrameInterval.getText());
-		settings.gapClosingFeatureCutoffs	= jPanelGapClosing.getFeatureRatios();
+		settings.gapClosingFeaturePenalties	= jPanelGapClosing.getFeatureRatios();
 		
 		settings.allowSplitting				= jCheckBoxAllowSplitting.isSelected();
 		settings.splittingDistanceCutoff	= Double.parseDouble(jTextFieldSplittingMaxDistance.getText());
 		settings.splittingTimeCutoff		= Double.parseDouble(jTextFieldSplittingMaxFrameInterval.getText());
-		settings.splittingFeatureCutoffs	= jPanelSplittingFeatures.getFeatureRatios();
+		settings.splittingFeaturePenalties	= jPanelSplittingFeatures.getFeatureRatios();
 		
 		settings.allowMerging				= jCheckBoxAllowMerging.isSelected();
 		settings.mergingDistanceCutoff		= Double.parseDouble(jTextFieldMergingMaxDistance.getText());
 		settings.mergingTimeCutoff			= Double.parseDouble(jTextFieldMergingFrameInterval.getText());
-		settings.mergingFeatureCutoffs		= jPanelMergingFeatures.getFeatureRatios();
+		settings.mergingFeaturePenalties	= jPanelMergingFeatures.getFeatureRatios();
 		
 		return settings;
 	}

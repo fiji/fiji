@@ -195,10 +195,10 @@ public class TmXmlWriter implements TmXmlKeys {
 		linkingElement.addContent(
 				new Element(TRACKER_SETTINGS_DISTANCE_CUTOFF_ELEMENT)
 				.setAttribute(TRACKER_SETTINGS_DISTANCE_CUTOFF_ATTNAME, ""+settings.linkingDistanceCutOff));
-		for(SpotFeature feature : settings.linkingFeatureCutoffs.keySet())
+		for(SpotFeature feature : settings.linkingFeaturePenalties.keySet())
 			linkingElement.addContent(
 					new Element(TRACKER_SETTINGS_FEATURE_ELEMENT)
-					.setAttribute(feature.name(), ""+settings.linkingFeatureCutoffs.get(feature)) );
+					.setAttribute(feature.name(), ""+settings.linkingFeaturePenalties.get(feature)) );
 		trackerSettingsElement.addContent(linkingElement);
 		// Gap-closing
 		Element gapClosingElement = new Element(TRACKER_SETTINGS_GAP_CLOSING_ELEMENT);
@@ -209,10 +209,10 @@ public class TmXmlWriter implements TmXmlKeys {
 		gapClosingElement.addContent(
 				new Element(TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT)
 				.setAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME, ""+settings.gapClosingTimeCutoff));
-		for(SpotFeature feature : settings.gapClosingFeatureCutoffs.keySet())
+		for(SpotFeature feature : settings.gapClosingFeaturePenalties.keySet())
 			gapClosingElement.addContent(
 					new Element(TRACKER_SETTINGS_FEATURE_ELEMENT)
-					.setAttribute(feature.name(), ""+settings.gapClosingFeatureCutoffs.get(feature)) );
+					.setAttribute(feature.name(), ""+settings.gapClosingFeaturePenalties.get(feature)) );
 		trackerSettingsElement.addContent(gapClosingElement);
 		// Splitting
 		Element splittingElement = new Element(TRACKER_SETTINGS_SPLITTING_ELEMENT);
@@ -223,10 +223,10 @@ public class TmXmlWriter implements TmXmlKeys {
 		splittingElement.addContent(
 				new Element(TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT)
 				.setAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME, ""+settings.splittingTimeCutoff));
-		for(SpotFeature feature : settings.splittingFeatureCutoffs.keySet())
+		for(SpotFeature feature : settings.splittingFeaturePenalties.keySet())
 			splittingElement.addContent(
 					new Element(TRACKER_SETTINGS_FEATURE_ELEMENT)
-					.setAttribute(feature.name(), ""+settings.splittingFeatureCutoffs.get(feature)) );
+					.setAttribute(feature.name(), ""+settings.splittingFeaturePenalties.get(feature)) );
 		trackerSettingsElement.addContent(splittingElement);
 		// Merging
 		Element mergingElement = new Element(TRACKER_SETTINGS_MERGING_ELEMENT);
@@ -237,10 +237,10 @@ public class TmXmlWriter implements TmXmlKeys {
 		mergingElement.addContent(
 				new Element(TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT)
 				.setAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME, ""+settings.mergingTimeCutoff));
-		for(SpotFeature feature : settings.mergingFeatureCutoffs.keySet())
+		for(SpotFeature feature : settings.mergingFeaturePenalties.keySet())
 			mergingElement.addContent(
 					new Element(TRACKER_SETTINGS_FEATURE_ELEMENT)
-					.setAttribute(feature.name(), ""+settings.mergingFeatureCutoffs.get(feature)) );
+					.setAttribute(feature.name(), ""+settings.mergingFeaturePenalties.get(feature)) );
 		trackerSettingsElement.addContent(mergingElement);
 		// Add to root		
 		root.addContent(trackerSettingsElement);

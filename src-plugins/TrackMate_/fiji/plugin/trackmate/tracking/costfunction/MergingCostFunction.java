@@ -10,29 +10,26 @@ import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import Jama.Matrix;
 import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.tracking.LAPUtils;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 /**
  * <p>Merging cost function used with {@link LAPTracker}.
  * 
- * <p>The <b>cost function</b> is:
- * 
- * <p><code>d^2 * p</code>, p > 1
- * <p><code>d^2 * (1/(p^2))</code>, p < 1
- * 
- * <p>d = euclidean distance between two objects
- * <p>p = (intensity of middle point, frame t+1) / ((intensity of end point, frame t) + (intensity of middle point, frame t))
- * 
- * <p>The <b>thresholds</b> used are:
+ * <p>The <b>cost function</b> is determined by the default equation in the
+ * TrackMate plugin, see below.
+ * <p>  
+ *  It slightly differs from the Jaqaman article, see equation (5) and (6) in the paper.
+ * <p>
+ * The <b>thresholds</b> used are:
  * <ul>
  * <li>Must be within a certain number of frames.</li>
  * <li>Must be within a certain distance.</li>
- * <li>p, the intensity ratio, must be within a certain range</li>
  * </ul>
  * 
- * See equations (5) and (6) in the paper.
- * 
+ * @see LAPUtils#computeLinkingCostFor(Spot, Spot, double, double, Map)
  * @author Nicholas Perry
+ * @author Jean-Yves Tinevez
  *
  */
 public class MergingCostFunction {
@@ -44,17 +41,17 @@ public class MergingCostFunction {
 	/** The distance threshold. */
 	protected double maxDist;
 	/** The value used to block an assignment in the cost matrix. */
-	protected double blocked;
+	protected double blockingValue;
 	/** Thresholds for the feature ratios. */
-	protected Map<SpotFeature, Double> featureCutoffs;
+	protected Map<SpotFeature, Double> featurePenalties;
 	/** A flag stating if we should use multi--threading for some calculations. */
 	protected boolean useMultithreading = fiji.plugin.trackmate.TrackMate_.DEFAULT_USE_MULTITHREADING;
 
 	public MergingCostFunction(TrackerSettings settings) {
 		this.maxDist 			= settings.mergingDistanceCutoff;
 		this.timeCutoff 		= settings.mergingTimeCutoff;
-		this.blocked 			= settings.blockingValue;
-		this.featureCutoffs 	= settings.mergingFeatureCutoffs;
+		this.blockingValue		= settings.blockingValue;
+		this.featurePenalties 	= settings.mergingFeaturePenalties;
 		this.allowed 			= settings.allowMerging;
 	}
 
@@ -63,7 +60,7 @@ public class MergingCostFunction {
 
 		// If we are not allow to make gap-closing, simply fill the matrix with blocking values.
 		if (!allowed) {
-			return new Matrix(trackSegments.size(), middlePoints.size(), blocked);
+			return new Matrix(trackSegments.size(), middlePoints.size(), blockingValue);
 		}
 
 		// Prepare threads
@@ -92,36 +89,13 @@ public class MergingCostFunction {
 							Float tend = end.getFeature(SpotFeature.POSITION_T);
 							Float tmiddle = middle.getFeature(SpotFeature.POSITION_T);
 							if (tmiddle - tend > timeCutoff || tmiddle - tend <= 0) {
-								m.set(i, j, blocked);
-								continue;
-							}
-
-							// Radius threshold
-							Float d2 = end.squareDistanceTo(middle);
-							if (d2 > maxDist*maxDist) {
-								m.set(i, j, blocked);
+								m.set(i, j, blockingValue);
 								continue;
 							}
 
 							// Initial cost
-							double s = d2;
-
-							// Update cost with feature costs
-							for (SpotFeature feature : featureCutoffs.keySet()) {
-
-								// Larger than 0, equals 0 is the 2 intensities are the same
-								Float iRatio = middle.normalizeDiffTo(end, feature);
-								if (iRatio > featureCutoffs.get(feature)) {
-									s = blocked;
-									break;
-								}
-
-								// Set score
-								s *= (1 + iRatio);
-							}
-
-							// Set score
-							m.set(i, j, s);
+							double cost = LAPUtils.computeLinkingCostFor(end, middle, maxDist, blockingValue, featurePenalties);
+							m.set(i, j, cost);
 						}
 					}
 				}

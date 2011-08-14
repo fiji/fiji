@@ -58,11 +58,11 @@ public class LAPTrackerTestDrive {
 		settings.allowMerging = true;
 		settings.mergingDistanceCutoff = 10;
 		settings.mergingTimeCutoff = 2;
-		settings.mergingFeatureCutoffs.clear();
+		settings.mergingFeaturePenalties.clear();
 		settings.allowSplitting = true;
 		settings.splittingDistanceCutoff = 10;
 		settings.splittingTimeCutoff = 2;
-		settings.splittingFeatureCutoffs.clear();
+		settings.splittingFeaturePenalties.clear();
 		System.out.println("Tracker settings:");
 		System.out.println(settings.toString());
 		model.getSettings().trackerSettings = settings;

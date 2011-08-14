@@ -5,7 +5,7 @@ GUI
 		- if we want to store data as a zipped xml file
 - Add panel allowing to specify what spot features we want to compute. Maybe this should
 go in the separate configuration panel. This needs rewriting the spot features, so that
-we only walk with a list of them, not whith the whole enum values. That could foster the
+we only walk with a list of them, not with the whole enum values. That could foster the
 de-enumification noted below. 
 
 
@@ -23,7 +23,11 @@ using the TrackMateEgo image file (look at the C).
 - When in the panel that allow selecting tracker, saving saves nothing.
 - The name of the tracker displayed in the tracker config panel turns not 
 to be the right one after moving back and forth in the GUI (again).
-- DEADLY: using feature threshold in linking seems to have NO EFFECT.
+- The feature penalties are not displayed in the Tracker settings GUI panel,
+after the user set some and comes back to this panel.
+- The estimate radius feature calculator should be more accurate. It seems
+like it reports only a finite number of values, corresponding to the discrete
+possible radii, and not the interpolated ones.
 
 
 Features:

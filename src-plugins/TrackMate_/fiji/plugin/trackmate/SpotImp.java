@@ -230,7 +230,10 @@ public class SpotImp implements Spot {
 	public Float normalizeDiffTo(Spot s, SpotFeature feature) {
 		final Float a = getFeature(feature);
 		final Float b = s.getFeature(feature);
-		return Math.abs(a-b)/((a+b)/2);
+		if (a == -b)
+			return 0f;
+		else
+			return Math.abs(a-b)/((a+b)/2);
 	}
 
 	@Override

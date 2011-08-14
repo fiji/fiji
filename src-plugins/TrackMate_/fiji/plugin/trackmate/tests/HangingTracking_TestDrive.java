@@ -41,13 +41,13 @@ public class HangingTracking_TestDrive {
 		tracker.createLinkingCostMatrices();
 		SortedMap<Integer, double[][]> costs1 = tracker.getLinkingCosts();
 		System.out.println("For frame pair "+frame+" -> "+(frame+1)+":");
-		System.out.println("There are "+filteredSpots.getNSpots(frame)+" to spost link to "+filteredSpots.getNSpots(frame+1));
+		System.out.println("There are "+filteredSpots.getNSpots(frame)+" spost to link to "+filteredSpots.getNSpots(frame+1));
 		double[][] cost1 = costs1.get(frame);
 		LAPUtils.echoMatrix(cost1);
 
 		System.out.println();
 		System.out.println("With feature condition:");
-		trackerSettings.linkingFeatureCutoffs.put(SpotFeature.MEAN_INTENSITY, (double) 1);
+		trackerSettings.linkingFeaturePenalties.put(SpotFeature.MORPHOLOGY, (double) 1);
 		tracker = new LAPTracker(filteredSpots, trackerSettings);
 		tracker.createLinkingCostMatrices();
 		SortedMap<Integer, double[][]> costs2 = tracker.getLinkingCosts();
