@@ -13,6 +13,8 @@ import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.LAPUtils;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
+import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
+import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView.ViewType;
 
 public class HangingTracking_TestDrive {
 
@@ -32,12 +34,14 @@ public class HangingTracking_TestDrive {
 		System.out.println();
 		System.out.println("Without feature condition:");
 		TrackerSettings trackerSettings = reader.getTrackerSettings();
+		trackerSettings.linkingDistanceCutOff = 60;
+		
 
 		LAPTracker tracker = new LAPTracker(filteredSpots, trackerSettings);
 		tracker.createLinkingCostMatrices();
 		SortedMap<Integer, double[][]> costs1 = tracker.getLinkingCosts();
 		System.out.println("For frame pair "+frame+" -> "+(frame+1)+":");
-		System.out.println("There are "+filteredSpots.getNSpots(frame)+" to link to "+filteredSpots.getNSpots(frame+1));
+		System.out.println("There are "+filteredSpots.getNSpots(frame)+" to spost link to "+filteredSpots.getNSpots(frame+1));
 		double[][] cost1 = costs1.get(frame);
 		LAPUtils.echoMatrix(cost1);
 
@@ -48,10 +52,14 @@ public class HangingTracking_TestDrive {
 		tracker.createLinkingCostMatrices();
 		SortedMap<Integer, double[][]> costs2 = tracker.getLinkingCosts();
 		System.out.println("For frame pair "+frame+" -> "+(frame+1)+":");
-		System.out.println("There are "+filteredSpots.getNSpots(frame)+" to link to "+filteredSpots.getNSpots(frame+1));
+		System.out.println("There are "+filteredSpots.getNSpots(frame)+" spots to link to "+filteredSpots.getNSpots(frame+1));
 		double[][] cost2 = costs2.get(frame);
 		LAPUtils.echoMatrix(cost2);
 
+		tracker.solveLAPForTrackSegments();
+		model.setGraph(tracker.getResult());
+		AbstractTrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model);
+		
 	}
 
 }

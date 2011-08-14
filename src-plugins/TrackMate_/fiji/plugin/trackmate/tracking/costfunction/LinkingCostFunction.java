@@ -1,8 +1,10 @@
 package fiji.plugin.trackmate.tracking.costfunction;
 
 import java.util.List;
+
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 /**
@@ -24,14 +26,10 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
  */
 public class LinkingCostFunction implements CostFunctions {
 	
-	/** The maximum distance away objects can be in order to be linked. */
-	protected double maxDist;
-	/** The value to use to block an assignment in the cost matrix. */
-	protected double blocked;
+	protected TrackerSettings settings;
 	
 	public LinkingCostFunction(TrackerSettings settings) {
-		this.maxDist = settings.linkingDistanceCutOff;
-		this.blocked = settings.blockingValue;
+		this.settings = settings;
 	}
 	
 	@Override
@@ -52,13 +50,19 @@ public class LinkingCostFunction implements CostFunctions {
 				d2 = s0.squareDistanceTo(s1);
 
 				// Distance threshold
-				if (d2 > maxDist*maxDist) {
-					m.set(i, j, blocked);
+				if (d2 > settings.linkingDistanceCutOff*settings.linkingDistanceCutOff) {
+					m.set(i, j, settings.blockingValue);
 					continue;
 				}
 
+				double penalty = 1;
+				for (SpotFeature feature : settings.linkingFeatureCutoffs.keySet()) {
+					double factor = settings.linkingFeatureCutoffs.get(feature);
+					penalty += factor * 1.5 * s0.normalizeDiffTo(s1, feature);
+				}
+				
 				// Set score
-				score = d2 + 2*Double.MIN_VALUE;	// score cannot be 0 in order to solve LAP, so add a small amount
+				score = d2 * penalty * penalty;
 				m.set(i, j, score);
 			}
 		}
