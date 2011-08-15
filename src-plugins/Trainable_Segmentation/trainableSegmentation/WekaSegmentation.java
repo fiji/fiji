@@ -3577,7 +3577,10 @@ public class WekaSegmentation {
 
 					IJ.log("Classifying slice " + i + " in " + numFurtherThreads + " threads...");
 					classImage.setTitle("classified_" + slice.getTitle());
-					classImage.setProcessor(classImage.getProcessor().convertToByte(true).duplicate());
+					if(probabilityMaps)
+						classImage.setProcessor(classImage.getProcessor().duplicate());
+					else
+						classImage.setProcessor(classImage.getProcessor().convertToByte(true).duplicate());
 					classifiedSlices[i-1] = classImage;
 				}
 			}
