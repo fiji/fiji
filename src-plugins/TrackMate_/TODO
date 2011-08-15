@@ -15,10 +15,6 @@ Design:
 
 Bugs:
 - Fix SpotEditTool not recognizing a second instance of TrackMate.
-- Check if a split event can be detected at first frame (and converse
-for merge events at last frame).
-- Check if there is conflict between gap closing and track splitting, 
-using the TrackMateEgo image file (look at the C).
 - Check if TrackScheme still reports edge deletion problems.
 - When in the panel that allow selecting tracker, saving saves nothing.
 - The name of the tracker displayed in the tracker config panel turns not 
