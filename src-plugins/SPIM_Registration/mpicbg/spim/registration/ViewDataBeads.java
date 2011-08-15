@@ -104,6 +104,10 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	protected int channel = 0, channelIndex = 0;
 	protected boolean useForRegistration = true;
 	protected boolean useForFusion = true;
+	protected float initialSigma = 1.8f;
+	protected float minPeakValue = 0.01f;
+	protected float minInitialPeakValue = 0.001f;
+
 	public int getChannel() { return channel; }
 	public void setChannel( final int channel ){ this.channel = channel; }
 	public int getChannelIndex() { return channelIndex; }
@@ -113,6 +117,14 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	public boolean getUseForFusion() { return useForFusion; }
 	public void setUseForFusion( final boolean useForFusion ) { this.useForFusion = useForFusion; }
 	
+	public void setInitialSigma( final float s ) { this.initialSigma = s; }
+	public void setMinPeakValue( final float m ) { this.minPeakValue = m; this.minInitialPeakValue = m/10f;}
+	public void setMinInitialPeakValue( final float m ) { this.minInitialPeakValue = m;}
+	public float getInitialSigma() { return this.initialSigma; }
+	public float getMinPeakValue() { return this.minPeakValue;}
+	public float getMinInitialPeakValue() { return this.minInitialPeakValue;}
+
+
 	/**
 	 * the acquisition angle
 	 */
@@ -502,7 +514,9 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 			if ( getViewStructure().debugLevel <= ViewStructure.DEBUG_ERRORONLY )
 				IOFunctions.println("Cannot read dimensions for " + this + ", trying to open image to determine them.");
 			
-			getImage();
+			if ( getImage() == null )
+				return false;
+
 			closeImage();
 			
 			if ( getImageSize() != null )

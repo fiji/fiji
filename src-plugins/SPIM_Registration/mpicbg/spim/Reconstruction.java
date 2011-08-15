@@ -6,6 +6,9 @@ import java.util.Date;
 import javax.media.j3d.Transform3D;
 import javax.vecmath.Vector3d;
 
+import fiji.plugin.timelapsedisplay.RegistrationStatistics;
+
+
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.Point;
 import mpicbg.spim.io.ConfigurationParserException;
@@ -26,10 +29,16 @@ public class Reconstruction
 	final protected SPIMConfiguration conf;
 	public SPIMConfiguration getSPIMConfiguration() { return conf; }
 	
+	ArrayList<RegistrationStatistics> stats;
+	public ArrayList<RegistrationStatistics> getRegistrationStatistics() { return stats; }
+
 	public Reconstruction( final SPIMConfiguration conf )
 	{
 		this.conf = conf; 
 		
+		if ( conf.collectRegistrationStatistics )
+			stats = new ArrayList<RegistrationStatistics>();
+
 		if ( conf.timeLapseRegistration )
 			processTimeLapse( conf );
 		else
@@ -189,7 +198,7 @@ public class Reconstruction
 	
 	protected void processIndividualViewStructure( SPIMConfiguration conf )
 	{
-		for (int timePointIndex = 0; timePointIndex < conf.file.length; timePointIndex++)
+		for ( int timePointIndex = 0; timePointIndex < conf.file.length; timePointIndex++ )
 		{
 			final ViewStructure viewStructure = ViewStructure.initViewStructure( conf, timePointIndex, new AffineModel3D(), "ViewStructure Timepoint " + timePointIndex, conf.debugLevelInt );						
 			
@@ -214,7 +223,7 @@ public class Reconstruction
 			        if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
 			        	IOFunctions.println( "Cannot find files for " + viewStructure );
 			        
-					System.exit(0);
+					return;
 				}
 				
 				segSuccess = viewStructure.loadSegmentations();
@@ -288,6 +297,10 @@ public class Reconstruction
 			for ( ViewDataBeads view : viewStructure.getViews() )
 				view.closeImage();
 			
+			// collect some information if wanted
+			if ( conf.collectRegistrationStatistics )
+				stats.add( new RegistrationStatistics( viewStructure ) );
+
 			IOFunctions.println( "Finished processing." );
 		}
 	}

@@ -63,7 +63,7 @@ public class STLLoader {
 		BufferedReader br = new BufferedReader(new FileReader(stlfile));
 		String line = br.readLine();
 		String[] words = line.trim().split("\\s+");
-		if (words[0].equalsIgnoreCase("solid")) {
+		if (line.indexOf('\0') < 0 && words[0].equalsIgnoreCase("solid")) {
 			IJ.log("Looks like an ASCII STL");
 			parseAscii(f);
 			return;

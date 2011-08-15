@@ -17,13 +17,14 @@ import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.LongType;
 import algorithms.Histogram2D;
 
-import com.lowagie.text.BadElementException;
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.PageSize;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.pdf.PdfContentByte;
-import com.lowagie.text.pdf.PdfWriter;
+import com.itextpdf.text.BadElementException;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.PageSize;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.pdf.PdfContentByte;
+import com.itextpdf.text.pdf.PdfWriter;
+
 
 public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 
@@ -43,8 +44,8 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 	Document document;
 
 	// a list of the available result images, no matter what specific kinds
-	protected List<com.lowagie.text.Image> listOfPDFImages
-		= new ArrayList<com.lowagie.text.Image>();
+	protected List<com.itextpdf.text.Image> listOfPDFImages
+		= new ArrayList<com.itextpdf.text.Image>();
 	protected List<Paragraph> listOfPDFTexts
 		= new ArrayList<Paragraph>();
 
@@ -88,8 +89,8 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 	protected void addImageToList(ImagePlus imp, String name) {
 		java.awt.Image awtImage = imp.getImage();
 		try {
-			com.lowagie.text.Image pdfImage = com.lowagie.text.Image.getInstance(awtImage, null);
-			pdfImage.setMarkupAttribute("name", name);
+			com.itextpdf.text.Image pdfImage = com.itextpdf.text.Image.getInstance(awtImage, null);
+			pdfImage.setAlt(name); // iText-1.3 setMarkupAttribute("name", name); 
 			listOfPDFImages.add(pdfImage);
 		}
 		catch (BadElementException e) {
@@ -119,43 +120,43 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 	 * @param img The image to print.
 	 * @param printName The name to print under the image.
 	 */
-	protected void addImage(com.lowagie.text.Image image)
+	protected void addImage(com.itextpdf.text.Image image)
 			throws DocumentException, IOException {
 
 		if (! isFirst) {
 			document.add(new Paragraph("\n"));
 			float vertPos = writer.getVerticalPosition(true);
-			if (vertPos - document.bottom() < image.height()) {
+			if (vertPos - document.bottom() < image.getHeight()) {
 				document.newPage();
 			} else {
 				PdfContentByte cb = writer.getDirectContent();
 				cb.setLineWidth(1f);
 				if (isLetter) {
-					cb.moveTo(PageSize.LETTER.left(50), vertPos);
-					cb.lineTo(PageSize.LETTER.right(50), vertPos);
+					cb.moveTo(PageSize.LETTER.getLeft(50), vertPos);
+					cb.lineTo(PageSize.LETTER.getRight(50), vertPos);
 				} else {
-					cb.moveTo(PageSize.A4.left(50), vertPos);
-					cb.lineTo(PageSize.A4.right(50), vertPos);
+					cb.moveTo(PageSize.A4.getLeft(50), vertPos);
+					cb.lineTo(PageSize.A4.getRight(50), vertPos);
 				}
 				cb.stroke();
 			}
 		}
 
 		if (showName) {
-			Paragraph paragraph = new Paragraph(image.getMarkupAttribute("name"));
+			Paragraph paragraph = new Paragraph(image.getAlt()); // iText-1.3: getMarkupAttribute("name"));
 			paragraph.setAlignment(Paragraph.ALIGN_CENTER);
 			document.add(paragraph);
 			//spcNm = 40;
 		}
 
 		if (showSize) {
-			Paragraph paragraph = new Paragraph(image.width() + " x " + image.height());
+			Paragraph paragraph = new Paragraph(image.getWidth() + " x " + image.getHeight());
 			paragraph.setAlignment(Paragraph.ALIGN_CENTER);
 			document.add(paragraph);
 			//spcSz = 40;
 		}
 
-		image.setAlignment(com.lowagie.text.Image.ALIGN_CENTER);
+		image.setAlignment(com.itextpdf.text.Image.ALIGN_CENTER);
 		document.add(image);
 		isFirst = false;
 	}
@@ -190,7 +191,7 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 			writer = PdfWriter.getInstance(document, new FileOutputStream(path));
 			document.open();
 			// iterate over all produced images
-			for (com.lowagie.text.Image img : listOfPDFImages) {
+			for (com.itextpdf.text.Image img : listOfPDFImages) {
 				addImage(img);
 			}
 			//iterate over all produced text objects

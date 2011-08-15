@@ -33,6 +33,9 @@ public class FijiClassLoader extends URLClassLoader {
 		this();
 		if (initDefaults) try {
 			String fijiDir = FijiTools.getFijiDir();
+			String pluginsDir = System.getProperty("plugins.dir");
+			if (pluginsDir != null && !pluginsDir.equals("") && new File(pluginsDir).exists() && !isSameFile(pluginsDir, fijiDir))
+				addPath(pluginsDir);
 			if (fijiDir != null && !fijiDir.startsWith("http://")) {
 				addPath(fijiDir + "/plugins");
 				addPath(fijiDir + "/jars");
@@ -63,6 +66,15 @@ public class FijiClassLoader extends URLClassLoader {
 		this();
 		for (String path : paths)
 			addPath(path, recurse);
+	}
+
+	protected static boolean isSameFile(String path1, String path2) {
+		try {
+			return new File(path1).getCanonicalPath()
+				.equals(new File(path2).getCanonicalPath());
+		} catch (IOException e) {
+			return false;
+		}
 	}
 
 	public void addClassMap(String url) {

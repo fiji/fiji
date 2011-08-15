@@ -9,6 +9,7 @@ import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.interpolation.InterpolatorFactory;
 import mpicbg.imglib.interpolation.linear.LinearInterpolatorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
+import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
@@ -30,6 +31,7 @@ public class SPIMConfiguration
 	public String channelsToFuse;
 	public String mirrorChannels = "";
 	
+	// [timepoint][channel][angle]
 	public File file[][][];
 	public String inputdirectory;
 	public String outputdirectory;// = "";
@@ -38,6 +40,7 @@ public class SPIMConfiguration
 	public int debugLevelInt = ViewStructure.DEBUG_MAIN;
 	public boolean showImageJWindow = false;
 	public boolean multiThreadedOpening = false;
+	public boolean collectRegistrationStatistics = false;
 	
 	// time lapse
 	public boolean timeLapseRegistration = false;
@@ -59,7 +62,7 @@ public class SPIMConfiguration
 	public InterpolatorFactory<FloatType> interpolatorFactorOutput = new LinearInterpolatorFactory<FloatType>( strategyFactoryOutput );
 	
 	// outofbounds strategy factories
-	public OutOfBoundsStrategyFactory<FloatType> strategyFactoryGauss = new OutOfBoundsStrategyValueFactory<FloatType>();
+	public OutOfBoundsStrategyFactory<FloatType> strategyFactoryGauss = new OutOfBoundsStrategyMirrorFactory<FloatType>();
 		
 	// segmentation	
 	public boolean writeOutputImage = true;
@@ -98,12 +101,12 @@ public class SPIMConfiguration
     public boolean useCenterOfMass = false;
 	
 	// ScaleSpace Segmentation
-	public float minPeakValue = 0.008f;
-	public float minInitialPeakValue = minPeakValue/10;
+	public float[] minPeakValue = new float[]{ 0.01f };
+	public float[] minInitialPeakValue = null; // minPeakValue/10
 	public float identityRadius = 3f;
 	public float maximaTolerance = 0.01f;
 	public float imageSigma = 0.5f;
-	public float initialSigma = 1.8f;
+	public float[] initialSigma = new float[]{ 1.8f };
 	public int stepsPerOctave = 4;
 	public int steps = 3;
 	public boolean detectSmallestStructures = false;
@@ -304,9 +307,8 @@ public class SPIMConfiguration
     		
     		if ( !contains )
     		{
-    			IOFunctions.println( "Channel " + cR + " that should be used for registration is not part of the channels " + 
+			throw new ConfigurationParserException( "Channel " + cR + " that should be used for registration is not part of the channels " +
     					Util.printCoordinates( channels ) );
-    			System.exit( 0 );
     		}
     	}		
 
@@ -320,9 +322,8 @@ public class SPIMConfiguration
     		
     		if ( !contains )
     		{
-    			IOFunctions.println( "Channel " + cF + " that should be used for fusion is not part of the channels " + 
+			throw new ConfigurationParserException( "Channel " + cF + " that should be used for fusion is not part of the channels " +
     					Util.printCoordinates( channels ) );
-    			System.exit( 0 );
     		}
     	}
     	
@@ -341,11 +342,25 @@ public class SPIMConfiguration
     		
     		if ( !contains )
     		{
-    			IOFunctions.println( "Channel " + c + " is not used for anything (not registration, not fusion); stopping. " );
-    			System.exit( 0 );    			
+			throw new ConfigurationParserException( "Channel " + c + " is not used for anything (not registration, not fusion); stopping. " );
     		}
     	}
     	
+	if ( useScaleSpace )
+	{
+		final int numChannelsRegister = channelsRegister.length;
+
+		if ( numChannelsRegister != initialSigma.length || numChannelsRegister != minPeakValue.length )
+			throw new ConfigurationParserException( "The number of channels with beads does not match the number of DoG parameters." );
+
+		// auto-adjust minInitialPeakValue
+		if ( minInitialPeakValue == null || minInitialPeakValue.length != numChannelsRegister )
+		{
+			minInitialPeakValue = new float[ numChannelsRegister ];
+			for ( int i = 0; i < numChannelsRegister; ++i )
+				minInitialPeakValue[ i ] = minPeakValue[ i ] / 10;
+		}
+	}
     	// do we want to mirror some channels in advance??
     	if ( mirrorChannels.trim().length() > 0 )
     	{

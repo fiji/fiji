@@ -42,6 +42,9 @@ public class ThreadEdf extends Thread {
 			IJ.error("The input image is not a z-stack of images.");
 			return;
 		}
+		if (imp.getType() == ImagePlus.COLOR_RGB) {
+			parameters.outputColorMap = Parameters.COLOR_RGB;
+		}
 		ExtendedDepthOfField edf = new ExtendedDepthOfField(imp, parameters);
 		edf.process();
 		System.gc();
