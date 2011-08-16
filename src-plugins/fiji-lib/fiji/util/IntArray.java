@@ -1,7 +1,6 @@
 package fiji.util;
 
-public class IntArray extends ArrayBase<int[]>
-{
+public class IntArray extends ArrayBase<int[], Integer> {
 	protected int[] baseArray;
 
 	public IntArray(int size, int growth) {
@@ -26,6 +25,11 @@ public class IntArray extends ArrayBase<int[]>
 	@Override
 	protected void setArray(int[] array) {
 		baseArray = array;
+	}
+
+	@Override
+	protected Integer valueOf(int index) {
+		return Integer.valueOf(baseArray[index]);
 	}
 
 	// Append a value to the collection.

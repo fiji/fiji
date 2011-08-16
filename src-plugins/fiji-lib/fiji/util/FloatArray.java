@@ -1,6 +1,6 @@
 package fiji.util;
 
-public class FloatArray extends ArrayBase<float[]>
+public class FloatArray extends ArrayBase<float[], Float>
 {
 	protected float[] baseArray;
 
@@ -26,6 +26,11 @@ public class FloatArray extends ArrayBase<float[]>
 	@Override
 	protected void setArray(float[] array) {
 		baseArray = array;
+	}
+
+	@Override
+	protected Float valueOf(int index) {
+		return Float.valueOf(baseArray[index]);
 	}
 
 	// Append a value to the collection.

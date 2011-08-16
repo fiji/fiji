@@ -2,8 +2,9 @@ package fiji.util;
 
 import java.lang.reflect.Array;
 
-public abstract class ArrayBase<ArrayType>
-{
+import java.util.Iterator;
+
+public abstract class ArrayBase<ArrayType, BaseType>  implements Iterable<BaseType> {
 	protected Class type;
 	protected int actualSize;
 	protected int allocated;
@@ -23,6 +24,8 @@ public abstract class ArrayBase<ArrayType>
 	protected abstract ArrayType getArray();
 
 	protected abstract void setArray(ArrayType array);
+
+	protected abstract BaseType valueOf(int index);
 
 	/// Make sure we have at least a specified capacity.
 	public void ensureCapacity(int required) {
@@ -92,5 +95,23 @@ public abstract class ArrayBase<ArrayType>
 		ArrayType copy = (ArrayType)Array.newInstance(type, actualSize);
 		System.arraycopy(getArray(), 0, copy, 0, actualSize);
 		return copy;
+	}
+
+	public Iterator<BaseType> iterator() {
+		return new Iterator<BaseType>() {
+			int counter = 0;
+
+			public boolean hasNext() {
+				return counter < actualSize;
+			}
+
+			public BaseType next() {
+				return valueOf(counter++);
+			}
+
+			public void remove() {
+				ArrayBase.this.remove(--counter);
+			}
+		};
 	}
 }

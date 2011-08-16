@@ -1,6 +1,6 @@
 package fiji.util;
 
-public class DoubleArray extends ArrayBase<double[]>
+public class DoubleArray extends ArrayBase<double[], Double>
 {
 	protected double[] baseArray;
 
@@ -26,6 +26,11 @@ public class DoubleArray extends ArrayBase<double[]>
 	@Override
 	protected void setArray(double[] array) {
 		baseArray = array;
+	}
+
+	@Override
+	protected Double valueOf(int index) {
+		return Double.valueOf(baseArray[index]);
 	}
 
 	// Append a value to the collection.
