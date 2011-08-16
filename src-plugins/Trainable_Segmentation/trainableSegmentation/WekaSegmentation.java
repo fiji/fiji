@@ -3705,13 +3705,13 @@ public class WekaSegmentation {
 					final ImagePlus slice = new ImagePlus(imp.getImageStack().getSliceLabel(i), imp.getImageStack().getProcessor(i));
 				
 
-					final Instances sliceData = fsa.get(i).createInstances(classNames);
+					final Instances sliceData = fsa.get(i-1).createInstances(classNames);
 					sliceData.setClassIndex(sliceData.numAttributes() - 1);
 
 					final ImagePlus classImage;
 					classImage = applyClassifier(sliceData, slice.getWidth(), slice.getHeight(), numFurtherThreads, probabilityMaps);
 
-					IJ.log("Classifying slice " + i + " in " + numFurtherThreads + " threads...");
+					IJ.log("Classifying slice " + i + " in " + numFurtherThreads + " thread(s)...");
 					classImage.setTitle("classified_" + slice.getTitle());
 					if(probabilityMaps)
 						classImage.setProcessor(classImage.getProcessor().duplicate());
