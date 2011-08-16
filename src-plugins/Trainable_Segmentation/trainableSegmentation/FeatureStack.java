@@ -1735,7 +1735,14 @@ public class FeatureStack
 			{
 				if (Thread.currentThread().isInterrupted()) 
 					return;
-				futures.add(exe.submit( getFilter(originalImage, filterList.getImageStack().getProcessor(i), filterList.getImageStack().getSliceLabel(i)) ) );
+				
+				// check if the filter slice is labeled (if not, assign an arbitrary label)
+				String filterLabel = filterList.getImageStack().getSliceLabel(i);
+				if(null == filterLabel || filterLabel.equals(""))
+				{
+					filterLabel = new String("filter-"+i);
+				}
+				futures.add(exe.submit( getFilter(originalImage, filterList.getImageStack().getProcessor(i), filterLabel) ) );
 			}
 			
 			// Wait for the jobs to be done
