@@ -14,7 +14,6 @@ Design:
 
 
 Bugs:
-- Fix SpotEditTool not recognizing a second instance of TrackMate.
 - Check if TrackScheme still reports edge deletion problems.
 - When in the panel that allow selecting tracker, saving saves nothing.
 - The name of the tracker displayed in the tracker config panel turns not 

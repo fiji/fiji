@@ -2,6 +2,7 @@ package fiji.plugin.trackmate.visualization.hyperstack;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.ImageCanvas;
 import ij.gui.Toolbar;
 
 import java.awt.event.KeyEvent;
@@ -90,7 +91,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	/*
 	 * METHODS
 	 */
-
+	
 	@Override
 	public String getToolName() {
 		return TOOL_NAME;
@@ -109,6 +110,33 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		if (DEBUG)
 			System.out.println("[SpotEditTool] Registering "+imp+" and "+displayer);
 		displayers.put(imp, displayer);
+		ImageCanvas canvas = imp.getCanvas();
+		registerTool(canvas);
+	}
+	
+	@Override
+	protected void registerTool(ImageCanvas canvas) {
+		if (canvas.getMouseListeners() != null && !arrayContains(canvas.getMouseListeners(), this)) {
+			canvas.addMouseListener(this);
+			if (DEBUG)
+				System.out.println("[SpotEditTool] Adding MouseListener to "+canvas.getImage());
+		}
+		if (canvas.getMouseWheelListeners() != null &&!arrayContains(canvas.getMouseWheelListeners(), this)) {
+			canvas.addMouseWheelListener(this);
+			if (DEBUG)
+				System.out.println("[SpotEditTool] Adding MouseWheelListener to "+canvas.getImage());
+		}
+		if (canvas.getMouseMotionListeners() != null &&!arrayContains(canvas.getMouseMotionListeners(), this)) {
+			canvas.addMouseMotionListener(this);
+			if (DEBUG)
+				System.out.println("[SpotEditTool] Adding MouseMotionListener to "+canvas.getImage());
+		}
+		if (canvas.getKeyListeners() != null && !arrayContains(canvas.getKeyListeners(), this)) {
+			canvas.addKeyListener(this);
+			if (DEBUG)
+				System.out.println("[SpotEditTool] Adding KeyListener to "+canvas.getImage());
+		}
+		
 	}
 
 	/*
@@ -367,4 +395,17 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		IJ.showStatus(statusString);
 	}
 
+	
+	private static final <T> boolean arrayContains(final T[] array, final T element) {
+		boolean found = false;
+		for (T el : array) {
+			if (el == element) {
+				found = true;
+				break;
+			}
+		}
+		return found;
+		
+	}
+	
 }
