@@ -36,9 +36,10 @@ public class IntArray extends ArrayBase<int[]>
 	}
 
 	// Insert a value into the collection.
-	public void insert(int index, int value) {
+	public int insert(int index, int value) {
 		makeInsertSpace(index);
 		baseArray[index] = value;
+		return index;
 	}
 
 	// Get value from the collection.

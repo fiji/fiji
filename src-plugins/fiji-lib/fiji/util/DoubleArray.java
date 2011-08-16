@@ -36,11 +36,12 @@ public class DoubleArray extends ArrayBase<double[]>
 	}
 
 	// Insert a value into the collection.
-	public void insert(int index, double value) {
+	public int insert(int index, double value) {
 		if (index < 0 || index > actualSize)
 			throw new ArrayIndexOutOfBoundsException("Invalid index value");
 		makeInsertSpace(index);
 		baseArray[index] = value;
+		return index;
 	}
 
 	// Get value from the collection.
