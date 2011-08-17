@@ -222,13 +222,18 @@ public class ReadyForUpload {
 		return result;
 	}
 
+	protected boolean fileNameOfBinary(String filename) {
+		return filename.matches("(?i).*\\.(class|pdf|jpg|png|gif)$");
+	}
+
 	protected boolean checkCRLF(String path) throws IOException {
 		boolean result = true;
 		if (path.endsWith(".jar")) {
 			ZipFile zip = new ZipFile(path);
 			for (ZipEntry entry : Collections.list(zip.entries())) {
 				String name = entry.getName();
-				if (!name.endsWith(".class") && !checkCRLF(zip.getInputStream(entry))) {
+				if (!fileNameOfBinary(name) &&
+						!checkCRLF(zip.getInputStream(entry))) {
 					print(name + " in " + path + " contains DOS-style line endings");
 					result = false;
 				}
