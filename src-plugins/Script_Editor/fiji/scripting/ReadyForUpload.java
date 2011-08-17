@@ -88,11 +88,6 @@ public class ReadyForUpload {
 	}
 
 	protected String getSourcePathForTarget(String path, boolean fromSubFakefile) throws FakeException, FileNotFoundException {
-		getRule(path);
-		if (rule == null) {
-			print("Warning: No rule found for " + path);
-			return null;
-		}
 		if (rule instanceof SubFake) {
 			if (fromSubFakefile) {
 				if (rule.getLastPrerequisite().equals("mpicbg/"))
@@ -144,11 +139,6 @@ public class ReadyForUpload {
 	}
 
 	protected boolean checkFakeTargetUpToDate(String path) throws FakeException, FileNotFoundException {
-		getRule(path);
-		if (rule == null) {
-			print("Warning: could not determine target for " + path);
-			return true; // ignore
-		}
 		return rule.upToDate();
 	}
 
@@ -252,9 +242,6 @@ public class ReadyForUpload {
 		if (IJ.isWindows())
 			fullPath = normalizeWinPath(fullPath);
 		String sourcePath = getSourcePathForTarget(fullPath, true);
-		if (sourcePath == null)
-			return true; // ignore
-
 		if (!sourcePath.endsWith(File.separator))
 			sourcePath += File.separator;
 
@@ -341,7 +328,12 @@ public class ReadyForUpload {
 		boolean result = true;
 		rule = null;
 		try {
-			if (!checkTimestamps(path)) {
+			getRule(path);
+			if (rule == null) {
+				print("Warning: " + path + " not made using Fiji Build!");
+				print("");
+			}
+			if (rule != null && !checkTimestamps(path)) {
 				print("");
 				result = false;
 			}
@@ -359,14 +351,14 @@ public class ReadyForUpload {
 				}
 			}
 
-			if (!checkFakeTargetUpToDate(path)) {
+			if (rule != null && !checkFakeTargetUpToDate(path)) {
 				print(path + " is not up-to-date");
 				print("");
 				result = false;
 			}
-			if (!checkDirtyFiles(path))
+			if (rule != null && !checkDirtyFiles(path))
 				result = false;
-			if (!checkPushed(path))
+			if (rule != null && !checkPushed(path))
 				result = false;
 		} catch (Exception e) {
 			e.printStackTrace(out);
