@@ -90,6 +90,10 @@ public class ReadyForUpload {
 
 	protected String getSourcePathForTarget(boolean fromSubFakefile) throws FakeException, FileNotFoundException {
 		if (rule instanceof SubFake) {
+			if (rule.getTarget().equals("plugins/loci_tools.jar"))
+				return "modules/bio-formats/components/bio-formats/src/";
+			if (rule.getTarget().equals("jars/batik.jar"))
+				return "modules/batik/sources/";
 			if (fromSubFakefile) {
 				if (rule.getLastPrerequisite().equals("mpicbg/"))
 					return fijiDir + "mpicbg/";
