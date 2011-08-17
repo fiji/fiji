@@ -311,6 +311,21 @@ public class ReadyForUpload {
 		return true;
 	}
 
+	protected boolean isUncheckedOutSubmodule() throws FakeException, FileNotFoundException {
+		if (!(rule instanceof SubFake))
+			return false;
+		String submoduleDir = rule.getLastPrerequisite();
+		if (submoduleDir == null)
+			return false;
+		File dir = new File(fijiDir, submoduleDir);
+		if (!dir.isDirectory())
+			return true;
+		for (String name : dir.list())
+			if (name.charAt(0) != '.')
+				return false;
+		return true;
+	}
+
 	public synchronized boolean check(String path) {
 		if (IJ.isWindows())
 			path = normalizeWinPath(path);
@@ -343,6 +358,8 @@ public class ReadyForUpload {
 			getRule();
 			if (rule == null)
 				print("Warning: " + path + " not made using Fiji Build!\n");
+			else if (isUncheckedOutSubmodule())
+				print("Warning: source for " + path + " not checked out!\n");
 			else {
 				if (!checkTimestamps()) {
 					print("");
