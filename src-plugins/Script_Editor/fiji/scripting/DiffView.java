@@ -14,6 +14,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import java.io.IOException;
+import java.io.OutputStream;
 
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
@@ -150,6 +151,31 @@ public class DiffView extends JScrollPane implements LineHandler {
 		public void handleLine(String line) {
 			IJ.log(line);
 		}
+	}
+
+	public class DiffOutputStream extends OutputStream {
+		@Override
+		public final void write(int i) {
+			write(Character.toString((char)i));
+		}
+
+		@Override
+		public final void write(byte[] buffer) {
+			write(new String(buffer));
+		}
+
+		@Override
+		public final void write(byte[] buffer, int off, int len) {
+			write(new String(buffer, off, len));
+		}
+
+		public final void write(final String string) {
+			normal(string);
+		}
+	}
+
+	public OutputStream getOutputStream() {
+		return new DiffOutputStream();
 	}
 
 	public static void main(String[] args) {
