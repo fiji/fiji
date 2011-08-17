@@ -82,8 +82,12 @@ public class DiffView extends JScrollPane implements LineHandler {
 	}
 
 	public void styled(String text, AttributeSet set) {
+		styled(document.getLength(), text, set);
+	}
+
+	public void styled(int position, String text, AttributeSet set) {
 		try {
-			document.insertString(document.getLength(), text, set);
+			document.insertString(position, text, set);
 		} catch (BadLocationException e) {
 			e.printStackTrace();
 			throw new RuntimeException(e);
@@ -100,6 +104,14 @@ public class DiffView extends JScrollPane implements LineHandler {
 
 	public void green(String text) {
 		styled(text, green);
+	}
+
+	public void red(int position, String text) {
+		styled(position, text, red);
+	}
+
+	public void green(int position, String text) {
+		styled(position, text, green);
 	}
 
 	public static SimpleAttributeSet getActionStyle(ActionListener action) {
