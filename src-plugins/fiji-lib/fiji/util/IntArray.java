@@ -1,7 +1,6 @@
 package fiji.util;
 
-public class IntArray extends ArrayBase<int[]>
-{
+public class IntArray extends ArrayBase<int[], Integer> {
 	protected int[] baseArray;
 
 	public IntArray(int size, int growth) {
@@ -28,6 +27,11 @@ public class IntArray extends ArrayBase<int[]>
 		baseArray = array;
 	}
 
+	@Override
+	protected Integer valueOf(int index) {
+		return Integer.valueOf(baseArray[index]);
+	}
+
 	// Append a value to the collection.
 	public int add(int value) {
 		int index = getAddIndex();
@@ -36,9 +40,10 @@ public class IntArray extends ArrayBase<int[]>
 	}
 
 	// Insert a value into the collection.
-	public void insert(int index, int value) {
+	public int insert(int index, int value) {
 		makeInsertSpace(index);
 		baseArray[index] = value;
+		return index;
 	}
 
 	// Get value from the collection.

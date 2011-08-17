@@ -1,47 +1,47 @@
 package fiji.util;
 
-public class DoubleArray extends ArrayBase<double[], Double>
+public class FloatArray extends ArrayBase<float[], Float>
 {
-	protected double[] baseArray;
+	protected float[] baseArray;
 
-	public DoubleArray(int size, int growth) {
-		super(size, growth, Double.TYPE);
+	public FloatArray(int size, int growth) {
+		super(size, growth, Float.TYPE);
 	}
 
-	public DoubleArray(int size) {
-		super(size, Double.TYPE);
+	public FloatArray(int size) {
+		super(size, Float.TYPE);
 	}
 
-	public DoubleArray() {
-		super(0, Double.TYPE);
+	public FloatArray() {
+		super(0, Float.TYPE);
 	}
 
 	// Implementation of callout to get the underlying array.
 	@Override
-	protected double[] getArray() {
+	protected float[] getArray() {
 		return baseArray;
 	}
 
 	// Implementation of callout to set the underlying array.
 	@Override
-	protected void setArray(double[] array) {
+	protected void setArray(float[] array) {
 		baseArray = array;
 	}
 
 	@Override
-	protected Double valueOf(int index) {
-		return Double.valueOf(baseArray[index]);
+	protected Float valueOf(int index) {
+		return Float.valueOf(baseArray[index]);
 	}
 
 	// Append a value to the collection.
-	public int add(double value) {
+	public int add(float value) {
 		int index = getAddIndex();
 		baseArray[index] = value;
 		return index;
 	}
 
 	// Insert a value into the collection.
-	public int insert(int index, double value) {
+	public int insert(int index, float value) {
 		if (index < 0 || index > actualSize)
 			throw new ArrayIndexOutOfBoundsException("Invalid index value");
 		makeInsertSpace(index);
@@ -50,20 +50,20 @@ public class DoubleArray extends ArrayBase<double[], Double>
 	}
 
 	// Get value from the collection.
-	public double get(int index) {
+	public float get(int index) {
 		if (index < 0 || index >= actualSize)
 			throw new ArrayIndexOutOfBoundsException("Invalid index value");
 		return baseArray[index];
 	}
 
 	// Set the value at a position in the collection.
-	public void set(int index, double value) {
+	public void set(int index, float value) {
 		if (index < 0 || index >= actualSize)
 			throw new ArrayIndexOutOfBoundsException("Invalid index value");
 		baseArray[index] = value;
 	}
 
-	public boolean contains(double value) {
+	public boolean contains(float value) {
 		for (int i = 0; i < actualSize; i++)
 			if (baseArray[i] == value)
 				return true;
@@ -81,10 +81,10 @@ public class DoubleArray extends ArrayBase<double[], Double>
 	}
 
 	public static void main(String[] args) {
-		DoubleArray array = new DoubleArray();
+		FloatArray array = new FloatArray();
 		array.ensureCapacity(5);
 		array.insert(2, 1);
-		array.insert(5, 2.2);
+		array.insert(5, 2.2f);
 		System.out.println(array.toString());
 	}
 }

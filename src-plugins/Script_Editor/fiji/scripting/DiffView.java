@@ -93,6 +93,10 @@ public class DiffView extends JScrollPane implements LineHandler {
 		styled(text, normal);
 	}
 
+	public void red(String text) {
+		styled(text, red);
+	}
+
 	public static SimpleAttributeSet getActionStyle(ActionListener action) {
 		SimpleAttributeSet style = new SimpleAttributeSet();
 		StyleConstants.setForeground(style, Color.blue);

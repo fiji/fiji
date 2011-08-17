@@ -1,10 +1,10 @@
 function InstallJava3D
 
-    %% Install Java3D.
-    % Use Miji and Fiji power to automatically download and install Java3D for
-    % the MATLAB JVM, so that we can play with accelerated 3D afterwards.
-    % Jean-Yves Tinevez, Johannes Schindelin, July 2011
-    
+%% Install Java3D.
+% Use Miji and Fiji power to automatically download and install Java3D for
+% the MATLAB JVM, so that we can play with accelerated 3D afterwards.
+% Jean-Yves Tinevez, Johannes Schindelin, July 2011
+
     %% Process
     
     % First, silently launch Miji, which will make Fiji libs accessible.
@@ -43,15 +43,15 @@ function InstallJava3D
     
     
     fprintf('Determining the target JVM ext folder...\n')
-    path =  char(ij3d.Install_J3D.getFirstExtDir());
-    fprintf('Target path is %s.\n', path);
+    ext_path =  char(ij3d.Install_J3D.getFirstExtDir());
+    fprintf('Target path is %s.\n', ext_path);
     fprintf('\n');
     
     fprintf('Determining if we have write access to JVM ext folder...\n')
-    [status attrib] = fileattrib(path); %
+    [status attrib] = fileattrib(ext_path); %
     
     if ~status
-        fprintf('Cannot determine the attributes of %s. Aborting.\n', path);
+        fprintf('Cannot determine the attributes of %s. Aborting.\n', ext_path);
         return
     end
     
@@ -63,15 +63,38 @@ function InstallJava3D
         % Indeed, under recent versions of Windows, the permissions reported
         % by MATLAB can be erroneous because of UAC...
         try
-            testfile = java.io.File([path java.io.File.separatorChar 'test']);
+            testfile = java.io.File([ext_path java.io.File.separatorChar 'test']);
             if (testfile.exists())
                 testfile.delete()
             end
             testfile.createNewFile();
             testfile.delete();
+            fprintf('Ok, we do have the right to write to %s.\n', ext_path)
         catch ioe %#ok<NASGU>
-            fprintf('Writing test shows that we CANNOT write to the path.\n')
+            fprintf('Writing test shows that we CANNOT write to the ext path.\n')
+            fprintf('We do not have the right to write to %s,\ninstallation CANNOT be done automatically.\n', ext_path)
             canwrite = false;
+        end
+        
+        % On windows versions, we also have to test that the bin folder is
+        % writable, for it is where the .dll files are going.
+        if ispc
+            
+            bin_path = [ char(java.lang.System.getProperty('java.home')) java.io.File.separatorChar 'bin' ];
+            try
+                testfile = java.io.File([bin_path java.io.File.separatorChar 'test']);
+                if (testfile.exists())
+                    testfile.delete()
+                end
+                testfile.createNewFile();
+                testfile.delete();
+                fprintf('Ok, we do have the right to write to %s.\n', bin_path)
+            catch ioe %#ok<NASGU>
+                fprintf('Writing test shows that we CANNOT write to the bin path.\n')
+                fprintf('We do not have the right to write to %s,\ninstallation CANNOT be done automatically.\n', bin_path)
+                canwrite = false;
+            end
+            
         end
         
     end
@@ -92,13 +115,15 @@ function InstallJava3D
         
     else
         
-        fprintf('We do not have the right to write to %s,\ninstallation CANNOT be done automatically.\n', path)
         fprintf('\n');
         
         fprintf('OK, so this is where you have to intervene manually.\n')
         fprintf('You will have to ask or impersonate your computer''s administrator\n')
         fprintf('so that it gives you WRITE PERMISSION to the following folder:\n')
-        fprintf('\t -> %s.\n', path)
+        fprintf('\t -> %s.\n', ext_path)
+        if ispc
+            fprintf('\t -> %s.\n', bin_path)
+        end
         fprintf('\n');
         fprintf('Once (s)he or you did that, relaunch this helper script, saying\n');
         fprintf('''Yes'' to any question you might be asked.\n');
