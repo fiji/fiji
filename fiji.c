@@ -1190,16 +1190,11 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 	const char *java_home = get_jre_home();
 
 #ifdef WIN32
-	/* Windows automatically adds the path of the executable to PATH */
-	struct string *path = string_initf("%s;%s/bin",
-		getenv("PATH"), java_home);
-	setenv_or_exit("PATH", path->buffer, 1);
-	string_release(path);
-
 	// on Windows, a setenv() invalidates strings obtained by getenv()
 	if (original_java_home_env)
 		original_java_home_env = xstrdup(original_java_home_env);
 #endif
+
 	setenv_or_exit("JAVA_HOME", java_home, 1);
 
 	string_addf(buffer, "%s/%s", java_home, library_path);
@@ -2506,6 +2501,13 @@ static int start_ij(void)
 
 	main_argc = count;
 
+#ifdef WIN32
+	/* Windows automatically adds the path of the executable to PATH */
+	struct string *path = string_initf("%s;%s/bin",
+		getenv("PATH"), get_jre_home());
+	setenv_or_exit("PATH", path->buffer, 1);
+	string_release(path);
+#endif
 	if (!headless &&
 #ifdef MACOSX
 			!CGSessionCopyCurrentDictionary()
