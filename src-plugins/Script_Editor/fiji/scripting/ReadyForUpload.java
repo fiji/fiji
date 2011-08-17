@@ -225,7 +225,7 @@ public class ReadyForUpload {
 			ZipFile zip = new ZipFile(path);
 			for (ZipEntry entry : Collections.list(zip.entries())) {
 				String name = entry.getName();
-				if (!fileNameOfBinary(name) &&
+				if (!fileNameOfBinary(name) && !name.startsWith("META-INF/") &&
 						!checkCRLF(zip.getInputStream(entry))) {
 					print(name + " in " + path + " contains DOS-style line endings");
 					result = false;
