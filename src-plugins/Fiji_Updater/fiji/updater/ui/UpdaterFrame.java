@@ -99,6 +99,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 
 	public UpdaterFrame(final PluginCollection plugins, boolean hidden) {
 		super("Fiji Updater");
+		setPreferredSize(new Dimension(780, 560));
 
 		this.plugins = plugins;
 		this.hidden = hidden;
