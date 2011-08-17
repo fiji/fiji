@@ -336,21 +336,27 @@ public class ReadyForUpload {
 		boolean result = true;
 		rule = null;
 		try {
-			if (!checkTimestamps(path))
+			if (!checkTimestamps(path)) {
+				print("");
 				result = false;
-			if (!checkCRLF(path))
+			}
+			if (!checkCRLF(path)) {
+				print("");
 				result = false;
+			}
 			if (containsDebugInfo(path)) {
 				if (new File(path).getCanonicalPath().equals(new File(fijiDir, "plugins/loci_tools.jar").getCanonicalPath()))
 					print("Ignoring debug info in Bio-Formats");
 				else {
 					print(path + " contains debug information");
+					print("");
 					result = false;
 				}
 			}
 
 			if (!checkFakeTargetUpToDate(path)) {
 				print(path + " is not up-to-date");
+				print("");
 				result = false;
 			}
 			if (!checkDirtyFiles(path))
