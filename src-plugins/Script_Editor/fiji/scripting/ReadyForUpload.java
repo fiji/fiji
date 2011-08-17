@@ -293,8 +293,6 @@ public class ReadyForUpload {
 
 	protected boolean checkPushed(String directory, String subdirectory, String path) throws IOException {
 		String upstreamBranch = "master";
-		if (path.endsWith("loci_tools.jar") && directory.endsWith("bio-formats/"))
-			upstreamBranch = "svn/4.2";
 		if (subdirectory.endsWith("/"))
 			subdirectory = subdirectory.substring(0, subdirectory.length() - 1);
 		SimpleExecuter executer = new SimpleExecuter(new File(directory), new String[] {
