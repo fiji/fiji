@@ -53,6 +53,7 @@ public class ReadyForUpload {
 	protected Fake fake;
 	protected Parser parser;
 	protected Rule rule;
+	protected String path, fullPath;
 
 	public ReadyForUpload(PrintStream printStream) {
 		out = printStream;
@@ -64,7 +65,7 @@ public class ReadyForUpload {
 	}
 
 	/* Fiji Build helpers */
-	protected void getRule(String path) throws FakeException, FileNotFoundException {
+	protected void getRule() throws FakeException, FileNotFoundException {
 		path = new File(path).getAbsolutePath();
 		if (IJ.isWindows())
 			path = normalizeWinPath(path);
@@ -87,7 +88,7 @@ public class ReadyForUpload {
 		rule =  parser.getRule(target);
 	}
 
-	protected String getSourcePathForTarget(String path, boolean fromSubFakefile) throws FakeException, FileNotFoundException {
+	protected String getSourcePathForTarget(boolean fromSubFakefile) throws FakeException, FileNotFoundException {
 		if (rule instanceof SubFake) {
 			if (fromSubFakefile) {
 				if (rule.getLastPrerequisite().equals("mpicbg/"))
@@ -126,7 +127,7 @@ public class ReadyForUpload {
 			return rule.getLastPrerequisite();
 		}
 		if (!(rule instanceof CompileJar)) {
-			print("Warning: ignoring rule for " + path);
+			print("Warning: ignoring rule for " + rule.getTarget());
 			return null;
 		}
 
@@ -138,11 +139,11 @@ public class ReadyForUpload {
 		return fijiDir + prereq;
 	}
 
-	protected boolean checkFakeTargetUpToDate(String path) throws FakeException, FileNotFoundException {
+	protected boolean checkFakeTargetUpToDate() throws FakeException, FileNotFoundException {
 		return rule.upToDate();
 	}
 
-	protected boolean checkDirtyFiles(File directory, String fileName, String path) throws IOException {
+	protected boolean checkDirtyFiles(File directory, String fileName) throws IOException {
 		SimpleExecuter executer = new SimpleExecuter(directory, new String[] {
 			"git", "ls-files", "--exclude-standard", "--other", "--modified", fileName
 		});
@@ -157,24 +158,20 @@ public class ReadyForUpload {
 		return true;
 	}
 
-	protected boolean checkDirtyFiles(String path) throws FakeException, IOException {
-		String fullPath = new File(path).getAbsolutePath();
-		if (IJ.isWindows())
-			fullPath = normalizeWinPath(fullPath);
-
+	protected boolean checkDirtyFiles() throws FakeException, IOException {
 		// check for uncommitted files
-		String sourcePath = getSourcePathForTarget(fullPath, true);
+		String sourcePath = getSourcePathForTarget(true);
 		if (sourcePath == null)
 			print("Warning: could not determine source directory for " + path);
-		else if (!checkDirtyFiles(new File(sourcePath), ".", path))
+		else if (!checkDirtyFiles(new File(sourcePath), "."))
 			return false;
 
 		// check whether submodules are correctly committed
 		if (sourcePath == null)
-			sourcePath = getSourcePathForTarget(fullPath, false);
+			sourcePath = getSourcePathForTarget(false);
 		if (sourcePath != null && new File(sourcePath, ".git").exists()) {
 			File dir = new File(sourcePath);
-			if (!checkDirtyFiles(dir.getParentFile(), dir.getName(), path))
+			if (!checkDirtyFiles(dir.getParentFile(), dir.getName()))
 				return false;
 		}
 
@@ -216,7 +213,7 @@ public class ReadyForUpload {
 		return filename.matches("(?i).*\\.(class|pdf|jpg|png|gif)$");
 	}
 
-	protected boolean checkCRLF(String path) throws IOException {
+	protected boolean checkCRLF() throws IOException {
 		boolean result = true;
 		if (path.endsWith(".jar")) {
 			ZipFile zip = new ZipFile(path);
@@ -237,11 +234,12 @@ public class ReadyForUpload {
 		return result;
 	}
 
-	protected boolean checkTimestamps(String path) throws FakeException, IOException {
-		String fullPath = new File(path).getAbsolutePath();
-		if (IJ.isWindows())
-			fullPath = normalizeWinPath(fullPath);
-		String sourcePath = getSourcePathForTarget(fullPath, true);
+	protected boolean checkTimestamps() throws FakeException, IOException {
+		String sourcePath = getSourcePathForTarget(true);
+		if (sourcePath == null) {
+			print("Warning: could not determine source path for " + path);
+			return false;
+		}
 		if (!sourcePath.endsWith(File.separator))
 			sourcePath += File.separator;
 
@@ -283,7 +281,7 @@ public class ReadyForUpload {
 		return result;
 	}
 
-	protected boolean checkPushed(String directory, String subdirectory, String path) throws IOException {
+	protected boolean checkPushed(String directory, String subdirectory) throws IOException {
 		String upstreamBranch = "master";
 		if (subdirectory.endsWith("/"))
 			subdirectory = subdirectory.substring(0, subdirectory.length() - 1);
@@ -301,22 +299,19 @@ public class ReadyForUpload {
 		return true;
 	}
 
-	protected boolean checkPushed(String path) throws FakeException, IOException {
-		String fullPath = new File(path).getAbsolutePath();
-		if (IJ.isWindows())
-			fullPath = normalizeWinPath(fullPath);
-		String submodulePath = getSourcePathForTarget(fullPath, false);
-		if (fullPath.startsWith(fijiDir) && submodulePath != null && !checkPushed(fijiDir, submodulePath, path))
+	protected boolean checkPushed() throws FakeException, IOException {
+		String submodulePath = getSourcePathForTarget(false);
+		if (fullPath.startsWith(fijiDir) && submodulePath != null && !checkPushed(fijiDir, submodulePath))
 			return false;
 
 		// check whether submodules are pushed
-		if (submodulePath != null && new File(submodulePath, ".git").exists() && !checkPushed(submodulePath, ".", path))
+		if (submodulePath != null && new File(submodulePath, ".git").exists() && !checkPushed(submodulePath, "."))
 			return false;
 
 		return true;
 	}
 
-	public boolean check(String path) {
+	public synchronized boolean check(String path) {
 		if (IJ.isWindows())
 			path = normalizeWinPath(path);
 
@@ -328,38 +323,40 @@ public class ReadyForUpload {
 		boolean result = true;
 		rule = null;
 		try {
-			getRule(path);
-			if (rule == null) {
-				print("Warning: " + path + " not made using Fiji Build!");
-				print("");
-			}
-			if (rule != null && !checkTimestamps(path)) {
-				print("");
-				result = false;
-			}
-			if (!checkCRLF(path)) {
+			this.path = path;
+			fullPath = new File(path).getAbsolutePath();
+			if (IJ.isWindows())
+				fullPath = normalizeWinPath(fullPath);
+
+			if (!checkCRLF()) {
 				print("");
 				result = false;
 			}
-			if (containsDebugInfo(path)) {
+			if (containsDebugInfo(fullPath)) {
 				if (new File(path).getCanonicalPath().equals(new File(fijiDir, "plugins/loci_tools.jar").getCanonicalPath()))
 					print("Ignoring debug info in Bio-Formats");
 				else {
-					print(path + " contains debug information");
-					print("");
+					print(path + " contains debug information\n");
 					result = false;
 				}
 			}
-
-			if (rule != null && !checkFakeTargetUpToDate(path)) {
-				print(path + " is not up-to-date");
-				print("");
-				result = false;
+			getRule();
+			if (rule == null)
+				print("Warning: " + path + " not made using Fiji Build!\n");
+			else {
+				if (!checkTimestamps()) {
+					print("");
+					result = false;
+				}
+				if (!checkFakeTargetUpToDate()) {
+					print(path + " is not up-to-date\n");
+					result = false;
+				}
+				if (!checkDirtyFiles())
+					result = false;
+				if (!checkPushed())
+					result = false;
 			}
-			if (rule != null && !checkDirtyFiles(path))
-				result = false;
-			if (rule != null && !checkPushed(path))
-				result = false;
 		} catch (Exception e) {
 			e.printStackTrace(out);
 			print("Error opening " + path + ": " + e);
