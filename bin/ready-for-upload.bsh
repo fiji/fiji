@@ -236,6 +236,7 @@ boolean checkTimestamps(String path) {
 			result = false;
 		}
 	}
+	zip.close();
 	return result;
 }
 
