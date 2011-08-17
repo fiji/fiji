@@ -314,7 +314,7 @@ public class ReadyForUpload {
 		if (IJ.isWindows())
 			fullPath = normalizeWinPath(fullPath);
 		String submodulePath = getSourcePathForTarget(fullPath, false);
-		if (fullPath.startsWith(fijiDir) && !checkPushed(fijiDir, submodulePath, path))
+		if (fullPath.startsWith(fijiDir) && submodulePath != null && !checkPushed(fijiDir, submodulePath, path))
 			return false;
 
 		// check whether submodules are pushed
