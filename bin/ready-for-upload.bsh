@@ -191,6 +191,47 @@ long getMTime(String path) {
 	return new File(path).lastModified();
 }
 
+boolean checkCRLF(InputStream input) {
+	buf = new byte[1024];
+	result = true;
+	for (;;) {
+		int count = input.read(buf);
+		if (count <= 0) {
+			input.close();
+			return result;
+		}
+		for (int i = 0; i < count; i++)
+			if (buf[i] == 0) {
+				// assume binary
+				input.close();
+				return true;
+			}
+			else if (buf[i] == 13)
+				// found carriage return
+				result = false;
+	}
+}
+
+boolean checkCRLF(String path) {
+	result = true;
+	if (path.endsWith(".jar")) {
+		zip = new ZipFile(path);
+		for (ZipEntry entry : Collections.list(zip.entries())) {
+			name = entry.getName();
+			if (!name.endsWith(".class") && !checkCRLF(zip.getInputStream(entry))) {
+				print(name + " in " + path + " contains DOS-style line endings");
+				result = false;
+			}
+		}
+		zip.close();
+	}
+	else if (!checkCRLF(new FileInputStream(path))) {
+		print(path + " contains DOS-style line endings");
+		result = false;
+	}
+	return result;
+}
+
 boolean checkTimestamps(String path) {
 	fullPath = new File(path).getAbsolutePath();
 	if (IJ.isWindows())
@@ -284,6 +325,8 @@ boolean check(String path) {
 	result = true;
 	try {
 		if (!checkTimestamps(path))
+			result = false;
+		if (!checkCRLF(path))
 			result = false;
 		if (DependencyAnalyzer.containsDebugInfo(path)) {
 			if (new File(path).getCanonicalPath().equals(new File(fijiDir, "plugins/loci_tools.jar").getCanonicalPath()))
