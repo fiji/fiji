@@ -648,8 +648,8 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 				+ " (" + sizeToString(bytesToDownload) + ")";
 		if (uninstall > 0)
 			text += " uninstall: " + uninstall;
-		if (plugins.hasUploadableSites())
-			text += ", upload: " + upload + " ("
+		if (plugins.hasUploadableSites() && upload > 0)
+			text += " upload: " + upload + " ("
 				+ sizeToString(bytesToUpload) + ")";
 		lblPluginSummary.setText(text);
 
