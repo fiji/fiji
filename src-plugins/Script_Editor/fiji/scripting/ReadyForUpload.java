@@ -206,20 +206,20 @@ public class ReadyForUpload {
 		boolean result = true;
 		for (;;) {
 			int count = input.read(buf);
-			if (count <= 0) {
-				input.close();
-				return result;
-			}
+			if (count <= 0)
+				break;
 			for (int i = 0; i < count; i++)
 				if (buf[i] == 0) {
 					// assume binary
-					input.close();
-					return true;
+					result = true;
+					break;
 				}
 				else if (buf[i] == 13)
 					// found carriage return
 					result = false;
 		}
+		input.close();
+		return result;
 	}
 
 	protected boolean checkCRLF(String path) throws IOException {
