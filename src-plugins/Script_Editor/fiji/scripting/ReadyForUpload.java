@@ -50,34 +50,45 @@ public class ReadyForUpload {
 	}
 
 	protected PrintStream out;
+	protected Fake fake;
+	protected Parser parser;
+	protected Rule rule;
 
 	public ReadyForUpload(PrintStream printStream) {
 		out = printStream;
 	}
 
+	/* helper functions */
 	protected void print(String message) {
 		out.println(message);
 	}
 
-	protected Rule getRule(String path) throws FakeException, FileNotFoundException {
+	/* Fiji Build helpers */
+	protected void getRule(String path) throws FakeException, FileNotFoundException {
 		path = new File(path).getAbsolutePath();
 		if (IJ.isWindows())
 			path = normalizeWinPath(path);
 		if (!path.startsWith(fijiDir)) {
 			print("Warning: Not in $FIJI_ROOT: " + path);
-			return null;
+			return;
 		}
-		path = path.substring(fijiDir.length());
 
-		Fake fake = new Fake();
-		Parser parser = fake.parse(new FileInputStream(fijiDir + "/Fakefile"), new File(fijiDir));
-		parser.parseRules(new ArrayList());
+		String target = path.substring(fijiDir.length());
+		if (rule != null && rule.getTarget().equals(target))
+			return;
 
-		return parser.getRule(path);
+		if (fake == null)
+			fake = new Fake();
+		if (parser == null) {
+			parser = fake.parse(new FileInputStream(fijiDir + "/Fakefile"), new File(fijiDir));
+			parser.parseRules(new ArrayList());
+		}
+
+		rule =  parser.getRule(target);
 	}
 
 	protected String getSourcePathForTarget(String path, boolean fromSubFakefile) throws FakeException, FileNotFoundException {
-		Rule rule = getRule(path);
+		getRule(path);
 		if (rule == null) {
 			print("Warning: No rule found for " + path);
 			return null;
@@ -133,7 +144,7 @@ public class ReadyForUpload {
 	}
 
 	protected boolean checkFakeTargetUpToDate(String path) throws FakeException, FileNotFoundException {
-		Rule rule = getRule(path);
+		getRule(path);
 		if (rule == null) {
 			print("Warning: could not determine target for " + path);
 			return true; // ignore
@@ -325,6 +336,7 @@ public class ReadyForUpload {
 		}
 
 		boolean result = true;
+		rule = null;
 		try {
 			if (!checkTimestamps(path))
 				result = false;
