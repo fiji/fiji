@@ -72,7 +72,7 @@ universe.centerSelected(c);
 universe.rotateUniverse(javax.vecmath.Vector3d(-1, -0.5, +0.2), +120 * pi / 180);
 
 %%
-% Et voil‡! A beautiful monochrome MATLAB logo, rendered in an accelerated
+% Et voil√†! A beautiful monochrome MATLAB logo, rendered in an accelerated
 % 3D viewer. You can try the _Fullscreen_ option in the _View_ menu, to
 % maximize your experience.
 %
