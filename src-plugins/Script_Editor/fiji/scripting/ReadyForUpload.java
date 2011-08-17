@@ -78,8 +78,10 @@ public class ReadyForUpload {
 		if (rule != null && rule.getTarget().equals(target))
 			return;
 
-		if (fake == null)
+		if (fake == null) {
 			fake = new Fake();
+			fake.out = fake.err = out;
+		}
 		if (parser == null) {
 			parser = fake.parse(new FileInputStream(fijiDir + "/Fakefile"), new File(fijiDir));
 			parser.parseRules(new ArrayList());
