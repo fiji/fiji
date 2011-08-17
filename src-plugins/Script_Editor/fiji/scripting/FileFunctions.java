@@ -1,7 +1,5 @@
 package fiji.scripting;
 
-import BSH.BSH_Interpreter;
-
 import fiji.SimpleExecuter;
 
 import fiji.build.Fake;
@@ -974,13 +972,14 @@ public class FileFunctions {
 
 		if (verboseLevel < 0) {
 			// When run from Updater, call ready-for-upload
-			diff.normal("Checking whether " + plugin + " is ready to be uploaded... ");
+			diff.normal("Checking whether " + plugin + " is ready to be uploaded... \n");
 			try {
-				String ready = BSH_Interpreter.execute(fijiDir + "bin/ready-for-upload.bsh", fijiDir + plugin);
-				if ("".equals(ready))
-					diff.normal("Yes!\n");
+				int pos = diff.document.getLength() - 1;
+				ReadyForUpload ready = new ReadyForUpload(new PrintStream(diff.getOutputStream()));
+				if (ready.check(plugin))
+					diff.green(pos, "Yes!");
 				else
-					diff.red("No!\n" + ready);
+					diff.red(pos, "Not ready!");
 			} catch (Exception e) {
 				IJ.handleException(e);
 				diff.red("Probably not (see Exception)\n");
