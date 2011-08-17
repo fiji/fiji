@@ -69,6 +69,15 @@ import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 
 public class FileFunctions {
+	protected static String fijiDir;
+
+	static {
+		String dir = System.getProperty("fiji.dir");
+		if (!dir.endsWith("/"))
+			dir += "/";
+		fijiDir = dir;
+	}
+
 	protected TextEditor parent;
 
 	public FileFunctions(TextEditor parent) {
@@ -147,15 +156,10 @@ public class FileFunctions {
 		return false;
 	}
 
-	protected static String fijiDir;
-
 	/**
 	 * Make a sensible effort to get the path of the source for a class.
 	 */
 	public String getSourcePath(String className) throws ClassNotFoundException {
-		if (fijiDir == null)
-			fijiDir = System.getProperty("fiji.dir");
-
 		// First, let's try to get the .jar file for said class.
 		String result = getJar(className);
 		if (result == null)
@@ -252,8 +256,6 @@ public class FileFunctions {
 					"Question", JOptionPane.YES_OPTION)
 					!= JOptionPane.YES_OPTION)
 				return null;
-			if (fijiDir == null)
-				fijiDir = System.getProperty("fiji.dir");
 			class2source = new HashMap<String, List<String>>();
 			findJavaPaths(new File(fijiDir), "");
 		}
@@ -930,8 +932,7 @@ public class FileFunctions {
 		});
 	}
 
-	public void showPluginChangesSinceUpload(String fijiDir, String plugin) {
-		this.fijiDir = fijiDir;
+	public void showPluginChangesSinceUpload(String plugin) {
 		showPluginChangesSinceUpload(plugin, -1);
 	}
 
@@ -990,7 +991,6 @@ public class FileFunctions {
 	}
 
 	protected void populateDiff(final DiffView diff, final String plugin, int verboseLevel) {
-		final String fijiDir = System.getProperty("fiji.dir");
 		List<String> cmdarray = new ArrayList<String>(Arrays.asList(new String[] {
 			fijiDir + "/bin/log-plugin-commits.bsh",
 			"-p", "--fuzz", "15"
