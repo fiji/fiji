@@ -202,6 +202,7 @@ boolean checkTimestamps(String path) {
 	if (!sourcePath.endsWith(File.separator))
 		sourcePath += File.separator;
 
+	result = true;
 	zip = new ZipFile(fullPath);
 	for (ZipEntry entry : Collections.list(zip.entries())) {
 		name = entry.getName();
@@ -228,14 +229,14 @@ boolean checkTimestamps(String path) {
 				(!path.endsWith("/ij.jar") ||
 				 (!name.equals("aboutja.jpg") && !name.equals("icon.gif")))) {
 			print(entry.getName() + " in " + path + " is missing the source " + name);
-			return false;
+			result = false;
 		}
 		if (entry.getTime() < getMTime(sourcePath + name)) {
 			print(entry.getName() + " in " + path + " is not up-to-date");
-			return false;
+			result = false;
 		}
 	}
-	return true;
+	return result;
 }
 
 boolean checkPushed(String directory, String subdirectory, String path) {
@@ -279,32 +280,33 @@ boolean check(String path) {
 		return true;
 	}
 
+	result = true;
 	try {
 		if (!checkTimestamps(path))
-			return false;
+			result = false;
 		if (DependencyAnalyzer.containsDebugInfo(path)) {
 			if (new File(path).getCanonicalPath().equals(new File(fijiDir, "plugins/loci_tools.jar").getCanonicalPath()))
 				print("Ignoring debug info in Bio-Formats");
 			else {
 				print(path + " contains debug information");
-				return false;
+				result = false;
 			}
 		}
 
 		if (!checkFakeTargetUpToDate(path)) {
 			print(path + " is not up-to-date");
-			return false;
+			result = false;
 		}
 		if (!checkDirtyFiles(path))
-			return false;
+			result = false;
 		if (!checkPushed(path))
-			return false;
+			result = false;
 	} catch (IOException e) {
 		e.printStackTrace();
 		print("Error opening " + path + ": " + e);
 		return false;
 	}
-	return true;
+	return result;
 }
 
 exitCode = 0;
