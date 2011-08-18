@@ -75,6 +75,10 @@ import ij.plugin.filter.GaussianBlur;
 import ij.plugin.filter.Convolver;
 import ij.plugin.filter.RankFilters;
 
+import imagescience.feature.Differentiator;
+import imagescience.image.Aspects;
+import imagescience.image.FloatImage;
+
 
 /**
  * This class stores the stacks of features that will be used during the trainable/weka segmentations.  
@@ -122,22 +126,36 @@ public class FeatureStack
 	public static final int LIPSCHITZ 				= 12;
 	/** Kuwahara filter flag index */
 	public static final int KUWAHARA				= 13;
-	/* Gabor filter flag index */					
+	/** Gabor filter flag index */					
 	public static final int GABOR					= 14;
-	/** Minimum filter flag index */
-//	public static final int BLUR_MINIMUM			= 15;
-	/** Maximum filter flag index */
-//	public static final int BLUR_MAXIMUM			= 16;
-	
+	/** Derivatives filter flag index */
+	public static final int DERIVATIVES				= 15;
 	
 	/** names of available filters */
 	public static final String[] availableFeatures 
 		= new String[]{	"Gaussian_blur", "Sobel_filter", "Hessian", "Difference_of_gaussians", 
 					   	"Membrane_projections","Variance","Mean", "Minimum", "Maximum", "Median", 
-					   	"Anisotropic_diffusion", "Bilateral", "Lipschitz", "Kuwahara", "Gabor" /*, "Blur_minimum", " Blur_maximum" */};
+					   	"Anisotropic_diffusion", "Bilateral", "Lipschitz", "Kuwahara", "Gabor" , "Derivatives"};
 	/** flags of filters to be used */
-	private boolean[] enableFeatures = new boolean[]{true, true, true, true, true, false, false, 
-													 false, false, false, false, false, false, false, false /*, false, false */};
+	private boolean[] enableFeatures = new boolean[]{
+			true, 	/* Gaussian_blur */
+			true, 	/* Sobel_filter */
+			true, 	/* Hessian */
+			true, 	/* Difference_of_gaussians */
+			true, 	/* Membrane_projections */
+			false, 	/* Variance */
+			false, 	/* Mean */
+			false, 	/* Minimum */
+			false, 	/* Maximum */
+			false, 	/* Median */
+			false,	/* Anisotropic_diffusion */
+			false, 	/* Bilateral */
+			false, 	/* Lipschitz */
+			false, 	/* Kuwahara */
+			false,	/* Gabor */
+			false 	/* Derivatives */
+	};
+	
 	/** use neighborhood flag */
 	private boolean useNeighbors = false;
 	/** expected membrane thickness (in pixels) */
@@ -146,6 +164,9 @@ public class FeatureStack
 	private int membranePatchSize = 19;
 	/** number of rotating angles for membrane, Kuwahara and Gabor features */
 	private int nAngles = 10;
+	
+	private int minDerivativeOrder = 2;
+	private int maxDerivativeOrder = 5;
 	
 	/** executor service to produce concurrent threads */
 	ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
@@ -1047,6 +1068,82 @@ public class FeatureStack
 	
 	
 	/**
+	 * Get derivatives features (to be submitted in an ExecutorService)
+	 *
+	 * @param originalImage input image
+	 * @param sigma smoothing scale
+	 * @param xOrder x-order of differentiation
+	 * @param yOrder y-order of differentiation
+	 * @return filter image after specific order derivatives
+	 */
+	public Callable<ImagePlus> getDerivatives(
+			final ImagePlus originalImage,
+			final double sigma,
+			final int xOrder,
+			final int yOrder)
+	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
+		return new Callable<ImagePlus>()
+		{
+			public ImagePlus call()
+			{
+				
+				imagescience.image.Image img = imagescience.image.Image.wrap( originalImage );
+				Aspects aspects = img.aspects();
+				
+
+				imagescience.image.Image newimg = new FloatImage(img);
+				Differentiator diff = new Differentiator();
+
+				diff.run(newimg, sigma , xOrder, yOrder, 0);
+				newimg.aspects(aspects);
+
+				ImagePlus newimp =  newimg.imageplus();
+							
+				return new ImagePlus (availableFeatures[DERIVATIVES] +"_" + xOrder + "_" +yOrder+"_"+sigma, newimp.getProcessor());
+			}
+		};
+	}	
+	
+	
+	/**
+	 * Add derivatives features to current stack
+	 *
+	 * @param sigma smoothing scale
+	 * @param xOrder x-order of differentiation
+	 * @param yOrder y-order of differentiation
+	 * @return filter image after specific order derivatives
+	 */
+	public void addDerivatives(
+			final double sigma,
+			final int xOrder,
+			final int yOrder)
+	{
+		if (Thread.currentThread().isInterrupted()) 
+			return;
+			
+		
+		final imagescience.image.Image img = imagescience.image.Image.wrap( originalImage ) ;
+				
+		final Aspects aspects = img.aspects();				
+
+		final imagescience.image.FloatImage newimg = new FloatImage( img );
+		
+		final Differentiator diff = new Differentiator();
+
+		diff.run(newimg, sigma , xOrder, yOrder, 0);
+				
+		newimg.aspects( aspects );
+
+		final ImagePlus newimp =  newimg.imageplus();
+				
+		wholeStack.addSlice(availableFeatures[DERIVATIVES] +"_" + xOrder + "_" +yOrder+"_"+sigma, newimp.getProcessor());
+		
+	}	
+	
+	/**
 	 * Get Gabor features (to be submitted in an ExecutorService)
 	 * @param originalImage input image
 	 * @param sigma size of the Gaussian envelope
@@ -1943,6 +2040,13 @@ public class FeatureStack
 				//IJ.log( n++ +": Calculating Median filter ("+ i + ")");
 				addMedian(i);
 			}
+			
+			// Derivatives
+			if(enableFeatures[DERIVATIVES])
+			{					
+				for(int order = minDerivativeOrder; order<=maxDerivativeOrder; order++)
+					addDerivatives( i, order, order );
+			}
 
 		}
 		// Membrane projections
@@ -2143,25 +2247,19 @@ public class FeatureStack
 					//IJ.log( n++ +": Calculating Maximum filter ("+ i + ")");
 					futures.add(exe.submit( getMax(originalImage, i)) );
 				}
-/*
-				// Blur Min
-				if(enableFeatures[BLUR_MINIMUM])
-				{
-					for(float j = i/2; j<= i; j*=2)
-						futures.add(exe.submit( getBlurMin(originalImage, i, j)) );
-				}
-				// Blur Max
-				if(enableFeatures[BLUR_MAXIMUM])
-				{
-					for(float j = i/2; j<= i; j*=2)
-						futures.add(exe.submit( getBlurMax(originalImage, i, j)) );
-				}
-*/				
+			
 				// Median
 				if(enableFeatures[MEDIAN])
 				{
 					//IJ.log( n++ +": Calculating Median filter ("+ i + ")");
 					futures.add(exe.submit( getMedian(originalImage, i)) );
+				}
+				
+				// Derivatives
+				if(enableFeatures[DERIVATIVES])
+				{					
+					for(int order = minDerivativeOrder; order<=maxDerivativeOrder; order++)
+						futures.add(exe.submit( getDerivatives(originalImage, i, order, order)) );
 				}
 
 			}
