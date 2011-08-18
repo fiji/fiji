@@ -147,8 +147,24 @@ public class WekaSegmentation {
 	/** maximum sigma to use on the filters */
 	private float maximumSigma = 16f;
 	/** flags of filters to be used */
-	private boolean[] enabledFeatures = new boolean[]{true, true, true, true, true, false, false, 
-													 false, false, false, false, false, false, false, false /*, false, false */};
+	private boolean[] enabledFeatures = new boolean[]{
+			true, 	/* Gaussian_blur */
+			true, 	/* Sobel_filter */
+			true, 	/* Hessian */
+			true, 	/* Difference_of_gaussians */
+			true, 	/* Membrane_projections */
+			false, 	/* Variance */
+			false, 	/* Mean */
+			false, 	/* Minimum */
+			false, 	/* Maximum */
+			false, 	/* Median */
+			false,	/* Anisotropic_diffusion */
+			false, 	/* Bilateral */
+			false, 	/* Lipschitz */
+			false, 	/* Kuwahara */
+			false,	/* Gabor */
+			false 	/* Derivatives */
+	};
 	/** use neighborhood flag */
 	private boolean useNeighbors = false;
 
