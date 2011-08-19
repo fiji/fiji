@@ -2608,7 +2608,7 @@ static void parse_command_line(void)
 	if (retrotranslator && build_classpath(class_path, fiji_path("retro"), 0))
 		die("Retrotranslator is required but cannot be found!");
 
-	if (!headless && is_default_main_class(main_class))
+	if (!options.debug && !options.use_system_jvm && !headless && is_default_main_class(main_class))
 		show_splash();
 
 	/* set up class path */
