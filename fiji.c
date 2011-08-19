@@ -2726,8 +2726,6 @@ static int start_ij(void)
 	struct string *buffer = string_init(32);
 	int i;
 
-	parse_command_line();
-
 	/* Handle update/ */
 	update_all_files();
 
@@ -3480,6 +3478,8 @@ int main(int argc, char **argv, char **e)
 	main_argv_backup = (char **)xmalloc(size);
 	memcpy(main_argv_backup, main_argv, size);
 	main_argc_backup = argc;
+
+	parse_command_line();
 
 	return start_ij();
 }
