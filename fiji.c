@@ -458,7 +458,7 @@ static const char *default_main_class = "fiji.Main";
 
 static int is_default_main_class(const char *name)
 {
-	return !strcmp(name, default_main_class) || !strcmp(name, "ij.ImageJ");
+	return name && (!strcmp(name, default_main_class) || !strcmp(name, "ij.ImageJ"));
 }
 
 /* Dynamic library loading stuff */
