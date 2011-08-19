@@ -2498,11 +2498,8 @@ public class Weka_Segmentation implements PlugIn
 			final ImagePlus probImage = wekaSegmentation.getClassifiedImage();
 			if(null != probImage)
 			{
+				probImage.setOpenAsHyperStack( true );				
 				probImage.show();
-				IJ.run(probImage, "Stack to Hyperstack...", 
-						"order=xyczt(default) channels=" + wekaSegmentation.getNumOfClasses() + 
-						" slices=" + win.getDisplayImage().getImageStackSize() + 
-				" frames=1 display=Grayscale");
 			}
 			win.updateButtonsEnabling();
 			IJ.showStatus("Done.");
