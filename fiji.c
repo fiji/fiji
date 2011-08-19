@@ -1075,8 +1075,11 @@ static void show_splash(void)
 	SplashLoadFile = dlsym(splashscreen, "SplashLoadFile");
 	SplashSetFileJarName = dlsym(splashscreen, "SplashSetFileJarName");
 	SplashClose = dlsym(splashscreen, "SplashClose");
-	if (!SplashInit || !SplashLoadFile || !SplashSetFileJarName || !SplashClose)
+	if (!SplashInit || !SplashLoadFile || !SplashSetFileJarName || !SplashClose) {
+		string_release(lib_path);
+		SplashClose = NULL;
 		return;
+	}
 
 	SplashInit();
 	SplashLoadFile(image_path);
