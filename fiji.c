@@ -1064,7 +1064,7 @@ static void show_splash(void)
 	int (*SplashLoadFile)(const char *path);
 	int (*SplashSetFileJarName)(const char *file_path, const char *jar_path);
 
-	if (no_splash || !lib_path)
+	if (no_splash || !lib_path || SplashClose)
 		return;
 	splashscreen = dlopen(lib_path->buffer, RTLD_LAZY);
 	if (!splashscreen) {
