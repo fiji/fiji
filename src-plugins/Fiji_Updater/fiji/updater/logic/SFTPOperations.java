@@ -1,11 +1,20 @@
 package fiji.updater.logic;
 
-import com.jcraft.jsch.*;
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpATTRS;
+import com.jcraft.jsch.SftpException;
+import com.jcraft.jsch.SftpProgressMonitor;
+import com.jcraft.jsch.UserInfo;
+
 import ij.IJ;
 
 import java.io.IOException;
 import java.io.InputStream;
+
 import java.text.SimpleDateFormat;
+
 import java.util.Date;
 
 /**

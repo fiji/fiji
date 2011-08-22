@@ -2,12 +2,15 @@ package fiji.updater.logic;
 
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.UserInfo;
+
 import fiji.updater.util.Canceled;
+
 import ij.IJ;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+
 import java.util.List;
 
 /**
