@@ -76,6 +76,7 @@ import ij.plugin.filter.Convolver;
 import ij.plugin.filter.RankFilters;
 
 import imagescience.feature.Differentiator;
+import imagescience.feature.Laplacian;
 import imagescience.image.Aspects;
 import imagescience.image.FloatImage;
 
@@ -130,12 +131,15 @@ public class FeatureStack
 	public static final int GABOR					= 14;
 	/** Derivatives filter flag index */
 	public static final int DERIVATIVES				= 15;
+	/** Laplacian filter flag index */
+	public static final int LAPLACIAN				= 16;
 	
 	/** names of available filters */
 	public static final String[] availableFeatures 
 		= new String[]{	"Gaussian_blur", "Sobel_filter", "Hessian", "Difference_of_gaussians", 
 					   	"Membrane_projections","Variance","Mean", "Minimum", "Maximum", "Median", 
-					   	"Anisotropic_diffusion", "Bilateral", "Lipschitz", "Kuwahara", "Gabor" , "Derivatives"};
+					   	"Anisotropic_diffusion", "Bilateral", "Lipschitz", "Kuwahara", "Gabor" , 
+					   	"Derivatives", "Laplacian"};
 	/** flags of filters to be used */
 	private boolean[] enableFeatures = new boolean[]{
 			true, 	/* Gaussian_blur */
@@ -153,7 +157,8 @@ public class FeatureStack
 			false, 	/* Lipschitz */
 			false, 	/* Kuwahara */
 			false,	/* Gabor */
-			false 	/* Derivatives */
+			false, 	/* Derivatives */
+			false, 	/* Laplacian */
 	};
 	
 	/** use neighborhood flag */
@@ -1143,8 +1148,77 @@ public class FeatureStack
 		
 	}	
 	
+	
+	/**
+	 * Get Laplacian features (to be submitted in an ExecutorService)
+	 *
+	 * @param originalImage input image
+	 * @param sigma smoothing scale	
+	 * @return filter Laplacian filter image
+	 */
+	public Callable<ImagePlus> getLaplacian(
+			final ImagePlus originalImage,
+			final double sigma)
+	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
+		return new Callable<ImagePlus>()
+		{
+			public ImagePlus call()
+			{
+				
+				final imagescience.image.Image img = imagescience.image.Image.wrap( originalImage ) ;
+				
+				final Aspects aspects = img.aspects();				
+
+				imagescience.image.Image newimg = new FloatImage( img );
+				
+				final Laplacian laplace = new Laplacian();
+
+				newimg = laplace.run(newimg, sigma);
+				newimg.aspects(aspects);						
+
+				final ImagePlus newimp =  newimg.imageplus();
+							
+				return new ImagePlus (availableFeatures[LAPLACIAN] +"_" + +sigma, newimp.getProcessor());
+			}
+		};
+	}
+	
+	/**
+	 * Add Laplacian features to current stack
+	 *
+	 * @param sigma smoothing scale	
+	 * @return filter Laplacian filter image
+	 */
+	public void addLaplacian(
+			final double sigma)
+	{
+		if (Thread.currentThread().isInterrupted()) 
+			return;
+			
+		
+		final imagescience.image.Image img = imagescience.image.Image.wrap( originalImage ) ;
+				
+		final Aspects aspects = img.aspects();				
+
+		imagescience.image.Image newimg = new FloatImage( img );
+		
+		final Laplacian laplace = new Laplacian();
+
+		newimg = laplace.run(newimg, sigma);
+		newimg.aspects(aspects);						
+
+		final ImagePlus newimp =  newimg.imageplus();
+				
+		wholeStack.addSlice(availableFeatures[LAPLACIAN] +"_" + +sigma, newimp.getProcessor());
+		
+	}
+	
 	/**
 	 * Get Gabor features (to be submitted in an ExecutorService)
+	 * 
 	 * @param originalImage input image
 	 * @param sigma size of the Gaussian envelope
 	 * @param gamma spatial aspect ratio, it specifies the ellipticity of the support of the Gabor function
@@ -2047,6 +2121,12 @@ public class FeatureStack
 				for(int order = minDerivativeOrder; order<=maxDerivativeOrder; order++)
 					addDerivatives( i, order, order );
 			}
+			
+			// Laplacian
+			if(enableFeatures[LAPLACIAN])
+			{
+				addLaplacian(i);
+			}
 
 		}
 		// Membrane projections
@@ -2260,6 +2340,12 @@ public class FeatureStack
 				{					
 					for(int order = minDerivativeOrder; order<=maxDerivativeOrder; order++)
 						futures.add(exe.submit( getDerivatives(originalImage, i, order, order)) );
+				}
+				
+				// Laplacian
+				if(enableFeatures[LAPLACIAN])
+				{
+					futures.add(exe.submit( getLaplacian(originalImage, i)) );
 				}
 
 			}

@@ -163,7 +163,8 @@ public class WekaSegmentation {
 			false, 	/* Lipschitz */
 			false, 	/* Kuwahara */
 			false,	/* Gabor */
-			false 	/* Derivatives */
+			false, 	/* Derivatives */
+			false, 	/* Laplacian */
 	};
 	/** use neighborhood flag */
 	private boolean useNeighbors = false;
