@@ -165,6 +165,7 @@ public class WekaSegmentation {
 			false,	/* Gabor */
 			false, 	/* Derivatives */
 			false, 	/* Laplacian */
+			false	/* Structure */
 	};
 	/** use neighborhood flag */
 	private boolean useNeighbors = false;

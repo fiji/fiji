@@ -45,6 +45,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.Vector;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -77,6 +78,7 @@ import ij.plugin.filter.RankFilters;
 
 import imagescience.feature.Differentiator;
 import imagescience.feature.Laplacian;
+import imagescience.feature.Structure;
 import imagescience.image.Aspects;
 import imagescience.image.FloatImage;
 
@@ -133,13 +135,15 @@ public class FeatureStack
 	public static final int DERIVATIVES				= 15;
 	/** Laplacian filter flag index */
 	public static final int LAPLACIAN				= 16;
+	/** structure tensor filter flag index */
+	public static final int STRUCTURE				= 17;
 	
 	/** names of available filters */
 	public static final String[] availableFeatures 
 		= new String[]{	"Gaussian_blur", "Sobel_filter", "Hessian", "Difference_of_gaussians", 
 					   	"Membrane_projections","Variance","Mean", "Minimum", "Maximum", "Median", 
 					   	"Anisotropic_diffusion", "Bilateral", "Lipschitz", "Kuwahara", "Gabor" , 
-					   	"Derivatives", "Laplacian"};
+					   	"Derivatives", "Laplacian", "Structure"};
 	/** flags of filters to be used */
 	private boolean[] enableFeatures = new boolean[]{
 			true, 	/* Gaussian_blur */
@@ -159,6 +163,7 @@ public class FeatureStack
 			false,	/* Gabor */
 			false, 	/* Derivatives */
 			false, 	/* Laplacian */
+			false	/* Structure */
 	};
 	
 	/** use neighborhood flag */
@@ -1181,7 +1186,7 @@ public class FeatureStack
 
 				final ImagePlus newimp =  newimg.imageplus();
 							
-				return new ImagePlus (availableFeatures[LAPLACIAN] +"_" + +sigma, newimp.getProcessor());
+				return new ImagePlus (availableFeatures[LAPLACIAN] +"_" + sigma, newimp.getProcessor());
 			}
 		};
 	}
@@ -1212,9 +1217,89 @@ public class FeatureStack
 
 		final ImagePlus newimp =  newimg.imageplus();
 				
-		wholeStack.addSlice(availableFeatures[LAPLACIAN] +"_" + +sigma, newimp.getProcessor());
+		wholeStack.addSlice(availableFeatures[LAPLACIAN] +"_" + sigma, newimp.getProcessor());
 		
 	}
+	
+	/**
+	 * Get structure tensor features (to be submitted in an ExecutorService).
+	 * It computes, for all pixels in the input image, the eigenvalues of the so-called structure tensor.
+	 *
+	 * @param originalImage input image
+	 * @param sigma smoothing scale	
+	 * @param integrationScale integration scale (standard deviation of the Gaussian 
+	 * 		kernel used for smoothing the elements of the structure tensor, must be larger than zero)
+	 * @return filter structure tensor filter image
+	 */
+	public Callable<ImagePlus> getStructure(
+			final ImagePlus originalImage,
+			final double sigma,
+			final double integrationScale)
+	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
+		return new Callable<ImagePlus>()
+		{
+			public ImagePlus call()
+			{
+				
+				final imagescience.image.Image img = imagescience.image.Image.wrap( originalImage ) ;
+				
+				final Aspects aspects = img.aspects();				
+
+				imagescience.image.Image newimg = new FloatImage( img );
+				
+				final Structure structure = new Structure();
+				final Vector<imagescience.image.Image> eigenimages = structure.run(new FloatImage(img), sigma, integrationScale);
+
+				final int nrimgs = eigenimages.size();
+				for (int i=0; i<nrimgs; ++i)
+					eigenimages.get(i).aspects(aspects);
+												
+				final ImageStack is = new ImageStack(width, height);
+				
+				is.addSlice(availableFeatures[STRUCTURE] +"_largest_" + sigma + "_" + integrationScale, eigenimages.get(0).imageplus().getProcessor() );
+				is.addSlice(availableFeatures[STRUCTURE] +"_smallest_" + sigma + "_" + integrationScale, eigenimages.get(1).imageplus().getProcessor() );
+							
+				return new ImagePlus ("Structure stack", is);
+			}
+		};
+	}
+	
+	/**
+	 * Add structure tensor features to current stack
+	 * It computes, for all pixels in the input image, the eigenvalues of the so-called structure tensor.
+	 * 
+	 * @param sigma smoothing scale	
+	 * @param integrationScale integration scale (standard deviation of the Gaussian 
+	 * 			kernel used for smoothing the elements of the structure tensor, must be larger than zero)
+	 * @return filter structure tensor filter image
+	 */
+	public void addStructure(
+			final double sigma,
+			final double integrationScale)
+	{
+		if (Thread.currentThread().isInterrupted()) 
+			return;
+			
+		
+		final imagescience.image.Image img = imagescience.image.Image.wrap( originalImage ) ;
+		
+		final Aspects aspects = img.aspects();				
+
+		imagescience.image.Image newimg = new FloatImage( img );
+		
+		final Structure structure = new Structure();
+		final Vector<imagescience.image.Image> eigenimages = structure.run(new FloatImage(img), sigma, integrationScale);
+
+		final int nrimgs = eigenimages.size();
+		for (int i=0; i<nrimgs; ++i)
+			eigenimages.get(i).aspects(aspects);												
+		
+		wholeStack.addSlice(availableFeatures[STRUCTURE] +"_largest_" + sigma + "_" + integrationScale, eigenimages.get(0).imageplus().getProcessor() );
+		wholeStack.addSlice(availableFeatures[STRUCTURE] +"_smallest_" + sigma + "_" + integrationScale, eigenimages.get(1).imageplus().getProcessor() );				
+	}	
 	
 	/**
 	 * Get Gabor features (to be submitted in an ExecutorService)
@@ -2127,6 +2212,13 @@ public class FeatureStack
 			{
 				addLaplacian(i);
 			}
+			
+			// Structure tensor
+			if(enableFeatures[ STRUCTURE ])
+			{					
+				for(int integrationScale = 1; integrationScale <= 3; integrationScale+=2)
+					addStructure(i, integrationScale );
+			}
 
 		}
 		// Membrane projections
@@ -2346,6 +2438,13 @@ public class FeatureStack
 				if(enableFeatures[LAPLACIAN])
 				{
 					futures.add(exe.submit( getLaplacian(originalImage, i)) );
+				}
+				
+				// Structure tensor
+				if(enableFeatures[ STRUCTURE ])
+				{					
+					for(int integrationScale = 1; integrationScale <= 3; integrationScale+=2)
+						futures.add(exe.submit( getStructure(originalImage, i, integrationScale )) );
 				}
 
 			}
