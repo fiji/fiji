@@ -31,7 +31,7 @@ public class SSHFileUploader extends FileUploader {
 
 		err = new IJLogOutputStream();
 
-        session = SSHSessionCreator.connect(username, sshHost, userInfo);
+		session = SSHSessionCreator.connect(username, sshHost, userInfo);
 	}
 
 	//Steps to accomplish entire upload task
