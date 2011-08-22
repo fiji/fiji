@@ -66,7 +66,10 @@ public class PluginUploader {
 	}
 
 	public String getDefaultUsername() {
-		int at = site.sshHost.indexOf('@');
+		String host = site.sshHost;
+		if (host.startsWith("sftp:"))
+			host = host.substring(5);
+		int at = host.indexOf('@');
 		if (at > 0)
 			return site.sshHost.substring(0, at);
 		return Prefs.get(Updater.PREFS_USER, "");
@@ -78,9 +81,11 @@ public class PluginUploader {
 
 	public synchronized boolean setLogin(String username, UserInfo userInfo) {
 		try {
-			uploader = new SFTPFileUploader(username,
-				site.sshHost.substring(site.sshHost.indexOf('@') + 1), site.uploadDirectory,
-				userInfo);
+			String host = site.sshHost.substring(site.sshHost.indexOf('@') + 1);
+			if (host.startsWith("sftp:"))
+				uploader = new SFTPFileUploader(username, host, site.uploadDirectory, userInfo);
+			else
+				uploader = new SSHFileUploader(username, host, site.uploadDirectory, userInfo);
 			return true;
 		} catch (JSchException e) {
 			IJ.error("Failed to login");
