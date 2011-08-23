@@ -10,6 +10,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.io.FileInfo;
 import ij.io.OpenDialog;
+import ij.process.ImageProcessor;
 
 import customnode.CustomMeshNode;
 import customnode.CustomMesh;
@@ -236,10 +237,12 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 		int d = orig.getStackSize();
 
 		for (int k = 0; k < d; k++) {
+			ImageProcessor ip = out.getImage().getStack().
+						getProcessor(k + 1);
 			for (int j = 0; j < h; j++) {
 				for(int i = 0; i < w; i++) {
 					fm.apply(i, j, k);
-					out.set(i, j, k, (byte)in.interpol.get(
+					ip.set(i, j, (int)in.interpol.get(
 							fm.x, fm.y, fm.z));
 				}
 				IJ.showProgress(k + 1, d);
