@@ -311,6 +311,12 @@ public class ImageJ3DViewer implements PlugIn {
 		}
 	}
 
+	public static void exportTransformed() {
+		Image3DUniverse univ = getUniv();
+		if(univ != null && univ.getSelected() != null)
+			univ.getSelected().exportTransformed().show();
+	}
+
 	public static void exportContent(String format, String path) {
 		Image3DUniverse univ = getUniv();
 		if(univ != null && univ.getSelected() != null) {
