@@ -1247,8 +1247,6 @@ public class FeatureStack
 				final imagescience.image.Image img = imagescience.image.Image.wrap( originalImage ) ;
 				
 				final Aspects aspects = img.aspects();				
-
-				imagescience.image.Image newimg = new FloatImage( img );
 				
 				final Structure structure = new Structure();
 				final Vector<imagescience.image.Image> eigenimages = structure.run(new FloatImage(img), sigma, integrationScale);
@@ -1287,8 +1285,6 @@ public class FeatureStack
 		final imagescience.image.Image img = imagescience.image.Image.wrap( originalImage ) ;
 		
 		final Aspects aspects = img.aspects();				
-
-		imagescience.image.Image newimg = new FloatImage( img );
 		
 		final Structure structure = new Structure();
 		final Vector<imagescience.image.Image> eigenimages = structure.run(new FloatImage(img), sigma, integrationScale);
