@@ -10,24 +10,26 @@ import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import Jama.Matrix;
 import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.tracking.LAPUtils;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 /**
  * <p>Gap closing cost function used with {@link LAPTracker}.
  * 
- * <p>The <b>cost function</b> is:
- * 
- * <p><code>d^2</code>, where d is the euclidean distance between two objects.
- * 
- * <p>The <b>thresholds</b> used are:
+ * <p>The <b>cost function</b> is determined by the default equation in the
+ * TrackMate plugin, see below.
+ * <p>  
+ *  It slightly differs from the Jaqaman article, see equation (4) in the paper.
+ * <p>
+ * The <b>thresholds</b> used are:
  * <ul>
- * <li>Must be within a certain time.</li>
+ * <li>Must be within a certain number of frames.</li>
  * <li>Must be within a certain distance.</li>
  * </ul>
  * 
- * See equation (4) in the paper.
- * 
+ * @see LAPUtils#computeLinkingCostFor(Spot, Spot, double, double, Map)
  * @author Nicholas Perry
+ * @author Jean-Yves Tinevez
  */
 public class GapClosingCostFunction {
 
@@ -36,9 +38,9 @@ public class GapClosingCostFunction {
 	/** The time cutoff, and distance cutoff, respectively */
 	protected double timeCutoff, maxDist;
 	/** The value to use to block an assignment in the cost matrix. */
-	protected double blocked;
+	protected double blockingValue;
 	/** Thresholds for the feature ratios. */
-	protected Map<SpotFeature, Double> featureCutoffs;
+	protected Map<SpotFeature, Double> featurePenalties;
 	/** A flag stating if we should use multi--threading for some calculations. */
 	protected boolean useMultithreading = fiji.plugin.trackmate.TrackMate_.DEFAULT_USE_MULTITHREADING;
 
@@ -46,8 +48,8 @@ public class GapClosingCostFunction {
 	public GapClosingCostFunction(TrackerSettings settings) {
 		this.timeCutoff 		= settings.gapClosingTimeCutoff;
 		this.maxDist 			= settings.gapClosingDistanceCutoff;
-		this.blocked 			= settings.blockingValue;
-		this.featureCutoffs		= settings.gapClosingFeatureCutoffs;
+		this.blockingValue		= settings.blockingValue;
+		this.featurePenalties	= settings.gapClosingFeaturePenalties;
 		this.allowed 			= settings.allowGapClosing;
 	}
 
@@ -57,7 +59,7 @@ public class GapClosingCostFunction {
 
 		// If we are not allow to make gap-closing, simply fill the matrix with blocking values.
 		if (!allowed) {
-			return new Matrix(n, n, blocked);
+			return new Matrix(n, n, blockingValue);
 		}
 
 		// Prepare threads
@@ -87,7 +89,7 @@ public class GapClosingCostFunction {
 
 							// If i and j are the same track segment, block it
 							if (i == j) {
-								m.set(i, j, blocked);
+								m.set(i, j, blockingValue);
 								continue;
 							}
 
@@ -97,36 +99,12 @@ public class GapClosingCostFunction {
 
 							// Frame cutoff
 							if (tstart - tend > timeCutoff || tend >= tstart) {
-								m.set(i, j, blocked);
+								m.set(i, j, blockingValue);
 								continue;
 							}
 
-							// Radius cutoff
-							double d2 = start.squareDistanceTo(end);
-							if (d2 > maxDist*maxDist) {
-								m.set(i, j, blocked);
-								continue;
-							}
-
-							// Initial cost
-							double s = d2;
-
-							// Update cost with feature costs
-							for (SpotFeature feature : featureCutoffs.keySet()) {
-
-								// Larger than 0, equals 0 is the 2 intensities are the same
-								Float iRatio = start.normalizeDiffTo(end, feature);
-								if (iRatio > featureCutoffs.get(feature)) {
-									s = blocked;
-									break;
-								}
-
-								// Set score
-								s *= (1 + iRatio);
-							}
-
-							// Set score
-							m.set(i, j, s);
+							double cost = LAPUtils.computeLinkingCostFor(end, start, maxDist, blockingValue, featurePenalties);
+							m.set(i, j, cost);
 						}
 					}
 				}

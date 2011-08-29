@@ -61,8 +61,8 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerSettingsPanel {
 		// Default ones
 		settings.allowMerging 		= false;
 		settings.allowSplitting 	= false;
-		settings.linkingFeatureCutoffs.clear();
-		settings.gapClosingFeatureCutoffs.clear();
+		settings.linkingFeaturePenalties.clear();
+		settings.gapClosingFeaturePenalties.clear();
 		// Panel ones
 		settings.linkingDistanceCutOff 		= Double.parseDouble(jTextFieldLinkingDistance.getText());
 		settings.gapClosingDistanceCutoff	= Double.parseDouble(jTextFieldGapClosingDistanceCutoff.getText());

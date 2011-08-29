@@ -248,25 +248,25 @@ public class TmXmlReader implements TmXmlKeys {
 			// Linking
 			Element linkingElement 			= trackerSettingsEl.getChild(TRACKER_SETTINGS_LINKING_ELEMENT);
 			trackerSettings.linkingDistanceCutOff = readDistanceCutoffAttribute(linkingElement);
-			trackerSettings.linkingFeatureCutoffs = readTrackerFeatureMap(linkingElement);
+			trackerSettings.linkingFeaturePenalties = readTrackerFeatureMap(linkingElement);
 			// Gap-closing
 			Element gapClosingElement		= trackerSettingsEl.getChild(TRACKER_SETTINGS_GAP_CLOSING_ELEMENT);
 			trackerSettings.allowGapClosing	= gapClosingElement.getAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME).getBooleanValue();
 			trackerSettings.gapClosingDistanceCutoff 	= readDistanceCutoffAttribute(gapClosingElement);
 			trackerSettings.gapClosingTimeCutoff 		= readTimeCutoffAttribute(gapClosingElement); 
-			trackerSettings.gapClosingFeatureCutoffs 	= readTrackerFeatureMap(gapClosingElement);
+			trackerSettings.gapClosingFeaturePenalties 	= readTrackerFeatureMap(gapClosingElement);
 			// Splitting
 			Element splittingElement		= trackerSettingsEl.getChild(TRACKER_SETTINGS_SPLITTING_ELEMENT);
 			trackerSettings.allowSplitting	= splittingElement.getAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME).getBooleanValue();
 			trackerSettings.splittingDistanceCutoff		= readDistanceCutoffAttribute(splittingElement);
 			trackerSettings.splittingTimeCutoff			= readTimeCutoffAttribute(splittingElement);
-			trackerSettings.splittingFeatureCutoffs		= readTrackerFeatureMap(splittingElement);
+			trackerSettings.splittingFeaturePenalties		= readTrackerFeatureMap(splittingElement);
 			// Merging
 			Element mergingElement 			= trackerSettingsEl.getChild(TRACKER_SETTINGS_MERGING_ELEMENT);
 			trackerSettings.allowMerging	= mergingElement.getAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME).getBooleanValue();
 			trackerSettings.mergingDistanceCutoff		= readDistanceCutoffAttribute(mergingElement);
 			trackerSettings.mergingTimeCutoff			= readTimeCutoffAttribute(mergingElement);
-			trackerSettings.mergingFeatureCutoffs		= readTrackerFeatureMap(mergingElement);
+			trackerSettings.mergingFeaturePenalties		= readTrackerFeatureMap(mergingElement);
 		}
 		return trackerSettings;
 	}

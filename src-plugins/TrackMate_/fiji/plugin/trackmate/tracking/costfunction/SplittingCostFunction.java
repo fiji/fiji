@@ -10,29 +10,26 @@ import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.tracking.LAPTracker;
+import fiji.plugin.trackmate.tracking.LAPUtils;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 /**
  * <p>Splitting cost function used with {@link LAPTracker}.
  * 
- * <p>The <b>cost function</b> is:
- * 
- * <p><code>d^2 * p</code>, p > 1
- * <p><code>d^2 * (1/(p^2))</code>, p < 1
- * 
- * <p>d = euclidean distance between two objects
- * <p>p = (intensity of middle point, frame t) / ((intensity of start point, frame t+1) + (intensity of middle point, frame t + 1))
- * 
- * <p>The <b>thresholds</b> used are:
+ * <p>The <b>cost function</b> is determined by the default equation in the
+ * TrackMate plugin, see below.
+ * <p>  
+ *  It slightly differs from the Jaqaman article, see equation (5) and (6) in the paper.
+ * <p>
+ * The <b>thresholds</b> used are:
  * <ul>
  * <li>Must be within a certain number of frames.</li>
  * <li>Must be within a certain distance.</li>
- * <li>p, the intensity ratio, must be within a certain range</li>
  * </ul>
  * 
- * See equations (5) and (6) in the paper.
- * 
+ * @see LAPUtils#computeLinkingCostFor(Spot, Spot, double, double, Map)
  * @author Nicholas Perry
+ * @author Jean-Yves Tinevez
  *
  */
 public class SplittingCostFunction {
@@ -44,9 +41,9 @@ public class SplittingCostFunction {
 	/** The distance threshold. */
 	protected double maxDist;
 	/** The value used to block an assignment in the cost matrix. */
-	protected double blocked;
+	protected double blockingValue;
 	/** Thresholds for the feature ratios. */
-	protected Map<SpotFeature, Double> featureCutoffs;
+	protected Map<SpotFeature, Double> featurePenalties;
 
 	private boolean allowSplitting;
 
@@ -63,8 +60,8 @@ public class SplittingCostFunction {
 		this.allowSplitting 	= settings.allowSplitting;
 		this.maxDist 			= settings.splittingDistanceCutoff;
 		this.timeCutoff 		= settings.splittingTimeCutoff;
-		this.blocked 			= settings.blockingValue;
-		this.featureCutoffs 	= settings.splittingFeatureCutoffs;
+		this.blockingValue 		= settings.blockingValue;
+		this.featurePenalties 	= settings.splittingFeaturePenalties;
 	}
 
 	/*
@@ -78,7 +75,7 @@ public class SplittingCostFunction {
 			System.out.println("-- DEBUG information from SplittingCostFunction --");
 
 		if (!allowSplitting)
-			return new Matrix(middlePoints.size(), trackSegments.size(), blocked);
+			return new Matrix(middlePoints.size(), trackSegments.size(), blockingValue);
 
 		// Prepare threads
 		final Thread[] threads;
@@ -113,7 +110,7 @@ public class SplittingCostFunction {
 							if (DEBUG)
 								System.out.println("Segment "+j);
 							if (track.contains(middle)) {	
-								m.set(i, j, blocked);
+								m.set(i, j, blockingValue);
 								continue;
 							}
 
@@ -121,35 +118,12 @@ public class SplittingCostFunction {
 							Float tstart = start.getFeature(SpotFeature.POSITION_T);
 							Float tmiddle = middle.getFeature(SpotFeature.POSITION_T);
 							if ( (tstart - tmiddle > timeCutoff) || (tstart - tmiddle <= 0) ) {
-								m.set(i, j, blocked);
+								m.set(i, j, blockingValue);
 								continue;
 							}
 
-							// Radius threshold
-							Float d2 = start.squareDistanceTo(middle);
-							if (d2 > maxDist*maxDist) {
-								m.set(i, j, blocked);
-								continue;
-							}
-
-							// Initial cost
-							double s = d2;
-
-							// Update cost with feature costs
-							for (SpotFeature feature : featureCutoffs.keySet()) {
-
-								// Larger than 0, equals 0 is the 2 intensities are the same
-								Float iRatio = start.normalizeDiffTo(middle, feature);
-								if (iRatio > featureCutoffs.get(feature)) {
-									s = blocked;
-									break;
-								}
-
-								// Set score
-								s *= (1 + iRatio);
-							}
-
-							m.set(i, j, s);
+							double cost = LAPUtils.computeLinkingCostFor(start, middle, maxDist, blockingValue, featurePenalties);
+							m.set(i, j, cost);
 						}
 					}
 				}

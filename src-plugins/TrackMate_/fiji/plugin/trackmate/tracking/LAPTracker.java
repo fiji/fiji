@@ -538,37 +538,58 @@ public class LAPTracker implements SpotTracker {
 
 					for (int i = ai.getAndIncrement(); i < framePairs.size(); i = ai.getAndIncrement()) {
 
+						// Get frame pairs
 						int frame0 = framePairs.get(i)[0];
 						int frame1 = framePairs.get(i)[1];
 
-						double[][] costMatrix = linkingCosts.get(frame0);
-						AssignmentProblem problem = new AssignmentProblem(costMatrix);
-						AssignmentAlgorithm solver = createAssignmentProblemSolver();
-						int[][] solutions = problem.solve(solver);
-
-						// Extend track segments using solutions: we update the graph edges
+						// Get spots
 						List<Spot> t0 = spots.get(frame0);
 						List<Spot> t1 = spots.get(frame1);
-						for (int j = 0; j < solutions.length; j++) {
-							if (solutions[j].length == 0)
-								continue;
-							int i0 = solutions[j][0];
-							int i1 = solutions[j][1];
 
-							if (i0 < t0.size() && i1 < t1.size() ) {
-								// Solution belong to the upper-left quadrant: we can connect the spots
-								Spot s0 = t0.get(i0);
-								Spot s1 = t1.get(i1);
-								// We set the edge weight to be the linking cost, for future reference. 
-								// This is NOT used in further tracking steps
-								double weight = costMatrix[i0][i1];
-								synchronized (graph) { // To avoid concurrent access, sad bu true
-									DefaultWeightedEdge edge = graph.addEdge(s0, s1);
-									graph.setEdgeWeight(edge, weight);
+						// Get cost
+						double[][] costMatrix = linkingCosts.get(frame0);
+
+						// Special case: top-left corner of the cost matrix is all blocked: we do nothing for this pair
+						// We handle this special case here, because some solvers might hang with this.
+						boolean allBlocked = true;
+						for (int j = 0; j < t0.size(); j++) {
+							for (int k = 0; k < t1.size(); k++) {
+								if (costMatrix[j][k] != settings.blockingValue) {
+									allBlocked = false;
+									break;
 								}
-							} // otherwise we do not create any connection
+								if (!allBlocked)
+									break;
+							}
 						}
 
+						if (!allBlocked) {
+							// Find solution
+							AssignmentProblem problem = new AssignmentProblem(costMatrix);
+							AssignmentAlgorithm solver = createAssignmentProblemSolver();
+							int[][] solutions = problem.solve(solver);
+
+							// Extend track segments using solutions: we update the graph edges
+							for (int j = 0; j < solutions.length; j++) {
+								if (solutions[j].length == 0)
+									continue;
+								int i0 = solutions[j][0];
+								int i1 = solutions[j][1];
+
+								if (i0 < t0.size() && i1 < t1.size() ) {
+									// Solution belong to the upper-left quadrant: we can connect the spots
+									Spot s0 = t0.get(i0);
+									Spot s1 = t1.get(i1);
+									// We set the edge weight to be the linking cost, for future reference. 
+									// This is NOT used in further tracking steps
+									double weight = costMatrix[i0][i1];
+									synchronized (graph) { // To avoid concurrent access, sad bu true
+										DefaultWeightedEdge edge = graph.addEdge(s0, s1);
+										graph.setEdgeWeight(edge, weight);
+									}
+								} // otherwise we do not create any connection
+							}
+						}
 						logger.setProgress(0.25f + 0.25f * progress.incrementAndGet() / (float) framePairs.size());
 
 					}

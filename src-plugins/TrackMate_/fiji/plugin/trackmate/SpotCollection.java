@@ -291,6 +291,18 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 				return nspots;
 	}
 
+
+	/**
+	 * Return the number of spots at the given frame.
+	 */
+	public int getNSpots(int key) {
+		List<Spot> spots = content.get(key);
+		if (null == spots)
+			return 0;
+		else
+			return spots.size();
+	}
+	
 	/**
 	 * Return a new list made of all the spot in this collection.
 	 * <p>
@@ -417,5 +429,6 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	public Set<java.util.Map.Entry<Integer, List<Spot>>> entrySet() {
 		return content.entrySet();
 	}
+
 
 }
