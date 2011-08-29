@@ -10,11 +10,14 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.io.FileInfo;
 import ij.io.OpenDialog;
+import ij.process.ImageProcessor;
 
 import customnode.CustomMeshNode;
 import customnode.CustomMesh;
 
+import vib.InterpolatedImage;
 import vib.PointList;
+import vib.FastMatrix;
 import isosurface.MeshGroup;
 import voltex.VoltexGroup;
 import orthoslice.OrthoGroup;
@@ -212,6 +215,43 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 
 		// update type
 		this.type = CUSTOM;
+	}
+
+	public ImagePlus exportTransformed() {
+		ImagePlus orig = getImage();
+		if(orig == null)
+			throw new RuntimeException("No greyscale image exists for "
+				+ getName());
+
+		Transform3D t1 = new Transform3D();
+		getLocalTranslate().getTransform(t1);
+		Transform3D t2 = new Transform3D();
+		getLocalRotate().getTransform(t2);
+		t1.mul(t2);
+		FastMatrix fc = FastMatrix.fromCalibration(orig);
+		FastMatrix fm = fc.inverse().times(Executer.toFastMatrix(t1).inverse()).
+			times(fc);
+		InterpolatedImage in = new InterpolatedImage(orig);
+		InterpolatedImage out = in.cloneDimensionsOnly();
+		int w = orig.getWidth(), h = orig.getHeight();
+		int d = orig.getStackSize();
+
+		for (int k = 0; k < d; k++) {
+			ImageProcessor ip = out.getImage().getStack().
+						getProcessor(k + 1);
+			for (int j = 0; j < h; j++) {
+				for(int i = 0; i < w; i++) {
+					fm.apply(i, j, k);
+					ip.set(i, j, (int)in.interpol.get(
+							fm.x, fm.y, fm.z));
+				}
+				IJ.showProgress(k + 1, d);
+			}
+		}
+		out.getImage().setTitle(orig.getTitle() + "_transformed");
+		out.getImage().getProcessor().setColorModel(
+			orig.getProcessor().getColorModel());
+		return out.getImage();
 	}
 
 	/* ************************************************************

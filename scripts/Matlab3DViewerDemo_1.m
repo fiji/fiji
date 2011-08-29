@@ -118,7 +118,7 @@ universe.show();
 % rendering.
 c = universe.addVoltex(imp);
 %%
-% Et voil‡!
+% Et voil√†!
 %%
 %
 % <<MRI-rendering.png>>

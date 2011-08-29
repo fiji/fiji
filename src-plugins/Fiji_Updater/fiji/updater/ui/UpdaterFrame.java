@@ -99,6 +99,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 
 	public UpdaterFrame(final PluginCollection plugins, boolean hidden) {
 		super("Fiji Updater");
+		setPreferredSize(new Dimension(780, 560));
 
 		this.plugins = plugins;
 		this.hidden = hidden;
@@ -647,8 +648,8 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 				+ " (" + sizeToString(bytesToDownload) + ")";
 		if (uninstall > 0)
 			text += " uninstall: " + uninstall;
-		if (plugins.hasUploadableSites())
-			text += ", upload: " + upload + " ("
+		if (plugins.hasUploadableSites() && upload > 0)
+			text += " upload: " + upload + " ("
 				+ sizeToString(bytesToUpload) + ")";
 		lblPluginSummary.setText(text);
 

@@ -210,7 +210,7 @@ public final class SurfacePlot extends Shape3D {
 		for(int z = 0; z < volume.zDim; z++) {
 			for(int y = 0; y < volume.yDim; y++) {
 				for(int x = 0; x < volume.xDim; x++) {
-					int v = volume.load(x, y, z);
+					int v = (0xff & volume.getAverage(x, y, z));
 					if(v > maxVal)
 						maxVal = v;
 				}
@@ -288,8 +288,8 @@ public final class SurfacePlot extends Shape3D {
 		for(int i = 0; i < nIndices; i++) {
 			float y = ph * (i / volume.xDim);
 			float x = pw * (i % volume.xDim);
-			float v = zFactor * volume.load(
-				i % volume.xDim, i / volume.xDim, g);
+			float v = zFactor * (0xff & volume.getAverage(
+				i % volume.xDim, i / volume.xDim, g));
 			coords[i] = new Point3f(x, y, v);
 			int c = volume.loadWithLUT(i % volume.xDim, i / volume.xDim, g);
 			colors[i] = new Color3f(((c >> 16) & 0xff) / 255f, ((c >> 8) & 0xff) / 255f, (c & 0xff) / 255f);

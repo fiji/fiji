@@ -29,6 +29,7 @@ public class ProgressDialog extends JDialog implements Progress {
 	Detail latestDetail;
 	String title;
 	boolean canceled;
+	protected long latestUpdate;
 
 	public ProgressDialog(Frame owner) {
 		this(owner, null);
@@ -124,6 +125,8 @@ public class ProgressDialog extends JDialog implements Progress {
 
 	public void setCount(int count, int total) {
 		checkIfCanceled();
+		if (updatesTooFast())
+			return;
 		progress.setMaximum(total);
 		progress.setValue(count);
 		repaint();
@@ -132,6 +135,8 @@ public class ProgressDialog extends JDialog implements Progress {
 	public void addItem(Object item) {
 		checkIfCanceled();
 		details.addDetail(item.toString());
+		if (updatesTooFast() && !detailsScrollPane.isVisible())
+			return;
 		setTitle();
 		validate();
 		repaint();
@@ -139,6 +144,8 @@ public class ProgressDialog extends JDialog implements Progress {
 
 	public void setItemCount(int count, int total) {
 		checkIfCanceled();
+		if (updatesTooFast())
+			return;
 		latestDetail.setMaximum(total);
 		latestDetail.setValue(count);
 		repaint();
@@ -193,6 +200,13 @@ public class ProgressDialog extends JDialog implements Progress {
 			setStringPainted(true);
 			setString(text);
 		}
+	}
+
+	protected boolean updatesTooFast() {
+		if (System.currentTimeMillis() - latestUpdate < 50)
+			return true;
+		latestUpdate = System.currentTimeMillis();
+		return false;
 	}
 
 	public static void main(String[] args) {

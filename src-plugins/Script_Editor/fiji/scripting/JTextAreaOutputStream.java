@@ -80,6 +80,7 @@ public class JTextAreaOutputStream extends OutputStream {
 
 	public void close() {
 		flush();
+		updater.shutdown();
 	}
 
 	/** Stop printing services, finishing to print any remaining tasks in the context of the calling thread. */

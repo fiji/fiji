@@ -110,6 +110,9 @@
 % data set in MATLAB and render it in 3D (volumetric rendering);
 % * <Matlab3DViewerDemo_2.html Matlab3DViewerDemo_2> shows how to create
 % simple object volumes in MATLAB and make a surface rendering of them.
+% * <Matlab3DViewerDemo_3.html Matlab3DViewerDemo_3> demonstrates the
+% surface plot mode. A 2D image is used to generate a 3D surface, where
+% pixel intensity is interpreted as elevation.
 %
 % *MIJ* is the low level Java class that contains static methods to
 % exchange data between MATLAB and ImageJ. You can find its documentation
@@ -127,7 +130,7 @@
 % * The ImageJ 3D viewer is written by Benjamin Schmid, Mark Longair,
 % Albert Cardona and Johannes Schindelin;
 % * MIJ is written by Daniel Sage and Dimiter Prodanov;
-% * Miji is written by Johannes Schindelin, Jacques Pécréaux and Jean-Yves
+% * Miji is written by Johannes Schindelin, Jacques PÃ©crÃ©aux and Jean-Yves
 % Tinevez.
 %
 % It's all open source, feel free to modify, distribute, comment or
@@ -138,6 +141,9 @@
 % * 26 Jul 2011: Initial release
 % * 4 Aug 2011: Fix a bug in write permission detection on Windows
 % platform, thanks to report by Peter Beemiller
+% * 11 Aug 2011: Added a 3rd demo, demonstrating the surface plot of 2D
+% image, thanks to the fix on the 3D viewer applied today by Johannes
+% Schindelin.
 % 
 %
 %%

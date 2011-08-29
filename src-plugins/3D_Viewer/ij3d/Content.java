@@ -222,6 +222,10 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 			c.display(node);
 	}
 
+	public ImagePlus exportTransformed() {
+		return getCurrent().exportTransformed();
+	}
+
 	/* ************************************************************
 	 * setters - visibility flags
 	 *

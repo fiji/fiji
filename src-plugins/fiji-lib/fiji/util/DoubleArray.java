@@ -1,6 +1,6 @@
 package fiji.util;
 
-public class DoubleArray extends ArrayBase<double[]>
+public class DoubleArray extends ArrayBase<double[], Double>
 {
 	protected double[] baseArray;
 
@@ -28,6 +28,11 @@ public class DoubleArray extends ArrayBase<double[]>
 		baseArray = array;
 	}
 
+	@Override
+	protected Double valueOf(int index) {
+		return Double.valueOf(baseArray[index]);
+	}
+
 	// Append a value to the collection.
 	public int add(double value) {
 		int index = getAddIndex();
@@ -36,11 +41,12 @@ public class DoubleArray extends ArrayBase<double[]>
 	}
 
 	// Insert a value into the collection.
-	public void insert(int index, double value) {
+	public int insert(int index, double value) {
 		if (index < 0 || index > actualSize)
 			throw new ArrayIndexOutOfBoundsException("Invalid index value");
 		makeInsertSpace(index);
 		baseArray[index] = value;
+		return index;
 	}
 
 	// Get value from the collection.

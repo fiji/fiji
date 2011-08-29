@@ -458,7 +458,7 @@ static const char *default_main_class = "fiji.Main";
 
 static int is_default_main_class(const char *name)
 {
-	return !strcmp(name, default_main_class) || !strcmp(name, "ij.ImageJ");
+	return name && (!strcmp(name, default_main_class) || !strcmp(name, "ij.ImageJ"));
 }
 
 /* Dynamic library loading stuff */
@@ -1064,7 +1064,7 @@ static void show_splash(void)
 	int (*SplashLoadFile)(const char *path);
 	int (*SplashSetFileJarName)(const char *file_path, const char *jar_path);
 
-	if (no_splash || !lib_path)
+	if (no_splash || !lib_path || SplashClose)
 		return;
 	splashscreen = dlopen(lib_path->buffer, RTLD_LAZY);
 	if (!splashscreen) {
@@ -1075,8 +1075,11 @@ static void show_splash(void)
 	SplashLoadFile = dlsym(splashscreen, "SplashLoadFile");
 	SplashSetFileJarName = dlsym(splashscreen, "SplashSetFileJarName");
 	SplashClose = dlsym(splashscreen, "SplashClose");
-	if (!SplashInit || !SplashLoadFile || !SplashSetFileJarName || !SplashClose)
+	if (!SplashInit || !SplashLoadFile || !SplashSetFileJarName || !SplashClose) {
+		string_release(lib_path);
+		SplashClose = NULL;
 		return;
+	}
 
 	SplashInit();
 	SplashLoadFile(image_path);
@@ -1190,16 +1193,11 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 	const char *java_home = get_jre_home();
 
 #ifdef WIN32
-	/* Windows automatically adds the path of the executable to PATH */
-	struct string *path = string_initf("%s;%s/bin",
-		getenv("PATH"), java_home);
-	setenv_or_exit("PATH", path->buffer, 1);
-	string_release(path);
-
 	// on Windows, a setenv() invalidates strings obtained by getenv()
 	if (original_java_home_env)
 		original_java_home_env = xstrdup(original_java_home_env);
 #endif
+
 	setenv_or_exit("JAVA_HOME", java_home, 1);
 
 	string_addf(buffer, "%s/%s", java_home, library_path);
@@ -2101,8 +2099,11 @@ static void jvm_workarounds(struct options *options)
 {
 	unsigned int java_version = guess_java_version();
 
-	if (java_version == 0x01070000 || java_version == 0x01070001)
+	if (java_version == 0x01070000 || java_version == 0x01070001) {
 		add_option(options, "-XX:-UseLoopPredicate", 0);
+		if (main_class && !strcmp(main_class, "sun.tools.javap.Main"))
+			main_class = "com.sun.tools.javap.Main";
+	}
 }
 
 /* the maximal size of the heap on 32-bit systems, in megabyte */
@@ -2192,14 +2193,15 @@ static int is_building(const char *target)
 	return 0;
 }
 
+const char *properties[32];
+
 static int retrotranslator;
 
-static int start_ij(void)
+static struct options options;
+static size_t memory_size = 0;
+
+static void parse_command_line(void)
 {
-	JavaVM *vm;
-	struct options options;
-	JavaVMInitArgs args;
-	JNIEnv *env;
 	struct string *buffer = string_init(32);
 	struct string *buffer2 = string_init(32);
 	struct string *class_path = string_init(32);
@@ -2213,7 +2215,6 @@ static int start_ij(void)
 	int dashdash = 0;
 	int allow_multiple = 0, skip_build_classpath = 0;
 	int jdb = 0, add_class_path_option = 0, advanced_gc = 1, debug_gc = 0;
-	size_t memory_size = 0;
 	int count = 1, i;
 
 #ifdef WIN32
@@ -2503,6 +2504,13 @@ static int start_ij(void)
 
 	main_argc = count;
 
+#ifdef WIN32
+	/* Windows automatically adds the path of the executable to PATH */
+	struct string *path = string_initf("%s;%s/bin",
+		getenv("PATH"), get_jre_home());
+	setenv_or_exit("PATH", path->buffer, 1);
+	string_release(path);
+#endif
 	if (!headless &&
 #ifdef MACOSX
 			!CGSessionCopyCurrentDictionary()
@@ -2598,13 +2606,10 @@ static int start_ij(void)
 	maybe_reexec_with_correct_lib_path();
 
 	if (retrotranslator && build_classpath(class_path, fiji_path("retro"), 0))
-		return 1;
+		die("Retrotranslator is required but cannot be found!");
 
-	if (!headless && is_default_main_class(main_class))
+	if (!options.debug && !options.use_system_jvm && !headless && is_default_main_class(main_class))
 		show_splash();
-
-	/* Handle update/ */
-	update_all_files();
 
 	/* set up class path */
 	if (skip_build_classpath) {
@@ -2623,7 +2628,7 @@ static int start_ij(void)
 		}
 		else {
 			if (build_classpath(class_path, fiji_path("plugins"), 0))
-				return 1;
+				die("Could not build classpath!");
 			build_classpath(class_path, fiji_path("jars"), 0);
 		}
 	}
@@ -2684,16 +2689,20 @@ static int start_ij(void)
 	for (i = 1; i < main_argc; i++)
 		add_option(&options, main_argv[i], 1);
 
-	const char *properties[] = {
-		"fiji.dir", fiji_dir,
-		"fiji.defaultLibPath", JAVA_LIB_PATH,
-		"fiji.executable", main_argv0,
-		"java.library.path", java_library_path->buffer,
+	i = 0;
+	properties[i++] = "fiji.dir";
+	properties[i++] =  fiji_dir,
+	properties[i++] = "fiji.defaultLibPath";
+	properties[i++] = JAVA_LIB_PATH;
+	properties[i++] = "fiji.executable";
+	properties[i++] = main_argv0;
+	properties[i++] = "java.library.path";
+	properties[i++] = java_library_path->buffer;
 #ifdef WIN32
-		"sun.java2d.noddraw", "true",
+	properties[i++] = "sun.java2d.noddraw";
+	properties[i++] = "true";
 #endif
-		NULL
-	};
+	properties[i++] = NULL;
 
 	keep_only_one_memory_option(&options.java_options);
 
@@ -2706,6 +2715,19 @@ static int start_ij(void)
 		show_commandline(&options);
 		exit(0);
 	}
+
+}
+
+static int start_ij(void)
+{
+	JavaVM *vm;
+	JavaVMInitArgs args;
+	JNIEnv *env;
+	struct string *buffer = string_init(32);
+	int i;
+
+	/* Handle update/ */
+	update_all_files();
 
 	memset(&args, 0, sizeof(args));
 	/* JNI_VERSION_1_4 is used on Mac OS X to indicate 1.4.x and later */
@@ -3456,6 +3478,8 @@ int main(int argc, char **argv, char **e)
 	main_argv_backup = (char **)xmalloc(size);
 	memcpy(main_argv_backup, main_argv, size);
 	main_argc_backup = argc;
+
+	parse_command_line();
 
 	return start_ij();
 }

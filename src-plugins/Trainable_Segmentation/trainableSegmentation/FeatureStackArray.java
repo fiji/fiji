@@ -22,8 +22,7 @@ package trainableSegmentation;
  */
 
 import ij.IJ;
-import ij.ImagePlus;
-
+	
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
