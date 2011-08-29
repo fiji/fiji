@@ -122,7 +122,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				System.out.println("[SpotEditTool] Adding MouseListener to "+canvas.getImage());
 		}
 		if (canvas.getMouseWheelListeners() != null &&!arrayContains(canvas.getMouseWheelListeners(), this)) {
-			canvas.addMouseWheelListener(this);
+			canvas.getImage().getWindow().addMouseWheelListener(this);
 			if (DEBUG)
 				System.out.println("[SpotEditTool] Adding MouseWheelListener to "+canvas.getImage());
 		}
