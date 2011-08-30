@@ -21,7 +21,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: libjava3d-java, libbatik-java, libxml-commons-external-java, libjcommon-java, fiji-vib (>= 20110816141539), fiji-imagej (>= 20110817113630), fiji-3d-viewer (>= 20110811181234), fiji-plugins (>= 20110427224836), libjfreechart-java, junit, libvecmath-java
+Depends: libjava3d-java, libbatik-java, libxml-commons-external-java, libjfreechart-java, fiji-vib (>= 20110816141539), fiji-imagej (>= 20110817113630), fiji-3d-viewer (>= 20110811181234), fiji-plugins (>= 20110427224836), libjcommon-java, junit, libvecmath-java
 Description: Semi-automatic tracing, analysis and visualization of neurons, f [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -571,7 +571,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: clojure, fiji-imglib (>= 20110604132637), fiji-rsyntaxtextarea (>= 20110223005940), libjcommon-java, fiji-vib (>= 20110816141539), libvecmath-java, fiji-base (>= 20110816184101), fiji-autocomplete (>= 20090524213156), libjava3d-java, bsh, fiji-imagej (>= 20110817113630), fiji-jython (>= 20100925003646), fiji-3d-viewer (>= 20110811181234), fiji-plugins (>= 20110816124044), libjfreechart-java, rhino, fiji-jruby (>= 20100925003646)
+Depends: clojure, fiji-imglib (>= 20110604132637), fiji-rsyntaxtextarea (>= 20110223005940), libjfreechart-java, fiji-vib (>= 20110816141539), libvecmath-java, fiji-base (>= 20110816184101), fiji-autocomplete (>= 20090524213156), libjava3d-java, bsh, fiji-imagej (>= 20110817113630), fiji-jython (>= 20100925003646), fiji-3d-viewer (>= 20110811181234), fiji-plugins (>= 20110816124044), libjcommon-java, rhino, fiji-jruby (>= 20100925003646)
 Description: components from Fiji, including: Script Editor, Javascript, JRub [...]
  The descriptions below are extracted from the Fiji Updater database:
  .
