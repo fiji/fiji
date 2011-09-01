@@ -91,6 +91,7 @@ public class TrackMateFrameController implements ActionListener {
 				public void run() { updateGUI(); }
 			});
 			performPostGUITask();
+			setMainButtonsFor(state);
 
 		} else if (event == view.PREVIOUS_BUTTON_PRESSED && actionFlag) {
 
@@ -382,6 +383,18 @@ public class TrackMateFrameController implements ActionListener {
 					view.jButtonNext.setEnabled(true);
 					view.jButtonPrevious.setEnabled(false);
 					view.jButtonNext.setText("Resume");
+					break;
+				case ACTIONS:
+					view.jButtonLoad.setEnabled(true);
+					view.jButtonSave.setEnabled(true);
+					view.jButtonNext.setEnabled(false);
+					view.jButtonPrevious.setEnabled(true);
+					break;
+				case START:
+					view.jButtonLoad.setEnabled(true);
+					view.jButtonSave.setEnabled(true);
+					view.jButtonNext.setEnabled(true);
+					view.jButtonPrevious.setEnabled(false);
 					break;
 
 				}
