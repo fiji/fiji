@@ -5,15 +5,15 @@ import ij.ImagePlus;
 import ij.gui.NewImage;
 import ij.gui.StackWindow;
 
-import java.awt.event.MouseEvent;
+import java.awt.Point;
 import java.util.Collection;
 import java.util.List;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
@@ -49,9 +49,9 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	 * DEFAULT METHODS
 	 */
 
-	final Spot getCLickLocation(final MouseEvent e) {
-		final double ix = canvas.offScreenXD(e.getX());
-		final double iy =  canvas.offScreenYD(e.getY());
+	final Spot getCLickLocation(final Point point) {
+		final double ix = canvas.offScreenXD(point.x);
+		final double iy =  canvas.offScreenYD(point.y);
 		final float x = (float) (ix * calibration[0]);
 		final float y = (float) (iy * calibration[1]);
 		final float z = (imp.getSlice()-1) * calibration[2];
