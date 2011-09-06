@@ -1193,10 +1193,12 @@ public class Weka_Segmentation implements PlugIn
 
 		//trainingImage.setProcessor("Advanced Weka Segmentation", trainingImage.getProcessor().duplicate().convertToByte(true));
 		//wekaSegmentation.loadNewImage(trainingImage);
+		/*
 		if(trainingImage.getImageStackSize() > 1)
 			(new StackConverter(trainingImage)).convertToGray8();
 		else
 			(new ImageConverter(trainingImage)).convertToGray8();
+		*/
 		wekaSegmentation.setTrainingImage(trainingImage);
 		
 		// The display image is a copy of the training image (single image or stack)
