@@ -197,7 +197,7 @@ public class FeatureStack
 		if( originalImage.getType() == ImagePlus.COLOR_RGB)
 			wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
 		else
-			wholeStack.addSlice("original", originalImage.getProcessor().convertToFloat());
+			wholeStack.addSlice("original", originalImage.getProcessor().duplicate().convertToFloat());
 	}
 	
 	/**
@@ -213,7 +213,7 @@ public class FeatureStack
 		if( originalImage.getType() == ImagePlus.COLOR_RGB)
 			wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
 		else
-			wholeStack.addSlice("original", originalImage.getProcessor().convertToFloat());
+			wholeStack.addSlice("original", originalImage.getProcessor().duplicate().convertToFloat());
 	}
 
 	/**
@@ -1197,7 +1197,7 @@ public class FeatureStack
 		else
 		{
 			channels = new ImagePlus[1];
-			channels[0] = new ImagePlus(originalImage.getTitle(), originalImage.getProcessor().convertToFloat() );
+			channels[0] = new ImagePlus(originalImage.getTitle(), originalImage.getProcessor().duplicate().convertToFloat() );
 		}
 		return channels;
 	}
@@ -2216,7 +2216,10 @@ public class FeatureStack
 	public void updateFeatures()
 	{
 		wholeStack = new ImageStack(width, height);
-		wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
+		if( originalImage.getType() == ImagePlus.COLOR_RGB)
+			wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
+		else
+			wholeStack.addSlice("original", originalImage.getProcessor().duplicate().convertToFloat());
 
 		int counter = 1;
 		for (float i=1.0f; i<= maximumSigma; i*=2)
@@ -2364,7 +2367,10 @@ public class FeatureStack
 	public boolean updateFeaturesST()
 	{
 		wholeStack = new ImageStack(width, height);
-		wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
+		if( originalImage.getType() == ImagePlus.COLOR_RGB)
+			wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
+		else
+			wholeStack.addSlice("original", originalImage.getProcessor().duplicate().convertToFloat());
 		
 		// Anisotropic Diffusion
 		if(enableFeatures[ANISOTROPIC_DIFFUSION])
@@ -2575,8 +2581,11 @@ public class FeatureStack
 		
 		exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 		wholeStack = new ImageStack(width, height);
-		wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
-		
+		if( originalImage.getType() == ImagePlus.COLOR_RGB)
+			wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
+		else
+			wholeStack.addSlice("original", originalImage.getProcessor().duplicate().convertToFloat());
+			
 		// Count the number of enabled features
 		int finalIndex = 0;
 		for(int i=0; i<enableFeatures.length; i++)
