@@ -1466,6 +1466,67 @@ public class WekaSegmentation {
 	}
 	
 	/**
+	 * Add binary training data from input and label images in a
+	 * random and balanced way (same number of samples per class).
+	 * The features will be created out of a list of filters.
+	 * Input and label images can be 2D or stacks and their
+	 * sizes must match.
+	 *
+	 * @param inputImage input grayscale image
+	 * @param labelImage binary label image
+	 * @param filters stack of filters to create features
+	 * @param whiteClassName class name for the white pixels
+	 * @param blackClassName class name for the black pixels
+	 * @param numSamples number of samples to pick for each class
+	 * @return false if error
+	 */
+	public boolean addRandomBalancedBinaryData(
+			ImagePlus inputImage,
+			ImagePlus labelImage,
+			ImagePlus filters,
+			String whiteClassName,
+			String blackClassName,
+			int numSamples)
+	{
+
+		// Check sizes
+		if(labelImage.getWidth() != inputImage.getWidth()
+				|| labelImage.getHeight() != inputImage.getHeight()
+				|| labelImage.getImageStackSize() != inputImage.getImageStackSize())
+		{
+			IJ.log("Error: label and training image sizes do not fit.");
+			return false;
+		}
+
+		final ImageStack inputSlices = inputImage.getImageStack();
+		final ImageStack labelSlices = labelImage.getImageStack();
+
+		for(int i=1; i <= inputSlices.getSize(); i++)
+		{
+
+			// Process label pixels
+			final ImagePlus labelIP = new ImagePlus ("labels", labelSlices.getProcessor(i).duplicate());
+			// Make sure it's binary
+			final byte[] pix = (byte[])labelIP.getProcessor().getPixels();
+			for(int j =0; j < pix.length; j++)
+				if(pix[j] > 0)
+					pix[j] = (byte)255;
+
+			final FeatureStack featureStack = new FeatureStack(new ImagePlus("slice " + i, inputSlices.getProcessor(i)));			
+			featureStack.addFeaturesMT( filters );
+
+
+			if( false == addRandomBalancedBinaryData(labelIP, featureStack, whiteClassName, blackClassName, numSamples) )
+			{
+				IJ.log("Error while loading binary label data from slice " + i);
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	
+	/**
 	 * Add binary training data from input and label images.
 	 * The features will be created out of a list of filters.
 	 * Input and label images can be 2D or stacks and their
@@ -1873,6 +1934,72 @@ public class WekaSegmentation {
 
 		// Apply current classifier
 		ImagePlus resultLabels = applyClassifier(image, 0, false);
+		
+		//resultLabels.show();
+		
+		int[][] confusionMatrix = new int[2][2];
+		
+		// Compare labels
+		final int height = image.getHeight();
+		final int width = image.getWidth();
+		final int depth = image.getStackSize();
+		
+
+		for(int z=1; z <= depth; z++)
+			for(int y=0; y<height; y++)
+				for(int x=0; x<width; x++)
+				{
+					if( expectedLabels.getImageStack().getProcessor(z).get(x, y) == 255 )
+					{
+						if( resultLabels.getImageStack().getProcessor(z).get(x, y) == 255 )
+							confusionMatrix[whiteClassIndex][whiteClassIndex] ++; 							                                 
+						else
+							confusionMatrix[whiteClassIndex][blackClassIndex] ++; 
+					}
+					else
+					{
+						if( resultLabels.getImageStack().getProcessor(z).get(x, y) == 0 )
+							confusionMatrix[blackClassIndex][blackClassIndex] ++; 							                                 
+						else
+							confusionMatrix[blackClassIndex][whiteClassIndex] ++;
+					}
+				}
+		
+		return confusionMatrix;
+	}
+	
+	/**
+	 * Get the confusion matrix for an input image and its expected labels
+	 *
+	 * @param image input image
+	 * @param filters stack of filters to apply to the original image in order to create the features
+	 * @param expectedLabels binary labels
+	 * @param whiteClassIndex index of the white class
+	 * @param blackClassIndex index of the black class
+	 * @return confusion matrix
+	 */
+	public int[][] getTestConfusionMatrix(
+			ImagePlus image,
+			ImagePlus filters,
+			ImagePlus expectedLabels,
+			int whiteClassIndex,
+			int blackClassIndex)
+	{
+	
+		// Set proper class names (skip empty list ones)
+		ArrayList<String> classNames = new ArrayList<String>();
+		if( null == loadedClassNames )
+		{
+			for(int i = 0; i < numOfClasses; i++)
+				if(examples[0].get(i).size() > 0)
+					classNames.add(classLabels[i]);
+		}
+		else
+			classNames = loadedClassNames;
+
+
+		// Apply current classifier
+		ImagePlus resultLabels = applyClassifier(image, filters, 0, false);
 		
 		//resultLabels.show();
 		
@@ -3649,6 +3776,24 @@ public class WekaSegmentation {
 		return result;
 	}
 
+
+	/**
+	 * Apply current classifier to a given image with precomputed features.
+	 *
+	 * @param imp image (2D single image or stack)
+	 * @param filters stack of filters to apply to the original image in order to create the features
+	 * @param numThreads The number of threads to use. Set to zero for auto-detection. 					
+	 * @param probabilityMaps create probability maps for each class instead of a classification
+	 * @return result image
+	 */
+	public ImagePlus applyClassifier(
+			final ImagePlus imp,
+			final ImagePlus filters,
+			int numThreads, 
+			final boolean probabilityMaps)
+	{
+		return applyClassifier(imp, new FeatureStackArray(imp, filters), numThreads, probabilityMaps);
+	}
 	
 	/**
 	 * Apply current classifier to a given image with precomputed features.
