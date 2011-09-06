@@ -1009,7 +1009,7 @@ public class FeatureStack
 			{
 				zp.setMethod(i);
 				zp.doProjection();
-				membraneStack[ ch ].addSlice(availableFeatures[MEMBRANE] + i +"_"+patchSize+"_"+membraneSize, zp.getProjection().getProcessor().duplicate());
+				membraneStack[ ch ].addSlice(availableFeatures[MEMBRANE] + "_" + i +"_"+patchSize+"_"+membraneSize, zp.getProjection().getProcessor().duplicate());
 			}
 		}
 		
@@ -1131,7 +1131,7 @@ public class FeatureStack
 					{
 						zp.setMethod(i);
 						zp.doProjection();
-						membraneStack[ ch ].addSlice(availableFeatures[MEMBRANE] + i +"_"+patchSize+"_"+membraneSize, zp.getProjection().getProcessor().duplicate());
+						membraneStack[ ch ].addSlice(availableFeatures[MEMBRANE] + "_" + i +"_"+patchSize+"_"+membraneSize, zp.getProjection().getProcessor().duplicate());
 					}
 				}
 				
