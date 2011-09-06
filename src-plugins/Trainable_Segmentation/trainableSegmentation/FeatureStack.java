@@ -936,43 +936,98 @@ public class FeatureStack
 		int startX = middle - (int) Math.floor(membraneSize/2.0);
 		int endX = middle + (int) Math.ceil(membraneSize/2.0);
 		
-		for (int x=startX; x<=endX; x++){
-			for (int y=0; y<patchSize; y++){
+		for (int x=startX; x<=endX; x++)
+			for (int y=0; y<patchSize; y++)
 				membranePatch.setf(x, y, 1f);
-			}
-		}
-
+					
 		
-		ImageStack is = new ImageStack(width, height);
+		// Get channel(s) to process
+		ImageProcessor[] channels = null;				
+		if( originalImage.getType() == ImagePlus.COLOR_RGB )
+		{
+			final ByteProcessor redBp = new ByteProcessor(width, height);
+			final ByteProcessor greenBp = new ByteProcessor(width, height);
+			final ByteProcessor blueBp = new ByteProcessor(width, height);
+
+			final byte[] redPixels = (byte[]) redBp.getPixels();
+			final byte[] greenPixels = (byte[]) greenBp.getPixels();
+			final byte[] bluePixels = (byte[]) blueBp.getPixels();
+
+			((ColorProcessor)(originalImage.getProcessor().duplicate())).getRGB(redPixels, greenPixels, bluePixels);
+
+			channels = new ImageProcessor[]{redBp.convertToFloat(), greenBp.convertToFloat(), blueBp.convertToFloat()};
+		}
+		else
+		{
+			channels = new ImageProcessor[1];
+			channels[0] = originalImage.getProcessor().duplicate().convertToFloat();
+		}
+	
+		// image stack to store the filtered version of each angle and channel
+		ImageStack[] is = new ImageStack[ channels.length ];		
+		for(int ch = 0; ch < channels.length; ch++)				
+			is[ ch ] = new ImageStack(width, height);
+		
+		
 		ImageProcessor rotatedPatch;
 		
-		// Rotate kernel 15 degrees up to 180
-		for (int i=0; i<12; i++)
-		{
+		final double rotationAngle = 180/nAngles;
+		// Rotate kernel "rotationAngle" degrees up to 180
+		for (int i=0; i<nAngles; i++)
+		{					
 			rotatedPatch = membranePatch.duplicate();
-			//rotatedPatch.invert();
-			rotatedPatch.rotate(15*i);
-			//rotatedPatch.invert();
+			rotatedPatch.rotate(i*rotationAngle);
+			
 			Convolver c = new Convolver();				
 	
 			float[] kernel = (float[]) rotatedPatch.getPixels();
-			ImageProcessor ip = originalImage.getProcessor().duplicate();		
-			c.convolveFloat(ip, kernel, patchSize, patchSize);		
+			
+			for(int ch = 0; ch < channels.length; ch++)
+			{
+				ImageProcessor ip = channels[ ch ].duplicate();		
+				c.convolveFloat(ip, kernel, patchSize, patchSize);		
 
-			is.addSlice("Membrane_"+patchSize+"_"+membraneSize, ip);
-		//	wholeStack.addSlice("Membrane_"+patchSize+"_"+membraneSize, ip.convertToByte(true));
+				is[ ch ].addSlice("Membrane_"+patchSize+"_"+membraneSize, ip);
+			}										
 		}
 		
-		ImagePlus projectStack = new ImagePlus("membraneStack",is);
-		//projectStack.show();
+		ImagePlus[] projectStack = new ImagePlus[ channels.length ];
+
+		// array of image stacks to store the projections of each channel
+		ImageStack[] membraneStack = new ImageStack[ channels.length ];
 		
-		ZProjector zp = new ZProjector(projectStack);
-		zp.setStopSlice(is.getSize());
-		for (int i=0;i<6; i++){
-			zp.setMethod(i);
-			zp.doProjection();
-			wholeStack.addSlice(availableFeatures[MEMBRANE] + "_" +i+"_"+patchSize+"_"+membraneSize, zp.getProjection().getChannelProcessor());
+		
+		for(int ch = 0; ch < channels.length; ch++)
+		{
+			projectStack[ch] = new ImagePlus("membraneStack", is[ch]);
+
+			membraneStack[ ch ] = new ImageStack(width, height);
+					
+			ZProjector zp = new ZProjector( projectStack[ch] );
+			zp.setStopSlice( is[ ch ].getSize() );
+			for (int i=0;i<6; i++)
+			{
+				zp.setMethod(i);
+				zp.doProjection();
+				membraneStack[ ch ].addSlice(availableFeatures[MEMBRANE] + i +"_"+patchSize+"_"+membraneSize, zp.getProjection().getProcessor().duplicate());
+			}
 		}
+		
+		// Merge channel results if necessary
+		if( originalImage.getType() == ImagePlus.COLOR_RGB)
+		{
+			final RGBStackMerge aux = new RGBStackMerge();
+			ImageStack mergedColorStack = aux.mergeStacks( width, height, 6, membraneStack[0], membraneStack[1], membraneStack[2], true);
+			
+			for (int i=0;i<6; i++)
+				wholeStack.addSlice(mergedColorStack.getSliceLabel(i+1), mergedColorStack.getProcessor(i+1));
+			
+		}
+		else 
+			for (int i=0;i<6; i++)
+				wholeStack.addSlice(membraneStack[0].getSliceLabel(i+1), membraneStack[0].getProcessor(i+1));
+		
+
 	}
 	
 	/**
@@ -1039,7 +1094,7 @@ public class FeatureStack
 				ImageProcessor rotatedPatch;
 				
 				final double rotationAngle = 180/nAngles;
-				// Rotate kernel 15 degrees up to 180
+				// Rotate kernel "rotationAngle" degrees up to 180
 				for (int i=0; i<nAngles; i++)
 				{					
 					rotatedPatch = membranePatch.duplicate();
@@ -1084,9 +1139,9 @@ public class FeatureStack
 				if( originalImage.getType() == ImagePlus.COLOR_RGB)
 				{
 					final RGBStackMerge aux = new RGBStackMerge();
-					ImageStack is1 = aux.mergeStacks( width, height, 6, membraneStack[0], membraneStack[1], membraneStack[2], true);
+					ImageStack mergedColorStack = aux.mergeStacks( width, height, 6, membraneStack[0], membraneStack[1], membraneStack[2], true);
 					
-					return new ImagePlus("membrane stack", is1);
+					return new ImagePlus("membrane stack", mergedColorStack);
 					
 				}
 				else 
