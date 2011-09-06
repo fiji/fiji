@@ -190,11 +190,14 @@ public class FeatureStack
 	 */
 	public FeatureStack(ImagePlus image)
 	{
-		originalImage = new ImagePlus("original image", image.getProcessor().convertToFloat());
+		originalImage = new ImagePlus("original image", image.getProcessor() );
 		width = image.getWidth();
 		height = image.getHeight();
 		wholeStack = new ImageStack(width, height);
-		wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
+		if( originalImage.getType() == ImagePlus.COLOR_RGB)
+			wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
+		else
+			wholeStack.addSlice("original", originalImage.getProcessor().convertToFloat());
 	}
 	
 	/**
@@ -203,11 +206,14 @@ public class FeatureStack
 	 */
 	public FeatureStack(ImageProcessor ip)
 	{
-		originalImage = new ImagePlus("original image", ip.convertToFloat());
+		originalImage = new ImagePlus("original image", ip);
 		width = ip.getWidth();
 		height = ip.getHeight();
 		wholeStack = new ImageStack(width, height);
-		wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
+		if( originalImage.getType() == ImagePlus.COLOR_RGB)
+			wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
+		else
+			wholeStack.addSlice("original", originalImage.getProcessor().convertToFloat());
 	}
 
 	/**
@@ -537,7 +543,11 @@ public class FeatureStack
 		};
 	}
 	
-	
+	/**
+	 * Write feature names in a file
+	 * 
+	 * @param filename output file name
+	 */
 	public void writeConfigurationToFile(String filename)
 	{
 		try{
@@ -557,39 +567,55 @@ public class FeatureStack
 		catch(FileNotFoundException e){System.out.println("File not found!");}
 	}
 	
-	public void addGradient(float sigma){
-		GaussianBlur gs = new GaussianBlur();
-		ImageProcessor ip_x = originalImage.getProcessor().duplicate();
-		gs.blur(ip_x, sigma);
-		Convolver c = new Convolver();
-		float[] sobelFilter_x = {1f,2f,1f,0f,0f,0f,-1f,-2f,-1f};
-		c.convolveFloat(ip_x, sobelFilter_x, 3, 3);
+	/**
+	 * Add Sobel filter version of the original image
+	 * 
+	 * @param sigma radius of the Gaussian blue applied previous to the Sobel filtering
+	 */
+	public void addGradient(float sigma)
+	{
+		// Get channel(s) to process
+		ImagePlus[] channels = extractChannels(originalImage);
 		
-		ImageProcessor ip_y = originalImage.getProcessor().duplicate();
-		gs.blur(ip_y, sigma);
-		c = new Convolver();
-		float[] sobelFilter_y = {1f,0f,-1f,2f,0f,-2f,1f,0f,-1f};
-		c.convolveFloat(ip_y, sobelFilter_y, 3, 3);
+		ImagePlus[] results = new ImagePlus[ channels.length ];
 		
-		ImageProcessor ip = new FloatProcessor(width, height);
-		
-		for (int x=0; x<width; x++){
-			for (int y=0; y<height; y++){
-				float s_x = ip_x.getf(x,y);
-				float s_y = ip_y.getf(x,y);
-				ip.setf(x,y, (float) Math.sqrt(s_x*s_x + s_y*s_y));
+		for(int ch=0; ch < channels.length; ch++)
+		{
+
+			GaussianBlur gs = new GaussianBlur();
+			ImageProcessor ip_x = channels[ch].getProcessor().convertToFloat();
+			gs.blur(ip_x, sigma);
+			Convolver c = new Convolver();
+			float[] sobelFilter_x = {1f,2f,1f,0f,0f,0f,-1f,-2f,-1f};
+			c.convolveFloat(ip_x, sobelFilter_x, 3, 3);
+
+			ImageProcessor ip_y = channels[ch].getProcessor().convertToFloat();
+			gs.blur(ip_y, sigma);
+			c = new Convolver();
+			float[] sobelFilter_y = {1f,0f,-1f,2f,0f,-2f,1f,0f,-1f};
+			c.convolveFloat(ip_y, sobelFilter_y, 3, 3);
+
+			ImageProcessor ip = new FloatProcessor(width, height);
+
+			for (int x=0; x<width; x++){
+				for (int y=0; y<height; y++){
+					float s_x = ip_x.getf(x,y);
+					float s_y = ip_y.getf(x,y);
+					ip.setf(x,y, (float) Math.sqrt(s_x*s_x + s_y*s_y));
+				}
 			}
+			results[ ch ] = new ImagePlus(availableFeatures[SOBEL]+ "_"  +sigma, ip);
 		}
 		
-		//ip.add(-ip.getMin());
-		wholeStack.addSlice(availableFeatures[SOBEL]+ "_"  +sigma, ip);
+		ImagePlus merged = mergeResultChannels(results);		
+		wholeStack.addSlice(merged.getTitle(), merged.getImageStack().getProcessor(1));
 	}
 	
 	/**
-	 * Get sobel filter version of the original image (to be called from an ExecutorService)
+	 * Get Sobel filter version of the original image (to be called from an ExecutorService)
 	 * 
 	 * @param originalImage input image
-	 * @param sigma radius of the Gaussian blur applied previous to the sobel filtering
+	 * @param sigma radius of the Gaussian blur applied previous to the Sobel filtering
 	 * @return filtered image
 	 */
 	public Callable<ImagePlus> getGradient(
@@ -602,29 +628,40 @@ public class FeatureStack
 		return new Callable<ImagePlus>(){
 			public ImagePlus call(){
 		
-				GaussianBlur gs = new GaussianBlur();
-				ImageProcessor ip_x = originalImage.getProcessor().duplicate();
-				gs.blur(ip_x, sigma);
-				Convolver c = new Convolver();
-				float[] sobelFilter_x = {1f,2f,1f,0f,0f,0f,-1f,-2f,-1f};
-				c.convolveFloat(ip_x, sobelFilter_x, 3, 3);
+				// Get channel(s) to process
+				ImagePlus[] channels = extractChannels(originalImage);
 				
-				ImageProcessor ip_y = originalImage.getProcessor().duplicate();
-				gs.blur(ip_y, sigma);
-				c = new Convolver();
-				float[] sobelFilter_y = {1f,0f,-1f,2f,0f,-2f,1f,0f,-1f};
-				c.convolveFloat(ip_y, sobelFilter_y, 3, 3);
+				ImagePlus[] results = new ImagePlus[ channels.length ];
 				
-				ImageProcessor ip = new FloatProcessor(width, height);
-				
-				for (int x=0; x<width; x++){
-					for (int y=0; y<height; y++){
-						float s_x = ip_x.getf(x,y);
-						float s_y = ip_y.getf(x,y);
-						ip.setf(x,y, (float) Math.sqrt(s_x*s_x + s_y*s_y));
+				for(int ch=0; ch < channels.length; ch++)
+				{
+
+					GaussianBlur gs = new GaussianBlur();
+					ImageProcessor ip_x = channels[ch].getProcessor().convertToFloat();
+					gs.blur(ip_x, sigma);
+					Convolver c = new Convolver();
+					float[] sobelFilter_x = {1f,2f,1f,0f,0f,0f,-1f,-2f,-1f};
+					c.convolveFloat(ip_x, sobelFilter_x, 3, 3);
+
+					ImageProcessor ip_y = channels[ch].getProcessor().convertToFloat();
+					gs.blur(ip_y, sigma);
+					c = new Convolver();
+					float[] sobelFilter_y = {1f,0f,-1f,2f,0f,-2f,1f,0f,-1f};
+					c.convolveFloat(ip_y, sobelFilter_y, 3, 3);
+
+					ImageProcessor ip = new FloatProcessor(width, height);
+
+					for (int x=0; x<width; x++){
+						for (int y=0; y<height; y++){
+							float s_x = ip_x.getf(x,y);
+							float s_y = ip_y.getf(x,y);
+							ip.setf(x,y, (float) Math.sqrt(s_x*s_x + s_y*s_y));
+						}
 					}
+					results[ ch ] = new ImagePlus(availableFeatures[SOBEL]+ "_"  +sigma, ip);
 				}
-				return new ImagePlus (availableFeatures[SOBEL] + "_" + sigma, ip);
+				
+				return mergeResultChannels(results);
 			}
 		};
 	}
@@ -643,96 +680,113 @@ public class FeatureStack
 		float[] sobelFilter_y = {1f,0f,-1f,2f,0f,-2f,1f,0f,-1f};
 		Convolver c = new Convolver();				
 		GaussianBlur gs = new GaussianBlur();
+	
+		// Get channel(s) to process
+		ImagePlus[] channels = extractChannels(originalImage);
 		
-		ImageProcessor ip_x = originalImage.getProcessor().duplicate();
-		gs.blur(ip_x, sigma);		
-		c.convolveFloat(ip_x, sobelFilter_x, 3, 3);		
+		ImagePlus[] results = new ImagePlus[ channels.length ];
 		
-		ImageProcessor ip_y = originalImage.getProcessor().duplicate();
-		gs.blur(ip_y, sigma);
-		c = new Convolver();
-		c.convolveFloat(ip_y, sobelFilter_y, 3, 3);
+		for(int ch=0; ch < channels.length; ch++)
+		{
 		
-		ImageProcessor ip_xx = ip_x.duplicate();
-		//gs.blur(ip_xx, sigma);		
-		c.convolveFloat(ip_xx, sobelFilter_x, 3, 3);		
-		
-		ImageProcessor ip_xy = ip_x.duplicate();
-		//gs.blur(ip_xy, sigma);		
-		c.convolveFloat(ip_xy, sobelFilter_y, 3, 3);		
-		
-		ImageProcessor ip_yy = ip_y.duplicate();
-		//gs.blur(ip_yy, sigma);		
-		c.convolveFloat(ip_yy, sobelFilter_y, 3, 3);		
-		
-		ImageProcessor ip = new FloatProcessor(width, height);
-		ImageProcessor ipTr = new FloatProcessor(width, height);
-		ImageProcessor ipDet = new FloatProcessor(width, height);
-		//ImageProcessor ipRatio = new FloatProcessor(width, height);
-		ImageProcessor ipEig1 = new FloatProcessor(width, height);
-		ImageProcessor ipEig2 = new FloatProcessor(width, height);
-		ImageProcessor ipOri = new FloatProcessor(width, height);
-		ImageProcessor ipSed = new FloatProcessor(width, height);
-		ImageProcessor ipNed = new FloatProcessor(width, height);
-				
-		final double t = Math.pow(1, 0.75);
-		
-		for (int x=0; x<width; x++){
-			for (int y=0; y<height; y++)
-			{
-				float s_xx = ip_xx.getf(x,y);
-				float s_xy = ip_xy.getf(x,y);
-				float s_yy = ip_yy.getf(x,y);
-				// Hessian module: sqrt (a^2 + b*c + d^2)
-				ip.setf(x,y, (float) Math.sqrt(s_xx*s_xx + s_xy*s_xy+ s_yy*s_yy));
-				// Trace: a + d
-				final float trace = (float) s_xx + s_yy;
-				ipTr.setf(x,y,  trace);
-				// Determinant: a*d - c*b
-				final float determinant = (float) s_xx*s_yy-s_xy*s_xy;
-				ipDet.setf(x,y, determinant);
-				// Ratio
-				//ipRatio.setf(x,y, (float)(trace*trace) / determinant);
-				ip.setf(x,y, (float) Math.sqrt(s_xx*s_xx + s_xy*s_xy+ s_yy*s_yy));
-				ipTr.setf(x,y, (float) s_xx + s_yy);
-				ipDet.setf(x,y, (float) s_xx*s_yy-s_xy*s_xy);
-				// First eigenvalue: (a + d) / 2 + sqrt( ( 4*b^2 + (a - d)^2) ) / 2 )
-				ipEig1.setf(x,y, (float) ( trace/2.0 + Math.sqrt((4*s_xy*s_xy + (s_xx - s_yy)*(s_xx - s_yy)) / 2.0 ) ) );
-				// Second eigenvalue: (a + d) / 2 - sqrt( ( 4*b^2 + (a - d)^2) ) / 2 )
-				ipEig2.setf(x,y, (float) ( trace/2.0 - Math.sqrt((4*s_xy*s_xy + (s_xx - s_yy)*(s_xx - s_yy)) / 2.0 ) ) );
-				// Orientation
-				if (s_xy < 0.0) // -0.5 * acos( (a-d) / sqrt( 4*b^2 + (a - d)^2)) )
+			ImageProcessor ip_x = channels[ch].getProcessor().convertToFloat();
+			gs.blur(ip_x, sigma);		
+			c.convolveFloat(ip_x, sobelFilter_x, 3, 3);		
+
+			ImageProcessor ip_y = channels[ch].getProcessor().convertToFloat();
+			gs.blur(ip_y, sigma);
+			c = new Convolver();
+			c.convolveFloat(ip_y, sobelFilter_y, 3, 3);
+
+			ImageProcessor ip_xx = ip_x.duplicate();
+			//gs.blur(ip_xx, sigma);		
+			c.convolveFloat(ip_xx, sobelFilter_x, 3, 3);		
+
+			ImageProcessor ip_xy = ip_x.duplicate();
+			//gs.blur(ip_xy, sigma);		
+			c.convolveFloat(ip_xy, sobelFilter_y, 3, 3);		
+
+			ImageProcessor ip_yy = ip_y.duplicate();
+			//gs.blur(ip_yy, sigma);		
+			c.convolveFloat(ip_yy, sobelFilter_y, 3, 3);		
+
+			ImageProcessor ip = new FloatProcessor(width, height);
+			ImageProcessor ipTr = new FloatProcessor(width, height);
+			ImageProcessor ipDet = new FloatProcessor(width, height);
+			//ImageProcessor ipRatio = new FloatProcessor(width, height);
+			ImageProcessor ipEig1 = new FloatProcessor(width, height);
+			ImageProcessor ipEig2 = new FloatProcessor(width, height);
+			ImageProcessor ipOri = new FloatProcessor(width, height);
+			ImageProcessor ipSed = new FloatProcessor(width, height);
+			ImageProcessor ipNed = new FloatProcessor(width, height);
+
+			final double t = Math.pow(1, 0.75);
+
+			for (int x=0; x<width; x++){
+				for (int y=0; y<height; y++)
 				{
-					float orientation =(float)( -0.5 * Math.acos((s_xx	- s_yy) 
-							/ Math.sqrt(4.0 * s_xy * s_xy + (s_xx - s_yy) * (s_xx - s_yy)) ));							
-					if (Float.isNaN(orientation))
-						orientation = 0;
-					ipOri.setf(x, y,  orientation);
+					float s_xx = ip_xx.getf(x,y);
+					float s_xy = ip_xy.getf(x,y);
+					float s_yy = ip_yy.getf(x,y);
+					// Hessian module: sqrt (a^2 + b*c + d^2)
+					ip.setf(x,y, (float) Math.sqrt(s_xx*s_xx + s_xy*s_xy+ s_yy*s_yy));
+					// Trace: a + d
+					final float trace = (float) s_xx + s_yy;
+					ipTr.setf(x,y,  trace);
+					// Determinant: a*d - c*b
+					final float determinant = (float) s_xx*s_yy-s_xy*s_xy;
+					ipDet.setf(x,y, determinant);
+					// Ratio
+					//ipRatio.setf(x,y, (float)(trace*trace) / determinant);
+					ip.setf(x,y, (float) Math.sqrt(s_xx*s_xx + s_xy*s_xy+ s_yy*s_yy));
+					ipTr.setf(x,y, (float) s_xx + s_yy);
+					ipDet.setf(x,y, (float) s_xx*s_yy-s_xy*s_xy);
+					// First eigenvalue: (a + d) / 2 + sqrt( ( 4*b^2 + (a - d)^2) ) / 2 )
+					ipEig1.setf(x,y, (float) ( trace/2.0 + Math.sqrt((4*s_xy*s_xy + (s_xx - s_yy)*(s_xx - s_yy)) / 2.0 ) ) );
+					// Second eigenvalue: (a + d) / 2 - sqrt( ( 4*b^2 + (a - d)^2) ) / 2 )
+					ipEig2.setf(x,y, (float) ( trace/2.0 - Math.sqrt((4*s_xy*s_xy + (s_xx - s_yy)*(s_xx - s_yy)) / 2.0 ) ) );
+					// Orientation
+					if (s_xy < 0.0) // -0.5 * acos( (a-d) / sqrt( 4*b^2 + (a - d)^2)) )
+					{
+						float orientation =(float)( -0.5 * Math.acos((s_xx	- s_yy) 
+								/ Math.sqrt(4.0 * s_xy * s_xy + (s_xx - s_yy) * (s_xx - s_yy)) ));							
+						if (Float.isNaN(orientation))
+							orientation = 0;
+						ipOri.setf(x, y,  orientation);
+					}
+					else 	// 0.5 * acos( (a-d) / sqrt( 4*b^2 + (a - d)^2)) )
+					{
+						float orientation =(float)( 0.5 * Math.acos((s_xx	- s_yy) 
+								/ Math.sqrt(4.0 * s_xy * s_xy + (s_xx - s_yy) * (s_xx - s_yy)) ));							
+						if (Float.isNaN(orientation))
+							orientation = 0;
+						ipOri.setf(x, y,  orientation);
+					}
+					// Gamma-normalized square eigenvalue difference
+					ipSed.setf(x, y, (float) ( Math.pow(t,4) * trace*trace * ( (s_xx - s_yy)*(s_xx - s_yy) + 4*s_xy*s_xy ) ) );
+					// Square of Gamma-normalized eigenvalue difference
+					ipNed.setf(x, y, (float) ( Math.pow(t,2) * ( (s_xx - s_yy)*(s_xx - s_yy) + 4*s_xy*s_xy ) ) );
 				}
-				else 	// 0.5 * acos( (a-d) / sqrt( 4*b^2 + (a - d)^2)) )
-				{
-					float orientation =(float)( 0.5 * Math.acos((s_xx	- s_yy) 
-							/ Math.sqrt(4.0 * s_xy * s_xy + (s_xx - s_yy) * (s_xx - s_yy)) ));							
-					if (Float.isNaN(orientation))
-						orientation = 0;
-					ipOri.setf(x, y,  orientation);
-				}
-				// Gamma-normalized square eigenvalue difference
-				ipSed.setf(x, y, (float) ( Math.pow(t,4) * trace*trace * ( (s_xx - s_yy)*(s_xx - s_yy) + 4*s_xy*s_xy ) ) );
-				// Square of Gamma-normalized eigenvalue difference
-				ipNed.setf(x, y, (float) ( Math.pow(t,2) * ( (s_xx - s_yy)*(s_xx - s_yy) + 4*s_xy*s_xy ) ) );
 			}
+
+			ImageStack hessianStack = new ImageStack(width, height);
+			hessianStack.addSlice(availableFeatures[HESSIAN] + "_"  + sigma, ip);
+			hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Trace_"+sigma, ipTr);
+			hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Determinant_"+sigma, ipDet);
+			//hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Eignevalue_Ratio_"+sigma, ipRatio);
+			hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Eigenvalue_1_"+sigma, ipEig1);
+			hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Eigenvalue_2_"+sigma, ipEig2);
+			hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Orientation_"+sigma, ipOri);
+			hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Square_Eigenvalue_Difference_"+sigma, ipSed);
+			hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Normalized_Eigenvalue_Difference_"+sigma, ipNed);
+		
+			results[ ch ] = new ImagePlus("hessian stack", hessianStack);
 		}
 		
-		wholeStack.addSlice(availableFeatures[HESSIAN] + "_"  + sigma, ip);
-		wholeStack.addSlice(availableFeatures[HESSIAN]+ "_Trace_"+sigma, ipTr);
-		wholeStack.addSlice(availableFeatures[HESSIAN]+ "_Determinant_"+sigma, ipDet);
-		//wholeStack.addSlice(availableFeatures[HESSIAN]+ "_Eignevalue_Ratio_"+sigma, ipRatio);
-		wholeStack.addSlice(availableFeatures[HESSIAN]+ "_Eigenvalue_1_"+sigma, ipEig1);
-		wholeStack.addSlice(availableFeatures[HESSIAN]+ "_Eigenvalue_2_"+sigma, ipEig2);
-		wholeStack.addSlice(availableFeatures[HESSIAN]+ "_Orientation_"+sigma, ipOri);
-		wholeStack.addSlice(availableFeatures[HESSIAN]+ "_Square_Eigenvalue_Difference_"+sigma, ipSed);
-		wholeStack.addSlice(availableFeatures[HESSIAN]+ "_Normalized_Eigenvalue_Difference_"+sigma, ipNed);
+		ImagePlus merged = mergeResultChannels(results);
+		
+		for(int i=1; i<=merged.getImageStackSize(); i++)
+			wholeStack.addSlice(merged.getImageStack().getSliceLabel(i), merged.getImageStack().getPixels(i));
 	}
 	
 	/**
@@ -754,104 +808,118 @@ public class FeatureStack
 		
 		return new Callable<ImagePlus>(){
 			public ImagePlus call(){
-		
+
 				final int width = originalImage.getWidth();
 				final int height = originalImage.getHeight();
-				
+
 				float[] sobelFilter_x = {1f,2f,1f,0f,0f,0f,-1f,-2f,-1f};
 				float[] sobelFilter_y = {1f,0f,-1f,2f,0f,-2f,1f,0f,-1f};
 				Convolver c = new Convolver();				
 				GaussianBlur gs = new GaussianBlur();
-				
-				ImageProcessor ip_x = originalImage.getProcessor().duplicate();
-				gs.blur(ip_x, sigma);		
-				c.convolveFloat(ip_x, sobelFilter_x, 3, 3);		
-				
-				ImageProcessor ip_y = originalImage.getProcessor().duplicate();
-				gs.blur(ip_y, sigma);
-				c = new Convolver();
-				c.convolveFloat(ip_y, sobelFilter_y, 3, 3);
-				
-				ImageProcessor ip_xx = ip_x.duplicate();
-				//gs.blur(ip_xx, sigma);		
-				c.convolveFloat(ip_xx, sobelFilter_x, 3, 3);		
-				
-				ImageProcessor ip_xy = ip_x.duplicate();
-				//gs.blur(ip_xy, sigma);		
-				c.convolveFloat(ip_xy, sobelFilter_y, 3, 3);		
-				
-				ImageProcessor ip_yy = ip_y.duplicate();
-				//gs.blur(ip_yy, sigma);		
-				c.convolveFloat(ip_yy, sobelFilter_y, 3, 3);		
-				
-				ImageProcessor ip = new FloatProcessor(width, height);
-				ImageProcessor ipTr = new FloatProcessor(width, height);
-				ImageProcessor ipDet = new FloatProcessor(width, height);
-				//ImageProcessor ipRatio = new FloatProcessor(width, height);
-				ImageProcessor ipEig1 = new FloatProcessor(width, height);
-				ImageProcessor ipEig2 = new FloatProcessor(width, height);
-				ImageProcessor ipOri = new FloatProcessor(width, height);
-				ImageProcessor ipSed = new FloatProcessor(width, height);
-				ImageProcessor ipNed = new FloatProcessor(width, height);
-					
-				final double t = Math.pow(1, 0.75);
-				
-				for (int x=0; x<width; x++)
+
+				// Get channel(s) to process
+				ImagePlus[] channels = extractChannels(originalImage);
+
+				ImagePlus[] results = new ImagePlus[ channels.length ];
+
+				for(int ch=0; ch < channels.length; ch++)
 				{
-					for (int y=0; y<height; y++)
-					{
-						float s_xx = ip_xx.getf(x,y);
-						float s_xy = ip_xy.getf(x,y);
-						float s_yy = ip_yy.getf(x,y);
-						// Hessian module: sqrt (a^2 + b*c + d^2)
-						ip.setf(x,y, (float) Math.sqrt(s_xx*s_xx + s_xy*s_xy+ s_yy*s_yy));
-						// Trace: a + d
-						final float trace = (float) s_xx + s_yy;
-						ipTr.setf(x,y,  trace);
-						// Determinant: a*d - c*b
-						final float determinant = (float) s_xx*s_yy-s_xy*s_xy;
-						ipDet.setf(x,y, determinant);
-						// Ratio
-						//ipRatio.setf(x,y, (float)(trace*trace) / determinant);
-						// First eigenvalue: (a + d) / 2 + sqrt( ( 4*b^2 + (a - d)^2) ) / 2 )
-						ipEig1.setf(x,y, (float) ( trace/2.0 + Math.sqrt((4*s_xy*s_xy + (s_xx - s_yy)*(s_xx - s_yy)) / 2.0 ) ) );
-						// Second eigenvalue: (a + d) / 2 - sqrt( ( 4*b^2 + (a - d)^2) ) / 2 )
-						ipEig2.setf(x,y, (float) ( trace/2.0 - Math.sqrt((4*s_xy*s_xy + (s_xx - s_yy)*(s_xx - s_yy)) / 2.0 ) ) );
-						// Orientation
-						if (s_xy < 0.0) // -0.5 * acos( (a-d) / sqrt( 4*b^2 + (a - d)^2)) )
+
+					ImageProcessor ip_x = channels[ch].getProcessor().convertToFloat();
+					gs.blur(ip_x, sigma);		
+					c.convolveFloat(ip_x, sobelFilter_x, 3, 3);		
+
+					ImageProcessor ip_y = channels[ch].getProcessor().convertToFloat();
+					gs.blur(ip_y, sigma);
+					c = new Convolver();
+					c.convolveFloat(ip_y, sobelFilter_y, 3, 3);
+
+					ImageProcessor ip_xx = ip_x.duplicate();
+					//gs.blur(ip_xx, sigma);		
+					c.convolveFloat(ip_xx, sobelFilter_x, 3, 3);		
+
+					ImageProcessor ip_xy = ip_x.duplicate();
+					//gs.blur(ip_xy, sigma);		
+					c.convolveFloat(ip_xy, sobelFilter_y, 3, 3);		
+
+					ImageProcessor ip_yy = ip_y.duplicate();
+					//gs.blur(ip_yy, sigma);		
+					c.convolveFloat(ip_yy, sobelFilter_y, 3, 3);		
+
+					ImageProcessor ip = new FloatProcessor(width, height);
+					ImageProcessor ipTr = new FloatProcessor(width, height);
+					ImageProcessor ipDet = new FloatProcessor(width, height);
+					//ImageProcessor ipRatio = new FloatProcessor(width, height);
+					ImageProcessor ipEig1 = new FloatProcessor(width, height);
+					ImageProcessor ipEig2 = new FloatProcessor(width, height);
+					ImageProcessor ipOri = new FloatProcessor(width, height);
+					ImageProcessor ipSed = new FloatProcessor(width, height);
+					ImageProcessor ipNed = new FloatProcessor(width, height);
+
+					final double t = Math.pow(1, 0.75);
+
+					for (int x=0; x<width; x++){
+						for (int y=0; y<height; y++)
 						{
-							float orientation =(float)( -0.5 * Math.acos((s_xx	- s_yy) 
-									/ Math.sqrt(4.0 * s_xy * s_xy + (s_xx - s_yy) * (s_xx - s_yy)) ));							
-							if (Float.isNaN(orientation))
-								orientation = 0;
-							ipOri.setf(x, y,  orientation);
+							float s_xx = ip_xx.getf(x,y);
+							float s_xy = ip_xy.getf(x,y);
+							float s_yy = ip_yy.getf(x,y);
+							// Hessian module: sqrt (a^2 + b*c + d^2)
+							ip.setf(x,y, (float) Math.sqrt(s_xx*s_xx + s_xy*s_xy+ s_yy*s_yy));
+							// Trace: a + d
+							final float trace = (float) s_xx + s_yy;
+							ipTr.setf(x,y,  trace);
+							// Determinant: a*d - c*b
+							final float determinant = (float) s_xx*s_yy-s_xy*s_xy;
+							ipDet.setf(x,y, determinant);
+							// Ratio
+							//ipRatio.setf(x,y, (float)(trace*trace) / determinant);
+							ip.setf(x,y, (float) Math.sqrt(s_xx*s_xx + s_xy*s_xy+ s_yy*s_yy));
+							ipTr.setf(x,y, (float) s_xx + s_yy);
+							ipDet.setf(x,y, (float) s_xx*s_yy-s_xy*s_xy);
+							// First eigenvalue: (a + d) / 2 + sqrt( ( 4*b^2 + (a - d)^2) ) / 2 )
+							ipEig1.setf(x,y, (float) ( trace/2.0 + Math.sqrt((4*s_xy*s_xy + (s_xx - s_yy)*(s_xx - s_yy)) / 2.0 ) ) );
+							// Second eigenvalue: (a + d) / 2 - sqrt( ( 4*b^2 + (a - d)^2) ) / 2 )
+							ipEig2.setf(x,y, (float) ( trace/2.0 - Math.sqrt((4*s_xy*s_xy + (s_xx - s_yy)*(s_xx - s_yy)) / 2.0 ) ) );
+							// Orientation
+							if (s_xy < 0.0) // -0.5 * acos( (a-d) / sqrt( 4*b^2 + (a - d)^2)) )
+							{
+								float orientation =(float)( -0.5 * Math.acos((s_xx	- s_yy) 
+										/ Math.sqrt(4.0 * s_xy * s_xy + (s_xx - s_yy) * (s_xx - s_yy)) ));							
+								if (Float.isNaN(orientation))
+									orientation = 0;
+								ipOri.setf(x, y,  orientation);
+							}
+							else 	// 0.5 * acos( (a-d) / sqrt( 4*b^2 + (a - d)^2)) )
+							{
+								float orientation =(float)( 0.5 * Math.acos((s_xx	- s_yy) 
+										/ Math.sqrt(4.0 * s_xy * s_xy + (s_xx - s_yy) * (s_xx - s_yy)) ));							
+								if (Float.isNaN(orientation))
+									orientation = 0;
+								ipOri.setf(x, y,  orientation);
+							}
+							// Gamma-normalized square eigenvalue difference
+							ipSed.setf(x, y, (float) ( Math.pow(t,4) * trace*trace * ( (s_xx - s_yy)*(s_xx - s_yy) + 4*s_xy*s_xy ) ) );
+							// Square of Gamma-normalized eigenvalue difference
+							ipNed.setf(x, y, (float) ( Math.pow(t,2) * ( (s_xx - s_yy)*(s_xx - s_yy) + 4*s_xy*s_xy ) ) );
 						}
-						else 	// 0.5 * acos( (a-d) / sqrt( 4*b^2 + (a - d)^2)) )
-						{
-							float orientation =(float)( 0.5 * Math.acos((s_xx	- s_yy) 
-									/ Math.sqrt(4.0 * s_xy * s_xy + (s_xx - s_yy) * (s_xx - s_yy)) ));							
-							if (Float.isNaN(orientation))
-								orientation = 0;
-							ipOri.setf(x, y,  orientation);
-						}
-						// Gamma-normalized square eigenvalue difference
-						ipSed.setf(x, y, (float) ( Math.pow(t,4) * trace*trace * ( (s_xx - s_yy)*(s_xx - s_yy) + 4*s_xy*s_xy ) ) );
-						// Square of Gamma-normalized eigenvalue difference
-						ipNed.setf(x, y, (float) ( Math.pow(t,2) * ( (s_xx - s_yy)*(s_xx - s_yy) + 4*s_xy*s_xy ) ) );
 					}
+
+					ImageStack hessianStack = new ImageStack(width, height);
+					hessianStack.addSlice(availableFeatures[HESSIAN] + "_"  + sigma, ip);
+					hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Trace_"+sigma, ipTr);
+					hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Determinant_"+sigma, ipDet);
+					//hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Eignevalue_Ratio_"+sigma, ipRatio);
+					hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Eigenvalue_1_"+sigma, ipEig1);
+					hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Eigenvalue_2_"+sigma, ipEig2);
+					hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Orientation_"+sigma, ipOri);
+					hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Square_Eigenvalue_Difference_"+sigma, ipSed);
+					hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Normalized_Eigenvalue_Difference_"+sigma, ipNed);
+
+					results[ ch ] = new ImagePlus("hessian stack", hessianStack);
 				}
-				
-				ImageStack hessianStack = new ImageStack(width, height);
-				hessianStack.addSlice(availableFeatures[HESSIAN] + "_"  + sigma, ip);
-				hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Trace_"+sigma, ipTr);
-				hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Determinant_"+sigma, ipDet);
-				//hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Eignevalue_Ratio_"+sigma, ipRatio);
-				hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Eigenvalue_1_"+sigma, ipEig1);
-				hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Eigenvalue_2_"+sigma, ipEig2);
-				hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Orientation_"+sigma, ipOri);
-				hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Square_Eigenvalue_Difference_"+sigma, ipSed);
-				hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Normalized_Eigenvalue_Difference_"+sigma, ipNed);
-				return new ImagePlus ("hessian stack", hessianStack);
+
+				return mergeResultChannels(results);
 			}
 		};
 	}
@@ -864,22 +932,34 @@ public class FeatureStack
 	public void addDoG(float sigma1, float sigma2)
 	{
 		GaussianBlur gs = new GaussianBlur();
-		ImageProcessor ip_1 = originalImage.getProcessor().duplicate();
-		gs.blur(ip_1, sigma1);
-		ImageProcessor ip_2 = originalImage.getProcessor().duplicate();
-		gs.blur(ip_2, sigma2);
 		
-		ImageProcessor ip = new FloatProcessor(width, height);
-		
-		for (int x=0; x<width; x++){
-			for (int y=0; y<height; y++){
-				float v1 = ip_1.getf(x,y);
-				float v2 = ip_2.getf(x,y);
-				ip.setf(x,y, v2-v1);
+		// Get channel(s) to process
+		ImagePlus[] channels = extractChannels(originalImage);
+
+		ImagePlus[] results = new ImagePlus[ channels.length ];
+
+		for(int ch=0; ch < channels.length; ch++)
+		{
+			ImageProcessor ip_1 = channels[ch].getProcessor().duplicate();
+			gs.blur(ip_1, sigma1);
+			ImageProcessor ip_2 = channels[ch].getProcessor().duplicate();
+			gs.blur(ip_2, sigma2);
+
+			ImageProcessor ip = new FloatProcessor(width, height);
+
+			for (int x=0; x<width; x++){
+				for (int y=0; y<height; y++){
+					float v1 = ip_1.getf(x,y);
+					float v2 = ip_2.getf(x,y);
+					ip.setf(x,y, v2-v1);
+				}
 			}
+		
+			results[ ch ] = new ImagePlus(availableFeatures[DOG]+ "_"+sigma1+"_"+sigma2, ip);
 		}
 		
-		wholeStack.addSlice(availableFeatures[DOG]+ "_"+sigma1+"_"+sigma2, ip);
+		ImagePlus merged = mergeResultChannels(results);		
+		wholeStack.addSlice(merged.getTitle(), merged.getImageStack().getProcessor(1));
 	}
 	
 	/**
@@ -904,21 +984,32 @@ public class FeatureStack
 				final int height = originalImage.getHeight();
 				
 				GaussianBlur gs = new GaussianBlur();
-				ImageProcessor ip_1 = originalImage.getProcessor().duplicate();
-				gs.blur(ip_1, sigma1);
-				ImageProcessor ip_2 = originalImage.getProcessor().duplicate();
-				gs.blur(ip_2, sigma2);
-				
-				ImageProcessor ip = new FloatProcessor(width, height);
-				
-				for (int x=0; x<width; x++){
-					for (int y=0; y<height; y++){
-						float v1 = ip_1.getf(x,y);
-						float v2 = ip_2.getf(x,y);
-						ip.setf(x,y, v2-v1);
+				// Get channel(s) to process
+				ImagePlus[] channels = extractChannels(originalImage);
+
+				ImagePlus[] results = new ImagePlus[ channels.length ];
+
+				for(int ch=0; ch < channels.length; ch++)
+				{
+					ImageProcessor ip_1 = channels[ch].getProcessor().duplicate();
+					gs.blur(ip_1, sigma1);
+					ImageProcessor ip_2 = channels[ch].getProcessor().duplicate();
+					gs.blur(ip_2, sigma2);
+
+					ImageProcessor ip = new FloatProcessor(width, height);
+
+					for (int x=0; x<width; x++){
+						for (int y=0; y<height; y++){
+							float v1 = ip_1.getf(x,y);
+							float v2 = ip_2.getf(x,y);
+							ip.setf(x,y, v2-v1);
+						}
 					}
+				
+					results[ ch ] = new ImagePlus(availableFeatures[DOG]+ "_"+sigma1+"_"+sigma2, ip);
 				}
-				return new ImagePlus (availableFeatures[DOG]+ "_"+sigma1+"_"+sigma2, ip);
+				
+				return mergeResultChannels(results);
 			}
 		};
 	}
@@ -939,95 +1030,55 @@ public class FeatureStack
 		for (int x=startX; x<=endX; x++)
 			for (int y=0; y<patchSize; y++)
 				membranePatch.setf(x, y, 1f);
-					
-		
-		// Get channel(s) to process
-		ImageProcessor[] channels = null;				
-		if( originalImage.getType() == ImagePlus.COLOR_RGB )
-		{
-			final ByteProcessor redBp = new ByteProcessor(width, height);
-			final ByteProcessor greenBp = new ByteProcessor(width, height);
-			final ByteProcessor blueBp = new ByteProcessor(width, height);
-
-			final byte[] redPixels = (byte[]) redBp.getPixels();
-			final byte[] greenPixels = (byte[]) greenBp.getPixels();
-			final byte[] bluePixels = (byte[]) blueBp.getPixels();
-
-			((ColorProcessor)(originalImage.getProcessor().duplicate())).getRGB(redPixels, greenPixels, bluePixels);
-
-			channels = new ImageProcessor[]{redBp.convertToFloat(), greenBp.convertToFloat(), blueBp.convertToFloat()};
-		}
-		else
-		{
-			channels = new ImageProcessor[1];
-			channels[0] = originalImage.getProcessor().duplicate().convertToFloat();
-		}
-	
-		// image stack to store the filtered version of each angle and channel
-		ImageStack[] is = new ImageStack[ channels.length ];		
-		for(int ch = 0; ch < channels.length; ch++)				
-			is[ ch ] = new ImageStack(width, height);
-		
-		
+											
 		ImageProcessor rotatedPatch;
-		
-		final double rotationAngle = 180/nAngles;
-		// Rotate kernel "rotationAngle" degrees up to 180
-		for (int i=0; i<nAngles; i++)
-		{					
-			rotatedPatch = membranePatch.duplicate();
-			rotatedPatch.rotate(i*rotationAngle);
-			
-			Convolver c = new Convolver();				
-	
-			float[] kernel = (float[]) rotatedPatch.getPixels();
-			
-			for(int ch = 0; ch < channels.length; ch++)
-			{
-				ImageProcessor ip = channels[ ch ].duplicate();		
-				c.convolveFloat(ip, kernel, patchSize, patchSize);		
 
-				is[ ch ].addSlice("Membrane_"+patchSize+"_"+membraneSize, ip);
-			}										
-		}
-		
-		ImagePlus[] projectStack = new ImagePlus[ channels.length ];
+        final double rotationAngle = 180/nAngles;
+        
+        // Get channel(s) to process
+		ImagePlus[] channels = extractChannels(originalImage);
 
-		// array of image stacks to store the projections of each channel
-		ImageStack[] membraneStack = new ImageStack[ channels.length ];
-		
-		
-		for(int ch = 0; ch < channels.length; ch++)
+		ImagePlus[] results = new ImagePlus[ channels.length ];
+
+		for(int ch=0; ch < channels.length; ch++)
 		{
-			projectStack[ch] = new ImagePlus("membraneStack", is[ch]);
-
-			membraneStack[ ch ] = new ImageStack(width, height);
-					
-			ZProjector zp = new ZProjector( projectStack[ch] );
-			zp.setStopSlice( is[ ch ].getSize() );
-			for (int i=0;i<6; i++)
+        
+			ImageStack is = new ImageStack(width, height);
+			
+			// Rotate kernel "nAngles" degrees up to 180
+			for (int i=0; i<nAngles; i++)
 			{
+				rotatedPatch = membranePatch.duplicate();
+				rotatedPatch.rotate(i*rotationAngle);
+
+				Convolver c = new Convolver();
+
+				float[] kernel = (float[]) rotatedPatch.getPixels();
+				ImageProcessor ip = channels[ ch ].getProcessor().duplicate();
+				c.convolveFloat(ip, kernel, patchSize, patchSize);
+
+				is.addSlice("Membrane_"+patchSize+"_"+membraneSize, ip);
+				//    wholeStack.addSlice("Membrane_"+patchSize+"_"+membraneSize, ip.convertToByte(true));
+			}
+
+			ImagePlus projectStack = new ImagePlus("membraneStack",is);
+			//projectStack.show();
+
+			ImageStack membraneStack = new ImageStack(width, height);
+
+			ZProjector zp = new ZProjector(projectStack);
+			zp.setStopSlice(is.getSize());
+			for (int i=0;i<6; i++){
 				zp.setMethod(i);
 				zp.doProjection();
-				membraneStack[ ch ].addSlice(availableFeatures[MEMBRANE] + "_" + i +"_"+patchSize+"_"+membraneSize, zp.getProjection().getProcessor().duplicate());
+				membraneStack.addSlice(availableFeatures[MEMBRANE] + "_" +i+"_"+patchSize+"_"+membraneSize, zp.getProjection().getChannelProcessor());
 			}
+			results[ ch ] =  new ImagePlus ("membrane stack", membraneStack);
 		}
 		
-		// Merge channel results if necessary
-		if( originalImage.getType() == ImagePlus.COLOR_RGB)
-		{
-			final RGBStackMerge aux = new RGBStackMerge();
-			ImageStack mergedColorStack = aux.mergeStacks( width, height, 6, membraneStack[0], membraneStack[1], membraneStack[2], true);
-			
-			for (int i=0;i<6; i++)
-				wholeStack.addSlice(mergedColorStack.getSliceLabel(i+1), mergedColorStack.getProcessor(i+1));
-			
-		}
-		else 
-			for (int i=0;i<6; i++)
-				wholeStack.addSlice(membraneStack[0].getSliceLabel(i+1), membraneStack[0].getProcessor(i+1));
-		
-
+		ImagePlus merged = mergeResultChannels( results );
+		for(int i=1; i<=merged.getImageStackSize(); i++)
+			wholeStack.addSlice(merged.getImageStack().getSliceLabel(i), merged.getImageStack().getPixels(i));
 	}
 	
 	/**
@@ -1048,108 +1099,133 @@ public class FeatureStack
 		return new Callable<ImagePlus>(){
 			public ImagePlus call(){
 		
-				final int width = originalImage.getWidth();
-				final int height = originalImage.getHeight();
-				
-				//create membrane patch
-				ImageProcessor membranePatch = new FloatProcessor(patchSize, patchSize);
-				int middle = Math.round(patchSize / 2);
-				int startX = middle - (int) Math.floor(membraneSize/2.0);
-				int endX = middle + (int) Math.ceil(membraneSize/2.0);
-				
-				for (int x=startX; x<=endX; x++){
-					for (int y=0; y<patchSize; y++){
-						membranePatch.setf(x, y, 1f);
-					}
-				}
-				
-				// Get channel(s) to process
-				ImageProcessor[] channels = null;				
-				if( originalImage.getType() == ImagePlus.COLOR_RGB )
-				{
-					final ByteProcessor redBp = new ByteProcessor(width, height);
-					final ByteProcessor greenBp = new ByteProcessor(width, height);
-					final ByteProcessor blueBp = new ByteProcessor(width, height);
+				 final int width = originalImage.getWidth();
+                 final int height = originalImage.getHeight();
 
-					final byte[] redPixels = (byte[]) redBp.getPixels();
-					final byte[] greenPixels = (byte[]) greenBp.getPixels();
-					final byte[] bluePixels = (byte[]) blueBp.getPixels();
+                 //create membrane patch
+                 final ImageProcessor membranePatch = new FloatProcessor(patchSize, patchSize);
+                 int middle = Math.round(patchSize / 2);
+                 int startX = middle - (int) Math.floor(membraneSize/2.0);
+                 int endX = middle + (int) Math.ceil(membraneSize/2.0);
 
-					((ColorProcessor)(originalImage.getProcessor().duplicate())).getRGB(redPixels, greenPixels, bluePixels);
+                 for (int x=startX; x<=endX; x++){
+                         for (int y=0; y<patchSize; y++){
+                                 membranePatch.setf(x, y, 1f);
+                         }
+                 }
 
-					channels = new ImageProcessor[]{redBp.convertToFloat(), greenBp.convertToFloat(), blueBp.convertToFloat()};
-				}
-				else
-				{
-					channels = new ImageProcessor[1];
-					channels[0] = originalImage.getProcessor().duplicate().convertToFloat();
-				}
-			
-				// image stack to store the filtered version of each angle and channel
-				ImageStack[] is = new ImageStack[ channels.length ];		
-				for(int ch = 0; ch < channels.length; ch++)				
-					is[ ch ] = new ImageStack(width, height);
-				
-				
-				ImageProcessor rotatedPatch;
-				
-				final double rotationAngle = 180/nAngles;
-				// Rotate kernel "rotationAngle" degrees up to 180
-				for (int i=0; i<nAngles; i++)
-				{					
-					rotatedPatch = membranePatch.duplicate();
-					rotatedPatch.rotate(i*rotationAngle);
-					
-					Convolver c = new Convolver();				
-			
-					float[] kernel = (float[]) rotatedPatch.getPixels();
-					
-					for(int ch = 0; ch < channels.length; ch++)
-					{
-						ImageProcessor ip = channels[ ch ].duplicate();		
-						c.convolveFloat(ip, kernel, patchSize, patchSize);		
+                 
+                 ImageProcessor rotatedPatch;
 
-						is[ ch ].addSlice("Membrane_"+patchSize+"_"+membraneSize, ip);
-					}										
-				}
-				
-				ImagePlus[] projectStack = new ImagePlus[ channels.length ];
+                 final double rotationAngle = 180/nAngles;
+                 
+                 // Get channel(s) to process
+ 				ImagePlus[] channels = extractChannels(originalImage);
 
-				// array of image stacks to store the projections of each channel
-				ImageStack[] membraneStack = new ImageStack[ channels.length ];
-				
-				
-				for(int ch = 0; ch < channels.length; ch++)
-				{
-					projectStack[ch] = new ImagePlus("membraneStack", is[ch]);
+ 				ImagePlus[] results = new ImagePlus[ channels.length ];
 
-					membraneStack[ ch ] = new ImageStack(width, height);
-							
-					ZProjector zp = new ZProjector( projectStack[ch] );
-					zp.setStopSlice( is[ ch ].getSize() );
-					for (int i=0;i<6; i++)
-					{
-						zp.setMethod(i);
-						zp.doProjection();
-						membraneStack[ ch ].addSlice(availableFeatures[MEMBRANE] + "_" + i +"_"+patchSize+"_"+membraneSize, zp.getProjection().getProcessor().duplicate());
-					}
-				}
-				
-				// Merge channel results if necessary
-				if( originalImage.getType() == ImagePlus.COLOR_RGB)
-				{
-					final RGBStackMerge aux = new RGBStackMerge();
-					ImageStack mergedColorStack = aux.mergeStacks( width, height, 6, membraneStack[0], membraneStack[1], membraneStack[2], true);
-					
-					return new ImagePlus("membrane stack", mergedColorStack);
-					
-				}
-				else 
-					return new ImagePlus("membrane stack", membraneStack[0]);				
+ 				for(int ch=0; ch < channels.length; ch++)
+ 				{
+                 
+ 					ImageStack is = new ImageStack(width, height);
+ 					
+ 					// Rotate kernel "nAngles" degrees up to 180
+ 					for (int i=0; i<nAngles; i++)
+ 					{
+ 						rotatedPatch = membranePatch.duplicate();
+ 						rotatedPatch.rotate(i*rotationAngle);
+
+ 						Convolver c = new Convolver();
+
+ 						float[] kernel = (float[]) rotatedPatch.getPixels();
+ 						ImageProcessor ip = channels[ ch ].getProcessor().duplicate();
+ 						c.convolveFloat(ip, kernel, patchSize, patchSize);
+
+ 						is.addSlice("Membrane_"+patchSize+"_"+membraneSize, ip);
+ 						//    wholeStack.addSlice("Membrane_"+patchSize+"_"+membraneSize, ip.convertToByte(true));
+ 					}
+
+ 					ImagePlus projectStack = new ImagePlus("membraneStack",is);
+ 					//projectStack.show();
+
+ 					ImageStack membraneStack = new ImageStack(width, height);
+
+ 					ZProjector zp = new ZProjector(projectStack);
+ 					zp.setStopSlice(is.getSize());
+ 					for (int i=0;i<6; i++){
+ 						zp.setMethod(i);
+ 						zp.doProjection();
+ 						membraneStack.addSlice(availableFeatures[MEMBRANE] + "_" +i+"_"+patchSize+"_"+membraneSize, zp.getProjection().getChannelProcessor());
+ 					}
+ 					results[ ch ] =  new ImagePlus ("membrane stack", membraneStack);
+ 				}
+ 				
+ 				return mergeResultChannels( results );
 			}
+
+			
 		};
 	}
 	
+
+	/**
+	 * Extract channels from input image if it is RGB
+	 * @param originalImage input image
+	 * @return array of channels
+	 */
+	ImagePlus[] extractChannels(final ImagePlus originalImage) 
+	{
+		final int width = originalImage.getWidth();
+		final int height = originalImage.getHeight();
+		ImagePlus[] channels;
+		if( originalImage.getType() == ImagePlus.COLOR_RGB )
+		{
+			final ByteProcessor redBp = new ByteProcessor(width, height);
+			final ByteProcessor greenBp = new ByteProcessor(width, height);
+			final ByteProcessor blueBp = new ByteProcessor(width, height);
+
+			final byte[] redPixels = (byte[]) redBp.getPixels();
+			final byte[] greenPixels = (byte[]) greenBp.getPixels();
+			final byte[] bluePixels = (byte[]) blueBp.getPixels();
+
+			((ColorProcessor)(originalImage.getProcessor().duplicate())).getRGB(redPixels, greenPixels, bluePixels);
+
+			channels = new ImagePlus[]{new ImagePlus("red", redBp.convertToFloat()), 
+					new ImagePlus("green", greenBp.convertToFloat()), 
+					new ImagePlus("blue", blueBp.convertToFloat() )};
+		}
+		else
+		{
+			channels = new ImagePlus[1];
+			channels[0] = new ImagePlus(originalImage.getTitle(), originalImage.getProcessor().convertToFloat() );
+		}
+		return channels;
+	}
+	
+	/**
+	 * Merge input channels if they are more than 1
+	 * @param channels results channels
+	 * @return result image 
+	 */
+	ImagePlus mergeResultChannels(final ImagePlus[] channels) 
+	{
+		if(channels.length > 1)
+		{
+			final RGBStackMerge aux = new RGBStackMerge();
+			final int width = channels[0].getWidth();
+			final int height = channels[0].getHeight();
+			ImageStack mergedColorStack = aux.mergeStacks( width, height, channels[0].getImageStackSize(), channels[0].getImageStack(), channels[1].getImageStack(), channels[2].getImageStack(), true);
+			
+			ImagePlus merged = new ImagePlus(channels[0].getTitle(), mergedColorStack); 
+			
+			for(int n = 1; n <= merged.getImageStackSize(); n++)
+				merged.getImageStack().setSliceLabel(channels[0].getImageStack().getSliceLabel(n), n);
+			
+			return merged;
+		}
+		else
+			return channels[0];
+	}
 	
 
 	/**
@@ -1208,19 +1284,27 @@ public class FeatureStack
 		{
 			public ImagePlus call()
 			{
+				// Get channel(s) to process
+				ImagePlus[] channels = extractChannels(originalImage);
 				
-				imagescience.image.Image img = imagescience.image.Image.wrap( originalImage );
-				Aspects aspects = img.aspects();
+				ImagePlus[] results = new ImagePlus[ channels.length ];
 				
+				for(int ch=0; ch < channels.length; ch++)
+				{
+					imagescience.image.Image img = imagescience.image.Image.wrap( channels[ ch ] );
+					Aspects aspects = img.aspects();
 
-				imagescience.image.Image newimg = new FloatImage(img);
-				Differentiator diff = new Differentiator();
 
-				diff.run(newimg, sigma , xOrder, yOrder, 0);
-				newimg.aspects(aspects);
+					imagescience.image.Image newimg = new FloatImage(img);
+					Differentiator diff = new Differentiator();
 
-				ImagePlus newimp =  newimg.imageplus();
-							
+					diff.run(newimg, sigma , xOrder, yOrder, 0);
+					newimg.aspects(aspects);
+
+					results[ch] =  newimg.imageplus();				
+				}
+						
+				ImagePlus newimp = mergeResultChannels(results);
 				return new ImagePlus (availableFeatures[DERIVATIVES] +"_" + xOrder + "_" +yOrder+"_"+sigma, newimp.getProcessor());
 			}
 		};
@@ -1243,23 +1327,30 @@ public class FeatureStack
 		if (Thread.currentThread().isInterrupted()) 
 			return;
 			
+		// Get channel(s) to process
+		ImagePlus[] channels = extractChannels(originalImage);
 		
-		final imagescience.image.Image img = imagescience.image.Image.wrap( originalImage ) ;
-				
-		final Aspects aspects = img.aspects();				
-
-		final imagescience.image.FloatImage newimg = new FloatImage( img );
+		ImagePlus[] results = new ImagePlus[ channels.length ];
 		
-		final Differentiator diff = new Differentiator();
+		for(int ch=0; ch < channels.length; ch++)
+		{
+			final imagescience.image.Image img = imagescience.image.Image.wrap( channels[ ch ] ) ;
 
-		diff.run(newimg, sigma , xOrder, yOrder, 0);
-				
-		newimg.aspects( aspects );
+			final Aspects aspects = img.aspects();				
 
-		final ImagePlus newimp =  newimg.imageplus();
-				
-		wholeStack.addSlice(availableFeatures[DERIVATIVES] +"_" + xOrder + "_" +yOrder+"_"+sigma, newimp.getProcessor());
+			final imagescience.image.FloatImage newimg = new FloatImage( img );
+
+			final Differentiator diff = new Differentiator();
+
+			diff.run(newimg, sigma , xOrder, yOrder, 0);
+
+			newimg.aspects( aspects );
+
+			results[ch] =  newimg.imageplus();
 		
+		}
+		ImagePlus newimp = mergeResultChannels(results);
+		wholeStack.addSlice(availableFeatures[DERIVATIVES] +"_" + xOrder + "_" +yOrder+"_"+sigma, newimp.getProcessor());		
 	}	
 	
 	
@@ -1282,18 +1373,29 @@ public class FeatureStack
 			public ImagePlus call()
 			{
 				
-				final imagescience.image.Image img = imagescience.image.Image.wrap( originalImage ) ;
+				// Get channel(s) to process
+				ImagePlus[] channels = extractChannels(originalImage);
 				
-				final Aspects aspects = img.aspects();				
-
-				imagescience.image.Image newimg = new FloatImage( img );
+				ImagePlus[] results = new ImagePlus[ channels.length ];
 				
-				final Laplacian laplace = new Laplacian();
+				for(int ch=0; ch < channels.length; ch++)
+				{
+					final imagescience.image.Image img = imagescience.image.Image.wrap( channels[ ch ] ) ;
+				
+					final Aspects aspects = img.aspects();				
 
-				newimg = laplace.run(newimg, sigma);
-				newimg.aspects(aspects);						
+					imagescience.image.Image newimg = new FloatImage( img );
 
-				final ImagePlus newimp =  newimg.imageplus();
+					final Laplacian laplace = new Laplacian();
+
+					newimg = laplace.run(newimg, sigma);
+					newimg.aspects(aspects);						
+
+					results[ch] =  newimg.imageplus();
+					
+				}
+				
+				ImagePlus newimp = mergeResultChannels(results);
 							
 				return new ImagePlus (availableFeatures[LAPLACIAN] +"_" + sigma, newimp.getProcessor());
 			}
@@ -1313,18 +1415,29 @@ public class FeatureStack
 			return;
 			
 		
-		final imagescience.image.Image img = imagescience.image.Image.wrap( originalImage ) ;
-				
-		final Aspects aspects = img.aspects();				
-
-		imagescience.image.Image newimg = new FloatImage( img );
+		// Get channel(s) to process
+		ImagePlus[] channels = extractChannels(originalImage);
 		
-		final Laplacian laplace = new Laplacian();
+		ImagePlus[] results = new ImagePlus[ channels.length ];
+		
+		for(int ch=0; ch < channels.length; ch++)
+		{
+			final imagescience.image.Image img = imagescience.image.Image.wrap( channels[ ch ] ) ;
+		
+			final Aspects aspects = img.aspects();				
 
-		newimg = laplace.run(newimg, sigma);
-		newimg.aspects(aspects);						
+			imagescience.image.Image newimg = new FloatImage( img );
 
-		final ImagePlus newimp =  newimg.imageplus();
+			final Laplacian laplace = new Laplacian();
+
+			newimg = laplace.run(newimg, sigma);
+			newimg.aspects(aspects);						
+
+			results[ch] =  newimg.imageplus();
+			
+		}
+		
+		ImagePlus newimp = mergeResultChannels(results);
 				
 		wholeStack.addSlice(availableFeatures[LAPLACIAN] +"_" + sigma, newimp.getProcessor());
 		
@@ -1353,23 +1466,33 @@ public class FeatureStack
 			public ImagePlus call()
 			{
 				
-				final imagescience.image.Image img = imagescience.image.Image.wrap( originalImage ) ;
+				// Get channel(s) to process
+				ImagePlus[] channels = extractChannels(originalImage);
 				
-				final Aspects aspects = img.aspects();				
+				ImagePlus[] results = new ImagePlus[ channels.length ];
 				
-				final Structure structure = new Structure();
-				final Vector<imagescience.image.Image> eigenimages = structure.run(new FloatImage(img), sigma, integrationScale);
+				for(int ch=0; ch < channels.length; ch++)
+				{
+					final imagescience.image.Image img = imagescience.image.Image.wrap( channels[ ch ] ) ;
+				
+					final Aspects aspects = img.aspects();				
 
-				final int nrimgs = eigenimages.size();
-				for (int i=0; i<nrimgs; ++i)
-					eigenimages.get(i).aspects(aspects);
-												
-				final ImageStack is = new ImageStack(width, height);
+					final Structure structure = new Structure();
+					final Vector<imagescience.image.Image> eigenimages = structure.run(new FloatImage(img), sigma, integrationScale);
+
+					final int nrimgs = eigenimages.size();
+					for (int i=0; i<nrimgs; ++i)
+						eigenimages.get(i).aspects(aspects);
+
+					final ImageStack is = new ImageStack(width, height);
+
+					is.addSlice(availableFeatures[STRUCTURE] +"_largest_" + sigma + "_" + integrationScale, eigenimages.get(0).imageplus().getProcessor() );
+					is.addSlice(availableFeatures[STRUCTURE] +"_smallest_" + sigma + "_" + integrationScale, eigenimages.get(1).imageplus().getProcessor() );
+
+					results[ ch ] = new ImagePlus ("Structure stack", is);
+				}
 				
-				is.addSlice(availableFeatures[STRUCTURE] +"_largest_" + sigma + "_" + integrationScale, eigenimages.get(0).imageplus().getProcessor() );
-				is.addSlice(availableFeatures[STRUCTURE] +"_smallest_" + sigma + "_" + integrationScale, eigenimages.get(1).imageplus().getProcessor() );
-							
-				return new ImagePlus ("Structure stack", is);
+				return mergeResultChannels(results);
 			}
 		};
 	}
@@ -1391,19 +1514,36 @@ public class FeatureStack
 			return;
 			
 		
-		final imagescience.image.Image img = imagescience.image.Image.wrap( originalImage ) ;
+		// Get channel(s) to process
+		ImagePlus[] channels = extractChannels(originalImage);
 		
-		final Aspects aspects = img.aspects();				
+		ImagePlus[] results = new ImagePlus[ channels.length ];
 		
-		final Structure structure = new Structure();
-		final Vector<imagescience.image.Image> eigenimages = structure.run(new FloatImage(img), sigma, integrationScale);
+		for(int ch=0; ch < channels.length; ch++)
+		{
+			final imagescience.image.Image img = imagescience.image.Image.wrap( channels[ ch ] ) ;
+		
+			final Aspects aspects = img.aspects();				
 
-		final int nrimgs = eigenimages.size();
-		for (int i=0; i<nrimgs; ++i)
-			eigenimages.get(i).aspects(aspects);												
+			final Structure structure = new Structure();
+			final Vector<imagescience.image.Image> eigenimages = structure.run(new FloatImage(img), sigma, integrationScale);
+
+			final int nrimgs = eigenimages.size();
+			for (int i=0; i<nrimgs; ++i)
+				eigenimages.get(i).aspects(aspects);
+
+			final ImageStack is = new ImageStack(width, height);
+
+			is.addSlice(availableFeatures[STRUCTURE] +"_largest_" + sigma + "_" + integrationScale, eigenimages.get(0).imageplus().getProcessor() );
+			is.addSlice(availableFeatures[STRUCTURE] +"_smallest_" + sigma + "_" + integrationScale, eigenimages.get(1).imageplus().getProcessor() );
+
+			results[ ch ] = new ImagePlus ("Structure stack", is);
+		}									
 		
-		wholeStack.addSlice(availableFeatures[STRUCTURE] +"_largest_" + sigma + "_" + integrationScale, eigenimages.get(0).imageplus().getProcessor() );
-		wholeStack.addSlice(availableFeatures[STRUCTURE] +"_smallest_" + sigma + "_" + integrationScale, eigenimages.get(1).imageplus().getProcessor() );				
+		ImagePlus merged = mergeResultChannels(results);
+		
+		wholeStack.addSlice(merged.getImageStack().getSliceLabel( 1 ), merged.getImageStack().getProcessor( 1 ) );
+		wholeStack.addSlice(merged.getImageStack().getSliceLabel( 2 ), merged.getImageStack().getProcessor( 2 ) );				
 	}	
 	
 	/**
@@ -1483,54 +1623,65 @@ public class FeatureStack
 				//ImagePlus ip_kernels = new ImagePlus("kernels", kernels);
 				//ip_kernels.show();
 				
-				final ImageStack is = new ImageStack(width, height);
-				// Apply kernels
-				//FourierConvolution<FloatType, FloatType> fourierConvolution = null;
-				//Image<FloatType> image2 = ImagePlusAdapter.wrap(originalImage);
-				for (int i=0; i<nAngles; i++)
+				// Get channel(s) to process
+				ImagePlus[] channels = extractChannels(originalImage);
+				
+				ImagePlus[] results = new ImagePlus[ channels.length ];
+				
+				for(int ch=0; ch < channels.length; ch++)
 				{
-					Image<FloatType> kernel = ImagePlusAdapter.wrap( new ImagePlus("", kernels.getProcessor(i+1)) );
-					Image<FloatType> image2 = ImagePlusAdapter.wrap(originalImage);
-					
-					// compute Fourier convolution
-					FourierConvolution<FloatType, FloatType> fourierConvolution = new FourierConvolution<FloatType, FloatType>( image2, kernel );
-					//if (fourierConvolution == null || !fourierConvolution.replaceKernel( kernel ) )
-					//	fourierConvolution = new FourierConvolution<FloatType, FloatType>( image2, kernel );
-					
-					if ( !fourierConvolution.checkInput() || !fourierConvolution.process() )
+
+					final ImageStack is = new ImageStack(width, height);
+					// Apply kernels
+					//FourierConvolution<FloatType, FloatType> fourierConvolution = null;
+					//Image<FloatType> image2 = ImagePlusAdapter.wrap(originalImage);
+					for (int i=0; i<nAngles; i++)
 					{
-						IJ.log( "Cannot compute fourier convolution: " + fourierConvolution.getErrorMessage() );
-						return null;
+						Image<FloatType> kernel = ImagePlusAdapter.wrap( new ImagePlus("", kernels.getProcessor(i+1)) );
+						Image<FloatType> image2 = ImagePlusAdapter.wrap( channels[ ch ] );
+
+						// compute Fourier convolution
+						FourierConvolution<FloatType, FloatType> fourierConvolution = new FourierConvolution<FloatType, FloatType>( image2, kernel );
+						//if (fourierConvolution == null || !fourierConvolution.replaceKernel( kernel ) )
+						//	fourierConvolution = new FourierConvolution<FloatType, FloatType>( image2, kernel );
+
+						if ( !fourierConvolution.checkInput() || !fourierConvolution.process() )
+						{
+							IJ.log( "Cannot compute fourier convolution: " + fourierConvolution.getErrorMessage() );
+							return null;
+						}
+
+						Image<FloatType>  convolved = fourierConvolution.getResult();
+
+						is.addSlice("gabor angle = " + i, ImageJFunctions.copyToImagePlus( convolved ).getProcessor() );					
 					}
-						
-					Image<FloatType>  convolved = fourierConvolution.getResult();
-								
-					is.addSlice("gabor angle = " + i, ImageJFunctions.copyToImagePlus( convolved ).getProcessor() );					
+
+
+					final ImagePlus projectStack = new ImagePlus("filtered stack",is);
+					//projectStack.show();
+
+					// Normalize filtered stack (it seems necessary to have proper results)
+					IJ.run(projectStack, "Enhance Contrast", "saturated=0.4 normalize normalize_all");
+					//final ContrastEnhancer c = new ContrastEnhancer();
+					//c.stretchHistogram(projectStack, 0.4);
+					//projectStack.updateAndDraw();
+
+					final ImageStack resultStack = new ImageStack(width, height);
+
+					final ZProjector zp = new ZProjector(projectStack);
+					zp.setStopSlice(is.getSize());
+					for (int i=1;i<=2; i++)
+					{
+						zp.setMethod(i);
+						zp.doProjection();
+						resultStack.addSlice(availableFeatures[GABOR] + "_" + i 
+								+"_"+sigma+"_" + gamma + "_"+ (int) (psi / (Math.PI/4) ) +"_"+frequency, 
+								zp.getProjection().getChannelProcessor());
+					}
+					results[ ch ] = new ImagePlus ("Gabor stack", resultStack);
 				}
 				
-				
-				final ImagePlus projectStack = new ImagePlus("filtered stack",is);
-				//projectStack.show();
-				
-				// Normalize filtered stack (it seems necessary to have proper results)
-				IJ.run(projectStack, "Enhance Contrast", "saturated=0.4 normalize normalize_all");
-				//final ContrastEnhancer c = new ContrastEnhancer();
-				//c.stretchHistogram(projectStack, 0.4);
-				//projectStack.updateAndDraw();
-				
-				final ImageStack resultStack = new ImageStack(width, height);
-				
-				final ZProjector zp = new ZProjector(projectStack);
-				zp.setStopSlice(is.getSize());
-				for (int i=1;i<=2; i++)
-				{
-					zp.setMethod(i);
-					zp.doProjection();
-					resultStack.addSlice(availableFeatures[GABOR] + "_" + i 
-							+"_"+sigma+"_" + gamma + "_"+ (int) (psi / (Math.PI/4) ) +"_"+frequency, 
-							zp.getProjection().getChannelProcessor());
-				}
-				return new ImagePlus ("Gabor stack", resultStack);
+				return mergeResultChannels(results);
 			}
 		};
 	}	
@@ -1606,41 +1757,68 @@ public class FeatureStack
 		//ImagePlus ip_kernels = new ImagePlus("kernels", kernels);
 		//ip_kernels.show();
 
-		final ImageStack is = new ImageStack(width, height);
-		// Apply kernels
-		for (int i=0; i<nAngles; i++)
+		// Get channel(s) to process
+		ImagePlus[] channels = extractChannels(originalImage);
+		
+		ImagePlus[] results = new ImagePlus[ channels.length ];
+		
+		for(int ch=0; ch < channels.length; ch++)
 		{
-			//final double theta = rotationAngle * i;		
-			final Convolver c = new Convolver();				
 
-			final float[] kernel = (float[]) kernels.getProcessor(i+1).getPixels();
-			final ImageProcessor ip = originalImage.getProcessor().duplicate();		
-			c.convolveFloat(ip, kernel, filterSizeX, filterSizeY);		
+			final ImageStack is = new ImageStack(width, height);
+			// Apply kernels
+			//FourierConvolution<FloatType, FloatType> fourierConvolution = null;
+			//Image<FloatType> image2 = ImagePlusAdapter.wrap(originalImage);
+			for (int i=0; i<nAngles; i++)
+			{
+				Image<FloatType> kernel = ImagePlusAdapter.wrap( new ImagePlus("", kernels.getProcessor(i+1)) );
+				Image<FloatType> image2 = ImagePlusAdapter.wrap( channels[ ch ] );
 
-			is.addSlice("gabor angle = " + i, ip);
+				// compute Fourier convolution
+				FourierConvolution<FloatType, FloatType> fourierConvolution = new FourierConvolution<FloatType, FloatType>( image2, kernel );
+				//if (fourierConvolution == null || !fourierConvolution.replaceKernel( kernel ) )
+				//	fourierConvolution = new FourierConvolution<FloatType, FloatType>( image2, kernel );
+
+				if ( !fourierConvolution.checkInput() || !fourierConvolution.process() )
+				{
+					IJ.log( "Cannot compute fourier convolution: " + fourierConvolution.getErrorMessage() );
+					return;
+				}
+
+				Image<FloatType>  convolved = fourierConvolution.getResult();
+
+				is.addSlice("gabor angle = " + i, ImageJFunctions.copyToImagePlus( convolved ).getProcessor() );					
+			}
+
+
+			final ImagePlus projectStack = new ImagePlus("filtered stack",is);
+			//projectStack.show();
+
+			// Normalize filtered stack (it seems necessary to have proper results)
+			IJ.run(projectStack, "Enhance Contrast", "saturated=0.4 normalize normalize_all");
+			//final ContrastEnhancer c = new ContrastEnhancer();
+			//c.stretchHistogram(projectStack, 0.4);
+			//projectStack.updateAndDraw();
+
+			final ImageStack resultStack = new ImageStack(width, height);
+
+			final ZProjector zp = new ZProjector(projectStack);
+			zp.setStopSlice(is.getSize());
+			for (int i=1;i<=2; i++)
+			{
+				zp.setMethod(i);
+				zp.doProjection();
+				resultStack.addSlice(availableFeatures[GABOR] + "_" + i 
+						+"_"+sigma+"_" + gamma + "_"+ (int) (psi / (Math.PI/4) ) +"_"+frequency, 
+						zp.getProjection().getChannelProcessor());
+			}
+			results[ ch ] = new ImagePlus ("Gabor stack", resultStack);
 		}
-
-
-		final ImagePlus projectStack = new ImagePlus("filtered stack",is);
-		//projectStack.show();
-
-		// Normalize filtered stack (it seems necessary to have proper results)
-		IJ.run(projectStack, "Enhance Contrast", "saturated=0.4 normalize normalize_all");
-		//final ContrastEnhancer c = new ContrastEnhancer();
-		//c.stretchHistogram(projectStack, 0.4);
-		//projectStack.updateAndDraw();
-
-
-		final ZProjector zp = new ZProjector(projectStack);
-		zp.setStopSlice(is.getSize());
-		for (int i=1;i<=2; i++)
-		{
-			zp.setMethod(i);
-			zp.doProjection();
-			wholeStack.addSlice(availableFeatures[GABOR] + "_" + i 
-					+"_"+sigma+"_" + gamma + "_"+ (int) (psi / (Math.PI/4) ) +"_"+frequency, 
-					zp.getProjection().getChannelProcessor());
-		}
+		
+		ImagePlus merged = mergeResultChannels(results);
+		
+		for(int i=1; i<=merged.getImageStackSize(); i++)
+			wholeStack.addSlice(merged.getImageStack().getSliceLabel(i), merged.getImageStack().getPixels(i));
 	}	
 	
 	/**
@@ -1808,10 +1986,20 @@ public class FeatureStack
 			public ImagePlus call()
 			{							
 				//IJ.log("calling bilateral filter with spatiaRadius =" + spatialRadius + " and rangeRadius = " + rangeRadius);
-				final ImagePlus result = BilateralFilter.filter(
-						new ImagePlus("", originalImage.getProcessor().convertToByte(true)), spatialRadius, rangeRadius);								
+				// Get channel(s) to process
+				ImagePlus[] channels = extractChannels(originalImage);
 				
-				return new ImagePlus (availableFeatures[BILATERAL] + "_" + spatialRadius + "_" + rangeRadius, result.getProcessor().convertToFloat());								
+				ImagePlus[] results = new ImagePlus[ channels.length ];
+				
+				for(int ch=0; ch < channels.length; ch++)
+				{
+					final ImagePlus result = BilateralFilter.filter(
+							new ImagePlus("", channels[ch].getProcessor().convertToByte(true)), spatialRadius, rangeRadius);								
+
+					results[ ch ] = new ImagePlus (availableFeatures[BILATERAL] + "_" + spatialRadius + "_" + rangeRadius, result.getProcessor().convertToFloat());
+				}
+				
+				return mergeResultChannels(results);
 			}
 		};
 	}	
@@ -1830,10 +2018,21 @@ public class FeatureStack
 			final double rangeRadius)
 	{			
 		//IJ.log("calling bilateral filter with spatiaRadius =" + spatialRadius + " and rangeRadius = " + rangeRadius);
-		final ImagePlus result = BilateralFilter.filter(
-				new ImagePlus("", originalImage.getProcessor().convertToByte(true)), spatialRadius, rangeRadius);								
+		// Get channel(s) to process
+		ImagePlus[] channels = extractChannels(originalImage);
+		
+		ImagePlus[] results = new ImagePlus[ channels.length ];
+		
+		for(int ch=0; ch < channels.length; ch++)
+		{
+			final ImagePlus result = BilateralFilter.filter(
+					new ImagePlus("", channels[ch].getProcessor().convertToByte(true)), spatialRadius, rangeRadius);								
 
-		wholeStack.addSlice(availableFeatures[BILATERAL] + "_" + spatialRadius + "_" + rangeRadius, result.getProcessor().convertToFloat());								
+			results[ ch ] = new ImagePlus (availableFeatures[BILATERAL] + "_" + spatialRadius + "_" + rangeRadius, result.getProcessor().convertToFloat());
+		}					
+
+		ImagePlus merged = mergeResultChannels(results);
+		wholeStack.addSlice(merged.getTitle(), merged.getImageStack().getProcessor(1));								
 	}		
 	
 	/**
@@ -1856,9 +2055,20 @@ public class FeatureStack
 				filter.setTopHat(topHat);
 				filter.m_Slope = slope;
 				
-				ImageProcessor result = originalImage.getProcessor().duplicate().convertToByte(true);
-				filter.Lipschitz2D(result);				
-				return new ImagePlus (availableFeatures[LIPSCHITZ] + "_" + downHat + "_" + topHat + "_" + slope, result.convertToFloat());								
+				// Get channel(s) to process
+				ImagePlus[] channels = extractChannels(originalImage);
+				
+				ImagePlus[] results = new ImagePlus[ channels.length ];
+				
+				for(int ch=0; ch < channels.length; ch++)
+				{
+					ImageProcessor result = originalImage.getProcessor().duplicate().convertToByte(true);
+					filter.Lipschitz2D(result);
+				
+					results[ ch ] = new ImagePlus (availableFeatures[LIPSCHITZ] + "_" + downHat + "_" + topHat + "_" + slope, result.convertToFloat());
+				}
+				
+				return mergeResultChannels(results);
 			}
 		};
 	}	
@@ -1879,9 +2089,21 @@ public class FeatureStack
 		filter.setTopHat(topHat);
 		filter.m_Slope = slope;
 
-		ImageProcessor result = originalImage.getProcessor().duplicate().convertToByte(true);
-		filter.Lipschitz2D(result);				
-		wholeStack.addSlice(availableFeatures[LIPSCHITZ] + "_" + downHat + "_" + topHat + "_" + slope, result.convertToFloat());								
+		// Get channel(s) to process
+		ImagePlus[] channels = extractChannels(originalImage);
+		
+		ImagePlus[] results = new ImagePlus[ channels.length ];
+		
+		for(int ch=0; ch < channels.length; ch++)
+		{
+			ImageProcessor result = originalImage.getProcessor().duplicate().convertToByte(true);
+			filter.Lipschitz2D(result);
+		
+			results[ ch ] = new ImagePlus (availableFeatures[LIPSCHITZ] + "_" + downHat + "_" + topHat + "_" + slope, result.convertToFloat());
+		}
+		
+		ImagePlus merged = mergeResultChannels(results);
+		wholeStack.addSlice(merged.getTitle(), merged.getImageStack().getProcessor(1));		
 	}
 	
 	public void addTest()
