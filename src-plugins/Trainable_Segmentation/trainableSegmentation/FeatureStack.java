@@ -69,8 +69,11 @@ import ij.IJ;
 import ij.ImageStack;
 import ij.ImagePlus;
 import ij.io.FileSaver;
+import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+import ij.plugin.RGBStackMerge;
 import ij.plugin.ZProjector;
 import ij.plugin.filter.GaussianBlur;
 import ij.plugin.filter.Convolver;
@@ -925,7 +928,8 @@ public class FeatureStack
 	 * @param patchSize size of the filter to be used
 	 * @param membraneSize expected membrane thickness
 	 */
-	public void addMembraneFeatures(int patchSize, int membraneSize){
+	public void addMembraneFeatures(int patchSize, int membraneSize)
+	{
 		//create membrane patch
 		ImageProcessor membranePatch = new FloatProcessor(patchSize, patchSize);
 		int middle = Math.round(patchSize / 2);
@@ -1003,8 +1007,35 @@ public class FeatureStack
 						membranePatch.setf(x, y, 1f);
 					}
 				}
+				
+				// Get channel(s) to process
+				ImageProcessor[] channels = null;				
+				if( originalImage.getType() == ImagePlus.COLOR_RGB )
+				{
+					final ByteProcessor redBp = new ByteProcessor(width, height);
+					final ByteProcessor greenBp = new ByteProcessor(width, height);
+					final ByteProcessor blueBp = new ByteProcessor(width, height);
+
+					final byte[] redPixels = (byte[]) redBp.getPixels();
+					final byte[] greenPixels = (byte[]) greenBp.getPixels();
+					final byte[] bluePixels = (byte[]) blueBp.getPixels();
+
+					((ColorProcessor)(originalImage.getProcessor().duplicate())).getRGB(redPixels, greenPixels, bluePixels);
+
+					channels = new ImageProcessor[]{redBp.convertToFloat(), greenBp.convertToFloat(), blueBp.convertToFloat()};
+				}
+				else
+				{
+					channels = new ImageProcessor[1];
+					channels[0] = originalImage.getProcessor().duplicate().convertToFloat();
+				}
 			
-				ImageStack is = new ImageStack(width, height);
+				// image stack to store the filtered version of each angle and channel
+				ImageStack[] is = new ImageStack[ channels.length ];		
+				for(int ch = 0; ch < channels.length; ch++)				
+					is[ ch ] = new ImageStack(width, height);
+				
+				
 				ImageProcessor rotatedPatch;
 				
 				final double rotationAngle = 180/nAngles;
@@ -1017,26 +1048,49 @@ public class FeatureStack
 					Convolver c = new Convolver();				
 			
 					float[] kernel = (float[]) rotatedPatch.getPixels();
-					ImageProcessor ip = originalImage.getProcessor().duplicate();		
-					c.convolveFloat(ip, kernel, patchSize, patchSize);		
+					
+					for(int ch = 0; ch < channels.length; ch++)
+					{
+						ImageProcessor ip = channels[ ch ].duplicate();		
+						c.convolveFloat(ip, kernel, patchSize, patchSize);		
 
-					is.addSlice("Membrane_"+patchSize+"_"+membraneSize, ip);
-				//	wholeStack.addSlice("Membrane_"+patchSize+"_"+membraneSize, ip.convertToByte(true));
+						is[ ch ].addSlice("Membrane_"+patchSize+"_"+membraneSize, ip);
+					}										
 				}
 				
-				ImagePlus projectStack = new ImagePlus("membraneStack",is);
-				//projectStack.show();
+				ImagePlus[] projectStack = new ImagePlus[ channels.length ];
+
+				// array of image stacks to store the projections of each channel
+				ImageStack[] membraneStack = new ImageStack[ channels.length ];
 				
-				ImageStack membraneStack = new ImageStack(width, height);
 				
-				ZProjector zp = new ZProjector(projectStack);
-				zp.setStopSlice(is.getSize());
-				for (int i=0;i<6; i++){
-					zp.setMethod(i);
-					zp.doProjection();
-					membraneStack.addSlice(availableFeatures[MEMBRANE] + "_" +i+"_"+patchSize+"_"+membraneSize, zp.getProjection().getChannelProcessor());
+				for(int ch = 0; ch < channels.length; ch++)
+				{
+					projectStack[ch] = new ImagePlus("membraneStack", is[ch]);
+
+					membraneStack[ ch ] = new ImageStack(width, height);
+							
+					ZProjector zp = new ZProjector( projectStack[ch] );
+					zp.setStopSlice( is[ ch ].getSize() );
+					for (int i=0;i<6; i++)
+					{
+						zp.setMethod(i);
+						zp.doProjection();
+						membraneStack[ ch ].addSlice(availableFeatures[MEMBRANE] + i +"_"+patchSize+"_"+membraneSize, zp.getProjection().getProcessor().duplicate());
+					}
 				}
-				return new ImagePlus ("membrane stack", membraneStack);
+				
+				// Merge channel results if necessary
+				if( originalImage.getType() == ImagePlus.COLOR_RGB)
+				{
+					final RGBStackMerge aux = new RGBStackMerge();
+					ImageStack is1 = aux.mergeStacks( width, height, 6, membraneStack[0], membraneStack[1], membraneStack[2], true);
+					
+					return new ImagePlus("membrane stack", is1);
+					
+				}
+				else 
+					return new ImagePlus("membrane stack", membraneStack[0]);				
 			}
 		};
 	}
