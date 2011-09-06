@@ -425,6 +425,11 @@ public class FeatureStackArray
 		return useNeighbors;
 	}
 	
+	public int getReferenceSliceIndex()
+	{
+		return referenceStackIndex;
+	}
+	
 }
 
 	
