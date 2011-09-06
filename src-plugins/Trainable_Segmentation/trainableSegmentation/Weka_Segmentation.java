@@ -2330,7 +2330,7 @@ public class Weka_Segmentation implements PlugIn
 			if(null == dir || null == fileWithExt)
 				return;
 
-			if(featureStackArray.isEmpty())
+			if(featureStackArray.isEmpty() || featureStackArray.getReferenceSliceIndex() == -1)
 			{
 				IJ.showStatus("Creating feature stack...");
 				IJ.log("Creating feature stack...");
