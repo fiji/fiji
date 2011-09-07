@@ -190,14 +190,14 @@ public class FeatureStack
 	 */
 	public FeatureStack(ImagePlus image)
 	{
-		originalImage = new ImagePlus("original image", image.getProcessor() );
+		if( image.getType() == ImagePlus.COLOR_RGB)
+			originalImage = new ImagePlus("original image", image.getProcessor() );
+		else
+			originalImage = new ImagePlus("original image", image.getProcessor().duplicate().convertToFloat() );
 		width = image.getWidth();
 		height = image.getHeight();
-		wholeStack = new ImageStack(width, height);
-		if( originalImage.getType() == ImagePlus.COLOR_RGB)
-			wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
-		else
-			wholeStack.addSlice("original", originalImage.getProcessor().duplicate().convertToFloat());
+		wholeStack = new ImageStack(width, height);		
+		wholeStack.addSlice("original", originalImage.getProcessor().duplicate());		
 	}
 	
 	/**
@@ -206,14 +206,15 @@ public class FeatureStack
 	 */
 	public FeatureStack(ImageProcessor ip)
 	{
-		originalImage = new ImagePlus("original image", ip);
+		if( ip instanceof ColorProcessor)
+			originalImage = new ImagePlus("original image", ip );
+		else
+			originalImage = new ImagePlus("original image", ip.duplicate().convertToFloat() );
+		
 		width = ip.getWidth();
 		height = ip.getHeight();
 		wholeStack = new ImageStack(width, height);
-		if( originalImage.getType() == ImagePlus.COLOR_RGB)
-			wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
-		else
-			wholeStack.addSlice("original", originalImage.getProcessor().duplicate().convertToFloat());
+		wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
 	}
 
 	/**
@@ -332,10 +333,20 @@ public class FeatureStack
 	 */
 	public void addVariance(float radius)
 	{
-		final ImageProcessor ip = originalImage.getProcessor().duplicate();
-		final RankFilters filter = new RankFilters();
-		filter.rank(ip, radius, RankFilters.VARIANCE);
-		wholeStack.addSlice(availableFeatures[VARIANCE]+ "_"  + radius, ip);
+		// Get channel(s) to process
+		ImagePlus[] channels = extractChannels(originalImage);
+
+		ImagePlus[] results = new ImagePlus[ channels.length ];
+
+		for(int ch=0; ch < channels.length; ch++)
+		{
+			final ImageProcessor ip = channels[ ch ].getProcessor().duplicate();
+			final RankFilters filter = new RankFilters();
+			filter.rank(ip, radius, RankFilters.VARIANCE);
+			results[ ch ] = new ImagePlus(availableFeatures[VARIANCE]+ "_"  + radius, ip);
+		}
+		ImagePlus merged = mergeResultChannels(results);
+		wholeStack.addSlice(merged.getTitle(), merged.getProcessor());
 	}
 	/**
 	 * Calculate variance filter concurrently
@@ -350,10 +361,19 @@ public class FeatureStack
 		return new Callable<ImagePlus>(){
 			public ImagePlus call(){
 		
-				final ImageProcessor ip = originalImage.getProcessor().duplicate();
-				final RankFilters filter = new RankFilters();
-				filter.rank(ip, radius, RankFilters.VARIANCE);
-				return new ImagePlus (availableFeatures[VARIANCE]+ "_"  + radius, ip);
+				// Get channel(s) to process
+				ImagePlus[] channels = extractChannels(originalImage);
+
+				ImagePlus[] results = new ImagePlus[ channels.length ];
+
+				for(int ch=0; ch < channels.length; ch++)
+				{
+					final ImageProcessor ip = channels[ ch ].getProcessor().duplicate();
+					final RankFilters filter = new RankFilters();
+					filter.rank(ip, radius, RankFilters.VARIANCE);
+					results[ ch ] = new ImagePlus(availableFeatures[VARIANCE]+ "_"  + radius, ip);
+				}
+				return mergeResultChannels(results);
 			}
 		};
 	}
@@ -1162,7 +1182,6 @@ public class FeatureStack
  				
  				return mergeResultChannels( results );
 			}
-
 			
 		};
 	}
@@ -1210,11 +1229,8 @@ public class FeatureStack
 	ImagePlus mergeResultChannels(final ImagePlus[] channels) 
 	{
 		if(channels.length > 1)
-		{
-			final RGBStackMerge aux = new RGBStackMerge();
-			final int width = channels[0].getWidth();
-			final int height = channels[0].getHeight();
-			ImageStack mergedColorStack = aux.mergeStacks( width, height, channels[0].getImageStackSize(), channels[0].getImageStack(), channels[1].getImageStack(), channels[2].getImageStack(), true);
+		{						
+			ImageStack mergedColorStack = mergeStacks(channels[0].getImageStack(), channels[1].getImageStack(), channels[2].getImageStack());
 			
 			ImagePlus merged = new ImagePlus(channels[0].getTitle(), mergedColorStack); 
 			
@@ -1227,7 +1243,63 @@ public class FeatureStack
 			return channels[0];
 	}
 	
+	/**
+	 * Merge three image stack into a color stack (doing scaling)
+	 * 
+	 * @param redChannel image stack representing the red channel 
+	 * @param greenChannel image stack representing the green channel
+	 * @param blueChannel image stack representing the blue channel
+	 * @return RGB merged stack
+	 */
+	ImageStack mergeStacks(ImageStack redChannel, ImageStack greenChannel, ImageStack blueChannel)
+	{
+		final ImageStack colorStack = new ImageStack( redChannel.getWidth(), redChannel.getHeight());
+		
+		for(int n=1; n<=redChannel.getSize(); n++)
+		{
+			final ByteProcessor red = create8BitImage( (FloatProcessor) (redChannel.getProcessor(n) ) );
+			final ByteProcessor green = create8BitImage( (FloatProcessor) ( greenChannel.getProcessor(n)) );
+			final ByteProcessor blue = create8BitImage( (FloatProcessor) ( blueChannel.getProcessor(n) ) );
+			
+			final ColorProcessor cp = new ColorProcessor(redChannel.getWidth(), redChannel.getHeight());
+			cp.setRGB((byte[]) red.getPixels(), (byte[]) green.getPixels(), (byte[]) blue.getPixels() );
+			
+			colorStack.addSlice(redChannel.getSliceLabel(n), cp);
+		}
+		
+		return colorStack;
+	}
 
+	/**
+	 * Convert a float processor to byte processor using scaling
+	 * @param fp original float image
+	 * @return scaled byte version of the float image
+	 */
+	ByteProcessor create8BitImage(FloatProcessor fp) 
+	{
+		fp.resetMinAndMax();
+		// scale from float to 8-bits
+		int size = fp.getWidth() * fp.getHeight();
+		
+		final byte[] pixels8 = new byte[size];
+		float value;
+		int ivalue;
+		float min2 = (float)fp.getMin(), max2=(float)fp.getMax();
+		float scale = 255f/(max2-min2);
+		final float[] pixels = (float[]) fp.getPixels();
+		for (int i=0; i<size; i++) 
+		{
+			value = pixels[i]-min2;
+			if (value<0f) 
+				value = 0f;
+			ivalue = (int)((value*scale)+0.5f);
+			if (ivalue>255) 
+				ivalue = 255;
+			pixels8[i] = (byte)ivalue;
+		}
+		return new ByteProcessor(fp.getWidth(), fp.getHeight(), pixels8, null);
+	}
+	
 	/**
 	 * Apply a filter to the original image (to be submitted to an ExecutorService)
 	 * @param originalImage original image
@@ -1840,10 +1912,20 @@ public class FeatureStack
 			public ImagePlus call()
 			{
 				
-				final ImageProcessor ip = originalImage.getProcessor().duplicate();
-				final Kuwahara filter = new Kuwahara();
-				filter.applyFilter(ip, kernelSize, nAngles, criterion);
-				return new ImagePlus (availableFeatures[KUWAHARA] + "_" + kernelSize + "_ " + nAngles + "_" + criterion, ip);
+				// Get channel(s) to process
+				ImagePlus[] channels = extractChannels(originalImage);
+				
+				ImagePlus[] results = new ImagePlus[ channels.length ];
+				
+				for(int ch=0; ch < channels.length; ch++)
+				{
+					final ImageProcessor ip = channels[ ch ].getProcessor().duplicate();
+					final Kuwahara filter = new Kuwahara();
+					filter.applyFilter(ip, kernelSize, nAngles, criterion);
+					results[ ch ] = new ImagePlus(availableFeatures[KUWAHARA] + "_" + kernelSize + "_ " + nAngles + "_" + criterion, ip);
+				}
+				
+				return mergeResultChannels(results);
 			}
 		};
 	}
@@ -1861,10 +1943,22 @@ public class FeatureStack
 			final int nAngles,
 			final int criterion)
 	{
-		final ImageProcessor ip = originalImage.getProcessor().duplicate();
-		final Kuwahara filter = new Kuwahara();
-		filter.applyFilter(ip, kernelSize, nAngles, criterion);
-		wholeStack.addSlice(availableFeatures[KUWAHARA] + "_" + kernelSize + "_ " + nAngles + "_" + criterion, ip);
+		// Get channel(s) to process
+		ImagePlus[] channels = extractChannels(originalImage);
+		
+		ImagePlus[] results = new ImagePlus[ channels.length ];
+		
+		for(int ch=0; ch < channels.length; ch++)
+		{
+			final ImageProcessor ip = channels[ ch ].getProcessor().duplicate();
+			final Kuwahara filter = new Kuwahara();
+			filter.applyFilter(ip, kernelSize, nAngles, criterion);
+			results[ ch ] = new ImagePlus(availableFeatures[KUWAHARA] + "_" + kernelSize + "_ " + nAngles + "_" + criterion, ip);
+		}
+		
+		ImagePlus merged = mergeResultChannels(results);
+		
+		wholeStack.addSlice(merged.getTitle(), merged.getProcessor());
 	}
 	
 	/**
@@ -2062,7 +2156,7 @@ public class FeatureStack
 				
 				for(int ch=0; ch < channels.length; ch++)
 				{
-					ImageProcessor result = originalImage.getProcessor().duplicate().convertToByte(true);
+					ImageProcessor result = channels[ ch ].getProcessor().duplicate().convertToByte(true);
 					filter.Lipschitz2D(result);
 				
 					results[ ch ] = new ImagePlus (availableFeatures[LIPSCHITZ] + "_" + downHat + "_" + topHat + "_" + slope, result.convertToFloat());
@@ -2096,7 +2190,7 @@ public class FeatureStack
 		
 		for(int ch=0; ch < channels.length; ch++)
 		{
-			ImageProcessor result = originalImage.getProcessor().duplicate().convertToByte(true);
+			ImageProcessor result = channels[ ch ].getProcessor().duplicate().convertToByte(true);
 			filter.Lipschitz2D(result);
 		
 			results[ ch ] = new ImagePlus (availableFeatures[LIPSCHITZ] + "_" + downHat + "_" + topHat + "_" + slope, result.convertToFloat());
@@ -2937,10 +3031,13 @@ public class FeatureStack
 		
 		double[] values = new double[ getSize() + 1 + extra ];
 		int n = 0;
-		for (int z=1; z<=getSize(); z++, n++)
-		{
-			values[z-1] = getProcessor(z).getPixelValue(x, y);
-		}
+		if( originalImage.getType() != ImagePlus.COLOR_RGB )
+			for (int z=1; z<=getSize(); z++, n++)		
+				values[z-1] = getProcessor(z).getPixelValue(x, y);
+		else
+			for (int z=1; z<=getSize(); z++, n++)		
+				values[z-1] = getProcessor(z).getPixel(x, y);
+		
 		
 		// Test: add neighbors of original image
 		if(useNeighbors)
@@ -2978,7 +3075,10 @@ public class FeatureStack
 		if(y2 >= ip.getHeight())
 			y2 = 2 * (ip.getHeight() - 1) - y2;
 		
-		return ip.getPixelValue(x2, y2);
+		if( originalImage.getType() != ImagePlus.COLOR_RGB )
+			return ip.getPixelValue(x2, y2);
+		else 
+			return ip.getPixel(x2, y2);
 	}
 
 	/**
