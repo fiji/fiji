@@ -76,6 +76,8 @@ public class Main {
 		}
 
 		public boolean matches(PluginObject plugin) {
+			if (!plugin.isForThisPlatform())
+				return false;
 			if (fileNames != null &&
 					!fileNames.contains(plugin.filename))
 				return false;
