@@ -164,22 +164,43 @@ public class Main {
 	}
 
 	public void update(List<String> files) {
+		update(files, false);
+	}
+
+	public void update(List<String> files, boolean force) {
+		update(files, force, false);
+	}
+
+	public void update(List<String> files, boolean force, boolean pristine) {
 		checksum(files);
 		for (PluginObject plugin : plugins.filter(new FileFilter(files)))
 			switch (plugin.getStatus()) {
-			case UPDATEABLE:
 			case MODIFIED:
+				if (!force) {
+					System.err.println("Skipping locally-modified " + plugin.filename);
+					break;
+				}
+			case UPDATEABLE:
 			case NEW:
 			case NOT_INSTALLED:
 				download(plugin);
 				break;
 			case NOT_FIJI:
-			case OBSOLETE:
+				if (!pristine) {
+					System.err.println("Keeping non-Fiji " + plugin.filename);
+					break;
+				}
 			case OBSOLETE_MODIFIED:
+				if (!force) {
+					System.err.println("Keeping modified but obsolete " + plugin.filename);
+					break;
+				}
+			case OBSOLETE:
 				delete(plugin);
 				break;
 			default:
-				System.err.println("Not updating " + plugin.filename + " (" + plugin.getStatus() + ")");
+				if (files != null && files.size() > 0)
+					System.err.println("Not updating " + plugin.filename + " (" + plugin.getStatus() + ")");
 			}
 		try {
 			plugins.write();
@@ -296,6 +317,8 @@ public class Main {
 			+ "\tlist-updateable [<files>]\n"
 			+ "\tlist-current [<files>]\n"
 			+ "\tupdate [<files>]\n"
+			+ "\tupdate-force [<files>]\n"
+			+ "\tupdate-force-pristine [<files>]\n"
 			+ "\tupload [<files>]\n"
 			+ "\tupdate-java");
 	}
@@ -318,6 +341,10 @@ public class Main {
 			getInstance().listUpdateable(makeList(args, 1));
 		else if (command.equals("update"))
 			getInstance().update(makeList(args, 1));
+		else if (command.equals("update-force"))
+			getInstance().update(makeList(args, 1), true);
+		else if (command.equals("update-force-pristine"))
+			getInstance().update(makeList(args, 1), true, true);
 		else if (command.equals("update-java"))
 			new UpdateJava().run(null);
 		else if (command.equals("upload"))
