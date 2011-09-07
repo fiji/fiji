@@ -18,6 +18,7 @@ import fiji.updater.util.Downloader;
 import fiji.updater.util.Progress;
 import fiji.updater.util.StderrProgress;
 import fiji.updater.util.UpdateJava;
+import fiji.updater.util.Util;
 
 import java.io.Console;
 import java.io.File;
@@ -67,8 +68,11 @@ public class Main {
 		protected Set<String> fileNames;
 
 		public FileFilter(List<String> files) {
-			if (files != null && files.size() > 0)
-				fileNames = new HashSet<String>(files);
+			if (files != null && files.size() > 0) {
+				fileNames = new HashSet<String>();
+				for (String file : files)
+					fileNames.add(Util.stripPrefix(file, ""));
+			}
 		}
 
 		public boolean matches(PluginObject plugin) {
