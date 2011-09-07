@@ -181,6 +181,9 @@ public class FeatureStack
 	private int minDerivativeOrder = 2;
 	private int maxDerivativeOrder = 5;
 	
+	/** flag to specify the use of color features */
+	final boolean colorFeatures;
+	
 	/** executor service to produce concurrent threads */
 	ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 	
@@ -191,9 +194,15 @@ public class FeatureStack
 	public FeatureStack(ImagePlus image)
 	{
 		if( image.getType() == ImagePlus.COLOR_RGB)
+		{
 			originalImage = new ImagePlus("original image", image.getProcessor() );
+			colorFeatures = true;
+		}
 		else
+		{
 			originalImage = new ImagePlus("original image", image.getProcessor().duplicate().convertToFloat() );
+			colorFeatures = false;
+		}
 		width = image.getWidth();
 		height = image.getHeight();
 		wholeStack = new ImageStack(width, height);		
@@ -207,9 +216,15 @@ public class FeatureStack
 	public FeatureStack(ImageProcessor ip)
 	{
 		if( ip instanceof ColorProcessor)
+		{
 			originalImage = new ImagePlus("original image", ip );
+			colorFeatures = true;
+		}
 		else
+		{
 			originalImage = new ImagePlus("original image", ip.duplicate().convertToFloat() );
+			colorFeatures = false;
+		}
 		
 		width = ip.getWidth();
 		height = ip.getHeight();
@@ -3031,7 +3046,7 @@ public class FeatureStack
 		
 		double[] values = new double[ getSize() + 1 + extra ];
 		int n = 0;
-		if( originalImage.getType() != ImagePlus.COLOR_RGB )
+		if( colorFeatures  == false )
 			for (int z=1; z<=getSize(); z++, n++)		
 				values[z-1] = getProcessor(z).getPixelValue(x, y);
 		else
@@ -3075,7 +3090,7 @@ public class FeatureStack
 		if(y2 >= ip.getHeight())
 			y2 = 2 * (ip.getHeight() - 1) - y2;
 		
-		if( originalImage.getType() != ImagePlus.COLOR_RGB )
+		if( colorFeatures  == false )
 			return ip.getPixelValue(x2, y2);
 		else 
 			return ip.getPixel(x2, y2);
