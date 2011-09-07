@@ -129,7 +129,7 @@ public class Main {
 		}
 
 		public String getDestination() {
-			return plugin.filename;
+			return Util.prefix(plugin.filename);
 		}
 
 		public String getURL() {
