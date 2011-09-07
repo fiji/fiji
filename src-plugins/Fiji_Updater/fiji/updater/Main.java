@@ -46,7 +46,7 @@ public class Main {
 		try {
 			plugins.read();
 		} catch (FileNotFoundException e) { /* ignore */ }
-		progress = new StderrProgress();
+		progress = new StderrProgress(80);
 		XMLFileDownloader downloader = new XMLFileDownloader(plugins);
 		downloader.addProgress(progress);
 		downloader.start();
