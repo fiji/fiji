@@ -3730,8 +3730,8 @@ public class WekaSegmentation {
 					filterFeatureStackByList(featureNames, sliceFeatures);
 
 					final Instances sliceData = sliceFeatures.createInstances(classNames);
-					sliceData.setClassIndex(sliceData.numAttributes() - 1);
-
+					sliceData.setClassIndex(sliceData.numAttributes() - 1);					
+					
 					final ImagePlus classImage;
 					classImage = applyClassifier(sliceData, slice.getWidth(), slice.getHeight(), numFurtherThreads, probabilityMaps);
 
@@ -4016,6 +4016,7 @@ public class WekaSegmentation {
 		}
 
 		IJ.log("Classifying whole image...");
+		//writeDataToARFF(wholeImageData, "/tmp/wholeImageData.arff");
 		classifiedImage = applyClassifier(wholeImageData, trainingImage.getWidth(), trainingImage.getHeight(), numThreads, classify);
 		
 		IJ.log("Finished segmentation of whole image.\n");
@@ -4260,7 +4261,12 @@ public class WekaSegmentation {
 								classificationResult[k][i] = prob[k];
 						}
 						else
-							classificationResult[0][i] = classifier.classifyInstance(data.instance(i));
+						{
+							if( null == data.get(i) )
+								IJ.log("ERROR! instance #" + i + " is null");
+							else
+								classificationResult[0][i] = classifier.classifyInstance(data.get(i));
+						}
 
 					}catch(Exception e){
 

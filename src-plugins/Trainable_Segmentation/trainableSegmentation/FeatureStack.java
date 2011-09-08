@@ -2291,6 +2291,8 @@ public class FeatureStack
 				data.add(createInstance(x, y, 0));
 			}
 		}
+		// Set the index of the class attribute
+		data.setClassIndex( attributes.size() - 1 );
 		IJ.showProgress(1.0);
 		return data;
 	}
