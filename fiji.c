@@ -2178,7 +2178,7 @@ static void try_with_less_memory(size_t memory_size)
 		new_argv[i] = quote_win32(new_argv[i]);
 	execve(new_argv[0], (char * const *)new_argv, NULL);
 #else
-	execve(new_argv[0], new_argv, NULL);
+	execv(new_argv[0], new_argv);
 #endif
 
 	string_setf(buffer, "ERROR: failed to launch (errno=%d;%s):\n",
