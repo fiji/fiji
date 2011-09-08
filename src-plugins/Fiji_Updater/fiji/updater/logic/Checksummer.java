@@ -180,8 +180,6 @@ public class Checksummer extends Progressable {
 	}
 
 	public void updateFromLocal(List<String> files) {
-		if (!Util.isDeveloper)
-			throw new RuntimeException("Must be developer");
 		queue = new ArrayList<StringPair>();
 		for (String file : files)
 			queue(file);
