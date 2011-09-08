@@ -1323,6 +1323,7 @@ struct dir *open_dir(const char *path)
 	result->handle = FindFirstFile(result->pattern->buffer,
 			&(result->find_data));
 	if (result->handle == INVALID_HANDLE_VALUE) {
+		string_release(result->pattern);
 		free(result);
 		return NULL;
 	}
