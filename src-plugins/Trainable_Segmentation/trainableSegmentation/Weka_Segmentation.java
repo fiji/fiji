@@ -2133,9 +2133,10 @@ public class Weka_Segmentation implements PlugIn
 		// Set classifier and options
 		c = (Object)m_ClassifierEditor.getValue();
 	    String options = "";
+	    final String[] optionsArray = ((OptionHandler)c).getOptions();
 	    if (c instanceof OptionHandler) 
 	    {
-	      options = Utils.joinOptions(((OptionHandler)c).getOptions());
+	      options = Utils.joinOptions( optionsArray );
 	    }
 	    //System.out.println("Classifier after choosing: " + c.getClass().getName() + " " + options);
 	    if(originalClassifierName.equals( c.getClass().getName() ) == false
@@ -2144,7 +2145,7 @@ public class Weka_Segmentation implements PlugIn
 	    	AbstractClassifier cls;
 	    	try{
 	    		cls = (AbstractClassifier) (c.getClass().newInstance());
-	    		cls.setOptions(options.split(" "));
+	    		cls.setOptions( optionsArray );
 	    	}
 	    	catch(Exception ex)
 	    	{
