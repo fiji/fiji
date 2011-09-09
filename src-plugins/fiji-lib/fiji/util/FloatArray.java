@@ -1,6 +1,6 @@
 package fiji.util;
 
-public class FloatArray extends ArrayBase<float[]>
+public class FloatArray extends ArrayBase<float[], Float>
 {
 	protected float[] baseArray;
 
@@ -28,6 +28,11 @@ public class FloatArray extends ArrayBase<float[]>
 		baseArray = array;
 	}
 
+	@Override
+	protected Float valueOf(int index) {
+		return Float.valueOf(baseArray[index]);
+	}
+
 	// Append a value to the collection.
 	public int add(float value) {
 		int index = getAddIndex();
@@ -36,11 +41,12 @@ public class FloatArray extends ArrayBase<float[]>
 	}
 
 	// Insert a value into the collection.
-	public void insert(int index, float value) {
+	public int insert(int index, float value) {
 		if (index < 0 || index > actualSize)
 			throw new ArrayIndexOutOfBoundsException("Invalid index value");
 		makeInsertSpace(index);
 		baseArray[index] = value;
+		return index;
 	}
 
 	// Get value from the collection.

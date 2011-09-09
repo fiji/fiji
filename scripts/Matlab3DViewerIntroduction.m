@@ -130,7 +130,7 @@
 % * The ImageJ 3D viewer is written by Benjamin Schmid, Mark Longair,
 % Albert Cardona and Johannes Schindelin;
 % * MIJ is written by Daniel Sage and Dimiter Prodanov;
-% * Miji is written by Johannes Schindelin, Jacques Pécréaux and Jean-Yves
+% * Miji is written by Johannes Schindelin, Jacques PÃ©crÃ©aux and Jean-Yves
 % Tinevez.
 %
 % It's all open source, feel free to modify, distribute, comment or
