@@ -3638,6 +3638,17 @@ public class WekaSegmentation {
 			return false;
 		}
 
+		/*
+		for(int i=0; i < data.numInstances(); i++)
+		{
+			try {
+				IJ.log("Prediction for instance " + i + ": " +classifier.classifyInstance(data.instance(i)));
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		*/
 		// Print classifier information
 		IJ.log( this.classifier.toString() );
 
@@ -4016,7 +4027,6 @@ public class WekaSegmentation {
 		}
 
 		IJ.log("Classifying whole image...");
-		//writeDataToARFF(wholeImageData, "/tmp/wholeImageData.arff");
 		classifiedImage = applyClassifier(wholeImageData, trainingImage.getWidth(), trainingImage.getHeight(), numThreads, classify);
 		
 		IJ.log("Finished segmentation of whole image.\n");
@@ -4152,7 +4162,15 @@ public class WekaSegmentation {
 			else
 				partialData[i] = new Instances(data, i*partialSize, partialSize);
 
-			fu[i] = exe.submit(classifyInstances(partialData[i], classifier, counter, probabilityMaps));
+			AbstractClassifier classifierCopy = null;
+			try {
+				classifierCopy = (AbstractClassifier) (AbstractClassifier.makeCopy( classifier ));
+			} catch (Exception e) {
+				IJ.log("Error: classifier could not be copied to classify in a multi-thread way.");
+				e.printStackTrace();
+			}
+			
+			fu[i] = exe.submit(classifyInstances(partialData[i], classifierCopy, counter, probabilityMaps));
 		}
 
 		ScheduledExecutorService monitor = Executors.newScheduledThreadPool(1);
@@ -4262,10 +4280,7 @@ public class WekaSegmentation {
 						}
 						else
 						{
-							if( null == data.get(i) )
-								IJ.log("ERROR! instance #" + i + " is null");
-							else
-								classificationResult[0][i] = classifier.classifyInstance(data.get(i));
+							classificationResult[0][i] = classifier.classifyInstance(data.get(i));
 						}
 
 					}catch(Exception e){
