@@ -75,6 +75,7 @@ Name					File					Author(s)						Contact								License
 * PostgreSQL JDBC 			postgresql-8.2-506.jdbc3.jar 		http://jdbc.postgresql.org/ 				http://jdbc.postgresql.org/					BSD
 * RandomJ	 			RandomJ_.jar	 			Erik Meijering	 					http://www.imagescience.org/meijering/software/randomj/		imagescience (see below)
 * Register virtual stack slices 	register_virtual_stack_slices.jar 	Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
+* Script Editor				Script_Editor.jar			Johannes Schindelin et al				fiji@googlegroups.com						BSD
 * Shepp-Logan Phantom			SheppLogan_.jar				Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/shepplogan/			BIG (see below)
 * Snakuscule				Snakuscule_.jar				Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/snakuscule/			BIG (see below)
 * Stack Reverser 			Stack_Reverser.class 			Anthony Padua, Daniel Barboriak 			http://rsb.info.nih.gov/ij/plugins/substack-maker.html		PD
