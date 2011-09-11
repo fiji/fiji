@@ -5,7 +5,7 @@
  * Copyright 2007-2011 Johannes Schindelin, Mark Longair, Albert Cardona
  * Benjamin Schmid, Erwin Frise and Gregory Jefferis
  *
- * The source is distributed under the GPLv2 or later.
+ * The source is distributed under the BSD license.
  *
  * Clarification: the license of the Fiji launcher has no effect on
  * the Java Runtime, ImageJ or any plugins, since they are not derivatives.

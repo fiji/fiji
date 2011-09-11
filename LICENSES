@@ -37,6 +37,7 @@ Name					File					Author(s)						Contact								License
 * FeatureJ	 			FeatureJ_.jar	 			Erik Meijering	 					http://www.imagescience.org/meijering/software/featurej/	imagescience (see below)
 * Fiji_Plugins.jar 			Fiji_Plugins.jar 			Various authors 					http://fiji.sc/Contributors 				PD,GPL
 * Fiji as a framework																							GPL
+* Fiji launcher				fiji-{win*,linux*,macosx,tiger}		Johannes Schindelin et al				fiji@googlegroups.com						BSD
 * Graph Cut				Graph_Cut.jar				Jan Funke						jan.funke@inf.tu-dresden.de					GPL 2
 * ij-ImageIO 				ij-ImageIO_.jar				Jarek Sacha 						jarek@ieee.org 							LGPL
 * ImageJA				ij.jar					Johannes Schindelin, Wayne Rasband			Johannes.Schindelin@gmx.de					PD
