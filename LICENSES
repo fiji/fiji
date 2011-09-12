@@ -1,6 +1,6 @@
 LICENSES
 
-This file lists the license under which each plugin or plugin bundle (a .jar file) is released.
+Fiji as a bundle is licensed under the GPL, with exceptions for plugins and other components.  This file lists the license under which each component, plugin or plugin bundle (a .jar file) is released.
 
 Abbreviations:
 * GPL: General Public License (latest) as specified at http://www.gnu.org/licenses/gpl.txt
@@ -35,8 +35,8 @@ Name					File					Author(s)						Contact								License
 * Differentials				Differentials_.jar			Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/differentials/			BIG (see below)
 * Extended Depth of Focus		Extended_Depth_Field.jar		Alex Prudencio, Daniel Sage et al			http://bigwww.epfl.ch/demo/edf/					BIG (see below)
 * FeatureJ	 			FeatureJ_.jar	 			Erik Meijering	 					http://www.imagescience.org/meijering/software/featurej/	imagescience (see below)
-* Fiji_Plugins.jar 			Fiji_Plugins.jar 			Various authors 					http://fiji.sc/Contributors 				PD,GPL
-* Fiji as a framework																							GPL
+* Fiji_Plugins.jar 			Fiji_Plugins.jar 			Various authors 					http://fiji.sc/Contributors 					PD,GPL
+* Fiji as a framework								The Fiji Team						fiji-devel@googlegroups.com					GPL
 * Graph Cut				Graph_Cut.jar				Jan Funke						jan.funke@inf.tu-dresden.de					GPL 2
 * ij-ImageIO 				ij-ImageIO_.jar				Jarek Sacha 						jarek@ieee.org 							LGPL
 * ImageJA				ij.jar					Johannes Schindelin, Wayne Rasband			Johannes.Schindelin@gmx.de					PD
