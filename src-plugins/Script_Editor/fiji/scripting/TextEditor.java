@@ -2148,7 +2148,8 @@ public class TextEditor extends JFrame implements ActionListener,
 	public void openHelp(String className, boolean withFrames) {
 		if (className == null)
 			className = getSelectedClassNameOrAsk();
-		getEditorPane().getClassNameFunctions().openHelpForClass(className, withFrames);
+		if (className != null)
+			getEditorPane().getClassNameFunctions().openHelpForClass(className, withFrames);
 	}
 
 	public void extractSourceJar() {
