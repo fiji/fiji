@@ -47,6 +47,7 @@ import javax.swing.JDialog;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
@@ -70,6 +71,7 @@ public class NeuriteTracerResultsDialog
 	protected JMenuBar menuBar;
 	protected JMenu fileMenu;
 	protected JMenu analysisMenu;
+	protected JMenu viewMenu;
 
 	protected JMenuItem loadMenuItem;
 	protected JMenuItem loadLabelsMenuItem;
@@ -82,6 +84,8 @@ public class NeuriteTracerResultsDialog
 	protected JMenuItem makeLineStackMenuItem;
 	protected JMenuItem exportCSVMenuItemAgain;
 	protected JMenuItem shollAnalysiHelpMenuItem;
+
+	protected JCheckBoxMenuItem mipOverlayMenuItem;
 
 	// These are the states that the UI can be in:
 
@@ -680,6 +684,9 @@ public class NeuriteTracerResultsDialog
 		analysisMenu = new JMenu("Analysis");
 		menuBar.add(analysisMenu);
 
+		viewMenu = new JMenu("View");
+		menuBar.add(viewMenu);
+
 		loadMenuItem = new JMenuItem("Load traces / SWC file...");
 		loadMenuItem.addActionListener(this);
 		fileMenu.add(loadMenuItem);
@@ -719,6 +726,14 @@ public class NeuriteTracerResultsDialog
 		shollAnalysiHelpMenuItem = new JMenuItem("Sholl Analysis help...");
 		shollAnalysiHelpMenuItem.addActionListener(this);
 		analysisMenu.add(shollAnalysiHelpMenuItem);
+
+		String opacityLabel = "Show MIP overlay(s) at "+
+			SimpleNeuriteTracer.OVERLAY_OPACITY_PERCENT+
+			"% opacity";
+		mipOverlayMenuItem = new JCheckBoxMenuItem(opacityLabel);
+		mipOverlayMenuItem.addItemListener(this);
+		viewMenu.add(mipOverlayMenuItem);
+
 
 		setJMenuBar(menuBar);
 
@@ -1402,8 +1417,15 @@ public class NeuriteTracerResultsDialog
 			int selectedIndex = paths3DChoice.getSelectedIndex();
 			plugin.setPaths3DDisplay( selectedIndex + 1 );
 
-		}
+		} else if( source == mipOverlayMenuItem ) {
 
+			if( e.getStateChange() == ItemEvent.SELECTED ) {
+				plugin.showMIPOverlays(true);
+			} else {
+				plugin.showMIPOverlays(false);
+			}
+
+		}
 	}
 
 	@Override

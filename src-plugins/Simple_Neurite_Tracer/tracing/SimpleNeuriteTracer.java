@@ -61,6 +61,9 @@ import amira.AmiraParameters;
 import features.SigmaPalette;
 import features.TubenessProcessor;
 
+import ij.plugin.ZProjector;
+import ij.gui.Roi;
+
 /* Note on terminology:
 
    "traces" files are made up of "paths".  Paths are non-branching
@@ -1513,5 +1516,41 @@ public class SimpleNeuriteTracer extends ThreePanes
 			       p[1] * y_spacing,
 			       p[2] * z_spacing,
 			       false );
+	}
+
+	public static final int OVERLAY_OPACITY_PERCENT = 20;
+
+	public void showMIPOverlays(boolean show) {
+		ArrayList<ImagePlus> allImages = new ArrayList<ImagePlus>();
+		allImages.add(xy);
+		if( ! single_pane ) {
+			allImages.add(xz);
+			allImages.add(zy);
+		}
+		for( ImagePlus imagePlus : allImages ) {
+			if( show ) {
+
+				// Create a MIP project of the stack:
+				ZProjector zp = new ZProjector();
+				zp.setImage(imagePlus);
+				zp.setMethod(ZProjector.MAX_METHOD);
+				zp.doProjection();
+				ImagePlus overlay = zp.getProjection();
+
+				// Add display it as an overlay.
+				// (This logic is taken from OverlayCommands.)
+				Roi roi = new ImageRoi(0, 0, overlay.getProcessor());
+				roi.setName(overlay.getShortTitle());
+				((ImageRoi)roi).setOpacity(OVERLAY_OPACITY_PERCENT/100.0);
+				Overlay overlayList = imagePlus.getOverlay();
+				if (overlayList==null)
+					overlayList = new Overlay();
+				overlayList.add(roi);
+				imagePlus.setOverlay(overlayList);
+
+			} else {
+				imagePlus.setOverlay(null);
+			}
+		}
 	}
 }
