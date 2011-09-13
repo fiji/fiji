@@ -702,7 +702,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	/* Start a search thread looking for the goal in the arguments: */
 
-	synchronized void testPathTo( double x_in_pane_precise, double y_in_pane_precise, int plane, PointInImage joinPoint ) {
+	synchronized void testPathTo( double world_x, double world_y, double world_z, PointInImage joinPoint ) {
 
 		if( ! lastStartPointSet ) {
 			IJ.showStatus( "No initial start point has been set.  Do that with a mouse click." +
@@ -715,16 +715,13 @@ public class SimpleNeuriteTracer extends ThreePanes
 			return;
 		}
 
-		double [] p = new double[3];
-		findPointInStackPrecise( x_in_pane_precise, y_in_pane_precise, plane, p );
-
 		double real_x_end, real_y_end, real_z_end;
 
 		int x_end, y_end, z_end;
 		if( joinPoint == null ) {
-			real_x_end = p[0] * x_spacing;
-			real_y_end = p[1] * y_spacing;
-			real_z_end = p[2] * z_spacing;
+			real_x_end = world_x;
+			real_y_end = world_y;
+			real_z_end = world_z;
 		} else {
 			real_x_end = joinPoint.x;
 			real_y_end = joinPoint.y;
@@ -887,9 +884,6 @@ public class SimpleNeuriteTracer extends ThreePanes
 		repaintAllPanes( );
 	}
 
-	/** This method should really be called by the other clickForTrace:
-	    FIXME - this needs some refactoring */
-
 	synchronized public void clickForTrace( Point3d p, boolean join ) {
 		double x_unscaled = p.x / x_spacing;
 		double y_unscaled = p.y / y_spacing;
@@ -897,17 +891,17 @@ public class SimpleNeuriteTracer extends ThreePanes
 		setSlicesAllPanes( (int)x_unscaled,
 				   (int)y_unscaled,
 				   (int)z_unscaled );
-		clickForTrace( x_unscaled, y_unscaled, ThreePanes.XY_PLANE, join );
+		clickForTrace( p.x, p.y, p.z, join );
 	}
 
-	synchronized public void clickForTrace( double x_in_pane_precise, double y_in_pane_precise, int plane, boolean join ) {
+	synchronized public void clickForTrace( double world_x, double world_y, double world_z, boolean join ) {
 
 		PointInImage joinPoint = null;
 
 		if( join ) {
-			double [] p = new double[3];
-			findPointInStackPrecise( x_in_pane_precise, y_in_pane_precise, plane, p );
-			joinPoint = pathAndFillManager.nearestJoinPointOnSelectedPaths( p[0], p[1], p[2] );
+			joinPoint = pathAndFillManager.nearestJoinPointOnSelectedPaths( world_x / x_spacing,
+											world_y / y_spacing,
+											world_z / z_spacing );
 		}
 
 		if( resultsDialog == null )
@@ -922,34 +916,40 @@ public class SimpleNeuriteTracer extends ThreePanes
 			return;
 
 		if( filler != null ) {
-			setFillThresholdFrom( x_in_pane_precise, y_in_pane_precise, plane );
+			setFillThresholdFrom( world_x, world_y, world_z );
 			return;
 		}
 
 		if( pathUnfinished ) {
 			/* Then this is a succeeding point, and we
 			   should start a search. */
-			testPathTo( x_in_pane_precise, y_in_pane_precise, plane, joinPoint );
+			testPathTo( world_x, world_y, world_z, joinPoint );
 			resultsDialog.changeState( NeuriteTracerResultsDialog.SEARCHING );
 		} else {
 			/* This is an initial point. */
-			startPath( x_in_pane_precise, y_in_pane_precise, plane, joinPoint );
+			startPath( world_x, world_y, world_z, joinPoint );
 			resultsDialog.changeState( NeuriteTracerResultsDialog.PARTIAL_PATH );
 		}
 
 	}
 
-	public void setFillThresholdFrom( double x_in_pane, double y_in_pane, int plane ) {
+	synchronized public void clickForTrace( double x_in_pane_precise, double y_in_pane_precise, int plane, boolean join ) {
 
 		double [] p = new double[3];
+		findPointInStackPrecise( x_in_pane_precise, y_in_pane_precise, plane, p );
 
-		findPointInStackPrecise( x_in_pane, y_in_pane, plane, p );
+		double world_x = p[0] * x_spacing;
+		double world_y = p[1] * y_spacing;
+		double world_z = p[2] * z_spacing;
 
-		double x = p[0];
-		double y = p[1];
-		double z = p[2];
+		clickForTrace( world_x, world_y, world_z, join );
+	}
 
-		float distance = filler.getDistanceAtPoint(x,y,z);
+	public void setFillThresholdFrom( double world_x, double world_y, double world_z ) {
+
+		float distance = filler.getDistanceAtPoint( world_x / x_spacing,
+							    world_y / y_spacing,
+							    world_z / z_spacing );
 
 		setFillThreshold( distance );
 	}
@@ -967,7 +967,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	}
 
-	synchronized void startPath( double x_in_pane_precise, double y_in_pane_precise, int plane, PointInImage joinPoint ) {
+	synchronized void startPath( double world_x, double world_y, double world_z, PointInImage joinPoint ) {
 
 		endJoin = null;
 		endJoinPoint = null;
@@ -976,9 +976,6 @@ public class SimpleNeuriteTracer extends ThreePanes
 			IJ.showStatus( "The start point has already been set; to finish a path press 'F'" );
 			return;
 		}
-
-		double [] p = new double[3];
-		findPointInStackPrecise( x_in_pane_precise, y_in_pane_precise, plane, p );
 
 		setPathUnfinished( true );
 		lastStartPointSet = true;
@@ -991,9 +988,9 @@ public class SimpleNeuriteTracer extends ThreePanes
 		double real_last_start_x, real_last_start_y, real_last_start_z;
 
 		if( joinPoint == null ) {
-			real_last_start_x = p[0] * x_spacing;
-			real_last_start_y = p[1] * y_spacing;
-			real_last_start_z = p[2] * z_spacing;
+			real_last_start_x = world_x;
+			real_last_start_y = world_y;
+			real_last_start_z = world_z;
 			ballColor = Color.BLUE;
 		} else {
 			real_last_start_x = joinPoint.x;
