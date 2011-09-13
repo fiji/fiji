@@ -1475,4 +1475,43 @@ public class SimpleNeuriteTracer extends ThreePanes
 		c.addKeyListener(firstKeyListener);
 	}
 
+	public void clickAtMaxPoint( int x_in_pane, int y_in_pane, int plane ) {
+		int [][] pointsToConsider = findAllPointsAlongLine( x_in_pane, y_in_pane, plane );
+		ArrayList<int[]> pointsAtMaximum = new ArrayList<int[]>();
+		float currentMaximum = -Float.MAX_VALUE;
+		for( int i = 0; i < pointsToConsider.length; ++i ) {
+			float v = -Float.MAX_VALUE;
+			int [] p = pointsToConsider[i];
+			int xyIndex = p[1]*width + p[0];
+			switch (imageType) {
+			case ImagePlus.GRAY8:
+			case ImagePlus.COLOR_256:
+				v = 0xFF & slices_data_b[p[2]][xyIndex];
+				break;
+			case ImagePlus.GRAY16:
+				v = slices_data_s[p[2]][xyIndex];
+				break;
+			case ImagePlus.GRAY32:
+				v = slices_data_f[p[2]][xyIndex];
+				break;
+			default:
+				throw new RuntimeException("Unknow image type: "+imageType);
+			}
+			if( v > currentMaximum ) {
+				pointsAtMaximum = new ArrayList<int[]>();
+				pointsAtMaximum.add(p);
+				currentMaximum = v;
+			} else if( v == currentMaximum ) {
+				pointsAtMaximum.add(p);
+			}
+		}
+		/* Take the middle of those points, and pretend that
+		   was the point that was clicked on. */
+		int [] p = pointsAtMaximum.get(pointsAtMaximum.size()/2);
+
+		clickForTrace( p[0] * x_spacing,
+			       p[1] * y_spacing,
+			       p[2] * z_spacing,
+			       false );
+	}
 }
