@@ -821,6 +821,8 @@ public class TrackMateModel {
 			System.out.println("[TrackMateModel] Adding spot " + spot + " to selection");
 		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(1);
 		spotMap.put(spot, true);
+		if (DEBUG_SELECTION)
+			System.out.println("[TrackMateModel] Seding event to listeners: "+selectionChangeListeners);
 		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
 		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
 			listener.selectionChanged(event);
@@ -848,6 +850,8 @@ public class TrackMateModel {
 			}
 		}
 		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
+		if (DEBUG_SELECTION) 
+			System.out.println("[TrackMateModel] Seding event "+event.hashCode()+" to "+selectionChangeListeners.size()+" listeners: "+selectionChangeListeners);
 		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
 			listener.selectionChanged(event);
 	}

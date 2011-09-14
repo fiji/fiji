@@ -165,18 +165,31 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	@Override
 	public void selectionChanged(TrackMateSelectionChangeEvent event) {
 		if (DEBUG_SELECTION) 
-			System.out.println("[TrackSchemeFrame] selectionChanged: received event from "+event.getSource()+". Fire flag is "+doFireSelectionChangeEvent);
+			System.out.println("[TrackSchemeFrame] selectionChanged: received event "+event.hashCode()+" from "+event.getSource()+". Fire flag is "+doFireSelectionChangeEvent);
 		if (!doFireSelectionChangeEvent)
 			return;
 		doFireSelectionChangeEvent = false;
-		highlightEdges(model.getEdgeSelection());
-		highlightSpots(model.getSpotSelection());
 
-		// TODO ADD HERE SOME CODE TO HANDLE SPOTS THAT ARE INVISIBLE TO TRACKSCHEME
-		// NAMELY WHEN LINKING 2 SPOTS THAT ARE NOT PART OF VISIBLE TRACKS
-		// CREATE NEW MXCELLS ON THE FLY, MAKE THEM INVISIBLE, PUT THEM IN A 
-		// KIND OF A BUFFER THAT YOU CAN FLUSH THESE INVISIBLE SPOTS EXIT SELECTION.
-		// THEN THE USER WILL BE ABLE TO LINK THEM / DELETE THEM / WHATSOEVER
+		/* Performance issue: we do our highlighting here, in batch, bypassing highlight* methods		 */
+		{
+			ArrayList<Object> newSelection = new ArrayList<Object>(model.getSpotSelection().size() + model.getEdgeSelection().size());
+			Iterator<DefaultWeightedEdge> edgeIt = model.getEdgeSelection().iterator();
+			while(edgeIt.hasNext()) {
+				mxICell cell = graph.getCellFor(edgeIt.next());
+				if (null != cell) {
+					newSelection.add(cell);
+				}
+			}
+			Iterator<Spot> spotIt = model.getSpotSelection().iterator();
+			while(spotIt.hasNext()) {
+				mxICell cell = graph.getCellFor(spotIt.next());
+				if (null != cell) {
+					newSelection.add(cell);
+				}
+			}
+			mxGraphSelectionModel mGSmodel = graph.getSelectionModel();
+			mGSmodel.setCells(newSelection.toArray());
+		}
 
 		// Center on selection if we added one spot exactly
 		Map<Spot, Boolean> spotsAdded = event.getSpots();
@@ -191,42 +204,10 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	}
 
 	@Override
-	public void highlightSpots(Collection<Spot> spots) {
-		mxGraphSelectionModel model = graph.getSelectionModel();
-		// Remove old spots
-		Object[] objects = model.getCells();
-		for (Object obj : objects) {
-			mxCell cell = (mxCell) obj;
-			if (cell.isVertex())
-				model.removeCell(cell);
-		}
-		// Add new ones
-		Object[] newSpots = new Object[spots.size()];
-		Iterator<Spot> it = spots.iterator();
-		for (int i = 0; i < newSpots.length; i++) {
-			final Spot spot = it.next();
-			newSpots[i] = graph.getCellFor(spot);
-		}
-		model.addCells(newSpots);
-	}
+	public void highlightSpots(Collection<Spot> spots) {}
 
 	@Override
-	public void highlightEdges(Collection<DefaultWeightedEdge> edges) {
-		mxGraphSelectionModel model = graph.getSelectionModel();
-		// Remove old edges
-		Object[] objects = model.getCells();
-		for (Object obj : objects) {
-			mxCell cell = (mxCell) obj;
-			if (!cell.isVertex())
-				model.removeCell(cell);
-		}
-		// Add new ones
-		Object[] newEdges = new Object[edges.size()];
-		Iterator<DefaultWeightedEdge> it = edges.iterator();
-		for (int i = 0; i < newEdges.length; i++) 
-			newEdges[i] = graph.getCellFor(it.next());
-		model.addCells(newEdges);
-	}
+	public void highlightEdges(Collection<DefaultWeightedEdge> edges) {}
 
 	@Override
 	public void centerViewOn(Spot spot) {
@@ -668,12 +649,16 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 			}
 		}
 		if (DEBUG_SELECTION)
-			System.out.println("[TrackMateModel] userChangeSelection: sending selection change to model.");
+			System.out.println("[TrackSchemeFrame] userChangeSelection: sending selection change to model.");
 		doFireSelectionChangeEvent = false;
-		model.addEdgeToSelection(edgesToAdd);
-		model.addSpotToSelection(spotsToAdd);
-		model.removeEdgeFromSelection(edgesToRemove);
-		model.removeSpotFromSelection(spotsToRemove);
+		if (!edgesToAdd.isEmpty())
+			model.addEdgeToSelection(edgesToAdd);
+		if (!spotsToAdd.isEmpty())
+			model.addSpotToSelection(spotsToAdd);
+		if (!edgesToRemove.isEmpty())
+			model.removeEdgeFromSelection(edgesToRemove);
+		if (!spotsToRemove.isEmpty())
+			model.removeSpotFromSelection(spotsToRemove);
 		doFireSelectionChangeEvent = true;
 	}
 
