@@ -133,7 +133,7 @@ public class TrackMateModel {
 	 * CONSTANTS
 	 */
 
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	private static final boolean DEBUG_SELECTION = false;
 
 	/*
@@ -1225,7 +1225,7 @@ public class TrackMateModel {
 	 * Fire events. Regenerate fields derived from the filtered graph.
 	 */
 	private void flushUpdate() {
-
+		
 		if (DEBUG) {
 			System.out.println("[TrackMateModel] #flushUpdate().");
 			System.out.println("[TrackMateModel] #flushUpdate(): Event cache is :" + eventCache);
@@ -1239,7 +1239,11 @@ public class TrackMateModel {
 		int nEdgesToSignal = edgesAdded.size() + edgesRemoved.size();
 		if (nEdgesToSignal + spotsRemoved.size() > 0) {
 			computeTracksFromGraph();
-			computeTrackFeatures();
+			new Thread("TrackMate track features computing thread") {
+				public void run() {
+					computeTrackFeatures(); // We do it in a thread because it is a lengthy operation
+				}
+			}.start();
 		}
 
 		// Deal with new or moved spots: we need to update their features.
@@ -1277,6 +1281,7 @@ public class TrackMateModel {
 			event.setSpotFlags(spotsFlag);
 		}
 
+		
 		// Configure it with edges to signal.
 		if (nEdgesToSignal > 0) {
 			ArrayList<DefaultWeightedEdge> edgesToSignal = new ArrayList<DefaultWeightedEdge>(nEdgesToSignal);
@@ -1291,7 +1296,7 @@ public class TrackMateModel {
 			event.setEdges(edgesToSignal);
 			event.setEdgeFlags(edgesFlag);
 		}
-
+		
 		try {
 			if (nEdgesToSignal + nSpotsToSignal > 0) {
 				if (DEBUG) {
@@ -1301,7 +1306,7 @@ public class TrackMateModel {
 					listener.modelChanged(event);
 				}
 			}
-
+		
 			// Fire events stored in the event cache
 			for (int eventID : eventCache) {
 				if (DEBUG) {
@@ -1313,7 +1318,7 @@ public class TrackMateModel {
 					listener.modelChanged(cachedEvent);
 				}
 			}
-
+			
 		} finally {
 			spotsAdded.clear();
 			spotsRemoved.clear();
@@ -1323,6 +1328,7 @@ public class TrackMateModel {
 			edgesRemoved.clear();
 			eventCache.clear();
 		}
+		
 	}
 
 	/**
@@ -1336,10 +1342,10 @@ public class TrackMateModel {
 	 * or split.
 	 */
 	private void computeTracksFromGraph() {
-		if (DEBUG) {
-			System.out.println("[TrackMateModel] #computeTracksFromGraph()");
-			System.out.println("[TrackMateModel] #computeTracksFromGraph() - old tracks: "+trackSpots);
-		}
+//		if (DEBUG) {
+//			System.out.println("[TrackMateModel] #computeTracksFromGraph()");
+//			System.out.println("[TrackMateModel] #computeTracksFromGraph() - old tracks: "+trackSpots.size());
+//		}
 
 		// Retain old values
 		List<Set<Spot>> oldTrackSpots = trackSpots;
@@ -1356,9 +1362,9 @@ public class TrackMateModel {
 			trackEdges.add(spotEdge);
 		}
 		
-		if (DEBUG) {
-			System.out.println("[TrackMateModel] #computeTracksFromGraph() - new tracks: "+trackSpots);
-		}
+//		if (DEBUG) {
+//			System.out.println("[TrackMateModel] #computeTracksFromGraph() - new tracks: "+trackSpots.size());
+//		}
 
 		
 		/* Deal with a special case: of there were no tracks at all before this call,
@@ -1375,10 +1381,10 @@ public class TrackMateModel {
 		}
 
 		// Try to infer correct visibility
-		if (DEBUG) {
-			System.out.println("[TrackMateModel] #computeTrackFromGraph: old track visibility is "
-					+ visibleTrackIndices);
-		}
+//		if (DEBUG) {
+//			System.out.println("[TrackMateModel] #computeTrackFromGraph: old track visibility is "
+//					+ visibleTrackIndices);
+//		}
 		final int ntracks = trackSpots.size();
 		final int noldtracks = oldTrackSpots.size();
 		final Set<Integer> oldTrackVisibility = visibleTrackIndices;
@@ -1409,10 +1415,10 @@ public class TrackMateModel {
 
 		}
 
-		if (DEBUG) {
-			System.out.println("[TrackMateModel] #computeTrackFromGraph: new track visibility is "
-					+ visibleTrackIndices);
-		}
+//		if (DEBUG) {
+//			System.out.println("[TrackMateModel] #computeTrackFromGraph: new track visibility is "
+//					+ visibleTrackIndices);
+//		}
 
 	}
 
