@@ -138,7 +138,9 @@ int execute(String[] cmdarray, File directory, PrintStream outWriter) {
 	process = Runtime.getRuntime().exec(cmdarray, null, directory);
 	new Outputter(process.getInputStream(), outWriter).start();
 	new Outputter(process.getErrorStream(), System.err).start();
-	return process.waitFor();
+	result = process.waitFor();
+	outWriter.flush();
+	return result;
 }
 
 ArrayList getZipItems(URL url) {
@@ -188,6 +190,7 @@ void copyFile(InputStream in, OutputStream out) {
 		out.write(buffer, 0, count);
 	}
 	in.close();
+	out.flush();
 	out.close();
 }
 
@@ -210,6 +213,7 @@ javap(String jar, String className, String outputFile) {
 hexdump(String file, String outputFile) {
 	out = new ByteArrayOutputStream();
 	execute(new String[] { "hexdump", "-C", file }, null, out);
+	out.close();
 	copyFile(new ByteArrayInputStream(out.toByteArray()), new FileOutputStream(outputFile));
 }
 
