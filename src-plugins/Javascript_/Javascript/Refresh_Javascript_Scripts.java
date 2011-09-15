@@ -30,7 +30,7 @@ public class Refresh_Javascript_Scripts extends RefreshScripts {
 				return;
 			}
 			// The stream will be closed by runScript(InputStream)
-			runScript(new FileInputStream(filename));
+			runScript(new FileInputStream(filename), filename);
 		} catch (Throwable t) {
 			printError(t);
 		}
@@ -39,6 +39,10 @@ public class Refresh_Javascript_Scripts extends RefreshScripts {
 	/** Will consume and close the stream. */
 	@Override
 	public void runScript(InputStream istream) {
+		runScript(istream, "<stream>");
+	}
+
+	public void runScript(InputStream istream, String filename) {
 		try {
 			Context cx = Context.enter();
 			cx.setApplicationClassLoader(IJ.getClassLoader());
@@ -48,7 +52,7 @@ public class Refresh_Javascript_Scripts extends RefreshScripts {
 			Object result = null;
 			try {
 				reader = new BufferedReader(new InputStreamReader(istream));
-				result = cx.evaluateReader(scope, reader, "<cmd>", 1, null);
+				result = cx.evaluateReader(scope, reader, filename, 1, null);
 			} catch (Exception e) {
 				printError(e);
 				return;
