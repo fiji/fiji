@@ -65,7 +65,7 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	@Override
 	public void modelChanged(TrackMateModelChangeEvent event) {
 		if (DEBUG)
-			System.out.println("[HyperStackDisplayer] Received model changed event ID: "+event.getEventID());
+			System.out.println("[HyperStackDisplayer] Received model changed event ID: "+event.getEventID()+" from "+event.getSource());
 		boolean redoOverlay = false;
 
 		switch (event.getEventID()) {
@@ -94,7 +94,7 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 			spotOverlay.computeSpotColors();
 			redoOverlay = true;
 			break;
-			
+
 		case TrackMateModelChangeEvent.TRACKS_VISIBILITY_CHANGED:
 		case TrackMateModelChangeEvent.TRACKS_COMPUTED:
 			trackOverlay.computeTrackColors();
@@ -162,6 +162,8 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 			public void imageClosed(ImagePlus source ) {
 				if (imp != source)
 					return;
+				if (DEBUG)
+					System.out.println("[HyperStackDisplayer] imp closing, removing me from model listener");
 				model.removeTrackMateModelChangeListener(HyperStackDisplayer.this);
 				model.removeTrackMateSelectionChangeListener(HyperStackDisplayer.this);
 				editTool.imageClosed(imp);
@@ -189,6 +191,9 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 		editTool = SpotEditTool.getInstance();
 		if (!SpotEditTool.isLaunched())
 			editTool.run("");
+		else {
+			editTool.imageOpened(imp);
+		}
 		editTool.register(imp, this);
 	}
 

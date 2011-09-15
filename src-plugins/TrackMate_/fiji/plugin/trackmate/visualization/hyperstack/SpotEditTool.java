@@ -2,7 +2,6 @@ package fiji.plugin.trackmate.visualization.hyperstack;
 
 import ij.IJ;
 import ij.ImagePlus;
-import ij.gui.ImageCanvas;
 import ij.gui.Toolbar;
 
 import java.awt.MouseInfo;
@@ -29,7 +28,7 @@ import fiji.tool.AbstractTool;
 
 public class SpotEditTool extends AbstractTool implements MouseMotionListener, MouseListener, MouseWheelListener, KeyListener {
 
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 
 	private static final float COARSE_STEP = 2;
 	private static final float FINE_STEP = 0.2f;
@@ -116,32 +115,6 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		if (DEBUG)
 			System.out.println("[SpotEditTool] Registering "+imp+" and "+displayer);
 		displayers.put(imp, displayer);
-		ImageCanvas canvas = imp.getCanvas();
-		registerTool(canvas);
-	}
-
-	@Override
-	protected void registerTool(ImageCanvas canvas) {
-		if (canvas.getMouseListeners() != null && !arrayContains(canvas.getMouseListeners(), this)) {
-			canvas.addMouseListener(this);
-			if (DEBUG)
-				System.out.println("[SpotEditTool] Adding MouseListener to "+canvas.getImage());
-		}
-		if (canvas.getMouseWheelListeners() != null &&!arrayContains(canvas.getMouseWheelListeners(), this)) {
-			canvas.getImage().getWindow().addMouseWheelListener(this);
-			if (DEBUG)
-				System.out.println("[SpotEditTool] Adding MouseWheelListener to "+canvas.getImage());
-		}
-		if (canvas.getMouseMotionListeners() != null &&!arrayContains(canvas.getMouseMotionListeners(), this)) {
-			canvas.addMouseMotionListener(this);
-			if (DEBUG)
-				System.out.println("[SpotEditTool] Adding MouseMotionListener to "+canvas.getImage());
-		}
-		if (canvas.getKeyListeners() != null &&!arrayContains(canvas.getKeyListeners(), this)) {
-			addKeyListener(canvas);
-			if (DEBUG)
-				System.out.println("[SpotEditTool] Adding KeyListener to "+canvas.getImage());
-		}
 	}
 
 	/*
@@ -150,12 +123,18 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
+		
 		final ImagePlus imp = getImagePlus(e);
 		final HyperStackDisplayer displayer = displayers.get(imp);
 		if (DEBUG) {
 			System.out.println("[SpotEditTool] @mouseClicked");
 			System.out.println("[SpotEditTool] Got "+imp+ " as ImagePlus");
 			System.out.println("[SpotEditTool] Matching displayer: "+displayer);
+			
+			for (MouseListener ml : imp.getCanvas().getMouseListeners()) {
+				System.out.println("[SpotEditTool] mouse listener: "+ml);
+			}
+			
 		}
 
 		if (null == displayer)
@@ -356,7 +335,10 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 
 	@Override
 	public void keyPressed(KeyEvent e) { 
-
+		
+		if (DEBUG) 
+			System.out.println("[SpotEditTool] keyPressed: "+e.getKeyChar());
+		
 		final ImagePlus imp = getImagePlus(e);
 		if (imp == null)
 			return;
@@ -454,7 +436,8 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				Spot clickLocation = displayer.getCLickLocation(mouseLocation);
 				Spot target = model.getFilteredSpots().getSpotAt(clickLocation, frame);
 				if (null == target) {
-					return; // un-consumed event
+					e.consume(); // Consume it anyway, so that we are not bothered by IJ
+					return; 
 				}
 
 				model.beginUpdate();
@@ -547,9 +530,28 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 
 	@Override
 	public void keyReleased(KeyEvent e) { 
+		if (DEBUG) 
+			System.out.println("[SpotEditTool] keyReleased: "+e.getKeyChar());
+		
 		switch(e.getKeyCode()) {
 		case KeyEvent.VK_SPACE: {
+			if (null == quickEditedSpot)
+				return;
+			final ImagePlus imp = getImagePlus(e);
+			if (imp == null)
+				return;
+			final HyperStackDisplayer displayer = displayers.get(imp);
+			if (null == displayer)
+				return;
+			TrackMateModel model = displayer.getModel();
+			model.beginUpdate();
+			try {
+				model.updateFeatures(quickEditedSpot);
+			} finally {
+				model.endUpdate();
+			}
 			quickEditedSpot = null;
+			break;
 		}
 		}
 
@@ -574,19 +576,6 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 					spot.getFeature(SpotFeature.POSITION_Z), spot.getFeature(SpotFeature.RADIUS), units );
 		}
 		IJ.showStatus(statusString);
-	}
-
-
-	private static final <T> boolean arrayContains(final T[] array, final T element) {
-		boolean found = false;
-		for (T el : array) {
-			if (el == element) {
-				found = true;
-				break;
-			}
-		}
-		return found;
-
 	}
 
 }

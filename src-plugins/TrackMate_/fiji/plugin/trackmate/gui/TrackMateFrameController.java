@@ -86,6 +86,7 @@ public class TrackMateFrameController implements ActionListener {
 
 			performLeaveStateTask();
 			state = state.nextState();
+			performPreGUITask();
 			SwingUtilities.invokeLater(new Runnable() {
 				@Override
 				public void run() { updateGUI(); }
@@ -281,6 +282,18 @@ public class TrackMateFrameController implements ActionListener {
 		}
 	}
 
+	/**
+	 * Action taken before the GUI has been displayed. 
+	 */
+	private void performPreGUITask() {
+		TrackMateModel model = plugin.getModel();
+		switch(state) {
+		case TUNE_TRACK_FILTERS:
+			model.computeTrackFeatures();
+			return;
+		}
+	}
+	
 	/**
 	 * Action taken after the GUI has been displayed. 
 	 */

@@ -161,10 +161,7 @@ public class StartDialogPanel extends ActionListenablePanel {
 	 * enable the {@link #target} component.
 	 */
 	private void refresh() {
-		if (null == settings.imp)
-			imp = WindowManager.getCurrentImage();
-		else 
-			imp = settings.imp;
+		imp = WindowManager.getCurrentImage();
 		if (null == imp) {
 			if (null != target) {
 				SwingUtilities.invokeLater(new Runnable() {

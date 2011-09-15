@@ -1217,6 +1217,16 @@ public class TrackMateModel {
 		return;
 	}
 
+	/**
+	 * Calculate all features for the tracks in this model.
+	 */
+	public void computeTrackFeatures() {
+		initFeatureMap();
+		trackFeatureFacade.processAllFeatures(this);
+	}
+
+
+	
 	/*
 	 * PRIVATE METHODS
 	 */
@@ -1239,11 +1249,11 @@ public class TrackMateModel {
 		int nEdgesToSignal = edgesAdded.size() + edgesRemoved.size();
 		if (nEdgesToSignal + spotsRemoved.size() > 0) {
 			computeTracksFromGraph();
-			new Thread("TrackMate track features computing thread") {
-				public void run() {
-					computeTrackFeatures(); // We do it in a thread because it is a lengthy operation
-				}
-			}.start();
+//			new Thread("TrackMate track features computing thread") {
+//				public void run() {
+//					computeTrackFeatures(); // We do it in a thread because it is a lengthy operation
+//				}
+//			}.start();
 		}
 
 		// Deal with new or moved spots: we need to update their features.
@@ -1310,8 +1320,7 @@ public class TrackMateModel {
 			// Fire events stored in the event cache
 			for (int eventID : eventCache) {
 				if (DEBUG) {
-					System.out.println("[TrackMateModel] #flushUpdate(): firing event with ID "
-							+ eventID);
+					System.out.println("[TrackMateModel] #flushUpdate(): firing event with ID "	+ eventID);
 				}
 				TrackMateModelChangeEvent cachedEvent = new TrackMateModelChangeEvent(this, eventID);
 				for (final TrackMateModelChangeListener listener : modelChangeListeners) {
@@ -1362,11 +1371,6 @@ public class TrackMateModel {
 			trackEdges.add(spotEdge);
 		}
 		
-//		if (DEBUG) {
-//			System.out.println("[TrackMateModel] #computeTracksFromGraph() - new tracks: "+trackSpots.size());
-//		}
-
-		
 		/* Deal with a special case: of there were no tracks at all before this call,
 		 * then oldTrackSpots is null. To avoid that, we set it to the new value. Also,
 		 * since the the visibility set is empty, we will not get any new track visible.
@@ -1381,10 +1385,6 @@ public class TrackMateModel {
 		}
 
 		// Try to infer correct visibility
-//		if (DEBUG) {
-//			System.out.println("[TrackMateModel] #computeTrackFromGraph: old track visibility is "
-//					+ visibleTrackIndices);
-//		}
 		final int ntracks = trackSpots.size();
 		final int noldtracks = oldTrackSpots.size();
 		final Set<Integer> oldTrackVisibility = visibleTrackIndices;
@@ -1414,17 +1414,6 @@ public class TrackMateModel {
 			}
 
 		}
-
-//		if (DEBUG) {
-//			System.out.println("[TrackMateModel] #computeTrackFromGraph: new track visibility is "
-//					+ visibleTrackIndices);
-//		}
-
-	}
-
-	private void computeTrackFeatures() {
-		initFeatureMap();
-		trackFeatureFacade.processAllFeatures(this);
 	}
 
 	/**
