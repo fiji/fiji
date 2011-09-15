@@ -45,9 +45,7 @@ public class Refresh_Javascript_Scripts extends RefreshScripts {
 	public void runScript(InputStream istream, String filename) {
 		try {
 			Context cx = Context.enter();
-			cx.setApplicationClassLoader(IJ.getClassLoader());
-			Scriptable scope = new ImporterTopLevel(cx);
-			new Javascript_Interpreter(cx, scope).importAll();
+			Scriptable scope = Javascript_Interpreter.getScopeAndImportAll(cx);
 			Reader reader = null;
 			Object result = null;
 			try {

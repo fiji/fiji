@@ -30,12 +30,7 @@ public class Javascript_Interpreter extends AbstractInterpreter {
 			// Initialize inside the executer thread in parent class
 			println("Starting Javascript ...");
 			cx = Context.enter();
-			cx.setApplicationClassLoader(IJ.getClassLoader());
-			//scope = cx.initStandardObjects(null); // reuse
-			// the above, with a null arg, enables reuse of the scope in subsequent calls.
-			// But this one is better: includes importClass and importPackage js functions
-			scope = new ImporterTopLevel(cx);
-			importAll();
+			scope = getScopeAndImportAll(cx);
 			println("done.");
 			createBuiltInFunctions();
 		} catch (Throwable t) {
@@ -79,6 +74,13 @@ public class Javascript_Interpreter extends AbstractInterpreter {
 	protected final static Set excludeFromImport =
 		new HashSet(Arrays.<String>asList("InternalError", "Math",
 			"Number", "Boolean", "Error", "String", "Object", "Array"));
+
+	protected static Scriptable getScopeAndImportAll(Context cx) {
+		cx.setApplicationClassLoader(IJ.getClassLoader());
+		Scriptable scope = new ImporterTopLevel(cx);
+		new Javascript_Interpreter(cx, scope).importAll();
+		return scope;
+	}
 
 	/** Import all ImageJ and java.lang classes. */
 	protected String getImportStatement(String packageName, Iterable<String> classNames) {
