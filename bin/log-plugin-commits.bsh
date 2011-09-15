@@ -312,7 +312,7 @@ void compareToUploaded(String plugin) {
 		return;
 	}
 	remotePath = null;
-	remoteURL = Updater.MAIN_URL + p.filename + "-" + p.timestamp;
+	remoteURL = plugins.getURL(p);
 	localPath = System.getProperty("fiji.dir") + "/" + plugin;
 	localURL = "file:" + localPath;
 
