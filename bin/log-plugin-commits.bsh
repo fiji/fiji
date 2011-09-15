@@ -313,12 +313,20 @@ void compareToUploaded(String plugin) {
 	}
 	remotePath = null;
 	remoteURL = Updater.MAIN_URL + p.filename + "-" + p.timestamp;
-	remote = getZipItems(new URL(remoteURL));
 	localPath = System.getProperty("fiji.dir") + "/" + plugin;
 	localURL = "file:" + localPath;
-	local = getZipItems(new URL(localURL));
 
 	System.out.println("Differences between the local and remote " + plugin);
+	if (plugin.matches(".*\\.(js|bsh|ijm|clj|rb|py|java|m)")) {
+		showFileDiff(remoteURL, localURL);
+		return;
+	}
+
+	if (!plugin.matches(".*\\.(jar|zip)"))
+		return;
+
+	remote = getZipItems(new URL(remoteURL));
+	local = getZipItems(new URL(localURL));
 	showManifestDiff(remoteURL, localURL);
 
 	int i = 0, j = 0;
