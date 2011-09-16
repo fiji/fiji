@@ -574,4 +574,48 @@ public class ThreePanes implements PaneOwner {
 
 	}
 
+	/* If a user clicks on a point in one of the panes, it's
+	   sometimes useful to consider all points in the column that
+	   point is in perpendicular to the plane.  This method
+	   returns the x, y and z coordinates of all the points in
+	   that column. */
+
+	public int [][] findAllPointsAlongLine( int x_in_pane, int y_in_pane, int plane ) {
+		int n = -1;
+
+		switch( plane ) {
+		case ThreePanes.XY_PLANE:
+			n = xy.getStackSize();
+			break;
+		case ThreePanes.XZ_PLANE:
+			n = xz.getStackSize();
+			break;
+		case ThreePanes.ZY_PLANE:
+			n = zy.getStackSize();
+			break;
+		}
+
+		int [][] result = new int[n][3];
+
+		switch( plane ) {
+		case ThreePanes.XY_PLANE:
+			for( int z = 0; z < n; ++z ) {
+				result[z] = new int [] { x_in_pane, y_in_pane, z };
+			}
+			break;
+		case ThreePanes.XZ_PLANE:
+			for( int y = 0; y < n; ++y ) {
+				result[y] = new int [] { x_in_pane, y, y_in_pane };
+			}
+			break;
+		case ThreePanes.ZY_PLANE:
+			for( int x = 0; x < n; ++x ) {
+				result[x] = new int [] { x, y_in_pane, x_in_pane };
+			}
+			break;
+		}
+
+		return result;
+	}
+
 }
