@@ -90,9 +90,14 @@ class InfoPane extends JPanel implements TrackMateSelectionView, TrackMateSelect
 
 	@Override
 	public void selectionChanged(TrackMateSelectionChangeEvent event) {
-		highlightSpots(model.getSpotSelection());
+		// Echo changed in a different thread for performance 
+		new Thread("TrackScheme info pane thread") {
+			public void run() {
+				highlightSpots(model.getSpotSelection());
+			}
+		}.start();
 	}
-	
+
 	/**
 	 * Ignored.
 	 */
@@ -153,9 +158,9 @@ class InfoPane extends JPanel implements TrackMateSelectionView, TrackMateSelect
 		}
 		for (Component c : scrollTable.getColumnHeader().getComponents())
 			c.setBackground(getBackground());
-		scrollTable.getColumnHeader().setOpaque(false);
-		scrollTable.setVisible(true);
-		revalidate();
+				scrollTable.getColumnHeader().setOpaque(false);
+				scrollTable.setVisible(true);
+				revalidate();
 	}
 
 	/*
