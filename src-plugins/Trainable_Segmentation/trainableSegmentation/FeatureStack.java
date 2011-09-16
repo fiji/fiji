@@ -13,10 +13,15 @@ package trainableSegmentation;
  * - Maximum
  * - Anisotropic diffusion
  * - Bilateral filter
+ * - Lipschitz filter
+ * - Linear Kuwahara filter
+ * - Gabor filters
+ * - High order derivative filters
+ * - Laplacian filter
+ * - Eigenvalues of the Structure tensor
+ * - Color features: HSB (if the input image is RGB)
  * 
  * filters to come:
- * - make use of color channels
- * - membraneFilters faster
  * - histogram patch
  * - BEL type edge detector
  * 
@@ -72,8 +77,8 @@ import ij.io.FileSaver;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
+import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
-import ij.plugin.RGBStackMerge;
 import ij.plugin.ZProjector;
 import ij.plugin.filter.GaussianBlur;
 import ij.plugin.filter.Convolver;
@@ -341,6 +346,7 @@ public class FeatureStack
 			}
 		};
 	}
+	
 	
 	/**
 	 * Add variance-filtered image to the stack (single thread version)
@@ -2479,7 +2485,10 @@ public class FeatureStack
 	{
 		wholeStack = new ImageStack(width, height);
 		if( originalImage.getType() == ImagePlus.COLOR_RGB)
+		{		
 			wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
+			addHSB();
+		}
 		else
 			wholeStack.addSlice("original", originalImage.getProcessor().duplicate().convertToFloat());
 		
@@ -2678,6 +2687,43 @@ public class FeatureStack
 		IJ.showStatus("Features stack is updated now!");
 		return true;
 	}
+
+	/**
+	 * Add HSB features
+	 */
+	public void addHSB() 
+	{
+		final ImagePlus hsb = originalImage.duplicate();
+		ImageConverter ic = new ImageConverter( hsb );
+		ic.convertToHSB();
+		for(int n=1; n<=hsb.getImageStackSize(); n++)
+			wholeStack.addSlice(hsb.getImageStack().getSliceLabel(n), hsb.getImageStack().getProcessor(n).convertToRGB());
+	}
+	
+	/**
+	 * Calculate HSB out of the RGB channels (to be submitted to an ExecutorService)
+	 * @param originalImage original input image
+	 * @return HSB image
+	 */
+	public Callable<ImagePlus> getHSB(
+			final ImagePlus originalImage)
+	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
+		return new Callable<ImagePlus>(){
+			public ImagePlus call(){
+		
+				final ImagePlus hsb = originalImage.duplicate();
+				ImageConverter ic = new ImageConverter( hsb );
+				ic.convertToHSB();
+				ImageStack is = new ImageStack(originalImage.getWidth(), originalImage.getHeight()); 
+				for(int n=1; n<=hsb.getImageStackSize(); n++)
+					is.addSlice(hsb.getImageStack().getSliceLabel(n), hsb.getImageStack().getProcessor(n).convertToRGB());
+				return new ImagePlus ("HSB", is);
+			}
+		};
+	}
 	
 	
 	/**
@@ -2726,6 +2772,10 @@ public class FeatureStack
 							//futures.add(exe.submit( getAnisotropicDiffusion(originalImage, 20, 20, (int) i, j, 0.9f, k) ) );
 					}				
 			}
+			
+			// HSB
+			if( originalImage.getType() == ImagePlus.COLOR_RGB)
+				futures.add(exe.submit( getHSB(originalImage) ) );
 			
 			// Bilateral filter
 			if(enableFeatures[BILATERAL])			
