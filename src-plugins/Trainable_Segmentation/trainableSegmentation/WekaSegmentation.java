@@ -4438,6 +4438,15 @@ public class WekaSegmentation {
 	}
 
 	/**
+	 * Set feature update flag
+	 * @param udpateFeatures new feature update flag
+	 */
+	public void setUpdateFeatures(boolean updateFeatures)
+	{
+		this.updateFeatures = updateFeatures;
+	}
+	
+	/**
 	 * Forces the feature stack to be updated whenever it is needed next.
 	 */
 	public void setFeaturesDirty()
