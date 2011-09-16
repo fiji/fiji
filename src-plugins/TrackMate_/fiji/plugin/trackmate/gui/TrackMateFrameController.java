@@ -80,7 +80,7 @@ public class TrackMateFrameController implements ActionListener {
 	public void actionPerformed(ActionEvent event) {
 		if (DEBUG)
 			System.out.println("[TrackMateFrameController] Caught event "+event);
-		DisplayerPanel displayerPanel = (DisplayerPanel) view.getPanelFor(PanelCard.DISPLAYER_PANEL_KEY);
+		final DisplayerPanel displayerPanel = (DisplayerPanel) view.getPanelFor(PanelCard.DISPLAYER_PANEL_KEY);
 
 		if (event == view.NEXT_BUTTON_PRESSED && actionFlag) {
 
@@ -119,8 +119,17 @@ public class TrackMateFrameController implements ActionListener {
 		} else if (event == displayerPanel.TRACK_SCHEME_BUTTON_PRESSED) {
 
 			// Display Track scheme
-			final TrackSchemeFrame trackScheme = new TrackSchemeFrame(plugin.getModel());
-			trackScheme.setVisible(true);
+			displayerPanel.jButtonShowTrackScheme.setEnabled(false);
+			new Thread("TrackScheme launching thread") {
+				public void run() {
+					try {
+						TrackSchemeFrame trackScheme = new TrackSchemeFrame(plugin.getModel());
+						trackScheme.setVisible(true);
+					} finally {
+						displayerPanel.jButtonShowTrackScheme.setEnabled(true);
+					}
+				}
+			}.start();
 
 
 		}
@@ -466,6 +475,7 @@ public class TrackMateFrameController implements ActionListener {
 				}
 			}
 
+			plugin.computeTrackFeatures();
 			GuiSaver saver = new GuiSaver(this);
 			File tmpFile = saver.askForFile(file);
 			if (null == tmpFile) {

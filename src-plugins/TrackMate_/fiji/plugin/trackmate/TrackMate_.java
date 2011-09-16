@@ -102,6 +102,14 @@ public class TrackMate_ implements PlugIn {
 		model.computeSpotFeatures(model.getSpots());
 	}
 
+	/**
+	 * Calculate all features for all tracks.
+	 */
+	public void computeTrackFeatures() {
+		model.computeTrackFeatures();
+	}
+
+
 
 	/**
 	 * Execute the tracking part.
@@ -314,8 +322,5 @@ public class TrackMate_ implements PlugIn {
 		TrackMate_ model = new TrackMate_();
 		model.run(null);
 	}
-
-
-
 
 }
