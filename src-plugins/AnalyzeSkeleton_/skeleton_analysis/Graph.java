@@ -116,7 +116,7 @@ public class Graph
 	 * Get root vertex.
 	 * @return root vertex of the graph
 	 */
-	Vertex getRoot()
+	public Vertex getRoot()
 	{
 		return this.root;
 	}	
