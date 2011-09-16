@@ -32,6 +32,7 @@ Name					File					Author(s)						Contact								License
 * Clojure Interpreter			Clojure_Interpreter.jar 		Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * Color Histogram 			Color_Histogram.jar			Dimiter Prodanov 					dimiterpp@gmail.com 						GPL 2
 * Color Inspector 3D 			Color_Inspector_3D.jar			Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
+* Colour Deconvolution 			Colour_Deconvolution.jar		Gabriel Landini 					G.Landini@bham.ac.uk						GPL 2 or later
 * Differentials				Differentials_.jar			Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/differentials/			BIG (see below)
 * Extended Depth of Focus		Extended_Depth_Field.jar		Alex Prudencio, Daniel Sage et al			http://bigwww.epfl.ch/demo/edf/					BIG (see below)
 * FeatureJ	 			FeatureJ_.jar	 			Erik Meijering	 					http://www.imagescience.org/meijering/software/featurej/	imagescience (see below)
