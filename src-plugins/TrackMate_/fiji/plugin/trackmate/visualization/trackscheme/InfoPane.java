@@ -8,6 +8,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
 
 import javax.swing.AbstractListModel;
 import javax.swing.JLabel;
@@ -26,8 +27,8 @@ import javax.swing.table.JTableHeader;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
 import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
@@ -90,9 +91,14 @@ class InfoPane extends JPanel implements TrackMateSelectionView, TrackMateSelect
 
 	@Override
 	public void selectionChanged(TrackMateSelectionChangeEvent event) {
-		highlightSpots(model.getSpotSelection());
+		// Echo changed in a different thread for performance 
+		new Thread("TrackScheme info pane thread") {
+			public void run() {
+				highlightSpots(model.getSpotSelection());
+			}
+		}.start();
 	}
-	
+
 	/**
 	 * Ignored.
 	 */
@@ -119,21 +125,27 @@ class InfoPane extends JPanel implements TrackMateSelectionView, TrackMateSelect
 		}
 
 		// Fill feature table
-		DefaultTableModel dm = new DefaultTableModel() { // Un-editable model
-			@Override
-			public boolean isCellEditable(int row, int column) { return false; }
-		};
-		for (Spot spot : spots) {
-			if (null == spot)
-				continue;
-			Object[] columnData = new Object[SpotFeature.values().length];
-			for (int i = 0; i < columnData.length; i++) 
-				columnData[i] = String.format("%.1f", spot.getFeature(SpotFeature.values()[i]));
-			dm.addColumn(spot.toString(), columnData);
-		}
-		table.setModel(dm);
-		// Tune look
+		try { // Dummy protection for ultra fast selection / de-selection events. Ugly.
 
+			DefaultTableModel dm = new DefaultTableModel() { // Un-editable model
+				@Override
+				public boolean isCellEditable(int row, int column) { return false; }
+			};
+
+			for (Spot spot : spots) {
+				if (null == spot)
+					continue;
+				Object[] columnData = new Object[SpotFeature.values().length];
+				for (int i = 0; i < columnData.length; i++) 
+					columnData[i] = String.format("%.1f", spot.getFeature(SpotFeature.values()[i]));
+				dm.addColumn(spot.toString(), columnData);
+			}
+			table.setModel(dm);
+		} catch (ConcurrentModificationException cme) {
+			// do nothing
+		} 
+		
+		// Tune look
 		DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer() {
 			public boolean isOpaque() { return false; };
 			@Override
@@ -151,8 +163,9 @@ class InfoPane extends JPanel implements TrackMateSelectionView, TrackMateSelect
 			table.setDefaultRenderer(table.getColumnClass(i), renderer);
 			table.getColumnModel().getColumn(i).setPreferredWidth(TrackSchemeFrame.TABLE_CELL_WIDTH);
 		}
-		for (Component c : scrollTable.getColumnHeader().getComponents())
+		for (Component c : scrollTable.getColumnHeader().getComponents()) {
 			c.setBackground(getBackground());
+		}
 		scrollTable.getColumnHeader().setOpaque(false);
 		scrollTable.setVisible(true);
 		revalidate();
