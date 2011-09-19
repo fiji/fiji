@@ -65,20 +65,23 @@ public class DetectionSegmentation
 		final float k = sigmaXY[ 1 ] / sigmaXY[ 0 ];
         final float K_MIN1_INV = computeKWeight(k);
 
-        // sigmaZ is at least twice the image sigma
-        final float sigma1Z = Math.max( imageSigma * 2, sigma1 / img.getCalibration( 2 ) );
-        final float sigma2Z = sigma1Z * k;
-        final float[] sigmaZ = new float[]{ sigma1Z, sigma2Z };
-        final float[] sigmaDiffZ = computeSigmaDiff( sigmaZ, imageSigma );
-        
         final double[][] sigmaDiff = new double[ 2 ][ 3 ];
         sigmaDiff[ 0 ][ 0 ] = sigmaDiffXY[ 0 ];
         sigmaDiff[ 0 ][ 1 ] = sigmaDiffXY[ 0 ];
-        sigmaDiff[ 0 ][ 2 ] = sigmaDiffZ[ 0 ];
         sigmaDiff[ 1 ][ 0 ] = sigmaDiffXY[ 1 ];
         sigmaDiff[ 1 ][ 1 ] = sigmaDiffXY[ 1 ];
-        sigmaDiff[ 1 ][ 2 ] = sigmaDiffZ[ 1 ];
-        
+
+        // sigmaZ is at least twice the image sigma
+		if ( img.getNumDimensions() == 3 )
+		{
+			final float sigma1Z = Math.max( imageSigma * 2, sigma1 / img.getCalibration( 2 ) );
+			final float sigma2Z = sigma1Z * k;
+			final float[] sigmaZ = new float[]{ sigma1Z, sigma2Z };
+			final float[] sigmaDiffZ = computeSigmaDiff( sigmaZ, imageSigma );
+	        sigmaDiff[ 0 ][ 2 ] = sigmaDiffZ[ 0 ];
+	        sigmaDiff[ 1 ][ 2 ] = sigmaDiffZ[ 1 ];
+		}
+
         //System.out.println( sigmaXY[ 0 ] + ", " + sigmaXY[ 0 ] + ", " + sigmaZ[ 0 ] );
         //System.out.println( sigmaXY[ 1 ] + ", " + sigmaXY[ 1 ] + ", " + sigmaZ[ 1 ] );
         //System.out.println( sigmaDiff[ 0 ][ 0 ] + ", " + sigmaDiff[ 0 ][ 1 ] + ", " + sigmaDiff[ 0 ][ 2 ] );
