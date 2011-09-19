@@ -42,7 +42,7 @@ public class Bead_Registration implements PlugIn
 		// output to IJ.log
 		IOFunctions.printIJLog = true;
 		
-		final GenericDialog gd = new GenericDialog( "Bead based Registration" );
+		final GenericDialog gd = new GenericDialog( "Bead based registration" );
 		
 		gd.addChoice( "Select type of registration", beadRegistration, beadRegistration[ defaultBeadRegistration ] );		
 		gd.addMessage( "Please note that the SPIM Registration is based on a publication.\n" +
@@ -66,6 +66,10 @@ public class Bead_Registration implements PlugIn
 			conf = singleChannel();
 		else
 			conf = multiChannel();
+		
+		// cancelled
+		if ( conf == null )
+			return;
 
 		// get filenames and so on...
 		if ( !init( conf ) )
@@ -113,10 +117,10 @@ public class Bead_Registration implements PlugIn
 		}
 	}
 
-	public static String spimDataDirectory = "F:/Tobias";
-	public static String timepoints = "0-50";
-	public static String fileNamePattern = "spim_TL{t}_Ch1_Angle{a}";
-	public static String angles = "0-300:60";
+	public static String spimDataDirectory = "";
+	public static String timepoints = "18";
+	public static String fileNamePattern = "spim_TL{t}_Angle{a}.lsm";
+	public static String angles = "0-270:45";
 	
 	public static boolean loadSegmentation = false;
 	public static String[] beadBrightness = { "Very weak", "Weak", "Comparable to Sample", "Strong", "Advanced ...", "Interactive ..." };	

@@ -332,8 +332,8 @@ public class ViewStructure
 		for (int c = 0; c < conf.file[ timePointIndex ].length; c++)
 			for (int i = 0; i < conf.file[ timePointIndex ][ c ].length; i++)
 			{
-				int channelRegister = 0;
 				final ViewDataBeads view = new ViewDataBeads( idNr++, model.copy(), conf.file[ timePointIndex ][ c ][ i ].getPath(), zStretching );
+				int channelRegister = 0;
 					
 				view.setAcqusitionAngle( conf.angles[ i ] );
 				view.setChannel( conf.channels[ c ] );
