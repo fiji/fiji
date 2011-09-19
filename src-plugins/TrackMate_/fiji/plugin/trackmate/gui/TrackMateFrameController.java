@@ -91,8 +91,8 @@ public class TrackMateFrameController implements ActionListener {
 				@Override
 				public void run() { updateGUI(); }
 			});
-			performPostGUITask();
 			setMainButtonsFor(state);
+			performPostGUITask();
 
 		} else if (event == view.PREVIOUS_BUTTON_PRESSED && actionFlag) {
 
@@ -139,7 +139,6 @@ public class TrackMateFrameController implements ActionListener {
 	/*
 	 * GETTERS / SETTERS
 	 */
-
 
 	public void setPlugin(final TrackMate_ plugin) {
 		this.plugin = plugin;
