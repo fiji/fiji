@@ -286,3 +286,4 @@ hs_err*.log
 /jars/jars/ij-ui-swing.jar
 /modules/imagej2/jars/ij-ui-swing.jar
 /plugins/Reconstruct_Reader.jar
+/jars/mpicbg.jar

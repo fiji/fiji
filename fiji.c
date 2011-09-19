@@ -5,7 +5,7 @@
  * Copyright 2007-2011 Johannes Schindelin, Mark Longair, Albert Cardona
  * Benjamin Schmid, Erwin Frise and Gregory Jefferis
  *
- * The source is distributed under the GPLv2 or later.
+ * The source is distributed under the BSD license.
  *
  * Clarification: the license of the Fiji launcher has no effect on
  * the Java Runtime, ImageJ or any plugins, since they are not derivatives.
@@ -458,7 +458,7 @@ static const char *default_main_class = "fiji.Main";
 
 static int is_default_main_class(const char *name)
 {
-	return !strcmp(name, default_main_class) || !strcmp(name, "ij.ImageJ");
+	return name && (!strcmp(name, default_main_class) || !strcmp(name, "ij.ImageJ"));
 }
 
 /* Dynamic library loading stuff */
@@ -1064,7 +1064,7 @@ static void show_splash(void)
 	int (*SplashLoadFile)(const char *path);
 	int (*SplashSetFileJarName)(const char *file_path, const char *jar_path);
 
-	if (no_splash || !lib_path)
+	if (no_splash || !lib_path || SplashClose)
 		return;
 	splashscreen = dlopen(lib_path->buffer, RTLD_LAZY);
 	if (!splashscreen) {
@@ -1075,14 +1075,25 @@ static void show_splash(void)
 	SplashLoadFile = dlsym(splashscreen, "SplashLoadFile");
 	SplashSetFileJarName = dlsym(splashscreen, "SplashSetFileJarName");
 	SplashClose = dlsym(splashscreen, "SplashClose");
-	if (!SplashInit || !SplashLoadFile || !SplashSetFileJarName || !SplashClose)
+	if (!SplashInit || !SplashLoadFile || !SplashSetFileJarName || !SplashClose) {
+		string_release(lib_path);
+		SplashClose = NULL;
 		return;
+	}
 
 	SplashInit();
 	SplashLoadFile(image_path);
 	SplashSetFileJarName(image_path, fiji_path("jars/Fiji.jar"));
 
 	string_release(lib_path);
+}
+
+static void hide_splash(void)
+{
+	if (!SplashClose)
+		return;
+	SplashClose();
+	SplashClose = NULL;
 }
 
 /*
@@ -1125,6 +1136,7 @@ static void maybe_reexec_with_correct_lib_path(void)
 		string_append_path_list(lib_path, original);
 	setenv_or_exit("LD_LIBRARY_PATH", lib_path->buffer, 1);
 	error("Re-executing with correct library lookup path");
+	hide_splash();
 	execv(main_argv_backup[0], main_argv_backup);
 	die("Could not re-exec with correct library lookup!");
 #endif
@@ -1311,6 +1323,7 @@ struct dir *open_dir(const char *path)
 	result->handle = FindFirstFile(result->pattern->buffer,
 			&(result->find_data));
 	if (result->handle == INVALID_HANDLE_VALUE) {
+		string_release(result->pattern);
 		free(result);
 		return NULL;
 	}
@@ -2157,13 +2170,15 @@ static void try_with_less_memory(size_t memory_size)
 
 	error("Trying with a smaller heap: %s", buffer->buffer);
 
+	hide_splash();
+
 #ifdef WIN32
 	new_argv[0] = dos_path(new_argv[0]);
 	for (i = 0; i < j; i++)
 		new_argv[i] = quote_win32(new_argv[i]);
 	execve(new_argv[0], (char * const *)new_argv, NULL);
 #else
-	execve(new_argv[0], new_argv, NULL);
+	execv(new_argv[0], new_argv);
 #endif
 
 	string_setf(buffer, "ERROR: failed to launch (errno=%d;%s):\n",
@@ -2190,14 +2205,15 @@ static int is_building(const char *target)
 	return 0;
 }
 
+const char *properties[32];
+
 static int retrotranslator;
 
-static int start_ij(void)
+static struct options options;
+static size_t memory_size = 0;
+
+static void parse_command_line(void)
 {
-	JavaVM *vm;
-	struct options options;
-	JavaVMInitArgs args;
-	JNIEnv *env;
 	struct string *buffer = string_init(32);
 	struct string *buffer2 = string_init(32);
 	struct string *class_path = string_init(32);
@@ -2211,7 +2227,6 @@ static int start_ij(void)
 	int dashdash = 0;
 	int allow_multiple = 0, skip_build_classpath = 0;
 	int jdb = 0, add_class_path_option = 0, advanced_gc = 1, debug_gc = 0;
-	size_t memory_size = 0;
 	int count = 1, i;
 
 #ifdef WIN32
@@ -2603,13 +2618,10 @@ static int start_ij(void)
 	maybe_reexec_with_correct_lib_path();
 
 	if (retrotranslator && build_classpath(class_path, fiji_path("retro"), 0))
-		return 1;
+		die("Retrotranslator is required but cannot be found!");
 
-	if (!headless && is_default_main_class(main_class))
+	if (!options.debug && !options.use_system_jvm && !headless && is_default_main_class(main_class))
 		show_splash();
-
-	/* Handle update/ */
-	update_all_files();
 
 	/* set up class path */
 	if (skip_build_classpath) {
@@ -2628,7 +2640,7 @@ static int start_ij(void)
 		}
 		else {
 			if (build_classpath(class_path, fiji_path("plugins"), 0))
-				return 1;
+				die("Could not build classpath!");
 			build_classpath(class_path, fiji_path("jars"), 0);
 		}
 	}
@@ -2689,16 +2701,20 @@ static int start_ij(void)
 	for (i = 1; i < main_argc; i++)
 		add_option(&options, main_argv[i], 1);
 
-	const char *properties[] = {
-		"fiji.dir", fiji_dir,
-		"fiji.defaultLibPath", JAVA_LIB_PATH,
-		"fiji.executable", main_argv0,
-		"java.library.path", java_library_path->buffer,
+	i = 0;
+	properties[i++] = "fiji.dir";
+	properties[i++] =  fiji_dir,
+	properties[i++] = "fiji.defaultLibPath";
+	properties[i++] = JAVA_LIB_PATH;
+	properties[i++] = "fiji.executable";
+	properties[i++] = main_argv0;
+	properties[i++] = "java.library.path";
+	properties[i++] = java_library_path->buffer;
 #ifdef WIN32
-		"sun.java2d.noddraw", "true",
+	properties[i++] = "sun.java2d.noddraw";
+	properties[i++] = "true";
 #endif
-		NULL
-	};
+	properties[i++] = NULL;
 
 	keep_only_one_memory_option(&options.java_options);
 
@@ -2711,6 +2727,19 @@ static int start_ij(void)
 		show_commandline(&options);
 		exit(0);
 	}
+
+}
+
+static int start_ij(void)
+{
+	JavaVM *vm;
+	JavaVMInitArgs args;
+	JNIEnv *env;
+	struct string *buffer = string_init(32);
+	int i;
+
+	/* Handle update/ */
+	update_all_files();
 
 	memset(&args, 0, sizeof(args));
 	/* JNI_VERSION_1_4 is used on Mac OS X to indicate 1.4.x and later */
@@ -2763,8 +2792,7 @@ static int start_ij(void)
 		args = prepare_ij_options(env, &options.ij_options);
 		(*env)->CallStaticVoidMethodA(env, instance,
 				method, (jvalue *)&args);
-		if (SplashClose)
-			SplashClose();
+		hide_splash();
 		if ((*vm)->DetachCurrentThread(vm))
 			error("Could not detach current thread");
 		/* This does not return until ImageJ exits */
@@ -2807,8 +2835,7 @@ static int start_ij(void)
 			string_setf(buffer, "%s/bin/%s", java_home_env, get_java_command());
 		}
 		options.java_options.list[0] = buffer->buffer;
-		if (SplashClose)
-			SplashClose();
+		hide_splash();
 #ifndef WIN32
 		if (execvp(buffer->buffer, options.java_options.list))
 			error("Could not launch system-wide Java (%s)", strerror(errno));
@@ -3246,6 +3273,7 @@ static int launch_32bit_on_tiger(int argc, char **argv)
 		argv[0] = buffer;
 	}
 	strcpy(argv[0] + offset, replace);
+	hide_splash();
 	execv(argv[0], argv);
 	fprintf(stderr, "Could not execute %s: %d(%s)\n",
 		argv[0], errno, strerror(errno));
@@ -3461,6 +3489,8 @@ int main(int argc, char **argv, char **e)
 	main_argv_backup = (char **)xmalloc(size);
 	memcpy(main_argv_backup, main_argv, size);
 	main_argc_backup = argc;
+
+	parse_command_line();
 
 	return start_ij();
 }

@@ -1193,10 +1193,12 @@ public class Weka_Segmentation implements PlugIn
 
 		//trainingImage.setProcessor("Advanced Weka Segmentation", trainingImage.getProcessor().duplicate().convertToByte(true));
 		//wekaSegmentation.loadNewImage(trainingImage);
+		/*
 		if(trainingImage.getImageStackSize() > 1)
 			(new StackConverter(trainingImage)).convertToGray8();
 		else
 			(new ImageConverter(trainingImage)).convertToGray8();
+		*/
 		wekaSegmentation.setTrainingImage(trainingImage);
 		
 		// The display image is a copy of the training image (single image or stack)
@@ -2131,9 +2133,10 @@ public class Weka_Segmentation implements PlugIn
 		// Set classifier and options
 		c = (Object)m_ClassifierEditor.getValue();
 	    String options = "";
+	    final String[] optionsArray = ((OptionHandler)c).getOptions();
 	    if (c instanceof OptionHandler) 
 	    {
-	      options = Utils.joinOptions(((OptionHandler)c).getOptions());
+	      options = Utils.joinOptions( optionsArray );
 	    }
 	    //System.out.println("Classifier after choosing: " + c.getClass().getName() + " " + options);
 	    if(originalClassifierName.equals( c.getClass().getName() ) == false
@@ -2142,7 +2145,7 @@ public class Weka_Segmentation implements PlugIn
 	    	AbstractClassifier cls;
 	    	try{
 	    		cls = (AbstractClassifier) (c.getClass().newInstance());
-	    		cls.setOptions(options.split(" "));
+	    		cls.setOptions( optionsArray );
 	    	}
 	    	catch(Exception ex)
 	    	{
@@ -2218,6 +2221,10 @@ public class Weka_Segmentation implements PlugIn
 			// Force features to be updated
 			wekaSegmentation.setFeaturesDirty();
 		}
+		else	// This checks if the feature stacks were updated while using the save feature stack button
+			if(wekaSegmentation.getFeatureStackArray().isEmpty() == false 
+					&& wekaSegmentation.getFeatureStackArray().getReferenceSliceIndex() != -1)
+				wekaSegmentation.setUpdateFeatures(false);
 
 		return true;
 	}
@@ -2328,7 +2335,7 @@ public class Weka_Segmentation implements PlugIn
 			if(null == dir || null == fileWithExt)
 				return;
 
-			if(featureStackArray.isEmpty())
+			if(featureStackArray.isEmpty() || featureStackArray.getReferenceSliceIndex() == -1)
 			{
 				IJ.showStatus("Creating feature stack...");
 				IJ.log("Creating feature stack...");
@@ -2498,11 +2505,8 @@ public class Weka_Segmentation implements PlugIn
 			final ImagePlus probImage = wekaSegmentation.getClassifiedImage();
 			if(null != probImage)
 			{
+				probImage.setOpenAsHyperStack( true );				
 				probImage.show();
-				IJ.run(probImage, "Stack to Hyperstack...", 
-						"order=xyczt(default) channels=" + wekaSegmentation.getNumOfClasses() + 
-						" slices=" + win.getDisplayImage().getImageStackSize() + 
-				" frames=1 display=Grayscale");
 			}
 			win.updateButtonsEnabling();
 			IJ.showStatus("Done.");

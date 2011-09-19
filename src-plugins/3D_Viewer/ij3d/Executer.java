@@ -95,6 +95,7 @@ public class Executer {
 	public static final String SET_CS = "setCoordinateSystem";
 	public static final String SET_TRANSFORM = "setTransform";
 	public static final String APPLY_TRANSFORM = "applyTransform";
+	public static final String EXPORT_TRANSFORMED = "exportTransformed";
 	public static final String SAVE_TRANSFORM = "saveTransform";
 	public static final String RESET_TRANSFORM = "resetTransform";
 	public static final String IMPORT = "importContent";
@@ -1291,43 +1292,14 @@ public class Executer {
 	}
 
 	private void exportTr(Content c) {
-		ImagePlus orig = c.getImage();
-		if(orig == null) {
-			IJ.error("No greyscale image exists for "
-				+ c.getName());
-			return;
+		try {
+			c.exportTransformed().show();
+			record(EXPORT_TRANSFORMED);
+		} catch(Exception e) {
+			e.printStackTrace();
+			IJ.error(e.getMessage());
 		}
-		Transform3D t1 = new Transform3D();
-		c.getLocalTranslate().getTransform(t1);
-		Transform3D t2 = new Transform3D();
-		c.getLocalRotate().getTransform(t2);
-		t1.mul(t2);
-		FastMatrix fc = FastMatrix.fromCalibration(orig);
-		FastMatrix fm = fc.inverse().times(toFastMatrix(t1).inverse()).
-			times(fc);
-		InterpolatedImage in = new InterpolatedImage(orig);
-		InterpolatedImage out = in.cloneDimensionsOnly();
-		int w = orig.getWidth(), h = orig.getHeight();
-		int d = orig.getStackSize();
-
-		for (int k = 0; k < d; k++) {
-			for (int j = 0; j < h; j++) {
-				for(int i = 0; i < w; i++) {
-					fm.apply(i, j, k);
-					out.set(i, j, k, (byte)in.interpol.get(
-							fm.x, fm.y, fm.z));
-				}
-				IJ.showProgress(k + 1, d);
-			}
-		}
-		out.getImage().setTitle(orig.getTitle() + "_transformed");
-		out.getImage().getProcessor().setColorModel(
-			orig.getProcessor().getColorModel());
-		out.getImage().show();
 	}
-
-
-
 
 	/* **********************************************************
 	 * View menu
@@ -1572,7 +1544,7 @@ public class Executer {
 		return m;
 	}
 
-	private FastMatrix toFastMatrix(Transform3D t3d) {
+	static FastMatrix toFastMatrix(Transform3D t3d) {
 		Matrix4d m = new Matrix4d();
 		t3d.get(m);
 		return new FastMatrix(new double[][] {
