@@ -288,3 +288,4 @@ hs_err*.log
 /jars/mpicbg.jar
 /plugins/Colour_Deconvolution.jar
 /plugins/Dichromacy_.jar
+/plugins/Threshold_Colour.jar
