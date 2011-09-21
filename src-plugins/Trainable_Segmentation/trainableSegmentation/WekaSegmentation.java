@@ -53,6 +53,7 @@ import ij.gui.Roi;
 import ij.gui.ShapeRoi;
 
 import ij.process.Blitter;
+import ij.process.ByteProcessor;
 import ij.process.FloatPolygon;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -180,6 +181,14 @@ public class WekaSegmentation {
 	private String tempFolder = null;
 
 	public static final double SIMPLE_POINT_THRESHOLD = 0;
+	public static final int MERGE 			= 1;
+	public static final int SPLIT 			= 2;
+	public static final int CREATE_HOLE		= 3;
+	public static final int DELETE_OBJECT 	= 4;
+	public static final int CREATE_OBJECT 	= 5;
+	public static final int DELETE_HOLE 	= 6;
+	
+	
 	
 	/** executor service to launch threads for the library operations */
 	private ExecutorService exe = Executors.newFixedThreadPool(1);
@@ -2680,6 +2689,7 @@ public class WekaSegmentation {
 	 * @param target target image
 	 * @param mask image mask
 	 * @param binaryThreshold binarization threshold
+	 * @param mismatches list of points that could not be flipped 
 	 * @return warped source image
 	 */
 	public ImagePlus simplePointWarp2dMT(
@@ -2945,13 +2955,140 @@ public class WekaSegmentation {
 		ip.insert(sourceReal.getProcessor(), -1, -1);
 		sourceReal.setProcessor(ip.duplicate());
 
-
+		// Adjust mismatches coordinates 
+		final ArrayList<Point3f> mismatches = new ArrayList<Point3f>();
+		for(Point3f p : result.mismatches)
+		{
+			mismatches.add(new Point3f( p.x - 1, p.y - 1, p.z));
+		}
+		
+		result.mismatches = mismatches;
 		result.warpedSource = sourceReal;
 		result.warpingError = diff / (width * height);
 		return result;
 	}
 
+	/**
+	 * Classify warping mismatches as MERGE, SPLIT, CREATE_HOLE, DELETE_HOLE, CREATE_OBJECT, DELETE_OBJECT
+	 *  
+	 * @param warpedLabels labels after warping (binary image)
+	 * @param mismatches list of mismatch points after warping
+	 * @return array of mismatch classifications
+	 */
+	public static int[] classifyMismatches2D( ImagePlus warpedLabels, ArrayList<Point3f> mismatches )
+	{
+		final int[] pointClassification = new int[ mismatches.size() ];
+		
+		// Calculate components in warped labels
+		ImageProcessor components = connectedComponents(
+				new ImagePlus("8-bit warped labesl", warpedLabels.getProcessor().convertToByte(true)
+						), 4).allRegions.getProcessor();
+		
+		int n = 0;
+		for(Point3f p : mismatches)
+		{
+			final int x = (int) p.x;
+			final int y = (int) p.y;
+			final ArrayList<Integer> neighborhood = getNeighborhood(components, new Point(x, y), 1, 1);
+								
+			// Count number of unique IDs in the neighborhood
+			ArrayList<Integer> uniqueId = new ArrayList<Integer>();
+			for( Integer neighbor : neighborhood)
+			{
+				if(!uniqueId.contains( neighbor ))
+					uniqueId.add( neighbor );				
+			}
+					
+			// If all surrounding pixels are background
+			if( uniqueId.size() == 1 && uniqueId.get(0) == 0)
+			{
+				if(components.getPixel(x, y) != 0)
+					pointClassification[ n ] = WekaSegmentation.DELETE_OBJECT;
+				else
+					pointClassification[ n ] = WekaSegmentation.CREATE_OBJECT;
+			}
+			// If all surrounding pixels belong to one object 
+			else if ( uniqueId.size() == 1 && uniqueId.get(0) != 0)
+			{
+				if(components.getPixel(x, y) != 0)
+					pointClassification[ n ] = WekaSegmentation.CREATE_HOLE;
+				else
+					pointClassification[ n ] = WekaSegmentation.DELETE_HOLE;
+			}
+			// If there are background and one single object ID in the surrounding pixels
+			else if ( uniqueId.size() == 2 )
+			{
+				if (components.getPixel(x, y) == 0)
+					pointClassification[ n ] = WekaSegmentation.CREATE_HOLE;
+				else
+				{
+					// flip pixel and apply connected components again
+					final ByteProcessor warpedPixels2 = (ByteProcessor) warpedLabels.getProcessor().duplicate().convertToByte(true);
+					warpedPixels2.set( x, y, warpedPixels2.get(x, y) != 0 ? 0 : 255);
+					// Calculate components in the new warped labels
+					ImageProcessor components2 = connectedComponents(new ImagePlus("8-bit warped labesl", warpedPixels2), 4).allRegions.getProcessor();
 
+
+					final ArrayList<Integer> neighborhood2 = getNeighborhood(components2, new Point(x, y), 1, 1);								
+
+					// Count number of unique IDs in the neighborhood of the new components
+					ArrayList<Integer> uniqueId2 = new ArrayList<Integer>();
+					for( Integer neighbor : neighborhood2)
+					{			
+						if(!uniqueId2.contains( neighbor ))
+							uniqueId2.add( neighbor );				
+					}
+
+					// If there are more than 2 new components then it's a split
+					if ( uniqueId2.size() > 2 )
+						pointClassification[ n ] = WekaSegmentation.SPLIT;
+					// otherwise it deletes a hole
+					else
+						pointClassification[ n ] = WekaSegmentation.DELETE_HOLE;
+				}
+			}			
+			else // If there are more than 1 object ID in the surrounding pixels 
+			{
+				if(components.getPixel(x, y) == 0)
+					pointClassification[ n ] = WekaSegmentation.MERGE;
+				else
+					pointClassification[ n ] = WekaSegmentation.SPLIT;
+			}	
+			n++;
+		}
+		
+		return pointClassification;
+	}
+
+	/**
+	 * Get neighborhood of a pixel in a 2D image
+	 * 
+	 * @param image 2D image
+	 * @param p point coordinates
+	 * @param x_offset x- neighborhood offset
+	 * @param y_offset y- neighborhood offset
+	 * @return corresponding neighborhood
+	 */
+	public static ArrayList<Integer> getNeighborhood(
+			final ImageProcessor image, 
+			final Point p, 
+			final int x_offset, 
+			final int y_offset)
+	{
+		final ArrayList<Integer> neighborhood = new ArrayList<Integer>();
+		
+
+		for(int j = p.y - y_offset; j <= p.y + y_offset; j++)
+			for(int i = p.x - x_offset; i <= p.x + x_offset; i++)							
+			{
+				if(i!=p.x || j!= p.y)
+					if(j>=0 && j<image.getHeight() && i>=0 && i<image.getWidth())
+						neighborhood.add( image.get(i, j));
+			}
+		
+		return neighborhood;
+	} // end getNeighborhood 
+	
 	/**
 	 * Check if a point is simple (in 2D)
 	 * @param im input patch
