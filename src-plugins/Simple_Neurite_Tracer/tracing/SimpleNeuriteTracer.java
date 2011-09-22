@@ -108,6 +108,14 @@ public class SimpleNeuriteTracer extends ThreePanes
 		return xy_tracer_canvas;
 	}
 
+	public String stripExtension(String filename) {
+		int lastDot=filename.lastIndexOf(".");
+		if( lastDot > 0 )
+			return filename.substring(0, lastDot);
+		else
+			return null;
+	}
+
 	/* Just for convenience, keep casted references to the
 	   superclass's InteractiveTracerCanvas objects: */
 
@@ -1258,6 +1266,13 @@ public class SimpleNeuriteTracer extends ThreePanes
 	// successfully.
 
 	float [][] tubeness;
+
+
+	/* If there appears to be a local file called
+	   <image-basename>.oof.nrrd then we assume that we can use
+	   Fethallah's tracing method.  This variable null if not such
+	   file was found. */
+	File oofFile = null;
 
 	public synchronized void enableHessian( boolean enable ) {
 		hessianEnabled = enable;
