@@ -1267,12 +1267,21 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	float [][] tubeness;
 
+	public boolean oofFileAvailable() {
+		return oofFile != null;
+	}
 
 	/* If there appears to be a local file called
 	   <image-basename>.oof.nrrd then we assume that we can use
 	   Fethallah's tracing method.  This variable null if not such
 	   file was found. */
+
 	File oofFile = null;
+	boolean fethallahTracingEnabled = false;
+
+	public synchronized void enableFethallahTracing( boolean enable ) {
+		fethallahTracingEnabled = enable;
+	}
 
 	public synchronized void enableHessian( boolean enable ) {
 		hessianEnabled = enable;
