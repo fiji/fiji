@@ -145,7 +145,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Volume_Viewer.jar \
 	plugins/IJ_Robot.jar \
 	plugins/Fiji_Updater.jar \
-	plugins/Daltonize_.jar \
 	plugins/Stitching_.jar \
 	plugins/LSM_Reader.jar \
 	plugins/AnalyzeSkeleton_.jar \
@@ -217,6 +216,10 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Kuwahara_Filter.jar \
 	plugins/Action_Bar.jar \
 	plugins/Multi_Kymograph.jar \
+	plugins/Colour_Deconvolution.jar \
+	plugins/Dichromacy_.jar \
+	plugins/Threshold_Colour.jar \
+	plugins/Reconstruct_Reader.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
@@ -313,11 +316,12 @@ jars/ij-platform.jar <- modules/imagej2/
 jars/ij-plugin.jar <- modules/imagej2/
 jars/ij-tool.jar <- modules/imagej2/
 jars/ij-ui.jar <- modules/imagej2/
-jars/ij-awt-common.jar <- modules/imagej2/
 jars/ij-imagej.jar <- modules/imagej2/
 jars/ij-platform-macosx.jar <- modules/imagej2/
 jars/ij-plugin-swing.jar <- modules/imagej2/
+jars/ij-ui-common-awt.jar <- modules/imagej2/
 jars/ij-ui-swing.jar <- modules/imagej2/
+jars/ij-util-awt.jar <- modules/imagej2/
 
 # From source
 libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama-1.0.2.jar \
@@ -343,7 +347,7 @@ CLASSPATH(plugins/BeanShell_Interpreter.jar)=jars/ij.jar:jars/fiji-scripting.jar
 CLASSPATH(plugins/Javascript_.jar)=jars/ij.jar:jars/fiji-scripting.jar:jars/js.jar
 CLASSPATH(plugins/CLI_.jar)=jars/ij.jar:jars/fiji-scripting.jar
 MAINCLASS(plugins/Script_Editor.jar)=fiji.scripting.Script_Editor
-CLASSPATH(plugins/Script_Editor.jar)=jars/ij.jar:jars/rsyntaxtextarea.jar:jars/autocomplete.jar:plugins/Clojure_Interpreter.jar:plugins/JRuby_Interpreter.jar:plugins/Javascript_.jar:plugins/Jython_Interpreter.jar:plugins/Refresh_Javas.jar:plugins/BeanShell_Interpreter.jar:plugins/CLI_.jar:jars/fiji-scripting.jar:jars/Fiji.jar:jars/imglib.jar:jars/fiji-lib.jar:jars/fake.jar:$TOOLS_JAR:jars/jfreechart-1.0.13.jar:jars/imglib-ij.jar
+CLASSPATH(plugins/Script_Editor.jar)=jars/ij.jar:jars/rsyntaxtextarea.jar:jars/autocomplete.jar:plugins/Clojure_Interpreter.jar:plugins/JRuby_Interpreter.jar:plugins/Javascript_.jar:plugins/Jython_Interpreter.jar:plugins/Refresh_Javas.jar:plugins/BeanShell_Interpreter.jar:plugins/CLI_.jar:jars/fiji-scripting.jar:jars/Fiji.jar:jars/imglib.jar:jars/fiji-lib.jar:jars/fake.jar:$TOOLS_JAR:jars/jfreechart-1.0.13.jar:jars/imglib-ij.jar:jars/commons-math.jar
 NO_COMPILE(plugins/Script_Editor.jar)=src-plugins/Script_Editor/templates/**/*
 src-plugins/Script_Editor/icon.png[cp $PRE $TARGET] <- images/icon.png
 src-plugins/Script_Editor/var.png[cp $PRE $TARGET] <- images/var.png
@@ -368,16 +372,16 @@ CLASSPATH(plugins/Stitching_.jar)=jars/ij.jar:plugins/loci_tools.jar:jars/fiji-l
 CLASSPATH(plugins/Fiji_Plugins.jar)=jars/ij.jar:jars/jsch-0.1.44.jar:jars/fiji-lib.jar:jars/VIB-lib.jar
 MAINCLASS(plugins/Fiji_Updater.jar)=fiji.updater.Main
 CLASSPATH(plugins/Fiji_Updater.jar)=jars/ij.jar:jars/jsch-0.1.44.jar
-CLASSPATH(plugins/IO_.jar)=jars/ij.jar:jars/batik.jar:jars/jpedalSTD.jar:jars/itext-1.3.jar:jars/jzlib-1.0.7.jar
+CLASSPATH(plugins/IO_.jar)=jars/ij.jar:jars/batik.jar:jars/jpedalSTD.jar:jars/itextpdf-5.1.1.jar:jars/jzlib-1.0.7.jar
 CLASSPATH(plugins/Sync_Win.jar)=jars/ij.jar:plugins/Image_5D.jar
 CLASSPATH(plugins/Fiji_Developer.jar)=jars/ij.jar:plugins/Script_Editor.jar:plugins/Fiji_Plugins.jar:jars/rsyntaxtextarea.jar:plugins/3D_Viewer.jar:$JAVA3D_JARS
-CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/ij.jar:jars/weka.jar:plugins/Stitching_.jar:jars/fiji-lib.jar:plugins/Anisotropic_Diffusion_2D.jar:jars/Jama-1.0.2.jar:jars/VIB-lib.jar:jars/commons-math.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/imglib-algorithms.jar:$JAVA3D_JARS
+CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/ij.jar:jars/weka.jar:plugins/Stitching_.jar:jars/fiji-lib.jar:plugins/Anisotropic_Diffusion_2D.jar:jars/Jama-1.0.2.jar:jars/VIB-lib.jar:jars/commons-math.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/imglib-algorithms.jar:jars/imagescience.jar:$JAVA3D_JARS
 CLASSPATH(plugins/VIB_.jar)=jars/ij.jar:$JAVA3D_JARS:jars/VIB-lib.jar:jars/pal-optimization.jar:plugins/3D_Viewer.jar:jars/imglib.jar:jars/fiji-lib.jar
 CLASSPATH(jars/VIB-lib.jar)=jars/ij.jar:jars/Jama-1.0.2.jar:jars/junit-4.5.jar:jars/pal-optimization.jar:jars/jzlib-1.0.7.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Simple_Neurite_Tracer.jar)=jars/ij.jar:$JAVA3D_JARS:jars/VIB-lib.jar:plugins/VIB_.jar:jars/pal-optimization.jar:jars/junit-4.5.jar:plugins/3D_Viewer.jar:jars/commons-math.jar:jars/jfreechart-1.0.13.jar:jars/jcommon-1.0.12.jar:jars/batik.jar:plugins/AnalyzeSkeleton_.jar:plugins/Skeletonize3D_.jar
 CLASSPATH(plugins/3D_Viewer.jar)=jars/ij.jar:jars/VIB-lib.jar:jars/imglib.jar:jars/Jama-1.0.2.jar:$JAVA3D_JARS
 CLASSPATH(jars/jep.jar)=jars/ij.jar:jars/Jama-1.0.2.jar:jars/junit-4.5.jar
-CLASSPATH(plugins/SPIM_Registration.jar)=jars/ij.jar:$JAVA3D_JARS:jars/imglib.jar:jars/mpicbg.jar:plugins/3D_Viewer.jar:jars/weka.jar:jars/fiji-lib.jar:plugins/loci_tools.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama-1.0.2.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar
+CLASSPATH(plugins/SPIM_Registration.jar)=jars/ij.jar:$JAVA3D_JARS:jars/imglib.jar:jars/mpicbg.jar:plugins/3D_Viewer.jar:jars/weka.jar:jars/fiji-lib.jar:plugins/loci_tools.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama-1.0.2.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:jars/jfreechart-1.0.13.jar:jars/jcommon-1.0.12.jar
 CLASSPATH(plugins/Bug_Submitter.jar)=jars/ij.jar:plugins/Fiji_Updater.jar
 CLASSPATH(plugins/TopoJ_.jar)=jars/ij.jar:jars/Jama-1.0.2.jar
 CLASSPATH(jars/imagescience.jar)=jars/ij.jar:plugins/Image_5D.jar
@@ -386,7 +390,7 @@ CLASSPATH(plugins/TransformJ_.jar)=jars/ij.jar:jars/imagescience.jar
 CLASSPATH(plugins/FeatureJ_.jar)=jars/ij.jar:jars/imagescience.jar
 CLASSPATH(plugins/RandomJ_.jar)=jars/ij.jar:jars/imagescience.jar
 CLASSPATH(plugins/Auto_Threshold.jar)=jars/ij.jar
-CLASSPATH(plugins/Colocalisation_Analysis.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/imglib-algorithms.jar:jars/junit-4.5.jar:jars/itext-1.3.jar
+CLASSPATH(plugins/Colocalisation_Analysis.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/imglib-algorithms.jar:jars/junit-4.5.jar:jars/itextpdf-5.1.1.jar
 CLASSPATH(plugins/Series_Labeler.jar)=jars/ij.jar
 CLASSPATH(plugins/Gray_Morphology.jar)=jars/ij.jar
 CLASSPATH(plugins/IsoData_Classifier.jar)=jars/ij.jar
@@ -399,7 +403,6 @@ CLASSPATH(plugins/level_sets.jar)=jars/ij.jar
 CLASSPATH(plugins/Anisotropic_Diffusion_2D.jar)=jars/ij.jar
 CLASSPATH(plugins/SplineDeformationGenerator_.jar)=jars/ij.jar
 CLASSPATH(plugins/Manual_Tracking.jar)=jars/ij.jar
-CLASSPATH(plugins/Daltonize_.jar)=jars/ij.jar
 CLASSPATH(plugins/IJ_Robot.jar)=jars/ij.jar
 CLASSPATH(jars/autocomplete.jar)=jars/rsyntaxtextarea.jar
 CLASSPATH(jars/jython.jar)=jars/junit-4.5.jar:jars/jna.jar
@@ -456,6 +459,10 @@ CLASSPATH(plugins/JNI_Example.jar)=jars/ij.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Kuwahara_Filter.jar)=jars/ij.jar
 CLASSPATH(plugins/Action_Bar.jar)=jars/ij.jar
 CLASSPATH(plugins/Multi_Kymograph.jar)=jars/ij.jar
+CLASSPATH(plugins/Reconstruct_Reader.jar)=jars/ij.jar:plugins/TrakEM2_.jar
+CLASSPATH(plugins/Colour_Deconvolution.jar)=jars/ij.jar
+CLASSPATH(plugins/Dichromacy_.jar)=jars/ij.jar
+CLASSPATH(plugins/Threshold_Colour.jar)=jars/ij.jar
 
 # pre-Java5 generics ;-)
 

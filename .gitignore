@@ -1,3 +1,4 @@
+hs_err*.log
 /Mac-Finder-DSStore-0.94
 /db.xml.gz
 .DS_Store
@@ -79,7 +80,6 @@
 /jars/clojure.jar
 /plugins/IJ_Robot.jar
 /plugins/Fiji_Updater.jar
-/plugins/Daltonize_.jar
 /plugins/Stitching_.jar
 /plugins/AnalyzeSkeleton_.jar
 /plugins/Skeletonize3D_.jar
@@ -284,3 +284,8 @@
 /modules/imagej2/jars/ij-plugin-swing.jar
 /jars/jars/ij-ui-swing.jar
 /modules/imagej2/jars/ij-ui-swing.jar
+/plugins/Reconstruct_Reader.jar
+/jars/mpicbg.jar
+/plugins/Colour_Deconvolution.jar
+/plugins/Dichromacy_.jar
+/plugins/Threshold_Colour.jar

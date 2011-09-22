@@ -4,6 +4,7 @@ function Miji(open_imagej)
     if nargin < 1
         open_imagej = true;
     end
+    
 
     %% Get the Fiji directory
     fiji_directory = fileparts(fileparts(mfilename('fullpath')));
@@ -12,15 +13,32 @@ function Miji(open_imagej)
     classpath = javaclasspath('-all');
 
     %% Add all libraries in jars/ and plugins/ to the classpath
+    
+    % Switch off warning
+    warning_state = warning('off');
+    
     add_to_classpath(classpath, strcat([fiji_directory filesep 'jars']));
     add_to_classpath(classpath, strcat([fiji_directory filesep 'plugins']));
+    
+    % Switch warning back to initial settings
+    warning(warning_state)
+
+    % Set the Fiji directory (and plugins.dir which is not Fiji.app/plugins/)
+    java.lang.System.setProperty('fiji.dir', fiji_directory);
+    java.lang.System.setProperty('plugins.dir', fiji_directory);
 
     %% Maybe open the ImageJ window
     if open_imagej
-      cd ..;
-      fprintf('\n\nUse MIJ.exit to end the session\n\n');
-      MIJ.start(pwd);
+        cd ..;
+        fprintf('\n\nUse MIJ.exit to end the session\n\n');
+        MIJ.start();
+    else
+        % initialize ImageJ with the NO_SHOW flag (== 2)
+        ij.ImageJ([], 2);
     end
+
+    % make sure that the scripts are found
+    fiji.User_Plugins.installScripts();
 end
 
 function add_to_classpath(classpath, directory)

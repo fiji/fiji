@@ -833,7 +833,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		else if (source == openHelpWithoutFrames)
 			openHelp(null, false);
 		else if (source == openMacroFunctions)
-			IJ.run("Macro Functions...");
+			new MacroFunctions().openHelp(getTextArea().getSelectedText());
 		else if (source == extractSourceJar)
 			extractSourceJar();
 		else if (source == openSourceForClass) {
@@ -1398,6 +1398,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		if (!write(file))
 			return false;
 		setFileName(file);
+		openRecent.add(path);
 		return true;
 	}
 
@@ -2147,7 +2148,8 @@ public class TextEditor extends JFrame implements ActionListener,
 	public void openHelp(String className, boolean withFrames) {
 		if (className == null)
 			className = getSelectedClassNameOrAsk();
-		getEditorPane().getClassNameFunctions().openHelpForClass(className, withFrames);
+		if (className != null)
+			getEditorPane().getClassNameFunctions().openHelpForClass(className, withFrames);
 	}
 
 	public void extractSourceJar() {

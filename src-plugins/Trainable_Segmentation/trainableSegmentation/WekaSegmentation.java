@@ -1,5 +1,6 @@
 package trainableSegmentation;
 
+import java.awt.Point;
 import java.awt.Rectangle;
 
 import java.io.BufferedReader;
@@ -146,8 +147,26 @@ public class WekaSegmentation {
 	/** maximum sigma to use on the filters */
 	private float maximumSigma = 16f;
 	/** flags of filters to be used */
-	private boolean[] enabledFeatures = new boolean[]{true, true, true, true, true, false, false, 
-													 false, false, false, false, false, false, false, false /*, false, false */};
+	private boolean[] enabledFeatures = new boolean[]{
+			true, 	/* Gaussian_blur */
+			true, 	/* Sobel_filter */
+			true, 	/* Hessian */
+			true, 	/* Difference_of_gaussians */
+			true, 	/* Membrane_projections */
+			false, 	/* Variance */
+			false, 	/* Mean */
+			false, 	/* Minimum */
+			false, 	/* Maximum */
+			false, 	/* Median */
+			false,	/* Anisotropic_diffusion */
+			false, 	/* Bilateral */
+			false, 	/* Lipschitz */
+			false, 	/* Kuwahara */
+			false,	/* Gabor */
+			false, 	/* Derivatives */
+			false, 	/* Laplacian */
+			false	/* Structure */
+	};
 	/** use neighborhood flag */
 	private boolean useNeighbors = false;
 
@@ -444,9 +463,7 @@ public class WekaSegmentation {
 			loadedTrainingData = null;
 			return false;
 		}
-
-		IJ.log("Loaded data: " + loadedTrainingData.numInstances() + " instances");
-
+		
 		boolean featuresChanged = false;
 		final boolean[] oldEnableFeatures = this.featureStackArray.getEnabledFeatures();
 		// Read checked features and check if any of them chasetButtonsEnablednged
@@ -459,15 +476,16 @@ public class WekaSegmentation {
 		if(featuresChanged)
 		{
 			//this.setButtonsEnabled(false);
-			this.featureStackArray.setEnabledFeatures(usedFeatures);
+			this.setEnabledFeatures( usedFeatures );
 			// Force features to be updated
 			updateFeatures = true;
+			
 		}
 
 		if (false == adjustSegmentationStateToData(loadedTrainingData) )
 			loadedTrainingData = null;
 		else
-			IJ.log("Loaded data: " + loadedTrainingData.numInstances() + " instances");
+			IJ.log("Loaded data: " + loadedTrainingData.numInstances() + " instances (" + loadedTrainingData.numAttributes() + " attributes)");
 
 		return true;
 	}
@@ -859,7 +877,7 @@ public class WekaSegmentation {
 			loadedTrainingData.setClassIndex(loadedTrainingData.numAttributes()-1);
 		}
 
-		// Check all pixels different from black
+		// Check all pixels 
 		final int width = labelImage.getWidth();
 		final int height = labelImage.getHeight();
 		final ImageProcessor img = labelImage.getProcessor();
@@ -902,6 +920,128 @@ public class WekaSegmentation {
 		return true;
 	}
 
+	/**
+	 * Add instances to two classes from a label (binary) image in a random
+	 * and balanced way.
+	 * White pixels will be added to the corresponding class 1 and
+	 * black pixels will be added to class 2.
+	 *
+	 * @param labelImage binary image
+	 * @param featureStack corresponding feature stack
+	 * @param whiteClassName name of the class which receives the white pixels
+	 * @param blackClassName name of the class which receives the black pixels
+	 * @param numSamples number of samples to add of each class
+	 * @return false if error
+	 */
+	public boolean addRandomBalancedBinaryData(
+			ImagePlus labelImage,
+			FeatureStack featureStack,
+			String whiteClassName,
+			String blackClassName,
+			int numSamples)
+	{		
+		// Update features if necessary
+		if(featureStack.getSize() < 2)
+		{
+			IJ.log("Creating feature stack...");
+			featureStack.updateFeaturesMT();
+			filterFeatureStackByList(this.featureNames, featureStack);
+			updateFeatures = false;
+			IJ.log("Feature stack is now updated.");
+		}
+
+		// Detect class indexes
+		int whiteClassIndex = 0;
+		for(whiteClassIndex = 0 ; whiteClassIndex < this.classLabels.length; whiteClassIndex++)
+			if(whiteClassName.equalsIgnoreCase(this.classLabels[whiteClassIndex]))
+				break;
+		if(whiteClassIndex == this.classLabels.length)
+		{
+			IJ.log("Error: class named '" + whiteClassName + "' not found.");
+			return false;
+		}
+		int blackClassIndex = 0;
+		for(blackClassIndex = 0 ; blackClassIndex < this.classLabels.length; blackClassIndex++)
+			if(blackClassName.equalsIgnoreCase(this.classLabels[blackClassIndex]))
+				break;
+		if(blackClassIndex == this.classLabels.length)
+		{
+			IJ.log("Error: class named '" + blackClassName + "' not found.");
+			return false;
+		}
+
+		// Create loaded training data if it does not exist yet
+		if(null == loadedTrainingData)
+		{
+			IJ.log("Initializing loaded data...");
+			// Create instances
+			ArrayList<Attribute> attributes = new ArrayList<Attribute>();
+			for (int i=1; i<=featureStack.getSize(); i++)
+			{
+				String attString = featureStack.getSliceLabel(i);
+				attributes.add(new Attribute(attString));
+			}
+
+			if(featureStack.useNeighborhood())
+				for (int i=0; i<8; i++)
+				{
+					IJ.log("Adding extra attribute original_neighbor_" + (i+1) + "...");
+					attributes.add(new Attribute(new String("original_neighbor_" + (i+1))));
+				}
+
+			// Update list of names of loaded classes
+			// (we assume the first two default class names)
+			loadedClassNames = new ArrayList<String>();
+			for(int i = 0; i < numOfClasses ; i ++)
+				loadedClassNames.add(classLabels[i]);
+			attributes.add(new Attribute("class", loadedClassNames));
+			loadedTrainingData = new Instances("segment", attributes, 1);
+
+			loadedTrainingData.setClassIndex(loadedTrainingData.numAttributes()-1);
+		}
+
+		// Create lists of coordinates of pixels of both classes
+		ArrayList<Point> blackCoordinates = new ArrayList<Point>();
+		ArrayList<Point> whiteCoordinates = new ArrayList<Point>();
+		final int width = labelImage.getWidth();
+		final int height = labelImage.getHeight();
+		final ImageProcessor img = labelImage.getProcessor();
+
+		for(int y = 0 ; y < height; y++)
+			for(int x = 0 ; x < width ; x++)
+			{
+				// White pixels are added to the class 1
+				// and black to class 2
+				if(img.getPixelValue(x, y) > 0)				
+					whiteCoordinates.add(new Point(x, y));					
+				else				
+					blackCoordinates.add(new Point(x, y));						
+			}
+
+		// Select random samples from both classes
+		Random rand = new Random();
+		for(int i=0; i<numSamples; i++)
+		{
+			int randomBlack = rand.nextInt( blackCoordinates.size() );
+			int randomWhite = rand.nextInt( whiteCoordinates.size() );
+			
+						
+			loadedTrainingData.add(featureStack.createInstance( blackCoordinates.get(randomBlack).x, 
+					blackCoordinates.get(randomBlack).y, blackClassIndex));
+			loadedTrainingData.add(featureStack.createInstance(whiteCoordinates.get(randomWhite).x, 
+					whiteCoordinates.get(randomWhite).y, whiteClassIndex));
+		}
+		
+		IJ.log("Added " + numSamples + " instances of '" + whiteClassName +"'.");
+		IJ.log("Added " + numSamples + " instances of '" + blackClassName +"'.");
+
+		IJ.log("Training dataset updated ("+ loadedTrainingData.numInstances() +
+				" instances, " + loadedTrainingData.numAttributes() +
+				" attributes, " + loadedTrainingData.numClasses() + " classes).");
+
+		return true;
+	}	
+	
 	/**
 	 * Get current feature stack
 	 * 
@@ -951,9 +1091,17 @@ public class WekaSegmentation {
 	{
 		// Accumulate current data in "loadedTrainingData"
 		IJ.log("Storing previous image instances...");
-/*
-		if (featureStack == null)
-			featureStack = new FeatureStack(newImage);
+
+		if(featureStackArray.isEmpty() || updateFeatures)
+		{
+			IJ.log("Creating feature stack...");
+			if ( false == featureStackArray.updateFeaturesMT(featureStackToUpdateTrain) )
+				return false;
+			Arrays.fill(featureStackToUpdateTrain, false);
+			filterFeatureStackByList();
+			updateFeatures = false;
+			IJ.log("Feature stack is now updated.");
+		}
 
 		// Create instances
 		Instances data = createTrainingInstances();
@@ -989,39 +1137,45 @@ public class WekaSegmentation {
 		}
 		else
 			IJ.log("Number of accumulated examples: 0");
-
-		// Remove traces from the lists and ROI overlays
-		IJ.log("Removing previous markings...");
-		examples.clear();
-		for(int i = 0; i < numOfClasses; i ++)
-		{
-			examples.add(new ArrayList<SliceRoi>());
-		}
-
+		
 		// Updating image
 		IJ.log("Updating image...");
 
-		if (trainingImage == null)
-			trainingImage = new ImagePlus("Advanced Weka Segmentation", newImage.getProcessor().duplicate().convertToByte(true));
-		else
-			trainingImage.setProcessor("Advanced Weka Segmentation", newImage.getProcessor().duplicate().convertToByte(true));
+		// Set new image as training image
+		trainingImage = new ImagePlus("Advanced Weka Segmentation", newImage.getImageStack());
+		
+		// Initialize feature stack array (no features yet)
+		featureStackArray = new FeatureStackArray(trainingImage.getImageStackSize(),
+				minimumSigma, maximumSigma, useNeighbors, membraneThickness, membranePatchSize,
+				enabledFeatures);
+		
+		// Remove traces from the lists and ROI overlays and initialize each feature stack
+		IJ.log("Removing previous markings...");
+		examples = new Vector[trainingImage.getImageStackSize()];
+		for(int i=0; i< trainingImage.getImageStackSize(); i++)
+		{
+			examples[i] = new Vector<ArrayList<Roi>>(MAX_NUM_CLASSES);
 
-		// Initialize feature stack (no features yet)
-		final boolean[] enabledFeatures = featureStack.getEnableFeatures();
-		featureStack = new FeatureStack(trainingImage);
-		featureStack.setEnableFeatures(enabledFeatures);
-		featureStack.setMaximumSigma(this.maximumSigma);
-		featureStack.setMinimumSigma(this.minimumSigma);
-		featureStack.setMembranePatchSize(this.membranePatchSize);
-		featureStack.setMembraneSize(this.membraneThickness);
+			for(int j=0; j<MAX_NUM_CLASSES; j++)
+				examples[i].add(new ArrayList<Roi>());
+			// Initialize each feature stack (one per slice)
+			featureStackArray.set(new FeatureStack(trainingImage.getImageStack().getProcessor(i+1)), i);
+		}
+		
+		
+		featureStackToUpdateTrain = new boolean[trainingImage.getImageStackSize()];
+		featureStackToUpdateTest = new boolean[trainingImage.getImageStackSize()];
+		Arrays.fill(featureStackToUpdateTest, true);
 		updateFeatures = true;
 		updateWholeData = true;
 
 		// Remove current classification result image
 		classifiedImage = null;
 
+		IJ.log("New image: " + newImage.getTitle() + " ("+trainingImage.getImageStackSize() + " slice(s))");
+		
 		IJ.log("Done");
-*/
+
 		return true;
 	}
 
@@ -1136,6 +1290,7 @@ public class WekaSegmentation {
 	 * Add label image as binary data
 	 *
 	 * @param labelImage binary label image
+	 * @param n slice number
 	 * @param whiteClassName class name for the white pixels
 	 * @param blackClassName class name for the black pixels
 	 * @return false if error
@@ -1243,6 +1398,133 @@ public class WekaSegmentation {
 		return true;
 	}
 
+	
+	/**
+	 * Add binary training data from input and label images in a
+	 * random and balanced way (same number of samples per class).
+	 * Input and label images can be 2D or stacks and their
+	 * sizes must match.
+	 *
+	 * @param inputImage input grayscale image
+	 * @param labelImage binary label image
+	 * @param whiteClassName class name for the white pixels
+	 * @param blackClassName class name for the black pixels
+	 * @param numSamples number of samples to pick for each class
+	 * @return false if error
+	 */
+	public boolean addRandomBalancedBinaryData(
+			ImagePlus inputImage,
+			ImagePlus labelImage,
+			String whiteClassName,
+			String blackClassName,
+			int numSamples)
+	{
+
+		// Check sizes
+		if(labelImage.getWidth() != inputImage.getWidth()
+				|| labelImage.getHeight() != inputImage.getHeight()
+				|| labelImage.getImageStackSize() != inputImage.getImageStackSize())
+		{
+			IJ.log("Error: label and training image sizes do not fit.");
+			return false;
+		}
+
+		final ImageStack inputSlices = inputImage.getImageStack();
+		final ImageStack labelSlices = labelImage.getImageStack();
+
+		for(int i=1; i <= inputSlices.getSize(); i++)
+		{
+
+			// Process label pixels
+			final ImagePlus labelIP = new ImagePlus ("labels", labelSlices.getProcessor(i).duplicate());
+			// Make sure it's binary
+			final byte[] pix = (byte[])labelIP.getProcessor().getPixels();
+			for(int j =0; j < pix.length; j++)
+				if(pix[j] > 0)
+					pix[j] = (byte)255;
+
+			final FeatureStack featureStack = new FeatureStack(new ImagePlus("slice " + i, inputSlices.getProcessor(i)));
+			featureStack.setEnabledFeatures(this.featureStackArray.getEnabledFeatures());
+			featureStack.setMembranePatchSize(membranePatchSize);
+			featureStack.setMembraneSize(this.membraneThickness);
+			featureStack.setMaximumSigma(this.maximumSigma);
+			featureStack.setMinimumSigma(this.minimumSigma);
+			IJ.log("Creating feature stack for slice "+i+"...");
+			featureStack.updateFeaturesMT();
+			filterFeatureStackByList(this.featureNames, featureStack);
+			IJ.log("Feature stack is now updated.");
+
+			featureStack.setUseNeighbors(this.featureStackArray.useNeighborhood());
+
+			if( false == addRandomBalancedBinaryData(labelIP, featureStack, whiteClassName, blackClassName, numSamples) )
+			{
+				IJ.log("Error while loading binary label data from slice " + i);
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	/**
+	 * Add binary training data from input and label images in a
+	 * random and balanced way (same number of samples per class).
+	 * The features will be created out of a list of filters.
+	 * Input and label images can be 2D or stacks and their
+	 * sizes must match.
+	 *
+	 * @param inputImage input grayscale image
+	 * @param labelImage binary label image
+	 * @param filters stack of filters to create features
+	 * @param whiteClassName class name for the white pixels
+	 * @param blackClassName class name for the black pixels
+	 * @param numSamples number of samples to pick for each class
+	 * @return false if error
+	 */
+	public boolean addRandomBalancedBinaryData(
+			ImagePlus inputImage,
+			ImagePlus labelImage,
+			ImagePlus filters,
+			String whiteClassName,
+			String blackClassName,
+			int numSamples)
+	{
+
+		// Check sizes
+		if(labelImage.getWidth() != inputImage.getWidth()
+				|| labelImage.getHeight() != inputImage.getHeight()
+				|| labelImage.getImageStackSize() != inputImage.getImageStackSize())
+		{
+			IJ.log("Error: label and training image sizes do not fit.");
+			return false;
+		}
+
+		final ImageStack inputSlices = inputImage.getImageStack();
+		final ImageStack labelSlices = labelImage.getImageStack();
+
+		for(int i=1; i <= inputSlices.getSize(); i++)
+		{
+
+			// Process label pixels
+			final ImagePlus labelIP = new ImagePlus ("labels", labelSlices.getProcessor(i).duplicate());
+			// Make sure it's binary
+			final byte[] pix = (byte[])labelIP.getProcessor().getPixels();
+			for(int j =0; j < pix.length; j++)
+				if(pix[j] > 0)
+					pix[j] = (byte)255;
+
+			final FeatureStack featureStack = new FeatureStack(new ImagePlus("slice " + i, inputSlices.getProcessor(i)));			
+			featureStack.addFeaturesMT( filters );
+
+
+			if( false == addRandomBalancedBinaryData(labelIP, featureStack, whiteClassName, blackClassName, numSamples) )
+			{
+				IJ.log("Error while loading binary label data from slice " + i);
+				return false;
+			}
+		}
+		return true;
+	}
+	
 	
 	/**
 	 * Add binary training data from input and label images.
@@ -1563,11 +1845,11 @@ public class WekaSegmentation {
 
 		for(int z=1; z <= depth; z++)
 		{
-			final ImagePlus testSlice = new ImagePlus(image.getImageStack().getSliceLabel(z), image.getImageStack().getProcessor(z).convertToByte(true));
+			final ImagePlus testSlice = new ImagePlus(image.getImageStack().getSliceLabel(z), image.getImageStack().getProcessor(z));
 			// Create feature stack for test image
-			IJ.showStatus("Creating features for test image...");
+			IJ.showStatus("Creating features for test image (slice "+z+")...");
 			if(verbose)
-				IJ.log("Creating features for test image " + z +  "...");
+				IJ.log("Creating features for test image (slice "+z+")...");
 			final FeatureStack testImageFeatures = new FeatureStack(testSlice);
 			// Use the same features as the current classifier
 			testImageFeatures.setEnabledFeatures(featureStackArray.getEnabledFeatures());
@@ -1623,6 +1905,137 @@ public class WekaSegmentation {
 	}
 
 	/**
+	 * Get the confusion matrix for an input image and its expected labels
+	 *
+	 * @param image input image
+	 * @param expectedLabels binary labels
+	 * @param whiteClassIndex index of the white class
+	 * @param blackClassIndex index of the black class
+	 * @return confusion matrix
+	 */
+	public int[][] getTestConfusionMatrix(
+			ImagePlus image,
+			ImagePlus expectedLabels,
+			int whiteClassIndex,
+			int blackClassIndex)
+	{
+	
+		// Set proper class names (skip empty list ones)
+		ArrayList<String> classNames = new ArrayList<String>();
+		if( null == loadedClassNames )
+		{
+			for(int i = 0; i < numOfClasses; i++)
+				if(examples[0].get(i).size() > 0)
+					classNames.add(classLabels[i]);
+		}
+		else
+			classNames = loadedClassNames;
+
+
+		// Apply current classifier
+		ImagePlus resultLabels = applyClassifier(image, 0, false);
+		
+		//resultLabels.show();
+		
+		int[][] confusionMatrix = new int[2][2];
+		
+		// Compare labels
+		final int height = image.getHeight();
+		final int width = image.getWidth();
+		final int depth = image.getStackSize();
+		
+
+		for(int z=1; z <= depth; z++)
+			for(int y=0; y<height; y++)
+				for(int x=0; x<width; x++)
+				{
+					if( expectedLabels.getImageStack().getProcessor(z).get(x, y) == 255 )
+					{
+						if( resultLabels.getImageStack().getProcessor(z).get(x, y) == 255 )
+							confusionMatrix[whiteClassIndex][whiteClassIndex] ++; 							                                 
+						else
+							confusionMatrix[whiteClassIndex][blackClassIndex] ++; 
+					}
+					else
+					{
+						if( resultLabels.getImageStack().getProcessor(z).get(x, y) == 0 )
+							confusionMatrix[blackClassIndex][blackClassIndex] ++; 							                                 
+						else
+							confusionMatrix[blackClassIndex][whiteClassIndex] ++;
+					}
+				}
+		
+		return confusionMatrix;
+	}
+	
+	/**
+	 * Get the confusion matrix for an input image and its expected labels
+	 *
+	 * @param image input image
+	 * @param filters stack of filters to apply to the original image in order to create the features
+	 * @param expectedLabels binary labels
+	 * @param whiteClassIndex index of the white class
+	 * @param blackClassIndex index of the black class
+	 * @return confusion matrix
+	 */
+	public int[][] getTestConfusionMatrix(
+			ImagePlus image,
+			ImagePlus filters,
+			ImagePlus expectedLabels,
+			int whiteClassIndex,
+			int blackClassIndex)
+	{
+	
+		// Set proper class names (skip empty list ones)
+		ArrayList<String> classNames = new ArrayList<String>();
+		if( null == loadedClassNames )
+		{
+			for(int i = 0; i < numOfClasses; i++)
+				if(examples[0].get(i).size() > 0)
+					classNames.add(classLabels[i]);
+		}
+		else
+			classNames = loadedClassNames;
+
+
+		// Apply current classifier
+		ImagePlus resultLabels = applyClassifier(image, filters, 0, false);
+		
+		//resultLabels.show();
+		
+		int[][] confusionMatrix = new int[2][2];
+		
+		// Compare labels
+		final int height = image.getHeight();
+		final int width = image.getWidth();
+		final int depth = image.getStackSize();
+		
+
+		for(int z=1; z <= depth; z++)
+			for(int y=0; y<height; y++)
+				for(int x=0; x<width; x++)
+				{
+					if( expectedLabels.getImageStack().getProcessor(z).get(x, y) == 255 )
+					{
+						if( resultLabels.getImageStack().getProcessor(z).get(x, y) == 255 )
+							confusionMatrix[whiteClassIndex][whiteClassIndex] ++; 							                                 
+						else
+							confusionMatrix[whiteClassIndex][blackClassIndex] ++; 
+					}
+					else
+					{
+						if( resultLabels.getImageStack().getProcessor(z).get(x, y) == 0 )
+							confusionMatrix[blackClassIndex][blackClassIndex] ++; 							                                 
+						else
+							confusionMatrix[blackClassIndex][whiteClassIndex] ++;
+					}
+				}
+		
+		return confusionMatrix;
+	}
+	
+	
+	/**
 	 * Get test error of current classifier on a specific image and its binary labels
 	 *
 	 * @param image input image
@@ -1667,7 +2080,7 @@ public class WekaSegmentation {
 
 		for(int z=1; z <= depth; z++)
 		{
-			final ImagePlus testSlice = new ImagePlus(image.getImageStack().getSliceLabel(z), image.getImageStack().getProcessor(z).convertToByte(true));
+			final ImagePlus testSlice = new ImagePlus(image.getImageStack().getSliceLabel(z), image.getImageStack().getProcessor(z));
 			// Create feature stack for test image
 			IJ.showStatus("Creating features for test image...");
 			if(verbose)
@@ -2862,7 +3275,7 @@ public class WekaSegmentation {
 		if(featuresChanged)
 		{
 			//this.setButtonsEnabled(false);
-			this.featureStackArray.setEnabledFeatures(usedFeatures);
+			this.featureStackArray.setEnabledFeatures( usedFeatures );
 			// Force features to be updated
 			updateFeatures = true;
 		}
@@ -2872,7 +3285,7 @@ public class WekaSegmentation {
 
 	/**
 	 * Create training instances out of the user markings
-	 * @return set of instances
+	 * @return set of instances (feature vectors in Weka format)
 	 */
 	public Instances createTrainingInstances()
 	{
@@ -2924,6 +3337,8 @@ public class WekaSegmentation {
 
 		IJ.log("Training input:");
 
+		final boolean colorFeatures = this.trainingImage.getType() == ImagePlus.COLOR_RGB;
+		
 		// For all classes
 		for(int l = 0; l < numOfClasses; l++)
 		{
@@ -2946,8 +3361,13 @@ public class WekaSegmentation {
 							for (int i=0; i<n; i++)
 							{
 								double[] values = new double[featureStackArray.getNumOfFeatures()+1];
-								for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
-									values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getPixelValue(x[i], y[i]);
+								if(colorFeatures)
+									for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
+										values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getPixel(x[i], y[i]);
+								else
+									for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
+										values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getPixelValue(x[i], y[i]);
+								
 								values[featureStackArray.getNumOfFeatures()] = (double) l;
 								trainingData.add(new DenseInstance(1.0, values));
 								// increase number of instances for this class
@@ -2984,8 +3404,12 @@ public class WekaSegmentation {
 											&& y >= 0 && y <featureStackArray.get(sliceNum-1).getHeight())
 									{
 										double[] values = new double[featureStackArray.getNumOfFeatures()+1];
-										for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
-											values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getInterpolatedValue(x, y);
+										if(colorFeatures)
+											for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
+												values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getPixelInterpolated(x, y);
+										else
+											for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
+												values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getInterpolatedValue(x, y);
 										values[featureStackArray.getNumOfFeatures()] = (double) l;
 										trainingData.add(new DenseInstance(1.0, values));
 										// increase number of instances for this class
@@ -3011,8 +3435,12 @@ public class WekaSegmentation {
 								if(shapeRoi.contains(x, y))
 								{
 									double[] values = new double[featureStackArray.getNumOfFeatures()+1];
-									for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
-										values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getPixelValue(x, y);
+									if(colorFeatures)
+										for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
+											values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getPixel(x, y);
+									else
+										for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
+											values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getPixelValue(x, y);
 									values[featureStackArray.getNumOfFeatures()] = (double) l;
 									trainingData.add(new DenseInstance(1.0, values));
 									// increase number of instances for this class
@@ -3210,6 +3638,17 @@ public class WekaSegmentation {
 			return false;
 		}
 
+		/*
+		for(int i=0; i < data.numInstances(); i++)
+		{
+			try {
+				IJ.log("Prediction for instance " + i + ": " +classifier.classifyInstance(data.instance(i)));
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		*/
 		// Print classifier information
 		IJ.log( this.classifier.toString() );
 
@@ -3287,7 +3726,7 @@ public class WekaSegmentation {
 
 				for (int i = startSlice; i < startSlice + numSlices; i++)
 				{
-					final ImagePlus slice = new ImagePlus(imp.getImageStack().getSliceLabel(i), imp.getImageStack().getProcessor(i).convertToByte(true));
+					final ImagePlus slice = new ImagePlus(imp.getImageStack().getSliceLabel(i), imp.getImageStack().getProcessor(i));
 					// Create feature stack for slice
 					IJ.showStatus("Creating features...");
 					IJ.log("Creating features for slice " + i +  "...");
@@ -3302,14 +3741,17 @@ public class WekaSegmentation {
 					filterFeatureStackByList(featureNames, sliceFeatures);
 
 					final Instances sliceData = sliceFeatures.createInstances(classNames);
-					sliceData.setClassIndex(sliceData.numAttributes() - 1);
-
+					sliceData.setClassIndex(sliceData.numAttributes() - 1);					
+					
 					final ImagePlus classImage;
 					classImage = applyClassifier(sliceData, slice.getWidth(), slice.getHeight(), numFurtherThreads, probabilityMaps);
 
 					IJ.log("Classifying slice " + i + " in " + numFurtherThreads + " threads...");
 					classImage.setTitle("classified_" + slice.getTitle());
-					classImage.setProcessor(classImage.getProcessor().convertToByte(true).duplicate());
+					if(probabilityMaps)
+						classImage.setProcessor(classImage.getProcessor().duplicate());
+					else
+						classImage.setProcessor(classImage.getProcessor().convertToByte(true).duplicate());
 					classifiedSlices[i-1] = classImage;
 				}
 			}
@@ -3343,7 +3785,7 @@ public class WekaSegmentation {
 				e.printStackTrace();
 			}
 
-		// assamble classified image
+		// assemble classified image
 		for (int i = 0; i < imp.getStackSize(); i++)
 			for (int c = 0; c < numChannels; c++)
 				classified.addSlice("", classifiedSlices[i].getStack().getProcessor(c+1));
@@ -3360,10 +3802,165 @@ public class WekaSegmentation {
 		return result;
 	}
 
+
+	/**
+	 * Apply current classifier to a given image with precomputed features.
+	 *
+	 * @param imp image (2D single image or stack)
+	 * @param filters stack of filters to apply to the original image in order to create the features
+	 * @param numThreads The number of threads to use. Set to zero for auto-detection. 					
+	 * @param probabilityMaps create probability maps for each class instead of a classification
+	 * @return result image
+	 */
+	public ImagePlus applyClassifier(
+			final ImagePlus imp,
+			final ImagePlus filters,
+			int numThreads, 
+			final boolean probabilityMaps)
+	{
+		return applyClassifier(imp, new FeatureStackArray(imp, filters), numThreads, probabilityMaps);
+	}
+	
+	/**
+	 * Apply current classifier to a given image with precomputed features.
+	 *
+	 * @param imp image (2D single image or stack)
+	 * @param fsa precomputed feature stack array
+	 * @param numThreads The number of threads to use. Set to zero for auto-detection. 					
+	 * @param probabilityMaps create probability maps for each class instead of a classification
+	 * @return result image
+	 */
+	public ImagePlus applyClassifier(
+			final ImagePlus imp,
+			FeatureStackArray fsa,
+			int numThreads, 
+			final boolean probabilityMaps)
+	{
+		if (numThreads == 0)
+			numThreads = Runtime.getRuntime().availableProcessors();
+
+		final int numSliceThreads = Math.min(imp.getStackSize(), numThreads);
+		final int numClasses      = numOfClasses;
+		final int numChannels     = (probabilityMaps ? numClasses : 1);
+
+		IJ.log("Processing slices of " + imp.getTitle() + " in " + numSliceThreads + " threads...");
+
+		// Set proper class names (skip empty list ones)
+		ArrayList<String> classNames = new ArrayList<String>();
+		if( null == loadedClassNames )
+		{
+			for(int i = 0; i < numOfClasses; i++)
+				for(int j=0; j<trainingImage.getImageStackSize(); j++)
+					if(examples[j].get(i).size() > 0)
+					{
+						classNames.add(classLabels[i]);
+						break;
+					}
+		}
+		else
+			classNames = loadedClassNames;
+
+		final ImagePlus[] classifiedSlices = new ImagePlus[imp.getStackSize()];
+
+		class ApplyClassifierThread extends Thread 
+		{
+
+			final int startSlice;
+			final int numSlices;
+			final int numFurtherThreads;
+			final ArrayList<String> classNames;
+			final FeatureStackArray fsa;
+			
+			public ApplyClassifierThread(
+					int startSlice, 
+					int numSlices, 
+					int numFurtherThreads, 
+					ArrayList<String> classNames,
+					FeatureStackArray fsa) 
+			{
+
+				this.startSlice         = startSlice;
+				this.numSlices          = numSlices;
+				this.numFurtherThreads  = numFurtherThreads;
+				this.classNames         = classNames;
+				this.fsa 				= fsa;
+			}
+
+			public void run() 
+			{
+
+				for (int i = startSlice; i < startSlice + numSlices; i++)
+				{
+					final ImagePlus slice = new ImagePlus(imp.getImageStack().getSliceLabel(i), imp.getImageStack().getProcessor(i));
+				
+
+					final Instances sliceData = fsa.get(i-1).createInstances(classNames);
+					sliceData.setClassIndex(sliceData.numAttributes() - 1);
+
+					final ImagePlus classImage;
+					classImage = applyClassifier(sliceData, slice.getWidth(), slice.getHeight(), numFurtherThreads, probabilityMaps);
+
+					IJ.log("Classifying slice " + i + " in " + numFurtherThreads + " thread(s)...");
+					classImage.setTitle("classified_" + slice.getTitle());
+					if(probabilityMaps)
+						classImage.setProcessor(classImage.getProcessor().duplicate());
+					else
+						classImage.setProcessor(classImage.getProcessor().convertToByte(true).duplicate());
+					classifiedSlices[i-1] = classImage;
+				}
+			}
+		}
+
+		final int numFurtherThreads = (int)Math.ceil((double)(numThreads - numSliceThreads)/numSliceThreads) + 1;
+		final ApplyClassifierThread[] threads = new ApplyClassifierThread[numSliceThreads];
+
+		int numSlices  = imp.getStackSize()/numSliceThreads;
+		for (int i = 0; i < numSliceThreads; i++) 
+		{
+
+			int startSlice = i*numSlices + 1;
+			// last thread takes all the remaining slices
+			if (i == numSliceThreads - 1)
+				numSlices = imp.getStackSize() - (numSliceThreads - 1)*(imp.getStackSize()/numSliceThreads);
+
+			IJ.log("Starting thread " + i + " processing " + numSlices + " slices, starting with " + startSlice);
+			threads[i] = new ApplyClassifierThread(startSlice, numSlices, numFurtherThreads, classNames, fsa);
+
+			threads[i].start();
+		}
+
+		// create classified image
+		final ImageStack classified = new ImageStack(imp.getWidth(), imp.getHeight());
+
+		// join threads
+		for(Thread thread : threads)
+			try {
+				thread.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+		// assemble classified image
+		for (int i = 0; i < imp.getStackSize(); i++)
+			for (int c = 0; c < numChannels; c++)
+				classified.addSlice("", classifiedSlices[i].getStack().getProcessor(c+1));
+
+		ImagePlus result = new ImagePlus("Classification result", classified);
+
+		if (probabilityMaps)
+		{
+			result.setDimensions(numOfClasses, imp.getNSlices(), imp.getNFrames());
+			if (imp.getNSlices()*imp.getNFrames() > 1)
+				result.setOpenAsHyperStack(true);
+		}
+
+		return result;
+	}
+	
 	/**
 	 * Apply current classifier to current image.
 	 * 
-	 * @param classify
+	 * @param classify flag to get labels or probability maps (false = labels)
 	 */
 	public void applyClassifier(boolean classify)
 	{
@@ -3436,8 +4033,9 @@ public class WekaSegmentation {
 	}
 
 	/**
+	 * Create the whole image data (instances) from the current image and feature stack.
 	 * 
-	 * @return
+	 * @return feature vectors (Weka instances) of the entire image
 	 */
 	public Instances updateWholeImageData() 
 	{
@@ -3472,7 +4070,7 @@ public class WekaSegmentation {
 
 			for(int z = 1; z<=trainingImage.getImageStackSize(); z++)
 			{
-				IJ.log("Creating fetaure vectors for slice number " + z + "...");
+				IJ.log("Creating feature vectors for slice number " + z + "...");
 				futures.add( exe.submit( createInstances(classNames, featureStackArray.get(z-1))) );
 			}
 
@@ -3484,10 +4082,10 @@ public class WekaSegmentation {
 				data[z-1].setClassIndex(data[z-1].numAttributes() - 1);
 			}						
 					
-			for(int n =0; n<data.length; n++)
+			for(int n=0; n<data.length; n++)
 			{
 				//IJ.log("Test dataset updated ("+ data[n].numInstances() + " instances, " + data[n].numAttributes() + " attributes).");
-
+				
 				if(null == wholeImageData)
 					wholeImageData = data[n];
 				else
@@ -3495,7 +4093,7 @@ public class WekaSegmentation {
 			}
 			
 			IJ.log("Total dataset: "+ wholeImageData.numInstances() + 
-					" instances, " + wholeImageData.numAttributes() + " attributes).");
+					" instances, " + wholeImageData.numAttributes() + " attributes.");
 			long end = System.currentTimeMillis();
 			IJ.log("Creating whole image data took: " + (end-start) + "ms");
 		
@@ -3533,7 +4131,7 @@ public class WekaSegmentation {
 	 * auto-detection.
 	 * @return result image
 	 */
-	private ImagePlus applyClassifier(final Instances data, int w, int h, int numThreads, boolean probabilityMaps)
+	public ImagePlus applyClassifier(final Instances data, int w, int h, int numThreads, boolean probabilityMaps)
 	{
 		if (numThreads == 0)
 			numThreads = Runtime.getRuntime().availableProcessors();
@@ -3564,7 +4162,15 @@ public class WekaSegmentation {
 			else
 				partialData[i] = new Instances(data, i*partialSize, partialSize);
 
-			fu[i] = exe.submit(classifyInstances(partialData[i], classifier, counter, probabilityMaps));
+			AbstractClassifier classifierCopy = null;
+			try {
+				classifierCopy = (AbstractClassifier) (AbstractClassifier.makeCopy( classifier ));
+			} catch (Exception e) {
+				IJ.log("Error: classifier could not be copied to classify in a multi-thread way.");
+				e.printStackTrace();
+			}
+			
+			fu[i] = exe.submit(classifyInstances(partialData[i], classifierCopy, counter, probabilityMaps));
 		}
 
 		ScheduledExecutorService monitor = Executors.newScheduledThreadPool(1);
@@ -3673,7 +4279,9 @@ public class WekaSegmentation {
 								classificationResult[k][i] = prob[k];
 						}
 						else
-							classificationResult[0][i] = classifier.classifyInstance(data.instance(i));
+						{
+							classificationResult[0][i] = classifier.classifyInstance(data.get(i));
+						}
 
 					}catch(Exception e){
 
@@ -3830,6 +4438,15 @@ public class WekaSegmentation {
 	}
 
 	/**
+	 * Set feature update flag
+	 * @param udpateFeatures new feature update flag
+	 */
+	public void setUpdateFeatures(boolean updateFeatures)
+	{
+		this.updateFeatures = updateFeatures;
+	}
+	
+	/**
 	 * Forces the feature stack to be updated whenever it is needed next.
 	 */
 	public void setFeaturesDirty()
@@ -3919,6 +4536,55 @@ public class WekaSegmentation {
 	{
 		featureStackArray.shutDownNow();
 		exe.shutdownNow();		
+	}
+
+	/**
+	 * Assign an arbitrary filter stack array
+	 * @param fsa new filter stack array
+	 */
+	public void setFeatureStackArray(FeatureStackArray fsa)
+	{
+		this.featureStackArray = fsa;
+	}
+
+	/**
+	 * Set the list of loaded class names
+	 * @param classNames new list of class names
+	 */
+	public void setLoadedClassNames(ArrayList<String> classNames)
+	{
+		this.loadedClassNames = classNames;
+	}
+
+	/**
+	 * Save specific slice feature stack
+	 * 
+	 * @param slice slice number
+	 * @param dir directory to save the stack(s)
+	 * @param fileWithExt file name with extension for the file(s)
+	 */
+	public void saveFeatureStack(int slice, String dir, String fileWithExt)
+	{
+		
+		if(featureStackArray.isEmpty())
+		{
+			featureStackArray.updateFeaturesMT();
+		}
+
+		if(null == dir || null == fileWithExt)
+			return;
+
+
+		final String fileName = dir + fileWithExt.substring(0, fileWithExt.length()-4) 
+									+ String.format("%04d", slice) + ".tif";
+		if(false == featureStackArray.get(slice-1).saveStackAsTiff(fileName))
+		{
+			IJ.error("Error", "Feature stack could not be saved");
+			return;
+		}
+
+		IJ.log("Saved feature stack for slice " + (slice) + " as " + fileName);
+			
 	}
 	
 }

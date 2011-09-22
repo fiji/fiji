@@ -184,7 +184,10 @@ package_name_to_file_matchers = {
         [ "plugins/Simple_Neurite_Tracer.jar" ],
 
     "fiji-jython" :
-        [ "jars/jython.jar" ]
+        [ "jars/jython.jar" ],
+
+    "fiji-itext" :
+        [ "jars/itextpdf-5.1.1.jar" ]
 
 }
 
@@ -212,7 +215,6 @@ map_to_external_dependencies = {
     'jars/junit.*\.jar' : ( 'junit', ),
     'jars/js\.jar' : ( 'rhino', ),
     'jars/Jama.*\.jar': ( 'libjama-java', ),
-    'jars/itext.*\.jar' : ( 'libitext1-java', ),
     'jars/jzlib.*\.jar' : ( 'libjzlib-java', ),
     'jars/jfreechart.*\.jar' : ( 'libjfreechart-java', ),
     'jars/jcommon.*\.jar' : ( 'libjcommon-java', ),
@@ -230,7 +232,6 @@ replacement_files =  {
     'jars/batik.jar' : ( '/usr/share/java/batik-all.jar', '/usr/share/java/xml-apis-ext.jar' ),
     'jars/bsh-2.0b4.jar' : ( '/usr/share/java/bsh.jar', ),
     'jars/clojure.jar' : ( '/usr/share/java/clojure.jar', ),
-    'jars/itext-1.3.jar' : ( '/usr/share/java/itext1.jar', ),
     'jars/Jama-1.0.2.jar' : ( '/usr/share/java/jama.jar', ),
     'jars/jcommon-1.0.12.jar' : ( '/usr/share/java/jcommon.jar', ),
     'jars/jfreechart-1.0.13.jar' : ( '/usr/share/java/jfreechart.jar', ),
@@ -662,7 +663,6 @@ if options.clean:
     to_remove.append("jars/js.jar")
     to_remove.append("jars/bsh*.jar")
     to_remove.append("jars/Jama*.jar")
-    to_remove.append("jars/itext*.jar")
     to_remove.append("jars/jzlib*.jar")
     to_remove.append("jars/jcommon*.jar")
     to_remove.append("jars/jfreechart*.jar")
@@ -707,6 +707,8 @@ if options.clean:
                 continue
             if re.search("(^\s*jars|precompiled)/batik.jar",line):
                 continue
+            if re.search("imagej2",line):
+                continue
         if re.search("^\s*missingPrecompiledFallBack",line):
             skip_next_line = True
             continue
@@ -732,7 +734,9 @@ if options.clean:
         with NamedTemporaryFile(delete=False) as tfp:
             with open(filename) as original:
                 for line in original:
-                    tfp.write(re.sub('fiji\s+--ant',"fiji --java-home '%s' --ant"%(java_home,),line))
+                    line = re.sub('../../fiji\s+',"../../fiji --java-home '%s' "%(java_home,),line)
+                    line = re.sub('/../bin/jar','/bin/jar',line)
+                    tfp.write(line)
         os.chmod(tfp.name, original_permissions)
         os.rename(tfp.name, original.name)
 

@@ -4,6 +4,7 @@ import com.jcraft.jsch.UserInfo;
 
 import fiji.updater.Updater;
 
+import fiji.updater.logic.Checksummer;
 import fiji.updater.logic.FileUploader;
 import fiji.updater.logic.Installer;
 import fiji.updater.logic.PluginCollection;
@@ -50,7 +51,9 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -96,6 +99,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 
 	public UpdaterFrame(final PluginCollection plugins, boolean hidden) {
 		super("Fiji Updater");
+		setPreferredSize(new Dimension(780, 560));
 
 		this.plugins = plugins;
 		this.hidden = hidden;
@@ -173,9 +177,9 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 
 		//Label text for plugin summaries
 		lblPluginSummary = new JLabel();
-		JPanel lblSummaryPanel = SwingTools.horizontalPanel();
-		lblSummaryPanel.add(lblPluginSummary);
-		lblSummaryPanel.add(Box.createHorizontalGlue());
+		JPanel summaryPanel = SwingTools.horizontalPanel();
+		summaryPanel.add(lblPluginSummary);
+		summaryPanel.add(Box.createHorizontalGlue());
 
 		//Create the plugin table and set up its scrollpane
 		table = new PluginTable(this);
@@ -197,10 +201,6 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		c.fill = GridBagConstraints.HORIZONTAL;
 		gb.setConstraints(box, c);
 		leftPanel.add(box);
-
-		c.gridy = 8;
-		gb.setConstraints(lblSummaryPanel, c);
-		leftPanel.add(lblSummaryPanel);
 
 		//======== End: LEFT PANEL ========
 
@@ -226,6 +226,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		//======== End: TOP PANEL (LEFT + RIGHT) ========
 
 		//======== Start: BOTTOM PANEL ========
+		JPanel bottomPanel2 = SwingTools.horizontalPanel();
 		JPanel bottomPanel = SwingTools.horizontalPanel();
 		bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 15, 15, 15));
 		bottomPanel.add(new PluginAction("Keep as-is", null));
@@ -254,10 +255,10 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 				new SitesDialog(UpdaterFrame.this, UpdaterFrame.this.plugins,
 					UpdaterFrame.this.plugins.hasUploadableSites()).setVisible(true);
 			}
-		}, bottomPanel);
+		}, bottomPanel2);
 
 		//includes button to upload to server if is a Developer using
-		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
+		bottomPanel2.add(Box.createRigidArea(new Dimension(15,0)));
 		upload = SwingTools.button("Upload to server",
 				"Upload selected plugins to server", new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -267,7 +268,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 					}
 				}.start();
 			}
-		}, bottomPanel);
+		}, bottomPanel2);
 		upload.setEnabled(false);
 		upload.setVisible(plugins.hasUploadableSites());
 
@@ -275,7 +276,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 			Class pluginChangesClass = Class.forName("fiji.scripting.ShowPluginChanges");
 			if (pluginChangesClass != null && new File(System.getProperty("fiji.dir"), ".git").isDirectory()) {
 				final PlugIn pluginChanges = (PlugIn)pluginChangesClass.newInstance();
-				bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
+				bottomPanel2.add(Box.createRigidArea(new Dimension(15,0)));
 				JButton showChanges = SwingTools.button("Show changes",
 						"Show the changes in Git since the last upload", new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
@@ -286,13 +287,41 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 							}
 						}.start();
 					}
-				}, bottomPanel);
+				}, bottomPanel2);
+			}
+			Class rebuildClass = Class.forName("fiji.scripting.RunFijiBuild");
+			if (rebuildClass != null && new File(System.getProperty("fiji.dir"), ".git").isDirectory()) {
+				final PlugIn rebuild = (PlugIn)rebuildClass.newInstance();
+				bottomPanel2.add(Box.createRigidArea(new Dimension(15,0)));
+				JButton showChanges = SwingTools.button("Rebuild",
+						"Rebuild using Fiji Build", new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						new Thread() {
+							public void run() {
+								String list = "";
+								List<String> files = new ArrayList<String>();
+								for (PluginObject plugin : table.getSelectedPlugins()) {
+									list += ("".equals(list) ? "" : " ") + plugin.filename + "-rebuild";
+									files.add(plugin.filename);
+								}
+								if (!"".equals(list))
+									rebuild.run(list);
+								Checksummer checksummer = new Checksummer(plugins, getProgress("Checksumming rebuilt plugins"));
+								checksummer.updateFromLocal(files);
+								pluginsChanged();
+								updatePluginsTable();
+							}
+						}.start();
+					}
+				}, bottomPanel2);
 			}
 		} catch (Exception e) { /* ignore */ }
 
+		bottomPanel2.add(Box.createHorizontalGlue());
+
 		// offer to update Java, but only on non-Macs
 		if (!IJ.isMacOSX() && new File(Util.fijiRoot, "java").canWrite()) {
-			bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
+			bottomPanel2.add(Box.createRigidArea(new Dimension(15,0)));
 			SwingTools.button("Update Java",
 					"Update the Java version used for Fiji", new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
@@ -302,7 +331,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 						}
 					}.start();
 				}
-			}, bottomPanel);
+			}, bottomPanel2);
 		}
 
 		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
@@ -326,7 +355,11 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		getContentPane().setLayout(new BoxLayout(getContentPane(),
 					BoxLayout.Y_AXIS));
 		getContentPane().add(topPanel);
+		getContentPane().add(summaryPanel);
 		getContentPane().add(bottomPanel);
+		getContentPane().add(bottomPanel2);
+
+		getRootPane().setDefaultButton(apply);
 
 		table.getModel().addTableModelListener(this);
 
@@ -341,8 +374,10 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 
 	public void setVisible(boolean visible) {
 		super.setVisible(visible && !hidden);
-		if (visible)
+		if (visible) {
 			WindowManager.addWindow(this);
+			apply.requestFocusInWindow();
+		}
 	}
 
 	public void dispose() {
@@ -436,7 +471,9 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 
 	public void updatePluginsTable() {
 		Iterable<PluginObject> view = viewOptions.getView(table);
-		// TODO: maybe we want to remember what was selected?
+		Set<PluginObject> selected = new HashSet<PluginObject>();
+		for (PluginObject plugin : table.getSelectedPlugins())
+			selected.add(plugin);
 		table.clearSelection();
 
 		String search = txtSearch.getText().trim();
@@ -445,6 +482,9 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 
 		//Directly update the table for display
 		table.setPlugins(view);
+		for (int i = 0; i < table.getRowCount(); i++)
+			if (selected.contains(table.getPlugin(i)))
+				table.addRowSelectionInterval(i, i);
 	}
 
 	// TODO: once the editor is embedded, this can go
@@ -609,13 +649,12 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		if (install > 0)
 			text += " install/update: " + install
 				+ (implicated > 0 ? "+" + implicated : "")
-				+ " download size: "
-				+ sizeToString(bytesToDownload);
+				+ " (" + sizeToString(bytesToDownload) + ")";
 		if (uninstall > 0)
 			text += " uninstall: " + uninstall;
-		if (plugins.hasUploadableSites())
-			text += ", upload: " + upload + ", upload size: "
-				+ sizeToString(bytesToUpload);
+		if (plugins.hasUploadableSites() && upload > 0)
+			text += " upload: " + upload + " ("
+				+ sizeToString(bytesToUpload) + ")";
 		lblPluginSummary.setText(text);
 
 	}

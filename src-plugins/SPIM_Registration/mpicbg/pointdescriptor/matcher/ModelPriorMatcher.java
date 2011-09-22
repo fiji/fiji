@@ -8,9 +8,10 @@ import javax.vecmath.Quat4f;
 import javax.vecmath.Vector3f;
 
 import mpicbg.models.PointMatch;
+import mpicbg.models.RigidModel3D;
 import mpicbg.pointdescriptor.fit.FitResult;
-import mpicbg.pointdescriptor.model.RigidModel3D;
 import mpicbg.pointdescriptor.model.TranslationInvariantRigidModel3D;
+import mpicbg.util.TransformUtils;
 
 /**
  * 
@@ -34,7 +35,7 @@ public class ModelPriorMatcher extends SimpleMatcher
 		this.model = model;
 		
 		this.referenceMatrix = new Matrix3f();                
-        model.getTransform3D().get( referenceMatrix );
+        TransformUtils.getTransform3D( model ).get( referenceMatrix );
 
         this.invertedReferenceMatrix = new Matrix3f( this.referenceMatrix );
 		this.invertedReferenceMatrix.invert();

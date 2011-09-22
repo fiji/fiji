@@ -3,6 +3,7 @@ package ij3d;
 import ij3d.shapes.Scalebar;
 import ij.util.Java2;
 import ij.gui.GenericDialog;
+import ij.gui.YesNoCancelDialog;
 import ij.io.SaveDialog;
 import ij.io.DirectoryChooser;
 import ij.io.OpenDialog;
@@ -94,8 +95,11 @@ public class Executer {
 	public static final String SET_CS = "setCoordinateSystem";
 	public static final String SET_TRANSFORM = "setTransform";
 	public static final String APPLY_TRANSFORM = "applyTransform";
+	public static final String EXPORT_TRANSFORMED = "exportTransformed";
 	public static final String SAVE_TRANSFORM = "saveTransform";
 	public static final String RESET_TRANSFORM = "resetTransform";
+	public static final String IMPORT = "importContent";
+	public static final String EXPORT = "exportContent";
 
 	// TODO
 	public static final String ADD = "add";
@@ -221,12 +225,12 @@ public class Executer {
 // 		univ.removeOctree();
 // 	}
 
-	public void importWaveFront() {
-		OpenDialog od = new OpenDialog("Select .obj file", OpenDialog.getDefaultDirectory(), null);
+	protected void importFile(String dialogTitle, String extension, String formatDescription) {
+		OpenDialog od = new OpenDialog(dialogTitle, OpenDialog.getDefaultDirectory(), null);
 		String filename = od.getFileName();
 		if (null == filename) return;
-		if (!filename.toLowerCase().endsWith(".obj")) {
-			IJ.showMessage("Must select a wavefront .obj file!");
+		if (!filename.toLowerCase().endsWith(extension)) {
+			IJ.showMessage("Must select a " + formatDescription + " file!");
 			return;
 		}
 		String path = new StringBuilder(od.getDirectory()).append(filename).toString();
@@ -234,50 +238,75 @@ public class Executer {
 		Object ob;
 		try {
 			ob = univ.addContentLater(path);
+			record(IMPORT, path);
 		} catch (Exception e) {
 			e.printStackTrace();
 			ob = null;
 		}
 		if (null == ob)
 			IJ.showMessage("Could not load the file:\n" + path);
+	}
+
+	public void importWaveFront() {
+		importFile("Select .obj file", ".obj", "wavefront .ob");
 	}
 
 	public void importSTL() {
-		OpenDialog od = new OpenDialog("Select .stl file", OpenDialog.getDefaultDirectory(), null);
-		String filename = od.getFileName();
-		if (null == filename) return;
-		if (!filename.toLowerCase().endsWith(".stl")) {
-			IJ.showMessage("Must select an STL file!");
-			return;
-		}
-		String path = new StringBuilder(od.getDirectory()).append(filename).toString();
-		IJ.log("path: " + path);
-		Object ob;
-		try {
-			ob = univ.addContentLater(path);
-		} catch (Exception e) {
-			e.printStackTrace();
-			ob = null;
-		}
-		if (null == ob)
-			IJ.showMessage("Could not load the file:\n" + path);
+		importFile("Select .stl file", ".stl", "STL");
 	}
 
-
 	public void saveAsDXF() {
-		MeshExporter.saveAsDXF(univ.getContents());
+		File dxf_file = promptForFile("Save as DXF", "untitled", ".dxf");
+		if(dxf_file == null)
+			return;
+		MeshExporter.saveAsDXF(univ.getContents(), dxf_file);
+		record(EXPORT, "DXF", dxf_file.getAbsolutePath());
 	}
 
 	public void saveAsWaveFront() {
-		MeshExporter.saveAsWaveFront(univ.getContents());
+		File obj_file = promptForFile("Save WaveFront", "untitled", ".obj");
+		if(obj_file == null)
+			return;
+		MeshExporter.saveAsWaveFront(univ.getContents(), obj_file);
+		record(EXPORT, "WaveFront", obj_file.getAbsolutePath());
 	}
 
 	public void saveAsAsciiSTL(){
-		MeshExporter.saveAsSTL(univ.getContents(), MeshExporter.ASCII);
+		File stl_file = promptForFile("Save as STL (ASCII)", "untitled", ".stl");
+		if(stl_file == null)
+			return;
+		MeshExporter.saveAsSTL(univ.getContents(), stl_file, MeshExporter.ASCII);
+		record(EXPORT, "STL ASCII", stl_file.getAbsolutePath());
 	}
 
 	public void saveAsBinarySTL(){
-		MeshExporter.saveAsSTL(univ.getContents(), MeshExporter.BINARY);
+		File stl_file = promptForFile("Save as STL (binary)", "untitled", ".stl");
+		if(stl_file == null)
+			return;
+		MeshExporter.saveAsSTL(univ.getContents(), stl_file, MeshExporter.BINARY);
+		record(EXPORT, "STL Binary", stl_file.getAbsolutePath());
+	}
+
+	public static File promptForFile(String title, String suggestion, String ending) {
+		SaveDialog sd = new SaveDialog(title, suggestion, ending);
+		String dir = sd.getDirectory();
+		if (null == dir)
+			return null;
+		String filename = sd.getFileName();
+		if (!filename.toLowerCase().endsWith(ending))
+			filename += ending;
+
+		File file = new File(dir, filename);
+		// check if file exists
+		if (!IJ.isMacOSX()) {
+			if(file.exists()) {
+				YesNoCancelDialog yn = new YesNoCancelDialog(IJ.getInstance(), "Overwrite?", "File  " + filename + " exists!\nOverwrite?");
+				if (!yn.yesPressed())
+					return null;
+			}
+		}
+
+		return file;
 	}
 
 	public void saveAsU3D(){
@@ -295,6 +324,7 @@ public class Executer {
 			IJ.log("% pdflatex yourfilename.tex");
 			IJ.log("");
 			IJ.log(tex);
+			record(EXPORT, "U3D", dir + name);
 		} catch(Exception e) {
 			IJ.error(e.getMessage());
 		}
@@ -1262,43 +1292,14 @@ public class Executer {
 	}
 
 	private void exportTr(Content c) {
-		ImagePlus orig = c.getImage();
-		if(orig == null) {
-			IJ.error("No greyscale image exists for "
-				+ c.getName());
-			return;
+		try {
+			c.exportTransformed().show();
+			record(EXPORT_TRANSFORMED);
+		} catch(Exception e) {
+			e.printStackTrace();
+			IJ.error(e.getMessage());
 		}
-		Transform3D t1 = new Transform3D();
-		c.getLocalTranslate().getTransform(t1);
-		Transform3D t2 = new Transform3D();
-		c.getLocalRotate().getTransform(t2);
-		t1.mul(t2);
-		FastMatrix fc = FastMatrix.fromCalibration(orig);
-		FastMatrix fm = fc.inverse().times(toFastMatrix(t1).inverse()).
-			times(fc);
-		InterpolatedImage in = new InterpolatedImage(orig);
-		InterpolatedImage out = in.cloneDimensionsOnly();
-		int w = orig.getWidth(), h = orig.getHeight();
-		int d = orig.getStackSize();
-
-		for (int k = 0; k < d; k++) {
-			for (int j = 0; j < h; j++) {
-				for(int i = 0; i < w; i++) {
-					fm.apply(i, j, k);
-					out.set(i, j, k, (byte)in.interpol.get(
-							fm.x, fm.y, fm.z));
-				}
-				IJ.showProgress(k + 1, d);
-			}
-		}
-		out.getImage().setTitle(orig.getTitle() + "_transformed");
-		out.getImage().getProcessor().setColorModel(
-			orig.getProcessor().getColorModel());
-		out.getImage().show();
 	}
-
-
-
 
 	/* **********************************************************
 	 * View menu
@@ -1543,7 +1544,7 @@ public class Executer {
 		return m;
 	}
 
-	private FastMatrix toFastMatrix(Transform3D t3d) {
+	static FastMatrix toFastMatrix(Transform3D t3d) {
 		Matrix4d m = new Matrix4d();
 		t3d.get(m);
 		return new FastMatrix(new double[][] {

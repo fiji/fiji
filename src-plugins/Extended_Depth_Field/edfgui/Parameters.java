@@ -23,6 +23,7 @@
 
 package edfgui;
 
+
 public class Parameters {
 
 	public static final int QUALITY_LOW = 0;

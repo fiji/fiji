@@ -337,7 +337,7 @@ public class VisualizationFunctions
 			transformGroup.setCapability( TransformGroup.ALLOW_CHILDREN_WRITE );
 
 			// add the sphere
-			final Sphere s;
+			Sphere s = null;
 			
 			/*
 			if ( nucleus.isReference )
@@ -350,26 +350,28 @@ public class VisualizationFunctions
 				continue;
 			*/
 			
-			if ( nucleus.isAmbigous )
+			/*if ( nucleus.isAmbigous )
 				s = new Sphere( nucleus.numCorr*1.5f, Sphere.BODY, 10, appearanceICP );
 			else if ( nucleus.isUnique )
 				s = new Sphere( nucleus.numCorr*1.5f, Sphere.BODY, 10, appearanceNon );
+			else */if ( nucleus.getRANSACCorrespondence().size() > 0 )
+				s = new Sphere( nucleusSize, Sphere.BODY, 10, appearanceTrue );
 			else if ( nucleus.getICPCorrespondence().size() > 0 )			
 				s = new Sphere( nucleusSize, Sphere.BODY, 10, appearanceICP );			
 			else if ( nucleus.getDescriptorCorrespondence().size() > 0 && nucleus.getRANSACCorrespondence().size() == 0 )
 				s = new Sphere( nucleusSize, Sphere.BODY, 10, appearanceFalse );
-			else if ( nucleus.getRANSACCorrespondence().size() > 0 )
-				s = new Sphere( nucleusSize, Sphere.BODY, 10, appearanceTrue );
 			else
 				s = new Sphere( nucleusSize, Sphere.BODY, 10, appearanceNon );
 			
-			
-			s.setCapability( Sphere.ENABLE_APPEARANCE_MODIFY );
-			s.getShape().setCapability( Shape3D.ALLOW_APPEARANCE_WRITE );
-			transformGroup.addChild( s );
-			
-			// add the group to the view branch
-			viewBranch.addChild(transformGroup);				
+			if ( s != null )
+			{
+				s.setCapability( Sphere.ENABLE_APPEARANCE_MODIFY );
+				s.getShape().setCapability( Shape3D.ALLOW_APPEARANCE_WRITE );
+				transformGroup.addChild( s );
+				
+				// add the group to the view branch
+				viewBranch.addChild(transformGroup);
+			}
 		}				
 
 		// ????
@@ -548,9 +550,15 @@ public class VisualizationFunctions
 
 	public static ArrayList<Point3f> getBoundingBox( final ViewDataBeads view )
 	{
-		final ArrayList<Point3f> boundingBox = new ArrayList<Point3f>();
 		final int[] to = view.getImageSize();
 		final int[] fr = view.getImageSizeOffset();
+
+		return getBoundingBox( fr, to );
+	}
+	
+	public static ArrayList<Point3f> getBoundingBox( final int[] fr, final int[] to )
+	{
+		final ArrayList<Point3f> boundingBox = new ArrayList<Point3f>();
 		
 		for ( int d = 0; d < to.length; ++d )
 			to[ d ] += fr[ d ];

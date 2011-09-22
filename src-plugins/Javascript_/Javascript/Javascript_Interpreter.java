@@ -6,12 +6,17 @@ import common.AbstractInterpreter;
 import ij.IJ;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ImporterTopLevel;
+import org.mozilla.javascript.NativeJavaClass;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.UniqueTag;
 
 public class Javascript_Interpreter extends AbstractInterpreter {
 
@@ -30,12 +35,7 @@ public class Javascript_Interpreter extends AbstractInterpreter {
 			// Initialize inside the executer thread in parent class
 			println("Starting Javascript ...");
 			cx = Context.enter();
-			cx.setApplicationClassLoader(IJ.getClassLoader());
-			//scope = cx.initStandardObjects(null); // reuse
-			// the above, with a null arg, enables reuse of the scope in subsequent calls.
-			// But this one is better: includes importClass and importPackage js functions
-			scope = new ImporterTopLevel(cx);
-			importAll();
+			scope = getScopeAndImportAll(cx);
 			println("done.");
 			createBuiltInFunctions();
 		} catch (Throwable t) {
@@ -79,6 +79,42 @@ public class Javascript_Interpreter extends AbstractInterpreter {
 	protected final static Set excludeFromImport =
 		new HashSet(Arrays.<String>asList("InternalError", "Math",
 			"Number", "Boolean", "Error", "String", "Object", "Array"));
+
+	protected static Scriptable getScopeAndImportAll(Context cx) {
+		try {
+			cx.setApplicationClassLoader(IJ.getClassLoader());
+			Scriptable scope = new ImporterTopLevel(cx);
+			new Javascript_Interpreter(cx, scope).importAll();
+			return scope;
+		} catch (Throwable t) { }
+
+		// work around obsolete Rhino, e.g. in Matlab
+		final ClassLoader loader = IJ.getClassLoader();
+		final Map<String, String> map = new HashMap<String, String>();
+		Map<String, List<String>> defaultImports = getDefaultImports();
+		for (String packageName : defaultImports.keySet())
+			for (String className : defaultImports.get(packageName))
+				map.put(className, packageName);
+
+		return new ImporterTopLevel(cx) {
+			// reverse map class -> package
+			@Override
+			public Object get(String name, Scriptable start) {
+				Object result = super.get(name, start);
+				if (result != UniqueTag.NOT_FOUND)
+					return result;
+				String packageName = map.get(name);
+				if (packageName == null)
+					return result;
+				try {
+					Class<?> clazz = loader.loadClass(packageName + "." + name);
+					return new NativeJavaClass(this, clazz);
+				} catch (ClassNotFoundException e) {
+					return result;
+				}
+			};
+		};
+	}
 
 	/** Import all ImageJ and java.lang classes. */
 	protected String getImportStatement(String packageName, Iterable<String> classNames) {

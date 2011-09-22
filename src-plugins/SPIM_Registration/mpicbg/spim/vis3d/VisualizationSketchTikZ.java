@@ -124,7 +124,7 @@ public class VisualizationSketchTikZ
 	}
 
 	public static String drawNucleus( final Nucleus nucleus, final Transform3D globalTransform, final String beadType, final float factor )
-	{				
+	{			
 		// we will insert lines like this
 		// put { translate([0,0,1]) } {Bead}
 		
@@ -144,9 +144,21 @@ public class VisualizationSketchTikZ
 		// transform the bead coordinates into the position of the view
 		globalTransform.transform( translation );
 		
-		insert += template1 + (translation.x*factor) + "," + (translation.y*factor) +"," + (translation.z*factor) + template2 + beadType + template3;
+		//insert += template1 + (translation.x*factor) + "," + (translation.y*factor) +"," + (translation.z*factor) + template2 + beadType + template3;
+		//return insert;
 
-		return insert;
+		final StringBuffer s = new StringBuffer( template1 );
+		
+		s.append( translation.x*factor );
+		s.append( "," ); 
+		s.append( translation.y*factor );
+		s.append( "," );
+		s.append( translation.z*factor );
+		s.append( template2 );
+		s.append( beadType );
+		s.append( template3 );
+		
+		return s.toString();
 	}
 	
 	public static String drawView( final ViewDataBeads view, final float factor )

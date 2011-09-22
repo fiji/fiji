@@ -103,6 +103,11 @@ public class QueueJumpingKeyListener implements KeyListener {
 			canvas.toggleJustNearSlices();
 			e.consume();
 
+		} else if( keyChar == 'm' || keyChar == 'M' ) {
+
+			canvas.clickAtMaxPoint();
+			e.consume();
+
 		} else if( keyChar == 'g' || keyChar == 'G' ) {
 
 			canvas.selectNearestPathToMousePointer( shift_down || control_down );

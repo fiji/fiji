@@ -6,6 +6,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
@@ -23,6 +24,7 @@ import javax.vecmath.Vector3f;
 
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.models.AbstractAffineModel3D;
+import mpicbg.models.AffineModel3D;
 import mpicbg.models.ErrorStatistic;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.Model;
@@ -262,7 +264,7 @@ public class TileConfigurationSPIM
 			}
 			
 			//if ( i == 0 )
-			if ( error < 7.5 )
+			//if ( error < 7.5 )
 			{
 				SketchTikZFileObject files = SketchTikZFileObject.initOutputFile( "src/templates/beadimage-movie.sk", "src/templates/movie/dros_nucleibased_" + i + ".sk" );
 				
@@ -327,7 +329,7 @@ public class TileConfigurationSPIM
 				
 				files.finishFiles();
 				
-				System.exit( 0 );
+				//System.exit( 0 );
 			}
 			
 			update();
@@ -374,6 +376,19 @@ public class TileConfigurationSPIM
 	 *   from stopping at plateaus smaller than this value.
 	 * @param debugLevel defines if the Optimizer prints the output at the end of the process
 	 */
+	/**
+	 * Minimize the displacement of all {@link PointMatch Correspondence pairs}
+	 * of all {@link Tile Tiles}
+	 * 
+	 * @param maxAllowedError do not accept convergence if error is > max_error
+	 * @param maxIterations stop after that many iterations even if there was
+	 *   no minimum found
+	 * @param maxPlateauwidth convergence is reached if the average absolute
+	 *   slope in an interval of this size and half this size is smaller than
+	 *   0.0001 (in double accuracy).  This is assumed to prevent the algorithm
+	 *   from stopping at plateaus smaller than this value.
+	 * @param debugLevel defines if the Optimizer prints the output at the end of the process
+	 */
 	public void optimizeWithSketchTikZNuclei(
 			final float maxAllowedError,
 			final int maxIterations,
@@ -382,94 +397,130 @@ public class TileConfigurationSPIM
 	{
 		final ErrorStatistic observer = new ErrorStatistic( maxPlateauwidth + 1 );
 		
-		int i = 0;
-		final float factor = 0.01f;
+		//
+		// parameters for movie
+		//
+		
+		// how many detailed iterations to show (one frame per updated angle)
+		final int numDetailedIterations = 5;
+		// till which error show one frame per iteration 
+		final float thresholdErrorFastMovie = 7.5f;
+		// from the error threshold on, every how many iterations to do one frame
+		final int ratioFastMovie = 8;
+		
+		// in a first run find minX, minY, minZ
+		// for that we need a constant order of tiles
+		final ArrayList<ViewDataBeads> tilesSorted = new ArrayList<ViewDataBeads>();
+		for ( final TileSPIM<?> tile : tiles )
+			tilesSorted.add( tile.getParent() );		
+		Collections.sort( tilesSorted );
+		
+		int i = 0, j = 0, frame = 0;
+		final float factor = 0.01f * 0.45f;
+		
+		int freeTiles = 0;
+		for ( final Tile<?> tile : tiles )
+			if ( !fixedTiles.contains( tile ) )
+				freeTiles++;
 		
 		boolean proceed = i < maxIterations;
 		
 		while ( proceed )
-		{
-			for ( final TileSPIM tile : tiles )
+		{						
+			//for ( final TileSPIM<?> tile1 : tiles )
+			for ( final ViewDataBeads view : tilesSorted )
 			{
-				if ( fixedTiles.contains( tile ) ) continue;
-				tile.updateWithDections();
+				final TileSPIM<?> tile1 = view.getTile();
+				
+				if ( fixedTiles.contains( tile1 ) ) continue;
+				tile1.updateWithDections();
 				if ( i > 0 )
 				{
-					tile.fitModel();
-					tile.updateWithDections();
+					tile1.fitModel();
+					tile1.updateWithDections();
 				}
-			}
-			
-			//if ( error < 7.5 )
-			if ( i < 30 )
-			{
-				SketchTikZFileObject files = SketchTikZFileObject.initOutputFile( "src/templates/beadimage-movie.sk", "src/templates/movie/dros_nucleibased_" + i + ".sk" );
-				System.out.println( i + " " + error );
 				
-				for ( TileSPIM tile : tiles )
+				// to get the most accurate error
+				update();
+
+				if ( j >= freeTiles-1 && ( j <= (numDetailedIterations+1)*freeTiles || 
+						                 ( error > thresholdErrorFastMovie && j%freeTiles == 0 ) || 
+						                 ( error <= thresholdErrorFastMovie && j%(freeTiles*ratioFastMovie) == 0 )) )
 				{
-					final AbstractAffineModel3D<?> m = (AbstractAffineModel3D<?>)tile.getModel().copy();
+					System.out.println( j + "(" + i + ") " + error + " frame=" + frame );
 					
-					Transform3D t = TransformUtils.getTransform3D1( m ); 
-					ViewDataBeads parent = tile.getParent();
-													
-					// the bounding box is not scaled yet, so we have to apply
-					// the correct z stretching
-					Transform3D tmp = new Transform3D();
-					Transform3D tmp2 = new Transform3D(t);
-					tmp.setScale( new Vector3d(1, 1, parent.getZStretching()) );							
-					tmp2.mul( tmp );				
-					t = tmp2;
-					
-					// back up the model
-					AbstractAffineModel3D backUp = (AbstractAffineModel3D)tile.getModel().copy();
-					backUp.set( (AbstractAffineModel3D)parent.getTile().getModel() );
-					
-					parent.getTile().getModel().set( TransformUtils.getAffineModel3D( t ) );
-					
-					/*
-					Transform3D backUpT3D = parent.transformation;
-					Transform3D backUpIT3D = parent.inverseTransformation;
-					parent.transformation = t;
-					parent.inverseTransformation = new Transform3D( t );
-					parent.inverseTransformation.invert();
-					*/
-					
-					//System.out.println("Writing view " + parent.getName() + " @ iteration " + i );
-					files.getOutput().println( VisualizationSketchTikZ.drawView( parent, factor ) );
-					files.getOutput().println( VisualizationSketchTikZ.drawNuclei( parent.getNucleiStructure().getNucleiList(), TransformUtils.getTransform3D1( m ), "Bead", factor ) );
-					
-					for ( Nucleus nucleus : parent.getNucleiStructure().getNucleiList() )
+					//if ( frame < 10 || frame == 525 )
 					{
-						float distance = nucleus.getDistance();
-						if ( distance >= 0 )
+						SketchTikZFileObject files = SketchTikZFileObject.initOutputFile( "src/templates/fish-movie.sk", "src/templates/movie_fish/fish_" + frame + ".sk" );
+						for ( TileSPIM tile : tiles )
 						{
-							int color = Math.round( (float)Math.log10( distance + 1 ) * 256f );
+							final AffineModel3D m = new AffineModel3D();
+							m.set( (AffineModel3D)tile.getModel() );
 							
-							// max value == 100
-							if ( color > 511 )
-								color = 511;
+							Transform3D t = TransformUtils.getTransform3D( m ); 
+							ViewDataBeads parent = tile.getParent();
+															
+							// the bounding box is not scaled yet, so we have to apply
+							// the correct z stretching
+							Transform3D tmp = new Transform3D();
+							Transform3D tmp2 = new Transform3D(t);
+							tmp.setScale( new Vector3d(1, 1, parent.getZStretching()) );							
+							tmp2.mul( tmp );				
+							t = tmp2;
 							
-							if ( color < 0)
-								color = 0;
+							// back up the model
+							AffineModel3D backUp = new AffineModel3D( );
+							backUp.set( (AffineModel3D)parent.getTile().getModel() );
 							
-							files.getOutput().println( VisualizationSketchTikZ.drawNucleus( nucleus, TransformUtils.getTransform3D1( m ), "RansacBead" + color, factor ) );
+							parent.getTile().getModel().set( TransformUtils.getAffineModel3D( t ) );
+							
+							/*
+							Transform3D backUpT3D = parent.transformation;
+							Transform3D backUpIT3D = parent.inverseTransformation;
+							parent.transformation = t;
+							parent.inverseTransformation = new Transform3D( t );
+							parent.inverseTransformation.invert();
+							*/
+							
+							//System.out.println("Writing view " + parent.getName() + " @ iteration " + i );
+							files.getOutput().println( VisualizationSketchTikZ.drawView( parent, factor ) );
+							files.getOutput().println( VisualizationSketchTikZ.drawNuclei( parent.getNucleiStructure().getNucleiList(), TransformUtils.getTransform3D( m ), "Bead", factor ) );
+							
+							for ( Nucleus nucleus : parent.getNucleiStructure().getNucleiList() )
+							{
+								float distance = nucleus.getDistance();
+								if ( distance >= 0 )
+								{
+									int color = Math.round( (float)Math.log10( distance + 1 ) * 256f );
+									
+									// max value == 100
+									if ( color > 511 )
+										color = 511;
+									
+									if ( color < 0)
+										color = 0;
+									
+									files.getOutput().println( VisualizationSketchTikZ.drawNucleus( nucleus, TransformUtils.getTransform3D( m ), "RansacBead" + color, factor ) );
+								}
+							}
+						
+							// write back old (unscaled) model
+							
+							parent.getTile().getModel().set( backUp );
+							
+							//parent.transformation = backUpT3D;
+							//parent.inverseTransformation = backUpIT3D;
 						}
+						
+						files.putTextEntry( 14.0f, -4.5f, "Iteration " + i + " (" + decimalFormat.format( error ) + " px)" );
+						files.finishFiles();
 					}
-				
-					// write back old (unscaled) model
-					
-					parent.getTile().getModel().set( backUp );
-					
-					//parent.transformation = backUpT3D;
-					//parent.inverseTransformation = backUpIT3D;
+					frame++;
+					//System.exit( 0 );
 				}
-				
-				files.finishFiles();
-				
-				//System.exit( 0 );
+				++j;
 			}
-			
+						
 			update();
 			observer.add( error );
 			
