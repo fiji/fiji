@@ -121,7 +121,9 @@ public class SaveSession {
 				}
 				CustomMeshNode cn = (CustomMeshNode)c.getContent();
 				ArrayList<CustomMesh> meshes = getMeshes(cn);
+				int i = -1;
 				for(CustomMesh cm : meshes) {
+					i++;
 					String file = cm.getFile();
 					boolean changed = file == null || cm.hasChanged();
 					if(!changed)
@@ -129,8 +131,11 @@ public class SaveSession {
 					if(!custommeshes.containsKey(file))
 						custommeshes.put(file,
 							new ArrayList<CMesh>());
-					String name = cm.getName() != null ?
-						cm.getName() : c.getName();
+					String name = cm.getName();
+					if(name == null)
+						name = c.getName();
+					if(meshes.size() > 1) // it's a multimesh; make sure the name is unique
+						name += "-multimesh" + i;
 					custommeshes.get(file).add(
 						new CMesh(cm, name));
 				}
@@ -194,8 +199,6 @@ public class SaveSession {
 	static boolean updateObj(ArrayList<CMesh> meshes, String path)
 						throws IOException {
 		Map<String, CustomMesh> prev = MeshLoader.load(path);
-		// TODO may go wrong since m.name is not unique
-		// especially for CustomMultiMesh
 		for(CMesh m : meshes)
 			prev.put(m.name, m.mesh);
 
@@ -203,6 +206,7 @@ public class SaveSession {
 			WavefrontExporter.save(prev, path);
 			return true;
 		} catch(IOException e) {
+			e.printStackTrace();
 			IJ.error(e.getMessage());
 			return false;
 		}
@@ -221,8 +225,6 @@ public class SaveSession {
 
 		HashMap<String, CustomMesh> m2w =
 			new HashMap<String, CustomMesh>();
-		// TODO may go wrong since m.name is not unique
-		// especially for CustomMultiMesh
 		for(CMesh m : meshes)
 			m2w.put(m.name, m.mesh);
 
@@ -230,6 +232,7 @@ public class SaveSession {
 			WavefrontExporter.save(m2w, path);
 			return true;
 		} catch(IOException e) {
+			e.printStackTrace();
 			IJ.error(e.getMessage());
 			return false;
 		}
@@ -445,6 +448,8 @@ public class SaveSession {
 		int type = i(props.get("type"));
 		if(type != Content.CUSTOM) {
 			c.image = IJ.openImage(props.get("imgfile"));
+			if(c.image == null)
+				throw new RuntimeException("Cannot load image: " + props.get("imgfile"));
 			c.displayAs(type);
 			if(type == Content.SURFACE_PLOT2D &&
 				(tmp = props.get("surfplt")) != null) {
@@ -502,7 +507,6 @@ public class SaveSession {
 	private CustomMeshNode createCustomNode(String s) {
 		String[] sp = s.split("%%%");
 		if(sp.length == 2) {
-System.out.println("loading " + sp[0]);
 			Map<String, CustomMesh> meshes =
 				MeshLoader.load(sp[0]);
 			if(meshes == null) {

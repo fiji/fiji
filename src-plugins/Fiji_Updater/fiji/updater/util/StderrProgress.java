@@ -5,6 +5,30 @@ public class StderrProgress implements Progress {
 	protected String label;
 	protected Object item;
 	protected long lastShown, minShowDelay = 500;
+	protected int lineWidth = -1;
+
+	public StderrProgress() {}
+
+	public StderrProgress(int lineWidth) {
+		this.lineWidth = lineWidth;
+	}
+
+	protected void print(String label, String rest) {
+		if (lineWidth < 0)
+			System.err.print(label + " " + rest + end);
+		else {
+			if (label.length() >= lineWidth - 3)
+				label = label.substring(0, lineWidth - 3) + "...";
+			else {
+				int diff = label.length() + 1 + rest.length() - lineWidth;
+				if (diff < 0)
+					label += " " + rest;
+				else
+					label += (" " + rest).substring(0, rest.length() - diff - 3) + "...";
+			}
+			System.err.print(label + end);
+		}
+	}
 
 	protected boolean skipShow() {
 		long now = System.currentTimeMillis();
@@ -21,27 +45,26 @@ public class StderrProgress implements Progress {
 	public void setCount(int count, int total) {
 		if (skipShow())
 			return;
-		System.err.print(label + " "
-			+ count + "/" + total + end);
+		print(label, "" + count + "/" + total);
 	}
 
 	public void addItem(Object item) {
 		this.item = item;
-		System.err.print(label + " (" + item + ") " + end);
+		print(label, "(" + item + ") ");
 	}
 
 	public void setItemCount(int count, int total) {
 		if (skipShow())
 			return;
-		System.err.print(label + " (" + item + ") ["
-			+ count + "/" + total + "]" + end);
+		print(label, "(" + item + ") [" + count + "/" + total + "]");
 	}
 
 	public void itemDone(Object item) {
-		System.err.print(item.toString() + " done" + end);
+		print(item.toString(), "done");
 	}
 
 	public void done() {
-		System.err.println("Done: " + label + end);
+		print("Done:", label);
+		System.err.println("");
 	}
 }

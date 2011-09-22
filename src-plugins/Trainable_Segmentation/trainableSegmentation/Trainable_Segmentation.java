@@ -1732,8 +1732,7 @@ public class Trainable_Segmentation implements PlugIn
 					testImageFeatures.updateFeaturesMT();
 
 					final Instances testData = testImageFeatures.createInstances(classNames);
-					testData.setClassIndex(testData.numAttributes() - 1);
-
+					
 					final ImagePlus testClassImage = applyClassifier(testData, testSlice.getWidth(), testSlice.getHeight(), numFurtherThreads);
 					testClassImage.setTitle("classified_" + testSlice.getTitle());
 					testClassImage.setProcessor(testClassImage.getProcessor().convertToByte(true).duplicate());

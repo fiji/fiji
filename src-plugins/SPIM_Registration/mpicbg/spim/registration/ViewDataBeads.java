@@ -304,6 +304,10 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 				return null;
 			}
 			
+			// set different calibration if override is activated
+			if ( getViewStructure().getSPIMConfiguration().overrideImageZStretching )
+				image.setCalibration( new float[]{ 1, 1, (float)getViewStructure().getSPIMConfiguration().zStretching } );
+			
 			/*
 			if ( getMirrorHorizontally() )
 			{
@@ -324,7 +328,7 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 						
 			maxValue = normalizeImage( image );
 			setImageSize( image.getDimensions() );
-			
+						
 			// now write dims for further use
 			IOFunctions.writeDim( this, getViewStructure().getSPIMConfiguration().registrationFiledirectory );			
 		}

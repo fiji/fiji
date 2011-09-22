@@ -240,7 +240,7 @@ public class DetectionRegistration
 		final NumberFormat nf = NumberFormat.getPercentInstance();
 		final float ratio = ((float)inliers.size() / (float)candidates.size());
 		
-		if ( modelFound && inliers.size() >= minNumCorrespondences * 3 )
+		if ( modelFound && inliers.size() >= minNumCorrespondences )
 		{			
 			for ( final PointMatch pointMatch : inliers )
 			{

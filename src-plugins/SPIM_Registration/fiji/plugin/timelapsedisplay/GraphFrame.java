@@ -23,7 +23,7 @@ public class GraphFrame extends JFrame implements ActionListener
 	JFreeChart chart = null;
 
 	ChartPanel chartPanel = null;
-	MouseListener mouseListener;
+	MouseListenerTimelapse mouseListener;
 	JPanel mainPanel;
 	
 	private int referenceTimePoint;
@@ -46,7 +46,6 @@ public class GraphFrame extends JFrame implements ActionListener
 
 		setContentPane( mainPanel );
 		validate();
-		setSize( new java.awt.Dimension( 500, 270 ) );
 		GUI.center( this );
 	}
 	
@@ -59,12 +58,11 @@ public class GraphFrame extends JFrame implements ActionListener
 		chartPanel = null;
 		this.chart = c;
 		chartPanel = new ChartPanel( c );
-		chartPanel.setMouseWheelEnabled( true );
-		if ( setSize )
-			chartPanel.setPreferredSize( new java.awt.Dimension( 800, 600 ) );
+		mouseListener = new MouseListenerTimelapse( chartPanel, referenceTimePoint, enableReferenceTimePoint );
 		
-		mouseListener = new MouseListener( chartPanel, referenceTimePoint, enableReferenceTimePoint, data );
 		chartPanel.addChartMouseListener( mouseListener );
+
+		chartPanel.setMouseWheelEnabled( true );
 		chartPanel.setHorizontalAxisTrace( true );
 		mainPanel.add( chartPanel, BorderLayout.CENTER );
 		
@@ -74,11 +72,10 @@ public class GraphFrame extends JFrame implements ActionListener
 		
 		if ( extraMenuItems != null )
 			for ( final FileOpenMenuEntry m : extraMenuItems )
+			{
+				m.setChartPanel( chartPanel );
 				menu.add( new JMenuItem( m ) );
-		
-		// link it to the chartPanel and the coordinates of the 
-		// popup by using a mouse listener for the right click
-		mouseListener.setFileOpenMenuEntryList( extraMenuItems );
+			}
 		
 		//menu.get
 		validate();
@@ -87,6 +84,5 @@ public class GraphFrame extends JFrame implements ActionListener
 	@Override
 	public void actionPerformed( ActionEvent e )
 	{
-		Object source = e.getSource();
 	}
 }

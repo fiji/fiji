@@ -23,12 +23,22 @@ function Miji(open_imagej)
     % Switch warning back to initial settings
     warning(warning_state)
 
+    % Set the Fiji directory (and plugins.dir which is not Fiji.app/plugins/)
+    java.lang.System.setProperty('fiji.dir', fiji_directory);
+    java.lang.System.setProperty('plugins.dir', fiji_directory);
+
     %% Maybe open the ImageJ window
     if open_imagej
-      cd ..;
-      fprintf('\n\nUse MIJ.exit to end the session\n\n');
-      MIJ.start(fiji_directory);
+        cd ..;
+        fprintf('\n\nUse MIJ.exit to end the session\n\n');
+        MIJ.start();
+    else
+        % initialize ImageJ with the NO_SHOW flag (== 2)
+        ij.ImageJ([], 2);
     end
+
+    % make sure that the scripts are found
+    fiji.User_Plugins.installScripts();
 end
 
 function add_to_classpath(classpath, directory)

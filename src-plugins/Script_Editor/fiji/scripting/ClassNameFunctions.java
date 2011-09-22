@@ -70,7 +70,7 @@ public class ClassNameFunctions {
 		String urlPrefix;
 		if (fullName.startsWith("java.") ||
 				fullName.startsWith("javax."))
-			urlPrefix = "http://java.sun.com/j2se/1.5.0/docs/api/";
+			urlPrefix = "http://java.sun.com/j2se/1.6.0/docs/api/";
 		else
 			urlPrefix = "http://fiji.sc/javadoc/";
 		new BrowserLauncher().run(urlPrefix

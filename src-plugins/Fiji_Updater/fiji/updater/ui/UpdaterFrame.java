@@ -359,6 +359,8 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		getContentPane().add(bottomPanel);
 		getContentPane().add(bottomPanel2);
 
+		getRootPane().setDefaultButton(apply);
+
 		table.getModel().addTableModelListener(this);
 
 		pack();
@@ -372,8 +374,10 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 
 	public void setVisible(boolean visible) {
 		super.setVisible(visible && !hidden);
-		if (visible)
+		if (visible) {
 			WindowManager.addWindow(this);
+			apply.requestFocusInWindow();
+		}
 	}
 
 	public void dispose() {

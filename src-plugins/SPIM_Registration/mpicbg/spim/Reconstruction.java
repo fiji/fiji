@@ -34,6 +34,8 @@ public class Reconstruction
 
 	public Reconstruction( final SPIMConfiguration conf )
 	{
+		IOFunctions.println( "Version 0.54" );
+		
 		this.conf = conf; 
 		
 		if ( conf.collectRegistrationStatistics )

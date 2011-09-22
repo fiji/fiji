@@ -5,7 +5,7 @@
  * Copyright 2007-2011 Johannes Schindelin, Mark Longair, Albert Cardona
  * Benjamin Schmid, Erwin Frise and Gregory Jefferis
  *
- * The source is distributed under the GPLv2 or later.
+ * The source is distributed under the BSD license.
  *
  * Clarification: the license of the Fiji launcher has no effect on
  * the Java Runtime, ImageJ or any plugins, since they are not derivatives.
@@ -1088,6 +1088,14 @@ static void show_splash(void)
 	string_release(lib_path);
 }
 
+static void hide_splash(void)
+{
+	if (!SplashClose)
+		return;
+	SplashClose();
+	SplashClose = NULL;
+}
+
 /*
  * On Linux, JDK5 does not find the library path with libmlib_image.so,
  * so we have to add that explicitely to the LD_LIBRARY_PATH.
@@ -1128,6 +1136,7 @@ static void maybe_reexec_with_correct_lib_path(void)
 		string_append_path_list(lib_path, original);
 	setenv_or_exit("LD_LIBRARY_PATH", lib_path->buffer, 1);
 	error("Re-executing with correct library lookup path");
+	hide_splash();
 	execv(main_argv_backup[0], main_argv_backup);
 	die("Could not re-exec with correct library lookup!");
 #endif
@@ -1314,6 +1323,7 @@ struct dir *open_dir(const char *path)
 	result->handle = FindFirstFile(result->pattern->buffer,
 			&(result->find_data));
 	if (result->handle == INVALID_HANDLE_VALUE) {
+		string_release(result->pattern);
 		free(result);
 		return NULL;
 	}
@@ -2160,13 +2170,15 @@ static void try_with_less_memory(size_t memory_size)
 
 	error("Trying with a smaller heap: %s", buffer->buffer);
 
+	hide_splash();
+
 #ifdef WIN32
 	new_argv[0] = dos_path(new_argv[0]);
 	for (i = 0; i < j; i++)
 		new_argv[i] = quote_win32(new_argv[i]);
 	execve(new_argv[0], (char * const *)new_argv, NULL);
 #else
-	execve(new_argv[0], new_argv, NULL);
+	execv(new_argv[0], new_argv);
 #endif
 
 	string_setf(buffer, "ERROR: failed to launch (errno=%d;%s):\n",
@@ -2780,8 +2792,7 @@ static int start_ij(void)
 		args = prepare_ij_options(env, &options.ij_options);
 		(*env)->CallStaticVoidMethodA(env, instance,
 				method, (jvalue *)&args);
-		if (SplashClose)
-			SplashClose();
+		hide_splash();
 		if ((*vm)->DetachCurrentThread(vm))
 			error("Could not detach current thread");
 		/* This does not return until ImageJ exits */
@@ -2824,8 +2835,7 @@ static int start_ij(void)
 			string_setf(buffer, "%s/bin/%s", java_home_env, get_java_command());
 		}
 		options.java_options.list[0] = buffer->buffer;
-		if (SplashClose)
-			SplashClose();
+		hide_splash();
 #ifndef WIN32
 		if (execvp(buffer->buffer, options.java_options.list))
 			error("Could not launch system-wide Java (%s)", strerror(errno));
@@ -3263,6 +3273,7 @@ static int launch_32bit_on_tiger(int argc, char **argv)
 		argv[0] = buffer;
 	}
 	strcpy(argv[0] + offset, replace);
+	hide_splash();
 	execv(argv[0], argv);
 	fprintf(stderr, "Could not execute %s: %d(%s)\n",
 		argv[0], errno, strerror(errno));

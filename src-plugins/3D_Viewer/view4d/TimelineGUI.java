@@ -164,12 +164,14 @@ public class TimelineGUI implements ActionListener, KeyListener {
 		if (buttons[playIndex].getActionCommand().equals("PLAY")) {
 			buttons[playIndex].setActionCommand("PAUSE");
 			buttons[playIndex].setIcon(new ImageIcon(pauseImage));
+			buttons[playIndex].setBorder(null);
 			buttons[playIndex].repaint();
 			timeline.play();
 		}
 		else {
 			buttons[playIndex].setActionCommand("PLAY");
 			buttons[playIndex].setIcon(new ImageIcon(playImage));
+			buttons[playIndex].setBorder(null);
 			buttons[playIndex].repaint();
 			timeline.pause();
 		}
@@ -197,21 +199,25 @@ public class TimelineGUI implements ActionListener, KeyListener {
 		if(command.equals("BOUNCEBACK")) {
 			buttons[bbIndex].setActionCommand("NOBOUNCEBACK");
 			buttons[bbIndex].setIcon(new ImageIcon(nbbImage));
+			buttons[bbIndex].setBorder(null);
 			buttons[bbIndex].repaint();
 			timeline.setBounceBack(true);
 		} else if(command.equals("NOBOUNCEBACK")) {
 			buttons[bbIndex].setActionCommand("BOUNCEBACK");
 			buttons[bbIndex].setIcon(new ImageIcon(bbImage));
+			buttons[bbIndex].setBorder(null);
 			buttons[bbIndex].repaint();
 			timeline.setBounceBack(false);
 		} else if(command.equals("PLAY")) {
 			buttons[playIndex].setActionCommand("PAUSE");
 			buttons[playIndex].setIcon(new ImageIcon(pauseImage));
+			buttons[playIndex].setBorder(null);
 			buttons[playIndex].repaint();
 			timeline.play();
 		} else if(command.equals("PAUSE")) {
 			buttons[playIndex].setActionCommand("PLAY");
 			buttons[playIndex].setIcon(new ImageIcon(playImage));
+			buttons[playIndex].setBorder(null);
 			buttons[playIndex].repaint();
 			timeline.pause();
 		} else if(command.equals("RECORD")) {

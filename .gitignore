@@ -80,7 +80,6 @@ hs_err*.log
 /jars/clojure.jar
 /plugins/IJ_Robot.jar
 /plugins/Fiji_Updater.jar
-/plugins/Daltonize_.jar
 /plugins/Stitching_.jar
 /plugins/AnalyzeSkeleton_.jar
 /plugins/Skeletonize3D_.jar
@@ -286,3 +285,7 @@ hs_err*.log
 /jars/jars/ij-ui-swing.jar
 /modules/imagej2/jars/ij-ui-swing.jar
 /plugins/Reconstruct_Reader.jar
+/jars/mpicbg.jar
+/plugins/Colour_Deconvolution.jar
+/plugins/Dichromacy_.jar
+/plugins/Threshold_Colour.jar

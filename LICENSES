@@ -1,6 +1,6 @@
 LICENSES
 
-This file lists the license under which each plugin or plugin bundle (a .jar file) is released.
+Fiji as a bundle is licensed under the GPL, with exceptions for plugins and other components.  This file lists the license under which each component, plugin or plugin bundle (a .jar file) is released.
 
 Abbreviations:
 * GPL: General Public License (latest) as specified at http://www.gnu.org/licenses/gpl.txt
@@ -32,11 +32,14 @@ Name					File					Author(s)						Contact								License
 * Clojure Interpreter			Clojure_Interpreter.jar 		Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * Color Histogram 			Color_Histogram.jar			Dimiter Prodanov 					dimiterpp@gmail.com 						GPL 2
 * Color Inspector 3D 			Color_Inspector_3D.jar			Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
+* Colour Deconvolution 			Colour_Deconvolution.jar		Gabriel Landini 					G.Landini@bham.ac.uk						GPL 2 or later
+* Dichromacy	 			Dichromacy_.jar				Gabriel Landini 					G.Landini@bham.ac.uk						GPL 2 or later
 * Differentials				Differentials_.jar			Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/differentials/			BIG (see below)
 * Extended Depth of Focus		Extended_Depth_Field.jar		Alex Prudencio, Daniel Sage et al			http://bigwww.epfl.ch/demo/edf/					BIG (see below)
 * FeatureJ	 			FeatureJ_.jar	 			Erik Meijering	 					http://www.imagescience.org/meijering/software/featurej/	imagescience (see below)
-* Fiji_Plugins.jar 			Fiji_Plugins.jar 			Various authors 					http://fiji.sc/Contributors 				PD,GPL
-* Fiji as a framework																							GPL
+* Fiji_Plugins.jar 			Fiji_Plugins.jar 			Various authors 					http://fiji.sc/Contributors 					PD,GPL
+* Fiji as a framework								The Fiji Team						fiji-devel@googlegroups.com					GPL
+* Fiji launcher				fiji-{win*,linux*,macosx,tiger}		Johannes Schindelin et al				fiji@googlegroups.com						BSD
 * Graph Cut				Graph_Cut.jar				Jan Funke						jan.funke@inf.tu-dresden.de					GPL 2
 * ij-ImageIO 				ij-ImageIO_.jar				Jarek Sacha 						jarek@ieee.org 							LGPL
 * ImageJA				ij.jar					Johannes Schindelin, Wayne Rasband			Johannes.Schindelin@gmx.de					PD
@@ -75,11 +78,13 @@ Name					File					Author(s)						Contact								License
 * PostgreSQL JDBC 			postgresql-8.2-506.jdbc3.jar 		http://jdbc.postgresql.org/ 				http://jdbc.postgresql.org/					BSD
 * RandomJ	 			RandomJ_.jar	 			Erik Meijering	 					http://www.imagescience.org/meijering/software/randomj/		imagescience (see below)
 * Register virtual stack slices 	register_virtual_stack_slices.jar 	Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
+* Script Editor				Script_Editor.jar			Johannes Schindelin et al				fiji@googlegroups.com						BSD
 * Shepp-Logan Phantom			SheppLogan_.jar				Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/shepplogan/			BIG (see below)
 * Snakuscule				Snakuscule_.jar				Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/snakuscule/			BIG (see below)
 * Stack Reverser 			Stack_Reverser.class 			Anthony Padua, Daniel Barboriak 			http://rsb.info.nih.gov/ij/plugins/substack-maker.html		PD
 * StackReg				StackReg_.jar				Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/stackreg/			BIG (see below)
 * Substack Maker 			Substack_Maker.class 			Wayne Rasband 						http://rsb.info.nih.gov/ij/plugins/reverser.html 		PD
+* Threshold Colour 			Threshold_Colour.jar			Gabriel Landini 					G.Landini@bham.ac.uk						GPL 2 or later
 * TransformJ 				TransformJ_.jar 			Erik Meijering 						http://www.imagescience.org/meijering/software/transformj/	imagescience (see below)
 * TrakEM2				TrakEM2_.jar				Albert Cardona, Rodney Douglas				acardona@ini.phys.ethz.ch					GPL
 * TurboReg				TurboReg_.jar				Philippe Thévenaz					philippe.thevenaz@epfl.ch					Citationware (see below)

@@ -138,7 +138,7 @@ public class ContentCreator {
 		ContentInstant content = c.getInstant(tp);
 		content.color = null;
 		content.transparency = 0f;
-		content.shaded = false;
+		content.shaded = true;
 		content.showCoordinateSystem(
 			UniverseSettings.showLocalCoordinateSystemsByDefault);
 		content.display(node);

@@ -87,6 +87,12 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		tracerPlugin.mouseMovedTo( last_x_in_pane_precise, last_y_in_pane_precise, plane, shift_pressed, join_modifier_pressed );
 	}
 
+	public void clickAtMaxPoint( ) {
+		tracerPlugin.clickAtMaxPoint( (int)Math.round(last_x_in_pane_precise),
+					      (int)Math.round(last_y_in_pane_precise),
+					      plane );
+	}
+
 	public void startShollAnalysis( ) {
 		if( pathAndFillManager.anySelected() ) {
 			double [] p = new double[3];

@@ -22,6 +22,7 @@ package trainableSegmentation;
  */
 
 import ij.IJ;
+import ij.ImagePlus;
 	
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
@@ -29,7 +30,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-
+/**
+ * This class stores the feature stacks of a set of input slices.
+ * It can be used so for 2D stacks or as the container of 3D features (by
+ * using a feature stack per section). 
+ * 
+ * @author Ignacio Arganda-Carreras (iarganda@mit.edu)
+ *
+ */
 public class FeatureStackArray 
 {
 	/** array of feature stacks */
@@ -79,6 +87,26 @@ public class FeatureStackArray
 		this.membraneThickness = membraneSize;
 		this.membranePatchSize = membranePatchSize;
 		this.enabledFeatures = enabledFeatures;
+	}
+	
+	/**
+	 * Create a feature stack array based on specific filters
+	 * 
+	 * @param inputImage original image
+	 * @param filters stack of filters to apply to the original image in order to create the features
+	 */
+	public FeatureStackArray(
+			final ImagePlus inputImage,
+			final ImagePlus filters)
+	{
+		this.featureStackArray = new FeatureStack[ inputImage.getImageStackSize() ];
+		
+		
+		for(int i=1; i <= featureStackArray.length; i++)
+		{		
+			featureStackArray[ i-1 ] = new FeatureStack(new ImagePlus("slice " + i, inputImage.getImageStack().getProcessor(i)));			
+			featureStackArray[ i-1 ].addFeaturesMT( filters );			 
+		}
 	}
 	
 	/**
@@ -395,6 +423,11 @@ public class FeatureStackArray
 		if(referenceStackIndex != -1)
 			return featureStackArray[referenceStackIndex].useNeighborhood();
 		return useNeighbors;
+	}
+	
+	public int getReferenceSliceIndex()
+	{
+		return referenceStackIndex;
 	}
 	
 }
