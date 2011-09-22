@@ -101,9 +101,12 @@ new XMLFileReader(plugins).read(null, new GZIPInputStream(new FileInputStream(db
 
 // Read the Fakefile
 
-fake = new Fake();
-parser = fake.parse(new FileInputStream(fijiDir + "/Fakefile"), new File(fijiDir));
-parser.parseRules(new ArrayList());
+parser = null;
+if (new File(fijiDir, "Fakefile").exists()) {
+	fake = new Fake();
+	parser = fake.parse(new FileInputStream(fijiDir + "/Fakefile"), new File(fijiDir));
+	parser.parseRules(new ArrayList());
+}
 
 public class Outputter extends Thread {
 	InputStream in;
@@ -393,7 +396,7 @@ for (String arg : bsh.args) {
 		message += " (-" + fuzz + " minutes) = " + since;
 	}
 
-	rule = parser.getRule(arg);
+	rule = parser == null ? null : parser.getRule(arg);
 
 	extraFiles = new ArrayList();
 	if (rule != null && !rule.getClass().getName().endsWith("SubFake")) {

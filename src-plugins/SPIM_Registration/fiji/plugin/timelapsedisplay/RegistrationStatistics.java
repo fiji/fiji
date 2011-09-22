@@ -110,7 +110,8 @@ public class RegistrationStatistics
 		}
 
 		avgRatio /= (float)numViews;
-
+		
+		this.worstView = new File( worstView.getFileName() );
 		// System.out.println("data.add( new TimepointData( "+timepoint.getTimePoint()+", "+minError+", "+avgError+", "+maxError+", "+minRatio+", "+avgRatio+", "+maxRatio+" ) );");
 	}
 }

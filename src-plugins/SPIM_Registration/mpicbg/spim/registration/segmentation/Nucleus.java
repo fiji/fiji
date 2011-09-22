@@ -18,6 +18,10 @@ public class Nucleus extends DetectionView<NucleusIdentification, Nucleus>
 
 	public void setDiameter( final float diameter ) { this.diameter = diameter; }
 	public float getDiameter() { return diameter; }
+	
+	Object assignedObject;
+	public void setAssignedObject( final Object o ) { this.assignedObject = o; }
+	public Object getAssignedObject() { return this.assignedObject; }
 
 	public void set( final float v, final int k ) 
 	{
