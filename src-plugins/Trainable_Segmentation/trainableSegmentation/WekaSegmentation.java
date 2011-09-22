@@ -69,6 +69,7 @@ import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Evaluation;
 
 import weka.classifiers.pmml.consumer.PMMLClassifier;
+import weka.classifiers.trees.RandomForest;
 
 import weka.core.Attribute;
 import weka.core.DenseInstance;
@@ -4301,7 +4302,12 @@ public class WekaSegmentation {
 
 			AbstractClassifier classifierCopy = null;
 			try {
-				classifierCopy = (AbstractClassifier) (AbstractClassifier.makeCopy( classifier ));
+				// The Weka randomm forest classifiers do not need to be duplicated on each thread 
+				// (that saves much memory)
+				if( classifier instanceof FastRandomForest || classifier instanceof RandomForest )
+					classifierCopy = classifier;
+				else
+					classifierCopy = (AbstractClassifier) (AbstractClassifier.makeCopy( classifier ));
 			} catch (Exception e) {
 				IJ.log("Error: classifier could not be copied to classify in a multi-thread way.");
 				e.printStackTrace();
