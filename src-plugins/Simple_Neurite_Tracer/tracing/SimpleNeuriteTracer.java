@@ -730,6 +730,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 	/* If non-null, holds a reference to the currently searching thread: */
 
 	TracerThread currentSearchThread;
+	FethallahTracer fethallahTracerThread = null;
 
 	/* Start a search thread looking for the goal in the arguments: */
 
@@ -772,33 +773,69 @@ public class SimpleNeuriteTracer extends ThreePanes
 		y_end = (int)Math.round( real_y_end / y_spacing );
 		z_end = (int)Math.round( real_z_end / z_spacing );
 
-		currentSearchThread = new TracerThread(
-			xy,
-			stackMin,
-			stackMax,
-			0, // timeout in seconds
-			1000, // reportEveryMilliseconds
-			last_start_point_x,
-			last_start_point_y,
-			last_start_point_z,
-			x_end,
-			y_end,
-			z_end,
-			true, // reciprocal
-			singleSlice,
-			(hessianEnabled ? hessian : null),
-			resultsDialog.getMultiplier(),
-			tubeness,
-			hessianEnabled );
+		if (fethallahTracingEnabled) {
 
-		addThreadToDraw( currentSearchThread );
+			IJ.error("Should be calling the ITK code here...");
+			if (true)
+				return;
 
-		currentSearchThread.setDrawingColors( Color.CYAN, null );
-		currentSearchThread.setDrawingThreshold( -1 );
+			// Then useful values are:
+			// oofFile.getAbsolutePath() - the filename of the OOF file
+			// last_start_point_[xyz] - image coordinates of the start point
+			// [xyz]_end - image coordinates of the end point
 
-		currentSearchThread.addProgressListener( this );
+			// [xyz]_spacing
 
-		currentSearchThread.start();
+			fethallahTracerThread = new FethallahTracer(
+				oofFile,
+				last_start_point_x,
+				last_start_point_y,
+				last_start_point_z,
+				x_end,
+				y_end,
+				z_end,
+				x_spacing,
+				y_spacing,
+				z_spacing,
+				spacing_units);
+
+			addThreadToDraw( fethallahTracerThread );
+
+			fethallahTracerThread.addProgressListener( this );
+
+			fethallahTracerThread.start();
+
+		} else {
+
+			currentSearchThread = new TracerThread(
+				xy,
+				stackMin,
+				stackMax,
+				0, // timeout in seconds
+				1000, // reportEveryMilliseconds
+				last_start_point_x,
+				last_start_point_y,
+				last_start_point_z,
+				x_end,
+				y_end,
+				z_end,
+				true, // reciprocal
+				singleSlice,
+				(hessianEnabled ? hessian : null),
+				resultsDialog.getMultiplier(),
+				tubeness,
+				hessianEnabled );
+
+			addThreadToDraw( currentSearchThread );
+
+			currentSearchThread.setDrawingColors( Color.CYAN, null );
+			currentSearchThread.setDrawingThreshold( -1 );
+
+			currentSearchThread.addProgressListener( this );
+
+			currentSearchThread.start();
+
+		}
 
 		repaintAllPanes();
 	}
@@ -1278,8 +1315,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 	   Fethallah's tracing method.  This variable null if not such
 	   file was found. */
 
-	File oofFile = null;
-	boolean fethallahTracingEnabled = false;
+	protected File oofFile = null;
+	protected boolean fethallahTracingEnabled = false;
 
 	public synchronized void enableFethallahTracing( boolean enable ) {
 		fethallahTracingEnabled = enable;
