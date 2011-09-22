@@ -352,7 +352,7 @@ public class FillerThread extends SearchThread {
 
 
 	@Override
-	void drawProgressOnSlice( int plane,
+	public void drawProgressOnSlice( int plane,
 				  int currentSliceInPlane,
 				  TracerCanvas canvas,
 				  Graphics g )  {
@@ -362,4 +362,7 @@ public class FillerThread extends SearchThread {
 	}
 
 
+	public Path getResult() {
+		throw new RuntimeException("BUG: getResult should never be called on a FillerThread");
+	}
 }

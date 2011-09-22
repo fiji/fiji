@@ -155,7 +155,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 			filler.requestStop();
 	}
 
-	public void threadStatus( SearchThread source, int status ) {
+	public void threadStatus( SearchInterface source, int status ) {
 		// Ignore this information.
 	}
 
@@ -228,7 +228,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 	/* Now a couple of callback methods, which get information
 	   about the progress of the search. */
 
-	public void finished( SearchThread source, boolean success ) {
+	public void finished( SearchInterface source, boolean success ) {
 
 		/* This is called by both filler and currentSearchThread,
 		   so distinguish these cases: */
@@ -238,7 +238,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 			removeSphere(targetBallName);
 
 			if( success ) {
-				Path result = currentSearchThread.getResult();
+				Path result = source.getResult();
 				if( result == null ) {
 					IJ.error("Bug! Succeeded, but null result.");
 					return;
@@ -257,7 +257,9 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 			// Indicate in the dialog that we've finished...
 
-			currentSearchThread = null;
+			if (source == currentSearchThread) {
+				currentSearchThread = null;
+			}
 
 		}
 
@@ -266,7 +268,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	}
 
-	public void pointsInSearch( SearchThread source, int inOpen, int inClosed ) {
+	public void pointsInSearch( SearchInterface source, int inOpen, int inClosed ) {
 		// Just use this signal to repaint the canvas, in case there's
 		// been no mouse movement.
 		repaintAllPanes();
@@ -683,7 +685,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 		}
 	}
 
-	void addThreadToDraw( SearchThread s ) {
+	void addThreadToDraw( SearchInterface s ) {
 		xy_tracer_canvas.addSearchThread(s);
 		if( ! single_pane ) {
 			zy_tracer_canvas.addSearchThread(s);
@@ -691,7 +693,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 		}
 	}
 
-	void removeThreadToDraw( SearchThread s ) {
+	void removeThreadToDraw( SearchInterface s ) {
 		xy_tracer_canvas.removeSearchThread(s);
 		if( ! single_pane ) {
 			zy_tracer_canvas.removeSearchThread(s);

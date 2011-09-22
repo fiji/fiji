@@ -27,25 +27,17 @@
 
 package tracing;
 
-public interface SearchProgressCallback {
+import java.awt.Graphics;
 
-	/* How many points have we considered? */
+public interface SearchInterface {
 
-	public void pointsInSearch( SearchInterface source, int inOpen, int inClosed );
+    public Path getResult();
 
-	/* Once finished is called, you should be able to get the
-	 * result from whatever means you've implemented,
-	 * e.g. TracerThreed.getResult() */
+	public void drawProgressOnSlice( int plane,
+                                     int currentSliceInPlane,
+                                     TracerCanvas canvas,
+                                     Graphics g );
 
-	public void finished( SearchInterface source, boolean success );
-
-	/* This reports the current status of the thread, which may be:
-
-	   SearchThread.RUNNING
-	   SearchThread.PAUSED
-	   SearchThread.STOPPING
-	*/
-
-	public void threadStatus( SearchInterface source, int currentStatus );
+    public void requestStop();
 
 }
