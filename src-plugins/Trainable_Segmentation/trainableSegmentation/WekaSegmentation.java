@@ -183,10 +183,10 @@ public class WekaSegmentation {
 	public static final double SIMPLE_POINT_THRESHOLD = 0;
 	public static final int MERGE 			= 1;
 	public static final int SPLIT 			= 2;
-	public static final int CREATE_HOLE		= 3;
-	public static final int DELETE_OBJECT 	= 4;
-	public static final int CREATE_OBJECT 	= 5;
-	public static final int DELETE_HOLE 	= 6;
+	public static final int HOLE_ADDITION	= 3;
+	public static final int OBJECT_DELETION = 4;
+	public static final int OBJECT_ADDITION = 5;
+	public static final int HOLE_DELETION 	= 6;
 	
 	
 	
@@ -2969,7 +2969,7 @@ public class WekaSegmentation {
 	}
 
 	/**
-	 * Classify warping mismatches as MERGE, SPLIT, CREATE_HOLE, DELETE_HOLE, CREATE_OBJECT, DELETE_OBJECT
+	 * Classify warping mismatches as MERGE, SPLIT, HOLE_ADDITION, HOLE_DELETION, OBJECT_ADDITION, OBJECT_DELETION
 	 *  
 	 * @param warpedLabels labels after warping (binary image)
 	 * @param mismatches list of mismatch points after warping
@@ -3003,23 +3003,23 @@ public class WekaSegmentation {
 			if( uniqueId.size() == 1 && uniqueId.get(0) == 0)
 			{
 				if(components.getPixel(x, y) != 0)
-					pointClassification[ n ] = WekaSegmentation.DELETE_OBJECT;
+					pointClassification[ n ] = WekaSegmentation.OBJECT_DELETION;
 				else
-					pointClassification[ n ] = WekaSegmentation.CREATE_OBJECT;
+					pointClassification[ n ] = WekaSegmentation.OBJECT_ADDITION;
 			}
 			// If all surrounding pixels belong to one object 
 			else if ( uniqueId.size() == 1 && uniqueId.get(0) != 0)
 			{
 				if(components.getPixel(x, y) != 0)
-					pointClassification[ n ] = WekaSegmentation.CREATE_HOLE;
+					pointClassification[ n ] = WekaSegmentation.HOLE_ADDITION;
 				else
-					pointClassification[ n ] = WekaSegmentation.DELETE_HOLE;
+					pointClassification[ n ] = WekaSegmentation.HOLE_DELETION;
 			}
 			// If there are background and one single object ID in the surrounding pixels
 			else if ( uniqueId.size() == 2 )
 			{
 				if (components.getPixel(x, y) == 0)
-					pointClassification[ n ] = WekaSegmentation.CREATE_HOLE;
+					pointClassification[ n ] = WekaSegmentation.HOLE_ADDITION;
 				else
 				{
 					// flip pixel and apply connected components again
@@ -3044,7 +3044,7 @@ public class WekaSegmentation {
 						pointClassification[ n ] = WekaSegmentation.SPLIT;
 					// otherwise it deletes a hole
 					else
-						pointClassification[ n ] = WekaSegmentation.DELETE_HOLE;
+						pointClassification[ n ] = WekaSegmentation.HOLE_DELETION;
 				}
 			}			
 			else // If there are more than 1 object ID in the surrounding pixels 
