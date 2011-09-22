@@ -177,7 +177,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 				if (beforeExtension != null) {
 					File possibleOOFFile = new File(file_info.directory,
 									beforeExtension + ".oof.nrrd");
-					if (possibleOOFFile.exists()) {
+					if (possibleOOFFile.exists() && ! singleSlice) {
 						oofFile = possibleOOFFile;
 					}
 				}
