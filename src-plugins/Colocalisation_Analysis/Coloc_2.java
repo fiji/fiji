@@ -68,7 +68,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		public int[] offset;
 		public int[] size;
 		public BoundingBox(int [] offset, int[] size) {
-			this.offset = offset.clone(); this.size = size.clone();
+			this.offset = offset.clone();
+			this.size = size.clone();
 		}
 	}
 
@@ -76,25 +77,38 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	protected class MaskInfo {
 		// the ROI to use (null if none)
 		BoundingBox roi;
+
 		/* the mask corresponding to the ROI, sized the same as a slice,
 		 * but also giving access to its bounding boxed' version
 		 */
 		public Image<T> mask;
 		public Image<T> boundingBox;
+
 		// constructors
 		public MaskInfo(BoundingBox roi, Image<T> m, Image<T> bb) {
 			this.roi = roi; mask = m; boundingBox = bb;
 		}
-		public MaskInfo() { };
+
+		public MaskInfo() { }
 	}
+
 	// the storage key for Fiji preferences
-	static String PREF_KEY = "Coloc_2.";
+	protected final static String PREF_KEY = "Coloc_2.";
+
 	// Allowed types of ROI configuration
-	protected enum RoiConfiguration {None, Img1, Img2, Mask};
+	protected enum RoiConfiguration {
+		None,
+		Img1,
+		Img2,
+		Mask
+	};
+
 	// the ROI configuration to use
-	RoiConfiguration roiConfig = RoiConfiguration.Img1;
+	protected RoiConfiguration roiConfig = RoiConfiguration.Img1;
+
 	// A list of all ROIs/masks found
-	ArrayList<MaskInfo> masks = new ArrayList<MaskInfo>();
+	protected ArrayList<MaskInfo> masks = new ArrayList<MaskInfo>();
+
 	// default indices of image, mask and roi choices
 	protected static int index1 = 0;
 	protected static int index2 = 1;
@@ -102,23 +116,29 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	protected static int indexRoi = 0;
 
 	// the images to work on
-	Image<T> img1, img2;
+	protected Image<T> img1, img2;
+
 	// the channels of the images to use
-	int img1Channel = 1, img2Channel = 1;
+	protected int img1Channel = 1, img2Channel = 1;
 
 	/* The different algorithms this plug-in provides.
 	 * If a reference is null it will not get run.
 	 */
-	PearsonsCorrelation<T> pearsonsCorrelation = null;
-	LiHistogram2D<T> liHistogramCh1 = null;
-	LiHistogram2D<T> liHistogramCh2 = null;
-	LiICQ<T> liICQ = null;
-	MandersCorrelation<T> mandersCorrelation = null;
-	Histogram2D<T> histogram2D = null;
-	CostesSignificanceTest<T> costesSignificance = null;
+	protected PearsonsCorrelation<T> pearsonsCorrelation;
+	protected LiHistogram2D<T> liHistogramCh1;
+	protected LiHistogram2D<T> liHistogramCh2;
+	protected LiICQ<T> liICQ;
+	protected MandersCorrelation<T> mandersCorrelation;
+	protected Histogram2D<T> histogram2D;
+	protected CostesSignificanceTest<T> costesSignificance;
 
 	/* GUI related members */
-	String[] roiLabels =  { "None","Channel 1", "Channel 2",};
+	protected String[] roiLabels = {
+		"None",
+		"Channel 1",
+		"Channel 2"
+	};
+
 	// indicates if a PDF should be saved automatically
 	protected boolean autoSavePdf;
 
