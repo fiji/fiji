@@ -36,9 +36,9 @@ import java.lang.reflect.Method;
 
 import ij.IJ;
 
-public class FethallahTracer extends Thread implements SearchInterface {
+public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 
-	public FethallahTracer( File oofFile,
+	public TubularGeodesicsTracer( File oofFile,
 				float start_x_image,
 				float start_y_image,
 				float start_z_image,
@@ -123,7 +123,7 @@ public class FethallahTracer extends Thread implements SearchInterface {
 	@Override
 	public void requestStop() {
 		// FIXME: should probably add a "stoppable" query method to SearchInterface
-		throw new RuntimeException("FethallahTracer:requestStop: Not implemented yet...");
+		throw new RuntimeException("TubularGeodesicsTracer:requestStop: Not implemented yet...");
 	}
 
 	@Override
@@ -156,7 +156,7 @@ public class FethallahTracer extends Thread implements SearchInterface {
 				   will be available at compile- or run-time, so we have to
 				   try to load it via reflection. */
 
-				Class<?> c = loader.loadClass("FijiITKInterface.MultiScaleTubularityMeasure");
+				Class<?> c = loader.loadClass("FijiITKInterface.TubularGeodesics");
 				Object newInstance = c.newInstance();
 
 				Class [] parameterTypes = { String.class,
@@ -184,13 +184,13 @@ public class FethallahTracer extends Thread implements SearchInterface {
 				throw new RuntimeException("There was an exception thrown by getPathResult: " + realException);
 			} catch (ClassNotFoundException e) {
 				reportFinished(false);
-				throw new RuntimeException("The FijiITKInterface.MultiScaleTubularityMeasure class was not found: " + e);
+				throw new RuntimeException("The FijiITKInterface.TubularGeodesics class was not found: " + e);
 			} catch (InstantiationException e) {
 				reportFinished(false);
-				throw new RuntimeException("Failed to instantiate the FijiITKInterface.MultiScaleTubularityMeasure object: " + e);
+				throw new RuntimeException("Failed to instantiate the FijiITKInterface.TubularGeodesics object: " + e);
 			} catch ( IllegalAccessException e ) {
 				reportFinished(false);
-				throw new RuntimeException("IllegalAccessException when trying to create an instance of FijiITKInterface.MultiScaleTubularityMeasure: "+e);
+				throw new RuntimeException("IllegalAccessException when trying to create an instance of FijiITKInterface.TubularGeodesics: "+e);
 			} catch (NoSuchMethodException e) {
 				reportFinished(false);
 				throw new RuntimeException("There was a NoSuchMethodException when trying to invoke getPathResult: " + e);
