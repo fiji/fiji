@@ -230,6 +230,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	public void finished( SearchInterface source, boolean success ) {
 
+		System.out.println("Yes, in finished...");
+
 		/* This is called by both filler and currentSearchThread,
 		   so distinguish these cases: */
 
