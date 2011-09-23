@@ -111,7 +111,8 @@ public class FethallahTracer extends Thread implements SearchInterface {
 					 Graphics g ) {
 	}
 
-	protected ArrayList< SearchProgressCallback > progressListeners;
+	protected ArrayList< SearchProgressCallback > progressListeners =
+		new ArrayList< SearchProgressCallback >();
 
 	public void addProgressListener( SearchProgressCallback callback ) {
 		progressListeners.add( callback );
