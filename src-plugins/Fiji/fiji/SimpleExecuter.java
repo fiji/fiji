@@ -60,9 +60,9 @@ public class SimpleExecuter {
 			}
 		}
 		Process process = Runtime.getRuntime().exec(cmdarray, null, workingDirectory);
-		stderr = err != null ? getDumper(err, process.getErrorStream()) : getDumper(process.getErrorStream(), err2);
-		stdout = out != null ? getDumper(out, process.getInputStream()) : getDumper(process.getInputStream(), out2);
-		new StreamCopy(in, process.getOutputStream());
+		stderr = err != null ? getDumper(err, process.getErrorStream()) : getDumper(process.getErrorStream(), err2, true);
+		stdout = out != null ? getDumper(out, process.getInputStream()) : getDumper(process.getInputStream(), out2, out2 != err2);
+		new StreamCopy(in, process.getOutputStream(), true);
 		try {
 			exitCode = process.waitFor();
 		} catch (InterruptedException e) {
@@ -201,10 +201,16 @@ public class SimpleExecuter {
 
 	protected class StreamCopy extends StreamDumper {
 		protected OutputStream out;
+		protected boolean closeAfterRun;
 
 		public StreamCopy(InputStream in, OutputStream out) {
+			this(in, out, true);
+		}
+
+		public StreamCopy(InputStream in, OutputStream out, boolean closeAfterRun) {
 			super(in);
 			this.out = out;
+			this.closeAfterRun = closeAfterRun;
 		}
 
 		@Override
@@ -212,6 +218,8 @@ public class SimpleExecuter {
 			if (in != null) try {
 				super.run();
 				out.flush();
+				if (closeAfterRun)
+					out.close();
 			} catch (IOException e) {
 				IJ.handleException(e);
 			}
@@ -227,8 +235,8 @@ public class SimpleExecuter {
 		return handler != null ? new LineDumper(handler, in) : new StreamDumper(in);
 	}
 
-	public StreamDumper getDumper(InputStream in, OutputStream out) {
-		return out != null ? new StreamCopy(in, out) : new StreamDumper(in);
+	public StreamDumper getDumper(InputStream in, OutputStream out, boolean closeAfterRun) {
+		return out != null ? new StreamCopy(in, out, closeAfterRun) : new StreamDumper(in);
 	}
 
 	protected String getInterpreter(String path) {
