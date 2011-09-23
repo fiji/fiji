@@ -143,7 +143,9 @@ class InfoPane extends JPanel implements TrackMateSelectionView, TrackMateSelect
 			table.setModel(dm);
 		} catch (ConcurrentModificationException cme) {
 			// do nothing
-		} 
+		} catch (ArrayIndexOutOfBoundsException aobe) {
+			// do nothing
+		}
 		
 		// Tune look
 		DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer() {

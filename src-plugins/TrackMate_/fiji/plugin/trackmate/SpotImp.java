@@ -36,7 +36,6 @@ public class SpotImp implements Spot {
 		}
 	}
 	
-//	public static int IDcounter = 0; 
 	public static AtomicInteger IDcounter = new AtomicInteger(0); 
 	
 	/** Store the individual features, and their values. */
@@ -86,19 +85,13 @@ public class SpotImp implements Spot {
 		}
 	}
 	
-	/**
-	 * Private blank constructor used to {@link #clone()} a spot, without messing up with the {@link #IDcounter}.
-	 */
-	private SpotImp() {
-	}
-	
 	/*
 	 * PUBLIC METHODS
 	 */
 	
 	@Override
 	public Spot clone() {
-		SpotImp newSpot = new SpotImp();
+		SpotImp newSpot = new SpotImp(ID);
 		// Deal with features
 		Float val;
 		for(SpotFeature key : features.keySet()) {
@@ -107,8 +100,6 @@ public class SpotImp implements Spot {
 				val = new Float(val);
 			newSpot.putFeature(key, val);
 		}
-		// Deal with ID
-		newSpot.ID = ID;
 		// Deal with name
 		newSpot.name = name;
 		return newSpot;

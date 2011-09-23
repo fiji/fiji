@@ -41,6 +41,8 @@ public class GrabSpotImageAction extends AbstractTMAction {
 			logger.setProgress((float) (frame + 1) / allSpots.keySet().size());
 		}
 		model.setLogger(oldLogger);
+		logger.log("Done.\n");
+		logger.setProgress(0);
 	}
 
 	@Override

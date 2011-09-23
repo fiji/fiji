@@ -15,6 +15,8 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 
 import javax.swing.SwingUtilities;
 
@@ -22,6 +24,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotFeature;
+import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.tool.AbstractTool;
 
@@ -519,9 +522,65 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 
 			break;
 		}
+		
+		// Copy spots from previous frame
+		case KeyEvent.VK_V: {
+			if (e.isShiftDown()) {
+				
+				int currentFrame = imp.getFrame() - 1;
+				if (currentFrame > 0) {
+					
+					List<Spot> previousFrameSpots = model.getFilteredSpots().get(currentFrame-1);
+					if (previousFrameSpots.isEmpty()) {
+						e.consume();
+						break;
+					}
+					ArrayList<Spot> copiedSpots = new ArrayList<Spot>(previousFrameSpots.size());
+					HashSet<SpotFeature> featuresKey = new HashSet<SpotFeature>(previousFrameSpots.get(0).getFeatures().keySet());
+					featuresKey.remove(SpotFeature.POSITION_T); // Deal with time separately
+					float dt = model.getSettings().dt;
+					if (dt == 0)
+						dt = 1;
+					
+					for(Spot spot : previousFrameSpots) {
+						Spot newSpot = new SpotImp(spot.getPosition(null), spot.getName());
+						// Deal with features
+						Float val;
+						for(SpotFeature key : featuresKey) {
+							val = spot.getFeature(key);
+							if (null != val)
+								val = new Float(val);
+							newSpot.putFeature(key, val);
+						}
+						newSpot.putFeature(SpotFeature.POSITION_T, spot.getFeature(SpotFeature.POSITION_T) + dt);
+						copiedSpots.add(newSpot);
+					}
+					
+					model.beginUpdate();
+					try {
+						// Remove old ones
+						for(Spot spot : new ArrayList<Spot>(model.getFilteredSpots().get(currentFrame))) {
+							model.removeSpotFrom(spot, currentFrame);
+						}
+						// Add new ones
+						for(Spot spot : copiedSpots) {
+							model.addSpotTo(spot, currentFrame);
+						}
+					} finally {
+						model.endUpdate();
+						imp.updateAndDraw();
+					}
+				}
+					
+				
+				e.consume();
+			}
+			break;
+		}
 
 		case KeyEvent.VK_W: {
 			e.consume(); // consume it: we do not want IJ to close the window
+			break;
 		}
 
 		}

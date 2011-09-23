@@ -1013,8 +1013,8 @@ public class TrackMateModel {
 	public DefaultWeightedEdge removeEdge(final Spot source, final Spot target) {
 		// Other graph
 		DefaultWeightedEdge edge = graph.removeEdge(source, target);
-		if (null == edge)
-			System.out.println("Problem removing edge " + edge);
+//		if (null == edge)
+//			System.out.println("Problem removing edge " + edge);
 //		// Transaction// DEALT WITH BY THE GRAPH LISTENER
 //		edgesRemoved.add(edge); // TRANSACTION
 		if (DEBUG)
@@ -1025,8 +1025,8 @@ public class TrackMateModel {
 	public boolean removeEdge(final DefaultWeightedEdge edge) {
 		// Mother graph
 		boolean removed = graph.removeEdge(edge);
-		if (!removed)
-			System.out.println("Problem removing edge " + edge);
+//		if (!removed)
+//			System.out.println("Problem removing edge " + edge);
 //		// Transaction// DEALT WITH BY THE GRAPH LISTENER
 //		edgesRemoved.add(edge);
 		if (DEBUG)

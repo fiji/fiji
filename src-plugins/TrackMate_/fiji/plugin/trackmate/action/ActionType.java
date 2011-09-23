@@ -11,6 +11,7 @@ public enum ActionType implements InfoTextable {
 	LINK_TO_NEW_3D_VIEWER 	(new LinkNew3DViewerAction()),
 	SET_RADIUS_TO_ESTIMATED (new RadiusToEstimatedAction()),
 	RESET_RADIUS_TO_EXPECTED (new ResetRadiusAction()),
+	RESET_SPOT_TIME 		(new ResetSpotTimeFeatureAction()),
 	RECOMPUTE_ALL_FEATURES 	(new RecalculateFeatureAction()),
 	GRAB_SPOT_IMAGES		(new GrabSpotImageAction()),
 	CAPTURE_OVERLAY			(new CaptureOverlayAction()),

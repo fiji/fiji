@@ -154,7 +154,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		this.graphLayout = new mxTrackGraphLayout(model, graph, settings.dx);
 		String title = "Track scheme";
 		if (null != settings.imp)
-			title += settings.imp.getShortTitle();
+			title += ": "+settings.imp.getShortTitle();
 		setTitle(title);
 	}
 
