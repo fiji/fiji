@@ -128,80 +128,94 @@ public class FethallahTracer extends Thread implements SearchInterface {
 	@Override
 	public void run( ) {
 
-		float [] p1 = new float[3];
-		float [] p2 = new float[3];
-
-		p1[0] = start_x_image;
-		p1[1] = start_y_image;
-		p1[2] = start_z_image;
-
-		p2[0] = end_x_image;
-		p2[1] = end_y_image;
-		p2[2] = end_z_image;
-
-		PathResult result = new PathResult();
-
-		// Call the JNI here:
-
-		ClassLoader loader = IJ.getClassLoader();
-		if (loader == null)
-			throw new RuntimeException("IJ.getClassLoader() failed (!)");
-
 		try {
 
-			/* Unfortunately, we can't be sure that the tubularity plugin
-			   will be available at compile- or run-time, so we have to
-			   try to load it via reflection. */
+			float [] p1 = new float[3];
+			float [] p2 = new float[3];
 
-			Class<?> c = loader.loadClass("FijiITKInterface.MultiScaleTubularityMeasure");
-			Object newInstance = c.newInstance();
+			p1[0] = start_x_image;
+			p1[1] = start_y_image;
+			p1[2] = start_z_image;
 
-			Class [] parameterTypes = { String.class,
-						    float[].class,
-						    float[].class,
-						    PathResult.class };
+			p2[0] = end_x_image;
+			p2[1] = end_y_image;
+			p2[2] = end_z_image;
 
-			Method m = c.getMethod( "getPathResult", parameterTypes );
-			Object [] parameters = new Object[4];
-			parameters[0] = oofFile.getAbsolutePath();
-			parameters[1] = p1;
-			parameters[2] = p2;
-			parameters[3] = result;
+			PathResult result = new PathResult();
 
-			m.invoke(newInstance,parameters);
+			// Call the JNI here:
 
-		} catch (IllegalArgumentException e) {
-			reportFinished(false);
-			throw new RuntimeException("There was an illegal argument when trying to invoke getPathResult: " + e);
-		} catch (InvocationTargetException e) {
-			reportFinished(false);
-			Throwable realException = e.getTargetException();
-			throw new RuntimeException("There was an exception thrown by getPathResult: " + realException);
-		} catch (ClassNotFoundException e) {
-			reportFinished(false);
-			throw new RuntimeException("The FijiITKInterface.MultiScaleTubularityMeasure class was not found: " + e);
-		} catch (InstantiationException e) {
-			reportFinished(false);
-			throw new RuntimeException("Failed to instantiate the FijiITKInterface.MultiScaleTubularityMeasure object: " + e);
-		} catch ( IllegalAccessException e ) {
-			reportFinished(false);
-			throw new RuntimeException("IllegalAccessException when trying to create an instance of FijiITKInterface.MultiScaleTubularityMeasure: "+e);
-		} catch (NoSuchMethodException e) {
-			reportFinished(false);
-			throw new RuntimeException("There was a NoSuchMethodException when trying to invoke getPathResult: " + e);
-		} catch (SecurityException e) {
-			reportFinished(false);
-			throw new RuntimeException("There was a SecurityException when trying to invoke getPathResult: " + e);
+			ClassLoader loader = IJ.getClassLoader();
+			if (loader == null)
+				throw new RuntimeException("IJ.getClassLoader() failed (!)");
+
+			try {
+
+				/* Unfortunately, we can't be sure that the tubularity plugin
+				   will be available at compile- or run-time, so we have to
+				   try to load it via reflection. */
+
+				Class<?> c = loader.loadClass("FijiITKInterface.MultiScaleTubularityMeasure");
+				Object newInstance = c.newInstance();
+
+				Class [] parameterTypes = { String.class,
+							    float[].class,
+							    float[].class,
+							    PathResult.class };
+
+				Method m = c.getMethod( "getPathResult", parameterTypes );
+				Object [] parameters = new Object[4];
+				parameters[0] = oofFile.getAbsolutePath();
+				parameters[1] = p1;
+				parameters[2] = p2;
+				parameters[3] = result;
+
+				m.invoke(newInstance,parameters);
+
+				System.out.println("finished running the ITK code");
+
+			} catch (IllegalArgumentException e) {
+				reportFinished(false);
+				throw new RuntimeException("There was an illegal argument when trying to invoke getPathResult: " + e);
+			} catch (InvocationTargetException e) {
+				reportFinished(false);
+				Throwable realException = e.getTargetException();
+				throw new RuntimeException("There was an exception thrown by getPathResult: " + realException);
+			} catch (ClassNotFoundException e) {
+				reportFinished(false);
+				throw new RuntimeException("The FijiITKInterface.MultiScaleTubularityMeasure class was not found: " + e);
+			} catch (InstantiationException e) {
+				reportFinished(false);
+				throw new RuntimeException("Failed to instantiate the FijiITKInterface.MultiScaleTubularityMeasure object: " + e);
+			} catch ( IllegalAccessException e ) {
+				reportFinished(false);
+				throw new RuntimeException("IllegalAccessException when trying to create an instance of FijiITKInterface.MultiScaleTubularityMeasure: "+e);
+			} catch (NoSuchMethodException e) {
+				reportFinished(false);
+				throw new RuntimeException("There was a NoSuchMethodException when trying to invoke getPathResult: " + e);
+			} catch (SecurityException e) {
+				reportFinished(false);
+				throw new RuntimeException("There was a SecurityException when trying to invoke getPathResult: " + e);
+			}
+
+			System.out.println("before checking for success");
+
+			if(!result.getSuccess()) {
+				reportFinished( false );
+				throw new RuntimeException("getPathResult failed, reporting the error: "+result.getErrorMessage());
+			}
+
+			lastPathResult = result;
+
+			System.out.println("about to call reportFinished, with "+progressListeners.size()+" listeners");
+
+			reportFinished( true );
+
+		} catch( Throwable t ) {
+			System.out.println("Got an exception from call to ITK code: "+t);
+			t.printStackTrace();
+			IJ.error("There was an error in calling to ITK code: "+t);
 		}
-
-		if(!result.getSuccess()) {
-			reportFinished( false );
-			throw new RuntimeException("getPathResult failed, reporting the error: "+result.getErrorMessage());
-		}
-
-		lastPathResult = result;
-
-		reportFinished( true );
 	}
 
 	public void reportFinished( boolean success ) {
