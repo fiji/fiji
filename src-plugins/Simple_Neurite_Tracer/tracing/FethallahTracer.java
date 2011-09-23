@@ -102,6 +102,7 @@ public class FethallahTracer extends Thread implements SearchInterface {
 			realResult.radiuses[i] = points[start+3];
 			System.out.println("point "+i+" is "+points[start]+", "+points[start+1]+", "+points[start+2]+", "+points[start+3]);
 		}
+		realResult.setGuessedTangents(2);
 		return realResult;
 	}
 
