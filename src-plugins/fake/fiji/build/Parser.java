@@ -574,6 +574,19 @@ public class Parser {
 			return;
 		}
 
+		String key2 = null;
+		if (name.equals("ENVOVERRIDES"))
+			key2 = key.substring(paren + 1, key.length() - 1);
+		else if ("true".equals(variables.get("ENVOVERRIDES(" + key + ")")))
+			key2 = key;
+		if (key2 != null) {
+			Object value2 = System.getenv(key2);
+			if (value2 != null) {
+				variables.put(key2, value2);
+				return;
+			}
+		}
+
 		if (isVarName(name, "CLASSPATH") || isVarName(name, "TOOLSPATH") || isVarName(name, "TOOLS_JAR")  || isVarName(name, "FIJI_JAVA_HOME"))
 			value = fake.prefixPaths(cwd, value.toString(), true);
 
@@ -691,9 +704,6 @@ public class Parser {
 	public String getVariable(String key,
 			String subkey, String subkey2) {
 		Object res = null;
-		if ("true".equals(variables.get("ENVOVERRIDES("
-						+ key + ")")))
-			res = System.getenv(key);
 		key = key.toUpperCase();
 		if (subkey != null && res == null)
 			res = variables.get(key
