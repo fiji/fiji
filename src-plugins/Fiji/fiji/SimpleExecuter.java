@@ -51,20 +51,25 @@ public class SimpleExecuter {
 		stderr = getDumper(err, process.getErrorStream());
 		stdout = getDumper(out, process.getInputStream());
 		new StreamCopy(in, process.getOutputStream()).start();
-		for (;;) try {
+		try {
 			exitCode = process.waitFor();
-			break;
 		} catch (InterruptedException e) {
 			process.destroy();
+			stdout.stop();
+			stderr.stop();
+			exitCode = -1;
+			return;
 		}
-		for (;;) try {
+		try {
 			stdout.join();
-			break;
-		} catch (InterruptedException e) { /* ignore */ }
-		for (;;) try {
+		} catch (InterruptedException e) {
+			stdout.stop();
+		}
+		try {
 			stderr.join();
-			break;
-		} catch (InterruptedException e) { /* ignore */ }
+		} catch (InterruptedException e) {
+			stderr.stop();
+		}
 	}
 
 	public static void exec(String... args) {
