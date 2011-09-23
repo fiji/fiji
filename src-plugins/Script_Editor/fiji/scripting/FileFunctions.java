@@ -15,6 +15,7 @@ import ij.plugin.BrowserLauncher;
 
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -640,7 +641,7 @@ public class FileFunctions {
 		}
 
 		final JFrame frame = new JFrame((diffOnly ? "Unstaged differences for " : "Commit ") + root);
-		frame.setSize(640, diffOnly ? 480 : 640);
+		frame.setPreferredSize(new Dimension(640, diffOnly ? 480 : 640));
 		if (diffOnly)
 			frame.getContentPane().add(diff);
 		else {
