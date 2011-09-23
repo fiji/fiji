@@ -626,7 +626,9 @@ public class Path implements Comparable<Path> {
 
 		points = points + (other.points - toSkip);
 
-		setGuessedTangents(2);
+		if( hasCircles() ) {
+			setGuessedTangents(2);
+		}
 	}
 
 	void unsetPrimaryForConnected( HashSet<Path> pathsExplored ) {
