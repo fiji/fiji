@@ -775,10 +775,6 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 		if (fethallahTracingEnabled) {
 
-			IJ.error("Should be calling the ITK code here...");
-			if (true)
-				return;
-
 			// Then useful values are:
 			// oofFile.getAbsolutePath() - the filename of the OOF file
 			// last_start_point_[xyz] - image coordinates of the start point
