@@ -235,7 +235,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 		/* This is called by both filler and currentSearchThread,
 		   so distinguish these cases: */
 
-		if( source == currentSearchThread ) {
+		if( source == currentSearchThread ||
+		    source == fethallahTracerThread ) {
 
 			removeSphere(targetBallName);
 
