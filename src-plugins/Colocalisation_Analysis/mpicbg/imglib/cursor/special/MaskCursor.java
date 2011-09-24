@@ -43,7 +43,7 @@ public class MaskCursor< T extends Type<T> & Comparable<T> > extends ConstraintC
 			new AlwaysTruePredicate<T>(),
 			new AboveThresholdPredicate<T>( offValue ) );
 		// for masking we want the forward mode to be "And"
-		setForwardMode( ForwardMode.And );
+		setForwardMode( ForwardMode.AND );
 		imageCursor = cursor;
 		this.maskCursor = mask;
 		this.mask = mask.getImage();

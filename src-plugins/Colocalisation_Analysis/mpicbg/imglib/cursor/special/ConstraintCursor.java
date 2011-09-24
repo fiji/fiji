@@ -40,9 +40,11 @@ public abstract class ConstraintCursor< T extends Type<T> & Comparable<T> > exte
 	 * Xor: One or (exclusive) must be true
 	 * None: Both need to be false
 	 */
-	public enum ForwardMode { And, Or, Xor, None }
+	public enum ForwardMode {
+		AND, OR, XOR, NONE
+	}
 	// the selected forward mode, defaulting to "Or"
-	protected ForwardMode forwardMode = ForwardMode.Or;
+	protected ForwardMode forwardMode = ForwardMode.OR;
 	// indicate if a check for a next element has already be performed
 	protected boolean hasNextChecked = false;
 	// the latest types found for valid elements
@@ -98,27 +100,22 @@ public abstract class ConstraintCursor< T extends Type<T> & Comparable<T> > exte
 			boolean ch1Valid = predicate1.evaluate( cursor1.getType() );
 			boolean ch2Valid = predicate2.evaluate( cursor2.getType() );
 
-			if (forwardMode == ForwardMode.And) {
-				if( ch1Valid && ch2Valid ) {
-					found = true;
-					break;
-				}
-			} else if (forwardMode == ForwardMode.Or) {
-				if( ch1Valid || ch2Valid ) {
-					found = true;
-					break;
-				}
-			} else if (forwardMode == ForwardMode.Xor) {
-				if( ch1Valid ^ ch2Valid ) {
-					found = true;
-					break;
-				}
-			} else if (forwardMode == ForwardMode.None) {
-				if( ! (ch1Valid && ch2Valid) ) {
-					found = true;
-					break;
-				}
+			switch (forwardMode) {
+			case AND:
+				found = ch1Valid && ch2Valid;
+				break;
+			case OR:
+				found = ch1Valid || ch2Valid;
+				break;
+			case XOR:
+				found = ch1Valid ^ ch2Valid;
+				break;
+			case NONE:
+				found = !(ch1Valid && ch2Valid);
+				break;
 			}
+			if (found)
+				break;
 		}
 
 		if (found) {
