@@ -72,7 +72,7 @@ import mpicbg.imglib.type.numeric.integer.LongType;
  */
 public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implements ResultHandler<T>, ItemListener, ActionListener, ClipboardOwner {
 	protected static final int WIN_WIDTH = 350;
-	protected static final int WIN_HEIGHT = 240;
+	protected static final int WIN_HEIGHT = 600;
 
 	// a static list for keeping track of all other SingleWindowDisplays
 	protected static ArrayList<SingleWindowDisplay> displays = new ArrayList<SingleWindowDisplay>();
