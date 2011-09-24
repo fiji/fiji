@@ -15,6 +15,11 @@ package fiji.util.gui;
  * modifications I've made to it under the same conditions.
  * 
  * Simon Andrews 21/04/2008
+ *
+ * I changed it to extend JComponent (because it really is no container)
+ * and fixed a few things here and there.
+ *
+ * Johannes Schindelin 23/09/2011
  */
 
 import ij.IJ;
@@ -34,10 +39,10 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Rectangle;
 
-import javax.swing.JPanel;
+import javax.swing.JComponent;
 
 /** This is a Canvas used to display images in a Window. */
-public class JImagePanel extends JPanel implements Cloneable {
+public class JImagePanel extends JComponent implements Cloneable {
 
 	protected static Cursor defaultCursor = new Cursor(Cursor.DEFAULT_CURSOR);
 	protected static Cursor handCursor = new Cursor(Cursor.HAND_CURSOR);
@@ -117,22 +122,22 @@ public class JImagePanel extends JPanel implements Cloneable {
 		imageUpdated = true;
 	}
 
-	public void update(Graphics g) {
-		paint(g);
-	}
-
-	public void paint(Graphics g) {
-		super.paint(g);
+	@Override
+	public void paintComponent(Graphics g) {
+		super.paintComponent(g);
 		try {
 			if (imageUpdated) {
 				imageUpdated = false;
 				imp.updateImage();
 			}
 			Java2.setBilinearInterpolation(g, Prefs.interpolateScaledImages);
-			Image img = imp.getImage();
+			Image img = imp.getProcessor().createImage();
 			if (img!=null)
-				g.drawImage(img, 0, 0, (int)(srcRect.width*magnification), (int)(srcRect.height*magnification),
-						srcRect.x, srcRect.y, srcRect.x+srcRect.width, srcRect.y+srcRect.height, null);
+				g.drawImage(img, 0, 0,
+					(int)(srcRect.width * magnification), (int)(srcRect.height * magnification),
+					srcRect.x, srcRect.y,
+					srcRect.x + srcRect.width, srcRect.y + srcRect.height,
+					null);
 		}
 		catch(OutOfMemoryError e) {IJ.outOfMemory("Paint");}
 	}
