@@ -74,33 +74,29 @@ public class JImagePanel extends JComponent implements Cloneable {
 	private int offScreenWidth = 0;
 	private int offScreenHeight = 0;
 
+	public JImagePanel() {
+		this(new ImagePlus());
+	}
+
 	public JImagePanel(ImagePlus imp) {
-		this.imp = imp;
+		updateImage(imp);
 		ij = IJ.getInstance();
-		int width = imp.getWidth();
-		int height = imp.getHeight();
-		imageWidth = width;
-		imageHeight = height;
-		srcRect = new Rectangle(0, 0, imageWidth, imageHeight);
-		setDrawingSize(imageWidth, (int)(imageHeight));
-		magnification = 1.0;
 		addKeyListener(ij);  // ImageJ handles keyboard shortcuts
 		setFocusTraversalKeysEnabled(false);
 	}
 
-	void updateImage(ImagePlus imp) {
+	public void updateImage(ImagePlus imp) {
 		this.imp = imp;
-		int width = imp.getWidth();
-		int height = imp.getHeight();
-		imageWidth = width;
-		imageHeight = height;
+		imageWidth = imp.getWidth();
+		imageHeight = imp.getHeight();
 		srcRect = new Rectangle(0, 0, imageWidth, imageHeight);
-		setDrawingSize(imageWidth, (int)imageHeight);
+		setDrawingSize(imageWidth, imageHeight);
 		magnification = 1.0;
+		setImageUpdated();
 	}
 
 	/** Update this JImagePanel to have the same zoom and scale settings as the one specified. */
-	void update(JImagePanel ic) {
+	public void update(JImagePanel ic) {
 		if (ic==null || ic==this || ic.imp==null)
 			return;
 		if (ic.imp.getWidth()!=imageWidth || ic.imp.getHeight()!=imageHeight)
@@ -139,10 +135,12 @@ public class JImagePanel extends JComponent implements Cloneable {
 					srcRect.x + srcRect.width, srcRect.y + srcRect.height,
 					null);
 		}
-		catch(OutOfMemoryError e) {IJ.outOfMemory("Paint");}
+		catch(OutOfMemoryError e) {
+			IJ.outOfMemory("Paint");
+		}
 	}
 
-	int getSliceNumber(String label) {
+	public int getSliceNumber(String label) {
 		if (label==null) return -1;
 		int slice = -1;
 		if (label.length()>4 && label.charAt(4)=='-' && label.length()>=14)
@@ -150,7 +148,7 @@ public class JImagePanel extends JComponent implements Cloneable {
 		return slice;
 	}
 
-	void initGraphics(Graphics g, Color c) {
+	public void initGraphics(Graphics g, Color c) {
 		if (labelColor==null) {
 			int red = showAllColor.getRed();
 			int green = showAllColor.getGreen();
@@ -169,7 +167,7 @@ public class JImagePanel extends JComponent implements Cloneable {
 
 	// Use double buffer to reduce flicker when drawing complex ROIs.
 	// Author: Erik Meijering
-	void paintDoubleBuffered(Graphics g) {
+	public void paintDoubleBuffered(Graphics g) {
 		final int srcRectWidthMag = (int)(srcRect.width*magnification);
 		final int srcRectHeightMag = (int)(srcRect.height*magnification);
 		if (offScreenImage==null || offScreenWidth!=srcRectWidthMag || offScreenHeight!=srcRectHeightMag) {
@@ -184,7 +182,7 @@ public class JImagePanel extends JComponent implements Cloneable {
 			}
 			Graphics offScreenGraphics = offScreenImage.getGraphics();
 			Java2.setBilinearInterpolation(offScreenGraphics, Prefs.interpolateScaledImages);
-			Image img = imp.getImage();
+			Image img = imp.getProcessor().createImage();
 			if (img!=null)
 				offScreenGraphics.drawImage(img, 0, 0, srcRectWidthMag, srcRectHeightMag,
 						srcRect.x, srcRect.y, srcRect.x+srcRect.width, srcRect.y+srcRect.height, null);
@@ -193,14 +191,10 @@ public class JImagePanel extends JComponent implements Cloneable {
 		catch(OutOfMemoryError e) {IJ.outOfMemory("Paint");}
 	}
 
-	long firstFrame;
-	int frames, fps;
-
+	@Override
 	public Dimension getPreferredSize() {
 		return new Dimension(dstWidth, dstHeight);
 	}
-
-	int count;
 
 	/** Returns the mouse event modifiers. */
 	public int getModifiers() {
@@ -258,7 +252,7 @@ public class JImagePanel extends JComponent implements Cloneable {
 		setMagnification2(magnification);
 	}
 
-	void setMagnification2(double magnification) {
+	protected void setMagnification2(double magnification) {
 		if (magnification>32.0) magnification = 32.0;
 		if (magnification<0.03125) magnification = 0.03125;
 		this.magnification = magnification;
@@ -269,11 +263,11 @@ public class JImagePanel extends JComponent implements Cloneable {
 		return srcRect;
 	}
 
-	void setSrcRect(Rectangle srcRect) {
+	protected void setSrcRect(Rectangle srcRect) {
 		this.srcRect = srcRect;
 	}
 
-	void adjustSourceRect(double newMag, int x, int y) {
+	protected void adjustSourceRect(double newMag, int x, int y) {
 		int w = (int)Math.round(dstWidth/newMag);
 		if (w*newMag<dstWidth) w++;
 		int h = (int)Math.round(dstHeight/newMag);
