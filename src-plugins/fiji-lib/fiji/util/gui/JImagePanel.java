@@ -37,6 +37,7 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.MediaTracker;
 import java.awt.Rectangle;
 
 import javax.swing.JComponent;
@@ -128,12 +129,14 @@ public class JImagePanel extends JComponent implements Cloneable {
 			}
 			Java2.setBilinearInterpolation(g, Prefs.interpolateScaledImages);
 			Image img = imp.getProcessor().createImage();
-			if (img!=null)
+			if (img!=null) {
+				waitForImage(img);
 				g.drawImage(img, 0, 0,
 					(int)(srcRect.width * magnification), (int)(srcRect.height * magnification),
 					srcRect.x, srcRect.y,
 					srcRect.x + srcRect.width, srcRect.y + srcRect.height,
 					null);
+			}
 		}
 		catch(OutOfMemoryError e) {
 			IJ.outOfMemory("Paint");
@@ -183,6 +186,7 @@ public class JImagePanel extends JComponent implements Cloneable {
 			Graphics offScreenGraphics = offScreenImage.getGraphics();
 			Java2.setBilinearInterpolation(offScreenGraphics, Prefs.interpolateScaledImages);
 			Image img = imp.getProcessor().createImage();
+			waitForImage(img);
 			if (img!=null)
 				offScreenGraphics.drawImage(img, 0, 0, srcRectWidthMag, srcRectHeightMag,
 						srcRect.x, srcRect.y, srcRect.x+srcRect.width, srcRect.y+srcRect.height, null);
@@ -281,5 +285,14 @@ public class JImagePanel extends JComponent implements Cloneable {
 		if (r.y+h>imageHeight) r.y = imageHeight-h;
 		srcRect = r;
 		setMagnification(newMag);
+	}
+
+	protected boolean waitForImage(Image image) {
+		MediaTracker tracker = new MediaTracker(this);
+		tracker.addImage(image, 0);
+		try {
+			tracker.waitForAll();
+		} catch(InterruptedException e) { /* ignore */ }
+		return(!tracker.isErrorAny());
 	}
 }
