@@ -131,8 +131,15 @@ public class JImagePanel extends JComponent implements Cloneable {
 			Image img = imp.getProcessor().createImage();
 			if (img!=null) {
 				waitForImage(img);
-				g.drawImage(img, 0, 0,
-					(int)(srcRect.width * magnification), (int)(srcRect.height * magnification),
+				int displayWidth = (int)(srcRect.width * magnification);
+				int displayHeight = (int)(srcRect.height * magnification);
+				Dimension size = getSize();
+				int offsetX = (size.width - displayWidth) / 2;
+				int offsetY = (size.height - displayHeight) / 2;
+				g.translate(offsetX, offsetY);
+				g.drawImage(img,
+					0, 0,
+					displayWidth, displayHeight,
 					srcRect.x, srcRect.y,
 					srcRect.x + srcRect.width, srcRect.y + srcRect.height,
 					null);
