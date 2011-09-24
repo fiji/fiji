@@ -435,14 +435,13 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 		this.imp.setProcessor(imp.getProcessor());
 		ImageProcessor ip = this.imp.getProcessor();
 		// set the display range
-		double max = ImageStatistics.getImageMax((Image<T>)img).getRealDouble();
-		this.imp.setDisplayRange(0.0, max);
 
 		// check if a LUT should be applied
 		if ( listOfLUTs.containsKey(img) ) {
 			// select linked look up table
 			IJ.run(this.imp, listOfLUTs.get(img), null);
 		}
+		imp.getProcessor().resetMinAndMax();
 
 		boolean overlayModified = false;
 		Overlay overlay = new Overlay();
