@@ -3,6 +3,8 @@ package results;
 import algorithms.AutoThresholdRegression;
 import algorithms.Histogram2D;
 
+import fiji.util.gui.JImagePanel;
+
 import gadgets.DataContainer;
 
 import ij.IJ;
@@ -17,8 +19,11 @@ import ij.process.ImageProcessor;
 
 import ij.text.TextWindow;
 
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Panel;
 
 import java.awt.datatransfer.Clipboard;
@@ -39,10 +44,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JEditorPane;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
 import mpicbg.imglib.algorithm.math.ImageStatistics;
@@ -62,7 +70,7 @@ import mpicbg.imglib.type.numeric.integer.LongType;
  * and offers features like the use of different LUTs.
  *
  */
-public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow implements ResultHandler<T>, ItemListener, ActionListener, ClipboardOwner {
+public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implements ResultHandler<T>, ItemListener, ActionListener, ClipboardOwner {
 	protected static final int WIN_WIDTH = 350;
 	protected static final int WIN_HEIGHT = 240;
 
@@ -100,6 +108,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	protected ImagePlus imp;
 
 	// GUI elements
+	protected JImagePanel imagePanel;
 	protected JButton listButton, copyButton;
 	protected JCheckBox log;
 
@@ -109,7 +118,10 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	protected DataContainer<T> dataContainer = null;
 
 	public SingleWindowDisplay(DataContainer<T> container, PDFWriter<T> pdfWriter){
-		super(NewImage.createFloatImage("Single Window Display", WIN_WIDTH, WIN_HEIGHT, 1, NewImage.FILL_WHITE));
+		super("Single Window Display");
+
+		setPreferredSize(new Dimension(WIN_WIDTH, WIN_HEIGHT));
+
 		// save a reference to the container
 		dataContainer = container;
 		this.pdfWriter = pdfWriter;
@@ -120,18 +132,15 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	}
 
 	public void setup() {
-		Panel imageSelectionPanel = new Panel();
-		imageSelectionPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 
 		JComboBox dropDownList = new JComboBox();
 		for(Image<? extends RealType> img : listOfImages) {
 			dropDownList.addItem(new NamedContainer<Image<? extends RealType> >(img, img.getName()));
 		}
 		dropDownList.addItemListener(this);
-		imageSelectionPanel.add(dropDownList);
 
-		Panel textPanel = new Panel();
-		textPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+		imagePanel = new JImagePanel(ij.IJ.createImage("dummy", "8-bit", 10, 10, 1));
+
 
 		// Create something to display it in
 		final JEditorPane editor = new JEditorPane();
@@ -140,9 +149,8 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 		editor.setText(makeHtmlText());			// specify the text to display
 
 		// Put the JEditorPane in a scrolling window and add it
-		JScrollPane sp = new JScrollPane(editor);
-		sp.setPreferredSize(new Dimension(256, 150));
-		textPanel.add(sp);
+		JScrollPane scrollPane = new JScrollPane(editor);
+		scrollPane.setPreferredSize(new Dimension(256, 150));
 
 		Panel buttons = new Panel();
 		buttons.setLayout(new FlowLayout(FlowLayout.RIGHT));
@@ -179,11 +187,21 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 		log.addActionListener(this);
 		buttons.add(log);
 
-		remove(ic);
-		add(imageSelectionPanel);
-		add(ic);
-		add(textPanel);
-		add(buttons);
+		final GridBagLayout layout = new GridBagLayout();
+		final Container pane = getContentPane();
+		getContentPane().setLayout(layout);
+		final GridBagConstraints c = new GridBagConstraints();
+		c.fill = GridBagConstraints.BOTH;
+		c.weightx = 1;
+		c.gridwidth = GridBagConstraints.BOTH;
+		c.gridy++;
+		pane.add(dropDownList, c);
+		c.gridy++;  c.weighty = 1;
+		pane.add(imagePanel, c);
+		c.gridy++; c.weighty = 1;
+		pane.add(scrollPane, c);
+		c.weighty = 0; c.gridy++;
+		pane.add(buttons, c);
 		pack();
     }
 
@@ -428,18 +446,15 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	 * lines will also be drawn
 	 */
 	protected void drawImage(Image<? extends RealType> img) {
-		// remove potentially added overlay
-		imp.setOverlay(null);
 		// get Imglib image as ImageJ image
-		ImagePlus imp = ImageJFunctions.displayAsVirtualStack( img );
-		this.imp.setProcessor(imp.getProcessor());
-		ImageProcessor ip = this.imp.getProcessor();
+		imp = ImageJFunctions.displayAsVirtualStack( img );
+		imagePanel.updateImage(imp);
 		// set the display range
 
 		// check if a LUT should be applied
 		if ( listOfLUTs.containsKey(img) ) {
 			// select linked look up table
-			IJ.run(this.imp, listOfLUTs.get(img), null);
+			IJ.run(imp, listOfLUTs.get(img), null);
 		}
 		imp.getProcessor().resetMinAndMax();
 
@@ -467,10 +482,10 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 
 		if (overlayModified) {
 			overlay.setStrokeColor(java.awt.Color.WHITE);
-			this.imp.setOverlay(overlay);
+			imp.setOverlay(overlay);
 		}
 
-		this.imp.updateAndDraw();
+		imagePanel.repaint();
 	}
 
 	/**
@@ -555,15 +570,16 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	}
 
 	protected void toggleLogarithmic(boolean enabled){
-		if (enabled){
-			this.imp.getProcessor().snapshot();
-			this.imp.getProcessor().log();
+		if (imp == null)
+			return;
+		if (enabled) {
+			imp.getProcessor().snapshot();
+			imp.getProcessor().log();
 			IJ.resetMinAndMax();
 		}
-		else {
-			this.imp.getProcessor().reset();
-		}
-		this.imp.updateAndDraw();
+		else
+			imp.getProcessor().reset();
+		imagePanel.repaint();
 	}
 
 	public void actionPerformed(ActionEvent e) {
