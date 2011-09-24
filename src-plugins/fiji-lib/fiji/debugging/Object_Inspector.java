@@ -96,6 +96,21 @@ public class Object_Inspector implements PlugIn, TreeWillExpandListener {
 	protected static void node(DefaultMutableTreeNode parent, String title) {
 		parent.add(new DefaultMutableTreeNode(title));
 	}
+
+	public static Object get(Object object, String fieldName) {
+		if (object == null)
+			return "<object is null>";
+		Class clazz = object.getClass();
+		while (clazz != null) try {
+			Field field = clazz.getDeclaredField(fieldName);
+			field.setAccessible(true);
+			return field.get(object);
+		} catch (Exception e) {
+			clazz = clazz.getSuperclass();
+		}
+		return "<could not access '" + fieldName + "'>";
+	}
+
 	protected static Object get(Field field, Object object) {
 		field.setAccessible(true);
 		try {
