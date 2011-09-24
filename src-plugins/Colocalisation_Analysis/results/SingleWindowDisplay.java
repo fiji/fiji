@@ -63,14 +63,14 @@ import mpicbg.imglib.type.numeric.integer.LongType;
  *
  */
 public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow implements ResultHandler<T>, ItemListener, ActionListener, ClipboardOwner {
-	static final int WIN_WIDTH = 350;
-	static final int WIN_HEIGHT = 240;
+	protected static final int WIN_WIDTH = 350;
+	protected static final int WIN_HEIGHT = 240;
 
 	// a static list for keeping track of all other SingleWindowDisplays
-	static ArrayList<SingleWindowDisplay> displays = new ArrayList<SingleWindowDisplay>();
+	protected static ArrayList<SingleWindowDisplay> displays = new ArrayList<SingleWindowDisplay>();
 
 	// indicates if original images should be displayed or not
-	boolean displayOriginalImages = false;
+	protected boolean displayOriginalImages = false;
 
 	// this is the image currently selected by the drop down menu
 	protected Image<? extends RealType> currentlyDisplayedImageResult;
@@ -94,15 +94,19 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	protected LocalizableByDimCursor<? extends RealType> pixelAccessCursor;
 
 	// A PDF writer to call if user wants PDF print
-	PDFWriter<T> pdfWriter;
+	protected PDFWriter<T> pdfWriter;
+
+	// The current image
+	protected ImagePlus imp;
 
 	// GUI elements
-	JButton listButton, copyButton;
-	JCheckBox log;
+	protected JButton listButton, copyButton;
+	protected JCheckBox log;
+
 	/* The data container with general information about
 	 * source images
 	 */
-	DataContainer<T> dataContainer = null;
+	protected DataContainer<T> dataContainer = null;
 
 	public SingleWindowDisplay(DataContainer<T> container, PDFWriter<T> pdfWriter){
 		super(NewImage.createFloatImage("Single Window Display", WIN_WIDTH, WIN_HEIGHT, 1, NewImage.FILL_WHITE));
