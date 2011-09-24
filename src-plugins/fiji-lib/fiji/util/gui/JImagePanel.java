@@ -27,6 +27,11 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.Prefs;
 
+import ij.gui.Overlay;
+import ij.gui.Roi;
+import ij.gui.TextRoi;
+import ij.gui.Toolbar;
+
 import ij.util.Java2;
 import ij.util.Tools;
 
@@ -144,6 +149,7 @@ public class JImagePanel extends JComponent implements Cloneable {
 					srcRect.x + srcRect.width, srcRect.y + srcRect.height,
 					null);
 			}
+			drawOverlay(g);
 		}
 		catch(OutOfMemoryError e) {
 			IJ.outOfMemory("Paint");
@@ -197,9 +203,43 @@ public class JImagePanel extends JComponent implements Cloneable {
 			if (img!=null)
 				offScreenGraphics.drawImage(img, 0, 0, srcRectWidthMag, srcRectHeightMag,
 						srcRect.x, srcRect.y, srcRect.x+srcRect.width, srcRect.y+srcRect.height, null);
+			drawOverlay(offScreenGraphics);
 			g.drawImage(offScreenImage, 0, 0, null);
 		}
 		catch(OutOfMemoryError e) {IJ.outOfMemory("Paint");}
+	}
+
+	protected void drawOverlay(Graphics g) {
+		if (imp!=null && imp.getHideOverlay())
+			return;
+
+		Overlay overlay = imp.getOverlay();
+		if (overlay==null)
+			return;
+
+		int n = overlay.size();
+		for (int i=0; i<n; i++) {
+			Roi roi = overlay.get(i);
+			drawRoi(g, roi);
+		}
+	}
+
+	void drawRoi(Graphics g, Roi roi) {
+		int type = roi.getType();
+		ImagePlus imp2 = roi.getImage();
+		roi.setImage(imp);
+		Color saveColor = roi.getStrokeColor();
+		if (saveColor==null)
+			roi.setStrokeColor(Toolbar.getForegroundColor());
+		if (roi instanceof TextRoi)
+			((TextRoi)roi).drawOverlay(g);
+		else
+			roi.drawOverlay(g);
+		roi.setStrokeColor(saveColor);
+		if (imp2!=null)
+			roi.setImage(imp2);
+		else
+			roi.setImage(null);
 	}
 
 	@Override
