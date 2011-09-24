@@ -133,6 +133,14 @@ public abstract class ConstraintCursor< T extends Type<T> & Comparable<T> > exte
 		return found;
 	}
 
+	public boolean predicateChannel1() {
+		return predicate1.evaluate( cursor1.getType() );
+	}
+
+	public boolean predicateChannel2() {
+		return predicate2.evaluate( cursor2.getType() );
+	}
+
 	protected void fwdCursors() {
 		cursor1.fwd();
 		cursor2.setPosition(cursor1);
