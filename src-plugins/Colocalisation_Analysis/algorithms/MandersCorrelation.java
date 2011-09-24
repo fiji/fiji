@@ -141,13 +141,13 @@ public class MandersCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			T type2 = cursor.getChannel2Type();
 			double ch2 = type2.getRealDouble();
 
-			// if ch2 is non-zero, increase ch1 nominator
-			if (Math.abs(ch2) > 0.00001) {
+			// if ch2 is above the threshold, increase ch1 nominator
+			if (cursor.predicateChannel2()) {
 				m1Nominator += ch1;
 			}
 
-			// if ch1 is non-zero, increase ch2 nominator
-			if (Math.abs(ch1) > 0.00001) {
+			// if ch1 is above the threshold, increase ch2 nominator
+			if (cursor.predicateChannel1()) {
 				m2Nominator += ch2;
 			}
 		}
