@@ -572,13 +572,14 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 	protected void toggleLogarithmic(boolean enabled){
 		if (imp == null)
 			return;
+		ImageProcessor ip = imp.getProcessor();
 		if (enabled) {
-			imp.getProcessor().snapshot();
-			imp.getProcessor().log();
-			IJ.resetMinAndMax();
+			ip.snapshot();
+			ip.log();
+			ip.resetMinAndMax();
 		}
 		else
-			imp.getProcessor().reset();
+			ip.reset();
 		imagePanel.repaint();
 	}
 
