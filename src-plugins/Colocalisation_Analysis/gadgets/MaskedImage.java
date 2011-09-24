@@ -5,6 +5,7 @@ import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.cursor.special.MaskCursor;
 import mpicbg.imglib.cursor.special.MaskLocalizableCursor;
+import mpicbg.imglib.cursor.special.MaskLocalizableByDimCursor;
 import mpicbg.imglib.cursor.special.RoiShiftingLocalizableByDimCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.interpolation.Interpolator;
@@ -75,6 +76,15 @@ public class MaskedImage<T extends NumericType<T> & Comparable<T>> extends RoiIm
 			mask.createLocalizableByDimCursor(), roiOffset, true);
 
 		return new MaskLocalizableCursor<T>(cursor, maskCursor, offValue, roiOffset);
+	}
+
+	@Override
+	public LocalizableByDimCursor<T> createLocalizableByDimCursor() {
+		LocalizableByDimCursor<T> cursor = image.createLocalizableByDimCursor();
+		LocalizableByDimCursor<T> maskCursor = new RoiShiftingLocalizableByDimCursor<T>(
+			mask.createLocalizableByDimCursor(), roiOffset, true);
+
+		return new MaskLocalizableByDimCursor<T>(cursor, maskCursor, offValue, roiOffset);
 	}
 
 	/* Not implemented/needed methods follow */
