@@ -92,6 +92,7 @@ JAVA3D_JARS=$FIJI_JAVA_EXT/j3dcore.jar:$FIJI_JAVA_EXT/j3dutils.jar:$FIJI_JAVA_EX
 # tools.jar
 TOOLS_JAR=$JAVA_HOME/../lib/tools.jar
 TOOLS_JAR(macosx)=/System/Library/Frameworks/JavaVM.framework/Classes/classes.jar
+ENVOVERRIDES(TOOLS_JAR)=true
 
 # the main target
 
@@ -145,7 +146,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Volume_Viewer.jar \
 	plugins/IJ_Robot.jar \
 	plugins/Fiji_Updater.jar \
-	plugins/Daltonize_.jar \
 	plugins/Stitching_.jar \
 	plugins/LSM_Reader.jar \
 	plugins/AnalyzeSkeleton_.jar \
@@ -217,6 +217,9 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Kuwahara_Filter.jar \
 	plugins/Action_Bar.jar \
 	plugins/Multi_Kymograph.jar \
+	plugins/Colour_Deconvolution.jar \
+	plugins/Dichromacy_.jar \
+	plugins/Threshold_Colour.jar \
 	plugins/Reconstruct_Reader.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
@@ -401,7 +404,6 @@ CLASSPATH(plugins/level_sets.jar)=jars/ij.jar
 CLASSPATH(plugins/Anisotropic_Diffusion_2D.jar)=jars/ij.jar
 CLASSPATH(plugins/SplineDeformationGenerator_.jar)=jars/ij.jar
 CLASSPATH(plugins/Manual_Tracking.jar)=jars/ij.jar
-CLASSPATH(plugins/Daltonize_.jar)=jars/ij.jar
 CLASSPATH(plugins/IJ_Robot.jar)=jars/ij.jar
 CLASSPATH(jars/autocomplete.jar)=jars/rsyntaxtextarea.jar
 CLASSPATH(jars/jython.jar)=jars/junit-4.5.jar:jars/jna.jar
@@ -459,6 +461,9 @@ CLASSPATH(plugins/Kuwahara_Filter.jar)=jars/ij.jar
 CLASSPATH(plugins/Action_Bar.jar)=jars/ij.jar
 CLASSPATH(plugins/Multi_Kymograph.jar)=jars/ij.jar
 CLASSPATH(plugins/Reconstruct_Reader.jar)=jars/ij.jar:plugins/TrakEM2_.jar
+CLASSPATH(plugins/Colour_Deconvolution.jar)=jars/ij.jar
+CLASSPATH(plugins/Dichromacy_.jar)=jars/ij.jar
+CLASSPATH(plugins/Threshold_Colour.jar)=jars/ij.jar
 
 # pre-Java5 generics ;-)
 

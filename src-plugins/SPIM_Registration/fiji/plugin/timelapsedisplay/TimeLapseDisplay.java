@@ -1,62 +1,28 @@
 package fiji.plugin.timelapsedisplay;
 
-import ij.ImageJ;
-import ij.gui.GUI;
-
 import java.awt.BasicStroke;
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Point;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.MenuElement;
 
 import mpicbg.imglib.util.Util;
 import mpicbg.models.AffineModel3D;
-import mpicbg.spim.io.ConfigurationParserException;
-import mpicbg.spim.io.ConfigurationParserGeneral;
-import mpicbg.spim.io.ConfigurationParserSPIM;
-import mpicbg.spim.io.IOFunctions;
-import mpicbg.spim.io.ProgramConfiguration;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
 import mpicbg.spim.registration.bead.Bead;
 
 import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartMouseEvent;
-import org.jfree.chart.ChartMouseListener;
-import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.StandardXYItemRenderer;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-import org.jfree.ui.RectangleAnchor;
-import org.jfree.ui.TextAnchor;
 
 
 public class TimeLapseDisplay
@@ -127,7 +93,7 @@ public class TimeLapseDisplay
 		//new ImageJ();
 		final ArrayList<FileOpenMenuEntry> items = new ArrayList<FileOpenMenuEntry>();
 		
-		items.add( new FileOpenMenuEntry( "Open File", new File( "F:/Stephan/Drosophila/Live HisYFP/HIS-YFP-13.07.2008/spim_TL18_Angle0.tif" ) ) );
+		items.add( new FileOpenMenuEntry( "Display image stack", data ) );
 		
 		plotData( data, getOptimalTimePoint( data ), true, items );
 	}
@@ -221,7 +187,13 @@ public class TimeLapseDisplay
 
         // Is it somehow possible to add a new tab to this Properties menu item?        
 		GraphFrame graphFrame = new GraphFrame( chart, referenceTimePoint, enableReferenceTimePoint, extraMenuItems, data );
-		graphFrame.setSize( 800, 400 );
+		
+		Dimension d = new Dimension( 800, 400 );	
+		graphFrame.setSize( d );
+
+		// resizing fucks up the interaction
+		graphFrame.setResizable( false );
+		
 		graphFrame.setVisible(true);
 		
 		return graphFrame.getReferenceTimePoint();
