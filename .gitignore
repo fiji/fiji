@@ -287,3 +287,4 @@ hs_err*.log
 /modules/imagej2/jars/ij-ui-swing.jar
 /plugins/Reconstruct_Reader.jar
 /jars/mpicbg.jar
+/jars/clojure.jar
