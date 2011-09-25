@@ -114,7 +114,7 @@ public class Main {
 	}
 
 	public void listNotUptodate(List<String> files) {
-		list(files, plugins.not(plugins.is(Status.INSTALLED)));
+		list(files, plugins.not(plugins.oneOf(new Status[] { Status.OBSOLETE, Status.INSTALLED, Status.NOT_FIJI})));
 	}
 
 	public void listUpdateable(List<String> files) {
