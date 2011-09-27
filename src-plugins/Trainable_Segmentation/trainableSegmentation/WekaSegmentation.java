@@ -86,6 +86,32 @@ import weka.filters.supervised.instance.Resample;
 
 import weka.gui.explorer.ClassifierPanel;
 
+
+/**
+ *
+ * License: GPL
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License 2
+ * as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ * Authors: Ignacio Arganda-Carreras (iarganda@mit.edu), Verena Kaynig (verena.kaynig@inf.ethz.ch),
+ *          Albert Cardona (acardona@ini.phys.ethz.ch)
+ */
+
+/**
+ * This class contains all the library methods to perform image segmentation
+ * based on the Weka classifiers.
+ */
 public class WekaSegmentation {
 
 	/** maximum number of classes (labels) allowed */
@@ -2784,20 +2810,6 @@ public class WekaSegmentation {
 		};
 	}
 
-
-	/**
-	 * Results from simple point warping (2D)
-	 *
-	 */
-	public static class WarpingResults{
-		/** warped source image after 2D simple point relaxation */
-		public ImagePlus warpedSource;
-		/** warping error */
-		public double warpingError;
-
-		public ArrayList<Point3f> mismatches;
-	}
-
 	/**
 	 * Use simple point relaxation to warp 2D source into 2D target.
 	 * Source is only modified at nonzero locations in the mask
@@ -2982,7 +2994,7 @@ public class WekaSegmentation {
 		
 		// Calculate components in warped labels
 		ImageProcessor components = connectedComponents(
-				new ImagePlus("8-bit warped labesl", warpedLabels.getProcessor().convertToByte(true)
+				new ImagePlus("8-bit warped labels", warpedLabels.getProcessor().convertToByte(true)
 						), 4).allRegions.getProcessor();
 		
 		int n = 0;
@@ -3062,6 +3074,90 @@ public class WekaSegmentation {
 	}
 
 	/**
+	 * Cluster the result mismatches from the warping so pixels
+	 * belonging to the same error are only counted once.
+	 * 
+	 * @param warpedLabels result warped labels
+	 * @param mismatches list of non simple points 
+	 * @param mismatchClassification array of classified mismatches
+	 * @return number of warping mismatches after clustering
+	 */
+	public static ClusteredWarpingMismatches clusterMismatchesByType(
+			ImagePlus warpedLabels, 
+			ArrayList<Point3f> mismatches, 
+			int [] mismatchClassification)
+	{
+		
+		// Create the 8 possible cases out of the mismatches
+		// 0: object addition, 1: hole deletion with an isolated background pixel
+		// 2: merger, 3: hole creation by removing a background pixel 
+		// 4: delete object, 5: hole creation by adding a background pixel
+		// 6: split ,7: hole deletion by removing a foreground pixel
+
+		ByteProcessor[] binaryMismatches = new ByteProcessor[ 8 ];
+		
+		final int width = warpedLabels.getWidth();
+		final int height = warpedLabels.getHeight();
+		
+		for(int i=0; i<8; i++)
+			binaryMismatches[ i ] = new ByteProcessor(width, height);
+		
+		// corresponding connectivity for each case (to run connected components)
+		final int[] connectivity = new int[]{4, 4, 8, 4, 4, 8, 4, 4};
+		
+		for(int i=0 ; i < mismatchClassification.length; i++)
+		{
+			final int x = (int) mismatches.get( i ).x;
+			final int y = (int) mismatches.get( i ).y;
+			
+			switch( mismatchClassification[ i ])
+			{				
+				case WekaSegmentation.OBJECT_ADDITION:
+					binaryMismatches[ 0 ].set(x, y, 255);
+					break;
+				case WekaSegmentation.HOLE_DELETION:
+					if( warpedLabels.getProcessor().getPixel(x, y) == 0)
+						binaryMismatches[ 1 ].set(x, y, 255);
+					else
+						binaryMismatches[ 7 ].set(x, y, 255);
+					break;
+				case WekaSegmentation.MERGE:
+					binaryMismatches[ 2 ].set(x, y, 255);
+					break;
+				case WekaSegmentation.HOLE_ADDITION:
+					if( warpedLabels.getProcessor().getPixel(x, y) == 0)
+						binaryMismatches[ 3 ].set(x, y, 255);
+					else
+						binaryMismatches[ 5 ].set(x, y, 255);
+					break;
+				case WekaSegmentation.OBJECT_DELETION:
+					binaryMismatches[ 4 ].set(x, y, 255);
+					break;
+				case WekaSegmentation.SPLIT:
+					binaryMismatches[ 6 ].set(x, y, 255);
+					break;
+				default:					
+			}
+		}
+		
+		// run connected components on each case
+		int[] componentsPerCase = new int[8];
+		for(int i=0; i<8; i++)
+		{
+			componentsPerCase[i] = connectedComponents(	new ImagePlus("components case " + i, 
+					binaryMismatches[ i ]), connectivity[ i ]).perRegion.size();
+		}
+						
+		return new ClusteredWarpingMismatches(componentsPerCase[ 0 ], 
+							componentsPerCase[ 1 ] + componentsPerCase[ 7 ], 
+							componentsPerCase[ 2 ], 
+							componentsPerCase[ 3 ] + componentsPerCase[ 5 ], 
+							componentsPerCase[4], 
+							componentsPerCase[6]);
+	}
+	
+		
+	/**
 	 * Get neighborhood of a pixel in a 2D image
 	 * 
 	 * @param image 2D image
@@ -3136,6 +3232,9 @@ public class WekaSegmentation {
 	{
 		ImageProcessor components = null;
 		final ImagePlus im2 = new ImagePlus("copy of im", im.getProcessor().duplicate());
+		
+		final Results ccResults;
+		
 		switch (adjacency)
 		{
 			case 4:
@@ -3152,7 +3251,9 @@ public class WekaSegmentation {
 				// ignore the central point
 
 				im2.getProcessor().set(1, 1, 0);
-				components = connectedComponents(im2, adjacency).allRegions.getProcessor();
+				//components = connectedComponents(im2, adjacency).allRegions.getProcessor();
+				ccResults = connectedComponents(im2, adjacency);
+				components = ccResults.allRegions.getProcessor();
 				// zero out locations that are not in the four-neighborhood
 				components.set(0,0,0);
 				components.set(0,2,0);
@@ -3173,7 +3274,9 @@ public class WekaSegmentation {
 				}
 				// ignore the central point
 				im2.getProcessor().set(1, 1, 0);
-				components = connectedComponents(im2, adjacency).allRegions.getProcessor();
+				//components = connectedComponents(im2, adjacency).allRegions.getProcessor();
+				ccResults = connectedComponents(im2, adjacency);
+				components = ccResults.allRegions.getProcessor();
 				break;
 			default:
 				IJ.error("Non valid adjacency value");
@@ -3183,6 +3286,7 @@ public class WekaSegmentation {
 		if(null == components)
 			return -1;
 
+		/*
 		int t = 0;
 		ArrayList<Integer> uniqueId = new ArrayList<Integer>();
 		for(int i = 0; i < 3; i++)
@@ -3194,14 +3298,15 @@ public class WekaSegmentation {
 			}
 
 		return uniqueId.size();
-
+		*/
+		return ccResults.regionInfo.size();
 	}
 
 	/**
 	 * Connected components based on Find Connected Regions (from Mark Longair)
 	 * @param im input image
 	 * @param adjacency number of neighbors to check (4, 8...)
-	 * @return list of images per regsion, all-regions image and regions info
+	 * @return list of images per region, all-regions image and regions info
 	 */
 	public static Results connectedComponents(final ImagePlus im, final int adjacency)
 	{
