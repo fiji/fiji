@@ -1,7 +1,5 @@
 package skeleton_analysis;
 
-import ij.IJ;
-
 import java.util.ArrayList;
 import java.util.Stack;
 
@@ -113,6 +111,16 @@ public class Graph
 	{
 		this.root = v;
 	}
+	// --------------------------------------------------------------------------
+	/**
+	 * Get root vertex.
+	 * @return root vertex of the graph
+	 */
+	public Vertex getRoot()
+	{
+		return this.root;
+	}	
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * Depth first search method to detect cycles in the graph.

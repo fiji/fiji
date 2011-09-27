@@ -2221,6 +2221,10 @@ public class Weka_Segmentation implements PlugIn
 			// Force features to be updated
 			wekaSegmentation.setFeaturesDirty();
 		}
+		else	// This checks if the feature stacks were updated while using the save feature stack button
+			if(wekaSegmentation.getFeatureStackArray().isEmpty() == false 
+					&& wekaSegmentation.getFeatureStackArray().getReferenceSliceIndex() != -1)
+				wekaSegmentation.setUpdateFeatures(false);
 
 		return true;
 	}

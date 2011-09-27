@@ -1,4 +1,13 @@
 package fiji.plugin;
+import fiji.plugin.timelapsedisplay.TimeLapseDisplay;
+import fiji.util.gui.GenericDialogPlus;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.gui.GenericDialog;
+import ij.gui.MultiLineLabel;
+import ij.plugin.BrowserLauncher;
+import ij.plugin.PlugIn;
+
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.event.MouseAdapter;
@@ -7,9 +16,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 
-
 import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.container.cell.CellContainerFactory;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.io.LOCI;
@@ -20,16 +27,6 @@ import mpicbg.spim.io.ConfigurationParserException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.segmentation.InteractiveDoG;
-
-import fiji.plugin.timelapsedisplay.TimeLapseDisplay;
-import fiji.util.gui.GenericDialogPlus;
-
-import ij.IJ;
-import ij.ImagePlus;
-import ij.gui.GenericDialog;
-import ij.gui.MultiLineLabel;
-import ij.plugin.BrowserLauncher;
-import ij.plugin.PlugIn;
 
 public class Bead_Registration implements PlugIn 
 {
@@ -45,7 +42,7 @@ public class Bead_Registration implements PlugIn
 		// output to IJ.log
 		IOFunctions.printIJLog = true;
 		
-		final GenericDialog gd = new GenericDialog( "Bead based Registration" );
+		final GenericDialog gd = new GenericDialog( "Bead based registration" );
 		
 		gd.addChoice( "Select type of registration", beadRegistration, beadRegistration[ defaultBeadRegistration ] );		
 		gd.addMessage( "Please note that the SPIM Registration is based on a publication.\n" +
@@ -69,6 +66,10 @@ public class Bead_Registration implements PlugIn
 			conf = singleChannel();
 		else
 			conf = multiChannel();
+		
+		// cancelled
+		if ( conf == null )
+			return;
 
 		// get filenames and so on...
 		if ( !init( conf ) )
@@ -77,36 +78,49 @@ public class Bead_Registration implements PlugIn
 		// this is only registration
 		conf.registerOnly = true;
 
-		// if we do not load the registration we can start
-		//if ( !loadRegistration )
-		//{
+		// if we do not do timelapseregistration we can just go ahead and
+		// display the result if wanted
+		if ( !timeLapseRegistration )
+		{
 			conf.timeLapseRegistration = false;
 			conf.collectRegistrationStatistics = true;
 
 			final Reconstruction reconstruction = new Reconstruction( conf );
-		//}
-		
-		if ( reconstruction.getSPIMConfiguration().file.length > 1 && defaultTimeLapseRegistration == 0 )
-			conf.referenceTimePoint = TimeLapseDisplay.plotData( reconstruction.getRegistrationStatistics(), 0, true );
 
-
-		/*
-		// manage the timelapse registration
-		if ( loadRegistration && timeLapseRegistration )
-			conf.timeLapseRegistration = true;
+			if ( reconstruction.getSPIMConfiguration().file.length > 1 && defaultTimeLapseRegistration == 0 )
+				TimeLapseDisplay.plotData( reconstruction.getRegistrationStatistics(), -1, false );
+		}
 		else
+		{
+			// now compute or load the inter-timepoint registration
 			conf.timeLapseRegistration = false;
-		*/
-		//conf.referenceTimePoint = referenceTimePointStatic;
+			conf.collectRegistrationStatistics = true;
 
-		// if ( defaulTimeLapseRegistration == 0 ) // manually
-
+			// compute per-timepoint registration
+			Reconstruction reconstruction = new Reconstruction( conf );
+			
+			if ( defaultTimeLapseRegistration == 0 )
+			{
+				// manually select timepoint
+				conf.referenceTimePoint = TimeLapseDisplay.plotData( reconstruction.getRegistrationStatistics(), 0, true ); 
+			}
+			else
+			{
+				// automatically select, but still show the display
+				conf.referenceTimePoint = TimeLapseDisplay.getOptimalTimePoint( reconstruction.getRegistrationStatistics() );
+				TimeLapseDisplay.plotData( reconstruction.getRegistrationStatistics(), conf.referenceTimePoint, false );
+			}
+			
+			// and now the timelapse-registration
+			conf.timeLapseRegistration = true;			
+			reconstruction = new Reconstruction( conf );			
+		}
 	}
 
-	public static String spimDataDirectory = "F:/Tobias";
-	public static String timepoints = "0-50";
-	public static String fileNamePattern = "spim_TL{t}_Ch1_Angle{a}";
-	public static String angles = "0-300:60";
+	public static String spimDataDirectory = "";
+	public static String timepoints = "18";
+	public static String fileNamePattern = "spim_TL{t}_Angle{a}.lsm";
+	public static String angles = "0-270:45";
 	
 	public static boolean loadSegmentation = false;
 	public static String[] beadBrightness = { "Very weak", "Weak", "Comparable to Sample", "Strong", "Advanced ...", "Interactive ..." };	
@@ -608,7 +622,7 @@ public class Bead_Registration implements PlugIn
 				}
 			}
 		}
-
+		
 		return true;
 	}
 
