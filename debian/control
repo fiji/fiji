@@ -21,7 +21,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: libjava3d-java, libbatik-java, libxml-commons-external-java, libjfreechart-java, fiji-vib (>= 20110913141410), fiji-imagej (>= 20110915052253), fiji-3d-viewer (>= 20110916140325), fiji-plugins (>= 20110916234907), libjcommon-java, junit, libvecmath-java
+Depends: libjava3d-java, libbatik-java, libxml-commons-external-java, libjcommon-java, fiji-vib (>= 20110913141410), fiji-imagej (>= 20110920220126), fiji-3d-viewer (>= 20110916140325), fiji-plugins (>= 20110927003144), libjfreechart-java, junit, libvecmath-java
 Description: Semi-automatic tracing, analysis and visualization of neurons, f [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -89,7 +89,7 @@ Architecture: any
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-imagej (>= 20110915052253), libjsch-java
+Depends: fiji-imagej (>= 20110920220126), libjsch-java
 Description: components from Fiji, including: Fiji, fake, fiji-logo-32x32, fu [...]
  The descriptions below are extracted from the Fiji Updater database:
  .
@@ -136,7 +136,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: libxml-commons-external-java, junit, libbatik-java, fiji-imagej (>= 20110915052253)
+Depends: libxml-commons-external-java, junit, libbatik-java, fiji-imagej (>= 20110920220126)
 Description: loci_tools.jar is a bundle containing the functionality of Bio-F [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -155,7 +155,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-imagej (>= 20110915052253)
+Depends: fiji-imagej (>= 20110920220126)
 Description: bUnwarpJ allows simultaneous and consistent registration of two [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -175,7 +175,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-imagej (>= 20110915052253)
+Depends: fiji-imagej (>= 20110920220126)
 Description: This plugin displays histograms in three different channels (Red [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -199,7 +199,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-mpicbg (>= 20110906142657), fiji-bunwarpj (>= 20110423002840), libjava3d-java, fiji-imglib (>= 20110604132637), fiji-tracer (>= 20110913153358), libpg-java, libjcommon-java, fiji-jai (>= 20080801134354), fiji-vib (>= 20110913141410), fiji-edu-mines-jtk (>= 20080801134354), fiji-imagej (>= 20110915052253), libvecmath-java, fiji-loci-tools (>= 20110915165249), fiji-3d-viewer (>= 20110916140325), fiji-plugins (>= 20110907054909), libjfreechart-java, libjama-java
+Depends: fiji-mpicbg (>= 20110906142657), fiji-bunwarpj (>= 20110423002840), libjava3d-java, fiji-imglib (>= 20110604132637), fiji-tracer (>= 20110913153358), libpg-java, libjcommon-java, fiji-jai (>= 20080801134354), fiji-vib (>= 20110913141410), fiji-edu-mines-jtk (>= 20080801134354), fiji-imagej (>= 20110920220126), libvecmath-java, fiji-loci-tools (>= 20110915165249), fiji-3d-viewer (>= 20110916140325), fiji-plugins (>= 20110907054909), libjfreechart-java, libjama-java
 Description: TrakEM2 is a program to model from images, it is used for morpho [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -239,7 +239,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-mpicbg (>= 20110906142657), fiji-bunwarpj (>= 20110423002840), fiji-itext (>= 20110809145740), libjava3d-java, fiji-imglib (>= 20110604132637), libjna-java, libjfreechart-java, fiji-loci-tools (>= 20110915165249), fiji-vib (>= 20110913141410), fiji-trakem2 (>= 20110915213726), libjsch-java, fiji-base (>= 20110816184101), fiji-edu-mines-jtk (>= 20080801134354), fiji-imagej (>= 20110915052253), fiji-3d-viewer (>= 20110916140325), fiji-weka (>= 20100609224141), libvecmath-java, libjcommon-java, junit, fiji-scripting (>= 20110915052253), libjama-java
+Depends: fiji-mpicbg (>= 20110906142657), fiji-bunwarpj (>= 20110423002840), fiji-itext (>= 20110809145740), libjava3d-java, fiji-imglib (>= 20110604132637), libjna-java, libjfreechart-java, fiji-loci-tools (>= 20110915165249), fiji-vib (>= 20110913141410), fiji-trakem2 (>= 20110927003433), libjsch-java, fiji-base (>= 20110816184101), fiji-edu-mines-jtk (>= 20080801134354), fiji-imagej (>= 20110920220126), fiji-3d-viewer (>= 20110916140325), fiji-weka (>= 20100609224141), libvecmath-java, libjcommon-java, junit, fiji-scripting (>= 20110915052253), libjama-java
 Description: components from Fiji, including: PIV analyser, listManagement, P [...]
  The descriptions below are extracted from the Fiji Updater database:
  .
@@ -305,6 +305,8 @@ Description: components from Fiji, including: PIV analyser, listManagement, P [.
  .
  plugins/FeatureJ_.jar: Extract differential features from images
  .
+ jars/mij.jar: MIJ - Access ImageJ from within Matlab
+ .
  plugins/Scripts/Image/Hyperstacks/Temporal-Color_Code.ijm: Color-code
  time series into a 2D image.
  .
@@ -348,10 +350,6 @@ Description: components from Fiji, including: PIV analyser, listManagement, P [.
  slice is used as the template with respect to which the next slice is
  aligned, so that the alignment proceeds by propagation. When the plugin
  is launched, the current slice acts as a global anchor.
- .
- plugins/Daltonize_.jar: Simulates Colour Blindness for a selected image.
- There are different modes available to choose from, such as Protanopia,
- Deutanopia, Tritanopia, and others as well.
  .
  plugins/Series_Labeler.jar: This plugin allows the user to put a
  customizable time code into time series.
@@ -407,6 +405,9 @@ Description: components from Fiji, including: PIV analyser, listManagement, P [.
  plugins/RATS_.jar: Robust Automatic Threshold Selection (RATS)  This
  algorithm determines local thresholds based on the pixel values and
  their gradient.
+ .
+ plugins/Colour_Deconvolution.jar: This plugin implements stain
+ separation using the colour deconvolution.
  .
  plugins/Statistical_Region_Merging.jar: Performs segmentation on an
  8-bit grayscale image of a user's choice by using the statistical region
@@ -547,7 +548,12 @@ Description: components from Fiji, including: PIV analyser, listManagement, P [.
  It can measure and visualize the image flow (related to motion) in any
  open stack.
  .
- jars/mij.jar: MIJ - Access ImageJ from within Matlab
+ plugins/Threshold_Colour.jar: This plugin isolates pixels in an RGB
+ image or stack according to a range of Hue.  Original PassBand2 by Bob
+ Dougherty. Some code borrowed from ThresholdAdjuster by Wayne Rasband.
+ .
+ plugins/Dichromacy_.jar: Simulation of dichromatic vision (colour
+ blindness)
  .
  plugins/Fiji_Plugins.jar: A collection of single-shot plugins for Fiji.
  On Edit>Selection, "Fit Circle to Image" will fit a circle selection to
@@ -571,7 +577,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: clojure, fiji-imglib (>= 20110604132637), fiji-rsyntaxtextarea (>= 20110223005940), libjcommon-java, fiji-vib (>= 20110816141539), libvecmath-java, fiji-base (>= 20110816184101), fiji-autocomplete (>= 20090524213156), libjava3d-java, bsh, fiji-imagej (>= 20110915052253), fiji-jython (>= 20100925003646), fiji-3d-viewer (>= 20110916140325), fiji-plugins (>= 20110906225816), libjfreechart-java, rhino, fiji-jruby (>= 20100925003646)
+Depends: clojure, fiji-imglib (>= 20110604132637), fiji-rsyntaxtextarea (>= 20110223005940), libjfreechart-java, fiji-vib (>= 20110816141539), libvecmath-java, fiji-base (>= 20110816184101), fiji-autocomplete (>= 20090524213156), libjava3d-java, bsh, fiji-imagej (>= 20110920220126), fiji-jython (>= 20100925003646), fiji-3d-viewer (>= 20110916140325), fiji-plugins (>= 20110906225816), libjcommon-java, rhino, fiji-jruby (>= 20100925003646)
 Description: components from Fiji, including: Script Editor, Javascript, JRub [...]
  The descriptions below are extracted from the Fiji Updater database:
  .
@@ -627,7 +633,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-imagej (>= 20110915052253), libjama-java
+Depends: fiji-imagej (>= 20110920220126), libjama-java
 Description: components from Fiji, including: mpicbg, mpicbg
  The descriptions below are extracted from the Fiji Updater database:
  .
@@ -645,7 +651,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-lsm-reader (>= 20110413184056), fiji-imagej (>= 20110915052253)
+Depends: fiji-lsm-reader (>= 20110413184056), fiji-imagej (>= 20110920220126)
 Description: The LSM_Toolbox is a project aiming at the integration of common [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -661,7 +667,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-imagej (>= 20110915052253)
+Depends: fiji-imagej (>= 20110920220126)
 Description: The program View5D interactively displays of up to 5 dimensional [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -676,7 +682,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513), fiji-plugins (<= 20110609134243)
 Conflicts: fiji (<= 20090513), fiji-plugins (<= 20110609134243)
-Depends: fiji-mpicbg (>= 20110906142657), libjava3d-java, fiji-edu-mines-jtk (>= 20080801134354), libjama-java, fiji-loci-tools (>= 20110915165249), libvecmath-java, fiji-imagej (>= 20110915052253)
+Depends: fiji-mpicbg (>= 20110906142657), libjava3d-java, fiji-edu-mines-jtk (>= 20080801134354), libjama-java, fiji-loci-tools (>= 20110915165249), libvecmath-java, fiji-imagej (>= 20110920220126)
 Description: components from Fiji, including: imglib-algorithms, imglib-ij, i [...]
  The descriptions below are extracted from the Fiji Updater database:
  .
@@ -696,7 +702,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-imagej (>= 20110915052253)
+Depends: fiji-imagej (>= 20110920220126)
 Description: MTrack2 is used for tracking objects in 2D over time. It will id [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -715,7 +721,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: libjava3d-java, fiji-imglib (>= 20110407154805), fiji-base (>= 20110816184101), fiji-imagej (>= 20110915052253), fiji-3d-viewer (>= 20110916140325), fiji-plugins (>= 20110907054909), libvecmath-java, junit, libjzlib-java, libjama-java
+Depends: libjava3d-java, fiji-imglib (>= 20110407154805), fiji-base (>= 20110816184101), fiji-imagej (>= 20110920220126), fiji-3d-viewer (>= 20110916140325), fiji-plugins (>= 20110907054909), libvecmath-java, junit, libjzlib-java, libjama-java
 Description: components from Fiji, including: VIB, VIB-lib
  The descriptions below are extracted from the Fiji Updater database:
  .
@@ -758,7 +764,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-jai (>= 20080801134354), fiji-imagej (>= 20110915052253)
+Depends: fiji-jai (>= 20080801134354), fiji-imagej (>= 20110920220126)
 Description: ij-ImageIO plugins add support for additional image file formats [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -787,7 +793,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-imagej (>= 20110915052253)
+Depends: fiji-imagej (>= 20110920220126)
 Description: components from Fiji, including: LSM Reader
 
 
@@ -832,7 +838,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-imagej (>= 20110915052253)
+Depends: fiji-imagej (>= 20110920220126)
 Description: This is the Multiple Image Processor plugin, where it is able to [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -848,7 +854,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513), fiji-plugins (<= 20100821202528)
 Conflicts: fiji (<= 20090513), fiji-plugins (<= 20100821202528)
-Depends: libjava3d-java, fiji-imglib (>= 20110407154805), fiji-vib (>= 20110913141410), fiji-imagej (>= 20110915052253), libjama-java, libvecmath-java
+Depends: libjava3d-java, fiji-imglib (>= 20110407154805), fiji-vib (>= 20110913141410), fiji-imagej (>= 20110920220126), libjama-java, libvecmath-java
 Description: A hardware-accelerated 3D/4D viewer offering volume rendering, o [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -862,7 +868,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: libbatik-java, fiji-jpedal (>= 20080801134354), fiji-itext (>= 20110809145740), libxml-commons-external-java, fiji-imagej (>= 20110915052253), libjzlib-java
+Depends: libbatik-java, fiji-jpedal (>= 20080801134354), fiji-itext (>= 20110809145740), libxml-commons-external-java, fiji-imagej (>= 20110920220126), libjzlib-java
 Description: The plugin allows one to: - Import and save PDF file format - Ex [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -885,7 +891,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-imagej (>= 20110915052253)
+Depends: fiji-imagej (>= 20110920220126)
 Description: components from Fiji, including: Color Inspector 3D, Volume View [...]
  The descriptions below are extracted from the Fiji Updater database:
  .
@@ -918,7 +924,7 @@ Package: fiji
 Section: graphics
 Architecture: all
 Priority: extra
-Depends: fiji-tracer (>= 20110913153358), fiji-jpedal (>= 20080801134354), fiji-examples (>= 20110531182644), fiji-base (>= 20110912195039), fiji-imagej (>= 20110915052253), fiji-loci-tools (>= 20110915165249), fiji-bunwarpj (>= 20110423002840), fiji-color-histogram (>= 20100607205357), fiji-edu-mines-jtk (>= 20080801134354), fiji-trakem2 (>= 20110915213726), fiji-itext (>= 20110809145740), fiji-luts (>= 20100610024221), fiji-plugins (>= 20110919110800), fiji-scripting (>= 20110915052253), fiji-mip (>= 20100818200853), fiji-mpicbg (>= 20110906142657), fiji-lsm-toolbox (>= 20100813145758), fiji-view5d (>= 20100609192927), fiji-imglib (>= 20110604132637), fiji-mtrack2 (>= 20100607205357), fiji-vib (>= 20110913141410), fiji-autocomplete (>= 20090524213156), fiji-jython (>= 20100925003646), fiji-ij-imageio (>= 20081218211215), fiji-jruby (>= 20100925003646), fiji-lsm-reader (>= 20110413184056), fiji-rsyntaxtextarea (>= 20110223005940), fiji-jai (>= 20080801134354), fiji-weka (>= 20100609224141), fiji-tcljava (>= 20081218211215), fiji-3d-viewer (>= 20110916140325), fiji-io (>= 20110912195039), fiji-barthel-plugins (>= 20100607205357)
+Depends: fiji-tracer (>= 20110913153358), fiji-jpedal (>= 20080801134354), fiji-examples (>= 20110925150919), fiji-base (>= 20110912195039), fiji-imagej (>= 20110920220126), fiji-loci-tools (>= 20110915165249), fiji-bunwarpj (>= 20110423002840), fiji-color-histogram (>= 20100607205357), fiji-edu-mines-jtk (>= 20080801134354), fiji-trakem2 (>= 20110927003433), fiji-itext (>= 20110809145740), fiji-luts (>= 20100610024221), fiji-plugins (>= 20110927003144), fiji-scripting (>= 20110925150919), fiji-mip (>= 20100818200853), fiji-mpicbg (>= 20110906142657), fiji-lsm-toolbox (>= 20100813145758), fiji-view5d (>= 20100609192927), fiji-imglib (>= 20110604132637), fiji-mtrack2 (>= 20100607205357), fiji-vib (>= 20110913141410), fiji-autocomplete (>= 20090524213156), fiji-jython (>= 20100925003646), fiji-ij-imageio (>= 20081218211215), fiji-jruby (>= 20100925003646), fiji-lsm-reader (>= 20110413184056), fiji-rsyntaxtextarea (>= 20110223005940), fiji-jai (>= 20080801134354), fiji-weka (>= 20100609224141), fiji-tcljava (>= 20081218211215), fiji-3d-viewer (>= 20110916140325), fiji-io (>= 20110912195039), fiji-barthel-plugins (>= 20100607205357)
 Description: A metapackage for the Fiji image processing suite (based on ImageJ)
  Fiji is a project aiming at simplifying:
     * the installation of ImageJ
