@@ -3233,8 +3233,6 @@ public class WekaSegmentation {
 		ImageProcessor components = null;
 		final ImagePlus im2 = new ImagePlus("copy of im", im.getProcessor().duplicate());
 		
-		final Results ccResults;
-		
 		switch (adjacency)
 		{
 			case 4:
@@ -3249,10 +3247,9 @@ public class WekaSegmentation {
 					return -1;
 				}
 				// ignore the central point
-
 				im2.getProcessor().set(1, 1, 0);
-				ccResults = connectedComponents(im2, adjacency);
-				components = ccResults.allRegions.getProcessor();
+				components = connectedComponents(im2, adjacency).allRegions.getProcessor();
+				
 				// zero out locations that are not in the four-neighborhood
 				components.set(0,0,0);
 				components.set(0,2,0);
@@ -3273,8 +3270,7 @@ public class WekaSegmentation {
 				}
 				// ignore the central point
 				im2.getProcessor().set(1, 1, 0);
-				ccResults = connectedComponents(im2, adjacency);
-				components = ccResults.allRegions.getProcessor();
+				components = connectedComponents(im2, adjacency).allRegions.getProcessor();
 				break;
 			default:
 				IJ.error("Non valid adjacency value");
@@ -3284,8 +3280,18 @@ public class WekaSegmentation {
 		if(null == components)
 			return -1;
 
-		// return number of components in the patch (= number of regions)
-		return ccResults.regionInfo.size();
+		
+		int t = 0;
+		ArrayList<Integer> uniqueId = new ArrayList<Integer>();
+		for(int i = 0; i < 3; i++)
+			for(int j = 0; j < 3; j++)
+			{
+				if(( t = components.get(i, j) ) != 0)
+					if(!uniqueId.contains(t))
+						uniqueId.add(t);
+			}
+
+		return uniqueId.size();				
 	}
 
 	/**
