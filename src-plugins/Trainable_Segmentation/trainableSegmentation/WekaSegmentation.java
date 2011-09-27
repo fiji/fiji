@@ -3145,7 +3145,7 @@ public class WekaSegmentation {
 		for(int i=0; i<8; i++)
 		{
 			componentsPerCase[i] = connectedComponents(	new ImagePlus("components case " + i, 
-					binaryMismatches[ i ]), connectivity[ i ]).perRegion.size();
+					binaryMismatches[ i ]), connectivity[ i ]).regionInfo.size();
 		}
 						
 		return new ClusteredWarpingMismatches(componentsPerCase[ 0 ], 
