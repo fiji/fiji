@@ -3251,7 +3251,6 @@ public class WekaSegmentation {
 				// ignore the central point
 
 				im2.getProcessor().set(1, 1, 0);
-				//components = connectedComponents(im2, adjacency).allRegions.getProcessor();
 				ccResults = connectedComponents(im2, adjacency);
 				components = ccResults.allRegions.getProcessor();
 				// zero out locations that are not in the four-neighborhood
@@ -3274,7 +3273,6 @@ public class WekaSegmentation {
 				}
 				// ignore the central point
 				im2.getProcessor().set(1, 1, 0);
-				//components = connectedComponents(im2, adjacency).allRegions.getProcessor();
 				ccResults = connectedComponents(im2, adjacency);
 				components = ccResults.allRegions.getProcessor();
 				break;
@@ -3286,19 +3284,7 @@ public class WekaSegmentation {
 		if(null == components)
 			return -1;
 
-		/*
-		int t = 0;
-		ArrayList<Integer> uniqueId = new ArrayList<Integer>();
-		for(int i = 0; i < 3; i++)
-			for(int j = 0; j < 3; j++)
-			{
-				if(( t = components.get(i, j) ) != 0)
-					if(!uniqueId.contains(t))
-						uniqueId.add(t);
-			}
-
-		return uniqueId.size();
-		*/
+		// return number of components in the patch (= number of regions)
 		return ccResults.regionInfo.size();
 	}
 
