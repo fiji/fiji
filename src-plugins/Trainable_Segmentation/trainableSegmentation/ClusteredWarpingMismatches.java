@@ -22,15 +22,15 @@ package trainableSegmentation;
 
 public class ClusteredWarpingMismatches
 {
-	public int numOfObjectAditions = 0;
+	public int numOfObjectAdditions = 0;
 	public int numOfHoleDeleitions = 0;
 	public int numOfMergers = 0;
 	public int numOfHoleAdditions = 0;
-	public int numOfObjectDeletions = 0;
+	public int numOfObjectDeleitions = 0;
 	public int numOfSplits = 0;
 	
 	public ClusteredWarpingMismatches(
-			int numOfObjectAditions,
+			int numOfObjectAdditions,
 			int numOfHoleDeleitions,
 			int numOfMergers,
 			int numOfHoleAdditions,
@@ -41,8 +41,8 @@ public class ClusteredWarpingMismatches
 		this.numOfHoleAdditions = numOfHoleAdditions;
 		this.numOfHoleDeleitions = numOfHoleDeleitions;
 		this.numOfMergers = numOfMergers;
-		this.numOfObjectAditions = numOfObjectAditions;
-		this.numOfObjectDeletions = numOfObjectDeletions;
+		this.numOfObjectAdditions = numOfObjectAdditions;
+		this.numOfObjectDeleitions = numOfObjectDeletions;
 		this.numOfSplits = numOfSplits;
 	}
 }
