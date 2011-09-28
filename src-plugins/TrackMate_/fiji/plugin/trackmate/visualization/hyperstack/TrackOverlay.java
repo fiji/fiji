@@ -241,10 +241,10 @@ public class TrackOverlay implements Overlay {
 	}
 
 	/* 
-	 * PRIVATE METHODS
+	 * PROTECTED METHODS
 	 */
 
-	private final void drawEdge(final Graphics2D g2d, final Spot source, final Spot target,
+	protected final void drawEdge(final Graphics2D g2d, final Spot source, final Spot target,
 			final int xcorner, final int ycorner, final float magnification, final float transparency) {
 		// Find x & y in physical coordinates
 		final float x0i = source.getFeature(SpotFeature.POSITION_X);
@@ -272,7 +272,7 @@ public class TrackOverlay implements Overlay {
 
 	}
 
-	private final void drawEdge(final Graphics2D g2d, final Spot source, final Spot target,
+	protected final void drawEdge(final Graphics2D g2d, final Spot source, final Spot target,
 			final int xcorner, final int ycorner, final float magnification) {
 		// Find x & y in physical coordinates
 		final float x0i = source.getFeature(SpotFeature.POSITION_X);

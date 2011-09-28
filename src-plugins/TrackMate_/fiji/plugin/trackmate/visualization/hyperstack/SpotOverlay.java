@@ -187,7 +187,7 @@ public class SpotOverlay implements Overlay {
 		this.spotSelection = spots;
 	}
 
-	private final void drawSpot(final Graphics2D g2d, final Spot spot, final float zslice, final int xcorner, final int ycorner, final float magnification) {
+	protected final void drawSpot(final Graphics2D g2d, final Spot spot, final float zslice, final int xcorner, final int ycorner, final float magnification) {
 		final float x = spot.getFeature(SpotFeature.POSITION_X);
 		final float y = spot.getFeature(SpotFeature.POSITION_Y);
 		final float z = spot.getFeature(SpotFeature.POSITION_Z);

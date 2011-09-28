@@ -57,6 +57,26 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 		final float z = (imp.getSlice()-1) * calibration[2];
 		return new SpotImp(new float[] {x, y, z});
 	}
+	
+	/*
+	 * PROTECTED METHODS
+	 */
+	
+	/**
+	 * Hook for subclassers. Instantiate here the overlay you want to use for the spots. 
+	 * @return
+	 */
+	protected SpotOverlay createSpotOverlay() {
+		return new SpotOverlay(model, imp, displaySettings);
+	}
+
+	/**
+	 * Hook for subclassers. Instantiate here the overlay you want to use for the spots. 
+	 * @return
+	 */
+	protected TrackOverlay createTrackOverlay() {
+		return new TrackOverlay(model, imp, displaySettings);
+	}
 
 	/*
 	 * PUBLIC METHODS
@@ -144,9 +164,9 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 		window = new StackWindow(imp, canvas);
 		window.show();
 		//
-		spotOverlay = new SpotOverlay(model, imp, displaySettings);
+		spotOverlay = createSpotOverlay();
 		//
-		trackOverlay = new TrackOverlay(model, imp, displaySettings);
+		trackOverlay = createTrackOverlay(); 
 		//
 		canvas.addOverlay(spotOverlay);
 		canvas.addOverlay(trackOverlay);
