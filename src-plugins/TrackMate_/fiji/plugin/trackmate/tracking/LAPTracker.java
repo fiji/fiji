@@ -336,7 +336,11 @@ public class LAPTracker implements SpotTracker {
 		tend = System.currentTimeMillis();
 		logger.log(String.format("  Frame to frame LAP solved in %.1f s.\n", (tend-tstart)/1e3f));
 
-
+		// Skip 2nd step if there is no rules to link track segments
+		if (!settings.allowGapClosing && !settings.allowSplitting && !settings.allowMerging) {
+			return true;
+		}
+		
 		// Step 2 - Link track segments into final tracks
 
 		// Create cost matrix
