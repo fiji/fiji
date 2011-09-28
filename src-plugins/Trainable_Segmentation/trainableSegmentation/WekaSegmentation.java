@@ -2617,7 +2617,7 @@ public class WekaSegmentation {
 	}
 
 	/**
-	 * Calculate warping error
+	 * Calculate warping error (single thread version)
 	 *
 	 * @param label original labels (single image or stack)
 	 * @param proposal proposed new labels
@@ -2625,7 +2625,7 @@ public class WekaSegmentation {
 	 * @param binaryThreshold binary threshold to binarize proposal
 	 * @return total warping error
 	 */
-	public static double warpingError(
+	public static double warpingErrorSingleThread(
 			ImagePlus label,
 			ImagePlus proposal,
 			ImagePlus mask,
@@ -2660,6 +2660,114 @@ public class WekaSegmentation {
 			return -1;
 	}
 
+	/**
+	 * Calculate warping error
+	 *
+	 * @param label original labels (single image or stack)
+	 * @param proposal proposed new labels
+	 * @param mask image mask
+	 * @param binaryThreshold binary threshold to binarize proposal
+	 * @return total warping error
+	 */
+	public static double warpingError(
+			ImagePlus label,
+			ImagePlus proposal,
+			ImagePlus mask,
+			double binaryThreshold)
+	{
+		
+		IJ.log("Warping ground truth...");
+
+		
+		// Warp ground truth, relax original labels to proposal. Only simple
+		// points warping is allowed.
+		WarpingResults[] wrs = WekaSegmentation.simplePointWarp2dMT(label, proposal, mask, 0.5);
+		
+
+		if(null == wrs)
+			return -1;
+
+		double error = 0;
+		double count = label.getWidth() * label.getHeight() * label.getImageStackSize();
+
+
+		for(int j=0; j<wrs.length; j++)			
+			error += wrs[ j ].mismatches.size();
+		
+
+		if(count != 0)
+			return error / count;
+		else
+			return -1;
+	}
+	
+	
+	/**
+	 * Use simple point relaxation to warp 2D source into 2D target.
+	 * Source is only modified at nonzero locations in the mask
+	 * (multi-thread static version)
+	 *
+	 * @param source input image to be relaxed (2D image or stack)
+	 * @param target target image (2D image or stack)
+	 * @param mask image mask (2D image or stack)
+	 * @param binaryThreshold binarization threshold
+	 * @return warping results for each slice of the source
+	 */
+	public static WarpingResults[] simplePointWarp2dMT(
+			ImagePlus source,
+			ImagePlus target,
+			ImagePlus mask,
+			double binaryThreshold)
+	{
+		if(source.getWidth() != target.getWidth()
+				|| source.getHeight() != target.getHeight()
+				|| source.getImageStackSize() != target.getImageStackSize())
+		{
+			IJ.log("Error: label and training image sizes do not fit.");
+			return null;
+		}
+
+		final ImageStack sourceSlices = source.getImageStack();
+		final ImageStack targetSlices = target.getImageStack();
+		final ImageStack maskSlices = (null != mask) ? mask.getImageStack() : null;
+
+		final WarpingResults[] wrs = new WarpingResults[ source.getImageStackSize() ];
+
+		// Executor service to produce concurrent threads
+		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+		final ArrayList< Future<WarpingResults> > futures = new ArrayList< Future<WarpingResults> >();
+
+		try{
+			for(int i = 1; i <= sourceSlices.getSize(); i++)
+			{
+				futures.add(exe.submit( simplePointWarp2DConcurrent(sourceSlices.getProcessor(i),
+										targetSlices.getProcessor(i),
+										null != maskSlices ? maskSlices.getProcessor(i) : null,
+										binaryThreshold ) ) );
+			}
+
+			int i = 0;
+			// Wait for the jobs to be done
+			for(Future<WarpingResults> f : futures)
+			{
+				wrs[ i ] = f.get();				
+				i++;
+			}			
+		}
+		catch(Exception ex)
+		{
+			IJ.log("Error when warping ground truth in a concurrent way.");
+			ex.printStackTrace();
+		}
+		finally{
+			exe.shutdown();
+		}
+
+		return wrs;
+	}
+	
+	
 	/**
 	 * Use simple point relaxation to warp 2D source into 2D target.
 	 * Source is only modified at nonzero locations in the mask
@@ -2702,7 +2810,7 @@ public class WekaSegmentation {
 				warpingError += wr.warpingError;
 		}
 
-		IJ.log("Warping error = " + (warpingError / sourceSlices.getSize()));
+		//IJ.log("Warping error = " + (warpingError / sourceSlices.getSize()));
 
 		return new ImagePlus("warped source", warpedSource);
 	}
@@ -2796,7 +2904,7 @@ public class WekaSegmentation {
 	 * @param binaryThreshold binary threshold to use
 	 * @return warping results (warped labels, warping error value and mismatching points)
 	 */
-	public Callable<WarpingResults> simplePointWarp2DConcurrent(
+	public static Callable<WarpingResults> simplePointWarp2DConcurrent(
 			final ImageProcessor source,
 			final ImageProcessor target,
 			final ImageProcessor mask,
@@ -2875,7 +2983,7 @@ public class WekaSegmentation {
 		final float[] targetBinPix = (float[])targetBin.getProcessor().getPixels();
 		for(int i=0; i < targetBinPix.length; i++)
 			targetBinPix[i] = (targetBinPix[i] > binaryThreshold) ? 1.0f : 0.0f;
-
+		
 		double diff = Double.MIN_VALUE;
 		double diff_before = 0;
 
@@ -2988,7 +3096,7 @@ public class WekaSegmentation {
 	 * @param mismatches list of mismatch points after warping
 	 * @return array of mismatch classifications
 	 */
-	public static int[] classifyMismatches2D( ImagePlus warpedLabels, ArrayList<Point3f> mismatches )
+	public static int[] classifyMismatches2d( ImagePlus warpedLabels, ArrayList<Point3f> mismatches )
 	{
 		final int[] pointClassification = new int[ mismatches.size() ];
 		
