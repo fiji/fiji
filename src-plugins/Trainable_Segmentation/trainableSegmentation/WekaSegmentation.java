@@ -2661,13 +2661,16 @@ public class WekaSegmentation {
 	}
 
 	/**
-	 * Calculate warping error
+	 * Calculate the topology-preserving warping error in 2D between some
+	 * original labels and the corresponding proposed labels. Both, original
+	 * and proposed labels are expected to have float values between 0 and 1. 
+	 * Otherwise, they will be converted.
 	 *
-	 * @param label original labels (single image or stack)
-	 * @param proposal proposed new labels
-	 * @param mask image mask
-	 * @param binaryThreshold binary threshold to binarize proposal
-	 * @return total warping error
+	 * @param label original labels (single 2D image or stack)
+	 * @param proposal proposed new labels (single 2D image or stack of the same as as the original labels)
+	 * @param mask image mask containing in white the areas where warping is allowed (null for not geometrical constraints)
+	 * @param binaryThreshold threshold value to binarize proposal (larger than 0 and smaller than 1)
+	 * @return total warping error (it counts all type of mismatches as errors)
 	 */
 	public static double warpingError(
 			ImagePlus label,
@@ -2741,8 +2744,8 @@ public class WekaSegmentation {
 		try{
 			for(int i = 1; i <= sourceSlices.getSize(); i++)
 			{
-				futures.add(exe.submit( simplePointWarp2DConcurrent(sourceSlices.getProcessor(i),
-										targetSlices.getProcessor(i),
+				futures.add(exe.submit( simplePointWarp2DConcurrent(sourceSlices.getProcessor(i).convertToFloat(),
+										targetSlices.getProcessor(i).convertToFloat(),
 										null != maskSlices ? maskSlices.getProcessor(i) : null,
 										binaryThreshold ) ) );
 			}
