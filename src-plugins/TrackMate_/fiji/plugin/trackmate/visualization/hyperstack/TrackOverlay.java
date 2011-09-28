@@ -29,12 +29,12 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.util.gui.OverlayedImageCanvas.Overlay;
 
 public class TrackOverlay implements Overlay {
-	private float[] calibration;
-	private ImagePlus imp;
-	private Map<Integer, Color> edgeColors;
-	private Collection<DefaultWeightedEdge> highlight = new HashSet<DefaultWeightedEdge>();
-	private Map<String, Object> displaySettings;
-	private TrackMateModel model;
+	protected float[] calibration;
+	protected ImagePlus imp;
+	protected Map<Integer, Color> edgeColors;
+	protected Collection<DefaultWeightedEdge> highlight = new HashSet<DefaultWeightedEdge>();
+	protected Map<String, Object> displaySettings;
+	protected TrackMateModel model;
 
 	/*
 	 * CONSTRUCTOR
@@ -244,7 +244,7 @@ public class TrackOverlay implements Overlay {
 	 * PROTECTED METHODS
 	 */
 
-	protected final void drawEdge(final Graphics2D g2d, final Spot source, final Spot target,
+	protected void drawEdge(final Graphics2D g2d, final Spot source, final Spot target,
 			final int xcorner, final int ycorner, final float magnification, final float transparency) {
 		// Find x & y in physical coordinates
 		final float x0i = source.getFeature(SpotFeature.POSITION_X);
@@ -272,7 +272,7 @@ public class TrackOverlay implements Overlay {
 
 	}
 
-	protected final void drawEdge(final Graphics2D g2d, final Spot source, final Spot target,
+	protected void drawEdge(final Graphics2D g2d, final Spot source, final Spot target,
 			final int xcorner, final int ycorner, final float magnification) {
 		// Find x & y in physical coordinates
 		final float x0i = source.getFeature(SpotFeature.POSITION_X);

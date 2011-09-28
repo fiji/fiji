@@ -37,17 +37,13 @@ public class SpotOverlay implements Overlay {
 	/** The color mapping of the target collection. */
 	protected Map<Spot, Color> targetColor;
 	protected Spot editingSpot;
-	private ImagePlus imp;
-	private float[] calibration;
-	private Composite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
-	
-
-	private FontMetrics fm;
-
-	private Collection<Spot> spotSelection = new ArrayList<Spot>();
-
-	private Map<String, Object> displaySettings;
-	private TrackMateModel model;
+	protected ImagePlus imp;
+	protected float[] calibration;
+	protected Composite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
+	protected FontMetrics fm;
+	protected Collection<Spot> spotSelection = new ArrayList<Spot>();
+	protected Map<String, Object> displaySettings;
+	protected TrackMateModel model;
 
 	/*
 	 * CONSTRUCTOR
@@ -187,7 +183,7 @@ public class SpotOverlay implements Overlay {
 		this.spotSelection = spots;
 	}
 
-	protected final void drawSpot(final Graphics2D g2d, final Spot spot, final float zslice, final int xcorner, final int ycorner, final float magnification) {
+	protected void drawSpot(final Graphics2D g2d, final Spot spot, final float zslice, final int xcorner, final int ycorner, final float magnification) {
 		final float x = spot.getFeature(SpotFeature.POSITION_X);
 		final float y = spot.getFeature(SpotFeature.POSITION_Y);
 		final float z = spot.getFeature(SpotFeature.POSITION_Z);
