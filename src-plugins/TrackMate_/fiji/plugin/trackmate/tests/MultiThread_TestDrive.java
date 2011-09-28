@@ -43,15 +43,15 @@ public class MultiThread_TestDrive {
 		TrackMate_ plugin = new TrackMate_(model);
 		plugin.execSpotFiltering();
 		LAPTracker tracker = new LAPTracker(model.getFilteredSpots(), model.getSettings().trackerSettings);
+		tracker.setNumThreads(1);
 		tracker.setLogger(Logger.VOID_LOGGER);
 
 		long start = System.currentTimeMillis();
-		tracker.reset();
-		tracker.createLinkingCostMatrices();
-		tracker.linkObjectsToTrackSegments();
 
 		for (int i = 0; i < REPEAT; i++) {
 			
+			tracker.reset();
+			tracker.linkObjectsToTrackSegments();
 			tracker.createTrackSegmentCostMatrix();
 
 		}

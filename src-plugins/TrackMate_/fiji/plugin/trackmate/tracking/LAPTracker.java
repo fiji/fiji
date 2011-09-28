@@ -2,15 +2,13 @@ package fiji.plugin.trackmate.tracking;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.SortedMap;
 import java.util.SortedSet;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import mpicbg.imglib.algorithm.MultiThreadedBenchmarkAlgorithm;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -112,20 +110,16 @@ import fiji.plugin.trackmate.tracking.hungarian.HungarianAlgorithm;
  * 
  * @author Nicholas Perry
  */
-public class LAPTracker implements SpotTracker {
+public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotTracker {
 
 	private final static String BASE_ERROR_MESSAGE = "LAPTracker: ";
 	private static final boolean DEBUG = false;
 
 	/** Logger used to echo progress on tracking. */
 	protected Logger logger = Logger.DEFAULT_LOGGER;
-	/** Stores a message describing an error incurred during use of the class. */
-	protected String errorMessage = BASE_ERROR_MESSAGE;
 	/** Stores whether the user has run checkInput() or not. */
 	protected boolean inputChecked = false;
 
-	/** The cost matrix for linking individual objects (step 1), indexed by the first frame index. */
-	protected SortedMap<Integer,double[][]> linkingCosts = null;
 	/** The cost matrix for linking individual track segments (step 2). */
 	protected double[][] segmentCosts = null;
 	/** Stores the objects to track as a list of Spots per frame.  */
@@ -179,6 +173,10 @@ public class LAPTracker implements SpotTracker {
 	 * @param settings The settings to use for this tracker.
 	 */
 	public LAPTracker(final SpotCollection spots, final TrackerSettings settings) {
+		super();
+		if (!useMultithreading) {
+			setNumThreads(1);
+		}
 		this.spots = spots;
 		this.settings = settings;
 		reset();
@@ -220,36 +218,12 @@ public class LAPTracker implements SpotTracker {
 	}
 
 	/**
-	 * Set the cost matrices used for step 1, linking objects into track segments.
-	 * <p>
-	 * The matrices are indexed by frame: if a matrix links spots at frame t0 with spots at frame t1,
-	 * then it will be put at index t0 in this {@link TreeMap}. The individual matrices must have 
-	 * the proper dimension, set by the number of spot in t0 and t1. 
-	 * @param linkingCosts The cost matrix, with structure matching figure 1b in the paper.
-	 */
-	public void setLinkingCosts(TreeMap<Integer, double[][]> linkingCosts) {
-		this.linkingCosts = linkingCosts;
-	}
-
-
-	/**
-	 * Get the cost matrices used for step 1, linking objects into track segments.
-	 * @return The cost matrices, with one <code>double[][]</code> in the ArrayList for each frame t, t+1 pair.
-	 */
-	public SortedMap<Integer, double[][]> getLinkingCosts() {
-		return linkingCosts;
-	}
-
-
-	/**
 	 * Set the cost matrix used for step 2, linking track segments into final tracks.
 	 * @param segmentCosts The cost matrix, with structure matching figure 1c in the paper.
 	 */
 	public void setSegmentCosts(double[][] segmentCosts) {
 		this.segmentCosts = segmentCosts;
 	}
-
-
 
 	/**
 	 * Get the cost matrix used for step 2, linking track segments into final tracks.
@@ -323,14 +297,6 @@ public class LAPTracker implements SpotTracker {
 		reset();
 
 		// Step 1 - Link objects into track segments
-
-		// Create cost matrices
-		tstart = System.currentTimeMillis();
-		if (!createLinkingCostMatrices()) return false;
-		tend = System.currentTimeMillis();
-		logger.log(String.format("  Cost matrix for frame-to-frame linking created in %.1f s.\n", (tend-tstart)/1e3f));
-
-		// Solve LAP
 		tstart = System.currentTimeMillis();
 		if (!linkObjectsToTrackSegments()) return false;
 		tend = System.currentTimeMillis();
@@ -368,6 +334,7 @@ public class LAPTracker implements SpotTracker {
 	 * matrices.
 	 * @return True if executes successfully, false otherwise.
 	 */
+	/*
 	public boolean createLinkingCostMatrices() {
 		linkingCosts = Collections.synchronizedSortedMap(new TreeMap<Integer, double[][]>());
 
@@ -427,7 +394,7 @@ public class LAPTracker implements SpotTracker {
 		logger.setStatus("");
 		return true;
 	}
-
+	 */
 
 	/**
 	 * Creates the cost matrix used to link track segments (step 2).
@@ -452,13 +419,10 @@ public class LAPTracker implements SpotTracker {
 	 */
 	public boolean linkObjectsToTrackSegments() {
 
-		if (null == linkingCosts) {
-			errorMessage = "The linking cost matrix is null.";
+		// Solve LAP
+		if (!solveLAPForTrackSegments()) {
 			return false;
 		}
-
-		// Solve LAP
-		solveLAPForTrackSegments();
 
 		// Compile LAP solutions into track segments
 		compileTrackSegments();
@@ -502,12 +466,15 @@ public class LAPTracker implements SpotTracker {
 
 
 	/**
-	 * Compute the optimal track segments using the cost matrix {@link LAPTracker#linkingCosts}.
-	 * Update the {@link #trackGraph} field.
+	 * Perform the frame to frame linking. 
+	 * <p>
+	 * For each frame, compute the cost matrix to link each spot to another spot in the next frame.
+	 * Then compute the optimal track segments using this cost matrix.
+	 * Finally, update the {@link #trackGraph} field with found links.
 	 * 
-	 * @see LAPTracker#createLinkingCostMatrices()
+	 * @see LAPTracker#createFrameToFrameLinkingCostMatrix(List, List, TrackerSettings)
 	 */
-	public void solveLAPForTrackSegments() {
+	public boolean solveLAPForTrackSegments() {
 
 		// Prepare frame pairs in order, not necessarily separated by 1.
 		final ArrayList<int[]> framePairs = new ArrayList<int[]>(spots.keySet().size()-1);
@@ -520,39 +487,31 @@ public class LAPTracker implements SpotTracker {
 			frame0 = frame1;
 		}
 
-
 		// Prepare threads
-		final Thread[] threads;
-		if (useMultithreading) {
-			threads = SimpleMultiThreading.newThreads();
-		} else {
-			threads = SimpleMultiThreading.newThreads(1);
-		}
+		final Thread[] threads = SimpleMultiThreading.newThreads(numThreads);
 
 		// Prepare the thread array
 		final AtomicInteger ai = new AtomicInteger(0);
 		final AtomicInteger progress = new AtomicInteger(0);
 		for (int ithread = 0; ithread < threads.length; ithread++) {
 
-
 			threads[ithread] = new Thread("LAPTracker track segment linking thread "+(1+ithread)+"/"+threads.length) {  
-
 
 				public void run() {
 
 					for (int i = ai.getAndIncrement(); i < framePairs.size(); i = ai.getAndIncrement()) {
 
 						// Get frame pairs
-						int frame0 = framePairs.get(i)[0];
-						int frame1 = framePairs.get(i)[1];
+						final int frame0 = framePairs.get(i)[0];
+						final int frame1 = framePairs.get(i)[1];
 
 						// Get spots
-						List<Spot> t0 = spots.get(frame0);
-						List<Spot> t1 = spots.get(frame1);
-
-						// Get cost
-						double[][] costMatrix = linkingCosts.get(frame0);
-
+						final List<Spot> t0 = spots.get(frame0);
+						final List<Spot> t1 = spots.get(frame1);
+						
+						// Create cost matrix
+						double[][] costMatrix = createFrameToFrameLinkingCostMatrix(t0, t1, settings);
+						
 						// Special case: top-left corner of the cost matrix is all blocked: we do nothing for this pair
 						// We handle this special case here, because some solvers might hang with this.
 						boolean allBlocked = true;
@@ -587,14 +546,14 @@ public class LAPTracker implements SpotTracker {
 									// We set the edge weight to be the linking cost, for future reference. 
 									// This is NOT used in further tracking steps
 									double weight = costMatrix[i0][i1];
-									synchronized (graph) { // To avoid concurrent access, sad bu true
+									synchronized (graph) { // To avoid concurrent access, sad but true
 										DefaultWeightedEdge edge = graph.addEdge(s0, s1);
 										graph.setEdgeWeight(edge, weight);
 									}
 								} // otherwise we do not create any connection
 							}
 						}
-						logger.setProgress(0.25f + 0.25f * progress.incrementAndGet() / (float) framePairs.size());
+						logger.setProgress(0.5f * progress.incrementAndGet() / (float) framePairs.size());
 
 					}
 				}
@@ -602,16 +561,35 @@ public class LAPTracker implements SpotTracker {
 
 		}
 
-
 		logger.setStatus("Solving for track segments...");
-		logger.setProgress(0.25f);
 		SimpleMultiThreading.startAndJoin(threads);
 		logger.setProgress(0.5f);
 		logger.setStatus("");
-
+		return true;
 	}
 
 
+	/**
+	 * Hook for subclassers.
+	 * <p>
+	 * Create the cost matrix required in the frame to frame linking.
+	 *  
+	 * @param t0  the list of spots in the first frame 
+	 * @param t1  the list of spots in the second frame 
+	 * @param settings  the tracker settings that specifies how this cost should be created
+	 * @return  the cost matrix as an array of array of double
+	 */
+	protected double[][] createFrameToFrameLinkingCostMatrix(final List<Spot> t0, List<Spot> t1, final TrackerSettings settings) {
+		// Create cost matrix
+		LinkingCostMatrixCreator objCosts = new LinkingCostMatrixCreator(t0, t1, settings);
+		if (!objCosts.checkInput() || !objCosts.process()) {
+			errorMessage = BASE_ERROR_MESSAGE + objCosts.getErrorMessage();
+			return null;
+		}
+		return objCosts.getCostMatrix();
+	}
+
+	
 
 
 	/**

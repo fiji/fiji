@@ -2,7 +2,6 @@ package fiji.plugin.trackmate.tests;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.SortedMap;
 
 import org.jdom.JDOMException;
 
@@ -11,7 +10,6 @@ import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.LAPTracker;
-import fiji.plugin.trackmate.tracking.LAPUtils;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView.ViewType;
@@ -38,23 +36,15 @@ public class HangingTracking_TestDrive {
 		
 
 		LAPTracker tracker = new LAPTracker(filteredSpots, trackerSettings);
-		tracker.createLinkingCostMatrices();
-		SortedMap<Integer, double[][]> costs1 = tracker.getLinkingCosts();
 		System.out.println("For frame pair "+frame+" -> "+(frame+1)+":");
-		System.out.println("There are "+filteredSpots.getNSpots(frame)+" spost to link to "+filteredSpots.getNSpots(frame+1));
-		double[][] cost1 = costs1.get(frame);
-		LAPUtils.echoMatrix(cost1);
+		System.out.println("There are "+filteredSpots.getNSpots(frame)+" spots to link to "+filteredSpots.getNSpots(frame+1));
 
 		System.out.println();
 		System.out.println("With feature condition:");
 		trackerSettings.linkingFeaturePenalties.put(SpotFeature.MORPHOLOGY, (double) 1);
 		tracker = new LAPTracker(filteredSpots, trackerSettings);
-		tracker.createLinkingCostMatrices();
-		SortedMap<Integer, double[][]> costs2 = tracker.getLinkingCosts();
 		System.out.println("For frame pair "+frame+" -> "+(frame+1)+":");
 		System.out.println("There are "+filteredSpots.getNSpots(frame)+" spots to link to "+filteredSpots.getNSpots(frame+1));
-		double[][] cost2 = costs2.get(frame);
-		LAPUtils.echoMatrix(cost2);
 
 		tracker.solveLAPForTrackSegments();
 		model.setGraph(tracker.getResult());
