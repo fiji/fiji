@@ -16,6 +16,8 @@ import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImagePlusAdapter;
@@ -33,6 +35,35 @@ import fiji.plugin.trackmate.TrackMate_;
  */
 public class TMUtils {
 
+	/**
+	 * http://www.rgagnon.com/javadetails/java-0541.html
+	 */
+	public static String renameFileExtension (String source, String newExtension) {
+		String target;
+		String currentExtension = getFileExtension(source);
+
+		if (currentExtension.equals("")) {
+			target = source + "." + newExtension;
+		}
+		else {
+			target = source.replaceFirst(Pattern.quote("." + currentExtension) 
+					+ "$", Matcher.quoteReplacement("." + newExtension));
+		}
+		return target;
+	}
+
+	/**
+	 * http://www.rgagnon.com/javadetails/java-0541.html
+	 */
+	  public static String getFileExtension(String f) {
+	    String ext = "";
+	    int i = f.lastIndexOf('.');
+	    if (i > 0 &&  i < f.length() - 1) {
+	      ext = f.substring(i + 1);
+	    }
+	    return ext;
+	  }
+	
 	/**
 	 * Create a new list of spots, made from the given list by excluding overlapping spots.
 	 * <p>
