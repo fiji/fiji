@@ -114,11 +114,15 @@ public class Main {
 	}
 
 	public void listNotUptodate(List<String> files) {
-		list(files, plugins.not(plugins.is(Status.INSTALLED)));
+		list(files, plugins.not(plugins.oneOf(new Status[] { Status.OBSOLETE, Status.INSTALLED, Status.NOT_FIJI})));
 	}
 
 	public void listUpdateable(List<String> files) {
 		list(files, plugins.is(Status.UPDATEABLE));
+	}
+
+	public void listModified(List<String> files) {
+		list(files, plugins.is(Status.MODIFIED));
 	}
 
 	class OnePlugin implements Downloader.FileDownload {
@@ -315,6 +319,7 @@ public class Main {
 			+ "\tlist-uptodate [<files>]\n"
 			+ "\tlist-not-uptodate [<files>]\n"
 			+ "\tlist-updateable [<files>]\n"
+			+ "\tlist-modified [<files>]\n"
 			+ "\tlist-current [<files>]\n"
 			+ "\tupdate [<files>]\n"
 			+ "\tupdate-force [<files>]\n"
@@ -339,6 +344,8 @@ public class Main {
 			getInstance().listNotUptodate(makeList(args, 1));
 		else if (command.equals("list-updateable"))
 			getInstance().listUpdateable(makeList(args, 1));
+		else if (command.equals("list-modified"))
+			getInstance().listModified(makeList(args, 1));
 		else if (command.equals("update"))
 			getInstance().update(makeList(args, 1));
 		else if (command.equals("update-force"))
