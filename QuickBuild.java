@@ -428,41 +428,42 @@ public class QuickBuild {
 		}
 
 		public void characters(char[] buffer, int offset, int length) {
+			String string = new String(buffer, offset, length);
 			if (debug)
-				System.err.println("characters: " + new String(buffer, offset, length) + " (prefix: " + prefix + ")");
+				System.err.println("characters: " + string + " (prefix: " + prefix + ")");
 
 			String prefix = this.prefix;
 			if (isCurrentProfile)
 				prefix = ">project" + prefix.substring(">project>profiles>profile".length());
 
 			if (prefix.equals(">project>groupId"))
-				groupId = new String(buffer, offset, length);
+				groupId = string;
 			else if (prefix.equals(">project>parent>groupId")) {
 				if (groupId == null)
-					groupId = new String(buffer, offset, length);
+					groupId = string;
 			}
 			else if (prefix.equals(">project>artifactId"))
-				artifactId = new String(buffer, offset, length);
+				artifactId = string;
 			else if (prefix.equals(">project>version"))
-				version = new String(buffer, offset, length);
+				version = string;
 			else if (prefix.equals(">project>parent>version")) {
 				if (version == null)
-					version = new String(buffer, offset, length);
+					version = string;
 			}
 			else if (prefix.equals(">project>modules>module"))
-				modules.add(new String(buffer, offset, length));
+				modules.add(string);
 			else if (prefix.startsWith(">project>properties>"))
-				properties.put(prefix.substring(">project>properties>".length()), new String(buffer, offset, length));
+				properties.put(prefix.substring(">project>properties>".length()), string);
 			else if (prefix.equals(">project>dependencies>dependency>groupId"))
-				latestDependency[0] = new String(buffer, offset, length);
+				latestDependency[0] = string;
 			else if (prefix.equals(">project>dependencies>dependency>artifactId"))
-				latestDependency[1] = new String(buffer, offset, length);
+				latestDependency[1] = string;
 			else if (prefix.equals(">project>dependencies>dependency>version"))
-				latestDependency[2] = new String(buffer, offset, length);
+				latestDependency[2] = string;
 			else if (prefix.equals(">project>profiles>profile>id"))
-				isCurrentProfile = profile.equals(new String (buffer, offset, length));
+				isCurrentProfile = profile.equals(string);
 			else if (prefix.equals(">project>repositories>repository>url"))
-				repositories.add(new String(buffer, offset, length));
+				repositories.add(string);
 			else if (debug)
 				System.err.println("Ignoring " + prefix);
 		}
