@@ -348,8 +348,10 @@ public class QuickBuild {
 
 		protected static String findLocallyCachedVersion(String path) throws IOException {
 			File file = new File(path, "maven-metadata-local.xml");
-			if (!file.exists())
-				return new File(path).list()[0];
+			if (!file.exists()) {
+				String[] list = new File(path).list();
+				return list != null && list.length > 0 ? list[0] : null;
+			}
 			BufferedReader reader = new BufferedReader(new FileReader(file));
 			for (;;) {
 				String line = reader.readLine();
