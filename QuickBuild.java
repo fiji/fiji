@@ -1,13 +1,20 @@
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 
 import java.lang.reflect.Method;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -445,6 +452,60 @@ public class QuickBuild {
 				for (POM child : children)
 					child.append(builder, indent + "  ");
 		}
+	}
+
+	protected static void download(String url, String groupId, String artifactId, String version) throws MalformedURLException, IOException, NoSuchAlgorithmException {
+		String path = "/" + groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/";
+		String baseURL = url + path + artifactId + "-" + version;
+		File directory = new File(System.getProperty("user.home") + "/.m2/repository" + path);
+		downloadAndVerify(baseURL + ".pom", directory);
+		downloadAndVerify(baseURL + ".jar", directory);
+	}
+
+	protected static void downloadAndVerify(String url, File directory) throws IOException, NoSuchAlgorithmException {
+		File sha1 = download(new URL(url + ".sha1"), directory);
+		File file = download(new URL(url), directory);
+		MessageDigest digest = MessageDigest.getInstance("SHA-1");
+		FileInputStream fileStream = new FileInputStream(file);
+		DigestInputStream digestStream = new DigestInputStream(fileStream, digest);
+		byte[] buffer = new byte[131072];
+		while (digestStream.read(buffer) >= 0)
+			; /* do nothing */
+		digestStream.close();
+
+		byte[] digestBytes = digest.digest();
+		fileStream = new FileInputStream(sha1);
+		for (int i = 0; i < digestBytes.length; i++) {
+			int value = (hexNybble(fileStream.read()) << 4) |
+				hexNybble(fileStream.read());
+			int d = digestBytes[i] & 0xff;
+			if (value != d)
+				throw new IOException("SHA1 mismatch: " + sha1 + ": " + Integer.toHexString(value) + " != " + Integer.toHexString(d));
+		}
+		fileStream.close();
+	}
+
+	protected static int hexNybble(int b) {
+		return (b < 'A' ? (b < 'a' ? b - '0' : b - 'a' + 10) : b - 'A' + 10) & 0xf;
+	}
+
+	protected static File download(URL url, File directory) throws IOException {
+		directory.mkdirs();
+		InputStream in = url.openStream();
+		String fileName = url.getPath();
+		fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
+		File result = new File(directory, fileName);
+		FileOutputStream out = new FileOutputStream(result);
+		byte[] buffer = new byte[131072];
+		for (;;) {
+			int count = in.read(buffer);
+			if (count < 0)
+				break;
+			out.write(buffer, 0, count);
+		}
+		in.close();
+		out.close();
+		return result;
 	}
 
 	public static void main(String[] args) throws Exception {
