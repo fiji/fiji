@@ -55,6 +55,7 @@ public class QuickBuild {
 		protected Map<String, String> properties = new HashMap<String, String>();
 		protected List<String> modules = new ArrayList<String>();
 		protected List<String[]> dependencies = new ArrayList<String[]>(); // contains String[3]
+		protected Set<String> repositories = new TreeSet<String>();
 
 		// only used during parsing
 		protected String prefix = "";
@@ -260,6 +261,22 @@ public class QuickBuild {
 			return result;
 		}
 
+		protected Set<String> getRepositories() {
+			Set<String> result = new TreeSet<String>();
+			getRepositories(result);
+			return result;
+		}
+
+		protected void getRepositories(Set<String> result) {
+			// add a default to the root
+			if (parent == null)
+				result.add("http://repo1.maven.org/maven2/");
+			result.addAll(repositories);
+			for (POM child : children)
+				if (child != null)
+					child.getRepositories(result);
+		}
+
 		protected POM findPOM(String groupId, String artifactId, String version) throws IOException, ParserConfigurationException, SAXException {
 			if (artifactId.equals(this.artifactId) &&
 					(groupId == null || groupId.equals(this.groupId)) &&
@@ -412,6 +429,8 @@ public class QuickBuild {
 				latestDependency[2] = new String(buffer, offset, length);
 			else if (prefix.equals(">project>profiles>profile>id"))
 				isCurrentProfile = profile.equals(new String (buffer, offset, length));
+			else if (prefix.equals(">project>repositories>repository>url"))
+				repositories.add(new String(buffer, offset, length));
 			else if (debug)
 				System.err.println("Ignoring " + prefix);
 		}
