@@ -337,8 +337,9 @@ public class QuickBuild {
 				if (version == null)
 					version = findLocallyCachedVersion(path);
 				path += version + "/" + artifactId + "-" + version + ".pom";
-				// TODO: if path does not exist, fetch the files
 				result = parse(new File(path), null);
+				if (result == null)
+					System.err.println("Artifact not found; consider 'get-dependencies': " + artifactId);
 				localPOMCache.put(key, result);
 			}
 			if (result != null && version != null && compareVersion(version, result.version) > 0)
