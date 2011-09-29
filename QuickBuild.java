@@ -1,6 +1,7 @@
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -126,6 +127,37 @@ public class QuickBuild {
 				else
 					file.delete();
 			directory.delete();
+		}
+
+		public void downloadDependencies() throws IOException, ParserConfigurationException, SAXException {
+			for (POM dependency : getDependencies())
+				if (dependency != null)
+					dependency.download();
+
+			download();
+		}
+
+		protected void download() throws FileNotFoundException {
+			if (buildFromSource || target.exists())
+				return;
+			print80("Downloading " + target);
+			for (String url : getRoot().getRepositories()) try {
+				download(url);
+				return;
+			} catch (Exception e) { /* ignore */ }
+			throw new FileNotFoundException("Could not download " + target);
+		}
+
+		protected void download(String url) throws MalformedURLException, IOException, NoSuchAlgorithmException {
+			if (version == null) {
+				System.err.println("Version of " + artifactId + " is null; Skipping.");
+				return;
+			}
+			String path = "/" + groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/";
+			String baseURL = url + path + artifactId + "-" + version;
+			File directory = new File(System.getProperty("user.home") + "/.m2/repository" + path);
+			downloadAndVerify(baseURL + ".pom", directory);
+			downloadAndVerify(baseURL + ".jar", directory);
 		}
 
 		public void build() throws IOException, ParserConfigurationException, SAXException {
@@ -473,14 +505,6 @@ public class QuickBuild {
 		}
 	}
 
-	protected static void download(String url, String groupId, String artifactId, String version) throws MalformedURLException, IOException, NoSuchAlgorithmException {
-		String path = "/" + groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/";
-		String baseURL = url + path + artifactId + "-" + version;
-		File directory = new File(System.getProperty("user.home") + "/.m2/repository" + path);
-		downloadAndVerify(baseURL + ".pom", directory);
-		downloadAndVerify(baseURL + ".jar", directory);
-	}
-
 	protected static void downloadAndVerify(String url, File directory) throws IOException, NoSuchAlgorithmException {
 		File sha1 = download(new URL(url + ".sha1"), directory);
 		File file = download(new URL(url), directory);
@@ -545,6 +569,8 @@ public class QuickBuild {
 		}
 		if (command.equals("clean"))
 			pom.clean();
+		else if (command.equals("get") || command.equals("get-dependencies"))
+			pom.downloadDependencies();
 		else if (command.equals("run")) {
 			String[] paths = pom.getClassPath().split(File.pathSeparator);
 			URL[] urls = new URL[paths.length];
