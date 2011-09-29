@@ -33,7 +33,8 @@ public class QuickBuild {
 	protected static class POM extends DefaultHandler implements Comparable<POM> {
 		protected final boolean debug = false;
 
-		protected File directory;
+		protected boolean buildFromSource;
+		protected File directory, target;
 		protected POM parent;
 		protected POM[] children;
 
@@ -66,6 +67,14 @@ public class QuickBuild {
 				pom.children[i] = parse(file, pom);
 			}
 
+			if (pom.target == null) {
+				String fileName = file.getName();
+				if (fileName.endsWith(".pom"))
+					fileName = fileName.substring(0, fileName.length() - 4);
+				fileName += ".jar";
+				pom.target = new File(directory, fileName);
+			}
+
 			return pom;
 		}
 
@@ -75,6 +84,11 @@ public class QuickBuild {
 			if (parent != null) {
 				groupId = parent.groupId;
 				version = parent.version;
+			}
+
+			if (new File(directory, "src").exists()) {
+				buildFromSource = true;
+				target = new File(directory, "target/classes");
 			}
 		}
 
@@ -92,6 +106,14 @@ public class QuickBuild {
 
 		public String getTarget() {
 			return groupId.replace('.', '/') + '/' + artifactId + '-' + version + ".jar";
+		}
+
+		public String getClassPath() throws IOException, ParserConfigurationException, SAXException {
+			StringBuilder builder = new StringBuilder();
+			builder.append(target);
+			for (POM pom : getDependencies())
+				builder.append(File.pathSeparator).append(pom.target);
+			return builder.toString();
 		}
 
 		public Set<POM> getDependencies() throws IOException, ParserConfigurationException, SAXException {
