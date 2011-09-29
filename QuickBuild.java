@@ -440,12 +440,15 @@ public class QuickBuild {
 		String artifactId = getSystemProperty("artifactId", "imagej");
 		String mainClass = getSystemProperty("mainClass", "imagej.Main");
 
+		POM pom = root.findPOM(null, artifactId, null);
+		if (pom == null)
+			pom = root;
 		if (command.equals("clean"))
-			root.findPOM(null, artifactId, null).clean();
+			pom.clean();
 		else if (command.equals("compile") || command.equals("build"))
-			root.findPOM(null, artifactId, null).build();
+			pom.build();
 		else if (command.equals("run")) {
-			String[] paths = root.findPOM(null, artifactId, null).getClassPath().split(File.pathSeparator);
+			String[] paths = pom.getClassPath().split(File.pathSeparator);
 			URL[] urls = new URL[paths.length];
 			for (int i = 0; i < urls.length; i++)
 				urls[i] = new URL("file:" + paths[i] + (paths[i].endsWith(".jar") ? "" : "/"));
