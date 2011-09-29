@@ -168,6 +168,7 @@ public class QuickBuild {
 					child.build();
 
 			target.mkdirs();
+			File source = new File(directory, "src/main/java");
 
 			List<String> arguments = new ArrayList<String>();
 			// classpath
@@ -178,7 +179,7 @@ public class QuickBuild {
 			arguments.add(target.getPath());
 			// the files
 			int count = arguments.size();
-			addRecursively(arguments, new File(directory, "src/main/java"), ".java", target, ".class");
+			addRecursively(arguments, source, ".java", target, ".class");
 			count = arguments.size() - count;
 
 			if (count > 0) {
@@ -188,7 +189,7 @@ public class QuickBuild {
 					throw new RuntimeException("Build error in " + directory);
 			}
 
-			// TODO: copy resources
+			updateRecursively(new File(source.getParentFile(), "resources"), target);
 
 			buildFromSource = false;
 		}
@@ -205,6 +206,27 @@ public class QuickBuild {
 					if (!targetFile.exists() || targetFile.lastModified() < file.lastModified())
 						list.add(file.getPath());
 				}
+		}
+
+		protected static void updateRecursively(File source, File target) throws IOException {
+			File[] list = source.listFiles();
+			if (list == null)
+				return;
+			for (File file : list) {
+				File targetFile = new File(target, file.getName());
+				if (file.isDirectory())
+					updateRecursively(file, targetFile);
+				else if (file.isFile()) {
+					if (targetFile.exists() && targetFile.lastModified() >= file.lastModified())
+						continue;
+					targetFile.getParentFile().mkdirs();
+					copyFile(file, targetFile);
+				}
+			}
+		}
+
+		protected static void copyFile(File source, File target) throws IOException {
+			copy(new FileInputStream(source), target);
 		}
 
 		public String getGroup() {
