@@ -136,24 +136,33 @@ public class QuickBuild {
 			arguments.add(target.getPath());
 			// the files
 			int count = arguments.size();
-			addRecursively(arguments, new File(directory, "src/main/java"), ".java");
+			addRecursively(arguments, new File(directory, "src/main/java"), ".java", target, ".class");
+			count = arguments.size() - count;
 
-			System.err.println("Compiling " + (arguments.size() - count) + " files in " + directory);
-			String[] array = arguments.toArray(new String[arguments.size()]);
-			if (com.sun.tools.javac.Main.compile(array, new java.io.PrintWriter(System.err)) > 0)
-				throw new RuntimeException("Build error in " + directory);
+			if (count > 0) {
+				System.err.println("Compiling " + (arguments.size() - count) + " files in " + directory);
+				String[] array = arguments.toArray(new String[arguments.size()]);
+				if (com.sun.tools.javac.Main.compile(array) > 0)
+					throw new RuntimeException("Build error in " + directory);
+			}
 
 			// TODO: copy resources
 
 			buildFromSource = false;
 		}
 
-		protected static void addRecursively(List<String> list, File directory, String extension) {
+		protected static void addRecursively(List<String> list, File directory, String extension, File targetDirectory, String targetExtension) {
 			for (File file : directory.listFiles())
 				if (file.isDirectory())
-					addRecursively(list, file, extension);
-				else if (file.getName().endsWith(extension))
-					list.add(file.getPath());
+					addRecursively(list, file, extension, new File(targetDirectory, file.getName()), targetExtension);
+				else {
+					String name = file.getName();
+					if (!name.endsWith(extension))
+						continue;
+					File targetFile = new File(targetDirectory, name.substring(0, name.length() - extension.length()) + targetExtension);
+					if (!targetFile.exists() || targetFile.lastModified() < file.lastModified())
+						list.add(file.getPath());
+				}
 		}
 
 		public String getGroup() {
