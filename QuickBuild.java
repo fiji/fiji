@@ -275,6 +275,8 @@ public class QuickBuild {
 			String key = groupId + ">" + artifactId;
 			POM result = localPOMCache.get(key);
 			if (result == null) {
+				if (groupId == null)
+					return null;
 				String path = System.getProperty("user.home") + "/.m2/repository/" + groupId.replace('.', '/') + "/" + artifactId + "/";
 				if (version == null)
 					version = findLocallyCachedVersion(path);
