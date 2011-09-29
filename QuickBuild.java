@@ -447,17 +447,22 @@ public class QuickBuild {
 
 	public static void main(String[] args) throws Exception {
 		POM root = POM.parse(new File("pom.xml"), null);
-		String command = args.length == 0 ? "run" : args[0];
+		String command = args.length == 0 ? "compile-and-run" : args[0];
 		String artifactId = getSystemProperty("artifactId", "imagej");
 		String mainClass = getSystemProperty("mainClass", "imagej.Main");
 
 		POM pom = root.findPOM(null, artifactId, null);
 		if (pom == null)
 			pom = root;
+		if (command.equals("compile") || command.equals("build") || command.equals("compile-and-run")) {
+			pom.build();
+			if (command.equals("compile-and-run"))
+				command = "run";
+			else
+				return;
+		}
 		if (command.equals("clean"))
 			pom.clean();
-		else if (command.equals("compile") || command.equals("build"))
-			pom.build();
 		else if (command.equals("run")) {
 			String[] paths = pom.getClassPath().split(File.pathSeparator);
 			URL[] urls = new URL[paths.length];
