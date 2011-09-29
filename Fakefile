@@ -118,6 +118,8 @@ SUBMODULE_TARGETS=\
 	jars/imglib-io.jar \
 	jars/imglib2.jar \
 	jars/imglib2-ij.jar \
+	jars/imglib2-io.jar \
+	jars/imglib2-ui.jar \
 	jars/mpicbg.jar \
 	jars/commons-math.jar \
 	jars/javassist.jar \
