@@ -97,6 +97,27 @@ public class QuickBuild {
 			}
 		}
 
+		public void clean() throws IOException, ParserConfigurationException, SAXException {
+			if (!buildFromSource)
+				return;
+			for (POM child : getDependencies())
+				if (child != null)
+					child.clean();
+			if (target.isDirectory())
+				rmRF(target);
+			else if (target.exists())
+				target.delete();
+		}
+
+		protected static void rmRF(File directory) {
+			for (File file : directory.listFiles())
+				if (file.isDirectory())
+					rmRF(file);
+				else
+					file.delete();
+			directory.delete();
+		}
+
 		public String getGroup() {
 			return groupId;
 		}
@@ -369,10 +390,12 @@ public class QuickBuild {
 	public static void main(String[] args) throws Exception {
 		POM root = POM.parse(new File("pom.xml"), null);
 		String command = args.length == 0 ? "run" : args[0];
-		if (command.equals("run")) {
-			String artifactId = "imagej";
-			String mainClass = "imagej.Main";
+		String artifactId = "imagej";
+		String mainClass = "imagej.Main";
 
+		if (command.equals("clean"))
+			root.findPOM(null, artifactId, null).clean();
+		else if (command.equals("run")) {
 			String[] paths = root.findPOM(null, artifactId, null).getClassPath().split(File.pathSeparator);
 			URL[] urls = new URL[paths.length];
 			for (int i = 0; i < urls.length; i++)
