@@ -542,7 +542,12 @@ public class QuickBuild {
 		String fileName = url.getPath();
 		fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
 		File result = new File(directory, fileName);
-		FileOutputStream out = new FileOutputStream(result);
+		copy(in, result);
+		return result;
+	}
+
+	protected static void copy(InputStream in, File target) throws IOException {
+		FileOutputStream out = new FileOutputStream(target);
 		byte[] buffer = new byte[131072];
 		for (;;) {
 			int count = in.read(buffer);
@@ -552,7 +557,6 @@ public class QuickBuild {
 		}
 		in.close();
 		out.close();
-		return result;
 	}
 
 	public static void main(String[] args) throws Exception {
