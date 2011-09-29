@@ -6,10 +6,10 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -30,7 +30,7 @@ public class QuickBuild {
 		System.err.print((length < 80 ? string : string.substring(0, 80)) + "\r");
 	}
 
-	protected static class POM extends DefaultHandler {
+	protected static class POM extends DefaultHandler implements Comparable<POM> {
 		protected final boolean debug = false;
 
 		protected File directory;
@@ -95,7 +95,7 @@ public class QuickBuild {
 		}
 
 		public Set<POM> getDependencies() throws IOException, ParserConfigurationException, SAXException {
-			Set<POM> set = new HashSet<POM>();
+			Set<POM> set = new TreeSet<POM>();
 			getDependencies(set);
 			return set;
 		}
@@ -310,6 +310,19 @@ public class QuickBuild {
 					. append("' ");
 			builder.append("]");
 			return builder.toString();
+		}
+
+		public int compareTo(POM other) {
+			int result = artifactId.compareTo(other.artifactId);
+			if (result != 0)
+				return result;
+			if (groupId != null && other.groupId != null)
+				result = groupId.compareTo(other.groupId);
+			if (result != 0)
+				return result;
+			if (version != null && other.version != null)
+				return compareVersion(version, other.version);
+			return 0;
 		}
 
 		public String toString() {
