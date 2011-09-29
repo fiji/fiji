@@ -118,6 +118,44 @@ public class QuickBuild {
 			directory.delete();
 		}
 
+		public void build() throws IOException, ParserConfigurationException, SAXException {
+			if (!buildFromSource)
+				return;
+			for (POM child : getDependencies())
+				if (child != null)
+					child.build();
+
+			target.mkdirs();
+
+			List<String> arguments = new ArrayList<String>();
+			// classpath
+			arguments.add("-classpath");
+			arguments.add(getClassPath());
+			// output directory
+			arguments.add("-d");
+			arguments.add(target.getPath());
+			// the files
+			int count = arguments.size();
+			addRecursively(arguments, new File(directory, "src/main/java"), ".java");
+
+			System.err.println("Compiling " + (arguments.size() - count) + " files in " + directory);
+			String[] array = arguments.toArray(new String[arguments.size()]);
+			if (com.sun.tools.javac.Main.compile(array, new java.io.PrintWriter(System.err)) > 0)
+				throw new RuntimeException("Build error in " + directory);
+
+			// TODO: copy resources
+
+			buildFromSource = false;
+		}
+
+		protected static void addRecursively(List<String> list, File directory, String extension) {
+			for (File file : directory.listFiles())
+				if (file.isDirectory())
+					addRecursively(list, file, extension);
+				else if (file.getName().endsWith(extension))
+					list.add(file.getPath());
+		}
+
 		public String getGroup() {
 			return groupId;
 		}
@@ -395,6 +433,8 @@ public class QuickBuild {
 
 		if (command.equals("clean"))
 			root.findPOM(null, artifactId, null).clean();
+		else if (command.equals("compile") || command.equals("build"))
+			root.findPOM(null, artifactId, null).build();
 		else if (command.equals("run")) {
 			String[] paths = root.findPOM(null, artifactId, null).getClassPath().split(File.pathSeparator);
 			URL[] urls = new URL[paths.length];
