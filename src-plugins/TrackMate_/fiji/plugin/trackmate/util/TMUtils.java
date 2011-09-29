@@ -35,6 +35,40 @@ import fiji.plugin.trackmate.TrackMate_;
  */
 public class TMUtils {
 
+
+	/**
+	 * Return a new copy of this collection of Spot, translated using the crop data 
+	 * given in the {@link Settings} object.
+	 * <p>
+	 * The spot coordinates will be translated assuming the given image was cropped 
+	 * using the {@link Settings} given: they will be relative to the top-left-lower
+	 * corner of the raw image <b>before</b> it was cropped.
+	 */
+	public static List<Spot> translateSpots(final Collection<Spot> spots, final Settings settings) {
+		ArrayList<Spot> translatedSpots = new ArrayList<Spot>(spots.size());
+		Spot newSpot;
+		float[] calibration = settings.getCalibration();
+		float dx = (settings.xstart-1)*calibration[0];
+		float dy = (settings.ystart-1)*calibration[1];
+		float dz = (settings.zstart-1)*calibration[2];
+		float[] dval = new float[] {dx, dy, dz};
+		SpotFeature[] features = new SpotFeature[] {SpotFeature.POSITION_X, SpotFeature.POSITION_Y, SpotFeature.POSITION_Z}; 
+		Float val;
+		for(Spot spot : spots) {
+			newSpot = spot.clone();
+			for (int i = 0; i < features.length; i++) {
+				val = newSpot.getFeature(features[i]);
+				if (null != val)
+					newSpot.putFeature(features[i], val+dval[i]);
+			}
+			translatedSpots.add(newSpot);
+		}
+		return translatedSpots;
+	}
+	
+	
+		
+	
 	/**
 	 * http://www.rgagnon.com/javadetails/java-0541.html
 	 */

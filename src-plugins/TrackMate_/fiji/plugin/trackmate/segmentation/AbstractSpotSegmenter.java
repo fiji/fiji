@@ -3,9 +3,6 @@ package fiji.plugin.trackmate.segmentation;
 import java.util.ArrayList;
 import java.util.List;
 
-import fiji.plugin.trackmate.SpotFeature;
-import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.Spot;
 import mpicbg.imglib.algorithm.roi.MedianFilter;
 import mpicbg.imglib.algorithm.roi.StructuringElement;
 import mpicbg.imglib.cursor.Cursor;
@@ -13,6 +10,9 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.RealType;
+import fiji.plugin.trackmate.Settings;
+import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.util.TMUtils;
 
 /**
  * This abstract class for spot segmented plainly implements the {@link SpotSegmenter}
@@ -114,24 +114,7 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 	
 	@Override
 	public List<Spot> getResult(Settings settings) {
-		ArrayList<Spot> translatedSpots = new ArrayList<Spot>(spots.size());
-		Spot newSpot;
-		float dx = (settings.xstart-1)*calibration[0];
-		float dy = (settings.ystart-1)*calibration[1];
-		float dz = (settings.zstart-1)*calibration[2];
-		float[] dval = new float[] {dx, dy, dz};
-		SpotFeature[] features = new SpotFeature[] {SpotFeature.POSITION_X, SpotFeature.POSITION_Y, SpotFeature.POSITION_Z}; 
-		Float val;
-		for(Spot spot : spots) {
-			newSpot = spot.clone();
-			for (int i = 0; i < features.length; i++) {
-				val = newSpot.getFeature(features[i]);
-				if (null != val)
-					newSpot.putFeature(features[i], val+dval[i]);
-			}
-			translatedSpots.add(newSpot);
-		}
-		return translatedSpots;
+		return TMUtils.translateSpots(spots, settings);
 	}
 	
 	@Override
