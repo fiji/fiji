@@ -4,6 +4,11 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 
+import java.lang.reflect.Method;
+
+import java.net.URL;
+import java.net.URLClassLoader;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -363,7 +368,23 @@ public class QuickBuild {
 
 	public static void main(String[] args) throws Exception {
 		POM root = POM.parse(new File("pom.xml"), null);
-		for (POM pom : root.findPOM(null, "imagej", null).getDependencies())
-			System.err.println(pom.artifactId);
+		String command = args.length == 0 ? "run" : args[0];
+		if (command.equals("run")) {
+			String artifactId = "imagej";
+			String mainClass = "imagej.Main";
+
+			String[] paths = root.findPOM(null, artifactId, null).getClassPath().split(File.pathSeparator);
+			URL[] urls = new URL[paths.length];
+			for (int i = 0; i < urls.length; i++)
+				urls[i] = new URL("file:" + paths[i] + (paths[i].endsWith(".jar") ? "" : "/"));
+			URLClassLoader classLoader = new URLClassLoader(urls);
+			// needed for sezpoz
+			Thread.currentThread().setContextClassLoader(classLoader);
+			Class clazz = classLoader.loadClass(mainClass);
+			Method main = clazz.getMethod("main", new Class[] { String[].class });
+			main.invoke(null, new Object[] { new String[0] });
+		}
+		else
+			System.err.println("Unhandled command: " + command);
 	}
 }
