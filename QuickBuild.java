@@ -428,8 +428,8 @@ public class QuickBuild {
 	public static void main(String[] args) throws Exception {
 		POM root = POM.parse(new File("pom.xml"), null);
 		String command = args.length == 0 ? "run" : args[0];
-		String artifactId = "imagej";
-		String mainClass = "imagej.Main";
+		String artifactId = getSystemProperty("artifactId", "imagej");
+		String mainClass = getSystemProperty("mainClass", "imagej.Main");
 
 		if (command.equals("clean"))
 			root.findPOM(null, artifactId, null).clean();
@@ -449,5 +449,10 @@ public class QuickBuild {
 		}
 		else
 			System.err.println("Unhandled command: " + command);
+	}
+
+	protected static String getSystemProperty(String key, String defaultValue) {
+		String result = System.getProperty(key);
+		return result == null ? defaultValue : result;
 	}
 }
