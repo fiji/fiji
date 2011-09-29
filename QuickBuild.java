@@ -477,6 +477,8 @@ public class QuickBuild {
 			Method main = clazz.getMethod("main", new Class[] { String[].class });
 			main.invoke(null, new Object[] { new String[0] });
 		}
+		else if (command.equals("classpath"))
+			System.out.println(pom.getClassPath());
 		else
 			System.err.println("Unhandled command: " + command);
 	}
