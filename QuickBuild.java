@@ -37,6 +37,7 @@ public class QuickBuild {
 
 	protected static class POM extends DefaultHandler implements Comparable<POM> {
 		protected final boolean debug = false;
+		protected String profile = "swing";
 
 		protected boolean buildFromSource;
 		protected File directory, target;
@@ -51,6 +52,7 @@ public class QuickBuild {
 		// only used during parsing
 		protected String prefix = "";
 		protected String[] latestDependency = new String[3];
+		protected boolean isCurrentProfile;
 
 		protected static Map<String, POM> localPOMCache = new HashMap<String, POM>();
 
@@ -356,10 +358,12 @@ public class QuickBuild {
 		}
 
 		public void endElement(String uri, String name, String qualifiedName) {
-			if (prefix.equals(">project>dependencies>dependency")) {
+			if (prefix.equals(">project>dependencies>dependency") || (isCurrentProfile && prefix.equals(">project>profiles>profile>dependencies>dependency"))) {
 				dependencies.add(latestDependency);
 				latestDependency = new String[3];
 			}
+			if (prefix.equals(">project>profiles>profile"))
+				isCurrentProfile = false;
 			prefix = prefix.substring(0, prefix.length() - 1 - qualifiedName.length());
 			if (debug)
 				System.err.println("end(" + uri + ", " + name + ", " + qualifiedName + ")");
@@ -368,6 +372,11 @@ public class QuickBuild {
 		public void characters(char[] buffer, int offset, int length) {
 			if (debug)
 				System.err.println("characters: " + new String(buffer, offset, length) + " (prefix: " + prefix + ")");
+
+			String prefix = this.prefix;
+			if (isCurrentProfile)
+				prefix = ">project" + prefix.substring(">project>profiles>profile".length());
+
 			if (prefix.equals(">project>groupId"))
 				groupId = new String(buffer, offset, length);
 			else if (prefix.equals(">project>parent>groupId")) {
@@ -392,6 +401,8 @@ public class QuickBuild {
 				latestDependency[1] = new String(buffer, offset, length);
 			else if (prefix.equals(">project>dependencies>dependency>version"))
 				latestDependency[2] = new String(buffer, offset, length);
+			else if (prefix.equals(">project>profiles>profile>id"))
+				isCurrentProfile = profile.equals(new String (buffer, offset, length));
 			else if (debug)
 				System.err.println("Ignoring " + prefix);
 		}
