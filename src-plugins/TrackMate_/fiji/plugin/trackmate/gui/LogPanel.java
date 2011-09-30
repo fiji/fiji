@@ -98,6 +98,9 @@ public class LogPanel extends ActionListenablePanel {
 	 * PUBLIC METHODS
 	 */
 	
+	/**
+	 * @return a {@link Logger} object that will log all events to this log panel.
+	 */
 	public Logger getLogger() {
 		return logger;
 	}

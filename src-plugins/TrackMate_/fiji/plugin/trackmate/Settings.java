@@ -85,6 +85,14 @@ public class Settings {
 		this.dy = (float) imp.getCalibration().pixelHeight;
 		this.dz = (float) imp.getCalibration().pixelDepth;
 		this.dt = (float) imp.getCalibration().frameInterval;
+		this.spaceUnits = imp.getCalibration().getUnit();
+		this.timeUnits = imp.getCalibration().getTimeUnit();
+		
+		if (dt == 0) {
+			dt = 1;
+			timeUnits = "frame";
+		}
+		
 		// Crop cube
 		this.zstart = 1;
 		this.zend = imp.getNSlices();

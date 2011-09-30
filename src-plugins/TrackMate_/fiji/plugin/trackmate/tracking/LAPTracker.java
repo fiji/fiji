@@ -295,12 +295,14 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 		}
 
 		reset();
+		processingTime = 0;
 
 		// Step 1 - Link objects into track segments
 		tstart = System.currentTimeMillis();
 		if (!linkObjectsToTrackSegments()) return false;
 		tend = System.currentTimeMillis();
 		logger.log(String.format("  Frame to frame LAP solved in %.1f s.\n", (tend-tstart)/1e3f));
+		processingTime += (tend-tstart);
 
 		// Skip 2nd step if there is no rules to link track segments
 		if (!settings.allowGapClosing && !settings.allowSplitting && !settings.allowMerging) {
@@ -315,6 +317,7 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 		tend = System.currentTimeMillis();
 		logger.setProgress(0.75f);
 		logger.log(String.format("  Cost matrix for track segments created in %.1f s.\n", (tend-tstart)/1e3f));
+		processingTime += (tend-tstart);
 
 		// Solve LAP
 		tstart = System.currentTimeMillis();
@@ -323,6 +326,7 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 		logger.setProgress(1);
 		logger.setStatus("");
 		logger.log(String.format("  Track segment LAP solved in %.1f s.\n", (tend-tstart)/1e3f));
+		processingTime += (tend-tstart);
 
 		return true;
 	}
