@@ -1,5 +1,8 @@
 package fiji.plugin.trackmate.gui;
 
+import java.util.List;
+import java.util.Map;
+
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
@@ -19,7 +22,7 @@ public abstract class TrackerSettingsPanel extends ActionListenablePanel {
 	 * Return a {@link TrackerSettingsPanel} that is able to configure the {@link SpotTracker}
 	 * selected in the settings object.
 	 */
-	public static TrackerSettingsPanel createPanel(Settings settings) {
+	public static TrackerSettingsPanel createPanel(Settings settings, List<String> features, Map<String, String> featureNames) {
 		final TrackerType trackerType = settings.trackerType;
 		TrackerSettings trackerSettings = settings.trackerSettings;
 		if (null == trackerSettings) {
@@ -30,7 +33,7 @@ public abstract class TrackerSettingsPanel extends ActionListenablePanel {
 		switch (trackerType) {
 		case LAP_TRACKER:
 		case FAST_LAPT:
-			return new LAPTrackerSettingsPanel(trackerSettings);
+			return new LAPTrackerSettingsPanel(trackerSettings, features, featureNames);
 		case SIMPLE_LAP_TRACKER:
 		case SIMPLE_FAST_LAPT:
 			return new SimpleLAPTrackerSettingsPanel(trackerSettings);

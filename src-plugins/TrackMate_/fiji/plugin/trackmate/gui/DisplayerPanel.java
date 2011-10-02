@@ -36,6 +36,7 @@ import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
 
+import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.util.TMUtils;
@@ -64,8 +65,8 @@ public class DisplayerPanel extends ActionListenablePanel {
 	private JCheckBox jCheckBoxLimitDepth;
 	private JTextField jTextFieldFrameDepth;
 	private JLabel jLabelFrameDepth;
-	private JPanelColorByFeatureGUI<SpotFeature> jPanelSpotColor;
-	private EnumMap<SpotFeature, double[]> featureValues;
+	private JPanelColorByFeatureGUI jPanelSpotColor;
+	private Map<String, double[]> featureValues;
 	private JNumericTextField jTextFieldSpotRadius;
 	private JCheckBox jCheckBoxDisplayNames;
 
@@ -128,7 +129,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 	 */
 
 	private void setModel(TrackMateModel model) {
-		this.featureValues = TMUtils.getSpotFeatureValues(model.getFilteredSpots().values());
+		this.featureValues = TMUtils.getSpotFeatureValues(model.getFilteredSpots().values()); // FIXME
 	}
 
 	private void initGUI() {
@@ -278,7 +279,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 				jPanelSpotOptions.setBounds(10, 63, 280, 110);
 				jPanelSpotOptions.setBorder(new LineBorder(new java.awt.Color(192,192,192), 1, true));
 				{
-					jPanelSpotColor = new JPanelColorByFeatureGUI<SpotFeature>(SpotFeature.QUALITY, this);
+					jPanelSpotColor = new JPanelColorByFeatureGUI(Spot.QUALITY, this);
 					jPanelSpotColor.featureValues = featureValues;
 					jPanelSpotOptions.add(jPanelSpotColor);
 					jPanelSpotColor.addActionListener(new ActionListener() {

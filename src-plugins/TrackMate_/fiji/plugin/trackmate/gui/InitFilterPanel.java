@@ -1,23 +1,25 @@
 package fiji.plugin.trackmate.gui;
-import java.awt.BorderLayout;
-import java.awt.Font;
 
+import static fiji.plugin.trackmate.gui.TrackMateFrame.BIG_FONT;
+import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
+
+import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.util.EnumMap;
+import java.awt.Font;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
-import javax.swing.WindowConstants;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT; 
-import static fiji.plugin.trackmate.gui.TrackMateFrame.BIG_FONT; 
-
 import fiji.plugin.trackmate.FeatureFilter;
-import fiji.plugin.trackmate.SpotFeature;
+import fiji.plugin.trackmate.Spot;
 
 /**
  * 
@@ -36,20 +38,20 @@ public class InitFilterPanel extends ActionListenablePanel {
 			"</html>";
 	private static final String SELECTED_SPOT_STRING = "Selected spots: %d out of %d";
 
-	private EnumMap<SpotFeature, double[]> features;
-	private FilterPanel<SpotFeature> jPanelThreshold;
+	private Map<String, double[]> features;
+	private FilterPanel jPanelThreshold;
 	private JPanel jPanelFields;
 	private JLabel jLabelInitialThreshold;
 	private JLabel jLabelExplanation;
 	private JLabel jLabelSelectedSpots;
 	private JPanel jPanelText;
 
-	public InitFilterPanel(EnumMap<SpotFeature, double[]> featureValues) {
+	public InitFilterPanel(Map<String, double[]> featureValues) {
 		this(featureValues, null);
 	}
 
 
-	public InitFilterPanel(EnumMap<SpotFeature, double[]> featureValues, Float initialFilterValue) {
+	public InitFilterPanel(Map<String, double[]> featureValues, Float initialFilterValue) {
 		super();
 		this.features = featureValues;
 		initGUI(initialFilterValue);
@@ -63,8 +65,8 @@ public class InitFilterPanel extends ActionListenablePanel {
 	/**
 	 * Return the feature threshold on quality set by this panel. 
 	 */
-	public FeatureFilter<SpotFeature> getFeatureThreshold() {
-		return new FeatureFilter<SpotFeature>(jPanelThreshold.getKey(), new Float(jPanelThreshold.getThreshold()), jPanelThreshold.isAboveThreshold());
+	public FeatureFilter getFeatureThreshold() {
+		return new FeatureFilter(jPanelThreshold.getKey(), new Float(jPanelThreshold.getThreshold()), jPanelThreshold.isAboveThreshold());
 	}
 
 	/*
@@ -74,7 +76,7 @@ public class InitFilterPanel extends ActionListenablePanel {
 	private void thresholdChanged() {
 		double threshold  = jPanelThreshold.getThreshold();
 		boolean isAbove = jPanelThreshold.isAboveThreshold();
-		double[] values = features.get(SpotFeature.QUALITY);
+		double[] values = features.get(Spot.QUALITY);
 		int nspots = values.length;
 		int nselected = 0;
 		if (isAbove) {
@@ -97,7 +99,11 @@ public class InitFilterPanel extends ActionListenablePanel {
 			this.setPreferredSize(new java.awt.Dimension(300, 500));
 			{
 
-				jPanelThreshold = new FilterPanel<SpotFeature>(features, SpotFeature.QUALITY);
+				ArrayList<String> keys = new ArrayList<String>(1);
+				keys.add(Spot.QUALITY);
+				HashMap<String, String> keyNames = new HashMap<String, String>(1);
+				keyNames.put(Spot.QUALITY, Spot.FEATURE_NAMES.get(Spot.QUALITY));
+				jPanelThreshold = new FilterPanel(features, keys, keyNames);
 				if (null != initialThreshold)
 					jPanelThreshold.setThreshold(initialThreshold);
 				jPanelThreshold.jComboBoxFeature.setEnabled(false);
@@ -164,18 +170,13 @@ public class InitFilterPanel extends ActionListenablePanel {
 		final int N_ITEMS = 100;
 		final Random ran = new Random();
 		double mean;
-		fiji.plugin.trackmate.SpotFeature[] features = new fiji.plugin.trackmate.SpotFeature[] { 
-				fiji.plugin.trackmate.SpotFeature.QUALITY, 
-				fiji.plugin.trackmate.SpotFeature.ELLIPSOIDFIT_AXISPHI_A, 
-				fiji.plugin.trackmate.SpotFeature.MEAN_INTENSITY };
-		EnumMap<fiji.plugin.trackmate.SpotFeature, double[]> fv = new EnumMap<fiji.plugin.trackmate.SpotFeature, double[]>(fiji.plugin.trackmate.SpotFeature.class);
-		for (fiji.plugin.trackmate.SpotFeature feature : features) {
-			double[] val = new double[N_ITEMS];
-			mean = ran.nextDouble() * 10;
-			for (int j = 0; j < val.length; j++) 
-				val[j] = ran.nextGaussian() + 5 + mean;
-			fv.put(feature, val);
-		}
+
+		Map<String, double[]> fv = new HashMap<String, double[]>();
+		double[] val = new double[N_ITEMS];
+		mean = ran.nextDouble() * 10;
+		for (int j = 0; j < val.length; j++) 
+			val[j] = ran.nextGaussian() + 5 + mean;
+		fv.put(Spot.QUALITY, val);
 
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(new InitFilterPanel(fv));

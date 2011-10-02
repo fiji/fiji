@@ -151,7 +151,7 @@ public class TrackMateModel {
 	 * The feature filter list that is used to generate {@link #filteredSpots}
 	 * from {@link #spots}.
 	 */
-	protected List<FeatureFilter<SpotFeature>> spotFilters = new ArrayList<FeatureFilter<SpotFeature>>();
+	protected List<FeatureFilter> spotFilters = new ArrayList<FeatureFilter>();
 	/**
 	 * The initial quality filter value that is used to clip spots of low
 	 * quality from {@link #spots}.
@@ -184,7 +184,7 @@ public class TrackMateModel {
 	 */
 	protected List<EnumMap<TrackFeature, Float>> trackFeatures;
 	/** The track filter list that is used to prune track and spots. */
-	protected List<FeatureFilter<TrackFeature>> trackFilters = new ArrayList<FeatureFilter<TrackFeature>>();
+	protected List<FeatureFilter> trackFilters = new ArrayList<FeatureFilter>();
 	/**
 	 * The visible track indices. Is a set made of the indices of tracks (in
 	 * {@link #trackEdges} and {@link #trackSpots}) that are retained after
@@ -646,11 +646,11 @@ public class TrackMateModel {
 	 * Add a filter to the list of spot filters to deal with when executing
 	 * {@link #execFiltering()}.
 	 */
-	public void addSpotFilter(final FeatureFilter<SpotFeature> filter) {
+	public void addSpotFilter(final FeatureFilter filter) {
 		spotFilters.add(filter);
 	}
 
-	public void removeSpotFilter(final FeatureFilter<SpotFeature> filter) {
+	public void removeSpotFilter(final FeatureFilter filter) {
 		spotFilters.remove(filter);
 	}
 
@@ -659,11 +659,11 @@ public class TrackMateModel {
 		spotFilters.clear();
 	}
 
-	public List<FeatureFilter<SpotFeature>> getSpotFilters() {
+	public List<FeatureFilter> getSpotFilters() {
 		return spotFilters;
 	}
 
-	public void setSpotFilters(List<FeatureFilter<SpotFeature>> spotFilters) {
+	public void setSpotFilters(List<FeatureFilter> spotFilters) {
 		this.spotFilters = spotFilters;
 	}
 
@@ -684,11 +684,11 @@ public class TrackMateModel {
 	}
 
 	/** Add a filter to the list of track filters. */
-	public void addTrackFilter(final FeatureFilter<TrackFeature> filter) {
+	public void addTrackFilter(final FeatureFilter filter) {
 		trackFilters.add(filter);
 	}
 
-	public void removeTrackFilter(final FeatureFilter<TrackFeature> filter) {
+	public void removeTrackFilter(final FeatureFilter filter) {
 		trackFilters.remove(filter);
 	}
 
@@ -697,11 +697,11 @@ public class TrackMateModel {
 		trackFilters.clear();
 	}
 
-	public List<FeatureFilter<TrackFeature>> getTrackFilters() {
+	public List<FeatureFilter> getTrackFilters() {
 		return trackFilters;
 	}
 
-	public void setTrackFilters(List<FeatureFilter<TrackFeature>> trackFilters) {
+	public void setTrackFilters(List<FeatureFilter> trackFilters) {
 		this.trackFilters = trackFilters;
 	}
 
@@ -757,8 +757,8 @@ public class TrackMateModel {
 	 * by this instance. Each feature maps a double array, with 1 element per
 	 * {@link Spot}, all pooled together.
 	 */
-	public EnumMap<SpotFeature, double[]> getSpotFeatureValues() {
-		return TMUtils.getSpotFeatureValues(spots.values());
+	public HashMap<String, double[]> getSpotFeatureValues() {
+		return TMUtils.getSpotFeatureValues(spots.values()); // FIXME ADD A FIELD STORING THE FEATURE WE SHOULD COMPUTE
 	}
 
 	/*
@@ -1079,7 +1079,7 @@ public class TrackMateModel {
 	 * {@link SpotFeatureAnalyzer} can compute more than a {@link SpotFeature}
 	 * at once, spots might received more data than required.
 	 */
-	public void computeSpotFeatures(final List<SpotFeature> features) {
+	public void computeSpotFeatures(final List<String> features) {
 		computeSpotFeatures(spots, features);
 	}
 
@@ -1087,8 +1087,8 @@ public class TrackMateModel {
 	 * Calculate given features for the all filtered spots of this model,
 	 * according to the {@link Settings} set in this model.
 	 */
-	public void computeSpotFeatures(final SpotFeature feature) {
-		ArrayList<SpotFeature> features = new ArrayList<SpotFeature>(1);
+	public void computeSpotFeatures(final String feature) {
+		ArrayList<String> features = new ArrayList<String>(1);
 		features.add(feature);
 		computeSpotFeatures(features);
 	}
@@ -1103,11 +1103,11 @@ public class TrackMateModel {
 	 * at once, spots might received more data than required.
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public void computeSpotFeatures(final SpotCollection toCompute, final List<SpotFeature> features) {
+	public void computeSpotFeatures(final SpotCollection toCompute, final List<String> features) {
 
 		int numFrames = settings.tend - settings.tstart + 1;
 		List<Spot> spotsThisFrame;
-		SpotFeatureFacade<?> featureCalculator;
+		
 		final float[] calibration = new float[] { settings.dx, settings.dy, settings.dz };
 
 		for (int i = settings.tstart - 1; i < settings.tend; i++) {
@@ -1132,7 +1132,7 @@ public class TrackMateModel {
 			/* 1.5 Determine what analyzers are needed */
 			featureCalculator = new SpotFeatureFacade(img, calibration);
 			HashSet<SpotFeatureAnalyzer> analyzers = new HashSet<SpotFeatureAnalyzer>();
-			for (SpotFeature feature : features)
+			for (String feature : features)
 				analyzers.add(featureCalculator.getAnalyzerForFeature(feature));
 
 					/* 2 - Compute features. */

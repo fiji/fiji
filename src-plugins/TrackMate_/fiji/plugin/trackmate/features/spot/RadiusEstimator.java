@@ -1,5 +1,10 @@
 package fiji.plugin.trackmate.features.spot;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.special.DiscCursor;
 import mpicbg.imglib.cursor.special.DomainCursor;
@@ -8,21 +13,43 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
+import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.SpotImp;
 
-public class RadiusEstimator <T extends RealType<T>> extends IndependentSpotFeatureAnalyzer {
+public class RadiusEstimator <T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
 
+	/*
+	 * CONSTANT
+	 */
+	
+	/** The single feature key name that this analyzer computes. */
+	public static final String						ESTIMATED_DIAMETER = "ESTIMATED_DIAMETER";
+	private static final ArrayList<String> 			FEATURES = new ArrayList<String>(1);
+	private static final HashMap<String, String> 	FEATURE_NAMES = new HashMap<String, String>(1);
+	private static final HashMap<String, String> 	FEATURE_SHORT_NAMES = new HashMap<String, String>(1);
+	private static final HashMap<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(1);
+	static {
+		FEATURES.add(ESTIMATED_DIAMETER);
+		FEATURE_NAMES.put(ESTIMATED_DIAMETER, "Estimated diameter");
+		FEATURE_SHORT_NAMES.put(ESTIMATED_DIAMETER, "Diam.");
+		FEATURE_DIMENSIONS.put(ESTIMATED_DIAMETER, Dimension.LENGTH);
+	}
+	
 	private static final float MIN_DIAMETER_RATIO = 0.4f;
 	private static final float MAX_DIAMETER_RATIO = 2;
 	
-	/** The number of different diameters to try. */
-	private int nDiameters;
+	
+	/*
+	 * FIELDS
+	 */
+	
 	private Image<T> img;
 	private float[] calibration;
 	/** Utility holder. */
 	private float[] coords;
+	/** The number of different diameters to try. */
+	protected int nDiameters = 10;
 
 	/**
 	 * Create a feature analyzer that will return the best estimated diameter for a 
@@ -37,19 +64,7 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentSpotFeat
 	 * @param nDiameters  the number of different diameter to compute
 	 * @param calibration  the spatial calibration array containing the pixel size in X, Y, Z
 	 */
-	public RadiusEstimator(Image<T> originalImage, int nDiameters,  float[] calibration) {
-		this.img = originalImage;
-		this.nDiameters = nDiameters;
-		this.calibration = calibration;
-		this.coords = new float[img.getNumDimensions()];
-	}
-
-	private static final SpotFeature FEATURE = SpotFeature.ESTIMATED_DIAMETER;
-	
-	@Override
-	public SpotFeature getFeature() {
-		return FEATURE;
-	}
+	public RadiusEstimator() { }	
 
 	@Override
 	public void process(Spot spot) {
@@ -57,7 +72,7 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentSpotFeat
 			coords[i] = spot.getFeature(Spot.POSITION_FEATURES[i]);
 
 		// Get diameter array and radius squared
-		final float radius = spot.getFeature(SpotFeature.RADIUS);
+		final float radius = spot.getFeature(Spot.RADIUS);
 		final float[] diameters = prepareDiameters(radius*2, nDiameters);
 		final float[] r2 = new float[nDiameters];
 		for (int i = 0; i < r2.length; i++) 
@@ -113,7 +128,7 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentSpotFeat
 					diameters[maxIndex], contrasts[maxIndex],
 					diameters[maxIndex+1], contrasts[maxIndex+1]);
 		}
-		spot.putFeature(FEATURE, bestDiameter);		
+		spot.putFeature(ESTIMATED_DIAMETER, bestDiameter);		
 	}
 	
 	private static final float quadratic1DInterpolation(float x1, float y1, float x2, float y2, float x3, float y3) {
@@ -158,7 +173,7 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentSpotFeat
 		SphereCursor<UnsignedByteType> cursor;
 		int index = 0;
 		for (SpotImp s : spots) {
-			s.putFeature(SpotFeature.RADIUS, radiuses[index]);
+			s.putFeature(Spot.RADIUS, radiuses[index]);
 			cursor = new SphereCursor<UnsignedByteType>(
 					testImage,
 					s.getPosition(null),
@@ -175,10 +190,9 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentSpotFeat
 		imp.show();
 		
 		// Apply the estimator
-		RadiusEstimator<UnsignedByteType> es = new RadiusEstimator<UnsignedByteType>(
-				testImage, 
-				20, 
-				calibration);
+		RadiusEstimator<UnsignedByteType> es = new RadiusEstimator<UnsignedByteType>();
+		es.setTarget(testImage, calibration);
+		es.nDiameters = 20;
 		
 		SpotImp s;
 		double r;
@@ -189,8 +203,28 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentSpotFeat
 			start = System.currentTimeMillis();
 			es.process(s);
 			stop = System.currentTimeMillis();
-			System.out.println(String.format("For spot %d, found diameter %.1f, real value was %.1f.", i, s.getFeatures().get(FEATURE), 2*r));
+			System.out.println(String.format("For spot %d, found diameter %.1f, real value was %.1f.", i, s.getFeatures().get(ESTIMATED_DIAMETER), 2*r));
 			System.out.println("Computing time: "+(stop-start)+" ms.");
 		}
+	}
+
+	@Override
+	public Collection<String> getFeatures() {
+		return FEATURES;
+	}
+
+	@Override
+	public Map<String, String> getFeatureShortNames() {
+		return FEATURE_SHORT_NAMES;
+	}
+
+	@Override
+	public Map<String, String> getFeatureNames() {
+		return FEATURE_NAMES;
+	}
+
+	@Override
+	public Map<String, Dimension> getFeatureDimensions() {
+		return FEATURE_DIMENSIONS;
 	}
 }

@@ -201,7 +201,7 @@ public class TrackMate_ implements PlugIn {
 							if (null != polygon) {
 								prunedSpots = new ArrayList<Spot>();
 								for (Spot spot : spotsThisFrame) {
-									if (polygon.contains(spot.getFeature(SpotFeature.POSITION_X)/calibration[0], spot.getFeature(SpotFeature.POSITION_Y)/calibration[1])) 
+									if (polygon.contains(spot.getFeature(Spot.POSITION_X)/calibration[0], spot.getFeature(Spot.POSITION_Y)/calibration[1])) 
 										prunedSpots.add(spot);
 								}
 							} else {
@@ -209,7 +209,7 @@ public class TrackMate_ implements PlugIn {
 							}
 							// Add segmentation feature other than position
 							for (Spot spot : prunedSpots) {
-								spot.putFeature(SpotFeature.POSITION_T, i * settings.dt);
+								spot.putFeature(Spot.POSITION_T, i * settings.dt);
 							}
 							spots.put(i, prunedSpots);
 							spotFound.addAndGet(prunedSpots.size());
@@ -258,7 +258,7 @@ public class TrackMate_ implements PlugIn {
 	 */
 	public void execInitialSpotFiltering() {
 		Float initialSpotFilterValue = model.getInitialSpotFilterValue();
-		FeatureFilter<SpotFeature> featureFilter = new FeatureFilter<SpotFeature>(SpotFeature.QUALITY, initialSpotFilterValue, true);
+		FeatureFilter featureFilter = new FeatureFilter(Spot.QUALITY, initialSpotFilterValue, true);
 		model.setSpots(model.getSpots().filter(featureFilter), true);
 	}
 
@@ -286,7 +286,7 @@ public class TrackMate_ implements PlugIn {
 
 		for (int trackIndex = 0; trackIndex < model.getNTracks(); trackIndex++) {
 			boolean trackIsOk = true;
-			for(FeatureFilter<TrackFeature> filter : model.getTrackFilters()) {
+			for(FeatureFilter filter : model.getTrackFilters()) {
 				Float tval = filter.value;
 				Float val = model.getTrackFeature(trackIndex, filter.feature);
 				if (null == val)

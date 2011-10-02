@@ -1,8 +1,10 @@
 package fiji.plugin.trackmate.gui;
 
-
 import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.TEXTFIELD_DIMENSION;
+
+import java.util.List;
+import java.util.Map;
 
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
@@ -10,18 +12,20 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
-import fiji.plugin.trackmate.SpotFeature;
+import fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics;
 
 public class JPanelFeatureRatioThreshold extends javax.swing.JPanel {
 
 	private static final long serialVersionUID = 3848390144561204540L;
 	private JComboBox jComboBoxFeature;
 	private JNumericTextField jTextFieldFeatureRatio;
-	private final SpotFeature[] features;
+	private final List<String> features;
+	private Map<String, String> featureNames;
 
-	public JPanelFeatureRatioThreshold() {
+	public JPanelFeatureRatioThreshold(List<String> features, Map<String, String> featureNames) {
 		super();
-		features = SpotFeature.values();
+		this.features = features;
+		this.featureNames = featureNames;
 		initGUI();
 	}
 	
@@ -29,8 +33,8 @@ public class JPanelFeatureRatioThreshold extends javax.swing.JPanel {
 	 * PUBLIC METHODS
 	 */
 	
-	public SpotFeature getSelectedFeature() {
-		return features[jComboBoxFeature.getSelectedIndex()];
+	public String getSelectedFeature() {
+		return features.get(jComboBoxFeature.getSelectedIndex());
 	}
 	
 	public double getRatioThreshold() {
@@ -54,10 +58,10 @@ public class JPanelFeatureRatioThreshold extends javax.swing.JPanel {
 			this.setSize(280, 40);
 			this.setLayout(null);
 			{
-				String[] featureNames = new String[features.length];
-				for (int i = 0; i < features.length; i++) 
-					featureNames[i] = features[i].toString();
-				ComboBoxModel jComboBoxFeatureModel = new DefaultComboBoxModel(featureNames);
+				String[] featureNames2 = new String[features.size()];
+				for (int i = 0; i < features.size(); i++) 
+					featureNames2[i] = featureNames.get(features.get(i));
+				ComboBoxModel jComboBoxFeatureModel = new DefaultComboBoxModel(featureNames2);
 				jComboBoxFeature = new JComboBox();
 				this.add(jComboBoxFeature);
 				jComboBoxFeature.setModel(jComboBoxFeatureModel);
@@ -89,7 +93,10 @@ public class JPanelFeatureRatioThreshold extends javax.swing.JPanel {
 	*/
 	public static void main(String[] args) {
 		JFrame frame = new JFrame();
-		frame.getContentPane().add(new JPanelFeatureRatioThreshold());
+		frame.getContentPane().add(new JPanelFeatureRatioThreshold(
+				BlobDescriptiveStatistics.FEATURES,
+				BlobDescriptiveStatistics.FEATURE_NAMES
+				));
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();
 		frame.setVisible(true);

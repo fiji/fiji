@@ -13,8 +13,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,7 +27,6 @@ import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMate_;
 
@@ -35,6 +35,73 @@ import fiji.plugin.trackmate.TrackMate_;
  */
 public class TMUtils {
 
+	
+	
+	/*
+	 * STATIC CONSTANTS
+	 */
+	
+	/** The name of the spot quality feature. */
+	public static final String QUALITY = "QUALITY";
+	/** The name of the radius spot feature. */
+	public static final String RADIUS = "RADIUS";
+	/** The name of the spot X position feature. */
+	public static final String POSITION_X = "POSITION_X";
+	/** The name of the spot Y position feature. */
+	public static final String POSITION_Y = "POSITION_Y";
+	/** The name of the spot Z position feature. */
+	public static final String POSITION_Z = "POSITION_Z";
+	/** The name of the spot T position feature. */
+	public static final String POSITION_T = "POSITION_T";
+
+	/** The position features. */
+	public final static String[] POSITION_FEATURES = new String[] { POSITION_X, POSITION_Y, POSITION_Z };
+	/** The 6 privileged spot features that must be set by a spot segmenter. */
+	public final static Collection<String> FEATURES = new ArrayList<String>(6);
+	/** The 6 privileged spot feature names. */
+	public final static Map<String, String> FEATURE_NAMES = new HashMap<String, String>(6);
+	/** The 6 privileged spot feature short names. */
+	public final static Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(6);
+	/** The 6 privileged spot feature dimensions. */
+	public final static Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(6);
+	
+	static {
+		FEATURES.add(POSITION_X);
+		FEATURES.add(POSITION_Y);
+		FEATURES.add(POSITION_Z);
+		FEATURES.add(POSITION_T);
+		FEATURES.add(RADIUS);
+		FEATURES.add(QUALITY);
+
+		FEATURE_NAMES.put(POSITION_X, "X");
+		FEATURE_NAMES.put(POSITION_Y, "Y");
+		FEATURE_NAMES.put(POSITION_Z, "Z");
+		FEATURE_NAMES.put(POSITION_T, "T");
+		FEATURE_NAMES.put(RADIUS, "Radius");
+		FEATURE_NAMES.put(QUALITY, "Quality");
+
+		FEATURE_SHORT_NAMES.put(POSITION_X, "X");
+		FEATURE_SHORT_NAMES.put(POSITION_Y, "Y");
+		FEATURE_SHORT_NAMES.put(POSITION_Z, "Z");
+		FEATURE_SHORT_NAMES.put(POSITION_T, "T");
+		FEATURE_SHORT_NAMES.put(RADIUS, "R");
+		FEATURE_SHORT_NAMES.put(QUALITY, "Quality");
+		
+		FEATURE_DIMENSIONS.put(POSITION_X, Dimension.POSITION);
+		FEATURE_DIMENSIONS.put(POSITION_Y, Dimension.POSITION);
+		FEATURE_DIMENSIONS.put(POSITION_Z, Dimension.POSITION);
+		FEATURE_DIMENSIONS.put(POSITION_T, Dimension.TIME);
+		FEATURE_DIMENSIONS.put(RADIUS, Dimension.LENGTH);
+		FEATURE_DIMENSIONS.put(QUALITY, Dimension.QUALITY);
+	}
+	
+	
+	
+	
+	
+	/*
+	 * STATIC METHODS
+	 */
 
 	/**
 	 * Return a new copy of this collection of Spot, translated using the crop data 
@@ -52,7 +119,7 @@ public class TMUtils {
 		float dy = (settings.ystart-1)*calibration[1];
 		float dz = (settings.zstart-1)*calibration[2];
 		float[] dval = new float[] {dx, dy, dz};
-		SpotFeature[] features = new SpotFeature[] {SpotFeature.POSITION_X, SpotFeature.POSITION_Y, SpotFeature.POSITION_Z}; 
+		String[] features = new String[] { Spot.POSITION_X, Spot.POSITION_Y, Spot.POSITION_Z }; 
 		Float val;
 		for(Spot spot : spots) {
 			newSpot = spot.clone();
@@ -109,7 +176,7 @@ public class TMUtils {
 	 * @param feature  the feature to consider when choosing what spot to retain in an overlapping couple. 
 	 * @return a new pruned list of non-overlapping spots. Incidentally, this list will be sorted by descending feature value.
 	 */
-	public static final List<Spot> suppressSpots(List<Spot> spots, final SpotFeature feature) {
+	public static final List<Spot> suppressSpots(List<Spot> spots, final String feature) {
 		Collections.sort(spots, createDescendingComparatorFor(feature));
 		final List<Spot> acceptedSpots = new ArrayList<Spot>(spots.size());
 		boolean ok;
@@ -117,7 +184,7 @@ public class TMUtils {
 		for (final Spot spot : spots) {
 			ok = true;
 			for (final Spot target : acceptedSpots) {
-				r2 = (spot.getFeature(SpotFeature.RADIUS) + target.getFeature(SpotFeature.RADIUS)) * (spot.getFeature(SpotFeature.RADIUS) + target.getFeature(SpotFeature.RADIUS));
+				r2 = (spot.getFeature(Spot.RADIUS) + target.getFeature(Spot.RADIUS)) * (spot.getFeature(Spot.RADIUS) + target.getFeature(Spot.RADIUS));
 				if (spot.squareDistanceTo(target) < r2 ) {
 					ok = false;
 					break;
@@ -130,7 +197,7 @@ public class TMUtils {
 	}
 
 
-	public static final Comparator<Spot> createAscendingComparatorFor(final SpotFeature feature) {
+	public static final Comparator<Spot> createAscendingComparatorFor(final String feature) {
 		return new Comparator<Spot>() {
 			@Override
 			public int compare(Spot o1, Spot o2) {
@@ -139,7 +206,7 @@ public class TMUtils {
 		};
 	}
 
-	public static final Comparator<Spot> createDescendingComparatorFor(final SpotFeature feature) {
+	public static final Comparator<Spot> createDescendingComparatorFor(final String feature) {
 		return new Comparator<Spot>() {
 			@Override
 			public int compare(Spot o1, Spot o2) {
@@ -187,9 +254,9 @@ public class TMUtils {
 	 * Convenience static method that executes the thresholding part.
 	 * <p>
 	 * Given a list of spots, only spots with the feature satisfying the threshold given
-	 * in argument are returned. 
+	 * in argument are returned.
 	 */
-	public static TreeMap<Integer, List<Spot>> thresholdSpots(final TreeMap<Integer, List<Spot>> spots, final FeatureFilter<SpotFeature> featureThreshold) {
+	public static TreeMap<Integer, List<Spot>> thresholdSpots(final TreeMap<Integer, List<Spot>> spots, final FeatureFilter filter) {
 		TreeMap<Integer, List<Spot>> selectedSpots = new TreeMap<Integer, List<Spot>>();
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
@@ -201,12 +268,12 @@ public class TMUtils {
 			spotToKeep = new ArrayList<Spot>(spotThisFrame);
 			spotToRemove = new ArrayList<Spot>(spotThisFrame.size());
 
-			tval = featureThreshold.value;
+			tval = filter.value;
 			if (null != tval) {
 
-				if (featureThreshold.isAbove) {
+				if (filter.isAbove) {
 					for (Spot spot : spotToKeep) {
-						val = spot.getFeature(featureThreshold.feature);
+						val = spot.getFeature(filter.feature);
 						if (null == val)
 							continue;
 						if ( val < tval)
@@ -215,7 +282,7 @@ public class TMUtils {
 
 				} else {
 					for (Spot spot : spotToKeep) {
-						val = spot.getFeature(featureThreshold.feature);
+						val = spot.getFeature(filter.feature);
 						if (null == val)
 							continue;
 						if ( val > tval)
@@ -237,7 +304,7 @@ public class TMUtils {
 	 * Given a list of spots, only spots with the feature satisfying <b>all</b> of the thresholds given
 	 * in argument are returned. 
 	 */
-	public static TreeMap<Integer, List<Spot>> thresholdSpots(final TreeMap<Integer, List<Spot>> spots, final List<FeatureFilter<SpotFeature>> featureThresholds) {
+	public static TreeMap<Integer, List<Spot>> thresholdSpots(final TreeMap<Integer, List<Spot>> spots, final List<FeatureFilter> filters) {
 		TreeMap<Integer, List<Spot>> selectedSpots = new TreeMap<Integer, List<Spot>>();
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
@@ -249,7 +316,7 @@ public class TMUtils {
 			spotToKeep = new ArrayList<Spot>(spotThisFrame);
 			spotToRemove = new ArrayList<Spot>(spotThisFrame.size());
 
-			for (FeatureFilter<SpotFeature> threshold : featureThresholds) {
+			for (FeatureFilter threshold : filters) {
 
 				tval = threshold.value;
 				if (null == tval)
@@ -344,7 +411,7 @@ public class TMUtils {
 	/**
 	 * Return the feature values of this Spot collection as a new double array.
 	 */
-	public static final double[] getFeature(final Collection<SpotImp> spots, final SpotFeature feature) {
+	public static final double[] getFeature(final Collection<SpotImp> spots, final String feature) {
 		final double[] values = new double[spots.size()];
 		int index = 0;
 		for(SpotImp spot : spots) {
@@ -359,8 +426,8 @@ public class TMUtils {
 	 * Each feature maps a double array, with 1 element per {@link Spot}, all pooled
 	 * together.
 	 */
-	public static EnumMap<SpotFeature, double[]> getSpotFeatureValues(Collection<? extends Collection<Spot>> spots) {
-		EnumMap<SpotFeature, double[]> featureValues = new  EnumMap<SpotFeature, double[]>(SpotFeature.class);
+	public static Map<String, double[]> getSpotFeatureValues(Collection<? extends Collection<Spot>> spots, Collection<String> features) {
+		Map<String, double[]> featureValues = new  HashMap<String, double[]>();
 		if (null == spots || spots.isEmpty())
 			return featureValues;
 		int index;
@@ -371,7 +438,7 @@ public class TMUtils {
 		for(Collection<? extends Spot> collection : spots)
 			spotNumber += collection.size();
 
-		for(SpotFeature feature : SpotFeature.values()) {
+		for(String feature : features) {
 			// Make a double array to comply to JFreeChart histograms
 			double[] values = new double[spotNumber];
 			index = 0;
@@ -518,7 +585,7 @@ public class TMUtils {
 	}
 
 	/**
-	 * Computes the square Euclidean distance between two Featurable.
+	 * Computes the square Euclidean distance between two spots.
 	 * @param i Spot i.
 	 * @param j Spot j.
 	 * @return The Euclidean distance between Featurable i and j, based on their
@@ -527,12 +594,12 @@ public class TMUtils {
 	public static final double euclideanDistanceSquared(Spot i, Spot j) {
 		final Float xi, xj, yi, yj, zi, zj;
 		double eucD = 0;
-		xi = i.getFeature(SpotFeature.POSITION_X);
-		xj = j.getFeature(SpotFeature.POSITION_X);
-		yi = i.getFeature(SpotFeature.POSITION_Y);
-		yj = j.getFeature(SpotFeature.POSITION_Y);
-		zi = i.getFeature(SpotFeature.POSITION_Z);
-		zj = j.getFeature(SpotFeature.POSITION_Z);
+		xi = i.getFeature(Spot.POSITION_X);
+		xj = j.getFeature(Spot.POSITION_X);
+		yi = i.getFeature(Spot.POSITION_Y);
+		yj = j.getFeature(Spot.POSITION_Y);
+		zi = i.getFeature(Spot.POSITION_Z);
+		zj = j.getFeature(Spot.POSITION_Z);
 
 		if (xj != null && xi != null)
 			eucD += (xj-xi)*(xj-xi);

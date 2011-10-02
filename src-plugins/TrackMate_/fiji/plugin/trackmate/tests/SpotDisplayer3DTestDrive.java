@@ -149,7 +149,7 @@ public class SpotDisplayer3DTestDrive {
 		frame.setVisible(true);
 
 		// Add a panel
-		gui.addThresholdPanel(SpotFeature.MEAN_INTENSITY);		
+		gui.addFilterPanel(SpotFeature.MEAN_INTENSITY);		
 		
 	}
 	

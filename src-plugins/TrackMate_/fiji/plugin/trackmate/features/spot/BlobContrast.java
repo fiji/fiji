@@ -1,48 +1,54 @@
 package fiji.plugin.trackmate.features.spot;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
 import mpicbg.imglib.cursor.special.DiscCursor;
 import mpicbg.imglib.cursor.special.DomainCursor;
 import mpicbg.imglib.cursor.special.SphereCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
+import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotFeature;
 
-public class BlobContrast <T extends RealType<T>> extends IndependentSpotFeatureAnalyzer {
+public class BlobContrast <T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
 
-	private static final SpotFeature FEATURE = SpotFeature.CONTRAST;
-	protected static final float RAD_PERCENTAGE = .2f;  
+	/** The single feature key name that this analyzer computes. */
+	public static final String						CONTRAST = "CONTRAST";
+	private static final ArrayList<String> 			FEATURES = new ArrayList<String>(1);
+	private static final HashMap<String, String> 	FEATURE_NAMES = new HashMap<String, String>(1);
+	private static final HashMap<String, String> 	FEATURE_SHORT_NAMES = new HashMap<String, String>(1);
+	private static final HashMap<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(1);
+	static {
+		FEATURES.add(CONTRAST);
+		FEATURE_NAMES.put(CONTRAST, "Contrast");
+		FEATURE_SHORT_NAMES.put(CONTRAST, "Contrast");
+		FEATURE_DIMENSIONS.put(CONTRAST, Dimension.NONE);
+	}
+	
+	protected static final float RAD_PERCENTAGE = .5f;  
 	protected Image<T> img;
 	protected float[] calibration;
 	/** Utility holder. */
-	private float[] coords;
+	private float[] coords = new float[3];
 	
-	
-	public BlobContrast(Image<T> originalImage, float[] calibration) {
-		this.img = originalImage;
-		this.calibration = calibration;
-		this.coords = new float[3];
-	}
-	
-	@Override
-	public SpotFeature getFeature() {
-		return FEATURE;
-	}
 
 	@Override
 	public void process(Spot spot) {
 		float contrast = getContrast(spot);
-		spot.putFeature(FEATURE, Math.abs(contrast));
+		spot.putFeature(CONTRAST, Math.abs(contrast));
 	}
 	
 	/**
-	 * 
+	 * Compute the contrast for the given spot.
 	 * @param spot
 	 * @param diameter  the diameter to search for is in physical units
 	 * @return
 	 */
 	protected float getContrast(final Spot spot) {
-		final float radius = spot.getFeature(SpotFeature.RADIUS);
+		final float radius = spot.getFeature(Spot.RADIUS);
 		final DomainCursor<T> cursor;
 		if (img.getNumDimensions() == 3) 
 			cursor = new SphereCursor<T>(img, spot.getPosition(coords), radius * (1+RAD_PERCENTAGE), calibration);
@@ -73,5 +79,26 @@ public class BlobContrast <T extends RealType<T>> extends IndependentSpotFeature
 		float outerMeanIntensity = outerTotalIntensity / outerRingVolume;
 		return innerMeanIntensity - outerMeanIntensity;
 	}
+	
 
+	@Override
+	public Collection<String> getFeatures() {
+		return FEATURES;
+	}
+
+	@Override
+	public Map<String, String> getFeatureShortNames() {
+		return FEATURE_SHORT_NAMES;
+	}
+
+	@Override
+	public Map<String, String> getFeatureNames() {
+		return FEATURE_NAMES;
+	}
+
+	@Override
+	public Map<String, Dimension> getFeatureDimensions() {
+		return FEATURE_DIMENSIONS;
+	}
+	
 }

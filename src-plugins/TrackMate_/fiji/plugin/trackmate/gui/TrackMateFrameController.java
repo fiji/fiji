@@ -14,7 +14,6 @@ import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
@@ -541,7 +540,7 @@ public class TrackMateFrameController implements ActionListener {
 	 */
 	private void execInitialThresholding() {
 		final TrackMateModel model = plugin.getModel();
-		FeatureFilter<SpotFeature> initialThreshold = view.initThresholdingPanel.getFeatureThreshold();
+		FeatureFilter initialThreshold = view.initThresholdingPanel.getFeatureThreshold();
 		String str = "Initial thresholding with a quality threshold above "+ String.format("%.1f", initialThreshold.value) + " ...\n";
 		logger.log(str,Logger.BLUE_COLOR);
 		int ntotal = 0;

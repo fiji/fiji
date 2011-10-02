@@ -36,7 +36,8 @@ public class GrabSpotImageAction extends AbstractTMAction {
 		for (int frame : allSpots.keySet()) {
 			List<Spot> spots = allSpots.get(frame);
 			Image img = TMUtils.getSingleFrameAsImage(settings.imp, frame, settings);
-			SpotIconGrabber grabber = new SpotIconGrabber(img, calibration);
+			SpotIconGrabber grabber = new SpotIconGrabber();
+			grabber.setTarget(img, calibration);
 			grabber.process(spots);			
 			logger.setProgress((float) (frame + 1) / allSpots.keySet().size());
 		}

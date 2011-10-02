@@ -2,10 +2,10 @@ package fiji.plugin.trackmate.action;
 
 import javax.swing.ImageIcon;
 
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.features.spot.RadiusEstimator;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 
 public class RadiusToEstimatedAction extends AbstractTMAction {
@@ -34,6 +34,6 @@ public class RadiusToEstimatedAction extends AbstractTMAction {
 		logger.log("Setting all spot radiuses to their estimated value.\n");
 		SpotCollection spots = model.getFilteredSpots();
 		for(Spot spot : spots)
-			spot.putFeature(SpotFeature.RADIUS, spot.getFeature(SpotFeature.ESTIMATED_DIAMETER) / 2);
+			spot.putFeature(Spot.RADIUS, spot.getFeature(RadiusEstimator.ESTIMATED_DIAMETER) / 2);
 	}
 }

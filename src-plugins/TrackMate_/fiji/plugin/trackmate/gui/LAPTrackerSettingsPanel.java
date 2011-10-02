@@ -2,11 +2,14 @@ package fiji.plugin.trackmate.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.util.List;
+import java.util.Map;
 
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.WindowConstants;
 
+import fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 
@@ -14,9 +17,12 @@ public class LAPTrackerSettingsPanel extends TrackerSettingsPanel {
 
 	private static final long serialVersionUID = -2536527408461090418L;
 	
-	private TrackerSettings settings;
 	private JPanelTrackerSettingsMain jPanelMain;
 	private JScrollPane jScrollPaneMain;
+
+	private TrackerSettings settings;
+	private List<String> features;
+	private  Map<String, String> featureNames;
 
 	{
 		//Set Look & Feel
@@ -31,9 +37,11 @@ public class LAPTrackerSettingsPanel extends TrackerSettingsPanel {
 	 * CONSTRUCTOR
 	 */
 	
-	public LAPTrackerSettingsPanel(TrackerSettings settings) {
+	public LAPTrackerSettingsPanel(TrackerSettings settings, List<String> features, Map<String, String> featureNames) {
 		super();
 		this.settings = settings;
+		this.features = features;
+		this.featureNames = featureNames;
 		initGUI();
 	}
 	
@@ -63,7 +71,7 @@ public class LAPTrackerSettingsPanel extends TrackerSettingsPanel {
 				jScrollPaneMain.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 				jScrollPaneMain.getVerticalScrollBar().setUnitIncrement(24);
 				{
-					jPanelMain = new JPanelTrackerSettingsMain(settings);
+					jPanelMain = new JPanelTrackerSettingsMain(settings, features, featureNames);
 					jScrollPaneMain.setViewportView(jPanelMain);
 				}
 			}
@@ -84,7 +92,10 @@ public class LAPTrackerSettingsPanel extends TrackerSettingsPanel {
 	*/
 	public static void main(String[] args) {
 		JFrame frame = new JFrame();
-		frame.getContentPane().add(new LAPTrackerSettingsPanel(new TrackerSettings()));
+		frame.getContentPane().add(new LAPTrackerSettingsPanel(
+				new TrackerSettings(),
+				BlobDescriptiveStatistics.FEATURES,
+				BlobDescriptiveStatistics.FEATURE_NAMES));
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();
 		frame.setVisible(true);

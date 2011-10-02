@@ -6,6 +6,10 @@ import ij.process.ImageProcessor;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 
@@ -16,30 +20,23 @@ import mpicbg.imglib.type.numeric.RealType;
 
 import com.mxgraph.util.mxBase64;
 
-import fiji.plugin.trackmate.SpotFeature;
+import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 
 /**
  * This class is used to take a snapshot of a {@link Spot} object (or collection) from 
  * its coordinates and an {@link ImagePlus} that contain the pixel data.
- * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Dec 2010
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Dec 2010 - 2011
  */
-public class SpotIconGrabber <T extends RealType<T>> extends IndependentSpotFeatureAnalyzer {
+public class SpotIconGrabber <T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
 
-	private float[] calibration;
-	private Image<T> img;
-	
-	public SpotIconGrabber(Image<T> originalImage, float[] calibration) {
-		this.img = originalImage;
-		this.calibration = calibration;
-	}
 	
 	@Override
 	public void process(Spot spot) {
 		// Get crop coordinates
-		final float radius = spot.getFeature(SpotFeature.RADIUS); // physical units, REQUIRED!
-		int x = Math.round((spot.getFeature(SpotFeature.POSITION_X) - radius) / calibration[0]); 
-		int y = Math.round((spot.getFeature(SpotFeature.POSITION_Y) - radius) / calibration[1]);
+		final float radius = spot.getFeature(Spot.RADIUS); // physical units, REQUIRED!
+		int x = Math.round((spot.getFeature(Spot.POSITION_X) - radius) / calibration[0]); 
+		int y = Math.round((spot.getFeature(Spot.POSITION_Y) - radius) / calibration[1]);
 		int width = Math.round(2 * radius / calibration[0]);
 		int height = Math.round(2 * radius / calibration[1]);
 		
@@ -49,7 +46,7 @@ public class SpotIconGrabber <T extends RealType<T>> extends IndependentSpotFeat
 		LocalizableByDimCursor<T> targetCursor = crop.createLocalizableByDimCursor();
 		if (img.getNumDimensions() > 2) {
 			int slice = 0;
-			slice = Math.round(spot.getFeature(SpotFeature.POSITION_Z) / calibration[2]);
+			slice = Math.round(spot.getFeature(Spot.POSITION_Z) / calibration[2]);
 			sourceCursor.setPosition(slice, 2);
 		}
 		
@@ -85,9 +82,31 @@ public class SpotIconGrabber <T extends RealType<T>> extends IndependentSpotFeat
 		}
 		
 	}
+	
+	
+	/*
+	 * FEATURE OUTPUT
+	 * We always return the empty list or map, because we do not want the spot icon feature
+	 * or whatever it would be to appear in the normal, numerical feature list.
+	 */
+	
+	@Override
+	public Collection<String> getFeatures() {
+		return new ArrayList<String>();
+	}
 
 	@Override
-	public SpotFeature getFeature() {
-		return null;
+	public Map<String, String> getFeatureShortNames() {
+		return new HashMap<String, String>();
+	}
+
+	@Override
+	public Map<String, String> getFeatureNames() {
+		return new HashMap<String, String>();
+	}
+
+	@Override
+	public Map<String, Dimension> getFeatureDimensions() {
+		return new HashMap<String, Dimension>();
 	}
 }

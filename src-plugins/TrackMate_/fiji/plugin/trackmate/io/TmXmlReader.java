@@ -27,7 +27,6 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
@@ -88,8 +87,8 @@ public class TmXmlReader implements TmXmlKeys {
 		settings.imp = getImage();
 		model.setSettings(settings);
 		// Spot Filters
-		List<FeatureFilter<SpotFeature>> spotFilters = getSpotFeatureFilters();
-		FeatureFilter<SpotFeature> initialFilter = getInitialFilter();
+		List<FeatureFilter> spotFilters = getSpotFeatureFilters();
+		FeatureFilter initialFilter = getInitialFilter();
 		model.setInitialSpotFilterValue(initialFilter.value);
 		model.setSpotFilters(spotFilters);
 		// Spots
@@ -102,7 +101,7 @@ public class TmXmlReader implements TmXmlKeys {
 		if (null != graph)
 			model.setGraph(graph);
 		// Track Filters
-		List<FeatureFilter<TrackFeature>> trackFilters = getTrackFeatureFilters();
+		List<FeatureFilter> trackFilters = getTrackFeatureFilters();
 		model.setTrackFilters(trackFilters);
 		// Filtered tracks
 		Set<Integer> filteredTrackIndices = getFilteredTracks();
@@ -118,14 +117,14 @@ public class TmXmlReader implements TmXmlKeys {
 	 * Return the initial threshold on quality stored in this file.
 	 * Return <code>null</code> if the initial threshold data cannot be found in the file.
 	 */
-	public FeatureFilter<SpotFeature> getInitialFilter() throws DataConversionException {
+	public FeatureFilter getInitialFilter() throws DataConversionException {
 		Element itEl = root.getChild(INITIAL_SPOT_FILTER_ELEMENT_KEY);
 		if (null == itEl)
 			return null;
-		SpotFeature feature = SpotFeature.valueOf(itEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME));
+		String feature 	= itEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
 		Float value 	= itEl.getAttribute(FILTER_VALUE_ATTRIBUTE_NAME).getFloatValue();
 		boolean isAbove	= itEl.getAttribute(FILTER_ABOVE_ATTRIBUTE_NAME).getBooleanValue();
-		FeatureFilter<SpotFeature> ft = new FeatureFilter<SpotFeature>(feature, value, isAbove);
+		FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
 		return ft;
 	}
 
@@ -135,17 +134,17 @@ public class TmXmlReader implements TmXmlKeys {
 	 * Return <code>null</code> if the spot feature filters data cannot be found in the file.
 	 */
 	@SuppressWarnings("unchecked")
-	public List<FeatureFilter<SpotFeature>> getSpotFeatureFilters() throws DataConversionException {
-		List<FeatureFilter<SpotFeature>> featureThresholds = new ArrayList<FeatureFilter<SpotFeature>>();
+	public List<FeatureFilter> getSpotFeatureFilters() throws DataConversionException {
+		List<FeatureFilter> featureThresholds = new ArrayList<FeatureFilter>();
 		Element ftCollectionEl = root.getChild(SPOT_FILTER_COLLECTION_ELEMENT_KEY);
 		if (null == ftCollectionEl)
 			return null;
 		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
 		for (Element ftEl : ftEls) {
-			SpotFeature feature = SpotFeature.valueOf(ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME));
+			String feature 	= ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
 			Float value 	= ftEl.getAttribute(FILTER_VALUE_ATTRIBUTE_NAME).getFloatValue();
 			boolean isAbove	= ftEl.getAttribute(FILTER_ABOVE_ATTRIBUTE_NAME).getBooleanValue();
-			FeatureFilter<SpotFeature> ft = new FeatureFilter<SpotFeature>(feature, value, isAbove);
+			FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
 			featureThresholds.add(ft);
 		}
 		return featureThresholds;
@@ -156,8 +155,8 @@ public class TmXmlReader implements TmXmlKeys {
 	 * Return <code>null</code> if the track feature filters data cannot be found in the file.
 	 */
 	@SuppressWarnings("unchecked")
-	public List<FeatureFilter<TrackFeature>> getTrackFeatureFilters() throws DataConversionException {
-		List<FeatureFilter<TrackFeature>> featureThresholds = new ArrayList<FeatureFilter<TrackFeature>>();
+	public List<FeatureFilter> getTrackFeatureFilters() throws DataConversionException {
+		List<FeatureFilter> featureThresholds = new ArrayList<FeatureFilter>();
 		Element ftCollectionEl = root.getChild(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
 		if (null == ftCollectionEl)
 			return null;
@@ -166,7 +165,7 @@ public class TmXmlReader implements TmXmlKeys {
 			TrackFeature feature = TrackFeature.valueOf(ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME));
 			Float value 	= ftEl.getAttribute(FILTER_VALUE_ATTRIBUTE_NAME).getFloatValue();
 			boolean isAbove	= ftEl.getAttribute(FILTER_ABOVE_ATTRIBUTE_NAME).getBooleanValue();
-			FeatureFilter<TrackFeature> ft = new FeatureFilter<TrackFeature>(feature, value, isAbove);
+			FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
 			featureThresholds.add(ft);
 		}
 		return featureThresholds;
@@ -488,14 +487,13 @@ public class TmXmlReader implements TmXmlKeys {
 	 * fetch the feature attributes from them, and returns them in a map.
 	 */
 	@SuppressWarnings("unchecked")
-	private static final Map<SpotFeature, Double> readTrackerFeatureMap(final Element element) throws DataConversionException {
-		Map<SpotFeature, Double> map = new HashMap<SpotFeature, Double>();
+	private static final Map<String, Double> readTrackerFeatureMap(final Element element) throws DataConversionException {
+		Map<String, Double> map = new HashMap<String, Double>();
 		List<Element> featurelinkingElements = element.getChildren(TRACKER_SETTINGS_FEATURE_ELEMENT);
 		for (Element el : featurelinkingElements) {
 			List<Attribute> atts = el.getAttributes();
 			for (Attribute att : atts) {
-				String featureStr = att.getName();
-				SpotFeature feature = SpotFeature.valueOf(featureStr);
+				String feature = att.getName();
 				Double cutoff = att.getDoubleValue();
 				map.put(feature, cutoff);
 			}
@@ -511,8 +509,8 @@ public class TmXmlReader implements TmXmlKeys {
 		if (null == name || name.equals(""))
 			name = "ID"+ID;
 		spot.setName(name);
-		for (SpotFeature feature : SpotFeature.values()) {
-			Attribute att = spotEl.getAttribute(feature.name());
+		for (String feature : SpotFeature.values()) {
+			Attribute att = spotEl.getAttribute(feature.name()); // FIXME: we do not know yet what are the feature stored
 			if (null == att)
 				continue;
 			spot.putFeature(feature, att.getFloatValue());

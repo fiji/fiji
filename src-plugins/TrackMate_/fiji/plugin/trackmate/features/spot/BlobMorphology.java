@@ -1,6 +1,10 @@
 package fiji.plugin.trackmate.features.spot;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.special.DiscCursor;
@@ -12,8 +16,8 @@ import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import Jama.EigenvalueDecomposition;
 import Jama.Matrix;
+import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.SpotImp;
 
 /**
@@ -57,18 +61,62 @@ import fiji.plugin.trackmate.SpotImp;
  *
  * @param <T>  the type of the input {@link Image}
  */
-public class BlobMorphology <T extends RealType<T>> extends IndependentSpotFeatureAnalyzer {
+public class BlobMorphology <T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
 
 	/*
-	 * Fields
+	 * CONSTANTS
 	 */
+
+	private final static String[] featurelist_sa 	= { "ELLIPSOIDFIT_SEMIAXISLENGTH_C", "ELLIPSOIDFIT_SEMIAXISLENGTH_B", 	"ELLIPSOIDFIT_SEMIAXISLENGTH_A" };
+	private final static String[] featurelist_phi 	= { "ELLIPSOIDFIT_AXISPHI_C", 		"ELLIPSOIDFIT_AXISPHI_B", 			"ELLIPSOIDFIT_AXISPHI_A" };
+	private final static String[] featurelist_theta = { "ELLIPSOIDFIT_AXISTHETA_C", 	"ELLIPSOIDFIT_AXISTHETA_B", 		"ELLIPSOIDFIT_AXISTHETA_A" }; 
+	/** The key name of the morphology feature this analyzer computes. */
+	public final static String MORPHOLOGY = "MORPHOLOGY";
 	
-	private final static SpotFeature[] featurelist_sa 	= {SpotFeature.ELLIPSOIDFIT_SEMIAXISLENGTH_C, 	SpotFeature.ELLIPSOIDFIT_SEMIAXISLENGTH_B, 	SpotFeature.ELLIPSOIDFIT_SEMIAXISLENGTH_A};
-	private final static SpotFeature[] featurelist_phi 	= {SpotFeature.ELLIPSOIDFIT_AXISPHI_C, 			SpotFeature.ELLIPSOIDFIT_AXISPHI_B, 		SpotFeature.ELLIPSOIDFIT_AXISPHI_A };
-	private final static SpotFeature[] featurelist_theta = {SpotFeature.ELLIPSOIDFIT_AXISTHETA_C, 		SpotFeature.ELLIPSOIDFIT_AXISTHETA_B, 		SpotFeature.ELLIPSOIDFIT_AXISTHETA_A}; 
-	/** The Feature characteristics this class computes. */
-	private static final SpotFeature FEATURE = SpotFeature.MORPHOLOGY;
-	
+	private static final ArrayList<String> 			FEATURES = new ArrayList<String>(10);
+	private static final HashMap<String, String> 	FEATURE_NAMES = new HashMap<String, String>(10);
+	private static final HashMap<String, String> 	FEATURE_SHORT_NAMES = new HashMap<String, String>(10);
+	private static final HashMap<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(10);
+	static {
+		FEATURES.add(MORPHOLOGY);
+		FEATURES.addAll(Arrays.asList(featurelist_sa));
+		FEATURES.addAll(Arrays.asList(featurelist_phi));
+		FEATURES.addAll(Arrays.asList(featurelist_theta));
+		
+		FEATURE_NAMES.put(MORPHOLOGY, "Morphology");
+		FEATURE_NAMES.put(featurelist_sa[0], "Ellipsoid C semi-axis length");
+		FEATURE_NAMES.put(featurelist_sa[1], "Ellipsoid B semi-axis length");
+		FEATURE_NAMES.put(featurelist_sa[2], "Ellipsoid A semi-axis length");
+		FEATURE_NAMES.put(featurelist_phi[0], "Ellipsoid C axis φ azimuth");
+		FEATURE_NAMES.put(featurelist_phi[1], "Ellipsoid B axis φ azimuth");
+		FEATURE_NAMES.put(featurelist_phi[2], "Ellipsoid A axis φ azimuth");
+		FEATURE_NAMES.put(featurelist_theta[0], "Ellipsoid C axis θ azimuth");
+		FEATURE_NAMES.put(featurelist_theta[1], "Ellipsoid B axis θ azimuth");
+		FEATURE_NAMES.put(featurelist_theta[2], "Ellipsoid A axis θ azimuth");
+
+		FEATURE_SHORT_NAMES.put(MORPHOLOGY, "Morpho.");
+		FEATURE_SHORT_NAMES.put(featurelist_sa[0], "lc");
+		FEATURE_SHORT_NAMES.put(featurelist_sa[1], "lb");
+		FEATURE_SHORT_NAMES.put(featurelist_sa[2], "la");
+		FEATURE_SHORT_NAMES.put(featurelist_phi[0], "φc");
+		FEATURE_SHORT_NAMES.put(featurelist_phi[1], "φb");
+		FEATURE_SHORT_NAMES.put(featurelist_phi[2], "φa");
+		FEATURE_SHORT_NAMES.put(featurelist_theta[0], "θc");
+		FEATURE_SHORT_NAMES.put(featurelist_theta[1], "θb");
+		FEATURE_SHORT_NAMES.put(featurelist_theta[2], "θa");
+		
+		FEATURE_DIMENSIONS.put(MORPHOLOGY, Dimension.NONE);
+		FEATURE_DIMENSIONS.put(featurelist_sa[0], Dimension.LENGTH);
+		FEATURE_DIMENSIONS.put(featurelist_sa[1], Dimension.LENGTH);
+		FEATURE_DIMENSIONS.put(featurelist_sa[2], Dimension.LENGTH);
+		FEATURE_DIMENSIONS.put(featurelist_phi[0], Dimension.ANGLE);
+		FEATURE_DIMENSIONS.put(featurelist_phi[1], Dimension.ANGLE);
+		FEATURE_DIMENSIONS.put(featurelist_phi[2], Dimension.ANGLE);
+		FEATURE_DIMENSIONS.put(featurelist_sa[0], Dimension.ANGLE);
+		FEATURE_DIMENSIONS.put(featurelist_sa[1], Dimension.ANGLE);
+		FEATURE_DIMENSIONS.put(featurelist_sa[2], Dimension.ANGLE);
+
+	}
 	/** Spherical shape, that is roughly a = b = c. */
 	public static final int SPHERE = 0;
 	/** Oblate shape, disk shaped, that is roughly a = b > c. */
@@ -82,43 +130,22 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentSpotFeatu
 	 *  considered significantly larger than the others. */
 	private static final double SIGNIFICANCE_FACTOR = 1.2;
 	
-	/** The image to extract the Feature characteristics from. */
-	private Image<T> img;
-	/** The Image calibration information. */
-	private float[] calibration;
-	/** Utility holder. */
-	private float[] coords;
-	
 	/*
-	 * CONSTRUCTORS
+	 * FIELDS
 	 */
 	
-	
-	public BlobMorphology (Image<T> img, float[] calibration) {
-		this.img = img;
-		this.calibration = calibration;
-		this.coords = new float[img.getNumDimensions()];
-	}
-	
-	
-	public BlobMorphology (Image<T> img) {
-		this(img, img.getCalibration());
-	}
+	/** Utility holder. */
+	private float[] coords = new float[3];
 	
 	/*
 	 * PUBLIC METHODS
 	 */
 	
 	
-	@Override
-	public SpotFeature getFeature() {
-		return FEATURE;
-	}
-	
 	
 	@Override
 	public void process(final Spot spot) {
-		final float radius = spot.getFeature(SpotFeature.RADIUS);
+		final float radius = spot.getFeature(Spot.RADIUS);
 		for (int i = 0; i < coords.length; i++) 
 			coords[i] = spot.getFeature(Spot.POSITION_FEATURES[i]);
 
@@ -207,7 +234,7 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentSpotFeatu
 			}
 
 			// Store the Spot morphology (needs to be outside the above loop)
-			spot.putFeature(SpotFeature.MORPHOLOGY, estimateMorphology(semiaxes_ordered));
+			spot.putFeature(MORPHOLOGY, estimateMorphology(semiaxes_ordered));
 			
 		} else if (img.getNumDimensions() == 2) {
 			
@@ -285,7 +312,7 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentSpotFeatu
 			spot.putFeature(featurelist_theta[2], 0);
 
 			// Store the Spot morphology (needs to be outside the above loop)
-			spot.putFeature(SpotFeature.MORPHOLOGY, estimateMorphology(semiaxes_ordered));
+			spot.putFeature(MORPHOLOGY, estimateMorphology(semiaxes_ordered));
 			
 		}
 	}
@@ -385,9 +412,10 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentSpotFeatu
 		ImageJFunctions.copyToImagePlus(img).show();
 		
 		start = System.currentTimeMillis();
-		BlobMorphology<UnsignedByteType> bm = new BlobMorphology<UnsignedByteType>(img, calibration);
+		BlobMorphology<UnsignedByteType> bm = new BlobMorphology<UnsignedByteType>();
+		bm.setTarget(img, calibration);
 		SpotImp spot = new SpotImp(center);
-		spot.putFeature(SpotFeature.RADIUS, max_radius);
+		spot.putFeature(Spot.RADIUS, max_radius);
 		bm.process(spot);
 		end = System.currentTimeMillis();
 		System.out.println("Blob morphology analyzed in " + (end-start) + " ms.");
@@ -476,6 +504,27 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentSpotFeatu
 		System.out.println(spot.echo());
 		
 		*/
+	}
+
+
+	@Override
+	public Collection<String> getFeatures() {
+		return FEATURES;
+	}
+
+	@Override
+	public Map<String, String> getFeatureShortNames() {
+		return FEATURE_SHORT_NAMES;
+	}
+
+	@Override
+	public Map<String, String> getFeatureNames() {
+		return FEATURE_NAMES;
+	}
+
+	@Override
+	public Map<String, Dimension> getFeatureDimensions() {
+		return FEATURE_DIMENSIONS;
 	}
 
 }

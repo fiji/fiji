@@ -21,7 +21,6 @@ import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
@@ -78,8 +77,8 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 	SegmenterSettingsPanel segmenterSettingsPanel;
 	InitFilterPanel initThresholdingPanel;
 	EnumChooserPanel<ViewType> displayerChooserPanel;
-	FilterGuiPanel<SpotFeature> spotFilterGuiPanel;
-	FilterGuiPanel<TrackFeature> trackFilterGuiPanel;
+	FilterGuiPanel spotFilterGuiPanel;
+	FilterGuiPanel trackFilterGuiPanel;
 	TrackerSettingsPanel trackerSettingsPanel;
 	DisplayerPanel displayerPanel;
 	EnumChooserPanel<SegmenterType> segmenterChoicePanel;
@@ -188,7 +187,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 		case SPOT_FILTER_GUI_KEY:
 			if (null != spotFilterGuiPanel) 
 				jPanelMain.remove(spotFilterGuiPanel);
-			spotFilterGuiPanel = new FilterGuiPanel<SpotFeature>(SpotFeature.QUALITY, "spots", model.getSpotFeatureValues(), model.getSpotFilters());
+			spotFilterGuiPanel = new FilterGuiPanel(Spot.QUALITY, "spots", model.getSpotFeatureValues(), model.getSpotFilters());
 			panel = spotFilterGuiPanel;
 			break;
 

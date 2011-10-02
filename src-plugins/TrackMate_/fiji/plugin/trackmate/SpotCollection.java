@@ -107,7 +107,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	 * Return a subset of this collection, containing only the spots with the 
 	 * feature satisfying the filter given. 
 	 */
-	public final SpotCollection filter(final FeatureFilter<SpotFeature> featurefilter) {
+	public final SpotCollection filter(final FeatureFilter featurefilter) {
 		SpotCollection selectedSpots = new SpotCollection();
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
@@ -153,7 +153,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	 * Return a subset of this collection, containing only the spots with the 
 	 * feature satisfying all the filters given. 
 	 */
-	public final SpotCollection filter(final Collection<FeatureFilter<SpotFeature>> filters) {
+	public final SpotCollection filter(final Collection<FeatureFilter> filters) {
 		SpotCollection selectedSpots = new SpotCollection();
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
@@ -165,7 +165,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 			spotToKeep = new ArrayList<Spot>(spotThisFrame);
 			spotToRemove = new ArrayList<Spot>(spotThisFrame.size());
 
-			for (FeatureFilter<SpotFeature> filter : filters) {
+			for (FeatureFilter filter : filters) {
 
 				tval = filter.value;
 				if (null == tval)
@@ -232,7 +232,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 		float d2;
 		for(Spot s : spots) {
 			d2 = s.squareDistanceTo(location);
-			if (d2 < s.getFeature(SpotFeature.RADIUS) * s.getFeature(SpotFeature.RADIUS)) {
+			if (d2 < s.getFeature(Spot.RADIUS) * s.getFeature(Spot.RADIUS)) {
 				return s;
 			}
 		}

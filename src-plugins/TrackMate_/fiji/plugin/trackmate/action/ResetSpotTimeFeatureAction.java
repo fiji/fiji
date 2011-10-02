@@ -9,7 +9,6 @@ import java.util.Set;
 import javax.swing.ImageIcon;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 
@@ -36,7 +35,7 @@ public class ResetSpotTimeFeatureAction extends AbstractTMAction {
 		for(int frame : frames) {
 			List<Spot> spots = model.getSpots().get(frame);
 			for(Spot spot : spots) {
-				spot.putFeature(SpotFeature.POSITION_T, frame * dt); 
+				spot.putFeature(Spot.POSITION_T, frame * dt); 
 			}
 			logger.setProgress((float) (frame + 1) / frames.size());
 		}

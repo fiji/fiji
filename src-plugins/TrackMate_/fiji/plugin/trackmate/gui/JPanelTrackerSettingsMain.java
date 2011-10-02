@@ -13,6 +13,8 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
+import java.util.Map;
 
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
@@ -22,6 +24,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
+import fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 public class JPanelTrackerSettingsMain extends javax.swing.JPanel {
@@ -72,12 +75,15 @@ public class JPanelTrackerSettingsMain extends javax.swing.JPanel {
 	private JTextField jTextFieldLinkingMaxDistance;
 	private JLabel jLabel3;
 	
-	
 	private TrackerSettings settings;
+	private List<String> features;
+	private Map<String, String> featureNames;
 
-	public JPanelTrackerSettingsMain(TrackerSettings settings) {
+	public JPanelTrackerSettingsMain(TrackerSettings settings, List<String> features, Map<String, String> featureNames) {
 		super();
 		this.settings = settings;
+		this.features = features;
+		this.featureNames = featureNames;
 		initGUI();
 	}
 	
@@ -194,7 +200,7 @@ public class JPanelTrackerSettingsMain extends javax.swing.JPanel {
 				jScrollPaneLinkingFeatures.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 				jScrollPaneLinkingFeatures.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 				{
-					jPanelLinkingFeatures = new JPanelFeatureSelectionGui();
+					jPanelLinkingFeatures = new JPanelFeatureSelectionGui(features, featureNames);
 					jScrollPaneLinkingFeatures.setViewportView(jPanelLinkingFeatures);
 				}
 			}
@@ -270,7 +276,7 @@ public class JPanelTrackerSettingsMain extends javax.swing.JPanel {
 				jScrollPaneGapClosingFeatures.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 				jScrollPaneGapClosingFeatures.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 				{
-					jPanelGapClosing = new JPanelFeatureSelectionGui();
+					jPanelGapClosing = new JPanelFeatureSelectionGui(features, featureNames);
 					jScrollPaneGapClosingFeatures.setViewportView(jPanelGapClosing);
 				}
 			}
@@ -346,7 +352,7 @@ public class JPanelTrackerSettingsMain extends javax.swing.JPanel {
 				jScrollPaneSplittingFeatures.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 				jScrollPaneSplittingFeatures.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 				{
-					jPanelSplittingFeatures = new JPanelFeatureSelectionGui();
+					jPanelSplittingFeatures = new JPanelFeatureSelectionGui(features, featureNames);
 					jScrollPaneSplittingFeatures.setViewportView(jPanelSplittingFeatures);
 				}
 			}
@@ -422,7 +428,7 @@ public class JPanelTrackerSettingsMain extends javax.swing.JPanel {
 				jScrollPaneMergingFeatures.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 				jScrollPaneMergingFeatures.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 				{
-					jPanelMergingFeatures = new JPanelFeatureSelectionGui();
+					jPanelMergingFeatures = new JPanelFeatureSelectionGui(features, featureNames);
 					jScrollPaneMergingFeatures.setViewportView(jPanelMergingFeatures);
 				}
 			}
@@ -456,7 +462,10 @@ public class JPanelTrackerSettingsMain extends javax.swing.JPanel {
 	 */
 	public static void main(String[] args) {
 		JFrame frame = new JFrame();
-		frame.getContentPane().add(new JPanelTrackerSettingsMain(new TrackerSettings()));
+		frame.getContentPane().add(new JPanelTrackerSettingsMain(
+				new TrackerSettings(),
+				BlobDescriptiveStatistics.FEATURES,
+				BlobDescriptiveStatistics.FEATURE_NAMES));
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();
 		frame.setVisible(true);

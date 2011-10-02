@@ -14,8 +14,11 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import javax.swing.ButtonGroup;
@@ -46,7 +49,7 @@ import fiji.plugin.trackmate.util.TMUtils;
 /**
  * 
  */
-public class FilterPanel <K extends Enum<K>>  extends javax.swing.JPanel {
+public class FilterPanel extends javax.swing.JPanel {
 	
 	static final Font FONT = new Font("Arial", Font.PLAIN, 11);
 	static final Font SMALL_FONT = FONT.deriveFont(10f);
@@ -65,10 +68,11 @@ public class FilterPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 	private XYPlot plot;
 	private IntervalMarker intervalMarker;
 	private double threshold;
-	private EnumMap<K, double[]> valuesMap;
+	private Map<String, double[]> valuesMap;
 	private XYTextSimpleAnnotation annotation;
-	private K key;
-	private K[] allKeys;
+	private String key;
+	private List<String> allKeys;
+	private Map<String, String> keyNames;
 	
 	private ArrayList<ChangeListener> listeners = new ArrayList<ChangeListener>();
 	
@@ -76,17 +80,18 @@ public class FilterPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 	 * CONSTRUCTOR
 	 */
 	
-	public FilterPanel(EnumMap<K, double[]> valuesMap, K selectedKey) {
+	public FilterPanel(List<String> allKeys, Map<String, String> keyNames, Map<String, double[]> valuesMap, int selectedKey) {
 		super();
 		this.valuesMap = valuesMap;		
-		this.allKeys = selectedKey.getDeclaringClass().getEnumConstants(); // get all enum values
+		this.allKeys = allKeys;
+		this.keyNames = keyNames;
 		initGUI();
-		jComboBoxFeature.setSelectedItem(selectedKey.toString());
+		jComboBoxFeature.setSelectedIndex(selectedKey);
 
 	}
 	
-	public FilterPanel(EnumMap<K, double[]> valuesMap) {
-		this(valuesMap, valuesMap.keySet().iterator().next());
+	public FilterPanel(Map<String, double[]> valuesMap, List<String> allKeys, Map<String, String> keyNames) {
+		this(allKeys, keyNames, valuesMap, 0);
 	}
 	
 	/*
@@ -130,7 +135,7 @@ public class FilterPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 	/** 
 	 * Return the Enum constant selected in this panel.
 	 */
-	public K getKey() { return key; }
+	public String getKey() { return key; }
 	
 	/**
 	 * Add an {@link ChangeListener} to this panel. The {@link ChangeListener} will
@@ -164,7 +169,7 @@ public class FilterPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 	}
 	
 	private void comboBoxSelectionChanged() {
-		key = allKeys[jComboBoxFeature.getSelectedIndex()];
+		key = allKeys.get(jComboBoxFeature.getSelectedIndex());
 		double[] values = valuesMap.get(key);
 		if (null == values) {
 			dataset = new LogHistogramDataset();
@@ -185,7 +190,7 @@ public class FilterPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 	}
 	
 	private void autoThreshold() {
-		K selectedFeature = allKeys[jComboBoxFeature.getSelectedIndex()];
+		String selectedFeature = allKeys.get(jComboBoxFeature.getSelectedIndex());
 		double[] values = valuesMap.get(selectedFeature);
 		if (null != values) {
 			threshold = TMUtils.otsuThreshold(valuesMap.get(selectedFeature));
@@ -207,10 +212,10 @@ public class FilterPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 			this.setMaximumSize(panelMaxSize);
 			this.setBorder(new LineBorder(annotationColor, 1, true));
 			{
-				String[] keyNames = new String[allKeys.length];
-				for (int i = 0; i < keyNames.length; i++) 
-					keyNames[i] = allKeys[i].toString();
-				ComboBoxModel jComboBoxFeatureModel = new DefaultComboBoxModel(keyNames);
+				String[] keyNames2 = new String[allKeys.size()];
+				for (int i = 0; i < keyNames2.length; i++) 
+					keyNames2[i] = keyNames.get(allKeys.get(i));
+				ComboBoxModel jComboBoxFeatureModel = new DefaultComboBoxModel(keyNames2);
 				jComboBoxFeature = new JComboBox();
 				this.add(jComboBoxFeature, new GridBagConstraints(0, 0, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(2, 5, 2, 5), 0, 0));
 				jComboBoxFeature.setModel(jComboBoxFeatureModel);
@@ -343,7 +348,7 @@ public class FilterPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 	}
 	
 	private void redrawThresholdMarker() {
-		K selectedFeature = allKeys[jComboBoxFeature.getSelectedIndex()];
+		String selectedFeature = allKeys.get(jComboBoxFeature.getSelectedIndex());
 		double[] values = valuesMap.get(selectedFeature);
 		if (null == values)
 			return;
@@ -388,12 +393,20 @@ public class FilterPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 		final int N_ITEMS = 100;
 		final Random ran = new Random();
 		double mean;
-		fiji.plugin.trackmate.SpotFeature[] features = new fiji.plugin.trackmate.SpotFeature[] { 
-				fiji.plugin.trackmate.SpotFeature.CONTRAST, 
-				fiji.plugin.trackmate.SpotFeature.ELLIPSOIDFIT_AXISPHI_A, 
-				fiji.plugin.trackmate.SpotFeature.MEAN_INTENSITY };
-		EnumMap<fiji.plugin.trackmate.SpotFeature, double[]> fv = new EnumMap<fiji.plugin.trackmate.SpotFeature, double[]>(fiji.plugin.trackmate.SpotFeature.class);
-		for (fiji.plugin.trackmate.SpotFeature feature : features) {
+		
+		String[] features = new String[] { 
+				fiji.plugin.trackmate.features.spot.BlobContrast.CONTRAST, 
+				fiji.plugin.trackmate.features.spot.BlobMorphology.MORPHOLOGY, 
+				fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics.MEAN_INTENSITY };
+		
+		Map<String, String> featureNames = new HashMap<String, String>();
+		featureNames.put(features[0], "Contrast");
+		featureNames.put(features[1], "Morphology");
+		featureNames.put(features[2], "Mean intensity");
+		
+		
+		Map<String, double[]> fv = new HashMap<String, double[]>();
+		for (String feature : features) {
 			double[] val = new double[N_ITEMS];
 			mean = ran.nextDouble() * 10;
 			for (int j = 0; j < val.length; j++) 
@@ -402,7 +415,7 @@ public class FilterPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 		}
 		
 		// Create GUI
-		FilterPanel<fiji.plugin.trackmate.SpotFeature> tp = new FilterPanel<fiji.plugin.trackmate.SpotFeature>(fv);
+		FilterPanel tp = new FilterPanel(fv, Arrays.asList(features), featureNames);
 		tp.resetAxes();
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(tp);

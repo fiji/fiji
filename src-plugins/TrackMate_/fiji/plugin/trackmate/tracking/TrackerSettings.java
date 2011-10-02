@@ -3,37 +3,27 @@ package fiji.plugin.trackmate.tracking;
 import java.util.HashMap;
 import java.util.Map;
 
-import fiji.plugin.trackmate.SpotFeature;
-
 public class TrackerSettings {
 	
 	private static final double 	DEFAULT_LINKING_DISTANCE_CUTOFF 		= 15.0;
-	private static final HashMap<SpotFeature, Double> DEFAULT_LINKING_FEATURE_PENALITIES = new HashMap<SpotFeature, Double>();
+	private static final HashMap<String, Double> DEFAULT_LINKING_FEATURE_PENALITIES = new HashMap<String, Double>();
 	
 	private static final boolean 	DEFAULT_ALLOW_GAP_CLOSING 				= true;
 	private static final double 	DEFAULT_GAP_CLOSING_TIME_CUTOFF 		= 4;
 	private static final double 	DEFAULT_GAP_CLOSING_DISTANCE_CUTOFF 	= 15.0;
-	private static final HashMap<SpotFeature, Double> DEFAULT_GAP_CLOSING_FEATURE_PENALTIES = new HashMap<SpotFeature, Double>();
-	static {
-		DEFAULT_GAP_CLOSING_FEATURE_PENALTIES.put(SpotFeature.MEAN_INTENSITY, 1d);
-	}
+	private static final HashMap<String, Double> DEFAULT_GAP_CLOSING_FEATURE_PENALTIES = new HashMap<String, Double>();
 	
 	private static final boolean 	DEFAULT_ALLOW_MERGING 					= false;
 	private static final double 	DEFAULT_MERGING_TIME_CUTOFF 			= 1;
 	private static final double 	DEFAULT_MERGING_DISTANCE_CUTOFF 		= 15.0;
-	private static final HashMap<SpotFeature, Double> DEFAULT_MERGING_FEATURE_PENALTIES = new HashMap<SpotFeature, Double>();
-	static {
-		DEFAULT_MERGING_FEATURE_PENALTIES.put(SpotFeature.MEAN_INTENSITY, 1d);
-	}
+	private static final HashMap<String, Double> DEFAULT_MERGING_FEATURE_PENALTIES = new HashMap<String, Double>();
+	
 
 	private static final boolean 	DEFAULT_ALLOW_SPLITTING 				= false;
 	private static final double 	DEFAULT_SPLITTING_TIME_CUTOFF 			= 1;
 	private static final double 	DEFAULT_SPLITTING_DISTANCE_CUTOFF 		= 15.0;
-	private static final HashMap<SpotFeature, Double> DEFAULT_SPLITTING_FEATURE_PENALTIES = new HashMap<SpotFeature, Double>();
-	static {
-		DEFAULT_SPLITTING_FEATURE_PENALTIES.put(SpotFeature.MEAN_INTENSITY, 1d);
-	}
-
+	private static final HashMap<String, Double> DEFAULT_SPLITTING_FEATURE_PENALTIES = new HashMap<String, Double>();
+	
 	private static final double 	DEFAULT_ALTERNATIVE_OBJECT_LINKING_COST_FACTOR = 1.05d;
 	private static final double 	DEFAULT_CUTOFF_PERCENTILE 				= 0.9d;
 	
@@ -43,7 +33,7 @@ public class TrackerSettings {
 	/** Max time difference over which particle linking is allowed.	 */
 	public double linkingDistanceCutOff 		= DEFAULT_LINKING_DISTANCE_CUTOFF;
 	/** Feature difference cutoffs for linking. */
-	public Map<SpotFeature, Double> linkingFeaturePenalties = DEFAULT_LINKING_FEATURE_PENALITIES; 
+	public Map<String, Double> linkingFeaturePenalties = DEFAULT_LINKING_FEATURE_PENALITIES; 
 	
 	/** Allow track segment gap closing? */
 	public boolean allowGapClosing 				= DEFAULT_ALLOW_GAP_CLOSING;
@@ -52,7 +42,7 @@ public class TrackerSettings {
 	/** Max distance over which segment gap closing is allowed. */
 	public double gapClosingDistanceCutoff 		= DEFAULT_GAP_CLOSING_DISTANCE_CUTOFF;
 	/** Feature difference cutoffs for gap closing. */
-	public Map<SpotFeature, Double> gapClosingFeaturePenalties = DEFAULT_GAP_CLOSING_FEATURE_PENALTIES; 
+	public Map<String, Double> gapClosingFeaturePenalties = DEFAULT_GAP_CLOSING_FEATURE_PENALTIES; 
 
 	/** Allow track segment merging? */
 	public boolean allowMerging 				= DEFAULT_ALLOW_MERGING;
@@ -61,7 +51,7 @@ public class TrackerSettings {
 	/** Max distance over which segment gap closing is allowed. */
 	public double mergingDistanceCutoff 		= DEFAULT_MERGING_DISTANCE_CUTOFF;
 	/** Feature difference cutoffs for merging. */
-	public Map<SpotFeature, Double> mergingFeaturePenalties = DEFAULT_MERGING_FEATURE_PENALTIES; 
+	public Map<String, Double> mergingFeaturePenalties = DEFAULT_MERGING_FEATURE_PENALTIES; 
 
 	/** Allow track segment splitting? */
 	public boolean allowSplitting				= DEFAULT_ALLOW_SPLITTING;
@@ -70,7 +60,7 @@ public class TrackerSettings {
 	/** Max distance over which segment splitting is allowed. */
 	public double splittingDistanceCutoff 		= DEFAULT_SPLITTING_DISTANCE_CUTOFF;
 	/** Feature difference cutoffs for splitting. */
-	public Map<SpotFeature, Double> splittingFeaturePenalties = DEFAULT_SPLITTING_FEATURE_PENALTIES; 
+	public Map<String, Double> splittingFeaturePenalties = DEFAULT_SPLITTING_FEATURE_PENALTIES; 
 
 	/** The factor used to create d and b in the paper, the alternative costs to linking objects. */
 	public double alternativeObjectLinkingCostFactor = DEFAULT_ALTERNATIVE_OBJECT_LINKING_COST_FACTOR;
@@ -131,13 +121,13 @@ public class TrackerSettings {
 	 * PRIVATE METHODS
 	 */
 	
-	private static String echoFeatureCuttofs(final Map<SpotFeature, Double> featurePenalties) {
+	private static String echoFeatureCuttofs(final Map<String, Double> featurePenalties) {
 		String str = "";
 		if (featurePenalties.isEmpty()) 
 			str += "    - no feature penalties\n";
 		else {
 			str += "    - with feature penalties:\n";
-			for (SpotFeature feature : featurePenalties.keySet()) {
+			for (String feature : featurePenalties.keySet()) {
 				str += "      - "+feature.toString() + ": weight = " + String.format("%.1f", featurePenalties.get(feature)) + '\n';
 			}
 		}

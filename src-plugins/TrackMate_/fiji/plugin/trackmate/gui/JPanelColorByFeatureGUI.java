@@ -10,7 +10,8 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -22,7 +23,7 @@ import javax.swing.JPanel;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
 
-public class JPanelColorByFeatureGUI<K extends Enum<K>> extends ActionListenablePanel {
+public class JPanelColorByFeatureGUI extends ActionListenablePanel {
 
 	/*
 	 * FIELDS
@@ -48,9 +49,10 @@ public class JPanelColorByFeatureGUI<K extends Enum<K>> extends ActionListenable
 	 * DEFAULT VISIBILITY
 	 */
 	
-	EnumMap<K, double[]> featureValues;
-	K setColorByFeature;
-	private K[] values;
+	Map<String, double[]> featureValues;
+	String setColorByFeature;
+	private Map<String, String> featureNames;
+	private List<String> features;
 
 
 	private ActionListenablePanel caller;
@@ -59,9 +61,10 @@ public class JPanelColorByFeatureGUI<K extends Enum<K>> extends ActionListenable
 	 * CONSTRUCTOR
 	 */
 	
-	public JPanelColorByFeatureGUI(final K featureType, final ActionListenablePanel caller) {
+	public JPanelColorByFeatureGUI(final List<String> features, final Map<String, String> featureNames, final ActionListenablePanel caller) {
 		super();
-		this.values = featureType.getDeclaringClass().getEnumConstants();
+		this.features = features;
+		this.featureNames = featureNames;
 		this.caller = caller;
 		initGUI();
 		
@@ -94,7 +97,7 @@ public class JPanelColorByFeatureGUI<K extends Enum<K>> extends ActionListenable
 		if (selection == 0) 
 			setColorByFeature = null;
 		else
-			setColorByFeature = values[selection-1];
+			setColorByFeature = features.get(selection-1);
 		caller.fireAction(COLOR_FEATURE_CHANGED);
 	}
 	
@@ -158,10 +161,10 @@ public class JPanelColorByFeatureGUI<K extends Enum<K>> extends ActionListenable
 				jLabelSetColorBy.setFont(SMALL_FONT);
 			}
 			{
-				featureStringList = new String[values.length+1];
+				featureStringList = new String[features.size()+1];
 				featureStringList[0] = "Default";
-				for (int i = 0; i < values.length; i++) 
-					featureStringList[i+1] = values[i].toString();
+				for (int i = 0; i < features.size(); i++) 
+					featureStringList[i+1] = featureNames.get(features.get(i));
 				ComboBoxModel jComboBoxSetColorByModel = new DefaultComboBoxModel(featureStringList);
 				jComboBoxSetColorBy = new JComboBox();
 				jPanelByFeature.add(Box.createHorizontalStrut(5));

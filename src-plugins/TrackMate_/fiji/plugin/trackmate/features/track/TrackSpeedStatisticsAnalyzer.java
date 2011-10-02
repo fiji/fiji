@@ -8,7 +8,6 @@ import mpicbg.imglib.util.Util;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 
@@ -44,7 +43,7 @@ public class TrackSpeedStatisticsAnalyzer implements TrackFeatureAnalyzer {
 				
 				// Edge velocity
 				Float d2 = source.squareDistanceTo(target);
-				Float dt = source.diffTo(target, SpotFeature.POSITION_T);
+				Float dt = source.diffTo(target, Spot.POSITION_T);
 				if (d2 == null || dt == null)
 					continue;
 				val = Math.sqrt(d2) / Math.abs(dt);

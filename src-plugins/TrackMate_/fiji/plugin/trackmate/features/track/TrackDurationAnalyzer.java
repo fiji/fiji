@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Set;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 
@@ -24,7 +23,7 @@ public class TrackDurationAnalyzer implements TrackFeatureAnalyzer{
 			Spot startSpot = null;
 			Spot endSpot = null;
 			for (Spot spot : track) {
-				t = spot.getFeature(SpotFeature.POSITION_T);
+				t = spot.getFeature(Spot.POSITION_T);
 				if (null == t)
 					continue;
 				allNull = false;

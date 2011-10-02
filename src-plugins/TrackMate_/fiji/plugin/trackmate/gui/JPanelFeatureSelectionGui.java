@@ -7,6 +7,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
@@ -19,7 +20,7 @@ import javax.swing.WindowConstants;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import fiji.plugin.trackmate.SpotFeature;
+import fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics;
 
 public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 
@@ -32,9 +33,13 @@ public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 	private JButton jButtonAdd;
 	
 	private Stack<JPanelFeatureRatioThreshold> featurePanels = new Stack<JPanelFeatureRatioThreshold>();
+	private List<String> features;
+	private Map<String, String> featureNames;
 	
-	public JPanelFeatureSelectionGui() {
+	public JPanelFeatureSelectionGui(List<String> features, Map<String, String> featureNames) {
 		super();
+		this.features = features;
+		this.featureNames = featureNames;
 		initGUI();
 	}
 	
@@ -42,8 +47,8 @@ public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 	 * PUBLIC METHODS
 	 */
 	
-	public Map<SpotFeature, Double>	 getFeatureRatios() {
-		Map<SpotFeature, Double> ratios = new HashMap<SpotFeature, Double>(featurePanels.size());
+	public Map<String, Double>	 getFeatureRatios() {
+		Map<String, Double> ratios = new HashMap<String, Double>(featurePanels.size());
 		for (JPanelFeatureRatioThreshold panel : featurePanels) 
 			ratios.put(panel.getSelectedFeature(), panel.getRatioThreshold());
 		return ratios;
@@ -66,7 +71,7 @@ public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 	 */
 	
 	private void addButtonPushed() {
-		JPanelFeatureRatioThreshold panel = new JPanelFeatureRatioThreshold();
+		JPanelFeatureRatioThreshold panel = new JPanelFeatureRatioThreshold(features, featureNames);
 		featurePanels.push(panel);
 		remove(jPanelButtons);
 		add(panel);
@@ -140,7 +145,10 @@ public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 		mainPanel.setSize(260, 300);
 		JScrollPane scrollPane = new JScrollPane();
 		scrollPane.setSize(260, 300);
-		JPanelFeatureSelectionGui instance = new JPanelFeatureSelectionGui();
+		JPanelFeatureSelectionGui instance = new JPanelFeatureSelectionGui(
+				BlobDescriptiveStatistics.FEATURES,
+				BlobDescriptiveStatistics.FEATURE_NAMES
+				);
 		scrollPane.setViewportView(instance);
 		mainPanel.add(scrollPane, BorderLayout.CENTER);
 		frame.getContentPane().add(mainPanel);
