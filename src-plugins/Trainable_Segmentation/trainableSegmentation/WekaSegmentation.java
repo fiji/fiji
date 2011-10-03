@@ -2839,9 +2839,9 @@ public class WekaSegmentation {
 					{
 						double pix1 = image1.getPixel(x, y) > binaryThreshold ? 1 : 0;
 						double pix2 = image2.getPixel(x, y) > binaryThreshold ? 1 : 0;
-						pixelError += Math.abs( pix1 - pix2 );
+						pixelError +=  ( pix1 - pix2 ) * ( pix1 - pix2 ) ;
 					}
-				return pixelError;
+				return Math.sqrt( pixelError );
 			}
 		};
 	}
