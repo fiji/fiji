@@ -14,7 +14,6 @@ import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.TrackMateFrame.PanelCard;
@@ -61,7 +60,7 @@ public class TrackMateFrameController implements ActionListener {
 
 	public TrackMateFrameController(final TrackMate_ plugin) {
 		this.plugin = plugin;
-		this.view = new TrackMateFrame(plugin.getModel());
+		this.view = new TrackMateFrame(plugin);
 		this.logger = view.getLogger();
 
 		plugin.setLogger(logger);
@@ -300,7 +299,7 @@ public class TrackMateFrameController implements ActionListener {
 			return;
 		}
 	}
-	
+
 	/**
 	 * Action taken after the GUI has been displayed. 
 	 */
@@ -673,31 +672,28 @@ public class TrackMateFrameController implements ActionListener {
 	private void execSpotFiltering() {
 		logger.log("Performing spot filtering on the following features:\n", Logger.BLUE_COLOR);
 		final TrackMateModel model = plugin.getModel();
-		List<FeatureFilter<SpotFeature>> featureFilters = view.spotFilterGuiPanel.getFeatureFilters();
+		List<FeatureFilter> featureFilters = view.spotFilterGuiPanel.getFeatureFilters();
 		model.setSpotFilters(featureFilters);
 		plugin.execSpotFiltering();
 
-		int ntotal = 0;
-		for(Collection<Spot> spots : model.getSpots().values())
-			ntotal += spots.size();
-				if (featureFilters == null || featureFilters.isEmpty()) {
-					logger.log("No feature threshold set, kept the " + ntotal + " spots.\n");
-				} else {
-					for (FeatureFilter<SpotFeature> ft : featureFilters) {
-						String str = "  - on "+ft.feature.name();
-						if (ft.isAbove) 
-							str += " above ";
-						else
-							str += " below ";
-						str += String.format("%.1f", ft.value);
-						str += '\n';
-						logger.log(str);
-					}
-					int nselected = 0;
-					for(Collection<Spot> spots : model.getFilteredSpots().values())
-						nselected += spots.size();
-							logger.log("Kept "+nselected+" spots out of " + ntotal + ".\n");
-				}		
+		int ntotal = model.getSpots().getNSpots();
+		if (featureFilters == null || featureFilters.isEmpty()) {
+			logger.log("No feature threshold set, kept the " + ntotal + " spots.\n");
+		} else {
+			for (FeatureFilter ft : featureFilters) {
+				String str = "  - on "+model.getSpotFeatureNames().get(ft.feature);
+				if (ft.isAbove) 
+					str += " above ";
+				else
+					str += " below ";
+				str += String.format("%.1f", ft.value);
+				str += '\n';
+				logger.log(str);
+			}
+			int nselected = model.getFilteredSpots().getNSpots();
+			logger.log("Kept "+nselected+" spots out of " + ntotal + ".\n");
+		}		
+
 	}
 
 	/**
@@ -708,7 +704,7 @@ public class TrackMateFrameController implements ActionListener {
 		new Thread("TrackMate track filtering thread") {
 			public void run() {
 				logger.log("Performing track filtering on the following features:\n", Logger.BLUE_COLOR);
-				List<FeatureFilter<TrackFeature>> featureFilters = view.trackFilterGuiPanel.getFeatureFilters();
+				List<FeatureFilter> featureFilters = view.trackFilterGuiPanel.getFeatureFilters();
 				final TrackMateModel model = plugin.getModel();
 				model.setTrackFilters(featureFilters);
 				plugin.execTrackFiltering();
@@ -716,8 +712,8 @@ public class TrackMateFrameController implements ActionListener {
 				if (featureFilters == null || featureFilters.isEmpty()) {
 					logger.log("No feature threshold set, kept the " + model.getNTracks() + " tracks.\n");
 				} else {
-					for (FeatureFilter<TrackFeature> ft : featureFilters) {
-						String str = "  - on "+ft.feature.name();
+					for (FeatureFilter ft : featureFilters) {
+						String str = "  - on "+model.getTrackFeatureNames().get(ft.feature);
 						if (ft.isAbove) 
 							str += " above ";
 						else

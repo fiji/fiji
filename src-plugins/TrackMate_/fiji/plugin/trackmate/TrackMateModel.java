@@ -282,6 +282,8 @@ public class TrackMateModel {
 
 	public TrackMateModel() {
 		graph.addGraphListener(new MyGraphListener());
+		// To initialize the spot features with the basic features:
+		setSpotFeatureAnalyzers(new ArrayList<SpotFeatureAnalyzer>());
 	}
 
 
@@ -785,7 +787,14 @@ public class TrackMateModel {
 		spotFeatureNames = new HashMap<String, String>();
 		spotFeatureShortNames = new HashMap<String, String>();
 		spotFeatureDimensions = new HashMap<String, Dimension>();
-
+		
+		// Add the basic features
+		spotFeatures.addAll(Spot.FEATURES);
+		spotFeatureNames.putAll(Spot.FEATURE_NAMES);
+		spotFeatureShortNames.putAll(Spot.FEATURE_SHORT_NAMES);
+		spotFeatureDimensions.putAll(Spot.FEATURE_DIMENSIONS);
+		
+		// Features from analyzers
 		for(SpotFeatureAnalyzer analyzer : spotFeatureAnalyzers) {
 			spotFeatures.addAll(analyzer.getFeatures());
 			spotFeatureNames.putAll(analyzer.getFeatureNames());
@@ -851,6 +860,38 @@ public class TrackMateModel {
 		}
 	}
 
+	
+	/**
+	 * Return the list of the track features that are dealt with in this model.
+	 */
+	public List<String> getTrackFeatures() {
+		return trackFeatures;
+	}
+	
+	/**
+	 * Return the name mapping of the track features that are dealt with in this model.
+	 * @return
+	 */
+	public Map<String, String> getTrackFeatureNames() {
+		return trackFeatureNames;
+	}
+
+	/**
+	 * Return the short name mapping of the track features that are dealt with in this model.
+	 * @return
+	 */
+	public Map<String, String> getTrackFeatureShortNames() {
+		return trackFeatureShortNames;
+	}
+
+	/**
+	 * Return the dimension mapping of the track features that are dealt with in this model.
+	 * @return
+	 */
+	public Map<String, Dimension> getTrackFeatureDimensions() {
+		return trackFeatureDimensions;
+	}
+	
 
 	/**
 	 * Return a map of {@link SpotFeature} values for the spot collection held

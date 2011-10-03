@@ -67,6 +67,7 @@ public class RadiusEstimator extends IndependentSpotFeatureAnalyzer {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public void process(Spot spot) {
+		coords = new float[img.getNumDimensions()];
 		for (int i = 0; i < coords.length; i++)
 			coords[i] = spot.getFeature(Spot.POSITION_FEATURES[i]);
 

@@ -13,6 +13,8 @@ import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -20,9 +22,11 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
+import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
 import fiji.plugin.trackmate.tracking.TrackerType;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
@@ -89,6 +93,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 	 */
 
 	private TrackMateModel model;
+	private TrackMate_ plugin;
 	private ArrayList<ActionListener> listeners = new ArrayList<ActionListener>();
 
 	private JPanel jPanelButtons;
@@ -121,8 +126,9 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 	 * CONSTRUCTOR
 	 */
 
-	public TrackMateFrame(TrackMateModel model) {
-		this.model = model;
+	public TrackMateFrame(TrackMate_ plugin) {
+		this.model = plugin.getModel();
+		this.plugin = plugin;
 		initGUI();
 		positionWindow();
 
@@ -187,7 +193,8 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 		case SPOT_FILTER_GUI_KEY:
 			if (null != spotFilterGuiPanel) 
 				jPanelMain.remove(spotFilterGuiPanel);
-			spotFilterGuiPanel = new FilterGuiPanel(Spot.QUALITY, "spots", model.getSpotFeatureValues(), model.getSpotFilters());
+			spotFilterGuiPanel = new  FilterGuiPanel(model.getSpotFeatures(), model.getSpotFilters(),  
+					model.getSpotFeatureNames(), model.getSpotFeatureValues(), "spots"); 
 			panel = spotFilterGuiPanel;
 			break;
 
@@ -200,14 +207,15 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 		case TUNE_TRACKER_KEY:
 			if (null != trackerSettingsPanel)
 				jPanelMain.remove(trackerSettingsPanel);
-			trackerSettingsPanel = TrackerSettingsPanel.createPanel(model.getSettings());
+			trackerSettingsPanel = TrackerSettingsPanel.createPanel(model.getSettings(), model.getSpotFeatures(), model.getSpotFeatureNames());
 			panel = trackerSettingsPanel;
 			break;
 
 		case TRACK_FILTER_GUI_KEY:
 			if (null != trackFilterGuiPanel) 
 				jPanelMain.remove(trackFilterGuiPanel);
-			trackFilterGuiPanel = new FilterGuiPanel<TrackFeature>(TrackFeature.TRACK_DURATION, "tracks", model.getTrackFeatureValues(), model.getTrackFilters());
+			trackFilterGuiPanel = new FilterGuiPanel(model.getTrackFeatures(), model.getTrackFilters(),
+					model.getTrackFeatureNames(), model.getTrackFeatureValues(), "tracks");
 			panel = trackFilterGuiPanel;
 			break;
 
