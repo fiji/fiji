@@ -21,7 +21,6 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
@@ -261,12 +260,12 @@ public class TmXmlWriter implements TmXmlKeys {
 			Element trackElement = new Element(TRACK_ELEMENT_KEY);
 			// Echo attributes and features
 			trackElement.setAttribute(TRACK_ID_ATTRIBUTE_NAME, ""+trackIndex);
-			for(TrackFeature feature : TrackFeature.values()) {
+			for(String feature : model.getTrackFeatureValues().keySet()) {
 				Float val = model.getTrackFeature(trackIndex, feature);
 				if (null == val) {
 					continue;
 				}
-				trackElement.setAttribute(feature.name(), val.toString());
+				trackElement.setAttribute(feature, val.toString());
 			}
 
 			// Echo edges

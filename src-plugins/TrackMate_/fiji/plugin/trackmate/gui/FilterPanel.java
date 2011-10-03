@@ -212,10 +212,8 @@ public class FilterPanel extends javax.swing.JPanel {
 			this.setMaximumSize(panelMaxSize);
 			this.setBorder(new LineBorder(annotationColor, 1, true));
 			{
-				String[] keyNames2 = new String[allKeys.size()];
-				for (int i = 0; i < keyNames2.length; i++) 
-					keyNames2[i] = keyNames.get(allKeys.get(i));
-				ComboBoxModel jComboBoxFeatureModel = new DefaultComboBoxModel(keyNames2);
+				ComboBoxModel jComboBoxFeatureModel = new DefaultComboBoxModel(
+						TMUtils.getArrayFromMaping(allKeys, keyNames).toArray(new String[] {}));
 				jComboBoxFeature = new JComboBox();
 				this.add(jComboBoxFeature, new GridBagConstraints(0, 0, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(2, 5, 2, 5), 0, 0));
 				jComboBoxFeature.setModel(jComboBoxFeatureModel);

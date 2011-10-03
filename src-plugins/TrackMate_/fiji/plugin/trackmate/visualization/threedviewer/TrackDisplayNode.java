@@ -1,7 +1,6 @@
 package fiji.plugin.trackmate.visualization.threedviewer;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import ij3d.ContentNode;
@@ -524,9 +523,9 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	public void getCenter(Tuple3d center) {
 		double x = 0, y = 0, z = 0;
 		for (Spot spot : model.getFilteredSpots()) {
-			x += spot.getFeature(SpotFeature.POSITION_X);
-			y += spot.getFeature(SpotFeature.POSITION_Y);
-			z += spot.getFeature(SpotFeature.POSITION_Z);
+			x += spot.getFeature(Spot.POSITION_X);
+			y += spot.getFeature(Spot.POSITION_Y);
+			z += spot.getFeature(Spot.POSITION_Z);
 		}
 		int nspot = model.getFilteredSpots().getNSpots();
 		x /= nspot;
@@ -544,13 +543,13 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		double zmax = Double.NEGATIVE_INFINITY;
 		float radius;
 		for (Spot spot : model.getFilteredSpots()) {
-			radius = spot.getFeature(SpotFeature.RADIUS);
-			if (xmax < spot.getFeature(SpotFeature.POSITION_X) + radius)
-				xmax = spot.getFeature(SpotFeature.POSITION_X) + radius;
-			if (ymax < spot.getFeature(SpotFeature.POSITION_Y) + radius)
-				ymax = spot.getFeature(SpotFeature.POSITION_Y) + radius;
-			if (zmax < spot.getFeature(SpotFeature.POSITION_Z) + radius)
-				zmax = spot.getFeature(SpotFeature.POSITION_Z) + radius;
+			radius = spot.getFeature(Spot.RADIUS);
+			if (xmax < spot.getFeature(Spot.POSITION_X) + radius)
+				xmax = spot.getFeature(Spot.POSITION_X) + radius;
+			if (ymax < spot.getFeature(Spot.POSITION_Y) + radius)
+				ymax = spot.getFeature(Spot.POSITION_Y) + radius;
+			if (zmax < spot.getFeature(Spot.POSITION_Z) + radius)
+				zmax = spot.getFeature(Spot.POSITION_Z) + radius;
 		}
 		max.x = xmax;
 		max.y = ymax;
@@ -565,13 +564,13 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		double zmin = Double.POSITIVE_INFINITY;
 		float radius;
 		for (Spot spot : model.getFilteredSpots()) {
-			radius = spot.getFeature(SpotFeature.RADIUS);
-			if (xmin > spot.getFeature(SpotFeature.POSITION_X) - radius)
-				xmin = spot.getFeature(SpotFeature.POSITION_X) - radius;
-			if (ymin > spot.getFeature(SpotFeature.POSITION_Y) - radius)
-				ymin = spot.getFeature(SpotFeature.POSITION_Y) - radius;
-			if (zmin > spot.getFeature(SpotFeature.POSITION_Z) - radius)
-				zmin = spot.getFeature(SpotFeature.POSITION_Z) - radius;
+			radius = spot.getFeature(Spot.RADIUS);
+			if (xmin > spot.getFeature(Spot.POSITION_X) - radius)
+				xmin = spot.getFeature(Spot.POSITION_X) - radius;
+			if (ymin > spot.getFeature(Spot.POSITION_Y) - radius)
+				ymin = spot.getFeature(Spot.POSITION_Y) - radius;
+			if (zmin > spot.getFeature(Spot.POSITION_Z) - radius)
+				zmin = spot.getFeature(Spot.POSITION_Z) - radius;
 		}
 		min.x = xmin;
 		min.y = ymin;

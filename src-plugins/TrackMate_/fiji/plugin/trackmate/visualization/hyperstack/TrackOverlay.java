@@ -22,7 +22,6 @@ import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.util.gui.OverlayedImageCanvas.Overlay;
@@ -62,7 +61,7 @@ public class TrackOverlay implements Overlay {
 		Color defaultColor = (Color) displaySettings.get(TrackMateModelView.KEY_COLOR);
 		edgeColors = new HashMap<Integer, Color>(ntracks);
 
-		final TrackFeature feature = (TrackFeature) displaySettings.get(TrackMateModelView.KEY_TRACK_COLOR_FEATURE);
+		final String feature = (String) displaySettings.get(TrackMateModelView.KEY_TRACK_COLOR_FEATURE);
 		if (feature != null) {
 
 			// Get min & max

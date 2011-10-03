@@ -17,7 +17,7 @@ import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 
-public class RadiusEstimator <T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
+public class RadiusEstimator extends IndependentSpotFeatureAnalyzer {
 
 	/*
 	 * CONSTANT
@@ -44,8 +44,6 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentSpotFeat
 	 * FIELDS
 	 */
 	
-	private Image<T> img;
-	private float[] calibration;
 	/** Utility holder. */
 	private float[] coords;
 	/** The number of different diameters to try. */
@@ -66,6 +64,7 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentSpotFeat
 	 */
 	public RadiusEstimator() { }	
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public void process(Spot spot) {
 		for (int i = 0; i < coords.length; i++)
@@ -82,11 +81,11 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentSpotFeat
 		final float[] ring_intensities = new float[nDiameters];
 		final int[]    ring_volumes = new int[nDiameters];
 
-		final DomainCursor<T> cursor;
+		final DomainCursor<? extends RealType<?>> cursor;
 		if (img.getNumDimensions() == 3)
-			cursor = new SphereCursor<T>(img, coords, diameters[nDiameters-2]/2, calibration);
+			cursor = new SphereCursor(img, coords, diameters[nDiameters-2]/2, calibration);
 		else
-			cursor = new DiscCursor<T>(img, coords, diameters[nDiameters-2]/2, calibration);
+			cursor = new DiscCursor(img, coords, diameters[nDiameters-2]/2, calibration);
 		double d2;
 		int i;
 		while(cursor.hasNext())  {
@@ -190,7 +189,7 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentSpotFeat
 		imp.show();
 		
 		// Apply the estimator
-		RadiusEstimator<UnsignedByteType> es = new RadiusEstimator<UnsignedByteType>();
+		RadiusEstimator es = new RadiusEstimator();
 		es.setTarget(testImage, calibration);
 		es.nDiameters = 20;
 		

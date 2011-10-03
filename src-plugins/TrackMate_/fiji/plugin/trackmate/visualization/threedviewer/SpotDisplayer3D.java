@@ -21,8 +21,6 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.SpotFeature;
-import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
@@ -277,7 +275,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			float[] coords = new float[3];
 			for(Spot spot : spotsThisFrame) {
 				spot.getPosition(coords);
-				radius = spot.getFeature(SpotFeature.RADIUS);
+				radius = spot.getFeature(Spot.RADIUS);
 				pos = new float[] {coords[0], coords[1], coords[2], radius*radiusRatio};
 				centers.put(spot, new Point4f(pos));
 			}
@@ -310,13 +308,13 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			spotsThisFrame = model.getSpots().get(key);
 			spotGroup = blobs.get(key);
 			for(Spot spot : spotsThisFrame)
-				spotGroup.setRadius(spot, radiusRatio*spot.getFeature(SpotFeature.RADIUS));
+				spotGroup.setRadius(spot, radiusRatio*spot.getFeature(Spot.RADIUS));
 		}
 	}
 
 	private void updateSpotColors() {
 		final Color color = (Color) displaySettings.get(KEY_COLOR);
-		final SpotFeature feature = (SpotFeature) displaySettings.get(KEY_SPOT_COLOR_FEATURE);
+		final String feature = (String) displaySettings.get(KEY_SPOT_COLOR_FEATURE);
 
 		if (null == feature) {
 			for(int key : blobs.keySet())
@@ -354,7 +352,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	}
 
 	private void updateTrackColors() {
-		final TrackFeature feature = (TrackFeature) displaySettings.get(KEY_TRACK_COLOR_FEATURE);
+		final String feature = (String) displaySettings.get(KEY_TRACK_COLOR_FEATURE);
 		if (null == feature) {
 			trackNode.computeTrackColors();
 

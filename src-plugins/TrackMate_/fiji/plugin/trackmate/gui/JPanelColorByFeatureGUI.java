@@ -42,7 +42,6 @@ public class JPanelColorByFeatureGUI extends ActionListenablePanel {
 	private Canvas canvasColor;
 	private JPanel jPanelColor;
 	
-	private String[] featureStringList;
 	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
 
 	/*
@@ -161,7 +160,7 @@ public class JPanelColorByFeatureGUI extends ActionListenablePanel {
 				jLabelSetColorBy.setFont(SMALL_FONT);
 			}
 			{
-				featureStringList = new String[features.size()+1];
+				String[] featureStringList = new String[features.size()+1];
 				featureStringList[0] = "Default";
 				for (int i = 0; i < features.size(); i++) 
 					featureStringList[i+1] = featureNames.get(features.get(i));

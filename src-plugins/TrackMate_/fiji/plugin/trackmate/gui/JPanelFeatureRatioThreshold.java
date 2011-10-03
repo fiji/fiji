@@ -13,6 +13,7 @@ import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
 import fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics;
+import fiji.plugin.trackmate.util.TMUtils;
 
 public class JPanelFeatureRatioThreshold extends javax.swing.JPanel {
 
@@ -58,10 +59,8 @@ public class JPanelFeatureRatioThreshold extends javax.swing.JPanel {
 			this.setSize(280, 40);
 			this.setLayout(null);
 			{
-				String[] featureNames2 = new String[features.size()];
-				for (int i = 0; i < features.size(); i++) 
-					featureNames2[i] = featureNames.get(features.get(i));
-				ComboBoxModel jComboBoxFeatureModel = new DefaultComboBoxModel(featureNames2);
+				ComboBoxModel jComboBoxFeatureModel = new DefaultComboBoxModel(
+						TMUtils.getArrayFromMaping(features, featureNames).toArray(new String[] {}));
 				jComboBoxFeature = new JComboBox();
 				this.add(jComboBoxFeature);
 				jComboBoxFeature.setModel(jComboBoxFeatureModel);

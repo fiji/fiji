@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.visualization.trackscheme;
+package fiji.plugin.trackmate.tests;
 
 import ij.ImagePlus;
 
@@ -9,12 +9,13 @@ import org.jdom.JDOMException;
 
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView.ViewType;
+import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class TrackVisualizerTestDrive {
@@ -36,7 +37,7 @@ public class TrackVisualizerTestDrive {
 		for(int i=0; i<model.getNFilteredTracks(); i++) 
 			System.out.println(" - "+model.trackToString(i));
 		
-		FeatureFilter<TrackFeature> filter = new FeatureFilter<TrackFeature>(TrackFeature.NUMBER_SPOTS, 50f, true);
+		FeatureFilter filter = new FeatureFilter(TrackBranchingAnalyzer.NUMBER_SPOTS, 50f, true);
 		model.addTrackFilter(filter);
 		plugin.execTrackFiltering();
 		System.out.println("After filtering, retaining "+model.getNFilteredTracks()+" tracks.");

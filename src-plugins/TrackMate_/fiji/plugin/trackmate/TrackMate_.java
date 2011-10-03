@@ -1,6 +1,14 @@
 package fiji.plugin.trackmate;
 
-import fiji.plugin.trackmate.features.spot.SpotFeatureFacade;
+import fiji.plugin.trackmate.features.spot.BlobContrast;
+import fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics;
+import fiji.plugin.trackmate.features.spot.BlobMorphology;
+import fiji.plugin.trackmate.features.spot.RadiusEstimator;
+import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzer;
+import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
+import fiji.plugin.trackmate.features.track.TrackDurationAnalyzer;
+import fiji.plugin.trackmate.features.track.TrackFeatureAnalyzer;
+import fiji.plugin.trackmate.features.track.TrackSpeedStatisticsAnalyzer;
 import fiji.plugin.trackmate.gui.TrackMateFrameController;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.SpotTracker;
@@ -42,23 +50,29 @@ public class TrackMate_ implements PlugIn {
 	private TrackMateModel model;
 	private boolean useMultithreading = DEFAULT_USE_MULTITHREADING;
 
+	private List<SpotFeatureAnalyzer> spotFeatureAnalyzers;
+	private List<TrackFeatureAnalyzer> trackFeatureAnalyzers;
 
 
 	/*
 	 * CONSTRUCTORS
 	 */
 
-	public TrackMate_() {
-		this(new TrackMateModel());
-	}
-
-	public TrackMate_(TrackMateModel model) {
-		this.model = model;
-	}
-	
 	public TrackMate_(Settings settings) {
 		this();
 		model.setSettings(settings);
+	}
+
+	public TrackMate_() {
+		this(new TrackMateModel());
+	}
+	
+	public TrackMate_(TrackMateModel model) {
+		this.model = model;
+		this.spotFeatureAnalyzers = createSpotFeatureAnalyzerList();
+		this.trackFeatureAnalyzers = createTrackFeatureAnalyzerList();
+		model.setSpotFeatureAnalyzers(spotFeatureAnalyzers);
+		model.setTrackFeatureAnalyzers(trackFeatureAnalyzers);
 	}
 
 
@@ -75,6 +89,40 @@ public class TrackMate_ implements PlugIn {
 	}
 
 	/*
+	 * PROTECTED METHODS
+	 */
+	
+	/**
+	 * Hook for subclassers.
+	 * <p>
+	 * Create the list of {@link SpotFeatureAnalyzer} that will be used to compute spot features.
+	 * Overwrite this method if you want to add your {@link SpotFeatureAnalyzer}.
+	 */
+	protected List<SpotFeatureAnalyzer> createSpotFeatureAnalyzerList() {
+		List<SpotFeatureAnalyzer> analyzers = new ArrayList<SpotFeatureAnalyzer>(5);
+		analyzers.add(new BlobDescriptiveStatistics());
+		analyzers.add(new BlobContrast());
+		analyzers.add(new RadiusEstimator());
+		analyzers.add(new BlobMorphology());
+//		analyzers.add(new SpotIconGrabber()); // Takes too long. And we need it only at the end, and we can do it with an action.
+		return analyzers;
+	}
+	
+	/**
+	 * Hook for subclassers.
+	 * <p>
+	 * Create the list of {@link TrackFeatureAnalyzer} that will be used to compute track features.
+	 * Overwrite this method if you want to add your {@link TrackFeatureAnalyzer}.
+	 */
+	protected List<TrackFeatureAnalyzer> createTrackFeatureAnalyzerList() {
+		List<TrackFeatureAnalyzer> analyzers = new ArrayList<TrackFeatureAnalyzer>(3);
+		analyzers.add(new TrackBranchingAnalyzer());
+		analyzers.add(new TrackDurationAnalyzer());
+		analyzers.add(new TrackSpeedStatisticsAnalyzer());
+		return analyzers;
+	}
+	
+	/*
 	 * METHODS
 	 */
 
@@ -86,17 +134,25 @@ public class TrackMate_ implements PlugIn {
 		model.setLogger(logger);
 	}
 
-
+	/**
+	 * Return a list of the {@link SpotFeatureAnalyzer} that are currently registered in this plugin.
+	 * <p>
+	 * Note: the features that will be actually computed are a subset of this list and can be specified 
+	 * to the model, using the {@link TrackMateModel#setSpotFeatureAnalyzers(List)} method. 
+	 * @see #createSpotFeatureAnalyzerList()
+	 */
+	public List<SpotFeatureAnalyzer> getAvailableSpotFeatureAnalyzers() {
+		return spotFeatureAnalyzers;
+	}
+	
 	/*
 	 * PROCESSES
 	 */
 
-
 	/**
 	 * Calculate all features for all segmented spots.
 	 * <p>
-	 * Features are calculated for each spot, using their location, and the raw image. See the {@link SpotFeatureFacade} class
-	 * for details. 
+	 * Features are calculated for each spot, using their location, and the raw image. 
 	 */
 	public void computeSpotFeatures() {
 		model.computeSpotFeatures(model.getSpots());

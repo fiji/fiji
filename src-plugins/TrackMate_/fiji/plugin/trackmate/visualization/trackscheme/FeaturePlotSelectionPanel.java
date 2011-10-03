@@ -8,6 +8,8 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
@@ -22,13 +24,15 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
+import fiji.plugin.trackmate.util.TMUtils;
+
 /**
  * A simple Panel to allow the selection of a X key amongst an enum, and of multiple Y keys
  * from the same enum. This is intended as a GUI panel to prepare for the plotting of data.
  * 
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - January 2011
  */
-public class FeaturePlotSelectionPanel <K extends Enum<K>> extends javax.swing.JPanel {
+public class FeaturePlotSelectionPanel extends javax.swing.JPanel {
 	
 	private static final long serialVersionUID = 4995336293032921408L;
 	private static final ImageIcon ADD_ICON = new ImageIcon(FeaturePlotSelectionPanel.class.getResource("resources/add.png"));
@@ -49,9 +53,9 @@ public class FeaturePlotSelectionPanel <K extends Enum<K>> extends javax.swing.J
 	
 	private Stack<JComboBox> comboBoxes = new Stack<JComboBox>();
 	private Stack<Component> struts = new Stack<Component>();
-	private K xKey;
-	private K[] allKeys;
-	private String[] keyNames;
+	private String xKey;
+	private List<String> features;
+	private Map<String, String> featureNames;
 	
 	{
 		//Set Look & Feel
@@ -62,13 +66,11 @@ public class FeaturePlotSelectionPanel <K extends Enum<K>> extends javax.swing.J
 		}
 	}
 
-	public FeaturePlotSelectionPanel(K xKey) {
+	public FeaturePlotSelectionPanel(String xKey, List<String> features, Map<String, String> featureNames) {
 		super();
 		this.xKey = xKey;
-		this.allKeys = xKey.getDeclaringClass().getEnumConstants();
-		this.keyNames = new String[allKeys.length];
-		for (int i = 0; i < keyNames.length; i++) 
-			keyNames[i] = allKeys[i].toString();
+		this.features = features;
+		this.featureNames = featureNames;
 		initGUI();
 		addFeature();
 	}
@@ -80,18 +82,18 @@ public class FeaturePlotSelectionPanel <K extends Enum<K>> extends javax.swing.J
 	/**
 	 * Return the enum constant selected in the X combo-box feature.
 	 */
-	public K getXKey() {
-		return allKeys[jComboBoxXFeature.getSelectedIndex()];
+	public String getXKey() {
+		return features.get(jComboBoxXFeature.getSelectedIndex());
 	}
 	
 	/**
 	 * Return a set of the keys selected in the Y feature panel. Since we
-	 * use a {@link Set}, deplicates are trimmed.
+	 * use a {@link Set}, duplicates are trimmed.
 	 */
-	public Set<K> getYKeys() {
-		Set<K> yKeys = new HashSet<K>(comboBoxes.size());
+	public Set<String> getYKeys() {
+		Set<String> yKeys = new HashSet<String>(comboBoxes.size());
 		for(JComboBox box : comboBoxes)
-			yKeys.add(allKeys[box.getSelectedIndex()]);
+			yKeys.add(features.get(box.getSelectedIndex()));
 		return yKeys;
 	}
 	
@@ -105,7 +107,8 @@ public class FeaturePlotSelectionPanel <K extends Enum<K>> extends javax.swing.J
 		if (comboBoxes.size() > MAX_FEATURE_ALLOWED)
 			return;
 		
-		ComboBoxModel jComboBoxYFeatureModel = new DefaultComboBoxModel(keyNames);
+		ComboBoxModel jComboBoxYFeatureModel = new DefaultComboBoxModel(
+				TMUtils.getArrayFromMaping(features, featureNames).toArray(new String[] {}));
 		JComboBox jComboBoxYFeature = new JComboBox();
 		jComboBoxYFeature.setModel(jComboBoxYFeatureModel);
 		jComboBoxYFeature.setPreferredSize(COMBO_BOX_SIZE);
@@ -114,7 +117,7 @@ public class FeaturePlotSelectionPanel <K extends Enum<K>> extends javax.swing.J
 		
 		if (!comboBoxes.isEmpty()) {
 			int newIndex = comboBoxes.get(comboBoxes.size()-1).getSelectedIndex()+1;
-			if (newIndex >= allKeys.length)
+			if (newIndex >= features.size())
 				newIndex = 0;
 			jComboBoxYFeature.setSelectedIndex(newIndex);
 		}
@@ -150,13 +153,14 @@ public class FeaturePlotSelectionPanel <K extends Enum<K>> extends javax.swing.J
 				jLabelXFeature.setBounds(10, 5, 148, 14);
 			}
 			{
-				ComboBoxModel jComboBoxXFeatureModel = new DefaultComboBoxModel(keyNames);
+				ComboBoxModel jComboBoxXFeatureModel = new DefaultComboBoxModel(
+						TMUtils.getArrayFromMaping(features, featureNames).toArray(new String[] {}));
 				jComboBoxXFeature = new JComboBox();
 				this.add(jComboBoxXFeature);
 				jComboBoxXFeature.setModel(jComboBoxXFeatureModel);
 				jComboBoxXFeature.setFont(SMALL_FONT);
 				jComboBoxXFeature.setBounds(10, 25, COMBO_BOX_SIZE.width, COMBO_BOX_SIZE.height);
-				jComboBoxXFeature.setSelectedIndex(xKey.ordinal());
+				jComboBoxXFeature.setSelectedIndex(features.indexOf(xKey));
 			}
 			{
 				jLabelYFeatures = new JLabel();

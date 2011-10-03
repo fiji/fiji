@@ -38,7 +38,6 @@ import com.mxgraph.view.mxPerimeter;
 
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 import fiji.plugin.trackmate.TrackMateModelChangeListener;
@@ -260,7 +259,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 						String style = cell.getStyle();
 						style = mxUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64,"+spot.getImageString());
 						graph.getModel().setStyle(cell, style);
-						int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(SpotFeature.RADIUS) / settings.dx));
+						int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Spot.RADIUS) / settings.dx));
 						height = Math.max(height, DEFAULT_CELL_HEIGHT/3);
 						graph.getModel().getGeometry(cell).setHeight(height);
 
@@ -294,8 +293,8 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	}
 
 	public void plotSelectionData() {
-		SpotFeature xFeature = infoPane.getFeatureSelectionPanel().getXKey();
-		Set<SpotFeature> yFeatures = infoPane.getFeatureSelectionPanel().getYKeys();
+		String xFeature = infoPane.getFeatureSelectionPanel().getXKey();
+		Set<String> yFeatures = infoPane.getFeatureSelectionPanel().getYKeys();
 
 		if (DEBUG) {
 			System.out.println("[TrackSchemeFrame] plotSelectionData(): X is "+xFeature+" and Ys are "+yFeatures);
@@ -452,7 +451,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		// Instantiate JGraphX cell
 		cellAdded = graph.addJGraphTVertex(spot);
 		// Position it
-		float instant = spot.getFeature(SpotFeature.POSITION_T);
+		float instant = spot.getFeature(Spot.POSITION_T);
 		double x = (targetColumn-1) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
 		Integer row = graphComponent.getRowForInstant().get(instant);
 		if (null == row) {
@@ -466,7 +465,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 			row = row + 1;
 		}
 		double y = (0.5 + row) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2; 
-		int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(SpotFeature.RADIUS) / settings.dx));
+		int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Spot.RADIUS) / settings.dx));
 		height = Math.max(height, 12);
 		mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
 		cellAdded.setGeometry(geometry);

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.swing.Box;
@@ -32,7 +33,6 @@ import org.jfree.data.xy.XYSeriesCollection;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.util.TMUtils;
 
@@ -41,18 +41,25 @@ public class SpotFeatureGrapher extends JFrame {
 	private static final long serialVersionUID = 5983064022212100254L;
 	private static final Shape DEFAULT_SHAPE = new Ellipse2D.Double(-3, -3, 6, 6);
 	private InterpolatePaintScale paints = InterpolatePaintScale.Jet; 
-	private SpotFeature xFeature;
-	private Set<SpotFeature> yFeatures;
+	private String xFeature;
+	private Set<String> yFeatures;
 	private List<Spot> spots;
 	private TrackMateModel model;
+	private Dimension xDimension;
+	private Map<String, Dimension> yDimensions;
+	private Map<String, String> featureNames;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public SpotFeatureGrapher(final SpotFeature xFeature, final Set<SpotFeature> yFeatures, final List<Spot> spots, final TrackMateModel model) {
+	public SpotFeatureGrapher(final String xFeature, final Set<String> yFeatures,
+			final List<Spot> spots, final TrackMateModel model) {
 		this.xFeature = xFeature;
+		this.xDimension = model.getSpotFeatureDimensions().get(xFeature);
 		this.yFeatures = yFeatures;
+		this.yDimensions = model.getSpotFeatureDimensions();
+		this.featureNames = model.getSpotFeatureNames();
 		this.spots = spots;
 		this.model = model;
 		initGUI();
@@ -69,13 +76,13 @@ public class SpotFeatureGrapher extends JFrame {
 		final Settings settings = model.getSettings();
 		
 		// X label
-		String xAxisLabel = xFeature.shortName() + " (" + TMUtils.getUnitsFor(xFeature.getDimension(), settings)+")";
+		String xAxisLabel = xFeature + " (" + TMUtils.getUnitsFor(xDimension, settings)+")";
 		
 		// Find how many different dimensions
 		HashSet<Dimension> dimensions = new HashSet<Dimension>();
 		{
-			for (SpotFeature yFeature : yFeatures) 
-				dimensions.add(yFeature.getDimension());
+			for (String yFeature : yFeatures) 
+				dimensions.add(yDimensions.get(yFeature));
 		}
 		
 		// Generate one panel per different dimension
@@ -86,27 +93,27 @@ public class SpotFeatureGrapher extends JFrame {
 			String yAxisLabel = TMUtils.getUnitsFor(dimension, settings);
 			
 			// Collect suitable feature for this dimension
-			ArrayList<SpotFeature> featuresThisDimension = new ArrayList<SpotFeature>();
-			for (SpotFeature yFeature : yFeatures)
-				if (yFeature.getDimension().equals(dimension))
+			ArrayList<String> featuresThisDimension = new ArrayList<String>();
+			for (String yFeature : yFeatures)
+				if (yDimensions.get(yFeature).equals(dimension))
 					featuresThisDimension.add(yFeature);
 			
 
 			// Title
 			String title = "";
 			{
-				Iterator<SpotFeature> it = featuresThisDimension.iterator();
-				title = "Plot of "+it.next().shortName();
+				Iterator<String> it = featuresThisDimension.iterator();
+				title = "Plot of "+featureNames.get(it.next());
 				while(it.hasNext())
-					title += ", "+it.next().shortName();
-				title += " vs "+xFeature.shortName()+".";
+					title += ", "+featureNames.get(it.next());
+				title += " vs "+featureNames.get(xFeature)+".";
 			}
 
 			// Data-set for points (easy)
 			XYSeriesCollection pointDataset = new XYSeriesCollection();
 			{
-				for(SpotFeature feature : featuresThisDimension) {
-					XYSeries series = new XYSeries(feature.shortName());
+				for(String feature : featuresThisDimension) {
+					XYSeries series = new XYSeries(featureNames.get(feature));
 					for(Spot spot : spots)
 						series.add(spot.getFeature(xFeature), spot.getFeature(feature));
 					pointDataset.addSeries(series);
@@ -142,8 +149,8 @@ public class SpotFeatureGrapher extends JFrame {
 				double x0, x1, y0, y1;
 				XYEdgeSeries edgeSeries;
 				Spot source, target;
-				for(SpotFeature yFeature : featuresThisDimension) {
-					edgeSeries = new XYEdgeSeries(yFeature.shortName());
+				for(String yFeature : featuresThisDimension) {
+					edgeSeries = new XYEdgeSeries(featureNames.get(yFeature));
 					for(Spot[]	edge : edges) {
 						source = edge[0];
 						target = edge[1];

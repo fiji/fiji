@@ -13,7 +13,7 @@ import mpicbg.imglib.util.Util;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 
-public class BlobDescriptiveStatistics <T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
+public class BlobDescriptiveStatistics extends IndependentSpotFeatureAnalyzer {
 
 	/*
 	 * CONSTANTS
@@ -85,16 +85,17 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 	 * Compute descriptive statistics items for this spot. Implementation follows
 	 * {@link http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance}.
 	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public void process(Spot spot) {
-		final DomainCursor<T> cursor;
+		final DomainCursor<? extends RealType<?>> cursor;
 		final float[] coords;
 		final float radius = spot.getFeature(Spot.RADIUS);
 		if (img.getNumDimensions() == 3) {
-			cursor = new SphereCursor<T>(img, new float[3], radius, calibration);
+			cursor = new SphereCursor(img, new float[3], radius, calibration);
 			coords = new float[3];
 		} else { 
-			cursor = new DiscCursor<T>(img, new float[2], radius, calibration);
+			cursor = new DiscCursor(img, new float[2], radius, calibration);
 			coords = new float[2];
 		}
 		final int npixels = cursor.getNPixels();

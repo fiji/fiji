@@ -1,7 +1,7 @@
 package fiji.plugin.trackmate.gui;
 
-import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.BIG_FONT;
+import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_DISPLAY_SPOT_NAMES;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOTS_VISIBLE;
@@ -18,8 +18,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.util.EnumMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -36,10 +36,7 @@ import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
 
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
@@ -66,7 +63,6 @@ public class DisplayerPanel extends ActionListenablePanel {
 	private JTextField jTextFieldFrameDepth;
 	private JLabel jLabelFrameDepth;
 	private JPanelColorByFeatureGUI jPanelSpotColor;
-	private Map<String, double[]> featureValues;
 	private JNumericTextField jTextFieldSpotRadius;
 	private JCheckBox jCheckBoxDisplayNames;
 
@@ -74,6 +70,9 @@ public class DisplayerPanel extends ActionListenablePanel {
 	 * The set of {@link TrackMateModelView} views controlled by this controller.
 	 */
 	private Set<TrackMateModelView> views = new HashSet<TrackMateModelView>();
+	private Map<String, double[]> featureValues;
+	private List<String> features;
+	private Map<String, String> featureNames;
 
 	public DisplayerPanel(TrackMateModel model) {
 		super();
@@ -129,7 +128,9 @@ public class DisplayerPanel extends ActionListenablePanel {
 	 */
 
 	private void setModel(TrackMateModel model) {
-		this.featureValues = TMUtils.getSpotFeatureValues(model.getFilteredSpots().values()); // FIXME
+		this.featureValues = model.getSpotFeatureValues();
+		this.features = model.getSpotFeatures();
+		this.featureNames = model.getSpotFeatureNames();
 	}
 
 	private void initGUI() {
@@ -279,7 +280,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 				jPanelSpotOptions.setBounds(10, 63, 280, 110);
 				jPanelSpotOptions.setBorder(new LineBorder(new java.awt.Color(192,192,192), 1, true));
 				{
-					jPanelSpotColor = new JPanelColorByFeatureGUI(Spot.QUALITY, this);
+					jPanelSpotColor = new JPanelColorByFeatureGUI(features, featureNames, this);
 					jPanelSpotColor.featureValues = featureValues;
 					jPanelSpotOptions.add(jPanelSpotColor);
 					jPanelSpotColor.addActionListener(new ActionListener() {

@@ -8,12 +8,11 @@ import java.util.Map;
 import mpicbg.imglib.cursor.special.DiscCursor;
 import mpicbg.imglib.cursor.special.DomainCursor;
 import mpicbg.imglib.cursor.special.SphereCursor;
-import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 
-public class BlobContrast <T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
+public class BlobContrast extends IndependentSpotFeatureAnalyzer {
 
 	/** The single feature key name that this analyzer computes. */
 	public static final String						CONTRAST = "CONTRAST";
@@ -29,8 +28,6 @@ public class BlobContrast <T extends RealType<T>> extends IndependentSpotFeature
 	}
 	
 	protected static final float RAD_PERCENTAGE = .5f;  
-	protected Image<T> img;
-	protected float[] calibration;
 	/** Utility holder. */
 	private float[] coords = new float[3];
 	
@@ -47,13 +44,14 @@ public class BlobContrast <T extends RealType<T>> extends IndependentSpotFeature
 	 * @param diameter  the diameter to search for is in physical units
 	 * @return
 	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	protected float getContrast(final Spot spot) {
 		final float radius = spot.getFeature(Spot.RADIUS);
-		final DomainCursor<T> cursor;
+		final DomainCursor<? extends RealType<?>> cursor;
 		if (img.getNumDimensions() == 3) 
-			cursor = new SphereCursor<T>(img, spot.getPosition(coords), radius * (1+RAD_PERCENTAGE), calibration);
+			cursor = new SphereCursor(img, spot.getPosition(coords), radius * (1+RAD_PERCENTAGE), calibration);
 		else
-			cursor = new DiscCursor<T>(img, spot.getPosition(coords), radius * (1+RAD_PERCENTAGE), calibration);
+			cursor = new DiscCursor(img, spot.getPosition(coords), radius * (1+RAD_PERCENTAGE), calibration);
 		int innerRingVolume = 0;
 		int outerRingVolume = 0 ;
 		float radius2 = radius * radius;

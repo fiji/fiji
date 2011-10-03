@@ -22,7 +22,6 @@ import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxEventSource.mxIEventListener;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 
 public class TrackSchemePopupMenu extends JPopupMenu {
@@ -173,7 +172,7 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 		// Sort spots by time
 		TreeMap<Float, Spot> spotsInTime = new TreeMap<Float, Spot>();
 		for (Spot spot : model.getSpotSelection()) {
-			spotsInTime.put(spot.getFeature(SpotFeature.POSITION_T), spot);
+			spotsInTime.put(spot.getFeature(Spot.POSITION_T), spot);
 		}
 
 		// Find adequate column

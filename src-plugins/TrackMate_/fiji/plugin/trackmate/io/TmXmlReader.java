@@ -516,6 +516,9 @@ public class TmXmlReader implements TmXmlKeys {
 		atts.remove(SPOT_NAME_ATTRIBUTE_NAME);
 		
 		for (Attribute att : atts) {
+			if (att.getName().equals(SPOT_NAME_ATTRIBUTE_NAME) || att.getName().equals(SPOT_ID_ATTRIBUTE_NAME)) {
+				continue;
+			}
 			spot.putFeature(att.getName(), att.getFloatValue());
 		}
 		return spot;

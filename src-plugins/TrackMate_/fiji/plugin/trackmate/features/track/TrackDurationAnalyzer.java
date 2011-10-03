@@ -1,14 +1,54 @@
 package fiji.plugin.trackmate.features.track;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 
-public class TrackDurationAnalyzer implements TrackFeatureAnalyzer{
+public class TrackDurationAnalyzer implements TrackFeatureAnalyzer {
+	
+	
+	public static final String 		TRACK_DURATION = "TRACK_DURATION";
+	public static final String 		TRACK_START = "TRACK_START";
+	public static final String 		TRACK_STOP = "TRACK_STOP";
+	public static final String 		TRACK_DISPLACEMENT = "TRACK_DISPLACEMENT";
+	
+	private static final List<String> FEATURES = new ArrayList<String>(4);
+	private static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(4);
+	private static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(4);
+	private static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(4);
+	
+	static {
+		FEATURES.add(TRACK_DURATION);
+		FEATURES.add(TRACK_START);
+		FEATURES.add(TRACK_STOP);
+		FEATURES.add(TRACK_DISPLACEMENT);
+		
+		FEATURE_NAMES.put(TRACK_DURATION, "Duration of track");
+		FEATURE_NAMES.put(TRACK_START, "Track start");
+		FEATURE_NAMES.put(TRACK_STOP, "Track stop");
+		FEATURE_NAMES.put(TRACK_DISPLACEMENT, "Track displacement");
+
+		FEATURE_SHORT_NAMES.put(TRACK_DURATION, "Duration");
+		FEATURE_SHORT_NAMES.put(TRACK_START, "T start");
+		FEATURE_SHORT_NAMES.put(TRACK_STOP, "T stop");
+		FEATURE_SHORT_NAMES.put(TRACK_DISPLACEMENT, "Displacement");
+		
+		FEATURE_DIMENSIONS.put(TRACK_DURATION, Dimension.TIME);
+		FEATURE_DIMENSIONS.put(TRACK_START, Dimension.TIME);
+		FEATURE_DIMENSIONS.put(TRACK_STOP, Dimension.TIME);
+		FEATURE_DIMENSIONS.put(TRACK_DISPLACEMENT, Dimension.LENGTH);
+	}
+	
+	/*
+	 * METHODS
+	 */
 
 	@Override
 	public void process(final TrackMateModel model) {
@@ -37,22 +77,35 @@ public class TrackDurationAnalyzer implements TrackFeatureAnalyzer{
 				}
 			}
 			if (!allNull) {
-				model.putTrackFeature(index, TrackFeature.TRACK_DURATION, (maxT-minT));
-				model.putTrackFeature(index, TrackFeature.TRACK_START, minT);
-				model.putTrackFeature(index, TrackFeature.TRACK_STOP, maxT);
-				model.putTrackFeature(index, TrackFeature.TRACK_DISPLACEMENT, (float) Math.sqrt(startSpot.squareDistanceTo(endSpot)));
+				model.putTrackFeature(index, TRACK_DURATION, (maxT-minT));
+				model.putTrackFeature(index, TRACK_START, minT);
+				model.putTrackFeature(index, TRACK_STOP, maxT);
+				model.putTrackFeature(index, TRACK_DISPLACEMENT, (float) Math.sqrt(startSpot.squareDistanceTo(endSpot)));
 			}
 		}
 	}
 
 	@Override
-	public Set<TrackFeature> getFeatures() {
-		Set<TrackFeature> features = new HashSet<TrackFeature>(4);
-		features.add(TrackFeature.TRACK_DURATION);
-		features.add(TrackFeature.TRACK_START);
-		features.add(TrackFeature.TRACK_STOP);
-		features.add(TrackFeature.TRACK_DISPLACEMENT);
-		return features;
+	public Map<String, String> getFeatureShortNames() {
+		return FEATURE_SHORT_NAMES;
 	}
+
+
+	@Override
+	public Map<String, String> getFeatureNames() {
+		return FEATURE_NAMES;
+	}
+
+
+	@Override
+	public Map<String, Dimension> getFeatureDimensions() {
+		return FEATURE_DIMENSIONS;
+	}
+
+	@Override
+	public Collection<String> getFeatures() {
+		return FEATURES;
+	}
+
 
 }

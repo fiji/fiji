@@ -28,7 +28,6 @@ import com.mxgraph.view.mxCellState;
 import com.mxgraph.view.mxGraph;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 
 public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventListener {
@@ -53,7 +52,7 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 
 		instants = new TreeSet<Float>();
 		for (Spot s : frame.getModel().getFilteredSpots())
-			instants.add(s.getFeature(SpotFeature.POSITION_T));
+			instants.add(s.getFeature(Spot.POSITION_T));
 
 		connectionHandler.addListener(mxEvent.CONNECT, this);
 

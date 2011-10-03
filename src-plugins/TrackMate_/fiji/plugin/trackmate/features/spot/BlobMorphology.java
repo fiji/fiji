@@ -61,7 +61,7 @@ import fiji.plugin.trackmate.SpotImp;
  *
  * @param <T>  the type of the input {@link Image}
  */
-public class BlobMorphology <T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
+public class BlobMorphology extends IndependentSpotFeatureAnalyzer {
 
 	/*
 	 * CONSTANTS
@@ -144,6 +144,7 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentSpotFeatu
 	
 	
 	@Override
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void process(final Spot spot) {
 		final float radius = spot.getFeature(Spot.RADIUS);
 		for (int i = 0; i < coords.length; i++) 
@@ -153,7 +154,7 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentSpotFeatu
 
 			// 3D case
 			
-			final SphereCursor<T> cursor = new SphereCursor<T>(img, coords, radius, calibration);
+			final SphereCursor<? extends RealType<?>> cursor = new SphereCursor(img, coords, radius, calibration);
 			double x, y, z;
 			double x2, y2, z2;
 			double mass, totalmass = 0;
@@ -240,7 +241,7 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentSpotFeatu
 			
 			// 2D case
 			
-			final DiscCursor<T> cursor = new DiscCursor<T>(img, coords, radius, calibration);
+			final DiscCursor<? extends RealType<?>> cursor = new DiscCursor(img, coords, radius, calibration);
 			double x, y;
 			double x2, y2;
 			double mass, totalmass = 0;
@@ -412,7 +413,7 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentSpotFeatu
 		ImageJFunctions.copyToImagePlus(img).show();
 		
 		start = System.currentTimeMillis();
-		BlobMorphology<UnsignedByteType> bm = new BlobMorphology<UnsignedByteType>();
+		BlobMorphology bm = new BlobMorphology();
 		bm.setTarget(img, calibration);
 		SpotImp spot = new SpotImp(center);
 		spot.putFeature(Spot.RADIUS, max_radius);

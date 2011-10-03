@@ -97,11 +97,20 @@ public class TMUtils {
 	
 	
 	
-	
-	
 	/*
 	 * STATIC METHODS
 	 */
+	
+	/**
+	 * Return the mapping in a map that is targeted by a list of keys, in the order given in the list.
+	 */
+	public static final <J,K> List<K> getArrayFromMaping(List<J> keys, Map<J, K> mapping) {
+		List<K> names = new ArrayList<K>(keys.size());
+		for (int i = 0; i < keys.size(); i++) {
+			names.add(mapping.get(keys.get(i)));
+		}
+		return names;
+	}
 
 	/**
 	 * Return a new copy of this collection of Spot, translated using the crop data 
@@ -227,8 +236,8 @@ public class TMUtils {
 	 * @param iFrame  the frame number to extract, 0-based
 	 * @return  a 3D or 2D {@link Image} with the single time-point required 
 	 */
-	@SuppressWarnings("rawtypes")
-	public static Image<? extends RealType> getSingleFrameAsImage(ImagePlus imp, int iFrame, Settings settings) {
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public static Image<? extends RealType<?>> getSingleFrameAsImage(ImagePlus imp, int iFrame, Settings settings) {
 		ImageStack stack = imp.getImageStack();
 		ImageStack frame = new ImageStack(settings.xend-settings.xstart, settings.yend-settings.ystart, stack.getColorModel());
 		int numSlices = imp.getNSlices();
@@ -244,8 +253,8 @@ public class TMUtils {
 		}
 
 		ImagePlus ipSingleFrame = new ImagePlus(imp.getShortTitle()+"-Frame_" + Integer.toString(iFrame + 1), frame);
-		@SuppressWarnings("unchecked")
-		Image<? extends RealType> img =  ImagePlusAdapter.wrap(ipSingleFrame);
+		Image<? extends RealType> obj =  ImagePlusAdapter.wrap(ipSingleFrame);
+		Image<? extends RealType<?>> img = (Image<? extends RealType<?>>) obj;
 		return img;
 	}
 

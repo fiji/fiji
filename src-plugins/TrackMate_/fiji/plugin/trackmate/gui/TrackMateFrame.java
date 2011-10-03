@@ -21,7 +21,7 @@ import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.TrackFeature;
+import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
 import fiji.plugin.trackmate.tracking.TrackerType;

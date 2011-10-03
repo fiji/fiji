@@ -24,7 +24,6 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.TrackMateFrameController.GuiState;
@@ -190,7 +189,7 @@ public class GuiReader {
 		
 		
 		{ // Try to read the initial threshold
-			FeatureFilter<SpotFeature> initialThreshold = null;
+			FeatureFilter initialThreshold = null;
 			try {
 				initialThreshold = reader.getInitialFilter();
 			} catch (DataConversionException e) {
@@ -217,7 +216,7 @@ public class GuiReader {
 		}		
 		
 		{ // Try to read feature thresholds
-			List<FeatureFilter<SpotFeature>> featureThresholds = null;
+			List<FeatureFilter> featureThresholds = null;
 			try {
 				featureThresholds = reader.getSpotFeatureFilters();
 			} catch (DataConversionException e) {

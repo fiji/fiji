@@ -1,18 +1,78 @@
 package fiji.plugin.trackmate.features.track;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import mpicbg.imglib.util.Util;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
+import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 
 public class TrackSpeedStatisticsAnalyzer implements TrackFeatureAnalyzer {
 
+
+	/*
+	 * CONSTANTS
+	 */
+	
+	public static final String 		TRACK_MEAN_SPEED = "TRACK_MEAN_SPEED";
+	public static final String 		TRACK_MAX_SPEED = "TRACK_MAX_SPEED";
+	public static final String 		TRACK_MIN_SPEED = "TRACK_MIN_SPEED";
+	public static final String 		TRACK_MEDIAN_SPEED = "TRACK_MEDIAN_SPEED";
+	public static final String 		TRACK_SPEED_STANDARD_DEVIATION = "TRACK_SPEED_STANDARD_DEVIATION";
+	public static final String 		TRACK_SPEED_KURTOSIS = "TRACK_SPEED_KURTOSIS";
+	public static final String 		TRACK_SPEED_SKEWNESS = "TRACK_SPEED_SKEWNESS";
+	
+	private static final List<String> FEATURES = new ArrayList<String>(7);
+	private static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(7);
+	private static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(7);
+	private static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(7);
+	
+	static {
+		FEATURES.add(TRACK_MEAN_SPEED);
+		FEATURES.add(TRACK_MAX_SPEED);
+		FEATURES.add(TRACK_MIN_SPEED);
+		FEATURES.add(TRACK_MEDIAN_SPEED);
+		FEATURES.add(TRACK_SPEED_STANDARD_DEVIATION);
+		FEATURES.add(TRACK_SPEED_KURTOSIS);
+		FEATURES.add(TRACK_SPEED_SKEWNESS);
+
+		FEATURE_NAMES.put(TRACK_MEAN_SPEED, "Mean velocity");
+		FEATURE_NAMES.put(TRACK_MAX_SPEED, "Maximal velocity");
+		FEATURE_NAMES.put(TRACK_MIN_SPEED, "Minimal velocity");
+		FEATURE_NAMES.put(TRACK_MEDIAN_SPEED, "Median velocity");
+		FEATURE_NAMES.put(TRACK_SPEED_STANDARD_DEVIATION, "Velocity standard deviation");
+		FEATURE_NAMES.put(TRACK_SPEED_KURTOSIS, "Velocity kurtosis");
+		FEATURE_NAMES.put(TRACK_SPEED_SKEWNESS, "Velocity skewness");
+
+		FEATURE_SHORT_NAMES.put(TRACK_MEAN_SPEED, "Mean V");
+		FEATURE_SHORT_NAMES.put(TRACK_MAX_SPEED, "Max V");
+		FEATURE_SHORT_NAMES.put(TRACK_MIN_SPEED, "Min V");
+		FEATURE_SHORT_NAMES.put(TRACK_MEDIAN_SPEED, "Median V");
+		FEATURE_SHORT_NAMES.put(TRACK_SPEED_STANDARD_DEVIATION, "V std");
+		FEATURE_SHORT_NAMES.put(TRACK_SPEED_KURTOSIS, "V kurtosis");
+		FEATURE_SHORT_NAMES.put(TRACK_SPEED_SKEWNESS, "V skewness");
+		
+		FEATURE_DIMENSIONS.put(TRACK_MEAN_SPEED, Dimension.VELOCITY);
+		FEATURE_DIMENSIONS.put(TRACK_MAX_SPEED, Dimension.VELOCITY);
+		FEATURE_DIMENSIONS.put(TRACK_MIN_SPEED, Dimension.VELOCITY);
+		FEATURE_DIMENSIONS.put(TRACK_MEDIAN_SPEED, Dimension.VELOCITY);
+		FEATURE_DIMENSIONS.put(TRACK_SPEED_STANDARD_DEVIATION, Dimension.VELOCITY);
+		FEATURE_DIMENSIONS.put(TRACK_SPEED_KURTOSIS, Dimension.NONE);
+		FEATURE_DIMENSIONS.put(TRACK_SPEED_SKEWNESS, Dimension.NONE);
+	}
+	
+	/*
+	 * METHODS
+	 */
+	
 	@Override
 	public void process(TrackMateModel model) {
 		
@@ -75,28 +135,37 @@ public class TrackSpeedStatisticsAnalyzer implements TrackFeatureAnalyzer {
 			double kurtosis = (n*M4) / (M2*M2) - 3;
 			double skewness =  Math.sqrt(n) * M3 / Math.pow(M2, 3/2.0) ;
 			
-			model.putTrackFeature(index, TrackFeature.TRACK_MEDIAN_SPEED, (float) median);
-			model.putTrackFeature(index, TrackFeature.TRACK_MIN_SPEED, (float) min);
-			model.putTrackFeature(index, TrackFeature.TRACK_MAX_SPEED, (float) max);
-			model.putTrackFeature(index, TrackFeature.TRACK_MEAN_SPEED, (float) mean);
-			model.putTrackFeature(index, TrackFeature.TRACK_SPEED_STANDARD_DEVIATION, (float) Math.sqrt(variance));
-			model.putTrackFeature(index, TrackFeature.TRACK_SPEED_KURTOSIS, (float) kurtosis);
-			model.putTrackFeature(index, TrackFeature.TRACK_SPEED_SKEWNESS, (float) skewness);
+			model.putTrackFeature(index, TRACK_MEDIAN_SPEED, (float) median);
+			model.putTrackFeature(index, TRACK_MIN_SPEED, (float) min);
+			model.putTrackFeature(index, TRACK_MAX_SPEED, (float) max);
+			model.putTrackFeature(index, TRACK_MEAN_SPEED, (float) mean);
+			model.putTrackFeature(index, TRACK_SPEED_STANDARD_DEVIATION, (float) Math.sqrt(variance));
+			model.putTrackFeature(index, TRACK_SPEED_KURTOSIS, (float) kurtosis);
+			model.putTrackFeature(index, TRACK_SPEED_SKEWNESS, (float) skewness);
 			
 		}
 	}
 
 	@Override
-	public Set<TrackFeature> getFeatures() {
-		Set<TrackFeature> features = new HashSet<TrackFeature>(7);
-		features.add(TrackFeature.TRACK_MEDIAN_SPEED);
-		features.add(TrackFeature.TRACK_MIN_SPEED);
-		features.add(TrackFeature.TRACK_MAX_SPEED);
-		features.add(TrackFeature.TRACK_MEAN_SPEED);
-		features.add(TrackFeature.TRACK_SPEED_STANDARD_DEVIATION);
-		features.add(TrackFeature.TRACK_SPEED_KURTOSIS);
-		features.add(TrackFeature.TRACK_SPEED_SKEWNESS);
-		return features;
+	public Map<String, String> getFeatureShortNames() {
+		return FEATURE_SHORT_NAMES;
+	}
+
+
+	@Override
+	public Map<String, String> getFeatureNames() {
+		return FEATURE_NAMES;
+	}
+
+
+	@Override
+	public Map<String, Dimension> getFeatureDimensions() {
+		return FEATURE_DIMENSIONS;
+	}
+
+	@Override
+	public Collection<String> getFeatures() {
+		return FEATURES;
 	}
 
 }

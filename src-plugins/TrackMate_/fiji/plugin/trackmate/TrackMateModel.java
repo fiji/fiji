@@ -2,7 +2,6 @@ package fiji.plugin.trackmate;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -24,8 +23,7 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 import org.jgrapht.traverse.DepthFirstIterator;
 
 import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzer;
-import fiji.plugin.trackmate.features.spot.SpotFeatureFacade;
-import fiji.plugin.trackmate.features.track.TrackFeatureFacade;
+import fiji.plugin.trackmate.features.track.TrackFeatureAnalyzer;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
@@ -139,7 +137,6 @@ public class TrackMateModel {
 	/*
 	 * FIELDS
 	 */
-	private boolean useMultithreading = TrackMate_.DEFAULT_USE_MULTITHREADING;
 
 	// SPOTS
 
@@ -147,6 +144,23 @@ public class TrackMateModel {
 	protected SpotCollection spots = new SpotCollection();
 	/** Contain the spots retained for tracking, after filtering by features. */
 	protected SpotCollection filteredSpots = new SpotCollection();
+	/** 
+	 * The list of spot feature analyzer that will be used to compute spot features.
+	 * Setting this field will automatically sets the derived fields: {@link #spotFeatures},
+	 * {@link #spotFeatureNames}, {@link #spotFeatureShortNames} and {@link #spotFeatureDimensions}
+	 * @see #updateFeatures(List) 
+	 * @see #updateFeatures(Spot)
+	 */
+	protected List<SpotFeatureAnalyzer> spotFeatureAnalyzers = new ArrayList<SpotFeatureAnalyzer>();
+
+	/** The list of spot features that are available for the spots of this model. */
+	private List<String> spotFeatures;
+	/** The map of the spot feature names. */
+	private Map<String, String> spotFeatureNames;
+	/** The map of the spot feature abbreviated names. */
+	private Map<String, String> spotFeatureShortNames;
+	/** The map of the spot feature dimension. */
+	private Map<String, Dimension> spotFeatureDimensions;
 	/**
 	 * The feature filter list that is used to generate {@link #filteredSpots}
 	 * from {@link #spots}.
@@ -168,21 +182,19 @@ public class TrackMateModel {
 	 * .
 	 */
 	protected ListenableUndirectedGraph<Spot, DefaultWeightedEdge> graph = new ListenableUndirectedGraph<Spot, DefaultWeightedEdge>(new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class));
-	
-	
+
+
 	/** The edges contained in the list of tracks. */
 	protected List<Set<DefaultWeightedEdge>> trackEdges = new ArrayList<Set<DefaultWeightedEdge>>();
 	/** The spots contained in the list of spots. */
 	protected List<Set<Spot>> trackSpots = new ArrayList<Set<Spot>>();
-	/** The feature facade that will be used to compute track features. */
-	private TrackFeatureFacade trackFeatureFacade = new TrackFeatureFacade();
 	/**
 	 * Feature storage. We use a List of Map as a 2D Map. The list maps each
 	 * track to its feature map. We use the same index that for
 	 * {@link #trackEdges} and {@link #trackSpots}. The feature map maps each
 	 * {@link TrackFeature} to its float value for the selected track.
 	 */
-	protected List<EnumMap<TrackFeature, Float>> trackFeatures;
+	protected List<Map<String, Float>> trackFeatureValues;
 	/** The track filter list that is used to prune track and spots. */
 	protected List<FeatureFilter> trackFilters = new ArrayList<FeatureFilter>();
 	/**
@@ -192,7 +204,12 @@ public class TrackMateModel {
 	 * this list.
 	 */
 	protected Set<Integer> visibleTrackIndices = new HashSet<Integer>();
-	
+
+	protected List<TrackFeatureAnalyzer> trackFeatureAnalyzers = new ArrayList<TrackFeatureAnalyzer>();
+	private ArrayList<String> trackFeatures = new ArrayList<String>();
+	private HashMap<String, String> trackFeatureNames = new HashMap<String, String>();
+	private HashMap<String, String> trackFeatureShortNames = new HashMap<String, String>();
+	private HashMap<String, Dimension> trackFeatureDimensions = new HashMap<String, Dimension>();
 
 	// TRANSACTION MODEL
 
@@ -253,14 +270,12 @@ public class TrackMateModel {
 	protected List<TrackMateModelChangeListener> modelChangeListeners = new ArrayList<TrackMateModelChangeListener>();
 	/** The list of listener listening to change in selection. */
 	protected List<TrackMateSelectionChangeListener> selectionChangeListeners = new ArrayList<TrackMateSelectionChangeListener>();
+	
 
-	
-	
-	
-	
-	
-	
-	
+
+
+
+
 	/*
 	 * CONSTRUCTOR
 	 */
@@ -268,15 +283,15 @@ public class TrackMateModel {
 	public TrackMateModel() {
 		graph.addGraphListener(new MyGraphListener());
 	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
+
+
+
 	/*
 	 * DEAL WITH MODEL CHANGE LISTENER
 	 */
@@ -419,26 +434,26 @@ public class TrackMateModel {
 
 	public String trackToString(int i) {
 		String str = "Track " + i + ": ";
-		for (TrackFeature feature : TrackFeature.values())
-			str += feature.shortName() + " = "	+ trackFeatures.get(i).get(feature) + ", ";
+		for (String feature : trackFeatures)
+			str += feature + " = "	+ trackFeatureValues.get(i).get(feature) + ", ";
 				return str;
 	}
 
 	// Track features
 
-	public void putTrackFeature(final int trackIndex, final TrackFeature feature, final Float value) {
-		trackFeatures.get(trackIndex).put(feature, value);
+	public void putTrackFeature(final int trackIndex, final String feature, final Float value) {
+		trackFeatureValues.get(trackIndex).put(feature, value);
 	}
 
-	public Float getTrackFeature(final int trackIndex, final TrackFeature feature) {
-		return trackFeatures.get(trackIndex).get(feature);
+	public Float getTrackFeature(final int trackIndex, final String feature) {
+		return trackFeatureValues.get(trackIndex).get(feature);
 	}
 
-	public EnumMap<TrackFeature, double[]> getTrackFeatureValues() {
-		final EnumMap<TrackFeature, double[]> featureValues = new EnumMap<TrackFeature, double[]>(TrackFeature.class);
+	public Map<String, double[]> getTrackFeatureValues() {
+		final Map<String, double[]> featureValues = new HashMap<String, double[]>();
 		Float val;
 		int nTracks = getNTracks();
-		for (TrackFeature feature : TrackFeature.values()) {
+		for (String feature : trackFeatures) {
 			// Make a double array to comply to JFreeChart histograms
 			boolean noDataFlag = true;
 			final double[] values = new double[nTracks];
@@ -752,13 +767,98 @@ public class TrackMateModel {
 	 * FEATURES
 	 */
 
+	/** 
+	 * Set the list of spot feature analyzers that will be used to compute spot features.
+	 * Setting this field will automatically sets the derived fields: {@link #spotFeatures},
+	 * {@link #spotFeatureNames}, {@link #spotFeatureShortNames} and {@link #spotFeatureDimensions}.
+	 * These fields will be generated from the {@link SpotFeatureAnalyzer} content, returned 
+	 * by its methods {@link SpotFeatureAnalyzer#getFeatures()}, etc... and will be added
+	 * in the order given by the list.
+	 * 
+	 * @see #updateFeatures(List) 
+	 * @see #updateFeatures(Spot)
+	 */
+	public void setSpotFeatureAnalyzers(List<SpotFeatureAnalyzer> featureAnalyzers) {
+		this.spotFeatureAnalyzers = featureAnalyzers;
+
+		spotFeatures = new ArrayList<String>();
+		spotFeatureNames = new HashMap<String, String>();
+		spotFeatureShortNames = new HashMap<String, String>();
+		spotFeatureDimensions = new HashMap<String, Dimension>();
+
+		for(SpotFeatureAnalyzer analyzer : spotFeatureAnalyzers) {
+			spotFeatures.addAll(analyzer.getFeatures());
+			spotFeatureNames.putAll(analyzer.getFeatureNames());
+			spotFeatureShortNames.putAll(analyzer.getFeatureShortNames());
+			spotFeatureDimensions.putAll(analyzer.getFeatureDimensions());
+		}
+	}
+	
+	/**
+	 * Return the list of the spot features that are dealt with in this model.
+	 */
+	public List<String> getSpotFeatures() {
+		return spotFeatures;
+	}
+	
+	/**
+	 * Return the name mapping of the spot features that are dealt with in this model.
+	 * @return
+	 */
+	public Map<String, String> getSpotFeatureNames() {
+		return spotFeatureNames;
+	}
+
+	/**
+	 * Return the short name mapping of the spot features that are dealt with in this model.
+	 * @return
+	 */
+	public Map<String, String> getSpotFeatureShortNames() {
+		return spotFeatureShortNames;
+	}
+
+	/**
+	 * Return the dimension mapping of the spot features that are dealt with in this model.
+	 * @return
+	 */
+	public Map<String, Dimension> getSpotFeatureDimensions() {
+		return spotFeatureDimensions;
+	}
+	
+	/** 
+	 * Set the list of track feature analyzers that will be used to compute track features.
+	 * Setting this field will automatically sets the derived fields: {@link #trackFeatures},
+	 * {@link #trackFeatureNames}, {@link #trackFeatureShortNames} and {@link #trackFeatureDimensions}.
+	 * These fields will be generated from the {@link TrackFeatureAnalyzer} content, returned 
+	 * by its methods {@link TrackFeatureAnalyzer#getFeatures()}, etc... and will be added
+	 * in the order given by the list.
+	 * 
+	 * @see #computeTrackFeatures()
+	 */
+	public void setTrackFeatureAnalyzers(List<TrackFeatureAnalyzer> featureAnalyzers) {
+		this.trackFeatureAnalyzers = featureAnalyzers;
+
+		trackFeatures = new ArrayList<String>();
+		trackFeatureNames = new HashMap<String, String>();
+		trackFeatureShortNames = new HashMap<String, String>();
+		trackFeatureDimensions = new HashMap<String, Dimension>();
+
+		for(TrackFeatureAnalyzer analyzer : trackFeatureAnalyzers) {
+			trackFeatures.addAll(analyzer.getFeatures());
+			trackFeatureNames.putAll(analyzer.getFeatureNames());
+			trackFeatureShortNames.putAll(analyzer.getFeatureShortNames());
+			trackFeatureDimensions.putAll(analyzer.getFeatureDimensions());
+		}
+	}
+
+
 	/**
 	 * Return a map of {@link SpotFeature} values for the spot collection held
 	 * by this instance. Each feature maps a double array, with 1 element per
 	 * {@link Spot}, all pooled together.
 	 */
-	public HashMap<String, double[]> getSpotFeatureValues() {
-		return TMUtils.getSpotFeatureValues(spots.values()); // FIXME ADD A FIELD STORING THE FEATURE WE SHOULD COMPUTE
+	public Map<String, double[]> getSpotFeatureValues() {
+		return TMUtils.getSpotFeatureValues(spots.values(), spotFeatures);
 	}
 
 	/*
@@ -1003,8 +1103,6 @@ public class TrackMateModel {
 		// Mother graph
 		DefaultWeightedEdge edge = graph.addEdge(source, target);
 		graph.setEdgeWeight(edge, weight);
-//		// Transaction // DEALT WITH BY THE GRAPH LISTENER
-//		edgesAdded.add(edge);
 		if (DEBUG)
 			System.out.println("[TrackMateModel] Adding edge between " + source + " and " + target + " with weight " + weight);
 		return edge;
@@ -1013,10 +1111,6 @@ public class TrackMateModel {
 	public DefaultWeightedEdge removeEdge(final Spot source, final Spot target) {
 		// Other graph
 		DefaultWeightedEdge edge = graph.removeEdge(source, target);
-//		if (null == edge)
-//			System.out.println("Problem removing edge " + edge);
-//		// Transaction// DEALT WITH BY THE GRAPH LISTENER
-//		edgesRemoved.add(edge); // TRANSACTION
 		if (DEBUG)
 			System.out.println("[TrackMateModel] Removing edge between " + source + " and " + target);
 		return edge;
@@ -1025,10 +1119,6 @@ public class TrackMateModel {
 	public boolean removeEdge(final DefaultWeightedEdge edge) {
 		// Mother graph
 		boolean removed = graph.removeEdge(edge);
-//		if (!removed)
-//			System.out.println("Problem removing edge " + edge);
-//		// Transaction// DEALT WITH BY THE GRAPH LISTENER
-//		edgesRemoved.add(edge);
 		if (DEBUG)
 			System.out.println("[TrackMateModel] Removing edge " + edge + " between " + graph.getEdgeSource(edge) + " and " + graph.getEdgeTarget(edge));
 		return removed;
@@ -1102,75 +1192,66 @@ public class TrackMateModel {
 	 * {@link SpotFeatureAnalyzer} can compute more than a {@link SpotFeature}
 	 * at once, spots might received more data than required.
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void computeSpotFeatures(final SpotCollection toCompute, final List<String> features) {
 
-		int numFrames = settings.tend - settings.tstart + 1;
-		List<Spot> spotsThisFrame;
+		/* 0 - Determine what analyzers are needed */
+		final List<SpotFeatureAnalyzer> selectedAnalyzers = new ArrayList<SpotFeatureAnalyzer>(); // We want to keep ordering
+		for (String feature : features) {
+			for (SpotFeatureAnalyzer analyzer : spotFeatureAnalyzers) {
+				if (analyzer.getFeatures().contains(feature) && !selectedAnalyzers.contains(analyzer)) {
+					selectedAnalyzers.add(analyzer);
+				}
+			}
+		}
 		
-		final float[] calibration = new float[] { settings.dx, settings.dy, settings.dz };
-
-		for (int i = settings.tstart - 1; i < settings.tend; i++) {
-			logger.setProgress((2 * (i - settings.tstart))/ (2f * numFrames + 1));
-			logger.setStatus("Frame " + (i + 1) + ": Calculating features...");
-
-			/*
-			 * 1 - Prepare stack for use with Imglib. This time, since the spot
-			 * coordinates are with respect to the top-left corner of the image,
-			 * we must not generate a cropped version of the image, but a full
-			 * snapshot.
-			 */
-			Settings uncroppedSettings = new Settings();
-			uncroppedSettings.xstart = 1;
-			uncroppedSettings.xend = settings.imp.getWidth();
-			uncroppedSettings.ystart = 1;
-			uncroppedSettings.yend = settings.imp.getHeight();
-			uncroppedSettings.zstart = 1;
-			uncroppedSettings.zend = settings.imp.getNSlices();
-			Image<? extends RealType> img = TMUtils.getSingleFrameAsImage(settings.imp, i, uncroppedSettings);
-
-			/* 1.5 Determine what analyzers are needed */
-			featureCalculator = new SpotFeatureFacade(img, calibration);
-			HashSet<SpotFeatureAnalyzer> analyzers = new HashSet<SpotFeatureAnalyzer>();
-			for (String feature : features)
-				analyzers.add(featureCalculator.getAnalyzerForFeature(feature));
-
-					/* 2 - Compute features. */
-					spotsThisFrame = toCompute.get(i);
-					for (SpotFeatureAnalyzer analyzer : analyzers)
-						analyzer.process(spotsThisFrame);
-
-		} // Finished looping over frames
-		logger.setProgress(1);
-							logger.setStatus("");
-							return;
+		computeSpotFeaturesAgent(toCompute, selectedAnalyzers);
 	}
 
 	/**
 	 * Calculate all features for the given spot collection.
 	 * <p>
 	 * Features are calculated for each spot, using their location, and the raw
-	 * image. See the {@link SpotFeatureFacade} class for details.
+	 * image. 
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void computeSpotFeatures(final SpotCollection toCompute) {
-		
+		computeSpotFeaturesAgent(toCompute, spotFeatureAnalyzers);
+	}
+
+
+	/**
+	 * Calculate all features for the tracks in this model.
+	 */
+	public void computeTrackFeatures() {
+		initFeatureMap();
+		for (TrackFeatureAnalyzer analyzer : trackFeatureAnalyzers)
+			analyzer.process(this);
+	}
+
+
+
+	/*
+	 * PRIVATE METHODS
+	 */
+	
+	/**
+	 * The method in charge of computing spot features with the given {@link SpotFeatureAnalyzer}s, fot the
+	 * given {@link SpotCollection}.
+	 * @param toCompute
+	 * @param analyzers
+	 */
+	private void computeSpotFeaturesAgent(final SpotCollection toCompute, final List<SpotFeatureAnalyzer> analyzers) {
+
 		// Can't compute any spot feature without an image to compute on.
 		if (settings.imp == null)
 			return;
 
-		final List<Integer> frameSet = new ArrayList(toCompute.keySet());
+		final List<Integer> frameSet = new ArrayList<Integer>(toCompute.keySet());
 		final int numFrames = frameSet.size();
 		final float[] calibration = settings.getCalibration();
+
 		final AtomicInteger ai = new AtomicInteger(0);
 		final AtomicInteger progress = new AtomicInteger(0);
-
-		final Thread[] threads;
-		if (useMultithreading) {
-			threads = SimpleMultiThreading.newThreads();
-		} else {
-			threads = SimpleMultiThreading.newThreads(1);
-		}
+		final Thread[] threads = SimpleMultiThreading.newThreads();
 
 		/*
 		 * Prepare stack for use with Imglib. This time, since the spot
@@ -1197,10 +1278,14 @@ public class TrackMateModel {
 					for (int index = ai.getAndIncrement(); index < numFrames; index = ai.getAndIncrement()) {
 
 						int frame = frameSet.get(index);
-						Image<? extends RealType> img = TMUtils.getSingleFrameAsImage(settings.imp, frame, uncroppedSettings);
-						SpotFeatureFacade featureCalculator = new SpotFeatureFacade(img, calibration);
 						List<Spot> spotsThisFrame = toCompute.get(frame);
-						featureCalculator.processAllFeatures(spotsThisFrame);
+						Image<? extends RealType<?>> img = TMUtils.getSingleFrameAsImage(settings.imp, frame, uncroppedSettings);
+
+						for (SpotFeatureAnalyzer analyzer : analyzers) {
+							analyzer.setTarget(img, calibration);
+							analyzer.process(spotsThisFrame);
+						}
+
 
 						logger.setProgress(progress.incrementAndGet() / (float) numFrames);
 					} // Finished looping over frames
@@ -1214,28 +1299,13 @@ public class TrackMateModel {
 
 		logger.setProgress(1);
 		logger.setStatus("");
-		return;
 	}
-
-	/**
-	 * Calculate all features for the tracks in this model.
-	 */
-	public void computeTrackFeatures() {
-		initFeatureMap();
-		trackFeatureFacade.processAllFeatures(this);
-	}
-
-
-	
-	/*
-	 * PRIVATE METHODS
-	 */
 
 	/**
 	 * Fire events. Regenerate fields derived from the filtered graph.
 	 */
 	private void flushUpdate() {
-		
+
 		if (DEBUG) {
 			System.out.println("[TrackMateModel] #flushUpdate().");
 			System.out.println("[TrackMateModel] #flushUpdate(): Event cache is :" + eventCache);
@@ -1245,15 +1315,15 @@ public class TrackMateModel {
 		 * and if some spots have been removed (equivalent to remove edges). We do
 		 * NOT recompute tracks if spots have been added: they will not result in
 		 * new tracks made of single spots.	 */
-		 
+
 		int nEdgesToSignal = edgesAdded.size() + edgesRemoved.size();
 		if (nEdgesToSignal + spotsRemoved.size() > 0) {
 			computeTracksFromGraph();
-//			new Thread("TrackMate track features computing thread") {
-//				public void run() {
-//					computeTrackFeatures(); // We do it in a thread because it is a lengthy operation
-//				}
-//			}.start();
+//						new Thread("TrackMate track features computing thread") {
+//							public void run() {
+//								computeTrackFeatures(); // We do it in a thread because it is a lengthy operation
+//							}
+//						}.start();
 		}
 
 		// Deal with new or moved spots: we need to update their features.
@@ -1291,7 +1361,7 @@ public class TrackMateModel {
 			event.setSpotFlags(spotsFlag);
 		}
 
-		
+
 		// Configure it with edges to signal.
 		if (nEdgesToSignal > 0) {
 			ArrayList<DefaultWeightedEdge> edgesToSignal = new ArrayList<DefaultWeightedEdge>(nEdgesToSignal);
@@ -1306,7 +1376,7 @@ public class TrackMateModel {
 			event.setEdges(edgesToSignal);
 			event.setEdgeFlags(edgesFlag);
 		}
-		
+
 		try {
 			if (nEdgesToSignal + nSpotsToSignal > 0) {
 				if (DEBUG) {
@@ -1316,7 +1386,7 @@ public class TrackMateModel {
 					listener.modelChanged(event);
 				}
 			}
-		
+
 			// Fire events stored in the event cache
 			for (int eventID : eventCache) {
 				if (DEBUG) {
@@ -1327,7 +1397,7 @@ public class TrackMateModel {
 					listener.modelChanged(cachedEvent);
 				}
 			}
-			
+
 		} finally {
 			spotsAdded.clear();
 			spotsRemoved.clear();
@@ -1337,7 +1407,7 @@ public class TrackMateModel {
 			edgesRemoved.clear();
 			eventCache.clear();
 		}
-		
+
 	}
 
 	/**
@@ -1351,11 +1421,6 @@ public class TrackMateModel {
 	 * or split.
 	 */
 	private void computeTracksFromGraph() {
-//		if (DEBUG) {
-//			System.out.println("[TrackMateModel] #computeTracksFromGraph()");
-//			System.out.println("[TrackMateModel] #computeTracksFromGraph() - old tracks: "+trackSpots.size());
-//		}
-
 		// Retain old values
 		List<Set<Spot>> oldTrackSpots = trackSpots;
 
@@ -1370,7 +1435,7 @@ public class TrackMateModel {
 			}
 			trackEdges.add(spotEdge);
 		}
-		
+
 		/* Deal with a special case: of there were no tracks at all before this call,
 		 * then oldTrackSpots is null. To avoid that, we set it to the new value. Also,
 		 * since the the visibility set is empty, we will not get any new track visible.
@@ -1420,14 +1485,14 @@ public class TrackMateModel {
 	 * Instantiate an empty feature 2D map.
 	 */
 	private void initFeatureMap() {
-		this.trackFeatures = new ArrayList<EnumMap<TrackFeature, Float>>(getNTracks());
+		this.trackFeatureValues = new ArrayList<Map<String, Float>>(getNTracks());
 		for (int i = 0; i < getNTracks(); i++) {
-			EnumMap<TrackFeature, Float> featureMap = new EnumMap<TrackFeature, Float>(TrackFeature.class);
-			trackFeatures.add(featureMap);
+			Map<String, Float> featureMap = new HashMap<String, Float>(trackFeatures.size());
+			trackFeatureValues.add(featureMap);
 		}
 	}
 
-	
+
 	/**
 	 * This listener class is made to deal with complex changes in the track graph.
 	 * <p>
@@ -1477,7 +1542,7 @@ public class TrackMateModel {
 		public void edgeRemoved(GraphEdgeChangeEvent<Spot, DefaultWeightedEdge> e) {
 			edgesRemoved.add(e.getEdge());
 		}
-		
+
 	}
-	
+
 }

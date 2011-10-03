@@ -1,13 +1,11 @@
 package fiji.plugin.trackmate.features.spot;
 
 import java.util.Collection;
-import java.util.Map;
 
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
-
-import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.features.FeatureAnalyzer;
 
 /**
  * Interface for a class that can compute feature on a collection of spots.
@@ -26,7 +24,7 @@ import fiji.plugin.trackmate.Spot;
  * The spot collection to operate on is given through the method {@link #process(Collection)},
  * and it must update the feature map of each spot directly, calling {@link Spot#putFeature(String, float)}.
  */
-public interface SpotFeatureAnalyzer <T extends RealType<T>> {
+public interface SpotFeatureAnalyzer extends FeatureAnalyzer {
 	
 	
 	/**
@@ -34,7 +32,7 @@ public interface SpotFeatureAnalyzer <T extends RealType<T>> {
 	 * We require the spatial calibration to be given as well, for we do not trust the  
 	 * {@link Image#getCalibration()} field.
 	 */
-	public void setTarget(Image<T> image, float[] calibration);
+	public void setTarget(Image<? extends RealType<?>> img, float[] calibration);
 	
 	
 	/**
@@ -45,36 +43,5 @@ public interface SpotFeatureAnalyzer <T extends RealType<T>> {
 	 */
 	public void process(Collection<Spot> spots);
 	
-	/**
-	 * Return the spot features this analyzer generates.
-	 * @see #getFeatureDimensions()
-	 * @see #getFeatureNames()
-	 * @see #getFeatureShortNames()
-	 */
-	public Collection<String> getFeatures();	
-	
-	/**
-	 * Return the short names of all the spot features this analyzer generates.
-	 * @see #getFeatures()
-	 * @see #getFeatureNames()
-	 * @see #getFeatureDimensions()
-	 */
-	public Map<String, String> getFeatureShortNames();
-
-	/**
-	 * Return the long names of all the spot features this analyzer generates.
-	 * @see #getFeatures()
-	 * @see #getFeatureShortNames()
-	 * @see #getFeatureDimensions()
-	 */
-	public Map<String, String> getFeatureNames();
-
-	/**
-	 * Return the dimension of all the spot features this analyzer generates.
-	 * @see #getFeatures()
-	 * @see #getFeatureNames()
-	 * @see #getFeatureShortNames()
-	 */
-	public Map<String, Dimension> getFeatureDimensions();
 
 }

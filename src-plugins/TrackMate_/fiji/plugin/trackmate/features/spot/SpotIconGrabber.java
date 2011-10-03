@@ -28,11 +28,10 @@ import fiji.plugin.trackmate.Spot;
  * its coordinates and an {@link ImagePlus} that contain the pixel data.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Dec 2010 - 2011
  */
-public class SpotIconGrabber <T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
+public class SpotIconGrabber extends IndependentSpotFeatureAnalyzer {
 
-	
 	@Override
-	public void process(Spot spot) {
+	public void  process(Spot spot) {
 		// Get crop coordinates
 		final float radius = spot.getFeature(Spot.RADIUS); // physical units, REQUIRED!
 		int x = Math.round((spot.getFeature(Spot.POSITION_X) - radius) / calibration[0]); 
@@ -41,9 +40,9 @@ public class SpotIconGrabber <T extends RealType<T>> extends IndependentSpotFeat
 		int height = Math.round(2 * radius / calibration[1]);
 		
 		// Copy cropped view
-		Image<T> crop = img.createNewImage(new int[] {width, height});
-		LocalizableByDimCursor<T> sourceCursor = img.createLocalizableByDimCursor();
-		LocalizableByDimCursor<T> targetCursor = crop.createLocalizableByDimCursor();
+		Image<? extends RealType<?>> crop = img.createNewImage(new int[] {width, height});
+		LocalizableByDimCursor<? extends RealType<?>> sourceCursor = img.createLocalizableByDimCursor();
+		LocalizableByDimCursor<? extends RealType<?>> targetCursor = crop.createLocalizableByDimCursor();
 		if (img.getNumDimensions() > 2) {
 			int slice = 0;
 			slice = Math.round(spot.getFeature(Spot.POSITION_Z) / calibration[2]);
@@ -57,7 +56,7 @@ public class SpotIconGrabber <T extends RealType<T>> extends IndependentSpotFeat
 				for (int j = 0; j < height; j++) {
 					sourceCursor.setPosition(j + y, 1);
 					targetCursor.setPosition(j, 1);
-					targetCursor.getType().set(sourceCursor.getType());
+					targetCursor.getType().setReal(sourceCursor.getType().getRealDouble());
 				}
 			}
 			// Convert to ImagePlus

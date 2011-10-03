@@ -103,7 +103,7 @@ public class SpotDisplayer3DTestDrive {
 		}
 		
 		System.out.println("Grabbing features...");
-		BlobDescriptiveStatistics<UnsignedByteType> analyzer = new BlobDescriptiveStatistics<UnsignedByteType>();
+		BlobDescriptiveStatistics analyzer = new BlobDescriptiveStatistics();
 		analyzer.setTarget(img, CALIBRATION);
 		analyzer.process(spots);
 		for (Spot s : spots) 

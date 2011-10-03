@@ -27,7 +27,6 @@ import com.mxgraph.util.mxRectangle;
 import com.mxgraph.util.mxUtils;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.util.TrackSplitter;
@@ -97,7 +96,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 			// Collect unique instants
 			SortedSet<Float> instants = new TreeSet<Float>();
 			for (Spot s : model.getFilteredSpots()) {
-				instants.add(s.getFeature(SpotFeature.POSITION_T));
+				instants.add(s.getFeature(Spot.POSITION_T));
 			}
 
 			TreeMap<Float, Integer> columns = new TreeMap<Float, Integer>();
@@ -165,7 +164,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					String style = cell.getStyle();
 
 					// Determine in what column to put the spot
-					Float instant = spot.getFeature(SpotFeature.POSITION_T);
+					Float instant = spot.getFeature(Spot.POSITION_T);
 					int freeColumn = columns.get(instant) + 1;
 
 					// If we have no direct edge with the previous spot, we add 1 to the current column
@@ -185,7 +184,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					double y = (0.5 + rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2;
 
 					// Cell size
-					int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(SpotFeature.RADIUS) / dx));
+					int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Spot.RADIUS) / dx));
 					height = Math.max(height, DEFAULT_CELL_HEIGHT/3);
 					geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
 
