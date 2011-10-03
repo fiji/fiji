@@ -102,6 +102,7 @@ hs_err*.log
 /plugins/PIV_analyser.jar
 /plugins/Record_Screen.jar
 /plugins/Video_Editing.jar
+/plugins/TrackMate_.jar
 /jars/zs.jar
 /plugins/Sync_Win.jar
 /jars/rsyntaxtextarea.jar
