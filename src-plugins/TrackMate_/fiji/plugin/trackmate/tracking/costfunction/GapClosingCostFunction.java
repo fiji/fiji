@@ -6,10 +6,9 @@ import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
-
 import Jama.Matrix;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.LAPUtils;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
@@ -40,7 +39,7 @@ public class GapClosingCostFunction {
 	/** The value to use to block an assignment in the cost matrix. */
 	protected double blockingValue;
 	/** Thresholds for the feature ratios. */
-	protected Map<SpotFeature, Double> featurePenalties;
+	protected Map<String, Double> featurePenalties;
 	/** A flag stating if we should use multi--threading for some calculations. */
 	protected boolean useMultithreading = fiji.plugin.trackmate.TrackMate_.DEFAULT_USE_MULTITHREADING;
 
@@ -82,7 +81,7 @@ public class GapClosingCostFunction {
 
 						SortedSet<Spot> seg1 = trackSegments.get(i);
 						Spot end = seg1.last();				// get last Spot of seg1
-						Float tend = end.getFeature(SpotFeature.POSITION_T); // we want at least tstart > tend
+						Float tend = end.getFeature(Spot.POSITION_T); // we want at least tstart > tend
 
 						// Set the gap closing scores for each segment start and end pair
 						for (int j = 0; j < n; j++) {
@@ -95,7 +94,7 @@ public class GapClosingCostFunction {
 
 							SortedSet<Spot> seg2 = trackSegments.get(j);
 							Spot start = seg2.first();			// get first Spot of seg2
-							Float tstart = start.getFeature(SpotFeature.POSITION_T);
+							Float tstart = start.getFeature(Spot.POSITION_T);
 
 							// Frame cutoff
 							if (tstart - tend > timeCutoff || tend >= tstart) {

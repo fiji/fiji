@@ -15,7 +15,6 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.util.TMUtils;
@@ -155,13 +154,13 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 		TreeMap<Float, Spot> spotQuality = new TreeMap<Float, Spot>();
 		spots = convertToSpots(centeredExtrema, calibration, downsampleFactors);
 		for (int i = 0; i < spots.size(); i++) {
-			spots.get(i).putFeature(SpotFeature.QUALITY, extremaValues.get(i));
-			spots.get(i).putFeature(SpotFeature.RADIUS, settings.expectedRadius);
+			spots.get(i).putFeature(Spot.QUALITY, extremaValues.get(i));
+			spots.get(i).putFeature(Spot.RADIUS, settings.expectedRadius);
 			spotQuality.put(extremaValues.get(i), spots.get(i));
 		}
 		
 		// Prune spots too close to each other
-		spots = TMUtils.suppressSpots(spots, SpotFeature.QUALITY);
+		spots = TMUtils.suppressSpots(spots, Spot.QUALITY);
 		
 		return true;
 	}

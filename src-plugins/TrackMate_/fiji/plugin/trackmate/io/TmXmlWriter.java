@@ -21,7 +21,6 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
@@ -195,10 +194,10 @@ public class TmXmlWriter implements TmXmlKeys {
 		linkingElement.addContent(
 				new Element(TRACKER_SETTINGS_DISTANCE_CUTOFF_ELEMENT)
 				.setAttribute(TRACKER_SETTINGS_DISTANCE_CUTOFF_ATTNAME, ""+settings.linkingDistanceCutOff));
-		for(SpotFeature feature : settings.linkingFeaturePenalties.keySet())
+		for(String feature : settings.linkingFeaturePenalties.keySet())
 			linkingElement.addContent(
 					new Element(TRACKER_SETTINGS_FEATURE_ELEMENT)
-					.setAttribute(feature.name(), ""+settings.linkingFeaturePenalties.get(feature)) );
+					.setAttribute(feature, ""+settings.linkingFeaturePenalties.get(feature)) );
 		trackerSettingsElement.addContent(linkingElement);
 		// Gap-closing
 		Element gapClosingElement = new Element(TRACKER_SETTINGS_GAP_CLOSING_ELEMENT);
@@ -209,10 +208,10 @@ public class TmXmlWriter implements TmXmlKeys {
 		gapClosingElement.addContent(
 				new Element(TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT)
 				.setAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME, ""+settings.gapClosingTimeCutoff));
-		for(SpotFeature feature : settings.gapClosingFeaturePenalties.keySet())
+		for(String feature : settings.gapClosingFeaturePenalties.keySet())
 			gapClosingElement.addContent(
 					new Element(TRACKER_SETTINGS_FEATURE_ELEMENT)
-					.setAttribute(feature.name(), ""+settings.gapClosingFeaturePenalties.get(feature)) );
+					.setAttribute(feature, ""+settings.gapClosingFeaturePenalties.get(feature)) );
 		trackerSettingsElement.addContent(gapClosingElement);
 		// Splitting
 		Element splittingElement = new Element(TRACKER_SETTINGS_SPLITTING_ELEMENT);
@@ -223,10 +222,10 @@ public class TmXmlWriter implements TmXmlKeys {
 		splittingElement.addContent(
 				new Element(TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT)
 				.setAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME, ""+settings.splittingTimeCutoff));
-		for(SpotFeature feature : settings.splittingFeaturePenalties.keySet())
+		for(String feature : settings.splittingFeaturePenalties.keySet())
 			splittingElement.addContent(
 					new Element(TRACKER_SETTINGS_FEATURE_ELEMENT)
-					.setAttribute(feature.name(), ""+settings.splittingFeaturePenalties.get(feature)) );
+					.setAttribute(feature, ""+settings.splittingFeaturePenalties.get(feature)) );
 		trackerSettingsElement.addContent(splittingElement);
 		// Merging
 		Element mergingElement = new Element(TRACKER_SETTINGS_MERGING_ELEMENT);
@@ -237,10 +236,10 @@ public class TmXmlWriter implements TmXmlKeys {
 		mergingElement.addContent(
 				new Element(TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT)
 				.setAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME, ""+settings.mergingTimeCutoff));
-		for(SpotFeature feature : settings.mergingFeaturePenalties.keySet())
+		for(String feature : settings.mergingFeaturePenalties.keySet())
 			mergingElement.addContent(
 					new Element(TRACKER_SETTINGS_FEATURE_ELEMENT)
-					.setAttribute(feature.name(), ""+settings.mergingFeaturePenalties.get(feature)) );
+					.setAttribute(feature, ""+settings.mergingFeaturePenalties.get(feature)) );
 		trackerSettingsElement.addContent(mergingElement);
 		// Add to root		
 		root.addContent(trackerSettingsElement);
@@ -358,7 +357,7 @@ public class TmXmlWriter implements TmXmlKeys {
 
 	private void echoInitialSpotFilter(final Float qualityThreshold) {
 		Element itElement = new Element(INITIAL_SPOT_FILTER_ELEMENT_KEY);
-		itElement.setAttribute(FILTER_FEATURE_ATTRIBUTE_NAME, SpotFeature.QUALITY.name());
+		itElement.setAttribute(FILTER_FEATURE_ATTRIBUTE_NAME, Spot.QUALITY);
 		itElement.setAttribute(FILTER_VALUE_ATTRIBUTE_NAME, ""+qualityThreshold);
 		itElement.setAttribute(FILTER_ABOVE_ATTRIBUTE_NAME, ""+true);
 		root.addContent(itElement);
@@ -367,12 +366,12 @@ public class TmXmlWriter implements TmXmlKeys {
 	}
 
 	private void echoSpotFilters() {
-		List<FeatureFilter<SpotFeature>> featureThresholds = model.getSpotFilters();
+		List<FeatureFilter> featureThresholds = model.getSpotFilters();
 
 		Element allTresholdElement = new Element(SPOT_FILTER_COLLECTION_ELEMENT_KEY);
-		for (FeatureFilter<SpotFeature> threshold : featureThresholds) {
+		for (FeatureFilter threshold : featureThresholds) {
 			Element thresholdElement = new Element(FILTER_ELEMENT_KEY);
-			thresholdElement.setAttribute(FILTER_FEATURE_ATTRIBUTE_NAME, threshold.feature.name());
+			thresholdElement.setAttribute(FILTER_FEATURE_ATTRIBUTE_NAME, threshold.feature);
 			thresholdElement.setAttribute(FILTER_VALUE_ATTRIBUTE_NAME, threshold.value.toString());
 			thresholdElement.setAttribute(FILTER_ABOVE_ATTRIBUTE_NAME, ""+threshold.isAbove);
 			allTresholdElement.addContent(thresholdElement);
@@ -383,12 +382,12 @@ public class TmXmlWriter implements TmXmlKeys {
 	}
 	
 	private void echoTrackFilters() {
-		List<FeatureFilter<TrackFeature>> featureThresholds = model.getTrackFilters();
+		List<FeatureFilter> featureThresholds = model.getTrackFilters();
 
 		Element allTresholdElement = new Element(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
-		for (FeatureFilter<TrackFeature> threshold : featureThresholds) {
+		for (FeatureFilter threshold : featureThresholds) {
 			Element thresholdElement = new Element(FILTER_ELEMENT_KEY);
-			thresholdElement.setAttribute(FILTER_FEATURE_ATTRIBUTE_NAME, threshold.feature.name());
+			thresholdElement.setAttribute(FILTER_FEATURE_ATTRIBUTE_NAME, threshold.feature);
 			thresholdElement.setAttribute(FILTER_VALUE_ATTRIBUTE_NAME, threshold.value.toString());
 			thresholdElement.setAttribute(FILTER_ABOVE_ATTRIBUTE_NAME, ""+threshold.isAbove);
 			allTresholdElement.addContent(thresholdElement);
@@ -434,11 +433,11 @@ public class TmXmlWriter implements TmXmlKeys {
 		attributes.add(nameAttribute);
 		Float val;
 		Attribute featureAttribute;
-		for (SpotFeature feature : SpotFeature.values()) {
+		for (String feature : spot.getFeatures().keySet()) {
 			val = spot.getFeature(feature);
 			if (null == val)
 				continue;
-			featureAttribute = new Attribute(feature.name(), val.toString());
+			featureAttribute = new Attribute(feature, val.toString());
 			attributes.add(featureAttribute);
 		}
 

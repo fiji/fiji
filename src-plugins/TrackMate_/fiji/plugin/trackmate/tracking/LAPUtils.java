@@ -18,7 +18,6 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotFeature;
 
 public class LAPUtils {
 
@@ -54,7 +53,7 @@ public class LAPUtils {
 	 * twice as far.
 	 */
 	public static final double computeLinkingCostFor(final Spot s0, final Spot s1, 
-			final double distanceCutOff, final double blockingValue, final Map<SpotFeature, Double> featurePenalties) {
+			final double distanceCutOff, final double blockingValue, final Map<String, Double> featurePenalties) {
 		double d2 = s0.squareDistanceTo(s1);
 
 		// Distance threshold
@@ -63,7 +62,7 @@ public class LAPUtils {
 		}
 
 		double penalty = 1;
-		for (SpotFeature feature : featurePenalties.keySet()) {
+		for (String feature : featurePenalties.keySet()) {
 			double ndiff = s0.normalizeDiffTo(s1, feature);
 			if (Double.isNaN(ndiff))
 				continue;

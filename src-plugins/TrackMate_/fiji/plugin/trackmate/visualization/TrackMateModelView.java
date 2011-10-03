@@ -5,7 +5,6 @@ import java.util.Map;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
 
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 
 public interface TrackMateModelView {

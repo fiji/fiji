@@ -6,10 +6,9 @@ import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
-
 import Jama.Matrix;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.LAPUtils;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
@@ -43,7 +42,7 @@ public class MergingCostFunction {
 	/** The value used to block an assignment in the cost matrix. */
 	protected double blockingValue;
 	/** Thresholds for the feature ratios. */
-	protected Map<SpotFeature, Double> featurePenalties;
+	protected Map<String, Double> featurePenalties;
 	/** A flag stating if we should use multi--threading for some calculations. */
 	protected boolean useMultithreading = fiji.plugin.trackmate.TrackMate_.DEFAULT_USE_MULTITHREADING;
 
@@ -86,8 +85,8 @@ public class MergingCostFunction {
 							Spot middle = middlePoints.get(j);
 
 							// Frame threshold - middle Spot must be one frame ahead of the end Spot
-							Float tend = end.getFeature(SpotFeature.POSITION_T);
-							Float tmiddle = middle.getFeature(SpotFeature.POSITION_T);
+							Float tend = end.getFeature(Spot.POSITION_T);
+							Float tmiddle = middle.getFeature(Spot.POSITION_T);
 							if (tmiddle - tend > timeCutoff || tmiddle - tend <= 0) {
 								m.set(i, j, blockingValue);
 								continue;

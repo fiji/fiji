@@ -18,7 +18,6 @@ import org.jgrapht.traverse.DepthFirstIterator;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.tracking.costmatrix.LinkingCostMatrixCreator;
 import fiji.plugin.trackmate.tracking.costmatrix.TrackSegmentCostMatrixCreator;
 import fiji.plugin.trackmate.tracking.hungarian.AssignmentAlgorithm;

@@ -14,7 +14,6 @@ import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.util.TMUtils;
@@ -118,13 +117,13 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 					coords[i] = dogpeak.getPosition(i) * calibration[i];
 			}
 			Spot spot = new SpotImp(coords);
-			spot.putFeature(SpotFeature.QUALITY, -dogpeak.getValue().get());
-			spot.putFeature(SpotFeature.RADIUS, settings.expectedRadius);
+			spot.putFeature(Spot.QUALITY, -dogpeak.getValue().get());
+			spot.putFeature(Spot.RADIUS, settings.expectedRadius);
 			spots.add(spot);
 		}
 		
-		// Pruned overlapping spots
-		spots = TMUtils.suppressSpots(spots, SpotFeature.QUALITY);
+		// Prune overlapping spots
+		spots = TMUtils.suppressSpots(spots, Spot.QUALITY);
 		
 		return true;
 	}

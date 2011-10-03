@@ -8,7 +8,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.LAPUtils;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
@@ -43,7 +42,7 @@ public class SplittingCostFunction {
 	/** The value used to block an assignment in the cost matrix. */
 	protected double blockingValue;
 	/** Thresholds for the feature ratios. */
-	protected Map<SpotFeature, Double> featurePenalties;
+	protected Map<String, Double> featurePenalties;
 
 	private boolean allowSplitting;
 
@@ -100,7 +99,7 @@ public class SplittingCostFunction {
 						Spot middle = middlePoints.get(i);
 						if (DEBUG)
 							System.out.println(String.format("Current middle spot: x=%.1f, y=%.1f, t=%.1f", 
-									middle.getPosition(null)[0], middle.getPosition(null)[1], middle.getFeature(SpotFeature.POSITION_T)));
+									middle.getPosition(null)[0], middle.getPosition(null)[1], middle.getFeature(Spot.POSITION_T)));
 
 						for (int j = 0; j < trackSegments.size(); j++) {
 
@@ -115,8 +114,8 @@ public class SplittingCostFunction {
 							}
 
 							// Frame threshold - middle Spot must be one frame behind of the start Spot
-							Float tstart = start.getFeature(SpotFeature.POSITION_T);
-							Float tmiddle = middle.getFeature(SpotFeature.POSITION_T);
+							Float tstart = start.getFeature(Spot.POSITION_T);
+							Float tmiddle = middle.getFeature(Spot.POSITION_T);
 							if ( (tstart - tmiddle > timeCutoff) || (tstart - tmiddle <= 0) ) {
 								m.set(i, j, blockingValue);
 								continue;

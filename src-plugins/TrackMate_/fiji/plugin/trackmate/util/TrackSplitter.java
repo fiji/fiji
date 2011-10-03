@@ -10,7 +10,6 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 
@@ -165,7 +164,7 @@ public class TrackSplitter {
 			Spot other = model.getEdgeSource(edge);
 			if (other == spot)
 				other = model.getEdgeTarget(edge);
-			float t = other.getFeature(SpotFeature.POSITION_T);
+			float t = other.getFeature(Spot.POSITION_T);
 			if (t > t0)
 				after++;
 			if (t < t0) 

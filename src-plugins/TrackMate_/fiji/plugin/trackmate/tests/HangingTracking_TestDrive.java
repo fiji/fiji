@@ -6,8 +6,8 @@ import java.io.IOException;
 import org.jdom.JDOMException;
 
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.features.spot.BlobMorphology;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
@@ -41,7 +41,7 @@ public class HangingTracking_TestDrive {
 
 		System.out.println();
 		System.out.println("With feature condition:");
-		trackerSettings.linkingFeaturePenalties.put(SpotFeature.MORPHOLOGY, (double) 1);
+		trackerSettings.linkingFeaturePenalties.put(BlobMorphology.MORPHOLOGY, (double) 1);
 		tracker = new LAPTracker(filteredSpots, trackerSettings);
 		System.out.println("For frame pair "+frame+" -> "+(frame+1)+":");
 		System.out.println("There are "+filteredSpots.getNSpots(frame)+" spots to link to "+filteredSpots.getNSpots(frame+1));

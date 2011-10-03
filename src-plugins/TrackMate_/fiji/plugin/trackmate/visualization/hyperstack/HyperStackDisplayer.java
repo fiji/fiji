@@ -13,7 +13,6 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
@@ -149,7 +148,7 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 		}
 		if (frame == -1)
 			return;
-		int z = Math.round(spot.getFeature(SpotFeature.POSITION_Z) / calibration[2] ) + 1;
+		int z = Math.round(spot.getFeature(Spot.POSITION_Z) / calibration[2] ) + 1;
 		imp.setPosition(1, z, frame+1);
 	}
 

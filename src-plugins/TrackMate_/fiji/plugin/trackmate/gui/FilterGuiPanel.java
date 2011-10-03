@@ -27,7 +27,7 @@ import javax.swing.event.ChangeListener;
 
 import fiji.plugin.trackmate.FeatureFilter;
 
-public class FilterGuiPanel<K extends Enum<K>> extends ActionListenablePanel implements ChangeListener {
+public class FilterGuiPanel extends ActionListenablePanel implements ChangeListener {
 
 	private static final long serialVersionUID = 1307749013344373051L;
 	private final ChangeEvent CHANGE_EVENT = new ChangeEvent(this);

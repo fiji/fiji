@@ -28,7 +28,6 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterType;
@@ -162,7 +161,7 @@ public class TmXmlReader implements TmXmlKeys {
 			return null;
 		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
 		for (Element ftEl : ftEls) {
-			TrackFeature feature = TrackFeature.valueOf(ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME));
+			String feature 	= ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
 			Float value 	= ftEl.getAttribute(FILTER_VALUE_ATTRIBUTE_NAME).getFloatValue();
 			boolean isAbove	= ftEl.getAttribute(FILTER_ABOVE_ATTRIBUTE_NAME).getBooleanValue();
 			FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
@@ -505,15 +504,19 @@ public class TmXmlReader implements TmXmlKeys {
 	private static Spot createSpotFrom(Element spotEl) throws DataConversionException {
 		int ID = spotEl.getAttribute(SPOT_ID_ATTRIBUTE_NAME).getIntValue();
 		Spot spot = new SpotImp(ID);
+
+		@SuppressWarnings("unchecked")
+		List<Attribute> atts = spotEl.getAttributes();
+		atts.remove(SPOT_ID_ATTRIBUTE_NAME);
+		
 		String name = spotEl.getAttributeValue(SPOT_NAME_ATTRIBUTE_NAME);
 		if (null == name || name.equals(""))
 			name = "ID"+ID;
 		spot.setName(name);
-		for (String feature : SpotFeature.values()) {
-			Attribute att = spotEl.getAttribute(feature.name()); // FIXME: we do not know yet what are the feature stored
-			if (null == att)
-				continue;
-			spot.putFeature(feature, att.getFloatValue());
+		atts.remove(SPOT_NAME_ATTRIBUTE_NAME);
+		
+		for (Attribute att : atts) {
+			spot.putFeature(att.getName(), att.getFloatValue());
 		}
 		return spot;
 	}

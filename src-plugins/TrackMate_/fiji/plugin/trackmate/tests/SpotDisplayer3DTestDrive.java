@@ -1,11 +1,11 @@
 package fiji.plugin.trackmate.tests;
 
+import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.features.spot.SpotFeatureFacade;
+import fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics;
 import fiji.plugin.trackmate.gui.FilterGuiPanel;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -96,14 +96,16 @@ public class SpotDisplayer3DTestDrive {
 		SpotImp spot;
 		for (int i = 0; i < N_BLOBS; i++)  {
 			spot = new SpotImp(centers.get(i), "Spot "+i);
-			spot.putFeature(SpotFeature.POSITION_T, 0);
-			spot.putFeature(SpotFeature.RADIUS, RADIUS);
-			spot.putFeature(SpotFeature.QUALITY, RADIUS);
+			spot.putFeature(Spot.POSITION_T, 0);
+			spot.putFeature(Spot.RADIUS, RADIUS);
+			spot.putFeature(Spot.QUALITY, RADIUS);
 			spots.add(spot);
 		}
 		
 		System.out.println("Grabbing features...");
-		new SpotFeatureFacade<UnsignedByteType>(img, CALIBRATION).processFeature(SpotFeature.MEAN_INTENSITY, spots);
+		BlobDescriptiveStatistics<UnsignedByteType> analyzer = new BlobDescriptiveStatistics<UnsignedByteType>();
+		analyzer.setTarget(img, CALIBRATION);
+		analyzer.process(spots);
 		for (Spot s : spots) 
 			System.out.println(s);
 
@@ -120,7 +122,13 @@ public class SpotDisplayer3DTestDrive {
 		displayer.render();
 		
 		// Launch threshold GUI
-		final FilterGuiPanel<SpotFeature> gui = new FilterGuiPanel<SpotFeature>(SpotFeature.QUALITY, "spots", TMUtils.getSpotFeatureValues(allSpots.values()));
+		List<FeatureFilter> ff = new ArrayList<FeatureFilter>();
+		final FilterGuiPanel gui = new FilterGuiPanel(
+				BlobDescriptiveStatistics.FEATURES, 
+				ff,
+				BlobDescriptiveStatistics.FEATURE_NAMES,
+				TMUtils.getSpotFeatureValues(allSpots.values(), BlobDescriptiveStatistics.FEATURES),
+				"spots");
 
 		// Set listeners
 		gui.addChangeListener(new ChangeListener() {
@@ -133,7 +141,7 @@ public class SpotDisplayer3DTestDrive {
 		gui.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (e == gui.COLOR_FEATURE_CHANGED) {
-					SpotFeature feature = gui.getColorByFeature();
+					String feature = gui.getColorByFeature();
 					displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLOR_FEATURE, feature);
 					displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_RADIUS_RATIO, RAN.nextFloat());
 					displayer.refresh();
@@ -149,7 +157,7 @@ public class SpotDisplayer3DTestDrive {
 		frame.setVisible(true);
 
 		// Add a panel
-		gui.addFilterPanel(SpotFeature.MEAN_INTENSITY);		
+		gui.addFilterPanel(BlobDescriptiveStatistics.MEAN_INTENSITY);		
 		
 	}
 	

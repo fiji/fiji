@@ -22,7 +22,6 @@ import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.TrackFeature;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -189,7 +188,7 @@ public class TrackOverlay implements Overlay {
 						continue;
 
 					source = model.getEdgeSource(edge);
-					sourceFrame = source.getFeature(SpotFeature.POSITION_T) / dt;
+					sourceFrame = source.getFeature(Spot.POSITION_T) / dt;
 					if (sourceFrame < minT || sourceFrame >= maxT)
 						continue;
 
@@ -215,7 +214,7 @@ public class TrackOverlay implements Overlay {
 						continue;
 
 					source = model.getEdgeSource(edge);
-					sourceFrame = source.getFeature(SpotFeature.POSITION_T) / dt;
+					sourceFrame = source.getFeature(Spot.POSITION_T) / dt;
 					if (sourceFrame < minT || sourceFrame >= maxT)
 						continue;
 
@@ -247,10 +246,10 @@ public class TrackOverlay implements Overlay {
 	protected void drawEdge(final Graphics2D g2d, final Spot source, final Spot target,
 			final int xcorner, final int ycorner, final float magnification, final float transparency) {
 		// Find x & y in physical coordinates
-		final float x0i = source.getFeature(SpotFeature.POSITION_X);
-		final float y0i = source.getFeature(SpotFeature.POSITION_Y);
-		final float x1i = target.getFeature(SpotFeature.POSITION_X);
-		final float y1i = target.getFeature(SpotFeature.POSITION_Y);
+		final float x0i = source.getFeature(Spot.POSITION_X);
+		final float y0i = source.getFeature(Spot.POSITION_Y);
+		final float x1i = target.getFeature(Spot.POSITION_X);
+		final float y1i = target.getFeature(Spot.POSITION_Y);
 		// In pixel units
 		final float x0p = x0i / calibration[0];
 		final float y0p = y0i / calibration[1];
@@ -275,10 +274,10 @@ public class TrackOverlay implements Overlay {
 	protected void drawEdge(final Graphics2D g2d, final Spot source, final Spot target,
 			final int xcorner, final int ycorner, final float magnification) {
 		// Find x & y in physical coordinates
-		final float x0i = source.getFeature(SpotFeature.POSITION_X);
-		final float y0i = source.getFeature(SpotFeature.POSITION_Y);
-		final float x1i = target.getFeature(SpotFeature.POSITION_X);
-		final float y1i = target.getFeature(SpotFeature.POSITION_Y);
+		final float x0i = source.getFeature(Spot.POSITION_X);
+		final float y0i = source.getFeature(Spot.POSITION_Y);
+		final float x1i = target.getFeature(Spot.POSITION_X);
+		final float y1i = target.getFeature(Spot.POSITION_Y);
 		// In pixel units
 		final float x0p = x0i / calibration[0];
 		final float y0p = y0i / calibration[1];

@@ -10,7 +10,6 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import fiji.plugin.trackmate.SpotFeature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 
@@ -92,8 +91,8 @@ public class PeakPickerSegmenter<T extends RealType<T>> extends AbstractSpotSegm
 				coords[i] = peak[i] * calibration[i];
 			Spot spot = new SpotImp(coords);
 			cursor.setPosition(peak);
-			spot.putFeature(SpotFeature.QUALITY, cursor.getType().getRealFloat());
-			spot.putFeature(SpotFeature.RADIUS, settings.expectedRadius);
+			spot.putFeature(Spot.QUALITY, cursor.getType().getRealFloat());
+			spot.putFeature(Spot.RADIUS, settings.expectedRadius);
 			spots.add(spot);
 		}
 		
