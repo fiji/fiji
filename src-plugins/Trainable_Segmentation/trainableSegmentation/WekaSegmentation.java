@@ -53,6 +53,7 @@ import ij.gui.Roi;
 import ij.gui.ShapeRoi;
 
 import ij.process.Blitter;
+import ij.process.ByteProcessor;
 import ij.process.FloatPolygon;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -68,6 +69,7 @@ import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Evaluation;
 
 import weka.classifiers.pmml.consumer.PMMLClassifier;
+import weka.classifiers.trees.RandomForest;
 
 import weka.core.Attribute;
 import weka.core.DenseInstance;
@@ -84,6 +86,32 @@ import weka.filters.supervised.instance.Resample;
 
 import weka.gui.explorer.ClassifierPanel;
 
+
+/**
+ *
+ * License: GPL
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License 2
+ * as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ * Authors: Ignacio Arganda-Carreras (iarganda@mit.edu), Verena Kaynig (verena.kaynig@inf.ethz.ch),
+ *          Albert Cardona (acardona@ini.phys.ethz.ch)
+ */
+
+/**
+ * This class contains all the library methods to perform image segmentation
+ * based on the Weka classifiers.
+ */
 public class WekaSegmentation {
 
 	/** maximum number of classes (labels) allowed */
@@ -180,6 +208,14 @@ public class WekaSegmentation {
 	private String tempFolder = null;
 
 	public static final double SIMPLE_POINT_THRESHOLD = 0;
+	public static final int MERGE 			= 1;
+	public static final int SPLIT 			= 2;
+	public static final int HOLE_ADDITION	= 3;
+	public static final int OBJECT_DELETION = 4;
+	public static final int OBJECT_ADDITION = 5;
+	public static final int HOLE_DELETION 	= 6;
+	
+	
 	
 	/** executor service to launch threads for the library operations */
 	private ExecutorService exe = Executors.newFixedThreadPool(1);
@@ -2581,7 +2617,7 @@ public class WekaSegmentation {
 	}
 
 	/**
-	 * Calculate warping error
+	 * Calculate warping error (single thread version)
 	 *
 	 * @param label original labels (single image or stack)
 	 * @param proposal proposed new labels
@@ -2589,7 +2625,7 @@ public class WekaSegmentation {
 	 * @param binaryThreshold binary threshold to binarize proposal
 	 * @return total warping error
 	 */
-	public static double warpingError(
+	public static double warpingErrorSingleThread(
 			ImagePlus label,
 			ImagePlus proposal,
 			ImagePlus mask,
@@ -2624,6 +2660,325 @@ public class WekaSegmentation {
 			return -1;
 	}
 
+	/**
+	 * Calculate the classic topology-preserving warping error in 2D between some
+	 * original labels and the corresponding proposed labels. Both, original
+	 * and proposed labels are expected to have float values between 0 and 1. 
+	 * Otherwise, they will be converted.
+	 *
+	 * @param label original labels (single 2D image or stack)
+	 * @param proposal proposed new labels (single 2D image or stack of the same as as the original labels)
+	 * @param mask image mask containing in white the areas where warping is allowed (null for not geometrical constraints)
+	 * @param binaryThreshold threshold value to binarize proposal (larger than 0 and smaller than 1)
+	 * @return total warping error (it counts all type of mismatches as errors)
+	 */
+	public static double warpingError(
+			ImagePlus label,
+			ImagePlus proposal,
+			ImagePlus mask,
+			double binaryThreshold)
+	{
+		
+		IJ.log("Warping ground truth...");
+
+		
+		// Warp ground truth, relax original labels to proposal. Only simple
+		// points warping is allowed.
+		WarpingResults[] wrs = WekaSegmentation.simplePointWarp2dMT(label, proposal, mask, binaryThreshold);
+		
+
+		if(null == wrs)
+			return -1;
+
+		double error = 0;
+		double count = label.getWidth() * label.getHeight() * label.getImageStackSize();
+
+
+		for(int j=0; j<wrs.length; j++)			
+			error += wrs[ j ].mismatches.size();
+		
+
+		if(count != 0)
+			return error / count;
+		else
+			return -1;
+	}
+	
+	/**
+	 * Calculate the topology-preserving warping error in 2D between some
+	 * original labels and the corresponding proposed labels. Pixels belonging 
+	 * to the same mistake will be only counted once. For example, if we have 
+	 * a line of 15 pixels that prevent from a merger, it will count as 1 instead
+	 * of 15 as in the classic warping error method. 
+	 * Both, original and proposed labels are expected to have float values between 
+	 * 0 and 1. Otherwise, they will be converted.
+	 *
+	 * @param label original labels (single 2D image or stack)
+	 * @param proposal proposed new labels (single 2D image or stack of the same as as the original labels)
+	 * @param mask image mask containing in white the areas where warping is allowed (null for not geometric constraints)
+	 * @param binaryThreshold threshold value to binarize proposal (larger than 0 and smaller than 1)
+	 * @return clustered warping error (it clusters the mismatches that belong to the same error together)
+	 */
+	public static double warpingErrorCluster(
+			ImagePlus label,
+			ImagePlus proposal,
+			ImagePlus mask,
+			double binaryThreshold)
+	{
+		
+		IJ.log("Warping ground truth...");
+
+		
+		// Get clustered mismatches after warping ground truth, i.e. relaxing original labels to proposal. 
+		// Only simple points warping is allowed.
+		ClusteredWarpingMismatches[] cwm = WekaSegmentation.getClusteredWarpingMismatches(label, proposal, mask, binaryThreshold);
+		
+
+		if(null == cwm)
+			return -1;
+
+		double error = 0;
+		double count = label.getWidth() * label.getHeight() * label.getImageStackSize();
+
+
+		for(int j=0; j<cwm.length; j++)			
+			error += cwm[ j ].numOfHoleAdditions + cwm[ j ].numOfHoleDeleitions +
+					 cwm[ j ].numOfMergers + cwm[ j ].numOfObjectAdditions +
+					 cwm[ j ].numOfObjectDeleitions + cwm[ j ].numOfSplits;
+		
+
+		if(count != 0)
+			return error / count;
+		else
+			return -1;
+	}
+	
+	/**
+	 * Calculate the pixel error in 2D between some original labels 
+	 * and the corresponding proposed labels. Both image are binarized.
+	 *
+	 * @param label original labels (single 2D image or stack)
+	 * @param proposal proposed new labels (single 2D image or stack of the same as as the original labels)
+	 * @param binaryThreshold threshold value to binarize proposal (larger than 0 and smaller than 1)
+	 * @return 
+	 */
+	public static double pixelError(
+			ImagePlus label,
+			ImagePlus proposal,
+			double binaryThreshold)
+	{
+		
+		if(label.getWidth() != proposal.getWidth()
+				|| label.getHeight() != proposal.getHeight()
+				|| label.getImageStackSize() != proposal.getImageStackSize())
+		{
+			IJ.log("Error: label and proposal image sizes do not fit.");
+			return -1;
+		}
+
+		final ImageStack labelSlices = label.getImageStack();
+		final ImageStack proposalSlices = proposal.getImageStack();
+
+		double pixelError = 0;
+
+		// Executor service to produce concurrent threads
+		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+		final ArrayList< Future<Double> > futures = new ArrayList< Future<Double> >();
+
+		try{
+			for(int i = 1; i <= labelSlices.getSize(); i++)
+			{
+				futures.add(exe.submit( getPixelErrorConcurrent(labelSlices.getProcessor(i).convertToFloat(),
+											proposalSlices.getProcessor(i).convertToFloat(),										
+											binaryThreshold ) ) );
+			}
+
+			// Wait for the jobs to be done
+			for(Future<Double> f : futures)
+			{
+				pixelError += f.get();				
+
+			}			
+		}
+		catch(Exception ex)
+		{
+			IJ.log("Error when warping ground truth in a concurrent way.");
+			ex.printStackTrace();
+		}
+		finally{
+			exe.shutdown();
+		}
+
+		final double numPixels = label.getWidth() * label.getHeight() * label.getImageStackSize();
+		return pixelError / numPixels ;
+	}
+	
+	/**
+	 * Get pixel error between two image in a concurrent way 
+	 * (to be submitted to an Executor Service). Both images
+	 * are binarized.
+	 * 
+	 * @param image1 first image
+	 * @param image2 second image
+	 * @param binaryThreshold threshold to apply to both images
+	 * @return pixel error
+	 */
+	public static Callable<Double> getPixelErrorConcurrent(
+			final ImageProcessor image1, 
+			final ImageProcessor image2,
+			final double binaryThreshold) 
+	{
+		return new Callable<Double>()
+		{
+			public Double call()
+			{
+				double pixelError = 0;
+				for(int x=0; x<image1.getWidth(); x++)
+					for(int y=0; y<image2.getWidth(); y++)
+					{
+						double pix1 = image1.getPixel(x, y) > binaryThreshold ? 1 : 0;
+						double pix2 = image2.getPixel(x, y) > binaryThreshold ? 1 : 0;
+						pixelError += Math.abs( pix1 - pix2 );
+					}
+				return pixelError;
+			}
+		};
+	}
+
+	/**
+	 * Use simple point relaxation to warp 2D source into 2D target.
+	 * Source is only modified at nonzero locations in the mask
+	 * (multi-thread static version)
+	 *
+	 * @param source input image to be relaxed (2D image or stack)
+	 * @param target target image (2D image or stack)
+	 * @param mask image mask (2D image or stack)
+	 * @param binaryThreshold binarization threshold
+	 * @return warping results for each slice of the source
+	 */
+	public static WarpingResults[] simplePointWarp2dMT(
+			ImagePlus source,
+			ImagePlus target,
+			ImagePlus mask,
+			double binaryThreshold)
+	{
+		if(source.getWidth() != target.getWidth()
+				|| source.getHeight() != target.getHeight()
+				|| source.getImageStackSize() != target.getImageStackSize())
+		{
+			IJ.log("Error: label and training image sizes do not fit.");
+			return null;
+		}
+
+		final ImageStack sourceSlices = source.getImageStack();
+		final ImageStack targetSlices = target.getImageStack();
+		final ImageStack maskSlices = (null != mask) ? mask.getImageStack() : null;
+
+		final WarpingResults[] wrs = new WarpingResults[ source.getImageStackSize() ];
+
+		// Executor service to produce concurrent threads
+		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+		final ArrayList< Future<WarpingResults> > futures = new ArrayList< Future<WarpingResults> >();
+
+		try{
+			for(int i = 1; i <= sourceSlices.getSize(); i++)
+			{
+				futures.add(exe.submit( simplePointWarp2DConcurrent(sourceSlices.getProcessor(i).convertToFloat(),
+										targetSlices.getProcessor(i).convertToFloat(),
+										null != maskSlices ? maskSlices.getProcessor(i) : null,
+										binaryThreshold ) ) );
+			}
+
+			int i = 0;
+			// Wait for the jobs to be done
+			for(Future<WarpingResults> f : futures)
+			{
+				wrs[ i ] = f.get();				
+				i++;
+			}			
+		}
+		catch(Exception ex)
+		{
+			IJ.log("Error when warping ground truth in a concurrent way.");
+			ex.printStackTrace();
+		}
+		finally{
+			exe.shutdown();
+		}
+
+		return wrs;
+	}
+	
+	
+	/**
+	 * Get all the mismatches of warping a source image into a target image  
+	 * and clustering them when they belong to the same error. Simple point 
+	 * relaxation is used for the warping. The source is only modified at 
+	 * nonzero locations in the mask (multi-thread static version)
+	 *
+	 * @param source input image to be relaxed (2D image or stack)
+	 * @param target target image (2D image or stack)
+	 * @param mask image mask (2D image or stack)
+	 * @param binaryThreshold binarization threshold
+	 * @return clustered warping mismatches for each slice of the source
+	 */
+	public static ClusteredWarpingMismatches[] getClusteredWarpingMismatches(
+			ImagePlus source,
+			ImagePlus target,
+			ImagePlus mask,
+			double binaryThreshold)
+	{
+		if(source.getWidth() != target.getWidth()
+				|| source.getHeight() != target.getHeight()
+				|| source.getImageStackSize() != target.getImageStackSize())
+		{
+			IJ.log("Error: label and training image sizes do not fit.");
+			return null;
+		}
+
+		final ImageStack sourceSlices = source.getImageStack();
+		final ImageStack targetSlices = target.getImageStack();
+		final ImageStack maskSlices = (null != mask) ? mask.getImageStack() : null;
+
+		final ClusteredWarpingMismatches[] cwm = new ClusteredWarpingMismatches[ source.getImageStackSize() ];
+
+		// Executor service to produce concurrent threads
+		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+		final ArrayList< Future<ClusteredWarpingMismatches> > futures = new ArrayList< Future<ClusteredWarpingMismatches> >();
+
+		try{
+			for(int i = 1; i <= sourceSlices.getSize(); i++)
+			{
+				futures.add(exe.submit( getClusteredWarpingMismatchesConcurrent(sourceSlices.getProcessor(i).convertToFloat(),
+										targetSlices.getProcessor(i).convertToFloat(),
+										null != maskSlices ? maskSlices.getProcessor(i) : null,
+										binaryThreshold ) ) );
+			}
+
+			int i = 0;
+			// Wait for the jobs to be done
+			for(Future<ClusteredWarpingMismatches> f : futures)
+			{
+				cwm[ i ] = f.get();				
+				i++;
+			}			
+		}
+		catch(Exception ex)
+		{
+			IJ.log("Error when getting the clustered warping mismatches in a concurrent way.");
+			ex.printStackTrace();
+		}
+		finally{
+			exe.shutdown();
+		}
+
+		return cwm;
+	}
+	
+	
 	/**
 	 * Use simple point relaxation to warp 2D source into 2D target.
 	 * Source is only modified at nonzero locations in the mask
@@ -2666,7 +3021,7 @@ public class WekaSegmentation {
 				warpingError += wr.warpingError;
 		}
 
-		IJ.log("Warping error = " + (warpingError / sourceSlices.getSize()));
+		//IJ.log("Warping error = " + (warpingError / sourceSlices.getSize()));
 
 		return new ImagePlus("warped source", warpedSource);
 	}
@@ -2680,6 +3035,7 @@ public class WekaSegmentation {
 	 * @param target target image
 	 * @param mask image mask
 	 * @param binaryThreshold binarization threshold
+	 * @param mismatches list of points that could not be flipped 
 	 * @return warped source image
 	 */
 	public ImagePlus simplePointWarp2dMT(
@@ -2759,7 +3115,7 @@ public class WekaSegmentation {
 	 * @param binaryThreshold binary threshold to use
 	 * @return warping results (warped labels, warping error value and mismatching points)
 	 */
-	public Callable<WarpingResults> simplePointWarp2DConcurrent(
+	public static Callable<WarpingResults> simplePointWarp2DConcurrent(
 			final ImageProcessor source,
 			final ImageProcessor target,
 			final ImageProcessor mask,
@@ -2773,20 +3129,32 @@ public class WekaSegmentation {
 		};
 	}
 
-
 	/**
-	 * Results from simple point warping (2D)
-	 *
+	 * Calculate the simple point warping in a concurrent way
+	 * (to be submitted to an Executor Service)
+	 * @param source moving image
+	 * @param target fixed image
+	 * @param mask mask image
+	 * @param binaryThreshold binary threshold to use
+	 * @return clustered mismatching points after warping
 	 */
-	public static class WarpingResults{
-		/** warped source image after 2D simple point relaxation */
-		public ImagePlus warpedSource;
-		/** warping error */
-		public double warpingError;
-
-		public ArrayList<Point3f> mismatches;
+	public static Callable<ClusteredWarpingMismatches> getClusteredWarpingMismatchesConcurrent(
+			final ImageProcessor source,
+			final ImageProcessor target,
+			final ImageProcessor mask,
+			final double binaryThreshold)
+	{
+		return new Callable<ClusteredWarpingMismatches>()
+		{
+			public ClusteredWarpingMismatches call()
+			{
+				WarpingResults wr = simplePointWarp2d(source, target, mask, binaryThreshold);
+				int[] mismatchesLabels = WekaSegmentation.classifyMismatches2d( wr.warpedSource, wr.mismatches );
+				return WekaSegmentation.clusterMismatchesByType( wr.warpedSource, wr.mismatches, mismatchesLabels );
+			}
+		};
 	}
-
+	
 	/**
 	 * Use simple point relaxation to warp 2D source into 2D target.
 	 * Source is only modified at nonzero locations in the mask
@@ -2852,7 +3220,7 @@ public class WekaSegmentation {
 		final float[] targetBinPix = (float[])targetBin.getProcessor().getPixels();
 		for(int i=0; i < targetBinPix.length; i++)
 			targetBinPix[i] = (targetBinPix[i] > binaryThreshold) ? 1.0f : 0.0f;
-
+		
 		double diff = Double.MIN_VALUE;
 		double diff_before = 0;
 
@@ -2945,13 +3313,224 @@ public class WekaSegmentation {
 		ip.insert(sourceReal.getProcessor(), -1, -1);
 		sourceReal.setProcessor(ip.duplicate());
 
-
+		// Adjust mismatches coordinates 
+		final ArrayList<Point3f> mismatches = new ArrayList<Point3f>();
+		for(Point3f p : result.mismatches)
+		{
+			mismatches.add(new Point3f( p.x - 1, p.y - 1, p.z));
+		}
+		
+		result.mismatches = mismatches;
 		result.warpedSource = sourceReal;
 		result.warpingError = diff / (width * height);
 		return result;
 	}
 
+	/**
+	 * Classify warping mismatches as MERGE, SPLIT, HOLE_ADDITION, HOLE_DELETION, OBJECT_ADDITION, OBJECT_DELETION
+	 *  
+	 * @param warpedLabels labels after warping (binary image)
+	 * @param mismatches list of mismatch points after warping
+	 * @return array of mismatch classifications
+	 */
+	public static int[] classifyMismatches2d( ImagePlus warpedLabels, ArrayList<Point3f> mismatches )
+	{
+		final int[] pointClassification = new int[ mismatches.size() ];
+		
+		// Calculate components in warped labels
+		ImageProcessor components = connectedComponents(
+				new ImagePlus("8-bit warped labels", warpedLabels.getProcessor().convertToByte(true)
+						), 4).allRegions.getProcessor();
+		
+		int n = 0;
+		for(Point3f p : mismatches)
+		{
+			final int x = (int) p.x;
+			final int y = (int) p.y;
+			final ArrayList<Integer> neighborhood = getNeighborhood(components, new Point(x, y), 1, 1);
+								
+			// Count number of unique IDs in the neighborhood
+			ArrayList<Integer> uniqueId = new ArrayList<Integer>();
+			for( Integer neighbor : neighborhood)
+			{
+				if(!uniqueId.contains( neighbor ))
+					uniqueId.add( neighbor );				
+			}
+					
+			// If all surrounding pixels are background
+			if( uniqueId.size() == 1 && uniqueId.get(0) == 0)
+			{
+				if(components.getPixel(x, y) != 0)
+					pointClassification[ n ] = WekaSegmentation.OBJECT_DELETION;
+				else
+					pointClassification[ n ] = WekaSegmentation.OBJECT_ADDITION;
+			}
+			// If all surrounding pixels belong to one object 
+			else if ( uniqueId.size() == 1 && uniqueId.get(0) != 0)
+			{
+				if(components.getPixel(x, y) != 0)
+					pointClassification[ n ] = WekaSegmentation.HOLE_ADDITION;
+				else
+					pointClassification[ n ] = WekaSegmentation.HOLE_DELETION;
+			}
+			// If there are background and one single object ID in the surrounding pixels
+			else if ( uniqueId.size() == 2 )
+			{
+				if (components.getPixel(x, y) == 0)
+					pointClassification[ n ] = WekaSegmentation.HOLE_ADDITION;
+				else
+				{
+					// flip pixel and apply connected components again
+					final ByteProcessor warpedPixels2 = (ByteProcessor) warpedLabels.getProcessor().duplicate().convertToByte(true);
+					warpedPixels2.set( x, y, warpedPixels2.get(x, y) != 0 ? 0 : 255);
+					// Calculate components in the new warped labels
+					ImageProcessor components2 = connectedComponents(new ImagePlus("8-bit warped labesl", warpedPixels2), 4).allRegions.getProcessor();
 
+
+					final ArrayList<Integer> neighborhood2 = getNeighborhood(components2, new Point(x, y), 1, 1);								
+
+					// Count number of unique IDs in the neighborhood of the new components
+					ArrayList<Integer> uniqueId2 = new ArrayList<Integer>();
+					for( Integer neighbor : neighborhood2)
+					{			
+						if(!uniqueId2.contains( neighbor ))
+							uniqueId2.add( neighbor );				
+					}
+
+					// If there are more than 2 new components then it's a split
+					if ( uniqueId2.size() > 2 )
+						pointClassification[ n ] = WekaSegmentation.SPLIT;
+					// otherwise it deletes a hole
+					else
+						pointClassification[ n ] = WekaSegmentation.HOLE_DELETION;
+				}
+			}			
+			else // If there are more than 1 object ID in the surrounding pixels 
+			{
+				if(components.getPixel(x, y) == 0)
+					pointClassification[ n ] = WekaSegmentation.MERGE;
+				else
+					pointClassification[ n ] = WekaSegmentation.SPLIT;
+			}	
+			n++;
+		}
+		
+		return pointClassification;
+	}
+
+	/**
+	 * Cluster the result mismatches from the warping so pixels
+	 * belonging to the same error are only counted once.
+	 * 
+	 * @param warpedLabels result warped labels
+	 * @param mismatches list of non simple points 
+	 * @param mismatchClassification array of classified mismatches
+	 * @return number of warping mismatches after clustering
+	 */
+	public static ClusteredWarpingMismatches clusterMismatchesByType(
+			ImagePlus warpedLabels, 
+			ArrayList<Point3f> mismatches, 
+			int [] mismatchClassification)
+	{
+		
+		// Create the 8 possible cases out of the mismatches
+		// 0: object addition, 1: hole deletion with an isolated background pixel
+		// 2: merger, 3: hole creation by removing a background pixel 
+		// 4: delete object, 5: hole creation by adding a background pixel
+		// 6: split ,7: hole deletion by removing a foreground pixel
+
+		ByteProcessor[] binaryMismatches = new ByteProcessor[ 8 ];
+		
+		final int width = warpedLabels.getWidth();
+		final int height = warpedLabels.getHeight();
+		
+		for(int i=0; i<8; i++)
+			binaryMismatches[ i ] = new ByteProcessor(width, height);
+		
+		// corresponding connectivity for each case (to run connected components)
+		final int[] connectivity = new int[]{4, 4, 8, 4, 4, 8, 4, 4};
+		
+		for(int i=0 ; i < mismatchClassification.length; i++)
+		{
+			final int x = (int) mismatches.get( i ).x;
+			final int y = (int) mismatches.get( i ).y;
+			
+			switch( mismatchClassification[ i ])
+			{				
+				case WekaSegmentation.OBJECT_ADDITION:
+					binaryMismatches[ 0 ].set(x, y, 255);
+					break;
+				case WekaSegmentation.HOLE_DELETION:
+					if( warpedLabels.getProcessor().getPixel(x, y) == 0)
+						binaryMismatches[ 1 ].set(x, y, 255);
+					else
+						binaryMismatches[ 7 ].set(x, y, 255);
+					break;
+				case WekaSegmentation.MERGE:
+					binaryMismatches[ 2 ].set(x, y, 255);
+					break;
+				case WekaSegmentation.HOLE_ADDITION:
+					if( warpedLabels.getProcessor().getPixel(x, y) == 0)
+						binaryMismatches[ 3 ].set(x, y, 255);
+					else
+						binaryMismatches[ 5 ].set(x, y, 255);
+					break;
+				case WekaSegmentation.OBJECT_DELETION:
+					binaryMismatches[ 4 ].set(x, y, 255);
+					break;
+				case WekaSegmentation.SPLIT:
+					binaryMismatches[ 6 ].set(x, y, 255);
+					break;
+				default:					
+			}
+		}
+		
+		// run connected components on each case
+		int[] componentsPerCase = new int[8];
+		for(int i=0; i<8; i++)
+		{
+			componentsPerCase[i] = connectedComponents(	new ImagePlus("components case " + i, 
+					binaryMismatches[ i ]), connectivity[ i ]).regionInfo.size();
+		}
+						
+		return new ClusteredWarpingMismatches(componentsPerCase[ 0 ], 
+							componentsPerCase[ 1 ] + componentsPerCase[ 7 ], 
+							componentsPerCase[ 2 ], 
+							componentsPerCase[ 3 ] + componentsPerCase[ 5 ], 
+							componentsPerCase[4], 
+							componentsPerCase[6]);
+	}
+	
+		
+	/**
+	 * Get neighborhood of a pixel in a 2D image
+	 * 
+	 * @param image 2D image
+	 * @param p point coordinates
+	 * @param x_offset x- neighborhood offset
+	 * @param y_offset y- neighborhood offset
+	 * @return corresponding neighborhood
+	 */
+	public static ArrayList<Integer> getNeighborhood(
+			final ImageProcessor image, 
+			final Point p, 
+			final int x_offset, 
+			final int y_offset)
+	{
+		final ArrayList<Integer> neighborhood = new ArrayList<Integer>();
+		
+
+		for(int j = p.y - y_offset; j <= p.y + y_offset; j++)
+			for(int i = p.x - x_offset; i <= p.x + x_offset; i++)							
+			{
+				if(i!=p.x || j!= p.y)
+					if(j>=0 && j<image.getHeight() && i>=0 && i<image.getWidth())
+						neighborhood.add( image.get(i, j));
+			}
+		
+		return neighborhood;
+	} // end getNeighborhood 
+	
 	/**
 	 * Check if a point is simple (in 2D)
 	 * @param im input patch
@@ -2998,6 +3577,7 @@ public class WekaSegmentation {
 	{
 		ImageProcessor components = null;
 		final ImagePlus im2 = new ImagePlus("copy of im", im.getProcessor().duplicate());
+		
 		switch (adjacency)
 		{
 			case 4:
@@ -3012,9 +3592,9 @@ public class WekaSegmentation {
 					return -1;
 				}
 				// ignore the central point
-
 				im2.getProcessor().set(1, 1, 0);
 				components = connectedComponents(im2, adjacency).allRegions.getProcessor();
+				
 				// zero out locations that are not in the four-neighborhood
 				components.set(0,0,0);
 				components.set(0,2,0);
@@ -3045,6 +3625,7 @@ public class WekaSegmentation {
 		if(null == components)
 			return -1;
 
+		
 		int t = 0;
 		ArrayList<Integer> uniqueId = new ArrayList<Integer>();
 		for(int i = 0; i < 3; i++)
@@ -3055,15 +3636,14 @@ public class WekaSegmentation {
 						uniqueId.add(t);
 			}
 
-		return uniqueId.size();
-
+		return uniqueId.size();				
 	}
 
 	/**
 	 * Connected components based on Find Connected Regions (from Mark Longair)
 	 * @param im input image
 	 * @param adjacency number of neighbors to check (4, 8...)
-	 * @return list of images per regsion, all-regions image and regions info
+	 * @return list of images per region, all-regions image and regions info
 	 */
 	public static Results connectedComponents(final ImagePlus im, final int adjacency)
 	{
@@ -4164,7 +4744,12 @@ public class WekaSegmentation {
 
 			AbstractClassifier classifierCopy = null;
 			try {
-				classifierCopy = (AbstractClassifier) (AbstractClassifier.makeCopy( classifier ));
+				// The Weka randomm forest classifiers do not need to be duplicated on each thread 
+				// (that saves much memory)
+				if( classifier instanceof FastRandomForest || classifier instanceof RandomForest )
+					classifierCopy = classifier;
+				else
+					classifierCopy = (AbstractClassifier) (AbstractClassifier.makeCopy( classifier ));
 			} catch (Exception e) {
 				IJ.log("Error: classifier could not be copied to classify in a multi-thread way.");
 				e.printStackTrace();

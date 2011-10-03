@@ -15,6 +15,7 @@ import ij.plugin.BrowserLauncher;
 
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -640,7 +641,7 @@ public class FileFunctions {
 		}
 
 		final JFrame frame = new JFrame((diffOnly ? "Unstaged differences for " : "Commit ") + root);
-		frame.setSize(640, diffOnly ? 480 : 640);
+		frame.setPreferredSize(new Dimension(640, diffOnly ? 480 : 640));
 		if (diffOnly)
 			frame.getContentPane().add(diff);
 		else {
@@ -931,10 +932,14 @@ public class FileFunctions {
 	}
 
 	public void showPluginChangesSinceUpload(String plugin) {
-		showPluginChangesSinceUpload(plugin, -1);
+		showPluginChangesSinceUpload(new LogComponentCommits(0, 15, false, null, null, "-p"), plugin, true);
 	}
 
 	public void showPluginChangesSinceUpload(final String plugin, final int verboseLevel) {
+		showPluginChangesSinceUpload(new LogComponentCommits(verboseLevel, 15, false, null, null, "-p"), plugin, false);
+	}
+
+	public void showPluginChangesSinceUpload(final LogComponentCommits logger, final String plugin, final boolean checkReadyForUpload) {
 		final DiffView diff = new DiffView();
 		diff.normal("Verbose level: ");
 		addChangesActionLink(diff, "file names", plugin, 0);
@@ -945,12 +950,15 @@ public class FileFunctions {
 		diff.normal(" ");
 		addChangesActionLink(diff, "hexdump", plugin, 3);
 		diff.normal("\n");
+		logger.setOutput(diff);
+		logger.setErrorOutput(diff);
 
 		final Cursor cursor = diff.getCursor();
 		diff.setCursor(new Cursor(Cursor.WAIT_CURSOR));
 		final Thread thread = new Thread() {
+			@Override
 			public void run() {
-				populateDiff(diff, plugin, verboseLevel);
+				logger.showChanges(plugin);
 				diff.setCursor(cursor);
 			}
 		};
@@ -960,7 +968,7 @@ public class FileFunctions {
 		frame.setSize(640, 640);
 		frame.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
-				thread.interrupt();
+				thread.stop();
 				try {
 					thread.join();
 				} catch (InterruptedException e2) {
@@ -970,7 +978,7 @@ public class FileFunctions {
 		});
 		frame.setVisible(true);
 
-		if (verboseLevel < 0) {
+		if (checkReadyForUpload) {
 			// When run from Updater, call ready-for-upload
 			diff.normal("Checking whether " + plugin + " is ready to be uploaded... \n");
 			try {
@@ -987,24 +995,6 @@ public class FileFunctions {
 		}
 
 		thread.start();
-	}
-
-	protected void populateDiff(final DiffView diff, final String plugin, int verboseLevel) {
-		List<String> cmdarray = new ArrayList<String>(Arrays.asList(new String[] {
-			fijiDir + "/bin/log-plugin-commits.bsh",
-			"-p", "--fuzz", "15"
-		}));
-		for (int i = 0; i < verboseLevel; i++)
-			cmdarray.add("-v");
-		cmdarray.add(plugin);
-		final String[] args = cmdarray.toArray(new String[cmdarray.size()]);
-		try {
-			SimpleExecuter e = new SimpleExecuter(args,
-				diff, new DiffView.IJLog(), new File(fijiDir));
-		} catch (IOException e) {
-			IJ.handleException(e);
-			return;
-		}
 	}
 
 	protected String stripSuffix(String string, String suffix) {

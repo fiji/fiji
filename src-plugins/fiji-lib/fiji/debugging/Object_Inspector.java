@@ -21,7 +21,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 public class Object_Inspector implements PlugIn, TreeWillExpandListener {
 	DefaultMutableTreeNode windows, root;
-	
+
+	@Override
 	public void run(String arg) {
 		windows = new DefaultMutableTreeNode("Windows");
 		openFrame("Windows", windows);
@@ -34,17 +35,17 @@ public class Object_Inspector implements PlugIn, TreeWillExpandListener {
 
 	public void openFrame(String label, DefaultMutableTreeNode node) {
 		node(node, label);
-		
+
 		root = new DefaultMutableTreeNode("Root");
 		root.add(node);
-		
+
 		JTree tree = new JTree(root);
 		tree.setRootVisible(false);
 		tree.addTreeWillExpandListener(this);
 
 		JScrollPane pane = new JScrollPane(tree);
 		//pane.setMinimumSize(new Dimension(300, 100));
-		
+
 		JFrame frame = new JFrame("Object Inspector");
 		frame.setContentPane(pane);
 		frame.setMinimumSize(new Dimension(600, 500));
@@ -53,8 +54,10 @@ public class Object_Inspector implements PlugIn, TreeWillExpandListener {
 		frame.setVisible(true);
 	}
 
+	@Override
 	public void treeWillCollapse(TreeExpansionEvent e) {}
-	
+
+	@Override
 	public void treeWillExpand(TreeExpansionEvent e) {
 		Object leaf = e.getPath().getLastPathComponent();
 		if (leaf == windows) {
@@ -72,13 +75,13 @@ public class Object_Inspector implements PlugIn, TreeWillExpandListener {
 				node(wrapper, "<null>");
 				return;
 			}
-			
+
 			if (object.getClass().isArray()) {
 				for (int i = 0; i < Array.getLength(object); i++)
 					wrapper.add(new ObjectWrapper(object.getClass().getComponentType(), "[" + i + "]", Array.get(object, i)));
 				return;
 			}
-			
+
 			Class clazz = object.getClass();
 			while (clazz != null && clazz != Object.class) {
 				node(wrapper, "Fields of " + clazz.getName());
@@ -90,11 +93,25 @@ public class Object_Inspector implements PlugIn, TreeWillExpandListener {
 		}
 	}
 
-	static void node(DefaultMutableTreeNode parent, String title) {
+	protected static void node(DefaultMutableTreeNode parent, String title) {
 		parent.add(new DefaultMutableTreeNode(title));
 	}
-	
-	static Object get(Field field, Object object) {
+
+	public static Object get(Object object, String fieldName) {
+		if (object == null)
+			return "<object is null>";
+		Class clazz = object.getClass();
+		while (clazz != null) try {
+			Field field = clazz.getDeclaredField(fieldName);
+			field.setAccessible(true);
+			return field.get(object);
+		} catch (Exception e) {
+			clazz = clazz.getSuperclass();
+		}
+		return "<could not access '" + fieldName + "'>";
+	}
+
+	protected static Object get(Field field, Object object) {
 		field.setAccessible(true);
 		try {
 			return field.get(object);
@@ -102,16 +119,16 @@ public class Object_Inspector implements PlugIn, TreeWillExpandListener {
 		return null;
 	}
 
-	static String getName(Class clazz, Object object) {
+	protected static String getName(Class clazz, Object object) {
 		if (clazz.isArray())
 			return clazz.getComponentType() + "[" + (object == null ? "": "" + Array.getLength(object)) + "]";
 		return clazz.getName();
 	}
-	
-	static class ObjectWrapper extends DefaultMutableTreeNode {
+
+	protected static class ObjectWrapper extends DefaultMutableTreeNode {
 		String title;
 		boolean initialized;
-		
+
 		public ObjectWrapper(String title, Object object) {
 			super(object);
 			this.title = title;
@@ -127,7 +144,7 @@ public class Object_Inspector implements PlugIn, TreeWillExpandListener {
 				+ ((field.getModifiers() & Modifier.STATIC) != 0 ? " [static]" : "")
 				+ " (" + getName(field.getType(), get(field, object)) + ")", get(field, object));
 		}
-		
+
 		public ObjectWrapper(Class clazz, String title, Object object) {
 			super(object);
 			this.title = title;
@@ -139,10 +156,10 @@ public class Object_Inspector implements PlugIn, TreeWillExpandListener {
 				node(this, "Dummy");
 		}
 
-		static String toString(Object object) {
+		protected static String toString(Object object) {
 			return object == null ? "<null>" : object.toString();
 		}
-		
+
 		public String toString() {
 			return title;
 		}

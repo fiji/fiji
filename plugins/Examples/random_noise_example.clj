@@ -6,7 +6,8 @@
 	   [java.awt.image IndexColorModel]
 	   [java.util Random]))
 
-(declare *random*)
+; Variable named *random* of type Random and with metadata that specifies it is dynamically rebindable
+(declare ^:dynamic ^Random *random*)
 
 (defmacro with-random
   "Macro. Provides a binding to a *random* var that points to a new Random instance."
@@ -14,17 +15,19 @@
   `(binding [*random* (new Random)]
     ~@body))
 
+(set! *warn-on-reflection* true)
+
 (defmacro rand-byte
   "Macro. Returns a random byte. Must be run within a with-random binding."
   []
-  `(byte (- (.nextInt *random* 256) 128)))
+  `(byte (- (.nextInt *random* (int 256)) (int 128))))
 
 (defn make-grey-channel
   "Returns a byte array of length 256, with values from 0 to 255."
   []
-  (let [channel (make-array Byte/TYPE 256)]
-    (dotimes [i 256]
-      (aset channel i (byte (- i 128))))
+  (let [channel (byte-array 256)]
+    (dotimes [i (int 256)]
+      (aset channel i (byte (- i (int 128)))))
     channel))
 
 (defn make-grayscale-lut
@@ -35,14 +38,14 @@
 
 ; Create a new image and set each pixel to a random byte
 (let [bp (new ByteProcessor 512 512)
-      pix (. bp (getPixels))]
+      ^bytes pix (. bp (getPixels))]
   (with-random
     (dotimes [i (count pix)]
       (aset pix i (rand-byte))))
   (.show (ImagePlus. "random" bp)))
 
 ; Create a second image directly from a byte array
-(let [pix (make-array Byte/TYPE (* 512 512))]
+(let [pix (byte-array (* 512 512))]
   (with-random
     (dotimes [i (count pix)]
       (aset pix i (rand-byte))))

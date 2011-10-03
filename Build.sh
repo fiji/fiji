@@ -15,6 +15,19 @@ dirname () {
 	esac
 }
 
+look_for_tools_jar () {
+	for d in "$@"
+	do
+		test -d "$d" || continue
+		for j in java default-java
+		do
+			test -f "$d/$java/lib/tools.jar" || continue
+			export TOOLS_JAR="$d/$java/lib/tools.jar"
+			return
+		done
+	done
+}
+
 CWD="$(dirname "$0")"
 
 case "$(uname -s)" in
@@ -26,8 +39,15 @@ Darwin)
 	esac; exe=;;
 Linux)
 	case "$(uname -m)" in
-		x86_64) platform=linux64; java_submodule=linux-amd64;;
-		*) platform=linux; java_submodule=$platform;;
+	x86_64)
+		platform=linux64
+		java_submodule=linux-amd64
+		look_for_tools_jar /usr/lib/jvm
+		;;
+	*)	platform=linux
+		java_submodule=$platform
+		look_for_tools_jar /usr/lib64/jvm
+		;;
 	esac; exe=;;
 MINGW*|CYGWIN*)
 	case "$PROCESSOR_ARCHITEW6432" in

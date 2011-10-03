@@ -2525,9 +2525,9 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	{
 		final byte[] neighborhood = new byte[(2*x_offset+1) * (2*y_offset+1) * (2*z_offset+1)];
 		
-		for(int l= 0, k = p.z - z_offset; k < p.z + z_offset; k++)
-			for(int j = p.y - y_offset; j < p.y + y_offset; j++)
-				for(int i = p.x - x_offset; i < p.x + x_offset; i++, l++)							
+		for(int l= 0, k = p.z - z_offset; k <= p.z + z_offset; k++)
+			for(int j = p.y - y_offset; j <= p.y + y_offset; j++)
+				for(int i = p.x - x_offset; i <= p.x + x_offset; i++, l++)							
 					neighborhood[l] = getPixel(image, i,   j,   k);				
 		return neighborhood;
 	} // end getNeighborhood 

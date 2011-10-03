@@ -41,6 +41,7 @@ public class DiffView extends JScrollPane implements LineHandler {
 	protected final static int fontSize = 12, bigFontSize = 15;
 
 	public DiffView() {
+		super(VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 		getViewport().setView(panel);

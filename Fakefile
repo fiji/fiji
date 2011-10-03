@@ -92,6 +92,7 @@ JAVA3D_JARS=$FIJI_JAVA_EXT/j3dcore.jar:$FIJI_JAVA_EXT/j3dutils.jar:$FIJI_JAVA_EX
 # tools.jar
 TOOLS_JAR=$JAVA_HOME/../lib/tools.jar
 TOOLS_JAR(macosx)=/System/Library/Frameworks/JavaVM.framework/Classes/classes.jar
+ENVOVERRIDES(TOOLS_JAR)=true
 
 # the main target
 
@@ -115,6 +116,10 @@ SUBMODULE_TARGETS=\
 	jars/imglib-algorithms.jar \
 	jars/imglib-ij.jar \
 	jars/imglib-io.jar \
+	jars/imglib2.jar \
+	jars/imglib2-ij.jar \
+	jars/imglib2-io.jar \
+	jars/imglib2-ui.jar \
 	jars/mpicbg.jar \
 	jars/commons-math.jar \
 	jars/javassist.jar \
