@@ -2810,7 +2810,7 @@ public class WekaSegmentation {
 			exe.shutdown();
 		}
 
-		return pixelError;
+		return pixelError / labelSlices.getSize();
 	}
 	
 	/**
@@ -2840,7 +2840,7 @@ public class WekaSegmentation {
 						double pix2 = image2.getPixelValue(x, y) > binaryThreshold ? 1 : 0;
 						pixelError +=  ( pix1 - pix2 ) * ( pix1 - pix2 ) ;
 					}
-				return Math.sqrt( pixelError / (image1.getWidth() * image1.getHeight()));
+				return pixelError / (image1.getWidth() * image1.getHeight());
 			}
 		};
 	}
@@ -2900,7 +2900,7 @@ public class WekaSegmentation {
 			exe.shutdown();
 		}
 		
-		return pixelError;
+		return pixelError / labelSlices.getSize();
 	}
 	
 	/**
@@ -2930,7 +2930,7 @@ public class WekaSegmentation {
 						pixelError +=  ( pix1 - pix2 ) * ( pix1 - pix2 ) ;
 											}
 				}
-				return Math.sqrt( pixelError / (image1.getWidth() * image1.getHeight()));
+				return pixelError / (image1.getWidth() * image1.getHeight());
 			}
 		};
 	}
