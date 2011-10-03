@@ -2760,7 +2760,7 @@ public class WekaSegmentation {
 	 * @param label original labels (single 2D image or stack)
 	 * @param proposal proposed new labels (single 2D image or stack of the same as as the original labels)
 	 * @param binaryThreshold threshold value to binarize proposal (larger than 0 and smaller than 1)
-	 * @return 
+	 * @return pixel error
 	 */
 	public static double pixelError(
 			ImagePlus label,
@@ -2837,8 +2837,8 @@ public class WekaSegmentation {
 				for(int x=0; x<image1.getWidth(); x++)
 					for(int y=0; y<image2.getWidth(); y++)
 					{
-						double pix1 = image1.getPixel(x, y) > binaryThreshold ? 1 : 0;
-						double pix2 = image2.getPixel(x, y) > binaryThreshold ? 1 : 0;
+						double pix1 = image1.getPixelValue(x, y) > binaryThreshold ? 1 : 0;
+						double pix2 = image2.getPixelValue(x, y) > binaryThreshold ? 1 : 0;
 						pixelError +=  ( pix1 - pix2 ) * ( pix1 - pix2 ) ;
 					}
 				return Math.sqrt( pixelError );
@@ -2846,6 +2846,95 @@ public class WekaSegmentation {
 		};
 	}
 
+	
+	/**
+	 * Calculate the pixel error in 2D between some original labels 
+	 * and the corresponding proposed labels.
+	 *
+	 * @param label original labels (single 2D image or stack)
+	 * @param proposal proposed new labels (single 2D image or stack of the same as as the original labels)
+	 * @return pixel error
+	 */
+	public static double pixelError(
+			ImagePlus label,
+			ImagePlus proposal)
+	{
+		
+		if(label.getWidth() != proposal.getWidth()
+				|| label.getHeight() != proposal.getHeight()
+				|| label.getImageStackSize() != proposal.getImageStackSize())
+		{
+			IJ.log("Error: label and proposal image sizes do not fit.");
+			return -1;
+		}
+
+		final ImageStack labelSlices = label.getImageStack();
+		final ImageStack proposalSlices = proposal.getImageStack();
+
+		double pixelError = 0;
+
+		// Executor service to produce concurrent threads
+		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+		final ArrayList< Future<Double> > futures = new ArrayList< Future<Double> >();
+
+		try{
+			for(int i = 1; i <= labelSlices.getSize(); i++)
+			{
+				futures.add(exe.submit( getPixelErrorConcurrent(labelSlices.getProcessor(i).convertToFloat(),
+											proposalSlices.getProcessor(i).convertToFloat() ) ) );
+			}
+
+			// Wait for the jobs to be done
+			for(Future<Double> f : futures)
+			{
+				pixelError += f.get();				
+
+			}			
+		}
+		catch(Exception ex)
+		{
+			IJ.log("Error when warping ground truth in a concurrent way.");
+			ex.printStackTrace();
+		}
+		finally{
+			exe.shutdown();
+		}
+
+		final double numPixels = label.getWidth() * label.getHeight() * label.getImageStackSize();
+		return pixelError / numPixels ;
+	}
+	
+	/**
+	 * Get pixel error between two image in a concurrent way 
+	 * (to be submitted to an Executor Service). 
+	 * 
+	 * @param image1 first image
+	 * @param image2 second image
+	 * @return pixel error
+	 */
+	public static Callable<Double> getPixelErrorConcurrent(
+			final ImageProcessor image1, 
+			final ImageProcessor image2) 
+	{
+		return new Callable<Double>()
+		{
+			public Double call()
+			{
+				double pixelError = 0;
+				for(int x=0; x<image1.getWidth(); x++)
+					for(int y=0; y<image2.getWidth(); y++)
+					{
+						double pix1 = image1.getPixelValue(x, y);
+						double pix2 = image2.getPixelValue(x, y);
+						pixelError +=  ( pix1 - pix2 ) * ( pix1 - pix2 ) ;
+					}
+				return Math.sqrt( pixelError );
+			}
+		};
+	}
+	
+	
 	/**
 	 * Use simple point relaxation to warp 2D source into 2D target.
 	 * Source is only modified at nonzero locations in the mask
