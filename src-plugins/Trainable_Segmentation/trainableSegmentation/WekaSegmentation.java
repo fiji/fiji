@@ -2810,8 +2810,7 @@ public class WekaSegmentation {
 			exe.shutdown();
 		}
 
-		final double numPixels = label.getWidth() * label.getHeight() * label.getImageStackSize();
-		return pixelError / numPixels ;
+		return pixelError;
 	}
 	
 	/**
@@ -2835,13 +2834,13 @@ public class WekaSegmentation {
 			{
 				double pixelError = 0;
 				for(int x=0; x<image1.getWidth(); x++)
-					for(int y=0; y<image2.getWidth(); y++)
+					for(int y=0; y<image1.getHeight(); y++)
 					{
 						double pix1 = image1.getPixelValue(x, y) > binaryThreshold ? 1 : 0;
 						double pix2 = image2.getPixelValue(x, y) > binaryThreshold ? 1 : 0;
 						pixelError +=  ( pix1 - pix2 ) * ( pix1 - pix2 ) ;
 					}
-				return Math.sqrt( pixelError );
+				return Math.sqrt( pixelError / (image1.getWidth() * image1.getHeight()));
 			}
 		};
 	}
@@ -2900,9 +2899,8 @@ public class WekaSegmentation {
 		finally{
 			exe.shutdown();
 		}
-
-		final double numPixels = label.getWidth() * label.getHeight() * label.getImageStackSize();
-		return pixelError / numPixels ;
+		
+		return pixelError;
 	}
 	
 	/**
@@ -2921,15 +2919,18 @@ public class WekaSegmentation {
 		{
 			public Double call()
 			{
-				double pixelError = 0;
+				double pixelError = 0;			
+				
 				for(int x=0; x<image1.getWidth(); x++)
-					for(int y=0; y<image2.getWidth(); y++)
+				{
+					for(int y=0; y<image1.getHeight(); y++)
 					{
 						double pix1 = image1.getPixelValue(x, y);
-						double pix2 = image2.getPixelValue(x, y);
+						double pix2 = image2.getPixelValue(x, y);									
 						pixelError +=  ( pix1 - pix2 ) * ( pix1 - pix2 ) ;
-					}
-				return Math.sqrt( pixelError );
+											}
+				}
+				return Math.sqrt( pixelError / (image1.getWidth() * image1.getHeight()));
 			}
 		};
 	}
