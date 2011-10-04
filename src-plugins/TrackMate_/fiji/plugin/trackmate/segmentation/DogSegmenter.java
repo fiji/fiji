@@ -33,10 +33,8 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 	 * CONSTRUCTOR
 	 */
 	
-	public DogSegmenter(SegmenterSettings segmenterSettings) {
-		super(segmenterSettings);
+	public DogSegmenter() {
 		this.baseErrorMessage = BASE_ERROR_MESSAGE;
-		this.doSubPixelLocalization = ((DogSegmenterSettings) segmenterSettings).doSubPixelLocalization;
 	}
 	
 	
@@ -46,13 +44,27 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 	 */
 
 	@Override
+	public SegmenterSettings getDefaultSettings() {
+		return new DogSegmenterSettings();
+	}
+	
+	@Override
+	public void setTarget(Image<T> image, float[] calibration, SegmenterSettings settings) {
+		super.setTarget(image, calibration, settings);
+		this.doSubPixelLocalization = ((DogSegmenterSettings) settings).doSubPixelLocalization;
+	}
+
+	@Override
 	public boolean process() {
 		
 		// Deal with median filter:
-		intermediateImage = img;
-		if (settings.useMedianFilter)
-			if (!applyMedianFilter())
+		Image<T> intermediateImage = applyMedianFilter(img);;
+		if (settings.useMedianFilter) {
+			intermediateImage = applyMedianFilter(intermediateImage);
+			if (null == intermediateImage) {
 				return false;
+			}
+		}
 		
 		float radius = settings.expectedRadius;
 		// first we need an image factory for FloatType
@@ -127,4 +139,7 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 		
 		return true;
 	}
+
+
+
 }

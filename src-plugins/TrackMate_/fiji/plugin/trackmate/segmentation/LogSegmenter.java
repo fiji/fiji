@@ -40,34 +40,33 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 	 * CONSTRUCTORS
 	 */
 	
-	public LogSegmenter(LogSegmenterSettings segmenterSettings) {
-		super(segmenterSettings);
+	public LogSegmenter() {
 		this.baseErrorMessage = BASE_ERROR_MESSAGE;
-		this.logsettings = segmenterSettings;
 	}
 
 	/*
 	 * PUBLIC METHODS
 	 */
 
-	/**
-	 * Set the image that will be segmented by this algorithm. This resets
-	 * the {@link #spots} and {@link #filteredImage} fields. 
-	 */
 	@Override
-	public void setImage(Image<T> image) {
-		if (image == null)
-			return;
-		if  ( (null == img ) || (img.getNumDimensions() != image.getNumDimensions()) ) {
-			super.setImage(image);
-			createLaplacianKernel(); // instantiate laplacian kernel if needed
-			createGaussianKernel();
-			float radius = settings.expectedRadius;
-			sigma = (float) (SMOOTH_FACTOR * 2 * radius / Math.sqrt(img.getNumDimensions())); // optimal sigma for LoG approach and dimensionality
-		} else {
-			super.setImage(image);
-		}
+	public void setTarget(Image<T> image, float[] calibration,	SegmenterSettings settings) {
+		super.setTarget(image, calibration, settings);
+
+		createLaplacianKernel(); // instantiate laplacian kernel if needed
+		createGaussianKernel();
+		
+		float radius = settings.expectedRadius;
+		sigma = (float) (SMOOTH_FACTOR * 2 * radius / Math.sqrt(img.getNumDimensions())); // optimal sigma for LoG approach and dimensionality
+		
+		this.logsettings = (LogSegmenterSettings) settings;
 	}
+	
+
+	@Override
+	public SegmenterSettings getDefaultSettings() {
+		return new LogSegmenterSettings();
+	}
+
 			
 	/*
 	 * ALGORITHM METHODS
@@ -80,7 +79,6 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 		 */
 		
 		boolean allowEdgeExtrema  	= logsettings.allowEdgeMaxima;
-		boolean useMedianFilter 	= settings.useMedianFilter;
 		float threshold 			= settings.threshold;
 		float radius 				= settings.expectedRadius;
 		
@@ -99,15 +97,20 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 			errorMessage = baseErrorMessage + "Failed to down-sample source image:\n"  + downsampler.getErrorMessage();
 	        return false;
 		}
-		intermediateImage = downsampler.getResult();
+		Image<T> intermediateImage = downsampler.getResult();
 		
 		
 		/* 2 - 	Apply a median filter, to get rid of salt and pepper noise which could be 
 		 * 		mistaken for maxima in the algorithm (only applied if requested by user explicitly) */
 		
-		if (useMedianFilter) 
-			if (!applyMedianFilter()) 
+		// Deal with median filter:
+		intermediateImage = applyMedianFilter(intermediateImage);;
+		if (settings.useMedianFilter) {
+			intermediateImage = applyMedianFilter(intermediateImage);
+			if (null == intermediateImage) {
 				return false;
+			}
+		}
 		
 		/* 3 - 	Apply the LoG filter - current homemade implementation  */
 		

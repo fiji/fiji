@@ -98,7 +98,6 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 	private CardLayout cardLayout;
 	private ActionChooserPanel actionPanel;
 
-
 	/*
 	 * ENUM
 	 */

@@ -13,7 +13,7 @@ import mpicbg.imglib.type.numeric.real.FloatType;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 
-public class PeakPickerSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T> {
+public class PeakPickerSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<T> {
 
 	/*
 	 * FIELDS
@@ -21,14 +21,11 @@ public class PeakPickerSegmenter<T extends RealType<T>> extends AbstractSpotSegm
 	
 	public final static String BASE_ERROR_MESSAGE = "PeakPickerSegmenter: ";
 	
-	
-	
 	/*
 	 * CONSTRUCTORS
 	 */
 	
 	public PeakPickerSegmenter(SegmenterSettings segmenterSettings) {
-		super(segmenterSettings);
 		baseErrorMessage = BASE_ERROR_MESSAGE;
 	}
 	
@@ -38,13 +35,21 @@ public class PeakPickerSegmenter<T extends RealType<T>> extends AbstractSpotSegm
 	
 
 	@Override
+	public SegmenterSettings getDefaultSettings() {
+		return new SegmenterSettings();
+	}
+
+	@Override
 	public boolean process() {
 		
 		// Deal with median filter:
-		intermediateImage = img;
-		if (settings.useMedianFilter)
-			if (!applyMedianFilter())
+		Image<T> intermediateImage = applyMedianFilter(img);;
+		if (settings.useMedianFilter) {
+			intermediateImage = applyMedianFilter(intermediateImage);
+			if (null == intermediateImage) {
 				return false;
+			}
+		}
 		
 		float radius = settings.expectedRadius;
 		float sigma = (float) (radius / Math.sqrt(img.getNumDimensions())); // optimal sigma for LoG approach and dimensionality
@@ -145,5 +150,7 @@ public class PeakPickerSegmenter<T extends RealType<T>> extends AbstractSpotSegm
 				}
 		cursor.close();		
 	}
+
+
 	
 }

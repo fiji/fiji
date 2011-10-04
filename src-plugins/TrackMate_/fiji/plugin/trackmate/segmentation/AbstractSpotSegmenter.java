@@ -20,14 +20,6 @@ import fiji.plugin.trackmate.util.TMUtils;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Sep 27, 2010
  */
 public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements SpotSegmenter<T> {
-
-	/*
-	 * CCONSTRUCTORS
-	 */
-	
-	protected AbstractSpotSegmenter(SegmenterSettings segmenterSettings) {
-		this.settings = segmenterSettings;
-	}
 	
 	/*
 	 * PROTECTED FIELDS
@@ -45,29 +37,28 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 	 */
 	protected float[] calibration = new float[] {1, 1, 1}; // always 3d;
 	/**
-	 * The lsit of {@link Spot} that will be populated by this segmenter.
+	 * The list of {@link Spot} that will be populated by this segmenter.
 	 */
 	protected List<Spot> spots = new ArrayList<Spot>(); // because this implementation is fast to add elements at the end of the list
 	/**
-	 * Most segmenters use an intermediate image that can be of use downstream to get feature values. 
-	 * This provides a link to it.
-	 */
-	protected Image<T> intermediateImage;
-	/**
-	 * The error message generated when somthing goes wrong.
+	 * The error message generated when something goes wrong.
 	 */
 	protected String errorMessage = null;
 
 	/**
-	 * The settings for this segmenter. Contains all parameters needed to perform segmentation.
+	 * The settings for this segmenter. Contains all parameters needed to perform segmentation
+	 * for the concrete segmenter implementation.
 	 */
 	protected SegmenterSettings settings;
 
 	private StructuringElement strel;
+	/** The processing time in ms. */
+	protected long processingTime;
 	
 	/*
 	 * SPOTSEGMENTER METHODS
 	 */
+		
 	@Override
 	public boolean checkInput() {
 		
@@ -96,46 +87,32 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 		return true;
 	};
 	
-	
-	@Override
-	public SegmenterSettings getSettings() {
-		return settings;
-	}
-	
-	@Override
-	public Image<T> getIntermediateImage() {
-		return intermediateImage;
-	}
-
+		
 	@Override
 	public List<Spot> getResult() {
-		return spots;
-	}
-	
-	@Override
-	public List<Spot> getResult(Settings settings) {
 		return TMUtils.translateSpots(spots, settings);
 	}
-	
+		
 	@Override
-	public void setImage(Image<T> image) {
+	public void setTarget(Image<T> image, float[] calibration, SegmenterSettings settings) {
 		this.spots = new ArrayList<Spot>();
-		this.intermediateImage = null;
 		this.img = image;
+		this.calibration = calibration;
+		this.settings = settings;
 		if (settings.useMedianFilter)
 			createSquareStrel();
 	}
 		
 	@Override
-	public void setCalibration(float[] calibration) {
-		this.calibration = calibration;
-	}
-
-	@Override
 	public String getErrorMessage() {
 		return errorMessage ;
 	}
 	
+
+	@Override
+	public long getProcessingTime() {
+		return processingTime;
+	}
 	
 	/*
 	 * PROTECTED METHODS
@@ -144,14 +121,14 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 	/**
 	 * Apply a median filter to the {@link #intermediateImage} field, which gets updated.
 	 */
-	protected boolean applyMedianFilter() {
-		final MedianFilter<T> medFilt = new MedianFilter<T>(intermediateImage, strel, new OutOfBoundsStrategyMirrorFactory<T>()); 
+	protected Image<T> applyMedianFilter(Image<T> image) {
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		final MedianFilter<T> medFilt = new MedianFilter(image, strel, new OutOfBoundsStrategyMirrorFactory()); 
 		if (!medFilt.process()) {
 			errorMessage = baseErrorMessage + "Failed in applying median filter";
-			return false;
+			return null;
 		}
-		intermediateImage = medFilt.getResult(); 
-		return true;
+		return medFilt.getResult(); 
 	}
 	
 	/*
