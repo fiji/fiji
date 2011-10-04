@@ -1,5 +1,8 @@
 package fiji.plugin.trackmate.io;
 
+
+import static fiji.plugin.trackmate.io.TmXmlKeys.*;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -27,7 +30,7 @@ import fiji.plugin.trackmate.segmentation.SegmenterType;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.tracking.TrackerType;
 
-public class TmXmlWriter implements TmXmlKeys {
+public class TmXmlWriter {
 
 	/*
 	 * FIELD

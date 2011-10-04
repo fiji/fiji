@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.io;
 
+import static fiji.plugin.trackmate.io.TmXmlKeys.*;
+
 import ij.IJ;
 import ij.ImagePlus;
 
@@ -34,7 +36,7 @@ import fiji.plugin.trackmate.segmentation.SegmenterType;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.tracking.TrackerType;
 
-public class TmXmlReader implements TmXmlKeys {
+public class TmXmlReader {
 
 
 	private Document document = null;
