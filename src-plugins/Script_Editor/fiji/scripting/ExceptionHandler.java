@@ -11,6 +11,7 @@ import java.io.CharArrayWriter;
 import java.io.File;
 import java.io.PrintWriter;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 
 import java.util.Map;
@@ -25,7 +26,7 @@ public class ExceptionHandler implements IJ.ExceptionHandler {
 	protected Map<ThreadGroup, TextEditor> threadMap =
 		new WeakHashMap<ThreadGroup, TextEditor>();
 
-	IJ.ExceptionHandler fallBack;
+	protected IJ.ExceptionHandler fallBack;
 
 	protected ExceptionHandler(IJ.ExceptionHandler fallBackHandler) {
 		fallBack = fallBackHandler;
@@ -44,7 +45,7 @@ public class ExceptionHandler implements IJ.ExceptionHandler {
 		IJ.ExceptionHandler current = null;
 
 		try {
-			current = IJ.getExceptionHandler();
+			current = getExceptionHandler();
 			if (current instanceof ExceptionHandler)
 				return (ExceptionHandler)current;
 		}
@@ -65,6 +66,16 @@ public class ExceptionHandler implements IJ.ExceptionHandler {
 		ExceptionHandler result = new ExceptionHandler(current);
 		IJ.setExceptionHandler(result);
 		return result;
+	}
+
+	protected static IJ.ExceptionHandler getExceptionHandler() {
+		try {
+			Field handler = IJ.class.getDeclaredField("exceptionHandler");
+			handler.setAccessible(true);
+			return (IJ.ExceptionHandler)handler.get(null);
+		} catch (Exception e) {
+			return null;
+		}
 	}
 
 	public void handle(Throwable t) {

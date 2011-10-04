@@ -107,7 +107,7 @@ public class Blob_Segmentation_in_3D implements PlugIn {
 							rt.show(name);
 						} catch (Throwable e) {
 							e.printStackTrace();
-							IJ.getExceptionHandler().handle(e);
+							IJ.handleException(e);
 						} finally {
 							synchronized (GrowBlob.this) {
 								thread = null;

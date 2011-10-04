@@ -196,7 +196,7 @@ public class Weaver {
 		try {
 			return (Callable<T>) loader.loadClass(className).newInstance();
 		} catch (Throwable t) {
-			IJ.getExceptionHandler().handle(t);
+			IJ.handleException(t);
 			throw t;
 		}
 	}
