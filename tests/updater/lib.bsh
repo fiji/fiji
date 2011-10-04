@@ -60,7 +60,7 @@ markForUpload(filename, updateSite) {
 
 // ADDITIONAL FILESYSTEM HELPERS
 
-baseJarCount = 5;
+baseJarCount = 6;
 
 prepareNewFijiRoot(root, asDeveloper) {
 	if (root.exists())
@@ -70,7 +70,7 @@ prepareNewFijiRoot(root, asDeveloper) {
 	toCopy = new String[] {
 		"fiji",
 		"jars/ij.jar", "jars/Fiji.jar", "plugins/Fiji_Updater.jar",
-		"jars/bsh-2.0b4.jar", "jars/jsch-0.1.44.jar"
+		"jars/bsh-2.0b4.jar", "jars/jsch-0.1.44.jar", "jars/javassist.jar"
 	};
 
 	if (asDeveloper)

@@ -2637,6 +2637,7 @@ static void parse_command_line(void)
 		if (is_default_main_class(main_class)) {
 			string_append_path_list(class_path, fiji_path("jars/Fiji.jar"));
 			string_append_path_list(class_path, fiji_path("jars/ij.jar"));
+			string_append_path_list(class_path, fiji_path("jars/javassist.jar"));
 		}
 		else {
 			if (build_classpath(class_path, fiji_path("plugins"), 0))
