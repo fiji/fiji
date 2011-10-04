@@ -67,13 +67,13 @@ public class TrackOverlay implements Overlay {
 			// Get min & max
 			double min = Float.POSITIVE_INFINITY;
 			double max = Float.NEGATIVE_INFINITY;
-			for (double val : model.getTrackFeatureValues().get(feature)) {
+			for (double val : model.getFeatureModel().getTrackFeatureValues().get(feature)) {
 				if (val > max) max = val;
 				if (val < min) min = val;
 			}
 
 			for(int i : model.getVisibleTrackIndices()) {
-				Float val = model.getTrackFeature(i, feature);
+				Float val = model.getFeatureModel().getTrackFeature(i, feature);
 				if (null == val) {
 					edgeColors.put(i, defaultColor); // if feature is not calculated
 				} else {

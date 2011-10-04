@@ -128,9 +128,9 @@ public class DisplayerPanel extends ActionListenablePanel {
 	 */
 
 	private void setModel(TrackMateModel model) {
-		this.featureValues = model.getSpotFeatureValues();
-		this.features = model.getSpotFeatures();
-		this.featureNames = model.getSpotFeatureNames();
+		this.featureValues = model.getFeatureModel().getSpotFeatureValues();
+		this.features = model.getFeatureModel().getSpotFeatures();
+		this.featureNames = model.getFeatureModel().getSpotFeatureNames();
 	}
 
 	private void initGUI() {

@@ -175,7 +175,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 		case INITIAL_THRESHOLDING_KEY:
 			if (null != initThresholdingPanel)
 				jPanelMain.remove(initThresholdingPanel);
-			initThresholdingPanel = new InitFilterPanel(model.getSpotFeatureValues(), model.getInitialSpotFilterValue());
+			initThresholdingPanel = new InitFilterPanel(model.getFeatureModel().getSpotFeatureValues(), model.getInitialSpotFilterValue());
 			panel = initThresholdingPanel;
 			break;
 
@@ -189,8 +189,8 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 		case SPOT_FILTER_GUI_KEY:
 			if (null != spotFilterGuiPanel) 
 				jPanelMain.remove(spotFilterGuiPanel);
-			spotFilterGuiPanel = new  FilterGuiPanel(model.getSpotFeatures(), model.getSpotFilters(),  
-					model.getSpotFeatureNames(), model.getSpotFeatureValues(), "spots"); 
+			spotFilterGuiPanel = new  FilterGuiPanel(model.getFeatureModel().getSpotFeatures(), model.getSpotFilters(),  
+					model.getFeatureModel().getSpotFeatureNames(), model.getFeatureModel().getSpotFeatureValues(), "spots"); 
 			panel = spotFilterGuiPanel;
 			break;
 
@@ -203,15 +203,16 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 		case TUNE_TRACKER_KEY:
 			if (null != trackerSettingsPanel)
 				jPanelMain.remove(trackerSettingsPanel);
-			trackerSettingsPanel = TrackerSettingsPanel.createPanel(model.getSettings(), model.getSpotFeatures(), model.getSpotFeatureNames());
+			trackerSettingsPanel = TrackerSettingsPanel.createPanel(model.getSettings(), 
+					model.getFeatureModel().getSpotFeatures(), model.getFeatureModel().getSpotFeatureNames());
 			panel = trackerSettingsPanel;
 			break;
 
 		case TRACK_FILTER_GUI_KEY:
 			if (null != trackFilterGuiPanel) 
 				jPanelMain.remove(trackFilterGuiPanel);
-			trackFilterGuiPanel = new FilterGuiPanel(model.getTrackFeatures(), model.getTrackFilters(),
-					model.getTrackFeatureNames(), model.getTrackFeatureValues(), "tracks");
+			trackFilterGuiPanel = new FilterGuiPanel(model.getFeatureModel().getTrackFeatures(), model.getTrackFilters(),
+					model.getFeatureModel().getTrackFeatureNames(), model.getFeatureModel().getTrackFeatureValues(), "tracks");
 			panel = trackFilterGuiPanel;
 			break;
 

@@ -135,13 +135,13 @@ public class TrackSpeedStatisticsAnalyzer implements TrackFeatureAnalyzer {
 			double kurtosis = (n*M4) / (M2*M2) - 3;
 			double skewness =  Math.sqrt(n) * M3 / Math.pow(M2, 3/2.0) ;
 			
-			model.putTrackFeature(index, TRACK_MEDIAN_SPEED, (float) median);
-			model.putTrackFeature(index, TRACK_MIN_SPEED, (float) min);
-			model.putTrackFeature(index, TRACK_MAX_SPEED, (float) max);
-			model.putTrackFeature(index, TRACK_MEAN_SPEED, (float) mean);
-			model.putTrackFeature(index, TRACK_SPEED_STANDARD_DEVIATION, (float) Math.sqrt(variance));
-			model.putTrackFeature(index, TRACK_SPEED_KURTOSIS, (float) kurtosis);
-			model.putTrackFeature(index, TRACK_SPEED_SKEWNESS, (float) skewness);
+			model.getFeatureModel().putTrackFeature(index, TRACK_MEDIAN_SPEED, (float) median);
+			model.getFeatureModel().putTrackFeature(index, TRACK_MIN_SPEED, (float) min);
+			model.getFeatureModel().putTrackFeature(index, TRACK_MAX_SPEED, (float) max);
+			model.getFeatureModel().putTrackFeature(index, TRACK_MEAN_SPEED, (float) mean);
+			model.getFeatureModel().putTrackFeature(index, TRACK_SPEED_STANDARD_DEVIATION, (float) Math.sqrt(variance));
+			model.getFeatureModel().putTrackFeature(index, TRACK_SPEED_KURTOSIS, (float) kurtosis);
+			model.getFeatureModel().putTrackFeature(index, TRACK_SPEED_SKEWNESS, (float) skewness);
 			
 		}
 	}

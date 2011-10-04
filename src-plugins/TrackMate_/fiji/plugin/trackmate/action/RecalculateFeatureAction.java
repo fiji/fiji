@@ -19,7 +19,7 @@ public class RecalculateFeatureAction extends AbstractTMAction {
 		logger.log("Recalculating all features.\n");
 		Logger oldLogger = model.getLogger();
 		model.setLogger(logger);
-		model.computeSpotFeatures(model.getSpots());
+		model.getFeatureModel().computeSpotFeatures(model.getSpots());
 		model.setLogger(oldLogger);
 	}
 

@@ -263,8 +263,8 @@ public class TmXmlWriter {
 			Element trackElement = new Element(TRACK_ELEMENT_KEY);
 			// Echo attributes and features
 			trackElement.setAttribute(TRACK_ID_ATTRIBUTE_NAME, ""+trackIndex);
-			for(String feature : model.getTrackFeatureValues().keySet()) {
-				Float val = model.getTrackFeature(trackIndex, feature);
+			for(String feature : model.getFeatureModel().getTrackFeatureValues().keySet()) {
+				Float val = model.getFeatureModel().getTrackFeature(trackIndex, feature);
 				if (null == val) {
 					continue;
 				}

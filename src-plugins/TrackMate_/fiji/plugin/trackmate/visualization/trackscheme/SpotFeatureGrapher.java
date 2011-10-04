@@ -56,10 +56,10 @@ public class SpotFeatureGrapher extends JFrame {
 	public SpotFeatureGrapher(final String xFeature, final Set<String> yFeatures,
 			final List<Spot> spots, final TrackMateModel model) {
 		this.xFeature = xFeature;
-		this.xDimension = model.getSpotFeatureDimensions().get(xFeature);
+		this.xDimension = model.getFeatureModel().getSpotFeatureDimensions().get(xFeature);
 		this.yFeatures = yFeatures;
-		this.yDimensions = model.getSpotFeatureDimensions();
-		this.featureNames = model.getSpotFeatureNames();
+		this.yDimensions = model.getFeatureModel().getSpotFeatureDimensions();
+		this.featureNames = model.getFeatureModel().getSpotFeatureNames();
 		this.spots = spots;
 		this.model = model;
 		initGUI();

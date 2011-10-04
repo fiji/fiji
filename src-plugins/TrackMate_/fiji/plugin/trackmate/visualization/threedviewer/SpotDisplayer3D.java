@@ -361,13 +361,13 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			// Get min & max
 			double min = Float.POSITIVE_INFINITY;
 			double max = Float.NEGATIVE_INFINITY;
-			for (double val : model.getTrackFeatureValues().get(feature)) {
+			for (double val : model.getFeatureModel().getTrackFeatureValues().get(feature)) {
 				if (val > max) max = val;
 				if (val < min) min = val;
 			}
 
 			for(int i : model.getVisibleTrackIndices()) {
-				double val = model.getTrackFeature(i, feature);
+				double val = model.getFeatureModel().getTrackFeature(i, feature);
 				Color color =  colorMap.getPaint((float) (val-min) / (max-min));
 				trackNode.setColor(model.getTrackSpots(i), color);
 			}

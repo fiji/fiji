@@ -77,10 +77,10 @@ public class TrackDurationAnalyzer implements TrackFeatureAnalyzer {
 				}
 			}
 			if (!allNull) {
-				model.putTrackFeature(index, TRACK_DURATION, (maxT-minT));
-				model.putTrackFeature(index, TRACK_START, minT);
-				model.putTrackFeature(index, TRACK_STOP, maxT);
-				model.putTrackFeature(index, TRACK_DISPLACEMENT, (float) Math.sqrt(startSpot.squareDistanceTo(endSpot)));
+				model.getFeatureModel().putTrackFeature(index, TRACK_DURATION, (maxT-minT));
+				model.getFeatureModel().putTrackFeature(index, TRACK_START, minT);
+				model.getFeatureModel().putTrackFeature(index, TRACK_STOP, maxT);
+				model.getFeatureModel().putTrackFeature(index, TRACK_DISPLACEMENT, (float) Math.sqrt(startSpot.squareDistanceTo(endSpot)));
 			}
 		}
 	}

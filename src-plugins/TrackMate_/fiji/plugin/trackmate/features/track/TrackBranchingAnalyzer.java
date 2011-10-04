@@ -80,10 +80,10 @@ public class TrackBranchingAnalyzer implements TrackFeatureAnalyzer {
 				}
 			}
 			// Put feature data
-			model.putTrackFeature(i, NUMBER_SPLITS, (float) nsplits);
-			model.putTrackFeature(i, NUMBER_MERGES, (float) nmerges);
-			model.putTrackFeature(i, NUMBER_COMPLEX, (float) ncomplex);
-			model.putTrackFeature(i, NUMBER_SPOTS, (float) track.size());
+			model.getFeatureModel().putTrackFeature(i, NUMBER_SPLITS, (float) nsplits);
+			model.getFeatureModel().putTrackFeature(i, NUMBER_MERGES, (float) nmerges);
+			model.getFeatureModel().putTrackFeature(i, NUMBER_COMPLEX, (float) ncomplex);
+			model.getFeatureModel().putTrackFeature(i, NUMBER_SPOTS, (float) track.size());
 		}
 
 	}

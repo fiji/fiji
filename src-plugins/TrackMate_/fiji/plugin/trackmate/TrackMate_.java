@@ -71,8 +71,8 @@ public class TrackMate_ implements PlugIn {
 		this.model = model;
 		this.spotFeatureAnalyzers = createSpotFeatureAnalyzerList();
 		this.trackFeatureAnalyzers = createTrackFeatureAnalyzerList();
-		model.setSpotFeatureAnalyzers(spotFeatureAnalyzers);
-		model.setTrackFeatureAnalyzers(trackFeatureAnalyzers);
+		model.getFeatureModel().setSpotFeatureAnalyzers(spotFeatureAnalyzers);
+		model.getFeatureModel().setTrackFeatureAnalyzers(trackFeatureAnalyzers);
 	}
 
 
@@ -155,7 +155,7 @@ public class TrackMate_ implements PlugIn {
 	 * Features are calculated for each spot, using their location, and the raw image. 
 	 */
 	public void computeSpotFeatures() {
-		model.computeSpotFeatures(model.getSpots());
+		model.getFeatureModel().computeSpotFeatures(model.getSpots());
 	}
 
 	/**
@@ -344,7 +344,7 @@ public class TrackMate_ implements PlugIn {
 			boolean trackIsOk = true;
 			for(FeatureFilter filter : model.getTrackFilters()) {
 				Float tval = filter.value;
-				Float val = model.getTrackFeature(trackIndex, filter.feature);
+				Float val = model.getFeatureModel().getTrackFeature(trackIndex, filter.feature);
 				if (null == val)
 					continue;
 

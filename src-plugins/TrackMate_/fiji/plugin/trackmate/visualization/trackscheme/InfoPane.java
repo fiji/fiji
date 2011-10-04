@@ -74,8 +74,8 @@ class InfoPane extends JPanel implements TrackMateSelectionView, TrackMateSelect
 
 	public InfoPane(final TrackMateModel model) {
 		this.model = model;
-		this.features = model.getSpotFeatures();
-		this.featureNames = model.getSpotFeatureShortNames();
+		this.features = model.getFeatureModel().getSpotFeatures();
+		this.featureNames = model.getFeatureModel().getSpotFeatureShortNames();
 		// Add a listener to ensure we remove this panel from the listener list of the model
 		addAncestorListener(new AncestorListener() {			
 			@Override

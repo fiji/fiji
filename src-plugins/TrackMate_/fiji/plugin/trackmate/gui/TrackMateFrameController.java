@@ -681,7 +681,7 @@ public class TrackMateFrameController implements ActionListener {
 			logger.log("No feature threshold set, kept the " + ntotal + " spots.\n");
 		} else {
 			for (FeatureFilter ft : featureFilters) {
-				String str = "  - on "+model.getSpotFeatureNames().get(ft.feature);
+				String str = "  - on "+model.getFeatureModel().getSpotFeatureNames().get(ft.feature);
 				if (ft.isAbove) 
 					str += " above ";
 				else
@@ -713,7 +713,7 @@ public class TrackMateFrameController implements ActionListener {
 					logger.log("No feature threshold set, kept the " + model.getNTracks() + " tracks.\n");
 				} else {
 					for (FeatureFilter ft : featureFilters) {
-						String str = "  - on "+model.getTrackFeatureNames().get(ft.feature);
+						String str = "  - on "+model.getFeatureModel().getTrackFeatureNames().get(ft.feature);
 						if (ft.isAbove) 
 							str += " above ";
 						else
