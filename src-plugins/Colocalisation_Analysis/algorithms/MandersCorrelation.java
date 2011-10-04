@@ -50,14 +50,19 @@ public class MandersCorrelation<T extends RealType<T>> extends Algorithm<T> {
 		// calculate the thresholded values, if possible
 		AutoThresholdRegression<T> autoThreshold = container.getAutoThreshold();
 		if (autoThreshold != null ) {
+			// create two predicates for testing if sth. is above a specific value
 			Predicate<T> img1Predicate =
 				new AboveThresholdPredicate<T>( autoThreshold.getCh1MaxThreshold() );
 			Predicate<T> img2Predicate =
 				new AboveThresholdPredicate<T>( autoThreshold.getCh2MaxThreshold() );
+			// cursor for iterating both images on the predicates conditions
 			TwinValueRangeCursor<T> cursor =
-				new TwinValueRangeCursor<T>(img1.createLocalizableByDimCursor(), img2.createLocalizableByDimCursor(), img1Predicate, img2Predicate);
+				new TwinValueRangeCursor<T>(img1.createLocalizableByDimCursor(),
+						img2.createLocalizableByDimCursor(), img1Predicate, img2Predicate);
+
 			// calculate Mander's values
-			results = calculateMandersCorrelation(cursor, container.getIntegralCh1(), container.getIntegralCh2() );
+			results = calculateMandersCorrelation(cursor, container.getIntegralCh1(),
+					container.getIntegralCh2() );
 
 			// save the results
 			mandersThresholdedM1 = results.m1;
@@ -130,8 +135,8 @@ public class MandersCorrelation<T extends RealType<T>> extends Algorithm<T> {
 	public MandersResults calculateMandersCorrelation(TwinValueRangeCursor<T> cursor,
 			double ch1Total, double ch2Total) {
 
-		double m1Nominator = 0;
-		double m2Nominator = 0;
+		double m1Numerator = 0;
+		double m2Numerator = 0;
 
 		// iterate over images
 		while ( cursor.hasNext() ) {
@@ -141,14 +146,14 @@ public class MandersCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			T type2 = cursor.getChannel2Type();
 			double ch2 = type2.getRealDouble();
 
-			// if ch2 is above the threshold, increase ch1 nominator
+			// if ch2 is above the threshold, increase ch1 numerator
 			if (cursor.predicateChannel2()) {
-				m1Nominator += ch1;
+				m1Numerator += ch1;
 			}
 
-			// if ch1 is above the threshold, increase ch2 nominator
+			// if ch1 is above the threshold, increase ch2 numerator
 			if (cursor.predicateChannel1()) {
-				m2Nominator += ch2;
+				m2Numerator += ch2;
 			}
 		}
 
@@ -157,8 +162,8 @@ public class MandersCorrelation<T extends RealType<T>> extends Algorithm<T> {
 
 		MandersResults results = new MandersResults();
 		// calculate the results
-		results.m1 = m1Nominator / ch1Total;
-		results.m2 = m2Nominator / ch2Total;
+		results.m1 = m1Numerator / ch1Total;
+		results.m2 = m2Numerator / ch2Total;
 
 		return results;
 	}
