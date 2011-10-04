@@ -208,20 +208,20 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
 		gd.addChoice("Channel_1", titles, titles[index1]);
 		gd.addChoice("Channel_2", titles, titles[index2]);
-		gd.addChoice("ROI or mask", roisAndMasks, roisAndMasks[indexMask]);
+		gd.addChoice("ROI_or_mask", roisAndMasks, roisAndMasks[indexMask]);
 		//gd.addChoice("Use ROI", roiLabels, roiLabels[indexRoi]);
 
 		// Add algorithm options
 		gd.addMessage("Algorithms:");
-		gd.addCheckbox("Li Histogram Channel 1", useLiCh1);
-		gd.addCheckbox("Li Histogram Channel 2", useLiCh2);
-		gd.addCheckbox("Li ICQ", useLiICQ);
-		gd.addCheckbox("Manders' Correlation", useManders);
-		gd.addCheckbox("2D Instensity Histogram", useScatterplot);
-		gd.addCheckbox("Costes' Significance Test", useCostes);
-		gd.addCheckbox("Show \"save PDF\" dialog", autoSavePdf);
+		gd.addCheckbox("Li_Histogram_Channel_1", useLiCh1);
+		gd.addCheckbox("Li_Histogram_Channel_2", useLiCh2);
+		gd.addCheckbox("Li_ICQ", useLiICQ);
+		gd.addCheckbox("Manders'_Correlation", useManders);
+		gd.addCheckbox("2D_Instensity_Histogram", useScatterplot);
+		gd.addCheckbox("Costes'_Significance_Test", useCostes);
+		gd.addCheckbox("Show_\"save_PDF\"_dialog", autoSavePdf);
 		gd.addNumericField("PSF", psf, 1);
-		gd.addNumericField("Costes randomisations", nrCostesRandomisations, 0);
+		gd.addNumericField("Costes_randomisations", nrCostesRandomisations, 0);
 
 		// show the dialog, finally
 		gd.showDialog();
