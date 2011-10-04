@@ -35,7 +35,7 @@ import org.xml.sax.XMLReader;
 
 import org.xml.sax.helpers.DefaultHandler;
 
-public class QuickBuild {
+public class MiniMaven {
 	protected static boolean verbose = false;
 
 	protected static void print80(String string) {
