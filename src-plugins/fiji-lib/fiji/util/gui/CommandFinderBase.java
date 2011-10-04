@@ -8,12 +8,12 @@
  */
 package fiji.util.gui;
 
+import fiji.util.Levenshtein;
+
 import ij.IJ;
 import ij.WindowManager;
 
 import ij.text.TextWindow;
-
-import ij.util.Levenshtein;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
