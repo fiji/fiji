@@ -2,6 +2,7 @@ package gadgets;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.Cursor;
+import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.cursor.special.MaskCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
@@ -37,6 +38,34 @@ public class MaskFactory {
 		return mask;
 	}
 	
+	/**
+	 * Create a new mask image with a defined size and preset content.
+	 */
+	public static Image<BitType> createMask(int[] dim, int[] roiOffset, int[] roiDim) {
+		final Image<BitType> mask = createMask(dim);
+		final LocalizableCursor<BitType> cursor = mask.createLocalizableCursor();
+
+		final int[] pos = mask.createPositionArray();
+		final int dims = pos.length;
+
+		// create an array with the max corner of the ROI
+		final int[] roiOffsetMax = mask.createPositionArray();
+		for (int i=0; i<dims; ++i)
+			roiOffsetMax[i] = roiOffset[i] + roiDim[i];
+		// go through the mask and mask points as valid that are in the ROI
+		while ( cursor.hasNext() ) {
+			cursor.getPosition(pos);
+			boolean valid = true;
+			// test if the current position is contained in the ROI
+			for(int i=0; i<dims; ++i)
+				valid &= pos[i] > roiOffset[i] && pos[i] < roiOffsetMax[i];
+			cursor.getType().set(valid);
+		}
+		cursor.close();
+
+		return mask;
+	}
+
 	/**
 	 * Create a new mask based on a threshold condition for two images.
 	 */
