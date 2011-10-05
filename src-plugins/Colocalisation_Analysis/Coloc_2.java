@@ -337,9 +337,15 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 					img1Channel, img2Channel, mask, maskBB,
 					roi.offset, roi.size);
 		} else if (roi != null) {
-			// if we have no musk, but a ROI, a regular ROI is in use
-			container = new DataContainer<T>(img1, img2,
-					img1Channel, img2Channel, roi.offset, roi.size);
+			try {
+				// if we have no musk, but a ROI, a regular ROI is in use
+				container = new DataContainer<T>(img1, img2,
+						img1Channel, img2Channel, roi.offset, roi.size);
+			} catch (MissingPreconditionException e) {
+				IJ.handleException(e);
+				IJ.showMessage("An error occured, could not colocalize!");
+				return;
+			}
 		} else {
 			// no mask and no ROI is present
 			container = new DataContainer<T>(img1, img2,

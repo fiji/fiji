@@ -11,6 +11,7 @@ import mpicbg.imglib.type.numeric.RealType;
 import algorithms.Algorithm;
 import algorithms.AutoThresholdRegression;
 import algorithms.InputCheck;
+import algorithms.MissingPreconditionException;
 
 /**
  * The DataContainer keeps all the source data, pre-processing results and
@@ -58,18 +59,12 @@ public class DataContainer<T extends RealType<T>> {
 	public DataContainer(Image<T> src1, Image<T> src2, int ch1, int ch2) {
 		sourceImage1 = src1;
 		sourceImage2 = src2;
+		// create a mask that is everywhere valid
 		mask = MaskFactory.createMask(src1.getDimensions(), true);
 		this.ch1 = ch1;
 		this.ch2 = ch2;
 
-		meanCh1 = ImageStatistics.getImageMean(sourceImage1);
-		meanCh2 = ImageStatistics.getImageMean(sourceImage2);
-		minCh1 = ImageStatistics.getImageMin(sourceImage1).getRealDouble();
-		minCh2 = ImageStatistics.getImageMin(sourceImage2).getRealDouble();
-		maxCh1 = ImageStatistics.getImageMax(sourceImage1).getRealDouble();
-		maxCh2 = ImageStatistics.getImageMax(sourceImage2).getRealDouble();
-		integralCh1 = ImageStatistics.getImageIntegral(sourceImage1);
-		integralCh2 = ImageStatistics.getImageIntegral(sourceImage2);
+		calculateStatistics();
 	}
 
 	/**
@@ -90,8 +85,14 @@ public class DataContainer<T extends RealType<T>> {
 	public DataContainer(Image<T> src1, Image<T> src2, int ch1, int ch2,
 			final Image<T> mask, final Image<T> maskBB,
 			final int[] offset, final int[] size) {
-		this(new MaskedImage<T>(src1, mask, offset, size), new MaskedImage<T>(src2, mask, offset, size),
-			 ch1, ch2);
+		sourceImage1 = new MaskedImage<T>(src1, mask, offset, size);
+		sourceImage2 = new MaskedImage<T>(src2, mask, offset, size);
+
+		// create a mask that is everywhere valid
+		this.mask = MaskFactory.createMask(src1.getDimensions(), true);
+		this.ch1 = ch1;
+		this.ch2 = ch2;
+
 		this.maskBB = maskBB;
 		/* The maskBBOffset will just be zero for all directions.
 		 * That is because we later need it to create a MaskImage
@@ -102,6 +103,7 @@ public class DataContainer<T extends RealType<T>> {
 		Arrays.fill(maskBBOffset, 0);
 
 		maskBBSize = size.clone();
+		calculateStatistics();
 	}
 
 	/**
@@ -118,10 +120,58 @@ public class DataContainer<T extends RealType<T>> {
 	 * @param size The size of the ROI in each dimension
 	 */
 	public DataContainer(Image<T> src1, Image<T> src2, int ch1, int ch2,
-			final int[] offset, final int size[]) {
-		this(new RoiImage<T>(src1, offset, size), new RoiImage<T>(src2, offset, size),
-			 ch1, ch2);
+			final int[] offset, final int size[]) throws MissingPreconditionException {
+		sourceImage1 = src1;
+		sourceImage2 = src2;
+
+		final int[] dim = src1.getDimensions();
+		int[] roiOffset = src1.createPositionArray();
+		int[] roiSize = src1.createPositionArray();
+
+		/* Make sure that the ROI offset has the same dimensionality
+		 * as the image. Fill up with zeros if needed.
+		 */
+		for (int i=0; i<roiOffset.length; ++i) {
+			if (i < offset.length) {
+				if (offset[i] > dim[i])
+					throw new MissingPreconditionException("Dimension " + i + " of ROI offset is larger than image dimension.");
+				roiOffset[i] = offset[i];
+			} else {
+				roiOffset[i] = 0;
+			}
+		}
+
+		/* Make sure that the ROI size has the same dimensionality
+		 * as the image. Fill up with image dimension if needed.
+		 */
+		for (int i=0; i<roiSize.length; ++i) {
+			if (i < size.length) {
+				if (size[i] > (dim[i] - roiOffset[i]))
+					throw new MissingPreconditionException("Dimension " + i + " of ROI size is larger than what fits in.");
+				roiSize[i] = size[i];
+			} else {
+				roiSize[i] = dim[i] - roiOffset[i];
+			}
+		}
+
+		// create a mask that is everywhere valid
+		mask = MaskFactory.createMask(dim, roiOffset, roiSize);
+		this.ch1 = ch1;
+		this.ch2 = ch2;
 		regularRoiInUse = true;
+
+		calculateStatistics();
+	}
+
+	protected void calculateStatistics() {
+		meanCh1 = ImageStatistics.getImageMean(sourceImage1);
+		meanCh2 = ImageStatistics.getImageMean(sourceImage2);
+		minCh1 = ImageStatistics.getImageMin(sourceImage1).getRealDouble();
+		minCh2 = ImageStatistics.getImageMin(sourceImage2).getRealDouble();
+		maxCh1 = ImageStatistics.getImageMax(sourceImage1).getRealDouble();
+		maxCh2 = ImageStatistics.getImageMax(sourceImage2).getRealDouble();
+		integralCh1 = ImageStatistics.getImageIntegral(sourceImage1);
+		integralCh2 = ImageStatistics.getImageIntegral(sourceImage2);
 	}
 
 	/**
