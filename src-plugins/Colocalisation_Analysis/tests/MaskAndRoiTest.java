@@ -14,6 +14,8 @@ import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 
 import org.junit.Test;
 
+import algorithms.MissingPreconditionException;
+
 /**
  * This class contains JUnit 4 test cases for the ROI and masks
  * implementation.
@@ -30,7 +32,7 @@ public class MaskAndRoiTest extends ColocalisationTest {
 	 * copied ROI image.
 	 */
 	@Test
-	public void regularRoiTest() {
+	public void regularRoiPredicateCursorTest() throws MissingPreconditionException {
 		// create a random noise 2D image -- set roiWidh/roiSize accordingly
 		//Image<FloatType> img = TestImageAccessor.produceNoiseImage(new FloatType(), 200, 300);
 		// load a 3D test image
@@ -132,7 +134,7 @@ public class MaskAndRoiTest extends ColocalisationTest {
 	 * with different dimensions than the image.
 	 */
 	@Test
-	public void regularRoiDimensionsTest() {
+	public void regularRoiDimensionsTest() throws MissingPreconditionException {
 		// load a 3D test image
 		Image<UnsignedByteType> img = positiveCorrelationImageCh1;
 		int width = img.getDimension(0);

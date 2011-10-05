@@ -3,11 +3,11 @@ package gadgets;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
-import mpicbg.imglib.cursor.special.MaskCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.RealType;
+import algorithms.MissingPreconditionException;
 
 public class MaskFactory {
 	
@@ -40,11 +40,15 @@ public class MaskFactory {
 	
 	/**
 	 * Create a new mask image with a defined size and preset content.
+	 * @throws MissingPreconditionException
 	 */
-	public static Image<BitType> createMask(int[] dim, int[] roiOffset, int[] roiDim) {
-		final Image<BitType> mask = createMask(dim);
-		final LocalizableCursor<BitType> cursor = mask.createLocalizableCursor();
+	public static Image<BitType> createMask(int[] dim, int[] roiOffset, int[] roiDim)
+			throws MissingPreconditionException {
+		if (dim.length != roiOffset.length || dim.length != roiDim.length) {
+			throw new MissingPreconditionException("The dimensions of the mask as well as the ROIs and his offset must be the same.");
+		}
 
+		final Image<BitType> mask = createMask(dim);
 		final int[] pos = mask.createPositionArray();
 		final int dims = pos.length;
 
@@ -53,7 +57,9 @@ public class MaskFactory {
 		for (int i=0; i<dims; ++i)
 			roiOffsetMax[i] = roiOffset[i] + roiDim[i];
 		// go through the mask and mask points as valid that are in the ROI
+		final LocalizableCursor<BitType> cursor = mask.createLocalizableCursor();
 		while ( cursor.hasNext() ) {
+			cursor.fwd();
 			cursor.getPosition(pos);
 			boolean valid = true;
 			// test if the current position is contained in the ROI
@@ -62,7 +68,6 @@ public class MaskFactory {
 			cursor.getType().set(valid);
 		}
 		cursor.close();
-
 		return mask;
 	}
 
