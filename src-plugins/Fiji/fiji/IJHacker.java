@@ -154,6 +154,15 @@ public class IJHacker implements Runnable {
 			replaceAppNameInCall(method, "showMessage", 2, 2);
 
 			clazz.toClass();
+
+			// Class JavaScriptEvaluator
+			clazz = pool.get("JavaScriptEvaluator");
+
+			// make sure Rhino gets the correct class loader
+			method = clazz.getMethod("run", "()V");
+			method.insertBefore("Thread.currentThread().setContextClassLoader(ij.IJ.getClassLoader());");
+
+			clazz.toClass();
 		} catch (NotFoundException e) {
 			e.printStackTrace();
 		} catch (CannotCompileException e) {
