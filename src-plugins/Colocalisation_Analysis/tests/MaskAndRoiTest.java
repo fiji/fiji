@@ -2,14 +2,15 @@ package tests;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import gadgets.MaskFactory;
 import gadgets.MaskedImage;
-import gadgets.RoiImage;
-import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.Cursor;
-import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
+import mpicbg.imglib.cursor.special.PredicateCursor;
+import mpicbg.imglib.cursor.special.predicate.MaskPredicate;
+import mpicbg.imglib.cursor.special.predicate.Predicate;
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
+import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 
 import org.junit.Test;
@@ -45,87 +46,22 @@ public class MaskAndRoiTest extends ColocalisationTest {
 		 */
 		int[] roiOffset = new int[] {width / 4, height / 4};
 		int[] roiSize = new int[] {width / 2, height / 2};
-		RoiImage<UnsignedByteType> roiImage
-			= new RoiImage<UnsignedByteType>(img, roiOffset, roiSize);
+		Image<BitType> mask = MaskFactory.createMask(img.getDimensions(),
+				roiOffset, roiSize);
 
 		// clip the actual ROI, so that the non-ROI area is removed
-		ImageFactory<UnsignedByteType> maskFactory
-			= new ImageFactory<UnsignedByteType>(img.createType(),
-				new ArrayContainerFactory());
-		Image<UnsignedByteType> clippedRoiImage
-			= maskFactory.createImage( roiImage.getDimensions(), "Clipped ROI" );
-		LocalizableCursor<UnsignedByteType> roiCursor
-			= roiImage.createLocalizableCursor();
-		LocalizableByDimCursor<UnsignedByteType> outputCursor
-			= clippedRoiImage.createLocalizableByDimCursor();
+		final Predicate<BitType> predicate = new MaskPredicate();
+		LocalizableCursor<BitType> roiCursor
+			= new PredicateCursor<BitType>(mask.createLocalizableCursor(), predicate);
 
 		// copy ROI data to new image
 		while (roiCursor.hasNext()) {
 			roiCursor.fwd();
-			outputCursor.setPosition(roiCursor);
-			outputCursor.getType().set( roiCursor.getType() );
+			// assert that the value is true
+			assert(roiCursor.getType().get());
 		}
 
 		roiCursor.close();
-		outputCursor.close();
-
-		/* go through the clipped ROI and compare the date to offset values
-		 * of the original data.
-		 */
-		LocalizableCursor<UnsignedByteType> roiCopyCursor
-			= clippedRoiImage.createLocalizableCursor();
-		LocalizableByDimCursor<UnsignedByteType> imgCursor
-		= img.createLocalizableByDimCursor();
-		// create variable for summing up and set it to zero
-		double sum = 0;
-		while (roiCopyCursor.hasNext()) {
-			roiCopyCursor.fwd();
-			int[] pos = roiImage.getOffset();
-			for (int d=0; d<clippedRoiImage.getNumDimensions(); d++) {
-				pos[d] = pos[d] + roiCopyCursor.getPosition(d);
-			}
-			// set position in original image
-			imgCursor.setPosition(pos);
-			// get ROI and original image data
-			double roiData = roiCopyCursor.getType().getRealDouble();
-			double imgData = imgCursor.getType().getRealDouble();
-			// sum up the difference
-			sum += (roiData - imgData);
-		}
-
-		// check if sum is zero
-		assertTrue("The sum of differences was " + sum + ".", Math.abs(sum) < 0.00001);
-	}
-
-	/**
-	 * This test puts a regular ROI onto an image and compares
-	 * the number of pixels in it to the expected volume of the
-	 * ROI (which is just a box).
-	 */
-	@Test
-	public void regularRoiPixelCountTest() {
-		// load a 3D test image
-		Image<UnsignedByteType> img = positiveCorrelationImageCh1;
-		int width = img.getDimension(0);
-		int height = img.getDimension(1);
-
-		int[] roiOffset = new int[] {width / 4, height / 4};
-		int[] roiSize = new int[] {width / 2, height / 2};
-		RoiImage<UnsignedByteType> roiImage
-			= new RoiImage<UnsignedByteType>(img, roiOffset, roiSize);
-		// calculate volume of ROI box
-		int roiVolume = roiSize[0] * roiSize[1] * img.getDimension(2);
-		// count pixels in ROI
-		Cursor<UnsignedByteType> roiCursor = roiImage.createCursor();
-		int count = 0;
-		while (roiCursor.hasNext()) {
-			roiCursor.fwd();
-			count++;
-		}
-
-		roiCursor.close();
-
-		assertEquals(roiVolume, count);
 	}
 
 	/**
@@ -142,22 +78,33 @@ public class MaskAndRoiTest extends ColocalisationTest {
 
 		int[] roiOffset = new int[] {width / 4, height / 4};
 		int[] roiSize = new int[] {width / 2, height / 2};
-		RoiImage<UnsignedByteType> roiImage
-			= new RoiImage<UnsignedByteType>(img, roiOffset, roiSize);
+		Image<BitType> mask = MaskFactory.createMask(img.getDimensions(),
+				roiOffset, roiSize);
+
 		// is the number of dimensions the same as in the image?
-		assertEquals(roiImage.getNumDimensions(), img.getNumDimensions());
-		assertEquals(roiImage.getOffset().length, img.getNumDimensions());
-		/* Is the ROIs dimension information correct? Is the z dimension
-		 * of the ROI the same as the images one?
-		 */
-		assertEquals(roiImage.getDimension(0), roiSize[0]);
-		assertEquals(roiImage.getDimension(1), roiSize[1]);
-		assertEquals(roiImage.getDimension(2), img.getDimension(2));
-		// Is the ROIs extend correct?
-		int[] ro = roiImage.getOffset();
-		assertEquals(ro[0], roiOffset[0]);
-		assertEquals(ro[1], roiOffset[1]);
-		assertEquals(ro[2], 0);
+		assertEquals(mask.getNumDimensions(), img.getNumDimensions());
+
+		// Is the ROIs dimension information correct?
+		for (int i=0; i<mask.getNumDimensions(); ++i)
+			assertEquals(mask.getDimension(i), img.getDimension(i));
+
+		// go through the mask and check if all valid points are in the ROI
+		final int[] pos = mask.createPositionArray();
+		final LocalizableCursor<BitType> cursor = mask.createLocalizableCursor();
+		boolean everythingOkay = true;
+		while ( cursor.hasNext() ) {
+			cursor.getPosition(pos);
+			boolean onInMask = cursor.getType().get();
+
+			boolean onInROI = true;
+			// test if the current position is contained in the ROI
+			for(int i=0; i<pos.length; ++i)
+				onInROI &= pos[i] > roiOffset[i] && pos[i] < (roiOffset[i] + roiSize[i]);
+			// assume both values are the same
+			everythingOkay &= (onInMask == onInROI);
+		}
+		assert(everythingOkay);
+		cursor.close();
 	}
 
 	/**
