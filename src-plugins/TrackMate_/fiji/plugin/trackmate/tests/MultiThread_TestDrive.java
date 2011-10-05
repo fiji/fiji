@@ -9,13 +9,14 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import fiji.plugin.trackmate.segmentation.SegmenterSettings;
-import fiji.plugin.trackmate.segmentation.SegmenterType;
+import fiji.plugin.trackmate.segmentation.LogSegmenter;
+import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 public class MultiThread_TestDrive {
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static void main(String[] args) throws JDOMException, IOException {
 
 		int REPEAT = 100;
@@ -26,13 +27,13 @@ public class MultiThread_TestDrive {
 		reader.parse();
 		TrackMateModel model = reader.getModel();
 
-		model.getSettings().segmenterType = SegmenterType.LOG_SEGMENTER;
-		SegmenterSettings old = model.getSettings().segmenterSettings;
-		model.getSettings().segmenterSettings = model.getSettings().segmenterType.createSettings();
-		model.getSettings().segmenterSettings.expectedRadius = old.expectedRadius;
-		model.getSettings().segmenterSettings.spaceUnits = old.spaceUnits;
-		model.getSettings().segmenterSettings.threshold = old.threshold;
-		model.getSettings().segmenterSettings.useMedianFilter = old.useMedianFilter;
+		model.getSettings().segmenter = new LogSegmenter();
+		LogSegmenterSettings old = (LogSegmenterSettings) model.getSettings().segmenterSettings;
+		LogSegmenterSettings nss = new LogSegmenterSettings();
+		nss.expectedRadius = old.expectedRadius;
+		nss.threshold = old.threshold;
+		nss.useMedianFilter = old.useMedianFilter;
+		model.getSettings().segmenterSettings = nss;
 
 		model.getSettings().trackerSettings = new TrackerSettings();
 

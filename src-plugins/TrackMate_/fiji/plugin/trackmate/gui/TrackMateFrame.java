@@ -23,7 +23,6 @@ import javax.swing.WindowConstants;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.segmentation.SegmenterType;
 import fiji.plugin.trackmate.tracking.TrackerType;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView.ViewType;
@@ -32,7 +31,7 @@ import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView.ViewType;
  * A view for the TrackMate_ plugin, strongly inspired from the spots segmentation GUI of the Imaris® software 
  * from Bitplane ({@link http://www.bitplane.com/}).
  * 
- * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - September 2010 - January 2011
+ * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - September 2010 - 2011
  */
 public class TrackMateFrame extends javax.swing.JFrame implements ActionListener {
 
@@ -74,14 +73,14 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 	JButton jButtonNext;
 
 	StartDialogPanel startDialogPanel;
-	SegmenterSettingsPanel segmenterSettingsPanel;
+	SegmenterConfigurationPanel segmenterSettingsPanel;
 	InitFilterPanel initThresholdingPanel;
 	EnumChooserPanel<ViewType> displayerChooserPanel;
+	EnumChooserPanel segmenterChoicePanel;
 	FilterGuiPanel spotFilterGuiPanel;
 	FilterGuiPanel trackFilterGuiPanel;
 	TrackerSettingsPanel trackerSettingsPanel;
 	DisplayerPanel displayerPanel;
-	EnumChooserPanel<SegmenterType> segmenterChoicePanel;
 	EnumChooserPanel<TrackerType> trackerChoicePanel;
 
 	/*
@@ -159,15 +158,15 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 			break;
 
 		case SEGMENTER_CHOICE_KEY:
-			if (null == segmenterChoicePanel)
-				segmenterChoicePanel = new EnumChooserPanel<SegmenterType>(SegmenterType.PEAKPICKER_SEGMENTER, "segmenter");
-			panel = segmenterChoicePanel;
+//			if (null == segmenterChoicePanel)
+//				segmenterChoicePanel = new EnumChooserPanel<SegmenterType>(SegmenterType.PEAKPICKER_SEGMENTER, "segmenter");
+//			panel = segmenterChoicePanel;
 			break;
 
 		case TUNE_SEGMENTER_KEY:
 			if (null != segmenterSettingsPanel)
 				jPanelMain.remove(segmenterSettingsPanel);
-			segmenterSettingsPanel = SegmenterSettingsPanel.createSegmenterSettingsPanel(model.getSettings());
+			segmenterSettingsPanel = model.getSettings().segmenterSettings.createConfigurationPanel();
 			panel = segmenterSettingsPanel;
 			break;
 

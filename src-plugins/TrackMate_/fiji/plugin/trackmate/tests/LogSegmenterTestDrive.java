@@ -68,9 +68,8 @@ public class LogSegmenterTestDrive {
 		// Instantiate segmenter
 		LogSegmenterSettings settings = new LogSegmenterSettings();
 		settings.expectedRadius = RADIUS;
-		SpotSegmenter<UnsignedByteType> segmenter = new LogSegmenter<UnsignedByteType>(settings);
-		segmenter.setImage(img);
-		segmenter.setCalibration(CALIBRATION);
+		SpotSegmenter<UnsignedByteType> segmenter = new LogSegmenter<UnsignedByteType>();
+		segmenter.setTarget(img, CALIBRATION, settings);
 		
 		// Segment
 		long start = System.currentTimeMillis();

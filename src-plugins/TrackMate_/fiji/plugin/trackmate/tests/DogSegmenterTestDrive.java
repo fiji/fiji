@@ -15,7 +15,7 @@ import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import mpicbg.imglib.util.Util;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.segmentation.DogSegmenter;
-import fiji.plugin.trackmate.segmentation.SegmenterSettings;
+import fiji.plugin.trackmate.segmentation.DogSegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 
 public class DogSegmenterTestDrive {
@@ -61,12 +61,11 @@ public class DogSegmenterTestDrive {
 		cursor.close();
 
 		// Instantiate segmenter
-		SegmenterSettings settings = new SegmenterSettings();
+		DogSegmenterSettings settings = new DogSegmenterSettings();
 		settings.expectedRadius = RADIUS;
 		settings.threshold = 5;
-		SpotSegmenter<UnsignedByteType> segmenter = new DogSegmenter<UnsignedByteType>(settings);
-		segmenter.setImage(img);
-		segmenter.setCalibration(CALIBRATION);
+		SpotSegmenter<UnsignedByteType> segmenter = new DogSegmenter<UnsignedByteType>();
+		segmenter.setTarget(img, CALIBRATION, settings);
 		
 		// Segment
 		long start = System.currentTimeMillis();

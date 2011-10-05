@@ -9,19 +9,13 @@ import java.awt.Insets;
 import javax.swing.JCheckBox;
 
 import fiji.plugin.trackmate.segmentation.DogSegmenterSettings;
+import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 
-public class DogSegmenterSettingsPanel extends SegmenterSettingsPanel {
+public class DogSegmenterConfigurationPanel extends LogSegmenterConfigurationPanel {
 
-	private static final long serialVersionUID = 1587146031133276446L;
+	private static final long serialVersionUID = -3763482904265242233L;
 	private JCheckBox jCheckSubPixel;
-
-	/**
-	 * @param segmenterSettings  must be a {@link DogSegmenterSettings}
-	 */
-	public DogSegmenterSettingsPanel(SegmenterSettings segmenterSettings) {
-		super(segmenterSettings);
-	}
 	
 	@Override
 	protected void initGUI() {
@@ -38,15 +32,30 @@ public class DogSegmenterSettingsPanel extends SegmenterSettingsPanel {
 			this.add(jCheckSubPixel, new GridBagConstraints(0, 6, 2, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 10), 0, 0));
 			jCheckSubPixel.setText("Do sub-pixel localization ");
 			jCheckSubPixel.setFont(FONT);
-			jCheckSubPixel.setSelected(((DogSegmenterSettings)settings).doSubPixelLocalization);
 		}
 	}
 	
 	@Override
-	public SegmenterSettings getSettings() {
-		DogSegmenterSettings s = (DogSegmenterSettings) super.getSettings();
-		s.doSubPixelLocalization = jCheckSubPixel.isSelected();
-		return s;
+	public SegmenterSettings getSegmenterSettings() {
+		LogSegmenterSettings lss = (LogSegmenterSettings) super.getSegmenterSettings();
+		DogSegmenterSettings dss = copyToDOGS(lss);
+		dss.doSubPixelLocalization = jCheckSubPixel.isSelected();
+		return dss;
+	}
+	
+	@Override
+	public void setSegmenterSettings(SegmenterSettings settings) {
+		super.setSegmenterSettings(settings);
+		jCheckSubPixel.setSelected(((DogSegmenterSettings)settings).doSubPixelLocalization);
+	}
+	
+	
+	public static DogSegmenterSettings copyToDOGS(LogSegmenterSettings lss) {
+		DogSegmenterSettings dss = new DogSegmenterSettings();
+		dss.expectedRadius 	= lss.expectedRadius;
+		dss.threshold		= lss.threshold;
+		dss.useMedianFilter	= lss.useMedianFilter;
+		return dss;
 	}
 	
 }

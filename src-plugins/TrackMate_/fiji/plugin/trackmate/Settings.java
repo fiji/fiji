@@ -1,13 +1,6 @@
 package fiji.plugin.trackmate;
 
-import java.awt.Rectangle;
-
-import fiji.plugin.trackmate.segmentation.DogSegmenter;
-import fiji.plugin.trackmate.segmentation.LogSegmenter;
-import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
-import fiji.plugin.trackmate.segmentation.PeakPickerSegmenter;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
-import fiji.plugin.trackmate.segmentation.SegmenterType;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.FastLAPTracker;
 import fiji.plugin.trackmate.tracking.LAPTracker;
@@ -16,6 +9,9 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.tracking.TrackerType;
 import ij.ImagePlus;
 import ij.gui.Roi;
+
+import java.awt.Rectangle;
+
 import mpicbg.imglib.type.numeric.RealType;
 
 /**
@@ -51,7 +47,7 @@ public class Settings {
 	public String timeUnits 		= "frames";
 	public String spaceUnits 		= "pixels";
 	
-	public SegmenterType segmenterType = SegmenterType.PEAKPICKER_SEGMENTER;
+	public SpotSegmenter<? extends RealType<?>> segmenter;
 	public TrackerType trackerType = TrackerType.LAP_TRACKER;
 	
 	public SegmenterSettings segmenterSettings = null;
@@ -117,22 +113,7 @@ public class Settings {
 	/*
 	 * METHODS
 	 */
-	
-	/**
-	 * Return a new {@link SpotSegmenter} as selected in this settings object.
-	 */
-	public <T extends RealType<T>> SpotSegmenter<T> getSpotSegmenter() {
-		switch(segmenterType) {
-		case LOG_SEGMENTER:
-			return new LogSegmenter<T>((LogSegmenterSettings) segmenterSettings);
-		case PEAKPICKER_SEGMENTER:
-			return new PeakPickerSegmenter<T>(segmenterSettings);
-		case DOG_SEGMENTER:
-			return new DogSegmenter<T>(segmenterSettings);
-		}
-		return null;
-	}
-	
+		
 	/**
 	 * Return a new {@link SpotTracker} as selected in this settings object, initialized for the given model.
 	 */

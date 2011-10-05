@@ -10,9 +10,7 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.RealType;
-import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.util.TMUtils;
 
 /**
  * This abstract class for spot segmented plainly implements the {@link SpotSegmenter}
@@ -90,7 +88,7 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 		
 	@Override
 	public List<Spot> getResult() {
-		return TMUtils.translateSpots(spots, settings);
+		return spots;
 	}
 		
 	@Override
@@ -99,8 +97,6 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 		this.img = image;
 		this.calibration = calibration;
 		this.settings = settings;
-		if (settings.useMedianFilter)
-			createSquareStrel();
 	}
 		
 	@Override
@@ -122,6 +118,7 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 	 * Apply a median filter to the {@link #intermediateImage} field, which gets updated.
 	 */
 	protected Image<T> applyMedianFilter(Image<T> image) {
+		createSquareStrel();
 		@SuppressWarnings({ "rawtypes", "unchecked" })
 		final MedianFilter<T> medFilt = new MedianFilter(image, strel, new OutOfBoundsStrategyMirrorFactory()); 
 		if (!medFilt.process()) {

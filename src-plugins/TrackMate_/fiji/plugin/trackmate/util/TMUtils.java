@@ -113,33 +113,23 @@ public class TMUtils {
 	}
 
 	/**
-	 * Return a new copy of this collection of Spot, translated using the crop data 
-	 * given in the {@link Settings} object.
+	 * Return a copy of this collection of spot, translated by the amount specified in 
+	 * argument. The distances are all understood in physical units.
 	 * <p>
-	 * The spot coordinates will be translated assuming the given image was cropped 
-	 * using the {@link Settings} given: they will be relative to the top-left-lower
-	 * corner of the raw image <b>before</b> it was cropped.
+	 * This is meant to deal with a crpoped image. The translation will bring the spot
+	 * coordinates back to the top-left corner of the un-cropped image reference. 
 	 */
-	public static List<Spot> translateSpots(final Collection<Spot> spots, final Settings settings) {
-		ArrayList<Spot> translatedSpots = new ArrayList<Spot>(spots.size());
-		Spot newSpot;
-		float[] calibration = settings.getCalibration();
-		float dx = (settings.xstart-1)*calibration[0];
-		float dy = (settings.ystart-1)*calibration[1];
-		float dz = (settings.zstart-1)*calibration[2];
+	public static void translateSpots(final Collection<Spot> spots, float dx, float dy, float dz) {
 		float[] dval = new float[] {dx, dy, dz};
 		String[] features = new String[] { Spot.POSITION_X, Spot.POSITION_Y, Spot.POSITION_Z }; 
 		Float val;
 		for(Spot spot : spots) {
-			newSpot = spot.clone();
 			for (int i = 0; i < features.length; i++) {
-				val = newSpot.getFeature(features[i]);
+				val = spot.getFeature(features[i]);
 				if (null != val)
-					newSpot.putFeature(features[i], val+dval[i]);
+					spot.putFeature(features[i], val+dval[i]);
 			}
-			translatedSpots.add(newSpot);
 		}
-		return translatedSpots;
 	}
 	
 	

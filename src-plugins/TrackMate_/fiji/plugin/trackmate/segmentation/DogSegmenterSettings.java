@@ -1,6 +1,9 @@
 package fiji.plugin.trackmate.segmentation;
 
-public class DogSegmenterSettings extends SegmenterSettings {
+import fiji.plugin.trackmate.gui.DogSegmenterConfigurationPanel;
+import fiji.plugin.trackmate.gui.SegmenterConfigurationPanel;
+
+public class DogSegmenterSettings extends LogSegmenterSettings {
 	
 	private static final boolean 	DEFAULT_DO_SUBPIXEL_LOCALIZATION = true;
 	
@@ -12,6 +15,13 @@ public class DogSegmenterSettings extends SegmenterSettings {
 		String str = super.toString();
 		str += "  Do sub-pixel localization: "+doSubPixelLocalization+'\n';
 		return str;
+	}
+	
+	@Override
+	public SegmenterConfigurationPanel createConfigurationPanel() {
+		DogSegmenterConfigurationPanel dogcp = new DogSegmenterConfigurationPanel();
+		dogcp.setSegmenterSettings(this);
+		return dogcp;
 	}
 	
 }

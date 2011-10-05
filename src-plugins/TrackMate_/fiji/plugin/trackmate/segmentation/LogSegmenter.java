@@ -20,26 +20,26 @@ import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.util.TMUtils;
 
 public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter<T> {
-	
+
 	/** The goal diameter of blobs in <b>pixels</b> following down-sizing. The image will be 
 	 * down-sized such that the blob has this diameter (or smaller) in all directions. 
 	 * 10 pixels was chosen because trial and error showed that it gave good results.*/
 	public final static float GOAL_DOWNSAMPLED_BLOB_DIAM = 10f;
-	
+
 	private final static String BASE_ERROR_MESSAGE = "LogSegmenter: ";
 
 	/** We smooth more than needed to discard secondary minima. */ 
 	private static final float SMOOTH_FACTOR = 2;
-	
+
 	private float sigma;
 	private Image<FloatType> laplacianKernel;
 	private Image<FloatType> gaussianKernel;
-	private LogSegmenterSettings logsettings;
+	private LogSegmenterSettings settings;
 
 	/*
 	 * CONSTRUCTORS
 	 */
-	
+
 	public LogSegmenter() {
 		this.baseErrorMessage = BASE_ERROR_MESSAGE;
 	}
@@ -47,6 +47,10 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 	/*
 	 * PUBLIC METHODS
 	 */
+	
+	public SpotSegmenter<T> createNewSegmenter() {
+		return new LogSegmenter<T>();
+	};
 
 	@Override
 	public void setTarget(Image<T> image, float[] calibration,	SegmenterSettings settings) {
@@ -54,55 +58,54 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 
 		createLaplacianKernel(); // instantiate laplacian kernel if needed
 		createGaussianKernel();
-		
+
 		float radius = settings.expectedRadius;
 		sigma = (float) (SMOOTH_FACTOR * 2 * radius / Math.sqrt(img.getNumDimensions())); // optimal sigma for LoG approach and dimensionality
-		
-		this.logsettings = (LogSegmenterSettings) settings;
+
+		this.settings = (LogSegmenterSettings) settings;
 	}
-	
+
 
 	@Override
-	public SegmenterSettings getDefaultSettings() {
+	public SegmenterSettings createDefaultSettings() {
 		return new LogSegmenterSettings();
 	}
 
-			
+
 	/*
 	 * ALGORITHM METHODS
 	 */
 
-		@Override
+	@Override
 	public boolean process() {
-		
+
 		/* 0 - Get settings
 		 */
-		
-		boolean allowEdgeExtrema  	= logsettings.allowEdgeMaxima;
+
 		float threshold 			= settings.threshold;
 		float radius 				= settings.expectedRadius;
-		
+
 		/* 1 - 	Downsample to improve run time. The image is downsampled by the 
 		 * 		factor necessary to achieve a resulting blob size of about 10 pixels 
 		 * 		in diameter in all dimensions. */
-		
+
 		final float[] downsampleFactors = createDownsampledDim(calibration, 2 * radius); // factors for x,y,z that we need for scaling image down;
-		
+
 		final int dim[] = img.getDimensions();
 		for (int j = 0; j < dim.length; j++)
 			dim[j] = (int) (dim[j] / downsampleFactors[j]);
-	
+
 		final DownSample<T> downsampler = new DownSample<T>(img, dim, 0.5f, 0.5f);	// optimal sigma is defined by 0.5f, as mentioned here: http://pacific.mpi-cbg.de/wiki/index.php/Downsample
 		if (!downsampler.checkInput() || !downsampler.process()) {
 			errorMessage = baseErrorMessage + "Failed to down-sample source image:\n"  + downsampler.getErrorMessage();
-	        return false;
+			return false;
 		}
 		Image<T> intermediateImage = downsampler.getResult();
-		
-		
+
+
 		/* 2 - 	Apply a median filter, to get rid of salt and pepper noise which could be 
 		 * 		mistaken for maxima in the algorithm (only applied if requested by user explicitly) */
-		
+
 		// Deal with median filter:
 		intermediateImage = applyMedianFilter(intermediateImage);;
 		if (settings.useMedianFilter) {
@@ -111,28 +114,28 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 				return false;
 			}
 		}
-		
+
 		/* 3 - 	Apply the LoG filter - current homemade implementation  */
-		
+
 		final FourierConvolution<T, FloatType> fConvGauss = new FourierConvolution<T, FloatType>(intermediateImage, gaussianKernel);
 		if (!fConvGauss.checkInput() || !fConvGauss.process()) {
 			errorMessage = baseErrorMessage + "Fourier convolution with Gaussian failed:\n" + fConvGauss.getErrorMessage() ;
 			return false;
 		}
 		intermediateImage = fConvGauss.getResult();
-		
+
 		final FourierConvolution<T, FloatType> fConvLaplacian = new FourierConvolution<T, FloatType>(intermediateImage, laplacianKernel);
 		if (!fConvLaplacian.checkInput() || !fConvLaplacian.process()) {
 			errorMessage = baseErrorMessage + "Fourier Convolution with Laplacian failed:\n" + fConvLaplacian.getErrorMessage() ;
 			return false;
 		}
 		intermediateImage = fConvLaplacian.getResult();	
-		
+
 		/* 4 - Find extrema of newly convoluted image */
-		
+
 		final RegionalExtremaFactory<T> extremaFactory = new RegionalExtremaFactory<T>(intermediateImage);
 		final RegionalExtremaFinder<T> findExtrema = extremaFactory.createRegionalMaximaFinder(true);
-		findExtrema.allowEdgeExtrema(allowEdgeExtrema);
+		findExtrema.allowEdgeExtrema(false);
 		T thresh = img.createType();
 		thresh.setReal(threshold);
 		findExtrema.setThreshold(thresh);
@@ -141,7 +144,7 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 			return false;
 		}
 		final List<float[]> centeredExtrema = findExtrema.getRegionalExtremaCenters(false);
-		
+
 		/* 4.5 - Grab extrema value to work as a quality feature. */
 		final List<Float> extremaValues = new ArrayList<Float>(centeredExtrema.size());
 		int[] roundCoords = new int[centeredExtrema.get(0).length];
@@ -152,7 +155,7 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 			cursor.setPosition(roundCoords);
 			extremaValues.add(cursor.getType().getRealFloat());
 		}
-		
+
 		// Create spots
 		TreeMap<Float, Spot> spotQuality = new TreeMap<Float, Spot>();
 		spots = convertToSpots(centeredExtrema, calibration, downsampleFactors);
@@ -161,19 +164,34 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 			spots.get(i).putFeature(Spot.RADIUS, settings.expectedRadius);
 			spotQuality.put(extremaValues.get(i), spots.get(i));
 		}
-		
+
 		// Prune spots too close to each other
 		spots = TMUtils.suppressSpots(spots, Spot.QUALITY);
-		
+
 		return true;
 	}
+
+	@Override
+	public String getInfoText() {
+		return "<html>" +
+				"This segmenter is basically identical to the LoG segmenter, except <br>" +
+				"that images are downsampled before filtering, giving it a small <br>" +
+				"kick in speed, particularly for large spot sizes. It is the fastest for <br>" +
+				"large spot sizes (>&nbsp;~20 pixels), at the cost of preision in localization. " +
+				"</html>";
+	}
 	
-	
+	@Override
+	public String toString() {
+		return "Downsampled LoG segmenter";
+	}
+
+
 	/*
 	 * PRIVATE METHODS
 	 */
 
-	
+
 	private void createLaplacianKernel() {
 		final ImageFactory<FloatType> factory = new ImageFactory<FloatType>(new FloatType(), new ArrayContainerFactory());
 		int numDim = img.getNumDimensions();
@@ -187,16 +205,16 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 			quickKernel2D(laplacianArray, laplacianKernel);
 		} 
 	}
-	
+
 	private void createGaussianKernel() {
 		ImageFactory<FloatType> factory = new ImageFactory<FloatType>(new FloatType(), new ArrayContainerFactory());
 		gaussianKernel = FourierConvolution.getGaussianKernel(factory, sigma, img.getNumDimensions());
 	}
-	
+
 	/*
 	 * STATIC METHODS
 	 */
-	
+
 	private static void quickKernel3D(float[][][] vals, Image<FloatType> kern)	{
 		final LocalizableByDimCursor<FloatType> cursor = kern.createLocalizableByDimCursor();
 		final int[] pos = new int[3];
@@ -212,7 +230,7 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 				}
 		cursor.close();		
 	}
-	
+
 	private static void quickKernel2D(float[][] vals, Image<FloatType> kern)	{
 		final LocalizableByDimCursor<FloatType> cursor = kern.createLocalizableByDimCursor();
 		final int[] pos = new int[2];
@@ -226,7 +244,7 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 			}
 		cursor.close();		
 	}
-	
+
 	/**
 	 * Return the down-sampling factors that should be applied to the image so that 
 	 * the diameter given (in physical units) would have a pixel size (diameter) set
@@ -264,7 +282,7 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 			downsampleFactors = new float[]{widthFactor, heightFactor};
 		return downsampleFactors;
 	}
-	
+
 	/**
 	 * Create a {@link Spot} ArrayList from a list of down-sampled pixel coordinates. 
 	 * Internally, we use the {@link SpotImp} concrete implementation of Featurable.

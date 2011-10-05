@@ -18,30 +18,41 @@ public class PeakPickerSegmenter <T extends RealType<T>> extends AbstractSpotSeg
 	/*
 	 * FIELDS
 	 */
-	
-	public final static String BASE_ERROR_MESSAGE = "PeakPickerSegmenter: ";
-	
+
+	private final static String BASE_ERROR_MESSAGE = "PeakPickerSegmenter: ";
+	private LogSegmenterSettings settings;
+
 	/*
 	 * CONSTRUCTORS
 	 */
-	
-	public PeakPickerSegmenter(SegmenterSettings segmenterSettings) {
+
+	public PeakPickerSegmenter() {
 		baseErrorMessage = BASE_ERROR_MESSAGE;
 	}
-	
+
 	/*
 	 * METHODS
 	 */
 	
+	@Override
+	public SpotSegmenter<T> createNewSegmenter() {
+		return new PeakPickerSegmenter<T>();
+	}
+	
+	@Override
+	public void setTarget(Image<T> image, float[] calibration, SegmenterSettings settings) {
+		super.setTarget(image, calibration, settings);
+		this.settings = (LogSegmenterSettings) settings;
+	}
 
 	@Override
-	public SegmenterSettings getDefaultSettings() {
-		return new SegmenterSettings();
+	public SegmenterSettings createDefaultSettings() {
+		return new LogSegmenterSettings();
 	}
 
 	@Override
 	public boolean process() {
-		
+
 		// Deal with median filter:
 		Image<T> intermediateImage = applyMedianFilter(img);;
 		if (settings.useMedianFilter) {
@@ -50,7 +61,7 @@ public class PeakPickerSegmenter <T extends RealType<T>> extends AbstractSpotSeg
 				return false;
 			}
 		}
-		
+
 		float radius = settings.expectedRadius;
 		float sigma = (float) (radius / Math.sqrt(img.getNumDimensions())); // optimal sigma for LoG approach and dimensionality
 		ImageFactory<FloatType> factory = new ImageFactory<FloatType>(new FloatType(), new ArrayContainerFactory());
@@ -61,7 +72,7 @@ public class PeakPickerSegmenter <T extends RealType<T>> extends AbstractSpotSeg
 			return false;
 		}
 		intermediateImage = fConvGauss.getResult();
-		
+
 		Image<FloatType> laplacianKernel = createLaplacianKernel();
 		final FourierConvolution<T, FloatType> fConvLaplacian = new FourierConvolution<T, FloatType>(intermediateImage, laplacianKernel);
 		if (!fConvLaplacian.checkInput() || !fConvLaplacian.process()) {
@@ -69,20 +80,20 @@ public class PeakPickerSegmenter <T extends RealType<T>> extends AbstractSpotSeg
 			return false;
 		}
 		intermediateImage = fConvLaplacian.getResult();	
-		
+
 
 		PickImagePeaks<T> peakPicker = new PickImagePeaks<T>(intermediateImage);
-		
+
 		double[] suppressionRadiuses = new double[img.getNumDimensions()];
 		for (int i = 0; i < img.getNumDimensions(); i++) 
 			suppressionRadiuses[i] = radius / calibration[i];
 		peakPicker.setSuppression(suppressionRadiuses); // in pixels
-		
+
 		if (!peakPicker.checkInput() || !peakPicker.process()) {
 			errorMessage = baseErrorMessage +"Could not run the peak picker algorithm:\n" + peakPicker.getErrorMessage();
 			return false;
 		}
-		
+
 		// Create spots
 		LocalizableByDimCursor<T> cursor = intermediateImage.createLocalizableByDimCursor();
 		ArrayList<int[]> peaks = peakPicker.getPeakList();
@@ -100,11 +111,31 @@ public class PeakPickerSegmenter <T extends RealType<T>> extends AbstractSpotSeg
 			spot.putFeature(Spot.RADIUS, settings.expectedRadius);
 			spots.add(spot);
 		}
-		
+
 		return true;
 	}
 
+	@Override
+	public String getInfoText() {
+		return "<html>" +
+				"This segmenter applies a LoG (Laplacian of Gaussian) filter <br>" +
+				"to the image, with a sigma suited to the blob estimated size.<br>" +
+				"Calculations are made in the Fourier space. The maxima in the <br>" +
+				"filtered image are searched for, and maxima too close from each <br>" +
+				"other are suppressed. " +
+				"</html>";	
+	}
+
+	@Override
+	public String toString() {
+		return "LoG segmenter";
+	}
 	
+	/*
+	 * PRIVATE METHODS
+	 */
+
+
 	private Image<FloatType> createLaplacianKernel() {
 		final ImageFactory<FloatType> factory = new ImageFactory<FloatType>(new FloatType(), new ArrayContainerFactory());
 		int numDim = img.getNumDimensions();
@@ -120,7 +151,12 @@ public class PeakPickerSegmenter <T extends RealType<T>> extends AbstractSpotSeg
 		} 
 		return laplacianKernel;
 	}
-	
+
+	/*
+	 * STATIC METHODS
+	 */
+
+
 	private static void quickKernel2D(float[][] vals, Image<FloatType> kern)	{
 		final LocalizableByDimCursor<FloatType> cursor = kern.createLocalizableByDimCursor();
 		final int[] pos = new int[2];
@@ -134,7 +170,7 @@ public class PeakPickerSegmenter <T extends RealType<T>> extends AbstractSpotSeg
 			}
 		cursor.close();		
 	}
-	
+
 	private static void quickKernel3D(float[][][] vals, Image<FloatType> kern)	{
 		final LocalizableByDimCursor<FloatType> cursor = kern.createLocalizableByDimCursor();
 		final int[] pos = new int[3];
@@ -152,5 +188,5 @@ public class PeakPickerSegmenter <T extends RealType<T>> extends AbstractSpotSeg
 	}
 
 
-	
+
 }

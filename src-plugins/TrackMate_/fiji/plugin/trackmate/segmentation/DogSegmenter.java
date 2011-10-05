@@ -27,7 +27,7 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 	public final static String BASE_ERROR_MESSAGE = "DogSegmenter: ";
 	
 	private boolean doSubPixelLocalization = false;
-	
+	private DogSegmenterSettings settings;
 	
 	/*
 	 * CONSTRUCTOR
@@ -37,21 +37,25 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 		this.baseErrorMessage = BASE_ERROR_MESSAGE;
 	}
 	
-	
 
 	/*
 	 * METHODS
 	 */
+	
+	public SpotSegmenter<T> createNewSegmenter() {
+		return new DogSegmenter<T>();
+	};
 
 	@Override
-	public SegmenterSettings getDefaultSettings() {
+	public SegmenterSettings createDefaultSettings() {
 		return new DogSegmenterSettings();
 	}
 	
 	@Override
 	public void setTarget(Image<T> image, float[] calibration, SegmenterSettings settings) {
 		super.setTarget(image, calibration, settings);
-		this.doSubPixelLocalization = ((DogSegmenterSettings) settings).doSubPixelLocalization;
+		this.settings = (DogSegmenterSettings) settings;
+		this.doSubPixelLocalization = this.settings.doSubPixelLocalization;
 	}
 
 	@Override
@@ -139,7 +143,23 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 		
 		return true;
 	}
-
-
+	
+	@Override
+	public String toString() {
+		return "DoG segmenter";
+	}
+	
+	@Override
+	public String getInfoText() {
+		return "<html>" +
+				"This segmenter is based on an approximation of the LoG operator <br> " +
+				"by differences of gaussian (DoG). Computations are made in direct space. <br>" +
+				"It is the quickest for small spot sizes (< ~5 pixels). " +
+				"<p> " +
+				"Spots found too close are suppressed. This segmenter can do sub-pixel <br>" +
+				"localization of spots. It is based on the scale-space framework <br>" +
+				"made by Stephan Preibisch for ImgLib. " +
+				"</html>";	
+	}
 
 }

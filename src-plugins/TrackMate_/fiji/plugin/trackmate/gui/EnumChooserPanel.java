@@ -1,7 +1,7 @@
 package fiji.plugin.trackmate.gui;
 
-import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.BIG_FONT;
+import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
 
 import java.awt.Font;
 import java.awt.event.ActionEvent;
@@ -10,12 +10,9 @@ import java.awt.event.ActionListener;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.WindowConstants;
 
 import fiji.plugin.trackmate.InfoTextable;
-import fiji.plugin.trackmate.segmentation.SegmenterType;
 
 /**
  * A panel to let the user choose what displayer he wants to use.
@@ -97,24 +94,5 @@ public class EnumChooserPanel <K extends Enum<K> & InfoTextable> extends ActionL
 	private void echo(K choice) {
 		jLabelHelpText.setText(choice.getInfoText().replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
 	}
-	
-
-	/*
-	 * MAIN METHOD
-	 */
-	
-	public static void main(String[] args) {
-		JFrame frame = new JFrame();
-		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-		frame.pack();
-		frame.setVisible(true);
-		{
-			EnumChooserPanel<SegmenterType> instance = new EnumChooserPanel<SegmenterType>(SegmenterType.LOG_SEGMENTER, "segmenter");
-			frame.getContentPane().add(instance);
-			instance.setPreferredSize(new java.awt.Dimension(300, 469));
-		}
-	}
-	
-	
 	
 }

@@ -238,20 +238,23 @@ public class TrackMate_ implements PlugIn {
 
 					for (int i = ai.getAndIncrement(); i < settings.tend; i = ai.getAndIncrement()) {
 
-						/* 0 -- Initialize local variables */
-
-						@SuppressWarnings("rawtypes")
-						SpotSegmenter<? extends RealType> segmenter = settings.getSpotSegmenter();
-						segmenter.setCalibration(calibration);
-
-						/* 1 - Prepare stack for use with Imglib. */
+						/* 0 - Prepare stack for use with Imglib. */
 						@SuppressWarnings("rawtypes")
 						Image img = TMUtils.getSingleFrameAsImage(imp, i, settings); // will be cropped according to settings
 
+						/* 1 -- Initialize segmenter */
+						SpotSegmenter<? extends RealType<?>> segmenter = settings.segmenter.createNewSegmenter();
+						segmenter.setTarget(img, calibration, settings.segmenterSettings);
+
 						/* 2 Segment it */
-						segmenter.setImage(img);
 						if (segmenter.checkInput() && segmenter.process()) {
-							List<Spot> spotsThisFrame = segmenter.getResult(settings);
+							// Get spots
+							List<Spot> spotsThisFrame = segmenter.getResult();
+							// Put them back in the right referential 
+							TMUtils.translateSpots(spotsThisFrame, 
+									settings.xstart * calibration[0], 
+									settings.ystart * calibration[1], 
+									settings.zstart * calibration[2]);
 							List<Spot> prunedSpots;
 							// Prune if outside of ROI
 							if (null != polygon) {

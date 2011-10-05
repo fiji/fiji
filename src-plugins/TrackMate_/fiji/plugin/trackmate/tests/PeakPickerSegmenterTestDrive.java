@@ -14,8 +14,8 @@ import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import mpicbg.imglib.util.Util;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
 import fiji.plugin.trackmate.segmentation.PeakPickerSegmenter;
-import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 
 public class PeakPickerSegmenterTestDrive {
@@ -61,11 +61,10 @@ public class PeakPickerSegmenterTestDrive {
 		cursor.close();
 
 		// Instantiate segmenter
-		SegmenterSettings settings = new SegmenterSettings();
+		LogSegmenterSettings settings = new LogSegmenterSettings();
 		settings.expectedRadius = RADIUS;
-		SpotSegmenter<UnsignedByteType> segmenter = new PeakPickerSegmenter<UnsignedByteType>(settings);
-		segmenter.setImage(img);
-		segmenter.setCalibration(CALIBRATION);
+		SpotSegmenter<UnsignedByteType> segmenter = new PeakPickerSegmenter<UnsignedByteType>();
+		segmenter.setTarget(img, CALIBRATION, settings);
 		
 		// Segment
 		long start = System.currentTimeMillis();
