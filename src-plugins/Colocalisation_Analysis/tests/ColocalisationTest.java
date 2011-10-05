@@ -1,7 +1,9 @@
 package tests;
 
+import gadgets.MaskFactory;
 import mpicbg.imglib.algorithm.math.ImageStatistics;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 
 import org.junit.After;
@@ -13,12 +15,14 @@ public abstract class ColocalisationTest {
 	// images and meta data for zero correlation
 	Image<UnsignedByteType> zeroCorrelationImageCh1;
 	Image<UnsignedByteType> zeroCorrelationImageCh2;
+	Image<BitType> zeroCorrelationAlwaysTrueMask;
 	double zeroCorrelationImageCh1Mean;
 	double zeroCorrelationImageCh2Mean;
 
 	// images and meta data for positive correlation
 	Image<UnsignedByteType> positiveCorrelationImageCh1;
 	Image<UnsignedByteType> positiveCorrelationImageCh2;
+	Image<BitType> positiveCorrelationAlwaysTrueMask;
 	double positiveCorrelationImageCh1Mean;
 	double positiveCorrelationImageCh2Mean;
 
@@ -34,11 +38,15 @@ public abstract class ColocalisationTest {
 		zeroCorrelationImageCh2 = TestImageAccessor.loadTiffFromJar("Data/redZstack.tif");
 		zeroCorrelationImageCh2Mean = ImageStatistics.getImageMean(zeroCorrelationImageCh2);
 
+		zeroCorrelationAlwaysTrueMask = MaskFactory.createMask(zeroCorrelationImageCh1.getDimensions(), true);
+
 		positiveCorrelationImageCh1 = TestImageAccessor.loadTiffFromJar("Data/colocsample1b-green.tif");
 		positiveCorrelationImageCh1Mean = ImageStatistics.getImageMean(positiveCorrelationImageCh1);
 
 		positiveCorrelationImageCh2 = TestImageAccessor.loadTiffFromJar("Data/colocsample1b-red.tif");
 		positiveCorrelationImageCh2Mean = ImageStatistics.getImageMean(positiveCorrelationImageCh2);
+
+		positiveCorrelationAlwaysTrueMask = MaskFactory.createMask(positiveCorrelationImageCh1.getDimensions(), true);
 	}
 
 	/**

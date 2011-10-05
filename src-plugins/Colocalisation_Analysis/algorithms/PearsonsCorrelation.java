@@ -1,12 +1,14 @@
 package algorithms;
 
-import results.ResultHandler;
-import mpicbg.imglib.algorithm.math.ImageStatistics;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.numeric.RealType;
 import gadgets.DataContainer;
-import mpicbg.imglib.cursor.special.TwinValueRangeCursor;
-import mpicbg.imglib.cursor.special.TwinValueRangeCursorFactory;
+import gadgets.MaskFactory;
+import gadgets.ThresholdMode;
+import mpicbg.imglib.algorithm.math.ImageStatistics;
+import mpicbg.imglib.cursor.special.TwinCursor;
+import mpicbg.imglib.image.Image;
+import mpicbg.imglib.type.logic.BitType;
+import mpicbg.imglib.type.numeric.RealType;
+import results.ResultHandler;
 
 /**
  * A class that represents the mean calculation of the two source
@@ -20,7 +22,7 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 	public enum Implementation {Classic, Fast};
 	// The member variable to store the implementation of the Pearson's Coefficient calculation used.
 	Implementation theImplementation = Implementation.Fast;
-	// resulting Pearsing value without thresholds
+	// resulting Pearsons value without thresholds
 	double pearsonsCorrelationValue;
 	// resulting Pearsons value below threshold
 	double pearsonsCorrelationValueBelowThr;
@@ -48,6 +50,7 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 		// get the 2 images for the calculation of Pearson's
 		Image<T> img1 = container.getSourceImage1();
 		Image<T> img2 = container.getSourceImage2();
+		Image<BitType> mask = container.getMask();
 
 		// get the thresholds of the images
 		AutoThresholdRegression<T> autoThreshold = container.getAutoThreshold();
@@ -60,13 +63,11 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			throw new MissingPreconditionException("Pearsons calculation needs valid (not null) thresholds.");
 		}
 
-		// create cursors to walk over the images
-		TwinValueRangeCursor<T> alwaysTrueCursor
-			= TwinValueRangeCursorFactory.generateAlwaysTrueCursor(img1, img2);
-		TwinValueRangeCursor<T> belowThresholdCursor
-			= TwinValueRangeCursorFactory.generateBelowThresholdCursor(img1, img2, threshold1, threshold2);
-		TwinValueRangeCursor<T> aboveThresholdCursor
-			= TwinValueRangeCursorFactory.generateAboveThresholdCursor(img1, img2, threshold1, threshold2);
+		/* Create cursors to walk over the images. First go over the
+		 * images without a mask. */
+		TwinCursor<T> cursor = new TwinCursor<T>(
+				img1.createLocalizableByDimCursor(), img2.createLocalizableByDimCursor(),
+				mask.createLocalizableCursor());
 
 		MissingPreconditionException error = null;
 		if (theImplementation == Implementation.Classic) {
@@ -75,7 +76,9 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			double ch2Mean = container.getMeanCh2();
 
 			try {
-				pearsonsCorrelationValue = classicPearsons(alwaysTrueCursor, ch1Mean, ch2Mean);
+				cursor.reset();
+				pearsonsCorrelationValue = classicPearsons(cursor,
+						ch1Mean, ch2Mean);
 			} catch (MissingPreconditionException e) {
 				// probably a numerical error occurred
 				pearsonsCorrelationValue = Double.NaN;
@@ -83,7 +86,9 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			}
 
 			try {
-				pearsonsCorrelationValueBelowThr = classicPearsons(belowThresholdCursor, ch1Mean, ch2Mean);
+				cursor.reset();
+				pearsonsCorrelationValueBelowThr = classicPearsons(cursor,
+						ch1Mean, ch2Mean, threshold1, threshold2, ThresholdMode.Below);
 			} catch (MissingPreconditionException e) {
 				// probably a numerical error occurred
 				pearsonsCorrelationValueBelowThr = Double.NaN;
@@ -91,7 +96,9 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			}
 
 			try {
-				pearsonsCorrelationValueAboveThr = classicPearsons(aboveThresholdCursor, ch1Mean, ch2Mean);
+				cursor.reset();
+				pearsonsCorrelationValueAboveThr = classicPearsons(cursor,
+						ch1Mean, ch2Mean, threshold1, threshold2, ThresholdMode.Above);
 			} catch (MissingPreconditionException e) {
 				// probably a numerical error occurred
 				pearsonsCorrelationValueAboveThr = Double.NaN;
@@ -100,7 +107,8 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 		}
 		else if (theImplementation == Implementation.Fast) {
 			try {
-				pearsonsCorrelationValue = fastPearsons(alwaysTrueCursor);
+				cursor.reset();
+				pearsonsCorrelationValue = fastPearsons(cursor);
 			} catch (MissingPreconditionException e) {
 				// probably a numerical error occurred
 				pearsonsCorrelationValue = Double.NaN;
@@ -108,7 +116,9 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			}
 
 			try {
-				pearsonsCorrelationValueBelowThr = fastPearsons(belowThresholdCursor);
+				cursor.reset();
+				pearsonsCorrelationValueBelowThr = fastPearsons(cursor,
+						threshold1, threshold2, ThresholdMode.Below);
 			} catch (MissingPreconditionException e) {
 				// probably a numerical error occurred
 				pearsonsCorrelationValueBelowThr = Double.NaN;
@@ -116,13 +126,17 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			}
 
 			try {
-				pearsonsCorrelationValueAboveThr = fastPearsons(aboveThresholdCursor);
+				cursor.reset();
+				pearsonsCorrelationValueAboveThr = fastPearsons(cursor,
+						threshold1, threshold2, ThresholdMode.Above);
 			} catch (MissingPreconditionException e) {
 				// probably a numerical error occurred
 				pearsonsCorrelationValueAboveThr = Double.NaN;
 				error = e;
 			}
 		}
+
+		cursor.close();
 
 		// if an error occurred, throw it one level up
 		if (error != null)
@@ -142,8 +156,10 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 	public <S extends RealType<S>> double calculatePearsons(Image<S> img1, Image<S> img2)
 			throws MissingPreconditionException {
 		// create cursors to walk over the images
-		TwinValueRangeCursor<S> alwaysTrueCursor
-			= TwinValueRangeCursorFactory.generateAlwaysTrueCursor(img1, img2);
+		Image<BitType> alwaysTrueMask = MaskFactory.createMask(img1.getDimensions(), true);
+		TwinCursor<S> alwaysTrueCursor = new TwinCursor<S>(
+				img1.createLocalizableByDimCursor(), img2.createLocalizableByDimCursor(),
+				alwaysTrueMask.createLocalizableCursor());
 
 		if (theImplementation == Implementation.Classic) {
 			/* since we need the means and apparently don't have them
@@ -168,13 +184,16 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 	 * @return Pearson's R value.
 	 * @throws MissingPreconditionException
 	 */
-	public <S extends RealType<S>> double calculatePearsons(TwinValueRangeCursor<S> cursor, double mean1, double mean2)
-			throws MissingPreconditionException {
+	public <S extends RealType<S>> double calculatePearsons(TwinCursor<S> cursor,
+			double mean1, double mean2, S thresholdCh1, S thresholdCh2,
+			ThresholdMode tMode) throws MissingPreconditionException {
 		if (theImplementation == Implementation.Classic) {
 			// do the actual calculation
-			return classicPearsons(cursor, mean1, mean2);
+			return classicPearsons(cursor, mean1, mean2,
+					thresholdCh1, thresholdCh2, tMode);
 		} else {
-			return fastPearsons(cursor);
+			return fastPearsons(cursor, thresholdCh1,
+					thresholdCh2, tMode);
 		}
 	}
 
@@ -190,22 +209,65 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 	 * @param cursor The cursor that defines the walk over both images.
 	 * @return Person's R value
 	 */
-	public static <T extends RealType<T>> double classicPearsons(TwinValueRangeCursor<T> cursor, double meanCh1, double meanCh2)
-			throws MissingPreconditionException {
+	public static <T extends RealType<T>> double classicPearsons(TwinCursor<T> cursor,
+			double meanCh1, double meanCh2) throws MissingPreconditionException {
+		return classicPearsons(cursor, meanCh1, meanCh2, null, null, ThresholdMode.None);
+	}
+
+	public static <T extends RealType<T>> double classicPearsons(TwinCursor<T> cursor,
+			double meanCh1, double meanCh2, T thresholdCh1, T thresholdCh2,
+			ThresholdMode tMode) throws MissingPreconditionException {
 		double pearsonDenominator = 0;
 		double ch1diffSquaredSum = 0;
 		double ch2diffSquaredSum = 0;
 		int count = 0;
-		while (cursor.hasNext()) {
-			cursor.fwd();
-			T type1 = cursor.getChannel1Type();
-			double ch1diff = type1.getRealDouble() - meanCh1;
-			T type2 = cursor.getChannel2Type();
-			double ch2diff = type2.getRealDouble() - meanCh2;
-			pearsonDenominator += ch1diff*ch2diff;
-			ch1diffSquaredSum += (ch1diff*ch1diff);
-			ch2diffSquaredSum += (ch2diff*ch2diff);
-			count++;
+
+		if (tMode == ThresholdMode.None) {
+			while (cursor.hasNext()) {
+				cursor.fwd();
+				T type1 = cursor.getChannel1();
+				T type2 = cursor.getChannel2();
+				double ch1diff = type1.getRealDouble() - meanCh1;
+				double ch2diff = type2.getRealDouble() - meanCh2;
+				pearsonDenominator += ch1diff*ch2diff;
+				ch1diffSquaredSum += (ch1diff*ch1diff);
+				ch2diffSquaredSum += (ch2diff*ch2diff);
+				count++;
+			}
+		} else if (tMode == ThresholdMode.Below) {
+			while (cursor.hasNext()) {
+				cursor.fwd();
+				T type1 = cursor.getChannel1();
+				T type2 = cursor.getChannel2();
+				// test if one of the values is below its threshold
+				if (type1.compareTo(thresholdCh1) < 0
+						|| type2.compareTo(thresholdCh2) < 0) {
+					double ch1diff = type1.getRealDouble() - meanCh1;
+					double ch2diff = type2.getRealDouble() - meanCh2;
+					pearsonDenominator += ch1diff*ch2diff;
+					ch1diffSquaredSum += (ch1diff*ch1diff);
+					ch2diffSquaredSum += (ch2diff*ch2diff);
+					count++;
+				}
+			}
+		} else if (tMode == ThresholdMode.Above) {
+			while (cursor.hasNext()) {
+				cursor.fwd();
+				T type1 = cursor.getChannel1();
+				T type2 = cursor.getChannel2();
+				// test if one of the values is below its threshold
+				if (type1.compareTo(thresholdCh1) > 0
+						|| type2.compareTo(thresholdCh2) > 0) {
+					double ch1diff = type1.getRealDouble() - meanCh1;
+					double ch2diff = type2.getRealDouble() - meanCh2;
+					pearsonDenominator += ch1diff*ch2diff;
+					ch1diffSquaredSum += (ch1diff*ch1diff);
+					ch2diffSquaredSum += (ch2diff*ch2diff);
+					count++;
+				}
+			}
+		} else {
+			throw new UnsupportedOperationException();
 		}
 		double pearsonNumerator = Math.sqrt(ch1diffSquaredSum * ch2diffSquaredSum);
 
@@ -228,25 +290,72 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 	 * @param cursor The cursor that defines the walk over both images.
 	 * @return Person's R value
 	 */
-	public static <T extends RealType<T>> double fastPearsons(TwinValueRangeCursor<T> cursor)
+	public static <T extends RealType<T>> double fastPearsons(TwinCursor<T> cursor)
+			throws MissingPreconditionException {
+		return fastPearsons(cursor, null, null, ThresholdMode.None);
+	}
+
+	public static <T extends RealType<T>> double fastPearsons(TwinCursor<T> cursor,
+			T thresholdCh1, T thresholdCh2, ThresholdMode tMode)
 			throws MissingPreconditionException {
 		double sum1 = 0.0, sum2 = 0.0, sumProduct1_2 = 0.0, sum1squared= 0.0, sum2squared = 0.0;
 		// the total amount of pixels that have been taken into consideration
 		int N = 0;
 
-		while (cursor.hasNext()) {
-			cursor.fwd();
-			T type1 = cursor.getChannel1Type();
-			double ch1 = type1.getRealDouble();
-			T type2 = cursor.getChannel2Type();
-			double ch2 = type2.getRealDouble();
+		if (tMode == ThresholdMode.None) {
+			while (cursor.hasNext()) {
+				cursor.fwd();
+				T type1 = cursor.getChannel1();
+				T type2 = cursor.getChannel2();
 
-			sum1 += ch1;
-			sumProduct1_2 += (ch1 * ch2);
-			sum1squared += (ch1 * ch1);
-			sum2squared += (ch2 *ch2);
-			sum2 += ch2;
-			N++;
+				double ch1 = type1.getRealDouble();
+				double ch2 = type2.getRealDouble();
+				sum1 += ch1;
+				sumProduct1_2 += (ch1 * ch2);
+				sum1squared += (ch1 * ch1);
+				sum2squared += (ch2 *ch2);
+				sum2 += ch2;
+				N++;
+			}
+		} else if (tMode == ThresholdMode.Below) {
+			while (cursor.hasNext()) {
+				cursor.fwd();
+				T type1 = cursor.getChannel1();
+				T type2 = cursor.getChannel2();
+				// test if one of the values is below its threshold
+				if (type1.compareTo(thresholdCh1) < 0
+						|| type2.compareTo(thresholdCh2) < 0) {
+					double ch1 = type1.getRealDouble();
+					double ch2 = type2.getRealDouble();
+					sum1 += ch1;
+					sumProduct1_2 += (ch1 * ch2);
+					sum1squared += (ch1 * ch1);
+					sum2squared += (ch2 *ch2);
+					sum2 += ch2;
+					N++;
+				}
+
+			}
+		} else if (tMode == ThresholdMode.Above) {
+			while (cursor.hasNext()) {
+				cursor.fwd();
+				T type1 = cursor.getChannel1();
+				T type2 = cursor.getChannel2();
+				// test if one of the values is below its threshold
+				if (type1.compareTo(thresholdCh1) > 0
+						|| type2.compareTo(thresholdCh2) > 0) {
+					double ch1 = type1.getRealDouble();
+					double ch2 = type2.getRealDouble();
+					sum1 += ch1;
+					sumProduct1_2 += (ch1 * ch2);
+					sum1squared += (ch1 * ch1);
+					sum2squared += (ch2 *ch2);
+					sum2 += ch2;
+					N++;
+				}
+			}
+		} else {
+			throw new UnsupportedOperationException();
 		}
 
 		// for faster computation, have the inverse of N available

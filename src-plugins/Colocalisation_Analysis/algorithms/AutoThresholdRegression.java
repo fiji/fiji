@@ -2,10 +2,11 @@ package algorithms;
 
 import results.ResultHandler;
 import gadgets.DataContainer;
-import mpicbg.imglib.cursor.special.TwinValueRangeCursor;
-import mpicbg.imglib.cursor.special.meta.BelowThresholdPredicate;
+import gadgets.ThresholdMode;
+import mpicbg.imglib.cursor.special.TwinCursor;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.RealType;
 
 /**
@@ -38,8 +39,9 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm<T>
 	public void execute(DataContainer<T> container)
 			throws MissingPreconditionException {
 		// get the 2 images for the calculation of Pearson's
-		Image<T> img1 = container.getSourceImage1();
-		Image<T> img2 = container.getSourceImage2();
+		final Image<T> img1 = container.getSourceImage1();
+		final Image<T> img2 = container.getSourceImage2();
+		final Image<BitType> mask = container.getMask();
 
 		double ch1Mean = container.getMeanCh1();
 		double ch2Mean = container.getMeanCh2();
@@ -145,13 +147,10 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm<T>
 		// define some image type specific threshold variables
 		T threshold1 = img1.createType();
 		T threshold2 = img2.createType();
-		/* have a thresholded TwinValueRangeCursor of which
-		 * predicates thresholds can be altered.
-		 */
-		BelowThresholdPredicate<T> predicate1 = new BelowThresholdPredicate<T>(threshold1);
-		BelowThresholdPredicate<T> predicate2 = new BelowThresholdPredicate<T>(threshold2);
-		TwinValueRangeCursor<T> cursor = new TwinValueRangeCursor<T>(
-				img1.createLocalizableByDimCursor(), img2.createLocalizableByDimCursor(), predicate1, predicate2);
+
+		TwinCursor<T> cursor = new TwinCursor<T>(
+				img1.createLocalizableByDimCursor(), img2.createLocalizableByDimCursor(),
+				mask.createLocalizableCursor());
 
 		// do regression
 		while (!thresholdFound && iteration<maxIterations) {
@@ -161,9 +160,6 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm<T>
 			// set the image type specific variables
 			threshold1.setReal( ch1ThreshMax );
 			threshold2.setReal( ch2ThreshMax );
-			// set the thresholds of the predicates
-			predicate1.setThreshold( threshold1 );
-			predicate2.setThreshold( threshold2 );
 			// indicates if we have actually found a real number
 			boolean badResult = false;
 
@@ -171,7 +167,8 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm<T>
 			lastPersonsR = currentPersonsR;
 			try {
 				// do persons calculation within the limits
-				currentPersonsR = pearsonsCorrellation.calculatePearsons(cursor, ch1Mean, ch2Mean);
+				currentPersonsR = pearsonsCorrellation.calculatePearsons(cursor,
+						ch1Mean, ch2Mean, threshold1, threshold2, ThresholdMode.Below);
 				// indicates if we have actually found a real number
 				badResult = Double.isNaN(currentPersonsR);
 

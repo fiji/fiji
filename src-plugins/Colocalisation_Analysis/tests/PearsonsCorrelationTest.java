@@ -1,9 +1,12 @@
 package tests;
 
 import static org.junit.Assert.assertTrue;
+import gadgets.MaskFactory;
+import mpicbg.imglib.cursor.special.TwinCursor;
 import mpicbg.imglib.cursor.special.TwinValueRangeCursor;
 import mpicbg.imglib.cursor.special.TwinValueRangeCursorFactory;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 
@@ -27,8 +30,10 @@ public class PearsonsCorrelationTest extends ColocalisationTest {
 	@Test
 	public void fastPearsonsZeroCorrTest() throws MissingPreconditionException {
 		// create a twin value range cursor that iterates over all pixels of the input data
-		TwinValueRangeCursor<UnsignedByteType> cursor = TwinValueRangeCursorFactory
-				.generateAlwaysTrueCursor(zeroCorrelationImageCh1, zeroCorrelationImageCh2);
+		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
+				zeroCorrelationImageCh1.createLocalizableByDimCursor(),
+				zeroCorrelationImageCh2.createLocalizableByDimCursor(),
+				zeroCorrelationAlwaysTrueMask.createLocalizableCursor());
 		// get the Pearson's value
 		double pearsonsR = PearsonsCorrelation.fastPearsons(cursor);
 		// check Pearsons R is close to zero
@@ -42,8 +47,10 @@ public class PearsonsCorrelationTest extends ColocalisationTest {
 	@Test
 	public void fastPearsonsPositiveCorrTest() throws MissingPreconditionException {
 		// create a twin value range cursor that iterates over all pixels of the input data
-		TwinValueRangeCursor<UnsignedByteType> cursor = TwinValueRangeCursorFactory
-				.generateAlwaysTrueCursor(positiveCorrelationImageCh1, positiveCorrelationImageCh2);
+		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
+				positiveCorrelationImageCh1.createLocalizableByDimCursor(),
+				positiveCorrelationImageCh2.createLocalizableByDimCursor(),
+				positiveCorrelationAlwaysTrueMask.createLocalizableCursor());
 		// get the Pearson's value
 		double pearsonsR = PearsonsCorrelation.fastPearsons(cursor);
 		// check Pearsons R is close to 0.75
@@ -57,8 +64,10 @@ public class PearsonsCorrelationTest extends ColocalisationTest {
 	@Test
 	public void classicPearsonsZeroCorrTest() throws MissingPreconditionException {
 		// create a twin value range cursor that iterates over all pixels of the input data
-		TwinValueRangeCursor<UnsignedByteType> cursor = TwinValueRangeCursorFactory
-				.generateAlwaysTrueCursor(zeroCorrelationImageCh1, zeroCorrelationImageCh2);
+		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
+				zeroCorrelationImageCh1.createLocalizableByDimCursor(),
+				zeroCorrelationImageCh2.createLocalizableByDimCursor(),
+				zeroCorrelationAlwaysTrueMask.createLocalizableCursor());
 		// get the Pearson's value
 		double pearsonsR = PearsonsCorrelation
 			.classicPearsons(cursor, zeroCorrelationImageCh1Mean, zeroCorrelationImageCh2Mean);
@@ -73,8 +82,10 @@ public class PearsonsCorrelationTest extends ColocalisationTest {
 	@Test
 	public void classicPearsonsPositiveCorrTest() throws MissingPreconditionException {
 		// create a twin value range cursor that iterates over all pixels of the input data
-		TwinValueRangeCursor<UnsignedByteType> cursor = TwinValueRangeCursorFactory
-				.generateAlwaysTrueCursor(positiveCorrelationImageCh1, positiveCorrelationImageCh2);
+		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
+				positiveCorrelationImageCh1.createLocalizableByDimCursor(),
+				positiveCorrelationImageCh2.createLocalizableByDimCursor(),
+				positiveCorrelationAlwaysTrueMask.createLocalizableCursor());
 		// get the Pearson's value
 		double pearsonsR = PearsonsCorrelation
 			.classicPearsons(cursor, positiveCorrelationImageCh1Mean, positiveCorrelationImageCh2Mean);
@@ -92,13 +103,17 @@ public class PearsonsCorrelationTest extends ColocalisationTest {
 		final double spread = 0.1;
 		final double[] sigma = new double[] {3.0, 3.0};
 
+		Image<BitType> mask = MaskFactory.createMask(new int[] {512, 512}, true);
+
 		for (double mean = initialMean; mean < 1; mean += spread) {
-			Image<FloatType> ch1 = TestImageAccessor.produceMeanBasedNoiseImage(new FloatType(), 512, 512, mean, spread, sigma);
-			Image<FloatType> ch2 = TestImageAccessor.produceMeanBasedNoiseImage(new FloatType(), 512, 512, mean, spread, sigma);
+			Image<FloatType> ch1 = TestImageAccessor.produceMeanBasedNoiseImage(new FloatType(),
+					512, 512, mean, spread, sigma);
+			Image<FloatType> ch2 = TestImageAccessor.produceMeanBasedNoiseImage(new FloatType(),
+					512, 512, mean, spread, sigma);
 
 			// create a twin value range cursor that iterates over all pixels of the input data
-			TwinValueRangeCursor<FloatType> cursor = TwinValueRangeCursorFactory
-					.generateAlwaysTrueCursor(ch1, ch2);
+			TwinCursor<FloatType> cursor = new TwinCursor<FloatType>(ch1.createLocalizableByDimCursor(),
+					ch2.createLocalizableByDimCursor(), mask.createLocalizableCursor());
 			double resultFast = PearsonsCorrelation.fastPearsons(cursor);
 			assertTrue(Math.abs(resultFast) < 0.1);
 

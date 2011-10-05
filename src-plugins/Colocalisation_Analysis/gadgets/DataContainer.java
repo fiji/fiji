@@ -6,6 +6,7 @@ import java.util.List;
 
 import mpicbg.imglib.algorithm.math.ImageStatistics;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.RealType;
 import algorithms.Algorithm;
 import algorithms.AutoThresholdRegression;
@@ -25,6 +26,9 @@ public class DataContainer<T extends RealType<T>> {
 	double meanCh1, meanCh2, minCh1, maxCh1, minCh2, maxCh2, integralCh1, integralCh2;
 	// The source images that the results are based on
 	Image<T> sourceImage1, sourceImage2;
+	// The mask for the images
+	Image<BitType> mask;
+
 	// The channels of the source images that the result relate to
 	int ch1, ch2;
 	// The mask, clipped to its bounding box, if irregular ROI or a mask is use
@@ -54,6 +58,7 @@ public class DataContainer<T extends RealType<T>> {
 	public DataContainer(Image<T> src1, Image<T> src2, int ch1, int ch2) {
 		sourceImage1 = src1;
 		sourceImage2 = src2;
+		mask = MaskFactory.createMask(src1.getDimensions(), true);
 		this.ch1 = ch1;
 		this.ch2 = ch2;
 
@@ -155,6 +160,10 @@ public class DataContainer<T extends RealType<T>> {
 
 	public Image<T> getSourceImage2() {
 		return sourceImage2;
+	}
+
+	public Image<BitType> getMask() {
+		return mask;
 	}
 
 	public int getCh1() {
