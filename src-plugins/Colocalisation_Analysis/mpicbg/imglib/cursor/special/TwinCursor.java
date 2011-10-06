@@ -12,7 +12,14 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.Type;
 import mpicbg.imglib.type.logic.BitType;
 
-public class TwinCursor<T extends Type<T>> implements Cursor<T> {
+/**
+ * The TwinCursor moves over two images with respect to a mask. The mask
+ * has to be of the same dimensionality as the images. Position information
+ * obtained from this class comes from the mask.
+ *
+ * @author Johannes Schindelin and Tom Kazimiers
+ */
+public class TwinCursor<T extends Type<T>> implements Cursor<T>, LocalizableCursor<T> {
 		final protected PredicateCursor<BitType> mask;
 		final protected LocalizableByDimCursor<T> channel1;
 		final protected LocalizableByDimCursor<T> channel2;
@@ -151,5 +158,25 @@ public class TwinCursor<T extends Type<T>> implements Cursor<T> {
 		@Override
 		public void setDebug(boolean arg0) {
 			throw new UnsupportedOperationException("This method has not been implemented, yet.");
+		}
+
+		@Override
+		public int[] getPosition() {
+			return mask.getPosition();
+		}
+
+		@Override
+		public void getPosition(int[] pos) {
+			mask.getPosition(pos);
+		}
+
+		@Override
+		public int getPosition(int dim) {
+			return mask.getPosition(dim);
+		}
+
+		@Override
+		public String getPositionAsString() {
+			return mask.getPositionAsString();
 		}
 	}
