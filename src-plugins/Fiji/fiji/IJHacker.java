@@ -448,6 +448,25 @@ public class IJHacker implements Runnable {
 				+ "}");
 
 			clazz.toClass();
+
+			// Class ij.macro.Functions
+			clazz = pool.get("ij.macro.Functions");
+
+			method = clazz.getMethod("call", "()Ljava/lang/String;");
+			method.instrument(new ExprEditor() {
+				@Override
+				public void edit(Handler handler) throws CannotCompileException {
+					try {
+						if (handler.getType().getName().equals("java.lang.reflect.InvocationTargetException"))
+							handler.insertBefore("ij.IJ.handleException($1);"
+								+ "return null");
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			});
+
+			clazz.toClass();
 		} catch (NotFoundException e) {
 			e.printStackTrace();
 		} catch (CannotCompileException e) {
