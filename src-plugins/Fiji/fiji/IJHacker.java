@@ -160,8 +160,11 @@ public class IJHacker implements Runnable {
 						call.replace("$_ = $0.getResource(\"/icon.png\");");
 				}
 			});
-			if (!isImageJA)
+			if (!isImageJA) {
 				clazz.getConstructor("(Ljava/applet/Applet;I)V").insertBeforeBody("if ($2 != ij.ImageJ.NO_SHOW) setIcon();");
+				method = clazz.getMethod("isRunning", "([Ljava/lang/String;)Z");
+				method.insertBefore("return fiji.OtherInstance.sendArguments($1);");
+			}
 
 			clazz.toClass();
 
