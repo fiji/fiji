@@ -131,7 +131,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	protected MandersCorrelation<T> mandersCorrelation;
 	protected Histogram2D<T> histogram2D;
 	protected CostesSignificanceTest<T> costesSignificance;
-
+	// indicates if images should be printed in result
+	protected boolean displayImages;
 	/* GUI related members */
 	protected String[] roiLabels = {
 		"None",
@@ -189,13 +190,14 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		}
 
 		// set up the users preferences
+		displayImages = Prefs.get(PREF_KEY+"displayImages", false);
+		autoSavePdf = Prefs.get(PREF_KEY+"autoSavePdf", true);
 		boolean useLiCh1 = Prefs.get(PREF_KEY+"useLiCh1", true);
 		boolean useLiCh2 = Prefs.get(PREF_KEY+"useLiCh2", true);
 		boolean useLiICQ = Prefs.get(PREF_KEY+"useLiICQ", true);
 		boolean useManders = Prefs.get(PREF_KEY+"useManders", true);
 		boolean useScatterplot = Prefs.get(PREF_KEY+"useScatterplot", true);
 		boolean useCostes = Prefs.get(PREF_KEY+"useCostes", true);
-		autoSavePdf = Prefs.get(PREF_KEY+"autoSavePdf", true);
 		int psf = (int) Prefs.get(PREF_KEY+"psf", 3);
 		int nrCostesRandomisations = (int) Prefs.get(PREF_KEY+"nrCostesRandomisations", 10);
 
@@ -212,6 +214,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		//gd.addChoice("Use ROI", roiLabels, roiLabels[indexRoi]);
 
 		// Add algorithm options
+		gd.addCheckbox("Show_\"Save_PDF\"_Dialog", autoSavePdf);
+		gd.addCheckbox("Display_Images_in_Result", displayImages);
 		gd.addMessage("Algorithms:");
 		gd.addCheckbox("Li_Histogram_Channel_1", useLiCh1);
 		gd.addCheckbox("Li_Histogram_Channel_2", useLiCh2);
@@ -219,7 +223,6 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		gd.addCheckbox("Manders'_Correlation", useManders);
 		gd.addCheckbox("2D_Instensity_Histogram", useScatterplot);
 		gd.addCheckbox("Costes'_Significance_Test", useCostes);
-		gd.addCheckbox("Show_\"save_PDF\"_dialog", autoSavePdf);
 		gd.addNumericField("PSF", psf, 1);
 		gd.addNumericField("Costes_randomisations", nrCostesRandomisations, 0);
 
@@ -275,24 +278,26 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		}
 
 		// read out GUI data
+		autoSavePdf = gd.getNextBoolean();
+		displayImages = gd.getNextBoolean();
 		useLiCh1 = gd.getNextBoolean();
 		useLiCh2 = gd.getNextBoolean();
 		useLiICQ = gd.getNextBoolean();
 		useManders = gd.getNextBoolean();
 		useScatterplot = gd.getNextBoolean();
 		useCostes = gd.getNextBoolean();
-		autoSavePdf = gd.getNextBoolean();
 		psf = (int) gd.getNextNumber();
 		nrCostesRandomisations = (int) gd.getNextNumber();
 
 		// save user preferences
+		Prefs.set(PREF_KEY+"autoSavePdf", autoSavePdf);
+		Prefs.set(PREF_KEY+"displayImages", displayImages);
 		Prefs.set(PREF_KEY+"useLiCh1", useLiCh1);
 		Prefs.set(PREF_KEY+"useLiCh2", useLiCh2);
 		Prefs.set(PREF_KEY+"useLiICQ", useLiICQ);
 		Prefs.set(PREF_KEY+"useManders", useManders);
 		Prefs.set(PREF_KEY+"useScatterplot", useScatterplot);
 		Prefs.set(PREF_KEY+"useCostes", useCostes);
-		Prefs.set(PREF_KEY+"autoSavePdf", autoSavePdf);
 		Prefs.set(PREF_KEY+"psf", psf);
 		Prefs.set(PREF_KEY+"nrCostesRandomisations", nrCostesRandomisations);
 
@@ -399,12 +404,20 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 				a.processResults(r);
 		}
 		// if we have ROIs/masks, add them to results
-		if (mask != null || roi != null) {
-			Image<T> mask1 = createMaskImage( container.getSourceImage1(), "Channel 1" );
-			Image<T> mask2 = createMaskImage( container.getSourceImage2(), "Channel 2" );
+		if (displayImages) {
+			Image<T> channel1, channel2;
+			if (mask != null || roi != null) {
+				channel1= createMaskImage( container.getSourceImage1(), "Channel 1" );
+				channel2 = createMaskImage( container.getSourceImage2(), "Channel 2" );
+			} else {
+				channel1 = container.getSourceImage1();
+				channel2 = container.getSourceImage2();
+				channel1.setName("Channel 1");
+				channel2.setName("Channel 2");
+			}
 			for (ResultHandler<T> r : listOfResultHandlers) {
-				r.handleImage (mask1);
-				r.handleImage (mask2);
+				r.handleImage (channel1);
+				r.handleImage (channel2);
 			}
 		}
 		// do the actual results processing
