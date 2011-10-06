@@ -57,6 +57,7 @@ import ij.process.ByteProcessor;
 import ij.process.FloatPolygon;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 
 import util.FindConnectedRegions;
 
@@ -2812,6 +2813,152 @@ public class WekaSegmentation {
 
 		return pixelError / labelSlices.getSize();
 	}
+	
+	
+	/**
+	 * Calculate the rand error in 2D between some original labels 
+	 * and the corresponding proposed labels. Both image are binarized.
+	 *
+	 * @param label original labels (single 2D image or stack)
+	 * @param proposal proposed new labels (single 2D image or stack of the same as as the original labels)
+	 * @param binaryThreshold threshold value to binarize proposal (larger than 0 and smaller than 1)
+	 * @return rand error
+	 */
+	public static double randError(
+			ImagePlus label,
+			ImagePlus proposal,
+			double binaryThreshold)
+	{
+		
+		if(label.getWidth() != proposal.getWidth()
+				|| label.getHeight() != proposal.getHeight()
+				|| label.getImageStackSize() != proposal.getImageStackSize())
+		{
+			IJ.log("Error: label and proposal image sizes do not fit.");
+			return -1;
+		}
+
+		final ImageStack labelSlices = label.getImageStack();
+		final ImageStack proposalSlices = proposal.getImageStack();
+
+		double randError = 0;
+
+		// Executor service to produce concurrent threads
+		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+		final ArrayList< Future<Double> > futures = new ArrayList< Future<Double> >();
+
+		try{
+			for(int i = 1; i <= labelSlices.getSize(); i++)
+			{
+				futures.add(exe.submit( getRandErrorConcurrent(labelSlices.getProcessor(i).convertToFloat(),
+											proposalSlices.getProcessor(i).convertToFloat(),										
+											binaryThreshold ) ) );
+			}
+
+			// Wait for the jobs to be done
+			for(Future<Double> f : futures)
+			{
+				randError += f.get();				
+
+			}			
+		}
+		catch(Exception ex)
+		{
+			IJ.log("Error when calculating rand error in a concurrent way.");
+			ex.printStackTrace();
+		}
+		finally{
+			exe.shutdown();
+		}
+
+		return randError / labelSlices.getSize();
+	}
+	
+	
+	/**
+	 * Get rand error between two image in a concurrent way 
+	 * (to be submitted to an Executor Service). Both images
+	 * are binarized.
+	 * 
+	 * @param image1 first image
+	 * @param image2 second image
+	 * @param binaryThreshold threshold to apply to both images
+	 * @return rand error
+	 */
+	public static Callable<Double> getRandErrorConcurrent(
+			final ImageProcessor image1, 
+			final ImageProcessor image2,
+			final double binaryThreshold) 
+	{
+		return new Callable<Double>()
+		{
+			public Double call()
+			{				
+				return randError ( image1, image2, binaryThreshold );
+			}
+		};
+	}
+	
+	/**
+	 * 
+	 * @param label
+	 * @param proposal
+	 * @param binaryThreshold
+	 * @return
+	 */
+	public static double randError(
+			ImageProcessor label,
+			ImageProcessor proposal,
+			double binaryThreshold)
+	{
+		// Binarize inputs
+		ByteProcessor binaryLabel = new ByteProcessor( label.getWidth(), label.getHeight() );
+		ByteProcessor binaryProposal = new ByteProcessor( label.getWidth(), label.getHeight() );
+		
+		for(int x=0; x<label.getWidth(); x++)
+			for(int y=0; y<label.getHeight(); y++)
+			{
+				binaryLabel.set(x, y, label.get( x, y ) > 0 ? 255 : 0);
+				binaryProposal.set(x, y, proposal.get( x, y ) > 0 ? 255 : 0);
+			}
+		
+		// Find components
+		ShortProcessor components1 = ( ShortProcessor ) connectedComponents(
+				new ImagePlus("binary labels", binaryLabel), 4).allRegions.getProcessor();
+		
+		ShortProcessor components2 = ( ShortProcessor ) connectedComponents(
+				new ImagePlus("proposal labels", binaryProposal), 4).allRegions.getProcessor();
+		
+		return 1 - randIndex( components1, components2 );
+		
+	}
+	
+	/**
+	 * 
+	 * @param cluster1
+	 * @param cluster2
+	 * @return
+	 */
+	public static double randIndex(
+			ShortProcessor cluster1,
+			ShortProcessor cluster2)
+	{
+		double agreements = 0;
+		
+		final short[] pixels1 = (short[]) cluster1.getPixels();
+		final short[] pixels2 = (short[]) cluster2.getPixels();
+		
+		double n = pixels1.length;
+		
+		for(int i=0; i<n-1; i++)
+			for(int j=i+1; j<n; j++)
+				if( pixels1[ i ] == pixels1[ j ] && pixels2[ i ] == pixels2[ j ] 
+				    || pixels1[ i ] != pixels1[ j ] && pixels2[ i ] != pixels2[ j ] )
+					agreements ++;
+		return agreements / ( n * (n - 1) / 2 );
+	}
+	
 	
 	/**
 	 * Get pixel error between two image in a concurrent way 
