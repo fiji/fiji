@@ -83,6 +83,16 @@ public class IJHacker implements Runnable {
 			method = clazz.getMethod("run", "()V");
 			replaceAppNameInNew(method, "ij.gui.GenericDialog", 1, 2);
 			replaceAppNameInCall(method, "addMessage", 1, 1);
+			// use our icon
+			method = clazz.getMethod("setIcon", "()V");
+			method.instrument(new ExprEditor() {
+				@Override
+				public void edit(MethodCall call) throws CannotCompileException {
+					if (call.getMethodName().equals("getResource"))
+						call.replace("$_ = $0.getResource(\"/icon.png\");");
+				}
+			});
+			clazz.getConstructor("(Ljava/applet/Applet;I)V").insertBeforeBody("if ($2 != ij.ImageJ.NO_SHOW) setIcon();");
 
 			clazz.toClass();
 
