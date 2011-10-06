@@ -63,6 +63,10 @@ public class DataContainer<T extends RealType<T>> {
 		mask = MaskFactory.createMask(src1.getDimensions(), true);
 		this.ch1 = ch1;
 		this.ch2 = ch2;
+		// fill mask dimension information, here the whole image
+		maskBBOffset = mask.createPositionArray();
+		Arrays.fill(maskBBOffset, 0);
+		maskBBSize = mask.getDimensions();
 
 		calculateStatistics();
 	}
@@ -156,6 +160,9 @@ public class DataContainer<T extends RealType<T>> {
 
 		// create a mask that is everywhere valid
 		mask = MaskFactory.createMask(dim, roiOffset, roiSize);
+		maskBBOffset = roiOffset.clone();
+		maskBBSize = roiSize.clone();
+
 		this.ch1 = ch1;
 		this.ch2 = ch2;
 		regularRoiInUse = true;
@@ -214,6 +221,14 @@ public class DataContainer<T extends RealType<T>> {
 
 	public Image<BitType> getMask() {
 		return mask;
+	}
+
+	public int[] getMaskBBOffset() {
+		return maskBBOffset;
+	}
+
+	public int[] getMaskBBSize() {
+		return maskBBSize;
 	}
 
 	public int getCh1() {
