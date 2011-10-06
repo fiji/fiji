@@ -12,7 +12,6 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 import ij.ImagePlus;
 import ij.process.StackConverter;
-import ij3d.Image3DUniverse;
 import ij3d.Install_J3D;
 
 import java.awt.event.ActionEvent;
@@ -110,15 +109,13 @@ public class SpotDisplayer3DTestDrive {
 			System.out.println(s);
 
 		// Launch renderer
-		final Image3DUniverse universe = new Image3DUniverse();
-		universe.addVoltex(imp);
-		universe.show();
-
 		final SpotCollection allSpots = new SpotCollection();
 		allSpots.put(0, spots);
 		final TrackMate_ plugin = new TrackMate_();
 		plugin.getModel().setSpots(allSpots, false);
-		final SpotDisplayer3D displayer = new SpotDisplayer3D(universe, plugin.getModel());
+		plugin.getModel().getSettings().imp = imp;
+		final SpotDisplayer3D displayer = new SpotDisplayer3D();
+		displayer.setModel(plugin.getModel());
 		displayer.render();
 		
 		// Launch threshold GUI

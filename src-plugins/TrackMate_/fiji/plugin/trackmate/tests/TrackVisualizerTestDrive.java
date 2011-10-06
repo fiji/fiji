@@ -13,10 +13,9 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
-import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView.ViewType;
-import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
+import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 public class TrackVisualizerTestDrive {
 
@@ -54,7 +53,8 @@ public class TrackVisualizerTestDrive {
 		}
 		
 		// Instantiate displayer
-		final TrackMateModelView displayer = AbstractTrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model);
+		final TrackMateModelView displayer = new HyperStackDisplayer();
+		displayer.setModel(model);
 		displayer.refresh();
 		
 		// Display Track scheme

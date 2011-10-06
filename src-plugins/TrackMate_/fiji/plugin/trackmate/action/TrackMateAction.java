@@ -5,6 +5,7 @@ import javax.swing.ImageIcon;
 import fiji.plugin.trackmate.InfoTextable;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.TrackMateFrame;
 
 /**
@@ -35,5 +36,10 @@ public interface TrackMateAction  extends InfoTextable {
 	 * Set the view linked to this action, in case the action needs accessing it or updating it.
 	 */
 	public void setView(TrackMateFrame view);
+
+	/**
+	 * Set the plugin controlled by the launcher of this action.
+	 */
+	public void setPlugin(TrackMate_ plugin);
 		
 }

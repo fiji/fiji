@@ -17,8 +17,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.TrackMateFrame.PanelCard;
-import fiji.plugin.trackmate.segmentation.SegmenterType;
-import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
+import fiji.plugin.trackmate.segmentation.ManualSegmenter;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
@@ -52,7 +51,7 @@ public class TrackMateFrameController implements ActionListener {
 	boolean actionFlag = true;
 	private boolean renderingDone;
 	private boolean calculateFeaturesDone;
-
+	
 
 	/*
 	 * CONSTRUCTOR
@@ -70,6 +69,11 @@ public class TrackMateFrameController implements ActionListener {
 		updateGUI();
 	}
 
+	/*
+	 * PROTECTED METHODS
+	 */
+	
+	
 	/*
 	 * ACTION LISTENER
 	 */
@@ -266,9 +270,7 @@ public class TrackMateFrameController implements ActionListener {
 
 		case TUNE_SEGMENTER: {
 			Settings settings = plugin.getModel().getSettings();
-			settings.segmenterSettings = view.segmenterSettingsPanel.getSettings();
-			settings.segmenterSettings.segmenterType = settings.segmenterType;
-			settings.segmenterSettings.spaceUnits = settings.spaceUnits;
+			settings.segmenterSettings = view.segmenterSettingsPanel.getSegmenterSettings();
 			break;
 		}
 
@@ -314,11 +316,11 @@ public class TrackMateFrameController implements ActionListener {
 
 		case TUNE_SEGMENTER: {
 			// If we choose to skip segmentation, initialize the model spot content and skip directly to state where we will be asked for a displayer.
-			Settings settings = model.getSettings();
-			if (settings.segmenterType == SegmenterType.MANUAL_SEGMENTER) {
-				settings.segmenterSettings.spaceUnits = settings.spaceUnits;
-				state = GuiState.CHOOSE_DISPLAYER.previousState();
-			}
+//			Settings settings = model.getSettings();
+//			if (settings.segmenterType == SegmenterType.MANUAL_SEGMENTER) {
+//				settings.segmenterSettings.spaceUnits = settings.spaceUnits;
+//				state = GuiState.CHOOSE_DISPLAYER.previousState();
+//			}
 			return;
 		}
 
@@ -330,19 +332,19 @@ public class TrackMateFrameController implements ActionListener {
 		case CHOOSE_DISPLAYER:
 			// Before we switch to the log display when calculating features, we *execute* the initial thresholding step,
 			// only if we did not skip segmentation.
-			if (model.getSettings().segmenterType != SegmenterType.MANUAL_SEGMENTER)
+			if (model.getSettings().segmenter.getClass() != ManualSegmenter.class)
 				execInitialThresholding();
 			return;
 
 		case CALCULATE_FEATURES: {
 			// Compute the feature first, again, only if we did not skip segmentation.
-			if (model.getSettings().segmenterType != SegmenterType.MANUAL_SEGMENTER)
+//			if (model.getSettings().segmenterType != SegmenterType.MANUAL_SEGMENTER)
 				execCalculateFeatures();
-			else {
-				// Otherwise we get the manual spot diameter,  and plan to jump to tracking
-				model.getSettings().segmenterSettings = view.segmenterSettingsPanel.getSettings();
-				state = GuiState.CHOOSE_TRACKER.previousState();
-			}
+//			else {
+//				// Otherwise we get the manual spot diameter,  and plan to jump to tracking
+//				model.getSettings().segmenterSettings = view.segmenterSettingsPanel.getSettings();
+//				state = GuiState.CHOOSE_TRACKER.previousState();
+//			}
 			// Then we launch the displayer
 			execLaunchdisplayer();
 			return;
@@ -495,9 +497,10 @@ public class TrackMateFrameController implements ActionListener {
 		plugin.getModel().setSettings(view.startDialogPanel.getSettings());
 	}
 
+	@SuppressWarnings("unchecked")
 	private void execGetSegmenterChoice() {
 		Settings settings = plugin.getModel().getSettings();
-		settings.segmenterType = view.segmenterChoicePanel.getChoice();
+		settings.segmenter = view.segmenterChoicePanel.getChoice();
 	}
 
 	private void execGetTrackerChoice() {
@@ -595,7 +598,9 @@ public class TrackMateFrameController implements ActionListener {
 					displayer.clear();
 				}
 				try {
-					displayer = AbstractTrackMateModelView.instantiateView(view.displayerChooserPanel.getChoice(), plugin.getModel());
+					displayer = view.displayerChooserPanel.getChoice();
+					displayer.setModel(plugin.getModel());
+					displayer.render();
 				} finally {
 					// Re-enable the GUI
 					renderingDone = true;

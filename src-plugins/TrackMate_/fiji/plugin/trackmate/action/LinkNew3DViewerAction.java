@@ -1,7 +1,5 @@
 package fiji.plugin.trackmate.action;
 
-import ij3d.Image3DUniverse;
-
 import javax.swing.ImageIcon;
 
 import fiji.plugin.trackmate.TrackMateModel;
@@ -22,9 +20,9 @@ public class LinkNew3DViewerAction extends AbstractTMAction {
 		new Thread("TrackMate copying thread") {
 			public void run() {
 				
-				final Image3DUniverse universe = new Image3DUniverse();
-				universe.show();
-				SpotDisplayer3D newDisplayer = new SpotDisplayer3D(universe, model);
+				SpotDisplayer3D newDisplayer = new SpotDisplayer3D();
+				newDisplayer.setModel(model);
+				newDisplayer.render();
 				DisplayerPanel displayerPanel = (DisplayerPanel) view.getPanelFor(TrackMateFrame.PanelCard.ACTION_PANEL_KEY);
 				if (null != displayerPanel) {
 					displayerPanel.register(newDisplayer);

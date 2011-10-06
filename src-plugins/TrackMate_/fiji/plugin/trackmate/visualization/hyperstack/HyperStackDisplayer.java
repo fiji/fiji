@@ -37,12 +37,7 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	 * CONSTRUCTORS
 	 */
 
-	public HyperStackDisplayer(final TrackMateModel model) {
-		setModel(model);
-		this.settings = model.getSettings();
-		this.imp = settings.imp;
-		this.calibration = settings.getCalibration();
-	}
+	public HyperStackDisplayer() {	}
 
 	/*
 	 * DEFAULT METHODS
@@ -56,11 +51,11 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 		final float z = (imp.getSlice()-1) * calibration[2];
 		return new SpotImp(new float[] {x, y, z});
 	}
-	
+
 	/*
 	 * PROTECTED METHODS
 	 */
-	
+
 	/**
 	 * Hook for subclassers. Instantiate here the overlay you want to use for the spots. 
 	 * @return
@@ -75,6 +70,14 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	 */
 	protected TrackOverlay createTrackOverlay() {
 		return new TrackOverlay(model, imp, displaySettings);
+	}
+
+	@Override
+	public void setModel(TrackMateModel model) {
+		super.setModel(model);
+		this.settings = model.getSettings();
+		this.imp = settings.imp;
+		this.calibration = settings.getCalibration();
 	}
 
 	/*
@@ -200,6 +203,29 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	public void clear() {
 		canvas.clearOverlay();
 	}	
+
+	@Override
+	public String getInfoText() {
+		return "<html>" +
+				"This displayer overlays the spots and tracks on the current<br>" +
+				"ImageJ hyperstack window. <br>" +
+				"<p> " +
+				"This displayer allows manual editing of spots, thanks to the spot <br> " +
+				"edit tool that appear in ImageJ toolbar." +
+				"<p>" +
+				"Double-clicking in a spot toggles the editing mode: The spot can <br> " +
+				"be moved around in a XY plane by mouse dragging. To move it in Z <br>" +
+				"or in time, simply change the current plane and time-point by <br>" +
+				"using the hyperstack sliders. To change its radius, hold the " +
+				"<tt>alt</tt> key down and rotate the mouse-wheel. Holding the " +
+				"<tt>shift</tt> key on top changes it faster."+
+				"</html>";
+	}
+	
+	@Override
+	public String toString() {
+		return "HyperStack Displayer";
+	}
 
 
 	/*

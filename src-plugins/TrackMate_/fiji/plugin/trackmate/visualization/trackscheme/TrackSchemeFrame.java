@@ -758,6 +758,11 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 
 	}
 
+	@Override
+	public String getInfoText() {
+		return "<html>InfoText for TrachScheme is not redacted.</html>";
+	}
+
 
 	// INNER CLASSES
 

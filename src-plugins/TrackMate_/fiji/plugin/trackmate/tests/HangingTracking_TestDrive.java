@@ -11,13 +11,13 @@ import fiji.plugin.trackmate.features.spot.BlobMorphology;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
-import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
-import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView.ViewType;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
 public class HangingTracking_TestDrive {
 
-	private static final File file = new File("E:/Users/JeanYves/Desktop/Data/Scoobidoo.xml");
-
+//	private static final File file = new File("E:/Users/JeanYves/Desktop/Data/Scoobidoo.xml");
+	private static final File file = new File("/Users/tinevez/Desktop/Data/Scoobidoo.xml");
 
 	public static void main(String[] args) throws JDOMException, IOException {
 
@@ -48,7 +48,10 @@ public class HangingTracking_TestDrive {
 
 		tracker.solveLAPForTrackSegments();
 		model.setGraph(tracker.getResult());
-		AbstractTrackMateModelView.instantiateView(ViewType.HYPERSTACK_DISPLAYER, model);
+		
+		TrackMateModelView view = new HyperStackDisplayer();
+		view.setModel(model);
+		view.render();
 		
 	}
 

@@ -17,9 +17,10 @@ import javax.swing.JList;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.action.ActionType;
+import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.action.TrackMateAction;
 
-public class ActionChooserPanel extends EnumChooserPanel<ActionType> {
+public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> {
 
 	private static final long serialVersionUID = 1L;
 	private static final Icon EXECUTE_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/control_play_blue.png"));
@@ -31,11 +32,13 @@ public class ActionChooserPanel extends EnumChooserPanel<ActionType> {
 	private Logger logger;
 	/** The view linked to the given model, in case some actions need it. */ 
 	private TrackMateFrame view;
+	private TrackMate_ plugin;
 
-	public ActionChooserPanel(TrackMateModel model, TrackMateFrame view) {
-		super(ActionType.GRAB_SPOT_IMAGES, "Action");
+	public ActionChooserPanel(TrackMateModel model, TrackMateFrame view, TrackMate_ plugin) {
+		super(plugin.getAvailableActions(), "action");
 		this.model = model;
 		this.view = view;
+		this.plugin = plugin;
 		this.logPanel = new LogPanel();
 		this.logger = logPanel.getLogger();
 		init();
@@ -58,10 +61,11 @@ public class ActionChooserPanel extends EnumChooserPanel<ActionType> {
 						try {
 							executeButton.setEnabled(false);
 							fireAction(ACTION_STARTED);
-							ActionType type = getChoice();
-							type.setLogger(logger);
-							type.setView(view);
-							type.execute(model);
+							TrackMateAction action = getChoice();
+							action.setLogger(logger);
+							action.setView(view);
+							action.setPlugin(plugin);
+							action.execute(model);
 							fireAction(ACTION_FINISHED);
 						} finally {
 							executeButton.setEnabled(true);
@@ -73,10 +77,10 @@ public class ActionChooserPanel extends EnumChooserPanel<ActionType> {
 		add(executeButton);
 		
 		HashMap<String, ImageIcon> icons = new HashMap<String, ImageIcon>();
-		String[] names = new String[types.length];
-		for (int i = 0; i < types.length; i++) { 
-			names[i] = types[i].toString();
-			icons.put(names[i], ActionType.values()[i].getAction().getIcon());
+		String[] names = new String[list.size()];
+		for (int i = 0; i < list.size(); i++) { 
+			names[i] = list.get(i).toString();
+			icons.put(names[i], list.get(i).getIcon());
 		}
 		IconListRenderer renderer = new IconListRenderer(icons);
 		jComboBoxChoice.setRenderer(renderer);
@@ -89,7 +93,7 @@ public class ActionChooserPanel extends EnumChooserPanel<ActionType> {
 	
 	public static void main(String[] args) {
 		JFrame frame = new JFrame();
-		frame.getContentPane().add(new ActionChooserPanel(new TrackMateModel(), null));
+		frame.getContentPane().add(new ActionChooserPanel(new TrackMateModel(), null, new TrackMate_()));
 		frame.setSize(300, 520);
 		frame.setVisible(true);
 	}

@@ -6,6 +6,7 @@ import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
@@ -17,12 +18,12 @@ import fiji.plugin.trackmate.InfoTextable;
 /**
  * A panel to let the user choose what displayer he wants to use.
  */
-public class EnumChooserPanel <K extends Enum<K> & InfoTextable> extends ActionListenablePanel {
+public class ListChooserPanel <K extends InfoTextable> extends ActionListenablePanel {
 	
-	private static final long serialVersionUID = -2349025481368788479L;
+	private static final long serialVersionUID = -1837635847479649545L;
 	protected JLabel jLabelHeader;
 	protected JComboBox jComboBoxChoice;
-	protected K[] types;
+	protected List<K> list;
 	protected JLabel jLabelHelpText;
 	protected String typeName;
 	
@@ -30,11 +31,11 @@ public class EnumChooserPanel <K extends Enum<K> & InfoTextable> extends ActionL
 	 * CONSTRUCTOR
 	 */
 	
-	public EnumChooserPanel(K defaultChoice, String typeName) {
+	public ListChooserPanel(List<K> list, String typeName) {
 		super();
 		this.typeName = typeName;
-		this.types = defaultChoice.getDeclaringClass().getEnumConstants();
-		initGUI(defaultChoice);
+		this.list = list;
+		initGUI();
 	}
 	
 	/*
@@ -42,7 +43,7 @@ public class EnumChooserPanel <K extends Enum<K> & InfoTextable> extends ActionL
 	 */
 	
 	public K getChoice() {
-		return types[jComboBoxChoice.getSelectedIndex()];
+		return list.get(jComboBoxChoice.getSelectedIndex());
 	}
 	
 
@@ -50,7 +51,7 @@ public class EnumChooserPanel <K extends Enum<K> & InfoTextable> extends ActionL
 	 * PRIVATE METHODS
 	 */
 
-	private void initGUI(K defaultChoice) {
+	private void initGUI() {
 		try {
 			this.setPreferredSize(new java.awt.Dimension(300, 470));
 			this.setLayout(null);
@@ -62,20 +63,19 @@ public class EnumChooserPanel <K extends Enum<K> & InfoTextable> extends ActionL
 				jLabelHeader.setBounds(20, 20, 270, 16);
 			}
 			{
-				String[] names = new String[types.length];
-				for (int i = 0; i < types.length; i++) 
-					names[i] = types[i].toString();
+				String[] names = new String[list.size()];
+				for (int i = 0; i < list.size(); i++) 
+					names[i] = list.get(i).toString();
 				ComboBoxModel jComboBoxDisplayerChoiceModel = new DefaultComboBoxModel(names);
 				jComboBoxChoice = new JComboBox();
 				jComboBoxChoice.setModel(jComboBoxDisplayerChoiceModel);
-				jComboBoxChoice.setSelectedIndex(defaultChoice.ordinal());
 				this.add(jComboBoxChoice);
 				jComboBoxChoice.setFont(FONT);
 				jComboBoxChoice.setBounds(12, 48, 270, 27);
 				jComboBoxChoice.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						echo(types[jComboBoxChoice.getSelectedIndex()]);
+						echo(list.get(jComboBoxChoice.getSelectedIndex()));
 					}
 				});
 			}
@@ -83,7 +83,7 @@ public class EnumChooserPanel <K extends Enum<K> & InfoTextable> extends ActionL
 				jLabelHelpText = new JLabel();
 				jLabelHelpText.setFont(FONT.deriveFont(Font.ITALIC));
 				jLabelHelpText.setBounds(12, 80, 270, 150);
-				echo(defaultChoice);
+				echo(list.get(jComboBoxChoice.getSelectedIndex()));
 				this.add(jLabelHelpText);
 			}
 		} catch (Exception e) {

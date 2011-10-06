@@ -4,6 +4,7 @@ import javax.swing.ImageIcon;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.TrackMateFrame;
 
 public abstract class AbstractTMAction implements TrackMateAction {
@@ -12,6 +13,7 @@ public abstract class AbstractTMAction implements TrackMateAction {
 	protected Logger logger = Logger.VOID_LOGGER;
 	protected ImageIcon icon = null;
 	protected TrackMateFrame view;
+	protected TrackMate_ plugin;
 	
 	@Override
 	public void setLogger(Logger logger) {
@@ -28,4 +30,9 @@ public abstract class AbstractTMAction implements TrackMateAction {
 		this.view = view;
 	}
 
+	@Override
+	public void setPlugin(TrackMate_ plugin) {
+		this.plugin = plugin;
+	}
+	
 }

@@ -31,8 +31,8 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
-import fiji.plugin.trackmate.segmentation.SegmenterType;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.tracking.TrackerType;
 
@@ -215,17 +215,17 @@ public class TmXmlReader {
 	}
 
 	public SegmenterSettings getSegmenterSettings() throws DataConversionException {
-		SegmenterSettings segSettings = null;
+		LogSegmenterSettings segSettings = new LogSegmenterSettings();
 		Element segSettingsEl = root.getChild(SEGMENTER_SETTINGS_ELEMENT_KEY);
 		if (null != segSettingsEl) {
-			String segmenterTypeStr = segSettingsEl.getAttributeValue(SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME);
-			SegmenterType segmenterType = SegmenterType.valueOf(segmenterTypeStr);
-			segSettings = segmenterType.createSettings();
-			segSettings.segmenterType 		= segmenterType;
+//			String segmenterTypeStr = segSettingsEl.getAttributeValue(SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME);
+//			SegmenterType segmenterType = SegmenterType.valueOf(segmenterTypeStr);
+//			segSettings = segmenterType.createSettings();
+//			segSettings.segmenterType 		= segmenterType;
 			segSettings.expectedRadius 		= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME).getFloatValue();
 			segSettings.threshold			= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME).getFloatValue();
 			segSettings.useMedianFilter		= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME).getBooleanValue();
-			segSettings.spaceUnits			= segSettingsEl.getAttributeValue(SEGMENTER_SETTINGS_UNITS_ATTRIBUTE_NAME);			
+//			segSettings.spaceUnits			= segSettingsEl.getAttributeValue(SEGMENTER_SETTINGS_UNITS_ATTRIBUTE_NAME);			
 		}
 		return segSettings;
 	}

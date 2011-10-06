@@ -1,5 +1,15 @@
 package fiji.plugin.trackmate;
 
+import fiji.plugin.trackmate.action.CaptureOverlayAction;
+import fiji.plugin.trackmate.action.CopyOverlayAction;
+import fiji.plugin.trackmate.action.GrabSpotImageAction;
+import fiji.plugin.trackmate.action.LinkNew3DViewerAction;
+import fiji.plugin.trackmate.action.PlotNSpotsVsTimeAction;
+import fiji.plugin.trackmate.action.RadiusToEstimatedAction;
+import fiji.plugin.trackmate.action.RecalculateFeatureAction;
+import fiji.plugin.trackmate.action.ResetRadiusAction;
+import fiji.plugin.trackmate.action.ResetSpotTimeFeatureAction;
+import fiji.plugin.trackmate.action.TrackMateAction;
 import fiji.plugin.trackmate.features.spot.BlobContrast;
 import fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics;
 import fiji.plugin.trackmate.features.spot.BlobMorphology;
@@ -10,9 +20,16 @@ import fiji.plugin.trackmate.features.track.TrackDurationAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackFeatureAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackSpeedStatisticsAnalyzer;
 import fiji.plugin.trackmate.gui.TrackMateFrameController;
+import fiji.plugin.trackmate.segmentation.DogSegmenter;
+import fiji.plugin.trackmate.segmentation.LogSegmenter;
+import fiji.plugin.trackmate.segmentation.ManualSegmenter;
+import fiji.plugin.trackmate.segmentation.PeakPickerSegmenter;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.util.TMUtils;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
+import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -52,6 +69,14 @@ public class TrackMate_ implements PlugIn {
 
 	private List<SpotFeatureAnalyzer> spotFeatureAnalyzers;
 	private List<TrackFeatureAnalyzer> trackFeatureAnalyzers;
+	/** The list of {@link SpotSegmenter} that will be offered to choose amongst to the user. */
+	@SuppressWarnings("rawtypes")
+	private List<SpotSegmenter> spotSegmenters;
+	/** The list of {@link TrackMateModelView} that will be offered to choose amongst to the user. */
+	private List<TrackMateModelView> trackMateModelViews;
+	/** The list of {@link TrackMateModelView} that will be offered to choose amongst to the user. */
+	private List<TrackMateAction> trackMateActions;
+
 
 
 	/*
@@ -71,6 +96,9 @@ public class TrackMate_ implements PlugIn {
 		this.model = model;
 		this.spotFeatureAnalyzers = createSpotFeatureAnalyzerList();
 		this.trackFeatureAnalyzers = createTrackFeatureAnalyzerList();
+		this.spotSegmenters = createSegmenterList();
+		this.trackMateModelViews = createTrackMateModelViewList();
+		this.trackMateActions = createTrackMateActionList();
 		model.getFeatureModel().setSpotFeatureAnalyzers(spotFeatureAnalyzers);
 		model.getFeatureModel().setTrackFeatureAnalyzers(trackFeatureAnalyzers);
 	}
@@ -85,12 +113,54 @@ public class TrackMate_ implements PlugIn {
 	 */
 	public void run(String arg) {
 		model.getSettings().imp = WindowManager.getCurrentImage();
-		new TrackMateFrameController(this);
+		launchGUI();
+		
 	}
 
 	/*
 	 * PROTECTED METHODS
 	 */
+	
+	/**
+	 * Hook for subclassers.
+	 * <p>
+	 * Create and launch the GUI that will control this plugin. You can override this method
+	 * if you want to use another GUI, or use a the {@link TrackMateFrameController} extended
+	 * to suit your needs. c
+	 */
+	protected void launchGUI() {
+		new TrackMateFrameController(this);
+	}
+	
+	/**
+	 * Hook for subclassers.
+	 * <p>
+	 * Create the list of available {@link TrackMateModelView} the will be offered to choose from.
+	 */
+	protected List<TrackMateModelView> createTrackMateModelViewList() {
+		List<TrackMateModelView> trackMateModelViews = new ArrayList<TrackMateModelView>(2);
+		trackMateModelViews.add(new HyperStackDisplayer());
+		trackMateModelViews.add(new SpotDisplayer3D());
+		return trackMateModelViews;
+	}
+	
+	
+	/**
+	 * Hook for subclassers.
+	 * <p>
+	 * Create the list of {@link SpotSegmenter} that will be offered to choose from. 
+	 * Override it to add your own segmenter.
+	 * @return
+	 */
+	@SuppressWarnings("rawtypes")
+	protected List<SpotSegmenter> createSegmenterList() {
+		List<SpotSegmenter> spotSegmenters = new ArrayList<SpotSegmenter>(4);
+		spotSegmenters.add(new PeakPickerSegmenter());
+		spotSegmenters.add(new DogSegmenter());
+		spotSegmenters.add(new LogSegmenter());
+		spotSegmenters.add(new ManualSegmenter());
+		return spotSegmenters;
+	}
 	
 	/**
 	 * Hook for subclassers.
@@ -122,6 +192,20 @@ public class TrackMate_ implements PlugIn {
 		return analyzers;
 	}
 	
+	protected List<TrackMateAction> createTrackMateActionList() {
+		List<TrackMateAction> actions = new ArrayList<TrackMateAction>(9);
+		actions.add(new GrabSpotImageAction());
+		actions.add(new LinkNew3DViewerAction());
+		actions.add(new CopyOverlayAction());
+		actions.add(new PlotNSpotsVsTimeAction());
+		actions.add(new CaptureOverlayAction());
+		actions.add(new ResetSpotTimeFeatureAction());
+		actions.add(new RecalculateFeatureAction());
+		actions.add(new ResetRadiusAction());
+		actions.add(new RadiusToEstimatedAction());
+		return actions;
+	}
+	
 	/*
 	 * METHODS
 	 */
@@ -144,6 +228,23 @@ public class TrackMate_ implements PlugIn {
 	public List<SpotFeatureAnalyzer> getAvailableSpotFeatureAnalyzers() {
 		return spotFeatureAnalyzers;
 	}
+	
+	/**
+	 * Return a list of the {@link SpotSegmenter} that are currently registered in this plugin.
+	 */
+	@SuppressWarnings("rawtypes")
+	public List<SpotSegmenter> getAvailableSpotSegmenters() {
+		return spotSegmenters;
+	}
+	
+	public List<TrackMateModelView> getAvailableTrackMateModelViews() {
+		return trackMateModelViews;
+	}
+	
+	public List<TrackMateAction> getAvailableActions() {
+		return trackMateActions;
+	}
+
 	
 	/*
 	 * PROCESSES
@@ -381,5 +482,7 @@ public class TrackMate_ implements PlugIn {
 		TrackMate_ model = new TrackMate_();
 		model.run(null);
 	}
+
+
 
 }

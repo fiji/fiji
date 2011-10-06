@@ -1,6 +1,8 @@
 package fiji.plugin.trackmate.visualization.threedviewer;
 
+import ij.ImagePlus;
 import ij3d.Content;
+import ij3d.ContentCreator;
 import ij3d.ContentInstant;
 import ij3d.Image3DUniverse;
 import ij3d.UniverseListener;
@@ -19,10 +21,12 @@ import javax.vecmath.Point4f;
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
+import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
@@ -68,12 +72,13 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		@Override
 		public void canvasResized() {}
 	};
+	private Settings settings;
 
-	public SpotDisplayer3D(Image3DUniverse universe, TrackMateModel model) {
-		this.universe = universe;
-		setModel(model);
+	public SpotDisplayer3D() {
+		universe = new Image3DUniverse();
 		// Add a listener to unregister this instance from the model listener list when closing
 		universe.addUniverseListener(unregisterListener);
+
 	}
 
 	/*
@@ -82,6 +87,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 
 	@Override
 	public void setModel(TrackMateModel model) {
+		this.settings = model.getSettings();
 		super.setModel(model);
 		if (model.getSpots() != null) {
 			spotContent = makeSpotContent();
@@ -203,6 +209,22 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			trackNode.setTrackDisplayDepth((Integer) displaySettings.get(KEY_TRACK_DISPLAY_DEPTH));
 			trackNode.refresh();
 		}
+		universe.show();
+		if (null != settings.imp) {
+//			if (!settings.imp.isVisible())
+//				settings.imp.show();
+			ImagePlus[] images = TMUtils.makeImageForViewer(settings);
+			final Content imageContent = ContentCreator.createContent(
+					settings.imp.getTitle(), 
+					images, 
+					Content.VOLUME, 
+					SpotDisplayer3D.DEFAULT_RESAMPLING_FACTOR, 
+					0,
+					null, 
+					SpotDisplayer3D.DEFAULT_THRESHOLD, 
+					new boolean[] {true, true, true});
+			universe.addContentLater(imageContent);	
+		}
 	}
 
 	@Override
@@ -235,6 +257,28 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		universe.removeContent(SPOT_CONTENT_NAME);
 		universe.removeContent(TRACK_CONTENT_NAME);
 	}
+
+	@Override
+	public String getInfoText() {
+		return "<html>" +
+				"This invokes a new 3D viewer (over time) window, which receive a<br> " +
+				"8-bit copy of the image data. Spots and tracks are rendered in 3D. " +
+				"All the spots 3D shapes are calculated during the rendering step, which" +
+				"can take long." +
+				"<p>" +
+				"This displayer does not allow manual editing of spots. Use it only for <br>" +
+				"for very specific cases where you need to have a good 3D image to jusdge <br>" +
+				"the quality of segmentation and tracking. If you don't, use the hyperstack <br>" +
+				"displayer; you can generate a 3D viewer at the last step of tracking that will <br>" +
+				"be in sync with the hyperstack displayer. " +
+				"</html>"; 
+	}
+	
+	@Override
+	public String toString() {
+		return "3D Viewer";
+	}
+
 
 	/*
 	 * PRIVATE METHODS
@@ -291,8 +335,8 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 
 			contentAllFrames.put(i, contentThisFrame);
 			blobs.put(i, blobGroup);
-			
-			
+
+
 		}
 		Content blobContent = new Content(SPOT_CONTENT_NAME, contentAllFrames);
 		blobContent.showCoordinateSystem(false);
