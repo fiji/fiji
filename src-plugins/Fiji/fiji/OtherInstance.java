@@ -2,6 +2,7 @@ package fiji;
 
 import ij.IJ;
 import ij.ImageJ;
+import ij.Prefs;
 
 import ij.io.OpenDialog;
 import ij.io.Opener;
@@ -109,6 +110,8 @@ public class OtherInstance {
 	}
 
 	public static boolean sendArguments(String[] args) {
+		if (!isRMIEnabled())
+			return false;
 		String file = getStubPath();
 		if (args.length > 0) try {
 			FileInputStream in = new FileInputStream(file);
@@ -182,5 +185,41 @@ public class OtherInstance {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	public static final String ENABLE_RMI = "enable.rmi.listener";
+
+	public static boolean isRMIEnabled() {
+		Properties ijProps = loadPrefs();
+		if (ijProps == null)
+			return true;
+		Object result = ijProps.get("." + ENABLE_RMI);
+		if (result == null)
+			return true;
+		String string = result.toString();
+		return !string.equalsIgnoreCase("true") && !string.equals("1");
+	}
+
+	protected static Properties loadPrefs() {
+		Properties result = new Properties();
+		File file = new File(getPrefsDirectory(), "IJ_Prefs.txt");
+		try {
+			InputStream in = new BufferedInputStream(new FileInputStream(file));
+			result.load(in);
+			in.close();
+		} catch (IOException e) { /* ignore */ }
+		return result;
+	}
+
+	protected static String getPrefsDirectory() {
+		String env = System.getenv("IJ_PREFS_DIR");
+		if (env != null)
+			return env;
+		String prefsDir = System.getProperty("user.home");
+		if (System.getProperty("os.name").startsWith("Mac"))
+			prefsDir += "/Library/Preferences";
+		else
+			prefsDir += "/.imagej";
+		return prefsDir;
 	}
 }
