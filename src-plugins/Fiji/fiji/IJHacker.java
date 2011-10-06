@@ -125,6 +125,21 @@ public class IJHacker implements Runnable {
 			field = new CtField(pool.get("java.lang.String"), "vistaHint", clazz);
 			field.setModifiers(Modifier.STATIC | Modifier.PUBLIC | Modifier.FINAL);
 			clazz.addField(field, "originalVistaHint" + replaceAppName + ";");
+			// do not use the current directory as IJ home on Windows
+			String prefsDir = System.getenv("IJ_PREFS_DIR");
+			if (prefsDir == null && System.getProperty("os.name").startsWith("Windows"))
+				prefsDir = System.getenv("user.home");
+			if (prefsDir != null) {
+				final String replace = "prefsDir = \"" + prefsDir + "\";";
+				method = clazz.getMethod("load", "(Ljava/lang/Object;Ljava/applet/Applet;)Ljava/lang/String;");
+				method.instrument(new ExprEditor() {
+					@Override
+					public void edit(FieldAccess access) throws CannotCompileException {
+						if (access.getFieldName().equals("prefsDir") && access.isWriter())
+							access.replace(replace);
+					}
+				});
+			}
 
 			clazz.toClass();
 
