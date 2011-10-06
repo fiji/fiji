@@ -82,6 +82,9 @@ public class IJHacker implements Runnable {
 			method = clazz.getMethod("error",
 				"(Ljava/lang/String;Ljava/lang/String;)V");
 			method.insertBefore("if ($1 == null || $1.equals(\"ImageJ\")) $1 = \"" + appName + "\";");
+			// make sure that ImageJ has been initialized in batch mode
+			method = clazz.getMethod("runMacro", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
+			method.insertBefore("if (ij==null && ij.Menus.getCommands()==null) init();");
 
 			clazz.toClass();
 
