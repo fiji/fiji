@@ -42,26 +42,40 @@ public class IJHacker implements Runnable {
 			// Class ij.ImagePlus
 			clazz = pool.get("ij.ImagePlus");
 
-			// add back the (deprecated) killProcessor(), and overlay methods
-			method = CtNewMethod.make("public void killProcessor() {}", clazz);
-			clazz.addMethod(method);
-			method = CtNewMethod.make("public void setDisplayList(java.util.Vector list) {"
-				+ "  getCanvas().setDisplayList(list);"
-				+ "}", clazz);
-			clazz.addMethod(method);
-			method = CtNewMethod.make("public java.util.Vector getDisplayList() {"
-				+ "  return getCanvas().getDisplayList();"
-				+ "}", clazz);
-			clazz.addMethod(method);
-			method = CtNewMethod.make("public void setDisplayList(ij.gui.Roi roi, java.awt.Color strokeColor, int strokeWidth, java.awt.Color fillColor) {"
-				+ "  setOverlay(roi, strokeColor, strokeWidth, fillColor);"
-				+ "}", clazz);
-			clazz.addMethod(method);
+			try {
+				// add back the (deprecated) killProcessor(), and overlay methods
+				method = CtNewMethod.make("public void killProcessor() {}", clazz);
+				clazz.addMethod(method);
+			} catch (Exception e) { /* ignore */ }
+			try {
+				method = CtNewMethod.make("public void setDisplayList(java.util.Vector list) {"
+					+ "  getCanvas().setDisplayList(list);"
+					+ "}", clazz);
+				clazz.addMethod(method);
+			} catch (Exception e) { /* ignore */ }
+			try {
+				method = CtNewMethod.make("public java.util.Vector getDisplayList() {"
+					+ "  return getCanvas().getDisplayList();"
+					+ "}", clazz);
+				clazz.addMethod(method);
+			} catch (Exception e) { /* ignore */ }
+			try {
+				method = CtNewMethod.make("public void setDisplayList(ij.gui.Roi roi, java.awt.Color strokeColor, int strokeWidth, java.awt.Color fillColor) {"
+					+ "  setOverlay(roi, strokeColor, strokeWidth, fillColor);"
+					+ "}", clazz);
+				clazz.addMethod(method);
+			} catch (Exception e) { /* ignore */ }
 
 			clazz.toClass();
 
 			// Class ij.IJ
 			clazz = pool.get("ij.IJ");
+
+			boolean isImageJA = false;
+			try {
+				method = clazz.getMethod("runFijiEditor", "(Ljava/lang/String;Ljava/lang/String;)Z");
+				isImageJA = true;
+			} catch (Exception e) { /* ignore */ }
 
 			// tell runUserPlugIn() to mention which class was not found if a dependency is missing
 			method = clazz.getMethod("runUserPlugIn",
@@ -146,7 +160,8 @@ public class IJHacker implements Runnable {
 						call.replace("$_ = $0.getResource(\"/icon.png\");");
 				}
 			});
-			clazz.getConstructor("(Ljava/applet/Applet;I)V").insertBeforeBody("if ($2 != ij.ImageJ.NO_SHOW) setIcon();");
+			if (!isImageJA)
+				clazz.getConstructor("(Ljava/applet/Applet;I)V").insertBeforeBody("if ($2 != ij.ImageJ.NO_SHOW) setIcon();");
 
 			clazz.toClass();
 
@@ -262,7 +277,8 @@ public class IJHacker implements Runnable {
 				+ "  if (closeAfter) close();"
 				+ "  return result;"
 				+ "}", clazz);
-			clazz.addMethod(method);
+			if (!isImageJA)
+				clazz.addMethod(method);
 
 			clazz.toClass();
 
@@ -280,7 +296,8 @@ public class IJHacker implements Runnable {
 				+ "    imp.close();"
 				+ "  return result;"
 				+ "}", clazz);
-			clazz.addMethod(method);
+			if (!isImageJA)
+				clazz.addMethod(method);
 
 			clazz.toClass();
 
@@ -341,76 +358,78 @@ public class IJHacker implements Runnable {
 
 			clazz.toClass();
 
-			// Class ij.plugin.frame.Recorder
-			clazz = pool.get("ij.plugin.frame.Recorder");
+			if (!isImageJA) {
+				// Class ij.plugin.frame.Recorder
+				clazz = pool.get("ij.plugin.frame.Recorder");
 
-			// create new macro in the Script Editor
-			method = clazz.getMethod("createMacro", "()V");
-			stripOutEditor(method.getMethodInfo());
-			method.instrument(new ExprEditor() {
-				@Override
-				public void edit(MethodCall call) throws CannotCompileException {
-					if (call.getMethodName().equals("createMacro"))
-						call.replace("if ($1.endsWith(\".txt\"))"
-							+ "  $1 = $1.substring($1.length() - 3) + \"ijm\";"
-							+ "if (!fiji.FijiTools.openEditor($1, $2)) {"
-							+ "  ed.createMacro($1, $2);"
-							+ "}");
-				}
-			});
-			// create new plugin in the Script Editor
-			method = clazz.getMethod("createPlugin", "(Ljava/lang/String;Ljava/lang/String;)V");
-			method.instrument(new ExprEditor() {
-				@Override
-				public void edit(MethodCall call) throws CannotCompileException {
-					if (call.getMethodName().equals("runPlugIn"))
-						call.replace("$_ = null;"
-							+ "new ij.plugin.NewPlugin().createPlugin(name, ij.plugin.NewPlugin.PLUGIN, $2);"
-							+ "return;");
-				}
-			});
+				// create new macro in the Script Editor
+				method = clazz.getMethod("createMacro", "()V");
+				stripOutEditor(method.getMethodInfo());
+				method.instrument(new ExprEditor() {
+					@Override
+					public void edit(MethodCall call) throws CannotCompileException {
+						if (call.getMethodName().equals("createMacro"))
+							call.replace("if ($1.endsWith(\".txt\"))"
+								+ "  $1 = $1.substring($1.length() - 3) + \"ijm\";"
+								+ "if (!fiji.FijiTools.openEditor($1, $2)) {"
+								+ "  ed.createMacro($1, $2);"
+								+ "}");
+					}
+				});
+				// create new plugin in the Script Editor
+				method = clazz.getMethod("createPlugin", "(Ljava/lang/String;Ljava/lang/String;)V");
+				method.instrument(new ExprEditor() {
+					@Override
+					public void edit(MethodCall call) throws CannotCompileException {
+						if (call.getMethodName().equals("runPlugIn"))
+							call.replace("$_ = null;"
+								+ "new ij.plugin.NewPlugin().createPlugin(name, ij.plugin.NewPlugin.PLUGIN, $2);"
+								+ "return;");
+					}
+				});
 
-			clazz.toClass();
+				clazz.toClass();
 
-			// Class ij.plugin.NewPlugin
-			clazz = pool.get("ij.plugin.NewPlugin");
+				// Class ij.plugin.NewPlugin
+				clazz = pool.get("ij.plugin.NewPlugin");
 
-			// open new plugin in Script Editor
-			method = clazz.getMethod("createMacro", "(Ljava/lang/String;)V");
-			stripOutEditor(method.getMethodInfo());
-			method.instrument(new ExprEditor() {
+				// open new plugin in Script Editor
+				method = clazz.getMethod("createMacro", "(Ljava/lang/String;)V");
+				stripOutEditor(method.getMethodInfo());
+				method.instrument(new ExprEditor() {
 
-				@Override
-				public void edit(MethodCall call) throws CannotCompileException {
-					if (call.getMethodName().equals("create"))
-						call.replace("if ($1.endsWith(\".txt\"))"
-							+ "  $1 = $1.substring($1.length() - 3) + \"ijm\";"
-							+ "if (!fiji.FijiTools.openEditor($1, $2)) {"
-							+ "  int options = (monospaced ? ij.plugin.frame.Editor.MONOSPACED : 0) |"
-							+ "    (menuBar ? ij.plugin.frame.Editor.MENU_BAR : 0);"
-							+ "  ed = new ij.plugin.frame.Editor(rows, columns, 0, options);"
-							+ "  ed.create($1, $2);"
-							+ "}");
-				}
-			});
-			// open new plugin in Script Editor
-			method = clazz.getMethod("createPlugin", "(Ljava/lang/String;ILjava/lang/String;)V");
-			stripOutEditor(method.getMethodInfo());
-			method.instrument(new ExprEditor() {
-				@Override
-				public void edit(MethodCall call) throws CannotCompileException {
-					if (call.getMethodName().equals("create"))
-						call.replace("if (!fiji.FijiTools.openEditor($1, $2)) {"
-							+ "  int options = (monospaced ? ij.plugin.frame.Editor.MONOSPACED : 0) |"
-							+ "    (menuBar ? ij.plugin.frame.Editor.MENU_BAR : 0);"
-							+ "  ed = new ij.plugin.frame.Editor(rows, columns, 0, options);"
-							+ "  ed.create($1, $2);"
-							+ "}");
-				}
+					@Override
+					public void edit(MethodCall call) throws CannotCompileException {
+						if (call.getMethodName().equals("create"))
+							call.replace("if ($1.endsWith(\".txt\"))"
+								+ "  $1 = $1.substring($1.length() - 3) + \"ijm\";"
+								+ "if (!fiji.FijiTools.openEditor($1, $2)) {"
+								+ "  int options = (monospaced ? ij.plugin.frame.Editor.MONOSPACED : 0) |"
+								+ "    (menuBar ? ij.plugin.frame.Editor.MENU_BAR : 0);"
+								+ "  ed = new ij.plugin.frame.Editor(rows, columns, 0, options);"
+								+ "  ed.create($1, $2);"
+								+ "}");
+					}
+				});
+				// open new plugin in Script Editor
+				method = clazz.getMethod("createPlugin", "(Ljava/lang/String;ILjava/lang/String;)V");
+				stripOutEditor(method.getMethodInfo());
+				method.instrument(new ExprEditor() {
+					@Override
+					public void edit(MethodCall call) throws CannotCompileException {
+						if (call.getMethodName().equals("create"))
+							call.replace("if (!fiji.FijiTools.openEditor($1, $2)) {"
+								+ "  int options = (monospaced ? ij.plugin.frame.Editor.MONOSPACED : 0) |"
+								+ "    (menuBar ? ij.plugin.frame.Editor.MENU_BAR : 0);"
+								+ "  ed = new ij.plugin.frame.Editor(rows, columns, 0, options);"
+								+ "  ed.create($1, $2);"
+								+ "}");
+					}
 
-			});
+				});
 
-			clazz.toClass();
+				clazz.toClass();
+			}
 
 			// Class ij.WindowManager
 			clazz = pool.get("ij.WindowManager");
