@@ -241,6 +241,20 @@ public class IJHacker implements Runnable {
 			clazz.addMethod(method);
 
 			clazz.toClass();
+
+			// Class ij.io.Opener
+			clazz = pool.get("ij.io.Opener");
+
+			// make sure that the check for Bio-Formats is correct
+			clazz.getClassInitializer().instrument(new ExprEditor() {
+				@Override
+				public void edit(FieldAccess access) throws CannotCompileException {
+					if (access.getFieldName().equals("bioformats") && access.isWriter())
+						access.replace("bioformats = ij.IJ.getClassLoader().loadClass(\"loci.plugins.LociImporter\") != null;");
+				}
+			});
+
+			clazz.toClass();
 		} catch (NotFoundException e) {
 			e.printStackTrace();
 		} catch (CannotCompileException e) {
