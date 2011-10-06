@@ -1,6 +1,12 @@
 package fiji;
 
+import ij.IJ;
+
+import java.awt.Frame;
+
 import java.io.File;
+
+import java.lang.reflect.Constructor;
 
 public class FijiTools {
 	public static String getFijiDir() throws ClassNotFoundException {
@@ -25,5 +31,18 @@ public class FijiTools {
 		} catch (Exception e) {
 			return false;
 		}
+	}
+
+	public static boolean openEditor(String title, String body) {
+		try {
+			Class clazz = IJ.getClassLoader().loadClass("fiji.scripting.TextEditor");
+			Constructor ctor = clazz.getConstructor(new Class[] { String.class, String.class });
+			Frame frame = (Frame)ctor.newInstance(new Object[] { title, body });
+			frame.setVisible(true);
+			return true;
+		} catch (Exception e) {
+			IJ.handleException(e);
+		}
+		return false;
 	}
 }

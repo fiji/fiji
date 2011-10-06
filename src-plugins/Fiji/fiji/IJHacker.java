@@ -14,6 +14,12 @@ import javassist.CtNewMethod;
 import javassist.Modifier;
 import javassist.NotFoundException;
 
+import javassist.bytecode.BadBytecode;
+import javassist.bytecode.CodeIterator;
+import javassist.bytecode.ConstPool;
+import javassist.bytecode.MethodInfo;
+import javassist.bytecode.Opcode;
+
 import javassist.expr.ConstructorCall;
 import javassist.expr.ExprEditor;
 import javassist.expr.FieldAccess;
@@ -289,6 +295,11 @@ public class IJHacker implements Runnable {
 						access.replace("bioformats = ij.IJ.getClassLoader().loadClass(\"loci.plugins.LociImporter\") != null;");
 				}
 			});
+			// open text in the Fiji Editor
+			method = clazz.getMethod("open", "(Ljava/lang/String;)V");
+			method.insertBefore("if ($1.indexOf(\"://\") < 0 && isText($1) &&"
+				+ "    ij.IJ.runPlugIn(\"fiji.scripting.Script_Editor\", $1) != null)"
+				+ "  return;");
 
 			clazz.toClass();
 
@@ -315,6 +326,88 @@ public class IJHacker implements Runnable {
 					if (call.getMethodName().equals("getCanonicalPath"))
 						call.replace("$_ = $0.getAbsolutePath();");
 				}
+			});
+
+			clazz.toClass();
+
+			// Class ij.plugin.Commands
+			clazz = pool.get("ij.plugin.Commands");
+
+			// open StartupMacros with the Script Editor
+			method = clazz.getMethod("openStartupMacros", "()V");
+			method.insertBefore("String path = ij.IJ.getDirectory(\"macros\") + \"/StartupMacros.txt\";"
+				+ "if (ij.IJ.runPlugIn(\"fiji.scripting.Script_Editor\", path) != null)"
+				+ "  return;");
+
+			clazz.toClass();
+
+			// Class ij.plugin.frame.Recorder
+			clazz = pool.get("ij.plugin.frame.Recorder");
+
+			// create new macro in the Script Editor
+			method = clazz.getMethod("createMacro", "()V");
+			stripOutEditor(method.getMethodInfo());
+			method.instrument(new ExprEditor() {
+				@Override
+				public void edit(MethodCall call) throws CannotCompileException {
+					if (call.getMethodName().equals("createMacro"))
+						call.replace("if ($1.endsWith(\".txt\"))"
+							+ "  $1 = $1.substring($1.length() - 3) + \"ijm\";"
+							+ "if (!fiji.FijiTools.openEditor($1, $2)) {"
+							+ "  ed.createMacro($1, $2);"
+							+ "}");
+				}
+			});
+			// create new plugin in the Script Editor
+			method = clazz.getMethod("createPlugin", "(Ljava/lang/String;Ljava/lang/String;)V");
+			method.instrument(new ExprEditor() {
+				@Override
+				public void edit(MethodCall call) throws CannotCompileException {
+					if (call.getMethodName().equals("runPlugIn"))
+						call.replace("$_ = null;"
+							+ "new ij.plugin.NewPlugin().createPlugin(name, ij.plugin.NewPlugin.PLUGIN, $2);"
+							+ "return;");
+				}
+			});
+
+			clazz.toClass();
+
+			// Class ij.plugin.NewPlugin
+			clazz = pool.get("ij.plugin.NewPlugin");
+
+			// open new plugin in Script Editor
+			method = clazz.getMethod("createMacro", "(Ljava/lang/String;)V");
+			stripOutEditor(method.getMethodInfo());
+			method.instrument(new ExprEditor() {
+
+				@Override
+				public void edit(MethodCall call) throws CannotCompileException {
+					if (call.getMethodName().equals("create"))
+						call.replace("if ($1.endsWith(\".txt\"))"
+							+ "  $1 = $1.substring($1.length() - 3) + \"ijm\";"
+							+ "if (!fiji.FijiTools.openEditor($1, $2)) {"
+							+ "  int options = (monospaced ? ij.plugin.frame.Editor.MONOSPACED : 0) |"
+							+ "    (menuBar ? ij.plugin.frame.Editor.MENU_BAR : 0);"
+							+ "  ed = new ij.plugin.frame.Editor(rows, columns, 0, options);"
+							+ "  ed.create($1, $2);"
+							+ "}");
+				}
+			});
+			// open new plugin in Script Editor
+			method = clazz.getMethod("createPlugin", "(Ljava/lang/String;ILjava/lang/String;)V");
+			stripOutEditor(method.getMethodInfo());
+			method.instrument(new ExprEditor() {
+				@Override
+				public void edit(MethodCall call) throws CannotCompileException {
+					if (call.getMethodName().equals("create"))
+						call.replace("if (!fiji.FijiTools.openEditor($1, $2)) {"
+							+ "  int options = (monospaced ? ij.plugin.frame.Editor.MONOSPACED : 0) |"
+							+ "    (menuBar ? ij.plugin.frame.Editor.MENU_BAR : 0);"
+							+ "  ed = new ij.plugin.frame.Editor(rows, columns, 0, options);"
+							+ "  ed.create($1, $2);"
+							+ "}");
+				}
+
 			});
 
 			clazz.toClass();
@@ -369,5 +462,32 @@ public class IJHacker implements Runnable {
 		}
 		builder.append(")");
 		return builder.toString();
+	}
+
+	private void stripOutEditor(MethodInfo info) throws CannotCompileException {
+		ConstPool constPool = info.getConstPool();
+		CodeIterator iterator = info.getCodeAttribute().iterator();
+	        while (iterator.hasNext()) try {
+	                int pos = iterator.next();
+			int c = iterator.byteAt(pos);
+			if (c == Opcode.LDC) {
+				int index = iterator.byteAt(pos + 1);
+				if (constPool.getTag(index) == ConstPool.CONST_String &&
+						constPool.getStringInfo(index).equals("ij.plugin.frame.Editor") &&
+						iterator.byteAt(pos + 2) == Opcode.LDC &&
+						iterator.byteAt(pos + 4) == Opcode.INVOKESTATIC &&
+						iterator.byteAt(pos + 7) == Opcode.CHECKCAST &&
+						iterator.byteAt(pos + 10) == Opcode.PUTFIELD &&
+						iterator.byteAt(pos + 13) == Opcode.ALOAD_0 &&
+						iterator.byteAt(pos + 14) == Opcode.GETFIELD &&
+						iterator.byteAt(pos + 17) == Opcode.IFNONNULL &&
+						iterator.byteAt(pos + 20) == Opcode.RETURN)
+					for (int i = 0; i < 21; i++)
+						iterator.writeByte(Opcode.NOP, pos + i);
+			}
+		}
+		catch (BadBytecode e) {
+			throw new CannotCompileException(e);
+		}
 	}
 }
