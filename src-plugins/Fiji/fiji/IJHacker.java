@@ -198,6 +198,15 @@ public class IJHacker implements Runnable {
 							+ "ij.IJ.showStatus($1);");
 				}
 			});
+			// tool names can be prefixes of other tools, watch out for that!
+			method = clazz.getMethod("getToolId", "(Ljava/lang/String;)I");
+			method.instrument(new ExprEditor() {
+				@Override
+				public void edit(MethodCall call) throws CannotCompileException {
+					if (call.getMethodName().equals("startsWith"))
+						call.replace("$_ = $0.equals($1) || $0.startsWith($1 + \"-\") || $0.startsWith($1 + \" -\");");
+				}
+			});
 
 			clazz.toClass();
 
