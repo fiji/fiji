@@ -97,6 +97,21 @@ public class IJHacker implements Runnable {
 
 			clazz.toClass();
 
+			// Class ij.gui.NonBlockingGenericDialog
+			clazz = pool.get("ij.gui.NonBlockingGenericDialog");
+
+			// make sure not to wait in macro mode
+			method = clazz.getMethod("showDialog", "()V");
+			method.instrument(new ExprEditor() {
+				@Override
+				public void edit(MethodCall call) throws CannotCompileException {
+					if (call.getMethodName().equals("wait"))
+						call.replace("if (isShowing()) wait();");
+				}
+			});
+
+			clazz.toClass();
+
 			// Class ij.ImageJ
 			clazz = pool.get("ij.ImageJ");
 
