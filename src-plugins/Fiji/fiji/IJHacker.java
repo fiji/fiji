@@ -411,6 +411,21 @@ public class IJHacker implements Runnable {
 			});
 
 			clazz.toClass();
+
+			// Class ij.WindowManager
+			clazz = pool.get("ij.WindowManager");
+
+			method = clazz.getMethod("addWindow", "(Ljava/awt/Frame;)V");
+			method.insertBefore("if ($1 != null) {"
+				+ "  java.net.URL url = fiji.Main.class.getResource(\"/icon.png\");"
+				+ "  if (url != null) {"
+				+ "    java.awt.Image img = $1.createImage((java.awt.image.ImageProducer)url.getContent());"
+				+ "    if (img != null)"
+				+ "      $1.setIconImage(img);"
+				+ "  }"
+				+ "}");
+
+			clazz.toClass();
 		} catch (NotFoundException e) {
 			e.printStackTrace();
 		} catch (CannotCompileException e) {
