@@ -258,6 +258,18 @@ public class IJHacker implements Runnable {
 			});
 
 			clazz.toClass();
+
+			// Class ij.macro.Interpreter
+			clazz = pool.get("ij.macro.Interpreter");
+
+			// make sure no dialog is opened in headless mode
+			method = clazz.getMethod("showError", "(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;)V");
+			method.insertBefore("if (ij.IJ.getInstance() == null) {"
+				+ "  java.lang.System.err.println($1 + \": \" + $2);"
+				+ "  return;"
+				+ "}");
+
+			clazz.toClass();
 		} catch (NotFoundException e) {
 			e.printStackTrace();
 		} catch (CannotCompileException e) {
