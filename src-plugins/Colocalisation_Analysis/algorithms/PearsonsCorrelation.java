@@ -215,66 +215,38 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 	}
 
 	public static <T extends RealType<T>> double classicPearsons(TwinCursor<T> cursor,
-			double meanCh1, double meanCh2, T thresholdCh1, T thresholdCh2,
+			double meanCh1, double meanCh2, final T thresholdCh1, final T thresholdCh2,
 			ThresholdMode tMode) throws MissingPreconditionException {
-		double pearsonDenominator = 0;
-		double ch1diffSquaredSum = 0;
-		double ch2diffSquaredSum = 0;
-		int count = 0;
+		// the actual accumulation of the image values is done in a separate object
+		Accumulator<T> acc;
 
 		if (tMode == ThresholdMode.None) {
-			while (cursor.hasNext()) {
-				cursor.fwd();
-				T type1 = cursor.getChannel1();
-				T type2 = cursor.getChannel2();
-				double ch1diff = type1.getRealDouble() - meanCh1;
-				double ch2diff = type2.getRealDouble() - meanCh2;
-				pearsonDenominator += ch1diff*ch2diff;
-				ch1diffSquaredSum += (ch1diff*ch1diff);
-				ch2diffSquaredSum += (ch2diff*ch2diff);
-				count++;
-			}
+			acc = new Accumulator<T>(cursor, meanCh1, meanCh2) {
+				final public boolean accept(T type1, T type2) {
+					return true;
+				}
+			};
 		} else if (tMode == ThresholdMode.Below) {
-			while (cursor.hasNext()) {
-				cursor.fwd();
-				T type1 = cursor.getChannel1();
-				T type2 = cursor.getChannel2();
-				// test if one of the values is below its threshold
-				if (type1.compareTo(thresholdCh1) < 0
-						|| type2.compareTo(thresholdCh2) < 0) {
-					double ch1diff = type1.getRealDouble() - meanCh1;
-					double ch2diff = type2.getRealDouble() - meanCh2;
-					pearsonDenominator += ch1diff*ch2diff;
-					ch1diffSquaredSum += (ch1diff*ch1diff);
-					ch2diffSquaredSum += (ch2diff*ch2diff);
-					count++;
+			acc = new Accumulator<T>(cursor, meanCh1, meanCh2) {
+				final public boolean accept(T type1, T type2) {
+					return type1.compareTo(thresholdCh1) < 0 ||
+							type2.compareTo(thresholdCh2) < 0;
 				}
-			}
+			};
 		} else if (tMode == ThresholdMode.Above) {
-			while (cursor.hasNext()) {
-				cursor.fwd();
-				T type1 = cursor.getChannel1();
-				T type2 = cursor.getChannel2();
-				// test if one of the values is below its threshold
-				if (type1.compareTo(thresholdCh1) > 0
-						|| type2.compareTo(thresholdCh2) > 0) {
-					double ch1diff = type1.getRealDouble() - meanCh1;
-					double ch2diff = type2.getRealDouble() - meanCh2;
-					pearsonDenominator += ch1diff*ch2diff;
-					ch1diffSquaredSum += (ch1diff*ch1diff);
-					ch2diffSquaredSum += (ch2diff*ch2diff);
-					count++;
+			acc = new Accumulator<T>(cursor, meanCh1, meanCh2) {
+				final public boolean accept(T type1, T type2) {
+					return type1.compareTo(thresholdCh1) > 0 ||
+							type2.compareTo(thresholdCh2) > 0;
 				}
-			}
+			};
 		} else {
 			throw new UnsupportedOperationException();
 		}
-		double pearsonNumerator = Math.sqrt(ch1diffSquaredSum * ch2diffSquaredSum);
 
-		double pearsonsR = pearsonDenominator / pearsonNumerator;
+		double pearsonsR = acc.xy / Math.sqrt(acc.xx * acc.yy);
 
-		checkForSanity(pearsonsR, count);
-
+		checkForSanity(pearsonsR, acc.count);
 		return pearsonsR;
 	}
 
@@ -296,77 +268,44 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 	}
 
 	public static <T extends RealType<T>> double fastPearsons(TwinCursor<T> cursor,
-			T thresholdCh1, T thresholdCh2, ThresholdMode tMode)
+			final T thresholdCh1, final T thresholdCh2, ThresholdMode tMode)
 			throws MissingPreconditionException {
-		double sum1 = 0.0, sum2 = 0.0, sumProduct1_2 = 0.0, sum1squared= 0.0, sum2squared = 0.0;
-		// the total amount of pixels that have been taken into consideration
-		int N = 0;
+		// the actual accumulation of the image values is done in a separate object
+		Accumulator<T> acc;
 
 		if (tMode == ThresholdMode.None) {
-			while (cursor.hasNext()) {
-				cursor.fwd();
-				T type1 = cursor.getChannel1();
-				T type2 = cursor.getChannel2();
-
-				double ch1 = type1.getRealDouble();
-				double ch2 = type2.getRealDouble();
-				sum1 += ch1;
-				sumProduct1_2 += (ch1 * ch2);
-				sum1squared += (ch1 * ch1);
-				sum2squared += (ch2 *ch2);
-				sum2 += ch2;
-				N++;
-			}
+			acc = new Accumulator<T>(cursor) {
+				final public boolean accept(T type1, T type2) {
+					return true;
+				}
+			};
 		} else if (tMode == ThresholdMode.Below) {
-			while (cursor.hasNext()) {
-				cursor.fwd();
-				T type1 = cursor.getChannel1();
-				T type2 = cursor.getChannel2();
-				// test if one of the values is below its threshold
-				if (type1.compareTo(thresholdCh1) < 0
-						|| type2.compareTo(thresholdCh2) < 0) {
-					double ch1 = type1.getRealDouble();
-					double ch2 = type2.getRealDouble();
-					sum1 += ch1;
-					sumProduct1_2 += (ch1 * ch2);
-					sum1squared += (ch1 * ch1);
-					sum2squared += (ch2 *ch2);
-					sum2 += ch2;
-					N++;
+			acc = new Accumulator<T>(cursor) {
+				final public boolean accept(T type1, T type2) {
+					return type1.compareTo(thresholdCh1) < 0 ||
+							type2.compareTo(thresholdCh2) < 0;
 				}
-
-			}
+			};
 		} else if (tMode == ThresholdMode.Above) {
-			while (cursor.hasNext()) {
-				cursor.fwd();
-				T type1 = cursor.getChannel1();
-				T type2 = cursor.getChannel2();
-				// test if one of the values is below its threshold
-				if (type1.compareTo(thresholdCh1) > 0
-						|| type2.compareTo(thresholdCh2) > 0) {
-					double ch1 = type1.getRealDouble();
-					double ch2 = type2.getRealDouble();
-					sum1 += ch1;
-					sumProduct1_2 += (ch1 * ch2);
-					sum1squared += (ch1 * ch1);
-					sum2squared += (ch2 *ch2);
-					sum2 += ch2;
-					N++;
+			acc = new Accumulator<T>(cursor) {
+				final public boolean accept(T type1, T type2) {
+					return type1.compareTo(thresholdCh1) > 0 ||
+							type2.compareTo(thresholdCh2) > 0;
 				}
-			}
+			};
 		} else {
 			throw new UnsupportedOperationException();
 		}
 
 		// for faster computation, have the inverse of N available
-		double invN = 1.0 / N;
+		double invCount = 1.0 / acc.count;
 
-		double pearsons1 = sumProduct1_2 - (sum1 * sum2 * invN);
-		double pearsons2 = sum1squared - (sum1 * sum1 * invN);
-		double pearsons3 = sum2squared - (sum2 * sum2 * invN);
-		double pearsonsR = pearsons1/(Math.sqrt(pearsons2*pearsons3));
+		double pearsons1 = acc.xy - (acc.x * acc.y * invCount);
+		double pearsons2 = acc.xx - (acc.x * acc.x * invCount);
+		double pearsons3 = acc.yy - (acc.y * acc.y * invCount);
+		double pearsonsR = pearsons1 / (Math.sqrt(pearsons2 * pearsons3));
 
-		checkForSanity(pearsonsR, N);
+		checkForSanity(pearsonsR, acc.count);
 
 		return pearsonsR;
 	}
