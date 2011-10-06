@@ -20,8 +20,9 @@ public class BasicSegmenterConfigurationPanel extends LogSegmenterConfigurationP
 	}
 	
 	@Override
-	public void setSegmenterSettings(SegmenterSettings settings) {
-		echoSettings(settings);
+	public void setSegmenterSettings(SegmenterSettings settings, String spaceUnits, String timeUnits) {
+		jTextFieldBlobDiameter.setText(""+(2*settings.expectedRadius));
+		jLabelBlobDiameterUnit.setText(spaceUnits);
 	}
 	
 	@Override
@@ -31,8 +32,4 @@ public class BasicSegmenterConfigurationPanel extends LogSegmenterConfigurationP
 		return ss;
 	}
 	
-	
-	private void echoSettings(SegmenterSettings settings) {
-		jTextFieldBlobDiameter.setText(""+(2*settings.expectedRadius));
-	}
 }

@@ -18,6 +18,7 @@ import org.jgrapht.traverse.DepthFirstIterator;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.tracking.costmatrix.LinkingCostMatrixCreator;
 import fiji.plugin.trackmate.tracking.costmatrix.TrackSegmentCostMatrixCreator;
 import fiji.plugin.trackmate.tracking.hungarian.AssignmentAlgorithm;
@@ -156,8 +157,6 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	protected SpotCollection spots;
 	/** The settings object that configures this tracker. */
 	protected TrackerSettings settings;
-	/** A flag stating if we should use multi--threading for some calculations. */
-	protected boolean useMultithreading = fiji.plugin.trackmate.TrackMate_.DEFAULT_USE_MULTITHREADING;
 
 
 	/*
@@ -171,13 +170,8 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	 * @param linkingCosts The cost matrix for step 1, linking objects, specified for every frame.
 	 * @param settings The settings to use for this tracker.
 	 */
-	public LAPTracker(final SpotCollection spots, final TrackerSettings settings) {
+	public LAPTracker() {
 		super();
-		if (!useMultithreading) {
-			setNumThreads(1);
-		}
-		this.spots = spots;
-		this.settings = settings;
 		reset();
 	}
 
@@ -196,11 +190,15 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 		return new HungarianAlgorithm();
 	}
 
-
-
 	/*
 	 * METHODS
 	 */
+
+	@Override
+	public void setModel(TrackMateModel model) {
+		this.spots = model.getFilteredSpots();
+		this.settings = model.getSettings().trackerSettings;
+	}
 
 	/**
 	 * Reset any link created in the graph result in this tracker, effectively creating a new graph, 
@@ -307,7 +305,7 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 		if (!settings.allowGapClosing && !settings.allowSplitting && !settings.allowMerging) {
 			return true;
 		}
-		
+
 		// Step 2 - Link track segments into final tracks
 
 		// Create cost matrix
@@ -329,75 +327,6 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 
 		return true;
 	}
-
-
-	/**
-	 * Creates the cost matrices used to link objects (Step 1) for each frame pair.
-	 * Calling this method resets the {@link #linkingCosts} field, which stores these 
-	 * matrices.
-	 * @return True if executes successfully, false otherwise.
-	 */
-	/*
-	public boolean createLinkingCostMatrices() {
-		linkingCosts = Collections.synchronizedSortedMap(new TreeMap<Integer, double[][]>());
-
-		// Prepare frame pairs in order, not necessarily separated by 1.
-		final ArrayList<int[]> framePairs = new ArrayList<int[]>(spots.keySet().size()-1);
-		final Iterator<Integer> frameIterator = spots.keySet().iterator(); 		
-		int frame0 = frameIterator.next();
-		int frame1;
-		while(frameIterator.hasNext()) { // ascending order
-			frame1 = frameIterator.next();
-			framePairs.add( new int[] {frame0, frame1} );
-			frame0 = frame1;
-		}
-
-		// Prepare threads
-		final Thread[] threads;
-		if (useMultithreading) {
-			threads = SimpleMultiThreading.newThreads();
-		} else {
-			threads = SimpleMultiThreading.newThreads(1);
-		}
-
-		// Prepare the thread array
-		final AtomicInteger ai = new AtomicInteger(0);
-		final AtomicInteger progress = new AtomicInteger(0);
-		for (int ithread = 0; ithread < threads.length; ithread++) {
-
-			threads[ithread] = new Thread("LAPTracker linking cost thread "+(1+ithread)+"/"+threads.length) {  
-
-				public void run() {
-
-					for (int i = ai.getAndIncrement(); i < framePairs.size(); i = ai.getAndIncrement()) {
-
-						int frame0 = framePairs.get(i)[0];
-						int frame1 = framePairs.get(i)[1];
-						List<Spot> t0 = spots.get(frame0);
-						List<Spot> t1 = spots.get(frame1);
-
-						LinkingCostMatrixCreator objCosts = new LinkingCostMatrixCreator(t0, t1, settings);
-						if (!objCosts.checkInput() || !objCosts.process()) {
-							errorMessage = objCosts.getErrorMessage();
-							return;
-						}
-						double[][] costMatrix = objCosts.getCostMatrix();
-						linkingCosts.put(frame0, costMatrix);
-
-						logger.setProgress(0 + 0.25f * progress.incrementAndGet() / (float) framePairs.size());
-					}
-				}
-			};
-		}
-
-		logger.setStatus("Creating linking cost matrices...");
-		logger.setProgress(0);
-		SimpleMultiThreading.startAndJoin(threads);
-		logger.setProgress(0.25f);
-		logger.setStatus("");
-		return true;
-	}
-	 */
 
 	/**
 	 * Creates the cost matrix used to link track segments (step 2).
@@ -511,10 +440,10 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 						// Get spots
 						final List<Spot> t0 = spots.get(frame0);
 						final List<Spot> t1 = spots.get(frame1);
-						
+
 						// Create cost matrix
 						double[][] costMatrix = createFrameToFrameLinkingCostMatrix(t0, t1, settings);
-						
+
 						// Special case: top-left corner of the cost matrix is all blocked: we do nothing for this pair
 						// We handle this special case here, because some solvers might hang with this.
 						boolean allBlocked = true;
@@ -592,7 +521,7 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 		return objCosts.getCostMatrix();
 	}
 
-	
+
 
 
 	/**
@@ -752,9 +681,26 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 
 	}
 
+	@Override
+	public String getInfoText() {
+		return "<html>" +
+				"This tracker is based on the Linear Assignment Problem mathematical framework. <br>" +
+				"Its implementation is derived from the following paper: <br>" +
+				"<i>Robust single-particle tracking in live-cell time-lapse sequences</i> - <br>" +
+				"Jaqaman <i> et al.</i>, 2008, Nature Methods. <br>" +
+				"</html>";
+	}
+	
+	@Override
+	public TrackerSettings createDefaultSettings() {
+		return new TrackerSettings();
+	}
 
-
-
+	@Override
+	public String toString() {
+		return "Fast LAP Tracker";
+	}
+	
 	@Override
 	public void setLogger(Logger logger) {
 		this.logger = logger;

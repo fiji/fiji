@@ -11,13 +11,14 @@ import fiji.plugin.trackmate.segmentation.SegmenterSettings;
  */
 public abstract class SegmenterConfigurationPanel extends ActionListenablePanel {
 
-	private static final long serialVersionUID = -1805603327110848271L;
+	private static final long serialVersionUID = -4404004531929041752L;
 
 	/**
 	 * Echo the parameters of the given instance of {@link SegmenterSettings} on
-	 * this panel.
+	 * this panel. Also for convenience, we pass the physical units name
+	 * to the panel, so that the user can enter only physical quantities.
 	 */
-	public abstract void setSegmenterSettings(SegmenterSettings settings);
+	public abstract void setSegmenterSettings(SegmenterSettings settings, String spaceUnits, String timeUnits);
 	
 	/**
 	 * @return  the {@link SegmenterSettings} object with its field values set

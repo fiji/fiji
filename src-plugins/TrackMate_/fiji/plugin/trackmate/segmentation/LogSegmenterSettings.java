@@ -26,8 +26,6 @@ public class LogSegmenterSettings extends SegmenterSettings {
 	
 	@Override
 	public SegmenterConfigurationPanel createConfigurationPanel() {
-		LogSegmenterConfigurationPanel lscp = new LogSegmenterConfigurationPanel();
-		lscp.setSegmenterSettings(this);
-		return lscp;
+		return new LogSegmenterConfigurationPanel();
 	}
 }

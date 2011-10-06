@@ -34,7 +34,7 @@ import fiji.plugin.trackmate.segmentation.SegmenterSettings;
  */
 public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel {
 
-	private static final long serialVersionUID = -5903893993004873678L;
+	private static final long serialVersionUID = 8004665430478476658L;
 	private JLabel jLabel1;
 	private JLabel jLabelSegmenterName;
 	private JLabel jLabel2;
@@ -43,7 +43,7 @@ public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel 
 	protected JLabel jLabelThreshold;
 	private JLabel jLabelHelpText;
 	protected JCheckBox jCheckBoxMedianFilter;
-	private JLabel jLabelBlobDiameterUnit;
+	protected JLabel jLabelBlobDiameterUnit;
 	protected JTextField jTextFieldBlobDiameter;
 	/** The {@link LogSegmenterSettings} object set by this panel. */
 	private LogSegmenterSettings settings;
@@ -77,9 +77,10 @@ public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel 
 	}
 	
 	@Override
-	public void setSegmenterSettings(SegmenterSettings settings) {
+	public void setSegmenterSettings(SegmenterSettings settings, String spaceUnits, String timeUnits) {
 		this.settings = (LogSegmenterSettings) settings;
 		echoSettings();
+		jLabelBlobDiameterUnit.setText(spaceUnits);
 	}
 	
 	
@@ -192,7 +193,7 @@ public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel 
 		JFrame frame = new JFrame();
 		SegmenterSettings s = new LogSegmenterSettings(); // Must be like that, otherwise clast cast exception
 		LogSegmenterConfigurationPanel panel = new LogSegmenterConfigurationPanel();
-		panel.setSegmenterSettings(s);
+		panel.setSegmenterSettings(s, "km", "years");
 		
 		frame.getContentPane().add(panel);
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);

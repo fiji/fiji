@@ -25,7 +25,10 @@ import fiji.plugin.trackmate.segmentation.LogSegmenter;
 import fiji.plugin.trackmate.segmentation.ManualSegmenter;
 import fiji.plugin.trackmate.segmentation.PeakPickerSegmenter;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
+import fiji.plugin.trackmate.tracking.FastLAPTracker;
+import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.SpotTracker;
+import fiji.plugin.trackmate.tracking.hungarian.SchindelinHungarianAlgorithm;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
@@ -76,6 +79,8 @@ public class TrackMate_ implements PlugIn {
 	private List<TrackMateModelView> trackMateModelViews;
 	/** The list of {@link TrackMateModelView} that will be offered to choose amongst to the user. */
 	private List<TrackMateAction> trackMateActions;
+	/** The list of {@link SpotTracker} that will be offered to choose amongst to the user. */
+	private List<SpotTracker> spotTrackers;
 
 
 
@@ -181,6 +186,20 @@ public class TrackMate_ implements PlugIn {
 	/**
 	 * Hook for subclassers.
 	 * <p>
+	 * Create the list of {@link SpotTracker} that will be used to build tracks.
+	 * Overwrite this method if you want to add your {@link SpotTracker}.
+	 */
+	protected List<SpotTracker> createSpotTrackerList() {
+		List<SpotTracker> trackers = new ArrayList<SpotTracker>(4);
+		trackers.add(new FastLAPTracker());
+		trackers.add(new LAPTracker());
+		return trackers;
+		
+	}
+	
+	/**
+	 * Hook for subclassers.
+	 * <p>
 	 * Create the list of {@link TrackFeatureAnalyzer} that will be used to compute track features.
 	 * Overwrite this method if you want to add your {@link TrackFeatureAnalyzer}.
 	 */
@@ -192,6 +211,12 @@ public class TrackMate_ implements PlugIn {
 		return analyzers;
 	}
 	
+	/**
+	 * Hook for subclassers.
+	 * <p>
+	 * Create the list of {@link TrackMateAction} that will be offered to use.
+	 * Overwrite this method if you want to add your {@link TrackMateAction}.
+	 */
 	protected List<TrackMateAction> createTrackMateActionList() {
 		List<TrackMateAction> actions = new ArrayList<TrackMateAction>(9);
 		actions.add(new GrabSpotImageAction());
@@ -237,10 +262,24 @@ public class TrackMate_ implements PlugIn {
 		return spotSegmenters;
 	}
 	
+	/**
+	 * Return a list of the {@link SpotTracker} that are currently registered in this plugin.
+	 */
+	public List<SpotTracker> getAvailableSpotTrackers() {
+		return spotTrackers;
+	}
+
+	
+	/**
+	 * Return a list of the {@link TrackMateModelView} that are currently registered in this plugin.
+	 */
 	public List<TrackMateModelView> getAvailableTrackMateModelViews() {
 		return trackMateModelViews;
 	}
 	
+	/**
+	 * Return a list of the {@link TrackMateAction} that are currently registered in this plugin.
+	 */
 	public List<TrackMateAction> getAvailableActions() {
 		return trackMateActions;
 	}
@@ -482,6 +521,7 @@ public class TrackMate_ implements PlugIn {
 		TrackMate_ model = new TrackMate_();
 		model.run(null);
 	}
+
 
 
 

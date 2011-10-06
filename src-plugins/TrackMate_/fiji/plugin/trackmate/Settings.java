@@ -2,9 +2,6 @@ package fiji.plugin.trackmate;
 
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
-import fiji.plugin.trackmate.tracking.FastLAPTracker;
-import fiji.plugin.trackmate.tracking.LAPTracker;
-import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.tracking.TrackerType;
 import ij.ImagePlus;
@@ -114,21 +111,6 @@ public class Settings {
 	 * METHODS
 	 */
 		
-	/**
-	 * Return a new {@link SpotTracker} as selected in this settings object, initialized for the given model.
-	 */
-	public SpotTracker getSpotTracker(TrackMateModel model) {
-		switch(trackerType) {
-		case LAP_TRACKER:
-		case SIMPLE_LAP_TRACKER:
-			return new LAPTracker(model.getFilteredSpots(), model.getSettings().trackerSettings);
-		case FAST_LAPT:
-		case SIMPLE_FAST_LAPT:
-			return new FastLAPTracker(model.getFilteredSpots(), model.getSettings().trackerSettings);
-		}
-		return null;
-	}
-	
 	/**
 	 * A utility method that returns a new float array with the 3 elements building the spatial calibration
 	 * (pixel size).

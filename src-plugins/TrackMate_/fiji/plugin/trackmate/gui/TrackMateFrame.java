@@ -24,6 +24,7 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
+import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerType;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
@@ -196,7 +197,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 
 		case TRACKER_CHOICE_KEY:
 			if (null == trackerChoicePanel)
-//				trackerChoicePanel = new ListChooserPanel<TrackerType>(TrackerType.SIMPLE_LAP_TRACKER, "tracker");
+				trackerChoicePanel = new ListChooserPanel<SpotTracker>(plugin.getAvailableSpotTrackers(), "tracker");
 			panel = trackerChoicePanel;
 			break;
 

@@ -44,9 +44,7 @@ public class SegmenterSettings {
 	 * @return  an GUI panel that is able to configure this concrete settings object.
 	 */
 	public SegmenterConfigurationPanel createConfigurationPanel() {
-		BasicSegmenterConfigurationPanel scp = new BasicSegmenterConfigurationPanel();
-		scp.setSegmenterSettings(this);
-		return scp;
+		return new BasicSegmenterConfigurationPanel();
 	}
 	
 }

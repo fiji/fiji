@@ -14,7 +14,7 @@ import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 
 public class DogSegmenterConfigurationPanel extends LogSegmenterConfigurationPanel {
 
-	private static final long serialVersionUID = -3763482904265242233L;
+	private static final long serialVersionUID = -1866975600466866636L;
 	private JCheckBox jCheckSubPixel;
 	
 	@Override
@@ -44,8 +44,8 @@ public class DogSegmenterConfigurationPanel extends LogSegmenterConfigurationPan
 	}
 	
 	@Override
-	public void setSegmenterSettings(SegmenterSettings settings) {
-		super.setSegmenterSettings(settings);
+	public void setSegmenterSettings(SegmenterSettings settings, String spaceUnits, String timeUnits) {
+		super.setSegmenterSettings(settings, spaceUnits, timeUnits);
 		jCheckSubPixel.setSelected(((DogSegmenterSettings)settings).doSubPixelLocalization);
 	}
 	

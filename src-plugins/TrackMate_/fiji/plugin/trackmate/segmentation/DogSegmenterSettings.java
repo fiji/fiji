@@ -19,9 +19,7 @@ public class DogSegmenterSettings extends LogSegmenterSettings {
 	
 	@Override
 	public SegmenterConfigurationPanel createConfigurationPanel() {
-		DogSegmenterConfigurationPanel dogcp = new DogSegmenterConfigurationPanel();
-		dogcp.setSegmenterSettings(this);
-		return dogcp;
+		return new DogSegmenterConfigurationPanel();
 	}
 	
 }

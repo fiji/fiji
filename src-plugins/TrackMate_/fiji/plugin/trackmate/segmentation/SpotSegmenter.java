@@ -39,8 +39,8 @@ public interface SpotSegmenter <T extends RealType<T>> extends Algorithm, Benchm
 
 	/**
 	 * Create a default {@link SegmenterSettings} implementation, suitable for this concrete spot segmenter.
-	 * The concrete implentation returned will be of type {@link SegmenterSettings}, but the actual instance
-	 * will be one suitable for the concrete segmenter implentation.
+	 * The concrete implementation returned will be of type {@link SegmenterSettings}, but the actual instance
+	 * will be one suitable for the concrete segmenter implementation.
 	 */
 	public SegmenterSettings createDefaultSettings();
 	

@@ -3,6 +3,8 @@ package fiji.plugin.trackmate.tracking;
 import java.util.HashMap;
 import java.util.Map;
 
+import fiji.plugin.trackmate.gui.TrackerSettingsPanel;
+
 public class TrackerSettings {
 	
 	private static final double 	DEFAULT_LINKING_DISTANCE_CUTOFF 		= 15.0;
@@ -116,6 +118,9 @@ public class TrackerSettings {
 		return str;
 	}
 	
+	public TrackerSettingsPanel createConfigurationPanel() {
+		return new LAPTrackerSettingsPanel();
+	}
 	
 	/*
 	 * PRIVATE METHODS
