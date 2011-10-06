@@ -10,6 +10,7 @@ import javassist.CtClass;
 import javassist.CtConstructor;
 import javassist.CtField;
 import javassist.CtMethod;
+import javassist.CtNewMethod;
 import javassist.Modifier;
 import javassist.NotFoundException;
 
@@ -161,6 +162,19 @@ public class IJHacker implements Runnable {
 			// make sure Rhino gets the correct class loader
 			method = clazz.getMethod("run", "()V");
 			method.insertBefore("Thread.currentThread().setContextClassLoader(ij.IJ.getClassLoader());");
+
+			clazz.toClass();
+
+			// Class ij.CompositeImage
+			clazz = pool.get("ij.CompositeImage");
+
+			// ImageJA had this public method
+			method = CtNewMethod.make("public ij.ImagePlus[] splitChannels(boolean closeAfter) {"
+				+ "  ij.ImagePlus[] result = ij.plugin.ChannelSplitter.split(this);"
+				+ "  if (closeAfter) close();"
+				+ "  return result;"
+				+ "}", clazz);
+			clazz.addMethod(method);
 
 			clazz.toClass();
 		} catch (NotFoundException e) {
