@@ -88,6 +88,15 @@ public class IJHacker implements Runnable {
 
 			clazz.toClass();
 
+			// Class ij.gui.GenericDialog
+			clazz = pool.get("ij.gui.GenericDialog");
+
+			// make sure that the dialog is disposed in macro mode
+			method = clazz.getMethod("showDialog", "()V");
+			method.insertBefore("if (macro) dispose();");
+
+			clazz.toClass();
+
 			// Class ij.ImageJ
 			clazz = pool.get("ij.ImageJ");
 
