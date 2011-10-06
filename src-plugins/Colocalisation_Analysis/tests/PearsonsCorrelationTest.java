@@ -3,8 +3,6 @@ package tests;
 import static org.junit.Assert.assertTrue;
 import gadgets.MaskFactory;
 import mpicbg.imglib.cursor.special.TwinCursor;
-import mpicbg.imglib.cursor.special.TwinValueRangeCursor;
-import mpicbg.imglib.cursor.special.TwinValueRangeCursorFactory;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
