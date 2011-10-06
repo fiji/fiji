@@ -177,6 +177,24 @@ public class IJHacker implements Runnable {
 			clazz.addMethod(method);
 
 			clazz.toClass();
+
+			// Class ij.plugin.filter.RGBStackSplitter
+			clazz = pool.get("ij.plugin.filter.RGBStackSplitter");
+
+			// add back the splitChannesToArray() method
+			method = CtNewMethod.make("public static ij.ImagePlus[] splitChannelsToArray(ij.ImagePlus imp, boolean closeAfter) {"
+				+ "  if (!imp.isComposite()) {"
+				+ "    ij.IJ.error(\"splitChannelsToArray was called on a non-composite image\");"
+				+ "    return null;"
+				+ "  }"
+				+ "  ij.ImagePlus[] result = ij.plugin.ChannelSplitter.split(imp);"
+				+ "  if (closeAfter)"
+				+ "    imp.close();"
+				+ "  return result;"
+				+ "}", clazz);
+			clazz.addMethod(method);
+
+			clazz.toClass();
 		} catch (NotFoundException e) {
 			e.printStackTrace();
 		} catch (CannotCompileException e) {
