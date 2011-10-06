@@ -270,6 +270,21 @@ public class IJHacker implements Runnable {
 				+ "}");
 
 			clazz.toClass();
+
+			// Class ij.plugin.DragAndDrop
+			clazz = pool.get("ij.plugin.DragAndDrop");
+
+			// make sure that symlinks are _not_ resolved (because then the parent info in the FileInfo would be wrong)
+			method = clazz.getMethod("openFile", "(Ljava/io/File;)V");
+			method.instrument(new ExprEditor() {
+				@Override
+				public void edit(MethodCall call) throws CannotCompileException {
+					if (call.getMethodName().equals("getCanonicalPath"))
+						call.replace("$_ = $0.getAbsolutePath();");
+				}
+			});
+
+			clazz.toClass();
 		} catch (NotFoundException e) {
 			e.printStackTrace();
 		} catch (CannotCompileException e) {
