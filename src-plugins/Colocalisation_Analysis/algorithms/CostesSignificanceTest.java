@@ -62,10 +62,12 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 	 *
 	 * @param psfRadiusInPixels The edge width of the 3D cube block.
 	 */
-	public CostesSignificanceTest(PearsonsCorrelation<T> pc, int psfRadiusInPixels, int nrRandomizations) {
+	public CostesSignificanceTest(PearsonsCorrelation<T> pc, int psfRadiusInPixels,
+			int nrRandomizations, boolean showShuffledImages) {
 		this.pearsonsCorrelation = pc;
 		Arrays.fill(psfRadius, psfRadiusInPixels);
 		this.nrRandomizations = nrRandomizations;
+		this.showShuffledImages = showShuffledImages;
 	}
 
 	/**

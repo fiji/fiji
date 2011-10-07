@@ -200,6 +200,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		// set up the users preferences
 		displayImages = Prefs.get(PREF_KEY+"displayImages", false);
 		autoSavePdf = Prefs.get(PREF_KEY+"autoSavePdf", true);
+		boolean displayShuffledCostes = Prefs.get(PREF_KEY+"displayShuffledCostes", false);
 		boolean useLiCh1 = Prefs.get(PREF_KEY+"useLiCh1", true);
 		boolean useLiCh2 = Prefs.get(PREF_KEY+"useLiCh2", true);
 		boolean useLiICQ = Prefs.get(PREF_KEY+"useLiICQ", true);
@@ -224,6 +225,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		// Add algorithm options
 		gd.addCheckbox("Show_\"Save_PDF\"_Dialog", autoSavePdf);
 		gd.addCheckbox("Display_Images_in_Result", displayImages);
+		gd.addCheckbox("Display_Shuffled_Images", displayShuffledCostes);
 		gd.addMessage("Algorithms:");
 		gd.addCheckbox("Li_Histogram_Channel_1", useLiCh1);
 		gd.addCheckbox("Li_Histogram_Channel_2", useLiCh2);
@@ -288,6 +290,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		// read out GUI data
 		autoSavePdf = gd.getNextBoolean();
 		displayImages = gd.getNextBoolean();
+		displayShuffledCostes = gd.getNextBoolean();
 		useLiCh1 = gd.getNextBoolean();
 		useLiCh2 = gd.getNextBoolean();
 		useLiICQ = gd.getNextBoolean();
@@ -300,6 +303,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		// save user preferences
 		Prefs.set(PREF_KEY+"autoSavePdf", autoSavePdf);
 		Prefs.set(PREF_KEY+"displayImages", displayImages);
+		Prefs.set(PREF_KEY+"displayShuffledCostes", displayShuffledCostes);
 		Prefs.set(PREF_KEY+"useLiCh1", useLiCh1);
 		Prefs.set(PREF_KEY+"useLiCh2", useLiCh2);
 		Prefs.set(PREF_KEY+"useLiICQ", useLiICQ);
@@ -323,7 +327,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		if (useScatterplot)
 			histogram2D = new Histogram2D<T>("2D intensity histogram");
 		if (useCostes) {
-			costesSignificance = new CostesSignificanceTest<T>(pearsonsCorrelation, psf, nrCostesRandomisations);
+			costesSignificance = new CostesSignificanceTest<T>(pearsonsCorrelation,
+					psf, nrCostesRandomisations, displayShuffledCostes);
 		}
 
 		return true;
