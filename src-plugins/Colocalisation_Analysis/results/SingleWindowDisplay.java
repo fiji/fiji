@@ -558,8 +558,8 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 		listButton.setEnabled( isHistogram(img) );
 		copyButton.setEnabled( isHistogram(img) );
 
-		toggleLogarithmic(log.isSelected());
 		drawImage(img);
+		toggleLogarithmic(log.isSelected());
 	}
 
 	public void itemStateChanged(ItemEvent e) {
