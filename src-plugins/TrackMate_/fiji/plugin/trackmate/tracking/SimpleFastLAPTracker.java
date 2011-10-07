@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate.tracking;
 
+import fiji.plugin.trackmate.gui.SimpleLAPTrackerSettingsPanel;
 import fiji.plugin.trackmate.gui.TrackerSettingsPanel;
 
 public class SimpleFastLAPTracker extends FastLAPTracker {

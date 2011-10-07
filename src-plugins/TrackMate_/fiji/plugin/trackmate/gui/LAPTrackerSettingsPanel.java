@@ -37,11 +37,7 @@ public class LAPTrackerSettingsPanel extends TrackerSettingsPanel {
 	 * CONSTRUCTOR
 	 */
 	
-	public LAPTrackerSettingsPanel(TrackerSettings settings, List<String> features, Map<String, String> featureNames) {
-		super();
-		this.settings = settings;
-		this.features = features;
-		this.featureNames = featureNames;
+	public LAPTrackerSettingsPanel() {
 		initGUI();
 	}
 	
@@ -53,10 +49,21 @@ public class LAPTrackerSettingsPanel extends TrackerSettingsPanel {
 	public TrackerSettings getSettings() {
 		return jPanelMain.getSettings();
 	}
+
+	@Override
+	public void setTrackerSettings(TrackerSettings settings, String spaceUnits, String timeUnits) {
+		this.settings = settings;
+		echoSettings(spaceUnits, timeUnits);
+	}
+	
 	
 	/*
 	 * PRIVATE METHODS
 	 */
+	
+	private void echoSettings(String spaceUnits, String timeUnits) {
+		// TODO TODO
+	}
 	
 	
 	private void initGUI() {

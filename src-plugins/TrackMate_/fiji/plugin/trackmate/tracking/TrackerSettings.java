@@ -29,9 +29,6 @@ public class TrackerSettings {
 	private static final double 	DEFAULT_ALTERNATIVE_OBJECT_LINKING_COST_FACTOR = 1.05d;
 	private static final double 	DEFAULT_CUTOFF_PERCENTILE 				= 0.9d;
 	
-	/** The tracker type this settings object is for. This field is here just for reference. */
-	public TrackerType trackerType = TrackerType.SIMPLE_LAP_TRACKER;
-	
 	/** Max time difference over which particle linking is allowed.	 */
 	public double linkingDistanceCutOff 		= DEFAULT_LINKING_DISTANCE_CUTOFF;
 	/** Feature difference cutoffs for linking. */
@@ -72,8 +69,6 @@ public class TrackerSettings {
 	/** Value used to block assignments when physically meaningless. */
 	public double blockingValue 				= Double.MAX_VALUE;
 	
-	public String timeUnits 					= "frames";
-	public String spaceUnits 					= "pixels";
 	
 
 	/*
@@ -82,8 +77,7 @@ public class TrackerSettings {
 	
 	@Override
 	public String toString() {
-		String 	str = "Tracker: "+ trackerType.toString()+'\n';
-		
+		String str = "";
 		str += "  Linking conditions:\n";
 		str += String.format("    - distance cutoff: %.1f\n", linkingDistanceCutOff);
 		str += echoFeatureCuttofs(linkingFeaturePenalties);
