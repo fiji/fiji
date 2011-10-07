@@ -1,10 +1,15 @@
 package gadgets;
 
+import java.util.Arrays;
+
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.Cursor;
+import mpicbg.imglib.cursor.Localizable;
+import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.RealType;
 import algorithms.MissingPreconditionException;
@@ -121,6 +126,40 @@ public class MaskFactory {
 		cursor2.close();
 		maskCursor.close();
 		
+		return mask;
+	}
+
+	/**
+	 * Creates a new mask of the given dimensions, based on the image data
+	 * in the passed image.
+	 *
+	 * @param dim The dimensions of the new mask image
+	 * @param origMask The image from which the mask should be created from
+	 */
+	public static<T extends RealType<T>> Image<BitType> createMask(int[] dim, Image<T> origMask) {
+		Image<BitType> mask = createMask(dim);
+		int[] origDim = origMask.getDimensions();
+
+		// test if original mask and new mask have same dimensions
+		if (Arrays.equals(dim, origDim)) {
+			LocalizableCursor<T> origCursor = origMask.createLocalizableCursor();
+			LocalizableByDimCursor<BitType> maskCursor = mask.createLocalizableByDimCursor();
+			while (origCursor.hasNext()) {
+				origCursor.fwd();
+				maskCursor.setPosition(origCursor);
+				boolean value = origCursor.getType().getRealDouble() > 0.001;
+				maskCursor.getType().set(value);
+			}
+		} else {
+			if (dim.length == origDim.length) {
+				System.out.println("same dim: " + dim.length);
+			} else {
+				System.out.println("different dim: " + dim.length + " vs. " + origDim.length);
+			}
+
+			throw new UnsupportedOperationException("Masks with different dimenensions than the image are not supported yet.");
+		}
+
 		return mask;
 	}
 }

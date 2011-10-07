@@ -89,23 +89,15 @@ public class DataContainer<T extends RealType<T>> {
 	public DataContainer(Image<T> src1, Image<T> src2, int ch1, int ch2,
 			final Image<T> mask, final Image<T> maskBB,
 			final int[] offset, final int[] size) {
-		sourceImage1 = new MaskedImage<T>(src1, mask, offset, size);
-		sourceImage2 = new MaskedImage<T>(src2, mask, offset, size);
-
-		// create a mask that is everywhere valid
-		this.mask = MaskFactory.createMask(src1.getDimensions(), true);
+		sourceImage1 = src1;
+		sourceImage2 = src2;
 		this.ch1 = ch1;
 		this.ch2 = ch2;
 
-		this.maskBB = maskBB;
-		/* The maskBBOffset will just be zero for all directions.
-		 * That is because we later need it to create a MaskImage
-		 * with only the size of the mask and therefore need no
-		 * offset.
-		 */
-		maskBBOffset = offset.clone();
-		Arrays.fill(maskBBOffset, 0);
+		this.mask = MaskFactory.createMask(src1.getDimensions(), mask);
 
+		this.maskBB = maskBB;
+		maskBBOffset = offset.clone();
 		maskBBSize = size.clone();
 		calculateStatistics();
 	}
