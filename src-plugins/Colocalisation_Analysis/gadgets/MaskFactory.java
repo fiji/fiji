@@ -4,12 +4,10 @@ import java.util.Arrays;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.Cursor;
-import mpicbg.imglib.cursor.Localizable;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.RealType;
 import algorithms.MissingPreconditionException;
@@ -131,14 +129,17 @@ public class MaskFactory {
 
 	/**
 	 * Creates a new mask of the given dimensions, based on the image data
-	 * in the passed image.
+	 * in the passed image. If the requested dimensionality is higher than
+	 * what is available in the data, the data gets repeated in the higher
+	 * dimensions.
 	 *
 	 * @param dim The dimensions of the new mask image
 	 * @param origMask The image from which the mask should be created from
 	 */
-	public static<T extends RealType<T>> Image<BitType> createMask(int[] dim, Image<T> origMask) {
-		Image<BitType> mask = createMask(dim);
-		int[] origDim = origMask.getDimensions();
+	public static<T extends RealType<T>> Image<BitType> createMask(final int[] dim,
+			final Image<T> origMask) {
+		final Image<BitType> mask = createMask(dim);
+		final int[] origDim = origMask.getDimensions();
 
 		// test if original mask and new mask have same dimensions
 		if (Arrays.equals(dim, origDim)) {
@@ -150,14 +151,40 @@ public class MaskFactory {
 				boolean value = origCursor.getType().getRealDouble() > 0.001;
 				maskCursor.getType().set(value);
 			}
-		} else {
-			if (dim.length == origDim.length) {
-				System.out.println("same dim: " + dim.length);
-			} else {
-				System.out.println("different dim: " + dim.length + " vs. " + origDim.length);
+		} else if (dim.length > origDim.length) {
+			// sanity check
+			for (int i=0; i<origDim.length; i++) {
+				if (origDim[i] != dim[i])
+					throw new UnsupportedOperationException("Masks with lower dimensionality than the image, "
+							+ " but a different extent are not yet supported.");
 			}
-
-			throw new UnsupportedOperationException("Masks with different dimenensions than the image are not supported yet.");
+			// mask and image have different dimensionality and maybe even a different extent
+			LocalizableCursor<T> origCursor = origMask.createLocalizableCursor();
+			LocalizableByDimCursor<BitType> maskCursor = mask.createLocalizableByDimCursor();
+			int[] pos = origCursor.createPositionArray();
+			// iterate over the original mask
+			while (origCursor.hasNext()) {
+				origCursor.fwd();
+				origCursor.getPosition(pos);
+				boolean value = origCursor.getType().getRealDouble() > 0.001;
+				// set available (lower dimensional) position information
+				for (int i=0; i<origDim.length; i++)
+					// setPosition requires first the position and then the dimension
+					maskCursor.setPosition(pos[i], i);
+				// go through the missing dimensions and set the value
+				for (int i=origDim.length; i<dim.length; i++)
+					for (int j=0; j<dim[i]; j++) {
+						// setPosition requires first the position and then the dimension
+						maskCursor.setPosition(j, i);
+						maskCursor.getType().set(value);
+					}
+			}
+		} else if (dim.length < origDim.length) {
+			// mask has more dimensions than image
+			throw new UnsupportedOperationException("Masks with more dimensions than the image are not supported, yet.");
+		} else {
+			// mask and image have a different extent, but are equal in dimensionality. Scale it?
+			throw new UnsupportedOperationException("Masks with same dimensionality, but a different extent than the image are not supported, yet.");
 		}
 
 		return mask;

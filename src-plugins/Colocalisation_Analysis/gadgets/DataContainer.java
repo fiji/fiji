@@ -74,7 +74,7 @@ public class DataContainer<T extends RealType<T>> {
 	/**
 	 * Creates a new {@link DataContainer} for a specific set of image and
 	 * channel combination. It will give access to the image according to
-	 * the misk passed. It is expected that the mask is of the same size
+	 * the mask passed. It is expected that the mask is of the same size
 	 * as an image slice. Default thresholds, min, max and mean will be set
 	 * according to the mask as well.
 	 *
@@ -85,20 +85,26 @@ public class DataContainer<T extends RealType<T>> {
 	 * @param mask The mask to use
 	 * @param offset The offset of the ROI in each dimension
 	 * @param size The size of the ROI in each dimension
+	 * @throws MissingPreconditionException
 	 */
 	public DataContainer(Image<T> src1, Image<T> src2, int ch1, int ch2,
-			final Image<T> mask, final Image<T> maskBB,
-			final int[] offset, final int[] size) {
+			final Image<T> mask, final Image<T> maskBB, final int[] offset,
+			final int[] size) throws MissingPreconditionException {
 		sourceImage1 = src1;
 		sourceImage2 = src2;
 		this.ch1 = ch1;
 		this.ch2 = ch2;
 
 		this.mask = MaskFactory.createMask(src1.getDimensions(), mask);
-
 		this.maskBB = maskBB;
-		maskBBOffset = offset.clone();
-		maskBBSize = size.clone();
+
+		final int[] dim = src1.getDimensions();
+		maskBBOffset = src1.createPositionArray();
+		maskBBSize = src1.createPositionArray();
+
+		adjustRoiOffset(offset, maskBBOffset, dim);
+		adjustRoiSize(size, maskBBSize, dim, maskBBOffset);
+
 		calculateStatistics();
 	}
 
