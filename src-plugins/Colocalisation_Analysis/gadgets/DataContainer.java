@@ -124,31 +124,8 @@ public class DataContainer<T extends RealType<T>> {
 		int[] roiOffset = src1.createPositionArray();
 		int[] roiSize = src1.createPositionArray();
 
-		/* Make sure that the ROI offset has the same dimensionality
-		 * as the image. Fill up with zeros if needed.
-		 */
-		for (int i=0; i<roiOffset.length; ++i) {
-			if (i < offset.length) {
-				if (offset[i] > dim[i])
-					throw new MissingPreconditionException("Dimension " + i + " of ROI offset is larger than image dimension.");
-				roiOffset[i] = offset[i];
-			} else {
-				roiOffset[i] = 0;
-			}
-		}
-
-		/* Make sure that the ROI size has the same dimensionality
-		 * as the image. Fill up with image dimension if needed.
-		 */
-		for (int i=0; i<roiSize.length; ++i) {
-			if (i < size.length) {
-				if (size[i] > (dim[i] - roiOffset[i]))
-					throw new MissingPreconditionException("Dimension " + i + " of ROI size is larger than what fits in.");
-				roiSize[i] = size[i];
-			} else {
-				roiSize[i] = dim[i] - roiOffset[i];
-			}
-		}
+		adjustRoiOffset(offset, roiOffset, dim);
+		adjustRoiSize(size, roiSize, dim, roiOffset);
 
 		// create a mask that is everywhere valid
 		mask = MaskFactory.createMask(dim, roiOffset, roiSize);
@@ -171,6 +148,52 @@ public class DataContainer<T extends RealType<T>> {
 		maxCh2 = ImageStatistics.getImageMax(sourceImage2).getRealDouble();
 		integralCh1 = ImageStatistics.getImageIntegral(sourceImage1);
 		integralCh2 = ImageStatistics.getImageIntegral(sourceImage2);
+	}
+
+	/**
+	 * 	Make sure that the ROI offset has the same dimensionality
+	 *	as the image. The method fills it up with zeros if needed.
+	 *
+	 * @param oldOffset The offset with the original dimensionality
+	 * @param newOffset The output array with the new dimensionality
+	 * @param dimensions An array of the dimensions
+	 * @throws MissingPreconditionException
+	 */
+	protected void adjustRoiOffset(int[] oldOffset, int[] newOffset, int[] dimensions)
+			throws MissingPreconditionException {
+		for (int i=0; i<newOffset.length; ++i) {
+			if (i < oldOffset.length) {
+				if (oldOffset[i] > dimensions[i])
+					throw new MissingPreconditionException("Dimension " + i + " of ROI offset is larger than image dimension.");
+				newOffset[i] = oldOffset[i];
+			} else {
+				newOffset[i] = 0;
+			}
+		}
+	}
+
+	/**
+	 * Transforms a ROI size array to a dimensionality. The method
+	 * fill up with image (dimension - offset in that dimension) if
+	 * needed.
+	 *
+	 * @param oldSize Size array of old dimensionality
+	 * @param newSize Output size array of new dimensionality
+	 * @param dimensions Dimensions representing the new dimensionality
+	 * @param offset Offset of the new dimensionality
+	 * @throws MissingPreconditionException
+	 */
+	protected void adjustRoiSize(int[] oldSize, int[] newSize, int[] dimensions, int[] offset)
+			throws MissingPreconditionException {
+		for (int i=0; i<newSize.length; ++i) {
+			if (i < oldSize.length) {
+				if (oldSize[i] > (dimensions[i] - offset[i]))
+					throw new MissingPreconditionException("Dimension " + i + " of ROI size is larger than what fits in.");
+				newSize[i] = oldSize[i];
+			} else {
+				newSize[i] = dimensions[i] - offset[i];
+			}
+		}
 	}
 
 	/**
