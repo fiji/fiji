@@ -2662,10 +2662,26 @@ public class WekaSegmentation {
 	}
 
 	/**
-	 * Calculate the classic topology-preserving warping error in 2D between some
-	 * original labels and the corresponding proposed labels. Both, original
-	 * and proposed labels are expected to have float values between 0 and 1. 
-	 * Otherwise, they will be converted.
+	 * Calculate the classic topology-preserving warping error \cite{Jain10} 
+	 * in 2D between some original labels and the corresponding proposed labels. 
+	 * Both, original and proposed labels are expected to have float values 
+	 * between 0 and 1. Otherwise, they will be converted.
+	 * 
+	 * BibTeX:
+	 * <pre>
+	 * &#64;article{Jain10,
+	 *   author    = {V. Jain, B. Bollmann, M. Richardson, D.R. Berger, M.N. Helmstaedter, 
+	 *   				K.L. Briggman, W. Denk, J.B. Bowden, J.M. Mendenhall, W.C. Abraham, 
+	 *   				K.M. Harris, N. Kasthuri, K.J. Hayworth, R. Schalek, J.C. Tapia, 
+	 *   				J.W. Lichtman, S.H. Seung},
+	 *   title     = {Boundary Learning by Optimization with Topological Constraints},
+	 *   booktitle = {2010 IEEE CONFERENCE ON COMPUTER VISION AND PATTERN RECOGNITION (CVPR)},
+	 *   year      = {2010},
+	 *   series    = {IEEE Conference on Computer Vision and Pattern Recognition},
+	 *   pages     = {2488-2495},
+	 *   doi       = {10.1109/CVPR.2010.5539950)
+	 * }
+	 * </pre>
 	 *
 	 * @param label original labels (single 2D image or stack)
 	 * @param proposal proposed new labels (single 2D image or stack of the same as as the original labels)
@@ -2816,13 +2832,29 @@ public class WekaSegmentation {
 	
 	
 	/**
-	 * Calculate the rand error in 2D between some original labels 
+	 * Calculate the Rand error in 2D between some original labels 
 	 * and the corresponding proposed labels. Both image are binarized.
+	 * The Rand error is defined as the 1 - Rand index, as described by
+	 * William M. Rand \cite{Rand71}.
 	 *
+	 * BibTeX:
+	 * <pre>
+	 * &#64;article{Rand71,
+	 *   author    = {William M. Rand},
+	 *   title     = {Objective criteria for the evaluation of clustering methods},
+	 *   journal   = {Journal of the American Statistical Association},
+	 *   year      = {1971},
+	 *   volume    = {66},
+	 *   number    = {336},
+	 *   pages     = {846–850},
+	 *   doi       = {10.2307/2284239)
+	 * }
+	 * </pre>
+	 * 
 	 * @param label original labels (single 2D image or stack)
 	 * @param proposal proposed new labels (single 2D image or stack of the same as as the original labels)
 	 * @param binaryThreshold threshold value to binarize proposal (larger than 0 and smaller than 1)
-	 * @return rand error
+	 * @return Rand error
 	 */
 	public static double randError(
 			ImagePlus label,
@@ -2877,14 +2909,30 @@ public class WekaSegmentation {
 	
 	
 	/**
-	 * Get rand error between two image in a concurrent way 
+	 * Get Rand error between two image in a concurrent way 
 	 * (to be submitted to an Executor Service). Both images
 	 * are binarized.
+	 * The Rand error is defined as the 1 - Rand index, as described by
+	 * William M. Rand \cite{Rand71}.
+	 *
+	 * BibTeX:
+	 * <pre>
+	 * &#64;article{Rand71,
+	 *   author    = {William M. Rand},
+	 *   title     = {Objective criteria for the evaluation of clustering methods},
+	 *   journal   = {Journal of the American Statistical Association},
+	 *   year      = {1971},
+	 *   volume    = {66},
+	 *   number    = {336},
+	 *   pages     = {846–850},
+	 *   doi       = {10.2307/2284239)
+	 * }
+	 * </pre>
 	 * 
 	 * @param image1 first image
 	 * @param image2 second image
 	 * @param binaryThreshold threshold to apply to both images
-	 * @return rand error
+	 * @return Rand error
 	 */
 	public static Callable<Double> getRandErrorConcurrent(
 			final ImageProcessor image1, 
@@ -2901,11 +2949,29 @@ public class WekaSegmentation {
 	}
 	
 	/**
+	 * Calculate the Rand error between some 2D original labels 
+	 * and the corresponding proposed labels. Both image are binarized.
+	 * The Rand error is defined as the 1 - Rand index, as described by
+	 * William M. Rand \cite{Rand71}.
+	 *
+	 * BibTeX:
+	 * <pre>
+	 * &#64;article{Rand71,
+	 *   author    = {William M. Rand},
+	 *   title     = {Objective criteria for the evaluation of clustering methods},
+	 *   journal   = {Journal of the American Statistical Association},
+	 *   year      = {1971},
+	 *   volume    = {66},
+	 *   number    = {336},
+	 *   pages     = {846–850},
+	 *   doi       = {10.2307/2284239)
+	 * }
+	 * </pre>
 	 * 
-	 * @param label
-	 * @param proposal
-	 * @param binaryThreshold
-	 * @return
+	 * @param label 2D image with the original labels
+	 * @param proposal 2D image with the proposed labels
+	 * @param binaryThreshold threshold value to binarize the input images
+	 * @return Rand error
 	 */
 	public static double randError(
 			ImageProcessor label,
@@ -2935,10 +3001,26 @@ public class WekaSegmentation {
 	}
 	
 	/**
+	 * Calculate the Rand index between to clusters, as described by
+	 * William M. Rand \cite{Rand71}.
+	 *
+	 * BibTeX:
+	 * <pre>
+	 * &#64;article{Rand71,
+	 *   author    = {William M. Rand},
+	 *   title     = {Objective criteria for the evaluation of clustering methods},
+	 *   journal   = {Journal of the American Statistical Association},
+	 *   year      = {1971},
+	 *   volume    = {66},
+	 *   number    = {336},
+	 *   pages     = {846–850},
+	 *   doi       = {10.2307/2284239)
+	 * }
+	 * </pre>
 	 * 
-	 * @param cluster1
-	 * @param cluster2
-	 * @return
+	 * @param cluster1 2D segmented image (objects are labeled with different numbers) 
+	 * @param cluster2 2D segmented image (objects are labeled with different numbers)
+	 * @return Rand index
 	 */
 	public static double randIndex(
 			ShortProcessor cluster1,
