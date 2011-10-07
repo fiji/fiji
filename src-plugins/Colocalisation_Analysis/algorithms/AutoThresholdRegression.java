@@ -1,13 +1,12 @@
 package algorithms;
 
-import results.ResultHandler;
 import gadgets.DataContainer;
 import gadgets.ThresholdMode;
 import mpicbg.imglib.cursor.special.TwinCursor;
-import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.RealType;
+import results.ResultHandler;
 
 /**
  * A class implementing the automatic finding of a threshold
@@ -49,20 +48,20 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm<T>
 		double combinedMean = ch1Mean + ch2Mean;
 
 		// get the cursors for iterating through pixels in images
-		Cursor<T> cursor1 = img1.createCursor();
-		Cursor<T> cursor2 = img2.createCursor();
+		TwinCursor<T> cursor = new TwinCursor<T>(
+				img1.createLocalizableByDimCursor(), img2.createLocalizableByDimCursor(),
+				mask.createLocalizableCursor());
 
 		// variables for summing up the
 		double ch1MeanDiffSum = 0.0, ch2MeanDiffSum = 0.0, combinedMeanDiffSum = 0.0;
 		double combinedSum = 0.0;
 		int N = 0, NZero = 0;
 
-		while (cursor1.hasNext() && cursor2.hasNext()) {
-			cursor1.fwd();
-			cursor2.fwd();
-			T type1 = cursor1.getType();
+		while (cursor.hasNext()) {
+			cursor.fwd();
+			T type1 = cursor.getChannel1();
 			double ch1 = type1.getRealDouble();
-			T type2 = cursor2.getType();
+			T type2 = cursor.getChannel2();
 			double ch2 = type2.getRealDouble();
 
 			combinedSum = ch1 + ch2;
@@ -82,10 +81,6 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm<T>
 
 			N++;
 		}
-
-		// close the cursors
-		cursor1.close();
-		cursor2.close();
 
 		double ch1Variance = ch1MeanDiffSum / (N - 1);
 		double ch2Variance = ch2MeanDiffSum / (N - 1);
@@ -147,10 +142,8 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm<T>
 		// define some image type specific threshold variables
 		T threshold1 = img1.createType();
 		T threshold2 = img2.createType();
-
-		TwinCursor<T> cursor = new TwinCursor<T>(
-				img1.createLocalizableByDimCursor(), img2.createLocalizableByDimCursor(),
-				mask.createLocalizableCursor());
+		// reset the previously created cursor
+		cursor.reset();
 
 		// do regression
 		while (!thresholdFound && iteration<maxIterations) {
