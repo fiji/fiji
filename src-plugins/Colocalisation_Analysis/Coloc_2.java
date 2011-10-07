@@ -10,7 +10,10 @@ import ij.plugin.PlugIn;
 import ij.process.Blitter;
 import ij.process.ImageProcessor;
 
+import java.awt.Checkbox;
 import java.awt.Rectangle;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -222,10 +225,11 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		gd.addChoice("ROI_or_mask", roisAndMasks, roisAndMasks[indexMask]);
 		//gd.addChoice("Use ROI", roiLabels, roiLabels[indexRoi]);
 
-		// Add algorithm options
 		gd.addCheckbox("Show_\"Save_PDF\"_Dialog", autoSavePdf);
 		gd.addCheckbox("Display_Images_in_Result", displayImages);
 		gd.addCheckbox("Display_Shuffled_Images", displayShuffledCostes);
+		final Checkbox shuffleCb = (Checkbox) gd.getCheckboxes().lastElement();
+		// Add algorithm options
 		gd.addMessage("Algorithms:");
 		gd.addCheckbox("Li_Histogram_Channel_1", useLiCh1);
 		gd.addCheckbox("Li_Histogram_Channel_2", useLiCh2);
@@ -233,8 +237,18 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		gd.addCheckbox("Manders'_Correlation", useManders);
 		gd.addCheckbox("2D_Instensity_Histogram", useScatterplot);
 		gd.addCheckbox("Costes'_Significance_Test", useCostes);
+		final Checkbox costesCb = (Checkbox) gd.getCheckboxes().lastElement();
 		gd.addNumericField("PSF", psf, 1);
 		gd.addNumericField("Costes_randomisations", nrCostesRandomisations, 0);
+
+		// disable shuffle checkbox if costes checkbox is set to "off"
+		shuffleCb.setEnabled(useCostes);
+		costesCb.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				shuffleCb.setEnabled(costesCb.getState());
+			}
+		});
 
 		// show the dialog, finally
 		gd.showDialog();
