@@ -560,6 +560,9 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 
 		drawImage(img);
 		toggleLogarithmic(log.isSelected());
+		// ensure a valid layout, we changed the image
+		getContentPane().validate();
+		getContentPane().repaint();
 	}
 
 	public void itemStateChanged(ItemEvent e) {
