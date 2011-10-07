@@ -273,16 +273,18 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 		else if (nrDimensions == 3)
 		{ // for a 3D image...
 			int z;
+			int originalZ = offset[2];
 			// go through the depth in steps of block depth
 			for ( z = psfRadius[2]; z <= dimensions[2]; z += psfRadius[2] ) {
-				offset[2] = z - psfRadius[2];
+				offset[2] = originalZ + z - psfRadius[2];
 				generateBlocksXY(img, blockList, offset, size, outOfBoundsFactory, false);
 			}
 			// check is we need to add a out of bounds strategy cursor
 			if (z > dimensions[2]) {
-				offset[2] = z - psfRadius[2];
+				offset[2] = originalZ + z - psfRadius[2];
 				generateBlocksXY(img, blockList, offset, size, outOfBoundsFactory, true);
 			}
+			offset[2] = originalZ;
 		}
 		else
 			throw new MissingPreconditionException("Currently only 2D and 3D images are supported.");
@@ -305,17 +307,19 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 			boolean forceOutOfBounds) {
 		// potentially masked image height
 		int height = size[1];
+		final int originalY = offset[1];
 		// go through the height in steps of block width
 		int y;
 		for ( y = psfRadius[1]; y <= height; y += psfRadius[1] ) {
-			offset[1] = y - psfRadius[1];
+			offset[1] = originalY + y - psfRadius[1];
 			generateBlocksX(img, blockList, offset, size, outOfBoundsFactory, forceOutOfBounds);
 		}
 		// check is we need to add a out of bounds strategy cursor
 		if (y > height) {
-			offset[1] = y - psfRadius[1];
+			offset[1] = originalY + y - psfRadius[1];
 			generateBlocksX(img, blockList, offset, size, outOfBoundsFactory, true);
 		}
+		offset[1] = originalY;
 	}
 
 	/**
@@ -334,10 +338,11 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 			boolean forceOutOfBounds) {
 		// potentially masked image width
 		int width = size[0];
+		final int originalX = offset[0];
 		// go through the width in steps of block width
 		int x;
 		for ( x = psfRadius[0]; x <= width; x += psfRadius[0] ) {
-			offset[0] = x - psfRadius[0];
+			offset[0] = originalX + x - psfRadius[0];
 
 			LocalizableByDimCursor<T> locCursor;
 			if (forceOutOfBounds)
@@ -351,13 +356,14 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 		}
 		// check is we need to add a out of bounds strategy cursor
 		if (x > width) {
-			offset[0] = x - psfRadius[0];
+			offset[0] = originalX + x - psfRadius[0];
 			LocalizableByDimCursor<T> locCursor
 				= img.createLocalizableByDimCursor( outOfBoundsFactory );
 			RegionOfInterestCursor<T> roiCursor
 				= locCursor.createRegionOfInterestCursor( offset, psfRadius );
 			blockList.add(roiCursor);
 		}
+		offset[0] = originalX;
 	}
 
 	protected void calculateStatistics(List<Double> compareValues, double originalVal) {
