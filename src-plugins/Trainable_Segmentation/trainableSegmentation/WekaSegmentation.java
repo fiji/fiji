@@ -57,6 +57,7 @@ import ij.process.ByteProcessor;
 import ij.process.FloatPolygon;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 
 import util.FindConnectedRegions;
 
@@ -2661,10 +2662,26 @@ public class WekaSegmentation {
 	}
 
 	/**
-	 * Calculate the classic topology-preserving warping error in 2D between some
-	 * original labels and the corresponding proposed labels. Both, original
-	 * and proposed labels are expected to have float values between 0 and 1. 
-	 * Otherwise, they will be converted.
+	 * Calculate the classic topology-preserving warping error \cite{Jain10} 
+	 * in 2D between some original labels and the corresponding proposed labels. 
+	 * Both, original and proposed labels are expected to have float values 
+	 * between 0 and 1. Otherwise, they will be converted.
+	 * 
+	 * BibTeX:
+	 * <pre>
+	 * &#64;article{Jain10,
+	 *   author    = {V. Jain, B. Bollmann, M. Richardson, D.R. Berger, M.N. Helmstaedter, 
+	 *   				K.L. Briggman, W. Denk, J.B. Bowden, J.M. Mendenhall, W.C. Abraham, 
+	 *   				K.M. Harris, N. Kasthuri, K.J. Hayworth, R. Schalek, J.C. Tapia, 
+	 *   				J.W. Lichtman, S.H. Seung},
+	 *   title     = {Boundary Learning by Optimization with Topological Constraints},
+	 *   booktitle = {2010 IEEE CONFERENCE ON COMPUTER VISION AND PATTERN RECOGNITION (CVPR)},
+	 *   year      = {2010},
+	 *   series    = {IEEE Conference on Computer Vision and Pattern Recognition},
+	 *   pages     = {2488-2495},
+	 *   doi       = {10.1109/CVPR.2010.5539950)
+	 * }
+	 * </pre>
 	 *
 	 * @param label original labels (single 2D image or stack)
 	 * @param proposal proposed new labels (single 2D image or stack of the same as as the original labels)
@@ -2695,11 +2712,11 @@ public class WekaSegmentation {
 
 
 		for(int j=0; j<wrs.length; j++)			
-			error += wrs[ j ].mismatches.size();
+			error += wrs[ j ].warpingError;
 		
 
 		if(count != 0)
-			return error / count;
+			return error / wrs.length;
 		else
 			return -1;
 	}
@@ -2812,6 +2829,218 @@ public class WekaSegmentation {
 
 		return pixelError / labelSlices.getSize();
 	}
+	
+	
+	/**
+	 * Calculate the Rand error in 2D between some original labels 
+	 * and the corresponding proposed labels. Both image are binarized.
+	 * The Rand error is defined as the 1 - Rand index, as described by
+	 * William M. Rand \cite{Rand71}.
+	 *
+	 * BibTeX:
+	 * <pre>
+	 * &#64;article{Rand71,
+	 *   author    = {William M. Rand},
+	 *   title     = {Objective criteria for the evaluation of clustering methods},
+	 *   journal   = {Journal of the American Statistical Association},
+	 *   year      = {1971},
+	 *   volume    = {66},
+	 *   number    = {336},
+	 *   pages     = {846–850},
+	 *   doi       = {10.2307/2284239)
+	 * }
+	 * </pre>
+	 * 
+	 * @param label original labels (single 2D image or stack)
+	 * @param proposal proposed new labels (single 2D image or stack of the same as as the original labels)
+	 * @param binaryThreshold threshold value to binarize proposal (larger than 0 and smaller than 1)
+	 * @return Rand error
+	 */
+	public static double randError(
+			ImagePlus label,
+			ImagePlus proposal,
+			double binaryThreshold)
+	{
+		
+		if(label.getWidth() != proposal.getWidth()
+				|| label.getHeight() != proposal.getHeight()
+				|| label.getImageStackSize() != proposal.getImageStackSize())
+		{
+			IJ.log("Error: label and proposal image sizes do not fit.");
+			return -1;
+		}
+
+		final ImageStack labelSlices = label.getImageStack();
+		final ImageStack proposalSlices = proposal.getImageStack();
+
+		double randError = 0;
+
+		// Executor service to produce concurrent threads
+		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+		final ArrayList< Future<Double> > futures = new ArrayList< Future<Double> >();
+
+		try{
+			for(int i = 1; i <= labelSlices.getSize(); i++)
+			{
+				futures.add(exe.submit( getRandErrorConcurrent(labelSlices.getProcessor(i).convertToFloat(),
+											proposalSlices.getProcessor(i).convertToFloat(),										
+											binaryThreshold ) ) );
+			}
+
+			// Wait for the jobs to be done
+			for(Future<Double> f : futures)
+			{
+				randError += f.get();				
+
+			}			
+		}
+		catch(Exception ex)
+		{
+			IJ.log("Error when calculating rand error in a concurrent way.");
+			ex.printStackTrace();
+		}
+		finally{
+			exe.shutdown();
+		}
+
+		return randError / labelSlices.getSize();
+	}
+	
+	
+	/**
+	 * Get Rand error between two image in a concurrent way 
+	 * (to be submitted to an Executor Service). Both images
+	 * are binarized.
+	 * The Rand error is defined as the 1 - Rand index, as described by
+	 * William M. Rand \cite{Rand71}.
+	 *
+	 * BibTeX:
+	 * <pre>
+	 * &#64;article{Rand71,
+	 *   author    = {William M. Rand},
+	 *   title     = {Objective criteria for the evaluation of clustering methods},
+	 *   journal   = {Journal of the American Statistical Association},
+	 *   year      = {1971},
+	 *   volume    = {66},
+	 *   number    = {336},
+	 *   pages     = {846–850},
+	 *   doi       = {10.2307/2284239)
+	 * }
+	 * </pre>
+	 * 
+	 * @param image1 first image
+	 * @param image2 second image
+	 * @param binaryThreshold threshold to apply to both images
+	 * @return Rand error
+	 */
+	public static Callable<Double> getRandErrorConcurrent(
+			final ImageProcessor image1, 
+			final ImageProcessor image2,
+			final double binaryThreshold) 
+	{
+		return new Callable<Double>()
+		{
+			public Double call()
+			{				
+				return randError ( image1, image2, binaryThreshold );
+			}
+		};
+	}
+	
+	/**
+	 * Calculate the Rand error between some 2D original labels 
+	 * and the corresponding proposed labels. Both image are binarized.
+	 * The Rand error is defined as the 1 - Rand index, as described by
+	 * William M. Rand \cite{Rand71}.
+	 *
+	 * BibTeX:
+	 * <pre>
+	 * &#64;article{Rand71,
+	 *   author    = {William M. Rand},
+	 *   title     = {Objective criteria for the evaluation of clustering methods},
+	 *   journal   = {Journal of the American Statistical Association},
+	 *   year      = {1971},
+	 *   volume    = {66},
+	 *   number    = {336},
+	 *   pages     = {846–850},
+	 *   doi       = {10.2307/2284239)
+	 * }
+	 * </pre>
+	 * 
+	 * @param label 2D image with the original labels
+	 * @param proposal 2D image with the proposed labels
+	 * @param binaryThreshold threshold value to binarize the input images
+	 * @return Rand error
+	 */
+	public static double randError(
+			ImageProcessor label,
+			ImageProcessor proposal,
+			double binaryThreshold)
+	{
+		// Binarize inputs
+		ByteProcessor binaryLabel = new ByteProcessor( label.getWidth(), label.getHeight() );
+		ByteProcessor binaryProposal = new ByteProcessor( label.getWidth(), label.getHeight() );
+		
+		for(int x=0; x<label.getWidth(); x++)
+			for(int y=0; y<label.getHeight(); y++)
+			{
+				binaryLabel.set(x, y, label.get( x, y ) > 0 ? 255 : 0);
+				binaryProposal.set(x, y, proposal.get( x, y ) > 0 ? 255 : 0);
+			}
+		
+		// Find components
+		ShortProcessor components1 = ( ShortProcessor ) connectedComponents(
+				new ImagePlus("binary labels", binaryLabel), 4).allRegions.getProcessor();
+		
+		ShortProcessor components2 = ( ShortProcessor ) connectedComponents(
+				new ImagePlus("proposal labels", binaryProposal), 4).allRegions.getProcessor();
+		
+		return 1 - randIndex( components1, components2 );
+		
+	}
+	
+	/**
+	 * Calculate the Rand index between to clusters, as described by
+	 * William M. Rand \cite{Rand71}.
+	 *
+	 * BibTeX:
+	 * <pre>
+	 * &#64;article{Rand71,
+	 *   author    = {William M. Rand},
+	 *   title     = {Objective criteria for the evaluation of clustering methods},
+	 *   journal   = {Journal of the American Statistical Association},
+	 *   year      = {1971},
+	 *   volume    = {66},
+	 *   number    = {336},
+	 *   pages     = {846–850},
+	 *   doi       = {10.2307/2284239)
+	 * }
+	 * </pre>
+	 * 
+	 * @param cluster1 2D segmented image (objects are labeled with different numbers) 
+	 * @param cluster2 2D segmented image (objects are labeled with different numbers)
+	 * @return Rand index
+	 */
+	public static double randIndex(
+			ShortProcessor cluster1,
+			ShortProcessor cluster2)
+	{
+		double agreements = 0;
+		
+		final short[] pixels1 = (short[]) cluster1.getPixels();
+		final short[] pixels2 = (short[]) cluster2.getPixels();
+		
+		double n = pixels1.length;
+		
+		for(int i=0; i<n-1; i++)
+			for(int j=i+1; j<n; j++)
+				if( pixels1[ i ] == pixels1[ j ] && pixels2[ i ] == pixels2[ j ] 
+				    || pixels1[ i ] != pixels1[ j ] && pixels2[ i ] != pixels2[ j ] )
+					agreements ++;
+		return agreements / ( n * (n - 1) / 2 );
+	}
+	
 	
 	/**
 	 * Get pixel error between two image in a concurrent way 
@@ -3335,8 +3564,13 @@ public class WekaSegmentation {
 					diff ++;
 
 			//IJ.log("Difference = " + diff);
-
-			if(diff == diff_before || diff == 0)
+			
+			if( diff == 0 )
+			{
+				result.mismatches = new ArrayList<Point3f>();
+				break;
+			}
+			if(diff == diff_before)
 				break;
 
 			final ArrayList<Point3f> mismatches = new ArrayList<Point3f>();
@@ -3388,14 +3622,9 @@ public class WekaSegmentation {
 							IJ.log("pix = " + pix);*/
 					sourceRealPix[ x + y * (width+2)] =  pix > 0.0 ? 0.0f : 1.0f ;
 					//IJ.log("flipping pixel x: " + x + " y: " + y + " to " + (pix > 0  ? 0.0 : 1.0));
-
 				}
-
 			}
-
 			result.mismatches = mismatches;
-
-
 		}
 
 		//IJ.run(sourceReal, "Canvas Size...", "width="+ width + " height=" + height + " position=Center zero");
