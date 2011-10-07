@@ -10,16 +10,17 @@ import java.util.Collections;
 import java.util.List;
 
 import mpicbg.imglib.algorithm.gauss.GaussianConvolution3;
-import mpicbg.imglib.function.Converter;
-import mpicbg.imglib.function.RealTypeConverter;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.special.RegionOfInterestCursor;
+import mpicbg.imglib.function.Converter;
+import mpicbg.imglib.function.RealTypeConverter;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
+import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import results.ResultHandler;
@@ -79,15 +80,16 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 	@Override
 	public void execute(DataContainer<T> container)
 			throws MissingPreconditionException {
+		final Image<T> img1 = container.getSourceImage1();
+		final Image<T> img2 = container.getSourceImage2();
+		final Image<BitType> mask = container.getMask();
 
-		// get the 2 images for the calculation of Pearson's
-		Image<T> img1 = container.getSourceImage1();
-		Image<T> img2 = container.getSourceImage2();
-		/* We expect two images of the same size, so we only
-		 * get dimensions from one image.
+		/* To determine the number of needed blocks, we need
+		 * the effective dimensions of the image. Since the
+		 * mask is responsible for this, we ask for its size.
 		 */
-		int[] dimensions = img1.getDimensions();
-		int nrDimensions = img1.getNumDimensions();
+		int[] dimensions = container.getMaskBBSize();
+		int nrDimensions = dimensions.length;
 
 		// calculate the needed number of blocks per image
 		int nrBlocksPerImage = 1;
@@ -106,22 +108,27 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 		blocks = new ArrayList<RegionOfInterestCursor<T>>( nrBlocksPerImage );
 
 		// generate the input blocks for shuffling
-		OutOfBoundsStrategyFactory<T> oobFactory = new OutOfBoundsStrategyMirrorFactory<T>();
-		generateBlocks( img1, blocks, oobFactory);
+		OutOfBoundsStrategyFactory<T> oobFactory =
+				new OutOfBoundsStrategyMirrorFactory<T>();
+		generateBlocks( img1, blocks, container.getMaskBBOffset(),
+				dimensions, oobFactory);
 
 		/* Create a new image to contain the shuffled data and with
 		 * same dimensions as the original data.
 		 */
-		Image<T> shuffledImage = img1.createNewImage(img1.getDimensions(), "Shuffled Image");
+		Image<T> shuffledImage = img1.createNewImage(
+				img1.getDimensions(), "Shuffled Image");
 
 		/* create a list of output blocks for the shuffled image
 		 * which will be used to write out the shuffled original
 		 * blocks to the new image.
 		 */
-		outputBlocks = new ArrayList<RegionOfInterestCursor<T>>( nrBlocksPerImage );
+		outputBlocks = new ArrayList<RegionOfInterestCursor<T>>(
+				nrBlocksPerImage );
 
 		// generate the output blocks for writing data into a new image
-		generateBlocks( shuffledImage, outputBlocks, new OutOfBoundsStrategyValueFactory<T>() );
+		generateBlocks( shuffledImage, outputBlocks, container.getMaskBBOffset(),
+				dimensions, new OutOfBoundsStrategyValueFactory<T>() );
 
 		// make sure we have the same amount of input and output blocks
 		assert(blocks.size() == outputBlocks.size());
@@ -176,7 +183,10 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 			for(int j=0; j < blocks.size(); j++) {
 				RegionOfInterestCursor<T> input = blocks.get( j );
 				RegionOfInterestCursor<T> output = outputBlocks.get( j );
-				// iterate over both blocks
+				/* Iterate over both blocks. Theoretically the iteration
+				 * order could be different. Because we are dealing with
+				 * randomized data anyway, this is not a problem here.
+				 */
 				while (input.hasNext() && output.hasNext()) {
 					input.fwd();
 					output.fwd();
@@ -205,12 +215,9 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 				throw new MissingPreconditionException( smoother.getErrorMessage() );
 			}
 
-			// allow the potential addition of a mask
-			smoothedShuffledImage = container.maskImageIfNeeded( smoothedShuffledImage );
-
 			try {
 				// calculate correlation value...
-				double pValue = pearsonsCorrelation.calculatePearsons( smoothedShuffledImage, img2);
+				double pValue = pearsonsCorrelation.calculatePearsons( smoothedShuffledImage, img2, mask);
 				// ...and add it to the results list
 				shuffledPearsonsResults.add( pValue );
 			} catch (MissingPreconditionException e) {
@@ -222,7 +229,8 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 					retries++;
 					nrRandomizations++;
 				} else {
-					throw new MissingPreconditionException("Costes: Maximum retries have been made, but errors keep on coming: " + e.getMessage());
+					throw new MissingPreconditionException("Costes: Maximum retries have been made (" +
+							+ retries + "), but errors keep on coming: " + e.getMessage(), e);
 				}
 			}
 		}
@@ -250,11 +258,8 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 	 * @param outOfBoundsFactory Defines what to do if a block has parts out of image bounds.
 	 */
 	protected void generateBlocks(Image<T> img, List<RegionOfInterestCursor<T>> blockList,
-			OutOfBoundsStrategyFactory<T> outOfBoundsFactory) throws MissingPreconditionException {
-		/* since we start at the first pixel, the offset in all
-		 *  directions is zero.
-		 */
-		int offset[] = {0, 0, 0};
+			int[] offset, int[] size, OutOfBoundsStrategyFactory<T> outOfBoundsFactory)
+			throws MissingPreconditionException {
 		// get the dimensions of the image
 		int[] dimensions = img.getDimensions();
 		// get the number of dimensions
@@ -262,7 +267,7 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 
 		if (nrDimensions == 2)
 		{ // for a 2D image...
-			generateBlocksXY(img, blockList, offset, outOfBoundsFactory, false);
+			generateBlocksXY(img, blockList, offset, size, outOfBoundsFactory, false);
 		}
 		else if (nrDimensions == 3)
 		{ // for a 3D image...
@@ -270,12 +275,12 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 			// go through the depth in steps of block depth
 			for ( z = psfRadius[2]; z <= dimensions[2]; z += psfRadius[2] ) {
 				offset[2] = z - psfRadius[2];
-				generateBlocksXY(img, blockList, offset, outOfBoundsFactory, false);
+				generateBlocksXY(img, blockList, offset, size, outOfBoundsFactory, false);
 			}
 			// check is we need to add a out of bounds strategy cursor
 			if (z > dimensions[2]) {
 				offset[2] = z - psfRadius[2];
-				generateBlocksXY(img, blockList, offset, outOfBoundsFactory, true);
+				generateBlocksXY(img, blockList, offset, size, outOfBoundsFactory, true);
 			}
 		}
 		else
@@ -295,19 +300,20 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 	 * @param forceOutOfBounds Indicates if all cursors created should be out-of-bounds ones.
 	 */
 	protected void generateBlocksXY(Image<T> img, List<RegionOfInterestCursor<T>> blockList,
-			int[] offset, OutOfBoundsStrategyFactory<T> outOfBoundsFactory, boolean forceOutOfBounds) {
-		// get image height
-		int height = img.getDimension(1);
+			int[] offset, int[] size, OutOfBoundsStrategyFactory<T> outOfBoundsFactory,
+			boolean forceOutOfBounds) {
+		// potentially masked image height
+		int height = size[1];
 		// go through the height in steps of block width
 		int y;
 		for ( y = psfRadius[1]; y <= height; y += psfRadius[1] ) {
 			offset[1] = y - psfRadius[1];
-			generateBlocksX(img, blockList, offset, outOfBoundsFactory, forceOutOfBounds);
+			generateBlocksX(img, blockList, offset, size, outOfBoundsFactory, forceOutOfBounds);
 		}
 		// check is we need to add a out of bounds strategy cursor
 		if (y > height) {
 			offset[1] = y - psfRadius[1];
-			generateBlocksX(img, blockList, offset, outOfBoundsFactory, true);
+			generateBlocksX(img, blockList, offset, size, outOfBoundsFactory, true);
 		}
 	}
 
@@ -323,9 +329,10 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 	 * @param forceOutOfBounds Indicates if all cursors created should be out-of-bounds ones.
 	 */
 	protected void generateBlocksX(Image<T> img, List<RegionOfInterestCursor<T>> blockList,
-			int[] offset, OutOfBoundsStrategyFactory<T> outOfBoundsFactory, boolean forceOutOfBounds) {
-		// get image width
-		int width = img.getDimension(0);
+			int[] offset, int[] size, OutOfBoundsStrategyFactory<T> outOfBoundsFactory,
+			boolean forceOutOfBounds) {
+		// potentially masked image width
+		int width = size[0];
 		// go through the width in steps of block width
 		int x;
 		for ( x = psfRadius[0]; x <= width; x += psfRadius[0] ) {
