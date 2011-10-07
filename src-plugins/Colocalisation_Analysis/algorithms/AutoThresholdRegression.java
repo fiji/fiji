@@ -70,7 +70,7 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm<T>
 			// into account that are combined above zero? And not just
 			// the denominator (like it is done now)?
 
-			// calculate the nominators for the variances
+			// calculate the numerators for the variances
 			ch1MeanDiffSum += (ch1 - ch1Mean) * (ch1 - ch1Mean);
 			ch2MeanDiffSum += (ch2 - ch2Mean) * (ch2 - ch2Mean);
 			combinedMeanDiffSum += (combinedSum - combinedMean) * (combinedSum - combinedMean);

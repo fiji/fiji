@@ -178,7 +178,7 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm<T> {
 		Cursor<T> cursor1 = img1.createCursor();
 		Cursor<T> cursor2 = img2.createCursor();
 
-		// create a ImageFactory<Type<T>> put the scatter-plot in
+		// create new image to put the scatter-plot in
 		final ImageFactory<LongType> scatterFactory =
 			new ImageFactory<LongType>(new LongType(), new ArrayContainerFactory());
 		plotImage = scatterFactory.createImage(new int[] {xBins, yBins}, title);

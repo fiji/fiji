@@ -111,7 +111,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	// A list of all ROIs/masks found
 	protected ArrayList<MaskInfo> masks = new ArrayList<MaskInfo>();
 
-	// default indices of image, mask and roi choices
+	// default indices of image, mask and ROI choices
 	protected static int index1 = 0;
 	protected static int index2 = 1;
 	protected static int indexMask = 0;
@@ -178,8 +178,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			= new GenericDialog("Coloc 2");
 
 		String[] titles = new String[windowList.length];
-		/* the masks and rois array needs three more entries than
-		 * windows to contain "none", "roi ch 1" and "roi ch 2"
+		/* the masks and ROIs array needs three more entries than
+		 * windows to contain "none", "ROI ch 1" and "ROI ch 2"
 		 */
 		String[] roisAndMasks= new String[windowList.length + 3];
 		roisAndMasks[0]="<None>";
@@ -242,7 +242,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
 		ImagePlus imp1 = WindowManager.getImage(gd.getNextChoiceIndex() + 1);
 		ImagePlus imp2 = WindowManager.getImage(gd.getNextChoiceIndex() + 1);
-		// get information about the mask/roi to use
+		// get information about the mask/ROI to use
 		indexMask = gd.getNextChoiceIndex();
 		if (indexMask == 0)
 			roiConfig = RoiConfiguration.None;
@@ -332,7 +332,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	/**
 	 * Call this method to run a whole colocalisation configuration,
 	 * all selected algorithms get run on the supplied images. You
-	 * can specitfy the data further by suppliing appropriate
+	 * can specify the data further by supplying appropriate
 	 * information in the mask structure.
 	 *
 	 * @param img1
@@ -558,19 +558,19 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	 * it will be put into a frame of its bounding box size and
 	 * put into an Image<T>.
 	 *
-	 * In the end the members rois, masks and maskBBs will be
+	 * In the end the members ROIs, masks and maskBBs will be
 	 * filled if ROIs or masks were found. They will be null
 	 * otherwise.
 	 */
 	protected void createMasksAndRois(ImagePlus imp) {
-		// get Rois from current image in Fiji
+		// get ROIs from current image in Fiji
 		Roi[] impRois = split(imp.getRoi());
 		// create empty list
 		masks.clear();
 
 		for (Roi r : impRois ){
 			MaskInfo mi = new MaskInfo();
-			// add it to the list of masks/rois
+			// add it to the list of masks/ROIs
 			masks.add(mi);
 			// get the ROIs/masks bounding box
 			Rectangle rect = r.getBounds();

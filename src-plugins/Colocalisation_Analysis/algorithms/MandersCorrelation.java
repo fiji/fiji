@@ -25,7 +25,7 @@ public class MandersCorrelation<T extends RealType<T>> extends Algorithm<T> {
 	double mandersThresholdedM1, mandersThresholdedM2;
 
 	/**
-	 * A result containter for Manders' calculations.
+	 * A result container for Manders' calculations.
 	 */
 	public static class MandersResults {
 		public double m1;

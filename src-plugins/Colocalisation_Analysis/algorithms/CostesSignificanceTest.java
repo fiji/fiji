@@ -30,7 +30,7 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 	boolean showShuffledImages = false;
 	// the number of randomization tests
 	int nrRandomizations;
-	// the shuffled image last worke on
+	// the shuffled image last worked on
 	Image<T> smoothedShuffledImage;
 	// the Pearson's algorithm (that should have been run before)
 	PearsonsCorrelation<T> pearsonsCorrelation;
@@ -128,7 +128,7 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 		for (int i = 0; i < nrDimensions; i++) {
 			psfRadius[i] = (double) psfRadiusInPixels[i];
 		}
-		/* Ccreate new type converters and image factories for imglib
+		/* Create new type converters and image factories for ImgLib
 		 * GaussionConvolution3. There is no need to construct them
 		 * all the time from scratch.
 		 * This is done because we want to make sure that the smoothing
@@ -215,7 +215,7 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 				 * problems, try it three times again and then fail.
 				 */
 				if (retries < maxErrorRetries) {
-					// increase retry count and the number of ranodmizations
+					// increase retry count and the number of randomizations
 					retries++;
 					nrRandomizations++;
 				} else {
@@ -380,7 +380,7 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 	public void processResults(ResultHandler<T> handler) {
 		super.processResults(handler);
 
-		// if desired, show the last shuffled iamge available
+		// if desired, show the last shuffled image available
 		if ( showShuffledImages ) {
 			smoothedShuffledImage.setName("Smoothed & shuffled channel 1");
 			handler.handleImage( smoothedShuffledImage );

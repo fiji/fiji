@@ -207,11 +207,11 @@ public class DataContainer<T extends RealType<T>> {
 	 * the type of source image. If source images don't have a ROI
 	 * or a mask, the image will be returned as is. The same is
 	 * true for a regular ROI. Otherwise a MaskImage is returned
-	 * that contains tha same mask as the one used during container
+	 * that contains the same mask as the one used during container
 	 * creation.
 	 */
 	public Image<T> maskImageIfNeeded(Image<T> image) {
-		// return the image on normal image or reg. ROI
+		// return the image on normal image or regular ROI
 		if (maskBB == null)
 			return image;
 
