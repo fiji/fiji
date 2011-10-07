@@ -85,7 +85,7 @@ public class CostesSignificanceTest extends ColocalisationTest {
 			}
 
 			algorithms.CostesSignificanceTest<FloatType> costes
-				= new algorithms.CostesSignificanceTest<FloatType>(pc, psf, 10);
+				= new algorithms.CostesSignificanceTest<FloatType>(pc, psf, 10, false);
 			costes.execute(container);
 
 			// check if we can expect a high P

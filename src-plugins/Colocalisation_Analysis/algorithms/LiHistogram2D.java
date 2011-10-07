@@ -4,8 +4,9 @@ import gadgets.DataContainer;
 
 import java.util.EnumSet;
 
-import mpicbg.imglib.cursor.Cursor;
+import mpicbg.imglib.cursor.special.TwinCursor;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.RealType;
 
 /**
@@ -62,26 +63,24 @@ public class LiHistogram2D<T extends RealType<T>> extends Histogram2D<T> {
 		 * max value that could occur.
 		 */
 
-		// get the 2 images for the calculation of Pearson's
-		Image<T> img1 = getImageCh1(container);
-		Image<T> img2 = getImageCh2(container);
+		// get the 2 images and the mask
+		final Image<T> img1 = getImageCh1(container);
+		final Image<T> img2 = getImageCh2(container);
+		final Image<BitType> mask = container.getMask();
 
 		// get the cursors for iterating through pixels in images
-		Cursor<T> cursor1 = img1.createCursor();
-		Cursor<T> cursor2 = img2.createCursor();
+		TwinCursor<T> cursor = new TwinCursor<T>(img1.createLocalizableByDimCursor(),
+				img2.createLocalizableByDimCursor(), mask.createLocalizableCursor());
 
 		// give liMin and liMax appropriate starting values at the top and bottom of the range
 		liMin = Double.MAX_VALUE;
 		liMax = Double.MIN_VALUE;
 
-		// iterate over image
-		while (cursor1.hasNext() && cursor2.hasNext()) {
-			cursor1.fwd();
-			cursor2.fwd();
-			T type1 = cursor1.getType();
-			double ch1 = type1.getRealDouble();
-			T type2 = cursor2.getType();
-			double ch2 = type2.getRealDouble();
+		// iterate over images
+		while (cursor.hasNext()) {
+			cursor.fwd();
+			double ch1 = cursor.getChannel1().getRealDouble();
+			double ch2 = cursor.getChannel2().getRealDouble();
 
 			double productOfDifferenceOfMeans = (ch1Mean - ch1) * (ch2Mean - ch2);
 
@@ -90,6 +89,7 @@ public class LiHistogram2D<T extends RealType<T>> extends Histogram2D<T> {
 			if (productOfDifferenceOfMeans > liMax)
 				liMax = productOfDifferenceOfMeans;
 		}
+		cursor.close();
 		liDiff = Math.abs(liMax - liMin);
 
 		generateHistogramData(container);
