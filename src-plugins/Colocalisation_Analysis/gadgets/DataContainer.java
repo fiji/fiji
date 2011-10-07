@@ -208,22 +208,6 @@ public class DataContainer<T extends RealType<T>> {
 		}
 	}
 
-	/**
-	 * This method will build a new image object that is based on
-	 * the type of source image. If source images don't have a ROI
-	 * or a mask, the image will be returned as is. The same is
-	 * true for a regular ROI. Otherwise a MaskImage is returned
-	 * that contains the same mask as the one used during container
-	 * creation.
-	 */
-	public Image<T> maskImageIfNeeded(Image<T> image) {
-		// return the image on normal image or regular ROI
-		if (maskBB == null)
-			return image;
-
-		return new MaskedImage<T>(image, maskBB, maskBBOffset.clone(), maskBBSize.clone());
-	}
-
 	public MaskType getMaskType() {
 		return maskType;
 	}
