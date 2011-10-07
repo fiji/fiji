@@ -230,7 +230,7 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 					retries++;
 					nrRandomizations++;
 				} else {
-					throw new MissingPreconditionException("Costes: Maximum retries have been made (" +
+					throw new MissingPreconditionException("Maximum retries have been made (" +
 							+ retries + "), but errors keep on coming: " + e.getMessage(), e);
 				}
 			}
