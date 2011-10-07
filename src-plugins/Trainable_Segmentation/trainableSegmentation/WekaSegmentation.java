@@ -2696,11 +2696,11 @@ public class WekaSegmentation {
 
 
 		for(int j=0; j<wrs.length; j++)			
-			error += wrs[ j ].mismatches.size();
+			error += wrs[ j ].warpingError;
 		
 
 		if(count != 0)
-			return error / count;
+			return error / wrs.length;
 		else
 			return -1;
 	}
@@ -3482,8 +3482,13 @@ public class WekaSegmentation {
 					diff ++;
 
 			//IJ.log("Difference = " + diff);
-
-			if(diff == diff_before || diff == 0)
+			
+			if( diff == 0 )
+			{
+				result.mismatches = new ArrayList<Point3f>();
+				break;
+			}
+			if(diff == diff_before)
 				break;
 
 			final ArrayList<Point3f> mismatches = new ArrayList<Point3f>();
@@ -3535,14 +3540,9 @@ public class WekaSegmentation {
 							IJ.log("pix = " + pix);*/
 					sourceRealPix[ x + y * (width+2)] =  pix > 0.0 ? 0.0f : 1.0f ;
 					//IJ.log("flipping pixel x: " + x + " y: " + y + " to " + (pix > 0  ? 0.0 : 1.0));
-
 				}
-
 			}
-
 			result.mismatches = mismatches;
-
-
 		}
 
 		//IJ.run(sourceReal, "Canvas Size...", "width="+ width + " height=" + height + " position=Center zero");
