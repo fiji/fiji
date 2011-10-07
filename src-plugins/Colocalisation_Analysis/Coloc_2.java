@@ -351,7 +351,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 					img1Channel, img2Channel, mask, maskBB,
 					roi.offset, roi.size);
 		} else if (roi != null) {
-				// if we have no musk, but a ROI, a regular ROI is in use
+				// we have no mask, but a regular ROI in use
 				container = new DataContainer<T>(img1, img2,
 						img1Channel, img2Channel, roi.offset, roi.size);
 		} else {
@@ -592,7 +592,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			ipSlice.copyBits(ipMask, mi.roi.offset[0], mi.roi.offset[1], Blitter.COPY);
 			// create an Image<T> out of it
 			ImagePlus maskImp = new ImagePlus("Mask", ipSlice);
-			// and remember it and the masks bounding box version
+			// and remember it and the masks bounding box
 			mi.mask = ImagePlusAdapter.<T>wrap( maskImp );
 			mi.boundingBox = ImagePlusAdapter.<T>wrap( new ImagePlus( "MaskBB", ipMask ) );
 		}
@@ -604,23 +604,25 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	 * source images are ROI/MaskImages.
 	 * @throws MissingPreconditionException
 	 */
-	protected Image<T> createMaskImage(Image<T> sourceImage, Image<BitType> mask,
+	protected Image<T> createMaskImage(Image<T> image, Image<BitType> mask,
 			int[] offset, int[] size, String name) throws MissingPreconditionException {
-		int[] pos = sourceImage.createPositionArray();
+		int[] pos = image.createPositionArray();
+		// sanity check
 		if (pos.length != offset.length || pos.length != size.length) {
 			throw new MissingPreconditionException("Mask offset and size must be of same dimensionality like image.");
 		}
+		// use twin cursor for only one image
 		TwinCursor<T> cursor = new TwinCursor<T>(
-				sourceImage.createLocalizableByDimCursor(),
-				sourceImage.createLocalizableByDimCursor(),
+				image.createLocalizableByDimCursor(),
+				image.createLocalizableByDimCursor(),
 				mask.createLocalizableCursor());
 		// prepare output image
 		ImageFactory<T> maskFactory = new ImageFactory<T>(
-				sourceImage.createType(), new ArrayContainerFactory());
+				image.createType(), new ArrayContainerFactory());
 		Image<T> maskImage = maskFactory.createImage( size, name );
 		LocalizableByDimCursor<T> maskCursor =
 				maskImage.createLocalizableByDimCursor();
-
+		// go through the visible data and copy it to the output
 		while (cursor.hasNext()) {
 			cursor.fwd();
 			cursor.getPosition(pos);
@@ -628,6 +630,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			for (int i=0; i < pos.length; ++i) {
 				pos[i] = pos[i] - offset[i];
 			}
+			// write out to correct position
 			maskCursor.setPosition( pos );
 			maskCursor.getType().set( cursor.getChannel1() );
 		}
