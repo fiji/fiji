@@ -111,17 +111,13 @@ public class MandersCorrelation<T extends RealType<T>> extends Algorithm<T> {
 				T type2 = cursor.getChannel2();
 				double ch1 = type1.getRealDouble();
 				double ch2 = type2.getRealDouble();
-				// test if one of the values is below its threshold
-				if (type1.compareTo(thresholdCh1) < 0
-						|| type2.compareTo(thresholdCh2) < 0) {
-					// if ch2 is non-zero, increase ch1 numerator
-					if (Math.abs(ch2) > 0.00001) {
-						m1Numerator += ch1;
-					}
-					// if ch1 is non-zero, increase ch2 numerator
-					if (Math.abs(ch1) > 0.00001) {
-						m2Numerator += ch2;
-					}
+				if (Math.abs(ch2) > 0.00001 &&
+						type1.compareTo(thresholdCh1) <= 0) {
+					m1Numerator += ch1;
+				}
+				if (Math.abs(ch1) > 0.00001 &&
+						type2.compareTo(thresholdCh2) <= 0) {
+					m2Numerator += ch2;
 				}
 				sumCh1 += ch1;
 				sumCh2 += ch2;
@@ -133,17 +129,13 @@ public class MandersCorrelation<T extends RealType<T>> extends Algorithm<T> {
 				T type2 = cursor.getChannel2();
 				double ch1 = type1.getRealDouble();
 				double ch2 = type2.getRealDouble();
-				// test if one of the values is above its threshold
-				if (type1.compareTo(thresholdCh1) > 0
-						|| type2.compareTo(thresholdCh2) > 0) {
-					// if ch2 is non-zero, increase ch1 numerator
-					if (Math.abs(ch2) > 0.00001) {
-						m1Numerator += ch1;
-					}
-					// if ch1 is non-zero, increase ch2 numerator
-					if (Math.abs(ch1) > 0.00001) {
-						m2Numerator += ch2;
-					}
+				if (Math.abs(ch2) > 0.00001 &&
+						type1.compareTo(thresholdCh1) >= 0) {
+					m1Numerator += ch1;
+				}
+				if (Math.abs(ch1) > 0.00001 &&
+						type2.compareTo(thresholdCh2) >= 0) {
+					m2Numerator += ch2;
 				}
 				sumCh1 += ch1;
 				sumCh2 += ch2;
