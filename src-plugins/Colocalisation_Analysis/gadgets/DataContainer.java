@@ -22,13 +22,16 @@ import algorithms.MissingPreconditionException;
  * @param <T>
  */
 public class DataContainer<T extends RealType<T>> {
-
+	// enumeration of different mask types
+	public enum MaskType { Regular, Irregular, None };
 	// some general image statistics
 	double meanCh1, meanCh2, minCh1, maxCh1, minCh2, maxCh2, integralCh1, integralCh2;
 	// The source images that the results are based on
 	Image<T> sourceImage1, sourceImage2;
 	// The mask for the images
 	Image<BitType> mask;
+	// Type of the used mask
+	protected MaskType maskType;
 
 	// The channels of the source images that the result relate to
 	int ch1, ch2;
@@ -36,8 +39,6 @@ public class DataContainer<T extends RealType<T>> {
 	protected Image<T> maskBB = null;
 	protected int[] maskBBSize = null;
 	protected int[] maskBBOffset = null;
-	// indicates if a regular ROI is in use
-	protected boolean regularRoiInUse = false;
 
 	InputCheck<T> inputCheck = null;
 	AutoThresholdRegression<T> autoThreshold = null;
@@ -67,6 +68,8 @@ public class DataContainer<T extends RealType<T>> {
 		maskBBOffset = mask.createPositionArray();
 		Arrays.fill(maskBBOffset, 0);
 		maskBBSize = mask.getDimensions();
+		// indicated that there is actually no mask
+		maskType = MaskType.None;
 
 		calculateStatistics();
 	}
@@ -101,6 +104,8 @@ public class DataContainer<T extends RealType<T>> {
 		final int[] dim = src1.getDimensions();
 		maskBBOffset = src1.createPositionArray();
 		maskBBSize = src1.createPositionArray();
+		// this constructor supports irregular masks
+		maskType = MaskType.Irregular;
 
 		adjustRoiOffset(offset, maskBBOffset, dim);
 		adjustRoiSize(size, maskBBSize, dim, maskBBOffset);
@@ -137,10 +142,11 @@ public class DataContainer<T extends RealType<T>> {
 		mask = MaskFactory.createMask(dim, roiOffset, roiSize);
 		maskBBOffset = roiOffset.clone();
 		maskBBSize = roiSize.clone();
+		// this constructor only supports regular masks
+		maskType = MaskType.Regular;
 
 		this.ch1 = ch1;
 		this.ch2 = ch2;
-		regularRoiInUse = true;
 
 		calculateStatistics();
 	}
@@ -218,18 +224,8 @@ public class DataContainer<T extends RealType<T>> {
 		return new MaskedImage<T>(image, maskBB, maskBBOffset.clone(), maskBBSize.clone());
 	}
 
-	/**
-	 * Indicates if a regular ROI is in use.
-	 */
-	public boolean isRoiInUse() {
-		return regularRoiInUse;
-	}
-
-	/**
-	 * Gets if a mask or irregular ROI is in use.
-	 */
-	public boolean isMaskInUse() {
-		return (maskBB != null);
+	public MaskType getMaskType() {
+		return maskType;
 	}
 
 	public Image<T> getSourceImage1() {

@@ -1,6 +1,7 @@
 package algorithms;
 
 import gadgets.DataContainer;
+import gadgets.DataContainer.MaskType;
 import gadgets.Statistics;
 
 import java.util.ArrayList;
@@ -154,7 +155,7 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 			Collections.shuffle( blocks );
 
 			// check if a mask is in use and further actions are needed
-			if (container.isMaskInUse()) {
+			if (container.getMaskType() == MaskType.Irregular) {
 				// black the whole intermediate image, just in case we have irr. masks
 				for(int j=0; j < outputBlocks.size(); j++) {
 					RegionOfInterestCursor<T> output = outputBlocks.get( j );
