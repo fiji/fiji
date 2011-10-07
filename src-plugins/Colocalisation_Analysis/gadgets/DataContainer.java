@@ -106,7 +106,6 @@ public class DataContainer<T extends RealType<T>> {
 		maskBBSize = src1.createPositionArray();
 		// this constructor supports irregular masks
 		maskType = MaskType.Irregular;
-
 		adjustRoiOffset(offset, maskBBOffset, dim);
 		adjustRoiSize(size, maskBBSize, dim, maskBBOffset);
 
@@ -225,11 +224,11 @@ public class DataContainer<T extends RealType<T>> {
 	}
 
 	public int[] getMaskBBOffset() {
-		return maskBBOffset;
+		return maskBBOffset.clone();
 	}
 
 	public int[] getMaskBBSize() {
-		return maskBBSize;
+		return maskBBSize.clone();
 	}
 
 	public int getCh1() {
