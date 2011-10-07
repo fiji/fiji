@@ -155,22 +155,39 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 	 */
 	public <S extends RealType<S>> double calculatePearsons(Image<S> img1, Image<S> img2)
 			throws MissingPreconditionException {
-		// create cursors to walk over the images
+		// create an "always true" mask to walk over the images
 		Image<BitType> alwaysTrueMask = MaskFactory.createMask(img1.getDimensions(), true);
-		TwinCursor<S> alwaysTrueCursor = new TwinCursor<S>(
+		return calculatePearsons(img1, img2, alwaysTrueMask);
+	}
+
+	/**
+	 * Calculates Pearson's R value without any constraint in values, thus it uses no
+	 * thresholds. A mask is required to mark which data points should be visited. If
+	 * additional data like the images mean is needed, it is calculated.
+	 *
+	 * @param <S> The images base type.
+	 * @param img1 The first image to walk over.
+	 * @param img2 The second image to walk over.
+	 * @param mask A mask for the images.
+	 * @return Pearson's R value.
+	 * @throws MissingPreconditionException
+	 */
+	public <S extends RealType<S>> double calculatePearsons(Image<S> img1, Image<S> img2,
+			Image<BitType> mask) throws MissingPreconditionException {
+		TwinCursor<S> cursor = new TwinCursor<S>(
 				img1.createLocalizableByDimCursor(), img2.createLocalizableByDimCursor(),
-				alwaysTrueMask.createLocalizableCursor());
+				mask.createLocalizableCursor());
 
 		if (theImplementation == Implementation.Classic) {
-			/* since we need the means and apparently don't have them
+			/* since we need the means and apparently don't have them,
 			 * calculate them.
 			 */
 			double mean1 = ImageStatistics.getImageMean(img1);
 			double mean2 = ImageStatistics.getImageMean(img2);
 			// do the actual calculation
-			return classicPearsons(alwaysTrueCursor, mean1, mean2);
+			return classicPearsons(cursor, mean1, mean2);
 		} else {
-			return fastPearsons(alwaysTrueCursor);
+			return fastPearsons(cursor);
 		}
 	}
 
