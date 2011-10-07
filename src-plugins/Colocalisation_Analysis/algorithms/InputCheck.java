@@ -1,11 +1,12 @@
 package algorithms;
 
-import results.ResultHandler;
 import gadgets.DataContainer;
 import ij.IJ;
-import mpicbg.imglib.cursor.Cursor;
+import mpicbg.imglib.cursor.special.TwinCursor;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.RealType;
+import results.ResultHandler;
 
 /**
  * This class implements some basic checks for the input image
@@ -31,13 +32,14 @@ public class InputCheck<T extends RealType<T>> extends Algorithm<T> {
 	@Override
 	public void execute(DataContainer<T> container)
 			throws MissingPreconditionException {
-		// get the 2 images for the calculation of Pearson's
-		Image<T> img1 = container.getSourceImage1();
-		Image<T> img2 = container.getSourceImage2();
+		// get the 2 images and the mask
+		final Image<T> img1 = container.getSourceImage1();
+		final Image<T> img2 = container.getSourceImage2();
+		final Image<BitType> mask = container.getMask();
 
 		// get the cursors for iterating through pixels in images
-		Cursor<T> cursor1 = img1.createCursor();
-		Cursor<T> cursor2 = img2.createCursor();
+		TwinCursor<T> cursor = new TwinCursor<T>(img1.createLocalizableByDimCursor(),
+				img2.createLocalizableByDimCursor(), mask.createLocalizableCursor());
 
 		double ch1Max = container.getMaxCh1();
 		double ch2Max = container.getMaxCh2();
@@ -51,13 +53,10 @@ public class InputCheck<T extends RealType<T>> extends Algorithm<T> {
 		// the amount of ch2 pixels with the maximum ch2 value;
 		int NsaturatedCh2 = 0;
 
-		while (cursor1.hasNext() && cursor2.hasNext()) {
-			cursor1.fwd();
-			cursor2.fwd();
-			T type1 = cursor1.getType();
-			double ch1 = type1.getRealDouble();
-			T type2 = cursor2.getType();
-			double ch2 = type2.getRealDouble();
+		while (cursor.hasNext()) {
+			cursor.fwd();
+			double ch1 = cursor.getChannel1().getRealDouble();
+			double ch2 = cursor.getChannel2().getRealDouble();
 
 			// is the current pixels combination a zero pixel?
 			if (Math.abs(ch1 + ch2) < 0.00001)
@@ -73,10 +72,7 @@ public class InputCheck<T extends RealType<T>> extends Algorithm<T> {
 
 			N++;
 		}
-
-		// close the cursors
-		cursor1.close();
-		cursor2.close();
+		cursor.close();
 
 		// calculate results
 		double zeroZeroRatio = (double)Nzero / (double)N;
