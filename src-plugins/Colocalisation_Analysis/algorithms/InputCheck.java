@@ -29,6 +29,10 @@ public class InputCheck<T extends RealType<T>> extends Algorithm<T> {
 	// the saturated pixel ratio of channel 2
 	double saturatedRatioCh2;
 
+	public InputCheck() {
+		super("input data check");
+	}
+
 	@Override
 	public void execute(DataContainer<T> container)
 			throws MissingPreconditionException {

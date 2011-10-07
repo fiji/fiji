@@ -63,6 +63,7 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm<T> {
 	}
 
 	public Histogram2D(String title, boolean swapChannels, EnumSet<DrawingFlags> drawingSettings){
+		super(title);
 		this.title = title;
 		this.swapChannels = swapChannels;
 

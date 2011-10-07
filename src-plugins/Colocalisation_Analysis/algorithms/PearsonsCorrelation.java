@@ -35,7 +35,7 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 	 * @param theImplementation The implementation of Pearson's Coefficient calculation to use.
 	 */
 	public PearsonsCorrelation(Implementation implementation) {
-		super();
+		super("Pearson correlation");
 		this.theImplementation = implementation;
 	}
 

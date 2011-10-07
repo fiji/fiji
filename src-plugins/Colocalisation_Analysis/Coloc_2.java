@@ -406,8 +406,12 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		addIfValid(costesSignificance, userSelectedJobs);
 
 		// execute all algorithms
+		int count = 0;
+		int jobs = userSelectedJobs.size();
 		for (Algorithm<T> a : userSelectedJobs){
 			try {
+				count++;
+				IJ.showStatus(count + "/" + jobs + ": Running " + a.getName());
 				a.execute(container);
 			}
 			catch (MissingPreconditionException e){
@@ -419,6 +423,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 				}
 			}
 		}
+		// clear status
+		IJ.showStatus("");
 
 		// let the algorithms feed their results to the handler
 		for (Algorithm<T> a : userSelectedJobs){

@@ -17,6 +17,10 @@ public class LiICQ<T extends RealType<T>> extends Algorithm<T> {
 	// the resulting ICQ value
 	double icqValue;
 
+	public LiICQ() {
+		super("Li ICQ calculation");
+	}
+
 	@Override
 	public void execute(DataContainer<T> container)
 			throws MissingPreconditionException {

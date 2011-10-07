@@ -65,6 +65,7 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 	 */
 	public CostesSignificanceTest(PearsonsCorrelation<T> pc, int psfRadiusInPixels,
 			int nrRandomizations, boolean showShuffledImages) {
+		super("Costes significance test");
 		this.pearsonsCorrelation = pc;
 		Arrays.fill(psfRadius, psfRadiusInPixels);
 		this.nrRandomizations = nrRandomizations;

@@ -32,6 +32,10 @@ public class MandersCorrelation<T extends RealType<T>> extends Algorithm<T> {
 		public double m2;
 	}
 
+	public MandersCorrelation() {
+		super("Manders correlation");
+	}
+
 	@Override
 	public void execute(DataContainer<T> container)
 			throws MissingPreconditionException {

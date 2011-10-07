@@ -30,7 +30,8 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm<T>
 	//This is the Pearson's correlation we will use for further calculations
 	PearsonsCorrelation<T> pearsonsCorrellation;
 
-	public AutoThresholdRegression(PearsonsCorrelation<T> pc){
+	public AutoThresholdRegression(PearsonsCorrelation<T> pc) {
+		super("auto threshold regression");
 		pearsonsCorrellation = pc;
 	}
 
