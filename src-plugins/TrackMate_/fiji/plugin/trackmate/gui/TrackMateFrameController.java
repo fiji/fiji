@@ -281,9 +281,6 @@ public class TrackMateFrameController implements ActionListener {
 		case TUNE_TRACKER: {
 			Settings settings = plugin.getModel().getSettings();
 			settings.trackerSettings = view.trackerSettingsPanel.getSettings();
-			settings.trackerSettings.trackerType = settings.trackerType;
-			settings.trackerSettings.spaceUnits = settings.spaceUnits;
-			settings.trackerSettings.timeUnits = settings.timeUnits;
 			break;
 		}
 
@@ -501,11 +498,12 @@ public class TrackMateFrameController implements ActionListener {
 	private void execGetSegmenterChoice() {
 		Settings settings = plugin.getModel().getSettings();
 		settings.segmenter = view.segmenterChoicePanel.getChoice();
+		settings.segmenterSettings = settings.segmenter.createDefaultSettings();
 	}
 
 	private void execGetTrackerChoice() {
 		Settings settings = plugin.getModel().getSettings();
-		settings.trackerType = view.trackerChoicePanel.getChoice();
+		settings.tracker = view.trackerChoicePanel.getChoice();
 	}
 
 	/**

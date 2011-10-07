@@ -1,6 +1,5 @@
 package fiji.plugin.trackmate.gui;
 
-import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -12,19 +11,13 @@ import java.util.Map;
 import java.util.Stack;
 
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
-
 import javax.swing.ImageIcon;
-import javax.swing.JScrollPane;
-import javax.swing.WindowConstants;
-import javax.swing.JFrame;
+import javax.swing.JButton;
 import javax.swing.JPanel;
-
-import fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics;
 
 public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 
-	private static final long serialVersionUID = 7567178804475300833L;
+	private static final long serialVersionUID = -891462567905389989L;
 	private static final String ADD_ICON = "images/add.png";
 	private static final String REMOVE_ICON = "images/delete.png";
 
@@ -36,16 +29,19 @@ public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 	private List<String> features;
 	private Map<String, String> featureNames;
 	
-	public JPanelFeatureSelectionGui(List<String> features, Map<String, String> featureNames) {
-		super();
-		this.features = features;
-		this.featureNames = featureNames;
+	public JPanelFeatureSelectionGui() {
 		initGUI();
 	}
 	
 	/*
 	 * PUBLIC METHODS
 	 */
+	
+	public void setDisplayFeatures(List<String> features, Map<String, String> featureNames) {
+		this.features = features;
+		this.featureNames = featureNames;
+	}
+	
 	
 	public Map<String, Double>	 getFeatureRatios() {
 		Map<String, Double> ratios = new HashMap<String, Double>(featurePanels.size());
@@ -127,33 +123,5 @@ public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-
-	/*
-	 * MAIN METHOD
-	 */
-
-
-	/**
-	 * Auto-generated main method to display this 
-	 * JPanel inside a new JFrame.
-	 */
-	public static void main(String[] args) {
-		JFrame frame = new JFrame();
-		JPanel mainPanel = new JPanel();
-		mainPanel.setLayout(new BorderLayout());
-		mainPanel.setSize(260, 300);
-		JScrollPane scrollPane = new JScrollPane();
-		scrollPane.setSize(260, 300);
-		JPanelFeatureSelectionGui instance = new JPanelFeatureSelectionGui(
-				BlobDescriptiveStatistics.FEATURES,
-				BlobDescriptiveStatistics.FEATURE_NAMES
-				);
-		scrollPane.setViewportView(instance);
-		mainPanel.add(scrollPane, BorderLayout.CENTER);
-		frame.getContentPane().add(mainPanel);
-		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-		frame.pack();
-		frame.setVisible(true);
 	}
 }

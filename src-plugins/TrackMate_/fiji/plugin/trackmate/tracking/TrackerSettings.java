@@ -3,6 +3,7 @@ package fiji.plugin.trackmate.tracking;
 import java.util.HashMap;
 import java.util.Map;
 
+import fiji.plugin.trackmate.gui.LAPTrackerSettingsPanel;
 import fiji.plugin.trackmate.gui.TrackerSettingsPanel;
 
 public class TrackerSettings {

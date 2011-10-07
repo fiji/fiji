@@ -34,7 +34,7 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
-import fiji.plugin.trackmate.tracking.TrackerType;
+
 
 public class TmXmlReader {
 
@@ -236,12 +236,7 @@ public class TmXmlReader {
 		TrackerSettings trackerSettings = null;
 		Element trackerSettingsEl = root.getChild(TRACKER_SETTINGS_ELEMENT_KEY);
 		if (null != trackerSettingsEl) {
-			String trackerTypeStr 			= trackerSettingsEl.getAttributeValue(TRACKER_SETTINGS_TRACKER_TYPE_ATTRIBUTE_NAME);
-			TrackerType trackerType 		= TrackerType.valueOf(trackerTypeStr);
-			trackerSettings = trackerType.createSettings();
-			trackerSettings.trackerType		= trackerType;
-			trackerSettings.timeUnits		= trackerSettingsEl.getAttributeValue(TRACKER_SETTINGS_TIME_UNITS_ATTNAME);
-			trackerSettings.spaceUnits		= trackerSettingsEl.getAttributeValue(TRACKER_SETTINGS_SPACE_UNITS_ATTNAME);
+			trackerSettings = new TrackerSettings(); // FIXME How to be generic? Delegate marshalling to concrete implementation
 			trackerSettings.alternativeObjectLinkingCostFactor = trackerSettingsEl.getAttribute(TRACKER_SETTINGS_ALTERNATE_COST_FACTOR_ATTNAME).getDoubleValue();
 			trackerSettings.cutoffPercentile = trackerSettingsEl.getAttribute(TRACKER_SETTINGS_CUTOFF_PERCENTILE_ATTNAME).getDoubleValue();
 			trackerSettings.blockingValue	=  trackerSettingsEl.getAttribute(TRACKER_SETTINGS_BLOCKING_VALUE_ATTNAME).getDoubleValue();

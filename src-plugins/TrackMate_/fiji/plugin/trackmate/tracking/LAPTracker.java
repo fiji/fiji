@@ -158,23 +158,6 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	/** The settings object that configures this tracker. */
 	protected TrackerSettings settings;
 
-
-	/*
-	 * CONSTRUCTORS
-	 */
-
-	/** 
-	 * Default constructor.
-	 * 
-	 * @param objects Holds a list of Spots for each frame in the time-lapse image.
-	 * @param linkingCosts The cost matrix for step 1, linking objects, specified for every frame.
-	 * @param settings The settings to use for this tracker.
-	 */
-	public LAPTracker() {
-		super();
-		reset();
-	}
-
 	/*	
 	 * PROTECTED METHODS
 	 */
@@ -198,6 +181,7 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	public void setModel(TrackMateModel model) {
 		this.spots = model.getFilteredSpots();
 		this.settings = model.getSettings().trackerSettings;
+		reset();
 	}
 
 	/**

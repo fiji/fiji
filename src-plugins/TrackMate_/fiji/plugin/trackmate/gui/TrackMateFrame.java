@@ -21,11 +21,11 @@ import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
 import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.SpotTracker;
-import fiji.plugin.trackmate.tracking.TrackerType;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
@@ -76,14 +76,14 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 	StartDialogPanel startDialogPanel;
 	SegmenterConfigurationPanel segmenterSettingsPanel;
 	InitFilterPanel initThresholdingPanel;
-	ListChooserPanel<TrackMateModelView> displayerChooserPanel;
 	@SuppressWarnings("rawtypes")
 	ListChooserPanel<SpotSegmenter> segmenterChoicePanel;
+	ListChooserPanel<TrackMateModelView> displayerChooserPanel;
+	ListChooserPanel<SpotTracker> trackerChoicePanel;
 	FilterGuiPanel spotFilterGuiPanel;
 	FilterGuiPanel trackFilterGuiPanel;
 	TrackerSettingsPanel trackerSettingsPanel;
 	DisplayerPanel displayerPanel;
-	ListChooserPanel<TrackerType> trackerChoicePanel;
 
 	/*
 	 * FIELDS
@@ -166,12 +166,15 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 			panel = segmenterChoicePanel;
 			break;
 
-		case TUNE_SEGMENTER_KEY:
+		case TUNE_SEGMENTER_KEY: {
 			if (null != segmenterSettingsPanel)
 				jPanelMain.remove(segmenterSettingsPanel);
-			segmenterSettingsPanel = model.getSettings().segmenterSettings.createConfigurationPanel();
+			Settings settings = model.getSettings();
+			segmenterSettingsPanel = settings.segmenterSettings.createConfigurationPanel();
+			segmenterSettingsPanel.setSegmenterSettings(settings.segmenterSettings, settings.spaceUnits, settings.timeUnits);
 			panel = segmenterSettingsPanel;
 			break;
+		}
 
 		case INITIAL_THRESHOLDING_KEY:
 			if (null != initThresholdingPanel)
@@ -204,8 +207,8 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 		case TUNE_TRACKER_KEY:
 			if (null != trackerSettingsPanel)
 				jPanelMain.remove(trackerSettingsPanel);
-			trackerSettingsPanel = TrackerSettingsPanel.createPanel(model.getSettings(), 
-					model.getFeatureModel().getSpotFeatures(), model.getFeatureModel().getSpotFeatureNames());
+			trackerSettingsPanel = model.getSettings().trackerSettings.createConfigurationPanel();
+			trackerSettingsPanel.setTrackerSettings(model.getSettings().trackerSettings, model);
 			panel = trackerSettingsPanel;
 			break;
 

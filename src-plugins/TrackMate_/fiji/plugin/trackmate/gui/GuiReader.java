@@ -292,7 +292,7 @@ public class GuiReader {
 				// Fill in defaults
 				trackerSettings = new TrackerSettings();
 				settings.trackerSettings = trackerSettings;
-				settings.trackerType = trackerSettings.trackerType;
+//				settings.trackerType = trackerSettings.trackerType;
 				model.setSettings(settings);
 				if (null != controller) {
 					view.setModel(model);
@@ -310,7 +310,7 @@ public class GuiReader {
 			}
 
 			settings.trackerSettings = trackerSettings;
-			settings.trackerType = trackerSettings.trackerType;
+//			settings.trackerType = trackerSettings.trackerType;
 			model.setSettings(settings);
 			logger.log("  Reading tracker settings done.\n");
 		}

@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate.gui;
 
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 /**
@@ -19,8 +20,9 @@ public abstract class TrackerSettingsPanel extends ActionListenablePanel {
 	
 	/**
 	 * Echo the parameters of the given instance of {@link TrackerSettings} on
-	 * this panel. Also for convenience, we pass the physical units name
-	 * to the panel, so that the user can enter only physical quantities.
+	 * this panel. Also for convenience, we pass the whole model to this panel.
+	 * Indeed, some specialized settings might require to access the declared 
+	 * features or other data to generate a proper settings object. 
 	 */
-	public abstract void setTrackerSettings(TrackerSettings settings, String spaceUnits, String timeUnits);
+	public abstract void setTrackerSettings(TrackerSettings settings, TrackMateModel model);
 }

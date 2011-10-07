@@ -28,7 +28,6 @@ import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.FastLAPTracker;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.SpotTracker;
-import fiji.plugin.trackmate.tracking.hungarian.SchindelinHungarianAlgorithm;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
@@ -318,7 +317,7 @@ public class TrackMate_ implements PlugIn {
 	 * @see #getTrackGraph()
 	 */ 
 	public void execTracking() {
-		SpotTracker tracker = model.getSettings().getSpotTracker(model);
+		SpotTracker tracker = model.getSettings().tracker;
 		tracker.setLogger(model.getLogger());
 		if (tracker.checkInput() && tracker.process()) {
 			model.setGraph(tracker.getResult());

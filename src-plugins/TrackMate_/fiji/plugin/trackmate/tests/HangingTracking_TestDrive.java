@@ -33,16 +33,21 @@ public class HangingTracking_TestDrive {
 		System.out.println("Without feature condition:");
 		TrackerSettings trackerSettings = reader.getTrackerSettings();
 		trackerSettings.linkingDistanceCutOff = 60;
+		model.getSettings().trackerSettings = trackerSettings;
 		
-
-		LAPTracker tracker = new LAPTracker(filteredSpots, trackerSettings);
+		LAPTracker tracker = new LAPTracker();
+		tracker.setModel(model);
+		
 		System.out.println("For frame pair "+frame+" -> "+(frame+1)+":");
 		System.out.println("There are "+filteredSpots.getNSpots(frame)+" spots to link to "+filteredSpots.getNSpots(frame+1));
 
 		System.out.println();
 		System.out.println("With feature condition:");
 		trackerSettings.linkingFeaturePenalties.put(BlobMorphology.MORPHOLOGY, (double) 1);
-		tracker = new LAPTracker(filteredSpots, trackerSettings);
+		
+		tracker = new LAPTracker();
+		tracker.setModel(model);
+		
 		System.out.println("For frame pair "+frame+" -> "+(frame+1)+":");
 		System.out.println("There are "+filteredSpots.getNSpots(frame)+" spots to link to "+filteredSpots.getNSpots(frame+1));
 

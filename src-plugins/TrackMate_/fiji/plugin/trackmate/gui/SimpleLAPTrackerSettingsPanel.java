@@ -1,7 +1,7 @@
 package fiji.plugin.trackmate.gui;
 
-import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.BIG_FONT;
+import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.TEXTFIELD_DIMENSION;
 
 import java.awt.Font;
@@ -9,11 +9,10 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
-import javax.swing.WindowConstants;
 
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
@@ -49,9 +48,10 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerSettingsPanel {
 	 * PUBLIC METHODS
 	 */
 	
-	public void setTrackerSettings(TrackerSettings settings, String spaceUnits, String timeUnits) {
+	@Override
+	public void setTrackerSettings(TrackerSettings settings, TrackMateModel model) {
 		this.settings = settings;
-		echoSettings(spaceUnits, timeUnits);
+		echoSettings(model.getSettings().spaceUnits, model.getSettings().timeUnits);
 		
 	};
 	
@@ -166,27 +166,5 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerSettingsPanel {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-
-	
-	/*
-	 * MAIN METHOD
-	 */
-	
-
-	/**
-	* Auto-generated main method to display this 
-	* JPanel inside a new JFrame.
-	*/
-	public static void main(String[] args) {
-		JFrame frame = new JFrame();
-		TrackerSettings ts = new TrackerSettings();
-		ts.trackerType = fiji.plugin.trackmate.tracking.TrackerType.SIMPLE_LAP_TRACKER;
-		SimpleLAPTrackerSettingsPanel sl = new SimpleLAPTrackerSettingsPanel();
-		frame.getContentPane().add(sl);
-		sl.setTrackerSettings(ts, "su", "tu");
-		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-		frame.pack();
-		frame.setVisible(true);
 	}
 }

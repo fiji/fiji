@@ -1,6 +1,5 @@
 package fiji.plugin.trackmate.io;
 
-
 import static fiji.plugin.trackmate.io.TmXmlKeys.*;
 
 import java.io.File;
@@ -28,7 +27,6 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
-import fiji.plugin.trackmate.tracking.TrackerType;
 
 public class TmXmlWriter {
 
@@ -178,13 +176,7 @@ public class TmXmlWriter {
 
 	private void echoTrackerSettings() {
 		TrackerSettings settings = model.getSettings().trackerSettings;
-		TrackerType type = settings.trackerType;
-		if (null == type)
-			return;
 		Element trackerSettingsElement = new Element(TRACKER_SETTINGS_ELEMENT_KEY);
-		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_TRACKER_TYPE_ATTRIBUTE_NAME, 		settings.trackerType.name());
-		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_TIME_UNITS_ATTNAME, 				settings.timeUnits);
-		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_SPACE_UNITS_ATTNAME, 				settings.spaceUnits);
 		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_ALTERNATE_COST_FACTOR_ATTNAME, 	""+settings.alternativeObjectLinkingCostFactor);
 		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_CUTOFF_PERCENTILE_ATTNAME, 		""+settings.cutoffPercentile);
 		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_BLOCKING_VALUE_ATTNAME,			""+settings.blockingValue);

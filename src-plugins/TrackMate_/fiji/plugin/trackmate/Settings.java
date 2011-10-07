@@ -2,8 +2,8 @@ package fiji.plugin.trackmate;
 
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
+import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
-import fiji.plugin.trackmate.tracking.TrackerType;
 import ij.ImagePlus;
 import ij.gui.Roi;
 
@@ -45,7 +45,7 @@ public class Settings {
 	public String spaceUnits 		= "pixels";
 	
 	public SpotSegmenter<? extends RealType<?>> segmenter;
-	public TrackerType trackerType = TrackerType.LAP_TRACKER;
+	public SpotTracker tracker;
 	
 	public SegmenterSettings segmenterSettings = null;
 	public TrackerSettings trackerSettings = null;
