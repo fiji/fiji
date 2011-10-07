@@ -6,10 +6,11 @@ import ij.measure.ResultsTable;
 import java.util.EnumSet;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
+import mpicbg.imglib.cursor.special.TwinCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
+import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.LongType;
 import results.ResultHandler;
@@ -171,12 +172,13 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm<T> {
 		double ch2BinWidth = getYBinWidth(container);
 
 		// get the 2 images for the calculation of Pearson's
-		Image<T> img1 = getImageCh1(container);
-		Image<T> img2 = getImageCh2(container);
+		final Image<T> img1 = getImageCh1(container);
+		final Image<T> img2 = getImageCh2(container);
+		final Image<BitType> mask = container.getMask();
 
 		// get the cursors for iterating through pixels in images
-		Cursor<T> cursor1 = img1.createCursor();
-		Cursor<T> cursor2 = img2.createCursor();
+		TwinCursor<T> cursor = new TwinCursor<T>(img1.createLocalizableByDimCursor(),
+				img2.createLocalizableByDimCursor(), mask.createLocalizableCursor());
 
 		// create new image to put the scatter-plot in
 		final ImageFactory<LongType> scatterFactory =
@@ -187,17 +189,12 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm<T> {
 		final LocalizableByDimCursor<LongType> histogram2DCursor =
 			plotImage.createLocalizableByDimCursor();
 
-		// iterate over image
-		while (cursor1.hasNext() && cursor2.hasNext()) {
-			cursor1.fwd();
-			cursor2.fwd();
-			T type1 = cursor1.getType();
-			double ch1 = type1.getRealDouble();
-			T type2 = cursor2.getType();
-			double ch2 = type2.getRealDouble();
-
-			/*
-			 * Scale values for both channels to fit in the range.
+		// iterate over images
+		while (cursor.hasNext()) {
+			cursor.fwd();
+			double ch1 = cursor.getChannel1().getRealDouble();
+			double ch2 = cursor.getChannel2().getRealDouble();
+			/* Scale values for both channels to fit in the range.
 			 * Moreover mirror the y value on the x axis.
 			 */
 			int scaledXvalue = getXValue(ch1, ch1BinWidth, ch2, ch2BinWidth);
@@ -210,6 +207,7 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm<T> {
 
 			histogram2DCursor.getType().set(count);
 		}
+		cursor.close();
 
 		xBinWidth = ch1BinWidth;
 		yBinWidth = ch2BinWidth;
