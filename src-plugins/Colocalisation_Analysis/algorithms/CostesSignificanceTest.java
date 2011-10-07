@@ -4,6 +4,7 @@ import gadgets.DataContainer;
 import gadgets.Statistics;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -23,7 +24,8 @@ import mpicbg.imglib.type.numeric.real.FloatType;
 import results.ResultHandler;
 
 public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> {
-	protected int psfRadiusInPixels[] = new int[3];
+	// radius of the PSF in pixels, its size *must* for now be three
+	protected int[] psfRadius = new int[3];
 	// the lists of cursor blocks, representing the images
 	List<RegionOfInterestCursor<T>> blocks, outputBlocks;
 	// indicates if the shuffled images should be shown as a result
@@ -53,7 +55,6 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 	protected final int maxErrorRetries = 3;
 
 
-
 	/**
 	 * Creates a new Costes significance test object by using a
 	 * cube block with the given edge length.
@@ -62,20 +63,19 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 	 */
 	public CostesSignificanceTest(PearsonsCorrelation<T> pc, int psfRadiusInPixels, int nrRandomizations) {
 		this.pearsonsCorrelation = pc;
-		this.psfRadiusInPixels[0] = psfRadiusInPixels;
-		this.psfRadiusInPixels[1] = psfRadiusInPixels;
-		this.psfRadiusInPixels[2] = psfRadiusInPixels;
+		Arrays.fill(psfRadius, psfRadiusInPixels);
 		this.nrRandomizations = nrRandomizations;
 	}
 
+	/**
+	 * Builds a list of blocks that represent the images. To
+	 * do so we create a list image ROI cursors. If a block
+	 * does not fit into the image it will get a out-of-bounds
+	 * strategy.
+	 */
 	@Override
 	public void execute(DataContainer<T> container)
 			throws MissingPreconditionException {
-		/* Build a list of blocks that represent the images. To
-		 * do so we create a list image ROI cursors. If a block
-		 * does not fit into the image it will get a out-of-bounds
-		 * strategy.
-		 */
 
 		// get the 2 images for the calculation of Pearson's
 		Image<T> img1 = container.getSourceImage1();
@@ -86,14 +86,14 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 		int[] dimensions = img1.getDimensions();
 		int nrDimensions = img1.getNumDimensions();
 
-		// calculate the number of blocks per image
+		// calculate the needed number of blocks per image
 		int nrBlocksPerImage = 1;
 		int[] nrBlocksPerDimension = new int[3];
 		for (int i = 0; i < nrDimensions; i++) {
 			// add the amount of full fitting blocks to the counter
-			nrBlocksPerDimension[i] = dimensions[i] / psfRadiusInPixels[i];
+			nrBlocksPerDimension[i] = dimensions[i] / psfRadius[i];
 			// if there is the need for a out-of-bounds block, increase count
-			if ( dimensions[i] % psfRadiusInPixels[i] != 0 )
+			if ( dimensions[i] % psfRadius[i] != 0 )
 				nrBlocksPerDimension[i]++;
 			// increase total count
 			nrBlocksPerImage *= nrBlocksPerDimension[i];
@@ -124,9 +124,9 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 		assert(blocks.size() == outputBlocks.size());
 
 		// create a double version of the PSF for the smoothing
-		double[] psfRadius = new double[nrDimensions];
+		double[] smoothingPsfRadius = new double[nrDimensions];
 		for (int i = 0; i < nrDimensions; i++) {
-			psfRadius[i] = (double) psfRadiusInPixels[i];
+			smoothingPsfRadius[i] = (double) psfRadius[i];
 		}
 		/* Create new type converters and image factories for ImgLib
 		 * GaussionConvolution3. There is no need to construct them
@@ -194,7 +194,7 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 			// create a Gaussian smoothing algorithm
 			GaussianConvolution3<T, FloatType, T> smoother
 				= new GaussianConvolution3<T, FloatType, T>(shuffledImage, imageFactoryIn, imageFactoryOut,
-						smootherOobFactory, typeConverterIn, typeConverterOut, psfRadius );
+						smootherOobFactory, typeConverterIn, typeConverterOut, smoothingPsfRadius );
 			// smooth the image
 			if ( smoother.checkInput() && smoother.process() ) {
 				smoothedShuffledImage = smoother.getResult();
@@ -265,13 +265,13 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 		{ // for a 3D image...
 			int z;
 			// go through the depth in steps of block depth
-			for ( z = psfRadiusInPixels[2]; z <= dimensions[2]; z += psfRadiusInPixels[2] ) {
-				offset[2] = z - psfRadiusInPixels[2];
+			for ( z = psfRadius[2]; z <= dimensions[2]; z += psfRadius[2] ) {
+				offset[2] = z - psfRadius[2];
 				generateBlocksXY(img, blockList, offset, outOfBoundsFactory, false);
 			}
 			// check is we need to add a out of bounds strategy cursor
 			if (z > dimensions[2]) {
-				offset[2] = z - psfRadiusInPixels[2];
+				offset[2] = z - psfRadius[2];
 				generateBlocksXY(img, blockList, offset, outOfBoundsFactory, true);
 			}
 		}
@@ -297,13 +297,13 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 		int height = img.getDimension(1);
 		// go through the height in steps of block width
 		int y;
-		for ( y = psfRadiusInPixels[1]; y <= height; y += psfRadiusInPixels[1] ) {
-			offset[1] = y - psfRadiusInPixels[1];
+		for ( y = psfRadius[1]; y <= height; y += psfRadius[1] ) {
+			offset[1] = y - psfRadius[1];
 			generateBlocksX(img, blockList, offset, outOfBoundsFactory, forceOutOfBounds);
 		}
 		// check is we need to add a out of bounds strategy cursor
 		if (y > height) {
-			offset[1] = y - psfRadiusInPixels[1];
+			offset[1] = y - psfRadius[1];
 			generateBlocksX(img, blockList, offset, outOfBoundsFactory, true);
 		}
 	}
@@ -325,8 +325,8 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 		int width = img.getDimension(0);
 		// go through the width in steps of block width
 		int x;
-		for ( x = psfRadiusInPixels[0]; x <= width; x += psfRadiusInPixels[0] ) {
-			offset[0] = x - psfRadiusInPixels[0];
+		for ( x = psfRadius[0]; x <= width; x += psfRadius[0] ) {
+			offset[0] = x - psfRadius[0];
 
 			LocalizableByDimCursor<T> locCursor;
 			if (forceOutOfBounds)
@@ -335,16 +335,16 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 				locCursor = img.createLocalizableByDimCursor();
 
 			RegionOfInterestCursor<T> roiCursor
-				= locCursor.createRegionOfInterestCursor( offset, psfRadiusInPixels );
+				= locCursor.createRegionOfInterestCursor( offset, psfRadius );
 			blockList.add(roiCursor);
 		}
 		// check is we need to add a out of bounds strategy cursor
 		if (x > width) {
-			offset[0] = x - psfRadiusInPixels[0];
+			offset[0] = x - psfRadius[0];
 			LocalizableByDimCursor<T> locCursor
 				= img.createLocalizableByDimCursor( outOfBoundsFactory );
 			RegionOfInterestCursor<T> roiCursor
-				= locCursor.createRegionOfInterestCursor( offset, psfRadiusInPixels );
+				= locCursor.createRegionOfInterestCursor( offset, psfRadius );
 			blockList.add(roiCursor);
 		}
 	}
