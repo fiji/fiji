@@ -10,6 +10,7 @@ import javassist.CtClass;
 import javassist.CtConstructor;
 import javassist.CtField;
 import javassist.CtMethod;
+import javassist.CtNewConstructor;
 import javassist.CtNewMethod;
 import javassist.Modifier;
 import javassist.NotFoundException;
@@ -459,7 +460,69 @@ public class IJHacker implements Runnable {
 					try {
 						if (handler.getType().getName().equals("java.lang.reflect.InvocationTargetException"))
 							handler.insertBefore("ij.IJ.handleException($1);"
-								+ "return null");
+								+ "return null;");
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			});
+
+			clazz.toClass();
+
+			// Make ij.Command a superclass of fiji.command.Command
+			clazz = pool.getAndRename("fiji.command.Command", "ij.Command");
+			clazz.toClass();
+			clazz = pool.makeClass("fiji.command.Command", clazz);
+			clazz.addConstructor(CtNewConstructor.make("public Command(String string) {"
+				+ "  super(string);"
+				+ "}", clazz));
+			clazz.addMethod(CtNewMethod.make("public void notify(fiji.command.CommandListenerPlus listener, int action) {"
+				+ "  listener.stateChanged(this, action);"
+				+ "}", clazz));
+
+			clazz.toClass();
+
+			// Make ij.CommandListenerPlus a subinterface of fiji.command.CommandListenerPlus
+			clazz = pool.makeInterface("ij.CommandListenerPlus", pool.get("fiji.command.CommandListenerPlus"));
+
+			clazz.toClass();
+
+			// Class ij.Executer
+			clazz = pool.get("ij.Executer");
+
+			// handle CommandListenerPlus instances
+			field = new CtField(pool.get("fiji.command.Command"), "cmd", clazz);
+			clazz.addField(field);
+			method = clazz.getMethod("run", "()V");
+			method.instrument(new ExprEditor() {
+				@Override
+				public void edit(MethodCall call) throws CannotCompileException {
+					String name = call.getMethodName();
+					if (name.equals("commandExecuting"))
+						call.replace("$_ = $0.commandExecuting($1);"
+							+ "if (cmd == null)"
+							+ "  cmd = new fiji.command.Command($1);"
+							+ "if ($0 instanceof fiji.command.CommandListenerPlus) {"
+							+ "  cmd.notify((fiji.command.CommandListenerPlus)$0,"
+							+ "     fiji.command.CommandListenerPlus.CMD_REQUESTED);"
+							+ "  if (cmd.isConsumed())"
+							+ "    return;"
+							+ "}");
+					else if (name.equals("runCommand"))
+						call.replace("cmd.runCommand(listeners);");
+				}
+
+				@Override
+				public void edit(Handler handler) throws CannotCompileException {
+					try {
+						CtClass type = handler.getType();
+						if (type == null)
+							return;
+						if (type.getName().equals("java.lang.Throwable"))
+							handler.insertBefore("if ($1 instanceof RuntimeException && ij.Macro.MACRO_CANCELED.equals($1.getMessage()))"
+								+ "  cmd.notify(listeners, fiji.command.CommandListenerPlus.CMD_CANCELED);"
+								+ "else"
+								+ " cmd.notify(listeners, fiji.command.CommandListenerPlus.CMD_ERROR);");
 					} catch (Exception e) {
 						e.printStackTrace();
 					}

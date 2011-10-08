@@ -309,7 +309,7 @@ public class User_Plugins implements PlugIn {
 		return item;
 	}
 
-	protected static Menu getMenu(String menuPath) {
+	public static Menu getMenu(String menuPath) {
 		return (Menu)getMenuItem(Menus.getMenuBar(), menuPath, true);
 	}
 
