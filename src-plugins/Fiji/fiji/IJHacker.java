@@ -349,6 +349,7 @@ public class IJHacker implements Runnable {
 						call.replace("$_ = $0.getAbsolutePath();");
 				}
 			});
+			handleHTTPS(clazz.getMethod("drop", "(Ljava/awt/dnd/DropTargetDropEvent;)V"));
 
 			clazz.toClass();
 
@@ -467,6 +468,7 @@ public class IJHacker implements Runnable {
 					}
 				}
 			});
+			handleHTTPS(clazz.getMethod("exec", "()Ljava/lang/String;"));
 
 			clazz.toClass();
 
@@ -538,6 +540,15 @@ public class IJHacker implements Runnable {
 				handleMousePressed(clazz);
 				clazz.toClass();
 			}
+
+			// handle https:// in addition to http://
+			clazz = pool.get("ij.io.PluginInstaller");
+			handleHTTPS(clazz.getMethod("install", "(Ljava/lang/String;)Z"));
+			clazz.toString();
+
+			clazz = pool.get("ij.plugin.ListVirtualStack");
+			handleHTTPS(clazz.getMethod("run", "(Ljava/lang/String;)V"));
+			clazz.toString();
 		} catch (NotFoundException e) {
 			e.printStackTrace();
 		} catch (CannotCompileException e) {
@@ -633,5 +644,47 @@ public class IJHacker implements Runnable {
 			method = clazz.getMethod("mouseDragged", "(Ljava/awt/event/MouseEvent;)V");
 			method.instrument(editor);
 		} catch (NotFoundException e) { /* ignore */ }
+	}
+
+	private void handleHTTPS(final CtMethod method) throws CannotCompileException {
+		method.instrument(new ExprEditor() {
+			@Override
+			public void edit(MethodCall call) throws CannotCompileException {
+				try {
+					if (call.getMethodName().equals("startsWith") &&
+							"http://".equals(getLatestArg(call, 0)))
+						call.replace("$_ = $0.startsWith($1) || $0.startsWith(\"https://\");");
+				} catch (BadBytecode e) {
+					e.printStackTrace();
+				} catch (NotFoundException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+
+	private String getLatestArg(MethodCall call, int skip) throws BadBytecode, NotFoundException {
+		int[] indices = new int[skip + 1];
+		int counter = 0;
+
+		MethodInfo info = ((CtMethod)call.where()).getMethodInfo();
+		CodeIterator iterator = info.getCodeAttribute().iterator();
+		int currentPos = call.indexOfBytecode();
+		while (iterator.hasNext()) {
+			int pos = iterator.next();
+			if (pos >= currentPos)
+				break;
+			switch (iterator.byteAt(pos)) {
+			case Opcode.LDC:
+				indices[(counter++) % indices.length] = iterator.byteAt(pos + 1);
+				break;
+			case Opcode.LDC_W:
+				indices[(counter++) % indices.length] = iterator.u16bitAt(pos + 1);
+				break;
+			}
+		}
+		if (counter < skip)
+			return null;
+		return info.getConstPool().getStringInfo(indices[(indices.length + counter - skip) % indices.length]);
 	}
 }
