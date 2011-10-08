@@ -360,8 +360,7 @@ public class IJHacker implements Runnable {
 
 			// open StartupMacros with the Script Editor
 			method = clazz.getMethod("openStartupMacros", "()V");
-			method.insertBefore("String path = ij.IJ.getDirectory(\"macros\") + \"/StartupMacros.txt\";"
-				+ "if (ij.IJ.runPlugIn(\"fiji.scripting.Script_Editor\", path) != null)"
+			method.insertBefore("if (fiji.FijiTools.openStartupMacros())"
 				+ "  return;");
 
 			clazz.toClass();
