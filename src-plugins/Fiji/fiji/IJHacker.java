@@ -549,6 +549,46 @@ public class IJHacker implements Runnable {
 			clazz = pool.get("ij.plugin.ListVirtualStack");
 			handleHTTPS(clazz.getMethod("run", "(Ljava/lang/String;)V"));
 			clazz.toString();
+
+			// Add back the "Convert to 8-bit Grayscale" checkbox to Import>Image Sequence
+			clazz = pool.get("ij.plugin.FolderOpener");
+			if (!hasField(clazz, "convertToGrayscale")) {
+				field = new CtField(CtClass.booleanType, "convertToGrayscale", clazz);
+				clazz.addField(field);
+				method = clazz.getMethod("run", "(Ljava/lang/String;)V");
+				method.instrument(new ExprEditor() {
+					protected int openImageCount;
+
+					@Override
+					public void edit(MethodCall call) throws CannotCompileException {
+						if (call.getMethodName().equals("openImage") && openImageCount++ == 1)
+							call.replace("$_ = $0.openImage($1, $2);"
+								+ "if (convertToGrayscale)"
+								+ "  ij.IJ.run($_, \"8-bit\", \"\");");
+					}
+				});
+				method = clazz.getMethod("showDialog", "(Lij/ImagePlus;[Ljava/lang/String;)Z");
+				method.instrument(new ExprEditor() {
+					protected int addCheckboxCount, getNextBooleanCount;
+
+					@Override
+					public void edit(MethodCall call) throws CannotCompileException {
+						String name = call.getMethodName();
+						if (name.equals("addCheckbox") && addCheckboxCount++ == 0)
+							call.replace("$0.addCheckbox(\"Convert to 8-bit Grayscale\", convertToGrayscale);"
+								+ "$0.addCheckbox($1, $2);");
+						else if (name.equals("getNextBoolean") && getNextBooleanCount++ == 0)
+							call.replace("convertToGrayscale = $0.getNextBoolean();"
+								+ "$_ = $0.getNextBoolean();"
+								+ "if (convertToGrayscale && $_) {"
+								+ "  ij.IJ.error(\"Cannot convert to grayscale and RGB at the same time.\");"
+								+ "  return false;"
+								+ "}");
+					}
+				});
+
+				clazz.toClass();
+			}
 		} catch (NotFoundException e) {
 			e.printStackTrace();
 		} catch (CannotCompileException e) {
@@ -686,5 +726,13 @@ public class IJHacker implements Runnable {
 		if (counter < skip)
 			return null;
 		return info.getConstPool().getStringInfo(indices[(indices.length + counter - skip) % indices.length]);
+	}
+
+	private boolean hasField(CtClass clazz, String name) {
+		try {
+			return clazz.getField(name) != null;
+		} catch (NotFoundException e) {
+			return false;
+		}
 	}
 }
