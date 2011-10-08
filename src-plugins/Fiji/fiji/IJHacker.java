@@ -4,6 +4,8 @@ package fiji;
  * Modify some IJ1 quirks at runtime, thanks to Javassist
  */
 
+import java.io.File;
+
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -588,6 +590,30 @@ public class IJHacker implements Runnable {
 				});
 
 				clazz.toClass();
+			}
+
+			// If there is a macros/StartupMacros.fiji, but no macros/StartupMacros.txt, execute that
+			try {
+				clazz = get("ij.Menus");
+				File macrosDirectory = new File(FijiTools.getFijiDir(), "macros");
+				File startupMacrosFile = new File(macrosDirectory, "StartupMacros.fiji");
+				if (startupMacrosFile.exists() &&
+						!new File(macrosDirectory, "StartupMacros.txt").exists() &&
+						!new File(macrosDirectory, "StartupMacros.ijm").exists()) {
+					method = clazz.getMethod("installStartupMacroSet", "()V");
+					final String startupMacrosPath = startupMacrosFile.getPath().replace("\\", "\\\\").replace("\"", "\\\"");
+					method.instrument(new ExprEditor() {
+						@Override
+						public void edit(MethodCall call) throws CannotCompileException {
+							if (call.getMethodName().equals("installFromIJJar"))
+								call.replace("$0.installFile(\"" + startupMacrosPath + "\");"
+									+ "nMacros += $0.getMacroCount();");
+						}
+					});
+				}
+				clazz.toClass();
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
 			}
 		} catch (NotFoundException e) {
 			e.printStackTrace();
