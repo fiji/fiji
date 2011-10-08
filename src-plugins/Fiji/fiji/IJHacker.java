@@ -232,6 +232,7 @@ public class IJHacker implements Runnable {
 						call.replace("$_ = $0.equals($1) || $0.startsWith($1 + \"-\") || $0.startsWith($1 + \" -\");");
 				}
 			});
+			handleMousePressed(clazz);
 
 			clazz.toClass();
 
@@ -530,6 +531,13 @@ public class IJHacker implements Runnable {
 			});
 
 			clazz.toClass();
+
+			// handle mighty mouse (at least on old Linux, Java mistakes the horizontal wheel for a popup trigger)
+			for (String name : new String[] { "ij.gui.ImageCanvas", "ij.plugin.frame.RoiManager", "ij.text.TextPanel" }) {
+				clazz = pool.get(name);
+				handleMousePressed(clazz);
+				clazz.toClass();
+			}
 		} catch (NotFoundException e) {
 			e.printStackTrace();
 		} catch (CannotCompileException e) {
@@ -608,5 +616,22 @@ public class IJHacker implements Runnable {
 		catch (BadBytecode e) {
 			throw new CannotCompileException(e);
 		}
+	}
+
+	private void handleMousePressed(CtClass clazz) throws CannotCompileException, NotFoundException {
+		// Work around a bug where the horizontal scroll wheel of the mighty mouse is mistaken for a popup trigger
+		ExprEditor editor = new ExprEditor() {
+			@Override
+			public void edit(MethodCall call) throws CannotCompileException {
+				if (call.getMethodName().equals("isPopupTrigger"))
+					call.replace("$_ = $0.isPopupTrigger() && $0.getButton() != 0;");
+			}
+		};
+		CtMethod method = clazz.getMethod("mousePressed", "(Ljava/awt/event/MouseEvent;)V");
+		method.instrument(editor);
+		try {
+			method = clazz.getMethod("mouseDragged", "(Ljava/awt/event/MouseEvent;)V");
+			method.instrument(editor);
+		} catch (NotFoundException e) { /* ignore */ }
 	}
 }
