@@ -484,7 +484,7 @@ public class TileConfigurationSPIM
 							
 							//System.out.println("Writing view " + parent.getName() + " @ iteration " + i );
 							files.getOutput().println( VisualizationSketchTikZ.drawView( parent, factor ) );
-							files.getOutput().println( VisualizationSketchTikZ.drawNuclei( parent.getNucleiStructure().getNucleiList(), TransformUtils.getTransform3D( m ), "Bead", factor ) );
+							files.getOutput().println( VisualizationSketchTikZ.drawNuclei( parent.getNucleiStructure().getNucleiList(), TransformUtils.getTransform3D( m ), factor ) );
 							
 							for ( Nucleus nucleus : parent.getNucleiStructure().getNucleiList() )
 							{

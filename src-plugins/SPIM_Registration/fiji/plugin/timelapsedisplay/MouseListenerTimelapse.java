@@ -43,7 +43,7 @@ public class MouseListenerTimelapse implements ChartMouseListener
 		this.referenceTimePoint = referenceTimePoint;
 		this.enableReferenceTimePoint = enableReferenceTimePoint;
 		
-		if ( enableReferenceTimePoint )
+		if ( enableReferenceTimePoint || referenceTimePoint != -1 ) // at least show it if it is not -1
 		{
 			valueMarker = makeMarker( referenceTimePoint );
 			

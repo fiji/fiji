@@ -10,6 +10,7 @@ import javax.media.j3d.Transform3D;
 import javax.vecmath.Matrix4f;
 
 import mpicbg.imglib.algorithm.gauss.DownSample;
+import mpicbg.imglib.algorithm.mirror.MirrorImage;
 //import mpicbg.imglib.algorithm.mirror.MirrorImage;
 import mpicbg.imglib.container.ContainerFactory;
 import mpicbg.imglib.cursor.Cursor;
@@ -25,23 +26,31 @@ import mpicbg.spim.registration.segmentation.NucleusStructure;
 
 public class ViewDataBeads implements Comparable< ViewDataBeads >
 {
+	/**
+	 * @param <M> - an implementation of the {@link AbstractAffineModel3D}
+	 * @param id - an unique id
+	 * @param model - the model instance, unintitialized
+	 * @param fileName - the filename (or directory with 2d planes) of the view
+	 * @param zStretching - the z/xy stretching
+	 */
 	public <M extends AbstractAffineModel3D<M>> ViewDataBeads( final int id, final M model, final String fileName, final double zStretching )
 	{		
 		setID( id );
 		setFileName( fileName );
 		setZStretching( zStretching );
 		
+		this.uninitializedModel = model.copy();
 		this.tile = new TileSPIM<M>( model.copy(), this );
 		this.beads = new BeadStructure();
 		this.nuclei = new NucleusStructure(); 
 	}
 	
 	/**
-	 * Provides the capability to lock a {@link ViewDataBeads} object if necessary
+	 * An uninitialized {@link AbstractAffineModel3D}
 	 */
-	//public AtomicInteger islockedA = new AtomicInteger( 0 );
-	//public AtomicInteger islockedB = new AtomicInteger( 0 );
-		
+	final AbstractAffineModel3D<?> uninitializedModel;
+	public AbstractAffineModel3D<?> getUninitializedModel() { return uninitializedModel; }
+	
 	/**
 	 * if the view is connected to any other view or excluded from the registration because no true correspondences were found
 	 * @return true if it is connected, otherwise false
@@ -222,6 +231,8 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	 * The input image
 	 */
 	private Image<FloatType> image = null;
+	private boolean isNormalized;
+	private float minValue = 0;
 	private float maxValue = 0;
 
 	/**
@@ -230,14 +241,23 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	 */
 	public int getNumDimensions() { return getImageSize().length; }
 	public float getMaxValueUnnormed() { return maxValue; }
-	
+
+	/**
+	 * The link to the input image of this view, normalized to [0...1]
+	 * @return the link or null unable to open
+	 */
+	public Image<FloatType> getImage()
+	{
+		return getImage( true );
+	}
+
 	/**
 	 * The link to the input image of this view
 	 * @return the link or null unable to open
 	 */
-	public Image<FloatType> getImage() 
+	public Image<FloatType> getImage( final boolean normalize ) 
 	{
-		return getImage( getViewStructure().getSPIMConfiguration().imageFactory );
+		return getImage( getViewStructure().getSPIMConfiguration().imageFactory, normalize );
 	}
 	
 	/**
@@ -246,7 +266,24 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	protected Image<FloatType> downSampledImage = null;
 	protected int currentDownSamplingFactor = -1;
 
+	/**
+	 * Gets a downsampled and normalized [0...1] version of the input image
+	 * 
+	 * @param downSamplingFactor - the factor
+	 */
 	public Image<FloatType> getDownSampledImage( final int downSamplingFactor )
+	{
+		return getDownSampledImage( downSamplingFactor, true );
+	}
+
+	/**
+	 * Gets a downsampled version of the input image
+	 * 
+	 * @param downSamplingFactor - the factor
+	 * @param normalize - if normalized to [0...1] or not
+	 * @return
+	 */
+	public Image<FloatType> getDownSampledImage( final int downSamplingFactor, final boolean normalize )
 	{
 		// if there is no downsampling we just return the image as is
 		if ( downSamplingFactor == 1 )
@@ -277,14 +314,23 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	protected boolean mirrorVertically = false, mirrorHorizontally = false;
 	public void setMirrorHorizontally( final boolean state ) { mirrorHorizontally = state; }
 	public void setMirrorVertically( final boolean state ) { mirrorVertically = state; }
-	public boolean getMirrorHorizontally() { return false; }
-	public boolean getMirrorVertically() { return false; }
+	public boolean getMirrorHorizontally() { return mirrorHorizontally; }
+	public boolean getMirrorVertically() { return mirrorVertically; }
+
+	/**
+	 * The link to the input image of this view normalized to [0...1]
+	 * @return the link or null unable to open
+	 */
+	public Image<FloatType> getImage( final ContainerFactory imageFactory ) 
+	{
+		return getImage( imageFactory, true );
+	}
 	
 	/**
 	 * The link to the input image of this view
 	 * @return the link or null unable to open
 	 */
-	public Image<FloatType> getImage( final ContainerFactory imageFactory ) 
+	public Image<FloatType> getImage( final ContainerFactory imageFactory, final boolean normalize ) 
 	{
 		if ( image == null )
 		{
@@ -308,7 +354,6 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 			if ( getViewStructure().getSPIMConfiguration().overrideImageZStretching )
 				image.setCalibration( new float[]{ 1, 1, (float)getViewStructure().getSPIMConfiguration().zStretching } );
 			
-			/*
 			if ( getMirrorHorizontally() )
 			{
 				IOFunctions.println( "Mirroring horizontally: " + this ); 
@@ -322,11 +367,23 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 				final MirrorImage<FloatType> mirror = new MirrorImage<FloatType>( image, 1 );
 				mirror.process();				
 			}
-			*/
 			
 			image.setName( getName() );
-						
-			maxValue = normalizeImage( image );
+			
+			if ( normalize )
+			{
+				final float[] minmax = normalizeImage( image );
+				minValue = minmax[ 0 ];
+				maxValue = minmax[ 1 ];
+				isNormalized = true;
+			}
+			else
+			{
+				image.getDisplay().setMinMax();				
+				minValue = (float)image.getDisplay().getMin();				
+				maxValue = (float)image.getDisplay().getMax();				
+				isNormalized = false;
+			}
 			setImageSize( image.getDimensions() );
 						
 			// now write dims for further use
@@ -335,12 +392,46 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 		
 		return image;
 	}
-		
+
+	public void unnormalizeImage()
+	{
+		if ( image == null )
+		{
+			getImage( false );
+		}
+		else if ( isNormalized )
+		{
+			final float diff = maxValue - minValue;
+
+			for ( final FloatType f : image )
+				f.set( f.get() * diff + minValue );
+			
+			isNormalized = false;
+		}
+	}
+
+	public void normalizeImage()
+	{
+		if ( image == null )
+		{
+			getImage( true );
+		}
+		else if ( !isNormalized )
+		{
+			final float diff = maxValue - minValue;
+			
+			for ( final FloatType f : image )
+				f.set( (f.get() - minValue) / diff );
+			
+			isNormalized = true;
+		}
+	}
+
 	/**
 	 * Normalizes the image to the range [0...1]
 	 * @param image - the image to normalize
 	 */
-	public static float normalizeImage( final Image<FloatType> image )
+	public static float[] normalizeImage( final Image<FloatType> image )
 	{
 		image.getDisplay().setMinMax();
 		
@@ -351,7 +442,7 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 		if ( Float.isNaN( diff ) || Float.isInfinite(diff) || diff == 0 )
 		{
 			IOFunctions.println("Cannot normalize image " + image.getName() + ", min=" + min + "  + max=" + max );
-			return max;
+			return new float[]{ min, max };
 		}
 		
 		final Cursor<FloatType> cursor = image.createCursor();
@@ -368,7 +459,7 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 		
 		image.getDisplay().setMinMax(0, 1);
 		
-		return max;
+		return new float[]{ min, max };
 	}
 	
 	/**

@@ -6,7 +6,10 @@ import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.media.j3d.Transform3D;
+import javax.vecmath.Matrix4f;
+import javax.vecmath.Quat4f;
 import javax.vecmath.Vector3d;
+import javax.vecmath.Vector3f;
 
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.models.AbstractAffineModel3D;
@@ -15,6 +18,7 @@ import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.Model;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.RigidModel3D;
+import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
@@ -95,10 +99,10 @@ public class BeadRegistration
 			return;
 		}
 		
-		// reset the affine models of the template (only if template does not equal reference)
-		AffineModel3D m = new AffineModel3D();
+		// reset the models of the template (only if template does not equal reference)
+		//AffineModel3D m = new AffineModel3D();
 		for ( final ViewDataBeads views : template.getViews() )
-			views.getTile().getModel().set( m );
+			views.getTile().getModel().set( views.getUninitializedModel() );
 		
 		//
 		// compute the proper alignment
@@ -535,15 +539,27 @@ public class BeadRegistration
 					Transform3D t = TransformUtils.getTransform3D1( (AbstractAffineModel3D<?>)view.getTile().getModel() );
 					Vector3d s = new Vector3d();
 					t.getScale( s );
-					IOFunctions.println( "Scaling: " + s );
 					
-					// TODO: Rigidmodel
-					/*
+			        if ( view.getViewStructure().getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+			        	IOFunctions.println( "Scaling: " + s );
+
+			        // if it was a rigid model, output approx. rotation axis and rotation angle
 					if ( view.getTile().getModel() instanceof RigidModel3D )
 					{
-						
+				        final Matrix4f matrix = new Matrix4f();
+				        TransformUtils.getTransform3D( ( (RigidModel3D)view.getTile().getModel() ) ).get( matrix );	        	        
+				        final Quat4f qu = new Quat4f();	        
+				        qu.set( matrix );
+				        
+				        final Vector3f n = new Vector3f(qu.getX(),qu.getY(), qu.getZ());
+				        n.normalize();
+				        
+				        if ( view.getViewStructure().getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+				        {
+							IOFunctions.println( "Approx. Axis: " + n );      
+							IOFunctions.println( "Approx. Angle: " + Math.toDegrees( Math.acos( qu.getW() ) * 2 ) );
+				        }				
 					}
-					*/
 				}
 			}
 			else
@@ -609,9 +625,13 @@ public class BeadRegistration
 
 				((RigidModel3D)model).concatenate( tmpModel );				
 			}
+			else if ( model instanceof TranslationModel3D )
+			{
+				IOFunctions.println( "Cannot concatenate Axial Scaling with TranslationModel3D, you can load the registration as Affine or Rigid model and run it then!" );
+			}
 			else
 			{
-				IOFunctions.println( "Cannot concatenate Axial Scaling, unknown model!" );
+				IOFunctions.println( "Cannot concatenate Axial Scaling, unknown model: " + model.getClass().getSimpleName() );
 			}
 		}		
 	}
