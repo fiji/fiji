@@ -38,6 +38,11 @@ public class NucleusIdentification extends DetectionIdentification<NucleusIdenti
 	 * @return the {@link Nucleus} object
 	 */
 	public Nucleus getDetection()
+	{
+		return getDetection( false );
+	}
+	
+	public Nucleus getDetection( final boolean silent )
 	{		
 		Nucleus nucleus = null;
 		
@@ -53,7 +58,7 @@ public class NucleusIdentification extends DetectionIdentification<NucleusIdenti
 				if ( n.getID() == detectionID )
 					nucleus = n;
 
-			if ( nucleus == null )
+			if ( nucleus == null && !silent )
 			{
 				IOFunctions.printErr( "NucleusIdentification.getNucleus(): Cannot find a nucleus for nucleusID=" + detectionID + " in view=" + view.getID() );
 				return null;

@@ -100,4 +100,9 @@ public class GaussContent extends IsolatedPixelWeightener<GaussContent>
 	{
 		gaussContent.close();
 	}
+
+	@Override
+	public Image<FloatType> getResultImage() {
+		return gaussContent;
+	}
 }

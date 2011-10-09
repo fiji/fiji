@@ -33,6 +33,8 @@ public class TranslationInvariantFixedModel extends TranslationInvariantModel<Tr
 		this.m12 = m12;
 		this.m22 = m22;		
 	}
+
+	public TranslationInvariantFixedModel() {}
 	
 	@Override
 	public boolean canDoNumDimension( final int numDimensions ) { return numDimensions == 3; }
