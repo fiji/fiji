@@ -885,7 +885,7 @@ public class IOFunctions
 		
 	public static boolean readRegistration( final ViewDataBeads view, final String fileName )
 	{
-		final AbstractAffineModel3D<?> model = (AbstractAffineModel3D<?>)view.getTile().getModel();
+		final AbstractAffineModel3D model = (AbstractAffineModel3D)view.getTile().getModel();
 		
 		// get 12 entry float array
 		final float m[] = model.getMatrix( null );
