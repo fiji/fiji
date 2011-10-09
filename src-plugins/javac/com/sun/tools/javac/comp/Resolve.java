@@ -1,12 +1,12 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1999, 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.tools.javac.comp;
@@ -42,8 +42,8 @@ import javax.lang.model.element.ElementVisitor;
 
 /** Helper class for name resolution, used mostly by the attribution phase.
  *
- *  <p><b>This is NOT part of any API supported by Sun Microsystems.  If
- *  you write code that depends on this, you do so at your own risk.
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
  */
@@ -407,8 +407,6 @@ public class Resolve {
                      Type site,
                      Name name,
                      TypeSymbol c) {
-        while (c.type.tag == TYPEVAR)
-            c = c.type.getUpperBound().tsym;
         Symbol bestSoFar = varNotFound;
         Symbol sym;
         Scope.Entry e = c.members().lookup(name);
@@ -420,7 +418,7 @@ public class Resolve {
             e = e.next();
         }
         Type st = types.supertype(c.type);
-        if (st != null && (st.tag == CLASS || st.tag == TYPEVAR)) {
+        if (st != null && st.tag == CLASS) {
             sym = findField(env, site, name, st.tsym);
             if (sym.kind < bestSoFar.kind) bestSoFar = sym;
         }
@@ -735,11 +733,9 @@ public class Resolve {
                               boolean allowBoxing,
                               boolean useVarargs,
                               boolean operator) {
-        for (Type ct = intype; ct.tag == CLASS || ct.tag == TYPEVAR; ct = types.supertype(ct)) {
-            while (ct.tag == TYPEVAR)
-                ct = ct.getUpperBound();
+        for (Type ct = intype; ct.tag == CLASS; ct = types.supertype(ct)) {
             ClassSymbol c = (ClassSymbol)ct.tsym;
-            if ((c.flags() & (ABSTRACT | INTERFACE)) == 0)
+            if ((c.flags() & (ABSTRACT | INTERFACE | ENUM)) == 0)
                 abstractok = false;
             for (Scope.Entry e = c.members().lookup(name);
                  e.scope != null;
