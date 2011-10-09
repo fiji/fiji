@@ -200,6 +200,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	public void render()  {	
 		if (DEBUG)
 			System.out.println("[SpotDisplayer3D] Call to render().");
+
 		updateRadiuses();
 		updateSpotColors();
 		spotContent.setVisible((Boolean) displaySettings.get(KEY_SPOTS_VISIBLE));
@@ -211,8 +212,8 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		}
 		universe.show();
 		if (null != settings.imp) {
-//			if (!settings.imp.isVisible())
-//				settings.imp.show();
+			if (!settings.imp.isVisible())
+				settings.imp.show();
 			ImagePlus[] images = TMUtils.makeImageForViewer(settings);
 			final Content imageContent = ContentCreator.createContent(
 					settings.imp.getTitle(), 
@@ -273,7 +274,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 				"be in sync with the hyperstack displayer. " +
 				"</html>"; 
 	}
-	
+
 	@Override
 	public String toString() {
 		return "3D Viewer";

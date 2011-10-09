@@ -8,6 +8,7 @@ import java.awt.Insets;
 
 import javax.swing.JCheckBox;
 
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.DogSegmenterSettings;
 import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
@@ -44,9 +45,9 @@ public class DogSegmenterConfigurationPanel extends LogSegmenterConfigurationPan
 	}
 	
 	@Override
-	public void setSegmenterSettings(SegmenterSettings settings, String spaceUnits, String timeUnits) {
-		super.setSegmenterSettings(settings, spaceUnits, timeUnits);
-		jCheckSubPixel.setSelected(((DogSegmenterSettings)settings).doSubPixelLocalization);
+	public void setSegmenterSettings(TrackMateModel model) {
+		super.setSegmenterSettings(model);
+		jCheckSubPixel.setSelected(((DogSegmenterSettings)model.getSettings().segmenterSettings).doSubPixelLocalization);
 	}
 	
 	
@@ -57,5 +58,4 @@ public class DogSegmenterConfigurationPanel extends LogSegmenterConfigurationPan
 		dss.useMedianFilter	= lss.useMedianFilter;
 		return dss;
 	}
-	
 }

@@ -49,14 +49,14 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerSettingsPanel {
 	 */
 	
 	@Override
-	public void setTrackerSettings(TrackerSettings settings, TrackMateModel model) {
-		this.settings = settings;
-		echoSettings(model.getSettings().spaceUnits, model.getSettings().timeUnits);
+	public void setTrackerSettings(TrackMateModel model) {
+		this.settings = model.getSettings().trackerSettings;
+		echoSettings(model);
 		
 	};
 	
 	@Override
-	public TrackerSettings getSettings() {
+	public TrackerSettings getTrackerSettings() {
 		// Default ones
 		settings.allowMerging 		= false;
 		settings.allowSplitting 	= false;
@@ -74,14 +74,16 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerSettingsPanel {
 	 * PRIVATE METHODS
 	 */
 	
-	private void echoSettings(String spaceUnits, String timeUnits) {
-//		jLabelTrackerDescription.setText(settings.trackerType.getInfoText().replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
+	private void echoSettings(TrackMateModel model) {
+		jLabelTrackerName.setText(model.getSettings().tracker.toString());
+		jLabelTrackerDescription.setText(model.getSettings().tracker.getInfoText()
+				.replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
 		jTextFieldLinkingDistance.setText(String.format("%.1f", settings.linkingDistanceCutOff));
 		jTextFieldGapClosingDistanceCutoff.setText(String.format("%.1f", settings.gapClosingDistanceCutoff));
 		jTextFieldGapClosingTimeCutoff.setText(String.format("%.1f", settings.gapClosingTimeCutoff));
-		jLabelGapClosingMaxDistanceUnit.setText(spaceUnits);
-		jLabelGapClosingTimeCutoffUnit.setText(timeUnits);
-		jLabelLinkingMaxDistanceUnit.setText(spaceUnits);
+		jLabelGapClosingMaxDistanceUnit.setText(model.getSettings().spaceUnits);
+		jLabelGapClosingTimeCutoffUnit.setText(model.getSettings().timeUnits);
+		jLabelLinkingMaxDistanceUnit.setText(model.getSettings().spaceUnits);
 	}
 	
 	private void initGUI() {

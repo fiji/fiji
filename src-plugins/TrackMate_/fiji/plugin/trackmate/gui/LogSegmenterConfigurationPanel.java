@@ -16,32 +16,28 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
-import javax.swing.WindowConstants;
 
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 
 /**
- * Mother class for spot segmenter settings panel. This panel is actually suitable for 2 implemented segmenters,
- * which is why it is a class concrete for now.  
- * <p>
- * Also offer a factory method to instantiate the correct panel pointed by a tracker type.
+ * Configuration panel for spot segmenters based on LoG segmentation. 
+ * 
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2010 - 2011
- *
  */
 public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel {
 
-	private static final long serialVersionUID = 8004665430478476658L;
+	private static final long serialVersionUID = -1376383272848535855L;
 	private JLabel jLabel1;
-	private JLabel jLabelSegmenterName;
+	protected JLabel jLabelSegmenterName;
 	private JLabel jLabel2;
 	protected JButton jButtonRefresh;
 	protected JTextField jTextFieldThreshold;
 	protected JLabel jLabelThreshold;
-	private JLabel jLabelHelpText;
+	protected JLabel jLabelHelpText;
 	protected JCheckBox jCheckBoxMedianFilter;
 	protected JLabel jLabelBlobDiameterUnit;
 	protected JTextField jTextFieldBlobDiameter;
@@ -77,10 +73,9 @@ public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel 
 	}
 	
 	@Override
-	public void setSegmenterSettings(SegmenterSettings settings, String spaceUnits, String timeUnits) {
-		this.settings = (LogSegmenterSettings) settings;
-		echoSettings();
-		jLabelBlobDiameterUnit.setText(spaceUnits);
+	public void setSegmenterSettings(TrackMateModel model) {
+		this.settings = (LogSegmenterSettings) model.getSettings().segmenterSettings;
+		echoSettings(model);
 	}
 	
 	
@@ -98,7 +93,11 @@ public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel 
 		jTextFieldThreshold.setText(String.format("%.0f", imp.getProcessor().getMinThreshold()));
 	}
 	
-	private void echoSettings() {
+	private void echoSettings(TrackMateModel model) {
+		jLabelBlobDiameterUnit.setText(model.getSettings().spaceUnits);
+		jLabelSegmenterName.setText(model.getSettings().segmenter.toString());
+		jLabelHelpText.setText(model.getSettings().segmenter.getInfoText().replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
+		
 		jTextFieldBlobDiameter.setText(""+(2*settings.expectedRadius));
 		jCheckBoxMedianFilter.setSelected(settings.useMedianFilter);
 		jTextFieldThreshold.setText(""+settings.threshold);
@@ -180,25 +179,4 @@ public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel 
 		}
 	}
 
-	
-	/*
-	 * MAIN METHOD
-	 */
-	
-	/**
-	* Auto-generated main method to display this 
-	* JPanel inside a new JFrame.
-	*/
-	public static void main(String[] args) {
-		JFrame frame = new JFrame();
-		SegmenterSettings s = new LogSegmenterSettings(); // Must be like that, otherwise clast cast exception
-		LogSegmenterConfigurationPanel panel = new LogSegmenterConfigurationPanel();
-		panel.setSegmenterSettings(s, "km", "years");
-		
-		frame.getContentPane().add(panel);
-		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-		frame.pack();
-		frame.setVisible(true);
-	}
-	
 }

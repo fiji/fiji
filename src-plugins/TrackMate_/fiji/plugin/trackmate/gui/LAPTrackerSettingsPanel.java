@@ -27,23 +27,18 @@ public class LAPTrackerSettingsPanel extends TrackerSettingsPanel {
 	 */
 	
 	@Override
-	public TrackerSettings getSettings() {
+	public TrackerSettings getTrackerSettings() {
 		return jPanelMain.getSettings();
 	}
 
 	@Override
-	public void setTrackerSettings(TrackerSettings settings, TrackMateModel model) {
-		echoSettings(settings, model);
+	public void setTrackerSettings(TrackMateModel model) {
+		jPanelMain.echoSettings(model);
 	}
 	
 	/*
 	 * PRIVATE METHODS
 	 */
-	
-	private void echoSettings(TrackerSettings settings, TrackMateModel model) {
-		jPanelMain.echoSettings(settings, model);
-	}
-	
 	
 	private void initGUI() {
 		try {

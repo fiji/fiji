@@ -27,7 +27,6 @@ public class SimpleLAPTracker extends LAPTracker {
 				return new SimpleLAPTrackerSettingsPanel();
 			}
 		};
-		ts = new TrackerSettings();
 		ts.allowMerging = false;
 		ts.allowSplitting = false;
 		return ts;

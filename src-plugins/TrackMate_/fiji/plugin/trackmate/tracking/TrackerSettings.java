@@ -86,7 +86,7 @@ public class TrackerSettings {
 		if (allowGapClosing) {
 			str += "  Gap-closing conditions:\n";
 			str += String.format("    - distance cutoff: %.1f\n", gapClosingDistanceCutoff);
-			str += String.format("    - max frame interval: %.1f\n", gapClosingTimeCutoff);
+			str += String.format("    - max time interval: %.1f\n", gapClosingTimeCutoff);
 			str += echoFeatureCuttofs(gapClosingFeaturePenalties);
 		} else {
 			str += "  Gap-closing not allowed.\n";
@@ -95,7 +95,7 @@ public class TrackerSettings {
 		if (allowSplitting) {
 			str += "  Track splitting conditions:\n";
 			str += String.format("    - distance cutoff: %.1f\n", splittingDistanceCutoff);
-			str += String.format("    - max frame interval: %.1f\n", splittingTimeCutoff);
+			str += String.format("    - max time interval: %.1f\n", splittingTimeCutoff);
 			str += echoFeatureCuttofs(splittingFeaturePenalties);
 		} else {
 			str += "  Track splitting not allowed.\n";
@@ -104,7 +104,7 @@ public class TrackerSettings {
 		if (allowMerging) {
 			str += "  Track merging conditions:\n";
 			str += String.format("    - distance cutoff: %.1f\n", mergingDistanceCutoff);
-			str += String.format("    - max frame interval: %.1f\n", mergingTimeCutoff);
+			str += String.format("    - max time interval: %.1f\n", mergingTimeCutoff);
 			str += echoFeatureCuttofs(mergingFeaturePenalties);
 		} else {
 			str += "  Track merging not allowed.\n";

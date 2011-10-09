@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.gui;
 
+import fiji.plugin.trackmate.Settings;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 
 /**
@@ -11,14 +13,17 @@ import fiji.plugin.trackmate.segmentation.SegmenterSettings;
  */
 public abstract class SegmenterConfigurationPanel extends ActionListenablePanel {
 
-	private static final long serialVersionUID = -4404004531929041752L;
+	private static final long serialVersionUID = -3740053698736400575L;
 
 	/**
 	 * Echo the parameters of the given instance of {@link SegmenterSettings} on
-	 * this panel. Also for convenience, we pass the physical units name
-	 * to the panel, so that the user can enter only physical quantities.
+	 * this panel. For convenience, we pass the whole model to this panel;
+	 * the configuration panel is expected to work only on the {@link Settings#segmenterSettings}
+	 * field of the settings object in the model.
+	 * But some specialized settings might require to access the declared 
+	 * features or other data to generate a proper settings object. 
 	 */
-	public abstract void setSegmenterSettings(SegmenterSettings settings, String spaceUnits, String timeUnits);
+	public abstract void setSegmenterSettings(TrackMateModel model);
 	
 	/**
 	 * @return  the {@link SegmenterSettings} object with its field values set

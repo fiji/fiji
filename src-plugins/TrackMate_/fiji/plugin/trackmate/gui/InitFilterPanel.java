@@ -77,6 +77,8 @@ public class InitFilterPanel extends ActionListenablePanel {
 		double threshold  = jPanelThreshold.getThreshold();
 		boolean isAbove = jPanelThreshold.isAboveThreshold();
 		double[] values = features.get(Spot.QUALITY);
+		if (null == values)
+			return;
 		int nspots = values.length;
 		int nselected = 0;
 		if (isAbove) {

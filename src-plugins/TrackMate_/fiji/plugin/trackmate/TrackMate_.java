@@ -27,6 +27,8 @@ import fiji.plugin.trackmate.segmentation.PeakPickerSegmenter;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.FastLAPTracker;
 import fiji.plugin.trackmate.tracking.LAPTracker;
+import fiji.plugin.trackmate.tracking.SimpleFastLAPTracker;
+import fiji.plugin.trackmate.tracking.SimpleLAPTracker;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -98,11 +100,12 @@ public class TrackMate_ implements PlugIn {
 	
 	public TrackMate_(TrackMateModel model) {
 		this.model = model;
-		this.spotFeatureAnalyzers = createSpotFeatureAnalyzerList();
-		this.trackFeatureAnalyzers = createTrackFeatureAnalyzerList();
-		this.spotSegmenters = createSegmenterList();
-		this.trackMateModelViews = createTrackMateModelViewList();
-		this.trackMateActions = createTrackMateActionList();
+		this.spotFeatureAnalyzers 	= createSpotFeatureAnalyzerList();
+		this.trackFeatureAnalyzers 	= createTrackFeatureAnalyzerList();
+		this.spotSegmenters 		= createSegmenterList();
+		this.spotTrackers 			= createSpotTrackerList();
+		this.trackMateModelViews 	= createTrackMateModelViewList();
+		this.trackMateActions 		= createTrackMateActionList();
 		model.getFeatureModel().setSpotFeatureAnalyzers(spotFeatureAnalyzers);
 		model.getFeatureModel().setTrackFeatureAnalyzers(trackFeatureAnalyzers);
 	}
@@ -190,7 +193,9 @@ public class TrackMate_ implements PlugIn {
 	 */
 	protected List<SpotTracker> createSpotTrackerList() {
 		List<SpotTracker> trackers = new ArrayList<SpotTracker>(4);
+		trackers.add(new SimpleFastLAPTracker());
 		trackers.add(new FastLAPTracker());
+		trackers.add(new SimpleLAPTracker());
 		trackers.add(new LAPTracker());
 		return trackers;
 		
@@ -318,6 +323,7 @@ public class TrackMate_ implements PlugIn {
 	 */ 
 	public void execTracking() {
 		SpotTracker tracker = model.getSettings().tracker;
+		tracker.setModel(model);
 		tracker.setLogger(model.getLogger());
 		if (tracker.checkInput() && tracker.process()) {
 			model.setGraph(tracker.getResult());

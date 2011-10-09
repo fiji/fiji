@@ -171,7 +171,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 				jPanelMain.remove(segmenterSettingsPanel);
 			Settings settings = model.getSettings();
 			segmenterSettingsPanel = settings.segmenterSettings.createConfigurationPanel();
-			segmenterSettingsPanel.setSegmenterSettings(settings.segmenterSettings, settings.spaceUnits, settings.timeUnits);
+			segmenterSettingsPanel.setSegmenterSettings(model);
 			panel = segmenterSettingsPanel;
 			break;
 		}
@@ -208,7 +208,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 			if (null != trackerSettingsPanel)
 				jPanelMain.remove(trackerSettingsPanel);
 			trackerSettingsPanel = model.getSettings().trackerSettings.createConfigurationPanel();
-			trackerSettingsPanel.setTrackerSettings(model.getSettings().trackerSettings, model);
+			trackerSettingsPanel.setTrackerSettings(model);
 			panel = trackerSettingsPanel;
 			break;
 

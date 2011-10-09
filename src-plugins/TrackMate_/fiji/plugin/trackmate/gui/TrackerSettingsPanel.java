@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate.gui;
 
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
@@ -10,19 +11,21 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
  */
 public abstract class TrackerSettingsPanel extends ActionListenablePanel {
 
-	private static final long serialVersionUID = -3943164177107531996L;
+	private static final long serialVersionUID = -5752429080747619688L;
 
 	/**
 	 * Update the {@link TrackerSettings} object given at the creation of this panel with the
 	 * settings entered by the user on this panel. 
 	 */
-	public abstract TrackerSettings getSettings();
+	public abstract TrackerSettings getTrackerSettings();
 	
 	/**
 	 * Echo the parameters of the given instance of {@link TrackerSettings} on
-	 * this panel. Also for convenience, we pass the whole model to this panel.
-	 * Indeed, some specialized settings might require to access the declared 
+	 * this panel. For convenience, we pass the whole model to this panel;
+	 * the configuration panel is expected to work only on the {@link Settings#trackerSettings}
+	 * field of the settings object in the model.
+	 * But some specialized settings might require to access the declared 
 	 * features or other data to generate a proper settings object. 
 	 */
-	public abstract void setTrackerSettings(TrackerSettings settings, TrackMateModel model);
+	public abstract void setTrackerSettings(TrackMateModel model);
 }

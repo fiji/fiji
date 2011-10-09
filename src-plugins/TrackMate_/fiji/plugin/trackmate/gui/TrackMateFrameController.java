@@ -271,6 +271,9 @@ public class TrackMateFrameController implements ActionListener {
 		case TUNE_SEGMENTER: {
 			Settings settings = plugin.getModel().getSettings();
 			settings.segmenterSettings = view.segmenterSettingsPanel.getSegmenterSettings();
+			if (settings.segmenter instanceof ManualSegmenter) {
+				state = GuiState.CHOOSE_DISPLAYER.previousState();
+			}
 			break;
 		}
 
@@ -280,7 +283,7 @@ public class TrackMateFrameController implements ActionListener {
 
 		case TUNE_TRACKER: {
 			Settings settings = plugin.getModel().getSettings();
-			settings.trackerSettings = view.trackerSettingsPanel.getSettings();
+			settings.trackerSettings = view.trackerSettingsPanel.getTrackerSettings();
 			break;
 		}
 
@@ -311,16 +314,6 @@ public class TrackMateFrameController implements ActionListener {
 			execGetStartSettings();
 			return;
 
-		case TUNE_SEGMENTER: {
-			// If we choose to skip segmentation, initialize the model spot content and skip directly to state where we will be asked for a displayer.
-//			Settings settings = model.getSettings();
-//			if (settings.segmenterType == SegmenterType.MANUAL_SEGMENTER) {
-//				settings.segmenterSettings.spaceUnits = settings.spaceUnits;
-//				state = GuiState.CHOOSE_DISPLAYER.previousState();
-//			}
-			return;
-		}
-
 		case SEGMENTING: {
 			execSegmentationStep(); 
 			return;
@@ -334,15 +327,7 @@ public class TrackMateFrameController implements ActionListener {
 			return;
 
 		case CALCULATE_FEATURES: {
-			// Compute the feature first, again, only if we did not skip segmentation.
-//			if (model.getSettings().segmenterType != SegmenterType.MANUAL_SEGMENTER)
-				execCalculateFeatures();
-//			else {
-//				// Otherwise we get the manual spot diameter,  and plan to jump to tracking
-//				model.getSettings().segmenterSettings = view.segmenterSettingsPanel.getSettings();
-//				state = GuiState.CHOOSE_TRACKER.previousState();
-//			}
-			// Then we launch the displayer
+			execCalculateFeatures();
 			execLaunchdisplayer();
 			return;
 		}
@@ -504,6 +489,7 @@ public class TrackMateFrameController implements ActionListener {
 	private void execGetTrackerChoice() {
 		Settings settings = plugin.getModel().getSettings();
 		settings.tracker = view.trackerChoicePanel.getChoice();
+		settings.trackerSettings = settings.tracker.createDefaultSettings(); 
 	}
 
 	/**
