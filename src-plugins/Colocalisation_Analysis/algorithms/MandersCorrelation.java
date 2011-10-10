@@ -48,7 +48,7 @@ public class MandersCorrelation<T extends RealType<T>> extends Algorithm<T> {
 				img2.createLocalizableByDimCursor(), mask.createLocalizableCursor());
 
 		// calculate Mander's values without threshold
-		MandersResults results = calculateMandersCorrelation(cursor);
+		MandersResults results = calculateMandersCorrelation(cursor, img1.createType());
 
 		// save the results
 		mandersM1 = results.m1;
@@ -66,88 +66,67 @@ public class MandersCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			mandersThresholdedM1 = results.m1;
 			mandersThresholdedM2 = results.m2;
 		}
+		cursor.close();
 	}
 
 	/**
 	 * Calculates Manders' split M1 and M2 values without a threshold
 	 *
 	 * @param cursor A TwinCursor that walks over two images
+	 * @param type A type instance, its value is not relevant
 	 * @return Both Manders' M1 and M2 values
 	 */
-	public MandersResults calculateMandersCorrelation(TwinCursor<T> cursor) {
-		return calculateMandersCorrelation(cursor, null, null, ThresholdMode.None);
+	public MandersResults calculateMandersCorrelation(TwinCursor<T> cursor, T type) {
+		return calculateMandersCorrelation(cursor, type, type, ThresholdMode.None);
 	}
 
 	public MandersResults calculateMandersCorrelation(TwinCursor<T> cursor,
-			T thresholdCh1, T thresholdCh2, ThresholdMode tMode) {
-		double m1Numerator = 0.0;
-		double m2Numerator = 0.0;
-		double sumCh1 = 0.0;
-		double sumCh2 = 0.0;
+			final T thresholdCh1, final T thresholdCh2, ThresholdMode tMode) {
+		MandersAccumulator acc;
+		// create a zero-values variable to compare to later on
+		final T zero = thresholdCh1.createVariable();
+		zero.setZero();
 
 		// iterate over images
 		if (tMode == ThresholdMode.None) {
-			while (cursor.hasNext()) {
-				cursor.fwd();
-				T type1 = cursor.getChannel1();
-				T type2 = cursor.getChannel2();
-				double ch1 = type1.getRealDouble();
-				double ch2 = type2.getRealDouble();
-				// if ch2 is non-zero, increase ch1 numerator
-				if (Math.abs(ch2) > 0.00001) {
-					m1Numerator += ch1;
+			acc = new MandersAccumulator(cursor) {
+				final boolean accecptCh1(T type1, T type2) {
+					return (type2.compareTo(zero) > 0);
 				}
-				// if ch1 is non-zero, increase ch2 numerator
-				if (Math.abs(ch1) > 0.00001) {
-					m2Numerator += ch2;
+				final boolean accecptCh2(T type1, T type2) {
+					return (type1.compareTo(zero) > 0);
 				}
-				sumCh1 += ch1;
-				sumCh2 += ch2;
-			}
+			};
 		} else if (tMode == ThresholdMode.Below) {
-			while (cursor.hasNext()) {
-				cursor.fwd();
-				T type1 = cursor.getChannel1();
-				T type2 = cursor.getChannel2();
-				double ch1 = type1.getRealDouble();
-				double ch2 = type2.getRealDouble();
-				if (Math.abs(ch2) > 0.00001 &&
-						type1.compareTo(thresholdCh1) <= 0) {
-					m1Numerator += ch1;
+			acc = new MandersAccumulator(cursor) {
+				final boolean accecptCh1(T type1, T type2) {
+					return (type2.compareTo(zero) > 0) &&
+						(type1.compareTo(thresholdCh1) <= 0);
 				}
-				if (Math.abs(ch1) > 0.00001 &&
-						type2.compareTo(thresholdCh2) <= 0) {
-					m2Numerator += ch2;
+				final boolean accecptCh2(T type1, T type2) {
+					return (type1.compareTo(zero) > 0) &&
+						(type2.compareTo(thresholdCh2) <= 0);
 				}
-				sumCh1 += ch1;
-				sumCh2 += ch2;
-			}
+			};
 		} else if (tMode == ThresholdMode.Above) {
-			while (cursor.hasNext()) {
-				cursor.fwd();
-				T type1 = cursor.getChannel1();
-				T type2 = cursor.getChannel2();
-				double ch1 = type1.getRealDouble();
-				double ch2 = type2.getRealDouble();
-				if (Math.abs(ch2) > 0.00001 &&
-						type1.compareTo(thresholdCh1) >= 0) {
-					m1Numerator += ch1;
+			acc = new MandersAccumulator(cursor) {
+				final boolean accecptCh1(T type1, T type2) {
+					return (type2.compareTo(zero) > 0) &&
+						(type1.compareTo(thresholdCh1) >= 0);
 				}
-				if (Math.abs(ch1) > 0.00001 &&
-						type2.compareTo(thresholdCh2) >= 0) {
-					m2Numerator += ch2;
+				final boolean accecptCh2(T type1, T type2) {
+					return (type1.compareTo(zero) > 0) &&
+						(type2.compareTo(thresholdCh2) >= 0);
 				}
-				sumCh1 += ch1;
-				sumCh2 += ch2;
-			}
+			};
 		} else {
 			throw new UnsupportedOperationException();
 		}
 
 		MandersResults results = new MandersResults();
 		// calculate the results
-		results.m1 = m1Numerator / sumCh1;
-		results.m2 = m2Numerator / sumCh2;
+		results.m1 = acc.condSumCh1 / acc.sumCh1;
+		results.m2 = acc.condSumCh2 / acc.sumCh2;
 
 		return results;
 	}
@@ -159,5 +138,31 @@ public class MandersCorrelation<T extends RealType<T>> extends Algorithm<T> {
 		handler.handleValue( "Manders M2 (no threshold)", mandersM2 );
 		handler.handleValue( "Manders M1 (threshold)", mandersThresholdedM1 );
 		handler.handleValue( "Manders M2 (threshold)", mandersThresholdedM2 );
+	}
+
+	/**
+	 * A class similar to the Accumulator class, but more specific
+	 * to the Manders calculations.
+	 */
+	protected abstract class MandersAccumulator {
+		double sumCh1, sumCh2, condSumCh1, condSumCh2;
+
+		public MandersAccumulator(TwinCursor<T> cursor) {
+			while (cursor.hasNext()) {
+				cursor.fwd();
+				T type1 = cursor.getChannel1();
+				T type2 = cursor.getChannel2();
+				double ch1 = type1.getRealDouble();
+				double ch2 = type2.getRealDouble();
+				if (accecptCh1(type1, type2))
+					condSumCh1 += ch1;
+				if (accecptCh2(type1, type2))
+					condSumCh2 += ch2;
+				sumCh1 += ch1;
+				sumCh2 += ch2;
+			}
+		}
+		abstract boolean accecptCh1(T type1, T type2);
+		abstract boolean accecptCh2(T type1, T type2);
 	}
 }
