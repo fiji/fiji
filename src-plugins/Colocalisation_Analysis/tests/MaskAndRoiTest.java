@@ -72,11 +72,8 @@ public class MaskAndRoiTest extends ColocalisationTest {
 	public void regularRoiDimensionsTest() throws MissingPreconditionException {
 		// load a 3D test image
 		Image<UnsignedByteType> img = positiveCorrelationImageCh1;
-		int width = img.getDimension(0);
-		int height = img.getDimension(1);
-
-		int[] roiOffset = new int[] {width / 4, height / 4};
-		int[] roiSize = new int[] {width / 2, height / 2};
+		int[] roiOffset = createRoiOffset(img);
+		int[] roiSize = createRoiSize(img);
 		Image<BitType> mask = MaskFactory.createMask(img.getDimensions(),
 				roiOffset, roiSize);
 
@@ -154,11 +151,11 @@ public class MaskAndRoiTest extends ColocalisationTest {
 	public void irregularRoiPixelCountTest() {
 		// load a 3D test image
 		Image<UnsignedByteType> img = positiveCorrelationImageCh1;
+		int[] roiOffset = createRoiOffset(img);
+		int[] roiSize = createRoiSize(img);
 		int width = img.getDimension(0);
 		int height = img.getDimension(1);
-		// define rectangular mask to be used as irregular mask
-		int[] roiOffset = new int[] {width / 4, height / 4};
-		int[] roiSize = new int[] {width / 2, height / 2};
+
 		Image<UnsignedByteType> maskImg
 			= TestImageAccessor.createRectengularMaskImage(width, height, roiOffset, roiSize);
 		Image<BitType> mask = MaskFactory.createMask(img.getDimensions(), maskImg);

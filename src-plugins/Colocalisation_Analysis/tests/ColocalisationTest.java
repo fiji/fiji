@@ -4,6 +4,7 @@ import gadgets.MaskFactory;
 import mpicbg.imglib.algorithm.math.ImageStatistics;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.logic.BitType;
+import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 
 import org.junit.After;
@@ -58,5 +59,29 @@ public abstract class ColocalisationTest {
 		zeroCorrelationImageCh2.closeAllCursors();
 		positiveCorrelationImageCh1.closeAllCursors();
 		positiveCorrelationImageCh2.closeAllCursors();
+	}
+
+	/**
+	 * Creates a ROI offset array with a distance of 1/4 to the origin
+	 * in each dimension.
+	 */
+	protected <T extends RealType<T>> int[] createRoiOffset(Image<T> img) {
+		int[] offset = img.createPositionArray();
+		for (int i=0; i<offset.length; i++) {
+			offset[i] = Math.max(1, img.getDimension(i) / 4);
+		}
+		return offset;
+	}
+
+	/**
+	 * Creates a ROI size array with a size of 1/2 of each
+	 * dimension.
+	 */
+	protected <T extends RealType<T>> int[] createRoiSize(Image<T> img) {
+		int[] size = img.createPositionArray();
+		for (int i=0; i<size.length; i++) {
+			size[i] = Math.max(1, img.getDimension(i) / 2);
+		}
+		return size;
 	}
 }
