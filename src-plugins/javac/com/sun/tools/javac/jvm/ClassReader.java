@@ -1122,8 +1122,10 @@ public class ClassReader extends ClassFile implements Completer {
                 new ListBuffer<CompoundAnnotationProxy>();
             for (int i = 0; i<numAttributes; i++) {
                 CompoundAnnotationProxy proxy = readCompoundAnnotation();
-                if (proxy.type.tsym == syms.proprietaryType.tsym)
-                    sym.flags_field |= PROPRIETARY;
+                if (proxy.type.tsym == syms.proprietaryType.tsym) {
+                    if (!sym.toString().startsWith("sun.reflect.annotation"))
+                        sym.flags_field |= PROPRIETARY;
+		}
                 else
                     proxies.append(proxy);
             }
