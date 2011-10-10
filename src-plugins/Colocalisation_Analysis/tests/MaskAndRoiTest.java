@@ -7,6 +7,7 @@ import java.util.Arrays;
 
 import gadgets.MaskFactory;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
+import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.cursor.special.PredicateCursor;
@@ -203,6 +204,45 @@ public class MaskAndRoiTest extends ColocalisationTest {
 		for (int i=0; i<roiMax.length; i++)
 			roiMax[i] += roiSize[i] - 1;
 		assertTrue(Arrays.equals(max, roiMax));
+	}
+
+	/**
+	 * This test creates first an "always true" mask and count the data
+	 * values. There should be as many as the number of vocels in total.
+	 * After that an "always false" mask is created. The predicate cursor
+	 * there should not return any values.
+	 */
+	@Test
+	public void simpleMaskCreationTest() {
+		final Image<UnsignedByteType> img = positiveCorrelationImageCh1;
+		// first, create an always true mask
+		Image<BitType> mask = MaskFactory.createMask(img.getDimensions(), true);
+		final Predicate<BitType> predicate = new MaskPredicate();
+		LocalizableCursor<BitType> cursor
+			= new PredicateCursor<BitType>(mask.createLocalizableCursor(),
+					predicate);
+		// iterate over mask and count values
+		int count = 0;
+		while (cursor.hasNext()) {
+			cursor.fwd();
+			count++;
+			assertTrue(cursor.getType().get());
+		}
+		cursor.close();
+		assertEquals(img.getNumPixels(), count);
+
+		// second, create an always false mask
+		mask = MaskFactory.createMask(img.getDimensions(), false);
+		cursor = new PredicateCursor<BitType>(
+				mask.createLocalizableCursor(), predicate);
+		// iterate over mask and count values
+		count = 0;
+		while (cursor.hasNext()) {
+			cursor.fwd();
+			count++;
+		}
+		cursor.close();
+		assertEquals(0, count);
 	}
 
 	/**
