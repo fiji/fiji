@@ -67,7 +67,7 @@ public class MaskFactory {
 			boolean valid = true;
 			// test if the current position is contained in the ROI
 			for(int i=0; i<dims; ++i)
-				valid &= pos[i] > roiOffset[i] && pos[i] < roiOffsetMax[i];
+				valid &= pos[i] >= roiOffset[i] && pos[i] < roiOffsetMax[i];
 			cursor.getType().set(valid);
 		}
 		cursor.close();
