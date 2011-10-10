@@ -50,6 +50,7 @@ Name					File					Author(s)						Contact								License
 * IO package 				IO_.jar 				A. Cardona, S. Saalfeld, J. Schindelin, G. Jefferis 	acardona@ini.phys.ethz.ch 					GPL/public domain
 * IPLab Reader 				IPLab_Reader.jar			Wayne Rasband 						wsr@nih.gov 							PD
 * Jacl 					jacl.jar 											http://sourceforge.net/projects/tcljava				BSD
+* Java Compiler				javac.jar				OpenJDK							http://hg.openjdk.java.net/jdk6/jdk6/langtools			GPL 2
 * Java Expression Parser (JEP)		jep.jar					Nathan Funk, Richard Morris				http://www.singularsys.com/jep/					GPL
 * Java Matrix package 			Jama-1.0.2.jar 				http://math.nist.gov/javanumerics/jama/#Authors 	http://math.nist.gov/javanumerics/jama/#Authors 		PD
 * Javascript Rhino Engine 		js.jar 					http://www.mozilla.org/rhino/ 				http://www.mozilla.org/rhino/ 					MPL 1.1/GPL 2  see http://developer.mozilla.org/en/docs/Rhino_License
