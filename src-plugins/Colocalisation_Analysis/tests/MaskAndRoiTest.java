@@ -99,6 +99,36 @@ public class MaskAndRoiTest extends ColocalisationTest {
 			assertTrue(onInMask == onInROI);
 		}
 		cursor.close();
+
+		/* go once more trough the image wrt. the mask to build a
+		 * bounding box
+		 */
+		// create cursor to walk an image with respect to a mask
+		final Predicate<BitType> predicate = new MaskPredicate();
+		LocalizableCursor<BitType> roiCursor
+			= new PredicateCursor<BitType>(mask.createLocalizableCursor(), predicate);
+		int[] min = mask.createPositionArray();
+		int[] max = mask.createPositionArray();
+		Arrays.fill(min, Integer.MAX_VALUE);
+		Arrays.fill(max, Integer.MIN_VALUE);
+		while (roiCursor.hasNext()) {
+			roiCursor.fwd();
+			roiCursor.getPosition(pos);
+			for (int i=0; i<pos.length; i++) {
+				if (pos[i] < min[i])
+					min[i] = pos[i];
+				if (pos[i] > max[i])
+					max[i] = pos[i];
+			}
+		}
+		roiCursor.close();
+		// the bounding box min should equal the ROI offset
+		assertTrue(Arrays.equals(min, roiOffset));
+		// create theoretical bounding box max and check it
+		int[] roiMax = roiOffset.clone();
+		for (int i=0; i<roiMax.length; i++)
+			roiMax[i] += roiSize[i] - 1;
+		assertTrue(Arrays.equals(max, roiMax));
 	}
 
 	/**
