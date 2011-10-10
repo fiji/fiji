@@ -146,7 +146,7 @@ public class MaskAndRoiTest extends ColocalisationTest {
 	}
 
 	@Test
-	public void irregularRoiPixelCountTest() {
+	public void regularRoiPixelCountTest() {
 		// load a 3D test image
 		Image<UnsignedByteType> img = positiveCorrelationImageCh1;
 		int[] roiOffset = createRoiOffset(img);
