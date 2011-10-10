@@ -2,13 +2,19 @@ package tests;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+
+import java.util.Arrays;
+
 import gadgets.MaskFactory;
+import mpicbg.imglib.container.array.ArrayContainerFactory;
+import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.cursor.special.PredicateCursor;
 import mpicbg.imglib.cursor.special.TwinCursor;
 import mpicbg.imglib.cursor.special.predicate.MaskPredicate;
 import mpicbg.imglib.cursor.special.predicate.Predicate;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 
@@ -25,39 +31,107 @@ import algorithms.MissingPreconditionException;
 public class MaskAndRoiTest extends ColocalisationTest {
 
 	/**
-	 * Tests if a RoiImage refers to the correct data by copying the
-	 * ROI data to a separate image and then convert that result with
+	 * Tests if a masked walk over an image refers to the correct data
+	 * by copying the data to a separate image and then compare it with
 	 * the original image data. The position data in the original image
-	 * is calculated for the ROI offset and the relative position in the
-	 * copied ROI image.
+	 * is calculated based on the ROI offset and the relative position
+	 * in the copied ROI image.
+	 * @throws MissingPreconditionException
 	 */
 	@Test
-	public void regularRoiPredicateCursorTest() throws MissingPreconditionException {
-		// create a random noise 2D image -- set roiWidh/roiSize accordingly
-		//Image<FloatType> img = TestImageAccessor.produceNoiseImage(new FloatType(), 200, 300);
+	public void maskContentTest() throws MissingPreconditionException {
+		// load a 3D test image
+		final Image<UnsignedByteType> img = positiveCorrelationImageCh1;
+		final int[] roiOffset = createRoiOffset(img);
+		final int[] roiSize = createRoiSize(img);
+		final Image<BitType> mask = MaskFactory.createMask(img.getDimensions(),
+				roiOffset, roiSize);
+
+		// create cursor to walk an image with respect to a mask
+		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
+				img.createLocalizableByDimCursor(),
+				img.createLocalizableByDimCursor(),
+				mask.createLocalizableCursor());
+
+		// create an image for the "clipped ROI"
+		ImageFactory<UnsignedByteType> maskFactory =
+				new ImageFactory<UnsignedByteType>(img.createType(),
+						new ArrayContainerFactory());
+		Image<UnsignedByteType> clippedRoiImage =
+				maskFactory.createImage( roiSize, "Clipped ROI" );
+		LocalizableByDimCursor<UnsignedByteType> outputCursor =
+				clippedRoiImage.createLocalizableByDimCursor();
+
+		// copy ROI data to new image
+		int[] pos = clippedRoiImage.createPositionArray();
+		while (cursor.hasNext()) {
+			cursor.fwd();
+			cursor.getPosition(pos);
+			// shift position by offset
+			for (int i=0; i<pos.length; i++) {
+				pos[i] = pos[i] - roiOffset[i];
+			}
+			outputCursor.setPosition(pos);
+			outputCursor.getType().set( cursor.getChannel1() );
+		}
+		cursor.close();
+		outputCursor.close();
+
+		/* go through the clipped ROI and compare the date to offset values
+		 * of the original data.
+		 */
+		LocalizableCursor<UnsignedByteType> roiCopyCursor =
+				clippedRoiImage.createLocalizableCursor();
+		LocalizableByDimCursor<UnsignedByteType> imgCursor =
+				img.createLocalizableByDimCursor();
+		// create variable for summing up and set it to zero
+		double sum = 0;
+		pos = clippedRoiImage.createPositionArray();
+		while (roiCopyCursor.hasNext()) {
+			roiCopyCursor.fwd();
+			roiCopyCursor.getPosition(pos);
+			// shift position by offset
+			for (int i=0; i<pos.length; i++) {
+				pos[i] = pos[i] + roiOffset[i];
+			}
+			// set position in original image
+			imgCursor.setPosition(pos);
+			// get ROI and original image data
+			double roiData = roiCopyCursor.getType().getRealDouble();
+			double imgData = imgCursor.getType().getRealDouble();
+			// sum up the difference
+			double diff = roiData - imgData;
+			sum += diff * diff;
+		}
+		roiCopyCursor.close();
+		imgCursor.close();
+
+		// check if sum is zero
+		assertTrue("The sum of squared differences was " + sum + ".", Math.abs(sum) < 0.00001);
+	}
+
+	/**
+	 * Tests a PredicateCursor by checking if all visited values are "true".
+	 * @throws MissingPreconditionException
+	 */
+	@Test
+	public void predicateCursorTest() throws MissingPreconditionException {
 		// load a 3D test image
 		Image<UnsignedByteType> img = positiveCorrelationImageCh1;
-		int width = img.getDimension(0);
-		int height = img.getDimension(1);
-		/* The size and dimensions are not of same dimension as the image.
-		 * This is intended to make sure the RoiImage can figure it out
-		 * on its own.
-		 */
-		int[] roiOffset = new int[] {width / 4, height / 4};
-		int[] roiSize = new int[] {width / 2, height / 2};
+		int[] roiOffset = createRoiOffset(img);
+		int[] roiSize = createRoiSize(img);
 		Image<BitType> mask = MaskFactory.createMask(img.getDimensions(),
 				roiOffset, roiSize);
 
-		// clip the actual ROI, so that the non-ROI area is removed
+		// create cursor to walk an image with respect to a mask
 		final Predicate<BitType> predicate = new MaskPredicate();
 		LocalizableCursor<BitType> roiCursor
 			= new PredicateCursor<BitType>(mask.createLocalizableCursor(), predicate);
 
-		// copy ROI data to new image
+		// test if all visited voxels are "true"
 		while (roiCursor.hasNext()) {
 			roiCursor.fwd();
-			// assert that the value is true
-			assert(roiCursor.getType().get());
+			assertTrue(roiCursor.getType().get());
 		}
 
 		roiCursor.close();
