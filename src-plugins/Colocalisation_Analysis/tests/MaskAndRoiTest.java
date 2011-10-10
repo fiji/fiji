@@ -64,12 +64,15 @@ public class MaskAndRoiTest extends ColocalisationTest {
 	}
 
 	/**
-	 * This test makes sure the RoiImage can figure out the
-	 * correct dimensions of the ROI in case on passes a ROI
-	 * with different dimensions than the image.
+	 * This test test if a regular mask is created by the MaskFactory
+	 * correctly. First, the dimensions are checked, they must be the
+	 * same as the original images ones. Then it is checked if all
+	 * values in the mask image have the value they should have. For
+	 * a regular ROI this is easy to tell as one can calculate it out
+	 * of the position.
 	 */
 	@Test
-	public void regularRoiDimensionsTest() throws MissingPreconditionException {
+	public void regularMaskCreationTest() throws MissingPreconditionException {
 		// load a 3D test image
 		Image<UnsignedByteType> img = positiveCorrelationImageCh1;
 		int[] roiOffset = createRoiOffset(img);
@@ -78,28 +81,23 @@ public class MaskAndRoiTest extends ColocalisationTest {
 				roiOffset, roiSize);
 
 		// is the number of dimensions the same as in the image?
-		assertEquals(mask.getNumDimensions(), img.getNumDimensions());
-
-		// Is the ROIs dimension information correct?
-		for (int i=0; i<mask.getNumDimensions(); ++i)
-			assertEquals(mask.getDimension(i), img.getDimension(i));
+		assertTrue( Arrays.equals(img.getDimensions(), mask.getDimensions()) );
 
 		// go through the mask and check if all valid points are in the ROI
 		final int[] pos = mask.createPositionArray();
 		final LocalizableCursor<BitType> cursor = mask.createLocalizableCursor();
-		boolean everythingOkay = true;
 		while ( cursor.hasNext() ) {
+			cursor.fwd();
 			cursor.getPosition(pos);
+			// get values in mask image
 			boolean onInMask = cursor.getType().get();
-
+			// calculate value that the current point *should* have
 			boolean onInROI = true;
-			// test if the current position is contained in the ROI
 			for(int i=0; i<pos.length; ++i)
-				onInROI &= pos[i] > roiOffset[i] && pos[i] < (roiOffset[i] + roiSize[i]);
-			// assume both values are the same
-			everythingOkay &= (onInMask == onInROI);
+				onInROI &= pos[i] >= roiOffset[i] && pos[i] < (roiOffset[i] + roiSize[i]);
+			// both values must match
+			assertTrue(onInMask == onInROI);
 		}
-		assert(everythingOkay);
 		cursor.close();
 	}
 
