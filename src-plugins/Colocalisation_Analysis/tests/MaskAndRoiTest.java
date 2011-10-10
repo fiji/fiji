@@ -127,7 +127,7 @@ public class MaskAndRoiTest extends ColocalisationTest {
 				mask.createLocalizableCursor());
 		while (cursor.hasNext()) {
 			cursor.fwd();
-			assertTrue( cursor.getType().getInteger() != 0 );
+			assertTrue( cursor.getChannel1().getInteger() != 0 );
 		}
 		cursor.close();
 
@@ -140,7 +140,7 @@ public class MaskAndRoiTest extends ColocalisationTest {
 				invMask.createLocalizableCursor());
 		while (cursor.hasNext()) {
 			cursor.fwd();
-			assertEquals( 0, cursor.getType().getInteger() );
+			assertEquals( 0, cursor.getChannel1().getInteger() );
 		}
 		cursor.close();
 	}
