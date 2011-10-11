@@ -62,6 +62,11 @@ public class Main {
 
 	public static void premain() {
 		new IJHacker().run();
+		try {
+			JavassistHelper.defineClasses();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		FileDialogDecorator.registerAutomaticDecorator();
 		JFileChooserDecorator.registerAutomaticDecorator();
 	}
