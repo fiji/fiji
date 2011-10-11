@@ -190,7 +190,8 @@ public class IJHacker extends JavassistHelper {
 			ctor.instrument(new ExprEditor() {
 				@Override
 				public void edit(ConstructorCall call) throws CannotCompileException {
-					if (call.getMethodName().equals("super"))
+					if (call.getMethodName().equals("super") &&
+							call.getSignature().startsWith("(Ljava/lang/String;)"))
 						call.replace("super($1, \"ImageJ\".equals($2) ? \"" + appName + "\" : $2, $3);");
 				}
 			});
