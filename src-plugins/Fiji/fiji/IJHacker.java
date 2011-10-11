@@ -6,6 +6,9 @@ package fiji;
 
 import java.io.File;
 
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -35,15 +38,27 @@ public class IJHacker implements Runnable {
 
 	protected String replaceAppName = ".replace(\"ImageJ\", \"" + appName + "\")";
 
+	protected LinkedHashMap<String, CtClass> definedClasses = new LinkedHashMap<String, CtClass>();
+	protected ClassPool pool = ClassPool.getDefault();
+
+	protected CtClass get(String className) throws NotFoundException {
+		if (!definedClasses.containsKey(className))
+			definedClasses.put(className, pool.get(className));
+		return definedClasses.get(className);
+	}
+
+	protected void add(CtClass clazz) {
+		definedClasses.put(clazz.getName(), clazz);
+	}
+
 	public void run() {
 		try {
-			ClassPool pool = ClassPool.getDefault();
 			CtClass clazz;
 			CtMethod method;
 			CtField field;
 
 			// Class ij.ImagePlus
-			clazz = pool.get("ij.ImagePlus");
+			clazz = get("ij.ImagePlus");
 
 			try {
 				// add back the (deprecated) killProcessor(), and overlay methods
@@ -69,10 +84,8 @@ public class IJHacker implements Runnable {
 				clazz.addMethod(method);
 			} catch (Exception e) { /* ignore */ }
 
-			clazz.toClass();
-
 			// Class ij.IJ
-			clazz = pool.get("ij.IJ");
+			clazz = get("ij.IJ");
 
 			boolean isImageJA = false;
 			try {
@@ -109,19 +122,15 @@ public class IJHacker implements Runnable {
 			method = clazz.getMethod("runMacro", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
 			method.insertBefore("if (ij==null && ij.Menus.getCommands()==null) init();");
 
-			clazz.toClass();
-
 			// Class ij.gui.GenericDialog
-			clazz = pool.get("ij.gui.GenericDialog");
+			clazz = get("ij.gui.GenericDialog");
 
 			// make sure that the dialog is disposed in macro mode
 			method = clazz.getMethod("showDialog", "()V");
 			method.insertBefore("if (macro) dispose();");
 
-			clazz.toClass();
-
 			// Class ij.gui.NonBlockingGenericDialog
-			clazz = pool.get("ij.gui.NonBlockingGenericDialog");
+			clazz = get("ij.gui.NonBlockingGenericDialog");
 
 			// make sure not to wait in macro mode
 			method = clazz.getMethod("showDialog", "()V");
@@ -133,10 +142,8 @@ public class IJHacker implements Runnable {
 				}
 			});
 
-			clazz.toClass();
-
 			// Class ij.ImageJ
-			clazz = pool.get("ij.ImageJ");
+			clazz = get("ij.ImageJ");
 
 			// tell the superclass java.awt.Frame that the window title is "Fiji"
 			for (CtConstructor ctor : clazz.getConstructors())
@@ -169,10 +176,8 @@ public class IJHacker implements Runnable {
 				method.insertBefore("return fiji.OtherInstance.sendArguments($1);");
 			}
 
-			clazz.toClass();
-
 			// Class ij.Prefs
-			clazz = pool.get("ij.Prefs");
+			clazz = get("ij.Prefs");
 
 			// use Fiji instead of ImageJ
 			clazz.getField("vistaHint").setName("originalVistaHint");
@@ -195,10 +200,8 @@ public class IJHacker implements Runnable {
 				});
 			}
 
-			clazz.toClass();
-
 			// Class ij.gui.YesNoCancelDialog
-			clazz = pool.get("ij.gui.YesNoCancelDialog");
+			clazz = get("ij.gui.YesNoCancelDialog");
 
 			// use Fiji as window title in the Yes/No dialog
 			for (CtConstructor ctor : clazz.getConstructors())
@@ -210,10 +213,8 @@ public class IJHacker implements Runnable {
 					}
 				});
 
-			clazz.toClass();
-
 			// Class ij.gui.Toolbar
-			clazz = pool.get("ij.gui.Toolbar");
+			clazz = get("ij.gui.Toolbar");
 
 			// use Fiji/ImageJ in the status line
 			method = clazz.getMethod("showMessage", "(I)V");
@@ -236,47 +237,37 @@ public class IJHacker implements Runnable {
 			});
 			handleMousePressed(clazz);
 
-			clazz.toClass();
-
 			// Class ij.plugin.CommandFinder
-			clazz = pool.get("ij.plugin.CommandFinder");
+			clazz = get("ij.plugin.CommandFinder");
 
 			// use Fiji in the window title
 			method = clazz.getMethod("export", "()V");
 			replaceAppNameInNew(method, "ij.text.TextWindow", 1, 5);
 
-			clazz.toClass();
-
 			// Class ij.plugin.Hotkeys
-			clazz = pool.get("ij.plugin.Hotkeys");
+			clazz = get("ij.plugin.Hotkeys");
 
 			// Replace application name in removeHotkey()
 			method = clazz.getMethod("removeHotkey", "()V");
 			replaceAppNameInCall(method, "addMessage", 1, 1);
 			replaceAppNameInCall(method, "showStatus", 1, 1);
 
-			clazz.toClass();
-
 			// Class ij.plugin.Options
-			clazz = pool.get("ij.plugin.Options");
+			clazz = get("ij.plugin.Options");
 
 			// Replace application name in restart message
 			method = clazz.getMethod("appearance", "()V");
 			replaceAppNameInCall(method, "showMessage", 2, 2);
 
-			clazz.toClass();
-
 			// Class JavaScriptEvaluator
-			clazz = pool.get("JavaScriptEvaluator");
+			clazz = get("JavaScriptEvaluator");
 
 			// make sure Rhino gets the correct class loader
 			method = clazz.getMethod("run", "()V");
 			method.insertBefore("Thread.currentThread().setContextClassLoader(ij.IJ.getClassLoader());");
 
-			clazz.toClass();
-
 			// Class ij.CompositeImage
-			clazz = pool.get("ij.CompositeImage");
+			clazz = get("ij.CompositeImage");
 
 			// ImageJA had this public method
 			method = CtNewMethod.make("public ij.ImagePlus[] splitChannels(boolean closeAfter) {"
@@ -287,10 +278,8 @@ public class IJHacker implements Runnable {
 			if (!isImageJA)
 				clazz.addMethod(method);
 
-			clazz.toClass();
-
 			// Class ij.plugin.filter.RGBStackSplitter
-			clazz = pool.get("ij.plugin.filter.RGBStackSplitter");
+			clazz = get("ij.plugin.filter.RGBStackSplitter");
 
 			// add back the splitChannesToArray() method
 			method = CtNewMethod.make("public static ij.ImagePlus[] splitChannelsToArray(ij.ImagePlus imp, boolean closeAfter) {"
@@ -306,10 +295,8 @@ public class IJHacker implements Runnable {
 			if (!isImageJA)
 				clazz.addMethod(method);
 
-			clazz.toClass();
-
 			// Class ij.io.Opener
-			clazz = pool.get("ij.io.Opener");
+			clazz = get("ij.io.Opener");
 
 			// make sure that the check for Bio-Formats is correct
 			clazz.getClassInitializer().instrument(new ExprEditor() {
@@ -325,10 +312,8 @@ public class IJHacker implements Runnable {
 				+ "    ij.IJ.runPlugIn(\"fiji.scripting.Script_Editor\", $1) != null)"
 				+ "  return;");
 
-			clazz.toClass();
-
 			// Class ij.macro.Interpreter
-			clazz = pool.get("ij.macro.Interpreter");
+			clazz = get("ij.macro.Interpreter");
 
 			// make sure no dialog is opened in headless mode
 			method = clazz.getMethod("showError", "(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;)V");
@@ -337,10 +322,8 @@ public class IJHacker implements Runnable {
 				+ "  return;"
 				+ "}");
 
-			clazz.toClass();
-
 			// Class ij.plugin.DragAndDrop
-			clazz = pool.get("ij.plugin.DragAndDrop");
+			clazz = get("ij.plugin.DragAndDrop");
 
 			// make sure that symlinks are _not_ resolved (because then the parent info in the FileInfo would be wrong)
 			method = clazz.getMethod("openFile", "(Ljava/io/File;)V");
@@ -353,21 +336,17 @@ public class IJHacker implements Runnable {
 			});
 			handleHTTPS(clazz.getMethod("drop", "(Ljava/awt/dnd/DropTargetDropEvent;)V"));
 
-			clazz.toClass();
-
 			// Class ij.plugin.Commands
-			clazz = pool.get("ij.plugin.Commands");
+			clazz = get("ij.plugin.Commands");
 
 			// open StartupMacros with the Script Editor
 			method = clazz.getMethod("openStartupMacros", "()V");
 			method.insertBefore("if (fiji.FijiTools.openStartupMacros())"
 				+ "  return;");
 
-			clazz.toClass();
-
 			if (!isImageJA) {
 				// Class ij.plugin.frame.Recorder
-				clazz = pool.get("ij.plugin.frame.Recorder");
+				clazz = get("ij.plugin.frame.Recorder");
 
 				// create new macro in the Script Editor
 				method = clazz.getMethod("createMacro", "()V");
@@ -395,10 +374,8 @@ public class IJHacker implements Runnable {
 					}
 				});
 
-				clazz.toClass();
-
 				// Class ij.plugin.NewPlugin
-				clazz = pool.get("ij.plugin.NewPlugin");
+				clazz = get("ij.plugin.NewPlugin");
 
 				// open new plugin in Script Editor
 				method = clazz.getMethod("createMacro", "(Ljava/lang/String;)V");
@@ -434,12 +411,10 @@ public class IJHacker implements Runnable {
 					}
 
 				});
-
-				clazz.toClass();
 			}
 
 			// Class ij.WindowManager
-			clazz = pool.get("ij.WindowManager");
+			clazz = get("ij.WindowManager");
 
 			method = clazz.getMethod("addWindow", "(Ljava/awt/Frame;)V");
 			method.insertBefore("if ($1 != null) {"
@@ -451,10 +426,8 @@ public class IJHacker implements Runnable {
 				+ "  }"
 				+ "}");
 
-			clazz.toClass();
-
 			// Class ij.macro.Functions
-			clazz = pool.get("ij.macro.Functions");
+			clazz = get("ij.macro.Functions");
 
 			method = clazz.getMethod("call", "()Ljava/lang/String;");
 			method.instrument(new ExprEditor() {
@@ -471,12 +444,11 @@ public class IJHacker implements Runnable {
 			});
 			handleHTTPS(clazz.getMethod("exec", "()Ljava/lang/String;"));
 
-			clazz.toClass();
-
 			// Make ij.Command a superclass of fiji.command.Command
 			clazz = pool.getAndRename("fiji.command.Command", "ij.Command");
-			clazz.toClass();
+			add(clazz);
 			clazz = pool.makeClass("fiji.command.Command", clazz);
+			add(clazz);
 			clazz.addConstructor(CtNewConstructor.make("public Command(String string) {"
 				+ "  super(string);"
 				+ "}", clazz));
@@ -484,18 +456,15 @@ public class IJHacker implements Runnable {
 				+ "  listener.stateChanged(this, action);"
 				+ "}", clazz));
 
-			clazz.toClass();
-
 			// Make ij.CommandListenerPlus a subinterface of fiji.command.CommandListenerPlus
 			clazz = pool.makeInterface("ij.CommandListenerPlus", pool.get("fiji.command.CommandListenerPlus"));
-
-			clazz.toClass();
+			add(clazz);
 
 			// Class ij.Executer
-			clazz = pool.get("ij.Executer");
+			clazz = get("ij.Executer");
 
 			// handle CommandListenerPlus instances
-			field = new CtField(pool.get("fiji.command.Command"), "cmd", clazz);
+			field = new CtField(get("fiji.command.Command"), "cmd", clazz);
 			clazz.addField(field);
 			method = clazz.getMethod("run", "()V");
 			method.instrument(new ExprEditor() {
@@ -533,26 +502,21 @@ public class IJHacker implements Runnable {
 				}
 			});
 
-			clazz.toClass();
-
 			// handle mighty mouse (at least on old Linux, Java mistakes the horizontal wheel for a popup trigger)
 			for (String name : new String[] { "ij.gui.ImageCanvas", "ij.plugin.frame.RoiManager", "ij.text.TextPanel" }) {
-				clazz = pool.get(name);
+				clazz = get(name);
 				handleMousePressed(clazz);
-				clazz.toClass();
 			}
 
 			// handle https:// in addition to http://
-			clazz = pool.get("ij.io.PluginInstaller");
+			clazz = get("ij.io.PluginInstaller");
 			handleHTTPS(clazz.getMethod("install", "(Ljava/lang/String;)Z"));
-			clazz.toString();
 
-			clazz = pool.get("ij.plugin.ListVirtualStack");
+			clazz = get("ij.plugin.ListVirtualStack");
 			handleHTTPS(clazz.getMethod("run", "(Ljava/lang/String;)V"));
-			clazz.toString();
 
 			// Add back the "Convert to 8-bit Grayscale" checkbox to Import>Image Sequence
-			clazz = pool.get("ij.plugin.FolderOpener");
+			clazz = get("ij.plugin.FolderOpener");
 			if (!hasField(clazz, "convertToGrayscale")) {
 				field = new CtField(CtClass.booleanType, "convertToGrayscale", clazz);
 				clazz.addField(field);
@@ -588,7 +552,6 @@ public class IJHacker implements Runnable {
 					}
 				});
 
-				clazz.toClass();
 			}
 
 			// If there is a macros/StartupMacros.fiji, but no macros/StartupMacros.txt, execute that
@@ -610,10 +573,12 @@ public class IJHacker implements Runnable {
 						}
 					});
 				}
-				clazz.toClass();
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
 			}
+
+			for (String name : definedClasses.keySet())
+				definedClasses.get(name).toClass();
 		} catch (NotFoundException e) {
 			e.printStackTrace();
 		} catch (CannotCompileException e) {
