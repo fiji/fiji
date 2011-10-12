@@ -25,12 +25,14 @@ public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 	private JButton jButtonRemove;
 	private JButton jButtonAdd;
 	
-	private Stack<JPanelFeatureRatioThreshold> featurePanels = new Stack<JPanelFeatureRatioThreshold>();
+	private Stack<JPanelFeaturePenalty> featurePanels = new Stack<JPanelFeaturePenalty>();
 	private List<String> features;
 	private Map<String, String> featureNames;
+	private int index;
 	
 	public JPanelFeatureSelectionGui() {
 		initGUI();
+		index = -1;
 	}
 	
 	/*
@@ -43,11 +45,11 @@ public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 	}
 	
 	
-	public Map<String, Double>	 getFeatureRatios() {
-		Map<String, Double> ratios = new HashMap<String, Double>(featurePanels.size());
-		for (JPanelFeatureRatioThreshold panel : featurePanels) 
-			ratios.put(panel.getSelectedFeature(), panel.getRatioThreshold());
-		return ratios;
+	public Map<String, Double>	getFeatureWeights() {
+		Map<String, Double> weights = new HashMap<String, Double>(featurePanels.size());
+		for (JPanelFeaturePenalty panel : featurePanels) 
+			weights.put(panel.getSelectedFeature(), panel.getPenaltyWeight());
+		return weights;
 	}
 	
 	@Override
@@ -67,7 +69,10 @@ public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 	 */
 	
 	private void addButtonPushed() {
-		JPanelFeatureRatioThreshold panel = new JPanelFeatureRatioThreshold(features, featureNames);
+		index = index + 1;
+		if (index >= features.size())
+			index = 0;
+		JPanelFeaturePenalty panel = new JPanelFeaturePenalty(features, featureNames, index);
 		featurePanels.push(panel);
 		remove(jPanelButtons);
 		add(panel);
@@ -80,7 +85,7 @@ public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 	private void removeButtonPushed() {
 		if (featurePanels.isEmpty())
 			return;
-		JPanelFeatureRatioThreshold panel = featurePanels.pop();
+		JPanelFeaturePenalty panel = featurePanels.pop();
 		remove(panel);
 		Dimension size = getSize();
 		setSize(size.width, size.height - panel.getSize().height);

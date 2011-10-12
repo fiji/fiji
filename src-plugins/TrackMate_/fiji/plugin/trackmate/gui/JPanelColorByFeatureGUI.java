@@ -28,8 +28,7 @@ public class JPanelColorByFeatureGUI extends ActionListenablePanel {
 	/*
 	 * FIELDS
 	 */
-	
-	
+		
 	private static final long serialVersionUID = 498572562002300656L;
 	/**
 	 * This action is fired when the feature to color in the "Set color by feature"

@@ -66,12 +66,12 @@ public class TMUtils {
 	public final static Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(6);
 	
 	static {
+		FEATURES.add(QUALITY);
 		FEATURES.add(POSITION_X);
 		FEATURES.add(POSITION_Y);
 		FEATURES.add(POSITION_Z);
 		FEATURES.add(POSITION_T);
 		FEATURES.add(RADIUS);
-		FEATURES.add(QUALITY);
 
 		FEATURE_NAMES.put(POSITION_X, "X");
 		FEATURE_NAMES.put(POSITION_Y, "Y");

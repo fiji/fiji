@@ -156,7 +156,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	public void addFilterPanel(FeatureFilter filter) {
 		if (null == filter)
 			return;
-		FilterPanel tp = new FilterPanel(features, featureNames, featureValues, features.indexOf(filter.feature));
+		FilterPanel tp = new FilterPanel(features, featureNames, featureValues, newFeatureIndex);
 		tp.setThreshold(filter.value);
 		tp.setAboveThreshold(filter.isAbove);		
 		tp.addChangeListener(this);
