@@ -51,6 +51,7 @@ public class CopyOverlayAction extends AbstractTMAction {
 							newDisplayer.render();
 							
 							final DisplayerPanel newDisplayerPanel = new DisplayerPanel(model);
+							newDisplayerPanel.register(newDisplayer);
 							JFrame newFrame = new JFrame(); 
 							newFrame.getContentPane().add(newDisplayerPanel);
 							newFrame.pack();
