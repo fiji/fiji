@@ -192,14 +192,37 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	 */
 	@Override
 	public void show() {
+		init(new ImageWindow3D("ImageJ 3D Viewer", this));
+		win.pack();
+		win.setVisible(true);
+	}
+
+	/**
+	 * It is assumed that the {@param window} already displays the {@link Canvas3D}
+	 * as obtained from calling {@link Image3DUniverse#getCanvas()}.
+	 * If the {@link DefaultUniverse} obtained from {@link ImageWindow3D#getUniverse()}
+	 * is not exactly this universe, a {@link RuntimeException} is thrown.
+	 *
+	 * This method acts as an initialization of the ImageWindow3D,
+	 * by adding the menubar to it as well as initializing the {@link PointListDialog}
+	 * and adding a {@link WindowAdapter} to the {@param window} that does cleanup.
+	 * 
+	 * The {@param window} is not shown, that is, {@link ImageWindow3D#pack()}
+	 * and {@link ImageWindow3D#setVisible()} are not called.
+	 * 
+	 */
+	public void init(ImageWindow3D window) {
+		if (window.getUniverse() != this) {
+			throw new RuntimeException("Incompatible universes! Go rethink the multiverse!");
+		}
+		this.win = window;
 		// Java 1.6.0_12 fixes the issues occurring when mixing
 		// AWT heavyweight and Swing lightweight components.
 		// Unfortunately, not everything is working so far, so
 		// comment out the check for the Java version.
 // 		if(System.getProperty("java.version").compareTo("1.6.0_12") < 0)
 		JPopupMenu.setDefaultLightWeightPopupEnabled(false);
-		win = new ImageWindow3D("ImageJ 3D Viewer", this);
-		plDialog = new PointListDialog(win);
+		plDialog = new PointListDialog(this.win);
 		plDialog.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
 				hideAllLandmarks();
@@ -208,9 +231,6 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 		menubar = new Image3DMenubar(this);
 		registrationMenubar = new RegistrationMenubar(this);
 		setMenubar(menubar);
-
-		win.pack();
-		win.setVisible(true);
 	}
 
 	/**
