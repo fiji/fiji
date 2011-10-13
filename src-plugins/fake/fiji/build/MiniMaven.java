@@ -206,6 +206,21 @@ public class MiniMaven {
 			downloadAndVerify(baseURL + ".jar", directory);
 		}
 
+		public boolean upToDate() throws IOException, ParserConfigurationException, SAXException {
+			if (!buildFromSource)
+				return true;
+			for (POM child : getDependencies())
+				if (child != null && !child.upToDate())
+					return false;
+
+			File source = new File(directory, "src/main/java");
+
+			List<String> notUpToDates = new ArrayList<String>();
+			addRecursively(notUpToDates, source, ".java", target, ".class");
+			int count = notUpToDates.size();
+			return count == 0;
+		}
+
 		public void build() throws FakeException, IOException, ParserConfigurationException, SAXException {
 			if (!buildFromSource)
 				return;
