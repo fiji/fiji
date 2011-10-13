@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 import java.util.TreeSet;
 
 import javax.xml.parsers.SAXParserFactory;
@@ -52,6 +53,39 @@ public class MiniMaven {
 	protected void print80(String string) {
 		int length = string.length();
 		err.print((length < 80 ? string : string.substring(0, 80)) + "\r");
+	}
+
+	public POM parse(File file) throws IOException, ParserConfigurationException, SAXException {
+		File directory = file.getCanonicalFile().getParentFile();
+
+		// look for root pom.xml
+		File parentDirectory = directory.getParentFile();
+		if (!parentDirectory.exists() || !new File(parentDirectory, "pom.xml").exists())
+			return parse(file, null);
+
+		Stack<String> stack = new Stack<String>();
+		for (;;) {
+			stack.push(directory.getName());
+			directory = parentDirectory;
+			parentDirectory = directory.getParentFile();
+			if (!parentDirectory.exists() || !new File(parentDirectory, "pom.xml").exists())
+				break;
+		}
+		POM pom = parse(new File(directory, "pom.xml"), null);
+		// walk back up to the desired pom.xml
+		while (!stack.empty()) {
+			String name = stack.pop();
+			POM next = null;
+			for (POM child : pom.children)
+				if (child.directory.getName().equals(name)) {
+					next = child;
+					break;
+				}
+			if (next == null)
+				next = pom.addModule(name);
+			pom = next;
+		}
+		return pom;
 	}
 
 	public POM parse(File file, POM parent) throws IOException, ParserConfigurationException, SAXException {
@@ -103,6 +137,17 @@ public class MiniMaven {
 		protected String[] latestDependency = new String[3];
 		protected boolean isCurrentProfile;
 
+		protected POM addModule(String name) throws IOException, ParserConfigurationException, SAXException {
+			return addChild(parse(new File(new File(directory, name), "pom.xml"), this));
+		}
+
+		protected POM addChild(POM child) {
+			POM[] newChildren = new POM[children.length + 1];
+			System.arraycopy(children, 0, newChildren, 0, children.length);
+			newChildren[children.length] = child;
+			children = newChildren;
+			return child;
+		}
 
 		protected POM(File directory, POM parent) {
 			this.directory = directory;
