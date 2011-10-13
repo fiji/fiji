@@ -2708,14 +2708,12 @@ public class WekaSegmentation {
 			return -1;
 
 		double error = 0;
-		double count = label.getWidth() * label.getHeight() * label.getImageStackSize();
-
 
 		for(int j=0; j<wrs.length; j++)			
 			error += wrs[ j ].warpingError;
 		
 
-		if(count != 0)
+		if(wrs.length != 0)
 			return error / wrs.length;
 		else
 			return -1;
