@@ -89,6 +89,27 @@ public class Headless extends JavassistHelper {
 
 		clazz = get("ij.Menus");
 		rewrite(clazz);
+
+		clazz = get("ij.plugin.HyperStackConverter");
+		clazz.instrument(new ExprEditor() {
+			@Override
+			public void edit(NewExpr expr) throws CannotCompileException {
+				if (expr.getClassName().equals("ij.gui.StackWindow"))
+					expr.replace("$1.show(); $_ = null;");
+			}
+		});
+
+		clazz = get("ij.plugin.Duplicator");
+		clazz.instrument(new ExprEditor() {
+			@Override
+			public void edit(MethodCall call) throws CannotCompileException {
+				String name = call.getMethodName();
+				if (name.equals("addTextListener"))
+					call.replace("");
+				else if (name.equals("elementAt"))
+					call.replace("$_ = $0 == null ? null : $0.elementAt($$);");
+			}
+		});
 	}
 
 
