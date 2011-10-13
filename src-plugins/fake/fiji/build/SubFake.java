@@ -88,10 +88,14 @@ public class SubFake extends Rule {
 	}
 
 	void action() throws FakeException {
-		checkObsoleteLocation(getLastPrerequisite());
+		String directory = getLastPrerequisite();
+		checkObsoleteLocation(directory);
 
-		for (String prereq : prerequisites)
-			action(prereq);
+		for (Rule prereq : getDependencies())
+			prereq.action();
+
+		if (getFakefile() != null || new File(directory, "Makefile").exists())
+			fakeOrMake(jarName);
 
 		File file = new File(Util.makePath(parser.cwd, source));
 		if (getVarBool("IGNOREMISSINGFAKEFILES") &&
@@ -114,11 +118,8 @@ public class SubFake extends Rule {
 			copyJar(source, target, parser.cwd, configPath);
 	}
 
-	void action(String directory) throws FakeException {
-		action(directory, jarName);
-	}
-
-	void action(String directory, String subTarget) throws FakeException {
+	protected void fakeOrMake(String subTarget) throws FakeException {
+		String directory = getLastPrerequisite();
 		parser.fake.fakeOrMake(parser.cwd, directory,
 			getVarBool("VERBOSE", directory),
 			getVarBool("IGNOREMISSINGFAKEFILES",
@@ -153,7 +154,7 @@ public class SubFake extends Rule {
 		clean(getLastPrerequisite() + jarName, dry_run);
 		File fakefile = getFakefile();
 		if (fakefile != null) try {
-			action(getLastPrerequisite(), jarName + "-clean"
+			fakeOrMake(jarName + "-clean"
 				+ (dry_run ? "-dry-run" : ""));
 		} catch (FakeException e) {
 			e.printStackTrace(parser.fake.err);
