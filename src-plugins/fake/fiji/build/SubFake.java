@@ -6,10 +6,10 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 public class SubFake extends Rule {
-	String jarName;
-	String baseName;
-	String source;
-	String configPath;
+	protected String jarName;
+	protected String baseName;
+	protected String source;
+	protected String configPath;
 
 	SubFake(Parser parser, String target, List<String> prerequisites) {
 		super(parser, target, prerequisites);
