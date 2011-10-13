@@ -1,6 +1,12 @@
 package fiji;
 
+import ij.IJ;
+
+import java.awt.Frame;
+
 import java.io.File;
+
+import java.lang.reflect.Constructor;
 
 public class FijiTools {
 	public static String getFijiDir() throws ClassNotFoundException {
@@ -25,5 +31,51 @@ public class FijiTools {
 		} catch (Exception e) {
 			return false;
 		}
+	}
+
+	public static boolean openStartupMacros() {
+		try {
+			File macros = new File(getFijiDir(), "macros");
+			File txt = new File(macros, "StartupMacros.txt");
+			File ijm = new File(macros, "StartupMacros.ijm");
+			File fiji = new File(macros, "StartupMacros.fiji");
+			if (txt.exists()) {
+				if (openEditor(txt, fiji))
+					return true;
+			}
+			else if (ijm.exists() || fiji.exists()) {
+				if (openEditor(ijm, fiji))
+					return true;
+			}
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	public static boolean openEditor(File file, File templateFile) {
+		try {
+			Class clazz = IJ.getClassLoader().loadClass("fiji.scripting.TextEditor");
+			Constructor ctor = clazz.getConstructor(new Class[] { File.class, File.class });
+			Frame frame = (Frame)ctor.newInstance(new Object[] { file, templateFile });
+			frame.setVisible(true);
+			return true;
+		} catch (Exception e) {
+			IJ.handleException(e);
+		}
+		return false;
+	}
+
+	public static boolean openEditor(String title, String body) {
+		try {
+			Class clazz = IJ.getClassLoader().loadClass("fiji.scripting.TextEditor");
+			Constructor ctor = clazz.getConstructor(new Class[] { String.class, String.class });
+			Frame frame = (Frame)ctor.newInstance(new Object[] { title, body });
+			frame.setVisible(true);
+			return true;
+		} catch (Exception e) {
+			IJ.handleException(e);
+		}
+		return false;
 	}
 }

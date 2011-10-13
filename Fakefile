@@ -98,7 +98,6 @@ ENVOVERRIDES(TOOLS_JAR)=true
 
 SUBMODULE_TARGETS=\
 	jars/ij.jar \
-	misc/headless.jar \
 	plugins/loci_tools.jar \
 	jars/VectorString.jar \
 	plugins/TrakEM2_.jar \
@@ -258,8 +257,6 @@ jars/batik.jar[] <-
 
 # From submodules
 jars/ij.jar <- jars/javac.jar modules/ImageJA/
-CLASSPATH(misc/headless.jar)=jars/ij.jar
-misc/headless.jar <- jars/javac.jar modules/ImageJA/
 CLASSPATH(plugins/mpicbg_.jar)=jars/ij.jar:jars/mpicbg.jar
 plugins/mpicbg_.jar <- modules/mpicbg/
 CLASSPATH(jars/mpicbg.jar)=jars/ij.jar:jars/Jama-1.0.2.jar
@@ -400,7 +397,6 @@ CLASSPATH(plugins/Series_Labeler.jar)=jars/ij.jar
 CLASSPATH(plugins/Gray_Morphology.jar)=jars/ij.jar
 CLASSPATH(plugins/IsoData_Classifier.jar)=jars/ij.jar
 CLASSPATH(plugins/ToAST_.jar)=jars/ij.jar
-CLASSPATH(misc/headless.jar)=jars/ij.jar
 CLASSPATH(plugins/AnalyzeSkeleton_.jar)=jars/ij.jar
 CLASSPATH(plugins/CPU_Meter.jar)=jars/jna.jar:jars/ij.jar
 CLASSPATH(plugins/M_I_P.jar)=jars/ij.jar
@@ -425,7 +421,7 @@ CLASSPATH(plugins/Volume_Viewer.jar)=jars/ij.jar
 CLASSPATH(plugins/Image_5D.jar)=jars/ij.jar
 CLASSPATH(jars/batik.jar)=jars/jacl.jar:plugins/loci_tools.jar:jars/jython.jar
 CLASSPATH(plugins/Stack_Manipulation.jar)=jars/ij.jar
-CLASSPATH(jars/Fiji.jar)=jars/ij.jar
+CLASSPATH(jars/Fiji.jar)=jars/ij.jar:jars/javassist.jar
 CLASSPATH(plugins/TurboReg_.jar)=jars/ij.jar
 CLASSPATH(plugins/RATS_.jar)=jars/ij.jar
 CLASSPATH(plugins/Interactive_3D_Surface_Plot.jar)=jars/ij.jar
@@ -496,6 +492,10 @@ plugins/FFMPEG_IO.jar-cross[src-plugins/FFMPEG_IO/generate.bsh all] <- src-plugi
 
 plugins/*.jar <- src-plugins/*/**/*
 jars/*.jar <- src-plugins/*/**/*
+
+# headless.jar
+
+misc/headless.jar[bin/make-headless-jar.bsh] <- jars/Fiji.jar jars/javassist.jar jars/ij.jar
 
 # Fiji launcher
 

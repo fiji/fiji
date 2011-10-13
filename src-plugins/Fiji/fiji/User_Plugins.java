@@ -124,6 +124,17 @@ public class User_Plugins implements PlugIn {
 		// install '{' as short cut for the Script Editor
 		Menus.getShortcuts().put(KeyEvent.VK_OPEN_BRACKET, "Script Editor");
 		Menus.getShortcuts().put(200 + KeyEvent.VK_OPEN_BRACKET, "Script Editor");
+
+		if (!Menus.getCommands().containsKey("Install PlugIn...")) {
+			Menus.getCommands().put("Install PlugIn...", "fiji.PlugInInstaller");
+			Menu plugins = getMenu("Plugins");
+			if (plugins != null)
+				for (int i = 0; i < plugins.getItemCount(); i++)
+					if (plugins.getItem(i).getLabel().equals("-")) {
+						plugins.insert("Install PlugIn...", i);
+						break;
+					}
+		}
 	}
 
 	/**
@@ -309,7 +320,7 @@ public class User_Plugins implements PlugIn {
 		return item;
 	}
 
-	protected static Menu getMenu(String menuPath) {
+	public static Menu getMenu(String menuPath) {
 		return (Menu)getMenuItem(Menus.getMenuBar(), menuPath, true);
 	}
 

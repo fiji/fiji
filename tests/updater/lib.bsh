@@ -60,6 +60,8 @@ markForUpload(filename, updateSite) {
 
 // ADDITIONAL FILESYSTEM HELPERS
 
+baseJarCount = 6;
+
 prepareNewFijiRoot(root, asDeveloper) {
 	if (root.exists())
 		deleteRecursively(root);
@@ -68,7 +70,7 @@ prepareNewFijiRoot(root, asDeveloper) {
 	toCopy = new String[] {
 		"fiji",
 		"jars/ij.jar", "jars/Fiji.jar", "plugins/Fiji_Updater.jar",
-		"jars/bsh-2.0b4.jar", "jars/jsch-0.1.44.jar"
+		"jars/bsh-2.0b4.jar", "jars/jsch-0.1.44.jar", "jars/javassist.jar"
 	};
 
 	if (asDeveloper)
@@ -237,7 +239,6 @@ startDownload() {
 
 /// THE DEVELOPER/USER IMPERSONATIONS
 
-
 uploadFailsIfChanged() {
 	startUpdater();
 	requireUpToDate();
@@ -253,7 +254,7 @@ initialUpload() {
 	startUpdater();
 	requireUpToDate();
 	advancedMode();
-	assert("5 plugins", plugins.size() == 5);
+	assert("" + baseJarCount + " plugins", plugins.size() == baseJarCount);
 	for (PluginObject plugin : plugins)
 		markForUpload(plugin.filename);
 	startUpload();
@@ -263,7 +264,7 @@ initialUserCheck() {
 	startUpdater();
 	requireUpToDate();
 	advancedMode();
-	assert("5 plugins", plugins.size() == 5);
+	assert("" + baseJarCount + " plugins", plugins.size() == baseJarCount);
 	for (PluginObject plugin : plugins)
 		assert(plugin.filename + " is up-to-date",
 			plugin.getStatus() == PluginObject.Status.INSTALLED);
@@ -309,7 +310,7 @@ uploadSome() {
 	startUpdater();
 	requireUpToDate();
 	advancedMode();
-	assert("7 plugins", plugins.size() == 7);
+	assert("+2 plugins", plugins.size() == baseJarCount + 2);
 	markForUpload("macros/new.ijm");
 	markForUpload("macros/modified.ijm");
 	startUpload();
@@ -320,7 +321,7 @@ downloadSome() {
 	requireModified();
 	advancedMode();
 	viewMode("all plugins");
-	assert("7 plugins", plugins.size() == 7);
+	assert("+2 plugins", plugins.size() == baseJarCount + 2);
 	assert("2 updateable", count(plugins.updateable(true)) == 2);
 	assert("1 modified", count(plugins.locallyModified()) == 1);
 	requireStatus("macros/modified.ijm", PluginObject.Status.MODIFIED);
@@ -344,8 +345,8 @@ uploadNewUpdater() {
 	startUpdater();
 	requireModified();
 	advancedMode();
-	assert("8 plugins", count(plugins) == 8);
-	assert("5 up-to-date", count(plugins.upToDate()) == 5);
+	assert("+3 plugins", count(plugins) == baseJarCount + 3);
+	assert("+0 up-to-date", count(plugins.upToDate()) == baseJarCount);
 	requireStatus("plugins/Fiji_Updater.jar", PluginObject.Status.MODIFIED);
 	requireStatus("macros/new2.ijm", PluginObject.Status.NOT_FIJI);
 	markForUpload("plugins/Fiji_Updater.jar");
@@ -362,12 +363,12 @@ downloadNewUpdater() {
 	waitUntilClosed(updaterFrame);
 	assert("db.xml.gz unmodified", lastModified == dbXmlGz.lastModified());
 	startUpdater();
-	while (count(plugins.upToDate()) != 6) {
-		print("Waiting until there are 6 up-to-date components (" + count(plugins.upToDate()) + ")");
+	while (count(plugins.upToDate()) != baseJarCount + 1) {
+		print("Waiting until there are +1 up-to-date components (" + count(plugins.upToDate()) + ")");
 		Thread.sleep(500);
 	}
 	advancedMode();
-	assert("6 up-to-date", count(plugins.upToDate()) == 6);
+	assert("+1 up-to-date", count(plugins.upToDate()) == baseJarCount + 1);
 	requireStatus("macros/modified.ijm", PluginObject.Status.UPDATEABLE);
 	requireStatus("macros/new2.ijm", PluginObject.Status.NEW);
 	startDownload();
@@ -389,7 +390,7 @@ uploadSecondary() {
 	startUpdater();
 	requireUpToDate();
 	advancedMode();
-	assert("9 plugins", plugins.size() == 9);
+	assert("+4 plugins", plugins.size() == baseJarCount + 4);
 	plugins.addUpdateSite("Secondary", "file:" + tmpSecondaryWebRoot.getAbsolutePath() + "/", null,
 		tmpSecondaryWebRoot.getAbsolutePath(), 20000101000000l);
 	markForUpload(secondaryFile, "Secondary");
@@ -420,7 +421,7 @@ downloadSecondary() {
 	startUpdater();
 	advancedMode();
 	viewMode("all plugins");
-	assert("9 plugins", plugins.size() == 9);
+	assert("+4 plugins", plugins.size() == baseJarCount + 4);
 	assert("1 updateable", count(plugins.updateable(false)) == 1);
 	assert("0 modified", count(plugins.locallyModified()) == 0);
 	requireStatus(secondaryFile, PluginObject.Status.NEW);
@@ -452,7 +453,7 @@ uploadCrossSiteDependencee() {
 	startUpdater();
 	requireUpToDate();
 	advancedMode();
-	assert("11 plugins", plugins.size() == 11);
+	assert("+6 plugins", plugins.size() == baseJarCount + 6);
 	markForUpload(crossSiteDependencee, "Secondary");
 	plugins.getPlugin(crossSiteDependencee).addDependency(crossSiteDependency);
 	startUpload();
@@ -462,7 +463,7 @@ downloadCrossSiteDependencies() {
 	startUpdater();
 	advancedMode();
 	viewMode("all plugins");
-	assert("11 plugins", plugins.size() == 11);
+	assert("+6 plugins", plugins.size() == baseJarCount + 6);
 	while (count(plugins.updateable(false)) != 2)
 		Thread.sleep(50);
 	assert("0 modified", count(plugins.locallyModified()) == 0);
@@ -493,7 +494,7 @@ uploadNativeDependency() {
 	startUpdater();
 	requireUpToDate();
 	advancedMode();
-	assert("13 plugins", plugins.size() == 13);
+	assert("+8 plugins", plugins.size() == baseJarCount + 8);
 	markForUpload(nativeDependency1);
 	plugins.getPlugin(nativeDependency1).addPlatform(Util.platform);
 	markForUpload(nativeDependency2);
@@ -507,7 +508,7 @@ downloadNativeDependency() {
 	startUpdater();
 	advancedMode();
 	viewMode("all plugins");
-	assert("13 plugins", plugins.size() == 13);
+	assert("+8 plugins", plugins.size() == baseJarCount + 8);
 	while (count(plugins.updateable(false)) != 1)
 		Thread.sleep(50);
 	assert("0 modified", count(plugins.locallyModified()) == 0);
