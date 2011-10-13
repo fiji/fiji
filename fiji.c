@@ -2631,12 +2631,10 @@ static void parse_command_line(void)
 			string_set_length(class_path, len - 1);
 	}
 	else {
-		if (headless)
-			string_append_path_list(class_path, fiji_path("misc/headless.jar"));
-
 		if (is_default_main_class(main_class)) {
 			string_append_path_list(class_path, fiji_path("jars/Fiji.jar"));
 			string_append_path_list(class_path, fiji_path("jars/ij.jar"));
+			string_append_path_list(class_path, fiji_path("jars/javassist.jar"));
 		}
 		else {
 			if (build_classpath(class_path, fiji_path("plugins"), 0))
