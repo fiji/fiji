@@ -3469,7 +3469,7 @@ public class WekaSegmentation {
 			{
 				WarpingResults wr = simplePointWarp2d(source, target, mask, binaryThreshold);
 				int[] mismatchesLabels = WekaSegmentation.classifyMismatches2d( wr.warpedSource, wr.mismatches );
-				return WekaSegmentation.clusterMismatchesByType( wr.warpedSource, wr.mismatches, mismatchesLabels );
+				return WekaSegmentation.clusterMismatchesByError( wr.warpedSource, wr.mismatches, mismatchesLabels );
 			}
 		};
 	}
@@ -3746,7 +3746,7 @@ public class WekaSegmentation {
 	 * @param mismatchClassification array of classified mismatches
 	 * @return number of warping mismatches after clustering
 	 */
-	public static ClusteredWarpingMismatches clusterMismatchesByType(
+	public static ClusteredWarpingMismatches clusterMismatchesByError(
 			ImagePlus warpedLabels, 
 			ArrayList<Point3f> mismatches, 
 			int [] mismatchClassification)
