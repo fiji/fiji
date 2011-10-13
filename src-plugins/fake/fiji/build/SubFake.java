@@ -1,5 +1,7 @@
 package fiji.build;
 
+import fiji.build.MiniMaven.POM;
+
 import java.io.File;
 
 import java.util.List;
@@ -53,6 +55,10 @@ public class SubFake extends Rule {
 				return rule.checkUpToDate();
 			}
 
+			POM pom = getPOM();
+			if (pom != null)
+				return pom.upToDate();
+
 			if (!upToDateRecursive(new File(Util.makePath(parser.cwd, directory)), target, true))
 				return false;
 		} catch (Exception e) {
@@ -87,6 +93,25 @@ public class SubFake extends Rule {
 		return file.exists() ? file : null;
 	}
 
+	protected POM getPOM() {
+		File file = new File(Util.makePath(parser.cwd, getLastPrerequisite()), "pom.xml");
+		if (!file.exists())
+			return null;
+		String targetBasename = jarName.substring(jarName.lastIndexOf('/') + 1);
+		if (targetBasename.endsWith(".jar"))
+			targetBasename = targetBasename.substring(0, targetBasename.length() - 4);
+		// TODO: targetBasename could end in "-<version>"
+		try {
+			POM pom = new MiniMaven(parser.fake, parser.fake.err, getVarBool("VERBOSE")).parse(file);
+			if (targetBasename.equals(pom.getArtifact()))
+				return pom;
+			return pom.findPOM(null, targetBasename, null);
+		} catch (Exception e) {
+			e.printStackTrace(parser.fake.err);
+			return null;
+		}
+	}
+
 	void action() throws FakeException {
 		String directory = getLastPrerequisite();
 		checkObsoleteLocation(directory);
@@ -96,6 +121,17 @@ public class SubFake extends Rule {
 
 		if (getFakefile() != null || new File(directory, "Makefile").exists())
 			fakeOrMake(jarName);
+		else {
+			POM pom = getPOM();
+			if (pom != null) try {
+				pom.build();
+				copyJar(pom.getTarget(), target, parser.cwd, configPath);
+				return;
+			} catch (Exception e) {
+				e.printStackTrace(parser.fake.err);
+				throw new FakeException(e.getMessage());
+			}
+		}
 
 		File file = new File(Util.makePath(parser.cwd, source));
 		if (getVarBool("IGNOREMISSINGFAKEFILES") &&
@@ -158,6 +194,17 @@ public class SubFake extends Rule {
 				+ (dry_run ? "-dry-run" : ""));
 		} catch (FakeException e) {
 			e.printStackTrace(parser.fake.err);
+		}
+		else {
+			POM pom = getPOM();
+			if (pom != null) {
+				try {
+					pom.clean();
+				} catch (Exception e) {
+					e.printStackTrace(parser.fake.err);
+				}
+				return;
+			}
 		}
 		File buildDir = getBuildDir();
 		if (buildDir != null) {
