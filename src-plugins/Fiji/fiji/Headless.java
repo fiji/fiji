@@ -168,14 +168,16 @@ public class Headless extends JavassistHelper {
 			@Override
 			public void edit(NewExpr expr) throws CannotCompileException {
 				String name = expr.getClassName();
-				if (name.startsWith("java.awt.Menu") || name.startsWith("java.awt.Checkbox") || name.equals("java.awt.Frame"))
+				if (name.startsWith("java.awt.Menu") || name.equals("java.awt.PopupMenu") ||
+						name.startsWith("java.awt.Checkbox") || name.equals("java.awt.Frame"))
 					expr.replace("$_ = null;");
 			}
 
 			@Override
 			public void edit(MethodCall call) throws CannotCompileException {
 				String name = call.getClassName();
-				if (name.startsWith("java.awt.Menu") || name.startsWith("java.awt.Checkbox")) try {
+				if (name.startsWith("java.awt.Menu") || name.equals("java.awt.PopupMenu") ||
+						name.startsWith("java.awt.Checkbox")) try {
 					CtClass type = call.getMethod().getReturnType();
 					if (type == CtClass.voidType)
 						call.replace("");
@@ -188,6 +190,8 @@ public class Headless extends JavassistHelper {
 					call.replace("if ($1 != null && $2 != null) $_ = $0.put($1, $2); else $_ = null;");
 				else if (call.getMethodName().equals("get") && call.getClassName().equals("java.util.Properties"))
 					call.replace("$_ = $1 != null ? $0.get($1) : null;");
+				else if (name.equals("java.lang.Integer") && call.getMethodName().equals("intValue"))
+					call.replace("$_ = $0 == null ? 0 : $0.intValue();");
 			}
 		});
 	}
