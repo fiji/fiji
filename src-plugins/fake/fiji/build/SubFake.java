@@ -57,27 +57,27 @@ public class SubFake extends Rule {
 			File source = new File(parser.cwd, precompiled + "/" + jarName);
 			return upToDate(source, target);
 		}
-		else {
-			if (Util.isDirEmpty(getLastPrerequisite())) {
-				String precompiled = getVar("PRECOMPILEDDIRECTORY");
-				if (precompiled == null)
-					return false;
-				File source = new File(parser.cwd, precompiled + "/" + jarName);
-				return upToDate(source, target);
-			}
 
-			File file = getFakefile();
-			if (file != null) {
-				Parser parser = this.parser.fake.parseFakefile(new File(this.parser.cwd, getLastPrerequisite()), file, getVarBool("VERBOSE", directory), getVarPath("TOOLSPATH", directory), getVarPath("CLASSPATH", directory), getBuildDir());
-				Rule all = parser.parseRules(null);
-				Rule rule = parser.getRule(jarName);
-				if (rule == null)
-					rule = all;
-				return rule.checkUpToDate();
-			}
-			if (!upToDateRecursive(dir, target, true))
+		if (Util.isDirEmpty(getLastPrerequisite())) {
+			String precompiled = getVar("PRECOMPILEDDIRECTORY");
+			if (precompiled == null)
 				return false;
+			File source = new File(parser.cwd, precompiled + "/" + jarName);
+			return upToDate(source, target);
 		}
+
+		File file = getFakefile();
+		if (file != null) {
+			Parser parser = this.parser.fake.parseFakefile(new File(this.parser.cwd, getLastPrerequisite()), file, getVarBool("VERBOSE", directory), getVarPath("TOOLSPATH", directory), getVarPath("CLASSPATH", directory), getBuildDir());
+			Rule all = parser.parseRules(null);
+			Rule rule = parser.getRule(jarName);
+			if (rule == null)
+				rule = all;
+			return rule.checkUpToDate();
+		}
+		if (!upToDateRecursive(dir, target, true))
+			return false;
+
 		return true;
 	}
 
