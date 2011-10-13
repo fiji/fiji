@@ -1,5 +1,7 @@
 package fiji.build;
 
+import com.sun.tools.javac.Main;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -187,7 +189,7 @@ public class MiniMaven {
 			if (count > 0) {
 				System.err.println("Compiling " + (arguments.size() - count) + " files in " + directory);
 				String[] array = arguments.toArray(new String[arguments.size()]);
-				if (com.sun.tools.javac.Main.compile(array) > 0)
+				if (Main.compile(array) > 0)
 					throw new RuntimeException("Build error in " + directory);
 			}
 
