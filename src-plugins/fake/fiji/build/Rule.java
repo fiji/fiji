@@ -128,8 +128,8 @@ public abstract class Rule {
 	}
 
 	boolean upToDate(String source, String target, File cwd) {
-		return upToDate(new File(cwd, source),
-			new File(cwd, target));
+		return upToDate(new File(Util.makePath(cwd, source)),
+			new File(Util.makePath(cwd, target)));
 	}
 
 	boolean upToDateError(File source, File target) {
