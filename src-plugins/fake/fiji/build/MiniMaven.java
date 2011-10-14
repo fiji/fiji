@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 
 import java.lang.reflect.Method;
 
@@ -40,12 +41,18 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
 public class MiniMaven {
-	protected static boolean verbose = false;
+	protected boolean verbose;
+	protected PrintStream err;
 	protected Map<String, POM> localPOMCache = new HashMap<String, POM>();
 
-	protected static void print80(String string) {
+	public MiniMaven(PrintStream err, boolean verbose) throws FakeException {
+		this.err = err;
+		this.verbose = verbose;
+	}
+
+	protected void print80(String string) {
 		int length = string.length();
-		System.err.print((length < 80 ? string : string.substring(0, 80)) + "\r");
+		err.print((length < 80 ? string : string.substring(0, 80)) + "\r");
 	}
 
 	public POM parse(File file, POM parent) throws IOException, ParserConfigurationException, SAXException {
@@ -145,7 +152,7 @@ public class MiniMaven {
 
 		protected void download(String url) throws MalformedURLException, IOException, NoSuchAlgorithmException {
 			if (version == null) {
-				System.err.println("Version of " + artifactId + " is null; Skipping.");
+				err.println("Version of " + artifactId + " is null; Skipping.");
 				return;
 			}
 			String path = "/" + groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/";
@@ -178,7 +185,7 @@ public class MiniMaven {
 			count = arguments.size() - count;
 
 			if (count > 0) {
-				System.err.println("Compiling " + (arguments.size() - count) + " files in " + directory);
+				err.println("Compiling " + (arguments.size() - count) + " files in " + directory);
 				String[] array = arguments.toArray(new String[arguments.size()]);
 				if (Main.compile(array) > 0)
 					throw new RuntimeException("Build error in " + directory);
@@ -352,7 +359,7 @@ public class MiniMaven {
 				path += version + "/" + artifactId + "-" + version + ".pom";
 				result = parse(new File(path), null);
 				if (result == null)
-					System.err.println("Artifact not found; consider 'get-dependencies': " + artifactId);
+					err.println("Artifact not found; consider 'get-dependencies': " + artifactId);
 				localPOMCache.put(key, result);
 			}
 			if (result != null && version != null && compareVersion(version, result.version) > 0)
@@ -394,7 +401,7 @@ public class MiniMaven {
 		public void startElement(String uri, String name, String qualifiedName, Attributes attributes) {
 			prefix += ">" + qualifiedName;
 			if (debug)
-				System.err.println("start(" + uri + ", " + name + ", " + qualifiedName + ", " + toString(attributes) + ")");
+				err.println("start(" + uri + ", " + name + ", " + qualifiedName + ", " + toString(attributes) + ")");
 		}
 
 		public void endElement(String uri, String name, String qualifiedName) {
@@ -406,13 +413,13 @@ public class MiniMaven {
 				isCurrentProfile = false;
 			prefix = prefix.substring(0, prefix.length() - 1 - qualifiedName.length());
 			if (debug)
-				System.err.println("end(" + uri + ", " + name + ", " + qualifiedName + ")");
+				err.println("end(" + uri + ", " + name + ", " + qualifiedName + ")");
 		}
 
 		public void characters(char[] buffer, int offset, int length) {
 			String string = new String(buffer, offset, length);
 			if (debug)
-				System.err.println("characters: " + string + " (prefix: " + prefix + ")");
+				err.println("characters: " + string + " (prefix: " + prefix + ")");
 
 			String prefix = this.prefix;
 			if (isCurrentProfile)
@@ -447,7 +454,7 @@ public class MiniMaven {
 			else if (prefix.equals(">project>repositories>repository>url"))
 				repositories.add(string);
 			else if (debug)
-				System.err.println("Ignoring " + prefix);
+				err.println("Ignoring " + prefix);
 		}
 
 		public String toString(Attributes attributes) {
@@ -586,7 +593,7 @@ public class MiniMaven {
 	}
 
 	public static void main(String[] args) throws Exception {
-		MiniMaven miniMaven = new MiniMaven();
+		MiniMaven miniMaven = new MiniMaven(System.err, false);
 		POM root = miniMaven.parse(new File("pom.xml"), null);
 		String command = args.length == 0 ? "compile-and-run" : args[0];
 		String artifactId = getSystemProperty("artifactId", "imagej");
@@ -619,9 +626,9 @@ public class MiniMaven {
 			main.invoke(null, new Object[] { new String[0] });
 		}
 		else if (command.equals("classpath"))
-			System.out.println(pom.getClassPath());
+			miniMaven.err.println(pom.getClassPath());
 		else
-			System.err.println("Unhandled command: " + command);
+			miniMaven.err.println("Unhandled command: " + command);
 	}
 
 	protected static String getSystemProperty(String key, String defaultValue) {
