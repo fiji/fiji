@@ -121,8 +121,8 @@ public class SubFake extends Rule {
 		else {
 			POM pom = getPOM();
 			if (pom != null) try {
-				pom.build();
-				copyJar(pom.getTarget(), target, parser.cwd, configPath);
+				pom.buildJar();
+				copyJar(pom.getTarget().getPath(), target, parser.cwd, configPath);
 				return;
 			} catch (Exception e) {
 				e.printStackTrace(parser.fake.err);
