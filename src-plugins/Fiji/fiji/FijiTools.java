@@ -7,6 +7,8 @@ import java.awt.Frame;
 import java.io.File;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+
 
 public class FijiTools {
 	public static String getFijiDir() throws ClassNotFoundException {
@@ -76,6 +78,18 @@ public class FijiTools {
 		} catch (Exception e) {
 			IJ.handleException(e);
 		}
+
+		try {
+			Class clazz = IJ.getClassLoader().loadClass("ij.plugin.frame.Editor");
+			Constructor ctor = clazz.getConstructor(new Class[] { Integer.TYPE, Integer.TYPE, Integer.TYPE, Integer.TYPE });
+			Object ed = ctor.newInstance(new Object[] { 16, 60, 0, 3 });
+			Method method = clazz.getMethod(title.endsWith(".ijm") ? "createMacro" : "create", new Class[] { String.class, String.class });
+			method.invoke(ed, new Object[] { title, body });
+			return true;
+		} catch (Exception e) {
+			IJ.handleException(e);
+		}
+
 		return false;
 	}
 }
