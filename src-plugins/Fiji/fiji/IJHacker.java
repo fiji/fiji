@@ -340,9 +340,8 @@ public class IJHacker extends JavassistHelper {
 					if (call.getMethodName().equals("createMacro"))
 						call.replace("if ($1.endsWith(\".txt\"))"
 							+ "  $1 = $1.substring($1.length() - 3) + \"ijm\";"
-							+ "if (!fiji.FijiTools.openEditor($1, $2)) {"
-							+ "  ed.createMacro($1, $2);"
-							+ "}");
+							+ "boolean b = fiji.FijiTools.openEditor($1, $2);"
+							+ "return;");
 				}
 			});
 			// create new plugin in the Script Editor
@@ -364,18 +363,13 @@ public class IJHacker extends JavassistHelper {
 			method = clazz.getMethod("createMacro", "(Ljava/lang/String;)V");
 			stripOutEditor(method.getMethodInfo());
 			method.instrument(new ExprEditor() {
-
 				@Override
 				public void edit(MethodCall call) throws CannotCompileException {
 					if (call.getMethodName().equals("create"))
 						call.replace("if ($1.endsWith(\".txt\"))"
 							+ "  $1 = $1.substring($1.length() - 3) + \"ijm\";"
-							+ "if (!fiji.FijiTools.openEditor($1, $2)) {"
-							+ "  int options = (monospaced ? ij.plugin.frame.Editor.MONOSPACED : 0) |"
-							+ "    (menuBar ? ij.plugin.frame.Editor.MENU_BAR : 0);"
-							+ "  ed = new ij.plugin.frame.Editor(rows, columns, 0, options);"
-							+ "  ed.create($1, $2);"
-							+ "}");
+							+ "fiji.FijiTools.openEditor($1, $2);"
+							+ "return;");
 				}
 			});
 			// open new plugin in Script Editor
@@ -385,12 +379,8 @@ public class IJHacker extends JavassistHelper {
 				@Override
 				public void edit(MethodCall call) throws CannotCompileException {
 					if (call.getMethodName().equals("create"))
-						call.replace("if (!fiji.FijiTools.openEditor($1, $2)) {"
-							+ "  int options = (monospaced ? ij.plugin.frame.Editor.MONOSPACED : 0) |"
-							+ "    (menuBar ? ij.plugin.frame.Editor.MENU_BAR : 0);"
-							+ "  ed = new ij.plugin.frame.Editor(rows, columns, 0, options);"
-							+ "  ed.create($1, $2);"
-							+ "}");
+						call.replace("boolean b = fiji.FijiTools.openEditor($1, $2);"
+							+ "return;");
 				}
 
 			});
