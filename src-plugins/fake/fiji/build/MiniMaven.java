@@ -395,6 +395,8 @@ public class MiniMaven {
 					return "loci";
 				if (key.equals("imagej.groupId"))
 					return "imagej";
+				if (key.equals("java.home"))
+					return System.getProperty("java.home");
 				return null;
 			}
 			return parent.getProperty(key);
