@@ -333,7 +333,7 @@ public class IJHacker extends JavassistHelper {
 
 			// create new macro in the Script Editor
 			method = clazz.getMethod("createMacro", "()V");
-			stripOutEditor(method.getMethodInfo());
+			dontReturnWhenEditorIsNull(method.getMethodInfo());
 			method.instrument(new ExprEditor() {
 				@Override
 				public void edit(MethodCall call) throws CannotCompileException {
@@ -342,6 +342,8 @@ public class IJHacker extends JavassistHelper {
 							+ "  $1 = $1.substring($1.length() - 3) + \"ijm\";"
 							+ "boolean b = fiji.FijiTools.openEditor($1, $2);"
 							+ "return;");
+					else if (call.getMethodName().equals("runPlugIn"))
+						call.replace("$_ = null;");
 				}
 			});
 			// create new plugin in the Script Editor
@@ -363,7 +365,6 @@ public class IJHacker extends JavassistHelper {
 
 			// open new plugin in Script Editor
 			method = clazz.getMethod("createMacro", "(Ljava/lang/String;)V");
-			stripOutEditor(method.getMethodInfo());
 			method.instrument(new ExprEditor() {
 				@Override
 				public void edit(MethodCall call) throws CannotCompileException {
@@ -372,17 +373,21 @@ public class IJHacker extends JavassistHelper {
 							+ "  $1 = $1.substring($1.length() - 3) + \"ijm\";"
 							+ "fiji.FijiTools.openEditor($1, $2);"
 							+ "return;");
+					else if (call.getMethodName().equals("runPlugIn"))
+						call.replace("$_ = null;");
 				}
 			});
 			// open new plugin in Script Editor
 			method = clazz.getMethod("createPlugin", "(Ljava/lang/String;ILjava/lang/String;)V");
-			stripOutEditor(method.getMethodInfo());
+			dontReturnWhenEditorIsNull(method.getMethodInfo());
 			method.instrument(new ExprEditor() {
 				@Override
 				public void edit(MethodCall call) throws CannotCompileException {
 					if (call.getMethodName().equals("create"))
 						call.replace("boolean b = fiji.FijiTools.openEditor($1, $2);"
 							+ "return;");
+					else if (call.getMethodName().equals("runPlugIn"))
+						call.replace("$_ = null;");
 				}
 
 			});
@@ -595,31 +600,24 @@ public class IJHacker extends JavassistHelper {
 		return builder.toString();
 	}
 
-	private void stripOutEditor(MethodInfo info) throws CannotCompileException {
+	private void dontReturnWhenEditorIsNull(MethodInfo info) throws CannotCompileException {
 		ConstPool constPool = info.getConstPool();
 		CodeIterator iterator = info.getCodeAttribute().iterator();
 	        while (iterator.hasNext()) try {
 	                int pos = iterator.next();
 			int c = iterator.byteAt(pos);
-			if (c == Opcode.LDC) {
-				int index = iterator.byteAt(pos + 1);
-				if (constPool.getTag(index) == ConstPool.CONST_String &&
-						constPool.getStringInfo(index).equals("ij.plugin.frame.Editor") &&
-						iterator.byteAt(pos + 2) == Opcode.LDC &&
-						iterator.byteAt(pos + 4) == Opcode.INVOKESTATIC &&
-						iterator.byteAt(pos + 7) == Opcode.CHECKCAST &&
-						iterator.byteAt(pos + 10) == Opcode.PUTFIELD &&
-						iterator.byteAt(pos + 13) == Opcode.ALOAD_0 &&
-						iterator.byteAt(pos + 14) == Opcode.GETFIELD &&
-						iterator.byteAt(pos + 17) == Opcode.IFNONNULL &&
-						iterator.byteAt(pos + 20) == Opcode.RETURN)
-					for (int i = 0; i < 21; i++)
-						iterator.writeByte(Opcode.NOP, pos + i);
+			if (c == Opcode.IFNONNULL && iterator.byteAt(pos + 3) == Opcode.RETURN) {
+				iterator.writeByte(Opcode.POP, pos);
+				iterator.writeByte(Opcode.NOP, pos + 1);
+				iterator.writeByte(Opcode.NOP, pos + 2);
+				iterator.writeByte(Opcode.NOP, pos + 3);
+				return;
 			}
 		}
 		catch (BadBytecode e) {
 			throw new CannotCompileException(e);
 		}
+		throw new CannotCompileException("Check not found");
 	}
 
 	private void handleMousePressed(CtClass clazz) throws CannotCompileException, NotFoundException {
