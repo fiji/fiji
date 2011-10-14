@@ -73,7 +73,7 @@ public class SubFake extends Rule {
 		if (!target.exists())
 			return false;
 
-		File dir = new File(directory);
+		File dir = new File(Util.makePath(parser.cwd, directory));
 		if (!dir.exists() || (dir.isDirectory()) &&
 				dir.listFiles().length == 0) {
 			String precompiled =
