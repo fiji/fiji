@@ -651,6 +651,9 @@ public class MiniMaven {
 		return length;
 	}
 
+	private final static String usage = "Usage: MiniMaven [command]\n"
+		+ "\tSupported commands: compile, run, compile-and-run, clean, get-dependencies";
+
 	public static void main(String[] args) throws Exception {
 		MiniMaven miniMaven = new MiniMaven(null, System.err, false);
 		POM root = miniMaven.parse(new File("pom.xml"), null);
@@ -687,7 +690,7 @@ public class MiniMaven {
 		else if (command.equals("classpath"))
 			miniMaven.err.println(pom.getClassPath());
 		else
-			miniMaven.err.println("Unhandled command: " + command);
+			miniMaven.err.println("Unhandled command: " + command + "\n" + usage);
 	}
 
 	protected static String getSystemProperty(String key, String defaultValue) {
