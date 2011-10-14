@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 
 import java.lang.reflect.Method;
@@ -27,6 +28,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.TreeSet;
+
+import java.util.jar.JarOutputStream;
+
+import java.util.zip.ZipEntry;
 
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -245,6 +250,23 @@ public class MiniMaven {
 			return count == 0;
 		}
 
+		public void buildJar() throws FakeException, IOException, ParserConfigurationException, SAXException {
+			build();
+			JarOutputStream out = new JarOutputStream(new FileOutputStream(getTarget()));
+			addToJarRecursively(out, target, "");
+			out.close();
+		}
+
+		protected void addToJarRecursively(JarOutputStream out, File directory, String prefix) throws IOException {
+			for (File file : directory.listFiles())
+				if (file.isFile()) {
+					out.putNextEntry(new ZipEntry(prefix + file.getName()));
+					copy(new FileInputStream(file), out, false);
+				}
+				else if (file.isDirectory())
+					addToJarRecursively(out, file, prefix + file.getName() + "/");
+		}
+
 		public void build() throws FakeException, IOException, ParserConfigurationException, SAXException {
 			if (!buildFromSource)
 				return;
@@ -322,8 +344,12 @@ public class MiniMaven {
 			return version;
 		}
 
-		public String getTarget() {
-			return groupId.replace('.', '/') + '/' + artifactId + '-' + version + ".jar";
+		public String getJarName() {
+			return artifactId + '-' + version + ".jar";
+		}
+
+		public File getTarget() {
+			return new File(new File(directory, "target"), getJarName());
 		}
 
 		public String getClassPath() throws IOException, ParserConfigurationException, SAXException {
@@ -650,7 +676,10 @@ public class MiniMaven {
 	}
 
 	protected static void copy(InputStream in, File target) throws IOException {
-		FileOutputStream out = new FileOutputStream(target);
+		copy(in, new FileOutputStream(target), true);
+	}
+
+	protected static void copy(InputStream in, OutputStream out, boolean closeOutput) throws IOException {
 		byte[] buffer = new byte[131072];
 		for (;;) {
 			int count = in.read(buffer);
@@ -659,7 +688,8 @@ public class MiniMaven {
 			out.write(buffer, 0, count);
 		}
 		in.close();
-		out.close();
+		if (closeOutput)
+			out.close();
 	}
 
 	protected static int compareVersion(String version1, String version2) {
