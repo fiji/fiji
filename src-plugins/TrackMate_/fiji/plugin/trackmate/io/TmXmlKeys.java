@@ -7,6 +7,7 @@ package fiji.plugin.trackmate.io;
   */
 public class TmXmlKeys {
 	
+	
 	/*
 	 * GENERIC ATTRIBUTES
 	 */
@@ -14,6 +15,7 @@ public class TmXmlKeys {
 	public static final String FRAME_ATTRIBUTE_NAME 				= "frame"; 
 	public static final String SPOT_ID_ATTRIBUTE_NAME 				= "ID";
 	public static final String SPOT_NAME_ATTRIBUTE_NAME 			= "name";
+	public static final String NONE_VALUE 							= "none";
 	
 	/*
 	 * ROOT ELEMENT
@@ -43,10 +45,10 @@ public class TmXmlKeys {
 	
 	public static final String SEGMENTER_SETTINGS_ELEMENT_KEY 						= "SegmenterSettings";
 	public static final String SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME 	= "segmentertype";
-	public static final String SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME 	= "expectedradius";
-	public static final String SEGMENTER_SETTINGS_UNITS_ATTRIBUTE_NAME 				= "units";
-	public static final String SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME 			= "threshold";
-	public static final String SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME			= "usemedianfilter";
+//	public static final String SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME 	= "expectedradius";
+//	public static final String SEGMENTER_SETTINGS_UNITS_ATTRIBUTE_NAME 				= "units";
+//	public static final String SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME 			= "threshold";
+//	public static final String SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME			= "usemedianfilter";
 
 	/*
 	 * TRACKER SETTINGS

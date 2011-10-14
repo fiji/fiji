@@ -53,7 +53,7 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 	};
 
 	@Override
-	public void setTarget(Image<T> image, float[] calibration,	SegmenterSettings settings) {
+	public void setTarget(Image<T> image, float[] calibration,	BasicSegmenterSettings settings) {
 		super.setTarget(image, calibration, settings);
 
 		createLaplacianKernel(); // instantiate laplacian kernel if needed
@@ -67,7 +67,7 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 
 
 	@Override
-	public SegmenterSettings createDefaultSettings() {
+	public BasicSegmenterSettings createDefaultSettings() {
 		return new LogSegmenterSettings();
 	}
 

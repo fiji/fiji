@@ -11,12 +11,18 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.input.SAXHandler;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.jgrapht.graph.DefaultWeightedEdge;
+import org.xml.sax.SAXException;
 
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
@@ -24,8 +30,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
-import fiji.plugin.trackmate.segmentation.SegmenterSettings;
+import fiji.plugin.trackmate.segmentation.BasicSegmenterSettings;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 public class TmXmlWriter {
@@ -37,6 +42,7 @@ public class TmXmlWriter {
 	private TrackMateModel model;
 	private Element root;
 	private Logger logger;
+	private SAXHandler handler;
 
 	/*
 	 * CONSTRUCTORS
@@ -53,6 +59,8 @@ public class TmXmlWriter {
 		if (null == logger) 
 			logger = Logger.VOID_LOGGER;
 		this.logger = logger;
+		this.handler = new SAXHandler();
+
 	}
 	/*
 	 * PUBLIC METHODS
@@ -68,10 +76,17 @@ public class TmXmlWriter {
 	}
 
 	/**
-	 * Append the {@link SegmenterSettings} to the {@link Document}.
+	 * Append the {@link BasicSegmenterSettings} to the {@link Document}.
+	 * @throws JAXBException 
 	 */
-	public void appendSegmenterSettings() {
-		echoSegmenterSettings();
+	public void appendSegmenterSettings()  {
+		try {
+			echoSegmenterSettings();
+		} catch (JAXBException e) {
+			e.printStackTrace();
+		} catch (SAXException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -161,14 +176,23 @@ public class TmXmlWriter {
 		return;
 	}
 
-	private void echoSegmenterSettings() {
-		LogSegmenterSettings segSettings = (LogSegmenterSettings) model.getSettings().segmenterSettings;
+	private void echoSegmenterSettings() throws JAXBException, SAXException {
+//		model.getSettings().segmenterSettings;
 		Element segSettingsElement = new Element(SEGMENTER_SETTINGS_ELEMENT_KEY);
-		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME, 		model.getSettings().segmenter.toString());
-		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME, 		""+segSettings.expectedRadius);
-//		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_UNITS_ATTRIBUTE_NAME, 				segSettings.spaceUnits);
-		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME, 			""+segSettings.threshold);
-		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME, 			""+segSettings.useMedianFilter);
+		// Echo segmenter name
+		String segStr;
+		if (null == model.getSettings().segmenter) {
+			segStr = NONE_VALUE;
+		} else {
+			segStr = model.getSettings().segmenter.toString();
+		}
+		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME, 		segStr);
+		// Marshall settings object as sub-element
+		JAXBContext context = JAXBContext.newInstance(model.getSettings().segmenterSettings.getClass());
+		Marshaller marshaller = context.createMarshaller();
+		marshaller.marshal(model.getSettings().segmenterSettings, handler);
+		segSettingsElement.addContent(handler.getCurrentElement());
+		
 		root.addContent(segSettingsElement);
 		logger.log("  Appending segmenter settings.\n");
 		return;

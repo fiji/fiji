@@ -11,7 +11,7 @@ import javax.swing.JCheckBox;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.DogSegmenterSettings;
 import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
-import fiji.plugin.trackmate.segmentation.SegmenterSettings;
+import fiji.plugin.trackmate.segmentation.BasicSegmenterSettings;
 
 public class DogSegmenterConfigurationPanel extends LogSegmenterConfigurationPanel {
 
@@ -37,7 +37,7 @@ public class DogSegmenterConfigurationPanel extends LogSegmenterConfigurationPan
 	}
 	
 	@Override
-	public SegmenterSettings getSegmenterSettings() {
+	public BasicSegmenterSettings getSegmenterSettings() {
 		LogSegmenterSettings lss = (LogSegmenterSettings) super.getSegmenterSettings();
 		DogSegmenterSettings dss = copyToDOGS(lss);
 		dss.doSubPixelLocalization = jCheckSubPixel.isSelected();

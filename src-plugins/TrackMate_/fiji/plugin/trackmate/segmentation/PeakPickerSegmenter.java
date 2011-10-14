@@ -40,13 +40,13 @@ public class PeakPickerSegmenter <T extends RealType<T>> extends AbstractSpotSeg
 	}
 	
 	@Override
-	public void setTarget(Image<T> image, float[] calibration, SegmenterSettings settings) {
+	public void setTarget(Image<T> image, float[] calibration, BasicSegmenterSettings settings) {
 		super.setTarget(image, calibration, settings);
 		this.settings = (LogSegmenterSettings) settings;
 	}
 
 	@Override
-	public SegmenterSettings createDefaultSettings() {
+	public BasicSegmenterSettings createDefaultSettings() {
 		return new LogSegmenterSettings();
 	}
 

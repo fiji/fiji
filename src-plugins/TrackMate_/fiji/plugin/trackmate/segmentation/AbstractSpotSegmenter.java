@@ -47,7 +47,7 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 	 * The settings for this segmenter. Contains all parameters needed to perform segmentation
 	 * for the concrete segmenter implementation.
 	 */
-	protected SegmenterSettings settings;
+	protected BasicSegmenterSettings settings;
 
 	private StructuringElement strel;
 	/** The processing time in ms. */
@@ -92,7 +92,7 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 	}
 		
 	@Override
-	public void setTarget(Image<T> image, float[] calibration, SegmenterSettings settings) {
+	public void setTarget(Image<T> image, float[] calibration, BasicSegmenterSettings settings) {
 		this.spots = new ArrayList<Spot>();
 		this.img = image;
 		this.calibration = calibration;

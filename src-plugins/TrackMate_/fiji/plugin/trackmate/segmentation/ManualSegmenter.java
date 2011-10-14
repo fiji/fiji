@@ -5,8 +5,8 @@ import mpicbg.imglib.type.numeric.RealType;
 public class ManualSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<T> {
 
 	@Override
-	public SegmenterSettings createDefaultSettings() {
-		return new SegmenterSettings();
+	public BasicSegmenterSettings createDefaultSettings() {
+		return new BasicSegmenterSettings();
 	}
 
 	@Override

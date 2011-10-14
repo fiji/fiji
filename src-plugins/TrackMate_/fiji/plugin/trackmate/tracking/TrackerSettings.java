@@ -3,9 +3,13 @@ package fiji.plugin.trackmate.tracking;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+
 import fiji.plugin.trackmate.gui.LAPTrackerSettingsPanel;
 import fiji.plugin.trackmate.gui.TrackerSettingsPanel;
 
+@XmlRootElement
 public class TrackerSettings {
 	
 	private static final double 	DEFAULT_LINKING_DISTANCE_CUTOFF 		= 15.0;
@@ -31,6 +35,7 @@ public class TrackerSettings {
 	private static final double 	DEFAULT_CUTOFF_PERCENTILE 				= 0.9d;
 	
 	/** Max time difference over which particle linking is allowed.	 */
+	@XmlElement
 	public double linkingDistanceCutOff 		= DEFAULT_LINKING_DISTANCE_CUTOFF;
 	/** Feature difference cutoffs for linking. */
 	public Map<String, Double> linkingFeaturePenalties = DEFAULT_LINKING_FEATURE_PENALITIES; 
@@ -54,6 +59,7 @@ public class TrackerSettings {
 	public Map<String, Double> mergingFeaturePenalties = DEFAULT_MERGING_FEATURE_PENALTIES; 
 
 	/** Allow track segment splitting? */
+	@XmlElement
 	public boolean allowSplitting				= DEFAULT_ALLOW_SPLITTING;
 	/** Max time difference over which segment splitting is allowed.	 */
 	public double splittingTimeCutoff 			= DEFAULT_SPLITTING_TIME_CUTOFF;
@@ -134,6 +140,5 @@ public class TrackerSettings {
 		return str;
 		
 	}
-
 
 }
