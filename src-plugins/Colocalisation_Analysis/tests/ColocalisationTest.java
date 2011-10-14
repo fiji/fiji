@@ -27,6 +27,11 @@ public abstract class ColocalisationTest {
 	double positiveCorrelationImageCh1Mean;
 	double positiveCorrelationImageCh2Mean;
 
+	// images like in the manders paper
+	Image<UnsignedByteType> mandersA, mandersB, mandersC, mandersD,
+		mandersE, mandersF, mandersG, mandersH, mandersI;
+	Image<BitType> mandersAlwaysTrueMask;
+
 	/**
 	 * This method is run before every single test is run and is meant to set up
 	 * the images and meta data needed for testing image colocalisation.
@@ -48,6 +53,18 @@ public abstract class ColocalisationTest {
 		positiveCorrelationImageCh2Mean = ImageStatistics.getImageMean(positiveCorrelationImageCh2);
 
 		positiveCorrelationAlwaysTrueMask = MaskFactory.createMask(positiveCorrelationImageCh1.getDimensions(), true);
+
+		mandersA = TestImageAccessor.loadTiffFromJar("Data/Mock1.tif");
+		mandersB = TestImageAccessor.loadTiffFromJar("Data/Mock2.tif");
+		mandersC = TestImageAccessor.loadTiffFromJar("Data/Mock3.tif");
+		mandersD = TestImageAccessor.loadTiffFromJar("Data/Mock4.tif");
+		mandersE = TestImageAccessor.loadTiffFromJar("Data/Mock5.tif");
+		mandersF = TestImageAccessor.loadTiffFromJar("Data/Mock6.tif");
+		mandersG = TestImageAccessor.loadTiffFromJar("Data/Mock7.tif");
+		mandersH = TestImageAccessor.loadTiffFromJar("Data/Mock8.tif");
+		mandersI = TestImageAccessor.loadTiffFromJar("Data/Mock9.tif");
+
+		mandersAlwaysTrueMask = MaskFactory.createMask(mandersA.getDimensions(), true);
 	}
 
 	/**
@@ -59,6 +76,16 @@ public abstract class ColocalisationTest {
 		zeroCorrelationImageCh2.closeAllCursors();
 		positiveCorrelationImageCh1.closeAllCursors();
 		positiveCorrelationImageCh2.closeAllCursors();
+
+		mandersA.closeAllCursors();
+		mandersB.closeAllCursors();
+		mandersC.closeAllCursors();
+		mandersD.closeAllCursors();
+		mandersE.closeAllCursors();
+		mandersF.closeAllCursors();
+		mandersG.closeAllCursors();
+		mandersH.closeAllCursors();
+		mandersI.closeAllCursors();
 	}
 
 	/**
