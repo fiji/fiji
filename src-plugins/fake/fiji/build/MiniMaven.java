@@ -41,13 +41,14 @@ import org.xml.sax.helpers.DefaultHandler;
 
 public class MiniMaven {
 	protected static boolean verbose = false;
+	protected Map<String, POM> localPOMCache = new HashMap<String, POM>();
 
 	protected static void print80(String string) {
 		int length = string.length();
 		System.err.print((length < 80 ? string : string.substring(0, 80)) + "\r");
 	}
 
-	public static POM parse(File file, POM parent) throws IOException, ParserConfigurationException, SAXException {
+	public POM parse(File file, POM parent) throws IOException, ParserConfigurationException, SAXException {
 		if (!file.exists())
 			return null;
 		if (verbose)
@@ -76,7 +77,7 @@ public class MiniMaven {
 		return pom;
 	}
 
-	protected static class POM extends DefaultHandler implements Comparable<POM> {
+	protected class POM extends DefaultHandler implements Comparable<POM> {
 		protected final boolean debug = false;
 		protected String profile = "swing";
 
@@ -96,7 +97,6 @@ public class MiniMaven {
 		protected String[] latestDependency = new String[3];
 		protected boolean isCurrentProfile;
 
-		protected static Map<String, POM> localPOMCache = new HashMap<String, POM>();
 
 		protected POM(File directory, POM parent) {
 			this.directory = directory;
@@ -189,7 +189,7 @@ public class MiniMaven {
 			buildFromSource = false;
 		}
 
-		protected static void addRecursively(List<String> list, File directory, String extension, File targetDirectory, String targetExtension) {
+		protected void addRecursively(List<String> list, File directory, String extension, File targetDirectory, String targetExtension) {
 			for (File file : directory.listFiles())
 				if (file.isDirectory())
 					addRecursively(list, file, extension, new File(targetDirectory, file.getName()), targetExtension);
@@ -203,7 +203,7 @@ public class MiniMaven {
 				}
 		}
 
-		protected static void updateRecursively(File source, File target) throws IOException {
+		protected void updateRecursively(File source, File target) throws IOException {
 			File[] list = source.listFiles();
 			if (list == null)
 				return;
@@ -340,7 +340,7 @@ public class MiniMaven {
 			return null;
 		}
 
-		protected static POM findLocallyCachedPOM(String groupId, String artifactId, String version) throws IOException, ParserConfigurationException, SAXException {
+		protected POM findLocallyCachedPOM(String groupId, String artifactId, String version) throws IOException, ParserConfigurationException, SAXException {
 			String key = groupId + ">" + artifactId;
 			POM result = localPOMCache.get(key);
 			if (result == null) {
@@ -360,7 +360,7 @@ public class MiniMaven {
 			return result;
 		}
 
-		protected static String findLocallyCachedVersion(String path) throws IOException {
+		protected String findLocallyCachedVersion(String path) throws IOException {
 			File file = new File(path, "maven-metadata-local.xml");
 			if (!file.exists()) {
 				String[] list = new File(path).list();
@@ -586,7 +586,8 @@ public class MiniMaven {
 	}
 
 	public static void main(String[] args) throws Exception {
-		POM root = parse(new File("pom.xml"), null);
+		MiniMaven miniMaven = new MiniMaven();
+		POM root = miniMaven.parse(new File("pom.xml"), null);
 		String command = args.length == 0 ? "compile-and-run" : args[0];
 		String artifactId = getSystemProperty("artifactId", "imagej");
 		String mainClass = getSystemProperty("mainClass", "imagej.Main");
