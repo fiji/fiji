@@ -47,6 +47,35 @@ public class MiniMaven {
 		System.err.print((length < 80 ? string : string.substring(0, 80)) + "\r");
 	}
 
+	public static POM parse(File file, POM parent) throws IOException, ParserConfigurationException, SAXException {
+		if (!file.exists())
+			return null;
+		if (verbose)
+			print80("Parsing " + file);
+		File directory = file.getCanonicalFile().getParentFile();
+		POM pom = new POM(directory, parent);
+		XMLReader reader = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
+		reader.setContentHandler(pom);
+		//reader.setXMLErrorHandler(...);
+		reader.parse(new InputSource(new FileInputStream(file)));
+
+		pom.children = new POM[pom.modules.size()];
+		for (int i = 0; i < pom.children.length; i++) {
+			file = new File(directory, pom.modules.get(i) + "/pom.xml");
+			pom.children[i] = parse(file, pom);
+		}
+
+		if (pom.target == null) {
+			String fileName = file.getName();
+			if (fileName.endsWith(".pom"))
+				fileName = fileName.substring(0, fileName.length() - 4);
+			fileName += ".jar";
+			pom.target = new File(directory, fileName);
+		}
+
+		return pom;
+	}
+
 	protected static class POM extends DefaultHandler implements Comparable<POM> {
 		protected final boolean debug = false;
 		protected String profile = "swing";
@@ -68,35 +97,6 @@ public class MiniMaven {
 		protected boolean isCurrentProfile;
 
 		protected static Map<String, POM> localPOMCache = new HashMap<String, POM>();
-
-		public static POM parse(File file, POM parent) throws IOException, ParserConfigurationException, SAXException {
-			if (!file.exists())
-				return null;
-			if (verbose)
-				print80("Parsing " + file);
-			File directory = file.getCanonicalFile().getParentFile();
-			POM pom = new POM(directory, parent);
-			XMLReader reader = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
-			reader.setContentHandler(pom);
-			//reader.setXMLErrorHandler(...);
-			reader.parse(new InputSource(new FileInputStream(file)));
-
-			pom.children = new POM[pom.modules.size()];
-			for (int i = 0; i < pom.children.length; i++) {
-				file = new File(directory, pom.modules.get(i) + "/pom.xml");
-				pom.children[i] = parse(file, pom);
-			}
-
-			if (pom.target == null) {
-				String fileName = file.getName();
-				if (fileName.endsWith(".pom"))
-					fileName = fileName.substring(0, fileName.length() - 4);
-				fileName += ".jar";
-				pom.target = new File(directory, fileName);
-			}
-
-			return pom;
-		}
 
 		protected POM(File directory, POM parent) {
 			this.directory = directory;
@@ -586,7 +586,7 @@ public class MiniMaven {
 	}
 
 	public static void main(String[] args) throws Exception {
-		POM root = POM.parse(new File("pom.xml"), null);
+		POM root = parse(new File("pom.xml"), null);
 		String command = args.length == 0 ? "compile-and-run" : args[0];
 		String artifactId = getSystemProperty("artifactId", "imagej");
 		String mainClass = getSystemProperty("mainClass", "imagej.Main");
