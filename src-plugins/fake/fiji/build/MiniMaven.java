@@ -124,15 +124,6 @@ public class MiniMaven {
 				target.delete();
 		}
 
-		protected static void rmRF(File directory) {
-			for (File file : directory.listFiles())
-				if (file.isDirectory())
-					rmRF(file);
-				else
-					file.delete();
-			directory.delete();
-		}
-
 		public void downloadDependencies() throws IOException, ParserConfigurationException, SAXException {
 			for (POM dependency : getDependencies())
 				if (dependency != null)
@@ -227,10 +218,6 @@ public class MiniMaven {
 					copyFile(file, targetFile);
 				}
 			}
-		}
-
-		protected static void copyFile(File source, File target) throws IOException {
-			copy(new FileInputStream(source), target);
 		}
 
 		public String getGroup() {
@@ -393,40 +380,6 @@ public class MiniMaven {
 			}
 		}
 
-		protected static int compareVersion(String version1, String version2) {
-			if (version1.equals(version2))
-				return 0;
-			String[] split1 = version1.split("\\.");
-			String[] split2 = version2.split("\\.");
-
-			for (int i = 0; ; i++) {
-				if (i == split1.length)
-					return i == split2.length ? 0 : -1;
-				if (i == split2.length)
-					return +1;
-				int end1 = firstNonDigit(split1[i]);
-				int end2 = firstNonDigit(split2[i]);
-				if (end1 != end2)
-					return end1 - end2;
-				int result = end1 == 0 ? 0 :
-					Integer.parseInt(split1[i].substring(0, end1))
-					- Integer.parseInt(split2[i].substring(0, end2));
-				if (result != 0)
-					return result;
-				result = split1[i].substring(end1).compareTo(split2[i].substring(end2));
-				if (result != 0)
-					return result;
-			}
-		}
-
-		protected static int firstNonDigit(String string) {
-			int length = string.length();
-			for (int i = 0; i < length; i++)
-				if (!Character.isDigit(string.charAt(i)))
-					return i;
-			return length;
-		}
-
 		// XML parsing
 
 		public void startDocument() {}
@@ -562,6 +515,15 @@ public class MiniMaven {
 		return (b < 'A' ? (b < 'a' ? b - '0' : b - 'a' + 10) : b - 'A' + 10) & 0xf;
 	}
 
+	protected static void rmRF(File directory) {
+		for (File file : directory.listFiles())
+			if (file.isDirectory())
+				rmRF(file);
+			else
+				file.delete();
+		directory.delete();
+	}
+
 	protected static File download(URL url, File directory) throws IOException {
 		directory.mkdirs();
 		InputStream in = url.openStream();
@@ -570,6 +532,10 @@ public class MiniMaven {
 		File result = new File(directory, fileName);
 		copy(in, result);
 		return result;
+	}
+
+	protected static void copyFile(File source, File target) throws IOException {
+		copy(new FileInputStream(source), target);
 	}
 
 	protected static void copy(InputStream in, File target) throws IOException {
@@ -583,6 +549,40 @@ public class MiniMaven {
 		}
 		in.close();
 		out.close();
+	}
+
+	protected static int compareVersion(String version1, String version2) {
+		if (version1.equals(version2))
+			return 0;
+		String[] split1 = version1.split("\\.");
+		String[] split2 = version2.split("\\.");
+
+		for (int i = 0; ; i++) {
+			if (i == split1.length)
+				return i == split2.length ? 0 : -1;
+			if (i == split2.length)
+				return +1;
+			int end1 = firstNonDigit(split1[i]);
+			int end2 = firstNonDigit(split2[i]);
+			if (end1 != end2)
+				return end1 - end2;
+			int result = end1 == 0 ? 0 :
+				Integer.parseInt(split1[i].substring(0, end1))
+				- Integer.parseInt(split2[i].substring(0, end2));
+			if (result != 0)
+				return result;
+			result = split1[i].substring(end1).compareTo(split2[i].substring(end2));
+			if (result != 0)
+				return result;
+		}
+	}
+
+	protected static int firstNonDigit(String string) {
+		int length = string.length();
+		for (int i = 0; i < length; i++)
+			if (!Character.isDigit(string.charAt(i)))
+				return i;
+		return length;
 	}
 
 	public static void main(String[] args) throws Exception {
