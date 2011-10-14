@@ -117,6 +117,18 @@ public class MiniMaven {
 		return pom;
 	}
 
+	protected class Dependency {
+		protected String groupId, artifactId, version;
+
+		public Dependency() {}
+
+		public Dependency(String groupId, String artifactId, String version) {
+			this.groupId = groupId;
+			this.artifactId = artifactId;
+			this.version = version;
+		}
+	}
+
 	protected class POM extends DefaultHandler implements Comparable<POM> {
 		protected final boolean debug = false;
 		protected String profile = "swing";
@@ -129,12 +141,12 @@ public class MiniMaven {
 		protected String groupId, artifactId, version;
 		protected Map<String, String> properties = new HashMap<String, String>();
 		protected List<String> modules = new ArrayList<String>();
-		protected List<String[]> dependencies = new ArrayList<String[]>(); // contains String[3]
+		protected List<Dependency> dependencies = new ArrayList<Dependency>(); // contains String[3]
 		protected Set<String> repositories = new TreeSet<String>();
 
 		// only used during parsing
 		protected String prefix = "";
-		protected String[] latestDependency = new String[3];
+		protected Dependency latestDependency = new Dependency();
 		protected boolean isCurrentProfile;
 
 		protected POM addModule(String name) throws IOException, ParserConfigurationException, SAXException {
@@ -317,10 +329,10 @@ public class MiniMaven {
 		}
 
 		public void getDependencies(Set<POM> result) throws IOException, ParserConfigurationException, SAXException {
-			for (String[] dependency : dependencies) {
-				String groupId = expand(dependency[0]);
-				String artifactId = expand(dependency[1]);
-				String version = expand(dependency[2]);
+			for (Dependency dependency : dependencies) {
+				String groupId = expand(dependency.groupId);
+				String artifactId = expand(dependency.artifactId);
+				String version = expand(dependency.version);
 				POM pom = getRoot().findPOM(groupId, artifactId, version);
 				if (pom == null || result.contains(pom))
 					continue;
@@ -468,7 +480,7 @@ public class MiniMaven {
 		public void endElement(String uri, String name, String qualifiedName) {
 			if (prefix.equals(">project>dependencies>dependency") || (isCurrentProfile && prefix.equals(">project>profiles>profile>dependencies>dependency"))) {
 				dependencies.add(latestDependency);
-				latestDependency = new String[3];
+				latestDependency = new Dependency();
 			}
 			if (prefix.equals(">project>profiles>profile"))
 				isCurrentProfile = false;
@@ -505,11 +517,11 @@ public class MiniMaven {
 			else if (prefix.startsWith(">project>properties>"))
 				properties.put(prefix.substring(">project>properties>".length()), string);
 			else if (prefix.equals(">project>dependencies>dependency>groupId"))
-				latestDependency[0] = string;
+				latestDependency.groupId = string;
 			else if (prefix.equals(">project>dependencies>dependency>artifactId"))
-				latestDependency[1] = string;
+				latestDependency.artifactId = string;
 			else if (prefix.equals(">project>dependencies>dependency>version"))
-				latestDependency[2] = string;
+				latestDependency.version = string;
 			else if (prefix.equals(">project>profiles>profile>id"))
 				isCurrentProfile = profile.equals(string);
 			else if (prefix.equals(">project>repositories>repository>url"))
