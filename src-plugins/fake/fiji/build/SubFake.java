@@ -1,15 +1,17 @@
 package fiji.build;
 
+import fiji.build.MiniMaven.POM;
+
 import java.io.File;
 
 import java.util.List;
 import java.util.StringTokenizer;
 
 public class SubFake extends Rule {
-	String jarName;
-	String baseName;
-	String source;
-	String configPath;
+	protected String jarName;
+	protected String baseName;
+	protected String source;
+	protected String configPath;
 
 	SubFake(Parser parser, String target, List<String> prerequisites) {
 		super(parser, target, prerequisites);
@@ -40,6 +42,30 @@ public class SubFake extends Rule {
 			e.printStackTrace();
 			return false;
 		}
+
+		String directory = getLastPrerequisite();
+		if (!Util.isDirEmpty(Util.makePath(parser.cwd, directory))) try {
+			File file = getFakefile();
+			if (file != null) {
+				Parser parser = this.parser.fake.parseFakefile(new File(this.parser.cwd, getLastPrerequisite()), file, getVarBool("VERBOSE", directory), getVarPath("TOOLSPATH", directory), getVarPath("CLASSPATH", directory), getBuildDir());
+				Rule all = parser.parseRules(null);
+				Rule rule = parser.getRule(jarName);
+				if (rule == null)
+					rule = all;
+				return rule.checkUpToDate();
+			}
+
+			POM pom = getPOM();
+			if (pom != null)
+				return pom.upToDate();
+
+			if (!upToDateRecursive(new File(Util.makePath(parser.cwd, directory)), target, true))
+				return false;
+		} catch (Exception e) {
+			e.printStackTrace(parser.fake.err);
+			return false;
+		}
+
 		return true;
 	}
 
@@ -57,27 +83,6 @@ public class SubFake extends Rule {
 			File source = new File(parser.cwd, precompiled + "/" + jarName);
 			return upToDate(source, target);
 		}
-		else {
-			if (Util.isDirEmpty(getLastPrerequisite())) {
-				String precompiled = getVar("PRECOMPILEDDIRECTORY");
-				if (precompiled == null)
-					return false;
-				File source = new File(parser.cwd, precompiled + "/" + jarName);
-				return upToDate(source, target);
-			}
-
-			File file = getFakefile();
-			if (file != null) {
-				Parser parser = this.parser.fake.parseFakefile(new File(this.parser.cwd, getLastPrerequisite()), file, getVarBool("VERBOSE", directory), getVarPath("TOOLSPATH", directory), getVarPath("CLASSPATH", directory), getBuildDir());
-				Rule all = parser.parseRules(null);
-				Rule rule = parser.getRule(jarName);
-				if (rule == null)
-					rule = all;
-				return rule.checkUpToDate();
-			}
-			if (!upToDateRecursive(dir, target, true))
-				return false;
-		}
 		return true;
 	}
 
@@ -88,11 +93,45 @@ public class SubFake extends Rule {
 		return file.exists() ? file : null;
 	}
 
-	void action() throws FakeException {
-		checkObsoleteLocation(getLastPrerequisite());
+	protected POM getPOM() {
+		File file = new File(Util.makePath(parser.cwd, getLastPrerequisite()), "pom.xml");
+		if (!file.exists())
+			return null;
+		String targetBasename = jarName.substring(jarName.lastIndexOf('/') + 1);
+		if (targetBasename.endsWith(".jar"))
+			targetBasename = targetBasename.substring(0, targetBasename.length() - 4);
+		// TODO: targetBasename could end in "-<version>"
+		try {
+			POM pom = new MiniMaven(parser.fake, parser.fake.err, getVarBool("VERBOSE")).parse(file);
+			if (targetBasename.equals(pom.getArtifact()))
+				return pom;
+			return pom.findPOM(null, targetBasename, null);
+		} catch (Exception e) {
+			e.printStackTrace(parser.fake.err);
+			return null;
+		}
+	}
 
-		for (String prereq : prerequisites)
-			action(prereq);
+	void action() throws FakeException {
+		String directory = getLastPrerequisite();
+		checkObsoleteLocation(directory);
+
+		for (Rule prereq : getDependencies())
+			prereq.action();
+
+		if (getFakefile() != null || new File(directory, "Makefile").exists())
+			fakeOrMake(jarName);
+		else {
+			POM pom = getPOM();
+			if (pom != null) try {
+				pom.build();
+				copyJar(pom.getTarget(), target, parser.cwd, configPath);
+				return;
+			} catch (Exception e) {
+				e.printStackTrace(parser.fake.err);
+				throw new FakeException(e.getMessage());
+			}
+		}
 
 		File file = new File(Util.makePath(parser.cwd, source));
 		if (getVarBool("IGNOREMISSINGFAKEFILES") &&
@@ -115,11 +154,8 @@ public class SubFake extends Rule {
 			copyJar(source, target, parser.cwd, configPath);
 	}
 
-	void action(String directory) throws FakeException {
-		action(directory, jarName);
-	}
-
-	void action(String directory, String subTarget) throws FakeException {
+	protected void fakeOrMake(String subTarget) throws FakeException {
+		String directory = getLastPrerequisite();
 		parser.fake.fakeOrMake(parser.cwd, directory,
 			getVarBool("VERBOSE", directory),
 			getVarBool("IGNOREMISSINGFAKEFILES",
@@ -154,10 +190,21 @@ public class SubFake extends Rule {
 		clean(getLastPrerequisite() + jarName, dry_run);
 		File fakefile = getFakefile();
 		if (fakefile != null) try {
-			action(getLastPrerequisite(), jarName + "-clean"
+			fakeOrMake(jarName + "-clean"
 				+ (dry_run ? "-dry-run" : ""));
 		} catch (FakeException e) {
 			e.printStackTrace(parser.fake.err);
+		}
+		else {
+			POM pom = getPOM();
+			if (pom != null) {
+				try {
+					pom.clean();
+				} catch (Exception e) {
+					e.printStackTrace(parser.fake.err);
+				}
+				return;
+			}
 		}
 		File buildDir = getBuildDir();
 		if (buildDir != null) {

@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-
 public class JarClassLoader extends ClassLoader {
 	Map<String, JarFile> jarFilesMap;
 	List<String> jarFilesNames;

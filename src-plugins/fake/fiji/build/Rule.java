@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Set;
 
 import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;

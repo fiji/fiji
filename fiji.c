@@ -2057,6 +2057,8 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\tstart JavaC, the Java Compiler, instead of ImageJ\n"
 		"--ant\n"
 		"\trun Apache Ant\n"
+		"--mini-maven\n"
+		"\trun Fiji's very simple Maven mockup\n"
 		"--javah\n"
 		"\tstart javah instead of ImageJ\n"
 		"--javap\n"
@@ -2486,6 +2488,8 @@ static void parse_command_line(void)
 			string_append_path_list(class_path, "/usr/share/java/ant-nodeps.jar");
 			string_append_path_list(class_path, "/usr/share/java/ant-junit.jar");
 		}
+		else if (!strcmp(main_argv[i], "--mini-maven"))
+			main_class = "fiji.build.MiniMaven";
 		else if (!strcmp(main_argv[i], "--retrotranslator") ||
 				!strcmp(main_argv[i], "--retro"))
 			retrotranslator = 1;
