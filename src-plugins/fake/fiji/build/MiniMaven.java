@@ -409,7 +409,7 @@ public class MiniMaven {
 		protected POM findLocallyCachedPOM(String groupId, String artifactId, String version) throws IOException, ParserConfigurationException, SAXException {
 			String key = groupId + ">" + artifactId;
 			POM result = localPOMCache.get(key);
-			if (result == null) {
+			if (!localPOMCache.containsKey(key)) {
 				if (groupId == null)
 					return null;
 				String path = System.getProperty("user.home") + "/.m2/repository/" + groupId.replace('.', '/') + "/" + artifactId + "/";
