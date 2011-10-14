@@ -116,9 +116,6 @@ public class SubFake extends Rule {
 		String directory = getLastPrerequisite();
 		checkObsoleteLocation(directory);
 
-		for (Rule prereq : getDependencies())
-			prereq.action();
-
 		if (getFakefile() != null || new File(directory, "Makefile").exists())
 			fakeOrMake(jarName);
 		else {
