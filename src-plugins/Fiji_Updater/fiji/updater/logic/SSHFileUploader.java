@@ -73,7 +73,7 @@ public class SSHFileUploader extends FileUploader {
 	//Steps to accomplish entire upload task
 	public synchronized void upload(List<SourceFile> sources,
 			List<String> locks) throws IOException {
-		setCommand("date +%Y%m%d%H%M%S");
+		setCommand("date --utc +%Y%m%d%H%M%S");
 		timestamp = readNumber(in);
 		setTitle("Uploading");
 
