@@ -39,10 +39,11 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
 public class MiniMaven {
-	protected boolean verbose;
+	protected boolean verbose, debug = false;
 	protected PrintStream err;
 	protected Map<String, POM> localPOMCache = new HashMap<String, POM>();
 	protected Fake fake;
+	protected String profile = "swing";
 
 	public MiniMaven(Fake fake, PrintStream err, boolean verbose) throws FakeException {
 		this.fake = fake == null ? new Fake() : fake;
@@ -144,9 +145,6 @@ public class MiniMaven {
 	}
 
 	protected class POM extends DefaultHandler implements Comparable<POM> {
-		protected final boolean debug = false;
-		protected String profile = "swing";
-
 		protected boolean buildFromSource;
 		protected File directory, target;
 		protected POM parent;
