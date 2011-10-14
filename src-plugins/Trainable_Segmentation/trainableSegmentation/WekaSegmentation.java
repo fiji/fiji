@@ -3100,8 +3100,8 @@ public class WekaSegmentation {
 		for(int x=0; x<label.getWidth(); x++)
 			for(int y=0; y<label.getHeight(); y++)
 			{
-				binaryLabel.set(x, y, label.get( x, y ) > 0 ? 255 : 0);
-				binaryProposal.set(x, y, proposal.get( x, y ) > 0 ? 255 : 0);
+				binaryLabel.set(   x, y,    label.getPixelValue( x, y ) > binaryThreshold ? 255 : 0);
+				binaryProposal.set(x, y, proposal.getPixelValue( x, y ) > binaryThreshold ? 255 : 0);
 			}
 		
 		// Find components
@@ -3148,21 +3148,25 @@ public class WekaSegmentation {
 	{
 		// Binarize inputs
 		ByteProcessor binaryLabel = new ByteProcessor( label.getWidth(), label.getHeight() );
-		ByteProcessor binaryProposal = new ByteProcessor( label.getWidth(), label.getHeight() );
+		ByteProcessor binaryProposal = new ByteProcessor( proposal.getWidth(), proposal.getHeight() );
 		
 		for(int x=0; x<label.getWidth(); x++)
 			for(int y=0; y<label.getHeight(); y++)
 			{
-				binaryLabel.set(x, y, label.get( x, y ) > 0 ? 255 : 0);
-				binaryProposal.set(x, y, proposal.get( x, y ) > 0 ? 255 : 0);
+				binaryLabel.set(   x, y,    label.getPixelValue( x, y ) > binaryThreshold ? 255 : 0);
+				binaryProposal.set(x, y, proposal.getPixelValue( x, y ) > binaryThreshold ? 255 : 0);
 			}
 		
 		// Find components
+		final ImagePlus im1 = new ImagePlus("binary labels", binaryLabel);
+		//im1.show();
 		ShortProcessor components1 = ( ShortProcessor ) connectedComponents(
-				new ImagePlus("binary labels", binaryLabel), 4).allRegions.getProcessor();
+				im1, 4).allRegions.getProcessor();
 		
+		final ImagePlus im2 = new ImagePlus("proposal labels", binaryProposal);
+		//im2.show();
 		ShortProcessor components2 = ( ShortProcessor ) connectedComponents(
-				new ImagePlus("proposal labels", binaryProposal), 4).allRegions.getProcessor();
+				im2, 4).allRegions.getProcessor();
 		
 		return 1 - adjustedRandIndex( components1, components2 );
 		
@@ -3277,7 +3281,7 @@ public class WekaSegmentation {
 		double t3 = 0.5 * (nis+njs);
 		
 		//Expected index (for adjustment)
-		double nc = (n*(n*n+1)-(n+1)*nis-(n+1)*njs+2*(nis*njs)/n)/(2*(n-1));
+		double nc = ( n*(n*n+1) - (n+1)*nis - (n+1)*njs+2*(nis*njs)/n) / (2*(n-1) );
 		
 		double agreements=t1+t2-t3;		// number of agreements
 		/*
@@ -3287,6 +3291,11 @@ public class WekaSegmentation {
 		double MI=D/t1;			// Mirkin 1970	%p(disagreement)
 		double HI=(agreements-D)/t1;		// Hubert 1977	%p(agree)-p(disagree)
 		*/
+		
+		//IJ.log("n = " + n + ", nis = " + nis + ", njs = " + njs);
+		//IJ.log("t1 = " + t1 + ", t2 = " + t2 + ", t3 = " + t3);
+		//IJ.log("nc = " + nc);
+		
 		double adjustedRandIndex;
 		
 		if ( t1 == nc )
