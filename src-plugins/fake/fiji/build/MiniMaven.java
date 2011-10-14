@@ -1,7 +1,5 @@
 package fiji.build;
 
-import com.sun.tools.javac.Main;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -44,8 +42,10 @@ public class MiniMaven {
 	protected boolean verbose;
 	protected PrintStream err;
 	protected Map<String, POM> localPOMCache = new HashMap<String, POM>();
+	protected Fake fake;
 
-	public MiniMaven(PrintStream err, boolean verbose) throws FakeException {
+	public MiniMaven(Fake fake, PrintStream err, boolean verbose) throws FakeException {
+		this.fake = fake == null ? new Fake() : fake;
 		this.err = err;
 		this.verbose = verbose;
 	}
@@ -162,7 +162,7 @@ public class MiniMaven {
 			downloadAndVerify(baseURL + ".jar", directory);
 		}
 
-		public void build() throws IOException, ParserConfigurationException, SAXException {
+		public void build() throws FakeException, IOException, ParserConfigurationException, SAXException {
 			if (!buildFromSource)
 				return;
 			for (POM child : getDependencies())
@@ -187,8 +187,8 @@ public class MiniMaven {
 			if (count > 0) {
 				err.println("Compiling " + (arguments.size() - count) + " files in " + directory);
 				String[] array = arguments.toArray(new String[arguments.size()]);
-				if (Main.compile(array) > 0)
-					throw new RuntimeException("Build error in " + directory);
+				if (fake != null)
+					fake.callJavac(array, verbose);
 			}
 
 			updateRecursively(new File(source.getParentFile(), "resources"), target);
@@ -593,7 +593,7 @@ public class MiniMaven {
 	}
 
 	public static void main(String[] args) throws Exception {
-		MiniMaven miniMaven = new MiniMaven(System.err, false);
+		MiniMaven miniMaven = new MiniMaven(null, System.err, false);
 		POM root = miniMaven.parse(new File("pom.xml"), null);
 		String command = args.length == 0 ? "compile-and-run" : args[0];
 		String artifactId = getSystemProperty("artifactId", "imagej");
