@@ -119,13 +119,15 @@ public class MiniMaven {
 
 	protected class Dependency {
 		protected String groupId, artifactId, version;
+		protected boolean optional;
 
 		public Dependency() {}
 
-		public Dependency(String groupId, String artifactId, String version) {
+		public Dependency(String groupId, String artifactId, String version, boolean optional) {
 			this.groupId = groupId;
 			this.artifactId = artifactId;
 			this.version = version;
+			this.optional = optional;
 		}
 	}
 
@@ -333,7 +335,8 @@ public class MiniMaven {
 				String groupId = expand(dependency.groupId);
 				String artifactId = expand(dependency.artifactId);
 				String version = expand(dependency.version);
-				POM pom = getRoot().findPOM(groupId, artifactId, version);
+				boolean optional = dependency.optional;
+				POM pom = getRoot().findPOM(groupId, artifactId, version, optional);
 				if (pom == null || result.contains(pom))
 					continue;
 				result.add(pom);
@@ -401,6 +404,10 @@ public class MiniMaven {
 		}
 
 		protected POM findPOM(String groupId, String artifactId, String version) throws IOException, ParserConfigurationException, SAXException {
+			return findPOM(groupId, artifactId, version, false);
+		}
+
+		protected POM findPOM(String groupId, String artifactId, String version, boolean quiet) throws IOException, ParserConfigurationException, SAXException {
 			if (artifactId.equals(this.artifactId) &&
 					(groupId == null || groupId.equals(this.groupId)) &&
 					(version == null || this.version == null || version.equals(this.version)))
@@ -410,17 +417,17 @@ public class MiniMaven {
 			for (POM child : children) {
 				if (child == null)
 					continue;
-				POM result = child.findPOM(groupId, artifactId, version);
+				POM result = child.findPOM(groupId, artifactId, version, quiet);
 				if (result != null)
 					return result;
 			}
 			// for the root POM, fall back to $HOME/.m2/repository/
 			if (parent == null)
-				return findLocallyCachedPOM(groupId, artifactId, version);
+				return findLocallyCachedPOM(groupId, artifactId, version, quiet);
 			return null;
 		}
 
-		protected POM findLocallyCachedPOM(String groupId, String artifactId, String version) throws IOException, ParserConfigurationException, SAXException {
+		protected POM findLocallyCachedPOM(String groupId, String artifactId, String version, boolean quiet) throws IOException, ParserConfigurationException, SAXException {
 			String key = groupId + ">" + artifactId;
 			POM result = localPOMCache.get(key);
 			if (!localPOMCache.containsKey(key)) {
@@ -431,7 +438,7 @@ public class MiniMaven {
 					version = findLocallyCachedVersion(path);
 				path += version + "/" + artifactId + "-" + version + ".pom";
 				result = parse(new File(path), null);
-				if (result == null)
+				if (result == null && !quiet)
 					err.println("Artifact not found; consider 'get-dependencies': " + artifactId);
 				localPOMCache.put(key, result);
 			}
@@ -522,6 +529,8 @@ public class MiniMaven {
 				latestDependency.artifactId = string;
 			else if (prefix.equals(">project>dependencies>dependency>version"))
 				latestDependency.version = string;
+			else if (prefix.equals(">project>dependencies>dependency>optional"))
+				latestDependency.optional = string.equalsIgnoreCase("true");
 			else if (prefix.equals(">project>profiles>profile>id"))
 				isCurrentProfile = profile.equals(string);
 			else if (prefix.equals(">project>repositories>repository>url"))
