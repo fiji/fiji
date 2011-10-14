@@ -18,7 +18,7 @@ import results.ResultHandler;
  *
  * @param <T>
  */
-public class MandersCorrelation<T extends RealType<T>> extends Algorithm<T> {
+public class MandersColocalization<T extends RealType<T>> extends Algorithm<T> {
 	// Manders M1 and M2 value
 	double mandersM1, mandersM2;
 	// thresholded Manders M1 and M2 values
@@ -32,7 +32,7 @@ public class MandersCorrelation<T extends RealType<T>> extends Algorithm<T> {
 		public double m2;
 	}
 
-	public MandersCorrelation() {
+	public MandersColocalization() {
 		super("Manders correlation");
 	}
 

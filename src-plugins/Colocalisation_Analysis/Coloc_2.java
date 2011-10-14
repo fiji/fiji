@@ -39,7 +39,7 @@ import algorithms.Histogram2D;
 import algorithms.InputCheck;
 import algorithms.LiHistogram2D;
 import algorithms.LiICQ;
-import algorithms.MandersCorrelation;
+import algorithms.MandersColocalization;
 import algorithms.MissingPreconditionException;
 import algorithms.PearsonsCorrelation;
 
@@ -133,7 +133,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	protected LiHistogram2D<T> liHistogramCh1;
 	protected LiHistogram2D<T> liHistogramCh2;
 	protected LiICQ<T> liICQ;
-	protected MandersCorrelation<T> mandersCorrelation;
+	protected MandersColocalization<T> mandersCorrelation;
 	protected Histogram2D<T> histogram2D;
 	protected CostesSignificanceTest<T> costesSignificance;
 	// indicates if images should be printed in result
@@ -337,7 +337,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		if (useLiICQ)
 			liICQ = new LiICQ<T>();
 		if (useManders)
-			mandersCorrelation = new MandersCorrelation<T>();
+			mandersCorrelation = new MandersColocalization<T>();
 		if (useScatterplot)
 			histogram2D = new Histogram2D<T>("2D intensity histogram");
 		if (useCostes) {
