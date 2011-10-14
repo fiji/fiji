@@ -393,6 +393,8 @@ public class MiniMaven {
 					(groupId == null || groupId.equals(this.groupId)) &&
 					(version == null || this.version == null || version.equals(this.version)))
 				return this;
+			if (groupId == null && artifactId.equals("jdom"))
+				groupId = "jdom";
 			for (POM child : children) {
 				if (child == null)
 					continue;
