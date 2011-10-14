@@ -117,17 +117,29 @@ public class MiniMaven {
 		return pom;
 	}
 
+	protected POM fakePOM(File target, String groupId, String artifactId, String version) {
+		POM pom = new POM(target, null);
+		pom.directory = target.getParentFile();
+		pom.target = target;
+		pom.children = new POM[0];
+		pom.groupId = groupId;
+		pom.artifactId = artifactId;
+		pom.version = version;
+		return pom;
+	}
+
 	protected class Dependency {
-		protected String groupId, artifactId, version;
+		protected String groupId, artifactId, version, systemPath;
 		protected boolean optional;
 
 		public Dependency() {}
 
-		public Dependency(String groupId, String artifactId, String version, boolean optional) {
+		public Dependency(String groupId, String artifactId, String version, boolean optional, String systemPath) {
 			this.groupId = groupId;
 			this.artifactId = artifactId;
 			this.version = version;
 			this.optional = optional;
+			this.systemPath = systemPath;
 		}
 	}
 
@@ -336,6 +348,14 @@ public class MiniMaven {
 				String artifactId = expand(dependency.artifactId);
 				String version = expand(dependency.version);
 				boolean optional = dependency.optional;
+				String systemPath = expand(dependency.systemPath);
+				if (systemPath != null) {
+					File file = new File(systemPath);
+					if (file.exists()) {
+						result.add(fakePOM(file, groupId, artifactId, version));
+						continue;
+					}
+				}
 				POM pom = getRoot().findPOM(groupId, artifactId, version, optional);
 				if (pom == null || result.contains(pom))
 					continue;
@@ -531,6 +551,8 @@ public class MiniMaven {
 				latestDependency.version = string;
 			else if (prefix.equals(">project>dependencies>dependency>optional"))
 				latestDependency.optional = string.equalsIgnoreCase("true");
+			else if (prefix.equals(">project>dependencies>dependency>systemPath"))
+				latestDependency.systemPath = string;
 			else if (prefix.equals(">project>profiles>profile>id"))
 				isCurrentProfile = profile.equals(string);
 			else if (prefix.equals(">project>repositories>repository>url"))
