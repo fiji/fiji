@@ -1129,6 +1129,8 @@ public class Fake {
 				parser.variables.put("TOOLSPATH", parser.expandVariables(toolsPath));
 			if (classPath != null)
 				parser.variables.put("CLASSPATH", parser.expandVariables(classPath));
+			else // let's not add all of Fiji's classes to SubFakes' classpaths by default
+				parser.variables.remove("CLASSPATH");
 			if (buildDir != null)
 				parser.setVariable("BUILDDIR", buildDir.getAbsolutePath());
 			parser.cwd = cwd;
