@@ -2844,7 +2844,7 @@ public class WekaSegmentation {
 	 *   year      = {1971},
 	 *   volume    = {66},
 	 *   number    = {336},
-	 *   pages     = {846–850},
+	 *   pages     = {846--850},
 	 *   doi       = {10.2307/2284239)
 	 * }
 	 * </pre>
@@ -2920,7 +2920,7 @@ public class WekaSegmentation {
 	 *   year      = {1971},
 	 *   volume    = {66},
 	 *   number    = {336},
-	 *   pages     = {846–850},
+	 *   pages     = {846--850},
 	 *   doi       = {10.2307/2284239)
 	 * }
 	 * </pre>
@@ -2998,7 +2998,7 @@ public class WekaSegmentation {
 	 *   year      = {1971},
 	 *   volume    = {66},
 	 *   number    = {336},
-	 *   pages     = {846–850},
+	 *   pages     = {846--850},
 	 *   doi       = {10.2307/2284239)
 	 * }
 	 * </pre>
@@ -3078,7 +3078,7 @@ public class WekaSegmentation {
 	 *   year      = {1971},
 	 *   volume    = {66},
 	 *   number    = {336},
-	 *   pages     = {846–850},
+	 *   pages     = {846--850},
 	 *   doi       = {10.2307/2284239)
 	 * }
 	 * </pre>
@@ -3185,7 +3185,7 @@ public class WekaSegmentation {
 	 *   year      = {1971},
 	 *   volume    = {66},
 	 *   number    = {336},
-	 *   pages     = {846–850},
+	 *   pages     = {846--850},
 	 *   doi       = {10.2307/2284239)
 	 * }
 	 * </pre>
@@ -3198,19 +3198,49 @@ public class WekaSegmentation {
 			ShortProcessor cluster1,
 			ShortProcessor cluster2)
 	{
-		double agreements = 0;
-		
 		final short[] pixels1 = (short[]) cluster1.getPixels();
 		final short[] pixels2 = (short[]) cluster2.getPixels();
 		
 		double n = pixels1.length;
 		
-		for(int i=0; i<n-1; i++)
-			for(int j=i+1; j<n; j++)
-				if( pixels1[ i ] == pixels1[ j ] && pixels2[ i ] == pixels2[ j ] 
-				    || pixels1[ i ] != pixels1[ j ] && pixels2[ i ] != pixels2[ j ] )
-					agreements ++;
-		return agreements / ( n * (n - 1) / 2 );
+		// Form contingency matrix
+		int[][]cont = new int[(int) cluster1.getMax() ] [ (int) cluster2.getMax() ];
+		
+		for(int i=0; i<n; i++)
+			cont[ pixels1[i] ] [ pixels2[i] ] ++;
+		
+		// sum over rows & columnns of nij^2
+		double t2 = 0;
+		
+		// sum of squares of sums of rows
+		double[] ni = new double[ cont.length ];
+		for(int i=0; i<cont.length; i++)
+			for(int j=0; j<cont[i].length; j++)			
+				ni[ i ] += cont[ i ][ j ];
+		double nis = 0;
+		for(int k=0; k<ni.length; k++)
+			nis += ni[ k ] * ni[ k ];
+		
+		// sum of squares of sums of columns
+		double[] nj = new double[ cont.length ];
+		for(int j=0; j<cont[0].length; j++)
+			for(int i=0; i<cont.length; i++)
+			{
+				nj[ j ] += cont[ i ][ j ];
+				t2 += cont[ i ][ j ] * cont[ i ][ j ];
+			}
+		double njs = 0;
+		for(int k=0; k<nj.length; k++)
+			njs += nj[ k ] * nj[ k ];
+		
+		// total number of pairs of entities
+		double t1 =  n * (n - 1) / 2 ;
+		
+		double t3 = 0.5 * (nis+njs);
+		
+		double agreements=t1+t2-t3;		// number of agreements
+		
+		return agreements/t1;
 	}
 	
 	
@@ -3295,7 +3325,7 @@ public class WekaSegmentation {
 		//IJ.log("n = " + n + ", nis = " + nis + ", njs = " + njs);
 		//IJ.log("t1 = " + t1 + ", t2 = " + t2 + ", t3 = " + t3);
 		//IJ.log("nc = " + nc);
-		
+								
 		double adjustedRandIndex;
 		
 		if ( t1 == nc )
@@ -3304,6 +3334,7 @@ public class WekaSegmentation {
 		   adjustedRandIndex=(agreements-nc)/(t1-nc);		// adjusted Rand - Hubert & Arabie 1985
 		
 		return adjustedRandIndex;
+		
 	}
 	
 	
