@@ -376,6 +376,12 @@ public class IJHacker extends JavassistHelper {
 					else if (call.getMethodName().equals("runPlugIn"))
 						call.replace("$_ = null;");
 				}
+
+				@Override
+				public void edit(NewExpr expr) throws CannotCompileException {
+					if (expr.getClassName().equals("ij.plugin.frame.Editor"))
+						expr.replace("$_ = null;");
+				}
 			});
 			// open new plugin in Script Editor
 			method = clazz.getMethod("createPlugin", "(Ljava/lang/String;ILjava/lang/String;)V");
