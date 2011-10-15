@@ -202,6 +202,9 @@ public class MiniMaven {
 				rmRF(target);
 			else if (target.exists())
 				target.delete();
+			File jar = getTarget();
+			if (jar.exists())
+				jar.delete();
 		}
 
 		public void downloadDependencies() throws IOException, ParserConfigurationException, SAXException {
