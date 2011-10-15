@@ -3027,19 +3027,19 @@ public class WekaSegmentation {
 	 * (to be submitted to an Executor Service). Both images
 	 * are binarized.
 	 * The adusted Rand error is defined as the 1 - adjusted Rand index, 
-	 * as described by William M. Rand \cite{Rand71}.
+	 * as described by Lawrence Hubert and Phipps Arabie \cite{Hubert85}.
 	 *
 	 * BibTeX:
 	 * <pre>
-	 * &#64;article{Rand71,
-	 *   author    = {William M. Rand},
-	 *   title     = {Objective criteria for the evaluation of clustering methods},
-	 *   journal   = {Journal of the American Statistical Association},
-	 *   year      = {1971},
-	 *   volume    = {66},
-	 *   number    = {336},
-	 *   pages     = {846–850},
-	 *   doi       = {10.2307/2284239)
+	 * &#64;article{Hubert85,
+	 *   author    = {Lawrence Hubert and Phipps Arabie},
+	 *   title     = {Comparing partitions},
+	 *   journal   = {Journal of Classification},
+	 *   year      = {1985},
+	 *   volume    = {2},
+	 *   issue	   = {1},
+	 *   pages     = {193-218},
+	 *   doi       = {10.1007/BF01908075)
 	 * }
 	 * </pre>
 	 * 
@@ -3120,19 +3120,19 @@ public class WekaSegmentation {
 	 * Calculate the adjusted Rand error between some 2D original labels 
 	 * and the corresponding proposed labels. Both image are binarized.
 	 * The adjusted Rand error is defined as the 1 - adjusted Rand index, 
-	 * as described by William M. Rand \cite{Rand71}.
+	 * as described by Lawrence Hubert and Phipps Arabie \cite{Hubert85}.
 	 *
 	 * BibTeX:
 	 * <pre>
-	 * &#64;article{Rand71,
-	 *   author    = {William M. Rand},
-	 *   title     = {Objective criteria for the evaluation of clustering methods},
-	 *   journal   = {Journal of the American Statistical Association},
-	 *   year      = {1971},
-	 *   volume    = {66},
-	 *   number    = {336},
-	 *   pages     = {846–850},
-	 *   doi       = {10.2307/2284239)
+	 * &#64;article{Hubert85,
+	 *   author    = {Lawrence Hubert and Phipps Arabie},
+	 *   title     = {Comparing partitions},
+	 *   journal   = {Journal of Classification},
+	 *   year      = {1985},
+	 *   volume    = {2},
+	 *   issue	   = {1},
+	 *   pages     = {193-218},
+	 *   doi       = {10.1007/BF01908075)
 	 * }
 	 * </pre>
 	 * 
@@ -3216,19 +3216,19 @@ public class WekaSegmentation {
 	
 	/**
 	 * Calculate the adjusted Rand index between to clusters, as described by
-	 * William M. Rand \cite{Rand71}.
+	 * Lawrence Hubert and Phipps Arabie \cite{Rand71}.
 	 *
 	 * BibTeX:
 	 * <pre>
-	 * &#64;article{Rand71,
-	 *   author    = {William M. Rand},
-	 *   title     = {Objective criteria for the evaluation of clustering methods},
-	 *   journal   = {Journal of the American Statistical Association},
-	 *   year      = {1971},
-	 *   volume    = {66},
-	 *   number    = {336},
-	 *   pages     = {846–850},
-	 *   doi       = {10.2307/2284239)
+	 * &#64;article{Hubert85,
+	 *   author    = {Lawrence Hubert and Phipps Arabie},
+	 *   title     = {Comparing partitions},
+	 *   journal   = {Journal of Classification},
+	 *   year      = {1985},
+	 *   volume    = {2},
+	 *   issue	   = {1},
+	 *   pages     = {193-218},
+	 *   doi       = {10.1007/BF01908075)
 	 * }
 	 * </pre>
 	 * 
