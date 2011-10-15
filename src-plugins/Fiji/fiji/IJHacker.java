@@ -370,7 +370,7 @@ public class IJHacker extends JavassistHelper {
 				public void edit(MethodCall call) throws CannotCompileException {
 					if (call.getMethodName().equals("create"))
 						call.replace("if ($1.endsWith(\".txt\"))"
-							+ "  $1 = $1.substring($1.length() - 3) + \"ijm\";"
+							+ "  $1 = $1.substring(0, $1.length() - 3) + \"ijm\";"
 							+ "fiji.FijiTools.openEditor($1, $2);"
 							+ "return;");
 					else if (call.getMethodName().equals("runPlugIn"))
