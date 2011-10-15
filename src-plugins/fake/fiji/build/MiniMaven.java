@@ -290,7 +290,7 @@ public class MiniMaven {
 			count = arguments.size() - count;
 
 			if (count > 0) {
-				err.println("Compiling " + (arguments.size() - count) + " files in " + directory);
+				err.println("Compiling " + count + " files in " + directory);
 				String[] array = arguments.toArray(new String[arguments.size()]);
 				if (fake != null)
 					fake.callJavac(array, verbose);
