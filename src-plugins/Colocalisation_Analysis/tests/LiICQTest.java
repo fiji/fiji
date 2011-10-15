@@ -2,6 +2,9 @@ package tests;
 
 import static org.junit.Assert.assertTrue;
 
+import mpicbg.imglib.cursor.special.TwinCursor;
+import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
+
 import org.junit.Test;
 
 import algorithms.LiICQ;
@@ -19,10 +22,15 @@ public class LiICQTest extends ColocalisationTest {
 	 */
 	@Test
 	public void liPositiveCorrTest() {
+		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
+				positiveCorrelationImageCh1.createLocalizableByDimCursor(),
+				positiveCorrelationImageCh2.createLocalizableByDimCursor(),
+				positiveCorrelationAlwaysTrueMask.createLocalizableCursor());
 		// calculate Li's ICQ value
-		double icq = LiICQ.calculateLisICQ(positiveCorrelationImageCh1, positiveCorrelationImageCh1Mean,
-					positiveCorrelationImageCh2, positiveCorrelationImageCh2Mean);
+		double icq = LiICQ.calculateLisICQ(cursor, positiveCorrelationImageCh1Mean,
+					positiveCorrelationImageCh2Mean);
 		assertTrue(icq > 0.34 && icq < 0.35);
+		cursor.close();
 	}
 
 	/**
@@ -30,9 +38,14 @@ public class LiICQTest extends ColocalisationTest {
 	 */
 	@Test
 	public void liZeroCorrTest() {
+		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
+				zeroCorrelationImageCh1.createLocalizableByDimCursor(),
+				zeroCorrelationImageCh2.createLocalizableByDimCursor(),
+				zeroCorrelationAlwaysTrueMask.createLocalizableCursor());
 		// calculate Li's ICQ value
-		double icq = LiICQ.calculateLisICQ(zeroCorrelationImageCh1, zeroCorrelationImageCh1Mean,
-					zeroCorrelationImageCh2, zeroCorrelationImageCh2Mean);
+		double icq = LiICQ.calculateLisICQ(cursor, zeroCorrelationImageCh1Mean,
+					zeroCorrelationImageCh2Mean);
 		assertTrue(icq > -0.01 && icq < 0.01);
+		cursor.close();
 	}
 }

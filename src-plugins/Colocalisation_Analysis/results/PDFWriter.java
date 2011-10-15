@@ -1,6 +1,7 @@
 package results;
 
 import gadgets.DataContainer;
+import gadgets.DataContainer.MaskType;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.io.SaveDialog;
@@ -171,7 +172,7 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 			/* If a mask is in use, add a counter
 			 * information to the name.
 			 */
-			if (container.isMaskInUse() || container.isRoiInUse()) {
+			if (container.getMaskType() != MaskType.None) {
 				name += "_mask_"+ (succeededPrints + 1);
 			}
 			// get the path to the file we are about to create

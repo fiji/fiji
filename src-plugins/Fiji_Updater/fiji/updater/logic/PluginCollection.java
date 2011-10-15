@@ -43,9 +43,9 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		public UpdateSite(String url, String sshHost, String uploadDirectory, long timestamp) {
 			if (url.equals("http://pacific.mpi-cbg.de/update/")) {
 				url = Updater.MAIN_URL;
-				if (sshHost.equals("pacific.mpi-cbg.de"))
+				if (sshHost != null && sshHost.equals("pacific.mpi-cbg.de"))
 					sshHost = Updater.SSH_HOST;
-				else if (sshHost.endsWith("@pacific.mpi-cbg.de"))
+				else if (sshHost != null && sshHost.endsWith("@pacific.mpi-cbg.de"))
 					sshHost = sshHost.substring(0, sshHost.length() - 18) + Updater.SSH_HOST;
 			}
 			if (!url.endsWith("/"))

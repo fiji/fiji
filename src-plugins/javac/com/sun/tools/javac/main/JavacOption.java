@@ -1,12 +1,12 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.tools.javac.main;
@@ -28,13 +28,11 @@ package com.sun.tools.javac.main;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Options;
 import java.io.PrintWriter;
-import java.util.Arrays;
-import java.util.Collection;
 
 /**
  * TODO: describe com.sun.tools.javac.main.JavacOption
  *
- * <p><b>This is NOT part of any API supported by Sun Microsystems.
+ * <p><b>This is NOT part of any supported API.
  * If you write code that depends on this, you do so at your own
  * risk.  This code and its internal interfaces are subject to change
  * or deletion without notice.</b></p>
@@ -43,29 +41,19 @@ public interface JavacOption {
 
     OptionKind getKind();
 
-    /** Does this option take a (separate) operand?
-     *  @return true if this option takes a separate operand
-     */
+    /** Does this option take a (separate) operand? */
     boolean hasArg();
 
     /** Does argument string match option pattern?
-     *  @param arg   the command line argument string
-     *  @return true if {@code arg} matches this option
+     *  @param arg        The command line argument string.
      */
     boolean matches(String arg);
 
-    /** Process an option with an argument.
-     *  @param options the accumulated set of analyzed options
-     *  @param option  the option to be processed
-     *  @param arg     the arg for the option to be processed
-     *  @return true if an error was detected
+    /** Process the option (with arg). Return true if error detected.
      */
     boolean process(Options options, String option, String arg);
 
-    /** Process the option with no argument.
-     *  @param options the accumulated set of analyzed options
-     *  @param option  the option to be processed
-     *  @return true if an error was detected
+    /** Process the option (without arg). Return true if error detected.
      */
     boolean process(Options options, String option);
 
@@ -75,11 +63,6 @@ public interface JavacOption {
         NORMAL,
         EXTENDED,
         HIDDEN,
-    }
-
-    enum ChoiceKind {
-        ONEOF,
-        ANYOF
     }
 
     /** This class represents an option recognized by the main program
@@ -102,14 +85,6 @@ public interface JavacOption {
          */
         boolean hasSuffix;
 
-        /** The kind of choices for this option, if any.
-         */
-        ChoiceKind choiceKind;
-
-        /** The choices for this option, if any.
-         */
-        Collection<String> choices;
-
         Option(OptionName name, String argsNameKey, String descrKey) {
             this.name = name;
             this.argsNameKey = argsNameKey;
@@ -117,116 +92,51 @@ public interface JavacOption {
             char lastChar = name.optionName.charAt(name.optionName.length()-1);
             hasSuffix = lastChar == ':' || lastChar == '=';
         }
-
         Option(OptionName name, String descrKey) {
             this(name, null, descrKey);
         }
 
-        Option(OptionName name, String descrKey, ChoiceKind choiceKind, String... choices) {
-            this(name, descrKey, choiceKind, Arrays.asList(choices));
-        }
-
-        Option(OptionName name, String descrKey, ChoiceKind choiceKind, Collection<String> choices) {
-            this(name, null, descrKey);
-            if (choiceKind == null || choices == null)
-                throw new NullPointerException();
-            this.choiceKind = choiceKind;
-            this.choices = choices;
-        }
-
-        @Override
         public String toString() {
             return name.optionName;
         }
 
+        /** Does this option take a (separate) operand?
+         */
         public boolean hasArg() {
             return argsNameKey != null && !hasSuffix;
         }
 
-        public boolean matches(String option) {
-            if (!hasSuffix)
-                return option.equals(name.optionName);
-
-            if (!option.startsWith(name.optionName))
-                return false;
-
-            if (choices != null) {
-                String arg = option.substring(name.optionName.length());
-                if (choiceKind == ChoiceKind.ONEOF)
-                    return choices.contains(arg);
-                else {
-                    for (String a: arg.split(",+")) {
-                        if (!choices.contains(a))
-                            return false;
-                    }
-                }
-            }
-
-            return true;
+        /** Does argument string match option pattern?
+         *  @param arg        The command line argument string.
+         */
+        public boolean matches(String arg) {
+            return hasSuffix ? arg.startsWith(name.optionName) : arg.equals(name.optionName);
         }
 
         /** Print a line of documentation describing this option, if standard.
-         * @param out the stream to which to write the documentation
          */
         void help(PrintWriter out) {
             String s = "  " + helpSynopsis();
             out.print(s);
-            for (int j = Math.min(s.length(), 28); j < 29; j++) out.print(" ");
+            for (int j = s.length(); j < 29; j++) out.print(" ");
             Log.printLines(out, Main.getLocalizedString(descrKey));
         }
-
         String helpSynopsis() {
-            StringBuilder sb = new StringBuilder();
-            sb.append(name);
-            if (argsNameKey == null) {
-                if (choices != null) {
-                    String sep = "{";
-                    for (String c: choices) {
-                        sb.append(sep);
-                        sb.append(c);
-                        sep = ",";
-                    }
-                    sb.append("}");
-                }
-            } else {
-                if (!hasSuffix)
-                    sb.append(" ");
-                sb.append(Main.getLocalizedString(argsNameKey));
-            }
-
-            return sb.toString();
+            return name +
+                (argsNameKey == null ? "" :
+                 ((hasSuffix ? "" : " ") +
+                  Main.getLocalizedString(argsNameKey)));
         }
 
         /** Print a line of documentation describing this option, if non-standard.
-         *  @param out the stream to which to write the documentation
          */
         void xhelp(PrintWriter out) {}
 
         /** Process the option (with arg). Return true if error detected.
          */
         public boolean process(Options options, String option, String arg) {
-            if (options != null) {
-                if (choices != null) {
-                    if (choiceKind == ChoiceKind.ONEOF) {
-                        // some clients like to see just one of option+choice set
-                        for (String c: choices)
-                            options.remove(option + c);
-                        String opt = option + arg;
-                        options.put(opt, opt);
-                        // some clients like to see option (without trailing ":")
-                        // set to arg
-                        String nm = option.substring(0, option.length() - 1);
-                        options.put(nm, arg);
-                    } else {
-                        // set option+word for each word in arg
-                        for (String a: arg.split(",+")) {
-                            String opt = option + a;
-                            options.put(opt, opt);
-                        }
-                    }
-                }
+            if (options != null)
                 options.put(option, arg);
-            }
             return false;
         }
 
@@ -253,17 +163,8 @@ public interface JavacOption {
         XOption(OptionName name, String descrKey) {
             this(name, null, descrKey);
         }
-        XOption(OptionName name, String descrKey, ChoiceKind kind, String... choices) {
-            super(name, descrKey, kind, choices);
-        }
-        XOption(OptionName name, String descrKey, ChoiceKind kind, Collection<String> choices) {
-            super(name, descrKey, kind, choices);
-        }
-        @Override
         void help(PrintWriter out) {}
-        @Override
         void xhelp(PrintWriter out) { super.help(out); }
-        @Override
         public OptionKind getKind() { return OptionKind.EXTENDED; }
     };
 
@@ -276,11 +177,8 @@ public interface JavacOption {
         HiddenOption(OptionName name, String argsNameKey) {
             super(name, argsNameKey, null);
         }
-        @Override
         void help(PrintWriter out) {}
-        @Override
         void xhelp(PrintWriter out) {}
-        @Override
         public OptionKind getKind() { return OptionKind.HIDDEN; }
     };
 

@@ -61,4 +61,10 @@ public class EntropyFast extends IsolatedPixelWeightener<EntropyFast>
 	{
 		entropy.close();
 	}
+
+	@Override
+	public Image<FloatType> getResultImage() 
+	{
+		return entropy;
+	}
 }

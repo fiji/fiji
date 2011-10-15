@@ -9,9 +9,9 @@ build_ij () {
 	version=$(git show |
 		sed -n 's/.* \(1\.4[0-9a-z]*\).*/\1/p' |
 		head -n 1) &&
-	../Build.sh ij.jar &&
-	mkdir -p ../ij-versions/$version &&
-	cp ij.jar ../ij-versions/$version/
+	../../Build.sh ij.jar &&
+	mkdir -p ../../ij-versions/$version &&
+	cp ij.jar ../../ij-versions/$version/
 }
 
 cd "$(dirname "$0")"/../modules/ImageJA &&

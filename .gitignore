@@ -290,3 +290,7 @@ hs_err*.log
 /plugins/Colour_Deconvolution.jar
 /plugins/Dichromacy_.jar
 /plugins/Threshold_Colour.jar
+/jars/imglib2.jar
+/jars/imglib2-ij.jar
+/jars/imglib2-io.jar
+/jars/imglib2-ui.jar

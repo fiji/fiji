@@ -10,7 +10,10 @@ import ij.plugin.PlugIn;
 import ij.process.Blitter;
 import ij.process.ImageProcessor;
 
+import java.awt.Checkbox;
 import java.awt.Rectangle;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -19,9 +22,11 @@ import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.cursor.special.RegionOfInterestCursor;
+import mpicbg.imglib.cursor.special.TwinCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.ImagePlusAdapter;
+import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.RealType;
 import results.PDFWriter;
 import results.ResultHandler;
@@ -68,7 +73,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		public int[] offset;
 		public int[] size;
 		public BoundingBox(int [] offset, int[] size) {
-			this.offset = offset.clone(); this.size = size.clone();
+			this.offset = offset.clone();
+			this.size = size.clone();
 		}
 	}
 
@@ -76,56 +82,82 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	protected class MaskInfo {
 		// the ROI to use (null if none)
 		BoundingBox roi;
+
 		/* the mask corresponding to the ROI, sized the same as a slice,
 		 * but also giving access to its bounding boxed' version
 		 */
 		public Image<T> mask;
 		public Image<T> boundingBox;
+
 		// constructors
 		public MaskInfo(BoundingBox roi, Image<T> m, Image<T> bb) {
 			this.roi = roi; mask = m; boundingBox = bb;
 		}
-		public MaskInfo() { };
+
+		public MaskInfo() { }
 	}
+
 	// the storage key for Fiji preferences
-	static String PREF_KEY = "Coloc_2.";
+	protected final static String PREF_KEY = "Coloc_2.";
+
 	// Allowed types of ROI configuration
-	protected enum RoiConfiguration {None, Img1, Img2, Mask};
+	protected enum RoiConfiguration {
+		None,
+		Img1,
+		Img2,
+		Mask
+	};
+
 	// the ROI configuration to use
-	RoiConfiguration roiConfig = RoiConfiguration.Img1;
+	protected RoiConfiguration roiConfig = RoiConfiguration.Img1;
+
 	// A list of all ROIs/masks found
-	ArrayList<MaskInfo> masks = new ArrayList<MaskInfo>();
-	// default indices of image, mask and roi choices
+	protected ArrayList<MaskInfo> masks = new ArrayList<MaskInfo>();
+
+	// default indices of image, mask and ROI choices
 	protected static int index1 = 0;
 	protected static int index2 = 1;
 	protected static int indexMask = 0;
 	protected static int indexRoi = 0;
 
 	// the images to work on
-	Image<T> img1, img2;
+	protected Image<T> img1, img2;
+
 	// the channels of the images to use
-	int img1Channel = 1, img2Channel = 1;
+	protected int img1Channel = 1, img2Channel = 1;
 
 	/* The different algorithms this plug-in provides.
 	 * If a reference is null it will not get run.
 	 */
-	PearsonsCorrelation<T> pearsonsCorrelation = null;
-	LiHistogram2D<T> liHistogramCh1 = null;
-	LiHistogram2D<T> liHistogramCh2 = null;
-	LiICQ<T> liICQ = null;
-	MandersCorrelation<T> mandersCorrelation = null;
-	Histogram2D<T> histogram2D = null;
-	CostesSignificanceTest<T> costesSignificance = null;
-
+	protected PearsonsCorrelation<T> pearsonsCorrelation;
+	protected LiHistogram2D<T> liHistogramCh1;
+	protected LiHistogram2D<T> liHistogramCh2;
+	protected LiICQ<T> liICQ;
+	protected MandersCorrelation<T> mandersCorrelation;
+	protected Histogram2D<T> histogram2D;
+	protected CostesSignificanceTest<T> costesSignificance;
+	// indicates if images should be printed in result
+	protected boolean displayImages;
 	/* GUI related members */
-	String[] roiLabels =  { "None","Channel 1", "Channel 2",};
+	protected String[] roiLabels = {
+		"None",
+		"Channel 1",
+		"Channel 2"
+	};
+
 	// indicates if a PDF should be saved automatically
 	protected boolean autoSavePdf;
 
 	public void run(String arg0) {
 		if (showDialog()) {
-			for (MaskInfo mi : masks) {
-				colocalise(img1, img2, mi.roi, mi.mask, mi.boundingBox);
+			try {
+				for (MaskInfo mi : masks) {
+					colocalise(img1, img2, mi.roi, mi.mask, mi.boundingBox);
+				}
+			} catch (MissingPreconditionException e) {
+				IJ.handleException(e);
+				IJ.showMessage("An error occured, could not colocalize!");
+				return;
 			}
 		}
 	}
@@ -149,8 +181,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			= new GenericDialog("Coloc 2");
 
 		String[] titles = new String[windowList.length];
-		/* the masks and rois array needs three more entries than
-		 * windows to contain "none", "roi ch 1" and "roi ch 2"
+		/* the masks and ROIs array needs three more entries than
+		 * windows to contain "none", "ROI ch 1" and "ROI ch 2"
 		 */
 		String[] roisAndMasks= new String[windowList.length + 3];
 		roisAndMasks[0]="<None>";
@@ -169,13 +201,15 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		}
 
 		// set up the users preferences
+		displayImages = Prefs.get(PREF_KEY+"displayImages", false);
+		autoSavePdf = Prefs.get(PREF_KEY+"autoSavePdf", true);
+		boolean displayShuffledCostes = Prefs.get(PREF_KEY+"displayShuffledCostes", false);
 		boolean useLiCh1 = Prefs.get(PREF_KEY+"useLiCh1", true);
 		boolean useLiCh2 = Prefs.get(PREF_KEY+"useLiCh2", true);
 		boolean useLiICQ = Prefs.get(PREF_KEY+"useLiICQ", true);
 		boolean useManders = Prefs.get(PREF_KEY+"useManders", true);
 		boolean useScatterplot = Prefs.get(PREF_KEY+"useScatterplot", true);
 		boolean useCostes = Prefs.get(PREF_KEY+"useCostes", true);
-		autoSavePdf = Prefs.get(PREF_KEY+"autoSavePdf", true);
 		int psf = (int) Prefs.get(PREF_KEY+"psf", 3);
 		int nrCostesRandomisations = (int) Prefs.get(PREF_KEY+"nrCostesRandomisations", 10);
 
@@ -188,20 +222,33 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
 		gd.addChoice("Channel_1", titles, titles[index1]);
 		gd.addChoice("Channel_2", titles, titles[index2]);
-		gd.addChoice("ROI or mask", roisAndMasks, roisAndMasks[indexMask]);
+		gd.addChoice("ROI_or_mask", roisAndMasks, roisAndMasks[indexMask]);
 		//gd.addChoice("Use ROI", roiLabels, roiLabels[indexRoi]);
 
+		gd.addCheckbox("Show_\"Save_PDF\"_Dialog", autoSavePdf);
+		gd.addCheckbox("Display_Images_in_Result", displayImages);
+		gd.addCheckbox("Display_Shuffled_Images", displayShuffledCostes);
+		final Checkbox shuffleCb = (Checkbox) gd.getCheckboxes().lastElement();
 		// Add algorithm options
 		gd.addMessage("Algorithms:");
-		gd.addCheckbox("Li Histogram Channel 1", useLiCh1);
-		gd.addCheckbox("Li Histogram Channel 2", useLiCh2);
-		gd.addCheckbox("Li ICQ", useLiICQ);
-		gd.addCheckbox("Manders' Correlation", useManders);
-		gd.addCheckbox("2D Instensity Histogram", useScatterplot);
-		gd.addCheckbox("Costes' Significance Test", useCostes);
-		gd.addCheckbox("Show \"save PDF\" dialog", autoSavePdf);
+		gd.addCheckbox("Li_Histogram_Channel_1", useLiCh1);
+		gd.addCheckbox("Li_Histogram_Channel_2", useLiCh2);
+		gd.addCheckbox("Li_ICQ", useLiICQ);
+		gd.addCheckbox("Manders'_Correlation", useManders);
+		gd.addCheckbox("2D_Instensity_Histogram", useScatterplot);
+		gd.addCheckbox("Costes'_Significance_Test", useCostes);
+		final Checkbox costesCb = (Checkbox) gd.getCheckboxes().lastElement();
 		gd.addNumericField("PSF", psf, 1);
-		gd.addNumericField("Costes randomisations", nrCostesRandomisations, 0);
+		gd.addNumericField("Costes_randomisations", nrCostesRandomisations, 0);
+
+		// disable shuffle checkbox if costes checkbox is set to "off"
+		shuffleCb.setEnabled(useCostes);
+		costesCb.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				shuffleCb.setEnabled(costesCb.getState());
+			}
+		});
 
 		// show the dialog, finally
 		gd.showDialog();
@@ -211,7 +258,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
 		ImagePlus imp1 = WindowManager.getImage(gd.getNextChoiceIndex() + 1);
 		ImagePlus imp2 = WindowManager.getImage(gd.getNextChoiceIndex() + 1);
-		// get information about the mask/roi to use
+		// get information about the mask/ROI to use
 		indexMask = gd.getNextChoiceIndex();
 		if (indexMask == 0)
 			roiConfig = RoiConfiguration.None;
@@ -255,24 +302,28 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		}
 
 		// read out GUI data
+		autoSavePdf = gd.getNextBoolean();
+		displayImages = gd.getNextBoolean();
+		displayShuffledCostes = gd.getNextBoolean();
 		useLiCh1 = gd.getNextBoolean();
 		useLiCh2 = gd.getNextBoolean();
 		useLiICQ = gd.getNextBoolean();
 		useManders = gd.getNextBoolean();
 		useScatterplot = gd.getNextBoolean();
 		useCostes = gd.getNextBoolean();
-		autoSavePdf = gd.getNextBoolean();
 		psf = (int) gd.getNextNumber();
 		nrCostesRandomisations = (int) gd.getNextNumber();
 
 		// save user preferences
+		Prefs.set(PREF_KEY+"autoSavePdf", autoSavePdf);
+		Prefs.set(PREF_KEY+"displayImages", displayImages);
+		Prefs.set(PREF_KEY+"displayShuffledCostes", displayShuffledCostes);
 		Prefs.set(PREF_KEY+"useLiCh1", useLiCh1);
 		Prefs.set(PREF_KEY+"useLiCh2", useLiCh2);
 		Prefs.set(PREF_KEY+"useLiICQ", useLiICQ);
 		Prefs.set(PREF_KEY+"useManders", useManders);
 		Prefs.set(PREF_KEY+"useScatterplot", useScatterplot);
 		Prefs.set(PREF_KEY+"useCostes", useCostes);
-		Prefs.set(PREF_KEY+"autoSavePdf", autoSavePdf);
 		Prefs.set(PREF_KEY+"psf", psf);
 		Prefs.set(PREF_KEY+"nrCostesRandomisations", nrCostesRandomisations);
 
@@ -290,7 +341,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		if (useScatterplot)
 			histogram2D = new Histogram2D<T>("2D intensity histogram");
 		if (useCostes) {
-			costesSignificance = new CostesSignificanceTest<T>(pearsonsCorrelation, psf, nrCostesRandomisations);
+			costesSignificance = new CostesSignificanceTest<T>(pearsonsCorrelation,
+					psf, nrCostesRandomisations, displayShuffledCostes);
 		}
 
 		return true;
@@ -299,7 +351,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	/**
 	 * Call this method to run a whole colocalisation configuration,
 	 * all selected algorithms get run on the supplied images. You
-	 * can specitfy the data further by suppliing appropriate
+	 * can specify the data further by supplying appropriate
 	 * information in the mask structure.
 	 *
 	 * @param img1
@@ -307,9 +359,10 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	 * @param roi
 	 * @param mask
 	 * @param maskBB
+	 * @throws MissingPreconditionException
 	 */
 	public void colocalise(Image<T> img1, Image<T> img2, BoundingBox roi,
-			Image<T> mask, Image<T> maskBB) {
+			Image<T> mask, Image<T> maskBB) throws MissingPreconditionException {
 		// create a new container for the selected images and channels
 		DataContainer<T> container;
 		if (mask != null) {
@@ -317,9 +370,9 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 					img1Channel, img2Channel, mask, maskBB,
 					roi.offset, roi.size);
 		} else if (roi != null) {
-			// if we have no musk, but a ROI, a regular ROI is in use
-			container = new DataContainer<T>(img1, img2,
-					img1Channel, img2Channel, roi.offset, roi.size);
+				// we have no mask, but a regular ROI in use
+				container = new DataContainer<T>(img1, img2,
+						img1Channel, img2Channel, roi.offset, roi.size);
 		} else {
 			// no mask and no ROI is present
 			container = new DataContainer<T>(img1, img2,
@@ -353,19 +406,23 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		addIfValid(costesSignificance, userSelectedJobs);
 
 		// execute all algorithms
+		int count = 0;
+		int jobs = userSelectedJobs.size();
 		for (Algorithm<T> a : userSelectedJobs){
 			try {
+				count++;
+				IJ.showStatus(count + "/" + jobs + ": Running " + a.getName());
 				a.execute(container);
 			}
 			catch (MissingPreconditionException e){
-				IJ.handleException(e);
-				String aName = a.getClass().getName();
 				for (ResultHandler<T> r : listOfResultHandlers){
 					r.handleWarning(
-							new Warning( "Probem with input data", aName + " - " + e.getMessage() ) );
+							new Warning( "Probem with input data", a.getName() + ": " + e.getMessage() ) );
 				}
 			}
 		}
+		// clear status
+		IJ.showStatus("");
 
 		// let the algorithms feed their results to the handler
 		for (Algorithm<T> a : userSelectedJobs){
@@ -373,12 +430,24 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 				a.processResults(r);
 		}
 		// if we have ROIs/masks, add them to results
-		if (mask != null || roi != null) {
-			Image<T> mask1 = createMaskImage( container.getSourceImage1(), "Channel 1" );
-			Image<T> mask2 = createMaskImage( container.getSourceImage2(), "Channel 2" );
+		if (displayImages) {
+			Image<T> channel1, channel2;
+			if (mask != null || roi != null) {
+				int[] offset = container.getMaskBBOffset();
+				int[] size = container.getMaskBBSize();
+				channel1 = createMaskImage( container.getSourceImage1(),
+						container.getMask(), offset, size, "Channel 1" );
+				channel2 = createMaskImage( container.getSourceImage2(),
+						container.getMask(), offset, size, "Channel 2" );
+			} else {
+				channel1 = container.getSourceImage1();
+				channel2 = container.getSourceImage2();
+				channel1.setName("Channel 1");
+				channel2.setName("Channel 2");
+			}
 			for (ResultHandler<T> r : listOfResultHandlers) {
-				r.handleImage (mask1);
-				r.handleImage (mask2);
+				r.handleImage (channel1);
+				r.handleImage (channel2);
 			}
 		}
 		// do the actual results processing
@@ -512,19 +581,19 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	 * it will be put into a frame of its bounding box size and
 	 * put into an Image<T>.
 	 *
-	 * In the end the members rois, masks and maskBBs will be
+	 * In the end the members ROIs, masks and maskBBs will be
 	 * filled if ROIs or masks were found. They will be null
 	 * otherwise.
 	 */
 	protected void createMasksAndRois(ImagePlus imp) {
-		// get Rois from current image in Fiji
+		// get ROIs from current image in Fiji
 		Roi[] impRois = split(imp.getRoi());
 		// create empty list
 		masks.clear();
 
 		for (Roi r : impRois ){
 			MaskInfo mi = new MaskInfo();
-			// add it to the list of masks/rois
+			// add it to the list of masks/ROIs
 			masks.add(mi);
 			// get the ROIs/masks bounding box
 			Rectangle rect = r.getBounds();
@@ -546,7 +615,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			ipSlice.copyBits(ipMask, mi.roi.offset[0], mi.roi.offset[1], Blitter.COPY);
 			// create an Image<T> out of it
 			ImagePlus maskImp = new ImagePlus("Mask", ipSlice);
-			// and remember it and the masks bounding box version
+			// and remember it and the masks bounding box
 			mi.mask = ImagePlusAdapter.<T>wrap( maskImp );
 			mi.boundingBox = ImagePlusAdapter.<T>wrap( new ImagePlus( "MaskBB", ipMask ) );
 		}
@@ -556,17 +625,37 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	 * This method duplicates the given images, but respects
 	 * ROIs if present. Meaning, a sub-picture will be created when
 	 * source images are ROI/MaskImages.
+	 * @throws MissingPreconditionException
 	 */
-	protected Image<T> createMaskImage(Image<T> sourceImage, String name) {
-		LocalizableCursor<T> cursor = sourceImage.createLocalizableCursor();
-		ImageFactory<T> maskFactory = new ImageFactory<T>(sourceImage.createType(), new ArrayContainerFactory());
-		Image<T> maskImage = maskFactory.createImage( sourceImage.getDimensions(), name );
-		LocalizableByDimCursor<T> maskCursor = maskImage.createLocalizableByDimCursor();
-
+	protected Image<T> createMaskImage(Image<T> image, Image<BitType> mask,
+			int[] offset, int[] size, String name) throws MissingPreconditionException {
+		int[] pos = image.createPositionArray();
+		// sanity check
+		if (pos.length != offset.length || pos.length != size.length) {
+			throw new MissingPreconditionException("Mask offset and size must be of same dimensionality like image.");
+		}
+		// use twin cursor for only one image
+		TwinCursor<T> cursor = new TwinCursor<T>(
+				image.createLocalizableByDimCursor(),
+				image.createLocalizableByDimCursor(),
+				mask.createLocalizableCursor());
+		// prepare output image
+		ImageFactory<T> maskFactory = new ImageFactory<T>(
+				image.createType(), new ArrayContainerFactory());
+		Image<T> maskImage = maskFactory.createImage( size, name );
+		LocalizableByDimCursor<T> maskCursor =
+				maskImage.createLocalizableByDimCursor();
+		// go through the visible data and copy it to the output
 		while (cursor.hasNext()) {
 			cursor.fwd();
-			maskCursor.setPosition( cursor );
-			maskCursor.getType().set( cursor.getType() );
+			cursor.getPosition(pos);
+			// shift coordinates by offset
+			for (int i=0; i < pos.length; ++i) {
+				pos[i] = pos[i] - offset[i];
+			}
+			// write out to correct position
+			maskCursor.setPosition( pos );
+			maskCursor.getType().set( cursor.getChannel1() );
 		}
 
 		cursor.close();
