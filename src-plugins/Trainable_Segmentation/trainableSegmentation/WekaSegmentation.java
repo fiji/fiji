@@ -1,5 +1,6 @@
 package trainableSegmentation;
 
+import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
 
@@ -48,6 +49,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 
+import ij.gui.Plot;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
@@ -2890,7 +2892,6 @@ public class WekaSegmentation {
 			for(Future<Double> f : futures)
 			{
 				randError += f.get();				
-
 			}			
 		}
 		catch(Exception ex)
@@ -2904,6 +2905,172 @@ public class WekaSegmentation {
 
 		return randError / labelSlices.getSize();
 	}
+	
+	/**
+	 * Calculate the Rand index and its derived statistics in 2D between 
+	 * some original labels and the corresponding proposed labels. Both images 
+	 * are binarized. We follow the definition of Rand index described by
+	 * William M. Rand \cite{Rand71}.
+	 *
+	 * BibTeX:
+	 * <pre>
+	 * &#64;article{Rand71,
+	 *   author    = {William M. Rand},
+	 *   title     = {Objective criteria for the evaluation of clustering methods},
+	 *   journal   = {Journal of the American Statistical Association},
+	 *   year      = {1971},
+	 *   volume    = {66},
+	 *   number    = {336},
+	 *   pages     = {846--850},
+	 *   doi       = {10.2307/2284239)
+	 * }
+	 * </pre>
+	 * 
+	 * @param label original labels (single 2D image or stack)
+	 * @param proposal proposed new labels (single 2D image or stack of the same as as the original labels)
+	 * @param binaryThreshold threshold value to binarize proposal (larger than 0 and smaller than 1)
+	 * @return Rand index value and derived satatistics
+	 */
+	public static ClassificationStatistics randIndexStats(
+			ImagePlus label,
+			ImagePlus proposal,
+			double binaryThreshold)
+	{
+		
+		if(label.getWidth() != proposal.getWidth()
+				|| label.getHeight() != proposal.getHeight()
+				|| label.getImageStackSize() != proposal.getImageStackSize())
+		{
+			IJ.log("Error: label and proposal image sizes do not fit.");
+			return null;
+		}
+
+		final ImageStack labelSlices = label.getImageStack();
+		final ImageStack proposalSlices = proposal.getImageStack();
+
+		double randIndex = 0;
+		int tp = 0;
+		int tn = 0;
+		int fp = 0;
+		int fn = 0;
+
+		// Executor service to produce concurrent threads
+		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+		final ArrayList< Future<ClassificationStatistics> > futures = new ArrayList< Future<ClassificationStatistics> >();
+
+		try{
+			for(int i = 1; i <= labelSlices.getSize(); i++)
+			{
+				futures.add(exe.submit( getRandIndexStatsConcurrent(labelSlices.getProcessor(i).convertToFloat(),
+											proposalSlices.getProcessor(i).convertToFloat(),										
+											binaryThreshold ) ) );
+			}
+
+			// Wait for the jobs to be done
+			for(Future<ClassificationStatistics> f : futures)
+			{
+				ClassificationStatistics cs = f.get();
+				randIndex += cs.metricValue;
+				tp += cs.truePositives;
+				tn += cs.trueNegatives;
+				fp += cs.falsePositives;
+				fn += cs.falseNegatives;
+			}			
+		}
+		catch(Exception ex)
+		{
+			IJ.log("Error when calculating rand error in a concurrent way.");
+			ex.printStackTrace();
+		}
+		finally{
+			exe.shutdown();
+		}
+
+		return new ClassificationStatistics( tp, tn, fp, fn, randIndex / labelSlices.getSize() );
+	}
+	
+	/**
+	 * Calculate the precision-recall values based on Rand index between 
+	 * some 2D original labels and the corresponding proposed labels. 
+	 * We follow the definition of Rand index as described by
+	 * William M. Rand \cite{Rand71}.
+	 *
+	 * BibTeX:
+	 * <pre>
+	 * &#64;article{Rand71,
+	 *   author    = {William M. Rand},
+	 *   title     = {Objective criteria for the evaluation of clustering methods},
+	 *   journal   = {Journal of the American Statistical Association},
+	 *   year      = {1971},
+	 *   volume    = {66},
+	 *   number    = {336},
+	 *   pages     = {846--850},
+	 *   doi       = {10.2307/2284239)
+	 * }
+	 * </pre>
+	 * 
+	 * @param label 2D image with the original labels
+	 * @param proposal 2D image with the proposed labels
+	 * @param minThreshold minimum threshold value to binarize the input images
+	 * @param maxThreshold maximum threshold value to binarize the input images
+	 * @param stepThreshold threshold step value to use during binarization
+	 * @return rand index value and derived statistics for each threshold
+	 */
+	public static ArrayList< ClassificationStatistics > randIndexPrecisionRecall(
+			ImagePlus label,
+			ImagePlus proposal,
+			double minThreshold,
+			double maxThreshold,
+			double stepThreshold)
+	{
+		if(label.getWidth() != proposal.getWidth()
+				|| label.getHeight() != proposal.getHeight()
+				|| label.getImageStackSize() != proposal.getImageStackSize())
+		{
+			IJ.log("Error: label and proposal image sizes do not fit.");
+			return null;
+		}
+		
+		if( minThreshold < 0 || minThreshold >= maxThreshold || maxThreshold > 1)
+		{
+			IJ.log("Error: unvalid threshold values.");
+			return null;
+		}
+		
+		ArrayList< ClassificationStatistics > cs = new ArrayList<ClassificationStatistics>();
+		
+		for(double th =  minThreshold; th <= maxThreshold; th += stepThreshold)
+		{
+			cs.add( randIndexStats(label, proposal, th));
+		}
+		
+		return cs;
+	}
+	
+		
+	/**
+	 * Plot the precision-recall curve
+	 * @param stats
+	 */
+	public static void plotPrecisionRecall(
+			ArrayList< ClassificationStatistics > stats)
+	{
+		// Plot mean distance		
+		float[] precision = new float[ stats.size() ];
+		float[] recall = new float[ stats.size() ];
+		
+		for(int i = 0; i < precision.length; i++)
+		{
+			precision[i] = (float) stats.get(i).precision;
+			recall[i] = (float) stats.get(i).recall;
+		}
+
+		Plot pl = new Plot("Precision recall curve", "recall: tp / (tp + fn)", "precision: tp / (tp+fp)", recall, precision);
+		pl.setColor(Color.GREEN);
+		pl.show();
+	}
+	
 	
 	/**
 	 * Calculate the Rand error in 2D between some original labels 
@@ -2966,7 +3133,6 @@ public class WekaSegmentation {
 			for(Future<Double> f : futures)
 			{
 				randError += f.get();				
-
 			}			
 		}
 		catch(Exception ex)
@@ -2983,7 +3149,7 @@ public class WekaSegmentation {
 	
 	
 	/**
-	 * Get Rand error between two image in a concurrent way 
+	 * Get Rand error between two images in a concurrent way 
 	 * (to be submitted to an Executor Service). Both images
 	 * are binarized.
 	 * The Rand error is defined as the 1 - Rand index, as described by
@@ -3021,9 +3187,48 @@ public class WekaSegmentation {
 			}
 		};
 	}
+
+	/**
+	 * Get Rand index value and derived statistics between two images 
+	 * in a concurrent way (to be submitted to an Executor Service). 
+	 * Both images are binarized.
+	 * We follow the Rand index definition described by William M. Rand \cite{Rand71}.
+	 *
+	 * BibTeX:
+	 * <pre>
+	 * &#64;article{Rand71,
+	 *   author    = {William M. Rand},
+	 *   title     = {Objective criteria for the evaluation of clustering methods},
+	 *   journal   = {Journal of the American Statistical Association},
+	 *   year      = {1971},
+	 *   volume    = {66},
+	 *   number    = {336},
+	 *   pages     = {846--850},
+	 *   doi       = {10.2307/2284239)
+	 * }
+	 * </pre>
+	 * 
+	 * @param image1 first image
+	 * @param image2 second image
+	 * @param binaryThreshold threshold to apply to both images
+	 * @return Rand index value and derived statistics
+	 */
+	public static Callable<ClassificationStatistics> getRandIndexStatsConcurrent(
+			final ImageProcessor image1, 
+			final ImageProcessor image2,
+			final double binaryThreshold) 
+	{
+		return new Callable<ClassificationStatistics>()
+		{
+			public ClassificationStatistics call()
+			{				
+				return randIndexStats( image1, image2, binaryThreshold );
+			}
+		};
+	}
 	
 	/**
-	 * Get adjusted Rand error between two image in a concurrent way 
+	 * Get adjusted Rand error between two images in a concurrent way 
 	 * (to be submitted to an Executor Service). Both images
 	 * are binarized.
 	 * The adusted Rand error is defined as the 1 - adjusted Rand index, 
@@ -3113,6 +3318,57 @@ public class WekaSegmentation {
 		
 		return 1 - randIndex( components1, components2 );
 		
+	}
+	
+	/**
+	 * Calculate the Rand index between some 2D original labels 
+	 * and the corresponding proposed labels. Both image are binarized.
+	 * We follow the definition of Rand index as described by
+	 * William M. Rand \cite{Rand71}.
+	 *
+	 * BibTeX:
+	 * <pre>
+	 * &#64;article{Rand71,
+	 *   author    = {William M. Rand},
+	 *   title     = {Objective criteria for the evaluation of clustering methods},
+	 *   journal   = {Journal of the American Statistical Association},
+	 *   year      = {1971},
+	 *   volume    = {66},
+	 *   number    = {336},
+	 *   pages     = {846--850},
+	 *   doi       = {10.2307/2284239)
+	 * }
+	 * </pre>
+	 * 
+	 * @param label 2D image with the original labels
+	 * @param proposal 2D image with the proposed labels
+	 * @param binaryThreshold threshold value to binarize the input images
+	 * @return rand index value and derived statistics
+	 */
+	public static ClassificationStatistics randIndexStats(
+			ImageProcessor label,
+			ImageProcessor proposal,
+			double binaryThreshold)
+	{
+		// Binarize inputs
+		ByteProcessor binaryLabel = new ByteProcessor( label.getWidth(), label.getHeight() );
+		ByteProcessor binaryProposal = new ByteProcessor( label.getWidth(), label.getHeight() );
+		
+		for(int x=0; x<label.getWidth(); x++)
+			for(int y=0; y<label.getHeight(); y++)
+			{
+				binaryLabel.set(   x, y,    label.getPixelValue( x, y ) > binaryThreshold ? 255 : 0);
+				binaryProposal.set(x, y, proposal.getPixelValue( x, y ) > binaryThreshold ? 255 : 0);
+			}
+		
+		// Find components
+		ShortProcessor components1 = ( ShortProcessor ) connectedComponents(
+				new ImagePlus("binary labels", binaryLabel), 4).allRegions.getProcessor();
+		
+		ShortProcessor components2 = ( ShortProcessor ) connectedComponents(
+				new ImagePlus("proposal labels", binaryProposal), 4).allRegions.getProcessor();
+		
+		return getRandIndexStats( components1, components2 );		
 	}
 	
 	
@@ -3241,6 +3497,106 @@ public class WekaSegmentation {
 		double agreements=t1+t2-t3;		// number of agreements
 		
 		return agreements/t1;
+	}
+	
+	/**
+	 * Calculate the Rand index between to clusters, as described by
+	 * William M. Rand \cite{Rand71}.
+	 *
+	 * BibTeX:
+	 * <pre>
+	 * &#64;article{Rand71,
+	 *   author    = {William M. Rand},
+	 *   title     = {Objective criteria for the evaluation of clustering methods},
+	 *   journal   = {Journal of the American Statistical Association},
+	 *   year      = {1971},
+	 *   volume    = {66},
+	 *   number    = {336},
+	 *   pages     = {846--850},
+	 *   doi       = {10.2307/2284239)
+	 * }
+	 * </pre>
+	 * 
+	 * @param cluster1 2D segmented image (objects are labeled with different numbers) 
+	 * @param cluster2 2D segmented image (objects are labeled with different numbers)
+	 * @return Rand index
+	 */
+	public static ClassificationStatistics getRandIndexStats(
+			ShortProcessor cluster1,
+			ShortProcessor cluster2)
+	{
+		final short[] pixels1 = (short[]) cluster1.getPixels();
+		final short[] pixels2 = (short[]) cluster2.getPixels();
+		
+		//(new ImagePlus("cluster 1", cluster1)).show();
+		//(new ImagePlus("cluster 2", cluster2)).show();
+		
+		double n = pixels1.length;
+		
+		// Form contingency matrix
+		int[][]cont = new int[(int) cluster1.getMax() ] [ (int) cluster2.getMax() ];
+		
+		for(int i=0; i<n; i++)
+			cont[ pixels1[i] ] [ pixels2[i] ] ++;
+		
+		// sum over rows & columnns of nij^2
+		double t2 = 0;
+		
+		// sum of squares of sums of rows
+		double[] ni = new double[ cont.length ];
+		for(int i=0; i<cont.length; i++)
+			for(int j=0; j<cont[i].length; j++)			
+				ni[ i ] += cont[ i ][ j ];
+		double nis = 0;
+		for(int k=0; k<ni.length; k++)
+			nis += ni[ k ] * ni[ k ];
+		
+		// sum of squares of sums of columns
+		double[] nj = new double[ cont.length ];
+		for(int j=0; j<cont[0].length; j++)
+			for(int i=0; i<cont.length; i++)
+			{
+				nj[ j ] += cont[ i ][ j ];
+				t2 += cont[ i ][ j ] * cont[ i ][ j ];
+			}
+		double njs = 0;
+		for(int k=0; k<nj.length; k++)
+			njs += nj[ k ] * nj[ k ];
+		
+		// true positives - type (i): objects in the pair are placed in the 
+		// same class in cluster1 and in the same class in claster2
+		double truePositives = 0;
+		for(int j=0; j<cont[0].length; j++)
+			for(int i=0; i<cont.length; i++)			
+				truePositives += cont[ i ][ j ] * ( cont[ i ][ j ] - 1 ) / 2;			
+		
+		
+		// true negatives - type (ii): objects in the pair are placed in different 
+		// classes in cluster1 and in different classes in claster2
+		double trueNegatives = (n*n + t2 - nis - njs) / 2;
+		
+		// false positives - type (iii): objects in the pair are placed in different 
+		// classes in cluster1 and in the same class in claster2
+		double falsePositives = (njs - t2) / 2;
+		
+		// false negatives - type (iv): objects in the pair are placed in the same 
+		// class in cluster1 and in different classes in claster2
+		double falseNegatives = (nis - t2) / 2;
+		
+		
+		IJ.log(" In getRandIndexStats:");
+		IJ.log("  tp = " + truePositives);
+	    IJ.log("  tn = " + trueNegatives);
+	    IJ.log("  fp = " + falsePositives);
+	    IJ.log("  fn = " + falseNegatives);
+	    
+		
+		double agreements = truePositives + trueNegatives;		// number of agreements
+		
+		double randIndex = agreements / ( n * (n-1) / 2 );
+		
+		return new ClassificationStatistics( (int) truePositives, (int) trueNegatives, 
+				(int) falsePositives, (int) falseNegatives, randIndex);
 	}
 	
 	
