@@ -542,11 +542,11 @@ public class IJHacker extends JavassistHelper {
 
 		}
 
-		// If there is a macros/StartupMacros.fiji, but no macros/StartupMacros.txt, execute that
+		// If there is a macros/StartupMacros.fiji.ijm, but no macros/StartupMacros.txt, execute that
 		try {
 			clazz = get("ij.Menus");
 			File macrosDirectory = new File(FijiTools.getFijiDir(), "macros");
-			File startupMacrosFile = new File(macrosDirectory, "StartupMacros.fiji");
+			File startupMacrosFile = new File(macrosDirectory, "StartupMacros.fiji.ijm");
 			if (startupMacrosFile.exists() &&
 					!new File(macrosDirectory, "StartupMacros.txt").exists() &&
 					!new File(macrosDirectory, "StartupMacros.ijm").exists()) {

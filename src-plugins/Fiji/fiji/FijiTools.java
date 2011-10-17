@@ -40,7 +40,7 @@ public class FijiTools {
 			File macros = new File(getFijiDir(), "macros");
 			File txt = new File(macros, "StartupMacros.txt");
 			File ijm = new File(macros, "StartupMacros.ijm");
-			File fiji = new File(macros, "StartupMacros.fiji");
+			File fiji = new File(macros, "StartupMacros.fiji.ijm");
 			if (txt.exists()) {
 				if (openEditor(txt, fiji))
 					return true;
