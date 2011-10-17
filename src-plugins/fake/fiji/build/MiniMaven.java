@@ -219,23 +219,19 @@ public class MiniMaven {
 			if (buildFromSource || target.exists())
 				return;
 			print80("Downloading " + target);
-			for (String url : getRoot().getRepositories()) try {
-				download(url);
-				return;
-			} catch (Exception e) { /* ignore */ }
-			throw new FileNotFoundException("Could not download " + target);
+			download(groupId, artifactId, version);
 		}
 
-		protected void download(String url) throws MalformedURLException, IOException, NoSuchAlgorithmException {
+		protected void download(String groupId, String artifactId, String version) throws FileNotFoundException {
 			if (version == null) {
 				err.println("Version of " + artifactId + " is null; Skipping.");
 				return;
 			}
-			String path = "/" + groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/";
-			String baseURL = url + path + artifactId + "-" + version;
-			File directory = new File(System.getProperty("user.home") + "/.m2/repository" + path);
-			downloadAndVerify(baseURL + ".pom", directory);
-			downloadAndVerify(baseURL + ".jar", directory);
+			for (String url : getRoot().getRepositories()) try {
+				downloadAndVerify(url, groupId, artifactId, version);
+				return;
+			} catch (Exception e) { /* ignore */ }
+			throw new FileNotFoundException("Could not download " + groupId + "/" + artifactId + "-" + version);
 		}
 
 		public boolean upToDate() throws IOException, ParserConfigurationException, SAXException {
@@ -626,6 +622,14 @@ public class MiniMaven {
 				for (POM child : children)
 					child.append(builder, indent + "  ");
 		}
+	}
+
+	protected static void downloadAndVerify(String repositoryURL, String groupId, String artifactId, String version) throws MalformedURLException, IOException, NoSuchAlgorithmException {
+		String path = "/" + groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/";
+		String baseURL = repositoryURL + path + artifactId + "-" + version;
+		File directory = new File(System.getProperty("user.home") + "/.m2/repository" + path);
+		downloadAndVerify(baseURL + ".pom", directory);
+		downloadAndVerify(baseURL + ".jar", directory);
 	}
 
 	protected static void downloadAndVerify(String url, File directory) throws IOException, NoSuchAlgorithmException {
