@@ -1,5 +1,6 @@
 package tests;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import gadgets.MaskFactory;
 import mpicbg.imglib.cursor.special.TwinCursor;
@@ -12,6 +13,7 @@ import org.junit.Test;
 
 import algorithms.MissingPreconditionException;
 import algorithms.PearsonsCorrelation;
+import algorithms.PearsonsCorrelation.Implementation;
 
 /**
  * This class contains JUnit 4 test cases for the Pearson's correlation
@@ -121,5 +123,54 @@ public class PearsonsCorrelationTest extends ColocalisationTest {
 			 * assertTrue(Math.abs(resultClassic) < 0.1);
 			 */
 		}
+	}
+
+	/**
+	 * The 1993 paper of Manders et. al about colocalization presents an own
+	 * method and testing data for it. For that testing data there are
+	 * Pearson colocalization numbers, too, and these get tested in this test.
+	 * @throws MissingPreconditionException
+	 */
+	@Test
+	public void mandersPaperImagesTest() throws MissingPreconditionException {
+		PearsonsCorrelation<UnsignedByteType> pc =
+				new PearsonsCorrelation<UnsignedByteType>(Implementation.Classic);
+		double r;
+
+		// test A-A combination
+		r = pc.calculatePearsons(mandersA, mandersA, mandersAlwaysTrueMask);
+		assertEquals(1.0d, r, 0.01);
+
+		// test A-B combination
+		r = pc.calculatePearsons(mandersA, mandersB, mandersAlwaysTrueMask);
+		assertEquals(0.72d, r, 0.01);
+
+		// test A-C combination
+		r = pc.calculatePearsons(mandersA, mandersC, mandersAlwaysTrueMask);
+		assertEquals(0.44d, r, 0.01);
+
+		// test A-D combination
+		r = pc.calculatePearsons(mandersA, mandersD, mandersAlwaysTrueMask);
+		assertEquals(0.16d, r, 0.01);
+
+		// test A-E combination
+		r = pc.calculatePearsons(mandersA, mandersE, mandersAlwaysTrueMask);
+		assertEquals(-0.12d, r, 0.01);
+
+		// test A-F combination
+		r = pc.calculatePearsons(mandersA, mandersF, mandersAlwaysTrueMask);
+		assertEquals(0.22d, r, 0.01);
+
+		// test A-G combination
+		r = pc.calculatePearsons(mandersA, mandersG, mandersAlwaysTrueMask);
+		assertEquals(0.30d, r, 0.01);
+
+		// test A-H combination
+		r = pc.calculatePearsons(mandersA, mandersH, mandersAlwaysTrueMask);
+		assertEquals(0.48d, r, 0.01);
+
+		// test A-I combination
+		r = pc.calculatePearsons(mandersA, mandersI, mandersAlwaysTrueMask);
+		assertEquals(0.23d, r, 0.01);
 	}
 }
