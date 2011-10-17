@@ -58,7 +58,7 @@ public class MiniMaven {
 
 	protected void print80(String string) {
 		int length = string.length();
-		err.print((length < 80 ? string : string.substring(0, 80)) + "\r");
+		err.print((verbose || length < 80 ? string : string.substring(0, 80)) + "\r");
 	}
 
 	public POM parse(File file) throws IOException, ParserConfigurationException, SAXException {
