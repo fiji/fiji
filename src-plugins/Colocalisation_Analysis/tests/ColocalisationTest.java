@@ -54,15 +54,15 @@ public abstract class ColocalisationTest {
 
 		positiveCorrelationAlwaysTrueMask = MaskFactory.createMask(positiveCorrelationImageCh1.getDimensions(), true);
 
-		mandersA = TestImageAccessor.loadTiffFromJar("Data/Mock1.tif");
-		mandersB = TestImageAccessor.loadTiffFromJar("Data/Mock2.tif");
-		mandersC = TestImageAccessor.loadTiffFromJar("Data/Mock3.tif");
-		mandersD = TestImageAccessor.loadTiffFromJar("Data/Mock4.tif");
-		mandersE = TestImageAccessor.loadTiffFromJar("Data/Mock5.tif");
-		mandersF = TestImageAccessor.loadTiffFromJar("Data/Mock6.tif");
-		mandersG = TestImageAccessor.loadTiffFromJar("Data/Mock7.tif");
-		mandersH = TestImageAccessor.loadTiffFromJar("Data/Mock8.tif");
-		mandersI = TestImageAccessor.loadTiffFromJar("Data/Mock9.tif");
+		mandersA = TestImageAccessor.loadTiffFromJar("Data/mandersA.tiff");
+		mandersB = TestImageAccessor.loadTiffFromJar("Data/mandersB.tiff");
+		mandersC = TestImageAccessor.loadTiffFromJar("Data/mandersC.tiff");
+		mandersD = TestImageAccessor.loadTiffFromJar("Data/mandersD.tiff");
+		mandersE = TestImageAccessor.loadTiffFromJar("Data/mandersE.tiff");
+		mandersF = TestImageAccessor.loadTiffFromJar("Data/mandersF.tiff");
+		mandersG = TestImageAccessor.loadTiffFromJar("Data/mandersG.tiff");
+		mandersH = TestImageAccessor.loadTiffFromJar("Data/mandersH.tiff");
+		mandersI = TestImageAccessor.loadTiffFromJar("Data/mandersI.tiff");
 
 		mandersAlwaysTrueMask = MaskFactory.createMask(mandersA.getDimensions(), true);
 	}
