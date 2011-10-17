@@ -44,7 +44,7 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
 public class MiniMaven {
-	protected boolean verbose, debug = false;
+	protected boolean verbose, debug = false, downloadAutomatically;
 	protected PrintStream err;
 	protected Map<String, POM> localPOMCache = new HashMap<String, POM>();
 	protected Fake fake;
@@ -208,10 +208,8 @@ public class MiniMaven {
 		}
 
 		public void downloadDependencies() throws IOException, ParserConfigurationException, SAXException {
-			for (POM dependency : getDependencies())
-				if (dependency != null)
-					dependency.download();
-
+			downloadAutomatically = true;
+			getDependencies();
 			download();
 		}
 
@@ -473,22 +471,51 @@ public class MiniMaven {
 		}
 
 		protected POM findLocallyCachedPOM(String groupId, String artifactId, String version, boolean quiet) throws IOException, ParserConfigurationException, SAXException {
+			if (groupId == null)
+				return null;
 			String key = groupId + ">" + artifactId;
-			POM result = localPOMCache.get(key);
-			if (!localPOMCache.containsKey(key)) {
-				if (groupId == null)
-					return null;
-				String path = System.getProperty("user.home") + "/.m2/repository/" + groupId.replace('.', '/') + "/" + artifactId + "/";
-				if (version == null)
-					version = findLocallyCachedVersion(path);
-				path += version + "/" + artifactId + "-" + version + ".pom";
-				result = parse(new File(path), null);
-				if (result == null && !quiet)
-					err.println("Artifact not found; consider 'get-dependencies': " + artifactId);
-				localPOMCache.put(key, result);
+			if (localPOMCache.containsKey(key))
+				return localPOMCache.get(key); // may be null
+
+			String path = System.getProperty("user.home") + "/.m2/repository/" + groupId.replace('.', '/') + "/" + artifactId + "/";
+			if (version == null)
+				version = findLocallyCachedVersion(path);
+			if (version == null) {
+				if (!quiet)
+					err.println("Cannot find version for artifact " + artifactId + " (dependency of " + this.artifactId + ")");
+				localPOMCache.put(key, null);
+				return null;
 			}
-			if (result != null && version != null && compareVersion(version, result.version) > 0)
-				throw new RuntimeException("Local artifact " + key + " has wrong version: " + result.version + " (< " + version + ")");
+			path += version + "/" + artifactId + "-" + version + ".pom";
+
+			File file = new File(path);
+			if (!file.exists()) {
+				if (downloadAutomatically) {
+					if (!quiet)
+						err.println("Downloading " + artifactId);
+					try {
+						download(groupId, artifactId, version);
+					} catch (Exception e) {
+						if (!quiet) {
+							e.printStackTrace(err);
+							err.println("Could not download " + artifactId + ": " + e.getMessage());
+						}
+						localPOMCache.put(key, null);
+						return null;
+					}
+				}
+				else {
+					if (!quiet)
+						err.println("Skipping artifact " + artifactId + ": not found");
+					localPOMCache.put(key, null);
+					return null;
+				}
+			}
+
+			POM result = parse(new File(path), null);
+			if (result == null && !quiet)
+				err.println("Artifact " + artifactId + " not found" + (downloadAutomatically ? "" : "; consider 'get-dependencies'"));
+			localPOMCache.put(key, result);
 			return result;
 		}
 
