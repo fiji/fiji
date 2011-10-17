@@ -1,7 +1,6 @@
 package tests;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import gadgets.MaskFactory;
 import mpicbg.imglib.cursor.special.TwinCursor;
 import mpicbg.imglib.image.Image;
@@ -37,7 +36,7 @@ public class PearsonsCorrelationTest extends ColocalisationTest {
 		// get the Pearson's value
 		double pearsonsR = PearsonsCorrelation.fastPearsons(cursor);
 		// check Pearsons R is close to zero
-		assertTrue(pearsonsR > -0.05 && pearsonsR < 0.05 );
+		assertEquals(0.0, pearsonsR, 0.05);
 	}
 
 	/**
@@ -54,7 +53,7 @@ public class PearsonsCorrelationTest extends ColocalisationTest {
 		// get the Pearson's value
 		double pearsonsR = PearsonsCorrelation.fastPearsons(cursor);
 		// check Pearsons R is close to 0.75
-		assertTrue(pearsonsR > 0.745 && pearsonsR < 0.755 );
+		assertEquals(0.75, pearsonsR, 0.01);
 	}
 
 	/**
@@ -72,7 +71,7 @@ public class PearsonsCorrelationTest extends ColocalisationTest {
 		double pearsonsR = PearsonsCorrelation
 			.classicPearsons(cursor, zeroCorrelationImageCh1Mean, zeroCorrelationImageCh2Mean);
 		// check Pearsons R is close to zero
-		assertTrue(pearsonsR > -0.05 && pearsonsR < 0.05 );
+		assertEquals(0.0, pearsonsR, 0.05);
 	}
 
 	/**
@@ -90,7 +89,7 @@ public class PearsonsCorrelationTest extends ColocalisationTest {
 		double pearsonsR = PearsonsCorrelation
 			.classicPearsons(cursor, positiveCorrelationImageCh1Mean, positiveCorrelationImageCh2Mean);
 		// check Pearsons R is close to 0.75
-		assertTrue(pearsonsR > 0.745 && pearsonsR < 0.755 );
+		assertEquals(0.75, pearsonsR, 0.01);
 	}
 
 	/**
@@ -115,7 +114,7 @@ public class PearsonsCorrelationTest extends ColocalisationTest {
 			TwinCursor<FloatType> cursor = new TwinCursor<FloatType>(ch1.createLocalizableByDimCursor(),
 					ch2.createLocalizableByDimCursor(), mask.createLocalizableCursor());
 			double resultFast = PearsonsCorrelation.fastPearsons(cursor);
-			assertTrue(Math.abs(resultFast) < 0.1);
+			assertEquals(0.0, resultFast, 0.1);
 
 			/* This test will throw Missing PreconsitionException, as the means are the same
 			 * which causes a numerical problem in the classic implementation of Pearson's
