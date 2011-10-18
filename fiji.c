@@ -307,7 +307,10 @@ static void string_vaddf(struct string *string, const char *fmt, va_list ap)
 			break;
 		}
 		case 'c':
-			string_add_char(string, va_arg(ap, int));
+			{
+				char c = va_arg(ap, int);
+				string_add_char(string, c);
+			}
 			break;
 		case 'u':
 		case 'i':
@@ -321,14 +324,17 @@ static void string_vaddf(struct string *string, const char *fmt, va_list ap)
 			int negative = 0, len;
 			unsigned long number, power;
 
-			if (*p == 'u')
+			if (*p == 'u') {
 				number = va_arg(ap, unsigned int);
+			}
 			else {
 				long signed_number;
-				if (*p == 'l')
+				if (*p == 'l') {
 					signed_number = va_arg(ap, long);
-				else
+				}
+				else {
 					signed_number = va_arg(ap, int);
+				}
 				if (signed_number < 0) {
 					negative = 1;
 					number = -signed_number;
