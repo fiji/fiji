@@ -47,12 +47,12 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 	};
 
 	@Override
-	public BasicSegmenterSettings createDefaultSettings() {
+	public SegmenterSettings createDefaultSettings() {
 		return new DogSegmenterSettings();
 	}
 	
 	@Override
-	public void setTarget(Image<T> image, float[] calibration, BasicSegmenterSettings settings) {
+	public void setTarget(Image<T> image, float[] calibration, SegmenterSettings settings) {
 		super.setTarget(image, calibration, settings);
 		this.settings = (DogSegmenterSettings) settings;
 		this.doSubPixelLocalization = this.settings.doSubPixelLocalization;

@@ -26,11 +26,11 @@ public interface SpotSegmenter <T extends RealType<T>> extends Algorithm, Benchm
 
 	/**
 	 * Set the image that will be segmented by this algorithm, with the settings specified
-	 * in the concrete {@link BasicSegmenterSettings} object.
+	 * in the concrete {@link SegmenterSettings} object.
 	 * The calibration float array will be used to convert pixel coordinates 
 	 * in physical spot coordinates. 
 	 */
-	public void setTarget(Image<T> image, float[] calibration, BasicSegmenterSettings settings);
+	public void setTarget(Image<T> image, float[] calibration, SegmenterSettings settings);
 	
 	/**
 	 * Return the list of Spot resulting from the segmentation process. 
@@ -38,11 +38,11 @@ public interface SpotSegmenter <T extends RealType<T>> extends Algorithm, Benchm
 	public List<Spot> getResult();
 
 	/**
-	 * Create a default {@link BasicSegmenterSettings} implementation, suitable for this concrete spot segmenter.
-	 * The concrete implementation returned will be of type {@link BasicSegmenterSettings}, but the actual instance
+	 * Create a default {@link SegmenterSettings} implementation, suitable for this concrete spot segmenter.
+	 * The concrete implementation returned will be of type {@link SegmenterSettings}, but the actual instance
 	 * will be one suitable for the concrete segmenter implementation.
 	 */
-	public BasicSegmenterSettings createDefaultSettings();
+	public SegmenterSettings createDefaultSettings();
 	
 	/**
 	 * @return  a new instance of the concrete implementation.

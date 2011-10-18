@@ -21,7 +21,7 @@ import javax.swing.JTextField;
 
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
-import fiji.plugin.trackmate.segmentation.BasicSegmenterSettings;
+import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 
 /**
  * Configuration panel for spot segmenters based on LoG segmentation. 
@@ -59,13 +59,13 @@ public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel 
 	
 	/**
 	 * Update the settings object given with the parameters this panel allow to tune its
-	 * {@link BasicSegmenterSettings} field, with the sub-fields
-	 * {@link BasicSegmenterSettings#expectedDiameter}, {@link BasicSegmenterSettings#useMedianFilter} and
-	 * {@link BasicSegmenterSettings#threshold}.
+	 * {@link SegmenterSettings} field, with the sub-fields
+	 * {@link SegmenterSettings#expectedDiameter}, {@link SegmenterSettings#useMedianFilter} and
+	 * {@link SegmenterSettings#threshold}.
 	 * @return  the updated Settings
 	 */
 	@Override
-	public BasicSegmenterSettings getSegmenterSettings() {
+	public SegmenterSettings getSegmenterSettings() {
 		settings.expectedRadius = Float.parseFloat(jTextFieldBlobDiameter.getText())/2;
 		settings.threshold = Float.parseFloat(jTextFieldThreshold.getText());
 		settings.useMedianFilter = jCheckBoxMedianFilter.isSelected();

@@ -14,9 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Unmarshaller;
-
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Document;
@@ -24,7 +21,6 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.contrib.input.LineNumberElement;
 import org.jdom.contrib.input.LineNumberSAXBuilder;
-import org.jdom.transform.JDOMSource;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
@@ -36,7 +32,6 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
-import fiji.plugin.trackmate.segmentation.BasicSegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
@@ -180,7 +175,7 @@ public class TmXmlReader {
 	/**
 	 * Return the settings for the TrackMate session saved in this file.
 	 * <p>
-	 * The settings object will have its {@link BasicSegmenterSettings} and {@link TrackerSettings} set default values will be
+	 * The settings object will have its {@link SegmenterSettings} and {@link TrackerSettings} set default values will be
 	 * used.
 	 * 
 	 * @return  a full Settings object
@@ -219,29 +214,17 @@ public class TmXmlReader {
 		return settings;
 	}
 
-	public BasicSegmenterSettings getSegmenterSettings() throws DataConversionException {
-		BasicSegmenterSettings segSettings = null;
+	public SegmenterSettings getSegmenterSettings() throws DataConversionException {
+		LogSegmenterSettings segSettings = new LogSegmenterSettings();
 		Element segSettingsEl = root.getChild(SEGMENTER_SETTINGS_ELEMENT_KEY);
 		if (null != segSettingsEl) {
-			String segmenterTypeStr = segSettingsEl.getAttributeValue(SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME);
-			if (null == segmenterTypeStr || NONE_VALUE == segmenterTypeStr) {
-				logger.log("No segmenter specified in file.");
-				return null;
-			}
-			
-
-			
-			// TODO TODO FIXME FIXME
-			JAXBContext context = JAXBContext.newInstance(ss.getClass());
-			Unmarshaller unmarshaller = context.createUnmarshaller();
-			segSettings  = (BasicSegmenterSettings) unmarshaller.unmarshal(new JDOMSource(segSettingsEl));
-			
+//			String segmenterTypeStr = segSettingsEl.getAttributeValue(SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME);
 //			SegmenterType segmenterType = SegmenterType.valueOf(segmenterTypeStr);
 //			segSettings = segmenterType.createSettings();
 //			segSettings.segmenterType 		= segmenterType;
-//			segSettings.expectedRadius 		= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME).getFloatValue();
-//			segSettings.threshold			= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME).getFloatValue();
-//			segSettings.useMedianFilter		= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME).getBooleanValue();
+			segSettings.expectedRadius 		= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME).getFloatValue();
+			segSettings.threshold			= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME).getFloatValue();
+			segSettings.useMedianFilter		= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME).getBooleanValue();
 //			segSettings.spaceUnits			= segSettingsEl.getAttributeValue(SEGMENTER_SETTINGS_UNITS_ATTRIBUTE_NAME);			
 		}
 		return segSettings;

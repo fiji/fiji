@@ -6,7 +6,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
-import fiji.plugin.trackmate.segmentation.BasicSegmenterSettings;
+import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 
 public class ResetRadiusAction extends AbstractTMAction {
 
@@ -18,7 +18,7 @@ public class ResetRadiusAction extends AbstractTMAction {
 	
 	@Override
 	public void execute(final TrackMateModel model) {
-		final BasicSegmenterSettings segSettings = model.getSettings().segmenterSettings;
+		final SegmenterSettings segSettings = model.getSettings().segmenterSettings;
 		final float radius = segSettings.expectedRadius;
 		logger.log(String.format("Setting all spot radiuses to %.1f "+model.getSettings().spaceUnits+"\n", radius));
 		SpotCollection spots = model.getFilteredSpots();

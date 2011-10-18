@@ -1,6 +1,6 @@
 package fiji.plugin.trackmate;
 
-import fiji.plugin.trackmate.segmentation.BasicSegmenterSettings;
+import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
@@ -47,7 +47,7 @@ public class Settings {
 	public SpotSegmenter<? extends RealType<?>> segmenter;
 	public SpotTracker tracker;
 	
-	public BasicSegmenterSettings segmenterSettings = null;
+	public SegmenterSettings segmenterSettings = null;
 	public TrackerSettings trackerSettings = null;
 	
 	/*

@@ -28,7 +28,7 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.TrackMateFrameController.GuiState;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import fiji.plugin.trackmate.segmentation.BasicSegmenterSettings;
+import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
@@ -125,7 +125,7 @@ public class GuiReader {
 
 
 		{ // Try to read segmenter settings
-			BasicSegmenterSettings segmenterSettings = null;
+			SegmenterSettings segmenterSettings = null;
 			try {
 				segmenterSettings = reader.getSegmenterSettings();
 			} catch (DataConversionException e1) {
@@ -134,7 +134,7 @@ public class GuiReader {
 			}
 			if (null == segmenterSettings) {
 				// Fill in defaults
-				segmenterSettings = new BasicSegmenterSettings();
+				segmenterSettings = new SegmenterSettings();
 				settings.segmenterSettings = segmenterSettings;
 //				settings.segmenterType = segmenterSettings.segmenterType;
 //				settings.trackerSettings = new TrackerSettings();

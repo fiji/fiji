@@ -1,8 +1,5 @@
 package fiji.plugin.trackmate.segmentation;
 
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlRootElement;
-
 import fiji.plugin.trackmate.gui.LogSegmenterConfigurationPanel;
 import fiji.plugin.trackmate.gui.SegmenterConfigurationPanel;
 
@@ -11,14 +8,11 @@ import fiji.plugin.trackmate.gui.SegmenterConfigurationPanel;
  * 
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2010-2011
  */
-@XmlRootElement
-public class LogSegmenterSettings extends BasicSegmenterSettings {
+public class LogSegmenterSettings extends SegmenterSettings {
 
 	/** The pixel value under which any peak will be discarded from further analysis. */
-	@XmlAttribute
 	public float 	threshold = 		0;
 	/** If true, a median filter will be applied before segmenting. */
-	@XmlAttribute
 	public boolean useMedianFilter;
 	
 	
