@@ -7,6 +7,7 @@ import ij.gui.GenericDialog;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
 import ij.plugin.PlugIn;
+import ij.plugin.frame.RoiManager;
 import ij.process.Blitter;
 import ij.process.ImageProcessor;
 
@@ -16,6 +17,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Hashtable;
 import java.util.List;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
@@ -105,7 +107,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		None,
 		Img1,
 		Img2,
-		Mask
+		Mask,
+		RoiManager
 	};
 
 	// the ROI configuration to use
@@ -138,12 +141,6 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	protected CostesSignificanceTest<T> costesSignificance;
 	// indicates if images should be printed in result
 	protected boolean displayImages;
-	/* GUI related members */
-	protected String[] roiLabels = {
-		"None",
-		"Channel 1",
-		"Channel 2"
-	};
 
 	// indicates if a PDF should be saved automatically
 	protected boolean autoSavePdf;
@@ -184,17 +181,18 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		/* the masks and ROIs array needs three more entries than
 		 * windows to contain "none", "ROI ch 1" and "ROI ch 2"
 		 */
-		String[] roisAndMasks= new String[windowList.length + 3];
+		String[] roisAndMasks= new String[windowList.length + 4];
 		roisAndMasks[0]="<None>";
-		roisAndMasks[1]="ROI in channel 1";
-		roisAndMasks[2]="ROI in channel 2";
+		roisAndMasks[1]="ROI(s) in channel 1";
+		roisAndMasks[2]="ROI(s) in channel 2";
+		roisAndMasks[3]="ROI Manager";
 
 		// go through all open images and add them to GUI
 		for (int i=0; i < windowList.length; i++) {
 			ImagePlus imp = WindowManager.getImage(windowList[i]);
 			if (imp != null) {
 				titles[i] = imp.getTitle();
-				roisAndMasks[i + 3] =imp.getTitle();
+				roisAndMasks[i + 4] =imp.getTitle();
 			} else {
 				titles[i] = "";
 			}
@@ -266,13 +264,15 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			roiConfig = RoiConfiguration.Img1;
 		else if (indexMask == 2)
 			roiConfig = RoiConfiguration.Img2;
+		else if (indexMask == 3)
+			roiConfig = RoiConfiguration.RoiManager;
 		else {
 			roiConfig = RoiConfiguration.Mask;
 			/* Make indexMask the reference to the mask image to use.
 			 * To do this we reduce it by three for the first three
 			 * entries in the combo box.
 			 */
-			indexMask = indexMask - 3;
+			indexMask = indexMask - 4;
 		}
 
 		// save the ImgLib wrapped images as members
@@ -284,9 +284,11 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		 * be selected (that is basically all, but a rectangle).
 		 */
 		if (roiConfig == RoiConfiguration.Img1 && hasValidRoi(imp1)) {
-			createMasksAndRois(imp1);
+			createMasksFromImage(imp1);
 		} else if (roiConfig == RoiConfiguration.Img2 && hasValidRoi(imp2)) {
-			createMasksAndRois(imp2);
+			createMasksFromImage(imp2);
+		} else if (roiConfig == RoiConfiguration.RoiManager) {
+			createMasksFromRoiManager(imp1.getWidth(), imp1.getHeight());
 		} else if (roiConfig == RoiConfiguration.Mask) {
 			// get the image to be used as mask
 			ImagePlus maskImp = WindowManager.getImage(windowList[indexMask]);
@@ -577,21 +579,41 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	/**
 	 * This method checks if the given ImagePlus contains any
 	 * masks or ROIs. If so, the appropriate date structures
-	 * are created and filled. If an irregular ROI is found,
-	 * it will be put into a frame of its bounding box size and
-	 * put into an Image<T>.
+	 * are created and filled.
+	 */
+	protected void createMasksFromImage(ImagePlus imp) {
+		// get ROIs from current image in Fiji
+		Roi[] impRois = split(imp.getRoi());
+		// create the ROIs
+		createMasksAndRois(impRois, imp.getWidth(), imp.getHeight());
+	}
+
+	/**
+	 * A method to fill the masks array with data based on the ROI manager.
+	 */
+	protected void createMasksFromRoiManager(int width, int height) {
+		RoiManager roiManager = RoiManager.getInstance();
+		if (roiManager == null)
+			IJ.error("Could not get ROI Manager instance.");
+		Roi[] selectedRois = roiManager.getSelectedRoisAsArray();
+		// create the ROIs
+		createMasksAndRois(selectedRois, width, height);
+	}
+
+	/**
+	 * Creates appropriate data structures from the ROI information
+	 * passed. If an irregular ROI is found, it will be put into a
+	 * frame of its bounding box size and put into an Image<T>.
 	 *
 	 * In the end the members ROIs, masks and maskBBs will be
 	 * filled if ROIs or masks were found. They will be null
 	 * otherwise.
 	 */
-	protected void createMasksAndRois(ImagePlus imp) {
-		// get ROIs from current image in Fiji
-		Roi[] impRois = split(imp.getRoi());
+	protected void createMasksAndRois(Roi[] rois, int width, int height) {
 		// create empty list
 		masks.clear();
 
-		for (Roi r : impRois ){
+		for (Roi r : rois ){
 			MaskInfo mi = new MaskInfo();
 			// add it to the list of masks/ROIs
 			masks.add(mi);
@@ -607,7 +629,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			}
 
 			// create a mask processor of the same size as a slice
-			ImageProcessor ipSlice = ipMask.createProcessor(imp.getWidth(), imp.getHeight());
+			ImageProcessor ipSlice = ipMask.createProcessor(width, height);
 			// fill the new slice with black
 			ipSlice.setValue(0.0);
 			ipSlice.fill();
