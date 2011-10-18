@@ -2949,10 +2949,10 @@ public class WekaSegmentation {
 		final ImageStack proposalSlices = proposal.getImageStack();
 
 		double randIndex = 0;
-		int tp = 0;
-		int tn = 0;
-		int fp = 0;
-		int fn = 0;
+		double tp = 0;
+		double tn = 0;
+		double fp = 0;
+		double fn = 0;
 
 		// Executor service to produce concurrent threads
 		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
@@ -3066,7 +3066,9 @@ public class WekaSegmentation {
 			recall[i] = (float) stats.get(i).recall;
 		}
 
-		Plot pl = new Plot("Precision recall curve", "recall: tp / (tp + fn)", "precision: tp / (tp+fp)", recall, precision);
+		Plot pl = new Plot("Precision-Recall curve", "Recall [tp / (tp + fn)]", "Precision [tp / (tp+fp)]", recall, precision, Plot.DEFAULT_FLAGS+Plot.X_FORCE2GRID+Plot.Y_FORCE2GRID);		
+		pl.setLimits(0, 1, 0, 1);
+		pl.setSize(540, 512);
 		pl.setColor(Color.GREEN);
 		pl.show();
 	}
@@ -3430,7 +3432,9 @@ public class WekaSegmentation {
 	
 	/**
 	 * Calculate the Rand index between to clusters, as described by
-	 * William M. Rand \cite{Rand71}.
+	 * William M. Rand \cite{Rand71}. Note that this version of the
+	 * Rand index treats the zero component (background) as another 
+	 * object.
 	 *
 	 * BibTeX:
 	 * <pre>
@@ -3450,7 +3454,7 @@ public class WekaSegmentation {
 	 * @param cluster2 2D segmented image (objects are labeled with different numbers)
 	 * @return Rand index
 	 */
-	public static double randIndex(
+	public static double classicRandIndex(
 			ShortProcessor cluster1,
 			ShortProcessor cluster2)
 	{
@@ -3501,7 +3505,106 @@ public class WekaSegmentation {
 	
 	/**
 	 * Calculate the Rand index between to clusters, as described by
-	 * William M. Rand \cite{Rand71}.
+	 * William M. Rand \cite{Rand71}, but pruning out the zero component.
+	 * Otherwise the Rand index gets symmetric.
+	 *
+	 * BibTeX:
+	 * <pre>
+	 * &#64;article{Rand71,
+	 *   author    = {William M. Rand},
+	 *   title     = {Objective criteria for the evaluation of clustering methods},
+	 *   journal   = {Journal of the American Statistical Association},
+	 *   year      = {1971},
+	 *   volume    = {66},
+	 *   number    = {336},
+	 *   pages     = {846--850},
+	 *   doi       = {10.2307/2284239)
+	 * }
+	 * </pre>
+	 * 
+	 * @param cluster1 2D segmented image (objects are labeled with different numbers) 
+	 * @param cluster2 2D segmented image (objects are labeled with different numbers)
+	 * @return Rand index
+	 */
+	public static double randIndex(
+			ShortProcessor cluster1,
+			ShortProcessor cluster2)
+	{
+		final short[] pixels1 = (short[]) cluster1.getPixels();
+		final short[] pixels2 = (short[]) cluster2.getPixels();
+		
+		//(new ImagePlus("cluster 1", cluster1)).show();
+		//(new ImagePlus("cluster 2", cluster2)).show();
+		
+		double nPixels = pixels1.length;
+		
+		// number of pixels that are "in" (not background)
+		double n = 0;
+		
+		// Form the contingency matrix
+		int[][]cont = new int[(int) cluster1.getMax() + 1] [ (int) cluster2.getMax() + 1];		
+
+		for(int i=0; i<nPixels; i++)
+		{						
+			cont[ pixels1[i] ] [ pixels2[i] ] ++;
+			if( pixels1[ i ] > 0)
+				n++;
+		}
+
+		// sum of squares of sums of rows
+		// (skip background objects in the first cluster)
+		double[] ni = new double[ cont.length ];
+		for(int i=1; i<cont.length; i++)
+			for(int j=0; j<cont[0].length; j++)
+			{
+				ni[ i ] += cont[ i ][ j ];				
+			}
+
+		// sum of squares of sums of columns
+		// (prune out the zero component in the labeling (un-assigned "out" space))
+		double[] nj = new double[ cont[0].length ];
+		for(int j=1; j<cont[0].length; j++)
+			for(int i=1; i<cont.length; i++)
+			{
+				nj[ j ] += cont[ i ][ j ];
+			}
+		
+		// true positives - type (i): objects in the pair are placed in the 
+		// same class in cluster1 and in the same class in claster2
+		// (prune out the zero component in the labeling (un-assigned "out" space))
+		double truePositives = 0;
+		for(int j=1; j<cont[0].length; j++)
+			for(int i=1; i<cont.length; i++)			
+				truePositives += cont[ i ][ j ] * ( cont[ i ][ j ] - 1 ) / 2;			
+						
+		// total number of pairs
+		double nPairsTotal = n * (n-1) / 2 ;
+		
+		double nPosTrue = 0;
+		for(int k=0; k<ni.length; k++)
+			nPosTrue += ni[ k ] * (ni[ k ]-1) /2;
+		
+		double nPosActual = 0;
+		for(int k=0; k<nj.length; k++)
+			nPosActual += nj[ k ] * (nj[ k ]-1)/2;				
+				
+		// true negatives - type (ii): objects in the pair are placed in different 
+		// classes in cluster1 and in different classes in claster2
+		//double trueNegatives = (n*n + t2 - nis - njs) / 2;		
+		double trueNegatives = nPairsTotal + truePositives - nPosTrue - nPosActual;
+		
+		double agreements = truePositives + trueNegatives;		// number of agreements
+		
+		double randIndex = agreements / nPairsTotal;
+		
+		return randIndex;
+	}
+	
+	
+	/**
+	 * Calculate the Rand index between to clusters, as described by
+	 * William M. Rand \cite{Rand71}, but pruning out the zero component.
+	 * Otherwise the Rand index gets symmetric.
 	 *
 	 * BibTeX:
 	 * <pre>
@@ -3531,72 +3634,105 @@ public class WekaSegmentation {
 		//(new ImagePlus("cluster 1", cluster1)).show();
 		//(new ImagePlus("cluster 2", cluster2)).show();
 		
-		double n = pixels1.length;
+		double nPixels = pixels1.length;
 		
-		// Form contingency matrix
-		int[][]cont = new int[(int) cluster1.getMax() ] [ (int) cluster2.getMax() ];
+		// number of pixels that are "in" (not background)
+		double n = 0;
 		
-		for(int i=0; i<n; i++)
+		// Form the contingency matrix
+		int[][]cont = new int[(int) cluster1.getMax() + 1] [ (int) cluster2.getMax() + 1];		
+
+		for(int i=0; i<nPixels; i++)
+		{						
 			cont[ pixels1[i] ] [ pixels2[i] ] ++;
-		
+			if( pixels1[ i ] > 0)
+				n++;
+		}
 		// sum over rows & columnns of nij^2
-		double t2 = 0;
+		//double t2 = 0;				
 		
 		// sum of squares of sums of rows
+		// (skip background objects in the first cluster)
 		double[] ni = new double[ cont.length ];
-		for(int i=0; i<cont.length; i++)
-			for(int j=0; j<cont[i].length; j++)			
-				ni[ i ] += cont[ i ][ j ];
+		for(int i=1; i<cont.length; i++)
+			for(int j=0; j<cont[0].length; j++)
+			{
+				ni[ i ] += cont[ i ][ j ];				
+			}
+		/*
 		double nis = 0;
 		for(int k=0; k<ni.length; k++)
 			nis += ni[ k ] * ni[ k ];
+		*/
 		
 		// sum of squares of sums of columns
-		double[] nj = new double[ cont.length ];
-		for(int j=0; j<cont[0].length; j++)
-			for(int i=0; i<cont.length; i++)
+		// (prune out the zero component in the labeling (un-assigned "out" space))
+		double[] nj = new double[ cont[0].length ];
+		for(int j=1; j<cont[0].length; j++)
+			for(int i=1; i<cont.length; i++)
 			{
 				nj[ j ] += cont[ i ][ j ];
-				t2 += cont[ i ][ j ] * cont[ i ][ j ];
+				//t2 += cont[ i ][ j ] * cont[ i ][ j ];
 			}
+		/*
 		double njs = 0;
 		for(int k=0; k<nj.length; k++)
 			njs += nj[ k ] * nj[ k ];
+		*/
 		
 		// true positives - type (i): objects in the pair are placed in the 
 		// same class in cluster1 and in the same class in claster2
+		// (prune out the zero component in the labeling (un-assigned "out" space))
 		double truePositives = 0;
-		for(int j=0; j<cont[0].length; j++)
-			for(int i=0; i<cont.length; i++)			
+		for(int j=1; j<cont[0].length; j++)
+			for(int i=1; i<cont.length; i++)			
 				truePositives += cont[ i ][ j ] * ( cont[ i ][ j ] - 1 ) / 2;			
+						
+		// total number of pairs
+		double nPairsTotal = n * (n-1) / 2 ;
 		
+		double nPosTrue = 0;
+		for(int k=0; k<ni.length; k++)
+			nPosTrue += ni[ k ] * (ni[ k ]-1) /2;
+		
+		double nPosActual = 0;
+		for(int k=0; k<nj.length; k++)
+			nPosActual += nj[ k ] * (nj[ k ]-1)/2;				
+		
+		double nNegCorrect = nPairsTotal + truePositives - nPosTrue - nPosActual;
 		
 		// true negatives - type (ii): objects in the pair are placed in different 
 		// classes in cluster1 and in different classes in claster2
-		double trueNegatives = (n*n + t2 - nis - njs) / 2;
+		//double trueNegatives = (n*n + t2 - nis - njs) / 2;		
+		double trueNegatives = nNegCorrect;
 		
 		// false positives - type (iii): objects in the pair are placed in different 
 		// classes in cluster1 and in the same class in claster2
-		double falsePositives = (njs - t2) / 2;
+		double falsePositives = nPosActual - truePositives; //(njs - t2) / 2;
 		
 		// false negatives - type (iv): objects in the pair are placed in the same 
 		// class in cluster1 and in different classes in claster2
-		double falseNegatives = (nis - t2) / 2;
+		double nNegActual = nPairsTotal - nPosActual;
+		double falseNegatives = nNegActual - nNegCorrect; //(nis - t2) / 2;
 		
-		
+		/*
 		IJ.log(" In getRandIndexStats:");
 		IJ.log("  tp = " + truePositives);
 	    IJ.log("  tn = " + trueNegatives);
 	    IJ.log("  fp = " + falsePositives);
 	    IJ.log("  fn = " + falseNegatives);
-	    
-		
+	    IJ.log(" nPairsTotal = " + nPairsTotal);
+	    IJ.log(" nPosTrue = " + nPosTrue);
+	    IJ.log(" nPosActual = " + nPosActual);
+	    IJ.log(" nNegCorrect = " + nNegCorrect);
+	    IJ.log(" nNegActual = " + nNegActual);
+		*/
 		double agreements = truePositives + trueNegatives;		// number of agreements
 		
-		double randIndex = agreements / ( n * (n-1) / 2 );
+		double randIndex = agreements / nPairsTotal;
 		
-		return new ClassificationStatistics( (int) truePositives, (int) trueNegatives, 
-				(int) falsePositives, (int) falseNegatives, randIndex);
+		return new ClassificationStatistics( truePositives, trueNegatives, 
+									falsePositives,  falseNegatives, randIndex);
 	}
 	
 	
