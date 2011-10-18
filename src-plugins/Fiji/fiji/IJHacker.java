@@ -413,6 +413,10 @@ public class IJHacker extends JavassistHelper {
 			+ "      $1.setIconImage(img);"
 			+ "  }"
 			+ "}");
+		if (!hasMethod(clazz, "setCurrentWindow", "(Lij/gui/ImageWindow;Z)V"))
+			clazz.addMethod(CtNewMethod.make("public static void setCurrentWindow(ij.gui.ImageWindow window, boolean suppressRecording /* unfortunately ignored now */) {"
+				+ "  setCurrentWindow(window);"
+				+ "}", clazz));
 
 		// Class ij.macro.Functions
 		clazz = get("ij.macro.Functions");
