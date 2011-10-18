@@ -474,7 +474,9 @@ public class IJHacker extends JavassistHelper {
 						+ "    return;"
 						+ "}");
 				else if (name.equals("runCommand"))
-					call.replace("cmd.runCommand(listeners);");
+					call.replace("if (this.cmd == null || !this.cmd.command.equals($1))"
+						+ "  this.cmd = new fiji.command.Command($1);"
+						+ "this.cmd.runCommand(listeners);");
 			}
 
 			@Override
