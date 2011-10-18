@@ -70,7 +70,7 @@ static void open_win_console();
 #endif
 #endif
 
-#ifdef __linux__
+#if defined(__linux__) && !defined(__TINYC__)
 #include "glibc-compat.h"
 #endif
 
