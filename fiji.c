@@ -17,6 +17,11 @@
 #include <limits.h>
 #include <string.h>
 
+#if defined(_WIN64) && !defined(WIN32)
+/* TinyCC's stdlib.h undefines WIN32 in 64-bit mode */
+#define WIN32 1
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
