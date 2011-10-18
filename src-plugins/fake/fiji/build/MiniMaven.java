@@ -476,8 +476,11 @@ public class MiniMaven {
 			if (groupId == null)
 				return null;
 			String key = groupId + ">" + artifactId;
-			if (localPOMCache.containsKey(key))
-				return localPOMCache.get(key); // may be null
+			if (localPOMCache.containsKey(key)) {
+				POM result = localPOMCache.get(key); // may be null
+				if (result == null || version == null || compareVersion(version, result.version) <= 0)
+					return result;
+			}
 
 			String path = System.getProperty("user.home") + "/.m2/repository/" + groupId.replace('.', '/') + "/" + artifactId + "/";
 			if (version == null)
