@@ -611,7 +611,7 @@ public class MiniMaven {
 			else if (prefix.equals(">project>dependencies>dependency>systemPath"))
 				latestDependency.systemPath = string;
 			else if (prefix.equals(">project>profiles>profile>id"))
-				isCurrentProfile = profile.equals(string);
+				isCurrentProfile = (!Util.getPlatform().equals("macosx") && "javac".equals(string)) || profile.equals(string);
 			else if (prefix.equals(">project>repositories>repository>url"))
 				repositories.add(string);
 			else if (debug)
