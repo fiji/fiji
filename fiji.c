@@ -580,7 +580,7 @@ size_t get_memory_size(int available_only)
 				host_info.inactive_count +
 				host_info.wire_count) * (size_t)page_size);
 }
-#elif defined(linux)
+#elif defined(__linux__)
 static size_t get_kB(struct string *string, const char *key)
 {
 	const char *p = strstr(string->buffer, key);
@@ -1108,7 +1108,7 @@ static void hide_splash(void)
  */
 static void maybe_reexec_with_correct_lib_path(void)
 {
-#ifdef linux
+#ifdef __linux__
 	struct string *path = string_initf("%s/%s", get_jre_home(), library_path);
 	struct string *parent = get_parent_directory(path->buffer);
 	struct string *lib_path = get_parent_directory(parent->buffer);
@@ -2244,7 +2244,7 @@ static void parse_command_line(void)
 			!is_building("fiji"))
 		error("Warning: your Fiji executable is not up-to-date");
 
-#ifdef linux
+#ifdef __linux__
 	string_append_path_list(java_library_path, getenv("LD_LIBRARY_PATH"));
 #endif
 #ifdef MACOSX
