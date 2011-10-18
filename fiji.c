@@ -639,6 +639,10 @@ size_t get_memory_size(int available_only)
 }
 #endif
 
+#if defined(__TINYC__)
+#define strtoll strtol
+#endif
+
 static long long parse_memory(const char *amount)
 {
 	char *endp;
