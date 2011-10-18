@@ -2488,8 +2488,11 @@ static void parse_command_line(void)
 			string_append_path_list(class_path, "/usr/share/java/ant-nodeps.jar");
 			string_append_path_list(class_path, "/usr/share/java/ant-junit.jar");
 		}
-		else if (!strcmp(main_argv[i], "--mini-maven"))
+		else if (!strcmp(main_argv[i], "--mini-maven")) {
+			skip_build_classpath = 1;
+			string_append_path_list(class_path, fiji_path("jars/fake.jar"));
 			main_class = "fiji.build.MiniMaven";
+		}
 		else if (!strcmp(main_argv[i], "--retrotranslator") ||
 				!strcmp(main_argv[i], "--retro"))
 			retrotranslator = 1;
