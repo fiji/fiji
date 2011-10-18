@@ -25,7 +25,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#if !defined(WIN32) || !defined(__TINYC__)
 #include <unistd.h>
+#endif
 #include <errno.h>
 
 #ifdef __GNUC__
