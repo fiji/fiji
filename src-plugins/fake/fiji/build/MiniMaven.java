@@ -369,6 +369,8 @@ public class MiniMaven {
 				String artifactId = expand(dependency.artifactId);
 				String version = expand(dependency.version);
 				boolean optional = dependency.optional;
+				if (version == null && "aopalliance".equals(artifactId))
+					optional = true; // guice has recorded this without a version
 				String systemPath = expand(dependency.systemPath);
 				if (systemPath != null) {
 					File file = new File(systemPath);
