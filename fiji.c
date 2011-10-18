@@ -1125,7 +1125,7 @@ static void maybe_reexec_with_correct_lib_path(void)
 	string_release(parent);
 
 	// Is this JDK6?
-	if (dir_exists(jli->buffer)) {
+	if (!dir_exists(get_jre_home()) || dir_exists(jli->buffer)) {
 		string_release(lib_path);
 		string_release(jli);
 		return;
