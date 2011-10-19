@@ -151,27 +151,13 @@ public class RandError extends Metrics
 	 * }
 	 * </pre>
 	 * 
-	 * @param label original labels (single 2D image or stack)
-	 * @param proposal proposed new labels (single 2D image or stack of the same as as the original labels)
 	 * @param binaryThreshold threshold value to binarize proposal (larger than 0 and smaller than 1)
 	 * @return Rand index value and derived satatistics
 	 */
-	public ClassificationStatistics randIndexStats(
-			ImagePlus label,
-			ImagePlus proposal,
-			double binaryThreshold)
+	public ClassificationStatistics getRandIndexStats( double binaryThreshold )
 	{
-		
-		if(label.getWidth() != proposal.getWidth()
-				|| label.getHeight() != proposal.getHeight()
-				|| label.getImageStackSize() != proposal.getImageStackSize())
-		{
-			IJ.log("Error: label and proposal image sizes do not fit.");
-			return null;
-		}
-
-		final ImageStack labelSlices = label.getImageStack();
-		final ImageStack proposalSlices = proposal.getImageStack();
+		final ImageStack labelSlices = originalLabels.getImageStack();
+		final ImageStack proposalSlices = proposedLabels.getImageStack();
 
 		double randIndex = 0;
 		double tp = 0;
@@ -223,7 +209,7 @@ public class RandError extends Metrics
 	 *
 	 * BibTeX:
 	 * <pre>
-	 * &#64;article{Rand71,
+	 * &#64;article{Rand71,label
 	 *   author    = {William M. Rand},
 	 *   title     = {Objective criteria for the evaluation of clustering methods},
 	 *   journal   = {Journal of the American Statistical Association},
@@ -235,27 +221,16 @@ public class RandError extends Metrics
 	 * }
 	 * </pre>
 	 * 
-	 * @param label 2D image with the original labels
-	 * @param proposal 2D image with the proposed labels
 	 * @param minThreshold minimum threshold value to binarize the input images
 	 * @param maxThreshold maximum threshold value to binarize the input images
 	 * @param stepThreshold threshold step value to use during binarization
 	 * @return rand index value and derived statistics for each threshold
 	 */
-	public ArrayList< ClassificationStatistics > randIndexPrecisionRecall(
-			ImagePlus label,
-			ImagePlus proposal,
+	public ArrayList< ClassificationStatistics > getRandIndexStats(
 			double minThreshold,
 			double maxThreshold,
 			double stepThreshold)
 	{
-		if(label.getWidth() != proposal.getWidth()
-				|| label.getHeight() != proposal.getHeight()
-				|| label.getImageStackSize() != proposal.getImageStackSize())
-		{
-			IJ.log("Error: label and proposal image sizes do not fit.");
-			return null;
-		}
 		
 		if( minThreshold < 0 || minThreshold >= maxThreshold || maxThreshold > 1)
 		{
@@ -267,7 +242,7 @@ public class RandError extends Metrics
 		
 		for(double th =  minThreshold; th <= maxThreshold; th += stepThreshold)
 		{
-			cs.add( randIndexStats(label, proposal, th));
+			cs.add( getRandIndexStats( th ));
 		}
 		
 		return cs;
