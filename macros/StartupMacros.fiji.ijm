@@ -233,17 +233,14 @@ macro "-" {} //menu divider
 
 macro "About Startup Macros..." {
 	title = "About Startup Macros";
-	id = "[" + title + "]";
-	if (isOpen(title))
-		print(id, "\\Update");
-	else
-		run("Text Window...", "name=" + id + " width=65 height=8");
-	print(id, "Macros, such as this one, contained in a file named 'StartupMacros.txt',\n"
-		+ "located in the 'macros' folder inside the Fiji folder, are automatically\n"
-		+ "installed in the Plugins>Macros menu when Fiji starts.\n"
+	text = "Macros, such as this one, contained in a file named\n"
+		+ "'StartupMacros.txt', located in the 'macros' folder inside the\n"
+		+ "Fiji folder, are automatically installed in the Plugins>Macros\n"
+		+ "menu when Fiji starts.\n"
 		+ "\n"
 		+ "More information is available at:\n"
-		+ "<http://rsb.info.nih.gov/ij/developer/macro/macros.html>");
+		+ "<http://imagej.nih.gov/ij/developer/macro/macros.html>";
+	dummy = call("fiji.FijiTools.openEditor", title, text);
 }
 
 macro "Save As JPEG... [j]" {
