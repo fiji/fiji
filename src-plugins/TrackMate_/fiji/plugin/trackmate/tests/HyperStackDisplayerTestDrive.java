@@ -6,6 +6,7 @@ import java.io.IOException;
 import org.jdom.JDOMException;
 
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.action.GrabSpotImageAction;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
@@ -25,6 +26,8 @@ public class HyperStackDisplayerTestDrive {
 		ij.ImageJ.main(args);
 		
 		final TrackMateModel model = reader.getModel();
+		GrabSpotImageAction action = new GrabSpotImageAction();
+		action.execute(model);
 
 		// Grab spot icons
 		if (null != model.getSettings().imp)

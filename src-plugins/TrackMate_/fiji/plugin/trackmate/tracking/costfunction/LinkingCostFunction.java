@@ -4,8 +4,8 @@ import java.util.List;
 
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
 import fiji.plugin.trackmate.tracking.LAPUtils;
-import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 /**
  * <p>Linking cost function used with {@link LAPTracker}.
@@ -23,9 +23,9 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
  */
 public class LinkingCostFunction implements CostFunctions {
 	
-	protected TrackerSettings settings;
+	protected LAPTrackerSettings settings;
 	
-	public LinkingCostFunction(TrackerSettings settings) {
+	public LinkingCostFunction(LAPTrackerSettings settings) {
 		this.settings = settings;
 	}
 	

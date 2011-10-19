@@ -9,8 +9,8 @@ import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.tracking.LAPTracker;
+import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
 import fiji.plugin.trackmate.tracking.LAPUtils;
-import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 /**
  * <p>Gap closing cost function used with {@link LAPTracker}.
@@ -44,7 +44,7 @@ public class GapClosingCostFunction {
 	protected boolean useMultithreading = fiji.plugin.trackmate.TrackMate_.DEFAULT_USE_MULTITHREADING;
 
 
-	public GapClosingCostFunction(TrackerSettings settings) {
+	public GapClosingCostFunction(LAPTrackerSettings settings) {
 		this.timeCutoff 		= settings.gapClosingTimeCutoff;
 		this.maxDist 			= settings.gapClosingDistanceCutoff;
 		this.blockingValue		= settings.blockingValue;

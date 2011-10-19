@@ -25,6 +25,8 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.segmentation.BasicSegmenterSettings;
+import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.tool.AbstractTool;
 
 public class SpotEditTool extends AbstractTool implements MouseMotionListener, MouseListener, MouseWheelListener, KeyListener {
@@ -49,6 +51,9 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			+ "C972D0cCfedD1cCfb6D2cCfa4D3cCc61D4cCb61D5cCb73D6c"
 			+ "C641D0dCda6D1dCfdaD2dCfdbD3dCc95D4dCb73D5d"
 			+ "C641L0e1eCa72D2eCb73D3eCc94D4e";
+
+	/** Fall back default radius when the settings does not give a default radius to use. */
+	private static final float FALL_BACK_RADIUS = 5;
 
 
 	private static SpotEditTool instance;
@@ -179,10 +184,16 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			if (null == editedSpot) {
 				// No spot is currently edited, we pick one to edit
 				float radius;
-				if (null != target && null != target.getFeature(Spot.RADIUS))
+				if (null != target && null != target.getFeature(Spot.RADIUS)) {
 					radius = target.getFeature(Spot.RADIUS);
-				else 
-					radius = displayer.settings.segmenterSettings.expectedRadius;
+				} else {
+					SegmenterSettings ss = displayer.settings.segmenterSettings;
+					if (ss instanceof BasicSegmenterSettings) {
+						radius = ((BasicSegmenterSettings)displayer.settings.segmenterSettings).expectedRadius;
+					} else {
+						radius = FALL_BACK_RADIUS;
+					}
+				}
 				if (null == target || target.squareDistanceTo(clickLocation) > radius*radius) {
 					// Create a new spot if not inside one
 					target = clickLocation;
@@ -398,7 +409,12 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				if (null != previousRadius) {
 					radius = previousRadius; 
 				} else { 
-					radius = displayer.settings.segmenterSettings.expectedRadius;
+					SegmenterSettings ss = displayer.settings.segmenterSettings;
+					if (ss instanceof BasicSegmenterSettings) {
+						radius = ((BasicSegmenterSettings)displayer.settings.segmenterSettings).expectedRadius;
+					} else {
+						radius = FALL_BACK_RADIUS;
+					}
 				}
 
 				Point mouseLocation = MouseInfo.getPointerInfo().getLocation();

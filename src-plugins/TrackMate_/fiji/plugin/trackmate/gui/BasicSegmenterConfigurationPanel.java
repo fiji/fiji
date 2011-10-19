@@ -3,6 +3,7 @@ package fiji.plugin.trackmate.gui;
 import javax.swing.JComponent;
 
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.segmentation.BasicSegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 
 public class BasicSegmenterConfigurationPanel extends LogSegmenterConfigurationPanel {
@@ -22,7 +23,7 @@ public class BasicSegmenterConfigurationPanel extends LogSegmenterConfigurationP
 	
 	@Override
 	public void setSegmenterSettings(TrackMateModel model) {
-		jTextFieldBlobDiameter.setText(""+(2*model.getSettings().segmenterSettings.expectedRadius));
+		jTextFieldBlobDiameter.setText(""+(((BasicSegmenterSettings)model.getSettings().segmenterSettings).expectedRadius * 2));
 		jLabelBlobDiameterUnit.setText(model.getSettings().spaceUnits);
 		jLabelSegmenterName.setText(model.getSettings().segmenter.toString());
 		jLabelHelpText.setText(model.getSettings().segmenter.getInfoText().replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
@@ -30,7 +31,7 @@ public class BasicSegmenterConfigurationPanel extends LogSegmenterConfigurationP
 	
 	@Override
 	public SegmenterSettings getSegmenterSettings() {
-		SegmenterSettings ss = new SegmenterSettings();
+		BasicSegmenterSettings ss = new BasicSegmenterSettings();
 		ss.expectedRadius = Float.parseFloat(jTextFieldBlobDiameter.getText())/2;
 		return ss;
 	}

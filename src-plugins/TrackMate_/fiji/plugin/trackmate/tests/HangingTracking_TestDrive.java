@@ -10,7 +10,7 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.spot.BlobMorphology;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.LAPTracker;
-import fiji.plugin.trackmate.tracking.TrackerSettings;
+import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
@@ -31,7 +31,7 @@ public class HangingTracking_TestDrive {
 
 		System.out.println();
 		System.out.println("Without feature condition:");
-		TrackerSettings trackerSettings = reader.getTrackerSettings();
+		LAPTrackerSettings trackerSettings = (LAPTrackerSettings) reader.getTrackerSettings();
 		trackerSettings.linkingDistanceCutOff = 60;
 		model.getSettings().trackerSettings = trackerSettings;
 		

@@ -10,7 +10,7 @@ import fiji.plugin.trackmate.util.TMUtils;
 
 /**
  * Interface for objects that can store and retrieve feature values.
- * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Sep 2010 - Oct 2011
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Sep 2010 - 2011
  *
  */
 public interface Spot {

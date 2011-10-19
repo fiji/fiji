@@ -20,11 +20,15 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jdom.DataConversionException;
+import org.jdom.Element;
+
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImagePlusAdapter;
 import mpicbg.imglib.type.numeric.RealType;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.FeatureFilter;
+import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
@@ -100,6 +104,50 @@ public class TMUtils {
 	/*
 	 * STATIC METHODS
 	 */
+	
+	
+
+	public static  final int readIntAttribute(Element element, String name, Logger logger) {
+		int val = 0;
+		try {
+			val = element.getAttribute(name).getIntValue();
+		} catch (DataConversionException e) {	
+			logger.error("Cannot read the attribute "+name+" of the element "+element.getName()+", substituting default value."); 
+		}
+		return val;
+	}
+	
+	public static  final float readFloatAttribute(Element element, String name, Logger logger) {
+		float val = 0;
+		try {
+			val = element.getAttribute(name).getFloatValue();
+		} catch (DataConversionException e) {	
+			logger.error("Cannot read the attribute "+name+" of the element "+element.getName()+", substituting default value."); 
+		}
+		return val;
+	}
+	
+	public static  final double readDoubleAttribute(Element element, String name, Logger logger) {
+		double val = 0;
+		try {
+			val = element.getAttribute(name).getDoubleValue();
+		} catch (DataConversionException e) {	
+			logger.error("Cannot read the attribute "+name+" of the element "+element.getName()+", substituting default value."); 
+		}
+		return val;
+	}
+	
+	public static  final boolean readBooleanAttribute(Element element, String name, Logger logger) {
+		boolean val = false;
+		try {
+			val = element.getAttribute(name).getBooleanValue();
+		} catch (DataConversionException e) {	
+			logger.error("Cannot read the attribute "+name+" of the element "+element.getName()+", substituting default value."); 
+		}
+		return val;
+	}
+	
+	
 	
 	/**
 	 * Return the mapping in a map that is targeted by a list of keys, in the order given in the list.

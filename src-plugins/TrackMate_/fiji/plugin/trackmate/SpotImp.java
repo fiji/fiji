@@ -1,19 +1,10 @@
 package fiji.plugin.trackmate;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.imageio.ImageIO;
-
 import mpicbg.imglib.util.Util;
-
-import com.mxgraph.util.mxBase64;
-
-import fiji.plugin.trackmate.gui.TrackMateFrame;
 
 /**
  * Plain implementation of the {@link Spot} interface.
@@ -27,16 +18,6 @@ public class SpotImp implements Spot {
 	 */
 	
 	private static String DEFAULT_IMAGE_STRING = "";
-	static {
-		try {
-			BufferedImage img = ImageIO.read(TrackMateFrame.class.getResource("images/spot_icon.png"));
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			ImageIO.write(img, "png", bos);
-			DEFAULT_IMAGE_STRING = mxBase64.encodeToString(bos.toByteArray(), false);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
 	
 	public static AtomicInteger IDcounter = new AtomicInteger(0); 
 	

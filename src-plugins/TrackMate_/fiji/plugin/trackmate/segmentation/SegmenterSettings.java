@@ -1,17 +1,17 @@
 package fiji.plugin.trackmate.segmentation;
 
-import fiji.plugin.trackmate.gui.BasicSegmenterConfigurationPanel;
-import fiji.plugin.trackmate.gui.SegmenterConfigurationPanel;
+import org.jdom.Attribute;
+import org.jdom.Element;
 
+import fiji.plugin.trackmate.gui.SegmenterConfigurationPanel;
+import fiji.plugin.trackmate.io.TmXmlKeys;
 
 /** 
- * Mother class for spot segmenter settings, to pass settings to the concrete 
+ * Mother interface for spot segmenter settings, to pass settings to the concrete 
  * implementations of {@link SpotSegmenter}s.
  * <p>
  * The concrete derivation of this class should be matched to the concrete implementation
  * of {@link SpotSegmenter}, and contain only public fields.
- * Default fields are provided in this class, that are generic enough to be of use for
- * most spot segmenters.
  * <p>
  * There is a bit of a edgy part: the {@link #createConfurationPanel()} method. It 
  * links a GUI object (the panel) to this settings object. This is the only
@@ -22,29 +22,29 @@ import fiji.plugin.trackmate.gui.SegmenterConfigurationPanel;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2010, 2011
  *
  */
-public class SegmenterSettings {
-	
-	private static final float DEFAULT_EXPECTED_DIAMETER	= 10f;
+public interface SegmenterSettings {
 
-	/** The expected spot diameter in physical units. */
-	public float 	expectedRadius = DEFAULT_EXPECTED_DIAMETER/2;
-	
-	/*
-	 * METHODS
-	 */
-	
-	@Override
-	public String toString() {
-		String str = "";
-		str += String.format("  Expected radius: %f\n", expectedRadius);
-		return str;
-	}
-	
 	/**
 	 * @return  an GUI panel that is able to configure this concrete settings object.
 	 */
-	public SegmenterConfigurationPanel createConfigurationPanel() {
-		return new BasicSegmenterConfigurationPanel();
-	}
+	public SegmenterConfigurationPanel createConfigurationPanel();
 	
+	/**
+	 * Marshall this concrete instance to a JDom element, ready for saving to XML.
+	 * <p>
+	 * Marshalling should be done by adding {@link Attribute}s to the given element, 
+	 * and/or child {@link Element}s. In the XML file, the mother element will have the
+	 * name {@link TmXmlKeys#SEGMENTER_SETTINGS_ELEMENT_KEY} and at least one attribute
+	 * with name {@link TmXmlKeys#SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME} and 
+	 * value the name of the concrete settings class, to allow for unmarshsalling.
+	 * 
+	 * @return  the JDom element
+	 */
+	public void marshall(Element element);
+	
+	/**
+	 * Load the field values stored in the JDom element to this instance.
+	 */
+	public void unmarshall(Element element);
+
 }

@@ -2,16 +2,19 @@ package fiji.plugin.trackmate.io;
 
 import static fiji.plugin.trackmate.io.TmXmlKeys.*;
 
+import static fiji.plugin.trackmate.util.TMUtils.readBooleanAttribute;
+import static fiji.plugin.trackmate.util.TMUtils.readDoubleAttribute;
+import static fiji.plugin.trackmate.util.TMUtils.readFloatAttribute;
+import static fiji.plugin.trackmate.util.TMUtils.readIntAttribute;
+
 import ij.IJ;
 import ij.ImagePlus;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.jdom.Attribute;
@@ -31,8 +34,9 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
+import fiji.plugin.trackmate.segmentation.BasicSegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
+import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 
@@ -79,7 +83,7 @@ public class TmXmlReader {
 	 * Fields not set in the field will be <code>null</code> in the model. 
 	 * @throws DataConversionException 
 	 */
-	public TrackMateModel getModel() throws DataConversionException {
+	public TrackMateModel getModel() {
 		TrackMateModel model = new TrackMateModel();
 		// Settings
 		Settings settings = getSettings();
@@ -87,6 +91,7 @@ public class TmXmlReader {
 		settings.trackerSettings = getTrackerSettings();
 		settings.imp = getImage();
 		model.setSettings(settings);
+		
 		// Spot Filters
 		List<FeatureFilter> spotFilters = getSpotFeatureFilters();
 		FeatureFilter initialFilter = getInitialFilter();
@@ -118,13 +123,13 @@ public class TmXmlReader {
 	 * Return the initial threshold on quality stored in this file.
 	 * Return <code>null</code> if the initial threshold data cannot be found in the file.
 	 */
-	public FeatureFilter getInitialFilter() throws DataConversionException {
+	public FeatureFilter getInitialFilter()  {
 		Element itEl = root.getChild(INITIAL_SPOT_FILTER_ELEMENT_KEY);
 		if (null == itEl)
 			return null;
 		String feature 	= itEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
-		Float value 	= itEl.getAttribute(FILTER_VALUE_ATTRIBUTE_NAME).getFloatValue();
-		boolean isAbove	= itEl.getAttribute(FILTER_ABOVE_ATTRIBUTE_NAME).getBooleanValue();
+		Float value 	= readFloatAttribute(itEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
+		boolean isAbove	= readBooleanAttribute(itEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
 		FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
 		return ft;
 	}
@@ -135,7 +140,7 @@ public class TmXmlReader {
 	 * Return <code>null</code> if the spot feature filters data cannot be found in the file.
 	 */
 	@SuppressWarnings("unchecked")
-	public List<FeatureFilter> getSpotFeatureFilters() throws DataConversionException {
+	public List<FeatureFilter> getSpotFeatureFilters() {
 		List<FeatureFilter> featureThresholds = new ArrayList<FeatureFilter>();
 		Element ftCollectionEl = root.getChild(SPOT_FILTER_COLLECTION_ELEMENT_KEY);
 		if (null == ftCollectionEl)
@@ -143,8 +148,8 @@ public class TmXmlReader {
 		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
 		for (Element ftEl : ftEls) {
 			String feature 	= ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
-			Float value 	= ftEl.getAttribute(FILTER_VALUE_ATTRIBUTE_NAME).getFloatValue();
-			boolean isAbove	= ftEl.getAttribute(FILTER_ABOVE_ATTRIBUTE_NAME).getBooleanValue();
+			Float value 	= readFloatAttribute(ftEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
+			boolean isAbove	= readBooleanAttribute(ftEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
 			FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
 			featureThresholds.add(ft);
 		}
@@ -156,7 +161,7 @@ public class TmXmlReader {
 	 * Return <code>null</code> if the track feature filters data cannot be found in the file.
 	 */
 	@SuppressWarnings("unchecked")
-	public List<FeatureFilter> getTrackFeatureFilters() throws DataConversionException {
+	public List<FeatureFilter> getTrackFeatureFilters() {
 		List<FeatureFilter> featureThresholds = new ArrayList<FeatureFilter>();
 		Element ftCollectionEl = root.getChild(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
 		if (null == ftCollectionEl)
@@ -164,8 +169,8 @@ public class TmXmlReader {
 		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
 		for (Element ftEl : ftEls) {
 			String feature 	= ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
-			Float value 	= ftEl.getAttribute(FILTER_VALUE_ATTRIBUTE_NAME).getFloatValue();
-			boolean isAbove	= ftEl.getAttribute(FILTER_ABOVE_ATTRIBUTE_NAME).getBooleanValue();
+			Float value 	= readFloatAttribute(ftEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
+			boolean isAbove	= readBooleanAttribute(ftEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
 			FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
 			featureThresholds.add(ft);
 		}
@@ -181,31 +186,31 @@ public class TmXmlReader {
 	 * @return  a full Settings object
 	 * @throws DataConversionException 
 	 */
-	public Settings getSettings() throws DataConversionException {
+	public Settings getSettings() {
 		Settings settings = new Settings();
 		// Basic settings
 		Element settingsEl = root.getChild(SETTINGS_ELEMENT_KEY);
 		if (null != settingsEl) {
-			settings.xstart 		= settingsEl.getAttribute(SETTINGS_XSTART_ATTRIBUTE_NAME).getIntValue();
-			settings.xend 			= settingsEl.getAttribute(SETTINGS_XEND_ATTRIBUTE_NAME).getIntValue();
-			settings.ystart 		= settingsEl.getAttribute(SETTINGS_YSTART_ATTRIBUTE_NAME).getIntValue();
-			settings.yend 			= settingsEl.getAttribute(SETTINGS_YEND_ATTRIBUTE_NAME).getIntValue();
-			settings.zstart 		= settingsEl.getAttribute(SETTINGS_ZSTART_ATTRIBUTE_NAME).getIntValue();
-			settings.zend 			= settingsEl.getAttribute(SETTINGS_ZEND_ATTRIBUTE_NAME).getIntValue();
-			settings.tstart 		= settingsEl.getAttribute(SETTINGS_TSTART_ATTRIBUTE_NAME).getIntValue();
-			settings.tend 			= settingsEl.getAttribute(SETTINGS_TEND_ATTRIBUTE_NAME).getIntValue();
+			settings.xstart = readIntAttribute(settingsEl, SETTINGS_XSTART_ATTRIBUTE_NAME, logger);
+			settings.xend 	= readIntAttribute(settingsEl, SETTINGS_XEND_ATTRIBUTE_NAME, logger);
+			settings.ystart = readIntAttribute(settingsEl, SETTINGS_YSTART_ATTRIBUTE_NAME, logger);
+			settings.yend 	= readIntAttribute(settingsEl, SETTINGS_YEND_ATTRIBUTE_NAME, logger);
+			settings.zstart = readIntAttribute(settingsEl, SETTINGS_ZSTART_ATTRIBUTE_NAME, logger);
+			settings.zend 	= readIntAttribute(settingsEl, SETTINGS_ZEND_ATTRIBUTE_NAME, logger);
+			settings.tstart = readIntAttribute(settingsEl, SETTINGS_TSTART_ATTRIBUTE_NAME, logger);
+			settings.tend 	= readIntAttribute(settingsEl, SETTINGS_TEND_ATTRIBUTE_NAME, logger);
 		}
 		// Image info settings
 		Element infoEl 	= root.getChild(IMAGE_ELEMENT_KEY);
 		if (null != infoEl) {
-			settings.dx				= infoEl.getAttribute(IMAGE_PIXEL_WIDTH_ATTRIBUTE_NAME).getFloatValue();
-			settings.dy				= infoEl.getAttribute(IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME).getFloatValue();
-			settings.dz				= infoEl.getAttribute(IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME).getFloatValue();
-			settings.dt				= infoEl.getAttribute(IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME).getFloatValue();
-			settings.width			= infoEl.getAttribute(IMAGE_WIDTH_ATTRIBUTE_NAME).getIntValue();
-			settings.height			= infoEl.getAttribute(IMAGE_HEIGHT_ATTRIBUTE_NAME).getIntValue();
-			settings.nslices		= infoEl.getAttribute(IMAGE_NSLICES_ATTRIBUTE_NAME).getIntValue();
-			settings.nframes		= infoEl.getAttribute(IMAGE_NFRAMES_ATTRIBUTE_NAME).getIntValue();
+			settings.dx				= readFloatAttribute(infoEl, IMAGE_PIXEL_WIDTH_ATTRIBUTE_NAME, logger);
+			settings.dy				= readFloatAttribute(infoEl, IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME, logger);
+			settings.dz				= readFloatAttribute(infoEl, IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME, logger);
+			settings.dt				= readFloatAttribute(infoEl, IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME, logger);
+			settings.width			= readIntAttribute(infoEl, IMAGE_WIDTH_ATTRIBUTE_NAME, logger);
+			settings.height			= readIntAttribute(infoEl, IMAGE_HEIGHT_ATTRIBUTE_NAME, logger);
+			settings.nslices		= readIntAttribute(infoEl, IMAGE_NSLICES_ATTRIBUTE_NAME, logger);
+			settings.nframes		= readIntAttribute(infoEl, IMAGE_NFRAMES_ATTRIBUTE_NAME, logger);
 			settings.spaceUnits		= infoEl.getAttributeValue(IMAGE_SPATIAL_UNITS_ATTRIBUTE_NAME);
 			settings.timeUnits		= infoEl.getAttributeValue(IMAGE_TIME_UNITS_ATTRIBUTE_NAME);
 			settings.imageFileName	= infoEl.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
@@ -214,56 +219,57 @@ public class TmXmlReader {
 		return settings;
 	}
 
-	public SegmenterSettings getSegmenterSettings() throws DataConversionException {
-		LogSegmenterSettings segSettings = new LogSegmenterSettings();
-		Element segSettingsEl = root.getChild(SEGMENTER_SETTINGS_ELEMENT_KEY);
-		if (null != segSettingsEl) {
-//			String segmenterTypeStr = segSettingsEl.getAttributeValue(SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME);
-//			SegmenterType segmenterType = SegmenterType.valueOf(segmenterTypeStr);
-//			segSettings = segmenterType.createSettings();
-//			segSettings.segmenterType 		= segmenterType;
-			segSettings.expectedRadius 		= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME).getFloatValue();
-			segSettings.threshold			= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME).getFloatValue();
-			segSettings.useMedianFilter		= segSettingsEl.getAttribute(SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME).getBooleanValue();
-//			segSettings.spaceUnits			= segSettingsEl.getAttributeValue(SEGMENTER_SETTINGS_UNITS_ATTRIBUTE_NAME);			
+	public SegmenterSettings getSegmenterSettings() {
+		Element el = root.getChild(SEGMENTER_SETTINGS_ELEMENT_KEY);
+		SegmenterSettings settings = null;
+		if (null != el) {
+			String segmenterTypeStr = el.getAttributeValue(SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME);
+			try {
+				settings = (SegmenterSettings) Class.forName(segmenterTypeStr).newInstance();
+				settings.unmarshall(el);
+			} catch (InstantiationException e) {
+				logger.error("Unable to instantiate segmenter settings class: "+e.getLocalizedMessage());
+				logger.error("\nSubstituting dummy segmenter settings.\n");
+				settings = new BasicSegmenterSettings();
+			} catch (IllegalAccessException e) {
+				logger.error("Unable to instantiate segmenter settings class: "+e.getLocalizedMessage());
+				logger.error("\nSubstituting dummy segmenter settings.\n");
+				settings = new BasicSegmenterSettings();
+			} catch (ClassNotFoundException e) {
+				logger.error("Unable to find segmenter settings class: "+e.getLocalizedMessage());
+				logger.error("\nSubstituting dummy segmenter settings.\n");
+				settings = new BasicSegmenterSettings();
+			}
 		}
-		return segSettings;
+		return settings;
 	}
 
 
-	public TrackerSettings getTrackerSettings() throws DataConversionException {
+	public TrackerSettings getTrackerSettings() {
 		// Tracker settings
-		TrackerSettings trackerSettings = null;
-		Element trackerSettingsEl = root.getChild(TRACKER_SETTINGS_ELEMENT_KEY);
-		if (null != trackerSettingsEl) {
-			trackerSettings = new TrackerSettings(); // FIXME How to be generic? Delegate marshalling to concrete implementation
-			trackerSettings.alternativeObjectLinkingCostFactor = trackerSettingsEl.getAttribute(TRACKER_SETTINGS_ALTERNATE_COST_FACTOR_ATTNAME).getDoubleValue();
-			trackerSettings.cutoffPercentile = trackerSettingsEl.getAttribute(TRACKER_SETTINGS_CUTOFF_PERCENTILE_ATTNAME).getDoubleValue();
-			trackerSettings.blockingValue	=  trackerSettingsEl.getAttribute(TRACKER_SETTINGS_BLOCKING_VALUE_ATTNAME).getDoubleValue();
-			// Linking
-			Element linkingElement 			= trackerSettingsEl.getChild(TRACKER_SETTINGS_LINKING_ELEMENT);
-			trackerSettings.linkingDistanceCutOff = readDistanceCutoffAttribute(linkingElement);
-			trackerSettings.linkingFeaturePenalties = readTrackerFeatureMap(linkingElement);
-			// Gap-closing
-			Element gapClosingElement		= trackerSettingsEl.getChild(TRACKER_SETTINGS_GAP_CLOSING_ELEMENT);
-			trackerSettings.allowGapClosing	= gapClosingElement.getAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME).getBooleanValue();
-			trackerSettings.gapClosingDistanceCutoff 	= readDistanceCutoffAttribute(gapClosingElement);
-			trackerSettings.gapClosingTimeCutoff 		= readTimeCutoffAttribute(gapClosingElement); 
-			trackerSettings.gapClosingFeaturePenalties 	= readTrackerFeatureMap(gapClosingElement);
-			// Splitting
-			Element splittingElement		= trackerSettingsEl.getChild(TRACKER_SETTINGS_SPLITTING_ELEMENT);
-			trackerSettings.allowSplitting	= splittingElement.getAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME).getBooleanValue();
-			trackerSettings.splittingDistanceCutoff		= readDistanceCutoffAttribute(splittingElement);
-			trackerSettings.splittingTimeCutoff			= readTimeCutoffAttribute(splittingElement);
-			trackerSettings.splittingFeaturePenalties		= readTrackerFeatureMap(splittingElement);
-			// Merging
-			Element mergingElement 			= trackerSettingsEl.getChild(TRACKER_SETTINGS_MERGING_ELEMENT);
-			trackerSettings.allowMerging	= mergingElement.getAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME).getBooleanValue();
-			trackerSettings.mergingDistanceCutoff		= readDistanceCutoffAttribute(mergingElement);
-			trackerSettings.mergingTimeCutoff			= readTimeCutoffAttribute(mergingElement);
-			trackerSettings.mergingFeaturePenalties		= readTrackerFeatureMap(mergingElement);
+		TrackerSettings settings = null;
+		Element el = root.getChild(TRACKER_SETTINGS_ELEMENT_KEY);
+		if (null != el) {
+			String trackerTypeStr = el.getAttributeValue(SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME);
+			try {
+				settings = (TrackerSettings) Class.forName(trackerTypeStr).newInstance();
+				settings.unmarshall(el);
+			} catch (InstantiationException e) {
+				logger.error("Unable to instantiate tracker settings class: "+e.getLocalizedMessage());
+				logger.error("\nSubstituting dummy tracker settings.\n");
+				settings = new LAPTrackerSettings();
+			} catch (IllegalAccessException e) {
+				logger.error("Unable to instantiate tracker settings class: "+e.getLocalizedMessage());
+				logger.error("\nSubstituting dummy tracker settings.\n");
+				settings = new LAPTrackerSettings();
+			} catch (ClassNotFoundException e) {
+				logger.error("Unable to find segmenter settings class: "+e.getLocalizedMessage());
+				logger.error("\nSubstituting dummy tracker settings.\n");
+				settings = new LAPTrackerSettings();
+			}
+
 		}
-		return trackerSettings;
+		return settings;
 	}
 
 
@@ -273,7 +279,7 @@ public class TmXmlReader {
 	 * @return  a {@link SpotCollection}. Return <code>null</code> if the spot section is not present in the file.
 	 */
 	@SuppressWarnings("unchecked")
-	public SpotCollection getAllSpots() throws DataConversionException {
+	public SpotCollection getAllSpots() {
 		Element spotCollection = root.getChild(SPOT_COLLECTION_ELEMENT_KEY);
 		if (null == spotCollection)
 			return null;
@@ -285,7 +291,7 @@ public class TmXmlReader {
 
 		for (Element currentFrameContent : frameContent) {
 
-			currentFrame = currentFrameContent.getAttribute(FRAME_ATTRIBUTE_NAME).getIntValue();
+			currentFrame = readIntAttribute(currentFrameContent, FRAME_ATTRIBUTE_NAME, logger);
 			List<Element> spotContent = currentFrameContent.getChildren(SPOT_ELEMENT_KEY);
 			spotList = new ArrayList<Spot>(spotContent.size());
 			for (Element spotElement : spotContent) {
@@ -308,10 +314,9 @@ public class TmXmlReader {
 	 * @param allSpots  the list of all spots, from which this selection is made 
 	 * @return  a {@link SpotCollection}. Each spot of this collection belongs also to the  given collection.
 	 * Return <code>null</code> if the spot selection section does is not present in the file.
-	 * @throws DataConversionException  if the attribute values are not formatted properly in the file.
 	 */
 	@SuppressWarnings("unchecked")
-	public SpotCollection getFilteredSpots(SpotCollection allSpots) throws DataConversionException {
+	public SpotCollection getFilteredSpots(SpotCollection allSpots)  {
 		Element selectedSpotCollection = root.getChild(FILTERED_SPOT_ELEMENT_KEY);
 		if (null == selectedSpotCollection)
 			return null;
@@ -325,7 +330,7 @@ public class TmXmlReader {
 		List<Element> frameContent = selectedSpotCollection.getChildren(FILTERED_SPOT_COLLECTION_ELEMENT_KEY);
 
 		for (Element currentFrameContent : frameContent) {
-			currentFrame = currentFrameContent.getAttribute(FRAME_ATTRIBUTE_NAME).getIntValue();
+			currentFrame = readIntAttribute(currentFrameContent, FRAME_ATTRIBUTE_NAME, logger);
 			// Get spot list from main list
 			spotsThisFrame = allSpots.get(currentFrame);
 			if (null == spotsThisFrame)
@@ -335,7 +340,7 @@ public class TmXmlReader {
 			spotList = new ArrayList<Spot>(spotContent.size());
 			// Loop over all spot element
 			for (Element spotEl : spotContent) {
-				ID = spotEl.getAttribute(SPOT_ID_ATTRIBUTE_NAME).getIntValue();
+				ID = readIntAttribute(spotEl, SPOT_ID_ATTRIBUTE_NAME, logger);
 				// Find corresponding spot in main list
 				for (Spot spot : spotsThisFrame) {
 					if (ID == spot.ID()) {
@@ -354,10 +359,9 @@ public class TmXmlReader {
 	 * Load the graph mapping spot linking as tracks. The graph vertices are made of the selected spot
 	 * list given in argument. Edges are formed from the file data.
 	 * @param selectedSpots  the spot selection from which tracks area made 
-	 * @throws DataConversionException  if the attribute values are not formatted properly in the file.
 	 */
 	@SuppressWarnings("unchecked")
-	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> readTracks(final SpotCollection spots) throws DataConversionException {
+	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> readTracks(final SpotCollection spots) {
 
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
 		if (null == allTracksElement)
@@ -367,67 +371,67 @@ public class TmXmlReader {
 		for (Spot spot : spots)
 			graph.addVertex(spot);
 
-				// Load tracks
-				List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
-				List<Element> edgeElements;
-				int sourceID, targetID;
-				Spot sourceSpot, targetSpot;
-				double weight = 0;
-				boolean sourceFound, targetFound;
+		// Load tracks
+		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
+		List<Element> edgeElements;
+		int sourceID, targetID;
+		Spot sourceSpot, targetSpot;
+		double weight = 0;
+		boolean sourceFound, targetFound;
 
-				for (Element trackElement : trackElements) {
-					edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
-					for (Element edgeElement : edgeElements) {
-						// Get source and target ID for this edge
-						sourceID = edgeElement.getAttribute(TRACK_EDGE_SOURCE_ATTRIBUTE_NAME).getIntValue();
-						targetID = edgeElement.getAttribute(TRACK_EDGE_TARGET_ATTRIBUTE_NAME).getIntValue();
-						if (null != edgeElement.getAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME))
-							weight   	= edgeElement.getAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME).getDoubleValue();
-						else 
-							weight  	= 0;
-						// Retrieve corresponding spots from their ID
-						targetFound = false;
-						sourceFound = false;
-						targetSpot = null;
-						sourceSpot = null;
-						for (Spot spot : spots) {
-							if (!sourceFound  && spot.ID() == sourceID) {
-								sourceSpot = spot;
-								sourceFound = true;
-							}
-							if (!targetFound  && spot.ID() == targetID) {
-								targetSpot = spot;
-								targetFound = true;
-							}
-							if (targetFound && sourceFound) {
-								if (sourceSpot.equals(targetSpot)) {
-									LineNumberElement lne = (LineNumberElement) edgeElement;
-									logger.error("Bad edge found for track "+trackElement.getAttributeValue(TRACK_ID_ATTRIBUTE_NAME)
-											+": loop edge at line "+lne.getStartLine()+". Skipping.");
-									break;
-								}
-								DefaultWeightedEdge edge = graph.addEdge(sourceSpot, targetSpot);
-								if (edge == null) {
-									LineNumberElement lne = (LineNumberElement) edgeElement;
-									logger.error("Bad edge found for track "+trackElement.getAttributeValue(TRACK_ID_ATTRIBUTE_NAME)
-											+": duplicate edge at line "+lne.getStartLine()+". Skipping.");
-									break;
-								} else {
-									graph.setEdgeWeight(edge, weight);
-								}
-								break;
-							}
+		for (Element trackElement : trackElements) {
+			edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
+			for (Element edgeElement : edgeElements) {
+				// Get source and target ID for this edge
+				sourceID = readIntAttribute(edgeElement, TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, logger);
+				targetID = readIntAttribute(edgeElement, TRACK_EDGE_TARGET_ATTRIBUTE_NAME, logger);
+				if (null != edgeElement.getAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME))
+					weight   	= readDoubleAttribute(edgeElement, TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME, logger);
+				else 
+					weight  	= 0;
+				// Retrieve corresponding spots from their ID
+				targetFound = false;
+				sourceFound = false;
+				targetSpot = null;
+				sourceSpot = null;
+				for (Spot spot : spots) {
+					if (!sourceFound  && spot.ID() == sourceID) {
+						sourceSpot = spot;
+						sourceFound = true;
+					}
+					if (!targetFound  && spot.ID() == targetID) {
+						targetSpot = spot;
+						targetFound = true;
+					}
+					if (targetFound && sourceFound) {
+						if (sourceSpot.equals(targetSpot)) {
+							LineNumberElement lne = (LineNumberElement) edgeElement;
+							logger.error("Bad edge found for track "+trackElement.getAttributeValue(TRACK_ID_ATTRIBUTE_NAME)
+									+": loop edge at line "+lne.getStartLine()+". Skipping.");
+							break;
 						}
+						DefaultWeightedEdge edge = graph.addEdge(sourceSpot, targetSpot);
+						if (edge == null) {
+							LineNumberElement lne = (LineNumberElement) edgeElement;
+							logger.error("Bad edge found for track "+trackElement.getAttributeValue(TRACK_ID_ATTRIBUTE_NAME)
+									+": duplicate edge at line "+lne.getStartLine()+". Skipping.");
+							break;
+						} else {
+							graph.setEdgeWeight(edge, weight);
+						}
+						break;
 					}
 				}
-				return graph;
+			}
+		}
+		return graph;
 	}
 
 	/**
 	 * Read and return the list of track indices that define the filtered track collection.
 	 * @throws DataConversionException 
 	 */
-	public Set<Integer> getFilteredTracks() throws DataConversionException {
+	public Set<Integer> getFilteredTracks() {
 		Element filteredTracksElement = root.getChild(FILTERED_TRACK_ELEMENT_KEY);
 		if (null == filteredTracksElement)
 			return null;
@@ -437,7 +441,7 @@ public class TmXmlReader {
 		List<Element> elements = filteredTracksElement.getChildren(TRACK_ID_ELEMENT_KEY);
 		HashSet<Integer> filteredTrackIndices = new HashSet<Integer>(elements.size());
 		for (Element indexElement : elements) {
-			Integer trackID = indexElement.getAttribute(TRACK_ID_ATTRIBUTE_NAME).getIntValue();
+			Integer trackID = readIntAttribute(indexElement, TRACK_ID_ATTRIBUTE_NAME, logger);
 			if (null != trackID) {
 				filteredTrackIndices.add(trackID);
 			}
@@ -466,57 +470,29 @@ public class TmXmlReader {
 	 * PRIVATE METHODS
 	 */
 
-
-
-	private static final double readDistanceCutoffAttribute(Element element) throws DataConversionException {
-		return element.getChild(TRACKER_SETTINGS_DISTANCE_CUTOFF_ELEMENT)
-				.getAttribute(TRACKER_SETTINGS_DISTANCE_CUTOFF_ATTNAME).getDoubleValue();
-	}
-
-	private static final double readTimeCutoffAttribute(Element element) throws DataConversionException {
-		return element.getChild(TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT)
-				.getAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME).getDoubleValue();
-	}
-
-	/**
-	 * Look for all the sub-elements of <code>element</code> with the name TRACKER_SETTINGS_FEATURE_ELEMENT, 
-	 * fetch the feature attributes from them, and returns them in a map.
-	 */
-	@SuppressWarnings("unchecked")
-	private static final Map<String, Double> readTrackerFeatureMap(final Element element) throws DataConversionException {
-		Map<String, Double> map = new HashMap<String, Double>();
-		List<Element> featurelinkingElements = element.getChildren(TRACKER_SETTINGS_FEATURE_ELEMENT);
-		for (Element el : featurelinkingElements) {
-			List<Attribute> atts = el.getAttributes();
-			for (Attribute att : atts) {
-				String feature = att.getName();
-				Double cutoff = att.getDoubleValue();
-				map.put(feature, cutoff);
-			}
-		}
-		return map;
-	}
-
-
-	private static Spot createSpotFrom(Element spotEl) throws DataConversionException {
-		int ID = spotEl.getAttribute(SPOT_ID_ATTRIBUTE_NAME).getIntValue();
+	private Spot createSpotFrom(Element spotEl) {
+		int ID = readIntAttribute(spotEl, SPOT_ID_ATTRIBUTE_NAME, logger);
 		Spot spot = new SpotImp(ID);
 
 		@SuppressWarnings("unchecked")
 		List<Attribute> atts = spotEl.getAttributes();
 		atts.remove(SPOT_ID_ATTRIBUTE_NAME);
-		
+
 		String name = spotEl.getAttributeValue(SPOT_NAME_ATTRIBUTE_NAME);
 		if (null == name || name.equals(""))
 			name = "ID"+ID;
 		spot.setName(name);
 		atts.remove(SPOT_NAME_ATTRIBUTE_NAME);
-		
+
 		for (Attribute att : atts) {
 			if (att.getName().equals(SPOT_NAME_ATTRIBUTE_NAME) || att.getName().equals(SPOT_ID_ATTRIBUTE_NAME)) {
 				continue;
 			}
-			spot.putFeature(att.getName(), att.getFloatValue());
+			try {
+				spot.putFeature(att.getName(), att.getFloatValue());
+			} catch (DataConversionException e) {
+				logger.error("Cannot read the feature "+att.getName()+" value. Skipping.");
+			}
 		}
 		return spot;
 	}

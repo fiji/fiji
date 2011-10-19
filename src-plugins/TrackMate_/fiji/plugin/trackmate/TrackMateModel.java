@@ -18,7 +18,6 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 import org.jgrapht.traverse.DepthFirstIterator;
 
 import fiji.plugin.trackmate.features.FeatureModel;
-import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
  * <h1>The model for the data managed by TrackMate plugin.</h1>

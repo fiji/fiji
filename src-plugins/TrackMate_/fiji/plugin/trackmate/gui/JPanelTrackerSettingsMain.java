@@ -22,6 +22,7 @@ import javax.swing.SwingConstants;
 
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 public class JPanelTrackerSettingsMain extends javax.swing.JPanel {
@@ -76,7 +77,7 @@ public class JPanelTrackerSettingsMain extends javax.swing.JPanel {
 	
 	void echoSettings(TrackMateModel model) {
 		
-		TrackerSettings settings = model.getSettings().trackerSettings;
+		LAPTrackerSettings settings = (LAPTrackerSettings) model.getSettings().trackerSettings;
 		
 		jLabelTrackerName.setText(model.getSettings().tracker.toString());
 		jLabelTrackDescription.setText(model.getSettings().tracker.getInfoText().replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
@@ -132,7 +133,7 @@ public class JPanelTrackerSettingsMain extends javax.swing.JPanel {
 	 * and sub-fields will be updated here.
 	 */
 	public TrackerSettings getSettings() {
-		TrackerSettings settings = new TrackerSettings();
+		LAPTrackerSettings settings = new LAPTrackerSettings();
 		
 		settings.linkingDistanceCutOff = Double.parseDouble(jTextFieldLinkingMaxDistance.getText());
 		settings.linkingFeaturePenalties = jPanelLinkingFeatures.getFeatureWeights();

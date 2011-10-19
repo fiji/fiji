@@ -36,8 +36,9 @@ public class ConcurrentSpotTestDrive {
 		// Make settings
 		Settings settings = new Settings(imp);
 		settings.segmenter = new DogSegmenter();
-		settings.segmenterSettings = new DogSegmenterSettings();
-		settings.segmenterSettings.expectedRadius = 2f;
+		DogSegmenterSettings dss = new DogSegmenterSettings();
+		dss.expectedRadius = 2f;
+		settings.segmenterSettings = dss;
 
 		// Instantiate plugin
 		TrackMate_ plugin = new TrackMate_(settings);

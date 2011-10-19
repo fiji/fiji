@@ -156,7 +156,7 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	/** The Spot collection that will be linked in the {@link #graph.} */
 	protected SpotCollection spots;
 	/** The settings object that configures this tracker. */
-	protected TrackerSettings settings;
+	protected LAPTrackerSettings settings;
 
 	/*	
 	 * PROTECTED METHODS
@@ -180,7 +180,7 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	@Override
 	public void setModel(TrackMateModel model) {
 		this.spots = model.getFilteredSpots();
-		this.settings = model.getSettings().trackerSettings;
+		this.settings = (LAPTrackerSettings) model.getSettings().trackerSettings;
 		reset();
 	}
 
@@ -495,7 +495,7 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	 * @param settings  the tracker settings that specifies how this cost should be created
 	 * @return  the cost matrix as an array of array of double
 	 */
-	protected double[][] createFrameToFrameLinkingCostMatrix(final List<Spot> t0, List<Spot> t1, final TrackerSettings settings) {
+	protected double[][] createFrameToFrameLinkingCostMatrix(final List<Spot> t0, List<Spot> t1, final LAPTrackerSettings settings) {
 		// Create cost matrix
 		LinkingCostMatrixCreator objCosts = new LinkingCostMatrixCreator(t0, t1, settings);
 		if (!objCosts.checkInput() || !objCosts.process()) {
@@ -677,7 +677,7 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	
 	@Override
 	public TrackerSettings createDefaultSettings() {
-		return new TrackerSettings();
+		return new LAPTrackerSettings();
 	}
 
 	@Override

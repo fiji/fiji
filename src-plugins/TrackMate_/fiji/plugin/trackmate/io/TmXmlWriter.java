@@ -24,7 +24,6 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
@@ -162,78 +161,21 @@ public class TmXmlWriter {
 	}
 
 	private void echoSegmenterSettings() {
-		LogSegmenterSettings segSettings = (LogSegmenterSettings) model.getSettings().segmenterSettings;
-		Element segSettingsElement = new Element(SEGMENTER_SETTINGS_ELEMENT_KEY);
-		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME, 		model.getSettings().segmenter.toString());
-		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME, 		""+segSettings.expectedRadius);
-//		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_UNITS_ATTRIBUTE_NAME, 				segSettings.spaceUnits);
-		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME, 			""+segSettings.threshold);
-		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME, 			""+segSettings.useMedianFilter);
-		root.addContent(segSettingsElement);
+		Element el = new Element(SEGMENTER_SETTINGS_ELEMENT_KEY);
+		el.setAttribute(SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME, 
+				model.getSettings().segmenterSettings.getClass().getName());
+		model.getSettings().segmenterSettings.marshall(el);
+		root.addContent(el);
 		logger.log("  Appending segmenter settings.\n");
 		return;
 	}
 
 	private void echoTrackerSettings() {
 		TrackerSettings settings = model.getSettings().trackerSettings;
-		Element trackerSettingsElement = new Element(TRACKER_SETTINGS_ELEMENT_KEY);
-		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_ALTERNATE_COST_FACTOR_ATTNAME, 	""+settings.alternativeObjectLinkingCostFactor);
-		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_CUTOFF_PERCENTILE_ATTNAME, 		""+settings.cutoffPercentile);
-		trackerSettingsElement.setAttribute(TRACKER_SETTINGS_BLOCKING_VALUE_ATTNAME,			""+settings.blockingValue);
-		// Linking
-		Element linkingElement = new Element(TRACKER_SETTINGS_LINKING_ELEMENT);
-		linkingElement.addContent(
-				new Element(TRACKER_SETTINGS_DISTANCE_CUTOFF_ELEMENT)
-				.setAttribute(TRACKER_SETTINGS_DISTANCE_CUTOFF_ATTNAME, ""+settings.linkingDistanceCutOff));
-		for(String feature : settings.linkingFeaturePenalties.keySet())
-			linkingElement.addContent(
-					new Element(TRACKER_SETTINGS_FEATURE_ELEMENT)
-					.setAttribute(feature, ""+settings.linkingFeaturePenalties.get(feature)) );
-		trackerSettingsElement.addContent(linkingElement);
-		// Gap-closing
-		Element gapClosingElement = new Element(TRACKER_SETTINGS_GAP_CLOSING_ELEMENT);
-		gapClosingElement.setAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME, ""+settings.allowGapClosing);
-		gapClosingElement.addContent(
-				new Element(TRACKER_SETTINGS_DISTANCE_CUTOFF_ELEMENT)
-				.setAttribute(TRACKER_SETTINGS_DISTANCE_CUTOFF_ATTNAME, ""+settings.gapClosingDistanceCutoff));
-		gapClosingElement.addContent(
-				new Element(TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT)
-				.setAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME, ""+settings.gapClosingTimeCutoff));
-		for(String feature : settings.gapClosingFeaturePenalties.keySet())
-			gapClosingElement.addContent(
-					new Element(TRACKER_SETTINGS_FEATURE_ELEMENT)
-					.setAttribute(feature, ""+settings.gapClosingFeaturePenalties.get(feature)) );
-		trackerSettingsElement.addContent(gapClosingElement);
-		// Splitting
-		Element splittingElement = new Element(TRACKER_SETTINGS_SPLITTING_ELEMENT);
-		splittingElement.setAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME, ""+settings.allowSplitting);
-		splittingElement.addContent(
-				new Element(TRACKER_SETTINGS_DISTANCE_CUTOFF_ELEMENT)
-				.setAttribute(TRACKER_SETTINGS_DISTANCE_CUTOFF_ATTNAME, ""+settings.splittingDistanceCutoff));
-		splittingElement.addContent(
-				new Element(TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT)
-				.setAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME, ""+settings.splittingTimeCutoff));
-		for(String feature : settings.splittingFeaturePenalties.keySet())
-			splittingElement.addContent(
-					new Element(TRACKER_SETTINGS_FEATURE_ELEMENT)
-					.setAttribute(feature, ""+settings.splittingFeaturePenalties.get(feature)) );
-		trackerSettingsElement.addContent(splittingElement);
-		// Merging
-		Element mergingElement = new Element(TRACKER_SETTINGS_MERGING_ELEMENT);
-		mergingElement.setAttribute(TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME, ""+settings.allowMerging);
-		mergingElement.addContent(
-				new Element(TRACKER_SETTINGS_DISTANCE_CUTOFF_ELEMENT)
-				.setAttribute(TRACKER_SETTINGS_DISTANCE_CUTOFF_ATTNAME, ""+settings.mergingDistanceCutoff));
-		mergingElement.addContent(
-				new Element(TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT)
-				.setAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME, ""+settings.mergingTimeCutoff));
-		for(String feature : settings.mergingFeaturePenalties.keySet())
-			mergingElement.addContent(
-					new Element(TRACKER_SETTINGS_FEATURE_ELEMENT)
-					.setAttribute(feature, ""+settings.mergingFeaturePenalties.get(feature)) );
-		trackerSettingsElement.addContent(mergingElement);
+		Element element = new Element(TRACKER_SETTINGS_ELEMENT_KEY);
+		settings.marshall(element);
 		// Add to root		
-		root.addContent(trackerSettingsElement);
+		root.addContent(element);
 		logger.log("  Appending tracker settings.\n");
 		return;
 	}

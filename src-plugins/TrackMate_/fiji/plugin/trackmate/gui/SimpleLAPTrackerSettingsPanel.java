@@ -14,6 +14,7 @@ import javax.swing.SwingConstants;
 
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.tracking.LAPTracker;
+import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 /**
@@ -33,7 +34,7 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerSettingsPanel {
 	private JNumericTextField jTextFieldLinkingDistance;
 	private JLabel jLabelTrackerDescription;
 	
-	private TrackerSettings settings;
+	private LAPTrackerSettings settings;
 
 	/*
 	 * CONSTRUCTOR
@@ -50,7 +51,7 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerSettingsPanel {
 	
 	@Override
 	public void setTrackerSettings(TrackMateModel model) {
-		this.settings = model.getSettings().trackerSettings;
+		this.settings = (LAPTrackerSettings) model.getSettings().trackerSettings;
 		echoSettings(model);
 		
 	};

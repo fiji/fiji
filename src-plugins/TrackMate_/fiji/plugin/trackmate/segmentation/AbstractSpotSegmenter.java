@@ -68,10 +68,6 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 			errorMessage = baseErrorMessage + "Image must be 2D or 3D, got " + img.getNumDimensions() +"D.";
 			return false;
 		}
-		if (settings.expectedRadius <= 0) {
-			errorMessage = baseErrorMessage + "Search diameter is negative or 0.";
-			return false;
-		}
 		if (calibration == null) {
 			errorMessage = baseErrorMessage + "Calibration array is null";
 			return false;

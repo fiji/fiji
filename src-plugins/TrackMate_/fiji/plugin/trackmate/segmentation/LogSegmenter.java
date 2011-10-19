@@ -59,13 +59,25 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 		createLaplacianKernel(); // instantiate laplacian kernel if needed
 		createGaussianKernel();
 
-		float radius = settings.expectedRadius;
+		float radius = ((LogSegmenterSettings)settings).expectedRadius;
 		sigma = (float) (SMOOTH_FACTOR * 2 * radius / Math.sqrt(img.getNumDimensions())); // optimal sigma for LoG approach and dimensionality
 
 		this.settings = (LogSegmenterSettings) settings;
 	}
 
-
+	@Override
+	public boolean checkInput() {
+		if (!super.checkInput())
+			return false;
+		if (settings instanceof LogSegmenterSettings) {
+			return true;
+		} else {
+			errorMessage = baseErrorMessage + "Bad settings class. Expected LogSegmenterSettings, got "+settings.getClass()+".\n";
+			return false;
+		}
+	}
+	
+	
 	@Override
 	public SegmenterSettings createDefaultSettings() {
 		return new LogSegmenterSettings();

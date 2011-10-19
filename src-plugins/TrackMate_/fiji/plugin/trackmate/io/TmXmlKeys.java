@@ -3,7 +3,7 @@ package fiji.plugin.trackmate.io;
 
 /**
  * Contains the key string used for xml marshaling.
- * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Sep - Dec, 2010
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>  2010-2011
   */
 public class TmXmlKeys {
 	
@@ -43,10 +43,6 @@ public class TmXmlKeys {
 	
 	public static final String SEGMENTER_SETTINGS_ELEMENT_KEY 						= "SegmenterSettings";
 	public static final String SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME 	= "segmentertype";
-	public static final String SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME 	= "expectedradius";
-	public static final String SEGMENTER_SETTINGS_UNITS_ATTRIBUTE_NAME 				= "units";
-	public static final String SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME 			= "threshold";
-	public static final String SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME			= "usemedianfilter";
 
 	/*
 	 * TRACKER SETTINGS
@@ -54,24 +50,6 @@ public class TmXmlKeys {
 	
 	public static final String TRACKER_SETTINGS_ELEMENT_KEY							= "TrackerSettings";
 	public static final String TRACKER_SETTINGS_TRACKER_TYPE_ATTRIBUTE_NAME			= "trackertype";
-	public static final String TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME					= "allowed";
-	// Alternative costs & blocking
-	public static final String TRACKER_SETTINGS_ALTERNATE_COST_FACTOR_ATTNAME 		= "alternatecostfactor";
-	public static final String TRACKER_SETTINGS_CUTOFF_PERCENTILE_ATTNAME			= "cutoffpercentile";
-	public static final String TRACKER_SETTINGS_BLOCKING_VALUE_ATTNAME				= "blockingvalue";
-	// Units
-	public static final String TRACKER_SETTINGS_TIME_UNITS_ATTNAME 	= "timeunits";
-	public static final String TRACKER_SETTINGS_SPACE_UNITS_ATTNAME = "spaceunits";
-	// Cutoff elements
-	public static final String TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT					= "TimeCutoff";
-	public static final String TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME					= "value";
-	public static final String TRACKER_SETTINGS_DISTANCE_CUTOFF_ELEMENT				= "DistanceCutoff";
-	public static final String TRACKER_SETTINGS_DISTANCE_CUTOFF_ATTNAME				= "value";
-	public static final String TRACKER_SETTINGS_FEATURE_ELEMENT						= "FeatureCondition";
-	public static final String TRACKER_SETTINGS_LINKING_ELEMENT						= "LinkingCondition";
-	public static final String TRACKER_SETTINGS_GAP_CLOSING_ELEMENT					= "GapClosingCondition";
-	public static final String TRACKER_SETTINGS_MERGING_ELEMENT						= "MergingCondition";
-	public static final String TRACKER_SETTINGS_SPLITTING_ELEMENT					= "SplittingCondition";
 	
 	/*
 	 * IMAGE element
@@ -97,7 +75,7 @@ public class TmXmlKeys {
 
 	public static final String SPOT_COLLECTION_ELEMENT_KEY 			= "AllSpots";
 	public static final String SPOT_FRAME_COLLECTION_ELEMENT_KEY 	= "SpotsInFrame"; 
-	public static final String SPOT_ELEMENT_KEY 					= "Spot"; 
+	public static final String SPOT_ELEMENT_KEY 						= "Spot"; 
 
 	/*
 	 * INITIAL SPOT FILTER element

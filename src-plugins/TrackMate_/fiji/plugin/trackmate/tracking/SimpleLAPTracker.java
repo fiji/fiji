@@ -22,7 +22,7 @@ public class SimpleLAPTracker extends LAPTracker {
 	
 	@Override
 	public TrackerSettings createDefaultSettings() {
-		TrackerSettings ts = new TrackerSettings() {
+		LAPTrackerSettings ts = new LAPTrackerSettings() {
 			public TrackerSettingsPanel createConfigurationPanel() {
 				return new SimpleLAPTrackerSettingsPanel();
 			}

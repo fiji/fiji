@@ -7,7 +7,7 @@ public class SimpleFastLAPTracker extends FastLAPTracker {
 
 	@Override
 	public TrackerSettings createDefaultSettings() {
-		TrackerSettings ts = new TrackerSettings() {
+		LAPTrackerSettings ts = new LAPTrackerSettings() {
 			public TrackerSettingsPanel createConfigurationPanel() {
 				return new SimpleLAPTrackerSettingsPanel();
 			}

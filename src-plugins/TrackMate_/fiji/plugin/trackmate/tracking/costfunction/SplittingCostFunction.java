@@ -9,8 +9,8 @@ import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.tracking.LAPTracker;
+import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
 import fiji.plugin.trackmate.tracking.LAPUtils;
-import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 /**
  * <p>Splitting cost function used with {@link LAPTracker}.
@@ -55,7 +55,7 @@ public class SplittingCostFunction {
 	 */
 
 
-	public SplittingCostFunction(TrackerSettings settings) {
+	public SplittingCostFunction(LAPTrackerSettings settings) {
 		this.allowSplitting 	= settings.allowSplitting;
 		this.maxDist 			= settings.splittingDistanceCutoff;
 		this.timeCutoff 		= settings.splittingTimeCutoff;

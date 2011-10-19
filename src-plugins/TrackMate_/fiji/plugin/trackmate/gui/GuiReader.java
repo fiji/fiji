@@ -14,7 +14,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import org.jdom.DataConversionException;
 import org.jdom.JDOMException;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
@@ -44,18 +43,18 @@ public class GuiReader {
 
 	private TrackMateFrameController controller;
 	private Logger logger = Logger.VOID_LOGGER;
-	
+
 	/*
 	 * CONSTRUCTORS
 	 */
-	
+
 	/**
 	 * Construct a {@link GuiReader} with a target file (can be null) and no {@link TrackMateFrameController} to modify.
 	 */
 	public GuiReader() {
 		this(null);
 	}
-	
+
 	/**
 	 * Construct a {@link GuiReader}. The {@link TrackMateFrameController} will have its state
 	 * set according to the data found in the file read.
@@ -66,21 +65,21 @@ public class GuiReader {
 		if (null != controller)
 			logger = controller.getView().getLogger();
 	}
-	
-	
+
+
 	/*
 	 * METHODS
 	 */
-	
-	
+
+
 	public TrackMateModel loadFile(File file) {
-		
+
 		TrackMateFrame view;
 		if (null == controller) 
 			view = null;
 		else
 			view = controller.getView();
-		
+
 		TrackMateModel model = new TrackMateModel();
 		logger.log("Opening file "+file.getName()+'\n');
 		TmXmlReader reader = new TmXmlReader(file);
@@ -94,18 +93,12 @@ public class GuiReader {
 					+".\nError message is:\n"+e.getLocalizedMessage()+'\n');
 		}
 		logger.log("  Parsing file done.\n");
-		
+
 		Settings settings = null;
 		ImagePlus imp = null;
-		
+
 		{ // Read settings
-			try {
-				settings = reader.getSettings();
-			} catch (DataConversionException e) {
-				logger.error("Problem reading the settings field of "+file.getName()
-						+". Error message is:\n"+e.getLocalizedMessage()+'\n');
-				return null;
-			}
+			settings = reader.getSettings();
 			logger.log("  Reading settings done.\n");
 
 			// Try to read image
@@ -125,20 +118,8 @@ public class GuiReader {
 
 
 		{ // Try to read segmenter settings
-			SegmenterSettings segmenterSettings = null;
-			try {
-				segmenterSettings = reader.getSegmenterSettings();
-			} catch (DataConversionException e1) {
-				logger.error("Problem reading the segmenter settings field of "+file.getName()
-						+". Error message is:\n"+e1.getLocalizedMessage()+'\n');
-			}
+			SegmenterSettings segmenterSettings = reader.getSegmenterSettings();
 			if (null == segmenterSettings) {
-				// Fill in defaults
-				segmenterSettings = new SegmenterSettings();
-				settings.segmenterSettings = segmenterSettings;
-//				settings.segmenterType = segmenterSettings.segmenterType;
-//				settings.trackerSettings = new TrackerSettings();
-//				settings.trackerType = settings.trackerSettings.trackerType;
 				model.setSettings(settings);
 				if (null != controller) {
 					controller.setPlugin(new TrackMate_(model));
@@ -153,22 +134,13 @@ public class GuiReader {
 			}
 
 			settings.segmenterSettings = segmenterSettings;
-//			settings.segmenterType = segmenterSettings.segmenterType;
-//			settings.trackerSettings = new TrackerSettings(); // put defaults for now
-//			settings.trackerType = settings.trackerSettings.trackerType;
 			model.setSettings(settings);
 			logger.log("  Reading segmenter settings done.\n");
 		}
-		
-		
+
+
 		{ // Try to read spots
-			SpotCollection spots = null;
-			try {
-				spots = reader.getAllSpots();
-			} catch (DataConversionException e) {
-				logger.error("Problem reading the spots field of "+file.getName()
-						+". Error message is\n"+e.getLocalizedMessage()+'\n');
-			}
+			SpotCollection spots = reader.getAllSpots();
 			if (null == spots) {
 				// No spots, so we stop here, and switch to the segmenter panel
 				if (null != controller) {
@@ -181,22 +153,15 @@ public class GuiReader {
 				logger.log("Loading data finished.\n");
 				return model;
 			}
-			
+
 			// We have a spot field, update the model.
 			model.setSpots(spots, false);
 			logger.log("  Reading spots done.\n");
 		}
-		
-		
-		{ // Try to read the initial threshold
-			FeatureFilter initialThreshold = null;
-			try {
-				initialThreshold = reader.getInitialFilter();
-			} catch (DataConversionException e) {
-				logger.error("Problem reading the initial spot filter field of "+file.getName()
-						+". Error message is\n"+e.getLocalizedMessage()+'\n');
-			}
 
+
+		{ // Try to read the initial threshold
+			FeatureFilter initialThreshold = reader.getInitialFilter();
 			if (initialThreshold == null) {
 				// No initial threshold, so set it
 				if (null != controller) {
@@ -214,16 +179,9 @@ public class GuiReader {
 			model.setInitialSpotFilterValue(initialThreshold.value);
 			logger.log("  Reading initial spot filter done.\n");
 		}		
-		
-		{ // Try to read feature thresholds
-			List<FeatureFilter> featureThresholds = null;
-			try {
-				featureThresholds = reader.getSpotFeatureFilters();
-			} catch (DataConversionException e) {
-				logger.error("Problem reading the spot filters field of "+file.getName()
-						+". Error message is\n"+e.getLocalizedMessage()+'\n');
-			}
 
+		{ // Try to read feature thresholds
+			List<FeatureFilter> featureThresholds = reader.getSpotFeatureFilters();
 			if (null == featureThresholds) {
 				// No feature thresholds, we assume we have the features calculated, and put ourselves
 				// in a state such that the threshold GUI will be displayed.
@@ -249,17 +207,10 @@ public class GuiReader {
 
 
 		{ // Try to read spot selection
-			SpotCollection selectedSpots = null;
-			try {
-				selectedSpots = reader.getFilteredSpots(model.getSpots());
-			} catch (DataConversionException e) {
-				logger.error("Problem reading the filtered spots field of "+file.getName()+
-						". Error message is\n"+e.getLocalizedMessage()+'\n');
-			}
-
-			// No spot selection, so we display the feature threshold GUI, with the loaded feature threshold
-			// already in place.
+			SpotCollection selectedSpots = reader.getFilteredSpots(model.getSpots());
 			if (null == selectedSpots) {
+				// No spot selection, so we display the feature threshold GUI, with the loaded feature threshold
+				// already in place.
 				if (null != controller) {
 					view.setModel(model);
 					controller.setState(GuiState.CALCULATE_FEATURES);
@@ -278,21 +229,11 @@ public class GuiReader {
 			model.setFilteredSpots(selectedSpots, false);
 			logger.log("  Reading spot selection done.\n");
 		}
-		
+
 
 		{ // Try to read tracker settings
-			TrackerSettings trackerSettings = null;
-			try {
-				trackerSettings = reader.getTrackerSettings();
-			} catch (DataConversionException e) {
-				logger.error("Problem reading the tracker settings field of "+file.getName()
-						+". Error message is:\n"+e.getLocalizedMessage()+'\n');
-			}
+			TrackerSettings trackerSettings = reader.getTrackerSettings();
 			if (null == trackerSettings) {
-				// Fill in defaults
-				trackerSettings = new TrackerSettings();
-				settings.trackerSettings = trackerSettings;
-//				settings.trackerType = trackerSettings.trackerType;
 				model.setSettings(settings);
 				if (null != controller) {
 					view.setModel(model);
@@ -310,20 +251,14 @@ public class GuiReader {
 			}
 
 			settings.trackerSettings = trackerSettings;
-//			settings.trackerType = trackerSettings.trackerType;
+			//			settings.trackerType = trackerSettings.trackerType;
 			model.setSettings(settings);
 			logger.log("  Reading tracker settings done.\n");
 		}
-		
+
 
 		{ // Try reading the tracks
-			SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = null;
-			try {
-				graph = reader.readTracks(model.getFilteredSpots());
-			} catch (DataConversionException e) {
-				logger.error("Problem reading the track field of "+file.getName()
-						+". Error message is\n"+e.getLocalizedMessage()+'\n');
-			}
+			SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = reader.readTracks(model.getFilteredSpots());
 			if (graph == null) {
 				if (null != controller) {
 					view.setModel(model);
@@ -342,14 +277,9 @@ public class GuiReader {
 			model.setGraph(graph);
 			logger.log("  Reading tracks done.\n");
 		}
-		
+
 		{ // Try reading track filters
-			try {
-				model.setTrackFilters(reader.getTrackFeatureFilters());
-			} catch (DataConversionException e) {
-				logger.error("Problem reading the track filters field of "+file.getName()
-						+". Error message is\n"+e.getLocalizedMessage()+'\n');
-			}
+			model.setTrackFilters(reader.getTrackFeatureFilters());
 			if (model.getTrackFilters() == null) {
 				if (null != controller) {
 					view.setModel(model);
@@ -369,12 +299,7 @@ public class GuiReader {
 		}
 
 		{ // Try reading track selection
-			try {
-				model.setVisibleTrackIndices(reader.getFilteredTracks(), false);
-			} catch (DataConversionException e) {
-				logger.error("Problem reading the filtered tracks field of "+file.getName()
-						+". Error message is\n"+e.getLocalizedMessage()+'\n');
-			}
+			model.setVisibleTrackIndices(reader.getFilteredTracks(), false);
 			if (model.getVisibleTrackIndices() == null) {
 				if (null != controller) {
 					view.setModel(model);
@@ -392,7 +317,7 @@ public class GuiReader {
 			}
 			logger.log("  Reading track selection done.\n");
 		}
-		
+
 		view.setModel(model);
 		controller.actionFlag = false;
 		controller.setState(GuiState.TUNE_DISPLAY);
@@ -405,15 +330,15 @@ public class GuiReader {
 		logger.log("Loading data finished.\n");
 		return model;
 	}
-	
-	
+
+
 	public File askForFile(File file) {
 		JFrame parent;
 		if (null == controller) 
 			parent = null;
 		else
 			parent = controller.getView();
-		
+
 		if(IJ.isMacintosh()) {
 			// use the native file dialog on the mac
 			FileDialog dialog =	new FileDialog(parent, "Select a TrackMate file", FileDialog.LOAD);
@@ -433,7 +358,7 @@ public class GuiReader {
 				return null;
 			}
 			file = new File(dialog.getDirectory(), selectedFile);
-			
+
 		} else {
 			// use a swing file dialog on the other platforms
 			JFileChooser fileChooser = new JFileChooser(file.getParent());
@@ -450,6 +375,6 @@ public class GuiReader {
 		}
 		return file;
 	}
-	
-	
+
+
 }

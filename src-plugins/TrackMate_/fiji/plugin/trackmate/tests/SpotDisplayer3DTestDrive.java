@@ -37,8 +37,7 @@ public class SpotDisplayer3DTestDrive {
 	public static void main(String[] args) {
 
 		System.out.println(Install_J3D.getJava3DVersion());
-		
-		
+				
 		final int N_BLOBS = 20;
 		final float RADIUS = 5; // µm
 		final Random RAN = new Random();

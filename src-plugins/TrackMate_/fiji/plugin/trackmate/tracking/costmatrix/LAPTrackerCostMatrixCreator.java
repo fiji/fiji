@@ -1,7 +1,8 @@
 package fiji.plugin.trackmate.tracking.costmatrix;
 
-import fiji.plugin.trackmate.tracking.TrackerSettings;
 import Jama.Matrix;
+import fiji.plugin.trackmate.tracking.LAPTracker;
+import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
 
 /**
  * Contains the mutually shared fields and private functions used by the two 
@@ -20,13 +21,13 @@ public abstract class LAPTrackerCostMatrixCreator implements CostMatrixCreator {
 	/** Stores whether the user has run checkInput() or not. */
 	protected boolean inputChecked = false;
 	/** The settings to comply to create a cost matrix. */
-	protected  TrackerSettings settings;
+	protected LAPTrackerSettings settings;
 	
 	/*
 	 * CONSTRUCTOR
 	 */
 	
-	protected LAPTrackerCostMatrixCreator(TrackerSettings settings) {
+	protected LAPTrackerCostMatrixCreator(LAPTrackerSettings settings) {
 		this.settings = settings;
 	}
 	

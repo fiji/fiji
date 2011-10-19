@@ -6,7 +6,7 @@ public class ManualSegmenter <T extends RealType<T>> extends AbstractSpotSegment
 
 	@Override
 	public SegmenterSettings createDefaultSettings() {
-		return new SegmenterSettings();
+		return new BasicSegmenterSettings();
 	}
 
 	@Override

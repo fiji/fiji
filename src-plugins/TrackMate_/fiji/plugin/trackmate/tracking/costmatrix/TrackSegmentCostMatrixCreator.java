@@ -8,8 +8,8 @@ import java.util.SortedSet;
 import Jama.Matrix;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
 import fiji.plugin.trackmate.tracking.LAPUtils;
-import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.tracking.costfunction.GapClosingCostFunction;
 import fiji.plugin.trackmate.tracking.costfunction.MergingCostFunction;
 import fiji.plugin.trackmate.tracking.costfunction.SplittingCostFunction;
@@ -112,7 +112,7 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 * an <code>ArrayList</code> of <code>Spots</code>.
 	 */
 
-	public TrackSegmentCostMatrixCreator(List<SortedSet<Spot>> trackSegments, TrackerSettings settings) {
+	public TrackSegmentCostMatrixCreator(List<SortedSet<Spot>> trackSegments, LAPTrackerSettings settings) {
 		super(settings);
 		this.trackSegments = trackSegments;
 	}

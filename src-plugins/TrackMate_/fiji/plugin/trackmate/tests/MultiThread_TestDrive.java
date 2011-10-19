@@ -10,9 +10,8 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.segmentation.LogSegmenter;
-import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
 import fiji.plugin.trackmate.tracking.LAPTracker;
-import fiji.plugin.trackmate.tracking.TrackerSettings;
+import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
 
 public class MultiThread_TestDrive {
 
@@ -28,14 +27,7 @@ public class MultiThread_TestDrive {
 		TrackMateModel model = reader.getModel();
 
 		model.getSettings().segmenter = new LogSegmenter();
-		LogSegmenterSettings old = (LogSegmenterSettings) model.getSettings().segmenterSettings;
-		LogSegmenterSettings nss = new LogSegmenterSettings();
-		nss.expectedRadius = old.expectedRadius;
-		nss.threshold = old.threshold;
-		nss.useMedianFilter = old.useMedianFilter;
-		model.getSettings().segmenterSettings = nss;
-
-		model.getSettings().trackerSettings = new TrackerSettings();
+		model.getSettings().trackerSettings = new LAPTrackerSettings();
 
 		System.out.println(model.getSettings());
 		System.out.println(model.getSettings().segmenterSettings);
@@ -46,7 +38,7 @@ public class MultiThread_TestDrive {
 		
 		LAPTracker tracker = new LAPTracker();
 		tracker.setModel(model);
-		tracker.setNumThreads();
+		tracker.setNumThreads(1);
 		tracker.setLogger(Logger.VOID_LOGGER);
 
 		long start = System.currentTimeMillis();

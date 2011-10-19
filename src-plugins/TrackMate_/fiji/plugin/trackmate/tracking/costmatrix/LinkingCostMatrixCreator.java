@@ -4,7 +4,7 @@ import java.util.List;
 
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.tracking.TrackerSettings;
+import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
 import fiji.plugin.trackmate.tracking.costfunction.LinkingCostFunction;
 
 /**
@@ -35,7 +35,7 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 */
 
 
-	public LinkingCostMatrixCreator(final List<Spot> t0, final List<Spot> t1, final TrackerSettings settings) {
+	public LinkingCostMatrixCreator(final List<Spot> t0, final List<Spot> t1, final LAPTrackerSettings settings) {
 		super(settings);
 		this.t0 = t0;
 		this.t1 = t1;
