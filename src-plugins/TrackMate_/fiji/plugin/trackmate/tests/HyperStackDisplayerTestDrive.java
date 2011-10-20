@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import org.jdom.JDOMException;
 
+import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.action.GrabSpotImageAction;
 import fiji.plugin.trackmate.io.TmXmlReader;
@@ -20,7 +21,7 @@ public class HyperStackDisplayerTestDrive {
 
 	public static void main(String[] args) throws JDOMException, IOException {
 		
-		TmXmlReader reader = new TmXmlReader(file);
+		TmXmlReader reader = new TmXmlReader(file, Logger.DEFAULT_LOGGER);
 		reader.parse();
 		
 		ij.ImageJ.main(args);

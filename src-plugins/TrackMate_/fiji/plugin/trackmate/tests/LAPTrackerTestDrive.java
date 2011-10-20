@@ -28,7 +28,7 @@ public class LAPTrackerTestDrive {
 		
 		// 1 - Load test spots
 		System.out.println("Opening file: "+file.getAbsolutePath());		
-		TmXmlReader reader = new TmXmlReader(file);
+		TmXmlReader reader = new TmXmlReader(file, Logger.DEFAULT_LOGGER);
 		TrackMateModel model = null;
 		// Parse
 		try {

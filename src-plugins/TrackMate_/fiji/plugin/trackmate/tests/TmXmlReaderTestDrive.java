@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import org.jdom.JDOMException;
 
+import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
@@ -21,7 +22,7 @@ public class TmXmlReaderTestDrive {
 		ij.ImageJ.main(args);
 		
 		System.out.println("Opening file: "+file.getAbsolutePath());		
-		TmXmlReader reader = new TmXmlReader(file);
+		TmXmlReader reader = new TmXmlReader(file, Logger.DEFAULT_LOGGER);
 		TrackMateModel model = null;
 		// Parse
 		try {

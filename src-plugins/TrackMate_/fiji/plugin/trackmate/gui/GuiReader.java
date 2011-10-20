@@ -51,9 +51,9 @@ public class GuiReader {
 	/**
 	 * Construct a {@link GuiReader} with a target file (can be null) and no {@link TrackMateFrameController} to modify.
 	 */
-	public GuiReader() {
-		this(null);
-	}
+//	public GuiReader() {
+//		this(null);
+//	}
 
 	/**
 	 * Construct a {@link GuiReader}. The {@link TrackMateFrameController} will have its state
@@ -82,7 +82,7 @@ public class GuiReader {
 
 		TrackMateModel model = new TrackMateModel();
 		logger.log("Opening file "+file.getName()+'\n');
-		TmXmlReader reader = new TmXmlReader(file);
+		TmXmlReader reader = new TmXmlReader(file, logger);
 		try {
 			reader.parse();
 		} catch (JDOMException e) {

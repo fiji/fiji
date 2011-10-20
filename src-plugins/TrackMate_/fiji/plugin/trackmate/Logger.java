@@ -96,7 +96,7 @@ public abstract class Logger extends PrintWriter {
 		}
 		@Override
 		public void error(String message) {
-			System.err.println(message);
+			System.err.print(message);
 		}
 		@Override
 		public void setProgress(float val) {}

@@ -41,15 +41,17 @@ public class TmXmlKeys {
 	 * SEGMENTER SETTINGS
 	 */
 	
-	public static final String SEGMENTER_SETTINGS_ELEMENT_KEY 						= "SegmenterSettings";
-	public static final String SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME 	= "segmentertype";
+	public static final String SEGMENTER_SETTINGS_ELEMENT_KEY 			= "SegmenterSettings";
+	public static final String SEGMENTER_SETTINGS_CLASS_ATTRIBUTE_NAME 	= "segmentersettingsclass";
+	public static final String SEGMENTER_CLASS_ATTRIBUTE_NAME 			= "segmenterclass";
 
 	/*
 	 * TRACKER SETTINGS
 	 */
 	
-	public static final String TRACKER_SETTINGS_ELEMENT_KEY							= "TrackerSettings";
-	public static final String TRACKER_SETTINGS_TRACKER_TYPE_ATTRIBUTE_NAME			= "trackertype";
+	public static final String TRACKER_SETTINGS_ELEMENT_KEY				= "TrackerSettings";
+	public static final String TRACKER_SETTINGS_CLASS_ATTRIBUTE_NAME	= "trackersettingsclass";
+	public static final String TRACKER_CLASS_ATTRIBUTE_NAME				= "trackerclass";
 	
 	/*
 	 * IMAGE element

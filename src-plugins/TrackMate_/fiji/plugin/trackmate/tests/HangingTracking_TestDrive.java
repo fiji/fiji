@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import org.jdom.JDOMException;
 
+import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.spot.BlobMorphology;
@@ -21,7 +22,7 @@ public class HangingTracking_TestDrive {
 
 	public static void main(String[] args) throws JDOMException, IOException {
 
-		TmXmlReader reader = new TmXmlReader(file);
+		TmXmlReader reader = new TmXmlReader(file, Logger.DEFAULT_LOGGER);
 		reader.parse();
 		SpotCollection spots = reader.getAllSpots();
 		SpotCollection filteredSpots = reader.getFilteredSpots(spots);

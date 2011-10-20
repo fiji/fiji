@@ -22,7 +22,7 @@ public class MultiThread_TestDrive {
 
 		//		File file = new File("/Users/tinevez/Projects/DMontaras/20052011_8_20.xml");
 		File file = new File("/Users/tinevez/Desktop/Data/FakeTracks2.xml");
-		TmXmlReader reader = new TmXmlReader(file);
+		TmXmlReader reader = new TmXmlReader(file, Logger.DEFAULT_LOGGER);
 		reader.parse();
 		TrackMateModel model = reader.getModel();
 

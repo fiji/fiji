@@ -41,9 +41,9 @@ public class TmXmlWriter {
 	 * CONSTRUCTORS
 	 */
 
-	public TmXmlWriter(TrackMateModel model) {
-		this(model, null);
-	}
+//	public TmXmlWriter(TrackMateModel model) {
+//		this(model, null);
+//	}
 
 	public TmXmlWriter(TrackMateModel model, Logger logger) {
 		this.model = model;
@@ -129,7 +129,7 @@ public class TmXmlWriter {
 		echoFilteredTracks();
 	}
 
-	
+
 	/**
 	 * Write the document to the given file.
 	 */
@@ -162,21 +162,35 @@ public class TmXmlWriter {
 
 	private void echoSegmenterSettings() {
 		Element el = new Element(SEGMENTER_SETTINGS_ELEMENT_KEY);
-		el.setAttribute(SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME, 
-				model.getSettings().segmenterSettings.getClass().getName());
-		model.getSettings().segmenterSettings.marshall(el);
+		if (null != model.getSettings().segmenter) {
+			el.setAttribute(SEGMENTER_CLASS_ATTRIBUTE_NAME, model.getSettings().segmenter.getClass().getName());
+		}
+		if (null != model.getSettings().segmenterSettings) {
+			el.setAttribute(SEGMENTER_SETTINGS_CLASS_ATTRIBUTE_NAME, model.getSettings().segmenterSettings.getClass().getName());
+			model.getSettings().segmenterSettings.marshall(el);
+			logger.log("  Appending segmenter settings.\n"); 
+		} else {
+			logger.log("  Segmenter settings are null.\n");
+		}
 		root.addContent(el);
-		logger.log("  Appending segmenter settings.\n");
 		return;
 	}
 
 	private void echoTrackerSettings() {
-		TrackerSettings settings = model.getSettings().trackerSettings;
 		Element element = new Element(TRACKER_SETTINGS_ELEMENT_KEY);
-		settings.marshall(element);
+		if (null != model.getSettings().tracker) {
+			element.setAttribute(TRACKER_SETTINGS_CLASS_ATTRIBUTE_NAME, model.getSettings().tracker.getClass().getName());
+		}
+		TrackerSettings settings = model.getSettings().trackerSettings;
+		if (null != settings) {
+			element.setAttribute(TRACKER_SETTINGS_CLASS_ATTRIBUTE_NAME, settings.getClass().getName());
+			settings.marshall(element);
+			logger.log("  Appending tracker settings.\n");
+		} else {
+			logger.log("  Tracker settings are null.\n");
+		}
 		// Add to root		
 		root.addContent(element);
-		logger.log("  Appending tracker settings.\n");
 		return;
 	}
 
@@ -187,10 +201,10 @@ public class TmXmlWriter {
 		Element allTracksElement = new Element(TRACK_COLLECTION_ELEMENT_KEY);
 
 		List<Set<DefaultWeightedEdge>> trackEdges = model.getTrackEdges();
-		
+
 		for (int trackIndex = 0; trackIndex < trackEdges.size(); trackIndex++) {
 			Set<DefaultWeightedEdge> track = trackEdges.get(trackIndex);
-		
+
 			Element trackElement = new Element(TRACK_ELEMENT_KEY);
 			// Echo attributes and features
 			trackElement.setAttribute(TRACK_ID_ATTRIBUTE_NAME, ""+trackIndex);
@@ -208,12 +222,12 @@ public class TmXmlWriter {
 				Spot source = model.getEdgeSource(edge);
 				Spot target = model.getEdgeTarget(edge);
 				double weight = model.getEdgeWeight(edge);
-				
+
 				Element edgeElement = new Element(TRACK_EDGE_ELEMENT_KEY);
 				edgeElement.setAttribute(TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, ""+source.ID());
 				edgeElement.setAttribute(TRACK_EDGE_TARGET_ATTRIBUTE_NAME, ""+target.ID());
 				edgeElement.setAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME, ""+weight);
-				
+
 				trackElement.addContent(edgeElement);
 			}
 			allTracksElement.addContent(trackElement);
@@ -222,12 +236,12 @@ public class TmXmlWriter {
 		logger.log("  Appending tracks.\n");
 		return;
 	}
-	
+
 	private void echoFilteredTracks() {
 		if (model.getVisibleTrackIndices() == null) {
 			return;
 		}
-		
+
 		Element filteredTracksElement = new Element(FILTERED_TRACK_ELEMENT_KEY);
 		Set<Integer> indices = model.getVisibleTrackIndices();
 		for(int trackIndex : indices) {
@@ -313,7 +327,7 @@ public class TmXmlWriter {
 		logger.log("  Appending spot feature filters.\n");
 		return;
 	}
-	
+
 	private void echoTrackFilters() {
 		List<FeatureFilter> featureThresholds = model.getTrackFilters();
 

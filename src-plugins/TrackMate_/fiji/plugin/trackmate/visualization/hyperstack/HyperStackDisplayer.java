@@ -164,7 +164,7 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 		imp.setOpenAsHyperStack(true);
 		canvas = new OverlayedImageCanvas(imp);
 		window = new StackWindow(imp, canvas);
-		window.show();
+		window.setVisible(true);
 		//
 		spotOverlay = createSpotOverlay();
 		//

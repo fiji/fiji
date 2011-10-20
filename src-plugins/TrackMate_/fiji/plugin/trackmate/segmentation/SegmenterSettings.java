@@ -35,7 +35,7 @@ public interface SegmenterSettings {
 	 * Marshalling should be done by adding {@link Attribute}s to the given element, 
 	 * and/or child {@link Element}s. In the XML file, the mother element will have the
 	 * name {@link TmXmlKeys#SEGMENTER_SETTINGS_ELEMENT_KEY} and at least one attribute
-	 * with name {@link TmXmlKeys#SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME} and 
+	 * with name {@link TmXmlKeys#SEGMENTER_SETTINGS_CLASS_ATTRIBUTE_NAME} and 
 	 * value the name of the concrete settings class, to allow for unmarshsalling.
 	 * 
 	 * @return  the JDom element
