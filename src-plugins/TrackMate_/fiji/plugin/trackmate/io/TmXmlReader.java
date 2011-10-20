@@ -250,7 +250,7 @@ public class TmXmlReader {
 		TrackerSettings settings = null;
 		Element el = root.getChild(TRACKER_SETTINGS_ELEMENT_KEY);
 		if (null != el) {
-			String trackerTypeStr = el.getAttributeValue(SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME);
+			String trackerTypeStr = el.getAttributeValue(TRACKER_SETTINGS_TRACKER_TYPE_ATTRIBUTE_NAME);
 			try {
 				settings = (TrackerSettings) Class.forName(trackerTypeStr).newInstance();
 				settings.unmarshall(el);

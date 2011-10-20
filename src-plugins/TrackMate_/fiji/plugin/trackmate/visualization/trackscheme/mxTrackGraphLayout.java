@@ -195,6 +195,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					// Set cell style and image
 					style = mxUtils.setStyle(style, mxConstants.STYLE_STROKECOLOR, trackColorStr);
 					style = graph.getModel().setStyle(cell, style);
+					
 				}
 
 				// Second pass: we know iterate over each spot's edges
@@ -282,11 +283,10 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 			// Clean previous branch cells
 			for (mxCell branchCell : branchCells )
 				graph.getModel().remove(branchCell);
-					branchCells = newBranchCells;
-
-
+			branchCells = newBranchCells;
 
 		} finally {
+
 			graph.getModel().endUpdate();
 		}
 	}
