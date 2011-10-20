@@ -11,7 +11,7 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 public class LAPTrackerSettingsPanel extends TrackerSettingsPanel {
 
-	private static final long serialVersionUID = -2536527408461090418L;
+	private static final long serialVersionUID = 1L;
 	private JPanelTrackerSettingsMain jPanelMain;
 	
 	/*

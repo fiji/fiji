@@ -38,12 +38,35 @@ public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 	/*
 	 * PUBLIC METHODS
 	 */
-	
+
+	/**
+	 * Set the features and their names that should be presented by this GUI.
+	 * The user will be allowed to choose amongst the given features. 
+	 */
 	public void setDisplayFeatures(List<String> features, Map<String, String> featureNames) {
 		this.features = features;
 		this.featureNames = featureNames;
 	}
-	
+
+	public void setSelectedFeaturePenalties(Map<String, Double> penalties) {
+		// Remove old features
+		while (!featurePanels.isEmpty()) {
+			JPanelFeaturePenalty panel = featurePanels.pop();
+			remove(panel);
+		}
+		// Remove buttons 
+		remove(jPanelButtons);
+		// Add new panels
+		for (String feature : penalties.keySet()) {
+			int localIndex = features.indexOf(feature);
+			JPanelFeaturePenalty panel = new JPanelFeaturePenalty(features, featureNames, localIndex);
+			panel.setSelectedFeature(feature, penalties.get(feature));
+			add(panel);
+			featurePanels.push(panel);
+		}
+		// Add buttons back
+		add(jPanelButtons);
+	}
 	
 	public Map<String, Double>	getFeatureWeights() {
 		Map<String, Double> weights = new HashMap<String, Double>(featurePanels.size());
@@ -129,4 +152,5 @@ public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 			e.printStackTrace();
 		}
 	}
+
 }

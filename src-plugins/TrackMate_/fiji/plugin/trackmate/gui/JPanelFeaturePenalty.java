@@ -32,6 +32,15 @@ public class JPanelFeaturePenalty extends javax.swing.JPanel {
 	 * PUBLIC METHODS
 	 */
 	
+	public void setSelectedFeature(String feature, double weight) {
+		int index = features.indexOf(feature);
+		if (index < 0) {
+			return;
+		}
+		jComboBoxFeature.setSelectedIndex(index);
+		jTextFieldFeatureWeight.setText(""+weight);
+	}
+	
 	public String getSelectedFeature() {
 		return features.get(jComboBoxFeature.getSelectedIndex());
 	}
@@ -62,14 +71,14 @@ public class JPanelFeaturePenalty extends javax.swing.JPanel {
 				jComboBoxFeature = new JComboBox();
 				this.add(jComboBoxFeature);
 				jComboBoxFeature.setModel(jComboBoxFeatureModel);
-				jComboBoxFeature.setBounds(12, 4, 214, 22);
+				jComboBoxFeature.setBounds(2, 4, 205, 22);
 				jComboBoxFeature.setFont(SMALL_FONT);
 			}
 			{
 				jTextFieldFeatureWeight = new JNumericTextField();
 				this.add(jTextFieldFeatureWeight);
 				jTextFieldFeatureWeight.setText("1.0");
-				jTextFieldFeatureWeight.setBounds(238, 4, 30, 22);
+				jTextFieldFeatureWeight.setBounds(220, 4, 30, 22);
 				jTextFieldFeatureWeight.setSize(TEXTFIELD_DIMENSION);
 				jTextFieldFeatureWeight.setFont(SMALL_FONT);
 			}
