@@ -1780,6 +1780,15 @@ static void keep_only_one_memory_option(struct string_array *options)
 	options->nr = j;
 }
 
+static char has_memory_option(struct string_array *options)
+{
+	int i;
+	for (i = 0; i < options->nr; i++)
+		if (!prefixcmp(options->list[i], "-Xm"))
+			return 1;
+	return 0;
+}
+
 __attribute__((unused))
 static void read_file_as_string(const char *file_name, struct string *contents)
 {
@@ -2572,7 +2581,7 @@ static void parse_command_line(void)
 	add_option(&options, plugin_path->buffer, 0);
 
 	// if arguments don't set the memory size, set it after available memory
-	if (memory_size == 0) {
+	if (memory_size == 0 && !has_memory_option(&options.java_options)) {
 		memory_size = get_memory_size(0);
 		/* 0.75x, but avoid multiplication to avoid overflow */
 		memory_size -= memory_size >> 2;
