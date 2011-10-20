@@ -9,14 +9,13 @@ import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
-
 public class FijiTools {
 	public static String getFijiDir() throws ClassNotFoundException {
 		String path = System.getProperty("fiji.dir");
 		if (path != null)
 			return path;
 		final String prefix = "file:";
-		final String suffix = "/jars/Fiji.jar!/fiji/FijiTools.class";
+		final String suffix = "/jars/fiji-compat.jar!/fiji/FijiTools.class";
 		path = Class.forName("fiji.FijiTools")
 			.getResource("FijiTools.class").getPath();
 		if (path.startsWith(prefix))

@@ -47,6 +47,7 @@ hs_err*.log
 /jars/fake.jar
 /jars/ij.jar
 /jars/Fiji.jar
+/jars/fiji-compat.jar
 /plugins/Jython_Interpreter.jar
 /plugins/Clojure_Interpreter.jar
 /plugins/JRuby_Interpreter.jar
@@ -134,7 +135,7 @@ hs_err*.log
 /plugins/Image_Expression_Parser.jar
 /plugins/Algorithm_Launcher.jar
 /jars/VIB-lib.jar
-/src-plugins/Fiji/icon.png
+/src-plugins/fiji-compat/icon.png
 /src-plugins/Script_Editor/function.png
 /src-plugins/Script_Editor/icon.png
 /src-plugins/Script_Editor/var.png

@@ -11,11 +11,22 @@ public class ClassLauncher {
 	 *        with the remaining arguments.
 	 */
 	public static void main(String[] arguments) {
-		new IJ1Patcher().run();
+		try {
+			patchIJ1();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		String[] stripped = new String[arguments.length - 1];
 		if (stripped.length > 0)
 			System.arraycopy(arguments, 1, stripped, 0, stripped.length);
 		launch(arguments[0], stripped);
+	}
+
+	protected static void patchIJ1() throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+		ClassLoader loader = ClassLauncher.class.getClassLoader();
+		Class<Runnable> clazz = (Class<Runnable>)loader.loadClass("fiji.IJ1Patcher");
+		Runnable ij1Patcher = clazz.newInstance();
+		ij1Patcher.run();
 	}
 
 	protected static void launch(String className, String[] arguments) {

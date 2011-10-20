@@ -225,7 +225,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Threshold_Colour.jar \
 	plugins/Helmholtz_Analysis.jar \
 	plugins/Descriptor_based_registration.jar \
-	plugins/Reconstruct_Reader.jar
+	plugins/Reconstruct_Reader.jar \
+	jars/fiji-compat.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
@@ -302,7 +303,7 @@ jars/batik.jar <- fiji modules/batik/
 jars/junit-4.5.jar <- fiji modules/junit/
 jars/rsyntaxtextarea.jar <- fiji modules/RSyntaxTextArea/
 jars/autocomplete.jar <- fiji modules/AutoComplete/
-jars/weka.jar <- fiji jars/Fiji.jar modules/weka/
+jars/weka.jar <- fiji jars/fiji-compat.jar modules/weka/
 jars/jython.jar <- fiji modules/jython/
 jars/commons-math.jar <- fiji modules/commons-math/
 jars/javassist.jar <- modules/javassist/
@@ -339,13 +340,15 @@ plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Scree
 
 plugins/Trainable_Segmentation.jar <- src-plugins/Trainable_Segmentation/**/*java src-plugins/Trainable_Segmentation/trainableSegmentation/images/*png src-plugins/Trainable_Segmentation/*
 
-mainClass(jars/Fiji.jar)=fiji.Main
-src-plugins/Fiji/icon.png[cp $PRE $TARGET] <- images/icon.png
+mainClass(jars/Fiji.jar)=fiji.ClassLauncher
+
+mainClass(jars/fiji-compat.jar)=fiji.Main
+src-plugins/fiji-compat/icon.png[cp $PRE $TARGET] <- images/icon.png
 
 MAINCLASS(jars/javac.jar)=com.sun.tools.javac.Main
 
-CLASSPATH(jars/fiji-scripting.jar)=jars/ij.jar:jars/jython.jar:jars/Fiji.jar:jars/bsh-2.0b4.jar:jars/js.jar
-CLASSPATH(plugins/Refresh_Javas.jar)=jars/ij.jar:jars/fiji-scripting.jar:jars/fake.jar:jars/Fiji.jar
+CLASSPATH(jars/fiji-scripting.jar)=jars/ij.jar:jars/jython.jar:jars/fiji-compat.jar:jars/bsh-2.0b4.jar:jars/js.jar
+CLASSPATH(plugins/Refresh_Javas.jar)=jars/ij.jar:jars/fiji-scripting.jar:jars/fake.jar:jars/fiji-compat.jar
 CLASSPATH(plugins/Jython_Interpreter.jar)=jars/ij.jar:jars/fiji-scripting.jar:jars/jython.jar
 CLASSPATH(plugins/Clojure_Interpreter.jar)=jars/ij.jar:jars/fiji-scripting.jar:jars/clojure.jar
 CLASSPATH(plugins/JRuby_Interpreter.jar)=jars/ij.jar:jars/fiji-scripting.jar:jars/jruby.jar
@@ -353,7 +356,7 @@ CLASSPATH(plugins/BeanShell_Interpreter.jar)=jars/ij.jar:jars/fiji-scripting.jar
 CLASSPATH(plugins/Javascript_.jar)=jars/ij.jar:jars/fiji-scripting.jar:jars/js.jar
 CLASSPATH(plugins/CLI_.jar)=jars/ij.jar:jars/fiji-scripting.jar
 MAINCLASS(plugins/Script_Editor.jar)=fiji.scripting.Script_Editor
-CLASSPATH(plugins/Script_Editor.jar)=jars/ij.jar:jars/rsyntaxtextarea.jar:jars/autocomplete.jar:plugins/Clojure_Interpreter.jar:plugins/JRuby_Interpreter.jar:plugins/Javascript_.jar:plugins/Jython_Interpreter.jar:plugins/Refresh_Javas.jar:plugins/BeanShell_Interpreter.jar:plugins/CLI_.jar:jars/fiji-scripting.jar:jars/Fiji.jar:jars/imglib.jar:jars/fiji-lib.jar:jars/fake.jar:$TOOLS_JAR:jars/jfreechart-1.0.13.jar:jars/imglib-ij.jar:jars/commons-math.jar
+CLASSPATH(plugins/Script_Editor.jar)=jars/ij.jar:jars/rsyntaxtextarea.jar:jars/autocomplete.jar:plugins/Clojure_Interpreter.jar:plugins/JRuby_Interpreter.jar:plugins/Javascript_.jar:plugins/Jython_Interpreter.jar:plugins/Refresh_Javas.jar:plugins/BeanShell_Interpreter.jar:plugins/CLI_.jar:jars/fiji-scripting.jar:jars/fiji-compat.jar:jars/imglib.jar:jars/fiji-lib.jar:jars/fake.jar:$TOOLS_JAR:jars/jfreechart-1.0.13.jar:jars/imglib-ij.jar:jars/commons-math.jar
 NO_COMPILE(plugins/Script_Editor.jar)=src-plugins/Script_Editor/templates/**/*
 src-plugins/Script_Editor/icon.png[cp $PRE $TARGET] <- images/icon.png
 src-plugins/Script_Editor/var.png[cp $PRE $TARGET] <- images/var.png
@@ -425,7 +428,7 @@ CLASSPATH(plugins/LocalThickness_.jar)=jars/ij.jar
 CLASSPATH(plugins/Volume_Viewer.jar)=jars/ij.jar
 CLASSPATH(jars/batik.jar)=jars/jacl.jar:plugins/loci_tools.jar:jars/jython.jar
 CLASSPATH(plugins/Stack_Manipulation.jar)=jars/ij.jar
-CLASSPATH(jars/Fiji.jar)=jars/ij.jar:jars/javassist.jar
+CLASSPATH(jars/fiji-compat.jar)=jars/Fiji.jar:jars/ij.jar:jars/javassist.jar
 CLASSPATH(plugins/TurboReg_.jar)=jars/ij.jar
 CLASSPATH(plugins/RATS_.jar)=jars/ij.jar
 CLASSPATH(plugins/Interactive_3D_Surface_Plot.jar)=jars/ij.jar
@@ -456,7 +459,7 @@ CLASSPATH(jars/wavelets.jar)=jars/ij.jar
 CLASSPATH(jars/imageware.jar)=jars/ij.jar
 CLASSPATH(plugins/Extended_Depth_Field.jar)=jars/ij.jar:jars/imageware.jar:jars/wavelets.jar
 CLASSPATH(plugins/panorama_.jar)=jars/ij.jar:jars/mpicbg.jar:/jars/mpicbg_.jar
-CLASSPATH(jars/weave_jy2java.jar)=plugins/Refresh_Javas.jar:jars/fiji-scripting.jar:jars/Fiji.jar:jars/ij.jar:plugins/Script_Editor.jar
+CLASSPATH(jars/weave_jy2java.jar)=plugins/Refresh_Javas.jar:jars/fiji-scripting.jar:jars/fiji-compat.jar:jars/ij.jar:plugins/Script_Editor.jar
 CLASSPATH(plugins/3D_Blob_Segmentation.jar)=jars/ij.jar:plugins/level_sets.jar:plugins/3D_Viewer.jar:jars/VIB-lib.jar:jars/imglib.jar:$JAVA3D_JARS
 CLASSPATH(plugins/Feature_Detection.jar)=jars/ij.jar:jars/imglib-ij.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/Jama-1.0.2.jar
 LIBS(plugins/JNI_Example.jar)=-lm
@@ -500,7 +503,7 @@ jars/*.jar <- src-plugins/*/**/*
 
 # headless.jar
 
-misc/headless.jar[bin/make-headless-jar.bsh] <- jars/Fiji.jar jars/javassist.jar jars/ij.jar
+misc/headless.jar[bin/make-headless-jar.bsh] <- jars/fiji-compat.jar jars/javassist.jar jars/ij.jar
 
 # Fiji launcher
 
@@ -543,6 +546,7 @@ LIBS(linux64)=-ldl -lpthread
 LIBS(macosx)=-weak -framework CoreFoundation -framework ApplicationServices \
 	-framework JavaVM
 
+CLASSPATH(fiji)=jars/Fiji.jar
 fiji <- fiji.c
 
 CFLAGS(fiji-macosx)=$COMMONCFLAGS $MACOPTS(osx10.5)
@@ -635,7 +639,7 @@ precompile[] <- precompile-fiji precompile-fake precompile-submodules
 # precompiled fall back
 
 missingPrecompiledFallBack[./fiji --update update $TARGET] <- \
-	jars/Fiji.jar plugins/Fiji_Updater.jar
+	jars/Fiji.jar jars/fiji-compat.jar plugins/Fiji_Updater.jar
 
 # Portable application/.app
 
