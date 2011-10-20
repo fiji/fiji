@@ -4,26 +4,19 @@ GUI
 		- specifying if we want to save the spot snapshot in the xml file;
 		- if we want to store data as a zipped xml file
 - Add panel allowing to specify what spot features we want to compute. Maybe this should
-go in the separate configuration panel. This needs rewriting the spot features, so that
-we only walk with a list of them, not with the whole enum values. That could foster the
-de-enumification noted below. 
-
-
-Design:
-- De-enumify TrackMate to implement Johannes idea.
+go in the separate configuration panel. 
 
 
 Bugs:
 - Check if TrackScheme still reports edge deletion problems.
 - When in the panel that allow selecting tracker, saving saves nothing.
-- The name of the tracker displayed in the tracker config panel turns not 
-to be the right one after moving back and forth in the GUI (again).
-- The feature penalties are not displayed in the Tracker settings GUI panel,
-after the user set some and comes back to this panel.
 - The estimate radius feature calculator should be more accurate. It seems
 like it reports only a finite number of values, corresponding to the discrete
 possible radii, and not the interpolated ones.
-
+- Are the spot circles drawn at the right x,y position? It seems like they are centered
+at the corner of the pixel, and not at the pixel center.
+- Unsolvable bug: in TrackScheme, when TrackMate is launched from Fiji, the cells
+are not movable???!
 
 Features:
 - Implement edge features. Maybe not.
@@ -34,11 +27,6 @@ Segmenting:
 - Implement an algorithm to segment cell imaged in phase-contrast.
 
 
-Tracking:
-- Offer to completely skip the 2nd step in LAP resolution, and only perform
-the frame to frame linking. 
-
-
 Actions:
 - Set radius to estimate should refresh the displayer.
 
@@ -47,14 +35,11 @@ Track scheme
 - Add the ability to name tracks.
 - Add a side table to display track features.
 - Allow to export side tables content to csv or xls.
-- Selection and graph modification should be done on a separate thread, because for
-large graphs, they are quite slow and block everything.
 
 
 Export/Import
 - Offer to select displayer at load.
 - Save the spot images in the xml file.
-- Make a MATLAB function to import xml files as MATLAB variables. In progress.
 
 
 Making it available.

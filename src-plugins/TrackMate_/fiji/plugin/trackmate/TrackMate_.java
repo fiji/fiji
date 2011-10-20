@@ -65,7 +65,7 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 public class TrackMate_ implements PlugIn {
 
 	public static final String PLUGIN_NAME_STR = "Track Mate";
-	public static final String PLUGIN_NAME_VERSION = ".beta_2011-09-23";
+	public static final String PLUGIN_NAME_VERSION = ".beta_2011-10-20";
 	public static final boolean DEFAULT_USE_MULTITHREADING = true;
 
 	private TrackMateModel model;
