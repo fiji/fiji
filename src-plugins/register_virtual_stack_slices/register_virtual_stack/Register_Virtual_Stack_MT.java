@@ -322,7 +322,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			final boolean non_shrink) 
 	{
 		// get file listing
-		final String exts = ".tif.jpg.png.gif.tiff.jpeg.bmp.pgm";
+		final String exts = ".tif.jpg.png.gif.tiff.jpeg.bmp.pgm.ima";
 		final String[] names = new File(source_dir).list(new FilenameFilter() 
 		{
 			public boolean accept(File dir, String name) 
