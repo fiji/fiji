@@ -413,6 +413,10 @@ public class IJHacker extends JavassistHelper {
 			+ "      $1.setIconImage(img);"
 			+ "  }"
 			+ "}");
+		if (!hasMethod(clazz, "setCurrentWindow", "(Lij/gui/ImageWindow;Z)V"))
+			clazz.addMethod(CtNewMethod.make("public static void setCurrentWindow(ij.gui.ImageWindow window, boolean suppressRecording /* unfortunately ignored now */) {"
+				+ "  setCurrentWindow(window);"
+				+ "}", clazz));
 
 		// Class ij.macro.Functions
 		clazz = get("ij.macro.Functions");
@@ -470,7 +474,9 @@ public class IJHacker extends JavassistHelper {
 						+ "    return;"
 						+ "}");
 				else if (name.equals("runCommand"))
-					call.replace("cmd.runCommand(listeners);");
+					call.replace("if (this.cmd == null || !this.cmd.command.equals($1))"
+						+ "  this.cmd = new fiji.command.Command($1);"
+						+ "this.cmd.runCommand(listeners);");
 			}
 
 			@Override
@@ -542,11 +548,11 @@ public class IJHacker extends JavassistHelper {
 
 		}
 
-		// If there is a macros/StartupMacros.fiji, but no macros/StartupMacros.txt, execute that
+		// If there is a macros/StartupMacros.fiji.ijm, but no macros/StartupMacros.txt, execute that
 		try {
 			clazz = get("ij.Menus");
 			File macrosDirectory = new File(FijiTools.getFijiDir(), "macros");
-			File startupMacrosFile = new File(macrosDirectory, "StartupMacros.fiji");
+			File startupMacrosFile = new File(macrosDirectory, "StartupMacros.fiji.ijm");
 			if (startupMacrosFile.exists() &&
 					!new File(macrosDirectory, "StartupMacros.txt").exists() &&
 					!new File(macrosDirectory, "StartupMacros.ijm").exists()) {

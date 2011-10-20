@@ -503,4 +503,8 @@ public abstract class Rule {
 		}
 		return s.substring(0, stars + 1);
 	}
+
+	public File getWorkingDirectory() {
+		return parser.cwd;
+	}
 }

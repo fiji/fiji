@@ -17,10 +17,17 @@
 #include <limits.h>
 #include <string.h>
 
+#if defined(_WIN64) && !defined(WIN32)
+/* TinyCC's stdlib.h undefines WIN32 in 64-bit mode */
+#define WIN32 1
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#if !defined(WIN32) || !defined(__TINYC__)
 #include <unistd.h>
+#endif
 #include <errno.h>
 
 #ifdef __GNUC__
@@ -70,7 +77,7 @@ static void open_win_console();
 #endif
 #endif
 
-#ifdef __linux__
+#if defined(__linux__) && !defined(__TINYC__)
 #include "glibc-compat.h"
 #endif
 
@@ -307,7 +314,10 @@ static void string_vaddf(struct string *string, const char *fmt, va_list ap)
 			break;
 		}
 		case 'c':
-			string_add_char(string, va_arg(ap, int));
+			{
+				char c = va_arg(ap, int);
+				string_add_char(string, c);
+			}
 			break;
 		case 'u':
 		case 'i':
@@ -321,14 +331,17 @@ static void string_vaddf(struct string *string, const char *fmt, va_list ap)
 			int negative = 0, len;
 			unsigned long number, power;
 
-			if (*p == 'u')
+			if (*p == 'u') {
 				number = va_arg(ap, unsigned int);
+			}
 			else {
 				long signed_number;
-				if (*p == 'l')
+				if (*p == 'l') {
 					signed_number = va_arg(ap, long);
-				else
+				}
+				else {
 					signed_number = va_arg(ap, int);
+				}
 				if (signed_number < 0) {
 					negative = 1;
 					number = -signed_number;
@@ -580,7 +593,7 @@ size_t get_memory_size(int available_only)
 				host_info.inactive_count +
 				host_info.wire_count) * (size_t)page_size);
 }
-#elif defined(linux)
+#elif defined(__linux__)
 static size_t get_kB(struct string *string, const char *key)
 {
 	const char *p = strstr(string->buffer, key);
@@ -624,6 +637,10 @@ size_t get_memory_size(int available_only)
 	fprintf(stderr, "Unsupported\n");
 	return 0;
 }
+#endif
+
+#if defined(__TINYC__)
+#define strtoll strtol
 #endif
 
 static long long parse_memory(const char *amount)
@@ -1108,7 +1125,7 @@ static void hide_splash(void)
  */
 static void maybe_reexec_with_correct_lib_path(void)
 {
-#ifdef linux
+#ifdef __linux__
 	struct string *path = string_initf("%s/%s", get_jre_home(), library_path);
 	struct string *parent = get_parent_directory(path->buffer);
 	struct string *lib_path = get_parent_directory(parent->buffer);
@@ -1119,7 +1136,7 @@ static void maybe_reexec_with_correct_lib_path(void)
 	string_release(parent);
 
 	// Is this JDK6?
-	if (dir_exists(jli->buffer)) {
+	if (!dir_exists(get_jre_home()) || dir_exists(jli->buffer)) {
 		string_release(lib_path);
 		string_release(jli);
 		return;
@@ -1763,6 +1780,15 @@ static void keep_only_one_memory_option(struct string_array *options)
 	options->nr = j;
 }
 
+static char has_memory_option(struct string_array *options)
+{
+	int i;
+	for (i = 0; i < options->nr; i++)
+		if (!prefixcmp(options->list[i], "-Xm"))
+			return 1;
+	return 0;
+}
+
 __attribute__((unused))
 static void read_file_as_string(const char *file_name, struct string *contents)
 {
@@ -2244,7 +2270,7 @@ static void parse_command_line(void)
 			!is_building("fiji"))
 		error("Warning: your Fiji executable is not up-to-date");
 
-#ifdef linux
+#ifdef __linux__
 	string_append_path_list(java_library_path, getenv("LD_LIBRARY_PATH"));
 #endif
 #ifdef MACOSX
@@ -2488,8 +2514,11 @@ static void parse_command_line(void)
 			string_append_path_list(class_path, "/usr/share/java/ant-nodeps.jar");
 			string_append_path_list(class_path, "/usr/share/java/ant-junit.jar");
 		}
-		else if (!strcmp(main_argv[i], "--mini-maven"))
+		else if (!strcmp(main_argv[i], "--mini-maven")) {
+			skip_build_classpath = 1;
+			string_append_path_list(class_path, fiji_path("jars/fake.jar"));
 			main_class = "fiji.build.MiniMaven";
+		}
 		else if (!strcmp(main_argv[i], "--retrotranslator") ||
 				!strcmp(main_argv[i], "--retro"))
 			retrotranslator = 1;
@@ -2552,7 +2581,7 @@ static void parse_command_line(void)
 	add_option(&options, plugin_path->buffer, 0);
 
 	// if arguments don't set the memory size, set it after available memory
-	if (memory_size == 0) {
+	if (memory_size == 0 && !has_memory_option(&options.java_options)) {
 		memory_size = get_memory_size(0);
 		/* 0.75x, but avoid multiplication to avoid overflow */
 		memory_size -= memory_size >> 2;

@@ -110,6 +110,14 @@ public abstract class JavassistHelper implements Runnable {
 		}
 	}
 
+	protected boolean hasMethod(CtClass clazz, String name, String signature) {
+		try {
+			return clazz.getMethod(name, signature) != null;
+		} catch (NotFoundException e) {
+			return false;
+		}
+	}
+
 	protected static String stripPackage(String className) {
 		int lastDot = -1;
 		for (int i = 0; ; i++) {

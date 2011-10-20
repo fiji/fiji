@@ -294,3 +294,7 @@ hs_err*.log
 /jars/imglib2-ij.jar
 /jars/imglib2-io.jar
 /jars/imglib2-ui.jar
+/modules/javassist/build/
+/modules/javassist/html/
+/modules/javassist/javassist.jar
+/modules/javassist/javassist-src.jar

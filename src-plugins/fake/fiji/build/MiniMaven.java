@@ -44,7 +44,7 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
 public class MiniMaven {
-	protected boolean verbose, debug = false;
+	protected boolean verbose, debug = false, downloadAutomatically;
 	protected PrintStream err;
 	protected Map<String, POM> localPOMCache = new HashMap<String, POM>();
 	protected Fake fake;
@@ -58,7 +58,7 @@ public class MiniMaven {
 
 	protected void print80(String string) {
 		int length = string.length();
-		err.print((length < 80 ? string : string.substring(0, 80)) + "\r");
+		err.print((verbose || length < 80 ? string : string.substring(0, 80)) + "\r");
 	}
 
 	public POM parse(File file) throws IOException, ParserConfigurationException, SAXException {
@@ -208,10 +208,8 @@ public class MiniMaven {
 		}
 
 		public void downloadDependencies() throws IOException, ParserConfigurationException, SAXException {
-			for (POM dependency : getDependencies())
-				if (dependency != null)
-					dependency.download();
-
+			downloadAutomatically = true;
+			getDependencies();
 			download();
 		}
 
@@ -219,23 +217,19 @@ public class MiniMaven {
 			if (buildFromSource || target.exists())
 				return;
 			print80("Downloading " + target);
-			for (String url : getRoot().getRepositories()) try {
-				download(url);
-				return;
-			} catch (Exception e) { /* ignore */ }
-			throw new FileNotFoundException("Could not download " + target);
+			download(groupId, artifactId, version);
 		}
 
-		protected void download(String url) throws MalformedURLException, IOException, NoSuchAlgorithmException {
+		protected void download(String groupId, String artifactId, String version) throws FileNotFoundException {
 			if (version == null) {
 				err.println("Version of " + artifactId + " is null; Skipping.");
 				return;
 			}
-			String path = "/" + groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/";
-			String baseURL = url + path + artifactId + "-" + version;
-			File directory = new File(System.getProperty("user.home") + "/.m2/repository" + path);
-			downloadAndVerify(baseURL + ".pom", directory);
-			downloadAndVerify(baseURL + ".jar", directory);
+			for (String url : getRoot().getRepositories()) try {
+				downloadAndVerify(url, groupId, artifactId, version);
+				return;
+			} catch (Exception e) { /* ignore */ }
+			throw new FileNotFoundException("Could not download " + groupId + "/" + artifactId + "-" + version);
 		}
 
 		public boolean upToDate() throws IOException, ParserConfigurationException, SAXException {
@@ -375,6 +369,8 @@ public class MiniMaven {
 				String artifactId = expand(dependency.artifactId);
 				String version = expand(dependency.version);
 				boolean optional = dependency.optional;
+				if (version == null && "aopalliance".equals(artifactId))
+					optional = true; // guice has recorded this without a version
 				String systemPath = expand(dependency.systemPath);
 				if (systemPath != null) {
 					File file = new File(systemPath);
@@ -477,22 +473,54 @@ public class MiniMaven {
 		}
 
 		protected POM findLocallyCachedPOM(String groupId, String artifactId, String version, boolean quiet) throws IOException, ParserConfigurationException, SAXException {
+			if (groupId == null)
+				return null;
 			String key = groupId + ">" + artifactId;
-			POM result = localPOMCache.get(key);
-			if (!localPOMCache.containsKey(key)) {
-				if (groupId == null)
-					return null;
-				String path = System.getProperty("user.home") + "/.m2/repository/" + groupId.replace('.', '/') + "/" + artifactId + "/";
-				if (version == null)
-					version = findLocallyCachedVersion(path);
-				path += version + "/" + artifactId + "-" + version + ".pom";
-				result = parse(new File(path), null);
-				if (result == null && !quiet)
-					err.println("Artifact not found; consider 'get-dependencies': " + artifactId);
-				localPOMCache.put(key, result);
+			if (localPOMCache.containsKey(key)) {
+				POM result = localPOMCache.get(key); // may be null
+				if (result == null || version == null || compareVersion(version, result.version) <= 0)
+					return result;
 			}
-			if (result != null && version != null && compareVersion(version, result.version) > 0)
-				throw new RuntimeException("Local artifact " + key + " has wrong version: " + result.version + " (< " + version + ")");
+
+			String path = System.getProperty("user.home") + "/.m2/repository/" + groupId.replace('.', '/') + "/" + artifactId + "/";
+			if (version == null)
+				version = findLocallyCachedVersion(path);
+			if (version == null) {
+				if (!quiet)
+					err.println("Cannot find version for artifact " + artifactId + " (dependency of " + this.artifactId + ")");
+				localPOMCache.put(key, null);
+				return null;
+			}
+			path += version + "/" + artifactId + "-" + version + ".pom";
+
+			File file = new File(path);
+			if (!file.exists()) {
+				if (downloadAutomatically) {
+					if (!quiet)
+						err.println("Downloading " + artifactId);
+					try {
+						download(groupId, artifactId, version);
+					} catch (Exception e) {
+						if (!quiet) {
+							e.printStackTrace(err);
+							err.println("Could not download " + artifactId + ": " + e.getMessage());
+						}
+						localPOMCache.put(key, null);
+						return null;
+					}
+				}
+				else {
+					if (!quiet)
+						err.println("Skipping artifact " + artifactId + ": not found");
+					localPOMCache.put(key, null);
+					return null;
+				}
+			}
+
+			POM result = parse(new File(path), null);
+			if (result == null && !quiet)
+				err.println("Artifact " + artifactId + " not found" + (downloadAutomatically ? "" : "; consider 'get-dependencies'"));
+			localPOMCache.put(key, result);
 			return result;
 		}
 
@@ -583,7 +611,7 @@ public class MiniMaven {
 			else if (prefix.equals(">project>dependencies>dependency>systemPath"))
 				latestDependency.systemPath = string;
 			else if (prefix.equals(">project>profiles>profile>id"))
-				isCurrentProfile = profile.equals(string);
+				isCurrentProfile = (!Util.getPlatform().equals("macosx") && "javac".equals(string)) || profile.equals(string);
 			else if (prefix.equals(">project>repositories>repository>url"))
 				repositories.add(string);
 			else if (debug)
@@ -626,6 +654,14 @@ public class MiniMaven {
 				for (POM child : children)
 					child.append(builder, indent + "  ");
 		}
+	}
+
+	protected static void downloadAndVerify(String repositoryURL, String groupId, String artifactId, String version) throws MalformedURLException, IOException, NoSuchAlgorithmException {
+		String path = "/" + groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/";
+		String baseURL = repositoryURL + path + artifactId + "-" + version;
+		File directory = new File(System.getProperty("user.home") + "/.m2/repository" + path);
+		downloadAndVerify(baseURL + ".pom", directory);
+		downloadAndVerify(baseURL + ".jar", directory);
 	}
 
 	protected static void downloadAndVerify(String url, File directory) throws IOException, NoSuchAlgorithmException {
