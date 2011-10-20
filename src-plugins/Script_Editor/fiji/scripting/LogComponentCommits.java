@@ -165,7 +165,7 @@ public class LogComponentCommits {
 		if (wasInterrupted())
 			return;
 
-		since = "--since=" + since;
+		since = "--since=" + since + "+0000";
 		String[] cmdarray = new String[5 + extraArgs.size() + extraFiles.size()];
 		int i = 0;
 		cmdarray[i++] = "git";

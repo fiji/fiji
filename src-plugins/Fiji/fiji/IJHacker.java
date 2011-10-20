@@ -149,10 +149,12 @@ public class IJHacker extends JavassistHelper {
 			@Override
 			public void edit(MethodCall call) throws CannotCompileException {
 				if (call.getMethodName().equals("getResource"))
-					call.replace("$_ = $0.getResource(\"/icon.png\");");
+					call.replace("$_ = new java.net.URL(\"file:\" + fiji.FijiTools.getFijiDir() + \"/images/icon.png\");");
 			}
 		});
-		if (!isImageJA) {
+		if (isImageJA)
+			clazz.getConstructor("(Lij/ImageJApplet;I)V").insertBeforeBody("if ($2 != ij.ImageJ.NO_SHOW) setIcon();");
+		else {
 			clazz.getConstructor("(Ljava/applet/Applet;I)V").insertBeforeBody("if ($2 != ij.ImageJ.NO_SHOW) setIcon();");
 			method = clazz.getMethod("isRunning", "([Ljava/lang/String;)Z");
 			method.insertBefore("return fiji.OtherInstance.sendArguments($1);");
@@ -333,26 +335,29 @@ public class IJHacker extends JavassistHelper {
 
 			// create new macro in the Script Editor
 			method = clazz.getMethod("createMacro", "()V");
-			stripOutEditor(method.getMethodInfo());
+			dontReturnWhenEditorIsNull(method.getMethodInfo());
 			method.instrument(new ExprEditor() {
 				@Override
 				public void edit(MethodCall call) throws CannotCompileException {
 					if (call.getMethodName().equals("createMacro"))
 						call.replace("if ($1.endsWith(\".txt\"))"
 							+ "  $1 = $1.substring($1.length() - 3) + \"ijm\";"
-							+ "if (!fiji.FijiTools.openEditor($1, $2)) {"
-							+ "  ed.createMacro($1, $2);"
-							+ "}");
+							+ "boolean b = fiji.FijiTools.openEditor($1, $2);"
+							+ "return;");
+					else if (call.getMethodName().equals("runPlugIn"))
+						call.replace("$_ = null;");
 				}
 			});
 			// create new plugin in the Script Editor
+			clazz.addField(new CtField(pool.get("java.lang.String"), "name", clazz));
 			method = clazz.getMethod("createPlugin", "(Ljava/lang/String;Ljava/lang/String;)V");
+			method.insertBefore("name = $2;");
 			method.instrument(new ExprEditor() {
 				@Override
 				public void edit(MethodCall call) throws CannotCompileException {
 					if (call.getMethodName().equals("runPlugIn"))
 						call.replace("$_ = null;"
-							+ "new ij.plugin.NewPlugin().createPlugin(name, ij.plugin.NewPlugin.PLUGIN, $2);"
+							+ "new ij.plugin.NewPlugin().createPlugin(this.name, ij.plugin.NewPlugin.PLUGIN, $2);"
 							+ "return;");
 				}
 			});
@@ -362,35 +367,35 @@ public class IJHacker extends JavassistHelper {
 
 			// open new plugin in Script Editor
 			method = clazz.getMethod("createMacro", "(Ljava/lang/String;)V");
-			stripOutEditor(method.getMethodInfo());
 			method.instrument(new ExprEditor() {
-
 				@Override
 				public void edit(MethodCall call) throws CannotCompileException {
 					if (call.getMethodName().equals("create"))
 						call.replace("if ($1.endsWith(\".txt\"))"
-							+ "  $1 = $1.substring($1.length() - 3) + \"ijm\";"
-							+ "if (!fiji.FijiTools.openEditor($1, $2)) {"
-							+ "  int options = (monospaced ? ij.plugin.frame.Editor.MONOSPACED : 0) |"
-							+ "    (menuBar ? ij.plugin.frame.Editor.MENU_BAR : 0);"
-							+ "  ed = new ij.plugin.frame.Editor(rows, columns, 0, options);"
-							+ "  ed.create($1, $2);"
-							+ "}");
+							+ "  $1 = $1.substring(0, $1.length() - 3) + \"ijm\";"
+							+ "fiji.FijiTools.openEditor($1, $2);"
+							+ "return;");
+					else if (call.getMethodName().equals("runPlugIn"))
+						call.replace("$_ = null;");
+				}
+
+				@Override
+				public void edit(NewExpr expr) throws CannotCompileException {
+					if (expr.getClassName().equals("ij.plugin.frame.Editor"))
+						expr.replace("$_ = null;");
 				}
 			});
 			// open new plugin in Script Editor
 			method = clazz.getMethod("createPlugin", "(Ljava/lang/String;ILjava/lang/String;)V");
-			stripOutEditor(method.getMethodInfo());
+			dontReturnWhenEditorIsNull(method.getMethodInfo());
 			method.instrument(new ExprEditor() {
 				@Override
 				public void edit(MethodCall call) throws CannotCompileException {
 					if (call.getMethodName().equals("create"))
-						call.replace("if (!fiji.FijiTools.openEditor($1, $2)) {"
-							+ "  int options = (monospaced ? ij.plugin.frame.Editor.MONOSPACED : 0) |"
-							+ "    (menuBar ? ij.plugin.frame.Editor.MENU_BAR : 0);"
-							+ "  ed = new ij.plugin.frame.Editor(rows, columns, 0, options);"
-							+ "  ed.create($1, $2);"
-							+ "}");
+						call.replace("boolean b = fiji.FijiTools.openEditor($1, $2);"
+							+ "return;");
+					else if (call.getMethodName().equals("runPlugIn"))
+						call.replace("$_ = null;");
 				}
 
 			});
@@ -408,6 +413,10 @@ public class IJHacker extends JavassistHelper {
 			+ "      $1.setIconImage(img);"
 			+ "  }"
 			+ "}");
+		if (!hasMethod(clazz, "setCurrentWindow", "(Lij/gui/ImageWindow;Z)V"))
+			clazz.addMethod(CtNewMethod.make("public static void setCurrentWindow(ij.gui.ImageWindow window, boolean suppressRecording /* unfortunately ignored now */) {"
+				+ "  setCurrentWindow(window);"
+				+ "}", clazz));
 
 		// Class ij.macro.Functions
 		clazz = get("ij.macro.Functions");
@@ -465,7 +474,9 @@ public class IJHacker extends JavassistHelper {
 						+ "    return;"
 						+ "}");
 				else if (name.equals("runCommand"))
-					call.replace("cmd.runCommand(listeners);");
+					call.replace("if (this.cmd == null || !this.cmd.command.equals($1))"
+						+ "  this.cmd = new fiji.command.Command($1);"
+						+ "this.cmd.runCommand(listeners);");
 			}
 
 			@Override
@@ -537,11 +548,11 @@ public class IJHacker extends JavassistHelper {
 
 		}
 
-		// If there is a macros/StartupMacros.fiji, but no macros/StartupMacros.txt, execute that
+		// If there is a macros/StartupMacros.fiji.ijm, but no macros/StartupMacros.txt, execute that
 		try {
 			clazz = get("ij.Menus");
 			File macrosDirectory = new File(FijiTools.getFijiDir(), "macros");
-			File startupMacrosFile = new File(macrosDirectory, "StartupMacros.fiji");
+			File startupMacrosFile = new File(macrosDirectory, "StartupMacros.fiji.ijm");
 			if (startupMacrosFile.exists() &&
 					!new File(macrosDirectory, "StartupMacros.txt").exists() &&
 					!new File(macrosDirectory, "StartupMacros.ijm").exists()) {
@@ -603,31 +614,24 @@ public class IJHacker extends JavassistHelper {
 		return builder.toString();
 	}
 
-	private void stripOutEditor(MethodInfo info) throws CannotCompileException {
+	private void dontReturnWhenEditorIsNull(MethodInfo info) throws CannotCompileException {
 		ConstPool constPool = info.getConstPool();
 		CodeIterator iterator = info.getCodeAttribute().iterator();
 	        while (iterator.hasNext()) try {
 	                int pos = iterator.next();
 			int c = iterator.byteAt(pos);
-			if (c == Opcode.LDC) {
-				int index = iterator.byteAt(pos + 1);
-				if (constPool.getTag(index) == ConstPool.CONST_String &&
-						constPool.getStringInfo(index).equals("ij.plugin.frame.Editor") &&
-						iterator.byteAt(pos + 2) == Opcode.LDC &&
-						iterator.byteAt(pos + 4) == Opcode.INVOKESTATIC &&
-						iterator.byteAt(pos + 7) == Opcode.CHECKCAST &&
-						iterator.byteAt(pos + 10) == Opcode.PUTFIELD &&
-						iterator.byteAt(pos + 13) == Opcode.ALOAD_0 &&
-						iterator.byteAt(pos + 14) == Opcode.GETFIELD &&
-						iterator.byteAt(pos + 17) == Opcode.IFNONNULL &&
-						iterator.byteAt(pos + 20) == Opcode.RETURN)
-					for (int i = 0; i < 21; i++)
-						iterator.writeByte(Opcode.NOP, pos + i);
+			if (c == Opcode.IFNONNULL && iterator.byteAt(pos + 3) == Opcode.RETURN) {
+				iterator.writeByte(Opcode.POP, pos);
+				iterator.writeByte(Opcode.NOP, pos + 1);
+				iterator.writeByte(Opcode.NOP, pos + 2);
+				iterator.writeByte(Opcode.NOP, pos + 3);
+				return;
 			}
 		}
 		catch (BadBytecode e) {
 			throw new CannotCompileException(e);
 		}
+		throw new CannotCompileException("Check not found");
 	}
 
 	private void handleMousePressed(CtClass clazz) throws CannotCompileException, NotFoundException {
