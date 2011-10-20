@@ -57,6 +57,7 @@ public class Updater implements PlugIn {
 			IJ.error("Fiji restart required to finalize previous update");
 			return;
 		}
+		Util.useSystemProxies();
 
 		final PluginCollection plugins = new PluginCollection();
 		try {
