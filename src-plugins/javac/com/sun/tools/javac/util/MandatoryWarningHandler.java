@@ -1,12 +1,12 @@
 /*
- * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.tools.javac.util;
@@ -43,8 +43,8 @@ import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
  * made on any API to generate a warning at all. In consequence, this handler only
  * gets to handle those warnings that JLS says must be generated.
  *
- *  <p><b>This is NOT part of any API supported by Sun Microsystems.  If
- *  you write code that depends on this, you do so at your own risk.
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
  */
@@ -101,12 +101,16 @@ public class MandatoryWarningHandler {
      *                individual instances should be given, or whether an aggregate
      *                message should be generated at the end of the compilation.
      *                Typically set via  -Xlint:option.
+     * @param enforceMandatory
+     *                True if mandatory warnings and notes are being enforced.
      * @param prefix  A common prefix for the set of message keys for
      *                the messages that may be generated.
      */
-    public MandatoryWarningHandler(Log log, boolean verbose, String prefix) {
+    public MandatoryWarningHandler(Log log, boolean verbose,
+                                   boolean enforceMandatory, String prefix) {
         this.log = log;
         this.verbose = verbose;
+        this.enforceMandatory = enforceMandatory;
         this.prefix = prefix;
     }
 
@@ -122,7 +126,7 @@ public class MandatoryWarningHandler {
 
             if (log.nwarnings < log.MaxWarnings) {
                 // generate message and remember the source file
-                log.mandatoryWarning(pos, msg, args);
+                logMandatoryWarning(pos, msg, args);
                 sourcesWithReportedWarnings.add(currentSource);
             } else if (deferredDiagnosticKind == null) {
                 // set up deferred message
@@ -163,12 +167,12 @@ public class MandatoryWarningHandler {
     public void reportDeferredDiagnostic() {
         if (deferredDiagnosticKind != null) {
             if (deferredDiagnosticArg == null)
-                log.mandatoryNote(deferredDiagnosticSource, deferredDiagnosticKind.getKey(prefix));
+                logMandatoryNote(deferredDiagnosticSource, deferredDiagnosticKind.getKey(prefix));
             else
-                log.mandatoryNote(deferredDiagnosticSource, deferredDiagnosticKind.getKey(prefix), deferredDiagnosticArg);
+                logMandatoryNote(deferredDiagnosticSource, deferredDiagnosticKind.getKey(prefix), deferredDiagnosticArg);
 
             if (!verbose)
-                log.mandatoryNote(deferredDiagnosticSource, prefix + ".recompile");
+                logMandatoryNote(deferredDiagnosticSource, prefix + ".recompile");
         }
     }
 
@@ -224,4 +228,32 @@ public class MandatoryWarningHandler {
      * deferredDiagnosticKind is updated.
      */
     private Object deferredDiagnosticArg;
+
+    /**
+     * True if mandatory warnings and notes are being enforced.
+     */
+    private final boolean enforceMandatory;
+
+    /**
+     * Reports a mandatory warning to the log.  If mandatory warnings
+     * are not being enforced, treat this as an ordinary warning.
+     */
+    private void logMandatoryWarning(DiagnosticPosition pos, String msg,
+                                     Object... args) {
+        if (enforceMandatory)
+            log.mandatoryWarning(pos, msg, args);
+        else
+            log.warning(pos, msg, args);
+    }
+
+    /**
+     * Reports a mandatory note to the log.  If mandatory notes are
+     * not being enforced, treat this as an ordinary note.
+     */
+    private void logMandatoryNote(JavaFileObject file, String msg, Object... args) {
+        if (enforceMandatory)
+            log.mandatoryNote(file, msg, args);
+        else
+            log.note(file, msg, args);
+    }
 }

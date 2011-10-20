@@ -100,8 +100,13 @@ public class ReadyForUpload {
 				if (rule.getLastPrerequisite().equals("mpicbg/"))
 					return fijiDir + "mpicbg/";
 				File fakefile = ((SubFake)rule).getFakefile();
-				if (fakefile == null)
+				if (fakefile == null) {
+					// TODO: this really needs to go into a new Rule.isClean() method, checking also for resources
+					File mavenSrc = new File(rule.getWorkingDirectory(), rule.getLastPrerequisite() + "src/main/java");
+					if (mavenSrc.exists())
+						return mavenSrc.getAbsolutePath();
 					return null;
+				}
 				Fake fake = new Fake();
 				File cwd = new File(fijiDir, rule.getLastPrerequisite());
 				if (!new File(cwd, ".git").exists()) {

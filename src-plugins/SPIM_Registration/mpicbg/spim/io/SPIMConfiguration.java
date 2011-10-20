@@ -13,6 +13,10 @@ import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
+import mpicbg.models.AbstractAffineModel3D;
+import mpicbg.models.AffineModel3D;
+import mpicbg.models.RigidModel3D;
+import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.registration.ViewStructure;
 
 public class SPIMConfiguration 
@@ -30,6 +34,7 @@ public class SPIMConfiguration
 	public String channelsToRegister;
 	public String channelsToFuse;
 	public String mirrorChannels = "";
+	public int[] registrationAssignmentForFusion = null;
 	
 	// [timepoint][channel][angle]
 	public File file[][][];
@@ -41,7 +46,7 @@ public class SPIMConfiguration
 	public boolean showImageJWindow = false;
 	public boolean multiThreadedOpening = false;
 	public boolean collectRegistrationStatistics = false;
-	
+	public String transformationModel = "Affine";
 	// time lapse
 	public boolean timeLapseRegistration = false;
 	public int referenceTimePoint = 1;
@@ -153,7 +158,17 @@ public class SPIMConfiguration
     // gauss fusion
     public float fusionSigma1 = 20;//42;
     public float fusionSigma2 = 40;//88;
-      
+    
+    public AbstractAffineModel3D getModel()
+    {
+		if ( transformationModel.equals( "Translation" ) )
+			return new TranslationModel3D();
+		else if ( transformationModel.equals( "Rigid" ) )
+			return new RigidModel3D();
+		else
+			return new AffineModel3D();
+    }
+    
     public int getIndexForTimePoint( final int timepoint )
     {
     	for ( int i = 0; i < timepoints.length; i++ )

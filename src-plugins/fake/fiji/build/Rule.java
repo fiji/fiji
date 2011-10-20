@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Set;
 
 import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -129,8 +128,8 @@ public abstract class Rule {
 	}
 
 	boolean upToDate(String source, String target, File cwd) {
-		return upToDate(new File(cwd, source),
-			new File(cwd, target));
+		return upToDate(new File(Util.makePath(cwd, source)),
+			new File(Util.makePath(cwd, target)));
 	}
 
 	boolean upToDateError(File source, File target) {
@@ -503,5 +502,9 @@ public abstract class Rule {
 			return "";
 		}
 		return s.substring(0, stars + 1);
+	}
+
+	public File getWorkingDirectory() {
+		return parser.cwd;
 	}
 }

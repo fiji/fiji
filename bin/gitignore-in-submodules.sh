@@ -77,6 +77,7 @@ then
 fi &&
 for submodule in "$@"
 do
+	submodule=${submodule%/}
 	if $(submodule_exists "$submodule")
 	then
 		case "$mode" in

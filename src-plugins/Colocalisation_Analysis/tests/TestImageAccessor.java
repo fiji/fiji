@@ -1,5 +1,6 @@
 package tests;
 
+import gadgets.MaskFactory;
 import ij.ImagePlus;
 import ij.gui.NewImage;
 import ij.gui.Roi;
@@ -15,8 +16,7 @@ import mpicbg.imglib.algorithm.math.ImageStatistics;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
-import mpicbg.imglib.cursor.special.TwinValueRangeCursor;
-import mpicbg.imglib.cursor.special.TwinValueRangeCursorFactory;
+import mpicbg.imglib.cursor.special.TwinCursor;
 import mpicbg.imglib.function.Converter;
 import mpicbg.imglib.function.RealTypeConverter;
 import mpicbg.imglib.image.Image;
@@ -24,6 +24,7 @@ import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.ImagePlusAdapter;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
+import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import algorithms.MissingPreconditionException;
@@ -343,7 +344,12 @@ public class TestImageAccessor {
 	 * the foreground is scaled to be in range of the background.
 	 */
 	public static <T extends RealType<T>> void combineImages(Image<T> background, Image<T> foreground) {
-		TwinValueRangeCursor<T> cursor = TwinValueRangeCursorFactory.generateAlwaysTrueCursor(background, foreground);
+		Image<BitType> alwaysTrueMask = MaskFactory.createMask(
+				background.getDimensions(), true);
+		TwinCursor<T> cursor = new TwinCursor<T>(
+				background.createLocalizableByDimCursor(),
+				foreground.createLocalizableByDimCursor(),
+				alwaysTrueMask.createLocalizableCursor());
 		// find a scaling factor for scale forground range into background
 		double bgMin = ImageStatistics.getImageMin(background).getRealDouble();
 		double bgMax = ImageStatistics.getImageMax(background).getRealDouble();
@@ -354,8 +360,8 @@ public class TestImageAccessor {
 		// iterate over both images
 		while (cursor.hasNext()) {
 			cursor.fwd();
-			T bgData = cursor.getChannel1Type();
-			double fgData = cursor.getChannel2Type().getRealDouble() * scaling;
+			T bgData = cursor.getChannel1();
+			double fgData = cursor.getChannel2().getRealDouble() * scaling;
 			if (fgData > 0.01) {
 				/* if the foreground data is above zero, copy
 				 * it to the background.

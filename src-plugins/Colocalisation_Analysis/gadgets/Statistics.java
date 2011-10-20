@@ -79,7 +79,7 @@ public class Statistics {
 	}
 
 	/**
-	 * Calculates the standard deviation of a vist of values.
+	 * Calculates the standard deviation of a list of values.
 	 *
 	 * @param values The list of values.
 	 * @return The standard deviation.

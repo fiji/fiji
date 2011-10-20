@@ -1,12 +1,12 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.tools.javac.main;
@@ -29,7 +29,7 @@ package com.sun.tools.javac.main;
 /**
  * TODO: describe com.sun.tools.javac.main.OptionName
  *
- * <p><b>This is NOT part of any API supported by Sun Microsystems.
+ * <p><b>This is NOT part of any supported API.
  * If you write code that depends on this, you do so at your own
  * risk.  This code and its internal interfaces are subject to change
  * or deletion without notice.</b></p>
@@ -37,9 +37,13 @@ package com.sun.tools.javac.main;
 public enum OptionName {
     G("-g"),
     G_NONE("-g:none"),
-    G_CUSTOM("-g:"),
+    G_CUSTOM("-g:{lines,vars,source}"),
     XLINT("-Xlint"),
-    XLINT_CUSTOM("-Xlint:"),
+    XLINT_CUSTOM("-Xlint:{"
+                 + "all,"
+                 + "cast,deprecation,divzero,empty,unchecked,fallthrough,path,serial,finally,overrides,"
+                 + "-cast,-deprecation,-divzero,-empty,-unchecked,-fallthrough,-path,-serial,-finally,-overrides,"
+                 + "none}"),
     NOWARN("-nowarn"),
     VERBOSE("-verbose"),
     DEPRECATION("-deprecation"),
@@ -54,12 +58,12 @@ public enum OptionName {
     DJAVA_EXT_DIRS("-Djava.ext.dirs="),
     ENDORSEDDIRS("-endorseddirs"),
     DJAVA_ENDORSED_DIRS("-Djava.endorsed.dirs="),
-    PROC("-proc:"),
+    PROC_CUSTOM("-proc:{none,only}"),
     PROCESSOR("-processor"),
     PROCESSORPATH("-processorpath"),
     D("-d"),
     S("-s"),
-    IMPLICIT("-implicit:"),
+    IMPLICIT("-implicit:{none,class}"),
     ENCODING("-encoding"),
     SOURCE("-source"),
     TARGET("-target"),
@@ -82,7 +86,7 @@ public enum OptionName {
     XPRINT("-Xprint"),
     XPRINTROUNDS("-XprintRounds"),
     XPRINTPROCESSORINFO("-XprintProcessorInfo"),
-    XPREFER("-Xprefer:"),
+    XPREFER("-Xprefer:{source,newer}"),
     O("-O"),
     XJCOV("-Xjcov"),
     XD("-XD"),

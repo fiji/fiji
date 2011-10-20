@@ -39,7 +39,7 @@ public class FusionControl
 		if (conf.multipleImageFusion)
 			fusion = new MappingFusionSequentialDifferentOutput( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories);
 		else if (conf.paralellFusion)
-			fusion = new MappingFusionParalell( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories );
+			fusion = new MappingFusionParalell( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories ); //TODO: Remove Max Weight
 		else
 		{
 			if ( conf.numParalellViews >= viewStructure.getNumViews() )

@@ -12,6 +12,8 @@ import ij.io.OpenDialog;
 
 import ij.plugin.PlugIn;
 
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Font;
 
 import java.awt.event.ActionEvent;
@@ -21,12 +23,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.PrintStream;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 public class RunFijiBuild implements PlugIn {
@@ -45,11 +47,12 @@ public class RunFijiBuild implements PlugIn {
 			arg = arg.substring(fijiDir.length());
 
 		final JFrame frame = new JFrame("Building " + arg + "...");
-		frame.getContentPane().setLayout(new BoxLayout(frame.getContentPane(), BoxLayout.Y_AXIS));
+		Container panel = frame.getContentPane();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 		JTextArea textArea = new JTextArea("Calling Fiji Build\n", 25, 80);
 		textArea.setFont(new Font("Courier", Font.PLAIN, 12));
 		textArea.setEditable(false);
-		frame.getContentPane().add(textArea);
+		panel.add(new JScrollPane(textArea));
 		final JButton okay = new JButton("okay");
 		okay.addActionListener(new ActionListener() {
 			@Override
@@ -58,7 +61,8 @@ public class RunFijiBuild implements PlugIn {
 			}
 		});
 		okay.setEnabled(false);
-		frame.getContentPane().add(okay);
+		okay.setAlignmentX(Component.CENTER_ALIGNMENT);
+		panel.add(okay);
 		frame.pack();
 		frame.setLocationRelativeTo(null);
 		okay.requestFocus();

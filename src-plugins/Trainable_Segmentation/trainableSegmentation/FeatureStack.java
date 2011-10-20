@@ -1265,7 +1265,7 @@ public class FeatureStack
 	}
 	
 	/**
-	 * Merge three image stack into a color stack (doing scaling)
+	 * Merge three image stack into a color stack (no scaling)
 	 * 
 	 * @param redChannel image stack representing the red channel 
 	 * @param greenChannel image stack representing the green channel
@@ -1278,9 +1278,9 @@ public class FeatureStack
 		
 		for(int n=1; n<=redChannel.getSize(); n++)
 		{
-			final ByteProcessor red = create8BitImage( (FloatProcessor) (redChannel.getProcessor(n) ) );
-			final ByteProcessor green = create8BitImage( (FloatProcessor) ( greenChannel.getProcessor(n)) );
-			final ByteProcessor blue = create8BitImage( (FloatProcessor) ( blueChannel.getProcessor(n) ) );
+			final ByteProcessor red = (ByteProcessor) redChannel.getProcessor(n).convertToByte(false); 
+			final ByteProcessor green = (ByteProcessor) greenChannel.getProcessor(n).convertToByte(false); 
+			final ByteProcessor blue = (ByteProcessor) blueChannel.getProcessor(n).convertToByte(false); 
 			
 			final ColorProcessor cp = new ColorProcessor(redChannel.getWidth(), redChannel.getHeight());
 			cp.setRGB((byte[]) red.getPixels(), (byte[]) green.getPixels(), (byte[]) blue.getPixels() );
@@ -1289,36 +1289,6 @@ public class FeatureStack
 		}
 		
 		return colorStack;
-	}
-
-	/**
-	 * Convert a float processor to byte processor using scaling
-	 * @param fp original float image
-	 * @return scaled byte version of the float image
-	 */
-	ByteProcessor create8BitImage(FloatProcessor fp) 
-	{
-		fp.resetMinAndMax();
-		// scale from float to 8-bits
-		int size = fp.getWidth() * fp.getHeight();
-		
-		final byte[] pixels8 = new byte[size];
-		float value;
-		int ivalue;
-		float min2 = (float)fp.getMin(), max2=(float)fp.getMax();
-		float scale = 255f/(max2-min2);
-		final float[] pixels = (float[]) fp.getPixels();
-		for (int i=0; i<size; i++) 
-		{
-			value = pixels[i]-min2;
-			if (value<0f) 
-				value = 0f;
-			ivalue = (int)((value*scale)+0.5f);
-			if (ivalue>255) 
-				ivalue = 255;
-			pixels8[i] = (byte)ivalue;
-		}
-		return new ByteProcessor(fp.getWidth(), fp.getHeight(), pixels8, null);
 	}
 	
 	/**

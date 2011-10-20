@@ -491,6 +491,23 @@ public class TextEditor extends JFrame implements ActionListener,
 		setTitle();
 	}
 
+	/**
+	 * Open a new editor to edit the given file, with a templateFile if the file does not exist yet
+	 */
+	public TextEditor(File file, File templateFile) {
+		this(file.exists() ? file.getPath() : templateFile.getPath());
+		if (!file.exists()) {
+			final EditorPane editorPane = getEditorPane();
+			try {
+				editorPane.setFile(file.getAbsolutePath());
+			} catch (IOException e) {
+				IJ.handleException(e);
+			}
+			editorPane.setLanguageByFileName(file.getName());
+			setTitle();
+		}
+	}
+
 	final public RSyntaxTextArea getTextArea() {
 		return getEditorPane();
 	}

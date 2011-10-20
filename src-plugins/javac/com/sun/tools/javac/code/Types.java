@@ -1,12 +1,12 @@
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2003, 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.tools.javac.code;
@@ -58,7 +58,7 @@ import static com.sun.tools.javac.util.ListBuffer.lb;
  * <dd>A second list of types should be named ss.</dd>
  * </dl>
  *
- * <p><b>This is NOT part of any API supported by Sun Microsystems.
+ * <p><b>This is NOT part of any supported API.
  * If you write code that depends on this, you do so at your own risk.
  * This code and its internal interfaces are subject to change or
  * deletion without notice.</b>
@@ -1302,7 +1302,7 @@ public class Types {
                     return t;
 
                 Type st = supertype(t);
-                if (st.tag == CLASS || st.tag == TYPEVAR || st.tag == ERROR) {
+                if (st.tag == CLASS || st.tag == ERROR) {
                     Type x = asSuper(st, sym);
                     if (x != null)
                         return x;
@@ -1324,10 +1324,7 @@ public class Types {
 
             @Override
             public Type visitTypeVar(TypeVar t, Symbol sym) {
-                if (t.tsym == sym)
-                    return t;
-                else
-                    return asSuper(t.bound, sym);
+                return asSuper(t.bound, sym);
             }
 
             @Override
@@ -1503,67 +1500,46 @@ public class Types {
      * type parameters in t are deleted.
      */
     public Type erasure(Type t) {
-        return erasure(t, false);
-    }
-    //where
-    private Type erasure(Type t, boolean recurse) {
         if (t.tag <= lastBaseTag)
             return t; /* fast special case */
         else
-            return erasure.visit(t, recurse);
+            return erasure.visit(t);
     }
     // where
-        private SimpleVisitor<Type, Boolean> erasure = new SimpleVisitor<Type, Boolean>() {
-            public Type visitType(Type t, Boolean recurse) {
+        private UnaryVisitor<Type> erasure = new UnaryVisitor<Type>() {
+            public Type visitType(Type t, Void ignored) {
                 if (t.tag <= lastBaseTag)
                     return t; /*fast special case*/
                 else
-                    return t.map(recurse ? erasureRecFun : erasureFun);
+                    return t.map(erasureFun);
             }
 
             @Override
-            public Type visitWildcardType(WildcardType t, Boolean recurse) {
-                return erasure(upperBound(t), recurse);
+            public Type visitWildcardType(WildcardType t, Void ignored) {
+                return erasure(upperBound(t));
             }
 
             @Override
-            public Type visitClassType(ClassType t, Boolean recurse) {
-                Type erased = t.tsym.erasure(Types.this);
-                if (recurse) {
-                    erased = new ErasedClassType(erased.getEnclosingType(),erased.tsym);
-                }
-                return erased;
+            public Type visitClassType(ClassType t, Void ignored) {
+                return t.tsym.erasure(Types.this);
             }
 
             @Override
-            public Type visitTypeVar(TypeVar t, Boolean recurse) {
-                return erasure(t.bound, recurse);
+            public Type visitTypeVar(TypeVar t, Void ignored) {
+                return erasure(t.bound);
             }
 
             @Override
-            public Type visitErrorType(ErrorType t, Boolean recurse) {
+            public Type visitErrorType(ErrorType t, Void ignored) {
                 return t;
             }
         };
-
     private Mapping erasureFun = new Mapping ("erasure") {
             public Type apply(Type t) { return erasure(t); }
         };
 
-    private Mapping erasureRecFun = new Mapping ("erasureRecursive") {
-        public Type apply(Type t) { return erasureRecursive(t); }
-    };
-
     public List<Type> erasure(List<Type> ts) {
         return Type.map(ts, erasureFun);
-    }
-
-    public Type erasureRecursive(Type t) {
-        return erasure(t, true);
-    }
-
-    public List<Type> erasureRecursive(List<Type> ts) {
-        return Type.map(ts, erasureRecFun);
     }
     // </editor-fold>
 
@@ -1651,13 +1627,14 @@ public class Types {
                     if (t.supertype_field == null) {
                         List<Type> actuals = classBound(t).allparams();
                         List<Type> formals = t.tsym.type.allparams();
-                        if (t.hasErasedSupertypes()) {
-                            t.supertype_field = erasureRecursive(supertype);
-                        } else if (formals.nonEmpty()) {
+                        if (actuals.isEmpty()) {
+                            if (formals.isEmpty())
+                                // Should not happen.  See comments below in interfaces
+                                t.supertype_field = supertype;
+                            else
+                                t.supertype_field = erasure(supertype);
+                        } else {
                             t.supertype_field = subst(supertype, formals, actuals);
-                        }
-                        else {
-                            t.supertype_field = supertype;
                         }
                     }
                 }
@@ -1732,14 +1709,17 @@ public class Types {
                         assert t != t.tsym.type : t.toString();
                         List<Type> actuals = t.allparams();
                         List<Type> formals = t.tsym.type.allparams();
-                        if (t.hasErasedSupertypes()) {
-                            t.interfaces_field = erasureRecursive(interfaces);
-                        } else if (formals.nonEmpty()) {
+                        if (actuals.isEmpty()) {
+                            if (formals.isEmpty()) {
+                                // In this case t is not generic (nor raw).
+                                // So this should not happen.
+                                t.interfaces_field = interfaces;
+                            } else {
+                                t.interfaces_field = erasure(interfaces);
+                            }
+                        } else {
                             t.interfaces_field =
                                 upperBounds(subst(interfaces, formals, actuals));
-                        }
-                        else {
-                            t.interfaces_field = interfaces;
                         }
                     }
                 }
@@ -2507,7 +2487,7 @@ public class Types {
                 break;
             default:
                 if (t.isPrimitive())
-                    return syms.errType;
+                    return syms.botType;
             }
         }
         switch (boundkind) {
@@ -3096,33 +3076,67 @@ public class Types {
      * quantifiers) only
      */
     private Type rewriteQuantifiers(Type t, boolean high, boolean rewriteTypeVars) {
-        ListBuffer<Type> from = new ListBuffer<Type>();
-        ListBuffer<Type> to = new ListBuffer<Type>();
-        adaptSelf(t, from, to);
-        ListBuffer<Type> rewritten = new ListBuffer<Type>();
-        List<Type> formals = from.toList();
-        boolean changed = false;
-        for (Type arg : to.toList()) {
-            Type bound;
-            if (rewriteTypeVars && arg.tag == TYPEVAR) {
-                TypeVar tv = (TypeVar)arg;
-                bound = high ? tv.bound : syms.botType;
-            } else {
-                bound = high ? upperBound(arg) : lowerBound(arg);
-            }
-            Type newarg = bound;
-            if (arg != bound) {
-                changed = true;
-                newarg = high ? makeExtendsWildcard(bound, (TypeVar)formals.head)
-                              : makeSuperWildcard(bound, (TypeVar)formals.head);
-            }
-            rewritten.append(newarg);
-            formals = formals.tail;
+        return new Rewriter(high, rewriteTypeVars).rewrite(t);
+    }
+
+    class Rewriter extends UnaryVisitor<Type> {
+
+        boolean high;
+        boolean rewriteTypeVars;
+
+        Rewriter(boolean high, boolean rewriteTypeVars) {
+            this.high = high;
+            this.rewriteTypeVars = rewriteTypeVars;
         }
-        if (changed)
-            return subst(t.tsym.type, from.toList(), rewritten.toList());
-        else
-            return t;
+
+        Type rewrite(Type t) {
+            ListBuffer<Type> from = new ListBuffer<Type>();
+            ListBuffer<Type> to = new ListBuffer<Type>();
+            adaptSelf(t, from, to);
+            ListBuffer<Type> rewritten = new ListBuffer<Type>();
+            List<Type> formals = from.toList();
+            boolean changed = false;
+            for (Type arg : to.toList()) {
+                Type bound = visit(arg);
+                if (arg != bound) {
+                    changed = true;
+                    bound = high ? makeExtendsWildcard(bound, (TypeVar)formals.head)
+                              : makeSuperWildcard(bound, (TypeVar)formals.head);
+                }
+                rewritten.append(bound);
+                formals = formals.tail;
+            }
+            if (changed)
+                return subst(t.tsym.type, from.toList(), rewritten.toList());
+            else
+                return t;
+        }
+
+        public Type visitType(Type t, Void s) {
+            return high ? upperBound(t) : lowerBound(t);
+        }
+
+        @Override
+        public Type visitCapturedType(CapturedType t, Void s) {
+            return visitWildcardType(t.wildcard, null);
+        }
+
+        @Override
+        public Type visitTypeVar(TypeVar t, Void s) {
+            if (rewriteTypeVars)
+                return high ? t.bound : syms.botType;
+            else
+                return t;
+        }
+
+        @Override
+        public Type visitWildcardType(WildcardType t, Void s) {
+            Type bound = high ? t.getExtendsBound() :
+                                t.getSuperBound();
+            if (bound == null)
+                bound = high ? syms.objectType : syms.botType;
+            return bound;
+        }
     }
 
     /**

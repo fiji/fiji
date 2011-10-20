@@ -366,33 +366,7 @@ public class ConfigurationParserSPIM
 		}
 
 		// check if directories exist
-		File dir = new File(conf.outputdirectory, "");
-		if (!dir.exists())
-		{
-			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Creating directory '" + conf.outputdirectory + "'.");
-			boolean success = dir.mkdirs();
-			if (!success)
-			{
-				if (!dir.exists())
-				{
-					throw new ConfigurationParserException("(" + new Date(System.currentTimeMillis()) + "): Cannot create directory '" + conf.outputdirectory + "', quitting.");
-				}				
-			}
-		}
-		
-		dir = new File(conf.registrationFiledirectory, "");
-		if (!dir.exists())
-		{
-			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Creating directory '" + conf.registrationFiledirectory + "'.");
-			boolean success = dir.mkdirs();
-			if (!success)
-			{
-				if (!dir.exists())
-				{
-					throw new ConfigurationParserException("(" + new Date(System.currentTimeMillis()) + "): Cannot create directory '" + conf.registrationFiledirectory + "', quitting.");
-				}
-			}
-		}	
+		testDirectories( conf );
 		
 		int countTrue = 0;
 		if (conf.paralellFusion) countTrue++;
@@ -426,6 +400,37 @@ public class ConfigurationParserSPIM
 		{};
 
 		return conf;
+	}
+	
+	public static void testDirectories( final SPIMConfiguration conf ) throws ConfigurationParserException
+	{
+		File dir = new File(conf.outputdirectory, "");
+		if (!dir.exists())
+		{
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Creating directory '" + conf.outputdirectory + "'.");
+			boolean success = dir.mkdirs();
+			if (!success)
+			{
+				if (!dir.exists())
+				{
+					throw new ConfigurationParserException("(" + new Date(System.currentTimeMillis()) + "): Cannot create directory '" + conf.outputdirectory + "', quitting.");
+				}				
+			}
+		}
+		
+		dir = new File(conf.registrationFiledirectory, "");
+		if (!dir.exists())
+		{
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Creating directory '" + conf.registrationFiledirectory + "'.");
+			boolean success = dir.mkdirs();
+			if (!success)
+			{
+				if (!dir.exists())
+				{
+					throw new ConfigurationParserException("(" + new Date(System.currentTimeMillis()) + "): Cannot create directory '" + conf.registrationFiledirectory + "', quitting.");
+				}
+			}
+		}	
 	}
 
 	private static int findEntry( final ArrayList<ConfigurationParserObject> list, final String entry )

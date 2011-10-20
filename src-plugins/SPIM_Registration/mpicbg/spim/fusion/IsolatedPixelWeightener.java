@@ -1,6 +1,7 @@
 package mpicbg.spim.fusion;
 
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
+import mpicbg.imglib.image.Image;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.spim.io.SPIMConfiguration;
@@ -19,6 +20,7 @@ public abstract class IsolatedPixelWeightener<I>
 		this.debugLevel = view.getViewStructure().getDebugLevel();
 	}	
 	
+	public abstract Image<FloatType> getResultImage();
 	public abstract LocalizableByDimCursor<FloatType> getResultIterator();
 	public abstract LocalizableByDimCursor<FloatType> getResultIterator( OutOfBoundsStrategyFactory<FloatType> factory);	
 	public abstract void close();

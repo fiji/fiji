@@ -18,16 +18,25 @@ import mpicbg.imglib.type.numeric.RealType;
  * such an algorithm.
  */
 public abstract class Algorithm<T extends RealType<T>> {
-
+	// a name for the algorithm
+	protected String name;
 	/* a list of warnings that can be filled by the
 	 *  execute method
 	 */
 	List<Warning> warnings = new ArrayList<Warning>();
 
+	public Algorithm(String name) {
+		this.name = name;
+	}
+
 	/**
 	 * Executes the previously initialized {@link Algorithm}.
 	 */
 	public abstract void execute(DataContainer<T> container) throws MissingPreconditionException;
+
+	public String getName() {
+		return name;
+	}
 
 	/**
 	 * A method to give the algorithm the opportunity to let

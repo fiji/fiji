@@ -8,7 +8,6 @@ import java.util.List;
 
 import java.util.regex.Pattern;
 
-
 public class GlobFilter implements FilenameFilter {
 	Pattern pattern;
 	long newerThan;

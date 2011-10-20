@@ -1,12 +1,12 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1999, 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.tools.javac.comp;
@@ -47,8 +47,8 @@ import static com.sun.tools.javac.code.TypeTags.*;
 
 /** Type checking helper class for the attribution phase.
  *
- *  <p><b>This is NOT part of any API supported by Sun Microsystems.  If
- *  you write code that depends on this, you do so at your own risk.
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
  */
@@ -100,9 +100,12 @@ public class Check {
 
         boolean verboseDeprecated = lint.isEnabled(LintCategory.DEPRECATION);
         boolean verboseUnchecked = lint.isEnabled(LintCategory.UNCHECKED);
+        boolean enforceMandatoryWarnings = source.enforceMandatoryWarnings();
 
-        deprecationHandler = new MandatoryWarningHandler(log,verboseDeprecated, "deprecated");
-        uncheckedHandler = new MandatoryWarningHandler(log, verboseUnchecked, "unchecked");
+        deprecationHandler = new MandatoryWarningHandler(log,verboseDeprecated,
+                enforceMandatoryWarnings, "deprecated");
+        uncheckedHandler = new MandatoryWarningHandler(log, verboseUnchecked,
+                enforceMandatoryWarnings, "unchecked");
     }
 
     /** Switch: generics enabled?
@@ -173,7 +176,7 @@ public class Check {
      *  @param ex         The failure to report.
      */
     public Type completionError(DiagnosticPosition pos, CompletionFailure ex) {
-        log.error(pos, "cant.access", ex.sym, ex.getDetailValue());
+        log.error(pos, "cant.access", ex.sym, ex.errmsg);
         if (ex instanceof ClassReader.BadClassFile) throw new Abort();
         else return syms.errType;
     }
@@ -1247,7 +1250,7 @@ public class Check {
                 for (Type t2 = sup;
                      t2.tag == CLASS;
                      t2 = types.supertype(t2)) {
-                    for (Scope.Entry e2 = t2.tsym.members().lookup(s1.name);
+                    for (Scope.Entry e2 = t1.tsym.members().lookup(s1.name);
                          e2.scope != null;
                          e2 = e2.next()) {
                         Symbol s2 = e2.sym;
@@ -1394,16 +1397,6 @@ public class Check {
             while (e.scope != null) {
                 if (m.overrides(e.sym, origin, types, false))
                     checkOverride(tree, m, (MethodSymbol)e.sym, origin);
-                else if (e.sym.isInheritedIn(origin, types) && !m.isConstructor()) {
-                    Type er1 = m.erasure(types);
-                    Type er2 = e.sym.erasure(types);
-                    if (types.isSameType(er1,er2)) {
-                            log.error(TreeInfo.diagnosticPositionFor(m, tree),
-                                    "name.clash.same.erasure.no.override",
-                                    m, m.location(),
-                                    e.sym, e.sym.location());
-                    }
-                }
                 e = e.next();
             }
         }
@@ -1486,8 +1479,6 @@ public class Check {
 
     private void checkNonCyclic1(DiagnosticPosition pos, Type t, Set<TypeVar> seen) {
         final TypeVar tv;
-        if  (t.tag == TYPEVAR && (t.tsym.flags() & UNATTRIBUTED) != 0)
-            return;
         if (seen.contains(t)) {
             tv = (TypeVar)t;
             tv.bound = new ErrorType();

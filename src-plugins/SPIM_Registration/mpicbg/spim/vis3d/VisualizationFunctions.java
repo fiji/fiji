@@ -291,16 +291,18 @@ public class VisualizationFunctions
 		appearanceNon.setTransparencyAttributes( new TransparencyAttributes( TransparencyAttributes.FASTEST, transparency ) );
 
 		final Appearance appearanceICP = new Appearance();
-		appearanceICP.setColoringAttributes( new ColoringAttributes( new Color3f( 1, 0.5f, 0 ), ColoringAttributes.SHADE_FLAT ) );
+		//appearanceICP.setColoringAttributes( new ColoringAttributes( new Color3f( 0, 56f/255f, 139f/255f ), ColoringAttributes.SHADE_FLAT ) );
+		appearanceICP.setColoringAttributes( new ColoringAttributes( new Color3f( 0, 0, 0.3f ), ColoringAttributes.SHADE_FLAT ) );
 		appearanceICP.setTransparencyAttributes( new TransparencyAttributes( TransparencyAttributes.FASTEST, transparency/2 ) );
 
 		final Appearance appearanceTrue = new Appearance();
-		appearanceTrue.setColoringAttributes( new ColoringAttributes( new Color3f( 0, 1, 0 ), ColoringAttributes.SHADE_FLAT ) );
+		//appearanceTrue.setColoringAttributes( new ColoringAttributes( new Color3f( 16f/255f, 185f/255f, 0 ), ColoringAttributes.SHADE_FLAT ) );
+		appearanceTrue.setColoringAttributes( new ColoringAttributes( new Color3f( 0, 0, 0 ), ColoringAttributes.SHADE_FLAT ) );
 		appearanceTrue.setTransparencyAttributes( new TransparencyAttributes( TransparencyAttributes.FASTEST, transparency/2 ) );
 
 		final Appearance appearanceFalse = new Appearance();
 		appearanceFalse.setColoringAttributes( new ColoringAttributes( new Color3f( 1, 0, 0 ), ColoringAttributes.SHADE_FLAT ) );
-		appearanceFalse.setTransparencyAttributes( new TransparencyAttributes( TransparencyAttributes.FASTEST, 0.5f ) );
+		appearanceFalse.setTransparencyAttributes( new TransparencyAttributes( TransparencyAttributes.FASTEST, transparency/2 ) );
 
 		// create a new branch group that contains all transform groups which contain one sphere each
 		final BranchGroup viewBranch = new BranchGroup();
@@ -358,10 +360,10 @@ public class VisualizationFunctions
 				s = new Sphere( nucleusSize, Sphere.BODY, 10, appearanceTrue );
 			else if ( nucleus.getICPCorrespondence().size() > 0 )			
 				s = new Sphere( nucleusSize, Sphere.BODY, 10, appearanceICP );			
-			else if ( nucleus.getDescriptorCorrespondence().size() > 0 && nucleus.getRANSACCorrespondence().size() == 0 )
-				s = new Sphere( nucleusSize, Sphere.BODY, 10, appearanceFalse );
+			//else if ( nucleus.getDescriptorCorrespondence().size() > 0 && nucleus.getRANSACCorrespondence().size() == 0 )
+			//	s = new Sphere( nucleusSize, Sphere.BODY, 10, appearanceFalse );
 			else
-				s = new Sphere( nucleusSize, Sphere.BODY, 10, appearanceNon );
+				s = new Sphere( nucleusSize/2, Sphere.BODY, 10, appearanceNon );
 			
 			if ( s != null )
 			{

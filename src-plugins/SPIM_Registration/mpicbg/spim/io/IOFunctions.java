@@ -10,11 +10,15 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 
+import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.AffineModel3D;
+import mpicbg.models.RigidModel3D;
+import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
 import mpicbg.spim.registration.bead.Bead;
 import mpicbg.spim.registration.bead.BeadIdentification;
+import mpicbg.spim.registration.segmentation.NucleiConfiguration;
 import mpicbg.spim.registration.segmentation.Nucleus;
 import mpicbg.spim.registration.segmentation.NucleusIdentification;
 
@@ -157,7 +161,7 @@ public class IOFunctions
 		return true;
 	}
 	
-	public static ArrayList<Nucleus> readNuclei( final ViewDataBeads view, final String directory )
+	public static ArrayList<Nucleus> readNuclei( final ViewDataBeads view, final String directory, final NucleiConfiguration nConf )
 	{
 		final int debugLevel = view.getViewStructure().getDebugLevel();
 
@@ -173,6 +177,7 @@ public class IOFunctions
 						
 			
 			boolean printedOnce = false;
+			boolean viewIDupdated = false;
 						
 			while ( in.ready() )
 			{
@@ -183,12 +188,21 @@ public class IOFunctions
 				final int beadID = Integer.parseInt(entries[0]);
 				final int viewID = Integer.parseInt(entries[1]);
 				
-				if ( view.getID() != viewID && !printedOnce )
+				if ( view.getID() != viewID && !viewIDupdated )
 				{
 					if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
-						IOFunctions.println("ViewID messed up, should be " + viewID + "(file) but is " + view.getID() + "(view). We have to recompute the registration (WILL BE OVERWRITTEN).");
+						IOFunctions.println("ViewID messed up, should be " + viewID + "(file) but is " + view.getID() + "(view). ViewID updated.");
+					
+					view.setID( viewID );
+					viewIDupdated = true;
+				}
+				else if ( view.getID() != viewID && viewIDupdated && !printedOnce )
+				{
+					if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
+						IOFunctions.println("ViewID messed up, should be " + viewID + "(file) but is " + view.getID() + "(view) and is changing throughout the file. We have to recompute the registration (WILL BE OVERWRITTEN).");
 					
 					printedOnce = true;
+					nConf.readRegistration = false;
 				}
 				
 				final float[] l = new float[]{ Float.parseFloat(entries[2]), Float.parseFloat(entries[3]), Float.parseFloat(entries[4])};
@@ -580,7 +594,8 @@ public class IOFunctions
 			view.getBeadStructure().getBeadList().clear();
 			
 			boolean printedOnce = false;
-						
+			boolean viewIDupdated = false;
+			
 			while ( in.ready() )
 			{
 				++countLine;
@@ -588,21 +603,30 @@ public class IOFunctions
 				final String entries[] = line.split( "\t" );
 				
 				final int beadID = Integer.parseInt(entries[0]);
-				final int viewID = Integer.parseInt(entries[1]);
+				final int viewID = Integer.parseInt(entries[1]);				
 				
-				if ( view.getID() != viewID && !printedOnce )
+				if ( view.getID() != viewID && !viewIDupdated )
 				{
 					if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
-						IOFunctions.println("ViewID messed up, should be " + viewID + "(file) but is " + view.getID() + "(view). We have to recompute the registration (WILL BE OVERWRITTEN).");
+						IOFunctions.println("ViewID messed up, should be " + viewID + "(file) but is " + view.getID() + "(view). ViewID updated.");
 					
+					view.setID( viewID );
+					viewIDupdated = true;
+				}
+				else if ( view.getID() != viewID && viewIDupdated && !printedOnce )
+				{
+					if ( debugLevel <= ViewStructure.DEBUG_ERRORONLY )
+						IOFunctions.println("ViewID messed up, should be " + viewID + "(file) but is " + view.getID() + "(view) and is changing throughout the file. We have to recompute the registration (WILL BE OVERWRITTEN).");
+
 					if ( conf != null)
 					{
 						conf.readRegistration = false;
 						conf.writeRegistration = true;
 					}
-					
+
 					printedOnce = true;
 				}
+				
 				
 				final float[] l = new float[]{ Float.parseFloat(entries[2]), Float.parseFloat(entries[3]), Float.parseFloat(entries[4])};
 				final float[] w = new float[]{ Float.parseFloat(entries[5]), Float.parseFloat(entries[6]), Float.parseFloat(entries[7])};
@@ -785,7 +809,7 @@ public class IOFunctions
 			{			
 				PrintWriter out = TextFileAccess.openFileWrite( fileName );
 				
-				final AffineModel3D model = (AffineModel3D)view.getTile().getModel();
+				final AbstractAffineModel3D<?> model = (AbstractAffineModel3D<?>)view.getTile().getModel();
 				final float m[] = model.getMatrix( null );
 				
 				out.println("m00: " + m[ 0 ] );
@@ -804,6 +828,7 @@ public class IOFunctions
 				out.println("m31: " + "0" );
 				out.println("m32: " + "0" );
 				out.println("m33: " + "1" );
+				out.println("model: " + model.getClass().getSimpleName() );
 				out.println("");
 				out.println("minError: " + view.getViewStructure().getGlobalErrorStatistics().getMinAlignmentError());
 				out.println("avgError: " + view.getViewStructure().getGlobalErrorStatistics().getAverageAlignmentError());
@@ -833,7 +858,7 @@ public class IOFunctions
 			}
 			catch (Exception e)
 			{
-				IOFunctions.printErr("Cannot write registration file: " + fileName);
+				IOFunctions.printErr("Cannot write registration file: " + fileName + " because: " + e);
 				return false;
 			}
 		}		
@@ -860,8 +885,13 @@ public class IOFunctions
 		
 	public static boolean readRegistration( final ViewDataBeads view, final String fileName )
 	{
-		final AffineModel3D model = (AffineModel3D)view.getTile().getModel();
+		final AbstractAffineModel3D model = (AbstractAffineModel3D)view.getTile().getModel();
+		
+		// get 12 entry float array
 		final float m[] = model.getMatrix( null );
+		
+		// the default if nothing is written
+		String savedModel = "AffineModel3D";
 		
 		boolean readReg = true;
 		
@@ -895,6 +925,8 @@ public class IOFunctions
 					m[ 10 ] = Float.parseFloat(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m23:"))
 					m[ 11 ] = Float.parseFloat(entry.substring(5, entry.length()));
+				else if (entry.startsWith("model:"))
+					savedModel = entry.substring(7, entry.length()).trim();
 				/*else if (entry.startsWith("m30:"))
 					m[ 12 ] = Float.parseFloat(entry.substring(5, entry.length()));
 				else if (entry.startsWith("m31:"))
@@ -908,7 +940,7 @@ public class IOFunctions
 				else if (entry.startsWith("maxError:") )
 					view.getViewStructure().getGlobalErrorStatistics().setMaxAlignmentError( Double.parseDouble(entry.substring(10, entry.length())) );
 				else if (entry.startsWith("avgError:") )
-					view.getViewStructure().getGlobalErrorStatistics().setAverageAlignmentError( Double.parseDouble(entry.substring(10, entry.length())) );
+					view.getViewStructure().getGlobalErrorStatistics().setAverageAlignmentError( Double.parseDouble(entry.substring(10, entry.length())) );				
 				else
 				{
 					for ( ViewDataBeads otherView : view.getViewStructure().getViews() )
@@ -917,8 +949,33 @@ public class IOFunctions
 				}
 			}
 			in.close();
-
-			model.set( m[ 0 ], m[ 1 ], m[ 2 ], m[ 3 ], m[ 4 ], m[ 5 ], m[ 6 ], m[ 7 ], m[ 8 ], m[ 9 ], m[ 10 ], m[ 11 ] );
+			
+			if ( model instanceof AffineModel3D )
+			{
+				if ( !savedModel.equals("AffineModel3D") )
+					if ( view.getViewStructure().getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
+						IOFunctions.println( "Warning: Loading a '" + savedModel + "' as AffineModel3D!" );
+					
+				((AffineModel3D)model).set( m[ 0 ], m[ 1 ], m[ 2 ], m[ 3 ], m[ 4 ], m[ 5 ], m[ 6 ], m[ 7 ], m[ 8 ], m[ 9 ], m[ 10 ], m[ 11 ] );
+			}
+			else if ( model instanceof RigidModel3D )
+			{
+				if ( !savedModel.equals("RigidModel3D") )
+					if ( view.getViewStructure().getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
+						IOFunctions.println( "Warning: Loading a '" + savedModel + "' as RigidModel3D!" );
+				
+				((RigidModel3D)model).set( m[ 0 ], m[ 1 ], m[ 2 ], m[ 3 ], m[ 4 ], m[ 5 ], m[ 6 ], m[ 7 ], m[ 8 ], m[ 9 ], m[ 10 ], m[ 11 ] );
+			}
+			else if ( model instanceof TranslationModel3D )
+			{
+				if ( !savedModel.equals("TranslationModel3D") )
+					if ( view.getViewStructure().getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
+						IOFunctions.println( "Warning: Loading a '" + savedModel + "' as TranslationModel3D!" );
+				
+				((TranslationModel3D)model).set( m[ 3 ], m[ 7 ], m[ 11 ] );
+			}
+			else
+				throw new Exception( "Unknown transformation model for import: " + model.getClass().getCanonicalName() );
 			
 			if ( view.getViewStructure().getDebugLevel() <= ViewStructure.DEBUG_ALL )
 				IOFunctions.println( "Transformation for (" + view.getName() + "):\n" + model );

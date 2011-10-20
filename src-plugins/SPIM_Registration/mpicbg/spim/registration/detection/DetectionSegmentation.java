@@ -81,15 +81,14 @@ public class DetectionSegmentation
 	        sigmaDiff[ 0 ][ 2 ] = sigmaDiffZ[ 0 ];
 	        sigmaDiff[ 1 ][ 2 ] = sigmaDiffZ[ 1 ];
 		}
-
+        
         //System.out.println( sigmaXY[ 0 ] + ", " + sigmaXY[ 0 ] + ", " + sigmaZ[ 0 ] );
         //System.out.println( sigmaXY[ 1 ] + ", " + sigmaXY[ 1 ] + ", " + sigmaZ[ 1 ] );
         //System.out.println( sigmaDiff[ 0 ][ 0 ] + ", " + sigmaDiff[ 0 ][ 1 ] + ", " + sigmaDiff[ 0 ][ 2 ] );
         //System.out.println( sigmaDiff[ 1 ][ 0 ] + ", " + sigmaDiff[ 1 ][ 1 ] + ", " + sigmaDiff[ 1 ][ 2 ] );
         
 		// compute difference of gaussian
-		//final DifferenceOfGaussianReal1<T> dog = new DifferenceOfGaussianReal1<T>( img, oobsFactory, sigmaDiff[0], sigmaDiff[1], minInitialPeakValue, K_MIN1_INV );
-        final DifferenceOfGaussianReal1<T> dog = new DifferenceOfGaussianReal1<T>( img, oobsFactory, sigmaDiff[0][0], sigmaDiff[1][0], minInitialPeakValue, K_MIN1_INV );
+		final DifferenceOfGaussianReal1<T> dog = new DifferenceOfGaussianReal1<T>( img, oobsFactory, sigmaDiff[0], sigmaDiff[1], minInitialPeakValue, K_MIN1_INV );
 		dog.setKeepDoGImage( true );
 		
 		if ( !dog.checkInput() || !dog.process() )
@@ -180,7 +179,7 @@ public class DetectionSegmentation
 		return peakList;
 		
 	}
-	
+
 	public static double computeK( final int stepsPerOctave ) { return Math.pow( 2f, 1f / stepsPerOctave ); }
 	public static float computeKWeight( final float k ) { return 1.0f / (k - 1.0f); }
 	public static float[] computeSigma( final float k, final float initialSigma )

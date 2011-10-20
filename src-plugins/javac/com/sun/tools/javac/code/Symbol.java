@@ -1,12 +1,12 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,16 +18,20 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.tools.javac.code;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import javax.lang.model.element.*;
+import javax.lang.model.type.ReferenceType;
+import javax.lang.model.type.TypeMirror;
 import javax.tools.JavaFileObject;
 
 import com.sun.tools.javac.util.*;
@@ -49,8 +53,8 @@ import static com.sun.tools.javac.code.TypeTags.*;
  *  types, packages. Each subclass is represented as a static inner class
  *  inside Symbol.
  *
- *  <p><b>This is NOT part of any API supported by Sun Microsystems.  If
- *  you write code that depends on this, you do so at your own risk.
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
  */
@@ -629,6 +633,11 @@ public abstract class Symbol implements Element {
 
         public List<Attribute.Compound> getAnnotationMirrors() {
             if (completer != null) complete();
+            if (package_info != null && package_info.completer != null) {
+                package_info.complete();
+                if (attributes_field.isEmpty())
+                    attributes_field = package_info.attributes_field;
+            }
             assert attributes_field != null;
             return attributes_field;
         }
@@ -1189,23 +1198,56 @@ public abstract class Symbol implements Element {
         public List<VarSymbol> params() {
             owner.complete();
             if (params == null) {
-                List<Name> names = savedParameterNames;
+                // If ClassReader.saveParameterNames has been set true, then
+                // savedParameterNames will be set to a list of names that
+                // matches the types in type.getParameterTypes().  If any names
+                // were not found in the class file, those names in the list will
+                // be set to the empty name.
+                // If ClassReader.saveParameterNames has been set false, then
+                // savedParameterNames will be null.
+                List<Name> paramNames = savedParameterNames;
                 savedParameterNames = null;
-                if (names == null) {
-                    names = List.nil();
-                    int i = 0;
-                    for (Type t : type.getParameterTypes())
-                        names = names.prepend(name.table.fromString("arg" + i++));
-                    names = names.reverse();
-                }
+                // discard the provided names if the list of names is the wrong size.
+                if (paramNames == null || paramNames.size() != type.getParameterTypes().size())
+                    paramNames = List.nil();
                 ListBuffer<VarSymbol> buf = new ListBuffer<VarSymbol>();
+                List<Name> remaining = paramNames;
+                // assert: remaining and paramNames are both empty or both
+                // have same cardinality as type.getParameterTypes()
+                int i = 0;
                 for (Type t : type.getParameterTypes()) {
-                    buf.append(new VarSymbol(PARAMETER, names.head, t, this));
-                    names = names.tail;
+                    Name paramName;
+                    if (remaining.isEmpty()) {
+                        // no names for any parameters available
+                        paramName = createArgName(i, paramNames);
+                    } else {
+                        paramName = remaining.head;
+                        remaining = remaining.tail;
+                        if (paramName.isEmpty()) {
+                            // no name for this specific parameter
+                            paramName = createArgName(i, paramNames);
+                        }
+                    }
+                    buf.append(new VarSymbol(PARAMETER, paramName, t, this));
+                    i++;
                 }
                 params = buf.toList();
             }
             return params;
+        }
+
+        // Create a name for the argument at position 'index' that is not in
+        // the exclude list. In normal use, either no names will have been
+        // provided, in which case the exclude list is empty, or all the names
+        // will have been provided, in which case this method will not be called.
+        private Name createArgName(int index, List<Name> exclude) {
+            String prefix = "arg";
+            while (true) {
+                Name argName = name.table.fromString(prefix + index);
+                if (!exclude.contains(argName))
+                    return argName;
+                prefix += "$";
+            }
         }
 
         public Symbol asMemberOf(Type site, Types types) {
@@ -1268,14 +1310,8 @@ public abstract class Symbol implements Element {
         private static final long serialVersionUID = 0;
         public Symbol sym;
 
-        /** A diagnostic object describing the failure
-         */
-        public JCDiagnostic diag;
-
         /** A localized string describing the failure.
-         * @deprecated Use {@code getDetail()} or {@code getMessage()}
          */
-        @Deprecated
         public String errmsg;
 
         public CompletionFailure(Symbol sym, String errmsg) {
@@ -1284,26 +1320,8 @@ public abstract class Symbol implements Element {
 //          this.printStackTrace();//DEBUG
         }
 
-        public CompletionFailure(Symbol sym, JCDiagnostic diag) {
-            this.sym = sym;
-            this.diag = diag;
-//          this.printStackTrace();//DEBUG
-        }
-
-        public JCDiagnostic getDiagnostic() {
-            return diag;
-        }
-
-        @Override
         public String getMessage() {
-            if (diag != null)
-                return diag.getMessage(null);
-            else
-                return errmsg;
-        }
-
-        public Object getDetailValue() {
-            return (diag != null ? diag : errmsg);
+            return errmsg;
         }
 
         @Override

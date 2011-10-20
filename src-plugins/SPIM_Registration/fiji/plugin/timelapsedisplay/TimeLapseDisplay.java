@@ -103,12 +103,12 @@ public class TimeLapseDisplay
 		plotData( data, -1, false, null );
 	}
 
-	public static int plotData( final ArrayList< RegistrationStatistics > data, int referenceTimePoint, boolean enableReferenceTimePoint )
+	public static GraphFrame plotData( final ArrayList< RegistrationStatistics > data, int referenceTimePoint, boolean enableReferenceTimePoint )
 	{
 		return plotData( data, referenceTimePoint, enableReferenceTimePoint, null );
 	}
 
-	public static int plotData( final ArrayList< RegistrationStatistics > data, int referenceTimePoint, boolean enableReferenceTimePoint, final List<FileOpenMenuEntry> extraMenuItems )
+	public static GraphFrame plotData( final ArrayList< RegistrationStatistics > data, int referenceTimePoint, boolean enableReferenceTimePoint, final List<FileOpenMenuEntry> extraMenuItems )
 	{
         Color errorColorMin = new Color(240, 50, 50);
         Color errorColorAvg = new Color(255, 0, 0);
@@ -196,7 +196,7 @@ public class TimeLapseDisplay
 		
 		graphFrame.setVisible(true);
 		
-		return graphFrame.getReferenceTimePoint();
+		return graphFrame;//.getReferenceTimePoint();
 	}
 	
 	/**

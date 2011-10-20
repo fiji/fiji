@@ -7,16 +7,16 @@ import fiji.updater.logic.PluginObject;
 
 import fiji.updater.util.StderrProgress;
 
+import java.util.Arrays;
+
 dbPath = System.getProperty("fiji.dir") + "/db.xml.gz";
 
 plugins = new PluginCollection();
 progress = new StderrProgress();
 checksummer = new Checksummer(plugins, progress);
 
-if (bsh.args.length > 1) {
-	String[] args = new String[bsh.args.length - 1];
-	System.arraycopy(bsh.args, 1, args, 0, args.length);
-	checksummer.updateFromLocal(args);
+if (bsh.args.length > 0) {
+	checksummer.updateFromLocal(Arrays.asList(bsh.args));
 }
 else
 	checksummer.updateFromLocal();

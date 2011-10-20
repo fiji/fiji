@@ -9,6 +9,7 @@ import javax.vecmath.Vector3d;
 import fiji.plugin.timelapsedisplay.RegistrationStatistics;
 
 
+import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.Point;
 import mpicbg.spim.io.ConfigurationParserException;
@@ -34,7 +35,7 @@ public class Reconstruction
 
 	public Reconstruction( final SPIMConfiguration conf )
 	{
-		IOFunctions.println( "Version 0.54" );
+		IOFunctions.println( "Version 0.55" );
 		
 		this.conf = conf; 
 		
@@ -121,8 +122,8 @@ public class Reconstruction
 	{
 		for (int timePointIndex = 0; timePointIndex < conf.file.length; timePointIndex++)
 		{
-			final ViewStructure reference = ViewStructure.initViewStructure( conf, conf.referenceTimePoint, conf.getFileName( conf.referenceTimePoint ), new AffineModel3D(), "Reference ViewStructure Timepoint " + conf.referenceTimePoint, conf.debugLevelInt );
-			final ViewStructure template = ViewStructure.initViewStructure( conf, timePointIndex, new AffineModel3D(), "Template ViewStructure Timepoint " + conf.timepoints[timePointIndex], conf.debugLevelInt );
+			final ViewStructure reference = ViewStructure.initViewStructure( conf, conf.referenceTimePoint, conf.getFileName( conf.referenceTimePoint ), conf.getModel(), "Reference ViewStructure Timepoint " + conf.referenceTimePoint, conf.debugLevelInt );
+			final ViewStructure template = ViewStructure.initViewStructure( conf, timePointIndex, conf.getModel(), "Template ViewStructure Timepoint " + conf.timepoints[timePointIndex], conf.debugLevelInt );
 			
 			//
 			// get timepoint information
@@ -202,7 +203,7 @@ public class Reconstruction
 	{
 		for ( int timePointIndex = 0; timePointIndex < conf.file.length; timePointIndex++ )
 		{
-			final ViewStructure viewStructure = ViewStructure.initViewStructure( conf, timePointIndex, new AffineModel3D(), "ViewStructure Timepoint " + timePointIndex, conf.debugLevelInt );						
+			final ViewStructure viewStructure = ViewStructure.initViewStructure( conf, timePointIndex, conf.getModel(), "ViewStructure Timepoint " + timePointIndex, conf.debugLevelInt );						
 			
 			// no file found
 			if ( viewStructure == null )
@@ -310,7 +311,7 @@ public class Reconstruction
 	protected void addExternalTransformation( final ViewStructure viewStructure )
 	{
 		
-		final AffineModel3D model = new AffineModel3D();
+		//final AffineModel3D model = new AffineModel3D();
 		// 5 angle
 		//model.set( 0.87249345f, -0.48363087f, -0.06975689f, 0.0f, 0.48480982f, 0.87462026f, 0.0f, 0.0f, 0.06101087f, -0.033818856f, 0.9975669f, 0.0f );
 		
@@ -323,11 +324,11 @@ public class Reconstruction
 					 0.909124f, -0.41619343f, -0.01663096f, 0f,
 					 0.120889686f, 0.2254387f, 0.96672803f, 0);
 		*/
-		for ( final ViewDataBeads view : viewStructure.getViews() )
-		{
-			final AffineModel3D viewModel = (AffineModel3D)view.getTile().getModel();
-			viewModel.preConcatenate( model );
-		}
+		//for ( final ViewDataBeads view : viewStructure.getViews() )
+		//{
+//			final AffineModel3D viewModel = (AffineModel3D)view.getTile().getModel();
+	//		viewModel.preConcatenate( model );
+		//}
 		
 	}
 	

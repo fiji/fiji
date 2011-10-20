@@ -1,12 +1,12 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.tools.javac.comp;
@@ -48,8 +48,8 @@ import static com.sun.tools.javac.jvm.ByteCodes.*;
 /** This pass translates away some syntactic sugar: inner classes,
  *  class literals, assertions, foreach loops, etc.
  *
- *  <p><b>This is NOT part of any API supported by Sun Microsystems.  If
- *  you write code that depends on this, you do so at your own risk.
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
  */
@@ -1835,7 +1835,6 @@ public class Lower extends TreeTranslator {
                                           + "" + rval.hashCode()),
                                       type,
                                       currentMethodSym);
-        rval = convert(rval,type);
         JCVariableDecl def = make.VarDef(var, (JCExpression)rval); // XXX cast
         JCTree built = builder.build(make.Ident(var));
         JCTree res = make.LetExpr(def, built);
@@ -1969,19 +1968,14 @@ public class Lower extends TreeTranslator {
                                                tree.packageAnnotations),
                                 name, List.<JCTypeParameter>nil(),
                                 null, List.<JCExpression>nil(), List.<JCTree>nil());
-            ClassSymbol c = reader.enterClass(name, tree.packge);
-            c.flatname = names.fromString(tree.packge + "." + name);
-            c.sourcefile = tree.sourcefile;
-            c.completer = null;
-            c.members_field = new Scope(c);
-            c.flags_field = flags;
+            ClassSymbol c = tree.packge.package_info;
+            c.flags_field |= flags;
             c.attributes_field = tree.packge.attributes_field;
             tree.packge.attributes_field = List.nil();
             ClassType ctype = (ClassType) c.type;
             ctype.supertype_field = syms.objectType;
             ctype.interfaces_field = List.nil();
             packageAnnotationsClass.sym = c;
-
 
             translated.append(packageAnnotationsClass);
         }
@@ -2110,15 +2104,63 @@ public class Lower extends TreeTranslator {
 
         Symbol valuesSym = lookupMethod(tree.pos(), names.values,
                                         tree.type, List.<Type>nil());
-        JCTypeCast valuesResult =
-            make.TypeCast(valuesSym.type.getReturnType(),
-                          make.App(make.Select(make.Ident(valuesVar),
-                                               syms.arrayCloneMethod)));
+        List<JCStatement> valuesBody;
+        if (useClone()) {
+            // return (T[]) $VALUES.clone();
+            JCTypeCast valuesResult =
+                make.TypeCast(valuesSym.type.getReturnType(),
+                              make.App(make.Select(make.Ident(valuesVar),
+                                                   syms.arrayCloneMethod)));
+            valuesBody = List.<JCStatement>of(make.Return(valuesResult));
+        } else {
+            // template: T[] $result = new T[$values.length];
+            Name resultName = names.fromString(target.syntheticNameChar() + "result");
+            while (tree.sym.members().lookup(resultName).scope != null) // avoid name clash
+                resultName = names.fromString(resultName + "" + target.syntheticNameChar());
+            VarSymbol resultVar = new VarSymbol(FINAL|SYNTHETIC,
+                                                resultName,
+                                                arrayType,
+                                                valuesSym);
+            JCNewArray resultArray = make.NewArray(make.Type(types.erasure(tree.type)),
+                                  List.of(make.Select(make.Ident(valuesVar), syms.lengthVar)),
+                                  null);
+            resultArray.type = arrayType;
+            JCVariableDecl decl = make.VarDef(resultVar, resultArray);
+
+            // template: System.arraycopy($VALUES, 0, $result, 0, $VALUES.length);
+            if (systemArraycopyMethod == null) {
+                systemArraycopyMethod =
+                    new MethodSymbol(PUBLIC | STATIC,
+                                     names.fromString("arraycopy"),
+                                     new MethodType(List.<Type>of(syms.objectType,
+                                                            syms.intType,
+                                                            syms.objectType,
+                                                            syms.intType,
+                                                            syms.intType),
+                                                    syms.voidType,
+                                                    List.<Type>nil(),
+                                                    syms.methodClass),
+                                     syms.systemType.tsym);
+            }
+            JCStatement copy =
+                make.Exec(make.App(make.Select(make.Ident(syms.systemType.tsym),
+                                               systemArraycopyMethod),
+                          List.of(make.Ident(valuesVar), make.Literal(0),
+                                  make.Ident(resultVar), make.Literal(0),
+                                  make.Select(make.Ident(valuesVar), syms.lengthVar))));
+
+            // template: return $result;
+            JCStatement ret = make.Return(make.Ident(resultVar));
+            valuesBody = List.<JCStatement>of(decl, copy, ret);
+        }
+
         JCMethodDecl valuesDef =
-            make.MethodDef((MethodSymbol)valuesSym,
-                           make.Block(0, List.<JCStatement>nil()
-                                      .prepend(make.Return(valuesResult))));
+             make.MethodDef((MethodSymbol)valuesSym, make.Block(0, valuesBody));
+
         enumDefs.append(valuesDef);
+
+        if (debugLower)
+            System.err.println(tree.sym + ".valuesDef = " + valuesDef);
 
         /** The template for the following code is:
          *
@@ -2155,6 +2197,17 @@ public class Lower extends TreeTranslator {
             addEnumCompatibleMembers(tree);
         }
     }
+        // where
+        private MethodSymbol systemArraycopyMethod;
+        private boolean useClone() {
+            try {
+                Scope.Entry e = syms.objectType.tsym.members().lookup(names.clone);
+                return (e.sym != null);
+            }
+            catch (CompletionFailure e) {
+                return false;
+            }
+        }
 
     /** Translate an enumeration constant and its initializer. */
     private void visitEnumConstantDef(JCVariableDecl var, int ordinal) {
@@ -2863,15 +2916,13 @@ public class Lower extends TreeTranslator {
             JCExpressionStatement step = make.Exec(makeUnary(JCTree.PREINC, make.Ident(index)));
 
             Type elemtype = types.elemtype(tree.expr.type);
-            JCExpression loopvarinit = make.Indexed(make.Ident(arraycache),
-                                                    make.Ident(index)).setType(elemtype);
-            JCVariableDecl loopvardef = (JCVariableDecl)make.VarDef(tree.var.mods,
-                                                  tree.var.name,
-                                                  tree.var.vartype,
-                                                  loopvarinit).setType(tree.var.type);
-            loopvardef.sym = tree.var.sym;
+            JCStatement loopvarinit = make.
+                VarDef(tree.var.sym,
+                       make.
+                       Indexed(make.Ident(arraycache), make.Ident(index)).
+                       setType(elemtype));
             JCBlock body = make.
-                Block(0, List.of(loopvardef, tree.body));
+                Block(0, List.of(loopvarinit, tree.body));
 
             result = translate(make.
                                ForLoop(loopinit,
@@ -2946,11 +2997,7 @@ public class Lower extends TreeTranslator {
             JCExpression vardefinit = make.App(make.Select(make.Ident(itvar), next));
             if (iteratorTarget != syms.objectType)
                 vardefinit = make.TypeCast(iteratorTarget, vardefinit);
-            JCVariableDecl indexDef = (JCVariableDecl)make.VarDef(tree.var.mods,
-                                                  tree.var.name,
-                                                  tree.var.vartype,
-                                                  vardefinit).setType(tree.var.type);
-            indexDef.sym = tree.var.sym;
+            JCVariableDecl indexDef = make.VarDef(tree.var.sym, vardefinit);
             JCBlock body = make.Block(0, List.of(indexDef, tree.body));
             result = translate(make.
                 ForLoop(List.of(init),
