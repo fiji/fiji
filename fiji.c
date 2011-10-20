@@ -2658,10 +2658,9 @@ static void parse_command_line(void)
 
 	/* set up class path */
 	if (skip_build_classpath) {
-		/* strip trailing ":" */
-		int len = class_path->length;
-		if (len > 0 && class_path->buffer[len - 1] == PATH_SEP[0])
-			string_set_length(class_path, len - 1);
+		string_append_path_list(class_path, fiji_path("jars/Fiji.jar"));
+		string_append_path_list(class_path, fiji_path("jars/ij.jar"));
+		string_append_path_list(class_path, fiji_path("jars/javassist.jar"));
 	}
 	else {
 		if (is_default_main_class(main_class)) {
@@ -2798,6 +2797,9 @@ static int start_ij(void)
 			prepend_string_copy(&options.java_options, buffer->buffer);
 		}
 	}
+
+	prepend_string_copy(&options.ij_options, main_class);
+	main_class = "fiji.ClassLauncher";
 
 	if (env) {
 		jclass instance;

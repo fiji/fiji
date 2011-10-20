@@ -61,15 +61,6 @@ public class Main {
 	}
 
 	public static void premain() {
-		String headless = System.getProperty("java.awt.headless");
-		if ("true".equalsIgnoreCase(headless))
-			new Headless().run();
-		new IJHacker().run();
-		try {
-			JavassistHelper.defineClasses();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 		FileDialogDecorator.registerAutomaticDecorator();
 		JFileChooserDecorator.registerAutomaticDecorator();
 	}

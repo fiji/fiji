@@ -5,12 +5,22 @@ import java.lang.reflect.Method;
 
 public class ClassLauncher {
 	/**
-	 * Launch the class given as first argument passing on the remaining arguments
+	 * Patch ij.jar and launch the class given as first argument passing on the remaining arguments
 	 *
 	 * @param arguments A list containing the name of the class whose main() method is to be called
 	 *        with the remaining arguments.
 	 */
 	public static void main(String[] arguments) {
+		String headless = System.getProperty("java.awt.headless");
+		if ("true".equalsIgnoreCase(headless))
+			new Headless().run();
+		new IJHacker().run();
+		try {
+			JavassistHelper.defineClasses();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 		String[] stripped = new String[arguments.length - 1];
 		if (stripped.length > 0)
 			System.arraycopy(arguments, 1, stripped, 0, stripped.length);
