@@ -242,7 +242,7 @@ public class RandError extends Metrics
 		
 		for(double th =  minThreshold; th <= maxThreshold; th += stepThreshold)
 		{
-			IJ.log("Calculating Rand index statistics for threshold value " + String.format("%.2f", th) + "...");
+			IJ.log("  Calculating Rand index statistics for threshold value " + String.format("%.2f", th) + "...");
 			cs.add( getRandIndexStats( th ));
 		}
 		

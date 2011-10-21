@@ -202,7 +202,7 @@ public class WarpingError extends Metrics {
 			boolean clusterByError)
 	{
 		
-		IJ.log("Warping ground truth...");
+		IJ.log("  Warping ground truth...");
 		
 		// Get clustered mismatches after warping ground truth, i.e. relaxing original labels to proposal. 
 		// Only simple points warping is allowed.
@@ -317,7 +317,7 @@ public class WarpingError extends Metrics {
 				
 		for(double th = minThreshold; th<=maxThreshold; th += stepThreshold)
 		{						
-			IJ.log("Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
+			IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
 			double error = getMetricValue( th, clusterByError );
 			if ( error < minError)
 				minError = error;
