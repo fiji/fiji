@@ -1,4 +1,4 @@
-package trainableSegmentation;
+package trainableSegmentation.metrics;
 
 /**
  *
@@ -23,15 +23,15 @@ package trainableSegmentation;
 public class ClusteredWarpingMismatches
 {
 	public int numOfObjectAdditions = 0;
-	public int numOfHoleDeleitions = 0;
+	public int numOfHoleDeletions = 0;
 	public int numOfMergers = 0;
 	public int numOfHoleAdditions = 0;
-	public int numOfObjectDeleitions = 0;
+	public int numOfObjectDeletions = 0;
 	public int numOfSplits = 0;
 	
 	public ClusteredWarpingMismatches(
 			int numOfObjectAdditions,
-			int numOfHoleDeleitions,
+			int numOfHoleDeletions,
 			int numOfMergers,
 			int numOfHoleAdditions,
 			int numOfObjectDeletions,
@@ -39,10 +39,10 @@ public class ClusteredWarpingMismatches
 			)
 	{
 		this.numOfHoleAdditions = numOfHoleAdditions;
-		this.numOfHoleDeleitions = numOfHoleDeleitions;
+		this.numOfHoleDeletions = numOfHoleDeletions;
 		this.numOfMergers = numOfMergers;
 		this.numOfObjectAdditions = numOfObjectAdditions;
-		this.numOfObjectDeleitions = numOfObjectDeletions;
+		this.numOfObjectDeletions = numOfObjectDeletions;
 		this.numOfSplits = numOfSplits;
 	}
 }
