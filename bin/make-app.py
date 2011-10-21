@@ -28,7 +28,7 @@ def make_app():
 		removedirs('Fiji.app')
 	os.makedirs('Fiji.app/images')
 	shutil.copy('images/icon.png', 'Fiji.app/images/')
-	for d in ['plugins', 'macros', 'jars', 'misc', 'retro', 'luts', \
+	for d in ['plugins', 'macros', 'jars', 'retro', 'luts', \
 			'scripts']:
 		shutil.copytree(d, 'Fiji.app/' + d)
 	if os.path.isdir('samples'):
