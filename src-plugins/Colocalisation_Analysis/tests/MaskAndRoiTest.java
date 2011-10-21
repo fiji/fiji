@@ -2,15 +2,15 @@ package tests;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import gadgets.MaskFactory;
 
 import java.util.Arrays;
 
-import gadgets.MaskFactory;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.cursor.special.PredicateCursor;
+import mpicbg.imglib.cursor.special.RegionOfInterestCursor;
 import mpicbg.imglib.cursor.special.TwinCursor;
 import mpicbg.imglib.cursor.special.predicate.MaskPredicate;
 import mpicbg.imglib.cursor.special.predicate.Predicate;
@@ -287,6 +287,52 @@ public class MaskAndRoiTest extends ColocalisationTest {
 			assertEquals( 0, cursor.getChannel1().getInteger() );
 		}
 		cursor.close();
+	}
+
+	/**
+	 * This test makes sure that a mask that is based on a lower dimension
+	 * image has the correct dimensionality.
+	 */
+	@Test
+	public void irregularRoiDimensionTest() {
+		// load a 3D test image
+		Image<UnsignedByteType> img = positiveCorrelationImageCh1;
+		int width = img.getDimension(0);
+		int height = img.getDimension(1);
+		int slices = img.getDimension(2);
+		// create a random noise 2D image -- set roiWidh/roiSize accordingly
+		Image<UnsignedByteType> maskSlice =
+			TestImageAccessor.produceSticksNoiseImage(width, height, 50, 2, 10);
+		Image<BitType> mask = MaskFactory.createMask(img.getDimensions(), maskSlice);
+		// check the dimensions of the mask
+		org.junit.Assert.assertArrayEquals(img.getDimensions(), mask.getDimensions());
+		// make sure the mask actually got the same content on every slice
+		int[] offset = mask.createPositionArray();
+		Arrays.fill(offset, 0);
+		int[] size = mask.createPositionArray();
+		size[0] = width;
+		size[1] = height;
+		size[2] = 1;
+		LocalizableByDimCursor<BitType> maskCursor =
+				mask.createLocalizableByDimCursor();
+		RegionOfInterestCursor<BitType> firstSliceCursor =
+				mask.createLocalizableByDimCursor().createRegionOfInterestCursor(offset, size);
+		int[] pos = mask.createPositionArray();
+		while (firstSliceCursor.hasNext()) {
+			firstSliceCursor.fwd();
+			firstSliceCursor.getPosition(pos);
+			BitType maskValue = firstSliceCursor.getType();
+			// go through all slices
+			for (int i=1; i<slices; ++i) {
+				pos[2] = i;
+				maskCursor.setPosition(pos);
+				// compare the values and assume they are the same
+				int cmp = maskCursor.getType().compareTo(maskValue);
+				assertEquals(0, cmp);
+			}
+		}
+		firstSliceCursor.close();
+		maskCursor.close();
 	}
 
 	@Test
