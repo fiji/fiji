@@ -241,6 +241,93 @@ public class WarpingError extends Metrics {
 	
 
 	/**
+	 * Calculate the number of splits and mergers for different thresholds
+	 * 
+	 * @param minThreshold minimum threshold value to binarize the input images
+	 * @param maxThreshold maximum threshold value to binarize the input images
+	 * @param stepThreshold threshold step value to use during binarization
+	 * @param clusterByError if false, cluster mismatches by type, otherwise cluster them by error and type
+	 * @return list with arrays with the number of splits and mergers
+	 */
+	public ArrayList<int[]> getSplitsAndMergers(
+			double minThreshold,
+			double maxThreshold,
+			double stepThreshold,
+			boolean clusterByError)
+	{
+		
+		if( minThreshold < 0 || minThreshold >= maxThreshold || maxThreshold > 1)
+		{
+			IJ.log("Error: unvalid threshold values.");
+			return null;
+		}
+						
+		ArrayList < int[] > listOfSplitsAndMergers = new ArrayList<int[]>();
+				
+		for(double th = minThreshold; th<=maxThreshold; th += stepThreshold)
+		{						
+			IJ.log("Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
+			ClusteredWarpingMismatches[] cwm = 
+						getClusteredWarpingMismatches(originalLabels, proposedLabels, 
+														mask, th, clusterByError);		
+			if(null == cwm)
+				return null;
+			
+			int[] splitsAndMergers = new int[2];
+			
+			for(int j=0; j<cwm.length; j++)
+			{
+				splitsAndMergers[ 0 ] += cwm[ j ].numOfSplits;
+				splitsAndMergers[ 1 ] += cwm[ j ].numOfMergers;
+			}
+			
+			listOfSplitsAndMergers.add( splitsAndMergers );
+			
+			IJ.log( "  # splits = " + splitsAndMergers[ 0 ] + ", # mergers = " + splitsAndMergers[ 1 ]);
+		}
+						
+		return listOfSplitsAndMergers;
+	}
+	
+	/**
+	 * Calculate error with the minimum number of splits and mergers for different thresholds
+	 * 
+	 * @param minThreshold minimum threshold value to binarize the input images
+	 * @param maxThreshold maximum threshold value to binarize the input images
+	 * @param stepThreshold threshold step value to use during binarization
+	 * @param clusterByError if false, cluster mismatches by type, otherwise cluster them by error and type
+	 * @return list with arrays with the number of splits and mergers
+	 */
+	public double getMinimumSplitsAndMergersErrorValue(
+			double minThreshold,
+			double maxThreshold,
+			double stepThreshold,
+			boolean clusterByError)
+	{
+		
+		if( minThreshold < 0 || minThreshold >= maxThreshold || maxThreshold > 1)
+		{
+			IJ.log("Error: unvalid threshold values.");
+			return -1;
+		}
+						
+		flags = MERGE + SPLIT;
+		
+		double minError = Double.MAX_VALUE;
+				
+		for(double th = minThreshold; th<=maxThreshold; th += stepThreshold)
+		{						
+			IJ.log("Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
+			double error = getMetricValue( th, clusterByError );
+			if ( error < minError)
+				minError = error;
+		}
+						
+		return minError;
+	}
+	
+	
+	/**
 	 * Check if a point is simple (in 2D)
 	 * @param im input patch
 	 * @param n neighbors
@@ -365,7 +452,7 @@ public class WarpingError extends Metrics {
 			final ImageProcessor mask,
 			double binaryThreshold)
 	{
-		if(binaryThreshold < 0 || binaryThreshold > 1)
+		if(binaryThreshold < 0 || binaryThreshold > 1.01)
 			binaryThreshold = 0.5;
 
 		// Grayscale target
@@ -413,7 +500,7 @@ public class WarpingError extends Metrics {
 
 		final float[] targetBinPix = (float[])targetBin.getProcessor().getPixels();
 		for(int i=0; i < targetBinPix.length; i++)
-			targetBinPix[i] = (targetBinPix[i] > binaryThreshold) ? 1.0f : 0.0f;
+			targetBinPix[i] = (targetBinPix[i] <= binaryThreshold) ? 0.0f : 1.0f;
 		
 		double diff = Double.MIN_VALUE;
 		double diff_before = 0;
@@ -766,7 +853,7 @@ public class WarpingError extends Metrics {
 			for(int i=0; i<proposalPixels.length; i++)
 			{
 				count ++;
-				final float thresholdedProposal = (proposalPixels[i] > binaryThreshold) ? 1.0f : 0.0f;
+				final float thresholdedProposal = (proposalPixels[i] <= binaryThreshold) ? 0.0f : 1.0f;
 				if (warpedPixels[i] != thresholdedProposal)
 					error++;
 			}
