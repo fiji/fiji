@@ -143,6 +143,7 @@ public class MaskFactory {
 
 		// test if original mask and new mask have same dimensions
 		if (Arrays.equals(dim, origDim)) {
+			// copy the input image to the mask output image
 			LocalizableCursor<T> origCursor = origMask.createLocalizableCursor();
 			LocalizableByDimCursor<BitType> maskCursor = mask.createLocalizableByDimCursor();
 			while (origCursor.hasNext()) {
