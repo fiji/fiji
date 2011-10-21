@@ -135,7 +135,7 @@ public class PixelError extends Metrics{
 	 *
 	 * @return pixel error
 	 */
-	public double pixelError()
+	public double getMetricValue()
 	{		
 		final ImageStack labelSlices = originalLabels.getImageStack();
 		final ImageStack proposalSlices = proposedLabels.getImageStack();
