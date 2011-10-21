@@ -151,6 +151,8 @@ public class MaskFactory {
 				boolean value = origCursor.getType().getRealDouble() > 0.001;
 				maskCursor.getType().set(value);
 			}
+			origCursor.close();
+			maskCursor.close();
 		} else if (dim.length > origDim.length) {
 			// sanity check
 			for (int i=0; i<origDim.length; i++) {
@@ -179,6 +181,8 @@ public class MaskFactory {
 						maskCursor.getType().set(value);
 					}
 			}
+			origCursor.close();
+			maskCursor.close();
 		} else if (dim.length < origDim.length) {
 			// mask has more dimensions than image
 			throw new UnsupportedOperationException("Masks with more dimensions than the image are not supported, yet.");
