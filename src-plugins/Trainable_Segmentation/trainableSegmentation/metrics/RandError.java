@@ -242,6 +242,7 @@ public class RandError extends Metrics
 		
 		for(double th =  minThreshold; th <= maxThreshold; th += stepThreshold)
 		{
+			IJ.log("Calculating Rand index statistics for threshold value " + String.format("%.2f", th) + "...");
 			cs.add( getRandIndexStats( th ));
 		}
 		
@@ -735,5 +736,29 @@ public class RandError extends Metrics
 		return new ClassificationStatistics( truePositives, trueNegatives, 
 									falsePositives,  falseNegatives, randIndex);
 	}
+	/**
+	 * Get the best F-score of the Rand index over a set of thresholds 
+	 * 
+	 * @param minThreshold minimum threshold value to binarize the input images
+	 * @param maxThreshold maximum threshold value to binarize the input images
+	 * @param stepThreshold threshold step value to use during binarization
+	 * @return maximal F-score of the Rand index
+	 */
+	public double getRandIndexMaximalFScore(
+			double minThreshold,
+			double maxThreshold,
+			double stepThreshold)
+	{
+		ArrayList<ClassificationStatistics> stats = getRandIndexStats( minThreshold, maxThreshold, stepThreshold );
+	    // trainableSegmentation.utils.Utils.plotPrecisionRecall( stats );    
+	    double maxFScore = 0;
 
-}
+	    for(ClassificationStatistics stat : stats)
+	    {
+	    	if (stat.fScore > maxFScore)
+	    		maxFScore = stat.fScore;
+	    }	    
+	    return maxFScore;
+	}
+	
+} // end class RandError
