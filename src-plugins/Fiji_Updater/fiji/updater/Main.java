@@ -333,6 +333,8 @@ public class Main {
 			usage();
 			System.exit(0);
 		}
+
+		Util.useSystemProxies();
 		String command = args[0];
 		if (command.equals("list"))
 			getInstance().list(makeList(args, 1));
