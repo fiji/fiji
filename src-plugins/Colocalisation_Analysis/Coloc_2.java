@@ -17,13 +17,11 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Hashtable;
 import java.util.List;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
-import mpicbg.imglib.cursor.special.RegionOfInterestCursor;
 import mpicbg.imglib.cursor.special.TwinCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
@@ -82,18 +80,13 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
 	// a storage class for ROI information
 	protected class MaskInfo {
-		// the ROI to use (null if none)
 		BoundingBox roi;
-
-		/* the mask corresponding to the ROI, sized the same as a slice,
-		 * but also giving access to its bounding boxed' version
-		 */
 		public Image<T> mask;
-		public Image<T> boundingBox;
 
 		// constructors
-		public MaskInfo(BoundingBox roi, Image<T> m, Image<T> bb) {
-			this.roi = roi; mask = m; boundingBox = bb;
+		public MaskInfo(BoundingBox roi, Image<T> mask) {
+			this.roi = roi;
+			this.mask = mask;
 		}
 
 		public MaskInfo() { }
@@ -149,7 +142,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		if (showDialog()) {
 			try {
 				for (MaskInfo mi : masks) {
-					colocalise(img1, img2, mi.roi, mi.mask, mi.boundingBox);
+					colocalise(img1, img2, mi.roi, mi.mask);
 				}
 			} catch (MissingPreconditionException e) {
 				IJ.handleException(e);
@@ -300,7 +293,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			/* if no ROI/mask is selected, just add an empty MaskInfo
 			 * to colocalise both images without constraints.
 			 */
-			masks.add(new MaskInfo(null, null, null));
+			masks.add(new MaskInfo(null, null));
 		}
 
 		// read out GUI data
@@ -364,13 +357,12 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	 * @throws MissingPreconditionException
 	 */
 	public void colocalise(Image<T> img1, Image<T> img2, BoundingBox roi,
-			Image<T> mask, Image<T> maskBB) throws MissingPreconditionException {
+			Image<T> mask) throws MissingPreconditionException {
 		// create a new container for the selected images and channels
 		DataContainer<T> container;
 		if (mask != null) {
 			container = new DataContainer<T>(img1, img2,
-					img1Channel, img2Channel, mask, maskBB,
-					roi.offset, roi.size);
+					img1Channel, img2Channel, mask, roi.offset, roi.size);
 		} else if (roi != null) {
 				// we have no mask, but a regular ROI in use
 				container = new DataContainer<T>(img1, img2,
@@ -523,24 +515,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 				size[d] = max[d] - min[d] + 1;
 			// create and add bounding box
 			BoundingBox bb = new BoundingBox(min, size);
-			// get a thumbnail version of the mask
-			LocalizableByDimCursor<T> maskCursor =
-				mask.createLocalizableByDimCursor();
-			RegionOfInterestCursor<T> roiCursor =
-				new RegionOfInterestCursor<T>(maskCursor, bb.offset, bb.size);
-			Image<T> maskBB = mask.createNewImage(bb.size, "clipped Mask");
-			LocalizableByDimCursor<T> maskBBCursor
-				= maskBB.createLocalizableByDimCursor();
-			while (roiCursor.hasNext()) {
-				roiCursor.fwd();
-				maskBBCursor.setPosition( roiCursor );
-				maskBBCursor.getType().set( roiCursor.getType() );
-			}
-			maskBBCursor.close();
-			roiCursor.close();
-			maskCursor.close();
-
-			return new MaskInfo(bb, mask, maskBB);
+			return new MaskInfo(bb, mask);
 		}
 	}
 
@@ -639,7 +614,6 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			ImagePlus maskImp = new ImagePlus("Mask", ipSlice);
 			// and remember it and the masks bounding box
 			mi.mask = ImagePlusAdapter.<T>wrap( maskImp );
-			mi.boundingBox = ImagePlusAdapter.<T>wrap( new ImagePlus( "MaskBB", ipMask ) );
 		}
 	}
 
