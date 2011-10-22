@@ -27,8 +27,8 @@ public class JNumericTextField extends JTextField {
 			checkInput();
 		}
 	};
-	private double value;
-	private double oldValue; 
+	private double value = 0;
+	private double oldValue = 0; 
 	
 	
 	/*

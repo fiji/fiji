@@ -9,7 +9,8 @@ import java.io.File;
 public class TrackMate_TestDrive {
 	
 //	private static final File file = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.tif");
-	private static final File file = new File("/Users/tinevez/Desktop/Data/FakeTracks.tif");
+//	private static final File file = new File("/Users/tinevez/Desktop/Data/FakeTracks.tif");
+	private static final File file = new File("/Users/tinevez/Desktop/Data/10-01-21-1hour-bis.tif");
 
 	public static void main(String[] args) {
 
