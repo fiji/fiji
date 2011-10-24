@@ -229,7 +229,7 @@ public class PixelError extends Metrics{
 				
 		for(double th =  minThreshold; th <= maxThreshold; th += stepThreshold)
 		{
-			IJ.log("  Calculating Pixel error statistics for threshold value " + String.format("%.2f", th) + "...");
+			IJ.log("  Calculating pixel error statistics for threshold value " + String.format("%.2f", th) + "...");
 			cs.add( getPrecisionRecallStats( th ));
 		}		
 		return cs;
