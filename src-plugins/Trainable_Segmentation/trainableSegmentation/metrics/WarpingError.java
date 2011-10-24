@@ -161,7 +161,7 @@ public class WarpingError extends Metrics {
 	public double getMetricValue(double binaryThreshold) 	
 	{
 		
-		IJ.log("Warping ground truth...");
+		IJ.log("  Warping ground truth...");
 		
 		// Warp ground truth, relax original labels to proposal. Only simple
 		// points warping is allowed.
@@ -266,7 +266,7 @@ public class WarpingError extends Metrics {
 				
 		for(double th = minThreshold; th<=maxThreshold; th += stepThreshold)
 		{						
-			IJ.log("Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
+			IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
 			ClusteredWarpingMismatches[] cwm = 
 						getClusteredWarpingMismatches(originalLabels, proposedLabels, 
 														mask, th, clusterByError);		
@@ -326,6 +326,90 @@ public class WarpingError extends Metrics {
 		return minError;
 	}
 	
+	
+	/**
+	 * Calculate the precision-recall values based on pixel error between 
+	 * some warped 2D original labels and the corresponding proposed labels. 
+	 * 
+	 * @param minThreshold minimum threshold value to binarize the input images
+	 * @param maxThreshold maximum threshold value to binarize the input images
+	 * @param stepThreshold threshold step value to use during binarization
+	 * @return pixel error value and derived statistics for each threshold
+	 */
+	public ArrayList< ClassificationStatistics > getPrecisionRecallStats(
+			double minThreshold,
+			double maxThreshold,
+			double stepThreshold)
+	{
+		
+		if( minThreshold < 0 || minThreshold >= maxThreshold || maxThreshold > 1)
+		{
+			IJ.log("Error: unvalid threshold values.");
+			return null;
+		}
+						
+		ArrayList< ClassificationStatistics > cs = new ArrayList<ClassificationStatistics>();
+				
+		for(double th =  minThreshold; th <= maxThreshold; th += stepThreshold)
+		{
+			WarpingResults[] wrs = simplePointWarp2dMT(originalLabels, proposedLabels, mask, th);
+			
+			ImageStack is = new ImageStack( originalLabels.getWidth(), originalLabels.getHeight() );
+			for(int i = 0; i < wrs.length; i ++)
+				is.addSlice("warped source slice " + (i+1), wrs[i].warpedSource.getProcessor() );
+			
+			ImagePlus warpedSource = new ImagePlus ("warped source", is);
+			
+			IJ.log("  Calculating warping error statistics for threshold value " + String.format("%.2f", th) + "...");
+			
+			// We calculate the precision-recall value between the warped original labels and the 
+			// proposed labels 
+			cs.add( (new PixelError( warpedSource, proposedLabels)).getPrecisionRecallStats( th ) );
+		}		
+		return cs;
+	}
+	
+	/**
+	 * Calculate the precision-recall values based on Rand index between 
+	 * some warped 2D original labels and the corresponding proposed labels. 
+	 * 
+	 * @param minThreshold minimum threshold value to binarize the input images
+	 * @param maxThreshold maximum threshold value to binarize the input images
+	 * @param stepThreshold threshold step value to use during binarization
+	 * @return Rand index value and derived statistics for each threshold
+	 */
+	public ArrayList< ClassificationStatistics > getRandIndexStats(
+			double minThreshold,
+			double maxThreshold,
+			double stepThreshold)
+	{
+		
+		if( minThreshold < 0 || minThreshold >= maxThreshold || maxThreshold > 1)
+		{
+			IJ.log("Error: unvalid threshold values.");
+			return null;
+		}
+						
+		ArrayList< ClassificationStatistics > cs = new ArrayList<ClassificationStatistics>();
+				
+		for(double th =  minThreshold; th <= maxThreshold; th += stepThreshold)
+		{
+			WarpingResults[] wrs = simplePointWarp2dMT(originalLabels, proposedLabels, mask, th);
+			
+			ImageStack is = new ImageStack( originalLabels.getWidth(), originalLabels.getHeight() );
+			for(int i = 0; i < wrs.length; i ++)
+				is.addSlice("warped source slice " + (i+1), wrs[i].warpedSource.getProcessor() );
+			
+			ImagePlus warpedSource = new ImagePlus ("warped source", is);
+			
+			IJ.log("  Calculating warping error statistics for threshold value " + String.format("%.2f", th) + "...");
+			
+			// We calculate the precision-recall value between the warped original labels and the 
+			// proposed labels 
+			cs.add( (new RandError( warpedSource, proposedLabels)).getRandIndexStats( th ) );
+		}		
+		return cs;
+	}
 	
 	/**
 	 * Check if a point is simple (in 2D)
@@ -958,6 +1042,7 @@ public class WarpingError extends Metrics {
 			public ClusteredWarpingMismatches call()
 			{
 				WarpingResults wr = simplePointWarp2d(source, target, mask, binaryThreshold);
+				//wr.warpedSource.show();
 				int[] mismatchesLabels = classifyMismatches2d( wr.warpedSource, wr.mismatches );
 				if( clusterByError )
 					return clusterMismatchesByError( wr.warpedSource, wr.mismatches, mismatchesLabels );
