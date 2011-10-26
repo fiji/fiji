@@ -46,6 +46,8 @@ public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> {
 	
 	private void init() {
 		
+		jLabelHelpText.setSize(270, 150);
+		
 		logPanel.setBounds(8, 260, 276, 200);
 		add(logPanel);
 		

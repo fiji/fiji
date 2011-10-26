@@ -82,7 +82,7 @@ public class ListChooserPanel <K extends InfoTextable> extends ActionListenableP
 			{
 				jLabelHelpText = new JLabel();
 				jLabelHelpText.setFont(FONT.deriveFont(Font.ITALIC));
-				jLabelHelpText.setBounds(12, 80, 270, 150);
+				jLabelHelpText.setBounds(12, 80, 270, 366);
 				echo(list.get(jComboBoxChoice.getSelectedIndex()));
 				this.add(jLabelHelpText);
 			}
