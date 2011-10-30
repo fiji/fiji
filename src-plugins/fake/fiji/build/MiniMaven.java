@@ -491,7 +491,11 @@ public class MiniMaven {
 				localPOMCache.put(key, null);
 				return null;
 			}
-			path += version + "/" + artifactId + "-" + version + ".pom";
+			path += version + "/";
+			if (version.endsWith("-SNAPSHOT")) try {
+				version = parseSnapshotVersion(new File(path));
+			} catch (FileNotFoundException e) { /* ignore */ }
+			path += artifactId + "-" + version + ".pom";
 
 			File file = new File(path);
 			if (!file.exists()) {
@@ -656,10 +660,17 @@ public class MiniMaven {
 		}
 	}
 
-	protected static void downloadAndVerify(String repositoryURL, String groupId, String artifactId, String version) throws MalformedURLException, IOException, NoSuchAlgorithmException {
+	protected static void downloadAndVerify(String repositoryURL, String groupId, String artifactId, String version) throws MalformedURLException, IOException, NoSuchAlgorithmException, ParserConfigurationException, SAXException {
 		String path = "/" + groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/";
-		String baseURL = repositoryURL + path + artifactId + "-" + version;
 		File directory = new File(System.getProperty("user.home") + "/.m2/repository" + path);
+		if (version.endsWith("-SNAPSHOT")) {
+			String metadataURL = repositoryURL + path + "maven-metadata.xml";
+			downloadAndVerify(metadataURL, directory, "maven-metadata-snapshot.xml");
+			version = parseSnapshotVersion(directory);
+			if (version == null)
+				throw new IOException("No version found in " + metadataURL);
+		}
+		String baseURL = repositoryURL + path + artifactId + "-" + version;
 		downloadAndVerify(baseURL + ".pom", directory);
 		downloadAndVerify(baseURL + ".jar", directory);
 	}
