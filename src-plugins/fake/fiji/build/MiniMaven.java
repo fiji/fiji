@@ -691,6 +691,47 @@ public class MiniMaven {
 		fileStream.close();
 	}
 
+	protected static String parseSnapshotVersion(File directory) throws IOException, ParserConfigurationException, SAXException {
+		return parseSnapshotVersion(new FileInputStream(new File(directory, "maven-metadata-snapshot.xml")));
+	}
+
+	protected static String parseSnapshotVersion(InputStream in) throws IOException, ParserConfigurationException, SAXException {
+		SnapshotPOMHandler handler = new SnapshotPOMHandler();
+		XMLReader reader = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
+		reader.setContentHandler(handler);
+		reader.parse(new InputSource(in));
+		if (handler.snapshotVersion != null && handler.timestamp != null && handler.buildNumber != null)
+			return handler.snapshotVersion + "-" + handler.timestamp + "-" + handler.buildNumber;
+		throw new IOException("Missing timestamp/build number: " + handler.timestamp + ", " + handler.buildNumber);
+	}
+
+	protected static class SnapshotPOMHandler extends DefaultHandler {
+		protected String qName;
+		protected String snapshotVersion, timestamp, buildNumber;
+
+		public void startElement(String uri, String localName, String qName, Attributes attributes) {
+			this.qName = qName;
+		}
+
+		public void endElement(String uri, String localName, String qName) {
+			this.qName = null;
+		}
+
+		public void characters(char[] ch, int start, int length) {
+			if (qName == null)
+				; // ignore
+			else if (qName.equals("version")) {
+				String version = new String(ch, start, length).trim();
+				if (version.endsWith("-SNAPSHOT"))
+					snapshotVersion = version.substring(0, version.length() - "-SNAPSHOT".length());
+			}
+			else if (qName.equals("timestamp"))
+				timestamp = new String(ch, start, length).trim();
+			else if (qName.equals("buildNumber"))
+				buildNumber = new String(ch, start, length).trim();
+		}
+	}
+
 	protected static int hexNybble(int b) {
 		return (b < 'A' ? (b < 'a' ? b - '0' : b - 'a' + 10) : b - 'A' + 10) & 0xf;
 	}
