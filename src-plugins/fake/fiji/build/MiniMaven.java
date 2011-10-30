@@ -701,10 +701,17 @@ public class MiniMaven {
 	}
 
 	protected static File download(URL url, File directory) throws IOException {
+		return download(url, directory, null);
+	}
+
+	protected static File download(URL url, File directory, String fileName) throws IOException {
+		if (fileName == null) {
+			fileName = url.getPath();
+			fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
+		}
+
 		InputStream in = url.openStream();
 		directory.mkdirs();
-		String fileName = url.getPath();
-		fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
 		File result = new File(directory, fileName);
 		copy(in, result);
 		return result;
