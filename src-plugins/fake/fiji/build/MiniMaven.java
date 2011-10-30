@@ -701,8 +701,8 @@ public class MiniMaven {
 	}
 
 	protected static File download(URL url, File directory) throws IOException {
-		directory.mkdirs();
 		InputStream in = url.openStream();
+		directory.mkdirs();
 		String fileName = url.getPath();
 		fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
 		File result = new File(directory, fileName);
