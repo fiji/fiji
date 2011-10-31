@@ -124,6 +124,7 @@ SUBMODULE_TARGETS=\
 	jars/javassist.jar \
 	jars/jsch-0.1.44.jar \
 	jars/imglib-scripting.jar \
+	plugins/Image_5D.jar \
 
 PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \
@@ -142,7 +143,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Analyze_Reader_Writer.jar \
 	plugins/Color_Histogram.jar \
 	plugins/Color_Inspector_3D.jar \
-	plugins/Image_5D.jar \
 	plugins/M_I_P.jar \
 	plugins/Interactive_3D_Surface_Plot.jar \
 	plugins/View5D_.jar \
@@ -223,6 +223,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Colour_Deconvolution.jar \
 	plugins/Dichromacy_.jar \
 	plugins/Threshold_Colour.jar \
+	plugins/Helmholtz_Analysis.jar \
 	plugins/Reconstruct_Reader.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
@@ -324,6 +325,8 @@ jars/ij-plugin-swing.jar <- modules/imagej2/
 jars/ij-ui-common-awt.jar <- modules/imagej2/
 jars/ij-ui-swing.jar <- modules/imagej2/
 jars/ij-util-awt.jar <- modules/imagej2/
+CLASSPATH(plugins/Image_5D.jar)=jars/ij.jar
+plugins/Image_5D.jar <- modules/image5d/
 
 # From source
 libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama-1.0.2.jar \
@@ -418,7 +421,6 @@ CLASSPATH(plugins/LSM_Reader.jar)=jars/ij.jar
 CLASSPATH(plugins/loci_tools.jar)=jars/ij.jar
 CLASSPATH(plugins/LocalThickness_.jar)=jars/ij.jar
 CLASSPATH(plugins/Volume_Viewer.jar)=jars/ij.jar
-CLASSPATH(plugins/Image_5D.jar)=jars/ij.jar
 CLASSPATH(jars/batik.jar)=jars/jacl.jar:plugins/loci_tools.jar:jars/jython.jar
 CLASSPATH(plugins/Stack_Manipulation.jar)=jars/ij.jar
 CLASSPATH(jars/Fiji.jar)=jars/ij.jar:jars/javassist.jar
@@ -464,6 +466,7 @@ CLASSPATH(plugins/Reconstruct_Reader.jar)=jars/ij.jar:plugins/TrakEM2_.jar
 CLASSPATH(plugins/Colour_Deconvolution.jar)=jars/ij.jar
 CLASSPATH(plugins/Dichromacy_.jar)=jars/ij.jar
 CLASSPATH(plugins/Threshold_Colour.jar)=jars/ij.jar
+CLASSPATH(plugins/Helmholtz_Analysis.jar)=jars/ij.jar
 
 # pre-Java5 generics ;-)
 
@@ -582,6 +585,7 @@ precompiled/fake.jar <- jars/fake.jar
 precompiled/javac.jar <- jars/javac.jar
 precompiled/ij.jar <- jars/ij.jar
 precompiled/mpicbg.jar <- jars/mpicbg.jar
+precompiled/Image_5D.jar <- plugins/Image_5D.jar
 precompiled/*[bin/copy-file.py $PRE $TARGET] <- *
 
 precompile-submodules[] <- \

@@ -298,3 +298,5 @@ hs_err*.log
 /modules/javassist/html/
 /modules/javassist/javassist.jar
 /modules/javassist/javassist-src.jar
+/modules/image5d/target/
+/plugins/Helmholtz_Analysis.jar
