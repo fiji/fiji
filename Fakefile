@@ -224,6 +224,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Dichromacy_.jar \
 	plugins/Threshold_Colour.jar \
 	plugins/Helmholtz_Analysis.jar \
+	plugins/Descriptor_based_registration.jar \
 	plugins/Reconstruct_Reader.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
