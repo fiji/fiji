@@ -30,6 +30,7 @@ import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.SimpleFastLAPTracker;
 import fiji.plugin.trackmate.tracking.SimpleLAPTracker;
 import fiji.plugin.trackmate.tracking.SpotTracker;
+import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
@@ -192,11 +193,12 @@ public class TrackMate_ implements PlugIn {
 	 * Overwrite this method if you want to add your {@link SpotTracker}.
 	 */
 	protected List<SpotTracker> createSpotTrackerList() {
-		List<SpotTracker> trackers = new ArrayList<SpotTracker>(4);
+		List<SpotTracker> trackers = new ArrayList<SpotTracker>(5);
 		trackers.add(new SimpleFastLAPTracker());
 		trackers.add(new FastLAPTracker());
 		trackers.add(new SimpleLAPTracker());
 		trackers.add(new LAPTracker());
+		trackers.add(new NearestNeighborTracker());
 		return trackers;
 		
 	}

@@ -8,12 +8,13 @@ import org.jdom.JDOMException;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import fiji.plugin.trackmate.tracking.LAPTracker;
-import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
+import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
+import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTrackerSettings;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
-public class LAPTrackerTestDrive {
+public class NNTrackerTest {
+
 	
 //	private static final File SPLITTING_CASE_3 = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
 	private static final File SPLITTING_CASE_3 = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
@@ -48,36 +49,25 @@ public class LAPTrackerTestDrive {
 		System.out.println();
 		
 		// 1.5 - Set the tracking settings
-		LAPTrackerSettings settings = new LAPTrackerSettings();
-		settings.linkingDistanceCutOff = 10;
-		settings.allowGapClosing = false;
-		settings.gapClosingDistanceCutoff = 15;
-		settings.gapClosingTimeCutoff = 10;
-		settings.allowMerging = false;
-		settings.mergingDistanceCutoff = 10;
-		settings.mergingTimeCutoff = 2;
-		settings.mergingFeaturePenalties.clear();
-		settings.allowSplitting = false;
-		settings.splittingDistanceCutoff = 10;
-		settings.splittingTimeCutoff = 2;
-		settings.splittingFeaturePenalties.clear();
+		NearestNeighborTrackerSettings settings = new NearestNeighborTrackerSettings();
+		settings.maxLinkingDistance = 15;
+		
 		System.out.println("Tracker settings:");
 		System.out.println(settings.toString());
 		model.getSettings().trackerSettings = settings;
 		
 		// 2 - Track the test spots
 		long start = System.currentTimeMillis();
-		LAPTracker lap;
-		lap = new LAPTracker();
-		lap.setModel(model);
-		lap.setLogger(Logger.DEFAULT_LOGGER);
+		NearestNeighborTracker tracker = new NearestNeighborTracker();
+		tracker.setModel(model);
+		tracker.setLogger(Logger.DEFAULT_LOGGER);
 
-		if (!lap.checkInput())
-			System.err.println("Error checking input: "+lap.getErrorMessage());
-		if (!lap.process())
-			System.err.println("Error in process: "+lap.getErrorMessage());
+		if (!tracker.checkInput())
+			System.err.println("Error checking input: "+tracker.getErrorMessage());
+		if (!tracker.process())
+			System.err.println("Error in process: "+tracker.getErrorMessage());
 		long end = System.currentTimeMillis();
-		model.setGraph(lap.getResult());
+		model.setGraph(tracker.getResult());
 		
 		// 3 - Print out results for testing		
 		System.out.println();
@@ -108,4 +98,5 @@ public class LAPTrackerTestDrive {
 		sd2d.setDisplaySettings(TrackMateModelView.KEY_TRACK_DISPLAY_MODE, TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE);
 	}
 
+	
 }
