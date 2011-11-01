@@ -24,6 +24,18 @@ public class ClassLoaderPlus extends URLClassLoader {
 		}
 	}
 
+	public static ClassLoaderPlus get(File... files) {
+		try {
+			URL[] urls = new URL[files.length];
+			for (int i = 0; i < urls.length; i++)
+				urls[i] = files[i].toURI().toURL();
+			return get(urls);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("Uh oh: " + e.getMessage());
+		}
+	}
+
 	public static ClassLoaderPlus get(URL... urls) {
 		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 		if (classLoader instanceof ClassLoaderPlus) {
