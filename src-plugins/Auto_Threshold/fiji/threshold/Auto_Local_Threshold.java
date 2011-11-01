@@ -385,7 +385,8 @@ public class Auto_Local_Threshold implements PlugIn {
 
 		ImagePlus Meanimp, Varimp;
 		ImageProcessor ip=imp.getProcessor(), ipMean, ipVar;
-		double k_value, c_value=0.0;
+		double k_value;
+		int c_value=0;
 
 		byte object;
 		byte backg ;
@@ -408,7 +409,7 @@ public class Auto_Local_Threshold implements PlugIn {
 
 		if (par2!=0) {
 			IJ.log("Niblack: changed c_value from :"+ c_value + "  to:" + par2);// requested feature, not in original
-			c_value=par2;
+			c_value=(int)par2;
 		}
 
 		Meanimp=duplicateImage(ip);
