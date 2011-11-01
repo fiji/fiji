@@ -77,6 +77,15 @@ public class ClassLoaderPlus extends URLClassLoader {
 		addURL(url);
 	}
 
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append(getClass().getName()).append("(");
+		for (URL url : getURLs())
+			builder.append(" ").append(url.toString());
+		builder.append(" )");
+		return builder.toString();
+	}
+
 	public static String getFijiDir() throws ClassNotFoundException {
 		String path = System.getProperty("fiji.dir");
 		if (path != null)
