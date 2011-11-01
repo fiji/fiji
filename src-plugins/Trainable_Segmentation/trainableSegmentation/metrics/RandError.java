@@ -240,7 +240,7 @@ public class RandError extends Metrics
 		
 		ArrayList< ClassificationStatistics > cs = new ArrayList<ClassificationStatistics>();
 		
-		for(double th =  minThreshold; th <= maxThreshold; th += stepThreshold)
+		for(double th = minThreshold; th <= maxThreshold; th += stepThreshold)
 		{
 			IJ.log("  Calculating Rand index statistics for threshold value " + String.format("%.2f", th) + "...");
 			cs.add( getRandIndexStats( th ));
@@ -736,6 +736,7 @@ public class RandError extends Metrics
 		return new ClassificationStatistics( truePositives, trueNegatives, 
 									falsePositives,  falseNegatives, randIndex);
 	}
+	
 	/**
 	 * Get the best F-score of the Rand index over a set of thresholds 
 	 * 
