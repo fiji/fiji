@@ -1,6 +1,5 @@
 package trainableSegmentation;
 
-import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
 
@@ -20,8 +19,6 @@ import java.io.OutputStreamWriter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Random;
@@ -49,22 +46,13 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 
-import ij.gui.Plot;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
 
-import ij.process.Blitter;
-import ij.process.ByteProcessor;
 import ij.process.FloatPolygon;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
-
-import trainableSegmentation.metrics.WarpingError;
-import util.FindConnectedRegions;
-
-import util.FindConnectedRegions.Results;
 
 import weka.attributeSelection.BestFirst;
 import weka.attributeSelection.CfsSubsetEval;
