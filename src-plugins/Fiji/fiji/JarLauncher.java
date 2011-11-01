@@ -52,15 +52,7 @@ public class JarLauncher {
 					+ jarPath + "'.");
 			System.exit(1);
 		}
-		try {
-			URL[] urls = new URL[] { new File(jarPath).toURL() };
-			ClassLoader loader = new URLClassLoader(urls);
-			Thread.currentThread().setContextClassLoader(loader);
-		} catch (MalformedURLException e) {
-			System.err.println("Could not make URL for '"
-					+ jarPath + "'.");
-			System.exit(1);
-		}
-		ClassLauncher.launch(className, arguments);
+		ClassLoaderPlus loader = ClassLoaderPlus.get(new File(jarPath));
+		ClassLauncher.launch(loader, className, arguments);
 	}
 }

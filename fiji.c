@@ -2657,19 +2657,11 @@ static void parse_command_line(void)
 		show_splash();
 
 	/* set up class path */
-	if (skip_build_classpath) {
+	if (skip_build_classpath)
 		string_append_path_list(class_path, fiji_path("jars/Fiji.jar"));
-		string_append_path_list(class_path, fiji_path("jars/fiji-compat.jar"));
-		string_append_path_list(class_path, fiji_path("jars/ij.jar"));
-		string_append_path_list(class_path, fiji_path("jars/javassist.jar"));
-	}
 	else {
-		if (is_default_main_class(main_class)) {
+		if (is_default_main_class(main_class))
 			string_append_path_list(class_path, fiji_path("jars/Fiji.jar"));
-			string_append_path_list(class_path, fiji_path("jars/fiji-compat.jar"));
-			string_append_path_list(class_path, fiji_path("jars/ij.jar"));
-			string_append_path_list(class_path, fiji_path("jars/javassist.jar"));
-		}
 		else {
 			if (build_classpath(class_path, fiji_path("plugins"), 0))
 				die("Could not build classpath!");

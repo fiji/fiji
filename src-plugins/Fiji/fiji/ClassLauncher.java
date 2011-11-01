@@ -11,29 +11,28 @@ public class ClassLauncher {
 	 *        with the remaining arguments.
 	 */
 	public static void main(String[] arguments) {
+		ClassLoaderPlus classLoader = ClassLoaderPlus.getInFijiDirectory("jars/fiji-compat.jar", "jars/ij.jar", "jars/javassist.jar");
 		try {
-			patchIJ1();
+			patchIJ1(classLoader);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		String[] stripped = new String[arguments.length - 1];
 		if (stripped.length > 0)
 			System.arraycopy(arguments, 1, stripped, 0, stripped.length);
-		launch(arguments[0], stripped);
+		launch(classLoader, arguments[0], stripped);
 	}
 
-	protected static void patchIJ1() throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-		ClassLoader loader = ClassLauncher.class.getClassLoader();
-		Class<Runnable> clazz = (Class<Runnable>)loader.loadClass("fiji.IJ1Patcher");
+	protected static void patchIJ1(ClassLoader classLoader) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+		Class<Runnable> clazz = (Class<Runnable>)classLoader.loadClass("fiji.IJ1Patcher");
 		Runnable ij1Patcher = clazz.newInstance();
 		ij1Patcher.run();
 	}
 
-	protected static void launch(String className, String[] arguments) {
+	protected static void launch(ClassLoader classLoader, String className, String[] arguments) {
 		Class main = null;
-		ClassLoader loader = Thread.currentThread().getContextClassLoader();
 		try {
-			main = loader.loadClass(className.replace('/', '.'));
+			main = classLoader.loadClass(className.replace('/', '.'));
 		} catch (ClassNotFoundException e) {
 			System.err.println("Class '" + className + "' was not found");
 			System.exit(1);
