@@ -1,4 +1,4 @@
-package fiji.threshold;
+//package fiji.threshold;
 import ij.*;
 import ij.process.*;
 import ij.gui.*;
@@ -6,11 +6,12 @@ import ij.plugin.filter.*;
 import ij.plugin.*;
 
 // AutoLocalThreshold segmentation 
-// Following the guidelines at http://fiji.sc/wiki/index.php/PlugIn_Design_Guidelines
+// Following the guidelines at http://pacific.mpi-cbg.de/wiki/index.php/PlugIn_Design_Guidelines
 // ImageJ plugin by G. Landini at bham. ac. uk
 // 1.0  15/Apr/2009
-//1.1  01/Jun/2009
-//1.2  25/May/2010
+// 1.1  01/Jun/2009
+// 1.2  25/May/2010
+// 1.3  1/Nov/2011 added constant offset to Niblack's method (request)
                 
 public class Auto_Local_Threshold implements PlugIn {
         /** Ask for parameters and then execute.*/
@@ -31,10 +32,10 @@ public class Auto_Local_Threshold implements PlugIn {
 		 // 2 - Ask for parameters:
 		GenericDialog gd = new GenericDialog("Auto Local Threshold");
 		String [] methods={"Try all", "Bernsen",  "Mean", "Median", "MidGrey", "Niblack", "Sauvola"};
-		gd.addMessage("Auto Local Threshold v1.2");
+		gd.addMessage("Auto Local Threshold v1.3");
 		gd.addChoice("Method", methods, methods[0]);
 		gd.addNumericField ("Radius",  15, 0);
-		gd.addMessage ("Special parameters (if different from default)");
+		gd.addMessage ("Special paramters (if different from default)");
 		gd.addNumericField ("Parameter_1",  0, 0);
 		gd.addNumericField ("Parameter_2",  0, 0);
 		gd.addCheckbox("White objects on black background",true);
@@ -384,7 +385,8 @@ public class Auto_Local_Threshold implements PlugIn {
 
 		ImagePlus Meanimp, Varimp;
 		ImageProcessor ip=imp.getProcessor(), ipMean, ipVar;
-		double k_value;
+		double k_value, c_value=0.0;
+
 		byte object;
 		byte backg ;
 
@@ -402,6 +404,11 @@ public class Auto_Local_Threshold implements PlugIn {
 		if (par1!=0) {
 			IJ.log("Niblack: changed k_value from :"+ k_value + "  to:" + par1);
 			k_value= par1;
+		}
+
+		if (par2!=0) {
+			IJ.log("Niblack: changed c_value from :"+ c_value + "  to:" + par2);// requested feature, not in original
+			c_value=par2;
 		}
 
 		Meanimp=duplicateImage(ip);
@@ -423,7 +430,7 @@ public class Auto_Local_Threshold implements PlugIn {
 		float[] var = (float []) ipVar.getPixels();
 
 		for (int i=0; i<pixels.length; i++) 
-			pixels[i] = ( (int)(pixels[i] &0xff) > (int)( mean[i] + k_value * Math.sqrt ( var[i] ))) ? object : backg;
+			pixels[i] = ( (int)(pixels[i] &0xff) > (int)( mean[i] + k_value * Math.sqrt ( var[i] )+ c_value)) ? object : backg;
 		//imp.updateAndDraw();
 		return;
 	}
