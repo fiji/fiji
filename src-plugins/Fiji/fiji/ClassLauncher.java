@@ -11,16 +11,7 @@ public class ClassLauncher {
 	 *        with the remaining arguments.
 	 */
 	public static void main(String[] arguments) {
-		String headless = System.getProperty("java.awt.headless");
-		if ("true".equalsIgnoreCase(headless))
-			new Headless().run();
-		new IJHacker().run();
-		try {
-			JavassistHelper.defineClasses();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
+		new IJ1Patcher().run();
 		String[] stripped = new String[arguments.length - 1];
 		if (stripped.length > 0)
 			System.arraycopy(arguments, 1, stripped, 0, stripped.length);
