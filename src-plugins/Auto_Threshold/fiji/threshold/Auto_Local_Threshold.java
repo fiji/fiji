@@ -1,4 +1,4 @@
-//package fiji.threshold;
+package fiji.threshold;
 import ij.*;
 import ij.process.*;
 import ij.gui.*;
