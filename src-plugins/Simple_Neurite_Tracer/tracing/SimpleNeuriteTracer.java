@@ -47,6 +47,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
 
 import client.ArchiveClient;
 
@@ -197,6 +198,23 @@ public class SimpleNeuriteTracer extends ThreePanes
 		if( filler != null ) {
 			filler.pauseOrUnpause( );
 		}
+	}
+
+	protected List<SNTListener> listeners = Collections.synchronizedList(
+		new ArrayList<SNTListener>());
+
+	public void addListener(SNTListener listener) {
+		listeners.add(listener);
+	}
+
+	public void notifyListeners(SNTEvent event) {
+		for(SNTListener listener : listeners.toArray(new SNTListener[0])) {
+			listener.onEvent(event);
+		}
+	}
+
+	public boolean anyListeners() {
+		return listeners.size() > 0;
 	}
 
 	/* Now a couple of callback methods, which get information
