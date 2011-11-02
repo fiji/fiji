@@ -83,6 +83,7 @@ public class NeuriteTracerResultsDialog
 	protected JMenuItem analyzeSkeletonMenuItem;
 	protected JMenuItem makeLineStackMenuItem;
 	protected JMenuItem exportCSVMenuItemAgain;
+	protected JMenuItem sendToTrakEM2;
 	protected JMenuItem shollAnalysiHelpMenuItem;
 
 	protected JCheckBoxMenuItem mipOverlayMenuItem;
@@ -427,6 +428,7 @@ public class NeuriteTracerResultsDialog
 		}
 
 		plugin.cancelSearch( true );
+		plugin.notifyListeners(new SNTEvent(SNTEvent.QUIT));
 		pw.dispose();
 		fw.dispose();
 		dispose();
@@ -456,6 +458,7 @@ public class NeuriteTracerResultsDialog
 		exportCSVMenuItem.setEnabled(false);
 		exportAllSWCMenuItem.setEnabled(false);
 		exportCSVMenuItemAgain.setEnabled(false);
+		sendToTrakEM2.setEnabled(false);
 		analyzeSkeletonMenuItem.setEnabled(false);
 		saveMenuItem.setEnabled(false);
 		loadMenuItem.setEnabled(false);
@@ -503,6 +506,7 @@ public class NeuriteTracerResultsDialog
 					exportCSVMenuItem.setEnabled(true);
 					exportAllSWCMenuItem.setEnabled(true);
 					exportCSVMenuItemAgain.setEnabled(true);
+					sendToTrakEM2.setEnabled(plugin.anyListeners());
 					analyzeSkeletonMenuItem.setEnabled(true);
 					if( uploadButton != null ) {
 						uploadButton.setEnabled(true);
@@ -706,6 +710,10 @@ public class NeuriteTracerResultsDialog
 		exportAllSWCMenuItem = new JMenuItem("Export all as SWC...");
 		exportAllSWCMenuItem.addActionListener(this);
 		fileMenu.add(exportAllSWCMenuItem);
+
+		sendToTrakEM2 = new JMenuItem("Send to TrakEM2");
+		sendToTrakEM2.addActionListener(this);
+		fileMenu.add(sendToTrakEM2);
 
 		quitMenuItem = new JMenuItem("Quit");
 		quitMenuItem.addActionListener(this);
@@ -1173,6 +1181,10 @@ public class NeuriteTracerResultsDialog
 			}
 			IJ.showStatus("Export complete.");
 			changeState( preExportingState );
+
+		} else if( source == sendToTrakEM2 ) {
+
+			plugin.notifyListeners(new SNTEvent(SNTEvent.SEND_TO_TRAKEM2));
 
 		} else if( source == showCorrespondencesToButton ) {
 

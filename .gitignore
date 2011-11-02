@@ -300,3 +300,4 @@ hs_err*.log
 /modules/javassist/javassist-src.jar
 /modules/image5d/target/
 /plugins/Helmholtz_Analysis.jar
+/plugins/Descriptor_based_registration.jar
