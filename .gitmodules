@@ -72,7 +72,7 @@
 	url = contrib@fiji.sc:/srv/git/jsch
 [submodule "modules/imagej2"]
 	path = modules/imagej2
-	url = contrib@fiji.sc:/srv/git/imagej2
+	url = git://dev.imagejdev.org/imagej.git
 [submodule "modules/imagej5d"]
 	path = modules/image5d
 	url = git://fiji.sc/image5d

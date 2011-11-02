@@ -1,6 +1,5 @@
 package trainableSegmentation;
 
-import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
 
@@ -20,8 +19,6 @@ import java.io.OutputStreamWriter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Random;
@@ -48,23 +45,15 @@ import hr.irb.fastRandomForest.FastRandomForest;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.Prefs;
 
-import ij.gui.Plot;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
 
-import ij.process.Blitter;
-import ij.process.ByteProcessor;
 import ij.process.FloatPolygon;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
-
-import trainableSegmentation.metrics.WarpingError;
-import util.FindConnectedRegions;
-
-import util.FindConnectedRegions.Results;
 
 import weka.attributeSelection.BestFirst;
 import weka.attributeSelection.CfsSubsetEval;
@@ -2847,7 +2836,7 @@ public class WekaSegmentation {
 	public ImagePlus applyClassifier(final ImagePlus imp, int numThreads, final boolean probabilityMaps)
 	{
 		if (numThreads == 0)
-			numThreads = Runtime.getRuntime().availableProcessors();
+			numThreads = Prefs.getThreads();
 
 		final int numSliceThreads = Math.min(imp.getStackSize(), numThreads);
 		final int numClasses      = numOfClasses;
@@ -3002,7 +2991,7 @@ public class WekaSegmentation {
 			final boolean probabilityMaps)
 	{
 		if (numThreads == 0)
-			numThreads = Runtime.getRuntime().availableProcessors();
+			numThreads = Prefs.getThreads();
 
 		final int numSliceThreads = Math.min(imp.getStackSize(), numThreads);
 		final int numClasses      = numOfClasses;
@@ -3153,7 +3142,7 @@ public class WekaSegmentation {
 		}
 		
 		if (numThreads == 0)
-			numThreads = Runtime.getRuntime().availableProcessors();
+			numThreads = Prefs.getThreads();
 
 		// Check if all feature stacks were used during training
 		boolean allUsed = true;
@@ -3225,7 +3214,7 @@ public class WekaSegmentation {
 							classNames.add(getClassLabels()[i]);
 		}
 		
-		final int numProcessors = Runtime.getRuntime().availableProcessors();
+		final int numProcessors = Prefs.getThreads();
 		final ExecutorService exe = Executors.newFixedThreadPool( numProcessors );
 		
 		final ArrayList< Future<Instances> > futures = new ArrayList< Future<Instances> >();
@@ -3299,7 +3288,7 @@ public class WekaSegmentation {
 	public ImagePlus applyClassifier(final Instances data, int w, int h, int numThreads, boolean probabilityMaps)
 	{
 		if (numThreads == 0)
-			numThreads = Runtime.getRuntime().availableProcessors();
+			numThreads = Prefs.getThreads();
 
 		final int numClasses   = data.numClasses();
 		final int numInstances = data.numInstances();
