@@ -197,24 +197,28 @@ public class Matching
 		if ( model == null )
 		{
 			// no prior model known, do a locally rigid matching
+			float zStretching = img1.getNumDimensions() >= 3 ? img1.getCalibration( 2 ) / img1.getCalibration( 0 ) : 1;
 			for ( DifferenceOfGaussianPeak<FloatType> peak : peaks1 )
-				listA.add( new Particle( id++, peak.getSubPixelPosition(), peak ) );
+				listA.add( new Particle( id++, peak, zStretching ) );
 
+			zStretching = img2.getNumDimensions() >= 3 ? img2.getCalibration( 2 ) / img2.getCalibration( 0 ) : 1;
 			for ( DifferenceOfGaussianPeak<FloatType> peak : peaks2 )
-				listB.add( new Particle( id++, peak.getSubPixelPosition(), peak ) );
+				listB.add( new Particle( id++, peak, zStretching ) );
 		}
 		else
 		{
 			// prior model known, apply to the points before matching and then do a simple descriptor matching
+			float zStretching = img1.getNumDimensions() >= 3 ? img1.getCalibration( 2 ) / img1.getCalibration( 0 ) : 1;
 			for ( DifferenceOfGaussianPeak<FloatType> peak : peaks1 )
 			{
-				final Particle particle = new Particle( id++, peak.getSubPixelPosition(), peak );			
+				final Particle particle = new Particle( id++, peak, zStretching );			
 				listA.add( particle );
 			}
 			
+			zStretching = img2.getNumDimensions() >= 3 ? img2.getCalibration( 2 ) / img2.getCalibration( 0 ) : 1;
 			for ( DifferenceOfGaussianPeak<FloatType> peak : peaks2 )
 			{
-				final Particle particle = new Particle( id++, peak.getSubPixelPosition(), peak );
+				final Particle particle = new Particle( id++, peak, zStretching );
 				particle.apply( model );
 				for ( int d = 0; d < particle.getL().length; ++d )
 					particle.getL()[ d ] = particle.getW()[ d ];
@@ -223,27 +227,6 @@ public class Matching
 			}
 		}
 		
-		// apply z-stretching if 3d (otherwise the locally rigid descriptors will not work,
-		// and also any other model than Affine will fail)
-		// we never unapply this, so it has to be taken into consideration when fusing
-		if ( img1.getNumDimensions() == 3 )
-		{
-			float zStretching = img1.getCalibration( 2 ) / img1.getCalibration( 0 );
-			
-			for ( final Particle p : listA )
-			{
-				p.getL()[ 2 ] *= zStretching;
-				p.getW()[ 2 ] = p.getL()[ 2 ];
-			}
-
-			zStretching = img2.getCalibration( 2 ) / img2.getCalibration( 0 );
-			for ( final Particle p : listB )
-			{
-				p.getL()[ 2 ] *= zStretching;
-				p.getW()[ 2 ] = p.getL()[ 2 ];
-			}
-		}
-
 		/* create KDTrees */	
 		final KDTree< Particle > treeA = new KDTree< Particle >( listA );
 		final KDTree< Particle > treeB = new KDTree< Particle >( listB );
