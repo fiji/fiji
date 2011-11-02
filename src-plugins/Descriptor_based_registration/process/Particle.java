@@ -1,6 +1,8 @@
 package process;
 
+import ij.IJ;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
 import mpicbg.models.Point;
@@ -23,6 +25,7 @@ public class Particle extends Point implements Leaf<Particle>
 		super( peak.getSubPixelPosition() );
 		this.id = id;
 		this.peak = peak;
+		this.zStretching = zStretching;
 		
 		// init
 		restoreCoordinates();
@@ -46,6 +49,7 @@ public class Particle extends Point implements Leaf<Particle>
 			w[ 2 ] *= zStretching;
 		}
 	}
+	
 	public int getID() { return id; }	
 	public void setWeight( final double weight ){ this.weight = weight; }
 	public double getWeight(){ return weight; }
@@ -101,29 +105,34 @@ public class Particle extends Point implements Leaf<Particle>
 	@Override
 	public float distanceTo( final Particle o )
 	{
-		final float x = o.get( 0 ) - get( 0 );
-		final float y = o.get( 1 ) - get( 1 );
+		double distance = 0;
 		
-		return (float)Math.sqrt(x*x + y*y);
+		for ( int d = 0; d < l.length; ++d )
+		{
+			final double a = o.get( d ) - get( d );
+			distance += a*a;
+		}
+		
+		return (float)Math.sqrt( distance );
 	}
 	
 	@Override
 	public Particle[] createArray( final int n ){ return new Particle[ n ];	}
 
 	@Override
-	public int getNumDimensions(){ return 2; }
+	public int getNumDimensions(){ return l.length; }
 	
 	public boolean equals( final Particle o )
 	{
 		if ( useW )
 		{
-			for ( int d = 0; d < 2; ++d )
+			for ( int d = 0; d < l.length; ++d )
 				if ( w[ d ] != o.w[ d ] )
 					return false;			
 		}
 		else
 		{
-			for ( int d = 0; d < 2; ++d )
+			for ( int d = 0; d < l.length; ++d )
 				if ( l[ d ] != o.l[ d ] )
 					return false;						
 		}
