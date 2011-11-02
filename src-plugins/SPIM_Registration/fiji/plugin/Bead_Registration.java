@@ -3,18 +3,25 @@ package fiji.plugin;
 import fiji.plugin.timelapsedisplay.GraphFrame;
 import fiji.plugin.timelapsedisplay.TimeLapseDisplay;
 import fiji.util.gui.GenericDialogPlus;
+import huisken.opener.SPIMExperiment;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.gui.MultiLineLabel;
 import ij.plugin.BrowserLauncher;
 import ij.plugin.PlugIn;
 
+import java.awt.AWTEvent;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.TextField;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.TextEvent;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -153,10 +160,13 @@ public class Bead_Registration implements PlugIn
 	{
 		final GenericDialogPlus gd = new GenericDialogPlus( "Single Channel Bead-based Registration" );
 		
-		gd.addDirectoryField( "SPIM_data_directory", spimDataDirectory );
+		gd.addDirectoryOrFileField( "SPIM_data_directory", spimDataDirectory );
+		final TextField tfSpimDataDirectory = (TextField) gd.getStringFields().lastElement();
 		gd.addStringField( "Pattern_of_SPIM files", fileNamePattern, 25 );
 		gd.addStringField( "Timepoints_to_process", timepoints );
+		final TextField tfTimepoints = (TextField) gd.getStringFields().lastElement();
 		gd.addStringField( "Angles to process", angles );
+		final TextField tfAngles = (TextField) gd.getStringFields().lastElement();
 
 		gd.addMessage( "" );		
 		
@@ -182,6 +192,47 @@ public class Bead_Registration implements PlugIn
 		MultiLineLabel text = (MultiLineLabel) gd.getMessage();
 		addHyperLinkListener(text, myURL);
 
+		gd.addDialogListener(
+				new DialogListener() {
+					@Override
+					public boolean dialogItemChanged( GenericDialog dialog, AWTEvent e )
+					{
+						if ( e instanceof TextEvent && e.getID() == TextEvent.TEXT_VALUE_CHANGED && e.getSource() == tfSpimDataDirectory )
+						{
+							TextField tf = (TextField) e.getSource();
+							spimDataDirectory = tf.getText();
+							IJ.log( "SPIM_data_directory changed: " + spimDataDirectory );
+							File f = new File( spimDataDirectory );
+							if ( f.exists() && f.isFile() && f.getName().endsWith( ".xml" ) )
+							{
+								IJ.log( "it's an .xml file. opening " + f.getAbsolutePath() );
+								SPIMExperiment exp = new SPIMExperiment( f.getAbsolutePath() );
+								IJ.log( "--" + exp.toString() );
+
+								// set timepoint string
+								String expTimepoints = "";
+								if ( exp.timepointStart == exp.timepointEnd )
+									expTimepoints = "" + exp.timepointStart;
+								else
+									expTimepoints = "" + exp.timepointStart + "-" + exp.timepointEnd;
+								tfTimepoints.setText( expTimepoints );
+								
+								// set angles string
+								String expAngles = "";
+								for ( String angle : exp.angles )
+								{
+									int a = Integer.parseInt(angle.substring(1, angle.length()));
+									if ( ! expAngles.equals( "" ) )
+										expAngles += ",";
+									expAngles += a;
+								}
+								tfAngles.setText( expAngles );
+							}
+						}
+						return true;
+					}
+			
+		});
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
