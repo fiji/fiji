@@ -9,11 +9,13 @@ import ij.measure.Calibration;
 
 import java.util.ArrayList;
 
+import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussian.SpecialPoint;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.imglib.util.Util;
 import mpicbg.models.Model;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
@@ -81,7 +83,7 @@ public class Matching
 		// compute ransac
 		ArrayList<PointMatch> finalInliers = new ArrayList<PointMatch>();
 		Model<?> finalModel = computeRANSAC( candidates, finalInliers, params.model.copy(), (float)params.ransacThreshold );
-		
+
 		// apply rotation-variant matching after applying the model until it converges
 		if ( finalInliers.size() > 0 )
 		{
@@ -147,7 +149,6 @@ public class Matching
 	protected Model<?> computeRANSAC( final ArrayList<PointMatch> candidates, final ArrayList<PointMatch> inliers, final Model<?> model, final float maxEpsilon )
 	{		
 		boolean modelFound = false;
-		//HomographyModel2D model = new HomographyModel2D();
 		float minInlierRatio = 0.05f;
 		int numIterations = 10000;
 		
@@ -163,22 +164,23 @@ public class Matching
 					candidates,
 					inliers,
 					numIterations,
-					maxEpsilon, minInlierRatio ); 
+					maxEpsilon, minInlierRatio );
+			
+			if ( modelFound )
+			{
+				IJ.log( "Remaining inliers after RANSAC (" + model.getClass().getSimpleName() + "): " + inliers.size() + " of " + candidates.size() + " with average error " + model.getCost() );
+				model.fit( inliers );
+			}
+			else
+			{
+				IJ.log( "NO Model found after RANSAC (" + model.getClass().getSimpleName() + ") of " + candidates.size() );
+			}
 		}
-		catch ( NotEnoughDataPointsException e )
+		catch ( Exception e )
 		{
 			IJ.log( "NO Model found after RANSAC (" + model.getClass().getSimpleName() + ") of " + candidates.size() );
 			System.out.println( e.toString() );
 			return null;
-		}
-
-		if ( modelFound )
-		{
-			IJ.log( "Remaining inliers after RANSAC (" + model.getClass().getSimpleName() + "): " + inliers.size() + " of " + candidates.size() + " with average error " + model.getCost() );
-		}
-		else
-		{
-			IJ.log( "NO Model found after RANSAC (" + model.getClass().getSimpleName() + ") of " + candidates.size() );
 		}
 		
 		return model;
@@ -200,7 +202,6 @@ public class Matching
 			float zStretching = img1.getNumDimensions() >= 3 ? img1.getCalibration( 2 ) / img1.getCalibration( 0 ) : 1;
 			for ( DifferenceOfGaussianPeak<FloatType> peak : peaks1 )
 				listA.add( new Particle( id++, peak, zStretching ) );
-
 			zStretching = img2.getNumDimensions() >= 3 ? img2.getCalibration( 2 ) / img2.getCalibration( 0 ) : 1;
 			for ( DifferenceOfGaussianPeak<FloatType> peak : peaks2 )
 				listB.add( new Particle( id++, peak, zStretching ) );
@@ -212,6 +213,9 @@ public class Matching
 			for ( DifferenceOfGaussianPeak<FloatType> peak : peaks1 )
 			{
 				final Particle particle = new Particle( id++, peak, zStretching );			
+				particle.apply( model );
+				for ( int d = 0; d < particle.getL().length; ++d )
+					particle.getL()[ d ] = particle.getW()[ d ];
 				listA.add( particle );
 			}
 			
@@ -219,12 +223,9 @@ public class Matching
 			for ( DifferenceOfGaussianPeak<FloatType> peak : peaks2 )
 			{
 				final Particle particle = new Particle( id++, peak, zStretching );
-				particle.apply( model );
-				for ( int d = 0; d < particle.getL().length; ++d )
-					particle.getL()[ d ] = particle.getW()[ d ];
-				
 				listB.add( particle );
 			}
+			//0 (192.01309, 394.9002, 56.54292) ((191.87242, 510.94934, 52.197083)) -> 561 (192.35054, 514.0911, 52.14846) ((192.35054, 514.0911, 52.14846))
 		}
 		
 		/* create KDTrees */	
