@@ -76,7 +76,8 @@ public class InteractiveDoG implements PlugIn
 	float threshold = 0.0001f;
 	
 	// steps per octave
-	int sensitivity = 4;
+	public static int standardSenstivity = 4;
+	int sensitivity = standardSenstivity;
 	
 	float imageSigma = 0.5f;
 	float sigmaMin = 0.5f;
@@ -130,7 +131,10 @@ public class InteractiveDoG implements PlugIn
 	public boolean getLookForMinima() { return lookForMinima; }
 	
 	public void setSigmaMax( final float sigmaMax ) { this.sigmaMax = sigmaMax; }
-	public void setSigma2isAdjustable( final boolean state ) { sigma2IsAdjustable = state; } 
+	public void setSigma2isAdjustable( final boolean state ) { sigma2IsAdjustable = state; }
+	
+	// for the case that it is needed again, we can save one conversion
+	public Image<FloatType> getConvertedImage() { return source; }
 	
 	public InteractiveDoG( final ImagePlus imp, final int channel ) 
 	{ 
@@ -326,7 +330,9 @@ public class InteractiveDoG implements PlugIn
 		final int offsetY = rectangle.y - extraSize/2;
 
 		final int[] location = new int[ source.getNumDimensions() ];
-		location[ 2 ] = (imp.getCurrentSlice()-1)/imp.getNChannels();
+		
+		if ( location.length > 2 )
+			location[ 2 ] = (imp.getCurrentSlice()-1)/imp.getNChannels();
 				
 		final LocalizableCursor<FloatType> cursor = img.createLocalizableCursor();
 		final LocalizableByDimCursor<FloatType> positionable;
@@ -365,12 +371,18 @@ public class InteractiveDoG implements PlugIn
 	 * @param imp - the {@link ImagePlus} input image
 	 * @return - the copy
 	 */
-	protected Image<FloatType> convertToFloat( final ImagePlus imp, int channel )
+	public static Image<FloatType> convertToFloat( final ImagePlus imp, int channel )
 	{
 		// stupid 1-offset of imagej
 		channel++;
 		final int numChannels = imp.getNChannels();
-		final Image<FloatType> img = new ImageFactory<FloatType>( new FloatType(), new ArrayContainerFactory() ).createImage( new int[]{ imp.getWidth(), imp.getHeight(), imp.getStack().getSize() / numChannels } );
+		
+		final Image<FloatType> img;
+		
+		if ( imp.getNSlices() > 1 )
+			img = new ImageFactory<FloatType>( new FloatType(), new ArrayContainerFactory() ).createImage( new int[]{ imp.getWidth(), imp.getHeight(), imp.getStack().getSize() / numChannels } );
+		else
+			img = new ImageFactory<FloatType>( new FloatType(), new ArrayContainerFactory() ).createImage( new int[]{ imp.getWidth(), imp.getHeight() } );
 		
 		final CompositeImage ci;
 		
