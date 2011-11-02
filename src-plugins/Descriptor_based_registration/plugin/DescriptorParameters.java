@@ -1,5 +1,7 @@
 package plugin;
 
+import mpicbg.imglib.image.Image;
+import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.models.AbstractModel;
 
 public class DescriptorParameters 
@@ -15,12 +17,20 @@ public class DescriptorParameters
 	defaultRansacThreshold = gd.getNextNumber();
 	*/
 	
-	public double sigma, threshold;
+	public int dimensionality;
+	public double sigma1, sigma2, threshold;
 	public boolean lookForMaxima, lookForMinima;
 	public AbstractModel<?> model;
 	public int numNeighbors;
 	public int redundancy;
 	public double significance;
 	public double ransacThreshold;
+	public int channel1, channel2;
 	
+	public boolean setPointsRois = true;
+	public boolean fuse = true;
+	
+	
+	// if the interactive dog is run, this one exists already
+	public Image<FloatType> img1 = null;
 }
