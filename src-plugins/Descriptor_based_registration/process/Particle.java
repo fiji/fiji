@@ -16,12 +16,16 @@ public class Particle extends Point implements Leaf<Particle>
 	protected double weight = 1;
 	protected float distance = -1;
 	float diameter = 1;
+	float zStretching = 1;
 
-	public Particle( final int id, final float[] location, final DifferenceOfGaussianPeak<FloatType> peak ) 
+	public Particle( final int id, final DifferenceOfGaussianPeak<FloatType> peak, final float zStretching ) 
 	{
-		super( location );
+		super( peak.getSubPixelPosition() );
 		this.id = id;
 		this.peak = peak;
+		
+		// init
+		restoreCoordinates();
 	}
 
 	public DifferenceOfGaussianPeak<FloatType> getPeak() { return peak; }
@@ -34,6 +38,13 @@ public class Particle extends Point implements Leaf<Particle>
 	{
 		for ( int d = 0; d < l.length; ++d )
 			l[ d ] = w[ d ] = peak.getSubPixelPosition( d );
+
+		// apply the z-stretching if it is 3d
+		if ( l.length >= 3 )
+		{
+			l[ 2 ] *= zStretching;
+			w[ 2 ] *= zStretching;
+		}
 	}
 	public int getID() { return id; }	
 	public void setWeight( final double weight ){ this.weight = weight; }
