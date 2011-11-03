@@ -555,6 +555,58 @@ public class WarpingError extends Metrics {
 		}		
 		return cs;
 	}
+
+	/**
+	 * Check if a point is simple (in 2D) based on 3D code from Mark Richardson
+	 * inspired in the work of Bertrand et al. \cite{Bertrand94} 
+	 * 
+	 * BibTeX:
+	 * <pre>
+	 * &#64;article{Bertrand94,
+	 *   author    = {Bertrand, Gilles and Malandain, Gr\'{e}goire},
+	 *   title     = {A new characterization of three-dimensional simple points},
+	 *   journal   = {Pattern Recogn. Lett.},
+	 *   volume    = {15},
+	 *   issue     = {2},
+	 *   month     = {February},
+	 *   year      = {1994},
+	 *   issn      = {0167-8655},
+	 *   pages     = {169--175},
+	 *   numpages  = {7},
+	 *   url       = {http://dl.acm.org/citation.cfm?id=179348.179356},
+	 *   doi       = {10.1016/0167-8655(94)90046-9},
+	 *   acmid     = {179356},
+	 *   publisher = {Elsevier Science Inc.},
+	 *   address   = {New York, NY, USA},
+	 *   keywords  = {digital topology, simple points, thinning algorithms, three dimensions},
+	 * }
+	 * </pre>  
+	 * @param im input patch
+	 * @param n neighbors
+	 * @return true if the center pixel of the patch is a simple point
+	 */
+	public boolean simple2DBertrand(ImagePlus im, int n)
+	{
+		
+		float[] input = new float[27];
+		
+		float[] center = (float[])im.getProcessor().getPixels();
+		
+		for(int i=0; i<9; i++)
+			input[i+9] = center[i];
+		
+		switch (n)
+		{
+			case 4:
+				return simple3d( input, 6);
+			case 8:
+				return simple3d(input, 26);
+			default:
+				IJ.error("Non valid adjacency value");
+				return false;
+		}
+	}
+	
 	
 	/**
 	 * Check if a point is simple (in 2D)
@@ -587,6 +639,8 @@ public class WarpingError extends Metrics {
 				return false;
 		}
 	}
+	
+	
 
 	/**
 	 * Computes topological numbers for the central point of an image patch.
@@ -806,7 +860,7 @@ public class WarpingError extends Metrics {
 				final double pix = val[4];
 
 				final ImagePlus patch = new ImagePlus("patch", new FloatProcessor(3,3,val));
-				if( simple2D(patch, 4) )
+				if( simple2Db(patch, 4) )
 				{/*
 							for(int i=0; i<9;i++)
 								IJ.log(" " + val[i]);
@@ -1190,14 +1244,10 @@ public class WarpingError extends Metrics {
 		{
 			public ClusteredWarpingMismatches call()
 			{
-				final long start = System.currentTimeMillis();
-				WarpingResults wr = simplePointWarp2d(source, target, mask, binaryThreshold);
-				final long end = System.currentTimeMillis();
-				IJ.log("  Warping 2D image took " + (end-start) + "ms");
+				WarpingResults wr = simplePointWarp2d(source, target, mask, binaryThreshold);				
 				//wr.warpedSource.show();
 				int[] mismatchesLabels = classifyMismatches2d( wr.warpedSource, wr.mismatches, radius );
-				final long end2 = System.currentTimeMillis();
-				IJ.log("  Classifying mismatches took " + (end2-end) + "ms");
+
 				if( clusterByError )
 					return clusterMismatchesByError( wr.warpedSource, wr.mismatches, mismatchesLabels );
 				else
@@ -1625,6 +1675,244 @@ public class WarpingError extends Metrics {
 		
 		return neighborhood;
 	} // end getNeighborhood 		
+
+	
+	
+	/**
+	 * Return the number of cavities of a 3D neighborhood
+	 * 
+	 * @param input
+	 * @param con
+	 * @param space
+	 * @return
+	 */
+	int nca(float[] input, int con, int space)
+	{
+		int tsum;
+		switch (con)
+		{
+		case 6:
+			tsum=((int)input[4] + (int)input[10]+(int)input[12]+(int)input[14]+(int)input[16] + (int)input[22]);
+			return (space==1)?(6*space - tsum):(tsum);
+		case 18:
+			tsum=((int)input[1]+(int)input[3]+(int)input[4]+(int)input[5]+(int)input[7] + (int)input[9]+(int)input[10]+(int)input[11]+(int)input[12]+(int)input[14]+(int)input[15]+(int)input[16]+(int)input[17] + (int)input[19]+(int)input[21]+(int)input[22]+(int)input[23]+(int)input[25]);
+			return (space==1)?(18*space - tsum):(tsum);
+		case 26:
+			tsum=((int)input[0]+(int)input[1]+(int)input[2]+(int)input[3]+(int)input[4]+(int)input[5]+(int)input[6]+(int)input[7]+(int)input[8] + (int)input[9]+(int)input[10]+(int)input[11]+(int)input[12]+(int)input[14]+(int)input[15]+(int)input[16]+(int)input[17] + (int)input[18]+(int)input[19]+(int)input[20]+(int)input[21]+(int)input[22]+(int)input[23]+(int)input[24]+(int)input[25]+(int)input[26]);
+			return (space==1)?(26*space - tsum):(tsum);
+		default:
+			return 0;
+		}
+	}
+
+	/**
+	 * 
+	 * @param input
+	 * @param ctyp
+	 * @param con
+	 * @param space
+	 * @return
+	 */
+	int ncb(float[] input, char ctyp, int con, int space)
+	{
+		int tsum;
+		final int[][][] a6m = new int[][][]{{{0,1,0}, {1,5,1}, {0,1,0}},
+											{{0,0,0}, {0,0,0}, {0,0,0}},
+											{{0,0,0}, {0,0,0}, {0,0,0}}};
+
+		final int[][][] a18m = new int[][][]{{{0,0,0}, {0,1,1}, {0,0,0}},
+											 {{0,0,0}, {0,0,1}, {0,0,0}},
+											 {{0,0,0}, {0,0,0}, {0,0,0}}};
+
+		final int[][][] a26m = new int[][][]{{{0,0,0}, {0,1,1}, {0,1,1}},
+											 {{0,0,0}, {0,0,1}, {0,1,1}},
+											 {{0,0,0}, {0,0,0}, {0,0,0}}};
+
+		final int[][][] b18m = new int[][][]{{{0,1,0}, {0,1,9}, {0,1,0}},
+											 {{0,1,1}, {0,0,1}, {0,1,1}},
+											 {{0,0,0}, {0,0,0}, {0,0,0}}};
+
+		final int[][][] b26m = new int[][][]{{{0,0,0}, {0,1,1}, {0,1,7}},
+											 {{0,0,0}, {0,0,1}, {0,1,1}},										
+											 {{0,0,0}, {0,0,0}, {0,0,0}}};
+
+		int[] tsuma = new int[12];
+		int x, y, z, i;
+
+		if(ctyp=='a'){
+			switch (con)
+			{
+			case 6:
+				for(x=0;x<3;x++){
+					for(y=0;y<3;y++){
+						for(z=0;z<3;z++){
+							tsuma[0]+=a6m[x][y][z]*input[x+y*3+z*3*3];
+							tsuma[1]+=a6m[2-x][y][z]*input[x+y*3+z*3*3];
+							tsuma[2]+=a6m[y][x][z]*input[x+y*3+z*3*3];
+							tsuma[3]+=a6m[2-y][x][z]*input[x+y*3+z*3*3];
+							tsuma[4]+=a6m[z][y][x]*input[x+y*3+z*3*3];
+							tsuma[5]+=a6m[2-z][y][x]*input[x+y*3+z*3*3];
+						}
+					}
+				}
+				tsum=0;
+				for(i=0;i<6;i++)
+					tsum += (tsuma[i]==(5-space))?1:0;
+
+				return tsum;
+			case 18:
+				for(x=0;x<3;x++){
+					for(y=0;y<3;y++){
+						for(z=0;z<3;z++){
+							tsuma[0]+=a18m[x][y][z]*input[x+y*3+z*3*3];
+							tsuma[1]+=a18m[x][y][2-z]*input[x+y*3+z*3*3];
+							tsuma[2]+=a18m[2-x][y][z]*input[x+y*3+z*3*3];
+							tsuma[3]+=a18m[2-x][y][2-z]*input[x+y*3+z*3*3];
+							tsuma[4]+=a18m[y][x][z]*input[x+y*3+z*3*3];
+							tsuma[5]+=a18m[y][x][2-z]*input[x+y*3+z*3*3];
+							tsuma[6]+=a18m[2-y][x][z]*input[x+y*3+z*3*3];
+							tsuma[7]+=a18m[2-y][x][2-z]*input[x+y*3+z*3*3];
+							tsuma[8]+=a18m[x][z][y]*input[x+y*3+z*3*3];
+							tsuma[9]+=a18m[x][z][2-y]*input[x+y*3+z*3*3];
+							tsuma[10]+=a18m[2-x][z][y]*input[x+y*3+z*3*3];
+							tsuma[11]+=a18m[2-x][z][2-y]*input[x+y*3+z*3*3];
+						}
+					}
+				}
+				tsum=0;
+				for(i=0;i<12;i++){
+					tsum += (tsuma[i]==(3-3*space))?1:0;
+				}
+				return tsum;
+			case 26:
+				for(x=0;x<3;x++){
+					for(y=0;y<3;y++){
+						for(z=0;z<3;z++){
+							tsuma[0]+=a26m[x][y][z]*input[x+y*3+z*3*3];
+							tsuma[1]+=a26m[2-x][y][z]*input[x+y*3+z*3*3];
+							tsuma[2]+=a26m[x][2-y][z]*input[x+y*3+z*3*3];
+							tsuma[3]+=a26m[x][y][2-z]*input[x+y*3+z*3*3];
+							tsuma[4]+=a26m[2-x][2-y][z]*input[x+y*3+z*3*3];
+							tsuma[5]+=a26m[x][2-y][2-z]*input[x+y*3+z*3*3];
+							tsuma[6]+=a26m[2-x][y][2-z]*input[x+y*3+z*3*3];
+							tsuma[7]+=a26m[2-x][2-y][2-z]*input[x+y*3+z*3*3];
+						}
+					}
+				}
+				tsum=0;
+				for(i=0;i<8;i++){
+					tsum += (tsuma[i]==(7-7*space))?1:0;
+				}
+				return tsum;
+			default:
+				return 0;
+			}
+		}else if(ctyp=='b'){
+			switch (con)
+			{
+			case 18:
+				for(x=0;x<3;x++){
+					for(y=0;y<3;y++){
+						for(z=0;z<3;z++){
+							tsuma[0]+=b18m[x][y][z]*input[x+y*3+z*3*3];
+							tsuma[1]+=b18m[x][y][2-z]*input[x+y*3+z*3*3];
+							tsuma[2]+=b18m[2-x][y][z]*input[x+y*3+z*3*3];
+							tsuma[3]+=b18m[2-x][y][2-z]*input[x+y*3+z*3*3];
+							tsuma[4]+=b18m[y][x][z]*input[x+y*3+z*3*3];
+							tsuma[5]+=b18m[y][x][2-z]*input[x+y*3+z*3*3];
+							tsuma[6]+=b18m[2-y][x][z]*input[x+y*3+z*3*3];
+							tsuma[7]+=b18m[2-y][x][2-z]*input[x+y*3+z*3*3];
+							tsuma[8]+=b18m[x][z][y]*input[x+y*3+z*3*3];
+							tsuma[9]+=b18m[x][z][2-y]*input[x+y*3+z*3*3];
+							tsuma[10]+=b18m[2-x][z][y]*input[x+y*3+z*3*3];
+							tsuma[11]+=b18m[2-x][z][2-y]*input[x+y*3+z*3*3];
+						}
+					}
+				}
+				tsum=0;
+				for(i=0;i<12;i++){
+					tsum += (tsuma[i]==(9-space))?1:0;
+				}
+				return tsum;
+			case 26:
+				for(x=0;x<3;x++){
+					for(y=0;y<3;y++){
+						for(z=0;z<3;z++){
+							tsuma[0]+=b26m[x][y][z]*input[x+y*3+z*3*3];
+							tsuma[1]+=b26m[2-x][y][z]*input[x+y*3+z*3*3];
+							tsuma[2]+=b26m[x][2-y][z]*input[x+y*3+z*3*3];
+							tsuma[3]+=b26m[x][y][2-z]*input[x+y*3+z*3*3];
+							tsuma[4]+=b26m[2-x][2-y][z]*input[x+y*3+z*3*3];
+							tsuma[5]+=b26m[x][2-y][2-z]*input[x+y*3+z*3*3];
+							tsuma[6]+=b26m[2-x][y][2-z]*input[x+y*3+z*3*3];
+							tsuma[7]+=b26m[2-x][2-y][2-z]*input[x+y*3+z*3*3];
+						}
+					}
+				}
+				tsum=0;
+				for(i=0;i<8;i++){
+					tsum += (tsuma[i]==7-space)?1:0;
+				}
+				return tsum;
+			default:
+				return 0;
+			}
+		}
+		else
+			return 0;
+
+	}
+
+	/**
+	 * Calculate if a point is simple in 3D
+	 * 
+	 * @param input 3D neighborhood (27 pixels) in a single array
+	 * @param region adjacency (26 or 6)
+	 * @return true if the point is simple
+	 */
+	boolean simple3d(float[] input, int region)
+	{
+		boolean simple = false;
+
+		if(region==26)
+		{
+			simple=false;
+			if( nca(input, 6, 1)==1 ){
+				simple=true;
+			}else if(nca(input, 26, 0)==1 ){
+				simple=true;
+			}else if( ncb(input, 'b', 26, 0)==0 ){
+				if( nca(input, 18, 0)==1 ){
+					simple=true;
+				}else if( (ncb(input, 'a', 6, 1)==0) && (ncb(input, 'b', 18, 0)==0) && ((nca(input, 6, 1)-ncb(input, 'a', 18, 1)+ncb(input, 'a', 26, 1))==1) ){
+					simple=true;
+				}
+			}
+		}
+		else if(region==6)
+		{
+			int i;
+			float[] input2 = new float[27];
+			
+			for(i=0;i<27;i++){
+				input2[i] = input[i] == 1.0f ? 0.0f : 1.0f;
+			}
+			simple=false;
+			if( nca(input2, 6, 1)==1 ){
+				simple=true;
+			}else if(nca(input2, 26, 0)==1 ){
+				simple=true;
+			}else if( ncb(input2, 'b', 26, 0)==0 ){
+				if( nca(input2, 18, 0)==1 ){
+					simple=true;
+				}else if( (ncb(input2, 'a', 6, 1)==0) && (ncb(input2, 'b', 18, 0)==0) && ((nca(input2, 6, 1)-ncb(input2, 'a', 18, 1)+ncb(input2, 'a', 26, 1))==1) ){
+					simple=true;
+				}
+			}
+		}
+		return simple;
+	}
+	
 	
 } // end class
 
