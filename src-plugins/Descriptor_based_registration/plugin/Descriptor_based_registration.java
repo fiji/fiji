@@ -121,6 +121,9 @@ public class Descriptor_based_registration implements PlugIn
 	public static int defaultChannel1 = 1;
 	public static int defaultChannel2 = 1;
 	
+	public static boolean defaultCreateOverlay = true;
+	public static boolean defaultAddPointRoi = true;
+	
 	/**
 	 * Ask for all other required parameters ..
 	 * 
@@ -146,30 +149,30 @@ public class Descriptor_based_registration implements PlugIn
 		
 		final GenericDialog gd = new GenericDialog( dimensionality + "-dimensional descriptor based registration" );			
 		
-		gd.addChoice( "Brightness of detections", detectionBrightness, detectionBrightness[ defaultDetectionBrightness ] );
-		gd.addChoice( "Approximate size of detections", detectionSize, detectionSize[ defaultDetectionSize ] );
-		gd.addChoice( "Type of detections", detectionTypes, detectionTypes[ defaultDetectionType ] );
+		gd.addChoice( "Brightness_of detections", detectionBrightness, detectionBrightness[ defaultDetectionBrightness ] );
+		gd.addChoice( "Approximate_size of detections", detectionSize, detectionSize[ defaultDetectionSize ] );
+		gd.addChoice( "Type_of_detections", detectionTypes, detectionTypes[ defaultDetectionType ] );
 		
-		gd.addChoice( "Transformation model", transformationModel, transformationModel[ defaultTransformationModel ] );
+		gd.addChoice( "Transformation_model", transformationModel, transformationModel[ defaultTransformationModel ] );
 		
 		if ( dimensionality == 2 )
 		{
 			if ( defaultNumNeighbors < 2 )
 				defaultNumNeighbors = 2;
 			
-			gd.addSlider( "Number of neighbors for the descriptors", 2, 10, defaultNumNeighbors );
+			gd.addSlider( "Number_of_neighbors for the descriptors", 2, 10, defaultNumNeighbors );
 		}
 		else
 		{
 			if ( defaultNumNeighbors < 3 )
 				defaultNumNeighbors = 3;
 			
-			gd.addSlider( "Number of neighbors for the descriptors", 3, 10, defaultNumNeighbors );
+			gd.addSlider( "Number_of_neighbors for the descriptors", 3, 10, defaultNumNeighbors );
 		}
 		
 		gd.addSlider( "Redundancy for descriptor matching", 0, 10, defaultRedundancy );		
 		gd.addSlider( "Significance required for a descriptor match", 1.0, 10.0, defaultSignificance );
-		gd.addSlider( "Allowed error for RANSAC (px)", 0.5, 20.0, defaultRansacThreshold );
+		gd.addSlider( "Allowed_error_for_RANSAC (px)", 0.5, 20.0, defaultRansacThreshold );
 
 		final int numChannels1 = imp1.getNChannels();
 		final int numChannels2 = imp2.getNChannels();
@@ -179,8 +182,11 @@ public class Descriptor_based_registration implements PlugIn
 		if ( defaultChannel2 > numChannels2 )
 			defaultChannel2 = 1;
 		
-		gd.addSlider( "Choose registration channel for image 1" , 1, numChannels1, defaultChannel1 );
-		gd.addSlider( "Choose registration channel for image 2" , 1, numChannels2, defaultChannel2 );
+		gd.addSlider( "Choose_registration_channel_for_image_1" , 1, numChannels1, defaultChannel1 );
+		gd.addSlider( "Choose_registration_channel_for_image_2" , 1, numChannels2, defaultChannel2 );
+		gd.addMessage( "Image fusion" );
+		gd.addCheckbox( "Create_overlayed images", defaultCreateOverlay );
+		gd.addCheckbox( "Add_point_rois for corresponding features to images", defaultAddPointRoi );
 
 		gd.addMessage("");
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
@@ -204,10 +210,12 @@ public class Descriptor_based_registration implements PlugIn
 		final int redundancy = (int)Math.round( gd.getNextNumber() );
 		final double significance = gd.getNextNumber();
 		final double ransacThreshold = gd.getNextNumber();
-		
 		// zero-offset channel
 		final int channel1 = (int)Math.round( gd.getNextNumber() ) - 1;
 		final int channel2 = (int)Math.round( gd.getNextNumber() ) - 1;
+		final boolean createOverlay = gd.getNextBoolean();
+		final boolean addPointRoi = gd.getNextBoolean();
+		
 		
 		// update static values for next call
 		defaultDetectionBrightness = detectionBrightnessIndex;
@@ -220,6 +228,8 @@ public class Descriptor_based_registration implements PlugIn
 		defaultRansacThreshold = ransacThreshold;
 		defaultChannel1 = channel1 + 1;
 		defaultChannel2 = channel2 + 1;
+		defaultCreateOverlay = createOverlay;
+		defaultAddPointRoi = addPointRoi;
 		
 		// one of them is by default interactive, then all are interactive
 		if ( detectionBrightnessIndex == detectionBrightness.length - 1 || 
@@ -338,6 +348,8 @@ public class Descriptor_based_registration implements PlugIn
 		params.ransacThreshold = ransacThreshold;
 		params.channel1 = channel1; 
 		params.channel2 = channel2;
+		params.fuse = createOverlay;
+		params.setPointsRois = addPointRoi;
 		
 		return params;
 	}
