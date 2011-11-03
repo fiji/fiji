@@ -414,6 +414,7 @@ public class MiniMaven {
 			if (properties.containsKey(key))
 				return properties.get(key);
 			if (parent == null) {
+				// hard-code a few variables
 				if (key.equals("bio-formats.groupId"))
 					return "loci";
 				if (key.equals("imagej.groupId"))
