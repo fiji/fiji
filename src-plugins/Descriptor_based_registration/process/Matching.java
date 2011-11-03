@@ -4,6 +4,7 @@ import fiji.util.KDTree;
 import fiji.util.NNearestNeighborSearch;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.gui.PointRoi;
 import ij.measure.Calibration;
 
@@ -16,6 +17,9 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
+import mpicbg.models.AbstractAffineModel3D;
+import mpicbg.models.AffineModel2D;
+import mpicbg.models.InvertibleBoundable;
 import mpicbg.models.Model;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
@@ -32,6 +36,7 @@ import mpicbg.pointdescriptor.model.TranslationInvariantRigidModel3D;
 import mpicbg.pointdescriptor.similarity.SimilarityMeasure;
 import mpicbg.pointdescriptor.similarity.SquareDistance;
 import mpicbg.spim.registration.ViewStructure;
+import mpicbg.spim.registration.bead.BeadRegistration;
 import mpicbg.spim.registration.detection.DetectionSegmentation;
 import mpicbg.spim.segmentation.InteractiveDoG;
 import plugin.DescriptorParameters;
@@ -85,7 +90,7 @@ public class Matching
 		Model<?> finalModel = computeRANSAC( candidates, finalInliers, params.model.copy(), (float)params.ransacThreshold );
 
 		// apply rotation-variant matching after applying the model until it converges
-		if ( finalInliers.size() > 0 )
+		if ( finalInliers.size() > finalModel.getMinNumMatches() )
 		{
 			int previousNumInliers = 0;
 			int numInliers = 0;
@@ -119,17 +124,66 @@ public class Matching
 		else
 		{
 			IJ.log( "No inliers found, stopping. Tipp: You could increase the number of neighbors, redundancy or use a model that has more degrees of freedom." );
+			return;
 		}
 		
 		IJ.log( "" + finalModel );
 		
-		// fuse if wanted
-		
 		// set point rois if 2d and wanted
 		if ( params.setPointsRois )
 			setPointRois( imp1, imp2, finalInliers );
+		
+		// fuse if wanted
+		if ( params.fuse )
+			createOverlay( imp1, imp2, finalModel, params.model.copy(), params.dimensionality );
 	}
+
 	
+	protected void createOverlay( final ImagePlus imp1, final ImagePlus imp2, final Model<?> finalModel1, final Model<?> finalModel2, final int dimensionality ) 
+	{
+		// estimate the bounaries of the output image
+		final float[] max1, max2;
+		final float[] min1 = new float[ dimensionality ];
+		final float[] min2= new float[ dimensionality ];
+		
+		if ( dimensionality == 2 )
+		{
+			max1 = new float[] { imp1.getWidth(), imp1.getHeight() };
+			max2 = new float[] { imp2.getWidth(), imp2.getHeight() };
+		}
+		else
+		{
+			max1 = new float[] { imp1.getWidth(), imp1.getHeight(), imp1.getNSlices() };
+			max2 = new float[] { imp2.getWidth(), imp2.getHeight(), imp2.getNSlices() };
+			BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D)finalModel1, imp1.getCalibration().pixelDepth / imp1.getCalibration().pixelWidth );
+			BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D)finalModel2, imp2.getCalibration().pixelDepth / imp2.getCalibration().pixelWidth );
+		}
+		
+		final InvertibleBoundable boundable1 = (InvertibleBoundable)finalModel1;
+		final InvertibleBoundable boundable2 = (InvertibleBoundable)finalModel2;
+		
+		IJ.log( imp1.getTitle() + ": " + Util.printCoordinates( min1 ) + " -> " + Util.printCoordinates( max1 ) );
+		IJ.log( imp2.getTitle() + ": " + Util.printCoordinates( min2 ) + " -> " + Util.printCoordinates( max2 ) );
+		
+		boundable1.estimateBounds( min1, max1 );
+		boundable2.estimateBounds( min2, max2 );
+
+		IJ.log( imp1.getTitle() + ": " + Util.printCoordinates( min1 ) + " -> " + Util.printCoordinates( max1 ) );
+		IJ.log( imp2.getTitle() + ": " + Util.printCoordinates( min2 ) + " -> " + Util.printCoordinates( max2 ) );
+
+		// 3d
+		if ( imp1.getNSlices() > 1 || imp2.getNSlices() > 1 )
+		{
+			
+		}
+		else //2d
+		{
+			
+
+		}
+	}
+
+
 	protected void setPointRois( final ImagePlus imp1, final ImagePlus imp2, final ArrayList<PointMatch> inliers )
 	{
 		final ArrayList<Point> list1 = new ArrayList<Point>();
