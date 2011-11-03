@@ -207,7 +207,7 @@ public class WarpingError extends Metrics {
 		// Get clustered mismatches after warping ground truth, i.e. relaxing original labels to proposal. 
 		// Only simple points warping is allowed.
 		ClusteredWarpingMismatches[] cwm = getClusteredWarpingMismatches(originalLabels, proposedLabels, 
-																		mask, binaryThreshold, clusterByError);		
+																		mask, binaryThreshold, clusterByError, -1);		
 		if(null == cwm)
 			return -1;
 
@@ -238,7 +238,64 @@ public class WarpingError extends Metrics {
 		else
 			return -1;
 	}
+
 	
+	/**
+	 * Calculate the topology-preserving warping error in 2D between some
+	 * original labels and the corresponding proposed labels. Pixels belonging 
+	 * to the same mistake will be only counted once. For example, if we have 
+	 * a line of 15 pixels that prevent from a merger, it will count as 1 instead
+	 * of 15 as in the classic warping error method. 
+	 * Both, original and proposed labels are expected to have float values between 
+	 * 0 and 1. Otherwise, they will be converted.
+	 *	
+	 * @param binaryThreshold threshold value to binarize proposal (larger than 0 and smaller than 1)
+	 * @param clusterByError if false, cluster mismatches by type, otherwise cluster them by error and type
+	 * @param radius radius in pixel to use when classifying mismatches
+	 * @return clustered warping error (it clusters the mismatches that belong to the same type and/or error together)
+	 */
+	public double getMetricValue(			
+			double binaryThreshold,
+			boolean clusterByError,
+			int radius)
+	{
+		
+		IJ.log("  Warping ground truth...");
+		
+		// Get clustered mismatches after warping ground truth, i.e. relaxing original labels to proposal. 
+		// Only simple points warping is allowed.
+		ClusteredWarpingMismatches[] cwm = getClusteredWarpingMismatches(originalLabels, proposedLabels, 
+																		mask, binaryThreshold, clusterByError, radius);		
+		if(null == cwm)
+			return -1;
+
+		double error = 0;
+		double count = originalLabels.getWidth() * originalLabels.getHeight() * originalLabels.getImageStackSize();
+		
+		if( (flags & HOLE_ADDITION) != 0)
+			for(int j=0; j<cwm.length; j++)					
+				error += cwm[ j ].numOfHoleAdditions;
+		if( (flags & HOLE_DELETION) != 0)
+			for(int j=0; j<cwm.length; j++)					
+				error += cwm[ j ].numOfHoleDeletions;
+		if( (flags & MERGE) != 0)
+			for(int j=0; j<cwm.length; j++)					
+				error += cwm[ j ].numOfMergers; 
+		if( (flags & OBJECT_ADDITION) != 0)
+			for(int j=0; j<cwm.length; j++)					
+				error += cwm[ j ].numOfObjectAdditions;
+		if( (flags & OBJECT_DELETION) != 0)
+			for(int j=0; j<cwm.length; j++)					
+				error += cwm[ j ].numOfObjectDeletions; 
+		if( (flags & SPLIT) != 0)
+			for(int j=0; j<cwm.length; j++)					
+				error += cwm[ j ].numOfSplits;
+
+		if(count != 0)
+			return error / count;
+		else
+			return -1;
+	}
 
 	/**
 	 * Calculate the number of splits and mergers for different thresholds
@@ -269,7 +326,58 @@ public class WarpingError extends Metrics {
 			IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
 			ClusteredWarpingMismatches[] cwm = 
 						getClusteredWarpingMismatches(originalLabels, proposedLabels, 
-														mask, th, clusterByError);		
+														mask, th, clusterByError, -1);		
+			if(null == cwm)
+				return null;
+			
+			int[] splitsAndMergers = new int[2];
+			
+			for(int j=0; j<cwm.length; j++)
+			{
+				splitsAndMergers[ 0 ] += cwm[ j ].numOfSplits;
+				splitsAndMergers[ 1 ] += cwm[ j ].numOfMergers;
+			}
+			
+			listOfSplitsAndMergers.add( splitsAndMergers );
+			
+			IJ.log( "  # splits = " + splitsAndMergers[ 0 ] + ", # mergers = " + splitsAndMergers[ 1 ]);
+		}
+						
+		return listOfSplitsAndMergers;
+	}
+	
+	/**
+	 * Calculate the number of splits and mergers for different thresholds
+	 * 
+	 * @param minThreshold minimum threshold value to binarize the input images
+	 * @param maxThreshold maximum threshold value to binarize the input images
+	 * @param stepThreshold threshold step value to use during binarization
+	 * @param clusterByError if false, cluster mismatches by type, otherwise cluster them by error and type
+	 * @param radius radius in pixel to use when classifying mismatches
+	 * @return list with arrays with the number of splits and mergers
+	 */
+	public ArrayList<int[]> getSplitsAndMergers(
+			double minThreshold,
+			double maxThreshold,
+			double stepThreshold,
+			boolean clusterByError,
+			int radius )
+	{
+		
+		if( minThreshold < 0 || minThreshold >= maxThreshold || maxThreshold > 1)
+		{
+			IJ.log("Error: unvalid threshold values.");
+			return null;
+		}
+						
+		ArrayList < int[] > listOfSplitsAndMergers = new ArrayList<int[]>();
+				
+		for(double th = minThreshold; th<=maxThreshold; th += stepThreshold)
+		{						
+			IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
+			ClusteredWarpingMismatches[] cwm = 
+						getClusteredWarpingMismatches(originalLabels, proposedLabels, 
+														mask, th, clusterByError, radius );		
 			if(null == cwm)
 				return null;
 			
@@ -325,7 +433,44 @@ public class WarpingError extends Metrics {
 						
 		return minError;
 	}
-	
+	/**
+	 * Calculate error with the minimum number of splits and mergers for different thresholds
+	 * 
+	 * @param minThreshold minimum threshold value to binarize the input images
+	 * @param maxThreshold maximum threshold value to binarize the input images
+	 * @param stepThreshold threshold step value to use during binarization
+	 * @param clusterByError if false, cluster mismatches by type, otherwise cluster them by error and type
+	 * @param radius radius in pixel to use when classifying mismatches
+	 * @return list with arrays with the number of splits and mergers
+	 */
+	public double getMinimumSplitsAndMergersErrorValue(
+			double minThreshold,
+			double maxThreshold,
+			double stepThreshold,
+			boolean clusterByError,
+			int radius )
+	{
+		
+		if( minThreshold < 0 || minThreshold >= maxThreshold || maxThreshold > 1)
+		{
+			IJ.log("Error: unvalid threshold values.");
+			return -1;
+		}
+						
+		flags = MERGE + SPLIT;
+		
+		double minError = Double.MAX_VALUE;
+				
+		for(double th = minThreshold; th<=maxThreshold; th += stepThreshold)
+		{						
+			IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
+			double error = getMetricValue( th, clusterByError, radius );
+			if ( error < minError)
+				minError = error;
+		}
+						
+		return minError;
+	}
 	
 	/**
 	 * Calculate the precision-recall values based on pixel error between 
@@ -962,6 +1107,7 @@ public class WarpingError extends Metrics {
 	 * @param mask image mask (2D image or stack)
 	 * @param binaryThreshold binarization threshold
 	 * @param clusterByError if false, cluster mismatches by type, otherwise cluster them by error and type
+	 * @param radius radius in pixels of the local area to look when deciding some cases (small radius speed up the method a lot, -1 to use whole image) 
 	 * @return clustered warping mismatches for each slice of the source
 	 */
 	public ClusteredWarpingMismatches[] getClusteredWarpingMismatches(
@@ -969,7 +1115,8 @@ public class WarpingError extends Metrics {
 			ImagePlus target,
 			ImagePlus mask,
 			double binaryThreshold,
-			boolean clusterByError)
+			boolean clusterByError,
+			int radius)
 	{
 		if(source.getWidth() != target.getWidth()
 				|| source.getHeight() != target.getHeight()
@@ -996,7 +1143,7 @@ public class WarpingError extends Metrics {
 				futures.add(exe.submit( getClusteredWarpingMismatchesConcurrent(sourceSlices.getProcessor(i).convertToFloat(),
 										targetSlices.getProcessor(i).convertToFloat(),
 										null != maskSlices ? maskSlices.getProcessor(i) : null,
-										binaryThreshold, clusterByError ) ) );
+										binaryThreshold, clusterByError, radius ) ) );
 			}
 
 			int i = 0;
@@ -1028,6 +1175,7 @@ public class WarpingError extends Metrics {
 	 * @param mask mask image
 	 * @param binaryThreshold binary threshold to use
 	 * @param clusterByError boolean flag to use clustering by error or only by type
+	 * @param radius radius in pixels of the local area to look when deciding some cases (small radius speed up the method a lot, -1 to use whole image) 
 	 * @return clustered mismatching points after warping
 	 */
 	public Callable<ClusteredWarpingMismatches> getClusteredWarpingMismatchesConcurrent(
@@ -1035,15 +1183,21 @@ public class WarpingError extends Metrics {
 			final ImageProcessor target,
 			final ImageProcessor mask,
 			final double binaryThreshold,
-			final boolean clusterByError)
+			final boolean clusterByError,
+			final int radius)
 	{
 		return new Callable<ClusteredWarpingMismatches>()
 		{
 			public ClusteredWarpingMismatches call()
 			{
+				final long start = System.currentTimeMillis();
 				WarpingResults wr = simplePointWarp2d(source, target, mask, binaryThreshold);
+				final long end = System.currentTimeMillis();
+				IJ.log("  Warping 2D image took " + (end-start) + "ms");
 				//wr.warpedSource.show();
-				int[] mismatchesLabels = classifyMismatches2d( wr.warpedSource, wr.mismatches );
+				int[] mismatchesLabels = classifyMismatches2d( wr.warpedSource, wr.mismatches, radius );
+				final long end2 = System.currentTimeMillis();
+				IJ.log("  Classifying mismatches took " + (end2-end) + "ms");
 				if( clusterByError )
 					return clusterMismatchesByError( wr.warpedSource, wr.mismatches, mismatchesLabels );
 				else
@@ -1058,11 +1212,19 @@ public class WarpingError extends Metrics {
 	 *  
 	 * @param warpedLabels labels after warping (binary image)
 	 * @param mismatches list of mismatch points after warping
+	 * @param radius radius in pixels of the local area to look when deciding some cases (small radius speed up the method a lot, -1 to use whole image) 
 	 * @return array of mismatch classifications
 	 */
-	public int[] classifyMismatches2d( ImagePlus warpedLabels, ArrayList<Point3f> mismatches )
+	public int[] classifyMismatches2d( 
+			ImagePlus warpedLabels, 
+			ArrayList<Point3f> mismatches,
+			int radius)
 	{
 		final int[] pointClassification = new int[ mismatches.size() ];
+		
+		int radiusToUse = radius;
+		if(radius <1 || radius > warpedLabels.getWidth() || radius > warpedLabels.getHeight())
+			radiusToUse = -1;			
 		
 		// Calculate components in warped labels
 		ImageProcessor components = Utils.connectedComponents(
@@ -1107,9 +1269,17 @@ public class WarpingError extends Metrics {
 					pointClassification[ n ] = HOLE_ADDITION;
 				else
 				{
-					// flip pixel and apply connected components again
-					final ByteProcessor warpedPixels2 = (ByteProcessor) warpedLabels.getProcessor().duplicate().convertToByte(true);
+					// flip pixel and apply connected components again					
+					ByteProcessor warpedPixels2;
+					  
+					warpedPixels2 = (ByteProcessor) warpedLabels.getProcessor().duplicate().convertToByte(true);
 					warpedPixels2.set( x, y, warpedPixels2.get(x, y) != 0 ? 0 : 255);
+					if (radiusToUse != -1)
+					{
+						warpedLabels.setRoi(x-radiusToUse/2, y-radiusToUse/2, radiusToUse, radiusToUse);
+						warpedPixels2 = (ByteProcessor) warpedLabels.getProcessor().crop().convertToByte(true);
+					}
+									
 					// Calculate components in the new warped labels
 					ImageProcessor components2 = Utils.connectedComponents(new ImagePlus("8-bit warped labesl", warpedPixels2), 4).allRegions.getProcessor();
 
