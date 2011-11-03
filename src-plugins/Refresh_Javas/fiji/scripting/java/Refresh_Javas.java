@@ -332,6 +332,12 @@ public class Refresh_Javas extends RefreshScripts {
 		if (extraArgs != null)
 			arguments = unshift(arguments, extraArgs);
 		String classPath = getPluginsClasspath();
+		File root = null;
+		try {
+			root = getSourceRootDirectory(path);
+		} catch (Exception e) { /* ignore */ }
+		if (root != null)
+			classPath = root.getPath() + (classPath.equals("") ? "" : File.pathSeparator + classPath);
 		if (!classPath.equals(""))
 			arguments = unshift(arguments,
 				new String[] { "-classpath", classPath });
