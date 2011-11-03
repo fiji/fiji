@@ -151,6 +151,9 @@ package_name_to_file_matchers = {
     "fiji-lsm-reader" :
         [ "plugins/LSM_Reader.jar" ],
 
+    "fiji-image5d" :
+        [ "plugins/Image_5D.jar" ],
+
     "fiji-loci-tools" :
         [ "plugins/loci_tools.jar" ],
 
