@@ -112,8 +112,7 @@ public class Refresh_Javas extends RefreshScripts {
 			}
 		}
 		try {
-			File plugins = new File(Menus.getPlugInsPath())
-				.getCanonicalFile();
+			File plugins = new File(Menus.getPlugInsPath()).getCanonicalFile();
 			File file = new File(c).getCanonicalFile();
 			c = file.getName();
 			while ((file = file.getParentFile()) != null &&
