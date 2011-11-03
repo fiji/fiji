@@ -30,11 +30,6 @@ public class DogSegmenterSettings extends LogSegmenterSettings {
 	}
 	
 	@Override
-	public void marshall(Element element) {
-		element.setAttributes(getAttributes());
-	}
-	
-	@Override
 	public void unmarshall(Element element) {
 		super.unmarshall(element);
 		doSubPixelLocalization = Boolean.parseBoolean(element.getAttributeValue(SEGMENTER_SETTINGS_DO_SUBPIXEL_ATTRIBUTE_NAME));
