@@ -385,32 +385,38 @@ public class Refresh_Javas extends RefreshScripts {
 		}
 	}
 
-	void runOutOfTreePlugin(String path) throws IOException,
-			MalformedURLException {
-		String className = new File(path).getName();
-		if (className.endsWith(".java"))
-			className = className.substring(0,
-					className.length() - 5);
-
-		String packageName = null;
-		try {
-			packageName = getPackageName(path);
-		} catch (IOException e) {
-			IJ.error("Could not read " + path);
-			return;
-		}
-		String classPath = getPluginsClasspath();
-		File directory = new File(path).getCanonicalFile()
-			.getParentFile();
+	protected File getSourceRootDirectory(String path) throws IOException {
+		String packageName = getPackageName(path);
+		File directory = new File(path).getCanonicalFile().getParentFile();
 		if (packageName != null) {
 			int dot = -1;
 			do {
-				className = directory.getName()
-					+ "." + className;
 				directory = directory.getParentFile();
 				dot = packageName.indexOf('.', dot + 1);
 			} while (dot > 0);
 		}
+		return directory;
+	}
+
+	protected String getClassName(String path) throws IOException {
+		String className = new File(path).getName();
+		if (className.endsWith(".java"))
+			className = className.substring(0, className.length() - 5);
+		String packageName = getPackageName(path);
+		return (packageName.equals("") ? "" : packageName + ".") + className;
+	}
+
+	void runOutOfTreePlugin(String path) throws IOException,
+			MalformedURLException {
+		String classPath = getPluginsClasspath();
+		File directory;
+		try {
+			directory = getSourceRootDirectory(path);
+		} catch (IOException e) {
+			IJ.error("Could not read " + path);
+			return;
+		}
+
 		if (classPath == null || classPath.equals(""))
 			classPath = directory.getPath();
 		else {
@@ -420,6 +426,7 @@ public class Refresh_Javas extends RefreshScripts {
 			classPath = directory.getPath() + classPath;
 		}
 
+		String className = getClassName(path);
 		new PlugInExecutor(classPath).run(className);
 	}
 
