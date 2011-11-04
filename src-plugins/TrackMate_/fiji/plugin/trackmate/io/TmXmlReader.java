@@ -66,10 +66,6 @@ public class TmXmlReader {
 		this.logger = logger;
 	}
 
-	//	public TmXmlReader(File file) {
-	//		this(file, Logger.DEFAULT_LOGGER);
-	//	}
-
 	/*
 	 * PUBLIC METHODS
 	 */
@@ -342,58 +338,69 @@ public class TmXmlReader {
 			return;
 		}
 
+
+		// Deal with tracker
+		SpotTracker tracker;
+		String trackerClassName = element.getAttributeValue(TRACKER_CLASS_ATTRIBUTE_NAME);
+		if (null == trackerClassName) {
+			logger.error("Tracker class is not present.\n");
+			logger.error("Substituting default.\n");
+			tracker = new SimpleFastLAPTracker();
+		} else {
+			try {
+				tracker = (SpotTracker) Class.forName(trackerClassName).newInstance();
+			} catch (InstantiationException e) {
+				logger.error("Unable to instantiate tracker settings class: "+e.getLocalizedMessage()+"\n");
+				logger.error("Substituting default.\n");
+				tracker = new SimpleFastLAPTracker();
+			} catch (IllegalAccessException e) {
+				logger.error("Unable to instantiate tracker settings class: "+e.getLocalizedMessage()+"\n");
+				logger.error("Substituting default.\n");
+				tracker = new SimpleFastLAPTracker();
+			} catch (ClassNotFoundException e) {
+				logger.error("Unable to find segmenter settings class: "+e.getLocalizedMessage()+"\n");
+				logger.error("Substituting default.\n");
+				tracker = new SimpleFastLAPTracker();
+			}
+		}
+		settings.tracker = tracker;
+
 		// Deal with tracker settings
 		{
-			TrackerSettings ts;
+			// To start with, we get a settings suitable for the tracker we have found 
+			TrackerSettings ts = tracker.createDefaultSettings();
 			String trackerSettingsClassName = element.getAttributeValue(TRACKER_SETTINGS_CLASS_ATTRIBUTE_NAME);
 			if (null == trackerSettingsClassName) {
 				logger.error("Tracker settings class is not present.\n");
-				ts = trackerSettingsFallback(element);
 			} else {
-				try {
-					ts = (TrackerSettings) Class.forName(trackerSettingsClassName).newInstance();
+
+				if (trackerSettingsClassName.equals(ts.getClass().getName())) {
+
+					// The saved class matched, we can updated the settings created above with the file content
 					ts.unmarshall(element);
-				} catch (InstantiationException e) {
-					logger.error("Unable to instantiate tracker settings class: "+e.getLocalizedMessage()+"\n");
-					ts = trackerSettingsFallback(element);
-				} catch (IllegalAccessException e) {
-					logger.error("Unable to instantiate tracker settings class: "+e.getLocalizedMessage()+"\n");
-					ts = trackerSettingsFallback(element);
-				} catch (ClassNotFoundException e) {
-					logger.error("Unable to find segmenter settings class: "+e.getLocalizedMessage()+"\n");
-					ts = trackerSettingsFallback(element);
+
+				} else {
+
+					// They do not match. We give priority to what has been saved.
+					
+					try {
+						ts = (TrackerSettings) Class.forName(trackerSettingsClassName).newInstance();
+						ts.unmarshall(element);
+					} catch (InstantiationException e) {
+						logger.error("Unable to instantiate tracker settings class: "+e.getLocalizedMessage()+"\n");
+						ts = trackerSettingsFallback(element);
+					} catch (IllegalAccessException e) {
+						logger.error("Unable to instantiate tracker settings class: "+e.getLocalizedMessage()+"\n");
+						ts = trackerSettingsFallback(element);
+					} catch (ClassNotFoundException e) {
+						logger.error("Unable to find segmenter settings class: "+e.getLocalizedMessage()+"\n");
+						ts = trackerSettingsFallback(element);
+					}
 				}
 			}
 			settings.trackerSettings = ts;
 		}
 
-		// Deal with tracker
-		{
-			SpotTracker tracker;
-			String trackerClassName = element.getAttributeValue(TRACKER_CLASS_ATTRIBUTE_NAME);
-			if (null == trackerClassName) {
-				logger.error("Tracker class is not present.\n");
-				logger.error("Substituting default.\n");
-				tracker = new SimpleFastLAPTracker();
-			} else {
-				try {
-					tracker = (SpotTracker) Class.forName(trackerClassName).newInstance();
-				} catch (InstantiationException e) {
-					logger.error("Unable to instantiate tracker settings class: "+e.getLocalizedMessage()+"\n");
-					logger.error("Substituting default.\n");
-					tracker = new SimpleFastLAPTracker();
-				} catch (IllegalAccessException e) {
-					logger.error("Unable to instantiate tracker settings class: "+e.getLocalizedMessage()+"\n");
-					logger.error("Substituting default.\n");
-					tracker = new SimpleFastLAPTracker();
-				} catch (ClassNotFoundException e) {
-					logger.error("Unable to find segmenter settings class: "+e.getLocalizedMessage()+"\n");
-					logger.error("Substituting default.\n");
-					tracker = new SimpleFastLAPTracker();
-				}
-			}
-			settings.tracker = tracker;
-		}
 	}
 
 	private TrackerSettings trackerSettingsFallback(Element element) {
