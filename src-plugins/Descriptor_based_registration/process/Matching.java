@@ -2,6 +2,7 @@ package process;
 
 import fiji.util.KDTree;
 import fiji.util.NNearestNeighborSearch;
+import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -13,14 +14,29 @@ import java.util.ArrayList;
 import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussian.SpecialPoint;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
+import mpicbg.imglib.container.imageplus.ImagePlusContainer;
+import mpicbg.imglib.container.imageplus.ImagePlusContainerFactory;
+import mpicbg.imglib.cursor.LocalizableCursor;
+import mpicbg.imglib.exception.ImgLibException;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.ImageFactory;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import mpicbg.imglib.interpolation.Interpolator;
+import mpicbg.imglib.interpolation.linear.LinearInterpolatorFactory;
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
+import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
+import mpicbg.imglib.type.numeric.RealType;
+import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
+import mpicbg.imglib.type.numeric.integer.UnsignedShortType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
 import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.AffineModel2D;
 import mpicbg.models.InvertibleBoundable;
+import mpicbg.models.InvertibleCoordinateTransform;
 import mpicbg.models.Model;
+import mpicbg.models.NoninvertibleModelException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
@@ -135,11 +151,19 @@ public class Matching
 		
 		// fuse if wanted
 		if ( params.fuse )
-			createOverlay( imp1, imp2, finalModel, params.model.copy(), params.dimensionality );
+		{
+			if ( imp1.getType() == ImagePlus.GRAY32 || imp2.getType() == ImagePlus.GRAY32 )
+				createOverlay( new FloatType(), imp1, imp2, finalModel, params.model.copy(), params.dimensionality );
+			else if ( imp1.getType() == ImagePlus.GRAY16 || imp2.getType() == ImagePlus.GRAY16 )
+				createOverlay( new UnsignedShortType(), imp1, imp2, finalModel, params.model.copy(), params.dimensionality );
+			else
+				createOverlay( new UnsignedByteType(), imp1, imp2, finalModel, params.model.copy(), params.dimensionality );
+		}
 	}
-
 	
-	protected void createOverlay( final ImagePlus imp1, final ImagePlus imp2, final Model<?> finalModel1, final Model<?> finalModel2, final int dimensionality ) 
+	
+	
+	protected <T extends RealType<T>> void createOverlay( final T targetType, final ImagePlus imp1, final ImagePlus imp2, final Model<?> finalModel1, final Model<?> finalModel2, final int dimensionality ) 
 	{
 		// estimate the bounaries of the output image
 		final float[] max1, max2;
@@ -168,22 +192,119 @@ public class Matching
 		boundable1.estimateBounds( min1, max1 );
 		boundable2.estimateBounds( min2, max2 );
 
+		final float[] minImg = new float[ dimensionality ];
+		final float[] maxImg = new float[ dimensionality ];
+
+		for ( int d = 0; d < dimensionality; ++d )
+		{
+			// the image might be rotated so that min is actually max
+			maxImg[ d ] = Math.max( Math.max( max1[ d ], max2[ d ] ), Math.max( min1[ d ], min2[ d ]) );
+			minImg[ d ] = Math.min( Math.min( max1[ d ], max2[ d ] ), Math.min( min1[ d ], min2[ d ]) );
+		}
+		
 		IJ.log( imp1.getTitle() + ": " + Util.printCoordinates( min1 ) + " -> " + Util.printCoordinates( max1 ) );
 		IJ.log( imp2.getTitle() + ": " + Util.printCoordinates( min2 ) + " -> " + Util.printCoordinates( max2 ) );
+		IJ.log( "output: " + Util.printCoordinates( minImg ) + " -> " + Util.printCoordinates( maxImg ) );
 
-		// 3d
-		if ( imp1.getNSlices() > 1 || imp2.getNSlices() > 1 )
+		// the size of the new image
+		final int[] size = new int[ dimensionality ];
+		// the offset relative to the output image which starts with its local coordinates (0,0,0)
+		final float[] offset = new float[ dimensionality ];
+		
+		for ( int d = 0; d < dimensionality; ++d )
 		{
-			
+			size[ d ] = Math.round( maxImg[ d ] - minImg[ d ] ) + 1;
+			offset[ d ] = minImg[ d ];			
 		}
-		else //2d
+		
+		IJ.log( "size: " + Util.printCoordinates( size ) );
+		IJ.log( "offset: " + Util.printCoordinates( offset ) );
+
+		// 2d
+		if ( dimensionality == 2 )
+		{
+			if ( !imp1.isComposite() && !imp2.isComposite() )
+			{
+				
+				final ImageFactory<T> f = new ImageFactory<T>( targetType, new ImagePlusContainerFactory() );
+				
+				final Image<T> out1 = f.createImage( size );
+				final Image<T> out2 = f.createImage( size );
+		
+				fuseChannel( out1, ImageJFunctions.convertFloat( imp1 ), offset, boundable1 );
+				fuseChannel( out2, ImageJFunctions.convertFloat( imp2 ), offset, boundable2 );			
+
+				try 
+				{
+					//((ImagePlusContainer)out1.getContainer()).getImagePlus().show();
+					//((ImagePlusContainer)out2.getContainer()).getImagePlus().show();
+					
+					// make composite
+					final ImageStack stack = new ImageStack( size[ 0 ], size[ 1 ] );
+					
+					stack.addSlice( imp1.getTitle(), ((ImagePlusContainer)out1.getContainer()).getImagePlus().getProcessor() );
+					stack.addSlice( imp2.getTitle(), ((ImagePlusContainer)out2.getContainer()).getImagePlus().getProcessor() );
+					
+					final ImagePlus result = new ImagePlus( "overlay " + imp1.getTitle() + "<->" + imp2.getTitle(), stack );
+					result.setDimensions( 2, 1, 1 );
+					final CompositeImage composite = new CompositeImage( result );
+					composite.show();
+				} 
+				catch (ImgLibException e) 
+				{
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				
+				
+			}
+		}
+		else //3d
 		{
 			
 
 		}
 	}
 
+	/**
+	 * Fuse one slice/volume (one channel)
+	 * 
+	 * @param output - same the type of the ImagePlus input
+	 * @param input - FloatType, because of Interpolation that needs to be done
+	 * @param transform - the transformation
+	 */
+	protected <T extends RealType<T>> void fuseChannel( final Image<T> output, final Image<FloatType> input, final float[] offset, final InvertibleCoordinateTransform transform )
+	{
+		final int dims = output.getNumDimensions();
+		final LocalizableCursor<T> out = output.createLocalizableCursor();
+		final Interpolator<FloatType> in = input.createInterpolator( new LinearInterpolatorFactory<FloatType>( new OutOfBoundsStrategyValueFactory<FloatType>() ) );
+		
+		final float[] tmp = new float[ input.getNumDimensions() ];
+		
+		while ( out.hasNext() )
+		{
+			out.fwd();
+			
+			for ( int d = 0; d < dims; ++d )
+				tmp[ d ] = out.getPosition( d ) + offset[ d ];
+			
+			try 
+			{
+				transform.applyInverseInPlace( tmp );
+			} 
+			catch (NoninvertibleModelException e) 
+			{
+				IJ.log( "Cannot invert model, qutting." );
+				return;
+			}
 
+			in.setPosition( tmp );			
+			out.getType().setReal( in.getType().get() );
+		}
+	}
+	
+	
 	protected void setPointRois( final ImagePlus imp1, final ImagePlus imp2, final ArrayList<PointMatch> inliers )
 	{
 		final ArrayList<Point> list1 = new ArrayList<Point>();
