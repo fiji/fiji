@@ -6,6 +6,7 @@ import java.io.IOException;
 import org.jdom.JDOMException;
 
 import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.spot.BlobMorphology;
@@ -32,7 +33,9 @@ public class HangingTracking_TestDrive {
 
 		System.out.println();
 		System.out.println("Without feature condition:");
-		LAPTrackerSettings trackerSettings = (LAPTrackerSettings) reader.getTrackerSettings();
+		Settings settings = new Settings();
+		reader.getTrackerSettings(settings);
+		LAPTrackerSettings trackerSettings = (LAPTrackerSettings) settings.trackerSettings;
 		trackerSettings.linkingDistanceCutOff = 60;
 		model.getSettings().trackerSettings = trackerSettings;
 		

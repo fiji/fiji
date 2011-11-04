@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -40,10 +41,6 @@ public class TmXmlWriter {
 	/*
 	 * CONSTRUCTORS
 	 */
-
-//	public TmXmlWriter(TrackMateModel model) {
-//		this(model, null);
-//	}
 
 	public TmXmlWriter(TrackMateModel model, Logger logger) {
 		this.model = model;
@@ -139,6 +136,22 @@ public class TmXmlWriter {
 		XMLOutputter outputter = new XMLOutputter(Format.getPrettyFormat());
 		outputter.output(document, new FileOutputStream(file));
 	}
+	
+	@Override
+	public String toString() {
+		String str = "";
+
+		Document document = new Document(root);
+		XMLOutputter outputter = new XMLOutputter(Format.getPrettyFormat());
+		StringWriter writer = new StringWriter();
+		try {
+			outputter.output(document, writer);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		str = writer.toString();
+		return str;
+	}
 
 	/*
 	 * PRIVATE METHODS
@@ -179,7 +192,7 @@ public class TmXmlWriter {
 	private void echoTrackerSettings() {
 		Element element = new Element(TRACKER_SETTINGS_ELEMENT_KEY);
 		if (null != model.getSettings().tracker) {
-			element.setAttribute(TRACKER_SETTINGS_CLASS_ATTRIBUTE_NAME, model.getSettings().tracker.getClass().getName());
+			element.setAttribute(TRACKER_CLASS_ATTRIBUTE_NAME, model.getSettings().tracker.getClass().getName());
 		}
 		TrackerSettings settings = model.getSettings().trackerSettings;
 		if (null != settings) {

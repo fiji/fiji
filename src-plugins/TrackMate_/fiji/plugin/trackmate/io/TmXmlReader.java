@@ -41,6 +41,7 @@ import fiji.plugin.trackmate.segmentation.PeakPickerSegmenter;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
+import fiji.plugin.trackmate.tracking.SimpleFastLAPTracker;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
@@ -93,7 +94,7 @@ public class TmXmlReader {
 		// Settings
 		Settings settings = getSettings();
 		getSegmenterSettings(settings);
-		settings.trackerSettings = getTrackerSettings();
+		getTrackerSettings(settings);
 		settings.imp = getImage();
 		model.setSettings(settings);
 
@@ -322,32 +323,76 @@ public class TmXmlReader {
 	}
 
 
-	public TrackerSettings getTrackerSettings() {
-		// Tracker settings
-		TrackerSettings settings = null;
+	/**
+	 * Update the given {@link Settings} object with the {@link TrackerSettings} and {@link SpotTracker} fields
+	 * named {@link Settings#trackerSettings} and {@link Settings#tracker} read within the XML file
+	 * this reader is initialized with.
+	 * <p>
+	 * If the tracker settings XML element is not present in the file, the {@link Settings} 
+	 * object is not updated. If the tracker settings or the tracker info can be read, 
+	 * but cannot be understood (most likely because the class the XML refers to is unknown) 
+	 * then a default object is substituted.  
+	 *   
+	 * @param settings  the base {@link Settings} object to update.
+	 */
+	public void getTrackerSettings(Settings settings) {
 		Element element = root.getChild(TRACKER_SETTINGS_ELEMENT_KEY);
-		if (null != element) {
+		if (null == element) {
+			return;
+		}
+
+		// Deal with tracker settings
+		{
+			TrackerSettings ts;
 			String trackerSettingsClassName = element.getAttributeValue(TRACKER_SETTINGS_CLASS_ATTRIBUTE_NAME);
 			if (null == trackerSettingsClassName) {
-				logger.error("Tracker settings class is not known.\n");
-				settings = trackerSettingsFallback(element);
+				logger.error("Tracker settings class is not present.\n");
+				ts = trackerSettingsFallback(element);
 			} else {
 				try {
-					settings = (TrackerSettings) Class.forName(trackerSettingsClassName).newInstance();
-					settings.unmarshall(element);
+					ts = (TrackerSettings) Class.forName(trackerSettingsClassName).newInstance();
+					ts.unmarshall(element);
 				} catch (InstantiationException e) {
 					logger.error("Unable to instantiate tracker settings class: "+e.getLocalizedMessage()+"\n");
-					settings = trackerSettingsFallback(element);
+					ts = trackerSettingsFallback(element);
 				} catch (IllegalAccessException e) {
 					logger.error("Unable to instantiate tracker settings class: "+e.getLocalizedMessage()+"\n");
-					settings = trackerSettingsFallback(element);
+					ts = trackerSettingsFallback(element);
 				} catch (ClassNotFoundException e) {
 					logger.error("Unable to find segmenter settings class: "+e.getLocalizedMessage()+"\n");
-					settings = trackerSettingsFallback(element);
+					ts = trackerSettingsFallback(element);
 				}
 			}
+			settings.trackerSettings = ts;
 		}
-		return settings;
+
+		// Deal with tracker
+		{
+			SpotTracker tracker;
+			String trackerClassName = element.getAttributeValue(TRACKER_CLASS_ATTRIBUTE_NAME);
+			if (null == trackerClassName) {
+				logger.error("Tracker class is not present.\n");
+				logger.error("Substituting default.\n");
+				tracker = new SimpleFastLAPTracker();
+			} else {
+				try {
+					tracker = (SpotTracker) Class.forName(trackerClassName).newInstance();
+				} catch (InstantiationException e) {
+					logger.error("Unable to instantiate tracker settings class: "+e.getLocalizedMessage()+"\n");
+					logger.error("Substituting default.\n");
+					tracker = new SimpleFastLAPTracker();
+				} catch (IllegalAccessException e) {
+					logger.error("Unable to instantiate tracker settings class: "+e.getLocalizedMessage()+"\n");
+					logger.error("Substituting default.\n");
+					tracker = new SimpleFastLAPTracker();
+				} catch (ClassNotFoundException e) {
+					logger.error("Unable to find segmenter settings class: "+e.getLocalizedMessage()+"\n");
+					logger.error("Substituting default.\n");
+					tracker = new SimpleFastLAPTracker();
+				}
+			}
+			settings.tracker = tracker;
+		}
 	}
 
 	private TrackerSettings trackerSettingsFallback(Element element) {
