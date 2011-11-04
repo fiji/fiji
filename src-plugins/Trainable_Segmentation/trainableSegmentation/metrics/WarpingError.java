@@ -751,22 +751,18 @@ public class WarpingError extends Metrics {
 		final int height = target.getHeight();
 
 		// Resize canvas to avoid checking the borders
-		//IJ.run(targetReal, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");
 		ImageProcessor ip = target.createProcessor(width+2, height+2);
 		ip.insert(target, 1, 1);
 		targetReal = new ImagePlus("target_real", ip.duplicate());
 
-		// IJ.run(targetBin, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");
 		targetBin = new ImagePlus("target_aux", ip.duplicate());
 
-		// IJ.run(sourceReal, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");
 		ip = target.createProcessor(width+2, height+2);
 		ip.insert(source, 1, 1);
 		sourceReal = new ImagePlus("source_real", ip.duplicate());
 
 		if(null != mask)
 		{
-			//IJ.run(maskReal, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");
 			ip = target.createProcessor(width+2, height+2);
 			ip.insert(mask, 1, 1);
 			maskReal = new ImagePlus("mask_real", ip.duplicate());
