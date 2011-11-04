@@ -3,7 +3,6 @@ package fiji.plugin;
 import fiji.plugin.timelapsedisplay.GraphFrame;
 import fiji.plugin.timelapsedisplay.TimeLapseDisplay;
 import fiji.util.gui.GenericDialogPlus;
-import huisken.opener.SPIMExperiment;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.DialogListener;
@@ -14,14 +13,12 @@ import ij.plugin.PlugIn;
 
 import java.awt.AWTEvent;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.TextField;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.TextEvent;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -36,6 +33,7 @@ import mpicbg.spim.io.ConfigurationParserException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.segmentation.InteractiveDoG;
+import spimopener.SPIMExperiment;
 
 public class Bead_Registration implements PlugIn 
 {

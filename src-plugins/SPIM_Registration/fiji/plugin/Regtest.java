@@ -9,7 +9,7 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.real.FloatType;
 
-import huisken.opener.SPIMExperiment;
+import spimopener.SPIMExperiment;
 
 public class Regtest
 {
