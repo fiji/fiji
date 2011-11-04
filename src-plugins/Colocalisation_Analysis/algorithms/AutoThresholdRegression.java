@@ -108,79 +108,39 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm<T>
 		// indicates whether the threshold has been found or not
 		boolean thresholdFound = false;
 		// the maximum number of iterations to look for the threshold
-		final int maxIterations = 30;
+		final int maxIterations = 100;
 		// the current iteration
 		int iteration = 0;
-		// the current maximum threshold
-		double maxThreshold = container.getMaxCh1();
-		// last Person's R value
-		double lastPersonsR;
-		/* current Person's R value
-		 * Since we want it to get as small as possible
-		 * we initialize it with a maximum double value.
-		 */
-		double currentPersonsR = Double.MAX_VALUE;
+		// the initial thresholds
+		double threshold1 = (container.getMaxCh1() + container.getMinCh1()) * 0.5;
+		double threshold2 = container.getMaxCh1();
 
 		// Min threshold not yet implemented
-		//double ch1ThreshMin = 0;
 		double ch1ThreshMax = container.getMaxCh1();
-		//double ch2ThreshMin = 0;
 		double ch2ThreshMax = container.getMaxCh2();
 
-		// the best found threshold for channel one
-		double ch1BestThreshold = ch1ThreshMax;
-		/* The related best Person's R value.
-		 * Since we want it to get as small as possible
-		 * we initialize it with a maximum double value.
-		 */
-		double bestPersonsR = Double.MAX_VALUE;
-		/* A tolerance for deciding if the threshold has
-		 * been found. If Person's R value is between
-		 * -tolerance and tolerance, it is considered
-		 * small enough.
-		 */
-		final double tolerance = 0.01;
 		// define some image type specific threshold variables
-		T threshold1 = img1.createType();
-		T threshold2 = img2.createType();
+		T thresholdCh1 = img1.createType();
+		T thresholdCh2 = img2.createType();
 		// reset the previously created cursor
 		cursor.reset();
 
 		// do regression
 		while (!thresholdFound && iteration<maxIterations) {
-			// calculate both thresholds
-			ch1ThreshMax = Math.round( maxThreshold );
+			// round ch1 threshold and compute ch2 threshold
+			ch1ThreshMax = Math.round( threshold1 );
 			ch2ThreshMax = Math.round( (ch1ThreshMax * m) + b );
 			// set the image type specific variables
-			threshold1.setReal( ch1ThreshMax );
-			threshold2.setReal( ch2ThreshMax );
+			thresholdCh1.setReal( ch1ThreshMax );
+			thresholdCh2.setReal( ch2ThreshMax );
+			// Person's R value
+			double currentPersonsR = Double.MAX_VALUE;
 			// indicates if we have actually found a real number
 			boolean badResult = false;
-
-			// backup last Person's R value
-			lastPersonsR = currentPersonsR;
 			try {
 				// do persons calculation within the limits
 				currentPersonsR = pearsonsCorrellation.calculatePearsons(cursor,
-						ch1Mean, ch2Mean, threshold1, threshold2, ThresholdMode.Below);
-				// indicates if we have actually found a real number
-				badResult = Double.isNaN(currentPersonsR);
-
-				//check to see if we're getting closer to zero for r
-				if ( (bestPersonsR * bestPersonsR) > (currentPersonsR * currentPersonsR) ) {
-					ch1BestThreshold = ch1ThreshMax;
-					bestPersonsR = currentPersonsR;
-				}
-
-				/* If our r is close to our level of tolerance,
-				 * then set threshold has been found.
-				 */
-				if ( (currentPersonsR < tolerance) && (currentPersonsR > -tolerance) )
-					thresholdFound = true;
-
-				// if we've reached ch1 = 1 then we've exhausted our possibilities
-				if (Math.round(ch1ThreshMax) == 0)
-					thresholdFound = true;
+						ch1Mean, ch2Mean, thresholdCh1, thresholdCh2, ThresholdMode.Below);
 			} catch (MissingPreconditionException e) {
 				/* the exception that could occur is due to numerical
 				 * problems within the pearsons calculation.
@@ -188,20 +148,21 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm<T>
 				badResult = true;
 			}
 
-			// change threshold maximum
-			if (badResult || currentPersonsR < 0.0) {
-				/* If a bad result was calculated or the Person's R value
-				 * is negative, increase the maximum threshold.
-				 */
-				maxThreshold = maxThreshold * 1.5;
-			} else {
-				/* If current Person's R value is above the previous one,
-				 * decrease the threshold, otherwise increase it.
-				 */
-				if ( currentPersonsR >= lastPersonsR )
-					maxThreshold = maxThreshold * 0.5;
-				else
-					maxThreshold = maxThreshold * 1.5;
+			/* If the difference between both thresholds is < 1, we consider
+			 * that as reasonable close to abort the regression.
+			 */
+			final double thrDiff = Math.abs(threshold1 - threshold2);
+			if (thrDiff < 1.0)
+				thresholdFound = true;
+
+			// update working thresholds
+			threshold2 = threshold1;
+			if (badResult || currentPersonsR < 0) {
+				// we went too far, increase by the absolute half
+				threshold1 = threshold1 + thrDiff * 0.5;
+			} else if (currentPersonsR > 0) {
+				// as long as r > 0 we go half the way down
+				threshold1 = threshold1 - thrDiff * 0.5;
 			}
 
 			// reset the cursor to reuse it
@@ -213,10 +174,6 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm<T>
 
 		// close the TwinValueRangeCursor, we don't need it anymore
 		cursor.close();
-
-		// remember the best threshold values
-		ch1ThreshMax = Math.round( ch1BestThreshold );
-		ch2ThreshMax = Math.round( (ch1BestThreshold * m) + b );
 
 		/* Get min and max value of image data type. Since type of image
 		 * one and two are the same, we dont't need to distinguish them.
