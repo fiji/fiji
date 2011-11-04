@@ -1,17 +1,16 @@
 package fiji.plugin.trackmate.tracking;
 
-import fiji.plugin.trackmate.gui.SimpleLAPTrackerSettingsPanel;
-import fiji.plugin.trackmate.gui.TrackerSettingsPanel;
-
 public class SimpleFastLAPTracker extends FastLAPTracker {
 
+	public SimpleFastLAPTracker() {
+		super();
+	}
+	
+	
 	@Override
 	public TrackerSettings createDefaultSettings() {
-		LAPTrackerSettings ts = new LAPTrackerSettings() {
-			public TrackerSettingsPanel createConfigurationPanel() {
-				return new SimpleLAPTrackerSettingsPanel();
-			}
-		};
+		LAPTrackerSettings ts = new LAPTrackerSettings();
+		ts.setUseSimpleConfigPanel(true);
 		ts.allowMerging = false;
 		ts.allowSplitting = false;
 		return ts;

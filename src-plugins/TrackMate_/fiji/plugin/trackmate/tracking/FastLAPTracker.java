@@ -18,5 +18,11 @@ public class FastLAPTracker extends LAPTracker {
 				"that solves an assignment problem in O(n^3) instead of O(n^4)." +
 				" </html>";	
 	}
+	
+	@Override
+	public String toString() {
+		return "Fast LAP Tracker";
+	}
+
 
 }

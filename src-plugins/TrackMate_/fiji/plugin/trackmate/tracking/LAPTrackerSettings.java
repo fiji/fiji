@@ -13,11 +13,16 @@ import org.jdom.Element;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.gui.LAPTrackerSettingsPanel;
+import fiji.plugin.trackmate.gui.SimpleLAPTrackerSettingsPanel;
 import fiji.plugin.trackmate.gui.TrackerSettingsPanel;
 
 public class LAPTrackerSettings implements TrackerSettings {
 
-
+	/*
+	 * MARSHALLING CONSTANTS
+	 */
+	
+	
 	private static final String TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME				= "allowed";
 	// Alternative costs & blocking
 	private static final String TRACKER_SETTINGS_ALTERNATE_COST_FACTOR_ATTNAME 		= "alternatecostfactor";
@@ -35,8 +40,9 @@ public class LAPTrackerSettings implements TrackerSettings {
 	private static final String TRACKER_SETTINGS_SPLITTING_ELEMENT					= "SplittingCondition";
 
 
-
-
+	/*
+	 * DEFAULT VALUE FOR PUBLIC FIELDS
+	 */
 
 	private static final double 	DEFAULT_LINKING_DISTANCE_CUTOFF 		= 15.0;
 	private static final HashMap<String, Double> DEFAULT_LINKING_FEATURE_PENALITIES = new HashMap<String, Double>();
@@ -60,6 +66,10 @@ public class LAPTrackerSettings implements TrackerSettings {
 	private static final double 	DEFAULT_ALTERNATIVE_OBJECT_LINKING_COST_FACTOR = 1.05d;
 	private static final double 	DEFAULT_CUTOFF_PERCENTILE 				= 0.9d;
 
+	/*
+	 * PUBLIC FIELDS
+	 */
+	
 	/** Max time difference over which particle linking is allowed.	 */
 	public double linkingDistanceCutOff 		= DEFAULT_LINKING_DISTANCE_CUTOFF;
 	/** Feature difference cutoffs for linking. */
@@ -101,6 +111,11 @@ public class LAPTrackerSettings implements TrackerSettings {
 	public double blockingValue 				= Double.MAX_VALUE;
 
 
+	/*
+	 * PRIVATE FIELDS
+	 */
+	
+	private boolean useSimpleConfigPanel = false;
 
 	/*
 	 * METHODS
@@ -145,7 +160,20 @@ public class LAPTrackerSettings implements TrackerSettings {
 
 	@Override
 	public TrackerSettingsPanel createConfigurationPanel() {
-		return new LAPTrackerSettingsPanel();
+		if (useSimpleConfigPanel) {
+			return new SimpleLAPTrackerSettingsPanel();
+		} else {
+			return new LAPTrackerSettingsPanel();
+		}
+	}
+	
+	/**
+	 * If the flag is set to true, then this settings object will return the simplified 
+	 * config panel when called by {@link #createConfigurationPanel()}. Otherwise,
+	 * the full, standard, config panel is used. 
+	 */
+	public void setUseSimpleConfigPanel(boolean useSimpleConfigPanel) {
+		this.useSimpleConfigPanel = useSimpleConfigPanel;
 	}
 
 	@Override
