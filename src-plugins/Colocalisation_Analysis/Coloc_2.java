@@ -12,9 +12,13 @@ import ij.process.Blitter;
 import ij.process.ImageProcessor;
 
 import java.awt.Checkbox;
+import java.awt.Frame;
 import java.awt.Rectangle;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -443,6 +447,14 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		}
 		// do the actual results processing
 		swDisplay.process();
+		// add window to the IJ window manager
+		swDisplay.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosed(WindowEvent e) {
+				WindowManager.removeWindow((Frame) swDisplay);
+			}
+		});
+		WindowManager.addWindow(swDisplay);
 		// show PDF saving dialog if requested
 		if (autoSavePdf)
 			pdfWriter.process();
