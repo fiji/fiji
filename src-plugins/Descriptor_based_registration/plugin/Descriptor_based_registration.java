@@ -1,5 +1,6 @@
 package plugin;
 
+import process.Matching;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.models.AffineModel2D;
 import mpicbg.models.AffineModel3D;
@@ -89,7 +90,13 @@ public class Descriptor_based_registration implements PlugIn
 			dimensionality = 2;
 		
 		// open a second dialog and query the other parameters
-		getParameters( imp1, imp2, dimensionality );
+		final DescriptorParameters params = getParameters( imp1, imp2, dimensionality );
+		
+		if ( params == null )
+			return;
+		
+		// compute the actual matching
+		new Matching( imp1, imp2, params );
 	}
 	
 	public String[] transformationModels2d = new String[] { "Translation (2d)", "Rigid (2d)", "Similarity (2d)", "Affine (2d)", "Homography (2d)" };
@@ -97,22 +104,25 @@ public class Descriptor_based_registration implements PlugIn
 	public static int defaultTransformationModel = 1;
 	
 	public static String[] detectionBrightness = { "Very low", "Low", "Medium", "Strong", "Advanced ...", "Interactive ..." };
-	public static int defaultDetectionBrightness = 1;
-	public static double defaultSigma = 1.8;
+	public static int defaultDetectionBrightness = 2;
+	public static double defaultSigma = 2;
 	public static double defaultThreshold = 0.03;
 	
-	public static String[] detectionRadius = { "0.5 px", "1 px", "2 px", "3 px", "4 px", "5 px", "6 px", "7 px", "8 px", "9 px", "10 px", "Advanced ...", "Interactive ..." };
-	public static int defaultDetectionRadius = 1;
+	public static String[] detectionSize = { "2 px", "3 px", "4 px", "5 px", "6 px", "7 px", "8 px", "9 px", "10 px", "Advanced ...", "Interactive ..." };
+	public static int defaultDetectionSize = 1;
 	
 	public static String[] detectionTypes = { "Maxima only", "Minima only", "Minima & Maxima", "Interactive ..." };
 	public static int defaultDetectionType = 0;
 	
-	public static int defaultNumNeighbors = 1;
+	public static int defaultNumNeighbors = 3;
 	public static int defaultRedundancy = 1;
 	public static double defaultSignificance = 3;
 	public static double defaultRansacThreshold = 5;
 	public static int defaultChannel1 = 1;
 	public static int defaultChannel2 = 1;
+	
+	public static boolean defaultCreateOverlay = true;
+	public static boolean defaultAddPointRoi = true;
 	
 	/**
 	 * Ask for all other required parameters ..
@@ -129,40 +139,40 @@ public class Descriptor_based_registration implements PlugIn
 		
 		// one of them is by default interactive, then all are interactive
 		if ( defaultDetectionBrightness == detectionBrightness.length - 1 || 
-			 defaultDetectionRadius == detectionRadius.length - 1 ||
+			 defaultDetectionSize == detectionSize.length - 1 ||
 			 defaultDetectionType == detectionTypes.length - 1 )
 		{
 			defaultDetectionBrightness = detectionBrightness.length - 1; 
-			defaultDetectionRadius = detectionRadius.length - 1;
+			defaultDetectionSize = detectionSize.length - 1;
 			defaultDetectionType = detectionTypes.length - 1;
 		}
 		
 		final GenericDialog gd = new GenericDialog( dimensionality + "-dimensional descriptor based registration" );			
 		
-		gd.addChoice( "Brightness of detections", detectionBrightness, detectionBrightness[ defaultDetectionBrightness ] );
-		gd.addChoice( "Approximate radius of detections", detectionRadius, detectionRadius[ defaultDetectionRadius ] );
-		gd.addChoice( "Type of detections", detectionTypes, detectionTypes[ defaultDetectionType ] );
+		gd.addChoice( "Brightness_of detections", detectionBrightness, detectionBrightness[ defaultDetectionBrightness ] );
+		gd.addChoice( "Approximate_size of detections", detectionSize, detectionSize[ defaultDetectionSize ] );
+		gd.addChoice( "Type_of_detections", detectionTypes, detectionTypes[ defaultDetectionType ] );
 		
-		gd.addChoice( "Transformation model", transformationModel, transformationModel[ defaultTransformationModel ] );
+		gd.addChoice( "Transformation_model", transformationModel, transformationModel[ defaultTransformationModel ] );
 		
 		if ( dimensionality == 2 )
 		{
 			if ( defaultNumNeighbors < 2 )
 				defaultNumNeighbors = 2;
 			
-			gd.addSlider( "Number of neighbors for the descriptors", 2, 10, defaultNumNeighbors );
+			gd.addSlider( "Number_of_neighbors for the descriptors", 2, 10, defaultNumNeighbors );
 		}
 		else
 		{
 			if ( defaultNumNeighbors < 3 )
 				defaultNumNeighbors = 3;
 			
-			gd.addSlider( "Number of neighbors for the descriptors", 3, 10, defaultNumNeighbors );
+			gd.addSlider( "Number_of_neighbors for the descriptors", 3, 10, defaultNumNeighbors );
 		}
 		
 		gd.addSlider( "Redundancy for descriptor matching", 0, 10, defaultRedundancy );		
 		gd.addSlider( "Significance required for a descriptor match", 1.0, 10.0, defaultSignificance );
-		gd.addSlider( "Allowed error for RANSAC (px)", 0.5, 20.0, defaultRansacThreshold );
+		gd.addSlider( "Allowed_error_for_RANSAC (px)", 0.5, 20.0, defaultRansacThreshold );
 
 		final int numChannels1 = imp1.getNChannels();
 		final int numChannels2 = imp2.getNChannels();
@@ -172,8 +182,11 @@ public class Descriptor_based_registration implements PlugIn
 		if ( defaultChannel2 > numChannels2 )
 			defaultChannel2 = 1;
 		
-		gd.addSlider( "Choose registration channel for image 1" , 1, numChannels1, defaultChannel1 );
-		gd.addSlider( "Choose registration channel for image 2" , 1, numChannels2, defaultChannel2 );
+		gd.addSlider( "Choose_registration_channel_for_image_1" , 1, numChannels1, defaultChannel1 );
+		gd.addSlider( "Choose_registration_channel_for_image_2" , 1, numChannels2, defaultChannel2 );
+		gd.addMessage( "Image fusion" );
+		gd.addCheckbox( "Create_overlayed images", defaultCreateOverlay );
+		gd.addCheckbox( "Add_point_rois for corresponding features to images", defaultAddPointRoi );
 
 		gd.addMessage("");
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
@@ -187,51 +200,59 @@ public class Descriptor_based_registration implements PlugIn
 			return null;
 		
 		final DescriptorParameters params = new DescriptorParameters();
+		params.dimensionality = dimensionality;
 		
 		final int detectionBrightnessIndex = gd.getNextChoiceIndex();
-		final int detectionRadiusIndex = gd.getNextChoiceIndex();
+		final int detectionSizeIndex = gd.getNextChoiceIndex();
 		final int detectionTypeIndex = gd.getNextChoiceIndex();
 		final int transformationModelIndex = gd.getNextChoiceIndex();
 		final int numNeighbors = (int)Math.round( gd.getNextNumber() );
 		final int redundancy = (int)Math.round( gd.getNextNumber() );
 		final double significance = gd.getNextNumber();
 		final double ransacThreshold = gd.getNextNumber();
-		final int channel1 = (int)Math.round( gd.getNextNumber() );
-		final int channel2 = (int)Math.round( gd.getNextNumber() );
+		// zero-offset channel
+		final int channel1 = (int)Math.round( gd.getNextNumber() ) - 1;
+		final int channel2 = (int)Math.round( gd.getNextNumber() ) - 1;
+		final boolean createOverlay = gd.getNextBoolean();
+		final boolean addPointRoi = gd.getNextBoolean();
+		
 		
 		// update static values for next call
 		defaultDetectionBrightness = detectionBrightnessIndex;
-		defaultDetectionRadius = detectionRadiusIndex;
+		defaultDetectionSize = detectionSizeIndex;
 		defaultDetectionType = detectionTypeIndex;
 		defaultTransformationModel = transformationModelIndex;
 		defaultNumNeighbors = numNeighbors;
 		defaultRedundancy = redundancy;
 		defaultSignificance = significance;
 		defaultRansacThreshold = ransacThreshold;
-		defaultChannel1 = channel1;
-		defaultChannel2 = channel2;
+		defaultChannel1 = channel1 + 1;
+		defaultChannel2 = channel2 + 1;
+		defaultCreateOverlay = createOverlay;
+		defaultAddPointRoi = addPointRoi;
 		
 		// one of them is by default interactive, then all are interactive
 		if ( detectionBrightnessIndex == detectionBrightness.length - 1 || 
-			 detectionRadiusIndex == detectionRadius.length - 1 ||
+			 detectionSizeIndex == detectionSize.length - 1 ||
 			 detectionTypeIndex == detectionTypes.length - 1 )
 		{
 			// query parameters interactively
 			final double[] values = new double[]{ defaultSigma, defaultThreshold };
 			final InteractiveDoG idog = getInteractiveDoGParameters( imp1, channel1, values, 20 );
 			
-			params.sigma = values[ 0 ];
+			params.sigma1 = values[ 0 ];
 			params.threshold = values[ 1 ];
 			params.lookForMaxima = idog.getLookForMaxima();
 			params.lookForMinima = idog.getLookForMinima();
+			params.img1 = idog.getConvertedImage();
 		}
 		else 
 		{
-			if ( detectionBrightnessIndex == detectionBrightness.length - 1 || detectionRadiusIndex == detectionRadius.length - 1 )
+			if ( detectionBrightnessIndex == detectionBrightness.length - 2 || detectionSizeIndex == detectionSize.length - 2 )
 			{
 				// ask for the dog parameters
 				final double[] values = getAdvancedDoGParameters( defaultSigma, defaultThreshold );
-				params.sigma = values[ 0 ];
+				params.sigma1 = values[ 0 ];
 				params.threshold = values[ 1 ];				
 			}
 			else
@@ -245,10 +266,7 @@ public class Descriptor_based_registration implements PlugIn
 				else if ( detectionBrightnessIndex == 3 )
 					params.threshold = 0.1;
 	
-				if ( detectionRadiusIndex == 0 )
-					params.sigma = 1;
-				else 
-					params.sigma = detectionRadiusIndex * 2;
+				params.sigma1 = (detectionSizeIndex + 2.0) / 2.0;
 			}
 			
 			if ( detectionTypeIndex == 2 )
@@ -268,7 +286,7 @@ public class Descriptor_based_registration implements PlugIn
 			}			
 		}
 		// set the new default values
-		defaultSigma = params.sigma;
+		defaultSigma = params.sigma1;
 		defaultThreshold = params.threshold;
 		
 		if ( params.lookForMaxima && params.lookForMinima )
@@ -323,10 +341,15 @@ public class Descriptor_based_registration implements PlugIn
 		}
 		
 		// other parameters
+		params.sigma2 = InteractiveDoG.computeSigma2( (float)params.sigma1, InteractiveDoG.standardSenstivity );
 		params.numNeighbors = numNeighbors;
 		params.redundancy = redundancy;
 		params.significance = significance;
 		params.ransacThreshold = ransacThreshold;
+		params.channel1 = channel1; 
+		params.channel2 = channel2;
+		params.fuse = createOverlay;
+		params.setPointsRois = addPointRoi;
 		
 		return params;
 	}
@@ -360,13 +383,10 @@ public class Descriptor_based_registration implements PlugIn
 	 */
 	public static InteractiveDoG getInteractiveDoGParameters( final ImagePlus imp, final int channel, final double values[], final float sigmaMax )
 	{
-		if ( imp.isHyperStack() )
-			IJ.log( "is hyperstack" );
-		
 		imp.setSlice( imp.getStackSize() / 2 );	
 		imp.setRoi( 0, 0, imp.getWidth()/3, imp.getHeight()/3 );		
 		
-		final InteractiveDoG idog = new InteractiveDoG( imp, channel - 1 );
+		final InteractiveDoG idog = new InteractiveDoG( imp, channel );
 		idog.setSigmaMax( sigmaMax );
 		
 		if ( values.length == 2 )

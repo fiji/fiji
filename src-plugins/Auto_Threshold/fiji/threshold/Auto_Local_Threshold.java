@@ -12,6 +12,8 @@ import ij.plugin.*;
 // 1.1  01/Jun/2009
 // 1.2  25/May/2010
 // 1.3  1/Nov/2011 added constant offset to Niblack's method (request)
+// 1.4  2/Nov/2011 Niblack's new constant should be subtracted to match mean, mode and midgrey methods. Midgrey method had the wrong constant sign.
+
                 
 public class Auto_Local_Threshold implements PlugIn {
         /** Ask for parameters and then execute.*/
@@ -32,7 +34,7 @@ public class Auto_Local_Threshold implements PlugIn {
 		 // 2 - Ask for parameters:
 		GenericDialog gd = new GenericDialog("Auto Local Threshold");
 		String [] methods={"Try all", "Bernsen",  "Mean", "Median", "MidGrey", "Niblack", "Sauvola"};
-		gd.addMessage("Auto Local Threshold v1.3");
+		gd.addMessage("Auto Local Threshold v1.4");
 		gd.addChoice("Method", methods, methods[0]);
 		gd.addNumericField ("Radius",  15, 0);
 		gd.addMessage ("Special paramters (if different from default)");
@@ -370,7 +372,7 @@ public class Auto_Local_Threshold implements PlugIn {
 		byte[] min = (byte [])ipMin.getPixels();
 
 		for (int i=0; i<pixels.length; i++) {
-				pixels[i] = ( (int)(pixels[i] &0xff) > (int)(((max[i]&0xff) +(min[i]&0xff))/2)+c_value ) ? object : backg;
+				pixels[i] = ( (int)(pixels[i] &0xff) > (int)(((max[i]&0xff) +(min[i]&0xff))/2) - c_value ) ? object : backg;
 		}    
 		//imp.updateAndDraw();
 		return;
@@ -431,7 +433,7 @@ public class Auto_Local_Threshold implements PlugIn {
 		float[] var = (float []) ipVar.getPixels();
 
 		for (int i=0; i<pixels.length; i++) 
-			pixels[i] = ( (int)(pixels[i] &0xff) > (int)( mean[i] + k_value * Math.sqrt ( var[i] )+ c_value)) ? object : backg;
+			pixels[i] = ( (int)(pixels[i] &0xff) > (int)( mean[i] + k_value * Math.sqrt ( var[i] ) - c_value)) ? object : backg;
 		//imp.updateAndDraw();
 		return;
 	}
