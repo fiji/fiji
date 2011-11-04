@@ -860,11 +860,8 @@ public class WarpingError extends Metrics {
 				final double pix = val[4];
 
 				final ImagePlus patch = new ImagePlus("patch", new FloatProcessor(3,3,val));
-				if( simple2Db(patch, 4) )
-				{/*
-							for(int i=0; i<9;i++)
-								IJ.log(" " + val[i]);
-							IJ.log("pix = " + pix);*/
+				if( simple2DBertrand(patch, 4) )
+				{
 					sourceRealPix[ x + y * (width+2)] =  pix > 0.0 ? 0.0f : 1.0f ;
 					//IJ.log("flipping pixel x: " + x + " y: " + y + " to " + (pix > 0  ? 0.0 : 1.0));
 				}
