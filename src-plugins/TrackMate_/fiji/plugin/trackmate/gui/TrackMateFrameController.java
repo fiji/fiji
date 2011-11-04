@@ -434,6 +434,7 @@ public class TrackMateFrameController implements ActionListener {
 			}
 			file = tmpFile;
 			plugin = new TrackMate_(reader.loadFile(file));
+			plugin.computeTrackFeatures();
 
 		} finally {
 			setMainButtonsFor(GuiState.LOAD_SAVE);

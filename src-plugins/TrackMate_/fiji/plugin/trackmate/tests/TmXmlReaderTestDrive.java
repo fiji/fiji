@@ -8,19 +8,17 @@ import org.jdom.JDOMException;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
-import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
 public class TmXmlReaderTestDrive {
 
 	private static final File file = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
-//	private static final File file = new File("/Users/tinevez/Projects/ELaplantine/2011-06-29/Dish4_avg-cell1.xml");
-//	private static final File file = new File("/Users/tinevez/Projects/DMontaras/Mutant/20052011_16_20.xml");
-		
+	//	private static final File file = new File("/Users/tinevez/Projects/ELaplantine/2011-06-29/Dish4_avg-cell1.xml");
+	//	private static final File file = new File("/Users/tinevez/Projects/DMontaras/Mutant/20052011_16_20.xml");
+
 	public static void main(String args[]) {
-		
-		ij.ImageJ.main(args);
-		
+
+		//		ij.ImageJ.main(args);
+
 		System.out.println("Opening file: "+file.getAbsolutePath());		
 		TmXmlReader reader = new TmXmlReader(file, Logger.DEFAULT_LOGGER);
 		TrackMateModel model = null;
@@ -33,9 +31,17 @@ public class TmXmlReaderTestDrive {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		System.out.println(model.getSettings());
+
+		System.out.println();
+		System.out.println("Segmenter was: "+model.getSettings().segmenter.toString());
+		System.out.println("With settings:");
 		System.out.println(model.getSettings().segmenterSettings);
+
+		System.out.println();
+		System.out.println("Tracker was: "+model.getSettings().tracker.toString());
+		System.out.println("With settings:");
 		System.out.println(model.getSettings().trackerSettings);
 		System.out.println();
 		System.out.println("Found "+model.getSpots().getNSpots()+" spots in total.");
@@ -43,13 +49,18 @@ public class TmXmlReaderTestDrive {
 		System.out.println("Found "+model.getNTracks()+" tracks in total.");
 		System.out.println("Found "+model.getNFilteredTracks()+" filtered tracks.");
 
+		System.out.println();
+		System.out.println("Track features:");
+		System.out.println(model.getFeatureModel().getTrackFeatureValues());
+
 		// Instantiate displayer
-		AbstractTrackMateModelView displayer = new HyperStackDisplayer();
-		displayer.setModel(model);
-		displayer.render();
-		displayer.refresh();
-		
+//		fiji.plugin.trackmate.visualization.AbstractTrackMateModelView displayer 
+//			= new fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer();
+//		displayer.setModel(model);
+//		displayer.render();
+//		displayer.refresh();
+
 	}
-	
-	
+
+
 }

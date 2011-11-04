@@ -110,8 +110,9 @@ public class TmXmlReader {
 		model.setFilteredSpots(filteredSpots, false);
 		// Tracks
 		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = readTracks(filteredSpots);
-		if (null != graph)
+		if (null != graph) {
 			model.setGraph(graph);
+		}
 		// Track Filters
 		List<FeatureFilter> trackFilters = getTrackFeatureFilters();
 		model.setTrackFilters(trackFilters);
@@ -508,6 +509,8 @@ public class TmXmlReader {
 	/**
 	 * Load the graph mapping spot linking as tracks. The graph vertices are made of the selected spot
 	 * list given in argument. Edges are formed from the file data.
+	 * <p>
+	 * The track features are not retrieved by this method. They must be recalculated from the model.
 	 * @param selectedSpots  the spot selection from which tracks area made 
 	 */
 	@SuppressWarnings("unchecked")
