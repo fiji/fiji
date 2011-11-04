@@ -1,5 +1,8 @@
 package mpicbg.spim.io;
 
+import huisken.opener.SPIMExperiment;
+import ij.IJ;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
@@ -50,6 +53,7 @@ public class SPIMConfiguration
 	// time lapse
 	public boolean timeLapseRegistration = false;
 	public int referenceTimePoint = 1;
+	public SPIMExperiment spimExperiment = null;
 	
 	// image factories
 	public ContainerFactory imageFactory = new ArrayContainerFactory();
@@ -281,6 +285,12 @@ public class SPIMConfiguration
     	{
     		// there is always channel 0
     		channels = new int[ 1 ];
+  
+    		// ...except when it is Huisken format, then we just take the first channel (which might not be 0)
+    		if ( isHuiskenFormat() )
+    		{
+    			channels[0] = spimExperiment.channelStart;
+    		}
     	}
 
     	if ( channelsToRegister != null && channelsToRegister.trim().length() > 0 )
@@ -295,6 +305,12 @@ public class SPIMConfiguration
     	{
     		// there is always channel 0
     		channelsRegister = new int[ 1 ];
+
+    		// ...except when it is Huisken format, then we just take the first channel (which might not be 0)
+    		if ( isHuiskenFormat() )
+    		{
+    			channelsRegister[0] = spimExperiment.channelStart;
+    		}
     	}
 
     	if ( channelsToFuse != null && channelsToFuse.trim().length() > 0 )
@@ -309,6 +325,12 @@ public class SPIMConfiguration
     	{
     		// there is always channel 0
     		channelsFuse = new int[ 1 ];
+
+    		// ...except when it is Huisken format, then we just take the first channel (which might not be 0)
+    		if ( isHuiskenFormat() )
+    		{
+    			channelsFuse[0] = spimExperiment.channelStart;
+    		}
     	}
     	
     	// test validity (channels for registration and fusion have to be a subclass of the channel pattern)
@@ -557,9 +579,48 @@ public class SPIMConfiguration
 		
 		return replacePattern;
     }
+    
+	public boolean isHuiskenFormat()
+	{
+		return spimExperiment != null;
+    }
+	
+	public SPIMExperiment getSpimExperiment()
+	{
+		return spimExperiment;
+	}
+	
+	public double getZStretchingHuisken()
+	{
+		return spimExperiment.pd / spimExperiment.pw;
+	}
+	
+	public void getFilenamesHuisken() throws ConfigurationParserException
+	{
+		parseTimePoints();
+		parseAngles();
+		parseChannels();
+		
+		// generate some dummy filenames that will be used for bead/registration files
+		file = new File[ timepoints.length ][ channels.length ][ angles.length ];
+		
+//		int sample = spimExperiment.sampleStart;
+//		int region = spimExperiment.regionStart;
+//		int plane = spimExperiment.planeStart;
+//		int frame = spimExperiment.frameStart;
+//		final String pathFormatString = "s%03d/t%05d/r%03d/a%03d/c%03d/z%04d/%010d.dat";
+		final String pathFormatString = "reg-t%05d-a%03d-c%03d";
+
+		for ( int tp = 0; tp < timepoints.length; ++tp )
+			for ( int channel = 0; channel < channels.length; ++channel )
+				for ( int angle = 0; angle < angles.length; ++angle )
+				{
+					file[ tp ][ channel ][ angle ] = new File( inputdirectory, String.format( pathFormatString, timepoints[tp], angles[angle], channels[channel] ) );
+				}
+	}
 
     public void getFileNames() throws ConfigurationParserException
-    {
+    {  
 		// find how to parse
 		String replaceTL = getReplaceStringTimePoints( inputFilePattern );
 		String replaceAngle = getReplaceStringAngle( inputFilePattern );

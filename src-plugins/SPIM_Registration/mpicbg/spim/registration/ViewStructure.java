@@ -7,7 +7,6 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.io.LOCI;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.models.AbstractAffineModel3D;
-import mpicbg.models.AffineModel3D;
 import mpicbg.spim.fusion.FusionControl;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
@@ -311,6 +310,12 @@ public class ViewStructure
 		{
 			zStretching = conf.zStretching;
 		}
+		else if ( conf.isHuiskenFormat() )
+		{
+			IOFunctions.println( "Reading z-stretching from xml." );
+			zStretching = conf.getZStretchingHuisken();
+			IOFunctions.println( "z-stretching = " + zStretching );
+		}
 		else
 		{
 			IOFunctions.println( "Opening first image to determine z-stretching." );
@@ -339,7 +344,8 @@ public class ViewStructure
 				view.setAcqusitionAngle( conf.angles[ i ] );
 				view.setChannel( conf.channels[ c ] );
 				view.setChannelIndex( c );
-		
+				view.setTimePoint( conf.timepoints[timePointIndex] );
+
 				if ( numChannels == 1 )
 				{
 					view.setUseForFusion( true );
@@ -436,6 +442,7 @@ public class ViewStructure
 				ViewDataBeads view = new ViewDataBeads( idNr++, model.copy(), files[ c ][ i ].getPath(), conf.zStretching );
 				view.setChannel( conf.channels[ c ] );
 				view.setChannelIndex( c );
+				view.setTimePoint( timePoint );
 
 				if ( numChannels == 1 )
 				{

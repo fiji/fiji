@@ -163,9 +163,10 @@ public class Bead_Registration implements PlugIn
 		gd.addDirectoryOrFileField( "SPIM_data_directory", spimDataDirectory );
 		final TextField tfSpimDataDirectory = (TextField) gd.getStringFields().lastElement();
 		gd.addStringField( "Pattern_of_SPIM files", fileNamePattern, 25 );
+		final TextField tfFilePattern = (TextField) gd.getStringFields().lastElement();
 		gd.addStringField( "Timepoints_to_process", timepoints );
 		final TextField tfTimepoints = (TextField) gd.getStringFields().lastElement();
-		gd.addStringField( "Angles to process", angles );
+		gd.addStringField( "Angles_to_process", angles );
 		final TextField tfAngles = (TextField) gd.getStringFields().lastElement();
 
 		gd.addMessage( "" );		
@@ -174,7 +175,9 @@ public class Bead_Registration implements PlugIn
 		gd.addChoice( "Bead_brightness", beadBrightness, beadBrightness[ defaultBeadBrightness ] );
 		gd.addCheckbox( "Override_file_dimensions", overrideResolution );
 		gd.addNumericField( "xy_resolution (um/px)", xyRes, 3 );
+		final TextField tfXyRes = (TextField) gd.getNumericFields().lastElement();
 		gd.addNumericField( "z_resolution (um/px)", zRes, 3 );
+		final TextField tfZRes = (TextField) gd.getNumericFields().lastElement();
 		
 		gd.addMessage( "" );		
 		
@@ -192,47 +195,57 @@ public class Bead_Registration implements PlugIn
 		MultiLineLabel text = (MultiLineLabel) gd.getMessage();
 		addHyperLinkListener(text, myURL);
 
-		gd.addDialogListener(
-				new DialogListener() {
-					@Override
-					public boolean dialogItemChanged( GenericDialog dialog, AWTEvent e )
+		gd.addDialogListener( new DialogListener()
+		{
+			@Override
+			public boolean dialogItemChanged( GenericDialog dialog, AWTEvent e )
+			{
+				if ( e instanceof TextEvent && e.getID() == TextEvent.TEXT_VALUE_CHANGED && e.getSource() == tfSpimDataDirectory )
+				{
+					TextField tf = ( TextField ) e.getSource();
+					spimDataDirectory = tf.getText();
+					File f = new File( spimDataDirectory );
+					if ( f.exists() && f.isFile() && f.getName().endsWith( ".xml" ) )
 					{
-						if ( e instanceof TextEvent && e.getID() == TextEvent.TEXT_VALUE_CHANGED && e.getSource() == tfSpimDataDirectory )
-						{
-							TextField tf = (TextField) e.getSource();
-							spimDataDirectory = tf.getText();
-							IJ.log( "SPIM_data_directory changed: " + spimDataDirectory );
-							File f = new File( spimDataDirectory );
-							if ( f.exists() && f.isFile() && f.getName().endsWith( ".xml" ) )
-							{
-								IJ.log( "it's an .xml file. opening " + f.getAbsolutePath() );
-								SPIMExperiment exp = new SPIMExperiment( f.getAbsolutePath() );
-								IJ.log( "--" + exp.toString() );
+						SPIMExperiment exp = new SPIMExperiment( f.getAbsolutePath() );
 
-								// set timepoint string
-								String expTimepoints = "";
-								if ( exp.timepointStart == exp.timepointEnd )
-									expTimepoints = "" + exp.timepointStart;
-								else
-									expTimepoints = "" + exp.timepointStart + "-" + exp.timepointEnd;
-								tfTimepoints.setText( expTimepoints );
-								
-								// set angles string
-								String expAngles = "";
-								for ( String angle : exp.angles )
-								{
-									int a = Integer.parseInt(angle.substring(1, angle.length()));
-									if ( ! expAngles.equals( "" ) )
-										expAngles += ",";
-									expAngles += a;
-								}
-								tfAngles.setText( expAngles );
-							}
+						// disable file pattern field
+						tfFilePattern.setEnabled( false );
+
+						// set timepoint string
+						String expTimepoints = "";
+						if ( exp.timepointStart == exp.timepointEnd )
+							expTimepoints = "" + exp.timepointStart;
+						else
+							expTimepoints = "" + exp.timepointStart + "-" + exp.timepointEnd;
+						tfTimepoints.setText( expTimepoints );
+
+						// set angles string
+						String expAngles = "";
+						for ( String angle : exp.angles )
+						{
+							int a = Integer.parseInt( angle.substring( 1, angle.length() ) );
+							if ( !expAngles.equals( "" ) )
+								expAngles += ",";
+							expAngles += a;
 						}
-						return true;
+						tfAngles.setText( expAngles );
+
+						// set dimension fields
+						if ( exp.pw != exp.ph )
+							IJ.log( "Warning: pixel width != pixel height in " + spimDataDirectory );
+						tfXyRes.setText( String.format( "%.3f", exp.pw ) );
+						tfZRes.setText( String.format( "%.3f", exp.pd ) );
 					}
-			
-		});
+					else
+					{
+						// enable file pattern field
+						tfFilePattern.setEnabled( true );
+					}
+				}
+				return true;
+			}
+		} );
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
@@ -302,7 +315,18 @@ public class Bead_Registration implements PlugIn
 		conf.channelsToFuse = "";
 		conf.anglePattern = angles;
 		conf.inputFilePattern = fileNamePattern;
-		conf.inputdirectory = spimDataDirectory;
+
+		File f = new File( spimDataDirectory );
+		if ( f.exists() && f.isFile() && f.getName().endsWith( ".xml" ) )
+		{
+			conf.spimExperiment = new SPIMExperiment( f.getAbsolutePath() );
+			conf.inputdirectory = f.getAbsolutePath().substring( 0, f.getAbsolutePath().length() - 4 );
+			System.out.println( "inputdirectory : " + conf.inputdirectory );
+		}
+		else
+		{		
+			conf.inputdirectory = spimDataDirectory;
+		}
 
 		conf.overrideImageZStretching = overrideResolution;
 
@@ -331,7 +355,7 @@ public class Bead_Registration implements PlugIn
 		
 		conf.registerOnly = true;
 		conf.timeLapseRegistration = timeLapseRegistration;
-
+		
 		return conf;
 	}
 
@@ -697,7 +721,10 @@ public class Bead_Registration implements PlugIn
 
 		try
 		{
-			conf.getFileNames();
+			if ( conf.isHuiskenFormat() )
+				conf.getFilenamesHuisken();
+			else
+				conf.getFileNames();
 		}
 		catch ( ConfigurationParserException e )
 		{
