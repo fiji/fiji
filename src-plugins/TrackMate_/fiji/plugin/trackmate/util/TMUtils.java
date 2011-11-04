@@ -112,7 +112,7 @@ public class TMUtils {
 		try {
 			val = element.getAttribute(name).getIntValue();
 		} catch (DataConversionException e) {	
-			logger.error("Cannot read the attribute "+name+" of the element "+element.getName()+", substituting default value."); 
+			logger.error("Cannot read the attribute "+name+" of the element "+element.getName()+", substituting default value.\n"); 
 		}
 		return val;
 	}
@@ -122,7 +122,7 @@ public class TMUtils {
 		try {
 			val = element.getAttribute(name).getFloatValue();
 		} catch (DataConversionException e) {	
-			logger.error("Cannot read the attribute "+name+" of the element "+element.getName()+", substituting default value."); 
+			logger.error("Cannot read the attribute "+name+" of the element "+element.getName()+", substituting default value.\n"); 
 		}
 		return val;
 	}
@@ -132,7 +132,7 @@ public class TMUtils {
 		try {
 			val = element.getAttribute(name).getDoubleValue();
 		} catch (DataConversionException e) {	
-			logger.error("Cannot read the attribute "+name+" of the element "+element.getName()+", substituting default value."); 
+			logger.error("Cannot read the attribute "+name+" of the element "+element.getName()+", substituting default value.\n"); 
 		}
 		return val;
 	}
@@ -142,7 +142,7 @@ public class TMUtils {
 		try {
 			val = element.getAttribute(name).getBooleanValue();
 		} catch (DataConversionException e) {	
-			logger.error("Cannot read the attribute "+name+" of the element "+element.getName()+", substituting default value."); 
+			logger.error("Cannot read the attribute "+name+" of the element "+element.getName()+", substituting default value.\n"); 
 		}
 		return val;
 	}

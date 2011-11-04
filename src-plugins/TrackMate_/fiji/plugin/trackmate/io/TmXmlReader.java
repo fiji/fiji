@@ -154,7 +154,7 @@ public class TmXmlReader {
 		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
 		for (Element ftEl : ftEls) {
 			String feature 	= ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
-			Float value 	= readFloatAttribute(ftEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
+			Float value 	= readFloatAttribute(ftEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
 			boolean isAbove	= readBooleanAttribute(ftEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
 			FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
 			featureThresholds.add(ft);
