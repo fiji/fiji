@@ -100,7 +100,8 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 	protected DataContainer<T> dataContainer = null;
 
 	public SingleWindowDisplay(DataContainer<T> container, PDFWriter<T> pdfWriter){
-		super("Single Window Display");
+		super("Colocalisation " + container.getSourceImage1().getName() + " vs " +
+				container.getSourceImage2().getName());
 
 		setPreferredSize(new Dimension(WIN_WIDTH, WIN_HEIGHT));
 
