@@ -273,8 +273,8 @@ public class SPIMExperiment {
 		ImagePlus ret = new ImagePlus(experimentName, stack);
 
 		ret.getCalibration().pixelWidth = pdiffs[xDir];
-		ret.getCalibration().pixelWidth = pdiffs[yDir];
-		ret.getCalibration().pixelWidth = pdiffs[zDir];
+		ret.getCalibration().pixelHeight = pdiffs[yDir];
+		ret.getCalibration().pixelDepth = pdiffs[zDir];
 		return ret;
 	}
 
@@ -349,8 +349,8 @@ public class SPIMExperiment {
 		ImagePlus ret = new ImagePlus(experimentName, stack);
 
 		ret.getCalibration().pixelWidth = pdiffs[xDir];
-		ret.getCalibration().pixelWidth = pdiffs[yDir];
-		ret.getCalibration().pixelWidth = pdiffs[zDir];
+		ret.getCalibration().pixelHeight = pdiffs[yDir];
+		ret.getCalibration().pixelDepth = pdiffs[zDir];
 		return ret;
 	}
 
