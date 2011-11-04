@@ -118,7 +118,8 @@ public class GuiReader {
 
 
 		{ // Try to read segmenter settings
-			SegmenterSettings segmenterSettings = reader.getSegmenterSettings();
+			reader.getSegmenterSettings(settings);
+			SegmenterSettings segmenterSettings = settings.segmenterSettings;
 			if (null == segmenterSettings) {
 				model.setSettings(settings);
 				if (null != controller) {
@@ -133,7 +134,6 @@ public class GuiReader {
 				return model;
 			}
 
-			settings.segmenterSettings = segmenterSettings;
 			model.setSettings(settings);
 			logger.log("  Reading segmenter settings done.\n");
 		}

@@ -17,6 +17,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import mpicbg.imglib.type.numeric.RealType;
+
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Document;
@@ -35,6 +37,7 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.segmentation.BasicSegmenterSettings;
+import fiji.plugin.trackmate.segmentation.PeakPickerSegmenter;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
@@ -62,9 +65,9 @@ public class TmXmlReader {
 		this.logger = logger;
 	}
 
-//	public TmXmlReader(File file) {
-//		this(file, Logger.DEFAULT_LOGGER);
-//	}
+	//	public TmXmlReader(File file) {
+	//		this(file, Logger.DEFAULT_LOGGER);
+	//	}
 
 	/*
 	 * PUBLIC METHODS
@@ -89,7 +92,7 @@ public class TmXmlReader {
 		TrackMateModel model = new TrackMateModel();
 		// Settings
 		Settings settings = getSettings();
-		settings.segmenterSettings = getSegmenterSettings();
+		getSegmenterSettings(settings);
 		settings.trackerSettings = getTrackerSettings();
 		settings.imp = getImage();
 		model.setSettings(settings);
@@ -221,31 +224,73 @@ public class TmXmlReader {
 		return settings;
 	}
 
-	public SegmenterSettings getSegmenterSettings() {
+	/**
+	 * Update the given {@link Settings} object with the {@link SegmenterSettings} and {@link SpotSegmenter} fields
+	 * named {@link Settings#segmenterSettings} and {@link Settings#segmenter} read within the XML file
+	 * this reader is initialized with.
+	 * <p>
+	 * If the segmenter settings XML element is not present in the file, the {@link Settings} 
+	 * object is not updated. If the segmenter settings or the segmenter info can be read, 
+	 * but cannot be understood (most likely because the class the XML refers to is unknown) 
+	 * then a default object is substituted.  
+	 *   
+	 * @param settings  the base {@link Settings} object to update.
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public void getSegmenterSettings(Settings settings) {
 		Element element = root.getChild(SEGMENTER_SETTINGS_ELEMENT_KEY);
-		SegmenterSettings settings = null;
-		if (null != element) {
-			String segmenterSettingsClassName = element.getAttributeValue(SEGMENTER_SETTINGS_CLASS_ATTRIBUTE_NAME);
-			if (null == segmenterSettingsClassName) {
-				logger.error("Segmenter settings class is not known.\n");
-				settings = segmenterSettingsFallback(element);
-			} else {
-				try {
-					settings = (SegmenterSettings) Class.forName(segmenterSettingsClassName).newInstance();
-					settings.unmarshall(element);
-				} catch (InstantiationException e) {
-					logger.error("Unable to instantiate segmenter settings class: "+e.getLocalizedMessage()+"\n");
-					settings = segmenterSettingsFallback(element);
-				} catch (IllegalAccessException e) {
-					logger.error("Unable to instantiate segmenter settings class: "+e.getLocalizedMessage()+"\n");
-					settings = segmenterSettingsFallback(element);
-				} catch (ClassNotFoundException e) {
-					logger.error("Unable to find segmenter settings class: "+e.getLocalizedMessage()+"\n");
-					settings = segmenterSettingsFallback(element);
-				}
+		if (null == element) {
+			return;
+		}
+
+		// Deal with segmenter settings
+		SegmenterSettings ss;
+		String segmenterSettingsClassName = element.getAttributeValue(SEGMENTER_SETTINGS_CLASS_ATTRIBUTE_NAME);
+		if (null == segmenterSettingsClassName) {
+			logger.error("Segmenter settings class is not present.\n");
+			ss = segmenterSettingsFallback(element);
+		} else {
+			try {
+				ss = (SegmenterSettings) Class.forName(segmenterSettingsClassName).newInstance();
+				ss.unmarshall(element);
+			} catch (InstantiationException e) {
+				logger.error("Unable to instantiate segmenter settings class: "+e.getLocalizedMessage()+"\n");
+				ss = segmenterSettingsFallback(element);
+			} catch (IllegalAccessException e) {
+				logger.error("Unable to instantiate segmenter settings class: "+e.getLocalizedMessage()+"\n");
+				ss = segmenterSettingsFallback(element);
+			} catch (ClassNotFoundException e) {
+				logger.error("Unable to find segmenter settings class: "+e.getLocalizedMessage()+"\n");
+				ss = segmenterSettingsFallback(element);
 			}
 		}
-		return settings;
+		settings.segmenterSettings = ss;
+
+		// Deal with segmenter
+		SpotSegmenter<? extends RealType<?>> segmenter;
+		String segmenterClassName = element.getAttributeValue(SEGMENTER_CLASS_ATTRIBUTE_NAME);
+		if (null == segmenterClassName) {
+			logger.error("Segmenter class is not present.\n");
+			logger.error("Substituting default.\n");
+			segmenter = new PeakPickerSegmenter();
+		} else {
+			try {
+				segmenter = (SpotSegmenter) Class.forName(segmenterClassName).newInstance();
+			} catch (InstantiationException e) {
+				logger.error("Unable to instantiate segmenter class: "+e.getLocalizedMessage()+"\n");
+				logger.error("Substituting default.\n");
+				segmenter = new PeakPickerSegmenter();
+			} catch (IllegalAccessException e) {
+				logger.error("Unable to instantiate segmenter class: "+e.getLocalizedMessage()+"\n");
+				logger.error("Substituting default.\n");
+				segmenter = new PeakPickerSegmenter();
+			} catch (ClassNotFoundException e) {
+				logger.error("Unable to find segmenter class: "+e.getLocalizedMessage()+"\n");
+				logger.error("Substituting default.\n");
+				segmenter = new PeakPickerSegmenter();
+			}
+		}
+		settings.segmenter = segmenter;
 	}
 
 	private SegmenterSettings segmenterSettingsFallback(Element element) {
@@ -284,8 +329,8 @@ public class TmXmlReader {
 		if (null != element) {
 			String trackerSettingsClassName = element.getAttributeValue(TRACKER_SETTINGS_CLASS_ATTRIBUTE_NAME);
 			if (null == trackerSettingsClassName) {
-					logger.error("Tracker settings class is not known.\n");
-					settings = trackerSettingsFallback(element);
+				logger.error("Tracker settings class is not known.\n");
+				settings = trackerSettingsFallback(element);
 			} else {
 				try {
 					settings = (TrackerSettings) Class.forName(trackerSettingsClassName).newInstance();

@@ -44,7 +44,7 @@ public class TrackVisualizerTestDrive {
 			
 		ImagePlus imp = reader.getImage();
 		Settings settings = reader.getSettings();
-		settings.segmenterSettings = reader.getSegmenterSettings();
+		reader.getSegmenterSettings(settings);
 		settings.imp = imp;
 		
 		// Launch ImageJ and display
