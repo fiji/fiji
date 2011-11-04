@@ -151,6 +151,9 @@ package_name_to_file_matchers = {
     "fiji-lsm-reader" :
         [ "plugins/LSM_Reader.jar" ],
 
+    "fiji-image5d" :
+        [ "plugins/Image_5D.jar" ],
+
     "fiji-loci-tools" :
         [ "plugins/loci_tools.jar" ],
 
@@ -656,6 +659,7 @@ if options.clean:
     to_remove.append("Retrotranslator")
     to_remove.append("clojure")
     to_remove.append("junit")
+    to_remove.append("javassist")
 
     # Remove files that are now provided by external dependencies.
     # FIXME: This list could (and should) be taken from the keys of
@@ -718,6 +722,7 @@ if options.clean:
         # format.  FIXME FIXME FIXME
         line = re.sub('\s+jars/Jama-1\.0\.2\.jar\s+',' ',line)
         line = re.sub('jars/Jama-1\.0\.2\.jar','/usr/share/java/jama.jar',line)
+        line = re.sub('jars/javassist.jar','/usr/share/java/javassist.jar',line)
         fp.write(line)
     fp.close()
 

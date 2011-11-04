@@ -414,6 +414,7 @@ public class MiniMaven {
 			if (properties.containsKey(key))
 				return properties.get(key);
 			if (parent == null) {
+				// hard-code a few variables
 				if (key.equals("bio-formats.groupId"))
 					return "loci";
 				if (key.equals("imagej.groupId"))
@@ -486,6 +487,13 @@ public class MiniMaven {
 			if (version == null)
 				version = findLocallyCachedVersion(path);
 			if (version == null) {
+				// try to find the .jar in Fiji's jars/ dir
+				File file = new File(System.getProperty("fiji.dir"), "jars/" + artifactId + ".jar");
+				if (file.exists()) {
+					POM pom = fakePOM(file, groupId, artifactId, version);
+					localPOMCache.put(key, pom);
+					return pom;
+				}
 				if (!quiet)
 					err.println("Cannot find version for artifact " + artifactId + " (dependency of " + this.artifactId + ")");
 				localPOMCache.put(key, null);

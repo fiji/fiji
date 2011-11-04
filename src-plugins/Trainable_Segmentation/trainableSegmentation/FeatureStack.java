@@ -73,6 +73,7 @@ import weka.core.Instances;
 import ij.IJ;
 import ij.ImageStack;
 import ij.ImagePlus;
+import ij.Prefs;
 import ij.io.FileSaver;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
@@ -190,7 +191,7 @@ public class FeatureStack
 	final boolean colorFeatures;
 	
 	/** executor service to produce concurrent threads */
-	ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+	ExecutorService exe = Executors.newFixedThreadPool( Prefs.getThreads() );
 	
 	/**
 	 * Construct object to store stack of image features
@@ -2395,7 +2396,7 @@ public class FeatureStack
 	 */
 	public void addFeaturesMT(final ImagePlus filterList)
 	{
-		exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		exe = Executors.newFixedThreadPool( Prefs.getThreads() );
 		wholeStack = new ImageStack(width, height);
 		//wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
 
@@ -2706,7 +2707,7 @@ public class FeatureStack
 		if (Thread.currentThread().isInterrupted() )
 			return false;
 		
-		exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		exe = Executors.newFixedThreadPool( Prefs.getThreads() );
 		wholeStack = new ImageStack(width, height);
 		if( originalImage.getType() == ImagePlus.COLOR_RGB)
 			wholeStack.addSlice("original", originalImage.getProcessor().duplicate());

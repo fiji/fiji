@@ -5,21 +5,138 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Node;
 
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import reconstructreader.Utils;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public class Translator {
 
-    private final StringBuilder xmlBuilder;
+    private static class MalformedFileInputStream extends FilterInputStream
+    {
+
+        int fixCnt;
+        int[] callCnt;
+        //int lastInt;
+        byte[] lastByte;
+
+        public MalformedFileInputStream(File f) throws FileNotFoundException
+        {
+            super(new FileInputStream(f));
+            fixCnt = 0;
+            callCnt = new int[3];
+            Arrays.fill(callCnt, 0);
+            //lastInt = 0;
+            lastByte  = new byte[0];
+        }
+
+        private byte fixByte(byte b)
+        {
+            if (b<0x20 && !(b==0x9 || b==0xA) || b == 0x26)
+            {
+                ++fixCnt;
+                b = 0x20;
+            }
+            return b;
+        }
+
+        public int read(byte[] bs, int off, int len) throws IOException
+        {
+            int ret = super.read(bs, off, len);
+
+            ++callCnt[0];
+
+            for (int i = 0; i < bs.length; ++i)
+            {
+                //Replace control chars with spaces
+                bs[i] = fixByte(bs[i]);
+
+//                //Handle ampersand
+//                if (bs[i] == 0x26)
+//                {
+//                    if (bs.length - i < 5)
+//                    {
+//                        bs[i] = 0x20;
+//                    }
+//                    else
+//                    {
+//                        byte[] amp = {0x61, 0x6d, 0x70, 0x3b};
+//                        byte[] lt = {0x6c, 0x74, 0x3b};
+//                        byte[] gt = {0x67, 0x74, 0x3b};
+//                        byte[] bs4 = new byte[4];
+//                        byte[] bs3 = new byte[3];
+//                        System.arraycopy(bs, i + 1, bs4, 0, 4);
+//                        System.arraycopy(bs, i + 1, bs3, 0, 3);
+//
+//                        if (!(Arrays.equals(amp, bs4) || Arrays.equals(lt, bs3) || Arrays.equals(gt, bs3)))
+//                        {
+//                            bs[i] = 0x20;
+//                        }
+//                    }
+//                }
+            }
+
+            lastByte = bs.clone();
+
+            return ret;
+        }
+
+        public int read(byte[] bs) throws IOException
+        {
+            int ret = super.read(bs);
+
+            ++callCnt[1];
+
+            for (int i = 0; i < bs.length; ++i)
+            {
+                bs[i] = fixByte(bs[i]);
+            }
+
+            lastByte = bs.clone();
+
+            return ret;
+        }
+
+        public int read() throws IOException
+        {
+            int read = super.read();
+
+            ++callCnt[2];
+
+            if (read != -1)
+            {
+                read = fixByte((byte)read);
+            }
+
+            return read;
+        }
+
+        public String toString()
+        {
+            String s = "Called " + callCnt[0] + " " + callCnt[1] + " " + callCnt[2] + ", and fixed " + fixCnt + '\n';
+            s += "[";
+            for (byte b : lastByte)
+            {
+                s += b + " ";
+            }
+
+            s += "];";
+
+            return s;
+        }
+    }
+
+    private static final int STRING_CHUNK_SIZE = 8192;
+
+    private StringBuilder xmlBuilder;
 
     private Document serDoc;
     private final ArrayList<Document> sectionDocuments;
@@ -39,10 +156,37 @@ public class Translator {
     private final int layerSetOID;
 
     private double[] preTransPatchSize;
+    private double defaultMag;
 
     private boolean ready;
 
+    private static String lastok = "";
 
+    public static InputSource getISO8559Source(final File f) throws FileNotFoundException, UnsupportedEncodingException
+    {
+        MalformedFileInputStream fileStream = new MalformedFileInputStream(f);
+        //Reader charStream = new InputStreamReader(fileStream, "ISO-8859-1");
+        Reader charStream = new InputStreamReader(fileStream);
+        return new InputSource(charStream);
+    }
+
+    public static void addSection(List<Document> sectionDocuments, DocumentBuilder builder, File f) throws IOException, SAXException
+    {
+        MalformedFileInputStream fileStream = new MalformedFileInputStream(f);
+        Reader charStream = new InputStreamReader(fileStream);
+        try
+        {
+            Document d = builder.parse(new InputSource(charStream));
+            sectionDocuments.add(d);
+            lastok = fileStream.toString();
+        }
+        catch (SAXParseException spe)
+        {
+            System.err.println(lastok);
+            System.err.println(fileStream);
+            throw spe;
+        }
+    }
 
     public Translator(String f)
     {
@@ -52,7 +196,7 @@ public class Translator {
         final File seriesDTD = new File(inputFile.getParent() + "/series.dtd");
         final File sectionDTD = new File(inputFile.getParent() + "/section.dtd");
 
-        xmlBuilder = new StringBuilder();
+        xmlBuilder = null;
         sectionDocuments = new ArrayList<Document>();
         sections = new ArrayList<ReconstructSection>();
         zTraces = new ArrayList<ReconstructZTrace>();
@@ -105,12 +249,14 @@ public class Translator {
         return layerSetOID;
     }
 
+
     public boolean process()
     {
         if (ready)
         {
             File[] list;
 
+            xmlBuilder = new StringBuilder();
             sectionDocuments.clear();
 
             /*
@@ -127,7 +273,7 @@ public class Translator {
                     {
                         public boolean accept(File dir, String name)
                         {
-                            return name.matches(projectName + ".*[0-9]$");
+                            return name.matches(projectName + ".[0-9]*$");
                         }
                     }
             );
@@ -142,7 +288,8 @@ public class Translator {
 
                 for (File f : list)
                 {
-                    sectionDocuments.add(builder.parse(f));
+                    System.out.println("Opening file " + f.getName());
+                    addSection(sectionDocuments, builder, f);
                 }
 
                 //Sort section files by index.
@@ -152,6 +299,7 @@ public class Translator {
                 //image transforms into TrakEM2 transforms. The coordinate systems are almost
                 //as different as possible, for a 2D euclidean space.
                 preTransPatchSize = Utils.getReconstructStackSize(sectionDocuments);
+                defaultMag = Utils.getMedianMag(sectionDocuments);
 
                 /*
                 Reconstruct : TrakEM2
@@ -179,10 +327,14 @@ public class Translator {
                 appendLayerSet(xmlBuilder);
                 appendDisplay(xmlBuilder);
                 xmlBuilder.append("</trakem2>\n");
+
+                clearMemory();
+
                 return true;
             }
             catch (Exception e)
             {
+                clearMemory();
                 e.printStackTrace();
                 return false;
             }
@@ -191,6 +343,15 @@ public class Translator {
         {
             return false;
         }
+    }
+
+    protected void clearMemory()
+    {
+        sectionDocuments.clear();
+        sections.clear();
+        closedContours.clear();
+        openContours.clear();
+        zTraces.clear();
     }
 
     protected void collectZTraces(Document serFile)
@@ -576,7 +737,6 @@ public class Translator {
     protected void appendLayerSet(final StringBuilder sb)
     {
         Node image = sectionDocuments.get(0).getElementsByTagName("Image").item(0);
-        double[] layerwh = Utils.getReconstructImageWH(image);
 
         sb.append("<t2_layer_set\n");
         sb.append("oid=\"").append(layerSetOID).append("\"\n");
@@ -585,8 +745,8 @@ public class Translator {
         sb.append("transform=\"matrix(1.0,0.0,0.0,1.0,0.0,0.0)\"\n");
         sb.append("title=\"Top Level\"\n");
         sb.append("links=\"\"\n");
-        sb.append("layer_width=\"").append(layerwh[0]).append("\"\n");
-        sb.append("layer_height=\"").append(layerwh[1]).append("\"\n");
+        sb.append("layer_width=\"").append(getStackWidth()).append("\"\n");
+        sb.append("layer_height=\"").append(getStackHeight()).append("\"\n");
         sb.append("rot_x=\"0.0\"\n");
         sb.append("rot_y=\"0.0\"\n");
         sb.append("rot_z=\"0.0\"\n");
@@ -691,11 +851,23 @@ public class Translator {
     {
         final String trakEMFile = inputFile.getParentFile().getAbsolutePath() + "/" + projectName + ".xml";
 
+        xmlBuilder.append('\n');
+
         try
         {
-            FileWriter fw = new FileWriter(
-                    new File(trakEMFile));
-            fw.write(xmlBuilder.toString());
+            FileWriter fw = new FileWriter(new File(trakEMFile));
+            String xmlString = xmlBuilder.toString();
+            int n = xmlString.length();
+            int t = n - STRING_CHUNK_SIZE;
+            int i;
+            xmlBuilder = null;
+            System.gc();
+
+            for (i = 0; i < t; i += STRING_CHUNK_SIZE)
+            {
+                fw.write(xmlString, i, STRING_CHUNK_SIZE);
+            }
+            fw.write(xmlString, i, n - i - 1);
             fw.close();
             return trakEMFile;
         }
@@ -707,6 +879,6 @@ public class Translator {
 
     public double getMag()
     {
-        return Utils.getMag(sectionDocuments.get(0).getDocumentElement());
+        return defaultMag;
     }
 }
