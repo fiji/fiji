@@ -1,11 +1,10 @@
 package customnode;
 
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 
 import javax.media.j3d.Appearance;
 import javax.media.j3d.ColoringAttributes;
-import javax.media.j3d.Geometry;
 import javax.media.j3d.GeometryArray;
 import javax.media.j3d.Material;
 import javax.media.j3d.PointArray;
@@ -28,6 +27,10 @@ public class CustomPointMesh extends CustomMesh {
 	public CustomPointMesh(List<Point3f> mesh,
 						Color3f color, float transparency) {
 		super(mesh, color, transparency);
+	}
+
+	public float getPointSize() {
+		return pointsize;
 	}
 
 	public void setPointSize(float pointsize) {
