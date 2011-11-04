@@ -2548,7 +2548,7 @@ public class WekaSegmentation {
 					Roi r = examples[sliceNum-1].get(l).get(j);
 
 					// For polygon rois we get the list of points
-					if( r instanceof PolygonRoi && r.getType() != Roi.FREEROI )
+					if( r instanceof PolygonRoi && r.getType() == Roi.FREELINE )
 					{
 						if(r.getStrokeWidth() == 1)
 						{
