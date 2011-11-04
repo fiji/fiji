@@ -371,9 +371,9 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		}
 
 		// create a results handler
-		List<ResultHandler<T>> listOfResultHandlers = new ArrayList<ResultHandler<T>>();
-		PDFWriter<T> pdfWriter = new PDFWriter<T>(container);
-		SingleWindowDisplay<T> swDisplay = new SingleWindowDisplay<T>(container, pdfWriter);
+		final List<ResultHandler<T>> listOfResultHandlers = new ArrayList<ResultHandler<T>>();
+		final PDFWriter<T> pdfWriter = new PDFWriter<T>(container);
+		final SingleWindowDisplay<T> swDisplay = new SingleWindowDisplay<T>(container, pdfWriter);
 		listOfResultHandlers.add(swDisplay);
 		listOfResultHandlers.add(pdfWriter);
 		//ResultHandler<T> resultHandler = new EasyDisplay<T>(container);
@@ -443,6 +443,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		}
 		// do the actual results processing
 		swDisplay.process();
+		// show PDF saving dialog if requested
 		if (autoSavePdf)
 			pdfWriter.process();
     }
