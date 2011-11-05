@@ -161,9 +161,7 @@ public class Matching
 		}
 	}
 	
-	
-	
-	protected <T extends RealType<T>> void createOverlay( final T targetType, final ImagePlus imp1, final ImagePlus imp2, final Model<?> finalModel1, final Model<?> finalModel2, final int dimensionality ) 
+	protected static <T extends RealType<T>> void createOverlay( final T targetType, final ImagePlus imp1, final ImagePlus imp2, final Model<?> finalModel1, final Model<?> finalModel2, final int dimensionality ) 
 	{
 		// estimate the bounaries of the output image
 		final float[] max1, max2;
@@ -223,42 +221,46 @@ public class Matching
 		// 2d
 		if ( dimensionality == 2 )
 		{
-			if ( !imp1.isComposite() && !imp2.isComposite() )
-			{
-				
-				final ImageFactory<T> f = new ImageFactory<T>( targetType, new ImagePlusContainerFactory() );
-				
-				final Image<T> out1 = f.createImage( size );
-				final Image<T> out2 = f.createImage( size );
-		
-				fuseChannel( out1, ImageJFunctions.convertFloat( imp1 ), offset, boundable1 );
-				fuseChannel( out2, ImageJFunctions.convertFloat( imp2 ), offset, boundable2 );			
+			final ImageFactory<T> f = new ImageFactory<T>( targetType, new ImagePlusContainerFactory() );
 
+			// the composite
+			final ImageStack stack = new ImageStack( size[ 0 ], size[ 1 ] );
+			
+			// transform all channels of imp1
+			for ( int c = 1; c <= imp1.getNChannels(); ++ c )
+			{
+				final Image<T> out = f.createImage( size );
+				fuseChannel( out, ImageJFunctions.convertFloat( new ImagePlus( "", imp1.getStack().getProcessor( c ) ) ), offset, boundable1 );
 				try 
 				{
-					//((ImagePlusContainer)out1.getContainer()).getImagePlus().show();
-					//((ImagePlusContainer)out2.getContainer()).getImagePlus().show();
-					
-					// make composite
-					final ImageStack stack = new ImageStack( size[ 0 ], size[ 1 ] );
-					
-					stack.addSlice( imp1.getTitle(), ((ImagePlusContainer)out1.getContainer()).getImagePlus().getProcessor() );
-					stack.addSlice( imp2.getTitle(), ((ImagePlusContainer)out2.getContainer()).getImagePlus().getProcessor() );
-					
-					final ImagePlus result = new ImagePlus( "overlay " + imp1.getTitle() + "<->" + imp2.getTitle(), stack );
-					result.setDimensions( 2, 1, 1 );
-					final CompositeImage composite = new CompositeImage( result );
-					composite.show();
+					stack.addSlice( imp1.getTitle(), ((ImagePlusContainer)out.getContainer()).getImagePlus().getProcessor() );
 				} 
 				catch (ImgLibException e) 
 				{
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					IJ.log( "Output image has no ImageJ type: " + e );
 				}
 				
-				
+			}
+
+			for ( int c = 1; c <= imp2.getNChannels(); ++ c )
+			{
+				final Image<T> out = f.createImage( size );
+				fuseChannel( out, ImageJFunctions.convertFloat( new ImagePlus( "", imp2.getStack().getProcessor( c ) ) ), offset, boundable2 );
+				try 
+				{
+					stack.addSlice( imp1.getTitle(), ((ImagePlusContainer)out.getContainer()).getImagePlus().getProcessor() );
+				} 
+				catch (ImgLibException e) 
+				{
+					IJ.log( "Output image has no ImageJ type: " + e );
+				}
 				
 			}
+
+			final ImagePlus result = new ImagePlus( "overlay " + imp1.getTitle() + "<->" + imp2.getTitle(), stack );
+			result.setDimensions( 2, 1, 1 );
+			final CompositeImage composite = new CompositeImage( result );
+			composite.show();
 		}
 		else //3d
 		{
@@ -274,7 +276,7 @@ public class Matching
 	 * @param input - FloatType, because of Interpolation that needs to be done
 	 * @param transform - the transformation
 	 */
-	protected <T extends RealType<T>> void fuseChannel( final Image<T> output, final Image<FloatType> input, final float[] offset, final InvertibleCoordinateTransform transform )
+	protected static <T extends RealType<T>> void fuseChannel( final Image<T> output, final Image<FloatType> input, final float[] offset, final InvertibleCoordinateTransform transform )
 	{
 		final int dims = output.getNumDimensions();
 		final LocalizableCursor<T> out = output.createLocalizableCursor();
@@ -282,25 +284,25 @@ public class Matching
 		
 		final float[] tmp = new float[ input.getNumDimensions() ];
 		
-		while ( out.hasNext() )
+		try 
 		{
-			out.fwd();
-			
-			for ( int d = 0; d < dims; ++d )
-				tmp[ d ] = out.getPosition( d ) + offset[ d ];
-			
-			try 
+			while ( out.hasNext() )
 			{
+				out.fwd();
+				
+				for ( int d = 0; d < dims; ++d )
+					tmp[ d ] = out.getPosition( d ) + offset[ d ];
+				
 				transform.applyInverseInPlace( tmp );
-			} 
-			catch (NoninvertibleModelException e) 
-			{
-				IJ.log( "Cannot invert model, qutting." );
-				return;
+	
+				in.setPosition( tmp );			
+				out.getType().setReal( in.getType().get() );
 			}
-
-			in.setPosition( tmp );			
-			out.getType().setReal( in.getType().get() );
+		} 
+		catch (NoninvertibleModelException e) 
+		{
+			IJ.log( "Cannot invert model, qutting." );
+			return;
 		}
 	}
 	
