@@ -1,6 +1,7 @@
 function Miji(open_imagej)
     %% This script sets up the classpath to Fiji and optionally starts MIJ
-    %% Author: Jacques Pecreaux & Johannes Schindelin
+    % Author: Jacques Pecreaux, Johannes Schindelin, Jean-Yves Tinevez
+
     if nargin < 1
         open_imagej = true;
     end
@@ -37,8 +38,16 @@ function Miji(open_imagej)
         ij.ImageJ([], 2);
     end
 
-    % make sure that the scripts are found
-    fiji.User_Plugins.installScripts();
+    % Make sure that the scripts are found.
+    % Unfortunately, this causes a nasty bug with MATLAB: calling this
+    % static method modifies the static MATLAB java path, which is
+    % normally forbidden. The consequences of that are nasty: adding a
+    % class to the dynamic class path can be refused, because it would be
+    % falsy recorded in the static path. On top of that, the static
+    % path is fsck in a weird way, with file separator from Unix, causing a
+    % mess on Windows platform.
+    % So we give it up as now.
+    % %    fiji.User_Plugins.installScripts();
 end
 
 function add_to_classpath(classpath, directory)
