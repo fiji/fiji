@@ -1,5 +1,7 @@
 package fiji.updater;
 
+import fiji.updater.GraphicalAuthenticator;
+
 import ij.IJ;
 import ij.WindowManager;
 
@@ -28,6 +30,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import java.net.Authenticator;
 import java.net.UnknownHostException;
 
 import javax.swing.JOptionPane;
@@ -69,6 +72,8 @@ public class Updater implements PlugIn {
 			IJ.error("There was an error reading the cached metadata: " + e);
 			return;
 		}
+
+		Authenticator.setDefault(new GraphicalAuthenticator());
 
 		final UpdaterFrame main = new UpdaterFrame(plugins, hidden);
 		main.setLocationRelativeTo(IJ.getInstance());
