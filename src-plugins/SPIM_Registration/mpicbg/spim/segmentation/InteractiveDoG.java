@@ -174,7 +174,7 @@ public class InteractiveDoG implements PlugIn
 		}
 		
 		// copy the ImagePlus into an ArrayImage<FloatType> for faster access
-		source = convertToFloat( imp, channel );
+		source = convertToFloat( imp, channel, 0 );
 		
 		// show the interactive kit
 		displaySliders();
@@ -371,35 +371,23 @@ public class InteractiveDoG implements PlugIn
 	 * @param imp - the {@link ImagePlus} input image
 	 * @return - the copy
 	 */
-	public static Image<FloatType> convertToFloat( final ImagePlus imp, int channel )
+	public static Image<FloatType> convertToFloat( final ImagePlus imp, int channel, int timepoint )
 	{
 		// stupid 1-offset of imagej
 		channel++;
-		final int numChannels = imp.getNChannels();
+		timepoint++;
 		
 		final Image<FloatType> img;
 		
 		if ( imp.getNSlices() > 1 )
-			img = new ImageFactory<FloatType>( new FloatType(), new ArrayContainerFactory() ).createImage( new int[]{ imp.getWidth(), imp.getHeight(), imp.getStack().getSize() / numChannels } );
+			img = new ImageFactory<FloatType>( new FloatType(), new ArrayContainerFactory() ).createImage( new int[]{ imp.getWidth(), imp.getHeight(), imp.getNSlices() } );
 		else
 			img = new ImageFactory<FloatType>( new FloatType(), new ArrayContainerFactory() ).createImage( new int[]{ imp.getWidth(), imp.getHeight() } );
-		
-		final CompositeImage ci;
-		
-		if ( imp.isComposite() )
-			ci = (CompositeImage)imp;
-		else
-			ci = null;
 		
 		final int sliceSize = imp.getWidth() * imp.getHeight();
 		
 		int z = 0;
-		ImageProcessor ip;
-		
-		if ( ci == null )
-			ip = imp.getStack().getProcessor( z + 1 );
-		else
-			ip = imp.getStack().getProcessor( ci.getStackIndex( channel, z + 1, 0 ) );
+		ImageProcessor ip = imp.getStack().getProcessor( imp.getStackIndex( channel, z + 1, timepoint ) );
 		
 		if ( ip instanceof FloatProcessor )
 		{
@@ -415,10 +403,7 @@ public class InteractiveDoG implements PlugIn
 				{
 					++z;
 					
-					if ( ci == null )
-						pixels = (float[])imp.getStack().getProcessor( z + 1 ).getPixels();
-					else
-						pixels = (float[])imp.getStack().getProcessor( ci.getStackIndex( channel, z + 1, 0 ) ).getPixels();
+					pixels = (float[])imp.getStack().getProcessor( imp.getStackIndex( channel, z + 1, timepoint ) ).getPixels();
 						 
 					i = 0;
 				}
@@ -439,10 +424,7 @@ public class InteractiveDoG implements PlugIn
 				if ( i == sliceSize )
 				{
 					++z;
-					if ( ci == null )
-						pixels = (byte[])imp.getStack().getProcessor( z + 1 ).getPixels();
-					else
-						pixels = (byte[])imp.getStack().getProcessor( ci.getStackIndex( channel, z + 1, 0 ) ).getPixels();
+					pixels = (byte[])imp.getStack().getProcessor( imp.getStackIndex( channel, z + 1, timepoint ) ).getPixels();
 					
 					i = 0;
 				}
@@ -464,10 +446,7 @@ public class InteractiveDoG implements PlugIn
 				{
 					++z;
 					
-					if ( ci == null )
-						pixels = (short[])imp.getStack().getProcessor( z + 1 ).getPixels();
-					else
-						pixels = (short[])imp.getStack().getProcessor( ci.getStackIndex( channel, z + 1, 0 ) ).getPixels();
+					pixels = (short[])imp.getStack().getProcessor( imp.getStackIndex( channel, z + 1, timepoint ) ).getPixels();
 					
 					i = 0;
 				}
@@ -490,10 +469,7 @@ public class InteractiveDoG implements PlugIn
 				{
 					z = location[ 2 ];
 					
-					if ( ci == null )
-						ip = imp.getStack().getProcessor( z + 1 );
-					else
-						ip = imp.getStack().getProcessor( ci.getStackIndex( channel, z + 1, 0 ) );
+					ip = imp.getStack().getProcessor( imp.getStackIndex( channel, z + 1, timepoint ) );
 				}
 				
 				cursor.getType().set( ip.getPixelValue( location[ 0 ], location[ 1 ] ) );
