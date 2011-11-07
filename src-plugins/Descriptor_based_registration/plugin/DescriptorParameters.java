@@ -1,21 +1,10 @@
 package plugin;
 
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.models.AbstractModel;
 
 public class DescriptorParameters 
 {
-	/*
-	defaultDetectionBrightness = gd.getNextChoiceIndex();
-	defaultDetectionRadius = gd.getNextChoiceIndex();
-	defaultDetectionType = gd.getNextChoiceIndex();
-	defaultTransformationModel = gd.getNextChoiceIndex();
-	defaultNumNeighbors = (int)Math.round( gd.getNextNumber() );
-	defaultRedundancy = (int)Math.round( gd.getNextNumber() );
-	defaultSignificance = gd.getNextNumber();
-	defaultRansacThreshold = gd.getNextNumber();
-	*/
+	public static int ransacIterations = 1000;
 	
 	public int dimensionality;
 	public double sigma1, sigma2, threshold;
@@ -27,10 +16,10 @@ public class DescriptorParameters
 	public double ransacThreshold;
 	public int channel1, channel2;
 	
+	// for stack-registration
+	public int globalOpt; // 0=all-to-all; 1=all-to-all-withrange; 2=all-to-1; 3=Consecutive
+	public int range;	
+	
 	public boolean setPointsRois = true;
 	public boolean fuse = true;
-	
-	
-	// if the interactive dog is run, this one exists already
-	public Image<FloatType> img1 = null;
 }

@@ -238,9 +238,8 @@ public class OverlayFusion
 			
 			return new ImagePlus( "", stack );
 		}
-			
 	}
-	
+		
 	/**
 	 * Rearranges an ImageJ XYCZT Hyperstack into XYZCT without wasting memory for processing 3d images as a chunk,
 	 * if it is already XYZCT it will shuffle it back to XYCZT
@@ -254,14 +253,27 @@ public class OverlayFusion
 		final int numChannels = imp.getNChannels();
 		final int numTimepoints = imp.getNFrames();
 		final int numZStacks = imp.getNSlices();
-		
-		// there is only one channel
-		if ( numChannels == 1 )
+
+		String newTitle;
+		if ( imp.getTitle().startsWith( "[XYZCT]" ) )
+			newTitle = imp.getTitle().substring( 8, imp.getTitle().length() );
+		else
+			newTitle = "[XYZCT] " + imp.getTitle();
+
+		// there is only one channel and one z-stack, i.e. XY(T)
+		if ( numChannels == 1 && numZStacks == 1 )
+		{
 			return imp;
-		
-		// it is only XYC(T)
-		if ( numZStacks == 1 )
+		}
+		// there is only one channel XYZ(T) or one z-stack XYC(T)
+		else if ( numChannels == 1 || numZStacks == 1 )
+		{
+			// numchannels, z-slices, timepoints 
+			// but of course now reversed...
+			imp.setDimensions( numZStacks, numChannels, numTimepoints );
+			imp.setTitle( newTitle );
 			return imp;
+		}
 		
 		// now we have to rearrange
 		final ImageStack stack = new ImageStack( imp.getWidth(), imp.getHeight() );
@@ -278,17 +290,77 @@ public class OverlayFusion
 				}
 			}
 		}
-		
-		String newTitle;
-		if ( imp.getTitle().startsWith( "[XYZCT]" ) )
-			newTitle = imp.getTitle().substring( 8, imp.getTitle().length() );
-		else
-			newTitle = "[XYZCT] " + imp.getTitle();
-		
+				
 		final ImagePlus result = new ImagePlus( newTitle, stack );
 		// numchannels, z-slices, timepoints 
 		// but of course now reversed...
 		result.setDimensions( numZStacks, numChannels, numTimepoints );
+		result.getCalibration().pixelWidth = imp.getCalibration().pixelWidth;
+		result.getCalibration().pixelHeight = imp.getCalibration().pixelHeight;
+		result.getCalibration().pixelDepth = imp.getCalibration().pixelDepth;
+		final CompositeImage composite = new CompositeImage( result );
+		
+		return composite;
+	}
+
+	/**
+	 * Rearranges an ImageJ XYCTZ Hyperstack into XYCZT without wasting memory for processing 3d images as a chunk,
+	 * if it is already XYCTZ it will shuffle it back to XYCZT
+	 * 
+	 * @param imp - the input {@link ImagePlus}
+	 * @return - an {@link ImagePlus} which can be the same instance if the image is XYC, XYZ, XYT or XY - otherwise a new instance
+	 * containing the same processors but in the new order XYZCT
+	 */
+	public static ImagePlus switchZTinXYCZT( final ImagePlus imp )
+	{
+		final int numChannels = imp.getNChannels();
+		final int numTimepoints = imp.getNFrames();
+		final int numZStacks = imp.getNSlices();
+		
+		String newTitle;
+		if ( imp.getTitle().startsWith( "[XYCTZ]" ) )
+			newTitle = imp.getTitle().substring( 8, imp.getTitle().length() );
+		else
+			newTitle = "[XYCTZ] " + imp.getTitle();
+
+		// there is only one timepoint and one z-stack, i.e. XY(C)
+		if ( numTimepoints == 1 && numZStacks == 1 )
+		{
+			return imp;
+		}
+		// there is only one channel XYZ(T) or one z-stack XYC(T)
+		else if ( numTimepoints == 1 || numZStacks == 1 )
+		{
+			// numchannels, z-slices, timepoints 
+			// but of course now reversed...
+			imp.setDimensions( numChannels, numTimepoints, numZStacks );
+			imp.setTitle( newTitle );
+			return imp;
+		}
+		
+		// now we have to rearrange
+		final ImageStack stack = new ImageStack( imp.getWidth(), imp.getHeight() );
+		
+		for ( int z = 1; z <= numZStacks; ++z )
+		{
+			for ( int t = 1; t <= numTimepoints; ++t )
+			{
+				for ( int c = 1; c <= numChannels; ++c )
+				{
+					final int index = imp.getStackIndex( c, z, t );
+					final ImageProcessor ip = imp.getStack().getProcessor( index );
+					stack.addSlice( imp.getStack().getSliceLabel( index ), ip );
+				}
+			}
+		}
+		
+		final ImagePlus result = new ImagePlus( newTitle, stack );
+		// numchannels, z-slices, timepoints 
+		// but of course now reversed...
+		result.setDimensions( numChannels, numTimepoints, numZStacks );
+		result.getCalibration().pixelWidth = imp.getCalibration().pixelWidth;
+		result.getCalibration().pixelHeight = imp.getCalibration().pixelHeight;
+		result.getCalibration().pixelDepth = imp.getCalibration().pixelDepth;
 		final CompositeImage composite = new CompositeImage( result );
 		
 		return composite;

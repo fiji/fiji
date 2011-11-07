@@ -1,46 +1,31 @@
 package process;
 
-import fiji.util.KDTree;
-import fiji.util.NNearestNeighborSearch;
 import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
-import ij.ImageStack;
 import ij.gui.PointRoi;
 import ij.measure.Calibration;
-import ij.process.ImageProcessor;
 
 import java.util.ArrayList;
+import java.util.Vector;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussian.SpecialPoint;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
-import mpicbg.imglib.container.imageplus.ImagePlusContainer;
-import mpicbg.imglib.container.imageplus.ImagePlusContainerFactory;
-import mpicbg.imglib.cursor.LocalizableCursor;
-import mpicbg.imglib.exception.ImgLibException;
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import mpicbg.imglib.interpolation.Interpolator;
-import mpicbg.imglib.interpolation.linear.LinearInterpolatorFactory;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
-import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
-import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import mpicbg.imglib.type.numeric.integer.UnsignedShortType;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import mpicbg.imglib.util.Util;
-import mpicbg.models.AbstractAffineModel3D;
-import mpicbg.models.AffineModel2D;
+import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.InvertibleBoundable;
-import mpicbg.models.InvertibleCoordinateTransform;
 import mpicbg.models.Model;
-import mpicbg.models.NoninvertibleModelException;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
+import mpicbg.models.Tile;
+import mpicbg.models.TileConfiguration;
 import mpicbg.pointdescriptor.AbstractPointDescriptor;
 import mpicbg.pointdescriptor.ModelPointDescriptor;
 import mpicbg.pointdescriptor.SimplePointDescriptor;
@@ -52,98 +37,34 @@ import mpicbg.pointdescriptor.model.TranslationInvariantRigidModel2D;
 import mpicbg.pointdescriptor.model.TranslationInvariantRigidModel3D;
 import mpicbg.pointdescriptor.similarity.SimilarityMeasure;
 import mpicbg.pointdescriptor.similarity.SquareDistance;
+import mpicbg.spim.io.IOFunctions;
+import mpicbg.spim.mpicbg.PointMatchGeneric;
+import mpicbg.spim.mpicbg.TileConfigurationSPIM;
+import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
-import mpicbg.spim.registration.bead.BeadRegistration;
+import mpicbg.spim.registration.bead.error.GlobalErrorStatistics;
+import mpicbg.spim.registration.detection.AbstractDetection;
 import mpicbg.spim.registration.detection.DetectionSegmentation;
 import mpicbg.spim.segmentation.InteractiveDoG;
 import plugin.DescriptorParameters;
+import fiji.util.KDTree;
+import fiji.util.NNearestNeighborSearch;
 
 public class Matching 
 {
-	public Matching( final ImagePlus imp1, final ImagePlus imp2, final DescriptorParameters params )
+	public static void descriptorBasedRegistration( final ImagePlus imp1, final ImagePlus imp2, final DescriptorParameters params )
 	{
-		// get the input images for registration
-		final Image<FloatType> img1, img2;
-		
-		if ( params.img1 != null )
-			img1 = params.img1;
-		else
-			img1 = InteractiveDoG.convertToFloat( imp1, params.channel1 );
-		
-		img2 = InteractiveDoG.convertToFloat( imp2, params.channel2 );
+		// zStretching if applicable
+		float zStretching1 = params.dimensionality == 3 ? (float)imp1.getCalibration().pixelDepth / (float)imp1.getCalibration().pixelWidth : 1;
+		float zStretching2 = params.dimensionality == 3 ? (float)imp2.getCalibration().pixelDepth / (float)imp2.getCalibration().pixelWidth : 1;
 
-		// extract Calibrations
-		final Calibration cal1 = imp1.getCalibration();
-		final Calibration cal2 = imp2.getCalibration();
-		
-		if ( params.dimensionality == 2 )
-		{
-			img1.setCalibration( new float[]{ (float)cal1.pixelWidth, (float)cal1.pixelHeight } );
-			img2.setCalibration( new float[]{ (float)cal2.pixelWidth, (float)cal2.pixelHeight } );
-		}
-		else
-		{
-			img1.setCalibration( new float[]{ (float)cal1.pixelWidth, (float)cal1.pixelHeight, (float)cal1.pixelDepth } );
-			img2.setCalibration( new float[]{ (float)cal2.pixelWidth, (float)cal2.pixelHeight, (float)cal2.pixelDepth } );			
-		}
-		
-		// extract candidates
-		final ArrayList<DifferenceOfGaussianPeak<FloatType>> peaks1 = computeDoG( img1, (float)params.sigma1, (float)params.sigma2, params.lookForMaxima, params.lookForMinima, (float)params.threshold );
-		final ArrayList<DifferenceOfGaussianPeak<FloatType>> peaks2 = computeDoG( img2, (float)params.sigma1, (float)params.sigma2, params.lookForMaxima, params.lookForMinima, (float)params.threshold );
+		// get the peaks
+		final ArrayList<DifferenceOfGaussianPeak<FloatType>> peaks1 = extractCandidates( imp1, params.channel1, 0, params );
+		final ArrayList<DifferenceOfGaussianPeak<FloatType>> peaks2 = extractCandidates( imp2, params.channel2, 0, params );
 
-		// remove invalid peaks
-		final int[] stats1 = removeInvalidAndCollectStatistics( peaks1 );
-		final int[] stats2 = removeInvalidAndCollectStatistics( peaks2 );
-		
-		IJ.log( "Found " + peaks1.size() + " candidates for " + imp1.getTitle() + " (" + stats1[ 1 ] + " maxima, " + stats1[ 0 ] + " minima)" );
-		IJ.log( "Found " + peaks2.size() + " candidates for " + imp2.getTitle() + " (" + stats2[ 1 ] + " maxima, " + stats2[ 0 ] + " minima)" );
-
-		// find correspondence candidates
-		final Matcher matcher = new SubsetMatcher( params.numNeighbors, params.numNeighbors + params.redundancy );
-		ArrayList<PointMatch> candidates = getCorrespondenceCandidates( params.significance, matcher, peaks1, peaks2, null, params.dimensionality, img1, img2 );
-		
 		// compute ransac
 		ArrayList<PointMatch> finalInliers = new ArrayList<PointMatch>();
-		Model<?> finalModel = computeRANSAC( candidates, finalInliers, params.model.copy(), (float)params.ransacThreshold );
-
-		// apply rotation-variant matching after applying the model until it converges
-		if ( finalInliers.size() > finalModel.getMinNumMatches() )
-		{
-			int previousNumInliers = 0;
-			int numInliers = 0;
-			do
-			{
-				// get the correspondence candidates with the knowledge of the previous model
-				candidates = getCorrespondenceCandidates( params.significance, matcher, peaks1, peaks2, finalModel, params.dimensionality, img1, img2 );
-				
-				// before we compute the RANSAC we will reset the coordinates of all points so that we directly get the correct model
-				for ( final PointMatch pm : candidates )
-				{
-					((Particle)pm.getP1()).restoreCoordinates();
-					((Particle)pm.getP2()).restoreCoordinates();
-				}			
-				
-				// compute ransac
-				previousNumInliers = finalInliers.size();				
-				final ArrayList<PointMatch> inliers = new ArrayList<PointMatch>();
-				Model<?> model2 = computeRANSAC( candidates, inliers, params.model.copy(), (float)params.ransacThreshold );
-				numInliers = inliers.size();
-				
-				// update model if this one was better
-				if ( numInliers > previousNumInliers )
-				{
-					finalModel = model2;
-					finalInliers = inliers;
-				}
-			} 
-			while ( numInliers > previousNumInliers );
-		}
-		else
-		{
-			IJ.log( "No inliers found, stopping. Tipp: You could increase the number of neighbors, redundancy or use a model that has more degrees of freedom." );
-			return;
-		}
-		
+		Model<?> finalModel = pairwiseMatching( finalInliers, peaks1, peaks2, zStretching1, zStretching2, params, "" );				
 		IJ.log( "" + finalModel );
 		
 		// set point rois if 2d and wanted
@@ -166,8 +87,245 @@ public class Matching
 		}
 	}
 	
+	public static void descriptorBasedStackRegistration( final ImagePlus imp, final DescriptorParameters params )
+	{
+		final int numImages = imp.getNFrames();
+		
+		// zStretching if applicable
+		final float zStretching = params.dimensionality == 3 ? (float)imp.getCalibration().pixelDepth / (float)imp.getCalibration().pixelWidth : 1;
+		
+		// get the peaks
+		final ArrayList<ArrayList<DifferenceOfGaussianPeak<FloatType>>> peaks = new ArrayList<ArrayList<DifferenceOfGaussianPeak<FloatType>>>();
+		
+		for ( int t = 1; t <= numImages; ++t )
+			peaks.add( extractCandidates( imp, params.channel1, t, params ) );
+		
+		// get all compare pairs
+		final Vector<ComparePair> pairs = getComparePairs( params, numImages );
+
+		// compute all matchings
+		final AtomicInteger ai = new AtomicInteger(0);					
+        final Thread[] threads = SimpleMultiThreading.newThreads();
+        final int numThreads = threads.length;
+    	
+        for ( int ithread = 0; ithread < threads.length; ++ithread )
+            threads[ ithread ] = new Thread(new Runnable()
+            {
+                public void run()
+                {		
+                   	final int myNumber = ai.getAndIncrement();
+                    
+                    for ( int i = 0; i < pairs.size(); i++ )
+                    	if ( i%numThreads == myNumber )
+                    	{
+                    		final ComparePair pair = pairs.get( i );
+                    		pair.model = pairwiseMatching( pair.inliers, peaks.get( pair.indexA ), peaks.get( pair.indexB ), zStretching, zStretching, params, pair.indexA + "<->" + pair.indexB );
+                    	}
+                }
+            });
+        
+        SimpleMultiThreading.startAndJoin( threads );
+        
+        // perform global optimization
+    	final ArrayList<Tile<?>> tiles = new ArrayList<Tile<?>>();
+		for ( int t = 1; t <= numImages; ++t )
+			tiles.add( new Tile( params.model.copy() ) );
+		
+		// reset the coordinates of all points so that we directly get the correct model
+		for ( final ComparePair pair : pairs )
+		{
+			if ( pair.inliers.size() > 0 )
+			{
+    			for ( final PointMatch pm : pair.inliers )
+				{
+					((Particle)pm.getP1()).restoreCoordinates();
+					((Particle)pm.getP2()).restoreCoordinates();
+				}    			
+			}
+			IJ.log( pair.indexA + "<->" + pair.indexB + ": " + pair.model );
+		}
+		
+		for ( final ComparePair pair : pairs )
+			addPointMatches( pair.inliers, tiles.get( pair.indexA ), tiles.get( pair.indexB ) );
+
+		final TileConfiguration tc = new TileConfiguration();
+
+		boolean fixed = false;
+		for ( int t = 0; t < numImages; ++t )
+		{
+			final Tile<?> tile = tiles.get( t );
+			
+			if ( tile.getConnectedTiles().size() > 0 )
+			{
+				tc.addTile( tile );
+				if ( !fixed )
+				{
+					tc.fixTile( tile );
+					fixed = true;
+				}
+			}
+			else 
+			{
+				IJ.log( "Tile " + t + " is not connected to any other tile, cannot compute a model" );
+			}
+		}
+		
+		try
+		{
+			tc.optimize( 10, 10000, 200 );
+		}
+		catch ( Exception e )
+		{
+			IJ.log( "Global optimization failed: " + e );
+			return;
+		}
+		
+		// assemble final list of models
+		final ArrayList<InvertibleBoundable> models = new ArrayList<InvertibleBoundable>();
+		
+		for ( int t = 0; t < numImages; ++t )
+		{
+			final Tile<?> tile = tiles.get( t );
+			
+			if ( tile.getConnectedTiles().size() > 0 )
+			{
+				IJ.log( "Tile " + t + " (connected): " + tile.getModel()  );
+				models.add( (InvertibleBoundable)tile.getModel() );
+			}
+			else
+			{
+				IJ.log( "Tile " + t + " (NOT connected): " + tile.getModel()  );
+				models.add( (InvertibleBoundable)params.model.copy() );
+			}
+		}
+	}
 	
-	protected void setPointRois( final ImagePlus imp1, final ImagePlus imp2, final ArrayList<PointMatch> inliers )
+	public synchronized static void addPointMatches( final ArrayList<PointMatch> correspondences, final Tile<?> tileA, final Tile<?> tileB )
+	{
+		if ( correspondences.size() > 0 )
+		{
+			tileA.addMatches( correspondences );							
+			tileB.addMatches( PointMatch.flip( correspondences ) );
+			tileA.addConnectedTile( tileB );
+			tileB.addConnectedTile( tileA );
+		}
+	}  
+
+	protected static Vector<ComparePair> getComparePairs( final DescriptorParameters params, final int numImages )
+	{
+		final Vector<ComparePair> pairs = new Vector<ComparePair>();
+		
+		if ( params.globalOpt == 0 ) //all-to-all
+		{
+			for ( int indexA = 0; indexA < numImages - 1; indexA++ )
+	    		for ( int indexB = indexA + 1; indexB < numImages; indexB++ )
+	    			pairs.add( new ComparePair( indexA, indexB, params.model ) );
+		}
+		else if ( params.globalOpt == 1 ) //all-to-all-withrange
+		{
+			for ( int indexA = 0; indexA < numImages - 1; indexA++ )
+	    		for ( int indexB = indexA + 1; indexB < numImages; indexB++ )
+	    			if ( Math.abs( indexB - indexA ) <= params.range )
+	    				pairs.add( new ComparePair( indexA, indexB, params.model ) );			
+		}
+		else if ( params.globalOpt == 2 ) //all-to-1
+		{
+			for ( int indexA = 1; indexA < numImages; ++indexA )
+				pairs.add( new ComparePair( indexA, 0, params.model ) );
+		}
+		else // Consecutive
+		{
+			for ( int indexA = 1; indexA < numImages; ++indexA )
+				pairs.add( new ComparePair( indexA, indexA - 1, params.model ) );			
+		}
+		
+		return pairs;
+	}
+	
+	protected static Model<?> pairwiseMatching( final ArrayList<PointMatch> finalInliers, final ArrayList<DifferenceOfGaussianPeak<FloatType>> peaks1, final ArrayList<DifferenceOfGaussianPeak<FloatType>>peaks2, 
+			final float zStretching1, final float zStretching2, final DescriptorParameters params, String explanation )
+	{
+		final Matcher matcher = new SubsetMatcher( params.numNeighbors, params.numNeighbors + params.redundancy );
+		ArrayList<PointMatch> candidates = getCorrespondenceCandidates( params.significance, matcher, peaks1, peaks2, null, params.dimensionality, zStretching1, zStretching2 );
+		
+		// compute ransac
+		//ArrayList<PointMatch> finalInliers = new ArrayList<PointMatch>();
+		Model<?> finalModel = params.model.copy();
+		String statement = computeRANSAC( candidates, finalInliers, finalModel, (float)params.ransacThreshold );
+
+		// apply rotation-variant matching after applying the model until it converges
+		if ( finalInliers.size() > finalModel.getMinNumMatches() )
+		{
+			int previousNumInliers = 0;
+			int numInliers = 0;
+			do
+			{
+				// get the correspondence candidates with the knowledge of the previous model
+				candidates = getCorrespondenceCandidates( params.significance, matcher, peaks1, peaks2, finalModel, params.dimensionality, zStretching1, zStretching2 );
+				
+				// before we compute the RANSAC we will reset the coordinates of all points so that we directly get the correct model
+				for ( final PointMatch pm : candidates )
+				{
+					((Particle)pm.getP1()).restoreCoordinates();
+					((Particle)pm.getP2()).restoreCoordinates();
+				}			
+				
+				// compute ransac
+				previousNumInliers = finalInliers.size();				
+				final ArrayList<PointMatch> inliers = new ArrayList<PointMatch>();
+				Model<?> model2 = params.model.copy();
+				statement = computeRANSAC( candidates, inliers, model2, (float)params.ransacThreshold );
+				numInliers = inliers.size();
+				
+				// update model if this one was better
+				if ( numInliers > previousNumInliers )
+				{
+					finalModel = model2;
+					finalInliers.clear();
+					finalInliers.addAll( inliers );
+					//finalInliers = inliers;
+				}
+			} 
+			while ( numInliers > previousNumInliers );
+		}
+		else
+		{
+			IJ.log( explanation + ": No inliers found, stopping. Tipp: You could increase the number of neighbors, redundancy or use a model that has more degrees of freedom." );
+			finalInliers.clear();
+			return null;
+		}
+		
+		IJ.log( explanation + ": " + statement );
+		
+		return finalModel;
+	}
+
+	protected static ArrayList<DifferenceOfGaussianPeak<FloatType>> extractCandidates( final ImagePlus imp, final int channel, final int timepoint, final DescriptorParameters params )
+	{
+		// get the input images for registration
+		final Image<FloatType> img = InteractiveDoG.convertToFloat( imp, channel, timepoint );
+
+		// extract Calibrations
+		final Calibration cal = imp.getCalibration();
+		
+		if ( params.dimensionality == 2 )
+			img.setCalibration( new float[]{ (float)cal.pixelWidth, (float)cal.pixelHeight } );
+		else
+			img.setCalibration( new float[]{ (float)cal.pixelWidth, (float)cal.pixelHeight, (float)cal.pixelDepth } );
+		
+		// extract candidates
+		final ArrayList<DifferenceOfGaussianPeak<FloatType>> peaks = computeDoG( img, (float)params.sigma1, (float)params.sigma2, params.lookForMaxima, params.lookForMinima, (float)params.threshold );
+		
+		// remove invalid peaks
+		final int[] stats1 = removeInvalidAndCollectStatistics( peaks );
+		
+		IJ.log( "Found " + peaks.size() + " candidates for " + imp.getTitle() + " [" + timepoint + "] (" + stats1[ 1 ] + " maxima, " + stats1[ 0 ] + " minima)" );
+		
+		return peaks;
+	}
+	
+	
+	protected static void setPointRois( final ImagePlus imp1, final ImagePlus imp2, final ArrayList<PointMatch> inliers )
 	{
 		final ArrayList<Point> list1 = new ArrayList<Point>();
 		final ArrayList<Point> list2 = new ArrayList<Point>();
@@ -183,11 +341,11 @@ public class Matching
 		
 	}
 	
-	protected Model<?> computeRANSAC( final ArrayList<PointMatch> candidates, final ArrayList<PointMatch> inliers, final Model<?> model, final float maxEpsilon )
+	protected static String computeRANSAC( final ArrayList<PointMatch> candidates, final ArrayList<PointMatch> inliers, final Model<?> model, final float maxEpsilon )
 	{		
 		boolean modelFound = false;
 		float minInlierRatio = 0.05f;
-		int numIterations = 10000;
+		int numIterations = DescriptorParameters.ransacIterations;
 		
 		try
 		{
@@ -205,27 +363,24 @@ public class Matching
 			
 			if ( modelFound )
 			{
-				IJ.log( "Remaining inliers after RANSAC (" + model.getClass().getSimpleName() + "): " + inliers.size() + " of " + candidates.size() + " with average error " + model.getCost() );
 				model.fit( inliers );
+				return "Remaining inliers after RANSAC (" + model.getClass().getSimpleName() + "): " + inliers.size() + " of " + candidates.size() + " with average error " + model.getCost();
 			}
 			else
 			{
-				IJ.log( "NO Model found after RANSAC (" + model.getClass().getSimpleName() + ") of " + candidates.size() );
+				return "NO Model found after RANSAC (" + model.getClass().getSimpleName() + ") of " + candidates.size();
 			}
 		}
 		catch ( Exception e )
 		{
-			IJ.log( "NO Model found after RANSAC (" + model.getClass().getSimpleName() + ") of " + candidates.size() );
-			IJ.log( e.toString() );
-			return null;
+			return "Exception - NO Model found after RANSAC (" + model.getClass().getSimpleName() + ") of " + candidates.size();
+
 		}
-		
-		return model;
 	}
 
-	protected ArrayList<PointMatch> getCorrespondenceCandidates( final double nTimesBetter, final Matcher matcher, 
+	protected static ArrayList<PointMatch> getCorrespondenceCandidates( final double nTimesBetter, final Matcher matcher, 
 			ArrayList<DifferenceOfGaussianPeak<FloatType>> peaks1, ArrayList<DifferenceOfGaussianPeak<FloatType>> peaks2, 
-			final Model<?> model, final int dimensionality, final Image<?> img1, final Image<?> img2 )
+			final Model<?> model, final int dimensionality, final float zStretching1, final float zStretching2 )
 	{
 		// two new lists
 		ArrayList<Particle> listA = new ArrayList<Particle>();
@@ -236,30 +391,26 @@ public class Matching
 		if ( model == null )
 		{
 			// no prior model known, do a locally rigid matching
-			float zStretching = img1.getNumDimensions() >= 3 ? img1.getCalibration( 2 ) / img1.getCalibration( 0 ) : 1;
 			for ( DifferenceOfGaussianPeak<FloatType> peak : peaks1 )
-				listA.add( new Particle( id++, peak, zStretching ) );
-			zStretching = img2.getNumDimensions() >= 3 ? img2.getCalibration( 2 ) / img2.getCalibration( 0 ) : 1;
+				listA.add( new Particle( id++, peak, zStretching1 ) );
 			for ( DifferenceOfGaussianPeak<FloatType> peak : peaks2 )
-				listB.add( new Particle( id++, peak, zStretching ) );
+				listB.add( new Particle( id++, peak, zStretching2 ) );
 		}
 		else
 		{
 			// prior model known, apply to the points before matching and then do a simple descriptor matching
-			float zStretching = img1.getNumDimensions() >= 3 ? img1.getCalibration( 2 ) / img1.getCalibration( 0 ) : 1;
 			for ( DifferenceOfGaussianPeak<FloatType> peak : peaks1 )
 			{
-				final Particle particle = new Particle( id++, peak, zStretching );			
+				final Particle particle = new Particle( id++, peak, zStretching1 );			
 				particle.apply( model );
 				for ( int d = 0; d < particle.getL().length; ++d )
 					particle.getL()[ d ] = particle.getW()[ d ];
 				listA.add( particle );
 			}
 			
-			zStretching = img2.getNumDimensions() >= 3 ? img2.getCalibration( 2 ) / img2.getCalibration( 0 ) : 1;
 			for ( DifferenceOfGaussianPeak<FloatType> peak : peaks2 )
 			{
-				final Particle particle = new Particle( id++, peak, zStretching );
+				final Particle particle = new Particle( id++, peak, zStretching2 );
 				listB.add( particle );
 			}
 		}
@@ -293,7 +444,7 @@ public class Matching
 		return correspondenceCandidates;
 	}
 	
-	protected final ArrayList<PointMatch> findCorrespondingDescriptors( final ArrayList<AbstractPointDescriptor> descriptorsA, final ArrayList<AbstractPointDescriptor> descriptorsB, final float nTimesBetter )
+	protected static final ArrayList<PointMatch> findCorrespondingDescriptors( final ArrayList<AbstractPointDescriptor> descriptorsA, final ArrayList<AbstractPointDescriptor> descriptorsB, final float nTimesBetter )
 	{
 		final ArrayList<PointMatch> correspondenceCandidates = new ArrayList<PointMatch>();
 		
@@ -342,7 +493,7 @@ public class Matching
 		return correspondenceCandidates;
 	}
 
-	protected ArrayList< AbstractPointDescriptor > createSimplePointDescriptors( final KDTree< Particle > tree, final ArrayList< Particle > basisPoints, 
+	protected static ArrayList< AbstractPointDescriptor > createSimplePointDescriptors( final KDTree< Particle > tree, final ArrayList< Particle > basisPoints, 
 			final int numNeighbors, final Matcher matcher, final SimilarityMeasure similarityMeasure )
 	{
 		final NNearestNeighborSearch< Particle > nnsearch = new NNearestNeighborSearch< Particle >( tree );
@@ -370,7 +521,7 @@ public class Matching
 		return descriptors;
 	}
 
-	protected ArrayList< AbstractPointDescriptor > createModelPointDescriptors( final KDTree< Particle > tree, final ArrayList< Particle > basisPoints, 
+	protected static ArrayList< AbstractPointDescriptor > createModelPointDescriptors( final KDTree< Particle > tree, final ArrayList< Particle > basisPoints, 
 			final int numNeighbors, final Matcher matcher, final SimilarityMeasure similarityMeasure, final int dimensionality )
 	{
 		final NNearestNeighborSearch< Particle > nnsearch = new NNearestNeighborSearch< Particle >( tree );
@@ -410,13 +561,13 @@ public class Matching
 		return descriptors;
 	}
 	
-	protected ArrayList<DifferenceOfGaussianPeak<FloatType>> computeDoG( final Image<FloatType> image, final float sigma1, final float sigma2, 
+	protected static ArrayList<DifferenceOfGaussianPeak<FloatType>> computeDoG( final Image<FloatType> image, final float sigma1, final float sigma2, 
 			final boolean lookForMaxima, final boolean lookForMinima, final float threshold )
 	{
 		return DetectionSegmentation.extractBeadsLaPlaceImgLib( image, new OutOfBoundsStrategyMirrorFactory<FloatType>(), 0.5f, sigma1, sigma2, threshold, threshold/4, lookForMaxima, lookForMinima, ViewStructure.DEBUG_MAIN );
 	}
 	
-	protected int[] removeInvalidAndCollectStatistics( ArrayList<DifferenceOfGaussianPeak<FloatType>> peaks )
+	protected static int[] removeInvalidAndCollectStatistics( ArrayList<DifferenceOfGaussianPeak<FloatType>> peaks )
 	{
 		int min = 0;
 		int max = 0;
