@@ -8,6 +8,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.PointRoi;
 import ij.measure.Calibration;
+import ij.process.ImageProcessor;
 
 import java.util.ArrayList;
 
@@ -217,15 +218,15 @@ public class Matching
 		
 		IJ.log( "size: " + Util.printCoordinates( size ) );
 		IJ.log( "offset: " + Util.printCoordinates( offset ) );
+		
+		// for output
+		final ImageFactory<T> f = new ImageFactory<T>( targetType, new ImagePlusContainerFactory() );
+		// the composite
+		final ImageStack stack = new ImageStack( size[ 0 ], size[ 1 ] );
 
 		// 2d
 		if ( dimensionality == 2 )
-		{
-			final ImageFactory<T> f = new ImageFactory<T>( targetType, new ImagePlusContainerFactory() );
-
-			// the composite
-			final ImageStack stack = new ImageStack( size[ 0 ], size[ 1 ] );
-			
+		{			
 			// transform all channels of imp1
 			for ( int c = 1; c <= imp1.getNChannels(); ++ c )
 			{
@@ -242,6 +243,7 @@ public class Matching
 				
 			}
 
+			// transform all channels of imp2
 			for ( int c = 1; c <= imp2.getNChannels(); ++ c )
 			{
 				final Image<T> out = f.createImage( size );
@@ -258,15 +260,138 @@ public class Matching
 			}
 
 			final ImagePlus result = new ImagePlus( "overlay " + imp1.getTitle() + "<->" + imp2.getTitle(), stack );
-			result.setDimensions( 2, 1, 1 );
+			// numchannels, z-slices, timepoints
+			result.setDimensions( imp1.getNChannels() + imp2.getNChannels(), 1, 1 );
 			final CompositeImage composite = new CompositeImage( result );
 			composite.show();
 		}
 		else //3d
 		{
+			for ( int c = 1; c <= imp1.getNChannels(); ++c )
+			{
+				final Image<T> out = f.createImage( size );
+				fuseChannel( out, ImageJFunctions.convertFloat( getImageChunk( imp1, c, 1 ) ), offset, boundable1 );
+				try 
+				{
+					final ImagePlus outImp = ((ImagePlusContainer)out.getContainer()).getImagePlus();
+					for ( int z = 1; z <= out.getDimension( 2 ); ++z )
+						stack.addSlice( imp1.getTitle(), outImp.getStack().getProcessor( z ) );
+				} 
+				catch (ImgLibException e) 
+				{
+					IJ.log( "Output image has no ImageJ type: " + e );
+				}				
+			}
 			
-
+			//channel 2 ...
+			for ( int c = 1; c <= imp2.getNChannels(); ++c )
+			{
+				final Image<T> out = f.createImage( size );
+				fuseChannel( out, ImageJFunctions.convertFloat( getImageChunk( imp2, c, 1 ) ), offset, boundable2 );
+				try 
+				{
+					final ImagePlus outImp = ((ImagePlusContainer)out.getContainer()).getImagePlus();
+					for ( int z = 1; z <= out.getDimension( 2 ); ++z )
+						stack.addSlice( imp2.getTitle(), outImp.getStack().getProcessor( z ) );
+				} 
+				catch (ImgLibException e) 
+				{
+					IJ.log( "Output image has no ImageJ type: " + e );
+				}				
+			}
+			
+			//convertXYZCT ...
+			ImagePlus result = new ImagePlus( "overlay " + imp1.getTitle() + "<->" + imp2.getTitle(), stack );
+			// numchannels, z-slices, timepoints (but right now the order is still XYZCT)
+			result.setDimensions( size[ 2 ], imp1.getNChannels() + imp2.getNChannels(), 1 );
+			
+			result = rearrangeIntoXYZCT( result );
+			
+			final CompositeImage composite = new CompositeImage( result );
+			composite.show();			
 		}
+	}
+	
+	/**
+	 * Returns an {@link ImagePlus} for a 2d or 3d stack where ImageProcessors are not copied but just added.
+	 * 
+	 * @param imp - the input image
+	 * @param channel - which channel (first channel is 1, NOT 0)
+	 * @param timepoint - which timepoint (first timepoint is 1, NOT 0)
+	 */
+	public static ImagePlus getImageChunk( final ImagePlus imp, final int channel, final int timepoint )
+	{
+		if ( imp.getNSlices() == 1 )
+		{
+			return new ImagePlus( "", imp.getStack().getProcessor( imp.getStackIndex( channel, 1, timepoint ) ) );
+		}
+		else
+		{
+			final ImageStack stack = new ImageStack( imp.getWidth(), imp.getHeight() );
+			
+			for ( int z = 1; z < imp.getNSlices(); ++z )
+			{
+				final int index = imp.getStackIndex( channel, z, timepoint );
+				final ImageProcessor ip = imp.getStack().getProcessor( index );
+				stack.addSlice( imp.getStack().getSliceLabel( index ), ip );
+			}
+			
+			return new ImagePlus( "", stack );
+		}
+			
+	}
+	
+	/**
+	 * Rearranges an ImageJ XYCZT Hyperstack into XYZCT without wasting memory for processing 3d images as a chunk,
+	 * if it is already XYZCT it will shuffle it back to XYCZT
+	 * 
+	 * @param imp - the input {@link ImagePlus}
+	 * @return - an {@link ImagePlus} which can be the same instance if the image is XYZT, XYZ, XYT or XY - otherwise a new instance
+	 * containing the same processors but in the new order XYZCT
+	 */
+	public static ImagePlus rearrangeIntoXYZCT( final ImagePlus imp )
+	{
+		final int numChannels = imp.getNChannels();
+		final int numTimepoints = imp.getNFrames();
+		final int numZStacks = imp.getNSlices();
+		
+		// there is only one channel
+		if ( numChannels == 1 )
+			return imp;
+		
+		// it is only XYC(T)
+		if ( numZStacks == 1 )
+			return imp;
+		
+		// now we have to rearrange
+		final ImageStack stack = new ImageStack( imp.getWidth(), imp.getHeight() );
+		
+		for ( int t = 1; t <= numTimepoints; ++t )
+		{
+			for ( int c = 1; c <= numChannels; ++c )
+			{
+				for ( int z = 1; z <= numZStacks; ++z )
+				{
+					final int index = imp.getStackIndex( c, z, t );
+					final ImageProcessor ip = imp.getStack().getProcessor( index );
+					stack.addSlice( imp.getStack().getSliceLabel( index ), ip );
+				}
+			}
+		}
+		
+		String newTitle;
+		if ( imp.getTitle().startsWith( "[XYZCT]" ) )
+			newTitle = imp.getTitle().substring( 8, imp.getTitle().length() );
+		else
+			newTitle = "[XYZCT] " + imp.getTitle();
+		
+		final ImagePlus result = new ImagePlus( newTitle, stack );
+		// numchannels, z-slices, timepoints 
+		// but of course now reversed...
+		result.setDimensions( numZStacks, numChannels, numTimepoints );
+		final CompositeImage composite = new CompositeImage( result );
+		
+		return composite;
 	}
 
 	/**
