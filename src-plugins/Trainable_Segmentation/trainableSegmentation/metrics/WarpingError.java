@@ -207,7 +207,7 @@ public class WarpingError extends Metrics {
 		// Get clustered mismatches after warping ground truth, i.e. relaxing original labels to proposal. 
 		// Only simple points warping is allowed.
 		ClusteredWarpingMismatches[] cwm = getClusteredWarpingMismatches(originalLabels, proposedLabels, 
-																		mask, binaryThreshold, clusterByError);		
+																		mask, binaryThreshold, clusterByError, -1);		
 		if(null == cwm)
 			return -1;
 
@@ -238,7 +238,64 @@ public class WarpingError extends Metrics {
 		else
 			return -1;
 	}
+
 	
+	/**
+	 * Calculate the topology-preserving warping error in 2D between some
+	 * original labels and the corresponding proposed labels. Pixels belonging 
+	 * to the same mistake will be only counted once. For example, if we have 
+	 * a line of 15 pixels that prevent from a merger, it will count as 1 instead
+	 * of 15 as in the classic warping error method. 
+	 * Both, original and proposed labels are expected to have float values between 
+	 * 0 and 1. Otherwise, they will be converted.
+	 *	
+	 * @param binaryThreshold threshold value to binarize proposal (larger than 0 and smaller than 1)
+	 * @param clusterByError if false, cluster mismatches by type, otherwise cluster them by error and type
+	 * @param radius radius in pixel to use when classifying mismatches
+	 * @return clustered warping error (it clusters the mismatches that belong to the same type and/or error together)
+	 */
+	public double getMetricValue(			
+			double binaryThreshold,
+			boolean clusterByError,
+			int radius)
+	{
+		
+		IJ.log("  Warping ground truth...");
+		
+		// Get clustered mismatches after warping ground truth, i.e. relaxing original labels to proposal. 
+		// Only simple points warping is allowed.
+		ClusteredWarpingMismatches[] cwm = getClusteredWarpingMismatches(originalLabels, proposedLabels, 
+																		mask, binaryThreshold, clusterByError, radius);		
+		if(null == cwm)
+			return -1;
+
+		double error = 0;
+		double count = originalLabels.getWidth() * originalLabels.getHeight() * originalLabels.getImageStackSize();
+		
+		if( (flags & HOLE_ADDITION) != 0)
+			for(int j=0; j<cwm.length; j++)					
+				error += cwm[ j ].numOfHoleAdditions;
+		if( (flags & HOLE_DELETION) != 0)
+			for(int j=0; j<cwm.length; j++)					
+				error += cwm[ j ].numOfHoleDeletions;
+		if( (flags & MERGE) != 0)
+			for(int j=0; j<cwm.length; j++)					
+				error += cwm[ j ].numOfMergers; 
+		if( (flags & OBJECT_ADDITION) != 0)
+			for(int j=0; j<cwm.length; j++)					
+				error += cwm[ j ].numOfObjectAdditions;
+		if( (flags & OBJECT_DELETION) != 0)
+			for(int j=0; j<cwm.length; j++)					
+				error += cwm[ j ].numOfObjectDeletions; 
+		if( (flags & SPLIT) != 0)
+			for(int j=0; j<cwm.length; j++)					
+				error += cwm[ j ].numOfSplits;
+
+		if(count != 0)
+			return error / count;
+		else
+			return -1;
+	}
 
 	/**
 	 * Calculate the number of splits and mergers for different thresholds
@@ -269,7 +326,58 @@ public class WarpingError extends Metrics {
 			IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
 			ClusteredWarpingMismatches[] cwm = 
 						getClusteredWarpingMismatches(originalLabels, proposedLabels, 
-														mask, th, clusterByError);		
+														mask, th, clusterByError, -1);		
+			if(null == cwm)
+				return null;
+			
+			int[] splitsAndMergers = new int[2];
+			
+			for(int j=0; j<cwm.length; j++)
+			{
+				splitsAndMergers[ 0 ] += cwm[ j ].numOfSplits;
+				splitsAndMergers[ 1 ] += cwm[ j ].numOfMergers;
+			}
+			
+			listOfSplitsAndMergers.add( splitsAndMergers );
+			
+			IJ.log( "  # splits = " + splitsAndMergers[ 0 ] + ", # mergers = " + splitsAndMergers[ 1 ]);
+		}
+						
+		return listOfSplitsAndMergers;
+	}
+	
+	/**
+	 * Calculate the number of splits and mergers for different thresholds
+	 * 
+	 * @param minThreshold minimum threshold value to binarize the input images
+	 * @param maxThreshold maximum threshold value to binarize the input images
+	 * @param stepThreshold threshold step value to use during binarization
+	 * @param clusterByError if false, cluster mismatches by type, otherwise cluster them by error and type
+	 * @param radius radius in pixel to use when classifying mismatches
+	 * @return list with arrays with the number of splits and mergers
+	 */
+	public ArrayList<int[]> getSplitsAndMergers(
+			double minThreshold,
+			double maxThreshold,
+			double stepThreshold,
+			boolean clusterByError,
+			int radius )
+	{
+		
+		if( minThreshold < 0 || minThreshold >= maxThreshold || maxThreshold > 1)
+		{
+			IJ.log("Error: unvalid threshold values.");
+			return null;
+		}
+						
+		ArrayList < int[] > listOfSplitsAndMergers = new ArrayList<int[]>();
+				
+		for(double th = minThreshold; th<=maxThreshold; th += stepThreshold)
+		{						
+			IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
+			ClusteredWarpingMismatches[] cwm = 
+						getClusteredWarpingMismatches(originalLabels, proposedLabels, 
+														mask, th, clusterByError, radius );		
 			if(null == cwm)
 				return null;
 			
@@ -325,7 +433,44 @@ public class WarpingError extends Metrics {
 						
 		return minError;
 	}
-	
+	/**
+	 * Calculate error with the minimum number of splits and mergers for different thresholds
+	 * 
+	 * @param minThreshold minimum threshold value to binarize the input images
+	 * @param maxThreshold maximum threshold value to binarize the input images
+	 * @param stepThreshold threshold step value to use during binarization
+	 * @param clusterByError if false, cluster mismatches by type, otherwise cluster them by error and type
+	 * @param radius radius in pixel to use when classifying mismatches
+	 * @return list with arrays with the number of splits and mergers
+	 */
+	public double getMinimumSplitsAndMergersErrorValue(
+			double minThreshold,
+			double maxThreshold,
+			double stepThreshold,
+			boolean clusterByError,
+			int radius )
+	{
+		
+		if( minThreshold < 0 || minThreshold >= maxThreshold || maxThreshold > 1)
+		{
+			IJ.log("Error: unvalid threshold values.");
+			return -1;
+		}
+						
+		flags = MERGE + SPLIT;
+		
+		double minError = Double.MAX_VALUE;
+				
+		for(double th = minThreshold; th<=maxThreshold; th += stepThreshold)
+		{						
+			IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
+			double error = getMetricValue( th, clusterByError, radius );
+			if ( error < minError)
+				minError = error;
+		}
+						
+		return minError;
+	}
 	
 	/**
 	 * Calculate the precision-recall values based on pixel error between 
@@ -410,6 +555,58 @@ public class WarpingError extends Metrics {
 		}		
 		return cs;
 	}
+
+	/**
+	 * Check if a point is simple (in 2D) based on 3D code from Mark Richardson
+	 * inspired in the work of Bertrand et al. \cite{Bertrand94} 
+	 * 
+	 * BibTeX:
+	 * <pre>
+	 * &#64;article{Bertrand94,
+	 *   author    = {Bertrand, Gilles and Malandain, Gr\'{e}goire},
+	 *   title     = {A new characterization of three-dimensional simple points},
+	 *   journal   = {Pattern Recogn. Lett.},
+	 *   volume    = {15},
+	 *   issue     = {2},
+	 *   month     = {February},
+	 *   year      = {1994},
+	 *   issn      = {0167-8655},
+	 *   pages     = {169--175},
+	 *   numpages  = {7},
+	 *   url       = {http://dl.acm.org/citation.cfm?id=179348.179356},
+	 *   doi       = {10.1016/0167-8655(94)90046-9},
+	 *   acmid     = {179356},
+	 *   publisher = {Elsevier Science Inc.},
+	 *   address   = {New York, NY, USA},
+	 *   keywords  = {digital topology, simple points, thinning algorithms, three dimensions},
+	 * }
+	 * </pre>  
+	 * @param im input patch
+	 * @param n neighbors
+	 * @return true if the center pixel of the patch is a simple point
+	 */
+	public boolean simple2DBertrand(ImagePlus im, int n)
+	{
+		
+		float[] input = new float[27];
+		
+		float[] center = (float[])im.getProcessor().getPixels();
+		
+		for(int i=0; i<9; i++)
+			input[i+9] = center[i];
+		
+		switch (n)
+		{
+			case 4:
+				return simple3d( input, 6);
+			case 8:
+				return simple3d(input, 26);
+			default:
+				IJ.error("Non valid adjacency value");
+				return false;
+		}
+	}
+	
 	
 	/**
 	 * Check if a point is simple (in 2D)
@@ -442,6 +639,8 @@ public class WarpingError extends Metrics {
 				return false;
 		}
 	}
+	
+	
 
 	/**
 	 * Computes topological numbers for the central point of an image patch.
@@ -552,22 +751,18 @@ public class WarpingError extends Metrics {
 		final int height = target.getHeight();
 
 		// Resize canvas to avoid checking the borders
-		//IJ.run(targetReal, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");
 		ImageProcessor ip = target.createProcessor(width+2, height+2);
 		ip.insert(target, 1, 1);
 		targetReal = new ImagePlus("target_real", ip.duplicate());
 
-		// IJ.run(targetBin, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");
 		targetBin = new ImagePlus("target_aux", ip.duplicate());
 
-		// IJ.run(sourceReal, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");
 		ip = target.createProcessor(width+2, height+2);
 		ip.insert(source, 1, 1);
 		sourceReal = new ImagePlus("source_real", ip.duplicate());
 
 		if(null != mask)
 		{
-			//IJ.run(maskReal, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");
 			ip = target.createProcessor(width+2, height+2);
 			ip.insert(mask, 1, 1);
 			maskReal = new ImagePlus("mask_real", ip.duplicate());
@@ -661,11 +856,8 @@ public class WarpingError extends Metrics {
 				final double pix = val[4];
 
 				final ImagePlus patch = new ImagePlus("patch", new FloatProcessor(3,3,val));
-				if( simple2D(patch, 4) )
-				{/*
-							for(int i=0; i<9;i++)
-								IJ.log(" " + val[i]);
-							IJ.log("pix = " + pix);*/
+				if( simple2DBertrand(patch, 4) )
+				{
 					sourceRealPix[ x + y * (width+2)] =  pix > 0.0 ? 0.0f : 1.0f ;
 					//IJ.log("flipping pixel x: " + x + " y: " + y + " to " + (pix > 0  ? 0.0 : 1.0));
 				}
@@ -962,6 +1154,7 @@ public class WarpingError extends Metrics {
 	 * @param mask image mask (2D image or stack)
 	 * @param binaryThreshold binarization threshold
 	 * @param clusterByError if false, cluster mismatches by type, otherwise cluster them by error and type
+	 * @param radius radius in pixels of the local area to look when deciding some cases (small radius speed up the method a lot, -1 to use whole image) 
 	 * @return clustered warping mismatches for each slice of the source
 	 */
 	public ClusteredWarpingMismatches[] getClusteredWarpingMismatches(
@@ -969,7 +1162,8 @@ public class WarpingError extends Metrics {
 			ImagePlus target,
 			ImagePlus mask,
 			double binaryThreshold,
-			boolean clusterByError)
+			boolean clusterByError,
+			int radius)
 	{
 		if(source.getWidth() != target.getWidth()
 				|| source.getHeight() != target.getHeight()
@@ -996,7 +1190,7 @@ public class WarpingError extends Metrics {
 				futures.add(exe.submit( getClusteredWarpingMismatchesConcurrent(sourceSlices.getProcessor(i).convertToFloat(),
 										targetSlices.getProcessor(i).convertToFloat(),
 										null != maskSlices ? maskSlices.getProcessor(i) : null,
-										binaryThreshold, clusterByError ) ) );
+										binaryThreshold, clusterByError, radius ) ) );
 			}
 
 			int i = 0;
@@ -1028,6 +1222,7 @@ public class WarpingError extends Metrics {
 	 * @param mask mask image
 	 * @param binaryThreshold binary threshold to use
 	 * @param clusterByError boolean flag to use clustering by error or only by type
+	 * @param radius radius in pixels of the local area to look when deciding some cases (small radius speed up the method a lot, -1 to use whole image) 
 	 * @return clustered mismatching points after warping
 	 */
 	public Callable<ClusteredWarpingMismatches> getClusteredWarpingMismatchesConcurrent(
@@ -1035,15 +1230,17 @@ public class WarpingError extends Metrics {
 			final ImageProcessor target,
 			final ImageProcessor mask,
 			final double binaryThreshold,
-			final boolean clusterByError)
+			final boolean clusterByError,
+			final int radius)
 	{
 		return new Callable<ClusteredWarpingMismatches>()
 		{
 			public ClusteredWarpingMismatches call()
 			{
-				WarpingResults wr = simplePointWarp2d(source, target, mask, binaryThreshold);
+				WarpingResults wr = simplePointWarp2d(source, target, mask, binaryThreshold);				
 				//wr.warpedSource.show();
-				int[] mismatchesLabels = classifyMismatches2d( wr.warpedSource, wr.mismatches );
+				int[] mismatchesLabels = classifyMismatches2d( wr.warpedSource, wr.mismatches, radius );
+
 				if( clusterByError )
 					return clusterMismatchesByError( wr.warpedSource, wr.mismatches, mismatchesLabels );
 				else
@@ -1058,11 +1255,19 @@ public class WarpingError extends Metrics {
 	 *  
 	 * @param warpedLabels labels after warping (binary image)
 	 * @param mismatches list of mismatch points after warping
+	 * @param radius radius in pixels of the local area to look when deciding some cases (small radius speed up the method a lot, -1 to use whole image) 
 	 * @return array of mismatch classifications
 	 */
-	public int[] classifyMismatches2d( ImagePlus warpedLabels, ArrayList<Point3f> mismatches )
+	public int[] classifyMismatches2d( 
+			ImagePlus warpedLabels, 
+			ArrayList<Point3f> mismatches,
+			int radius)
 	{
 		final int[] pointClassification = new int[ mismatches.size() ];
+		
+		int radiusToUse = radius;
+		if(radius <1 || radius > warpedLabels.getWidth() || radius > warpedLabels.getHeight())
+			radiusToUse = -1;			
 		
 		// Calculate components in warped labels
 		ImageProcessor components = Utils.connectedComponents(
@@ -1107,9 +1312,17 @@ public class WarpingError extends Metrics {
 					pointClassification[ n ] = HOLE_ADDITION;
 				else
 				{
-					// flip pixel and apply connected components again
-					final ByteProcessor warpedPixels2 = (ByteProcessor) warpedLabels.getProcessor().duplicate().convertToByte(true);
+					// flip pixel and apply connected components again					
+					ByteProcessor warpedPixels2;
+					  
+					warpedPixels2 = (ByteProcessor) warpedLabels.getProcessor().duplicate().convertToByte(true);
 					warpedPixels2.set( x, y, warpedPixels2.get(x, y) != 0 ? 0 : 255);
+					if (radiusToUse != -1)
+					{
+						warpedLabels.setRoi(x-radiusToUse/2, y-radiusToUse/2, radiusToUse, radiusToUse);
+						warpedPixels2 = (ByteProcessor) warpedLabels.getProcessor().crop().convertToByte(true);
+					}
+									
 					// Calculate components in the new warped labels
 					ImageProcessor components2 = Utils.connectedComponents(new ImagePlus("8-bit warped labesl", warpedPixels2), 4).allRegions.getProcessor();
 
@@ -1455,6 +1668,244 @@ public class WarpingError extends Metrics {
 		
 		return neighborhood;
 	} // end getNeighborhood 		
+
+	
+	
+	/**
+	 * Return the number of cavities of a 3D neighborhood
+	 * 
+	 * @param input
+	 * @param con
+	 * @param space
+	 * @return
+	 */
+	int nca(float[] input, int con, int space)
+	{
+		int tsum;
+		switch (con)
+		{
+		case 6:
+			tsum=((int)input[4] + (int)input[10]+(int)input[12]+(int)input[14]+(int)input[16] + (int)input[22]);
+			return (space==1)?(6*space - tsum):(tsum);
+		case 18:
+			tsum=((int)input[1]+(int)input[3]+(int)input[4]+(int)input[5]+(int)input[7] + (int)input[9]+(int)input[10]+(int)input[11]+(int)input[12]+(int)input[14]+(int)input[15]+(int)input[16]+(int)input[17] + (int)input[19]+(int)input[21]+(int)input[22]+(int)input[23]+(int)input[25]);
+			return (space==1)?(18*space - tsum):(tsum);
+		case 26:
+			tsum=((int)input[0]+(int)input[1]+(int)input[2]+(int)input[3]+(int)input[4]+(int)input[5]+(int)input[6]+(int)input[7]+(int)input[8] + (int)input[9]+(int)input[10]+(int)input[11]+(int)input[12]+(int)input[14]+(int)input[15]+(int)input[16]+(int)input[17] + (int)input[18]+(int)input[19]+(int)input[20]+(int)input[21]+(int)input[22]+(int)input[23]+(int)input[24]+(int)input[25]+(int)input[26]);
+			return (space==1)?(26*space - tsum):(tsum);
+		default:
+			return 0;
+		}
+	}
+
+	/**
+	 * 
+	 * @param input
+	 * @param ctyp
+	 * @param con
+	 * @param space
+	 * @return
+	 */
+	int ncb(float[] input, char ctyp, int con, int space)
+	{
+		int tsum;
+		final int[][][] a6m = new int[][][]{{{0,1,0}, {1,5,1}, {0,1,0}},
+											{{0,0,0}, {0,0,0}, {0,0,0}},
+											{{0,0,0}, {0,0,0}, {0,0,0}}};
+
+		final int[][][] a18m = new int[][][]{{{0,0,0}, {0,1,1}, {0,0,0}},
+											 {{0,0,0}, {0,0,1}, {0,0,0}},
+											 {{0,0,0}, {0,0,0}, {0,0,0}}};
+
+		final int[][][] a26m = new int[][][]{{{0,0,0}, {0,1,1}, {0,1,1}},
+											 {{0,0,0}, {0,0,1}, {0,1,1}},
+											 {{0,0,0}, {0,0,0}, {0,0,0}}};
+
+		final int[][][] b18m = new int[][][]{{{0,1,0}, {0,1,9}, {0,1,0}},
+											 {{0,1,1}, {0,0,1}, {0,1,1}},
+											 {{0,0,0}, {0,0,0}, {0,0,0}}};
+
+		final int[][][] b26m = new int[][][]{{{0,0,0}, {0,1,1}, {0,1,7}},
+											 {{0,0,0}, {0,0,1}, {0,1,1}},										
+											 {{0,0,0}, {0,0,0}, {0,0,0}}};
+
+		int[] tsuma = new int[12];
+		int x, y, z, i;
+
+		if(ctyp=='a'){
+			switch (con)
+			{
+			case 6:
+				for(x=0;x<3;x++){
+					for(y=0;y<3;y++){
+						for(z=0;z<3;z++){
+							tsuma[0]+=a6m[x][y][z]*input[x+y*3+z*3*3];
+							tsuma[1]+=a6m[2-x][y][z]*input[x+y*3+z*3*3];
+							tsuma[2]+=a6m[y][x][z]*input[x+y*3+z*3*3];
+							tsuma[3]+=a6m[2-y][x][z]*input[x+y*3+z*3*3];
+							tsuma[4]+=a6m[z][y][x]*input[x+y*3+z*3*3];
+							tsuma[5]+=a6m[2-z][y][x]*input[x+y*3+z*3*3];
+						}
+					}
+				}
+				tsum=0;
+				for(i=0;i<6;i++)
+					tsum += (tsuma[i]==(5-space))?1:0;
+
+				return tsum;
+			case 18:
+				for(x=0;x<3;x++){
+					for(y=0;y<3;y++){
+						for(z=0;z<3;z++){
+							tsuma[0]+=a18m[x][y][z]*input[x+y*3+z*3*3];
+							tsuma[1]+=a18m[x][y][2-z]*input[x+y*3+z*3*3];
+							tsuma[2]+=a18m[2-x][y][z]*input[x+y*3+z*3*3];
+							tsuma[3]+=a18m[2-x][y][2-z]*input[x+y*3+z*3*3];
+							tsuma[4]+=a18m[y][x][z]*input[x+y*3+z*3*3];
+							tsuma[5]+=a18m[y][x][2-z]*input[x+y*3+z*3*3];
+							tsuma[6]+=a18m[2-y][x][z]*input[x+y*3+z*3*3];
+							tsuma[7]+=a18m[2-y][x][2-z]*input[x+y*3+z*3*3];
+							tsuma[8]+=a18m[x][z][y]*input[x+y*3+z*3*3];
+							tsuma[9]+=a18m[x][z][2-y]*input[x+y*3+z*3*3];
+							tsuma[10]+=a18m[2-x][z][y]*input[x+y*3+z*3*3];
+							tsuma[11]+=a18m[2-x][z][2-y]*input[x+y*3+z*3*3];
+						}
+					}
+				}
+				tsum=0;
+				for(i=0;i<12;i++){
+					tsum += (tsuma[i]==(3-3*space))?1:0;
+				}
+				return tsum;
+			case 26:
+				for(x=0;x<3;x++){
+					for(y=0;y<3;y++){
+						for(z=0;z<3;z++){
+							tsuma[0]+=a26m[x][y][z]*input[x+y*3+z*3*3];
+							tsuma[1]+=a26m[2-x][y][z]*input[x+y*3+z*3*3];
+							tsuma[2]+=a26m[x][2-y][z]*input[x+y*3+z*3*3];
+							tsuma[3]+=a26m[x][y][2-z]*input[x+y*3+z*3*3];
+							tsuma[4]+=a26m[2-x][2-y][z]*input[x+y*3+z*3*3];
+							tsuma[5]+=a26m[x][2-y][2-z]*input[x+y*3+z*3*3];
+							tsuma[6]+=a26m[2-x][y][2-z]*input[x+y*3+z*3*3];
+							tsuma[7]+=a26m[2-x][2-y][2-z]*input[x+y*3+z*3*3];
+						}
+					}
+				}
+				tsum=0;
+				for(i=0;i<8;i++){
+					tsum += (tsuma[i]==(7-7*space))?1:0;
+				}
+				return tsum;
+			default:
+				return 0;
+			}
+		}else if(ctyp=='b'){
+			switch (con)
+			{
+			case 18:
+				for(x=0;x<3;x++){
+					for(y=0;y<3;y++){
+						for(z=0;z<3;z++){
+							tsuma[0]+=b18m[x][y][z]*input[x+y*3+z*3*3];
+							tsuma[1]+=b18m[x][y][2-z]*input[x+y*3+z*3*3];
+							tsuma[2]+=b18m[2-x][y][z]*input[x+y*3+z*3*3];
+							tsuma[3]+=b18m[2-x][y][2-z]*input[x+y*3+z*3*3];
+							tsuma[4]+=b18m[y][x][z]*input[x+y*3+z*3*3];
+							tsuma[5]+=b18m[y][x][2-z]*input[x+y*3+z*3*3];
+							tsuma[6]+=b18m[2-y][x][z]*input[x+y*3+z*3*3];
+							tsuma[7]+=b18m[2-y][x][2-z]*input[x+y*3+z*3*3];
+							tsuma[8]+=b18m[x][z][y]*input[x+y*3+z*3*3];
+							tsuma[9]+=b18m[x][z][2-y]*input[x+y*3+z*3*3];
+							tsuma[10]+=b18m[2-x][z][y]*input[x+y*3+z*3*3];
+							tsuma[11]+=b18m[2-x][z][2-y]*input[x+y*3+z*3*3];
+						}
+					}
+				}
+				tsum=0;
+				for(i=0;i<12;i++){
+					tsum += (tsuma[i]==(9-space))?1:0;
+				}
+				return tsum;
+			case 26:
+				for(x=0;x<3;x++){
+					for(y=0;y<3;y++){
+						for(z=0;z<3;z++){
+							tsuma[0]+=b26m[x][y][z]*input[x+y*3+z*3*3];
+							tsuma[1]+=b26m[2-x][y][z]*input[x+y*3+z*3*3];
+							tsuma[2]+=b26m[x][2-y][z]*input[x+y*3+z*3*3];
+							tsuma[3]+=b26m[x][y][2-z]*input[x+y*3+z*3*3];
+							tsuma[4]+=b26m[2-x][2-y][z]*input[x+y*3+z*3*3];
+							tsuma[5]+=b26m[x][2-y][2-z]*input[x+y*3+z*3*3];
+							tsuma[6]+=b26m[2-x][y][2-z]*input[x+y*3+z*3*3];
+							tsuma[7]+=b26m[2-x][2-y][2-z]*input[x+y*3+z*3*3];
+						}
+					}
+				}
+				tsum=0;
+				for(i=0;i<8;i++){
+					tsum += (tsuma[i]==7-space)?1:0;
+				}
+				return tsum;
+			default:
+				return 0;
+			}
+		}
+		else
+			return 0;
+
+	}
+
+	/**
+	 * Calculate if a point is simple in 3D
+	 * 
+	 * @param input 3D neighborhood (27 pixels) in a single array
+	 * @param region adjacency (26 or 6)
+	 * @return true if the point is simple
+	 */
+	boolean simple3d(float[] input, int region)
+	{
+		boolean simple = false;
+
+		if(region==26)
+		{
+			simple=false;
+			if( nca(input, 6, 1)==1 ){
+				simple=true;
+			}else if(nca(input, 26, 0)==1 ){
+				simple=true;
+			}else if( ncb(input, 'b', 26, 0)==0 ){
+				if( nca(input, 18, 0)==1 ){
+					simple=true;
+				}else if( (ncb(input, 'a', 6, 1)==0) && (ncb(input, 'b', 18, 0)==0) && ((nca(input, 6, 1)-ncb(input, 'a', 18, 1)+ncb(input, 'a', 26, 1))==1) ){
+					simple=true;
+				}
+			}
+		}
+		else if(region==6)
+		{
+			int i;
+			float[] input2 = new float[27];
+			
+			for(i=0;i<27;i++){
+				input2[i] = input[i] == 1.0f ? 0.0f : 1.0f;
+			}
+			simple=false;
+			if( nca(input2, 6, 1)==1 ){
+				simple=true;
+			}else if(nca(input2, 26, 0)==1 ){
+				simple=true;
+			}else if( ncb(input2, 'b', 26, 0)==0 ){
+				if( nca(input2, 18, 0)==1 ){
+					simple=true;
+				}else if( (ncb(input2, 'a', 6, 1)==0) && (ncb(input2, 'b', 18, 0)==0) && ((nca(input2, 6, 1)-ncb(input2, 'a', 18, 1)+ncb(input2, 'a', 26, 1))==1) ){
+					simple=true;
+				}
+			}
+		}
+		return simple;
+	}
+	
 	
 } // end class
 
