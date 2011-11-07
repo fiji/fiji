@@ -71,7 +71,7 @@ public class Matching
 			img1 = InteractiveDoG.convertToFloat( imp1, params.channel1 );
 		
 		img2 = InteractiveDoG.convertToFloat( imp2, params.channel2 );
-		
+
 		// extract Calibrations
 		final Calibration cal1 = imp1.getCalibration();
 		final Calibration cal2 = imp2.getCalibration();
@@ -262,7 +262,6 @@ public class Matching
 				final Particle particle = new Particle( id++, peak, zStretching );
 				listB.add( particle );
 			}
-			//0 (192.01309, 394.9002, 56.54292) ((191.87242, 510.94934, 52.197083)) -> 561 (192.35054, 514.0911, 52.14846) ((192.35054, 514.0911, 52.14846))
 		}
 		
 		/* create KDTrees */	

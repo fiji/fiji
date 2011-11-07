@@ -17,6 +17,7 @@ import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.MultiLineLabel;
+import ij.measure.Calibration;
 import ij.plugin.PlugIn;
 import ij.process.ImageConverter;
 import ij.process.StackConverter;
@@ -52,7 +53,7 @@ public class Descriptor_based_registration implements PlugIn
 	
 		gd.addChoice("First_image (reference)", imgList, imgList[ defaultImg1 ] );
 		gd.addChoice("Second_image (to register)", imgList, imgList[ defaultImg2 ] );
-		gd.addMessage( "Warning: if images are of RGB or 8-bit they will be converted to hyperstacks.");
+		gd.addMessage( "Warning: if images are of RGB or 8-bit color they will be converted to hyperstacks.");
 		gd.addMessage( "Please note that the SPIM Registration is based on a publication.\n" +
 					   "If you use it successfully for your research please be so kind to cite our work:\n" +
 					   "Preibisch et al., Nature Methods (2010), 7(6):418-419\n" );
@@ -438,9 +439,14 @@ public class Descriptor_based_registration implements PlugIn
 				new ImageConverter( imp ).convertToRGB();
 		}
 		
+		final Calibration cal = imp.getCalibration();
+		
 		// now convert to hyperstack, this creates a new imageplus
 		if ( imp.getType() == ImagePlus.COLOR_RGB )
+		{
 			imp = new CompositeConverter2().makeComposite( imp );
+			imp.setCalibration( cal );
+		}
 		
 		return imp;
 	}
