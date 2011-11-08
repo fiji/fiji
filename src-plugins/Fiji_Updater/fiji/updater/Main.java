@@ -25,6 +25,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -333,6 +336,10 @@ public class Main {
 			usage();
 			System.exit(0);
 		}
+
+		Util.useSystemProxies();
+		Authenticator.setDefault(new ProxyAuthenticator());
+
 		String command = args[0];
 		if (command.equals("list"))
 			getInstance().list(makeList(args, 1));
@@ -358,6 +365,16 @@ public class Main {
 			getInstance().upload(makeList(args, 1));
 		else
 			usage();
+	}
+
+	protected static class ProxyAuthenticator extends Authenticator {
+		protected Console console = System.console();
+
+		protected PasswordAuthentication getPasswordAuthentication() {
+			String user = console.readLine("                                  \rProxy User: ");
+			char[] password = console.readPassword("Proxy Password: ");
+			return new PasswordAuthentication(user, password);
+		}
 	}
 
 	protected static class ConsoleUserInfo implements UserInfo {

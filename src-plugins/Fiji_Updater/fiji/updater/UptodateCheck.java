@@ -14,6 +14,7 @@ import ij.plugin.PlugIn;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
@@ -30,6 +31,7 @@ import javax.swing.JOptionPane;
 public class UptodateCheck implements PlugIn {
 	final static String latestReminderKey = "fiji.updater.latestNag";
 	final static long reminderInterval = 86400 * 7; // one week
+	protected final static String PROXY_NEEDS_AUTHENTICATION = "Your HTTP proxy requires authentication";
 
 	public void run(String arg) {
 		Util.useSystemProxies();
@@ -55,6 +57,10 @@ public class UptodateCheck implements PlugIn {
 
 	public String checkOrShowDialog() {
 		String result = check();
+		if (result == PROXY_NEEDS_AUTHENTICATION) {
+			IJ.showStatus("Please run Help>Update Fiji occasionally");
+			return null;
+		}
 		if (result == null && !isBatchMode())
 			showDialog();
 		return result;
@@ -80,6 +86,8 @@ public class UptodateCheck implements PlugIn {
 			for (String name : plugins.getUpdateSiteNames()) {
 				UpdateSite updateSite = plugins.getUpdateSite(name);
 				long lastModified = getLastModified(updateSite.url + Updater.XML_COMPRESSED);
+				if (lastModified == -111381)
+					return PROXY_NEEDS_AUTHENTICATION;
 				if (lastModified < 0)
 					continue; // assume network is down
 				if (!updateSite.isLastModified(lastModified))
@@ -158,7 +166,9 @@ public class UptodateCheck implements PlugIn {
 			long lastModified = connection.getLastModified();
 			connection.getInputStream().close();
 			return lastModified;
-		} catch (Exception e) {
+		} catch (IOException e) {
+			if (e.getMessage().startsWith("Server returned HTTP response code: 407"))
+				return -111381;
 			// assume no network; so let's pretend everything's ok.
 			return -1;
 		}
