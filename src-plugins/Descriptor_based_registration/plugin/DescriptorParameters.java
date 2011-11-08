@@ -1,5 +1,6 @@
 package plugin;
 
+import ij.gui.Roi;
 import mpicbg.models.AbstractModel;
 
 public class DescriptorParameters 
@@ -19,6 +20,8 @@ public class DescriptorParameters
 	// for stack-registration
 	public int globalOpt; // 0=all-to-all; 1=all-to-all-withrange; 2=all-to-1; 3=Consecutive
 	public int range;	
+	
+	public Roi roi1, roi2;
 	
 	public boolean setPointsRois = true;
 	public boolean fuse = true;

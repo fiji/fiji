@@ -4,6 +4,7 @@ import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.PointRoi;
+import ij.gui.Roi;
 import ij.measure.Calibration;
 
 import java.util.ArrayList;
@@ -62,9 +63,13 @@ public class Matching
 		float zStretching2 = params.dimensionality == 3 ? (float)imp2.getCalibration().pixelDepth / (float)imp2.getCalibration().pixelWidth : 1;
 
 		// get the peaks
-		final ArrayList<DifferenceOfGaussianPeak<FloatType>> peaks1 = extractCandidates( imp1, params.channel1, 0, params );
-		final ArrayList<DifferenceOfGaussianPeak<FloatType>> peaks2 = extractCandidates( imp2, params.channel2, 0, params );
+		ArrayList<DifferenceOfGaussianPeak<FloatType>> peaks1 = extractCandidates( imp1, params.channel1, 0, params );
+		ArrayList<DifferenceOfGaussianPeak<FloatType>> peaks2 = extractCandidates( imp2, params.channel2, 0, params );
 
+		// filter for ROI
+		peaks1 = filterForROI( params.roi1, peaks1 );
+		peaks2 = filterForROI( params.roi2, peaks2 );
+		
 		// compute ransac
 		ArrayList<PointMatch> finalInliers = new ArrayList<PointMatch>();
 		Model<?> finalModel = pairwiseMatching( finalInliers, peaks1, peaks2, zStretching1, zStretching2, params, "" );				
@@ -345,12 +350,29 @@ public class Matching
 		
 		// remove invalid peaks
 		final int[] stats1 = removeInvalidAndCollectStatistics( peaks );
-		
+				
 		IJ.log( "Found " + peaks.size() + " candidates for " + imp.getTitle() + " [" + timepoint + "] (" + stats1[ 1 ] + " maxima, " + stats1[ 0 ] + " minima)" );
 		
 		return peaks;
 	}
 	
+	protected static ArrayList<DifferenceOfGaussianPeak<FloatType>> filterForROI( final Roi roi, final ArrayList<DifferenceOfGaussianPeak<FloatType>> peaks )
+	{
+		if ( roi == null )
+		{
+			return peaks;
+		}
+		else
+		{
+			final ArrayList<DifferenceOfGaussianPeak<FloatType>> peaksNew = new ArrayList<DifferenceOfGaussianPeak<FloatType>>();
+			
+			for ( final DifferenceOfGaussianPeak<FloatType> peak : peaks )
+				if ( roi.contains( Math.round( peak.getSubPixelPosition( 0 ) ), Math.round( peak.getSubPixelPosition( 1 ) ) ) )
+					peaksNew.add( peak );
+			
+			return peaksNew;
+		}
+	}
 	
 	protected static void setPointRois( final ImagePlus imp1, final ImagePlus imp2, final ArrayList<PointMatch> inliers )
 	{

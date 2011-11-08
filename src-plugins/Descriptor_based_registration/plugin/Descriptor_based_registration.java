@@ -202,6 +202,8 @@ public class Descriptor_based_registration implements PlugIn
 		
 		final DescriptorParameters params = new DescriptorParameters();
 		params.dimensionality = dimensionality;
+		params.roi1 = imp1.getRoi();
+		params.roi2 = imp2.getRoi();
 		
 		final int detectionBrightnessIndex = gd.getNextChoiceIndex();
 		final int detectionSizeIndex = gd.getNextChoiceIndex();
