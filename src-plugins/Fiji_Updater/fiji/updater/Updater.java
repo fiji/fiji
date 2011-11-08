@@ -128,7 +128,8 @@ public class Updater implements PlugIn {
 				// overwrite the original updater
 				File downloaded = new File(Util.prefix("update/plugins/Fiji_Updater.jar"));
 				File updaterJar = new File(Util.prefix("plugins/Fiji_Updater.jar"));
-				if (!updaterJar.delete() || !downloaded.renameTo(updaterJar) ||
+				if (!(updaterJar.delete() || moveOutOfTheWay(updaterJar)) ||
+						!downloaded.renameTo(updaterJar) ||
 						!downloaded.getParentFile().delete() ||
 						!downloaded.getParentFile().getParentFile().delete())
 					main.error("Could not overwrite Fiji Updater");
@@ -196,5 +197,20 @@ public class Updater implements PlugIn {
 			return true;
 		} else
 			return false;
+	}
+
+	protected static boolean moveOutOfTheWay(File file) {
+		if (!file.exists())
+			return true;
+		File backup = new File(file.getParentFile(), file.getName() + ".old");
+		if (backup.exists() && !backup.delete()) {
+			int i = 2;
+			for (;;) {
+				backup = new File(file.getParentFile(), file.getName() + ".old" + i);
+				if (!backup.exists())
+					break;
+			}
+		}
+		return file.renameTo(backup);
 	}
 }
