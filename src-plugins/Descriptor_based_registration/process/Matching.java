@@ -190,7 +190,7 @@ public class Matching
 		// fuse
 		if ( params.dimensionality == 3 )
 			for ( final InvertibleBoundable model : models )
-				BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D<?>)model, imp.getCalibration().pixelDepth / imp.getCalibration().pixelWidth );				
+				BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D<?>)model, imp.getCalibration().pixelDepth / imp.getCalibration().pixelWidth );
 		
 		final ImagePlus result;
 		
@@ -270,9 +270,12 @@ public class Matching
                     	{
                     		final ComparePair pair = pairs.get( i );
                     		pair.model = pairwiseMatching( pair.inliers, peaks.get( pair.indexA ), peaks.get( pair.indexB ), zStretching, zStretching, params, pair.indexA + "<->" + pair.indexB );
-                    		
+                    		                    		
                     		if ( pair.model == null )
+                    		{
+                    			pair.inliers.clear();
                     			pair.model = params.model.copy();
+                    		}
                     	}
                 }
             });
@@ -286,7 +289,7 @@ public class Matching
 	{
         // perform global optimization
     	final ArrayList<Tile<?>> tiles = new ArrayList<Tile<?>>();
-		for ( int t = 1; t <= numImages; ++t )
+		for ( int t = 0; t < numImages; ++t )
 			tiles.add( new Tile( params.model.copy() ) );
 		
 		// reset the coordinates of all points so that we directly get the correct model
@@ -305,7 +308,7 @@ public class Matching
 		
 		for ( final ComparePair pair : pairs )
 			addPointMatches( pair.inliers, tiles.get( pair.indexA ), tiles.get( pair.indexB ) );
-
+		
 		final TileConfiguration tc = new TileConfiguration();
 
 		boolean fixed = false;
@@ -412,10 +415,10 @@ public class Matching
 		//ArrayList<PointMatch> finalInliers = new ArrayList<PointMatch>();
 		Model<?> finalModel = params.model.copy();
 		String statement = computeRANSAC( candidates, finalInliers, finalModel, (float)params.ransacThreshold );
-		IJ.log( explanation + ": " + statement );
+		//IJ.log( explanation + ": " + statement );
 		
 		// apply rotation-variant matching after applying the model until it converges
-		if ( finalInliers.size() > finalModel.getMinNumMatches() )
+		if ( finalInliers.size() > finalModel.getMinNumMatches() * DescriptorParameters.minInlierFactor )
 		{
 			int previousNumInliers = 0;
 			int numInliers = 0;
@@ -432,12 +435,14 @@ public class Matching
 				}			
 				
 				// compute ransac
-				previousNumInliers = finalInliers.size();				
+				previousNumInliers = finalInliers.size();
+				
 				final ArrayList<PointMatch> inliers = new ArrayList<PointMatch>();
 				Model<?> model2 = params.model.copy();
 				statement = computeRANSAC( candidates, inliers, model2, (float)params.ransacThreshold );
+				
 				numInliers = inliers.size();
-				IJ.log( explanation + ": " + statement );
+				//IJ.log( explanation + ": " + statement );
 				
 				// update model if this one was better
 				if ( numInliers > previousNumInliers )
@@ -466,7 +471,7 @@ public class Matching
 	{
 		// get the input images for registration
 		final Image<FloatType> img = InteractiveDoG.convertToFloat( imp, channel, timepoint );
-
+		
 		// extract Calibrations
 		final Calibration cal = imp.getCalibration();
 		
@@ -579,13 +584,14 @@ public class Matching
 			}
 			else
 			{
+				inliers.clear();
 				return "NO Model found after RANSAC (" + model.getClass().getSimpleName() + ") of " + candidates.size();
 			}
 		}
 		catch ( Exception e )
 		{
+			inliers.clear();
 			return "Exception - NO Model found after RANSAC (" + model.getClass().getSimpleName() + ") of " + candidates.size();
-
 		}
 	}
 

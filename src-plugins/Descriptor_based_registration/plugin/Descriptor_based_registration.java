@@ -52,6 +52,12 @@ public class Descriptor_based_registration implements PlugIn
 		for ( int i = 0; i < idList.length; ++i )
 			imgList[ i ] = WindowManager.getImage(idList[i]).getTitle();
 
+		if ( defaultImg1 >= imgList.length || defaultImg2 >= imgList.length )
+		{
+			defaultImg1 = 0;
+			defaultImg2 = 1;
+		}
+
 		/**
 		 * The first dialog for choosing the images
 		 */

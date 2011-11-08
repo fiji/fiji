@@ -17,6 +17,7 @@ import mpicbg.spim.segmentation.InteractiveDoG;
 import fiji.plugin.Bead_Registration;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.MultiLineLabel;
@@ -48,6 +49,9 @@ public class Descriptor_based_series_registration implements PlugIn
 		for ( int i = 0; i < idList.length; ++i )
 			imgList[ i ] = WindowManager.getImage(idList[i]).getTitle();
 
+		if ( defaultImg >= imgList.length )
+			defaultImg = 0;
+		
 		/**
 		 * The first dialog for choosing the images
 		 */
@@ -275,7 +279,19 @@ public class Descriptor_based_series_registration implements PlugIn
 			// query parameters interactively
 			final double[] values = new double[]{ defaultSigma, defaultThreshold };
 			
-			final ImagePlus interactiveTmp = new ImagePlus( "First slice of " + imp.getTitle(), imp.getStack().getProcessor( imp.getStackIndex( channel, 1, 1 ) ) );
+			final ImagePlus interactiveTmp;
+			
+			if ( dimensionality == 2 )
+			{
+				interactiveTmp = new ImagePlus( "First slice of " + imp.getTitle(), imp.getStack().getProcessor( imp.getStackIndex( channel, 1, 1 ) ) );
+			}
+			else
+			{
+				ImageStack stack = new ImageStack( imp.getWidth(), imp.getHeight() );
+				for ( int f = 1; f <= imp.getNFrames(); ++f )
+					stack.addSlice( "", imp.getStack().getProcessor( imp.getStackIndex( channel, 1, f ) ) );
+				interactiveTmp = new ImagePlus( "First series of " + imp.getTitle(), stack );
+			}
 			interactiveTmp.show();
 			final InteractiveDoG idog = Descriptor_based_registration.getInteractiveDoGParameters( interactiveTmp, 1, values, 20 );
 			interactiveTmp.close();
