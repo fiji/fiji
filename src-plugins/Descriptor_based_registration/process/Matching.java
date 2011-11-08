@@ -8,6 +8,7 @@ import ij.gui.Roi;
 import ij.measure.Calibration;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -132,108 +133,43 @@ public class Matching
 		if ( !params.reApply )
 		{
 			// get the peaks
-			final ArrayList<ArrayList<DifferenceOfGaussianPeak<FloatType>>> peaks = new ArrayList<ArrayList<DifferenceOfGaussianPeak<FloatType>>>();
+			final ArrayList<ArrayList<DifferenceOfGaussianPeak<FloatType>>> peaksComplete = new ArrayList<ArrayList<DifferenceOfGaussianPeak<FloatType>>>();
 			
 			for ( int t = 0; t < numImages; ++t )
-				peaks.add( extractCandidates( imp, params.channel1, t, params ) );
+				peaksComplete.add( extractCandidates( imp, params.channel1, t, params ) );
+
+			// filter for roi
+			final ArrayList<ArrayList<DifferenceOfGaussianPeak<FloatType>>> peaks = new ArrayList<ArrayList<DifferenceOfGaussianPeak<FloatType>>>();
+			for ( int t = 0; t < numImages; ++t )
+				peaks.add( filterForROI( params.roi1, peaksComplete.get( t ) ) );
 			
-			// get all compare pairs
-			final Vector<ComparePair> pairs = getComparePairs( params, numImages );
-	
-			// compute all matchings
-			final AtomicInteger ai = new AtomicInteger(0);					
-	        final Thread[] threads = SimpleMultiThreading.newThreads();
-	        final int numThreads = threads.length;
-	    	
-	        for ( int ithread = 0; ithread < threads.length; ++ithread )
-	            threads[ ithread ] = new Thread(new Runnable()
-	            {
-	                public void run()
-	                {		
-	                   	final int myNumber = ai.getAndIncrement();
-	                    
-	                    for ( int i = 0; i < pairs.size(); i++ )
-	                    	if ( i%numThreads == myNumber )
-	                    	{
-	                    		final ComparePair pair = pairs.get( i );
-	                    		pair.model = pairwiseMatching( pair.inliers, peaks.get( pair.indexA ), peaks.get( pair.indexB ), zStretching, zStretching, params, pair.indexA + "<->" + pair.indexB );
-	                    	}
-	                }
-	            });
-	        
-	        SimpleMultiThreading.startAndJoin( threads );
+			// compute descriptormatching between all pairs of images
+			final Vector<ComparePair> pairs = descriptorMatching( peaks, numImages, params, zStretching );
 	        
 	        // perform global optimization
-	    	final ArrayList<Tile<?>> tiles = new ArrayList<Tile<?>>();
-			for ( int t = 1; t <= numImages; ++t )
-				tiles.add( new Tile( params.model.copy() ) );
-			
-			// reset the coordinates of all points so that we directly get the correct model
-			for ( final ComparePair pair : pairs )
+	        models = globalOptimization( pairs, numImages, params );
+	        
+			// we are done if no roi was selected, otherwise we have to update the roi with the new transformations
+			if ( params.roi1 != null )
 			{
-				if ( pair.inliers.size() > 0 )
-				{
-	    			for ( final PointMatch pm : pair.inliers )
-					{
-						((Particle)pm.getP1()).restoreCoordinates();
-						((Particle)pm.getP2()).restoreCoordinates();
-					}    			
-				}
-				IJ.log( pair.indexA + "<->" + pair.indexB + ": " + pair.model );
-			}
-			
-			for ( final ComparePair pair : pairs )
-				addPointMatches( pair.inliers, tiles.get( pair.indexA ), tiles.get( pair.indexB ) );
-	
-			final TileConfiguration tc = new TileConfiguration();
-	
-			boolean fixed = false;
-			for ( int t = 0; t < numImages; ++t )
-			{
-				final Tile<?> tile = tiles.get( t );
+				int numMatches = countMatches( pairs );
+				IJ.log( "\nNumber of matches " + numMatches );
 				
-				if ( tile.getConnectedTiles().size() > 0 )
+				// iterate until it converges
+				for ( int iteration = 0; iteration < 5; ++iteration )
 				{
-					tc.addTile( tile );
-					if ( !fixed )
-					{
-						tc.fixTile( tile );
-						fixed = true;
-					}
-				}
-				else 
-				{
-					IJ.log( "Tile " + t + " is not connected to any other tile, cannot compute a model" );
-				}
-			}
-			
-			try
-			{
-				tc.optimize( 10, 10000, 200 );
-			}
-			catch ( Exception e )
-			{
-				IJ.log( "Global optimization failed: " + e );
-				return;
-			}
-			
-			// assemble final list of models
-			models = new ArrayList<InvertibleBoundable>();
-			
-			for ( int t = 0; t < numImages; ++t )
-			{
-				final Tile<?> tile = tiles.get( t );
+					IJ.log( "\nIteration " + (iteration+1) );
 				
-				if ( tile.getConnectedTiles().size() > 0 )
-				{
-					IJ.log( "Tile " + t + " (connected): " + tile.getModel()  );
-					models.add( (InvertibleBoundable)tile.getModel() );
+					final int numMatches2 = performIteration( models, peaksComplete, numImages, params, zStretching );
+
+					IJ.log( "\nNumber of matches " + numMatches2 );
+
+					if ( numMatches == numMatches2 )
+						break;
+					
+					numMatches = numMatches2;
 				}
-				else
-				{
-					IJ.log( "Tile " + t + " (NOT connected): " + tile.getModel()  );
-					models.add( (InvertibleBoundable)params.model.copy() );
-				}
+				
 			}
 	
 			// set the static model
@@ -262,6 +198,159 @@ public class Matching
 			result = OverlayFusion.createReRegisteredSeries( new UnsignedByteType(), imp, models, params.dimensionality );
 		
 		result.show();
+	}
+	
+	/**
+	 * Computes one iteration and updates the lastModels ArrayList with the new models
+	 * 
+	 * @param lastModels - models from last iteration (or init)
+	 * @param peaksComplete - all peaks for all images
+	 * @param numImages - how many images are there
+	 * @param params - the parameters
+	 * @param zStretching - the zStretching if applicable
+	 * 
+	 * @return the number of matches found
+	 */
+	protected static int performIteration( final ArrayList<InvertibleBoundable> lastModels, final ArrayList<ArrayList<DifferenceOfGaussianPeak<FloatType>>> peaksComplete, 
+			final int numImages, final DescriptorParameters params, final float zStretching )
+	{
+		// filter for roi with updated global coordinates
+		final ArrayList<ArrayList<DifferenceOfGaussianPeak<FloatType>>> peaks = new ArrayList<ArrayList<DifferenceOfGaussianPeak<FloatType>>>();
+		for ( int t = 0; t < numImages; ++t )
+			peaks.add( filterForROI( params.roi1, peaksComplete.get( t ), (Model)lastModels.get( t ) ) );
+
+		// compute descriptormatching between all pairs of images
+		final Vector<ComparePair> pairs = descriptorMatching( peaks, numImages, params, zStretching );
+    	
+        // perform global optimization
+		final ArrayList<InvertibleBoundable> models = globalOptimization( pairs, numImages, params );
+
+		// update old models
+		lastModels.clear();
+		for ( final InvertibleBoundable model : models )
+			lastModels.add( model );
+	
+		// count matches
+		return countMatches( pairs );
+	}
+	
+	protected static int countMatches( final List<ComparePair> pairs )
+	{
+		int numMatches = 0;
+		
+		for ( final ComparePair pair : pairs )
+			numMatches += pair.inliers.size();
+		
+		return numMatches;
+	}
+	
+	public static Vector<ComparePair> descriptorMatching( final ArrayList<ArrayList<DifferenceOfGaussianPeak<FloatType>>> peaks, final int numImages, final DescriptorParameters params, final float zStretching )
+	{
+		// get all compare pairs
+		final Vector<ComparePair> pairs = getComparePairs( params, numImages );
+
+		// compute all matchings
+		final AtomicInteger ai = new AtomicInteger(0);					
+        final Thread[] threads = SimpleMultiThreading.newThreads();
+        final int numThreads = threads.length;
+    	
+        for ( int ithread = 0; ithread < threads.length; ++ithread )
+            threads[ ithread ] = new Thread(new Runnable()
+            {
+                public void run()
+                {		
+                   	final int myNumber = ai.getAndIncrement();
+                    
+                    for ( int i = 0; i < pairs.size(); i++ )
+                    	if ( i%numThreads == myNumber )
+                    	{
+                    		final ComparePair pair = pairs.get( i );
+                    		pair.model = pairwiseMatching( pair.inliers, peaks.get( pair.indexA ), peaks.get( pair.indexB ), zStretching, zStretching, params, pair.indexA + "<->" + pair.indexB );
+                    	}
+                }
+            });
+        
+        SimpleMultiThreading.startAndJoin( threads );
+        
+		return pairs;
+	}
+	
+	public static ArrayList<InvertibleBoundable> globalOptimization( final Vector<ComparePair> pairs, final int numImages, final DescriptorParameters params )
+	{
+        // perform global optimization
+    	final ArrayList<Tile<?>> tiles = new ArrayList<Tile<?>>();
+		for ( int t = 1; t <= numImages; ++t )
+			tiles.add( new Tile( params.model.copy() ) );
+		
+		// reset the coordinates of all points so that we directly get the correct model
+		for ( final ComparePair pair : pairs )
+		{
+			if ( pair.inliers.size() > 0 )
+			{
+    			for ( final PointMatch pm : pair.inliers )
+				{
+					((Particle)pm.getP1()).restoreCoordinates();
+					((Particle)pm.getP2()).restoreCoordinates();
+				}    			
+			}
+			//IJ.log( pair.indexA + "<->" + pair.indexB + ": " + pair.model );
+		}
+		
+		for ( final ComparePair pair : pairs )
+			addPointMatches( pair.inliers, tiles.get( pair.indexA ), tiles.get( pair.indexB ) );
+
+		final TileConfiguration tc = new TileConfiguration();
+
+		boolean fixed = false;
+		for ( int t = 0; t < numImages; ++t )
+		{
+			final Tile<?> tile = tiles.get( t );
+			
+			if ( tile.getConnectedTiles().size() > 0 )
+			{
+				tc.addTile( tile );
+				if ( !fixed )
+				{
+					tc.fixTile( tile );
+					fixed = true;
+				}
+			}
+			else 
+			{
+				IJ.log( "Tile " + t + " is not connected to any other tile, cannot compute a model" );
+			}
+		}
+		
+		try
+		{
+			tc.optimize( 10, 10000, 200 );
+		}
+		catch ( Exception e )
+		{
+			IJ.log( "Global optimization failed: " + e );
+			return null;
+		}
+		
+		// assemble final list of models
+		final ArrayList<InvertibleBoundable> models = new ArrayList<InvertibleBoundable>();
+		
+		for ( int t = 0; t < numImages; ++t )
+		{
+			final Tile<?> tile = tiles.get( t );
+			
+			if ( tile.getConnectedTiles().size() > 0 )
+			{
+				IJ.log( "Tile " + t + " (connected): " + tile.getModel()  );
+				models.add( (InvertibleBoundable)tile.getModel() );
+			}
+			else
+			{
+				IJ.log( "Tile " + t + " (NOT connected): " + tile.getModel()  );
+				models.add( (InvertibleBoundable)params.model.copy() );
+			}
+		}
+		
+		return models;
 	}
 	
 	public synchronized static void addPointMatches( final ArrayList<PointMatch> correspondences, final Tile<?> tileA, final Tile<?> tileB )
@@ -405,7 +494,37 @@ public class Matching
 			return peaksNew;
 		}
 	}
-	
+
+	protected static ArrayList<DifferenceOfGaussianPeak<FloatType>> filterForROI( final Roi roi, final ArrayList<DifferenceOfGaussianPeak<FloatType>> peaks, final Model<?> model )
+	{
+		if ( roi == null )
+		{
+			return peaks;
+		}
+		else
+		{
+			final ArrayList<DifferenceOfGaussianPeak<FloatType>> peaksNew = new ArrayList<DifferenceOfGaussianPeak<FloatType>>();
+			
+			// init a temporary point that we will transform
+			final int numDimensions = peaks.get( 0 ).getSubPixelPosition().length;
+			final float[] tmp = new float[ numDimensions ];
+			
+			for ( final DifferenceOfGaussianPeak<FloatType> peak : peaks )
+			{
+				// update tmp
+				peak.getSubPixelPosition( tmp );
+				
+				// apply the model
+				model.applyInPlace( tmp );
+				
+				if ( roi.contains( Math.round( tmp[ 0 ] ), Math.round( tmp[ 1 ] ) ) )
+					peaksNew.add( peak );
+			}
+			
+			return peaksNew;
+		}
+	}
+
 	protected static void setPointRois( final ImagePlus imp1, final ImagePlus imp2, final ArrayList<PointMatch> inliers )
 	{
 		final ArrayList<Point> list1 = new ArrayList<Point>();
