@@ -86,6 +86,9 @@ public class WarpingError extends Metrics {
 	/** flags to select which error should be taken into account and which not */
 	int flags = DEFAULT_FLAGS;
 	
+	/** boolean flag to set the level of detail on the standard output messages */
+	private boolean verbose = true;
+	
 	/**
 	 * Initialize warping error metric
 	 * @param originalLabels original labels (single 2D image or stack)
@@ -161,7 +164,8 @@ public class WarpingError extends Metrics {
 	public double getMetricValue(double binaryThreshold) 	
 	{
 		
-		IJ.log("  Warping ground truth...");
+		if( verbose )
+			IJ.log("  Warping ground truth...");
 		
 		// Warp ground truth, relax original labels to proposal. Only simple
 		// points warping is allowed.
@@ -202,7 +206,8 @@ public class WarpingError extends Metrics {
 			boolean clusterByError)
 	{
 		
-		IJ.log("  Warping ground truth...");
+		if( verbose )
+			IJ.log("  Warping ground truth...");
 		
 		// Get clustered mismatches after warping ground truth, i.e. relaxing original labels to proposal. 
 		// Only simple points warping is allowed.
@@ -260,7 +265,8 @@ public class WarpingError extends Metrics {
 			int radius)
 	{
 		
-		IJ.log("  Warping ground truth...");
+		if( verbose )
+			IJ.log("  Warping ground truth...");
 		
 		// Get clustered mismatches after warping ground truth, i.e. relaxing original labels to proposal. 
 		// Only simple points warping is allowed.
@@ -323,7 +329,8 @@ public class WarpingError extends Metrics {
 				
 		for(double th = minThreshold; th<=maxThreshold; th += stepThreshold)
 		{						
-			IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
+			if( verbose )
+				IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
 			ClusteredWarpingMismatches[] cwm = 
 						getClusteredWarpingMismatches(originalLabels, proposedLabels, 
 														mask, th, clusterByError, -1);		
@@ -340,7 +347,8 @@ public class WarpingError extends Metrics {
 			
 			listOfSplitsAndMergers.add( splitsAndMergers );
 			
-			IJ.log( "  # splits = " + splitsAndMergers[ 0 ] + ", # mergers = " + splitsAndMergers[ 1 ]);
+			if( verbose )
+				IJ.log( "  # splits = " + splitsAndMergers[ 0 ] + ", # mergers = " + splitsAndMergers[ 1 ]);
 		}
 						
 		return listOfSplitsAndMergers;
@@ -374,7 +382,8 @@ public class WarpingError extends Metrics {
 				
 		for(double th = minThreshold; th<=maxThreshold; th += stepThreshold)
 		{						
-			IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
+			if( verbose )
+				IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
 			ClusteredWarpingMismatches[] cwm = 
 						getClusteredWarpingMismatches(originalLabels, proposedLabels, 
 														mask, th, clusterByError, radius );		
@@ -391,7 +400,8 @@ public class WarpingError extends Metrics {
 			
 			listOfSplitsAndMergers.add( splitsAndMergers );
 			
-			IJ.log( "  # splits = " + splitsAndMergers[ 0 ] + ", # mergers = " + splitsAndMergers[ 1 ]);
+			if( verbose )
+				IJ.log( "  # splits = " + splitsAndMergers[ 0 ] + ", # mergers = " + splitsAndMergers[ 1 ]);
 		}
 						
 		return listOfSplitsAndMergers;
@@ -425,7 +435,8 @@ public class WarpingError extends Metrics {
 				
 		for(double th = minThreshold; th<=maxThreshold; th += stepThreshold)
 		{						
-			IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
+			if( verbose )
+				IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
 			double error = getMetricValue( th, clusterByError );
 			if ( error < minError)
 				minError = error;
@@ -463,7 +474,8 @@ public class WarpingError extends Metrics {
 				
 		for(double th = minThreshold; th<=maxThreshold; th += stepThreshold)
 		{						
-			IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
+			if ( verbose )
+				IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
 			double error = getMetricValue( th, clusterByError, radius );
 			if ( error < minError)
 				minError = error;
@@ -505,7 +517,8 @@ public class WarpingError extends Metrics {
 			
 			ImagePlus warpedSource = new ImagePlus ("warped source", is);
 			
-			IJ.log("  Calculating warping error statistics for threshold value " + String.format("%.2f", th) + "...");
+			if( verbose )
+				IJ.log("  Calculating warping error statistics for threshold value " + String.format("%.2f", th) + "...");
 			
 			// We calculate the precision-recall value between the warped original labels and the 
 			// proposed labels 
@@ -547,7 +560,8 @@ public class WarpingError extends Metrics {
 			
 			ImagePlus warpedSource = new ImagePlus ("warped source", is);
 			
-			IJ.log("  Calculating warping error statistics for threshold value " + String.format("%.2f", th) + "...");
+			if( verbose )
+				IJ.log("  Calculating warping error statistics for threshold value " + String.format("%.2f", th) + "...");
 			
 			// We calculate the precision-recall value between the warped original labels and the 
 			// proposed labels 
@@ -971,7 +985,8 @@ public class WarpingError extends Metrics {
 					mismatches[i] = wr.mismatches;
 				i++;
 			}
-			IJ.log("Warping error = " + (warpingError / sourceSlices.getSize()));
+			if( verbose )
+				IJ.log("Warping error = " + (warpingError / sourceSlices.getSize()));
 		}
 		catch(Exception ex)
 		{
@@ -1905,6 +1920,93 @@ public class WarpingError extends Metrics {
 		}
 		return simple;
 	}
+
+	
+    /**
+     * Main method for calcualte the warping error metrics 
+     * from the command line
+     *
+     * @param args arguments to decide the action
+     */
+    public static void main(String args[]) 
+    {
+       if (args.length<1) 
+       {
+          dumpSyntax();
+          System.exit(1);
+       } 
+       else 
+       {
+          if( args[0].equals("-help") )                 
+        	  dumpSyntax();  
+          else if (args[0].equals("-splitsAndMergers"))
+        	  System.out.println( splitsAndMergersCommandLine(args) );
+          else 
+        	  dumpSyntax();
+       }
+       System.exit(0);
+    }
+    
+    /**
+     * Calculate the best splits and mergers ratio based on the
+     * parameters introduced by command line
+     * 
+     * @param args command line arguments
+     * @return warping error with minimum splits and mergers ratio
+     */
+    static double splitsAndMergersCommandLine(String[] args) 
+    {
+    	if (args.length != 8)
+        {
+            dumpSyntax();
+            return -1;
+        }
+    	
+    	final ImagePlus label = new ImagePlus( args[ 1 ] );
+    	final ImagePlus proposal = new ImagePlus( args[ 2 ] );
+    	final double minThreshold = Double.parseDouble( args[ 3 ] );
+		final double maxThreshold = Double.parseDouble( args[ 4 ] );
+		final double stepThreshold = Double.parseDouble( args[ 5 ] );
+		final boolean clusterByError = Boolean.parseBoolean( args[ 6 ]);
+		final int radius = Integer.parseInt( args[ 7 ]);
+    	
+		WarpingError we = new WarpingError(label, proposal);
+		we.setVerboseMode( false );
+		return we.getMinimumSplitsAndMergersErrorValue(minThreshold, maxThreshold, stepThreshold, clusterByError, radius );
+	}
+
+    /**
+     * Set verbose mode
+     * @param verbose true to display more information in the standard output
+     */
+    public void setVerboseMode(boolean verbose) 
+    {		
+    	this.verbose = verbose;
+	}
+
+	/**
+     * Method to write the syntax of the program in the command line.
+     */
+    private static void dumpSyntax () 
+    {
+       System.out.println("Purpose: calculate warping error between proposed and original labels.\n");     
+       System.out.println("Usage: WarpingError ");
+       System.out.println("  -help                      : show this message");
+       System.out.println("");
+       System.out.println("  -splitsAndMergers          : calculate the splits and mergers ratio over a set of thresholds");
+       System.out.println("          labels             : image with the original labels");
+       System.out.println("          proposal           : image with the proposed labels");
+       System.out.println("          minThreshold       : minimum threshold value to binarize the proposal");
+       System.out.println("          maxThreshold       : maximum threshold value to binarize the proposal");
+       System.out.println("          stepThreshold      : threshold step value to use during binarization");
+       System.out.println("          clusterMistakes    : boolean flag to cluster or not the mistakes by type of error");
+       System.out.println("          radius             : radius of the search neighborhood to decide simple points classification\n");
+       System.out.println("Examples:");
+       System.out.println("Calculate the splits and mergers ratio between proposed and original labels over a set of");
+       System.out.println("thresholds (from 0.0 to 1.0 in steps of 0.1) without clustering the mistakes and using a \n" +
+       					  "radius of 20 pixels:");
+       System.out.println("   WarpingError -splitsAndMergers original-labels.tif proposed-labels.tif 0.0 1.0 0.1 false 20");
+    } 
 	
 	
 } // end class
