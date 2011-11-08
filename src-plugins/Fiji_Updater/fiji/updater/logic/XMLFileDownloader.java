@@ -29,7 +29,6 @@ import java.util.Observer;
 
 import java.util.zip.GZIPInputStream;
 
-
 /*
  * Directly in charge of downloading and saving start-up files (i.e.: XML file
  * and related).
