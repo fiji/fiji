@@ -1,7 +1,6 @@
 package fiji.plugin.trackmate.io;
 
 import static fiji.plugin.trackmate.io.TmXmlKeys.*;
-
 import static fiji.plugin.trackmate.util.TMUtils.readBooleanAttribute;
 import static fiji.plugin.trackmate.util.TMUtils.readDoubleAttribute;
 import static fiji.plugin.trackmate.util.TMUtils.readFloatAttribute;
@@ -36,11 +35,9 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.segmentation.BasicSegmenterSettings;
 import fiji.plugin.trackmate.segmentation.PeakPickerSegmenter;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
-import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
 import fiji.plugin.trackmate.tracking.SimpleFastLAPTracker;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
@@ -241,29 +238,6 @@ public class TmXmlReader {
 			return;
 		}
 
-		// Deal with segmenter settings
-		SegmenterSettings ss;
-		String segmenterSettingsClassName = element.getAttributeValue(SEGMENTER_SETTINGS_CLASS_ATTRIBUTE_NAME);
-		if (null == segmenterSettingsClassName) {
-			logger.error("Segmenter settings class is not present.\n");
-			ss = segmenterSettingsFallback(element);
-		} else {
-			try {
-				ss = (SegmenterSettings) Class.forName(segmenterSettingsClassName).newInstance();
-				ss.unmarshall(element);
-			} catch (InstantiationException e) {
-				logger.error("Unable to instantiate segmenter settings class: "+e.getLocalizedMessage()+"\n");
-				ss = segmenterSettingsFallback(element);
-			} catch (IllegalAccessException e) {
-				logger.error("Unable to instantiate segmenter settings class: "+e.getLocalizedMessage()+"\n");
-				ss = segmenterSettingsFallback(element);
-			} catch (ClassNotFoundException e) {
-				logger.error("Unable to find segmenter settings class: "+e.getLocalizedMessage()+"\n");
-				ss = segmenterSettingsFallback(element);
-			}
-		}
-		settings.segmenterSettings = ss;
-
 		// Deal with segmenter
 		SpotSegmenter<? extends RealType<?>> segmenter;
 		String segmenterClassName = element.getAttributeValue(SEGMENTER_CLASS_ATTRIBUTE_NAME);
@@ -289,37 +263,38 @@ public class TmXmlReader {
 			}
 		}
 		settings.segmenter = segmenter;
-	}
+		
+		// Deal with segmenter settings
+		SegmenterSettings ss = segmenter.createDefaultSettings();
+		String segmenterSettingsClassName = element.getAttributeValue(SEGMENTER_SETTINGS_CLASS_ATTRIBUTE_NAME);
 
-	private SegmenterSettings segmenterSettingsFallback(Element element) {
-		SegmenterSettings settings;
-		String segmenterClassName = element.getAttributeValue(SEGMENTER_CLASS_ATTRIBUTE_NAME);
-		if (null == segmenterClassName) {
-			logger.error("Substituting dummy segmenter settings.\n");
-			settings = new BasicSegmenterSettings();
+		if (null == segmenterSettingsClassName) {
+			
+			logger.error("Segmenter settings class is not present,\n");
+			logger.error("substituting default one.\n");
+			
 		} else {
-			logger.error("Guessing default segmenter settings from segmenter name: "+segmenterClassName+".\n");
-			try {
-				SpotSegmenter<?> segmenter = (SpotSegmenter<?>) Class.forName(segmenterClassName).newInstance();
-				settings = segmenter.createDefaultSettings();
-			} catch (InstantiationException e) {
-				logger.error("Unable to instantiate segmenter settings class: "+e.getLocalizedMessage());
-				logger.error("\nFalling back to dummy segmenter settings.\n");
-				settings = new BasicSegmenterSettings();
-			} catch (IllegalAccessException e) {
-				logger.error("Unable to instantiate segmenter settings class: "+e.getLocalizedMessage());
-				logger.error("\nFalling back to dummy segmenter settings.\n");
-				settings = new BasicSegmenterSettings();
-			} catch (ClassNotFoundException e) {
-				logger.error("Unable to find segmenter settings class: "+e.getLocalizedMessage());
-				logger.error("\nFalling back to dummy segmenter settings.\n");
-				settings = new BasicSegmenterSettings();
+			
+			if (segmenterSettingsClassName.equals(ss.getClass().getName())) {
+				
+				// The saved class matched, we can updated the settings created above with the file content
+				ss.unmarshall(element);
+
+			} else {
+
+				// They do not match. We DO NOT give priority to what has been saved. That way we always
+				// have something that works (when invoking the process methods of the plugin).
+				
+				logger.error("Tracker settings class ("+segmenterSettingsClassName+") does not match tracker requirements (" +
+						ss.getClass().getName()+"),\n");
+				logger.error("substituting default one.\n");
+				
 			}
 		}
-		return settings;
+		settings.segmenterSettings = ss;
+
 	}
-
-
+	
 	/**
 	 * Update the given {@link Settings} object with the {@link TrackerSettings} and {@link SpotTracker} fields
 	 * named {@link Settings#trackerSettings} and {@link Settings#tracker} read within the XML file
@@ -337,7 +312,6 @@ public class TmXmlReader {
 		if (null == element) {
 			return;
 		}
-
 
 		// Deal with tracker
 		SpotTracker tracker;
@@ -371,7 +345,10 @@ public class TmXmlReader {
 			TrackerSettings ts = tracker.createDefaultSettings();
 			String trackerSettingsClassName = element.getAttributeValue(TRACKER_SETTINGS_CLASS_ATTRIBUTE_NAME);
 			if (null == trackerSettingsClassName) {
-				logger.error("Tracker settings class is not present.\n");
+				
+				logger.error("Tracker settings class is not present,\n");
+				logger.error("substituting default one.\n");
+				
 			} else {
 
 				if (trackerSettingsClassName.equals(ts.getClass().getName())) {
@@ -381,54 +358,16 @@ public class TmXmlReader {
 
 				} else {
 
-					// They do not match. We give priority to what has been saved.
+					// They do not match. We DO NOT give priority to what has been saved. That way we always
+					// have something that works (when invoking the process methods of the plugin).
 					
-					try {
-						ts = (TrackerSettings) Class.forName(trackerSettingsClassName).newInstance();
-						ts.unmarshall(element);
-					} catch (InstantiationException e) {
-						logger.error("Unable to instantiate tracker settings class: "+e.getLocalizedMessage()+"\n");
-						ts = trackerSettingsFallback(element);
-					} catch (IllegalAccessException e) {
-						logger.error("Unable to instantiate tracker settings class: "+e.getLocalizedMessage()+"\n");
-						ts = trackerSettingsFallback(element);
-					} catch (ClassNotFoundException e) {
-						logger.error("Unable to find segmenter settings class: "+e.getLocalizedMessage()+"\n");
-						ts = trackerSettingsFallback(element);
-					}
+					logger.error("Tracker settings class ("+trackerSettingsClassName+") does not match tracker requirements (" +
+							ts.getClass().getName()+"),\n");
+					logger.error("substituting default one.\n");
 				}
 			}
 			settings.trackerSettings = ts;
 		}
-
-	}
-
-	private TrackerSettings trackerSettingsFallback(Element element) {
-		TrackerSettings settings;
-		String trackerClassName = element.getAttributeValue(TRACKER_CLASS_ATTRIBUTE_NAME);
-		if (null == trackerClassName) {
-			logger.error("Substituting dummy tracker settings.\n");
-			settings = new LAPTrackerSettings();
-		} else {
-			logger.error("Guessing default tracker settings from segmenter name: "+trackerClassName+".\n");
-			try {
-				SpotTracker tracker = (SpotTracker) Class.forName(trackerClassName).newInstance();
-				settings = tracker.createDefaultSettings();
-			} catch (InstantiationException e) {
-				logger.error("Unable to instantiate tracker settings class: "+e.getLocalizedMessage());
-				logger.error("\nFalling back to dummy tracker settings.\n");
-				settings = new LAPTrackerSettings();
-			} catch (IllegalAccessException e) {
-				logger.error("Unable to instantiate tracker settings class: "+e.getLocalizedMessage());
-				logger.error("\nFalling back to dummy tracker settings.\n");
-				settings = new LAPTrackerSettings();
-			} catch (ClassNotFoundException e) {
-				logger.error("Unable to find segmenter tracker class: "+e.getLocalizedMessage());
-				logger.error("\nFalling back to dummy tracker settings.\n");
-				settings = new LAPTrackerSettings();
-			}
-		}
-		return settings;
 	}
 
 	/**
