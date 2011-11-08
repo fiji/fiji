@@ -546,7 +546,7 @@ LIBS(linux64)=-ldl -lpthread
 LIBS(macosx)=-weak -framework CoreFoundation -framework ApplicationServices \
 	-framework JavaVM
 
-CLASSPATH(fiji)=jars/Fiji.jar
+CLASSPATH(fiji)=jars/Fiji.jar:jars/fiji-compat.jar:jars/ij.jar:jars/javassist.jar
 fiji <- fiji.c
 
 CFLAGS(fiji-macosx)=$COMMONCFLAGS $MACOPTS(osx10.5)
