@@ -84,6 +84,10 @@ public class Matching
 			model2 = params.model.copy();
 			IJ.log( "" + model1 );
 			
+			// nothing found
+			if ( model1 == null || model2 == null )
+				return;
+			
 			// set the static model
 			Descriptor_based_registration.lastModel1 = (InvertibleBoundable)model1.copy();
 			Descriptor_based_registration.lastModel2 = (InvertibleBoundable)model2.copy();
@@ -266,6 +270,9 @@ public class Matching
                     	{
                     		final ComparePair pair = pairs.get( i );
                     		pair.model = pairwiseMatching( pair.inliers, peaks.get( pair.indexA ), peaks.get( pair.indexB ), zStretching, zStretching, params, pair.indexA + "<->" + pair.indexB );
+                    		
+                    		if ( pair.model == null )
+                    			pair.model = params.model.copy();
                     	}
                 }
             });
@@ -405,7 +412,8 @@ public class Matching
 		//ArrayList<PointMatch> finalInliers = new ArrayList<PointMatch>();
 		Model<?> finalModel = params.model.copy();
 		String statement = computeRANSAC( candidates, finalInliers, finalModel, (float)params.ransacThreshold );
-
+		IJ.log( explanation + ": " + statement );
+		
 		// apply rotation-variant matching after applying the model until it converges
 		if ( finalInliers.size() > finalModel.getMinNumMatches() )
 		{
@@ -429,6 +437,7 @@ public class Matching
 				Model<?> model2 = params.model.copy();
 				statement = computeRANSAC( candidates, inliers, model2, (float)params.ransacThreshold );
 				numInliers = inliers.size();
+				IJ.log( explanation + ": " + statement );
 				
 				// update model if this one was better
 				if ( numInliers > previousNumInliers )
@@ -443,7 +452,7 @@ public class Matching
 		}
 		else
 		{
-			IJ.log( explanation + ": No inliers found, stopping. Tipp: You could increase the number of neighbors, redundancy or use a model that has more degrees of freedom." );
+			IJ.log( explanation + ": " + statement + " - No inliers foundTipp: You could increase the number of neighbors, redundancy or use a model that has more degrees of freedom." );
 			finalInliers.clear();
 			return null;
 		}
@@ -544,8 +553,10 @@ public class Matching
 	protected static String computeRANSAC( final ArrayList<PointMatch> candidates, final ArrayList<PointMatch> inliers, final Model<?> model, final float maxEpsilon )
 	{		
 		boolean modelFound = false;
-		float minInlierRatio = 0.05f;
+		float minInlierRatio = DescriptorParameters.minInlierRatio;
 		int numIterations = DescriptorParameters.ransacIterations;
+		float maxTrust = DescriptorParameters.maxTrust;
+		float minInlierFactor = DescriptorParameters.minInlierFactor;
 		
 		try
 		{
@@ -559,9 +570,9 @@ public class Matching
 					candidates,
 					inliers,
 					numIterations,
-					maxEpsilon, minInlierRatio );
+					maxEpsilon, minInlierRatio, maxTrust );
 			
-			if ( modelFound )
+			if ( modelFound && inliers.size() > model.getMinNumMatches() * minInlierFactor )
 			{
 				model.fit( inliers );
 				return "Remaining inliers after RANSAC (" + model.getClass().getSimpleName() + "): " + inliers.size() + " of " + candidates.size() + " with average error " + model.getCost();

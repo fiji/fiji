@@ -5,8 +5,34 @@ import mpicbg.models.AbstractModel;
 
 public class DescriptorParameters 
 {
+	/**
+	 * How many iterations for a RANSAC
+	 */
 	public static int ransacIterations = 1000;
 	
+	/**
+	 * minimal number of inliers to number of
+	 * candidates in RANSAC
+	 */
+	public static float minInlierRatio = 0.05f;
+	
+	/**
+	 * Max trust: reject candidates with a cost 
+	 * larger than maxTrust * median cost 
+	 */
+	public static float maxTrust = 4f;
+	
+	/**
+	 * How many times more inliers are required
+	 * than the minimum number of correspondences
+	 * required for the model.
+	 * 
+	 * E.g. AffineModel3d needs at least 4 corresponences,
+	 * so we reject if the number of inliers is smaller
+	 * than minInlierFactor*4 
+	 */
+	public static float minInlierFactor = 2f;
+
 	public int dimensionality;
 	public double sigma1, sigma2, threshold;
 	public boolean lookForMaxima, lookForMinima;
