@@ -189,7 +189,6 @@ public class Descriptor_based_stack_registration implements PlugIn
 			return null;
 		
 		final DescriptorParameters params = new DescriptorParameters();
-		params.dimensionality = 2;
 		
 		final int detectionBrightnessIndex = gd.getNextChoiceIndex();
 		final int detectionSizeIndex = gd.getNextChoiceIndex();
@@ -342,6 +341,7 @@ public class Descriptor_based_stack_registration implements PlugIn
 		params.setPointsRois = false;
 		params.globalOpt = globalOptIndex;
 		params.range = range;
+		params.dimensionality = dimensionality;
 		
 		return params;
 	}

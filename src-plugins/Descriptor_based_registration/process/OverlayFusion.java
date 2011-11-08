@@ -96,7 +96,7 @@ public class OverlayFusion
 		{
 			result.setDimensions( size[ 2 ], imp.getNChannels(), imp.getNFrames() );
 			result = OverlayFusion.switchZCinXYCZT( result );
-			return result;
+			return new CompositeImage( result );
 		}
 		else
 		{
