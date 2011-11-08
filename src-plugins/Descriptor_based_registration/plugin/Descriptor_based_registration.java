@@ -5,6 +5,7 @@ import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.models.AffineModel2D;
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.HomographyModel2D;
+import mpicbg.models.InvertibleBoundable;
 import mpicbg.models.RigidModel2D;
 import mpicbg.models.RigidModel3D;
 import mpicbg.models.SimilarityModel2D;
@@ -29,7 +30,12 @@ public class Descriptor_based_registration implements PlugIn
 
 	public static int defaultImg1 = 0;
 	public static int defaultImg2 = 1;
+	public static boolean defaultReApply = false;
 
+	public static InvertibleBoundable lastModel1 = null;
+	public static InvertibleBoundable lastModel2 = null;
+	public static int lastDimensionality = Integer.MAX_VALUE;
+	
 	//@Override
 	public void run(String arg0) 
 	{		
@@ -51,8 +57,12 @@ public class Descriptor_based_registration implements PlugIn
 		 */
 		final GenericDialog gd = new GenericDialog( "Descriptor based registration" );
 	
-		gd.addChoice("First_image (reference)", imgList, imgList[ defaultImg1 ] );
-		gd.addChoice("Second_image (to register)", imgList, imgList[ defaultImg2 ] );
+		gd.addChoice("First_image (to register)", imgList, imgList[ defaultImg1 ] );
+		gd.addChoice("Second_image (reference)", imgList, imgList[ defaultImg2 ] );
+		
+		if ( lastModel1 != null )
+			gd.addCheckbox( "Reapply last model", defaultReApply );
+		
 		gd.addMessage( "Warning: if images are of RGB or 8-bit color they will be converted to hyperstacks.");
 		gd.addMessage( "Please note that the SPIM Registration is based on a publication.\n" +
 					   "If you use it successfully for your research please be so kind to cite our work:\n" +
@@ -68,7 +78,14 @@ public class Descriptor_based_registration implements PlugIn
 		
 		ImagePlus imp1 = WindowManager.getImage( idList[ defaultImg1 = gd.getNextChoiceIndex() ] );		
 		ImagePlus imp2 = WindowManager.getImage( idList[ defaultImg2 = gd.getNextChoiceIndex() ] );		
-
+		boolean reApply = false;
+		
+		if ( lastModel1 != null )
+		{
+			reApply = gd.getNextBoolean();
+			defaultReApply = reApply;			
+		}
+		
 		// if one of the images is rgb or 8-bit color convert them to hyperstack
 		imp1 = convertToHyperStack( imp1 );
 		imp2 = convertToHyperStack( imp2 );
@@ -90,12 +107,36 @@ public class Descriptor_based_registration implements PlugIn
 		else
 			dimensionality = 2;
 		
+		// reapply?
+		if ( reApply )
+		{
+			if ( dimensionality < lastDimensionality )
+			{
+				IJ.log( "Cannot reapply, cannot apply a " + lastModel1.getClass().getSimpleName() + " to " + dimensionality + " data." );
+				defaultReApply = false;
+				return;
+			}
+			else if ( dimensionality > lastDimensionality )
+			{
+				IJ.log( "WARNING: applying a " + lastModel1.getClass().getSimpleName() + " to " + dimensionality + " data." );
+			}
+			
+			// just fuse
+			final DescriptorParameters params = new DescriptorParameters();
+			params.dimensionality = dimensionality;
+			params.reApply = true;
+			params.fuse = true;
+			params.setPointsRois = false;
+			Matching.descriptorBasedRegistration( imp1, imp2, params );
+			return;			
+		}
+
 		// open a second dialog and query the other parameters
 		final DescriptorParameters params = getParameters( imp1, imp2, dimensionality );
 		
 		if ( params == null )
 			return;
-		
+				
 		// compute the actual matching
 		Matching.descriptorBasedRegistration( imp1, imp2, params );
 	}

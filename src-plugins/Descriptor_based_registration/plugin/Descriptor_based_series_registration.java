@@ -1,10 +1,13 @@
 package plugin;
 
+import java.util.ArrayList;
+
 import process.Matching;
 import process.OverlayFusion;
 import mpicbg.models.AffineModel2D;
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.HomographyModel2D;
+import mpicbg.models.InvertibleBoundable;
 import mpicbg.models.RigidModel2D;
 import mpicbg.models.RigidModel3D;
 import mpicbg.models.SimilarityModel2D;
@@ -25,6 +28,9 @@ public class Descriptor_based_series_registration implements PlugIn
 	final private String paperURL = "http://www.nature.com/nmeth/journal/v7/n6/full/nmeth0610-418.html";
 
 	public static int defaultImg = 0;
+	public static boolean defaultReApply = false;
+	public static ArrayList<InvertibleBoundable> lastModels = null;
+	public static int lastDimensionality = Integer.MAX_VALUE;
 	
 	@Override
 	public void run( final String arg0 ) 
@@ -47,7 +53,11 @@ public class Descriptor_based_series_registration implements PlugIn
 		 */
 		final GenericDialog gd = new GenericDialog( "Descriptor based registration" );
 	
-		gd.addChoice("Stack_of_images", imgList, imgList[ defaultImg ] );
+		gd.addChoice("Series_of_images", imgList, imgList[ defaultImg ] );
+		
+		if ( lastModels != null )
+			gd.addCheckbox( "Reapply last models", defaultReApply );
+		
 		gd.addMessage( "Warning: if images are of RGB or 8-bit color they will be converted to hyperstacks.");
 		gd.addMessage( "Please note that the SPIM Registration is based on a publication.\n" +
 					   "If you use it successfully for your research please be so kind to cite our work:\n" +
@@ -62,6 +72,13 @@ public class Descriptor_based_series_registration implements PlugIn
 			return;
 		
 		ImagePlus imp = WindowManager.getImage( idList[ defaultImg = gd.getNextChoiceIndex() ] );		
+		boolean reApply = false;
+		
+		if ( lastModels != null )
+		{
+			reApply = gd.getNextBoolean();
+			defaultReApply = reApply;			
+		}
 
 		// if one of the images is rgb or 8-bit color convert them to hyperstack
 		imp = Descriptor_based_registration.convertToHyperStack( imp );
@@ -83,7 +100,39 @@ public class Descriptor_based_series_registration implements PlugIn
 		// if it is a stack, we convert it into a movie
 		if ( dimensionality == 2 && imp.getNSlices() > 1 )
 			imp = OverlayFusion.switchZTinXYCZT( imp );
-		
+
+		// reapply?
+		if ( reApply )
+		{
+			if ( lastModels.size() < imp.getNFrames() )
+			{
+				IJ.log( "Cannot reapply, you have only " + lastModels.size() + " models, but the series size is" + imp.getNFrames() + "." );
+				defaultReApply = false;
+				return;
+			}
+			else if ( lastModels.size() > imp.getNFrames() )
+			{
+				IJ.log( "WARNING: you have " + lastModels.size() + " models, but the series size is only" + imp.getNFrames() + "." );
+			}
+			else if ( dimensionality < lastDimensionality )
+			{
+				IJ.log( "Cannot reapply, cannot apply " + lastModels.get( 0 ).getClass().getSimpleName() + " to " + dimensionality + " data." );
+				defaultReApply = false;
+				return;
+			}
+			else if ( dimensionality > lastDimensionality )
+			{
+				IJ.log( "WARNING: applying " + lastModels.get( 0 ).getClass().getSimpleName() + " to " + dimensionality + " data." );
+			}
+			
+			// just fuse
+			final DescriptorParameters params = new DescriptorParameters();
+			params.reApply = true;
+			params.dimensionality = dimensionality;
+			Matching.descriptorBasedStackRegistration( imp, params );
+			return;
+		}
+
 		// open a second dialog and query the other parameters
 		final DescriptorParameters params = getParameters( imp, dimensionality );
 		
@@ -189,6 +238,7 @@ public class Descriptor_based_series_registration implements PlugIn
 			return null;
 		
 		final DescriptorParameters params = new DescriptorParameters();
+		params.roi1 = imp.getRoi();
 		
 		final int detectionBrightnessIndex = gd.getNextChoiceIndex();
 		final int detectionSizeIndex = gd.getNextChoiceIndex();
