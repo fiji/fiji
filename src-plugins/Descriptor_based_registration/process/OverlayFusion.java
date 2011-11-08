@@ -7,6 +7,7 @@ import ij.ImageStack;
 import ij.process.ImageProcessor;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import mpicbg.imglib.container.imageplus.ImagePlusContainer;
 import mpicbg.imglib.container.imageplus.ImagePlusContainerFactory;
@@ -39,6 +40,76 @@ public class OverlayFusion
 		models.add( finalModel2 );
 		
 		return createOverlay( targetType, images, models, dimensionality );
+	}
+	
+	public static <T extends RealType<T>> ImagePlus createReRegisteredSeries( final T targetType, final ImagePlus imp, final ArrayList<InvertibleBoundable> models, final int dimensionality )
+	{
+		final int numImages = imp.getNFrames();
+
+		// the size of the new image
+		final int[] size = new int[ dimensionality ];
+		// the offset relative to the output image which starts with its local coordinates (0,0,0)
+		final float[] offset = new float[ dimensionality ];
+
+		final int[][] imgSizes = new int[ numImages ][ dimensionality ];
+		
+		for ( int i = 0; i < numImages; ++i )
+		{
+			imgSizes[ i ][ 0 ] = imp.getWidth();
+			imgSizes[ i ][ 1 ] = imp.getHeight();
+			if ( dimensionality == 3 )
+				imgSizes[ i ][ 2 ] = imp.getNSlices();
+		}
+		
+		// estimate the boundaries of the output image and the offset for fusion (negative coordinates after transform have to be shifted to 0,0,0)
+		estimateBounds( offset, size, imgSizes, models, dimensionality );
+				
+		// for output
+		final ImageFactory<T> f = new ImageFactory<T>( targetType, new ImagePlusContainerFactory() );
+		// the composite
+		final ImageStack stack = new ImageStack( size[ 0 ], size[ 1 ] );
+
+		for ( int t = 1; t <= numImages; ++t )
+		{
+			for ( int c = 1; c <= imp.getNChannels(); ++c )
+			{
+				final Image<T> out = f.createImage( size );
+				fuseChannel( out, ImageJFunctions.convertFloat( getImageChunk( imp, c, t ) ), offset, models.get( t - 1 ) );
+				try 
+				{
+					final ImagePlus outImp = ((ImagePlusContainer<?,?>)out.getContainer()).getImagePlus();
+					for ( int z = 1; z <= out.getDimension( 2 ); ++z )
+						stack.addSlice( imp.getTitle(), outImp.getStack().getProcessor( z ) );
+				} 
+				catch (ImgLibException e) 
+				{
+					IJ.log( "Output image has no ImageJ type: " + e );
+				}				
+			}
+		}
+		
+		//convertXYZCT ...
+		ImagePlus result = new ImagePlus( "registered " + imp.getTitle(), stack );
+		
+		// numchannels, z-slices, timepoints (but right now the order is still XYZCT)
+		if ( dimensionality == 3 )
+		{
+			result.setDimensions( size[ 2 ], imp.getNChannels(), imp.getNFrames() );
+			result = OverlayFusion.switchZCinXYCZT( result );
+			return result;
+		}
+		else
+		{
+			IJ.log( "ch: " + imp.getNChannels() );
+			IJ.log( "slices: " + imp.getNSlices() );
+			IJ.log( "frames: " + imp.getNFrames() );
+			result.setDimensions( imp.getNChannels(), 1, imp.getNFrames() );
+			
+			if ( imp.getNChannels() > 1 )
+				return new CompositeImage( result );
+			else
+				return result;
+		}
 	}
 	
 	public static <T extends RealType<T>> CompositeImage createOverlay( final T targetType, final ArrayList<ImagePlus> images, final ArrayList<InvertibleBoundable> models, final int dimensionality )
@@ -102,10 +173,25 @@ public class OverlayFusion
 		
 		return new CompositeImage( result );
 	}
-
-	public static void estimateBounds( final float[] offset, final int[] size, final ArrayList<ImagePlus> images, final ArrayList<InvertibleBoundable> models, final int dimensionality )
+	
+	public static void estimateBounds( final float[] offset, final int[] size, final List<ImagePlus> images, final ArrayList<InvertibleBoundable> models, final int dimensionality )
 	{
-		final int numImages = images.size();
+		final int[][] imgSizes = new int[ images.size() ][ dimensionality ];
+		
+		for ( int i = 0; i < images.size(); ++i )
+		{
+			imgSizes[ i ][ 0 ] = images.get( i ).getWidth();
+			imgSizes[ i ][ 1 ] = images.get( i ).getHeight();
+			if ( dimensionality == 3 )
+				imgSizes[ i ][ 2 ] = images.get( i ).getNSlices();
+		}
+		
+		estimateBounds( offset, size, imgSizes, models, dimensionality );
+	}
+	
+	public static void estimateBounds( final float[] offset, final int[] size, final int[][]imgSizes, final ArrayList<InvertibleBoundable> models, final int dimensionality )
+	{
+		final int numImages = imgSizes.length;
 		
 		// estimate the bounaries of the output image
 		final float[][] max = new float[ numImages ][];
@@ -114,15 +200,12 @@ public class OverlayFusion
 		if ( dimensionality == 2 )
 		{
 			for ( int i = 0; i < numImages; ++i )
-				max[ i ] = new float[] { images.get( i ).getWidth(), images.get( i ).getHeight() };
+				max[ i ] = new float[] { imgSizes[ i ][ 0 ], imgSizes[ i ][ 1 ] };
 		}
 		else
 		{
 			for ( int i = 0; i < numImages; ++i )
-			{
-				max[ i ] = new float[] { images.get( i ).getWidth(), images.get( i ).getHeight(), images.get( i ).getNSlices() };
-				BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D<?>)models.get( i ), images.get( i ).getCalibration().pixelDepth / images.get( i ).getCalibration().pixelWidth );
-			}
+				max[ i ] = new float[] { imgSizes[ i ][ 0 ], imgSizes[ i ][ 1 ], imgSizes[ i ][ 2 ] };
 		}
 
 		// casts of the models
@@ -148,7 +231,7 @@ public class OverlayFusion
 			maxImg[ d ] = Math.max( Math.max( max[ 0 ][ d ], max[ 1 ][ d ] ), Math.max( min[ 0 ][ d ], min[ 1 ][ d ]) );
 			minImg[ d ] = Math.min( Math.min( max[ 0 ][ d ], max[ 1 ][ d ] ), Math.min( min[ 0 ][ d ], min[ 1 ][ d ]) );
 			
-			for ( int i = 2; i < images.size(); ++i )
+			for ( int i = 2; i < imgSizes.length; ++i )
 			{
 				maxImg[ d ] = Math.max( maxImg[ d ], Math.max( min[ i ][ d ], max[ i ][ d ]) );
 				minImg[ d ] = Math.min( minImg[ d ], Math.min( min[ i ][ d ], max[ i ][ d ]) );	

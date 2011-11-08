@@ -13,11 +13,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussian.SpecialPoint;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import mpicbg.imglib.type.numeric.integer.UnsignedShortType;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.InvertibleBoundable;
 import mpicbg.models.Model;
@@ -42,6 +44,7 @@ import mpicbg.spim.mpicbg.PointMatchGeneric;
 import mpicbg.spim.mpicbg.TileConfigurationSPIM;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
+import mpicbg.spim.registration.bead.BeadRegistration;
 import mpicbg.spim.registration.bead.error.GlobalErrorStatistics;
 import mpicbg.spim.registration.detection.AbstractDetection;
 import mpicbg.spim.registration.detection.DetectionSegmentation;
@@ -75,9 +78,17 @@ public class Matching
 		if ( params.fuse )
 		{
 			final CompositeImage composite;
+
+			final Model<?> model2 = params.model.copy();
+			
+			if ( params.dimensionality == 3 )
+			{
+				BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D<?>)finalModel, imp1.getCalibration().pixelDepth / imp1.getCalibration().pixelWidth );				
+				BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D<?>)model2, imp2.getCalibration().pixelDepth / imp2.getCalibration().pixelWidth );
+			}
 			
 			if ( imp1.getType() == ImagePlus.GRAY32 || imp2.getType() == ImagePlus.GRAY32 )
-				composite = OverlayFusion.createOverlay( new FloatType(), imp1, imp2, (InvertibleBoundable)finalModel, (InvertibleBoundable)params.model.copy(), params.dimensionality );
+				composite = OverlayFusion.createOverlay( new FloatType(), imp1, imp2, (InvertibleBoundable)finalModel, (InvertibleBoundable)model2, params.dimensionality );
 			else if ( imp1.getType() == ImagePlus.GRAY16 || imp2.getType() == ImagePlus.GRAY16 )
 				composite = OverlayFusion.createOverlay( new UnsignedShortType(), imp1, imp2, (InvertibleBoundable)finalModel, (InvertibleBoundable)params.model.copy(), params.dimensionality );
 			else
@@ -97,7 +108,7 @@ public class Matching
 		// get the peaks
 		final ArrayList<ArrayList<DifferenceOfGaussianPeak<FloatType>>> peaks = new ArrayList<ArrayList<DifferenceOfGaussianPeak<FloatType>>>();
 		
-		for ( int t = 1; t <= numImages; ++t )
+		for ( int t = 0; t < numImages; ++t )
 			peaks.add( extractCandidates( imp, params.channel1, t, params ) );
 		
 		// get all compare pairs
@@ -198,6 +209,22 @@ public class Matching
 				models.add( (InvertibleBoundable)params.model.copy() );
 			}
 		}
+		
+		// fuse
+		if ( params.dimensionality == 3 )
+			for ( final InvertibleBoundable model : models )
+				BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D<?>)model, imp.getCalibration().pixelDepth / imp.getCalibration().pixelWidth );				
+		
+		final ImagePlus result;
+		
+		if ( imp.getType() == ImagePlus.GRAY32 )
+			result = OverlayFusion.createReRegisteredSeries( new FloatType(), imp, models, params.dimensionality );
+		else if ( imp.getType() == ImagePlus.GRAY16 )
+			result = OverlayFusion.createReRegisteredSeries( new UnsignedShortType(), imp, models, params.dimensionality );
+		else
+			result = OverlayFusion.createReRegisteredSeries( new UnsignedByteType(), imp, models, params.dimensionality );
+		
+		result.show();
 	}
 	
 	public synchronized static void addPointMatches( final ArrayList<PointMatch> correspondences, final Tile<?> tileA, final Tile<?> tileB )

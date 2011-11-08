@@ -165,7 +165,6 @@ public class Descriptor_based_stack_registration implements PlugIn
 			
 			gd.addSlider( "Number_of_neighbors for the descriptors", 3, 10, defaultNumNeighbors );
 		}
-		gd.addSlider( "Number_of_neighbors for the descriptors", 2, 10, defaultNumNeighbors );
 		gd.addSlider( "Redundancy for descriptor matching", 0, 10, defaultRedundancy );		
 		gd.addSlider( "Significance required for a descriptor match", 1.0, 10.0, defaultSignificance );
 		gd.addSlider( "Allowed_error_for_RANSAC (px)", 0.5, 20.0, defaultRansacThreshold );
