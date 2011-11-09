@@ -105,8 +105,6 @@ public class TMUtils {
 	 * STATIC METHODS
 	 */
 	
-	
-
 	public static  final int readIntAttribute(Element element, String name, Logger logger) {
 		int val = 0;
 		try {

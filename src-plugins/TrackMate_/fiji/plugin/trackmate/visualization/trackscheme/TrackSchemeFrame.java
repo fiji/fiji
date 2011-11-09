@@ -90,6 +90,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	/** The model this instance is a view of (Yoda I speak like). */
 	private TrackMateModel model;
 	private Map<String, Object> displaySettings = new HashMap<String, Object>();
+	private SpotImageUpdater spotImageUpdater;
 
 
 
@@ -126,6 +127,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		initDisplaySettings();
 		init();
 		setSize(DEFAULT_SIZE);
+		this.spotImageUpdater = new SpotImageUpdater(model);
 	}
 
 	/*
@@ -228,53 +230,64 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		if (event.getEventID() != TrackMateModelChangeEvent.MODEL_MODIFIED)
 			return;
 
-		graph.getModel().beginUpdate();
-		try {
-			ArrayList<mxICell> cellsToRemove = new ArrayList<mxICell>();
+		new Thread() {
+			public void run() {
 
-			int targetColumn = 0;
-			for (int i = 0; i < graphComponent.getColumnWidths().length; i++)
-				targetColumn += graphComponent.getColumnWidths()[i];
 
-			if (event.getSpots() != null) {
-				for (Spot spot : event.getSpots() ) {
+				graph.getModel().beginUpdate();
+				try {
+					ArrayList<mxICell> cellsToRemove = new ArrayList<mxICell>();
 
-					if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_ADDED) {
+					int targetColumn = 0;
+					for (int i = 0; i < graphComponent.getColumnWidths().length; i++)
+						targetColumn += graphComponent.getColumnWidths()[i];
 
-						insertSpotInGraph(spot, targetColumn);
-						targetColumn++;
+					if (event.getSpots() != null) {
+						for (Spot spot : event.getSpots() ) {
 
-					} else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_MODIFIED) {
+							if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_ADDED) {
 
-						mxICell cell = graph.getCellFor(spot);
-						if (DEBUG)
-							System.out.println("[TrackSchemeFrame] modelChanged: updating cell for spot "+spot);
-						if (null == cell) {
-							// mxCell not present in graph. Most likely because the corresponding spot belonged
-							// to an invisible track, and a cell was not created for it when TrackScheme was
-							// launched. So we create one on the fly now.
-							cell = insertSpotInGraph(spot, targetColumn);
+								insertSpotInGraph(spot, targetColumn);
+								targetColumn++;
+
+							} else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_MODIFIED) {
+
+								mxICell cell = graph.getCellFor(spot);
+								if (DEBUG)
+									System.out.println("[TrackSchemeFrame] modelChanged: updating cell for spot "+spot);
+								if (null == cell) {
+									// mxCell not present in graph. Most likely because the corresponding spot belonged
+									// to an invisible track, and a cell was not created for it when TrackScheme was
+									// launched. So we create one on the fly now.
+									cell = insertSpotInGraph(spot, targetColumn);
+								}
+
+								// Update spot image
+								spotImageUpdater.update(spot);
+
+								// Update cell look
+								String style = cell.getStyle();
+								style = mxUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64,"+spot.getImageString());
+								graph.getModel().setStyle(cell, style);
+								int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Spot.RADIUS) / settings.dx));
+								height = Math.max(height, DEFAULT_CELL_HEIGHT/3);
+								graph.getModel().getGeometry(cell).setHeight(height);
+
+							}  else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_REMOVED) {
+
+								mxICell cell = graph.getCellFor(spot);
+								cellsToRemove.add(cell);
+							}
+
 						}
-
-						String style = cell.getStyle();
-						style = mxUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64,"+spot.getImageString());
-						graph.getModel().setStyle(cell, style);
-						int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Spot.RADIUS) / settings.dx));
-						height = Math.max(height, DEFAULT_CELL_HEIGHT/3);
-						graph.getModel().getGeometry(cell).setHeight(height);
-
-					}  else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_REMOVED) {
-
-						mxICell cell = graph.getCellFor(spot);
-						cellsToRemove.add(cell);
+						graph.removeCells(cellsToRemove.toArray(), true);
 					}
-
+				} finally {
+					graph.getModel().endUpdate();
 				}
-				graph.removeCells(cellsToRemove.toArray(), true);
-			}
-		} finally {
-			graph.getModel().endUpdate();
-		}
+			};
+		}.start();
+
 	}
 
 
