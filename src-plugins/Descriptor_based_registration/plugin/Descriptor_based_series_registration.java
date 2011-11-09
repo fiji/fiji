@@ -288,8 +288,8 @@ public class Descriptor_based_series_registration implements PlugIn
 			else
 			{
 				ImageStack stack = new ImageStack( imp.getWidth(), imp.getHeight() );
-				for ( int f = 1; f <= imp.getNFrames(); ++f )
-					stack.addSlice( "", imp.getStack().getProcessor( imp.getStackIndex( channel, 1, f ) ) );
+				for ( int s = 1; s <= imp.getNSlices(); ++s )
+					stack.addSlice( "", imp.getStack().getProcessor( imp.getStackIndex( channel, s, 1 ) ) );
 				interactiveTmp = new ImagePlus( "First series of " + imp.getTitle(), stack );
 			}
 			interactiveTmp.show();
