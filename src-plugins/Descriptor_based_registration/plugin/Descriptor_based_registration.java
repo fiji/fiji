@@ -1,6 +1,13 @@
 package plugin;
 
-import process.Matching;
+import fiji.plugin.Bead_Registration;
+import fiji.stacks.Hyperstack_rearranger;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
+import ij.gui.MultiLineLabel;
+import ij.plugin.PlugIn;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.models.AffineModel2D;
 import mpicbg.models.AffineModel3D;
@@ -12,18 +19,7 @@ import mpicbg.models.SimilarityModel2D;
 import mpicbg.models.TranslationModel2D;
 import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.segmentation.InteractiveDoG;
-import fiji.plugin.Bead_Registration;
-import fiji.stacks.CompositeConverter2;
-import fiji.stacks.Hyperstack_rearranger;
-import ij.IJ;
-import ij.ImagePlus;
-import ij.WindowManager;
-import ij.gui.GenericDialog;
-import ij.gui.MultiLineLabel;
-import ij.measure.Calibration;
-import ij.plugin.PlugIn;
-import ij.process.ImageConverter;
-import ij.process.StackConverter;
+import process.Matching;
 
 public class Descriptor_based_registration implements PlugIn 
 {
@@ -99,7 +95,7 @@ public class Descriptor_based_registration implements PlugIn
 		imp2 = Hyperstack_rearranger.convertToHyperStack( imp2 );
 		
 		// test if the images are compatible
-		String error = Stitching_Pairwise.testRegistrationCompatibility( imp1, imp2 );
+		String error = testRegistrationCompatibility( imp1, imp2 );
 
 		if ( error != null )
 		{
@@ -471,4 +467,24 @@ public class Descriptor_based_registration implements PlugIn
 		
 		return idog;
 	}
+	
+	public static String testRegistrationCompatibility( final ImagePlus imp1, final ImagePlus imp2 ) 
+	{
+		// test time points
+		final int numFrames1 = imp1.getNFrames();
+		final int numFrames2 = imp2.getNFrames();
+		
+		if ( numFrames1 != numFrames2 )
+			return "Images have a different number of time points, cannot proceed...";
+		
+		// test if both have 2d or 3d image contents
+		final int numSlices1 = imp1.getNSlices();
+		final int numSlices2 = imp2.getNSlices();
+		
+		if ( numSlices1 == 1 && numSlices2 != 1 || numSlices1 != 1 && numSlices2 == 1 )
+			return "One image is 2d and the other one is 3d, cannot proceed...";
+		
+		return null;
+	}
+	
 }
