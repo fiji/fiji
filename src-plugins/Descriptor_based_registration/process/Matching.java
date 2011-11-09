@@ -429,13 +429,13 @@ public class Matching
 		//				((Particle)pm.getP2()).getID() + "; " + Util.printCoordinates( ((Particle)pm.getP2()).getL() )  + " ["+Util.printCoordinates( ((Particle)pm.getP2()).getW() )+"] {" + Util.printCoordinates( ((Particle)pm.getP2()).getPeak().getSubPixelPosition() )+"}" );
 		//}
 
-		IJ.log( "" );
+		//IJ.log( "" );
 		
 		String statement = computeRANSAC( candidates, finalInliers, finalModel, (float)params.ransacThreshold );
 		//IJ.log( explanation + ": " + statement );
 		
-		IJ.log( "Z1 " + zStretching1 );
-		IJ.log( "Z2 " + zStretching2 );
+		//IJ.log( "Z1 " + zStretching1 );
+		//IJ.log( "Z2 " + zStretching2 );
 
 		//IJ.log( "after RANSAC:" );
 		//for ( final PointMatch pm : finalInliers )
