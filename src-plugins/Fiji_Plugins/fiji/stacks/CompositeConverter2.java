@@ -1,4 +1,4 @@
-package plugin;
+package fiji.stacks;
 
 import ij.CompositeImage;
 import ij.ImagePlus;

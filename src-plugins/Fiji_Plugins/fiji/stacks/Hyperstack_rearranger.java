@@ -6,8 +6,11 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.measure.Calibration;
 import ij.plugin.PlugIn;
+import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
+import ij.process.StackConverter;
 
 public class Hyperstack_rearranger implements PlugIn
 {
@@ -178,5 +181,33 @@ public class Hyperstack_rearranger implements PlugIn
 		
 		return c;
 	}
-	
+
+	/**
+	 * Converts this image to Hyperstack if it is RGB or 8-bit color
+	 * 
+	 * @param imp - Inputimage
+	 * @return the output image, might be the same
+	 */
+	public static ImagePlus convertToHyperStack( ImagePlus imp )
+	{
+		// first 8-bit color to RGB, directly to Hyperstack is not supported
+		if ( imp.getType() == ImagePlus.COLOR_256 )
+		{
+			if ( imp.getStackSize() > 1 )
+				new StackConverter( imp ).convertToRGB();
+			else
+				new ImageConverter( imp ).convertToRGB();
+		}
+		
+		final Calibration cal = imp.getCalibration();
+		
+		// now convert to hyperstack, this creates a new imageplus
+		if ( imp.getType() == ImagePlus.COLOR_RGB )
+		{
+			imp = new CompositeConverter2().makeComposite( imp );
+			imp.setCalibration( cal );
+		}
+		
+		return imp;
+	}
 }
