@@ -13,6 +13,8 @@ import mpicbg.models.TranslationModel2D;
 import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.segmentation.InteractiveDoG;
 import fiji.plugin.Bead_Registration;
+import fiji.stacks.CompositeConverter2;
+import fiji.stacks.Hyperstack_rearranger;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -93,8 +95,8 @@ public class Descriptor_based_registration implements PlugIn
 		}
 		
 		// if one of the images is rgb or 8-bit color convert them to hyperstack
-		imp1 = convertToHyperStack( imp1 );
-		imp2 = convertToHyperStack( imp2 );
+		imp1 = Hyperstack_rearranger.convertToHyperStack( imp1 );
+		imp2 = Hyperstack_rearranger.convertToHyperStack( imp2 );
 		
 		// test if the images are compatible
 		String error = Stitching_Pairwise.testRegistrationCompatibility( imp1, imp2 );
@@ -469,34 +471,4 @@ public class Descriptor_based_registration implements PlugIn
 		
 		return idog;
 	}
-	
-	/**
-	 * Converts this image to Hyperstack if it is RGB or 8-bit color
-	 * 
-	 * @param imp - Inputimage
-	 * @return the output image, might be the same
-	 */
-	public static ImagePlus convertToHyperStack( ImagePlus imp )
-	{
-		// first 8-bit color to RGB, directly to Hyperstack is not supported
-		if ( imp.getType() == ImagePlus.COLOR_256 )
-		{
-			if ( imp.getStackSize() > 1 )
-				new StackConverter( imp ).convertToRGB();
-			else
-				new ImageConverter( imp ).convertToRGB();
-		}
-		
-		final Calibration cal = imp.getCalibration();
-		
-		// now convert to hyperstack, this creates a new imageplus
-		if ( imp.getType() == ImagePlus.COLOR_RGB )
-		{
-			imp = new CompositeConverter2().makeComposite( imp );
-			imp.setCalibration( cal );
-		}
-		
-		return imp;
-	}
-
 }

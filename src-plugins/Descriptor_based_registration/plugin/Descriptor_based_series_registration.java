@@ -1,9 +1,17 @@
 package plugin;
 
+import fiji.plugin.Bead_Registration;
+import fiji.stacks.Hyperstack_rearranger;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
+import ij.gui.MultiLineLabel;
+import ij.plugin.PlugIn;
+
 import java.util.ArrayList;
 
-import process.Matching;
-import process.OverlayFusion;
 import mpicbg.models.AffineModel2D;
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.HomographyModel2D;
@@ -14,14 +22,8 @@ import mpicbg.models.SimilarityModel2D;
 import mpicbg.models.TranslationModel2D;
 import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.segmentation.InteractiveDoG;
-import fiji.plugin.Bead_Registration;
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.WindowManager;
-import ij.gui.GenericDialog;
-import ij.gui.MultiLineLabel;
-import ij.plugin.PlugIn;
+import process.Matching;
+import process.OverlayFusion;
 
 public class Descriptor_based_series_registration implements PlugIn
 {
@@ -85,7 +87,7 @@ public class Descriptor_based_series_registration implements PlugIn
 		}
 
 		// if one of the images is rgb or 8-bit color convert them to hyperstack
-		imp = Descriptor_based_registration.convertToHyperStack( imp );
+		imp = Hyperstack_rearranger.convertToHyperStack( imp );
 		
 		if ( imp.getNSlices() == 1 && imp.getNFrames() == 1)
 		{
