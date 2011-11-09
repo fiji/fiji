@@ -1,20 +1,16 @@
-package plugin;
+package fiji.stacks;
 
-import fiji.plugin.Bead_Registration;
 import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
-import ij.gui.MultiLineLabel;
 import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 
 public class Hyperstack_rearranger implements PlugIn
 {
-	final private String myURL = "http://fly.mpi-cbg.de/preibisch";
-
 	public static int defaultIndexChannels = 0;
 	public static int defaultIndexSlices = 1;
 	public static int defaultIndexFrames = 2;
@@ -24,6 +20,12 @@ public class Hyperstack_rearranger implements PlugIn
 	public void run(String arg0) 
 	{
 		final ImagePlus imp = WindowManager.getCurrentImage();
+		
+		if ( imp == null )
+		{			
+			IJ.log( "No images open." );
+			return;
+		}
 		
 		final int nChannels = imp.getNChannels();
 		final int nSlices = imp.getNSlices();
@@ -44,11 +46,6 @@ public class Hyperstack_rearranger implements PlugIn
 		gd.addMessage("Current number of channels: " + nChannels );
 		gd.addMessage("Current number of slices: " + nSlices );
 		gd.addMessage("Current number of frames: " + nFrames );
-		gd.addMessage("");
-		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
-
-		MultiLineLabel text = (MultiLineLabel) gd.getMessage();
-		Bead_Registration.addHyperLinkListener(text, myURL);
 		
 		gd.showDialog();
 		
