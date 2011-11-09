@@ -97,7 +97,7 @@ public class OverlayFusion
 		{
 			result.setDimensions( size[ 2 ], imp.getNChannels(), imp.getNFrames() );
 			result = OverlayFusion.switchZCinXYCZT( result );
-			return new CompositeImage( result );
+			return new CompositeImage( result, CompositeImage.COMPOSITE );
 		}
 		else
 		{
@@ -107,7 +107,7 @@ public class OverlayFusion
 			result.setDimensions( imp.getNChannels(), 1, imp.getNFrames() );
 			
 			if ( imp.getNChannels() > 1 )
-				return new CompositeImage( result );
+				return new CompositeImage( result, CompositeImage.COMPOSITE );
 			else
 				return result;
 		}
@@ -172,7 +172,7 @@ public class OverlayFusion
 			result.setDimensions( numChannels, 1, 1 );
 		}
 		
-		return new CompositeImage( result );
+		return new CompositeImage( result, CompositeImage.COMPOSITE );
 	}
 	
 	public static void estimateBounds( final float[] offset, final int[] size, final List<ImagePlus> images, final ArrayList<InvertibleBoundable> models, final int dimensionality )
