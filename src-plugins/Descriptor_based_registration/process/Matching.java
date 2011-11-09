@@ -428,8 +428,6 @@ public class Matching
 		//		IJ.log( ((Particle)pm.getP1()).getID() + "; " + Util.printCoordinates( ((Particle)pm.getP1()).getL() ) + " ["+Util.printCoordinates( ((Particle)pm.getP1()).getW() )+"] {" + Util.printCoordinates( ((Particle)pm.getP1()).getPeak().getSubPixelPosition() )+"} <-> " + 
 		//				((Particle)pm.getP2()).getID() + "; " + Util.printCoordinates( ((Particle)pm.getP2()).getL() )  + " ["+Util.printCoordinates( ((Particle)pm.getP2()).getW() )+"] {" + Util.printCoordinates( ((Particle)pm.getP2()).getPeak().getSubPixelPosition() )+"}" );
 		//}
-
-		//IJ.log( "" );
 		
 		String statement = computeRANSAC( candidates, finalInliers, finalModel, (float)params.ransacThreshold );
 		//IJ.log( explanation + ": " + statement );
