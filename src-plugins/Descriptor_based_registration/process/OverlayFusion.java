@@ -21,6 +21,7 @@ import mpicbg.imglib.interpolation.linear.LinearInterpolatorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.imglib.util.Util;
 import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.InvertibleBoundable;
 import mpicbg.models.InvertibleCoordinateTransform;
@@ -100,9 +101,9 @@ public class OverlayFusion
 		}
 		else
 		{
-			IJ.log( "ch: " + imp.getNChannels() );
-			IJ.log( "slices: " + imp.getNSlices() );
-			IJ.log( "frames: " + imp.getNFrames() );
+			//IJ.log( "ch: " + imp.getNChannels() );
+			//IJ.log( "slices: " + imp.getNSlices() );
+			//IJ.log( "frames: " + imp.getNFrames() );
 			result.setDimensions( imp.getNChannels(), 1, imp.getNFrames() );
 			
 			if ( imp.getNChannels() > 1 )
@@ -207,6 +208,9 @@ public class OverlayFusion
 			for ( int i = 0; i < numImages; ++i )
 				max[ i ] = new float[] { imgSizes[ i ][ 0 ], imgSizes[ i ][ 1 ], imgSizes[ i ][ 2 ] };
 		}
+		
+		//IJ.log( "1: " + Util.printCoordinates( min[ 0 ] ) + " -> " + Util.printCoordinates( max[ 0 ] ) );
+		//IJ.log( "2: " + Util.printCoordinates( min[ 1 ] ) + " -> " + Util.printCoordinates( max[ 1 ] ) );
 
 		// casts of the models
 		final ArrayList<InvertibleBoundable> boundables = new ArrayList<InvertibleBoundable>();
@@ -216,10 +220,12 @@ public class OverlayFusion
 			final InvertibleBoundable boundable = (InvertibleBoundable)models.get( i ); 
 			boundables.add( boundable );
 			
+			//IJ.log( "i: " + boundable );
+			
 			boundable.estimateBounds( min[ i ], max[ i ] );
 		}
-		//IJ.log( imp1.getTitle() + ": " + Util.printCoordinates( min1 ) + " -> " + Util.printCoordinates( max1 ) );
-		//IJ.log( imp2.getTitle() + ": " + Util.printCoordinates( min2 ) + " -> " + Util.printCoordinates( max2 ) );
+		//IJ.log( "1: " + Util.printCoordinates( min[ 0 ] ) + " -> " + Util.printCoordinates( max[ 0 ] ) );
+		//IJ.log( "2: " + Util.printCoordinates( min[ 1 ] ) + " -> " + Util.printCoordinates( max[ 1 ] ) );
 		
 		// dimensions of the final image
 		final float[] minImg = new float[ dimensionality ];
@@ -238,8 +244,6 @@ public class OverlayFusion
 			}
 		}
 		
-		//IJ.log( imp1.getTitle() + ": " + Util.printCoordinates( min1 ) + " -> " + Util.printCoordinates( max1 ) );
-		//IJ.log( imp2.getTitle() + ": " + Util.printCoordinates( min2 ) + " -> " + Util.printCoordinates( max2 ) );
 		//IJ.log( "output: " + Util.printCoordinates( minImg ) + " -> " + Util.printCoordinates( maxImg ) );
 
 		// the size of the new image

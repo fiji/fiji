@@ -21,6 +21,7 @@ import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import mpicbg.imglib.type.numeric.integer.UnsignedShortType;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.imglib.util.Util;
 import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.InvertibleBoundable;
@@ -110,8 +111,12 @@ public class Matching
 			
 			if ( params.dimensionality == 3 )
 			{
+				//IJ.log( "model1: " + model1 );
+				//IJ.log( "model2: " + model2 );
 				BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D<?>)model1, imp1.getCalibration().pixelDepth / imp1.getCalibration().pixelWidth );				
 				BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D<?>)model2, imp2.getCalibration().pixelDepth / imp2.getCalibration().pixelWidth );
+				//IJ.log( "model1: " + model1 );
+				//IJ.log( "model2: " + model2 );
 			}
 			
 			if ( imp1.getType() == ImagePlus.GRAY32 || imp2.getType() == ImagePlus.GRAY32 )
@@ -414,8 +419,34 @@ public class Matching
 		// compute ransac
 		//ArrayList<PointMatch> finalInliers = new ArrayList<PointMatch>();
 		Model<?> finalModel = params.model.copy();
+		
+		//IJ.log( "after Candidates:" );
+		//for ( final PointMatch pm : candidates )
+		//{
+			//0; (336.40515, 285.3888, 51.396233) [(335.1637, 293.7457, 44.46349)] {(336.40515, 285.3888, 16.24121)} <-> 467; (334.7591, 293.14224, 44.127663) [(335.1637, 293.7457, 44.46349)
+		//	if ( ((Particle)pm.getP1()).getID() == 0 )
+		//		IJ.log( ((Particle)pm.getP1()).getID() + "; " + Util.printCoordinates( ((Particle)pm.getP1()).getL() ) + " ["+Util.printCoordinates( ((Particle)pm.getP1()).getW() )+"] {" + Util.printCoordinates( ((Particle)pm.getP1()).getPeak().getSubPixelPosition() )+"} <-> " + 
+		//				((Particle)pm.getP2()).getID() + "; " + Util.printCoordinates( ((Particle)pm.getP2()).getL() )  + " ["+Util.printCoordinates( ((Particle)pm.getP2()).getW() )+"] {" + Util.printCoordinates( ((Particle)pm.getP2()).getPeak().getSubPixelPosition() )+"}" );
+		//}
+
+		IJ.log( "" );
+		
 		String statement = computeRANSAC( candidates, finalInliers, finalModel, (float)params.ransacThreshold );
 		//IJ.log( explanation + ": " + statement );
+		
+		IJ.log( "Z1 " + zStretching1 );
+		IJ.log( "Z2 " + zStretching2 );
+
+		//IJ.log( "after RANSAC:" );
+		//for ( final PointMatch pm : finalInliers )
+		//{
+		//	IJ.log( ((Particle)pm.getP1()).getID() + "; " + Util.printCoordinates( ((Particle)pm.getP1()).getL() ) + " ["+Util.printCoordinates( ((Particle)pm.getP1()).getW() )+"] {" + Util.printCoordinates( ((Particle)pm.getP1()).getPeak().getSubPixelPosition() )+"} <-> " + 
+		//			((Particle)pm.getP2()).getID() + "; " + Util.printCoordinates( ((Particle)pm.getP2()).getL() )  + " ["+Util.printCoordinates( ((Particle)pm.getP2()).getW() )+"] {" + Util.printCoordinates( ((Particle)pm.getP2()).getPeak().getSubPixelPosition() )+"}" );
+			
+		//	pm.getP1().apply( finalModel );
+		//	IJ.log( ((Particle)pm.getP1()).getID() + "; " + Util.printCoordinates( ((Particle)pm.getP1()).getL() ) + " ["+Util.printCoordinates( ((Particle)pm.getP1()).getW() )+"] {" + Util.printCoordinates( ((Particle)pm.getP1()).getPeak().getSubPixelPosition() )+"} <-> " + 
+		//			((Particle)pm.getP2()).getID() + "; " + Util.printCoordinates( ((Particle)pm.getP2()).getL() )  + " ["+Util.printCoordinates( ((Particle)pm.getP2()).getW() )+"] {" + Util.printCoordinates( ((Particle)pm.getP2()).getPeak().getSubPixelPosition() )+"}" );
+		//}
 		
 		// apply rotation-variant matching after applying the model until it converges
 		if ( finalInliers.size() > finalModel.getMinNumMatches() * DescriptorParameters.minInlierFactor )
@@ -654,10 +685,26 @@ public class Matching
 			descriptorsB = createSimplePointDescriptors( treeB, listB, numNeighbors, matcher, similarityMeasure );
 		}
 		
+		//IJ.log( "before" );
+		//for ( final Particle p : listA )
+		//{
+				//0; (336.40515, 285.3888, 51.396233) [(335.1637, 293.7457, 44.46349)] {(336.40515, 285.3888, 16.24121)} <-> 467; (334.7591, 293.14224, 44.127663) [(335.1637, 293.7457, 44.46349)
+		//		if ( p.getID() == 0 || p.getID() == 467 )
+		//			IJ.log( p.getID() + "; " + Util.printCoordinates( p.getL() ) + " ["+Util.printCoordinates( p.getW() )+"] {" + Util.printCoordinates( p.getPeak().getSubPixelPosition() ) );
+		//}
+		
 		/* compute matching */
 		/* the list of correspondence candidates */
 		final ArrayList<PointMatch> correspondenceCandidates = findCorrespondingDescriptors( descriptorsA, descriptorsB, (float)nTimesBetter );
-		
+
+		//IJ.log( "after" );
+		//for ( final Particle p : listA )
+		//{
+				//0; (336.40515, 285.3888, 51.396233) [(335.1637, 293.7457, 44.46349)] {(336.40515, 285.3888, 16.24121)} <-> 467; (334.7591, 293.14224, 44.127663) [(335.1637, 293.7457, 44.46349)
+		//		if ( p.getID() == 0 || p.getID() == 467 )
+		//			IJ.log( p.getID() + "; " + Util.printCoordinates( p.getL() ) + " ["+Util.printCoordinates( p.getW() )+"] {" + Util.printCoordinates( p.getPeak().getSubPixelPosition() ) );
+		//}
+
 		return correspondenceCandidates;
 	}
 	
