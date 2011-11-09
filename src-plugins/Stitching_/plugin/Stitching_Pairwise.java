@@ -4,6 +4,8 @@ import static stitching.CommonFunctions.addHyperLinkListener;
 import java.awt.Choice;
 import java.awt.TextField;
 
+import fiji.stacks.Hyperstack_rearranger;
+
 import stitching.CommonFunctions;
 import ij.IJ;
 import ij.ImagePlus;
@@ -68,9 +70,13 @@ public class Stitching_Pairwise implements PlugIn
 		if ( gd1.wasCanceled() )
 			return;
 		
-		final ImagePlus imp1 = WindowManager.getImage( idList[ defaultImg1 = gd1.getNextChoiceIndex() ] );		
-		final ImagePlus imp2 = WindowManager.getImage( idList[ defaultImg2 = gd1.getNextChoiceIndex() ] );		
+		ImagePlus imp1 = WindowManager.getImage( idList[ defaultImg1 = gd1.getNextChoiceIndex() ] );		
+		ImagePlus imp2 = WindowManager.getImage( idList[ defaultImg2 = gd1.getNextChoiceIndex() ] );		
 
+		// if one of the images is rgb or 8-bit color convert them to hyperstack
+		imp1 = Hyperstack_rearranger.convertToHyperStack( imp1 );
+		imp2 = Hyperstack_rearranger.convertToHyperStack( imp2 );
+		
 		// test if the images are compatible
 		String error = testRegistrationCompatibility( imp1, imp2 );
 		
