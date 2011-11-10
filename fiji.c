@@ -2372,9 +2372,11 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 	}
 	else if (!strcmp(argv[*i], "--system"))
 		options.use_system_jvm++;
-#ifdef WIN32
 	else if (!strcmp(argv[*i], "--console"))
+#ifdef WIN32
 		open_win_console();
+#else
+		; /* ignore */
 #endif
 	else if (!strcmp(argv[*i], "--jdb")) {
 		string_addf_path_list(&class_path, "%s/../lib/tools.jar", get_jre_home());
