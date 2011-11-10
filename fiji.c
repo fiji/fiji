@@ -2101,16 +2101,19 @@ const char *default_subcommands[] = {
 	" start javadoc instead of ImageJ",
 };
 
+static void initialize_subcommands(void)
+{
+	int i;
+	for (i = 0; i < sizeof(default_subcommands) / sizeof(default_subcommands[0]); i++)
+		add_subcommand(default_subcommands[i]);
+}
+
 static const char *expand_subcommand(const char *option)
 {
 	int i;
 
-	if (!all_subcommands.size) {
-		for (i = 0; i < sizeof(default_subcommands)
-				/ sizeof(default_subcommands[0]); i++)
-			add_subcommand(default_subcommands[i]);
-	}
-
+	if (!all_subcommands.size)
+		initialize_subcommands();
 	for (i = 0; i < all_subcommands.size; i++)
 		if (!strcmp(option, all_subcommands.list[i].name))
 			return all_subcommands.list[i].expanded;
