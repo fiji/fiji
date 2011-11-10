@@ -4,10 +4,6 @@ import fiji.stacks.Hyperstack_rearranger;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
-import ij.process.ByteProcessor;
-import ij.process.FloatProcessor;
-import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
 
 import java.util.ArrayList;
 import java.util.Vector;
@@ -17,10 +13,8 @@ import mpicbg.imglib.algorithm.fft.PhaseCorrelation;
 import mpicbg.imglib.algorithm.fft.PhaseCorrelationPeak;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.algorithm.scalespace.SubpixelLocalization;
-import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
-import mpicbg.imglib.cursor.array.ArrayCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
@@ -31,7 +25,6 @@ import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import mpicbg.imglib.type.numeric.integer.UnsignedShortType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
-import mpicbg.spim.registration.ViewDataBeads;
 
 /**
  * Pairwise Stitching of two ImagePlus using ImgLib1 and PhaseCorrelation.
@@ -550,122 +543,6 @@ public class StitchingImgLib
 			return false;
 	}
 	
-	/**
-	 * Normalize and make a copy of the {@link ImagePlus} into an {@link Image}<FloatType> for faster access when copying the slices
-	 * 
-	 * @param imp - the {@link ImagePlus} input image
-	 * @return - the normalized copy [0...1]
-	 */
-	public static Image<FloatType> convertToFloat( final ImagePlus imp, int channel, int timepoint )
-	{
-		// stupid 1-offset of imagej
-		channel++;
-		timepoint++;
-		
-		final Image<FloatType> img;
-		
-		if ( imp.getNSlices() > 1 )
-			img = new ImageFactory<FloatType>( new FloatType(), new ArrayContainerFactory() ).createImage( new int[]{ imp.getWidth(), imp.getHeight(), imp.getNSlices() } );
-		else
-			img = new ImageFactory<FloatType>( new FloatType(), new ArrayContainerFactory() ).createImage( new int[]{ imp.getWidth(), imp.getHeight() } );
-		
-		final int sliceSize = imp.getWidth() * imp.getHeight();
-		
-		int z = 0;
-		ImageProcessor ip = imp.getStack().getProcessor( imp.getStackIndex( channel, z + 1, timepoint ) );
-		
-		if ( ip instanceof FloatProcessor )
-		{
-			final ArrayCursor<FloatType> cursor = (ArrayCursor<FloatType>)img.createCursor();
-			
-			float[] pixels = (float[])ip.getPixels();
-			int i = 0;
-			
-			while ( cursor.hasNext() )
-			{
-				// only get new imageprocessor if necessary
-				if ( i == sliceSize )
-				{
-					++z;
-					
-					pixels = (float[])imp.getStack().getProcessor( imp.getStackIndex( channel, z + 1, timepoint ) ).getPixels();
-						 
-					i = 0;
-				}
-				
-				cursor.next().set( pixels[ i++ ] );
-			}
-		}
-		else if ( ip instanceof ByteProcessor )
-		{
-			final ArrayCursor<FloatType> cursor = (ArrayCursor<FloatType>)img.createCursor();
-
-			byte[] pixels = (byte[])ip.getPixels();
-			int i = 0;
-			
-			while ( cursor.hasNext() )
-			{
-				// only get new imageprocessor if necessary
-				if ( i == sliceSize )
-				{
-					++z;
-					pixels = (byte[])imp.getStack().getProcessor( imp.getStackIndex( channel, z + 1, timepoint ) ).getPixels();
-					
-					i = 0;
-				}
-				
-				cursor.next().set( pixels[ i++ ] & 0xff );
-			}
-		}
-		else if ( ip instanceof ShortProcessor )
-		{
-			final ArrayCursor<FloatType> cursor = (ArrayCursor<FloatType>)img.createCursor();
-
-			short[] pixels = (short[])ip.getPixels();
-			int i = 0;
-			
-			while ( cursor.hasNext() )
-			{
-				// only get new imageprocessor if necessary
-				if ( i == sliceSize )
-				{
-					++z;
-					
-					pixels = (short[])imp.getStack().getProcessor( imp.getStackIndex( channel, z + 1, timepoint ) ).getPixels();
-					
-					i = 0;
-				}
-				
-				cursor.next().set( pixels[ i++ ] & 0xffff );
-			}
-		}
-		else // some color stuff or so 
-		{
-			final LocalizableCursor<FloatType> cursor = img.createLocalizableCursor();
-			final int[] location = new int[ img.getNumDimensions() ];
-
-			while ( cursor.hasNext() )
-			{
-				cursor.fwd();
-				cursor.getPosition( location );
-				
-				// only get new imageprocessor if necessary
-				if ( location[ 2 ] != z )
-				{
-					z = location[ 2 ];
-					
-					ip = imp.getStack().getProcessor( imp.getStackIndex( channel, z + 1, timepoint ) );
-				}
-				
-				cursor.getType().set( ip.getPixelValue( location[ 0 ], location[ 1 ] ) );
-			}
-		}
-		
-		ViewDataBeads.normalizeImage( img );
-		
-		return img;
-	}
-
 	protected static Roi getOnlyRectangularRoi( final ImagePlus imp )
 	{
 		Roi roi = imp.getRoi();
