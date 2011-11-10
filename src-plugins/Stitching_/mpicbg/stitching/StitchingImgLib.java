@@ -2,14 +2,19 @@ package mpicbg.stitching;
 
 import java.util.ArrayList;
 
+import process.OverlayFusion;
+
 import mpicbg.imglib.algorithm.fft.PhaseCorrelation;
 import mpicbg.imglib.algorithm.fft.PhaseCorrelationPeak;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.algorithm.scalespace.SubpixelLocalization;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
+import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
+import mpicbg.imglib.type.numeric.integer.UnsignedShortType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
+import mpicbg.models.InvertibleBoundable;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
@@ -25,15 +30,60 @@ public class StitchingImgLib
 
 	public StitchingImgLib( final ImagePlus imp1, final ImagePlus imp2, final StitchingParameters params )
 	{
-		
+		//
+		// the ugly but correct way into generic programming...
+		//
+		if ( imp1.getType() == ImagePlus.GRAY32 )
+		{
+			final FloatType type1 = new FloatType();
+			
+			if ( imp2.getType() == ImagePlus.GRAY32 )
+				performStitching( type1, new FloatType(), imp1, imp2, params );
+			else if ( imp2.getType() == ImagePlus.GRAY16 )
+				performStitching( type1, new UnsignedShortType(), imp1, imp2, params );
+			else if ( imp2.getType() == ImagePlus.GRAY8 )
+				performStitching( type1, new UnsignedByteType(), imp1, imp2, params );
+			else
+				IJ.log( "Unknown image type: " + imp2.getType() );
+		}
+		else if ( imp1.getType() == ImagePlus.GRAY16 )
+		{
+			final UnsignedShortType type1 = new UnsignedShortType();
+			
+			if ( imp2.getType() == ImagePlus.GRAY32 )
+				performStitching( type1, new FloatType(), imp1, imp2, params );
+			else if ( imp2.getType() == ImagePlus.GRAY16 )
+				performStitching( type1, new UnsignedShortType(), imp1, imp2, params );
+			else if ( imp2.getType() == ImagePlus.GRAY8 )
+				performStitching( type1, new UnsignedByteType(), imp1, imp2, params );
+			else
+				IJ.log( "Unknown image type: " + imp2.getType() );
+		}
+		else if ( imp1.getType() == ImagePlus.GRAY8 )
+		{
+			final UnsignedByteType type1 = new UnsignedByteType();
+			
+			if ( imp2.getType() == ImagePlus.GRAY32 )
+				performStitching( type1, new FloatType(), imp1, imp2, params );
+			else if ( imp2.getType() == ImagePlus.GRAY16 )
+				performStitching( type1, new UnsignedShortType(), imp1, imp2, params );
+			else if ( imp2.getType() == ImagePlus.GRAY8 )
+				performStitching( type1, new UnsignedByteType(), imp1, imp2, params );
+			else
+				IJ.log( "Unknown image type: " + imp2.getType() );
+		}
+		else
+		{
+			IJ.log( "Unknown image type: " + imp1.getType() );			
+		}
 	}
 	
-	protected void performStitching()
+	protected < T extends RealType<T>, S extends RealType<S> > void performStitching( final T type1, final S type2, final ImagePlus imp1, final ImagePlus imp2, final StitchingParameters params )
 	{
 		
 	}
 	
-	public static <T extends RealType<T>, S extends RealType<S> > float[] computePhaseCorrelation( final Image<T> img1, final Image<S> img2, final int numPeaks, final boolean subpixelAccuracy )
+	public static < T extends RealType<T>, S extends RealType<S> > float[] computePhaseCorrelation( final Image<T> img1, final Image<S> img2, final int numPeaks, final boolean subpixelAccuracy )
 	{
 		final PhaseCorrelation< T, S > phaseCorr = new PhaseCorrelation<T, S>( img1, img2 );
 		phaseCorr.setInvestigateNumPeaks( numPeaks );
