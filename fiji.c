@@ -2536,6 +2536,8 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 	}
 	else if (!strcmp(argv[*i], "--add-classpath-option"))
 		add_class_path_option = 1;
+	else if (!strcmp(argv[*i], "--no-full-classpath"))
+		skip_build_classpath = 1;
 	else if (!strcmp(argv[*i], "--mini-maven")) {
 		skip_build_classpath = 1;
 		string_append_path_list(&class_path, fiji_path("jars/fake.jar"));
