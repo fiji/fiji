@@ -57,6 +57,7 @@ public class GuiSaver {
 		TmXmlWriter writer = new TmXmlWriter(model, logger);
 		switch (state) {
 		case START:
+		case CHOOSE_SEGMENTER:
 			model.setSettings(((StartDialogPanel) controller.getView().getPanelFor(PanelCard.START_DIALOG_KEY)).getSettings());
 			writer.appendBasicSettings();
 			break;
@@ -71,6 +72,7 @@ public class GuiSaver {
 			writer.appendSpots();
 			break;		
 		case CALCULATE_FEATURES:
+		case CHOOSE_DISPLAYER:
 			writer.appendBasicSettings();
 			writer.appendSegmenterSettings();
 			writer.appendInitialSpotFilter();
@@ -78,6 +80,7 @@ public class GuiSaver {
 			break;
 		case TUNE_SPOT_FILTERS:
 		case FILTER_SPOTS:
+		case CHOOSE_TRACKER:
 			writer.appendBasicSettings();
 			writer.appendSegmenterSettings();
 			writer.appendInitialSpotFilter();
@@ -116,6 +119,8 @@ public class GuiSaver {
 			writer.appendSpots();
 			break;
 		case TUNE_DISPLAY:
+		case ACTIONS:
+		default:
 			writer.appendBasicSettings();
 			writer.appendSegmenterSettings();
 			writer.appendTrackerSettings();
