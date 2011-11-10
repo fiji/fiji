@@ -2522,6 +2522,8 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 		else
 			die("Unknown tool: %s", argv[*i]);
 	}
+	else if (!strcmp(argv[*i], "--tools-jar"))
+		string_addf_path_list(&class_path, "%s/../lib/tools.jar", get_jre_home());
 	else if (!strcmp(argv[*i], "--ant")) {
 		main_class = "org.apache.tools.ant.Main";
 		string_addf_path_list(&class_path, "%s/../lib/tools.jar", get_jre_home());
