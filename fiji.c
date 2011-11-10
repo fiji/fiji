@@ -2352,6 +2352,31 @@ static int is_building(const char *target)
 	return 0;
 }
 
+const char *maybe_substitute_fiji_jar(const char *relative_path)
+{
+	const char *replacement = NULL;
+
+	if (!strcmp(relative_path, "jars/jython.jar"))
+		replacement = "/usr/share/java/jython.jar";
+	else if (!strcmp(relative_path, "jars/clojure.jar"))
+		replacement = "/usr/share/java/clojure.jar";
+	else if (!strcmp(relative_path, "jars/bsh-2.0b4.jar") || !strcmp(relative_path, "jars/bsh.jar"))
+		replacement = "/usr/share/java/bsh.jar";
+	else if (!strcmp(relative_path, "jars/ant.jar"))
+		replacement = "/usr/share/java/ant.jar";
+	else if (!strcmp(relative_path, "jars/ant-launcher.jar"))
+		replacement = "/usr/share/java/ant-launcher.jar";
+	else if (!strcmp(relative_path, "jars/ant-nodeps.jar"))
+		replacement = "/usr/share/java/ant-nodeps.jar";
+	else if (!strcmp(relative_path, "jars/ant-junit.jar"))
+		replacement = "/usr/share/java/ant-junit.jar";
+
+	if (!replacement || file_exists(fiji_path(relative_path)))
+		return NULL;
+
+	return replacement;
+}
+
 const char *properties[32];
 
 static int retrotranslator;
@@ -2464,6 +2489,10 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 			handle_one_option(i, argv, "--cp", &arg) ||
 			handle_one_option(i, argv, "-cp", &arg))
 		string_addf_path_list(&class_path, "%s", arg.buffer);
+	else if (handle_one_option(i, argv, "--fiji-jar", &arg)) {
+		const char *path = maybe_substitute_fiji_jar(arg.buffer);
+		string_addf_path_list(&class_path, "%s", path ? path : fiji_path(arg.buffer));
+	}
 	else if (handle_one_option(i, argv, "--jar-path", &arg) ||
 			handle_one_option(i, argv, "--jarpath", &arg) ||
 			handle_one_option(i, argv, "-jarpath", &arg)) {
