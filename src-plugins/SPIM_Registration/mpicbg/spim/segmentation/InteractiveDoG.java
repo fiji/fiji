@@ -366,10 +366,10 @@ public class InteractiveDoG implements PlugIn
 	}
 	
 	/**
-	 * Make a copy of the {@link ImagePlus} into an {@link Image} (Array) <FloatType> for faster access when copying the slices
+	 * Normalize and make a copy of the {@link ImagePlus} into an {@link Image}<FloatType> for faster access when copying the slices
 	 * 
 	 * @param imp - the {@link ImagePlus} input image
-	 * @return - the copy
+	 * @return - the normalized copy [0...1]
 	 */
 	public static Image<FloatType> convertToFloat( final ImagePlus imp, int channel, int timepoint )
 	{
