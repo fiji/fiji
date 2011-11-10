@@ -179,6 +179,14 @@ public class Stitching_Pairwise implements PlugIn
 		params.channel1 = defaultChannel1 = gd2.getNextChoiceIndex();
 		params.channel2 = defaultChannel2 = gd2.getNextChoiceIndex();
 
+		// if there is only one channel we do not need to average
+		if ( channels1.length == 2 )
+			params.channel1 = 1;
+
+		// if there is only one channel we do not need to average
+		if ( channels2.length == 2 )
+			params.channel2 = 1;
+
 		if ( imp1.getNFrames() > 1 ) 
 			params.timeSelect = defaultTimeSelect = gd2.getNextChoiceIndex();
 		else
