@@ -2072,6 +2072,33 @@ static void add_subcommand(const char *line)
 }
 
 const char *default_subcommands[] = {
+	"--update --fiji-jar=plugins/Fiji_Updater.jar --main-class=fiji.updater.Main",
+	" start the command-line version of the Fiji updater",
+	"--jython --fiji-jar=jars/jython.jar --main-class=org.python.util.jython",
+	" start Jython instead of ImageJ (this is the",
+	" default when called with a file ending in .py)",
+	"--jruby --main-class=org.jruby.Main",
+	" start JRuby instead of ImageJ (this is the",
+	" default when called with a file ending in .rb)",
+	"--clojure --fiji-jar=jars/clojure.jar --main-class=clojure.lang.Repl",
+	" start Clojure instead of ImageJ (this is the """,
+	" default when called with a file ending in .clj)",
+	"--beanshell --fiji-jar=jars/bsh-2.0b4.jar --main-class=bsh.Interpreter",
+	"--bsh --fiji-jar=jars/bsh-2.0b4.jar --main-class=bsh.Interpreter",
+	" start BeanShell instead of ImageJ (this is the",
+	" default when called with a file ending in .bs or .bsh",
+	"--ant --tools-jar --fiji-jar=jars/ant.jar --fiji-jar=jars/ant-launcher.jar --fiji-jar=jars/ant-nodeps.jar --fiji-jar=jars/ant-junit.jar --headless --main-class=org.apache.tools.ant.Main",
+	" run Apache Ant",
+	"--mini-maven --fiji-jar=jars/fake.jar --main-class=fiji.build.MiniMaven",
+	" run Fiji's very simple Maven mockup",
+	"--javac --fiji-jar=jars/javac.jar --headless --add-classpath-option --main-class=com.sun.tools.javac.Main",
+	" start JavaC, the Java Compiler, instead of ImageJ",
+	"--javah --tools-jar --headless --add-classpath-option --main-class=com.sun.tools.javah.Main",
+	" start javah instead of ImageJ",
+	"--javap --tools-jar --headless --add-classpath-option --main-class=sun.tools.javap.Main",
+	" start javap instead of ImageJ",
+	"--javadoc --tools-jar --headless --add-classpath-option --main-class=com.sun.tools.javadoc.Main",
+	" start javadoc instead of ImageJ",
 };
 
 static const char *expand_subcommand(const char *option)
@@ -2147,7 +2174,7 @@ static void __attribute__((__noreturn__)) usage(void)
 		"--no-splash\n"
 		"\tsuppress showing a splash screen upon startup\n"
 		"\n"
-		"Options for ImageJ:\n"
+		"Options for ImageJ1:\n"
 		"--allow-multiple\n"
 		"\tdo not reuse existing ImageJ instance\n"
 		"--plugins <dir>\n"
@@ -2160,43 +2187,13 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\tedit the given file in the script editor\n"
 		"\n"
 		"Options to run programs other than ImageJ:\n"
-		"--update\n"
-		"\tstart the command-line version of the Fiji updater\n"
-		"--jdb\n"
-		"\tstart in JDB, the Java debugger\n"
-		"--jython\n"
-		"\tstart Jython instead of ImageJ (this is the\n"
-		"\tdefault when called with a file ending in .py)\n"
-		"--jruby\n"
-		"\tstart JRuby instead of ImageJ (this is the\n"
-		"\tdefault when called with a file ending in .rb)\n"
-		"--clojure\n"
-		"\tstart Clojure instead of ImageJ (this is the ""\n"
-		"\tdefault when called with a file ending in .clj)\n"
-		"--main-class <class name> (this is the\n"
-		"\tdefault when called with a file ending in .class)\n"
-		"--beanshell, --bsh\n"
-		"\tstart BeanShell instead of ImageJ (this is the ""\n"
-		"\tdefault when called with a file ending in .bs or .bsh)"
 		"%s"
+		"--build\n"
+		"\tstart Fiji's build instead of ImageJ\n"
 		"\n"
 		"--main-class <class name> (this is the\n"
 		"\tdefault when called with a file ending in .class)\n"
 		"\tstart the given class instead of ImageJ\n"
-		"--build\n"
-		"\tstart Fiji's build instead of ImageJ\n"
-		"--javac\n"
-		"\tstart JavaC, the Java Compiler, instead of ImageJ\n"
-		"--ant\n"
-		"\trun Apache Ant\n"
-		"--mini-maven\n"
-		"\trun Fiji's very simple Maven mockup\n"
-		"--javah\n"
-		"\tstart javah instead of ImageJ\n"
-		"--javap\n"
-		"\tstart javap instead of ImageJ\n"
-		"--javadoc\n"
-		"\tstart javadoc instead of ImageJ\n"
 		"--retrotranslator\n"
 		"\tuse Retrotranslator to support Java < 1.6\n\n",
 		main_argv[0], subcommands.buffer);
@@ -2447,29 +2444,6 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 		memory_size = parse_memory(arg.buffer);
 	else if (!strcmp(argv[*i], "--headless"))
 		headless = 1;
-	else if (!strcmp(argv[*i], "--jython")) {
-		main_class = "org.python.util.jython";
-		/* When running on Debian / Ubuntu we depend on the
-		   external version of jython, so add its jar.
-		   Since that .jar does not contain the Lib/ folder,
-		   let's add that jar only if we do not have our own. */
-		if (!file_exists(fiji_path("jars/jython.jar")))
-			string_append_path_list(&class_path, "/usr/share/java/jython.jar");
-	}
-	else if (!strcmp(argv[*i], "--jruby"))
-		main_class = "org.jruby.Main";
-	else if (!strcmp(argv[*i], "--clojure")) {
-		main_class = "clojure.lang.Repl";
-		/* When running on Debian / Ubuntu we depend on the
-		   external version of clojure, so add its jar: */
-		string_append_path_list(&class_path, "/usr/share/java/clojure.jar");
-	} else if (!strcmp(argv[*i], "--beanshell") ||
-		   !strcmp(argv[*i], "--bsh")) {
-		main_class = "bsh.Interpreter";
-		/* When running on Debian / Ubuntu we depend on the
-		   external version of beanshell, so add its jar: */
-		string_append_path_list(&class_path, "/usr/share/java/bsh.jar");
-	}
 	else if (handle_one_option(i, argv, "--main-class", &arg)) {
 		string_append_path_list(&class_path, ".");
 		main_class = xstrdup(arg.buffer);
@@ -2478,10 +2452,6 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 		string_addf_path_list(&class_path, "%s", arg.buffer);
 		main_class = "fiji.JarLauncher";
 		add_option_string(&options, &arg, 1);
-	}
-	else if (!strcmp(argv[*i], "--update")) {
-		string_append_path_list(&class_path, fiji_path("plugins/Fiji_Updater.jar"));
-		main_class = "fiji.updater.Main";
 	}
 	else if (handle_one_option(i, argv, "--class-path", &arg) ||
 			handle_one_option(i, argv, "--classpath", &arg) ||
@@ -2524,54 +2494,12 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 		string_addf_path_list(&class_path, "%s", fake_jar);
 		main_class = "fiji.build.Fake";
 	}
-	else if (!strcmp(argv[*i], "--javac") ||
-			!strcmp(argv[*i], "--javah") ||
-			!strcmp(argv[*i], "--javap") ||
-			!strcmp(argv[*i], "--javadoc")) {
-		add_class_path_option = 1;
-		headless = 1;
-		if (!strcmp(argv[*i], "--javac")) {
-			const char *javac;
-
-			javac = fiji_path("jars/javac.jar");
-			if (run_precompiled || !file_exists(javac))
-				string_append_path_list(&class_path, fiji_path("precompiled/javac.jar"));
-			else
-				string_append_path_list(&class_path, javac);
-		}
-		string_addf_path_list(&class_path, "%s/../lib/tools.jar", get_jre_home());
-		if (!strcmp(argv[*i], "--javac"))
-			main_class = "com.sun.tools.javac.Main";
-		else if (!strcmp(argv[*i], "--javah"))
-			main_class = "com.sun.tools.javah.Main";
-		else if (!strcmp(argv[*i], "--javap"))
-			main_class = "sun.tools.javap.Main";
-		else if (!strcmp(argv[*i], "--javadoc"))
-			main_class = "com.sun.tools.javadoc.Main";
-		else
-			die("Unknown tool: %s", argv[*i]);
-	}
 	else if (!strcmp(argv[*i], "--tools-jar"))
 		string_addf_path_list(&class_path, "%s/../lib/tools.jar", get_jre_home());
-	else if (!strcmp(argv[*i], "--ant")) {
-		main_class = "org.apache.tools.ant.Main";
-		string_addf_path_list(&class_path, "%s/../lib/tools.jar", get_jre_home());
-		/* When running on Debian / Ubuntu we depend on the
-		   external version of ant, so add those jars too: */
-		string_append_path_list(&class_path, "/usr/share/java/ant.jar");
-		string_append_path_list(&class_path, "/usr/share/java/ant-launcher.jar");
-		string_append_path_list(&class_path, "/usr/share/java/ant-nodeps.jar");
-		string_append_path_list(&class_path, "/usr/share/java/ant-junit.jar");
-	}
 	else if (!strcmp(argv[*i], "--add-classpath-option"))
 		add_class_path_option = 1;
 	else if (!strcmp(argv[*i], "--no-full-classpath"))
 		skip_build_classpath = 1;
-	else if (!strcmp(argv[*i], "--mini-maven")) {
-		skip_build_classpath = 1;
-		string_append_path_list(&class_path, fiji_path("jars/fake.jar"));
-		main_class = "fiji.build.MiniMaven";
-	}
 	else if (!strcmp(argv[*i], "--retrotranslator") ||
 			!strcmp(argv[*i], "--retro"))
 		retrotranslator = 1;
