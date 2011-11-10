@@ -183,6 +183,34 @@ public class Hyperstack_rearranger implements PlugIn
 	}
 
 	/**
+	 * Returns an {@link ImagePlus} for a 2d or 3d stack where ImageProcessors are not copied but just added.
+	 * 
+	 * @param imp - the input image
+	 * @param channel - which channel (first channel is 1, NOT 0)
+	 * @param timepoint - which timepoint (first timepoint is 1, NOT 0)
+	 */
+	public static ImagePlus getImageChunk( final ImagePlus imp, final int channel, final int timepoint )
+	{
+		if ( imp.getNSlices() == 1 )
+		{
+			return new ImagePlus( "", imp.getStack().getProcessor( imp.getStackIndex( channel, 1, timepoint ) ) );
+		}
+		else
+		{
+			final ImageStack stack = new ImageStack( imp.getWidth(), imp.getHeight() );
+			
+			for ( int z = 1; z < imp.getNSlices(); ++z )
+			{
+				final int index = imp.getStackIndex( channel, z, timepoint );
+				final ImageProcessor ip = imp.getStack().getProcessor( index );
+				stack.addSlice( imp.getStack().getSliceLabel( index ), ip );
+			}
+			
+			return new ImagePlus( "", stack );
+		}
+	}
+	
+	/**
 	 * Converts this image to Hyperstack if it is RGB or 8-bit color
 	 * 
 	 * @param imp - Inputimage

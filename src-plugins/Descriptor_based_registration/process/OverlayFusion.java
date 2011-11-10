@@ -1,5 +1,6 @@
 package process;
 
+import fiji.stacks.Hyperstack_rearranger;
 import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
@@ -75,7 +76,7 @@ public class OverlayFusion
 			for ( int c = 1; c <= imp.getNChannels(); ++c )
 			{
 				final Image<T> out = f.createImage( size );
-				fuseChannel( out, ImageJFunctions.convertFloat( getImageChunk( imp, c, t ) ), offset, models.get( t - 1 ) );
+				fuseChannel( out, ImageJFunctions.convertFloat( Hyperstack_rearranger.getImageChunk( imp, c, t ) ), offset, models.get( t - 1 ) );
 				try 
 				{
 					final ImagePlus outImp = ((ImagePlusContainer<?,?>)out.getContainer()).getImagePlus();
@@ -141,7 +142,7 @@ public class OverlayFusion
 			for ( int c = 1; c <= imp.getNChannels(); ++c )
 			{
 				final Image<T> out = f.createImage( size );
-				fuseChannel( out, ImageJFunctions.convertFloat( getImageChunk( imp, c, 1 ) ), offset, models.get( i ) );
+				fuseChannel( out, ImageJFunctions.convertFloat( Hyperstack_rearranger.getImageChunk( imp, c, 1 ) ), offset, models.get( i ) );
 				try 
 				{
 					final ImagePlus outImp = ((ImagePlusContainer<?,?>)out.getContainer()).getImagePlus();
@@ -298,35 +299,7 @@ public class OverlayFusion
 		}
 	}
 
-	
-	/**
-	 * Returns an {@link ImagePlus} for a 2d or 3d stack where ImageProcessors are not copied but just added.
-	 * 
-	 * @param imp - the input image
-	 * @param channel - which channel (first channel is 1, NOT 0)
-	 * @param timepoint - which timepoint (first timepoint is 1, NOT 0)
-	 */
-	public static ImagePlus getImageChunk( final ImagePlus imp, final int channel, final int timepoint )
-	{
-		if ( imp.getNSlices() == 1 )
-		{
-			return new ImagePlus( "", imp.getStack().getProcessor( imp.getStackIndex( channel, 1, timepoint ) ) );
-		}
-		else
-		{
-			final ImageStack stack = new ImageStack( imp.getWidth(), imp.getHeight() );
 			
-			for ( int z = 1; z < imp.getNSlices(); ++z )
-			{
-				final int index = imp.getStackIndex( channel, z, timepoint );
-				final ImageProcessor ip = imp.getStack().getProcessor( index );
-				stack.addSlice( imp.getStack().getSliceLabel( index ), ip );
-			}
-			
-			return new ImagePlus( "", stack );
-		}
-	}
-		
 	/**
 	 * Rearranges an ImageJ XYCZT Hyperstack into XYZCT without wasting memory for processing 3d images as a chunk,
 	 * if it is already XYZCT it will shuffle it back to XYCZT
