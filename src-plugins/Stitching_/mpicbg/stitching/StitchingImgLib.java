@@ -45,61 +45,125 @@ import mpicbg.spim.registration.ViewDataBeads;
  */
 public class StitchingImgLib 
 {
-	public static ImagePlus stitchPairwise( final ImagePlus imp1, final ImagePlus imp2, final StitchingParameters params )
+	public static float[] stitchPairwise( final ImagePlus imp1, final ImagePlus imp2, final int timepoint, final StitchingParameters params )
 	{
+		// can both images be wrapped into imglib without copying
+		final boolean canWrap = !StitchingParameters.alwaysCopy && canWrapIntoImgLib( imp1, params.channel1 ) && canWrapIntoImgLib( imp2, params.channel2 );
+		
+		float[] shift = null;
+		
 		//
 		// the ugly but correct way into generic programming...
 		//
-		if ( imp1.getType() == ImagePlus.GRAY32 )
+		if ( canWrap )
 		{
-			final FloatType type1 = new FloatType();
-			
-			if ( imp2.getType() == ImagePlus.GRAY32 )
-				performStitching( type1, new FloatType(), imp1, imp2, params );
-			else if ( imp2.getType() == ImagePlus.GRAY16 )
-				performStitching( type1, new UnsignedShortType(), imp1, imp2, params );
-			else if ( imp2.getType() == ImagePlus.GRAY8 )
-				performStitching( type1, new UnsignedByteType(), imp1, imp2, params );
+			if ( imp1.getType() == ImagePlus.GRAY32 )
+			{
+				final Image<FloatType> image1 = getWrappedImageFloat( imp1, params.channel1, timepoint );
+				
+				if ( imp2.getType() == ImagePlus.GRAY32 )
+					shift = performStitching( image1, getWrappedImageFloat( imp2, params.channel2, timepoint), params );
+				else if ( imp2.getType() == ImagePlus.GRAY16 )
+					shift = performStitching( image1, getWrappedImageUnsignedShort( imp2, params.channel2, timepoint), params );
+				else if ( imp2.getType() == ImagePlus.GRAY8 )
+					shift = performStitching( image1, getWrappedImageUnsignedByte( imp2, params.channel2, timepoint), params );
+				else
+					IJ.log( "Unknown image type: " + imp2.getType() );
+			}
+			else if ( imp1.getType() == ImagePlus.GRAY16 )
+			{
+				final Image<UnsignedShortType> image1 = getWrappedImageUnsignedShort( imp1, params.channel1, timepoint );
+				
+				if ( imp2.getType() == ImagePlus.GRAY32 )
+					shift = performStitching( image1, getWrappedImageFloat( imp2, params.channel2, timepoint), params );
+				else if ( imp2.getType() == ImagePlus.GRAY16 )
+					shift = performStitching( image1, getWrappedImageUnsignedShort( imp2, params.channel2, timepoint), params );
+				else if ( imp2.getType() == ImagePlus.GRAY8 )
+					shift = performStitching( image1, getWrappedImageUnsignedByte( imp2, params.channel2, timepoint), params );
+				else
+					IJ.log( "Unknown image type: " + imp2.getType() );
+			} 
+			else if ( imp1.getType() == ImagePlus.GRAY8 )
+			{
+				final Image<UnsignedByteType> image1 = getWrappedImageUnsignedByte( imp1, params.channel1, timepoint );
+				
+				if ( imp2.getType() == ImagePlus.GRAY32 )
+					shift = performStitching( image1, getWrappedImageFloat( imp2, params.channel2, timepoint), params );
+				else if ( imp2.getType() == ImagePlus.GRAY16 )
+					shift = performStitching( image1, getWrappedImageUnsignedShort( imp2, params.channel2, timepoint), params );
+				else if ( imp2.getType() == ImagePlus.GRAY8 )
+					shift = performStitching( image1, getWrappedImageUnsignedByte( imp2, params.channel2, timepoint), params );
+				else
+					IJ.log( "Unknown image type: " + imp2.getType() );
+			} 
 			else
-				IJ.log( "Unknown image type: " + imp2.getType() );
-		}
-		else if ( imp1.getType() == ImagePlus.GRAY16 )
-		{
-			final UnsignedShortType type1 = new UnsignedShortType();
-			
-			if ( imp2.getType() == ImagePlus.GRAY32 )
-				performStitching( type1, new FloatType(), imp1, imp2, params );
-			else if ( imp2.getType() == ImagePlus.GRAY16 )
-				performStitching( type1, new UnsignedShortType(), imp1, imp2, params );
-			else if ( imp2.getType() == ImagePlus.GRAY8 )
-				performStitching( type1, new UnsignedByteType(), imp1, imp2, params );
-			else
-				IJ.log( "Unknown image type: " + imp2.getType() );
-		}
-		else if ( imp1.getType() == ImagePlus.GRAY8 )
-		{
-			final UnsignedByteType type1 = new UnsignedByteType();
-			
-			if ( imp2.getType() == ImagePlus.GRAY32 )
-				performStitching( type1, new FloatType(), imp1, imp2, params );
-			else if ( imp2.getType() == ImagePlus.GRAY16 )
-				performStitching( type1, new UnsignedShortType(), imp1, imp2, params );
-			else if ( imp2.getType() == ImagePlus.GRAY8 )
-				performStitching( type1, new UnsignedByteType(), imp1, imp2, params );
-			else
-				IJ.log( "Unknown image type: " + imp2.getType() );
+			{
+				IJ.log( "Unknown image type: " + imp1.getType() );			
+			}
 		}
 		else
 		{
-			IJ.log( "Unknown image type: " + imp1.getType() );			
+			final ImageFactory<UnsignedByteType> imgFactoryByte = new ImageFactory<UnsignedByteType>( new UnsignedByteType(), StitchingParameters.phaseCorrelationFactory );
+			final ImageFactory<UnsignedShortType> imgFactoryShort = new ImageFactory<UnsignedShortType>( new UnsignedShortType(), StitchingParameters.phaseCorrelationFactory );
+			final ImageFactory<FloatType> imgFactoryFloat = new ImageFactory<FloatType>( new FloatType(), StitchingParameters.phaseCorrelationFactory );
+			
+			if ( imp1.getType() == ImagePlus.GRAY32 )
+			{
+				final Image< FloatType > image1 = getImage( imp1, imgFactoryFloat, params.channel1, timepoint );
+				
+				if ( imp2.getType() == ImagePlus.GRAY32 )
+					shift = performStitching( image1, getImage( imp2, imgFactoryFloat, params.channel2, timepoint ), params );
+				else if ( imp2.getType() == ImagePlus.GRAY16 )
+					shift = performStitching( image1, getImage( imp2, imgFactoryShort, params.channel2, timepoint ), params );
+				else if ( imp2.getType() == ImagePlus.GRAY8 )
+					shift = performStitching( image1, getImage( imp2, imgFactoryByte, params.channel2, timepoint ), params );
+				else
+					IJ.log( "Unknown image type: " + imp2.getType() );					
+			}
+			else if ( imp1.getType() == ImagePlus.GRAY16 )
+			{
+				final Image< UnsignedShortType > image1 = getImage( imp1, imgFactoryShort, params.channel1, timepoint );
+				
+				if ( imp2.getType() == ImagePlus.GRAY32 )
+					shift = performStitching( image1, getImage( imp2, imgFactoryFloat, params.channel2, timepoint ), params );
+				else if ( imp2.getType() == ImagePlus.GRAY16 )
+					shift = performStitching( image1, getImage( imp2, imgFactoryShort, params.channel2, timepoint ), params );
+				else if ( imp2.getType() == ImagePlus.GRAY8 )
+					shift = performStitching( image1, getImage( imp2, imgFactoryByte, params.channel2, timepoint ), params );
+				else
+					IJ.log( "Unknown image type: " + imp2.getType() );					
+			}
+			else if ( imp1.getType() == ImagePlus.GRAY8 )
+			{
+				final Image< UnsignedByteType > image1 = getImage( imp1, imgFactoryByte, params.channel1, timepoint );
+				
+				if ( imp2.getType() == ImagePlus.GRAY32 )
+					shift = performStitching( image1, getImage( imp2, imgFactoryFloat, params.channel2, timepoint ), params );
+				else if ( imp2.getType() == ImagePlus.GRAY16 )
+					shift = performStitching( image1, getImage( imp2, imgFactoryShort, params.channel2, timepoint ), params );
+				else if ( imp2.getType() == ImagePlus.GRAY8 )
+					shift = performStitching( image1, getImage( imp2, imgFactoryByte, params.channel2, timepoint ), params );
+				else
+					IJ.log( "Unknown image type: " + imp2.getType() );					
+			}
+			else
+			{
+				IJ.log( "Unknown image type: " + imp1.getType() );			
+			}
 		}
 		
-		return null;
+		return shift;
 	}
 	
-	protected static < T extends RealType<T>, S extends RealType<S> > void performStitching( final T type1, final S type2, final ImagePlus imp1, final ImagePlus imp2, final StitchingParameters params )
+	protected static < T extends RealType<T>, S extends RealType<S> > float[] performStitching( final Image<T> img1, final Image<S> img2, final StitchingParameters params )
 	{
+		IJ.log( "Image1: Type=" + img1.createType().getClass().getSimpleName() + " Factory: " + img1.getContainer().getClass().getSimpleName() + " size: " + Util.printCoordinates( img1.getDimensions() ) );
+		IJ.log( "Image2: Type=" + img2.createType().getClass().getSimpleName() + " Factory: " + img2.getContainer().getClass().getSimpleName() + " size: " + Util.printCoordinates( img2.getDimensions() ) );
 		
+		ImageJFunctions.show( img1 );
+		ImageJFunctions.show( img2 );
+		
+		return null;
 	}
 	
 	public static < T extends RealType<T>, S extends RealType<S> > float[] computePhaseCorrelation( final Image<T> img1, final Image<S> img2, final int numPeaks, final boolean subpixelAccuracy )
@@ -154,15 +218,14 @@ public class StitchingImgLib
 	}
 
 	/**
-	 * return an {@link Image} of {@link UnsignedByteType} as input for the PhaseCorrelation. If no rectangular roi
-	 * is selected, it will only wrap the existing ImagePlus!
+	 * return an {@link Image}<T> as input for the PhaseCorrelation.
 	 * 
-	 * @param targetType - which {@link RealType}
+	 * @param imp - the {@link ImagePlus}
+	 * @param imgFactory - the {@link ImageFactory} defining wher to put it into
 	 * @param channel - which channel (if channel=0 means average all channels)
 	 * @param timepoint - which timepoint
-	 * @param imp - the {@link ImagePlus}
 	 * 
-	 * @return - the {@link Image} or null if it was not an ImagePlus.GRAY8 or if channel = 0
+	 * @return - the {@link Image} or null if it was not an ImagePlus.GRAY8, ImagePlus.GRAY16 or ImagePlus.GRAY32
 	 */
 	public static < T extends RealType<T> > Image<T> getImage( final ImagePlus imp, final ImageFactory<T> imgFactory, final int channel, final int timepoint )
 	{
@@ -202,19 +265,29 @@ public class StitchingImgLib
 		
 		// create the Image
 		final Image<T> img = imgFactory.createImage( size );
+		final boolean success;
 		
 		// copy the content
 		if ( channel == 0 )
 		{
 			// we need to average all channels
-			averageAllChannels( img, offset, imp, timepoint );
+			success = averageAllChannels( img, offset, imp, timepoint );
 		}
 		else
 		{
-			
+			// otherwise only copy one channel
+			success = fillInChannel( img, offset, imp, channel, timepoint );
 		}
 		
-		return img;
+		if ( success )
+		{
+			return img;
+		}
+		else
+		{
+			img.close();
+			return null;
+		}
 	}
 	
 	/**
@@ -225,8 +298,10 @@ public class StitchingImgLib
 	 * @param offset - the offset of the area (might be [0,0] or [0,0,0])
 	 * @param imp - the input ImagePlus
 	 * @param timepoint - for which timepoint
+	 * 
+	 * @return true if successful, false if the ImagePlus type was unknow
 	 */
-	protected static < T extends RealType< T > > void averageAllChannels( final Image< T > target, final int[] offset, final ImagePlus imp, final int timepoint )
+	public static < T extends RealType< T > > boolean averageAllChannels( final Image< T > target, final int[] offset, final ImagePlus imp, final int timepoint )
 	{
 		final int numChannels = imp.getNChannels();
 		
@@ -239,6 +314,7 @@ public class StitchingImgLib
 				images.add( getWrappedImageUnsignedByte( imp, c, timepoint ) );			
 
 			averageAllChannels( target, images, offset );			
+			return true;
 		}
 		else if ( imp.getType() == ImagePlus.GRAY16 )
 		{
@@ -249,6 +325,7 @@ public class StitchingImgLib
 				images.add( getWrappedImageUnsignedShort( imp, c, timepoint ) );			
 
 			averageAllChannels( target, images, offset );
+			return true;
 		}
 		else if ( imp.getType() == ImagePlus.GRAY32 )
 		{
@@ -259,9 +336,65 @@ public class StitchingImgLib
 				images.add( getWrappedImageFloat( imp, c, timepoint ) );
 			
 			averageAllChannels( target, images, offset );
+			return true;
+		}
+		else
+		{
+			IJ.log( "Unknow image type: " + imp.getType() );
+			return false;
 		}
 	}
-	
+
+	/**
+	 * Averages all channels into the target image. The size is given by the dimensions of the target image,
+	 * the offset (if applicable) is given by an extra field
+	 * 
+	 * @param target - the target Image
+	 * @param offset - the offset of the area (might be [0,0] or [0,0,0])
+	 * @param imp - the input ImagePlus
+	 * @param timepoint - for which timepoint
+	 * 
+	 * @return true if successful, false if the ImagePlus type was unknow
+	 */
+	public static < T extends RealType< T > > boolean fillInChannel( final Image< T > target, final int[] offset, final ImagePlus imp, final int channel, final int timepoint )
+	{
+		if ( imp.getType() == ImagePlus.GRAY8 )
+		{
+			final ArrayList< Image< UnsignedByteType > > images = new ArrayList<Image<UnsignedByteType>>();
+
+			// first get wrapped instances of all channels
+			images.add( getWrappedImageUnsignedByte( imp, channel, timepoint ) );			
+
+			averageAllChannels( target, images, offset );			
+			return true;
+		}
+		else if ( imp.getType() == ImagePlus.GRAY16 )
+		{
+			final ArrayList< Image< UnsignedShortType > > images = new ArrayList<Image<UnsignedShortType>>();
+
+			// first get wrapped instances of all channels
+			images.add( getWrappedImageUnsignedShort( imp, channel, timepoint ) );			
+
+			averageAllChannels( target, images, offset );
+			return true;
+		}
+		else if ( imp.getType() == ImagePlus.GRAY32 )
+		{
+			final ArrayList< Image< FloatType > > images = new ArrayList<Image<FloatType>>();
+
+			// first get wrapped instances of all channels
+			images.add( getWrappedImageFloat( imp, channel, timepoint ) );
+			
+			averageAllChannels( target, images, offset );
+			return true;
+		}
+		else
+		{
+			IJ.log( "Unknow image type: " + imp.getType() );
+			return false;
+		}
+	}
+
 	/**
 	 * Averages all channels into the target image. The size is given by the dimensions of the target image,
 	 * the offset (if applicable) is given by an extra field
@@ -403,11 +536,10 @@ public class StitchingImgLib
 	 * 
 	 * @param imp - the ImagePlus
 	 * @param channel - which channel (if channel=0 means average all channels)
-	 * @param timepoint - which timepoint
 	 * 
 	 * @return true if it can be wrapped, otherwise false
 	 */
-	public static boolean canWrapIntoImgLib( final ImagePlus imp, final int channel, final int timepoint )
+	public static boolean canWrapIntoImgLib( final ImagePlus imp, final int channel )
 	{
 		// first test the roi
 		final Roi roi = getOnlyRectangularRoi( imp );
