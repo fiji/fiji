@@ -192,7 +192,7 @@ public class Stitching_Pairwise implements PlugIn
 		}
 		
 		// compute the stitching
-		new StitchingImgLib( imp1, imp2, params );
+		StitchingImgLib.stitchPairwise( imp1, imp2, params );
 	}
 
 	public static String testRegistrationCompatibility( final ImagePlus imp1, final ImagePlus imp2 ) 

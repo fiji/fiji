@@ -1,8 +1,10 @@
 package mpicbg.stitching;
 
-import java.util.ArrayList;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.gui.Roi;
 
-import process.OverlayFusion;
+import java.util.ArrayList;
 
 import mpicbg.imglib.algorithm.fft.PhaseCorrelation;
 import mpicbg.imglib.algorithm.fft.PhaseCorrelationPeak;
@@ -14,21 +16,20 @@ import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import mpicbg.imglib.type.numeric.integer.UnsignedShortType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
-import mpicbg.models.InvertibleBoundable;
-import ij.IJ;
-import ij.ImagePlus;
-import ij.gui.Roi;
 
 /**
- * Pairwise Stitching of two ImagePlus using ImgLib1 and PhaseCorrelation
+ * Pairwise Stitching of two ImagePlus using ImgLib1 and PhaseCorrelation.
+ * It deals with aligning two slices (2d) or stacks (3d) having an arbitrary
+ * amount of channels. If the ImagePlus contains several time-points it will 
+ * only consider the first time-point as this requires global optimization of 
+ * many independent 2d/3d <-> 2d/3d alignments.
  * 
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
 public class StitchingImgLib 
 {
-
-	public StitchingImgLib( final ImagePlus imp1, final ImagePlus imp2, final StitchingParameters params )
+	public static ImagePlus stitchPairwise( final ImagePlus imp1, final ImagePlus imp2, final StitchingParameters params )
 	{
 		//
 		// the ugly but correct way into generic programming...
@@ -76,9 +77,11 @@ public class StitchingImgLib
 		{
 			IJ.log( "Unknown image type: " + imp1.getType() );			
 		}
+		
+		return null;
 	}
 	
-	protected < T extends RealType<T>, S extends RealType<S> > void performStitching( final T type1, final S type2, final ImagePlus imp1, final ImagePlus imp2, final StitchingParameters params )
+	protected static < T extends RealType<T>, S extends RealType<S> > void performStitching( final T type1, final S type2, final ImagePlus imp1, final ImagePlus imp2, final StitchingParameters params )
 	{
 		
 	}
