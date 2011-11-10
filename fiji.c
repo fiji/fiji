@@ -2006,12 +2006,38 @@ struct subcommand
 {
 	char *name, *expanded;
 	struct string description;
+	struct {
+		char **list;
+		int alloc, size;
+	} extensions;
 };
 
 struct {
 	int alloc, size;
 	struct subcommand *list;
 } all_subcommands;
+
+static int iswhitespace(char c)
+{
+	return c == ' ' || c == '\t' || c == '\n';
+}
+
+static void add_extension(struct subcommand *subcommand, const char *extension)
+{
+	int length = strlen(extension);
+
+	while (length && iswhitespace(extension[length - 1]))
+		length--;
+	if (!length)
+		return;
+
+	if (subcommand->extensions.size + 1 >= subcommand->extensions.alloc) {
+		int alloc = (16 + subcommand->extensions.alloc) * 3 / 2;
+		subcommand->extensions.list = xrealloc(subcommand->extensions.list, alloc * sizeof(char *));
+		subcommand->extensions.alloc = alloc;
+	}
+	subcommand->extensions.list[subcommand->extensions.size++] = xstrndup(extension, length);
+}
 
 /*
  * The files for subcommand configuration are of the form
@@ -2028,17 +2054,18 @@ struct {
 static void add_subcommand(const char *line)
 {
 	int size = all_subcommands.size;
+	// TODO: safeguard against malformed configuration files
+	struct subcommand *latest = &all_subcommands.list[size - 1];
 
 	// is it the description?
 	if (line[0] == ' ') {
-		struct subcommand *latest = &all_subcommands.list[size - 1];
 		struct string *description = &latest->description;
 
 		string_append(description, "\t");
 		string_append(description, line + 1);
 		string_append(description, "\n");
 	}
-	else {
+	else if (line[0] == '-') {
 		struct subcommand *current;
 		const char *space;
 		int length = strlen(line);
@@ -2069,22 +2096,30 @@ static void add_subcommand(const char *line)
 			current->name = xstrndup(line, length);
 		all_subcommands.size++;
 	}
+	else if (line[0] == '.') {
+		add_extension(latest, line);
+	}
 }
 
 const char *default_subcommands[] = {
 	"--update --fiji-jar=plugins/Fiji_Updater.jar --main-class=fiji.updater.Main",
 	" start the command-line version of the Fiji updater",
 	"--jython --fiji-jar=jars/jython.jar --main-class=org.python.util.jython",
+	".py",
 	" start Jython instead of ImageJ (this is the",
 	" default when called with a file ending in .py)",
 	"--jruby --main-class=org.jruby.Main",
+	".rb",
 	" start JRuby instead of ImageJ (this is the",
 	" default when called with a file ending in .rb)",
 	"--clojure --fiji-jar=jars/clojure.jar --main-class=clojure.lang.Repl",
+	".clj",
 	" start Clojure instead of ImageJ (this is the """,
 	" default when called with a file ending in .clj)",
 	"--beanshell --fiji-jar=jars/bsh-2.0b4.jar --main-class=bsh.Interpreter",
+	".bs",
 	"--bsh --fiji-jar=jars/bsh-2.0b4.jar --main-class=bsh.Interpreter",
+	".bsh",
 	" start BeanShell instead of ImageJ (this is the",
 	" default when called with a file ending in .bs or .bsh",
 	"--ant --tools-jar --fiji-jar=jars/ant.jar --fiji-jar=jars/ant-launcher.jar --fiji-jar=jars/ant-nodeps.jar --fiji-jar=jars/ant-junit.jar --headless --main-class=org.apache.tools.ant.Main",
@@ -2117,6 +2152,36 @@ static const char *expand_subcommand(const char *option)
 	for (i = 0; i < all_subcommands.size; i++)
 		if (!strcmp(option, all_subcommands.list[i].name))
 			return all_subcommands.list[i].expanded;
+	return NULL;
+}
+
+static const char *expand_subcommand_for_extension(const char *extension)
+{
+	int i, j;
+
+	if (!extension)
+		return NULL;
+
+	if (!all_subcommands.size)
+		initialize_subcommands();
+	for (i = 0; i < all_subcommands.size; i++)
+		for (j = 0; j < all_subcommands.list[i].extensions.size; j++)
+			if (!strcmp(extension, all_subcommands.list[i].extensions.list[j]))
+				return all_subcommands.list[i].expanded;
+	return NULL;
+}
+
+static const char *get_file_extension(const char *path)
+{
+	int i = strlen(path);
+
+	while (i)
+		if (path[i - 1] == '.')
+			return path + i - 1;
+		else if (path[i - 1] == '/' || path[i - 1] == '\\')
+			return NULL;
+		else
+			i--;
 	return NULL;
 }
 
@@ -2201,11 +2266,6 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\tuse Retrotranslator to support Java < 1.6\n\n",
 		main_argv[0], subcommands.buffer);
 	string_release(&subcommands);
-}
-
-static int iswhitespace(char c)
-{
-	return c == ' ' || c == '\t' || c == '\n';
 }
 
 static const char *skip_whitespace(const char *string)
@@ -2746,18 +2806,12 @@ static void parse_command_line(void)
 		int index = dashdash ? dashdash : 1;
 		const char *first = main_argv[index];
 		int len = main_argc > index ? strlen(first) : 0;
+		const char *expanded;
 
 		if (len > 1 && !strncmp(first, "--", 2))
 			len = 0;
-		if (len > 3 && !strcmp(first + len - 3, ".py"))
-			main_class = "org.python.util.jython";
-		else if (len > 3 && !strcmp(first + len - 3, ".rb"))
-			main_class = "org.jruby.Main";
-		else if (len > 4 && !strcmp(first + len - 4, ".clj"))
-			main_class = "clojure.lang.Script";
-		else if ((len > 4 && !strcmp(first + len - 4, ".bsh")) ||
-				(len > 3 && !strcmp(first + len - 3, ".bs")))
-			main_class = "bsh.Interpreter";
+		if (len > 3 && (expanded = expand_subcommand_for_extension(get_file_extension(first))))
+			handle_commandline(expanded);
 		else if (len > 6 && !strcmp(first + len - 6, ".class")) {
 			struct string *dotted = string_copy(first);
 			string_append_path_list(&class_path, ".");
