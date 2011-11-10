@@ -169,6 +169,8 @@ static void string_ensure_alloc(struct string *string, int length)
 
 static void string_set_length(struct string *string, int length)
 {
+	if (length == string->length)
+		return;
 	if (length > string->length)
 		die("Cannot enlarge strings");
 	string->length = length;
