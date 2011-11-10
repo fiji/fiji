@@ -164,6 +164,7 @@ public class Descriptor_based_series_registration implements PlugIn
 	public static String[] detectionTypes = { "Maxima only", "Minima only", "Minima & Maxima", "Interactive ..." };
 	public static int defaultDetectionType = 0;
 	
+	public static boolean defaultSimilarOrientation = false;
 	public static int defaultNumNeighbors = 3;
 	public static int defaultRedundancy = 1;
 	public static double defaultSignificance = 3;
@@ -205,6 +206,7 @@ public class Descriptor_based_series_registration implements PlugIn
 		gd.addChoice( "Type_of_detections", detectionTypes, detectionTypes[ defaultDetectionType ] );
 		
 		gd.addChoice( "Transformation_model", transformationModel, transformationModel[ defaultTransformationModel ] );
+		gd.addCheckbox( "Images_are_roughly_aligned", defaultSimilarOrientation );
 		
 		if ( dimensionality == 2 )
 		{
@@ -250,6 +252,7 @@ public class Descriptor_based_series_registration implements PlugIn
 		final int detectionSizeIndex = gd.getNextChoiceIndex();
 		final int detectionTypeIndex = gd.getNextChoiceIndex();
 		final int transformationModelIndex = gd.getNextChoiceIndex();
+		final boolean similarOrientation = gd.getNextBoolean();
 		final int numNeighbors = (int)Math.round( gd.getNextNumber() );
 		final int redundancy = (int)Math.round( gd.getNextNumber() );
 		final double significance = gd.getNextNumber();
@@ -265,6 +268,7 @@ public class Descriptor_based_series_registration implements PlugIn
 		defaultDetectionSize = detectionSizeIndex;
 		defaultDetectionType = detectionTypeIndex;
 		defaultTransformationModel = transformationModelIndex;
+		defaultSimilarOrientation = similarOrientation;
 		defaultNumNeighbors = numNeighbors;
 		defaultRedundancy = redundancy;
 		defaultSignificance = significance;
@@ -399,6 +403,7 @@ public class Descriptor_based_series_registration implements PlugIn
 		
 		// other parameters
 		params.sigma2 = InteractiveDoG.computeSigma2( (float)params.sigma1, InteractiveDoG.standardSenstivity );
+		params.similarOrientation = similarOrientation;
 		params.numNeighbors = numNeighbors;
 		params.redundancy = redundancy;
 		params.significance = significance;
