@@ -113,8 +113,15 @@ public class Matching
 			{
 				//IJ.log( "model1: " + model1 );
 				//IJ.log( "model2: " + model2 );
-				BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D<?>)model1, imp1.getCalibration().pixelDepth / imp1.getCalibration().pixelWidth );				
-				BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D<?>)model2, imp2.getCalibration().pixelDepth / imp2.getCalibration().pixelWidth );
+				try
+				{
+					BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D<?>)model1, imp1.getCalibration().pixelDepth / imp1.getCalibration().pixelWidth );				
+					BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D<?>)model2, imp2.getCalibration().pixelDepth / imp2.getCalibration().pixelWidth );
+				}
+				catch (Exception e) 
+				{
+					IJ.log( "WARNING: Cannot cast " + model1.getClass().getSimpleName() + " to AbstractAffineModel3d, cannot concatenate axial scaling." );
+				}
 				//IJ.log( "model1: " + model1 );
 				//IJ.log( "model2: " + model2 );
 			}
@@ -194,8 +201,17 @@ public class Matching
 		
 		// fuse
 		if ( params.dimensionality == 3 )
-			for ( final InvertibleBoundable model : models )
-				BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D<?>)model, imp.getCalibration().pixelDepth / imp.getCalibration().pixelWidth );
+		{
+			try
+			{
+				for ( final InvertibleBoundable model : models )
+					BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D<?>)model, imp.getCalibration().pixelDepth / imp.getCalibration().pixelWidth );
+			}
+			catch (Exception e) 
+			{
+				IJ.log( "WARNING: Cannot cast " + models.get( 0 ).getClass().getSimpleName() + " to AbstractAffineModel3d, cannot concatenate axial scaling." );
+			}
+		}
 		
 		final ImagePlus result;
 		
