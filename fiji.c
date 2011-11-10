@@ -1996,8 +1996,111 @@ static void update_all_files(void)
 	string_release(buffer);
 }
 
+/*
+ * Flexible subcommand handling
+ *
+ * Every command line option of the form --<name> will be expanded to
+ * <expanded>.
+ */
+struct subcommand
+{
+	char *name, *expanded;
+	struct string description;
+};
+
+struct {
+	int alloc, size;
+	struct subcommand *list;
+} all_subcommands;
+
+/*
+ * The files for subcommand configuration are of the form
+ *
+ * <option>: <command-line options to replacing the subcommand options>
+ *  <description>
+ *  [<possible continuation>]
+ *
+ * Example:
+ *
+ * --build --cp jars/fake.jar --main-class fiji.build.Fake
+ *  Start the Fiji Build in the current directory
+ */
+static void add_subcommand(const char *line)
+{
+	int size = all_subcommands.size;
+
+	// is it the description?
+	if (line[0] == ' ') {
+		struct subcommand *latest = &all_subcommands.list[size - 1];
+		struct string *description = &latest->description;
+
+		string_append(description, "\t");
+		string_append(description, line + 1);
+		string_append(description, "\n");
+	}
+	else {
+		struct subcommand *current;
+		const char *space;
+		int length = strlen(line);
+
+		if (length && line[length - 1] == '\n')
+			length --;
+		if (length && line[length - 1] == '\r')
+			length --;
+		if (!length)
+			return;
+
+		if (size == all_subcommands.alloc) {
+			int alloc = (size + 16) * 3 / 2;
+			all_subcommands.list = xrealloc(all_subcommands.list,
+				alloc * sizeof(struct subcommand));
+			all_subcommands.alloc = alloc;
+		}
+
+		current = &all_subcommands.list[size];
+		memset(current, 0, sizeof(struct subcommand));
+		space = strchr(line, ' ');
+		if (space) {
+			current->name = xstrndup(line, space - line);
+			current->expanded = xstrndup(space + 1,
+				length - (space + 1 - line));
+		}
+		else
+			current->name = xstrndup(line, length);
+		all_subcommands.size++;
+	}
+}
+
+const char *default_subcommands[] = {
+};
+
+static const char *expand_subcommand(const char *option)
+{
+	int i;
+
+	if (!all_subcommands.size) {
+		for (i = 0; i < sizeof(default_subcommands)
+				/ sizeof(default_subcommands[0]); i++)
+			add_subcommand(default_subcommands[i]);
+	}
+
+	for (i = 0; i < all_subcommands.size; i++)
+		if (!strcmp(option, all_subcommands.list[i].name))
+			return all_subcommands.list[i].expanded;
+	return NULL;
+}
+
 static void __attribute__((__noreturn__)) usage(void)
 {
+	struct string subcommands = { 0, 0, NULL };
+	int i;
+
+	for (i = 0; i < all_subcommands.size; i++) {
+		struct subcommand *subcommand = &all_subcommands.list[i];
+		string_addf(&subcommands, "%s\n%s", subcommand->name,
+			subcommand->description.length ? subcommand->description.buffer : "");
+	}
+
 	die("Usage: %s [<Java options>.. --] [<ImageJ options>..] [<files>..]\n"
 		"\n"
 		"Java options are passed to the Java Runtime, ImageJ\n"
@@ -2075,6 +2178,7 @@ static void __attribute__((__noreturn__)) usage(void)
 		"--beanshell, --bsh\n"
 		"\tstart BeanShell instead of ImageJ (this is the ""\n"
 		"\tdefault when called with a file ending in .bs or .bsh)"
+		"%s"
 		"\n"
 		"--main-class <class name> (this is the\n"
 		"\tdefault when called with a file ending in .class)\n"
@@ -2095,7 +2199,20 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\tstart javadoc instead of ImageJ\n"
 		"--retrotranslator\n"
 		"\tuse Retrotranslator to support Java < 1.6\n\n",
-		main_argv[0]);
+		main_argv[0], subcommands.buffer);
+	string_release(&subcommands);
+}
+
+static int iswhitespace(char c)
+{
+	return c == ' ' || c == '\t' || c == '\n';
+}
+
+static const char *skip_whitespace(const char *string)
+{
+	while (iswhitespace(*string))
+		string++;
+	return string;
 }
 
 static const char *parse_number(const char *string, unsigned int *result, int shift)
@@ -2448,6 +2565,38 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 	return 1;
 }
 
+static void handle_commandline(const char *line)
+{
+	int i, alloc = 32, argc = 0;
+	char **argv = xmalloc(alloc * sizeof(char *));
+	const char *current;
+
+	current = line = skip_whitespace(line);
+	if (!*current)
+		return;
+
+	while (*(++line))
+		if (iswhitespace(*line)) {
+			if (argc + 2 >= alloc) {
+				alloc = (16 + alloc) * 3 / 2;
+				argv = xrealloc(argv, alloc * sizeof(char *));
+			}
+			argv[argc++] = xstrndup(current, line - current);
+			current = line = skip_whitespace(line + 1);
+		}
+
+	if (current != line)
+		argv[argc++] = xstrndup(current, line - current);
+
+	for (i = 0; i < argc; i++)
+		if (!handle_one_option2(&i, argc, (const char **)argv))
+			die("Unhandled option: %s", argv[i]);
+
+	while (argc > 0)
+		free(argv[--argc]);
+	free(argv);
+}
+
 static void parse_command_line(void)
 {
 	struct string *jvm_options = string_init(32);
@@ -2546,8 +2695,13 @@ static void parse_command_line(void)
 			main_argv[count++] = main_argv[i];
 		else if (handle_one_option2(&i, main_argc, (const char **)main_argv))
 			; /* ignore */
-		else
-			main_argv[count++] = main_argv[i];
+		else {
+			const char *expanded = expand_subcommand(main_argv[i]);
+			if (expanded)
+				handle_commandline(expanded);
+			else
+				main_argv[count++] = main_argv[i];
+		}
 
 	main_argc = count;
 
