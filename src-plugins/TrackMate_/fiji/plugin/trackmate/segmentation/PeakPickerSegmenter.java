@@ -54,7 +54,7 @@ public class PeakPickerSegmenter <T extends RealType<T>> extends AbstractSpotSeg
 	public boolean process() {
 
 		// Deal with median filter:
-		Image<T> intermediateImage = applyMedianFilter(img);;
+		Image<T> intermediateImage = img;
 		if (settings.useMedianFilter) {
 			intermediateImage = applyMedianFilter(intermediateImage);
 			if (null == intermediateImage) {
