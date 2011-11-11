@@ -175,6 +175,7 @@ public class Descriptor_based_series_registration implements PlugIn
 	public static int defaultRange = 5;
 	
 	public static int defaultChannel = 1;
+	public static boolean defaultCreateOverlay = true;
 
 	/**
 	 * Ask for all other required parameters ..
@@ -233,6 +234,8 @@ public class Descriptor_based_series_registration implements PlugIn
 			defaultChannel = 1;
 		
 		gd.addSlider( "Choose_registration_channel" , 1, numChannels, defaultChannel );
+		gd.addMessage( "Image fusion" );
+		gd.addCheckbox( "Create_registered_image", defaultCreateOverlay );
 
 		gd.addMessage("");
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
@@ -261,7 +264,7 @@ public class Descriptor_based_series_registration implements PlugIn
 		final int range = (int)Math.round( gd.getNextNumber() );
 		// zero-offset channel
 		final int channel = (int)Math.round( gd.getNextNumber() ) - 1;
-		
+		final boolean createOverlay = gd.getNextBoolean();
 		
 		// update static values for next call
 		defaultDetectionBrightness = detectionBrightnessIndex;
@@ -276,6 +279,7 @@ public class Descriptor_based_series_registration implements PlugIn
 		defaultGlobalOpt = globalOptIndex;
 		defaultRange = range;
 		defaultChannel = channel + 1;
+		defaultCreateOverlay = createOverlay;
 		
 		// one of them is by default interactive, then all are interactive
 		if ( detectionBrightnessIndex == detectionBrightness.length - 1 || 
@@ -410,7 +414,7 @@ public class Descriptor_based_series_registration implements PlugIn
 		params.ransacThreshold = ransacThreshold;
 		params.channel1 = channel; 
 		params.channel2 = -1;
-		params.fuse = true;
+		params.fuse = createOverlay;
 		params.setPointsRois = false;
 		params.globalOpt = globalOptIndex;
 		params.range = range;
