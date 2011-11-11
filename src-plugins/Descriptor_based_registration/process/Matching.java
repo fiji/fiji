@@ -329,8 +329,13 @@ public class Matching
 			//IJ.log( pair.indexA + "<->" + pair.indexB + ": " + pair.model );
 		}
 		
+		// add the matches
 		for ( final ComparePair pair : pairs )
 			addPointMatches( pair.inliers, tiles.get( pair.indexA ), tiles.get( pair.indexB ) );
+		
+		// compute an approximate correct orientation (this is important for all models execpt translation and affine!, they might not converge otherwise)
+		// which models have already an approximate location
+		
 		
 		final TileConfiguration tc = new TileConfiguration();
 
@@ -438,12 +443,14 @@ public class Matching
 		if ( params.similarOrientation )
 		{
 			// an empty model with identity transform
-			final Model<?> identityTransform;
-			
+			final Model<?> identityTransform = params.model.copy();
+
+			/*
 			if ( params.dimensionality == 2 )
 				identityTransform = new TranslationModel2D();
 			else
 				identityTransform = new TranslationModel3D();
+			*/
 			
 			candidates = getCorrespondenceCandidates( params.significance, matcher, peaks1, peaks2, identityTransform, params.dimensionality, zStretching1, zStretching2 );
 		}
