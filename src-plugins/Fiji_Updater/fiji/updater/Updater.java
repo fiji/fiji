@@ -132,7 +132,7 @@ public class Updater implements PlugIn {
 						!downloaded.renameTo(updaterJar) ||
 						!downloaded.getParentFile().delete() ||
 						!downloaded.getParentFile().getParentFile().delete())
-					main.error("Could not overwrite Fiji Updater");
+					main.info("Please restart Fiji and call Help>Update Fiji to continue the update");
 				else
 					/*
 					 * Start a new Thread that refreshes the menus and restarts the updater;
