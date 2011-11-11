@@ -25,7 +25,7 @@ public class Test2DTracing {
 	double endX = 1.730; double endY = 13.554;
 
 	@Before public void setUp() {
-		image = BatchOpener.openFirstChannel("test-images/c061AG-small-section-z-max.tif" );
+		image = BatchOpener.openFirstChannel("tests/sample-data/c061AG-small-section-z-max.tif" );
 		assertNotNull("Couldn't open the 2D test image",image);
 	}
 
