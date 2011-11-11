@@ -30,8 +30,10 @@ public class Descriptor_based_registration implements PlugIn
 	public static int defaultImg2 = 1;
 	public static boolean defaultReApply = false;
 
+	// if both are not null, the option of re-apply previous models will show up
 	public static InvertibleBoundable lastModel1 = null;
 	public static InvertibleBoundable lastModel2 = null;
+	// define if it is was a 2d or 3d model
 	public static int lastDimensionality = Integer.MAX_VALUE;
 	
 	//@Override

@@ -202,29 +202,32 @@ public class Matching
 		}
 		
 		// fuse
-		if ( params.dimensionality == 3 )
+		if ( params.fuse )
 		{
-			try
+			if ( params.dimensionality == 3 )
 			{
-				for ( final InvertibleBoundable model : models )
-					BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D<?>)model, imp.getCalibration().pixelDepth / imp.getCalibration().pixelWidth );
+				try
+				{
+					for ( final InvertibleBoundable model : models )
+						BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D<?>)model, imp.getCalibration().pixelDepth / imp.getCalibration().pixelWidth );
+				}
+				catch (Exception e) 
+				{
+					IJ.log( "WARNING: Cannot cast " + models.get( 0 ).getClass().getSimpleName() + " to AbstractAffineModel3d, cannot concatenate axial scaling." );
+				}
 			}
-			catch (Exception e) 
-			{
-				IJ.log( "WARNING: Cannot cast " + models.get( 0 ).getClass().getSimpleName() + " to AbstractAffineModel3d, cannot concatenate axial scaling." );
-			}
+			
+			final ImagePlus result;
+			
+			if ( imp.getType() == ImagePlus.GRAY32 )
+				result = OverlayFusion.createReRegisteredSeries( new FloatType(), imp, models, params.dimensionality );
+			else if ( imp.getType() == ImagePlus.GRAY16 )
+				result = OverlayFusion.createReRegisteredSeries( new UnsignedShortType(), imp, models, params.dimensionality );
+			else
+				result = OverlayFusion.createReRegisteredSeries( new UnsignedByteType(), imp, models, params.dimensionality );
+			
+			result.show();
 		}
-		
-		final ImagePlus result;
-		
-		if ( imp.getType() == ImagePlus.GRAY32 )
-			result = OverlayFusion.createReRegisteredSeries( new FloatType(), imp, models, params.dimensionality );
-		else if ( imp.getType() == ImagePlus.GRAY16 )
-			result = OverlayFusion.createReRegisteredSeries( new UnsignedShortType(), imp, models, params.dimensionality );
-		else
-			result = OverlayFusion.createReRegisteredSeries( new UnsignedByteType(), imp, models, params.dimensionality );
-		
-		result.show();
 	}
 	
 	/**
