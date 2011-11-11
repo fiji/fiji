@@ -21,7 +21,7 @@ sys.exit(lib.launchFiji(['--headless', \
 		'vib.TestFastMatrix', \
 		'tracing.Test2DTracing', \
 		'tracing.Test3DTracing'], \
-	File(System.getProperty('fiji.dir') + '/VIB')))
+	File(System.getProperty('fiji.dir') + '/src-plugins/VIB-lib')))
 
 '''
 This does not work:
