@@ -458,14 +458,11 @@ public class Matching
 					// are there enough matches?
 					if ( pm.size() > targetTile.getModel().getMinNumMatches() )
 					{
-						IJ.log( "Tile " + referenceTile + " -> Tile " + targetTile + ": " + pm.size() );
-					
 						// fit the model of the targetTile to the subset of matches
 						// mapping its local coordinates target.p.l into the world
 						// coordinates reference.p.w
 						// this will give us an approximation for the global optimization
 						targetTile.getModel().fit( pm );							
-						IJ.log( "absoulte Model: " + targetTile.getModel() );
 						
 						// now that we managed to fit the model we remove the
 						// Tile from unaligned tiles and add it to aligned tiles
