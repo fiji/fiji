@@ -37,6 +37,7 @@ public class DescriptorParameters
 	public double sigma1, sigma2, threshold;
 	public boolean lookForMaxima, lookForMinima;
 	public AbstractModel<?> model;
+	public boolean similarOrientation;
 	public int numNeighbors;
 	public int redundancy;
 	public double significance;

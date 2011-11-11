@@ -31,6 +31,8 @@ import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
 import mpicbg.models.Tile;
 import mpicbg.models.TileConfiguration;
+import mpicbg.models.TranslationModel2D;
+import mpicbg.models.TranslationModel3D;
 import mpicbg.pointdescriptor.AbstractPointDescriptor;
 import mpicbg.pointdescriptor.ModelPointDescriptor;
 import mpicbg.pointdescriptor.SimplePointDescriptor;
@@ -113,8 +115,15 @@ public class Matching
 			{
 				//IJ.log( "model1: " + model1 );
 				//IJ.log( "model2: " + model2 );
-				BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D<?>)model1, imp1.getCalibration().pixelDepth / imp1.getCalibration().pixelWidth );				
-				BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D<?>)model2, imp2.getCalibration().pixelDepth / imp2.getCalibration().pixelWidth );
+				try
+				{
+					BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D<?>)model1, imp1.getCalibration().pixelDepth / imp1.getCalibration().pixelWidth );				
+					BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D<?>)model2, imp2.getCalibration().pixelDepth / imp2.getCalibration().pixelWidth );
+				}
+				catch (Exception e) 
+				{
+					IJ.log( "WARNING: Cannot cast " + model1.getClass().getSimpleName() + " to AbstractAffineModel3d, cannot concatenate axial scaling." );
+				}
 				//IJ.log( "model1: " + model1 );
 				//IJ.log( "model2: " + model2 );
 			}
@@ -196,8 +205,17 @@ public class Matching
 		if ( params.fuse )
 		{
 			if ( params.dimensionality == 3 )
-				for ( final InvertibleBoundable model : models )
-					BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D<?>)model, imp.getCalibration().pixelDepth / imp.getCalibration().pixelWidth );
+			{
+				try
+				{
+					for ( final InvertibleBoundable model : models )
+						BeadRegistration.concatenateAxialScaling( (AbstractAffineModel3D<?>)model, imp.getCalibration().pixelDepth / imp.getCalibration().pixelWidth );
+				}
+				catch (Exception e) 
+				{
+					IJ.log( "WARNING: Cannot cast " + models.get( 0 ).getClass().getSimpleName() + " to AbstractAffineModel3d, cannot concatenate axial scaling." );
+				}
+			}
 			
 			final ImagePlus result;
 			
@@ -417,7 +435,23 @@ public class Matching
 			final float zStretching1, final float zStretching2, final DescriptorParameters params, String explanation )
 	{
 		final Matcher matcher = new SubsetMatcher( params.numNeighbors, params.numNeighbors + params.redundancy );
-		ArrayList<PointMatch> candidates = getCorrespondenceCandidates( params.significance, matcher, peaks1, peaks2, null, params.dimensionality, zStretching1, zStretching2 );
+		ArrayList<PointMatch> candidates;
+		
+		// if the images are already in similar orientation, we do not do a rotation-invariant matching, but only translation-invariant
+		if ( params.similarOrientation )
+		{
+			// an empty model with identity transform
+			final Model<?> identityTransform;
+			
+			if ( params.dimensionality == 2 )
+				identityTransform = new TranslationModel2D();
+			else
+				identityTransform = new TranslationModel3D();
+			
+			candidates = getCorrespondenceCandidates( params.significance, matcher, peaks1, peaks2, identityTransform, params.dimensionality, zStretching1, zStretching2 );
+		}
+		else
+			candidates = getCorrespondenceCandidates( params.significance, matcher, peaks1, peaks2, null, params.dimensionality, zStretching1, zStretching2 );
 		
 		// compute ransac
 		//ArrayList<PointMatch> finalInliers = new ArrayList<PointMatch>();

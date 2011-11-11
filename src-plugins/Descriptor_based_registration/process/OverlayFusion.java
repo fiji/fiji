@@ -254,7 +254,7 @@ public class OverlayFusion
 		
 		for ( int d = 0; d < dimensionality; ++d )
 		{
-			size[ d ] = Math.round( maxImg[ d ] - minImg[ d ] ) + 1;
+			size[ d ] = Math.round( maxImg[ d ] - minImg[ d ] );
 			offset[ d ] = minImg[ d ];			
 		}
 		

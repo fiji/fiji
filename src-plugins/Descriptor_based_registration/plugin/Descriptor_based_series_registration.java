@@ -166,6 +166,7 @@ public class Descriptor_based_series_registration implements PlugIn
 	public static String[] detectionTypes = { "Maxima only", "Minima only", "Minima & Maxima", "Interactive ..." };
 	public static int defaultDetectionType = 0;
 	
+	public static boolean defaultSimilarOrientation = false;
 	public static int defaultNumNeighbors = 3;
 	public static int defaultRedundancy = 1;
 	public static double defaultSignificance = 3;
@@ -176,6 +177,7 @@ public class Descriptor_based_series_registration implements PlugIn
 	public static int defaultRange = 5;
 	
 	public static int defaultChannel = 1;
+	public static boolean defaultCreateOverlay = true;
 
 	/**
 	 * Ask for all other required parameters ..
@@ -207,6 +209,7 @@ public class Descriptor_based_series_registration implements PlugIn
 		gd.addChoice( "Type_of_detections", detectionTypes, detectionTypes[ defaultDetectionType ] );
 		
 		gd.addChoice( "Transformation_model", transformationModel, transformationModel[ defaultTransformationModel ] );
+		gd.addCheckbox( "Images_are_roughly_aligned", defaultSimilarOrientation );
 		
 		if ( dimensionality == 2 )
 		{
@@ -233,6 +236,8 @@ public class Descriptor_based_series_registration implements PlugIn
 			defaultChannel = 1;
 		
 		gd.addSlider( "Choose_registration_channel" , 1, numChannels, defaultChannel );
+		gd.addMessage( "Image fusion" );
+		gd.addCheckbox( "Create_registered_image", defaultCreateOverlay );
 
 		gd.addMessage("");
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
@@ -252,6 +257,7 @@ public class Descriptor_based_series_registration implements PlugIn
 		final int detectionSizeIndex = gd.getNextChoiceIndex();
 		final int detectionTypeIndex = gd.getNextChoiceIndex();
 		final int transformationModelIndex = gd.getNextChoiceIndex();
+		final boolean similarOrientation = gd.getNextBoolean();
 		final int numNeighbors = (int)Math.round( gd.getNextNumber() );
 		final int redundancy = (int)Math.round( gd.getNextNumber() );
 		final double significance = gd.getNextNumber();
@@ -260,13 +266,14 @@ public class Descriptor_based_series_registration implements PlugIn
 		final int range = (int)Math.round( gd.getNextNumber() );
 		// zero-offset channel
 		final int channel = (int)Math.round( gd.getNextNumber() ) - 1;
-		
+		final boolean createOverlay = gd.getNextBoolean();
 		
 		// update static values for next call
 		defaultDetectionBrightness = detectionBrightnessIndex;
 		defaultDetectionSize = detectionSizeIndex;
 		defaultDetectionType = detectionTypeIndex;
 		defaultTransformationModel = transformationModelIndex;
+		defaultSimilarOrientation = similarOrientation;
 		defaultNumNeighbors = numNeighbors;
 		defaultRedundancy = redundancy;
 		defaultSignificance = significance;
@@ -274,6 +281,7 @@ public class Descriptor_based_series_registration implements PlugIn
 		defaultGlobalOpt = globalOptIndex;
 		defaultRange = range;
 		defaultChannel = channel + 1;
+		defaultCreateOverlay = createOverlay;
 		
 		// one of them is by default interactive, then all are interactive
 		if ( detectionBrightnessIndex == detectionBrightness.length - 1 || 
@@ -401,13 +409,14 @@ public class Descriptor_based_series_registration implements PlugIn
 		
 		// other parameters
 		params.sigma2 = InteractiveDoG.computeSigma2( (float)params.sigma1, InteractiveDoG.standardSenstivity );
+		params.similarOrientation = similarOrientation;
 		params.numNeighbors = numNeighbors;
 		params.redundancy = redundancy;
 		params.significance = significance;
 		params.ransacThreshold = ransacThreshold;
 		params.channel1 = channel; 
 		params.channel2 = -1;
-		params.fuse = true;
+		params.fuse = createOverlay;
 		params.setPointsRois = false;
 		params.globalOpt = globalOptIndex;
 		params.range = range;

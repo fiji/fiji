@@ -165,6 +165,7 @@ public class Descriptor_based_registration implements PlugIn
 	public static String[] detectionTypes = { "Maxima only", "Minima only", "Minima & Maxima", "Interactive ..." };
 	public static int defaultDetectionType = 0;
 	
+	public static boolean defaultSimilarOrientation = false;
 	public static int defaultNumNeighbors = 3;
 	public static int defaultRedundancy = 1;
 	public static double defaultSignificance = 3;
@@ -205,6 +206,7 @@ public class Descriptor_based_registration implements PlugIn
 		gd.addChoice( "Type_of_detections", detectionTypes, detectionTypes[ defaultDetectionType ] );
 		
 		gd.addChoice( "Transformation_model", transformationModel, transformationModel[ defaultTransformationModel ] );
+		gd.addCheckbox( "Images_are_roughly_aligned", defaultSimilarOrientation );
 		
 		if ( dimensionality == 2 )
 		{
@@ -220,7 +222,6 @@ public class Descriptor_based_registration implements PlugIn
 			
 			gd.addSlider( "Number_of_neighbors for the descriptors", 3, 10, defaultNumNeighbors );
 		}
-		
 		gd.addSlider( "Redundancy for descriptor matching", 0, 10, defaultRedundancy );		
 		gd.addSlider( "Significance required for a descriptor match", 1.0, 10.0, defaultSignificance );
 		gd.addSlider( "Allowed_error_for_RANSAC (px)", 0.5, 20.0, defaultRansacThreshold );
@@ -259,6 +260,7 @@ public class Descriptor_based_registration implements PlugIn
 		final int detectionSizeIndex = gd.getNextChoiceIndex();
 		final int detectionTypeIndex = gd.getNextChoiceIndex();
 		final int transformationModelIndex = gd.getNextChoiceIndex();
+		final boolean similarOrientation = gd.getNextBoolean();
 		final int numNeighbors = (int)Math.round( gd.getNextNumber() );
 		final int redundancy = (int)Math.round( gd.getNextNumber() );
 		final double significance = gd.getNextNumber();
@@ -275,6 +277,7 @@ public class Descriptor_based_registration implements PlugIn
 		defaultDetectionSize = detectionSizeIndex;
 		defaultDetectionType = detectionTypeIndex;
 		defaultTransformationModel = transformationModelIndex;
+		defaultSimilarOrientation = similarOrientation;
 		defaultNumNeighbors = numNeighbors;
 		defaultRedundancy = redundancy;
 		defaultSignificance = significance;
@@ -394,6 +397,7 @@ public class Descriptor_based_registration implements PlugIn
 		
 		// other parameters
 		params.sigma2 = InteractiveDoG.computeSigma2( (float)params.sigma1, InteractiveDoG.standardSenstivity );
+		params.similarOrientation = similarOrientation;
 		params.numNeighbors = numNeighbors;
 		params.redundancy = redundancy;
 		params.significance = significance;
