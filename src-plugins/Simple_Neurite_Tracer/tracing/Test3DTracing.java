@@ -121,14 +121,14 @@ public class Test3DTracing {
 
 			pointsExploredHessian = tracer.pointsConsideredInSearch();
 
-			assertTrue( "Hessian-based analysis should explore less than 20000 points",
-				    pointsExploredHessian < 20000 );
+			assertTrue( "Hessian-based analysis should explore less than 24000 points",
+				    pointsExploredHessian < 24000 );
 
 			if( doNormal ) {
 				assertTrue( "Hessian-based analysis should reduce the points explored " +
 					    "by at least a third; in fact went from " +
 					    pointsExploredNormal + " to " +pointsExploredHessian,
-					    pointsExploredHessian * 10 < pointsExploredNormal );
+					    pointsExploredHessian < pointsExploredNormal * 0.6666 );
 			}
 		}
 	}

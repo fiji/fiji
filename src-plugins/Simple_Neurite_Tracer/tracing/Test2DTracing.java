@@ -121,9 +121,9 @@ public class Test2DTracing {
 			pointsExploredHessian = tracer.pointsConsideredInSearch();
 
 			assertTrue( "Hessian-based analysis should reduce the points explored " +
-				    "by at least a third; in fact went from " +
+				    "by at least a two fifths; in fact went from " +
 				    pointsExploredNormal + " to " +pointsExploredHessian,
-				    pointsExploredHessian * 1.5 < pointsExploredNormal );
+				    pointsExploredHessian < pointsExploredNormal * 0.8 );
 		}
 	}
 }
