@@ -55,17 +55,3 @@ JUnitCore.main(['math3d.TestEigenvalueDecompositions', \
                'vib.TestFastMatrix', \
                'tracing.Test2DTracing', \
                'tracing.Test3DTracing'])
-
-# sys.exit(lib.launchFiji(['--headless', \
-# 		'--main-class=org.junit.runner.JUnitCore', \
-# 		'math3d.TestEigenvalueDecompositions', \
-# 		'util.TestFindConnectedRegions', \
-# 		'distance.TestMutualInformation', \
-# 		'distance.TestEuclidean', \
-# 		'distance.TestCorrelation', \
-# 		'landmarks.TestLoading', \
-# 		'util.TestPenalty', \
-# 		'vib.TestFastMatrix', \
-# 		'tracing.Test2DTracing', \
-# 		'tracing.Test3DTracing'], \
-# 	File(fiji_dir)))
