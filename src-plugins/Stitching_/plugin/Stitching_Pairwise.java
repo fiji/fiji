@@ -20,10 +20,12 @@ import fiji.stacks.Hyperstack_rearranger;
 import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.MultiLineLabel;
 import ij.plugin.PlugIn;
+import ij.process.ImageProcessor;
 import stitching.CommonFunctions;
 
 
@@ -313,19 +315,37 @@ public class Stitching_Pairwise implements PlugIn
 			images.add( imp1 );
 			images.add( imp2 );
 		
+			final CompositeImage timepoint0 = OverlayFusion.createOverlay( targetType, images, models, params.dimensionality, 1 );
+			
 			if ( imp1.getNFrames() > 1 )
 			{
+				final ImageStack stack = new ImageStack( timepoint0.getWidth(), timepoint0.getHeight() );
+				
+				// add all slices of the first timepoint
+				for ( int c = 1; c <= timepoint0.getStackSize(); ++c )
+					stack.addSlice( "", timepoint0.getStack().getProcessor( c ) );
+				
 				//"Overlay into composite image"
-				for ( int f = 1; f < imp1.getNFrames(); ++f )
+				for ( int f = 2; f <= imp1.getNFrames(); ++f )
 				{
-					OverlayFusion.createOverlay( targetType, images, models, params.dimensionality, f );
+					final CompositeImage tmp = OverlayFusion.createOverlay( targetType, images, models, params.dimensionality, f );
+					
+					// add all slices of the first timepoint
+					for ( int c = 1; c <= tmp.getStackSize(); ++c )
+						stack.addSlice( "", tmp.getStack().getProcessor( c ) );					
 				}
-				return null;
-						
+				
+				//convertXYZCT ...
+				ImagePlus result = new ImagePlus( params.fusedName, stack );
+				
+				// numchannels, z-slices, timepoints (but right now the order is still XYZCT)
+				result.setDimensions( timepoint0.getNChannels(), timepoint0.getNSlices(), imp1.getNFrames() );
+				return new CompositeImage( result, CompositeImage.COMPOSITE );
 			}
 			else
 			{
-				return OverlayFusion.createOverlay( targetType, images, models, params.dimensionality, 1 );				
+				timepoint0.setTitle( params.fusedName );
+				return timepoint0;
 			}
 		}
 		else

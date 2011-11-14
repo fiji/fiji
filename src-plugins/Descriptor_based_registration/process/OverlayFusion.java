@@ -221,7 +221,7 @@ public class OverlayFusion
 		// casts of the models
 		final ArrayList<InvertibleBoundable> boundables = new ArrayList<InvertibleBoundable>();
 		
-		for ( int i = 0; i < models.size(); ++i )
+		for ( int i = 0; i < numImages; ++i )
 		{
 			final InvertibleBoundable boundable = (InvertibleBoundable)models.get( i ); 
 			boundables.add( boundable );
