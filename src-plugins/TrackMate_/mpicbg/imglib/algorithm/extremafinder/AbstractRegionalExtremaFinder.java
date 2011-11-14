@@ -26,7 +26,7 @@ public abstract class AbstractRegionalExtremaFinder<T extends RealType<T>> imple
 	}
 	
 	@Override
-	public ArrayList< float[] > getRegionalExtremaCenters(boolean doInterpolate) {
+	public ArrayList< float[] > getRegionalExtremaCenters() {
 		ArrayList<float[]> centeredRegionalMaxima = new ArrayList<float[]>();
 		ArrayList<ArrayList<int[]>> regionalMaxima = new ArrayList<ArrayList<int[]>>(maxima); // make a copy
 		ArrayList<int[]> curr = null;

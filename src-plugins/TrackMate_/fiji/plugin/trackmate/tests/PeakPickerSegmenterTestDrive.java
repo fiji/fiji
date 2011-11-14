@@ -15,7 +15,7 @@ import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import mpicbg.imglib.util.Util;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
-import fiji.plugin.trackmate.segmentation.PeakPickerSegmenter;
+import fiji.plugin.trackmate.segmentation.LogSegmenter;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 
 public class PeakPickerSegmenterTestDrive {
@@ -63,7 +63,7 @@ public class PeakPickerSegmenterTestDrive {
 		// Instantiate segmenter
 		LogSegmenterSettings settings = new LogSegmenterSettings();
 		settings.expectedRadius = RADIUS;
-		SpotSegmenter<UnsignedByteType> segmenter = new PeakPickerSegmenter<UnsignedByteType>();
+		SpotSegmenter<UnsignedByteType> segmenter = new LogSegmenter<UnsignedByteType>();
 		segmenter.setTarget(img, CALIBRATION, settings);
 		
 		// Segment

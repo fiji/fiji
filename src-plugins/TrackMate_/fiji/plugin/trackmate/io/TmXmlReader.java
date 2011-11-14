@@ -35,7 +35,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.segmentation.PeakPickerSegmenter;
+import fiji.plugin.trackmate.segmentation.LogSegmenter;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.SimpleFastLAPTracker;
@@ -244,22 +244,22 @@ public class TmXmlReader {
 		if (null == segmenterClassName) {
 			logger.error("Segmenter class is not present.\n");
 			logger.error("Substituting default.\n");
-			segmenter = new PeakPickerSegmenter();
+			segmenter = new LogSegmenter();
 		} else {
 			try {
 				segmenter = (SpotSegmenter) Class.forName(segmenterClassName).newInstance();
 			} catch (InstantiationException e) {
 				logger.error("Unable to instantiate segmenter class: "+e.getLocalizedMessage()+"\n");
 				logger.error("Substituting default.\n");
-				segmenter = new PeakPickerSegmenter();
+				segmenter = new LogSegmenter();
 			} catch (IllegalAccessException e) {
 				logger.error("Unable to instantiate segmenter class: "+e.getLocalizedMessage()+"\n");
 				logger.error("Substituting default.\n");
-				segmenter = new PeakPickerSegmenter();
+				segmenter = new LogSegmenter();
 			} catch (ClassNotFoundException e) {
 				logger.error("Unable to find segmenter class: "+e.getLocalizedMessage()+"\n");
 				logger.error("Substituting default.\n");
-				segmenter = new PeakPickerSegmenter();
+				segmenter = new LogSegmenter();
 			}
 		}
 		settings.segmenter = segmenter;

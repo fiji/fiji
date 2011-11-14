@@ -42,12 +42,10 @@ public interface RegionalExtremaFinder<T extends RealType<T>> extends Algorithm,
 	 * would be computed by this function). Return <code>null</code> if the {@link #process()} method
 	 * has not bee called.
 	 * 
-	 * @param  doInterpolate  if true, extrema positions will be interpolated to sub-pixel accuracy using 
-	 * neighborhood pixels
 	 * @return The coordinates of the "center pixel" of the regional maximum. It will always be 
 	 * a 3-elements float arrays, even for 2D case.
 	 */
-	public ArrayList<float[]> getRegionalExtremaCenters(boolean doInterpolate);
+	public ArrayList<float[]> getRegionalExtremaCenters();
 		
 	/**
 	 * If set to true before the {@link #process()} method is called, then extrema found 

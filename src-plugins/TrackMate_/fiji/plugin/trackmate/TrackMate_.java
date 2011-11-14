@@ -23,7 +23,7 @@ import fiji.plugin.trackmate.gui.TrackMateFrameController;
 import fiji.plugin.trackmate.segmentation.DogSegmenter;
 import fiji.plugin.trackmate.segmentation.DownSampleLogSegmenter;
 import fiji.plugin.trackmate.segmentation.ManualSegmenter;
-import fiji.plugin.trackmate.segmentation.PeakPickerSegmenter;
+import fiji.plugin.trackmate.segmentation.LogSegmenter;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.FastLAPTracker;
 import fiji.plugin.trackmate.tracking.LAPTracker;
@@ -163,7 +163,7 @@ public class TrackMate_ implements PlugIn {
 	@SuppressWarnings("rawtypes")
 	protected List<SpotSegmenter> createSegmenterList() {
 		List<SpotSegmenter> spotSegmenters = new ArrayList<SpotSegmenter>(4);
-		spotSegmenters.add(new PeakPickerSegmenter());
+		spotSegmenters.add(new LogSegmenter());
 		spotSegmenters.add(new DogSegmenter());
 		spotSegmenters.add(new DownSampleLogSegmenter());
 		spotSegmenters.add(new ManualSegmenter());
