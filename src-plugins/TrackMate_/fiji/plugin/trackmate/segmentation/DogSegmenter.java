@@ -26,8 +26,7 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 	
 	public final static String BASE_ERROR_MESSAGE = "DogSegmenter: ";
 	
-	private boolean doSubPixelLocalization = false;
-	private DogSegmenterSettings settings;
+	private LogSegmenterSettings settings;
 	
 	/*
 	 * CONSTRUCTOR
@@ -48,14 +47,13 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 
 	@Override
 	public SegmenterSettings createDefaultSettings() {
-		return new DogSegmenterSettings();
+		return new LogSegmenterSettings();
 	}
 	
 	@Override
 	public void setTarget(Image<T> image, float[] calibration, SegmenterSettings settings) {
 		super.setTarget(image, calibration, settings);
-		this.settings = (DogSegmenterSettings) settings;
-		this.doSubPixelLocalization = this.settings.doSubPixelLocalization;
+		this.settings = (LogSegmenterSettings) settings;
 	}
 
 	@Override
@@ -85,7 +83,7 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 		final DifferenceOfGaussianRealNI<T, FloatType> dog = new DifferenceOfGaussianRealNI<T, FloatType>(intermediateImage, imageFactory, oobs2, sigma1, sigma2, minPeakValue, 1.0, calibration);
 		
 		// Keep laplace image if needed
-		if (doSubPixelLocalization)
+		if (settings.doSubPixelLocalization)
 			dog.setKeepDoGImage(true);
 		
 		// Execute
@@ -111,7 +109,7 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 		}
 		
 		// Deal with sub-pixel localization if required
-		if (doSubPixelLocalization && pruned_list.size() > 0) {
+		if (settings.doSubPixelLocalization && pruned_list.size() > 0) {
 			Image<FloatType> laplacian = dog.getDoGImage();
 			SubpixelLocalization<FloatType> locator = new SubpixelLocalization<FloatType>(laplacian , pruned_list);
 			if ( !locator.checkInput() || !locator.process() )	{
@@ -125,7 +123,7 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 		spots.clear();
 		for(DifferenceOfGaussianPeak<FloatType> dogpeak : pruned_list) {
 			float[] coords = new float[3];
-			if (doSubPixelLocalization) {
+			if (settings.doSubPixelLocalization) {
 				for (int i = 0; i < img.getNumDimensions(); i++) 
 					coords[i] = dogpeak.getSubPixelPosition(i) * calibration[i];
 			} else {

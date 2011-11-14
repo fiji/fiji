@@ -30,7 +30,7 @@ import fiji.plugin.trackmate.segmentation.SegmenterSettings;
  */
 public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel {
 
-	private static final long serialVersionUID = -1376383272848535855L;
+	private static final long serialVersionUID = 4519313560718180405L;
 	private JLabel jLabel1;
 	protected JLabel jLabelSegmenterName;
 	private JLabel jLabel2;
@@ -41,6 +41,7 @@ public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel 
 	protected JCheckBox jCheckBoxMedianFilter;
 	protected JLabel jLabelBlobDiameterUnit;
 	protected JTextField jTextFieldBlobDiameter;
+	private JCheckBox jCheckSubPixel;
 	/** The {@link LogSegmenterSettings} object set by this panel. */
 	private LogSegmenterSettings settings;
 	
@@ -69,6 +70,7 @@ public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel 
 		settings.expectedRadius = Float.parseFloat(jTextFieldBlobDiameter.getText())/2;
 		settings.threshold = Float.parseFloat(jTextFieldThreshold.getText());
 		settings.useMedianFilter = jCheckBoxMedianFilter.isSelected();
+		settings.doSubPixelLocalization = jCheckSubPixel.isSelected();
 		return settings;
 	}
 	
@@ -101,16 +103,20 @@ public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel 
 		jTextFieldBlobDiameter.setText(""+(2*settings.expectedRadius));
 		jCheckBoxMedianFilter.setSelected(settings.useMedianFilter);
 		jTextFieldThreshold.setText(""+settings.threshold);
+		jCheckSubPixel.setSelected(settings.doSubPixelLocalization);
 	}
 	
 	protected void initGUI() {
 		try {
 			GridBagLayout thisLayout = new GridBagLayout();
 			this.setPreferredSize(new java.awt.Dimension(246, 399));
-			thisLayout.rowWeights = new double[] {0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.5, 0.0};
-			thisLayout.rowHeights = new int[] {15, 15, 7, 15, 15, 15, 7, 15};
+			thisLayout.rowWeights = new double[] {0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0};
+			thisLayout.rowHeights = new int[] {15, 15, 7, 15, 15, 15, 15, 7, 15};
+//			thisLayout.rowWeights = new double[] {0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.5, 0.0};
+//			thisLayout.rowHeights = new int[] {15, 15, 7, 15, 15, 15, 7, 15};
 			thisLayout.columnWeights = new double[] {0.1, 0.1, 0.1};
 			thisLayout.columnWidths = new int[] {7, 7, 7};
+			
 			this.setLayout(thisLayout);
 			{
 				jLabel1 = new JLabel();
@@ -162,6 +168,13 @@ public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel 
 				jTextFieldThreshold = new JNumericTextField();
 				this.add(jTextFieldThreshold, new GridBagConstraints(1, 4, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
 				jTextFieldThreshold.setFont(FONT);
+			}
+			{
+				// Add sub-pixel checkbox
+				jCheckSubPixel = new JCheckBox();
+				this.add(jCheckSubPixel, new GridBagConstraints(0, 6, 2, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 10), 0, 0));
+				jCheckSubPixel.setText("Do sub-pixel localization ");
+				jCheckSubPixel.setFont(FONT);
 			}
 			{
 				jButtonRefresh = new JButton();

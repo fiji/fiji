@@ -18,11 +18,16 @@ public class LogSegmenterSettings extends BasicSegmenterSettings {
 
 	private static final String SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME = "threshold";
 	private static final String SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME= "usemedianfilter";
+	private static final String SEGMENTER_SETTINGS_DO_SUBPIXEL_ATTRIBUTE_NAME	= "doSubPixelLocalization";
 
+	private static final boolean 	DEFAULT_DO_SUBPIXEL_LOCALIZATION = true;
+	
 	/** The pixel value under which any peak will be discarded from further analysis. */
 	public float 	threshold = 		0;
 	/** If true, a median filter will be applied before segmenting. */
 	public boolean useMedianFilter;
+	/** If true, spot locations will be interpolated so as to reach sub-pixel localization	 */
+	public boolean doSubPixelLocalization = DEFAULT_DO_SUBPIXEL_LOCALIZATION;
 	
 	
 	@Override
@@ -30,6 +35,7 @@ public class LogSegmenterSettings extends BasicSegmenterSettings {
 		String str = super.toString();
 		str += String.format("  Threshold: %f\n", threshold);
 		str += "  Median filter: "+useMedianFilter+'\n';
+		str += "  Do sub-pixel localization: "+doSubPixelLocalization+'\n';
 	return str;
 	}
 	
@@ -53,15 +59,18 @@ public class LogSegmenterSettings extends BasicSegmenterSettings {
 			threshold = val;
 		} catch (NumberFormatException nfe) { }
 		useMedianFilter = Boolean.parseBoolean(element.getAttributeValue(SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME));
+		doSubPixelLocalization = Boolean.parseBoolean(element.getAttributeValue(SEGMENTER_SETTINGS_DO_SUBPIXEL_ATTRIBUTE_NAME));
 	}
 	
 	protected List<Attribute> getAttributes() {
 		Attribute attThreshold 	= new Attribute(SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME, ""+threshold);
 		Attribute attMedian 	= new Attribute(SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME, ""+useMedianFilter);
-		List<Attribute> atts = new ArrayList<Attribute>(3);
+		Attribute attSubpixel 	= new Attribute(SEGMENTER_SETTINGS_DO_SUBPIXEL_ATTRIBUTE_NAME, ""+doSubPixelLocalization);
+		List<Attribute> atts = new ArrayList<Attribute>(4);
 		atts.add(super.getAttribute());
 		atts.add(attThreshold);
 		atts.add(attMedian);
+		atts.add(attSubpixel);
 		return atts;
 	}
 }

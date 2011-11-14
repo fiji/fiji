@@ -9,7 +9,7 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import fiji.plugin.trackmate.segmentation.LogSegmenter;
+import fiji.plugin.trackmate.segmentation.DownSampleLogSegmenter;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
 
@@ -26,7 +26,7 @@ public class MultiThread_TestDrive {
 		reader.parse();
 		TrackMateModel model = reader.getModel();
 
-		model.getSettings().segmenter = new LogSegmenter();
+		model.getSettings().segmenter = new DownSampleLogSegmenter();
 		model.getSettings().trackerSettings = new LAPTrackerSettings();
 
 		System.out.println(model.getSettings());

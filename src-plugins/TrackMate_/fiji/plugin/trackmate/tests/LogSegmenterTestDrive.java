@@ -14,12 +14,12 @@ import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import mpicbg.imglib.util.Util;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.segmentation.LogSegmenter;
+import fiji.plugin.trackmate.segmentation.DownSampleLogSegmenter;
 import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 
 /**
- * Test class for {@link LogSegmenter}
+ * Test class for {@link DownSampleLogSegmenter}
  * @author Jean-Yves Tinevez
  *
  */
@@ -68,7 +68,7 @@ public class LogSegmenterTestDrive {
 		// Instantiate segmenter
 		LogSegmenterSettings settings = new LogSegmenterSettings();
 		settings.expectedRadius = RADIUS;
-		SpotSegmenter<UnsignedByteType> segmenter = new LogSegmenter<UnsignedByteType>();
+		SpotSegmenter<UnsignedByteType> segmenter = new DownSampleLogSegmenter<UnsignedByteType>();
 		segmenter.setTarget(img, CALIBRATION, settings);
 		
 		// Segment

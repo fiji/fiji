@@ -1,9 +1,13 @@
 package fiji.plugin.trackmate.segmentation;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import mpicbg.imglib.algorithm.math.PickImagePeaks;
+import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
+import mpicbg.imglib.algorithm.scalespace.SubpixelLocalization;
+import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussian.SpecialPoint;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.image.Image;
@@ -83,7 +87,6 @@ public class PeakPickerSegmenter <T extends RealType<T>> extends AbstractSpotSeg
 
 
 		PickImagePeaks<T> peakPicker = new PickImagePeaks<T>(intermediateImage);
-
 		double[] suppressionRadiuses = new double[img.getNumDimensions()];
 		for (int i = 0; i < img.getNumDimensions(); i++) 
 			suppressionRadiuses[i] = radius / calibration[i];
@@ -94,24 +97,55 @@ public class PeakPickerSegmenter <T extends RealType<T>> extends AbstractSpotSeg
 			return false;
 		}
 
-		// Create spots
-		LocalizableByDimCursor<T> cursor = intermediateImage.createLocalizableByDimCursor();
-		ArrayList<int[]> peaks = peakPicker.getPeakList();
-		spots.clear();
-		for(int[] peak : peaks) {
+		// Get peaks location and values
+		final ArrayList<int[]> peaks = peakPicker.getPeakList();
+		final LocalizableByDimCursor<T> cursor = intermediateImage.createLocalizableByDimCursor();
+		// Prune values lower than threshold
+		List<DifferenceOfGaussianPeak<T>> dogPeaks = new ArrayList<DifferenceOfGaussianPeak<T>>();
+		final List<T> pruned_values = new ArrayList<T>();
+		final SpecialPoint specialPoint = SpecialPoint.MAX;
+		for (int i = 0; i < peaks.size(); i++) {
+			int[] peak = peaks.get(i);
 			cursor.setPosition(peak);
-			if (cursor.getType().getRealFloat() < settings.threshold)
+			T value = cursor.getType().copy();
+			if (value.getRealFloat() < settings.threshold) {
 				break; // because peaks are sorted, we can exit loop here
+			}
+			DifferenceOfGaussianPeak<T> dogPeak = new DifferenceOfGaussianPeak<T>(peak, value, specialPoint);
+			dogPeaks.add(dogPeak);
+			pruned_values.add(value);
+		}
+		
+		// Do sub-pixel localization
+		if (settings.doSubPixelLocalization ) {
+			// Create localizer and apply it to the list
+			final SubpixelLocalization<T> locator = new SubpixelLocalization<T>(intermediateImage, dogPeaks);
+			if ( !locator.checkInput() || !locator.process() )	{
+				errorMessage = baseErrorMessage + locator.getErrorMessage();
+				return false;
+			}
+			dogPeaks = locator.getDoGPeaks();
+		}
+		
+		// Create spots
+		spots.clear();
+		for (int j = 0; j < dogPeaks.size(); j++) {
+
+			DifferenceOfGaussianPeak<T> dogPeak = dogPeaks.get(j); 
 			float[] coords = new float[3];
-			for (int i = 0; i < img.getNumDimensions(); i++) 
-				coords[i] = peak[i] * calibration[i];
+			if (settings.doSubPixelLocalization) {
+				for (int i = 0; i < img.getNumDimensions(); i++) 
+					coords[i] = dogPeak.getSubPixelPosition(i) * calibration[i];
+			} else {
+				for (int i = 0; i < img.getNumDimensions(); i++) 
+					coords[i] = dogPeak.getPosition(i) * calibration[i];
+			}
 			Spot spot = new SpotImp(coords);
-			cursor.setPosition(peak);
-			spot.putFeature(Spot.QUALITY, cursor.getType().getRealFloat());
+			spot.putFeature(Spot.QUALITY, pruned_values.get(j).getRealFloat());
 			spot.putFeature(Spot.RADIUS, settings.expectedRadius);
 			spots.add(spot);
 		}
-
+		
 		return true;
 	}
 

@@ -6,7 +6,7 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.segmentation.DogSegmenter;
-import fiji.plugin.trackmate.segmentation.DogSegmenterSettings;
+import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
 import ij.ImagePlus;
 import ij.gui.NewImage;
 
@@ -36,7 +36,7 @@ public class ConcurrentSpotTestDrive {
 		// Make settings
 		Settings settings = new Settings(imp);
 		settings.segmenter = new DogSegmenter();
-		DogSegmenterSettings dss = new DogSegmenterSettings();
+		LogSegmenterSettings dss = new LogSegmenterSettings();
 		dss.expectedRadius = 2f;
 		settings.segmenterSettings = dss;
 
