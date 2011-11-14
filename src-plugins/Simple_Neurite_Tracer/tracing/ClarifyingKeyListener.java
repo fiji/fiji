@@ -29,10 +29,12 @@ package tracing;
 
 import ij.IJ;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.event.ContainerEvent;
+import java.awt.event.ContainerListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 /** There have been problems on Mac OS with people trying to start the
   * Sholl analysis interface, but while the focus isn't on the image
