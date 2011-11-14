@@ -44,6 +44,8 @@ public class PairWiseStitchingImgLib
 		final boolean canWrap = !StitchingParameters.alwaysCopy && canWrapIntoImgLib( imp1, params.channel1 ) && canWrapIntoImgLib( imp2, params.channel2 );
 		
 		float[] shift = null;
+		final Roi roi1 = getOnlyRectangularRoi( imp1.getRoi() );
+		final Roi roi2 = getOnlyRectangularRoi( imp2.getRoi() );
 		
 		//
 		// the ugly but correct way into generic programming...
@@ -145,18 +147,49 @@ public class PairWiseStitchingImgLib
 			}
 		}
 		
+		// add the offset to the shift
+		if ( roi2 != null )
+		{
+			shift[ 0 ] -= roi2.getBounds().x;
+			shift[ 1 ] -= roi2.getBounds().y;
+		}	
+		
+		if ( roi1 != null )
+		{
+			shift[ 0 ] += roi1.getBounds().x;
+			shift[ 1 ] += roi1.getBounds().y;			
+		}
+		
 		return shift;
 	}
-	
-	protected static < T extends RealType<T>, S extends RealType<S> > float[] performStitching( final Image<T> img1, final Image<S> img2, final StitchingParameters params )
+
+	public static < T extends RealType<T>, S extends RealType<S> > float[] performStitching( final Image<T> img1, final Image<S> img2, final StitchingParameters params )
 	{
-		IJ.log( "Image1: Type=" + img1.createType().getClass().getSimpleName() + " Factory: " + img1.getContainer().getClass().getSimpleName() + " size: " + Util.printCoordinates( img1.getDimensions() ) );
-		IJ.log( "Image2: Type=" + img2.createType().getClass().getSimpleName() + " Factory: " + img2.getContainer().getClass().getSimpleName() + " size: " + Util.printCoordinates( img2.getDimensions() ) );
+		//IJ.log( "Image1: Type=" + img1.createType().getClass().getSimpleName() + " Factory: " + img1.getContainer().getClass().getSimpleName() + " size: " + Util.printCoordinates( img1.getDimensions() ) );
+		//IJ.log( "Image2: Type=" + img2.createType().getClass().getSimpleName() + " Factory: " + img2.getContainer().getClass().getSimpleName() + " size: " + Util.printCoordinates( img2.getDimensions() ) );
 		
-		ImageJFunctions.show( img1 );
-		ImageJFunctions.show( img2 );
+		//ImageJFunctions.show( img1 );
+		//ImageJFunctions.show( img2 );
 		
-		return null;
+		if ( img1 == null )
+		{
+			IJ.log( "Image 1 could not be wrapped." );
+			return null;
+		}
+		else if ( img2 == null )
+		{
+			IJ.log( "Image 2 could not be wrapped." );
+			return null;
+		}
+		else if ( params == null )
+		{
+			IJ.log( "Parameters are null." );
+			return null;
+		}
+		
+		final float[] shift = computePhaseCorrelation( img1, img2, params.checkPeaks, params.subpixelAccuracy );
+		
+		return shift;
 	}
 	
 	public static < T extends RealType<T>, S extends RealType<S> > float[] computePhaseCorrelation( final Image<T> img1, final Image<S> img2, final int numPeaks, final boolean subpixelAccuracy )
@@ -516,7 +549,7 @@ public class PairWiseStitchingImgLib
 	 */
 	public static Image<FloatType> getWrappedImageFloat( final ImagePlus imp, final int channel, final int timepoint )
 	{
-		if ( channel == 0 || imp.getType() != ImagePlus.GRAY16 )
+		if ( channel == 0 || imp.getType() != ImagePlus.GRAY32 )
 			return null;
 		else
 			return ImageJFunctions.wrapFloat( Hyperstack_rearranger.getImageChunk( imp, channel, timepoint ) );
@@ -542,13 +575,22 @@ public class PairWiseStitchingImgLib
 		else
 			return false;
 	}
-	
+
+	protected static Roi getOnlyRectangularRoi( Roi roi )
+	{
+		// we can only do rectangular rois
+		if ( roi != null && roi.getType() != Roi.RECTANGLE )
+			return null;
+		else
+			return roi;
+	}
+
 	protected static Roi getOnlyRectangularRoi( final ImagePlus imp )
 	{
 		Roi roi = imp.getRoi();
 		
 		// we can only do rectangular rois
-		if ( roi != null && roi.getType() == Roi.RECTANGLE )
+		if ( roi != null && roi.getType() != Roi.RECTANGLE )
 		{
 			IJ.log( "WARNING: roi for " + imp.getTitle() + " is not a rectangle, we have to ignore it." );
 			roi = null;
