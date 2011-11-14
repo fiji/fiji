@@ -36,7 +36,7 @@ import mpicbg.imglib.util.Util;
  * @author Stephan Preibisch (stephan.preibisch@gmx.de)
  *
  */
-public class StitchingImgLib 
+public class PairWiseStitchingImgLib 
 {
 	public static float[] stitchPairwise( final ImagePlus imp1, final ImagePlus imp2, final int timepoint, final StitchingParameters params )
 	{

@@ -1,6 +1,6 @@
 package plugin;
 import static stitching.CommonFunctions.addHyperLinkListener;
-import mpicbg.stitching.StitchingImgLib;
+import mpicbg.stitching.PairWiseStitchingImgLib;
 import mpicbg.stitching.StitchingParameters;
 import fiji.stacks.Hyperstack_rearranger;
 import ij.IJ;
@@ -200,7 +200,7 @@ public class Stitching_Pairwise implements PlugIn
 		}
 		
 		// compute the stitching
-		StitchingImgLib.stitchPairwise( imp1, imp2, 1, params );
+		PairWiseStitchingImgLib.stitchPairwise( imp1, imp2, 1, params );
 	}
 
 	public static String testRegistrationCompatibility( final ImagePlus imp1, final ImagePlus imp2 ) 
