@@ -263,8 +263,7 @@ public class Checksummer extends Progressable {
 	protected void initializeQueue() {
 		queue = new ArrayList<StringPair>();
 
-		for (String launcher : Util.isDeveloper ?
-					Util.launchers : Util.getLaunchers())
+		for (String launcher : Util.launchers)
 				queueIfExists(launcher);
 
 		for (int i = 0; i < directories.length; i += 2)

@@ -590,11 +590,11 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			});
 		}
 		if (!Util.isDeveloper)
-			for (String name : Util.getLaunchers()) {
+			for (String name : Util.launchers) {
 				PluginObject launcher = getPlugin(name);
 				if (launcher == null)
 					continue; // the regression test triggers this
-				if (launcher.getStatus() == Status.NOT_INSTALLED)
+				if (launcher.getStatus() == Status.NOT_INSTALLED && launcher.isForThisPlatform())
 					launcher.setAction(this, Action.INSTALL);
 			}
 	}
