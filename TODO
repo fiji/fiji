@@ -6,16 +6,7 @@ A loose TODO list for Fiji
 	- suggests updating if Fiji is out of date; and then
 	- suggest bug reporting if it is up-to-date.
 - ignore JAVA_HOME by default, add an innocuous option to jvm.cfg to force system java (either by using JAVA_HOME or by specific path)
-- teach RefreshScripts to special-case plugins/Scripts/ to be able to put scripts anywhere into the menu structure
 - include Piotr's parallel deconvolution plugins, StackReg and BoneJ
-- updater:
-	- special-case updating the updater even more: just download the updater,
-		start a thread that downloads the updater and overwrites the old
-		one and refreshes the menus and relaunches the updater (possibly
-		using a macro to avoid classloader clashes)
-	- multiple updater sites
-	- close after upload
-	- close after download
 - fix merge channels with 4 grayscale images
 - fix z-project, split channels for virtual stacks
 - fix substack maker for hyperstacks
@@ -27,16 +18,13 @@ A loose TODO list for Fiji
 - win: verify that console window stays open when falling back to system Java
 - move Amira I/O into bio-formats already
 - headless: should we activate "batch"?
-- test Bilateral Filter
 - Segmentation Editor fails
 - add script recorder for the new scripting languages
 - check which Reader Plugins do not extend ImagePlus
 - extend GenericDialogPlus to provide Help, Advanced button
 - GenericDialog.addToolText()
-- make a GenericSwingDialog
 - add tests (test that all plugins are found, test which image types
   they support, add regression tests, if file importers return ImagePlus)
-- in ImageJA: add isCanceled() method to SaveDialog (is getDirectory() == null).
 - in ImageJA: what about a file extension based construct similar to
   HandleExtraFileTypes for save?  This would allow to work on top of custom
   file formats seamlessly.

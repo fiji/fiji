@@ -426,7 +426,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		LinkedList<Path> nextPathsToAdd = new LinkedList<Path>();
 		Set<Path> pathsAlreadyDone = new HashSet<Path>();
 
-		Path firstPath = (Path)structuredPathSet.iterator().next();
+		Path firstPath = structuredPathSet.iterator().next();
 		if( firstPath.size() == 0 )
 			throw new SWCExportException("The primary path contained no points!");
 		nextPathsToAdd.add( firstPath );
@@ -2459,5 +2459,11 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 
 		return pafmResult;
+	}
+
+	public void downsampleAll(double maximumPermittedDistance) {
+		for (Path p : allPaths) {
+			p.downsample(maximumPermittedDistance);
+		}
 	}
 }

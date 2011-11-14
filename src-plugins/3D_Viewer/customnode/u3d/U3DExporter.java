@@ -1,16 +1,31 @@
 package customnode.u3d;
 
-import java.io.*;
-import java.nio.channels.*;
-import java.nio.*;
-import javax.vecmath.*;
-import customnode.*;
-import ij3d.*;
-
+import ij3d.Content;
+import ij3d.ContentNode;
+import ij3d.Image3DUniverse;
+import ij3d.ImageCanvas3D;
 import isosurface.MeshGroup;
 
-import javax.media.j3d.*;
-import java.util.*;
+import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.WritableByteChannel;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.media.j3d.TriangleArray;
+import javax.vecmath.Color3f;
+import javax.vecmath.Color4f;
+import javax.vecmath.Point3f;
+import javax.vecmath.Vector3f;
+
+import customnode.CustomMeshNode;
+import customnode.CustomTriangleMesh;
 
 /**
  * Some links:
@@ -18,7 +33,7 @@ import java.util.*;
  * http://www3.math.tu-berlin.de/jreality/download/jr/src-io/de/jreality/writer/u3d/
  * http://u3d.svn.sourceforge.net/viewvc/u3d/trunk/Source/Samples/Data/
  * http://www.ctan.org/tex-archive/macros/latex/contrib/movie15/
- * 
+ *
  */
 public class U3DExporter {
 
@@ -31,7 +46,7 @@ public class U3DExporter {
 		CustomTriangleMesh ctm = new CustomTriangleMesh(l);
 		ctm.setColor(new Color3f(0f, 1f, 0f));
 		univ.addCustomMesh(ctm, "icosahedron");
-		
+
 		l = customnode.MeshMaker.createSphere(1, 0, 0, 0.5f);
 		ctm = new CustomTriangleMesh(l);
 		ctm.setColor(new Color3f(1f, 0f, 0f));
@@ -66,7 +81,7 @@ public class U3DExporter {
 		Point3f max = new Point3f(Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY);
 
 		List<Mesh> meshes = new ArrayList<Mesh>();
-			
+
 		for(Object content : univ.getContents()) {
 			ContentNode cn = ((Content)content).getContent();
 			CustomTriangleMesh ctm = null;
@@ -74,7 +89,7 @@ public class U3DExporter {
 				ctm = (CustomTriangleMesh)((CustomMeshNode)cn).getMesh();
 			} else if(cn instanceof MeshGroup) {
 				if(((MeshGroup)cn).getMesh() instanceof CustomTriangleMesh)
-					ctm = (CustomTriangleMesh)((MeshGroup)cn).getMesh();
+					ctm = ((MeshGroup)cn).getMesh();
 			}
 
 			if(ctm != null) {
@@ -100,20 +115,20 @@ public class U3DExporter {
 		for(Mesh mesh : meshes) {
 			String n = mesh.name;
 			mesh.normalizeCoords(min, max);
-	
+
 			float[] matrix = new float[] {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 			String nodeModifierChainName = n; // "Box01";
 			String modelNodeName         = n; // "Box01";
 			String modelResourceName     = n; // "LightBoxModel";
 			String shadingName           = n; // "Box01";
 			String shaderName            = n; // "Box010";
-			
+
 			b = getNodeModifierChain(nodeModifierChainName, modelNodeName, modelResourceName, shadingName, shaderName, matrix);
 			ds += writeDataBlock(b, oDecl, buffer);
 
 			String modelModifierChainName = n; // "LightBoxModel";
 			String meshname               = n; // "LightBoxModel";
-	
+
 			b = getModelResourceModifierChain(modelModifierChainName, mesh, meshname);
 			ds += writeDataBlock(b, oDecl, buffer);
 
@@ -149,13 +164,12 @@ public class U3DExporter {
 		out.close();
 	}
 
-
 	private static int writeDataBlock(DataBlock b, WritableByteChannel o, ByteBuffer buffer) throws IOException {
 
 	        int dataSize = (int)Math.ceil(b.getDataSize() / 4.0); // include padding
 	        int metaDataSize = (int)Math.ceil(b.getMetaDataSize() / 4.0); // include padding
 
-	        int blockLength = (int)(12 + 4 * (dataSize + metaDataSize));
+	        int blockLength = (12 + 4 * (dataSize + metaDataSize));
 	        if (buffer.capacity() < blockLength) {
 	                buffer = ByteBuffer.allocate(blockLength);
 	                buffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -233,7 +247,7 @@ public class U3DExporter {
 		w.WriteU32(1);                         // Render pass enabled flags
 		w.WriteU32(0);                         // Shader channels
 		w.WriteU32(0);                         // Alpha texture channels
-		w.WriteString(materialName);           // Material name	
+		w.WriteString(materialName);           // Material name
 		DataBlock b = w.GetDataBlock();
 		b.setBlockType(type);
 		return b;
@@ -365,10 +379,10 @@ public class U3DExporter {
 		w.WriteString("");                    // parent node name
 		WriteMatrix(w, matrix);               // transformation
 		w.WriteString(lightResourceName);     // Light resource name
-		
+
 		DataBlock b = w.GetDataBlock();
 		b.setBlockType(type);
-		return b;		
+		return b;
 	}
 
 	public static DataBlock getLightResourceBlock(String lightResourceName) {
@@ -386,10 +400,10 @@ public class U3DExporter {
 		w.WriteF32(0f);                       // Light attenuation quadratic factor
 		w.WriteF32(180f);                     // Light spot angle
 		w.WriteF32(.5f);                      // Light intensity
-		
+
 		DataBlock b = w.GetDataBlock();
 		b.setBlockType(type);
-		return b;		
+		return b;
 	}
 
 	private static DataBlock getMeshDeclarationBlock(Mesh mesh, String meshname) {
@@ -464,8 +478,8 @@ w.WriteU32(0);
 		int[] coordIndices = mesh.coordIndices;
 		int[] normalIndices= mesh.normalIndices;
 		int[] colorIndices = mesh.colorIndices;
-		
-		
+
+
 		BitStreamWrite w = new BitStreamWrite();
 		long type = (0xffff << 16) | 0xff3b;  // mesh continuation block
 		w.WriteString(meshname);              // mesh name
@@ -541,7 +555,7 @@ w.WriteU32(0);
 			Point3f center = new Point3f();
 			center.add(min, max);
 			center.scale(0.5f);
-	
+
 			for(Point3f p : coords) {
 				p.sub(center);
 				p.scale(1 / maxd);
@@ -565,26 +579,26 @@ w.WriteU32(0);
 			g.getCoordinates(0, coords);
 			g.getColors(0, colors);
 			g.getNormals(0, normals);
-	
+
 			// create indices
 			Map<Point3f, Integer>  vertexToIndex = new HashMap<Point3f, Integer>();
 			Map<Color3f, Integer>  colorToIndex  = new HashMap<Color3f, Integer>();
 			Map<Vector3f, Integer> normalToIndex = new HashMap<Vector3f, Integer>();
-	
+
 			int nFaces = N;
 			coordIndices  = new int[nFaces];
 			colorIndices  = new int[nFaces];
 			normalIndices = new int[nFaces];
-	
+
 			List<Point3f>  vList = new ArrayList<Point3f>();
 			List<Color3f>  cList = new ArrayList<Color3f>();
 			List<Vector3f> nList = new ArrayList<Vector3f>();
-	
+
 			for(int i = 0; i < N; i++) {
 				Point3f v  = coords[i];
 				Color3f c  = colors[i];
 				Vector3f n = normals[i];
-	
+
 				if(!vertexToIndex.containsKey(v)) {
 					Point3f newp = new Point3f(v);
 					vertexToIndex.put(newp, vList.size());
@@ -604,13 +618,13 @@ w.WriteU32(0);
 				}
 				normalIndices[i] = normalToIndex.get(n);
 			}
-	
+
 			coords = new Point3f[vList.size()];
 			vList.toArray(coords);
-	
+
 			normals = new Vector3f[nList.size()];
 			nList.toArray(normals);
-	
+
 			colors = new Color3f[cList.size()];
 			cList.toArray(colors);
 		}

@@ -178,6 +178,7 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 				img1.createLocalizableByDimCursor(), img2.createLocalizableByDimCursor(),
 				mask.createLocalizableCursor());
 
+		double r;
 		if (theImplementation == Implementation.Classic) {
 			/* since we need the means and apparently don't have them,
 			 * calculate them.
@@ -185,10 +186,13 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			double mean1 = ImageStatistics.getImageMean(img1);
 			double mean2 = ImageStatistics.getImageMean(img2);
 			// do the actual calculation
-			return classicPearsons(cursor, mean1, mean2);
+			r = classicPearsons(cursor, mean1, mean2);
 		} else {
-			return fastPearsons(cursor);
+			r = fastPearsons(cursor);
 		}
+
+		cursor.close();
+		return r;
 	}
 
 	/**

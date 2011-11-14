@@ -23,6 +23,7 @@ package trainableSegmentation;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.Prefs;
 	
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
@@ -150,7 +151,7 @@ public class FeatureStackArray
 		if (Thread.currentThread().isInterrupted() )
 			return false;
 		
-		final int numProcessors = Runtime.getRuntime().availableProcessors();
+		final int numProcessors = Prefs.getThreads();
 		final ExecutorService exe = Executors.newFixedThreadPool( numProcessors );
 		
 		final ArrayList< Future<Boolean> > futures = new ArrayList< Future<Boolean> >();
@@ -215,7 +216,7 @@ public class FeatureStackArray
 	 */
 	public boolean updateFeaturesMT()
 	{
-		final int numProcessors = Runtime.getRuntime().availableProcessors();
+		final int numProcessors = Prefs.getThreads();
 		final ExecutorService exe = Executors.newFixedThreadPool( numProcessors );
 		//IJ.log("Num of processors = " + numProcessors);
 		

@@ -25,7 +25,7 @@ public class Test2DTracing {
 	double endX = 1.730; double endY = 13.554;
 
 	@Before public void setUp() {
-		image = BatchOpener.openFirstChannel("test-images/c061AG-small-section-z-max.tif" );
+		image = BatchOpener.openFirstChannel("tests/sample-data/c061AG-small-section-z-max.tif" );
 		assertNotNull("Couldn't open the 2D test image",image);
 	}
 
@@ -121,9 +121,9 @@ public class Test2DTracing {
 			pointsExploredHessian = tracer.pointsConsideredInSearch();
 
 			assertTrue( "Hessian-based analysis should reduce the points explored " +
-				    "by at least a third; in fact went from " +
+				    "by at least a two fifths; in fact went from " +
 				    pointsExploredNormal + " to " +pointsExploredHessian,
-				    pointsExploredHessian * 1.5 < pointsExploredNormal );
+				    pointsExploredHessian < pointsExploredNormal * 0.8 );
 		}
 	}
 }

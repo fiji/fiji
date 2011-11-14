@@ -34,7 +34,8 @@ public class LiICQTest extends ColocalisationTest {
 	}
 
 	/**
-	 * Checks Li's ICQ value for zero correlated images.
+	 * Checks Li's ICQ value for zero correlated images. The ICQ value
+	 * should be about zero.
 	 */
 	@Test
 	public void liZeroCorrTest() {
@@ -45,7 +46,7 @@ public class LiICQTest extends ColocalisationTest {
 		// calculate Li's ICQ value
 		double icq = LiICQ.calculateLisICQ(cursor, zeroCorrelationImageCh1Mean,
 					zeroCorrelationImageCh2Mean);
-		assertTrue(icq > -0.01 && icq < 0.01);
+		assertTrue(Math.abs(icq) < 0.01);
 		cursor.close();
 	}
 }

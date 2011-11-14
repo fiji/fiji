@@ -3,7 +3,8 @@
 
 from jarray import zeros
 from threading import Lock
-from sys import exit
+from sys import exit, stderr
+from os.path import realpath
 
 from fiji import Main
 from ij import IJ, ImageJ
@@ -123,7 +124,7 @@ def launchProgram(args, workingDir = None):
 	return process.waitFor()
 
 def launchFiji(args, workingDir = None):
-	args.insert(0, System.getProperty('fiji.executable'))
+	args.insert(0, realpath(System.getProperty('fiji.executable')))
 	try:
 		launchProgram(args, workingDir)
 	except:

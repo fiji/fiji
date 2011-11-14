@@ -30,7 +30,8 @@ then
 	    modules/jython \
 	    modules/mpicbg \
 	    modules/tcljava \
-	    modules/weka
+	    modules/weka \
+	    modules/image5d
     )
 
     VERSION=$( cd fiji && dpkg-parsechangelog | egrep '^Version' | sed 's/^Version: //' )

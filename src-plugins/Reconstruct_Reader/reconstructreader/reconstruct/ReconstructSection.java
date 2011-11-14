@@ -14,15 +14,20 @@ public class ReconstructSection {
     private final Document doc;
     private final Translator translator;
     private final ArrayList<ReconstructProfile> profiles;
+    private final double mag;
 
-    public ReconstructSection(Translator t, final Document d)
+    public ReconstructSection(final Translator t, final Document d)
     {
+        double m;
         translator = t;
         //index = t.nextOID();
         index = Integer.valueOf(d.getDocumentElement().getAttribute("index"));
         oid = t.nextOID();
         doc = d;
         profiles = new ArrayList<ReconstructProfile>();
+
+        m = Utils.getMag(d);
+        mag = Double.isNaN(m) ? t.getMag() : m;
     }
 
     public int getOID()
@@ -40,12 +45,17 @@ public class ReconstructSection {
         return doc;
     }
 
-    public void addProfile(ReconstructProfile rp)
+    public double getMag()
+    {
+        return mag;
+    }
+
+    public void addProfile(final ReconstructProfile rp)
     {
         profiles.add(rp);
     }
 
-    public void appendXML(StringBuilder sb)
+    public void appendXML(final StringBuilder sb)
     {
         String thickness = doc.getDocumentElement().getAttribute("thickness");
         double mag = translator.getMag();
@@ -74,7 +84,7 @@ public class ReconstructSection {
     }
 
 
-    protected void appendPatch(final StringBuilder sb,final Element image)
+    protected void appendPatch(final StringBuilder sb, final Element image)
     {
         Element rTransform = (Element)image.getParentNode();
         double[] wh = Utils.getReconstructImageWH(image);

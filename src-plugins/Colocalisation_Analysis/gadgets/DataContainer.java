@@ -6,6 +6,7 @@ import java.util.List;
 
 import mpicbg.imglib.algorithm.math.ImageStatistics;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.RealType;
 import algorithms.Algorithm;
@@ -35,8 +36,7 @@ public class DataContainer<T extends RealType<T>> {
 
 	// The channels of the source images that the result relate to
 	int ch1, ch2;
-	// The mask, clipped to its bounding box, if irregular ROI or a mask is use
-	protected Image<T> maskBB = null;
+	// The masks bounding box
 	protected int[] maskBBSize = null;
 	protected int[] maskBBOffset = null;
 
@@ -91,16 +91,14 @@ public class DataContainer<T extends RealType<T>> {
 	 * @throws MissingPreconditionException
 	 */
 	public DataContainer(Image<T> src1, Image<T> src2, int ch1, int ch2,
-			final Image<T> mask, final Image<T> maskBB, final int[] offset,
-			final int[] size) throws MissingPreconditionException {
+			final Image<T> mask, final int[] offset, final int[] size)
+			throws MissingPreconditionException {
 		sourceImage1 = src1;
 		sourceImage2 = src2;
 		this.ch1 = ch1;
 		this.ch2 = ch2;
 
 		this.mask = MaskFactory.createMask(src1.getDimensions(), mask);
-		this.maskBB = maskBB;
-
 		final int[] dim = src1.getDimensions();
 		maskBBOffset = src1.createPositionArray();
 		maskBBSize = src1.createPositionArray();

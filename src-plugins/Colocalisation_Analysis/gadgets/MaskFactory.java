@@ -67,7 +67,7 @@ public class MaskFactory {
 			boolean valid = true;
 			// test if the current position is contained in the ROI
 			for(int i=0; i<dims; ++i)
-				valid &= pos[i] > roiOffset[i] && pos[i] < roiOffsetMax[i];
+				valid &= pos[i] >= roiOffset[i] && pos[i] < roiOffsetMax[i];
 			cursor.getType().set(valid);
 		}
 		cursor.close();
@@ -143,6 +143,7 @@ public class MaskFactory {
 
 		// test if original mask and new mask have same dimensions
 		if (Arrays.equals(dim, origDim)) {
+			// copy the input image to the mask output image
 			LocalizableCursor<T> origCursor = origMask.createLocalizableCursor();
 			LocalizableByDimCursor<BitType> maskCursor = mask.createLocalizableByDimCursor();
 			while (origCursor.hasNext()) {
@@ -151,6 +152,8 @@ public class MaskFactory {
 				boolean value = origCursor.getType().getRealDouble() > 0.001;
 				maskCursor.getType().set(value);
 			}
+			origCursor.close();
+			maskCursor.close();
 		} else if (dim.length > origDim.length) {
 			// sanity check
 			for (int i=0; i<origDim.length; i++) {
@@ -179,6 +182,8 @@ public class MaskFactory {
 						maskCursor.getType().set(value);
 					}
 			}
+			origCursor.close();
+			maskCursor.close();
 		} else if (dim.length < origDim.length) {
 			// mask has more dimensions than image
 			throw new UnsupportedOperationException("Masks with more dimensions than the image are not supported, yet.");

@@ -1,22 +1,13 @@
 package results;
 
-import algorithms.AutoThresholdRegression;
-import algorithms.Histogram2D;
-
 import fiji.util.gui.JImagePanel;
-
 import gadgets.DataContainer;
-
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
-
 import ij.gui.Line;
-import ij.gui.NewImage;
 import ij.gui.Overlay;
-
 import ij.process.ImageProcessor;
-
 import ij.text.TextWindow;
 
 import java.awt.Container;
@@ -25,45 +16,35 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Panel;
-
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import mpicbg.imglib.algorithm.math.ImageStatistics;
-
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
-
 import mpicbg.imglib.image.Image;
-
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-
 import mpicbg.imglib.type.numeric.RealType;
-
 import mpicbg.imglib.type.numeric.integer.LongType;
+import algorithms.AutoThresholdRegression;
+import algorithms.Histogram2D;
 
 /**
  * This class displays the container contents in one single window
@@ -71,6 +52,7 @@ import mpicbg.imglib.type.numeric.integer.LongType;
  *
  */
 public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implements ResultHandler<T>, ItemListener, ActionListener, ClipboardOwner {
+	private static final long serialVersionUID = -5642321584354176878L;
 	protected static final int WIN_WIDTH = 350;
 	protected static final int WIN_HEIGHT = 600;
 
@@ -220,7 +202,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 			adjustDisplayedImage(listOfImages.get(0));
 		}
 		// show the GUI
-		this.show();
+		this.setVisible(true);
 	}
 
 	public void handleImage(Image<T> image) {
@@ -357,7 +339,9 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 			// get the actual histogram data
 			String histogramData = hr.getData();
 
-			TextWindow tw = new TextWindow(getTitle(), vHeadingX + "\t" + vHeadingY + "\tcount", histogramData, 250, 400);
+			TextWindow tw = new TextWindow(getTitle(), vHeadingX + "\t" +
+					vHeadingY + "\tcount", histogramData, 250, 400);
+			tw.setVisible(true);
 		}
 	}
 
@@ -446,7 +430,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 	 * lines will also be drawn
 	 */
 	protected void drawImage(Image<? extends RealType> img) {
-		// get Imglib image as ImageJ image
+		// get ImgLib image as ImageJ image
 		imp = ImageJFunctions.displayAsVirtualStack( img );
 		imagePanel.updateImage(imp);
 		// set the display range

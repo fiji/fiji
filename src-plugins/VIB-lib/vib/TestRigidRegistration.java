@@ -43,8 +43,8 @@ public class TestRigidRegistration {
 	@Test
 	public void testRegistration8BitGray() {
 
-		String canton = "test-images"+File.separator+"CantonF41c-reduced.tif";
-		String other  = "test-images"+File.separator+"tidied-mhl-62yxUAS-lacZ0-reduced.tif";
+		String canton = "tests/sample-data"+File.separator+"CantonF41c-reduced.tif";
+		String other  = "tests/sample-data"+File.separator+"tidied-mhl-62yxUAS-lacZ0-reduced.tif";
 
 		float bestScoreMI = -0.3f;
                 float bestScoreEuclidean = 25.0f;
@@ -101,7 +101,7 @@ public class TestRigidRegistration {
 
                         // Make sure the output directory exists:
                         
-                        File outputDirectory = new File("test-images" + File.separator + "output");
+                        File outputDirectory = new File("tests/sample-data" + File.separator + "output");
                         outputDirectory.mkdir();
                         
 			String outputTransformed = outputDirectory.getPath()+File.separator+"testRegistration8BitGray-"+run+"-transformed.tif";
@@ -132,8 +132,8 @@ public class TestRigidRegistration {
 	static final int fanShapedBody = 11;
 	static final int protocerebralBridge = 12;
 
-	String centralComplex_Labels_71yAAeastmost = "test-images"+File.separator+"71yAAeastmost.labels";
-	String centralComplex_Labels_c005BA = "test-images"+File.separator+"c005BA.labels";
+	String centralComplex_Labels_71yAAeastmost = "tests/sample-data"+File.separator+"71yAAeastmost.labels";
+	String centralComplex_Labels_c005BA = "tests/sample-data"+File.separator+"c005BA.labels";
         
 	@Test
 	public void testRegistrationMaterials() {
@@ -197,7 +197,7 @@ public class TestRigidRegistration {
 			
                         // Make sure the output directory exists:
                         
-                        File outputDirectory = new File("test-images" + File.separator + "output");
+                        File outputDirectory = new File("tests/sample-data" + File.separator + "output");
                         outputDirectory.mkdir();
                         
 			String outputTransformed = outputDirectory.getPath()+File.separator+"testRegistrationMaterials-"+material+"-transformed.tif";
@@ -229,9 +229,9 @@ public class TestRigidRegistration {
 	@Test
 	public void testRegistration12BitGray() {
 
-		String darkDetail =   "test-images"+File.separator+"181y-12bit-aaarrg-dark-detail-reduced.tif";
-		String midDetail =    "test-images"+File.separator+"181y-12bit-aaarrg-mid-detail-reduced.tif";
-		String brightDetail = "test-images"+File.separator+"181y-12bit-aaarrg-bright-reduced.tif";
+		String darkDetail =   "tests/sample-data"+File.separator+"181y-12bit-aaarrg-dark-detail-reduced.tif";
+		String midDetail =    "tests/sample-data"+File.separator+"181y-12bit-aaarrg-mid-detail-reduced.tif";
+		String brightDetail = "tests/sample-data"+File.separator+"181y-12bit-aaarrg-bright-reduced.tif";
 
 		ImagePlus darkDetail_ImagePlus   = BatchOpener.openFirstChannel( darkDetail );
 		ImagePlus midDetail_ImagePlus    = BatchOpener.openFirstChannel( midDetail );
@@ -305,7 +305,7 @@ public class TestRigidRegistration {
 				
 				// Make sure the output directory exists:
 				
-				File outputDirectory = new File("test-images" + File.separator + "output");
+				File outputDirectory = new File("tests/sample-data" + File.separator + "output");
 				outputDirectory.mkdir();
 				
 				String outputTransformed = outputDirectory.getPath()+File.separator+"testRegistration12BitGray-"+timeThrough+"-"+measureName+"-transformed.tif";

@@ -36,20 +36,20 @@ public class TestLoading {
 		NamedPointSet testNPS = null;
 
 		try {
-			testNPS = NamedPointSet.fromFile( "test-images/CantonF41c-reduced.tif.points.xml" );
+			testNPS = NamedPointSet.fromFile( "tests/sample-data/CantonF41c-reduced.tif.points.xml" );
 		} catch( NamedPointSet.PointsFileException e ) {
 			assertTrue( false );
 		}
 		assertTrue( testNPS.equals(nps) );
 
 		try {
-			testNPS = NamedPointSet.forImage( "test-images/CantonF41c-reduced.tif" );
+			testNPS = NamedPointSet.forImage( "tests/sample-data/CantonF41c-reduced.tif" );
 		} catch( NamedPointSet.PointsFileException e ) {
 			assertTrue( false );
 		}
 		assertTrue( testNPS.equals(nps) );
 
-		ImagePlus imagePlus = BatchOpener.openFirstChannel( "test-images/CantonF41c-reduced.tif" );
+		ImagePlus imagePlus = BatchOpener.openFirstChannel( "tests/sample-data/CantonF41c-reduced.tif" );
 		try {
 			testNPS = NamedPointSet.forImage( imagePlus );
 		} catch( NamedPointSet.PointsFileException e ) {
@@ -81,20 +81,20 @@ public class TestLoading {
 		NamedPointSet testNPS = null;
 
 		try {
-			testNPS = NamedPointSet.fromFile( "test-images/tidied-mhl-62yxUAS-lacZ0-reduced.tif.points.R" );
+			testNPS = NamedPointSet.fromFile( "tests/sample-data/tidied-mhl-62yxUAS-lacZ0-reduced.tif.points.R" );
 		} catch( NamedPointSet.PointsFileException e ) {
 			assertTrue( false );
 		}
 		assertTrue( testNPS.equals(nps) );
 
 		try {
-			testNPS = NamedPointSet.forImage( "test-images/tidied-mhl-62yxUAS-lacZ0-reduced.tif" );
+			testNPS = NamedPointSet.forImage( "tests/sample-data/tidied-mhl-62yxUAS-lacZ0-reduced.tif" );
 		} catch( NamedPointSet.PointsFileException e ) {
 			assertTrue( false );
 		}
 		assertTrue( testNPS.equals(nps) );
 
-		ImagePlus imagePlus = BatchOpener.openFirstChannel( "test-images/tidied-mhl-62yxUAS-lacZ0-reduced.tif" );
+		ImagePlus imagePlus = BatchOpener.openFirstChannel( "tests/sample-data/tidied-mhl-62yxUAS-lacZ0-reduced.tif" );
 		try {
 			testNPS = NamedPointSet.forImage( imagePlus );
 		} catch( NamedPointSet.PointsFileException e ) {
@@ -145,7 +145,7 @@ public class TestLoading {
 
 		/*
 		try {
-			testNPS = NamedPointSet.fromFile( "test-images/71yAAeastmost.labels.points" );
+			testNPS = NamedPointSet.fromFile( "tests/sample-data/71yAAeastmost.labels.points" );
 		} catch( NamedPointSet.PointsFileException e ) {
 			assertTrue( false );
 		}
@@ -153,13 +153,13 @@ public class TestLoading {
 		*/
 
 		try {
-			testNPS = NamedPointSet.forImage( "test-images/71yAAeastmost.labels" );
+			testNPS = NamedPointSet.forImage( "tests/sample-data/71yAAeastmost.labels" );
 		} catch( NamedPointSet.PointsFileException e ) {
 			assertTrue( false );
 		}
 		assertTrue( testNPS.equals(nps) );
 
-		ImagePlus imagePlus = BatchOpener.openFirstChannel( "test-images/71yAAeastmost.labels" );
+		ImagePlus imagePlus = BatchOpener.openFirstChannel( "tests/sample-data/71yAAeastmost.labels" );
 		try {
 			testNPS = NamedPointSet.forImage( imagePlus );
 		} catch( NamedPointSet.PointsFileException e ) {

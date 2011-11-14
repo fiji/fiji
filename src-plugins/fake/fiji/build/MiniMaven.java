@@ -414,6 +414,7 @@ public class MiniMaven {
 			if (properties.containsKey(key))
 				return properties.get(key);
 			if (parent == null) {
+				// hard-code a few variables
 				if (key.equals("bio-formats.groupId"))
 					return "loci";
 				if (key.equals("imagej.groupId"))
@@ -485,13 +486,25 @@ public class MiniMaven {
 			String path = System.getProperty("user.home") + "/.m2/repository/" + groupId.replace('.', '/') + "/" + artifactId + "/";
 			if (version == null)
 				version = findLocallyCachedVersion(path);
-			if (version == null) {
+			if (version == null || artifactId.equals("tools")) {
+				// try to find the .jar in Fiji's jars/ dir
+				String jarName = artifactId.equals("tools") ? "javac.jar" : artifactId + ".jar";
+				File file = new File(System.getProperty("fiji.dir"), "jars/" + jarName);
+				if (file.exists()) {
+					POM pom = fakePOM(file, groupId, artifactId, version);
+					localPOMCache.put(key, pom);
+					return pom;
+				}
 				if (!quiet)
 					err.println("Cannot find version for artifact " + artifactId + " (dependency of " + this.artifactId + ")");
 				localPOMCache.put(key, null);
 				return null;
 			}
-			path += version + "/" + artifactId + "-" + version + ".pom";
+			path += version + "/";
+			if (version.endsWith("-SNAPSHOT")) try {
+				version = parseSnapshotVersion(new File(path));
+			} catch (FileNotFoundException e) { /* ignore */ }
+			path += artifactId + "-" + version + ".pom";
 
 			File file = new File(path);
 			if (!file.exists()) {
@@ -656,17 +669,28 @@ public class MiniMaven {
 		}
 	}
 
-	protected static void downloadAndVerify(String repositoryURL, String groupId, String artifactId, String version) throws MalformedURLException, IOException, NoSuchAlgorithmException {
+	protected static void downloadAndVerify(String repositoryURL, String groupId, String artifactId, String version) throws MalformedURLException, IOException, NoSuchAlgorithmException, ParserConfigurationException, SAXException {
 		String path = "/" + groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/";
-		String baseURL = repositoryURL + path + artifactId + "-" + version;
 		File directory = new File(System.getProperty("user.home") + "/.m2/repository" + path);
+		if (version.endsWith("-SNAPSHOT")) {
+			String metadataURL = repositoryURL + path + "maven-metadata.xml";
+			downloadAndVerify(metadataURL, directory, "maven-metadata-snapshot.xml");
+			version = parseSnapshotVersion(directory);
+			if (version == null)
+				throw new IOException("No version found in " + metadataURL);
+		}
+		String baseURL = repositoryURL + path + artifactId + "-" + version;
 		downloadAndVerify(baseURL + ".pom", directory);
 		downloadAndVerify(baseURL + ".jar", directory);
 	}
 
 	protected static void downloadAndVerify(String url, File directory) throws IOException, NoSuchAlgorithmException {
-		File sha1 = download(new URL(url + ".sha1"), directory);
-		File file = download(new URL(url), directory);
+		downloadAndVerify(url, directory, null);
+	}
+
+	protected static void downloadAndVerify(String url, File directory, String fileName) throws IOException, NoSuchAlgorithmException {
+		File sha1 = download(new URL(url + ".sha1"), directory, fileName == null ? null : fileName + ".sha1");
+		File file = download(new URL(url), directory, fileName);
 		MessageDigest digest = MessageDigest.getInstance("SHA-1");
 		FileInputStream fileStream = new FileInputStream(file);
 		DigestInputStream digestStream = new DigestInputStream(fileStream, digest);
@@ -687,6 +711,47 @@ public class MiniMaven {
 		fileStream.close();
 	}
 
+	protected static String parseSnapshotVersion(File directory) throws IOException, ParserConfigurationException, SAXException {
+		return parseSnapshotVersion(new FileInputStream(new File(directory, "maven-metadata-snapshot.xml")));
+	}
+
+	protected static String parseSnapshotVersion(InputStream in) throws IOException, ParserConfigurationException, SAXException {
+		SnapshotPOMHandler handler = new SnapshotPOMHandler();
+		XMLReader reader = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
+		reader.setContentHandler(handler);
+		reader.parse(new InputSource(in));
+		if (handler.snapshotVersion != null && handler.timestamp != null && handler.buildNumber != null)
+			return handler.snapshotVersion + "-" + handler.timestamp + "-" + handler.buildNumber;
+		throw new IOException("Missing timestamp/build number: " + handler.timestamp + ", " + handler.buildNumber);
+	}
+
+	protected static class SnapshotPOMHandler extends DefaultHandler {
+		protected String qName;
+		protected String snapshotVersion, timestamp, buildNumber;
+
+		public void startElement(String uri, String localName, String qName, Attributes attributes) {
+			this.qName = qName;
+		}
+
+		public void endElement(String uri, String localName, String qName) {
+			this.qName = null;
+		}
+
+		public void characters(char[] ch, int start, int length) {
+			if (qName == null)
+				; // ignore
+			else if (qName.equals("version")) {
+				String version = new String(ch, start, length).trim();
+				if (version.endsWith("-SNAPSHOT"))
+					snapshotVersion = version.substring(0, version.length() - "-SNAPSHOT".length());
+			}
+			else if (qName.equals("timestamp"))
+				timestamp = new String(ch, start, length).trim();
+			else if (qName.equals("buildNumber"))
+				buildNumber = new String(ch, start, length).trim();
+		}
+	}
+
 	protected static int hexNybble(int b) {
 		return (b < 'A' ? (b < 'a' ? b - '0' : b - 'a' + 10) : b - 'A' + 10) & 0xf;
 	}
@@ -701,10 +766,17 @@ public class MiniMaven {
 	}
 
 	protected static File download(URL url, File directory) throws IOException {
-		directory.mkdirs();
+		return download(url, directory, null);
+	}
+
+	protected static File download(URL url, File directory, String fileName) throws IOException {
+		if (fileName == null) {
+			fileName = url.getPath();
+			fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
+		}
+
 		InputStream in = url.openStream();
-		String fileName = url.getPath();
-		fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
+		directory.mkdirs();
 		File result = new File(directory, fileName);
 		copy(in, result);
 		return result;

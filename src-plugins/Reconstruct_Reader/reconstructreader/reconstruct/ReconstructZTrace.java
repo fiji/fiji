@@ -14,7 +14,7 @@ public class ReconstructZTrace implements ContourSet
     private final ArrayList<Integer> polyLineIDList;
     private final Translator translator;
 
-    public ReconstructZTrace(Element e, Translator t)
+    public ReconstructZTrace(final Element e, final Translator t)
     {
         translator = t;
         oid = translator.nextOID();
@@ -27,7 +27,7 @@ public class ReconstructZTrace implements ContourSet
         addContour(e, null);
     }
 
-    public void appendProjectXML(StringBuilder sb)
+    public void appendProjectXML(final StringBuilder sb)
     {
         sb.append("<reconstruct_ztrace id=\"").append(oid).append("\" title=\"")
                 .append(name).append("\" expanded=\"true\">\n");
@@ -41,7 +41,7 @@ public class ReconstructZTrace implements ContourSet
         sb.append("</reconstruct_ztrace>\n");
     }
 
-    public void appendXML(StringBuilder sb)
+    public void appendXML(final StringBuilder sb)
     {
         for (int i = 0; i < polyLineList.size(); ++i)
         {
@@ -102,7 +102,7 @@ public class ReconstructZTrace implements ContourSet
         }
     }
 
-    public void addContour(Element e, ReconstructSection sec) {
+    public void addContour(final Element e, final ReconstructSection sec) {
         polyLineList.add(e);
         polyLineOIDList.add(translator.nextOID());
         polyLineIDList.add(translator.nextOID());

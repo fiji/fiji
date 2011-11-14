@@ -96,7 +96,7 @@ public class SingularValueDecomposition implements java.io.Serializable {
             s[k] = -s[k];
          }
          for (int j = k+1; j < n; j++) {
-            if ((k < nct) & (s[k] != 0.0))  {
+            if ((k < nct) && (s[k] != 0.0))  {
 
             // Apply the transformation.
 
@@ -115,7 +115,7 @@ public class SingularValueDecomposition implements java.io.Serializable {
 
             e[j] = A[k][j];
          }
-         if (wantu & (k < nct)) {
+         if (wantu && (k < nct)) {
 
             // Place the transformation in U for subsequent back
             // multiplication.
@@ -143,7 +143,7 @@ public class SingularValueDecomposition implements java.io.Serializable {
                e[k+1] += 1.0;
             }
             e[k] = -e[k];
-            if ((k+1 < m) & (e[k] != 0.0)) {
+            if ((k+1 < m) && (e[k] != 0.0)) {
 
             // Apply the transformation.
 
@@ -229,7 +229,7 @@ public class SingularValueDecomposition implements java.io.Serializable {
 
       if (wantv) {
          for (int k = n-1; k >= 0; k--) {
-            if ((k < nrt) & (e[k] != 0.0)) {
+            if ((k < nrt) && (e[k] != 0.0)) {
                for (int j = k+1; j < nu; j++) {
                   double t = 0;
                   for (int i = k+1; i < n; i++) {

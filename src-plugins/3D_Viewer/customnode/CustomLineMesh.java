@@ -1,12 +1,10 @@
 package customnode;
 
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 
 import javax.media.j3d.Appearance;
 import javax.media.j3d.ColoringAttributes;
-import javax.media.j3d.Geometry;
-import javax.media.j3d.GeometryStripArray;
 import javax.media.j3d.GeometryArray;
 import javax.media.j3d.LineArray;
 import javax.media.j3d.LineAttributes;
@@ -73,6 +71,10 @@ public class CustomLineMesh extends CustomMesh {
 	public void setLineWidth(float w) {
 		this.linewidth = w;
 		getAppearance().getLineAttributes().setLineWidth(w);
+	}
+
+	public float getLineWidth() {
+		return linewidth;
 	}
 
 	public void addLines(Point3f[] v) {
