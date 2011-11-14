@@ -390,7 +390,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			return yes();
 		return new Filter() {
 			public boolean matches(PluginObject plugin) {
-				return plugin.isForThisPlatform();
+				return plugin.isUpdateablePlatform();
 			}
 		};
 	}
@@ -576,7 +576,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		return filter(new Filter() {
 			public boolean matches(PluginObject plugin) {
 				return plugin.isUpdateable(evenForcedOnes) &&
-					plugin.isForThisPlatform();
+					plugin.isUpdateablePlatform();
 			}
 		});
 	}
@@ -630,7 +630,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		for (Dependency dependency : plugin.getDependencies()) {
 			PluginObject other = getPlugin(dependency.filename);
 			if (other == null || overriding != dependency.overrides
-					|| !other.isForThisPlatform())
+					|| !other.isUpdateablePlatform())
 				continue;
 			if (dependency.overrides) {
 				if (other.willNotBeInstalled())
