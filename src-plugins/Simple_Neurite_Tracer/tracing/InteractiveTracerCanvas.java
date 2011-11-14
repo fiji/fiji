@@ -47,7 +47,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	// -------------------------------------------------------------
 
-	private SimpleNeuriteTracer tracerPlugin;
+	private final SimpleNeuriteTracer tracerPlugin;
 
 	public SimpleNeuriteTracer getTracerPlugin() {
 		return tracerPlugin;
