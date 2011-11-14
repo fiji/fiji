@@ -23,7 +23,7 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 	 * FIELDS
 	 */
 
-	private final static String BASE_ERROR_MESSAGE = "PeakPickerSegmenter: ";
+	private final static String BASE_ERROR_MESSAGE = "LogSegmenter: ";
 	private LogSegmenterSettings settings;
 
 	/*

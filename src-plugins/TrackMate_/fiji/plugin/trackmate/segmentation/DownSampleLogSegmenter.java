@@ -26,7 +26,7 @@ public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpo
 	 * 10 pixels was chosen because trial and error showed that it gave good results.*/
 	public final static float GOAL_DOWNSAMPLED_BLOB_DIAM = 10f;
 
-	private final static String BASE_ERROR_MESSAGE = "LogSegmenter: ";
+	private final static String BASE_ERROR_MESSAGE = "DownSampleLogSegmenter: ";
 
 	/** We smooth more than needed to discard secondary minima. */ 
 	private static final float SMOOTH_FACTOR = 2;
@@ -189,7 +189,7 @@ public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpo
 				"This segmenter is basically identical to the LoG segmenter, except <br>" +
 				"that images are downsampled before filtering, giving it a small <br>" +
 				"kick in speed, particularly for large spot sizes. It is the fastest for <br>" +
-				"large spot sizes (>&nbsp;~20 pixels), at the cost of preision in localization. " +
+				"large spot sizes (>&nbsp;~20 pixels), at the cost of precision in localization. " +
 				"</html>";
 	}
 	
