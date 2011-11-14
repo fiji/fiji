@@ -13,11 +13,13 @@ import java.security.NoSuchAlgorithmException;
 
 import java.text.DecimalFormat;
 
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Arrays;
+import java.util.Set;
 
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -38,6 +40,7 @@ public class Util {
 	public final static String fijiRoot, platform;
 	public final static boolean isDeveloper;
 	public final static String[] platforms, launchers;
+	protected final static Set<String> updateablePlatforms;
 
 	static {
 		String property = System.getProperty("fiji.dir");
@@ -63,6 +66,18 @@ public class Util {
 			list[i] = "fiji-" + list[i] +
 				(list[i].startsWith("win") ? ".exe" : "");
 		launchers = list.clone();
+
+		updateablePlatforms = new HashSet<String>();
+		if (new File(fijiRoot, macLauncher).exists())
+			updateablePlatforms.add("macosx");
+		String[] files = new File(fijiRoot).list();
+		for (String name : files == null ? new String[0] : files)
+			if (name.startsWith("fiji-")) {
+				name = name.substring(5);
+				if (name.endsWith(".exe"))
+					name = name.substring(0, name.length() - 4);
+				updateablePlatforms.add(name);
+			}
 	}
 
 	private Util() {} // make sure this class is not instantiated
@@ -264,6 +279,10 @@ public class Util {
 		if (index < 0)
 			index = -1 - index;
 		return new String[] { launchers[index] };
+	}
+
+	public static boolean isUpdateablePlatform(String platform) {
+		return updateablePlatforms.contains(platform);
 	}
 
 	public static<T> String join(String delimiter, Iterable<T> list) {
