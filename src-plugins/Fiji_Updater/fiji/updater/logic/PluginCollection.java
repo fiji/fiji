@@ -390,7 +390,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			return yes();
 		return new Filter() {
 			public boolean matches(PluginObject plugin) {
-				return plugin.isForThisPlatform();
+				return plugin.isUpdateablePlatform();
 			}
 		};
 	}
@@ -576,7 +576,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		return filter(new Filter() {
 			public boolean matches(PluginObject plugin) {
 				return plugin.isUpdateable(evenForcedOnes) &&
-					plugin.isForThisPlatform();
+					plugin.isUpdateablePlatform();
 			}
 		});
 	}
@@ -590,11 +590,11 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			});
 		}
 		if (!Util.isDeveloper)
-			for (String name : Util.getLaunchers()) {
+			for (String name : Util.launchers) {
 				PluginObject launcher = getPlugin(name);
 				if (launcher == null)
 					continue; // the regression test triggers this
-				if (launcher.getStatus() == Status.NOT_INSTALLED)
+				if (launcher.getStatus() == Status.NOT_INSTALLED && launcher.isForThisPlatform())
 					launcher.setAction(this, Action.INSTALL);
 			}
 	}
@@ -630,7 +630,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		for (Dependency dependency : plugin.getDependencies()) {
 			PluginObject other = getPlugin(dependency.filename);
 			if (other == null || overriding != dependency.overrides
-					|| !other.isForThisPlatform())
+					|| !other.isUpdateablePlatform())
 				continue;
 			if (dependency.overrides) {
 				if (other.willNotBeInstalled())
