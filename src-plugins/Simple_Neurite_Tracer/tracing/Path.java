@@ -1984,6 +1984,15 @@ public class Path implements Comparable<Path> {
 			}
 		}
 
+		// Has the path's representation in the 3D viewer been marked as invalid?
+
+		if (pathToUse.is3DViewInvalid()) {
+			pathToUse.removeFrom3DViewer(univ);
+			pathToUse.addTo3DViewer(univ, color, colorImage);
+			invalid3DMesh = false;
+			return;
+		}
+
 		// Is the (flat) color wrong?
 
 		if( pathToUse.realColor == null || ! pathToUse.realColor.equals(color) ) {
@@ -2039,6 +2048,14 @@ public class Path implements Comparable<Path> {
 						     (float)precise_z_positions[i] ) );
 		}
 		return linePoints;
+	}
+
+	protected boolean invalid3DMesh = false;
+	public void invalidate3DView() {
+		invalid3DMesh = true;
+	}
+	public boolean is3DViewInvalid() {
+		return invalid3DMesh;
 	}
 
 	public Content addAsLinesTo3DViewer(Image3DUniverse univ, Color c, ImagePlus colorImage ) {
