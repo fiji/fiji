@@ -368,7 +368,7 @@ public class Matching
 		{
 			// compute an approximate correct orientation (this is important for all models execpt translation and affine!, they might not converge otherwise)
 			// which models have already an approximate location
-			computePreAlignment( tc );
+			tc.preAlign( );
 			
 			// compute the global optimum
 			tc.optimize( 10, 10000, 200 );
@@ -401,127 +401,6 @@ public class Matching
 		return models;
 	}
 	
-	/**
-	 * Computes a pre-alignemnt of all non-fixed {@link Tile}s by propagating the pairwise
-	 * models. This does not give a correct registration but a very good starting point
-	 * for the global optimization. This is necessary for models where the global optimization
-	 * is not guaranteed to converge like the {@link HomographyModel2D}, {@link RigidModel3D}, ... 
-	 * 
-	 * @return - a list of {@link Tile}s that could not be pre-aligned
-	 * @throws NotEnoughDataPointsException
-	 * @throws {@link IllDefinedDataPointsException}
-	 */
-	public static List< Tile< ? > > computePreAlignment( final TileConfiguration tc ) throws NotEnoughDataPointsException, IllDefinedDataPointsException 
-	{	
-		// first get order all tiles by
-		// a) unaligned
-		// b) aligned - which initially only contains the fixed ones
-		final ArrayList< Tile< ? > > unAlignedTiles = new ArrayList< Tile< ? > >();
-		final ArrayList< Tile< ? > > alignedTiles = new ArrayList< Tile< ? > >();
-
-		for ( final Tile< ? > tile : tc.getTiles() )
-		{
-			if ( tc.getFixedTiles().contains( tile ) )
-				alignedTiles.add( tile );
-			else
-				unAlignedTiles.add( tile );
-		}
-		
-		// we go through each fixed/aligned tile and try to find a pre-alignment
-		// for all other unaligned tiles
-		for ( final ListIterator< Tile< ?> > referenceIterator = alignedTiles.listIterator(); referenceIterator.hasNext(); )
-		{
-			// once all tiles are aligned we can quit this loop
-			if ( unAlignedTiles.size() == 0 )
-				break;
-			
-			// get the next reference tile (either a fixed or an already aligned one
-			final Tile< ? > referenceTile = referenceIterator.next();
-
-			// transform all reference points into the reference coordinate system
-			// so that we get the direct model even if we are not anymore at the
-			// level of the fixed tile
-			referenceTile.apply();
-			
-			// now we go through the unaligned tiles to see if we can align it to the current reference tile one
-			for ( final ListIterator< Tile< ?> > targetIterator = unAlignedTiles.listIterator(); targetIterator.hasNext(); )
-			{
-				// get the tile that we want to preregister
-				final Tile< ? > targetTile = targetIterator.next();
-
-				// target tile is connected to reference tile
-				if ( referenceTile.getConnectedTiles().contains( targetTile ) )
-				{
-					// extract all PointMatches between reference and target tile and fit a model only on these
-					final ArrayList< PointMatch > pm = getConnectingPointMatches( targetTile, referenceTile );
-					
-					// are there enough matches?
-					if ( pm.size() > targetTile.getModel().getMinNumMatches() )
-					{
-						// fit the model of the targetTile to the subset of matches
-						// mapping its local coordinates target.p.l into the world
-						// coordinates reference.p.w
-						// this will give us an approximation for the global optimization
-						targetTile.getModel().fit( pm );							
-						
-						// now that we managed to fit the model we remove the
-						// Tile from unaligned tiles and add it to aligned tiles
-						targetIterator.remove();
-						
-						// now add the aligned target tile to the end of the reference list
-						int countFwd = 0;
-						
-						while ( referenceIterator.hasNext() )
-						{
-							referenceIterator.next();
-							++countFwd;
-						}
-						referenceIterator.add( targetTile );
-						
-						// move back to the current position 
-						// (+1 because it add just behind the current position)
-						for ( int j = 0; j < countFwd + 1; ++j )
-							referenceIterator.previous();
-					}
-				}
-				
-			}
-		}
-		
-		return unAlignedTiles;
-	}
-	
-	/**
-	 * Returns an {@link ArrayList} of {@link PointMatch} that connect the targetTile and the referenceTile. The order of the
-	 * {@link PointMatch} is PointMatch.p1 = target, PointMatch.p2 = reference. A {@link Model}.fit() will then solve the fit
-	 * so that target.p1.l is mapped to reference.p2.w.
-	 * 
-	 * @param targetTile - the {@link Tile} for which a {@link Model} can fit 
-	 * @param referenceTile - the {@link Tile} to which target will map
-	 * 
-	 * @return - an {@link ArrayList} of all {@link PointMatch} that target and reference share
-	 */
-	final public static ArrayList<PointMatch> getConnectingPointMatches( final Tile<?> targetTile, final Tile<?> referenceTile ) 
-	{
-		final Set< PointMatch > referenceMatches = referenceTile.getMatches();
-		final ArrayList< Point > referencePoints = new ArrayList<Point>( referenceMatches.size() );
-		
-		// add all points from the reference tile so that we can search for them
-		for ( final PointMatch pm : referenceMatches )
-			referencePoints.add( pm.getP1() );
-		
-		// the result arraylist containing only the pointmatches from the target file
-		final ArrayList< PointMatch > connectedPointMatches = new ArrayList<PointMatch>();
-
-		// look for all PointMatches where targetTile.PointMatch.Point2 == referenceTile.PointMatch.Point1
-		// i.e. a PointMatch of the target tile that links a Point which is part of reference tile
-		for ( final PointMatch pm : targetTile.getMatches() )
-			if ( referencePoints.contains( pm.getP2() ) )
-				connectedPointMatches.add( pm );
-		
-		return connectedPointMatches;
-	}
-
 	public synchronized static void addPointMatches( final ArrayList<PointMatch> correspondences, final Tile<?> tileA, final Tile<?> tileB )
 	{
 		if ( correspondences.size() > 0 )
