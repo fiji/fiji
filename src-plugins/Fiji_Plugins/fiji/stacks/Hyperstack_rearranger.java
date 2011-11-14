@@ -199,7 +199,7 @@ public class Hyperstack_rearranger implements PlugIn
 		{
 			final ImageStack stack = new ImageStack( imp.getWidth(), imp.getHeight() );
 			
-			for ( int z = 1; z < imp.getNSlices(); ++z )
+			for ( int z = 1; z <= imp.getNSlices(); ++z )
 			{
 				final int index = imp.getStackIndex( channel, z, timepoint );
 				final ImageProcessor ip = imp.getStack().getProcessor( index );
