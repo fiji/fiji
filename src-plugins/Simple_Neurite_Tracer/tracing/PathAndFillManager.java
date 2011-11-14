@@ -2460,4 +2460,10 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		return pafmResult;
 	}
+
+	public void downsampleAll(double maximumPermittedDistance) {
+		for (Path p : allPaths) {
+			p.downsample(maximumPermittedDistance);
+		}
+	}
 }
