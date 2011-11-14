@@ -1,7 +1,5 @@
 package fiji.updater;
 
-import fiji.updater.GraphicalAuthenticator;
-
 import ij.IJ;
 import ij.WindowManager;
 
@@ -13,6 +11,7 @@ import fiji.updater.logic.PluginObject;
 import fiji.updater.logic.XMLFileDownloader;
 import fiji.updater.logic.XMLFileReader;
 
+import fiji.updater.ui.GraphicalAuthenticator;
 import fiji.updater.ui.SwingTools;
 import fiji.updater.ui.UpdaterFrame;
 import fiji.updater.ui.ViewOptions;
