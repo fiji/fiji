@@ -1,9 +1,23 @@
 package plugin;
 import static stitching.CommonFunctions.addHyperLinkListener;
+
+import java.util.ArrayList;
+
+import process.OverlayFusion;
+
+import mpicbg.imglib.type.numeric.RealType;
+import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
+import mpicbg.imglib.type.numeric.integer.UnsignedShortType;
+import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
+import mpicbg.models.InvertibleBoundable;
+import mpicbg.models.TranslationModel2D;
+import mpicbg.models.TranslationModel3D;
 import mpicbg.stitching.PairWiseStitchingImgLib;
+import mpicbg.stitching.PairWiseStitchingResult;
 import mpicbg.stitching.StitchingParameters;
 import fiji.stacks.Hyperstack_rearranger;
+import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -117,11 +131,18 @@ public class Stitching_Pairwise implements PlugIn
 		
 		// which fusion methods are available
 		String[] fusionMethodList;
+		final boolean simpleFusion;
 		
 		if ( imp1.getNChannels() != imp2.getNChannels() )
+		{
 			fusionMethodList = CommonFunctions.fusionMethodListSimple;
+			simpleFusion = true;
+		}
 		else
-			fusionMethodList = CommonFunctions.fusionMethodList;		
+		{
+			fusionMethodList = CommonFunctions.fusionMethodList;
+			simpleFusion = false;
+		}
 		
 		if ( defaultFusionMethod >= fusionMethodList.length )
 			defaultFusionMethod = 0;
@@ -163,7 +184,12 @@ public class Stitching_Pairwise implements PlugIn
 		final StitchingParameters params = new StitchingParameters();
 		
 		params.dimensionality = dimensionality;
-		params.fusionMethod = defaultFusionMethod = gd2.getNextChoiceIndex();
+		
+		if ( simpleFusion )
+			params.fusionMethod = defaultFusionMethod = gd2.getNextChoiceIndex() + 4;
+		else
+			params.fusionMethod = defaultFusionMethod = gd2.getNextChoiceIndex();
+		
 		params.fusionAlpha = defaultAlpha = gd2.getNextNumber();
 		params.fusedName = gd2.getNextText();
 		params.checkPeaks = defaultCheckPeaks = (int)Math.round( gd2.getNextNumber() );
@@ -200,8 +226,113 @@ public class Stitching_Pairwise implements PlugIn
 			IJ.log( "WARNING: Instead we will '" + CommonFunctions.timeSelect[ params.timeSelect ] + "'" );
 		}
 		
-		// compute the stitching
-		IJ.log( "shift: " + Util.printCoordinates( PairWiseStitchingImgLib.stitchPairwise( imp1, imp2, 1, params ) ) );
+		// compute and fuse
+		performStitching( imp1, imp2, params );
+	}
+	
+	public static void performStitching( final ImagePlus imp1, final ImagePlus imp2, final StitchingParameters params )
+	{
+		final ArrayList<InvertibleBoundable> models = new ArrayList< InvertibleBoundable >();
+		
+		// the simplest case, only one registration necessary
+		if ( imp1.getNFrames() == 1 || params.timeSelect == 0 )
+		{
+			// compute the stitching
+			final PairWiseStitchingResult result = PairWiseStitchingImgLib.stitchPairwise( imp1, imp2, 1, params );			
+			IJ.log( "shift (second relative to first): " + Util.printCoordinates( result.getOffset() ) + " correlation (R)=" + result.getCrossCorrelation() );
+
+			for ( int f = 1; f <= imp1.getNFrames(); ++f )
+			{
+				if ( params.dimensionality == 2 )
+				{
+					TranslationModel2D model1 = new TranslationModel2D();
+					TranslationModel2D model2 = new TranslationModel2D();
+					model2.set( result.getOffset( 0 ), result.getOffset( 1 ) );
+					
+					models.add( model1 );			
+					models.add( model2 );
+				}
+				else
+				{
+					TranslationModel3D model1 = new TranslationModel3D();
+					TranslationModel3D model2 = new TranslationModel3D();
+					model2.set( result.getOffset( 0 ), result.getOffset( 1 ), result.getOffset( 2 ) );
+					
+					models.add( model1 );			
+					models.add( model2 );
+					
+				}
+			}
+			
+		}
+		else
+		{
+			
+		}
+		
+		// now fuse
+		final CompositeImage ci;
+		
+		if ( imp1.getType() == ImagePlus.GRAY32 || imp2.getType() == ImagePlus.GRAY32 )
+			ci = fuse( new FloatType(), imp1, imp2, models, params );
+		else if ( imp1.getType() == ImagePlus.GRAY16 || imp2.getType() == ImagePlus.GRAY16 )
+			ci = fuse( new FloatType(), imp1, imp2, models, params );
+		else
+			ci = fuse( new FloatType(), imp1, imp2, models, params );
+		
+		if ( ci != null )
+			ci.show();
+	}
+	
+	protected static < T extends RealType< T > > CompositeImage fuse( final T targetType, final ImagePlus imp1, final ImagePlus imp2, final ArrayList<InvertibleBoundable> models, final StitchingParameters params )
+	{
+		if ( params.fusionMethod == 0 )
+		{
+			//"Linear Blending"
+			return null;
+		}
+		else if ( params.fusionMethod == 1 )
+		{
+			//"Average"
+			return null;
+		}
+		else if ( params.fusionMethod == 2 )
+		{
+			//"Max. Intensity"
+			return null;
+		}
+		else if ( params.fusionMethod == 3 )
+		{
+			//"Min. Intensity"
+			return null;
+		}
+		else if ( params.fusionMethod == 4 )
+		{
+			// images are always the same, we just trigger different timepoints
+			final ArrayList<ImagePlus> images = new ArrayList< ImagePlus >();
+			images.add( imp1 );
+			images.add( imp2 );
+		
+			if ( imp1.getNFrames() > 1 )
+			{
+				//"Overlay into composite image"
+				for ( int f = 1; f < imp1.getNFrames(); ++f )
+				{
+					OverlayFusion.createOverlay( targetType, images, models, params.dimensionality, f );
+				}
+				return null;
+						
+			}
+			else
+			{
+				return OverlayFusion.createOverlay( targetType, images, models, params.dimensionality, 1 );				
+			}
+		}
+		else
+		{
+			//"Do not fuse images"
+			return null;
+		}				
 	}
 
 	public static String testRegistrationCompatibility( final ImagePlus imp1, final ImagePlus imp2 ) 
