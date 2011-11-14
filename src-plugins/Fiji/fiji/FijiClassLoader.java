@@ -100,6 +100,14 @@ public class FijiClassLoader extends URLClassLoader {
 		} catch (Exception e) { e.printStackTrace(); /* ignore */ }
 	}
 
+	protected void addFile(File file) {
+		try {
+			addURL(file.toURI().toURL());
+		} catch (MalformedURLException e) {
+			IJ.log("FijiClassLoader: " + e);
+		}
+	}
+
 	public void addPath(String path) throws IOException {
 		addPath(path, true);
 	}
@@ -111,32 +119,18 @@ public class FijiClassLoader extends URLClassLoader {
 			return;
 		File file = new File(path);
 
-		if (!recurse && file.isDirectory()) try {
-			addURL(file.toURI().toURL());
-		} catch (MalformedURLException e) {
-			IJ.log("FijiClassLoader: " + e);
-		}
+		if (!recurse && file.isDirectory())
+			addFile(file);
 		else if (file.isDirectory()) {
-
-			try {
-
-				// Add first level subdirectories to search path
-				addURL(file.toURI().toURL());
-			} catch (MalformedURLException e) {
-				IJ.log("FijiClassLoader: " + e);
-			}
+			// Add first level subdirectories to search path
+			addFile(file);
 			String[] paths = file.list();
 			for (int i = 0; i < paths.length; i++)
 				if (!paths[i].startsWith("."))
 					addPath(path + File.separator + paths[i]);
 		}
-		else if (path.endsWith(".jar")) {
-			try {
-				addURL(file.toURI().toURL());
-			} catch (MalformedURLException e) {
-				IJ.log("FijiClassLoader: " + e);
-			}
-		}
+		else if (path.endsWith(".jar"))
+			addFile(file);
 	}
 
 	public void addFallBack(ClassLoader loader) {
