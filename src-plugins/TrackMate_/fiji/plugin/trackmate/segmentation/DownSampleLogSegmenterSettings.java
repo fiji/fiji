@@ -6,28 +6,27 @@ import java.util.List;
 import org.jdom.Attribute;
 import org.jdom.Element;
 
-import fiji.plugin.trackmate.gui.LogSegmenterConfigurationPanel;
 import fiji.plugin.trackmate.gui.SegmenterConfigurationPanel;
 
 /**
- * A segmenter settings object valid for most spot segmenters based on Log filtering,
+ * A segmenter settings object valid for the down-sampling Log segmenter.
  * 
- * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2010-2011
+ * @author Jean-Yves Tinevez <tinevez@pasteur.fr> 2011
  */
-public class LogSegmenterSettings extends BasicSegmenterSettings {
+public class DownSampleLogSegmenterSettings extends BasicSegmenterSettings {
 
-	private static final String SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME 	= "threshold";
-	private static final String SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME	= "usemedianfilter";
-	private static final String SEGMENTER_SETTINGS_DO_SUBPIXEL_ATTRIBUTE_NAME	= "doSubPixelLocalization";
+	private static final String SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME 			= "threshold";
+	private static final String SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME			= "usemedianfilter";
+	private static final String SEGMENTER_SETTINGS_DOWN_SAMPLE_FACTOR_ATTRIBUTE_NAME	= "downsamplingfactor";
 
-	private static final boolean 	DEFAULT_DO_SUBPIXEL_LOCALIZATION = true;
+	private static final float 	DEFAULT_DOWNSAMPLING_FACTOR = 4;
 	
 	/** The pixel value under which any peak will be discarded from further analysis. */
 	public float 	threshold = 		0;
 	/** If true, a median filter will be applied before segmenting. */
 	public boolean useMedianFilter;
-	/** If true, spot locations will be interpolated so as to reach sub-pixel localization	 */
-	public boolean doSubPixelLocalization = DEFAULT_DO_SUBPIXEL_LOCALIZATION;
+	/** By how much the source image will be down-sampled before filtering.	 */
+	public float downSamplingFactor = DEFAULT_DOWNSAMPLING_FACTOR;
 	
 	
 	@Override
@@ -35,13 +34,13 @@ public class LogSegmenterSettings extends BasicSegmenterSettings {
 		String str = super.toString();
 		str += String.format("  Threshold: %f\n", threshold);
 		str += "  Median filter: "+useMedianFilter+'\n';
-		str += "  Do sub-pixel localization: "+doSubPixelLocalization+'\n';
+		str += "  Down-sampling factor: "+downSamplingFactor+'\n';
 	return str;
 	}
 	
 	@Override
 	public SegmenterConfigurationPanel createConfigurationPanel() {
-		return new LogSegmenterConfigurationPanel();
+		return new DownSampleLogSegmenterConfigurationPanel();
 	}
 	
 	@Override
@@ -59,18 +58,21 @@ public class LogSegmenterSettings extends BasicSegmenterSettings {
 			threshold = val;
 		} catch (NumberFormatException nfe) { }
 		useMedianFilter = Boolean.parseBoolean(element.getAttributeValue(SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME));
-		doSubPixelLocalization = Boolean.parseBoolean(element.getAttributeValue(SEGMENTER_SETTINGS_DO_SUBPIXEL_ATTRIBUTE_NAME));
+		try {
+			float val = Float.parseFloat(element.getAttributeValue(SEGMENTER_SETTINGS_DOWN_SAMPLE_FACTOR_ATTRIBUTE_NAME));
+			downSamplingFactor = val;
+		} catch (NumberFormatException nfe) { }
 	}
 	
 	protected List<Attribute> getAttributes() {
 		Attribute attThreshold 	= new Attribute(SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME, ""+threshold);
 		Attribute attMedian 	= new Attribute(SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME, ""+useMedianFilter);
-		Attribute attSubpixel 	= new Attribute(SEGMENTER_SETTINGS_DO_SUBPIXEL_ATTRIBUTE_NAME, ""+doSubPixelLocalization);
+		Attribute attDwnSpl 	= new Attribute(SEGMENTER_SETTINGS_DOWN_SAMPLE_FACTOR_ATTRIBUTE_NAME, ""+downSamplingFactor);
 		List<Attribute> atts = new ArrayList<Attribute>(4);
 		atts.add(super.getAttribute());
 		atts.add(attThreshold);
 		atts.add(attMedian);
-		atts.add(attSubpixel);
+		atts.add(attDwnSpl);
 		return atts;
 	}
 }

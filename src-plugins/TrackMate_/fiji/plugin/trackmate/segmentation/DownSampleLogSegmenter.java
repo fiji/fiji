@@ -21,20 +21,12 @@ import fiji.plugin.trackmate.util.TMUtils;
 
 public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter<T> {
 
-	/** The goal diameter of blobs in <b>pixels</b> following down-sizing. The image will be 
-	 * down-sized such that the blob has this diameter (or smaller) in all directions. 
-	 * 10 pixels was chosen because trial and error showed that it gave good results.*/
-	public final static float GOAL_DOWNSAMPLED_BLOB_DIAM = 10f;
-
 	private final static String BASE_ERROR_MESSAGE = "DownSampleLogSegmenter: ";
-
-	/** We smooth more than needed to discard secondary minima. */ 
-	private static final float SMOOTH_FACTOR = 2;
 
 	private float sigma;
 	private Image<FloatType> laplacianKernel;
 	private Image<FloatType> gaussianKernel;
-	private LogSegmenterSettings settings;
+	private DownSampleLogSegmenterSettings settings;
 
 	/*
 	 * CONSTRUCTORS
@@ -56,23 +48,22 @@ public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpo
 	public void setTarget(Image<T> image, float[] calibration,	SegmenterSettings settings) {
 		super.setTarget(image, calibration, settings);
 
+		this.settings = (DownSampleLogSegmenterSettings) settings;
+		float radius = this.settings.expectedRadius;
+		this.sigma = (float) (radius / Math.sqrt(img.getNumDimensions()) / this.settings.downSamplingFactor); // optimal sigma for LoG approach and dimensionality
+
 		createLaplacianKernel(); // instantiate laplacian kernel if needed
 		createGaussianKernel();
-
-		float radius = ((LogSegmenterSettings)settings).expectedRadius;
-		sigma = (float) (SMOOTH_FACTOR * 2 * radius / Math.sqrt(img.getNumDimensions())); // optimal sigma for LoG approach and dimensionality
-
-		this.settings = (LogSegmenterSettings) settings;
 	}
 
 	@Override
 	public boolean checkInput() {
 		if (!super.checkInput())
 			return false;
-		if (settings instanceof LogSegmenterSettings) {
+		if (settings instanceof DownSampleLogSegmenterSettings) {
 			return true;
 		} else {
-			errorMessage = baseErrorMessage + "Bad settings class. Expected LogSegmenterSettings, got "+settings.getClass()+".\n";
+			errorMessage = baseErrorMessage + "Bad settings class. Expected DownSampleLogSegmenterSettings, got "+settings.getClass()+".\n";
 			return false;
 		}
 	}
@@ -80,7 +71,7 @@ public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpo
 	
 	@Override
 	public SegmenterSettings createDefaultSettings() {
-		return new LogSegmenterSettings();
+		return new DownSampleLogSegmenterSettings();
 	}
 
 
@@ -95,17 +86,13 @@ public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpo
 		 */
 
 		float threshold 			= settings.threshold;
-		float radius 				= settings.expectedRadius;
+		float downSampleFactor 		= settings.downSamplingFactor;
 
-		/* 1 - 	Downsample to improve run time. The image is downsampled by the 
-		 * 		factor necessary to achieve a resulting blob size of about 10 pixels 
-		 * 		in diameter in all dimensions. */
-
-		final float[] downsampleFactors = createDownsampledDim(calibration, 2 * radius); // factors for x,y,z that we need for scaling image down;
+		/* 1 - 	Downsample to improve run time. */
 
 		final int dim[] = img.getDimensions();
 		for (int j = 0; j < dim.length; j++)
-			dim[j] = (int) (dim[j] / downsampleFactors[j]);
+			dim[j] = (int) (dim[j] / downSampleFactor);
 
 		final DownSample<T> downsampler = new DownSample<T>(img, dim, 0.5f, 0.5f);	// optimal sigma is defined by 0.5f, as mentioned here: http://pacific.mpi-cbg.de/wiki/index.php/Downsample
 		if (!downsampler.checkInput() || !downsampler.process()) {
@@ -113,7 +100,6 @@ public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpo
 			return false;
 		}
 		Image<T> intermediateImage = downsampler.getResult();
-
 
 		/* 2 - 	Apply a median filter, to get rid of salt and pepper noise which could be 
 		 * 		mistaken for maxima in the algorithm (only applied if requested by user explicitly) */
@@ -170,7 +156,7 @@ public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpo
 
 		// Create spots
 		TreeMap<Float, Spot> spotQuality = new TreeMap<Float, Spot>();
-		spots = convertToSpots(centeredExtrema, calibration, downsampleFactors);
+		spots = convertToSpots(centeredExtrema, calibration, downSampleFactor);
 		for (int i = 0; i < spots.size(); i++) {
 			spots.get(i).putFeature(Spot.QUALITY, extremaValues.get(i));
 			spots.get(i).putFeature(Spot.RADIUS, settings.expectedRadius);
@@ -258,44 +244,6 @@ public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpo
 	}
 
 	/**
-	 * Return the down-sampling factors that should be applied to the image so that 
-	 * the diameter given (in physical units) would have a pixel size (diameter) set
-	 * by the static field {@link GOAL_DOWNSAMPLED_BLOB_DIAM}.
-	 * @param calibration  the physical calibration (pixel size)
-	 * @param diam  the physical object diameter
-	 * @return  a float array of down-sampling factors, for usage in {@link DownSample}
-	 * @see #downSampleByFactor(Image, float[])
-	 */
-	private static float[] createDownsampledDim(final float[] calibration, final float diameter) {
-		float goal = GOAL_DOWNSAMPLED_BLOB_DIAM;
-		int numDim = calibration.length;
-		float widthFactor;
-		if ( (diameter / calibration[0]) > goal) {
-			widthFactor = (diameter / calibration[0]) / goal; // scale down to reach goal size
-		} else{
-			widthFactor = 1; // do not scale down
-		}
-		float heightFactor;
-		if ( (diameter / calibration[1]) > goal) {
-			heightFactor = (diameter / calibration[1]) / goal;
-		} else {
-			heightFactor = 1;
-		}
-		float depthFactor;
-		if ( (numDim == 3 && (diameter / calibration[2]) > goal) ) {
-			depthFactor = (diameter / calibration[2]) / goal; 
-		} else {
-			depthFactor = 1;								
-		}
-		float downsampleFactors[];
-		if (numDim ==3)
-			downsampleFactors = new float[]{widthFactor, heightFactor, depthFactor};
-		else
-			downsampleFactors = new float[]{widthFactor, heightFactor};
-		return downsampleFactors;
-	}
-
-	/**
 	 * Create a {@link Spot} ArrayList from a list of down-sampled pixel coordinates. 
 	 * Internally, we use the {@link SpotImp} concrete implementation of Featurable.
 	 * <p>
@@ -310,14 +258,14 @@ public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpo
 	 * @param  downsampleFactors  the array containing the factors used to down-sample the source image
 	 * @return  Spot list  with coordinates in physical units of the source image
 	 */
-	private static List<Spot> convertToSpots(List< float[] > coords, float[] calibration, float[] downsampleFactors) {
+	private static List<Spot> convertToSpots(List< float[] > coords, float[] calibration, float downSampleFactor) {
 		ArrayList<Spot> spots = new ArrayList<Spot>();
 		Iterator< float[] > itr = coords.iterator();
 		while (itr.hasNext()) {
 			float[] coord = itr.next();
 			float[] calibrated = new float[3];
 			for (int i = 0; i < calibration.length; i++) 
-				calibrated[i] = coord[i] * calibration[i] * downsampleFactors[i];
+				calibrated[i] = coord[i] * calibration[i] * downSampleFactor;
 			SpotImp spot = new SpotImp(calibrated);
 			spots.add(spot);
 		}

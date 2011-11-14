@@ -41,9 +41,9 @@ public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel 
 	protected JCheckBox jCheckBoxMedianFilter;
 	protected JLabel jLabelBlobDiameterUnit;
 	protected JTextField jTextFieldBlobDiameter;
-	private JCheckBox jCheckSubPixel;
+	protected JCheckBox jCheckSubPixel;
 	/** The {@link LogSegmenterSettings} object set by this panel. */
-	private LogSegmenterSettings settings;
+	private LogSegmenterSettings settings = new LogSegmenterSettings();
 	
 	/*
 	 * CONSTRUCTOR
