@@ -68,6 +68,7 @@ public class Util {
 		launchers = list.clone();
 
 		updateablePlatforms = new HashSet<String>();
+		updateablePlatforms.add(platform);
 		if (new File(fijiRoot, macLauncher).exists())
 			updateablePlatforms.add("macosx");
 		String[] files = new File(fijiRoot).list();
