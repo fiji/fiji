@@ -31,9 +31,6 @@ import ij.*;
 import java.awt.*;
 import java.awt.event.*;
 import stacks.ThreePanes;
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.HashMap;
 
 @SuppressWarnings("serial")
 public class InteractiveTracerCanvas extends TracerCanvas {
