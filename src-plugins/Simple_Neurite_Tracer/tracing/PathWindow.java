@@ -612,7 +612,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		for( int i = 0; i < count;  i++ ) {
 			DefaultMutableTreeNode child = (DefaultMutableTreeNode) model.getChild( node, i );
 			Path p = (Path)child.getUserObject();
-			if( tree.isExpanded( (Object[])(child.getPath()) ) ) {
+			if( tree.isExpanded( child.getPath() ) ) {
 				set.add(p);
 			}
 			if( ! model.isLeaf(child) )
@@ -627,7 +627,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			DefaultMutableTreeNode child = (DefaultMutableTreeNode) model.getChild( node, i );
 			Path p = (Path)child.getUserObject();
 			if( set.contains(p) || ((justAdded != null) && (justAdded == p)) ) {
-				tree.setExpanded( (Object[])(child.getPath()), true );
+				tree.setExpanded( child.getPath(), true );
 			}
 			if( ! model.isLeaf(child) )
 				setExpandedPaths( tree, model, child, set, justAdded );
@@ -655,7 +655,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			DefaultMutableTreeNode child = (DefaultMutableTreeNode) model.getChild( node, i );
 			Path p = (Path)child.getUserObject();
 			if( set.contains(p) ) {
-				tree.setSelected( (Object[])(child.getPath()) );
+				tree.setSelected( child.getPath() );
 			}
 			if( ! model.isLeaf(child) )
 				setSelectedPaths( tree, model, child, set );
