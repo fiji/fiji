@@ -5,6 +5,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
+import ij.gui.Roi;
 import ij.process.ColorProcessor;
 
 import java.awt.Point;
@@ -39,10 +40,16 @@ public class CompositeConverter2
 		
 		if ( imp.getBitDepth()==24 ) 
 		{
+			Roi roi = imp.getRoi();
+			ImagePlus newImp;
+			
 			if ( z > 1 )
-				return convertRGBToCompositeStack( imp );
+				newImp = convertRGBToCompositeStack( imp );
 			else
-				return convertRGBToCompositeImage(imp);
+				newImp = convertRGBToCompositeImage( imp );
+			
+			newImp.setRoi( roi );
+			return newImp;
 		}
 		else
 		{
