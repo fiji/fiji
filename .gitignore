@@ -302,3 +302,5 @@ hs_err*.log
 /plugins/Helmholtz_Analysis.jar
 /plugins/Descriptor_based_registration.jar
 /tests/sample-data/
+/modules/jython/unpacked
+/modules/jython/python-*
