@@ -180,7 +180,7 @@ public class Stitching_Pairwise implements PlugIn
 				
 		gd2.addChoice("Fusion_method", fusionMethodList, fusionMethodList[ defaultFusionMethod ] );
 		gd2.addNumericField("Fusion_alpha", defaultAlpha, 2 );		
-		gd2.addStringField("Fused_image name: ", "Stitched_" + imp1.getTitle() + "_" + imp2.getTitle(), 30 );
+		gd2.addStringField("Fused_image name: ", "Stitched_" + imp1.getTitle() + "_" + imp2.getTitle(), 20 );
 		gd2.addSlider("Check_peaks", 1, 100, defaultCheckPeaks );
 		gd2.addCheckbox("Compute_overlap", defaultComputeOverlap );
 		gd2.addCheckbox("Subpixel_accuracy", defaultSubpixelAccuracy );
@@ -429,6 +429,7 @@ public class Stitching_Pairwise implements PlugIn
 			else
 				factory  = new NearestNeighborInterpolatorFactory<FloatType>( new OutOfBoundsStrategyValueFactory<FloatType>() );
 		
+			// fuses the first timepoint but estimates the boundaries for all timepoints as it gets all models
 			final CompositeImage timepoint0 = OverlayFusion.createOverlay( targetType, images, models, params.dimensionality, 1, factory );
 			
 			if ( imp1.getNFrames() > 1 )

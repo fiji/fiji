@@ -145,9 +145,8 @@ public class GlobalOptimization
 				double avgError = tc.getError();
 				double maxError = tc.getMaxError();				
 				
-				if ( ( avgError*params.relativeThreshold < maxError && maxError > 0.75 ) || avgError > params.absoluteThreshold )
+				if ( ( ( avgError*params.relativeThreshold < maxError && maxError > 0.95 ) || avgError > params.absoluteThreshold ) )
 				{
-					IJ.log( "maxError more than " + params.relativeThreshold + " times bigger than avgerror or avgerror bigger than " + params.absoluteThreshold );
 					Tile worstTile = tc.getWorstTile();
 					Set< PointMatch > matches = worstTile.getMatches();
 					
