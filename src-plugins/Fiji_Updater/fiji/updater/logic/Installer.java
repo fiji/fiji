@@ -46,7 +46,6 @@ public class Installer extends Downloader {
 		}
 
 		public long getFilesize() {
-			// TODO: unify case
 			return plugin.filesize;
 		}
 	}

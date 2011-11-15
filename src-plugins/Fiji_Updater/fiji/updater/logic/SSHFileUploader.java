@@ -11,10 +11,8 @@ import com.jcraft.jsch.UserInfo;
 import fiji.updater.Updater;
 
 import fiji.updater.util.Canceled;
-import fiji.updater.util.IJLogOutputStream;
-import fiji.updater.util.InputStream2IJLog;
-
-import ij.IJ;
+import fiji.updater.util.InputStream2OutputStream;
+import fiji.updater.util.UserInterface;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -41,7 +39,7 @@ public class SSHFileUploader extends FileUploader {
 			UserInfo userInfo) throws JSchException {
 		super(uploadDirectory);
 
-		err = new IJLogOutputStream();
+		err = UserInterface.get().getOutputStream();
 
 		int port = 22, colon = sshHost.indexOf(':');
 		if (colon > 0) {
@@ -194,8 +192,7 @@ public class SSHFileUploader extends FileUploader {
 			channel.disconnect();
 		}
 		try {
-			if (IJ.debugMode)
-				IJ.log("launching command " + command);
+			UserInterface.get().debug("launching command " + command);
 			channel = session.openChannel("exec");
 			((ChannelExec)channel).setCommand(command);
 			channel.setInputStream(null);
@@ -217,7 +214,7 @@ public class SSHFileUploader extends FileUploader {
 	}
 
 	public void disconnectSession() throws IOException {
-		new InputStream2IJLog(in);
+		new InputStream2OutputStream(in, UserInterface.get().getOutputStream());
 		try {
 			Thread.sleep(100);
 		}
@@ -232,8 +229,7 @@ public class SSHFileUploader extends FileUploader {
 			/* ignore */
 		}
 		int exitStatus = channel.getExitStatus();
-		if (IJ.debugMode)
-			IJ.log("disconnect session; exit status is " + exitStatus);
+		UserInterface.get().debug("disconnect session; exit status is " + exitStatus);
 		channel.disconnect();
 		session.disconnect();
 		err.close();
@@ -260,7 +256,7 @@ public class SSHFileUploader extends FileUploader {
 		//          -1
 		if (b == 0)
 			return b;
-		IJ.handleException(new Exception("checkAck returns " + b));
+		UserInterface.get().handleException(new Exception("checkAck returns " + b));
 		if (b == -1)
 			return b;
 
@@ -271,8 +267,8 @@ public class SSHFileUploader extends FileUploader {
 				c = in.read();
 				sb.append((char)c);
 			} while (c != '\n');
-			IJ.log("checkAck returned '" + sb.toString() + "'");
-			IJ.error(sb.toString());
+			UserInterface.get().log("checkAck returned '" + sb.toString() + "'");
+			UserInterface.get().error(sb.toString());
 		}
 		return b;
 	}

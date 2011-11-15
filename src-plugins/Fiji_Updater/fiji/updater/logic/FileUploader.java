@@ -6,8 +6,6 @@ import fiji.updater.util.Progress;
 import fiji.updater.util.Progressable;
 import fiji.updater.util.Util;
 
-import ij.IJ;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;

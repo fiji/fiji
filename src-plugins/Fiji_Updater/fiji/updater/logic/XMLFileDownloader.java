@@ -11,8 +11,6 @@ import fiji.updater.util.Progress;
 import fiji.updater.util.Progressable;
 import fiji.updater.util.Util;
 
-import ij.Prefs;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;

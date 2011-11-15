@@ -11,9 +11,7 @@ import fiji.updater.logic.PluginCollection.UpdateSite;
 
 import fiji.updater.util.Progress;
 import fiji.updater.util.Util;
-
-import ij.IJ;
-import ij.Prefs;
+import fiji.updater.util.UserInterface;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -69,7 +67,10 @@ public class PluginUploader {
 		int at = site.sshHost.indexOf('@');
 		if (at > 0)
 			return site.sshHost.substring(0, at);
-		return Prefs.get(Updater.PREFS_USER, "");
+		String name = UserInterface.get().getPref(Updater.PREFS_USER);
+		if (name == null)
+			return "";
+		return name;
 	}
 
 	public void setUploader(FileUploader uploader) {
@@ -83,7 +84,7 @@ public class PluginUploader {
 				userInfo);
 			return true;
 		} catch (JSchException e) {
-			IJ.error("Failed to login");
+			UserInterface.get().error("Failed to login");
 			return false;
 		}
 	}
@@ -230,13 +231,11 @@ public class PluginUploader {
 			connection.setUseCaches(false);
 			long lastModified = connection.getLastModified();
 			connection.getInputStream().close();
-			if (IJ.debugMode)
-				IJ.log("got last modified " + lastModified + " = timestamp " + Util.timestamp(lastModified));
+			UserInterface.get().debug("got last modified " + lastModified + " = timestamp " + Util.timestamp(lastModified));
 			return lastModified;
 		}
 		catch (Exception e) {
-			if (IJ.debugMode)
-				IJ.handleException(e);
+			UserInterface.get().debug(e.getMessage());
 			if (plugins.size() == 0)
 				return -1; // assume initial upload
 			e.printStackTrace();

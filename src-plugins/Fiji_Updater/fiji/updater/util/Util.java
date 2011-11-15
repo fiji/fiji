@@ -286,6 +286,10 @@ public class Util {
 		return updateablePlatforms.contains(platform);
 	}
 
+	public static boolean isMacOSX() {
+		return platform.equals("macosx");
+	}
+
 	public static<T> String join(String delimiter, Iterable<T> list) {
 		StringBuilder builder = new StringBuilder();
 		for (T object : list)

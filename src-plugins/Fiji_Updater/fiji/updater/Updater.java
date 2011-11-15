@@ -1,8 +1,5 @@
 package fiji.updater;
 
-import ij.IJ;
-import ij.WindowManager;
-
 import ij.plugin.PlugIn;
 
 import fiji.updater.logic.Checksummer;
@@ -12,6 +9,7 @@ import fiji.updater.logic.XMLFileDownloader;
 import fiji.updater.logic.XMLFileReader;
 
 import fiji.updater.ui.GraphicalAuthenticator;
+import fiji.updater.ui.IJ1UI;
 import fiji.updater.ui.SwingTools;
 import fiji.updater.ui.UpdaterFrame;
 import fiji.updater.ui.ViewOptions;
@@ -20,6 +18,7 @@ import fiji.updater.ui.ViewOptions.Option;
 
 import fiji.updater.util.Canceled;
 import fiji.updater.util.Progress;
+import fiji.updater.util.UserInterface;
 import fiji.updater.util.Util;
 
 import ij.Executer;
@@ -51,12 +50,13 @@ public class Updater implements PlugIn {
 	public static boolean debug, testRun, hidden;
 
 	public void run(String arg) {
+		UserInterface.set(new IJ1UI());
 
 		if (errorIfDebian())
 			return;
 
 		if (new File(Util.fijiRoot, "update").exists()) {
-			IJ.error("Fiji restart required to finalize previous update");
+			UserInterface.get().error("Fiji restart required to finalize previous update");
 			return;
 		}
 		Util.useSystemProxies();
@@ -68,14 +68,13 @@ public class Updater implements PlugIn {
 		catch (FileNotFoundException e) { /* ignore */ }
 		catch (Exception e) {
 			e.printStackTrace();
-			IJ.error("There was an error reading the cached metadata: " + e);
+			UserInterface.get().error("There was an error reading the cached metadata: " + e);
 			return;
 		}
 
 		Authenticator.setDefault(new GraphicalAuthenticator());
 
 		final UpdaterFrame main = new UpdaterFrame(plugins, hidden);
-		main.setLocationRelativeTo(IJ.getInstance());
 		main.setEasyMode(true);
 
 		Progress progress = main.getProgress("Starting up...");
@@ -192,7 +191,7 @@ public class Updater implements PlugIn {
 		if (isDebian()) {
 			String message = "You are using the Debian packaged version of Fiji.\n";
 			message += "You should update Fiji with your system's usual package manager instead.";
-			IJ.error(message);
+			UserInterface.get().error(message);
 			return true;
 		} else
 			return false;

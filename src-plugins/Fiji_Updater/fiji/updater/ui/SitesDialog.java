@@ -11,6 +11,7 @@ import fiji.updater.logic.PluginObject;
 import fiji.updater.logic.PluginUploader;
 import fiji.updater.logic.XMLFileReader;
 
+import fiji.updater.util.UserInterface;
 import fiji.updater.util.Util;
 
 import java.awt.Container;
@@ -425,7 +426,9 @@ public class SitesDialog extends JDialog implements ActionListener, ItemListener
 		PluginCollection plugins = new PluginCollection();
 		try {
 			plugins.read();
-		} catch (Exception e) { ij.IJ.handleException(e); }
+		} catch (Exception e) {
+			UserInterface.get().handleException(e);
+		}
 		SitesDialog dialog = new SitesDialog(null, plugins, !false);
 		dialog.setVisible(true);
 	}

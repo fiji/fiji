@@ -20,8 +20,10 @@ import fiji.updater.util.Canceled;
 import fiji.updater.util.Progress;
 import fiji.updater.util.StderrProgress;
 import fiji.updater.util.UpdateJava;
+import fiji.updater.util.UserInterface;
 import fiji.updater.util.Util;
 
+// TODO: abstract out dependencies on ij.jar
 import ij.IJ;
 import ij.Prefs;
 import ij.WindowManager;
@@ -320,7 +322,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		bottomPanel2.add(Box.createHorizontalGlue());
 
 		// offer to update Java, but only on non-Macs
-		if (!IJ.isMacOSX() && new File(Util.fijiRoot, "java").canWrite()) {
+		if (!Util.isMacOSX() && new File(Util.fijiRoot, "java").canWrite()) {
 			bottomPanel2.add(Box.createRigidArea(new Dimension(15,0)));
 			SwingTools.button("Update Java",
 					"Update the Java version used for Fiji", new ActionListener() {
@@ -691,10 +693,9 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 				list += ", " + plugin.getFilename();
 		}
 		if (list != null)
-			IJ.showMessage("Read-only Plugins",
-					"WARNING: The following plugin files "
+			UserInterface.get().info("WARNING: The following plugin files "
 					+ "are set to read-only: '"
-					+ list + "'");
+					+ list + "'", "Read-only Plugins");
 	}
 
 	void markUploadable() {
@@ -764,8 +765,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 			if (progress != null)
 				progress.done();
 		} catch (Throwable e) {
-			IJ.handleException(e);
-			e.printStackTrace();
+			UserInterface.get().handleException(e);
 			error("Upload failed: " + e);
 			if (progress != null)
 				progress.done();
@@ -792,8 +792,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 			if (progress != null)
 				progress.done();
 		} catch (Throwable e) {
-			e.printStackTrace();
-			IJ.handleException(e);
+			UserInterface.get().handleException(e);
 			if (progress != null)
 				progress.done();
 		}
