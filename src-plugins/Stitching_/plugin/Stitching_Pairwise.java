@@ -2,17 +2,24 @@ package plugin;
 import static stitching.CommonFunctions.addHyperLinkListener;
 
 import java.util.ArrayList;
+import java.util.Vector;
 
 import process.OverlayFusion;
 
+import mpicbg.imglib.interpolation.InterpolatorFactory;
+import mpicbg.imglib.interpolation.linear.LinearInterpolatorFactory;
+import mpicbg.imglib.interpolation.nearestneighbor.NearestNeighborInterpolatorFactory;
+import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import mpicbg.imglib.type.numeric.integer.UnsignedShortType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
 import mpicbg.models.InvertibleBoundable;
+import mpicbg.models.Model;
 import mpicbg.models.TranslationModel2D;
 import mpicbg.models.TranslationModel3D;
+import mpicbg.stitching.ComparePair;
 import mpicbg.stitching.PairWiseStitchingImgLib;
 import mpicbg.stitching.PairWiseStitchingResult;
 import mpicbg.stitching.StitchingParameters;
@@ -70,6 +77,12 @@ public class Stitching_Pairwise implements PlugIn
 		 * The first dialog for choosing the images
 		 */
 		final GenericDialog gd1 = new GenericDialog( "Paiwise Stitching of Images" );
+		
+		if ( defaultImg1 >= imgList.length || defaultImg2 >= imgList.length )
+		{
+			defaultImg1 = 0;
+			defaultImg2 = 1;
+		}
 		
 		gd1.addChoice("First_image (reference)", imgList, imgList[ defaultImg1 ] );
 		gd1.addChoice("Second_image (to register)", imgList, imgList[ defaultImg2 ] );
@@ -149,7 +162,6 @@ public class Stitching_Pairwise implements PlugIn
 		if ( defaultFusionMethod >= fusionMethodList.length )
 			defaultFusionMethod = 0;
 		
-		IJ.log( "dim: " + dimensionality );
 		/**
 		 * Show the next dialog
 		 */
@@ -229,19 +241,20 @@ public class Stitching_Pairwise implements PlugIn
 		}
 		
 		// compute and fuse
-		performStitching( imp1, imp2, params );
+		performPairWiseStitching( imp1, imp2, params );
 	}
 	
-	public static void performStitching( final ImagePlus imp1, final ImagePlus imp2, final StitchingParameters params )
+	public static void performPairWiseStitching( final ImagePlus imp1, final ImagePlus imp2, final StitchingParameters params )
 	{
 		final ArrayList<InvertibleBoundable> models = new ArrayList< InvertibleBoundable >();
+		long start = System.currentTimeMillis();			
 		
 		// the simplest case, only one registration necessary
 		if ( imp1.getNFrames() == 1 || params.timeSelect == 0 )
 		{
 			// compute the stitching
-			final PairWiseStitchingResult result = PairWiseStitchingImgLib.stitchPairwise( imp1, imp2, 1, params );			
-			IJ.log( "shift (second relative to first): " + Util.printCoordinates( result.getOffset() ) + " correlation (R)=" + result.getCrossCorrelation() );
+			final PairWiseStitchingResult result = PairWiseStitchingImgLib.stitchPairwise( imp1, imp2, 1, 1, params );			
+			IJ.log( "shift (second relative to first): " + Util.printCoordinates( result.getOffset() ) + " correlation (R)=" + result.getCrossCorrelation() + " (" + (System.currentTimeMillis() - start) + " ms)");
 
 			for ( int f = 1; f <= imp1.getNFrames(); ++f )
 			{
@@ -269,12 +282,38 @@ public class Stitching_Pairwise implements PlugIn
 		}
 		else
 		{
+			// get all that we have to compare
+			final Vector< ComparePair > pairs = getComparePairs( imp1, imp2, params.dimensionality, params.timeSelect );
 			
+			for ( final ComparePair pair : pairs )
+			{
+				final PairWiseStitchingResult result = PairWiseStitchingImgLib.stitchPairwise( pair.getImagePlus1(), pair.getImagePlus2(), pair.getTimePoint1(), pair.getTimePoint2(), params );			
+
+				if ( params.dimensionality == 2 )
+				{
+					TranslationModel2D model2 = new TranslationModel2D();
+					model2.set( result.getOffset( 0 ), result.getOffset( 1 ) );
+					pair.setModel( model2 );
+				}
+				else
+				{
+					TranslationModel3D model2 = new TranslationModel3D();
+					model2.set( result.getOffset( 0 ), result.getOffset( 1 ), result.getOffset( 2 ) );
+					pair.setModel( model2 );
+				}
+				
+				pair.setCrossCorrelation( result.getCrossCorrelation() );
+
+				IJ.log( imp1.getTitle() + " <- " + imp2.getTitle() + ": " + Util.printCoordinates( result.getOffset() ) + " correlation (R)=" + result.getCrossCorrelation() + " (" + (System.currentTimeMillis() - start) + " ms)");
+			}
 		}
 		
 		// now fuse
-		final CompositeImage ci;
+		IJ.log( "Fusing ..." );
 		
+		final CompositeImage ci;
+		start = System.currentTimeMillis();			
+			
 		if ( imp1.getType() == ImagePlus.GRAY32 || imp2.getType() == ImagePlus.GRAY32 )
 			ci = fuse( new FloatType(), imp1, imp2, models, params );
 		else if ( imp1.getType() == ImagePlus.GRAY16 || imp2.getType() == ImagePlus.GRAY16 )
@@ -284,6 +323,8 @@ public class Stitching_Pairwise implements PlugIn
 		
 		if ( ci != null )
 			ci.show();
+		
+		IJ.log( "Finished ... (" + (System.currentTimeMillis() - start) + " ms)");
 	}
 	
 	protected static < T extends RealType< T > > CompositeImage fuse( final T targetType, final ImagePlus imp1, final ImagePlus imp2, final ArrayList<InvertibleBoundable> models, final StitchingParameters params )
@@ -314,8 +355,15 @@ public class Stitching_Pairwise implements PlugIn
 			final ArrayList<ImagePlus> images = new ArrayList< ImagePlus >();
 			images.add( imp1 );
 			images.add( imp2 );
+			
+			final InterpolatorFactory< FloatType > factory;
+			
+			if ( params.subpixelAccuracy )
+				factory  = new LinearInterpolatorFactory<FloatType>( new OutOfBoundsStrategyValueFactory<FloatType>() );
+			else
+				factory  = new NearestNeighborInterpolatorFactory<FloatType>( new OutOfBoundsStrategyValueFactory<FloatType>() );
 		
-			final CompositeImage timepoint0 = OverlayFusion.createOverlay( targetType, images, models, params.dimensionality, 1 );
+			final CompositeImage timepoint0 = OverlayFusion.createOverlay( targetType, images, models, params.dimensionality, 1, factory );
 			
 			if ( imp1.getNFrames() > 1 )
 			{
@@ -328,7 +376,7 @@ public class Stitching_Pairwise implements PlugIn
 				//"Overlay into composite image"
 				for ( int f = 2; f <= imp1.getNFrames(); ++f )
 				{
-					final CompositeImage tmp = OverlayFusion.createOverlay( targetType, images, models, params.dimensionality, f );
+					final CompositeImage tmp = OverlayFusion.createOverlay( targetType, images, models, params.dimensionality, f, factory );
 					
 					// add all slices of the first timepoint
 					for ( int c = 1; c <= tmp.getStackSize(); ++c )
@@ -352,7 +400,49 @@ public class Stitching_Pairwise implements PlugIn
 		{
 			//"Do not fuse images"
 			return null;
-		}				
+		}
+	}
+	
+	protected static Vector< ComparePair > getComparePairs( final ImagePlus imp1, final ImagePlus imp2, final int dimensionality, final int timeSelect )
+	{
+		final Vector< ComparePair > pairs = new Vector< ComparePair >();
+		
+		final Model< ? > model;
+		
+		if ( dimensionality == 2 )
+			model = new TranslationModel2D();
+		else
+			model = new TranslationModel3D();
+
+		// imp1 vs imp2 at all timepoints
+		for ( int timePointA = 1; timePointA <= Math.min( imp1.getNFrames(), imp2.getNFrames() ); timePointA++ )
+			pairs.add( new ComparePair( imp1, imp2, timePointA, timePointA, model.copy() ) );
+
+		if ( timeSelect == 1 )
+		{
+			// consequtively all timepoints of imp1
+			for ( int timePointA = 1; timePointA <= imp1.getNFrames() - 1; timePointA++ )
+				pairs.add( new ComparePair( imp1, imp1, timePointA, timePointA + 1, model.copy() ) );
+
+			// consequtively all timepoints of imp2
+			for ( int timePointB = 1; timePointB <= imp2.getNFrames() - 1; timePointB++ )
+				pairs.add( new ComparePair( imp2, imp2, timePointB, timePointB + 1, model.copy() ) );
+			
+		}
+		else
+		{
+			// all against all for imp1
+			for ( int timePointA = 1; timePointA <= imp1.getNFrames() - 1; timePointA++ )
+				for ( int timePointB = timePointA + 1; timePointB <= imp1.getNFrames(); timePointB++ )
+					pairs.add( new ComparePair( imp1, imp1, timePointA, timePointB, model.copy() ) );
+			
+			// all against all for imp2
+			for ( int timePointA = 1; timePointA <= imp2.getNFrames() - 1; timePointA++ )
+				for ( int timePointB = timePointA + 1; timePointB <= imp2.getNFrames(); timePointB++ )
+					pairs.add( new ComparePair( imp2, imp2, timePointA, timePointB, model.copy() ) );
+		}
+		
+		return pairs;
 	}
 
 	public static String testRegistrationCompatibility( final ImagePlus imp1, final ImagePlus imp2 ) 
