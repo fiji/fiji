@@ -122,7 +122,7 @@ public class OverlayFusion
 	public static <T extends RealType<T>> CompositeImage createOverlay( final T targetType, final ArrayList<ImagePlus> images, final ArrayList<InvertibleBoundable> models, final int dimensionality, final int timepoint, final InterpolatorFactory< FloatType > factory )
 	{	
 		final int numImages = images.size();
-
+		
 		// the size of the new image
 		final int[] size = new int[ dimensionality ];
 		// the offset relative to the output image which starts with its local coordinates (0,0,0)
@@ -147,7 +147,7 @@ public class OverlayFusion
 			for ( int c = 1; c <= imp.getNChannels(); ++c )
 			{
 				final Image<T> out = f.createImage( size );
-				fuseChannel( out, ImageJFunctions.convertFloat( Hyperstack_rearranger.getImageChunk( imp, c, timepoint ) ), offset, models.get( i ), factory );
+				fuseChannel( out, ImageJFunctions.convertFloat( Hyperstack_rearranger.getImageChunk( imp, c, timepoint ) ), offset, models.get( i + (timepoint - 1) * numImages ), factory );
 				try 
 				{
 					final ImagePlus outImp = ((ImagePlusContainer<?,?>)out.getContainer()).getImagePlus();
@@ -181,6 +181,22 @@ public class OverlayFusion
 		return new CompositeImage( result, CompositeImage.COMPOSITE );
 	}
 	
+	/**
+	 * Estimate the bounds of the output image. If there are more models than images, we assume that this encodes for more timepoints.
+	 * E.g. 2 Images and 10 models would mean 5 timepoints. The arrangement of the models should be as follows:
+	 * 
+	 * image1 timepoint1
+	 * image2 timepoint1
+	 * image1 timepoint2
+	 * ...
+	 * image2 timepoint5
+	 * 
+	 * @param offset - the offset, will be computed
+	 * @param size - the size, will be computed
+	 * @param images - all imageplus in a list
+	 * @param models - all models
+	 * @param dimensionality - which dimensionality (2 or 3)
+	 */
 	public static void estimateBounds( final float[] offset, final int[] size, final List<ImagePlus> images, final ArrayList<InvertibleBoundable> models, final int dimensionality )
 	{
 		final int[][] imgSizes = new int[ images.size() ][ dimensionality ];
@@ -196,23 +212,40 @@ public class OverlayFusion
 		estimateBounds( offset, size, imgSizes, models, dimensionality );
 	}
 	
+	/**
+	 * Estimate the bounds of the output image. If there are more models than images, we assume that this encodes for more timepoints.
+	 * E.g. 2 Images and 10 models would mean 5 timepoints. The arrangement of the models should be as follows:
+	 * 
+	 * image1 timepoint1
+	 * image2 timepoint1
+	 * image1 timepoint2
+	 * ...
+	 * image2 timepoint5
+	 * 
+	 * @param offset - the offset, will be computed
+	 * @param size - the size, will be computed
+	 * @param imgSizes - the dimensions of all input images imgSizes[ image ][ x, y, (z) ]
+	 * @param models - all models
+	 * @param dimensionality - which dimensionality (2 or 3)
+	 */
 	public static void estimateBounds( final float[] offset, final int[] size, final int[][]imgSizes, final ArrayList<InvertibleBoundable> models, final int dimensionality )
 	{
 		final int numImages = imgSizes.length;
+		final int numTimePoints = models.size() / numImages;
 		
 		// estimate the bounaries of the output image
-		final float[][] max = new float[ numImages ][];
-		final float[][] min = new float[ numImages ][ dimensionality ];
+		final float[][] max = new float[ numImages * numTimePoints ][];
+		final float[][] min = new float[ numImages * numTimePoints ][ dimensionality ];
 		
 		if ( dimensionality == 2 )
 		{
-			for ( int i = 0; i < numImages; ++i )
-				max[ i ] = new float[] { imgSizes[ i ][ 0 ], imgSizes[ i ][ 1 ] };
+			for ( int i = 0; i < numImages * numTimePoints; ++i )
+				max[ i ] = new float[] { imgSizes[ i / numTimePoints ][ 0 ], imgSizes[ i / numTimePoints ][ 1 ] };
 		}
 		else
 		{
-			for ( int i = 0; i < numImages; ++i )
-				max[ i ] = new float[] { imgSizes[ i ][ 0 ], imgSizes[ i ][ 1 ], imgSizes[ i ][ 2 ] };
+			for ( int i = 0; i < numImages * numTimePoints; ++i )
+				max[ i ] = new float[] { imgSizes[ i / numTimePoints ][ 0 ], imgSizes[ i / numTimePoints ][ 1 ], imgSizes[ i / numTimePoints ][ 2 ] };
 		}
 		
 		//IJ.log( "1: " + Util.printCoordinates( min[ 0 ] ) + " -> " + Util.printCoordinates( max[ 0 ] ) );
@@ -221,7 +254,7 @@ public class OverlayFusion
 		// casts of the models
 		final ArrayList<InvertibleBoundable> boundables = new ArrayList<InvertibleBoundable>();
 		
-		for ( int i = 0; i < numImages; ++i )
+		for ( int i = 0; i < numImages * numTimePoints; ++i )
 		{
 			final InvertibleBoundable boundable = (InvertibleBoundable)models.get( i ); 
 			boundables.add( boundable );
@@ -243,7 +276,7 @@ public class OverlayFusion
 			maxImg[ d ] = Math.max( Math.max( max[ 0 ][ d ], max[ 1 ][ d ] ), Math.max( min[ 0 ][ d ], min[ 1 ][ d ]) );
 			minImg[ d ] = Math.min( Math.min( max[ 0 ][ d ], max[ 1 ][ d ] ), Math.min( min[ 0 ][ d ], min[ 1 ][ d ]) );
 			
-			for ( int i = 2; i < imgSizes.length; ++i )
+			for ( int i = 2; i < numImages * numTimePoints; ++i )
 			{
 				maxImg[ d ] = Math.max( maxImg[ d ], Math.max( min[ i ][ d ], max[ i ][ d ]) );
 				minImg[ d ] = Math.min( minImg[ d ], Math.min( min[ i ][ d ], max[ i ][ d ]) );	
