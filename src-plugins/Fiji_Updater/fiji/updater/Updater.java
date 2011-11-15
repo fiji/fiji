@@ -11,6 +11,7 @@ import fiji.updater.logic.PluginObject;
 import fiji.updater.logic.XMLFileDownloader;
 import fiji.updater.logic.XMLFileReader;
 
+import fiji.updater.ui.GraphicalAuthenticator;
 import fiji.updater.ui.SwingTools;
 import fiji.updater.ui.UpdaterFrame;
 import fiji.updater.ui.ViewOptions;
@@ -28,6 +29,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import java.net.Authenticator;
 import java.net.UnknownHostException;
 
 import javax.swing.JOptionPane;
@@ -57,6 +59,7 @@ public class Updater implements PlugIn {
 			IJ.error("Fiji restart required to finalize previous update");
 			return;
 		}
+		Util.useSystemProxies();
 
 		final PluginCollection plugins = new PluginCollection();
 		try {
@@ -68,6 +71,8 @@ public class Updater implements PlugIn {
 			IJ.error("There was an error reading the cached metadata: " + e);
 			return;
 		}
+
+		Authenticator.setDefault(new GraphicalAuthenticator());
 
 		final UpdaterFrame main = new UpdaterFrame(plugins, hidden);
 		main.setLocationRelativeTo(IJ.getInstance());
@@ -122,10 +127,11 @@ public class Updater implements PlugIn {
 				// overwrite the original updater
 				File downloaded = new File(Util.prefix("update/plugins/Fiji_Updater.jar"));
 				File updaterJar = new File(Util.prefix("plugins/Fiji_Updater.jar"));
-				if (!updaterJar.delete() || !downloaded.renameTo(updaterJar) ||
+				if (!(updaterJar.delete() || moveOutOfTheWay(updaterJar)) ||
+						!downloaded.renameTo(updaterJar) ||
 						!downloaded.getParentFile().delete() ||
 						!downloaded.getParentFile().getParentFile().delete())
-					main.error("Could not overwrite Fiji Updater");
+					main.info("Please restart Fiji and call Help>Update Fiji to continue the update");
 				else
 					/*
 					 * Start a new Thread that refreshes the menus and restarts the updater;
@@ -190,5 +196,20 @@ public class Updater implements PlugIn {
 			return true;
 		} else
 			return false;
+	}
+
+	protected static boolean moveOutOfTheWay(File file) {
+		if (!file.exists())
+			return true;
+		File backup = new File(file.getParentFile(), file.getName() + ".old");
+		if (backup.exists() && !backup.delete()) {
+			int i = 2;
+			for (;;) {
+				backup = new File(file.getParentFile(), file.getName() + ".old" + i);
+				if (!backup.exists())
+					break;
+			}
+		}
+		return file.renameTo(backup);
 	}
 }

@@ -496,6 +496,15 @@ public class PluginObject {
 		return platforms.size() == 0 || isForPlatform(Util.platform);
 	}
 
+	public boolean isUpdateablePlatform() {
+		if (platforms.size() == 0)
+			return true;
+		for (String platform : platforms.keySet())
+			if (Util.isUpdateablePlatform(platform))
+				return true;
+		return false;
+	}
+
 	public boolean isFiji() {
 		return status != Status.NOT_FIJI;
 	}
