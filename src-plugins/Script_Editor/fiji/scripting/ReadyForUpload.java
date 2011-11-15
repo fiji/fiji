@@ -32,7 +32,10 @@ import java.io.InputStream;
 import java.io.PrintStream;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -337,14 +340,22 @@ public class ReadyForUpload {
 		return true;
 	}
 
+	protected static Set<String> textFileExtensions;
+	static {
+		textFileExtensions = new HashSet<String>(Arrays.asList(new String[] {
+			"bsh", "c", "clj", "h", "ijm", "js", "m", "py", "rb", "txt"
+		}));
+	}
+
 	public synchronized boolean check(String path) {
 		if (IJ.isWindows())
 			path = normalizeWinPath(path);
 
-		if (!path.endsWith(".jar")) {
-			print("Warning: ignoring " + path);
-			return true;
-		}
+		int dot = path.lastIndexOf('.');
+		String extension = "";
+		if (dot > path.length() - 5)
+			extension = path.substring(dot + 1);
+		boolean isText = textFileExtensions.contains(extension);
 
 		boolean result = true;
 		rule = null;
@@ -354,10 +365,19 @@ public class ReadyForUpload {
 			if (IJ.isWindows())
 				fullPath = normalizeWinPath(fullPath);
 
+			if (!isText && !extension.equals("jar")) {
+				print("Warning: ignoring " + path);
+				return true;
+			}
+
 			if (!checkCRLF()) {
 				print("");
 				result = false;
 			}
+
+			if (isText)
+				return result;
+
 			if (containsDebugInfo(fullPath)) {
 				if (new File(path).getCanonicalPath().equals(new File(fijiDir, "plugins/loci_tools.jar").getCanonicalPath()))
 					print("Ignoring debug info in Bio-Formats");
