@@ -38,7 +38,7 @@ import mpicbg.imglib.util.Util;
  */
 public class PairWiseStitchingImgLib 
 {
-	public static PairWiseStitchingResult stitchPairwise( final ImagePlus imp1, final ImagePlus imp2, final int timepoint, final StitchingParameters params )
+	public static PairWiseStitchingResult stitchPairwise( final ImagePlus imp1, final ImagePlus imp2, final int timepoint1, final int timepoint2, final StitchingParameters params )
 	{
 		// can both images be wrapped into imglib without copying
 		final boolean canWrap = !StitchingParameters.alwaysCopy && canWrapIntoImgLib( imp1, params.channel1 ) && canWrapIntoImgLib( imp2, params.channel2 );
@@ -54,40 +54,40 @@ public class PairWiseStitchingImgLib
 		{
 			if ( imp1.getType() == ImagePlus.GRAY32 )
 			{
-				final Image<FloatType> image1 = getWrappedImageFloat( imp1, params.channel1, timepoint );
+				final Image<FloatType> image1 = getWrappedImageFloat( imp1, params.channel1, timepoint1 );
 				
 				if ( imp2.getType() == ImagePlus.GRAY32 )
-					result = performStitching( image1, getWrappedImageFloat( imp2, params.channel2, timepoint), params );
+					result = performStitching( image1, getWrappedImageFloat( imp2, params.channel2, timepoint2 ), params );
 				else if ( imp2.getType() == ImagePlus.GRAY16 )
-					result = performStitching( image1, getWrappedImageUnsignedShort( imp2, params.channel2, timepoint), params );
+					result = performStitching( image1, getWrappedImageUnsignedShort( imp2, params.channel2, timepoint2 ), params );
 				else if ( imp2.getType() == ImagePlus.GRAY8 )
-					result = performStitching( image1, getWrappedImageUnsignedByte( imp2, params.channel2, timepoint), params );
+					result = performStitching( image1, getWrappedImageUnsignedByte( imp2, params.channel2, timepoint2 ), params );
 				else
 					IJ.log( "Unknown image type: " + imp2.getType() );
 			}
 			else if ( imp1.getType() == ImagePlus.GRAY16 )
 			{
-				final Image<UnsignedShortType> image1 = getWrappedImageUnsignedShort( imp1, params.channel1, timepoint );
+				final Image<UnsignedShortType> image1 = getWrappedImageUnsignedShort( imp1, params.channel1, timepoint1 );
 				
 				if ( imp2.getType() == ImagePlus.GRAY32 )
-					result = performStitching( image1, getWrappedImageFloat( imp2, params.channel2, timepoint), params );
+					result = performStitching( image1, getWrappedImageFloat( imp2, params.channel2, timepoint2 ), params );
 				else if ( imp2.getType() == ImagePlus.GRAY16 )
-					result = performStitching( image1, getWrappedImageUnsignedShort( imp2, params.channel2, timepoint), params );
+					result = performStitching( image1, getWrappedImageUnsignedShort( imp2, params.channel2, timepoint2 ), params );
 				else if ( imp2.getType() == ImagePlus.GRAY8 )
-					result = performStitching( image1, getWrappedImageUnsignedByte( imp2, params.channel2, timepoint), params );
+					result = performStitching( image1, getWrappedImageUnsignedByte( imp2, params.channel2, timepoint2 ), params );
 				else
 					IJ.log( "Unknown image type: " + imp2.getType() );
 			} 
 			else if ( imp1.getType() == ImagePlus.GRAY8 )
 			{
-				final Image<UnsignedByteType> image1 = getWrappedImageUnsignedByte( imp1, params.channel1, timepoint );
+				final Image<UnsignedByteType> image1 = getWrappedImageUnsignedByte( imp1, params.channel1, timepoint1 );
 				
 				if ( imp2.getType() == ImagePlus.GRAY32 )
-					result = performStitching( image1, getWrappedImageFloat( imp2, params.channel2, timepoint), params );
+					result = performStitching( image1, getWrappedImageFloat( imp2, params.channel2, timepoint2 ), params );
 				else if ( imp2.getType() == ImagePlus.GRAY16 )
-					result = performStitching( image1, getWrappedImageUnsignedShort( imp2, params.channel2, timepoint), params );
+					result = performStitching( image1, getWrappedImageUnsignedShort( imp2, params.channel2, timepoint2 ), params );
 				else if ( imp2.getType() == ImagePlus.GRAY8 )
-					result = performStitching( image1, getWrappedImageUnsignedByte( imp2, params.channel2, timepoint), params );
+					result = performStitching( image1, getWrappedImageUnsignedByte( imp2, params.channel2, timepoint2 ), params );
 				else
 					IJ.log( "Unknown image type: " + imp2.getType() );
 			} 
@@ -104,40 +104,40 @@ public class PairWiseStitchingImgLib
 			
 			if ( imp1.getType() == ImagePlus.GRAY32 )
 			{
-				final Image< FloatType > image1 = getImage( imp1, imgFactoryFloat, params.channel1, timepoint );
+				final Image< FloatType > image1 = getImage( imp1, imgFactoryFloat, params.channel1, timepoint1 );
 				
 				if ( imp2.getType() == ImagePlus.GRAY32 )
-					result = performStitching( image1, getImage( imp2, imgFactoryFloat, params.channel2, timepoint ), params );
+					result = performStitching( image1, getImage( imp2, imgFactoryFloat, params.channel2, timepoint2 ), params );
 				else if ( imp2.getType() == ImagePlus.GRAY16 )
-					result = performStitching( image1, getImage( imp2, imgFactoryShort, params.channel2, timepoint ), params );
+					result = performStitching( image1, getImage( imp2, imgFactoryShort, params.channel2, timepoint2 ), params );
 				else if ( imp2.getType() == ImagePlus.GRAY8 )
-					result = performStitching( image1, getImage( imp2, imgFactoryByte, params.channel2, timepoint ), params );
+					result = performStitching( image1, getImage( imp2, imgFactoryByte, params.channel2, timepoint2 ), params );
 				else
 					IJ.log( "Unknown image type: " + imp2.getType() );					
 			}
 			else if ( imp1.getType() == ImagePlus.GRAY16 )
 			{
-				final Image< UnsignedShortType > image1 = getImage( imp1, imgFactoryShort, params.channel1, timepoint );
+				final Image< UnsignedShortType > image1 = getImage( imp1, imgFactoryShort, params.channel1, timepoint1 );
 				
 				if ( imp2.getType() == ImagePlus.GRAY32 )
-					result = performStitching( image1, getImage( imp2, imgFactoryFloat, params.channel2, timepoint ), params );
+					result = performStitching( image1, getImage( imp2, imgFactoryFloat, params.channel2, timepoint2 ), params );
 				else if ( imp2.getType() == ImagePlus.GRAY16 )
-					result = performStitching( image1, getImage( imp2, imgFactoryShort, params.channel2, timepoint ), params );
+					result = performStitching( image1, getImage( imp2, imgFactoryShort, params.channel2, timepoint2 ), params );
 				else if ( imp2.getType() == ImagePlus.GRAY8 )
-					result = performStitching( image1, getImage( imp2, imgFactoryByte, params.channel2, timepoint ), params );
+					result = performStitching( image1, getImage( imp2, imgFactoryByte, params.channel2, timepoint2 ), params );
 				else
 					IJ.log( "Unknown image type: " + imp2.getType() );					
 			}
 			else if ( imp1.getType() == ImagePlus.GRAY8 )
 			{
-				final Image< UnsignedByteType > image1 = getImage( imp1, imgFactoryByte, params.channel1, timepoint );
+				final Image< UnsignedByteType > image1 = getImage( imp1, imgFactoryByte, params.channel1, timepoint1 );
 				
 				if ( imp2.getType() == ImagePlus.GRAY32 )
-					result = performStitching( image1, getImage( imp2, imgFactoryFloat, params.channel2, timepoint ), params );
+					result = performStitching( image1, getImage( imp2, imgFactoryFloat, params.channel2, timepoint2 ), params );
 				else if ( imp2.getType() == ImagePlus.GRAY16 )
-					result = performStitching( image1, getImage( imp2, imgFactoryShort, params.channel2, timepoint ), params );
+					result = performStitching( image1, getImage( imp2, imgFactoryShort, params.channel2, timepoint2 ), params );
 				else if ( imp2.getType() == ImagePlus.GRAY8 )
-					result = performStitching( image1, getImage( imp2, imgFactoryByte, params.channel2, timepoint ), params );
+					result = performStitching( image1, getImage( imp2, imgFactoryByte, params.channel2, timepoint2 ), params );
 				else
 					IJ.log( "Unknown image type: " + imp2.getType() );					
 			}
