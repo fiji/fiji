@@ -3,8 +3,6 @@ package fiji.updater.logic;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.UserInfo;
 
-import fiji.updater.Updater;
-
 import fiji.updater.logic.FileUploader.SourceFile;
 
 import fiji.updater.logic.PluginCollection.UpdateSite;
@@ -54,7 +52,7 @@ public class PluginUploader {
 		this.plugins = plugins;
 		siteName = updateSite;
 		site = plugins.getUpdateSite(updateSite);
-		compressed = Updater.XML_COMPRESSED;
+		compressed = Util.XML_COMPRESSED;
 		if (site.sshHost == null || site.sshHost.equals(""))
 			uploader = new FileUploader(site.uploadDirectory);
 	}
@@ -67,7 +65,7 @@ public class PluginUploader {
 		int at = site.sshHost.indexOf('@');
 		if (at > 0)
 			return site.sshHost.substring(0, at);
-		String name = UserInterface.get().getPref(Updater.PREFS_USER);
+		String name = UserInterface.get().getPref(Util.PREFS_USER);
 		if (name == null)
 			return "";
 		return name;
@@ -125,7 +123,7 @@ public class PluginUploader {
 			files.add(new UploadableFile(plugin));
 
 		// must be last lock
-		locks.add(Updater.XML_COMPRESSED);
+		locks.add(Util.XML_COMPRESSED);
 
 		// verify that the files have not changed in the meantime
 		for (SourceFile file : files)
@@ -222,11 +220,11 @@ public class PluginUploader {
 		try {
 			URLConnection connection;
 			try {
-				connection = new URL(site.url + Updater.XML_COMPRESSED).openConnection();
+				connection = new URL(site.url + Util.XML_COMPRESSED).openConnection();
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 				Thread.sleep(500);
-				connection = new URL(site.url + Updater.XML_COMPRESSED).openConnection();
+				connection = new URL(site.url + Util.XML_COMPRESSED).openConnection();
 			}
 			connection.setUseCaches(false);
 			long lastModified = connection.getLastModified();

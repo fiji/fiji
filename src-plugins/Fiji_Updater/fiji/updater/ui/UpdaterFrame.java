@@ -2,8 +2,6 @@ package fiji.updater.ui;
 
 import com.jcraft.jsch.UserInfo;
 
-import fiji.updater.Updater;
-
 import fiji.updater.logic.Checksummer;
 import fiji.updater.logic.FileUploader;
 import fiji.updater.logic.Installer;
@@ -880,7 +878,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 				break;
 		}
 
-		Prefs.set(Updater.PREFS_USER, username);
+		Prefs.set(Util.PREFS_USER, username);
 		return true;
 	}
 

@@ -34,6 +34,16 @@ import java.util.jar.JarFile;
  * - Get details of the Operating System Fiji application is on
  */
 public class Util {
+	public static String MAIN_URL = "http://fiji.sc/update/";
+	public static String UPDATE_DIRECTORY = "/var/www/update/";
+	public static String SSH_HOST = "fiji.sc";
+
+	public static final String XML_COMPRESSED = "db.xml.gz";
+
+	// Key names for ij.Prefs for saved values
+	// Note: ij.Prefs is only saved during shutdown of Fiji
+	public static final String PREFS_USER = "fiji.updater.login";
+
 	public final static boolean useMacPrefix;
 	public final static String macPrefix = "Contents/MacOS/";
 

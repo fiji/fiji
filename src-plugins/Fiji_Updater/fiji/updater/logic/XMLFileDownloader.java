@@ -1,7 +1,5 @@
 package fiji.updater.logic;
 
-import fiji.updater.Updater;
-
 import fiji.updater.logic.PluginCollection.UpdateSite;
 
 import fiji.updater.util.Downloader;
@@ -56,7 +54,7 @@ public class XMLFileDownloader extends Progressable {
 			addItem(title);
 			setCount(current, total);
 			try {
-				URLConnection connection = new URL(updateSite.url + Updater.XML_COMPRESSED).openConnection();
+				URLConnection connection = new URL(updateSite.url + Util.XML_COMPRESSED).openConnection();
 				long lastModified = connection.getLastModified();
 				int fileSize = (int)connection.getContentLength();
 				InputStream in = getInputStream(new GZIPInputStream(connection.getInputStream()), fileSize);

@@ -1,6 +1,5 @@
 package fiji.updater.ui;
 
-import fiji.updater.Updater;
 import fiji.updater.UptodateCheck;
 
 import fiji.updater.logic.PluginCollection;
@@ -297,7 +296,7 @@ public class SitesDialog extends JDialog implements ActionListener, ItemListener
 		protected boolean validURL(String url) {
 			if (!url.endsWith("/"))
 				url += "/";
-			return UptodateCheck.getLastModified(url + Updater.XML_COMPRESSED) != -1;
+			return UptodateCheck.getLastModified(url + Util.XML_COMPRESSED) != -1;
 		}
 
 		protected boolean readFromSite(String name) {

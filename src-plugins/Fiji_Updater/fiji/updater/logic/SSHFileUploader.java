@@ -8,8 +8,6 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.UserInfo;
 
-import fiji.updater.Updater;
-
 import fiji.updater.util.Canceled;
 import fiji.updater.util.InputStream2OutputStream;
 import fiji.updater.util.UserInterface;
