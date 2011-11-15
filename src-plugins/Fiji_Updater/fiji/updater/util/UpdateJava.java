@@ -4,7 +4,7 @@ package fiji.updater.util;
  * This class helps with updating Fiji's JRE/JDK on Windows and Linux
  */
 
-import fiji.updater.ui.IJProgress;
+import fiji.updater.ui.ij1.IJProgress;
 
 import ij.IJ;
 import ij.Macro;

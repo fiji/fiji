@@ -1,5 +1,7 @@
 package fiji.updater.util;
 
+import java.awt.Frame;
+
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -18,6 +20,10 @@ public abstract class UserInterface {
 	public abstract void setPref(String key, String value);
 	public abstract void savePreferences();
 	public abstract void openURL(String url) throws IOException;
+	public abstract String getString(String title);
+	public abstract String getPassword(String title);
+	public abstract void addWindow(Frame window);
+	public abstract void removeWindow(Frame window);
 
 	// The singleton
 	protected static UserInterface ui = new StderrInterface();
@@ -98,6 +104,28 @@ public abstract class UserInterface {
 		@Override
 		public void openURL(String url) {
 			System.err.println("Open URL " + url);
+		}
+
+		@Override
+		public String getString(String title) {
+			System.err.print(title + " ");
+			return new String(System.console().readLine());
+		}
+
+		@Override
+		public String getPassword(String title) {
+			System.err.print(title + " ");
+			return new String(System.console().readPassword());
+		}
+
+		@Override
+		public void addWindow(Frame window) {
+			// do nothing
+		}
+
+		@Override
+		public void removeWindow(Frame window) {
+			// do nothing
 		}
 	}
 }

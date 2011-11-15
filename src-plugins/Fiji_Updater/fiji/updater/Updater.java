@@ -8,13 +8,14 @@ import fiji.updater.logic.PluginObject;
 import fiji.updater.logic.XMLFileDownloader;
 import fiji.updater.logic.XMLFileReader;
 
-import fiji.updater.ui.GraphicalAuthenticator;
-import fiji.updater.ui.IJ1UI;
 import fiji.updater.ui.SwingTools;
 import fiji.updater.ui.UpdaterFrame;
 import fiji.updater.ui.ViewOptions;
 
 import fiji.updater.ui.ViewOptions.Option;
+
+import fiji.updater.ui.ij1.GraphicalAuthenticator;
+import fiji.updater.ui.ij1.IJ1UserInterface;
 
 import fiji.updater.util.Canceled;
 import fiji.updater.util.Progress;
@@ -50,7 +51,7 @@ public class Updater implements PlugIn {
 	public static boolean debug, testRun, hidden;
 
 	public void run(String arg) {
-		UserInterface.set(new IJ1UI());
+		UserInterface.set(new IJ1UserInterface());
 
 		if (errorIfDebian())
 			return;

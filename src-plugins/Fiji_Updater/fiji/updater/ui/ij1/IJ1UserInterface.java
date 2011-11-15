@@ -1,21 +1,26 @@
-package fiji.updater.ui;
+package fiji.updater.ui.ij1;
 
-import fiji.updater.util.IJLogOutputStream;
 import fiji.updater.util.UserInterface;
 
 import ij.IJ;
 import ij.Prefs;
+import ij.WindowManager;
+
+import ij.gui.GenericDialog;
 
 import ij.macro.Interpreter;
 
 import ij.plugin.BrowserLauncher;
+
+import java.awt.TextField;
+import java.awt.Frame;
 
 import java.io.IOException;
 import java.io.OutputStream;
 
 import javax.swing.JOptionPane;
 
-public class IJ1UI extends UserInterface {
+public class IJ1UserInterface extends UserInterface {
 	@Override
 	public void error(String message) {
 		IJ.error(message);
@@ -89,5 +94,39 @@ public class IJ1UI extends UserInterface {
 	@Override
 	public void openURL(String url) throws IOException {
 		BrowserLauncher.openURL(url);
+	}
+
+	@Override
+	public String getString(String title) {
+		GenericDialog gd = new GenericDialog(title);
+		gd.addStringField(title, "", 20);
+		gd.showDialog();
+		if (gd.wasCanceled())
+			return null;
+		return gd.getNextString();
+	}
+
+	@Override
+	public String getPassword(String title) {
+		GenericDialog gd = new GenericDialog(title);
+		gd.addStringField("Password", "", 20);
+
+		final TextField pwd =
+			(TextField)gd.getStringFields().lastElement();
+		pwd.setEchoChar('*');
+		gd.showDialog();
+		if (gd.wasCanceled())
+			return null;
+		return gd.getNextString();
+	}
+
+	@Override
+	public void addWindow(Frame window) {
+		WindowManager.addWindow(window);
+	}
+
+	@Override
+	public void removeWindow(Frame window) {
+		WindowManager.removeWindow(window);
 	}
 }
