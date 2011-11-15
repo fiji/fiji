@@ -1,8 +1,5 @@
 package fiji.updater.logic;
 
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.UserInfo;
-
 import fiji.updater.logic.FileUploader.SourceFile;
 
 import fiji.updater.logic.PluginCollection.UpdateSite;
@@ -71,20 +68,16 @@ public class PluginUploader {
 		return name;
 	}
 
-	public void setUploader(FileUploader uploader) {
-		this.uploader = uploader;
+	public String getUploadHost() {
+		return site.sshHost.substring(site.sshHost.indexOf('@') + 1);
 	}
 
-	public synchronized boolean setLogin(String username, UserInfo userInfo) {
-		try {
-			uploader = new SSHFileUploader(username,
-				site.sshHost.substring(site.sshHost.indexOf('@') + 1), site.uploadDirectory,
-				userInfo);
-			return true;
-		} catch (JSchException e) {
-			UserInterface.get().error("Failed to login");
-			return false;
-		}
+	public String getUploadDirectory() {
+		return site.uploadDirectory;
+	}
+
+	public void setUploader(FileUploader uploader) {
+		this.uploader = uploader;
 	}
 
 	protected class DbXmlFile implements SourceFile {

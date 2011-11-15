@@ -1,5 +1,6 @@
 package fiji.updater;
 
+import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.UserInfo;
 
 import fiji.updater.logic.Checksummer;
@@ -8,6 +9,7 @@ import fiji.updater.logic.PluginCollection.Filter;
 import fiji.updater.logic.PluginCollection.UpdateSite;
 import fiji.updater.logic.PluginObject;
 import fiji.updater.logic.PluginUploader;
+import fiji.updater.logic.SSHFileUploader;
 
 import fiji.updater.logic.PluginObject.Action;
 import fiji.updater.logic.PluginObject.Status;
@@ -254,8 +256,15 @@ public class Main {
 		String username = uploader.getDefaultUsername();
 		if (username == null || username.equals(""))
 			username = userInfo.getUsername("Login for " + getLongUpdateSiteName(updateSite));
-		if (!uploader.setLogin(username, userInfo))
+		try {
+			SSHFileUploader sshUploader = new SSHFileUploader(username,
+				uploader.getUploadHost(),
+				uploader.getUploadDirectory(),
+				userInfo);
+			uploader.setUploader(sshUploader);
+		} catch (JSchException e) {
 			die("Aborting");
+		}
 		try {
 			uploader.upload(progress);
 			plugins.write();

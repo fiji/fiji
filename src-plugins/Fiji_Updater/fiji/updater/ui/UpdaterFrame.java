@@ -1,5 +1,6 @@
 package fiji.updater.ui;
 
+import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.UserInfo;
 
 import fiji.updater.logic.Checksummer;
@@ -12,6 +13,7 @@ import fiji.updater.logic.PluginObject;
 import fiji.updater.logic.PluginObject.Action;
 import fiji.updater.logic.PluginObject.Status;
 import fiji.updater.logic.PluginUploader;
+import fiji.updater.logic.SSHFileUploader;
 
 import fiji.updater.util.Downloader;
 import fiji.updater.util.Canceled;
@@ -873,9 +875,17 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 			username = gd.getNextString();
 			String password = gd.getNextString();
 
-			UserInfo userInfo = getUserInfo(password);
-			if (uploader.setLogin(username, userInfo))
+			try {
+				UserInfo userInfo = getUserInfo(password);
+				SSHFileUploader sshUploader = new SSHFileUploader(username,
+					uploader.getUploadHost(),
+					uploader.getUploadDirectory(),
+					userInfo);
+				uploader.setUploader(sshUploader);
 				break;
+			} catch (JSchException e) {
+				UserInterface.get().error("Failed to login");
+			}
 		}
 
 		Prefs.set(Util.PREFS_USER, username);
