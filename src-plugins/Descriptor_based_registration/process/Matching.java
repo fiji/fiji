@@ -453,14 +453,13 @@ public class Matching
 		if ( params.similarOrientation )
 		{
 			// an empty model with identity transform
-			final Model<?> identityTransform = params.model.copy();
+			final Model<?> identityTransform;// = params.model.copy();
 
-			/*
+			
 			if ( params.dimensionality == 2 )
 				identityTransform = new TranslationModel2D();
 			else
 				identityTransform = new TranslationModel3D();
-			*/
 			
 			candidates = getCorrespondenceCandidates( params.significance, matcher, peaks1, peaks2, identityTransform, params.dimensionality, zStretching1, zStretching2 );
 		}
