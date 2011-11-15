@@ -29,4 +29,9 @@ public class StitchingParameters
 	public int channel2;
 
 	public int timeSelect;
+	
+	public int cpuMemChoice = 0;
+	public double regThreshold = -2;
+	public double relativeThreshold = 2.5;
+	public double absoluteThreshold = 3.5;
 }
