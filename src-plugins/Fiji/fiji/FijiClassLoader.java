@@ -116,12 +116,11 @@ public class FijiClassLoader extends URLClassLoader {
 		File[] files = directory.listFiles();
 		if (files == null)
 			return;
+		if (addDirectoriesToo)
+			result.add(directory);
 		for (File file : files)
-			if (file.isDirectory()) {
-				if (addDirectoriesToo)
-					result.add(file);
+			if (file.isDirectory())
 				getJars(result, file, addDirectoriesToo);
-			}
 			else if (file.getName().endsWith(".jar"))
 				result.add(file);
 	}
@@ -135,10 +134,10 @@ public class FijiClassLoader extends URLClassLoader {
 		File[] files = directory.listFiles();
 		if (files == null)
 			return;
+		if (addDirectoriesToo)
+			result.add(directory);
 		for (File file : files)
 			if (file.isDirectory()) {
-				if (addDirectoriesToo)
-					result.add(file);
 				getNewerJars(result, file, new File(thanDirectory, file.getName()), addDirectoriesToo);
 			}
 			else if (file.getName().endsWith(".jar")) {
