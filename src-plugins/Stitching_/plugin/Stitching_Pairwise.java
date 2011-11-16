@@ -29,6 +29,7 @@ import mpicbg.stitching.ImagePlusTimePoint;
 import mpicbg.stitching.PairWiseStitchingImgLib;
 import mpicbg.stitching.PairWiseStitchingResult;
 import mpicbg.stitching.StitchingParameters;
+import mpicbg.stitching.fusion.Fusion;
 import fiji.stacks.Hyperstack_rearranger;
 import ij.CompositeImage;
 import ij.IJ;
@@ -210,8 +211,8 @@ public class Stitching_Pairwise implements PlugIn
 		
 		params.dimensionality = dimensionality;
 		
-		if ( simpleFusion )
-			params.fusionMethod = defaultFusionMethod = gd2.getNextChoiceIndex() + 4;
+		if ( simpleFusion ) // 
+			params.fusionMethod = defaultFusionMethod = gd2.getNextChoiceIndex() + ( CommonFunctions.fusionMethodList.length - CommonFunctions.fusionMethodListSimple.length );
 		else
 			params.fusionMethod = defaultFusionMethod = gd2.getNextChoiceIndex();
 		
@@ -395,33 +396,19 @@ public class Stitching_Pairwise implements PlugIn
 	
 	protected static < T extends RealType< T > > CompositeImage fuse( final T targetType, final ImagePlus imp1, final ImagePlus imp2, final ArrayList<InvertibleBoundable> models, final StitchingParameters params )
 	{
-		if ( params.fusionMethod == 0 )
+		final ArrayList<ImagePlus> images = new ArrayList< ImagePlus >();
+		images.add( imp1 );
+		images.add( imp2 );
+		
+		if ( params.fusionMethod < 5 )
 		{
+			CompositeImage composite = Fusion.fuse( targetType, images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod );
 			//"Linear Blending"
-			return null;
+			return composite;
 		}
-		else if ( params.fusionMethod == 1 )
-		{
-			//"Average"
-			return null;
-		}
-		else if ( params.fusionMethod == 2 )
-		{
-			//"Max. Intensity"
-			return null;
-		}
-		else if ( params.fusionMethod == 3 )
-		{
-			//"Min. Intensity"
-			return null;
-		}
-		else if ( params.fusionMethod == 4 )
+		else if ( params.fusionMethod == 5 )
 		{
 			// images are always the same, we just trigger different timepoints
-			final ArrayList<ImagePlus> images = new ArrayList< ImagePlus >();
-			images.add( imp1 );
-			images.add( imp2 );
-			
 			final InterpolatorFactory< FloatType > factory;
 			
 			if ( params.subpixelAccuracy )

@@ -6,12 +6,10 @@ import java.util.Collections;
 public class MedianPixelFusion implements PixelFusion
 {
 	final ArrayList< Float > list;
-	final int numImages;
 	
-	public MedianPixelFusion( final int numImages ) 
+	public MedianPixelFusion() 
 	{
-		this.numImages = numImages;
-		list = new ArrayList< Float >( numImages );
+		list = new ArrayList< Float >();
 		clear(); 
 	}
 	
@@ -44,5 +42,5 @@ public class MedianPixelFusion implements PixelFusion
 	}
 	
 	@Override
-	public PixelFusion duplicatePixelFusion() { return new MedianPixelFusion( numImages ); }
+	public PixelFusion duplicatePixelFusion() { return new MedianPixelFusion(); }
 }

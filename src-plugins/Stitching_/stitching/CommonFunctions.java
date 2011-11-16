@@ -54,7 +54,7 @@ public class CommonFunctions
 	public static String[] rgbTypes = {"rgb", "rbg", "grb", "gbr", "brg", "bgr"}; 
 	public static String[] colorList = { "Red", "Green", "Blue", "Red and Green", "Red and Blue", "Green and Blue", "Red, Green and Blue" };
 
-	public static String[] fusionMethodList = { "Linear Blending", "Average", "Max. Intensity", "Min. Intensity", "Overlay into composite image", "Do not fuse images" };	
+	public static String[] fusionMethodList = { "Linear Blending", "Average", "Median", "Max. Intensity", "Min. Intensity", "Overlay into composite image", "Do not fuse images" };	
 	public static String[] fusionMethodListSimple = { "Overlay into composite image", "Do not fuse images" };	
 	public static String[] timeSelect = { "Apply registration of first time-point to all other time-points", "Register images adjacently over time", "Register all images over all time-points globally (expensive!)" };
 	public static String[] cpuMemSelect = { "Save memory (but be slower)", "Save computation time (but use more RAM)" };

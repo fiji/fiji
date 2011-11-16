@@ -1,6 +1,7 @@
 package mpicbg.stitching.fusion;
 
 import fiji.stacks.Hyperstack_rearranger;
+import ij.CompositeImage;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -21,11 +22,14 @@ import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.interpolation.Interpolator;
 import mpicbg.imglib.interpolation.InterpolatorFactory;
 import mpicbg.imglib.interpolation.linear.LinearInterpolatorFactory;
+import mpicbg.imglib.interpolation.nearestneighbor.NearestNeighborInterpolatorFactory;
 import mpicbg.imglib.multithreading.Chunk;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.RealType;
+import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
+import mpicbg.imglib.type.numeric.integer.UnsignedShortType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.models.InvertibleBoundable;
 import mpicbg.models.InvertibleCoordinateTransform;
@@ -48,7 +52,8 @@ public class Fusion
 	 * @param dimensionality
 	 * @param subpixelResolution - if there is no subpixel resolution, we do not need to convert to float as no interpolation is necessary, we can compute everything with RealType
 	 */
-	public static < T extends RealType< T > > void fuse( final T targetType, final ArrayList< ImagePlus > images, final ArrayList< InvertibleBoundable > models, final int dimensionality, final boolean subpixelResolution )
+	public static < T extends RealType< T > > CompositeImage fuse( final T targetType, final ArrayList< ImagePlus > images, final ArrayList< InvertibleBoundable > models, 
+			final int dimensionality, final boolean subpixelResolution, final int fusionType )
 	{
 		// first we need to estimate the boundaries of the new image
 		final float[] offset = new float[ dimensionality ];
@@ -61,8 +66,8 @@ public class Fusion
 		// for output
 		final ImageFactory<T> f = new ImageFactory<T>( targetType, new ImagePlusContainerFactory() );
 		
-		// the composite
-		final ImageStack stack = new ImageStack( size[ 0 ], size[ 1 ] );
+		// the final composite
+		final ImageStack finalStack = new ImageStack( size[ 0 ], size[ 1 ] );
 
 		//"Overlay into composite image"
 		for ( int t = 1; t <= numTimePoints; ++t )
@@ -72,36 +77,64 @@ public class Fusion
 				// create the 2d/3d target image for the current channel and timepoint 
 				final Image< T > out = f.createImage( size );
 
-				// 
+				// init the fusion
+				PixelFusion fusion = null;
 				
+				if ( fusionType == 1 ) 
+					fusion = new AveragePixelFusion();
+				else if ( fusionType == 2 )
+					fusion = new MedianPixelFusion();
+				else if ( fusionType == 3 )
+					fusion = new MaxPixelFusion();
+				else if ( fusionType == 4)
+					fusion = new MinPixelFusion();	
+					
 				// extract the complete blockdata
 				if ( subpixelResolution )
 				{
-					final ArrayList< Image< FloatType > > blockData = new ArrayList< Image< FloatType > >();
-					for ( final ImagePlus imp : images )
-						blockData.add( ImageJFunctions.convertFloat( Hyperstack_rearranger.getImageChunk( imp, c, t ) ) );
+					final ArrayList< ImageInterpolation< FloatType > > blockData = new ArrayList< ImageInterpolation< FloatType > >();
+
+					// for linear interpolation we want to mirror, otherwise we get black areas at the first and last pixel of each image
+					final InterpolatorFactory< FloatType > interpolatorFactory = new LinearInterpolatorFactory<FloatType>( new OutOfBoundsStrategyMirrorFactory<FloatType>() );
 					
-					fuseBlock( out, blockData, offset, models );
+					for ( final ImagePlus imp : images )
+						blockData.add( new ImageInterpolation<FloatType>( ImageJFunctions.convertFloat( Hyperstack_rearranger.getImageChunk( imp, c, t ) ), interpolatorFactory ) );
+					
+					// init blending with the images
+					if ( fusionType == 0 )
+						fusion = new BlendingPixelFusion( blockData );
+					
+					fuseBlock( out, blockData, offset, models, fusion );
 				}
 				else
 				{
 					// can be a mixture of different RealTypes
-					final ArrayList< Image< ? extends RealType< ? > > > blockData = new ArrayList< Image< ? extends RealType< ? > > >();
-					
+					final ArrayList< ImageInterpolation< ? extends RealType< ? > > > blockData = new ArrayList< ImageInterpolation< ? extends RealType< ? > > >();
+
+					final InterpolatorFactory< FloatType > interpolatorFactoryFloat = new NearestNeighborInterpolatorFactory< FloatType >( new OutOfBoundsStrategyValueFactory<FloatType>() );
+					final InterpolatorFactory< UnsignedShortType > interpolatorFactoryShort = new NearestNeighborInterpolatorFactory< UnsignedShortType >( new OutOfBoundsStrategyValueFactory<UnsignedShortType>() );
+					final InterpolatorFactory< UnsignedByteType > interpolatorFactoryByte = new NearestNeighborInterpolatorFactory< UnsignedByteType >( new OutOfBoundsStrategyValueFactory<UnsignedByteType>() );
+
 					for ( final ImagePlus imp : images )
 					{
 						if ( imp.getType() == ImagePlus.GRAY32 )
-							blockData.add( ImageJFunctions.wrapFloat( Hyperstack_rearranger.getImageChunk( imp, c, t ) ) );
+							blockData.add( new ImageInterpolation<FloatType>( ImageJFunctions.wrapFloat( Hyperstack_rearranger.getImageChunk( imp, c, t ) ), interpolatorFactoryFloat ) );
 						else if ( imp.getType() == ImagePlus.GRAY16 )
-							blockData.add( ImageJFunctions.wrapShort( Hyperstack_rearranger.getImageChunk( imp, c, t ) ) );
+							blockData.add( new ImageInterpolation<UnsignedShortType>( ImageJFunctions.wrapShort( Hyperstack_rearranger.getImageChunk( imp, c, t ) ), interpolatorFactoryShort ) );
 						else
-							blockData.add( ImageJFunctions.wrapByte( Hyperstack_rearranger.getImageChunk( imp, c, t ) ) );
+							blockData.add( new ImageInterpolation<UnsignedByteType>( ImageJFunctions.wrapByte( Hyperstack_rearranger.getImageChunk( imp, c, t ) ), interpolatorFactoryByte ) );
 					}
+					
+					// init blending with the images
+					if ( fusionType == 0 )
+						fusion = new BlendingPixelFusion( blockData );					
+
+					fuseBlock( out, blockData, offset, models, fusion );
 				}
 			}
 		}
 		
-		
+		return null;
 	}
 	
 	/**
@@ -111,11 +144,9 @@ public class Fusion
 	 * @param input - FloatType, because of Interpolation that needs to be done
 	 * @param transform - the transformation
 	 */
-	protected static <T extends RealType<T>> void fuseBlock( final Image<T> output, final ArrayList<Image<FloatType>> input, final float[] offset, final ArrayList< InvertibleBoundable > transform )
+	protected static <T extends RealType<T>> void fuseBlock( final Image<T> output, final ArrayList< ? extends ImageInterpolation< ? extends RealType< ? > > > input, final float[] offset, 
+			final ArrayList< InvertibleBoundable > transform, final PixelFusion fusion )
 	{
-		// for interpolation we want to mirror, otherwise we get black areas at the first and last pixel of each image
-		final InterpolatorFactory< FloatType > factory = new LinearInterpolatorFactory<FloatType>( new OutOfBoundsStrategyMirrorFactory<FloatType>() ); 
-		
 		final int numDimensions = output.getNumDimensions();
 		final int numImages = input.size();
 		long imageSize = output.getDimension( 0 );
@@ -126,7 +157,7 @@ public class Fusion
 		final int[][] max = new int[ numImages ][ numDimensions ];
 		for ( int i = 0; i < numImages; ++i )
 			for ( int d = 0; d < numDimensions; ++d )
-				max[ i ][ d ] = input.get( i ).getDimension( d ) - 1; 
+				max[ i ][ d ] = input.get( i ).getImage().getDimension( d ) - 1; 
 		
 		// run multithreaded
 		final AtomicInteger ai = new AtomicInteger(0);					
@@ -148,12 +179,13 @@ public class Fusion
                 	final long loopSize = myChunk.getLoopSize();
                 	
             		final LocalizableCursor<T> out = output.createLocalizableCursor();
-            		final ArrayList<Interpolator<FloatType>> in = new ArrayList<Interpolator<FloatType>>(); //input.createInterpolator( factory );
+            		final ArrayList<Interpolator<? extends RealType<?>>> in = new ArrayList<Interpolator<? extends RealType<?>>>(); //input.createInterpolator( factory );
             		
             		for ( int i = 0; i < numImages; ++i )
-            			in.add( input.get( i ).createInterpolator( factory ) );
+            			in.add( input.get( i ).createInterpolator() );
             		
             		final float[][] tmp = new float[ numImages ][ output.getNumDimensions() ];
+            		final PixelFusion myFusion = fusion.duplicatePixelFusion();
             		
             		try 
             		{
@@ -174,7 +206,10 @@ public class Fusion
             						tmp[ i ][ d ] = value;
             				}
             				
-            				// transform
+            				// transform and compute output value
+            				myFusion.clear();
+            				
+            				// loop over all images for this output location
 A:        					for ( int i = 0; i < numImages; ++i )
         					{
         						transform.get( i ).applyInverseInPlace( tmp[ i ] );
@@ -185,9 +220,12 @@ A:        					for ( int i = 0; i < numImages; ++i )
         								continue A;
         						
         						in.get( i ).setPosition( tmp[ i ] );			
-        						out.getType().setReal( in.get( i ).getType().get() );
+        						myFusion.addValue( in.get( i ).getType().getRealFloat(), i, tmp[ i ] );
         					}
-            			}
+            				
+            				// set value
+    						out.getType().setReal( myFusion.getValue() );
+                        }
             		} 
             		catch (NoninvertibleModelException e) 
             		{

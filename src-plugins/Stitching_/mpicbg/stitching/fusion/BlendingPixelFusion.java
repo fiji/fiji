@@ -14,7 +14,7 @@ public class BlendingPixelFusion implements PixelFusion
 	final float[] dimensionScaling;
 	final float[] border;
 	
-	final ArrayList< Image< ? > > images;
+	final ArrayList< ? extends ImageInterpolation< ? > > images;
 
 	double valueSum, weightSum;
 	
@@ -23,7 +23,7 @@ public class BlendingPixelFusion implements PixelFusion
 	 * 
 	 * @param images - all input images (the position in the list has to be the same as Id provided by addValue!)
 	 */
-	public BlendingPixelFusion( final ArrayList< Image< ? > > images )
+	public BlendingPixelFusion( final ArrayList< ? extends ImageInterpolation< ? > > images )
 	{
 		this( images, 0.2f );
 	}	
@@ -33,18 +33,18 @@ public class BlendingPixelFusion implements PixelFusion
 	 * @param images - all input images (the position in the list has to be the same as Id provided by addValue!)
 	 * @param percentScaling - which percentage of the image should be blended ( e.g. 0,3 means 15% on the left and 15% on the right)
 	 */
-	public BlendingPixelFusion( final ArrayList< Image< ? > > images, final float fractionBlended )
+	public BlendingPixelFusion( final ArrayList< ? extends ImageInterpolation< ? > > images, final float fractionBlended )
 	{
 		this.images = images;
 		this.percentScaling = fractionBlended;
 		
-		this.numDimensions = images.get( 0 ).getNumDimensions();
+		this.numDimensions = images.get( 0 ).getImage().getNumDimensions();
 		this.numImages = images.size();
 		this.dimensions = new int[ numImages ][ numDimensions ];
 		
 		for ( int i = 0; i < numImages; ++i )
 			for ( int d = 0; d < numDimensions; ++d )
-				dimensions[ i ][ d ] = images.get( i ).getDimension( d ) - 1; 
+				dimensions[ i ][ d ] = images.get( i ).getImage().getDimension( d ) - 1; 
 
 		this.dimensionScaling = new float[ numDimensions ];
 		this.border = new float[ numDimensions ];
@@ -69,10 +69,13 @@ public class BlendingPixelFusion implements PixelFusion
 	@Override
 	public float getValue()
 	{ 
+		return (float)weightSum;
+		/*
 		if ( weightSum == 0 )
 			return 0;
 		else
-			return (float)( valueSum / weightSum ); 
+			return (float)( valueSum / weightSum );
+		*/ 
 	}
 
 	@Override
