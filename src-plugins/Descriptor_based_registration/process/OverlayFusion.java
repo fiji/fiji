@@ -240,12 +240,12 @@ public class OverlayFusion
 		if ( dimensionality == 2 )
 		{
 			for ( int i = 0; i < numImages * numTimePoints; ++i )
-				max[ i ] = new float[] { imgSizes[ i / numTimePoints ][ 0 ], imgSizes[ i / numTimePoints ][ 1 ] };
+				max[ i ] = new float[] { imgSizes[ i % numImages ][ 0 ], imgSizes[ i % numImages ][ 1 ] };
 		}
 		else
 		{
 			for ( int i = 0; i < numImages * numTimePoints; ++i )
-				max[ i ] = new float[] { imgSizes[ i / numTimePoints ][ 0 ], imgSizes[ i / numTimePoints ][ 1 ], imgSizes[ i / numTimePoints ][ 2 ] };
+				max[ i ] = new float[] { imgSizes[ i % numImages ][ 0 ], imgSizes[ i % numImages ][ 1 ], imgSizes[ i % numImages ][ 2 ] };
 		}
 		
 		//IJ.log( "1: " + Util.printCoordinates( min[ 0 ] ) + " -> " + Util.printCoordinates( max[ 0 ] ) );

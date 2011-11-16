@@ -2,7 +2,6 @@ package mpicbg.stitching.fusion;
 
 import java.util.ArrayList;
 
-import mpicbg.imglib.image.Image;
 import mpicbg.spim.fusion.BlendingSimple;
 
 public class BlendingPixelFusion implements PixelFusion
@@ -62,20 +61,20 @@ public class BlendingPixelFusion implements PixelFusion
 	@Override
 	public void addValue( final float value, final int imageId, final float[] localPosition ) 
 	{
-		weightSum += BlendingSimple.computeWeight( localPosition, dimensions[ imageId ], border, dimensionScaling, percentScaling );
-		valueSum += value;
+		// we are always inside the image, so we do not want 0.0
+		final double weight = Math.max( 0.00001, BlendingSimple.computeWeight( localPosition, dimensions[ imageId ], border, dimensionScaling, percentScaling ) );
+		
+		weightSum += weight;
+		valueSum += value * weight;
 	}
 
 	@Override
 	public float getValue()
 	{ 
-		return (float)weightSum;
-		/*
 		if ( weightSum == 0 )
 			return 0;
 		else
 			return (float)( valueSum / weightSum );
-		*/ 
 	}
 
 	@Override

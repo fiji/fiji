@@ -181,14 +181,14 @@ public class Stitching_Pairwise implements PlugIn
 				
 		gd2.addChoice("Fusion_method", fusionMethodList, fusionMethodList[ defaultFusionMethod ] );
 		gd2.addNumericField("Fusion_alpha", defaultAlpha, 2 );		
-		gd2.addStringField("Fused_image name: ", "Stitched_" + imp1.getTitle() + "_" + imp2.getTitle(), 20 );
+		gd2.addStringField("Fused_image name: ", imp1.getTitle() + "<->" + imp2.getTitle(), 20 );
 		gd2.addSlider("Check_peaks", 1, 100, defaultCheckPeaks );
 		gd2.addCheckbox("Compute_overlap", defaultComputeOverlap );
 		gd2.addCheckbox("Subpixel_accuracy", defaultSubpixelAccuracy );
-		gd2.addNumericField("x", defaultxOffset, 0 );
-		gd2.addNumericField("y", defaultyOffset, 0 );
+		gd2.addNumericField("x", defaultxOffset, 4 );
+		gd2.addNumericField("y", defaultyOffset, 4 );
 		if ( dimensionality == 3 )		
-			gd2.addNumericField("z", defaultzOffset, 0 );		
+			gd2.addNumericField("z", defaultzOffset, 4 );		
 
 		gd2.addChoice( "Registration_channel_image_1 ", channels1, channels1[ defaultChannel1 ] );
 		gd2.addChoice( "Registration_channel_image_2 ", channels2, channels2[ defaultChannel2 ] );
@@ -286,9 +286,43 @@ public class Stitching_Pairwise implements PlugIn
 			// compute the stitching
 			long start = System.currentTimeMillis();
 			
-			final PairWiseStitchingResult result = PairWiseStitchingImgLib.stitchPairwise( imp1, imp2, 1, 1, params );			
-			IJ.log( "shift (second relative to first): " + Util.printCoordinates( result.getOffset() ) + " correlation (R)=" + result.getCrossCorrelation() + " (" + (System.currentTimeMillis() - start) + " ms)");
-
+			final PairWiseStitchingResult result;
+			
+			if ( params.computeOverlap )
+			{
+				result = PairWiseStitchingImgLib.stitchPairwise( imp1, imp2, 1, 1, params );
+				IJ.log( "shift (second relative to first): " + Util.printCoordinates( result.getOffset() ) + " correlation (R)=" + result.getCrossCorrelation() + " (" + (System.currentTimeMillis() - start) + " ms)");
+				
+				// update the dialog to show the numbers next time
+				defaultxOffset = result.getOffset( 0 );
+				defaultyOffset = result.getOffset( 1 );
+				if ( params.dimensionality == 3 )
+					defaultzOffset = result.getOffset( 2 );
+			}
+			else
+			{
+				final float[] offset;
+				
+				if ( params.dimensionality == 2 )
+				{
+					if ( params.subpixelAccuracy )
+						offset = new float[] { (float)params.xOffset, (float)params.yOffset };
+					else
+						offset = new float[] { Math.round( (float)params.xOffset ), Math.round( (float)params.yOffset ) };
+				}
+				else
+				{
+					if ( params.subpixelAccuracy )
+						offset = new float[] { (float)params.xOffset, (float)params.yOffset, (float)params.zOffset };
+					else
+						offset = new float[] { Math.round( (float)params.xOffset ), Math.round( (float)params.yOffset ), Math.round( (float)params.zOffset ) };					
+				}
+				
+				result = new PairWiseStitchingResult( offset, 0.0f, 0.0f );
+				IJ.log( "shift (second relative to first): " + Util.printCoordinates( result.getOffset() ) + " (from dialog)");
+			}
+						
+			
 			for ( int f = 1; f <= imp1.getNFrames(); ++f )
 			{
 				if ( params.dimensionality == 2 )
@@ -309,7 +343,7 @@ public class Stitching_Pairwise implements PlugIn
 					models.add( model1 );			
 					models.add( model2 );					
 				}
-			}
+			}			
 		}
 		else
 		{
@@ -388,6 +422,8 @@ public class Stitching_Pairwise implements PlugIn
 		else
 			ci = fuse( new FloatType(), imp1, imp2, models, params );
 		
+		ci.setTitle( params.fusedName );
+		
 		if ( ci != null )
 			ci.show();
 		
@@ -405,7 +441,7 @@ public class Stitching_Pairwise implements PlugIn
 			ImagePlus imp = Fusion.fuse( targetType, images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod );
 			return imp;
 		}
-		else if ( params.fusionMethod == 5 )
+		else if ( params.fusionMethod == 5 ) // overlay
 		{
 			// images are always the same, we just trigger different timepoints
 			final InterpolatorFactory< FloatType > factory;

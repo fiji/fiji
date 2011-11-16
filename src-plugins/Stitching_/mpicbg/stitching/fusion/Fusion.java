@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import process.OverlayFusion;
-
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.container.imageplus.ImagePlusContainer;
 import mpicbg.imglib.container.imageplus.ImagePlusContainerFactory;
@@ -34,9 +32,9 @@ import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import mpicbg.imglib.type.numeric.integer.UnsignedShortType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.models.InvertibleBoundable;
-import mpicbg.models.InvertibleCoordinateTransform;
 import mpicbg.models.NoninvertibleModelException;
 import mpicbg.spim.fusion.BlendingSimple;
+import process.OverlayFusion;
 
 /**
  * Manages the fusion for all types except the overlayfusion
