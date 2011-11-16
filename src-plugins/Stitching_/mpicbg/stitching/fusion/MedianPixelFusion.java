@@ -42,5 +42,5 @@ public class MedianPixelFusion implements PixelFusion
 	}
 	
 	@Override
-	public PixelFusion duplicatePixelFusion() { return new MedianPixelFusion(); }
+	public PixelFusion copy() { return new MedianPixelFusion(); }
 }

@@ -28,5 +28,5 @@ public interface PixelFusion
 	 * 
 	 * @return - a {@link PixelFusion} with the same properties
 	 */
-	PixelFusion duplicatePixelFusion();
+	PixelFusion copy();
 }

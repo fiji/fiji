@@ -378,7 +378,7 @@ public class Stitching_Pairwise implements PlugIn
 		// now fuse
 		IJ.log( "Fusing ..." );
 		
-		final CompositeImage ci;
+		final ImagePlus ci;
 		final long start = System.currentTimeMillis();			
 			
 		if ( imp1.getType() == ImagePlus.GRAY32 || imp2.getType() == ImagePlus.GRAY32 )
@@ -394,7 +394,7 @@ public class Stitching_Pairwise implements PlugIn
 		IJ.log( "Finished ... (" + (System.currentTimeMillis() - start) + " ms)");
 	}
 	
-	protected static < T extends RealType< T > > CompositeImage fuse( final T targetType, final ImagePlus imp1, final ImagePlus imp2, final ArrayList<InvertibleBoundable> models, final StitchingParameters params )
+	protected static < T extends RealType< T > > ImagePlus fuse( final T targetType, final ImagePlus imp1, final ImagePlus imp2, final ArrayList<InvertibleBoundable> models, final StitchingParameters params )
 	{
 		final ArrayList<ImagePlus> images = new ArrayList< ImagePlus >();
 		images.add( imp1 );
@@ -402,9 +402,8 @@ public class Stitching_Pairwise implements PlugIn
 		
 		if ( params.fusionMethod < 5 )
 		{
-			CompositeImage composite = Fusion.fuse( targetType, images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod );
-			//"Linear Blending"
-			return composite;
+			ImagePlus imp = Fusion.fuse( targetType, images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod );
+			return imp;
 		}
 		else if ( params.fusionMethod == 5 )
 		{

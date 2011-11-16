@@ -33,5 +33,5 @@ public class MaxPixelFusion implements PixelFusion
 	public float getValue() { return max; }
 
 	@Override
-	public PixelFusion duplicatePixelFusion() { return new MaxPixelFusion(); }
+	public PixelFusion copy() { return new MaxPixelFusion(); }
 }

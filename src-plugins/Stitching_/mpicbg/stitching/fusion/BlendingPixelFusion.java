@@ -79,6 +79,6 @@ public class BlendingPixelFusion implements PixelFusion
 	}
 
 	@Override
-	public PixelFusion duplicatePixelFusion() { return new BlendingPixelFusion( images ); }
+	public PixelFusion copy() { return new BlendingPixelFusion( images ); }
 	
 }

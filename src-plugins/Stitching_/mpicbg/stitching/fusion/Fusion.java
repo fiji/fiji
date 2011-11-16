@@ -14,8 +14,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import process.OverlayFusion;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
+import mpicbg.imglib.container.imageplus.ImagePlusContainer;
 import mpicbg.imglib.container.imageplus.ImagePlusContainerFactory;
 import mpicbg.imglib.cursor.LocalizableCursor;
+import mpicbg.imglib.exception.ImgLibException;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
@@ -52,7 +54,7 @@ public class Fusion
 	 * @param dimensionality
 	 * @param subpixelResolution - if there is no subpixel resolution, we do not need to convert to float as no interpolation is necessary, we can compute everything with RealType
 	 */
-	public static < T extends RealType< T > > CompositeImage fuse( final T targetType, final ArrayList< ImagePlus > images, final ArrayList< InvertibleBoundable > models, 
+	public static < T extends RealType< T > > ImagePlus fuse( final T targetType, final ArrayList< ImagePlus > images, final ArrayList< InvertibleBoundable > models, 
 			final int dimensionality, final boolean subpixelResolution, final int fusionType )
 	{
 		// first we need to estimate the boundaries of the new image
@@ -67,7 +69,7 @@ public class Fusion
 		final ImageFactory<T> f = new ImageFactory<T>( targetType, new ImagePlusContainerFactory() );
 		
 		// the final composite
-		final ImageStack finalStack = new ImageStack( size[ 0 ], size[ 1 ] );
+		final ImageStack stack = new ImageStack( size[ 0 ], size[ 1 ] );
 
 		//"Overlay into composite image"
 		for ( int t = 1; t <= numTimePoints; ++t )
@@ -88,7 +90,7 @@ public class Fusion
 					fusion = new MaxPixelFusion();
 				else if ( fusionType == 4)
 					fusion = new MinPixelFusion();	
-					
+				
 				// extract the complete blockdata
 				if ( subpixelResolution )
 				{
@@ -131,10 +133,43 @@ public class Fusion
 
 					fuseBlock( out, blockData, offset, models, fusion );
 				}
+				
+				// add to stack
+				try 
+				{
+					final ImagePlus outImp = ((ImagePlusContainer<?,?>)out.getContainer()).getImagePlus();
+					for ( int z = 1; z <= out.getDimension( 2 ); ++z )
+						stack.addSlice( "", outImp.getStack().getProcessor( z ) );
+				} 
+				catch (ImgLibException e) 
+				{
+					IJ.log( "Output image has no ImageJ type: " + e );
+				}				
 			}
 		}
 		
-		return null;
+		//convertXYZCT ...
+		ImagePlus result = new ImagePlus( "", stack );
+		
+		// numchannels, z-slices, timepoints (but right now the order is still XYZCT)
+		if ( dimensionality == 3 )
+		{
+			result.setDimensions( size[ 2 ], numChannels, numTimePoints );
+			result = OverlayFusion.switchZCinXYCZT( result );
+			return new CompositeImage( result, CompositeImage.COMPOSITE );
+		}
+		else
+		{
+			//IJ.log( "ch: " + imp.getNChannels() );
+			//IJ.log( "slices: " + imp.getNSlices() );
+			//IJ.log( "frames: " + imp.getNFrames() );
+			result.setDimensions( numChannels, 1, numTimePoints );
+			
+			if ( numChannels > 1 || numTimePoints > 1 )
+				return new CompositeImage( result, CompositeImage.COMPOSITE );
+			else
+				return result;
+		}
 	}
 	
 	/**
@@ -179,13 +214,13 @@ public class Fusion
                 	final long loopSize = myChunk.getLoopSize();
                 	
             		final LocalizableCursor<T> out = output.createLocalizableCursor();
-            		final ArrayList<Interpolator<? extends RealType<?>>> in = new ArrayList<Interpolator<? extends RealType<?>>>(); //input.createInterpolator( factory );
+            		final ArrayList<Interpolator<? extends RealType<?>>> in = new ArrayList<Interpolator<? extends RealType<?>>>();
             		
             		for ( int i = 0; i < numImages; ++i )
             			in.add( input.get( i ).createInterpolator() );
             		
             		final float[][] tmp = new float[ numImages ][ output.getNumDimensions() ];
-            		final PixelFusion myFusion = fusion.duplicatePixelFusion();
+            		final PixelFusion myFusion = fusion.copy();
             		
             		try 
             		{
@@ -227,7 +262,7 @@ A:        					for ( int i = 0; i < numImages; ++i )
     						out.getType().setReal( myFusion.getValue() );
                         }
             		} 
-            		catch (NoninvertibleModelException e) 
+            		catch ( NoninvertibleModelException e ) 
             		{
             			IJ.log( "Cannot invert model, qutting." );
             			return;

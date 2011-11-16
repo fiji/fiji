@@ -31,6 +31,6 @@ public class AveragePixelFusion implements PixelFusion
 	}
 
 	@Override
-	public PixelFusion duplicatePixelFusion() { return new AveragePixelFusion(); }
+	public PixelFusion copy() { return new AveragePixelFusion(); }
 
 }

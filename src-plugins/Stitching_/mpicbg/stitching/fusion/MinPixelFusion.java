@@ -32,5 +32,5 @@ public class MinPixelFusion implements PixelFusion
 	public float getValue() { return min; }
 
 	@Override
-	public PixelFusion duplicatePixelFusion() { return new MinPixelFusion(); }
+	public PixelFusion copy() { return new MinPixelFusion(); }
 }
