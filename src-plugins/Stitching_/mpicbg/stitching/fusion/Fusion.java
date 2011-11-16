@@ -1,7 +1,8 @@
-package mpicbg.stitching;
+package mpicbg.stitching.fusion;
 
 import fiji.stacks.Hyperstack_rearranger;
 import ij.IJ;
+import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 
@@ -11,6 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import process.OverlayFusion;
 
+import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.container.imageplus.ImagePlusContainerFactory;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
@@ -21,12 +23,14 @@ import mpicbg.imglib.interpolation.InterpolatorFactory;
 import mpicbg.imglib.interpolation.linear.LinearInterpolatorFactory;
 import mpicbg.imglib.multithreading.Chunk;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
+import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.models.InvertibleBoundable;
 import mpicbg.models.InvertibleCoordinateTransform;
 import mpicbg.models.NoninvertibleModelException;
+import mpicbg.spim.fusion.BlendingSimple;
 
 /**
  * Manages the fusion for all types except the overlayfusion
@@ -77,7 +81,7 @@ public class Fusion
 					for ( final ImagePlus imp : images )
 						blockData.add( ImageJFunctions.convertFloat( Hyperstack_rearranger.getImageChunk( imp, c, t ) ) );
 					
-					fuseBlock( out, blockData, offset, models, new LinearInterpolatorFactory<FloatType>( new OutOfBoundsStrategyValueFactory<FloatType>() ) );
+					fuseBlock( out, blockData, offset, models );
 				}
 				else
 				{
@@ -107,14 +111,23 @@ public class Fusion
 	 * @param input - FloatType, because of Interpolation that needs to be done
 	 * @param transform - the transformation
 	 */
-	protected static <T extends RealType<T>> void fuseBlock( final Image<T> output, final ArrayList<Image<FloatType>> input, final float[] offset, final ArrayList< InvertibleBoundable > transform, final InterpolatorFactory< FloatType > factory )
+	protected static <T extends RealType<T>> void fuseBlock( final Image<T> output, final ArrayList<Image<FloatType>> input, final float[] offset, final ArrayList< InvertibleBoundable > transform )
 	{
-		final int dims = output.getNumDimensions();
+		// for interpolation we want to mirror, otherwise we get black areas at the first and last pixel of each image
+		final InterpolatorFactory< FloatType > factory = new LinearInterpolatorFactory<FloatType>( new OutOfBoundsStrategyMirrorFactory<FloatType>() ); 
+		
+		final int numDimensions = output.getNumDimensions();
+		final int numImages = input.size();
 		long imageSize = output.getDimension( 0 );
 		
 		for ( int d = 1; d < output.getNumDimensions(); ++d )
 			imageSize *= output.getDimension( d );
 
+		final int[][] max = new int[ numImages ][ numDimensions ];
+		for ( int i = 0; i < numImages; ++i )
+			for ( int d = 0; d < numDimensions; ++d )
+				max[ i ][ d ] = input.get( i ).getDimension( d ) - 1; 
+		
 		// run multithreaded
 		final AtomicInteger ai = new AtomicInteger(0);					
         final Thread[] threads = SimpleMultiThreading.newThreads();
@@ -135,9 +148,12 @@ public class Fusion
                 	final long loopSize = myChunk.getLoopSize();
                 	
             		final LocalizableCursor<T> out = output.createLocalizableCursor();
-            		final Interpolator<FloatType> in = null;//input.createInterpolator( factory );
+            		final ArrayList<Interpolator<FloatType>> in = new ArrayList<Interpolator<FloatType>>(); //input.createInterpolator( factory );
             		
-            		final float[] tmp = new float[ output.getNumDimensions() ];
+            		for ( int i = 0; i < numImages; ++i )
+            			in.add( input.get( i ).createInterpolator( factory ) );
+            		
+            		final float[][] tmp = new float[ numImages ][ output.getNumDimensions() ];
             		
             		try 
             		{
@@ -149,13 +165,28 @@ public class Fusion
                         {
             				out.fwd();
             				
-            				for ( int d = 0; d < dims; ++d )
-            					tmp[ d ] = out.getPosition( d ) + offset[ d ];
+            				// get the current position in the output image
+            				for ( int d = 0; d < numDimensions; ++d )
+            				{
+            					final float value = out.getPosition( d ) + offset[ d ];
+            					
+            					for ( int i = 0; i < numImages; ++i )
+            						tmp[ i ][ d ] = value;
+            				}
             				
-            				transform.get( 0 ).applyInverseInPlace( tmp );
+            				// transform
+A:        					for ( int i = 0; i < numImages; ++i )
+        					{
+        						transform.get( i ).applyInverseInPlace( tmp[ i ] );
             	
-            				in.setPosition( tmp );			
-            				out.getType().setReal( in.getType().get() );
+        						// test if inside
+        						for ( int d = 0; d < numDimensions; ++d )
+        							if ( tmp[ i ][ d ] < 0 || tmp[ i ][ d ] > max[ i ][ d ] )
+        								continue A;
+        						
+        						in.get( i ).setPosition( tmp[ i ] );			
+        						out.getType().setReal( in.get( i ).getType().get() );
+        					}
             			}
             		} 
             		catch (NoninvertibleModelException e) 
@@ -170,4 +201,39 @@ public class Fusion
         SimpleMultiThreading.startAndJoin( threads );
 	}
 
+	public static void main( String[] args )
+	{
+		new ImageJ();
+		
+		// test blending
+		ImageFactory< FloatType > f = new ImageFactory<FloatType>( new FloatType(), new ArrayContainerFactory() );
+		Image< FloatType > img = f.createImage( new int[] { 1024, 100 } ); 
+		
+		LocalizableCursor< FloatType > c = img.createLocalizableCursor();
+		final int numDimensions = img.getNumDimensions();
+		final float[] tmp = new float[ numDimensions ];
+		
+		// for blending
+		final int[] dimensions = img.getDimensions();
+		final float percentScaling = 0.3f;
+		final float[] dimensionScaling = new float[ numDimensions ];
+		final float[] border = new float[ numDimensions ];
+		for ( int d = 0; d < numDimensions; ++d )
+			dimensionScaling[ d ] = 1;
+		
+		//dimensionScaling[ 1 ] = 0.5f;
+			
+		while ( c.hasNext() )
+		{
+			c.fwd();
+			
+			for ( int d = 0; d < numDimensions; ++d )
+				tmp[ d ] = c.getPosition( d );
+			
+			c.getType().set( (float)BlendingSimple.computeWeight( tmp, dimensions, border, dimensionScaling, percentScaling ) );
+		}
+		
+		ImageJFunctions.show( img );
+		System.out.println( "done" );
+	}
 }
