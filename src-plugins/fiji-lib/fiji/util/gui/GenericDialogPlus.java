@@ -33,9 +33,11 @@ import java.awt.event.KeyEvent;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 
 import java.util.List;
 
+import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -163,6 +165,68 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 		constraints.weightx = weightx;
 		layout.setConstraints(component, constraints);
 		add(component);
+	}
+	
+	/**
+	 * Adds an image to the generic dialog
+	 * 
+	 * @param path - the path to the image in the jar, e.g. /images/fiji.png (the first / has to be there!)
+	 * @return true if the image was found and added, otherwise false
+	 */
+	public boolean addImage( final String path ) 
+	{
+		return addImage( getClass().getResource( path ) );
+	}
+	
+	/**
+	 * Adds an image to the generic dialog
+	 * 
+	 * @param imgURL - the {@link URL} pointing to the resource
+	 * @return true if the image was found and added, otherwise false
+	 */
+	public boolean addImage( final URL imgURL ) 
+	{
+		final ImageIcon image = createImageIcon( imgURL );
+		
+		if ( image == null )
+		{
+			return false;
+		}
+		else
+		{
+			addImage( image );
+			return true;
+		}
+	}
+
+	/**
+	 * Adds an image to the generic dialog
+	 * 
+	 * @param image - the {@link ImageIcon} to display
+	 * @return label - the {@link JLabel} that contains the image for updating:
+	 * 
+	 * image.setImage( otherImageIcon.getImage() );
+	 * label.update( label.getGraphics() );
+	 */
+	public JLabel addImage( final ImageIcon image ) 
+	{
+		final Panel panel = new Panel();
+		panel.setLayout( new FlowLayout( FlowLayout.LEFT, 0, 0 ) );
+		final JLabel label = new JLabel( image );
+		label.setOpaque( true );
+		panel.add( label );
+		addPanel( panel );
+		
+		return label;
+	}
+
+	/** Returns an ImageIcon, or null if the path was invalid. */
+	public static ImageIcon createImageIcon( final URL imgURL ) 
+	{
+	    if (imgURL != null)
+	        return new ImageIcon( imgURL );
+	    else
+	        return null;
 	}
 	
 	// Work around too many private restrictions (add a new panel and remove it right away)
