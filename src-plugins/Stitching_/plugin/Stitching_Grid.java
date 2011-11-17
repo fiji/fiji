@@ -1,38 +1,53 @@
 package plugin;
 
-import javax.swing.ImageIcon;
-
-import ij.IJ;
-import ij.gui.GenericDialog;
+import fiji.util.gui.GenericDialogPlus;
 import ij.plugin.PlugIn;
+
+import java.awt.Choice;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
 
 public class Stitching_Grid implements PlugIn
 {
 	String[] choose = new String[]{ "erstens", "zweitens" };
+	ImageIcon[] images = new ImageIcon[ choose.length ];
+
+	public static int defaultChoice = 0;
+	
 	@Override
 	public void run(String arg0) 
 	{
+		images[ 0 ] = GenericDialogPlus.createImageIcon( getClass().getResource( "/images/test.png" ) );
+		images[ 1 ] = GenericDialogPlus.createImageIcon( getClass().getResource( "/images/test2.png" ) );					
 		
-		IJ.log( "" + getClass().getResource( "images/test.png" ) );
-		IJ.log( "" + getClass().getResource( "images/test.png" ).getPath() );
+        final GenericDialogPlus gd = new GenericDialogPlus( "test" );
 		
-		ImageIcon icon = createImageIcon( getClass().getResource( "images/test.png" ).getPath(), "gfgdf" );
+		gd.addChoice( "choose", choose, choose[ defaultChoice ] );
 		
+		final ImageIcon display = new ImageIcon( images[ defaultChoice ].getImage() );
+		final JLabel label = gd.addImage( display );	
 		
-		//GenericDialog gd = new GenericDialog( "test" );
-		
-		//gd.addChoice( "choose", choose, choose[ 0 ] );
+		// start the listener
+		imageSwitch( (Choice) gd.getChoices().get(0), images, display, label );
+
+		gd.showDialog();		
 	}
 	
-	/** Returns an ImageIcon, or null if the path was invalid. */
-	protected ImageIcon createImageIcon(String path,
-	                                           String description) {
-	    java.net.URL imgURL = getClass().getResource(path);
-	    if (imgURL != null) {
-	        return new ImageIcon(imgURL, description);
-	    } else {
-	        System.err.println("Couldn't find file: " + path);
-	        return null;
-	    }
+	protected final void imageSwitch( final Choice choice, final ImageIcon[] images, final ImageIcon display, final JLabel label )
+	{
+		choice.addItemListener( new ItemListener()
+		{
+			public void itemStateChanged(ItemEvent ie)
+			{
+				final int state = choice.getSelectedIndex();
+				
+				display.setImage( images[ state ].getImage() );
+				label.update( label.getGraphics() );
+			}
+		});
 	}
+
 }
