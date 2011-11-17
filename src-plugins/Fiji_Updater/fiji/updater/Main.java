@@ -2,6 +2,8 @@ package fiji.updater;
 
 import com.jcraft.jsch.UserInfo;
 
+import fiji.updater.java.UpdateJava;
+
 import fiji.updater.logic.Checksummer;
 import fiji.updater.logic.FileUploader;
 import fiji.updater.logic.PluginCollection;
@@ -19,7 +21,6 @@ import fiji.updater.logic.XMLFileDownloader;
 import fiji.updater.util.Downloader;
 import fiji.updater.util.Progress;
 import fiji.updater.util.StderrProgress;
-import fiji.updater.util.UpdateJava;
 import fiji.updater.util.Util;
 
 import java.io.Console;

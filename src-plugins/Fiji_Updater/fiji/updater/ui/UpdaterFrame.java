@@ -2,6 +2,8 @@ package fiji.updater.ui;
 
 import com.jcraft.jsch.UserInfo;
 
+import fiji.updater.java.UpdateJava;
+
 import fiji.updater.logic.Checksummer;
 import fiji.updater.logic.FileUploader;
 import fiji.updater.logic.Installer;
@@ -16,7 +18,6 @@ import fiji.updater.logic.SSHFileUploader;
 import fiji.updater.util.Canceled;
 import fiji.updater.util.Progress;
 import fiji.updater.util.StderrProgress;
-import fiji.updater.util.UpdateJava;
 import fiji.updater.util.UserInterface;
 import fiji.updater.util.Util;
 
