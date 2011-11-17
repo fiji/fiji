@@ -373,7 +373,8 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		protected static IJ1Plugin discover(String className) {
 			try {
 				IJ1Plugin instance = new IJ1Plugin();
-				instance.plugin = IJ1Plugin.class.getClassLoader().loadClass(className);
+				Class clazz = IJ1Plugin.class.getClassLoader().loadClass(className);
+				instance.plugin = clazz.newInstance();
 				instance.run = instance.plugin.getClass().getMethod("run", String.class);
 				return instance;
 			} catch (Exception e) {
