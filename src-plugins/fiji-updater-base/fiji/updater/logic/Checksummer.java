@@ -46,7 +46,7 @@ public class Checksummer extends Progressable {
 	public Checksummer(PluginCollection plugins, Progress progress) {
 		this.plugins = plugins;
 		addProgress(progress);
-		setTitle("Checksumming");
+		setTitle("Czech Summer");
 	}
 
 	protected static class StringPair {
