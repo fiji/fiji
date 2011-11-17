@@ -7,17 +7,36 @@ import java.io.File;
 
 import loci.plugins.BF;
 import loci.plugins.in.ImporterOptions;
+import mpicbg.models.Model;
 
 public class ImageCollectionElement 
 {
 	final File file;
 	ImagePlus imp = null;
+	final int index;
+	Model<?> model;
+	int dimensionality;
+	float[] offset;
 	
-	
-	public ImageCollectionElement( final File file )
+	public ImageCollectionElement( final File file, final int index )
 	{
 		this.file = file;
+		this.index = index;
 	}
+	
+	public void setOffset( final float[] offset ) { this.offset = offset; }
+	public float[] getOffset() { return offset; }
+	public float getOffset( final int dim ) { return offset[ dim ]; }
+	
+	public int getIndex() { return index; }
+	
+	public void setModel( final Model<?> model ) { this.model = model; }
+	public Model<?> getModel() { return model; }
+	
+	public void setDimensionality( final int dimensionality ) { this.dimensionality = dimensionality; }
+	public int getDimensionality() { return dimensionality; }
+	
+	public File getFile() { return file; }
 	
 	public ImagePlus open()
 	{

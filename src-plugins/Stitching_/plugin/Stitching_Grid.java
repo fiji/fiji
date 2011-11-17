@@ -3,8 +3,12 @@ package plugin;
 import static stitching.CommonFunctions.addHyperLinkListener;
 
 import java.io.File;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
+import mpicbg.models.TranslationModel2D;
+import mpicbg.models.TranslationModel3D;
+import mpicbg.spim.io.TextFileAccess;
 import mpicbg.stitching.ImagePlusTimePoint;
 
 import fiji.util.gui.GenericDialogPlus;
@@ -102,7 +106,7 @@ public class Stitching_Grid implements PlugIn
 		
 		final int gridSizeX = defaultGridSizeX = (int)Math.round(gd.getNextNumber());
 		final int gridSizeY = defaultGridSizeY = (int)Math.round(gd.getNextNumber());
-		final double overlap = defaultOverlap = gd.getNextNumber()/100;
+		final double overlap = defaultOverlap = gd.getNextNumber()/100.0;
 
 		int startI = 0, startX = 0, startY = 0;
 		
@@ -120,6 +124,7 @@ public class Stitching_Grid implements PlugIn
 		
 		String directory = defaultDirectory = gd.getNextString();
 		final String filenames = defaultFileNames = gd.getNextString();
+		final String outputFile = defaultTileConfiguration = gd.getNextString();
 		final int fusionMethod = defaultFusionMethod = gd.getNextChoiceIndex();
 		final double regressionThreshold = defaultRegressionThreshold = gd.getNextNumber();
 		final double displacementThresholdRelative = defaultDisplacementThresholdRelative = gd.getNextNumber();		
@@ -204,16 +209,19 @@ public class Stitching_Grid implements PlugIn
 
 				// get the filename
             	final String file = filenames.replace( replaceI, getLeadingZeros( numIValues, i + startI ) );
-            	gridLayout[ position[ 0 ] ][ position [ 1 ] ] = new ImageCollectionElement( new File( directory, file ) );
+            	gridLayout[ position[ 0 ] ][ position [ 1 ] ] = new ImageCollectionElement( new File( directory, file ), i ); 
 			}
 		}
 		else // fixed positions
 		{
+			// an index for the element
+			int i = 0;
+			
 			for ( int y = 0; y < gridSizeY; ++y )
 				for ( int x = 0; x < gridSizeX; ++x )
 				{
 					final String file = filenames.replace( replaceX, getLeadingZeros( numXValues, x + startX ) ).replace( replaceY, getLeadingZeros( numYValues, y + startY ) );
-	            	gridLayout[ x ][ y ] = new ImageCollectionElement( new File( directory, file ) );
+	            	gridLayout[ x ][ y ] = new ImageCollectionElement( new File( directory, file ), i++ );
 				}
 		}
 
@@ -228,7 +236,7 @@ public class Stitching_Grid implements PlugIn
 		boolean is2d = false;
 		boolean is3d = false;
 		
-		// now get the approximate coordinates for each element
+		// open all images and test them, collect information
 		for ( int y = 0; y < gridSizeY; ++y )
 			for ( int x = 0; x < gridSizeX; ++x )
 			{
@@ -286,10 +294,79 @@ public class Stitching_Grid implements PlugIn
 					minDepth = imp.getNSlices();
 			}
 		
+		// the dimensionality of each image that will be correlated (might still have more channels or timepoints)
+		final int dimensionality;
+		
 		if ( is2d )
+		{
 			IJ.log( "Reference dimensions (smallest of all images) for grid layout: " + minWidth + " x " + minHeight + "px." );
+			dimensionality = 2;
+		}
 		else
+		{
 			IJ.log( "Reference dimensions (smallest of all images) for grid layout: " + minWidth + " x " + minHeight + " x " + minDepth + "px." );
+			dimensionality = 3;
+		}
+		
+		// now get the approximate coordinates for each element
+		// that is easiest done incrementally
+		int xoffset = 0, yoffset = 0, zoffset = 0;
+    	
+    	// write the tileconfiguration
+		final String fileName = directory + outputFile;
+		final PrintWriter out = TextFileAccess.openFileWrite( fileName );
+
+    	for ( int y = 0; y < gridSizeY; y++ )
+    	{
+        	if ( y == 0 )
+        		yoffset = 0;
+        	else 
+        		yoffset += (int)( minWidth * ( 1 - overlap ) );
+
+        	for ( int x = 0; x < gridSizeX; x++ )
+            {
+        		final ImageCollectionElement element = gridLayout[ x ][ y ];
+        		
+            	if ( x == 0 && y == 0 && out != null )
+            	{
+        			out.println( "# Define the number of dimensions we are working on" );
+        	        out.println( "dim = " + dimensionality );
+        	        out.println( "" );
+        	        out.println( "# Define the image coordinates" );
+            	}
+            	
+            	if ( x == 0 && y == 0 )
+            		xoffset = yoffset = zoffset = 0;
+            	
+            	if ( x == 0 )
+            		xoffset = 0;
+            	else 
+            		xoffset += (int)( minWidth * ( 1 - overlap ) );
+            	
+            	if ( out != null )
+            	{
+            		if ( dimensionality == 3 )
+            			out.println( element.getFile().getAbsolutePath() + "; ; (" + xoffset + ", " + yoffset + ", " + zoffset + ")");
+            		else
+            			out.println( element.getFile().getAbsolutePath() + "; ; (" + xoffset + ", " + yoffset + ")");
+            	}            	
+            	
+            	element.setDimensionality( dimensionality );
+            	
+            	if ( dimensionality == 3 )
+            	{
+            		element.setModel( new TranslationModel3D() );
+            		element.setOffset( new float[]{ xoffset, yoffset, zoffset } );
+            	}
+            	else
+            	{
+            		element.setModel( new TranslationModel2D() );
+            		element.setOffset( new float[]{ xoffset, yoffset } );
+            	}
+            }
+    	}
+    	
+    	out.close();
 	}
 	
 	// current snake directions ( if necessary )
