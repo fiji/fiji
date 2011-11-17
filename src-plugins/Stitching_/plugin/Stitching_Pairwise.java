@@ -58,14 +58,12 @@ public class Stitching_Pairwise implements PlugIn
 	public static boolean defaultComputeOverlap = true;
 	public static boolean defaultSubpixelAccuracy = true;
 	public static int defaultCheckPeaks = 5;
-	public static double defaultAlpha = 1.5;
 	public static double defaultxOffset = 0, defaultyOffset = 0, defaultzOffset = 0;
 
 	public static boolean[] defaultHandleChannel1 = null;
 	public static boolean[] defaultHandleChannel2 = null;
 
 	public static int defaultMemorySpeedChoice = 0;
-	public static double defaultRegressionThreshold = 0.3;
 	public static double defaultDisplacementThresholdRelative = 2.5;		
 	public static double defaultDisplacementThresholdAbsolute = 3.5;		
 
@@ -180,7 +178,6 @@ public class Stitching_Pairwise implements PlugIn
 		final GenericDialog gd2 = new GenericDialog( "Paiwise Stitching" );
 				
 		gd2.addChoice("Fusion_method", fusionMethodList, fusionMethodList[ defaultFusionMethod ] );
-		gd2.addNumericField("Fusion_alpha", defaultAlpha, 2 );		
 		gd2.addStringField("Fused_image name: ", imp1.getTitle() + "<->" + imp2.getTitle(), 20 );
 		gd2.addSlider("Check_peaks", 1, 100, defaultCheckPeaks );
 		gd2.addCheckbox("Compute_overlap", defaultComputeOverlap );
@@ -216,7 +213,6 @@ public class Stitching_Pairwise implements PlugIn
 		else
 			params.fusionMethod = defaultFusionMethod = gd2.getNextChoiceIndex();
 		
-		params.fusionAlpha = defaultAlpha = gd2.getNextNumber();
 		params.fusedName = gd2.getNextText();
 		params.checkPeaks = defaultCheckPeaks = (int)Math.round( gd2.getNextNumber() );
 		params.computeOverlap = defaultComputeOverlap = gd2.getNextBoolean();

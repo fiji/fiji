@@ -17,7 +17,6 @@ public class StitchingParameters
 	
 	public int dimensionality;
 	public int fusionMethod;
-	public double fusionAlpha;
 	public String fusedName;
 	public int checkPeaks;
 	public boolean computeOverlap, subpixelAccuracy;
