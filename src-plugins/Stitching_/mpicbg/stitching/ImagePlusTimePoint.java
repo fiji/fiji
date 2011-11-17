@@ -1,10 +1,9 @@
 package mpicbg.stitching;
 
+import ij.ImagePlus;
 import mpicbg.models.Model;
 import mpicbg.models.Tile;
 import mpicbg.models.TranslationModel2D;
-import mpicbg.models.TranslationModel3D;
-import ij.ImagePlus;
 
 public class ImagePlusTimePoint extends Tile implements Comparable< ImagePlusTimePoint >
 {

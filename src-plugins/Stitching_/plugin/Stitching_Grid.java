@@ -1,6 +1,12 @@
 package plugin;
 
 import static stitching.CommonFunctions.addHyperLinkListener;
+
+import java.io.File;
+import java.util.ArrayList;
+
+import mpicbg.stitching.ImagePlusTimePoint;
+
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.ImagePlus;
@@ -15,15 +21,21 @@ public class Stitching_Grid implements PlugIn
 	public static int defaultGridChoice1 = 0;
 	public static int defaultGridChoice2 = 0;
 
-	public static int defaultGridSizeX = 3, defaultGridSizeY = 3;
+	public static int defaultGridSizeX = 2, defaultGridSizeY = 3;
 	public static double defaultOverlap = 20;
-	public static String defaultDirectory = "";
-	public static String defaultFileNames = "Tile{ii}.tif";
+	
+	//TODO: change to ""
+	public static String defaultDirectory = "/Volumes/Macintosh HD 2/Truman/standard";
+	
+	//TODO: change back to "tile{iii}.tif"
+	public static String defaultFileNames = "{ii}.tif";
 	public static String defaultTileConfiguration = "TileConfiguration.txt";
 	public static boolean defaultComputeOverlap = true;
 	public static boolean defaultSubpixelAccuracy = true;
 	public static boolean writeOnlyTileConfStatic = false;
-	public static int defaultStartI = 1;
+	
+	//TODO: change to 1
+	public static int defaultStartI = 73;
 	public static int defaultStartX = 1;
 	public static int defaultStartY = 1;
 	public static int defaultFusionMethod = 0;
@@ -92,7 +104,7 @@ public class Stitching_Grid implements PlugIn
 		final int gridSizeY = defaultGridSizeY = (int)Math.round(gd.getNextNumber());
 		final double overlap = defaultOverlap = gd.getNextNumber()/100;
 
-		int startI, startX, startY;
+		int startI = 0, startX = 0, startY = 0;
 		
 		// row-by-row, column-by-column or snake
 		// needs the same questions
@@ -175,6 +187,9 @@ public class Stitching_Grid implements PlugIn
 		if (directory.length() > 0 && !directory.endsWith("/"))
 			directory = directory + "/";
 		
+		// determine the layout
+		final ImageCollectionElement[][] gridLayout = new ImageCollectionElement[ gridSizeX ][ gridSizeY ];
+		
 		// all snakes, row, columns, whatever
 		if ( grid.getType() < 4 )
 		{
@@ -188,22 +203,93 @@ public class Stitching_Grid implements PlugIn
 				getPosition( position, i, gridType, gridOrder, gridSizeX, gridSizeY );
 
 				// get the filename
-            	String file = filenames.replace( replaceI, getLeadingZeros( numIValues, i ) );
-
-				
-				IJ.log( "(" + position[ 0 ] + ", " + position [ 1 ] + "): " + file );
+            	final String file = filenames.replace( replaceI, getLeadingZeros( numIValues, i + startI ) );
+            	gridLayout[ position[ 0 ] ][ position [ 1 ] ] = new ImageCollectionElement( new File( directory, file ) );
 			}
 		}
-		else
+		else // fixed positions
 		{
 			for ( int y = 0; y < gridSizeY; ++y )
 				for ( int x = 0; x < gridSizeX; ++x )
 				{
-					String file = filenames.replace( replaceX, getLeadingZeros( numXValues, x ) ).replace( replaceY, getLeadingZeros( numYValues, y ) );
-
-					IJ.log( "(" + x + ", " + y + "): " + file );
+					final String file = filenames.replace( replaceX, getLeadingZeros( numXValues, x + startX ) ).replace( replaceY, getLeadingZeros( numYValues, y + startY ) );
+	            	gridLayout[ x ][ y ] = new ImageCollectionElement( new File( directory, file ) );
 				}
 		}
+
+		// based on the minimum size we will compute the initial arrangement
+		int minWidth = Integer.MAX_VALUE;
+		int minHeight = Integer.MAX_VALUE;
+		int minDepth = Integer.MAX_VALUE;
+		
+		int numChannels = -1;
+		int numTimePoints = -1;
+		
+		boolean is2d = false;
+		boolean is3d = false;
+		
+		// now get the approximate coordinates for each element
+		for ( int y = 0; y < gridSizeY; ++y )
+			for ( int x = 0; x < gridSizeX; ++x )
+			{
+				IJ.log( "Loading (" + x + ", " + y + "): " + gridLayout[ x ][ y ].file.getAbsolutePath() + " ... " );
+				
+				long time = System.currentTimeMillis();
+				final ImagePlus imp = gridLayout[ x ][ y ].open();
+				time = System.currentTimeMillis() - time;
+				
+				if ( imp == null )
+					return;
+				
+				int lastNumChannels = numChannels;
+				int lastNumTimePoints = numTimePoints;
+				numChannels = imp.getNChannels();
+				numTimePoints = imp.getNFrames();
+				
+				if ( imp.getNSlices() > 1 )
+				{
+					IJ.log( "" + imp.getWidth() + "x" + imp.getHeight() + "x" + imp.getNSlices() + "px, channels=" + numChannels + ", timepoints=" + numTimePoints + " (" + time + " ms)" );
+					is3d = true;					
+				}
+				else
+				{
+					IJ.log( "" + imp.getWidth() + "x" + imp.getHeight() + "px, channels=" + numChannels + ", timepoints=" + numTimePoints + " (" + time + " ms)" );
+					is2d = true;
+				}
+				
+				// test validity of images
+				if ( is2d && is3d )
+				{
+					IJ.log( "Some images are 2d, some are 3d ... cannot proceed" );
+					return;
+				}
+				
+				if ( ( lastNumChannels != numChannels ) && x != 0 && y != 0 )
+				{
+					IJ.log( "Number of channels per image changes ... cannot proceed" );
+					return;					
+				}
+
+				if ( ( lastNumTimePoints != numTimePoints ) && x != 0 && y != 0 )
+				{
+					IJ.log( "Number of timepoints per image changes ... cannot proceed" );
+					return;					
+				}
+
+				if ( imp.getWidth() < minWidth )
+					minWidth = imp.getWidth();
+
+				if ( imp.getHeight() < minHeight )
+					minHeight = imp.getHeight();
+				
+				if ( imp.getNSlices() < minDepth )
+					minDepth = imp.getNSlices();
+			}
+		
+		if ( is2d )
+			IJ.log( "Reference dimensions (smallest of all images) for grid layout: " + minWidth + " x " + minHeight + "px." );
+		else
+			IJ.log( "Reference dimensions (smallest of all images) for grid layout: " + minWidth + " x " + minHeight + " x " + minDepth + "px." );
 	}
 	
 	// current snake directions ( if necessary )
