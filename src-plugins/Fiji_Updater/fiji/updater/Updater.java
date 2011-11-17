@@ -118,19 +118,16 @@ public class Updater implements PlugIn {
 		}
 
 		PluginObject updater = plugins.getPlugin("plugins/Fiji_Updater.jar");
-		if (updater != null && updater.getStatus() == PluginObject.Status.UPDATEABLE) {
+		PluginObject updaterBase = plugins.getPlugin("jars/fiji-updater-base.jar");
+		if ((updater != null && updater.getStatus() == PluginObject.Status.UPDATEABLE) ||
+				(updaterBase != null && updaterBase.getStatus() == PluginObject.Status.UPDATEABLE)) {
 			if (SwingTools.showQuestion(hidden, main, "Update the updater",
 					"There is an update available for the Fiji Updater. Install now?")) {
 				// download just the updater
 				main.updateTheUpdater();
 
 				// overwrite the original updater
-				File downloaded = new File(Util.prefix("update/plugins/Fiji_Updater.jar"));
-				File updaterJar = new File(Util.prefix("plugins/Fiji_Updater.jar"));
-				if (!(updaterJar.delete() || moveOutOfTheWay(updaterJar)) ||
-						!downloaded.renameTo(updaterJar) ||
-						!downloaded.getParentFile().delete() ||
-						!downloaded.getParentFile().getParentFile().delete())
+				if (!overwriteWithUpdated(updater) || !overwriteWithUpdated(updaterBase))
 					main.info("Please restart Fiji and call Help>Update Fiji to continue the update");
 				else
 					/*
@@ -173,6 +170,28 @@ public class Updater implements PlugIn {
 		}
 
 		main.updatePluginsTable();
+	}
+
+	protected static boolean overwriteWithUpdated(PluginObject plugin) {
+		File downloaded = new File(Util.prefix("update/" + plugin.filename));
+		if (!downloaded.exists())
+			return true; // assume all is well if there is no updated file
+		File jar = new File(Util.prefix(plugin.filename));
+		if (!jar.delete() && !moveOutOfTheWay(jar))
+			return false;
+		if (!downloaded.renameTo(jar))
+			return false;
+		for (;;) {
+			downloaded = downloaded.getParentFile();
+			if (downloaded == null)
+				return true;
+			String[] list = downloaded.list();
+			if (list != null && list.length > 0)
+				return true;
+			// dir is empty, remove
+			if (!downloaded.delete())
+				return false;
+		}
 	}
 
 	/** This returns true if this seems to be the Debian packaged

@@ -588,7 +588,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 	public void updateTheUpdater() {
 		PluginCollection.Filter filter = new PluginCollection.Filter() {
 			public boolean matches(PluginObject plugin) {
-				if (plugin.filename.equals("plugins/Fiji_Updater.jar")) {
+				if (plugin.filename.equals("plugins/Fiji_Updater.jar") || plugin.filename.equals("jars/fiji-updater-base.jar")) {
 					plugin.setAction(plugins, Action.UPDATE);
 					return true;
 				}
