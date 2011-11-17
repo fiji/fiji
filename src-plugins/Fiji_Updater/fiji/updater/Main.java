@@ -157,6 +157,12 @@ public class Main {
 	public void download(PluginObject plugin) {
 		try {
 			new Downloader(progress).start(new OnePlugin(plugin));
+			if (Util.isLauncher(plugin.filename) && !Util.platform.startsWith("win")) try {
+				Runtime.getRuntime().exec(new String[] { "chmod", "0755", Util.prefix(plugin.filename) });
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new RuntimeException("Could not mark " + plugin.filename + " as executable");
+			}
 			System.err.println("Installed " + plugin.filename);
 		} catch (IOException e) {
 			System.err.println("IO error downloading "
