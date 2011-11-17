@@ -1,4 +1,4 @@
-package fiji.updater.logic;
+package fiji.updater.logic.ssh;
 
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;

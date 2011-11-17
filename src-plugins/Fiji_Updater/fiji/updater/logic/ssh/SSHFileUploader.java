@@ -1,10 +1,13 @@
-package fiji.updater.logic;
+package fiji.updater.logic.ssh;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.UserInfo;
+
+import fiji.updater.logic.FileUploader;
+import fiji.updater.logic.PluginUploader;
 
 import fiji.updater.util.Canceled;
 import fiji.updater.util.InputStream2OutputStream;

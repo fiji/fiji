@@ -11,12 +11,13 @@ import fiji.updater.logic.PluginCollection.Filter;
 import fiji.updater.logic.PluginCollection.UpdateSite;
 import fiji.updater.logic.PluginObject;
 import fiji.updater.logic.PluginUploader;
-import fiji.updater.logic.SSHFileUploader;
 
 import fiji.updater.logic.PluginObject.Action;
 import fiji.updater.logic.PluginObject.Status;
 
 import fiji.updater.logic.XMLFileDownloader;
+
+import fiji.updater.logic.ssh.SSHFileUploader;
 
 import fiji.updater.util.Downloader;
 import fiji.updater.util.Progress;
