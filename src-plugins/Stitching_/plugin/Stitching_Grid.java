@@ -69,11 +69,19 @@ public class Stitching_Grid implements PlugIn
 		{
 			gd.addChoice( "Grid_order", choose2[ defaultChoice1 ], choose2[ defaultChoice1 ][ defaultChoice2 ] );
 			
-			final ImageIcon display = new ImageIcon( images[ defaultChoice1 ][ defaultChoice2 ].getImage() );
-			final JLabel label = gd.addImage( display );	
-			
-			// start the listener
-			imageSwitch( (Choice) gd.getChoices().get(0), (Choice) gd.getChoices().get(1), images, display, label );
+			try
+			{
+				final ImageIcon display = new ImageIcon( images[ defaultChoice1 ][ defaultChoice2 ].getImage() );
+				final JLabel label = gd.addImage( display );	
+				
+				// start the listener
+				imageSwitch( (Choice) gd.getChoices().get(0), (Choice) gd.getChoices().get(1), images, display, label );
+			}
+			catch (Exception e )
+			{
+				gd.addMessage( "" );
+				gd.addMessage( "Cannot load images to visualize the grid types ... " );
+			}
 		}
 		else
 		{
@@ -126,24 +134,28 @@ public class Stitching_Grid implements PlugIn
 		{
 			public void itemStateChanged(ItemEvent ie)
 			{
-				final int state1 = choice1.getSelectedIndex();
-				final int state2;
-				
-				if ( state1 == 4 )
-					state2 = 0;
-				else
-					state2 = choice2.getSelectedIndex();
-				
-				// update the texts in choice2
-				choice2.removeAll();
-				for ( int i = 0; i < choose2[ state1 ].length; ++i )
-					choice2.add( choose2[ state1 ][ i ] );
-				
-				choice2.select( state2 );
-				
-				
-				display.setImage( images[ state1 ][ state2 ].getImage() );
-				label.update( label.getGraphics() );
+				try
+				{
+					final int state1 = choice1.getSelectedIndex();
+					final int state2;
+					
+					if ( state1 == 4 )
+						state2 = 0;
+					else
+						state2 = choice2.getSelectedIndex();
+					
+					// update the texts in choice2
+					choice2.removeAll();
+					for ( int i = 0; i < choose2[ state1 ].length; ++i )
+						choice2.add( choose2[ state1 ][ i ] );
+					
+					choice2.select( state2 );
+					
+					
+					display.setImage( images[ state1 ][ state2 ].getImage() );
+					label.update( label.getGraphics() );
+				}
+				catch( Exception e ){}
 			}
 		});
 
@@ -151,16 +163,20 @@ public class Stitching_Grid implements PlugIn
 		{
 			public void itemStateChanged(ItemEvent ie)
 			{
-				final int state1 = choice1.getSelectedIndex();
-				final int state2;
-				
-				if ( state1 == 4 )
-					state2 = 0;
-				else
-					state2 = choice2.getSelectedIndex();
+				try
+				{
+					final int state1 = choice1.getSelectedIndex();
+					final int state2;
 					
-				display.setImage( images[ state1 ][ state2 ].getImage() );
-				label.update( label.getGraphics() );
+					if ( state1 == 4 )
+						state2 = 0;
+					else
+						state2 = choice2.getSelectedIndex();
+						
+					display.setImage( images[ state1 ][ state2 ].getImage() );
+					label.update( label.getGraphics() );
+				}
+				catch( Exception e ){}
 			}
 		});
 	}
