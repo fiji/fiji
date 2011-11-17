@@ -1,10 +1,14 @@
-package fiji.updater.util;
+package fiji.updater.java;
 
 /**
  * This class helps with updating Fiji's JRE/JDK on Windows and Linux
  */
 
-import fiji.updater.ui.IJProgress;
+import fiji.updater.ui.ij1.IJProgress;
+
+import fiji.updater.util.Progress;
+import fiji.updater.util.StderrProgress;
+import fiji.updater.util.Util;
 
 import ij.IJ;
 import ij.Macro;
@@ -54,6 +58,7 @@ public class UpdateJava implements PlugIn {
 	protected Progress progress;
 
 	public UpdateJava() {
+		// TODO: make independent of IJ1
 		this(IJ.getInstance() != null ? new IJProgress() : new StderrProgress());
 		progress.setTitle("");
 	}
@@ -81,6 +86,7 @@ public class UpdateJava implements PlugIn {
 
 	public void downloadAndInstall(boolean isJRE) throws IOException {
 		progress.setCount(0, 1);
+		// TODO: make independent of IJ1
 		String platform = (IJ.isLinux() ? "Linux" : IJ.isWindows() ? "Windows" : "MacOSX haha")
 			+ (IJ.is64Bit() ? " x64" : "");
 		String ext = IJ.isLinux() ? "bin" : "exe";
@@ -120,6 +126,7 @@ public class UpdateJava implements PlugIn {
 		}, null, null);
 		eyeCandy.cancel();
 		exe.delete();
+		// TODO: make independent of IJ1
 		IJ.showMessage("Successfully installed new Java "
 			+ (isJRE ? "Runtime" : "Development Kit")
 			+ " to " + outputDirectory);
@@ -133,6 +140,7 @@ public class UpdateJava implements PlugIn {
 	}
 
 	public static void log(String message) {
+		// TODO: make independent of IJ1
 		if (IJ.getInstance() != null)
 			IJ.log(message);
 		else
@@ -140,6 +148,7 @@ public class UpdateJava implements PlugIn {
 	}
 
 	public static void error(String message) {
+		// TODO: make independent of IJ1
 		if (IJ.getInstance() != null)
 			IJ.error(message);
 		else
@@ -196,6 +205,7 @@ public class UpdateJava implements PlugIn {
 			currentBytes = 0;
 			return http.getInputStream();
 		} catch (MalformedURLException e) {
+			// TODO: make independent of IJ1
 			IJ.handleException(e);
 		}
 		cookie = null;
@@ -290,6 +300,7 @@ public class UpdateJava implements PlugIn {
 		}
 
 		public void handleError(String errorMsg, int pos) {
+			// TODO: make independent of IJ1
 			//IJ.log(errorMsg);
 		}
 	}
@@ -308,6 +319,7 @@ public class UpdateJava implements PlugIn {
 			if (list.size() > 1)
 				for (int i = 1; i < list.size(); i++)
 					if (!list.get(i).url.equals(list.get(0).url)) {
+						// TODO: make independent of IJ1
 						IJ.log("Ambiguous link:\n" + list.get(i).url + "\n" + list.get(0).url);
 						abort("Ambiguous link in " + url);
 					}
@@ -432,6 +444,7 @@ public class UpdateJava implements PlugIn {
 				parameters += URLEncoder.encode(key, "UTF-8") + "="
 					+ URLEncoder.encode(variables.get(key), "UTF-8");
 			} catch (UnsupportedEncodingException e) {
+				// TODO: make independent of IJ1
 				IJ.handleException(e);
 			}
 			byte[] bytes = parameters.getBytes();
@@ -512,6 +525,7 @@ public class UpdateJava implements PlugIn {
 				else try {
 					value = URLDecoder.decode(value, "UTF-8");
 				} catch (UnsupportedEncodingException e) {
+					// TODO: make independent of IJ1
 					IJ.handleException(e);
 				}
 				if (name != null)
@@ -529,6 +543,7 @@ public class UpdateJava implements PlugIn {
 		if (!matcher.matches())
 			abort("Could not determine Java version");
 		String subDirectory = "java/"
+			// TODO: make independent of IJ1
 			+ (IJ.isWindows() ? (IJ.is64Bit() ? "win64" : "win32") : (IJ.is64Bit() ? "linux-amd64" : "linux"))
 			+ "/jdk1." + matcher.group(1) + ".0_" + matcher.group(2);
 		if (isJRE)
@@ -540,6 +555,7 @@ public class UpdateJava implements PlugIn {
 		if (targetDirectory.exists())
 			abort("The directory " + targetDirectory + " already exists! Already up-to-date?");
 
+		// TODO: make independent of IJ1
 		File parentDirectory = IJ.isWindows() ? targetDirectory : targetDirectory.getParentFile();
 		if (!parentDirectory.exists() && !parentDirectory.mkdirs())
 			abort("Could not make the directory " + parentDirectory + "!");
@@ -547,10 +563,12 @@ public class UpdateJava implements PlugIn {
 		for (String item : parentDirectory.list())
 			oldItems.add(item);
 
+		// TODO: make independent of IJ1
 		String[] cmdarray = IJ.isWindows() ?
 			// TODO: use 8.3 path on Windows to avoid quoting
 			new String[] { exe.getPath(), "/qr", "INSTALLDIR=" + parentDirectory.getAbsolutePath(), "STATIC=1" } :
 			new String[] { "sh", exe.getPath() };
+		// TODO: make independent of IJ1
 		launchProgram(cmdarray, parentDirectory, IJ.isWindows() ? null : "yes\n");
 
 		if (!targetDirectory.exists()) {
@@ -584,6 +602,7 @@ public class UpdateJava implements PlugIn {
 							out.write(stdin.getBytes());
 							out.close();
 						} catch (IOException e) {
+							// TODO: make independent of IJ1
 							IJ.handleException(e);
 						}
 					}
@@ -636,6 +655,7 @@ public class UpdateJava implements PlugIn {
 				}
 				in.close();
 			} catch (IOException e) {
+				// TODO: make independent of IJ1
 				IJ.handleException(e);
 			}
 		}
