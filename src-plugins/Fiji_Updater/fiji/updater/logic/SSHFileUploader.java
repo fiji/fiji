@@ -28,6 +28,8 @@ public class SSHFileUploader extends FileUploader {
 			String protocol = uploader.getUploadProtocol();
 			String host = uploader.getUploadHost();
 			String directory = uploader.getUploadDirectory();
+			if (protocol == null && (host.endsWith(".sourceforge.net") || host.endsWith(".sf.net")))
+				protocol = "sftp";
 			if (protocol != null && protocol.equalsIgnoreCase("sftp"))
 				return new SFTPFileUploader(username, host, directory, userInfo);
 			else
