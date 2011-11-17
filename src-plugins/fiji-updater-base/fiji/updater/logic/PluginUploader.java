@@ -73,7 +73,7 @@ public class PluginUploader {
 			host = host.substring(5);
 		int at = host.indexOf('@');
 		if (at > 0)
-			return site.sshHost.substring(0, at);
+			return host.substring(0, at);
 		String name = UserInterface.get().getPref(Util.PREFS_USER);
 		if (name == null)
 			return "";
