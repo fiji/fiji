@@ -20,6 +20,11 @@ package trainableSegmentation.metrics;
  * Authors: Ignacio Arganda-Carreras (iarganda@mit.edu)
  */
 
+/**
+ * This class stores the number of mismatches after applying
+ * a topology-preserving warping. The mismatches are clustered
+ * by the different type of possible mistakes. 
+ */
 public class ClusteredWarpingMismatches
 {
 	public int numOfObjectAdditions = 0;
