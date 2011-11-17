@@ -1,6 +1,5 @@
 package fiji.updater.ui;
 
-import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.UserInfo;
 
 import fiji.updater.logic.Checksummer;
@@ -8,14 +7,12 @@ import fiji.updater.logic.FileUploader;
 import fiji.updater.logic.Installer;
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginCollection.DependencyMap;
-import fiji.updater.logic.PluginCollection.UpdateSite;
 import fiji.updater.logic.PluginObject;
 import fiji.updater.logic.PluginObject.Action;
 import fiji.updater.logic.PluginObject.Status;
 import fiji.updater.logic.PluginUploader;
 import fiji.updater.logic.SSHFileUploader;
 
-import fiji.updater.util.Downloader;
 import fiji.updater.util.Canceled;
 import fiji.updater.util.Progress;
 import fiji.updater.util.StderrProgress;
@@ -29,12 +26,9 @@ import java.awt.Dimension;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
-import java.awt.TextField;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -54,16 +48,13 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
-import javax.swing.JTextPane;
 
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -862,17 +853,13 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 			if (password == null)
 				return false; //return back to user interface
 
-			try {
-				UserInfo userInfo = getUserInfo(password);
-				SSHFileUploader sshUploader = new SSHFileUploader(username,
-					uploader.getUploadHost(),
-					uploader.getUploadDirectory(),
-					userInfo);
+			UserInfo userInfo = getUserInfo(password);
+			FileUploader sshUploader = SSHFileUploader.getUploader(uploader, username, userInfo);
+			if (sshUploader != null) {
 				uploader.setUploader(sshUploader);
 				break;
-			} catch (JSchException e) {
-				UserInterface.get().error("Failed to login");
 			}
+			UserInterface.get().error("Failed to login");
 			username = null;
 		}
 

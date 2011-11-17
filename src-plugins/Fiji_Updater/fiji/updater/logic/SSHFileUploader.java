@@ -33,6 +33,15 @@ public class SSHFileUploader extends FileUploader {
 	protected OutputStream err;
 	private InputStream in;
 
+	public static FileUploader getUploader(PluginUploader uploader, String username, UserInfo userInfo) {
+		try {
+			return new SSHFileUploader(username, uploader.getUploadHost(), uploader.getUploadDirectory(), userInfo);
+		} catch (JSchException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
 	public SSHFileUploader(String username, String sshHost, String uploadDirectory,
 			UserInfo userInfo) throws JSchException {
 		super(uploadDirectory);
