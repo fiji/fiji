@@ -174,6 +174,8 @@ public class FijiClassLoader extends URLClassLoader {
 			// Add first level subdirectories to search path
 			addFile(file);
 			String[] paths = file.list();
+			if (paths == null)
+				return;
 			for (int i = 0; i < paths.length; i++)
 				if (!paths[i].startsWith("."))
 					addPath(path + File.separator + paths[i]);

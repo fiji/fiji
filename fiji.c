@@ -2233,6 +2233,24 @@ static int is_building(const char *target)
 	return 0;
 }
 
+/*
+ * Returns the number of elements which this option spans if it is an ImageJ1 option, 0 otherwise.
+ */
+static int imagej1_option_count(const char *option)
+{
+	if (!option)
+		return 0;
+	if (option[0] != '-') /* file names */
+		return 1;
+	if (!prefixcmp(option, "-port") || !strcmp(option, "-debug"))
+		return 1;
+	if (!strcmp(option, "-ijpath") || !strcmp(option, "-macro") || !strcmp(option, "-eval") || !strcmp(option, "-run"))
+		return 2;
+	if (!strcmp(option, "-batch"))
+		return 3;
+	return 0;
+}
+
 const char *properties[32];
 
 static int retrotranslator;
@@ -2683,9 +2701,36 @@ static void parse_command_line(void)
 	if (default_arguments->length)
 		add_options(&options, default_arguments->buffer, 1);
 
+	if (is_default_main_class(main_class)) {
+		if (allow_multiple)
+			add_option(&options, "-port0", 1);
+		else
+			add_option(&options, "-port7", 1);
+		add_option(&options, "-Dsun.java.command=Fiji", 0);
+	}
+	// If there is no -- but some options unknown to IJ1, DWIM it
+	if (!dashdash && is_default_main_class(main_class)) {
+		for (i = 1; i < main_argc; i++) {
+			int count = imagej1_option_count(main_argv[i]);
+			if (!count) {
+				dashdash = main_argc;
+				break;
+			}
+			i += count - 1;
+		}
+	}
+
 	if (dashdash) {
-		for (i = 1; i < dashdash; i++)
-			add_option(&options, main_argv[i], 0);
+		int is_imagej1 = is_default_main_class(main_class);
+
+		for (i = 1; i < dashdash; ) {
+			int count = is_imagej1 ? imagej1_option_count(main_argv[i]) : 0;
+			if (!count)
+				add_option(&options, main_argv[i++], 0);
+			else
+				while (count-- && i < dashdash)
+					add_option(&options, main_argv[i++], 1);
+		}
 		main_argv += dashdash - 1;
 		main_argc -= dashdash - 1;
 	}
@@ -2700,13 +2745,6 @@ static void parse_command_line(void)
 
 	if (jdb)
 		add_option_copy(&options, main_class, 1);
-	if (is_default_main_class(main_class)) {
-		if (allow_multiple)
-			add_option(&options, "-port0", 1);
-		else
-			add_option(&options, "-port7", 1);
-		add_option(&options, "-Dsun.java.command=Fiji", 0);
-	}
 
 	/* handle "--headless script.ijm" gracefully */
 	if (headless && is_default_main_class(main_class)) {
