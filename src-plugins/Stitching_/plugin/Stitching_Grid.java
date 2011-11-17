@@ -12,7 +12,7 @@ import javax.swing.JLabel;
 
 public class Stitching_Grid implements PlugIn
 {
-	String[] choose = new String[]{ "erstens", "zweitens" };
+	String[] choose = new String[]{ "Book-like arrangement", "fiji" };
 	ImageIcon[] images = new ImageIcon[ choose.length ];
 
 	public static int defaultChoice = 0;
@@ -20,12 +20,12 @@ public class Stitching_Grid implements PlugIn
 	@Override
 	public void run(String arg0) 
 	{
-		images[ 0 ] = GenericDialogPlus.createImageIcon( getClass().getResource( "/images/test.png" ) );
-		images[ 1 ] = GenericDialogPlus.createImageIcon( getClass().getResource( "/images/test2.png" ) );					
+		images[ 0 ] = GenericDialogPlus.createImageIcon( getClass().getResource( "/images/snake1.png" ) );
+		images[ 1 ] = GenericDialogPlus.createImageIcon( getClass().getResource( "/images/snake2.png" ) );					
 		
         final GenericDialogPlus gd = new GenericDialogPlus( "test" );
 		
-		gd.addChoice( "choose", choose, choose[ defaultChoice ] );
+		gd.addChoice( "Choose type of grid", choose, choose[ defaultChoice ] );
 		
 		final ImageIcon display = new ImageIcon( images[ defaultChoice ].getImage() );
 		final JLabel label = gd.addImage( display );	
