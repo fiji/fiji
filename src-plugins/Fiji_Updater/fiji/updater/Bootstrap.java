@@ -62,7 +62,7 @@ public class Bootstrap {
 			int bang = fijiDir.indexOf("!/");
 			if (bang > 0)
 				fijiDir = fijiDir.substring(0, bang);
-			for (String suffix : new String[] { "/fiji-updater-base.jar", "/jars" })
+			for (String suffix : new String[] { "/Fiji_Updater.jar", "/plugins" })
 				if (fijiDir.endsWith(suffix))
 					fijiDir = fijiDir.substring(0, fijiDir.length() - suffix.length());
 			System.setProperty("fiji.dir", fijiDir);

@@ -118,16 +118,14 @@ public class Updater implements PlugIn {
 		}
 
 		PluginObject updater = plugins.getPlugin("plugins/Fiji_Updater.jar");
-		PluginObject updaterBase = plugins.getPlugin("jars/fiji-updater-base.jar");
-		if ((updater != null && updater.getStatus() == PluginObject.Status.UPDATEABLE) ||
-				(updaterBase != null && updaterBase.getStatus() == PluginObject.Status.UPDATEABLE)) {
+		if ((updater != null && updater.getStatus() == PluginObject.Status.UPDATEABLE)) {
 			if (SwingTools.showQuestion(hidden, main, "Update the updater",
 					"There is an update available for the Fiji Updater. Install now?")) {
 				// download just the updater
 				main.updateTheUpdater();
 
 				// overwrite the original updater
-				if (!overwriteWithUpdated(updater) || !overwriteWithUpdated(updaterBase))
+				if (!overwriteWithUpdated(updater))
 					main.info("Please restart Fiji and call Help>Update Fiji to continue the update");
 				else
 					/*

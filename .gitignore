@@ -80,7 +80,6 @@ hs_err*.log
 /jars/clojure.jar
 /plugins/IJ_Robot.jar
 /plugins/Fiji_Updater.jar
-/jars/fiji-updater-base.jar
 /plugins/Stitching_.jar
 /plugins/AnalyzeSkeleton_.jar
 /plugins/Skeletonize3D_.jar
