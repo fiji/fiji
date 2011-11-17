@@ -201,8 +201,8 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 	 * @param image - the {@link ImageIcon} to display
 	 * @return label - the {@link JLabel} that contains the image for updating:
 	 * 
-	 * image.setImage( otherImageIcon.getImage() );
-	 * label.update( label.getGraphics() );
+	 * image.setImage(otherImageIcon.getImage());
+	 * label.update(label.getGraphics());
 	 */
 	public JLabel addImage(final ImageIcon image) {
 		final Panel panel = new Panel();
@@ -216,7 +216,7 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 	}
 
 	/** Returns an ImageIcon, or null if the path was invalid. */
-	public static ImageIcon createImageIcon( final URL imgURL ) {
+	public static ImageIcon createImageIcon(final URL imgURL) {
 	    if (imgURL != null)
 	        return new ImageIcon(imgURL);
 	    else
@@ -288,7 +288,7 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 			fc.showOpenDialog(null);
 			File selFile = fc.getSelectedFile();
 			if (selFile != null)
-				text.setText( selFile.getAbsolutePath() );
+				text.setText(selFile.getAbsolutePath());
 		}
 	}
 
