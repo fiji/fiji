@@ -58,8 +58,20 @@ public class PluginUploader {
 		return uploader != null;
 	}
 
+	public String getUploadProtocol() {
+		String host = site.sshHost;
+		int at = host.indexOf('@');
+		int colon = host.indexOf(':');
+		if (colon > 0 && colon < at)
+			return host.substring(0, colon);
+		return null;
+	}
+
 	public String getDefaultUsername() {
-		int at = site.sshHost.indexOf('@');
+		String host = site.sshHost;
+		if (host.startsWith("sftp:"))
+			host = host.substring(5);
+		int at = host.indexOf('@');
 		if (at > 0)
 			return site.sshHost.substring(0, at);
 		String name = UserInterface.get().getPref(Util.PREFS_USER);
