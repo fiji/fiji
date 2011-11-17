@@ -80,6 +80,7 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 		return WindowManager.getImage(windowIDs[getNextChoiceIndex()]);
 	}
 
+	@Override
 	public void addStringField(String label, String defaultString, int columns) {
 		super.addStringField(label, defaultString, columns);
 		TextField text = (TextField)stringField.lastElement();
@@ -142,8 +143,7 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 	 * @param label button label
 	 * @param listener listener to handle the action when pressing the button
 	 */
-	public void addButton(String label, ActionListener listener)
-	{
+	public void addButton(String label, ActionListener listener) {
 		Button button = new Button(label);
 
 		button.addActionListener(listener);
@@ -173,9 +173,8 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 	 * @param path - the path to the image in the jar, e.g. /images/fiji.png (the first / has to be there!)
 	 * @return true if the image was found and added, otherwise false
 	 */
-	public boolean addImage( final String path ) 
-	{
-		return addImage( getClass().getResource( path ) );
+	public boolean addImage(final String path) {
+		return addImage(getClass().getResource(path));
 	}
 	
 	/**
@@ -184,17 +183,14 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 	 * @param imgURL - the {@link URL} pointing to the resource
 	 * @return true if the image was found and added, otherwise false
 	 */
-	public boolean addImage( final URL imgURL ) 
-	{
-		final ImageIcon image = createImageIcon( imgURL );
+	public boolean addImage(final URL imgURL) {
+		final ImageIcon image = createImageIcon(imgURL);
 		
-		if ( image == null )
-		{
+		if (image==null) {
 			return false;
 		}
-		else
-		{
-			addImage( image );
+		else{
+			addImage(image);
 			return true;
 		}
 	}
@@ -208,23 +204,21 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 	 * image.setImage( otherImageIcon.getImage() );
 	 * label.update( label.getGraphics() );
 	 */
-	public JLabel addImage( final ImageIcon image ) 
-	{
+	public JLabel addImage(final ImageIcon image) {
 		final Panel panel = new Panel();
-		panel.setLayout( new FlowLayout( FlowLayout.LEFT, 0, 0 ) );
-		final JLabel label = new JLabel( image );
-		label.setOpaque( true );
-		panel.add( label );
-		addPanel( panel );
+		panel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		final JLabel label = new JLabel(image);
+		label.setOpaque(true);
+		panel.add(label);
+		addPanel(panel);
 		
 		return label;
 	}
 
 	/** Returns an ImageIcon, or null if the path was invalid. */
-	public static ImageIcon createImageIcon( final URL imgURL ) 
-	{
+	public static ImageIcon createImageIcon( final URL imgURL ) {
 	    if (imgURL != null)
-	        return new ImageIcon( imgURL );
+	        return new ImageIcon(imgURL);
 	    else
 	        return null;
 	}
@@ -248,6 +242,7 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 			this.text = text;
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e) {
 			String fileName = null;
 			File dir = new File(text.getText());
@@ -281,6 +276,7 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 			this.text = text;
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e) {
 			File directory = new File(text.getText());
 			while (directory != null && !directory.exists())
@@ -338,6 +334,7 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 			this.text = text;
 		}
 
+		@Override
 		public void drop(DropTargetDropEvent event) {
 			try {
 				text.setText(getString(event));
@@ -345,6 +342,7 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 		}
 	}
 
+	@Override
 	public void keyPressed(KeyEvent e) {
 		int keyCode = e.getKeyCode();
 		if (keyCode == KeyEvent.VK_ESCAPE || (keyCode == KeyEvent.VK_W &&
@@ -353,7 +351,10 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 			windowClosing(null);
 	}
 
+	@Override
 	public void keyReleased(KeyEvent e) {}
+	
+	@Override
 	public void keyTyped(KeyEvent e) {}
 
 	public static void main(String[] args) {
