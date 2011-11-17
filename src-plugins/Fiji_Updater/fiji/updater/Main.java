@@ -3,11 +3,13 @@ package fiji.updater;
 import com.jcraft.jsch.UserInfo;
 
 import fiji.updater.logic.Checksummer;
+import fiji.updater.logic.FileUploader;
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginCollection.Filter;
 import fiji.updater.logic.PluginCollection.UpdateSite;
 import fiji.updater.logic.PluginObject;
 import fiji.updater.logic.PluginUploader;
+import fiji.updater.logic.SSHFileUploader;
 
 import fiji.updater.logic.PluginObject.Action;
 import fiji.updater.logic.PluginObject.Status;
@@ -155,6 +157,12 @@ public class Main {
 	public void download(PluginObject plugin) {
 		try {
 			new Downloader(progress).start(new OnePlugin(plugin));
+			if (Util.isLauncher(plugin.filename) && !Util.platform.startsWith("win")) try {
+				Runtime.getRuntime().exec(new String[] { "chmod", "0755", Util.prefix(plugin.filename) });
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new RuntimeException("Could not mark " + plugin.filename + " as executable");
+			}
 			System.err.println("Installed " + plugin.filename);
 		} catch (IOException e) {
 			System.err.println("IO error downloading "
@@ -254,8 +262,10 @@ public class Main {
 		String username = uploader.getDefaultUsername();
 		if (username == null || username.equals(""))
 			username = userInfo.getUsername("Login for " + getLongUpdateSiteName(updateSite));
-		if (!uploader.setLogin(username, userInfo))
+		FileUploader sshUploader = SSHFileUploader.getUploader(uploader, username, userInfo);
+		if (sshUploader == null)
 			die("Aborting");
+		uploader.setUploader(sshUploader);
 		try {
 			uploader.upload(progress);
 			plugins.write();

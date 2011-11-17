@@ -1,4 +1,4 @@
-package fiji.updater.ui;
+package fiji.updater.ui.ij1;
 
 import ij.Macro;
 

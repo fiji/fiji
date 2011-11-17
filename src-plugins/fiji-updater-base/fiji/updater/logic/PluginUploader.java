@@ -1,19 +1,12 @@
 package fiji.updater.logic;
 
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.UserInfo;
-
-import fiji.updater.Updater;
-
 import fiji.updater.logic.FileUploader.SourceFile;
 
 import fiji.updater.logic.PluginCollection.UpdateSite;
 
 import fiji.updater.util.Progress;
 import fiji.updater.util.Util;
-
-import ij.IJ;
-import ij.Prefs;
+import fiji.updater.util.UserInterface;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -56,7 +49,7 @@ public class PluginUploader {
 		this.plugins = plugins;
 		siteName = updateSite;
 		site = plugins.getUpdateSite(updateSite);
-		compressed = Updater.XML_COMPRESSED;
+		compressed = Util.XML_COMPRESSED;
 		if (site.sshHost == null || site.sshHost.equals(""))
 			uploader = new FileUploader(site.uploadDirectory);
 	}
@@ -65,27 +58,38 @@ public class PluginUploader {
 		return uploader != null;
 	}
 
+	public String getUploadProtocol() {
+		String host = site.sshHost;
+		int at = host.indexOf('@');
+		int colon = host.indexOf(':');
+		if (colon > 0 && colon < at)
+			return host.substring(0, colon);
+		return null;
+	}
+
 	public String getDefaultUsername() {
-		int at = site.sshHost.indexOf('@');
+		String host = site.sshHost;
+		if (host.startsWith("sftp:"))
+			host = host.substring(5);
+		int at = host.indexOf('@');
 		if (at > 0)
-			return site.sshHost.substring(0, at);
-		return Prefs.get(Updater.PREFS_USER, "");
+			return host.substring(0, at);
+		String name = UserInterface.get().getPref(Util.PREFS_USER);
+		if (name == null)
+			return "";
+		return name;
+	}
+
+	public String getUploadHost() {
+		return site.sshHost.substring(site.sshHost.indexOf('@') + 1);
+	}
+
+	public String getUploadDirectory() {
+		return site.uploadDirectory;
 	}
 
 	public void setUploader(FileUploader uploader) {
 		this.uploader = uploader;
-	}
-
-	public synchronized boolean setLogin(String username, UserInfo userInfo) {
-		try {
-			uploader = new SSHFileUploader(username,
-				site.sshHost.substring(site.sshHost.indexOf('@') + 1), site.uploadDirectory,
-				userInfo);
-			return true;
-		} catch (JSchException e) {
-			IJ.error("Failed to login");
-			return false;
-		}
 	}
 
 	protected class DbXmlFile implements SourceFile {
@@ -124,7 +128,7 @@ public class PluginUploader {
 			files.add(new UploadableFile(plugin));
 
 		// must be last lock
-		locks.add(Updater.XML_COMPRESSED);
+		locks.add(Util.XML_COMPRESSED);
 
 		// verify that the files have not changed in the meantime
 		for (SourceFile file : files)
@@ -221,22 +225,20 @@ public class PluginUploader {
 		try {
 			URLConnection connection;
 			try {
-				connection = new URL(site.url + Updater.XML_COMPRESSED).openConnection();
+				connection = new URL(site.url + Util.XML_COMPRESSED).openConnection();
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 				Thread.sleep(500);
-				connection = new URL(site.url + Updater.XML_COMPRESSED).openConnection();
+				connection = new URL(site.url + Util.XML_COMPRESSED).openConnection();
 			}
 			connection.setUseCaches(false);
 			long lastModified = connection.getLastModified();
 			connection.getInputStream().close();
-			if (IJ.debugMode)
-				IJ.log("got last modified " + lastModified + " = timestamp " + Util.timestamp(lastModified));
+			UserInterface.get().debug("got last modified " + lastModified + " = timestamp " + Util.timestamp(lastModified));
 			return lastModified;
 		}
 		catch (Exception e) {
-			if (IJ.debugMode)
-				IJ.handleException(e);
+			UserInterface.get().debug(e.getMessage());
 			if (plugins.size() == 0)
 				return -1; // assume initial upload
 			e.printStackTrace();

@@ -1,12 +1,8 @@
 package fiji.updater.logic;
 
-import fiji.updater.Updater;
-
 import fiji.updater.util.Progress;
 import fiji.updater.util.Progressable;
 import fiji.updater.util.Util;
-
-import ij.IJ;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -39,7 +35,7 @@ public class FileUploader extends Progressable {
 	long timestamp;
 
 	public FileUploader() {
-		this(Updater.UPDATE_DIRECTORY);
+		this(Util.UPDATE_DIRECTORY);
 	}
 
 	public FileUploader(String uploadDir) {

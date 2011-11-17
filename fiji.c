@@ -2455,7 +2455,10 @@ static void parse_command_line(void)
 			add_option_string(&options, arg, 1);
 		}
 		else if (!strcmp(main_argv[i], "--update")) {
+			skip_build_classpath = 1;
 			string_append_path_list(class_path, fiji_path("plugins/Fiji_Updater.jar"));
+			string_append_path_list(class_path, fiji_path("jars/fiji-updater-base.jar"));
+			string_append_path_list(class_path, fiji_path("jars/jsch-0.1.44.jar"));
 			main_class = "fiji.updater.Main";
 		}
 		else if (handle_one_option(&i, "--class-path", arg) ||
