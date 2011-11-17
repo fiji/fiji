@@ -2,6 +2,7 @@ package fiji.updater.ui;
 
 import fiji.updater.UptodateCheck;
 
+import fiji.updater.logic.Checksummer;
 import fiji.updater.logic.PluginCollection;
 
 import fiji.updater.logic.PluginCollection.UpdateSite;
@@ -302,6 +303,11 @@ public class SitesDialog extends JDialog implements ActionListener, ItemListener
 		protected boolean readFromSite(String name) {
 			try {
 				new XMLFileReader(plugins).read(name);
+				List<String> pluginsFromSite = new ArrayList<String>();
+				for (PluginObject plugin : plugins.forUpdateSite(name))
+					pluginsFromSite.add(plugin.filename);
+				Checksummer checksummer = new Checksummer(plugins, updaterFrame.getProgress("Czech Summer"));
+				checksummer.updateFromLocal(pluginsFromSite);
 			} catch (Exception e) {
 				error("Not a valid URL: " + url.getText());
 				return false;
