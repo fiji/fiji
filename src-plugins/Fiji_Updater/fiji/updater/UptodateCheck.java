@@ -3,6 +3,8 @@ package fiji.updater;
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginCollection.UpdateSite;
 
+import fiji.updater.ui.ij1.IJ1UserInterface;
+
 import fiji.updater.util.UserInterface;
 import fiji.updater.util.Util;
 
@@ -30,6 +32,7 @@ public class UptodateCheck implements PlugIn {
 	protected final static String PROXY_NEEDS_AUTHENTICATION = "Your HTTP proxy requires authentication";
 
 	public void run(String arg) {
+		UserInterface.set(new IJ1UserInterface());
 		Util.useSystemProxies();
 		if ("quick".equals(arg)) {
 			// "quick" is used on startup; don't produce an error in the Debian packaged version
