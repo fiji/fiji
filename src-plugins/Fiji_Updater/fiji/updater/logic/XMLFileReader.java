@@ -1,7 +1,5 @@
 package fiji.updater.logic;
 
-import fiji.updater.Updater;
-
 import fiji.updater.logic.PluginCollection.UpdateSite;
 
 import fiji.updater.logic.PluginObject.Status;
@@ -65,7 +63,7 @@ public class XMLFileReader extends DefaultHandler {
 		UpdateSite site = plugins.getUpdateSite(updateSite);
 		if (site == null)
 			throw new IOException("Unknown update site: " + site);
-		URL url = new URL(site.url + Updater.XML_COMPRESSED);
+		URL url = new URL(site.url + Util.XML_COMPRESSED);
 		URLConnection connection = url.openConnection();
 		long lastModified = connection.getLastModified();
 		read(updateSite, new GZIPInputStream(connection.getInputStream()), site.timestamp);
