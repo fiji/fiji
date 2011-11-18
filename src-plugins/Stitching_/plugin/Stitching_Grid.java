@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
+import loci.plugins.BF;
+import loci.plugins.in.ImporterOptions;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import mpicbg.imglib.type.numeric.integer.UnsignedShortType;
 import mpicbg.imglib.type.numeric.real.FloatType;
@@ -44,6 +46,7 @@ public class Stitching_Grid implements PlugIn
 	
 	//TODO: change to ""
 	public static String defaultDirectory = "/Volumes/Macintosh HD 2/Truman/standard";
+	public static String defaultSeriesFile = "";
 	public static boolean defaultConfirmFiles = true;
 	
 	//TODO: change back to "tile{iii}.tif"
@@ -98,19 +101,27 @@ public class Stitching_Grid implements PlugIn
 				gd.addNumericField( "First_file_index_y", defaultStartY, 0 );
 			}
 		}
-		gd.addDirectoryField( "Directory", defaultDirectory, 50 );
 		
-		if ( gridType == 5 )
-			gd.addCheckbox( "Confirm_files", defaultConfirmFiles );
-		
-		if ( gridType < 5 )			
-			gd.addStringField( "File_names for tiles", defaultFileNames, 50 );
-		
-		if ( gridType == 6 )
-			gd.addStringField( "Layout_file", defaultTileConfiguration, 50 );
+		if ( gridType == 6 && gridOrder == 1 )
+		{
+			gd.addFileField( "Multi_series_file", defaultSeriesFile, 50 );
+		}
 		else
-			gd.addStringField( "Output_textfile_name", defaultTileConfiguration, 50 );
-				
+		{
+			gd.addDirectoryField( "Directory", defaultDirectory, 50 );
+		
+			if ( gridType == 5 )
+				gd.addCheckbox( "Confirm_files", defaultConfirmFiles );
+			
+			if ( gridType < 5 )			
+				gd.addStringField( "File_names for tiles", defaultFileNames, 50 );
+			
+			if ( gridType == 6 )
+				gd.addStringField( "Layout_file", defaultTileConfiguration, 50 );
+			else
+				gd.addStringField( "Output_textfile_name", defaultTileConfiguration, 50 );
+		}
+		
 		gd.addChoice( "Fusion_method", CommonFunctions.fusionMethodListGrid, CommonFunctions.fusionMethodListGrid[ defaultFusionMethod ] );
 		gd.addNumericField( "Regression_threshold", defaultRegressionThreshold, 2 );
 		gd.addNumericField( "Max/avg_displacement_threshold", defaultDisplacementThresholdRelative, 2 );		
@@ -166,33 +177,45 @@ public class Stitching_Grid implements PlugIn
 			overlap = 0;
 		}
 		
-		String directory = defaultDirectory = gd.getNextString();
-		
+		String directory, outputFile, seriesFile;
 		final boolean confirmFiles;
-		
-		if ( gridType == 5 )
-			confirmFiles = defaultConfirmFiles = gd.getNextBoolean();
-		else
-			confirmFiles = false;
-		
 		final String filenames;
-		if ( gridType < 5 )
-			filenames = defaultFileNames = gd.getNextString();
+		
+		if ( gridType == 6 && gridOrder == 1 )
+		{
+			seriesFile = defaultSeriesFile = gd.getNextString();
+			outputFile = null;
+			directory = null;
+			filenames = null;
+			confirmFiles = false;
+		}
 		else
-			filenames = "";
-
-		String outputFile = defaultTileConfiguration = gd.getNextString();
+		{
+			directory = defaultDirectory = gd.getNextString();
+			seriesFile = null;
+				
+			if ( gridType == 5 )
+				confirmFiles = defaultConfirmFiles = gd.getNextBoolean();
+			else
+				confirmFiles = false;
+			
+			if ( gridType < 5 )
+				filenames = defaultFileNames = gd.getNextString();
+			else
+				filenames = "";
+	
+			outputFile = defaultTileConfiguration = gd.getNextString();
+		}
+		
 		params.fusionMethod = defaultFusionMethod = gd.getNextChoiceIndex();
 		params.regThreshold = defaultRegressionThreshold = gd.getNextNumber();
 		params.relativeThreshold = defaultDisplacementThresholdRelative = gd.getNextNumber();		
 		params.absoluteThreshold = defaultDisplacementThresholdAbsolute = gd.getNextNumber();
 		
-		if ( gridType < 5 )
+		if ( gridType != 5 )
 			params.computeOverlap = defaultComputeOverlap = gd.getNextBoolean();
 		else if ( gridType == 5 )
 			params.computeOverlap = true;
-		else if ( gridType == 6 )
-			params.computeOverlap = defaultComputeOverlap = gd.getNextBoolean();
 		
 		params.subpixelAccuracy = defaultSubpixelAccuracy = gd.getNextBoolean();
 		params.cpuMemChoice = defaultMemorySpeedChoice = gd.getNextChoiceIndex();
@@ -216,12 +239,14 @@ public class Stitching_Grid implements PlugIn
 			elements = getGridLayout( grid, gridSizeX, gridSizeY, overlap, directory, filenames, startI, startX, startY );
 		else if ( gridType == 5 )
 			elements = getAllFilesInDirectory( directory, confirmFiles );
+		else if ( gridType == 6 || gridOrder == 1 )
+			elements = getLayoutFromMultiSeriesFile( seriesFile );
 		else if ( gridType == 6 )
 			elements = getLayoutFromFile( directory, outputFile );
 		else
 			elements = null;
 		
-		if ( elements == null )
+		if ( elements == null || elements.size() < 2 )
 		{
 			IJ.log( "Could not initialise stitching." );
 			return;
@@ -387,9 +412,34 @@ public class Stitching_Grid implements PlugIn
     		element.close();
 	}
 	
-	protected ArrayList< ImageCollectionElement > getLayoutFromFile( final String directory, final String layoutFile )
+	protected ArrayList< ImageCollectionElement > getLayoutFromMultiSeriesFile( final String multiSeriesFile )
 	{
 		ArrayList< ImageCollectionElement > elements = new ArrayList< ImageCollectionElement >();
+		
+		ImporterOptions options;
+		try {
+			options = new ImporterOptions();
+			options.setId( new File( multiSeriesFile ).getAbsolutePath() );
+			options.setSplitChannels( false );
+			options.setSplitTimepoints( false );
+			options.setSplitFocalPlanes( false );
+			options.setAutoscale( false );
+			
+			final ImagePlus[] imp = BF.openImagePlus( options );
+			
+			IJ.log( "tiles: " + imp.length ); 
+			
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return elements;
+	}	
+	
+	protected ArrayList< ImageCollectionElement > getLayoutFromFile( final String directory, final String layoutFile )
+	{
+		final ArrayList< ImageCollectionElement > elements = new ArrayList< ImageCollectionElement >();
 		int dim = -1;
 		int index = 0;
 		
