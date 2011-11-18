@@ -1,12 +1,18 @@
 package plugin;
 import static stitching.CommonFunctions.addHyperLinkListener;
+import fiji.stacks.Hyperstack_rearranger;
+import ij.CompositeImage;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
+import ij.gui.MultiLineLabel;
+import ij.plugin.PlugIn;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import process.OverlayFusion;
 
 import mpicbg.imglib.interpolation.InterpolatorFactory;
 import mpicbg.imglib.interpolation.linear.LinearInterpolatorFactory;
@@ -20,7 +26,6 @@ import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
 import mpicbg.models.InvertibleBoundable;
 import mpicbg.models.Model;
-import mpicbg.models.Tile;
 import mpicbg.models.TranslationModel2D;
 import mpicbg.models.TranslationModel3D;
 import mpicbg.stitching.ComparePair;
@@ -30,16 +35,7 @@ import mpicbg.stitching.PairWiseStitchingImgLib;
 import mpicbg.stitching.PairWiseStitchingResult;
 import mpicbg.stitching.StitchingParameters;
 import mpicbg.stitching.fusion.Fusion;
-import fiji.stacks.Hyperstack_rearranger;
-import ij.CompositeImage;
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.WindowManager;
-import ij.gui.GenericDialog;
-import ij.gui.MultiLineLabel;
-import ij.plugin.PlugIn;
-import ij.process.ImageProcessor;
+import mpicbg.stitching.fusion.OverlayFusion;
 import stitching.CommonFunctions;
 
 

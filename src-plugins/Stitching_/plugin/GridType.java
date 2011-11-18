@@ -17,7 +17,7 @@ public class GridType
 {
 	final private String paperURL = "http://bioinformatics.oxfordjournals.org/cgi/content/abstract/btp184";
 	
-	final public static String[] choose1 = new String[]{ "Row-by-row", "Column-by-column", "Snake by rows", "Snake by columns", "Fixed position", "Unknown position", "From file" };
+	final public static String[] choose1 = new String[]{ "Grid: row-by-row", "Grid: column-by-column", "Grid: snake by rows", "Grid: snake by columns", "File defined position", "Unknown position", "Positions from file" };
 	final public static String[][] choose2 = new String[ choose1.length ][];
 	final public static String[] allChoices;
 	
@@ -57,16 +57,17 @@ public class GridType
 		images[ 5 ] = new ImageIcon[ 1 ];
 		images[ 5 ][ 0 ] = GenericDialogPlus.createImageIcon( getClass().getResource( "/images/unknown.png" ) );
 
-		images[ 6 ] = new ImageIcon[ 1 ];
+		images[ 6 ] = new ImageIcon[ 2 ];
 		images[ 6 ][ 0 ] = GenericDialogPlus.createImageIcon( getClass().getResource( "/images/fromFile.png" ) );
+		images[ 6 ][ 1 ] = GenericDialogPlus.createImageIcon( getClass().getResource( "/images/fromFile.png" ) );
 
-		final GenericDialogPlus gd = new GenericDialogPlus( "test" );
-		
-		gd.addChoice( "Grid_type", choose1, choose1[ Stitching_Grid.defaultGridChoice1 ] );
+		final GenericDialogPlus gd = new GenericDialogPlus( "Grid/Collection stitching" );
+		IJ.log( "dfgdfgdfgdgfdg");
+		gd.addChoice( "Type", choose1, choose1[ Stitching_Grid.defaultGridChoice1 ] );
 		
 		if ( !IJ.isMacro() )
 		{
-			gd.addChoice( "Grid_order", choose2[ Stitching_Grid.defaultGridChoice1 ], choose2[ Stitching_Grid.defaultGridChoice1 ][ Stitching_Grid.defaultGridChoice2 ] );
+			gd.addChoice( "Order", choose2[ Stitching_Grid.defaultGridChoice1 ], choose2[ Stitching_Grid.defaultGridChoice1 ][ Stitching_Grid.defaultGridChoice2 ] );
 			
 			try
 			{
@@ -114,7 +115,9 @@ public class GridType
 			final int tmp = gd.getNextChoiceIndex();
 			
 			// position
-			if ( tmp >= 8 )
+			if ( tmp == 11 )
+				order = 1;
+			else if ( tmp >= 8 )
 				order = 0;
 			else
 				order = tmp % 4;				
@@ -134,11 +137,11 @@ public class GridType
 		choose2[ 3 ] = new String[]{ "Down & Right                ", "Down & Left", "Up & Right", "Up & Left" };
 		choose2[ 4 ] = new String[]{ "Defined by filename         " };
 		choose2[ 5 ] = new String[]{ "All files in directory" };
-		choose2[ 6 ] = new String[]{ "Defined by TileConfiguration" };
+		choose2[ 6 ] = new String[]{ "Defined by TileConfiguration", "Defined by image metadata" };
 
 		// the interactive changing is not compatible with the macro language, 
 		// thats why we show all possible options and figure out what was meant
-		allChoices = new String[ 11 ];
+		allChoices = new String[ 12 ];
 		allChoices[ 0 ] = choose2[ 0 ][ 0 ];
 		allChoices[ 1 ] = choose2[ 0 ][ 1 ];
 		allChoices[ 2 ] = choose2[ 0 ][ 2 ];
@@ -149,7 +152,8 @@ public class GridType
 		allChoices[ 7 ] = choose2[ 1 ][ 3 ];
 		allChoices[ 8 ] = choose2[ 4 ][ 0 ];		
 		allChoices[ 9 ] = choose2[ 5 ][ 0 ];		
-		allChoices[ 10 ] = choose2[ 6 ][ 0 ];		
+		allChoices[ 10 ] = choose2[ 6 ][ 0 ];
+		allChoices[ 11 ] = choose2[ 6 ][ 1 ];
 	}
 	
 	protected final void imageSwitch( final Choice choice1, final Choice choice2, final ImageIcon[][] images, final ImageIcon display, final JLabel label )

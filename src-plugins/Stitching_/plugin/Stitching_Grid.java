@@ -4,7 +4,6 @@ import static stitching.CommonFunctions.addHyperLinkListener;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.ImagePlus;
-import ij.WindowManager;
 import ij.gui.MultiLineLabel;
 import ij.plugin.PlugIn;
 
@@ -20,15 +19,19 @@ import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.models.InvertibleBoundable;
 import mpicbg.models.TranslationModel2D;
 import mpicbg.models.TranslationModel3D;
-import mpicbg.spim.io.TextFileAccess;
 import mpicbg.stitching.CollectionStitchingImgLib;
 import mpicbg.stitching.ImageCollectionElement;
 import mpicbg.stitching.ImagePlusTimePoint;
 import mpicbg.stitching.StitchingParameters;
+import mpicbg.stitching.TextFileAccess;
 import mpicbg.stitching.fusion.Fusion;
 import stitching.CommonFunctions;
-import stitching.ImageInformation;
 
+/**
+ * 
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de)
+ *
+ */
 public class Stitching_Grid implements PlugIn
 {
 	final private String myURL = "http://fly.mpi-cbg.de/preibisch";
