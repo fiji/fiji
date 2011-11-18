@@ -74,7 +74,7 @@ public class GlobalOptimization
 			if ( tiles.size() == 0 )
 			{
 				
-				if ( params.dimensionality == 2 )
+				if ( params.dimensionality == 3 )
 				{
 					IJ.log( "Error: No correlated tiles found, setting the first tile to (0, 0)." );
 					TranslationModel3D model = (TranslationModel3D)fixedImage.getModel();

@@ -136,6 +136,12 @@ public class Stitching_Grid implements PlugIn
 		params.subpixelAccuracy = defaultSubpixelAccuracy = gd.getNextBoolean();
 		params.cpuMemChoice = defaultMemorySpeedChoice = gd.getNextChoiceIndex();
 		
+		// we need to set this
+		params.channel1 = 0;
+		params.channel2 = 0;
+		params.timeSelect = 0;
+		params.checkPeaks = 5;
+		
 		// define the parsing of filenames
 		// find how to parse
 		String replaceX = "{", replaceY = "{", replaceI = "{";
@@ -379,6 +385,10 @@ public class Stitching_Grid implements PlugIn
     	
     	// call the final stitiching
     	Stitching_Collection.stitchCollection( elements, params );
+    	
+    	// close all images
+    	for ( final ImageCollectionElement element : elements )
+    		element.open().close();
 	}
 	
 	// current snake directions ( if necessary )

@@ -61,9 +61,6 @@ public class Stitching_Collection
                 			final Roi roi1 = getROI( pair.getTile1().getElement(), pair.getTile2().getElement() );
                 			final Roi roi2 = getROI( pair.getTile2().getElement(), pair.getTile1().getElement() );
                 			
-                			pair.getImagePlus1().setRoi( roi1 );
-                			pair.getImagePlus2().setRoi( roi2 );
-                			
             				final PairWiseStitchingResult result = PairWiseStitchingImgLib.stitchPairwise( pair.getImagePlus1(), pair.getImagePlus2(), roi1, roi2, pair.getTimePoint1(), pair.getTimePoint2(), params );			
 
             				if ( params.dimensionality == 2 )
@@ -128,6 +125,11 @@ public class Stitching_Collection
 			if ( element.open() == null )
 				return null;
 		}
+		
+		// all ImagePlusTimePoints, each of them needs its own model
+		final ArrayList< ImagePlusTimePoint > listImp = new ArrayList< ImagePlusTimePoint >();
+		for ( final ImageCollectionElement element : elements )
+			listImp.add( new ImagePlusTimePoint( element.open(), element.getIndex(), 1, element.getModel(), element ) );
 	
 		// get the connecting tiles
 		final Vector< ComparePair > overlappingTiles = new Vector< ComparePair >();
@@ -151,9 +153,9 @@ public class Stitching_Collection
 				
 				if ( overlapping )
 				{
-					final ImagePlusTimePoint impA = new ImagePlusTimePoint( e1.open(), e1.getIndex(), 1, e1.getModel(), e1 );
-					final ImagePlusTimePoint impB = new ImagePlusTimePoint( e2.open(), e2.getIndex(), 1, e2.getModel(), e2 );
-					overlappingTiles.add( new ComparePair( impA, impB ) );
+					//final ImagePlusTimePoint impA = new ImagePlusTimePoint( e1.open(), e1.getIndex(), 1, e1.getModel().copy(), e1 );
+					//final ImagePlusTimePoint impB = new ImagePlusTimePoint( e2.open(), e2.getIndex(), 1, e2.getModel().copy(), e2 );
+					overlappingTiles.add( new ComparePair( listImp.get( i ), listImp.get( j ) ) );
 				}
 			}
 		

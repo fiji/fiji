@@ -78,7 +78,7 @@ public class ImageCollectionElement
 						size = new int[] { imp[ 0 ].getWidth(), imp[ 0 ].getHeight(), imp[ 0 ].getNSlices() };
 					
 					this.imp = imp[ 0 ];
-					this.imp.show();
+					//this.imp.show();
 					
 					return this.imp;
 				}
