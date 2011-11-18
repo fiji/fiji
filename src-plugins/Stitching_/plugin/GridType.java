@@ -62,7 +62,6 @@ public class GridType
 		images[ 6 ][ 1 ] = GenericDialogPlus.createImageIcon( getClass().getResource( "/images/fromFile.png" ) );
 
 		final GenericDialogPlus gd = new GenericDialogPlus( "Grid/Collection stitching" );
-		IJ.log( "dfgdfgdfgdgfdg");
 		gd.addChoice( "Type", choose1, choose1[ Stitching_Grid.defaultGridChoice1 ] );
 		
 		if ( !IJ.isMacro() )

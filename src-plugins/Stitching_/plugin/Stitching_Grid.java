@@ -44,20 +44,17 @@ public class Stitching_Grid implements PlugIn
 	public static int defaultGridSizeX = 2, defaultGridSizeY = 3;
 	public static double defaultOverlap = 20;
 	
-	//TODO: change to ""
-	public static String defaultDirectory = "/Volumes/Macintosh HD 2/Truman/standard";
+	public static String defaultDirectory = "";
 	public static String defaultSeriesFile = "";
 	public static boolean defaultConfirmFiles = true;
 	
-	//TODO: change back to "tile{iii}.tif"
-	public static String defaultFileNames = "{ii}.tif";
+	public static String defaultFileNames = "tile_{ii}.tif";
 	public static String defaultTileConfiguration = "TileConfiguration.txt";
 	public static boolean defaultComputeOverlap = true;
 	public static boolean defaultSubpixelAccuracy = true;
 	public static boolean writeOnlyTileConfStatic = false;
 	
-	//TODO: change to 1
-	public static int defaultStartI = 73;
+	public static int defaultStartI = 1;
 	public static int defaultStartX = 1;
 	public static int defaultStartY = 1;
 	public static int defaultFusionMethod = 0;
