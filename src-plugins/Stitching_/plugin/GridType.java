@@ -17,7 +17,7 @@ public class GridType
 {
 	final private String paperURL = "http://bioinformatics.oxfordjournals.org/cgi/content/abstract/btp184";
 	
-	final public static String[] choose1 = new String[]{ "Grid: row-by-row", "Grid: column-by-column", "Grid: snake by rows", "Grid: snake by columns", "File defined position", "Unknown position", "Positions from file" };
+	final public static String[] choose1 = new String[]{ "Grid: row-by-row", "Grid: column-by-column", "Grid: snake by rows", "Grid: snake by columns", "Filename defined position", "Unknown position", "Positions from file" };
 	final public static String[][] choose2 = new String[ choose1.length ][];
 	final public static String[] allChoices;
 	
