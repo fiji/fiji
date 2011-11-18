@@ -16,17 +16,25 @@ public class ImageCollectionElement
 	final int index;
 	Model<?> model;
 	int dimensionality;
-	float[] offset;
+	
+	//2d or 3d offset
+	float[] offset;	
+	
+	//2d or 3d size if image
+	int[] size;
 	
 	public ImageCollectionElement( final File file, final int index )
 	{
 		this.file = file;
-		this.index = index;
+		this.index = index;		
 	}
 	
 	public void setOffset( final float[] offset ) { this.offset = offset; }
 	public float[] getOffset() { return offset; }
 	public float getOffset( final int dim ) { return offset[ dim ]; }
+	
+	public int[] getDimensions() { return size; }
+	public int getDimension( final int dim ) { return size[ dim ]; }
 	
 	public int getIndex() { return index; }
 	
@@ -64,7 +72,15 @@ public class ImageCollectionElement
 				}
 				else
 				{
-					return imp[ 0 ];
+					if ( imp[ 0 ].getNSlices() == 1 )
+						size = new int[] { imp[ 0 ].getWidth(), imp[ 0 ].getHeight() };
+					else
+						size = new int[] { imp[ 0 ].getWidth(), imp[ 0 ].getHeight(), imp[ 0 ].getNSlices() };
+					
+					this.imp = imp[ 0 ];
+					this.imp.show();
+					
+					return this.imp;
 				}
 				
 			} catch ( Exception e ) 

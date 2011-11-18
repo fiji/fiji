@@ -10,6 +10,7 @@ import mpicbg.models.TranslationModel2D;
 import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.io.TextFileAccess;
 import mpicbg.stitching.ImagePlusTimePoint;
+import mpicbg.stitching.StitchingParameters;
 
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
@@ -89,7 +90,6 @@ public class Stitching_Grid implements PlugIn
 		gd.addNumericField( "Regression_threshold", defaultRegressionThreshold, 2 );
 		gd.addNumericField( "Max/avg_displacement_threshold", defaultDisplacementThresholdRelative, 2 );		
 		gd.addNumericField( "Absolute_displacement_threshold", defaultDisplacementThresholdAbsolute, 2 );		
-		gd.addCheckbox( "Create_only_preview", defaultOnlyPreview );
 		gd.addCheckbox( "Compute_overlap (otherwise use approximate grid coordinates)", defaultComputeOverlap );
 		gd.addCheckbox( "Subpixel_accuracy", defaultSubpixelAccuracy );
 		gd.addChoice( "Computation_parameters", CommonFunctions.cpuMemSelect, CommonFunctions.cpuMemSelect[ defaultMemorySpeedChoice ] );
@@ -104,6 +104,9 @@ public class Stitching_Grid implements PlugIn
 		if ( gd.wasCanceled() )
 			return;
 		
+		// the general stitching parameters
+		final StitchingParameters params = new StitchingParameters();
+				
 		final int gridSizeX = defaultGridSizeX = (int)Math.round(gd.getNextNumber());
 		final int gridSizeY = defaultGridSizeY = (int)Math.round(gd.getNextNumber());
 		final double overlap = defaultOverlap = gd.getNextNumber()/100.0;
@@ -125,14 +128,13 @@ public class Stitching_Grid implements PlugIn
 		String directory = defaultDirectory = gd.getNextString();
 		final String filenames = defaultFileNames = gd.getNextString();
 		final String outputFile = defaultTileConfiguration = gd.getNextString();
-		final int fusionMethod = defaultFusionMethod = gd.getNextChoiceIndex();
-		final double regressionThreshold = defaultRegressionThreshold = gd.getNextNumber();
-		final double displacementThresholdRelative = defaultDisplacementThresholdRelative = gd.getNextNumber();		
-		final double displacementThresholdAbsolute = defaultDisplacementThresholdAbsolute = gd.getNextNumber();
-		final boolean previewOnly = defaultOnlyPreview = gd.getNextBoolean();
-		final boolean computeOverlap = defaultComputeOverlap = gd.getNextBoolean();
-		final boolean subpixelAccuracy = defaultSubpixelAccuracy = gd.getNextBoolean();
-		final int memSpeed = defaultMemorySpeedChoice = gd.getNextChoiceIndex();
+		params.fusionMethod = defaultFusionMethod = gd.getNextChoiceIndex();
+		params.regThreshold = defaultRegressionThreshold = gd.getNextNumber();
+		params.relativeThreshold = defaultDisplacementThresholdRelative = gd.getNextNumber();		
+		params.absoluteThreshold = defaultDisplacementThresholdAbsolute = gd.getNextNumber();
+		params.computeOverlap = defaultComputeOverlap = gd.getNextBoolean();
+		params.subpixelAccuracy = defaultSubpixelAccuracy = gd.getNextBoolean();
+		params.cpuMemChoice = defaultMemorySpeedChoice = gd.getNextChoiceIndex();
 		
 		// define the parsing of filenames
 		// find how to parse
@@ -308,6 +310,8 @@ public class Stitching_Grid implements PlugIn
 			dimensionality = 3;
 		}
 		
+		params.dimensionality = dimensionality;
+		
 		// now get the approximate coordinates for each element
 		// that is easiest done incrementally
 		int xoffset = 0, yoffset = 0, zoffset = 0;
@@ -316,6 +320,9 @@ public class Stitching_Grid implements PlugIn
 		final String fileName = directory + outputFile;
 		final PrintWriter out = TextFileAccess.openFileWrite( fileName );
 
+		// an ArrayList containing all the ImageCollectionElements
+		final ArrayList< ImageCollectionElement > elements = new ArrayList< ImageCollectionElement >();
+		
     	for ( int y = 0; y < gridSizeY; y++ )
     	{
         	if ( y == 0 )
@@ -363,10 +370,15 @@ public class Stitching_Grid implements PlugIn
             		element.setModel( new TranslationModel2D() );
             		element.setOffset( new float[]{ xoffset, yoffset } );
             	}
+            	
+            	elements.add( element );
             }
     	}
     	
     	out.close();
+    	
+    	// call the final stitiching
+    	Stitching_Collection.stitchCollection( elements, params );
 	}
 	
 	// current snake directions ( if necessary )
@@ -376,12 +388,12 @@ public class Stitching_Grid implements PlugIn
 
 	protected void getPosition( final int[] currentPosition, final int i, final int gridType, final int gridOrder, final int sizeX, final int sizeY )
 	{
-		// gridType = { "Row-by-row", "Column-by-column", "Snake by rows", "Snake by columns", "Fixed position" };
-		// gridOrder
-//		choose2[ 0 ] = new String[]{ "Right & Down", "Left & Down", "Right & Up", "Left & Up" };
-//		choose2[ 1 ] = new String[]{ "Down & Right", "Down & Left", "Up & Right", "Up & Left" };
-//		choose2[ 2 ] = new String[]{ "Right & Down", "Left & Down", "Right & Up", "Left & Up" };
-//		choose2[ 3 ] = new String[]{ "Down & Right", "Down & Left", "Up & Right", "Up & Left" };
+		// gridType: "Row-by-row", "Column-by-column", "Snake by rows", "Snake by columns", "Fixed position"
+		// gridOrder:
+		//		choose2[ 0 ] = new String[]{ "Right & Down", "Left & Down", "Right & Up", "Left & Up" };
+		//		choose2[ 1 ] = new String[]{ "Down & Right", "Down & Left", "Up & Right", "Up & Left" };
+		//		choose2[ 2 ] = new String[]{ "Right & Down", "Left & Down", "Right & Up", "Left & Up" };
+		//		choose2[ 3 ] = new String[]{ "Down & Right", "Down & Left", "Up & Right", "Up & Left" };
 			
 		// init the position
 		if ( i == 0 )

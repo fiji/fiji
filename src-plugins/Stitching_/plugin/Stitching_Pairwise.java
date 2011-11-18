@@ -286,7 +286,7 @@ public class Stitching_Pairwise implements PlugIn
 			
 			if ( params.computeOverlap )
 			{
-				result = PairWiseStitchingImgLib.stitchPairwise( imp1, imp2, 1, 1, params );
+				result = PairWiseStitchingImgLib.stitchPairwise( imp1, imp2, imp1.getRoi(), imp2.getRoi(), 1, 1, params );
 				IJ.log( "shift (second relative to first): " + Util.printCoordinates( result.getOffset() ) + " correlation (R)=" + result.getCrossCorrelation() + " (" + (System.currentTimeMillis() - start) + " ms)");
 				
 				// update the dialog to show the numbers next time
@@ -374,7 +374,8 @@ public class Stitching_Pairwise implements PlugIn
 	                    		
 	                    		long start = System.currentTimeMillis();			
 
-	            				final PairWiseStitchingResult result = PairWiseStitchingImgLib.stitchPairwise( pair.getImagePlus1(), pair.getImagePlus2(), pair.getTimePoint1(), pair.getTimePoint2(), params );			
+	            				final PairWiseStitchingResult result = PairWiseStitchingImgLib.stitchPairwise( pair.getImagePlus1(), pair.getImagePlus2(), 
+	            						pair.getImagePlus1().getRoi(), pair.getImagePlus2().getRoi(), pair.getTimePoint1(), pair.getTimePoint2(), params );			
 
 	            				if ( params.dimensionality == 2 )
 	            					pair.setRelativeShift( new float[]{ result.getOffset( 0 ), result.getOffset( 1 ) } );
@@ -414,9 +415,9 @@ public class Stitching_Pairwise implements PlugIn
 		if ( imp1.getType() == ImagePlus.GRAY32 || imp2.getType() == ImagePlus.GRAY32 )
 			ci = fuse( new FloatType(), imp1, imp2, models, params );
 		else if ( imp1.getType() == ImagePlus.GRAY16 || imp2.getType() == ImagePlus.GRAY16 )
-			ci = fuse( new FloatType(), imp1, imp2, models, params );
+			ci = fuse( new UnsignedShortType(), imp1, imp2, models, params );
 		else
-			ci = fuse( new FloatType(), imp1, imp2, models, params );
+			ci = fuse( new UnsignedByteType(), imp1, imp2, models, params );
 		
 		ci.setTitle( params.fusedName );
 		
@@ -501,10 +502,10 @@ public class Stitching_Pairwise implements PlugIn
 		final ArrayList< ImagePlusTimePoint > listImp2 = new ArrayList< ImagePlusTimePoint >();
 		
 		for ( int timePoint1 = 1; timePoint1 <= imp1.getNFrames(); timePoint1++ )
-			listImp1.add( new ImagePlusTimePoint( imp1, 1, timePoint1, model.copy() ) );
+			listImp1.add( new ImagePlusTimePoint( imp1, 1, timePoint1, model.copy(), null ) );
 
 		for ( int timePoint2 = 1; timePoint2 <= imp2.getNFrames(); timePoint2++ )
-			listImp2.add( new ImagePlusTimePoint( imp2, 2, timePoint2, model.copy() ) );
+			listImp2.add( new ImagePlusTimePoint( imp2, 2, timePoint2, model.copy(), null ) );
 		
 		final Vector< ComparePair > pairs = new Vector< ComparePair >();		
 				

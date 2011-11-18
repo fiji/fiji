@@ -1,5 +1,6 @@
 package mpicbg.stitching;
 
+import plugin.ImageCollectionElement;
 import ij.ImagePlus;
 import mpicbg.models.Model;
 import mpicbg.models.Tile;
@@ -11,12 +12,16 @@ public class ImagePlusTimePoint extends Tile implements Comparable< ImagePlusTim
 	final int impId;
 	final int timePoint, dimensionality;
 	
-	public ImagePlusTimePoint( final ImagePlus imp, final int impId, final int timepoint, final Model model )
+	// might have one if called from grid/collection stitching
+	final ImageCollectionElement element;
+	
+	public ImagePlusTimePoint( final ImagePlus imp, final int impId, final int timepoint, final Model model, final ImageCollectionElement element )
 	{
 		super( model );
 		this.imp = imp;
 		this.impId = impId;
 		this.timePoint = timepoint;
+		this.element = element;
 		
 		if ( TranslationModel2D.class.isInstance( model ) )
 			dimensionality = 2;
@@ -27,6 +32,7 @@ public class ImagePlusTimePoint extends Tile implements Comparable< ImagePlusTim
 	public int getImpId() { return impId; }
 	public ImagePlus getImagePlus() { return imp; }
 	public int getTimePoint() { return timePoint; }
+	public ImageCollectionElement getElement() { return element; }
 
 	@Override
 	public int compareTo( final ImagePlusTimePoint o ) 
