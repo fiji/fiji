@@ -1,4 +1,4 @@
-package plugin;
+package mpicbg.stitching;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -78,12 +78,11 @@ public class ImageCollectionElement
 						size = new int[] { imp[ 0 ].getWidth(), imp[ 0 ].getHeight(), imp[ 0 ].getNSlices() };
 					
 					this.imp = imp[ 0 ];
-					//this.imp.show();
-					
 					return this.imp;
 				}
 				
-			} catch ( Exception e ) 
+			} 
+			catch ( Exception e ) 
 			{
 				IJ.log( "Cannot open file '" + file + "': " + e );
 				e.printStackTrace();
@@ -91,5 +90,11 @@ public class ImageCollectionElement
 			} 
 			
 		}
+	}
+
+	public void close() 
+	{
+		imp.close();
+		imp = null;
 	}
 }

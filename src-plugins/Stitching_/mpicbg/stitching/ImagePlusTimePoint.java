@@ -1,6 +1,5 @@
 package mpicbg.stitching;
 
-import plugin.ImageCollectionElement;
 import ij.ImagePlus;
 import mpicbg.models.Model;
 import mpicbg.models.Tile;

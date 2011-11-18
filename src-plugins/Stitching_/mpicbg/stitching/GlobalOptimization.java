@@ -69,20 +69,18 @@ public class GlobalOptimization
 				}
 			}
 			
-			IJ.log( "Tile size: " + tiles.size() );
-			
 			if ( tiles.size() == 0 )
 			{
 				
 				if ( params.dimensionality == 3 )
 				{
-					IJ.log( "Error: No correlated tiles found, setting the first tile to (0, 0)." );
+					IJ.log( "Error: No correlated tiles found, setting the first tile to (0, 0, 0)." );
 					TranslationModel3D model = (TranslationModel3D)fixedImage.getModel();
 					model.set( 0, 0, 0 );
 				}
 				else
 				{
-					IJ.log( "Error: No correlated tiles found, setting the first tile to (0, 0, 0)." );
+					IJ.log( "Error: No correlated tiles found, setting the first tile to (0, 0)." );
 					TranslationModel2D model = (TranslationModel2D)fixedImage.getModel();
 					model.set( 0, 0 );					
 				}
@@ -190,9 +188,6 @@ public class GlobalOptimization
 			imageInformationList.add( (ImagePlusTimePoint)t );
 		
 		Collections.sort( imageInformationList );
-		
-		
-		IJ.log(" image information list size =" + imageInformationList.size());
 		
 		return imageInformationList;
 	}
