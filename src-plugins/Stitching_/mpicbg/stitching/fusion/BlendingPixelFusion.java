@@ -2,8 +2,6 @@ package mpicbg.stitching.fusion;
 
 import java.util.ArrayList;
 
-import mpicbg.spim.fusion.BlendingSimple;
-
 public class BlendingPixelFusion implements PixelFusion
 {
 	final int numDimensions;
@@ -62,7 +60,7 @@ public class BlendingPixelFusion implements PixelFusion
 	public void addValue( final float value, final int imageId, final float[] localPosition ) 
 	{
 		// we are always inside the image, so we do not want 0.0
-		final double weight = Math.max( 0.00001, BlendingSimple.computeWeight( localPosition, dimensions[ imageId ], border, dimensionScaling, percentScaling ) );
+		final double weight = Math.max( 0.00001, computeWeight( localPosition, dimensions[ imageId ], border, dimensionScaling, percentScaling ) );
 		
 		weightSum += weight;
 		valueSum += value * weight;
@@ -79,5 +77,56 @@ public class BlendingPixelFusion implements PixelFusion
 
 	@Override
 	public PixelFusion copy() { return new BlendingPixelFusion( images ); }
-	
+
+	/**
+	 * From SPIM Registration
+	 * 
+	 * 
+	 * @param location
+	 * @param dimensions
+	 * @param border
+	 * @param dimensionScaling
+	 * @param percentScaling
+	 * @return
+	 */
+	final public static double computeWeight( final float[] location, final int[] dimensions, final float[] border, final float[] dimensionScaling, final float percentScaling )
+	{		
+		// compute multiplicative distance to the respective borders [0...1]
+		double minDistance = 1;
+		
+		for ( int dim = 0; dim < location.length; ++dim )
+		{
+			// the position in the image
+			final double localImgPos = location[ dim ];
+			
+			// the distance to the border that is closer
+			double value;
+			if ( dimensionScaling != null && dimensionScaling[ dim ] != 0 )
+			{
+				value = Math.max( 0, Math.min( localImgPos - border[ dim ]/dimensionScaling[ dim ], (dimensions[ dim ] - 1) - localImgPos - border[ dim ]/dimensionScaling[ dim ] ) );
+				value *= dimensionScaling[ dim ];
+			}
+			else
+			{
+				value = Math.max( 0, Math.min( localImgPos - border[ dim ], (dimensions[ dim ] - 1) - localImgPos - border[ dim ] ) );				
+			}
+						
+			final float imgAreaBlend = Math.round( percentScaling * 0.5f * dimensions[ dim ] );
+			
+			if ( value < imgAreaBlend )
+				value = value / imgAreaBlend;
+			else
+				value = 1;
+			
+			minDistance *= value;
+		}
+		
+		if ( minDistance == 1 )
+			return 1;
+		else if ( minDistance == 0)
+			return 0;
+		else
+			return ( Math.cos( (1 - minDistance) * Math.PI ) + 1 ) / 2;				
+	}
+
 }

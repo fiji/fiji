@@ -1,24 +1,39 @@
 package plugin;
 
 import static stitching.CommonFunctions.addHyperLinkListener;
-
-import java.io.File;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-
-import mpicbg.models.TranslationModel2D;
-import mpicbg.models.TranslationModel3D;
-import mpicbg.spim.io.TextFileAccess;
-import mpicbg.stitching.ImagePlusTimePoint;
-import mpicbg.stitching.StitchingParameters;
-
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.MultiLineLabel;
 import ij.plugin.PlugIn;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+
+import loci.plugins.BF;
+import loci.plugins.in.ImporterOptions;
+import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
+import mpicbg.imglib.type.numeric.integer.UnsignedShortType;
+import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.models.InvertibleBoundable;
+import mpicbg.models.TranslationModel2D;
+import mpicbg.models.TranslationModel3D;
+import mpicbg.stitching.CollectionStitchingImgLib;
+import mpicbg.stitching.ImageCollectionElement;
+import mpicbg.stitching.ImagePlusTimePoint;
+import mpicbg.stitching.StitchingParameters;
+import mpicbg.stitching.TextFileAccess;
+import mpicbg.stitching.fusion.Fusion;
 import stitching.CommonFunctions;
 
+/**
+ * 
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de)
+ *
+ */
 public class Stitching_Grid implements PlugIn
 {
 	final private String myURL = "http://fly.mpi-cbg.de/preibisch";
@@ -29,18 +44,17 @@ public class Stitching_Grid implements PlugIn
 	public static int defaultGridSizeX = 2, defaultGridSizeY = 3;
 	public static double defaultOverlap = 20;
 	
-	//TODO: change to ""
-	public static String defaultDirectory = "/Volumes/Macintosh HD 2/Truman/standard";
+	public static String defaultDirectory = "";
+	public static String defaultSeriesFile = "";
+	public static boolean defaultConfirmFiles = true;
 	
-	//TODO: change back to "tile{iii}.tif"
-	public static String defaultFileNames = "{ii}.tif";
+	public static String defaultFileNames = "tile_{ii}.tif";
 	public static String defaultTileConfiguration = "TileConfiguration.txt";
 	public static boolean defaultComputeOverlap = true;
 	public static boolean defaultSubpixelAccuracy = true;
 	public static boolean writeOnlyTileConfStatic = false;
 	
-	//TODO: change to 1
-	public static int defaultStartI = 73;
+	public static int defaultStartI = 1;
 	public static int defaultStartX = 1;
 	public static int defaultStartY = 1;
 	public static int defaultFusionMethod = 0;
@@ -65,32 +79,56 @@ public class Stitching_Grid implements PlugIn
 
 		final GenericDialogPlus gd = new GenericDialogPlus( "Grid stitching: " + GridType.choose1[ gridType ] + ", " + GridType.choose2[ gridType ][ gridOrder ] );
 
-		gd.addNumericField( "Grid_size_x", defaultGridSizeX, 0 );
-		gd.addNumericField( "Grid_size_y", defaultGridSizeY, 0 );
-		
-		gd.addSlider( "Tile_overlap [%]", 0, 100, defaultOverlap );
-		
-		// row-by-row, column-by-column or snake
-		// needs the same questions
-		if ( grid.getType() < 4 )
+		if ( gridType < 5 )
 		{
-			gd.addNumericField( "First_file_index_i", defaultStartI, 0 );
+			gd.addNumericField( "Grid_size_x", defaultGridSizeX, 0 );
+			gd.addNumericField( "Grid_size_y", defaultGridSizeY, 0 );
+			
+			gd.addSlider( "Tile_overlap [%]", 0, 100, defaultOverlap );
+			
+			// row-by-row, column-by-column or snake
+			// needs the same questions
+			if ( grid.getType() < 4 )
+			{
+				gd.addNumericField( "First_file_index_i", defaultStartI, 0 );
+			}
+			else
+			{
+				gd.addNumericField( "First_file_index_x", defaultStartX, 0 );
+				gd.addNumericField( "First_file_index_y", defaultStartY, 0 );
+			}
+		}
+		
+		if ( gridType == 6 && gridOrder == 1 )
+		{
+			gd.addFileField( "Multi_series_file", defaultSeriesFile, 50 );
 		}
 		else
 		{
-			gd.addNumericField( "First_file_index_x", defaultStartX, 0 );
-			gd.addNumericField( "First_file_index_y", defaultStartY, 0 );
+			gd.addDirectoryField( "Directory", defaultDirectory, 50 );
+		
+			if ( gridType == 5 )
+				gd.addCheckbox( "Confirm_files", defaultConfirmFiles );
+			
+			if ( gridType < 5 )			
+				gd.addStringField( "File_names for tiles", defaultFileNames, 50 );
+			
+			if ( gridType == 6 )
+				gd.addStringField( "Layout_file", defaultTileConfiguration, 50 );
+			else
+				gd.addStringField( "Output_textfile_name", defaultTileConfiguration, 50 );
 		}
-
-		gd.addDirectoryField( "Directory", defaultDirectory, 50 );
-		gd.addStringField( "File_names for tiles", defaultFileNames, 50 );
-		gd.addStringField( "Output_textfile_name", defaultTileConfiguration, 50 );
-				
+		
 		gd.addChoice( "Fusion_method", CommonFunctions.fusionMethodListGrid, CommonFunctions.fusionMethodListGrid[ defaultFusionMethod ] );
 		gd.addNumericField( "Regression_threshold", defaultRegressionThreshold, 2 );
 		gd.addNumericField( "Max/avg_displacement_threshold", defaultDisplacementThresholdRelative, 2 );		
-		gd.addNumericField( "Absolute_displacement_threshold", defaultDisplacementThresholdAbsolute, 2 );		
-		gd.addCheckbox( "Compute_overlap (otherwise use approximate grid coordinates)", defaultComputeOverlap );
+		gd.addNumericField( "Absolute_displacement_threshold", defaultDisplacementThresholdAbsolute, 2 );
+		
+		if ( gridType < 5 )
+			gd.addCheckbox( "Compute_overlap (otherwise use approximate grid coordinates)", defaultComputeOverlap );
+		else if ( gridType == 6 )
+			gd.addCheckbox( "Compute_overlap (otherwise apply coordinates from layout file)", defaultComputeOverlap );
+		
 		gd.addCheckbox( "Subpixel_accuracy", defaultSubpixelAccuracy );
 		gd.addChoice( "Computation_parameters", CommonFunctions.cpuMemSelect, CommonFunctions.cpuMemSelect[ defaultMemorySpeedChoice ] );
 		gd.addMessage("");
@@ -106,36 +144,495 @@ public class Stitching_Grid implements PlugIn
 		
 		// the general stitching parameters
 		final StitchingParameters params = new StitchingParameters();
-				
-		final int gridSizeX = defaultGridSizeX = (int)Math.round(gd.getNextNumber());
-		final int gridSizeY = defaultGridSizeY = (int)Math.round(gd.getNextNumber());
-		final double overlap = defaultOverlap = gd.getNextNumber()/100.0;
-
+		
+		final int gridSizeX, gridSizeY;
+		double overlap;
 		int startI = 0, startX = 0, startY = 0;
 		
-		// row-by-row, column-by-column or snake
-		// needs the same questions
-		if ( grid.getType() < 4 )
+		if ( gridType < 5 )
 		{
-			startI = defaultStartI = (int)Math.round(gd.getNextNumber());
+			gridSizeX = defaultGridSizeX = (int)Math.round(gd.getNextNumber());
+			gridSizeY = defaultGridSizeY = (int)Math.round(gd.getNextNumber());
+			overlap = defaultOverlap = gd.getNextNumber();
+			overlap /= 100.0;
+	
+			// row-by-row, column-by-column or snake
+			// needs the same questions
+			if ( grid.getType() < 4 )
+			{
+				startI = defaultStartI = (int)Math.round(gd.getNextNumber());
+			}
+			else // position
+			{
+				startX = defaultStartI = (int)Math.round(gd.getNextNumber());
+				startY = defaultStartI = (int)Math.round(gd.getNextNumber());			
+			}
 		}
-		else // position
+		else
 		{
-			startX = defaultStartI = (int)Math.round(gd.getNextNumber());
-			startY = defaultStartI = (int)Math.round(gd.getNextNumber());			
+			gridSizeX = gridSizeY = 0;
+			overlap = 0;
 		}
 		
-		String directory = defaultDirectory = gd.getNextString();
-		final String filenames = defaultFileNames = gd.getNextString();
-		final String outputFile = defaultTileConfiguration = gd.getNextString();
+		String directory, outputFile, seriesFile;
+		final boolean confirmFiles;
+		final String filenames;
+		
+		if ( gridType == 6 && gridOrder == 1 )
+		{
+			seriesFile = defaultSeriesFile = gd.getNextString();
+			outputFile = null;
+			directory = null;
+			filenames = null;
+			confirmFiles = false;
+		}
+		else
+		{
+			directory = defaultDirectory = gd.getNextString();
+			seriesFile = null;
+				
+			if ( gridType == 5 )
+				confirmFiles = defaultConfirmFiles = gd.getNextBoolean();
+			else
+				confirmFiles = false;
+			
+			if ( gridType < 5 )
+				filenames = defaultFileNames = gd.getNextString();
+			else
+				filenames = "";
+	
+			outputFile = defaultTileConfiguration = gd.getNextString();
+		}
+		
 		params.fusionMethod = defaultFusionMethod = gd.getNextChoiceIndex();
 		params.regThreshold = defaultRegressionThreshold = gd.getNextNumber();
 		params.relativeThreshold = defaultDisplacementThresholdRelative = gd.getNextNumber();		
 		params.absoluteThreshold = defaultDisplacementThresholdAbsolute = gd.getNextNumber();
-		params.computeOverlap = defaultComputeOverlap = gd.getNextBoolean();
+		
+		if ( gridType != 5 )
+			params.computeOverlap = defaultComputeOverlap = gd.getNextBoolean();
+		else if ( gridType == 5 )
+			params.computeOverlap = true;
+		
 		params.subpixelAccuracy = defaultSubpixelAccuracy = gd.getNextBoolean();
 		params.cpuMemChoice = defaultMemorySpeedChoice = gd.getNextChoiceIndex();
 		
+		// we need to set this
+		params.channel1 = 0;
+		params.channel2 = 0;
+		params.timeSelect = 0;
+		params.checkPeaks = 5;
+				
+		// for reading in writing the tileconfiguration file
+		directory = directory.replace('\\', '/');
+		directory = directory.trim();
+		if (directory.length() > 0 && !directory.endsWith("/"))
+			directory = directory + "/";
+		
+		// get all imagecollectionelements
+		final ArrayList< ImageCollectionElement > elements;
+		
+		if ( gridType < 5 )
+			elements = getGridLayout( grid, gridSizeX, gridSizeY, overlap, directory, filenames, startI, startX, startY );
+		else if ( gridType == 5 )
+			elements = getAllFilesInDirectory( directory, confirmFiles );
+		else if ( gridType == 6 || gridOrder == 1 )
+			elements = getLayoutFromMultiSeriesFile( seriesFile );
+		else if ( gridType == 6 )
+			elements = getLayoutFromFile( directory, outputFile );
+		else
+			elements = null;
+		
+		if ( elements == null || elements.size() < 2 )
+		{
+			IJ.log( "Could not initialise stitching." );
+			return;
+		}
+		
+		// open all images (if not done already by grid parsing) and test them, collect information
+		int numChannels = -1;
+		int numTimePoints = -1;
+		
+		boolean is2d = false;
+		boolean is3d = false;
+		
+		for ( final ImageCollectionElement element : elements )
+		{
+			if ( gridType >=5 )
+				IJ.log( "Loading: " + element.getFile().getAbsolutePath() + " ... " );
+			
+			long time = System.currentTimeMillis();
+			final ImagePlus imp = element.open();
+			time = System.currentTimeMillis() - time;
+			
+			if ( imp == null )
+				return;
+			
+			int lastNumChannels = numChannels;
+			int lastNumTimePoints = numTimePoints;
+			numChannels = imp.getNChannels();
+			numTimePoints = imp.getNFrames();
+			
+			if ( imp.getNSlices() > 1 )
+			{
+				if ( gridType >=5 )
+					IJ.log( "" + imp.getWidth() + "x" + imp.getHeight() + "x" + imp.getNSlices() + "px, channels=" + numChannels + ", timepoints=" + numTimePoints + " (" + time + " ms)" );
+				is3d = true;					
+			}
+			else
+			{
+				if ( gridType >=5 )
+					IJ.log( "" + imp.getWidth() + "x" + imp.getHeight() + "px, channels=" + numChannels + ", timepoints=" + numTimePoints + " (" + time + " ms)" );
+				is2d = true;
+			}
+			
+			// test validity of images
+			if ( is2d && is3d )
+			{
+				IJ.log( "Some images are 2d, some are 3d ... cannot proceed" );
+				return;
+			}
+			
+			if ( ( lastNumChannels != numChannels ) && lastNumChannels != -1 )
+			{
+				IJ.log( "Number of channels per image changes ... cannot proceed" );
+				return;					
+			}
+
+			if ( ( lastNumTimePoints != numTimePoints ) && lastNumTimePoints != -1 )
+			{
+				IJ.log( "Number of timepoints per image changes ... cannot proceed" );
+				return;					
+			}
+			
+			if ( gridType == 5 )
+			{
+				if ( is2d )
+				{
+					element.setDimensionality( 2 );
+            		element.setModel( new TranslationModel2D() );
+            		element.setOffset( new float[]{ 0, 0 } );
+				}
+				else
+				{
+					element.setDimensionality( 3 );
+            		element.setModel( new TranslationModel3D() );
+            		element.setOffset( new float[]{ 0, 0, 0 } );
+				}
+				
+			}
+		}
+		
+		// the dimensionality of each image that will be correlated (might still have more channels or timepoints)
+		final int dimensionality;
+		
+		if ( is2d )
+			dimensionality = 2;
+		else
+			dimensionality = 3;
+		
+		params.dimensionality = dimensionality;
+    	
+    	// write the initial tileconfiguration
+    	if ( gridType != 6 )
+    		writeTileConfiguration( new File( directory, outputFile ), elements );
+    	    	
+    	// call the final stitiching
+    	final ArrayList<ImagePlusTimePoint> optimized = CollectionStitchingImgLib.stitchCollection( elements, params );
+
+    	// output the result
+		for ( final ImagePlusTimePoint imt : optimized )
+			IJ.log( imt.getImagePlus().getTitle() + ": " + imt.getModel() );
+		
+    	// write the file tileconfiguration
+		if ( params.computeOverlap )
+		{
+			if ( outputFile.endsWith( ".txt" ) )
+				outputFile = outputFile.substring( 0, outputFile.length() - 4 ) + ".registered.txt";
+			else
+				outputFile = outputFile + ".registered.txt";
+				
+			writeRegisteredTileConfiguration( new File( directory, outputFile ), elements );
+		}
+		
+		// fuse		
+		if ( params.fusionMethod != CommonFunctions.fusionMethodListGrid.length - 1 )
+		{
+			long time = System.currentTimeMillis();
+			IJ.log( "Fusing ..." );
+			
+			// first prepare the models and get the targettype
+			final ArrayList<InvertibleBoundable> models = new ArrayList< InvertibleBoundable >();
+			final ArrayList<ImagePlus> images = new ArrayList<ImagePlus>();
+			
+			boolean is32bit = false;
+			boolean is16bit = false;
+			boolean is8bit = false;
+			
+			for ( final ImagePlusTimePoint imt : optimized )
+			{
+				final ImagePlus imp = imt.getImagePlus();
+				
+				if ( imp.getType() == ImagePlus.GRAY32 )
+					is32bit = true;
+				else if ( imp.getType() == ImagePlus.GRAY16 )
+					is16bit = true;
+				else if ( imp.getType() == ImagePlus.GRAY8 )
+					is8bit = true;
+				
+				images.add( imp );
+			}
+			
+			for ( int f = 1; f <= numTimePoints; ++f )
+				for ( final ImagePlusTimePoint imt : optimized )
+					models.add( (InvertibleBoundable)imt.getModel() );
+	
+			ImagePlus imp = null;
+			
+			if ( is32bit )
+				imp = Fusion.fuse( new FloatType(), images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod );
+			else if ( is16bit )
+				imp = Fusion.fuse( new UnsignedShortType(), images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod );
+			else if ( is8bit )
+				imp = Fusion.fuse( new UnsignedByteType(), images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod );
+			else
+				IJ.log( "Unknown image type for fusion." );
+			
+			IJ.log( "Finished ... (" + (System.currentTimeMillis() - time) + " ms)");
+			
+			if ( imp != null )
+				imp.show();
+		}
+		
+    	// close all images
+    	for ( final ImageCollectionElement element : elements )
+    		element.close();
+	}
+	
+	protected ArrayList< ImageCollectionElement > getLayoutFromMultiSeriesFile( final String multiSeriesFile )
+	{
+		ArrayList< ImageCollectionElement > elements = new ArrayList< ImageCollectionElement >();
+		
+		ImporterOptions options;
+		try {
+			options = new ImporterOptions();
+			options.setId( new File( multiSeriesFile ).getAbsolutePath() );
+			options.setSplitChannels( false );
+			options.setSplitTimepoints( false );
+			options.setSplitFocalPlanes( false );
+			options.setAutoscale( false );
+			
+			final ImagePlus[] imp = BF.openImagePlus( options );
+			
+			IJ.log( "tiles: " + imp.length ); 
+			
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return elements;
+	}	
+	
+	protected ArrayList< ImageCollectionElement > getLayoutFromFile( final String directory, final String layoutFile )
+	{
+		final ArrayList< ImageCollectionElement > elements = new ArrayList< ImageCollectionElement >();
+		int dim = -1;
+		int index = 0;
+		
+		try
+		{
+			final BufferedReader in = TextFileAccess.openFileRead( new File( directory, layoutFile ) );
+			int lineNo = 0;
+			
+			while ( in.ready() )
+			{
+				String line = in.readLine().trim();
+				lineNo++;
+				if ( !line.startsWith( "#" ) && line.length() > 3 )
+				{
+					if ( line.startsWith( "dim" ) )
+					{
+						String entries[] = line.split( "=" );
+						if ( entries.length != 2 )
+						{
+							System.out.println( "Stitching_Grid.getLayoutFromFile: Line " + lineNo + " does not look like [ dim = n ]: " + line);
+							IJ.log( "Stitching_Grid.getLayoutFromFile: Line " + lineNo + " does not look like [ dim = n ]: " + line);
+							return null;						
+						}
+						
+						try
+						{
+							dim = Integer.parseInt( entries[1].trim() );
+						}
+						catch ( NumberFormatException e )
+						{
+							System.out.println( "Stitching_Grid.getLayoutFromFile: Line " + lineNo + ": Cannot parse dimensionality: " + entries[1].trim());
+							IJ.log( "Stitching_Grid.getLayoutFromFile: Line " + lineNo + ": Cannot parse dimensionality: " + entries[1].trim());
+							return null;														
+						}
+					}
+					else
+					{
+						if ( dim < 0 )
+						{
+							System.out.println( "Stitching_Grid.getLayoutFromFile: Line " + lineNo + ": Header missing, should look like [dim = n], but first line is: " + line);
+							IJ.log( "Stitching_Grid.getLayoutFromFile: Line " + lineNo + ": Header missing, should look like [dim = n], but first line is: " + line);
+							return null;							
+						}
+						
+						if ( dim < 2 || dim > 3 )
+						{
+							System.out.println( "Stitching_Grid.getLayoutFromFile: Line " + lineNo + ": only dimensions of 2 and 3 are supported: " + line);
+							IJ.log( "Stitching_Grid.getLayoutFromFile: Line " + lineNo + ": only dimensions of 2 and 3 are supported: " + line);
+							return null;							
+						}
+						
+						// read image tiles
+						String entries[] = line.split(";");
+						if (entries.length != 3)
+						{
+							System.out.println( "Stitching_Grid.getLayoutFromFile: Line " + lineNo + " does not have 3 entries! [fileName; ImagePlus; (x,y,...)]");
+							IJ.log( "Stitching_Grid.getLayoutFromFile: Line " + lineNo + " does not have 3 entries! [fileName; ImagePlus; (x,y,...)]");
+							return null;						
+						}
+						String imageName = entries[0].trim();
+						String imp = entries[1].trim();
+						
+						if (imageName.length() == 0 && imp.length() == 0)
+						{
+							System.out.println( "Stitching_Grid.getLayoutFromFile: Line " + lineNo + ": You have to give a filename or a ImagePlus [fileName; ImagePlus; (x,y,...)]: " + line);
+							IJ.log( "Stitching_Grid.getLayoutFromFile: Line " + lineNo + ": You have to give a filename or a ImagePlus [fileName; ImagePlus; (x,y,...)]: " + line);
+							return null;						
+						}
+						
+						String point = entries[2].trim();
+						if (!point.startsWith("(") || !point.endsWith(")"))
+						{
+							System.out.println( "Stitching_Grid.getLayoutFromFile: Line " + lineNo + ": Wrong format of coordinates: (x,y,...): " + point);
+							IJ.log( "Stitching_Grid.getLayoutFromFile: Line " + lineNo + ": Wrong format of coordinates: (x,y,...): " + point);
+							return null;
+						}
+						
+						point = point.substring(1, point.length() - 1);
+						String points[] = point.split(",");
+						if (points.length != dim)
+						{
+							System.out.println( "Stitching_Grid.getLayoutFromFile: Line " + lineNo + ": Wrong format of coordinates: (x,y,z,..), dim = " + dim + ": " + point);
+							IJ.log( "Stitching_Grid.getLayoutFromFile: Line " + lineNo + ": Wrong format of coordinates: (x,y,z,...), dim = " + dim + ": " + point);
+							return null;
+						}
+						
+						ImageCollectionElement element = new ImageCollectionElement( new File( directory, imageName ), index++ );
+						element.setDimensionality( dim );
+								
+						if ( dim == 3 )
+							element.setModel( new TranslationModel3D() );
+						else
+							element.setModel( new TranslationModel2D() );
+
+						final float[] offset = new float[ dim ];
+						for ( int i = 0; i < dim; i++ )
+						{
+							try
+							{
+								offset[ i ] = Float.parseFloat( points[i].trim() ); 
+							}
+							catch (NumberFormatException e)
+							{
+								System.out.println( "Stitching_Grid.getLayoutFromFile: Line " + lineNo + ": Cannot parse number: " + points[i].trim());
+								IJ.log( "Stitching_Grid.getLayoutFromFile: Line " + lineNo + ": Cannot parse number: " + points[i].trim());
+								return null;							
+							}
+						}
+						
+						element.setOffset( offset );
+						elements.add( element );
+					}
+				}
+			}
+		}
+		catch ( IOException e )
+		{
+			System.out.println( "Stitch_Grid.getLayoutFromFile: " + e );
+			IJ.log( "Stitching_Grid.getLayoutFromFile: " + e );
+			return null;
+		};
+		
+		return elements;
+	}
+	
+	protected ArrayList< ImageCollectionElement > getAllFilesInDirectory( final String directory, final boolean confirmFiles )
+	{
+		// get all files from the directory
+		final File dir = new File( directory );
+		if ( !dir.isDirectory() )
+		{
+			IJ.log( "'" + directory + "' is not a directory. stop.");
+			return null;
+		}
+		
+		final String[] imageFiles = dir.list();
+		final ArrayList<String> files = new ArrayList<String>();
+		for ( final String fileName : imageFiles )
+		{
+			File file = new File( dir, fileName );
+			
+			if ( file.isFile() && !file.isHidden() && !fileName.endsWith( ".txt" ) && !fileName.endsWith( ".TXT" ) )
+			{
+				IJ.log( file.getPath() );
+				files.add( fileName );
+			}
+		}
+		
+		IJ.log( "Found " + files.size() + " files (we ignore hidden and .txt files)." );
+		
+		if ( files.size() < 2 )
+		{
+			IJ.log( "Only " + files.size() + " files found in '" + dir.getPath() + "', you need at least 2 - stop." );
+			return null ;
+		}
+		
+		final boolean[] useFile = new boolean[ files.size() ];
+		for ( int i = 0; i < files.size(); ++i )
+			useFile[ i ] = true;
+		
+		if ( confirmFiles )
+		{
+			final GenericDialogPlus gd = new GenericDialogPlus( "Confirm files" );
+			
+			for ( final String name : files )
+				gd.addCheckbox( name, true );
+			
+			gd.showDialog();
+			
+			if ( gd.wasCanceled() )
+				return null;
+			
+			for ( int i = 0; i < files.size(); ++i )
+				useFile[ i ] = gd.getNextBoolean();
+		}
+	
+		final ArrayList< ImageCollectionElement > elements = new ArrayList< ImageCollectionElement >();
+
+		for ( int i = 0; i < files.size(); ++i )
+			if ( useFile [ i ] )
+				elements.add( new ImageCollectionElement( new File( directory, files.get( i ) ), i ) );
+		
+		if ( elements.size() < 2 )
+		{
+			IJ.log( "Only " + elements.size() + " files selected, you need at least 2 - stop." );
+			return null ;			
+		}
+		
+		return elements;
+	}
+	
+	protected ArrayList< ImageCollectionElement > getGridLayout( final GridType grid, final int gridSizeX, final int gridSizeY, final double overlap, final String directory, final String filenames, final int startI, final int startX, final int startY )
+	{
+		final int gridType = grid.getType();
+		final int gridOrder = grid.getOrder();
+
 		// define the parsing of filenames
 		// find how to parse
 		String replaceX = "{", replaceY = "{", replaceI = "{";
@@ -188,12 +685,6 @@ public class Stitching_Grid implements PlugIn
 			}			
 		}
 		
-		// for reading in writing the tileconfiguration file
-		directory = directory.replace('\\', '/');
-		directory = directory.trim();
-		if (directory.length() > 0 && !directory.endsWith("/"))
-			directory = directory + "/";
-		
 		// determine the layout
 		final ImageCollectionElement[][] gridLayout = new ImageCollectionElement[ gridSizeX ][ gridSizeY ];
 		
@@ -226,14 +717,11 @@ public class Stitching_Grid implements PlugIn
 	            	gridLayout[ x ][ y ] = new ImageCollectionElement( new File( directory, file ), i++ );
 				}
 		}
-
+		
 		// based on the minimum size we will compute the initial arrangement
 		int minWidth = Integer.MAX_VALUE;
 		int minHeight = Integer.MAX_VALUE;
 		int minDepth = Integer.MAX_VALUE;
-		
-		int numChannels = -1;
-		int numTimePoints = -1;
 		
 		boolean is2d = false;
 		boolean is3d = false;
@@ -242,28 +730,23 @@ public class Stitching_Grid implements PlugIn
 		for ( int y = 0; y < gridSizeY; ++y )
 			for ( int x = 0; x < gridSizeX; ++x )
 			{
-				IJ.log( "Loading (" + x + ", " + y + "): " + gridLayout[ x ][ y ].file.getAbsolutePath() + " ... " );
+				IJ.log( "Loading (" + x + ", " + y + "): " + gridLayout[ x ][ y ].getFile().getAbsolutePath() + " ... " );
 				
 				long time = System.currentTimeMillis();
 				final ImagePlus imp = gridLayout[ x ][ y ].open();
 				time = System.currentTimeMillis() - time;
 				
 				if ( imp == null )
-					return;
-				
-				int lastNumChannels = numChannels;
-				int lastNumTimePoints = numTimePoints;
-				numChannels = imp.getNChannels();
-				numTimePoints = imp.getNFrames();
+					return null;
 				
 				if ( imp.getNSlices() > 1 )
 				{
-					IJ.log( "" + imp.getWidth() + "x" + imp.getHeight() + "x" + imp.getNSlices() + "px, channels=" + numChannels + ", timepoints=" + numTimePoints + " (" + time + " ms)" );
+					IJ.log( "" + imp.getWidth() + "x" + imp.getHeight() + "x" + imp.getNSlices() + "px, channels=" + imp.getNChannels() + ", timepoints=" + imp.getNFrames() + " (" + time + " ms)" );
 					is3d = true;					
 				}
 				else
 				{
-					IJ.log( "" + imp.getWidth() + "x" + imp.getHeight() + "px, channels=" + numChannels + ", timepoints=" + numTimePoints + " (" + time + " ms)" );
+					IJ.log( "" + imp.getWidth() + "x" + imp.getHeight() + "px, channels=" + imp.getNChannels() + ", timepoints=" + imp.getNFrames() + " (" + time + " ms)" );
 					is2d = true;
 				}
 				
@@ -271,19 +754,7 @@ public class Stitching_Grid implements PlugIn
 				if ( is2d && is3d )
 				{
 					IJ.log( "Some images are 2d, some are 3d ... cannot proceed" );
-					return;
-				}
-				
-				if ( ( lastNumChannels != numChannels ) && x != 0 && y != 0 )
-				{
-					IJ.log( "Number of channels per image changes ... cannot proceed" );
-					return;					
-				}
-
-				if ( ( lastNumTimePoints != numTimePoints ) && x != 0 && y != 0 )
-				{
-					IJ.log( "Number of timepoints per image changes ... cannot proceed" );
-					return;					
+					return null;
 				}
 
 				if ( imp.getWidth() < minWidth )
@@ -296,30 +767,17 @@ public class Stitching_Grid implements PlugIn
 					minDepth = imp.getNSlices();
 			}
 		
-		// the dimensionality of each image that will be correlated (might still have more channels or timepoints)
 		final int dimensionality;
 		
-		if ( is2d )
-		{
-			IJ.log( "Reference dimensions (smallest of all images) for grid layout: " + minWidth + " x " + minHeight + "px." );
-			dimensionality = 2;
-		}
-		else
-		{
-			IJ.log( "Reference dimensions (smallest of all images) for grid layout: " + minWidth + " x " + minHeight + " x " + minDepth + "px." );
+		if ( is3d )
 			dimensionality = 3;
-		}
-		
-		params.dimensionality = dimensionality;
-		
+		else
+			dimensionality = 2;
+			
 		// now get the approximate coordinates for each element
 		// that is easiest done incrementally
 		int xoffset = 0, yoffset = 0, zoffset = 0;
     	
-    	// write the tileconfiguration
-		final String fileName = directory + outputFile;
-		final PrintWriter out = TextFileAccess.openFileWrite( fileName );
-
 		// an ArrayList containing all the ImageCollectionElements
 		final ArrayList< ImageCollectionElement > elements = new ArrayList< ImageCollectionElement >();
 		
@@ -334,14 +792,6 @@ public class Stitching_Grid implements PlugIn
             {
         		final ImageCollectionElement element = gridLayout[ x ][ y ];
         		
-            	if ( x == 0 && y == 0 && out != null )
-            	{
-        			out.println( "# Define the number of dimensions we are working on" );
-        	        out.println( "dim = " + dimensionality );
-        	        out.println( "" );
-        	        out.println( "# Define the image coordinates" );
-            	}
-            	
             	if ( x == 0 && y == 0 )
             		xoffset = yoffset = zoffset = 0;
             	
@@ -349,15 +799,7 @@ public class Stitching_Grid implements PlugIn
             		xoffset = 0;
             	else 
             		xoffset += (int)( minWidth * ( 1 - overlap ) );
-            	
-            	if ( out != null )
-            	{
-            		if ( dimensionality == 3 )
-            			out.println( element.getFile().getAbsolutePath() + "; ; (" + xoffset + ", " + yoffset + ", " + zoffset + ")");
-            		else
-            			out.println( element.getFile().getAbsolutePath() + "; ; (" + xoffset + ", " + yoffset + ")");
-            	}            	
-            	
+            	            	
             	element.setDimensionality( dimensionality );
             	
             	if ( dimensionality == 3 )
@@ -375,16 +817,66 @@ public class Stitching_Grid implements PlugIn
             }
     	}
     	
-    	out.close();
-    	
-    	// call the final stitiching
-    	Stitching_Collection.stitchCollection( elements, params );
+    	return elements;
 	}
 	
 	// current snake directions ( if necessary )
 	// they need a global state
 	int snakeDirectionX = 0; 
 	int snakeDirectionY = 0; 
+	
+	protected void writeTileConfiguration( final File file, final ArrayList< ImageCollectionElement > elements )
+	{
+    	// write the initial tileconfiguration
+		final PrintWriter out = TextFileAccess.openFileWrite( file );
+		final int dimensionality = elements.get( 0 ).getDimensionality();
+		
+		out.println( "# Define the number of dimensions we are working on" );
+        out.println( "dim = " + dimensionality );
+        out.println( "" );
+        out.println( "# Define the image coordinates" );
+        
+        for ( final ImageCollectionElement element : elements )
+        {
+    		if ( dimensionality == 3 )
+    			out.println( element.getFile().getName() + "; ; (" + element.getOffset( 0 ) + ", " + element.getOffset( 1 ) + ", " + element.getOffset( 2 ) + ")");
+    		else
+    			out.println( element.getFile().getName() + "; ; (" + element.getOffset( 0 ) + ", " + element.getOffset( 1 ) + ")");        	
+        }
+
+    	out.close();		
+	}
+
+	protected void writeRegisteredTileConfiguration( final File file, final ArrayList< ImageCollectionElement > elements )
+	{
+    	// write the initial tileconfiguration
+		final PrintWriter out = TextFileAccess.openFileWrite( file );
+		final int dimensionality = elements.get( 0 ).getDimensionality();
+		
+		out.println( "# Define the number of dimensions we are working on" );
+        out.println( "dim = " + dimensionality );
+        out.println( "" );
+        out.println( "# Define the image coordinates" );
+        
+        for ( final ImageCollectionElement element : elements )
+        {
+    		if ( dimensionality == 3 )
+    		{
+    			final TranslationModel3D m = (TranslationModel3D)element.getModel();
+    			out.println( element.getFile().getName() + "; ; (" + m.getTranslation()[ 0 ] + ", " + m.getTranslation()[ 1 ] + ", " + m.getTranslation()[ 2 ] + ")");
+    		}
+    		else
+    		{
+    			final TranslationModel2D m = (TranslationModel2D)element.getModel();
+    			final float[] tmp = new float[ 2 ];
+    			m.applyInPlace( tmp );
+    			
+    			out.println( element.getFile().getName() + "; ; (" + tmp[ 0 ] + ", " + tmp[ 1 ] + ")");
+    		}
+        }
+
+    	out.close();		
+	}
 
 	protected void getPosition( final int[] currentPosition, final int i, final int gridType, final int gridOrder, final int sizeX, final int sizeY )
 	{
@@ -597,11 +1089,6 @@ public class Stitching_Grid implements PlugIn
 			output = "0" + output;
 		
 		return output;
-	}
-	
-	public static ImagePlus openHyperStack()
-	{
-		return null;
 	}
 }
  

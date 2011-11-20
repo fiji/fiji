@@ -2703,6 +2703,17 @@ static void parse_command_line(void)
 	if (default_arguments->length)
 		add_options(&options, default_arguments->buffer, 1);
 
+	if (add_class_path_option) {
+		add_option(&options, "-classpath", 1);
+		add_option_copy(&options, class_path->buffer, 1);
+	}
+
+	if (jdb)
+		add_option_copy(&options, main_class, 1);
+
+	if (!strcmp(main_class, "org.apache.tools.ant.Main"))
+		add_java_home_to_path();
+
 	if (is_default_main_class(main_class)) {
 		if (allow_multiple)
 			add_option(&options, "-port0", 1);
@@ -2710,6 +2721,7 @@ static void parse_command_line(void)
 			add_option(&options, "-port7", 1);
 		add_option(&options, "-Dsun.java.command=Fiji", 0);
 	}
+
 	// If there is no -- but some options unknown to IJ1, DWIM it
 	if (!dashdash && is_default_main_class(main_class)) {
 		for (i = 1; i < main_argc; i++) {
@@ -2736,17 +2748,6 @@ static void parse_command_line(void)
 		main_argv += dashdash - 1;
 		main_argc -= dashdash - 1;
 	}
-
-	if (add_class_path_option) {
-		add_option(&options, "-classpath", 1);
-		add_option_copy(&options, class_path->buffer, 1);
-	}
-
-	if (!strcmp(main_class, "org.apache.tools.ant.Main"))
-		add_java_home_to_path();
-
-	if (jdb)
-		add_option_copy(&options, main_class, 1);
 
 	/* handle "--headless script.ijm" gracefully */
 	if (headless && is_default_main_class(main_class)) {
