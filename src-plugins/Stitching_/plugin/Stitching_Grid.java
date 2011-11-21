@@ -13,6 +13,12 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
+import loci.common.services.ServiceFactory;
+import loci.formats.ChannelSeparator;
+import loci.formats.IFormatReader;
+import loci.formats.meta.IMetadata;
+import loci.formats.meta.MetadataRetrieve;
+import loci.formats.services.OMEXMLService;
 import loci.plugins.BF;
 import loci.plugins.in.ImporterOptions;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
@@ -28,6 +34,7 @@ import mpicbg.stitching.StitchingParameters;
 import mpicbg.stitching.TextFileAccess;
 import mpicbg.stitching.fusion.Fusion;
 import stitching.CommonFunctions;
+import stitching.ImageInformation;
 
 /**
  * 
@@ -53,6 +60,9 @@ public class Stitching_Grid implements PlugIn
 	public static boolean defaultComputeOverlap = true;
 	public static boolean defaultSubpixelAccuracy = true;
 	public static boolean writeOnlyTileConfStatic = false;
+	
+	public static boolean defaultIgnoreCalibration = false;
+	public static double defaultIncreaseOverlap = 10;
 	
 	public static int defaultStartI = 1;
 	public static int defaultStartX = 1;
@@ -126,8 +136,14 @@ public class Stitching_Grid implements PlugIn
 		
 		if ( gridType < 5 )
 			gd.addCheckbox( "Compute_overlap (otherwise use approximate grid coordinates)", defaultComputeOverlap );
-		else if ( gridType == 6 )
+		else if ( gridType == 6 && gridOrder == 0 )
 			gd.addCheckbox( "Compute_overlap (otherwise apply coordinates from layout file)", defaultComputeOverlap );
+		else if ( gridType == 6 && gridOrder == 1 )
+		{
+			gd.addCheckbox( "Compute_overlap (otherwise trust coordinates in the file)", defaultComputeOverlap );
+			gd.addCheckbox( "Ignore_Calibration", defaultIgnoreCalibration );
+			gd.addSlider( "Increase_overlap [%]", 0, 100, defaultIncreaseOverlap );
+		}
 		
 		gd.addCheckbox( "Subpixel_accuracy", defaultSubpixelAccuracy );
 		gd.addChoice( "Computation_parameters", CommonFunctions.cpuMemSelect, CommonFunctions.cpuMemSelect[ defaultMemorySpeedChoice ] );
@@ -213,6 +229,19 @@ public class Stitching_Grid implements PlugIn
 			params.computeOverlap = defaultComputeOverlap = gd.getNextBoolean();
 		else if ( gridType == 5 )
 			params.computeOverlap = true;
+
+		final double increaseOverlap;
+		final boolean ignoreCalibration;
+		if ( gridType == 6 && gridOrder == 1 )
+		{
+			ignoreCalibration = defaultIgnoreCalibration = gd.getNextBoolean();
+			increaseOverlap = defaultIncreaseOverlap = gd.getNextNumber();
+		}
+		else
+		{
+			ignoreCalibration = false;
+			increaseOverlap = 0;
+		}
 		
 		params.subpixelAccuracy = defaultSubpixelAccuracy = gd.getNextBoolean();
 		params.cpuMemChoice = defaultMemorySpeedChoice = gd.getNextChoiceIndex();
@@ -240,7 +269,7 @@ public class Stitching_Grid implements PlugIn
 		else if ( gridType == 5 )
 			elements = getAllFilesInDirectory( directory, confirmFiles );
 		else if ( gridType == 6 && gridOrder == 1 )
-			elements = getLayoutFromMultiSeriesFile( seriesFile );
+			elements = getLayoutFromMultiSeriesFile( seriesFile, increaseOverlap, ignoreCalibration );
 		else if ( gridType == 6 )
 			elements = getLayoutFromFile( directory, outputFile );
 		else
@@ -351,7 +380,7 @@ public class Stitching_Grid implements PlugIn
 			IJ.log( imt.getImagePlus().getTitle() + ": " + imt.getModel() );
 		
     	// write the file tileconfiguration
-		if ( params.computeOverlap )
+		if ( params.computeOverlap && outputFile != null )
 		{
 			if ( outputFile.endsWith( ".txt" ) )
 				outputFile = outputFile.substring( 0, outputFile.length() - 4 ) + ".registered.txt";
@@ -415,12 +444,149 @@ public class Stitching_Grid implements PlugIn
     		element.close();
 	}
 	
-	protected ArrayList< ImageCollectionElement > getLayoutFromMultiSeriesFile( final String multiSeriesFile )
+	protected ArrayList< ImageCollectionElement > getLayoutFromMultiSeriesFile( final String multiSeriesFile, final double increaseOverlap, final boolean ignoreCalibration )
 	{
-		ArrayList< ImageCollectionElement > elements = new ArrayList< ImageCollectionElement >();
+		if ( multiSeriesFile == null || multiSeriesFile.length() == 0 )
+		{
+			IJ.log( "Filename is empty!" );
+			return null;
+		}
+
+		final ArrayList< ImageCollectionElement > elements = new ArrayList< ImageCollectionElement >();		
 		
+		final IFormatReader r = new ChannelSeparator();
+		
+		try 
+		{
+			final ServiceFactory factory = new ServiceFactory();
+			final OMEXMLService service = factory.getInstance( OMEXMLService.class );
+			final IMetadata meta = service.createOMEXMLMetadata();
+			r.setMetadataStore( meta );
+
+			r.setId( multiSeriesFile );
+
+			final int numSeries = r.getSeriesCount();
+			
+			// IJ.log( "numSeries:  " + numSeries );
+			
+			if ( numSeries == 1 )
+			{
+				IJ.log( "File contains only one tile: " + multiSeriesFile );
+				return null;
+			}
+			
+			// get maxZ
+			int dim = 2;
+			for ( int series = 0; series < numSeries; ++series )
+				if ( r.getSizeZ() > 1 )
+					dim = 3;
+
+			// IJ.log( "dim:  " + dim );
+
+			for ( int series = 0; series < numSeries; ++series )
+			{
+				// IJ.log( "fetching data for series:  " + series );
+				r.setSeries( series );
+
+				final MetadataRetrieve retrieve = (MetadataRetrieve)r.getMetadataStore();
+
+				// stage coordinates (per plane and series)
+				Double tmp;
+				double locationX, locationY, locationZ;
+				
+				tmp = retrieve.getPlanePositionX( series, 0 );
+				if ( tmp != null )
+					locationX = tmp;
+				else
+					locationX = 0;				
+				// IJ.log( "locationX:  " + locationX );
+				
+				tmp = retrieve.getPlanePositionY( series, 0 );
+				if ( tmp != null )
+					locationY = tmp;
+				else
+					locationY = 0;				
+				// IJ.log( "locationY:  " + locationY );
+				
+				tmp = retrieve.getPlanePositionZ( series, 0 );
+				if ( tmp != null )
+					locationZ = tmp;
+				else
+					locationZ = 0;				
+				// IJ.log( "locationZ:  " + locationZ );
+
+				if ( !ignoreCalibration )
+				{
+					// calibration
+					double calX = 1, calY = 1, calZ = 1;
+					Double cal;
+					final String dimOrder = r.getDimensionOrder().toUpperCase();
+					
+					final int posX = dimOrder.indexOf( 'X' );
+					cal = retrieve.getPixelsPhysicalSizeX( 0 ).getValue();
+					if ( posX >= 0 && cal != null && cal.floatValue() != 0 )
+						calX = cal.floatValue(); 
+	
+					// IJ.log( "calibrationX:  " + calX );
+	
+					final int posY = dimOrder.indexOf( 'Y' );
+					cal = retrieve.getPixelsPhysicalSizeY( 0 ).getValue();
+					if ( posY >= 0 && cal != null && cal.floatValue() != 0 )
+						calY = cal.floatValue();
+	
+					// IJ.log( "calibrationY:  " + calY );
+	
+					final int posZ = dimOrder.indexOf( 'Z' );
+					cal = retrieve.getPixelsPhysicalSizeZ( 0 ).getValue();
+					if ( posZ >= 0 && cal != null && cal.floatValue() != 0 )
+						calZ = cal.floatValue();
+				
+					// IJ.log( "calibrationZ:  " + calZ );
+	
+					// location in pixel values;
+					locationX /= calX;
+					locationY /= calY;
+					locationZ /= calZ;
+				}
+				
+				// increase overlap if desired
+				locationX *= (100.0-increaseOverlap)/100.0;
+				locationY *= (100.0-increaseOverlap)/100.0;
+				locationZ *= (100.0-increaseOverlap)/100.0;
+				
+				// create ImageInformationList
+				
+				final ImageCollectionElement element;
+				
+				if ( dim == 2 )
+				{
+					element = new ImageCollectionElement( new File( multiSeriesFile ), series );
+					element.setModel( new TranslationModel2D() );
+					element.setOffset( new float[]{ (float)locationX, (float)locationY } );
+					element.setDimensionality( 2 );
+				}
+				else
+				{
+					element = new ImageCollectionElement( new File( multiSeriesFile ), series );
+					element.setModel( new TranslationModel3D() );
+					element.setOffset( new float[]{ (float)locationX, (float)locationY, (float)locationZ } );
+					element.setDimensionality( 3 );
+				}
+				
+				elements.add( element );
+			}
+		}
+		catch ( Exception ex ) 
+		{ 
+			IJ.log("Exception: " + ex.getMessage());
+			ex.printStackTrace();
+			return null; 
+		}
+
+		// open all images
 		ImporterOptions options;
-		try {
+		try 
+		{
 			options = new ImporterOptions();
 			options.setId( new File( multiSeriesFile ).getAbsolutePath() );
 			options.setSplitChannels( false );
@@ -428,13 +594,40 @@ public class Stitching_Grid implements PlugIn
 			options.setSplitFocalPlanes( false );
 			options.setAutoscale( false );
 			
-			final ImagePlus[] imp = BF.openImagePlus( options );
+			options.setOpenAllSeries( true );		
 			
-			IJ.log( "tiles: " + imp.length ); 
+			final ImagePlus[] imps = BF.openImagePlus( options );
 			
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
+			if ( imps.length != elements.size() )
+			{
+				IJ.log( "Inconsistent series layout. Metadata says " + elements.size() + " tiles, but contains only " + imps.length + " images/tiles." );
+				
+				for ( ImagePlus imp : imps )
+					if ( imp != null )
+						imp.close();
+				
+				return null;
+			}
+			
+			for ( int series = 0; series < elements.size(); ++series )
+			{
+				final ImageCollectionElement element = elements.get( series );
+				element.setImagePlus( imps[ series ] );
+				
+				if ( element.getDimensionality() == 2 )
+					IJ.log( "series " + series + ": position = (" + element.getOffset( 0 ) + "," + element.getOffset( 1 ) + ") [px], " +
+							"size = (" + element.getDimension( 0 ) + "," + element.getDimension( 1 ) + ")" );
+				else
+					IJ.log( "series " + series + ": position = (" + element.getOffset( 0 ) + "," + element.getOffset( 1 ) + "," + element.getOffset( 2 ) + ") [px], " +
+							"size = (" + element.getDimension( 0 ) + "," + element.getDimension( 1 ) + "," + element.getDimension( 2 ) + ")" );
+			}
+			
+		} 
+		catch (Exception e) 
+		{
+			IJ.log( "Cannot open multiseries file: " + e );
 			e.printStackTrace();
+			return null;
 		}
 
 		return elements;

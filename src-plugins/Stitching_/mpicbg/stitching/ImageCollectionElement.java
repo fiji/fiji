@@ -46,6 +46,21 @@ public class ImageCollectionElement
 	
 	public File getFile() { return file; }
 	
+	/**
+	 * Used by the multi-series stitching
+	 * 
+	 * @param imp - the ImagePlus of this series
+	 */
+	public void setImagePlus( final ImagePlus imp ) 
+	{ 
+		this.imp = imp; 
+		
+		if ( imp.getNSlices() == 1 )
+			size = new int[] { imp.getWidth(), imp.getHeight() };
+		else
+			size = new int[] { imp.getWidth(), imp.getHeight(), imp.getNSlices() };	
+	}
+	
 	public ImagePlus open()
 	{
 		if ( imp != null )
