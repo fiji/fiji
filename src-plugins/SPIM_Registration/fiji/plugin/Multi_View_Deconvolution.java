@@ -1,6 +1,7 @@
 package fiji.plugin;
 
 import fiji.util.gui.GenericDialogPlus;
+import ij.IJ;
 import ij.gui.GenericDialog;
 import ij.gui.MultiLineLabel;
 import ij.plugin.PlugIn;
@@ -8,14 +9,18 @@ import ij.plugin.PlugIn;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.Date;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
+import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.spim.Reconstruction;
 import mpicbg.spim.fusion.FusionControl;
 import mpicbg.spim.fusion.PreDeconvolutionFusion;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
+import mpicbg.spim.postprocessing.deconvolution.ExtractPSF;
 import mpicbg.spim.registration.ViewStructure;
 
 /**
@@ -55,12 +60,25 @@ public class Multi_View_Deconvolution implements PlugIn
 		
 		final int numViews = viewStructure.getNumViews();
 		
+		/*
 		for ( int view = 0; view < numViews; ++view )
 		{
 			ImageJFunctions.show( fusion.getFusedImage( view ) );
 			ImageJFunctions.show( fusion.getWeightImage( view ) );
 		}
+		*/
 		
+		// extract the beads
+		IJ.log( new Date( System.currentTimeMillis() ) +": Extracting Point spread functions." );
+		final ExtractPSF extractPSF = new ExtractPSF( viewStructure );
+		extractPSF.setPSFSize( 21, false );
+		extractPSF.extract();
+		
+		final ArrayList< Image< FloatType > > pointSpreadFunctions = extractPSF.getPSFs();
+		final Image< FloatType > averagePSF = extractPSF.getAveragePSF();
+		
+		for ( final Image< FloatType > psf : pointSpreadFunctions )
+			ImageJFunctions.show( psf );
 	}
 
 	public static boolean fusionUseContentBasedStatic = false;
@@ -251,7 +269,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd2.addMessage( "" );
 		gd2.addNumericField( "Crop_output_image_offset_x", Multi_View_Fusion.cropOffsetXStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_offset_y", Multi_View_Fusion.cropOffsetYStatic, 0 );
-		gd2.addNumericField( "Crop_output_image_offset_x", Multi_View_Fusion.cropOffsetZStatic, 0 );
+		gd2.addNumericField( "Crop_output_image_offset_z", Multi_View_Fusion.cropOffsetZStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_size_x", Multi_View_Fusion.cropSizeXStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_size_y", Multi_View_Fusion.cropSizeYStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_size_z", Multi_View_Fusion.cropSizeZStatic, 0 );

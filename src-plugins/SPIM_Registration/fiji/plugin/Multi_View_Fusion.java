@@ -74,12 +74,12 @@ public class Multi_View_Fusion implements PlugIn
 	public static boolean displayFusedImageStatic = true;
 	public static boolean saveFusedImageStatic = true;
 	public static int outputImageScalingStatic = 1;
-	public static int cropOffsetXStatic = 0;
-	public static int cropOffsetYStatic = 0;
-	public static int cropOffsetZStatic = 0;
-	public static int cropSizeXStatic = 0;
-	public static int cropSizeYStatic = 0;
-	public static int cropSizeZStatic = 0;
+	public static int cropOffsetXStatic = 285;
+	public static int cropOffsetYStatic = 353;
+	public static int cropOffsetZStatic = 375;
+	public static int cropSizeXStatic = 727;
+	public static int cropSizeYStatic = 395;
+	public static int cropSizeZStatic = 325;
 	
 	protected SPIMConfiguration getParameters( final boolean multichannel ) 
 	{
@@ -282,7 +282,7 @@ public class Multi_View_Fusion implements PlugIn
 		gd2.addNumericField( "Downsample_output image n-times", outputImageScalingStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_offset_x", cropOffsetXStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_offset_y", cropOffsetYStatic, 0 );
-		gd2.addNumericField( "Crop_output_image_offset_x", cropOffsetZStatic, 0 );
+		gd2.addNumericField( "Crop_output_image_offset_z", cropOffsetZStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_size_x", cropSizeXStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_size_y", cropSizeYStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_size_z", cropSizeZStatic, 0 );

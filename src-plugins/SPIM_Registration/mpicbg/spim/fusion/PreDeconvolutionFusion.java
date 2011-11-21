@@ -382,9 +382,9 @@ public class PreDeconvolutionFusion extends SPIMImageFusion
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Closing all input images (Channel " + channelIndex +  ").");
 
-		// unload images
-		for ( final ViewDataBeads view : views ) 
-			view.closeImage();
+		// do not unload images, we need them to extract the beads!
+		//for ( final ViewDataBeads view : views ) 
+		//	view.closeImage();
 			
 		// close weighteners		
 		// close isolated pixel weighteners
