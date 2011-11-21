@@ -79,6 +79,77 @@ public class ExtractPSF
 	public Image< FloatType > getPSF( final int index ) { return pointSpreadFunctions.get( index ); }
 	public Image< FloatType > getAveragePSF() { return avgPSF; }
 	
+	/**
+	 * Get projection along the smallest dimension (which is usually the rotation axis)
+	 * 
+	 * @return - the averaged, projected PSF
+	 */
+	public Image< FloatType > getMaxProjectionAveragePSF()
+	{
+		final int[] dimensions = avgPSF.getDimensions();
+		
+		int minSize = dimensions[ 0 ];
+		int minDim = 0;
+		
+		for ( int d = 0; d < dimensions.length; ++d )
+		{
+			if ( avgPSF.getDimension( d ) < minSize )
+			{
+				minSize = avgPSF.getDimension( d );
+				minDim = d;
+			}
+		}
+		
+		final int[] projDim = new int[ dimensions.length - 1 ];
+		
+		int dim = 0;
+		int sizeProjection = 0;
+		
+		// the new dimensions
+		for ( int d = 0; d < dimensions.length; ++d )
+			if ( d != minDim )
+				projDim[ dim++ ] = dimensions[ d ];
+			else
+				sizeProjection = dimensions[ d ];
+		
+		final Image< FloatType > proj = avgPSF.getImageFactory().createImage( projDim );
+		
+		final LocalizableByDimCursor< FloatType > psfIterator = avgPSF.createLocalizableByDimCursor();
+		final LocalizableCursor< FloatType > projIterator = proj.createLocalizableCursor();
+		
+		final int[] tmp = new int[ avgPSF.getNumDimensions() ];
+		
+		while ( projIterator.hasNext() )
+		{
+			projIterator.fwd();
+
+			dim = 0;
+			for ( int d = 0; d < dimensions.length; ++d )
+				if ( d != minDim )
+					tmp[ d ] = projIterator.getPosition( dim++ );
+
+			tmp[ minDim ] = -1;
+			
+			float maxValue = -Float.MAX_VALUE;
+			
+			psfIterator.setPosition( tmp );
+			for ( int i = 0; i < sizeProjection; ++i )
+			{
+				psfIterator.fwd( minDim );
+				final float value = psfIterator.getType().get();
+				
+				if ( value > maxValue )
+					maxValue = value;
+			}
+			
+			projIterator.getType().set( maxValue );
+		}
+		
+		proj.setName( "Averaged PSF of all views for " +viewStructure.getID() );
+		
+		return proj;
+	}
+	
 	public void extract()
 	{
 		final ArrayList<ViewDataBeads > views = viewStructure.getViews();

@@ -75,10 +75,12 @@ public class Multi_View_Deconvolution implements PlugIn
 		extractPSF.extract();
 		
 		final ArrayList< Image< FloatType > > pointSpreadFunctions = extractPSF.getPSFs();
-		final Image< FloatType > averagePSF = extractPSF.getAveragePSF();
+		final Image< FloatType > averagePSF = extractPSF.getMaxProjectionAveragePSF();
 		
-		for ( final Image< FloatType > psf : pointSpreadFunctions )
-			ImageJFunctions.show( psf );
+		//for ( final Image< FloatType > psf : pointSpreadFunctions )
+		//	ImageJFunctions.show( psf );
+		
+		ImageJFunctions.show( averagePSF );
 	}
 
 	public static boolean fusionUseContentBasedStatic = false;
