@@ -488,7 +488,7 @@ public class MiniMaven {
 			String path = System.getProperty("user.home") + "/.m2/repository/" + groupId.replace('.', '/') + "/" + artifactId + "/";
 			if (version == null)
 				version = findLocallyCachedVersion(path);
-			if (version == null || artifactId.equals("tools")) {
+			if (version == null || version.startsWith("[") || artifactId.equals("tools")) {
 				// try to find the .jar in Fiji's jars/ dir
 				String jarName = artifactId.equals("tools") ? "javac.jar" : artifactId + ".jar";
 				File file = new File(System.getProperty("fiji.dir"), "jars/" + jarName);
