@@ -149,14 +149,14 @@ public class DataContainer<T extends RealType<T>> {
 	}
 
 	protected void calculateStatistics() {
-		meanCh1 = ImageStatistics.getImageMean(sourceImage1);
-		meanCh2 = ImageStatistics.getImageMean(sourceImage2);
-		minCh1 = ImageStatistics.getImageMin(sourceImage1).getRealDouble();
-		minCh2 = ImageStatistics.getImageMin(sourceImage2).getRealDouble();
-		maxCh1 = ImageStatistics.getImageMax(sourceImage1).getRealDouble();
-		maxCh2 = ImageStatistics.getImageMax(sourceImage2).getRealDouble();
-		integralCh1 = ImageStatistics.getImageIntegral(sourceImage1);
-		integralCh2 = ImageStatistics.getImageIntegral(sourceImage2);
+		meanCh1 = ImageStatistics.getImageMean(sourceImage1, mask);
+		meanCh2 = ImageStatistics.getImageMean(sourceImage2, mask);
+		minCh1 = ImageStatistics.getImageMin(sourceImage1, mask).getRealDouble();
+		minCh2 = ImageStatistics.getImageMin(sourceImage2, mask).getRealDouble();
+		maxCh1 = ImageStatistics.getImageMax(sourceImage1, mask).getRealDouble();
+		maxCh2 = ImageStatistics.getImageMax(sourceImage2, mask).getRealDouble();
+		integralCh1 = ImageStatistics.getImageIntegral(sourceImage1, mask);
+		integralCh2 = ImageStatistics.getImageIntegral(sourceImage2, mask);
 	}
 
 	/**
