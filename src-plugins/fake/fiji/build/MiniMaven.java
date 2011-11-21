@@ -476,6 +476,8 @@ public class MiniMaven {
 		protected POM findLocallyCachedPOM(String groupId, String artifactId, String version, boolean quiet) throws IOException, ParserConfigurationException, SAXException {
 			if (groupId == null)
 				return null;
+			if (version != null && version.equals(""))
+				version = null;
 			String key = groupId + ">" + artifactId;
 			if (localPOMCache.containsKey(key)) {
 				POM result = localPOMCache.get(key); // may be null
