@@ -12,9 +12,13 @@ import ij.process.Blitter;
 import ij.process.ImageProcessor;
 
 import java.awt.Checkbox;
+import java.awt.Frame;
 import java.awt.Rectangle;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -155,11 +159,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	public boolean showDialog() {
 		// get IDs of open windows
 		int[] windowList = WindowManager.getIDList();
-		// if there are no windows open, cancel
-		if (windowList == null) {
-			IJ.noImage();
-			return false;
-		} else if (windowList.length < 2) {
+		// if there are less than 2 windows open, cancel
+		if (windowList == null || windowList.length < 2) {
 			IJ.showMessage("At least 2 images must be open!");
 			return false;
 		}
@@ -374,9 +375,9 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		}
 
 		// create a results handler
-		List<ResultHandler<T>> listOfResultHandlers = new ArrayList<ResultHandler<T>>();
-		PDFWriter<T> pdfWriter = new PDFWriter<T>(container);
-		SingleWindowDisplay<T> swDisplay = new SingleWindowDisplay<T>(container, pdfWriter);
+		final List<ResultHandler<T>> listOfResultHandlers = new ArrayList<ResultHandler<T>>();
+		final PDFWriter<T> pdfWriter = new PDFWriter<T>(container);
+		final SingleWindowDisplay<T> swDisplay = new SingleWindowDisplay<T>(container, pdfWriter);
 		listOfResultHandlers.add(swDisplay);
 		listOfResultHandlers.add(pdfWriter);
 		//ResultHandler<T> resultHandler = new EasyDisplay<T>(container);
@@ -446,6 +447,15 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		}
 		// do the actual results processing
 		swDisplay.process();
+		// add window to the IJ window manager
+		swDisplay.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosed(WindowEvent e) {
+				WindowManager.removeWindow((Frame) swDisplay);
+			}
+		});
+		WindowManager.addWindow(swDisplay);
+		// show PDF saving dialog if requested
 		if (autoSavePdf)
 			pdfWriter.process();
     }
