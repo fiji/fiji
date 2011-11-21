@@ -1,18 +1,22 @@
 package fiji.plugin;
 
+import fiji.util.gui.GenericDialogPlus;
+import ij.gui.GenericDialog;
+import ij.gui.MultiLineLabel;
+import ij.plugin.PlugIn;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 
-import fiji.util.gui.GenericDialogPlus;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.container.cell.CellContainerFactory;
-import mpicbg.spim.io.ConfigurationParserException;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import mpicbg.spim.Reconstruction;
+import mpicbg.spim.fusion.FusionControl;
+import mpicbg.spim.fusion.PreDeconvolutionFusion;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
-import ij.gui.GenericDialog;
-import ij.gui.MultiLineLabel;
-import ij.plugin.PlugIn;
+import mpicbg.spim.registration.ViewStructure;
 
 /**
  * 
@@ -26,6 +30,9 @@ public class Multi_View_Deconvolution implements PlugIn
 	@Override
 	public void run(String arg0) 
 	{
+		// output to IJ.log
+		IOFunctions.printIJLog = true;
+		
 		final SPIMConfiguration conf = getParameters();
 		
 		// cancelled
@@ -34,22 +41,31 @@ public class Multi_View_Deconvolution implements PlugIn
 		
 		conf.readSegmentation = true;
 		conf.readRegistration = true;
+		
+		// we need the individual images back by reference
+		conf.isDeconvolution = true;
+		
+		// run the first part of fusion
+		final Reconstruction reconstruction = new Reconstruction( conf );
+		
+		// get the input images for the deconvolution
+		final ViewStructure viewStructure = reconstruction.getCurrentViewStructure();
+		final FusionControl fusionControl = viewStructure.getFusionControl();
+		final PreDeconvolutionFusion fusion = (PreDeconvolutionFusion)fusionControl.getFusion();
+		
+		final int numViews = viewStructure.getNumViews();
+		
+		for ( int view = 0; view < numViews; ++view )
+		{
+			ImageJFunctions.show( fusion.getFusedImage( view ) );
+			ImageJFunctions.show( fusion.getWeightImage( view ) );
+		}
+		
 	}
 
-	public static String allChannels = "0, 1";
-	public static String[] fusionMethodList = { "Fuse all views at once", "Fuse views sequentially", "Create independent registered images" };	
-	public static int defaultFusionMethod = 0;
-	public static boolean fusionUseBlendingStatic = true;
 	public static boolean fusionUseContentBasedStatic = false;
 	public static boolean displayFusedImageStatic = true;
 	public static boolean saveFusedImageStatic = true;
-	public static int outputImageScalingStatic = 1;
-	public static int cropOffsetXStatic = 0;
-	public static int cropOffsetYStatic = 0;
-	public static int cropOffsetZStatic = 0;
-	public static int cropSizeXStatic = 0;
-	public static int cropSizeYStatic = 0;
-	public static int cropSizeZStatic = 0;
 	
 	protected SPIMConfiguration getParameters() 
 	{
@@ -143,7 +159,7 @@ public class Multi_View_Deconvolution implements PlugIn
 				if ( s.endsWith( ".registration" ) )
 				{
 					// does the same file exist ending with .beads.txt?
-					String query = s.substring( 0, s.length() - 12 );
+					String query = s.substring( 0, s.length() - new String( "registration" ).length() );
 					boolean isPresent = false;
 					for ( final String beadFile : entriesBeads )
 						if ( beadFile.contains( query ) )
@@ -160,7 +176,7 @@ public class Multi_View_Deconvolution implements PlugIn
 					final int timepoint = Integer.parseInt( s.substring( s.indexOf( ".registration.to_" ) + 17, s.length() ) );
 
 					// does the same file exist ending with .beads.txt?
-					String query = s.substring( 0, s.length() - 12 );
+					String query = s.substring( 0, s.length() - new String( "registration.to_" + timepoint ).length() );
 					boolean isPresent = false;
 					for ( final String beadFile : entriesBeads )
 						if ( beadFile.contains( query ) )
@@ -233,13 +249,12 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd2.addMessage( "" );
 		gd2.addCheckbox( "Apply_content_based_weightening", fusionUseContentBasedStatic );
 		gd2.addMessage( "" );
-		gd2.addNumericField( "Downsample_output image n-times", outputImageScalingStatic, 0 );
-		gd2.addNumericField( "Crop_output_image_offset_x", cropOffsetXStatic, 0 );
-		gd2.addNumericField( "Crop_output_image_offset_y", cropOffsetYStatic, 0 );
-		gd2.addNumericField( "Crop_output_image_offset_x", cropOffsetZStatic, 0 );
-		gd2.addNumericField( "Crop_output_image_size_x", cropSizeXStatic, 0 );
-		gd2.addNumericField( "Crop_output_image_size_y", cropSizeYStatic, 0 );
-		gd2.addNumericField( "Crop_output_image_size_z", cropSizeZStatic, 0 );
+		gd2.addNumericField( "Crop_output_image_offset_x", Multi_View_Fusion.cropOffsetXStatic, 0 );
+		gd2.addNumericField( "Crop_output_image_offset_y", Multi_View_Fusion.cropOffsetYStatic, 0 );
+		gd2.addNumericField( "Crop_output_image_offset_x", Multi_View_Fusion.cropOffsetZStatic, 0 );
+		gd2.addNumericField( "Crop_output_image_size_x", Multi_View_Fusion.cropSizeXStatic, 0 );
+		gd2.addNumericField( "Crop_output_image_size_y", Multi_View_Fusion.cropSizeYStatic, 0 );
+		gd2.addNumericField( "Crop_output_image_size_z", Multi_View_Fusion.cropSizeZStatic, 0 );
 		gd2.addMessage( "" );
 		gd2.addCheckbox( "Display_fused_image", displayFusedImageStatic );
 		gd2.addCheckbox( "Save_fused_image", saveFusedImageStatic );
@@ -307,12 +322,12 @@ public class Multi_View_Deconvolution implements PlugIn
 		IOFunctions.println( "tp " + tp );
 		
 		fusionUseContentBasedStatic = gd2.getNextBoolean();
-		cropOffsetXStatic = (int)Math.round( gd2.getNextNumber() );
-		cropOffsetYStatic = (int)Math.round( gd2.getNextNumber() );
-		cropOffsetZStatic = (int)Math.round( gd2.getNextNumber() );
-		cropSizeXStatic  = (int)Math.round( gd2.getNextNumber() );
-		cropSizeYStatic = (int)Math.round( gd2.getNextNumber() );
-		cropSizeZStatic = (int)Math.round( gd2.getNextNumber() );
+		Multi_View_Fusion.cropOffsetXStatic = (int)Math.round( gd2.getNextNumber() );
+		Multi_View_Fusion.cropOffsetYStatic = (int)Math.round( gd2.getNextNumber() );
+		Multi_View_Fusion.cropOffsetZStatic = (int)Math.round( gd2.getNextNumber() );
+		Multi_View_Fusion.cropSizeXStatic  = (int)Math.round( gd2.getNextNumber() );
+		Multi_View_Fusion.cropSizeYStatic = (int)Math.round( gd2.getNextNumber() );
+		Multi_View_Fusion.cropSizeZStatic = (int)Math.round( gd2.getNextNumber() );
 		displayFusedImageStatic = gd2.getNextBoolean(); 
 		saveFusedImageStatic = gd2.getNextBoolean(); 		
 
@@ -320,12 +335,8 @@ public class Multi_View_Deconvolution implements PlugIn
 		conf.sequentialFusion = false;
 		conf.multipleImageFusion = false;
 
-		if ( defaultFusionMethod == 0 )
-			conf.paralellFusion = true;
-		else if ( defaultFusionMethod == 1 )
-			conf.sequentialFusion = true;
-		else
-			conf.multipleImageFusion = true;
+		// we need different output and weight images
+		conf.multipleImageFusion = true;
 		
 		if ( conf.timeLapseRegistration || !displayFusedImageStatic  )
 			conf.showOutputImage = false;
@@ -340,12 +351,12 @@ public class Multi_View_Deconvolution implements PlugIn
 		conf.useLinearBlening = true;
 		conf.useGauss = fusionUseContentBasedStatic;
 		conf.scale = 1;
-		conf.cropOffsetX = cropOffsetXStatic;
-		conf.cropOffsetY = cropOffsetYStatic;
-		conf.cropOffsetZ = cropOffsetZStatic;
-		conf.cropSizeX = cropSizeXStatic;
-		conf.cropSizeY = cropSizeYStatic;
-		conf.cropSizeZ = cropSizeZStatic;
+		conf.cropOffsetX = Multi_View_Fusion.cropOffsetXStatic;
+		conf.cropOffsetY = Multi_View_Fusion.cropOffsetYStatic;
+		conf.cropOffsetZ = Multi_View_Fusion.cropOffsetZStatic;
+		conf.cropSizeX = Multi_View_Fusion.cropSizeXStatic;
+		conf.cropSizeY = Multi_View_Fusion.cropSizeYStatic;
+		conf.cropSizeZ = Multi_View_Fusion.cropSizeZStatic;
 		conf.outputImageFactory = new ArrayContainerFactory();
 		
 		conf.overrideImageZStretching = true;

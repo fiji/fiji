@@ -7,8 +7,22 @@ import mpicbg.spim.registration.ViewDataBeads;
 
 public class BlendingSimpleFactory implements CombinedPixelWeightenerFactory<BlendingSimple>
 {
+	final float boundary;
+	
+	public BlendingSimpleFactory( final float boundary )
+	{
+		this.boundary = boundary;
+	}
+	
 	@Override
-	public BlendingSimple createInstance( ArrayList<ViewDataBeads> views ) { return new BlendingSimple( views ); }
+	public BlendingSimple createInstance( ArrayList<ViewDataBeads> views ) 
+	{ 
+		final BlendingSimple blending = new BlendingSimple( views );
+		
+		blending.setBorder( boundary );
+		
+		return blending;
+	}
 	
 	@Override
 	public void printProperties()

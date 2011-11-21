@@ -82,7 +82,8 @@ public class SPIMConfiguration
     public boolean paralellFusion = true;    
     public boolean sequentialFusion = false; 
     public int numParalellViews = 1;
-    public boolean multipleImageFusion = false;    
+    public boolean multipleImageFusion = false;
+    public boolean isDeconvolution = false;
     
     public boolean registerOnly = false;
     public boolean displayRegistration = false;
