@@ -224,10 +224,13 @@ public class Stitching_Grid implements PlugIn
 		params.checkPeaks = 5;
 				
 		// for reading in writing the tileconfiguration file
-		directory = directory.replace('\\', '/');
-		directory = directory.trim();
-		if (directory.length() > 0 && !directory.endsWith("/"))
-			directory = directory + "/";
+		if ( ! (gridType == 6 && gridOrder == 1 ) )
+		{		
+			directory = directory.replace('\\', '/');
+			directory = directory.trim();
+			if (directory.length() > 0 && !directory.endsWith("/"))
+				directory = directory + "/";
+		}
 		
 		// get all imagecollectionelements
 		final ArrayList< ImageCollectionElement > elements;
@@ -236,7 +239,7 @@ public class Stitching_Grid implements PlugIn
 			elements = getGridLayout( grid, gridSizeX, gridSizeY, overlap, directory, filenames, startI, startX, startY );
 		else if ( gridType == 5 )
 			elements = getAllFilesInDirectory( directory, confirmFiles );
-		else if ( gridType == 6 || gridOrder == 1 )
+		else if ( gridType == 6 && gridOrder == 1 )
 			elements = getLayoutFromMultiSeriesFile( seriesFile );
 		else if ( gridType == 6 )
 			elements = getLayoutFromFile( directory, outputFile );
@@ -339,7 +342,10 @@ public class Stitching_Grid implements PlugIn
     	    	
     	// call the final stitiching
     	final ArrayList<ImagePlusTimePoint> optimized = CollectionStitchingImgLib.stitchCollection( elements, params );
-
+    	
+    	if ( optimized == null )
+    		return;
+    	
     	// output the result
 		for ( final ImagePlusTimePoint imt : optimized )
 			IJ.log( imt.getImagePlus().getTitle() + ": " + imt.getModel() );
