@@ -26,7 +26,9 @@ public abstract class Packager {
 	}
 
 	protected static boolean isLauncher(String fileName) {
-		return fileName.startsWith("Fiji.app/fiji-") ||
+		return fileName.equals("Fiji.app/fiji") ||
+			fileName.equals("Fiji.app/fiji.exe") ||
+			fileName.startsWith("Fiji.app/fiji-") ||
 			fileName.startsWith("Fiji.app/Contents/MacOS/fiji-");
 	}
 }
