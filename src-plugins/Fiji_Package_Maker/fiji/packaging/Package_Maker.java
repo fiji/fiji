@@ -67,14 +67,15 @@ public class Package_Maker implements PlugIn {
 		}
 	}
 
-	protected static void addFile(Packager packager, String fileName) throws IOException {
+	protected static boolean addFile(Packager packager, String fileName) throws IOException {
 		if (fileName.equals("fiji-macosx") || fileName.equals("fiji-tiger"))
 			fileName = "Contents/MacOS/" + fileName;
 		File file = new File(Util.prefix(fileName));
 		if (!file.exists())
-			return;
+			return false;
 		packager.putNextEntry("Fiji.app/" + fileName, (int)file.length());
 		packager.write(new FileInputStream(file));
 		packager.closeEntry();
+		return true;
 	}
 }
