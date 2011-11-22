@@ -60,7 +60,12 @@ MINGW*|CYGWIN*)
 	# copy and use bin/fiji-other.sh
 	test -f "$CWD/fiji" &&
 	test "$CWD/bin/fiji" -nt "$CWD/bin/fiji-other.sh" ||
-	cp "$CWD/bin/fiji-other.sh" "$CWD/fiji";;
+	cp "$CWD/bin/fiji-other.sh" "$CWD/fiji"
+	TOOLS_JAR="$(ls -t /usr/jdk*/lib/tools.jar \
+		/usr/local/jdk*/lib/tools.jar 2> /dev/null |
+		head -n 1)"
+	test -z "$TOOLS_JAR" ||
+	export TOOLS_JAR;;
 esac
 
 test -n "$platform" &&
