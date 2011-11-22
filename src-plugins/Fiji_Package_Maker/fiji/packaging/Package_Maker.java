@@ -53,6 +53,9 @@ public class Package_Maker implements PlugIn {
 			for (PluginObject plugin : plugins)
 				count++;
 			addFile(packager, "db.xml.gz");
+			// Maybe fiji or fiji.exe exist?
+			addFile(packager, "fiji");
+			addFile(packager, "fiji.exe");
 			int i = 0;
 			for (PluginObject plugin : plugins) {
 				addFile(packager, plugin.filename);
