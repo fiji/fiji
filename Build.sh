@@ -55,6 +55,22 @@ MINGW*|CYGWIN*)
 	*) platform=win64; java_submodule=$platform;;
 	esac
 	exe=.exe;;
+FreeBSD)
+	platform=freebsd
+	if test -z "$JAVA_HOME"
+	then
+		JAVA_HOME=/usr/local/jdk1.6.0/jre
+		export JAVA_HOME
+	fi
+	if ! test -f "$JAVA_HOME/jre/lib/ext/vecmath.jar" && ! test -f "$JAVA_HOME/lib/ext/vecmath.jar"
+	then
+		echo "You are missing Java3D. Please install with"
+		echo ""
+		echo "        sudo portinstall java3d"
+		echo ""
+		echo "(This requires some time)"
+		exit 1
+	fi;;
 *)
 	platform=
 	# copy and use bin/fiji-other.sh
