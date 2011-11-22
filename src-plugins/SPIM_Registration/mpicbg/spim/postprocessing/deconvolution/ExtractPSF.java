@@ -21,7 +21,6 @@ import mpicbg.imglib.util.Util;
 import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.CoordinateTransform;
-import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
@@ -33,11 +32,12 @@ public class ExtractPSF
 	final ViewStructure viewStructure;
 	final ArrayList<Image<FloatType>> pointSpreadFunctions;
 	Image<FloatType> avgPSF;
+	final boolean computeAveragePSF;
 	
 	int size = 19;
 	boolean isotropic = false;
 	
-	public ExtractPSF( final SPIMConfiguration config )
+	public ExtractPSF( final SPIMConfiguration config, final boolean computeAveragePSF )
 	{
 		//
 		// load the files
@@ -55,12 +55,14 @@ public class ExtractPSF
 		
 		this.viewStructure = viewStructure;
 		this.pointSpreadFunctions = new ArrayList<Image<FloatType>>();
+		this.computeAveragePSF = computeAveragePSF;
 	}
 	
-	public ExtractPSF( final ViewStructure viewStructure )
+	public ExtractPSF( final ViewStructure viewStructure, final boolean computeAveragePSF )
 	{		
 		this.viewStructure = viewStructure;
 		this.pointSpreadFunctions = new ArrayList<Image<FloatType>>();
+		this.computeAveragePSF = computeAveragePSF;
 	}
 	
 	/**
@@ -180,39 +182,43 @@ public class ExtractPSF
 			psf.getDisplay().setMinMax();
 		}
 		
-		avgPSF = pointSpreadFunctions.get( 0 ).createNewImage( maxSize );
 		
-		final int[] avgCenter = new int[ numDimensions ];		
-		for ( int d = 0; d < numDimensions; ++d )
-			avgCenter[ d ] = avgPSF.getDimension( d ) / 2;
-			
-		for ( final Image<FloatType> psf : pointSpreadFunctions )
+		if ( computeAveragePSF )
 		{
-			final LocalizableByDimCursor<FloatType> avgCursor = avgPSF.createLocalizableByDimCursor();
-			final LocalizableCursor<FloatType> psfCursor = psf.createLocalizableCursor();
+			avgPSF = pointSpreadFunctions.get( 0 ).createNewImage( maxSize );
 			
-			final int[] loc = new int[ numDimensions ];
-			final int[] psfCenter = new int[ numDimensions ];		
+			final int[] avgCenter = new int[ numDimensions ];		
 			for ( int d = 0; d < numDimensions; ++d )
-				psfCenter[ d ] = psf.getDimension( d ) / 2;
-			
-			while ( psfCursor.hasNext() )
+				avgCenter[ d ] = avgPSF.getDimension( d ) / 2;
+				
+			for ( final Image<FloatType> psf : pointSpreadFunctions )
 			{
-				psfCursor.fwd();
-				psfCursor.getPosition( loc );
+				final LocalizableByDimCursor<FloatType> avgCursor = avgPSF.createLocalizableByDimCursor();
+				final LocalizableCursor<FloatType> psfCursor = psf.createLocalizableCursor();
 				
+				final int[] loc = new int[ numDimensions ];
+				final int[] psfCenter = new int[ numDimensions ];		
 				for ( int d = 0; d < numDimensions; ++d )
-					loc[ d ] = psfCenter[ d ] - loc[ d ] + avgCenter[ d ];
+					psfCenter[ d ] = psf.getDimension( d ) / 2;
 				
-				avgCursor.moveTo( loc );
-				avgCursor.getType().add( psfCursor.getType() );				
+				while ( psfCursor.hasNext() )
+				{
+					psfCursor.fwd();
+					psfCursor.getPosition( loc );
+					
+					for ( int d = 0; d < numDimensions; ++d )
+						loc[ d ] = psfCenter[ d ] - loc[ d ] + avgCenter[ d ];
+					
+					avgCursor.moveTo( loc );
+					avgCursor.getType().add( psfCursor.getType() );				
+				}
+				
+				avgCursor.close();
+				psfCursor.close();
 			}
 			
-			avgCursor.close();
-			psfCursor.close();
+			avgPSF.getDisplay().setMinMax();
 		}
-		
-		avgPSF.getDisplay().setMinMax();
 	}
 	
 	public static Image<FloatType> getTransformedPSF( final ViewDataBeads view, final int[] size )
@@ -394,186 +400,5 @@ public class ExtractPSF
 		}
 		
 		return minMaxDim;
-	}
-		
-	public static void main( String args[] )
-	{
-		new ExtractPSF( IOFunctions.initSPIMProcessing() );
-	}
-
-	/*
-	public static int debugLevel = Reconstruction.DEBUG_MAIN;
-	protected final ViewDataBeads[] views;
-	protected final Point3f min = new Point3f();
-	protected final Point3f max = new Point3f();
-	protected final Point3f size = new Point3f();
-	protected final Point3f cropOffset = new Point3f();
-	protected final Point3f cropSize = new Point3f();
-
-	protected final Point3i neighborhood = new Point3i( 29, 29, 29 );
-
-
-	public ExtractBeads( final SPIMConfiguration config )
-	{
-		// load all views
-		views = IOFunctions.loadViewsWithData( "Visualize Beads", config.file[0], config.registrationFiledirectory, config.zStretching, new AffineModel3D(), true, this, null, Reconstruction.DEBUG_ALL);
-		BeadRegistration.concatZScaling( views, Reconstruction.DEBUG_ALL );
-
-		float[] dim = views[0].imageSize;
-		IOFunctions.println( dim[0] );
-		IOFunctions.println( dim[1] );
-		IOFunctions.println( dim[2] );
-		
-		cropOffset.x = config.cropOffsetX;
-		cropOffset.y = config.cropOffsetY;
-		cropOffset.z = config.cropOffsetZ;
-		
-		cropSize.x = config.cropSizeX;
-		cropSize.y = config.cropSizeY;
-		cropSize.z = config.cropSizeZ;
-		
-		
-		SPIMImageFusion.computeImageSize( views, min, max, size, config.scale, config.cropSizeX, config.cropSizeY, config.cropSizeZ, true );
-								
-		IOFunctions.println( "min: " + min );
-		IOFunctions.println( "max: " + max );
-		IOFunctions.println( "cropOffset: " + cropOffset );
-		
-		for ( int i = 1; i < 5; i++)
-			extractBeads( views[i], min, max, cropOffset, cropSize, neighborhood, config );
-	}
-	
-	
-	protected void extractBeads( final ViewDataBeads view, final Point3f min, final Point3f max, 
-			                     final Point3f cropOffset, final Point3f cropSize, final Point3i neighborhood,
-			                     final SPIMConfiguration config )
-	{
-		view.imageFloat = ViewDataBeads.loadImage( view, 0, config.scaleSpaceFactory);
-		
-		final Float3D psf = view.imageFloat.createNewImage( neighborhood.x, neighborhood.y, neighborhood.z );		
-		final FloatLocalizableIterator i = psf.createLocalizableIterator();		
-		final FloatInterpolatedAccess interpolator = view.imageFloat.createInterpolatedAccessor( new FloatOutOfBoundsStrategyValueFactory( 0 ), new FloatLinearInterpolatorFactory() );
-		
-		int count = 0;
-		
-		for ( final Bead bead : view.beads.getBeadList() )
-		{
-			final Point3f location = new Point3f( bead.getLocationOutputSpace() );
-			
-			location.sub( min );
-			location.sub( cropOffset );
-			
-			if ( bead.getRANSACCorrespondence().size() > 0 && 
-				 location.x >= 0 && location.y >= 0 && location.z >= 0 && 
-				 location.x < cropSize.x && location.y < cropSize.y && location.z < cropSize.z )
-			{		
-				++count;
-				
-				//IOFunctions.println( bead.getLocationImage() + " " + bead.getLocationOutputSpace() );
-				//IOFunctions.println( location );
-				
-				i.reset();
-
-				while ( i.hasNext() )
-				{
-					i.next();	
-					
-					final float x = ((i.getX() - neighborhood.x/2) + location.x); 
-					final float y = ((i.getY() - neighborhood.y/2) + location.y); 
-					final float z = ((i.getZ() - neighborhood.z/2) + location.z); 
-					
-					//IOFunctions.println( x + " " + y + " " +  z + " = " + interpolator.get( x, y, z ) );
-					
-					i.set( i.get() + interpolator.get( x, y, z ) );
-					
-				}
-			}
-		}
-
-		i.reset();
-
-		while ( i.hasNext() )
-		{
-			i.next();
-			i.set( i.get()/(float)(count) );
-		}		
-		
-		view.imageFloat.close();
-		
-		psf.convertToImagePlus("psf_"+view.shortName).show();
-		
-	}
-	
-	public static void main(String[] args) 
-	{
-		// read&parse configuration file
-		programConfiguration conf = null;
-		try
-		{
-			conf = parseFile("config/configuration.txt");
-		} 
-		catch (final Exception e)
-		{
-			IOFunctions.printErr("Cannot open configuration file: " + e);
-			e.printStackTrace();
-			return;
-		}
-
-		// open imageJ window
-		System.getProperties().setProperty("plugins.dir", conf.pluginsDir);
-		final String params[] = {"-ijpath " + conf.pluginsDir};
-		ij.ImageJ.main(params);
-
-		// read SPIM configuration
-		SPIMConfiguration config = null;
-
-		try
-		{
-			config = ConfigurationParserSPIM.parseFile("spimconfig/configuration.txt");
-			config.printProperties();
-		}
-		catch (final ConfigurationParserException e)
-		{
-			e.printStackTrace();
-			System.exit(0);
-		}
-
-		new ExtractBeads( config );
-
-	}
-	// statistics
-    protected double avgError = -1;
-    protected double minError = -1;
-    protected double maxError = -1;
-    protected int numCorrespondences = 0;
-    protected int countAvgErrors = 0;
-    protected double avgLocalError = 0;
-
-    public double getAverageAlignmentError(){ return avgError; }
-    public double getMinAlignmentError(){ return minError; }
-    public double getMaxAlignmentError(){ return maxError; }
-    
-    public void setAverageAlignmentError( final double avg ){ avgError = avg; }
-    public void setMinAlignmentError( final double min ){ minError = min; }
-    public void setMaxAlignmentError( final double max ){ maxError = max; }
-    
-    public double getAverageLocalAlignmentError(){ return avgLocalError/(double)countAvgErrors; }
-    public int getNumCorrespondences(){ return numCorrespondences; }
-    public double[] getAngleSpecificErrors() 
-    {
-    	double[] errors = new double[views.length];
-    	
-    	for (int i = 0; i < views.length; i++)
-    		if (views[i].angleSpecificCount > 1)
-    			errors[i] = views[i].angleSpecificError / (double)views[i].angleSpecificCount;
-    	
-    	return errors; 
-    }
-    
-    public void printAngleSpecificErrors()
-    {
-    	for (int i = 0; i < views.length; i++)
-			IOFunctions.println(views[i].shortName + " " + (views[i].angleSpecificError / (double)views[i].angleSpecificCount) + " " + (((double)views[i].ransacCorrespondences / (double)views[i].beadDescriptorCorrespondences)*100) + "%");
-    }
-    */
+	}		
 }

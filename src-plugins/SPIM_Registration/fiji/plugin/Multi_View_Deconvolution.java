@@ -60,32 +60,34 @@ public class Multi_View_Deconvolution implements PlugIn
 		
 		final int numViews = viewStructure.getNumViews();
 		
-		/*
+		final ArrayList< Image < FloatType > > images = new ArrayList< Image < FloatType > >();
+		final ArrayList< Image < FloatType > > weights = new ArrayList< Image < FloatType > >();
+		
 		for ( int view = 0; view < numViews; ++view )
 		{
-			ImageJFunctions.show( fusion.getFusedImage( view ) );
-			ImageJFunctions.show( fusion.getWeightImage( view ) );
+			images.add( fusion.getFusedImage( view ) );
+			weights.add( fusion.getWeightImage( view ) );
 		}
-		*/
 		
 		// extract the beads
 		IJ.log( new Date( System.currentTimeMillis() ) +": Extracting Point spread functions." );
-		final ExtractPSF extractPSF = new ExtractPSF( viewStructure );
+		final ExtractPSF extractPSF = new ExtractPSF( viewStructure, showAveragePSF );
 		extractPSF.setPSFSize( 21, false );
 		extractPSF.extract();
 		
 		final ArrayList< Image< FloatType > > pointSpreadFunctions = extractPSF.getPSFs();
-		final Image< FloatType > averagePSF = extractPSF.getMaxProjectionAveragePSF();
+		
+		if ( showAveragePSF )
+			ImageJFunctions.show( extractPSF.getMaxProjectionAveragePSF() );
 		
 		//for ( final Image< FloatType > psf : pointSpreadFunctions )
 		//	ImageJFunctions.show( psf );
-		
-		ImageJFunctions.show( averagePSF );
 	}
 
 	public static boolean fusionUseContentBasedStatic = false;
 	public static boolean displayFusedImageStatic = true;
 	public static boolean saveFusedImageStatic = true;
+	public static boolean showAveragePSF = true;
 	
 	protected SPIMConfiguration getParameters() 
 	{
@@ -276,6 +278,8 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd2.addNumericField( "Crop_output_image_size_y", Multi_View_Fusion.cropSizeYStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_size_z", Multi_View_Fusion.cropSizeZStatic, 0 );
 		gd2.addMessage( "" );
+		gd2.addCheckbox( "Show_averaged_PSF", showAveragePSF );
+		gd2.addMessage( "" );
 		gd2.addCheckbox( "Display_fused_image", displayFusedImageStatic );
 		gd2.addCheckbox( "Save_fused_image", saveFusedImageStatic );
 
@@ -348,6 +352,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		Multi_View_Fusion.cropSizeXStatic  = (int)Math.round( gd2.getNextNumber() );
 		Multi_View_Fusion.cropSizeYStatic = (int)Math.round( gd2.getNextNumber() );
 		Multi_View_Fusion.cropSizeZStatic = (int)Math.round( gd2.getNextNumber() );
+		showAveragePSF = gd2.getNextBoolean();
 		displayFusedImageStatic = gd2.getNextBoolean(); 
 		saveFusedImageStatic = gd2.getNextBoolean(); 		
 
