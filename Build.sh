@@ -55,6 +55,11 @@ MINGW*|CYGWIN*)
 	*) platform=win64; java_submodule=$platform;;
 	esac
 	exe=.exe;;
+*)
+	# copy and use bin/fiji-other.sh
+	test -f "$CWD/fiji" &&
+	test "$CWD/bin/fiji" -nt "$CWD/bin/fiji-other.sh" ||
+	cp "$CWD/bin/fiji-other.sh" "$CWD/fiji";;
 esac
 
 test -z "$JAVA_HOME" &&
