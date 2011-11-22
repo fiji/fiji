@@ -52,8 +52,8 @@ public class Package_Maker implements PlugIn {
 			int count = 0;
 			for (PluginObject plugin : plugins)
 				count++;
-			int i = 0;
 			addFile(packager, "db.xml.gz");
+			int i = 0;
 			for (PluginObject plugin : plugins) {
 				addFile(packager, plugin.filename);
 				IJ.showProgress(i++, count);
