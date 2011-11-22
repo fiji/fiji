@@ -14,6 +14,7 @@ import java.util.Date;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import mpicbg.imglib.io.LOCI;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.spim.Reconstruction;
 import mpicbg.spim.fusion.FusionControl;
@@ -21,6 +22,9 @@ import mpicbg.spim.fusion.PreDeconvolutionFusion;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.postprocessing.deconvolution.ExtractPSF;
+import mpicbg.spim.postprocessing.deconvolution.LucyRichardsonFFT;
+import mpicbg.spim.postprocessing.deconvolution.LucyRichardsonMultiViewDeconvolution;
+import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
 
 /**
@@ -82,6 +86,16 @@ public class Multi_View_Deconvolution implements PlugIn
 		
 		//for ( final Image< FloatType > psf : pointSpreadFunctions )
 		//	ImageJFunctions.show( psf );
+		
+		// run the deconvolution
+		final ArrayList<LucyRichardsonFFT> deconvolutionData = new ArrayList<LucyRichardsonFFT>();
+
+		for ( int view = 0; view < numViews; ++view )
+			deconvolutionData.add( new LucyRichardsonFFT( fusion.getFusedImage( view ), fusion.getWeightImage( view ), pointSpreadFunctions.get( view ) ) );		
+		
+		final Image<FloatType> deconvolved = LucyRichardsonMultiViewDeconvolution.lucyRichardsonMultiView( deconvolutionData, 100 );
+		
+		ImageJFunctions.show( deconvolved );
 	}
 
 	public static boolean fusionUseContentBasedStatic = false;

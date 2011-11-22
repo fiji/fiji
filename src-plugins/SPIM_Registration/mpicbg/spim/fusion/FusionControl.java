@@ -1,5 +1,7 @@
 package mpicbg.spim.fusion;
 
+import ij.IJ;
+
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -39,7 +41,7 @@ public class FusionControl
 		{
 			// if we deconvolve we want a small border of black around the sample due to the PSF overlap
 			if ( conf.isDeconvolution )
-				combinedWeightenerFactories.add( new BlendingSimpleFactory( 15 ) );
+				combinedWeightenerFactories.add( new BlendingSimpleFactory( new float[] { 15, 15, 15 } ) );
 			else
 				combinedWeightenerFactories.add( new BlendingSimpleFactory( 0 ) );
 		}
@@ -148,7 +150,8 @@ public class FusionControl
 			}					
 		}
 		
-		fusion.closeImages();
+		if  ( !conf.isDeconvolution )
+			fusion.closeImages();
 	}
 	
 }

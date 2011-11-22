@@ -295,7 +295,8 @@ public class Reconstruction
 				
 				currentViewStructure.getFusionControl().fuse( currentViewStructure, conf.timepoints[timePointIndex] );
 				
-				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Finished Fusion");
+				if  ( !conf.isDeconvolution )
+					IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Finished Fusion");
 			}	
 
 			//
@@ -309,7 +310,8 @@ public class Reconstruction
 			if ( conf.collectRegistrationStatistics )
 				stats.add( new RegistrationStatistics( currentViewStructure ) );
 
-			IOFunctions.println( "Finished processing." );
+			if  ( !conf.isDeconvolution )
+				IOFunctions.println( "Finished processing." );
 		}
 	}
 	
