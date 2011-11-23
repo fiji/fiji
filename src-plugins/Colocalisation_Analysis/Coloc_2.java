@@ -210,7 +210,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		 */
 		index1 = clip( index1, 0, titles.length );
 		index2 = clip( index2, 0, titles.length );
-		indexMask = clip( indexMask, 0, roisAndMasks.length);
+		indexMask = clip( indexMask, 0, roisAndMasks.length - 1);
 
 		gd.addChoice("Channel_1", titles, titles[index1]);
 		gd.addChoice("Channel_2", titles, titles[index2]);
