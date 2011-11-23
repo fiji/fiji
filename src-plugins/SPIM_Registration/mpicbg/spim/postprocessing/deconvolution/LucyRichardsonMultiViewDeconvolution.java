@@ -21,14 +21,12 @@ import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.registration.ViewDataBeads;
 
 public class LucyRichardsonMultiViewDeconvolution
-{	
-	public static Image<FloatType> lucyRichardsonMultiView( final ArrayList<LucyRichardsonFFT> data, final int maxIterations )
-	{
-		return lucyRichardsonMultiView( data, maxIterations, Runtime.getRuntime().availableProcessors() );
-	}
+{
+	final private boolean additive = true;
 	
-	public static Image<FloatType> lucyRichardsonMultiView( final ArrayList<LucyRichardsonFFT> data, final int maxIterations, final int numThreads )
+	public static Image<FloatType> lucyRichardsonMultiView( final ArrayList<LucyRichardsonFFT> data, final int minIterations, final int maxIterations, final double lambda )
 	{
+		final int numThreads = Runtime.getRuntime().availableProcessors();
 		final int numViews = data.size();
 		//final long numPixels = data.get( 0 ).getImage().getNumPixels();		
 		//final double minValue = (1.0 / ( 10000.0 * numPixels ) );		
@@ -61,7 +59,7 @@ public class LucyRichardsonMultiViewDeconvolution
                 }
             });
 
-        IJ.log( "NumThreads: " + threads.length );
+        //IJ.log( "NumThreads: " + threads.length );
         SimpleMultiThreading.startAndJoin( threads );
         
         // the overlapping area has the same energy
@@ -272,6 +270,23 @@ public class LucyRichardsonMultiViewDeconvolution
 				cursorWeight.close();
 
 			//
+			// perform Tikonovh regularization if desired
+			//		
+			if ( lambda > 0 )
+			{
+				IJ.log( "lambda = " + lambda );
+				cursorNextPsiGlobal.reset();
+				
+				while ( cursorNextPsiGlobal.hasNext() )
+				{
+					cursorNextPsiGlobal.fwd();
+					final float f = cursorNextPsiGlobal.getType().get();
+					final float reg = (float)( (Math.sqrt( 1.0 + 2.0*lambda*f ) - 1.0) / lambda );
+					cursorNextPsiGlobal.getType().set( reg );
+				}
+			}
+			
+			//
 			// Update psi for next iteration
 			//						
 			cursorPsiGlobal.reset();
@@ -282,7 +297,8 @@ public class LucyRichardsonMultiViewDeconvolution
 			
 			while ( cursorNextPsiGlobal.hasNext() )
 			{
-				cursorPsiGlobal.fwd(); cursorNextPsiGlobal.fwd();
+				cursorPsiGlobal.fwd(); 
+				cursorNextPsiGlobal.fwd();
 				
 				final float lastPsiValue = cursorPsiGlobal.getType().get();
 				
@@ -304,6 +320,7 @@ public class LucyRichardsonMultiViewDeconvolution
 			IJ.log(" Max Change per Pixel: " + maxChange );
 			IJ.log("------------------------------------------------");			
 			
+			System.out.println( i + "\t" + sumChange + "\t" + maxChange );
 			
 			if ( i % 10 == 0 )
 			{

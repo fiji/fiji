@@ -35,7 +35,7 @@ public class BlendingSimpleFactory implements CombinedPixelWeightenerFactory<Ble
 		else
 			blending.setBorder( boundaryArray );
 		
-		blending.setPercentScaling( 0.5f );
+		blending.setPercentScaling( 0.6f );
 		
 		IJ.log( "border: " + Util.printCoordinates( blending.border ) );
 		IJ.log( "percent: " + blending.percentScaling );

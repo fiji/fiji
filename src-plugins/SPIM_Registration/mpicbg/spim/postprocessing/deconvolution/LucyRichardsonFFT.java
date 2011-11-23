@@ -11,21 +11,16 @@ public class LucyRichardsonFFT
 	
 	Image<FloatType> viewContribution = null;
 	
-	public LucyRichardsonFFT( final Image<FloatType> image, final Image<FloatType> weight, final Image<FloatType> kernel )
+	public LucyRichardsonFFT( final Image<FloatType> image, final Image<FloatType> weight, final Image<FloatType> kernel, final int cpusPerView )
 	{
 		this.image = image;
 		this.kernel = kernel;
 		this.weight = weight;
 		
 		fftConvolution = new FourierConvolution<FloatType, FloatType>( image, kernel );
-		fftConvolution.setNumThreads();
+		fftConvolution.setNumThreads( cpusPerView );
 	}
 
-	public LucyRichardsonFFT( final Image<FloatType> image, final Image<FloatType> kernel )
-	{
-		this ( image, null, kernel );
-	}
-	
 	public Image<FloatType> getImage() { return image; }
 	public Image<FloatType> getWeight() { return weight; }
 	public Image<FloatType> getKernel() { return kernel; }
