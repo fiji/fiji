@@ -282,7 +282,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		} else if (roiConfig == RoiConfiguration.Img2 && hasValidRoi(imp2)) {
 			createMasksFromImage(imp2);
 		} else if (roiConfig == RoiConfiguration.RoiManager) {
-			createMasksFromRoiManager(imp1.getWidth(), imp1.getHeight());
+			if (!createMasksFromRoiManager(imp1.getWidth(), imp1.getHeight()))
+				return false;
 		} else if (roiConfig == RoiConfiguration.Mask) {
 			// get the image to be used as mask
 			ImagePlus maskImp = WindowManager.getImage(windowList[indexMask]);
@@ -576,13 +577,16 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	/**
 	 * A method to fill the masks array with data based on the ROI manager.
 	 */
-	protected void createMasksFromRoiManager(int width, int height) {
+	protected boolean createMasksFromRoiManager(int width, int height) {
 		RoiManager roiManager = RoiManager.getInstance();
-		if (roiManager == null)
+		if (roiManager == null) {
 			IJ.error("Could not get ROI Manager instance.");
+			return false;
+		}
 		Roi[] selectedRois = roiManager.getSelectedRoisAsArray();
 		// create the ROIs
 		createMasksAndRois(selectedRois, width, height);
+		return true;
 	}
 
 	/**
