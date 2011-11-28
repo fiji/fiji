@@ -14,6 +14,7 @@ import java.util.Date;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import mpicbg.imglib.io.LOCI;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.spim.Reconstruction;
 import mpicbg.spim.fusion.FusionControl;
@@ -21,6 +22,9 @@ import mpicbg.spim.fusion.PreDeconvolutionFusion;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.postprocessing.deconvolution.ExtractPSF;
+import mpicbg.spim.postprocessing.deconvolution.LucyRichardsonFFT;
+import mpicbg.spim.postprocessing.deconvolution.LucyRichardsonMultiViewDeconvolution;
+import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
 
 /**
@@ -60,32 +64,70 @@ public class Multi_View_Deconvolution implements PlugIn
 		
 		final int numViews = viewStructure.getNumViews();
 		
-		/*
+		final ArrayList< Image < FloatType > > images = new ArrayList< Image < FloatType > >();
+		final ArrayList< Image < FloatType > > weights = new ArrayList< Image < FloatType > >();
+		
 		for ( int view = 0; view < numViews; ++view )
 		{
-			ImageJFunctions.show( fusion.getFusedImage( view ) );
-			ImageJFunctions.show( fusion.getWeightImage( view ) );
+			images.add( fusion.getFusedImage( view ) );
+			weights.add( fusion.getWeightImage( view ) );
 		}
-		*/
 		
 		// extract the beads
 		IJ.log( new Date( System.currentTimeMillis() ) +": Extracting Point spread functions." );
-		final ExtractPSF extractPSF = new ExtractPSF( viewStructure );
+		final ExtractPSF extractPSF = new ExtractPSF( viewStructure, showAveragePSF );
 		extractPSF.setPSFSize( 21, false );
 		extractPSF.extract();
 		
 		final ArrayList< Image< FloatType > > pointSpreadFunctions = extractPSF.getPSFs();
-		final Image< FloatType > averagePSF = extractPSF.getMaxProjectionAveragePSF();
+		
+		if ( showAveragePSF )
+			ImageJFunctions.show( extractPSF.getMaxProjectionAveragePSF() );
+		
+		// now we close all the input images
+		for ( final ViewDataBeads view : viewStructure.getViews() )
+			view.closeImage();
 		
 		//for ( final Image< FloatType > psf : pointSpreadFunctions )
 		//	ImageJFunctions.show( psf );
 		
-		ImageJFunctions.show( averagePSF );
+		// run the deconvolution
+		final ArrayList<LucyRichardsonFFT> deconvolutionData = new ArrayList<LucyRichardsonFFT>();
+		final int cpusPerView = Math.round( Runtime.getRuntime().availableProcessors() / (float)numViews );
+		
+		IJ.log( "CPUs per view: " + cpusPerView );
+		IJ.log( "Minimal number iterations: " + minNumIterations );
+		IJ.log( "Maximal number iterations: " + maxNumIterations );
+		if ( useTikhonovRegularization )
+			IJ.log( "Using Tikhonov regularization (lambda = " + lambda + ")" );
+		else
+			IJ.log( "Not using Tikhonov regularization" );
+		
+		for ( int view = 0; view < numViews; ++view )
+			deconvolutionData.add( new LucyRichardsonFFT( fusion.getFusedImage( view ), fusion.getWeightImage( view ), pointSpreadFunctions.get( view ), cpusPerView ) );		
+		
+		final Image<FloatType> deconvolved;
+		
+		if ( useTikhonovRegularization )
+			deconvolved = LucyRichardsonMultiViewDeconvolution.lucyRichardsonMultiView( deconvolutionData, minNumIterations, maxNumIterations, lambda );
+		else
+			deconvolved = LucyRichardsonMultiViewDeconvolution.lucyRichardsonMultiView( deconvolutionData, minNumIterations, maxNumIterations, 0 );
+		
+		ImageJFunctions.show( deconvolved );
 	}
 
 	public static boolean fusionUseContentBasedStatic = false;
 	public static boolean displayFusedImageStatic = true;
 	public static boolean saveFusedImageStatic = true;
+	public static int defaultMinNumIterations = 20;
+	public static int defaultMaxNumIterations = 50;
+	public static boolean defaultUseTikhonovRegularization = true;
+	public static double defaultLambda = 0.006;
+	public static boolean showAveragePSF = true;
+
+	int minNumIterations, maxNumIterations;
+	boolean useTikhonovRegularization = true;
+	double lambda = 0.006;
 	
 	protected SPIMConfiguration getParameters() 
 	{
@@ -223,9 +265,9 @@ public class Multi_View_Deconvolution implements PlugIn
 			return null;
 		}
 
-		for ( int c = 0; c < channels.size(); ++c )
-			for ( final int i : timepoints.get( c ) )
-				IOFunctions.println( c + ": " + i );
+		//for ( int c = 0; c < channels.size(); ++c )
+		//	for ( final int i : timepoints.get( c ) )
+		//		IOFunctions.println( c + ": " + i );
 
 		final GenericDialog gd2 = new GenericDialog( "Multi-View Deconvolution" );
 		
@@ -275,6 +317,12 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd2.addNumericField( "Crop_output_image_size_x", Multi_View_Fusion.cropSizeXStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_size_y", Multi_View_Fusion.cropSizeYStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_size_z", Multi_View_Fusion.cropSizeZStatic, 0 );
+		gd2.addMessage( "" );		
+		gd2.addNumericField( "Minimal_number_of_iterations", defaultMinNumIterations, 0 );
+		gd2.addNumericField( "Maximal_number_of_iterations", defaultMaxNumIterations, 0 );
+		gd2.addCheckbox( "Use_Tikhonov_regularization", defaultUseTikhonovRegularization );
+		gd2.addNumericField( "Tikhonov_parameter", defaultLambda, 4 );
+		gd2.addCheckbox( "Show_averaged_PSF", showAveragePSF );
 		gd2.addMessage( "" );
 		gd2.addCheckbox( "Display_fused_image", displayFusedImageStatic );
 		gd2.addCheckbox( "Save_fused_image", saveFusedImageStatic );
@@ -339,7 +387,7 @@ public class Multi_View_Deconvolution implements PlugIn
 			conf.referenceTimePoint = tp;
 		}
 		
-		IOFunctions.println( "tp " + tp );
+		//IOFunctions.println( "tp " + tp );
 		
 		fusionUseContentBasedStatic = gd2.getNextBoolean();
 		Multi_View_Fusion.cropOffsetXStatic = (int)Math.round( gd2.getNextNumber() );
@@ -348,6 +396,12 @@ public class Multi_View_Deconvolution implements PlugIn
 		Multi_View_Fusion.cropSizeXStatic  = (int)Math.round( gd2.getNextNumber() );
 		Multi_View_Fusion.cropSizeYStatic = (int)Math.round( gd2.getNextNumber() );
 		Multi_View_Fusion.cropSizeZStatic = (int)Math.round( gd2.getNextNumber() );
+		
+		minNumIterations = defaultMinNumIterations = (int)Math.round( gd2.getNextNumber() );
+		maxNumIterations = defaultMaxNumIterations = (int)Math.round( gd2.getNextNumber() );
+		useTikhonovRegularization = defaultUseTikhonovRegularization = gd2.getNextBoolean();
+		lambda = defaultLambda = gd2.getNextNumber();
+		showAveragePSF = gd2.getNextBoolean();
 		displayFusedImageStatic = gd2.getNextBoolean(); 
 		saveFusedImageStatic = gd2.getNextBoolean(); 		
 
