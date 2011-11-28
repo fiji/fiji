@@ -438,7 +438,9 @@ public class FileFunctions {
 
 			// insert classpath
 			offset = content.lastIndexOf("\nCLASSPATH(");
-			if (offset > 0 && content.substring(offset).startsWith("\nCLASSPATH(jars/test-fiji.jar)"))
+			while (offset > 0 &&
+					(content.substring(offset).startsWith("\nCLASSPATH(jars/test-fiji.jar)") ||
+					content.substring(offset).startsWith("\nCLASSPATH(plugins/FFMPEG")))
 				offset = content.lastIndexOf("\nCLASSPATH(", offset - 1);
 			if (offset < 0)
 				return false;

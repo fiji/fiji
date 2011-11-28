@@ -634,7 +634,7 @@ size_t get_memory_size(int available_only)
 #else
 size_t get_memory_size(int available_only)
 {
-	fprintf(stderr, "Unsupported\n");
+	fprintf(stderr, "Cannot reserve optimal memory on this platform\n");
 	return 0;
 }
 #endif
@@ -2688,6 +2688,8 @@ static void parse_command_line(void)
 			string_append_path_list(class_path, fiji_path("jars/Fiji.jar"));
 			string_append_path_list(class_path, fiji_path("jars/ij.jar"));
 			string_append_path_list(class_path, fiji_path("jars/javassist.jar"));
+			// Debian
+			string_append_path_list(class_path, "/usr/share/java/javassist.jar");
 		}
 		else {
 			if (build_classpath(class_path, fiji_path("plugins"), 0))

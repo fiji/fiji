@@ -69,6 +69,7 @@ public class Parser {
 			allPlatforms.add("osx10.4");
 			allPlatforms.add("osx10.5");
 			allPlatforms.add("osx10.6");
+			allPlatforms.add("freebsd");
 			for (String platform : allPlatforms)
 				setVariable("platform(" + platform + ")", platform);
 		}

@@ -88,12 +88,12 @@ public abstract class UserInterface {
 
 		@Override
 		public String getPref(String key) {
-			throw new RuntimeException("TODO");
+			return null;
 		}
 
 		@Override
 		public void setPref(String key, String value) {
-			throw new RuntimeException("TODO");
+			/* ignore */
 		}
 
 		@Override
