@@ -84,6 +84,10 @@ public class Multi_View_Deconvolution implements PlugIn
 		if ( showAveragePSF )
 			ImageJFunctions.show( extractPSF.getMaxProjectionAveragePSF() );
 		
+		// now we close all the input images
+		for ( final ViewDataBeads view : viewStructure.getViews() )
+			view.closeImage();
+		
 		//for ( final Image< FloatType > psf : pointSpreadFunctions )
 		//	ImageJFunctions.show( psf );
 		
@@ -317,7 +321,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd2.addNumericField( "Minimal_number_of_iterations", defaultMinNumIterations, 0 );
 		gd2.addNumericField( "Maximal_number_of_iterations", defaultMaxNumIterations, 0 );
 		gd2.addCheckbox( "Use_Tikhonov_regularization", defaultUseTikhonovRegularization );
-		gd2.addNumericField( "Tikhonov_parameter", defaultLambda, 5 );
+		gd2.addNumericField( "Tikhonov_parameter", defaultLambda, 4 );
 		gd2.addCheckbox( "Show_averaged_PSF", showAveragePSF );
 		gd2.addMessage( "" );
 		gd2.addCheckbox( "Display_fused_image", displayFusedImageStatic );
