@@ -23,7 +23,7 @@ import mpicbg.spim.registration.ViewDataBeads;
 
 public class LucyRichardsonMultiViewDeconvolution
 {
-	final private static boolean additive = false;
+	final private static boolean additive = true;
 	
 	public static Image<FloatType> lucyRichardsonMultiView( final ArrayList<LucyRichardsonFFT> data, final int minIterations, final int maxIterations, final double lambda )
 	{
