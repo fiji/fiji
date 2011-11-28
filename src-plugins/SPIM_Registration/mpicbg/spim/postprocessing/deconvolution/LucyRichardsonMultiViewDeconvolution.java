@@ -7,6 +7,7 @@ import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
+import weka.classifiers.meta.AdditiveRegression;
 
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
@@ -22,10 +23,11 @@ import mpicbg.spim.registration.ViewDataBeads;
 
 public class LucyRichardsonMultiViewDeconvolution
 {
-	final private boolean additive = true;
+	final private static boolean additive = false;
 	
 	public static Image<FloatType> lucyRichardsonMultiView( final ArrayList<LucyRichardsonFFT> data, final int minIterations, final int maxIterations, final double lambda )
 	{
+		IJ.log( "add: " + additive );
 		final int numThreads = Runtime.getRuntime().availableProcessors();
 		final int numViews = data.size();
 		//final long numPixels = data.get( 0 ).getImage().getNumPixels();		
@@ -185,13 +187,13 @@ public class LucyRichardsonMultiViewDeconvolution
 			// this cannot be done in multithreaded as it would collide
 			//
 			final ArrayList<Cursor<FloatType>> blurredResidualsCursors = new ArrayList<Cursor<FloatType>>();
-			final ArrayList<Cursor<FloatType>> imageCursors = new ArrayList<Cursor<FloatType>>();
+			//final ArrayList<Cursor<FloatType>> imageCursors = new ArrayList<Cursor<FloatType>>();
 			final ArrayList<Cursor<FloatType>> weightCursors = new ArrayList<Cursor<FloatType>>();
 
 			for ( int view = 0; view < numViews; ++view )
 			{
 				blurredResidualsCursors.add( data.get( view ).getViewContribution().createCursor() );
-				imageCursors.add( data.get( view ).getImage().createCursor() );
+				//imageCursors.add( data.get( view ).getImage().createCursor() );
 				
 				if ( data.get( view ).getWeight() != null )	
 					weightCursors.add( data.get( view ).getWeight().createCursor() );
@@ -209,6 +211,10 @@ public class LucyRichardsonMultiViewDeconvolution
 				cursorNextPsiGlobal.fwd();
 				
 				double value = cursorNextPsiGlobal.getType().get();
+				
+				if ( additive )
+					value = 0;
+				
 				double num = 0;
 				
 				if ( weightCursors.size() > 0 )
@@ -216,17 +222,22 @@ public class LucyRichardsonMultiViewDeconvolution
 					for ( int h = 0; h < numViews; ++h )
 					{
 						final Cursor<FloatType> cursorResidualsBlurred = blurredResidualsCursors.get( h );					
-						final Cursor<FloatType> cursorImage = imageCursors.get( h );
+						//final Cursor<FloatType> cursorImage = imageCursors.get( h );
 						final Cursor<FloatType> cursorWeight = weightCursors.get( h );
 											
 						cursorResidualsBlurred.fwd();
-						cursorImage.fwd();
+						//cursorImage.fwd();
 						cursorWeight.fwd();
 						
 						final float weight = cursorWeight.getType().get();
 						if ( weight > 0 )
 						{
-							value *= Math.pow( cursorResidualsBlurred.getType().get(), weight );
+							if ( additive )
+								value += cursorResidualsBlurred.getType().get() * weight;
+							else
+								value *= Math.pow( cursorResidualsBlurred.getType().get(), weight );
+								
+							
 							num += weight;
 						}
 					}
@@ -236,10 +247,10 @@ public class LucyRichardsonMultiViewDeconvolution
 					for ( int h = 0; h < numViews; ++h )
 					{
 						final Cursor<FloatType> cursorResidualsBlurred = blurredResidualsCursors.get( h );					
-						final Cursor<FloatType> cursorImage = imageCursors.get( h );
+						//final Cursor<FloatType> cursorImage = imageCursors.get( h );
 											
 						cursorResidualsBlurred.fwd();
-						cursorImage.fwd();
+						//cursorImage.fwd();
 						
 						value *= cursorResidualsBlurred.getType().get();
 						num++;
@@ -249,8 +260,12 @@ public class LucyRichardsonMultiViewDeconvolution
 				cursorPsiGlobal.fwd();
 				
 				if ( num > 0 )
-					value = (double)cursorPsiGlobal.getType().get() * Math.pow( value, 1.0/num );
-				
+				{
+					if ( additive )
+						value = (double)cursorPsiGlobal.getType().get() * cursorNextPsiGlobal.getType().get() * value/num;
+					else
+						value = (double)cursorPsiGlobal.getType().get() * Math.pow( value, 1.0/num );
+				}
 				cursorNextPsiGlobal.getType().set( (float)value );
 			}
 
@@ -263,18 +278,17 @@ public class LucyRichardsonMultiViewDeconvolution
 			for ( final Cursor<FloatType> cursorResidualsBlurred : blurredResidualsCursors )
 				cursorResidualsBlurred.close();
 
-			for ( final Cursor<FloatType> cursorImage : imageCursors )
-				cursorImage.close();
+			//for ( final Cursor<FloatType> cursorImage : imageCursors )
+			//	cursorImage.close();
 
 			for ( final Cursor<FloatType> cursorWeight : weightCursors )
 				cursorWeight.close();
 
 			//
-			// perform Tikonovh regularization if desired
+			// perform Tikhonov regularization if desired
 			//		
 			if ( lambda > 0 )
 			{
-				IJ.log( "lambda = " + lambda );
 				cursorNextPsiGlobal.reset();
 				
 				while ( cursorNextPsiGlobal.hasNext() )

@@ -161,7 +161,7 @@ public class ExtractPSF
 		if ( !this.isotropic )
 			size[ numDimensions - 1 ] /= Math.max( 1, views.get( 0 ).getZStretching()/2 );
 		
-		IJ.log ( Util.printCoordinates( size ) );
+		//IJ.log ( Util.printCoordinates( size ) );
 		
 		final int[] maxSize = new int[ numDimensions ];
 		

@@ -1,28 +1,27 @@
 package mpicbg.spim.fusion;
 
-import ij.IJ;
-
 import java.util.ArrayList;
 
-import mpicbg.imglib.util.Util;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.registration.ViewDataBeads;
 
 public class BlendingSimpleFactory implements CombinedPixelWeightenerFactory<BlendingSimple>
 {
-	final float boundary;
+	final float boundary, percentScaling;
 	final float[] boundaryArray;
 	
-	public BlendingSimpleFactory( final float boundary )
+	public BlendingSimpleFactory( final float boundary, final float percentScaling )
 	{
 		this.boundary = boundary;
 		this.boundaryArray = null;
+		this.percentScaling = percentScaling;
 	}
 	
-	public BlendingSimpleFactory( final float[] boundary )
+	public BlendingSimpleFactory( final float[] boundary, final float percentScaling )
 	{
 		this.boundaryArray = boundary;
 		this.boundary = 0;
+		this.percentScaling = percentScaling;
 	}
 	
 	@Override
@@ -35,10 +34,7 @@ public class BlendingSimpleFactory implements CombinedPixelWeightenerFactory<Ble
 		else
 			blending.setBorder( boundaryArray );
 		
-		blending.setPercentScaling( 0.6f );
-		
-		IJ.log( "border: " + Util.printCoordinates( blending.border ) );
-		IJ.log( "percent: " + blending.percentScaling );
+		blending.setPercentScaling( percentScaling );
 		
 		return blending;
 	}
