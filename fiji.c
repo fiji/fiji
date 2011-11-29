@@ -2191,6 +2191,7 @@ static void __attribute__((__noreturn__)) usage(void)
 	struct string subcommands = { 0, 0, NULL };
 	int i;
 
+	initialize_subcommands();
 	for (i = 0; i < all_subcommands.size; i++) {
 		struct subcommand *subcommand = &all_subcommands.list[i];
 		string_addf(&subcommands, "%s\n%s", subcommand->name,
