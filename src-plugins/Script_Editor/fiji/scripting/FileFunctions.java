@@ -167,8 +167,8 @@ public class FileFunctions {
 		// try the simple thing first
 		int slash = result.lastIndexOf('/'), backSlash = result.lastIndexOf('\\');
 		String baseName = result.substring(Math.max(slash, backSlash) + 1, result.length() - 4);
-		String dir = fijiDir + "/src-plugins/" + baseName;
-		String path = dir + "/" + className.replace('.', '/') + ".java";
+		String dir = fijiDir + "/src-plugins/" + baseName + "/";
+		String path = dir + className.replace('.', '/') + ".java";
 		if (new File(path).exists())
 			return path;
 		if (new File(dir).isDirectory())
@@ -177,7 +177,7 @@ public class FileFunctions {
 				if (dot < 0)
 					break;
 				className = className.substring(0, dot);
-				path = dir + "/" + className.replace('.', '/') + ".java";
+				path = dir + className.replace('.', '/') + ".java";
 			}
 
 		// Try to find it with the help of the Fakefile
@@ -199,8 +199,9 @@ public class FileFunctions {
 				String stripPath = rule.getStripPath();
 				dir = fijiDir + "/";
 				if (rule instanceof SubFake) {
+					SubFake subFake = (SubFake)rule;
 					stripPath = rule.getLastPrerequisite();
-					fakefile = ((SubFake)rule).getFakefile();
+					fakefile = subFake.getFakefile();
 					if (fakefile != null) {
 						dir += rule.getLastPrerequisite();
 						parser = fake.parse(new FileInputStream(fakefile), new File(dir));
@@ -211,8 +212,10 @@ public class FileFunctions {
 					}
 				}
 				if (stripPath != null) {
+					if (!stripPath.endsWith("/"))
+						stripPath += "/";
 					dir += stripPath;
-					path = dir + "/" + className.replace('.', '/') + ".java";
+					path = dir + className.replace('.', '/') + ".java";
 					if (new File(path).exists())
 						return path;
 				}
