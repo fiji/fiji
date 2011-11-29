@@ -257,10 +257,7 @@ public class MiniMaven {
 		}
 
 		public void buildJar() throws FakeException, IOException, ParserConfigurationException, SAXException {
-			build();
-			JarOutputStream out = new JarOutputStream(new FileOutputStream(getTarget()));
-			addToJarRecursively(out, target, "");
-			out.close();
+			build(true);
 		}
 
 		protected void addToJarRecursively(JarOutputStream out, File directory, String prefix) throws IOException {
@@ -274,11 +271,15 @@ public class MiniMaven {
 		}
 
 		public void build() throws FakeException, IOException, ParserConfigurationException, SAXException {
+			build(false);
+		}
+
+		public void build(boolean makeJar) throws FakeException, IOException, ParserConfigurationException, SAXException {
 			if (!buildFromSource)
 				return;
 			for (POM child : getDependencies())
 				if (child != null)
-					child.build();
+					child.build(makeJar);
 
 			target.mkdirs();
 			File source = new File(directory, getSourcePath());
@@ -304,7 +305,11 @@ public class MiniMaven {
 
 			updateRecursively(new File(source.getParentFile(), "resources"), target);
 
-			buildFromSource = false;
+			if (makeJar) {
+				JarOutputStream out = new JarOutputStream(new FileOutputStream(getTarget()));
+				addToJarRecursively(out, target, "");
+				out.close();
+			}
 		}
 
 		protected void addRecursively(List<String> list, File directory, String extension, File targetDirectory, String targetExtension) {
