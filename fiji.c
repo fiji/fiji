@@ -2103,7 +2103,7 @@ static void add_subcommand(const char *line)
 }
 
 const char *default_subcommands[] = {
-	"--update --fiji-jar=plugins/Fiji_Updater.jar --fiji-jar=jars/jsch-0.1.44.jar --main-class=fiji.updater.Main",
+	"--update --fiji-jar=plugins/Fiji_Updater.jar --fiji-jar=jars/jsch-0.1.44.jar --no-full-classpath --main-class=fiji.updater.Main",
 	" start the command-line version of the Fiji updater",
 	"--jython --fiji-jar=jars/jython.jar --main-class=org.python.util.jython",
 	".py",
@@ -2123,9 +2123,9 @@ const char *default_subcommands[] = {
 	".bsh",
 	" start BeanShell instead of ImageJ (this is the",
 	" default when called with a file ending in .bs or .bsh",
-	"--ant --tools-jar --fiji-jar=jars/ant.jar --fiji-jar=jars/ant-launcher.jar --fiji-jar=jars/ant-nodeps.jar --fiji-jar=jars/ant-junit.jar --headless --main-class=org.apache.tools.ant.Main",
+	"--ant --tools-jar --fiji-jar=jars/ant.jar --fiji-jar=jars/ant-launcher.jar --fiji-jar=jars/ant-nodeps.jar --fiji-jar=jars/ant-junit.jar --no-full-classpath --headless --main-class=org.apache.tools.ant.Main",
 	" run Apache Ant",
-	"--mini-maven --fiji-jar=jars/fake.jar --main-class=fiji.build.MiniMaven",
+	"--mini-maven --fiji-jar=jars/fake.jar --no-full-classpath --main-class=fiji.build.MiniMaven",
 	" run Fiji's very simple Maven mockup",
 	"--javac --fiji-jar=jars/javac.jar --headless --add-classpath-option --main-class=com.sun.tools.javac.Main",
 	" start JavaC, the Java Compiler, instead of ImageJ",
