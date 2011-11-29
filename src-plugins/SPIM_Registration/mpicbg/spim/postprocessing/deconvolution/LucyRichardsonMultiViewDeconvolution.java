@@ -23,6 +23,8 @@ import mpicbg.spim.registration.ViewDataBeads;
 
 public class LucyRichardsonMultiViewDeconvolution
 {
+	public static boolean debug = false;
+	
 	public static Image<FloatType> lucyRichardsonMultiView( final ArrayList<LucyRichardsonFFT> data, final int minIterations, final int maxIterations, final boolean multiplicative, final double lambda )
 	{
 		final int numThreads = Runtime.getRuntime().availableProcessors();
@@ -332,7 +334,8 @@ public class LucyRichardsonMultiViewDeconvolution
 			
 			System.out.println( i + "\t" + sumChange + "\t" + maxChange );
 			
-			if ( i % 10 == 0 )
+			
+			if ( debug && i % 10 == 0 )
 			{
 				Image<FloatType> psiCopy = psi.clone();
 				//ViewDataBeads.normalizeImage( psiCopy );
@@ -341,7 +344,6 @@ public class LucyRichardsonMultiViewDeconvolution
 				psiCopy.close();
 				psiCopy = null;
 			}
-	
 		}
 		while ( i < maxIterations );
 		
