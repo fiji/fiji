@@ -154,7 +154,7 @@ public class MiniMaven {
 		}
 	}
 
-	protected class POM extends DefaultHandler implements Comparable<POM> {
+	public class POM extends DefaultHandler implements Comparable<POM> {
 		protected boolean buildFromSource;
 		protected File directory, target;
 		protected POM parent;
