@@ -14,7 +14,6 @@ import java.util.Date;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import mpicbg.imglib.io.LOCI;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.spim.Reconstruction;
 import mpicbg.spim.fusion.FusionControl;
@@ -98,6 +97,12 @@ public class Multi_View_Deconvolution implements PlugIn
 		IJ.log( "CPUs per view: " + cpusPerView );
 		IJ.log( "Minimal number iterations: " + minNumIterations );
 		IJ.log( "Maximal number iterations: " + maxNumIterations );
+		
+		if ( multiplicative )
+			IJ.log( "Using a multiplicative multiview combination scheme." );
+		else
+			IJ.log( "Using an additive multiview combination scheme." );
+		
 		if ( useTikhonovRegularization )
 			IJ.log( "Using Tikhonov regularization (lambda = " + lambda + ")" );
 		else
@@ -109,11 +114,30 @@ public class Multi_View_Deconvolution implements PlugIn
 		final Image<FloatType> deconvolved;
 		
 		if ( useTikhonovRegularization )
-			deconvolved = LucyRichardsonMultiViewDeconvolution.lucyRichardsonMultiView( deconvolutionData, minNumIterations, maxNumIterations, lambda );
+			deconvolved = LucyRichardsonMultiViewDeconvolution.lucyRichardsonMultiView( deconvolutionData, minNumIterations, maxNumIterations, multiplicative, lambda );
 		else
-			deconvolved = LucyRichardsonMultiViewDeconvolution.lucyRichardsonMultiView( deconvolutionData, minNumIterations, maxNumIterations, 0 );
-		
-		ImageJFunctions.show( deconvolved );
+			deconvolved = LucyRichardsonMultiViewDeconvolution.lucyRichardsonMultiView( deconvolutionData, minNumIterations, maxNumIterations, multiplicative, 0 );
+				
+		if ( conf.writeOutputImage || conf.showOutputImage )
+		{
+			String name = viewStructure.getSPIMConfiguration().inputFilePattern;			
+			String replaceTP = SPIMConfiguration.getReplaceStringTimePoints( name );
+			String replaceChannel = SPIMConfiguration.getReplaceStringChannels( name );
+			
+			if ( replaceTP != null )
+				name = name.replace( replaceTP, "" + conf.timepoints[ 0 ] );
+
+			if ( replaceChannel != null )
+				name = name.replace( replaceChannel, "" + conf.channelsFuse[ 0 ] );
+
+			deconvolved.setName( "DC(l=" + lambda + ")_" + name );
+			
+			if ( conf.showOutputImage )
+				ImageJFunctions.copyToImagePlus( deconvolved ).show();
+
+			if ( conf.writeOutputImage )
+				ImageJFunctions.saveAsTiffs( deconvolved, conf.outputdirectory, name + "_ch" + viewStructure.getChannelNum( 0 ), ImageJFunctions.GRAY32 );
+		}
 	}
 
 	public static boolean fusionUseContentBasedStatic = false;
@@ -124,10 +148,14 @@ public class Multi_View_Deconvolution implements PlugIn
 	public static boolean defaultUseTikhonovRegularization = true;
 	public static double defaultLambda = 0.006;
 	public static boolean showAveragePSF = true;
+	public static int defaultDeconvolutionScheme = 0;
 
+	public static String[] deconvolutionScheme = new String[]{ "Multiplicative", "Additive" };
+	
 	int minNumIterations, maxNumIterations;
 	boolean useTikhonovRegularization = true;
 	double lambda = 0.006;
+	boolean multiplicative = true;
 	
 	protected SPIMConfiguration getParameters() 
 	{
@@ -320,6 +348,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd2.addMessage( "" );		
 		gd2.addNumericField( "Minimal_number_of_iterations", defaultMinNumIterations, 0 );
 		gd2.addNumericField( "Maximal_number_of_iterations", defaultMaxNumIterations, 0 );
+		gd2.addChoice( "Type_of_multiview_combination", deconvolutionScheme, deconvolutionScheme[ defaultDeconvolutionScheme ] );
 		gd2.addCheckbox( "Use_Tikhonov_regularization", defaultUseTikhonovRegularization );
 		gd2.addNumericField( "Tikhonov_parameter", defaultLambda, 4 );
 		gd2.addCheckbox( "Show_averaged_PSF", showAveragePSF );
@@ -399,6 +428,11 @@ public class Multi_View_Deconvolution implements PlugIn
 		
 		minNumIterations = defaultMinNumIterations = (int)Math.round( gd2.getNextNumber() );
 		maxNumIterations = defaultMaxNumIterations = (int)Math.round( gd2.getNextNumber() );
+		defaultDeconvolutionScheme = gd2.getNextChoiceIndex();
+		if ( defaultDeconvolutionScheme == 0 )
+			multiplicative = true;
+		else
+			multiplicative = false;
 		useTikhonovRegularization = defaultUseTikhonovRegularization = gd2.getNextBoolean();
 		lambda = defaultLambda = gd2.getNextNumber();
 		showAveragePSF = gd2.getNextBoolean();
@@ -412,10 +446,10 @@ public class Multi_View_Deconvolution implements PlugIn
 		// we need different output and weight images
 		conf.multipleImageFusion = true;
 		
-		if ( conf.timeLapseRegistration || !displayFusedImageStatic  )
-			conf.showOutputImage = false;
-		else
+		if ( displayFusedImageStatic  )
 			conf.showOutputImage = true;
+		else
+			conf.showOutputImage = false;
 		
 		if ( saveFusedImageStatic )
 			conf.writeOutputImage = true;

@@ -376,10 +376,10 @@ public class Multi_View_Fusion implements PlugIn
 		else
 			conf.multipleImageFusion = true;
 		
-		if ( conf.timeLapseRegistration || !displayFusedImageStatic  )
-			conf.showOutputImage = false;
-		else
+		if ( displayFusedImageStatic  )
 			conf.showOutputImage = true;
+		else
+			conf.showOutputImage = false;
 		
 		if ( saveFusedImageStatic )
 			conf.writeOutputImage = true;
