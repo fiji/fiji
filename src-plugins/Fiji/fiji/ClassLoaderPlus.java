@@ -101,4 +101,20 @@ public class ClassLoaderPlus extends URLClassLoader {
 				path.length() - suffix.length());
 		return path;
 	}
+
+	public String getJarPath(String className) {
+		try {
+			Class clazz = loadClass(className);
+			String path = clazz.getResource("/" + className.replace('.', '/') + ".class").getPath();
+			if (path.startsWith("file:"))
+				path = path.substring(5);
+			int bang = path.indexOf("!/");
+			if (bang > 0)
+				path = path.substring(0, bang);
+			return path;
+		} catch (Throwable t) {
+			t.printStackTrace();
+			return null;
+		}
+	}
 }
