@@ -12,7 +12,7 @@ public class ClassLauncher {
 	 */
 	public static void main(String[] arguments) {
 		ClassLoaderPlus classLoader = null;
-		if (!arguments[0].equals("imagej.Main")) {
+		if (!arguments[0].equals("imagej.Main") && !arguments[0].equals("fiji.build.MiniMaven")) {
 			classLoader = ClassLoaderPlus.getInFijiDirectory("jars/fiji-compat.jar", "jars/ij.jar", "jars/javassist.jar");
 			try {
 				patchIJ1(classLoader);
