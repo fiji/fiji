@@ -17,8 +17,8 @@ public class LucyRichardsonFFT
 		this.kernel = kernel;
 		this.weight = weight;
 		
-		fftConvolution = new FourierConvolution<FloatType, FloatType>( image, kernel );
-		fftConvolution.setNumThreads( cpusPerView );
+		fftConvolution = new FourierConvolution<FloatType, FloatType>( image, kernel );	
+		fftConvolution.setNumThreads( Math.max( 1, cpusPerView ) );
 	}
 
 	public Image<FloatType> getImage() { return image; }

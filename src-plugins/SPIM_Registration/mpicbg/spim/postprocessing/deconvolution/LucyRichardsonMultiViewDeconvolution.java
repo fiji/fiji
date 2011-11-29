@@ -23,11 +23,8 @@ import mpicbg.spim.registration.ViewDataBeads;
 
 public class LucyRichardsonMultiViewDeconvolution
 {
-	final private static boolean additive = true;
-	
-	public static Image<FloatType> lucyRichardsonMultiView( final ArrayList<LucyRichardsonFFT> data, final int minIterations, final int maxIterations, final double lambda )
+	public static Image<FloatType> lucyRichardsonMultiView( final ArrayList<LucyRichardsonFFT> data, final int minIterations, final int maxIterations, final boolean multiplicative, final double lambda )
 	{
-		IJ.log( "add: " + additive );
 		final int numThreads = Runtime.getRuntime().availableProcessors();
 		final int numViews = data.size();
 		//final long numPixels = data.get( 0 ).getImage().getNumPixels();		
@@ -212,7 +209,7 @@ public class LucyRichardsonMultiViewDeconvolution
 				
 				double value = cursorNextPsiGlobal.getType().get();
 				
-				if ( additive )
+				if ( !multiplicative )
 					value = 0;
 				
 				double num = 0;
@@ -232,12 +229,11 @@ public class LucyRichardsonMultiViewDeconvolution
 						final float weight = cursorWeight.getType().get();
 						if ( weight > 0 )
 						{
-							if ( additive )
-								value += cursorResidualsBlurred.getType().get() * weight;
-							else
+							if ( multiplicative )
 								value *= Math.pow( cursorResidualsBlurred.getType().get(), weight );
-								
-							
+							else
+								value += cursorResidualsBlurred.getType().get() * weight;
+
 							num += weight;
 						}
 					}
@@ -261,10 +257,10 @@ public class LucyRichardsonMultiViewDeconvolution
 				
 				if ( num > 0 )
 				{
-					if ( additive )
-						value = (double)cursorPsiGlobal.getType().get() * cursorNextPsiGlobal.getType().get() * value/num;
-					else
+					if ( multiplicative )
 						value = (double)cursorPsiGlobal.getType().get() * Math.pow( value, 1.0/num );
+					else
+						value = (double)cursorPsiGlobal.getType().get() * cursorNextPsiGlobal.getType().get() * value/num;
 				}
 				cursorNextPsiGlobal.getType().set( (float)value );
 			}
