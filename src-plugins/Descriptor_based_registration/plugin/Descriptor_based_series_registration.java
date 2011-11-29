@@ -295,13 +295,13 @@ public class Descriptor_based_series_registration implements PlugIn
 			
 			if ( dimensionality == 2 )
 			{
-				interactiveTmp = new ImagePlus( "First slice of " + imp.getTitle(), imp.getStack().getProcessor( imp.getStackIndex( channel, 1, 1 ) ) );
+				interactiveTmp = new ImagePlus( "First slice of " + imp.getTitle(), imp.getStack().getProcessor( imp.getStackIndex( channel + 1, 1, 1 ) ) );
 			}
 			else
 			{
 				ImageStack stack = new ImageStack( imp.getWidth(), imp.getHeight() );
 				for ( int s = 1; s <= imp.getNSlices(); ++s )
-					stack.addSlice( "", imp.getStack().getProcessor( imp.getStackIndex( channel, s, 1 ) ) );
+					stack.addSlice( "", imp.getStack().getProcessor( imp.getStackIndex( channel + 1, s, 1 ) ) );
 				interactiveTmp = new ImagePlus( "First series of " + imp.getTitle(), stack );
 			}
 			interactiveTmp.show();

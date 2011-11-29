@@ -129,6 +129,8 @@ public class InteractiveDoG implements PlugIn
 	public boolean getSigma2WasAdjusted() { return enableSigma2; }
 	public boolean getLookForMaxima() { return lookForMaxima; }
 	public boolean getLookForMinima() { return lookForMinima; }
+	public void setLookForMaxima( final boolean lookForMaxima ) { this.lookForMaxima = lookForMaxima; }
+	public void setLookForMinima( final boolean lookForMinima ) { this.lookForMinima = lookForMinima; }
 	
 	public void setSigmaMax( final float sigmaMax ) { this.sigmaMax = sigmaMax; }
 	public void setSigma2isAdjustable( final boolean state ) { sigma2IsAdjustable = state; }

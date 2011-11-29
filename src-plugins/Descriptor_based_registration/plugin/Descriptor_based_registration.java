@@ -2,6 +2,7 @@ package plugin;
 
 import fiji.plugin.Bead_Registration;
 import fiji.stacks.Hyperstack_rearranger;
+import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -164,6 +165,8 @@ public class Descriptor_based_registration implements PlugIn
 	
 	public static String[] detectionTypes = { "Maxima only", "Minima only", "Minima & Maxima", "Interactive ..." };
 	public static int defaultDetectionType = 0;
+	public static boolean defaultInteractiveMaxima = true;
+	public static boolean defaultInteractiveMinima = false;
 	
 	public static boolean defaultSimilarOrientation = false;
 	public static int defaultNumNeighbors = 3;
@@ -439,11 +442,17 @@ public class Descriptor_based_registration implements PlugIn
 	 */
 	public static InteractiveDoG getInteractiveDoGParameters( final ImagePlus imp, final int channel, final double values[], final float sigmaMax )
 	{
-		imp.setSlice( imp.getStackSize() / 2 );	
+		 if ( imp.isDisplayedHyperStack() )
+             imp.setPosition( imp.getStackIndex( channel + 1, imp.getNSlices() / 2 + 1 , 1 ) );
+         else
+             imp.setSlice( imp.getStackIndex( channel + 1, imp.getNSlices() / 2 + 1 , 1 ) );
+		 
 		imp.setRoi( 0, 0, imp.getWidth()/3, imp.getHeight()/3 );		
 		
 		final InteractiveDoG idog = new InteractiveDoG( imp, channel );
 		idog.setSigmaMax( sigmaMax );
+		idog.setLookForMaxima( defaultInteractiveMaxima );
+		idog.setLookForMinima( defaultInteractiveMinima );
 		
 		if ( values.length == 2 )
 		{
@@ -473,6 +482,12 @@ public class Descriptor_based_registration implements PlugIn
 			values[ 1 ] = idog.getSigma2();						
 			values[ 2 ] = idog.getThreshold();
 		}
+		
+		// remove the roi
+		imp.killRoi();
+		
+		defaultInteractiveMaxima = idog.getLookForMaxima();
+		defaultInteractiveMinima = idog.getLookForMinima();
 		
 		return idog;
 	}
