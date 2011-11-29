@@ -2140,6 +2140,8 @@ const char *default_subcommands[] = {
 static void initialize_subcommands(void)
 {
 	int i;
+	if (all_subcommands.size)
+		return;
 	for (i = 0; i < sizeof(default_subcommands) / sizeof(default_subcommands[0]); i++)
 		add_subcommand(default_subcommands[i]);
 }
@@ -2148,8 +2150,7 @@ static const char *expand_subcommand(const char *option)
 {
 	int i;
 
-	if (!all_subcommands.size)
-		initialize_subcommands();
+	initialize_subcommands();
 	for (i = 0; i < all_subcommands.size; i++)
 		if (!strcmp(option, all_subcommands.list[i].name))
 			return all_subcommands.list[i].expanded;
@@ -2163,8 +2164,7 @@ static const char *expand_subcommand_for_extension(const char *extension)
 	if (!extension)
 		return NULL;
 
-	if (!all_subcommands.size)
-		initialize_subcommands();
+	initialize_subcommands();
 	for (i = 0; i < all_subcommands.size; i++)
 		for (j = 0; j < all_subcommands.list[i].extensions.size; j++)
 			if (!strcmp(extension, all_subcommands.list[i].extensions.list[j]))
