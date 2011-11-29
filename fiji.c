@@ -2475,6 +2475,10 @@ const char *maybe_substitute_fiji_jar(const char *relative_path)
 		replacement = "/usr/share/java/ant-nodeps.jar";
 	else if (!strcmp(relative_path, "jars/ant-junit.jar"))
 		replacement = "/usr/share/java/ant-junit.jar";
+	else if (!strcmp(relative_path, "jars/jsch-0.1.44.jar"))
+		replacement = "/usr/share/java/jsch.jar";
+	else if (!strcmp(relative_path, "jars/javassist.jar"))
+		replacement = "/usr/share/java/javassist.jar";
 
 	if (!replacement || file_exists(fiji_path(relative_path)))
 		return NULL;
