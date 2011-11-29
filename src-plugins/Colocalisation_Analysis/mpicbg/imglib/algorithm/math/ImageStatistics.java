@@ -30,15 +30,42 @@
 package mpicbg.imglib.algorithm.math;
 
 import mpicbg.imglib.cursor.Cursor;
+import mpicbg.imglib.cursor.special.TwinCursor;
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.Type;
+import mpicbg.imglib.type.logic.BitType;
+import mpicbg.imglib.type.numeric.RealType;
 
 /**
  * This class contains some basic {@link Image} statistics
  * calculations.
  */
 public class ImageStatistics {
+	/**
+	 * Calculates the mean of an image with respect to a mask.
+	 *
+	 * @param img The image to calculate the mean of
+	 * @param mask The mask to respect
+	 * @return The mean of the image passed
+	 */
+	final public static <T extends RealType<T>> double getImageMean( final Image<T> img, final Image<BitType>  mask )
+	{
+		final RealSum sum = new RealSum();
+		long numPixels = 0;
+		// create cursor to walk an image with respect to a mask
+		final TwinCursor<T> cursor = new TwinCursor<T>(
+				img.createLocalizableByDimCursor(),
+				img.createLocalizableByDimCursor(),
+				mask.createLocalizableCursor());
+		while (cursor.hasNext()) {
+			sum.add(cursor.getChannel1().getRealDouble());
+			++numPixels;
+		}
+		cursor.close();
+
+		return sum.getSum() / numPixels;
+	}
+
 	/**
 	 * Calculates the mean of an image.
 	 *
@@ -81,6 +108,27 @@ public class ImageStatistics {
 	}
 
 	/**
+	 * Calculates the integral of the pixel values of an image.
+	 *
+	 * @param img The image to calculate the integral of
+	 * @return The pixel values integral of the image passed
+	 */
+	final public static <T extends RealType<T>> double getImageIntegral( final Image<T> img, Image<BitType> mask )
+	{
+		final RealSum sum = new RealSum();
+		// create cursor to walk an image with respect to a mask
+		final TwinCursor<T> cursor = new TwinCursor<T>(
+				img.createLocalizableByDimCursor(),
+				img.createLocalizableByDimCursor(),
+				mask.createLocalizableCursor());
+		while (cursor.hasNext())
+			sum.add( cursor.getChannel1().getRealDouble() );
+		cursor.close();
+
+		return sum.getSum();
+	}
+
+	/**
 	 * Calculates the min of an image.
 	 *
 	 * @param img The image to calculate the min of
@@ -103,6 +151,38 @@ public class ImageStatistics {
 			if ( currValue.compareTo( min ) < 0 )
 				min.set( currValue );
 		}
+
+        return min;
+	 }
+
+	/**
+	 * Calculates the min of an image with respect to a mask.
+	 *
+	 * @param img The image to calculate the min of
+	 * @param mask The mask to respect
+	 * @return The min of the image passed
+	 */
+	final public static <T extends Type<T> & Comparable<T>> T getImageMin( final Image<T> img, final Image<BitType> mask )
+	{
+		// create cursor to walk an image with respect to a mask
+		final TwinCursor<T> cursor = new TwinCursor<T>(
+				img.createLocalizableByDimCursor(),
+				img.createLocalizableByDimCursor(),
+				mask.createLocalizableCursor());
+		final T min = img.createType();
+		// forward one step to get the first value
+		cursor.fwd();
+		min.set( cursor.getChannel1() );
+
+		while ( cursor.hasNext() ) {
+			cursor.fwd();
+
+			final T currValue = cursor.getChannel1();
+
+			if ( currValue.compareTo( min ) < 0 )
+				min.set( currValue );
+		}
+		cursor.close();
 
         return min;
 	 }
@@ -133,4 +213,35 @@ public class ImageStatistics {
 
         return max;
 	}
+	/**
+	 * Calculates the max of an image with respect to a mask.
+	 *
+	 * @param img The image to calculate the min of
+	 * @param mask The mask to respect
+	 * @return The min of the image passed
+	 */
+	final public static <T extends Type<T> & Comparable<T>> T getImageMax( final Image<T> img, final Image<BitType> mask )
+	{
+		// create cursor to walk an image with respect to a mask
+		final TwinCursor<T> cursor = new TwinCursor<T>(
+				img.createLocalizableByDimCursor(),
+				img.createLocalizableByDimCursor(),
+				mask.createLocalizableCursor());
+		final T max = img.createType();
+		// forward one step to get the first value
+		cursor.fwd();
+		max.set( cursor.getChannel1() );
+
+		while ( cursor.hasNext() ) {
+			cursor.fwd();
+
+			final T currValue = cursor.getChannel1();
+
+			if ( currValue.compareTo( max ) > 0 )
+				max.set( currValue );
+		}
+		cursor.close();
+
+        return max;
+	 }
 }

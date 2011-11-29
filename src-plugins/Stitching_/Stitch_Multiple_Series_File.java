@@ -70,7 +70,7 @@ public class Stitch_Multiple_Series_File implements PlugIn
 		
 		gd.addFileField( "File", fileNameStatic, 50 );		
 		gd.addCheckbox( "Compute_overlap (or trust coordinates in the file)", computeOverlapStatic );
-		gd.addCheckbox("Ignore_Calibration", ignoreCalibrationStatic );
+		gd.addCheckbox( "Ignore_Calibration", ignoreCalibrationStatic );
 		gd.addSlider( "Increase_overlap [%]", 0, 100, overlapStatic );
 		             
 		gd.addChoice( "Fusion_Method", methodListCollection, fusionMethodStatic );

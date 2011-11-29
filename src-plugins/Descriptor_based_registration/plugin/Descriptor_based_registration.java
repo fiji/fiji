@@ -1,25 +1,26 @@
 package plugin;
 
-import process.Matching;
-import mpicbg.imglib.multithreading.SimpleMultiThreading;
-import mpicbg.models.AffineModel2D;
-import mpicbg.models.AffineModel3D;
-import mpicbg.models.HomographyModel2D;
-import mpicbg.models.RigidModel2D;
-import mpicbg.models.RigidModel3D;
-import mpicbg.models.SimilarityModel2D;
-import mpicbg.models.TranslationModel2D;
-import mpicbg.models.TranslationModel3D;
-import mpicbg.spim.segmentation.InteractiveDoG;
 import fiji.plugin.Bead_Registration;
+import fiji.stacks.Hyperstack_rearranger;
+import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.MultiLineLabel;
 import ij.plugin.PlugIn;
-import ij.process.ImageConverter;
-import ij.process.StackConverter;
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
+import mpicbg.models.AffineModel2D;
+import mpicbg.models.AffineModel3D;
+import mpicbg.models.HomographyModel2D;
+import mpicbg.models.InvertibleBoundable;
+import mpicbg.models.RigidModel2D;
+import mpicbg.models.RigidModel3D;
+import mpicbg.models.SimilarityModel2D;
+import mpicbg.models.TranslationModel2D;
+import mpicbg.models.TranslationModel3D;
+import mpicbg.spim.segmentation.InteractiveDoG;
+import process.Matching;
 
 public class Descriptor_based_registration implements PlugIn 
 {
@@ -28,7 +29,14 @@ public class Descriptor_based_registration implements PlugIn
 
 	public static int defaultImg1 = 0;
 	public static int defaultImg2 = 1;
+	public static boolean defaultReApply = false;
 
+	// if both are not null, the option of re-apply previous models will show up
+	public static InvertibleBoundable lastModel1 = null;
+	public static InvertibleBoundable lastModel2 = null;
+	// define if it is was a 2d or 3d model
+	public static int lastDimensionality = Integer.MAX_VALUE;
+	
 	//@Override
 	public void run(String arg0) 
 	{		
@@ -45,14 +53,24 @@ public class Descriptor_based_registration implements PlugIn
 		for ( int i = 0; i < idList.length; ++i )
 			imgList[ i ] = WindowManager.getImage(idList[i]).getTitle();
 
+		if ( defaultImg1 >= imgList.length || defaultImg2 >= imgList.length )
+		{
+			defaultImg1 = 0;
+			defaultImg2 = 1;
+		}
+
 		/**
 		 * The first dialog for choosing the images
 		 */
 		final GenericDialog gd = new GenericDialog( "Descriptor based registration" );
 	
-		gd.addChoice("First_image (reference)", imgList, imgList[ defaultImg1 ] );
-		gd.addChoice("Second_image (to register)", imgList, imgList[ defaultImg2 ] );
-		gd.addMessage( "Warning: if images are of RGB or 8-bit they will be converted to hyperstacks.");
+		gd.addChoice("First_image (to register)", imgList, imgList[ defaultImg1 ] );
+		gd.addChoice("Second_image (reference)", imgList, imgList[ defaultImg2 ] );
+		
+		if ( lastModel1 != null )
+			gd.addCheckbox( "Reapply last model", defaultReApply );
+		
+		gd.addMessage( "Warning: if images are of RGB or 8-bit color they will be converted to hyperstacks.");
 		gd.addMessage( "Please note that the SPIM Registration is based on a publication.\n" +
 					   "If you use it successfully for your research please be so kind to cite our work:\n" +
 					   "Preibisch et al., Nature Methods (2010), 7(6):418-419\n" );
@@ -67,13 +85,20 @@ public class Descriptor_based_registration implements PlugIn
 		
 		ImagePlus imp1 = WindowManager.getImage( idList[ defaultImg1 = gd.getNextChoiceIndex() ] );		
 		ImagePlus imp2 = WindowManager.getImage( idList[ defaultImg2 = gd.getNextChoiceIndex() ] );		
-
+		boolean reApply = false;
+		
+		if ( lastModel1 != null )
+		{
+			reApply = gd.getNextBoolean();
+			defaultReApply = reApply;			
+		}
+		
 		// if one of the images is rgb or 8-bit color convert them to hyperstack
-		imp1 = convertToHyperStack( imp1 );
-		imp2 = convertToHyperStack( imp2 );
+		imp1 = Hyperstack_rearranger.convertToHyperStack( imp1 );
+		imp2 = Hyperstack_rearranger.convertToHyperStack( imp2 );
 		
 		// test if the images are compatible
-		String error = Stitching_Pairwise.testRegistrationCompatibility( imp1, imp2 );
+		String error = testRegistrationCompatibility( imp1, imp2 );
 
 		if ( error != null )
 		{
@@ -89,14 +114,41 @@ public class Descriptor_based_registration implements PlugIn
 		else
 			dimensionality = 2;
 		
+		if ( imp1.getNFrames() > 1 || imp2.getNFrames() > 2 )
+			IJ.log( "WARNING: Images have more than one timepoint, ignoring all but the first one." );
+		
+		// reapply?
+		if ( reApply )
+		{
+			if ( dimensionality < lastDimensionality )
+			{
+				IJ.log( "Cannot reapply, cannot apply a " + lastModel1.getClass().getSimpleName() + " to " + dimensionality + " data." );
+				defaultReApply = false;
+				return;
+			}
+			else if ( dimensionality > lastDimensionality )
+			{
+				IJ.log( "WARNING: applying a " + lastModel1.getClass().getSimpleName() + " to " + dimensionality + " data." );
+			}
+			
+			// just fuse
+			final DescriptorParameters params = new DescriptorParameters();
+			params.dimensionality = dimensionality;
+			params.reApply = true;
+			params.fuse = true;
+			params.setPointsRois = false;
+			Matching.descriptorBasedRegistration( imp1, imp2, params );
+			return;			
+		}
+
 		// open a second dialog and query the other parameters
 		final DescriptorParameters params = getParameters( imp1, imp2, dimensionality );
 		
 		if ( params == null )
 			return;
-		
+				
 		// compute the actual matching
-		new Matching( imp1, imp2, params );
+		Matching.descriptorBasedRegistration( imp1, imp2, params );
 	}
 	
 	public String[] transformationModels2d = new String[] { "Translation (2d)", "Rigid (2d)", "Similarity (2d)", "Affine (2d)", "Homography (2d)" };
@@ -113,7 +165,10 @@ public class Descriptor_based_registration implements PlugIn
 	
 	public static String[] detectionTypes = { "Maxima only", "Minima only", "Minima & Maxima", "Interactive ..." };
 	public static int defaultDetectionType = 0;
+	public static boolean defaultInteractiveMaxima = true;
+	public static boolean defaultInteractiveMinima = false;
 	
+	public static boolean defaultSimilarOrientation = false;
 	public static int defaultNumNeighbors = 3;
 	public static int defaultRedundancy = 1;
 	public static double defaultSignificance = 3;
@@ -154,6 +209,7 @@ public class Descriptor_based_registration implements PlugIn
 		gd.addChoice( "Type_of_detections", detectionTypes, detectionTypes[ defaultDetectionType ] );
 		
 		gd.addChoice( "Transformation_model", transformationModel, transformationModel[ defaultTransformationModel ] );
+		gd.addCheckbox( "Images_are_roughly_aligned", defaultSimilarOrientation );
 		
 		if ( dimensionality == 2 )
 		{
@@ -169,7 +225,6 @@ public class Descriptor_based_registration implements PlugIn
 			
 			gd.addSlider( "Number_of_neighbors for the descriptors", 3, 10, defaultNumNeighbors );
 		}
-		
 		gd.addSlider( "Redundancy for descriptor matching", 0, 10, defaultRedundancy );		
 		gd.addSlider( "Significance required for a descriptor match", 1.0, 10.0, defaultSignificance );
 		gd.addSlider( "Allowed_error_for_RANSAC (px)", 0.5, 20.0, defaultRansacThreshold );
@@ -201,11 +256,14 @@ public class Descriptor_based_registration implements PlugIn
 		
 		final DescriptorParameters params = new DescriptorParameters();
 		params.dimensionality = dimensionality;
+		params.roi1 = imp1.getRoi();
+		params.roi2 = imp2.getRoi();
 		
 		final int detectionBrightnessIndex = gd.getNextChoiceIndex();
 		final int detectionSizeIndex = gd.getNextChoiceIndex();
 		final int detectionTypeIndex = gd.getNextChoiceIndex();
 		final int transformationModelIndex = gd.getNextChoiceIndex();
+		final boolean similarOrientation = gd.getNextBoolean();
 		final int numNeighbors = (int)Math.round( gd.getNextNumber() );
 		final int redundancy = (int)Math.round( gd.getNextNumber() );
 		final double significance = gd.getNextNumber();
@@ -222,6 +280,7 @@ public class Descriptor_based_registration implements PlugIn
 		defaultDetectionSize = detectionSizeIndex;
 		defaultDetectionType = detectionTypeIndex;
 		defaultTransformationModel = transformationModelIndex;
+		defaultSimilarOrientation = similarOrientation;
 		defaultNumNeighbors = numNeighbors;
 		defaultRedundancy = redundancy;
 		defaultSignificance = significance;
@@ -244,7 +303,6 @@ public class Descriptor_based_registration implements PlugIn
 			params.threshold = values[ 1 ];
 			params.lookForMaxima = idog.getLookForMaxima();
 			params.lookForMinima = idog.getLookForMinima();
-			params.img1 = idog.getConvertedImage();
 		}
 		else 
 		{
@@ -342,6 +400,7 @@ public class Descriptor_based_registration implements PlugIn
 		
 		// other parameters
 		params.sigma2 = InteractiveDoG.computeSigma2( (float)params.sigma1, InteractiveDoG.standardSenstivity );
+		params.similarOrientation = similarOrientation;
 		params.numNeighbors = numNeighbors;
 		params.redundancy = redundancy;
 		params.significance = significance;
@@ -354,7 +413,7 @@ public class Descriptor_based_registration implements PlugIn
 		return params;
 	}
 	
-	protected double[] getAdvancedDoGParameters( final double defaultSigma, final double defaultThreshold )
+	protected static double[] getAdvancedDoGParameters( final double defaultSigma, final double defaultThreshold )
 	{
 		final GenericDialog gd = new GenericDialog( "Select Difference-of-Gaussian parameters" );
 		
@@ -383,11 +442,17 @@ public class Descriptor_based_registration implements PlugIn
 	 */
 	public static InteractiveDoG getInteractiveDoGParameters( final ImagePlus imp, final int channel, final double values[], final float sigmaMax )
 	{
-		imp.setSlice( imp.getStackSize() / 2 );	
+		 if ( imp.isDisplayedHyperStack() )
+             imp.setPosition( imp.getStackIndex( channel + 1, imp.getNSlices() / 2 + 1 , 1 ) );
+         else
+             imp.setSlice( imp.getStackIndex( channel + 1, imp.getNSlices() / 2 + 1 , 1 ) );
+		 
 		imp.setRoi( 0, 0, imp.getWidth()/3, imp.getHeight()/3 );		
 		
 		final InteractiveDoG idog = new InteractiveDoG( imp, channel );
 		idog.setSigmaMax( sigmaMax );
+		idog.setLookForMaxima( defaultInteractiveMaxima );
+		idog.setLookForMinima( defaultInteractiveMinima );
 		
 		if ( values.length == 2 )
 		{
@@ -418,31 +483,32 @@ public class Descriptor_based_registration implements PlugIn
 			values[ 2 ] = idog.getThreshold();
 		}
 		
+		// remove the roi
+		imp.killRoi();
+		
+		defaultInteractiveMaxima = idog.getLookForMaxima();
+		defaultInteractiveMinima = idog.getLookForMinima();
+		
 		return idog;
 	}
 	
-	/**
-	 * Converts this image to Hyperstack if it is RGB or 8-bit color
-	 * 
-	 * @param imp - Inputimage
-	 * @return the output image, might be the same
-	 */
-	public static ImagePlus convertToHyperStack( ImagePlus imp )
+	public static String testRegistrationCompatibility( final ImagePlus imp1, final ImagePlus imp2 ) 
 	{
-		// first 8-bit color to RGB, directly to Hyperstack is not supported
-		if ( imp.getType() == ImagePlus.COLOR_256 )
-		{
-			if ( imp.getStackSize() > 1 )
-				new StackConverter( imp ).convertToRGB();
-			else
-				new ImageConverter( imp ).convertToRGB();
-		}
+		// test time points
+		final int numFrames1 = imp1.getNFrames();
+		final int numFrames2 = imp2.getNFrames();
 		
-		// now convert to hyperstack, this creates a new imageplus
-		if ( imp.getType() == ImagePlus.COLOR_RGB )
-			imp = new CompositeConverter2().makeComposite( imp );
+		if ( numFrames1 != numFrames2 )
+			return "Images have a different number of time points, cannot proceed...";
 		
-		return imp;
+		// test if both have 2d or 3d image contents
+		final int numSlices1 = imp1.getNSlices();
+		final int numSlices2 = imp2.getNSlices();
+		
+		if ( numSlices1 == 1 && numSlices2 != 1 || numSlices1 != 1 && numSlices2 == 1 )
+			return "One image is 2d and the other one is 3d, cannot proceed...";
+		
+		return null;
 	}
-
+	
 }

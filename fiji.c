@@ -636,7 +636,7 @@ size_t get_memory_size(int available_only)
 #else
 size_t get_memory_size(int available_only)
 {
-	fprintf(stderr, "Unsupported\n");
+	fprintf(stderr, "Cannot reserve optimal memory on this platform\n");
 	return 0;
 }
 #endif
@@ -2103,7 +2103,7 @@ static void add_subcommand(const char *line)
 }
 
 const char *default_subcommands[] = {
-	"--update --fiji-jar=plugins/Fiji_Updater.jar --main-class=fiji.updater.Main",
+	"--update --fiji-jar=plugins/Fiji_Updater.jar --fiji-jar=jars/jsch-0.1.44.jar --main-class=fiji.updater.Main",
 	" start the command-line version of the Fiji updater",
 	"--jython --fiji-jar=jars/jython.jar --main-class=org.python.util.jython",
 	".py",
@@ -2480,6 +2480,24 @@ const char *maybe_substitute_fiji_jar(const char *relative_path)
 		return NULL;
 
 	return replacement;
+}
+
+/*
+ * Returns the number of elements which this option spans if it is an ImageJ1 option, 0 otherwise.
+ */
+static int imagej1_option_count(const char *option)
+{
+	if (!option)
+		return 0;
+	if (option[0] != '-') /* file names */
+		return 1;
+	if (!prefixcmp(option, "-port") || !strcmp(option, "-debug"))
+		return 1;
+	if (!strcmp(option, "-ijpath") || !strcmp(option, "-macro") || !strcmp(option, "-eval") || !strcmp(option, "-run"))
+		return 2;
+	if (!strcmp(option, "-batch"))
+		return 3;
+	return 0;
 }
 
 const char *properties[32];
@@ -2899,29 +2917,50 @@ static void parse_command_line(void)
 	if (default_arguments->length)
 		add_options(&options, default_arguments->buffer, 1);
 
-	if (dashdash) {
-		for (i = 1; i < dashdash; i++)
-			add_option(&options, main_argv[i], 0);
-		main_argv += dashdash - 1;
-		main_argc -= dashdash - 1;
-	}
-
 	if (add_class_path_option) {
 		add_option(&options, "-classpath", 1);
 		add_option_copy(&options, class_path.buffer, 1);
 	}
 
+	if (jdb)
+		add_option_copy(&options, main_class, 1);
+
 	if (!strcmp(main_class, "org.apache.tools.ant.Main"))
 		add_java_home_to_path();
 
-	if (jdb)
-		add_option_copy(&options, main_class, 1);
 	if (is_default_main_class(main_class)) {
 		if (allow_multiple)
 			add_option(&options, "-port0", 1);
 		else
 			add_option(&options, "-port7", 1);
 		add_option(&options, "-Dsun.java.command=Fiji", 0);
+	}
+
+	// If there is no -- but some options unknown to IJ1, DWIM it
+	if (!dashdash && is_default_main_class(main_class)) {
+		for (i = 1; i < main_argc; i++) {
+			int count = imagej1_option_count(main_argv[i]);
+			if (!count) {
+				dashdash = main_argc;
+				break;
+			}
+			i += count - 1;
+		}
+	}
+
+	if (dashdash) {
+		int is_imagej1 = is_default_main_class(main_class);
+
+		for (i = 1; i < dashdash; ) {
+			int count = is_imagej1 ? imagej1_option_count(main_argv[i]) : 0;
+			if (!count)
+				add_option(&options, main_argv[i++], 0);
+			else
+				while (count-- && i < dashdash)
+					add_option(&options, main_argv[i++], 1);
+		}
+		main_argv += dashdash - 1;
+		main_argc -= dashdash - 1;
 	}
 
 	/* handle "--headless script.ijm" gracefully */

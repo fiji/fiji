@@ -1,7 +1,5 @@
 package fiji.updater.logic;
 
-import fiji.updater.Updater;
-
 import fiji.updater.logic.PluginCollection.UpdateSite;
 
 import fiji.updater.util.Downloader;
@@ -10,8 +8,6 @@ import fiji.updater.util.Downloader.FileDownload;
 import fiji.updater.util.Progress;
 import fiji.updater.util.Progressable;
 import fiji.updater.util.Util;
-
-import ij.Prefs;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -28,7 +24,6 @@ import java.util.Observable;
 import java.util.Observer;
 
 import java.util.zip.GZIPInputStream;
-
 
 /*
  * Directly in charge of downloading and saving start-up files (i.e.: XML file
@@ -59,7 +54,7 @@ public class XMLFileDownloader extends Progressable {
 			addItem(title);
 			setCount(current, total);
 			try {
-				URLConnection connection = new URL(updateSite.url + Updater.XML_COMPRESSED).openConnection();
+				URLConnection connection = new URL(updateSite.url + Util.XML_COMPRESSED).openConnection();
 				long lastModified = connection.getLastModified();
 				int fileSize = (int)connection.getContentLength();
 				InputStream in = getInputStream(new GZIPInputStream(connection.getInputStream()), fileSize);
