@@ -611,6 +611,8 @@ public class MiniMaven {
 				if (version == null)
 					version = string;
 			}
+			else if (prefix.equals(">project>modules"))
+				buildFromSource = true; // might not be building a target
 			else if (prefix.equals(">project>modules>module"))
 				modules.add(string);
 			else if (prefix.startsWith(">project>properties>"))
