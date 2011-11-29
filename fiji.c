@@ -2045,6 +2045,7 @@ static void add_extension(struct subcommand *subcommand, const char *extension)
  * <option>: <command-line options to replacing the subcommand options>
  *  <description>
  *  [<possible continuation>]
+ * [.extension]
  *
  * Example:
  *
