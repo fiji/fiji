@@ -846,7 +846,7 @@ public class MiniMaven {
 		MiniMaven miniMaven = new MiniMaven(null, System.err, false);
 		POM root = miniMaven.parse(new File("pom.xml"), null);
 		String command = args.length == 0 ? "compile-and-run" : args[0];
-		String artifactId = getSystemProperty("artifactId", "imagej");
+		String artifactId = getSystemProperty("artifactId", "ij-app");
 		String mainClass = getSystemProperty("mainClass", "imagej.Main");
 
 		POM pom = root.findPOM(null, artifactId, null);
