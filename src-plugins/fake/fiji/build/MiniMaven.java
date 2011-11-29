@@ -360,6 +360,8 @@ public class MiniMaven {
 		}
 
 		public File getTarget() {
+			if (!buildFromSource)
+				return target;
 			return new File(new File(directory, "target"), getJarName());
 		}
 
@@ -369,6 +371,15 @@ public class MiniMaven {
 			for (POM pom : getDependencies())
 				builder.append(File.pathSeparator).append(pom.target);
 			return builder.toString();
+		}
+
+		public void copyDependencies(File directory, boolean onlyNewer) throws IOException, ParserConfigurationException, SAXException {
+			for (POM pom : getDependencies()) {
+				File file = pom.getTarget();
+				File destination = new File(directory, pom.artifactId + ".jar");
+				if (file.exists() && (!destination.exists() || destination.lastModified() < file.lastModified()))
+					copyFile(file, destination);
+			}
 		}
 
 		public Set<POM> getDependencies() throws IOException, ParserConfigurationException, SAXException {
