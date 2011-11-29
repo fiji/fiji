@@ -2186,6 +2186,47 @@ static const char *get_file_extension(const char *path)
 	return NULL;
 }
 
+__attribute__((format (printf, 1, 2)))
+static int jar_exists(const char *fmt, ...)
+{
+	struct string string = { 0, 0, NULL };
+	va_list ap;
+	int result;
+
+	va_start(ap, fmt);
+	string_vaddf(&string, fmt, ap);
+	result = file_exists(string.buffer);
+	free(string.buffer);
+	va_end(ap);
+
+	return result;
+}
+
+/*
+ * Check whether all .jar files specified in the classpath are available.
+ */
+static int check_subcommand_classpath(struct subcommand *subcommand)
+{
+	const char *expanded = subcommand->expanded;
+
+	while (expanded && *expanded) {
+		const char *space = strchr(expanded, ' ');
+		if (!space)
+			space = expanded + strlen(expanded);
+		if (!prefixcmp(expanded, "--fiji-jar=")) {
+			expanded += 11;
+			if (!jar_exists("%s/%.*s", fiji_path(""), (int)(space - expanded), expanded))
+				return 0;
+		}
+		else if (!prefixcmp(expanded, "--tools-jar")) {
+			if (!jar_exists("%s/../lib/tools.jar", get_jre_home()))
+				return 0;
+		}
+		expanded = space + !!*space;
+	}
+	return 1;
+}
+
 static void __attribute__((__noreturn__)) usage(void)
 {
 	struct string subcommands = { 0, 0, NULL };
@@ -2194,6 +2235,8 @@ static void __attribute__((__noreturn__)) usage(void)
 	initialize_subcommands();
 	for (i = 0; i < all_subcommands.size; i++) {
 		struct subcommand *subcommand = &all_subcommands.list[i];
+		if (!check_subcommand_classpath(subcommand))
+			continue;
 		string_addf(&subcommands, "%s\n%s", subcommand->name,
 			subcommand->description.length ? subcommand->description.buffer : "");
 	}
