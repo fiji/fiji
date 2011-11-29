@@ -11,11 +11,14 @@ public class ClassLauncher {
 	 *        with the remaining arguments.
 	 */
 	public static void main(String[] arguments) {
-		ClassLoaderPlus classLoader = ClassLoaderPlus.getInFijiDirectory("jars/fiji-compat.jar", "jars/ij.jar", "jars/javassist.jar");
-		try {
-			patchIJ1(classLoader);
-		} catch (Exception e) {
-			e.printStackTrace();
+		ClassLoaderPlus classLoader = null;
+		if (!arguments[0].equals("imagej.Main")) {
+			classLoader = ClassLoaderPlus.getInFijiDirectory("jars/fiji-compat.jar", "jars/ij.jar", "jars/javassist.jar");
+			try {
+				patchIJ1(classLoader);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 		String[] stripped = new String[arguments.length - 1];
 		if (stripped.length > 0)
@@ -31,6 +34,8 @@ public class ClassLauncher {
 
 	protected static void launch(ClassLoader classLoader, String className, String[] arguments) {
 		Class main = null;
+		if (classLoader == null)
+			classLoader = Thread.currentThread().getContextClassLoader();
 		try {
 			main = classLoader.loadClass(className.replace('/', '.'));
 		} catch (ClassNotFoundException e) {
