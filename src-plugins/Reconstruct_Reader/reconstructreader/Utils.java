@@ -5,6 +5,9 @@ import reconstructreader.reconstruct.ContourSet;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.*;
 
 public final class Utils {
@@ -495,6 +498,16 @@ public final class Utils {
         Collections.sort(magList);
 
         return magList.get(magList.size() / 2);
+    }
+
+    public static String stackTraceToString(final Throwable t)
+    {
+        //adapted from code found on javapractices.com
+        final StringWriter result = new StringWriter();
+        final PrintWriter printWriter = new PrintWriter(result);
+        t.printStackTrace(printWriter);
+        return result.toString();
+
     }
 }
 
