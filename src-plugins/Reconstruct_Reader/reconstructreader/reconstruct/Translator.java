@@ -151,6 +151,9 @@ public class Translator {
     private final String nuid;
     private final File inputFile;
 
+    private String errorMessage;
+    private File lastFile;
+
     private int currentOID;
 
     private final int layerSetOID;
@@ -160,7 +163,7 @@ public class Translator {
 
     private boolean ready;
 
-    private static String lastok = "";
+
 
     public static InputSource getISO8559Source(final File f) throws FileNotFoundException, UnsupportedEncodingException
     {
@@ -174,18 +177,8 @@ public class Translator {
     {
         MalformedFileInputStream fileStream = new MalformedFileInputStream(f);
         Reader charStream = new InputStreamReader(fileStream);
-        try
-        {
-            Document d = builder.parse(new InputSource(charStream));
-            sectionDocuments.add(d);
-            lastok = fileStream.toString();
-        }
-        catch (SAXParseException spe)
-        {
-            System.err.println(lastok);
-            System.err.println(fileStream);
-            throw spe;
-        }
+        Document d = builder.parse(new InputSource(charStream));
+        sectionDocuments.add(d);
     }
 
     public Translator(String f)
@@ -193,8 +186,11 @@ public class Translator {
         inputFile = new File(f);
         // Parse out the path
         final String localFile = inputFile.getName();
-        final File seriesDTD = new File(inputFile.getParent() + "/series.dtd");
-        final File sectionDTD = new File(inputFile.getParent() + "/section.dtd");
+        //final File seriesDTD = new File(inputFile.getParent() + "/series.dtd");
+        //final File sectionDTD = new File(inputFile.getParent() + "/section.dtd");
+
+        errorMessage = "";
+        lastFile = null;
 
         xmlBuilder = null;
         sectionDocuments = new ArrayList<Document>();
@@ -213,9 +209,11 @@ public class Translator {
 
         layerSetOID = nextOID();
 
+        ready = true;
+
         // Make sure that the DTD files exist. Apparently it doesn't matter a
         // whole lot if they actually contain anything.
-        try
+        /*try
         {
             if (!seriesDTD.exists())
             {
@@ -238,10 +236,11 @@ public class Translator {
         catch (IOException ioe)
         {
             ioe.printStackTrace();
-            xmlBuilder.append(ioe.getStackTrace());
+            errorMessage = "Error while spoofing DTD files:\n" +
+                    Utils.stackTraceToString(ioe);
 
             ready = false;
-        }
+        }*/
     }
 
     public int getLayerSetOID()
@@ -281,14 +280,19 @@ public class Translator {
             try
             {
                 //Read and parse all of the files (series and sections)
-                DocumentBuilder builder =
-                        DocumentBuilderFactory.newInstance().newDocumentBuilder();
+                final DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+                DocumentBuilder builder;
+
+                builderFactory.setValidating(false);
+                builderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+                builder = builderFactory.newDocumentBuilder();
 
                 serDoc = builder.parse(inputFile);
 
                 for (File f : list)
                 {
-                    System.out.println("Opening file " + f.getName());
+                    System.out.println("Opening file " + f.getAbsolutePath());
+                    lastFile = f;
                     addSection(sectionDocuments, builder, f);
                 }
 
@@ -332,10 +336,20 @@ public class Translator {
 
                 return true;
             }
+            catch (SAXParseException spe)
+            {
+                String fid = lastFile == null ? "" : " in " + lastFile.getName();
+                errorMessage = "Error while parsing XML" + fid + " at line " + spe.getLineNumber() +
+                        ", column " + spe.getColumnNumber() + "\n";
+                errorMessage += Utils.stackTraceToString(spe);
+
+                return false;
+            }
             catch (Exception e)
             {
                 clearMemory();
                 e.printStackTrace();
+                errorMessage = Utils.stackTraceToString(e);
                 return false;
             }
         }
@@ -343,6 +357,11 @@ public class Translator {
         {
             return false;
         }
+    }
+
+    public String getLastErrorMessage()
+    {
+        return errorMessage;
     }
 
     protected void clearMemory()
