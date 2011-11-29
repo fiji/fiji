@@ -469,11 +469,12 @@ static int string_read_file(struct string *string, const char *path) {
 static const char *absolute_java_home;
 static const char *relative_java_home = JAVA_HOME;
 static const char *library_path = JAVA_LIB_PATH;
-static const char *default_main_class = "fiji.Main";
+static const char *default_fiji1_class = "fiji.Main";
+static const char *default_main_class = "imagej.Main";
 
-static int is_default_main_class(const char *name)
+static int is_default_ij1_class(const char *name)
 {
-	return name && (!strcmp(name, default_main_class) || !strcmp(name, "ij.ImageJ"));
+	return name && (!strcmp(name, default_fiji1_class) || !strcmp(name, "ij.ImageJ"));
 }
 
 /* Dynamic library loading stuff */
@@ -2049,7 +2050,7 @@ static void add_extension(struct subcommand *subcommand, const char *extension)
  *
  * Example:
  *
- * --build --cp jars/fake.jar --main-class fiji.build.Fake
+ * --build --fiji-jar=jars/fake.jar --main-class=fiji.build.Fake
  *  Start the Fiji Build in the current directory
  */
 static void add_subcommand(const char *line)
@@ -2287,7 +2288,11 @@ static void __attribute__((__noreturn__)) usage(void)
 		"--no-splash\n"
 		"\tsuppress showing a splash screen upon startup\n"
 		"\n"
-		"Options for ImageJ1:\n"
+		"Options for ImageJ:\n"
+		"--ij2\n"
+		"\tstart ImageJ2 instead of ImageJ1\n"
+		"--ij1\n"
+		"\tstart ImageJ1\n"
 		"--allow-multiple\n"
 		"\tdo not reuse existing ImageJ instance\n"
 		"--plugins <dir>\n"
@@ -2412,7 +2417,7 @@ static void try_with_less_memory(size_t memory_size)
 		struct string *dummy = string_init(32);
 		if (!found_dashdash && !strcmp(main_argv_backup[i], "--"))
 			found_dashdash = 1;
-		if ((!found_dashdash || is_default_main_class(main_class)) &&
+		if ((!found_dashdash || is_default_ij1_class(main_class)) &&
 				(handle_one_option(&i, (const char **)main_argv, "--mem", dummy) ||
 				 handle_one_option(&i, (const char **)main_argv, "--memory", dummy)))
 			continue;
@@ -2605,6 +2610,10 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 	else if (handle_one_option(i, argv, "--ext", &arg)) {
 		string_append_path_list(&ext_option, arg.buffer);
 	}
+	else if (!strcmp(argv[*i], "--ij2") || !strcmp(argv[*i], "--imagej"))
+		main_class = default_main_class;
+	else if (!strcmp(argv[*i], "--ij1") || !strcmp(argv[*i], "--legacy"))
+		main_class = default_fiji1_class;
 	else if (!strcmp(argv[*i], "--build") ||
 			!strcmp(argv[*i], "--fake")) {
 		const char *fake_jar, *precompiled_fake_jar;
@@ -2786,7 +2795,7 @@ static void parse_command_line(void)
 		if (!strcmp(main_argv[i], "--") && !dashdash)
 			dashdash = count;
 		else if (dashdash && main_class &&
-				!is_default_main_class(main_class))
+				!is_default_ij1_class(main_class))
 			main_argv[count++] = main_argv[i];
 		else if (handle_one_option2(&i, main_argc, (const char **)main_argv))
 			; /* ignore */
@@ -2890,7 +2899,7 @@ static void parse_command_line(void)
 			string_release(dotted);
 		}
 		else
-			main_class = default_main_class;
+			main_class = default_fiji1_class;
 	}
 
 	maybe_reexec_with_correct_lib_path();
@@ -2898,14 +2907,14 @@ static void parse_command_line(void)
 	if (retrotranslator && build_classpath(&class_path, fiji_path("retro"), 0))
 		die("Retrotranslator is required but cannot be found!");
 
-	if (!options.debug && !options.use_system_jvm && !headless && is_default_main_class(main_class))
+	if (!options.debug && !options.use_system_jvm && !headless && is_default_ij1_class(main_class))
 		show_splash();
 
 	/* set up class path */
 	if (skip_build_classpath)
 		string_append_path_list(&class_path, fiji_path("jars/Fiji.jar"));
 	else {
-		if (is_default_main_class(main_class))
+		if (is_default_ij1_class(main_class))
 			string_append_path_list(&class_path, fiji_path("jars/Fiji.jar"));
 		else {
 			if (build_classpath(&class_path, fiji_path("plugins"), 0))
@@ -2932,7 +2941,7 @@ static void parse_command_line(void)
 	if (!strcmp(main_class, "org.apache.tools.ant.Main"))
 		add_java_home_to_path();
 
-	if (is_default_main_class(main_class)) {
+	if (is_default_ij1_class(main_class)) {
 		if (allow_multiple)
 			add_option(&options, "-port0", 1);
 		else
@@ -2941,7 +2950,7 @@ static void parse_command_line(void)
 	}
 
 	// If there is no -- but some options unknown to IJ1, DWIM it
-	if (!dashdash && is_default_main_class(main_class)) {
+	if (!dashdash && is_default_ij1_class(main_class)) {
 		for (i = 1; i < main_argc; i++) {
 			int count = imagej1_option_count(main_argv[i]);
 			if (!count) {
@@ -2953,7 +2962,7 @@ static void parse_command_line(void)
 	}
 
 	if (dashdash) {
-		int is_imagej1 = is_default_main_class(main_class);
+		int is_imagej1 = is_default_ij1_class(main_class);
 
 		for (i = 1; i < dashdash; ) {
 			int count = is_imagej1 ? imagej1_option_count(main_argv[i]) : 0;
@@ -2968,7 +2977,7 @@ static void parse_command_line(void)
 	}
 
 	/* handle "--headless script.ijm" gracefully */
-	if (headless && is_default_main_class(main_class)) {
+	if (headless && is_default_ij1_class(main_class)) {
 		if (main_argc + headless_argc < 2) {
 			error("--headless without a parameter?");
 			if (!options.debug)
