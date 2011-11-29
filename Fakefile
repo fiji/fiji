@@ -310,25 +310,8 @@ jars/jython.jar <- fiji modules/jython/
 jars/commons-math.jar <- fiji modules/commons-math/
 jars/javassist.jar <- modules/javassist/
 jars/jsch-0.1.44.jar <- modules/jsch/
-jars/ij-core-plugins.jar <- modules/imagej2/
-jars/ij-core-tools.jar <- modules/imagej2/
-jars/ij-core.jar <- modules/imagej2/
-jars/ij-data.jar <- modules/imagej2/
-jars/ij-display.jar <- modules/imagej2/
-jars/ij-event.jar <- modules/imagej2/
-jars/ij-legacy.jar <- modules/imagej2/
-jars/ij-module.jar <- modules/imagej2/
-jars/ij-object.jar <- modules/imagej2/
-jars/ij-platform.jar <- modules/imagej2/
-jars/ij-plugin.jar <- modules/imagej2/
-jars/ij-tool.jar <- modules/imagej2/
-jars/ij-ui.jar <- modules/imagej2/
-jars/ij-imagej.jar <- modules/imagej2/
-jars/ij-platform-macosx.jar <- modules/imagej2/
-jars/ij-plugin-swing.jar <- modules/imagej2/
-jars/ij-ui-common-awt.jar <- modules/imagej2/
-jars/ij-ui-swing.jar <- modules/imagej2/
-jars/ij-util-awt.jar <- modules/imagej2/
+COPYDEPENDENCIES(jars/ij-app.jar)=true
+jars/ij-app.jar <- modules/imagej2/
 CLASSPATH(plugins/Image_5D.jar)=jars/ij.jar
 plugins/Image_5D.jar <- modules/image5d/
 
