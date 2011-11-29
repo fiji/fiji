@@ -244,12 +244,16 @@ public class MiniMaven {
 				if (child != null && !child.upToDate())
 					return false;
 
-			File source = new File(directory, "src/main/java");
+			File source = new File(directory, getSourcePath());
 
 			List<String> notUpToDates = new ArrayList<String>();
 			addRecursively(notUpToDates, source, ".java", target, ".class");
 			int count = notUpToDates.size();
 			return count == 0;
+		}
+
+		public String getSourcePath() {
+			return "src/main/java";
 		}
 
 		public void buildJar() throws FakeException, IOException, ParserConfigurationException, SAXException {
@@ -277,7 +281,7 @@ public class MiniMaven {
 					child.build();
 
 			target.mkdirs();
-			File source = new File(directory, "src/main/java");
+			File source = new File(directory, getSourcePath());
 
 			List<String> arguments = new ArrayList<String>();
 			// classpath
