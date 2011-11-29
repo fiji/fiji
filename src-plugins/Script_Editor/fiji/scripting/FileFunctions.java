@@ -235,6 +235,10 @@ public class FileFunctions {
 		return null;
 	}
 
+	public String getSourceURL(String className) {
+		return "http://fiji.sc/" + className.replace('.', '/') + ".java";
+	}
+
 	public String getJar(String className) {
 		try {
 			Class clazz = Class.forName(className);

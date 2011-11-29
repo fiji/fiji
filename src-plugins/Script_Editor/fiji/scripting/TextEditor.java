@@ -11,6 +11,8 @@ import ij.gui.GenericDialog;
 
 import ij.io.SaveDialog;
 
+import ij.plugin.BrowserLauncher;
+
 import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.Font;
@@ -855,6 +857,10 @@ public class TextEditor extends JFrame implements ActionListener,
 				String path = new FileFunctions(this).getSourcePath(className);
 				if (path != null)
 					open(path);
+				else {
+					String url = new FileFunctions(this).getSourceURL(className);
+					new BrowserLauncher().run(url);
+				}
 			} catch (ClassNotFoundException e) {
 				error("Could not open source for class " + className);
 			}
