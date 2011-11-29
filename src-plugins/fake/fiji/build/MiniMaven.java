@@ -504,6 +504,8 @@ public class MiniMaven {
 			}
 			path += version + "/";
 			if (version.endsWith("-SNAPSHOT")) try {
+				if (!maybeDownloadAutomatically(groupId, artifactId, version, quiet))
+					return null;
 				version = parseSnapshotVersion(new File(path));
 			} catch (FileNotFoundException e) { /* ignore */ }
 			path += artifactId + "-" + version + ".pom";
@@ -511,18 +513,8 @@ public class MiniMaven {
 			File file = new File(path);
 			if (!file.exists()) {
 				if (downloadAutomatically) {
-					if (!quiet)
-						err.println("Downloading " + artifactId);
-					try {
-						download(groupId, artifactId, version);
-					} catch (Exception e) {
-						if (!quiet) {
-							e.printStackTrace(err);
-							err.println("Could not download " + artifactId + ": " + e.getMessage());
-						}
-						localPOMCache.put(key, null);
+					if (!maybeDownloadAutomatically(groupId, artifactId, version, quiet))
 						return null;
-					}
 				}
 				else {
 					if (!quiet)
@@ -537,6 +529,25 @@ public class MiniMaven {
 				err.println("Artifact " + artifactId + " not found" + (downloadAutomatically ? "" : "; consider 'get-dependencies'"));
 			localPOMCache.put(key, result);
 			return result;
+		}
+
+		protected boolean maybeDownloadAutomatically(String groupId, String artifactId, String version, boolean quiet) {
+			if (!downloadAutomatically || buildFromSource)
+				return true;
+			if (!quiet)
+				err.println("Downloading " + artifactId);
+			try {
+				download(groupId, artifactId, version);
+			} catch (Exception e) {
+				if (!quiet) {
+					e.printStackTrace(err);
+					err.println("Could not download " + artifactId + ": " + e.getMessage());
+				}
+				String key = groupId + ">" + artifactId;
+				localPOMCache.put(key, null);
+				return false;
+			}
+			return true;
 		}
 
 		protected String findLocallyCachedVersion(String path) throws IOException {
