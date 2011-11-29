@@ -3,6 +3,7 @@ package fiji.scripting;
 import fiji.SimpleExecuter;
 
 import fiji.build.Fake;
+import fiji.build.MiniMaven.POM;
 import fiji.build.Parser;
 import fiji.build.Rule;
 import fiji.build.SubFake;
@@ -209,6 +210,13 @@ public class FileFunctions {
 						rule = parser.getRule(baseName + ".jar");
 						if (rule != null)
 							stripPath = rule.getStripPath();
+					}
+					else {
+						POM pom = subFake.getPOM();
+						if (pom != null) {
+							dir += rule.getLastPrerequisite();
+							stripPath = pom.getSourcePath();
+						}
 					}
 				}
 				if (stripPath != null) {
