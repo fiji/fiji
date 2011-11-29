@@ -131,6 +131,11 @@ public class MiniMaven {
 		pom.groupId = groupId;
 		pom.artifactId = artifactId;
 		pom.version = version;
+		if (artifactId.equals("ij")) {
+			String javac = pom.expand("${java.home}/../lib/tools.jar");
+			if (new File(javac).exists())
+				pom.dependencies.add(new Dependency("com.sun", "tools", "1.4.2", false, javac));
+		}
 		return pom;
 	}
 
