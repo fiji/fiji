@@ -14,10 +14,12 @@ import java.util.Date;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.spim.Reconstruction;
 import mpicbg.spim.fusion.FusionControl;
 import mpicbg.spim.fusion.PreDeconvolutionFusion;
+import mpicbg.spim.io.ConfigurationParserException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.postprocessing.deconvolution.ExtractPSF;
@@ -86,14 +88,13 @@ public class Multi_View_Deconvolution implements PlugIn
 		// now we close all the input images
 		for ( final ViewDataBeads view : viewStructure.getViews() )
 			view.closeImage();
-		
-		//for ( final Image< FloatType > psf : pointSpreadFunctions )
-		//	ImageJFunctions.show( psf );
-		
+		//
 		// run the deconvolution
+		//
 		final ArrayList<LucyRichardsonFFT> deconvolutionData = new ArrayList<LucyRichardsonFFT>();
-		final int cpusPerView = Math.round( Runtime.getRuntime().availableProcessors() / (float)numViews );
+		final int cpusPerView = Math.min( Runtime.getRuntime().availableProcessors(), Math.round( Runtime.getRuntime().availableProcessors() / (float)paralellViews ) );
 		
+		IJ.log( "Computer views in paralell: " + paralellViews );
 		IJ.log( "CPUs per view: " + cpusPerView );
 		IJ.log( "Minimal number iterations: " + minNumIterations );
 		IJ.log( "Maximal number iterations: " + maxNumIterations );
@@ -109,14 +110,20 @@ public class Multi_View_Deconvolution implements PlugIn
 			IJ.log( "Not using Tikhonov regularization" );
 		
 		for ( int view = 0; view < numViews; ++view )
-			deconvolutionData.add( new LucyRichardsonFFT( fusion.getFusedImage( view ), fusion.getWeightImage( view ), pointSpreadFunctions.get( view ), cpusPerView ) );		
+		{
+			//ImageJFunctions.copyToImagePlus( fusion.getFusedImage( view ) ).show();
+			//ImageJFunctions.copyToImagePlus( fusion.getWeightImage( view ) ).show();
+			//ImageJFunctions.copyToImagePlus( pointSpreadFunctions.get( view ) ).show();
+
+			deconvolutionData.add( new LucyRichardsonFFT( fusion.getFusedImage( view ), fusion.getWeightImage( view ), pointSpreadFunctions.get( view ), cpusPerView ) );
+		}
 		
 		final Image<FloatType> deconvolved;
 		
 		if ( useTikhonovRegularization )
-			deconvolved = LucyRichardsonMultiViewDeconvolution.lucyRichardsonMultiView( deconvolutionData, minNumIterations, maxNumIterations, multiplicative, lambda );
+			deconvolved = LucyRichardsonMultiViewDeconvolution.lucyRichardsonMultiView( deconvolutionData, minNumIterations, maxNumIterations, multiplicative, lambda, paralellViews );
 		else
-			deconvolved = LucyRichardsonMultiViewDeconvolution.lucyRichardsonMultiView( deconvolutionData, minNumIterations, maxNumIterations, multiplicative, 0 );
+			deconvolved = LucyRichardsonMultiViewDeconvolution.lucyRichardsonMultiView( deconvolutionData, minNumIterations, maxNumIterations, multiplicative, 0, paralellViews );
 				
 		if ( conf.writeOutputImage || conf.showOutputImage )
 		{
@@ -136,7 +143,7 @@ public class Multi_View_Deconvolution implements PlugIn
 				ImageJFunctions.copyToImagePlus( deconvolved ).show();
 
 			if ( conf.writeOutputImage )
-				ImageJFunctions.saveAsTiffs( deconvolved, conf.outputdirectory, name + "_ch" + viewStructure.getChannelNum( 0 ), ImageJFunctions.GRAY32 );
+				ImageJFunctions.saveAsTiffs( deconvolved, conf.outputdirectory, "DC(l=" + lambda + ")_" + name + "_ch" + viewStructure.getChannelNum( 0 ), ImageJFunctions.GRAY32 );
 		}
 	}
 
@@ -147,12 +154,13 @@ public class Multi_View_Deconvolution implements PlugIn
 	public static int defaultMaxNumIterations = 50;
 	public static boolean defaultUseTikhonovRegularization = true;
 	public static double defaultLambda = 0.006;
+	public static int defaultParalellViews = 0;
 	public static boolean showAveragePSF = true;
 	public static int defaultDeconvolutionScheme = 0;
 
 	public static String[] deconvolutionScheme = new String[]{ "Multiplicative", "Additive" };
 	
-	int minNumIterations, maxNumIterations;
+	int minNumIterations, maxNumIterations, paralellViews;
 	boolean useTikhonovRegularization = true;
 	double lambda = 0.006;
 	boolean multiplicative = true;
@@ -182,6 +190,18 @@ public class Multi_View_Deconvolution implements PlugIn
 		Bead_Registration.timepoints = gd.getNextString();
 		Bead_Registration.angles = gd.getNextString();
 
+		int numViews = 0;
+		
+		try
+		{
+			numViews = SPIMConfiguration.parseIntegerString( Bead_Registration.angles ).size();
+		}
+		catch (ConfigurationParserException e)
+		{
+			IOFunctions.printErr( "Cannot understand/parse the channels: " + Bead_Registration.angles );
+			return null;
+		}
+		
 		ArrayList<Integer> channels;
 		channels = new ArrayList<Integer>();
 		channels.add( 0 );
@@ -351,6 +371,13 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd2.addChoice( "Type_of_multiview_combination", deconvolutionScheme, deconvolutionScheme[ defaultDeconvolutionScheme ] );
 		gd2.addCheckbox( "Use_Tikhonov_regularization", defaultUseTikhonovRegularization );
 		gd2.addNumericField( "Tikhonov_parameter", defaultLambda, 4 );
+		
+		String[] views = new String[ numViews ];
+		views[ 0 ] = "All";
+		for ( int v = 1; v < numViews; v++ )
+			views[ v ] = "" + v;
+		
+		gd2.addChoice( "Process_views_in_paralell", views, views[ defaultParalellViews ] );
 		gd2.addCheckbox( "Show_averaged_PSF", showAveragePSF );
 		gd2.addMessage( "" );
 		gd2.addCheckbox( "Display_fused_image", displayFusedImageStatic );
@@ -435,6 +462,9 @@ public class Multi_View_Deconvolution implements PlugIn
 			multiplicative = false;
 		useTikhonovRegularization = defaultUseTikhonovRegularization = gd2.getNextBoolean();
 		lambda = defaultLambda = gd2.getNextNumber();
+		paralellViews = defaultParalellViews = gd2.getNextChoiceIndex(); // 0 = all
+		if ( paralellViews == 0 )
+			paralellViews = numViews;
 		showAveragePSF = gd2.getNextBoolean();
 		displayFusedImageStatic = gd2.getNextBoolean(); 
 		saveFusedImageStatic = gd2.getNextBoolean(); 		

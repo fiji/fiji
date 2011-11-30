@@ -20,14 +20,15 @@ import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.registration.ViewDataBeads;
+import mpicbg.util.RealSum;
 
 public class LucyRichardsonMultiViewDeconvolution
 {
 	public static boolean debug = false;
 	
-	public static Image<FloatType> lucyRichardsonMultiView( final ArrayList<LucyRichardsonFFT> data, final int minIterations, final int maxIterations, final boolean multiplicative, final double lambda )
+	public static Image<FloatType> lucyRichardsonMultiView( final ArrayList<LucyRichardsonFFT> data, final int minIterations, final int maxIterations, final boolean multiplicative, final double lambda, final int numThreads )
 	{
-		final int numThreads = Runtime.getRuntime().availableProcessors();
+		//final int numThreads = Runtime.getRuntime().availableProcessors();
 		final int numViews = data.size();
 		//final long numPixels = data.get( 0 ).getImage().getNumPixels();		
 		//final double minValue = (1.0 / ( 10000.0 * numPixels ) );		
@@ -357,10 +358,11 @@ public class LucyRichardsonMultiViewDeconvolution
 	public static double normAllImages( final ArrayList<LucyRichardsonFFT> data )
 	{
 		// the individual sums of the overlapping area
-		final double[] sums = new double[ data.size() ];
+		//final double[] sums = new double[ data.size() ];
 		
+		final RealSum sum = new RealSum();
 		// the number of overlapping pixels
-		int numPixels = 0;
+		long count = 0;
 		
 		final ArrayList<Cursor<FloatType>> cursorsImage = new ArrayList<Cursor<FloatType>>();
 		final ArrayList<Cursor<FloatType>> cursorsWeight = new ArrayList<Cursor<FloatType>>();
@@ -384,20 +386,38 @@ A:		while ( cursor.hasNext() )
 				c.fwd();
 			
 			// only sum if all views overlap
-			for ( final Cursor<FloatType> c : cursorsWeight )
-				if ( c.getType().get() == 0 )
-					continue A;
-			
-			// one more overlapping pixel
-			++numPixels;
+			//for ( final Cursor<FloatType> c : cursorsWeight )
+			//	if ( c.getType().get() == 0 )
+			//		continue A;
 			
 			// sum up individual intensities
+			double sumLocal = 0;
+			int countLocal = 0;
+			
 			for ( int i = 0; i < cursorsImage.size(); ++i )
-				sums[ i ] += cursorsImage.get( i ).getType().get();
+			{
+				if ( cursorsWeight.get( i ).getType().get() != 0 )
+				{
+					sumLocal += cursorsImage.get( i ).getType().get();
+					countLocal++;
+				}
+			}
+
+			// at least two overlap
+			if ( countLocal > 1 )
+			{
+				sum.add( sumLocal );
+				count += countLocal;
+			}
 		}
 
+		if ( count == 0 )
+			return 1;
+		
 		// compute the average sum
-		double avgSum = 0;	
+		final double avg = sum.getSum() / (double)count;
+		
+		/*
 		for ( double d : sums )
 			avgSum += d;		
 		avgSum /= (double)(sums.length);
@@ -423,7 +443,7 @@ A:		while ( cursor.hasNext() )
 				//c.getType().set( (float)(c.getType().get() / sums[ i++ ]) );
 			}
 		}
-
+		*/
 		// close all cursors
 		for ( final Cursor<FloatType> c : cursorsImage )
 			c.close();
@@ -431,7 +451,7 @@ A:		while ( cursor.hasNext() )
 			c.close();
 		
 		// return the average intensity in the overlapping area
-		return avgSum/(double)numPixels;
+		return avg;
 	}
 
 	
