@@ -9,6 +9,8 @@ import fiji.util.MenuItemDiverter;
 import ij.IJ;
 import ij.Menus;
 
+import ij.plugin.BrowserLauncher;
+
 import javax.swing.JOptionPane;
 
 public class OpenSourceForMenuItem extends MenuItemDiverter {
@@ -42,6 +44,11 @@ public class OpenSourceForMenuItem extends MenuItemDiverter {
 			}
 			if (path != null) {
 				new Script_Editor().run(path);
+				return;
+			}
+			else {
+				String url = new FileFunctions(Script_Editor.getInstance()).getSourceURL(action);
+				new BrowserLauncher().run(url);
 				return;
 			}
 		} catch (Exception e) { e.printStackTrace(); /* fallthru */ }
