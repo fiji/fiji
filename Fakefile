@@ -126,6 +126,7 @@ SUBMODULE_TARGETS=\
 	jars/jsch-0.1.44.jar \
 	jars/imglib-scripting.jar \
 	plugins/Image_5D.jar \
+	jars/ij-app.jar \
 
 PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \
