@@ -985,7 +985,7 @@ public class Stitching_Grid implements PlugIn
         	if ( y == 0 )
         		yoffset = 0;
         	else 
-        		yoffset += (int)( minWidth * ( 1 - overlap ) );
+        		yoffset += (int)( minHeight * ( 1 - overlap ) );
 
         	for ( int x = 0; x < gridSizeX; x++ )
             {
