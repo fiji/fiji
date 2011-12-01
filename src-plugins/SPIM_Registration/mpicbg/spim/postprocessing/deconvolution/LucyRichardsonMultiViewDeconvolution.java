@@ -340,7 +340,8 @@ public class LucyRichardsonMultiViewDeconvolution
 			{
 				Image<FloatType> psiCopy = psi.clone();
 				//ViewDataBeads.normalizeImage( psiCopy );
-				psiCopy.setName( "Iteration " + i );
+				psiCopy.setName( "Iteration " + i + " l=" + lambda );
+				psiCopy.getDisplay().setMinMax( 0, 1 );
 				ImageJFunctions.copyToImagePlus( psiCopy ).show();
 				psiCopy.close();
 				psiCopy = null;
