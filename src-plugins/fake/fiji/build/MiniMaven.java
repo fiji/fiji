@@ -563,7 +563,7 @@ public class MiniMaven {
 			if (!downloadAutomatically)
 				return true;
 			if (!quiet)
-				err.println("Downloading " + artifactId);
+				err.println((version.endsWith("-SNAPSHOT") ? "Checking for new snapshot of " : "Downloading ") + artifactId);
 			try {
 				download(groupId, artifactId, version);
 			} catch (Exception e) {
