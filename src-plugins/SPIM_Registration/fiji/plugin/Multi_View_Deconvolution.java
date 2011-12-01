@@ -140,7 +140,10 @@ public class Multi_View_Deconvolution implements PlugIn
 			deconvolved.setName( "DC(l=" + lambda + ")_" + name );
 			
 			if ( conf.showOutputImage )
+			{
+				deconvolved.getDisplay().setMinMax( 0 , 1 );
 				ImageJFunctions.copyToImagePlus( deconvolved ).show();
+			}
 
 			if ( conf.writeOutputImage )
 				ImageJFunctions.saveAsTiffs( deconvolved, conf.outputdirectory, "DC(l=" + lambda + ")_" + name + "_ch" + viewStructure.getChannelNum( 0 ), ImageJFunctions.GRAY32 );
@@ -372,10 +375,13 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd2.addCheckbox( "Use_Tikhonov_regularization", defaultUseTikhonovRegularization );
 		gd2.addNumericField( "Tikhonov_parameter", defaultLambda, 4 );
 		
-		String[] views = new String[ numViews ];
+		final String[] views = new String[ numViews ];
 		views[ 0 ] = "All";
 		for ( int v = 1; v < numViews; v++ )
 			views[ v ] = "" + v;
+		
+		if ( defaultParalellViews >= views.length )
+			defaultParalellViews = views.length - 1;
 		
 		gd2.addChoice( "Process_views_in_paralell", views, views[ defaultParalellViews ] );
 		gd2.addCheckbox( "Show_averaged_PSF", showAveragePSF );
