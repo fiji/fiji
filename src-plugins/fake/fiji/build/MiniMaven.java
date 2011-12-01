@@ -558,6 +558,7 @@ public class MiniMaven {
 			return result;
 		}
 
+		// TODO: if there is no internet connection, do not try to download -SNAPSHOT versions
 		protected boolean maybeDownloadAutomatically(String groupId, String artifactId, String version, boolean quiet) {
 			if (!downloadAutomatically || buildFromSource)
 				return true;
@@ -720,6 +721,9 @@ public class MiniMaven {
 			version = parseSnapshotVersion(directory);
 			if (version == null)
 				throw new IOException("No version found in " + metadataURL);
+			if (new File(directory, artifactId + "-" + version + ".jar").exists() &&
+					new File(directory, artifactId + "-" + version + ".pom").exists())
+				return;
 		}
 		String baseURL = repositoryURL + path + artifactId + "-" + version;
 		downloadAndVerify(baseURL + ".pom", directory);
