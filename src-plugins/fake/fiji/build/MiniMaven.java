@@ -560,7 +560,7 @@ public class MiniMaven {
 
 		// TODO: if there is no internet connection, do not try to download -SNAPSHOT versions
 		protected boolean maybeDownloadAutomatically(String groupId, String artifactId, String version, boolean quiet) {
-			if (!downloadAutomatically || buildFromSource)
+			if (!downloadAutomatically)
 				return true;
 			if (!quiet)
 				err.println("Downloading " + artifactId);
