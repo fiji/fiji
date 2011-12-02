@@ -921,6 +921,21 @@ public class MiniMaven {
 		}
 		else if (command.equals("classpath"))
 			miniMaven.err.println(pom.getClassPath());
+		else if (command.equals("list")) {
+			Set<POM> result = new TreeSet<POM>();
+			Stack<POM> stack = new Stack<POM>();
+			stack.push(pom.getRoot());
+			while (!stack.empty()) {
+				pom = stack.pop();
+				if (result.contains(pom) || !pom.buildFromSource)
+					continue;
+				result.add(pom);
+				for (POM child : pom.children)
+					stack.push(child);
+			}
+			for (POM pom2 : result)
+				System.err.println(pom2);
+		}
 		else
 			miniMaven.err.println("Unhandled command: " + command + "\n" + usage);
 	}
