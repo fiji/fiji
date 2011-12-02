@@ -32,7 +32,10 @@ import java.io.InputStream;
 import java.io.PrintStream;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -337,14 +340,91 @@ public class ReadyForUpload {
 		return true;
 	}
 
+	protected boolean checkPrecompiled() {
+		final String baseName = new File(path).getName();
+		final File precompiled = new File(new File(fijiDir, "precompiled"), baseName);
+		if (!precompiled.exists())
+			return true;
+
+		// compare .jar contents (timestamps can vary)
+		try {
+			final ZipFile jar = new ZipFile(fullPath);
+			final Set<ZipEntry> files = new HashSet<ZipEntry>(Collections.list(jar.entries()));
+			final ZipFile precompiledJar = new ZipFile(precompiled);
+			final Set<ZipEntry> precompiledFiles = new HashSet<ZipEntry>(Collections.list(precompiledJar.entries()));
+
+			if (files.size() != precompiledFiles.size()) {
+				print(path + " differs from the precompiled one!");
+				return false;
+			}
+
+			for (ZipEntry entry : files) {
+				ZipEntry precompiledEntry = precompiledJar.getEntry(entry.getName());
+				if (precompiledEntry == null) {
+					print("The precompiled " + path + " lacks the file " + entry.getName() + "!");
+					return false;
+				}
+				InputStream in = jar.getInputStream(entry);
+				InputStream precompiledIn = precompiledJar.getInputStream(precompiledEntry);
+				if (streamCompare(in, precompiledIn) != 0) {
+					print(path + " differs from the precompiled one (" + entry.getName() + ")!");
+					return false;
+				}
+			}
+		} catch (IOException e) {
+			print("Could not compare " + path + " to the precompiled one!");
+			return false;
+		}
+		return true;
+	}
+
+	protected int streamCompare(InputStream in1, InputStream in2) throws IOException {
+		byte[] buffer1 = new byte[32768];
+		byte[] buffer2 = new byte[32768];
+
+		for (;;) {
+			int count1 = in1.read(buffer1);
+			if (count1 < 0) {
+				in1.close();
+				int count2 = in2.read(buffer2);
+				in2.close();
+				if (count2 >= 0)
+					return -1;
+				return 0;
+			}
+
+			for (int i1 = 0; i1 < count1; ) {
+				int count2 = in2.read(buffer2, 0, count1 - i1);
+				if (count2 < 0) {
+					in1.close();
+					in2.close();
+					return +1;
+				}
+				for (int i2 = 0; i2 < count2; i2++)
+					if (buffer1[i1 + i2] != buffer2[i2])
+						return buffer1[i1 + i2] - buffer2[i2];
+				i1 += count2;
+			}
+		}
+
+	}
+
+	protected static Set<String> textFileExtensions;
+	static {
+		textFileExtensions = new HashSet<String>(Arrays.asList(new String[] {
+			"bsh", "c", "clj", "h", "ijm", "js", "m", "py", "rb", "txt"
+		}));
+	}
+
 	public synchronized boolean check(String path) {
 		if (IJ.isWindows())
 			path = normalizeWinPath(path);
 
-		if (!path.endsWith(".jar")) {
-			print("Warning: ignoring " + path);
-			return true;
-		}
+		int dot = path.lastIndexOf('.');
+		String extension = "";
+		if (dot > path.length() - 5)
+			extension = path.substring(dot + 1);
+		boolean isText = textFileExtensions.contains(extension);
 
 		boolean result = true;
 		rule = null;
@@ -354,10 +434,19 @@ public class ReadyForUpload {
 			if (IJ.isWindows())
 				fullPath = normalizeWinPath(fullPath);
 
+			if (!isText && !extension.equals("jar")) {
+				print("Warning: ignoring " + path);
+				return true;
+			}
+
 			if (!checkCRLF()) {
 				print("");
 				result = false;
 			}
+
+			if (isText)
+				return result;
+
 			if (containsDebugInfo(fullPath)) {
 				if (new File(path).getCanonicalPath().equals(new File(fijiDir, "plugins/loci_tools.jar").getCanonicalPath()))
 					print("Ignoring debug info in Bio-Formats");
@@ -383,6 +472,8 @@ public class ReadyForUpload {
 				if (!checkDirtyFiles())
 					result = false;
 				if (!checkPushed())
+					result = false;
+				if (!checkPrecompiled())
 					result = false;
 			}
 		} catch (Exception e) {

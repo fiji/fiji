@@ -1,7 +1,5 @@
 package fiji.updater.logic;
 
-import fiji.updater.Updater;
-
 import fiji.updater.logic.PluginObject.Action;
 import fiji.updater.logic.PluginObject.Status;
 
@@ -42,11 +40,11 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 		public UpdateSite(String url, String sshHost, String uploadDirectory, long timestamp) {
 			if (url.equals("http://pacific.mpi-cbg.de/update/")) {
-				url = Updater.MAIN_URL;
+				url = Util.MAIN_URL;
 				if (sshHost != null && sshHost.equals("pacific.mpi-cbg.de"))
-					sshHost = Updater.SSH_HOST;
+					sshHost = Util.SSH_HOST;
 				else if (sshHost != null && sshHost.endsWith("@pacific.mpi-cbg.de"))
-					sshHost = sshHost.substring(0, sshHost.length() - 18) + Updater.SSH_HOST;
+					sshHost = sshHost.substring(0, sshHost.length() - 18) + Util.SSH_HOST;
 			}
 			if (!url.endsWith("/"))
 				url += "/";
@@ -80,10 +78,10 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public PluginCollection() {
 		updateSites = new LinkedHashMap<String, UpdateSite>();
-		addUpdateSite(DEFAULT_UPDATE_SITE, Updater.MAIN_URL,
-			Util.isDeveloper ? Updater.SSH_HOST : null,
-			Util.isDeveloper ? Updater.UPDATE_DIRECTORY : null,
-			Util.getTimestamp(Updater.XML_COMPRESSED));
+		addUpdateSite(DEFAULT_UPDATE_SITE, Util.MAIN_URL,
+			Util.isDeveloper ? Util.SSH_HOST : null,
+			Util.isDeveloper ? Util.UPDATE_DIRECTORY : null,
+			Util.getTimestamp(Util.XML_COMPRESSED));
 	}
 
 	public void addUpdateSite(String name, String url, String sshHost, String uploadDirectory, long timestamp) {
@@ -179,11 +177,11 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	}
 
 	public void read() throws IOException, ParserConfigurationException, SAXException {
-		new XMLFileReader(this).read(new File(Util.prefix(Updater.XML_COMPRESSED)));
+		new XMLFileReader(this).read(new File(Util.prefix(Util.XML_COMPRESSED)));
 	}
 
 	public void write() throws IOException, SAXException, TransformerConfigurationException, ParserConfigurationException {
-		new XMLFileWriter(this).write(new GZIPOutputStream(new FileOutputStream(Util.prefix(Updater.XML_COMPRESSED))), true);
+		new XMLFileWriter(this).write(new GZIPOutputStream(new FileOutputStream(Util.prefix(Util.XML_COMPRESSED))), true);
 	}
 
 	protected static DependencyAnalyzer dependencyAnalyzer;
@@ -390,7 +388,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			return yes();
 		return new Filter() {
 			public boolean matches(PluginObject plugin) {
-				return plugin.isForThisPlatform();
+				return plugin.isUpdateablePlatform();
 			}
 		};
 	}
@@ -576,7 +574,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		return filter(new Filter() {
 			public boolean matches(PluginObject plugin) {
 				return plugin.isUpdateable(evenForcedOnes) &&
-					plugin.isForThisPlatform();
+					plugin.isUpdateablePlatform();
 			}
 		});
 	}
@@ -590,11 +588,11 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			});
 		}
 		if (!Util.isDeveloper)
-			for (String name : Util.getLaunchers()) {
+			for (String name : Util.launchers) {
 				PluginObject launcher = getPlugin(name);
 				if (launcher == null)
 					continue; // the regression test triggers this
-				if (launcher.getStatus() == Status.NOT_INSTALLED)
+				if (launcher.getStatus() == Status.NOT_INSTALLED && launcher.isForThisPlatform())
 					launcher.setAction(this, Action.INSTALL);
 			}
 	}
@@ -630,7 +628,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		for (Dependency dependency : plugin.getDependencies()) {
 			PluginObject other = getPlugin(dependency.filename);
 			if (other == null || overriding != dependency.overrides
-					|| !other.isForThisPlatform())
+					|| !other.isUpdateablePlatform())
 				continue;
 			if (dependency.overrides) {
 				if (other.willNotBeInstalled())

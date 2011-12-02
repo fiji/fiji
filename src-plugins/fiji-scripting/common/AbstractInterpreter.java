@@ -1013,6 +1013,8 @@ public abstract class AbstractInterpreter implements PlugIn {
 			while (iter.hasNext()) {
 				String className = iter.next();
 				if (reverse.containsKey(className)) {
+					if (IJ.debugMode)
+						IJ.log("Not auto-importing " + className + " (is in both " + packageName + " and " + reverse.get(className) + ")");
 					iter.remove();
 					defaultImports.get(reverse.get(className)).remove(className);
 				}

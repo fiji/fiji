@@ -1,72 +1,69 @@
 package ij3d;
 
-import ij3d.shapes.Scalebar;
-import ij.util.Java2;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.YesNoCancelDialog;
-import ij.io.SaveDialog;
 import ij.io.DirectoryChooser;
 import ij.io.OpenDialog;
-import ij.IJ;
-import ij.WindowManager;
-import ij.ImagePlus;
-import ij.text.TextWindow;
+import ij.io.SaveDialog;
 import ij.plugin.frame.Recorder;
-import ij.process.StackConverter;
-import ij.process.ImageConverter;
-
-import ij3d.gui.LUTDialog;
+import ij.text.TextWindow;
 import ij3d.gui.ContentCreatorDialog;
-
-import math3d.TransformIO;
-
-import javax.swing.JFileChooser;
-import javax.swing.filechooser.*;
-import java.awt.event.*;
-import java.awt.*;
-import java.util.Arrays;
-import java.util.Vector;
-import java.util.Iterator;
-import java.util.Collection;
-import java.util.Map;
-
-import java.io.File;
-
-import vib.InterpolatedImage;
-import vib.FastMatrix;
-
-import orthoslice.MultiOrthoGroup;
-import orthoslice.OrthoGroup;
-import voltex.VoltexGroup;
-import voltex.VolumeRenderer;
-import isosurface.MeshExporter;
+import ij3d.gui.LUTDialog;
+import ij3d.shapes.Scalebar;
 import isosurface.MeshEditor;
+import isosurface.MeshExporter;
 import isosurface.SmoothControl;
 
-import customnode.u3d.U3DExporter;
+import java.awt.Button;
+import java.awt.Checkbox;
+import java.awt.Cursor;
+import java.awt.FlowLayout;
+import java.awt.Label;
+import java.awt.Panel;
+import java.awt.Scrollbar;
+import java.awt.TextField;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.TextEvent;
+import java.awt.event.TextListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.vecmath.Color3f;
-import javax.vecmath.Point3f;
-import javax.vecmath.Vector3f;
-import javax.vecmath.Matrix4d;
-import javax.media.j3d.Transform3D;
 import javax.media.j3d.Background;
 import javax.media.j3d.PointLight;
+import javax.media.j3d.Transform3D;
+import javax.vecmath.Color3f;
+import javax.vecmath.Matrix4d;
+import javax.vecmath.Point3d;
+import javax.vecmath.Point3f;
+import javax.vecmath.Vector3f;
 
+import math3d.TransformIO;
+import orthoslice.MultiOrthoGroup;
+import orthoslice.OrthoGroup;
+import vib.FastMatrix;
+import voltex.VoltexGroup;
+import voltex.VolumeRenderer;
 import customnode.CustomMesh;
 import customnode.CustomMeshNode;
 import customnode.CustomMultiMesh;
 import customnode.CustomTriangleMesh;
-
-import java.awt.event.TextListener;
-
-import java.util.concurrent.atomic.AtomicInteger;
-import javax.vecmath.Point3d;
-import octree.OctreeDialog;
-import octree.VolumeOctree;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import customnode.u3d.U3DExporter;
 
 public class Executer {
 
@@ -367,6 +364,7 @@ public class Executer {
 			return;
 		new Thread() {
 			{ setPriority(Thread.NORM_PRIORITY); }
+			@Override
 			public void run() {
 				try {
 					univ.loadSession(dir + name);
@@ -529,6 +527,7 @@ public class Executer {
 			final int i = k;
 			sl[i] = (Scrollbar)gd.getSliders().get(i);
 			sl[i].addAdjustmentListener(new AdjustmentListener() {
+				@Override
 				public void adjustmentValueChanged(
 							AdjustmentEvent e) {
 					os.setSlice(dirs[i], sl[i].getValue());
@@ -538,6 +537,7 @@ public class Executer {
 
 			cb[i] = (Checkbox)gd.getCheckboxes().get(i);
 			cb[i].addItemListener(new ItemListener() {
+				@Override
 				public void itemStateChanged(ItemEvent e) {
 					os.setVisible(dirs[i],cb[i].getState());
 				}
@@ -679,6 +679,7 @@ public class Executer {
 		if (showDefaultCheckbox) {
 			final Checkbox cBox = (Checkbox)gd.getCheckboxes().get(0);
 			cBox.addItemListener(new ItemListener() {
+				@Override
 				public void itemStateChanged(ItemEvent e) {
 					gd.setCursor(new Cursor(Cursor.WAIT_CURSOR));
 					rSlider.setEnabled(!cBox.getState());
@@ -695,6 +696,7 @@ public class Executer {
 		}
 
 		AdjustmentListener listener = new AdjustmentListener() {
+			@Override
 			public void adjustmentValueChanged(AdjustmentEvent e) {
 				colorListener.colorChanged(new Color3f(
 						rSlider.getValue() / 255f,
@@ -731,11 +733,13 @@ public class Executer {
 		final ContentInstant ci = c.getCurrent();
 		final Color3f oldC = ci.getColor();
 		final ColorListener colorListener = new ColorListener() {
+			@Override
 			public void colorChanged(Color3f color) {
 				ci.setColor(color);
 				univ.fireContentChanged(c);
 			}
 
+			@Override
 			public void ok(final GenericDialog gd) {
 				if (gd.getNextBoolean())
 					record(SET_COLOR, "null", "null", "null");
@@ -760,12 +764,14 @@ public class Executer {
 		background.getColor(oldC);
 
 		final ColorListener colorListener = new ColorListener() {
+			@Override
 			public void colorChanged(Color3f color) {
 				background.setColor(color);
 				status.setBackground(color.get());
 				((ImageCanvas3D)univ.getCanvas()).render();
 			}
 
+			@Override
 			public void ok(final GenericDialog gd) {
 				// TODO macro record
 			}
@@ -779,11 +785,13 @@ public class Executer {
 		final ContentInstant ci = c.getCurrent();
 		final Color3f oldC = ci.getLandmarkColor();
 		final ColorListener colorListener = new ColorListener() {
+			@Override
 			public void colorChanged(Color3f color) {
 				ci.setLandmarkColor(color);
 				univ.fireContentChanged(c);
 			}
 
+			@Override
 			public void ok(final GenericDialog gd) {
 				// TODO: record
 				// gd.wasOKed: apply to all time points
@@ -807,6 +815,7 @@ public class Executer {
 		ld.addCtrlHint();
 
 		ld.addListener(new LUTDialog.Listener() {
+			@Override
 			public void applied() {
 				c.setLUT(r, g, b, a);
 				univ.fireContentChanged(c);
@@ -850,6 +859,7 @@ public class Executer {
 			return;
 		final ContentInstant ci = c.getCurrent();
 		final SliderAdjuster transp_adjuster = new SliderAdjuster() {
+			@Override
 			public synchronized final void setValue(ContentInstant ci, int v) {
 				ci.setTransparency(v / 100f);
 				univ.fireContentChanged(c);
@@ -863,14 +873,16 @@ public class Executer {
 
 		((Scrollbar)gd.getSliders().get(0)).
 			addAdjustmentListener(new AdjustmentListener() {
+			@Override
 			public void adjustmentValueChanged(AdjustmentEvent e) {
 				if(!transp_adjuster.go)
 					transp_adjuster.start();
-				transp_adjuster.exec((int)e.getValue(), ci, univ);
+				transp_adjuster.exec(e.getValue(), ci, univ);
 			}
 		});
 		((TextField)gd.getNumericFields().get(0)).
 			addTextListener(new TextListener() {
+			@Override
 			public void textValueChanged(TextEvent e) {
 				if(!transp_adjuster.go)
 					transp_adjuster.start();
@@ -892,7 +904,7 @@ public class Executer {
 				if (null != transp_adjuster)
 					transp_adjuster.quit();
 				if(gd.wasCanceled()) {
-					float newTr = (float)oldTr / 100f;
+					float newTr = oldTr / 100f;
 					ci.setTransparency(newTr);
 					univ.fireContentChanged(c);
 					return;
@@ -919,16 +931,17 @@ public class Executer {
 		}
 		final ContentInstant ci = c.getCurrent();
 		final SliderAdjuster thresh_adjuster = new SliderAdjuster() {
+			@Override
 			public synchronized final void setValue(ContentInstant ci, int v) {
 				ci.setThreshold(v);
 				univ.fireContentChanged(c);
 			}
 		};
-		final int oldTr = (int)(ci.getThreshold());
+		final int oldTr = (ci.getThreshold());
 		if(c.getType() == Content.SURFACE) {
 			final GenericDialog gd = new GenericDialog(
 				"Adjust threshold ...", univ.getWindow());
-			final int old = (int)ci.getThreshold();
+			final int old = ci.getThreshold();
 			gd.addNumericField("Threshold", old, 0);
 			gd.addCheckbox("Apply to all timepoints", true);
 			gd.showDialog();
@@ -951,11 +964,12 @@ public class Executer {
 		gd.addSlider("Threshold", 0, 255, oldTr);
 		((Scrollbar)gd.getSliders().get(0)).
 			addAdjustmentListener(new AdjustmentListener() {
+			@Override
 			public void adjustmentValueChanged(final AdjustmentEvent e) {
 				// start adjuster and request an action
 				if(!thresh_adjuster.go)
 					thresh_adjuster.start();
-				thresh_adjuster.exec((int)e.getValue(), ci, univ);
+				thresh_adjuster.exec(e.getValue(), ci, univ);
 			}
 		});
 		gd.addCheckbox("Apply to all timepoints", true);
@@ -1117,12 +1131,13 @@ public class Executer {
 			return;
 		final GenericDialog gd =
 			new GenericDialog("Point size", univ.getWindow());
-		final float oldS = (float)(c.getLandmarkPointSize());
+		final float oldS = (c.getLandmarkPointSize());
 		final float minS = oldS / 10f;
 		final float maxS = oldS * 10f;
 		gd.addSlider("Size", minS, maxS, oldS);
 		final TextField textField = (TextField)gd.getNumericFields().get(0);
 		textField.addTextListener(new TextListener() {
+			@Override
 			public void textValueChanged(TextEvent e2) {
 				try {
 					c.setLandmarkPointSize(Float.parseFloat(textField.getText()));
@@ -1133,6 +1148,7 @@ public class Executer {
 		});
 		((Scrollbar)gd.getSliders().get(0)).
 			addAdjustmentListener(new AdjustmentListener() {
+			@Override
 			public void adjustmentValueChanged(AdjustmentEvent e) {
 				float newS = Float.parseFloat(textField.getText());
 				c.setLandmarkPointSize(newS);
@@ -1285,6 +1301,7 @@ public class Executer {
 			return;
 		new Thread() {
 			{ setPriority(Thread.NORM_PRIORITY); }
+			@Override
 			public void run() {
 				exportTr(c);
 			}
@@ -1338,6 +1355,7 @@ public class Executer {
 
 	public void record360() {
 		new Thread() {
+			@Override
 			public void run() {
 				ImagePlus movie = univ.record360();
 				if(movie != null)
@@ -1440,10 +1458,12 @@ public class Executer {
 		l.getColor(col);
 
 		final ColorListener colorListener = new ColorListener() {
+			@Override
 			public void colorChanged(Color3f color) {
 				l.setColor(color);
 			}
 
+			@Override
 			public void ok(final GenericDialog gd) {
 				// TODO macro record
 			}
@@ -1522,6 +1542,7 @@ public class Executer {
 		Panel p = new Panel(new FlowLayout());
 		Button b = new Button("Open from file");
 		b.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				float[] m = new TransformIO().
 						openAffineTransform();
@@ -1576,7 +1597,7 @@ public class Executer {
 		for(int z = 0; z < d; z++) {
 			byte[] p = (byte[])imp.getStack().getPixels(z+1);
 			for(int i = 0; i < p.length; i++) {
-				histo[(int)(p[i]&0xff)]++;
+				histo[(p[i]&0xff)]++;
 			}
 		}
 		return imp.getProcessor().getAutoThreshold(histo);

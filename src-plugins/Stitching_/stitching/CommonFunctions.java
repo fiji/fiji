@@ -54,9 +54,11 @@ public class CommonFunctions
 	public static String[] rgbTypes = {"rgb", "rbg", "grb", "gbr", "brg", "bgr"}; 
 	public static String[] colorList = { "Red", "Green", "Blue", "Red and Green", "Red and Blue", "Green and Blue", "Red, Green and Blue" };
 
-	public static String[] fusionMethodList = { "Average", "Linear Blending", "Max. Intensity", "Min. Intensity", "Combine into composite image (preserve all channels)", "Do not fuse images" };	
-	public static String[] channelSelect = { "Use all channels for registration", "Select individual channels for registration" };
-	public static String[] timeSelect = { "Register images for each time-point individually", "Register images for each time-point and adjacently over time", "Register all images over all time-points globally (expensive!)" };
+	public static String[] fusionMethodList = { "Linear Blending", "Average", "Median", "Max. Intensity", "Min. Intensity", "Overlay into composite image", "Do not fuse images" };	
+	public static String[] fusionMethodListSimple = { "Overlay into composite image", "Do not fuse images" };	
+	public static String[] fusionMethodListGrid = { "Linear Blending", "Average", "Median", "Max. Intensity", "Min. Intensity", /* "Overlay into composite image", */ "Do not fuse images (only write TileConfiguration)" };	
+	public static String[] timeSelect = { "Apply registration of first time-point to all other time-points", "Register images adjacently over time", "Register all images over all time-points globally (expensive!)" };
+	public static String[] cpuMemSelect = { "Save memory (but be slower)", "Save computation time (but use more RAM)" };
 	
 	public static ImagePlus loadImage(String directory, String file, int seriesNumber) { return loadImage(directory, file, seriesNumber, "rgb"); }
 	public static ImagePlus loadImage(String directory, String file, int seriesNumber, String rgb)
@@ -83,32 +85,35 @@ public class CommonFunctions
 
 	public static final void addHyperLinkListener(final MultiLineLabel text, final String myURL)
 	{
-		text.addMouseListener(new MouseAdapter()
+		if ( text != null && myURL != null )
 		{
-			public void mouseClicked(MouseEvent e)
+			text.addMouseListener(new MouseAdapter()
 			{
-				try
+				public void mouseClicked(MouseEvent e)
 				{
-					BrowserLauncher.openURL(myURL);
+					try
+					{
+						BrowserLauncher.openURL(myURL);
+					}
+					catch (Exception ex)
+					{
+						IJ.error("" + ex);
+					}
 				}
-				catch (Exception ex)
+	
+				public void mouseEntered(MouseEvent e)
 				{
-					IJ.error("" + ex);
+					text.setForeground(Color.BLUE);
+					text.setCursor(new Cursor(Cursor.HAND_CURSOR));
 				}
-			}
-
-			public void mouseEntered(MouseEvent e)
-			{
-				text.setForeground(Color.BLUE);
-				text.setCursor(new Cursor(Cursor.HAND_CURSOR));
-			}
-
-			public void mouseExited(MouseEvent e)
-			{
-				text.setForeground(Color.BLACK);
-				text.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-			}
-		});
+	
+				public void mouseExited(MouseEvent e)
+				{
+					text.setForeground(Color.BLACK);
+					text.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+				}
+			});
+		}
 	}
 
 	public static ImagePlus openLOCIImagePlus(String path, String fileName, int seriesNumber, String rgb) 

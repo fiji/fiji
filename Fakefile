@@ -81,6 +81,7 @@ FIJI_JAVA_HOME(linux64)=java/linux-amd64/jdk1.6.0_24/jre
 FIJI_JAVA_HOME(win32)=java/win32/jdk1.6.0_24/jre
 FIJI_JAVA_HOME(win64)=java/win64/jdk1.6.0_24/jre
 FIJI_JAVA_HOME(macosx)=java/macosx-java3d
+FIJI_JAVA_HOME(freebsd)=/usr/local/jdk1.6.0/jre
 JAVA_HOME=$FIJI_JAVA_HOME
 ENVOVERRIDES(JAVA_HOME)=true
 
@@ -226,7 +227,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Helmholtz_Analysis.jar \
 	plugins/Descriptor_based_registration.jar \
 	plugins/SPIM_Opener.jar \
-	plugins/Reconstruct_Reader.jar
+	plugins/Reconstruct_Reader.jar \
+	plugins/Fiji_Package_Maker.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
@@ -375,7 +377,7 @@ CLASSPATH(plugins/Directionality_.jar)=jars/ij.jar:jars/jfreechart-1.0.13.jar:ja
 CLASSPATH(plugins/LSM_Toolbox.jar)=jars/ij.jar:plugins/LSM_Reader.jar
 MAINCLASS(plugins/LSM_Toolbox.jar)=org.imagearchive.lsm.toolbox.gui.AboutDialog
 MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
-CLASSPATH(plugins/Stitching_.jar)=jars/ij.jar:plugins/loci_tools.jar:jars/fiji-lib.jar:jars/imglib.jar:jars/edu_mines_jtk.jar
+CLASSPATH(plugins/Stitching_.jar)=jars/ij.jar:plugins/loci_tools.jar:jars/fiji-lib.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/edu_mines_jtk.jar:plugins/Fiji_Plugins.jar:jars/mpicbg.jar
 CLASSPATH(plugins/Fiji_Plugins.jar)=jars/ij.jar:jars/jsch-0.1.44.jar:jars/fiji-lib.jar:jars/VIB-lib.jar
 MAINCLASS(plugins/Fiji_Updater.jar)=fiji.updater.Main
 CLASSPATH(plugins/Fiji_Updater.jar)=jars/ij.jar:jars/jsch-0.1.44.jar
@@ -471,6 +473,7 @@ CLASSPATH(plugins/Colour_Deconvolution.jar)=jars/ij.jar
 CLASSPATH(plugins/Dichromacy_.jar)=jars/ij.jar
 CLASSPATH(plugins/Threshold_Colour.jar)=jars/ij.jar
 CLASSPATH(plugins/Helmholtz_Analysis.jar)=jars/ij.jar
+CLASSPATH(plugins/Fiji_Package_Maker.jar)=jars/ij.jar:plugins/Fiji_Updater.jar:jars/fiji-lib.jar
 
 # pre-Java5 generics ;-)
 
@@ -511,6 +514,7 @@ JAVA_LIB_PATH(linux64)=lib/amd64/server/libjvm.so
 JAVA_LIB_PATH(win32)=bin/client/jvm.dll
 JAVA_LIB_PATH(win64)=bin/server/jvm.dll
 JAVA_LIB_PATH(macosx)=
+JAVA_LIB_PATH(freebsd)=lib/i386/client/libjvm.so
 
 # The variables CFLAGS, LDFLAGS and LIBS will be used for compiling
 # C and C++ programs.
@@ -536,6 +540,9 @@ CFLAGS(linux64)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector -rdynamic
 	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(linux64)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(linux64)"'
 
 LDFLAGS(win32)=$LDFLAGS $WINOPTS
+
+CFLAGS(freebsd)=$COMMONCFLAGS \
+	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(freebsd)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(freebsd)"'
 
 CFLAGS(fiji)=$COMMONCFLAGS $MACOPTS
 LDFLAGS(fiji)=$LDFLAGS $MACOPTS
