@@ -903,6 +903,16 @@ public class MiniMaven {
 			else
 				return;
 		}
+		else if (command.equals("jar") || command.equals("jars")) {
+			if (!pom.buildFromSource) {
+				System.err.println("Cannot build " + pom + " from source");
+				System.exit(1);
+			}
+			pom.buildJar();
+			if (command.equals("jars"))
+				pom.copyDependencies(new File(pom.directory, "target"), true);
+			return;
+		}
 		if (command.equals("clean"))
 			pom.clean();
 		else if (command.equals("get") || command.equals("get-dependencies"))
