@@ -1,6 +1,6 @@
 package mpicbg.spim.registration;
 
-import huisken.opener.SPIMExperiment;
+import spimopener.SPIMExperiment;
 import ij.IJ;
 import ij.ImagePlus;
 
