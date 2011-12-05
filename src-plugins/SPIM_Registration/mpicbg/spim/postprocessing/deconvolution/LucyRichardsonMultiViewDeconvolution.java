@@ -265,6 +265,12 @@ public class LucyRichardsonMultiViewDeconvolution
 					else
 						value = (double)cursorPsiGlobal.getType().get() * cursorNextPsiGlobal.getType().get() * value/num;
 				}
+				else
+				{
+					// maybe that works ...
+					value = minValue; //(double)cursorPsiGlobal.getType().get() * cursorNextPsiGlobal.getType().get();					
+				}
+				
 				cursorNextPsiGlobal.getType().set( (float)value );
 			}
 

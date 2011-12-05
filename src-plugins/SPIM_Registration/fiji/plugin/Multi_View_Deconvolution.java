@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
+import mpicbg.imglib.container.cell.CellContainerFactory;
+import mpicbg.imglib.container.planar.PlanarContainerFactory;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
@@ -99,6 +101,9 @@ public class Multi_View_Deconvolution implements PlugIn
 		IJ.log( "Minimal number iterations: " + minNumIterations );
 		IJ.log( "Maximal number iterations: " + maxNumIterations );
 		
+		IJ.log( "ImgLib container (input): " + conf.outputImageFactory.getClass().getSimpleName() );
+		IJ.log( "ImgLib container (output): " + conf.imageFactory.getClass().getSimpleName() );
+		
 		if ( multiplicative )
 			IJ.log( "Using a multiplicative multiview combination scheme." );
 		else
@@ -160,10 +165,12 @@ public class Multi_View_Deconvolution implements PlugIn
 	public static int defaultParalellViews = 0;
 	public static boolean showAveragePSF = true;
 	public static int defaultDeconvolutionScheme = 0;
-
-	public static String[] deconvolutionScheme = new String[]{ "Multiplicative", "Additive" };
+	public static int defaultContainer = 0;
 	
-	int minNumIterations, maxNumIterations, paralellViews;
+	public static String[] deconvolutionScheme = new String[]{ "Multiplicative", "Additive" };
+	public static String[] imglibContainer = new String[]{ "Array container", "Planar container", "Cell container" };
+	
+	int minNumIterations, maxNumIterations, paralellViews, container;
 	boolean useTikhonovRegularization = true;
 	double lambda = 0.006;
 	boolean multiplicative = true;
@@ -384,6 +391,7 @@ public class Multi_View_Deconvolution implements PlugIn
 			defaultParalellViews = views.length - 1;
 		
 		gd2.addChoice( "Process_views_in_paralell", views, views[ defaultParalellViews ] );
+		gd2.addChoice( "ImgLib_container", imglibContainer, imglibContainer[ defaultContainer ] );
 		gd2.addCheckbox( "Show_averaged_PSF", showAveragePSF );
 		gd2.addMessage( "" );
 		gd2.addCheckbox( "Display_fused_image", displayFusedImageStatic );
@@ -471,6 +479,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		paralellViews = defaultParalellViews = gd2.getNextChoiceIndex(); // 0 = all
 		if ( paralellViews == 0 )
 			paralellViews = numViews;
+		container = defaultContainer = gd2.getNextChoiceIndex();
 		showAveragePSF = gd2.getNextBoolean();
 		displayFusedImageStatic = gd2.getNextBoolean(); 
 		saveFusedImageStatic = gd2.getNextBoolean(); 		
@@ -501,7 +510,22 @@ public class Multi_View_Deconvolution implements PlugIn
 		conf.cropSizeX = Multi_View_Fusion.cropSizeXStatic;
 		conf.cropSizeY = Multi_View_Fusion.cropSizeYStatic;
 		conf.cropSizeZ = Multi_View_Fusion.cropSizeZStatic;
-		conf.outputImageFactory = new ArrayContainerFactory();
+		
+		if ( container == 1 )
+		{
+			conf.outputImageFactory = new PlanarContainerFactory();
+			conf.imageFactory = new PlanarContainerFactory();
+		}
+		else if ( container == 2 )
+		{
+			conf.outputImageFactory = new CellContainerFactory( 256 );
+			conf.imageFactory = new CellContainerFactory( 256 );
+		}
+		else
+		{
+			conf.outputImageFactory = new ArrayContainerFactory();
+			conf.imageFactory = new ArrayContainerFactory();
+		}
 		
 		conf.overrideImageZStretching = true;
 
