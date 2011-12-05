@@ -3001,6 +3001,8 @@ static void parse_command_line(void)
 		add_option(&options, main_argv[i], 1);
 
 	i = 0;
+	properties[i++] = "imagej.dir";
+	properties[i++] =  fiji_dir,
 	properties[i++] = "fiji.dir";
 	properties[i++] =  fiji_dir,
 	properties[i++] = "fiji.defaultLibPath";
