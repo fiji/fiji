@@ -3017,6 +3017,9 @@ static void parse_command_line(void)
 #endif
 	properties[i++] = NULL;
 
+	if (i > sizeof(properties) / sizeof(properties[0]))
+		die ("Too many properties: %d", i);
+
 	keep_only_one_memory_option(&options.java_options);
 
 	if (options.debug) {
