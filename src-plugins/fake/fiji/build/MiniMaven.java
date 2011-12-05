@@ -449,6 +449,8 @@ public class MiniMaven {
 				// hard-code a few variables
 				if (key.equals("bio-formats.groupId"))
 					return "loci";
+				if (key.equals("bio-formats.version"))
+					return "4.4-SNAPSHOT";
 				if (key.equals("imagej.groupId"))
 					return "imagej";
 				if (key.equals("java.home"))
