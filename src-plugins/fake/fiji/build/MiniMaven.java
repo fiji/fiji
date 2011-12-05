@@ -281,6 +281,10 @@ public class MiniMaven {
 				if (child != null)
 					child.build(makeJar);
 
+			// do not build wrapper projects
+			if (!new File(directory, "src").exists())
+				return;
+
 			target.mkdirs();
 			File source = new File(directory, getSourcePath());
 
@@ -313,7 +317,10 @@ public class MiniMaven {
 		}
 
 		protected void addRecursively(List<String> list, File directory, String extension, File targetDirectory, String targetExtension) {
-			for (File file : directory.listFiles())
+			File[] files = directory.listFiles();
+			if (list == null)
+				return;
+			for (File file : files)
 				if (file.isDirectory())
 					addRecursively(list, file, extension, new File(targetDirectory, file.getName()), targetExtension);
 				else {
