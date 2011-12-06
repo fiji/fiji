@@ -96,7 +96,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		final ArrayList<LucyRichardsonFFT> deconvolutionData = new ArrayList<LucyRichardsonFFT>();
 		final int cpusPerView = Math.min( Runtime.getRuntime().availableProcessors(), Math.round( Runtime.getRuntime().availableProcessors() / (float)paralellViews ) );
 		
-		IJ.log( "Computer views in paralell: " + paralellViews );
+		IJ.log( "Compute views in paralell: " + paralellViews );
 		IJ.log( "CPUs per view: " + cpusPerView );
 		IJ.log( "Minimal number iterations: " + minNumIterations );
 		IJ.log( "Maximal number iterations: " + maxNumIterations );
