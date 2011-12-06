@@ -1,5 +1,9 @@
 package plugin;
 
+import javax.media.j3d.Transform3D;
+import javax.vecmath.Vector3d;
+
+import fiji.plugin.Apply_External_Transformation;
 import fiji.plugin.Bead_Registration;
 import fiji.stacks.Hyperstack_rearranger;
 import ij.CompositeImage;
@@ -20,6 +24,7 @@ import mpicbg.models.SimilarityModel2D;
 import mpicbg.models.TranslationModel2D;
 import mpicbg.models.TranslationModel3D;
 import mpicbg.spim.segmentation.InteractiveDoG;
+import mpicbg.util.TransformUtils;
 import process.Matching;
 
 public class Descriptor_based_registration implements PlugIn 
@@ -168,7 +173,8 @@ public class Descriptor_based_registration implements PlugIn
 	public static boolean defaultInteractiveMaxima = true;
 	public static boolean defaultInteractiveMinima = false;
 	
-	public static boolean defaultSimilarOrientation = false;
+	public static String[] orientation = { "Not prealigned", "Approxmiately aligned", "I will provide the approximate alignment" };
+	public static int defaultSimilarOrientation = 0;
 	public static int defaultNumNeighbors = 3;
 	public static int defaultRedundancy = 1;
 	public static double defaultSignificance = 3;
@@ -179,6 +185,19 @@ public class Descriptor_based_registration implements PlugIn
 	public static boolean defaultCreateOverlay = true;
 	public static boolean defaultAddPointRoi = true;
 	
+	public String[] axes = new String[] { "x-axis", "y-axis", "z-axis" };
+	public static int defaultAxis1 = 0;
+	public static int defaultAxis2 = 1;
+	public static int defaultAxis3 = 2;
+	public static double defaultDegrees1 = 90;
+	public static double defaultDegrees2 = 0;
+	public static double defaultDegrees3 = 0;
+
+	public static double defaultScale = 1;
+	public static double m00 = 1, m01 = 0, m02 = 0, m03 = 0;
+	public static double m10 = 0, m11 = 1, m12 = 0, m13 = 0;
+	public static double m20 = 0, m21 = 0, m22 = 1, m23 = 0;
+
 	/**
 	 * Ask for all other required parameters ..
 	 * 
@@ -209,7 +228,7 @@ public class Descriptor_based_registration implements PlugIn
 		gd.addChoice( "Type_of_detections", detectionTypes, detectionTypes[ defaultDetectionType ] );
 		
 		gd.addChoice( "Transformation_model", transformationModel, transformationModel[ defaultTransformationModel ] );
-		gd.addCheckbox( "Images_are_roughly_aligned", defaultSimilarOrientation );
+		gd.addChoice( "Images_pre-alignemnt", orientation, orientation[ defaultSimilarOrientation ] );
 		
 		if ( dimensionality == 2 )
 		{
@@ -263,7 +282,7 @@ public class Descriptor_based_registration implements PlugIn
 		final int detectionSizeIndex = gd.getNextChoiceIndex();
 		final int detectionTypeIndex = gd.getNextChoiceIndex();
 		final int transformationModelIndex = gd.getNextChoiceIndex();
-		final boolean similarOrientation = gd.getNextBoolean();
+		final int similarOrientation = gd.getNextChoiceIndex();
 		final int numNeighbors = (int)Math.round( gd.getNextNumber() );
 		final int redundancy = (int)Math.round( gd.getNextNumber() );
 		final double significance = gd.getNextNumber();
@@ -400,7 +419,10 @@ public class Descriptor_based_registration implements PlugIn
 		
 		// other parameters
 		params.sigma2 = InteractiveDoG.computeSigma2( (float)params.sigma1, InteractiveDoG.standardSenstivity );
-		params.similarOrientation = similarOrientation;
+		if ( similarOrientation == 0 )
+			params.similarOrientation = false;
+		else
+			params.similarOrientation = true;
 		params.numNeighbors = numNeighbors;
 		params.redundancy = redundancy;
 		params.significance = significance;
@@ -409,6 +431,246 @@ public class Descriptor_based_registration implements PlugIn
 		params.channel2 = channel2;
 		params.fuse = createOverlay;
 		params.setPointsRois = addPointRoi;
+		
+		// ask for the approximate transformation
+		if ( similarOrientation == 2 )
+		{
+			if ( TranslationModel3D.class.isInstance( params.model ) || TranslationModel2D.class.isInstance( params.model ) )
+			{
+				IJ.log( "No parameters necessary ... the matching is anyways translation invariant." );
+			}
+			else if ( RigidModel3D.class.isInstance( params.model ) )
+			{
+				final GenericDialog gd2 = new GenericDialog( "Model parameters for rigid model 3d" );
+				
+				gd2.addChoice( "1st_Rotation_axis", axes, axes[ defaultAxis1 ] );
+				gd2.addSlider( "1st_Rotation_angle", 0, 359, defaultDegrees1 );
+
+				gd2.addChoice( "2nd_Rotation_axis", axes, axes[ defaultAxis2 ] );
+				gd2.addSlider( "2nd_Rotation_angle", 0, 359, defaultDegrees2 );
+
+				gd2.addChoice( "3rd_Rotation_axis", axes, axes[ defaultAxis3 ] );
+				gd2.addSlider( "3rd_Rotation_angle", 0, 359, defaultDegrees3 );
+				
+				gd2.showDialog();
+				
+				if ( gd2.wasCanceled() )
+					return null;
+				
+				defaultAxis1 = gd2.getNextChoiceIndex();
+				defaultDegrees1 = gd2.getNextNumber();
+				defaultAxis2 = gd2.getNextChoiceIndex();				
+				defaultDegrees2 = gd2.getNextNumber();
+				defaultAxis3 = gd2.getNextChoiceIndex();
+				defaultDegrees3 = gd2.getNextNumber();
+				
+				final Transform3D t3 = new Transform3D();
+				final Transform3D t2 = new Transform3D();
+				final Transform3D t1 = new Transform3D();
+				
+				if ( defaultAxis1 == 0 )
+					t1.rotX( Math.toRadians( defaultDegrees1 ) );
+				else if ( defaultAxis1 == 1 )
+					t1.rotY( Math.toRadians( defaultDegrees1 ) );
+				else
+					t1.rotZ( Math.toRadians( defaultDegrees1 ) );
+				
+				if ( defaultAxis2 == 0 )
+					t2.rotX( Math.toRadians( defaultDegrees2 ) );
+				else if ( defaultAxis2 == 1 )
+					t2.rotY( Math.toRadians( defaultDegrees2 ) );
+				else
+					t2.rotZ( Math.toRadians( defaultDegrees2 ) );
+				
+				if ( defaultAxis3 == 0 )
+					t3.rotX( Math.toRadians( defaultDegrees3 ) );
+				else if ( defaultAxis3 == 1 )
+					t3.rotY( Math.toRadians( defaultDegrees3 ) );
+				else
+					t3.rotZ( Math.toRadians( defaultDegrees3 ) );
+				
+				final AffineModel3D m1 = TransformUtils.getAffineModel3D( t1 );
+				final AffineModel3D m2 = TransformUtils.getAffineModel3D( t2 );
+				final AffineModel3D m3 = TransformUtils.getAffineModel3D( t3 );
+
+				m1.preConcatenate( m2 );
+				m1.preConcatenate( m3 );
+				
+				// set the model as initial guess
+				params.initialModel = m1;
+			}
+			else if ( AffineModel3D.class.isInstance( params.model ) )
+			{
+				final GenericDialog gd2 = new GenericDialog( "Model parameters for affine model 3d" );
+				
+				gd2.addMessage( "" );
+				gd2.addMessage( "m00 m01 m02 m03" );
+				gd2.addMessage( "m10 m11 m12 m13" );
+				gd2.addMessage( "m20 m21 m22 m23" );
+				gd2.addMessage( "" );
+				gd2.addMessage( "Please provide 3d affine in this form (any brackets will be ignored):" );
+				gd2.addMessage( "m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23" );
+				gd2.addStringField( "Affine_matrix", m00 + ", " + m01 + ", " + m02 + ", " + m03 + ", " + m10 + ", " + m11 + ", " + m12 + ", " + m13 + ", " + m20 + ", " + m21 + ", " + m22 + ", " + m23, 80 );
+
+				gd2.showDialog();
+				
+				if ( gd2.wasCanceled() )
+					return null;
+
+				String entry = Apply_External_Transformation.removeSequences( gd2.getNextString().trim(), new String[] { "(", ")", "{", "}", "[", "]", "<", ">", ":", "m00", "m01", "m02", "m03", "m10", "m11", "m12", "m13", "m20", "m21", "m22", "m23", " " } );			
+				final String[] numbers = entry.split( "," );
+				
+				if  ( numbers.length != 12 )
+				{
+					IJ.log( "Affine matrix has to have 12 entries: m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23" );
+					IJ.log( "This one has only " + numbers.length + " after trimming: " + entry );
+					
+					return null;				
+				}
+				
+				m00 = Double.parseDouble( numbers[ 0 ] );
+				m01 = Double.parseDouble( numbers[ 1 ] );
+				m02 = Double.parseDouble( numbers[ 2 ] );
+				m03 = Double.parseDouble( numbers[ 3 ] );
+				m10 = Double.parseDouble( numbers[ 4 ] );
+				m11 = Double.parseDouble( numbers[ 5 ] );
+				m12 = Double.parseDouble( numbers[ 6 ] );
+				m13 = Double.parseDouble( numbers[ 7 ] );
+				m20 = Double.parseDouble( numbers[ 8 ] );
+				m21 = Double.parseDouble( numbers[ 9 ] );
+				m22 = Double.parseDouble( numbers[ 10 ] );
+				m23 = Double.parseDouble( numbers[ 11 ] );
+				
+				// set the model as initial guess
+				final AffineModel3D model = new AffineModel3D();
+				model.set( (float)m00, (float)m01, (float)m02, (float)m03, (float)m10, (float)m11, (float)m12, (float)m13, (float)m20, (float)m21, (float)m22, (float)m23 );
+				params.initialModel = model;
+			}
+			else if ( AffineModel2D.class.isInstance( params.model ) )
+			{
+				final GenericDialog gd2 = new GenericDialog( "Model parameters for affine model 2d" );
+				gd2.addMessage( "" );
+				gd2.addMessage( "m00 m01 m02" );
+				gd2.addMessage( "m10 m11 m12" );
+				gd2.addMessage( "" );
+
+				gd2.addMessage( "Please provide 2d affine in this form (any brackets will be ignored):" );
+				gd2.addMessage( "m00, m01, m02, m10, m11, m12" );
+				gd2.addStringField( "Affine_matrix", m00 + ", " + m01 + ", " + m02 + ", " + m10 + ", " + m11 + ", " + m12, 60 );
+				
+				gd2.showDialog();
+				
+				if ( gd2.wasCanceled() )
+					return null;
+
+				String entry = Apply_External_Transformation.removeSequences( gd2.getNextString().trim(), new String[] { "(", ")", "{", "}", "[", "]", "<", ">", ":", "m00", "m01", "m02", "m03", "m10", "m11", "m12", "m13", "m20", "m21", "m22", "m23", " " } );			
+				final String[] numbers = entry.split( "," );
+				
+				if  ( numbers.length != 6 )
+				{
+					IJ.log( "Affine matrix has to have 6 entries: m00, m01, m02, m10, m11, m12" );
+					IJ.log( "This one has only " + numbers.length + " after trimming: " + entry );
+					
+					return null;				
+				}
+				
+				m00 = Double.parseDouble( numbers[ 0 ] );
+				m01 = Double.parseDouble( numbers[ 1 ] );
+				m02 = Double.parseDouble( numbers[ 2 ] );
+				m10 = Double.parseDouble( numbers[ 3 ] );
+				m11 = Double.parseDouble( numbers[ 4 ] );
+				m12 = Double.parseDouble( numbers[ 5 ] );
+				
+				// set the model as initial guess
+				final AffineModel2D model = new AffineModel2D();
+				model.set( (float)m00, (float)m01, (float)m02, (float)m10, (float)m11, (float)m12 );
+				params.initialModel = model;
+			}
+			else if ( HomographyModel2D.class.isInstance( params.model ) )
+			{
+				final GenericDialog gd2 = new GenericDialog( "Model parameters for homography model 2d" );
+				
+				gd2.addMessage( "" );
+				gd2.addMessage( "m00 m01 m02" );
+				gd2.addMessage( "m10 m11 m12" );
+				gd2.addMessage( "m20 m21 m22" );
+				gd2.addMessage( "" );
+				gd2.addMessage( "Please provide 2d homography in this form (any brackets will be ignored):" );
+				gd2.addMessage( "m00, m01, m02, m10, m11, m12, m20, m21, m22" );
+				gd2.addStringField( "Homography_matrix", m00 + ", " + m01 + ", " + m02 + ", " + m10 + ", " + m11 + ", " + m12, 70 );
+
+				gd2.showDialog();
+				
+				if ( gd2.wasCanceled() )
+					return null;
+
+				String entry = Apply_External_Transformation.removeSequences( gd2.getNextString().trim(), new String[] { "(", ")", "{", "}", "[", "]", "<", ">", ":", "m00", "m01", "m02", "m03", "m10", "m11", "m12", "m13", "m20", "m21", "m22", "m23", " " } );			
+				final String[] numbers = entry.split( "," );
+				
+				if  ( numbers.length != 9 )
+				{
+					IJ.log( "Homography matrix has to have 9 entries: m00, m01, m02, m10, m11, m12, m20, m21, m22" );
+					IJ.log( "This one has only " + numbers.length + " after trimming: " + entry );
+					
+					return null;				
+				}
+				
+				m00 = Double.parseDouble( numbers[ 0 ] );
+				m01 = Double.parseDouble( numbers[ 1 ] );
+				m02 = Double.parseDouble( numbers[ 2 ] );
+				m10 = Double.parseDouble( numbers[ 3 ] );
+				m11 = Double.parseDouble( numbers[ 4 ] );
+				m12 = Double.parseDouble( numbers[ 5 ] );
+				m20 = Double.parseDouble( numbers[ 6 ] );
+				m21 = Double.parseDouble( numbers[ 7 ] );
+				m22 = Double.parseDouble( numbers[ 8 ] );
+				
+				// set the model as initial guess
+				final HomographyModel2D model = new HomographyModel2D();
+				model.set( (float)m00, (float)m01, (float)m02, (float)m10, (float)m11, (float)m12, (float)m20, (float)m21, (float)m22 );
+				params.initialModel = model;
+			}
+			else if ( RigidModel2D.class.isInstance( params.model ) )
+			{
+				final GenericDialog gd2 = new GenericDialog( "Model parameters for rigid model 2d" );
+				gd2.addSlider( "Rotation_angle", 0, 359, defaultDegrees1 );
+				
+				gd2.showDialog();
+				
+				if ( gd2.wasCanceled() )
+					return null;
+
+				defaultDegrees1 = gd2.getNextNumber();
+				
+				// set the model as initial guess
+				final RigidModel2D model = new RigidModel2D();
+				model.set( (float)Math.toRadians( defaultDegrees1 ), 0, 0 );
+				params.initialModel = model;
+			}			
+			else if ( SimilarityModel2D.class.isInstance( params.model ) )
+			{
+				final GenericDialog gd2 = new GenericDialog( "Model parameters for rigid model 2d" );
+				gd2.addSlider( "Rotation_angle", 0, 359, defaultDegrees1 );
+				gd2.addNumericField( "Scaling", defaultScale, 2 );
+				gd2.showDialog();
+				
+				if ( gd2.wasCanceled() )
+					return null;
+
+				defaultDegrees1 = gd2.getNextNumber();
+				defaultScale = gd2.getNextNumber();
+				
+				// set the model as initial guess
+				final SimilarityModel2D model = new SimilarityModel2D();
+				model.set( (float)( defaultScale*Math.cos( Math.toRadians( defaultDegrees1 ) ) ), (float)( defaultScale * Math.sin( Math.toRadians( defaultDegrees1 ) ) ), 0, 0 );
+				params.initialModel = model;
+			}			
+			else
+			{
+				IJ.log( "Unfortunately this is not supported this model yet ... " );
+				return null;
+			}					
+		}
 		
 		return params;
 	}
@@ -510,5 +772,4 @@ public class Descriptor_based_registration implements PlugIn
 		
 		return null;
 	}
-	
 }

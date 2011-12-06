@@ -453,15 +453,23 @@ public class Matching
 		if ( params.similarOrientation )
 		{
 			// an empty model with identity transform
-			final Model<?> identityTransform;// = params.model.copy();
-
-			
+			final Model<?> identityTransform = params.getInitialModel();// = params.model.copy();
+	
+			/*
 			if ( params.dimensionality == 2 )
 				identityTransform = new TranslationModel2D();
 			else
 				identityTransform = new TranslationModel3D();
+			*/
 			
 			candidates = getCorrespondenceCandidates( params.significance, matcher, peaks1, peaks2, identityTransform, params.dimensionality, zStretching1, zStretching2 );
+
+			// before we compute the RANSAC we will reset the coordinates of all points so that we directly get the correct model
+			for ( final PointMatch pm : candidates )
+			{
+				((Particle)pm.getP1()).restoreCoordinates();
+				((Particle)pm.getP2()).restoreCoordinates();
+			}
 		}
 		else
 			candidates = getCorrespondenceCandidates( params.significance, matcher, peaks1, peaks2, null, params.dimensionality, zStretching1, zStretching2 );
@@ -480,8 +488,8 @@ public class Matching
 		//}
 		
 		String statement = computeRANSAC( candidates, finalInliers, finalModel, (float)params.ransacThreshold );
-		//IJ.log( explanation + ": " + statement );
-		
+		//IJ.log( "First ransac: " + explanation + ": " + statement );
+		//IJ.log( "first model: " + finalModel );
 		//IJ.log( "Z1 " + zStretching1 );
 		//IJ.log( "Z2 " + zStretching2 );
 
@@ -521,7 +529,7 @@ public class Matching
 				statement = computeRANSAC( candidates, inliers, model2, (float)params.ransacThreshold );
 				
 				numInliers = inliers.size();
-				//IJ.log( explanation + ": " + statement );
+				IJ.log( explanation + ": " + statement );
 				
 				// update model if this one was better
 				if ( numInliers > previousNumInliers )
