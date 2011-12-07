@@ -197,8 +197,8 @@ public class WekaSegmentation {
 	/** flag to set the resampling of the training data in order to guarantee the same number of instances per class */
 	private boolean homogenizeClasses = false;
 
-	/** temporary folder name. It is used to stored intermediate results if different from null */
-	private String tempFolder = null;
+	/** Project folder name. It is used to stored temporary data if different from null */
+	private String projectFolder = null;
 	
 	/** executor service to launch threads for the library operations */
 	private ExecutorService exe = Executors.newFixedThreadPool(1);
@@ -1680,12 +1680,12 @@ public class WekaSegmentation {
 	}
 
 	/**
-	 * Set the temporary folder
-	 * @param tempFolder complete path name for temporary folder
+	 * Set the project folder
+	 * @param projectFolder complete path name for project folder
 	 */
-	public void setTempFolder(final String tempFolder)
+	public void setProjectFolder(final String projectFolder)
 	{
-		this.tempFolder = tempFolder;
+		this.projectFolder = projectFolder;
 	}
 
 
@@ -3173,15 +3173,23 @@ public class WekaSegmentation {
 			IJ.log("Feature stack is now updated (" + (end-start) + "ms).");
 		}
 		
+		/*
 		if(updateWholeData)
 		{			
 			wholeImageData = updateWholeImageData();
 			if( null == wholeImageData)
 				return;
 		}
-
-		IJ.log("Classifying whole image...");
-		classifiedImage = applyClassifier(wholeImageData, trainingImage.getWidth(), trainingImage.getHeight(), numThreads, classify);
+*/
+		IJ.log("Classifying whole image using " + numThreads + " threads...");
+		try{
+			classifiedImage = applyClassifier(featureStackArray, numThreads, classify);
+		}
+		catch(Exception ex)
+		{
+			IJ.log("Error while classifying whole image! ");
+			ex.printStackTrace();
+		}
 		
 		IJ.log("Finished segmentation of whole image.\n");
 	}
@@ -3318,7 +3326,7 @@ public class WekaSegmentation {
 
 			AbstractClassifier classifierCopy = null;
 			try {
-				// The Weka randomm forest classifiers do not need to be duplicated on each thread 
+				// The Weka random forest classifiers do not need to be duplicated on each thread 
 				// (that saves much memory)
 				if( classifier instanceof FastRandomForest || classifier instanceof RandomForest )
 					classifierCopy = classifier;
@@ -3389,10 +3397,247 @@ public class WekaSegmentation {
 		return classImg;
 	}
 
+	
 	/**
-	 * Classify instance concurrently
+	 * Apply current classifier to a set of feature vectors (given in a feature stack array)
+	 * 
+	 * @param fsa feature stack array
+	 * @param numThreads The number of threads to use. Set to zero for auto-detection.
+	 * @param probabilityMaps probability flag. Tue: probability maps are calculated, false: binary classification 
+	 * @return result image containing the probability maps or the binary classification
+	 */
+	public ImagePlus applyClassifier(
+			final FeatureStackArray fsa, 
+			int numThreads, 
+			boolean probabilityMaps)
+	{
+		if (numThreads == 0)
+			numThreads = Prefs.getThreads();
+
+		ArrayList<String> classNames = null;
+		
+		if(null != loadedClassNames)
+			classNames = loadedClassNames;
+		else
+		{
+			classNames = new ArrayList<String>();
+
+			for(int j=0; j<trainingImage.getImageStackSize(); j++)
+				for(int i = 0; i < numOfClasses; i++)					
+					if(examples[j].get(i).size() > 0)
+						if(false == classNames.contains(getClassLabels()[i]))
+							classNames.add(getClassLabels()[i]);
+		}
+
+		// Create instances information (each instance needs a pointer to this)
+		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
+		for (int i=1; i<=fsa.getNumOfFeatures(); i++)
+		{
+			String attString = fsa.getLabel(i);
+			attributes.add(new Attribute(attString));
+		}
+
+		if(fsa.useNeighborhood())
+			for (int i=0; i<8; i++)
+			{
+				IJ.log("Adding extra attribute original_neighbor_" + (i+1) + "...");
+				attributes.add(new Attribute(new String("original_neighbor_" + (i+1))));
+			}
+		
+		attributes.add(new Attribute("class", classNames));
+		Instances dataInfo = new Instances("segment", attributes, 1);
+		dataInfo.setClassIndex(dataInfo.numAttributes()-1);
+		
+		// number of classes
+		final int numClasses   = classNames.size();
+		// total number of instances (i.e. feature vectors)
+		final int numInstances = fsa.getSize() * trainingImage.getWidth() * trainingImage.getHeight();
+		// number of channels of the result image
+		final int numChannels  = (probabilityMaps ? numClasses : 1);
+		// number of slices of the result image
+		final int numSlices    = (numChannels*numInstances)/(trainingImage.getWidth()*trainingImage.getHeight());
+
+		IJ.showStatus("Classifying image...");
+
+		final long start = System.currentTimeMillis();
+
+		exe = Executors.newFixedThreadPool(numThreads);
+		final double[][][] results = new double[numThreads][][];
+		final int partialSize = numInstances / numThreads;
+		Future<double[][]> fu[] = new Future[numThreads];
+
+		final AtomicInteger counter = new AtomicInteger();
+
+		for(int i = 0; i < numThreads; i++)
+		{
+			if (Thread.currentThread().isInterrupted()) 
+				return null;
+			
+			int first = i*partialSize;
+			int size = (i == numThreads - 1) ? numInstances - i*partialSize : partialSize;
+			
+
+			AbstractClassifier classifierCopy = null;
+			try {
+				// The Weka random forest classifiers do not need to be duplicated on each thread 
+				// (that saves much memory)
+				if( classifier instanceof FastRandomForest || classifier instanceof RandomForest )
+					classifierCopy = classifier;
+				else
+					classifierCopy = (AbstractClassifier) (AbstractClassifier.makeCopy( classifier ));
+			} catch (Exception e) {
+				IJ.log("Error: classifier could not be copied to classify in a multi-thread way.");
+				e.printStackTrace();
+			}
+			
+			fu[i] = exe.submit(classifyInstances(fsa, dataInfo, first, size, classifierCopy, counter, probabilityMaps));
+		}
+
+		ScheduledExecutorService monitor = Executors.newScheduledThreadPool(1);
+		ScheduledFuture task = monitor.scheduleWithFixedDelay(new Runnable() {
+			public void run() {
+				IJ.showProgress(counter.get(), numInstances);
+			}
+		}, 0, 1, TimeUnit.SECONDS);
+
+		// Join threads
+		for(int i = 0; i < numThreads; i++)
+		{
+			try {
+				results[i] = fu[i].get();
+			} catch (InterruptedException e) {				
+				//e.printStackTrace();
+				return null;
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+				return null;
+			} finally {
+				exe.shutdown();
+				task.cancel(true);
+				monitor.shutdownNow();
+				IJ.showProgress(1);
+			}
+		}
+
+		exe.shutdown();
+
+		// Create final array
+		double[][] classificationResult = new double[numChannels][numInstances];
+
+		for(int i = 0; i < numThreads; i++)
+			for (int c = 0; c < numChannels; c++)
+				System.arraycopy(results[i][c], 0, classificationResult[c], i*partialSize, results[i][c].length);
+
+		IJ.showProgress(1.0);
+		final long end = System.currentTimeMillis();
+		IJ.log("Classifying whole image data took: " + (end-start) + "ms");
+
+		double[] classifiedSlice = new double[trainingImage.getWidth() * trainingImage.getHeight()];
+		final ImageStack classStack = new ImageStack(trainingImage.getWidth(), trainingImage.getHeight());
+
+		for (int i = 0; i < numSlices/numChannels; i++)
+		{
+			for (int c = 0; c < numChannels; c++)
+			{
+				System.arraycopy(classificationResult[c], i*(trainingImage.getWidth()*trainingImage.getHeight()), classifiedSlice, 0, trainingImage.getWidth()*trainingImage.getHeight());
+				ImageProcessor classifiedSliceProcessor = new FloatProcessor(trainingImage.getWidth(), trainingImage.getHeight(), classifiedSlice);				
+				classStack.addSlice(probabilityMaps ? getClassLabels()[c] : "", classifiedSliceProcessor);
+			}
+		}
+		ImagePlus classImg = new ImagePlus(probabilityMaps ? "Probability maps" : "Classification result", classStack);
+
+		return classImg;
+	}
+	
+	/**
+	 * Classify instances concurrently
+	 * 
+	 * @param fsa feature stack array with the feature vectors
+	 * @param dataInfo empty set of instances containing the data structure (attributes and classes)
+	 * @param first index of the first instance to classify (considering the feature stack array as a 1D array)
+	 * @param numInstances number of instances to classify in this thread
+	 * @param classifier current classifier
+	 * @param counter auxiliary counter to be able to update the progress bar
+	 * @param probabilityMaps if true return a probability map for each class instead of a classified image
+	 * @return classification result
+	 */
+	private static Callable<double[][]> classifyInstances(
+			final FeatureStackArray fsa,
+			final Instances dataInfo,
+			final int first,
+			final int numInstances,
+			final AbstractClassifier classifier,
+			final AtomicInteger counter,
+			final boolean probabilityMaps)
+	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
+		return new Callable<double[][]>(){
+
+			public double[][] call(){
+
+				final double[][] classificationResult;
+				
+				final int width = fsa.getWidth();
+				final int height = fsa.getHeight();
+				final int sliceSize = width * height;
+				final int numClasses = dataInfo.numClasses();
+
+				if (probabilityMaps)
+					classificationResult = new double[numClasses][numInstances];
+				else
+					classificationResult = new double[1][numInstances];
+			
+				for (int i=0; i<numInstances; i++)
+				{
+					try{
+
+						if (0 == i % 4000)
+						{
+							if (Thread.currentThread().isInterrupted()) 
+								return null;
+							counter.addAndGet(4000);
+						}
+
+						final int absolutePos = first + i;
+						final int slice = absolutePos / sliceSize;
+						final int localPos = absolutePos - slice * sliceSize;
+						final int x = localPos % width;
+						final int y = localPos / width;
+						DenseInstance ins = fsa.get( slice ).createInstance(x, y, 0);
+						ins.setDataset(dataInfo);
+						
+						if (probabilityMaps)
+						{							
+							double[] prob = classifier.distributionForInstance( ins );
+							for(int k = 0 ; k < numClasses; k++)
+								classificationResult[k][i] = prob[k];
+						}
+						else
+						{
+							classificationResult[0][i] = classifier.classifyInstance( ins );
+						}
+
+					}catch(Exception e){
+
+						IJ.showMessage("Could not apply Classifier!");
+						e.printStackTrace();
+						return null;
+					}
+				}
+				return classificationResult;
+			}
+		};
+	}
+	
+	
+	/**
+	 * Classify instances concurrently
+	 * 
 	 * @param data set of instances to classify
 	 * @param classifier current classifier
+	 * @param counter auxiliary counter to be able to update the progress bar
 	 * @param probabilityMaps return a probability map for each class instead of a
 	 * classified image
 	 * @return classification result
