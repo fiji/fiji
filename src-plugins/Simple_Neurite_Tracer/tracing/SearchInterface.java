@@ -31,13 +31,13 @@ import java.awt.Graphics;
 
 public interface SearchInterface {
 
-    public Path getResult();
+	public Path getResult();
 
 	public void drawProgressOnSlice( int plane,
                                      int currentSliceInPlane,
                                      TracerCanvas canvas,
                                      Graphics g );
 
-    public void requestStop();
+	public void requestStop();
 
 }
