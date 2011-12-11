@@ -14,6 +14,7 @@ import ij3d.gui.ContentCreatorDialog;
 import ij3d.gui.InteractiveTransformDialog;
 import ij3d.gui.LUTDialog;
 import ij3d.shapes.Scalebar;
+import ij3d.shortcuts.ShortCutDialog;
 import isosurface.MeshEditor;
 import isosurface.MeshExporter;
 import isosurface.SmoothControl;
@@ -1516,6 +1517,10 @@ public class Executer {
 
 	public void viewPreferences() {
 		UniverseSettings.initFromDialog(univ);
+	}
+
+	public void editShortcuts() {
+		new ShortCutDialog(univ.getShortcuts());
 	}
 
 	public void adjustLight() {

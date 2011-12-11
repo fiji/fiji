@@ -3,6 +3,7 @@ package ij3d;
 import ij.IJ;
 import ij.ImagePlus;
 import ij3d.pointlist.PointListDialog;
+import ij3d.shortcuts.ShortCuts;
 
 import java.awt.BorderLayout;
 import java.awt.CheckboxMenuItem;
@@ -101,6 +102,9 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 
 	/** A reference to the Executer */
 	private Executer executer;
+
+	/** A reference to the universe's shortcuts */
+	private ShortCuts shortcuts;
 
 	/**
 	 * A flag indicating whether the view is adjusted each time a
@@ -231,6 +235,7 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 		});
 		menubar = new Image3DMenubar(this);
 		registrationMenubar = new RegistrationMenubar(this);
+		shortcuts = new ShortCuts(menubar);
 		setMenubar(menubar);
 	}
 
@@ -386,6 +391,13 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	 */
 	public Executer getExecuter() {
 		return executer;
+	}
+
+	/**
+	 * Returns a reference to the universe's shortcuts.
+	 */
+	public ShortCuts getShortcuts() {
+		return shortcuts;
 	}
 
 	/**
