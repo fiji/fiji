@@ -1,5 +1,7 @@
 package fiji;
 
+import java.io.File;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -12,6 +14,28 @@ public class ClassLauncher {
 	 */
 	public static void main(String[] arguments) {
 		ClassLoaderPlus classLoader = null;
+		int i = 0;
+		for (; i < arguments.length && arguments[i].charAt(0) == '-'; i++) {
+			String option = arguments[i];
+			if (option.equals("-cp") || option.equals("-classpath"))
+				classLoader = ClassLoaderPlus.get(new File(arguments[++i]));
+			if (option.equals("-ijcp") || option.equals("-ijclasspath"))
+				classLoader = ClassLoaderPlus.getInFijiDirectory(arguments[++i]);
+			else if (option.equals("-jarpath"))
+				classLoader = ClassLoaderPlus.getRecursively(new File(arguments[++i]));
+			else if (option.equals("-ijjarpath"))
+				classLoader = ClassLoaderPlus.getRecursivelyInFijiDirectory(arguments[++i]);
+			else {
+				System.err.println("Unknown option: " + option);
+				System.exit(1);
+			}
+		}
+		if (i > 0) {
+			String[] newArguments = new String[arguments.length - i + 1];
+			System.arraycopy(arguments, i, newArguments, 0, newArguments.length);
+			arguments = newArguments;
+		}
+
 		if (!arguments[0].equals("imagej.Main") && !arguments[0].equals("fiji.build.MiniMaven")) {
 			classLoader = ClassLoaderPlus.getInFijiDirectory("jars/fiji-compat.jar", "jars/ij.jar", "jars/javassist.jar");
 			try {
