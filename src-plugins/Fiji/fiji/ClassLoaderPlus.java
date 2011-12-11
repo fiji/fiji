@@ -47,6 +47,38 @@ public class ClassLoaderPlus extends URLClassLoader {
 		return new ClassLoaderPlus(urls);
 	}
 
+	public static ClassLoaderPlus getRecursivelyInFijiDirectory(String... relativePaths) {
+		try {
+			File directory = new File(getFijiDir());
+			ClassLoaderPlus classLoader = null;
+			File[] files = new File[relativePaths.length];
+			for (int i = 0; i < files.length; i++)
+				classLoader = getRecursively(new File(directory, relativePaths[i]));
+			return classLoader;
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("Uh oh: " + e.getMessage());
+		}
+	}
+
+	public static ClassLoaderPlus getRecursively(File directory) {
+		try {
+			ClassLoaderPlus classLoader = get(directory);
+			File[] list = directory.listFiles();
+			if (list != null)
+				for (File file : list)
+					if (file.isDirectory())
+						classLoader = getRecursively(file);
+					else if (file.getName().endsWith(".jar"))
+						classLoader = get(file);
+			return classLoader;
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("Uh oh: " + e.getMessage());
+		}
+	}
+
+
 	public ClassLoaderPlus() {
 		this(new URL[0]);
 	}
