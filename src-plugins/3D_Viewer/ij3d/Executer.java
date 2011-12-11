@@ -11,6 +11,7 @@ import ij.io.SaveDialog;
 import ij.plugin.frame.Recorder;
 import ij.text.TextWindow;
 import ij3d.gui.ContentCreatorDialog;
+import ij3d.gui.InteractiveTransformDialog;
 import ij3d.gui.LUTDialog;
 import ij3d.shapes.Scalebar;
 import isosurface.MeshEditor;
@@ -49,6 +50,7 @@ import javax.media.j3d.PointLight;
 import javax.media.j3d.Transform3D;
 import javax.vecmath.Color3f;
 import javax.vecmath.Matrix4d;
+import javax.vecmath.Matrix4f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
@@ -1250,36 +1252,102 @@ public class Executer {
 		record(RESET_TRANSFORM);
 	}
 
-	public void setTransform(Content c) {
+	@SuppressWarnings("serial")
+	public void setTransform(final Content c) {
 		if(!checkSel(c))
 			return;
 		if(c.isLocked()) {
 			IJ.error(c.getName() + " is locked");
 			return;
 		}
-		univ.fireTransformationStarted();
-		float[] t = readTransform(c);
-		if(t != null) {
-			c.setTransform(new Transform3D(t));
-			univ.fireTransformationFinished();
-			record(SET_TRANSFORM, affine2string(t));
-		}
+		final boolean useToFront = univ.getUseToFront();
+		univ.setUseToFront(false);
+
+		final Transform3D org = new Transform3D();
+		c.getLocalTranslate().getTransform(org);
+		Transform3D t2 = new Transform3D();
+		c.getLocalRotate().getTransform(t2);
+		org.mul(t2);
+		Matrix4f m = new Matrix4f();
+		org.get(m);
+
+		Point3d contentCenter = new Point3d();
+		c.getContent().getCenter(contentCenter);
+		Point3f center = new Point3f(contentCenter);
+
+		new InteractiveTransformDialog("Set transformation", center, m) {
+			@Override
+			public void transformationUpdated(Matrix4f mat) {
+				univ.fireTransformationStarted();
+				c.setTransform(new Transform3D(mat));
+				univ.fireTransformationFinished();
+			}
+			@Override
+			public void oked(Matrix4f mat) {
+				Transform3D t = new Transform3D(mat);
+				float[] v = new float[16];
+				t.get(v);
+				univ.setUseToFront(useToFront);
+				record(SET_TRANSFORM, affine2string(v));
+			}
+			@Override
+			public void canceled() {
+				c.setTransform(org);
+				univ.setUseToFront(useToFront);
+			}
+		};
 	}
 
-	public void applyTransform(Content c) {
+	@SuppressWarnings("serial")
+	public void applyTransform(final Content c) {
 		if(!checkSel(c))
 			return;
 		if(c.isLocked()) {
 			IJ.error(c.getName() + " is locked");
 			return;
 		}
-		univ.fireTransformationStarted();
-		float[] t = readTransform(c);
-		if(t != null) {
-			c.applyTransform(new Transform3D(t));
-			univ.fireTransformationFinished();
-			record(APPLY_TRANSFORM, affine2string(t));
-		}
+		final boolean useToFront = univ.getUseToFront();
+		univ.setUseToFront(false);
+
+		final Transform3D org = new Transform3D();
+		c.getLocalTranslate().getTransform(org);
+		Transform3D t2 = new Transform3D();
+		c.getLocalRotate().getTransform(t2);
+		org.mul(t2);
+		final Matrix4f m = new Matrix4f();
+		org.get(m);
+
+		final Matrix4f conc = new Matrix4f();
+
+		Point3d contentCenter = new Point3d();
+		c.getContent().getCenter(contentCenter);
+		Point3f center = new Point3f(contentCenter);
+
+		Matrix4f init = new Matrix4f();
+		init.setIdentity();
+
+		new InteractiveTransformDialog("Set transformation", center, init) {
+			@Override
+			public void transformationUpdated(Matrix4f mat) {
+				univ.fireTransformationStarted();
+				conc.mul(mat, m);
+				c.setTransform(new Transform3D(conc));
+				univ.fireTransformationFinished();
+			}
+			@Override
+			public void oked(Matrix4f mat) {
+				Transform3D t = new Transform3D(mat);
+				float[] v = new float[16];
+				t.get(v);
+				univ.setUseToFront(useToFront);
+				record(APPLY_TRANSFORM, affine2string(v));
+			}
+			@Override
+			public void canceled() {
+				c.setTransform(org);
+				univ.setUseToFront(useToFront);
+			}
+		};
 	}
 
 	public void saveTransform(Content c) {
