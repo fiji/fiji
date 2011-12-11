@@ -3072,8 +3072,10 @@ static int start_ij(void)
 		}
 	}
 
-	prepend_string_copy(&options.ij_options, main_class);
-	main_class = "fiji.ClassLauncher";
+	if (strcmp(main_class, "fiji.build.Fake")) {
+		prepend_string_copy(&options.ij_options, main_class);
+		main_class = "fiji.ClassLauncher";
+	}
 
 	if (env) {
 		jclass instance;
