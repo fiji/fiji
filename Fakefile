@@ -475,6 +475,10 @@ CLASSPATH(plugins/Threshold_Colour.jar)=jars/ij.jar
 CLASSPATH(plugins/Helmholtz_Analysis.jar)=jars/ij.jar
 CLASSPATH(plugins/Fiji_Package_Maker.jar)=jars/ij.jar:plugins/Fiji_Updater.jar:jars/fiji-lib.jar
 
+# pom.xml sub-projects
+
+jars/VIB-lib.jar <- src-plugins/VIB-lib/pom.xml
+
 # pre-Java5 generics ;-)
 
 src-plugins/VIB-lib/vib/FloatMatrix.java[src-plugins/VIB-lib/sed.py $PRE $TARGET] <- src-plugins/VIB-lib/vib/FastMatrix.java
