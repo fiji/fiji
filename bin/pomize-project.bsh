@@ -67,6 +67,16 @@ String getBaseName(String target) {
 	return key;
 }
 
+void writeAndAddFile(String contents, File file) {
+	dir = file.getParentFile();
+	if (dir != null && !dir.exists())
+		dir.mkdirs();
+	out = new FileOutputStream(file);
+	out.write(contents.getBytes("UTF-8"));
+	out.close();
+	SimpleExecuter.exec(fijiDir, new String[] { "git", "add", file.getPath() });
+}
+
 void writePOM(String target, Rule rule) {
 	String versionRegex = "(.*?)-([\\.0-9]*)";
 	Pattern versionPattern = Pattern.compile(versionRegex);
@@ -127,11 +137,20 @@ void writePOM(String target, Rule rule) {
 		+ "\t</build>\n"
 		+ "\n"
 		+ "</project>";
-	pomFile = new File(fijiDir, rule.getStripPath() + "pom.xml");
-	out = new FileOutputStream(pomFile);
-	out.write(pom.getBytes("UTF-8"));
-	out.close();
-	SimpleExecuter.exec(fijiDir, new String[] { "git", "add", pomFile.getPath() });
+	writeAndAddFile(pom, new File(fijiDir, rule.getStripPath() + "pom.xml"));
+}
+
+void fsckEclipse(String stripPath) {
+	factoryPath = "<factorypath>\n"
+		+ "\t<factorypathentry kind=\"VARJAR\" id=\"M2_REPO/net/java/sezpoz/sezpoz/1.9/sezpoz-1.9.jar\" enabled=\"true\" runInBatchMode=\"true\"/>\n"
+		+ "</factorypath>";
+	writeAndAddFile(factoryPath, new File(fijiDir, rule.getStripPath() + ".factorypath"));
+	settings = "#Sun Jan 15 20:38:51 CET 2010\n"
+		+ "eclipse.preferences.version=1\n"
+		+ "org.eclipse.jdt.apt.aptEnabled=true\n"
+		+ "org.eclipse.jdt.apt.genSrcDir=target/classes\n"
+		+ "org.eclipse.jdt.apt.reconcileEnabled=false\n";
+	writeAndAddFile(settings, new File(fijiDir, rule.getStripPath() + ".settings/org.eclipse.jdt.apt.core.prefs"));
 }
 
 void editFakefile(String target, String stripPath) {
@@ -162,11 +181,7 @@ void editFakefile(String target, String stripPath) {
 			+ fakefile.substring(offset + 1);
 	}
 
-	File file = new File(fijiDir, "Fakefile");
-	FileOutputStream out = new FileOutputStream(file);
-	out.write(fakefile.getBytes("UTF-8"));
-	out.close();
-	SimpleExecuter.exec(fijiDir, new String[] { "git", "add", file.getPath() });
+	writeAndAddFile(fakefile, new File(fijiDir, "Fakefile"));
 }
 
 fake = new Fake();
@@ -192,5 +207,6 @@ for (String target : targets) {
 
 	moveSources(stripPath);
 	writePOM(target, rule);
+	fsckEclipse(stripPath);
 	editFakefile(target, stripPath);
 }
