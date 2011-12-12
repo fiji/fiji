@@ -15,6 +15,7 @@ import javax.swing.JMenuItem;
 import javax.swing.SwingUtilities;
 
 
+@SuppressWarnings("serial")
 public class Image3DMenubar extends JMenuBar implements ActionListener,
 					 		ItemListener,
 							UniverseListener {
@@ -22,11 +23,8 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 	private Image3DUniverse univ;
 	private Executer executer;
 
-	private JMenuItem addContentFromFile;
+	private JMenuItem open;
 	private JMenuItem addContentFromImage;
-	private JMenuItem add4DFromFile;
-	private JMenuItem add4DFromImage;
-	private JMenuItem add4DFromFolder;
 	private JMenuItem saveView;
 	private JMenuItem loadView;
 	private JMenuItem saveSession;
@@ -40,9 +38,6 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 	private JMenuItem luts;
 	private JMenuItem transparency;
 	private JMenuItem threshold;
-	private JMenuItem fill;
-	private JMenuItem slices;
-	private JMenuItem updateVol;
 	private JMenuItem delete;
 	private JMenuItem properties;
 	private JMenuItem resetView;
@@ -67,10 +62,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 	private JMenuItem exportAsciiSTL;
 	private JMenuItem exportBinarySTL;
 	private JMenuItem exportU3D;
-	private JMenuItem smoothMesh;
-	private JMenuItem smoothDialog;
 	private JMenuItem scalebar;
-	private JMenuItem smoothAllMeshes;
 	private JMenuItem displayAsVolume;
 	private JMenuItem displayAsOrtho;
 	private JMenuItem displayAsMultiOrtho;
@@ -83,9 +75,6 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 	private JMenuItem fitViewToUniverse;
 	private JMenuItem fitViewToContent;
 	private JMenuItem regist;
-	private JCheckBoxMenuItem shaded;
-	private JCheckBoxMenuItem saturated;
-	private JMenuItem colorSurface;
 	private JMenuItem pl_load;
 	private JMenuItem pl_save;
 	private JMenuItem pl_size;
@@ -100,11 +89,13 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 	private JMenuItem viewposXY, viewposXZ, viewposYZ, viewnegXY, viewnegXZ, viewnegYZ;
 
 	private JMenu transformMenu;
+	private JMenu landmarksMenu;
 	private JMenu editMenu;
 	private JMenu selectMenu;
 	private JMenu viewMenu;
 	private JMenu fileMenu;
 	private JMenu helpMenu;
+	private JMenu addMenu;
 
 	public Image3DMenubar(Image3DUniverse univ) {
 		super();
@@ -119,14 +110,14 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		editMenu = createEditMenu();
 		this.add(editMenu);
 
-		selectMenu = createSelectMenu();
-		this.add(selectMenu);
-
-		transformMenu = createTransformMenu();
-		this.add(transformMenu);
-
 		viewMenu = createViewMenu();
 		this.add(viewMenu);
+
+		addMenu = createAddMenu();
+		this.add(addMenu);
+
+		landmarksMenu = createLandmarkMenu();
+		this.add(landmarksMenu);
 
 		helpMenu = createHelpMenu();
 		this.add(helpMenu);
@@ -137,64 +128,24 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 	public JMenu createFileMenu() {
 		JMenu file = new JMenu("File");
 
-		JMenu addContent = new JMenu("Add content");
-		addContentFromFile = new JMenuItem("from file");
-		addContentFromFile.addActionListener(this);
-		addContent.add(addContentFromFile);
-		addContentFromImage = new JMenuItem("from open image");
-		addContentFromImage.addActionListener(this);
-		addContent.add(addContentFromImage);
-		file.add(addContent);
+		open = new JMenuItem("Open...");
+		open.addActionListener(this);
+		file.add(open);
 
-		JMenu add4D = new JMenu("Add timelapse");
-		add4DFromFile = new JMenuItem("from hyperstack file");
-		add4DFromFile.addActionListener(this);
-		add4D.add(add4DFromFile);
-		add4DFromImage = new JMenuItem("from open hyperstack");
-		add4DFromImage.addActionListener(this);
-		add4D.add(add4DFromImage);
-		add4DFromFolder = new JMenuItem("from folder with stacks");
-		add4DFromFolder.addActionListener(this);
-		add4D.add(add4DFromFolder);
-		file.add(add4D);
+		JMenu importt = new JMenu("Import surfaces");
 
-
-		importObj = new JMenuItem("Import WaveFront");
+		importObj = new JMenuItem("WaveFront");
 		importObj.addActionListener(this);
-		file.add(importObj);
+		importt.add(importObj);
 
-		importStl = new JMenuItem("Import STL");
+		importStl = new JMenuItem("STL");
 		importStl.addActionListener(this);
-		file.add(importStl);
+		importt.add(importStl);
 
-		delete = new JMenuItem("Delete");
-		delete.setEnabled(false);
-		delete.addActionListener(this);
-		file.add(delete);
 
-		file.addSeparator();
+		file.add(importt);
 
-		saveView = new JMenuItem("Save View");
-		saveView.addActionListener(this);
-		file.add(saveView);
-
-		loadView = new JMenuItem("Load View");
-		loadView.addActionListener(this);
-		file.add(loadView);
-
-		file.addSeparator();
-
-		saveSession = new JMenuItem("Save Session");
-		saveSession.addActionListener(this);
-		file.add(saveSession);
-
-		loadSession = new JMenuItem("Load Session");
-		loadSession.addActionListener(this);
-		file.add(loadSession);
-
-		file.addSeparator();
-
-		JMenu subMenu = new JMenu("Export surfaces as");
+		JMenu subMenu = new JMenu("Export surfaces");
 		file.add(subMenu);
 		exportObj = new JMenuItem("WaveFront");
 		exportObj.addActionListener(this);
@@ -218,6 +169,26 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 
 		file.addSeparator();
 
+		saveView = new JMenuItem("Save View");
+		saveView.addActionListener(this);
+		file.add(saveView);
+
+		loadView = new JMenuItem("Load View");
+		loadView.addActionListener(this);
+		file.add(loadView);
+
+		file.addSeparator();
+
+		saveSession = new JMenuItem("Save Session");
+		saveSession.addActionListener(this);
+		file.add(saveSession);
+
+		loadSession = new JMenuItem("Load Session");
+		loadSession.addActionListener(this);
+		file.add(loadSession);
+
+		file.addSeparator();
+
 		close = new JMenuItem("Quit");
 		close.addActionListener(this);
 		file.add(close);
@@ -225,48 +196,73 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		return file;
 	}
 
+	public JMenu createAddMenu() {
+		JMenu add = new JMenu("Add");
+		addContentFromImage = new JMenuItem("From image");
+		addContentFromImage.addActionListener(this);
+		add.add(addContentFromImage);
+
+		return add;
+	}
+
 	public JMenu createEditMenu() {
 		JMenu edit = new JMenu("Edit");
 
-		slices = new JMenuItem("Adjust slices");
-		slices.addActionListener(this);
-		edit.add(slices);
-
-		updateVol = new JMenuItem("Upate Volume");
-		updateVol.addActionListener(this);
-		edit.add(updateVol);
-
-		fill = new JMenuItem("Fill selection");
-		fill.addActionListener(this);
-		edit.add(fill);
-
-		JMenu smooth = new JMenu("Smooth");
-		edit.add(smooth);
-
-		smoothMesh = new JMenuItem("Smooth mesh");
-		smoothMesh.addActionListener(this);
-		smooth.add(smoothMesh);
-
-		smoothAllMeshes = new JMenuItem("Smooth all meshes");
-		smoothAllMeshes.addActionListener(this);
-		smooth.add(smoothAllMeshes);
-
-		smoothDialog = new JMenuItem("Smooth control");
-		smoothDialog.addActionListener(this);
-		smooth.add(smoothDialog);
-
-		edit.addSeparator();
-
 		edit.add(createDisplayAsSubMenu());
-		edit.add(createAttributesSubMenu());
-		edit.add(createHideSubMenu());
-		edit.add(createPLSubMenu());
+		// TODO:
+		selectMenu = createSelectMenu();
+		edit.add(selectMenu);
 
 		edit.addSeparator();
 
-		regist = new JMenuItem("Register");
-		regist.addActionListener(this);
-		edit.add(regist);
+		luts = new JMenuItem("Transfer function");
+		luts.addActionListener(this);
+		edit.add(luts);
+
+		channels = new JMenuItem("Change channels");
+		channels.addActionListener(this);
+		edit.add(channels);
+
+		color = new JMenuItem("Change color");
+		color.addActionListener(this);
+		edit.add(color);
+
+		transparency = new JMenuItem("Change transparency");
+		transparency.addActionListener(this);
+		edit.add(transparency);
+
+		threshold = new JMenuItem("Adjust threshold");
+		threshold.addActionListener(this);
+		edit.add(threshold);
+
+		edit.addSeparator();
+
+		show = new JCheckBoxMenuItem("Show content");
+		show.setState(true);
+		show.addItemListener(this);
+		edit.add(show);
+
+		coordinateSystem = new JCheckBoxMenuItem(
+					"Show coordinate system", true);
+		coordinateSystem.addItemListener(this);
+		edit.add(coordinateSystem);
+
+		boundingBox = new JCheckBoxMenuItem(
+					"Show bounding box", false);
+		boundingBox.addItemListener(this);
+		edit.add(boundingBox);
+
+		allCoordinateSystems = new JCheckBoxMenuItem(
+				"Show all coordinate systems", true);
+		allCoordinateSystems.addItemListener(this);
+		edit.add(allCoordinateSystems);
+
+		edit.addSeparator();
+
+		delete = new JMenuItem("Delete");
+		delete.setEnabled(false);
+		delete.addActionListener(this);
+		edit.add(delete);
 
 		edit.addSeparator();
 
@@ -274,7 +270,57 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		properties.addActionListener(this);
 		edit.add(properties);
 
+		edit.addSeparator();
+
+
+		transformMenu = createTransformMenu();
+		edit.add(transformMenu);
+
+		edit.addSeparator();
+
+		shortcuts = new JMenuItem("Keyboard shortcuts");
+		shortcuts.addActionListener(this);
+		edit.add(shortcuts);
+
+		viewPreferences = new JMenuItem("View Preferences");
+		viewPreferences.addActionListener(this);
+		edit.add(viewPreferences);
+
 		return edit;
+	}
+
+	private JMenu createLandmarkMenu() {
+		JMenu pl = new JMenu("Landmarks");
+
+		pl_load = new JMenuItem("Load Point List");
+		pl_load.addActionListener(this);
+		pl.add(pl_load);
+
+		pl_save = new JMenuItem("Save Point List");
+		pl_save.addActionListener(this);
+		pl.add(pl_save);
+
+		pl_show = new JCheckBoxMenuItem("Show Point List");
+		pl_show.addItemListener(this);
+		pl.add(pl_show);
+
+		pl.addSeparator();
+
+		pl_size = new JMenuItem("Point size");
+		pl_size.addActionListener(this);
+		pl.add(pl_size);
+
+		pl_color = new JMenuItem("Point color");
+		pl_color.addActionListener(this);
+		pl.add(pl_color);
+
+		pl.addSeparator();
+
+		regist = new JMenuItem("Register");
+		regist.addActionListener(this);
+		pl.add(regist);
+
+		return pl;
 	}
 
 	public JMenu createSelectMenu() {
@@ -312,6 +358,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 
 		return transform;
 	}
+
 	public JMenu createViewMenu() {
 		JMenu view = new JMenu("View");
 
@@ -415,16 +462,6 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		fullscreen.addItemListener(this);
 		view.add(fullscreen);
 
-		view.addSeparator();
-
-		shortcuts = new JMenuItem("Keyboard shortcuts");
-		shortcuts.addActionListener(this);
-		view.add(shortcuts);
-
-		viewPreferences = new JMenuItem("View Preferences");
-		viewPreferences.addActionListener(this);
-		view.add(viewPreferences);
-
 		return view;
 	}
 
@@ -436,99 +473,11 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		return help;
 	}
 
-
-	public JMenu createPLSubMenu() {
-		JMenu pl = new JMenu("Point list");
-		if(univ == null)
-			return pl;
-		pl_load = new JMenuItem("Load Point List");
-		pl_load.addActionListener(this);
-		pl.add(pl_load);
-
-		pl_save = new JMenuItem("Save Point List");
-		pl_save.addActionListener(this);
-		pl.add(pl_save);
-
-		pl_show = new JCheckBoxMenuItem("Show Point List");
-		pl_show.addItemListener(this);
-		pl.add(pl_show);
-
-		pl.addSeparator();
-
-		pl_size = new JMenuItem("Point size");
-		pl_size.addActionListener(this);
-		pl.add(pl_size);
-
-		pl_color = new JMenuItem("Point color");
-		pl_color.addActionListener(this);
-		pl.add(pl_color);
-
-		return pl;
-	}
-
-
-	public JMenu createHideSubMenu() {
-		JMenu hide = new JMenu("Hide/Show");
-
-		show = new JCheckBoxMenuItem("Show content");
-		show.setState(true);
-		show.addItemListener(this);
-		hide.add(show);
-
-		coordinateSystem = new JCheckBoxMenuItem(
-					"Show coordinate system", true);
-		coordinateSystem.addItemListener(this);
-		hide.add(coordinateSystem);
-
-		boundingBox = new JCheckBoxMenuItem(
-					"Show bounding box", false);
-		boundingBox.addItemListener(this);
-		hide.add(boundingBox);
-
-		allCoordinateSystems = new JCheckBoxMenuItem(
-				"Show all coordinate systems", true);
-		allCoordinateSystems.addItemListener(this);
-		hide.add(allCoordinateSystems);
-
-		return hide;
-	}
-
 	public JMenu createAttributesSubMenu() {
 		JMenu attributes = new JMenu("Attributes");
 
-		luts = new JMenuItem("Transfer function");
-		luts.addActionListener(this);
-		attributes.add(luts);
 
-		channels = new JMenuItem("Change channels");
-		channels.addActionListener(this);
-		attributes.add(channels);
 
-		color = new JMenuItem("Change color");
-		color.addActionListener(this);
-		attributes.add(color);
-
-		transparency = new JMenuItem("Change transparency");
-		transparency.addActionListener(this);
-		attributes.add(transparency);
-
-		threshold = new JMenuItem("Adjust threshold");
-		threshold.addActionListener(this);
-		attributes.add(threshold);
-
-		shaded = new JCheckBoxMenuItem("Shade surface");
-		shaded.setState(true);
-		shaded.addItemListener(this);
-		attributes.add(shaded);
-
-		saturated = new JCheckBoxMenuItem("Saturated volume rendering");
-		saturated.setState(false);
-		saturated.addItemListener(this);
-		attributes.add(saturated);
-
-		colorSurface = new JMenuItem("Surface color");
-		colorSurface.addActionListener(this);
-		attributes.add(colorSurface);
 
 		return attributes;
 	}
@@ -575,18 +524,10 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 			executer.changeChannels(getSelected());
 		else if(src == transparency)
 			executer.changeTransparency(getSelected());
-		else if(src == colorSurface)
-			executer.applySurfaceColors(getSelected());
-		else if(src == addContentFromFile)
+		else if(src == open)
 			executer.addContentFromFile();
 		else if(src == addContentFromImage)
 			executer.addContentFromImage(null);
-		else if(src == add4DFromFile)
-			executer.addTimelapseFromFile();
-		else if(src == add4DFromImage)
-			executer.addTimelapseFromHyperstack(null);
-		else if(src == add4DFromFolder)
-			executer.addTimelapseFromFolder();
 		else if(src == regist)
 			executer.register();
 		else if(src == delete)
@@ -635,13 +576,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 			executer.displayAs(
 				getSelected(), Content.SURFACE_PLOT2D);
 			updateMenus();
-		} else if(src == updateVol)
-			executer.updateVolume(getSelected());
-		else if(src == slices)
-			executer.changeSlices(getSelected());
-		else if(src == fill)
-			executer.fill(getSelected());
-		else if(src == close)
+		} else if(src == close)
 			executer.close();
 		else if(src == resetTransform)
 			executer.resetTransform(getSelected());
@@ -685,12 +620,6 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 			executer.saveAsAsciiSTL();
 		else if (src == exportBinarySTL)
 			executer.saveAsBinarySTL();
-		else if (src == smoothMesh)
-			executer.smoothMesh(getSelected());
-		else if (src == smoothAllMeshes)
-			executer.smoothAllMeshes();
-		else if (src == smoothDialog)
-			executer.smoothControl();
 		else if (src == light)
 			executer.adjustLight();
 		else if (src == viewPreferences)
@@ -736,10 +665,6 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 			executer.showContent(c, show.getState());
 		else if(src == lock)
 			executer.setLocked(c, lock.getState());
-		else if(src == shaded)
-			executer.setShaded(c, shaded.getState());
-		else if(src == saturated)
-			executer.setSaturatedVolumeRendering(c, saturated.getState());
 		else if (src == pl_show)
 			executer.showPointList(c, pl_show.getState());
 		else if (src == sync)
@@ -793,7 +718,6 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 					executer.select(null);
 			}
 		});
-		selectMenu.add(item);
 	}
 
 	@Override
@@ -803,7 +727,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 			return;
 		for(int i = 0; i < selectMenu.getItemCount(); i++) {
 			JMenuItem item = selectMenu.getItem(i);
-			if(item.getLabel().equals(c.getName())) {
+			if(item.getText().equals(c.getName())) {
 				selectMenu.remove(i);
 				return;
 			}
@@ -833,9 +757,6 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 
 		delete.setEnabled(c != null);
 		centerSelected.setEnabled(c != null);
-		updateVol.setEnabled(c != null);
-		fill.setEnabled(c != null);
-		smoothMesh.setEnabled(c != null);
 
 		displayAsVolume.setEnabled(c != null);
 		displayAsSurface.setEnabled(c != null);
@@ -847,8 +768,6 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		transparency.setEnabled(c != null);
 		threshold.setEnabled(c != null);
 		channels.setEnabled(c != null);
-		shaded.setEnabled(c != null);
-		saturated.setEnabled(c != null);
 
 		show.setEnabled(c != null);
 		coordinateSystem.setEnabled(c != null);
@@ -871,7 +790,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		for(int i = 0; i < selectMenu.getItemCount(); i++) {
 			JMenuItem item = selectMenu.getItem(i);
 			((JCheckBoxMenuItem)item).setState(sel != null &&
-				sel.getName().equals(item.getLabel()));
+				sel.getName().equals(item.getText()));
 		}
 
 
@@ -880,22 +799,10 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 
 		int t = c.getType();
 
-		slices.setEnabled(t == Content.ORTHO || t == Content.MULTIORTHO);
-		updateVol.setEnabled(t == Content.VOLUME ||
-			t == Content.ORTHO || t == Content.MULTIORTHO);
-		fill.setEnabled(t == Content.VOLUME);
-		shaded.setEnabled(t == Content.SURFACE_PLOT2D ||
-			t == Content.SURFACE || t == Content.CUSTOM);
-		saturated.setEnabled(t == Content.VOLUME);
-		colorSurface.setEnabled(t == Content.SURFACE || t == Content.CUSTOM);
-		smoothMesh.setEnabled(t == Content.SURFACE || t == Content.CUSTOM);
-
 		coordinateSystem.setState(c.hasCoord());
 		lock.setState(c.isLocked());
 		show.setState(c.isVisible());
 		pl_show.setState(c.isPLVisible());
-		shaded.setState(c.isShaded());
-		saturated.setState(c.isSaturatedVolumeRendering());
 
 		ImagePlus i = c.getImage();
 		displayAsVolume.setEnabled(t != Content.VOLUME && i != null);

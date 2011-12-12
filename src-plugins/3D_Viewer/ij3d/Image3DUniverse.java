@@ -2,6 +2,7 @@ package ij3d;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij3d.contextmenu.ContextMenu;
 import ij3d.pointlist.PointListDialog;
 import ij3d.shortcuts.ShortCuts;
 
@@ -106,6 +107,8 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	/** A reference to the universe's shortcuts */
 	private ShortCuts shortcuts;
 
+	private ContextMenu contextmenu;
+
 	/**
 	 * A flag indicating whether the view is adjusted each time a
 	 * Content is added
@@ -164,6 +167,8 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 
 		resetView();
 
+		contextmenu = new ContextMenu(this);
+
 		// add mouse listeners
 		canvas.addMouseMotionListener(new MouseMotionAdapter() {
 			@Override
@@ -182,9 +187,17 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 			public void mouseClicked(MouseEvent e) {
 				if (e.isConsumed())
 					return;
-				Content c = picker.getPickedContent(
-						e.getX(), e.getY());
-				select(c);
+				select(picker.getPickedContent(e.getX(), e.getY()));
+			}
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+				contextmenu.showPopup(e);
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				contextmenu.showPopup(e);
 			}
 		});
 
