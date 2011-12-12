@@ -93,7 +93,7 @@ public class SubFake extends Rule {
 		return file.exists() ? file : null;
 	}
 
-	protected POM getPOM() {
+	public POM getPOM() {
 		File file = new File(Util.makePath(parser.cwd, getLastPrerequisite()), "pom.xml");
 		if (!file.exists())
 			return null;

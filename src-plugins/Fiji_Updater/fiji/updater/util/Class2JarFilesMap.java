@@ -1,8 +1,5 @@
 package fiji.updater.util;
 
-import ij.IJ;
-import ij.ImageJ;
-
 import java.io.File;
 import java.io.IOException;
 
@@ -32,7 +29,7 @@ public class Class2JarFilesMap extends HashMap<String, ArrayList<String>> {
 			if (list[i].endsWith(".jar")) try {
 				addJar(path);
 			} catch (IOException e) {
-				IJ.log("Warning: could not open " + path);
+				UserInterface.get().log("Warning: could not open " + path);
 			}
 			else
 				addDirectory(path);
@@ -51,7 +48,7 @@ public class Class2JarFilesMap extends HashMap<String, ArrayList<String>> {
 						".class").replace('/', '.'), jar);
 			}
 		} catch (ZipException e) {
-			IJ.log("Warning: could not open " + jar);
+			UserInterface.get().log("Warning: could not open " + jar);
 		}
 	}
 
@@ -106,9 +103,6 @@ public class Class2JarFilesMap extends HashMap<String, ArrayList<String>> {
 	}
 
 	public static void main(String[] args) {
-		if (IJ.getInstance() == null)
-			new ImageJ();
-
 		Class2JarFilesMap map = new Class2JarFilesMap();
 
 		if (args.length == 0)

@@ -270,8 +270,8 @@ public class Util {
 			return "macosx";
 		if (osName.startsWith("Windows"))
 			return "win" + (is64bit ? "64" : "32");
-		System.err.println("Unknown platform: " + osName);
-		return osName;
+		//System.err.println("Unknown platform: " + osName);
+		return osName.toLowerCase();
 	}
 
 	public static boolean isAbsolutePath(String path) {

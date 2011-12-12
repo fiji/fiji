@@ -88,6 +88,10 @@ public class Headless extends JavassistHelper {
 			});
 
 		clazz = get("ij.Menus");
+		clazz.getMethod("installJarPlugin", "(Ljava/lang/String;Ljava/lang/String;)V")
+			.insertBefore("int quote = $2.indexOf('\"');"
+				+ "if (quote >= 0)"
+				+ "  addPluginItem(null, $2.substring(quote));");
 		rewrite(clazz);
 
 		clazz = get("ij.plugin.HyperStackConverter");

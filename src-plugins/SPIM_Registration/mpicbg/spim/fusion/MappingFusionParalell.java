@@ -127,13 +127,13 @@ public class MappingFusionParalell extends SPIMImageFusion
 						
 			if ( !successful )
 			{
-				IOFunctions.println( "Not enough memory for running the content-based fusion, running without it" );
+				IOFunctions.println( "WARNING: Not enough memory for running the content-based fusion, running without it" );
 				isoWinit = new IsolatedPixelWeightener[ 0 ][ 0 ];
 			}
 		}
 		catch (Exception e)
 		{				
-			IOFunctions.println( "Not enough memory for running the content-based fusion, running without it" );
+			IOFunctions.println( "WARNING: Not enough memory for running the content-based fusion, running without it" );
 			isoWinit = new IsolatedPixelWeightener[ 0 ][ 0 ];
 		}
 		

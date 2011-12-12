@@ -2,43 +2,18 @@
 
 package landmarks;
 
-import ij.*;
-import ij.process.*;
-import ij.gui.*;
-import ij.plugin.*;
-import ij.plugin.filter.*;
-
-import ij.measure.Calibration;
-
-import java.awt.Color;
-import java.io.*;
-
-import math3d.Point3d;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.ListIterator;
-import java.util.Comparator;
-
-import vib.oldregistration.RegistrationAlgorithm;
-
-import vib.transforms.OrderedTransformations;
-import vib.transforms.FastMatrixTransform;
-import vib.FastMatrix;
-import landmarks.NamedPointWorld;
-
-import util.CombinationGenerator;
-
+import ij.IJ;
+import ij.ImagePlus;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
+import ij.plugin.PlugIn;
 import util.Overlay_Registered;
-import vib.TransformedImage;
-
-import pal.math.ConjugateDirectionSearch;
-import pal.math.MultivariateFunction;
 
 /* This method doesn't work terribly well, and is here largely for
    comparison purposes. */
 
 public class Affine_From_Landmarks extends AffineFromLandmarks implements PlugIn {
+        @Override
         public void run(String arg) {
 
                 int[] wList = WindowManager.getIDList();

@@ -2,12 +2,17 @@ package ij3d;
 
 import ij.ImagePlus;
 
-import javax.swing.*;
-import java.awt.event.*;
-import java.awt.*;
-import java.util.Iterator;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 import javax.media.j3d.View;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.SwingUtilities;
 
 
 public class Image3DMenubar extends JMenuBar implements ActionListener,
@@ -50,6 +55,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 	private JMenuItem animationOptions;
 	private JMenuItem light;
 	private JMenuItem viewPreferences;
+	private JMenuItem shortcuts;
 	private JMenuItem close;
 	private JMenuItem setTransform;
 	private JMenuItem resetTransform;
@@ -396,10 +402,6 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 
 		view.addSeparator();
 
-		viewPreferences = new JMenuItem("View Preferences");
-		viewPreferences.addActionListener(this);
-		view.add(viewPreferences);
-
 		light = new JMenuItem("Adjust light");
 		light.addActionListener(this);
 		view.add(light);
@@ -412,6 +414,16 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		fullscreen.setState(univ.isFullScreen());
 		fullscreen.addItemListener(this);
 		view.add(fullscreen);
+
+		view.addSeparator();
+
+		shortcuts = new JMenuItem("Keyboard shortcuts");
+		shortcuts.addActionListener(this);
+		view.add(shortcuts);
+
+		viewPreferences = new JMenuItem("View Preferences");
+		viewPreferences.addActionListener(this);
+		view.add(viewPreferences);
 
 		return view;
 	}
@@ -547,6 +559,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		return display;
 	}
 
+	@Override
 	public void actionPerformed(ActionEvent e) {
 		Object src = e.getSource();
 
@@ -682,22 +695,31 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 			executer.adjustLight();
 		else if (src == viewPreferences)
 			executer.viewPreferences();
+		else if (src == shortcuts)
+			executer.editShortcuts();
 		else if(src == j3dproperties)
 			executer.j3dproperties();
 		else if (viewposXY == src)
-			executer.execute(new Runnable() { public void run() { univ.rotateToPositiveXY(); }});
+			executer.execute(new Runnable() { @Override
+			public void run() { univ.rotateToPositiveXY(); }});
 		else if (viewposXZ == src)
-			executer.execute(new Runnable() { public void run() { univ.rotateToPositiveXZ(); }});
+			executer.execute(new Runnable() { @Override
+			public void run() { univ.rotateToPositiveXZ(); }});
 		else if (viewposYZ == src)
-			executer.execute(new Runnable() { public void run() { univ.rotateToPositiveYZ(); }});
+			executer.execute(new Runnable() { @Override
+			public void run() { univ.rotateToPositiveYZ(); }});
 		else if (viewnegXY == src)
-			executer.execute(new Runnable() { public void run() { univ.rotateToNegativeXY(); }});
+			executer.execute(new Runnable() { @Override
+			public void run() { univ.rotateToNegativeXY(); }});
 		else if (viewnegXZ == src)
-			executer.execute(new Runnable() { public void run() { univ.rotateToNegativeXZ(); }});
+			executer.execute(new Runnable() { @Override
+			public void run() { univ.rotateToNegativeXZ(); }});
 		else if (viewnegYZ == src)
-			executer.execute(new Runnable() { public void run() { univ.rotateToNegativeYZ(); }});
+			executer.execute(new Runnable() { @Override
+			public void run() { univ.rotateToNegativeYZ(); }});
 	}
 
+	@Override
 	public void itemStateChanged(ItemEvent e) {
 		Object src = e.getSource();
 		Content c = getSelected();
@@ -742,13 +764,20 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 
 
 	// Universe Listener interface
+	@Override
 	public void transformationStarted(View view) {}
+	@Override
 	public void transformationFinished(View view) {}
+	@Override
 	public void canvasResized() {}
+	@Override
 	public void transformationUpdated(View view) {}
+	@Override
 	public void contentChanged(Content c) {}
+	@Override
 	public void universeClosed() {}
 
+	@Override
 	public void contentAdded(Content c) {
 		updateMenus();
 		if(c == null)
@@ -756,6 +785,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		final String name = c.getName();
 		final JCheckBoxMenuItem item = new JCheckBoxMenuItem(name);
 		item.addItemListener(new ItemListener() {
+			@Override
 			public void itemStateChanged(ItemEvent e) {
 				if(item.getState())
 					executer.select(name);
@@ -766,6 +796,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		selectMenu.add(item);
 	}
 
+	@Override
 	public void contentRemoved(Content c) {
 		updateMenus();
 		if(c == null)
@@ -780,12 +811,14 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 	}
 
 
+	@Override
 	public void contentSelected(Content c) {
 		updateMenus();
 	}
 
 	public void updateMenus() {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() {
 				doUpdateMenus();
 			}

@@ -8,7 +8,7 @@ Abbreviations:
 * LGPL: Lesser General Public License as specified at http://www.gnu.org/licenses/lgpl.html
 * AGPL: Affero General Public License as specified at http://www.gnu.org/licenses/agpl.html
 * PD: Public Domain
-* CPL 1.0: Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+* CPL 1.0: Common Public License 1.0 (http://eclipse.org/legal/cpl-v10.html)
 * PSF 2: Python Software Foundation Version 2
 * JSF 2.1: Jython Software License 2.0, 2.1
 * JPSL: JPython 1.1.x Software License
@@ -56,6 +56,7 @@ Name					File					Author(s)						Contact								License
 * Java Matrix package 			Jama-1.0.2.jar 				http://math.nist.gov/javanumerics/jama/#Authors 	http://math.nist.gov/javanumerics/jama/#Authors 		PD
 * Javascript Rhino Engine 		js.jar 					http://www.mozilla.org/rhino/ 				http://www.mozilla.org/rhino/ 					MPL 1.1/GPL 2  see http://developer.mozilla.org/en/docs/Rhino_License
 * Javascript Interpreter 		Javascript_Interpreter.jar 		Albert Cardona 						acardona@ini.phys.ethz.ch 					GPL
+* JFreeChart	 			jfreechart-1.0.13.jar 			http://www.jfree.org/jfreechart/			http://www.jfree.org/jfreechart/ 				LGPL
 * JPedal PDF library 			jpedalSTD.jar 				http://www.jpedal.org/ 					http://www.jpedal.org/ 						GPL/commercial
 * JRuby Interpreter 			JRuby_Interpreter.jar			Mark Longair						Mark.Longair@ed.ac.uk						GPL
 * JRuby 				jruby.jar				Thomas E. Enebo						http://jruby.codehaus.org/					CPL/GPL/LGPL

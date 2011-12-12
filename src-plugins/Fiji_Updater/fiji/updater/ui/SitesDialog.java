@@ -1,8 +1,8 @@
 package fiji.updater.ui;
 
-import fiji.updater.Updater;
 import fiji.updater.UptodateCheck;
 
+import fiji.updater.logic.Checksummer;
 import fiji.updater.logic.PluginCollection;
 
 import fiji.updater.logic.PluginCollection.UpdateSite;
@@ -11,6 +11,7 @@ import fiji.updater.logic.PluginObject;
 import fiji.updater.logic.PluginUploader;
 import fiji.updater.logic.XMLFileReader;
 
+import fiji.updater.util.UserInterface;
 import fiji.updater.util.Util;
 
 import java.awt.Container;
@@ -296,12 +297,17 @@ public class SitesDialog extends JDialog implements ActionListener, ItemListener
 		protected boolean validURL(String url) {
 			if (!url.endsWith("/"))
 				url += "/";
-			return UptodateCheck.getLastModified(url + Updater.XML_COMPRESSED) != -1;
+			return UptodateCheck.getLastModified(url + Util.XML_COMPRESSED) != -1;
 		}
 
 		protected boolean readFromSite(String name) {
 			try {
 				new XMLFileReader(plugins).read(name);
+				List<String> pluginsFromSite = new ArrayList<String>();
+				for (PluginObject plugin : plugins.forUpdateSite(name))
+					pluginsFromSite.add(plugin.filename);
+				Checksummer checksummer = new Checksummer(plugins, updaterFrame.getProgress("Czech Summer"));
+				checksummer.updateFromLocal(pluginsFromSite);
 			} catch (Exception e) {
 				error("Not a valid URL: " + url.getText());
 				return false;
@@ -425,7 +431,9 @@ public class SitesDialog extends JDialog implements ActionListener, ItemListener
 		PluginCollection plugins = new PluginCollection();
 		try {
 			plugins.read();
-		} catch (Exception e) { ij.IJ.handleException(e); }
+		} catch (Exception e) {
+			UserInterface.get().handleException(e);
+		}
 		SitesDialog dialog = new SitesDialog(null, plugins, !false);
 		dialog.setVisible(true);
 	}

@@ -1,7 +1,5 @@
 package fiji.updater.logic;
 
-import fiji.updater.Updater;
-
 import fiji.updater.util.Downloader;
 import fiji.updater.util.Downloader.FileDownload;
 import fiji.updater.util.Progress;
@@ -46,7 +44,6 @@ public class Installer extends Downloader {
 		}
 
 		public long getFilesize() {
-			// TODO: unify case
 			return plugin.filesize;
 		}
 	}

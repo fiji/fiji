@@ -2,7 +2,10 @@ package fiji.updater;
 
 import com.jcraft.jsch.UserInfo;
 
+import fiji.updater.java.UpdateJava;
+
 import fiji.updater.logic.Checksummer;
+import fiji.updater.logic.FileUploader;
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginCollection.Filter;
 import fiji.updater.logic.PluginCollection.UpdateSite;
@@ -14,16 +17,20 @@ import fiji.updater.logic.PluginObject.Status;
 
 import fiji.updater.logic.XMLFileDownloader;
 
+import fiji.updater.logic.ssh.SSHFileUploader;
+
 import fiji.updater.util.Downloader;
 import fiji.updater.util.Progress;
 import fiji.updater.util.StderrProgress;
-import fiji.updater.util.UpdateJava;
 import fiji.updater.util.Util;
 
 import java.io.Console;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -76,7 +83,7 @@ public class Main {
 		}
 
 		public boolean matches(PluginObject plugin) {
-			if (!plugin.isForThisPlatform())
+			if (!plugin.isUpdateablePlatform())
 				return false;
 			if (fileNames != null &&
 					!fileNames.contains(plugin.filename))
@@ -152,6 +159,12 @@ public class Main {
 	public void download(PluginObject plugin) {
 		try {
 			new Downloader(progress).start(new OnePlugin(plugin));
+			if (Util.isLauncher(plugin.filename) && !Util.platform.startsWith("win")) try {
+				Runtime.getRuntime().exec(new String[] { "chmod", "0755", Util.prefix(plugin.filename) });
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new RuntimeException("Could not mark " + plugin.filename + " as executable");
+			}
 			System.err.println("Installed " + plugin.filename);
 		} catch (IOException e) {
 			System.err.println("IO error downloading "
@@ -251,8 +264,10 @@ public class Main {
 		String username = uploader.getDefaultUsername();
 		if (username == null || username.equals(""))
 			username = userInfo.getUsername("Login for " + getLongUpdateSiteName(updateSite));
-		if (!uploader.setLogin(username, userInfo))
+		FileUploader sshUploader = SSHFileUploader.getUploader(uploader, username, userInfo);
+		if (sshUploader == null)
 			die("Aborting");
+		uploader.setUploader(sshUploader);
 		try {
 			uploader.upload(progress);
 			plugins.write();
@@ -333,6 +348,10 @@ public class Main {
 			usage();
 			System.exit(0);
 		}
+
+		Util.useSystemProxies();
+		Authenticator.setDefault(new ProxyAuthenticator());
+
 		String command = args[0];
 		if (command.equals("list"))
 			getInstance().list(makeList(args, 1));
@@ -358,6 +377,16 @@ public class Main {
 			getInstance().upload(makeList(args, 1));
 		else
 			usage();
+	}
+
+	protected static class ProxyAuthenticator extends Authenticator {
+		protected Console console = System.console();
+
+		protected PasswordAuthentication getPasswordAuthentication() {
+			String user = console.readLine("                                  \rProxy User: ");
+			char[] password = console.readPassword("Proxy Password: ");
+			return new PasswordAuthentication(user, password);
+		}
 	}
 
 	protected static class ConsoleUserInfo implements UserInfo {

@@ -1,5 +1,7 @@
 package mpicbg.spim.fusion;
 
+import ij.IJ;
+
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -13,6 +15,10 @@ import mpicbg.spim.registration.ViewStructure;
 
 public class FusionControl
 {	
+	SPIMImageFusion fusion;
+	
+	public SPIMImageFusion getFusion() { return fusion; }
+	
 	public void fuse( final ViewStructure viewStructure, final int timePoint )
 	{
 		fuse( viewStructure, viewStructure, timePoint );
@@ -32,12 +38,18 @@ public class FusionControl
 			isolatedWeightenerFactories.add( new GaussContentFactory( conf.entropyFactory ) );
 
 		if (conf.useLinearBlening)
-			combinedWeightenerFactories.add( new BlendingSimpleFactory() );
+		{
+			// if we deconvolve we want a small border of black around the sample due to the PSF overlap
+			if ( conf.isDeconvolution )
+				combinedWeightenerFactories.add( new BlendingSimpleFactory( new float[] { 15, 15, 15 }, 0.6f ) );
+			else
+				combinedWeightenerFactories.add( new BlendingSimpleFactory( 0, 0.3f ) );
+		}
 		
-		final SPIMImageFusion fusion;
-		
-		if (conf.multipleImageFusion)
-			fusion = new MappingFusionSequentialDifferentOutput( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories);
+		if ( conf.isDeconvolution )
+			fusion = new PreDeconvolutionFusion( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories );
+		else if (conf.multipleImageFusion)
+			fusion = new MappingFusionSequentialDifferentOutput( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories );
 		else if (conf.paralellFusion)
 			fusion = new MappingFusionParalell( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories ); //TODO: Remove Max Weight
 		else
@@ -60,6 +72,11 @@ public class FusionControl
 				continue;
 			
 			fusion.fuseSPIMImages( channelIndex );		
+			
+			if ( conf.isDeconvolution )
+			{
+				return;
+			}
 			
 			if (conf.showOutputImage)
 			{
@@ -133,7 +150,8 @@ public class FusionControl
 			}					
 		}
 		
-		fusion.closeImages();
+		if  ( !conf.isDeconvolution )
+			fusion.closeImages();
 	}
 	
 }

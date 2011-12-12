@@ -3,6 +3,7 @@ package mpicbg.spim.io;
 import ij.IJ;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 
+import mpicbg.imglib.util.Util;
 import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.RigidModel3D;
@@ -987,5 +989,140 @@ public class IOFunctions
 		}
 		
 		return readReg;
+	}
+	
+	public static void reWriteRegistrationFile( final File file, final AffineModel3D newModel, final AffineModel3D oldModel, final AffineModel3D preConcatenated )
+	{
+		try 
+		{
+			// read the old file
+			final ArrayList< String > content = new ArrayList< String >();
+			final BufferedReader in = TextFileAccess.openFileRead( file );
+			
+			while ( in.ready() )
+				content.add( in.readLine().trim() );
+
+			in.close();
+			
+			// over-write the old file
+			final PrintWriter out = TextFileAccess.openFileWrite( file );
+			
+			// get the model parameters
+			final float[] matrixNew = newModel.getMatrix( null );
+			
+			for ( final String entry : content )
+			{
+				if (entry.startsWith("m00:"))
+					out.println( "m00: " + matrixNew[ 0 ] );
+				else if (entry.startsWith("m01:"))
+					out.println( "m01: " + matrixNew[ 1 ] );
+				else if (entry.startsWith("m02:"))
+					out.println( "m02: " + matrixNew[ 2 ] );
+				else if (entry.startsWith("m03:"))
+					out.println( "m03: " + matrixNew[ 3 ] );
+				else if (entry.startsWith("m10:"))
+					out.println( "m10: " + matrixNew[ 4 ] );
+				else if (entry.startsWith("m11:"))
+					out.println( "m11: " + matrixNew[ 5 ] );
+				else if (entry.startsWith("m12:"))
+					out.println( "m12: " + matrixNew[ 6 ] );
+				else if (entry.startsWith("m13:"))
+					out.println( "m13: " + matrixNew[ 7 ] );
+				else if (entry.startsWith("m20:"))
+					out.println( "m20: " + matrixNew[ 8 ] );
+				else if (entry.startsWith("m21:"))
+					out.println( "m21: " + matrixNew[ 9 ] );
+				else if (entry.startsWith("m22:"))
+					out.println( "m22: " + matrixNew[ 10 ] );
+				else if (entry.startsWith("m23:"))
+					out.println( "m23: " + matrixNew[ 11 ] );
+				else if (entry.startsWith("model:"))
+					out.println( "model: AffineModel3D" );
+				else
+					out.println( entry );
+			}
+			
+			// save the old models, just in case
+			final float[] matrixOld = oldModel.getMatrix( null );
+			final float[] matrixConcat = preConcatenated.getMatrix( null );
+
+			out.println();
+			out.println( "Previous model: " + Util.printCoordinates( matrixOld ) );
+			out.println( "Pre-concatenated model: " + Util.printCoordinates( matrixConcat ) );
+			
+			out.close();
+		} 
+		catch (IOException e) 
+		{
+			IJ.log( "Cannot find file: " + file.getAbsolutePath() + ": " + e );
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return;
+		}	
+	}
+	
+	public static AffineModel3D getModelFromFile( final File file )
+	{
+		final AffineModel3D model = new AffineModel3D();
+				
+		try 
+		{
+			final BufferedReader in = TextFileAccess.openFileRead( file );
+			
+			// get 12 entry float array
+			final float m[] = new float[ 12 ];
+			
+			// the default if nothing is written
+			String savedModel = "AffineModel3D";
+
+			while ( in.ready() )
+			{
+				String entry = in.readLine().trim();
+				
+				if (entry.startsWith("m00:"))
+					m[ 0 ] = Float.parseFloat(entry.substring(5, entry.length()));
+				else if (entry.startsWith("m01:"))
+					m[ 1 ] = Float.parseFloat(entry.substring(5, entry.length()));
+				else if (entry.startsWith("m02:"))
+					m[ 2 ] = Float.parseFloat(entry.substring(5, entry.length()));
+				else if (entry.startsWith("m03:"))
+					m[ 3 ] = Float.parseFloat(entry.substring(5, entry.length()));
+				else if (entry.startsWith("m10:"))
+					m[ 4 ] = Float.parseFloat(entry.substring(5, entry.length()));
+				else if (entry.startsWith("m11:"))
+					m[ 5 ] = Float.parseFloat(entry.substring(5, entry.length()));
+				else if (entry.startsWith("m12:"))
+					m[ 6 ] = Float.parseFloat(entry.substring(5, entry.length()));
+				else if (entry.startsWith("m13:"))
+					m[ 7 ] = Float.parseFloat(entry.substring(5, entry.length()));
+				else if (entry.startsWith("m20:"))
+					m[ 8 ] = Float.parseFloat(entry.substring(5, entry.length()));
+				else if (entry.startsWith("m21:"))
+					m[ 9 ] = Float.parseFloat(entry.substring(5, entry.length()));
+				else if (entry.startsWith("m22:"))
+					m[ 10 ] = Float.parseFloat(entry.substring(5, entry.length()));
+				else if (entry.startsWith("m23:"))
+					m[ 11 ] = Float.parseFloat(entry.substring(5, entry.length()));
+				else if (entry.startsWith("model:"))
+					savedModel = entry.substring(7, entry.length()).trim();
+			}
+
+			in.close();
+			
+			if ( !savedModel.equals("AffineModel3D") )
+				IOFunctions.println( "Warning: Loading a '" + savedModel + "' as AffineModel3D!" );
+				
+			model.set( m[ 0 ], m[ 1 ], m[ 2 ], m[ 3 ], m[ 4 ], m[ 5 ], m[ 6 ], m[ 7 ], m[ 8 ], m[ 9 ], m[ 10 ], m[ 11 ] );
+			
+		} 
+		catch (IOException e) 
+		{
+			IJ.log( "Cannot find file: " + file.getAbsolutePath() + ": " + e );
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+		
+		return model;
 	}	
 }

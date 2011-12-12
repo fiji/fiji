@@ -1733,6 +1733,9 @@ public class Weka_Segmentation implements PlugIn
 			return;
 		}
 
+		// Set the flag of training complete to true
+		win.trainingComplete = true;
+		
 		// update GUI
 		win.updateAddClassButtons();
 

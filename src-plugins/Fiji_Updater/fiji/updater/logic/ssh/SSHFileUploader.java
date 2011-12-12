@@ -1,73 +1,55 @@
-package fiji.updater.logic;
+package fiji.updater.logic.ssh;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
-import com.jcraft.jsch.HostKey;
-import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.UserInfo;
 
-import fiji.updater.Updater;
+import fiji.updater.logic.FileUploader;
+import fiji.updater.logic.PluginUploader;
 
 import fiji.updater.util.Canceled;
-import fiji.updater.util.IJLogOutputStream;
-import fiji.updater.util.InputStream2IJLog;
+import fiji.updater.util.InputStream2OutputStream;
+import fiji.updater.util.UserInterface;
 
-import ij.IJ;
-
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class SSHFileUploader extends FileUploader {
 	private Session session;
 	private Channel channel;
-	private long uploadedBytes;
-	private long uploadSize;
 	private OutputStream out;
 	protected OutputStream err;
 	private InputStream in;
+
+	public static FileUploader getUploader(PluginUploader uploader, String username, UserInfo userInfo) {
+		try {
+			String protocol = uploader.getUploadProtocol();
+			String host = uploader.getUploadHost();
+			String directory = uploader.getUploadDirectory();
+			if (protocol == null && (host.endsWith(".sourceforge.net") || host.endsWith(".sf.net")))
+				protocol = "sftp";
+			if (protocol != null && protocol.equalsIgnoreCase("sftp"))
+				return new SFTPFileUploader(username, host, directory, userInfo);
+			else
+				return new SSHFileUploader(username, host, directory, userInfo);
+		} catch (JSchException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
 
 	public SSHFileUploader(String username, String sshHost, String uploadDirectory,
 			UserInfo userInfo) throws JSchException {
 		super(uploadDirectory);
 
-		err = new IJLogOutputStream();
+		err = UserInterface.get().getOutputStream();
 
-		int port = 22, colon = sshHost.indexOf(':');
-		if (colon > 0) {
-			port = Integer.parseInt(sshHost.substring(colon + 1));
-			sshHost = sshHost.substring(0, colon);
-		}
-
-		JSch jsch = new JSch();
-
-		// Reuse ~/.ssh/known_hosts file
-		File knownHosts = new File(new File(System.getProperty("user.home"), ".ssh"), "known_hosts");
-		jsch.setKnownHosts(knownHosts.getAbsolutePath());
-
-		ConfigInfo configInfo = getIdentity(username, sshHost);
-		if (configInfo != null) {
-			if (configInfo.username != null)
-				username = configInfo.username;
-			if (configInfo.sshHost != null)
-				sshHost = configInfo.sshHost;
-			if (configInfo.identity != null)
-				jsch.addIdentity(configInfo.identity);
-		}
-
-		session = jsch.getSession(username, sshHost, 22);
-		session.setUserInfo(userInfo);
-		session.connect();
+		session = SSHSessionCreator.connect(username, sshHost, userInfo);
 	}
 
 	//Steps to accomplish entire upload task
@@ -194,8 +176,7 @@ public class SSHFileUploader extends FileUploader {
 			channel.disconnect();
 		}
 		try {
-			if (IJ.debugMode)
-				IJ.log("launching command " + command);
+			UserInterface.get().debug("launching command " + command);
 			channel = session.openChannel("exec");
 			((ChannelExec)channel).setCommand(command);
 			channel.setInputStream(null);
@@ -217,7 +198,7 @@ public class SSHFileUploader extends FileUploader {
 	}
 
 	public void disconnectSession() throws IOException {
-		new InputStream2IJLog(in);
+		new InputStream2OutputStream(in, UserInterface.get().getOutputStream());
 		try {
 			Thread.sleep(100);
 		}
@@ -232,8 +213,7 @@ public class SSHFileUploader extends FileUploader {
 			/* ignore */
 		}
 		int exitStatus = channel.getExitStatus();
-		if (IJ.debugMode)
-			IJ.log("disconnect session; exit status is " + exitStatus);
+		UserInterface.get().debug("disconnect session; exit status is " + exitStatus);
 		channel.disconnect();
 		session.disconnect();
 		err.close();
@@ -260,7 +240,7 @@ public class SSHFileUploader extends FileUploader {
 		//          -1
 		if (b == 0)
 			return b;
-		IJ.handleException(new Exception("checkAck returns " + b));
+		UserInterface.get().handleException(new Exception("checkAck returns " + b));
 		if (b == -1)
 			return b;
 
@@ -271,53 +251,9 @@ public class SSHFileUploader extends FileUploader {
 				c = in.read();
 				sb.append((char)c);
 			} while (c != '\n');
-			IJ.log("checkAck returned '" + sb.toString() + "'");
-			IJ.error(sb.toString());
+			UserInterface.get().log("checkAck returned '" + sb.toString() + "'");
+			UserInterface.get().error(sb.toString());
 		}
 		return b;
-	}
-
-	protected static class ConfigInfo {
-		String username, sshHost, identity;
-	}
-
-	protected ConfigInfo getIdentity(String username, String sshHost) {
-		File config = new File(new File(System.getProperty("user.home"), ".ssh"), "config");
-		if (!config.exists())
-			return null;
-
-		try {
-			ConfigInfo result = new ConfigInfo();
-			BufferedReader reader = new BufferedReader(new FileReader(config));
-			boolean hostMatches = false;
-			for (;;) {
-				String line = reader.readLine();
-				if (line == null)
-					break;
-				line = line.trim();
-				int space = line.indexOf(' ');
-				if (space < 0)
-					continue;
-				String key = line.substring(0, space).toLowerCase();
-				if (key.equals("host"))
-					hostMatches = line.substring(5).trim().equals(sshHost);
-				else if (hostMatches) {
-					if (key.equals("user")) {
-						if (username == null || username.equals(""))
-							result.username = line.substring(5).trim();
-					}
-					else if (key.equals("hostname"))
-						result.sshHost = line.substring(9).trim();
-					else if (key.equals("identityfile"))
-						result.identity = line.substring(13).trim();
-				}
-			}
-			reader.close();
-			return result;
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
 	}
 }

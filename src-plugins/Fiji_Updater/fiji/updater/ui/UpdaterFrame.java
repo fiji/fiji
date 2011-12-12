@@ -2,33 +2,25 @@ package fiji.updater.ui;
 
 import com.jcraft.jsch.UserInfo;
 
-import fiji.updater.Updater;
+import fiji.updater.java.UpdateJava;
 
 import fiji.updater.logic.Checksummer;
 import fiji.updater.logic.FileUploader;
 import fiji.updater.logic.Installer;
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginCollection.DependencyMap;
-import fiji.updater.logic.PluginCollection.UpdateSite;
 import fiji.updater.logic.PluginObject;
 import fiji.updater.logic.PluginObject.Action;
 import fiji.updater.logic.PluginObject.Status;
 import fiji.updater.logic.PluginUploader;
 
-import fiji.updater.util.Downloader;
+import fiji.updater.logic.ssh.SSHFileUploader;
+
 import fiji.updater.util.Canceled;
 import fiji.updater.util.Progress;
 import fiji.updater.util.StderrProgress;
-import fiji.updater.util.UpdateJava;
+import fiji.updater.util.UserInterface;
 import fiji.updater.util.Util;
-
-import ij.IJ;
-import ij.Prefs;
-import ij.WindowManager;
-
-import ij.gui.GenericDialog;
-
-import ij.plugin.PlugIn;
 
 import java.awt.Container;
 import java.awt.Component;
@@ -36,18 +28,17 @@ import java.awt.Dimension;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
-import java.awt.TextField;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import java.io.File;
 import java.io.IOException;
+
+import java.lang.reflect.Method;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -59,16 +50,13 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
-import javax.swing.JTextPane;
 
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -273,9 +261,8 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		upload.setVisible(plugins.hasUploadableSites());
 
 		if (Util.isDeveloper) try {
-			Class pluginChangesClass = Class.forName("fiji.scripting.ShowPluginChanges");
-			if (pluginChangesClass != null && new File(System.getProperty("fiji.dir"), ".git").isDirectory()) {
-				final PlugIn pluginChanges = (PlugIn)pluginChangesClass.newInstance();
+			final IJ1Plugin pluginChanges = IJ1Plugin.discover("fiji.scripting.ShowPluginChanges");
+			if (pluginChanges != null && new File(System.getProperty("fiji.dir"), ".git").isDirectory()) {
 				bottomPanel2.add(Box.createRigidArea(new Dimension(15,0)));
 				JButton showChanges = SwingTools.button("Show changes",
 						"Show the changes in Git since the last upload", new ActionListener() {
@@ -289,9 +276,8 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 					}
 				}, bottomPanel2);
 			}
-			Class rebuildClass = Class.forName("fiji.scripting.RunFijiBuild");
-			if (rebuildClass != null && new File(System.getProperty("fiji.dir"), ".git").isDirectory()) {
-				final PlugIn rebuild = (PlugIn)rebuildClass.newInstance();
+			final IJ1Plugin rebuild = IJ1Plugin.discover("fiji.scripting.RunFijiBuild");
+			if (rebuild != null && new File(System.getProperty("fiji.dir"), ".git").isDirectory()) {
 				bottomPanel2.add(Box.createRigidArea(new Dimension(15,0)));
 				JButton showChanges = SwingTools.button("Rebuild",
 						"Rebuild using Fiji Build", new ActionListener() {
@@ -320,7 +306,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		bottomPanel2.add(Box.createHorizontalGlue());
 
 		// offer to update Java, but only on non-Macs
-		if (!IJ.isMacOSX() && new File(Util.fijiRoot, "java").canWrite()) {
+		if (!Util.isMacOSX() && new File(Util.fijiRoot, "java").canWrite()) {
 			bottomPanel2.add(Box.createRigidArea(new Dimension(15,0)));
 			SwingTools.button("Update Java",
 					"Update the Java version used for Fiji", new ActionListener() {
@@ -372,16 +358,41 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		addCustomViewOptions();
 	}
 
+	protected static class IJ1Plugin {
+		protected Object plugin;
+		protected Method run;
+
+		protected void run(String arg) {
+			try {
+				run.invoke(plugin, arg);
+			} catch (Exception e) {
+				UserInterface.get().handleException(e);
+			}
+		}
+
+		protected static IJ1Plugin discover(String className) {
+			try {
+				IJ1Plugin instance = new IJ1Plugin();
+				Class clazz = IJ1Plugin.class.getClassLoader().loadClass(className);
+				instance.plugin = clazz.newInstance();
+				instance.run = instance.plugin.getClass().getMethod("run", String.class);
+				return instance;
+			} catch (Exception e) {
+				return null;
+			}
+		}
+	}
+
 	public void setVisible(boolean visible) {
 		super.setVisible(visible && !hidden);
 		if (visible) {
-			WindowManager.addWindow(this);
+			UserInterface.get().addWindow(this);
 			apply.requestFocusInWindow();
 		}
 	}
 
 	public void dispose() {
-		WindowManager.removeWindow(this);
+		UserInterface.get().removeWindow(this);
 		super.dispose();
 	}
 
@@ -691,10 +702,9 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 				list += ", " + plugin.getFilename();
 		}
 		if (list != null)
-			IJ.showMessage("Read-only Plugins",
-					"WARNING: The following plugin files "
+			UserInterface.get().info("WARNING: The following plugin files "
 					+ "are set to read-only: '"
-					+ list + "'");
+					+ list + "'", "Read-only Plugins");
 	}
 
 	void markUploadable() {
@@ -764,8 +774,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 			if (progress != null)
 				progress.done();
 		} catch (Throwable e) {
-			IJ.handleException(e);
-			e.printStackTrace();
+			UserInterface.get().handleException(e);
 			error("Upload failed: " + e);
 			if (progress != null)
 				progress.done();
@@ -792,36 +801,11 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 			if (progress != null)
 				progress.done();
 		} catch (Throwable e) {
-			e.printStackTrace();
-			IJ.handleException(e);
+			UserInterface.get().handleException(e);
 			if (progress != null)
 				progress.done();
 		}
 		return false;
-	}
-
-	protected GenericDialog getPasswordDialog(String title, String username) {
-		GenericDialog gd = new GenericDialog(title);
-		if (username != null)
-			gd.addStringField("Username", username, 20);
-		gd.addStringField("Password", "", 20);
-
-		final TextField pwd =
-			(TextField)gd.getStringFields().lastElement();
-		pwd.setEchoChar('*');
-		if (username != null) {
-			final TextField user =
-				(TextField)gd.getStringFields().firstElement();
-			if (!username.equals(""))
-				user.addFocusListener(new FocusAdapter() {
-					public void focusGained(FocusEvent e) {
-						pwd.requestFocus();
-						user.removeFocusListener(this);
-					}
-				});
-		}
-
-		return gd;
 	}
 
 	protected UserInfo getUserInfo(final String password) {
@@ -830,17 +814,13 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 			protected int count = 0;
 
 			public String getPassphrase() {
-				GenericDialog gd = getPasswordDialog(prompt, null);
-				gd.showDialog();
-				return gd.wasCanceled() ? null : gd.getNextString();
+				return UserInterface.get().getPassword(prompt);
 			}
 
 			public String getPassword() {
 				if (count == 1)
 					return password;
-				GenericDialog gd = getPasswordDialog(prompt, null);
-				gd.showDialog();
-				return gd.wasCanceled() ? null : gd.getNextString();
+				return UserInterface.get().getPassword(prompt);
 			}
 
 			public boolean promptPassphrase(String message) {
@@ -867,21 +847,26 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		String username = uploader.getDefaultUsername();
 		for (;;) {
 			//Dialog to enter username and password
-			GenericDialog gd = getPasswordDialog("Login", username);
-			gd.showDialog();
-			if (gd.wasCanceled())
+			if (username == null) {
+				username = UserInterface.get().getString("Login for " + uploader.getUploadHost());
+				if (username == null || username.equals(""))
+					return false;
+			}
+			String password = UserInterface.get().getPassword("Password for " + username + "@" + uploader.getUploadHost());
+			if (password == null)
 				return false; //return back to user interface
 
-			//Get the required login information
-			username = gd.getNextString();
-			String password = gd.getNextString();
-
 			UserInfo userInfo = getUserInfo(password);
-			if (uploader.setLogin(username, userInfo))
+			FileUploader sshUploader = SSHFileUploader.getUploader(uploader, username, userInfo);
+			if (sshUploader != null) {
+				uploader.setUploader(sshUploader);
 				break;
+			}
+			UserInterface.get().error("Failed to login");
+			username = null;
 		}
 
-		Prefs.set(Updater.PREFS_USER, username);
+		UserInterface.get().setPref(Util.PREFS_USER, username);
 		return true;
 	}
 

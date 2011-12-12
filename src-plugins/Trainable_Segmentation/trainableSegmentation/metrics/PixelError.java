@@ -34,9 +34,12 @@ import ij.process.ImageProcessor;
 /**
  * This class implements the pixel error metric
  */
-public class PixelError extends Metrics{
+public class PixelError extends Metrics
+{
 
-	
+	/** boolean flag to set the level of detail on the standard output messages */
+	private boolean verbose = true;
+		
 	/**
 	 * Initialize pixel error metric
 	 * @param originalLabels original labels (single 2D image or stack)
@@ -216,7 +219,7 @@ public class PixelError extends Metrics{
 	public ArrayList< ClassificationStatistics > getPrecisionRecallStats(
 			double minThreshold,
 			double maxThreshold,
-			double stepThreshold)
+			double stepThreshold )
 	{
 		
 		if( minThreshold < 0 || minThreshold >= maxThreshold || maxThreshold > 1)
@@ -229,7 +232,8 @@ public class PixelError extends Metrics{
 				
 		for(double th =  minThreshold; th <= maxThreshold; th += stepThreshold)
 		{
-			IJ.log("  Calculating pixel error statistics for threshold value " + String.format("%.2f", th) + "...");
+			if( verbose ) 
+				IJ.log("  Calculating pixel error statistics for threshold value " + String.format("%.2f", th) + "...");
 			cs.add( getPrecisionRecallStats( th ));
 		}		
 		return cs;
@@ -371,12 +375,13 @@ public class PixelError extends Metrics{
 	 * @param minThreshold minimum threshold value to binarize the input images
 	 * @param maxThreshold maximum threshold value to binarize the input images
 	 * @param stepThreshold threshold step value to use during binarization
+	 * @param verbose flag to print or not output information
 	 * @return maximal F-score of the pixel error
 	 */
 	public double getPixelErrorMaximalFScore(
 			double minThreshold,
 			double maxThreshold,
-			double stepThreshold)
+			double stepThreshold )
 	{
 		ArrayList<ClassificationStatistics> stats = getPrecisionRecallStats( minThreshold, maxThreshold, stepThreshold );
 	    // trainableSegmentation.utils.Utils.plotPrecisionRecall( stats );    
@@ -388,6 +393,89 @@ public class PixelError extends Metrics{
 	    		maxFScore = stat.fScore;
 	    }	    
 	    return maxFScore;
+	}
+
+	
+    /**
+     * Main method for calculate the pixel error metrics from the command line
+     *
+     * @param args arguments to decide the action
+     */
+    public static void main(String args[]) 
+    {
+       if (args.length<1) 
+       {
+          dumpSyntax();
+          System.exit(1);
+       } 
+       else 
+       {
+          if( args[0].equals("-help") )                 
+        	  dumpSyntax();  
+          else if (args[0].equals("-maxFScore"))
+        	  System.out.println( maximalFScoreCommandLine(args) );
+          else 
+        	  dumpSyntax();
+       }
+       System.exit(0);
+    }
+    
+    /**
+     * Calculate the maximal F-score of pixel similarity based on the
+     * parameters introduced by command line
+     * 
+     * @param args command line arguments
+     * @return maximal F-score
+     */
+    static double maximalFScoreCommandLine(String[] args) 
+    {
+    	if (args.length != 6)
+        {
+            dumpSyntax();
+            return -1;
+        }
+    	
+    	final ImagePlus label = new ImagePlus( args[ 1 ] );
+    	final ImagePlus proposal = new ImagePlus( args[ 2 ] );
+    	final double minThreshold = Double.parseDouble( args[ 3 ] );
+		final double maxThreshold = Double.parseDouble( args[ 4 ] );
+		final double stepThreshold = Double.parseDouble( args[ 5 ] );
+    	
+		PixelError pe = new PixelError(label, proposal);
+		pe.setVerboseMode( false );
+		return pe.getPixelErrorMaximalFScore(minThreshold, maxThreshold, stepThreshold );
+	}
+
+
+    /**
+     * Method to write the syntax of the program in the command line.
+     */
+    private static void dumpSyntax () 
+    {
+       System.out.println("Purpose: calculate pixel error between proposed and original labels.\n");     
+       System.out.println("Usage: PixelError ");
+       System.out.println("  -help                      : show this message");
+       System.out.println("");
+       System.out.println("  -maxFScore                 : calculate the best F-score of the pixel error over a set of thresholds");
+       System.out.println("          labels             : image with the original labels");
+       System.out.println("          proposal           : image with the proposed labels");
+       System.out.println("          minThreshold       : minimum threshold value to binarize the proposal");
+       System.out.println("          maxThreshold       : maximum threshold value to binarize the proposal");
+       System.out.println("          stepThreshold      : threshold step value to use during binarization\n");
+       System.out.println("Examples:");
+       System.out.println("Calculate the maximal F-score of pixel similarity between proposed and original labels over a set of");
+       System.out.println("thresholds (from 0.0 to 1.0 in steps of 0.1):");
+       System.out.println("   PixelError -maxFScore original-labels.tif proposed-labels.tif 0.0 1.0 0.1");
+
+    } 
+    
+    /**
+     * Set verbose mode
+     * @param verbose true to display more information in the standard output
+     */
+    public void setVerboseMode(boolean verbose) 
+    {		
+    	this.verbose = verbose;
 	}
 	
 }

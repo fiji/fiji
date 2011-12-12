@@ -37,4 +37,6 @@ public class WarpingResults{
 	public double warpingError;
 
 	public ArrayList<Point3f> mismatches;
+	
+	public ImagePlus classifiedMismatches = null;
 }

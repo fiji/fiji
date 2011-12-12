@@ -1,6 +1,7 @@
 package fiji.plugin;
 
 import fiji.util.gui.GenericDialogPlus;
+import ij.IJ;
 import ij.gui.GenericDialog;
 import ij.gui.MultiLineLabel;
 import ij.plugin.PlugIn;
@@ -23,7 +24,7 @@ public class Multi_View_Fusion implements PlugIn
 	final private String myURL = "http://fly.mpi-cbg.de/preibisch";
 	final private String paperURL = "http://www.nature.com/nmeth/journal/v7/n6/full/nmeth0610-418.html";
 
-	final String fusionType[] = new String[] { "Single-channel", "Multi-channel" };
+	final static String fusionType[] = new String[] { "Single-channel", "Multi-channel" };
 	static int defaultFusionType = 0;
 
 	@Override
@@ -67,19 +68,20 @@ public class Multi_View_Fusion implements PlugIn
 	}
 
 	public static String allChannels = "0, 1";
-	public static String[] fusionMethodList = { "Fuse all views at once", "Fuse views sequentially", "Create independent registered images" };	
+	public static String[] fusionMethodList = { "Fuse into a single image", "Create independent registered images" };	
 	public static int defaultFusionMethod = 0;
+	public static int defaultParalellViews = 0;
 	public static boolean fusionUseBlendingStatic = true;
 	public static boolean fusionUseContentBasedStatic = false;
 	public static boolean displayFusedImageStatic = true;
 	public static boolean saveFusedImageStatic = true;
 	public static int outputImageScalingStatic = 1;
-	public static int cropOffsetXStatic = 0;
-	public static int cropOffsetYStatic = 0;
-	public static int cropOffsetZStatic = 0;
-	public static int cropSizeXStatic = 0;
-	public static int cropSizeYStatic = 0;
-	public static int cropSizeZStatic = 0;
+	public static int cropOffsetXStatic = 285;
+	public static int cropOffsetYStatic = 353;
+	public static int cropOffsetZStatic = 375;
+	public static int cropSizeXStatic = 727;
+	public static int cropSizeYStatic = 395;
+	public static int cropSizeZStatic = 325;
 	
 	protected SPIMConfiguration getParameters( final boolean multichannel ) 
 	{
@@ -105,9 +107,21 @@ public class Multi_View_Fusion implements PlugIn
 			return null;
 
 		Bead_Registration.spimDataDirectory = gd.getNextString();
-		Bead_Registration.fileNamePatternMC = gd.getNextString();
+		Bead_Registration.fileNamePattern = gd.getNextString();
 		Bead_Registration.timepoints = gd.getNextString();
 		Bead_Registration.angles = gd.getNextString();
+
+		int numViews = 0;
+		
+		try
+		{
+			numViews = SPIMConfiguration.parseIntegerString( Bead_Registration.angles ).size();
+		}
+		catch (ConfigurationParserException e)
+		{
+			IOFunctions.printErr( "Cannot understand/parse the channels: " + Bead_Registration.angles );
+			return null;
+		}
 
 		int numChannels = 0;
 		ArrayList<Integer> channels;
@@ -178,6 +192,9 @@ public class Multi_View_Fusion implements PlugIn
 			final String name = conf.file[ 0 ][ c ][ 0 ].getName();			
 			final File regDir = new File( conf.registrationFiledirectory );
 			
+			IJ.log( "name: " + name );
+			IJ.log( "dir: " + regDir.getAbsolutePath() );
+			
 			if ( !regDir.isDirectory() )
 			{
 				IOFunctions.println( conf.registrationFiledirectory + " is not a directory. " );
@@ -194,6 +211,9 @@ public class Multi_View_Fusion implements PlugIn
 						return false;
 				}
 			});
+			
+			for ( final String e : entries )
+				IJ.log( e );
 	
 			for ( final String s : entries )
 			{
@@ -275,6 +295,15 @@ public class Multi_View_Fusion implements PlugIn
 
 		gd2.addMessage( "" );
 		gd2.addChoice( "Fusion_method", fusionMethodList, fusionMethodList[ defaultFusionMethod ] );
+		
+		final String[] views = new String[ numViews ];
+		views[ 0 ] = "All";
+		for ( int v = 1; v < numViews; v++ )
+			views[ v ] = "" + v;	
+		if ( defaultParalellViews >= views.length )
+			defaultParalellViews = views.length - 1;
+		gd2.addChoice( "Process_views_in_paralell", views, views[ defaultParalellViews ] );
+		
 		gd2.addMessage( "" );
 		gd2.addCheckbox( "Apply_blending", fusionUseBlendingStatic );
 		gd2.addCheckbox( "Apply_content_based_weightening", fusionUseContentBasedStatic );
@@ -282,7 +311,7 @@ public class Multi_View_Fusion implements PlugIn
 		gd2.addNumericField( "Downsample_output image n-times", outputImageScalingStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_offset_x", cropOffsetXStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_offset_y", cropOffsetYStatic, 0 );
-		gd2.addNumericField( "Crop_output_image_offset_x", cropOffsetZStatic, 0 );
+		gd2.addNumericField( "Crop_output_image_offset_z", cropOffsetZStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_size_x", cropSizeXStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_size_y", cropSizeYStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_size_z", cropSizeZStatic, 0 );
@@ -353,6 +382,7 @@ public class Multi_View_Fusion implements PlugIn
 		IOFunctions.println( "tp " + tp );
 		
 		defaultFusionMethod = gd2.getNextChoiceIndex();
+		defaultParalellViews = gd2.getNextChoiceIndex(); // 0 = all
 		fusionUseBlendingStatic = gd2.getNextBoolean();
 		fusionUseContentBasedStatic = gd2.getNextBoolean();
 		outputImageScalingStatic = (int)Math.round( gd2.getNextNumber() );
@@ -369,17 +399,24 @@ public class Multi_View_Fusion implements PlugIn
 		conf.sequentialFusion = false;
 		conf.multipleImageFusion = false;
 
-		if ( defaultFusionMethod == 0 )
+		if ( defaultFusionMethod == 0 && defaultParalellViews == 0  )
+		{
 			conf.paralellFusion = true;
-		else if ( defaultFusionMethod == 1 )
+		}
+		else if ( defaultFusionMethod == 0 && defaultParalellViews > 0 )
+		{
 			conf.sequentialFusion = true;
+			conf.numParalellViews = defaultParalellViews;
+		}
 		else
+		{
 			conf.multipleImageFusion = true;
+		}
 		
-		if ( conf.timeLapseRegistration || !displayFusedImageStatic  )
-			conf.showOutputImage = false;
-		else
+		if ( displayFusedImageStatic  )
 			conf.showOutputImage = true;
+		else
+			conf.showOutputImage = false;
 		
 		if ( saveFusedImageStatic )
 			conf.writeOutputImage = true;

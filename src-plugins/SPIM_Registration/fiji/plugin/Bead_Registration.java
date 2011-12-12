@@ -693,31 +693,34 @@ public class Bead_Registration implements PlugIn
 
 	public static final void addHyperLinkListener(final MultiLineLabel text, final String myURL)
 	{
-		text.addMouseListener(new MouseAdapter()
+		if ( text != null && myURL != null )
 		{
-			public void mouseClicked(MouseEvent e)
+			text.addMouseListener(new MouseAdapter()
 			{
-				try
+				public void mouseClicked(MouseEvent e)
 				{
-					BrowserLauncher.openURL(myURL);
+					try
+					{
+						BrowserLauncher.openURL(myURL);
+					}
+					catch (Exception ex)
+					{
+						IJ.error("" + ex);
+					}
 				}
-				catch (Exception ex)
+	
+				public void mouseEntered(MouseEvent e)
 				{
-					IJ.error("" + ex);
+					text.setForeground(Color.BLUE);
+					text.setCursor(new Cursor(Cursor.HAND_CURSOR));
 				}
-			}
-
-			public void mouseEntered(MouseEvent e)
-			{
-				text.setForeground(Color.BLUE);
-				text.setCursor(new Cursor(Cursor.HAND_CURSOR));
-			}
-
-			public void mouseExited(MouseEvent e)
-			{
-				text.setForeground(Color.BLACK);
-				text.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-			}
-		});
+	
+				public void mouseExited(MouseEvent e)
+				{
+					text.setForeground(Color.BLACK);
+					text.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+				}
+			});
+		}
 	}	
 }

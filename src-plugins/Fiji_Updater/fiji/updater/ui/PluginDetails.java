@@ -3,11 +3,8 @@ package fiji.updater.ui;
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginObject;
 
+import fiji.updater.util.UserInterface;
 import fiji.updater.util.Util;
-
-import ij.IJ;
-
-import ij.plugin.BrowserLauncher;
 
 import java.awt.Color;
 import java.awt.Cursor;
@@ -64,10 +61,10 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 				String url = getLinkAt(e.getPoint());
 				try {
 					if (url != null)
-						BrowserLauncher.openURL(url);
+						UserInterface.get().openURL(url);
 				} catch(Exception exception) {
 					exception.printStackTrace();
-					IJ.error("Could not open " + url + ": "
+					UserInterface.get().error("Could not open " + url + ": "
 						+ exception.getMessage());
 				}
 			}

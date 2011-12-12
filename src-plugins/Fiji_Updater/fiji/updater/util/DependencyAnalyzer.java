@@ -1,7 +1,5 @@
 package fiji.updater.util;
 
-import ij.IJ;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -64,24 +62,22 @@ public class DependencyAnalyzer {
 				addClassAndInterfaces(allClassNames, handled, name);
 
 			for (String name : allClassNames) {
-				if (IJ.debugMode)
-					IJ.log("Considering name from analyzer: "+name);
+				UserInterface.get().debug("Considering name from analyzer: " + name);
 				List<String> allJars = map.get(name);
 				if (allJars == null ||
 						allJars.contains(filename))
 					continue;
 				if (allJars.size() > 1) {
-					IJ.log("Warning: class " + name
+					UserInterface.get().log("Warning: class " + name
 						+ ", referenced in " + filename
 						+ ", is in more than one jar:");
 					for (String j : allJars)
-						IJ.log("  "+j);
-					IJ.log("... adding all as dependency.");
+						UserInterface.get().log("  "+j);
+					UserInterface.get().log("... adding all as dependency.");
 				}
 				for (String j : allJars) {
 					result.add(j);
-					if (IJ.debugMode)
-						IJ.log("... adding dep "
+					UserInterface.get().debug("... adding dep "
 							+ j + " for " + filename
 							+ " because of class "
 							+ name);

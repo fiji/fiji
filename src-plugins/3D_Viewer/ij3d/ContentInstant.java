@@ -1,45 +1,43 @@
 package ij3d;
 
-import ij3d.shapes.CoordinateSystem;
-import ij3d.shapes.BoundingBox;
-import ij3d.pointlist.PointListPanel;
-import ij3d.pointlist.PointListShape;
-import ij3d.pointlist.PointListDialog;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.io.FileInfo;
 import ij.io.OpenDialog;
 import ij.process.ImageProcessor;
-
-import customnode.CustomMeshNode;
-import customnode.CustomMesh;
-
-import vib.InterpolatedImage;
-import vib.PointList;
-import vib.FastMatrix;
+import ij3d.pointlist.PointListDialog;
+import ij3d.pointlist.PointListPanel;
+import ij3d.pointlist.PointListShape;
+import ij3d.shapes.BoundingBox;
+import ij3d.shapes.CoordinateSystem;
 import isosurface.MeshGroup;
-import voltex.VoltexGroup;
-import orthoslice.OrthoGroup;
-import orthoslice.MultiOrthoGroup;
-import surfaceplot.SurfacePlotGroup;
-
-import java.util.BitSet;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Enumeration;
 
 import javax.media.j3d.BranchGroup;
+import javax.media.j3d.OrderedGroup;
 import javax.media.j3d.Switch;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.media.j3d.View;
-
 import javax.vecmath.Color3f;
 import javax.vecmath.Matrix3f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
+
+import orthoslice.MultiOrthoGroup;
+import orthoslice.OrthoGroup;
+import surfaceplot.SurfacePlotGroup;
+import vib.FastMatrix;
+import vib.InterpolatedImage;
+import vib.PointList;
+import voltex.VoltexGroup;
+import customnode.CustomMesh;
+import customnode.CustomMeshNode;
 
 public class ContentInstant extends BranchGroup implements UniverseListener, ContentConstants {
 
@@ -80,8 +78,7 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 	private PointList points;
 
 	// scene graph entries
-	private Switch bbSwitch;
-	private BitSet whichChild = new BitSet(5);
+	private OrderedGroup ordered;
 
 	protected TransformGroup localRotate;
 	protected TransformGroup localTranslate;
@@ -104,18 +101,22 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 		localRotate.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
 		localTranslate.addChild(localRotate);
 
-		bbSwitch = new Switch();
-		bbSwitch.setWhichChild(Switch.CHILD_MASK);
-		bbSwitch.setCapability(Switch.ALLOW_SWITCH_READ);
-		bbSwitch.setCapability(Switch.ALLOW_SWITCH_WRITE);
-		bbSwitch.setCapability(Switch.ALLOW_CHILDREN_WRITE);
-		bbSwitch.setCapability(Switch.ALLOW_CHILDREN_EXTEND);
-		localRotate.addChild(bbSwitch);
+		ordered = new OrderedGroup();
+		for(int i = 0; i < 5; i++) {
+			Switch s = new Switch();
+			s.setCapability(Switch.ALLOW_SWITCH_WRITE);
+			s.setCapability(Switch.ALLOW_SWITCH_READ);
+			s.setCapability(Switch.ALLOW_CHILDREN_WRITE);
+			s.setCapability(Switch.ALLOW_CHILDREN_EXTEND);
+			ordered.addChild(s);
+		}
+
+		localRotate.addChild(ordered);
 
 		// create the point list
 		points = new PointList();
 		plShape = new PointListShape(points);
-		plShape.setPickable(false);
+		plShape.setPickable(true);
 		plPanel = new PointListPanel(name, points);
 	}
 
@@ -177,44 +178,51 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 
 	public void display(ContentNode node) {
 		// remove everything if possible
-		bbSwitch.removeAllChildren();
+		for(@SuppressWarnings("rawtypes")
+		Enumeration e = ordered.getAllChildren(); e.hasMoreElements(); ) {
+			Switch s = (Switch)e.nextElement();
+			s.removeAllChildren();
+		}
 
 		// create content node and add it to the switch
 		contentNode = node;
-		bbSwitch.addChild(contentNode);
+		((Switch)ordered.getChild(CO)).addChild(contentNode);
 
 		// create the bounding box and add it to the switch
 		Point3d min = new Point3d(); contentNode.getMin(min);
 		Point3d max = new Point3d(); contentNode.getMax(max);
 		BoundingBox bb = new BoundingBox(min, max);
 		bb.setPickable(false);
-		bbSwitch.addChild(bb);
+		((Switch)ordered.getChild(BS)).addChild(bb);
 		bb = new BoundingBox(min, max, new Color3f(0, 1, 0));
 		bb.setPickable(false);
-		bbSwitch.addChild(bb);
+		((Switch)ordered.getChild(BB)).addChild(bb);
 
 		// create coordinate system and add it to the switch
 		float cl = (float)Math.abs(max.x - min.x) / 5f;
 		CoordinateSystem cs = new CoordinateSystem(
 						cl, new Color3f(0, 1, 0));
 		cs.setPickable(false);
-		bbSwitch.addChild(cs);
+		((Switch)ordered.getChild(CS)).addChild(cs);
 
 		// create point list and add it to the switch
-		bbSwitch.addChild(plShape);
+		((Switch)ordered.getChild(PL)).addChild(plShape);
 
 		// adjust the landmark point size properly
 		plShape.setRadius((float)min.distance(max) / 100f);
 
 		// initialize child mask of the switch
-		whichChild.set(BS, selected);
-		whichChild.set(CS, coordVisible);
-		whichChild.set(CO, visible);
-		whichChild.set(PL, showPL);
-		bbSwitch.setChildMask(whichChild);
+		setSwitch(BS, selected);
+		setSwitch(CS, coordVisible);
+		setSwitch(CO, visible);
+		setSwitch(PL, showPL);
 
 		// update type
 		this.type = CUSTOM;
+	}
+
+	private void setSwitch(int which, boolean on) {
+		((Switch)ordered.getChild(which)).setWhichChild(on ? Switch.CHILD_ALL : Switch.CHILD_NONE);
 	}
 
 	public ImagePlus exportTransformed() {
@@ -330,34 +338,30 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 
 	public void setVisible(boolean b) {
 		visible = b;
-		whichChild.set(CO, b);
-		whichChild.set(CS, b && coordVisible);
+		setSwitch(CO, b);
+		setSwitch(CS, b & coordVisible);
 // 		whichChild.set(BB, b && bbVisible);
 		// only if hiding, hide the point list
 		if(!b) {
 			showPointList(false);
 		}
-		bbSwitch.setChildMask(whichChild);
 	}
 
 	public void showBoundingBox(boolean b) {
 		bbVisible = b;
-		whichChild.set(BB, b);
-		bbSwitch.setChildMask(whichChild);
+		setSwitch(BB, b);
 	}
 
 
 	public void showCoordinateSystem(boolean b) {
 		coordVisible = b;
-		whichChild.set(CS, b);
-		bbSwitch.setChildMask(whichChild);
+		setSwitch(CS, b);
 	}
 
 	public void setSelected(boolean selected) {
 		this.selected = selected;
 		boolean sb = selected && UniverseSettings.showSelectionBox;
-		whichChild.set(BS, sb);
-		bbSwitch.setChildMask(whichChild);
+		setSwitch(BS, sb);
 	}
 
 	/* ************************************************************
@@ -373,9 +377,8 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 		if(plShape == null)
 			return;
 
-		whichChild.set(PL, b);
+		setSwitch(PL, b);
 		showPL = b;
-		bbSwitch.setChildMask(whichChild);
 		if(b && plDialog != null)
 			plDialog.addPointList(getName(), plPanel);
 		else if(!b && plDialog != null)
@@ -413,6 +416,7 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 	 * @deprecated
 	 * @param p
 	 */
+	@Deprecated
 	public void addPointListPoint(Point3d p) {
 		points.add(p.x, p.y, p.z);
 		if(plDialog != null)
@@ -424,6 +428,7 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 	 * @param i
 	 * @param pos
 	 */
+	@Deprecated
 	public void setListPointPos(int i, Point3d pos) {
 		points.placePoint(points.get(i), pos.x, pos.y, pos.z);
 	}
@@ -452,6 +457,7 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 	 * @deprecated
 	 * @param i
 	 */
+	@Deprecated
 	public void deletePointListPoint(int i) {
 		points.remove(i);
 		if(plDialog != null)
@@ -622,25 +628,34 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 	 * UniverseListener interface
 	 *
 	 *************************************************************/
+	@Override
 	public void transformationStarted(View view) {}
+	@Override
 	public void contentAdded(Content c) {}
+	@Override
 	public void contentRemoved(Content c) {
 		if(plDialog != null)
 			plDialog.removePointList(plPanel);
 	}
+	@Override
 	public void canvasResized() {}
+	@Override
 	public void contentSelected(Content c) {}
+	@Override
 	public void contentChanged(Content c) {}
 
+	@Override
 	public void universeClosed() {
 		if(plDialog != null)
 			plDialog.removePointList(plPanel);
 	}
 
+	@Override
 	public void transformationUpdated(View view) {
 		eyePtChanged(view);
 	}
 
+	@Override
 	public void transformationFinished(View view) {
 		eyePtChanged(view);
 	}

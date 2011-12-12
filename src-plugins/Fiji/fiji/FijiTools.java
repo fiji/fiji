@@ -92,4 +92,15 @@ public class FijiTools {
 
 		return false;
 	}
+
+	public static String getFileExtension(String path) {
+		int dot = path.lastIndexOf('.');
+		if (dot < 0)
+			return "";
+		int slash = path.lastIndexOf('/');
+		int backslash = path.lastIndexOf('\\');
+		if (dot < slash || dot < backslash)
+			return "";
+		return path.substring(dot + 1);
+	}
 }

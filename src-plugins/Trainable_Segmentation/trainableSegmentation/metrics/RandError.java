@@ -57,6 +57,8 @@ import ij.process.ShortProcessor;
  */
 public class RandError extends Metrics
 {
+	/** boolean flag to set the level of detail on the standard output messages */
+	private boolean verbose = true;
 
 	/**
 	 * Initialize Rand error metric
@@ -242,7 +244,8 @@ public class RandError extends Metrics
 		
 		for(double th = minThreshold; th <= maxThreshold; th += stepThreshold)
 		{
-			IJ.log("  Calculating Rand index statistics for threshold value " + String.format("%.2f", th) + "...");
+			if( verbose ) 
+				IJ.log("  Calculating Rand index statistics for threshold value " + String.format("%.2f", th) + "...");
 			cs.add( getRandIndexStats( th ));
 		}
 		
@@ -761,5 +764,87 @@ public class RandError extends Metrics
 	    }	    
 	    return maxFScore;
 	}
+	
+    /**
+     * Main method for calcualte the Rand error metrics 
+     * from the command line
+     *
+     * @param args arguments to decide the action
+     */
+    public static void main(String args[]) 
+    {
+       if (args.length<1) 
+       {
+          dumpSyntax();
+          System.exit(1);
+       } 
+       else 
+       {
+          if( args[0].equals("-help") )                 
+        	  dumpSyntax();  
+          else if (args[0].equals("-maxFScoreRandIndex"))
+        	  System.out.println( maxFScoreRandIndex(args) );
+          else 
+        	  dumpSyntax();
+       }
+       System.exit(0);
+    }
+    
+    /**
+     * Calculate the maximum F-score of the Rand index based on the
+     * parameters introduced by command line
+     * 
+     * @param args command line arguments
+     * @return maximal F-score of the Rand index
+     */
+    static double maxFScoreRandIndex(String[] args) 
+    {
+    	if (args.length != 6)
+        {
+            dumpSyntax();
+            return -1;
+        }
+    	
+    	final ImagePlus label = new ImagePlus( args[ 1 ] );
+    	final ImagePlus proposal = new ImagePlus( args[ 2 ] );
+    	final double minThreshold = Double.parseDouble( args[ 3 ] );
+		final double maxThreshold = Double.parseDouble( args[ 4 ] );
+		final double stepThreshold = Double.parseDouble( args[ 5 ] );
+    	
+		RandError re = new RandError(label, proposal);
+		re.setVerboseMode( false );
+		return re.getRandIndexMaximalFScore(minThreshold, maxThreshold, stepThreshold);
+	}
+
+    /**
+     * Set verbose mode
+     * @param verbose true to display more information in the standard output
+     */
+    public void setVerboseMode(boolean verbose) 
+    {		
+    	this.verbose = verbose;
+	}
+
+	/**
+     * Method to write the syntax of the program in the command line.
+     */
+    private static void dumpSyntax () 
+    {
+       System.out.println("Purpose: calculate Rand error between proposed and original labels.\n");     
+       System.out.println("Usage: RandError ");
+       System.out.println("  -help                      : show this message");
+       System.out.println("");
+       System.out.println("  -maxFScoreRandIndex        : calculate maximum F-score of the Rand index over a set of thresholds");
+       System.out.println("          labels             : image with the original labels");
+       System.out.println("          proposal           : image with the proposed labels");
+       System.out.println("          minThreshold       : minimum threshold value to binarize the proposal");
+       System.out.println("          maxThreshold       : maximum threshold value to binarize the proposal");
+       System.out.println("          stepThreshold      : threshold step value to use during binarization");
+       System.out.println("Examples:");
+       System.out.println("Calculate the maximum F-score of the Rand index between proposed and original labels over a set of");
+       System.out.println("thresholds (from 0.0 to 1.0 in steps of 0.1)");
+       System.out.println("   WarpingError -maxFScoreRandIndex original-labels.tif proposed-labels.tif 0.0 1.0 0.1");
+    }
+	
 	
 } // end class RandError

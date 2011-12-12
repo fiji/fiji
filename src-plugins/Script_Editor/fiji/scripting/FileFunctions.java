@@ -3,6 +3,7 @@ package fiji.scripting;
 import fiji.SimpleExecuter;
 
 import fiji.build.Fake;
+import fiji.build.MiniMaven.POM;
 import fiji.build.Parser;
 import fiji.build.Rule;
 import fiji.build.SubFake;
@@ -167,8 +168,8 @@ public class FileFunctions {
 		// try the simple thing first
 		int slash = result.lastIndexOf('/'), backSlash = result.lastIndexOf('\\');
 		String baseName = result.substring(Math.max(slash, backSlash) + 1, result.length() - 4);
-		String dir = fijiDir + "/src-plugins/" + baseName;
-		String path = dir + "/" + className.replace('.', '/') + ".java";
+		String dir = fijiDir + "/src-plugins/" + baseName + "/";
+		String path = dir + className.replace('.', '/') + ".java";
 		if (new File(path).exists())
 			return path;
 		if (new File(dir).isDirectory())
@@ -177,7 +178,7 @@ public class FileFunctions {
 				if (dot < 0)
 					break;
 				className = className.substring(0, dot);
-				path = dir + "/" + className.replace('.', '/') + ".java";
+				path = dir + className.replace('.', '/') + ".java";
 			}
 
 		// Try to find it with the help of the Fakefile
@@ -199,8 +200,9 @@ public class FileFunctions {
 				String stripPath = rule.getStripPath();
 				dir = fijiDir + "/";
 				if (rule instanceof SubFake) {
+					SubFake subFake = (SubFake)rule;
 					stripPath = rule.getLastPrerequisite();
-					fakefile = ((SubFake)rule).getFakefile();
+					fakefile = subFake.getFakefile();
 					if (fakefile != null) {
 						dir += rule.getLastPrerequisite();
 						parser = fake.parse(new FileInputStream(fakefile), new File(dir));
@@ -209,10 +211,19 @@ public class FileFunctions {
 						if (rule != null)
 							stripPath = rule.getStripPath();
 					}
+					else {
+						POM pom = subFake.getPOM();
+						if (pom != null) {
+							dir += rule.getLastPrerequisite();
+							stripPath = pom.getSourcePath();
+						}
+					}
 				}
 				if (stripPath != null) {
+					if (!stripPath.endsWith("/"))
+						stripPath += "/";
 					dir += stripPath;
-					path = dir + "/" + className.replace('.', '/') + ".java";
+					path = dir + className.replace('.', '/') + ".java";
 					if (new File(path).exists())
 						return path;
 				}
@@ -222,6 +233,10 @@ public class FileFunctions {
 		}
 
 		return null;
+	}
+
+	public String getSourceURL(String className) {
+		return "http://fiji.sc/" + className.replace('.', '/') + ".java";
 	}
 
 	public String getJar(String className) {
@@ -438,7 +453,9 @@ public class FileFunctions {
 
 			// insert classpath
 			offset = content.lastIndexOf("\nCLASSPATH(");
-			if (offset > 0 && content.substring(offset).startsWith("\nCLASSPATH(jars/test-fiji.jar)"))
+			while (offset > 0 &&
+					(content.substring(offset).startsWith("\nCLASSPATH(jars/test-fiji.jar)") ||
+					content.substring(offset).startsWith("\nCLASSPATH(plugins/FFMPEG")))
 				offset = content.lastIndexOf("\nCLASSPATH(", offset - 1);
 			if (offset < 0)
 				return false;

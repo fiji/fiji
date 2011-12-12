@@ -42,6 +42,8 @@ public class BlendingSimple extends CombinedPixelWeightener<BlendingSimple>
 		//setBorder( 15 );
 	}
 	
+	public void setPercentScaling( final float p ) { this.percentScaling = p; }
+	
 	public void setBorder( final float numPixels )
 	{
 		for ( int d = 0; d < border.length; ++d )

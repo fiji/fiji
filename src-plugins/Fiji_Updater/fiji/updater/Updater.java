@@ -1,8 +1,5 @@
 package fiji.updater;
 
-import ij.IJ;
-import ij.WindowManager;
-
 import ij.plugin.PlugIn;
 
 import fiji.updater.logic.Checksummer;
@@ -17,8 +14,12 @@ import fiji.updater.ui.ViewOptions;
 
 import fiji.updater.ui.ViewOptions.Option;
 
+import fiji.updater.ui.ij1.GraphicalAuthenticator;
+import fiji.updater.ui.ij1.IJ1UserInterface;
+
 import fiji.updater.util.Canceled;
 import fiji.updater.util.Progress;
+import fiji.updater.util.UserInterface;
 import fiji.updater.util.Util;
 
 import ij.Executer;
@@ -28,6 +29,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import java.net.Authenticator;
 import java.net.UnknownHostException;
 
 import javax.swing.JOptionPane;
@@ -49,14 +51,16 @@ public class Updater implements PlugIn {
 	public static boolean debug, testRun, hidden;
 
 	public void run(String arg) {
+		UserInterface.set(new IJ1UserInterface());
 
 		if (errorIfDebian())
 			return;
 
 		if (new File(Util.fijiRoot, "update").exists()) {
-			IJ.error("Fiji restart required to finalize previous update");
+			UserInterface.get().error("Fiji restart required to finalize previous update");
 			return;
 		}
+		Util.useSystemProxies();
 
 		final PluginCollection plugins = new PluginCollection();
 		try {
@@ -65,12 +69,13 @@ public class Updater implements PlugIn {
 		catch (FileNotFoundException e) { /* ignore */ }
 		catch (Exception e) {
 			e.printStackTrace();
-			IJ.error("There was an error reading the cached metadata: " + e);
+			UserInterface.get().error("There was an error reading the cached metadata: " + e);
 			return;
 		}
 
+		Authenticator.setDefault(new GraphicalAuthenticator());
+
 		final UpdaterFrame main = new UpdaterFrame(plugins, hidden);
-		main.setLocationRelativeTo(IJ.getInstance());
 		main.setEasyMode(true);
 
 		Progress progress = main.getProgress("Starting up...");
@@ -113,19 +118,15 @@ public class Updater implements PlugIn {
 		}
 
 		PluginObject updater = plugins.getPlugin("plugins/Fiji_Updater.jar");
-		if (updater != null && updater.getStatus() == PluginObject.Status.UPDATEABLE) {
+		if ((updater != null && updater.getStatus() == PluginObject.Status.UPDATEABLE)) {
 			if (SwingTools.showQuestion(hidden, main, "Update the updater",
 					"There is an update available for the Fiji Updater. Install now?")) {
 				// download just the updater
 				main.updateTheUpdater();
 
 				// overwrite the original updater
-				File downloaded = new File(Util.prefix("update/plugins/Fiji_Updater.jar"));
-				File updaterJar = new File(Util.prefix("plugins/Fiji_Updater.jar"));
-				if (!updaterJar.delete() || !downloaded.renameTo(updaterJar) ||
-						!downloaded.getParentFile().delete() ||
-						!downloaded.getParentFile().getParentFile().delete())
-					main.error("Could not overwrite Fiji Updater");
+				if (!overwriteWithUpdated(updater))
+					main.info("Please restart Fiji and call Help>Update Fiji to continue the update");
 				else
 					/*
 					 * Start a new Thread that refreshes the menus and restarts the updater;
@@ -169,6 +170,28 @@ public class Updater implements PlugIn {
 		main.updatePluginsTable();
 	}
 
+	protected static boolean overwriteWithUpdated(PluginObject plugin) {
+		File downloaded = new File(Util.prefix("update/" + plugin.filename));
+		if (!downloaded.exists())
+			return true; // assume all is well if there is no updated file
+		File jar = new File(Util.prefix(plugin.filename));
+		if (!jar.delete() && !moveOutOfTheWay(jar))
+			return false;
+		if (!downloaded.renameTo(jar))
+			return false;
+		for (;;) {
+			downloaded = downloaded.getParentFile();
+			if (downloaded == null)
+				return true;
+			String[] list = downloaded.list();
+			if (list != null && list.length > 0)
+				return true;
+			// dir is empty, remove
+			if (!downloaded.delete())
+				return false;
+		}
+	}
+
 	/** This returns true if this seems to be the Debian packaged
 	 * version of Fiji, or false otherwise. */
 
@@ -186,9 +209,24 @@ public class Updater implements PlugIn {
 		if (isDebian()) {
 			String message = "You are using the Debian packaged version of Fiji.\n";
 			message += "You should update Fiji with your system's usual package manager instead.";
-			IJ.error(message);
+			UserInterface.get().error(message);
 			return true;
 		} else
 			return false;
+	}
+
+	protected static boolean moveOutOfTheWay(File file) {
+		if (!file.exists())
+			return true;
+		File backup = new File(file.getParentFile(), file.getName() + ".old");
+		if (backup.exists() && !backup.delete()) {
+			int i = 2;
+			for (;;) {
+				backup = new File(file.getParentFile(), file.getName() + ".old" + i);
+				if (!backup.exists())
+					break;
+			}
+		}
+		return file.renameTo(backup);
 	}
 }

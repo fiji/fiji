@@ -2,6 +2,8 @@ package plugin;
 
 import ij.gui.Roi;
 import mpicbg.models.AbstractModel;
+import mpicbg.models.TranslationModel2D;
+import mpicbg.models.TranslationModel3D;
 
 public class DescriptorParameters 
 {
@@ -53,4 +55,16 @@ public class DescriptorParameters
 	
 	public boolean setPointsRois = true;
 	public boolean fuse = true;
+	
+	protected AbstractModel< ? > initialModel = null; 
+	public AbstractModel<?> getInitialModel()
+	{
+		if ( initialModel != null )
+			return initialModel;
+		else if ( this.dimensionality == 2 )
+			return new TranslationModel2D();
+		else
+			return new TranslationModel3D();
+
+	}
 }

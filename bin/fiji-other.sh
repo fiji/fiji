@@ -58,6 +58,8 @@ Options to run programs other than ImageJ:
 	start the given class instead of ImageJ
 --build
 	start Fiji's build instead of ImageJ
+--update
+	start Fiji's command-line Updater instead of ImageJ
 EOF
 		exit 1
 		;;
@@ -85,6 +87,9 @@ EOF
 		;;
 	?,--build)
 		main_class=fiji.build.Fake
+		;;
+	?,--update)
+		main_class=fiji.updater.Main
 		;;
 	f,*)
 		java_options="$java_options `sq_quote "$option"`"
