@@ -14,6 +14,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
@@ -265,6 +266,20 @@ public abstract class Rule {
 		if (prereq.endsWith(".jar/"))
 			prereq = Util.stripSuffix(prereq, "/");
 		return (Rule)parser.allRules.get(prereq);
+	}
+
+	public Iterable<String> getJarDependencies() throws FakeException {
+		Set<String> result = new TreeSet<String>();
+		for (String prereq : prerequisites)
+			if (prereq.endsWith(".jar"))
+				result.add(prereq);
+
+		// check the classpath
+		for (String jarFile : Util.split(getVar("CLASSPATH"), ":"))
+			if (jarFile.endsWith(".jar"))
+				result.add(jarFile);
+
+		return result;
 	}
 
 	public Iterable<Rule> getDependencies() throws FakeException {
