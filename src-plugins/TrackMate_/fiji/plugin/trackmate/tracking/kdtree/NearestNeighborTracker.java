@@ -177,12 +177,12 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 				"maximal allowed distance, a link between the two is created. <br>" +
 				"<p>" +
 				"The nearest neighbor search relies upon the KD-tree technique implemented <br>" +
-				"in imglib by ??. This ensure a very efficient tracking and <br>" +
-				"makes this tracker suitable for situation where a huge number of particles <br>" +
-				"are to be tracked over a very large number of frames. However, because of <br>" +
-				"the naiveness of its principles, it can result in pathological tracks. <br>" +
-				"It can only do frame-to-frame linking; there cannot be any track merging or <br>" +
-				"splitting, and gaps will not be closed." +
+				"in imglib by Johannes Schindelin and friends. This ensure a very efficient " +
+				"tracking and makes this tracker suitable for situation where a huge number <br>" +
+				"of particles are to be tracked over a very large number of frames. However, <br>" +
+				"because of the naiveness of its principles, it can result in pathological <br>" +
+				"tracks. It can only do frame-to-frame linking; there cannot be any track <br>" +
+				"merging or splitting, and gaps will not be closed." +
 				" </html>";	
 	}
 

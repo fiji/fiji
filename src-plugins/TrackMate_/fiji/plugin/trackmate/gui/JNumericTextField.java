@@ -82,6 +82,7 @@ public class JNumericTextField extends JTextField {
 	}
 	
 	public double getValue() {
+		checkInput();
 		return value;
 	}
 	

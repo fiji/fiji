@@ -37,7 +37,7 @@ public class NearestNeighborTrackerSettingsPanel extends TrackerSettingsPanel {
 		NearestNeighborTrackerSettings settings = (NearestNeighborTrackerSettings) model.getSettings().trackerSettings;
 		maxDistField.setText(""+settings.maxLinkingDistance);
 		labelTracker.setText(model.getSettings().tracker.toString());
-		labelTrackerDescription.setText(model.getSettings().tracker.getInfoText());
+		labelTrackerDescription.setText(model.getSettings().tracker.getInfoText().replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
 		labelUnits.setText(model.getSettings().spaceUnits);
 	}
 
@@ -70,7 +70,6 @@ public class NearestNeighborTrackerSettingsPanel extends TrackerSettingsPanel {
 
 		maxDistField = new JNumericTextField();
 		maxDistField.setFont(FONT);
-		maxDistField.setText("<default>");
 		maxDistField.setBounds(184, 316, 62, 16);
 		maxDistField.setSize(TEXTFIELD_DIMENSION);
 		add(maxDistField);
