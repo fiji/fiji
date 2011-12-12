@@ -513,6 +513,21 @@ public class MiniMaven {
 				localPOMCache.put(key, null);
 				return null;
 			}
+			else {
+				for (String jarName : new String[] {
+					"jars/" + artifactId + "-" + version + ".jar",
+					"plugins/" + artifactId + "-" + version + ".jar",
+					"jars/" + artifactId + ".jar",
+					"plugins/" + artifactId + ".jar"
+				}) {
+					File file = new File(System.getProperty("fiji.dir"), jarName);
+					if (file.exists()) {
+						POM pom = fakePOM(file, groupId, artifactId, version);
+						localPOMCache.put(key, pom);
+						return pom;
+					}
+				}
+			}
 			path += version + "/";
 			if (version.endsWith("-SNAPSHOT")) try {
 				if (!maybeDownloadAutomatically(groupId, artifactId, version, quiet))
