@@ -258,6 +258,7 @@ jars/postgresql-8.2-506.jdbc3.jar[] <-
 jars/jai_core.jar[] <-
 jars/jai_codec.jar[] <-
 jars/batik.jar[] <-
+jars/jzlib-1.0.7.jar[] <-
 
 # From submodules
 jars/ij.jar <- jars/javac.jar modules/ImageJA/
