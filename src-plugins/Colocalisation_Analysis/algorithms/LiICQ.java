@@ -53,7 +53,7 @@ public class LiICQ<T extends RealType<T>> extends Algorithm<T> {
 		 * of Li's product of the difference of means.
 		 */
 		long numPositiveProducts = 0;
-		long numNegariveProducts = 0;
+		long numNegativeProducts = 0;
 		// iterate over image
 		while (cursor.hasNext()) {
 			cursor.fwd();
@@ -66,7 +66,7 @@ public class LiICQ<T extends RealType<T>> extends Algorithm<T> {
 
 			// check for positive and negative values
 			if (productOfDifferenceOfMeans < 0.0 )
-				++numNegariveProducts;
+				++numNegativeProducts;
 			else
 				++numPositiveProducts;
 		}
@@ -74,7 +74,7 @@ public class LiICQ<T extends RealType<T>> extends Algorithm<T> {
 		/* calculate Li's ICQ value by dividing the amount of "positive pixels" to the
 		 * total number of pixels. Then shift it in the -0.5,0.5 range.
 		 */
-		return ( (double) numPositiveProducts / (double) (numNegariveProducts + numPositiveProducts) ) - 0.5;
+		return ( (double) numPositiveProducts / (double) (numNegativeProducts + numPositiveProducts) ) - 0.5;
 	}
 
 	@Override
