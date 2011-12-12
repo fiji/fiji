@@ -59,11 +59,11 @@ public class UniverseSettings {
 
 	private static void setDefaultShortcuts() {
 		shortcuts.clear();
-		shortcuts.put("File > Add content > from open image", getKeyStroke(KeyEvent.VK_O));
-		shortcuts.put("File > Delete", "pressed DELETE");
+		shortcuts.put("File > Open...", getKeyStroke(KeyEvent.VK_O));
+		shortcuts.put("Edit > Delete", "pressed DELETE");
 		shortcuts.put("File > Quit", getKeyStroke(KeyEvent.VK_W));
-		shortcuts.put("Edit > Attributes > Change transparency", getKeyStroke(KeyEvent.VK_T));
-		shortcuts.put("Edit > Attributes > Change color", getKeyStroke(KeyEvent.VK_C));
+		shortcuts.put("Edit > Change transparency", getKeyStroke(KeyEvent.VK_T));
+		shortcuts.put("Edit > Change color", getKeyStroke(KeyEvent.VK_C));
 		shortcuts.put("View > Fullscreen", getKeyStroke(KeyEvent.VK_F));
 		shortcuts.put("View > Reset view", "ctrl pressed H");
 		shortcuts.put("Help > Java 3D Properties", "pressed F1");
