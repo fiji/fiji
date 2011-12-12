@@ -120,6 +120,8 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 		if (settings.doSubPixelLocalization ) {
 			// Create localizer and apply it to the list
 			final SubpixelLocalization<T> locator = new SubpixelLocalization<T>(intermediateImage, dogPeaks);
+			locator.setNumThreads(1); // Since the calls to a segmenter  are already multi-threaded.
+			locator.setCanMoveOutside(true);
 			if ( !locator.checkInput() || !locator.process() )	{
 				errorMessage = baseErrorMessage + locator.getErrorMessage();
 				return false;

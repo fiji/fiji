@@ -112,6 +112,7 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 		if (settings.doSubPixelLocalization && pruned_list.size() > 0) {
 			Image<FloatType> laplacian = dog.getDoGImage();
 			SubpixelLocalization<FloatType> locator = new SubpixelLocalization<FloatType>(laplacian , pruned_list);
+			locator.setNumThreads(1); // Since the calls to a segmenter  are already multi-threaded.
 			if ( !locator.checkInput() || !locator.process() )	{
 				errorMessage = baseErrorMessage + locator.getErrorMessage();
 				return false;
