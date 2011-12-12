@@ -31,7 +31,7 @@ case $(uname -s) in
         JAR=jar
         ;;
     *)
-        JAR=$(../../../fiji --print-java-home)/../bin/jar
+        JAR=$(../../fiji --print-java-home)/../bin/jar
         ;;
 esac
 
