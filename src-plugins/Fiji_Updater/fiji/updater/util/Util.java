@@ -47,24 +47,24 @@ public class Util {
 	public final static boolean useMacPrefix;
 	public final static String macPrefix = "Contents/MacOS/";
 
-	public final static String fijiRoot, platform;
+	public final static String ijRoot, platform;
 	public final static boolean isDeveloper;
 	public final static String[] platforms, launchers;
 	protected final static Set<String> updateablePlatforms;
 
 	static {
-		String property = System.getProperty("fiji.dir");
-		fijiRoot = property != null ? property + File.separator :
+		String property = System.getProperty("ij.dir");
+		ijRoot = property != null ? property + File.separator :
 			new Util().getClass().getResource("Util.class")
 			.toString().replace("jar:file:", "")
 			.replace("plugins/Fiji_Updater.jar!/"
 				+ "fiji/updater/util/Util.class", "");
-		isDeveloper = new File(fijiRoot + "/ImageJ.c").exists();
+		isDeveloper = new File(ijRoot + "/ImageJ.c").exists();
 		platform = getPlatform();
 
 		String macLauncher = macPrefix + "ImageJ-macosx";
 		useMacPrefix = platform.equals("macosx") &&
-			new File(fijiRoot + "/" + macLauncher).exists();
+			new File(ijRoot + "/" + macLauncher).exists();
 
 		String[] list = {
 			"linux", "linux64", "macosx", "tiger", "win32", "win64"
@@ -79,9 +79,9 @@ public class Util {
 
 		updateablePlatforms = new HashSet<String>();
 		updateablePlatforms.add(platform);
-		if (new File(fijiRoot, macLauncher).exists())
+		if (new File(ijRoot, macLauncher).exists())
 			updateablePlatforms.add("macosx");
-		String[] files = new File(fijiRoot).list();
+		String[] files = new File(ijRoot).list();
 		for (String name : files == null ? new String[0] : files)
 			if (name.startsWith("ImageJ-")) {
 				name = name.substring(5);
@@ -264,7 +264,7 @@ public class Util {
 			path = path.substring(macPrefix.length());
 		if (File.separator.equals("\\"))
 			path = path.replace("\\", "/");
-		return fijiRoot + (isLauncher(path) ?
+		return ijRoot + (isLauncher(path) ?
 				(isDeveloper ? "precompiled/" :
 				 (useMacPrefix ? macPrefix : "")) : "") + path;
 	}
@@ -279,7 +279,7 @@ public class Util {
 
 	public static boolean isLauncher(String filename) {
 		return Arrays.binarySearch(launchers,
-				stripPrefix(stripPrefix(filename, fijiRoot), "precompiled/")) >= 0;
+				stripPrefix(stripPrefix(filename, ijRoot), "precompiled/")) >= 0;
 	}
 
 	public static String[] getLaunchers() {

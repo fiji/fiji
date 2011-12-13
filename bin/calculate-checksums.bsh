@@ -9,7 +9,7 @@ import fiji.updater.util.StderrProgress;
 
 import java.util.Arrays;
 
-dbPath = System.getProperty("fiji.dir") + "/db.xml.gz";
+dbPath = System.getProperty("ij.dir") + "/db.xml.gz";
 
 plugins = new PluginCollection();
 progress = new StderrProgress();

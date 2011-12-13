@@ -25,7 +25,7 @@ IJ.runMacro("", "")
 menu = User_Plugins.getMenuItem('File>Open Samples')
 commands = Menus.getCommands()
 plugin = 'ij.plugin.URLOpener("'
-samples = System.getProperty('fiji.dir') + '/samples'
+samples = System.getProperty('ij.dir') + '/samples'
 
 class FileSizeReporter(Thread):
 	def __init__(self, name, path):

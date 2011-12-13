@@ -77,7 +77,7 @@ prepareNewFijiRoot(root, asDeveloper) {
 		toCopy = unshiftArray(toCopy, "ImageJ.c");
 
 	for (String name : toCopy)
-		copyFile(new File(fijiDir, name),  new File(root, name));
+		copyFile(new File(ijDir, name),  new File(root, name));
 }
 
 cleanWebRoot() {

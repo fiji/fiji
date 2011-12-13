@@ -527,7 +527,7 @@ public class MiniMaven {
 			if (version == null || version.startsWith("[") || artifactId.equals("tools")) {
 				// try to find the .jar in Fiji's jars/ dir
 				String jarName = artifactId.equals("tools") ? "javac.jar" : artifactId + ".jar";
-				File file = new File(System.getProperty("fiji.dir"), "jars/" + jarName);
+				File file = new File(System.getProperty("ij.dir"), "jars/" + jarName);
 				if (file.exists()) {
 					POM pom = fakePOM(file, groupId, artifactId, version);
 					localPOMCache.put(key, pom);

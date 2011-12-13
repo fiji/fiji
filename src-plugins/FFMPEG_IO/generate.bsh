@@ -4,14 +4,14 @@
 import fiji.build.Parser;
 import fiji.build.Util;
 
-addClassPath(System.getProperty("fiji.dir") + "/jars/ij.jar");
+addClassPath(System.getProperty("ij.dir") + "/jars/ij.jar");
 import ij.IJ;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 
-File cwd = new File(System.getProperty("fiji.dir"), "src-plugins/FFMPEG_IO");
+File cwd = new File(System.getProperty("ij.dir"), "src-plugins/FFMPEG_IO");
 
 String platform, target;
 
@@ -56,7 +56,7 @@ buildFFMPEG(platform) {
 		}
 	}
 
-	String libraryTarget = System.getProperty("fiji.dir") + "/lib/" + platform + "/" + target;
+	String libraryTarget = System.getProperty("ij.dir") + "/lib/" + platform + "/" + target;
 
 	fakefile += "\n" +
 		"ffmpeg/" + target + "[sh build.sh " + platform + " " + target + "] <-"
@@ -73,7 +73,7 @@ buildFFMPEG(platform) {
 
 // Fake stuff
 
-addClassPath(System.getProperty("fiji.dir") + "/jars/fake.jar");
+addClassPath(System.getProperty("ij.dir") + "/jars/fake.jar");
 
 // Using fiji.build.Fake to avoid getting the Fake in the default package
 fiji.build.Fake fake = new fiji.build.Fake();
@@ -96,7 +96,7 @@ String fakefilePrefix =
 // Make sure that ffmpeg/ is dirty when the platform is different than last time
 File ffmpegDir = new File(cwd, "ffmpeg");
 String avformatTarget = "fiji/ffmpeg/AVFORMAT.java";
-String pluginJarName = System.getProperty("fiji.dir") + "/plugins/FFMPEG_IO.jar";
+String pluginJarName = System.getProperty("ij.dir") + "/plugins/FFMPEG_IO.jar";
 
 String fakefile = fakefilePrefix +
 	"all <- " + pluginJarName + "\n";

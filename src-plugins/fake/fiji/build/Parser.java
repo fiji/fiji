@@ -76,12 +76,13 @@ public class Parser {
 
 		setVariable("platform", Util.getPlatform());
 
-		setVariable("FIJIHOME", Fake.fijiHome);
+		setVariable("FIJIHOME", Fake.ijHome);
+		setVariable("IJHOME", Fake.ijHome);
 
 		// Include all libraries in classpath when not building Fiji itself
 		// (when building submodules, the classpath will be overridden)
 		try {
-			if (!new File(Fake.fijiHome).getCanonicalFile().equals(this.cwd.getCanonicalFile()))
+			if (!new File(Fake.ijHome).getCanonicalFile().equals(this.cwd.getCanonicalFile()))
 				setVariable("CLASSPATH", Util.join(fake.discoverJars(), ":"));
 		} catch (IOException e) { /* ignore */ }
 

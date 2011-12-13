@@ -93,53 +93,50 @@ public class Fake {
 		variableNames.add("INCLUDESOURCE");
 	}
 
-	public final static String fijiHome;
+	public final static String ijHome;
 
 	static {
-		fijiHome = discoverFijiHome();
+		ijHome = discoverImageJHome();
 	}
 
-	protected static String discoverFijiHome() {
+	protected static String discoverImageJHome() {
 		URL url = Fake.class.getResource("Fake.class");
-		String fijiHome;
+		String ijHome;
 		try {
-			fijiHome = URLDecoder.decode(url.toString(), "UTF-8");
+			ijHome = URLDecoder.decode(url.toString(), "UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException("Could not discover the Fiji root directory");
+			throw new RuntimeException("Could not discover the ImageJ root directory");
 		}
 		if (Util.getPlatform().startsWith("win"))
-			fijiHome = fijiHome.replace('\\', '/');
-		if (!fijiHome.endsWith("/Fake.class"))
+			ijHome = ijHome.replace('\\', '/');
+		if (!ijHome.endsWith("/Fake.class"))
 			throw new RuntimeException("unexpected URL: " + url);
-		fijiHome = fijiHome.substring(0, fijiHome.length() - 10);
-		if (fijiHome.endsWith("/fiji/build/"))
-			fijiHome = fijiHome.substring(0, fijiHome.length() - 11);
-		int slash = fijiHome.lastIndexOf('/', fijiHome.length() - 2);
-		if (fijiHome.startsWith("jar:file:") &&
-				fijiHome.endsWith(".jar!/")) {
-			fijiBuildJar = fijiHome.substring(9,
-					fijiHome.length() - 2);
+		ijHome = ijHome.substring(0, ijHome.length() - 10);
+		if (ijHome.endsWith("/fiji/build/"))
+			ijHome = ijHome.substring(0, ijHome.length() - 11);
+		int slash = ijHome.lastIndexOf('/', ijHome.length() - 2);
+		if (ijHome.startsWith("jar:file:") &&
+				ijHome.endsWith(".jar!/")) {
+			fijiBuildJar = ijHome.substring(9,
+					ijHome.length() - 2);
 			mtimeFijiBuild = new File(fijiBuildJar).lastModified();
-			fijiHome = fijiHome.substring(9, slash + 1);
+			ijHome = ijHome.substring(9, slash + 1);
 		}
-		else if (fijiHome.startsWith("file:/")) {
-			fijiHome = fijiHome.substring(5, slash + 1);
-			if (fijiHome.endsWith("/src-plugins/"))
-				fijiHome = Util.stripSuffix(fijiHome, "src-plugins/");
+		else if (ijHome.startsWith("file:/")) {
+			ijHome = ijHome.substring(5, slash + 1);
+			if (ijHome.endsWith("/src-plugins/"))
+				ijHome = Util.stripSuffix(ijHome, "src-plugins/");
 		}
-		if (Util.getPlatform().startsWith("win") && fijiHome.startsWith("/"))
-			fijiHome = fijiHome.substring(1);
-		if (fijiHome.endsWith("precompiled/"))
-			fijiHome = fijiHome.substring(0,
-					fijiHome.length() - 12);
-		else if (fijiHome.endsWith("jars/"))
-			fijiHome = fijiHome.substring(0,
-					fijiHome.length() - 5);
-		else if (fijiHome.endsWith("plugins/"))
-			fijiHome = fijiHome.substring(0,
-					fijiHome.length() - 8);
+		if (Util.getPlatform().startsWith("win") && ijHome.startsWith("/"))
+			ijHome = ijHome.substring(1);
+		if (ijHome.endsWith("precompiled/"))
+			ijHome = ijHome.substring(0, ijHome.length() - 12);
+		else if (ijHome.endsWith("jars/"))
+			ijHome = ijHome.substring(0, ijHome.length() - 5);
+		else if (ijHome.endsWith("plugins/"))
+			ijHome = ijHome.substring(0, ijHome.length() - 8);
 
-		return fijiHome;
+		return ijHome;
 	}
 
 	protected static void setDefaultProperty(String key, String value) {
@@ -148,33 +145,33 @@ public class Fake {
 	}
 
 	protected static void discoverJython() throws IOException {
-		String pythonHome = fijiHome + "jars";
+		String pythonHome = ijHome + "jars";
 		setDefaultProperty("python.home", pythonHome);
 		setDefaultProperty("python.cachedir.skip", "false");
 		String jythonJar = pythonHome + "/jython.jar";
 		if (!new File(jythonJar).exists())
-			jythonJar = fijiHome + "/precompiled/jython.jar";
-		getClassLoader(fijiHome + "/jars/jna.jar");
+			jythonJar = ijHome + "/precompiled/jython.jar";
+		getClassLoader(ijHome + "/jars/jna.jar");
 		if (new File(jythonJar).exists())
 			getClassLoader(jythonJar);
 	}
 
 	protected static void discoverBeanshell() throws IOException {
-		String bshJar = fijiHome + "/jars/bsh.jar";
+		String bshJar = ijHome + "/jars/bsh.jar";
 		if (!new File(bshJar).exists()) {
-			bshJar = fijiHome + "/jars/bsh-2.0b4.jar";
+			bshJar = ijHome + "/jars/bsh-2.0b4.jar";
 			if (!new File(bshJar).exists())
-				bshJar = fijiHome + "/precompiled/bsh.jar";
+				bshJar = ijHome + "/precompiled/bsh.jar";
 		}
 		getClassLoader(bshJar);
 	}
 
 	protected static void discoverJavac() throws IOException {
-		String path = fijiHome + "jars/javac.jar";
+		String path = ijHome + "jars/javac.jar";
 		if (!new File(path).exists()) {
-			path = fijiHome + "precompiled/javac.jar";
+			path = ijHome + "precompiled/javac.jar";
 			if (!new File(path).exists()) {
-				System.err.println("No javac.jar found (looked in " + fijiHome + ")!");
+				System.err.println("No javac.jar found (looked in " + ijHome + ")!");
 				return;
 			}
 		}
@@ -189,8 +186,8 @@ public class Fake {
 		 * be picked up instead of ImageJ's, we cannot blindly
 		 * include all plugin's jars...
 		 */
-		// expandGlob(fijiHome + "plugins/**/*.jar", jars, cwd);
-		expandGlob(fijiHome + "jars/**/*.jar", jars, cwd, 0, null);
+		// expandGlob(ijHome + "plugins/**/*.jar", jars, cwd);
+		expandGlob(ijHome + "jars/**/*.jar", jars, cwd, 0, null);
 		if (Util.getPlatform().startsWith("win")) {
 			String[] paths =
 				Util.split(System.getProperty("java.ext.dirs"),
@@ -1231,10 +1228,10 @@ public class Fake {
 
 	public static File moveToUpdateDirectory(File file) throws FakeException {
 		String absolute = file.getAbsolutePath().replace('\\', '/');
-		if (!absolute.startsWith(fijiHome))
+		if (!absolute.startsWith(ijHome))
 			throw new FakeException("The file " + file
 					+ " could not be deleted!");
-		int len = fijiHome.length();
+		int len = ijHome.length();
 		File result = new File(absolute.substring(0, len)
 			+ "update/" + absolute.substring(len));
 		result.getParentFile().mkdirs();
@@ -1252,12 +1249,12 @@ public class Fake {
 		return Util.join(paths, ":");
 	}
 
-	public static String stripFijiHome(String string) {
+	public static String stripImageJHome(String string) {
 		if (string == null)
 			return string;
 		String slashes = string.replace('\\', '/');
-		if (slashes.startsWith(fijiHome))
-			return Util.stripPrefix(slashes, fijiHome);
+		if (slashes.startsWith(ijHome))
+			return Util.stripPrefix(slashes, ijHome);
 		return string;
 	}
 }

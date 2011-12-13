@@ -67,9 +67,9 @@ def check_HEAD():
 		if path.endswith('.java'):
 			check_in_HEAD(path)
 
-fiji_dir = System.getProperty('fiji.dir') + '/src-plugins'
+ij_dir = System.getProperty('ij.dir') + '/src-plugins'
 
 if sys.argv[0] == 'worktree':
-	check_directory(fiji_dir)
+	check_directory(ij_dir)
 else:
 	check_HEAD()

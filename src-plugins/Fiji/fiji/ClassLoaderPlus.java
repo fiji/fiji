@@ -119,7 +119,7 @@ public class ClassLoaderPlus extends URLClassLoader {
 	}
 
 	public static String getFijiDir() throws ClassNotFoundException {
-		String path = System.getProperty("fiji.dir");
+		String path = System.getProperty("ij.dir");
 		if (path != null)
 			return path;
 		final String prefix = "file:";

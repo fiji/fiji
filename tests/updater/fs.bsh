@@ -48,7 +48,7 @@ copyFileWithMTime(source, destination) {
 	destination.setLastModified(source.lastModified());
 }
 
-fijiDir = new File(System.getProperty("fiji.executable")).getCanonicalFile().getParentFile();
+ijDir = new File(System.getProperty("ij.dir")).getCanonicalFile();
 
 import java.io.ByteArrayOutputStream;
 

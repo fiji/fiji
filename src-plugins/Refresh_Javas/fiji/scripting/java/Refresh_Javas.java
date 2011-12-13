@@ -164,7 +164,7 @@ public class Refresh_Javas extends RefreshScripts {
 		path = file.getName();
 		String name = path;
 
-		File srcPlugins = new File(System.getProperty("fiji.dir"), "src-plugins");
+		File srcPlugins = new File(System.getProperty("ij.dir"), "src-plugins");
 		try {
 			srcPlugins = srcPlugins.getCanonicalFile();
 		}
@@ -299,7 +299,7 @@ public class Refresh_Javas extends RefreshScripts {
 
 	public static InputStream fakeFakefile(String projectName) {
 		StringBuilder buffer = new StringBuilder();
-		String target = System.getProperty("fiji.dir") + "/plugins/" + projectName + ".jar";
+		String target = System.getProperty("ij.dir") + "/plugins/" + projectName + ".jar";
 		buffer.append("all <- ").append(target).append("\n")
 			.append(target).append(" <- ").append(projectName).append("/**/*\n");
 		return new ByteArrayInputStream(buffer.toString().getBytes());

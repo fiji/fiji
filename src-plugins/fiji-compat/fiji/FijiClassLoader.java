@@ -34,18 +34,18 @@ public class FijiClassLoader extends URLClassLoader {
 	public FijiClassLoader(boolean initDefaults) {
 		this();
 		if (initDefaults) try {
-			String fijiDir = FijiTools.getFijiDir();
+			String ijDir = FijiTools.getImageJDir();
 			String pluginsDir = System.getProperty("plugins.dir");
-			if (pluginsDir != null && !pluginsDir.equals("") && new File(pluginsDir).exists() && !isSameFile(pluginsDir, fijiDir))
+			if (pluginsDir != null && !pluginsDir.equals("") && new File(pluginsDir).exists() && !isSameFile(pluginsDir, ijDir))
 				addPath(pluginsDir);
-			if (fijiDir != null && !fijiDir.startsWith("http://")) {
+			if (ijDir != null && !ijDir.startsWith("http://")) {
 				Set<File> classPath = new HashSet<File>();
-				File updateDir = new File(fijiDir, "update");
-				File plugins = new File(fijiDir, "plugins");
+				File updateDir = new File(ijDir, "update");
+				File plugins = new File(ijDir, "plugins");
 				File updatePlugins = new File(updateDir, "plugins");
 				getNewerJars(classPath, plugins, updatePlugins, true);
 				getNewerJars(classPath, updatePlugins, plugins, false);
-				File jars = new File(fijiDir, "jars");
+				File jars = new File(ijDir, "jars");
 				updatePlugins = new File(updateDir, "jars");
 				getNewerJars(classPath, jars, updatePlugins, true);
 				getNewerJars(classPath, updatePlugins, jars, false);
@@ -314,8 +314,8 @@ public class FijiClassLoader extends URLClassLoader {
 			IJ.showStatus("Retrotranslating '" + path + "'");
 			File tmpFile = File.createTempFile("retro-", ".jar");
 			SimpleExecuter executer = new SimpleExecuter(new String[] {
-				System.getProperty("fiji.executable"),
-				"--jar", System.getProperty("fiji.dir") + "/retro/retrotranslator-transformer-1.2.7.jar",
+				System.getProperty("ij.executable"),
+				"--jar", System.getProperty("ij.dir") + "/retro/retrotranslator-transformer-1.2.7.jar",
 				"-srcjar", path,
 				"-destjar", tmpFile.getCanonicalPath(),
 				"-target", "1.5"

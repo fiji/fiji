@@ -20,8 +20,8 @@ import java.util.zip.GZIPInputStream;
 
 // Read the database
 
-fijiDir = System.getProperty("fiji.dir");
-dbPath = fijiDir + "/db.xml.gz";
+ijDir = System.getProperty("ij.dir");
+dbPath = ijDir + "/db.xml.gz";
 plugins = new PluginCollection();
 new XMLFileReader(plugins).read(null, new GZIPInputStream(new FileInputStream(dbPath)), 0);
 

@@ -9,7 +9,7 @@ from java.io import FileInputStream, FileOutputStream
 from java.lang.System import getProperty
 from java.util.zip import GZIPInputStream, GZIPOutputStream
 
-dbPath = getProperty('fiji.dir') + '/db.xml.gz'
+dbPath = getProperty('ij.dir') + '/db.xml.gz'
 plugins = PluginCollection()
 XMLFileReader(plugins).read(None, GZIPInputStream(FileInputStream(dbPath)), 0)
 

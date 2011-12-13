@@ -33,7 +33,7 @@ public class JNALibraryLoader {
 			}
 		}
 		if (libraryDirectory == null)
-			libraryDirectory = new File(new File(System.getProperty("fiji.dir"), "lib"), getPlatform());
+			libraryDirectory = new File(new File(System.getProperty("ij.dir"), "lib"), getPlatform());
 
 	}
 
