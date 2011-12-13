@@ -13,6 +13,7 @@ import ij.text.TextWindow;
 import ij3d.gui.ContentCreatorDialog;
 import ij3d.gui.InteractiveTransformDialog;
 import ij3d.gui.LUTDialog;
+import ij3d.gui.PrimitiveDialogs;
 import ij3d.shapes.Scalebar;
 import ij3d.shortcuts.ShortCutDialog;
 import isosurface.MeshEditor;
@@ -1386,6 +1387,27 @@ public class Executer {
 			IJ.error(e.getMessage());
 		}
 	}
+
+	/* **********************************************************
+	 * Add menu
+	 * *********************************************************/
+	public void addTube() {
+		PrimitiveDialogs.addTube(univ);
+	}
+
+	public void addSphere() {
+		PrimitiveDialogs.addSphere(univ);
+	}
+
+	public void addCone() {
+		PrimitiveDialogs.addCone(univ);
+	}
+
+	public void addBox() {
+		PrimitiveDialogs.addBox(univ);
+	}
+
+
 
 	/* **********************************************************
 	 * View menu

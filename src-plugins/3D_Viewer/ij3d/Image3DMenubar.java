@@ -87,6 +87,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 	private JCheckBoxMenuItem lock;
 	private JCheckBoxMenuItem show;
 	private JMenuItem viewposXY, viewposXZ, viewposYZ, viewnegXY, viewnegXZ, viewnegYZ;
+	private JMenuItem sphere, box, cone, tube;
 
 	private JMenu transformMenu;
 	private JMenu landmarksMenu;
@@ -201,6 +202,24 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		addContentFromImage = new JMenuItem("From image");
 		addContentFromImage.addActionListener(this);
 		add.add(addContentFromImage);
+
+		add.addSeparator();
+
+		sphere = new JMenuItem("Sphere");
+		sphere.addActionListener(this);
+		add.add(sphere);
+
+		box = new JMenuItem("Box");
+		box.addActionListener(this);
+		add.add(box);
+
+		cone = new JMenuItem("Cone");
+		cone.addActionListener(this);
+		add.add(cone);
+
+		tube = new JMenuItem("Tube");
+		tube.addActionListener(this);
+		add.add(tube);
 
 		return add;
 	}
@@ -646,6 +665,15 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		else if (viewnegYZ == src)
 			executer.execute(new Runnable() { @Override
 			public void run() { univ.rotateToNegativeYZ(); }});
+		else if(src == sphere) {
+			executer.addSphere();
+		} else if(src == box) {
+			executer.addBox();
+		} else if(src == cone) {
+			executer.addCone();
+		} else if(src == tube) {
+			executer.addTube();
+		}
 	}
 
 	@Override
