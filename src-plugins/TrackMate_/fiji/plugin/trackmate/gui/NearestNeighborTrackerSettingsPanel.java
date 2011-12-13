@@ -76,7 +76,7 @@ public class NearestNeighborTrackerSettingsPanel extends TrackerSettingsPanel {
 		
 		labelUnits = new JLabel("<unit>");
 		labelUnits.setFont(FONT);
-		labelUnits.setBounds(256, 317, 34, 20);
+		labelUnits.setBounds(236, 314, 34, 20);
 		add(labelUnits);
 	}
 }

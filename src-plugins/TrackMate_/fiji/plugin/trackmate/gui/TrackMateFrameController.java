@@ -500,7 +500,7 @@ public class TrackMateFrameController implements ActionListener {
 	private void execSegmentationStep() {
 		switchNextButton(false);
 		final Settings settings = plugin.getModel().getSettings();
-		logger.log("Starting segmentation...\n", Logger.BLUE_COLOR);
+		logger.log("Starting segmentation using "+settings.segmenter.toString()+"\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
 		logger.log(settings.toString());
 		logger.log(settings.segmenterSettings.toString());
@@ -726,7 +726,7 @@ public class TrackMateFrameController implements ActionListener {
 	private void execTrackingStep() {
 		switchNextButton(false);
 		final TrackMateModel model = plugin.getModel();
-		logger.log("Starting tracking...\n", Logger.BLUE_COLOR);
+		logger.log("Starting tracking using "+model.getSettings().tracker.toString()+"\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
 		logger.log(model.getSettings().trackerSettings.toString());
 		new Thread("TrackMate tracking thread") {					
