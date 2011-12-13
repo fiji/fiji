@@ -289,6 +289,13 @@ public final class Utils {
     {
         return getReconstructImageWH(image, null);
     }
+    
+    public static Element getImageDomainContour(final Node image)
+    {
+        NodeList imageContourList =
+                ((Element)image.getParentNode()).getElementsByTagName("Contour");
+        return (Element)imageContourList.item(0);
+    }
 
     public static double[] getReconstructImageWH(final Node image,
                                                  double[] wh)
@@ -299,10 +306,7 @@ public final class Utils {
         }
         else
         {
-            NodeList imageContourList =
-                    ((Element)image.getParentNode()).getElementsByTagName("Contour");
-            Element imageDomainContour =
-                    Utils.findElementByAttributeRegex(imageContourList, "name", "^domain.*");
+            Element imageDomainContour = getImageDomainContour(image);
             String pointsString;
             double[] points;
 
