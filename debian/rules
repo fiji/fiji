@@ -69,7 +69,7 @@ clean : prebuild-actions
 	rm -f build-arch-stamp build-indep-stamp configure-stamp install-arch-stamp install-indep-stamp
 	rm -f $(INDEP_STAMPS) $(ARCH_STAMPS)
 	$(BUILD_COMMAND) clean
-	rm -f fjij fiji.o
+	rm -f fiji fiji.o
 	dh_clean
 
 install : install-indep-stamp install-arch-stamp
