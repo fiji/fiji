@@ -1969,7 +1969,7 @@ static int update_files(struct string *relative_path)
 
 #ifdef WIN32
 		if (file_exists(target->buffer) && unlink(target->buffer)) {
-			if (!strcmp(filename, "fiji.exe") || !strcmp(filename, "fiji-win32.exe") || !strcmp(filename, "fiji-win64.exe"))
+			if (!strcmp(filename, "ImageJ.exe") || !strcmp(filename, "ImageJ-win32.exe") || !strcmp(filename, "ImageJ-win64.exe"))
 				die("Could not remove old version of %s.  Please move %s to %s manually!", target->buffer, source->buffer, target->buffer);
 			else
 				die("Could not remove old version of %s.  Please remove it manually!", target->buffer);
@@ -2716,12 +2716,12 @@ static void parse_command_line(void)
 #define EXE_EXTENSION
 #endif
 
-	string_setf(&buffer, "%s/fiji" EXE_EXTENSION, fiji_dir);
-	string_setf(&buffer2, "%s/fiji.c", fiji_dir);
-	if (file_exists(fiji_path("fiji" EXE_EXTENSION)) &&
-			file_is_newer(fiji_path("fiji.c"), fiji_path("fiji" EXE_EXTENSION)) &&
-			!is_building("fiji"))
-		error("Warning: your Fiji executable is not up-to-date");
+	string_setf(&buffer, "%s/ij" EXE_EXTENSION, ij_dir);
+	string_setf(&buffer2, "%s/ij.c", ij_dir);
+	if (file_exists(ij_path("ImageJ" EXE_EXTENSION)) &&
+			file_is_newer(fiji_path("ImageJ.c"), fiji_path("ImageJ" EXE_EXTENSION)) &&
+			!is_building("ImageJ"))
+		error("Warning: your ImageJ executable is not up-to-date");
 
 #ifdef __linux__
 	string_append_path_list(java_library_path, getenv("LD_LIBRARY_PATH"));
@@ -3783,8 +3783,8 @@ int main(int argc, char **argv, char **e)
 	argv[0] = _pgmptr;
 #endif
 	len = strlen(argv[0]);
-	if (!suffixcmp(argv[0], len, "fiji.exe") ||
-			!suffixcmp(argv[0], len, "fiji"))
+	if (!suffixcmp(argv[0], len, "ImageJ.exe") ||
+			!suffixcmp(argv[0], len, "ImageJ"))
 		open_win_console();
 #endif
 	fiji_dir = get_fiji_dir(argv[0]);

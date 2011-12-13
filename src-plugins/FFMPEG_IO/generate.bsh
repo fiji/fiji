@@ -1,5 +1,5 @@
 #!/bin/sh
-// 2> /dev/null || exec fiji --headless --bsh "$0" "$@"
+// 2> /dev/null || exec ImageJ --headless --bsh "$0" "$@"
 
 import fiji.build.Parser;
 import fiji.build.Util;

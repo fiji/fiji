@@ -1,5 +1,5 @@
 #!/bin/sh
-''''exec "$(dirname "$0")"/../fiji --headless --jython "$0" "$@" # (call again with fiji)'''
+''''exec "$(dirname "$0")"/../ImageJ --headless --jython "$0" "$@" # (call again with fiji)'''
 
 from fiji import User_Plugins
 from ij import IJ

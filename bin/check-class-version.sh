@@ -9,7 +9,7 @@
 # Author: Curtis Rueden (ctrueden at wisc.edu)
 
 FIJIROOT="$(dirname "$0")/.."
-FIJI="$FIJIROOT"/fiji
+FIJI="$FIJIROOT"/ImageJ
 
 function canonpath() {
   echo $(cd $(dirname $1); pwd -P)/$(basename $1)
@@ -31,5 +31,5 @@ do
   f=${file[$idx]}
   let idx=idx+1
   echo "=== $f ==="
-  ./fiji fiji.CheckClassVersions.class "$f"
+  ./ImageJ fiji.CheckClassVersions.class "$f"
 done

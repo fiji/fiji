@@ -1,5 +1,5 @@
 #!/bin/sh
-/*/. 2>/dev/null; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
+/*/. 2>/dev/null; exec "$(dirname "$0")"/../ImageJ "$0" "$@" # exec with fiji */
 
 if (bsh.args.length < 1) {
 	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
@@ -72,9 +72,9 @@ compile(prefix, platform, cflags, exe) {
 	cc = prefix + "gcc";
 	strip = prefix + "strip";
 	windres = prefix + "windres";
-	target = "precompiled/fiji-" + platform + exe;
+	target = "precompiled/ImageJ-" + platform + exe;
 
-	source = "fiji.c";
+	source = "ImageJ.c";
 	if (platform.startsWith("win")) {
 		cflags = filterOut(cflags, "-mno-cygwin");
 		res = new FileWriter("tmp.rc");
@@ -116,11 +116,11 @@ else if (platform.equals("macosx") || platform.startsWith("tiger") || (platform.
 	if (platform.equals("macosx") || platform.equals("leopard"))
 		compile(prefix64, "leopard", append(cflags2, "-m64"), "");
 	if (platform.equals("tiger")) {
-		args = new String[] { prefix64 + "lipo", "-create", "precompiled/fiji-tiger-ppc", "precompiled/fiji-tiger-i686", "-output", "precompiled/fiji-tiger" };
+		args = new String[] { prefix64 + "lipo", "-create", "precompiled/ImageJ-tiger-ppc", "precompiled/ImageJ-tiger-i686", "-output", "precompiled/ImageJ-tiger" };
 		execute(args);
 	}
 	if (platform.equals("macosx")) {
-		args = new String[] { prefix64 + "lipo", "-create", "precompiled/fiji-tiger-i686", "precompiled/fiji-leopard", "-output", "precompiled/fiji-macosx" };
+		args = new String[] { prefix64 + "lipo", "-create", "precompiled/ImageJ-tiger-i686", "precompiled/ImageJ-leopard", "-output", "precompiled/ImageJ-macosx" };
 		execute(args);
 	}
 }

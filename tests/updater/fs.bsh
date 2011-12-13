@@ -39,7 +39,7 @@ import java.io.FileOutputStream;
 copyFile(source, destination) {
 	destination.getCanonicalFile().getParentFile().mkdirs();
 	copyTo(new FileInputStream(source), new FileOutputStream(destination));
-	if (destination.getName().equals("fiji"))
+	if (destination.getName().equals("ImageJ"))
 		execute(new String[] { "chmod", "a+x", destination.getAbsolutePath() });
 }
 

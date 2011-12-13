@@ -43,7 +43,7 @@ line, separating them from the ImageJ arguments (if any) with a "--".
 In other words, if you want to override the memory setting, call Fiji
 like this:
 
-	$ ./fiji-linux -Xmx128m --
+	$ ./ImageJ-linux -Xmx128m --
 
 Open Source
 -----------

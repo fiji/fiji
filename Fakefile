@@ -231,15 +231,15 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	jars/fiji-compat.jar \
 	plugins/Fiji_Package_Maker.jar
 
-all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
+all <- ImageJ $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
-# The "run" rule just executes ./fiji (as long as the file "run" does not exist...)
+# The "run" rule just executes ./ImageJ (as long as the file "run" does not exist...)
 # It has items on the right side, because these would be passed to the executable.
 
 run[] <- all run-fiji
-run-fiji[./fiji] <-
+run-fiji[./ImageJ] <-
 DEBUG_ARGS=-agentlib:jdwp=transport=dt_socket,address=8000,server=y,suspend=n
-dev[./fiji $DEBUG_ARGS] <-
+dev[./ImageJ $DEBUG_ARGS] <-
 
 
 # JDK
@@ -294,21 +294,21 @@ CLASSPATH(jars/imglib2-ops.jar)=jars/imglib2.jar
 jars/imglib2-ops.jar <- modules/imglib/
 CLASSPATH(jars/imglib2-ui.jar)=jars/imglib2.jar:jars/imglib2-io.jar:plugins/loci_tools.jar
 jars/imglib2-ui.jar <- jars/imglib2-io.jar modules/imglib/
-jars/clojure.jar <- fiji modules/clojure/
-plugins/loci_tools.jar <- fiji modules/bio-formats/
+jars/clojure.jar <- ImageJ modules/clojure/
+plugins/loci_tools.jar <- ImageJ modules/bio-formats/
 CLASSPATH(jars/VectorString.jar)=jars/ij.jar:jars/Jama-1.0.2.jar:$JAVA3D_JARS
 jars/VectorString.jar <- modules/TrakEM2/
 CLASSPATH(plugins/TrakEM2_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar:jars/VectorString.jar:jars/postgresql-8.2-506.jdbc3.jar:jars/jcommon-1.0.12.jar:jars/jfreechart-1.0.13.jar:jars/edu_mines_jtk.jar:jars/VIB-lib.jar:plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama-1.0.2.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar:plugins/Lasso_and_Blow_Tool.jar:$JAVA3D_JARS
 plugins/TrakEM2_.jar <- modules/TrakEM2/
 plugins/ij-ImageIO_.jar <- modules/ij-plugins/
-jars/jacl.jar <- fiji modules/tcljava/
-jars/batik.jar <- fiji modules/batik/
-jars/junit-4.5.jar <- fiji modules/junit/
-jars/rsyntaxtextarea.jar <- fiji modules/RSyntaxTextArea/
-jars/autocomplete.jar <- fiji modules/AutoComplete/
-jars/weka.jar <- fiji jars/fiji-compat.jar modules/weka/
-jars/jython.jar <- fiji modules/jython/
-jars/commons-math.jar <- fiji modules/commons-math/
+jars/jacl.jar <- ImageJ modules/tcljava/
+jars/batik.jar <- ImageJ modules/batik/
+jars/junit-4.5.jar <- ImageJ modules/junit/
+jars/rsyntaxtextarea.jar <- ImageJ modules/RSyntaxTextArea/
+jars/autocomplete.jar <- ImageJ modules/AutoComplete/
+jars/weka.jar <- ImageJ jars/fiji-compat.jar modules/weka/
+jars/jython.jar <- ImageJ modules/jython/
+jars/commons-math.jar <- ImageJ modules/commons-math/
 jars/javassist.jar <- modules/javassist/
 jars/jsch-0.1.44.jar <- modules/jsch/
 COPYDEPENDENCIES(jars/ij-app.jar)=true
@@ -510,7 +510,7 @@ CFLAGS(win32)=$COMMONCFLAGS $WINOPTS \
 CFLAGS(win64)=$COMMONCFLAGS $WINOPTS \
 	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(win64)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(win64)"'
 
-# Include 64-bit architectures only in ./fiji (as opposed to ./fiji-tiger),
+# Include 64-bit architectures only in ./ImageJ (as opposed to ./ImageJ-tiger),
 # and only on MacOSX
 MACOPTS(osx10.3)=-I/System/Library/Frameworks/JavaVM.Framework/Headers -Iincludes \
 	-DMACOSX \
@@ -529,28 +529,28 @@ LDFLAGS(win32)=$LDFLAGS $WINOPTS
 CFLAGS(freebsd)=$COMMONCFLAGS \
 	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(freebsd)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(freebsd)"'
 
-CFLAGS(fiji)=$COMMONCFLAGS $MACOPTS
-LDFLAGS(fiji)=$LDFLAGS $MACOPTS
+CFLAGS(ImageJ)=$COMMONCFLAGS $MACOPTS
+LDFLAGS(ImageJ)=$LDFLAGS $MACOPTS
 
 LIBS(linux)=-ldl -lpthread
 LIBS(linux64)=-ldl -lpthread
 LIBS(macosx)=-weak -framework CoreFoundation -framework ApplicationServices \
 	-framework JavaVM
 
-CLASSPATH(fiji)=jars/Fiji.jar:jars/fiji-compat.jar:jars/ij.jar:jars/javassist.jar
-fiji <- fiji.c
+CLASSPATH(ImageJ)=jars/Fiji.jar:jars/fiji-compat.jar:jars/ij.jar:jars/javassist.jar
+ImageJ <- ImageJ.c
 
-CFLAGS(fiji-macosx)=$COMMONCFLAGS $MACOPTS(osx10.5)
-LDFLAGS(fiji-macosx)=$LDFLAGS $MACOPTS(osx10.5)
-fiji-macosx <- fiji.c
+CFLAGS(ImageJ-macosx)=$COMMONCFLAGS $MACOPTS(osx10.5)
+LDFLAGS(ImageJ-macosx)=$LDFLAGS $MACOPTS(osx10.5)
+ImageJ-macosx <- ImageJ.c
 
-CFLAGS(fiji-tiger)=$COMMONCFLAGS $MACOPTS(osx10.4)
-LDFLAGS(fiji-tiger)=$LDFLAGS $MACOPTS(osx10.4)
-fiji-tiger <- fiji.c
+CFLAGS(ImageJ-tiger)=$COMMONCFLAGS $MACOPTS(osx10.4)
+LDFLAGS(ImageJ-tiger)=$LDFLAGS $MACOPTS(osx10.4)
+ImageJ-tiger <- ImageJ.c
 
-CFLAGS(fiji-panther)=$COMMONCFLAGS $MACOPTS(osx10.3)
-LDFLAGS(fiji-panther)=$LDFLAGS $MACOPTS(osx10.3)
-fiji-panther <- fiji.c
+CFLAGS(ImageJ-panther)=$COMMONCFLAGS $MACOPTS(osx10.3)
+LDFLAGS(ImageJ-panther)=$LDFLAGS $MACOPTS(osx10.3)
+ImageJ-panther <- ImageJ.c
 
 # Cross-compiling (works only on Linux64 so far)
 
@@ -558,24 +558,24 @@ all-cross[] <- cross-win32 cross-win64 cross-linux cross-macosx cross-tiger
 # cross-tiger does not work yet
 
 cross-tiger[bin/cross-compiler.bsh tiger \
-	$CFLAGS(fiji-panther) $LIBS(macosx)] <- fiji.c
+	$CFLAGS(ImageJ-panther) $LIBS(macosx)] <- ImageJ.c
 cross-macosx[bin/cross-compiler.bsh macosx \
-	$CFLAGS(fiji-panther) $LIBS(macosx)] <- fiji.c
-cross-*[bin/cross-compiler.bsh * $CFLAGS(*) $LDFLAGS(*) $LIBS(*)] <- fiji.c
+	$CFLAGS(ImageJ-panther) $LIBS(macosx)] <- ImageJ.c
+cross-*[bin/cross-compiler.bsh * $CFLAGS(*) $LDFLAGS(*) $LIBS(*)] <- ImageJ.c
 
 # Precompiled stuff
 
-LAUNCHER(*)=precompiled/fiji-$PLATFORM
-LAUNCHER(win32)=precompiled/fiji-win32.exe
-LAUNCHER(win64)=precompiled/fiji-win64.exe
-LAUNCHER(osx10.4)=precompiled/fiji-macosx
-LAUNCHER(osx10.5)=precompiled/fiji-macosx precompiled/fiji-tiger
-precompile-fiji[] <- $LAUNCHER
+LAUNCHER(*)=precompiled/ImageJ-$PLATFORM
+LAUNCHER(win32)=precompiled/ImageJ-win32.exe
+LAUNCHER(win64)=precompiled/ImageJ-win64.exe
+LAUNCHER(osx10.4)=precompiled/ImageJ-macosx
+LAUNCHER(osx10.5)=precompiled/ImageJ-macosx precompiled/ImageJ-tiger
+precompile-ImageJ[] <- $LAUNCHER
 
-precompiled/fiji-tiger[bin/copy-file.py $PRE $TARGET] <- fiji-tiger
-precompiled/fiji-macosx[bin/copy-file.py $PRE $TARGET] <- fiji-macosx
-# this rule only matches precompiled/fiji-$PLATFORM
-precompiled/fiji-*[bin/copy-file.py $PRE $TARGET] <- fiji
+precompiled/ImageJ-tiger[bin/copy-file.py $PRE $TARGET] <- ImageJ-tiger
+precompiled/ImageJ-macosx[bin/copy-file.py $PRE $TARGET] <- ImageJ-macosx
+# this rule only matches precompiled/ImageJ-$PLATFORM
+precompiled/ImageJ-*[bin/copy-file.py $PRE $TARGET] <- ImageJ
 
 precompile-fake[] <- precompiled/fake.jar
 precompiled/fake.jar <- jars/fake.jar
@@ -625,17 +625,17 @@ precompiled/javassist.jar <- jars/javassist.jar
 precompiled/jsch-0.1.44.jar <- jars/jsch-0.1.44.jar
 precompiled/* <- plugins/*
 
-precompile[] <- precompile-fiji precompile-fake precompile-submodules
+precompile[] <- precompile-ImageJ precompile-fake precompile-submodules
 
 # precompiled fall back
 
-missingPrecompiledFallBack[./fiji --update update $TARGET] <- \
+missingPrecompiledFallBack[./ImageJ --update update $TARGET] <- \
 	jars/Fiji.jar jars/fiji-compat.jar plugins/Fiji_Updater.jar
 
 # Portable application/.app
 
 all-apps[] <- app-macosx app-linux app-linux64 app-win32 app-win64
-MACOSX_TIGER_LAUNCHER(macosx)=fiji-tiger
+MACOSX_TIGER_LAUNCHER(macosx)=ImageJ-tiger
 app-*[bin/make-app.py * $PLATFORM] <- all $MACOSX_TIGER_LAUNCHER
 
 app-all[bin/make-app.py all $PLATFORM] <- all
@@ -673,7 +673,7 @@ check[] <- check-launchers check-submodules
 
 LAUNCHERS=$LAUNCHER(linux) $LAUNCHER(linux64) \
 	$LAUNCHER(win32) $LAUNCHER(win64) $LAUNCHER(macosx)
-check-launchers[bin/up-to-date-check.py fiji.c $LAUNCHERS] <-
+check-launchers[bin/up-to-date-check.py ImageJ.c $LAUNCHERS] <-
 
 check-submodules[] <- check-ij check-TrakEM2 check-mpicbg
 

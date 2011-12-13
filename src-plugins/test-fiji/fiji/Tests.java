@@ -11,7 +11,7 @@ import junit.framework.TestSuite;
 import org.junit.runner.JUnitCore;
 
 public class Tests extends TestSuite {
-	
+
 	public Tests() {
 		addScriptTests();
 	}
@@ -55,7 +55,7 @@ public class Tests extends TestSuite {
 			fijiExecutable = System.getProperty("fiji.executable");
 			if (fijiExecutable == null)
 				throw new RuntimeException("Could not find the "
-					+ "fiji executable");
+					+ "ImageJ executable");
 		}
 
 		String[] newArgs = new String[args.length + 1];

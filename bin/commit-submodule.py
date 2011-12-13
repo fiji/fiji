@@ -1,5 +1,5 @@
 #!/bin/sh
-''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
+''''exec "$(dirname "$0")"/../ImageJ --jython "$0" "$@" # (call again with fiji)'''
 
 import os
 import sys
@@ -161,7 +161,7 @@ for extension in [ 'config', 'Fakefile' ]:
 
 # precompile
 
-print execute('./fiji --build ' + precompiled_target)
+print execute('./ImageJ --build ' + precompiled_target)
 
 # git add submodule & precompiled
 

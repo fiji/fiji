@@ -25,7 +25,7 @@
 
 	<target name="main-fiji" depends="make-plugins.config" description="Main target, use Fiji build system.">
 		<echo message="Generating jar file with Fiji build system" />
-		<apply executable="${fijiDir}/fiji" dir="${fijiDir}" relative="true" >
+		<apply executable="${ijDir}/ImageJ" dir="${ijDir}" relative="true" >
 			<arg value="--build"  />
 			<string value="${pluginsDirName}/${jarName}" />
 		</apply>
