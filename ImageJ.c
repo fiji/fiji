@@ -2778,21 +2778,21 @@ static void parse_command_line(void)
 		chdir(ij_dir);
 	}
 
-	if (!get_fiji_bundle_variable("heap", arg) ||
-			!get_fiji_bundle_variable("mem", arg) ||
-			!get_fiji_bundle_variable("memory", arg))
-		memory_size = parse_memory(arg->buffer);
-	if (!get_fiji_bundle_variable("system", arg) &&
-			atol(arg->buffer) > 0)
+	if (!get_fiji_bundle_variable("heap", &arg) ||
+			!get_fiji_bundle_variable("mem", &arg) ||
+			!get_fiji_bundle_variable("memory", &arg))
+		memory_size = parse_memory((&arg)->buffer);
+	if (!get_fiji_bundle_variable("system", &arg) &&
+			atol((&arg)->buffer) > 0)
 		options.use_system_jvm++;
-	if (get_fiji_bundle_variable("ext", ext_option))
-		string_setf(ext_option, "%s/Home/lib/ext:"
+	if (get_fiji_bundle_variable("ext", &ext_option))
+		string_setf(&ext_option, "%s/Home/lib/ext:"
 			"/Library/Java/Extensions:"
 			"/System/Library/Java/Extensions:"
 			"/System/Library/Frameworks/JavaVM.framework/"
 				"Home/lib/ext", get_java_home());
-	if (!get_fiji_bundle_variable("allowMultiple", arg))
-		allow_multiple = parse_bool(arg->buffer);
+	if (!get_fiji_bundle_variable("allowMultiple", &arg))
+		allow_multiple = parse_bool((&arg)->buffer);
 	get_fiji_bundle_variable("JVMOptions", jvm_options);
 	get_fiji_bundle_variable("DefaultArguments", default_arguments);
 #else
