@@ -2233,6 +2233,36 @@ static int check_subcommand_classpath(struct subcommand *subcommand)
 	return 1;
 }
 
+static void read_config(struct string *jvm_options)
+{
+	const char *path = ij_path("ImageJ.cfg");
+
+	if (file_exists(path)) {
+		const char *p;
+		read_file_as_string(path, jvm_options);
+		p = strchr(jvm_options->buffer, '\n');
+		if (p)
+			p = strchr(p + 1, '\n');
+		if (p) {
+			int new_length;
+			p++;
+			new_length = jvm_options->length - (p - jvm_options->buffer);
+			memmove(jvm_options->buffer, p, new_length);
+			p = strchr(jvm_options->buffer, '\n');
+			if (p)
+				new_length = p - jvm_options->buffer;
+			if (new_length > 10 && !strncmp(jvm_options->buffer + new_length - 10, " ij.ImageJ", 10))
+				new_length -= 10;
+			string_set_length(jvm_options, new_length);
+		}
+	}
+	else {
+		path = ij_path("jvm.cfg");
+		if (file_exists(path))
+			read_file_as_string(path, jvm_options);
+	}
+}
+
 static void __attribute__((__noreturn__)) usage(void)
 {
 	struct string subcommands = { 0, 0, NULL };
@@ -2796,7 +2826,7 @@ static void parse_command_line(void)
 	get_fiji_bundle_variable("JVMOptions", jvm_options);
 	get_fiji_bundle_variable("DefaultArguments", default_arguments);
 #else
-	read_file_as_string(ij_path("jvm.cfg"), jvm_options);
+	read_config(jvm_options);
 #endif
 
 	if (jvm_options->length)
