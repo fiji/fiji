@@ -33,6 +33,8 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.WeakHashMap;
 
+import javax.swing.JOptionPane;
+
 public class Main {
 	protected Image icon;
 	protected boolean debug;
@@ -40,6 +42,17 @@ public class Main {
 	public static void runUpdater() {
 		System.setProperty("fiji.main.checksUpdaterAtStartup", "true");
 		gentlyRunPlugIn("fiji.updater.UptodateCheck", "quick");
+	}
+
+	public static void checkObsoleteLauncher() {
+		String launcher = System.getProperty("fiji.executable");
+		if (launcher != null) {
+			launcher = launcher.substring(launcher.lastIndexOf('/') + 1);
+			launcher = launcher.substring(launcher.lastIndexOf('\\') + 1);
+			if (!launcher.startsWith("fiji"))
+				return;
+		}
+		JOptionPane.showMessageDialog(null, "Fiji was started using the 'fiji' executable; please use 'ImageJ' next time.");
 	}
 
 	public static void gentlyRunPlugIn(String className, String arg) {
@@ -61,6 +74,7 @@ public class Main {
 	}
 
 	public static void premain() {
+		checkObsoleteLauncher();
 		FileDialogDecorator.registerAutomaticDecorator();
 		JFileChooserDecorator.registerAutomaticDecorator();
 	}
