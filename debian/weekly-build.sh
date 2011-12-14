@@ -31,6 +31,7 @@ then
 	    modules/mpicbg \
 	    modules/tcljava \
 	    modules/weka \
+	    modules/imagej2 \
 	    modules/image5d
     )
 

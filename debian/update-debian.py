@@ -712,8 +712,6 @@ if options.clean:
                 continue
             if re.search("(^\s*jars|precompiled)/batik.jar",line):
                 continue
-            if re.search("imagej2",line):
-                continue
         if re.search("^\s*missingPrecompiledFallBack",line):
             skip_next_line = True
             continue
