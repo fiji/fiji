@@ -9,14 +9,20 @@ package fiji;
 public class IJ1Patcher implements Runnable {
 	@Override
 	public void run() {
-		String headless = System.getProperty("java.awt.headless");
-		if ("true".equalsIgnoreCase(headless))
-			new Headless().run();
-		new IJHacker().run();
 		try {
-			JavassistHelper.defineClasses();
-		} catch (Exception e) {
-			e.printStackTrace();
+			String headless = System.getProperty("java.awt.headless");
+			if ("true".equalsIgnoreCase(headless))
+				new Headless().run();
+			new IJHacker().run();
+			try {
+				JavassistHelper.defineClasses();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		} catch (NoClassDefFoundError e) {
+			// Deliberately ignored - in some cases
+			// javassist can not be found, and we should
+			// continue anyway.
 		}
 	}
 }
