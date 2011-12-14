@@ -76,7 +76,7 @@ precompiledDirectory=precompiled/
 
 buildDir=build/
 
-FIJI_JAVA_HOME(linux)=java/linux/jdk1.6.0_24/jre
+FIJI_JAVA_HOME(linux32)=java/linux/jdk1.6.0_24/jre
 FIJI_JAVA_HOME(linux64)=java/linux-amd64/jdk1.6.0_24/jre
 FIJI_JAVA_HOME(win32)=java/win32/jdk1.6.0_24/jre
 FIJI_JAVA_HOME(win64)=java/win64/jdk1.6.0_24/jre
@@ -494,7 +494,7 @@ misc/headless.jar[bin/make-headless-jar.bsh] <- jars/fiji-compat.jar jars/javass
 
 # Fiji launcher
 
-JAVA_LIB_PATH(linux)=lib/i386/client/libjvm.so
+JAVA_LIB_PATH(linux32)=lib/i386/client/libjvm.so
 JAVA_LIB_PATH(linux64)=lib/amd64/server/libjvm.so
 JAVA_LIB_PATH(win32)=bin/client/jvm.dll
 JAVA_LIB_PATH(win64)=bin/server/jvm.dll
@@ -519,8 +519,8 @@ MACOPTS(osx10.4)=$MACOPTS(osx10.3) -mmacosx-version-min=10.3 -arch i386 -arch pp
 MACOPTS(osx10.5)=$MACOPTS(osx10.3) -mmacosx-version-min=10.4 -arch i386 -arch x86_64
 CFLAGS(macosx)=$MACOPTS
 
-CFLAGS(linux)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector \
-	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(linux)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(linux)"'
+CFLAGS(linux32)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stak-protector \
+	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(linux32)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(linux32)"'
 CFLAGS(linux64)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector -rdynamic -g \
 	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(linux64)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(linux64)"'
 
@@ -532,7 +532,7 @@ CFLAGS(freebsd)=$COMMONCFLAGS \
 CFLAGS(ImageJ)=$COMMONCFLAGS $MACOPTS
 LDFLAGS(ImageJ)=$LDFLAGS $MACOPTS
 
-LIBS(linux)=-ldl -lpthread
+LIBS(linux32)=-ldl -lpthread
 LIBS(linux64)=-ldl -lpthread
 LIBS(macosx)=-weak -framework CoreFoundation -framework ApplicationServices \
 	-framework JavaVM
@@ -554,7 +554,7 @@ ImageJ-panther <- ImageJ.c
 
 # Cross-compiling (works only on Linux64 so far)
 
-all-cross[] <- cross-win32 cross-win64 cross-linux cross-macosx cross-tiger
+all-cross[] <- cross-win32 cross-win64 cross-linux32 cross-macosx cross-tiger
 # cross-tiger does not work yet
 
 cross-tiger[bin/cross-compiler.bsh tiger \
@@ -634,7 +634,7 @@ missingPrecompiledFallBack[./ImageJ --update update $TARGET] <- \
 
 # Portable application/.app
 
-all-apps[] <- app-macosx app-linux app-linux64 app-win32 app-win64
+all-apps[] <- app-macosx app-linux32 app-linux64 app-win32 app-win64
 MACOSX_TIGER_LAUNCHER(macosx)=ImageJ-tiger
 app-*[bin/make-app.py * $PLATFORM] <- all $MACOSX_TIGER_LAUNCHER
 
@@ -649,21 +649,21 @@ dmg[] <- fiji-macosx.dmg
 resources/install-fiji.jpg[./fiji bin/generate-finder-background.py] <- \
 	bin/generate-finder-background.py
 
-all-tars[] <- fiji-linux.tar.bz2 fiji-linux64.tar.bz2 \
+all-tars[] <- fiji-linux32.tar.bz2 fiji-linux64.tar.bz2 \
 	fiji-all.tar.bz2 fiji-nojre.tar.bz2
 fiji-*.tar.bz2[bin/make-tar.py $TARGET Fiji.app] <- app-* Fiji.app
 tar[] <- fiji-$PLATFORM.tar.bz2
 
-all-zips[] <- fiji-linux.zip fiji-linux64.zip fiji-win32.zip fiji-win64.zip \
+all-zips[] <- fiji-linux32.zip fiji-linux64.zip fiji-win32.zip fiji-win64.zip \
 	fiji-all.zip fiji-nojre.zip
 fiji-*.zip[bin/make-zip.py $TARGET Fiji.app] <- app-* Fiji.app
 zip[] <- fiji-$PLATFORM.zip
 
-all-isos[] <- fiji-linux.iso fiji-linux64.iso fiji-win32.iso fiji-win64.iso \
+all-isos[] <- fiji-linux32.iso fiji-linux64.iso fiji-win32.iso fiji-win64.iso \
 	fiji-macosx.iso fiji-all.iso fiji-nojre.iso
 fiji-*.iso[genisoimage -J -V Fiji -o $TARGET Fiji.app] <- app-*
 
-all-7zs[] <- fiji-linux.7z fiji-linux64.7z fiji-win32.7z fiji-win64.7z \
+all-7zs[] <- fiji-linux32.7z fiji-linux64.7z fiji-win32.7z fiji-win64.7z \
 	fiji-macosx.7z fiji-all.7z fiji-nojre.7z
 fiji-*.7z[bin/make-7z.py $TARGET Fiji.app] <- app-*
 
@@ -671,7 +671,7 @@ fiji-*.7z[bin/make-7z.py $TARGET Fiji.app] <- app-*
 
 check[] <- check-launchers check-submodules
 
-LAUNCHERS=$LAUNCHER(linux) $LAUNCHER(linux64) \
+LAUNCHERS=$LAUNCHER(linux32) $LAUNCHER(linux64) \
 	$LAUNCHER(win32) $LAUNCHER(win64) $LAUNCHER(macosx)
 check-launchers[bin/up-to-date-check.py ImageJ.c $LAUNCHERS] <-
 

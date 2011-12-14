@@ -162,7 +162,7 @@ echo "Making .dmg" &&
 make_dmg &&
 
 echo "Verifying" &&
-for a in linux linux64 win32 win64 macosx
+for a in linux32 linux64 win32 win64 macosx
 do
 	launcher="ImageJ-$a" &&
 	java="java/$a" &&
@@ -177,9 +177,9 @@ do
 	verify_archives $a "$launcher jars/fiji-lib.jar $java "
 done &&
 
-verify_archives nojre "Contents/MacOS/ImageJ-macosx Contents/MacOS/ImageJ-tiger ImageJ-linux ImageJ-linux64 ImageJ-win32.exe ImageJ-win64.exe jars/fiji-lib.jar " &&
+verify_archives nojre "Contents/MacOS/ImageJ-macosx Contents/MacOS/ImageJ-tiger ImageJ-linux32 ImageJ-linux64 ImageJ-win32.exe ImageJ-win64.exe jars/fiji-lib.jar " &&
 
-verify_archives all "Contents/MacOS/ImageJ-macosx Contents/MacOS/ImageJ-tiger ImageJ-linux ImageJ-linux64 ImageJ-win32.exe ImageJ-win64.exe jars/fiji-lib.jar java/linux java/linux-amd64 java/macosx-java3d java/win32 java/win64 " ||
+verify_archives all "Contents/MacOS/ImageJ-macosx Contents/MacOS/ImageJ-tiger ImageJ-linux32 ImageJ-linux64 ImageJ-win32.exe ImageJ-win64.exe jars/fiji-lib.jar java/linux java/linux-amd64 java/macosx-java3d java/win32 java/win64 " ||
 errorcount=$(($errorcount+1))
 
 if test $errorcount -gt 0

@@ -68,9 +68,9 @@ tiger)
 	CC=/opt/mac/bin/i686-apple-darwin8-gcc
 	TARGET=ImageJ-tiger
 ;;
-linux)
+linux32)
 	CC=/usr/bin/gcc
-	TARGET=ImageJ-linux
+	TARGET=ImageJ-linux32
 ;;
 *)
 	echo "Unknown platform: $PLATFORM!" >&2

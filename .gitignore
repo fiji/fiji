@@ -40,7 +40,6 @@ hs_err*.log
 /CoreLog.txt
 /chroot-*-i386
 /livecd
-/root-x86_64-pc-linux
 /jars/javac.jar
 /jars/cachedir
 /tmp.ijm

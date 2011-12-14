@@ -44,7 +44,7 @@ Linux)
 		java_submodule=linux-amd64
 		look_for_tools_jar /usr/lib/jvm
 		;;
-	*)	platform=linux
+	*)	platform=linux32
 		java_submodule=$platform
 		look_for_tools_jar /usr/lib64/jvm
 		;;

@@ -13,7 +13,7 @@ if len(sys.argv) < 3:
 platform = sys.argv[1].replace('app-', '')
 host_platform = sys.argv[2]
 
-all_platforms = ['linux', 'linux64', 'win32', 'win64', 'macosx']
+all_platforms = ['linux32', 'linux64', 'win32', 'win64', 'macosx']
 
 if platform == 'nojre':
 	copy_jre = False

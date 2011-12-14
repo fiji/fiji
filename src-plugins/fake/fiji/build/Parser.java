@@ -58,7 +58,7 @@ public class Parser {
 
 		if (allPlatforms == null) {
 			allPlatforms = new HashSet<String>();
-			allPlatforms.add("linux");
+			allPlatforms.add("linux32");
 			allPlatforms.add("linux64");
 			allPlatforms.add("win32");
 			allPlatforms.add("win64");

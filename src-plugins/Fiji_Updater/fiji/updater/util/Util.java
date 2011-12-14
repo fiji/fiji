@@ -67,7 +67,7 @@ public class Util {
 			new File(ijRoot + "/" + macLauncher).exists();
 
 		String[] list = {
-			"linux", "linux64", "macosx", "tiger", "win32", "win64"
+			"linux32", "linux64", "macosx", "tiger", "win32", "win64"
 		};
 
 		Arrays.sort(list);
@@ -112,7 +112,7 @@ public class Util {
 			System.getProperty("os.arch", "").indexOf("64") >= 0;
 		String osName = System.getProperty("os.name", "<unknown>");
 		if (osName.equals("Linux"))
-			return "linux" + (is64bit ? "64" : "");
+			return "linux" + (is64bit ? "64" : "32");
 		if (osName.equals("Mac OS X"))
 			return "macosx";
 		if (osName.startsWith("Windows"))

@@ -48,7 +48,7 @@ public class JNALibraryLoader {
 		return IJ.isMacOSX() ? "macosx" :
 			(IJ.isWindows() ? "win"
 				+ (IJ.is64Bit() ? "64" : "32")
-			 : "linux" + (IJ.is64Bit() ? "64" : ""));
+			 : "linux" + (IJ.is64Bit() ? "64" : "32"));
 	}
 
 	protected static String getLibraryName(String name, int version) {

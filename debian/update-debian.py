@@ -72,7 +72,7 @@ package_name_to_file_matchers = {
         [ "jars/autocomplete.jar" ],
 
     "fiji-base" :
-        [ "ImageJ-linux",
+        [ "ImageJ-linux32",
           "ImageJ-linux64",
           "jars/fake.jar",
           "misc/Fiji.jar",
