@@ -81,6 +81,7 @@ FIJI_JAVA_HOME(linux64)=java/linux-amd64/jdk1.6.0_24/jre
 FIJI_JAVA_HOME(win32)=java/win32/jdk1.6.0_24/jre
 FIJI_JAVA_HOME(win64)=java/win64/jdk1.6.0_24/jre
 FIJI_JAVA_HOME(macosx)=java/macosx-java3d
+FIJI_JAVA_HOME(freebsd)=/usr/local/jdk1.6.0/jre
 JAVA_HOME=$FIJI_JAVA_HOME
 ENVOVERRIDES(JAVA_HOME)=true
 
@@ -225,7 +226,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Threshold_Colour.jar \
 	plugins/Helmholtz_Analysis.jar \
 	plugins/Descriptor_based_registration.jar \
-	plugins/Reconstruct_Reader.jar
+	plugins/Reconstruct_Reader.jar \
+	plugins/Fiji_Package_Maker.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
@@ -307,24 +309,25 @@ jars/jython.jar <- fiji modules/jython/
 jars/commons-math.jar <- fiji modules/commons-math/
 jars/javassist.jar <- modules/javassist/
 jars/jsch-0.1.44.jar <- modules/jsch/
-jars/ij-core-plugins.jar <- modules/imagej2/
-jars/ij-core-tools.jar <- modules/imagej2/
 jars/ij-core.jar <- modules/imagej2/
 jars/ij-data.jar <- modules/imagej2/
-jars/ij-display.jar <- modules/imagej2/
-jars/ij-event.jar <- modules/imagej2/
-jars/ij-legacy.jar <- modules/imagej2/
-jars/ij-module.jar <- modules/imagej2/
-jars/ij-object.jar <- modules/imagej2/
+jars/ij-ext.jar <- modules/imagej2/
+jars/ij-ext-swing.jar <- modules/imagej2/
+jars/ij-io.jar <- modules/imagej2/
+jars/ij-options.jar <- modules/imagej2/
 jars/ij-platform.jar <- modules/imagej2/
-jars/ij-plugin.jar <- modules/imagej2/
-jars/ij-tool.jar <- modules/imagej2/
-jars/ij-ui.jar <- modules/imagej2/
-jars/ij-imagej.jar <- modules/imagej2/
 jars/ij-platform-macosx.jar <- modules/imagej2/
-jars/ij-plugin-swing.jar <- modules/imagej2/
+jars/ij-plugins-app.jar <- modules/imagej2/
+jars/ij-plugins-data.jar <- modules/imagej2/
+jars/ij-plugins-debug.jar <- modules/imagej2/
+jars/ij-plugins-display.jar <- modules/imagej2/
+jars/ij-tools.jar <- modules/imagej2/
+jars/ij-ui.jar <- modules/imagej2/
 jars/ij-ui-common-awt.jar <- modules/imagej2/
-jars/ij-ui-swing.jar <- modules/imagej2/
+jars/ij-ui-swing-base.jar <- modules/imagej2/
+jars/ij-ui-swing-plugins.jar <- modules/imagej2/
+jars/ij-ui-swing-sdi.jar <- modules/imagej2/
+jars/ij-ui-swing-tools.jar <- modules/imagej2/
 jars/ij-util-awt.jar <- modules/imagej2/
 CLASSPATH(plugins/Image_5D.jar)=jars/ij.jar
 plugins/Image_5D.jar <- modules/image5d/
@@ -374,7 +377,7 @@ CLASSPATH(plugins/Directionality_.jar)=jars/ij.jar:jars/jfreechart-1.0.13.jar:ja
 CLASSPATH(plugins/LSM_Toolbox.jar)=jars/ij.jar:plugins/LSM_Reader.jar
 MAINCLASS(plugins/LSM_Toolbox.jar)=org.imagearchive.lsm.toolbox.gui.AboutDialog
 MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
-CLASSPATH(plugins/Stitching_.jar)=jars/ij.jar:plugins/loci_tools.jar:jars/fiji-lib.jar:jars/imglib.jar:jars/edu_mines_jtk.jar
+CLASSPATH(plugins/Stitching_.jar)=jars/ij.jar:plugins/loci_tools.jar:jars/fiji-lib.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/edu_mines_jtk.jar:plugins/Fiji_Plugins.jar:jars/mpicbg.jar
 CLASSPATH(plugins/Fiji_Plugins.jar)=jars/ij.jar:jars/jsch-0.1.44.jar:jars/fiji-lib.jar:jars/VIB-lib.jar
 MAINCLASS(plugins/Fiji_Updater.jar)=fiji.updater.Main
 CLASSPATH(plugins/Fiji_Updater.jar)=jars/ij.jar:jars/jsch-0.1.44.jar
@@ -388,7 +391,7 @@ CLASSPATH(plugins/Simple_Neurite_Tracer.jar)=jars/ij.jar:$JAVA3D_JARS:jars/VIB-l
 CLASSPATH(plugins/3D_Viewer.jar)=jars/ij.jar:jars/VIB-lib.jar:jars/imglib.jar:jars/Jama-1.0.2.jar:$JAVA3D_JARS
 CLASSPATH(jars/jep.jar)=jars/ij.jar:jars/Jama-1.0.2.jar:jars/junit-4.5.jar
 CLASSPATH(plugins/SPIM_Registration.jar)=jars/ij.jar:$JAVA3D_JARS:jars/imglib.jar:jars/mpicbg.jar:plugins/3D_Viewer.jar:jars/weka.jar:jars/fiji-lib.jar:plugins/loci_tools.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama-1.0.2.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:jars/jfreechart-1.0.13.jar:jars/jcommon-1.0.12.jar
-CLASSPATH(plugins/Descriptor_based_registration.jar)=jars/ij.jar:jars/imglib.jar:jars/mpicbg.jar:jars/fiji-lib.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama-1.0.2.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:plugins/SPIM_Registration.jar:plugins/Stitching_.jar
+CLASSPATH(plugins/Descriptor_based_registration.jar)=jars/ij.jar:jars/imglib.jar:jars/mpicbg.jar:jars/fiji-lib.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama-1.0.2.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:plugins/SPIM_Registration.jar:$JAVA3D_JARS
 CLASSPATH(plugins/Bug_Submitter.jar)=jars/ij.jar:plugins/Fiji_Updater.jar
 CLASSPATH(plugins/TopoJ_.jar)=jars/ij.jar:jars/Jama-1.0.2.jar
 CLASSPATH(jars/imagescience.jar)=jars/ij.jar:plugins/Image_5D.jar
@@ -469,6 +472,7 @@ CLASSPATH(plugins/Colour_Deconvolution.jar)=jars/ij.jar
 CLASSPATH(plugins/Dichromacy_.jar)=jars/ij.jar
 CLASSPATH(plugins/Threshold_Colour.jar)=jars/ij.jar
 CLASSPATH(plugins/Helmholtz_Analysis.jar)=jars/ij.jar
+CLASSPATH(plugins/Fiji_Package_Maker.jar)=jars/ij.jar:plugins/Fiji_Updater.jar:jars/fiji-lib.jar
 
 # pre-Java5 generics ;-)
 
@@ -509,6 +513,7 @@ JAVA_LIB_PATH(linux64)=lib/amd64/server/libjvm.so
 JAVA_LIB_PATH(win32)=bin/client/jvm.dll
 JAVA_LIB_PATH(win64)=bin/server/jvm.dll
 JAVA_LIB_PATH(macosx)=
+JAVA_LIB_PATH(freebsd)=lib/i386/client/libjvm.so
 
 # The variables CFLAGS, LDFLAGS and LIBS will be used for compiling
 # C and C++ programs.
@@ -534,6 +539,9 @@ CFLAGS(linux64)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector -rdynamic
 	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(linux64)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(linux64)"'
 
 LDFLAGS(win32)=$LDFLAGS $WINOPTS
+
+CFLAGS(freebsd)=$COMMONCFLAGS \
+	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(freebsd)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(freebsd)"'
 
 CFLAGS(fiji)=$COMMONCFLAGS $MACOPTS
 LDFLAGS(fiji)=$LDFLAGS $MACOPTS

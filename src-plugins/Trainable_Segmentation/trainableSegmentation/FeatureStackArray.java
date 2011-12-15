@@ -431,6 +431,20 @@ public class FeatureStackArray
 		return referenceStackIndex;
 	}
 	
+	public int getWidth()
+	{
+		if(referenceStackIndex != -1)
+			return featureStackArray[referenceStackIndex].getWidth();
+		return -1;
+	}
+	
+	public int getHeight()
+	{
+		if(referenceStackIndex != -1)
+			return featureStackArray[referenceStackIndex].getHeight();
+		return -1;
+	}
+	
 }
 
 	

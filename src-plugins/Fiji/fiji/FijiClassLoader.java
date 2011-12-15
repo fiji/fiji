@@ -16,8 +16,10 @@ import java.net.URLClassLoader;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class FijiClassLoader extends URLClassLoader {
 
@@ -37,8 +39,18 @@ public class FijiClassLoader extends URLClassLoader {
 			if (pluginsDir != null && !pluginsDir.equals("") && new File(pluginsDir).exists() && !isSameFile(pluginsDir, fijiDir))
 				addPath(pluginsDir);
 			if (fijiDir != null && !fijiDir.startsWith("http://")) {
-				addPath(fijiDir + "/plugins");
-				addPath(fijiDir + "/jars");
+				Set<File> classPath = new HashSet<File>();
+				File updateDir = new File(fijiDir, "update");
+				File plugins = new File(fijiDir, "plugins");
+				File updatePlugins = new File(updateDir, "plugins");
+				getNewerJars(classPath, plugins, updatePlugins, true);
+				getNewerJars(classPath, updatePlugins, plugins, false);
+				File jars = new File(fijiDir, "jars");
+				updatePlugins = new File(updateDir, "jars");
+				getNewerJars(classPath, jars, updatePlugins, true);
+				getNewerJars(classPath, updatePlugins, jars, false);
+				for (File file : classPath)
+					addFile(file);
 			}
 			else
 				addClassMap(System.getProperty("jnlp_class_map"));
@@ -100,6 +112,51 @@ public class FijiClassLoader extends URLClassLoader {
 		} catch (Exception e) { e.printStackTrace(); /* ignore */ }
 	}
 
+	protected void getJars(Set<File> result, File directory, boolean addDirectoriesToo) {
+		File[] files = directory.listFiles();
+		if (files == null)
+			return;
+		if (addDirectoriesToo)
+			result.add(directory);
+		for (File file : files)
+			if (file.isDirectory())
+				getJars(result, file, addDirectoriesToo);
+			else if (file.getName().endsWith(".jar"))
+				result.add(file);
+	}
+
+	protected void getNewerJars(Set<File> result, File directory, File thanDirectory, boolean addDirectoriesToo) {
+		if (!thanDirectory.exists()) {
+			getJars(result, directory, addDirectoriesToo);
+			return;
+		}
+
+		File[] files = directory.listFiles();
+		if (files == null)
+			return;
+		if (addDirectoriesToo)
+			result.add(directory);
+		for (File file : files)
+			if (file.isDirectory()) {
+				getNewerJars(result, file, new File(thanDirectory, file.getName()), addDirectoriesToo);
+			}
+			else if (file.getName().endsWith(".jar")) {
+				File than = new File(thanDirectory, file.getName());
+				if (than.exists() && than.lastModified() > file.lastModified())
+					result.add(than);
+				else
+					result.add(file);
+			}
+	}
+
+	protected void addFile(File file) {
+		try {
+			addURL(file.toURI().toURL());
+		} catch (MalformedURLException e) {
+			IJ.log("FijiClassLoader: " + e);
+		}
+	}
+
 	public void addPath(String path) throws IOException {
 		addPath(path, true);
 	}
@@ -111,32 +168,20 @@ public class FijiClassLoader extends URLClassLoader {
 			return;
 		File file = new File(path);
 
-		if (!recurse && file.isDirectory()) try {
-			addURL(file.toURI().toURL());
-		} catch (MalformedURLException e) {
-			IJ.log("FijiClassLoader: " + e);
-		}
+		if (!recurse && file.isDirectory())
+			addFile(file);
 		else if (file.isDirectory()) {
-
-			try {
-
-				// Add first level subdirectories to search path
-				addURL(file.toURI().toURL());
-			} catch (MalformedURLException e) {
-				IJ.log("FijiClassLoader: " + e);
-			}
+			// Add first level subdirectories to search path
+			addFile(file);
 			String[] paths = file.list();
+			if (paths == null)
+				return;
 			for (int i = 0; i < paths.length; i++)
 				if (!paths[i].startsWith("."))
 					addPath(path + File.separator + paths[i]);
 		}
-		else if (path.endsWith(".jar")) {
-			try {
-				addURL(file.toURI().toURL());
-			} catch (MalformedURLException e) {
-				IJ.log("FijiClassLoader: " + e);
-			}
-		}
+		else if (path.endsWith(".jar"))
+			addFile(file);
 	}
 
 	public void addFallBack(ClassLoader loader) {

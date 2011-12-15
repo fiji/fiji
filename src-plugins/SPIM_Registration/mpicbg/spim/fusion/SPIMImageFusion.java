@@ -166,7 +166,11 @@ public abstract class SPIMImageFusion
 			if ( scale != 1 )
 			{
 				ram = (4l * size.x/scale * size.y/scale * size.z/scale)/(1024l * 1024l);
-				IOFunctions.println("Scaled size("+scale+"): (" + Math.round(size.x/scale) + ", " + Math.round(size.y/scale) + ", " + Math.round(size.z/scale) + ") needs " + Math.round( ram ) + " MB of RAM" );				
+				
+				if ( views.get( 0 ).getViewStructure().getSPIMConfiguration().isDeconvolution )
+					IOFunctions.println("Scaled size("+scale+"): (" + Math.round(size.x/scale) + ", " + Math.round(size.y/scale) + ", " + Math.round(size.z/scale) + ") needs " + Math.round( ram ) + " MB of RAM x " + 2*views.size() + " = " + Math.round( ram )*2*views.size() + " MB" );
+				else
+					IOFunctions.println("Scaled size("+scale+"): (" + Math.round(size.x/scale) + ", " + Math.round(size.y/scale) + ", " + Math.round(size.z/scale) + ") needs " + Math.round( ram ) + " MB of RAM" );
 			}
 			
 			if ( cropSizeX > 0 && cropSizeY > 0 && cropSizeZ > 0)
@@ -177,7 +181,11 @@ public abstract class SPIMImageFusion
 					IOFunctions.println("Cropped image size: " + cropSizeX + "x" + cropSizeY + "x" + cropSizeZ);
 				
 				ram = (4l * cropSizeX/scale * cropSizeY/scale * cropSizeZ/scale)/(1024l * 1024l);
-				IOFunctions.println("Needs " + Math.round( ram ) + " MB of RAM");
+				
+				if ( views.get( 0 ).getViewStructure().getSPIMConfiguration().isDeconvolution )
+					IOFunctions.println("Needs " + Math.round( ram ) + " MB of RAM x " + 2*views.size() + " = " + Math.round( ram )*2*views.size() + " MB" );
+				else
+					IOFunctions.println("Needs " + Math.round( ram ) + " MB of RAM");
 			}
 		}
 	}

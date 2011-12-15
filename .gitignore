@@ -301,3 +301,7 @@ hs_err*.log
 /modules/image5d/target/
 /plugins/Helmholtz_Analysis.jar
 /plugins/Descriptor_based_registration.jar
+/tests/sample-data/
+/modules/jython/unpacked
+/modules/jython/python-*
+/plugins/Fiji_Package_Maker.jar

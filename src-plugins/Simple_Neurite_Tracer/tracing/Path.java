@@ -1984,6 +1984,15 @@ public class Path implements Comparable<Path> {
 			}
 		}
 
+		// Has the path's representation in the 3D viewer been marked as invalid?
+
+		if (pathToUse.is3DViewInvalid()) {
+			pathToUse.removeFrom3DViewer(univ);
+			pathToUse.addTo3DViewer(univ, color, colorImage);
+			invalid3DMesh = false;
+			return;
+		}
+
 		// Is the (flat) color wrong?
 
 		if( pathToUse.realColor == null || ! pathToUse.realColor.equals(color) ) {
@@ -2039,6 +2048,14 @@ public class Path implements Comparable<Path> {
 						     (float)precise_z_positions[i] ) );
 		}
 		return linePoints;
+	}
+
+	protected boolean invalid3DMesh = false;
+	public void invalidate3DView() {
+		invalid3DMesh = true;
+	}
+	public boolean is3DViewInvalid() {
+		return invalid3DMesh;
 	}
 
 	public Content addAsLinesTo3DViewer(Image3DUniverse univ, Color c, ImagePlus colorImage ) {
@@ -2382,4 +2399,140 @@ public class Path implements Comparable<Path> {
 
 		return result;
 	}
+
+	/** Returns the points which are indicated to be a join,
+	 *  either in this Path object, or any other that starts or ends on
+	 *  it.
+	 */
+	public List<PointInImage> findJoinedPoints() {
+		ArrayList<PointInImage > result = new ArrayList<PointInImage>();
+		if (startJoins != null) {
+			result.add(startJoinsPoint);
+		}
+		if (endJoins != null) {
+			result.add(endJoinsPoint);
+		}
+		for (Path other : somehowJoins) {
+			if (other.startJoins == this) {
+				result.add(other.startJoinsPoint);
+			}
+			if (other.endJoins == this) {
+				result.add(other.endJoinsPoint);
+			}
+		}
+		return result;
+	}
+
+	/** Returns the indices of points which are indicated to be a
+	 *  join, either in this path object, or any other that starts
+	 *  or ends on it.
+	 */
+	public Set<Integer> findJoinedPointIndices() {
+		HashSet<Integer> result = new HashSet<Integer>();
+		for (PointInImage point : findJoinedPoints()) {
+			result.add(indexNearestTo(point.x, point.y, point.z));
+		}
+		return result;
+	}
+
+	synchronized public void downsample(double maximumAllowedDeviation) {
+		// We should only downsample between the fixed points, i.e.
+		// where this neuron joins others
+		Set<Integer> fixedPointSet = findJoinedPointIndices();
+		// Add the start and end points:
+		fixedPointSet.add(0);
+		fixedPointSet.add(points-1);
+		Integer [] fixedPoints = fixedPointSet.toArray(new Integer[0]);
+		Arrays.sort(fixedPoints);
+		int lastIndex = -1;
+		int totalDroppedPoints = 0;
+		for (int fpi : fixedPoints) {
+			if (lastIndex >= 0) {
+				int start = lastIndex - totalDroppedPoints;
+				int end = fpi - totalDroppedPoints;
+				// Now downsample between those points:
+				ArrayList<SimplePoint> forDownsampling = new ArrayList<SimplePoint>();
+				for (int i = start; i <= end; ++i) {
+					forDownsampling.add(new SimplePoint(
+							precise_x_positions[i],
+							precise_y_positions[i],
+							precise_z_positions[i],
+							i));
+				}
+				ArrayList<SimplePoint> downsampled =
+					PathDownsampler.downsample(forDownsampling, maximumAllowedDeviation);
+
+				// Now update x_points, y_points, z_points:
+				int pointsDroppedThisTime = forDownsampling.size() - downsampled.size();
+				totalDroppedPoints += pointsDroppedThisTime;
+				int newLength = points - pointsDroppedThisTime;
+				double [] new_x_points = new double[maxPoints];
+				double [] new_y_points = new double[maxPoints];
+				double [] new_z_points = new double[maxPoints];
+				// First copy the elements before 'start' verbatim:
+				System.arraycopy(precise_x_positions, 0, new_x_points, 0, start);
+				System.arraycopy(precise_y_positions, 0, new_y_points, 0, start);
+				System.arraycopy(precise_z_positions, 0, new_z_points, 0, start);
+				// Now copy in the downsampled points:
+				int downsampledLength = downsampled.size();
+				for (int i = 0; i < downsampledLength; ++i) {
+					SimplePoint sp = downsampled.get(i);
+					new_x_points[start+i] = sp.x;
+					new_y_points[start+i] = sp.y;
+					new_z_points[start+i] = sp.z;
+				}
+				System.arraycopy(precise_x_positions, end, new_x_points, (start + downsampledLength) - 1, points - end);
+				System.arraycopy(precise_y_positions, end, new_y_points, (start + downsampledLength) - 1, points - end);
+				System.arraycopy(precise_z_positions, end, new_z_points, (start + downsampledLength) - 1, points - end);
+
+				double [] new_radiuses = null;
+				if (hasCircles()) {
+					new_radiuses = new double[maxPoints];
+					System.arraycopy(radiuses, 0, new_radiuses, 0, start);
+					for (int i = 0; i < downsampledLength; ++i) {
+						SimplePoint sp = downsampled.get(i);
+						// Find a first and last index in the original radius array to
+						// take a mean over:
+						int firstRadiusIndex, lastRadiusIndex, n = 0;
+						double total = 0;
+						if (i == 0) {
+							// This is the first point:
+							SimplePoint spNext = downsampled.get(i+1);
+							firstRadiusIndex = sp.originalIndex;
+							lastRadiusIndex = (sp.originalIndex + spNext.originalIndex) / 2;
+						} else if (i == downsampledLength - 1) {
+							// The this is the last point:
+							SimplePoint spPrevious = downsampled.get(i-1);
+							firstRadiusIndex = (spPrevious.originalIndex + sp.originalIndex) / 2;
+							lastRadiusIndex = sp.originalIndex;
+						} else {
+							SimplePoint spPrevious = downsampled.get(i-1);
+							SimplePoint spNext = downsampled.get(i+1);
+							firstRadiusIndex = (sp.originalIndex + spPrevious.originalIndex) / 2;
+							lastRadiusIndex = (sp.originalIndex + spNext.originalIndex) / 2;
+						}
+						for (int j = firstRadiusIndex; j <= lastRadiusIndex; ++j) {
+							total += radiuses[j];
+							++n;
+						}
+						new_radiuses[start+i] = total / n;
+					}
+					System.arraycopy(radiuses, end, new_radiuses, (start + downsampledLength) -1, points - end);
+				}
+
+				// Now update all of those fields:
+				points = newLength;
+				precise_x_positions = new_x_points;
+				precise_y_positions = new_y_points;
+				precise_z_positions = new_z_points;
+				radiuses = new_radiuses;
+				if (hasCircles()) {
+					setGuessedTangents(2);
+				}
+			}
+			lastIndex = fpi;
+		}
+		invalidate3DView();
+	}
+
 }

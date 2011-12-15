@@ -1,12 +1,17 @@
 package ij3d.pointlist;
 
+import java.awt.Font;
+
 import javax.media.j3d.Alpha;
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BoundingSphere;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.ColoringAttributes;
+import javax.media.j3d.Geometry;
 import javax.media.j3d.Group;
 import javax.media.j3d.Material;
+import javax.media.j3d.OrientedShape3D;
+import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.ScaleInterpolator;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Transform3D;
@@ -20,6 +25,7 @@ import vib.BenesNamedPoint;
 import vib.PointList;
 
 import com.sun.j3d.utils.geometry.Sphere;
+import com.sun.j3d.utils.geometry.Text2D;
 
 /**
  * This class extends BranchGroup to represent a PointList as a number
@@ -113,6 +119,21 @@ public class PointListShape extends BranchGroup
 						.getChild(0)).getChild(0);
 			Sphere s = (Sphere)tg.getChild(0);
 			s.setAppearance(appearance);
+
+			// update text
+			Group gr = (Group)bg.getChild(0);
+			gr = (Group)gr.getChild(2);
+			OrientedShape3D os = (OrientedShape3D)gr.getChild(0);
+			Text2D t2d = new Text2D(points.get(i).getName(), color, "Helvetica", 24, Font.PLAIN);
+			t2d.setRectangleScaleFactor(0.03f);
+			Geometry g = t2d.getGeometry();
+			Appearance a = t2d.getAppearance();
+			RenderingAttributes ra = new RenderingAttributes();
+			ra.setDepthTestFunction(RenderingAttributes.ALWAYS);
+			a.setRenderingAttributes(ra);
+			g.setCapability(Geometry.ALLOW_INTERSECT);
+			os.setGeometry(g);
+			os.setAppearance(a);
 		}
 	}
 
@@ -126,6 +147,7 @@ public class PointListShape extends BranchGroup
 	/**
 	 * @see PointList.PointListListener#added(BenesNamedPoint)
 	 */
+	@Override
 	public void added(BenesNamedPoint p) {
 		Point3f p3f = new Point3f((float)p.x, (float)p.y, (float)p.z);
 		addPointToGeometry(p3f, p.getName());
@@ -134,6 +156,7 @@ public class PointListShape extends BranchGroup
 	/**
 	 * @see PointList.PointListListener#removed(BenesNamedPoint)
 	 */
+	@Override
 	public void removed(BenesNamedPoint p) {
 		deletePointFromGeometry(p.getName());
 	}
@@ -141,14 +164,30 @@ public class PointListShape extends BranchGroup
 	/**
 	 * @see PointList.PointListListener#renamed(BenesNamedPoint)
 	 */
+	@Override
 	public void renamed(BenesNamedPoint p) {
 		int i = points.indexOf(p);
 		getChild(i).setName(points.get(i).getName());
+		Group bg = (Group)getChild(i);
+		bg = (Group)bg.getChild(0);
+		bg = (Group)bg.getChild(2);
+		OrientedShape3D os = (OrientedShape3D)bg.getChild(0);
+		Text2D t2d = new Text2D(p.getName(), color, "Helvetica", 24, Font.PLAIN);
+		t2d.setRectangleScaleFactor(0.03f);
+		Geometry g = t2d.getGeometry();
+		Appearance a = t2d.getAppearance();
+		RenderingAttributes ra = new RenderingAttributes();
+		ra.setDepthTestFunction(RenderingAttributes.ALWAYS);
+		a.setRenderingAttributes(ra);
+		g.setCapability(Geometry.ALLOW_INTERSECT);
+		os.setGeometry(g);
+		os.setAppearance(a);
 	}
 
 	/**
 	 * @see PointList.PointListListener#moved(BenesNamedPoint)
 	 */
+	@Override
 	public void moved(BenesNamedPoint p) {
 		int i = points.indexOf(p);
 		if(i >= 0 && i < points.size())
@@ -158,6 +197,7 @@ public class PointListShape extends BranchGroup
 	/**
 	 * @see PointList.PointListListener#reordered(BenesNamedPoint)
 	 */
+	@Override
 	public void reordered() {
 		recreate();
 	}
@@ -165,6 +205,7 @@ public class PointListShape extends BranchGroup
 	/**
 	 * @see PointList.PointListListener#highlighted(BenesNamedPoint)
 	 */
+	@Override
 	public void highlighted(final BenesNamedPoint p) {
 		final int i = points.indexOf(p);
 		BranchGroup bg = (BranchGroup)getChild(i);
@@ -236,10 +277,12 @@ public class PointListShape extends BranchGroup
 		tg.addChild(si);
 
 		Sphere sphere = new Sphere();
+		sphere.setPickable(false);
 		sphere.getShape().setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
 		sphere.setCapability(Sphere.ENABLE_APPEARANCE_MODIFY);
 		sphere.setAppearance(appearance);
 		sig.addChild(sphere);
+		addText(tg, name, p, color);
 
 		addChild(bg);
 
@@ -249,6 +292,34 @@ public class PointListShape extends BranchGroup
 		sig.getTransform(scaleTransform);
 		scaleTransform.setScale(radius);
 		sig.setTransform(scaleTransform);
+	}
+
+	private void addText(Group bg, String s, Point3f pos, Color3f c) {
+		Transform3D translation = new Transform3D();
+		translation.setTranslation(new Vector3f(-radius, -radius, 0));
+		TransformGroup tg = new TransformGroup(translation);
+		Text2D t2d = new Text2D(s, c, "Helvetica", 24, Font.PLAIN);
+		t2d.setRectangleScaleFactor(0.03f);
+		Geometry g = t2d.getGeometry();
+		Appearance a = t2d.getAppearance();
+		RenderingAttributes ra = new RenderingAttributes();
+		ra.setDepthTestFunction(RenderingAttributes.ALWAYS);
+		a.setRenderingAttributes(ra);
+		g.setCapability(Geometry.ALLOW_INTERSECT);
+		OrientedShape3D textShape = new OrientedShape3D();
+		textShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
+		textShape.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
+		textShape.setAlignmentMode(OrientedShape3D.ROTATE_ABOUT_POINT);
+		textShape.setAlignmentAxis(0.0f, 1.0f, 0.0f);
+		textShape.setRotationPoint(new Point3f());
+		textShape.setConstantScaleEnable(true);
+		textShape.setGeometry(g);
+		textShape.setAppearance(a);
+		tg.setCapability(ENABLE_PICK_REPORTING);
+		tg.setPickable(true);
+
+		tg.addChild(textShape);
+		bg.addChild(tg);
 	}
 
 	/**
@@ -286,9 +357,11 @@ public class PointListShape extends BranchGroup
 	 */
 	private void initAppearance(Color3f color) {
 		appearance = new Appearance();
+		appearance.setCapability(Appearance.ALLOW_COLORING_ATTRIBUTES_READ);
 		ColoringAttributes colorAttrib = new ColoringAttributes();
 		colorAttrib.setShadeModel(ColoringAttributes.SHADE_GOURAUD);
 		colorAttrib.setColor(color);
+		colorAttrib.setCapability(ColoringAttributes.ALLOW_COLOR_WRITE);
 		appearance.setColoringAttributes(colorAttrib);
 
 		Material material = new Material();

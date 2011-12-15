@@ -41,8 +41,8 @@ public class CompileNativeLibrary extends Rule {
 			hostLibraryExtension = ".dll";
 		}
 		else {
-			System.err.println("Unknown platform: " + osName);
-			hostPlatform = null;
+			String arch = hostIs64Bit ? "64" : "32";
+			hostPlatform = osName.toLowerCase() + (osName.endsWith(arch) ? "" : arch);
 			hostLibraryPrefix = "lib";
 			hostLibraryExtension = ".so";
 		}

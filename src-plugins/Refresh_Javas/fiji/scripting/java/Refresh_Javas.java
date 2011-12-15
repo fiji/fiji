@@ -409,7 +409,7 @@ public class Refresh_Javas extends RefreshScripts {
 		if (className.endsWith(".java"))
 			className = className.substring(0, className.length() - 5);
 		String packageName = getPackageName(path);
-		return (packageName.equals("") ? "" : packageName + ".") + className;
+		return (packageName == null || packageName.equals("") ? "" : packageName + ".") + className;
 	}
 
 	void runOutOfTreePlugin(String path) throws IOException,

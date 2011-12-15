@@ -28,6 +28,7 @@
 package tracing;
 
 import ij.*;
+import ij.gui.GenericDialog;
 import ij.io.*;
 
 import javax.swing.*;
@@ -314,6 +315,30 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 				p.setName(s);
 				pathAndFillManager.resetListeners(null);
 			}
+
+		} else if (source == downsampleMenuItem) {
+			GenericDialog gd = new GenericDialog("Choose level of downsampling");
+			gd.addNumericField("Maximum permitted distance from previous points", plugin.x_spacing, 3);
+			gd.addMessage("WARNING: this destructive operation cannot be undone");
+			gd.showDialog();
+			if (gd.wasCanceled())
+				return;
+			double maximumDeviation = gd.getNextNumber();
+			if (Double.isNaN(maximumDeviation) || maximumDeviation <= 0) {
+				IJ.error("The maximum permitted distance must be a postive number");
+				return;
+			}
+			for (Path p : selectedPaths) {
+				Path pathToUse = p;
+				if( p.getUseFitted() ) {
+					pathToUse = p.fitted;
+				}
+				pathToUse.downsample(maximumDeviation);
+			}
+			// Make sure that the 3D viewer and the stacks are redrawn:
+			pathAndFillManager.update3DViewerContents();
+			plugin.repaintAllPanes();
+
 		} else {
 			// Check if the source was from one of the SWC menu
 			// items:
@@ -478,6 +503,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 	protected JMenuItem makePrimaryMenuItem;
 	protected JMenuItem deleteMenuItem;
 	protected JMenuItem exportAsSWCMenuItem;
+	protected JMenuItem downsampleMenuItem;
 
 	protected ArrayList<JMenuItem> swcTypeMenuItems = new ArrayList<JMenuItem>();
 
@@ -520,6 +546,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		makePrimaryMenuItem = new JMenuItem("Make Primary");
 		deleteMenuItem = new JMenuItem("Delete");
 		exportAsSWCMenuItem = new JMenuItem("Export as SWC");
+		downsampleMenuItem = new JMenuItem("Downsample ...");
 
 		popup.add(renameMenuItem);
 		popup.add(fitVolumeMenuItem);
@@ -527,6 +554,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		popup.add(makePrimaryMenuItem);
 		popup.add(deleteMenuItem);
 		popup.add(exportAsSWCMenuItem);
+		popup.add(downsampleMenuItem);
 
 		renameMenuItem.addActionListener(this);
 		fitVolumeMenuItem.addActionListener(this);
@@ -534,6 +562,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		makePrimaryMenuItem.addActionListener(this);
 		deleteMenuItem.addActionListener(this);
 		exportAsSWCMenuItem.addActionListener(this);
+		downsampleMenuItem.addActionListener(this);
 
 		// Now also add the SWC types submenu:
 		swcTypeMenu = new JMenu("Set SWC type");
@@ -612,7 +641,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		for( int i = 0; i < count;  i++ ) {
 			DefaultMutableTreeNode child = (DefaultMutableTreeNode) model.getChild( node, i );
 			Path p = (Path)child.getUserObject();
-			if( tree.isExpanded( (Object[])(child.getPath()) ) ) {
+			if( tree.isExpanded( child.getPath() ) ) {
 				set.add(p);
 			}
 			if( ! model.isLeaf(child) )
@@ -627,7 +656,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			DefaultMutableTreeNode child = (DefaultMutableTreeNode) model.getChild( node, i );
 			Path p = (Path)child.getUserObject();
 			if( set.contains(p) || ((justAdded != null) && (justAdded == p)) ) {
-				tree.setExpanded( (Object[])(child.getPath()), true );
+				tree.setExpanded( child.getPath(), true );
 			}
 			if( ! model.isLeaf(child) )
 				setExpandedPaths( tree, model, child, set, justAdded );
@@ -655,7 +684,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			DefaultMutableTreeNode child = (DefaultMutableTreeNode) model.getChild( node, i );
 			Path p = (Path)child.getUserObject();
 			if( set.contains(p) ) {
-				tree.setSelected( (Object[])(child.getPath()) );
+				tree.setSelected( child.getPath() );
 			}
 			if( ! model.isLeaf(child) )
 				setSelectedPaths( tree, model, child, set );

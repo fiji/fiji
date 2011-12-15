@@ -22,6 +22,7 @@ do
 	$sha1)
 		case "$mode" in
 		merged)
+			test origin/contrib = "$ref" ||
 			echo $ref is already in master;;
 		esac;;
 	*)
