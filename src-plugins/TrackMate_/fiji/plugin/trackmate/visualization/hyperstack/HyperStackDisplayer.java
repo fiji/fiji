@@ -195,7 +195,7 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 
 
 	@Override
-	public void refresh() {
+	public void refresh() { 
 		imp.updateAndDraw();
 	}
 

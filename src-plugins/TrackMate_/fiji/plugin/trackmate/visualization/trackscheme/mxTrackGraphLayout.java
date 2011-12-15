@@ -42,7 +42,7 @@ import fiji.plugin.trackmate.util.TrackSplitter;
 public class mxTrackGraphLayout extends mxGraphLayout {
 
 	private static final int SWIMLANE_HEADER_SIZE = 30;
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 
 	private JGraphXAdapter graph;
 	private int[] columnWidths;
@@ -83,7 +83,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 
 		graph.getModel().beginUpdate();
 		try {
-
+			
 			// Generate colors
 			int ntracks = model.getNFilteredTracks();
 			HashMap<Integer, Color> trackColors = new HashMap<Integer, Color>(ntracks, 1);
@@ -128,6 +128,8 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 			// To keep a reference of branch cells, if any
 			ArrayList<mxCell> newBranchCells = new ArrayList<mxCell>();
 
+			int spotIndex = 0; // Index with which the cells will be added to the root.
+
 			for (int i : model.getVisibleTrackIndices()) {
 
 				// Init track variables
@@ -159,7 +161,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 						}
 						cell = graph.addJGraphTVertex(spot);
 					}
-					
+
 					// Get default style					
 					String style = cell.getStyle();
 
@@ -186,16 +188,21 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					// Cell size
 					int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Spot.RADIUS) / dx));
 					height = Math.max(height, DEFAULT_CELL_HEIGHT/3);
-					geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
-
-					// Add it to its root cell holder
-					graph.getModel().add(currentParent, cell, 0); //spotIndex++);
-					graph.getModel().setGeometry(cell, geometry);
+					geometry = cell.getGeometry();
+					geometry.setHeight(height);
+					geometry.setWidth(DEFAULT_CELL_WIDTH);
+					geometry.setX(x);
+					geometry.setY(y);
+					
+					// Add it to its root cell holder.
+					// Not needed, but if we do not do it, some cells with modified geometry 
+					// are not put back to the imposed geometry.
+					graph.getModel().add(currentParent, cell, spotIndex++); 
 
 					// Set cell style and image
 					style = mxUtils.setStyle(style, mxConstants.STYLE_STROKECOLOR, trackColorStr);
 					style = graph.getModel().setStyle(cell, style);
-					
+
 				}
 
 				// Second pass: we know iterate over each spot's edges
@@ -230,7 +237,6 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 				// Change the parent of some spots to add them to branches
 
 				if (doBranchGrouping ) {
-
 
 					ArrayList<ArrayList<Spot>> branches = new TrackSplitter(model).splitTrackInBranches(track);
 
@@ -286,66 +292,63 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 			branchCells = newBranchCells;
 
 		} finally {
-
 			graph.getModel().endUpdate();
 		}
 	}
 
-	/**
-	 * Return the width in column units of each track after they are arranged by this GraphLayout.
-	 */
-	public int[] getTrackColumnWidths() {
-		return columnWidths;
-	}
 
-	/**
-	 * Return map linking the the row number for a given instant.
-	 */
-	public TreeMap<Float, Integer> getRowForInstant() {
-		return rows;
-	}
+/**
+ * Return the width in column units of each track after they are arranged by this GraphLayout.
+ */
+public int[] getTrackColumnWidths() {
+	return columnWidths;
+}
 
-	/**
-	 * Return the color affected to each track.
-	 */
-	public Color[] getTrackColors() {
-		return trackColorArray;
-	}
+/**
+ * Return map linking the the row number for a given instant.
+ */
+public TreeMap<Float, Integer> getRowForInstant() {
+	return rows;
+}
 
+/**
+ * Return the color affected to each track.
+ */
+public Color[] getTrackColors() {
+	return trackColorArray;
+}
 
+private mxCell makeParentCell(String trackColorStr, int trackIndex, int partIndex) {
+	// Set this as parent for the coming track in JGraphX
+	mxCell rootCell = (mxCell) graph.insertVertex(graph.getDefaultParent(), null, "Track "+trackIndex+"\nBranch "+partIndex, 100, 100, 100, 100);
+	rootCell.setConnectable(false);
 
+	// Set the root style
+	String rootStyle = rootCell.getStyle();
+	rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_STROKECOLOR, "black");
+	rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_ROUNDED, "false");
+	rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_FILLCOLOR, Integer.toHexString(Color.DARK_GRAY.brighter().getRGB()).substring(2));
+	rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_DASHED, "true");
+	rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_VERTICAL_ALIGN, mxConstants.ALIGN_TOP);
+	rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_FONTCOLOR, trackColorStr);
+	rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_FONTSTYLE, ""+mxConstants.FONT_BOLD);
+	rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_SHAPE, ""+mxConstants.SHAPE_SWIMLANE);
+	rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_STARTSIZE, ""+SWIMLANE_HEADER_SIZE);
+	graph.getModel().setStyle(rootCell, rootStyle);
 
-	private mxCell makeParentCell(String trackColorStr, int trackIndex, int partIndex) {
-		// Set this as parent for the coming track in JGraphX
-		mxCell rootCell = (mxCell) graph.insertVertex(graph.getDefaultParent(), null, "Track "+trackIndex+"\nBranch "+partIndex, 100, 100, 100, 100);
-		rootCell.setConnectable(false);
+	return rootCell;
+}
 
-		// Set the root style
-		String rootStyle = rootCell.getStyle();
-		rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_STROKECOLOR, "black");
-		rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_ROUNDED, "false");
-		rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_FILLCOLOR, Integer.toHexString(Color.DARK_GRAY.brighter().getRGB()).substring(2));
-		rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_DASHED, "true");
-		rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_VERTICAL_ALIGN, mxConstants.ALIGN_TOP);
-		rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_FONTCOLOR, trackColorStr);
-		rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_FONTSTYLE, ""+mxConstants.FONT_BOLD);
-		rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_SHAPE, ""+mxConstants.SHAPE_SWIMLANE);
-		rootStyle = mxUtils.setStyle(rootStyle, mxConstants.STYLE_STARTSIZE, ""+SWIMLANE_HEADER_SIZE);
-		graph.getModel().setStyle(rootCell, rootStyle);
+public boolean isBranchGroupingEnabled() {
+	return doBranchGrouping;
+}
 
-		return rootCell;
-	}
+public void setBranchGrouping(boolean enable) {
+	this.doBranchGrouping = enable;
+}
 
-	public boolean isBranchGroupingEnabled() {
-		return doBranchGrouping;
-	}
-
-	public void setBranchGrouping(boolean enable) {
-		this.doBranchGrouping = enable;
-	}
-
-	public void setAllFolded(boolean collapsed) {
-		graph.foldCells(collapsed, false, branchCells.toArray());
-	}
+public void setAllFolded(boolean collapsed) {
+	graph.foldCells(collapsed, false, branchCells.toArray());
+}
 
 }

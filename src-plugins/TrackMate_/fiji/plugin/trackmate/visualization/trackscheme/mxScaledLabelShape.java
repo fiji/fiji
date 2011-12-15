@@ -1,9 +1,12 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
+import java.awt.Image;
 import java.awt.Rectangle;
 
 import com.mxgraph.canvas.mxGraphics2DCanvas;
-import com.mxgraph.shape.mxLabelShape;
+import com.mxgraph.shape.mxRectangleShape;
+import com.mxgraph.util.mxConstants;
+import com.mxgraph.util.mxUtils;
 import com.mxgraph.view.mxCellState;
 
 /**
@@ -16,17 +19,32 @@ import com.mxgraph.view.mxCellState;
  *   
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Mar 15, 2011
  */
-public class mxScaledLabelShape extends mxLabelShape {
+public class mxScaledLabelShape extends mxRectangleShape {
 
 	public static final String SHAPE_NAME = "scaledLabel";
 
 	@Override
-	public Rectangle getImageBounds(mxGraphics2DCanvas canvas, mxCellState state) {
+	public void paintShape(mxGraphics2DCanvas canvas, mxCellState state) {
+		super.paintShape(canvas, state);
+		
+		Image img = canvas.loadImage(mxUtils.getString(state.getStyle(), mxConstants.STYLE_IMAGE));
+		if (img != null)  {
+			Rectangle bounds = getImageBounds(canvas, state);
+			int x = bounds.x;
+			int y = bounds.y;
+			int w = bounds.width;
+			int h = bounds.height;
+			Image scaledImage = img.getScaledInstance(w, h, Image.SCALE_FAST);
+			canvas.getGraphics().drawImage(scaledImage, x, y, null);
+		}
+	}
+
+	private final Rectangle getImageBounds(mxGraphics2DCanvas canvas, mxCellState state) {
 		Rectangle cellR = state.getRectangle();
 		int arc = getArcSize(cellR.width, cellR.height) / 2;
 		int minSize = Math.min(cellR.width - arc*2, cellR.height - 4);
 		Rectangle imageBounds = new Rectangle(cellR.x + arc, cellR.y+2, minSize, minSize);
 		return imageBounds;
 	}
-	
+
 }

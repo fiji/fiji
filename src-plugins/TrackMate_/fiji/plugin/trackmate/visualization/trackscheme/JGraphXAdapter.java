@@ -68,7 +68,7 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 		mxCell cell = null;
 		getModel().beginUpdate();
 		try {
-			cell = new mxCell(vertex);
+			cell = new mxCell(vertex, new mxGeometry(), "");
 			cell.setVertex(true);
 			cell.setId(null);
 			cell.setValue(vertex.getName());
@@ -105,22 +105,6 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 		}
 		return cell;
 	}
-
-//	public HashMap<Spot, mxCell> getVertexToCellMap() {
-//		return vertexToCellMap;
-//	}
-//
-//	public HashMap<DefaultWeightedEdge, mxCell> getEdgeToCellMap() {
-//		return edgeToCellMap;
-//	}
-//
-//	public HashMap<mxCell, DefaultWeightedEdge> getCellToEdgeMap() {
-//		return cellToEdgeMap;
-//	}
-//
-//	public HashMap<mxCell, Spot> getCellToVertexMap() {
-//		return cellToVertexMap;
-//	}
 	
 	public void mapEdgeToCell(DefaultWeightedEdge edge, mxICell cell) {
 		cellToEdgeMap.put(cell, edge);
