@@ -186,6 +186,9 @@ package_name_to_file_matchers = {
     "fiji-tracer" :
         [ "plugins/Simple_Neurite_Tracer.jar" ],
 
+    "fiji-db-registration" :
+        [ "plugins/Descriptor_based_registration.jar" ],
+
     "fiji-jython" :
         [ "jars/jython.jar" ],
 
@@ -201,6 +204,7 @@ conflicts_and_replaces = {
     'fiji-3d-viewer' : ( 'fiji-plugins (<= 20100821202528)', ),
     'fiji-imglib' : ( 'fiji-plugins (<= 20110609134243)', ),
     'fiji-image5d' : ( 'fiji-plugins (<= 20111011070056)', ),
+    'fiji-db-registration' : ( 'fiji-plugins (<= 20111206070018)', )
 }
 
 # A dictionary whose keys are regular expressions that match files in

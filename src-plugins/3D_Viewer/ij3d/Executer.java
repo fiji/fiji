@@ -13,6 +13,7 @@ import ij.text.TextWindow;
 import ij3d.gui.ContentCreatorDialog;
 import ij3d.gui.InteractiveTransformDialog;
 import ij3d.gui.LUTDialog;
+import ij3d.gui.PrimitiveDialogs;
 import ij3d.shapes.Scalebar;
 import ij3d.shortcuts.ShortCutDialog;
 import isosurface.MeshEditor;
@@ -49,6 +50,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.media.j3d.Background;
 import javax.media.j3d.PointLight;
 import javax.media.j3d.Transform3D;
+import javax.swing.JFileChooser;
 import javax.vecmath.Color3f;
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Matrix4f;
@@ -120,16 +122,15 @@ public class Executer {
 	 * *********************************************************/
 
 	public void addContentFromFile() {
-		OpenDialog od = new OpenDialog("Open from file", null);
-		String folder = od.getDirectory();
-		String name = od.getFileName();
-		if(folder == null || name == null)
+		JFileChooser chooser = new JFileChooser(OpenDialog.getLastDirectory());
+		chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+		chooser.setMultiSelectionEnabled(false);
+		int returnVal = chooser.showOpenDialog(null);
+		if (returnVal != JFileChooser.APPROVE_OPTION)
 			return;
-		File f = new File(folder, name);
-		if(f.exists())
-			addContent(null, f);
-		else
-			IJ.error("Can not load " + f.getAbsolutePath());
+		File f = chooser.getSelectedFile();
+		OpenDialog.setLastDirectory(f.getParentFile().getAbsolutePath());
+		addContent(null, f);
 	}
 
 	public void addContentFromImage(ImagePlus image) {
@@ -1386,6 +1387,27 @@ public class Executer {
 			IJ.error(e.getMessage());
 		}
 	}
+
+	/* **********************************************************
+	 * Add menu
+	 * *********************************************************/
+	public void addTube() {
+		PrimitiveDialogs.addTube(univ);
+	}
+
+	public void addSphere() {
+		PrimitiveDialogs.addSphere(univ);
+	}
+
+	public void addCone() {
+		PrimitiveDialogs.addCone(univ);
+	}
+
+	public void addBox() {
+		PrimitiveDialogs.addBox(univ);
+	}
+
+
 
 	/* **********************************************************
 	 * View menu
