@@ -11,6 +11,7 @@ import ij.io.SaveDialog;
 import ij.plugin.frame.Recorder;
 import ij.text.TextWindow;
 import ij3d.gui.ContentCreatorDialog;
+import ij3d.gui.InteractiveMeshDecimation;
 import ij3d.gui.InteractiveTransformDialog;
 import ij3d.gui.LUTDialog;
 import ij3d.gui.PrimitiveDialogs;
@@ -18,6 +19,7 @@ import ij3d.shapes.Scalebar;
 import ij3d.shortcuts.ShortCutDialog;
 import isosurface.MeshEditor;
 import isosurface.MeshExporter;
+import isosurface.MeshGroup;
 import isosurface.SmoothControl;
 
 import java.awt.Button;
@@ -642,6 +644,25 @@ public class Executer {
 	/** Interactively smooth meshes, with undo. */
 	public void smoothControl() {
 		new SmoothControl(univ);
+	}
+
+	public void decimateMesh() {
+		Content c = univ.getSelected();
+		if(c == null)
+			return;
+		CustomTriangleMesh ctm;
+		ContentNode n = c.getContent();
+		if(n instanceof CustomMeshNode) {
+			if(((CustomMeshNode)n).getMesh() instanceof CustomTriangleMesh)
+				ctm = (CustomTriangleMesh)((CustomMeshNode) n).getMesh();
+			else
+				return;
+		} else if (n instanceof MeshGroup) {
+			ctm = ((MeshGroup)n).getMesh();
+		} else {
+			return;
+		}
+		new InteractiveMeshDecimation().run(ctm);
 	}
 
 	/* ----------------------------------------------------------
