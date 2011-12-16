@@ -21,6 +21,7 @@ hs_err*.log
 /fiji-macosx.dmg
 /tests/plugins
 /jvm.cfg
+/ImageJ.cfg
 /samples/
 *.swp
 /.recent-changes.*
