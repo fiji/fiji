@@ -123,7 +123,7 @@ public class MiniMaven {
 		return pom;
 	}
 
-	protected POM fakePOM(File target, Dependency dependency) {
+	protected POM fakePOM(File target, Coordinate dependency) {
 		POM pom = new POM(target, null);
 		pom.directory = target.getParentFile();
 		pom.target = target;
@@ -132,22 +132,22 @@ public class MiniMaven {
 		if (dependency.artifactId.equals("ij")) {
 			String javac = pom.expand("${java.home}/../lib/tools.jar");
 			if (new File(javac).exists())
-				pom.dependencies.add(new Dependency("com.sun", "tools", "1.4.2", false, javac));
+				pom.dependencies.add(new Coordinate("com.sun", "tools", "1.4.2", false, javac));
 		}
 		return pom;
 	}
 
-	protected static class Dependency {
+	protected static class Coordinate {
 		protected String groupId, artifactId, version, systemPath;
 		protected boolean optional;
 
-		public Dependency() {}
+		public Coordinate() {}
 
-		public Dependency(String groupId, String artifactId, String version) {
+		public Coordinate(String groupId, String artifactId, String version) {
 			this(groupId, artifactId, version, false, null);
 		}
 
-		public Dependency(String groupId, String artifactId, String version, boolean optional, String systemPath) {
+		public Coordinate(String groupId, String artifactId, String version, boolean optional, String systemPath) {
 			this.groupId = normalize(groupId);
 			this.artifactId = normalize(artifactId);
 			this.version = normalize(version);
@@ -166,15 +166,15 @@ public class MiniMaven {
 		protected POM parent;
 		protected POM[] children;
 
-		protected Dependency coordinate = new Dependency();
+		protected Coordinate coordinate = new Coordinate();
 		protected Map<String, String> properties = new HashMap<String, String>();
 		protected List<String> modules = new ArrayList<String>();
-		protected List<Dependency> dependencies = new ArrayList<Dependency>(); // contains String[3]
+		protected List<Coordinate> dependencies = new ArrayList<Coordinate>(); // contains String[3]
 		protected Set<String> repositories = new TreeSet<String>();
 
 		// only used during parsing
 		protected String prefix = "";
-		protected Dependency latestDependency = new Dependency();
+		protected Coordinate latestDependency = new Coordinate();
 		protected boolean isCurrentProfile;
 
 		protected POM addModule(String name) throws IOException, ParserConfigurationException, SAXException {
@@ -231,7 +231,7 @@ public class MiniMaven {
 			download(coordinate);
 		}
 
-		protected void download(Dependency dependency) throws FileNotFoundException {
+		protected void download(Coordinate dependency) throws FileNotFoundException {
 			if (dependency.version == null) {
 				err.println("Version of " + dependency.artifactId + " is null; Skipping.");
 				return;
@@ -379,7 +379,7 @@ public class MiniMaven {
 		}
 
 		public void getDependencies(Set<POM> result) throws IOException, ParserConfigurationException, SAXException {
-			for (Dependency dependency : dependencies) {
+			for (Coordinate dependency : dependencies) {
 				String groupId = expand(dependency.groupId);
 				String artifactId = expand(dependency.artifactId);
 				String version = expand(dependency.version);
@@ -387,7 +387,7 @@ public class MiniMaven {
 				if (version == null && "aopalliance".equals(artifactId))
 					optional = true; // guice has recorded this without a version
 				String systemPath = expand(dependency.systemPath);
-				Dependency expanded = new Dependency(groupId, artifactId, version, optional, systemPath);
+				Coordinate expanded = new Coordinate(groupId, artifactId, version, optional, systemPath);
 				if (systemPath != null) {
 					File file = new File(systemPath);
 					if (file.exists()) {
@@ -465,11 +465,11 @@ public class MiniMaven {
 					child.getRepositories(result);
 		}
 
-		protected POM findPOM(Dependency dependency) throws IOException, ParserConfigurationException, SAXException {
+		protected POM findPOM(Coordinate dependency) throws IOException, ParserConfigurationException, SAXException {
 			return findPOM(dependency, false);
 		}
 
-		protected POM findPOM(Dependency dependency, boolean quiet) throws IOException, ParserConfigurationException, SAXException {
+		protected POM findPOM(Coordinate dependency, boolean quiet) throws IOException, ParserConfigurationException, SAXException {
 			if (dependency.artifactId.equals(coordinate.artifactId) &&
 					(dependency.groupId == null || dependency.groupId.equals(coordinate.groupId)) &&
 					(dependency.version == null || coordinate.version == null || dependency.version.equals(coordinate.version)))
@@ -489,7 +489,7 @@ public class MiniMaven {
 			return null;
 		}
 
-		protected POM findLocallyCachedPOM(Dependency dependency, boolean quiet) throws IOException, ParserConfigurationException, SAXException {
+		protected POM findLocallyCachedPOM(Coordinate dependency, boolean quiet) throws IOException, ParserConfigurationException, SAXException {
 			if (dependency.groupId == null)
 				return null;
 			String key = dependency.groupId + ">" + dependency.artifactId;
@@ -547,7 +547,7 @@ public class MiniMaven {
 			return result;
 		}
 
-		protected boolean maybeDownloadAutomatically(Dependency dependency, boolean quiet) {
+		protected boolean maybeDownloadAutomatically(Coordinate dependency, boolean quiet) {
 			if (!downloadAutomatically || buildFromSource)
 				return true;
 			if (!quiet)
@@ -606,7 +606,7 @@ public class MiniMaven {
 		public void endElement(String uri, String name, String qualifiedName) {
 			if (prefix.equals(">project>dependencies>dependency") || (isCurrentProfile && prefix.equals(">project>profiles>profile>dependencies>dependency"))) {
 				dependencies.add(latestDependency);
-				latestDependency = new Dependency();
+				latestDependency = new Coordinate();
 			}
 			if (prefix.equals(">project>profiles>profile"))
 				isCurrentProfile = false;
@@ -700,7 +700,7 @@ public class MiniMaven {
 		}
 	}
 
-	protected static void downloadAndVerify(String repositoryURL, Dependency dependency) throws MalformedURLException, IOException, NoSuchAlgorithmException, ParserConfigurationException, SAXException {
+	protected static void downloadAndVerify(String repositoryURL, Coordinate dependency) throws MalformedURLException, IOException, NoSuchAlgorithmException, ParserConfigurationException, SAXException {
 		String path = "/" + dependency.groupId.replace('.', '/') + "/" + dependency.artifactId + "/" + dependency.version + "/";
 		File directory = new File(System.getProperty("user.home") + "/.m2/repository" + path);
 		if (dependency.version.endsWith("-SNAPSHOT")) {
@@ -878,7 +878,7 @@ public class MiniMaven {
 		String artifactId = getSystemProperty("artifactId", "ij-app");
 		String mainClass = getSystemProperty("mainClass", "imagej.Main");
 
-		POM pom = root.findPOM(new Dependency(null, artifactId, null));
+		POM pom = root.findPOM(new Coordinate(null, artifactId, null));
 		if (pom == null)
 			pom = root;
 		if (command.equals("compile") || command.equals("build") || command.equals("compile-and-run")) {

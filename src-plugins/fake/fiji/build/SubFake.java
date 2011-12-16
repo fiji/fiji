@@ -1,6 +1,6 @@
 package fiji.build;
 
-import fiji.build.MiniMaven.Dependency;
+import fiji.build.MiniMaven.Coordinate;
 import fiji.build.MiniMaven.POM;
 
 import java.io.File;
@@ -105,7 +105,7 @@ public class SubFake extends Rule {
 			POM pom = new MiniMaven(parser.fake, parser.fake.err, getVarBool("VERBOSE")).parse(file);
 			if (targetBasename.equals(pom.getArtifact()))
 				return pom;
-			return pom.findPOM(new Dependency(null, targetBasename, null));
+			return pom.findPOM(new Coordinate(null, targetBasename, null));
 		} catch (Exception e) {
 			e.printStackTrace(parser.fake.err);
 			return null;
