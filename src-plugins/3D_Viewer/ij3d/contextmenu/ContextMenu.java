@@ -25,7 +25,7 @@ public class ContextMenu implements ActionListener, ItemListener, ContentConstan
 
 	private Content content;
 
-	private JMenuItem slices, updateVol, fill, smoothMesh, smoothAllMeshes, smoothDialog, colorSurface;
+	private JMenuItem slices, updateVol, fill, smoothMesh, smoothAllMeshes, smoothDialog, colorSurface, decimateMesh;
 	private JCheckBoxMenuItem shaded, saturated;
 
 	public ContextMenu (Image3DUniverse univ) {
@@ -55,6 +55,10 @@ public class ContextMenu implements ActionListener, ItemListener, ContentConstan
 		smoothAllMeshes = new JMenuItem("Smooth all meshes");
 		smoothAllMeshes.addActionListener(this);
 		smooth.add(smoothAllMeshes);
+
+		decimateMesh = new JMenuItem("Decimate mesh");
+		decimateMesh.addActionListener(this);
+		popup.add(decimateMesh);
 
 		smoothDialog = new JMenuItem("Smooth control");
 		smoothDialog.addActionListener(this);
@@ -111,6 +115,8 @@ public class ContextMenu implements ActionListener, ItemListener, ContentConstan
 			executer.smoothAllMeshes();
 		else if (src == smoothDialog)
 			executer.smoothControl();
+		else if (src == decimateMesh)
+			executer.decimateMesh();
 		else if(src == colorSurface)
 			executer.applySurfaceColors(content);
 	}
