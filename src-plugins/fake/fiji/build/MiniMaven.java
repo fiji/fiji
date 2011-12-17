@@ -610,7 +610,7 @@ public class MiniMaven {
 			try {
 				download(dependency);
 			} catch (Exception e) {
-				if (!quiet) {
+				if (!quiet && !dependency.optional) {
 					e.printStackTrace(err);
 					err.println("Could not download " + dependency.artifactId + ": " + e.getMessage());
 				}
