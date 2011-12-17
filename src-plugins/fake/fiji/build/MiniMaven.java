@@ -44,7 +44,7 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
 public class MiniMaven {
-	protected boolean verbose, debug = false, downloadAutomatically;
+	protected boolean verbose, debug = false, downloadAutomatically, offlineMode;
 	protected PrintStream err;
 	protected Map<String, POM> localPOMCache = new HashMap<String, POM>();
 	protected Fake fake;
@@ -605,7 +605,7 @@ public class MiniMaven {
 
 		// TODO: if there is no internet connection, do not try to download -SNAPSHOT versions
 		protected boolean maybeDownloadAutomatically(Coordinate dependency, boolean quiet) {
-			if (!downloadAutomatically)
+			if (!downloadAutomatically || offlineMode)
 				return true;
 			if (!quiet)
 				err.println((dependency.version.endsWith("-SNAPSHOT") ? "Checking for new snapshot of " : "Downloading ") + dependency.artifactId);
@@ -759,7 +759,7 @@ public class MiniMaven {
 		}
 	}
 
-	protected static void downloadAndVerify(String repositoryURL, Coordinate dependency) throws MalformedURLException, IOException, NoSuchAlgorithmException, ParserConfigurationException, SAXException {
+	protected void downloadAndVerify(String repositoryURL, Coordinate dependency) throws MalformedURLException, IOException, NoSuchAlgorithmException, ParserConfigurationException, SAXException {
 		String path = "/" + dependency.groupId.replace('.', '/') + "/" + dependency.artifactId + "/" + dependency.version + "/";
 		File directory = new File(System.getProperty("user.home") + "/.m2/repository" + path);
 		if (dependency.version.endsWith("-SNAPSHOT")) {
@@ -777,11 +777,11 @@ public class MiniMaven {
 		downloadAndVerify(baseURL + dependency.getJarName(), directory);
 	}
 
-	protected static void downloadAndVerify(String url, File directory) throws IOException, NoSuchAlgorithmException {
+	protected void downloadAndVerify(String url, File directory) throws IOException, NoSuchAlgorithmException {
 		downloadAndVerify(url, directory, null);
 	}
 
-	protected static void downloadAndVerify(String url, File directory, String fileName) throws IOException, NoSuchAlgorithmException {
+	protected void downloadAndVerify(String url, File directory, String fileName) throws IOException, NoSuchAlgorithmException {
 		File sha1 = download(new URL(url + ".sha1"), directory, fileName == null ? null : fileName + ".sha1");
 		File file = download(new URL(url), directory, fileName);
 		MessageDigest digest = MessageDigest.getInstance("SHA-1");
@@ -858,11 +858,13 @@ public class MiniMaven {
 		directory.delete();
 	}
 
-	protected static File download(URL url, File directory) throws IOException {
+	protected File download(URL url, File directory) throws IOException {
 		return download(url, directory, null);
 	}
 
-	protected static File download(URL url, File directory, String fileName) throws IOException {
+	protected File download(URL url, File directory, String fileName) throws IOException {
+		if (offlineMode)
+			throw new RuntimeException("Offline!");
 		if (fileName == null) {
 			fileName = url.getPath();
 			fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
