@@ -132,27 +132,28 @@ public class MiniMaven {
 		if (dependency.artifactId.equals("ij")) {
 			String javac = pom.expand("${java.home}/../lib/tools.jar");
 			if (new File(javac).exists())
-				pom.dependencies.add(new Coordinate("com.sun", "tools", "1.4.2", false, javac));
+				pom.dependencies.add(new Coordinate("com.sun", "tools", "1.4.2", false, javac, null));
 		}
 		return pom;
 	}
 
 	protected static class Coordinate {
-		protected String groupId, artifactId, version, systemPath;
+		protected String groupId, artifactId, version, systemPath, classifier;
 		protected boolean optional;
 
 		public Coordinate() {}
 
 		public Coordinate(String groupId, String artifactId, String version) {
-			this(groupId, artifactId, version, false, null);
+			this(groupId, artifactId, version, false, null, null);
 		}
 
-		public Coordinate(String groupId, String artifactId, String version, boolean optional, String systemPath) {
+		public Coordinate(String groupId, String artifactId, String version, boolean optional, String systemPath, String classifier) {
 			this.groupId = normalize(groupId);
 			this.artifactId = normalize(artifactId);
 			this.version = normalize(version);
 			this.optional = optional;
 			this.systemPath = normalize(systemPath);
+			this.classifier = classifier;
 		}
 
 		public String normalize(String s) {
@@ -383,11 +384,12 @@ public class MiniMaven {
 				String groupId = expand(dependency.groupId);
 				String artifactId = expand(dependency.artifactId);
 				String version = expand(dependency.version);
+				String classifier = expand(dependency.classifier);
 				boolean optional = dependency.optional;
 				if (version == null && "aopalliance".equals(artifactId))
 					optional = true; // guice has recorded this without a version
 				String systemPath = expand(dependency.systemPath);
-				Coordinate expanded = new Coordinate(groupId, artifactId, version, optional, systemPath);
+				Coordinate expanded = new Coordinate(groupId, artifactId, version, optional, systemPath, classifier);
 				if (systemPath != null) {
 					File file = new File(systemPath);
 					if (file.exists()) {
@@ -654,6 +656,8 @@ public class MiniMaven {
 				latestDependency.optional = string.equalsIgnoreCase("true");
 			else if (prefix.equals(">project>dependencies>dependency>systemPath"))
 				latestDependency.systemPath = string;
+			else if (prefix.equals(">project>dependencies>dependency>classifier"))
+				latestDependency.classifier = string;
 			else if (prefix.equals(">project>profiles>profile>id"))
 				isCurrentProfile = (!Util.getPlatform().equals("macosx") && "javac".equals(string)) || profile.equals(string);
 			else if (prefix.equals(">project>repositories>repository>url"))
