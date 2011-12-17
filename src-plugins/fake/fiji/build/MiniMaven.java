@@ -175,6 +175,7 @@ public class MiniMaven {
 		public String getFileName(boolean withProjectPrefix, String fileExtension) {
 			return (withProjectPrefix ? groupId + "/" : "")
 				+ artifactId + "-" + version
+				+ (classifier == null ? "" : "-" + classifier)
 				+ "." + fileExtension;
 		}
 	}
