@@ -159,6 +159,24 @@ public class MiniMaven {
 		public String normalize(String s) {
 			return "".equals(s) ? null : s;
 		}
+
+		public String getJarName() {
+			return getJarName(false);
+		}
+
+		public String getJarName(boolean withProjectPrefix) {
+			return getFileName(withProjectPrefix, "jar");
+		}
+
+		public String getFileName(String fileExtension) {
+			return getFileName(false, fileExtension);
+		}
+
+		public String getFileName(boolean withProjectPrefix, String fileExtension) {
+			return (withProjectPrefix ? groupId + "/" : "")
+				+ artifactId + "-" + version
+				+ "." + fileExtension;
+		}
 	}
 
 	public class POM extends DefaultHandler implements Comparable<POM> {
@@ -241,7 +259,7 @@ public class MiniMaven {
 				downloadAndVerify(url, dependency);
 				return;
 			} catch (Exception e) { /* ignore */ }
-			throw new FileNotFoundException("Could not download " + dependency.groupId + "/" + dependency.artifactId + "-" + dependency.version);
+			throw new FileNotFoundException("Could not download " + dependency.getJarName());
 		}
 
 		public boolean upToDate() throws IOException, ParserConfigurationException, SAXException {
@@ -526,7 +544,7 @@ public class MiniMaven {
 					return null;
 				dependency.version = parseSnapshotVersion(new File(path));
 			} catch (FileNotFoundException e) { /* ignore */ }
-			path += dependency.artifactId + "-" + dependency.version + ".pom";
+			path += dependency.getFileName("pom");
 
 			File file = new File(path);
 			if (!file.exists()) {
@@ -714,9 +732,9 @@ public class MiniMaven {
 			if (dependency.version == null)
 				throw new IOException("No version found in " + metadataURL);
 		}
-		String baseURL = repositoryURL + path + dependency.artifactId + "-" + dependency.version;
-		downloadAndVerify(baseURL + ".pom", directory);
-		downloadAndVerify(baseURL + ".jar", directory);
+		String baseURL = repositoryURL + path;
+		downloadAndVerify(baseURL + dependency.getFileName("pom"), directory);
+		downloadAndVerify(baseURL + dependency.getFileName("jar"), directory);
 	}
 
 	protected static void downloadAndVerify(String url, File directory) throws IOException, NoSuchAlgorithmException {
