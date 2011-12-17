@@ -165,17 +165,25 @@ public class MiniMaven {
 		}
 
 		public String getJarName(boolean withProjectPrefix) {
-			return getFileName(withProjectPrefix, "jar");
+			return getFileName(withProjectPrefix, true, "jar");
 		}
 
-		public String getFileName(String fileExtension) {
-			return getFileName(false, fileExtension);
+		public String getPOMName() {
+			return getPOMName(false);
 		}
 
-		public String getFileName(boolean withProjectPrefix, String fileExtension) {
+		public String getPOMName(boolean withProjectPrefix) {
+			return getFileName(withProjectPrefix, false, "pom");
+		}
+
+		public String getFileName(boolean withClassifier, String fileExtension) {
+			return getFileName(false, withClassifier, fileExtension);
+		}
+
+		public String getFileName(boolean withProjectPrefix, boolean withClassifier, String fileExtension) {
 			return (withProjectPrefix ? groupId + "/" : "")
 				+ artifactId + "-" + version
-				+ (classifier == null ? "" : "-" + classifier)
+				+ (withClassifier && classifier != null ? "-" + classifier : "")
 				+ "." + fileExtension;
 		}
 	}
@@ -545,7 +553,7 @@ public class MiniMaven {
 					return null;
 				dependency.version = parseSnapshotVersion(new File(path));
 			} catch (FileNotFoundException e) { /* ignore */ }
-			path += dependency.getFileName("pom");
+			path += dependency.getPOMName();
 
 			File file = new File(path);
 			if (!file.exists()) {
@@ -734,8 +742,8 @@ public class MiniMaven {
 				throw new IOException("No version found in " + metadataURL);
 		}
 		String baseURL = repositoryURL + path;
-		downloadAndVerify(baseURL + dependency.getFileName("pom"), directory);
-		downloadAndVerify(baseURL + dependency.getFileName("jar"), directory);
+		downloadAndVerify(baseURL + dependency.getPOMName(), directory);
+		downloadAndVerify(baseURL + dependency.getJarName(), directory);
 	}
 
 	protected static void downloadAndVerify(String url, File directory) throws IOException, NoSuchAlgorithmException {
