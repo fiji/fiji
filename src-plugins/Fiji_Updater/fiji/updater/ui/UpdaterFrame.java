@@ -262,7 +262,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 
 		if (Util.isDeveloper) try {
 			final IJ1Plugin pluginChanges = IJ1Plugin.discover("fiji.scripting.ShowPluginChanges");
-			if (pluginChanges != null && new File(System.getProperty("fiji.dir"), ".git").isDirectory()) {
+			if (pluginChanges != null && new File(System.getProperty("ij.dir"), ".git").isDirectory()) {
 				bottomPanel2.add(Box.createRigidArea(new Dimension(15,0)));
 				JButton showChanges = SwingTools.button("Show changes",
 						"Show the changes in Git since the last upload", new ActionListener() {
@@ -277,7 +277,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 				}, bottomPanel2);
 			}
 			final IJ1Plugin rebuild = IJ1Plugin.discover("fiji.scripting.RunFijiBuild");
-			if (rebuild != null && new File(System.getProperty("fiji.dir"), ".git").isDirectory()) {
+			if (rebuild != null && new File(System.getProperty("ij.dir"), ".git").isDirectory()) {
 				bottomPanel2.add(Box.createRigidArea(new Dimension(15,0)));
 				JButton showChanges = SwingTools.button("Rebuild",
 						"Rebuild using Fiji Build", new ActionListener() {
@@ -306,7 +306,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 		bottomPanel2.add(Box.createHorizontalGlue());
 
 		// offer to update Java, but only on non-Macs
-		if (!Util.isMacOSX() && new File(Util.fijiRoot, "java").canWrite()) {
+		if (!Util.isMacOSX() && new File(Util.ijRoot, "java").canWrite()) {
 			bottomPanel2.add(Box.createRigidArea(new Dimension(15,0)));
 			SwingTools.button("Update Java",
 					"Update the Java version used for Fiji", new ActionListener() {

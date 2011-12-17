@@ -291,10 +291,7 @@ public class MiniMaven {
 		}
 
 		public void buildJar() throws FakeException, IOException, ParserConfigurationException, SAXException {
-			build();
-			JarOutputStream out = new JarOutputStream(new FileOutputStream(getTarget()));
-			addToJarRecursively(out, target, "");
-			out.close();
+			build(true);
 		}
 
 		protected void addToJarRecursively(JarOutputStream out, File directory, String prefix) throws IOException {
@@ -308,11 +305,19 @@ public class MiniMaven {
 		}
 
 		public void build() throws FakeException, IOException, ParserConfigurationException, SAXException {
+			build(false);
+		}
+
+		public void build(boolean makeJar) throws FakeException, IOException, ParserConfigurationException, SAXException {
 			if (!buildFromSource)
 				return;
 			for (POM child : getDependencies())
 				if (child != null)
-					child.build();
+					child.build(makeJar);
+
+			// do not build wrapper projects
+			if (!new File(directory, "src").exists())
+				return;
 
 			target.mkdirs();
 			File source = new File(directory, getSourcePath());
@@ -338,11 +343,18 @@ public class MiniMaven {
 
 			updateRecursively(new File(source.getParentFile(), "resources"), target);
 
-			buildFromSource = false;
+			if (makeJar) {
+				JarOutputStream out = new JarOutputStream(new FileOutputStream(getTarget()));
+				addToJarRecursively(out, target, "");
+				out.close();
+			}
 		}
 
 		protected void addRecursively(List<String> list, File directory, String extension, File targetDirectory, String targetExtension) {
-			for (File file : directory.listFiles())
+			File[] files = directory.listFiles();
+			if (list == null)
+				return;
+			for (File file : files)
 				if (file.isDirectory())
 					addRecursively(list, file, extension, new File(targetDirectory, file.getName()), targetExtension);
 				else {
@@ -389,6 +401,8 @@ public class MiniMaven {
 		}
 
 		public File getTarget() {
+			if (!buildFromSource)
+				return target;
 			return new File(new File(directory, "target"), getJarName());
 		}
 
@@ -398,6 +412,15 @@ public class MiniMaven {
 			for (POM pom : getDependencies())
 				builder.append(File.pathSeparator).append(pom.target);
 			return builder.toString();
+		}
+
+		public void copyDependencies(File directory, boolean onlyNewer) throws IOException, ParserConfigurationException, SAXException {
+			for (POM pom : getDependencies()) {
+				File file = pom.getTarget();
+				File destination = new File(directory, pom.coordinate.artifactId + ".jar");
+				if (file.exists() && (!destination.exists() || destination.lastModified() < file.lastModified()))
+					copyFile(file, destination);
+			}
 		}
 
 		public Set<POM> getDependencies() throws IOException, ParserConfigurationException, SAXException {
@@ -462,6 +485,8 @@ public class MiniMaven {
 				// hard-code a few variables
 				if (key.equals("bio-formats.groupId"))
 					return "loci";
+				if (key.equals("bio-formats.version"))
+					return "4.4-SNAPSHOT";
 				if (key.equals("imagej.groupId"))
 					return "imagej";
 				if (key.equals("java.home"))
@@ -536,7 +561,7 @@ public class MiniMaven {
 			if (dependency.version == null || dependency.version.startsWith("[") || dependency.artifactId.equals("tools")) {
 				// try to find the .jar in Fiji's jars/ dir
 				String jarName = dependency.artifactId.equals("tools") ? "javac.jar" : dependency.artifactId + ".jar";
-				File file = new File(System.getProperty("fiji.dir"), "jars/" + jarName);
+				File file = new File(System.getProperty("ij.dir"), "jars/" + jarName);
 				if (file.exists()) {
 					POM pom = fakePOM(file, dependency);
 					localPOMCache.put(key, pom);
@@ -576,11 +601,12 @@ public class MiniMaven {
 			return result;
 		}
 
+		// TODO: if there is no internet connection, do not try to download -SNAPSHOT versions
 		protected boolean maybeDownloadAutomatically(Coordinate dependency, boolean quiet) {
-			if (!downloadAutomatically || buildFromSource)
+			if (!downloadAutomatically)
 				return true;
 			if (!quiet)
-				err.println("Downloading " + dependency.artifactId);
+				err.println((dependency.version.endsWith("-SNAPSHOT") ? "Checking for new snapshot of " : "Downloading ") + dependency.artifactId);
 			try {
 				download(dependency);
 			} catch (Exception e) {
@@ -740,6 +766,9 @@ public class MiniMaven {
 			dependency.version = parseSnapshotVersion(directory);
 			if (dependency.version == null)
 				throw new IOException("No version found in " + metadataURL);
+			if (new File(directory, dependency.getJarName()).exists() &&
+					new File(directory, dependency.getPOMName()).exists())
+				return;
 		}
 		String baseURL = repositoryURL + path;
 		downloadAndVerify(baseURL + dependency.getPOMName(), directory);
@@ -919,6 +948,16 @@ public class MiniMaven {
 			else
 				return;
 		}
+		else if (command.equals("jar") || command.equals("jars")) {
+			if (!pom.buildFromSource) {
+				System.err.println("Cannot build " + pom + " from source");
+				System.exit(1);
+			}
+			pom.buildJar();
+			if (command.equals("jars"))
+				pom.copyDependencies(new File(pom.directory, "target"), true);
+			return;
+		}
 		if (command.equals("clean"))
 			pom.clean();
 		else if (command.equals("get") || command.equals("get-dependencies"))
@@ -937,6 +976,21 @@ public class MiniMaven {
 		}
 		else if (command.equals("classpath"))
 			miniMaven.err.println(pom.getClassPath());
+		else if (command.equals("list")) {
+			Set<POM> result = new TreeSet<POM>();
+			Stack<POM> stack = new Stack<POM>();
+			stack.push(pom.getRoot());
+			while (!stack.empty()) {
+				pom = stack.pop();
+				if (result.contains(pom) || !pom.buildFromSource)
+					continue;
+				result.add(pom);
+				for (POM child : pom.children)
+					stack.push(child);
+			}
+			for (POM pom2 : result)
+				System.err.println(pom2);
+		}
 		else
 			miniMaven.err.println("Unhandled command: " + command + "\n" + usage);
 	}

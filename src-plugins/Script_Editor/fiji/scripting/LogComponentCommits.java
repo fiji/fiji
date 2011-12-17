@@ -57,7 +57,7 @@ public class LogComponentCommits {
 	protected LineHandler out, err;
 	protected List<String> extraArgs = new ArrayList<String>();
 
-	protected String fijiDir = System.getProperty("fiji.dir");
+	protected String ijDir = System.getProperty("ij.dir");
 	protected String tempDir;
 
 	// Updater stuff
@@ -179,10 +179,10 @@ public class LogComponentCommits {
 		cmdarray[i++] = ".";
 
 		if (rule != null && rule.getClass().getName().endsWith("SubFake"))
-			SimpleExecuter.exec(new File(fijiDir, rule.getLastPrerequisite()), out, cmdarray);
-		else if (component.startsWith("precompiled/fiji-") || component.startsWith("fiji-")) {
-			cmdarray[cmdarray.length - 1] = "fiji.c";
-			SimpleExecuter.exec(new File(fijiDir), out, cmdarray);
+			SimpleExecuter.exec(new File(ijDir, rule.getLastPrerequisite()), out, cmdarray);
+		else if (component.startsWith("precompiled/ImageJ-") || component.startsWith("ImageJ-")) {
+			cmdarray[cmdarray.length - 1] = "ImageJ.c";
+			SimpleExecuter.exec(new File(ijDir), out, cmdarray);
 		}
 		else {
 			String path = rule == null ? component : rule.getPrerequisiteString();
@@ -190,7 +190,7 @@ public class LogComponentCommits {
 			if (starstar >= 0)
 				path = path.substring(0, starstar);
 			cmdarray[cmdarray.length - 1] = path;
-			SimpleExecuter.exec(new File(fijiDir), out, cmdarray);
+			SimpleExecuter.exec(new File(ijDir), out, cmdarray);
 		}
 	}
 
@@ -261,10 +261,10 @@ public class LogComponentCommits {
 
 	public Rule getRule(String component) {
 		if (parser == null) try {
-			if (!new File(fijiDir, "Fakefile").exists())
+			if (!new File(ijDir, "Fakefile").exists())
 				return null;
 			Fake fake = new Fake();
-			parser = fake.parse(new FileInputStream(fijiDir + "/Fakefile"), new File(fijiDir));
+			parser = fake.parse(new FileInputStream(ijDir + "/Fakefile"), new File(ijDir));
 			parser.parseRules(new ArrayList<String>());
 		} catch (Exception e) {
 			parser = null;
@@ -358,14 +358,14 @@ public class LogComponentCommits {
 
 	protected void javap(String jar, String className, String outputFile) {
 		List<String> args = new ArrayList(Arrays.asList(new String[] {
-			System.getProperty("fiji.executable"),
+			System.getProperty("ij.executable"),
 				"--javap", "--", "-classpath", jar, "-c", "-l",
 		}));
 		if (verbose > 1)
 			args.add("-verbose");
 		args.add(className);
 		try {
-			SimpleExecuter.exec(new File(fijiDir), new FileOutputStream(outputFile), toStringArray(args));
+			SimpleExecuter.exec(new File(ijDir), new FileOutputStream(outputFile), toStringArray(args));
 		} catch (Exception e) {
 			out.handleLine("Could not execute " + Arrays.toString(toStringArray(args)));
 		}
@@ -375,7 +375,7 @@ public class LogComponentCommits {
 	protected void hexdump(String file, String outputFile) {
 		try {
 			OutputStream out = new FileOutputStream(outputFile);
-			SimpleExecuter.exec(new File(fijiDir), out, "hexdump", "-C", file);
+			SimpleExecuter.exec(new File(ijDir), out, "hexdump", "-C", file);
 			out.close();
 		} catch (Exception e) {
 			out.handleLine("Could not execute hexdump " + file);
@@ -487,7 +487,7 @@ public class LogComponentCommits {
 			return true;
 		}
 		String remotePath = null;
-		String localPath = System.getProperty("fiji.dir") + "/" + plugin;
+		String localPath = System.getProperty("ij.dir") + "/" + plugin;
 		String localURL = "file:" + localPath;
 
 		out.handleLine("Differences between the local and remote " + plugin);

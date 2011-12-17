@@ -124,6 +124,8 @@ public class SubFake extends Rule {
 				pom.downloadDependencies();
 				pom.buildJar();
 				copyJar(pom.getTarget().getPath(), target, parser.cwd, configPath);
+				if (getVarBool("copyDependencies"))
+					pom.copyDependencies(new File(target).getAbsoluteFile().getParentFile(), true);
 				return;
 			} catch (Exception e) {
 				e.printStackTrace(parser.fake.err);

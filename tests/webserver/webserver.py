@@ -74,6 +74,6 @@ if __name__ == '__main__':
         directory = sys.argv[1]
     else:
         from java.lang import System
-        directory = System.getProperty('fiji.dir') + '/tests'
+        directory = System.getProperty('ij.dir') + '/tests'
     server = startHTTP(directory)
     print 'started httpserver...'

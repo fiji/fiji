@@ -23,15 +23,15 @@ then
 	die "Could not fetch the Python library files"
 fi
 
-../../fiji --ant -Dpython.lib="$PYTHON_LIB" -f jython/build.xml jar-complete copy-lib >&2 ||
+../../ImageJ --ant -Dpython.lib="$PYTHON_LIB" -f jython/build.xml jar-complete copy-lib >&2 ||
 die "Could not run ant"
 
 rm -rf unpacked &&
 mkdir unpacked && (
 	cd unpacked &&
-	$(../../../fiji --print-java-home)/../bin/jar xf ../jython/dist/jython.jar &&
+	$(../../../ImageJ --print-java-home)/../bin/jar xf ../jython/dist/jython.jar &&
 	rm -rf com/sun/jna &&
 	cp -R ../jython/dist/Lib ./ &&
-	$(../../../fiji --print-java-home)/../bin/jar cf ../jython.jar *
+	$(../../../ImageJ --print-java-home)/../bin/jar cf ../jython.jar *
 ) ||
 die "Could not add Lib/ to jython.jar"

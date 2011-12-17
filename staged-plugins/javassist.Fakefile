@@ -1,3 +1,3 @@
 all <- javassist.jar
 
-javassist.jar[../../fiji --ant jar] <- src/**/*
+javassist.jar[../../ImageJ --ant jar] <- src/**/*

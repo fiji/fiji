@@ -27,7 +27,7 @@ x86_64)
 	version_regex='2\.0'
 	;;
 esac
-objdump -t fiji |
+objdump -t ImageJ |
 grep -v -e "GLIBC_$version_regex" |
 sed -n -e 's/.* \([^ ]*\)\@\@\(GLIBC_.*\)/GLIBC_COMPAT_SYMBOL(\1);/p' \
 >> glibc-compat.h

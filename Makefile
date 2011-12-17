@@ -3,8 +3,8 @@ all: run
 run:
 	sh Build.sh $(shell test -f make-targets && cat make-targets || echo run)
 
-fiji: fiji.c
-	sh Build.sh fiji
+ImageJ: ImageJ.c
+	sh Build.sh ImageJ
 
 .PHONY: jars/fake.jar
 jars/fake.jar:
@@ -25,7 +25,7 @@ mm:
 portable-app: Fiji.app
 	for arch in linux linux-amd64 win32; do \
 		case $$arch in win32) exe=.exe;; *) exe=;; esac; \
-		cp precompiled/fiji-$$arch$$exe $</; \
+		cp precompiled/ImageJ-$$arch$$exe $</; \
 		jdk=$$(git ls-tree --name-only origin/java/$$arch:); \
 		jre=$$jdk/jre; \
 		git archive --prefix=$</java/$$arch/$$jre/ \
@@ -40,7 +40,7 @@ Fiji.app-%:
 		case $$ARCH in win*) EXE=.exe;; *) EXE=;; esac; \
 		mkdir -p $@/$(JAVA_HOME) && \
 		mkdir -p $@/images && \
-		cp -R precompiled/fiji-$$ARCH$$EXE $@/fiji$$EXE && \
+		cp -R precompiled/ImageJ-$$ARCH$$EXE $@/ImageJ$$EXE && \
 		cp -R plugins macros jars misc $@ && \
 		REL_PATH=$$(echo $(JAVA_HOME) | sed "s|java/$(ARCH)/||") && \
 		git archive --prefix=java/$(ARCH)/$$REL_PATH/ \

@@ -1,5 +1,5 @@
 #!/bin/sh
-/*/. 2>/dev/null; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
+/*/. 2>/dev/null; exec "$(dirname "$0")"/../ImageJ "$0" "$@" # exec with fiji */
 
 import fiji.build.Fake;
 
@@ -61,12 +61,12 @@ String editClasspath(String contents, String target, String match, String replac
 DependencyAnalyzer da = new DependencyAnalyzer();
 if (bsh.args.length > 0 && (bsh.args[0].equals("--check-fakefile") || bsh.args[0].equals("--fix-fakefile"))) {
 	fix = bsh.args[0].equals("--fix-fakefile");
-	fijiDir = System.getProperty("fiji.dir");
-	if (!fijiDir.endsWith("/"))
-		fijiDir += "/";
+	ijDir = System.getProperty("ij.dir");
+	if (!ijDir.endsWith("/"))
+		ijDir += "/";
 	fake = new Fake();
-	parser = fake.parse(new FileInputStream(fijiDir + "Fakefile"),
-		new File(fijiDir));
+	parser = fake.parse(new FileInputStream(ijDir + "Fakefile"),
+		new File(ijDir));
 	parser.parseRules(new ArrayList());
 
 	targets = new ArrayList();
@@ -81,7 +81,7 @@ if (bsh.args.length > 0 && (bsh.args[0].equals("--check-fakefile") || bsh.args[0
 		}
 
 	if (fix)
-		contents = new String(fake.readFile(fijiDir + "Fakefile"));
+		contents = new String(fake.readFile(ijDir + "Fakefile"));
 
 	for (String target : targets) {
 		rule = parser.getRule(target);
@@ -101,8 +101,8 @@ if (bsh.args.length > 0 && (bsh.args[0].equals("--check-fakefile") || bsh.args[0
 		classPath = rule.getVar("CLASSPATH");
 		if (classPath != null)
 			for (String dependency : fake.split(classPath, ":")) {
-				if (dependency.startsWith(fijiDir))
-					dependency = dependency.substring(fijiDir.length());
+				if (dependency.startsWith(ijDir))
+					dependency = dependency.substring(ijDir.length());
 				inFakefile.add(dependency);
 			}
 
@@ -136,7 +136,7 @@ if (bsh.args.length > 0 && (bsh.args[0].equals("--check-fakefile") || bsh.args[0
 	}
 
 	if (fix) {
-		FileOutputStream out = new FileOutputStream(fijiDir + "Fakefile");
+		FileOutputStream out = new FileOutputStream(ijDir + "Fakefile");
 		out.write(contents.getBytes());
 		out.close();
 	}
