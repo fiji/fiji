@@ -597,7 +597,7 @@ public class MiniMaven {
 			}
 
 			POM result = parse(new File(path), null, dependency.classifier);
-			if (result == null && !quiet)
+			if (result == null && !quiet && !dependency.optional)
 				err.println("Artifact " + dependency.artifactId + " not found" + (downloadAutomatically ? "" : "; consider 'get-dependencies'"));
 			localPOMCache.put(key, result);
 			return result;
