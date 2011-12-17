@@ -95,12 +95,17 @@ public class MiniMaven {
 	}
 
 	public POM parse(File file, POM parent) throws IOException, ParserConfigurationException, SAXException {
+		return parse(file, parent, null);
+	}
+
+	public POM parse(File file, POM parent, String classifier) throws IOException, ParserConfigurationException, SAXException {
 		if (!file.exists())
 			return null;
 		if (verbose)
 			print80("Parsing " + file);
 		File directory = file.getCanonicalFile().getParentFile();
 		POM pom = new POM(directory, parent);
+		pom.coordinate.classifier = classifier;
 		XMLReader reader = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
 		reader.setContentHandler(pom);
 		//reader.setXMLErrorHandler(...);
@@ -113,10 +118,7 @@ public class MiniMaven {
 		}
 
 		if (pom.target == null) {
-			String fileName = file.getName();
-			if (fileName.endsWith(".pom"))
-				fileName = fileName.substring(0, fileName.length() - 4);
-			fileName += ".jar";
+			String fileName = pom.coordinate.getJarName();
 			pom.target = new File(directory, fileName);
 		}
 
@@ -594,7 +596,7 @@ public class MiniMaven {
 				}
 			}
 
-			POM result = parse(new File(path), null);
+			POM result = parse(new File(path), null, dependency.classifier);
 			if (result == null && !quiet)
 				err.println("Artifact " + dependency.artifactId + " not found" + (downloadAutomatically ? "" : "; consider 'get-dependencies'"));
 			localPOMCache.put(key, result);
