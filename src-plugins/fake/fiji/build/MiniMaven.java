@@ -562,8 +562,8 @@ public class MiniMaven {
 						return null;
 				}
 				else {
-					if (!quiet)
-						err.println("Skipping artifact " + dependency.artifactId + ": not found");
+					if (!quiet && !dependency.optional)
+						err.println("Skipping artifact " + dependency.artifactId + " (for " + coordinate.artifactId + "): not found");
 					localPOMCache.put(key, null);
 					return null;
 				}
