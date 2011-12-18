@@ -186,7 +186,12 @@ public class MiniMaven {
 			return (withProjectPrefix ? groupId + "/" : "")
 				+ artifactId + "-" + version
 				+ (withClassifier && classifier != null ? "-" + classifier : "")
-				+ "." + fileExtension;
+				+ (fileExtension != null ? "." + fileExtension : "");
+		}
+
+		@Override
+		public String toString() {
+			return getFileName(true, true, null);
 		}
 	}
 
