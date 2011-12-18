@@ -152,7 +152,7 @@ test "a$targets" != a$jar &&
 	(cd "$CWD" && sh "$(basename "$0")" $variables $jar) || exit
 }
 
-# make sure the Fiji launcher is up-to-date
+# make sure the ImageJ launcher is up-to-date
 test "a$targets" != a$jar -a "a$targets" != aImageJ &&
 test ! -f "$CWD"/ImageJ -o "$CWD"/ImageJ.c -nt "$CWD"/ImageJ$exe && {
 	(cd "$CWD" && sh "$(basename "$0")" $variables ImageJ) || exit

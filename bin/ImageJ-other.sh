@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# A fallback shell script to launch Fiji without the Fiji launcher
+# A fallback shell script to launch Fiji without the ImageJ launcher
 # (i.e. when all else fails)
 
 # bend over for SunOS' sh, and use `` instead of $()

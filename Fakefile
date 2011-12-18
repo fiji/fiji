@@ -492,7 +492,7 @@ jars/*.jar <- src-plugins/*/**/*
 
 misc/headless.jar[bin/make-headless-jar.bsh] <- jars/fiji-compat.jar jars/javassist.jar jars/ij.jar
 
-# Fiji launcher
+# ImageJ launcher
 
 JAVA_LIB_PATH(linux32)=lib/i386/client/libjvm.so
 JAVA_LIB_PATH(linux64)=lib/amd64/server/libjvm.so

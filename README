@@ -33,7 +33,7 @@ Fiji is meant to be distributed without source, to make the download as
 small as possible.  In the basic version, Fiji is a portable application,
 i.e. it should run wherever you copy it.
 
-The starting point is the Fiji launcher, which will launch Java, set up
+The starting point is the ImageJ launcher, which will launch Java, set up
 the environment, and call ImageJ.
 
 To pass arguments to ImageJ, just specify them on the command line.
