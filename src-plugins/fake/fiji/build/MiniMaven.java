@@ -262,17 +262,16 @@ public class MiniMaven {
 		protected void download() throws FileNotFoundException {
 			if (buildFromSource || target.exists())
 				return;
-			print80("Downloading " + target);
-			download(coordinate);
+			download(coordinate, true);
 		}
 
-		protected void download(Coordinate dependency) throws FileNotFoundException {
+		protected void download(Coordinate dependency, boolean quiet) throws FileNotFoundException {
 			if (dependency.version == null) {
 				err.println("Version of " + dependency.artifactId + " is null; Skipping.");
 				return;
 			}
 			for (String url : getRoot().getRepositories()) try {
-				downloadAndVerify(url, dependency);
+				downloadAndVerify(url, dependency, quiet);
 				return;
 			} catch (Exception e) { /* ignore */ }
 			throw new FileNotFoundException("Could not download " + dependency.getJarName());
@@ -622,10 +621,8 @@ public class MiniMaven {
 		protected boolean maybeDownloadAutomatically(Coordinate dependency, boolean quiet) {
 			if (!downloadAutomatically || offlineMode)
 				return true;
-			if (!quiet)
-				err.println((dependency.version.endsWith("-SNAPSHOT") ? "Checking for new snapshot of " : "Downloading ") + dependency.artifactId);
 			try {
-				download(dependency);
+				download(dependency, quiet);
 			} catch (Exception e) {
 				if (!quiet && !dependency.optional) {
 					e.printStackTrace(err);
@@ -774,7 +771,7 @@ public class MiniMaven {
 		}
 	}
 
-	protected void downloadAndVerify(String repositoryURL, Coordinate dependency) throws MalformedURLException, IOException, NoSuchAlgorithmException, ParserConfigurationException, SAXException {
+	protected void downloadAndVerify(String repositoryURL, Coordinate dependency, boolean quiet) throws MalformedURLException, IOException, NoSuchAlgorithmException, ParserConfigurationException, SAXException {
 		String path = "/" + dependency.groupId.replace('.', '/') + "/" + dependency.artifactId + "/" + dependency.version + "/";
 		File directory = new File(System.getProperty("user.home") + "/.m2/repository" + path);
 		if (dependency.version.endsWith("-SNAPSHOT")) {
@@ -783,8 +780,9 @@ public class MiniMaven {
 			if (System.currentTimeMillis() - snapshotMetaData.lastModified() < 24 * 60 * 60 * 1000l)
 				return;
 
+			String message = quiet ? null : "Checking for new snapshot of " + dependency.artifactId;
 			String metadataURL = repositoryURL + path + "maven-metadata.xml";
-			downloadAndVerify(metadataURL, directory, snapshotMetaData.getName());
+			downloadAndVerify(metadataURL, directory, snapshotMetaData.getName(), message);
 			dependency.version = parseSnapshotVersion(directory);
 			if (dependency.version == null)
 				throw new IOException("No version found in " + metadataURL);
@@ -792,18 +790,19 @@ public class MiniMaven {
 					new File(directory, dependency.getPOMName()).exists())
 				return;
 		}
+		String message = quiet ? null : "Downloading " + dependency.artifactId;
 		String baseURL = repositoryURL + path;
-		downloadAndVerify(baseURL + dependency.getPOMName(), directory);
-		downloadAndVerify(baseURL + dependency.getJarName(), directory);
+		downloadAndVerify(baseURL + dependency.getPOMName(), directory, null);
+		downloadAndVerify(baseURL + dependency.getJarName(), directory, message);
 	}
 
-	protected void downloadAndVerify(String url, File directory) throws IOException, NoSuchAlgorithmException {
-		downloadAndVerify(url, directory, null);
+	protected void downloadAndVerify(String url, File directory, String message) throws IOException, NoSuchAlgorithmException {
+		downloadAndVerify(url, directory, null, message);
 	}
 
-	protected void downloadAndVerify(String url, File directory, String fileName) throws IOException, NoSuchAlgorithmException {
-		File sha1 = download(new URL(url + ".sha1"), directory, fileName == null ? null : fileName + ".sha1");
-		File file = download(new URL(url), directory, fileName);
+	protected void downloadAndVerify(String url, File directory, String fileName, String message) throws IOException, NoSuchAlgorithmException {
+		File sha1 = download(new URL(url + ".sha1"), directory, fileName == null ? null : fileName + ".sha1", null);
+		File file = download(new URL(url), directory, fileName, message);
 		MessageDigest digest = MessageDigest.getInstance("SHA-1");
 		FileInputStream fileStream = new FileInputStream(file);
 		DigestInputStream digestStream = new DigestInputStream(fileStream, digest);
@@ -878,11 +877,11 @@ public class MiniMaven {
 		directory.delete();
 	}
 
-	protected File download(URL url, File directory) throws IOException {
-		return download(url, directory, null);
+	protected File download(URL url, File directory, String message) throws IOException {
+		return download(url, directory, null, message);
 	}
 
-	protected File download(URL url, File directory, String fileName) throws IOException {
+	protected File download(URL url, File directory, String fileName, String message) throws IOException {
 		if (offlineMode)
 			throw new RuntimeException("Offline!");
 		if (fileName == null) {
@@ -891,6 +890,8 @@ public class MiniMaven {
 		}
 
 		InputStream in = url.openStream();
+		if (message != null)
+			err.println(message);
 		directory.mkdirs();
 		File result = new File(directory, fileName);
 		copy(in, result);
