@@ -41,7 +41,7 @@ public class Package_Maker implements PlugIn {
 		String platform = Util.platform;
 		String timestamp = Util.timestamp(System.currentTimeMillis());
 		String extension = packager.getExtension();
-		String fileName = "fiji-" + platform + "-" + timestamp;
+		String fileName = "ImageJ-" + platform + "-" + timestamp;
 		SaveDialog save = new SaveDialog("Make Fiji Package", fileName, extension);
 		if (save.getFileName() == null)
 			return;
@@ -53,9 +53,9 @@ public class Package_Maker implements PlugIn {
 			for (PluginObject plugin : plugins)
 				count++;
 			addFile(packager, "db.xml.gz");
-			// Maybe fiji or fiji.exe exist?
-			addFile(packager, "fiji");
-			addFile(packager, "fiji.exe");
+			// Maybe ImageJ or ImageJ.exe exist?
+			addFile(packager, "ImageJ");
+			addFile(packager, "ImageJ.exe");
 			int i = 0;
 			for (PluginObject plugin : plugins) {
 				addFile(packager, plugin.filename);
@@ -71,7 +71,7 @@ public class Package_Maker implements PlugIn {
 	}
 
 	protected static boolean addFile(Packager packager, String fileName) throws IOException {
-		if (fileName.equals("fiji-macosx") || fileName.equals("fiji-tiger"))
+		if (fileName.equals("ImageJ-macosx") || fileName.equals("ImageJ-tiger"))
 			fileName = "Contents/MacOS/" + fileName;
 		File file = new File(Util.prefix(fileName));
 		if (!file.exists())

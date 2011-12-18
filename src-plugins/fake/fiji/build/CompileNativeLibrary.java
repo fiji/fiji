@@ -13,7 +13,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class CompileNativeLibrary extends Rule {
-	public static final String fijiDir;
+	public static final String ijDir;
 	public static final boolean hostIs64Bit;
 	public static final String hostPlatform;
 	public static final String hostLibraryDirectory;
@@ -21,7 +21,7 @@ public class CompileNativeLibrary extends Rule {
 	public static final String hostLibraryExtension;
 
 	static {
-		fijiDir = System.getProperty("fiji.dir");
+		ijDir = System.getProperty("ij.dir");
 		String os = System.getProperty("os.name");
 		hostIs64Bit = System.getProperty("os.arch", "").indexOf("64") >= 0;
 		String osName = System.getProperty("os.name", "<unknown>");
@@ -51,7 +51,7 @@ public class CompileNativeLibrary extends Rule {
 	}
 
 	public static String getLibraryDirectory(String platform) {
-		return fijiDir + "/lib/" + (platform != null ? platform + "/" : "");
+		return ijDir + "/lib/" + (platform != null ? platform + "/" : "");
 	}
 
 	public static String makeTargetPath(String libraryBaseName, String cwd) {
@@ -216,7 +216,7 @@ public class CompileNativeLibrary extends Rule {
 			arguments.addAll(Util.splitCommandLine(value));
 
 		Set<String> includeDirs = new HashSet<String>();
-		includeDirs.add(fijiDir + "/includes");
+		includeDirs.add(ijDir + "/includes");
 		includeDirs.add(buildDir.getAbsolutePath());
 		for (String prereq : prerequisites)
 			if (isHeader(prereq))
@@ -254,7 +254,7 @@ public class CompileNativeLibrary extends Rule {
 
 	protected void javah(File jarFile, String className, List<String> arguments) throws FakeException, IOException {
 		parser.fake.execute(getVarBool("VERBOSE"), parser.cwd,
-			System.getProperty("fiji.executable"),
+			System.getProperty("ij.executable"),
 			"--javah", "-classpath", jarFile.getAbsolutePath(),
 			"-d", buildDir.getAbsolutePath(), className);
 		arguments.add("-I");

@@ -44,7 +44,7 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
 public class MiniMaven {
-	protected boolean verbose, debug = false, downloadAutomatically;
+	protected boolean verbose, debug = false, downloadAutomatically, offlineMode;
 	protected PrintStream err;
 	protected Map<String, POM> localPOMCache = new HashMap<String, POM>();
 	protected Fake fake;
@@ -95,12 +95,17 @@ public class MiniMaven {
 	}
 
 	public POM parse(File file, POM parent) throws IOException, ParserConfigurationException, SAXException {
+		return parse(file, parent, null);
+	}
+
+	public POM parse(File file, POM parent, String classifier) throws IOException, ParserConfigurationException, SAXException {
 		if (!file.exists())
 			return null;
 		if (verbose)
 			print80("Parsing " + file);
 		File directory = file.getCanonicalFile().getParentFile();
 		POM pom = new POM(directory, parent);
+		pom.coordinate.classifier = classifier;
 		XMLReader reader = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
 		reader.setContentHandler(pom);
 		//reader.setXMLErrorHandler(...);
@@ -113,62 +118,98 @@ public class MiniMaven {
 		}
 
 		if (pom.target == null) {
-			String fileName = file.getName();
-			if (fileName.endsWith(".pom"))
-				fileName = fileName.substring(0, fileName.length() - 4);
-			fileName += ".jar";
+			String fileName = pom.coordinate.getJarName();
 			pom.target = new File(directory, fileName);
 		}
 
 		return pom;
 	}
 
-	protected POM fakePOM(File target, String groupId, String artifactId, String version) {
+	protected POM fakePOM(File target, Coordinate dependency) {
 		POM pom = new POM(target, null);
 		pom.directory = target.getParentFile();
 		pom.target = target;
 		pom.children = new POM[0];
-		pom.groupId = groupId;
-		pom.artifactId = artifactId;
-		pom.version = version;
-		if (artifactId.equals("ij")) {
+		pom.coordinate = dependency;
+		if (dependency.artifactId.equals("ij")) {
 			String javac = pom.expand("${java.home}/../lib/tools.jar");
 			if (new File(javac).exists())
-				pom.dependencies.add(new Dependency("com.sun", "tools", "1.4.2", false, javac));
+				pom.dependencies.add(new Coordinate("com.sun", "tools", "1.4.2", false, javac, null));
 		}
 		return pom;
 	}
 
-	protected class Dependency {
-		protected String groupId, artifactId, version, systemPath;
+	protected static class Coordinate {
+		protected String groupId, artifactId, version, systemPath, classifier;
 		protected boolean optional;
 
-		public Dependency() {}
+		public Coordinate() {}
 
-		public Dependency(String groupId, String artifactId, String version, boolean optional, String systemPath) {
-			this.groupId = groupId;
-			this.artifactId = artifactId;
-			this.version = version;
+		public Coordinate(String groupId, String artifactId, String version) {
+			this(groupId, artifactId, version, false, null, null);
+		}
+
+		public Coordinate(String groupId, String artifactId, String version, boolean optional, String systemPath, String classifier) {
+			this.groupId = normalize(groupId);
+			this.artifactId = normalize(artifactId);
+			this.version = normalize(version);
 			this.optional = optional;
-			this.systemPath = systemPath;
+			this.systemPath = normalize(systemPath);
+			this.classifier = classifier;
+		}
+
+		public String normalize(String s) {
+			return "".equals(s) ? null : s;
+		}
+
+		public String getJarName() {
+			return getJarName(false);
+		}
+
+		public String getJarName(boolean withProjectPrefix) {
+			return getFileName(withProjectPrefix, true, "jar");
+		}
+
+		public String getPOMName() {
+			return getPOMName(false);
+		}
+
+		public String getPOMName(boolean withProjectPrefix) {
+			return getFileName(withProjectPrefix, false, "pom");
+		}
+
+		public String getFileName(boolean withClassifier, String fileExtension) {
+			return getFileName(false, withClassifier, fileExtension);
+		}
+
+		public String getFileName(boolean withProjectPrefix, boolean withClassifier, String fileExtension) {
+			return (withProjectPrefix ? groupId + "/" : "")
+				+ artifactId + "-" + version
+				+ (withClassifier && classifier != null ? "-" + classifier : "")
+				+ (fileExtension != null ? "." + fileExtension : "");
+		}
+
+		@Override
+		public String toString() {
+			return getFileName(true, true, null);
 		}
 	}
 
 	public class POM extends DefaultHandler implements Comparable<POM> {
-		protected boolean buildFromSource;
+		protected boolean buildFromSource, built;
 		protected File directory, target;
 		protected POM parent;
 		protected POM[] children;
 
-		protected String groupId, artifactId, version;
+		protected Coordinate coordinate = new Coordinate();
 		protected Map<String, String> properties = new HashMap<String, String>();
 		protected List<String> modules = new ArrayList<String>();
-		protected List<Dependency> dependencies = new ArrayList<Dependency>(); // contains String[3]
+		protected List<Coordinate> dependencies = new ArrayList<Coordinate>(); // contains String[3]
 		protected Set<String> repositories = new TreeSet<String>();
 
 		// only used during parsing
 		protected String prefix = "";
-		protected Dependency latestDependency = new Dependency();
+		protected Coordinate latestDependency = new Coordinate();
 		protected boolean isCurrentProfile;
 
 		protected POM addModule(String name) throws IOException, ParserConfigurationException, SAXException {
@@ -187,8 +228,8 @@ public class MiniMaven {
 			this.directory = directory;
 			this.parent = parent;
 			if (parent != null) {
-				groupId = parent.groupId;
-				version = parent.version;
+				coordinate.groupId = parent.coordinate.groupId;
+				coordinate.version = parent.coordinate.version;
 			}
 
 			if (new File(directory, "src").exists()) {
@@ -222,19 +263,19 @@ public class MiniMaven {
 			if (buildFromSource || target.exists())
 				return;
 			print80("Downloading " + target);
-			download(groupId, artifactId, version);
+			download(coordinate);
 		}
 
-		protected void download(String groupId, String artifactId, String version) throws FileNotFoundException {
-			if (version == null) {
-				err.println("Version of " + artifactId + " is null; Skipping.");
+		protected void download(Coordinate dependency) throws FileNotFoundException {
+			if (dependency.version == null) {
+				err.println("Version of " + dependency.artifactId + " is null; Skipping.");
 				return;
 			}
 			for (String url : getRoot().getRepositories()) try {
-				downloadAndVerify(url, groupId, artifactId, version);
+				downloadAndVerify(url, dependency);
 				return;
 			} catch (Exception e) { /* ignore */ }
-			throw new FileNotFoundException("Could not download " + groupId + "/" + artifactId + "-" + version);
+			throw new FileNotFoundException("Could not download " + dependency.getJarName());
 		}
 
 		public boolean upToDate() throws IOException, ParserConfigurationException, SAXException {
@@ -257,10 +298,7 @@ public class MiniMaven {
 		}
 
 		public void buildJar() throws FakeException, IOException, ParserConfigurationException, SAXException {
-			build();
-			JarOutputStream out = new JarOutputStream(new FileOutputStream(getTarget()));
-			addToJarRecursively(out, target, "");
-			out.close();
+			build(true);
 		}
 
 		protected void addToJarRecursively(JarOutputStream out, File directory, String prefix) throws IOException {
@@ -274,11 +312,19 @@ public class MiniMaven {
 		}
 
 		public void build() throws FakeException, IOException, ParserConfigurationException, SAXException {
-			if (!buildFromSource)
+			build(false);
+		}
+
+		public void build(boolean makeJar) throws FakeException, IOException, ParserConfigurationException, SAXException {
+			if (!buildFromSource || built)
 				return;
 			for (POM child : getDependencies())
 				if (child != null)
-					child.build();
+					child.build(makeJar);
+
+			// do not build wrapper projects
+			if (!new File(directory, "src").exists())
+				return;
 
 			target.mkdirs();
 			File source = new File(directory, getSourcePath());
@@ -297,6 +343,8 @@ public class MiniMaven {
 
 			if (count > 0) {
 				err.println("Compiling " + count + " files in " + directory);
+				if (verbose)
+					err.println("using the class path: " + getClassPath());
 				String[] array = arguments.toArray(new String[arguments.size()]);
 				if (fake != null)
 					fake.callJavac(array, verbose);
@@ -304,11 +352,20 @@ public class MiniMaven {
 
 			updateRecursively(new File(source.getParentFile(), "resources"), target);
 
-			buildFromSource = false;
+			if (makeJar) {
+				JarOutputStream out = new JarOutputStream(new FileOutputStream(getTarget()));
+				addToJarRecursively(out, target, "");
+				out.close();
+			}
+
+			built = true;
 		}
 
 		protected void addRecursively(List<String> list, File directory, String extension, File targetDirectory, String targetExtension) {
-			for (File file : directory.listFiles())
+			File[] files = directory.listFiles();
+			if (list == null)
+				return;
+			for (File file : files)
 				if (file.isDirectory())
 					addRecursively(list, file, extension, new File(targetDirectory, file.getName()), targetExtension);
 				else {
@@ -339,22 +396,24 @@ public class MiniMaven {
 		}
 
 		public String getGroup() {
-			return groupId;
+			return coordinate.groupId;
 		}
 
 		public String getArtifact() {
-			return artifactId;
+			return coordinate.artifactId;
 		}
 
 		public String getVersion() {
-			return version;
+			return coordinate.version;
 		}
 
 		public String getJarName() {
-			return artifactId + '-' + version + ".jar";
+			return coordinate.artifactId + '-' + coordinate.version + ".jar";
 		}
 
 		public File getTarget() {
+			if (!buildFromSource)
+				return target;
 			return new File(new File(directory, "target"), getJarName());
 		}
 
@@ -366,6 +425,15 @@ public class MiniMaven {
 			return builder.toString();
 		}
 
+		public void copyDependencies(File directory, boolean onlyNewer) throws IOException, ParserConfigurationException, SAXException {
+			for (POM pom : getDependencies()) {
+				File file = pom.getTarget();
+				File destination = new File(directory, pom.coordinate.artifactId + ".jar");
+				if (file.exists() && (!destination.exists() || destination.lastModified() < file.lastModified()))
+					copyFile(file, destination);
+			}
+		}
+
 		public Set<POM> getDependencies() throws IOException, ParserConfigurationException, SAXException {
 			Set<POM> set = new TreeSet<POM>();
 			getDependencies(set);
@@ -373,22 +441,24 @@ public class MiniMaven {
 		}
 
 		public void getDependencies(Set<POM> result) throws IOException, ParserConfigurationException, SAXException {
-			for (Dependency dependency : dependencies) {
+			for (Coordinate dependency : dependencies) {
 				String groupId = expand(dependency.groupId);
 				String artifactId = expand(dependency.artifactId);
 				String version = expand(dependency.version);
+				String classifier = expand(dependency.classifier);
 				boolean optional = dependency.optional;
 				if (version == null && "aopalliance".equals(artifactId))
 					optional = true; // guice has recorded this without a version
 				String systemPath = expand(dependency.systemPath);
+				Coordinate expanded = new Coordinate(groupId, artifactId, version, optional, systemPath, classifier);
 				if (systemPath != null) {
 					File file = new File(systemPath);
 					if (file.exists()) {
-						result.add(fakePOM(file, groupId, artifactId, version));
+						result.add(fakePOM(file, expanded));
 						continue;
 					}
 				}
-				POM pom = getRoot().findPOM(groupId, artifactId, version, optional);
+				POM pom = getRoot().findPOM(expanded);
 				if (pom == null || result.contains(pom))
 					continue;
 				result.add(pom);
@@ -426,6 +496,8 @@ public class MiniMaven {
 				// hard-code a few variables
 				if (key.equals("bio-formats.groupId"))
 					return "loci";
+				if (key.equals("bio-formats.version"))
+					return "4.4-SNAPSHOT";
 				if (key.equals("imagej.groupId"))
 					return "imagej";
 				if (key.equals("java.home"))
@@ -458,103 +530,108 @@ public class MiniMaven {
 					child.getRepositories(result);
 		}
 
-		protected POM findPOM(String groupId, String artifactId, String version) throws IOException, ParserConfigurationException, SAXException {
-			return findPOM(groupId, artifactId, version, false);
+		protected POM findPOM(Coordinate dependency) throws IOException, ParserConfigurationException, SAXException {
+			return findPOM(dependency, false);
 		}
 
-		protected POM findPOM(String groupId, String artifactId, String version, boolean quiet) throws IOException, ParserConfigurationException, SAXException {
-			if (artifactId.equals(this.artifactId) &&
-					(groupId == null || groupId.equals(this.groupId)) &&
-					(version == null || this.version == null || version.equals(this.version)))
+		protected POM findPOM(Coordinate dependency, boolean quiet) throws IOException, ParserConfigurationException, SAXException {
+			if (dependency.artifactId.equals(coordinate.artifactId) &&
+					(dependency.groupId == null || dependency.groupId.equals(coordinate.groupId)) &&
+					(dependency.version == null || coordinate.version == null || dependency.version.equals(coordinate.version)))
 				return this;
-			if (groupId == null && artifactId.equals("jdom"))
-				groupId = "jdom";
+			if (dependency.groupId == null && dependency.artifactId.equals("jdom"))
+				dependency.groupId = "jdom";
 			for (POM child : children) {
 				if (child == null)
 					continue;
-				POM result = child.findPOM(groupId, artifactId, version, quiet);
+				POM result = child.findPOM(dependency, quiet);
 				if (result != null)
 					return result;
 			}
 			// for the root POM, fall back to $HOME/.m2/repository/
 			if (parent == null)
-				return findLocallyCachedPOM(groupId, artifactId, version, quiet);
+				return findLocallyCachedPOM(dependency, quiet);
 			return null;
 		}
 
-		protected POM findLocallyCachedPOM(String groupId, String artifactId, String version, boolean quiet) throws IOException, ParserConfigurationException, SAXException {
-			if (groupId == null)
+		protected POM findLocallyCachedPOM(Coordinate dependency, boolean quiet) throws IOException, ParserConfigurationException, SAXException {
+			if (dependency.groupId == null)
 				return null;
-			if (version != null && version.equals(""))
-				version = null;
-			String key = groupId + ">" + artifactId;
+			String key = dependency.groupId + ">" + dependency.artifactId;
 			if (localPOMCache.containsKey(key)) {
 				POM result = localPOMCache.get(key); // may be null
-				if (result == null || version == null || compareVersion(version, result.version) <= 0)
+				if (result == null || dependency.version == null || compareVersion(dependency.version, result.coordinate.version) <= 0)
 					return result;
 			}
 
-			String path = System.getProperty("user.home") + "/.m2/repository/" + groupId.replace('.', '/') + "/" + artifactId + "/";
-			if (version == null)
-				version = findLocallyCachedVersion(path);
-			if (version == null && artifactId.equals("scifio"))
-				version = "4.4-SNAPSHOT";
-			if (version == null || version.startsWith("[") || artifactId.equals("tools")) {
+			String path = System.getProperty("user.home") + "/.m2/repository/" + dependency.groupId.replace('.', '/') + "/" + dependency.artifactId + "/";
+			if (dependency.version == null)
+				dependency.version = findLocallyCachedVersion(path);
+			if (dependency.version == null && dependency.artifactId.equals("scifio"))
+				dependency.version = "4.4-SNAPSHOT";
+			if (dependency.version == null || dependency.version.startsWith("[") || dependency.artifactId.equals("tools")) {
 				// try to find the .jar in Fiji's jars/ dir
-				String jarName = artifactId.equals("tools") ? "javac.jar" : artifactId + ".jar";
-				File file = new File(System.getProperty("fiji.dir"), "jars/" + jarName);
+				String jarName = dependency.artifactId.equals("tools") ? "javac.jar" : dependency.artifactId + ".jar";
+				File file = new File(System.getProperty("ij.dir"), "jars/" + jarName);
 				if (file.exists()) {
-					POM pom = fakePOM(file, groupId, artifactId, version);
+					POM pom = fakePOM(file, dependency);
 					localPOMCache.put(key, pom);
 					return pom;
 				}
 				if (!quiet)
-					err.println("Cannot find version for artifact " + artifactId + " (dependency of " + this.artifactId + ")");
+					err.println("Cannot find version for artifact " + dependency.artifactId + " (dependency of " + coordinate.artifactId + ")");
 				localPOMCache.put(key, null);
 				return null;
 			}
-			path += version + "/";
-			if (version.endsWith("-SNAPSHOT")) try {
-				if (!maybeDownloadAutomatically(groupId, artifactId, version, quiet))
+			path += dependency.version + "/";
+			if (dependency.version.endsWith("-SNAPSHOT")) try {
+				if (!maybeDownloadAutomatically(dependency, quiet))
 					return null;
-				version = parseSnapshotVersion(new File(path));
+				dependency.version = parseSnapshotVersion(new File(path));
 			} catch (FileNotFoundException e) { /* ignore */ }
-			path += artifactId + "-" + version + ".pom";
+			path += dependency.getPOMName();
 
 			File file = new File(path);
 			if (!file.exists()) {
 				if (downloadAutomatically) {
-					if (!maybeDownloadAutomatically(groupId, artifactId, version, quiet))
+					if (!maybeDownloadAutomatically(dependency, quiet))
 						return null;
 				}
 				else {
-					if (!quiet)
-						err.println("Skipping artifact " + artifactId + ": not found");
+					if (!quiet && !dependency.optional)
+						err.println("Skipping artifact " + dependency.artifactId + " (for " + coordinate.artifactId + "): not found");
 					localPOMCache.put(key, null);
 					return null;
 				}
 			}
 
-			POM result = parse(new File(path), null);
-			if (result == null && !quiet)
-				err.println("Artifact " + artifactId + " not found" + (downloadAutomatically ? "" : "; consider 'get-dependencies'"));
+			POM result = parse(new File(path), null, dependency.classifier);
+			if (result != null) {
+				if (result.target.getName().endsWith("-SNAPSHOT.jar")) {
+					result.coordinate.version = dependency.version;
+					result.target = new File(result.directory, dependency.getJarName());
+				}
+			}
+			else if (!quiet && !dependency.optional)
+				err.println("Artifact " + dependency.artifactId + " not found" + (downloadAutomatically ? "" : "; consider 'get-dependencies'"));
 			localPOMCache.put(key, result);
 			return result;
 		}
 
-		protected boolean maybeDownloadAutomatically(String groupId, String artifactId, String version, boolean quiet) {
-			if (!downloadAutomatically || buildFromSource)
+		// TODO: if there is no internet connection, do not try to download -SNAPSHOT versions
+		protected boolean maybeDownloadAutomatically(Coordinate dependency, boolean quiet) {
+			if (!downloadAutomatically || offlineMode)
 				return true;
 			if (!quiet)
-				err.println("Downloading " + artifactId);
+				err.println((dependency.version.endsWith("-SNAPSHOT") ? "Checking for new snapshot of " : "Downloading ") + dependency.artifactId);
 			try {
-				download(groupId, artifactId, version);
+				download(dependency);
 			} catch (Exception e) {
-				if (!quiet) {
+				if (!quiet && !dependency.optional) {
 					e.printStackTrace(err);
-					err.println("Could not download " + artifactId + ": " + e.getMessage());
+					err.println("Could not download " + dependency.artifactId + ": " + e.getMessage());
 				}
-				String key = groupId + ">" + artifactId;
+				String key = dependency.groupId + ">" + dependency.artifactId;
 				localPOMCache.put(key, null);
 				return false;
 			}
@@ -587,9 +664,9 @@ public class MiniMaven {
 
 		public void endDocument() {
 			if (!properties.containsKey("project.groupId"))
-				properties.put("project.groupId", groupId);
+				properties.put("project.groupId", coordinate.groupId);
 			if (!properties.containsKey("project.version"))
-				properties.put("project.version", version);
+				properties.put("project.version", coordinate.version);
 		}
 
 		public void startElement(String uri, String name, String qualifiedName, Attributes attributes) {
@@ -601,7 +678,7 @@ public class MiniMaven {
 		public void endElement(String uri, String name, String qualifiedName) {
 			if (prefix.equals(">project>dependencies>dependency") || (isCurrentProfile && prefix.equals(">project>profiles>profile>dependencies>dependency"))) {
 				dependencies.add(latestDependency);
-				latestDependency = new Dependency();
+				latestDependency = new Coordinate();
 			}
 			if (prefix.equals(">project>profiles>profile"))
 				isCurrentProfile = false;
@@ -620,18 +697,18 @@ public class MiniMaven {
 				prefix = ">project" + prefix.substring(">project>profiles>profile".length());
 
 			if (prefix.equals(">project>groupId"))
-				groupId = string;
+				coordinate.groupId = string;
 			else if (prefix.equals(">project>parent>groupId")) {
-				if (groupId == null)
-					groupId = string;
+				if (coordinate.groupId == null)
+					coordinate.groupId = string;
 			}
 			else if (prefix.equals(">project>artifactId"))
-				artifactId = string;
+				coordinate.artifactId = string;
 			else if (prefix.equals(">project>version"))
-				version = string;
+				coordinate.version = string;
 			else if (prefix.equals(">project>parent>version")) {
-				if (version == null)
-					version = string;
+				if (coordinate.version == null)
+					coordinate.version = string;
 			}
 			else if (prefix.equals(">project>modules"))
 				buildFromSource = true; // might not be building a target
@@ -649,6 +726,8 @@ public class MiniMaven {
 				latestDependency.optional = string.equalsIgnoreCase("true");
 			else if (prefix.equals(">project>dependencies>dependency>systemPath"))
 				latestDependency.systemPath = string;
+			else if (prefix.equals(">project>dependencies>dependency>classifier"))
+				latestDependency.classifier = string;
 			else if (prefix.equals(">project>profiles>profile>id"))
 				isCurrentProfile = (!Util.getPlatform().equals("macosx") && "javac".equals(string)) || profile.equals(string);
 			else if (prefix.equals(">project>repositories>repository>url"))
@@ -669,15 +748,15 @@ public class MiniMaven {
 		}
 
 		public int compareTo(POM other) {
-			int result = artifactId.compareTo(other.artifactId);
+			int result = coordinate.artifactId.compareTo(other.coordinate.artifactId);
 			if (result != 0)
 				return result;
-			if (groupId != null && other.groupId != null)
-				result = groupId.compareTo(other.groupId);
+			if (coordinate.groupId != null && other.coordinate.groupId != null)
+				result = coordinate.groupId.compareTo(other.coordinate.groupId);
 			if (result != 0)
 				return result;
-			if (version != null && other.version != null)
-				return compareVersion(version, other.version);
+			if (coordinate.version != null && other.coordinate.version != null)
+				return compareVersion(coordinate.version, other.coordinate.version);
 			return 0;
 		}
 
@@ -688,33 +767,36 @@ public class MiniMaven {
 		}
 
 		public void append(StringBuilder builder, String indent) {
-			builder.append(indent + groupId + ">" + artifactId + "\n");
+			builder.append(indent + coordinate.groupId + ">" + coordinate.artifactId + "\n");
 			if (children != null)
 				for (POM child : children)
 					child.append(builder, indent + "  ");
 		}
 	}
 
-	protected static void downloadAndVerify(String repositoryURL, String groupId, String artifactId, String version) throws MalformedURLException, IOException, NoSuchAlgorithmException, ParserConfigurationException, SAXException {
-		String path = "/" + groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/";
+	protected void downloadAndVerify(String repositoryURL, Coordinate dependency) throws MalformedURLException, IOException, NoSuchAlgorithmException, ParserConfigurationException, SAXException {
+		String path = "/" + dependency.groupId.replace('.', '/') + "/" + dependency.artifactId + "/" + dependency.version + "/";
 		File directory = new File(System.getProperty("user.home") + "/.m2/repository" + path);
-		if (version.endsWith("-SNAPSHOT")) {
+		if (dependency.version.endsWith("-SNAPSHOT")) {
 			String metadataURL = repositoryURL + path + "maven-metadata.xml";
 			downloadAndVerify(metadataURL, directory, "maven-metadata-snapshot.xml");
-			version = parseSnapshotVersion(directory);
-			if (version == null)
+			dependency.version = parseSnapshotVersion(directory);
+			if (dependency.version == null)
 				throw new IOException("No version found in " + metadataURL);
+			if (new File(directory, dependency.getJarName()).exists() &&
+					new File(directory, dependency.getPOMName()).exists())
+				return;
 		}
-		String baseURL = repositoryURL + path + artifactId + "-" + version;
-		downloadAndVerify(baseURL + ".pom", directory);
-		downloadAndVerify(baseURL + ".jar", directory);
+		String baseURL = repositoryURL + path;
+		downloadAndVerify(baseURL + dependency.getPOMName(), directory);
+		downloadAndVerify(baseURL + dependency.getJarName(), directory);
 	}
 
-	protected static void downloadAndVerify(String url, File directory) throws IOException, NoSuchAlgorithmException {
+	protected void downloadAndVerify(String url, File directory) throws IOException, NoSuchAlgorithmException {
 		downloadAndVerify(url, directory, null);
 	}
 
-	protected static void downloadAndVerify(String url, File directory, String fileName) throws IOException, NoSuchAlgorithmException {
+	protected void downloadAndVerify(String url, File directory, String fileName) throws IOException, NoSuchAlgorithmException {
 		File sha1 = download(new URL(url + ".sha1"), directory, fileName == null ? null : fileName + ".sha1");
 		File file = download(new URL(url), directory, fileName);
 		MessageDigest digest = MessageDigest.getInstance("SHA-1");
@@ -791,11 +873,13 @@ public class MiniMaven {
 		directory.delete();
 	}
 
-	protected static File download(URL url, File directory) throws IOException {
+	protected File download(URL url, File directory) throws IOException {
 		return download(url, directory, null);
 	}
 
-	protected static File download(URL url, File directory, String fileName) throws IOException {
+	protected File download(URL url, File directory, String fileName) throws IOException {
+		if (offlineMode)
+			throw new RuntimeException("Offline!");
 		if (fileName == null) {
 			fileName = url.getPath();
 			fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
@@ -863,17 +947,36 @@ public class MiniMaven {
 		return length;
 	}
 
+	protected static void ensureIJDirIsSet() {
+		String ijDir = System.getProperty("ij.dir");
+		if (ijDir != null && new File(ijDir).isDirectory())
+			return;
+		ijDir = MiniMaven.class.getResource("MiniMaven.class").toString();
+		for (String prefix : new String[] { "jar:", "file:" })
+			if (ijDir.startsWith(prefix))
+				ijDir = ijDir.substring(prefix.length());
+		int bang = ijDir.indexOf("!/");
+		if (bang < 0)
+			throw new RuntimeException("Funny ?-) " + ijDir);
+		ijDir = ijDir.substring(0, bang);
+		for (String suffix : new String[] { "fake.jar", File.separator, "jars", File.separator })
+			if (ijDir.endsWith(suffix))
+				ijDir = ijDir.substring(0, ijDir.length() - suffix.length());
+		System.setProperty("ij.dir", ijDir);
+	}
+
 	private final static String usage = "Usage: MiniMaven [command]\n"
 		+ "\tSupported commands: compile, run, compile-and-run, clean, get-dependencies";
 
 	public static void main(String[] args) throws Exception {
+		ensureIJDirIsSet();
 		MiniMaven miniMaven = new MiniMaven(null, System.err, false);
 		POM root = miniMaven.parse(new File("pom.xml"), null);
 		String command = args.length == 0 ? "compile-and-run" : args[0];
 		String artifactId = getSystemProperty("artifactId", "ij-app");
 		String mainClass = getSystemProperty("mainClass", "imagej.Main");
 
-		POM pom = root.findPOM(null, artifactId, null);
+		POM pom = root.findPOM(new Coordinate(null, artifactId, null));
 		if (pom == null)
 			pom = root;
 		if (command.equals("compile") || command.equals("build") || command.equals("compile-and-run")) {
@@ -882,6 +985,16 @@ public class MiniMaven {
 				command = "run";
 			else
 				return;
+		}
+		else if (command.equals("jar") || command.equals("jars")) {
+			if (!pom.buildFromSource) {
+				System.err.println("Cannot build " + pom + " from source");
+				System.exit(1);
+			}
+			pom.buildJar();
+			if (command.equals("jars"))
+				pom.copyDependencies(new File(pom.directory, "target"), true);
+			return;
 		}
 		if (command.equals("clean"))
 			pom.clean();
@@ -901,6 +1014,21 @@ public class MiniMaven {
 		}
 		else if (command.equals("classpath"))
 			miniMaven.err.println(pom.getClassPath());
+		else if (command.equals("list")) {
+			Set<POM> result = new TreeSet<POM>();
+			Stack<POM> stack = new Stack<POM>();
+			stack.push(pom.getRoot());
+			while (!stack.empty()) {
+				pom = stack.pop();
+				if (result.contains(pom) || !pom.buildFromSource)
+					continue;
+				result.add(pom);
+				for (POM child : pom.children)
+					stack.push(child);
+			}
+			for (POM pom2 : result)
+				System.err.println(pom2);
+		}
 		else
 			miniMaven.err.println("Unhandled command: " + command + "\n" + usage);
 	}

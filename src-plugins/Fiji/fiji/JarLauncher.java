@@ -52,46 +52,7 @@ public class JarLauncher {
 					+ jarPath + "'.");
 			System.exit(1);
 		}
-		Class main = null;
-		try {
-			URL[] urls = new URL[] { new File(jarPath).toURL() };
-			ClassLoader loader = new URLClassLoader(urls);
-			main = loader.loadClass(className.replace('/', '.'));
-		} catch (ClassNotFoundException e) {
-			System.err.println("Class '" + className
-					+ "' was not found in '"
-					+ jarPath + "'.");
-			System.exit(1);
-		} catch (MalformedURLException e) {
-			System.err.println("Could not make URL for '"
-					+ jarPath + "'.");
-			System.exit(1);
-		}
-		Class[] argsType = new Class[] { arguments.getClass() };
-		Method mainMethod = null;
-		try {
-			mainMethod = main.getMethod("main", argsType);
-		} catch (NoSuchMethodException e) {
-			System.err.println("Class '" + className
-					+ "' in '" + jarPath
-					+ "' does not have a main() method.");
-			System.exit(1);
-		}
-		Integer result = new Integer(1);
-		try {
-                        result = (Integer)mainMethod.invoke(null,
-                                        new Object[] { arguments });
-                } catch (IllegalAccessException e) {
-                        System.err.println("The main() method of class '"
-                                        + className + "' in '" + jarPath
-                                        + "' is not public.");
-                } catch (InvocationTargetException e) {
-                        System.err.println("Error while executing the main() "
-                                        + "method of class '" + className
-                                        + "' in '" + jarPath + "':");
-                        e.getTargetException().printStackTrace();
-                }
-		if (result != null)
-			System.exit(result.intValue());
+		ClassLoaderPlus loader = ClassLoaderPlus.get(new File(jarPath));
+		ClassLauncher.launch(loader, className, arguments);
 	}
 }

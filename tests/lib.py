@@ -124,7 +124,7 @@ def launchProgram(args, workingDir = None):
 	return process.waitFor()
 
 def launchFiji(args, workingDir = None):
-	args.insert(0, realpath(System.getProperty('fiji.executable')))
+	args.insert(0, realpath(System.getProperty('ij.executable')))
 	try:
 		launchProgram(args, workingDir)
 	except:

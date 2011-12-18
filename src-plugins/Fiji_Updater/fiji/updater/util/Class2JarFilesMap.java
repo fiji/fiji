@@ -20,7 +20,7 @@ public class Class2JarFilesMap extends HashMap<String, ArrayList<String>> {
 	}
 
 	private void addDirectory(String directory) {
-		File dir = new File(Util.fijiRoot + "/" + directory);
+		File dir = new File(Util.ijRoot + "/" + directory);
 		if (!dir.isDirectory())
 			return;
 		String[] list = dir.list();
@@ -38,7 +38,7 @@ public class Class2JarFilesMap extends HashMap<String, ArrayList<String>> {
 
 	private void addJar(String jar) throws IOException {
 		try {
-			JarFile file = new JarFile(Util.fijiRoot + "/" + jar);
+			JarFile file = new JarFile(Util.ijRoot + "/" + jar);
 			Enumeration entries = file.entries();
 			while (entries.hasMoreElements()) {
 				String name = ((JarEntry)entries.nextElement())

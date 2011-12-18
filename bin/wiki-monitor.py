@@ -1,5 +1,5 @@
 #!/bin/sh
-''''exec "$(dirname "$0")"/../fiji --jython --headless --mem=64m "$0" "$@" # (call again with fiji)'''
+''''exec "$(dirname "$0")"/../ImageJ --jython --headless --mem=64m "$0" "$@" # (call again with fiji)'''
 
 # This script allows you to monitor a Wiki conveniently, by looking at the
 # Special:RecentChanges page, and comparing it with the version it found

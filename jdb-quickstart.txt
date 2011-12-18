@@ -14,7 +14,7 @@ Notable differences:
 
 Okay, so here you go, a little demonstration:
 
-$ ./fiji --jdb
+$ ./ImageJ --jdb
 > stop in ij.ImageJ.main
 Deferring breakpoint ij.ImageJ.main.
 It will be set after the class is loaded.

@@ -6,11 +6,11 @@
 
 	<property name="builder.name" value="the Fiji team" />
 
-	<property name="fijiDir" 			location="${basedir}/../.." />
+	<property name="ijDir" 			location="${basedir}/../.." />
 	<property name="pluginsDirName"  	value="plugins" />
-	<property name="pluginsDir"  		location="${fijiDir}/${pluginsDirName}" />
-	<property name="srcPluginsDir"  	location="${fijiDir}/src-plugins" />
-	<property name="stagedPluginsDir"  	location="${fijiDir}/staged-plugins" />
+	<property name="pluginsDir"  		location="${ijDir}/${pluginsDirName}" />
+	<property name="srcPluginsDir"  	location="${ijDir}/src-plugins" />
+	<property name="stagedPluginsDir"  	location="${ijDir}/staged-plugins" />
 	<property name="fijiConfigFile"		value="${ant.project.name}.config" />
 	<property name="pluginConfigFile"	value="plugins.config" />
 	<property name="jarName"			value="${ant.project.name}.jar" />
@@ -25,7 +25,7 @@
 
 	<target name="main-fiji" depends="make-plugins.config" description="Main target, use Fiji build system.">
 		<echo message="Generating jar file with Fiji build system" />
-		<apply executable="${fijiDir}/fiji" dir="${fijiDir}" relative="true" >
+		<apply executable="${ijDir}/ImageJ" dir="${ijDir}" relative="true" >
 			<arg value="--build"  />
 			<string value="${pluginsDirName}/${jarName}" />
 		</apply>
