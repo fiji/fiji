@@ -945,10 +945,29 @@ public class MiniMaven {
 		return length;
 	}
 
+	protected static void ensureIJDirIsSet() {
+		String ijDir = System.getProperty("ij.dir");
+		if (ijDir != null && new File(ijDir).isDirectory())
+			return;
+		ijDir = MiniMaven.class.getResource("MiniMaven.class").toString();
+		for (String prefix : new String[] { "jar:", "file:" })
+			if (ijDir.startsWith(prefix))
+				ijDir = ijDir.substring(prefix.length());
+		int bang = ijDir.indexOf("!/");
+		if (bang < 0)
+			throw new RuntimeException("Funny ?-) " + ijDir);
+		ijDir = ijDir.substring(0, bang);
+		for (String suffix : new String[] { "fake.jar", File.separator, "jars", File.separator })
+			if (ijDir.endsWith(suffix))
+				ijDir = ijDir.substring(0, ijDir.length() - suffix.length());
+		System.setProperty("ij.dir", ijDir);
+	}
+
 	private final static String usage = "Usage: MiniMaven [command]\n"
 		+ "\tSupported commands: compile, run, compile-and-run, clean, get-dependencies";
 
 	public static void main(String[] args) throws Exception {
+		ensureIJDirIsSet();
 		MiniMaven miniMaven = new MiniMaven(null, System.err, false);
 		POM root = miniMaven.parse(new File("pom.xml"), null);
 		String command = args.length == 0 ? "compile-and-run" : args[0];
