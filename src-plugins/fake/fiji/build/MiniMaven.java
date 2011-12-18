@@ -604,7 +604,13 @@ public class MiniMaven {
 			}
 
 			POM result = parse(new File(path), null, dependency.classifier);
-			if (result == null && !quiet && !dependency.optional)
+			if (result != null) {
+				if (result.target.getName().endsWith("-SNAPSHOT.jar")) {
+					result.coordinate.version = dependency.version;
+					result.target = new File(result.directory, dependency.getJarName());
+				}
+			}
+			else if (!quiet && !dependency.optional)
 				err.println("Artifact " + dependency.artifactId + " not found" + (downloadAutomatically ? "" : "; consider 'get-dependencies'"));
 			localPOMCache.put(key, result);
 			return result;
