@@ -778,8 +778,13 @@ public class MiniMaven {
 		String path = "/" + dependency.groupId.replace('.', '/') + "/" + dependency.artifactId + "/" + dependency.version + "/";
 		File directory = new File(System.getProperty("user.home") + "/.m2/repository" + path);
 		if (dependency.version.endsWith("-SNAPSHOT")) {
+			// Only check snapshots once per day
+			File snapshotMetaData = new File(directory, "maven-metadata-snapshot.xml");
+			if (System.currentTimeMillis() - snapshotMetaData.lastModified() < 24 * 60 * 60 * 1000l)
+				return;
+
 			String metadataURL = repositoryURL + path + "maven-metadata.xml";
-			downloadAndVerify(metadataURL, directory, "maven-metadata-snapshot.xml");
+			downloadAndVerify(metadataURL, directory, snapshotMetaData.getName());
 			dependency.version = parseSnapshotVersion(directory);
 			if (dependency.version == null)
 				throw new IOException("No version found in " + metadataURL);
