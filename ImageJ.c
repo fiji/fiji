@@ -3044,6 +3044,8 @@ static void parse_command_line(void)
 	i = 0;
 	properties[i++] = "imagej.dir";
 	properties[i++] =  ij_dir,
+	properties[i++] = "ij.dir";
+	properties[i++] =  ij_dir,
 	properties[i++] = "fiji.dir";
 	properties[i++] =  ij_dir,
 	properties[i++] = "fiji.defaultLibPath";
