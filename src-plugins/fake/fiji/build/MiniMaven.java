@@ -196,7 +196,7 @@ public class MiniMaven {
 	}
 
 	public class POM extends DefaultHandler implements Comparable<POM> {
-		protected boolean buildFromSource;
+		protected boolean buildFromSource, built;
 		protected File directory, target;
 		protected POM parent;
 		protected POM[] children;
@@ -316,7 +316,7 @@ public class MiniMaven {
 		}
 
 		public void build(boolean makeJar) throws FakeException, IOException, ParserConfigurationException, SAXException {
-			if (!buildFromSource)
+			if (!buildFromSource || built)
 				return;
 			for (POM child : getDependencies())
 				if (child != null)
@@ -357,6 +357,8 @@ public class MiniMaven {
 				addToJarRecursively(out, target, "");
 				out.close();
 			}
+
+			built = true;
 		}
 
 		protected void addRecursively(List<String> list, File directory, String extension, File targetDirectory, String targetExtension) {
