@@ -111,6 +111,12 @@ public class MiniMaven {
 		//reader.setXMLErrorHandler(...);
 		reader.parse(new InputSource(new FileInputStream(file)));
 
+
+		if (new File(pom.directory, pom.sourceDirectory).exists()) {
+			pom.buildFromSource = true;
+			pom.target = new File(directory, "target/classes");
+		}
+
 		pom.children = new POM[pom.modules.size()];
 		for (int i = 0; i < pom.children.length; i++) {
 			file = new File(directory, pom.modules.get(i) + "/pom.xml");
@@ -198,6 +204,7 @@ public class MiniMaven {
 	public class POM extends DefaultHandler implements Comparable<POM> {
 		protected boolean buildFromSource, built;
 		protected File directory, target;
+		protected String sourceDirectory = "src/main/java";
 		protected POM parent;
 		protected POM[] children;
 
@@ -230,11 +237,6 @@ public class MiniMaven {
 			if (parent != null) {
 				coordinate.groupId = parent.coordinate.groupId;
 				coordinate.version = parent.coordinate.version;
-			}
-
-			if (new File(directory, "src").exists()) {
-				buildFromSource = true;
-				target = new File(directory, "target/classes");
 			}
 		}
 
@@ -293,7 +295,7 @@ public class MiniMaven {
 		}
 
 		public String getSourcePath() {
-			return "src/main/java";
+			return sourceDirectory;
 		}
 
 		public void buildJar() throws FakeException, IOException, ParserConfigurationException, SAXException {
@@ -726,9 +728,11 @@ public class MiniMaven {
 			else if (prefix.equals(">project>dependencies>dependency>classifier"))
 				latestDependency.classifier = string;
 			else if (prefix.equals(">project>profiles>profile>id"))
-				isCurrentProfile = (!Util.getPlatform().equals("macosx") && "javac".equals(string)) || profile.equals(string);
+				isCurrentProfile = (!Util.getPlatform().equals("macosx") && "javac".equals(string)) || (coordinate.artifactId.equals("javassist") && string.equals("jdk16")) || profile.equals(string);
 			else if (prefix.equals(">project>repositories>repository>url"))
 				repositories.add(string);
+			else if (prefix.equals(">project>build>sourceDirectory"))
+				sourceDirectory = string;
 			else if (debug)
 				err.println("Ignoring " + prefix);
 		}
