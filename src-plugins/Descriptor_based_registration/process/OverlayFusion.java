@@ -5,6 +5,7 @@ import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.io.FileSaver;
 import ij.process.ImageProcessor;
 
 import java.util.ArrayList;
@@ -49,7 +50,7 @@ public class OverlayFusion
 		return createOverlay( targetType, images, models, dimensionality, 1, new LinearInterpolatorFactory<FloatType>( new OutOfBoundsStrategyValueFactory<FloatType>() ) );
 	}
 	
-	public static <T extends RealType<T>> ImagePlus createReRegisteredSeries( final T targetType, final ImagePlus imp, final ArrayList<InvertibleBoundable> models, final int dimensionality )
+	public static <T extends RealType<T>> ImagePlus createReRegisteredSeries( final T targetType, final ImagePlus imp, final ArrayList<InvertibleBoundable> models, final int dimensionality, final String directory )
 	{
 		final int numImages = imp.getNFrames();
 
@@ -85,8 +86,24 @@ public class OverlayFusion
 				try 
 				{
 					final ImagePlus outImp = ((ImagePlusContainer<?,?>)out.getContainer()).getImagePlus();
-					for ( int z = 1; z <= out.getDimension( 2 ); ++z )
-						stack.addSlice( imp.getTitle(), outImp.getStack().getProcessor( z ) );
+					
+					if ( directory == null )
+					{
+						// fuse
+						for ( int z = 1; z <= out.getDimension( 2 ); ++z )
+							stack.addSlice( imp.getTitle(), outImp.getStack().getProcessor( z ) );
+					}
+					else
+					{
+						//write to disk
+						for ( int z = 1; z <= out.getDimension( 2 ); ++z )
+						{
+							final ImagePlus tmp = new ImagePlus( "img_t" + t + "_c" + c + "_z" + z, outImp.getStack().getProcessor( z ) );
+							final FileSaver fs = new FileSaver( tmp );
+							fs.saveAsTiff( directory );
+							tmp.close();
+						}
+					}
 				} 
 				catch (ImgLibException e) 
 				{
@@ -94,6 +111,9 @@ public class OverlayFusion
 				}				
 			}
 		}
+		
+		if ( directory != null )
+			return null;
 		
 		//convertXYZCT ...
 		ImagePlus result = new ImagePlus( "registered " + imp.getTitle(), stack );

@@ -113,7 +113,7 @@ public class Matching
 		}
 		
 		// fuse if wanted
-		if ( params.fuse )
+		if ( params.fuse < 2 )
 		{
 			final CompositeImage composite;
 			
@@ -208,7 +208,7 @@ public class Matching
 		}
 		
 		// fuse
-		if ( params.fuse )
+		if ( params.fuse < 2 )
 		{
 			if ( params.dimensionality == 3 )
 			{
@@ -224,15 +224,22 @@ public class Matching
 			}
 			
 			final ImagePlus result;
+			String directory = null;
+			
+			if ( params.fuse == 1 )
+				directory = params.directory;
 			
 			if ( imp.getType() == ImagePlus.GRAY32 )
-				result = OverlayFusion.createReRegisteredSeries( new FloatType(), imp, models, params.dimensionality );
+				result = OverlayFusion.createReRegisteredSeries( new FloatType(), imp, models, params.dimensionality, directory );
 			else if ( imp.getType() == ImagePlus.GRAY16 )
-				result = OverlayFusion.createReRegisteredSeries( new UnsignedShortType(), imp, models, params.dimensionality );
+				result = OverlayFusion.createReRegisteredSeries( new UnsignedShortType(), imp, models, params.dimensionality, directory );
 			else
-				result = OverlayFusion.createReRegisteredSeries( new UnsignedByteType(), imp, models, params.dimensionality );
+				result = OverlayFusion.createReRegisteredSeries( new UnsignedByteType(), imp, models, params.dimensionality, directory );
 			
-			result.show();
+			if ( result != null ) 
+				result.show();
+			
+			IJ.log( "Finished" );
 		}
 	}
 	
