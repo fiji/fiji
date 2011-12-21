@@ -536,7 +536,7 @@ public class Matching
 				statement = computeRANSAC( candidates, inliers, model2, (float)params.ransacThreshold );
 				
 				numInliers = inliers.size();
-				IJ.log( explanation + ": " + statement );
+				//IJ.log( explanation + ": " + statement );
 				
 				// update model if this one was better
 				if ( numInliers > previousNumInliers )

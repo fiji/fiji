@@ -8,6 +8,7 @@ import ij.ImageStack;
 import ij.io.FileSaver;
 import ij.process.ImageProcessor;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -98,9 +99,9 @@ public class OverlayFusion
 						//write to disk
 						for ( int z = 1; z <= out.getDimension( 2 ); ++z )
 						{
-							final ImagePlus tmp = new ImagePlus( "img_t" + t + "_c" + c + "_z" + z, outImp.getStack().getProcessor( z ) );
+							final ImagePlus tmp = new ImagePlus( "img_t" + t + "_z" + z + "_c" + c, outImp.getStack().getProcessor( z ) );
 							final FileSaver fs = new FileSaver( tmp );
-							fs.saveAsTiff( directory );
+							fs.saveAsTiff( new File( directory, tmp.getTitle() ).getAbsolutePath() );
 							tmp.close();
 						}
 					}

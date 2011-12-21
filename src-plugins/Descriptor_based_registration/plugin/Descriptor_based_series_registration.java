@@ -179,7 +179,7 @@ public class Descriptor_based_series_registration implements PlugIn
 	
 	public static int defaultChannel = 1;
 	
-	public static String[] resultChoices = { "Fuse_and_display_result", "Write_result_to_disk", "Do_not_fuse" };
+	public static String[] resultChoices = { "Fuse and display", "Write to disk", "Do not fuse" };
 	public static int defaultResult = 0;
 
 	public static String defaultDirectory = "";
