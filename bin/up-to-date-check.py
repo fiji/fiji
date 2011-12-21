@@ -1,11 +1,11 @@
 #!/bin/sh
-''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
+''''exec "$(dirname "$0")"/../ImageJ --jython "$0" "$@" # (call again with fiji)'''
 
-# This script checks if the Fiji launcher for a given platform is
+# This script checks if the ImageJ launcher for a given platform is
 # up-to-date.
 #
 # The idea is to check every line of history (in reverse chronological
-# order, from HEAD) stopping when the Fiji launcher was modified.  If
+# order, from HEAD) stopping when the ImageJ launcher was modified.  If
 # somewhere on that line, the source was modified, the launcher needs
 # rebuilding.
 

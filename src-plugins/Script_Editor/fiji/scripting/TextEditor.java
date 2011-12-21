@@ -712,7 +712,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			String defaultDir =
 				editorPane != null && editorPane.file != null ?
 				editorPane.file.getParent() :
-				System.getProperty("fiji.dir");
+				System.getProperty("ij.dir");
 			final String path = openWithDialog("Open...", defaultDir, new String[] {
 				".class", ".jar"
 			}, false);
@@ -1389,7 +1389,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		EditorPane editorPane = getEditorPane();
 		SaveDialog sd = new SaveDialog("Save as ",
 				editorPane.file == null ?
-				System.getProperty("fiji.dir") :
+				System.getProperty("ij.dir") :
 				editorPane.file.getParentFile().getAbsolutePath(),
 				editorPane.getFileName() , "");
 		grabFocus(2);

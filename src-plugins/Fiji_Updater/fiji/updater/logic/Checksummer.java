@@ -212,8 +212,8 @@ public class Checksummer extends Progressable {
 			return false;
 		platform = platform.substring(0, slash);
 
-		if (platform.equals("linux32"))
-			platform = "linux";
+		if (platform.equals("linux"))
+			platform = "linux32";
 		for (String valid : Util.platforms)
 			if (platform.equals(valid)) {
 				plugin.addPlatform(platform);

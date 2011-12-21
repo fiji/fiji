@@ -47,10 +47,10 @@ public class SampleImageLoader implements PlugIn {
 	}
 
 	protected static File getCached(String url, boolean evenIfNotExists) {
-		String fijiDir = System.getProperty("fiji.dir");
-		if (fijiDir != null) {
+		String ijDir = System.getProperty("ij.dir");
+		if (ijDir != null) {
 			int slash = url.lastIndexOf('/');
-			File file = new File(fijiDir + "/samples",
+			File file = new File(ijDir + "/samples",
 					url.substring(slash + 1));
 			if (evenIfNotExists || file.exists())
 				return file;

@@ -197,8 +197,8 @@ public class Bug_Submitter implements PlugIn {
 		StringBuffer sb = new StringBuffer();
 		sb.append("  JAVA_HOME is set to: ");
 		sb.append(System.getenv("JAVA_HOME"));
-		sb.append("\n  fiji.dir => ");
-		sb.append(System.getProperty("fiji.dir"));
+		sb.append("\n  ij.dir => ");
+		sb.append(System.getProperty("ij.dir"));
 		return sb.toString();
 	}
 

@@ -26,10 +26,10 @@ export SYSTEM_JAVA=$JAVA_HOME/bin/java
 
 mkdir -p "$FIJI_DIRECTORY"/build &&
   $SYSTEM_JAVAC -d "$FIJI_DIRECTORY"/build/ "$FIJI_DIRECTORY"/$source &&
-  $SYSTEM_JAVA -classpath "$FIJI_DIRECTORY"/build fiji.build.Fake fiji &&
+  $SYSTEM_JAVA -classpath "$FIJI_DIRECTORY"/build fiji.build.Fake ImageJ &&
   $SYSTEM_JAVA -classpath "$FIJI_DIRECTORY"/build fiji.build.Fake jars/fake.jar
 
-./fiji --build --java-home "$JAVA_HOME" -- FALLBACK=false VERBOSE=true \
+./ImageJ --build --java-home "$JAVA_HOME" -- FALLBACK=false VERBOSE=true \
     "CLASSPATH(jars/VIB-lib.jar)=/usr/share/java/jama.jar:/usr/share/java/junit4.jar:/usr/share/java/jzlib.jar:jars/fiji-lib.jar:jars/ij.jar:jars/pal-optimization.jar" \
     "CLASSPATH(jars/VectorString.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jama.jar:/usr/share/java/vecmath.jar:jars/ij.jar" \
     "CLASSPATH(jars/fiji-scripting.jar)=/usr/share/java/bsh.jar:/usr/share/java/js.jar:jars/Fiji.jar:jars/ij.jar:jars/jython.jar" \

@@ -244,7 +244,7 @@ public class SimpleExecuter {
 		if (lower.endsWith(".exe"))
 			return null;
 		if (lower.endsWith(".bsh") || lower.endsWith(".bs") || lower.endsWith(".py") || lower.endsWith(".rb") || lower.endsWith(".clj"))
-			return System.getProperty("fiji.executable");
+			return System.getProperty("ij.executable");
 		// TODO: handle #! lines (needs command line splitting)
 		return null;
 	}

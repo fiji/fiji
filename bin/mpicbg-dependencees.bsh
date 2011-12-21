@@ -1,5 +1,5 @@
 #!/bin/sh
-/*/. 2>/dev/null; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
+/*/. 2>/dev/null; exec "$(dirname "$0")"/../ImageJ "$0" "$@" # exec with fiji */
 
 /*
  * This script helps to identify the plugins that depend directly or
@@ -20,8 +20,8 @@ import java.util.zip.GZIPInputStream;
 
 // Read the database
 
-fijiDir = System.getProperty("fiji.dir");
-dbPath = fijiDir + "/db.xml.gz";
+ijDir = System.getProperty("ij.dir");
+dbPath = ijDir + "/db.xml.gz";
 plugins = new PluginCollection();
 new XMLFileReader(plugins).read(null, new GZIPInputStream(new FileInputStream(dbPath)), 0);
 

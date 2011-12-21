@@ -1,5 +1,5 @@
 #!/bin/sh
-/*/. 2>/dev/null; exec "$(dirname "$0")"/../../fiji "$0" "$@" # exec with fiji */
+/*/. 2>/dev/null; exec "$(dirname "$0")"/../../ImageJ "$0" "$@" # exec with fiji */
 
 import java.io.File;
 
@@ -30,7 +30,7 @@ new Thread() {
 	}
 }.start();
 
-assert("update/ does not exist anymore", !new File(System.getProperty("fiji.dir"), "update").exists());
+assert("update/ does not exist anymore", !new File(System.getProperty("ij.dir"), "update").exists());
 print("Eval'ing " + bsh.args[0]);
 try {
 	eval(bsh.args[0]);

@@ -25,7 +25,7 @@ function Miji(open_imagej)
     warning(warning_state)
 
     % Set the Fiji directory (and plugins.dir which is not Fiji.app/plugins/)
-    java.lang.System.setProperty('fiji.dir', fiji_directory);
+    java.lang.System.setProperty('ij.dir', fiji_directory);
     java.lang.System.setProperty('plugins.dir', fiji_directory);
 
     %% Maybe open the ImageJ window

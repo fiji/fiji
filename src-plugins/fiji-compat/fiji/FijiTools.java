@@ -9,15 +9,23 @@ import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
-
 public class FijiTools {
+	/**
+	 * Get the path of the Fiji directory
+	 *
+	 * @deprecated
+	 */
 	public static String getFijiDir() throws ClassNotFoundException {
-		String path = System.getProperty("fiji.dir");
+		return getImageJDir();
+	}
+
+	public static String getImageJDir() throws ClassNotFoundException {
+		String path = System.getProperty("ij.dir");
 		if (path != null)
 			return path;
 		final String prefix = "file:";
-		final String suffix = "/jars/Fiji.jar!/fiji/FijiTools.class";
-		path = Class.forName("fiji.FijiTools")
+		final String suffix = "/jars/fiji-compat.jar!/fiji/FijiTools.class";
+		path = fiji.FijiTools.class
 			.getResource("FijiTools.class").getPath();
 		if (path.startsWith(prefix))
 			path = path.substring(prefix.length());
@@ -29,7 +37,7 @@ public class FijiTools {
 
 	public static boolean isFijiDeveloper() {
 		try {
-			return new File(getFijiDir(), "fiji.c").exists();
+			return new File(getFijiDir(), "ImageJ.c").exists();
 		} catch (Exception e) {
 			return false;
 		}

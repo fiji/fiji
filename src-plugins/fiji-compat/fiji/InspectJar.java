@@ -198,12 +198,12 @@ public class InspectJar implements Iterable<JarEntry> {
 	}
 
 	public static void main(String[] args) {
-		String fijiDir = System.getProperty("fiji.dir");
+		String ijDir = System.getProperty("ij.dir");
 		try {
 			for (String className : getClassNames(new String[] {
-				fijiDir + "/jars/Fiji.jar",
-				fijiDir + "/jars/zs.jar",
-				fijiDir + "/plugins/CLI_.jar"
+				ijDir + "/jars/Fiji.jar",
+				ijDir + "/jars/zs.jar",
+				ijDir + "/plugins/CLI_.jar"
 			}))
 				System.err.println("class: " + className);
 		} catch (IOException e) {
