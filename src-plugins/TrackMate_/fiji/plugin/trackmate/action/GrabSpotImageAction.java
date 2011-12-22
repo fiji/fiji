@@ -31,11 +31,12 @@ public class GrabSpotImageAction extends AbstractTMAction {
 		model.setLogger(logger);
 		Settings settings = model.getSettings();
 		float[] calibration = settings.getCalibration();
+		final int targetChannel = settings.imp.getChannel() - 1; // TODO: be more flexible about that
 		
 		SpotCollection allSpots = model.getFilteredSpots();
 		for (int frame : allSpots.keySet()) {
 			List<Spot> spots = allSpots.get(frame);
-			Image img = TMUtils.getSingleFrameAsImage(settings.imp, frame, settings);
+			Image img = TMUtils.getSingleFrameAsImage(settings.imp, frame, targetChannel, settings);
 			SpotIconGrabber grabber = new SpotIconGrabber();
 			grabber.setTarget(img, calibration);
 			grabber.process(spots);			

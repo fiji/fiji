@@ -134,7 +134,7 @@ public class TrackMate_ implements PlugIn {
 	 * <p>
 	 * Create and launch the GUI that will control this plugin. You can override this method
 	 * if you want to use another GUI, or use a the {@link TrackMateFrameController} extended
-	 * to suit your needs. c
+	 * to suit your needs.
 	 */
 	protected void launchGUI() {
 		new TrackMateFrameController(this);
@@ -374,6 +374,8 @@ public class TrackMate_ implements PlugIn {
 			threads = SimpleMultiThreading.newThreads(1);
 		}
 
+		// The channel segmented is the one currently selected when this method is called.
+		final int segmentationChannel = imp.getChannel() - 1;
 
 		// Prepare the thread array
 		final AtomicInteger ai = new AtomicInteger(settings.tstart-1);
@@ -387,7 +389,7 @@ public class TrackMate_ implements PlugIn {
 
 						/* 0 - Prepare stack for use with Imglib. */
 						@SuppressWarnings("rawtypes")
-						Image img = TMUtils.getSingleFrameAsImage(imp, i, settings); // will be cropped according to settings
+						Image img = TMUtils.getSingleFrameAsImage(imp, i, segmentationChannel, settings); // will be cropped according to settings
 
 						/* 1 -- Initialize segmenter */
 						SpotSegmenter<? extends RealType<?>> segmenter = settings.segmenter.createNewSegmenter();

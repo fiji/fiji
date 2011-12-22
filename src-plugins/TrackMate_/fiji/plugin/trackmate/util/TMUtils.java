@@ -270,10 +270,11 @@ public class TMUtils {
 	 * in the given 4D or 3D {@link ImagePlus}.
 	 * @param imp  the 4D or 3D source ImagePlus
 	 * @param iFrame  the frame number to extract, 0-based
+	 * @param iChannel  the channel number to extract, 0-based
 	 * @return  a 3D or 2D {@link Image} with the single time-point required 
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static Image<? extends RealType<?>> getSingleFrameAsImage(ImagePlus imp, int iFrame, Settings settings) {
+	public static Image<? extends RealType<?>> getSingleFrameAsImage(ImagePlus imp, int iFrame, int iChannel, Settings settings) {
 		ImageStack stack = imp.getImageStack();
 		ImageStack frame = new ImageStack(settings.xend-settings.xstart, settings.yend-settings.ystart, stack.getColorModel());
 		int numSlices = imp.getNSlices();
@@ -282,7 +283,8 @@ public class TMUtils {
 		ImageProcessor ip, croppedIp;
 		Roi cropRoi = new Roi(settings.xstart-1, settings.ystart-1, settings.xend-settings.xstart, settings.yend-settings.ystart);
 		for (int j = settings.zstart; j <= settings.zend; j++) {
-			ip = stack.getProcessor(j + (iFrame * numSlices));
+			int stackIndex = imp.getStackIndex(iChannel+1, j, iFrame+1);
+			ip = stack.getProcessor(stackIndex);
 			ip .setRoi(cropRoi);
 			croppedIp = ip.crop();
 			frame.addSlice(Integer.toString(j + (iFrame * numSlices)), croppedIp);

@@ -267,12 +267,11 @@ public class FeatureModel {
 		final AtomicInteger progress = new AtomicInteger(0);
 		final Thread[] threads = SimpleMultiThreading.newThreads();
 
-		/*
-		 * Prepare stack for use with Imglib. This time, since the spot
+		
+		/* Prepare stack for use with Imglib. This time, since the spot
 		 * coordinates are with respect to the top-left corner of the image, we
 		 * must not generate a cropped version of the image, but a full
-		 * snapshot.
-		 */
+		 * snapshot. */
 		final Settings uncroppedSettings = new Settings();
 		uncroppedSettings.xstart = 1;
 		uncroppedSettings.xend = settings.imp.getWidth();
@@ -280,6 +279,8 @@ public class FeatureModel {
 		uncroppedSettings.yend = settings.imp.getHeight();
 		uncroppedSettings.zstart = 1;
 		uncroppedSettings.zend = settings.imp.getNSlices();
+		// Set the target channel for feature calculation. For now, we simple take the current one. // TODO: be more flexible 
+		final int targetChannel = settings.imp.getChannel() - 1;
 
 		// Prepare the thread array
 		for (int ithread = 0; ithread < threads.length; ithread++) {
@@ -293,7 +294,7 @@ public class FeatureModel {
 
 						int frame = frameSet.get(index);
 						List<Spot> spotsThisFrame = toCompute.get(frame);
-						Image<? extends RealType<?>> img = TMUtils.getSingleFrameAsImage(settings.imp, frame, uncroppedSettings);
+						Image<? extends RealType<?>> img = TMUtils.getSingleFrameAsImage(settings.imp, frame, targetChannel, uncroppedSettings);
 
 						for (SpotFeatureAnalyzer analyzer : analyzers) {
 							analyzer.setTarget(img, calibration);
