@@ -48,7 +48,7 @@ public class DependencyAnalyzer {
 		Set<String> handled = new HashSet<String>();
 
 		final JarFile jar = new JarFile(filename);
-		filename = Util.stripPrefix(filename, Util.fijiRoot);
+		filename = Util.stripPrefix(filename, Util.ijRoot);
 		for (JarEntry file : Collections.list(jar.entries())) {
 			if (!file.getName().endsWith(".class"))
 				continue;

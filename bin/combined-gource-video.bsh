@@ -1,5 +1,5 @@
 #!/bin/sh
-// 2>&1 | :; exec "$(dirname "$0")"/../fiji --bsh "$0" "$@" # exec with fiji */
+// 2>&1 | :; exec "$(dirname "$0")"/../ImageJ --bsh "$0" "$@" # exec with fiji */
 
 if (bsh.args.length != 1) {
 	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
@@ -77,16 +77,16 @@ class Logger {
 }
 
 loggers = new ArrayList();
-fijiDir = System.getProperty("fiji.dir") + "/";
-loggers.add(new Logger(fijiDir, "", since));
+ijDir = System.getProperty("ij.dir") + "/";
+loggers.add(new Logger(ijDir, "", since));
 for (sub : new String[] { "ImageJA", "TrakEM2", "VIB", "imglib", "mpicbg" })
-	loggers.add(new Logger(fijiDir + "/" + sub, sub + "/", since));
+	loggers.add(new Logger(ijDir + "/" + sub, sub + "/", since));
 for (l : loggers)
 	l.readOneCommit();
 
 import java.io.FileWriter;
 
-writer = new FileWriter(fijiDir + "out.gource");
+writer = new FileWriter(ijDir + "out.gource");
 for (;;) {
 	logger = null;
 	time = Long.MAX_VALUE;
@@ -110,5 +110,5 @@ Runtime.getRuntime().exec(new String[] {
 	"--disable-auto-skip",
 	"--disable-progress",
 	"--hide-filenames",
-	"--output-movie", fijiDir + "gource.flv",
-	fijiDir + "out.gource" });
+	"--output-movie", ijDir + "gource.flv",
+	ijDir + "out.gource" });

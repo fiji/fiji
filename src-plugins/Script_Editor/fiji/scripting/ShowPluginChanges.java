@@ -9,13 +9,13 @@ public class ShowPluginChanges implements PlugIn {
 		FileFunctions fileFunctions = new FileFunctions(null);
 		if (arg == null || "".equals(arg)) {
 			OpenDialog dialog = new OpenDialog("Which Fiji component",
-				fileFunctions.fijiDir + "plugins", "");
+				fileFunctions.ijDir + "plugins", "");
 			if (dialog.getDirectory() == null)
 				return;
 			arg = dialog.getDirectory() + dialog.getFileName();
 		}
-		if (arg.startsWith(fileFunctions.fijiDir))
-			arg = arg.substring(fileFunctions.fijiDir.length());
+		if (arg.startsWith(fileFunctions.ijDir))
+			arg = arg.substring(fileFunctions.ijDir.length());
 		fileFunctions.showPluginChangesSinceUpload(arg);
 	}
 }

@@ -1,5 +1,5 @@
 #!/bin/sh
-// 2>&1 | :; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji
+// 2>&1 | :; exec "$(dirname "$0")"/../ImageJ "$0" "$@" # exec with fiji
 
 import fiji.build.Fake;
 import fiji.build.Parser;
@@ -40,15 +40,15 @@ if (mode == 0) {
 
 setAccessibility(true);
 
-File fijiDir = new File(System.getProperty("fiji.dir"));
-String fijiPath(String name) {
+File ijDir = new File(System.getProperty("ij.dir"));
+String ijPath(String name) {
 	if (new File(name).isAbsolute())
 		return name;
-	return new File(fijiDir, name).getAbsolutePath();
+	return new File(ijDir, name).getAbsolutePath();
 }
 
 Fake fake = new Fake();
-Parser parser = fake.parse(new FileInputStream(new File(fijiDir, "Fakefile")), fijiDir);
+Parser parser = fake.parse(new FileInputStream(new File(ijDir, "Fakefile")), ijDir);
 parser.parseRules(new ArrayList());
 
 void saveFile(File path, String contents) {
@@ -63,7 +63,7 @@ String getBaseName(String name, String suffix) {
 }
 
 File getProjectDirectory(String rootName, String name) {
-	File workspaceDirectory = new File(fijiDir, rootName);
+	File workspaceDirectory = new File(ijDir, rootName);
 	File result = new File(workspaceDirectory, name);
 	result.mkdirs();
 	return result;
@@ -86,8 +86,8 @@ void generateEclipseJarProject(CompileJar rule) {
 	String libs = "", projects = "";
 	String classpath = rule.getVar("CLASSPATH");
 	for (String path : Util.split(classpath, ":")) {
-		path = Util.stripPrefix(path, fijiDir.getAbsolutePath() + File.separator);
-		libs += "\t<classpathentry kind=\"lib\" path=\"" + fijiPath(path) + "\"/>\n";
+		path = Util.stripPrefix(path, ijDir.getAbsolutePath() + File.separator);
+		libs += "\t<classpathentry kind=\"lib\" path=\"" + ijPath(path) + "\"/>\n";
 		if (parser.getRule(path) != null)
 			projects += "\t\t<project>" + getBaseName(path, ".jar") + "</project>\n";
 	}
@@ -137,7 +137,7 @@ void generateEclipseJarProject(CompileJar rule) {
 		+ "\t\t<link>\n"
 		+ "\t\t\t<name>" + name + "</name>\n"
 		+ "\t\t\t<type>2</type>\n"
-		+ "\t\t\t<location>" + fijiPath(stripPath) + "</location>\n"
+		+ "\t\t\t<location>" + ijPath(stripPath) + "</location>\n"
 		+ "\t\t</link>\n"
 		+ "\t</linkedResources>\n"
 		+ "</projectDescription>\n");
@@ -152,10 +152,10 @@ void generateEclipseJarProject(CompileJar rule) {
 		+ "<stringAttribute key=\"org.eclipse.ui.externaltools.ATTR_LOCATION\" value=\"${system_path:java}\"/>\n"
 		+ "<stringAttribute key=\"org.eclipse.ui.externaltools.ATTR_RUN_BUILD_KINDS\" value=\"auto,full,incremental,\"/>\n"
 		+ "<stringAttribute key=\"org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS\" value=\"-jar "
-			+ fijiPath("jars/fake.jar") + " PREBUILTDIR(" + rule.target + ")="
+			+ ijPath("jars/fake.jar") + " PREBUILTDIR(" + rule.target + ")="
 			+ new File(projectDirectory, ".build").getAbsolutePath() + " " + rule.target + "\"/>\n"
 		+ "<booleanAttribute key=\"org.eclipse.ui.externaltools.ATTR_TRIGGERS_CONFIGURED\" value=\"true\"/>\n"
-		+ "<stringAttribute key=\"org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY\" value=\"" + fijiDir.getAbsolutePath() + "\"/>\n"
+		+ "<stringAttribute key=\"org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY\" value=\"" + ijDir.getAbsolutePath() + "\"/>\n"
 		+ "</launchConfiguration>\n");
 
 	File settingsDirectory = new File(projectDirectory, ".settings");
@@ -439,7 +439,7 @@ void generateEclipseJarProject(CompileJar rule) {
 ArrayList projects = new ArrayList();
 
 void writeIntelliJWorkspace() {
-	File root = new File(fijiDir, "intellij");
+	File root = new File(ijDir, "intellij");
 	root.mkdirs();
 	File rootIML = new File(root, "intellij.iml");
 	saveFile(rootIML, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -554,12 +554,12 @@ void generateIntelliJJarProject(CompileJar rule) {
 	String libs = "", deps = "";
 	String classpath = rule.getVar("CLASSPATH");
 	for (String path : Util.split(classpath, ":")) {
-		path = Util.stripPrefix(path, fijiDir.getAbsolutePath() + File.separator);
+		path = Util.stripPrefix(path, ijDir.getAbsolutePath() + File.separator);
 		Rule dependency = parser.getRule(path);
 		if (dependency != null && (dependency instanceof CompileJar))
 			deps += "    <orderEntry type=\"module\" module-name=\"" + getBaseName(dependency.target, ".jar") + "\" />\n";
 		else
-			libs += "          <root url=\"jar://" + fijiPath(path) + "!/\" />\n";
+			libs += "          <root url=\"jar://" + ijPath(path) + "!/\" />\n";
 	}
 	String excluding = rule.getVar("EXCLUDE_UNEXPANDED");
 	String noCompile = rule.getVar("NO_COMPILE_UNEXPANDED");
@@ -576,10 +576,10 @@ void generateIntelliJJarProject(CompileJar rule) {
 	saveFile(iml, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 + "<module type=\"JAVA_MODULE\" version=\"4\">\n"
                 + "  <component name=\"NewModuleRootManager\" inherit-compiler-output=\"true\">\n"
-		+ "    <output url=\"file://" + fijiPath("build/" + name) + "\" />\n"
+		+ "    <output url=\"file://" + ijPath("build/" + name) + "\" />\n"
                 + "    <exclude-output />\n"
-                + "    <content url=\"file://" + fijiPath(stripPath) + "\">\n"
-                + "      <sourceFolder url=\"file://" + fijiPath(stripPath) + "\" isTestSource=\"false\" />\n"
+                + "    <content url=\"file://" + ijPath(stripPath) + "\">\n"
+                + "      <sourceFolder url=\"file://" + ijPath(stripPath) + "\" isTestSource=\"false\" />\n"
 		+ excludes
                 + "    </content>\n"
                 + "    <orderEntry type=\"inheritedJdk\" />\n"
@@ -600,7 +600,7 @@ void generateIntelliJJarProject(CompileJar rule) {
 
 	File artifacts = getProjectDirectory("intellij", ".idea/artifacts");
 	artifacts.mkdirs();
-	File target = new File(fijiPath(rule.target));
+	File target = new File(ijPath(rule.target));
 	File artifact = new File(artifacts, name + ".xml");
 	saveFile(artifact, "<component name=\"ArtifactManager\">\n"
                 + "  <artifact type=\"jar\" build-on-make=\"true\" name=\"" + name + "\">\n"
@@ -620,7 +620,7 @@ void generateNetbeansJarProject(rule) {
 	String[] list = Util.split(classpath, ":");
 	Arrays.sort(list);
 	for (String path : list) {
-		path = Util.stripPrefix(path, fijiDir.getAbsolutePath() + File.separator);
+		path = Util.stripPrefix(path, ijDir.getAbsolutePath() + File.separator);
 		Rule dependency = parser.getRule(path);
 		if (dependency != null && (dependency instanceof CompileJar)) {
 			String base = getBaseName(dependency.target, ".jar");
@@ -635,11 +635,11 @@ void generateNetbeansJarProject(rule) {
 				+ "                <clean-target>clean</clean-target>\n"
 				+ "                <id>jar</id>\n"
 				+ "            </reference>\n";
-			refs3 += "reference." + base2 + ".jar=" + fijiPath(dependency.target) + "\n";
+			refs3 += "reference." + base2 + ".jar=" + ijPath(dependency.target) + "\n";
 		}
 		else {
 			String base = path.replace('/', '-');
-			libs += "file.reference." + base + "=" + fijiPath(path) + "\n";
+			libs += "file.reference." + base + "=" + ijPath(path) + "\n";
 			refs += "\\\n    ${file.reference." + base + "}:";
 		}
 	}
@@ -654,7 +654,7 @@ void generateNetbeansJarProject(rule) {
 			if (entry.endsWith("/**/*"))
 				excludes += "      <excludeFolder url=\"file://" + Util.stripSuffix(entry, "/**/*") + "\" />\n";
 
-	File target = new File(fijiPath(rule.target));
+	File target = new File(ijPath(rule.target));
 
 	File projectDirectory = getProjectDirectory("netbeans", name);
 	projectDirectory.mkdirs();
@@ -690,7 +690,7 @@ void generateNetbeansJarProject(rule) {
 		+ "endorsed.classpath=\n"
                 + "excludes=\n"
 		+ libs
-                + "file.reference." + rule.target.replace('/', '.') + "=" + fijiPath(stripPath) + "\n"
+                + "file.reference." + rule.target.replace('/', '.') + "=" + ijPath(stripPath) + "\n"
                 + "includes=**\n"
                 + "jar.compress=false\n"
                 + "javac.classpath=" + refs + "\n"

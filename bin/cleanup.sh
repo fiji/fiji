@@ -14,7 +14,7 @@ is_dirty && die 'Dirty working directory.  Aborting.'
 
 # mark non-executables as not executable
 git ls-files --stage |
-sed -ne '/\(\.\(sh\|exe\|py\)\|debian\/rules\|precompiled\/fiji-.*\)$/d' \
+sed -ne '/\(\.\(sh\|exe\|py\)\|debian\/rules\|precompiled\/ImageJ-.*\)$/d' \
 	-e 's/^100755 .\{43\}//p' |
 while read file
 do

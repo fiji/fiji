@@ -64,11 +64,11 @@ public class MenuItemHelper {
 				resource = resource.substring(4, resource.length() - path.length() - 2);
 			if (resource.startsWith("file:"))
 				resource = resource.substring(5);
-			String fijiDir = System.getProperty("fiji.dir");
-			if (!fijiDir.endsWith("/"))
-				fijiDir += "/";
-			if (resource.startsWith(fijiDir))
-				resource = resource.substring(fijiDir.length());
+			String ijDir = System.getProperty("ij.dir");
+			if (!ijDir.endsWith("/"))
+				ijDir += "/";
+			if (resource.startsWith(ijDir))
+				resource = resource.substring(ijDir.length());
 			return resource;
 		} catch (Exception e) {
 			IJ.handleException(e);

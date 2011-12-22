@@ -23,7 +23,7 @@ then
 	die "Could not fetch the Python library files"
 fi
 
-../../fiji --ant -Dpython.lib="$PYTHON_LIB" -f jython/build.xml jar-complete copy-lib >&2 ||
+../../ImageJ --ant -Dpython.lib="$PYTHON_LIB" -f jython/build.xml jar-complete copy-lib >&2 ||
 die "Could not run ant"
 
 case $(uname -s) in
@@ -31,7 +31,7 @@ case $(uname -s) in
         JAR=jar
         ;;
     *)
-        JAR=$(../../fiji --print-java-home)/../bin/jar
+        JAR=$(../../ImageJ --print-java-home)/../bin/jar
         ;;
 esac
 

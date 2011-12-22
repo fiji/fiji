@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# A fallback shell script to launch Fiji without the Fiji launcher
+# A fallback shell script to launch Fiji without the ImageJ launcher
 # (i.e. when all else fails)
 
 # bend over for SunOS' sh, and use `` instead of $()
@@ -148,8 +148,10 @@ eval java -Dpython.cachedir.skip=true \
 	-Xincgc -XX:PermSize=128m \
 	-Dplugins.dir=$FIJI_ROOT_SQ \
 	-Djava.class.path="`sq_quote $CLASSPATH`" \
-	-Dsun.java.command=Fiji -Dfiji.dir=$FIJI_ROOT_SQ \
+	-Dsun.java.command=Fiji -Dij.dir=$FIJI_ROOT_SQ \
+	-Dfiji.dir=$FIJI_ROOT_SQ \
 	-Dfiji.executable="`sq_quote "$EXECUTABLE_NAME"`" \
+	-Dij.executable="`sq_quote "$EXECUTABLE_NAME"`" \
 	`cat "$FIJI_ROOT"/jvm.cfg 2> /dev/null` \
 	$java_options \
 	$main_class $ij_options

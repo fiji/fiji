@@ -1,11 +1,11 @@
 #!/bin/sh
-''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
+''''exec "$(dirname "$0")"/../ImageJ --jython "$0" "$@" # (call again with fiji)'''
 
 from java.lang.System import getProperty
 
 # Find out the checksum
 
-dbPath = getProperty('fiji.dir') + '/db.xml.gz'
+dbPath = getProperty('ij.dir') + '/db.xml.gz'
 
 def getTimestamp(plugin, checksum):
 	from fiji.updater.logic import PluginCollection, XMLFileReader
@@ -55,11 +55,11 @@ if timestamp == None:
 
 from fiji.build import Fake
 
-fakefile = getProperty('fiji.dir') + '/Fakefile'
+fakefile = getProperty('ij.dir') + '/Fakefile'
 
 fake = Fake()
 from java.io import File, FileInputStream
-parser = fake.parse(FileInputStream(fakefile), File(getProperty('fiji.dir')))
+parser = fake.parse(FileInputStream(fakefile), File(getProperty('ij.dir')))
 parser.parseRules([])
 print 'Getting rule for', argv[1]
 rule = parser.getRule(argv[1])

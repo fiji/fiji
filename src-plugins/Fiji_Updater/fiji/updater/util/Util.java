@@ -47,43 +47,43 @@ public class Util {
 	public final static boolean useMacPrefix;
 	public final static String macPrefix = "Contents/MacOS/";
 
-	public final static String fijiRoot, platform;
+	public final static String ijRoot, platform;
 	public final static boolean isDeveloper;
 	public final static String[] platforms, launchers;
 	protected final static Set<String> updateablePlatforms;
 
 	static {
-		String property = System.getProperty("fiji.dir");
-		fijiRoot = property != null ? property + File.separator :
+		String property = System.getProperty("ij.dir");
+		ijRoot = property != null ? property + File.separator :
 			new Util().getClass().getResource("Util.class")
 			.toString().replace("jar:file:", "")
 			.replace("plugins/Fiji_Updater.jar!/"
 				+ "fiji/updater/util/Util.class", "");
-		isDeveloper = new File(fijiRoot + "/fiji.c").exists();
+		isDeveloper = new File(ijRoot + "/ImageJ.c").exists();
 		platform = getPlatform();
 
-		String macLauncher = macPrefix + "fiji-macosx";
+		String macLauncher = macPrefix + "ImageJ-macosx";
 		useMacPrefix = platform.equals("macosx") &&
-			new File(fijiRoot + "/" + macLauncher).exists();
+			new File(ijRoot + "/" + macLauncher).exists();
 
 		String[] list = {
-			"linux", "linux64", "macosx", "tiger", "win32", "win64"
+			"linux32", "linux64", "macosx", "tiger", "win32", "win64"
 		};
 
 		Arrays.sort(list);
 		platforms = list.clone();
 		for (int i = 0; i < list.length; i++)
-			list[i] = "fiji-" + list[i] +
+			list[i] = "ImageJ-" + list[i] +
 				(list[i].startsWith("win") ? ".exe" : "");
 		launchers = list.clone();
 
 		updateablePlatforms = new HashSet<String>();
 		updateablePlatforms.add(platform);
-		if (new File(fijiRoot, macLauncher).exists())
+		if (new File(ijRoot, macLauncher).exists())
 			updateablePlatforms.add("macosx");
-		String[] files = new File(fijiRoot).list();
+		String[] files = new File(ijRoot).list();
 		for (String name : files == null ? new String[0] : files)
-			if (name.startsWith("fiji-")) {
+			if (name.startsWith("ImageJ-")) {
 				name = name.substring(5);
 				if (name.endsWith(".exe"))
 					name = name.substring(0, name.length() - 4);
@@ -112,7 +112,7 @@ public class Util {
 			System.getProperty("os.arch", "").indexOf("64") >= 0;
 		String osName = System.getProperty("os.name", "<unknown>");
 		if (osName.equals("Linux"))
-			return "linux" + (is64bit ? "64" : "");
+			return "linux" + (is64bit ? "64" : "32");
 		if (osName.equals("Mac OS X"))
 			return "macosx";
 		if (osName.startsWith("Windows"))
@@ -264,7 +264,7 @@ public class Util {
 			path = path.substring(macPrefix.length());
 		if (File.separator.equals("\\"))
 			path = path.replace("\\", "/");
-		return fijiRoot + (isLauncher(path) ?
+		return ijRoot + (isLauncher(path) ?
 				(isDeveloper ? "precompiled/" :
 				 (useMacPrefix ? macPrefix : "")) : "") + path;
 	}
@@ -279,14 +279,14 @@ public class Util {
 
 	public static boolean isLauncher(String filename) {
 		return Arrays.binarySearch(launchers,
-				stripPrefix(stripPrefix(filename, fijiRoot), "precompiled/")) >= 0;
+				stripPrefix(stripPrefix(filename, ijRoot), "precompiled/")) >= 0;
 	}
 
 	public static String[] getLaunchers() {
 		if (platform.equals("macosx"))
-			return new String[] { "fiji-macosx", "fiji-tiger" };
+			return new String[] { "ImageJ-macosx", "ImageJ-tiger" };
 
-		int index = Arrays.binarySearch(launchers, "fiji-" + platform);
+		int index = Arrays.binarySearch(launchers, "ImageJ-" + platform);
 		if (index < 0)
 			index = -1 - index;
 		return new String[] { launchers[index] };

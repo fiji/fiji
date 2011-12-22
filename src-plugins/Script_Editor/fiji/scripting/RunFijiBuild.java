@@ -33,18 +33,18 @@ import javax.swing.JTextArea;
 
 public class RunFijiBuild implements PlugIn {
 	public void run(String arg) {
-		String fijiDir = System.getProperty("fiji.dir");
-		if (!fijiDir.endsWith("/"))
-			fijiDir += "/";
+		String ijDir = System.getProperty("ij.dir");
+		if (!ijDir.endsWith("/"))
+			ijDir += "/";
 		if (arg == null || "".equals(arg)) {
 			OpenDialog dialog = new OpenDialog("Which Fiji component",
-				fijiDir + "plugins", "");
+				ijDir + "plugins", "");
 			if (dialog.getDirectory() == null)
 				return;
 			arg = dialog.getDirectory() + dialog.getFileName();
 		}
-		if (arg.startsWith(fijiDir))
-			arg = arg.substring(fijiDir.length());
+		if (arg.startsWith(ijDir))
+			arg = arg.substring(ijDir.length());
 
 		final JFrame frame = new JFrame("Building " + arg + "...");
 		Container panel = frame.getContentPane();
@@ -71,7 +71,7 @@ public class RunFijiBuild implements PlugIn {
 		try {
 			Fake fake = new Fake();
 			fake.out = fake.err = new PrintStream(new JTextAreaOutputStream(textArea));
-			Parser parser = fake.parse(new FileInputStream(fijiDir + "/Fakefile"), new File(fijiDir));
+			Parser parser = fake.parse(new FileInputStream(ijDir + "/Fakefile"), new File(ijDir));
 		        final Rule all = parser.parseRules(Arrays.asList(arg.split("\\s+")));
 			all.make();
 			fake.out.println("Finished.");

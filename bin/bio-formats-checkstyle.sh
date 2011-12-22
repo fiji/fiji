@@ -9,5 +9,5 @@ test -d .git || {
 files="$(git diff --name-only HEAD)"
 test -z "$files" && files = "$(git diff --name-only HEAD^)"
 
-../fiji --jar jar/checkstyle-all-4.2.jar --jarpath jar \
+../ImageJ --jar jar/checkstyle-all-4.2.jar --jarpath jar \
 		-c checkstyle.xml $files

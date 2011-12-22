@@ -21,6 +21,7 @@ import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 
 import javassist.CannotCompileException;
+import javassist.ClassClassPath;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtConstructor;
@@ -39,7 +40,13 @@ public abstract class JavassistHelper implements Runnable {
 
 	protected Set<String> classNames = new HashSet<String>();
 	protected static LinkedHashMap<String, CtClass> definedClasses = new LinkedHashMap<String, CtClass>();
-	protected static ClassPool pool = ClassPool.getDefault();
+	protected static ClassPool pool;
+	protected static boolean frozen;
+
+	static {
+		pool = ClassPool.getDefault();
+		pool.appendClassPath(new ClassClassPath(JavassistHelper.class));
+	}
 
 	protected CtClass get(String className) throws NotFoundException {
 		if (!definedClasses.containsKey(className)) {
@@ -55,16 +62,27 @@ public abstract class JavassistHelper implements Runnable {
 	}
 
 	public static void defineClasses() throws CannotCompileException {
+		if (frozen) {
+			new Exception("Attempted to defined patched classes again").printStackTrace();
+			return;
+		}
 		for (String name : definedClasses.keySet())
 			definedClasses.get(name).toClass();
+		frozen = true;
 	}
 
 	final public void run() {
+		if (frozen) {
+			System.err.println("Attempted to patch classes again: " + getClass().getName());
+			return;
+		}
 		try {
 			instrumentClasses();
 		} catch (BadBytecode e) {
 			e.printStackTrace();
 		} catch (NotFoundException e) {
+			e.printStackTrace();
+		} catch (RuntimeException e) {
 			e.printStackTrace();
 		} catch (CannotCompileException e) {
 			System.err.println(e.getMessage() + "\n" + e.getReason());

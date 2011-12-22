@@ -22,10 +22,13 @@ public class Translator {
 
     private static class MalformedFileInputStream extends FilterInputStream
     {
-
+        /**
+         * A private class to handle malformed XML that sometimes crops up in
+         * Reconstruct files, when the projects get very large, typically in
+         * the comments.
+         */
         int fixCnt;
         int[] callCnt;
-        //int lastInt;
         byte[] lastByte;
 
         public MalformedFileInputStream(File f) throws FileNotFoundException
@@ -34,7 +37,6 @@ public class Translator {
             fixCnt = 0;
             callCnt = new int[3];
             Arrays.fill(callCnt, 0);
-            //lastInt = 0;
             lastByte  = new byte[0];
         }
 
@@ -58,30 +60,6 @@ public class Translator {
             {
                 //Replace control chars with spaces
                 bs[i] = fixByte(bs[i]);
-
-//                //Handle ampersand
-//                if (bs[i] == 0x26)
-//                {
-//                    if (bs.length - i < 5)
-//                    {
-//                        bs[i] = 0x20;
-//                    }
-//                    else
-//                    {
-//                        byte[] amp = {0x61, 0x6d, 0x70, 0x3b};
-//                        byte[] lt = {0x6c, 0x74, 0x3b};
-//                        byte[] gt = {0x67, 0x74, 0x3b};
-//                        byte[] bs4 = new byte[4];
-//                        byte[] bs3 = new byte[3];
-//                        System.arraycopy(bs, i + 1, bs4, 0, 4);
-//                        System.arraycopy(bs, i + 1, bs3, 0, 3);
-//
-//                        if (!(Arrays.equals(amp, bs4) || Arrays.equals(lt, bs3) || Arrays.equals(gt, bs3)))
-//                        {
-//                            bs[i] = 0x20;
-//                        }
-//                    }
-//                }
             }
 
             lastByte = bs.clone();
@@ -151,6 +129,9 @@ public class Translator {
     private final String nuid;
     private final File inputFile;
 
+    private String errorMessage;
+    private File lastFile;
+
     private int currentOID;
 
     private final int layerSetOID;
@@ -160,7 +141,7 @@ public class Translator {
 
     private boolean ready;
 
-    private static String lastok = "";
+
 
     public static InputSource getISO8559Source(final File f) throws FileNotFoundException, UnsupportedEncodingException
     {
@@ -174,18 +155,8 @@ public class Translator {
     {
         MalformedFileInputStream fileStream = new MalformedFileInputStream(f);
         Reader charStream = new InputStreamReader(fileStream);
-        try
-        {
-            Document d = builder.parse(new InputSource(charStream));
-            sectionDocuments.add(d);
-            lastok = fileStream.toString();
-        }
-        catch (SAXParseException spe)
-        {
-            System.err.println(lastok);
-            System.err.println(fileStream);
-            throw spe;
-        }
+        Document d = builder.parse(new InputSource(charStream));
+        sectionDocuments.add(d);
     }
 
     public Translator(String f)
@@ -193,8 +164,11 @@ public class Translator {
         inputFile = new File(f);
         // Parse out the path
         final String localFile = inputFile.getName();
-        final File seriesDTD = new File(inputFile.getParent() + "/series.dtd");
-        final File sectionDTD = new File(inputFile.getParent() + "/section.dtd");
+        //final File seriesDTD = new File(inputFile.getParent() + "/series.dtd");
+        //final File sectionDTD = new File(inputFile.getParent() + "/section.dtd");
+
+        errorMessage = "";
+        lastFile = null;
 
         xmlBuilder = null;
         sectionDocuments = new ArrayList<Document>();
@@ -213,35 +187,8 @@ public class Translator {
 
         layerSetOID = nextOID();
 
-        // Make sure that the DTD files exist. Apparently it doesn't matter a
-        // whole lot if they actually contain anything.
-        try
-        {
-            if (!seriesDTD.exists())
-            {
-                FileWriter fw = new FileWriter(seriesDTD);
-                fw.write("");
-                fw.close();
-                seriesDTD.deleteOnExit();
-            }
+        ready = true;
 
-            if (!sectionDTD.exists())
-            {
-                FileWriter fw = new FileWriter(sectionDTD);
-                fw.write("");
-                fw.close();
-                sectionDTD.deleteOnExit();
-            }
-
-            ready = true;
-        }
-        catch (IOException ioe)
-        {
-            ioe.printStackTrace();
-            xmlBuilder.append(ioe.getStackTrace());
-
-            ready = false;
-        }
     }
 
     public int getLayerSetOID()
@@ -281,14 +228,20 @@ public class Translator {
             try
             {
                 //Read and parse all of the files (series and sections)
-                DocumentBuilder builder =
-                        DocumentBuilderFactory.newInstance().newDocumentBuilder();
+                final DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+                DocumentBuilder builder;
+
+                // DTDs aren't commonly included with Reconstruct projects, so ignore them.
+                builderFactory.setValidating(false);
+                builderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+                builder = builderFactory.newDocumentBuilder();
 
                 serDoc = builder.parse(inputFile);
 
                 for (File f : list)
                 {
-                    System.out.println("Opening file " + f.getName());
+                    System.out.println("Opening file " + f.getAbsolutePath());
+                    lastFile = f;
                     addSection(sectionDocuments, builder, f);
                 }
 
@@ -332,10 +285,20 @@ public class Translator {
 
                 return true;
             }
+            catch (SAXParseException spe)
+            {
+                String fid = lastFile == null ? "" : " in " + lastFile.getName();
+                errorMessage = "Error while parsing XML" + fid + " at line " + spe.getLineNumber() +
+                        ", column " + spe.getColumnNumber() + "\n";
+                errorMessage += Utils.stackTraceToString(spe);
+
+                return false;
+            }
             catch (Exception e)
             {
                 clearMemory();
                 e.printStackTrace();
+                errorMessage = Utils.stackTraceToString(e);
                 return false;
             }
         }
@@ -343,6 +306,11 @@ public class Translator {
         {
             return false;
         }
+    }
+
+    public String getLastErrorMessage()
+    {
+        return errorMessage;
     }
 
     protected void clearMemory()
@@ -380,11 +348,18 @@ public class Translator {
             NodeList contours = doc.getElementsByTagName("Contour");
             ReconstructSection currSection = new ReconstructSection(this, doc);
             sections.add(currSection);
+            ArrayList<Element> domains = new ArrayList<Element>();
+            NodeList images = doc.getElementsByTagName("Image");
+            for (int i = 0; i < images.getLength(); ++i)
+            {
+                domains.add(Utils.getImageDomainContour(images.item(i)));
+            }
 
             for (int i = 0; i < contours.getLength(); ++i)
             {
                 Element e = (Element)contours.item(i);
-                if (e.getAttribute("closed").equals("true"))
+
+                if (e.getAttribute("closed").equals("true") && !domains.contains(e))
                 {
                     ReconstructAreaList areaList = Utils.findContourByName(closedContours,
                             e.getAttribute("name"));
@@ -397,7 +372,7 @@ public class Translator {
                         areaList.addContour(e, currSection);
                     }
                 }
-                else
+                else if (!domains.contains(e))
                 {
                     ReconstructProfileList profileList = Utils.findContourByName(openContours,
                             e.getAttribute("name"));

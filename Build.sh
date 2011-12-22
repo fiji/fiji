@@ -44,7 +44,7 @@ Linux)
 		java_submodule=linux-amd64
 		look_for_tools_jar /usr/lib/jvm
 		;;
-	*)	platform=linux
+	*)	platform=linux32
 		java_submodule=$platform
 		look_for_tools_jar /usr/lib64/jvm
 		;;
@@ -73,10 +73,10 @@ FreeBSD)
 	fi;;
 *)
 	platform=
-	# copy and use bin/fiji-other.sh
-	test -f "$CWD/fiji" &&
-	test "$CWD/bin/fiji" -nt "$CWD/bin/fiji-other.sh" ||
-	cp "$CWD/bin/fiji-other.sh" "$CWD/fiji"
+	# copy and use bin/ImageJ-other.sh
+	test -f "$CWD/ImageJ" &&
+	test "$CWD/bin/ImageJ" -nt "$CWD/bin/ImageJ-other.sh" ||
+	cp "$CWD/bin/ImageJ-other.sh" "$CWD/ImageJ"
 	TOOLS_JAR="$(ls -t /usr/jdk*/lib/tools.jar \
 		/usr/local/jdk*/lib/tools.jar 2> /dev/null |
 		head -n 1)"
@@ -86,7 +86,7 @@ esac
 
 test -n "$platform" &&
 test -z "$JAVA_HOME" &&
-JAVA_HOME="$("$CWD"/precompiled/fiji-"$platform" --print-java-home 2> /dev/null)"
+JAVA_HOME="$("$CWD"/precompiled/ImageJ-"$platform" --print-java-home 2> /dev/null)"
 
 if test -n "$platform" && test ! -d "$JAVA_HOME"
 then
@@ -152,10 +152,10 @@ test "a$targets" != a$jar &&
 	(cd "$CWD" && sh "$(basename "$0")" $variables $jar) || exit
 }
 
-# make sure the Fiji launcher is up-to-date
-test "a$targets" != a$jar -a "a$targets" != afiji &&
-test ! -f "$CWD"/fiji -o "$CWD"/fiji.c -nt "$CWD"/fiji$exe && {
-	(cd "$CWD" && sh "$(basename "$0")" $variables fiji) || exit
+# make sure the ImageJ launcher is up-to-date
+test "a$targets" != a$jar -a "a$targets" != aImageJ &&
+test ! -f "$CWD"/ImageJ -o "$CWD"/ImageJ.c -nt "$CWD"/ImageJ$exe && {
+	(cd "$CWD" && sh "$(basename "$0")" $variables ImageJ) || exit
 }
 
 # on Win64, with a 32-bit compiler, do not try to compile
@@ -167,23 +167,23 @@ win64)
 	case "$CC,$(gcc --version)" in
 	,*mingw32*)
 		# cannot compile!
-		test "$CWD"/fiji.exe -nt "$CWD"/fiji.c &&
-		test "$CWD"/fiji.exe -nt "$CWD"/precompiled/fiji-win64.exe &&
-		test "$CWD"/fiji.exe -nt "$CWD"/Fakefile &&
-		test "$CWD"/fiji.exe -nt "$CWD"/$jar ||
-		cp precompiled/fiji-win64.exe fiji.exe
+		test "$CWD"/ImageJ.exe -nt "$CWD"/ImageJ.c &&
+		test "$CWD"/ImageJ.exe -nt "$CWD"/precompiled/ImageJ-win64.exe &&
+		test "$CWD"/ImageJ.exe -nt "$CWD"/Fakefile &&
+		test "$CWD"/ImageJ.exe -nt "$CWD"/$jar ||
+		cp precompiled/ImageJ-win64.exe ImageJ.exe
 	esac
 esac
 
 # still needed for Windows, which cannot overwrite files that are in use
-test -f "$CWD"/fiji$exe -a -f "$CWD"/$jar &&
-test "a$targets" != a$jar -a "a$targets" != afiji &&
-exec "$CWD"/fiji$exe --build "$@"
+test -f "$CWD"/ImageJ$exe -a -f "$CWD"/$jar &&
+test "a$targets" != a$jar -a "a$targets" != aImageJ &&
+exec "$CWD"/ImageJ$exe --build "$@"
 
 # fall back to precompiled
-test -f "$CWD"/precompiled/fiji-$platform$exe \
+test -f "$CWD"/precompiled/ImageJ-$platform$exe \
 	-a -f "$CWD"/precompiled/${jar##*/} &&
-exec "$CWD"/precompiled/fiji-$platform$exe --build -- "$@"
+exec "$CWD"/precompiled/ImageJ-$platform$exe --build -- "$@"
 
 export SYSTEM_JAVA=java
 export SYSTEM_JAVAC=javac

@@ -548,7 +548,7 @@ public class UpdateJava implements PlugIn {
 			+ "/jdk1." + matcher.group(1) + ".0_" + matcher.group(2);
 		if (isJRE)
 			subDirectory += "/jre";
-		return new File(System.getProperty("fiji.dir"), subDirectory);
+		return new File(System.getProperty("ij.dir"), subDirectory);
 	}
 
 	protected void silentInstall(File exe, File targetDirectory) {

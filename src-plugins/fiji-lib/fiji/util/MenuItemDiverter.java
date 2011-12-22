@@ -37,7 +37,7 @@ public abstract class MenuItemDiverter implements KeyListener, PlugIn, WindowFoc
 	protected abstract void action(String arg);
 
 	protected String getCursorPath() {
-		return System.getProperty("fiji.dir") + "/images/help-cursor.gif";
+		return System.getProperty("ij.dir") + "/images/help-cursor.gif";
 	}
 
 	@Override
