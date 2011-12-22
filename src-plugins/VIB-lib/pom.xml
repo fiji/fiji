@@ -44,10 +44,6 @@
 			<groupId>fiji</groupId>
 			<artifactId>pal-optimization</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>fiji</groupId>
-			<artifactId>VIB-lib-2.0-SNAPSHOT</artifactId>
-		</dependency>
 	</dependencies>
 
 	<build>
