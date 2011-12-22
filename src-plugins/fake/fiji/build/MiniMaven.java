@@ -584,6 +584,21 @@ public class MiniMaven {
 				localPOMCache.put(key, null);
 				return null;
 			}
+			else {
+				for (String jarName : new String[] {
+					"jars/" + dependency.artifactId + "-" + dependency.version + ".jar",
+					"plugins/" + dependency.artifactId + "-" + dependency.version + ".jar",
+					"jars/" + dependency.artifactId + ".jar",
+					"plugins/" + dependency.artifactId + ".jar"
+				}) {
+					File file = new File(System.getProperty("ij.dir"), jarName);
+					if (file.exists()) {
+						POM pom = fakePOM(file, dependency);
+						localPOMCache.put(key, pom);
+						return pom;
+					}
+				}
+			}
 			path += dependency.version + "/";
 			if (dependency.version.endsWith("-SNAPSHOT")) try {
 				if (!maybeDownloadAutomatically(dependency, quiet))

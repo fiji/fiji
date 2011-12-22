@@ -260,6 +260,7 @@ jars/postgresql-8.2-506.jdbc3.jar[] <-
 jars/jai_core.jar[] <-
 jars/jai_codec.jar[] <-
 jars/batik.jar[] <-
+jars/jzlib-1.0.7.jar[] <-
 
 # From submodules
 jars/ij.jar <- jars/javac.jar modules/ImageJA/
@@ -459,6 +460,10 @@ CLASSPATH(plugins/Dichromacy_.jar)=jars/ij.jar
 CLASSPATH(plugins/Threshold_Colour.jar)=jars/ij.jar
 CLASSPATH(plugins/Helmholtz_Analysis.jar)=jars/ij.jar
 CLASSPATH(plugins/Fiji_Package_Maker.jar)=jars/ij.jar:plugins/Fiji_Updater.jar:jars/fiji-lib.jar
+
+# pom.xml sub-projects
+
+jars/VIB-lib.jar <- src-plugins/VIB-lib/pom.xml
 
 # pre-Java5 generics ;-)
 
