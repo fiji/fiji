@@ -231,7 +231,9 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	jars/fiji-compat.jar \
 	plugins/Fiji_Package_Maker.jar
 
-all <- ImageJ $SUBMODULE_TARGETS $PLUGIN_TARGETS
+LEGACYLAUNCHER=fiji
+
+all <- ImageJ $LEGACYLAUNCHER $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
 # The "run" rule just executes ./ImageJ (as long as the file "run" does not exist...)
 # It has items on the right side, because these would be passed to the executable.
@@ -567,6 +569,10 @@ cross-tiger[bin/cross-compiler.bsh tiger \
 cross-macosx[bin/cross-compiler.bsh macosx \
 	$CFLAGS(ImageJ-panther) $LIBS(macosx)] <- ImageJ.c
 cross-*[bin/cross-compiler.bsh * $CFLAGS(*) $LDFLAGS(*) $LIBS(*)] <- ImageJ.c
+
+# legacy launcher
+
+fiji[bin/copy-file.py $PRE $TARGET] <- ImageJ
 
 # Precompiled stuff
 
