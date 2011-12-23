@@ -301,3 +301,4 @@ hs_err*.log
 /modules/jython/unpacked
 /modules/jython/python-*
 /plugins/Fiji_Package_Maker.jar
+/src-plugins/*/target/
