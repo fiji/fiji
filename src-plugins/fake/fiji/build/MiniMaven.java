@@ -142,6 +142,8 @@ public class MiniMaven {
 			if (new File(javac).exists())
 				pom.dependencies.add(new Coordinate("com.sun", "tools", "1.4.2", false, javac, null));
 		}
+		else if (dependency.artifactId.equals("imglib2-io"))
+			pom.dependencies.add(new Coordinate("loci", "bio-formats", "${bio-formats.version}"));
 		return pom;
 	}
 
