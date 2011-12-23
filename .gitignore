@@ -302,3 +302,7 @@ hs_err*.log
 /modules/jython/python-*
 /plugins/Fiji_Package_Maker.jar
 /src-plugins/*/target/
+/modules/javassist/target/
+/modules/jsch/build/
+/modules/jsch/dist/
+/modules/jsch/jsch-0.1.44.jar
