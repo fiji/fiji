@@ -73,6 +73,8 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		public void canvasResized() {}
 	};
 	private Settings settings;
+	/**  the flag specifying whether to render image data or not. By default, it is true. */
+	private boolean doRenderImage = true;
 
 	public SpotDisplayer3D() {
 		universe = new Image3DUniverse();
@@ -85,6 +87,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	 * OVERRIDDEN METHODS
 	 */
 
+	
 	@Override
 	public void setModel(TrackMateModel model) {
 		this.settings = model.getSettings();
@@ -210,8 +213,9 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			trackNode.setTrackDisplayDepth((Integer) displaySettings.get(KEY_TRACK_DISPLAY_DEPTH));
 			trackNode.refresh();
 		}
+
 		universe.show();
-		if (null != settings.imp) {
+		if (doRenderImage && null != settings.imp) {
 			if (!settings.imp.isVisible())
 				settings.imp.show();
 			ImagePlus[] images = TMUtils.makeImageForViewer(settings);
@@ -225,6 +229,8 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 					SpotDisplayer3D.DEFAULT_THRESHOLD, 
 					new boolean[] {true, true, true});
 			universe.addContentLater(imageContent);	
+		} else {
+			universe.updateStartAndEndTime(blobs.firstKey(), blobs.lastKey());
 		}
 	}
 
@@ -278,6 +284,19 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	@Override
 	public String toString() {
 		return "3D Viewer";
+	}
+	
+	/*
+	 * PUBLIC SPECIFIC METHODS
+	 */
+	
+	/**
+	 * Set a flag that specifies whether the next call to {@link #render()} will cause
+	 * image data to be imported and displayer in this viewer   
+	 * @param doRenderImage  the flag specifying whether to render image data or not. By default, it is true.
+	 */
+	public void setRenderImageData(boolean doRenderImage) {
+		this.doRenderImage = doRenderImage;
 	}
 
 
