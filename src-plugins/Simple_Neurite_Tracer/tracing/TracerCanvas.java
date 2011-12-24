@@ -49,19 +49,19 @@ public class TracerCanvas extends ThreePanesCanvas {
 		this.pathAndFillManager = pathAndFillManager;
 	}
 
-	ArrayList<SearchThread> searchThreads = new ArrayList<SearchThread>();
+	ArrayList<SearchInterface> searchThreads = new ArrayList<SearchInterface>();
 
-	void addSearchThread( SearchThread s ) {
+	void addSearchThread( SearchInterface s ) {
 		synchronized (searchThreads) {
 			searchThreads.add( s );
 		}
 	}
 
-	void removeSearchThread( SearchThread s ) {
+	void removeSearchThread( SearchInterface s ) {
 		synchronized (searchThreads) {
 			int index = -1;
 			for( int i = 0; i < searchThreads.size(); ++i ) {
-				SearchThread inList = searchThreads.get(i);
+				SearchInterface inList = searchThreads.get(i);
 				if( s == inList )
 					index = i;
 			}
@@ -87,7 +87,7 @@ public class TracerCanvas extends ThreePanesCanvas {
 		int current_z = imp.getCurrentSlice() - 1;
 
 		synchronized (searchThreads) {
-			for( SearchThread st : searchThreads )
+			for( SearchInterface st : searchThreads )
 				st.drawProgressOnSlice( plane, current_z, this, g );
 		}
 

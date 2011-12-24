@@ -117,4 +117,8 @@ public class AutoSearchThread extends SearchThread {
 		return nodes_as_image_from_start[from_z][from_y*width+from_x].asPath( x_spacing, y_spacing, z_spacing, spacing_units );
 	}
 
+	public Path getResult() {
+		throw new RuntimeException("BUG: not implemented");
+	}
+
 }

@@ -158,6 +158,8 @@ public class NeuriteTracerResultsDialog
 		"as lines",
 		"as lines and discs" };
 
+	protected JCheckBox useTubularGeodesics;
+
 	protected JCheckBox preprocess;
 	protected JCheckBox usePreprocessed;
 
@@ -454,6 +456,7 @@ public class NeuriteTracerResultsDialog
 		viewPathChoice.setEnabled(false);
 		paths3DChoice.setEnabled(false);
 		preprocess.setEnabled(false);
+		useTubularGeodesics.setEnabled(false);
 
 		exportCSVMenuItem.setEnabled(false);
 		exportAllSWCMenuItem.setEnabled(false);
@@ -493,6 +496,7 @@ public class NeuriteTracerResultsDialog
 					viewPathChoice.setEnabled(true);
 					paths3DChoice.setEnabled(true);
 					preprocess.setEnabled(true);
+					useTubularGeodesics.setEnabled(plugin.oofFileAvailable());
 
 					editSigma.setEnabled( ! preprocess.isSelected() );
 					sigmaWizard.setEnabled( ! preprocess.isSelected() );
@@ -534,6 +538,7 @@ public class NeuriteTracerResultsDialog
 					viewPathChoice.setEnabled(true);
 					paths3DChoice.setEnabled(true);
 					preprocess.setEnabled(true);
+					useTubularGeodesics.setEnabled(plugin.oofFileAvailable());
 
 					editSigma.setEnabled( ! preprocess.isSelected() );
 					sigmaWizard.setEnabled( ! preprocess.isSelected() );
@@ -911,6 +916,15 @@ public class NeuriteTracerResultsDialog
 			otherOptionsPanel.setLayout(new GridBagLayout());
 			GridBagConstraints co = new GridBagConstraints();
 			co.anchor = GridBagConstraints.LINE_START;
+
+			useTubularGeodesics = new JCheckBox("Use Tubular Geodesics");
+			useTubularGeodesics.addItemListener( this );
+
+			co.gridx = 0;
+			++ co.gridy;
+			co.gridwidth = 2;
+			co.anchor = GridBagConstraints.LINE_START;
+			otherOptionsPanel.add(useTubularGeodesics,co);
 
 			preprocess = new JCheckBox("Hessian-based analysis");
 			preprocess.addItemListener( this );
@@ -1404,6 +1418,10 @@ public class NeuriteTracerResultsDialog
 		if( source == viewPathChoice ) {
 
 			plugin.justDisplayNearSlices(nearbySlices(),getEitherSide());
+
+		} else if( source == useTubularGeodesics ) {
+
+			plugin.enableTubularGeodesicsTracing(useTubularGeodesics.isSelected());
 
 		} else if( source == preprocess && ! ignorePreprocessEvents) {
 
