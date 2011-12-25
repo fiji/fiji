@@ -10,9 +10,6 @@ import ij.gui.NewImage;
 import ij.gui.Roi;
 
 import java.awt.Component;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -20,8 +17,12 @@ import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JSlider;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 public class StartDialogPanel extends ActionListenablePanel {
 
@@ -56,18 +57,23 @@ public class StartDialogPanel extends ActionListenablePanel {
 	private JLabel jLabelPixelWidth;
 	private JLabel jLabelImageName;
 	private JNumericTextField jTextFieldTimeInterval;
-	private GridBagLayout thisLayout;
 	private JLabel jLabelTimeInterval;
 	private JLabel jLabelUnits4;
+	private JSlider sliderChannel;
 
 	private ImagePlus imp;
 	private Settings settings;
 	private Component target;
-	
+	private JLabel lblSegmentInChannel;
+	private JLabel labelChannel;
+
 	/**
 	 * Create and lay out of new {@link StartDialogPanel}, with the default settings given, and a target component.
 	 * The later will be disabled, until a valid {@link ImagePlus} is set in the {@link Settings} field returned
 	 * by this panel.
+	 * <p>
+	 * A {@link Component} target can be given, that will be disabled until a valid target {@link ImagePlus}
+	 * is targeted by this dialog. Pass <code>null</code> if you do not want to use that feature.
 	 */
 	public StartDialogPanel(Settings settings, Component target) {		
 		super();
@@ -88,9 +94,9 @@ public class StartDialogPanel extends ActionListenablePanel {
 	/*
 	 * PUBLIC METHODS
 	 */
-	
 
-	
+
+
 	/**
 	 * Update the settings object given with the parameters this panel allow to tune
 	 * this plugin.	
@@ -126,12 +132,12 @@ public class StartDialogPanel extends ActionListenablePanel {
 		}
 		return settings;
 	}
-	
-	
+
+
 	/*
 	 * PRIVATE METHODS
 	 */
-	
+
 	/**
 	 * Fill the text fields with the parameters grabbed in the {@link Settings} argument.
 	 */
@@ -154,8 +160,8 @@ public class StartDialogPanel extends ActionListenablePanel {
 		jTextFieldTStart.setText(""+settings.tstart); 
 		jTextFieldTEnd.setText(""+settings.tend);
 	}
-	
-	
+
+
 	/**
 	 * Fill the text fields with parameters grabbed from current ImagePlus. If the image is valid,
 	 * enable the {@link #target} component.
@@ -164,11 +170,9 @@ public class StartDialogPanel extends ActionListenablePanel {
 		imp = WindowManager.getCurrentImage();
 		if (null == imp) {
 			if (null != target) {
+				// Lock target component, because we still do not have a valid target image.
 				SwingUtilities.invokeLater(new Runnable() {
-					@Override
-					public void run() {
-						target.setEnabled(false);
-					}
+					public void run() { target.setEnabled(false); }
 				});
 			}
 			return;
@@ -200,209 +204,271 @@ public class StartDialogPanel extends ActionListenablePanel {
 		jTextFieldTStart.setText(""+1); 
 		jTextFieldTEnd.setText(""+imp.getNFrames());
 
+		// Deal with channels: the slider and channel labels are only visible if we find more than one channel.
+		int n_channels = imp.getNChannels();
+		sliderChannel.setMaximum(n_channels);
+		sliderChannel.setMinimum(1);
+		sliderChannel.setValue(imp.getChannel());
+		if (n_channels <= 1) {
+			labelChannel.setVisible(false);
+			lblSegmentInChannel.setVisible(false);
+			sliderChannel.setVisible(false);
+		} else {
+			labelChannel.setVisible(true);
+			lblSegmentInChannel.setVisible(true);
+			sliderChannel.setVisible(true);			
+		}
+		// Re-enable target component, because we have a valid target image to operate on.
 		if (null != target)
 			target.setEnabled(true);
 	}
-	
-	
+
+
 	private void initGUI() {
 		try {
-			thisLayout = new GridBagLayout();
-			thisLayout.rowWeights = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0};
-			thisLayout.rowHeights = new int[] {50, 20, 20, 20, 20, 50, 20, 20, 20, 20, 50, 20, 20, 20, 25, 7, 15};
-			thisLayout.columnWeights = new double[] {0.1, 0.0, 0.1};
-			thisLayout.columnWidths = new int[] {7, 50, 20};
-			this.setLayout(thisLayout);
 			this.setPreferredSize(new java.awt.Dimension(266, 476));
+			setLayout(null);
 			{
 				jLabelImageName = new JLabel();
-				this.add(jLabelImageName, new GridBagConstraints(0, 0, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 10), 0, 0));
+				jLabelImageName.setBounds(10, 14, 245, 17);
+				this.add(jLabelImageName);
 				jLabelImageName.setText("Select an image, and press refresh.");
 				jLabelImageName.setFont(BIG_FONT);
 			}
 			{
 				jLabelCheckCalibration = new JLabel();
-				this.add(jLabelCheckCalibration, new GridBagConstraints(0, 5, 3, 1, 0.0, 0.0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE, new Insets(0, 10, 10, 0), 0, 0));
+				jLabelCheckCalibration.setBounds(10, 107, 93, 13);
+				this.add(jLabelCheckCalibration);
 				jLabelCheckCalibration.setText("Calibration settings:");
 				jLabelCheckCalibration.setFont(SMALL_FONT);
 			}
 			{
 				jLabelPixelWidth = new JLabel();
-				this.add(jLabelPixelWidth, new GridBagConstraints(0, 6, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
+				jLabelPixelWidth.setBounds(63, 131, 55, 13);
+				this.add(jLabelPixelWidth);
 				jLabelPixelWidth.setText("Pixel width:");
 				jLabelPixelWidth.setFont(SMALL_FONT);
 			}
 			{
 				jLabelPixelHeight = new JLabel();
-				this.add(jLabelPixelHeight, new GridBagConstraints(0, 7, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
+				jLabelPixelHeight.setBounds(58, 151, 60, 13);
+				this.add(jLabelPixelHeight);
 				jLabelPixelHeight.setText("Pixel height:");
 				jLabelPixelHeight.setFont(SMALL_FONT);
 			}
 			{
 				jLabelVoxelDepth = new JLabel();
-				this.add(jLabelVoxelDepth, new GridBagConstraints(0, 8, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
+				jLabelVoxelDepth.setBounds(58, 171, 60, 13);
+				this.add(jLabelVoxelDepth);
 				jLabelVoxelDepth.setText("Voxel depth:");
 				jLabelVoxelDepth.setFont(SMALL_FONT);
 			}
 			{
 				jLabelTimeInterval = new JLabel();
-				this.add(jLabelTimeInterval, new GridBagConstraints(0, 9, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
+				jLabelTimeInterval.setBounds(52, 191, 66, 13);
+				this.add(jLabelTimeInterval);
 				jLabelTimeInterval.setText("Time interval:" );				
 				jLabelTimeInterval.setFont(SMALL_FONT);
 			}
 			{
 				jTextFieldPixelWidth = new JNumericTextField();
-				this.add(jTextFieldPixelWidth, new GridBagConstraints(1, 6, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0));
+				jTextFieldPixelWidth.setBounds(128, 130, 40, 15);
+				this.add(jTextFieldPixelWidth);
 				jTextFieldPixelWidth.setFont(SMALL_FONT);
 			}
 			{
 				jTextFieldPixelHeight = new JNumericTextField();
-				this.add(jTextFieldPixelHeight, new GridBagConstraints(1, 7, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0));
+				jTextFieldPixelHeight.setBounds(128, 150, 40, 15);
+				this.add(jTextFieldPixelHeight);
 				jTextFieldPixelHeight.setFont(SMALL_FONT);
 			}
 			{
 				jTextFieldVoxelDepth = new JNumericTextField();
-				this.add(jTextFieldVoxelDepth, new GridBagConstraints(1, 8, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0));
+				jTextFieldVoxelDepth.setBounds(128, 170, 40, 15);
+				this.add(jTextFieldVoxelDepth);
 				jTextFieldVoxelDepth.setFont(SMALL_FONT);
 			}
 			{
 				jTextFieldTimeInterval = new JNumericTextField();
-				this.add(jTextFieldTimeInterval, new GridBagConstraints(1, 9, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0));
+				jTextFieldTimeInterval.setBounds(128, 190, 40, 15);
+				this.add(jTextFieldTimeInterval);
 				jTextFieldTimeInterval.setFont(SMALL_FONT);
 			}
 			{
 				jLabelUnits1 = new JLabel();
-				this.add(jLabelUnits1, new GridBagConstraints(2, 6, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				jLabelUnits1.setBounds(178, 131, 77, 13);
+				this.add(jLabelUnits1);
 				jLabelUnits1.setText("units");
 				jLabelUnits1.setFont(SMALL_FONT);
 			}
 			{
 				jLabelUnits2 = new JLabel();
-				this.add(jLabelUnits2, new GridBagConstraints(2, 7, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				jLabelUnits2.setBounds(178, 151, 77, 13);
+				this.add(jLabelUnits2);
 				jLabelUnits2.setText("units");
 				jLabelUnits2.setFont(SMALL_FONT);
 			}
 			{
 				jLabelUnits3 = new JLabel();
-				this.add(jLabelUnits3, new GridBagConstraints(2, 8, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				jLabelUnits3.setBounds(178, 171, 77, 13);
+				this.add(jLabelUnits3);
 				jLabelUnits3.setText("units");
 				jLabelUnits3.setFont(SMALL_FONT);
 			}
 			{
 				jLabelUnits4 = new JLabel();
-				this.add(jLabelUnits4, new GridBagConstraints(2, 9, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				jLabelUnits4.setBounds(178, 191, 78, 13);
+				this.add(jLabelUnits4);
 				jLabelUnits4.setText("units");
 				jLabelUnits4.setFont(SMALL_FONT);
 			}
 			{
 				jLabelCropSetting = new JLabel();
-				this.add(jLabelCropSetting, new GridBagConstraints(0, 10, 3, 1, 0.0, 0.0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE, new Insets(0, 10, 10, 0), 0, 0));
+				jLabelCropSetting.setBounds(10, 237, 111, 13);
+				this.add(jLabelCropSetting);
 				jLabelCropSetting.setText("Crop settings (in pixels):");
 				jLabelCropSetting.setFont(SMALL_FONT);
 			}
 			{
 				jLabelX = new JLabel();
-				this.add(jLabelX, new GridBagConstraints(0, 11, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				jLabelX.setBounds(58, 262, 7, 13);
+				this.add(jLabelX);
 				jLabelX.setText("X");
 				jLabelX.setFont(SMALL_FONT);
 			}
 			{
 				jLabelY = new JLabel();
-				this.add(jLabelY, new GridBagConstraints(0, 12, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				jLabelY.setBounds(58, 285, 7, 13);
+				this.add(jLabelY);
 				jLabelY.setText("Y");
 				jLabelY.setFont(SMALL_FONT);
 			}
 			{
 				jLabelZ = new JLabel();
-				this.add(jLabelZ, new GridBagConstraints(0, 13, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				jLabelZ.setBounds(58, 308, 6, 13);
+				this.add(jLabelZ);
 				jLabelZ.setText("Z");
 				jLabelZ.setFont(SMALL_FONT);
 			}
 			{
 				jTextFieldXStart = new JNumericTextField();
-				this.add(jTextFieldXStart, new GridBagConstraints(0, 11, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
-				jTextFieldXStart.setSize(30, 22);
+				jTextFieldXStart.setLocation(78, 260);
+				this.add(jTextFieldXStart);
+				jTextFieldXStart.setSize(40, 18);
 				jTextFieldXStart.setPreferredSize(TEXTFIELD_DIMENSION);
 				jTextFieldXStart.setFont(SMALL_FONT);
 			}
 			{
 				jTextFieldYStart = new JNumericTextField();
-				this.add(jTextFieldYStart, new GridBagConstraints(0, 12, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
-				jTextFieldYStart.setSize(30, 22);
+				jTextFieldYStart.setLocation(78, 283);
+				this.add(jTextFieldYStart);
+				jTextFieldYStart.setSize(40, 18);
 				jTextFieldYStart.setPreferredSize(TEXTFIELD_DIMENSION);
 				jTextFieldYStart.setFont(SMALL_FONT);
 			}
 			{
 				jTextFieldZStart = new JNumericTextField();
-				this.add(jTextFieldZStart, new GridBagConstraints(0, 13, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
+				jTextFieldZStart.setBounds(78, 306, 40, 18);
+				this.add(jTextFieldZStart);
 				jTextFieldZStart.setPreferredSize(TEXTFIELD_DIMENSION);
 				jTextFieldZStart.setFont(SMALL_FONT);
 			}
 			{
 				jLabelTo1 = new JLabel();
-				this.add(jLabelTo1, new GridBagConstraints(1, 11, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				jLabelTo1.setBounds(146, 262, 9, 13);
+				this.add(jLabelTo1);
 				jLabelTo1.setText("to");
 				jLabelTo1.setFont(SMALL_FONT);
 			}
 			{
 				jLabelTo2 = new JLabel();
-				this.add(jLabelTo2, new GridBagConstraints(1, 12, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				jLabelTo2.setBounds(146, 285, 9, 13);
+				this.add(jLabelTo2);
 				jLabelTo2.setText("to");
 				jLabelTo2.setFont(SMALL_FONT);
 			}
 			{
 				jLabelTo3 = new JLabel();
-				this.add(jLabelTo3, new GridBagConstraints(1, 13, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				jLabelTo3.setBounds(146, 308, 9, 13);
+				this.add(jLabelTo3);
 				jLabelTo3.setText("to");
 				jLabelTo3.setFont(SMALL_FONT);
 			}
 			{
 				jTextFieldXEnd = new JNumericTextField();
-				this.add(jTextFieldXEnd, new GridBagConstraints(2, 11, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				jTextFieldXEnd.setBounds(178, 260, 40, 18);
+				this.add(jTextFieldXEnd);
 				jTextFieldXEnd.setPreferredSize(TEXTFIELD_DIMENSION);
 				jTextFieldXEnd.setFont(SMALL_FONT);
 			}
 			{
 				jTextFieldYEnd = new JNumericTextField();
-				this.add(jTextFieldYEnd, new GridBagConstraints(2, 12, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				jTextFieldYEnd.setBounds(178, 283, 40, 18);
+				this.add(jTextFieldYEnd);
 				jTextFieldYEnd.setPreferredSize(TEXTFIELD_DIMENSION);
 				jTextFieldYEnd.setFont(SMALL_FONT);
 			}
 			{
 				jTextFieldZEnd = new JNumericTextField();
-				this.add(jTextFieldZEnd, new GridBagConstraints(2, 13, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				jTextFieldZEnd.setBounds(178, 306, 40, 18);
+				this.add(jTextFieldZEnd);
 				jTextFieldZEnd.setPreferredSize(TEXTFIELD_DIMENSION);
 				jTextFieldZEnd.setFont(SMALL_FONT);
 			}
 			{
 				jLabelT = new JLabel();
-				this.add(jLabelT, new GridBagConstraints(0, 14, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				jLabelT.setBounds(58, 332, 7, 13);
+				this.add(jLabelT);
 				jLabelT.setText("T");
 				jLabelT.setFont(SMALL_FONT);
 			}
 			{
 				jTextFieldTStart = new JNumericTextField();
-				this.add(jTextFieldTStart, new GridBagConstraints(0, 14, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
+				jTextFieldTStart.setBounds(78, 330, 40, 18);
+				this.add(jTextFieldTStart);
 				jTextFieldTStart.setPreferredSize(TEXTFIELD_DIMENSION);
 				jTextFieldTStart.setFont(SMALL_FONT);
 			}
 			{
 				jLabelTo4 = new JLabel();
-				this.add(jLabelTo4, new GridBagConstraints(1, 14, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				jLabelTo4.setBounds(146, 332, 9, 13);
+				this.add(jLabelTo4);
 				jLabelTo4.setText("to");
 				jLabelTo4.setFont(SMALL_FONT);
 			}
 			{
 				jTextFieldTEnd = new JNumericTextField();
-				this.add(jTextFieldTEnd, new GridBagConstraints(2, 14, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				jTextFieldTEnd.setBounds(178, 330, 40, 18);
+				this.add(jTextFieldTEnd);
 				jTextFieldTEnd.setPreferredSize(TEXTFIELD_DIMENSION);
 				jTextFieldTEnd.setFont(SMALL_FONT);
 			}
 			{
+				lblSegmentInChannel = new JLabel("Segment in channel:");
+				lblSegmentInChannel.setFont(SMALL_FONT);
+				lblSegmentInChannel.setBounds(10, 368, 245, 17);
+				add(lblSegmentInChannel);
+
+				sliderChannel = new JSlider();
+				sliderChannel.setBounds(10, 396, 200, 23);
+				sliderChannel.addChangeListener(new ChangeListener() {
+					public void stateChanged(ChangeEvent e) { labelChannel.setText(""+sliderChannel.getValue()); }
+				});
+				add(sliderChannel);
+
+				labelChannel = new JLabel("1");
+				labelChannel.setHorizontalAlignment(SwingConstants.CENTER);
+				labelChannel.setBounds(226, 396, 29, 23);
+				labelChannel.setFont(SMALL_FONT);
+				add(labelChannel);
+			}
+			{
 				jButtonRefresh = new JButton();
-				this.add(jButtonRefresh, new GridBagConstraints(0, 16, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
+				jButtonRefresh.setBounds(10, 455, 78, 21);
+				this.add(jButtonRefresh);
 				jButtonRefresh.setText("Refresh");
 				jButtonRefresh.setFont(SMALL_FONT);
+
 				jButtonRefresh.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						refresh();
@@ -414,15 +480,15 @@ public class StartDialogPanel extends ActionListenablePanel {
 		}
 	}
 
-	
+
 	/*
 	 * MAIN METHOD
 	 */
-	
+
 	/**
-	* Auto-generated main method to display this 
-	* JPanel inside a new JFrame.
-	*/
+	 * Auto-generated main method to display this 
+	 * JPanel inside a new JFrame.
+	 */
 	public static void main(String[] args) {
 		JFrame frame = new JFrame();
 		ij.ImageJ.main(args);
@@ -440,5 +506,4 @@ public class StartDialogPanel extends ActionListenablePanel {
 		frame.setVisible(true);
 		WindowManager.setCurrentWindow(imp.getWindow());
 	}
-
 }
