@@ -30,6 +30,8 @@ public class Settings {
 	public int yend;
 	public int zstart;
 	public int zend;
+	/** Target channel for segmentation, 0-based. */
+	public int segmentationChannel = 0;
 	// Image info
 	public float dt 	= 1;
 	public float dx 	= 1;
@@ -132,6 +134,7 @@ public class Settings {
 		str += String.format("  Y = %4d - %4d, dy = %g %s\n", ystart, yend, dy, spaceUnits);
 		str += String.format("  Z = %4d - %4d, dz = %g %s\n", zstart, zend, dz, spaceUnits);
 		str += String.format("  T = %4d - %4d, dt = %g %s\n", tstart, tend, dt, timeUnits);
+		str += String.format("  Target channel for segmentation: %d\n", segmentationChannel);
 		return str;
 	}
 

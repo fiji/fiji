@@ -115,6 +115,8 @@ public class StartDialogPanel extends ActionListenablePanel {
 		settings.yend 	= Math.round(Float.parseFloat(jTextFieldYEnd.getText()));
 		settings.zstart = Math.round(Float.parseFloat(jTextFieldZStart.getText()));
 		settings.zend 	= Math.round(Float.parseFloat(jTextFieldZEnd.getText()));
+		// Segmentation channel
+		settings.segmentationChannel = sliderChannel.getValue() - 1 ; // 0-based
 		// Image info
 		settings.dx 	= Float.parseFloat(jTextFieldPixelWidth.getText());
 		settings.dy 	= Float.parseFloat(jTextFieldPixelHeight.getText());
@@ -159,6 +161,9 @@ public class StartDialogPanel extends ActionListenablePanel {
 		jTextFieldZEnd.setText(""+settings.zend);
 		jTextFieldTStart.setText(""+settings.tstart); 
 		jTextFieldTEnd.setText(""+settings.tend);
+		// Target segmentation channel
+		sliderChannel.setValue(settings.segmentationChannel+1);
+		labelChannel.setText(""+(settings.segmentationChannel+1));
 	}
 
 
@@ -464,7 +469,7 @@ public class StartDialogPanel extends ActionListenablePanel {
 			}
 			{
 				jButtonRefresh = new JButton();
-				jButtonRefresh.setBounds(10, 455, 78, 21);
+				jButtonRefresh.setBounds(10, 430, 78, 21);
 				this.add(jButtonRefresh);
 				jButtonRefresh.setText("Refresh");
 				jButtonRefresh.setFont(SMALL_FONT);

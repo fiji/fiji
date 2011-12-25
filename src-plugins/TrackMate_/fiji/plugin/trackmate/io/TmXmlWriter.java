@@ -168,6 +168,7 @@ public class TmXmlWriter {
 		settingsElement.setAttribute(SETTINGS_ZEND_ATTRIBUTE_NAME, ""+settings.zend);
 		settingsElement.setAttribute(SETTINGS_TSTART_ATTRIBUTE_NAME, ""+settings.tstart);
 		settingsElement.setAttribute(SETTINGS_TEND_ATTRIBUTE_NAME, ""+settings.tend);
+		settingsElement.setAttribute(SETTINGS_SEGMENTATION_CHANNEL_ATTRIBUTE_NAME, ""+settings.segmentationChannel);
 		root.addContent(settingsElement);
 		logger.log("  Appending base settings.\n");
 		return;

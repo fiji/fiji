@@ -199,6 +199,7 @@ public class TmXmlReader {
 			settings.zend 	= readIntAttribute(settingsEl, SETTINGS_ZEND_ATTRIBUTE_NAME, logger);
 			settings.tstart = readIntAttribute(settingsEl, SETTINGS_TSTART_ATTRIBUTE_NAME, logger);
 			settings.tend 	= readIntAttribute(settingsEl, SETTINGS_TEND_ATTRIBUTE_NAME, logger);
+			settings.segmentationChannel = readIntAttribute(settingsEl, SETTINGS_SEGMENTATION_CHANNEL_ATTRIBUTE_NAME, logger);
 		}
 		// Image info settings
 		Element infoEl 	= root.getChild(IMAGE_ELEMENT_KEY);

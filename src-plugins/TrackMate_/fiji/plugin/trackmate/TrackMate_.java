@@ -374,8 +374,8 @@ public class TrackMate_ implements PlugIn {
 			threads = SimpleMultiThreading.newThreads(1);
 		}
 
-		// The channel segmented is the one currently selected when this method is called.
-		final int segmentationChannel = imp.getChannel() - 1;
+		// The channel segmented is the one specified in the settings object, 0-based.
+		final int segmentationChannel = settings.segmentationChannel;
 
 		// Prepare the thread array
 		final AtomicInteger ai = new AtomicInteger(settings.tstart-1);

@@ -36,6 +36,7 @@ public class TmXmlKeys {
 	public static final String SETTINGS_YEND_ATTRIBUTE_NAME 		= "yend";
 	public static final String SETTINGS_ZEND_ATTRIBUTE_NAME 		= "zend";
 	public static final String SETTINGS_TEND_ATTRIBUTE_NAME 		= "tend";
+	public static final String SETTINGS_SEGMENTATION_CHANNEL_ATTRIBUTE_NAME 		= "segmentationchannel";
 
 	/*
 	 * SEGMENTER SETTINGS
