@@ -30,8 +30,8 @@ public class Settings {
 	public int yend;
 	public int zstart;
 	public int zend;
-	/** Target channel for segmentation, 0-based. */
-	public int segmentationChannel = 0;
+	/** Target channel for segmentation, 1-based. */
+	public int segmentationChannel = 1;
 	// Image info
 	public float dt 	= 1;
 	public float dx 	= 1;

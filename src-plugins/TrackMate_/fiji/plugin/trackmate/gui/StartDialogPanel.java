@@ -116,7 +116,7 @@ public class StartDialogPanel extends ActionListenablePanel {
 		settings.zstart = Math.round(Float.parseFloat(jTextFieldZStart.getText()));
 		settings.zend 	= Math.round(Float.parseFloat(jTextFieldZEnd.getText()));
 		// Segmentation channel
-		settings.segmentationChannel = sliderChannel.getValue() - 1 ; // 0-based
+		settings.segmentationChannel = sliderChannel.getValue(); // 1-based
 		// Image info
 		settings.dx 	= Float.parseFloat(jTextFieldPixelWidth.getText());
 		settings.dy 	= Float.parseFloat(jTextFieldPixelHeight.getText());
@@ -162,8 +162,8 @@ public class StartDialogPanel extends ActionListenablePanel {
 		jTextFieldTStart.setText(""+settings.tstart); 
 		jTextFieldTEnd.setText(""+settings.tend);
 		// Target segmentation channel
-		sliderChannel.setValue(settings.segmentationChannel+1);
-		labelChannel.setText(""+(settings.segmentationChannel+1));
+		sliderChannel.setValue(settings.segmentationChannel);
+		labelChannel.setText(""+(settings.segmentationChannel));
 	}
 
 

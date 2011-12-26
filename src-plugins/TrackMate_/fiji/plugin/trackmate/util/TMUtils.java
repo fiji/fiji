@@ -270,7 +270,7 @@ public class TMUtils {
 	 * in the given 4D or 3D {@link ImagePlus}.
 	 * @param imp  the 4D or 3D source ImagePlus
 	 * @param iFrame  the frame number to extract, 0-based
-	 * @param iChannel  the channel number to extract, 0-based
+	 * @param iChannel  the channel number to extract, careful: <b>1-based</b>
 	 * @return  a 3D or 2D {@link Image} with the single time-point required 
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -283,7 +283,7 @@ public class TMUtils {
 		ImageProcessor ip, croppedIp;
 		Roi cropRoi = new Roi(settings.xstart-1, settings.ystart-1, settings.xend-settings.xstart, settings.yend-settings.ystart);
 		for (int j = settings.zstart; j <= settings.zend; j++) {
-			int stackIndex = imp.getStackIndex(iChannel+1, j, iFrame+1);
+			int stackIndex = imp.getStackIndex(iChannel, j, iFrame+1);
 			ip = stack.getProcessor(stackIndex);
 			ip .setRoi(cropRoi);
 			croppedIp = ip.crop();
