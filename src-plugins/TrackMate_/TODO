@@ -9,12 +9,9 @@ go in the separate configuration panel.
 
 Bugs:
 - Check if TrackScheme still reports edge deletion problems.
-- When in the panel that allow selecting tracker, saving saves nothing.
 - The estimate radius feature calculator should be more accurate. It seems
 like it reports only a finite number of values, corresponding to the discrete
 possible radii, and not the interpolated ones.
-- Are the spot circles drawn at the right x,y position? It seems like they are centered
-at the corner of the pixel, and not at the pixel center.
 - Unsolvable bug: in TrackScheme, when TrackMate is launched from Fiji, the cells
 are not movable???!
 
