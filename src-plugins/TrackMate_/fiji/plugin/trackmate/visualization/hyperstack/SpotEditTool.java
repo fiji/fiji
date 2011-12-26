@@ -277,8 +277,8 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		Spot editedSpot = editedSpots.get(imp);
 		if (null == editedSpot)
 			return;
-		final double ix = displayer.canvas.offScreenXD(e.getX());
-		final double iy =  displayer.canvas.offScreenYD(e.getY());
+		final double ix = displayer.canvas.offScreenXD(e.getX()) + 0.5f;  // relative to pixel center
+		final double iy =  displayer.canvas.offScreenYD(e.getY()) + 0.5f;
 		final float x = (float) (ix * displayer.calibration[0]);
 		final float y = (float) (iy * displayer.calibration[1]);
 		final float z = (displayer.imp.getSlice()-1) * displayer.calibration[2];
@@ -301,8 +301,8 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		if (null != editedSpot)
 			return;
 
-		final double ix = displayer.canvas.offScreenXD(e.getX());
-		final double iy =  displayer.canvas.offScreenYD(e.getY());
+		final double ix = displayer.canvas.offScreenXD(e.getX()) + 0.5f;  // relative to pixel center
+		final double iy =  displayer.canvas.offScreenYD(e.getY()) + 0.5f;
 		final float x = (float) (ix * displayer.calibration[0]);
 		final float y = (float) (iy * displayer.calibration[1]);
 		final float z = (displayer.imp.getSlice()-1) * displayer.calibration[2];

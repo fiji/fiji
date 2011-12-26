@@ -28,6 +28,10 @@ import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.util.gui.OverlayedImageCanvas.Overlay;
 
+/**
+ * The overlay class in charge of drawing the spot images on the hyperstack window.
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2010 - 2011
+ */
 public class SpotOverlay implements Overlay {
 
 	private static final Font LABEL_FONT = new Font("Arial", Font.BOLD, 12);
@@ -129,8 +133,8 @@ public class SpotOverlay implements Overlay {
 			final float y = editingSpot.getFeature(Spot.POSITION_Y);
 			final float radius = editingSpot.getFeature(Spot.RADIUS) / calibration[0] * mag;
 			// In pixel units
-			final float xp = x / calibration[0];
-			final float yp = y / calibration[1];
+			final float xp = x / calibration[0] - 0.5f;
+			final float yp = y / calibration[1] - 0.5f;
 			// Scale to image zoom
 			final float xs = (xp - xcorner) * mag ;
 			final float ys = (yp - ycorner) * mag;
@@ -190,8 +194,8 @@ public class SpotOverlay implements Overlay {
 		float radiusRatio = (Float) displaySettings.get(TrackMateModelView.KEY_SPOT_RADIUS_RATIO);
 		final float radius = spot.getFeature(Spot.RADIUS)*radiusRatio;
 		// In pixel units
-		final float xp = x / calibration[0];
-		final float yp = y / calibration[1];
+		final float xp = x / calibration[0] - 0.5f;
+		final float yp = y / calibration[1] - 0.5f; // so that spot centers are displayed on the pixel centers
 		// Scale to image zoom
 		final float xs = (xp - xcorner) * magnification ;
 		final float ys = (yp - ycorner) * magnification ;
