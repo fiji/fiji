@@ -108,6 +108,8 @@ public class InitFilterPanel extends ActionListenablePanel {
 				jPanelThreshold = new FilterPanel(features, keys, keyNames);
 				if (null != initialThreshold)
 					jPanelThreshold.setThreshold(initialThreshold);
+				else
+					jPanelThreshold.setThreshold(0);
 				jPanelThreshold.jComboBoxFeature.setEnabled(false);
 				jPanelThreshold.jRadioButtonAbove.setEnabled(false);
 				jPanelThreshold.jRadioButtonBelow.setEnabled(false);
