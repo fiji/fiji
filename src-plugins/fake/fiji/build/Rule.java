@@ -268,6 +268,20 @@ public abstract class Rule implements Comparable<Rule> {
 		return (Rule)parser.allRules.get(prereq);
 	}
 
+	public Iterable<String> getJarDependencies() throws FakeException {
+		Set<String> result = new TreeSet<String>();
+		for (String prereq : prerequisites)
+			if (prereq.endsWith(".jar"))
+				result.add(prereq);
+
+		// check the classpath
+		for (String jarFile : Util.split(getVar("CLASSPATH"), ":"))
+			if (jarFile.endsWith(".jar"))
+				result.add(jarFile);
+
+		return result;
+	}
+
 	public Iterable<Rule> getDependencies() throws FakeException {
 		Set<Rule> result = new HashSet<Rule>();
 		for (String prereq : prerequisites) {

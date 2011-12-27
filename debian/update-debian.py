@@ -524,6 +524,7 @@ if options.install or options.generate_complete_control or options.generate_sour
     directories_to_walk = [ "plugins",
                             "misc",
                             "jars",
+                            "scripts",
                             "luts",
                             "macros",
                             "images" ]

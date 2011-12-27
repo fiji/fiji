@@ -427,11 +427,6 @@ hs_err*.log
 /src-plugins/Script_Editor/function.png
 /src-plugins/Script_Editor/icon.png
 /src-plugins/Script_Editor/var.png
-/src-plugins/VIB-lib/math3d/Eigensystem2x2Float.java
-/src-plugins/VIB-lib/math3d/Eigensystem3x3Float.java
-/src-plugins/VIB-lib/math3d/FloatMatrixN.java
-/src-plugins/VIB-lib/math3d/JacobiFloat.java
-/src-plugins/VIB-lib/vib/FloatMatrix.java
 /jars/pal-optimization.jar
 /plugins/Anisotropic_Diffusion_2D.jar
 /modules/AutoComplete/ant-classes/
@@ -594,3 +589,8 @@ hs_err*.log
 /modules/jython/unpacked
 /modules/jython/python-*
 /plugins/Fiji_Package_Maker.jar
+/src-plugins/*/target/
+/modules/javassist/target/
+/modules/jsch/build/
+/modules/jsch/dist/
+/modules/jsch/jsch-0.1.44.jar

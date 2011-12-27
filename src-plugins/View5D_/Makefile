@@ -8,7 +8,7 @@ T	= view5D
 
 SRCS =	$(S)/View5D_.java 
 
-JAVAC	= javac -target 1.1 -source 1.2 -deprecation 
+JAVAC	= javac -target 1.1 -source 1.5 -deprecation # -source 1.2
 MV	= cp
 RM	= rm -f 
 

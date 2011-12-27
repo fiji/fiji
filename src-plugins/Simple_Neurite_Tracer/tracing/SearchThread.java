@@ -45,7 +45,7 @@ import java.io.PrintWriter;
 /* This is the thread that explores the image using a variety of
    strategies, for example to trace tubular structures or surfaces. */
 
-public abstract class SearchThread extends Thread {
+public abstract class SearchThread extends Thread implements SearchInterface {
 
 	boolean verbose = SimpleNeuriteTracer.verbose;
 
@@ -699,7 +699,7 @@ public abstract class SearchThread extends Thread {
 	   the search at this slice.  If openColor or closedColor are
 	   null then that means "don't bother to draw that list". */
 
-	void drawProgressOnSlice( int plane,
+	public void drawProgressOnSlice( int plane,
 				  int currentSliceInPlane,
 				  TracerCanvas canvas,
 				  Graphics g ){

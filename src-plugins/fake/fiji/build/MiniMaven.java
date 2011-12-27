@@ -142,6 +142,8 @@ public class MiniMaven {
 			if (new File(javac).exists())
 				pom.dependencies.add(new Coordinate("com.sun", "tools", "1.4.2", false, javac, null));
 		}
+		else if (dependency.artifactId.equals("imglib2-io"))
+			pom.dependencies.add(new Coordinate("loci", "bio-formats", "${bio-formats.version}"));
 		return pom;
 	}
 
@@ -583,6 +585,21 @@ public class MiniMaven {
 					err.println("Cannot find version for artifact " + dependency.artifactId + " (dependency of " + coordinate.artifactId + ")");
 				localPOMCache.put(key, null);
 				return null;
+			}
+			else {
+				for (String jarName : new String[] {
+					"jars/" + dependency.artifactId + "-" + dependency.version + ".jar",
+					"plugins/" + dependency.artifactId + "-" + dependency.version + ".jar",
+					"jars/" + dependency.artifactId + ".jar",
+					"plugins/" + dependency.artifactId + ".jar"
+				}) {
+					File file = new File(System.getProperty("ij.dir"), jarName);
+					if (file.exists()) {
+						POM pom = fakePOM(file, dependency);
+						localPOMCache.put(key, pom);
+						return pom;
+					}
+				}
 			}
 			path += dependency.version + "/";
 			if (dependency.version.endsWith("-SNAPSHOT")) try {

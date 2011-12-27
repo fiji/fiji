@@ -29,6 +29,8 @@ public class FijiClassLoader extends URLClassLoader {
 	public FijiClassLoader() {
 		super(new URL[0], Thread.currentThread().getContextClassLoader());
 		fallBacks = new ArrayList<ClassLoader>();
+		// needed for sezpoz
+		Thread.currentThread().setContextClassLoader(this);
 	}
 
 	public FijiClassLoader(boolean initDefaults) {

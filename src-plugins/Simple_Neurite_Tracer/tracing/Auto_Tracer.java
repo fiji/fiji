@@ -600,7 +600,7 @@ public class Auto_Tracer extends ThreePanes implements PlugIn, PaneOwner, Search
 
 	/* How many points have we considered? */
 
-	public void pointsInSearch( SearchThread source, int inOpen, int inClosed ) {
+	public void pointsInSearch( SearchInterface source, int inOpen, int inClosed ) {
 		if( liveDisplay )
 			repaintAllPanes();
 		// Also check whether we're over the requested number
@@ -617,11 +617,19 @@ public class Auto_Tracer extends ThreePanes implements PlugIn, PaneOwner, Search
 	 * result from whatever means you've implemented,
 	 * e.g. TracerThreed.getResult() */
 
-	public void finished( SearchThread source, boolean success ) {
+	public void finished( SearchInterface source, boolean success ) {
 		long currentTime = System.currentTimeMillis();
 		long secondsSinceThreadStarted = (currentTime - threadTimeStarted) / 1000;
+
+		// FIXME: a quick hack to make this compile again, since we're not using
+		// it much:
+		SearchThread sourceThread = (SearchThread)source;
+
 		// Just log how many nodes were explored in that time:
-		System.out.println("  "+(source.open_from_start.size()+source.closed_from_start.size())+" nodes in "+secondsSinceThreadStarted+" seconds");
+		System.out.println("  "+
+				   (sourceThread.open_from_start.size()+
+				    sourceThread.closed_from_start.size())+
+				   " nodes in "+secondsSinceThreadStarted+" seconds");
 	}
 
 	/* This reports the current status of the thread, which may be:
@@ -631,7 +639,7 @@ public class Auto_Tracer extends ThreePanes implements PlugIn, PaneOwner, Search
 	   SearchThread.STOPPING
 	*/
 
-	public void threadStatus( SearchThread source, int currentStatus ) {
+	public void threadStatus( SearchInterface source, int currentStatus ) {
 
 	}
 

@@ -1,0 +1,212 @@
+#!/bin/sh
+/*/. 2>/dev/null; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
+
+import fiji.SimpleExecuter;
+
+import fiji.build.Fake;
+import fiji.build.Rule;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+
+import java.util.ArrayList;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+if (bsh.args.length == 0) {
+	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
+		+ " <Fakefile-target>");
+	System.exit(1);
+}
+
+File fijiDir = new File(System.getProperty("fiji.dir"));
+
+void moveSources(File sourceDirectory, File targetDirectory) {
+	File[] list = sourceDirectory.listFiles();
+	if (list == null)
+		return;
+	SimpleExecuter.exec(fijiDir, new String[] { "mkdir", "-p", targetDirectory.getPath() });
+	for (File file : list) {
+		File targetFile = new File(targetDirectory, file.getName());
+		if (file.isDirectory() && !file.getAbsolutePath().endsWith("/src/main/java"))
+			moveSources(file, targetFile);
+		else if (file.getName().endsWith(".java"))
+			SimpleExecuter.exec(fijiDir, new String[] { "git", "mv", file.getPath(), targetFile.getPath() });
+	}
+}
+
+void moveSources(String baseDirectory) {
+	moveSources(new File(baseDirectory), new File(baseDirectory, "src/main/java"));
+}
+
+String readFile(File file) {
+	byte[] buffer = new byte[65536];
+	in = new FileInputStream(file);
+	out = new ByteArrayOutputStream();
+	for (;;) {
+		int count = in.read(buffer);
+		if (count < 0)
+			break;
+		out.write(buffer, 0, count);
+	}
+	in.close();
+	out.close();
+	return out.toString();
+}
+
+String getBaseName(String target) {
+	String key = target;
+	if (key.endsWith(".jar"))
+		key = key.substring(0, key.length() - 4);
+	int slash = key.lastIndexOf('/');
+	if (slash >= 0)
+		key = key.substring(slash + 1);
+	return key;
+}
+
+void writeAndAddFile(String contents, File file) {
+	dir = file.getParentFile();
+	if (dir != null && !dir.exists())
+		dir.mkdirs();
+	out = new FileOutputStream(file);
+	out.write(contents.getBytes("UTF-8"));
+	out.close();
+	SimpleExecuter.exec(fijiDir, new String[] { "git", "add", file.getPath() });
+}
+
+void writePOM(String target, Rule rule) {
+	String versionRegex = "(.*?)-([\\.0-9]*)";
+	Pattern versionPattern = Pattern.compile(versionRegex);
+	dependencies = "";
+	for (String target : rule.getJarDependencies()) {
+		artifact = getBaseName(target);
+		version = null;
+		Matcher matcher = versionPattern.matcher(artifact);
+		if (matcher.matches()) {
+			artifact = matcher.group(1);
+			version = matcher.group(2);
+		}
+
+		dependencies += "\t\t<dependency>\n"
+			+ "\t\t\t<groupId>fiji</groupId>\n"
+			+ "\t\t\t<artifactId>" + artifact + "</artifactId>\n"
+			+ (version == null || version.equals("") ? "" : "\t\t\t<version>" + version + "</version>\n")
+			+ "\t\t</dependency>\n";
+	}
+
+	pom = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		+ "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n"
+		+ "\txmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+		+ "\txsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0\n"
+		+ "\t\thttp://maven.apache.org/xsd/maven-4.0.0.xsd\">\n"
+		+ "\t<modelVersion>4.0.0</modelVersion>\n"
+		+ "\n"
+		+ "\t<parent>\n"
+		+ "\t\t<groupId>fiji</groupId>\n"
+		+ "\t\t<artifactId>pom-fiji-plugins</artifactId>\n"
+		+ "\t\t<version>2.0-SNAPSHOT</version>\n"
+		+ "\t</parent>\n"
+		+ "\n"
+		+ "\t<artifactId>" + getBaseName(target) + "</artifactId>\n"
+		+ "\n"
+		+ "\t<name>" + target + "</name>\n"
+		+ "\t<description></description>\n"
+		+ "\n"
+		+ (dependencies.equals("") ?
+			"" :
+			"\t<dependencies>\n"
+			+ dependencies
+			+ "\t</dependencies>\n"
+			+ "\n")
+		+ "\t<build>\n"
+		+ "\t\t<plugins>\n"
+		+ "\t\t\t<plugin>\n"
+		+ "\t\t\t\t<artifactId>maven-jar-plugin</artifactId>\n"
+		+ "\t\t\t\t<configuration>\n"
+		+ "\t\t\t\t\t<archive>\n"
+		+ "\t\t\t\t\t\t<manifest>\n"
+		//+ "\t\t\t\t\t\t\t<packageName>" + getPackageName() + "</packageName>\n"
+		+ "\t\t\t\t\t\t</manifest>\n"
+		+ "\t\t\t\t\t</archive>\n"
+		+ "\t\t\t\t</configuration>\n"
+		+ "\t\t\t</plugin>\n"
+		+ "\t\t</plugins>\n"
+		+ "\t</build>\n"
+		+ "\n"
+		+ "</project>";
+	writeAndAddFile(pom, new File(fijiDir, rule.getStripPath() + "pom.xml"));
+}
+
+void fsckEclipse(String stripPath) {
+	factoryPath = "<factorypath>\n"
+		+ "\t<factorypathentry kind=\"VARJAR\" id=\"M2_REPO/net/java/sezpoz/sezpoz/1.9/sezpoz-1.9.jar\" enabled=\"true\" runInBatchMode=\"true\"/>\n"
+		+ "</factorypath>";
+	writeAndAddFile(factoryPath, new File(fijiDir, rule.getStripPath() + ".factorypath"));
+	settings = "#Sun Jan 15 20:38:51 CET 2010\n"
+		+ "eclipse.preferences.version=1\n"
+		+ "org.eclipse.jdt.apt.aptEnabled=true\n"
+		+ "org.eclipse.jdt.apt.genSrcDir=target/classes\n"
+		+ "org.eclipse.jdt.apt.reconcileEnabled=false\n";
+	writeAndAddFile(settings, new File(fijiDir, rule.getStripPath() + ".settings/org.eclipse.jdt.apt.core.prefs"));
+}
+
+void editFakefile(String target, String stripPath) {
+	insert = target + " <- " + stripPath + "pom.xml\n";
+
+	fakefile = readFile(new File(fijiDir, "Fakefile"));
+	// for the moment, leave all CLASSPATH(<target>) stuff
+	int offset = fakefile.indexOf("\n" + target + " <- ");
+	if (offset >= 0) {
+		// does not use the default rule
+		int endOffset = fakefile.indexOf("\n", offset + 1);
+		while (endOffset > 0 && fakefile.charAt(endOffset - 1) == '\\')
+			endOffset = fakefile.indexOf("\n", endOffset + 1);
+		fakefile = fakefile.substring(0, offset)
+			+ fakefile.substring(endOffset);
+	}
+
+	offset = fakefile.indexOf("\n\n# pre-Java5 generics");
+	if (offset < 0) {
+		System.err.println("Could not find pre-Java5 generics label!");
+		System.exit(1);
+	}
+	else {
+		pomLabelOffset = fakefile.indexOf("\n\n# pom.xml sub-projects");
+		fakefile = fakefile.substring(0, offset + 1)
+			+ (pomLabelOffset < 0 ? "\n# pom.xml sub-projects\n\n" : "")
+			+ insert
+			+ fakefile.substring(offset + 1);
+	}
+
+	writeAndAddFile(fakefile, new File(fijiDir, "Fakefile"));
+}
+
+fake = new Fake();
+parser = fake.parse(new FileInputStream(new File(fijiDir, "Fakefile")), fijiDir);
+parser.parseRules(new ArrayList());
+
+targets = new ArrayList();
+for (i = 0; i < bsh.args.length; i++)
+	targets.add(bsh.args[i]);
+
+for (String target : targets) {
+	rule = parser.getRule(target);
+	if (rule == null) {
+		print("No rule found for " + target);
+		continue;
+	}
+	if (!rule.getClass().getName().endsWith(".CompileJar")) {
+		print("Target '" + target + "' is not a .jar rule");
+		continue;
+	}
+
+	String stripPath = rule.getStripPath();
+
+	moveSources(stripPath);
+	writePOM(target, rule);
+	fsckEclipse(stripPath);
+	editFakefile(target, stripPath);
+}
