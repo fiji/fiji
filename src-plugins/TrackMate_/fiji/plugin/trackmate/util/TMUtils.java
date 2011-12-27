@@ -20,6 +20,7 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
 
@@ -107,8 +108,13 @@ public class TMUtils {
 	
 	public static  final int readIntAttribute(Element element, String name, Logger logger) {
 		int val = 0;
+		Attribute att = element.getAttribute(name);
+		if (null == att) {
+			logger.error("Could not find attribute "+name+" for element "+element.getName()+", substituting default value.\n");
+			return val;
+		}
 		try {
-			val = element.getAttribute(name).getIntValue();
+			val = att.getIntValue();
 		} catch (DataConversionException e) {	
 			logger.error("Cannot read the attribute "+name+" of the element "+element.getName()+", substituting default value.\n"); 
 		}
@@ -117,8 +123,13 @@ public class TMUtils {
 	
 	public static  final float readFloatAttribute(Element element, String name, Logger logger) {
 		float val = 0;
+		Attribute att = element.getAttribute(name);
+		if (null == att) {
+			logger.error("Could not find attribute "+name+" for element "+element.getName()+", substituting default value.\n");
+			return val;
+		}
 		try {
-			val = element.getAttribute(name).getFloatValue();
+			val = att.getFloatValue();
 		} catch (DataConversionException e) {	
 			logger.error("Cannot read the attribute "+name+" of the element "+element.getName()+", substituting default value.\n"); 
 		}
@@ -127,8 +138,13 @@ public class TMUtils {
 	
 	public static  final double readDoubleAttribute(Element element, String name, Logger logger) {
 		double val = 0;
+		Attribute att = element.getAttribute(name);
+		if (null == att) {
+			logger.error("Could not find attribute "+name+" for element "+element.getName()+", substituting default value.\n");
+			return val;
+		}
 		try {
-			val = element.getAttribute(name).getDoubleValue();
+			val = att.getDoubleValue();
 		} catch (DataConversionException e) {	
 			logger.error("Cannot read the attribute "+name+" of the element "+element.getName()+", substituting default value.\n"); 
 		}
@@ -137,8 +153,13 @@ public class TMUtils {
 	
 	public static  final boolean readBooleanAttribute(Element element, String name, Logger logger) {
 		boolean val = false;
+		Attribute att = element.getAttribute(name);
+		if (null == att) {
+			logger.error("Could not find attribute "+name+" for element "+element.getName()+", substituting default value.\n");
+			return val;
+		}
 		try {
-			val = element.getAttribute(name).getBooleanValue();
+			val = att.getBooleanValue();
 		} catch (DataConversionException e) {	
 			logger.error("Cannot read the attribute "+name+" of the element "+element.getName()+", substituting default value.\n"); 
 		}
