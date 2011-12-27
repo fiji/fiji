@@ -5,7 +5,7 @@ cd src
 # javac -target 1.1 -deprecation View5D_.java
 cp view5d/View5D_.java view5d/aaa.class
 rm view5d/*.class
-javac -target 1.4 -source 1.2 -deprecation -classpath "." view5d/View5D_.java view5d/View5D.java
+javac -target 1.5 -source 1.5 -deprecation -classpath ".:/usr/local/ImageJ/ij.jar" view5d/View5D_.java view5d/View5D.java  # -target 1.4 -source 1.2
 # javac -deprecation -classpath "." View5D_.java
 jar -cf View5D_.jar view5d/*.class plugins.config
 # cp /*.class /usr/local/ImageJ/plugins/View5D/
@@ -16,10 +16,11 @@ cp View5D_.jar /usr/local/KhorosInstall/goodies/data/display/View5D.jar
 cp View5D_.jar /usr/local/matlab/java/jar/toolbox/View5D.jar
 cp View5D_.jar /usr/local/dip/common/dipimage/private/View5D.jar
 cp View5D_.jar ../examples/View5D.jar
-mv View5D_.jar ..
+cp View5D_.jar ..
+rm View5D_.jar
 cd ..
-zip -r View5D.zip View5D_.jar view5d.m *.html *.jpg *.m *.policy examples COPYING plugins.config
-zip -r View5DSources.zip view5d.m src/*.java src/view5d/*.java COPYING javacImageJ Makefile *.m plugins.config
+zip -r View5D.zip View5D_.jar view5d.m *.html *.jpg *.m *.policy examples COPYING src/plugins.config
+zip -r View5DSources.zip view5d.m src/*.java src/view5d/*.java COPYING javacImageJ Makefile *.m src/plugins.config
 
 cp View5D.html /usr/local/ImageJ/plugins/View5D/index.html
 cp *.html /usr/local/ImageJ/plugins/View5D/

@@ -159,7 +159,7 @@ public class PositionLabel extends Panel implements MouseListener{
   void Help() {
        // javax.swing.JOptionPane.showMessageDialog(applet,
       String newtext="Java 5D image viewer, Version V"+View5D_.serialVersionUID+"."+View5D_.serialSubVersionUID+"."+View5D_.serialSubSubVersionUID+"" +
-      "by Rainer Heintzmann\nUniversity of Jena, Germany (heintzmann@gmail.com)\n"+
+      " by Rainer Heintzmann\nUniversity of Jena, Germany (heintzmann@gmail.com)\n"+
               "Right-click for menu\nUse mouse click for changing slices, \n"+
               "Shift and mouse-drag for square ROIs, Ctrl and mouse-drag for multiple line ROIs\ndrag images, zoom by typing 'A' and 'a' or into ROI by 'Z'\n"+
 	      "Arrow keys for fine control of slicing position\n"+
