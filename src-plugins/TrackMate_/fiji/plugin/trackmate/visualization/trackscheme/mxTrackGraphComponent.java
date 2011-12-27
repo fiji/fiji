@@ -42,6 +42,9 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 	private int[] columnWidths = null;
 	private Color[] columnColors;
 	private TrackSchemeFrame frame;
+	
+	/** If true, will paint background decorations. */
+	private boolean doPaintDecorations = true;
 
 	public mxTrackGraphComponent(TrackSchemeFrame frame) {
 		super(frame.getGraph());
@@ -56,9 +59,10 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 
 		connectionHandler.addListener(mxEvent.CONNECT, this);
 
+		// Our own cell painter, that displays an image (if any) and a label next to it.
 		mxGraphics2DCanvas.putShape(mxScaledLabelShape.SHAPE_NAME, new mxScaledLabelShape());
-		// Replace default painter for edge label so that we can draw labels parallel to edges
-		mxGraphics2DCanvas.putTextShape(mxGraphics2DCanvas.TEXT_SHAPE_DEFAULT, new mxSideTextShape());
+		// Replace default painter for edge label so that we can draw labels parallel to edges.
+		mxGraphics2DCanvas.putTextShape(mxGraphics2DCanvas.TEXT_SHAPE_DEFAULT, new mxSideTextShape(true));
 
 		setSwimlaneSelectionEnabled(true);
 
@@ -247,6 +251,10 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 	 */
 	@Override
 	public void paintBackground(Graphics g) {
+		
+		if (!doPaintDecorations)
+			return;
+		
 		Graphics2D g2d = (Graphics2D) g;
 		Rectangle paintBounds = g.getClipBounds();
 

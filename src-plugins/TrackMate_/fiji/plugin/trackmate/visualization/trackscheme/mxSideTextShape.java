@@ -26,10 +26,22 @@ import com.mxgraph.view.mxCellState;
 public class mxSideTextShape extends mxDefaultTextShape {
 
 	public static final String SHAPE_NAME = "sideLabel"; 
+	
+	/** If true, will paint the edge label on its side. */
+	private boolean doPaintSideLabel;
+
+	
+	public mxSideTextShape(boolean doPaintSideLabel) {
+		this.doPaintSideLabel = doPaintSideLabel;
+	}
+	
 
 	@Override
 	public void paintShape(mxGraphics2DCanvas canvas, String text, mxCellState state, Map<String, Object> style) {
 
+		if (!doPaintSideLabel)
+			return;
+		
 		mxCell cell = (mxCell) state.getCell();
 		boolean isEdgeLabel = cell.isEdge(); 
 
