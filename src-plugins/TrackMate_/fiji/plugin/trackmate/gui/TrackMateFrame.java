@@ -91,6 +91,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 
 	private TrackMateModel model;
 	private TrackMate_ plugin;
+	private TrackMateFrameController controller;
 	private ArrayList<ActionListener> listeners = new ArrayList<ActionListener>();
 
 	private JPanel jPanelButtons;
@@ -122,9 +123,10 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 	 * CONSTRUCTOR
 	 */
 
-	public TrackMateFrame(TrackMate_ plugin) {
+	public TrackMateFrame(TrackMate_ plugin, TrackMateFrameController controller) {
 		this.model = plugin.getModel();
 		this.plugin = plugin;
+		this.controller = controller;
 		initGUI();
 		positionWindow();
 
@@ -230,7 +232,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 
 		case ACTION_PANEL_KEY:
 			if (null == actionPanel)
-				actionPanel = new ActionChooserPanel(model, this, plugin);
+				actionPanel = new ActionChooserPanel(model, controller);
 			panel = actionPanel;
 			break;
 		}

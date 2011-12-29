@@ -33,7 +33,27 @@ public class RadiusToEstimatedAction extends AbstractTMAction {
 	public void execute(final TrackMateModel model) {
 		logger.log("Setting all spot radiuses to their estimated value.\n");
 		SpotCollection spots = model.getFilteredSpots();
-		for(Spot spot : spots)
-			spot.putFeature(Spot.RADIUS, spot.getFeature(RadiusEstimator.ESTIMATED_DIAMETER) / 2);
+		int valid = 0;
+		int invalid = 0;
+		for(Spot spot : spots) {
+			Float diameter = spot.getFeature(RadiusEstimator.ESTIMATED_DIAMETER);
+			if (null == diameter || diameter == 0) {
+				invalid++;
+			} else {
+				spot.putFeature(Spot.RADIUS, diameter/2);
+				valid++;
+			}
+		}
+		if (invalid == 0) {
+			logger.log(String.format("%d spots changed.\n", valid));
+		} else if (valid == 0 ){
+			logger.log("All spots miss the "+RadiusEstimator.ESTIMATED_DIAMETER+" feature.\n");
+			logger.log("No modification made.\n");
+		} else {
+			logger.log("Some spots miss the "+RadiusEstimator.ESTIMATED_DIAMETER+" feature.\n");
+			logger.log(String.format("Updated %d spots, left %d spots unchanged.\n", valid, invalid));
+		}
+		logger.log("Done.\n");
+		controller.getModelView().refresh();
 	}
 }

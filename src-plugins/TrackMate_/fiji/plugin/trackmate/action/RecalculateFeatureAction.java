@@ -21,6 +21,7 @@ public class RecalculateFeatureAction extends AbstractTMAction {
 		model.setLogger(logger);
 		model.getFeatureModel().computeSpotFeatures(model.getSpots());
 		model.setLogger(oldLogger);
+		logger.log("Done.\n");
 	}
 
 	@Override

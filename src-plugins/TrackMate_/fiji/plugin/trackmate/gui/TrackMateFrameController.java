@@ -59,7 +59,7 @@ public class TrackMateFrameController implements ActionListener {
 
 	public TrackMateFrameController(final TrackMate_ plugin) {
 		this.plugin = plugin;
-		this.view = new TrackMateFrame(plugin);
+		this.view = new TrackMateFrame(plugin, this);
 		this.logger = view.getLogger();
 
 		plugin.setLogger(logger);

@@ -17,7 +17,6 @@ import javax.swing.JList;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.action.TrackMateAction;
 
 public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> {
@@ -30,15 +29,12 @@ public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> {
 	private TrackMateModel model;
 	private LogPanel logPanel;
 	private Logger logger;
-	/** The view linked to the given model, in case some actions need it. */ 
-	private TrackMateFrame view;
-	private TrackMate_ plugin;
+	private TrackMateFrameController controller;
 
-	public ActionChooserPanel(TrackMateModel model, TrackMateFrame view, TrackMate_ plugin) {
-		super(plugin.getAvailableActions(), "action");
+	public ActionChooserPanel(TrackMateModel model, TrackMateFrameController controller) {
+		super(controller.getPlugin().getAvailableActions(), "action");
 		this.model = model;
-		this.view = view;
-		this.plugin = plugin;
+		this.controller = controller;
 		this.logPanel = new LogPanel();
 		this.logger = logPanel.getLogger();
 		init();
@@ -65,8 +61,7 @@ public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> {
 							fireAction(ACTION_STARTED);
 							TrackMateAction action = getChoice();
 							action.setLogger(logger);
-							action.setView(view);
-							action.setPlugin(plugin);
+							action.setController(controller);
 							action.execute(model);
 							fireAction(ACTION_FINISHED);
 						} finally {
@@ -95,7 +90,7 @@ public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> {
 	
 	public static void main(String[] args) {
 		JFrame frame = new JFrame();
-		frame.getContentPane().add(new ActionChooserPanel(new TrackMateModel(), null, new TrackMate_()));
+		frame.getContentPane().add(new ActionChooserPanel(new TrackMateModel(), null));
 		frame.setSize(300, 520);
 		frame.setVisible(true);
 	}

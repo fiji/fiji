@@ -19,17 +19,18 @@ public class LinkNew3DViewerAction extends AbstractTMAction {
 	public void execute(final TrackMateModel model) {
 		new Thread("TrackMate new 3D viewer thread") {
 			public void run() {
-				logger.log("Rendering 3D overlay...");
+				logger.log("Rendering 3D overlay...\n");
 				SpotDisplayer3D newDisplayer = new SpotDisplayer3D();
 				newDisplayer.setRenderImageData(false);
 				newDisplayer.setModel(model);
+				TrackMateFrame view = controller.getView();
 				DisplayerPanel displayerPanel = (DisplayerPanel) view.getPanelFor(TrackMateFrame.PanelCard.ACTION_PANEL_KEY);
 				if (null != displayerPanel) {
 					displayerPanel.register(newDisplayer);
 					displayerPanel.updateDisplaySettings(newDisplayer.getDisplaySettings());
 				}
 				newDisplayer.render();
-				logger.log("Done.");
+				logger.log("Done.\n");
 			}
 		}.start();
 	}

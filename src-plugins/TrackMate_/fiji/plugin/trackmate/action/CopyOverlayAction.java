@@ -40,9 +40,11 @@ public class CopyOverlayAction extends AbstractTMAction {
 							TrackMateModelView newDisplayer;
 							String title;
 							if (null == dest) {
+								logger.log("Copying data and overlay to new 3D viewer\n");
 								newDisplayer = new SpotDisplayer3D();
 								title = "3D viewer overlay";
 							} else {
+								logger.log("Copying overlay to "+dest.getShortTitle()+"\n");
 								model.getSettings().imp = dest; // TODO TODO DANGER DANGER
 								newDisplayer = new HyperStackDisplayer();
 								title = dest.getShortTitle() + " ctrl";
@@ -59,6 +61,7 @@ public class CopyOverlayAction extends AbstractTMAction {
 							newFrame.setSize(300, 470);
 							newFrame.setLocationRelativeTo(null);
 							newFrame.setVisible(true);
+							logger.log("Done.\n");
 							
 						}
 					}.start();

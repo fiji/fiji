@@ -33,6 +33,8 @@ public class ResetRadiusAction extends AbstractTMAction {
 		SpotCollection spots = model.getFilteredSpots();
 		for(Spot spot : spots)
 			spot.putFeature(Spot.RADIUS, radius);
+		controller.getModelView().refresh();
+		logger.log("Done.\n");
 	}
 
 	@Override
