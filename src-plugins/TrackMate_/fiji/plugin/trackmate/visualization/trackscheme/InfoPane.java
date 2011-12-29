@@ -147,36 +147,37 @@ class InfoPane extends JPanel implements TrackMateSelectionView, TrackMateSelect
 				dm.addColumn(spot.toString(), columnData);
 			}
 			table.setModel(dm);
+
+			// Tune look
+			DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer() {
+				public boolean isOpaque() { return false; };
+				@Override
+				public Color getBackground() {
+					return Color.BLUE;
+				}
+			};
+			headerRenderer.setBackground(Color.RED);
+
+			DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
+			renderer.setOpaque(false);
+			renderer.setHorizontalAlignment(SwingConstants.RIGHT);
+			renderer.setFont(SMALL_FONT);			
+			for(int i=0; i<table.getColumnCount(); i++) {
+				table.setDefaultRenderer(table.getColumnClass(i), renderer);
+				table.getColumnModel().getColumn(i).setPreferredWidth(TrackSchemeFrame.TABLE_CELL_WIDTH);
+			}
+			for (Component c : scrollTable.getColumnHeader().getComponents()) {
+				c.setBackground(getBackground());
+			}
+			scrollTable.getColumnHeader().setOpaque(false);
+			scrollTable.setVisible(true);
+			revalidate();
+
 		} catch (ConcurrentModificationException cme) {
 			// do nothing
 		} catch (ArrayIndexOutOfBoundsException aobe) {
 			// do nothing
 		}
-		
-		// Tune look
-		DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer() {
-			public boolean isOpaque() { return false; };
-			@Override
-			public Color getBackground() {
-				return Color.BLUE;
-			}
-		};
-		headerRenderer.setBackground(Color.RED);
-
-		DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
-		renderer.setOpaque(false);
-		renderer.setHorizontalAlignment(SwingConstants.RIGHT);
-		renderer.setFont(SMALL_FONT);			
-		for(int i=0; i<table.getColumnCount(); i++) {
-			table.setDefaultRenderer(table.getColumnClass(i), renderer);
-			table.getColumnModel().getColumn(i).setPreferredWidth(TrackSchemeFrame.TABLE_CELL_WIDTH);
-		}
-		for (Component c : scrollTable.getColumnHeader().getComponents()) {
-			c.setBackground(getBackground());
-		}
-		scrollTable.getColumnHeader().setOpaque(false);
-		scrollTable.setVisible(true);
-		revalidate();
 	}
 
 	/*
