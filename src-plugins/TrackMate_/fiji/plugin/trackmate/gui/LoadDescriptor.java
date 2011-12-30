@@ -38,7 +38,7 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 				return;
 			}
 			file = tmpFile;
-			reader.loadFile(file, plugin);
+			reader.loadFile(file);
 			setTargetNextID(reader.getTargetDescriptor());
 
 		} finally {

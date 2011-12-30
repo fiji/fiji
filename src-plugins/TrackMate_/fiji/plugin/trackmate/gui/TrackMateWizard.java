@@ -12,6 +12,7 @@ import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 
 import javax.swing.Icon;
@@ -153,6 +154,14 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	 * 
 	 * WIZARD MODEL METHODS
 	 */
+	
+	/**
+	 * @return the collection of {@link WizardPanelDescriptor} currently
+	 * registered in this wizard.
+	 */
+	public Collection<WizardPanelDescriptor> getWizardPanelDescriptors() {
+		return descriptorHashmap.values();
+	}
 
 	/**
 	 * Registers the WizardPanelDescriptor in the model using the Object-identifier specified.
@@ -170,7 +179,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	 * Sets the current panel to that identified by the String passed in.
 	 * @param id String-based panel identifier
 	 */    
-	public void setCurrentPanel(String id) {
+	public void setCurrentPanelDescriptor(String id) {
 		currentDescriptor = descriptorHashmap.get(id);
 		String str =  currentDescriptor.getComponentID();
 		cardLayout.show(jPanelMain, str);

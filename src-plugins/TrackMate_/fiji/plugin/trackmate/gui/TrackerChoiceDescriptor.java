@@ -42,7 +42,9 @@ public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public void aboutToDisplayPanel() {	}
+	public void aboutToDisplayPanel() {
+		setCurrentChoiceFromPlugin();
+	}
 
 	@Override
 	public void displayingPanel() { }
@@ -65,6 +67,7 @@ public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 	public void setPlugin(TrackMate_ plugin) {
 		this.plugin = plugin;
 		this.component = new ListChooserPanel<SpotTracker>(plugin.getAvailableSpotTrackers(), "tracker");
+		setCurrentChoiceFromPlugin();
 	}
 
 	@Override
@@ -72,4 +75,19 @@ public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 		this.wizard = wizard;
 	}
 
+	private void setCurrentChoiceFromPlugin() {
+		SpotTracker tracker = plugin.getModel().getSettings().tracker; 
+		if (tracker != null) {
+			int index = 0;
+			for (int i = 0; i < plugin.getAvailableSpotTrackers().size(); i++) {
+				if (tracker.toString().equals(plugin.getAvailableSpotTrackers().get(i).toString())) {
+					index = i;
+					break;
+				}
+			}
+			component.jComboBoxChoice.setSelectedIndex(index);
+		}
+	}
+
+	
 }

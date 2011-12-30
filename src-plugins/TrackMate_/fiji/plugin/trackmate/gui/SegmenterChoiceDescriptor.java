@@ -46,6 +46,10 @@ public class SegmenterChoiceDescriptor implements WizardPanelDescriptor {
 
 	@Override
 	public void aboutToDisplayPanel() {
+		setCurrentChoiceFromPlugin();
+	}
+	
+	private void setCurrentChoiceFromPlugin() {
 		SpotSegmenter<? extends RealType<?>> segmenter = plugin.getModel().getSettings().segmenter; 
 		if (segmenter != null) {
 			int index = 0;
@@ -83,6 +87,7 @@ public class SegmenterChoiceDescriptor implements WizardPanelDescriptor {
 	public void setPlugin(TrackMate_ plugin) {
 		this.plugin = plugin;
 		this.component = new ListChooserPanel<SpotSegmenter>(plugin.getAvailableSpotSegmenters(), "segmenter");
+		setCurrentChoiceFromPlugin();
 	}
 
 	@Override

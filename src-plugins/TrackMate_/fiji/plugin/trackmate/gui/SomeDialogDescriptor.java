@@ -20,7 +20,6 @@ public abstract class SomeDialogDescriptor implements WizardPanelDescriptor {
 	protected Logger logger;
 	protected File file;
 	protected String targetID;
-	private boolean previousPreviousButtonState;
 
 	public void setTargetNextID(String ID) {
 		this.targetID = ID;
@@ -62,26 +61,11 @@ public abstract class SomeDialogDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public void aboutToDisplayPanel() {
-		// To be able to put it back later.
-		previousPreviousButtonState = wizard.jButtonPrevious.isEnabled();
-		// Disable everything
-		wizard.setPreviousButtonEnabled(false);
-		wizard.setNextButtonEnabled(false);
-		wizard.setLoadButtonEnabled(false);
-		wizard.setSaveButtonEnabled(false);
-		// Change name
-		wizard.jButtonNext.setText("Resume");
-	}
+	public void aboutToDisplayPanel() {}
 
 	@Override
 	public abstract void displayingPanel();
 
 	@Override
-	public void aboutToHidePanel() {
-		wizard.jButtonNext.setText("Next");
-		wizard.setSaveButtonEnabled(true);
-		wizard.setLoadButtonEnabled(true);
-		wizard.setPreviousButtonEnabled(previousPreviousButtonState);
-	}
+	public void aboutToHidePanel() {}
 }

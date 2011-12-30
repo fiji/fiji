@@ -112,11 +112,18 @@ public class GuiReader {
 		}
 		logger.log("  Parsing file done.\n");
 
-		// Retrieve data and update GUI
 		
+		// Retrieve data and update GUI
 		Settings settings = null;
 		ImagePlus imp = null;
 
+		// Send the new instance of plugin to all panel a first
+		// time, required by some for proper instantiation.
+		// We will have to do it a second time just before
+		// leaving, so that all panels are updated with the new
+		// content before leaving.
+		passNewPluginToWizard();
+		
 		{ // Read settings
 			settings = reader.getSettings();
 			logger.log("  Reading settings done.\n");
@@ -137,7 +144,6 @@ public class GuiReader {
 
 			// Update start panel
 			WizardPanelDescriptor panel = wizard.getPanelDescriptorFor(StartDialogPanel.DESCRIPTOR);
-			panel.setPlugin(plugin);
 			panel.aboutToDisplayPanel();
 		}
 
@@ -150,6 +156,7 @@ public class GuiReader {
 				targetDescriptor = StartDialogPanel.DESCRIPTOR;
 				if (!imp.isVisible())
 					imp.show();
+				passNewPluginToWizard();
 				logger.log("Loading data finished.\n");
 				return;
 			}
@@ -158,7 +165,6 @@ public class GuiReader {
 			
 			// Update 2nd panel: segmenter choice
 			SegmenterChoiceDescriptor segmenterChoiceDescriptor = (SegmenterChoiceDescriptor) wizard.getPanelDescriptorFor(SegmenterChoiceDescriptor.DESCRIPTOR);
-			segmenterChoiceDescriptor.setPlugin(plugin);
 			segmenterChoiceDescriptor.aboutToDisplayPanel();
 			
 			// Instantiate descriptor for the segmenter configuration and update it
@@ -174,10 +180,10 @@ public class GuiReader {
 			SpotCollection spots = reader.getAllSpots();
 			if (null == spots) {
 				// No spots, so we stop here, and switch to the segmenter panel
-				plugin = new TrackMate_(model);
 				targetDescriptor = SegmenterConfigurationPanelDescriptor.DESCRIPTOR;
 				if (!imp.isVisible())
 					imp.show();
+				passNewPluginToWizard();
 				logger.log("Loading data finished.\n");
 				return;
 			}
@@ -188,22 +194,18 @@ public class GuiReader {
 			
 			// Next panel that needs to know is the initial filter one
 			InitFilterPanel panel = (InitFilterPanel) wizard.getPanelDescriptorFor(InitFilterPanel.DESCRIPTOR);
-			panel.setPlugin(plugin);
 			panel.aboutToDisplayPanel();
 		}
 		
-		// TODO 
-		// TODO from here
-
 
 		{ // Try to read the initial threshold
 			FeatureFilter initialThreshold = reader.getInitialFilter();
 			if (initialThreshold == null) {
 				// No initial threshold, so set it
-				plugin = new TrackMate_(model);
 				targetDescriptor = InitFilterPanel.DESCRIPTOR;
 				if (!imp.isVisible())
 					imp.show();
+				passNewPluginToWizard();
 				logger.log("Loading data finished.\n");
 				return;
 			}
@@ -211,14 +213,19 @@ public class GuiReader {
 			// Store it in model
 			model.setInitialSpotFilterValue(initialThreshold.value);
 			logger.log("  Reading initial spot filter done.\n");
+			
 		}		
+
+		// Prepare the next panel, which is the spot filter panel
+		SpotFilterDescriptor spotFilterDescriptor = (SpotFilterDescriptor) wizard.getPanelDescriptorFor(SpotFilterDescriptor.DESCRIPTOR);
+		spotFilterDescriptor.setPlugin(plugin);
 
 		{ // Try to read feature thresholds
 			List<FeatureFilter> featureThresholds = reader.getSpotFeatureFilters();
 			if (null == featureThresholds) {
 				// No feature thresholds, we assume we have the features calculated, and put ourselves
 				// in a state such that the threshold GUI will be displayed.
-				plugin = new TrackMate_(model);
+				spotFilterDescriptor.aboutToDisplayPanel();
 				targetDescriptor = SpotFilterDescriptor.DESCRIPTOR;
 				TrackMateModelView displayer = new HyperStackDisplayer();
 				displayer.setModel(model);
@@ -226,12 +233,14 @@ public class GuiReader {
 				wizard.setDisplayer(displayer);
 				if (!imp.isVisible())
 					imp.show();
+				passNewPluginToWizard();
 				logger.log("Loading data finished.\n");
 				return;
 			}
 
 			// Store thresholds in model
 			model.setSpotFilters(featureThresholds);
+			spotFilterDescriptor.aboutToDisplayPanel();
 			logger.log("  Reading spot filters done.\n");
 		}
 
@@ -241,7 +250,6 @@ public class GuiReader {
 			if (null == selectedSpots) {
 				// No spot selection, so we display the feature threshold GUI, with the loaded feature threshold
 				// already in place.
-				plugin = new TrackMate_(model);
 				targetDescriptor = SpotFilterDescriptor.DESCRIPTOR;
 				TrackMateModelView displayer = new HyperStackDisplayer();
 				displayer.setModel(model);
@@ -249,6 +257,7 @@ public class GuiReader {
 				wizard.setDisplayer(displayer);
 				if (!imp.isVisible())
 					imp.show();
+				passNewPluginToWizard();
 				logger.log("Loading data finished.\n");
 				return;
 			}
@@ -263,14 +272,14 @@ public class GuiReader {
 			TrackerSettings trackerSettings = settings.trackerSettings;
 			if (null == trackerSettings) {
 				model.setSettings(settings);
-				plugin = new TrackMate_(model);
-				targetDescriptor = TrackerConfigurationPanelDescriptor.DESCRIPTOR;
+				targetDescriptor = SpotFilterDescriptor.DESCRIPTOR;
 				TrackMateModelView displayer = new HyperStackDisplayer();
 				displayer.setModel(model);
 				displayer.render();
 				wizard.setDisplayer(displayer);
 				if (!imp.isVisible())
 					imp.show();
+				passNewPluginToWizard();
 				logger.log("Loading data finished.\n");
 				return;
 			}
@@ -278,12 +287,22 @@ public class GuiReader {
 			model.setSettings(settings);
 			logger.log("  Reading tracker settings done.\n");
 		}
+		
 
+		// Update panel: tracker choice
+		TrackerChoiceDescriptor segmenterChoiceDescriptor = (TrackerChoiceDescriptor) wizard.getPanelDescriptorFor(TrackerChoiceDescriptor.DESCRIPTOR);
+		segmenterChoiceDescriptor.aboutToDisplayPanel();
+		
+		// Instantiate descriptor for the tracker configuration and update it
+		TrackerConfigurationPanelDescriptor trackerDescriptor = new TrackerConfigurationPanelDescriptor();
+		trackerDescriptor.setWizard(wizard);
+		trackerDescriptor.setPlugin(plugin);
+		wizard.registerWizardDescriptor(TrackerConfigurationPanelDescriptor.DESCRIPTOR, trackerDescriptor);
 
+		
 		{ // Try reading the tracks
 			SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = reader.readTracks(model.getFilteredSpots());
 			if (graph == null) {
-				plugin = new TrackMate_(model);
 				targetDescriptor = TrackerConfigurationPanelDescriptor.DESCRIPTOR;
 				TrackMateModelView displayer = new HyperStackDisplayer();
 				displayer.setModel(model);
@@ -291,17 +310,19 @@ public class GuiReader {
 				wizard.setDisplayer(displayer);
 				if (!imp.isVisible())
 					imp.show();
+				passNewPluginToWizard();
+				trackerDescriptor.aboutToDisplayPanel();
 				logger.log("Loading data finished.\n");
 				return;
 			}
 			model.setGraph(graph);
+			trackerDescriptor.aboutToDisplayPanel();
 			logger.log("  Reading tracks done.\n");
 		}
 
 		{ // Try reading track filters
 			model.setTrackFilters(reader.getTrackFeatureFilters());
 			if (model.getTrackFilters() == null) {
-				plugin = new TrackMate_(model);
 				targetDescriptor = TrackFilterDescriptor.DESCRIPTOR;
 				TrackMateModelView displayer = new HyperStackDisplayer();
 				displayer.setModel(model);
@@ -309,17 +330,21 @@ public class GuiReader {
 				wizard.setDisplayer(displayer);
 				if (!imp.isVisible())
 					imp.show();
+				passNewPluginToWizard();
 				logger.log("Loading data finished.\n");
 				return;
 			}
 			logger.log("  Reading track filters done.\n");
 		}
 
+		
+		// Track filter descriptor
+		TrackFilterDescriptor trackFilterDescriptor = (TrackFilterDescriptor) wizard.getPanelDescriptorFor(TrackFilterDescriptor.DESCRIPTOR);
+		
 		{ // Try reading track selection
 			model.setVisibleTrackIndices(reader.getFilteredTracks(), false);
 			if (model.getVisibleTrackIndices() == null) {
 				if (null != wizard) {
-					plugin = new TrackMate_(model);
 					targetDescriptor = TrackFilterDescriptor.DESCRIPTOR;
 					TrackMateModelView displayer = new HyperStackDisplayer();
 					displayer.setModel(model);
@@ -327,14 +352,16 @@ public class GuiReader {
 					wizard.setDisplayer(displayer);
 					if (!imp.isVisible())
 						imp.show();
+					passNewPluginToWizard();
 				}
+				trackFilterDescriptor.aboutToDisplayPanel();
 				logger.log("Loading data finished.\n");
 				return;
 			}
+			trackFilterDescriptor.aboutToDisplayPanel();
 			logger.log("  Reading track selection done.\n");
 		}
 
-		plugin = new TrackMate_(model);
 		targetDescriptor = DisplayerPanel.DESCRIPTOR;
 		TrackMateModelView displayer = new HyperStackDisplayer();
 		displayer.setModel(model);
@@ -342,6 +369,12 @@ public class GuiReader {
 		wizard.setDisplayer(displayer);
 		if (!imp.isVisible())
 			imp.show();
+		passNewPluginToWizard();
+		
+		// Displayer descriptor
+		DisplayerPanel displayerPanel = (DisplayerPanel) wizard.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);
+		displayerPanel.aboutToDisplayPanel();
+		
 		logger.log("Loading data finished.\n");
 	}
 
@@ -389,6 +422,14 @@ public class GuiReader {
 		}
 		return file;
 	}
-
-
+	
+	
+	/**
+	 *  Pass new plugin instance to all panels.
+	 */
+	public void passNewPluginToWizard() {
+		for (WizardPanelDescriptor descriptor : wizard.getWizardPanelDescriptors()) {
+			descriptor.setPlugin(plugin);
+		}
+	}
 }

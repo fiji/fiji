@@ -64,7 +64,6 @@ public class TrackerConfigurationPanelDescriptor implements WizardPanelDescripto
 
 	@Override
 	public void aboutToDisplayPanel() {
-
 		configPanel.setTrackerSettings(plugin.getModel());
 	}
 

@@ -280,7 +280,7 @@ public class FeatureModel {
 		uncroppedSettings.zstart = 1;
 		uncroppedSettings.zend = settings.imp.getNSlices();
 		// Set the target channel for feature calculation. For now, we simple take the current one. // TODO: be more flexible 
-		final int targetChannel = settings.imp.getChannel() - 1;
+		final int targetChannel = settings.imp.getChannel();
 
 		// Prepare the thread array
 		for (int ithread = 0; ithread < threads.length; ithread++) {

@@ -20,9 +20,22 @@ public class SegmenterConfigurationPanelDescriptor implements WizardPanelDescrip
 	@Override
 	public void setWizard(TrackMateWizard wizard) { }
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public void setPlugin(TrackMate_ plugin) {
 		this.plugin = plugin;
+		SegmenterSettings settings = plugin.getModel().getSettings().segmenterSettings;
+		// Bulletproof null
+		if (null == settings) {
+			SpotSegmenter segmenter = plugin.getModel().getSettings().segmenter;
+			if (null == segmenter) {
+				// try to make it right with a default
+				segmenter = new ManualSegmenter();
+				plugin.getModel().getSettings().segmenter = segmenter;
+			}
+			settings = segmenter.createDefaultSettings();
+		}
+		configPanel = settings.createConfigurationPanel();
 	}
 
 	@Override
@@ -55,20 +68,7 @@ public class SegmenterConfigurationPanelDescriptor implements WizardPanelDescrip
 	}
 
 	@Override
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void aboutToDisplayPanel() {
-		SegmenterSettings settings = plugin.getModel().getSettings().segmenterSettings;
-		// Bulletproof null
-		if (null == settings) {
-			SpotSegmenter segmenter = plugin.getModel().getSettings().segmenter;
-			if (null == segmenter) {
-				// try to make it right with a default
-				segmenter = new ManualSegmenter();
-				plugin.getModel().getSettings().segmenter = segmenter;
-			}
-			settings = segmenter.createDefaultSettings();
-		}
-		configPanel = settings.createConfigurationPanel();
 		configPanel.setSegmenterSettings(plugin.getModel());
 	}
 

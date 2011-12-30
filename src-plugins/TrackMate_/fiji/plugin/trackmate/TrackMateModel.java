@@ -147,9 +147,9 @@ public class TrackMateModel {
 	protected List<FeatureFilter> spotFilters = new ArrayList<FeatureFilter>();
 	/**
 	 * The initial quality filter value that is used to clip spots of low
-	 * quality from {@link #spots}. Is 0 by default.
+	 * quality from {@link #spots}.
 	 */
-	protected Float initialSpotFilterValue = 0f; // has a default non null value
+	protected Float initialSpotFilterValue;
 
 	// TRACKS
 
