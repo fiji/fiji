@@ -43,6 +43,7 @@ import algorithms.Histogram2D;
 import algorithms.InputCheck;
 import algorithms.LiHistogram2D;
 import algorithms.LiICQ;
+import algorithms.SpearmanRankCorrelation;
 import algorithms.MandersColocalization;
 import algorithms.MissingPreconditionException;
 import algorithms.PearsonsCorrelation;
@@ -133,6 +134,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	protected LiHistogram2D<T> liHistogramCh1;
 	protected LiHistogram2D<T> liHistogramCh2;
 	protected LiICQ<T> liICQ;
+	protected SpearmanRankCorrelation<T> SpearmanRankCorrelation;
 	protected MandersColocalization<T> mandersCorrelation;
 	protected Histogram2D<T> histogram2D;
 	protected CostesSignificanceTest<T> costesSignificance;
@@ -199,6 +201,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		boolean useLiCh1 = Prefs.get(PREF_KEY+"useLiCh1", true);
 		boolean useLiCh2 = Prefs.get(PREF_KEY+"useLiCh2", true);
 		boolean useLiICQ = Prefs.get(PREF_KEY+"useLiICQ", true);
+		boolean useSpearmanRank = Prefs.get(PREF_KEY+"useSpearmanRank", true);
 		boolean useManders = Prefs.get(PREF_KEY+"useManders", true);
 		boolean useScatterplot = Prefs.get(PREF_KEY+"useScatterplot", true);
 		boolean useCostes = Prefs.get(PREF_KEY+"useCostes", true);
@@ -226,6 +229,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		gd.addCheckbox("Li_Histogram_Channel_1", useLiCh1);
 		gd.addCheckbox("Li_Histogram_Channel_2", useLiCh2);
 		gd.addCheckbox("Li_ICQ", useLiICQ);
+		gd.addCheckbox("Spearman's_Rank_Correlation", useSpearmanRank);
 		gd.addCheckbox("Manders'_Correlation", useManders);
 		gd.addCheckbox("2D_Instensity_Histogram", useScatterplot);
 		gd.addCheckbox("Costes'_Significance_Test", useCostes);
@@ -305,6 +309,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		useLiCh1 = gd.getNextBoolean();
 		useLiCh2 = gd.getNextBoolean();
 		useLiICQ = gd.getNextBoolean();
+		useSpearmanRank = gd.getNextBoolean();
 		useManders = gd.getNextBoolean();
 		useScatterplot = gd.getNextBoolean();
 		useCostes = gd.getNextBoolean();
@@ -318,6 +323,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		Prefs.set(PREF_KEY+"useLiCh1", useLiCh1);
 		Prefs.set(PREF_KEY+"useLiCh2", useLiCh2);
 		Prefs.set(PREF_KEY+"useLiICQ", useLiICQ);
+		Prefs.set(PREF_KEY+"useSpearmanRank", useSpearmanRank);
 		Prefs.set(PREF_KEY+"useManders", useManders);
 		Prefs.set(PREF_KEY+"useScatterplot", useScatterplot);
 		Prefs.set(PREF_KEY+"useCostes", useCostes);
@@ -333,6 +339,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			liHistogramCh2 = new LiHistogram2D<T>("Li - Ch2", false);
 		if (useLiICQ)
 			liICQ = new LiICQ<T>();
+		if (useSpearmanRank)
+		    SpearmanRankCorrelation = new SpearmanRankCorrelation<T>();
 		if (useManders)
 			mandersCorrelation = new MandersColocalization<T>();
 		if (useScatterplot)
@@ -397,6 +405,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		addIfValid(liHistogramCh1, userSelectedJobs);
 		addIfValid(liHistogramCh2, userSelectedJobs);
 		addIfValid(liICQ, userSelectedJobs);
+		addIfValid(SpearmanRankCorrelation, userSelectedJobs);
 		addIfValid(mandersCorrelation, userSelectedJobs);
 		addIfValid(histogram2D, userSelectedJobs);
 		addIfValid(costesSignificance, userSelectedJobs);
