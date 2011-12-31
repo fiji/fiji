@@ -27,6 +27,13 @@ public abstract class ColocalisationTest {
 	double positiveCorrelationImageCh1Mean;
 	double positiveCorrelationImageCh2Mean;
 
+	// images and meta data for a synthetic negative correlation dataset
+	Image<UnsignedByteType> syntheticNegativeCorrelationImageCh1;
+	Image<UnsignedByteType> syntheticNegativeCorrelationImageCh2;
+	Image<BitType> syntheticNegativeCorrelationAlwaysTrueMask;
+	double syntheticNegativeCorrelationImageCh1Mean;
+	double syntheticNegativeCorrelationImageCh2Mean;
+	
 	// images like in the manders paper
 	Image<UnsignedByteType> mandersA, mandersB, mandersC, mandersD,
 		mandersE, mandersF, mandersG, mandersH, mandersI;
@@ -54,6 +61,16 @@ public abstract class ColocalisationTest {
 
 		positiveCorrelationAlwaysTrueMask = MaskFactory.createMask(positiveCorrelationImageCh1.getDimensions(), true);
 
+		/*
+		syntheticNegativeCorrelationImageCh1 = TestImageAccessor.loadTiffFromJar("Data/syntheticNegCh1.tif");
+		syntheticNegativeCorrelationImageCh1Mean = ImageStatistics.getImageMean(syntheticNegativeCorrelationImageCh1);
+
+		syntheticNegativeCorrelationImageCh2 = TestImageAccessor.loadTiffFromJar("Data/syntheticNegCh2.tif");
+		syntheticNegativeCorrelationImageCh2Mean = ImageStatistics.getImageMean(syntheticNegativeCorrelationImageCh2);
+
+		syntheticNegativeCorrelationAlwaysTrueMask = MaskFactory.createMask(syntheticNegativeCorrelationImageCh1.getDimensions(), true);
+		*/
+		
 		mandersA = TestImageAccessor.loadTiffFromJar("Data/mandersA.tiff");
 		mandersB = TestImageAccessor.loadTiffFromJar("Data/mandersB.tiff");
 		mandersC = TestImageAccessor.loadTiffFromJar("Data/mandersC.tiff");
