@@ -586,6 +586,12 @@ public class MiniMaven {
 				localPOMCache.put(key, null);
 				return null;
 			}
+			if (dependency.version.endsWith("-SNAPSHOT")) try {
+				if (!maybeDownloadAutomatically(dependency, quiet))
+					return null;
+				path += dependency.version + "/";
+				dependency.version = parseSnapshotVersion(new File(path));
+			} catch (FileNotFoundException e) { /* ignore */ }
 			else {
 				for (String jarName : new String[] {
 					"jars/" + dependency.artifactId + "-" + dependency.version + ".jar",
@@ -601,12 +607,6 @@ public class MiniMaven {
 					}
 				}
 			}
-			path += dependency.version + "/";
-			if (dependency.version.endsWith("-SNAPSHOT")) try {
-				if (!maybeDownloadAutomatically(dependency, quiet))
-					return null;
-				dependency.version = parseSnapshotVersion(new File(path));
-			} catch (FileNotFoundException e) { /* ignore */ }
 			path += dependency.getPOMName();
 
 			File file = new File(path);
