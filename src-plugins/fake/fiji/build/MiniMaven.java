@@ -905,11 +905,12 @@ public class MiniMaven {
 	protected File download(URL url, File directory, String fileName, String message) throws IOException {
 		if (offlineMode)
 			throw new RuntimeException("Offline!");
+		if (verbose)
+			err.println("Trying to download " + url);
 		if (fileName == null) {
 			fileName = url.getPath();
 			fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
 		}
-
 		InputStream in = url.openStream();
 		if (message != null)
 			err.println(message);
