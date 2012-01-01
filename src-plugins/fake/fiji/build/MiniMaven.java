@@ -586,10 +586,10 @@ public class MiniMaven {
 				localPOMCache.put(key, null);
 				return null;
 			}
+			path += dependency.version + "/";
 			if (dependency.version.endsWith("-SNAPSHOT")) try {
 				if (!maybeDownloadAutomatically(dependency, quiet))
 					return null;
-				path += dependency.version + "/";
 				dependency.version = parseSnapshotVersion(new File(path));
 			} catch (FileNotFoundException e) { /* ignore */ }
 			else {
