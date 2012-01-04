@@ -69,7 +69,7 @@ clean : prebuild-actions
 	rm -f build-arch-stamp build-indep-stamp configure-stamp install-arch-stamp install-indep-stamp
 	rm -f $(INDEP_STAMPS) $(ARCH_STAMPS)
 	$(BUILD_COMMAND) clean
-	rm -f fjij fiji.o
+	rm -f ImageJ ImageJ.o
 	dh_clean
 
 install : install-indep-stamp install-arch-stamp
@@ -91,7 +91,7 @@ install-arch-stamp : build-arch-stamp
 	dh_installdirs -s
 	install -d $(DESTDIR)/usr/bin/
 	install -d $(DESTDIR)/usr/lib/fiji/
-	install -m 755 fiji $(DESTDIR)/usr/lib/fiji/
+	install -m 755 ImageJ $(DESTDIR)/usr/lib/fiji/
 	< debian/simple-launcher sed \
 		-e 's,@@INSTALLED_JVM_ROOT@@,$(INSTALLED_JVM_ROOT),' \
 		-e 's,@@ADDITIONAL_JARS@@,$(ADDITIONAL_JARS),' \

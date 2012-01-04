@@ -1,5 +1,5 @@
 #!/bin/sh
-// 2>&1 |: re-exec with fiji; exec "$(dirname "$0")"/../fiji --bsh "$0" "$@"
+// 2>&1 |: re-exec with fiji; exec "$(dirname "$0")"/../ImageJ --bsh "$0" "$@"
 
 import fiji.build.Fake;
 
@@ -8,11 +8,11 @@ import java.io.FileInputStream;
 
 import java.lang.System;
 
-fakefile = System.getProperty("fiji.dir") + "/Fakefile";
+fakefile = System.getProperty("ij.dir") + "/Fakefile";
 
 fake = new Fake();
 parser = fake.parse(new FileInputStream(fakefile),
-		new File(System.getProperty("fiji.dir")));
+		new File(System.getProperty("ij.dir")));
 parser.parseRules(null);
 setAccessibility(true);
 for (Object key : parser.allRules.keySet()) {

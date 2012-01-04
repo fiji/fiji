@@ -1,5 +1,5 @@
 #!/bin/sh
-/*/. 2>/dev/null; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
+/*/. 2>/dev/null; exec "$(dirname "$0")"/../ImageJ "$0" "$@" # exec with fiji */
 
 /*
 This script checks several preconditions of .jar files before uploading:

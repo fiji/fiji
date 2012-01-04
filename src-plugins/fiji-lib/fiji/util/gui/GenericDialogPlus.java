@@ -359,8 +359,8 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 
 	public static void main(String[] args) {
 		GenericDialogPlus gd = new GenericDialogPlus("GenericDialogPlus Test");
-		gd.addFileField("A_file", System.getProperty("fiji.dir") + "/jars/ij.jar");
-		gd.addDirectoryField("A_directory", System.getProperty("fiji.dir") + "/plugins");
+		gd.addFileField("A_file", System.getProperty("ij.dir") + "/jars/ij.jar");
+		gd.addDirectoryField("A_directory", System.getProperty("ij.dir") + "/plugins");
 		gd.addButton("Click me!", new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				IJ.showMessage("You clicked me!");

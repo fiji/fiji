@@ -30,7 +30,8 @@ class PlaneROI extends ROI {
     Vector<Integer> PlanesS[];
     Vector<Double>PlanesD[];  // Starting vectors and direction vectors of planes
     
-    PlaneROI() {
+    @SuppressWarnings("unchecked")
+	PlaneROI() {
         PlanesS = (Vector<Integer>[]) new Vector[3];
         PlanesD = (Vector<Double>[]) new Vector[3];
     }

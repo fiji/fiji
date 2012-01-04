@@ -11,10 +11,15 @@ import ij.io.SaveDialog;
 import ij.plugin.frame.Recorder;
 import ij.text.TextWindow;
 import ij3d.gui.ContentCreatorDialog;
+import ij3d.gui.InteractiveMeshDecimation;
+import ij3d.gui.InteractiveTransformDialog;
 import ij3d.gui.LUTDialog;
+import ij3d.gui.PrimitiveDialogs;
 import ij3d.shapes.Scalebar;
+import ij3d.shortcuts.ShortCutDialog;
 import isosurface.MeshEditor;
 import isosurface.MeshExporter;
+import isosurface.MeshGroup;
 import isosurface.SmoothControl;
 
 import java.awt.Button;
@@ -47,8 +52,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.media.j3d.Background;
 import javax.media.j3d.PointLight;
 import javax.media.j3d.Transform3D;
+import javax.swing.JFileChooser;
 import javax.vecmath.Color3f;
 import javax.vecmath.Matrix4d;
+import javax.vecmath.Matrix4f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
@@ -117,16 +124,15 @@ public class Executer {
 	 * *********************************************************/
 
 	public void addContentFromFile() {
-		OpenDialog od = new OpenDialog("Open from file", null);
-		String folder = od.getDirectory();
-		String name = od.getFileName();
-		if(folder == null || name == null)
+		JFileChooser chooser = new JFileChooser(OpenDialog.getLastDirectory());
+		chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+		chooser.setMultiSelectionEnabled(false);
+		int returnVal = chooser.showOpenDialog(null);
+		if (returnVal != JFileChooser.APPROVE_OPTION)
 			return;
-		File f = new File(folder, name);
-		if(f.exists())
-			addContent(null, f);
-		else
-			IJ.error("Can not load " + f.getAbsolutePath());
+		File f = chooser.getSelectedFile();
+		OpenDialog.setLastDirectory(f.getParentFile().getAbsolutePath());
+		addContent(null, f);
 	}
 
 	public void addContentFromImage(ImagePlus image) {
@@ -638,6 +644,25 @@ public class Executer {
 	/** Interactively smooth meshes, with undo. */
 	public void smoothControl() {
 		new SmoothControl(univ);
+	}
+
+	public void decimateMesh() {
+		Content c = univ.getSelected();
+		if(c == null)
+			return;
+		CustomTriangleMesh ctm;
+		ContentNode n = c.getContent();
+		if(n instanceof CustomMeshNode) {
+			if(((CustomMeshNode)n).getMesh() instanceof CustomTriangleMesh)
+				ctm = (CustomTriangleMesh)((CustomMeshNode) n).getMesh();
+			else
+				return;
+		} else if (n instanceof MeshGroup) {
+			ctm = ((MeshGroup)n).getMesh();
+		} else {
+			return;
+		}
+		new InteractiveMeshDecimation().run(ctm);
 	}
 
 	/* ----------------------------------------------------------
@@ -1250,36 +1275,102 @@ public class Executer {
 		record(RESET_TRANSFORM);
 	}
 
-	public void setTransform(Content c) {
+	@SuppressWarnings("serial")
+	public void setTransform(final Content c) {
 		if(!checkSel(c))
 			return;
 		if(c.isLocked()) {
 			IJ.error(c.getName() + " is locked");
 			return;
 		}
-		univ.fireTransformationStarted();
-		float[] t = readTransform(c);
-		if(t != null) {
-			c.setTransform(new Transform3D(t));
-			univ.fireTransformationFinished();
-			record(SET_TRANSFORM, affine2string(t));
-		}
+		final boolean useToFront = univ.getUseToFront();
+		univ.setUseToFront(false);
+
+		final Transform3D org = new Transform3D();
+		c.getLocalTranslate().getTransform(org);
+		Transform3D t2 = new Transform3D();
+		c.getLocalRotate().getTransform(t2);
+		org.mul(t2);
+		Matrix4f m = new Matrix4f();
+		org.get(m);
+
+		Point3d contentCenter = new Point3d();
+		c.getContent().getCenter(contentCenter);
+		Point3f center = new Point3f(contentCenter);
+
+		new InteractiveTransformDialog("Set transformation", center, m) {
+			@Override
+			public void transformationUpdated(Matrix4f mat) {
+				univ.fireTransformationStarted();
+				c.setTransform(new Transform3D(mat));
+				univ.fireTransformationFinished();
+			}
+			@Override
+			public void oked(Matrix4f mat) {
+				Transform3D t = new Transform3D(mat);
+				float[] v = new float[16];
+				t.get(v);
+				univ.setUseToFront(useToFront);
+				record(SET_TRANSFORM, affine2string(v));
+			}
+			@Override
+			public void canceled() {
+				c.setTransform(org);
+				univ.setUseToFront(useToFront);
+			}
+		};
 	}
 
-	public void applyTransform(Content c) {
+	@SuppressWarnings("serial")
+	public void applyTransform(final Content c) {
 		if(!checkSel(c))
 			return;
 		if(c.isLocked()) {
 			IJ.error(c.getName() + " is locked");
 			return;
 		}
-		univ.fireTransformationStarted();
-		float[] t = readTransform(c);
-		if(t != null) {
-			c.applyTransform(new Transform3D(t));
-			univ.fireTransformationFinished();
-			record(APPLY_TRANSFORM, affine2string(t));
-		}
+		final boolean useToFront = univ.getUseToFront();
+		univ.setUseToFront(false);
+
+		final Transform3D org = new Transform3D();
+		c.getLocalTranslate().getTransform(org);
+		Transform3D t2 = new Transform3D();
+		c.getLocalRotate().getTransform(t2);
+		org.mul(t2);
+		final Matrix4f m = new Matrix4f();
+		org.get(m);
+
+		final Matrix4f conc = new Matrix4f();
+
+		Point3d contentCenter = new Point3d();
+		c.getContent().getCenter(contentCenter);
+		Point3f center = new Point3f(contentCenter);
+
+		Matrix4f init = new Matrix4f();
+		init.setIdentity();
+
+		new InteractiveTransformDialog("Set transformation", center, init) {
+			@Override
+			public void transformationUpdated(Matrix4f mat) {
+				univ.fireTransformationStarted();
+				conc.mul(mat, m);
+				c.setTransform(new Transform3D(conc));
+				univ.fireTransformationFinished();
+			}
+			@Override
+			public void oked(Matrix4f mat) {
+				Transform3D t = new Transform3D(mat);
+				float[] v = new float[16];
+				t.get(v);
+				univ.setUseToFront(useToFront);
+				record(APPLY_TRANSFORM, affine2string(v));
+			}
+			@Override
+			public void canceled() {
+				c.setTransform(org);
+				univ.setUseToFront(useToFront);
+			}
+		};
 	}
 
 	public void saveTransform(Content c) {
@@ -1317,6 +1408,27 @@ public class Executer {
 			IJ.error(e.getMessage());
 		}
 	}
+
+	/* **********************************************************
+	 * Add menu
+	 * *********************************************************/
+	public void addTube() {
+		PrimitiveDialogs.addTube(univ);
+	}
+
+	public void addSphere() {
+		PrimitiveDialogs.addSphere(univ);
+	}
+
+	public void addCone() {
+		PrimitiveDialogs.addCone(univ);
+	}
+
+	public void addBox() {
+		PrimitiveDialogs.addBox(univ);
+	}
+
+
 
 	/* **********************************************************
 	 * View menu
@@ -1448,6 +1560,10 @@ public class Executer {
 
 	public void viewPreferences() {
 		UniverseSettings.initFromDialog(univ);
+	}
+
+	public void editShortcuts() {
+		new ShortCutDialog(univ.getShortcuts());
 	}
 
 	public void adjustLight() {

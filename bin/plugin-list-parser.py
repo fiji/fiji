@@ -1,5 +1,5 @@
 #!/bin/sh
-''''exec "$(dirname "$0")"/../fiji --headless --jython "$0" "$@" # (call again with fiji)'''
+''''exec "$(dirname "$0")"/../ImageJ --headless --jython "$0" "$@" # (call again with fiji)'''
 
 from fiji import User_Plugins
 from ij import IJ
@@ -75,8 +75,8 @@ def appendJar(jarfile_path, type):
         packageName, className = splitLast(line[2], '.')
         appendPlugin(line[0], line[1], className, packageName, type, jarfile_path)
 
-def createPluginsTree(fiji_folder):
-    plugins_location = os.path.join(fiji_folder, PLUGINS_FOLDER)
+def createPluginsTree(ij_folder):
+    plugins_location = os.path.join(ij_folder, PLUGINS_FOLDER)
 
     for top, names in walktree(plugins_location):
         for name in names:
@@ -173,12 +173,12 @@ elif len(sys.argv) > 1 and sys.argv[1] == '--compare-to-wiki':
     sys.argv = sys.argv[:1] + sys.argv[2:]
 
 if len(sys.argv) < 2:
-    fiji_folder = os.path.curdir
+    ij_folder = os.path.curdir
 else:
-    fiji_folder = sys.argv[1]
+    ij_folder = sys.argv[1]
 
 # Create the tree
-createPluginsTree(fiji_folder)
+createPluginsTree(ij_folder)
 
 # Output it
 result = pluginsTreeToString()

@@ -72,8 +72,8 @@ package_name_to_file_matchers = {
         [ "jars/autocomplete.jar" ],
 
     "fiji-base" :
-        [ "fiji-linux",
-          "fiji-linux64",
+        [ "ImageJ-linux32",
+          "ImageJ-linux64",
           "jars/fake.jar",
           "misc/Fiji.jar",
           "plugins/Fiji_Updater.jar",
@@ -186,6 +186,9 @@ package_name_to_file_matchers = {
     "fiji-tracer" :
         [ "plugins/Simple_Neurite_Tracer.jar" ],
 
+    "fiji-db-registration" :
+        [ "plugins/Descriptor_based_registration.jar" ],
+
     "fiji-jython" :
         [ "jars/jython.jar" ],
 
@@ -201,6 +204,7 @@ conflicts_and_replaces = {
     'fiji-3d-viewer' : ( 'fiji-plugins (<= 20100821202528)', ),
     'fiji-imglib' : ( 'fiji-plugins (<= 20110609134243)', ),
     'fiji-image5d' : ( 'fiji-plugins (<= 20111011070056)', ),
+    'fiji-db-registration' : ( 'fiji-plugins (<= 20111206070018)', )
 }
 
 # A dictionary whose keys are regular expressions that match files in
@@ -452,10 +456,10 @@ export SYSTEM_JAVA=$JAVA_HOME/bin/java
 
 mkdir -p "$FIJI_DIRECTORY"/build &&
   $SYSTEM_JAVAC -d "$FIJI_DIRECTORY"/build/ "$FIJI_DIRECTORY"/$source &&
-  $SYSTEM_JAVA -classpath "$FIJI_DIRECTORY"/build fiji.build.Fake fiji &&
+  $SYSTEM_JAVA -classpath "$FIJI_DIRECTORY"/build fiji.build.Fake ImageJ &&
   $SYSTEM_JAVA -classpath "$FIJI_DIRECTORY"/build fiji.build.Fake jars/fake.jar
 
-./fiji --build --java-home "$JAVA_HOME" -- FALLBACK=false VERBOSE=true \\
+./ImageJ --build --java-home "$JAVA_HOME" -- FALLBACK=false VERBOSE=true \\
 ''')
         for k in sorted(new_classpaths.keys()):
             f.write('    "CLASSPATH(%s)=%s" \\\n' % (k,':'.join(sorted(new_classpaths[k]))))
@@ -520,6 +524,7 @@ if options.install or options.generate_complete_control or options.generate_sour
     directories_to_walk = [ "plugins",
                             "misc",
                             "jars",
+                            "scripts",
                             "luts",
                             "macros",
                             "images" ]
@@ -712,8 +717,6 @@ if options.clean:
                 continue
             if re.search("(^\s*jars|precompiled)/batik.jar",line):
                 continue
-            if re.search("imagej2",line):
-                continue
         if re.search("^\s*missingPrecompiledFallBack",line):
             skip_next_line = True
             continue
@@ -728,7 +731,7 @@ if options.clean:
     fp.close()
 
     # Hopefully there'll be a better fix for this at some stage, but
-    # for the moment rewrite any occurence of "fiji --ant" in
+    # for the moment rewrite any occurence of "ImageJ --ant" in
     # staged-plugins/* and bin/build-jython.sh to include the
     # --java-home parameter:
 
@@ -740,7 +743,7 @@ if options.clean:
         with NamedTemporaryFile(delete=False) as tfp:
             with open(filename) as original:
                 for line in original:
-                    line = re.sub('../../fiji\s+',"../../fiji --java-home '%s' "%(java_home,),line)
+                    line = re.sub('../../ImageJ\s+',"../../ImageJ --java-home '%s' "%(java_home,),line)
                     line = re.sub('/../bin/jar','/bin/jar',line)
                     tfp.write(line)
         os.chmod(tfp.name, original_permissions)

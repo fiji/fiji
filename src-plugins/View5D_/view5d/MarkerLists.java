@@ -33,6 +33,7 @@ public class MarkerLists extends Object { // This class manages multiple lists o
 	MarkerList MyActiveList = null;
     int NumLists = 0;
     int ActiveList = -1;
+    int ListOffset = 0;
     int CurrentNameNr=1;
     Vector<MarkerList> ListOfLists;   // marker coordinates are stored as a list of APoint objects in pixel coordinates here
     //public Vector MyPoints=null;    // currently active list of positions
@@ -395,10 +396,43 @@ public class MarkerLists extends Object { // This class manages multiple lists o
         }
     }
 
+    int FindMarkerListByName(String MarkerName)
+    {	int n;
+        for (n=0;n<NumLists;n++) { // Find the corresponding list by using the marker names
+        	if (GetMarkerList(n).MyName.equals(MarkerName))
+        		return n;  // found a suitable list that should be replaced
+        }
+        return NumLists;  // for a new list
+    }
+    
+    void DeleteDublicateMarkerLists() {
+    for (int n=ListOffset;n<NumLists;n++) { // Find the corresponding list by using the marker names
+       for (int m=0;m<ListOffset;m++) { // Find the corresponding list by using the marker names
+    	   MarkerList nlist=GetMarkerList(n);
+    	   if (nlist.MyName != null && !nlist.MyName.equals("") && nlist.MyName.equals(GetMarkerList(m).MyName)) { // previous list will be deleted
+    		   int mynum;
+    			try {
+    				mynum=Integer.parseInt(nlist.MyName);
+    	    		if (mynum >= CurrentNameNr)
+    	    			CurrentNameNr=mynum+1;
+    			}
+    			catch(NumberFormatException e) { }  // just ignore this as no new CurrentNameNr needs to be generated
+     		   SetActiveList(m);
+    		   RemoveList();
+    		   ListOffset = ListOffset-1;
+    		   m=m-1;
+    		   n=n-1;
+    	    }
+    	   }
+       }
+	ListOffset=0;  // Reset the ListOffset
+	SetActiveList(NumLists-1);
+	MyActiveList.ActivePoint=0; 
+    }
     
     boolean InsertInformationVector(float [] info, String MarkerName)    // inserts one line of information into the viewer, this can create a new list if necessary
     {
-    	int listnr = (int) info[0];
+    	int listnr = (int) info[0] + ListOffset; // ListOffset is used to first insert totally new markers and then delete dublicated list names
     	int markernr = (int) info[1];
     	
     	double posx = info[2];
@@ -415,9 +449,15 @@ public class MarkerLists extends Object { // This class manages multiple lists o
     	int Child1Nr = (int) info[12+7];
     	int Child2Nr = (int) info[13+7];
         int MyColor =(int) info[14+7];
- 
-    	if (listnr>NumLists)  // This new list is more than one bigger than existing lists
-    		return false;
+                
+        if (Parent1Nr >= 0) Parent1Nr += ListOffset;
+        if (Parent2Nr >= 0) Parent2Nr += ListOffset;
+        if (Child1Nr >= 0) Child1Nr += ListOffset;
+        if (Child2Nr >= 0) Child2Nr += ListOffset;
+
+        if (listnr>NumLists)  // This new list is more than one bigger than existing lists
+    		listnr = NumLists;
+    		// return false;
 
     	if (listnr>=NumLists)  // This new list is one bigger than existing lists -> make new one
     		for (int ll=NumLists;ll <= listnr; ll++)
@@ -461,7 +501,7 @@ public class MarkerLists extends Object { // This class manages multiple lists o
         APoint pt=new APoint(posx,posy,posz,pose,post);
         if (NumPoints > 0)
             pt.mycolor = GetPoint(0,-1).mycolor;  // all have the same color as the first one
-        if (NumPoints == 1)  // probably jsut the first point was added
+        if (NumPoints == 1)  // probably just the first point was added
         	MyActiveList.SetColor(pt.mycolor);  // ensure the rest of the connected regions are updated as well
 
         pt.tagged=(tagged!=0);
@@ -527,6 +567,7 @@ public class MarkerLists extends Object { // This class manages multiple lists o
     		pt.max=max;
     		pt.tagged=(tagged!=0);
     		
+            //System.out.println("Added Marker "+markernr+" in List "+listnr);
             //data3d.ConstrainPoint(pt);
             //data3d.ClippedCOI(pt,data3d.COMX,data3d.COMY,data3d.COMZ,false);  // use the current settings and recompute center of intensity, but do not change positions
     return true;
@@ -541,11 +582,13 @@ public class MarkerLists extends Object { // This class manages multiple lists o
     public void ImportMarkerLists(float [][] lists)    // inserts all lists
     {
     	float [] alist;
+    	ListOffset=NumLists;
     	for (int l=0; l<lists.length; l++)
     	{
     		alist = lists[l];
     		InsertInformationVector(alist,"");
     	}
+    	DeleteDublicateMarkerLists();
     }
 
     
@@ -808,7 +851,7 @@ public class MarkerLists extends Object { // This class manages multiple lists o
 
     public String PrintList(My3DData data3d) {
         String newtext="#List Nr.,\tMarker Nr,\tPosX [pixels],\tY [pixels],\tZ [pixels],\tElements [element],\tTime [time],\tIntegral (no BG sub) [Units],\tMax (no BG sub) [Units],"+
-        "\t"+data3d.GetAxisNames()[0]+" ["+data3d.GetAxisUnits()[0]+"],\t"+data3d.GetAxisNames()[1]+" ["+data3d.GetAxisUnits()[1]+"],\t"+data3d.GetAxisNames()[2]+" ["+data3d.GetAxisUnits()[2]+"],\t"+data3d.GetAxisNames()[3]+" ["+data3d.GetAxisUnits()[3]+"],\t"+data3d.GetAxisNames()[4]+" ["+data3d.GetAxisUnits()[4]+"],\tIntegral "+data3d.GetValueName(data3d.ActiveElement)+" (no BG sub)["+data3d.GetValueUnit(data3d.ActiveElement)+"],\tMax "+data3d.GetValueName(data3d.ActiveElement)+" (no BG sub)["+data3d.GetValueUnit(data3d.ActiveElement)+"]\tTagText \tTagInteger \tParentNr \tChild1 \t Child2 \tListColor \tListName\n";
+        "\t"+data3d.GetAxisNames()[0]+" ["+data3d.GetAxisUnits()[0]+"],\t"+data3d.GetAxisNames()[1]+" ["+data3d.GetAxisUnits()[1]+"],\t"+data3d.GetAxisNames()[2]+" ["+data3d.GetAxisUnits()[2]+"],\t"+data3d.GetAxisNames()[3]+" ["+data3d.GetAxisUnits()[3]+"],\t"+data3d.GetAxisNames()[4]+" ["+data3d.GetAxisUnits()[4]+"],\tIntegral "+data3d.GetValueName(data3d.ActiveElement)+" (no BG sub)["+data3d.GetValueUnit(data3d.ActiveElement)+"],\tMax "+data3d.GetValueName(data3d.ActiveElement)+" (no BG sub)["+data3d.GetValueUnit(data3d.ActiveElement)+"]\tTagText \tTagInteger \tParent1 \tParent2 \tChild1 \t Child2 \tListColor \tListName\n";
         APoint point;
         NumberFormat nf = java.text.NumberFormat.getNumberInstance(Locale.US);
         nf.setMaximumFractionDigits(2);
@@ -883,7 +926,7 @@ public class MarkerLists extends Object { // This class manages multiple lists o
  }
     
  String PrintSummary(My3DData data3d) {
-    String newtext = "# Statistics Summary\n";
+    String newtext = "# Statistics Summary\n#\t";
     APoint point,oldpoint;
     NumberFormat nf = java.text.NumberFormat.getNumberInstance(Locale.US);
     nf.setMaximumFractionDigits(3);
@@ -942,7 +985,7 @@ public class MarkerLists extends Object { // This class manages multiple lists o
           }
     // MSD Plots
     // compute MSD plots
-    if (doMSD > 0)
+    if (doMSD > 0 && NumMarkers(l) > 1)
     	{
         double MSDs[];
         if (data3d.TrackDirection == 2 || data3d.SizeZ == 1)
@@ -957,7 +1000,7 @@ public class MarkerLists extends Object { // This class manages multiple lists o
         }
         int elem = (int) GetPoint(0,l).coord[3];
   		for (int dd=0;dd<MSDs.length;dd++) {
-            newtext+= l + "\t"+(dd+1)*data3d.GetScale(elem,data3d.TrackDirection) + "\t" + MSDs[dd] + "\n";  	      		  
+            newtext+="#\t"+ l + "\t"+(dd+1)*data3d.GetScale(elem,data3d.TrackDirection) + "\t" + MSDs[dd] + "\n";  	      		  
   		  }        		
     	}
     }

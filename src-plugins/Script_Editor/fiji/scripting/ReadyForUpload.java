@@ -41,15 +41,15 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class ReadyForUpload {
-	protected static String fijiDir;
+	protected static String ijDir;
 
 	static {
-		String dir = System.getProperty("fiji.dir");
+		String dir = System.getProperty("ij.dir");
 		if (IJ.isWindows())
 			dir = normalizeWinPath(dir);
 		if (!dir.endsWith("/"))
 			dir += "/";
-		fijiDir = dir;
+		ijDir = dir;
 	}
 
 	protected PrintStream out;
@@ -72,12 +72,12 @@ public class ReadyForUpload {
 		path = new File(path).getAbsolutePath();
 		if (IJ.isWindows())
 			path = normalizeWinPath(path);
-		if (!path.startsWith(fijiDir)) {
+		if (!path.startsWith(ijDir)) {
 			print("Warning: Not in $FIJI_ROOT: " + path);
 			return;
 		}
 
-		String target = path.substring(fijiDir.length());
+		String target = path.substring(ijDir.length());
 		if (rule != null && rule.getTarget().equals(target))
 			return;
 
@@ -86,7 +86,7 @@ public class ReadyForUpload {
 			fake.out = fake.err = out;
 		}
 		if (parser == null) {
-			parser = fake.parse(new FileInputStream(fijiDir + "/Fakefile"), new File(fijiDir));
+			parser = fake.parse(new FileInputStream(ijDir + "/Fakefile"), new File(ijDir));
 			parser.parseRules(new ArrayList());
 		}
 
@@ -101,7 +101,7 @@ public class ReadyForUpload {
 				return "modules/batik/sources/";
 			if (fromSubFakefile) {
 				if (rule.getLastPrerequisite().equals("mpicbg/"))
-					return fijiDir + "mpicbg/";
+					return ijDir + "mpicbg/";
 				File fakefile = ((SubFake)rule).getFakefile();
 				if (fakefile == null) {
 					// TODO: this really needs to go into a new Rule.isClean() method, checking also for resources
@@ -111,7 +111,7 @@ public class ReadyForUpload {
 					return null;
 				}
 				Fake fake = new Fake();
-				File cwd = new File(fijiDir, rule.getLastPrerequisite());
+				File cwd = new File(ijDir, rule.getLastPrerequisite());
 				if (!new File(cwd, ".git").exists()) {
 					print(rule.getLastPrerequisite() + " not checked out");
 					return null;
@@ -150,7 +150,7 @@ public class ReadyForUpload {
 		if (starstar >= 0)
 			prereq = prereq.substring(0, starstar);
 
-		return fijiDir + prereq;
+		return ijDir + prereq;
 	}
 
 	protected boolean checkFakeTargetUpToDate() throws FakeException, FileNotFoundException {
@@ -315,7 +315,7 @@ public class ReadyForUpload {
 
 	protected boolean checkPushed() throws FakeException, IOException {
 		String submodulePath = getSourcePathForTarget(false);
-		if (fullPath.startsWith(fijiDir) && submodulePath != null && !checkPushed(fijiDir, submodulePath))
+		if (fullPath.startsWith(ijDir) && submodulePath != null && !checkPushed(ijDir, submodulePath))
 			return false;
 
 		// check whether submodules are pushed
@@ -331,7 +331,7 @@ public class ReadyForUpload {
 		String submoduleDir = rule.getLastPrerequisite();
 		if (submoduleDir == null)
 			return false;
-		File dir = new File(fijiDir, submoduleDir);
+		File dir = new File(ijDir, submoduleDir);
 		if (!dir.isDirectory())
 			return true;
 		for (String name : dir.list())
@@ -342,7 +342,7 @@ public class ReadyForUpload {
 
 	protected boolean checkPrecompiled() {
 		final String baseName = new File(path).getName();
-		final File precompiled = new File(new File(fijiDir, "precompiled"), baseName);
+		final File precompiled = new File(new File(ijDir, "precompiled"), baseName);
 		if (!precompiled.exists())
 			return true;
 
@@ -448,7 +448,7 @@ public class ReadyForUpload {
 				return result;
 
 			if (containsDebugInfo(fullPath)) {
-				if (new File(path).getCanonicalPath().equals(new File(fijiDir, "plugins/loci_tools.jar").getCanonicalPath()))
+				if (new File(path).getCanonicalPath().equals(new File(ijDir, "plugins/loci_tools.jar").getCanonicalPath()))
 					print("Ignoring debug info in Bio-Formats");
 				else {
 					print(path + " contains debug information\n");

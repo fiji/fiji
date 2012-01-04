@@ -25,7 +25,7 @@ package view5d;
 
 import java.awt.event.*;
 import java.awt.*;
-// import ij.*;  
+// import ij.gui.GenericDialog;  
 // import ij.gui.*;  // only needed when based on GenericDialog from ImageJ instead of AGenergicDialog
 
 class ANGenericDialog extends AGenericDialog implements ActionListener, FocusListener, ItemListener {             // derived from the ImageJ class or from the emulation AGernericDialog

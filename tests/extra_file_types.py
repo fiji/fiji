@@ -1,5 +1,5 @@
 #!/bin/sh
-''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
+''''exec "$(dirname "$0")"/../ImageJ --jython "$0" "$@" # (call again with fiji)'''
 
 # Test whether HandleExtraFileTypes.java tryPlugIn(<classname>) calls
 # will succeed, by testing if the class is in the classpath or in the plugins folder.
@@ -26,7 +26,7 @@ def checkClassName(name):
     except ClassNotFoundException:
       return 0
 
-path = System.getProperty('fiji.dir') + '/' + "src-plugins/IO_/"
+path = System.getProperty('ij.dir') + '/' + "src-plugins/IO_/"
 print "path: ", path
 f = open(path + "HandleExtraFileTypes.java")
 

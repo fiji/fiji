@@ -114,7 +114,7 @@ public class PlugInExecutor {
 		ClassLoader classLoader = newClassLoader ?
 			new FijiClassLoader(new String[] {
 				IJ.getDirectory("plugins"),
-				System.getProperty("fiji.dir") + "/jars"
+				System.getProperty("ij.dir") + "/jars"
 			}) : getClassLoader();
 		if (newClassLoader && jarPath != null)
 			((FijiClassLoader)classLoader).addPath(jarPath);

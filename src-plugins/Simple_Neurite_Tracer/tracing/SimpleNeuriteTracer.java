@@ -108,6 +108,14 @@ public class SimpleNeuriteTracer extends ThreePanes
 		return xy_tracer_canvas;
 	}
 
+	public String stripExtension(String filename) {
+		int lastDot=filename.lastIndexOf(".");
+		if( lastDot > 0 )
+			return filename.substring(0, lastDot);
+		else
+			return null;
+	}
+
 	/* Just for convenience, keep casted references to the
 	   superclass's InteractiveTracerCanvas objects: */
 
@@ -147,7 +155,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 			filler.requestStop();
 	}
 
-	public void threadStatus( SearchThread source, int status ) {
+	public void threadStatus( SearchInterface source, int status ) {
 		// Ignore this information.
 	}
 
@@ -220,17 +228,20 @@ public class SimpleNeuriteTracer extends ThreePanes
 	/* Now a couple of callback methods, which get information
 	   about the progress of the search. */
 
-	public void finished( SearchThread source, boolean success ) {
+	public void finished( SearchInterface source, boolean success ) {
+
+		System.out.println("Yes, in finished...");
 
 		/* This is called by both filler and currentSearchThread,
 		   so distinguish these cases: */
 
-		if( source == currentSearchThread ) {
+		if( source == currentSearchThread ||
+		    source == tubularGeodesicsThread ) {
 
 			removeSphere(targetBallName);
 
 			if( success ) {
-				Path result = currentSearchThread.getResult();
+				Path result = source.getResult();
 				if( result == null ) {
 					IJ.error("Bug! Succeeded, but null result.");
 					return;
@@ -249,7 +260,9 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 			// Indicate in the dialog that we've finished...
 
-			currentSearchThread = null;
+			if (source == currentSearchThread) {
+				currentSearchThread = null;
+			}
 
 		}
 
@@ -258,7 +271,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	}
 
-	public void pointsInSearch( SearchThread source, int inOpen, int inClosed ) {
+	public void pointsInSearch( SearchInterface source, int inOpen, int inClosed ) {
 		// Just use this signal to repaint the canvas, in case there's
 		// been no mouse movement.
 		repaintAllPanes();
@@ -675,7 +688,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 		}
 	}
 
-	void addThreadToDraw( SearchThread s ) {
+	void addThreadToDraw( SearchInterface s ) {
 		xy_tracer_canvas.addSearchThread(s);
 		if( ! single_pane ) {
 			zy_tracer_canvas.addSearchThread(s);
@@ -683,7 +696,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 		}
 	}
 
-	void removeThreadToDraw( SearchThread s ) {
+	void removeThreadToDraw( SearchInterface s ) {
 		xy_tracer_canvas.removeSearchThread(s);
 		if( ! single_pane ) {
 			zy_tracer_canvas.removeSearchThread(s);
@@ -720,6 +733,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 	/* If non-null, holds a reference to the currently searching thread: */
 
 	TracerThread currentSearchThread;
+	TubularGeodesicsTracer tubularGeodesicsThread = null;
 
 	/* Start a search thread looking for the goal in the arguments: */
 
@@ -762,33 +776,65 @@ public class SimpleNeuriteTracer extends ThreePanes
 		y_end = (int)Math.round( real_y_end / y_spacing );
 		z_end = (int)Math.round( real_z_end / z_spacing );
 
-		currentSearchThread = new TracerThread(
-			xy,
-			stackMin,
-			stackMax,
-			0, // timeout in seconds
-			1000, // reportEveryMilliseconds
-			last_start_point_x,
-			last_start_point_y,
-			last_start_point_z,
-			x_end,
-			y_end,
-			z_end,
-			true, // reciprocal
-			singleSlice,
-			(hessianEnabled ? hessian : null),
-			resultsDialog.getMultiplier(),
-			tubeness,
-			hessianEnabled );
+		if (tubularGeodesicsTracingEnabled) {
 
-		addThreadToDraw( currentSearchThread );
+			// Then useful values are:
+			// oofFile.getAbsolutePath() - the filename of the OOF file
+			// last_start_point_[xyz] - image coordinates of the start point
+			// [xyz]_end - image coordinates of the end point
 
-		currentSearchThread.setDrawingColors( Color.CYAN, null );
-		currentSearchThread.setDrawingThreshold( -1 );
+			// [xyz]_spacing
 
-		currentSearchThread.addProgressListener( this );
+			tubularGeodesicsThread = new TubularGeodesicsTracer(
+				oofFile,
+				last_start_point_x,
+				last_start_point_y,
+				last_start_point_z,
+				x_end,
+				y_end,
+				z_end,
+				x_spacing,
+				y_spacing,
+				z_spacing,
+				spacing_units);
 
-		currentSearchThread.start();
+			addThreadToDraw( tubularGeodesicsThread );
+
+			tubularGeodesicsThread.addProgressListener( this );
+
+			tubularGeodesicsThread.start();
+
+		} else {
+
+			currentSearchThread = new TracerThread(
+				xy,
+				stackMin,
+				stackMax,
+				0, // timeout in seconds
+				1000, // reportEveryMilliseconds
+				last_start_point_x,
+				last_start_point_y,
+				last_start_point_z,
+				x_end,
+				y_end,
+				z_end,
+				true, // reciprocal
+				singleSlice,
+				(hessianEnabled ? hessian : null),
+				resultsDialog.getMultiplier(),
+				tubeness,
+				hessianEnabled );
+
+			addThreadToDraw( currentSearchThread );
+
+			currentSearchThread.setDrawingColors( Color.CYAN, null );
+			currentSearchThread.setDrawingThreshold( -1 );
+
+			currentSearchThread.addProgressListener( this );
+
+			currentSearchThread.start();
+
+		}
 
 		repaintAllPanes();
 	}
@@ -1258,6 +1304,22 @@ public class SimpleNeuriteTracer extends ThreePanes
 	// successfully.
 
 	float [][] tubeness;
+
+	public boolean oofFileAvailable() {
+		return oofFile != null;
+	}
+
+	/* If there appears to be a local file called
+	   <image-basename>.oof.nrrd then we assume that we can use
+	   the Tubular Geodesics tracing method.  This variable null
+	   if not such file was found. */
+
+	protected File oofFile = null;
+	protected boolean tubularGeodesicsTracingEnabled = false;
+
+	public synchronized void enableTubularGeodesicsTracing( boolean enable ) {
+		tubularGeodesicsTracingEnabled = enable;
+	}
 
 	public synchronized void enableHessian( boolean enable ) {
 		hessianEnabled = enable;

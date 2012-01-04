@@ -196,7 +196,7 @@ public class Multi_View_Deconvolution implements PlugIn
 			return null;
 
 		Bead_Registration.spimDataDirectory = gd.getNextString();
-		Bead_Registration.fileNamePatternMC = gd.getNextString();
+		Bead_Registration.fileNamePattern = gd.getNextString();
 		Bead_Registration.timepoints = gd.getNextString();
 		Bead_Registration.angles = gd.getNextString();
 
@@ -261,7 +261,7 @@ public class Multi_View_Deconvolution implements PlugIn
 						return false;
 				}
 			});
-
+			
 			final String entriesBeads[] = regDir.list( new FilenameFilter() 
 			{
 				@Override

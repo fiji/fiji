@@ -1,9 +1,9 @@
 package fiji.build;
 
+import fiji.build.MiniMaven.Coordinate;
 import fiji.build.MiniMaven.POM;
 
 import java.io.File;
-
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -57,7 +57,7 @@ public class SubFake extends Rule {
 
 			POM pom = getPOM();
 			if (pom != null)
-				return pom.upToDate();
+				return pom.upToDate() && upToDate(pom.getTarget(), target);
 
 			if (!upToDateRecursive(new File(Util.makePath(parser.cwd, directory)), target, true))
 				return false;
@@ -105,7 +105,7 @@ public class SubFake extends Rule {
 			POM pom = new MiniMaven(parser.fake, parser.fake.err, getVarBool("VERBOSE")).parse(file);
 			if (targetBasename.equals(pom.getArtifact()))
 				return pom;
-			return pom.findPOM(null, targetBasename, null);
+			return pom.findPOM(new Coordinate(null, targetBasename, null));
 		} catch (Exception e) {
 			e.printStackTrace(parser.fake.err);
 			return null;
@@ -124,6 +124,8 @@ public class SubFake extends Rule {
 				pom.downloadDependencies();
 				pom.buildJar();
 				copyJar(pom.getTarget().getPath(), target, parser.cwd, configPath);
+				if (getVarBool("copyDependencies"))
+					pom.copyDependencies(new File(target).getAbsoluteFile().getParentFile(), true);
 				return;
 			} catch (Exception e) {
 				e.printStackTrace(parser.fake.err);

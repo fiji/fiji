@@ -34,8 +34,8 @@ import ij.gui.*;
 /* The code below is necessary to include the software as a plugin into ImageJ */
 public class View5D_ extends PlugInFrame implements PlugIn, WindowListener {
     public static final long serialVersionUID = 1;
-    public static final long serialSubVersionUID = 2;
-    public static final long serialSubSubVersionUID = 17;
+    public static final long serialSubVersionUID = 3;
+    public static final long serialSubSubVersionUID = 0;
 	// Panel panel;
 	int previousId;
 	ImagePlus imp;
@@ -419,7 +419,7 @@ public class View5D_ extends PlugInFrame implements PlugIn, WindowListener {
 	
     void showAbout() {
               IJ.showMessage("About View5D, Version V"+serialVersionUID+"."+serialSubVersionUID+"."+serialSubSubVersionUID,
-	      "5D-Viewer by Rainer Heintzmann\nUniversity of Jena, Jena, Germany\n"+
+	      " 5D-Viewer by Rainer Heintzmann\nUniversity of Jena, Jena, Germany\n"+
               "heintzmann@googlemail.com\n"+
               "http://www.nanoimaging.de/View5D/\n"+
 	      "use mouse click for changing slices, \ndrag images, zoom by typing 'A' and 'a'\n"+

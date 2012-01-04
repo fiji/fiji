@@ -81,7 +81,7 @@ checkout_and_build () {
 	do
 		test -e bin/$d || ln -s ../../bin/$d bin/
 	done &&
-	./Build.sh all-cross precompile-fiji &&
+	./Build.sh all-cross precompile-ImageJ &&
 	if ! git diff-files -q --exit-code --ignore-submodules
 	then
 		git commit -s -a -m "$COMMIT_MESSAGE"
@@ -162,12 +162,12 @@ echo "Making .dmg" &&
 make_dmg &&
 
 echo "Verifying" &&
-for a in linux linux64 win32 win64 macosx
+for a in linux32 linux64 win32 win64 macosx
 do
-	launcher="fiji-$a" &&
+	launcher="ImageJ-$a" &&
 	java="java/$a" &&
 	case $a in
-	macosx) launcher="Contents/MacOS/fiji-macosx Contents/MacOS/fiji-tiger" &&
+	macosx) launcher="Contents/MacOS/ImageJ-macosx Contents/MacOS/ImageJ-tiger" &&
 		java=java/macosx-java3d;;
 	linux64)
 		java=java/linux-amd64;;
@@ -177,9 +177,9 @@ do
 	verify_archives $a "$launcher jars/fiji-lib.jar $java "
 done &&
 
-verify_archives nojre "Contents/MacOS/fiji-macosx Contents/MacOS/fiji-tiger fiji-linux fiji-linux64 fiji-win32.exe fiji-win64.exe jars/fiji-lib.jar " &&
+verify_archives nojre "Contents/MacOS/ImageJ-macosx Contents/MacOS/ImageJ-tiger ImageJ-linux32 ImageJ-linux64 ImageJ-win32.exe ImageJ-win64.exe jars/fiji-lib.jar " &&
 
-verify_archives all "Contents/MacOS/fiji-macosx Contents/MacOS/fiji-tiger fiji-linux fiji-linux64 fiji-win32.exe fiji-win64.exe jars/fiji-lib.jar java/linux java/linux-amd64 java/macosx-java3d java/win32 java/win64 " ||
+verify_archives all "Contents/MacOS/ImageJ-macosx Contents/MacOS/ImageJ-tiger ImageJ-linux32 ImageJ-linux64 ImageJ-win32.exe ImageJ-win64.exe jars/fiji-lib.jar java/linux java/linux-amd64 java/macosx-java3d java/win32 java/win64 " ||
 errorcount=$(($errorcount+1))
 
 if test $errorcount -gt 0
@@ -190,7 +190,7 @@ then
 fi
 
 echo " Note: Asked for the files which are not up-to-date, the Updater says:"
-./fiji --update list-not-uptodate
+./ImageJ --update list-not-uptodate
 
 echo "Uploading" &&
 copy_files || exit

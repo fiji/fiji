@@ -1,5 +1,5 @@
 #!/bin/sh
-// 2>&1 | :; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
+// 2>&1 | :; exec "$(dirname "$0")"/../ImageJ "$0" "$@" # exec with fiji */
 
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
