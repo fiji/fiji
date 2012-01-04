@@ -1,5 +1,7 @@
 package process;
 
+import fiji.util.KDTree;
+import fiji.util.NNearestNeighborSearch;
 import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
@@ -8,37 +10,25 @@ import ij.gui.Roi;
 import ij.measure.Calibration;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.ListIterator;
-import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussian.SpecialPoint;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import mpicbg.imglib.type.numeric.integer.UnsignedShortType;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import mpicbg.imglib.util.Util;
 import mpicbg.models.AbstractAffineModel3D;
-import mpicbg.models.HomographyModel2D;
-import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.InvertibleBoundable;
 import mpicbg.models.Model;
-import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
-import mpicbg.models.RigidModel3D;
 import mpicbg.models.Tile;
 import mpicbg.models.TileConfiguration;
-import mpicbg.models.TranslationModel2D;
-import mpicbg.models.TranslationModel3D;
 import mpicbg.pointdescriptor.AbstractPointDescriptor;
 import mpicbg.pointdescriptor.ModelPointDescriptor;
 import mpicbg.pointdescriptor.SimplePointDescriptor;
@@ -50,21 +40,13 @@ import mpicbg.pointdescriptor.model.TranslationInvariantRigidModel2D;
 import mpicbg.pointdescriptor.model.TranslationInvariantRigidModel3D;
 import mpicbg.pointdescriptor.similarity.SimilarityMeasure;
 import mpicbg.pointdescriptor.similarity.SquareDistance;
-import mpicbg.spim.io.IOFunctions;
-import mpicbg.spim.mpicbg.PointMatchGeneric;
-import mpicbg.spim.mpicbg.TileConfigurationSPIM;
-import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
 import mpicbg.spim.registration.bead.BeadRegistration;
-import mpicbg.spim.registration.bead.error.GlobalErrorStatistics;
-import mpicbg.spim.registration.detection.AbstractDetection;
 import mpicbg.spim.registration.detection.DetectionSegmentation;
 import mpicbg.spim.segmentation.InteractiveDoG;
 import plugin.DescriptorParameters;
 import plugin.Descriptor_based_registration;
 import plugin.Descriptor_based_series_registration;
-import fiji.util.KDTree;
-import fiji.util.NNearestNeighborSearch;
 
 public class Matching 
 {
