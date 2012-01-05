@@ -3,9 +3,9 @@ import java.awt.Font;
 
 import javax.swing.JLabel;
 
-import static fiji.plugin.trackmate.gui.TrackMateFrame.BIG_FONT;
-import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
-import static fiji.plugin.trackmate.gui.TrackMateFrame.TEXTFIELD_DIMENSION;
+import static fiji.plugin.trackmate.gui.TrackMateWizard.BIG_FONT;
+import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
+import static fiji.plugin.trackmate.gui.TrackMateWizard.TEXTFIELD_DIMENSION;
 
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.tracking.TrackerSettings;

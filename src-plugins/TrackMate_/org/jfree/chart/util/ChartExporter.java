@@ -1,7 +1,7 @@
 package org.jfree.chart.util;
 
-import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
-import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
+import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
+import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
 
 import java.awt.Graphics2D;
 import java.awt.Rectangle;

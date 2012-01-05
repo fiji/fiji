@@ -1,8 +1,8 @@
 package fiji.plugin.trackmate.gui;
 
-import static fiji.plugin.trackmate.gui.TrackMateFrame.BIG_FONT;
-import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
-import static fiji.plugin.trackmate.gui.TrackMateFrame.TEXTFIELD_DIMENSION;
+import static fiji.plugin.trackmate.gui.TrackMateWizard.BIG_FONT;
+import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
+import static fiji.plugin.trackmate.gui.TrackMateWizard.TEXTFIELD_DIMENSION;
 
 import java.awt.Font;
 import java.awt.GridBagConstraints;

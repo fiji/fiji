@@ -1,7 +1,7 @@
 package fiji.plugin.trackmate.gui;
 
-import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
-import static fiji.plugin.trackmate.gui.TrackMateFrame.TEXTFIELD_DIMENSION;
+import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
+import static fiji.plugin.trackmate.gui.TrackMateWizard.TEXTFIELD_DIMENSION;
 
 import java.util.List;
 import java.util.Map;

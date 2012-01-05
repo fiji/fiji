@@ -1,7 +1,7 @@
 package fiji.plugin.trackmate.action;
 
-import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
-import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
+import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
+import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;

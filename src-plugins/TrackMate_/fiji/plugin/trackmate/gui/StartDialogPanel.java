@@ -1,9 +1,10 @@
 package fiji.plugin.trackmate.gui;
 
-import static fiji.plugin.trackmate.gui.TrackMateFrame.BIG_FONT;
-import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
-import static fiji.plugin.trackmate.gui.TrackMateFrame.TEXTFIELD_DIMENSION;
+import static fiji.plugin.trackmate.gui.TrackMateWizard.BIG_FONT;
+import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
+import static fiji.plugin.trackmate.gui.TrackMateWizard.TEXTFIELD_DIMENSION;
 import fiji.plugin.trackmate.Settings;
+import fiji.plugin.trackmate.TrackMate_;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.NewImage;
@@ -19,14 +20,16 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JSlider;
 import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-public class StartDialogPanel extends ActionListenablePanel {
+public class StartDialogPanel extends ActionListenablePanel implements WizardPanelDescriptor {
 
 	private static final long serialVersionUID = -5495612173611259921L;
+	
+	public static final Object DESCRIPTOR = "StartDialog";
+	
 	private JLabel jLabelCheckCalibration;
 	private JNumericTextField jTextFieldPixelWidth;
 	private JNumericTextField jTextFieldZStart;
@@ -63,39 +66,97 @@ public class StartDialogPanel extends ActionListenablePanel {
 
 	private ImagePlus imp;
 	private Settings settings;
-	private Component target;
 	private JLabel lblSegmentInChannel;
 	private JLabel labelChannel;
 
+	private TrackMate_ plugin;
+
+	private WizardModel model;
+	
+	/*
+	 * CONSTRUCTOR
+	 */
+	
 	/**
 	 * Create and lay out of new {@link StartDialogPanel}, with the default settings given, and a target component.
 	 * The later will be disabled, until a valid {@link ImagePlus} is set in the {@link Settings} field returned
 	 * by this panel.
-	 * <p>
-	 * A {@link Component} target can be given, that will be disabled until a valid target {@link ImagePlus}
-	 * is targeted by this dialog. Pass <code>null</code> if you do not want to use that feature.
 	 */
-	public StartDialogPanel(Settings settings, Component target) {		
+	public StartDialogPanel(Settings settings) {		
 		super();
 		if (null == settings)
 			settings = new Settings();
 		this.settings = settings;
-		this.target = target;
 		initGUI();
+	}
+	
+	/*
+	 * WIZARDPANELDESCRIPTOR METHODS
+	 */
+
+	@Override
+	public void setWizardModel(WizardModel model) {
+		this.model = model;
+	}
+
+	@Override
+	public void setPlugin(TrackMate_ plugin) {
+		this.plugin = plugin;
+	}
+	
+//	@Override
+//	public void setWizard(TrackMateWizard wizard) {
+//		this.wizard = wizard;
+//	}
+
+	@Override
+	public Component getPanelComponent() {
+		return this;
+	}
+
+	@Override
+	public Object getPanelDescriptorIdentifier() {
+		return DESCRIPTOR;
+	}
+
+	@Override
+	public Object getNextPanelDescriptor() {
+		return SegmenterChoiceDescriptor.DESCRIPTOR;
+	}
+
+	@Override
+	public Object getBackPanelDescriptor() {
+		return null;
+	}
+
+	@Override
+	public void aboutToDisplayPanel() {
 		if (null == settings.imp) {
+			imp = WindowManager.getCurrentImage();
 			refresh();
 		} else {
 			echoSettings(settings);
 			imp = settings.imp;
 			refresh();
 		}
+		model.setPreviousButtonEnabled(false);
 	}
 
+	@Override
+	public void displayingPanel() { }
+
+	@Override
+	public void aboutToHidePanel() {
+		// Get settings and pass them to the plugin managed by the wizard
+		plugin.getModel().setSettings(getSettings());
+		model.setPreviousButtonEnabled(true);
+	}
+	
+	
+	
 	/*
 	 * PUBLIC METHODS
 	 */
-
-
 
 	/**
 	 * Update the settings object given with the parameters this panel allow to tune
@@ -172,14 +233,9 @@ public class StartDialogPanel extends ActionListenablePanel {
 	 * enable the {@link #target} component.
 	 */
 	private void refresh() {
-		imp = WindowManager.getCurrentImage();
 		if (null == imp) {
-			if (null != target) {
-				// Lock target component, because we still do not have a valid target image.
-				SwingUtilities.invokeLater(new Runnable() {
-					public void run() { target.setEnabled(false); }
-				});
-			}
+			// Lock next button, because we still do not have a valid target image.
+			model.setNextButtonEnabled(false);
 			return;
 		}
 		jLabelImageName.setText("Target: "+imp.getShortTitle());
@@ -224,8 +280,7 @@ public class StartDialogPanel extends ActionListenablePanel {
 			sliderChannel.setVisible(true);			
 		}
 		// Re-enable target component, because we have a valid target image to operate on.
-		if (null != target)
-			target.setEnabled(true);
+		model.setNextButtonEnabled(true);
 	}
 
 
@@ -505,10 +560,13 @@ public class StartDialogPanel extends ActionListenablePanel {
 		imp.getCalibration().pixelWidth = 0.4;
 		imp.setRoi(new Roi(10, 20, 5, 60));
 		imp.show();
-		frame.getContentPane().add(new StartDialogPanel(null, null));
+		frame.getContentPane().add(new StartDialogPanel(null));
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();
 		frame.setVisible(true);
 		WindowManager.setCurrentWindow(imp.getWindow());
 	}
+
+	
+
 }

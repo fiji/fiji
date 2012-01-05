@@ -19,7 +19,7 @@ import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackDurationAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackFeatureAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackSpeedStatisticsAnalyzer;
-import fiji.plugin.trackmate.gui.TrackMateFrameController;
+import fiji.plugin.trackmate.gui.WizardController;
 import fiji.plugin.trackmate.segmentation.DogSegmenter;
 import fiji.plugin.trackmate.segmentation.DownSampleLogSegmenter;
 import fiji.plugin.trackmate.segmentation.ManualSegmenter;
@@ -133,11 +133,11 @@ public class TrackMate_ implements PlugIn {
 	 * Hook for subclassers.
 	 * <p>
 	 * Create and launch the GUI that will control this plugin. You can override this method
-	 * if you want to use another GUI, or use a the {@link TrackMateFrameController} extended
+	 * if you want to use another GUI, or use a the {@link WizardController} extended
 	 * to suit your needs.
 	 */
 	protected void launchGUI() {
-		new TrackMateFrameController(this);
+		new WizardController(this);
 	}
 	
 	/**

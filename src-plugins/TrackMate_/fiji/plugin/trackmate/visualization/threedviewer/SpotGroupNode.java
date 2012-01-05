@@ -1,6 +1,6 @@
 package fiji.plugin.trackmate.visualization.threedviewer;
 
-import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
+import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import ij3d.ContentNode;
 

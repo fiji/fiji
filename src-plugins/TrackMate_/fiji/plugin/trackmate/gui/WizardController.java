@@ -16,12 +16,12 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.gui.TrackMateFrame.PanelCard;
+import fiji.plugin.trackmate.gui.TrackMateWizard.PanelCard;
 import fiji.plugin.trackmate.segmentation.ManualSegmenter;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
-public class TrackMateFrameController implements ActionListener {
+public class WizardController implements ActionListener {
 
 	/*
 	 * FIELDS
@@ -40,7 +40,7 @@ public class TrackMateFrameController implements ActionListener {
 	/** The model describing the data. */
 	private TrackMate_ plugin;
 	/** The GUI controlled by this controller.  */
-	private TrackMateFrame view;
+	private TrackMateWizard view;
 
 	/**
 	 * Is used to determine how to react to a 'next' button push. If it is set to true, then we are
@@ -57,9 +57,9 @@ public class TrackMateFrameController implements ActionListener {
 	 * CONSTRUCTOR
 	 */
 
-	public TrackMateFrameController(final TrackMate_ plugin) {
+	public WizardController(final TrackMate_ plugin) {
 		this.plugin = plugin;
-		this.view = new TrackMateFrame(plugin, this);
+		this.view = new TrackMateWizard(plugin, this);
 		this.logger = view.getLogger();
 
 		plugin.setLogger(logger);
@@ -154,11 +154,7 @@ public class TrackMateFrameController implements ActionListener {
 		this.state = state;
 	}
 
-	public GuiState getState() {
-		return state;
-	}
-
-	public TrackMateFrame getView() {
+	public TrackMateWizard getView() {
 		return view;
 	}
 
@@ -172,7 +168,7 @@ public class TrackMateFrameController implements ActionListener {
 	 */
 	private void updateGUI() {
 		// Display adequate card
-		final TrackMateFrame.PanelCard key;
+		final TrackMateWizard.PanelCard key;
 		switch (state) {
 
 		default:
@@ -466,7 +462,7 @@ public class TrackMateFrameController implements ActionListener {
 				return;
 			}
 			file = tmpFile;
-			saver.writeFile(file);
+			saver.writeFile(file, state);
 
 		}	finally {
 
@@ -522,7 +518,7 @@ public class TrackMateFrameController implements ActionListener {
 	}
 
 	/**
-	 * Apply the quality threshold set by the {@link TrackMateFrame#initThresholdingPanel}, and <b>overwrite</b> 
+	 * Apply the quality threshold set by the {@link TrackMateWizard#initThresholdingPanel}, and <b>overwrite</b> 
 	 * the {@link Spot} collection of the {@link TrackMateModel} with the result.
 	 */
 	private void execInitialThresholding() {

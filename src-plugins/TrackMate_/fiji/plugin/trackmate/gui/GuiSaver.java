@@ -14,19 +14,19 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.gui.TrackMateFrame.PanelCard;
-import fiji.plugin.trackmate.gui.TrackMateFrameController.GuiState;
+import fiji.plugin.trackmate.gui.TrackMateWizard.PanelCard;
+import fiji.plugin.trackmate.gui.WizardController.GuiState;
 import fiji.plugin.trackmate.io.TmXmlWriter;
 
 /**
  * This class is in charge of writing a {@link TrackMateModel} to a file, from
- * the current state and content of the controller {@link TrackMateFrameController}.
+ * the current state and content of the controller {@link WizardController}.
  * 
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Apr 28, 2011
  */
 public class GuiSaver {
 
-	private TrackMateFrameController controller;
+	private WizardController controller;
 	private Logger logger = Logger.VOID_LOGGER;
 	
 	/*
@@ -34,25 +34,23 @@ public class GuiSaver {
 	 */
 	
 	/**
-	 * Construct a {@link GuiReader}. The {@link TrackMateFrameController} will have its state
+	 * Construct a {@link GuiReader}. The {@link WizardController} will have its state
 	 * set according to the data found in the file read.
 	 * @param controller
 	 */
-	public GuiSaver(TrackMateFrameController controller) {
+	public GuiSaver(WizardController controller) {
 		this.controller = controller;
 		logger = controller.getView().getLogger();
 	}
-	
 	
 	/*
 	 * METHODS
 	 */
 	
 	
-	public void writeFile(File file) {
+	public void writeFile(final File file, final GuiState state) {
 		
 		TrackMateModel model = controller.getPlugin().getModel();
-		GuiState state = controller.getState();
 		
 		TmXmlWriter writer = new TmXmlWriter(model, logger);
 		switch (state) {

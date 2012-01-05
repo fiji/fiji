@@ -1,6 +1,6 @@
 package fiji.plugin.trackmate.gui;
 
-import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
+import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
@@ -22,16 +22,16 @@ import fiji.plugin.trackmate.action.TrackMateAction;
 public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> {
 
 	private static final long serialVersionUID = 1L;
-	private static final Icon EXECUTE_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/control_play_blue.png"));
+	private static final Icon EXECUTE_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/control_play_blue.png"));
 	
 	public final ActionEvent ACTION_STARTED = new ActionEvent(this, 0, "ActionStarted");
 	public final ActionEvent ACTION_FINISHED = new ActionEvent(this, 1, "ActionFinished");
 	private TrackMateModel model;
 	private LogPanel logPanel;
 	private Logger logger;
-	private TrackMateFrameController controller;
+	private WizardController controller;
 
-	public ActionChooserPanel(TrackMateModel model, TrackMateFrameController controller) {
+	public ActionChooserPanel(TrackMateModel model, WizardController controller) {
 		super(controller.getPlugin().getAvailableActions(), "action");
 		this.model = model;
 		this.controller = controller;

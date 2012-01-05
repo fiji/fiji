@@ -1,6 +1,6 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
-import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
+import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
 
 import java.awt.Color;
 import java.awt.Font;

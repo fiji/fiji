@@ -25,7 +25,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.gui.TrackMateFrameController.GuiState;
+import fiji.plugin.trackmate.gui.WizardController.GuiState;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
@@ -41,7 +41,7 @@ import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
  */
 public class GuiReader {
 
-	private TrackMateFrameController controller;
+	private WizardController controller;
 	private Logger logger = Logger.VOID_LOGGER;
 
 	/*
@@ -56,11 +56,11 @@ public class GuiReader {
 //	}
 
 	/**
-	 * Construct a {@link GuiReader}. The {@link TrackMateFrameController} will have its state
+	 * Construct a {@link GuiReader}. The {@link WizardController} will have its state
 	 * set according to the data found in the file read.
 	 * @param controller
 	 */
-	public GuiReader(TrackMateFrameController controller) {
+	public GuiReader(WizardController controller) {
 		this.controller = controller;
 		if (null != controller)
 			logger = controller.getView().getLogger();
@@ -74,7 +74,7 @@ public class GuiReader {
 
 	public TrackMateModel loadFile(File file) {
 
-		TrackMateFrame view;
+		TrackMateWizard view;
 		if (null == controller) 
 			view = null;
 		else

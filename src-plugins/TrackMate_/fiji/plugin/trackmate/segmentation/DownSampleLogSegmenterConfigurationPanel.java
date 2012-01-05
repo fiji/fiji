@@ -1,6 +1,6 @@
 package fiji.plugin.trackmate.segmentation;
 
-import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
+import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;

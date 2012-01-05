@@ -34,7 +34,7 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
  * 
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - September 2010 - 2011
  */
-public class TrackMateFrame extends javax.swing.JFrame implements ActionListener {
+public class TrackMateWizard extends javax.swing.JFrame implements ActionListener {
 
 	/*
 	 * DEFAULT VISIBILITY & PUBLIC CONSTANTS
@@ -50,10 +50,10 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 	 */
 
 	private static final long serialVersionUID = -4092131926852771798L;
-	private static final Icon NEXT_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/arrow_right.png"));
-	private static final Icon PREVIOUS_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/arrow_left.png"));
-	private static final Icon LOAD_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/page_go.png"));
-	private static final Icon SAVE_ICON = new ImageIcon(TrackMateFrame.class.getResource("images/page_save.png"));
+	private static final Icon NEXT_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/arrow_right.png"));
+	private static final Icon PREVIOUS_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/arrow_left.png"));
+	private static final Icon LOAD_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/page_go.png"));
+	private static final Icon SAVE_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/page_save.png"));
 
 	/*
 	 * DEFAULT VISIBILITY FIELDS
@@ -91,7 +91,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 
 	private TrackMateModel model;
 	private TrackMate_ plugin;
-	private TrackMateFrameController controller;
+	private WizardController controller;
 	private ArrayList<ActionListener> listeners = new ArrayList<ActionListener>();
 
 	private JPanel jPanelButtons;
@@ -99,6 +99,9 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 	private LogPanel logPanel;
 	private CardLayout cardLayout;
 	private ActionChooserPanel actionPanel;
+	/** The model in charge of keeping track of this wizard. Not to be mixed with the {@link TrackMateModel}
+	 * which contains the data. */
+	private WizardModel wizardModel;
 
 	/*
 	 * ENUM
@@ -123,7 +126,7 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 	 * CONSTRUCTOR
 	 */
 
-	public TrackMateFrame(TrackMate_ plugin, TrackMateFrameController controller) {
+	public TrackMateWizard(TrackMate_ plugin, WizardController controller) {
 		this.model = plugin.getModel();
 		this.plugin = plugin;
 		this.controller = controller;
@@ -441,5 +444,9 @@ public class TrackMateFrame extends javax.swing.JFrame implements ActionListener
 	@Override
 	public void actionPerformed(final ActionEvent event) {
 		fireAction(event);
+	}
+
+	public WizardModel getModel() {
+		return wizardModel;
 	}
 }

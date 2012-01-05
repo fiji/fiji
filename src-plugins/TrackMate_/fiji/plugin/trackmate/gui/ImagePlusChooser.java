@@ -18,8 +18,8 @@ import javax.swing.JPanel;
 
 import javax.swing.WindowConstants;
 import javax.swing.SwingUtilities;
-import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
-import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
+import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
+import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
 
 
 public class ImagePlusChooser extends javax.swing.JFrame {
