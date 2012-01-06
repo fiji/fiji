@@ -3,19 +3,18 @@ package fiji.plugin.trackmate.gui;
 import java.awt.Component;
 
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.segmentation.SpotSegmenter;
+import fiji.plugin.trackmate.tracking.SpotTracker;
 
-public class SegmenterChoiceDescriptor implements WizardPanelDescriptor {
+public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 
-	public static final Object DESCRIPTOR = "SegmenterChoice";
-	@SuppressWarnings("rawtypes")
-	private ListChooserPanel<SpotSegmenter> component;
+	public static final Object DESCRIPTOR = "TrackerChoice";
+	private ListChooserPanel<SpotTracker> component;
 	private TrackMate_ plugin;
 	
 	/*
 	 * METHODS
 	 */
-
+	
 	@Override
 	public Component getPanelComponent() {
 		return component;
@@ -28,12 +27,12 @@ public class SegmenterChoiceDescriptor implements WizardPanelDescriptor {
 
 	@Override
 	public Object getNextPanelDescriptor() {
-		return SegmenterConfigurationPanelDescriptor.DESCRIPTOR;
+		return TrackerConfigurationPanelDescriptor.DESCRIPTOR;
 	}
 
 	@Override
 	public Object getBackPanelDescriptor() {
-		return StartDialogPanel.DESCRIPTOR;
+		return SpotFilterDescriptor.DESCRIPTOR;
 	}
 
 	@Override
@@ -42,17 +41,15 @@ public class SegmenterChoiceDescriptor implements WizardPanelDescriptor {
 	@Override
 	public void displayingPanel() { }
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public void aboutToHidePanel() {
-		plugin.getModel().getSettings().segmenter = component.getChoice();
+		plugin.getModel().getSettings().tracker = component.getChoice();
 	}
 
-	@SuppressWarnings("rawtypes")
 	@Override
 	public void setPlugin(TrackMate_ plugin) {
 		this.plugin = plugin;
-		this.component = new ListChooserPanel<SpotSegmenter>(plugin.getAvailableSpotSegmenters(), "segmenter");
+		this.component = new ListChooserPanel<SpotTracker>(plugin.getAvailableSpotTrackers(), "tracker");
 	}
 
 	@Override

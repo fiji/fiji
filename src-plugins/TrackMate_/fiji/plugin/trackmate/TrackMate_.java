@@ -122,7 +122,6 @@ public class TrackMate_ implements PlugIn {
 	public void run(String arg) {
 		model.getSettings().imp = WindowManager.getCurrentImage();
 		launchGUI();
-		
 	}
 
 	/*

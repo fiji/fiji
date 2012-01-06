@@ -22,7 +22,7 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
  * 
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - 2010-2011
  */
-public class SimpleLAPTrackerSettingsPanel extends TrackerSettingsPanel {
+public class SimpleLAPTrackerSettingsPanel extends TrackerConfigurationPanel {
 	
 	private static final long serialVersionUID = 4099537392544048109L;
 	private JLabel jLabelLinkingMaxDistanceUnit;

@@ -17,28 +17,78 @@ import javax.swing.JList;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.action.TrackMateAction;
 
-public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> {
+public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> implements WizardPanelDescriptor {
 
 	private static final long serialVersionUID = 1L;
 	private static final Icon EXECUTE_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/control_play_blue.png"));
 	
+	public static final Object DESCRIPTOR = "ActionChooserPanel";
 	public final ActionEvent ACTION_STARTED = new ActionEvent(this, 0, "ActionStarted");
 	public final ActionEvent ACTION_FINISHED = new ActionEvent(this, 1, "ActionFinished");
-	private TrackMateModel model;
+//	private TrackMateModel model;
 	private LogPanel logPanel;
 	private Logger logger;
-	private WizardController controller;
+	private TrackMateWizard wizard;
+	private TrackMate_ plugin;
 
 	public ActionChooserPanel(TrackMateModel model, WizardController controller) {
 		super(controller.getPlugin().getAvailableActions(), "action");
-		this.model = model;
-		this.controller = controller;
+//		this.model = model;
+//		this.controller = controller;
 		this.logPanel = new LogPanel();
 		this.logger = logPanel.getLogger();
 		init();
 	}
+	
+	/*
+	 * PUBLIC METHODS
+	 */
+	
+	@Override
+	public void setWizard(TrackMateWizard wizard) {
+		this.wizard = wizard;
+	}
+
+	@Override
+	public void setPlugin(TrackMate_ plugin) {
+		this.plugin = plugin;
+	}
+
+	@Override
+	public Component getPanelComponent() {
+		return this;
+	}
+
+	@Override
+	public Object getPanelDescriptorIdentifier() {
+		return DESCRIPTOR;
+	}
+
+	@Override
+	public Object getNextPanelDescriptor() {
+		return null;
+	}
+
+	@Override
+	public Object getBackPanelDescriptor() {
+		return DisplayerPanel.DESCRIPTOR;
+	}
+
+	@Override
+	public void aboutToDisplayPanel() { }
+
+	@Override
+	public void displayingPanel() { }
+
+	@Override
+	public void aboutToHidePanel() { }
+	
+	/*
+	 * PRIVATE METHODS
+	 */
 	
 	private void init() {
 		
@@ -61,8 +111,8 @@ public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> {
 							fireAction(ACTION_STARTED);
 							TrackMateAction action = getChoice();
 							action.setLogger(logger);
-							action.setController(controller);
-							action.execute(model);
+							action.setWizard(wizard);
+							action.execute(plugin);
 							fireAction(ACTION_FINISHED);
 						} finally {
 							executeButton.setEnabled(true);
@@ -115,4 +165,5 @@ public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> {
 			return label;
 		}
 	}
+
 }

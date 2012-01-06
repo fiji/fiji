@@ -5,7 +5,8 @@ import javax.swing.ImageIcon;
 import fiji.plugin.trackmate.InfoTextable;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.gui.WizardController;
+import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.gui.TrackMateWizard;
 
 /**
  * This interface describe a track mate action, that can be run on a 
@@ -17,9 +18,9 @@ import fiji.plugin.trackmate.gui.WizardController;
 public interface TrackMateAction  extends InfoTextable {
 	
 	/**
-	 * Execute this action on the given model
+	 * Execute this action using the given plugin
 	 */
-	public void execute(final TrackMateModel model);
+	public void execute(final TrackMate_ plugin);
 
 	/**
 	 * Set the logger that will receive logs when this action is executed.
@@ -32,8 +33,8 @@ public interface TrackMateAction  extends InfoTextable {
 	public ImageIcon getIcon();
 
 	/**
-	 * Set the GUI controller that launched this action, in case the action needs accessing it or updating it.
+	 * Set the GUI that launched this action, in case the action needs accessing it or updating it.
 	 */
-	public void setController(WizardController controller);
+	public void setWizard(TrackMateWizard wizard);
 		
 }

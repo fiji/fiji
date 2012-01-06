@@ -9,6 +9,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 import fiji.plugin.trackmate.gui.ImagePlusChooser;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -24,7 +25,7 @@ public class CopyOverlayAction extends AbstractTMAction {
 	}	
 	
 	@Override
-	public void execute(final TrackMateModel model) {
+	public void execute(final TrackMate_ plugin) {
 		final ImagePlusChooser impChooser = new ImagePlusChooser();
 		impChooser.setLocationRelativeTo(null);
 		impChooser.setVisible(true);
@@ -34,6 +35,7 @@ public class CopyOverlayAction extends AbstractTMAction {
 				if (e == impChooser.OK_BUTTON_PUSHED) {
 					new Thread("TrackMate copying thread") {
 						public void run() {
+							TrackMateModel model = plugin.getModel();
 							// Instantiate displayer
 							ImagePlus dest = impChooser.getSelectedImagePlus();
 							impChooser.setVisible(false);
@@ -52,7 +54,8 @@ public class CopyOverlayAction extends AbstractTMAction {
 							newDisplayer.setModel(model);
 							newDisplayer.render();
 							
-							final DisplayerPanel newDisplayerPanel = new DisplayerPanel(model);
+							final DisplayerPanel newDisplayerPanel = new DisplayerPanel();
+							newDisplayerPanel.setPlugin(plugin);
 							newDisplayerPanel.register(newDisplayer);
 							JFrame newFrame = new JFrame(); 
 							newFrame.getContentPane().add(newDisplayerPanel);

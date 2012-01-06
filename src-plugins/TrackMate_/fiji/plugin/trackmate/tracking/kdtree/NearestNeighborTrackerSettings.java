@@ -4,7 +4,7 @@ import org.jdom.Element;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.gui.NearestNeighborTrackerSettingsPanel;
-import fiji.plugin.trackmate.gui.TrackerSettingsPanel;
+import fiji.plugin.trackmate.gui.TrackerConfigurationPanel;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.util.TMUtils;
 
@@ -19,7 +19,7 @@ public class NearestNeighborTrackerSettings implements TrackerSettings {
 	public double maxLinkingDistance = DEFAULT_MAX_LINKING_DISTANCE;
 	
 	@Override
-	public TrackerSettingsPanel createConfigurationPanel() {
+	public TrackerConfigurationPanel createConfigurationPanel() {
 		return new NearestNeighborTrackerSettingsPanel();
 	}
 

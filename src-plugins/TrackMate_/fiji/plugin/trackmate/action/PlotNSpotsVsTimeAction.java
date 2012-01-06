@@ -15,6 +15,7 @@ import org.jfree.data.xy.DefaultXYDataset;
 
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 public class PlotNSpotsVsTimeAction extends AbstractTMAction {
@@ -26,8 +27,9 @@ public class PlotNSpotsVsTimeAction extends AbstractTMAction {
 	}
 	
 	@Override
-	public void execute(TrackMateModel model) {
+	public void execute(TrackMate_ plugin) {
 		// Collect data
+		final TrackMateModel model = plugin.getModel();
 		final double dt = model.getSettings().dt;
 		final SpotCollection spots = model.getFilteredSpots();
 		final int nFrames = spots.keySet().size();

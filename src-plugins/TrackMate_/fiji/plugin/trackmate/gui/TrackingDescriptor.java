@@ -3,12 +3,12 @@ package fiji.plugin.trackmate.gui;
 import java.awt.Component;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.Settings;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 
-public class SegmentationDescriptor implements WizardPanelDescriptor {
-	
-	public static final Object DESCRIPTOR = "SegmentationPanel";
+public class TrackingDescriptor implements WizardPanelDescriptor {
+
+	public static final Object DESCRIPTOR = "TrackingPanel";
 	private LogPanel logPanel;
 	private TrackMate_ plugin;
 	private TrackMateWizard wizard;
@@ -39,12 +39,12 @@ public class SegmentationDescriptor implements WizardPanelDescriptor {
 
 	@Override
 	public Object getNextPanelDescriptor() {
-		return InitFilterPanel.DESCRIPTOR;
+		return TrackFilterDescriptor.DESCRIPTOR;
 	}
 
 	@Override
 	public Object getBackPanelDescriptor() {
-		return SegmenterConfigurationPanelDescriptor.DESCRIPTOR;
+		return TrackerConfigurationPanelDescriptor.DESCRIPTOR;
 	}
 
 	@Override
@@ -53,23 +53,20 @@ public class SegmentationDescriptor implements WizardPanelDescriptor {
 	@Override
 	public void displayingPanel() {
 		wizard.setNextButtonEnabled(false);
-		final Settings settings = plugin.getModel().getSettings();
-		logger.log("Starting segmentation using "+settings.segmenter.toString()+"\n", Logger.BLUE_COLOR);
+		final TrackMateModel model = plugin.getModel();
+		logger.log("Starting tracking using "+model.getSettings().tracker.toString()+"\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
-		logger.log(settings.toString());
-		logger.log(settings.segmenterSettings.toString());
-		new Thread("TrackMate segmentation mother thread") {					
+		logger.log(model.getSettings().trackerSettings.toString());
+		new Thread("TrackMate tracking thread") {					
 			public void run() {
-				long start = System.currentTimeMillis();
 				try {
-					plugin.execSegmentation();
-				} catch (Exception e) {
-					logger.error("An error occured:\n"+e+'\n');
-					e.printStackTrace(logger);
+					long start = System.currentTimeMillis();
+					plugin.execTracking();
+					// Re-enable the GUI
+					long end = System.currentTimeMillis();
+					logger.log(String.format("Tracking done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
 				} finally {
 					wizard.setNextButtonEnabled(true);
-					long end = System.currentTimeMillis();
-					logger.log(String.format("Segmentation done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
 				}
 			}
 		}.start();

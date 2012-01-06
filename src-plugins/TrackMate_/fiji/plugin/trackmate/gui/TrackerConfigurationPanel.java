@@ -9,7 +9,7 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2011
  *
  */
-public abstract class TrackerSettingsPanel extends ActionListenablePanel {
+public abstract class TrackerConfigurationPanel extends ActionListenablePanel {
 
 	private static final long serialVersionUID = -5752429080747619688L;
 

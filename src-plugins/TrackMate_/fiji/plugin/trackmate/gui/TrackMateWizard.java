@@ -23,11 +23,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.segmentation.SpotSegmenter;
-import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
@@ -38,15 +34,11 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
  */
 public class TrackMateWizard extends javax.swing.JFrame implements ActionListener {
 
-    private WizardPanelDescriptor currentPanel;
-    private HashMap<Object, WizardPanelDescriptor> panelHashmap;
-	
 	private JButton jButtonSave;
 	private JButton jButtonLoad;
 	private JButton jButtonPrevious;
 	private JButton jButtonNext;
 
-    
 	/*
 	 * DEFAULT VISIBILITY & PUBLIC CONSTANTS
 	 */
@@ -79,175 +71,35 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	/** This {@link ActionEvent} is fired when the 'save' button is pressed. */
 	final ActionEvent SAVE_BUTTON_PRESSED = new ActionEvent(this, 3, "SaveButtonPressed");
 
-
-	StartDialogPanel startDialogPanel;
-	SegmenterConfigurationPanel segmenterSettingsPanel;
-	InitFilterPanel initThresholdingPanel;
-	@SuppressWarnings("rawtypes")
-	ListChooserPanel<SpotSegmenter> segmenterChoicePanel;
-	ListChooserPanel<TrackMateModelView> displayerChooserPanel;
-	ListChooserPanel<SpotTracker> trackerChoicePanel;
-	FilterGuiPanel spotFilterGuiPanel;
-	FilterGuiPanel trackFilterGuiPanel;
-	TrackerSettingsPanel trackerSettingsPanel;
-	DisplayerPanel displayerPanel;
-
 	/*
 	 * FIELDS
 	 */
 
-	private TrackMateModel model;
 	private TrackMate_ plugin;
-	private WizardController controller;
+	private WizardPanelDescriptor currentDescriptor;
+	private HashMap<Object, WizardPanelDescriptor> descriptorHashmap;
 	private ArrayList<ActionListener> listeners = new ArrayList<ActionListener>();
 
 	private JPanel jPanelButtons;
 	private JPanel jPanelMain;
 	private LogPanel logPanel;
 	private CardLayout cardLayout;
-	private ActionChooserPanel actionPanel;
 	private TrackMateModelView displayer;
 
-	/*
-	 * ENUM
-	 */
-
-	public enum PanelCard {
-		START_DIALOG_KEY,
-		SEGMENTER_CHOICE_KEY,
-		TUNE_SEGMENTER_KEY,
-		INITIAL_THRESHOLDING_KEY,
-		DISPLAYER_CHOICE_KEY,
-		SPOT_FILTER_GUI_KEY,
-		TRACKER_CHOICE_KEY,
-		TUNE_TRACKER_KEY,
-		LOG_PANEL_KEY,
-		TRACK_FILTER_GUI_KEY,
-		DISPLAYER_PANEL_KEY, 
-		ACTION_PANEL_KEY;
-	}
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public TrackMateWizard(TrackMate_ plugin, WizardController controller) {
-		this.model = plugin.getModel();
+	public TrackMateWizard(TrackMate_ plugin) {
 		this.plugin = plugin;
-		this.controller = controller;
 		initGUI();
 		positionWindow();
-
 	}
 
 	/*
 	 * PUBLIC METHODS
 	 */
-
-	public void setModel(TrackMateModel model) {
-		this.model = model;
-		model.setLogger(getLogger());
-	}
-
-
-	/**
-	 * Display the panel whose key is given. If needed, instantiate it or update it by getting 
-	 * required parameters from the model this view represent.
-	 */
-	@SuppressWarnings("rawtypes")
-	public void displayPanel(PanelCard key) {
-
-		if (key == PanelCard.LOG_PANEL_KEY) {
-			cardLayout.show(jPanelMain, PanelCard.LOG_PANEL_KEY.name());
-			return;
-		}
-
-		ActionListenablePanel panel = null;
-		switch (key) {
-
-		case START_DIALOG_KEY:
-			startDialogPanel = new StartDialogPanel(model.getSettings());
-			panel = startDialogPanel;
-			break;
-
-		case SEGMENTER_CHOICE_KEY:
-			if (null == segmenterChoicePanel)
-				segmenterChoicePanel = new ListChooserPanel<SpotSegmenter>(plugin.getAvailableSpotSegmenters(), "segmenter");
-			panel = segmenterChoicePanel;
-			break;
-
-		case TUNE_SEGMENTER_KEY: {
-			if (null != segmenterSettingsPanel)
-				jPanelMain.remove(segmenterSettingsPanel);
-			Settings settings = model.getSettings();
-			segmenterSettingsPanel = settings.segmenterSettings.createConfigurationPanel();
-			segmenterSettingsPanel.setSegmenterSettings(model);
-			panel = segmenterSettingsPanel;
-			break;
-		}
-
-		case INITIAL_THRESHOLDING_KEY:
-			if (null != initThresholdingPanel)
-				jPanelMain.remove(initThresholdingPanel);
-			initThresholdingPanel = new InitFilterPanel();
-			panel = initThresholdingPanel;
-			break;
-
-		case DISPLAYER_CHOICE_KEY:
-			if (null != displayerChooserPanel)
-				jPanelMain.remove(displayerChooserPanel);
-			displayerChooserPanel = new ListChooserPanel<TrackMateModelView>(plugin.getAvailableTrackMateModelViews(), "displayer");
-			panel = displayerChooserPanel;
-			break;
-
-		case SPOT_FILTER_GUI_KEY:
-			if (null != spotFilterGuiPanel) 
-				jPanelMain.remove(spotFilterGuiPanel);
-			spotFilterGuiPanel = new  FilterGuiPanel(model.getFeatureModel().getSpotFeatures(), model.getSpotFilters(),  
-					model.getFeatureModel().getSpotFeatureNames(), model.getFeatureModel().getSpotFeatureValues(), "spots"); 
-			panel = spotFilterGuiPanel;
-			break;
-
-		case TRACKER_CHOICE_KEY:
-			if (null == trackerChoicePanel)
-				trackerChoicePanel = new ListChooserPanel<SpotTracker>(plugin.getAvailableSpotTrackers(), "tracker");
-			panel = trackerChoicePanel;
-			break;
-
-		case TUNE_TRACKER_KEY:
-			if (null != trackerSettingsPanel)
-				jPanelMain.remove(trackerSettingsPanel);
-			trackerSettingsPanel = model.getSettings().trackerSettings.createConfigurationPanel();
-			trackerSettingsPanel.setTrackerSettings(model);
-			panel = trackerSettingsPanel;
-			break;
-
-		case TRACK_FILTER_GUI_KEY:
-			if (null != trackFilterGuiPanel) 
-				jPanelMain.remove(trackFilterGuiPanel);
-			trackFilterGuiPanel = new FilterGuiPanel(model.getFeatureModel().getTrackFeatures(), model.getTrackFilters(),
-					model.getFeatureModel().getTrackFeatureNames(), model.getFeatureModel().getTrackFeatureValues(), "tracks");
-			panel = trackFilterGuiPanel;
-			break;
-
-		case DISPLAYER_PANEL_KEY:
-			if (null == displayerPanel) {
-				displayerPanel = new DisplayerPanel(model);
-				displayerPanel.addActionListener(this);
-			}
-			panel = displayerPanel;
-			break;
-
-		case ACTION_PANEL_KEY:
-			if (null == actionPanel)
-				actionPanel = new ActionChooserPanel(model, controller);
-			panel = actionPanel;
-			break;
-		}
-
-		jPanelMain.add(panel, key.name());
-		cardLayout.show(jPanelMain, key.name());
-	}
 
 	/** 
 	 * Add an {@link ActionListener} to the list of listeners of this GUI, that will be notified 
@@ -259,7 +111,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 
 	/** 
 	 * Remove an {@link ActionListener} from the list of listeners of this GUI.
-	 * @return  true if the listener was present in the list for this GUI and was sucessfully removed from it.
+	 * @return  true if the listener was present in the list for this GUI and was successfully removed from it.
 	 */
 	public boolean removeActionListener(ActionListener listener) {
 		return listeners.remove(listener);
@@ -271,7 +123,101 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	public Logger getLogger() {
 		return logPanel.getLogger();
 	}
+	
 
+	public LogPanel getLogPanel() {
+		return logPanel;
+	}
+
+	public TrackMateModelView getDisplayer() {
+		return displayer;
+	}
+
+	public void setDisplayer(TrackMateModelView displayer) {
+		this.displayer = displayer;
+
+	}
+	
+	/** 
+	 * Simply forward the caught event to listeners of this main frame.
+	 */
+	@Override
+	public void actionPerformed(final ActionEvent event) {
+		fireAction(event);
+	}
+
+	/*
+	 * 
+	 * WIZARD MODEL METHODS
+	 */
+
+	/**
+	 * Registers the WizardPanelDescriptor in the model using the Object-identifier specified.
+	 * @param id Object-based identifier
+	 * @param descriptor WizardPanelDescriptor that describes the panel
+	 */    
+	public void registerWizardDescriptor(Object id, WizardPanelDescriptor descriptor) {
+		cardLayout.addLayoutComponent(descriptor.getPanelComponent(), id);
+		descriptorHashmap.put(id, descriptor);
+	}
+	
+	/**
+	 * Returns the currently displayed WizardPanelDescriptor.
+	 * @return The currently displayed WizardPanelDescriptor
+	 */    
+	public WizardPanelDescriptor getCurrentPanelDescriptor() {
+		return currentDescriptor;
+	}
+
+	public WizardPanelDescriptor getPanelDescriptorFor(Object id) {
+		return descriptorHashmap.get(id);
+	}
+	
+	/**
+	 * Sets the current panel to that identified by the Object passed in.
+	 * @param id Object-based panel identifier
+	 * @return boolean indicating success or failure
+	 */    
+	public void setCurrentPanel(Object id) {
+
+		// Execute leave action of the old panel
+		WizardPanelDescriptor oldPanelDescriptor = currentDescriptor;
+		if (oldPanelDescriptor != null) {
+			oldPanelDescriptor.aboutToHidePanel();
+		}
+
+		// Execute about to be displayed action of the new one
+		currentDescriptor = descriptorHashmap.get(id);
+		currentDescriptor.aboutToDisplayPanel();
+
+		//  Show the panel in the dialog, and execute action after display
+		cardLayout.show(jPanelMain, id.toString());
+		currentDescriptor.displayingPanel();        
+	}
+
+	public void setNextButtonEnabled(final boolean b) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() { jButtonNext.setEnabled(b); }
+		});
+	}
+
+	public void setPreviousButtonEnabled(final boolean b) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() { jButtonPrevious.setEnabled(b); }
+		});
+	}
+
+	public void setSaveButtonEnabled(final boolean b) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() { jButtonSave.setEnabled(b); }
+		});
+	}
+
+	public void setLoadButtonEnabled(final boolean b) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() { jButtonLoad.setEnabled(b); }
+		});
+	}
 
 	/*
 	 * PRIVATE METHODS
@@ -281,18 +227,18 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	 * Try to position the GUI cleverly...
 	 */
 	private void positionWindow() {
-		if (null != model.getSettings().imp && model.getSettings().imp.getWindow() != null) {
-			
+		if (null != plugin.getModel().getSettings().imp && plugin.getModel().getSettings().imp.getWindow() != null) {
+
 			// Get total size of all screens
 			GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 			GraphicsDevice[] gs = ge.getScreenDevices();
 			int screenWidth = 0;
 			for (int i=0; i<gs.length; i++) {
-			    DisplayMode dm = gs[i].getDisplayMode();
-			    screenWidth += dm.getWidth();
+				DisplayMode dm = gs[i].getDisplayMode();
+				screenWidth += dm.getWidth();
 			}
-			
-			ImageWindow window = model.getSettings().imp.getWindow();
+
+			ImageWindow window = plugin.getModel().getSettings().imp.getWindow();
 			Point windowLoc = window.getLocation();
 			Dimension windowSize = window.getSize();
 			Dimension guiSize = this.getSize();
@@ -305,7 +251,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 			} else {
 				setLocation(windowLoc.x-guiSize.width, windowLoc.y); // put it to the left
 			}
-			
+
 		} else {
 			setLocationRelativeTo(null);
 		}
@@ -399,7 +345,6 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 			// Only instantiate the logger panel, the rest will be done by the controller
 			{
 				logPanel = new LogPanel();
-				jPanelMain.add(logPanel, PanelCard.LOG_PANEL_KEY.name());
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -408,144 +353,4 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 		validate();
 	}
 
-	/**
-	 * Return the GUI panel associated with the given {@link PanelCard}. 
-	 * Warning: Some panels may not be instantiated (yet) at the time when this method is called
-	 */
-	public ActionListenablePanel getPanelFor(PanelCard card) {
-		switch(card) {
-
-		case ACTION_PANEL_KEY:
-			return displayerPanel;
-		case DISPLAYER_CHOICE_KEY:
-			return displayerChooserPanel;
-		case DISPLAYER_PANEL_KEY:
-			return displayerPanel;
-		case INITIAL_THRESHOLDING_KEY:
-			return initThresholdingPanel;
-		case LOG_PANEL_KEY:
-			return logPanel;
-		case SEGMENTER_CHOICE_KEY:
-			return segmenterChoicePanel;
-		case START_DIALOG_KEY:
-			return startDialogPanel;
-		case SPOT_FILTER_GUI_KEY:
-			return spotFilterGuiPanel;
-		case TRACKER_CHOICE_KEY:
-			return trackerChoicePanel;
-		case TUNE_SEGMENTER_KEY:
-			return segmenterSettingsPanel;
-		case TUNE_TRACKER_KEY:
-			return trackerSettingsPanel;
-		default:
-			return null;
-		}
-
-	}
-
-	/** 
-	 * Simply forward the caught event to listeners of this main frame.
-	 */
-	@Override
-	public void actionPerformed(final ActionEvent event) {
-		fireAction(event);
-	}
-
-	/*
-	 * 
-	 * WIZARD MODEL METHODS
-	 */
-	
-	
-	
-    /**
-     * Returns the currently displayed WizardPanelDescriptor.
-     * @return The currently displayed WizardPanelDescriptor
-     */    
-    WizardPanelDescriptor getCurrentPanelDescriptor() {
-        return currentPanel;
-    }
-    
-    /**
-     * Registers the WizardPanelDescriptor in the model using the Object-identifier specified.
-     * @param id Object-based identifier
-     * @param descriptor WizardPanelDescriptor that describes the panel
-     */    
-     void registerPanel(Object id, WizardPanelDescriptor descriptor) {
-        
-        //  Place a reference to it in a hashtable so we can access it later
-        //  when it is about to be displayed.
-        
-        panelHashmap.put(id, descriptor);
-        
-    }  
-    
-    /**
-     * Sets the current panel to that identified by the Object passed in.
-     * @param id Object-based panel identifier
-     * @return boolean indicating success or failure
-     */    
-     boolean setCurrentPanel(Object id) {
-
-        //  First, get the hashtable reference to the panel that should
-        //  be displayed.
-        
-        WizardPanelDescriptor nextPanel = panelHashmap.get(id);
-        
-        //  If we couldn't find the panel that should be displayed, return
-        //  false.
-        
-        if (nextPanel == null) {
-        	return false;
-        }
-
-        WizardPanelDescriptor oldPanel = currentPanel;
-        currentPanel = nextPanel;
-        
-        if (oldPanel != currentPanel) {
-//            firePropertyChange(CURRENT_PANEL_DESCRIPTOR_PROPERTY, oldPanel, currentPanel);
-        }
-        return true;
-    }
-
-	public void setNextButtonEnabled(final boolean b) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() { jButtonNext.setEnabled(b); }
-		});
-	}
-
-	public void setPreviousButtonEnabled(final boolean b) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() { jButtonPrevious.setEnabled(b); }
-		});
-	}
-	
-	public void setSaveButtonEnabled(final boolean b) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() { jButtonSave.setEnabled(b); }
-		});
-	}
-	
-	public void setLoadButtonEnabled(final boolean b) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() { jButtonLoad.setEnabled(b); }
-		});
-	}
-
-	public LogPanel getLogPanel() {
-		return logPanel;
-	}
-
-	public TrackMateModelView getDisplayer() {
-		return displayer;
-	}
-
-	public void setDisplayer(TrackMateModelView displayer) {
-		this.displayer = displayer;
-		
-	}
-
-
-
-	
 }

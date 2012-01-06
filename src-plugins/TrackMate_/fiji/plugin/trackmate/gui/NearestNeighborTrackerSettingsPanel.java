@@ -12,7 +12,7 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTrackerSettings;
 import javax.swing.SwingConstants;
 
-public class NearestNeighborTrackerSettingsPanel extends TrackerSettingsPanel {
+public class NearestNeighborTrackerSettingsPanel extends TrackerConfigurationPanel {
 
 	private static final long serialVersionUID = 1L;
 	private JNumericTextField maxDistField;

@@ -4,7 +4,7 @@ import javax.swing.ImageIcon;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 import fiji.plugin.trackmate.segmentation.BasicSegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
@@ -19,21 +19,22 @@ public class ResetRadiusAction extends AbstractTMAction {
 	}
 	
 	@Override
-	public void execute(final TrackMateModel model) {
-		final SegmenterSettings segSettings = model.getSettings().segmenterSettings;
+	public void execute(final TrackMate_ plugin) {
+		final SegmenterSettings segSettings = plugin.getModel().getSettings().segmenterSettings;
 		final float radius;
 		if (segSettings instanceof BasicSegmenterSettings) {
 			radius = ((BasicSegmenterSettings) segSettings).expectedRadius;
 		} else {
 			radius = FALL_BACK_RADIUS;
-			logger.error("Could not determine expected radius from settings. Falling back to "+FALL_BACK_RADIUS+" "+model.getSettings().spaceUnits);
+			logger.error("Could not determine expected radius from settings. Falling back to "+FALL_BACK_RADIUS+" "
+					 + plugin.getModel().getSettings().spaceUnits);
 		}
 		
-		logger.log(String.format("Setting all spot radiuses to %.1f "+model.getSettings().spaceUnits+"\n", radius));
-		SpotCollection spots = model.getFilteredSpots();
+		logger.log(String.format("Setting all spot radiuses to %.1f "+plugin.getModel().getSettings().spaceUnits+"\n", radius));
+		SpotCollection spots = plugin.getModel().getFilteredSpots();
 		for(Spot spot : spots)
 			spot.putFeature(Spot.RADIUS, radius);
-		controller.getModelView().refresh();
+		wizard.getDisplayer().refresh();
 		logger.log("Done.\n");
 	}
 
@@ -49,5 +50,4 @@ public class ResetRadiusAction extends AbstractTMAction {
 	public String toString() {
 		return "Reset radius to expected value";
 	}
-
 }

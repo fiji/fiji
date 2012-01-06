@@ -9,7 +9,7 @@ import java.util.Set;
 import javax.swing.ImageIcon;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 
 /**
@@ -25,15 +25,15 @@ public class ResetSpotTimeFeatureAction extends AbstractTMAction {
 	}
 	
 	@Override
-	public void execute(TrackMateModel model) {
+	public void execute(TrackMate_ plugin) {
 		logger.log("Reset spot time.\n");
-		float dt = model.getSettings().dt;
+		float dt = plugin.getModel().getSettings().dt;
 		if (dt == 0) {
 			dt = 1;
 		}
-		Set<Integer> frames = model.getSpots().keySet();
+		Set<Integer> frames = plugin.getModel().getSpots().keySet();
 		for(int frame : frames) {
-			List<Spot> spots = model.getSpots().get(frame);
+			List<Spot> spots = plugin.getModel().getSpots().get(frame);
 			for(Spot spot : spots) {
 				spot.putFeature(Spot.POSITION_T, frame * dt); 
 			}
@@ -55,5 +55,4 @@ public class ResetSpotTimeFeatureAction extends AbstractTMAction {
 	public String toString() {
 		return "Reset spot time";
 	}
-	
 }

@@ -15,13 +15,12 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
-public class SpotFilterDescriptor implements WizardPanelDescriptor {
-
-	public static final Object DESCRIPTOR = "SpotFilter";
+public class TrackFilterDescriptor implements WizardPanelDescriptor {
+	public static final Object DESCRIPTOR = "TrackFilter";
 	private TrackMateWizard wizard;
 	private FilterGuiPanel component;
 	private TrackMate_ plugin;
-	
+
 	@Override
 	public void setWizard(TrackMateWizard wizard) {
 		this.wizard = wizard;
@@ -44,25 +43,26 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 
 	@Override
 	public Object getNextPanelDescriptor() {
-		return TrackerChoiceDescriptor.DESCRIPTOR;
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
 	public Object getBackPanelDescriptor() {
-		return DisplayerChoiceDescriptor.DESCRIPTOR;
+		return TrackerConfigurationPanelDescriptor.DESCRIPTOR;
 	}
 
 	@Override
 	public void aboutToDisplayPanel() {
 		TrackMateModel model = plugin.getModel();
-		component = new  FilterGuiPanel(model.getFeatureModel().getSpotFeatures(), model.getSpotFilters(),  
-				model.getFeatureModel().getSpotFeatureNames(), model.getFeatureModel().getSpotFeatureValues(), "spots"); 
+		component = new  FilterGuiPanel(model.getFeatureModel().getTrackFeatures(), model.getTrackFilters(),  
+				model.getFeatureModel().getTrackFeatureNames(), model.getFeatureModel().getTrackFeatureValues(), "tracks"); 
 	}
 
 	@Override
 	public void displayingPanel() {
-		
-		 // Link displayer and component
+
+		// Link displayer and component
 		final TrackMateModelView displayer = wizard.getDisplayer();
 		SwingUtilities.invokeLater(new Runnable() {			
 			@Override
@@ -71,7 +71,7 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 				component.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent event) {
-						displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLOR_FEATURE, component.getColorByFeature());
+						displayer.setDisplaySettings(TrackMateModelView.KEY_TRACK_COLOR_FEATURE, component.getColorByFeature());
 						displayer.refresh();
 					}
 				});
@@ -80,32 +80,28 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 					@Override
 					public void stateChanged(ChangeEvent event) {
 						// We set the thresholds field of the model but do not touch its selected spot field yet.
-						plugin.getModel().setSpotFilters(component.getFeatureFilters());
-						plugin.execSpotFiltering();
-						displayer.refresh();
+						plugin.getModel().setTrackFilters(component.getFeatureFilters());
+						plugin.execTrackFiltering();
 					}
 				});
-
-				component.stateChanged(null); // force redraw
 			}
 		});
 	}
 
 	@Override
 	public void aboutToHidePanel() {
-		Logger logger = wizard.getLogger();
-		logger.log("Performing spot filtering on the following features:\n", Logger.BLUE_COLOR);
-		final TrackMateModel model = plugin.getModel();
+		final Logger logger = wizard.getLogger();
+		logger.log("Performing track filtering on the following features:\n", Logger.BLUE_COLOR);
 		List<FeatureFilter> featureFilters = component.getFeatureFilters();
-		model.setSpotFilters(featureFilters);
-		plugin.execSpotFiltering();
+		final TrackMateModel model = plugin.getModel();
+		model.setTrackFilters(featureFilters);
+		plugin.execTrackFiltering();
 
-		int ntotal = model.getSpots().getNSpots();
 		if (featureFilters == null || featureFilters.isEmpty()) {
-			logger.log("No feature threshold set, kept the " + ntotal + " spots.\n");
+			logger.log("No feature threshold set, kept the " + model.getNTracks() + " tracks.\n");
 		} else {
 			for (FeatureFilter ft : featureFilters) {
-				String str = "  - on "+model.getFeatureModel().getSpotFeatureNames().get(ft.feature);
+				String str = "  - on "+model.getFeatureModel().getTrackFeatureNames().get(ft.feature);
 				if (ft.isAbove) 
 					str += " above ";
 				else
@@ -114,8 +110,7 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 				str += '\n';
 				logger.log(str);
 			}
-			int nselected = model.getFilteredSpots().getNSpots();
-			logger.log("Kept "+nselected+" spots out of " + ntotal + ".\n");
+			logger.log("Kept "+model.getNFilteredTracks()+" tracks out of "+model.getNTracks()+".\n");
 		}		
 	}
 }

@@ -37,6 +37,7 @@ import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
 
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
@@ -45,10 +46,11 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
  * This GUI takes the role of a controller.
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr>   -  2010 - 2011
  */
-public class DisplayerPanel extends ActionListenablePanel {
+public class DisplayerPanel extends ActionListenablePanel implements WizardPanelDescriptor {
 
 	private static final long serialVersionUID = 1L;
 
+	public static final Object DESCRIPTOR = "DisplayerPanel";
 	public ActionEvent TRACK_SCHEME_BUTTON_PRESSED 	= new ActionEvent(this, 0, "TrackSchemeButtonPushed");
 
 	JButton jButtonShowTrackScheme;
@@ -74,17 +76,63 @@ public class DisplayerPanel extends ActionListenablePanel {
 	private List<String> features;
 	private Map<String, String> featureNames;
 
-	public DisplayerPanel(TrackMateModel model) {
-		super();
-		setModel(model);
-		initGUI();
-	}
-
-
 	/*
 	 * PUBLIC METHODS
 	 */
 
+
+	@Override
+	public void setWizard(TrackMateWizard wizard) {
+		register(wizard.getDisplayer());
+	}
+
+
+	@Override
+	public void setPlugin(TrackMate_ plugin) {
+		setModel(plugin.getModel());
+	}
+
+
+	@Override
+	public Component getPanelComponent() {
+		return this;
+	}
+
+
+	@Override
+	public Object getPanelDescriptorIdentifier() {
+		return DESCRIPTOR;
+	}
+
+
+	@Override
+	public Object getNextPanelDescriptor() {
+		return ActionChooserPanel.DESCRIPTOR;
+	}
+
+
+	@Override
+	public Object getBackPanelDescriptor() {
+		return TrackFilterDescriptor.DESCRIPTOR;
+	}
+
+
+	@Override
+	public void aboutToDisplayPanel() {
+		initGUI();
+	}
+
+
+	@Override
+	public void displayingPanel() { }
+
+
+	@Override
+	public void aboutToHidePanel() { }
+
+
+	
+	
 	/**
 	 * Add the given {@link TrackMateModelView} to the list managed by this controller.
 	 */
@@ -377,7 +425,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();
 		frame.setVisible(true);
-		DisplayerPanel displayerPanel_IL = new DisplayerPanel(null);
+		DisplayerPanel displayerPanel_IL = new DisplayerPanel();
 		frame.getContentPane().add(displayerPanel_IL);
 		displayerPanel_IL.setPreferredSize(new java.awt.Dimension(300, 469));
 	}

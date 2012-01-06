@@ -14,7 +14,7 @@ import org.jdom.Element;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.gui.LAPTrackerSettingsPanel;
 import fiji.plugin.trackmate.gui.SimpleLAPTrackerSettingsPanel;
-import fiji.plugin.trackmate.gui.TrackerSettingsPanel;
+import fiji.plugin.trackmate.gui.TrackerConfigurationPanel;
 
 public class LAPTrackerSettings implements TrackerSettings {
 
@@ -159,7 +159,7 @@ public class LAPTrackerSettings implements TrackerSettings {
 	}
 
 	@Override
-	public TrackerSettingsPanel createConfigurationPanel() {
+	public TrackerConfigurationPanel createConfigurationPanel() {
 		if (useSimpleConfigPanel) {
 			return new SimpleLAPTrackerSettingsPanel();
 		} else {

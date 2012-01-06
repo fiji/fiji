@@ -16,6 +16,7 @@ import ij.process.ColorProcessor;
 import javax.swing.ImageIcon;
 
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 public class CaptureOverlayAction extends AbstractTMAction {
@@ -27,10 +28,11 @@ public class CaptureOverlayAction extends AbstractTMAction {
 	}
 
 	@Override
-	public void execute(TrackMateModel model) {
+	public void execute(TrackMate_ plugin) {
 		logger.log("Capturing TrackMate overlay.\n");
 		logger.log("  Preparing and allocating memory...");
 		try {
+			final TrackMateModel model = plugin.getModel();
 			final ImagePlus imp = model.getSettings().imp;
 			final ImageWindow win = imp.getWindow();
 			win.toFront();

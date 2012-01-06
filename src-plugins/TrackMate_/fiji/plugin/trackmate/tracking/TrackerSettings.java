@@ -3,7 +3,7 @@ package fiji.plugin.trackmate.tracking;
 import org.jdom.Attribute;
 import org.jdom.Element;
 
-import fiji.plugin.trackmate.gui.TrackerSettingsPanel;
+import fiji.plugin.trackmate.gui.TrackerConfigurationPanel;
 import fiji.plugin.trackmate.io.TmXmlKeys;
 
 public interface TrackerSettings {
@@ -11,7 +11,7 @@ public interface TrackerSettings {
 	/**
 	 * @return  an GUI panel that is able to configure this concrete settings object.
 	 */
-	public TrackerSettingsPanel createConfigurationPanel();
+	public TrackerConfigurationPanel createConfigurationPanel();
 
 	/**
 	 * Marshall this concrete instance to a JDom element, ready for saving to XML.
