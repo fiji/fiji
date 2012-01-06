@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class Translator {
+public class ReconstructTranslator {
 
     private static class MalformedFileInputStream extends FilterInputStream
     {
@@ -159,7 +159,7 @@ public class Translator {
         sectionDocuments.add(d);
     }
 
-    public Translator(String f)
+    public ReconstructTranslator(String f)
     {
         inputFile = new File(f);
         // Parse out the path
@@ -292,6 +292,8 @@ public class Translator {
                         ", column " + spe.getColumnNumber() + "\n";
                 errorMessage += Utils.stackTraceToString(spe);
 
+                clearMemory();
+                
                 return false;
             }
             catch (Exception e)
