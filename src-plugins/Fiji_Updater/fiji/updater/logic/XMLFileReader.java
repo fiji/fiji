@@ -126,6 +126,9 @@ public class XMLFileReader extends DefaultHandler {
 						+ already.updateSite
 						+ "'\n");
 			}
+			String executable = atts.getValue("executable");
+			if ("true".equalsIgnoreCase(executable))
+				current.executable = true;
 		}
 		else if (currentTag.equals("previous-version"))
 			current.addPreviousVersion(atts.getValue("checksum"),
