@@ -13,15 +13,6 @@ public class SegmenterChoiceDescriptor implements WizardPanelDescriptor {
 	private TrackMate_ plugin;
 	
 	/*
-	 * CONSTRUCTOR
-	 */
-	
-	@SuppressWarnings("rawtypes")
-	public SegmenterChoiceDescriptor(TrackMate_ plugin) {
-		this.component = new ListChooserPanel<SpotSegmenter>(plugin.getAvailableSpotSegmenters(), "segmenter");
-	}
-	
-	/*
 	 * METHODS
 	 */
 
@@ -37,8 +28,7 @@ public class SegmenterChoiceDescriptor implements WizardPanelDescriptor {
 
 	@Override
 	public Object getNextPanelDescriptor() {
-		// TODO Auto-generated method stub
-		return null;
+		return SegmentationDescriptor.DESCRIPTOR;
 	}
 
 	@Override
@@ -58,14 +48,14 @@ public class SegmenterChoiceDescriptor implements WizardPanelDescriptor {
 		plugin.getModel().getSettings().segmenter = component.getChoice();
 	}
 
-	@Override
-	public void setWizardModel(WizardModel model) {
-		// We do not use the wizard panel here
-	}
-
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void setPlugin(TrackMate_ plugin) {
 		this.plugin = plugin;
+		this.component = new ListChooserPanel<SpotSegmenter>(plugin.getAvailableSpotSegmenters(), "segmenter");
 	}
+
+	@Override
+	public void setWizard(TrackMateWizard wizard) {	}
 
 }

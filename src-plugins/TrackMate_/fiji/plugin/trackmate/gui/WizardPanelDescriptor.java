@@ -11,15 +11,9 @@ import fiji.plugin.trackmate.TrackMate_;
 public interface WizardPanelDescriptor {
       
 	/** 
-	 * Set a reference to the wizard model that will hold changes made by the user on the GUI 
-	 * component this descriptor controls.
+	 * Set a reference to the model that will embed the GUI component this descriptor controls.
 	 */
-	public void setWizardModel(WizardModel model);
-
-//	/** 
-//	 * Set a reference to the model that will embed the GUI component this descriptor controls.
-//	 */
-//	public void setWizard(TrackMateWizard wizard);
+	public void setWizard(TrackMateWizard wizard);
 
 	/**
 	 * Set a reference to the TrackMate plugin that is managed by the GUI. This

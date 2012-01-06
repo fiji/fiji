@@ -93,7 +93,7 @@ public class WizardController implements ActionListener {
 				@Override
 				public void run() { updateGUI(); }
 			});
-			setMainButtonsFor(state);
+//			setMainButtonsFor(state);
 			performPostGUITask();
 
 		} else if (event == view.PREVIOUS_BUTTON_PRESSED && actionFlag) {
@@ -115,7 +115,7 @@ public class WizardController implements ActionListener {
 				event == view.SAVE_BUTTON_PRESSED) && !actionFlag ) {
 
 			actionFlag = true;
-			setMainButtonsFor(state);
+//			setMainButtonsFor(state);
 			updateGUI();
 
 		} else if (event == displayerPanel.TRACK_SCHEME_BUTTON_PRESSED) {
@@ -225,24 +225,24 @@ public class WizardController implements ActionListener {
 		}
 		view.displayPanel(key);
 		// Update button states
-		switch(state) {
-		case START:
-			view.jButtonPrevious.setEnabled(false);
-			break;
-		case ACTIONS:
-			view.jButtonPrevious.setEnabled(true);
-			view.jButtonNext.setEnabled(false);
-			break;
-		default:
-			view.jButtonPrevious.setEnabled(true);
-			view.jButtonNext.setEnabled(true);
-		}
+//		switch(state) {
+//		case START:
+//			view.jButtonPrevious.setEnabled(false);
+//			break;
+//		case ACTIONS:
+//			view.jButtonPrevious.setEnabled(true);
+//			view.jButtonNext.setEnabled(false);
+//			break;
+//		default:
+//			view.jButtonPrevious.setEnabled(true);
+//			view.jButtonNext.setEnabled(true);
+//		}
 		// Extra actions
 		switch(state) {
 
-		case TUNE_SPOT_FILTERS:
-			execLinkDisplayerToSpotFilterGUI();
-			break;
+//		case TUNE_SPOT_FILTERS:
+//			execLinkDisplayerToSpotFilterGUI();
+//			break;
 
 		case TUNE_TRACK_FILTERS:
 			execLinkDisplayerToTrackFilterGUI();
@@ -260,9 +260,9 @@ public class WizardController implements ActionListener {
 	private void performLeaveStateTask() {
 		switch(state) {
 
-		case CHOOSE_SEGMENTER:
-			execGetSegmenterChoice();
-			break;
+//		case CHOOSE_SEGMENTER:
+//			execGetSegmenterChoice();
+//			break;
 
 		case TUNE_SEGMENTER: {
 			Settings settings = plugin.getModel().getSettings();
@@ -305,32 +305,32 @@ public class WizardController implements ActionListener {
 		TrackMateModel model = plugin.getModel();
 		switch(state) {
 
-		case CHOOSE_SEGMENTER:
-			// Get the settings basic fields from the start dialog panel 
-			execGetStartSettings();
-			return;
+//		case CHOOSE_SEGMENTER:
+//			// Get the settings basic fields from the start dialog panel 
+//			execGetStartSettings();
+//			return;
 
-		case SEGMENTING: {
-			execSegmentationStep(); 
-			return;
-		}
+//		case SEGMENTING: {
+//			execSegmentationStep(); 
+//			return;
+//		}
 
-		case CHOOSE_DISPLAYER:
-			// Before we switch to the log display when calculating features, we *execute* the initial thresholding step,
-			// only if we did not skip segmentation.
-			if (model.getSettings().segmenter.getClass() != ManualSegmenter.class)
-				execInitialThresholding();
-			return;
+//		case CHOOSE_DISPLAYER:
+//			// Before we switch to the log display when calculating features, we *execute* the initial thresholding step,
+//			// only if we did not skip segmentation.
+//			if (model.getSettings().segmenter.getClass() != ManualSegmenter.class)
+//				execInitialThresholding();
+//			return;
 
-		case CALCULATE_FEATURES: {
-			execCalculateFeatures();
-			execLaunchdisplayer();
-			return;
-		}
-
-		case FILTER_SPOTS:
-			execSpotFiltering();
-			return;
+//		case CALCULATE_FEATURES: {
+//			execCalculateFeatures();
+//			execLaunchdisplayer();
+//			return;
+//		}
+//
+//		case FILTER_SPOTS:
+//			execSpotFiltering();
+//			return;
 
 		case FILTER_TRACKS:
 			execTrackFiltering();
@@ -356,57 +356,57 @@ public class WizardController implements ActionListener {
 	 * previous) according to the given state. If <code>null</code> is given,
 	 * all buttons are disabled.
 	 */
-	private void setMainButtonsFor(final GuiState state) {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				view.jButtonNext.setText("Next");
-				if (null == state) {
-					view.jButtonLoad.setEnabled(false);
-					view.jButtonSave.setEnabled(false);
-					view.jButtonNext.setEnabled(false);
-					view.jButtonPrevious.setEnabled(false);
-					return;
-				}
-
-				switch (state)	{
-				default:
-					view.jButtonLoad.setEnabled(true);
-					view.jButtonSave.setEnabled(true);
-					view.jButtonNext.setEnabled(true);
-					view.jButtonPrevious.setEnabled(true);
-					break;
-				case LOAD_SAVE:
-					view.jButtonLoad.setEnabled(false);
-					view.jButtonSave.setEnabled(false);
-					view.jButtonNext.setEnabled(true);
-					view.jButtonPrevious.setEnabled(false);
-					view.jButtonNext.setText("Resume");
-					break;
-				case ACTIONS:
-					view.jButtonLoad.setEnabled(true);
-					view.jButtonSave.setEnabled(true);
-					view.jButtonNext.setEnabled(false);
-					view.jButtonPrevious.setEnabled(true);
-					break;
-				case START:
-					view.jButtonLoad.setEnabled(true);
-					view.jButtonSave.setEnabled(true);
-					view.jButtonNext.setEnabled(true);
-					view.jButtonPrevious.setEnabled(false);
-					break;
-
-				}
-			}});
-
-	}
+//	private void setMainButtonsFor(final GuiState state) {
+//		SwingUtilities.invokeLater(new Runnable() {
+//			@Override
+//			public void run() {
+//				view.jButtonNext.setText("Next");
+//				if (null == state) {
+//					view.jButtonLoad.setEnabled(false);
+//					view.jButtonSave.setEnabled(false);
+//					view.jButtonNext.setEnabled(false);
+//					view.jButtonPrevious.setEnabled(false);
+//					return;
+//				}
+//
+//				switch (state)	{
+//				default:
+//					view.jButtonLoad.setEnabled(true);
+//					view.jButtonSave.setEnabled(true);
+//					view.jButtonNext.setEnabled(true);
+//					view.jButtonPrevious.setEnabled(true);
+//					break;
+//				case LOAD_SAVE:
+//					view.jButtonLoad.setEnabled(false);
+//					view.jButtonSave.setEnabled(false);
+//					view.jButtonNext.setEnabled(true);
+//					view.jButtonPrevious.setEnabled(false);
+//					view.jButtonNext.setText("Resume");
+//					break;
+//				case ACTIONS:
+//					view.jButtonLoad.setEnabled(true);
+//					view.jButtonSave.setEnabled(true);
+//					view.jButtonNext.setEnabled(false);
+//					view.jButtonPrevious.setEnabled(true);
+//					break;
+//				case START:
+//					view.jButtonLoad.setEnabled(true);
+//					view.jButtonSave.setEnabled(true);
+//					view.jButtonNext.setEnabled(true);
+//					view.jButtonPrevious.setEnabled(false);
+//					break;
+//
+//				}
+//			}});
+//
+//	}
 
 
 	private void load() {
 		try {
 
 			actionFlag = false;
-			setMainButtonsFor(null);
+//			setMainButtonsFor(null);
 			view.displayPanel(PanelCard.LOG_PANEL_KEY);
 
 			// New model to feed
@@ -425,7 +425,7 @@ public class WizardController implements ActionListener {
 			GuiReader reader = new GuiReader(this);
 			File tmpFile = reader.askForFile(file);
 			if (null == tmpFile) {
-				setMainButtonsFor(GuiState.LOAD_SAVE);
+//				setMainButtonsFor(GuiState.LOAD_SAVE);
 				return;
 			}
 			file = tmpFile;
@@ -433,14 +433,14 @@ public class WizardController implements ActionListener {
 			plugin.computeTrackFeatures();
 
 		} finally {
-			setMainButtonsFor(GuiState.LOAD_SAVE);
+//			setMainButtonsFor(GuiState.LOAD_SAVE);
 		}
 	}
 
 	private void save() {
 		try {
 
-			setMainButtonsFor(null);
+//			setMainButtonsFor(null);
 			view.displayPanel(PanelCard.LOG_PANEL_KEY);
 
 			logger.log("Saving data...\n", Logger.BLUE_COLOR);
@@ -458,7 +458,7 @@ public class WizardController implements ActionListener {
 			File tmpFile = saver.askForFile(file);
 			if (null == tmpFile) {
 				actionFlag = false;
-				setMainButtonsFor(GuiState.LOAD_SAVE);
+//				setMainButtonsFor(GuiState.LOAD_SAVE);
 				return;
 			}
 			file = tmpFile;
@@ -467,21 +467,21 @@ public class WizardController implements ActionListener {
 		}	finally {
 
 			actionFlag = false;
-			setMainButtonsFor(GuiState.LOAD_SAVE);
+//			setMainButtonsFor(GuiState.LOAD_SAVE);
 
 		}
 	}
 
-	private void execGetStartSettings() {
-		plugin.getModel().setSettings(view.startDialogPanel.getSettings());
-	}
-
-	@SuppressWarnings("unchecked")
-	private void execGetSegmenterChoice() {
-		Settings settings = plugin.getModel().getSettings();
-		settings.segmenter = view.segmenterChoicePanel.getChoice();
-		settings.segmenterSettings = settings.segmenter.createDefaultSettings();
-	}
+//	private void execGetStartSettings() {
+//		plugin.getModel().setSettings(view.startDialogPanel.getSettings());
+//	}
+//
+//	@SuppressWarnings("unchecked")
+//	private void execGetSegmenterChoice() {
+//		Settings settings = plugin.getModel().getSettings();
+//		settings.segmenter = view.segmenterChoicePanel.getChoice();
+//		settings.segmenterSettings = settings.segmenter.createDefaultSettings();
+//	}
 
 	private void execGetTrackerChoice() {
 		Settings settings = plugin.getModel().getSettings();
@@ -489,142 +489,142 @@ public class WizardController implements ActionListener {
 		settings.trackerSettings = settings.tracker.createDefaultSettings(); 
 	}
 
-	/**
-	 * Switch to the log panel, and execute the segmentation step, which will be delegated to 
-	 * the {@link TrackMate_} glue class in a new Thread.
-	 */
-	private void execSegmentationStep() {
-		switchNextButton(false);
-		final Settings settings = plugin.getModel().getSettings();
-		logger.log("Starting segmentation using "+settings.segmenter.toString()+"\n", Logger.BLUE_COLOR);
-		logger.log("with settings:\n");
-		logger.log(settings.toString());
-		logger.log(settings.segmenterSettings.toString());
-		new Thread("TrackMate segmentation mother thread") {					
-			public void run() {
-				long start = System.currentTimeMillis();
-				try {
-					plugin.execSegmentation();
-				} catch (Exception e) {
-					logger.error("An error occured:\n"+e+'\n');
-					e.printStackTrace(logger);
-				} finally {
-					switchNextButton(true);
-					long end = System.currentTimeMillis();
-					logger.log(String.format("Segmentation done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
-				}
-			}
-		}.start();
-	}
+//	/**
+//	 * Switch to the log panel, and execute the segmentation step, which will be delegated to 
+//	 * the {@link TrackMate_} glue class in a new Thread.
+//	 */
+//	private void execSegmentationStep() {
+////		switchNextButton(false);
+//		final Settings settings = plugin.getModel().getSettings();
+//		logger.log("Starting segmentation using "+settings.segmenter.toString()+"\n", Logger.BLUE_COLOR);
+//		logger.log("with settings:\n");
+//		logger.log(settings.toString());
+//		logger.log(settings.segmenterSettings.toString());
+//		new Thread("TrackMate segmentation mother thread") {					
+//			public void run() {
+//				long start = System.currentTimeMillis();
+//				try {
+//					plugin.execSegmentation();
+//				} catch (Exception e) {
+//					logger.error("An error occured:\n"+e+'\n');
+//					e.printStackTrace(logger);
+//				} finally {
+////					switchNextButton(true);
+//					long end = System.currentTimeMillis();
+//					logger.log(String.format("Segmentation done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
+//				}
+//			}
+//		}.start();
+//	}
 
-	/**
-	 * Apply the quality threshold set by the {@link TrackMateWizard#initThresholdingPanel}, and <b>overwrite</b> 
-	 * the {@link Spot} collection of the {@link TrackMateModel} with the result.
-	 */
-	private void execInitialThresholding() {
-		final TrackMateModel model = plugin.getModel();
-		FeatureFilter initialThreshold = view.initThresholdingPanel.getFeatureThreshold();
-		String str = "Initial thresholding with a quality threshold above "+ String.format("%.1f", initialThreshold.value) + " ...\n";
-		logger.log(str,Logger.BLUE_COLOR);
-		int ntotal = 0;
-		for (Collection<Spot> spots : model.getSpots().values())
-			ntotal += spots.size();
-				model.setInitialSpotFilterValue(initialThreshold.value);
-				plugin.execInitialSpotFiltering();
-				int nselected = 0;
-				for (Collection<Spot> spots : model.getSpots().values())
-					nselected += spots.size();
-						logger.log(String.format("Retained %d spots out of %d.\n", nselected, ntotal));
-	}
+//	/**
+//	 * Apply the quality threshold set by the {@link TrackMateWizard#initThresholdingPanel}, and <b>overwrite</b> 
+//	 * the {@link Spot} collection of the {@link TrackMateModel} with the result.
+//	 */
+//	private void execInitialThresholding() {
+//		final TrackMateModel model = plugin.getModel();
+//		FeatureFilter initialThreshold = view.initThresholdingPanel.getFeatureThreshold();
+//		String str = "Initial thresholding with a quality threshold above "+ String.format("%.1f", initialThreshold.value) + " ...\n";
+//		logger.log(str,Logger.BLUE_COLOR);
+//		int ntotal = 0;
+//		for (Collection<Spot> spots : model.getSpots().values())
+//			ntotal += spots.size();
+//				model.setInitialSpotFilterValue(initialThreshold.value);
+//				plugin.execInitialSpotFiltering();
+//				int nselected = 0;
+//				for (Collection<Spot> spots : model.getSpots().values())
+//					nselected += spots.size();
+//						logger.log(String.format("Retained %d spots out of %d.\n", nselected, ntotal));
+//	}
 
 
-	/**
-	 * Compute all features on all spots retained after initial thresholding.
-	 */
-	private void execCalculateFeatures() {
-		switchNextButton(false);
-		logger.log("Calculating features...\n",Logger.BLUE_COLOR);
-		calculateFeaturesDone = false;
-		// Calculate features
-		new Thread("TrackMate spot feature calculating mother thread") {
-			public void run() {
-				try {
-					long start = System.currentTimeMillis();
-					plugin.computeSpotFeatures();		
-					long end  = System.currentTimeMillis();
-					logger.log(String.format("Calculating features done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
-				} finally {
-					calculateFeaturesDone = true;
-					if (renderingDone) {
-						switchNextButton(true);
-					}
-				}
-			}
-		}.start();
-	}
+//	/**
+//	 * Compute all features on all spots retained after initial thresholding.
+//	 */
+//	private void execCalculateFeatures() {
+////		switchNextButton(false);
+//		logger.log("Calculating features...\n",Logger.BLUE_COLOR);
+//		calculateFeaturesDone = false;
+//		// Calculate features
+//		new Thread("TrackMate spot feature calculating mother thread") {
+//			public void run() {
+//				try {
+//					long start = System.currentTimeMillis();
+//					plugin.computeSpotFeatures();		
+//					long end  = System.currentTimeMillis();
+//					logger.log(String.format("Calculating features done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
+//				} finally {
+//					calculateFeaturesDone = true;
+//					if (renderingDone) {
+////						switchNextButton(true);
+//					}
+//				}
+//			}
+//		}.start();
+//	}
 
-	/**
-	 * Render spots in another thread, then switch to the thresholding panel. 
-	 */
-	private void execLaunchdisplayer() {
-		// Launch renderer
-		logger.log("Rendering results...\n",Logger.BLUE_COLOR);
-		renderingDone = false;
-		// Thread for rendering
-		new Thread("TrackMate rendering thread") {
+//	/**
+//	 * Render spots in another thread, then switch to the thresholding panel. 
+//	 */
+//	private void execLaunchdisplayer() {
+//		// Launch renderer
+//		logger.log("Rendering results...\n",Logger.BLUE_COLOR);
+//		renderingDone = false;
+//		// Thread for rendering
+//		new Thread("TrackMate rendering thread") {
+//
+//			public void run() {
+//				// Instantiate displayer
+//				if (null != displayer) {
+//					displayer.clear();
+//				}
+//				try {
+//					displayer = view.displayerChooserPanel.getChoice();
+//					displayer.setModel(plugin.getModel());
+//					displayer.render();
+//				} finally {
+//					// Re-enable the GUI
+//					renderingDone = true;
+//					logger.log("Rendering done.\n", Logger.BLUE_COLOR);
+//					if (calculateFeaturesDone) {
+////						switchNextButton(true);
+//					}
+//				}
+//			}
+//		}.start();
+//	}
 
-			public void run() {
-				// Instantiate displayer
-				if (null != displayer) {
-					displayer.clear();
-				}
-				try {
-					displayer = view.displayerChooserPanel.getChoice();
-					displayer.setModel(plugin.getModel());
-					displayer.render();
-				} finally {
-					// Re-enable the GUI
-					renderingDone = true;
-					logger.log("Rendering done.\n", Logger.BLUE_COLOR);
-					if (calculateFeaturesDone) {
-						switchNextButton(true);
-					}
-				}
-			}
-		}.start();
-	}
-
-	/**
-	 * Link the displayer frame to the threshold gui displayed in the view, so that 
-	 * displayed spots are updated live when the user changes something in the view.
-	 */
-	private void execLinkDisplayerToSpotFilterGUI() {
-		SwingUtilities.invokeLater(new Runnable() {			
-			@Override
-			public void run() {
-
-				view.spotFilterGuiPanel.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent event) {
-						displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLOR_FEATURE, view.spotFilterGuiPanel.getColorByFeature());
-						displayer.refresh();
-					}
-				});
-
-				view.spotFilterGuiPanel.addChangeListener(new ChangeListener() {
-					@Override
-					public void stateChanged(ChangeEvent event) {
-						// We set the thresholds field of the model but do not touch its selected spot field yet.
-						plugin.getModel().setSpotFilters(view.spotFilterGuiPanel.getFeatureFilters());
-						plugin.execSpotFiltering();
-						displayer.refresh();
-					}
-				});
-
-				view.spotFilterGuiPanel.stateChanged(null); // force redraw
-			}
-		});
-	}
+//	/**
+//	 * Link the displayer frame to the threshold gui displayed in the view, so that 
+//	 * displayed spots are updated live when the user changes something in the view.
+//	 */
+//	private void execLinkDisplayerToSpotFilterGUI() {
+//		SwingUtilities.invokeLater(new Runnable() {			
+//			@Override
+//			public void run() {
+//
+//				view.spotFilterGuiPanel.addActionListener(new ActionListener() {
+//					@Override
+//					public void actionPerformed(ActionEvent event) {
+//						displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLOR_FEATURE, view.spotFilterGuiPanel.getColorByFeature());
+//						displayer.refresh();
+//					}
+//				});
+//
+//				view.spotFilterGuiPanel.addChangeListener(new ChangeListener() {
+//					@Override
+//					public void stateChanged(ChangeEvent event) {
+//						// We set the thresholds field of the model but do not touch its selected spot field yet.
+//						plugin.getModel().setSpotFilters(view.spotFilterGuiPanel.getFeatureFilters());
+//						plugin.execSpotFiltering();
+//						displayer.refresh();
+//					}
+//				});
+//
+//				view.spotFilterGuiPanel.stateChanged(null); // force redraw
+//			}
+//		});
+//	}
 
 	private void execLinkDisplayerToTrackFilterGUI() {
 		SwingUtilities.invokeLater(new Runnable() {			
@@ -651,36 +651,36 @@ public class WizardController implements ActionListener {
 		});
 	}
 
-	/**
-	 * Retrieve the spot feature filter list set in the filter GUI, forward it to the model, and 
-	 * perform the spot filtering in the model.
-	 */
-	private void execSpotFiltering() {
-		logger.log("Performing spot filtering on the following features:\n", Logger.BLUE_COLOR);
-		final TrackMateModel model = plugin.getModel();
-		List<FeatureFilter> featureFilters = view.spotFilterGuiPanel.getFeatureFilters();
-		model.setSpotFilters(featureFilters);
-		plugin.execSpotFiltering();
-
-		int ntotal = model.getSpots().getNSpots();
-		if (featureFilters == null || featureFilters.isEmpty()) {
-			logger.log("No feature threshold set, kept the " + ntotal + " spots.\n");
-		} else {
-			for (FeatureFilter ft : featureFilters) {
-				String str = "  - on "+model.getFeatureModel().getSpotFeatureNames().get(ft.feature);
-				if (ft.isAbove) 
-					str += " above ";
-				else
-					str += " below ";
-				str += String.format("%.1f", ft.value);
-				str += '\n';
-				logger.log(str);
-			}
-			int nselected = model.getFilteredSpots().getNSpots();
-			logger.log("Kept "+nselected+" spots out of " + ntotal + ".\n");
-		}		
-
-	}
+//	/**
+//	 * Retrieve the spot feature filter list set in the filter GUI, forward it to the model, and 
+//	 * perform the spot filtering in the model.
+//	 */
+//	private void execSpotFiltering() {
+//		logger.log("Performing spot filtering on the following features:\n", Logger.BLUE_COLOR);
+//		final TrackMateModel model = plugin.getModel();
+//		List<FeatureFilter> featureFilters = view.spotFilterGuiPanel.getFeatureFilters();
+//		model.setSpotFilters(featureFilters);
+//		plugin.execSpotFiltering();
+//
+//		int ntotal = model.getSpots().getNSpots();
+//		if (featureFilters == null || featureFilters.isEmpty()) {
+//			logger.log("No feature threshold set, kept the " + ntotal + " spots.\n");
+//		} else {
+//			for (FeatureFilter ft : featureFilters) {
+//				String str = "  - on "+model.getFeatureModel().getSpotFeatureNames().get(ft.feature);
+//				if (ft.isAbove) 
+//					str += " above ";
+//				else
+//					str += " below ";
+//				str += String.format("%.1f", ft.value);
+//				str += '\n';
+//				logger.log(str);
+//			}
+//			int nselected = model.getFilteredSpots().getNSpots();
+//			logger.log("Kept "+nselected+" spots out of " + ntotal + ".\n");
+//		}		
+//
+//	}
 
 	/**
 	 * Retrieve the track feature filter list set in the threshold GUI, forward it to the model, and 
@@ -720,7 +720,7 @@ public class WizardController implements ActionListener {
 	 * Switch to the log panel, and execute the tracking part in another thread.
 	 */
 	private void execTrackingStep() {
-		switchNextButton(false);
+//		switchNextButton(false);
 		final TrackMateModel model = plugin.getModel();
 		logger.log("Starting tracking using "+model.getSettings().tracker.toString()+"\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
@@ -734,34 +734,34 @@ public class WizardController implements ActionListener {
 					long end = System.currentTimeMillis();
 					logger.log(String.format("Tracking done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
 				} finally {
-					switchNextButton(true);
+//					switchNextButton(true);
 				}
 			}
 		}.start();
 	}
 
-	private void switchNextButton(final boolean state) {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				view.jButtonNext.setEnabled(state);
-			}
-		});
-	}
+//	private void switchNextButton(final boolean state) {
+//		SwingUtilities.invokeLater(new Runnable() {
+//			@Override
+//			public void run() {
+//				view.jButtonNext.setEnabled(state);
+//			}
+//		});
+//	}
 
 
 	/*
 	 * ENUMS
 	 */
 
-
-	public void setModelView(TrackMateModelView displayer) {
-		this.displayer = displayer;
-	}
-
-	public TrackMateModelView getModelView() {
-		return displayer;
-	}
+//
+//	public void setModelView(TrackMateModelView displayer) {
+//		this.displayer = displayer;
+//	}
+//
+//	public TrackMateModelView getModelView() {
+//		return displayer;
+//	}
 
 
 	/**

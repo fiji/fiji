@@ -70,8 +70,7 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 	private JLabel labelChannel;
 
 	private TrackMate_ plugin;
-
-	private WizardModel model;
+	private TrackMateWizard wizard;
 	
 	/*
 	 * CONSTRUCTOR
@@ -95,8 +94,8 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 	 */
 
 	@Override
-	public void setWizardModel(WizardModel model) {
-		this.model = model;
+	public void setWizard(TrackMateWizard wizard) {
+		this.wizard = wizard;
 	}
 
 	@Override
@@ -139,7 +138,7 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 			imp = settings.imp;
 			refresh();
 		}
-		model.setPreviousButtonEnabled(false);
+		wizard.setPreviousButtonEnabled(false);
 	}
 
 	@Override
@@ -149,7 +148,7 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 	public void aboutToHidePanel() {
 		// Get settings and pass them to the plugin managed by the wizard
 		plugin.getModel().setSettings(getSettings());
-		model.setPreviousButtonEnabled(true);
+		wizard.setPreviousButtonEnabled(true);
 	}
 	
 	
@@ -235,7 +234,7 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 	private void refresh() {
 		if (null == imp) {
 			// Lock next button, because we still do not have a valid target image.
-			model.setNextButtonEnabled(false);
+			wizard.setNextButtonEnabled(false);
 			return;
 		}
 		jLabelImageName.setText("Target: "+imp.getShortTitle());
@@ -280,7 +279,7 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 			sliderChannel.setVisible(true);			
 		}
 		// Re-enable target component, because we have a valid target image to operate on.
-		model.setNextButtonEnabled(true);
+		wizard.setNextButtonEnabled(true);
 	}
 
 

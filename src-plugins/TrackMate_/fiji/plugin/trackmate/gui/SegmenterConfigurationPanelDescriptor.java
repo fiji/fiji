@@ -18,7 +18,7 @@ public class SegmenterConfigurationPanelDescriptor implements WizardPanelDescrip
 	 */
 
 	@Override
-	public void setWizardModel(WizardModel model) {	}
+	public void setWizard(TrackMateWizard wizard) { }
 
 	@Override
 	public void setPlugin(TrackMate_ plugin) {
@@ -37,8 +37,11 @@ public class SegmenterConfigurationPanelDescriptor implements WizardPanelDescrip
 
 	@Override
 	public Object getNextPanelDescriptor() {
-		// TODO Auto-generated method stub
-		return null;
+		if (plugin.getModel().getSettings().segmenter.getClass() == ManualSegmenter.class) {
+			return LaunchDisplayerDescriptor.DESCRIPTOR;
+		} else {
+			return SegmentationDescriptor.DESCRIPTOR;
+		}
 	}
 
 	@Override
@@ -60,7 +63,7 @@ public class SegmenterConfigurationPanelDescriptor implements WizardPanelDescrip
 			}
 			settings = segmenter.createDefaultSettings();
 		}
-		SegmenterConfigurationPanel configPanel = settings.createConfigurationPanel();
+		configPanel = settings.createConfigurationPanel();
 		configPanel.setSegmenterSettings(plugin.getModel());
 	}
 

@@ -4,9 +4,11 @@ import static fiji.plugin.trackmate.gui.TrackMateWizard.BIG_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -19,14 +21,17 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import fiji.plugin.trackmate.FeatureFilter;
+import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMate_;
 
 /**
  * 
  */
-public class InitFilterPanel extends ActionListenablePanel {
+public class InitFilterPanel extends ActionListenablePanel implements WizardPanelDescriptor {
 
-	private static final long serialVersionUID = -5067695740285574761L;
+	private static final long serialVersionUID = 1L;
 	private static final String EXPLANATION_TEXT = "<html><p align=\"justify\">" +
 			"Set here a threshold on the quality feature to restrict the number of spots " +
 			"before calculating other features and rendering. This step can help save " +
@@ -37,6 +42,7 @@ public class InitFilterPanel extends ActionListenablePanel {
 			"step." +
 			"</html>";
 	private static final String SELECTED_SPOT_STRING = "Selected spots: %d out of %d";
+	public  static final Object DESCRIPTOR = "InitialThresholding";
 
 	private Map<String, double[]> features;
 	private FilterPanel jPanelThreshold;
@@ -45,18 +51,8 @@ public class InitFilterPanel extends ActionListenablePanel {
 	private JLabel jLabelExplanation;
 	private JLabel jLabelSelectedSpots;
 	private JPanel jPanelText;
-
-	public InitFilterPanel(Map<String, double[]> featureValues) {
-		this(featureValues, null);
-	}
-
-
-	public InitFilterPanel(Map<String, double[]> featureValues, Float initialFilterValue) {
-		super();
-		this.features = featureValues;
-		initGUI(initialFilterValue);
-		thresholdChanged();
-	}
+	private TrackMate_ plugin;
+	private Logger logger;
 
 	/*
 	 * PUBLIC METHOD
@@ -67,6 +63,71 @@ public class InitFilterPanel extends ActionListenablePanel {
 	 */
 	public FeatureFilter getFeatureThreshold() {
 		return new FeatureFilter(jPanelThreshold.getKey(), new Float(jPanelThreshold.getThreshold()), jPanelThreshold.isAboveThreshold());
+	}
+	
+	@Override
+	public void setWizard(TrackMateWizard wizard) { 
+		this.logger = wizard.getLogger();
+	}
+
+
+	@Override
+	public void setPlugin(TrackMate_ plugin) {
+		this.plugin = plugin;
+	}
+
+
+	@Override
+	public Component getPanelComponent() {
+		return this;
+	}
+
+
+	@Override
+	public Object getPanelDescriptorIdentifier() {
+		return DESCRIPTOR;
+	}
+
+
+	@Override
+	public Object getNextPanelDescriptor() {
+		return LaunchDisplayerDescriptor.DESCRIPTOR;
+	}
+
+
+	@Override
+	public Object getBackPanelDescriptor() {
+		return SegmentationDescriptor.DESCRIPTOR;
+	}
+
+	@Override
+	public void aboutToDisplayPanel() {
+		TrackMateModel model = plugin.getModel();
+		this.features = model.getFeatureModel().getSpotFeatureValues();
+		Float initialFilterValue = model.getInitialSpotFilterValue();
+		initGUI(initialFilterValue);
+	}
+
+	@Override
+	public void displayingPanel() {
+		thresholdChanged();
+	}
+
+	@Override
+	public void aboutToHidePanel() {
+		final TrackMateModel model = plugin.getModel();
+		FeatureFilter initialThreshold = getFeatureThreshold();
+		String str = "Initial thresholding with a quality threshold above "+ String.format("%.1f", initialThreshold.value) + " ...\n";
+		logger.log(str,Logger.BLUE_COLOR);
+		int ntotal = 0;
+		for (Collection<Spot> spots : model.getSpots().values())
+			ntotal += spots.size();
+		model.setInitialSpotFilterValue(initialThreshold.value);
+		plugin.execInitialSpotFiltering();
+		int nselected = 0;
+		for (Collection<Spot> spots : model.getSpots().values())
+			nselected += spots.size();
+		logger.log(String.format("Retained %d spots out of %d.\n", nselected, ntotal));
 	}
 
 	/*
@@ -182,8 +243,13 @@ public class InitFilterPanel extends ActionListenablePanel {
 			val[j] = ran.nextGaussian() + 5 + mean;
 		fv.put(Spot.QUALITY, val);
 
+		InitFilterPanel panel = new InitFilterPanel();
+		panel.features = fv; // FORBIDDEN normally but that's fine for testing
+		
 		JFrame frame = new JFrame();
-		frame.getContentPane().add(new InitFilterPanel(fv));
+		frame.getContentPane().add(panel);
+		panel.initGUI(0f); // FORBIDDEN
+		panel.displayingPanel();
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();
 		frame.setVisible(true);

@@ -13,11 +13,13 @@ import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
 import fiji.plugin.trackmate.Logger;
@@ -36,6 +38,15 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
  */
 public class TrackMateWizard extends javax.swing.JFrame implements ActionListener {
 
+    private WizardPanelDescriptor currentPanel;
+    private HashMap<Object, WizardPanelDescriptor> panelHashmap;
+	
+	private JButton jButtonSave;
+	private JButton jButtonLoad;
+	private JButton jButtonPrevious;
+	private JButton jButtonNext;
+
+    
 	/*
 	 * DEFAULT VISIBILITY & PUBLIC CONSTANTS
 	 */
@@ -68,10 +79,6 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	/** This {@link ActionEvent} is fired when the 'save' button is pressed. */
 	final ActionEvent SAVE_BUTTON_PRESSED = new ActionEvent(this, 3, "SaveButtonPressed");
 
-	JButton jButtonSave;
-	JButton jButtonLoad;
-	JButton jButtonPrevious;
-	JButton jButtonNext;
 
 	StartDialogPanel startDialogPanel;
 	SegmenterConfigurationPanel segmenterSettingsPanel;
@@ -99,9 +106,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	private LogPanel logPanel;
 	private CardLayout cardLayout;
 	private ActionChooserPanel actionPanel;
-	/** The model in charge of keeping track of this wizard. Not to be mixed with the {@link TrackMateModel}
-	 * which contains the data. */
-	private WizardModel wizardModel;
+	private TrackMateModelView displayer;
 
 	/*
 	 * ENUM
@@ -161,7 +166,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 		switch (key) {
 
 		case START_DIALOG_KEY:
-			startDialogPanel = new StartDialogPanel(model.getSettings(), jButtonNext);
+			startDialogPanel = new StartDialogPanel(model.getSettings());
 			panel = startDialogPanel;
 			break;
 
@@ -184,7 +189,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 		case INITIAL_THRESHOLDING_KEY:
 			if (null != initThresholdingPanel)
 				jPanelMain.remove(initThresholdingPanel);
-			initThresholdingPanel = new InitFilterPanel(model.getFeatureModel().getSpotFeatureValues(), model.getInitialSpotFilterValue());
+			initThresholdingPanel = new InitFilterPanel();
 			panel = initThresholdingPanel;
 			break;
 
@@ -446,7 +451,101 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 		fireAction(event);
 	}
 
-	public WizardModel getModel() {
-		return wizardModel;
+	/*
+	 * 
+	 * WIZARD MODEL METHODS
+	 */
+	
+	
+	
+    /**
+     * Returns the currently displayed WizardPanelDescriptor.
+     * @return The currently displayed WizardPanelDescriptor
+     */    
+    WizardPanelDescriptor getCurrentPanelDescriptor() {
+        return currentPanel;
+    }
+    
+    /**
+     * Registers the WizardPanelDescriptor in the model using the Object-identifier specified.
+     * @param id Object-based identifier
+     * @param descriptor WizardPanelDescriptor that describes the panel
+     */    
+     void registerPanel(Object id, WizardPanelDescriptor descriptor) {
+        
+        //  Place a reference to it in a hashtable so we can access it later
+        //  when it is about to be displayed.
+        
+        panelHashmap.put(id, descriptor);
+        
+    }  
+    
+    /**
+     * Sets the current panel to that identified by the Object passed in.
+     * @param id Object-based panel identifier
+     * @return boolean indicating success or failure
+     */    
+     boolean setCurrentPanel(Object id) {
+
+        //  First, get the hashtable reference to the panel that should
+        //  be displayed.
+        
+        WizardPanelDescriptor nextPanel = panelHashmap.get(id);
+        
+        //  If we couldn't find the panel that should be displayed, return
+        //  false.
+        
+        if (nextPanel == null) {
+        	return false;
+        }
+
+        WizardPanelDescriptor oldPanel = currentPanel;
+        currentPanel = nextPanel;
+        
+        if (oldPanel != currentPanel) {
+//            firePropertyChange(CURRENT_PANEL_DESCRIPTOR_PROPERTY, oldPanel, currentPanel);
+        }
+        return true;
+    }
+
+	public void setNextButtonEnabled(final boolean b) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() { jButtonNext.setEnabled(b); }
+		});
 	}
+
+	public void setPreviousButtonEnabled(final boolean b) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() { jButtonPrevious.setEnabled(b); }
+		});
+	}
+	
+	public void setSaveButtonEnabled(final boolean b) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() { jButtonSave.setEnabled(b); }
+		});
+	}
+	
+	public void setLoadButtonEnabled(final boolean b) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() { jButtonLoad.setEnabled(b); }
+		});
+	}
+
+	public LogPanel getLogPanel() {
+		return logPanel;
+	}
+
+	public TrackMateModelView getDisplayer() {
+		return displayer;
+	}
+
+	public void setDisplayer(TrackMateModelView displayer) {
+		this.displayer = displayer;
+		
+	}
+
+
+
+	
 }
